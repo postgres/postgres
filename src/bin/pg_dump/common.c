@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.5 1996/09/16 06:05:47 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.6 1996/10/07 03:30:31 scrappy Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -42,7 +42,7 @@
  */
 
 char*
-findTypeByOid(TypeInfo* tinfo, int numTypes, char* oid)
+findTypeByOid(TypeInfo* tinfo, int numTypes, const char* oid)
 {
     int i;
 
@@ -68,7 +68,7 @@ findTypeByOid(TypeInfo* tinfo, int numTypes, char* oid)
  * 
  */
 char*
-findOprByOid(OprInfo *oprinfo, int numOprs, char *oid)
+findOprByOid(OprInfo *oprinfo, int numOprs, const char *oid)
 {
     int i;
     for (i=0;i<numOprs;i++) {
@@ -94,7 +94,7 @@ findOprByOid(OprInfo *oprinfo, int numOprs, char *oid)
 
 char** 
 findParentsByOid(TableInfo* tblinfo, int numTables,
-		 InhInfo* inhinfo, int numInherits, char *oid,
+		 InhInfo* inhinfo, int numInherits, const char *oid,
 		 int *numParentsPtr)
 {
     int i,j;
@@ -134,7 +134,7 @@ findParentsByOid(TableInfo* tblinfo, int numTables,
  */
 
 void 
-parseArgTypes(char **argtypes, char* str)
+parseArgTypes(char **argtypes, const char* str)
 {
     int j, argNum;
     char temp[100];
@@ -171,7 +171,7 @@ parseArgTypes(char **argtypes, char* str)
  */
 
 int 
-strInArray(char* pattern, char** arr, int arr_size)
+strInArray(const char* pattern, char** arr, int arr_size)
 {
     int i;
     for (i=0;i<arr_size;i++) {
@@ -189,7 +189,7 @@ strInArray(char* pattern, char** arr, int arr_size)
  */
 
 TableInfo *
-dumpSchema(FILE *fout, int *numTablesPtr, char *tablename)
+dumpSchema(FILE *fout, int *numTablesPtr, const char *tablename)
 {
     int numTypes;
     int numFuncs;
@@ -279,7 +279,7 @@ if (!tablename && fout) {
  */
 
 extern void
-dumpSchemaIdx(FILE *fout, int *numTablesPtr, char *tablename,
+dumpSchemaIdx(FILE *fout, int *numTablesPtr, const char *tablename,
 					TableInfo* tblinfo, int numTables)
 {
     int numIndices;
@@ -344,7 +344,7 @@ flagInhAttrs(TableInfo* tblinfo, int numTables,
  */
 
 int
-findTableByName(TableInfo* tblinfo, int numTables, char* relname)
+findTableByName(TableInfo* tblinfo, int numTables, const char* relname)
 {
     int i;
     for (i=0;i<numTables;i++) {
@@ -363,7 +363,7 @@ findTableByName(TableInfo* tblinfo, int numTables, char* relname)
  */
 
 int
-findTableByOid(TableInfo* tblinfo, int numTables, char* oid)
+findTableByOid(TableInfo* tblinfo, int numTables, const char* oid)
 {
     int i;
     for (i=0;i<numTables;i++) {
@@ -383,7 +383,7 @@ findTableByOid(TableInfo* tblinfo, int numTables, char* oid)
  */
 
 int
-findFuncByName(FuncInfo* finfo, int numFuncs, char* name)
+findFuncByName(FuncInfo* finfo, int numFuncs, const char* name)
 {
     int i;
     for (i=0;i<numFuncs;i++) {
@@ -399,7 +399,7 @@ findFuncByName(FuncInfo* finfo, int numFuncs, char* name)
  *   returns true if the relation name is an archive name, false otherwise
  */ 
 int
-isArchiveName(char* relname)
+isArchiveName(const char* relname)
 {
     return (strlen(relname) > 1 && relname[1] == ',');
 }

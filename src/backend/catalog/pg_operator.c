@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.1.1.1 1996/07/09 06:21:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.2 1996/10/07 03:27:48 scrappy Exp $
  *
  * NOTES
  *    these routines moved here from commands/define.c and somewhat cleaned up.
@@ -35,7 +35,7 @@
 #include "fmgr.h"
 
 static Oid OperatorGetWithOpenRelation(Relation pg_operator_desc,
-				       char *operatorName,
+				       const char *operatorName,
 				       Oid leftObjectId,
 				       Oid rightObjectId );
 static Oid OperatorGet(char *operatorName,
@@ -79,7 +79,7 @@ static void OperatorUpd(Oid baseId , Oid commId , Oid negId );
  */
 static Oid
 OperatorGetWithOpenRelation(Relation pg_operator_desc,
-			    char *operatorName,
+			    const char *operatorName,
 			    Oid leftObjectId,
 			    Oid rightObjectId)
 {

@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.9 1996/10/02 21:38:35 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.10 1996/10/07 03:30:37 scrappy Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -75,7 +75,7 @@ char g_comment_end[10];
 
 
 static void
-usage(char* progname)
+usage(const char* progname)
 {
     fprintf(stderr, "%s - version 1.13.dhb.2\n\n",progname);
     fprintf(stderr, "usage:  %s [options] [dbname]\n",progname);
@@ -98,7 +98,7 @@ usage(char* progname)
     exit(1);
 }
 
-void 
+static void 
 exit_nicely(PGconn* conn)
 {
   PQfinish(conn);
@@ -106,18 +106,18 @@ exit_nicely(PGconn* conn)
 }
 
 
-void
+int
 main(int argc, char** argv)
 {
     int c;
-    char* progname;
-    char* filename;
-    char* dbname;
+    const char* progname;
+    const char* filename;
+    const char* dbname;
     int schemaOnly;
     int dataOnly;
-    char *pghost = NULL;
-    char *pgport = NULL;
-    char *tablename;
+    const char *pghost = NULL;
+    const char *pgport = NULL;
+    const char *tablename;
     int oids;
     TableInfo *tblinfo;
     int numTables;
@@ -1200,7 +1200,7 @@ void dumpTables(FILE* fout, TableInfo *tblinfo, int numTables,
     char **parentRels;  /* list of names of parent relations */
     int numParents;
     int actual_atts; /* number of attrs in this CREATE statment */
-    char *archiveMode;
+    const char *archiveMode;
 
     for (i=0;i<numTables;i++) {
 
@@ -1300,12 +1300,12 @@ void dumpTables(FILE* fout, TableInfo *tblinfo, int numTables,
  */
 void 
 dumpIndices(FILE* fout, IndInfo* indinfo, int numIndices,
-	    TableInfo* tblinfo, int numTables, char *tablename)
+	    TableInfo* tblinfo, int numTables, const char *tablename)
 {
     int i;
     int tableInd;
-    char *attname;  /* the name of the indexed attribute  */
-    char *funcname; /* the name of the function to comput the index key from*/
+    const char *attname;  /* the name of the indexed attribute  */
+    const char *funcname; /* the name of the function to comput the index key from*/
     int indkey;
 
     char q[MAXQUERYLEN];
@@ -1361,7 +1361,7 @@ dumpIndices(FILE* fout, IndInfo* indinfo, int numIndices,
  *    dump the contents of all the classes.
  */
 void
-dumpClasses(TableInfo *tblinfo, int numTables, FILE *fout, char *onlytable, int oids)
+dumpClasses(TableInfo *tblinfo, int numTables, FILE *fout, const char *onlytable, int oids)
 {
     char query[255];
 #define COPYBUFSIZ	8192
@@ -1605,7 +1605,7 @@ setMaxOid(FILE *fout)
 */
 
 int
-findLastBuiltinOid()
+findLastBuiltinOid(void)
 {
 	PGresult* res;
 	int ntups;
@@ -1634,7 +1634,7 @@ findLastBuiltinOid()
  *    checks a string for quote characters and quotes them
  */
 char*
-checkForQuote(char* s)
+checkForQuote(const char* s)
 {
     char *r;
     char c;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/magic.c,v 1.1.1.1 1996/07/09 06:22:09 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/magic.c,v 1.2 1996/10/07 03:29:30 scrappy Exp $
  *
  * NOTES
  *	XXX eventually, should be able to handle version identifiers
@@ -37,7 +37,7 @@ static char	Pg_verfile[] = PG_VERFILE;
 /*
  * private function prototypes
  */
-static void PathSetVersionFilePath(char path[], char filepathbuf[]);
+static void PathSetVersionFilePath(const char *path, char *filepathbuf);
 
 /*
  * DatabaseMetaGunkIsConsistent
@@ -48,7 +48,7 @@ static void PathSetVersionFilePath(char path[], char filepathbuf[]);
  * and checking the existence of the database whether Noversion is set or not.
  */
 int
-DatabaseMetaGunkIsConsistent(char *database, char *path)
+DatabaseMetaGunkIsConsistent(const char *database, char *path)
 {
     int		isValid;
 #ifndef WIN32
@@ -80,7 +80,7 @@ DatabaseMetaGunkIsConsistent(char *database, char *path)
  *	version number.
  */
 int
-ValidPgVersion(char *path)
+ValidPgVersion(const char *path)
 {
     int		fd;
     char		version[4], buf[MAXPGPATH+1];
@@ -131,7 +131,7 @@ ValidPgVersion(char *path)
  *	SetPgVersion	- writes the version to a database directory
  */
 void
-SetPgVersion(char *path)
+SetPgVersion(const char *path)
 {
     int	fd;
     char	version[4], buf[MAXPGPATH+1];
@@ -159,9 +159,9 @@ SetPgVersion(char *path)
  * and the name of the version file name.
  */
 static void
-PathSetVersionFilePath(char *path, char *filepathbuf)
+PathSetVersionFilePath(const char *path, char *filepathbuf)
 {
     if (strlen(path) > (MAXPGPATH - sizeof(Pg_verfile) - 1))
 	elog(FATAL, "PathSetVersionFilePath: %s: path too long");
-    (void) sprintf(filepathbuf, "%s%c%s", path, SEP_CHAR, Pg_verfile);
+    sprintf(filepathbuf, "%s%c%s", path, SEP_CHAR, Pg_verfile);
 }

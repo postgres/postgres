@@ -12,7 +12,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.3 1996/09/19 20:02:53 scrappy Exp $
+ * $Id: miscadmin.h,v 1.4 1996/10/07 03:28:12 scrappy Exp $
  *
  * NOTES
  *    some of the information in this file will be moved to
@@ -186,8 +186,8 @@ extern ProcessingMode GetProcessingMode(void);
 /*
  * Prototypes for utils/init/magic.c
  */
-extern int DatabaseMetaGunkIsConsistent(char database[], char path[]);
-extern int ValidPgVersion(char path []);
-extern void SetPgVersion(char path []);
+extern int DatabaseMetaGunkIsConsistent(const char *database, char *path);
+extern int ValidPgVersion(const char *path);
+extern void SetPgVersion(const char *path);
 
 #endif	/* MISCADMIN_H */

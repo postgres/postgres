@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.6 1996/09/23 18:15:41 scrappy Exp $
+ * $Id: pg_dump.h,v 1.7 1996/10/07 03:30:40 scrappy Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -141,27 +141,27 @@ extern char g_opaque_type[10]; /* name for the opaque type */
  *  common utility functions 
 */
 
-extern TableInfo* dumpSchema(FILE* fout, int *numTablesPtr, char *tablename);
-extern void dumpSchemaIdx(FILE* fout, int *numTablesPtr, char *tablename,
+extern TableInfo* dumpSchema(FILE* fout, int *numTablesPtr, const char *tablename);
+extern void dumpSchemaIdx(FILE* fout, int *numTablesPtr, const char *tablename,
 				TableInfo* tblinfo, int numTables);
 
-extern char* findTypeByOid(TypeInfo* tinfo, int numTypes, char* oid);
-extern char* findOprByOid(OprInfo *oprinfo, int numOprs, char *oid);
-extern int findFuncByName(FuncInfo* finfo, int numFuncs, char* name);
+extern char* findTypeByOid(TypeInfo* tinfo, int numTypes, const char* oid);
+extern char* findOprByOid(OprInfo *oprinfo, int numOprs, const char *oid);
+extern int findFuncByName(FuncInfo* finfo, int numFuncs, const char* name);
 extern char** findParentsByOid(TableInfo* tbinfo, int numTables,
 			      InhInfo* inhinfo, int numInherits,
-			      char *oid, 
+			      const char *oid, 
 			      int *numParents);
-extern int findTableByName(TableInfo *tbinfo, int numTables, char *relname);
-extern int findTableByOid(TableInfo *tbinfo, int numTables, char *oid);
+extern int findTableByName(TableInfo *tbinfo, int numTables, const char *relname);
+extern int findTableByOid(TableInfo *tbinfo, int numTables, const char *oid);
 extern void flagInhAttrs(TableInfo* tbinfo, int numTables,
 			   InhInfo* inhinfo, int numInherits);
 
-extern void check_conn_and_db();
-extern char* dupstr(char *s);
-extern int strInArray(char* pattern, char** arr, int arr_size);
-extern void parseArgTypes(char **argtypes, char* str);
-extern int isArchiveName(char*);
+extern void check_conn_and_db(void);
+extern char* dupstr(const char *s);
+extern int strInArray(const char* pattern, char** arr, int arr_size);
+extern void parseArgTypes(char **argtypes, const char* str);
+extern int isArchiveName(const char*);
 
 /*
  * version specific routines 
@@ -186,16 +186,16 @@ extern void dumpOneFunc(FILE* fout, FuncInfo* finfo, int i,
 			TypeInfo *tinfo, int numTypes);
 extern void dumpTables(FILE* fout, TableInfo* tbinfo, int numTables,
 		       InhInfo *inhinfo, int numInherits,
-		       TypeInfo *tinfo, int numTypes, char *tablename);
+		       TypeInfo *tinfo, int numTypes, const char *tablename);
 extern void dumpIndices(FILE* fout, IndInfo* indinfo, int numIndices,
-			TableInfo* tbinfo, int numTables, char *tablename);
+			TableInfo* tbinfo, int numTables, const char *tablename);
 
 extern void dumpClasses(TableInfo *tbinfo, int numTables, FILE *fout, 
-                        char *tablename, int oids);
+                        const char *tablename, int oids);
 extern void dumpTuples(PGresult *res, FILE *fout, int *attrmap);
 extern void setMaxOid(FILE *fout);
-extern char* checkForQuote(char* s);
-extern int findLastBuiltinOid();
+extern char* checkForQuote(const char* s);
+extern int findLastBuiltinOid(void);
 
 
 /* largest query string size */
