@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.52 2000/05/11 03:54:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.53 2000/05/12 16:10:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,11 +258,11 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 		Assert(pg_proc_Tuple);
 		pg_proc_Form = (Form_pg_proc) GETSTRUCT(pg_proc_Tuple);
 		namecpy(&(finfo->funcName), &(pg_proc_Form->proname));
+		natts = 1;				/* function result is a single column */
 	}
 	else
 	{
 		finfo = (FuncIndexInfo *) NULL;
-		natts = 1;
 	}
 
 	index_create(RelationGetRelationName(NewHeap),
@@ -273,7 +273,8 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 				 natts,
 				 Old_pg_index_Form->indkey,
 				 Old_pg_index_Form->indclass,
-				 (uint16) 0, (Datum) NULL, NULL,
+				 (uint16) 0, (Datum *) NULL,
+				 (Node *) NULL,	/* XXX where's the predicate? */
 				 Old_pg_index_Form->indislossy,
 				 Old_pg_index_Form->indisunique,
 				 Old_pg_index_Form->indisprimary);
@@ -313,8 +314,20 @@ rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 		LocalHeapTuple.t_datamcxt = NULL;
 		LocalHeapTuple.t_data = NULL;
 		heap_fetch(LocalOldHeap, SnapshotNow, &LocalHeapTuple, &LocalBuffer);
-		heap_insert(LocalNewHeap, &LocalHeapTuple);
-		ReleaseBuffer(LocalBuffer);
+		if (LocalHeapTuple.t_data != NULL) {
+			/*
+			 * We must copy the tuple because heap_insert() will overwrite
+			 * the commit-status fields of the tuple it's handed, and the
+			 * retrieved tuple will actually be in a disk buffer!  Thus,
+			 * the source relation would get trashed, which is bad news
+			 * if we abort later on.  (This was a bug in releases thru 7.0)
+			 */
+			HeapTuple	copiedTuple = heap_copytuple(&LocalHeapTuple);
+
+			ReleaseBuffer(LocalBuffer);
+			heap_insert(LocalNewHeap, copiedTuple);
+			heap_freetuple(copiedTuple);
+		}
 		pfree(ScanResult);
 	}
 
