@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.52 1999/05/25 16:10:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.53 1999/05/29 03:58:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2028,8 +2028,8 @@ LockBuffer(Buffer buffer, int mode)
 			S_LOCK(&(buf->cntx_lock));
 #else
 			IpcSemaphoreUnlock(WaitCLSemId, 0, IpcExclusiveLock);
-			s_lock_sleep(i++)
-				IpcSemaphoreLock(WaitCLSemId, 0, IpcExclusiveLock);
+			s_lock_sleep(i++);
+			IpcSemaphoreLock(WaitCLSemId, 0, IpcExclusiveLock);
 #endif
 		}
 		(buf->r_locks)++;
@@ -2054,8 +2054,8 @@ LockBuffer(Buffer buffer, int mode)
 			S_LOCK(&(buf->cntx_lock));
 #else
 			IpcSemaphoreUnlock(WaitCLSemId, 0, IpcExclusiveLock);
-			s_lock_sleep(i++)
-				IpcSemaphoreLock(WaitCLSemId, 0, IpcExclusiveLock);
+			s_lock_sleep(i++);
+			IpcSemaphoreLock(WaitCLSemId, 0, IpcExclusiveLock);
 #endif
 		}
 		buf->w_lock = true;
