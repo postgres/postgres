@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.24 2001/11/08 23:36:18 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.25 2001/11/12 02:35:16 momjian Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -236,13 +236,12 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
         <listitem>
          <para>
           Like the <literal>md5</literal> method but uses older crypt
-          authentication for pre-7.2 clients.  <literal>md5</literal>
-	  is preferred, unless you need to support old clients that
-	  do not have <literal>md5</literal>.  The <literal>crypt</>
-	  method is not compatible with encrypting passwords in
-	  <filename>pg_shadow</>, and it has been observed to fail
-	  when client and server machines have different implementations
-	  of the crypt() library routine.
+          authentication for pre-7.2 clients. <literal>md5</literal> is
+          preferred for 7.2 and later clients. The <literal>crypt</>
+          method is also not compatible with encrypting passwords in
+          <filename>pg_shadow</>, and may fail if client and server
+          machines have different implementations of the crypt() library
+          routine.
          </para>
         </listitem>
        </varlistentry>
