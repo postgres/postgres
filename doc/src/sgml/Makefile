@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.3 1998/05/13 05:33:30 thomas Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.4 1998/07/29 06:29:04 thomas Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -29,8 +29,14 @@ PSTYLE=/usr/lib/sgml/stylesheets/jade/docbook/print
 HDSL=$(HSTYLE)/docbook.dsl
 PDSL=$(PSTYLE)/docbook.dsl
 
+# Options for DocBook style sheets
+
 DBOPTS= -D ref
 #DBOPTS+= -V %no-split-output% -V %no-make-index%
+# use-id-as-filename picks up the "Id=" fields to use as file names.
+# If this is omitted then file names are generic "c01.htm"
+#  as in v6.3 documentation. Yuck.
+DBOPTS+= -V %use-id-as-filename%
 
 TAR= tar
 
@@ -87,8 +93,8 @@ distclean::
 %.html:	%.sgml #$(HDSL)
 	(rm -rf *.htm)
 	jade $(DBOPTS) $(HTMLOPTS) -t sgml $<
-	(ln -sf book01.htm index.html)
-	(ln -sf book01.htm $*.html)
+	(ln -sf $*.htm index.html)
+	(ln -sf $*.htm $*.html)
 
 # RTF to allow minor editing for hardcopy
 # This is used for v6.3 docs
