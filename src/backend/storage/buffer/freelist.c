@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.36 2003/11/19 15:55:07 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.37 2003/11/27 18:12:50 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -694,7 +694,9 @@ void
 StrategyInvalidateBuffer(BufferDesc *buf)
 {
 	int					cdb_id;
+#ifdef USE_ASSERT_CHECKING
 	int					buf_id;
+#endif
 	BufferStrategyCDB  *cdb;
 
 	/* The buffer cannot be dirty or pinned */
@@ -705,7 +707,7 @@ StrategyInvalidateBuffer(BufferDesc *buf)
 	 * If we have the buffer somewhere in the directory, remove it,
 	 * add the CDB to the list of unused CDB's. and the buffer to
 	 * the list of free buffers
- */
+	 */
 	cdb_id = BufTableLookup(&(buf->tag));
 	if (cdb_id >= 0)
 	{
