@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.86 2000/12/07 01:22:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.87 2001/01/03 22:01:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,6 +124,7 @@ gatherRewriteMeta(Query *parsetree,
 	 * Note that if the rule refers to OLD, its jointree will add back
 	 * a reference to rt_index.
 	 */
+	if (sub_action->jointree != NULL)
 	{
 		bool	found;
 		List   *newjointree = adjustJoinTreeList(parsetree,
