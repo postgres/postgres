@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.41.2.1 2004/09/17 18:29:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.41.2.2 2004/10/13 21:56:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,13 +22,13 @@
 #include "utils/memutils.h"
 
 
-static TupleTableSlot *ExecHashJoinOuterGetTuple(Plan *node, Plan *parent,
+static TupleTableSlot *ExecHashJoinOuterGetTuple(Plan *node, HashJoin *parent,
 						  HashJoinState *hjstate);
 static TupleTableSlot *ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 						  BufFile *file,
 						  TupleTableSlot *tupleSlot);
 static int	ExecHashJoinGetBatch(int bucketno, HashJoinTable hashtable);
-static int	ExecHashJoinNewBatch(HashJoinState *hjstate);
+static int	ExecHashJoinNewBatch(HashJoinState *hjstate, HashJoin *node);
 
 
 /* ----------------------------------------------------------------
@@ -153,7 +153,7 @@ ExecHashJoin(HashJoin *node)
 		if (hjstate->hj_NeedNewOuter)
 		{
 			outerTupleSlot = ExecHashJoinOuterGetTuple(outerNode,
-													   (Plan *) node,
+													   node,
 													   hjstate);
 			if (TupIsNull(outerTupleSlot))
 			{
@@ -469,7 +469,7 @@ ExecEndHashJoin(HashJoin *node)
  */
 
 static TupleTableSlot *
-ExecHashJoinOuterGetTuple(Plan *node, Plan *parent, HashJoinState *hjstate)
+ExecHashJoinOuterGetTuple(Plan *node, HashJoin *parent, HashJoinState *hjstate)
 {
 	HashJoinTable hashtable = hjstate->hj_HashTable;
 	int			curbatch = hashtable->curbatch;
@@ -477,7 +477,7 @@ ExecHashJoinOuterGetTuple(Plan *node, Plan *parent, HashJoinState *hjstate)
 
 	if (curbatch == 0)
 	{							/* if it is the first pass */
-		slot = ExecProcNode(node, parent);
+		slot = ExecProcNode(node, (Plan *) parent);
 		if (!TupIsNull(slot))
 			return slot;
 
@@ -485,7 +485,7 @@ ExecHashJoinOuterGetTuple(Plan *node, Plan *parent, HashJoinState *hjstate)
 		 * We have just reached the end of the first pass. Try to switch
 		 * to a saved batch.
 		 */
-		curbatch = ExecHashJoinNewBatch(hjstate);
+		curbatch = ExecHashJoinNewBatch(hjstate, parent);
 	}
 
 	/*
@@ -499,7 +499,7 @@ ExecHashJoinOuterGetTuple(Plan *node, Plan *parent, HashJoinState *hjstate)
 										 hjstate->hj_OuterTupleSlot);
 		if (!TupIsNull(slot))
 			return slot;
-		curbatch = ExecHashJoinNewBatch(hjstate);
+		curbatch = ExecHashJoinNewBatch(hjstate, parent);
 	}
 
 	/* Out of batches... */
@@ -545,7 +545,7 @@ ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
  * ----------------------------------------------------------------
  */
 static int
-ExecHashJoinNewBatch(HashJoinState *hjstate)
+ExecHashJoinNewBatch(HashJoinState *hjstate, HashJoin *node)
 {
 	HashJoinTable hashtable = hjstate->hj_HashTable;
 	int			nbatch = hashtable->nbatch;
@@ -575,7 +575,7 @@ ExecHashJoinNewBatch(HashJoinState *hjstate)
 	while (newbatch <= nbatch &&
 		   (outerBatchSize[newbatch - 1] == 0L ||
 			(innerBatchSize[newbatch - 1] == 0L &&
-			 hjstate->js.jointype != JOIN_LEFT)))
+			 node->join.jointype != JOIN_LEFT)))
 	{
 		BufFileClose(hashtable->innerBatchFile[newbatch - 1]);
 		hashtable->innerBatchFile[newbatch - 1] = NULL;
