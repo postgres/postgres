@@ -1059,7 +1059,7 @@ From owner-pgsql-hackers@hub.org Thu Jan 20 18:45:32 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA00672
 	for <pgman@candle.pha.pa.us>; Thu, 20 Jan 2000 19:45:30 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.16 $) with ESMTP id TAA01989 for <pgman@candle.pha.pa.us>; Thu, 20 Jan 2000 19:39:15 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.17 $) with ESMTP id TAA01989 for <pgman@candle.pha.pa.us>; Thu, 20 Jan 2000 19:39:15 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id TAA00957;
 	Thu, 20 Jan 2000 19:35:19 -0500 (EST)
@@ -1836,4 +1836,87 @@ skewed -- so the next most common makes up a very high proportion of
 what's left.  I forget the figures exactly.
 
 Jules
+
+From pgsql-hackers-owner+M6154@hub.org Wed Aug 23 14:36:41 2000
+Received: from hub.org (root@hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id NAA11076
+	for <pgman@candle.pha.pa.us>; Wed, 23 Aug 2000 13:36:41 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e7NHTqN92431;
+	Wed, 23 Aug 2000 13:29:52 -0400 (EDT)
+Received: from mail.fct.unl.pt (fct1.si.fct.unl.pt [193.136.120.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e7NHM1N90883
+	for <pgsql-hackers@hub.org>; Wed, 23 Aug 2000 13:22:01 -0400 (EDT)
+Received: (qmail 13816 invoked by alias); 23 Aug 2000 17:29:02 -0000
+Received: (qmail 13807 invoked from network); 23 Aug 2000 17:29:02 -0000
+Received: from eros.si.fct.unl.pt (193.136.120.112)
+  by fct1.si.fct.unl.pt with SMTP; 23 Aug 2000 17:29:02 -0000
+Date: Wed, 23 Aug 2000 18:22:40 +0100 (WEST)
+From: =?iso-8859-1?Q?Tiago_Ant=E3o?= <tra@fct.unl.pt>
+X-Sender: tiago@eros.si.fct.unl.pt
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: =?iso-8859-1?Q?Tiago_Ant=E3o?= <tra@fct.unl.pt>,
+        PostgreSQL Hackers list <pgsql-hackers@hub.org>
+Subject: Re: [HACKERS] analyze.c 
+In-Reply-To: <28154.967041988@sss.pgh.pa.us>
+Message-ID: <Pine.LNX.4.21.0008231742420.5111-100000@eros.si.fct.unl.pt>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: ORr
+
+
+
+On Wed, 23 Aug 2000, Tom Lane wrote:
+
+> > What's the big reason not to do that? I know that
+> > there is some code in analyze.c (like comparing) that uses other parts of
+> > pg, but that seems to be easily fixed.
+> 
+> Are you proposing not to do any comparisons?  It will be interesting to
+> see how you can compute a histogram without any idea of equality or
+> ordering.  But if you want that, then you still need the function-call
+> manager as well as the type-specific comparison routines for every
+> datatype that you might be asked to operate on (don't forget
+> user-defined types here).
+
+   I forgot user defined data types :-(, but regarding histograms I think
+the code can be made external (at least for testing purposes):
+   1. I was not suggesting not to do any comparisons, but I think the only
+comparison I need is equality, I don't need order as I don't need to
+calculate mins or maxs (I just need mins and maxes on frequencies, NOT on 
+dat itself) to make a histogram.
+   2. The mapping to text guarantees that I have (PQgetvalue returns
+always char* and pg_statistics keeps a "text" anyway) a way of knowing
+about equality regardless of type.
+
+   But at least anything relating to order has to be in.
+
+> >   I'm leaning toward the implementation of end-biased histograms. There is
+> > an introductory reference in the IEEE Data Engineering Bulletin, september
+> > 1995 (available on microsoft research site).
+> 
+> Sounds interesting.  Can you give us an exact URL?
+
+http://www.research.microsoft.com/research/db/debull/default.htm
+
+BTW, you can get access to SIGMOD CDs with lots of goodies for a very low
+price (at least in 1999 it was a bargain), check out ACM membership for
+sigmod.
+
+I've been reading something about implementation of histograms, and,
+AFAIK, in practice histograms is just a cool name for no more than:
+   1. top ten with frequency for each
+   2. the same for top ten worse
+   3. average for the rest
+
+I'm writing code get this info (outside pg for now - for testing
+purposes).
+
+Best Regards,
+Tiago
+PS - again: I'm starting, so, some of my comments can be completly dumb.
+
 
