@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * ylib.c--
+ * parser.c--
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.14 1996/11/30 18:06:37 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.15 1996/12/07 04:38:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

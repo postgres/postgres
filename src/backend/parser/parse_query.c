@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.10 1996/11/30 18:06:34 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.11 1996/12/07 04:38:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -654,9 +654,7 @@ make_const(Value *value)
 		elog(NOTICE,"unknown type : %d\n", nodeTag(value));
 
 	    /* null const */
-	    /* if we don't set a type here, things will break.      */
-	    /* so set it to type 'unknown'.                         */
-	    con = makeConst(UNKNOWNOID, 0, (Datum)NULL, TRUE, 0, FALSE);
+	    con = makeConst(0, 0, (Datum)NULL, TRUE, 0, FALSE);
 	    return con;
 	}
     }
