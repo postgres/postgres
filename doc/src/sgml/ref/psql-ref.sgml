@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.122 2004/09/20 18:51:17 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.123 2004/10/06 18:39:15 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1603,7 +1603,7 @@ lo_import 152801
         class="parameter">filename</replaceable> is omitted, the history
         is written to the standard output. This option is only available
         if <application>psql</application> is configured to use the
-        <acronym>GNU</acronym> history library.
+        <acronym>GNU</acronym> readline (or history) library.
         </para>
 
         <note>
