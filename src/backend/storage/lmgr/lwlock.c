@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lwlock.c,v 1.4 2001/12/10 21:13:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lwlock.c,v 1.5 2001/12/28 23:26:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ static LWLockId held_lwlocks[MAX_SIMUL_LWLOCKS];
 bool		Trace_lwlocks = false;
 
 inline static void
-PRINT_LWDEBUG(const char *where, LWLockId lockid, const LWLock *lock)
+PRINT_LWDEBUG(const char *where, LWLockId lockid, const volatile LWLock *lock)
 {
 	if (Trace_lwlocks)
 		elog(DEBUG, "%s(%d): excl %d shared %d head %p",
@@ -72,8 +72,17 @@ PRINT_LWDEBUG(const char *where, LWLockId lockid, const LWLock *lock)
 			 (int) lock->exclusive, lock->shared, lock->head);
 }
 
+inline static void
+LOG_LWDEBUG(const char *where, LWLockId lockid, const char *msg)
+{
+	if (Trace_lwlocks)
+		elog(DEBUG, "%s(%d): %s",
+			 where, (int) lockid, msg);
+}
+
 #else							/* not LOCK_DEBUG */
 #define PRINT_LWDEBUG(a,b,c)
+#define LOG_LWDEBUG(a,b,c)
 #endif   /* LOCK_DEBUG */
 
 
@@ -265,6 +274,8 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 		 * received, so that the lock manager or signal manager will see
 		 * the received signal when it next waits.
 		 */
+		LOG_LWDEBUG("LWLockAcquire", lockid, "waiting");
+
 		for (;;)
 		{
 			/* "false" means cannot accept cancel/die interrupt here. */
@@ -273,6 +284,8 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 				break;
 			extraWaits++;
 		}
+
+		LOG_LWDEBUG("LWLockAcquire", lockid, "awakened");
 
 		/*
 		 * The awakener already updated the lock struct's state, so we
@@ -352,6 +365,7 @@ LWLockConditionalAcquire(LWLockId lockid, LWLockMode mode)
 	{
 		/* Failed to get lock, so release interrupt holdoff */
 		RESUME_INTERRUPTS();
+		LOG_LWDEBUG("LWLockConditionalAcquire", lockid, "failed");
 	}
 	else
 	{
@@ -448,6 +462,7 @@ LWLockRelease(LWLockId lockid)
 	 */
 	while (head != NULL)
 	{
+		LOG_LWDEBUG("LWLockRelease", lockid, "release waiter");
 		proc = head;
 		head = proc->lwWaitLink;
 		proc->lwWaitLink = NULL;
