@@ -44,7 +44,7 @@ global PgAcVar CurrentDB
 	set PgAcVar(tblinfo,isunique) {}
 	set PgAcVar(tblinfo,isclustered) {}
 	set PgAcVar(tblinfo,indexfields) {}
-	wpg_select $CurrentDB "select attnum,attname,typname,attlen,attnotnull,atttypmod,usename,usesysid,pg_class.oid,relpages,reltuples,relhaspkey,relhasrules,relacl from pg_class,pg_user,pg_attribute,pg_type where (pg_class.relname='$PgAcVar(tblinfo,tablename)') and (pg_class.oid=pg_attribute.attrelid) and (pg_class.relowner=pg_user.usesysid) and (pg_attribute.atttypid=pg_type.oid) order by attnum" rec {
+	wpg_select $CurrentDB "select attnum,attname,typname,attlen,attnotnull,atttypmod,usename,usesysid,pg_class.oid,relpages,reltuples,relhasrules,relacl from pg_class,pg_user,pg_attribute,pg_type where (pg_class.relname='$PgAcVar(tblinfo,tablename)') and (pg_class.oid=pg_attribute.attrelid) and (pg_class.relowner=pg_user.usesysid) and (pg_attribute.atttypid=pg_type.oid) order by attnum" rec {
 		set fsize $rec(attlen)
 		set fsize1 $rec(atttypmod)
 		set ftype $rec(typname)
@@ -68,11 +68,6 @@ global PgAcVar CurrentDB
 		set PgAcVar(tblinfo,numtuples) $rec(reltuples)
 		set PgAcVar(tblinfo,numpages) $rec(relpages)
 		set PgAcVar(tblinfo,permissions) $rec(relacl)
-		if {$rec(relhaspkey)=="t"} {
-			set PgAcVar(tblinfo,hasprimarykey) [intlmsg Yes]
-		} else {
-			set PgAcVar(tblinfo,hasprimarykey) [intlmsg No]
-		}
 		if {$rec(relhasrules)=="t"} {
 			set PgAcVar(tblinfo,hasrules) [intlmsg Yes]
 		} else {
@@ -1723,13 +1718,6 @@ if {[set PgAcVar(tblinfo,col_id) [.pgaw:TableInfo.f1.lb curselection]]==""} then
 		-anchor w -borderwidth 1 \
 		-relief sunken -text {} -textvariable PgAcVar(tblinfo,ownerid) \
 		-width 200 
-	label $base.f0.fi.l9 \
-		-borderwidth 0 \
-		-relief raised -text [intlmsg {Has primary key ?}]
-	label $base.f0.fi.l10 \
-		-anchor w -borderwidth 1 \
-		-relief sunken -text {} \
-		-textvariable PgAcVar(tblinfo,hasprimarykey) -width 200 
 	label $base.f0.fi.l11 \
 		-borderwidth 0 \
 		-relief raised -text [intlmsg {Has rules ?}]
@@ -2175,7 +2163,7 @@ proc vTclWindow.pgaw:Permissions {base} {
 #
 # This file contains Tcl procedures used to input Japanese text.
 #
-# $Header: /cvsroot/pgsql/src/bin/pgaccess/lib/Attic/tables.tcl,v 1.7 2001/02/26 05:15:48 ishii Exp $
+# $Header: /cvsroot/pgsql/src/bin/pgaccess/lib/Attic/tables.tcl,v 1.8 2001/05/30 14:44:00 momjian Exp $
 #
 # Copyright (c) 1993  Software Research Associates, Inc.
 #
