@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.7 1997/08/06 04:45:39 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.8 1997/08/06 05:38:38 momjian Exp $
  *
  * NOTES
  *      Sorts the first relation into the second relation.
@@ -123,10 +123,10 @@ psort_begin(Sort *node, int nkeys, ScanKey key)
     PS(node)->BytesRead = 0;
     PS(node)->BytesWritten = 0;
     PS(node)->treeContext.tupDesc =
-	ExecGetTupType(outerPlan((Plan *)node));
+    ExecGetTupType(outerPlan((Plan *)node));
     PS(node)->treeContext.nKeys = nkeys;
     PS(node)->treeContext.scanKeys = key;
-    PS(node)->treeContext.sortMem = SortMem;
+    PS(node)->treeContext.sortMem = SortMem * 1024;
 
     PS(node)->Tuples = NULL;
     PS(node)->tupcount = 0;

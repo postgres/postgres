@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psort.h,v 1.4 1997/08/06 03:42:13 momjian Exp $
+ * $Id: psort.h,v 1.5 1997/08/06 05:38:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 #include "utils/lselect.h"
 #include "nodes/plannodes.h"
 
-#define	SORTMEM		(1 << 18)		/* 1/4 M - any static memory */
 #define	MAXTAPES	7			/* 7--See Fig. 70, p273 */
 #define	TAPEEXTLEN	strlen("pg_psort.xxxxx.xxx")	/* TEMPDIR/TAPEEXT */
 #define	FREE(x)		pfree((char *) x)
