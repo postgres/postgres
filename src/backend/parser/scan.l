@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.101 2002/08/29 07:22:23 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.102 2002/11/04 14:25:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,8 @@
 #include "nodes/pg_list.h"
 #include "parser/gramparse.h"
 #include "parser/keywords.h"
-#include "parser/parse.h"
+/* Not needed now that this file is compiled as part of gram.y */
+/* #include "parser/parse.h" */
 #include "utils/builtins.h"
 #include "mb/pg_wchar.h"
 
