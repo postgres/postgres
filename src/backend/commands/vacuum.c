@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.164 2000/09/06 14:15:16 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.165 2000/09/12 04:49:07 momjian Exp $
  *
 
  *-------------------------------------------------------------------------
@@ -306,7 +306,7 @@ getrels(NameData *VacRelP)
 
 		if (rkind != RELKIND_RELATION)
 		{
-			elog(NOTICE, "Vacuum: can not process index and certain system tables");
+			elog(NOTICE, "Vacuum: can not process indecies, views and certain system tables");
 			continue;
 		}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.100 2000/09/12 04:33:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.101 2000/09/12 04:49:06 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -533,6 +533,9 @@ AlterTableAlterColumn(const char *relationName,
 #endif
 
 	rel = heap_openr(relationName, AccessExclusiveLock);
+	if ( rel->rd_rel->relkind == RELKIND_VIEW )
+		elog(ERROR, "ALTER TABLE: %s is a view", relationName);
+
 	myrelid = RelationGetRelid(rel);
 	heap_close(rel, NoLock);
 
@@ -1133,6 +1136,10 @@ AlterTableAddConstraint(char *relationName,
 
 						rel = heap_openr(relationName, AccessExclusiveLock);
 
+						/* make sure it is not a view */
+						if (rel->rd_rel->relkind == RELKIND_VIEW)
+						   elog(ERROR, "ALTER TABLE: cannot add constraint to a view");
+
 						/*
 						 * Scan all of the rows, looking for a false match
 						 */
@@ -1251,19 +1258,20 @@ AlterTableAddConstraint(char *relationName,
 					elog(ERROR, "ALTER TABLE / ADD CONSTRAINT: Unable to reference temporary table from permanent table constraint.");
 				}
 
-				/* check to see if the referenced table is a view. */
-				if (is_viewr(fkconstraint->pktable_name))
-				 elog(ERROR, "ALTER TABLE: Cannot add constraints to views.");
-
 				/*
 				 * Grab an exclusive lock on the pk table, so that someone
 				 * doesn't delete rows out from under us.
 				 */
 
 				pkrel = heap_openr(fkconstraint->pktable_name, AccessExclusiveLock);
-			        if (pkrel == NULL)
-                			elog(ERROR, "referenced table \"%s\" not found",
+				if (pkrel == NULL)
+						elog(ERROR, "referenced table \"%s\" not found",
+							 fkconstraint->pktable_name);
+
+				if (pkrel->rd_rel->relkind != RELKIND_RELATION)
+					elog(ERROR, "referenced table \"%s\" not a relation", 
 		                         fkconstraint->pktable_name);
+				
 
 				/*
 				 * Grab an exclusive lock on the fk table, and then scan
@@ -1276,6 +1284,9 @@ AlterTableAddConstraint(char *relationName,
 				if (rel == NULL)
 					elog(ERROR, "table \"%s\" not found",
 						relationName);
+
+				if (rel->rd_rel->relkind != RELKIND_RELATION)
+					elog(ERROR, "referencing table \"%s\" not a relation", relationName);
 
 				/* First we check for limited correctness of the constraint */
 
@@ -1503,6 +1514,7 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 	 * allow to create TOAST tables for views. But why not - someone
 	 * can insert into a view, so it shouldn't be impossible to hide
 	 * huge data there :-)
+	 * Not any more.
 	 */
 	if (((Form_pg_class) GETSTRUCT(reltup))->relkind != RELKIND_RELATION)
 	{
@@ -1701,6 +1713,9 @@ LockTableCommand(LockStmt *lockstmt)
 	int			aclresult;
 
 	rel = heap_openr(lockstmt->relname, NoLock);
+
+	if (rel->rd_rel->relkind != RELKIND_RELATION)
+			elog(ERROR, "LOCK TABLE: %s is not a table", lockstmt->relname);
 
 	if (is_view(rel)) 
 			elog(ERROR, "LOCK TABLE: cannot lock a view");

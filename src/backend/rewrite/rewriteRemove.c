@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.38 2000/06/30 07:04:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.39 2000/09/12 04:49:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,6 +102,11 @@ RemoveRewriteRule(char *ruleName)
 	 * be changing the ruleset while queries are executing on the rel.
 	 */
 	event_relation = heap_open(eventRelationOid, AccessExclusiveLock);
+
+	/* do not allow the removal of a view's SELECT rule */
+	if (event_relation->rd_rel->relkind == RELKIND_VIEW &&
+			((Form_pg_rewrite) GETSTRUCT(tuple))->ev_type == '1' )
+		elog(ERROR, "Cannot remove a view's SELECT rule");
 
 	hasMoreRules = event_relation->rd_rules != NULL &&
 		event_relation->rd_rules->numLocks > 1;

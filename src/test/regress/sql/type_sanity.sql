@@ -99,7 +99,7 @@ WHERE p1.typsend = p2.oid AND p1.typtype = 'b' AND
 
 SELECT p1.oid, p1.relname
 FROM pg_class as p1
-WHERE p1.relkind NOT IN ('r', 'i', 's', 'S', 't');
+WHERE p1.relkind NOT IN ('r', 'i', 's', 'S', 't', 'v');
 
 -- Indexes should have an access method, others not.
 

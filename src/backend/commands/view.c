@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.46 2000/09/12 04:15:56 momjian Exp $
+ *	$Id: view.c,v 1.47 2000/09/12 04:49:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,7 +102,7 @@ DefineVirtualRelation(char *relname, List *tlist)
 	/*
 	 * finally create the relation...
 	 */
-	DefineRelation(&createStmt, RELKIND_RELATION);
+	DefineRelation(&createStmt, RELKIND_VIEW);
 }
 
 /*------------------------------------------------------------------

@@ -21,6 +21,7 @@
 #include "catalog/pg_shadow.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_class.h"
 #include "commands/comment.h"
 #include "miscadmin.h"
 #include "parser/parse.h"
@@ -301,19 +302,19 @@ CommentRelation(int reltype, char *relname, char *comment)
 	switch (reltype)
 	{
 		case (INDEX):
-			if (relkind != 'i')
+			if (relkind != RELKIND_INDEX)
 				elog(ERROR, "relation '%s' is not an index", relname);
 			break;
 		case (TABLE):
-			if (relkind != 'r')
+			if (relkind != RELKIND_RELATION)
 				elog(ERROR, "relation '%s' is not a table", relname);
 			break;
 		case (VIEW):
-			if (relkind != 'r')
+			if (relkind != RELKIND_VIEW)
 				elog(ERROR, "relation '%s' is not a view", relname);
 			break;
 		case (SEQUENCE):
-			if (relkind != 'S')
+			if (relkind != RELKIND_SEQUENCE)
 				elog(ERROR, "relation '%s' is not a sequence", relname);
 			break;
 	}

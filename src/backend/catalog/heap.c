@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.142 2000/08/03 19:19:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.143 2000/09/12 04:49:06 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -842,7 +842,9 @@ heap_create_with_catalog(char *relname,
 	/*
 	 * We create the disk file for this relation here
 	 */
-	heap_storage_create(new_rel_desc);
+	if (relkind != RELKIND_VIEW)
+		heap_storage_create(new_rel_desc);
+
 	/* ----------------
 	 *	ok, the relation has been cataloged, so close our relations
 	 *	and return the oid of the newly created relation.
@@ -1468,7 +1470,7 @@ heap_drop_with_catalog(const char *relname,
 	 *	unlink the relation's physical file and finish up.
 	 * ----------------
 	 */
-	if (! rel->rd_unlinked)
+	if (rel->rd_rel->relkind != RELKIND_VIEW && ! rel->rd_unlinked)
 		smgrunlink(DEFAULT_SMGR, rel);
 	rel->rd_unlinked = true;
 

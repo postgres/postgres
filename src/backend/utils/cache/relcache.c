@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.110 2000/08/30 08:48:55 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.111 2000/09/12 04:49:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1022,14 +1022,18 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	 *	by the storage manager code to rd_fd.
 	 * ----------------
 	 */
-	fd = smgropen(DEFAULT_SMGR, relation);
+	if (relation->rd_rel->relkind != RELKIND_VIEW) {
+		fd = smgropen(DEFAULT_SMGR, relation);
 
-	Assert(fd >= -1);
-	if (fd == -1)
-		elog(NOTICE, "RelationIdBuildRelation: smgropen(%s): %m",
-			 NameStr(relation->rd_rel->relname));
+		Assert(fd >= -1);
+		if (fd == -1)
+			elog(NOTICE, "RelationBuildDesc: smgropen(%s): %m",
+				 NameStr(relation->rd_rel->relname));
 
-	relation->rd_fd = fd;
+		relation->rd_fd = fd;
+	} else {
+		relation->rd_fd = -1;
+	}
 
 	/* ----------------
 	 *	insert newly created relation into proper relcaches,
@@ -1279,7 +1283,7 @@ RelationIdCacheGetRelation(Oid relationId)
 
 	if (RelationIsValid(rd))
 	{
-		if (rd->rd_fd == -1)
+		if (rd->rd_fd == -1 && rd->rd_rel->relkind != RELKIND_VIEW)
 		{
 			rd->rd_fd = smgropen(DEFAULT_SMGR, rd);
 			Assert(rd->rd_fd != -1 || rd->rd_unlinked);
@@ -1313,7 +1317,7 @@ RelationNameCacheGetRelation(const char *relationName)
 
 	if (RelationIsValid(rd))
 	{
-		if (rd->rd_fd == -1)
+		if (rd->rd_fd == -1 && rd->rd_rel->relkind != RELKIND_VIEW)
 		{
 			rd->rd_fd = smgropen(DEFAULT_SMGR, rd);
 			Assert(rd->rd_fd != -1 || rd->rd_unlinked);

@@ -111,7 +111,7 @@ WHERE p1.typsend = p2.oid AND p1.typtype = 'b' AND
 -- Look for illegal values in pg_class fields
 SELECT p1.oid, p1.relname
 FROM pg_class as p1
-WHERE p1.relkind NOT IN ('r', 'i', 's', 'S', 't');
+WHERE p1.relkind NOT IN ('r', 'i', 's', 'S', 't', 'v');
  oid | relname 
 -----+---------
 (0 rows)

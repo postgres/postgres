@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.125 2000/09/06 14:15:17 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.126 2000/09/12 04:49:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -718,6 +718,10 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 
 		if (resultRelationDesc->rd_rel->relkind == RELKIND_TOASTVALUE)
 			elog(ERROR, "You can't change toast relation %s",
+				 RelationGetRelationName(resultRelationDesc));
+
+		if (resultRelationDesc->rd_rel->relkind == RELKIND_VIEW)
+			elog(ERROR, "You can't change view relation %s",
 				 RelationGetRelationName(resultRelationDesc));
 
 		resultRelationInfo = makeNode(RelationInfo);

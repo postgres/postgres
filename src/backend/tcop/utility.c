@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.92 2000/09/06 14:15:21 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.93 2000/09/12 04:49:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,6 +227,9 @@ ProcessUtility(Node *parsetree,
 				rel = heap_openr(relname, AccessExclusiveLock);
 				if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
 					elog(ERROR, "TRUNCATE cannot be used on sequences. '%s' is a sequence",
+						 relname);
+				if (rel->rd_rel->relkind == RELKIND_VIEW)
+					elog(ERROR, "TRUNCATE cannot be used on views. '%s' is a sequence",
 						 relname);
 				heap_close(rel, NoLock);
 
