@@ -55,8 +55,166 @@
  */
 #define RELSEG_SIZE	(0x40000000 / BLCKSZ)
 
+/* Set to 1 if you want to USE_LOCALE */
+#undef USE_LOCALE
+
+/* Set to 1 if you want CYR_RECODE (cyrillic recode) */
+#undef CYR_RECODE
+
+/* Set to 1 if you want to Enable ASSERT CHECKING */
+#undef USE_ASSERT_CHECKING
+
 /* 
+ * DEF_PGPORT is the TCP port number on which the Postmaster listens by
+ * default.  This can be overriden by command options, environment variables,
+ * and the postconfig hook. (set by configure script)
+ */ 
+
+#undef DEF_PGPORT 
+
+/*
+ * If you do not plan to use Host based authentication,
+ * comment out the following line (set by build script)
+ */
+#undef HBA
+
+/*
+ * As soon as the backend blocks on a lock, it waits this number of seconds
+ * before checking for a deadlock.
+ * We don't check for deadlocks just before sleeping because a deadlock is
+ * a rare event, and checking is an expensive operation.
+ */
+#define DEADLOCK_CHECK_TIMER 1
+
+/*
+ * This flag enables the use of indexes in plans generated for function
+ * executions which normally are always executed with sequential scans.
+ */
+#define INDEXSCAN_PATCH 
+
+/*
+ * Enables debugging print statements in the date/time support routines.
+ * Particularly useful for porting to a new platform/OS combination.
+ */
+/* #define DATEDEBUG */
+
+/*
+ * defining unsafe floats's will make float4 and float8
+ * ops faster at the cost of safety, of course!        
+ */
+/* #define UNSAFE_FLOATS */
+
+/*
+ * There is a bug in the function executor. The backend crashes while trying to
+ * execute an sql function containing an utility command (create, notify, ...).
+ * The bug is part in the planner, which returns a number of plans different
+ * than the number of commands if there are utility commands in the query, and
+ * in part in the function executor which assumes that all commands are normal
+ * query commands and causes a SIGSEGV trying to execute commands without plan.
+ */
+#define FUNC_UTIL_PATCH
+
+/*
+ * Define this to make libpgtcl's "pg_result -assign" command process C-style
+ * backslash sequences in returned tuple data and convert Postgres array
+ * attributes into Tcl lists.  CAUTION: this conversion is *wrong* unless
+ * you install the routines in contrib/string/string_io to make the backend
+ * produce C-style backslash sequences in the first place.
+ */
+/* #define TCL_ARRAYS */
+
+/*
+ * The following flag allows copying tables from files with number of columns
+ * different than the number of attributes setting missing attributes to NULL
+ * and ignoring extra columns.  This also avoids the shift of the attributes
+ * of the rest of the file if one line has a wrong column count.
+ */
+#define COPY_PATCH
+
+/*
+ * User locks are handled totally on the application side as long term
+ * cooperative locks which extend beyond the normal transaction boundaries.
+ * Their purpose is to indicate to an application that someone is `working'
+ * on an item.  Define this flag to enable user locks.  You will need the
+ * loadable module user-locks.c to use this feature.
+ */
+#define USER_LOCKS
+
+/* Genetic Query Optimization (GEQO):
+ * 
+ * The GEQO module in PostgreSQL is intended for the solution of the
+ * query optimization problem by means of a Genetic Algorithm (GA).
+ * It allows the handling of large JOIN queries through non-exhaustive
+ * search.
+ * For further information see README.GEQO <utesch@aut.tu-freiberg.de>.
+ */
+#define GEQO
+
+/*
+ * Define this if you want psql to _always_ ask for a username and a password
+ * for password authentication.
+ */
+/* #define PSQL_ALWAYS_GET_PASSWORDS */
+
+/*
+ * Define this if you want to allow the lo_import and lo_export SQL functions
+ * to be executed by ordinary users.  By default these functions are only
+ * available to the Postgres superuser.  CAUTION: these functions are
+ * SECURITY HOLES since they can read and write any file that the Postgres
+ * backend has permission to access.  If you turn this on, don't say we
+ * didn't warn you.
+ */
+/* #define ALLOW_DANGEROUS_LO_FUNCTIONS */
+
+/*
+ * Use btree bulkload code: 
+ * this code is moderately slow (~10% slower) compared to the regular
+ * btree (insertion) build code on sorted or well-clustered data.  on
+ * random data, however, the insertion build code is unusable -- the
+ * difference on a 60MB heap is a factor of 15 because the random
+ * probes into the btree thrash the buffer pool.
+ *
+ * Great thanks to Paul M. Aoki (aoki@CS.Berkeley.EDU)
+ */
+#define FASTBUILD /* access/nbtree/nbtsort.c */
+
+/*
+ * TBL_FREE_CMD_MEMORY: free memory allocated for an user query inside
+ * transaction block after this query is done. 
+ */
+#define TBL_FREE_CMD_MEMORY
+
+/*
+ * ELOG_TIMESTAMPS: adds a timestamp with the following format to elog
+ * messages:  yymmdd.hh:mm:ss.mmm [pid] message
+ */
+/* #define ELOG_TIMESTAMPS */
+
+/*
+ * USE_SYSLOG: use syslog for elog and error messages printed by tprintf
+ * and eprintf. This must be activated with the syslog flag in pg_options
+ * (syslog=0 for stdio, syslog=1 for stdio+syslog, syslog=2 for syslog).
+ * For information see backend/utils/misc/trace.c (Massimo Dal Zotto).
+ */
+/* #define USE_SYSLOG */
+
+/* Debug #defines */
+/* #define IPORTAL_DEBUG  */
+/* #define HEAPDEBUGALL  */
+/* #define ISTRATDEBUG  */
+/* #define FASTBUILD_DEBUG */
+/* #define ACLDEBUG */
+/* #define RTDEBUG */
+/* #define GISTDEBUG */
+/* #define OMIT_PARTIAL_INDEX */
+/* #define NO_BUFFERISVALID   */
+/* #define NO_SECURITY        */
+/* #define OLD_REWRITE        */
+
+/*
+ *------------------------------------------------------------------------
  * The following is set using configure.  
+ *------------------------------------------------------------------------
  */
 
 /* Set to 1 if you have <arpa/inet.h> */
@@ -129,14 +287,8 @@
 /* Define if you have the <sys/param.h> header file.  */
 #undef HAVE_SYS_PARAM_H
 
-/* Define if you have the c library (-lc).  */
-#undef HAVE_LIBC
-
 /* Define if you have the dl library (-ldl).  */
 #undef HAVE_LIBDL
-
-/* Define if you have the m library (-lm).  */
-#undef HAVE_LIBM
 
 /*
  * End parameters for ODBC code.
@@ -154,26 +306,11 @@
 /* Set to 1 if you have vsnprintf() */
 #undef HAVE_VSNPRINTF
 
-/* Set to 1 if you have fp_class() */
-#undef HAVE_FP_CLASS
-
-/* Set to 1 if you have class() */
-#undef HAVE_CLASS
-
-/* Set to 1 if you have fp_class_d() */
-#undef HAVE_FP_CLASS_D
-
-/* Set to 1 if you have fpclass() */
-#undef HAVE_FPCLASS
-
 /* Set to 1 if you have isinf() */
 #undef HAVE_ISINF
 #ifndef HAVE_ISINF
 int isinf(double x);
 #endif
-
-/* Set to 1 if you have tzset() */
-#undef HAVE_TZSET
 
 /* Set to 1 if you have gethostname() */
 #undef HAVE_GETHOSTNAME
@@ -210,9 +347,6 @@ extern int  inet_aton(const char *cp, struct in_addr * addr);
 /* Set to 1 if you have fcvt() */
 #undef HAVE_FCVT
 
-/* Set to 1 if you have strerror() */
-#undef HAVE_STRERROR
-
 /* Set to 1 if you have rint() */
 #undef HAVE_RINT 
 
@@ -221,12 +355,6 @@ extern int  inet_aton(const char *cp, struct in_addr * addr);
 
 /* Set to 1 if you have sigsetjmp() */
 #undef HAVE_SIGSETJMP
-
-/* Set to 1 if you have kill() */
-#undef HAVE_KILL
-
-/* Set to 1 if you have vfork() */
-#undef HAVE_VFORK
 
 /* Set to 1 if you have sysconf() */
 #undef HAVE_SYSCONF
@@ -279,20 +407,17 @@ extern void srandom(unsigned int seed);
 /* Set to 1 if you have libhistory.a */
 #undef HAVE_LIBHISTORY
 
+/*
+ * On architectures for which we have not implemented spinlocks (or
+ * cannot do so), we use System V semaphores.  We also use them for
+ * long locks.  For some reason union semun is never defined in the
+ * System V header files so we must do it ourselves.
+ */
 /* Set to 1 if you have union semun */
 #undef HAVE_UNION_SEMUN
 
 /* Set to 1 if you have F_SETLK option for fcntl() */
 #undef HAVE_FCNTL_SETLK
-
-/* Set to 1 if you want to USE_LOCALE */
-#undef USE_LOCALE
-
-/* Set to 1 if you want CYR_RECODE (cyrillic recode) */
-#undef CYR_RECODE
-
-/* Set to 1 if you want to Enable ASSERT CHECKING */
-#undef USE_ASSERT_CHECKING
 
 /* Set to 1 if type "long int" works and is 64 bits */
 #undef HAVE_LONG_INT_64
@@ -355,180 +480,5 @@ extern void srandom(unsigned int seed);
 #  define SIGNAL_ARGS int postgres_signal_arg
 #endif
 
-/* 
- * DEF_PGPORT is the TCP port number on which the Postmaster listens by
- * default.  This can be overriden by command options, environment variables,
- * and the postconfig hook. (set by configure script)
- */ 
-
-#undef DEF_PGPORT 
-
-/*
- * If you do not plan to use Host based authentication,
- * comment out the following line (set by build script)
- */
-#undef HBA
-
-/*
- * On architectures for which we have not implemented spinlocks (or
- * cannot do so), we use System V semaphores.  We also use them for
- * long locks.  For some reason union semun is never defined in the
- * System V header files so we must do it ourselves.
- */
-
-/*  Debug and various "defines" that should be documented */
-
-/* found in function aclparse() in src/backend/utils/adt/acl.c */
-/* #define ACLDEBUG */
-
-/* found in src/backend/utils/adt/arrayfuncs.c
-   code seems broken without it, Bruce Momjian */
-/* #define LOARRAY */
-
-/*
- * As soon as the backend blocks on a lock, it waits this number of seconds
- * before checking for a deadlock.
- * We don't check for deadlocks just before sleeping because a deadlock is
- * a rare event, and checking is an expensive operation.
- */
-#define DEADLOCK_CHECK_TIMER 1
-
-/*
- * This flag enables the use of indexes in plans generated for function
- * executions which normally are always executed with sequential scans.
- */
-#define INDEXSCAN_PATCH 
-
-/*
- * Enables debugging print statements in the date/time support routines.
- * Particularly useful for porting to a new platform/OS combination.
- */
-/* #define DATEDEBUG */
-
-/*
- * defining unsafe floats's will make float4 and float8
- * ops faster at the cost of safety, of course!        
- */
-/* #define UNSAFE_FLOATS */
-
-/*
- * There is a bug in the function executor. The backend crashes while trying to
- * execute an sql function containing an utility command (create, notify, ...).
- * The bug is part in the planner, which returns a number of plans different
- * than the number of commands if there are utility commands in the query, and
- * in part in the function executor which assumes that all commands are normal
- * query commands and causes a SIGSEGV trying to execute commands without plan.
- */
-#define FUNC_UTIL_PATCH
-
-/*
- * Define this to make libpgtcl's "pg_result -assign" command process C-style
- * backslash sequences in returned tuple data and convert Postgres array
- * attributes into Tcl lists.  CAUTION: this conversion is *wrong* unless
- * you install the routines in contrib/string/string_io to make the backend
- * produce C-style backslash sequences in the first place.
- */
-/* #define TCL_ARRAYS */
-
-/*
- * The following flag allows limiting the number of rows returned by a query.
- * You will need the loadable module utils.c to use this feature.
- */
-#define QUERY_LIMIT
-
-/*
- * The following flag allows copying tables from files with number of columns
- * different than the number of attributes setting missing attributes to NULL
- * and ignoring extra columns.  This also avoids the shift of the attributes
- * of the rest of the file if one line has a wrong column count.
- */
-#define COPY_PATCH
-
-/*
- * User locks are handled totally on the application side as long term
- * cooperative locks which extend beyond the normal transaction boundaries.
- * Their purpose is to indicate to an application that someone is `working'
- * on an item.  Define this flag to enable user locks.  You will need the
- * loadable module user-locks.c to use this feature.
- */
-#define USER_LOCKS
-
-/* Debug #defines */
-/* #define IPORTAL_DEBUG  */
-/* #define HEAPDEBUGALL  */
-/* #define ISTRATDEBUG  */
-/* #define FASTBUILD_DEBUG */
-#define RTDEBUG 
-#define GISTDEBUG 
-/* #define DEBUG_RECIPE */
-
-/* The following don't have any apparent purpose, but are in the
- * code.  someday, will take them out altogether, but for now, 
- * document them here
- */
-/* #define OMIT_PARTIAL_INDEX */
-/* #define NO_BUFFERISVALID   */
-/* #define NO_SECURITY        */
-/* #define TIOGA              */
-/* #define OLD_REWRITE        */
-/* #define NOTYET             */
-
-/* Genetic Query Optimization (GEQO):
- * 
- * The GEQO module in PostgreSQL is intended for the solution of the
- * query optimization problem by means of a Genetic Algorithm (GA).
- * It allows the handling of large JOIN queries through non-exhaustive
- * search.
- * For further information see README.GEQO <utesch@aut.tu-freiberg.de>.
- */
-#define GEQO /* backend/optimizer/path/allpaths.c */
-
-/*
- * Define this if you want psql to _always_ ask for a username and a password
- * for password authentication.
- */
-/* #define PSQL_ALWAYS_GET_PASSWORDS */
-
-/*
- * Define this if you want to allow the lo_import and lo_export SQL functions
- * to be executed by ordinary users.  By default these functions are only
- * available to the Postgres superuser.  CAUTION: these functions are
- * SECURITY HOLES since they can read and write any file that the Postgres
- * backend has permission to access.  If you turn this on, don't say we
- * didn't warn you.
- */
-/* #define ALLOW_DANGEROUS_LO_FUNCTIONS */
-
-/*
- * Use btree bulkload code: 
- * this code is moderately slow (~10% slower) compared to the regular
- * btree (insertion) build code on sorted or well-clustered data.  on
- * random data, however, the insertion build code is unusable -- the
- * difference on a 60MB heap is a factor of 15 because the random
- * probes into the btree thrash the buffer pool.
- *
- * Great thanks to Paul M. Aoki (aoki@CS.Berkeley.EDU)
- */
-#define FASTBUILD /* access/nbtree/nbtsort.c */
-
-/*
- * TBL_FREE_CMD_MEMORY: free memory allocated for an user query inside
- * transaction block after this query is done. 
- */
-#define TBL_FREE_CMD_MEMORY
-
-/*
- * ELOG_TIMESTAMPS: adds a timestamp with the following format to elog
- * messages:  yymmdd.hh:mm:ss.mmm [pid] message
- */
-/* #define ELOG_TIMESTAMPS */
-
-/*
- * USE_SYSLOG: use syslog for elog and error messages printed by tprintf
- * and eprintf. This must be activated with the syslog flag in pg_options
- * (syslog=0 for stdio, syslog=1 for stdio+syslog, syslog=2 for syslog).
- * For information see backend/utils/misc/trace.c (Massimo Dal Zotto).
- */
-/* #define USE_SYSLOG */
 
 #endif /* CONFIG_H */

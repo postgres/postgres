@@ -19,7 +19,7 @@ It can be done by done by typing configure, make and make install.
    (This may be optional.)
 
 1. Download the Cygwin32 IPC Package by Ludovic LANGE 
-   (http://www.multione.capgemini.fr/tools/pack_ipc/
+   http://www.multione.capgemini.fr:80/tools/pack_ipc/current.tar.gz
 2. Untar the package and follow the readme instructions.
 3. I tested 1.03.
 4. I used the \cygwin-b20\h-i568-cygwin32\i586-cygwin32\lib and

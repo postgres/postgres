@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.52 1999/07/17 20:16:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.53 1999/07/18 18:03:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -510,7 +510,6 @@ AtCommit_Notify()
 				 * signal first, because the other guy can't read
 				 * pg_listener until we unlock it.
 				 */
-#ifdef HAVE_KILL
 				if (kill(listenerPID, SIGUSR2) < 0)
 				{
 
@@ -526,7 +525,6 @@ AtCommit_Notify()
 					heap_delete(lRel, &lTuple->t_self, NULL);
 				}
 				else
-#endif
 				{
 					d = heap_getattr(lTuple, Anum_pg_listener_notify,
 									 tdesc, &isnull);
