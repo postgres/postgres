@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.147 2000/11/06 22:18:10 petere Exp $
+ * $Id: config.h.in,v 1.148 2000/11/20 15:56:13 petere Exp $
  */
 
 #ifndef CONFIG_H
@@ -601,11 +601,28 @@ extern void srandom(unsigned int seed);
 /* Define if C++ compiler accepts "#include <string>" */
 #undef HAVE_CXX_STRING_HEADER
 
-/* Define if a system lib (-ldl) has dlopen() (needed for AIX) */
+/* Define if you have the dlopen function */
 #undef HAVE_DLOPEN
 
 /* Define if you have the optreset variable */
 #undef HAVE_INT_OPTRESET
+
+#undef HAVE_STRTOLL
+#undef HAVE_STRTOQ
+
+#if defined(HAVE_LONG_LONG_INT_64) && !defined(HAVE_STRTOLL) && defined(HAVE_STRTOQ)
+# define strtoll strtoq
+# define HAVE_STRTOLL 1
+#endif
+
+#undef HAVE_STRTOULL
+#undef HAVE_STRTOUQ
+
+#if defined(HAVE_LONG_LONG_INT_64) && !defined(HAVE_STRTOULL) && defined(HAVE_STRTOUQ)
+# define strtoull strtouq
+# define HAVE_STRTOULL 1
+#endif
+
 
 /*
  *------------------------------------------------------------------------

@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include "ecpgtype.h"
 #include "ecpglib.h"
 #include "ecpgerrno.h"
@@ -81,12 +83,14 @@ get_int_item(int lineno, void *var, enum ECPGttype vartype, int value)
 		case ECPGt_unsigned_long:
 			*(unsigned long *) var = (unsigned long) value;
 			break;
+#ifdef HAVE_LONG_LONG_INT_64
 		case ECPGt_long_long:
 			*(long long int *) var = (long long int) value;
 			break;
 		case ECPGt_unsigned_long_long:
 			*(unsigned long long int *) var = (unsigned long long int) value;
 			break;
+#endif /* HAVE_LONG_LONG_INT_64 */
 		case ECPGt_float:
 			*(float *) var = (float) value;
 			break;

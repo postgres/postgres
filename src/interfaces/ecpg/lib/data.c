@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -60,12 +62,14 @@ get_data(PGresult *results, int act_tuple, int act_field, int lineno,
 		case ECPGt_unsigned_long:
 			((long *) ind)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);
 			break;
+#ifdef HAVE_LONG_LONG_INT_64
 		case ECPGt_long_long:
 		        ((long long int*) ind)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);
 		        break;
 		case ECPGt_unsigned_long_long:
 		        ((unsigned long long int*) ind)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);
-		        break; 
+		        break;
+#endif /* HAVE_LONG_LONG_INT_64 */
 		case ECPGt_NO_INDICATOR:
 			if (PQgetisnull(results, act_tuple, act_field))
 			{
@@ -154,10 +158,12 @@ get_data(PGresult *results, int act_tuple, int act_field, int lineno,
 				}
 				break;
 
+#ifdef HAVE_LONG_LONG_INT_64
+# ifdef HAVE_STRTOLL
 			case ECPGt_long_long:
 				if (pval)
 				{
-					((long long int *) var)[act_tuple] = strtoull(pval, &scan_length, 10);
+					((long long int *) var)[act_tuple] = strtoll(pval, &scan_length, 10);
 					if ((isarray && *scan_length != ',' && *scan_length != '}')
 						|| (!isarray && *scan_length != '\0'))	/* Garbage left */
 					{
@@ -169,7 +175,8 @@ get_data(PGresult *results, int act_tuple, int act_field, int lineno,
 					((long long int *) var)[act_tuple] = 0LL;
 				
 				break;
-
+# endif /* HAVE_STRTOLL */
+# ifdef HAVE_STRTOULL
 			case ECPGt_unsigned_long_long:
 				if (pval)
 				{
@@ -185,6 +192,8 @@ get_data(PGresult *results, int act_tuple, int act_field, int lineno,
 					((unsigned long long int *) var)[act_tuple] = 0LL;
 				
 				break;
+# endif /* HAVE_STRTOULL */
+#endif /* HAVE_LONG_LONG_INT_64 */
 					
 			case ECPGt_float:
 			case ECPGt_double:
