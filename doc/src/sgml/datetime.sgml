@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.43 2004/11/15 06:32:13 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.44 2004/12/28 15:25:55 tgl Exp $
 -->
 
  <appendix id="datetime-appendix">
@@ -617,7 +617,7 @@ $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.43 2004/11/15 06:32:13 neilc E
        <row>
 	<entry>BDST</entry>
 	<entry>+02:00</entry>
-	<entry>British Double Standard Time</entry>
+	<entry>British Double Summer Time</entry>
        </row>
        <row>
 	<entry>CEST</entry>
