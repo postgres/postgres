@@ -1,4 +1,3 @@
-=============== running regression queries ... =================
 QUERY: SELECT onek.* WHERE onek.unique1 < 10;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -176,7 +175,6 @@ unique1|string4
 QUERY: SELECT two, stringu1, ten, string4
    INTO TABLE temp
    FROM onek;
-
 QUERY: SELECT p.name, p.age FROM person* p;
 name   |age
 -------+---

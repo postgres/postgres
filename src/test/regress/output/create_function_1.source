@@ -1,9 +1,9 @@
-QUERY: CREATE FUNCTION circle_in(opaque)
-   RETURNS circle
+QUERY: CREATE FUNCTION widget_in(opaque)
+   RETURNS widget
    AS '_CWD_/regress_DLSUFFIX_'
    LANGUAGE 'c';
-NOTICE:ProcedureCreate: type 'circle' is not yet defined
-QUERY: CREATE FUNCTION circle_out(opaque)
+NOTICE:ProcedureCreate: type 'widget' is not yet defined
+QUERY: CREATE FUNCTION widget_out(opaque)
    RETURNS opaque
    AS '_CWD_/regress_DLSUFFIX_'
    LANGUAGE 'c';

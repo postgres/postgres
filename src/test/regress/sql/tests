@@ -9,6 +9,8 @@ create_operator
 create_view
 create_index
 sanity_check
+timespan
+datetime
 reltime
 abstime
 boolean
@@ -34,4 +36,5 @@ select
 select_into
 select_distinct
 select_distinct_on
+errors
 misc

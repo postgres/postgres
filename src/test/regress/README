@@ -2,23 +2,39 @@
 Introduction
 
   The PostgreSQL regression tests are a comprehensive set of tests for the
-  SQL implementation embeded in PostgreSQL developed by Jolly Chen and
-  Andrew Yu. It tests standard SQL operations as well as the extensability
+  SQL implementation embedded in PostgreSQL developed by Jolly Chen and
+  Andrew Yu. It tests standard SQL operations as well as the extensibility
   capabilities of PostgreSQL.
+
+  These tests have recently been revised by Marc Fournier and others to
+  become current for PostgreSQL v6.1. The tests are now packaged as
+  functional units and should be easier to run and easier to interpret.
+
+  Some properly installed and fully functional PostgreSQL installations
+  can fail these regression tests due to artifacts of the genetic optimizer.
+  See the v6.1-specific release notes in this document for further details.
 
 Preparation
 
-  The regression test is invoked thru by the 'make' command which compiles
+  The regression test is invoked by the 'make' command which compiles
   a 'c' program with PostgreSQL extension functions into a shared library
   in the current directory.  Localized shell scripts are also created in
-  the current directory. The 'expected.input' file is massaged into the
-  'expected.out' file.  The localization replaces macros in the source
+  the current directory. The output file templates are massaged into the
+  ./expected/*.out files.  The localization replaces macros in the source
   files with absolute pathnames and user names.
+
+  The postmaster should be invoked with the system time zone set for
+  Berkeley, California. On some systems, this can be accomplished by
+  setting the TZ environment variable before starting the postmaster
+  (for csh/bash; use set/export for some other shells):
+
+    setenv TZ PST8PDT7,M04.01.0,M10.05.03
+    /usr/local/pgsql/bin/postmaster -s
 
 Directory Layout
 
   input/ .... .source files that are converted using 'make all' into
-              .sql files in the 'sql' subdirectory
+              some of the .sql files in the 'sql' subdirectory
 
   output/ ... .source files that are converted using 'make all' into
               .out files in the 'expected' subdirectory
@@ -29,7 +45,7 @@ Directory Layout
               look like
 
   results/ .. .out files that represent what the results *actually* look
-              like
+              like. Also used as temporary storage for table copy testing.
 
 Running the regression test
 
@@ -45,14 +61,14 @@ Running the regression test
   Normally, the regression test should be run as the pg_superuser as the
   'src/test/regress' directory and sub-directories are owned by the
   pg_superuser. If you run the regression test as another user the
-  'src/test/regress' directory should be writeable to that user.
+  'src/test/regress' directory tree should be writeable to that user.
 
 Comparing expected/actual output
 
-  The results are in the file 'regress.out' which can be compared
-  with the 'expected.out' file using 'diff'. The files will NOT
-  compare exactly. The following paragraphs attempt to explain the
-  differences.
+  The results are in the files in the ./results directory. These
+  results can be compared with results in the ./expected directory
+  using 'diff'. The files might not compare exactly. The following
+  paragraphs attempt to explain the differences.
 
 OID differences
 
@@ -62,7 +78,7 @@ OID differences
   If you run the regression test on a non-virgin database or run it multiple
   times, the OID's reported will have different values. 
 
-  The following SQL statements in 'regress.out' have shown this behavior:
+  The following SQL statements in 'misc.out' have shown this behavior:
 
   QUERY: SELECT user_relns() AS user_relns ORDER BY user_relns;
 
@@ -96,8 +112,8 @@ POLYGON differences
 
   Several of the tests involve operations on geographic date about the
   Oakland/Berkley CA street map. The map data is expressed as polygons
-  whose verticies are represened as pairs of FLOAT8 numbers (decimal
-  lattitude and longitude). Initially, some tables are created and
+  whose vertices are represented as pairs of FLOAT8 numbers (decimal
+  latitude and longitude). Initially, some tables are created and
   loaded with geographic data, then some views are created which join
   two tables using the polygon intersection operator (##), then a select
   is done on the view. 
@@ -111,24 +127,84 @@ POLYGON differences
 
 DATE/TIME differences
 
+  On many supported platforms, you can force PostgreSQL to believe that it
+  is running in the same time zone as Berkeley, California. See details in
+  the section on how to run the regression tests.
+
   The Makefile attempts to adjust for timezone differences, but it is
-  totally possible to eliminate them.  People outside North America
+  not possible to totally eliminate them.  People outside North America
   will probabablly find the Makefile's adjustments are incorrect.  Also
   entries that use the time -infinity display with year 1970 plus/minus the
   number of hours you are different from GMT.
 
---------[ old stuff that needs to be rewritten ]-----
+Random differences
 
-The 'expected.input' file and the 'sample.regress.out' file
+  There is at least one test case in misc.out which is intended to produce
+  random results. This causes misc to fail the regression testing.
+  Typing "diff results/misc.out expected/misc.out" should produce only
+  one or a few lines of differences for this reason, but other floating
+  point differences on dissimilar architectures might cause many more
+  differences.
 
-  The 'expected.input' file was created on a SPARC Solaris 2.4 system
-  using the 'postgres5-1.02a5.tar.gz' source tree. It has been compared
+The 'expected' files
+
+  The ./expected/*.out files were adapted from the original monolithic
+  'expected.input' file provided by Jolly Chen et al. Newer versions of these
+  files generated on various development machines have been substituted after
+  careful (?) inspection. Many of the development machines are running a
+  Unix OS variant (FreeBSD, Linux, etc) on Ix86 hardware.
+
+  The original 'expected.input' file was created on a SPARC Solaris 2.4
+  system using the 'postgres5-1.02a5.tar.gz' source tree. It was compared
   with a file created on an I386 Solaris 2.4 system and the differences
-  are only in the floating point polygons in the 3rd digit to the right
+  were only in the floating point polygons in the 3rd digit to the right
   of the decimal point. (see below)
 
-  The 'sample.regress.out' file is from the postgres-1.01 release
+  The original 'sample.regress.out' file was from the postgres-1.01 release
   constructed by Jolly Chen and is included here for reference. It may
   have been created on a DEC ALPHA machine as the 'Makefile.global'
   in the postgres-1.01 release has PORTNAME=alpha.
+
+Current release notes
+
+  There are no release notes for PostgreSQL v6.0.
+
+v6.1beta release notes
+
+  The regression tests have been adapted and extensively modified for the
+  v6.1 release of PostgreSQL.
+
+  Three new data types (datetime, timespan, and circle) have been added to
+  the native set of PostgreSQL types. Points, boxes, paths, and polygons
+  have had their output formats improved, but the old-style input formats
+  are accepted by v6.1. The source data files have not been updated to the
+  new formats, but should be for the next release. The polygon output in
+  misc.out has only been spot-checked for correctness relative to the
+  original regression output.
+
+  To get consistant results from the regression tests, compile the PostgreSQL
+  backend with the genetic optimizer (GEQ) turned off. The genetic algorithms
+  introduce a random behavior in the output ordering which causes the
+  simple "diff" implementation of the tests to fail. To turn off the genetic
+  optimizer, edit the src/include/config.h file and comment-out the line
+  containing "#define GEQ", then do a "make clean install" to regenerate
+  the backend. Existing v6.1 databases are not affected by the choice of
+  optimizer, so there is no need to reload after changing the optimizer.
+  The new genetic optimizer has very nice performance with many-table joins,
+  so you may want to make sure to re-enable it and reinstall the code after
+  you have concluded your regression testing.
+
+XXX update this for the production release - tgl 97/04/26
+  The interpretation of array specifiers (the curly braces around atomic
+  values) appears to have changed sometime after the original regression
+  tests were generated. The current ./expected/*.out files reflect this
+  new interpretation, which may not be correct!
+
+XXX update this for the production release - tgl 97/04/26
+  The float8 regression test fails. This may be due to the parser continuing
+  rather than aborting when given invalid constants for input values.
+
+XXX update this for the production release - tgl 97/04/26
+  Regression tests involving indexed tables fail in at least some environments.
+  This may indicate a problem with the current index code.
 

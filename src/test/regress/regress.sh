@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.7 1997/04/26 05:49:39 scrappy Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.8 1997/04/27 02:56:18 scrappy Exp $
 #
 if [ -d ./obj ]; then
 	cd ./obj
@@ -10,26 +10,27 @@ TZ="PST8PDT7,M04.01.00,M10.05.03"; export TZ
 #FRONTEND=monitor
 FRONTEND="psql -n -e -q"
 
-echo =============== Notes... =================
-echo "You must be already running the postmaster"
-echo " for the regression tests to succeed."
-echo "The time zone might need to be set to PST/PDT"
-echo " for the date and time data types to pass the"
-echo " regression tests; to do this type"
+echo "=============== Notes...                              ================="
+echo "postmaster must already be running for the regression tests to succeed."
+echo "The non-GEQ optimizer will give more consistant results than will the"
+echo " GEQ optimizer. See the regression testing README for more details."
+echo "The time zone might need to be set to PST/PDT for the date and time data"
+echo " types to pass the regression tests; to do this type"
 echo "  setenv TZ $TZ"
 echo " before starting the postmaster."
+echo ""
 
-echo =============== destroying old regression database... =================
+echo "=============== destroying old regression database... ================="
 destroydb regression
 
-echo =============== creating new regression database... =================
+echo "=============== creating new regression database...   ================="
 createdb regression
 if [ $? -ne 0 ]; then
      echo createdb failed
      exit 1
 fi
 
-echo =============== running regression queries ... =================
+echo "=============== running regression queries...         ================="
 for i in `cat sql/tests`
 do
 	echo -n "${i} .. "
@@ -43,7 +44,7 @@ do
 done
 exit
 
-echo =============== running error queries ... =================
+echo "=============== running error queries ...             ================="
 $FRONTEND regression < errors.sql
 # this will generate error result code
 
@@ -54,7 +55,7 @@ if test "$debug" -eq 1
 then
 echo Skipping clearing and deletion of the regression database
 else
-echo =============== clearing regression database... =================
+echo "=============== clearing regression database...       ================="
 $FRONTEND regression < destroy.sql
 if [ $? -ne 0 ]; then
      echo the destroy script has an error
@@ -62,7 +63,7 @@ if [ $? -ne 0 ]; then
 fi
 
 exit 0
-echo =============== destroying regression database... =================
+echo "=============== destroying regression database...     ================="
 destroydb regression
 if [ $? -ne 0 ]; then
      echo destroydb failed

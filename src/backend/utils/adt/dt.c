@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.17 1997/04/25 18:40:13 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.18 1997/04/27 02:55:49 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -455,6 +455,9 @@ timespan_ne(TimeSpan *timespan1, TimeSpan *timespan2)
     if (!PointerIsValid(timespan1) || !PointerIsValid(timespan2))
 	return FALSE;
 
+    if (TIMESPAN_IS_INVALID(*timespan1) || TIMESPAN_IS_INVALID(*timespan2))
+	return FALSE;
+
     return( (timespan1->time != timespan2->time)
          || (timespan1->month != timespan2->month));
 } /* timespan_ne() */
@@ -467,10 +470,13 @@ timespan_lt(TimeSpan *timespan1, TimeSpan *timespan2)
     if (!PointerIsValid(timespan1) || !PointerIsValid(timespan2))
 	return FALSE;
 
+    if (TIMESPAN_IS_INVALID(*timespan1) || TIMESPAN_IS_INVALID(*timespan2))
+	return FALSE;
+
     span1 = timespan1->time;
-    if (timespan1->month != 0) span1 += (timespan1->month * 30);
+    if (timespan1->month != 0) span1 += (timespan1->month * (30*86400));
     span2 = timespan2->time;
-    if (timespan2->month != 0) span2 += (timespan2->month * 30);
+    if (timespan2->month != 0) span2 += (timespan2->month * (30*86400));
 
     return( span1 < span2);
 } /* timespan_lt() */
@@ -483,10 +489,13 @@ timespan_gt(TimeSpan *timespan1, TimeSpan *timespan2)
     if (!PointerIsValid(timespan1) || !PointerIsValid(timespan2))
 	return FALSE;
 
+    if (TIMESPAN_IS_INVALID(*timespan1) || TIMESPAN_IS_INVALID(*timespan2))
+	return FALSE;
+
     span1 = timespan1->time;
-    if (timespan1->month != 0) span1 += (timespan1->month * 30);
+    if (timespan1->month != 0) span1 += (timespan1->month * (30*86400));
     span2 = timespan2->time;
-    if (timespan2->month != 0) span2 += (timespan2->month * 30);
+    if (timespan2->month != 0) span2 += (timespan2->month * (30*86400));
 
     return( span1 > span2);
 } /* timespan_gt() */
@@ -499,10 +508,13 @@ timespan_le(TimeSpan *timespan1, TimeSpan *timespan2)
     if (!PointerIsValid(timespan1) || !PointerIsValid(timespan2))
 	return FALSE;
 
+    if (TIMESPAN_IS_INVALID(*timespan1) || TIMESPAN_IS_INVALID(*timespan2))
+	return FALSE;
+
     span1 = timespan1->time;
-    if (timespan1->month != 0) span1 += (timespan1->month * 30);
+    if (timespan1->month != 0) span1 += (timespan1->month * (30*86400));
     span2 = timespan2->time;
-    if (timespan2->month != 0) span2 += (timespan2->month * 30);
+    if (timespan2->month != 0) span2 += (timespan2->month * (30*86400));
 
     return( span1 <= span2);
 } /* timespan_le() */
@@ -515,10 +527,13 @@ timespan_ge(TimeSpan *timespan1, TimeSpan *timespan2)
     if (!PointerIsValid(timespan1) || !PointerIsValid(timespan2))
 	return FALSE;
 
+    if (TIMESPAN_IS_INVALID(*timespan1) || TIMESPAN_IS_INVALID(*timespan2))
+	return FALSE;
+
     span1 = timespan1->time;
-    if (timespan1->month != 0) span1 += (timespan1->month * 30);
+    if (timespan1->month != 0) span1 += (timespan1->month * (30*86400));
     span2 = timespan2->time;
-    if (timespan2->month != 0) span2 += (timespan2->month * 30);
+    if (timespan2->month != 0) span2 += (timespan2->month * (30*86400));
 
     return( span1 >= span2);
 } /* timespan_ge() */

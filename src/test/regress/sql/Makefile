@@ -7,11 +7,11 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/sql/Attic/Makefile,v 1.1 1997/04/26 05:45:48 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/sql/Attic/Makefile,v 1.2 1997/04/27 02:58:26 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
-CLFILES=	create_function_1.sql create_function_2.sql copy.sql
+CLFILES=	create_function_1.sql create_function_2.sql copy.sql misc.sql
 
 clean:
 	rm -f $(CLFILES)

@@ -17,7 +17,7 @@ QUERY: CREATE FUNCTION user_relns()
        where relname !~ ''pg_.*'' and
              relkind <> ''i'' '
    LANGUAGE 'sql';
-QUERY: CREATE FUNCTION pt_in_circle(point, circle)
+QUERY: CREATE FUNCTION pt_in_widget(point, widget)
    RETURNS int4
    AS '_CWD_/regress_DLSUFFIX_'
    LANGUAGE 'c';

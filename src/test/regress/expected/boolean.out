@@ -162,18 +162,18 @@ tf_12_ff_4|f1|f1
           |t |f 
           |t |f 
           |t |f 
-          |t |f 
-          |t |f 
-          |t |f 
-          |t |f 
-          |t |f 
-          |t |f 
+          |f |f 
           |t |f 
           |t |f 
           |t |f 
           |f |f 
+          |t |f 
+          |t |f 
+          |t |f 
           |f |f 
-          |f |f 
+          |t |f 
+          |t |f 
+          |t |f 
           |f |f 
 (16 rows)
 

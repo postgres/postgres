@@ -22,7 +22,7 @@ INSERT INTO POINT_TBL(f1) VALUES ('(10.0 10.0)');
 INSERT INTO POINT_TBL(f1) VALUES ('(10.0,10.0');
 
 
-SELECT '' AS five, POINT_TBL.*;
+SELECT '' AS six, POINT_TBL.*;
 
 -- left of 
 SELECT '' AS three, p.* FROM POINT_TBL p WHERE p.f1 !< '(0.0, 0.0)';
@@ -40,7 +40,7 @@ SELECT '' AS one, p.* FROM POINT_TBL p WHERE p.f1 !| '(0.0, 0.0)';
 SELECT '' AS one, p.* FROM POINT_TBL p WHERE p.f1 =|= '(5.1, 34.5)';
 
 -- point in box 
-SELECT '' AS two, p.* FROM POINT_TBL p
+SELECT '' AS three, p.* FROM POINT_TBL p
    WHERE p.f1 ===> '(0,0,100,100)';
 
 SELECT '' AS three, p.* FROM POINT_TBL p
@@ -49,24 +49,23 @@ SELECT '' AS three, p.* FROM POINT_TBL p
 SELECT '' AS two, p.* FROM POINT_TBL p
    WHERE on_ppath(p.f1,'(0,3,0,0,-10,0,-10,10)'::path);
 
-SELECT '' AS five, p.f1, p.f1 <===> '(0,0)' AS dist FROM POINT_TBL p;
+SELECT '' AS six, p.f1, p.f1 <===> '(0,0)'::point AS dist FROM POINT_TBL p;
 
-SELECT '' AS twentyfive, p1.f1, p2.f1, p1.f1 <===> p2.f1 AS dist
+SELECT '' AS thirtysix, p1.f1, p2.f1, p1.f1 <===> p2.f1 AS dist
    FROM POINT_TBL p1, POINT_TBL p2;
 
-SELECT '' AS twenty, p1.f1, p2.f1
+SELECT '' AS thirty, p1.f1, p2.f1
    FROM POINT_TBL p1, POINT_TBL p2
    WHERE (p1.f1 <===> p2.f1) > 3;
 
-SELECT '' AS ten, p1.f1, p2.f1
+SELECT '' AS fifteen, p1.f1, p2.f1
    FROM POINT_TBL p1, POINT_TBL p2
    WHERE (p1.f1 <===> p2.f1) > 3 and 
 	p1.f1 !< p2.f1;
 
-SELECT '' AS two, p1.f1, p2.f1 
+SELECT '' AS three, p1.f1, p2.f1 
    FROM POINT_TBL p1, POINT_TBL p2 
    WHERE (p1.f1 <===> p2.f1) > 3 and 
 	p1.f1 !< p2.f1 and
 	p1.f1 !^ p2.f1;
-
 
