@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.80 1999/05/13 07:28:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.81 1999/05/19 16:46:10 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1514,7 +1514,7 @@ StoreAttrDefault(Relation rel, AttrDefault *attrdef)
 	char		nulls[4] = {' ', ' ', ' ', ' '};
 	extern GlobalMemory CacheCxt;
 
-start:;
+start:
 	/* Surround table name with double quotes to allow mixed-case and
 	 * whitespaces in names. - BGA 1998-11-14
 	 */
@@ -1537,7 +1537,21 @@ start:;
 
 	if (type != atp->atttypid)
 	{
-		if (IS_BINARY_COMPATIBLE(type, atp->atttypid))
+		/*
+		 *	Though these types are binary compatible, bpchar has a fixed
+		 *	length on the disk, requiring non-bpchar types to be padded
+		 *	before storage in the default table.  bjm 1999/05/18
+		 */
+		if (atp->atttypid == BPCHAROID &&
+			(type == TEXTOID || type == BPCHAROID || type == UNKNOWNOID))
+		{
+			if (can_coerce_type(1, &(type), &(atp->atttypid)))
+				expr = coerce_type(NULL, (Node *)expr, type, atp->atttypid);
+			else
+				elog(ERROR, "DEFAULT clause const type '%s' can not be converted to char().",
+					 typeidTypeName(type));
+		}
+		else if (IS_BINARY_COMPATIBLE(type, atp->atttypid))
 			; /* use without change */
 		else if (can_coerce_type(1, &(type), &(atp->atttypid)))
 			expr = coerce_type(NULL, (Node *)expr, type, atp->atttypid);
@@ -1556,8 +1570,7 @@ start:;
 
 	adbin = nodeToString(expr);
 	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
-	attrdef->adbin = (char *) palloc(strlen(adbin) + 1);
-	strcpy(attrdef->adbin, adbin);
+	attrdef->adbin = pstrdup(adbin);
 	(void) MemoryContextSwitchTo(oldcxt);
 	pfree(adbin);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.14 1999/02/13 23:16:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.15 1999/05/19 16:46:11 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -26,7 +26,7 @@
 
 /*
  * stringToNode -
- *	  returns a Node with a given legal ascii representation
+ *	  returns a Node with a given legal ASCII representation
  */
 void *
 stringToNode(char *str)

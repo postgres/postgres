@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: outfuncs.c,v 1.83 1999/05/18 21:34:28 tgl Exp $
+ *  $Id: outfuncs.c,v 1.84 1999/05/19 16:46:11 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -1203,18 +1203,14 @@ _outDatum(StringInfo str, Datum value, Oid type)
 		s = (char *) (&value);
 		appendStringInfo(str, " %d [ ", length);
 		for (i = 0; i < sizeof(Datum); i++)
-		{
 			appendStringInfo(str, " %d ", (int) (s[i]));
-		}
 		appendStringInfo(str, "] ");
 	}
 	else
 	{							/* !byValue */
 		s = (char *) DatumGetPointer(value);
 		if (!PointerIsValid(s))
-		{
 			appendStringInfo(str, " 0 [ ] ");
-		}
 		else
 		{
 			/*

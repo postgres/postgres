@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.12 1999/05/10 00:45:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.13 1999/05/19 16:46:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,6 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId, Oid targetTypeId)
 		 */
 		else if (inputTypeId != UNKNOWNOID)
 		{
-
 			/*
 			 * We already know there is a function which will do this, so
 			 * let's use it
