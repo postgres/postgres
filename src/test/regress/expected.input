@@ -4761,7 +4761,7 @@ QUERY: CLOSE foo23;
 QUERY: CLOSE foo24;
 QUERY: CLOSE foo25;
 QUERY: END;
-QUERY: PURGE hash_f8_heap BEFORE 'now';		-- absolute time
+QUERY: PURGE hash_f8_heap BEFORE 'now';
 SELECT count(*) AS has_10002 FROM hash_f8_heap[,] h;
 QUERY: VACUUM hash_f8_heap;
 QUERY: SELECT count(*) AS has_10000 FROM hash_f8_heap[,] h;
@@ -4770,7 +4770,7 @@ has_10000
     10002
 (1 row)
 
-QUERY: PURGE hash_i4_heap AFTER '@ 1 second ago';	-- relative time
+QUERY: PURGE hash_i4_heap AFTER '@ 1 second ago';
 SELECT count(*) AS has_10002 FROM hash_i4_heap[,] h;
 QUERY: VACUUM hash_i4_heap;
 QUERY: SELECT count(*) AS has_10000 FROM hash_i4_heap[,] h;

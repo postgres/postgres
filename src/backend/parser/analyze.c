@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.7 1996/10/14 03:53:53 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.8 1996/10/30 02:01:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,14 +52,11 @@ static Node *transformExpr(ParseState *pstate, Node *expr);
 static void makeRangeTable(ParseState *pstate, char *relname, List *frmList);
 static List *expandAllTables(ParseState *pstate);
 static char *figureColname(Node *expr, Node *resval);
-static List *makeTargetList(ParseState *pstate, List *cols, List *exprs);
-static List *transformTargetList(ParseState *pstate, 
-				 List *targetlist, bool isInsert,
-				 bool isUpdate);
+static List *makeTargetNames(ParseState *pstate, List *cols);
+static List *transformTargetList(ParseState *pstate, List *targetlist);
 static TargetEntry *make_targetlist_expr(ParseState *pstate,
-					 char *name, Node *expr,
-					 List *arrayRef,
-					 bool ResdomNoIsAttrNo);
+					 char *colname, Node *expr,
+					 List *arrayRef);
 static Node *transformWhereClause(ParseState *pstate, Node *a_expr);
 static List *transformGroupClause(ParseState *pstate, List *grouplist);
 static List *transformSortClause(ParseState *pstate,
@@ -69,10 +66,10 @@ static List *transformSortClause(ParseState *pstate,
 static void parseFromClause(ParseState *pstate, List *frmList);
 static Node *ParseFunc(ParseState *pstate, char *funcname, 
 		       List *fargs, int *curr_resno);
-static char *ParseColumnName(ParseState *pstate, char *name, bool *isRelName);
 static List *setup_tlist(char *attname, Oid relid);
 static List *setup_base_tlist(Oid typeid);
-static void make_arguments(int nargs, List *fargs, Oid *input_typeids, Oid *function_typeids);
+static void make_arguments(int nargs, List *fargs, Oid *input_typeids,
+							Oid *function_typeids);
 static void AddAggToParseState(ParseState *pstate, Aggreg *aggreg);
 static void finalizeAggregates(ParseState *pstate, Query *qry);
 static void parseCheckAggregates(ParseState *pstate, Query *qry);
@@ -94,15 +91,19 @@ makeParseState() {
 
     pstate = malloc(sizeof(ParseState));
     pstate->p_last_resno = 1;
-    pstate->p_target_resnos = NIL;
-    pstate->p_current_rel = NULL;
     pstate->p_rtable = NIL;
-    pstate->p_query_is_rule = 0;
     pstate->p_numAgg = 0;
     pstate->p_aggs = NIL;
+    pstate->p_is_insert = false;
+    pstate->p_insert_columns = NIL;
+    pstate->p_is_update = false;
+    pstate->p_is_rule = false;
+    pstate->p_target_relation = NULL;
+    pstate->p_target_rangetblentry = NULL;
 
     return (pstate);
 }
+
 /*
  * parse_analyze -
  *    analyze a list of parse trees and transform them if necessary.
@@ -127,8 +128,8 @@ parse_analyze(List *pl)
 	pstate = makeParseState();
 	result->qtrees[i++] = transformStmt(pstate, lfirst(pl));
 	pl = lnext(pl);
-	if (pstate->p_current_rel != NULL)
-	    heap_close(pstate->p_current_rel);
+	if (pstate->p_target_relation != NULL)
+	    heap_close(pstate->p_target_relation);
 	free(pstate);
     }
 
@@ -247,14 +248,13 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
     /* set up a range table */
     makeRangeTable(pstate, stmt->relname, NULL);
     
-/*    qry->uniqueFlag = FALSE; */
     qry->uniqueFlag = NULL; 
 
     /* fix where clause */
     qry->qual = transformWhereClause(pstate, stmt->whereClause);
 
     qry->rtable = pstate->p_rtable;
-    qry->resultRelation = RangeTablePosn(pstate->p_rtable, stmt->relname);
+    qry->resultRelation = refnameRangeTablePosn(pstate->p_rtable, stmt->relname);
 
     /* make sure we don't have aggregates in the where clause */
     if (pstate->p_numAgg > 0)
@@ -274,26 +274,24 @@ transformInsertStmt(ParseState *pstate, AppendStmt *stmt)
     List *targetlist;
 
     qry->commandType = CMD_INSERT;
+    pstate->p_is_insert = true;
 
     /* set up a range table */
     makeRangeTable(pstate, stmt->relname, stmt->fromClause);
 
-/*    qry->uniqueFlag = FALSE; */
     qry->uniqueFlag = NULL; 
 
     /* fix the target list */
-    targetlist = makeTargetList(pstate, stmt->cols, stmt->exprs);
-    qry->targetList = transformTargetList(pstate, 
-					  targetlist,
-					  TRUE /* is insert */,
-					  FALSE /*not update*/);
+    pstate->p_insert_columns = makeTargetNames(pstate, stmt->cols);
+
+    qry->targetList = transformTargetList(pstate, stmt->targetList);
 
     /* fix where clause */
     qry->qual = transformWhereClause(pstate, stmt->whereClause);
 
     /* now the range table will not change */
     qry->rtable = pstate->p_rtable;
-    qry->resultRelation = RangeTablePosn(pstate->p_rtable, stmt->relname);
+    qry->resultRelation = refnameRangeTablePosn(pstate->p_rtable, stmt->relname);
 
     if (pstate->p_numAgg > 0)
 	finalizeAggregates(pstate, qry);
@@ -362,21 +360,17 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
      * transform each statment, like parse_analyze()
      */
     while (actions != NIL) {
-	RangeTblEntry *curEnt, *newEnt;
-
 	/*
 	 * NOTE: 'CURRENT' must always have a varno equal to 1 and 'NEW' 
 	 * equal to 2.
 	 */
-	curEnt = makeRangeTableEntry(stmt->object->relname, FALSE,
-				     NULL, "*CURRENT*");
-	newEnt = makeRangeTableEntry(stmt->object->relname, FALSE,
-				     NULL, "*NEW*");
-	pstate->p_rtable = makeList(curEnt, newEnt, -1);
+	addRangeTableEntry(pstate, stmt->object->relname, "*CURRENT*",
+					FALSE, FALSE, NULL);
+	addRangeTableEntry(pstate, stmt->object->relname, "*NEW*",
+					FALSE, FALSE, NULL);
 
 	pstate->p_last_resno = 1;
-	pstate->p_target_resnos = NIL;
-	pstate->p_query_is_rule = 1;	/* for expand all */
+	pstate->p_is_rule = true;	/* for expand all */
 	pstate->p_numAgg = 0;
 	pstate->p_aggs = NULL;
 	
@@ -413,10 +407,7 @@ transformSelectStmt(ParseState *pstate, RetrieveStmt *stmt)
     qry->isPortal = FALSE;
 
     /* fix the target list */
-    qry->targetList = transformTargetList(pstate, 
-					  stmt->targetList,
-					  FALSE, /*is insert */
-					  FALSE /*not update*/);
+    qry->targetList = transformTargetList(pstate, stmt->targetList);
 
     /* fix where clause */
     qry->qual = transformWhereClause(pstate,stmt->whereClause);
@@ -449,7 +440,7 @@ transformUpdateStmt(ParseState *pstate, ReplaceStmt *stmt)
     Query *qry = makeNode(Query);
 
     qry->commandType = CMD_UPDATE;
-
+    pstate->p_is_update = true;
     /*
      * the FROM clause is non-standard SQL syntax. We used to be able to
      * do this with REPLACE in POSTQUEL so we keep the feature.
@@ -457,16 +448,13 @@ transformUpdateStmt(ParseState *pstate, ReplaceStmt *stmt)
     makeRangeTable(pstate, stmt->relname, stmt->fromClause); 
 
     /* fix the target list */
-    qry->targetList = transformTargetList(pstate, 
-					  stmt->targetList,
-					  FALSE, /* not insert */
-					  TRUE   /* is update */);
+    qry->targetList = transformTargetList(pstate, stmt->targetList);
 
     /* fix where clause */
     qry->qual = transformWhereClause(pstate,stmt->whereClause);
 
     qry->rtable = pstate->p_rtable;
-    qry->resultRelation = RangeTablePosn(pstate->p_rtable, stmt->relname);
+    qry->resultRelation = refnameRangeTablePosn(pstate->p_rtable, stmt->relname);
 
     /* make sure we don't have aggregates in the where clause */
     if (pstate->p_numAgg > 0)
@@ -502,10 +490,7 @@ transformCursorStmt(ParseState *pstate, CursorStmt *stmt)
     qry->isBinary = stmt->binary;	/* internal portal */
 
     /* fix the target list */
-    qry->targetList = transformTargetList(pstate,
-					  stmt->targetList,
-					  FALSE, /*is insert */
-					  FALSE /*not update*/);
+    qry->targetList = transformTargetList(pstate, stmt->targetList);
 
     /* fix where clause */
     qry->qual = transformWhereClause(pstate,stmt->whereClause);
@@ -700,33 +685,23 @@ transformExpr(ParseState *pstate, Node *expr)
     }
     case T_Ident: {
 	Ident *ident = (Ident*)expr;
-	bool isrel;
-	char *reln= ParseColumnName(pstate,ident->name, &isrel);
+    	RangeTblEntry *rte;
 
-	/* could be a column name or a relation_name */
-	if (reln==NULL) {
-	    /*
-	     * may be a relation_name
-	     *
-	     * ??? in fact, every ident left after transfromExpr() is called
-	     *     will be assumed to be a relation.
-	     */
-	    if (isrel) {
+		/* could be a column name or a relation_name */
+	if (refnameRangeTableEntry(pstate->p_rtable, ident->name) != NULL) {
 		ident->isRel = TRUE;
 		result = (Node*)ident;
-	    } else {
-		elog(WARN, "attribute \"%s\" not found", ident->name);
-	    }
-	}else {
+	}
+	else if ((rte = colnameRangeTableEntry(pstate, ident->name)) != NULL)
+ 	{
 	    Attr *att = makeNode(Attr);
-	    att->relname = reln;
+
+	    att->relname = rte->refname;
 	    att->attrs = lcons(makeString(ident->name), NIL);
-	    /*
-	     * a column name
-	     */
 	    result =
 		(Node*)handleNestedDots(pstate, att, &pstate->p_last_resno);
-	}
+	} else
+	    elog(WARN, "attribute \"%s\" not found", ident->name);
 	break;
     }
     case T_FuncCall: {
@@ -734,9 +709,8 @@ transformExpr(ParseState *pstate, Node *expr)
 	List *args;
 
 	/* transform the list of arguments */
-	foreach(args, fn->args) {
+	foreach(args, fn->args)
 	    lfirst(args) = transformExpr(pstate, (Node*)lfirst(args));
-	}
 	result = ParseFunc(pstate,
 			   fn->funcname, fn->args, &pstate->p_last_resno);
 	break;
@@ -769,30 +743,21 @@ transformExpr(ParseState *pstate, Node *expr)
 static void
 parseFromClause(ParseState *pstate, List *frmList)
 {
-    List *fl= frmList;
+    List *fl;
 
-    while(fl!=NIL) {
+    foreach(fl, frmList)
+    {
 	RangeVar *r = lfirst(fl);
 	RelExpr	*baserel = r->relExpr;
-	RangeTblEntry *ent;
 	char *relname = baserel->relname;
 	char *refname = r->name;
-
-	if (refname==NULL) {
+	RangeTblEntry *rte;
+	
+	if (refname==NULL)
 	    refname = relname;
-	} else {
-	    /*
-	     * check whether refname exists already
-	     */
-	    if (RangeTablePosn(pstate->p_rtable, refname) != 0)
-		elog(WARN, "parser: range variable \"%s\" duplicated",
-		     refname);
-	}
 
-	ent = makeRangeTableEntry(relname, baserel->inh,
-				  baserel->timeRange, refname);
 	/*
-	 * marks this entry to indicate it comes from the from clause. In
+	 * marks this entry to indicate it comes from the FROM clause. In
 	 * SQL, the target list can only refer to range variables specified
 	 * in the from clause but we follow the more powerful POSTQUEL
 	 * semantics and automatically generate the range variable if not
@@ -802,10 +767,8 @@ parseFromClause(ParseState *pstate, List *frmList)
 	 * eg. select * from foo f where f.x = 1; will generate wrong answer
 	 *     if we expand * to foo.x.
 	 */
-	ent->inFromCl = true;
-
-	pstate->p_rtable = lappend(pstate->p_rtable, ent);	
-	fl= lnext(fl);
+	rte = addRangeTableEntry(pstate, relname, refname, baserel->inh, TRUE,
+				  baserel->timeRange);
     }
 }
 
@@ -817,25 +780,23 @@ parseFromClause(ParseState *pstate, List *frmList)
 static void
 makeRangeTable(ParseState *pstate, char *relname, List *frmList)
 {
-    int x;
+    RangeTblEntry *rte;
 
     parseFromClause(pstate, frmList);
 
     if (relname == NULL)
 	return;
     
-    if (RangeTablePosn(pstate->p_rtable, relname) < 1) {
-	RangeTblEntry *ent;
+    if (refnameRangeTablePosn(pstate->p_rtable, relname) < 1)
+	rte = addRangeTableEntry(pstate, relname, relname, FALSE, FALSE, NULL);
+    else
+	rte = refnameRangeTableEntry(pstate->p_rtable, relname);
 
-	ent = makeRangeTableEntry(relname, FALSE, NULL, relname);
-	pstate->p_rtable = lappend(pstate->p_rtable, ent);
-    }
-    x = RangeTablePosn(pstate->p_rtable, relname);
-    if (pstate->p_current_rel != NULL)
-        heap_close(pstate->p_current_rel);
-    pstate->p_current_rel = heap_openr(VarnoGetRelname(pstate,x));
-    if (pstate->p_current_rel == NULL)
-	elog(WARN,"invalid relation name");
+    pstate->p_target_rangetblentry = rte;
+    Assert(pstate->p_target_relation == NULL);
+    pstate->p_target_relation = heap_open(rte->relid);
+    Assert(pstate->p_target_relation != NULL);
+	/* will close relation later */
 }
 
 /*
@@ -897,7 +858,7 @@ expandAllTables(ParseState *pstate)
     List *rt, *rtable;
 
     rtable = pstate->p_rtable;
-    if (pstate->p_query_is_rule) {
+    if (pstate->p_is_rule) {
 	/*
 	 * skip first two entries, "*new*" and "*current*"
 	 */
@@ -927,16 +888,16 @@ expandAllTables(ParseState *pstate)
 
     foreach(rt, legit_rtable) {
 	RangeTblEntry *rte = lfirst(rt);
-	char *rt_name= rte->refname;	/* use refname here so that we
-					   refer to the right entry */
 	List *temp = target;
 	
 	if(temp == NIL )
-	    target = expandAll(pstate, rt_name, &pstate->p_last_resno);
+	    target = expandAll(pstate, rte->relname, rte->refname,
+							&pstate->p_last_resno);
 	else {
 	    while (temp != NIL && lnext(temp) != NIL)
 		temp = lnext(temp);
-	    lnext(temp) = expandAll(pstate, rt_name, &pstate->p_last_resno);
+	    lnext(temp) = expandAll(pstate, rte->relname, rte->refname,
+							&pstate->p_last_resno);
 	}
     }
     return target;
@@ -976,96 +937,46 @@ figureColname(Node *expr, Node *resval)
  *****************************************************************************/
 
 /*
- * makeTargetList -
- *    turn a list of column names and expressions (in the same order) into
- *    a target list (used exclusively for inserts)
+ * makeTargetNames -
+ *    generate a list of column names if not supplied or
+ *    test supplied column names to make sure they are in target table
+ *    (used exclusively for inserts)
  */
 static List *
-makeTargetList(ParseState *pstate, List *cols, List *exprs)
+makeTargetNames(ParseState *pstate, List *cols)
 {
-    List *tlist, *tl=NULL;
-    if (cols != NIL) {
-	/* has to transform colElem too (opt_indirection can be exprs) */
-	while(cols!=NIL) {
-	    ResTarget *res = makeNode(ResTarget);
-	    Ident *id = lfirst(cols);
-	    /* Id opt_indirection */
-	    res->name = id->name;
-	    res->indirection = id->indirection;
-	    if (exprs == NIL) {
-		elog(WARN, "insert: number of expressions less than columns");
-	    }else {
-		res->val = (Node *)lfirst(exprs);
-	    }
-	    if (tl==NIL) {
-		tlist = tl = lcons(res, NIL);
-	    }else {
-		lnext(tl) = lcons(res,NIL);
-		tl = lnext(tl);
-	    }
-	    cols = lnext(cols);
-	    exprs = lnext(exprs);
-	}
-	if (cols != NIL) {
-	    elog(WARN, "insert: number of columns more than expressions");
-	}
-    }else {
-	bool has_star = false;
+    List *tl=NULL;
+
+    	/* Generate ResTarget if not supplied */
+    	
+    if (cols == NIL) {
+	int numcol;
+	int i;
+	AttributeTupleForm *attr = pstate->p_target_relation->rd_att->attrs;
 	
-	if (exprs==NIL)
-	    return NIL;
-	if (IsA(lfirst(exprs),Attr)) {
-	    Attr *att = lfirst(exprs);
+	numcol = pstate->p_target_relation->rd_rel->relnatts;
+	for(i=0; i < numcol; i++) {
+	    Ident *id = makeNode(Ident);
 
-	    if ((att->relname!=NULL && !strcmp(att->relname,"*")) ||
-		(att->attrs!=NIL && !strcmp(strVal(lfirst(att->attrs)),"*")))
-		has_star = true;
-	}
-	if (has_star) {
-	    /*
-	     * right now, these better be 'relname.*' or '*' (this can happen
-	     * in eg. insert into tenk2 values (tenk1.*); or
-	     *        insert into tenk2 select * from tenk1;
-	     */
-	    while(exprs!=NIL) {
-		ResTarget *res = makeNode(ResTarget);
-		res->name = NULL;
-		res->indirection = NULL;
-		res->val = (Node *)lfirst(exprs);
-		if (tl==NIL) {
-		    tlist = tl = lcons(res, NIL);
-		}else {
-		    lnext(tl) = lcons(res,NIL);
-		    tl = lnext(tl);
-		}
-		exprs = lnext(exprs);
-	    }
-	} else {
-	    Relation insertRel = pstate->p_current_rel;
-	    int numcol;
-	    int i;
-	    AttributeTupleForm *attr = insertRel->rd_att->attrs;
-	    
-	    numcol = Min(length(exprs), insertRel->rd_rel->relnatts);
-	    for(i=0; i < numcol; i++) {
-		ResTarget *res = makeNode(ResTarget);
-
-		res->name = palloc(NAMEDATALEN+1);
-		strncpy(res->name, attr[i]->attname.data, NAMEDATALEN);
-		res->name[NAMEDATALEN]='\0';
-		res->indirection = NULL;
-		res->val = (Node *)lfirst(exprs);
-		if (tl==NIL) {
-		    tlist = tl = lcons(res, NIL);
-		}else {
-		    lnext(tl) = lcons(res,NIL);
-		    tl = lnext(tl);
-		}
-		exprs = lnext(exprs);
+	    id->name = palloc(NAMEDATALEN+1);
+	    strncpy(id->name, attr[i]->attname.data, NAMEDATALEN);
+	    id->name[NAMEDATALEN]='\0';
+	    id->indirection = NIL;
+	    id->isRel = false;
+	    if (tl == NIL)
+	        cols = tl = lcons(id, NIL);
+	    else {
+	        lnext(tl) = lcons(id,NIL);
+	        tl = lnext(tl);
 	    }
 	}
     }
-    return tlist;
+    else
+        foreach(tl, cols)
+			/* elog on failure */
+    	 (void)varattno(pstate->p_target_relation,((Ident *)lfirst(tl))->name);
+
+    return cols;
 }
 
 /*
@@ -1073,13 +984,10 @@ makeTargetList(ParseState *pstate, List *cols, List *exprs)
  *    turns a list of ResTarget's into a list of TargetEntry's
  */
 static List *
-transformTargetList(ParseState *pstate, 
-		    List *targetlist,
-		    bool isInsert,
-		    bool isUpdate)
+transformTargetList(ParseState *pstate, List *targetlist)
 {
     List *p_target= NIL;
-    List *temp = NIL;
+    List *tail_p_target = NIL;
 
     while(targetlist != NIL) {
 	ResTarget *res= (ResTarget *)lfirst(targetlist);
@@ -1092,8 +1000,9 @@ transformTargetList(ParseState *pstate,
 	    int type_len;
 	    char *identname;
 	    char *resname;
-
+	    
 	    identname = ((Ident*)res->val)->name;
+	    handleTargetColname(pstate, &res->name, NULL, res->name);
 	    expr = transformExpr(pstate, (Node*)res->val);
 	    type_id = exprType(expr);
 	    type_len = tlen(get_id_type(type_id));
@@ -1115,11 +1024,9 @@ transformTargetList(ParseState *pstate,
 	case T_A_Expr: {
 	    Node *expr = transformExpr(pstate, (Node *)res->val);
 
-	    if (isInsert && res->name==NULL)
-		elog(WARN, "Sorry, have to specify the column list");
-
+	    handleTargetColname(pstate, &res->name, NULL, NULL);
 	    /* note indirection has not been transformed */
-	    if (isInsert && res->indirection!=NIL) {
+	    if (pstate->p_is_insert && res->indirection!=NIL) {
 		/* this is an array assignment */
 		char *val;
 		char *str, *save_str;
@@ -1160,7 +1067,7 @@ transformTargetList(ParseState *pstate,
 		    i++;
 		}
 		sprintf(str, "=%s", val);
-		rd = pstate->p_current_rel;
+		rd = pstate->p_target_relation;
 		Assert(rd != NULL);
 		resdomno = varattno(rd, res->name);
 		ndims = att_attnelems(rd, resdomno);
@@ -1171,8 +1078,7 @@ transformTargetList(ParseState *pstate,
 		constval->val.str = save_str;
 		tent = make_targetlist_expr(pstate, res->name,
 					    (Node*)make_const(constval),
-					    NULL,
-					    (isInsert||isUpdate));
+					    NULL);
 		pfree(save_str);
 	    } else {
 		char *colname= res->name;
@@ -1192,9 +1098,9 @@ transformTargetList(ParseState *pstate,
 			ilist = lnext(ilist);
 		    }
 		}
-		tent = make_targetlist_expr(pstate, colname, expr, 
-					    res->indirection,
-					    (isInsert||isUpdate));
+		res->name = colname;
+		tent = make_targetlist_expr(pstate, res->name, expr, 
+					    res->indirection);
 	    }
 	    break;
 	}
@@ -1207,7 +1113,6 @@ transformTargetList(ParseState *pstate,
 	    char *resname;
 	    Resdom *resnode;
 	    List *attrs = att->attrs;
-		
 
 	    /*
 	     * Target item is a single '*', expand all tables
@@ -1231,19 +1136,20 @@ transformTargetList(ParseState *pstate,
 	     */
 	    attrname = strVal(lfirst(att->attrs));
 	    if (att->attrs!=NIL && !strcmp(attrname,"*")) {
-		/* temp is the target list we're building in the while
+		/* tail_p_target is the target list we're building in the while
 		 * loop. Make sure we fix it after appending more nodes.
 		 */
-		if (temp == NIL) {
-		    p_target = temp =
-			expandAll(pstate, att->relname, &pstate->p_last_resno);
+		if (tail_p_target == NIL) {
+		    p_target = tail_p_target = expandAll(pstate, att->relname,
+					att->relname, &pstate->p_last_resno);
 		} else {
-		    lnext(temp) =
-			expandAll(pstate, att->relname, &pstate->p_last_resno);
+		    lnext(tail_p_target) =
+			expandAll(pstate, att->relname, att->relname,
+							&pstate->p_last_resno);
 		}
-		while(lnext(temp)!=NIL)
-		    temp = lnext(temp);	/* make sure we point to the last
-					   target entry */
+		while(lnext(tail_p_target)!=NIL)
+			/* make sure we point to the last target entry */
+		    tail_p_target = lnext(tail_p_target);
 		/*
 		 * skip the rest of the while loop
 		 */
@@ -1256,6 +1162,7 @@ transformTargetList(ParseState *pstate,
 	     * Target item is fully specified: ie. relation.attribute
 	     */
 	    result = handleNestedDots(pstate, att, &pstate->p_last_resno);
+	    handleTargetColname(pstate, &res->name, att->relname, attrname);
 	    if (att->indirection != NIL) {
 		List *ilist = att->indirection;
 		while (ilist!=NIL) {
@@ -1268,6 +1175,7 @@ transformTargetList(ParseState *pstate,
 	    }
 	    type_id = exprType(result);
 	    type_len = tlen(get_id_type(type_id));
+	    	/* move to last entry */
 	    while(lnext(attrs)!=NIL)
 		attrs=lnext(attrs);
 	    resname = (res->name) ? res->name : strVal(lfirst(attrs));
@@ -1289,30 +1197,30 @@ transformTargetList(ParseState *pstate,
 	    break;
 	}
 
-	if (p_target==NIL) {
-	    p_target = temp = lcons(tent, NIL);
+	if (p_target == NIL) {
+	    p_target = tail_p_target = lcons(tent, NIL);
 	}else {
-	    lnext(temp) = lcons(tent, NIL);
-	    temp = lnext(temp);
+	    lnext(tail_p_target) = lcons(tent, NIL);
+	    tail_p_target = lnext(tail_p_target);
 	}
 	targetlist = lnext(targetlist);
     }
+
     return p_target;
 }
 
 
 /*
  * make_targetlist_expr -
- *    make a TargetEntry
+ *    make a TargetEntry from an expression
  *
  * arrayRef is a list of transformed A_Indices
  */
 static TargetEntry *
 make_targetlist_expr(ParseState *pstate,
-		     char *name,
+		     char *colname,
 		     Node *expr,
-		     List *arrayRef,
-		     bool ResdomNoIsAttrNo)
+		     List *arrayRef)
 {
      int type_id, type_len, attrtype, attrlen;
      int resdomno;
@@ -1333,16 +1241,17 @@ make_targetlist_expr(ParseState *pstate,
      type_len = tlen(get_id_type(type_id));
 
      /* I have no idea what the following does! */
-     if (ResdomNoIsAttrNo) {
+     /* It appears to process target columns that will be receiving results */
+     if (pstate->p_is_insert||pstate->p_is_update) {
 	  /*
 	   * append or replace query -- 
 	   * append, replace work only on one relation,
 	   * so multiple occurence of same resdomno is bogus
 	   */
-	  rd = pstate->p_current_rel;
+	  rd = pstate->p_target_relation;
 	  Assert(rd != NULL);
-	  resdomno = varattno(rd,name);
-	  attrisset = varisset(rd,name);
+	  resdomno = varattno(rd,colname);
+	  attrisset = varisset(rd,colname);
 	  attrtype = att_typeid(rd,resdomno);
 	  if ((arrayRef != NIL) && (lfirst(arrayRef) == NIL))
 	       attrtype = GetArrayElementType(attrtype);
@@ -1388,13 +1297,14 @@ make_targetlist_expr(ParseState *pstate,
 			 lfirst(expr) = lispInteger (FLOAT4OID);
                     else
 			 elog(WARN, "unequal type in tlist : %s \n",
-			      name));
+			      colname));
 	       }
 	  
 	  Input_is_string = false;
 	  Input_is_integer = false;
 	  Typecast_ok = true;
 #endif
+
 	  if (attrtype != type_id) {
 	      if (IsA(expr,Const)) {
 		  /* try to cast the constant */
@@ -1415,18 +1325,12 @@ make_targetlist_expr(ParseState *pstate,
 	      } else {
 		  /* currently, we can't handle casting of expressions */
 		  elog(WARN, "parser: attribute '%s' is of type '%.*s' but expression is of type '%.*s'",
-		       name,
+		       colname,
 		       NAMEDATALEN, get_id_typname(attrtype),
 		       NAMEDATALEN, get_id_typname(type_id));
 	      }
 	  }
 
-	  if (intMember(resdomno, pstate->p_target_resnos)) {
-	       elog(WARN,"two or more occurrences of same attr");
-	  } else {
-	       pstate->p_target_resnos = lconsi(resdomno,
-						 pstate->p_target_resnos);
-	  }
 	  if (arrayRef != NIL) {
 	       Expr *target_expr;
 	       Attr *att = makeNode(Attr);
@@ -1435,7 +1339,7 @@ make_targetlist_expr(ParseState *pstate,
 	       List *lowerIndexpr = NIL;
 
 	       att->relname = pstrdup(RelationGetRelationName(rd)->data);
-	       att->attrs = lcons(makeString(name), NIL);
+	       att->attrs = lcons(makeString(colname), NIL);
 	       target_expr = (Expr*)handleNestedDots(pstate, att,
 						     &pstate->p_last_resno);
 	       while(ar!=NIL) {
@@ -1471,7 +1375,7 @@ make_targetlist_expr(ParseState *pstate,
      resnode = makeResdom((AttrNumber)resdomno,
 			  (Oid) attrtype,
 			  (Size) attrlen,
-			  name, 
+			  colname, 
 			  (Index)0,
 			  (Oid)0,
 			  0);
@@ -1524,14 +1428,13 @@ transformWhereClause(ParseState *pstate, Node *a_expr)
  *
  */
 static Resdom *
-find_tl_elt(ParseState *pstate, char *range, char *varname, List *tlist)
+find_tl_elt(ParseState *pstate, char *refname, char *colname, List *tlist)
 {
     List *i;
     int real_rtable_pos;
 
-    if(range) {
-	real_rtable_pos = RangeTablePosn(pstate->p_rtable, range);
-    }
+    if(refname)
+	real_rtable_pos = refnameRangeTablePosn(pstate->p_rtable, refname);
 
     foreach(i, tlist) {
 	TargetEntry *target = (TargetEntry *)lfirst(i);
@@ -1540,8 +1443,8 @@ find_tl_elt(ParseState *pstate, char *range, char *varname, List *tlist)
 	char *resname = resnode->resname;
 	int test_rtable_pos = var->varno;
 
-	if (!strcmp(resname, varname)) {
-	    if(range) {
+	if (!strcmp(resname, colname)) {
+	    if(refname) {
 		if(real_rtable_pos == test_rtable_pos) {
 		    return (resnode);
 		}
@@ -1979,7 +1882,8 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
     Oid funcid = (Oid)0;
     List *i = NIL;
     Node *first_arg= NULL;
-    char *relname, *oldname;
+    char *relname;
+    char *refname;
     Relation rd;
     Oid relid;
     int nargs;
@@ -2005,28 +1909,23 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
      ** type, then the function could be a projection.
      */
     if (length(fargs) == 1) {
+    	
 	if (nodeTag(first_arg)==T_Ident && ((Ident*)first_arg)->isRel) {
+	    RangeTblEntry *rte;
 	    Ident *ident = (Ident*)first_arg;
 
 	    /*
 	     * first arg is a relation. This could be a projection.
 	     */
-	    relname = ident->name;
-	    if (RangeTablePosn(pstate->p_rtable, relname)== 0) {
-		RangeTblEntry *ent;
+	    refname = ident->name;
 
-		ent =
-		    makeRangeTableEntry(relname,
-					FALSE, NULL, relname);
-		pstate->p_rtable = lappend(pstate->p_rtable, ent);
-	    }
-	    oldname = relname;
-	    relname = VarnoGetRelname(pstate, 
-				      RangeTablePosn(pstate->p_rtable,
-						     oldname));
-	    rd = heap_openr(relname);
-	    relid = RelationGetRelationId(rd);
-	    heap_close(rd);
+	    rte = refnameRangeTableEntry(pstate->p_rtable, refname);
+	    if (rte == NULL)
+		rte = addRangeTableEntry(pstate, refname, refname, FALSE, FALSE,NULL);
+
+	    relname = rte->relname;
+	    relid = rte->relid;
+
 	    /* If the attr isn't a set, just make a var for it.  If
 	     * it is a set, treat it like a function and drop through.
 	     */
@@ -2035,7 +1934,7 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
 
 		return
 		    ((Node*)make_var(pstate,
-				     oldname,
+				     refname,
 				     funcname,
 				     &dummyTypeId));
 	    } else {
@@ -2064,10 +1963,10 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
 			 tname(get_id_type(toid)));
 		argrelid = typeid_get_relid(toid);
 		/* A projection contains either an attribute name or the
-		 * word "all".
+		 * "*".
 		 */
 		if ((get_attnum(argrelid, funcname) == InvalidAttrNumber) 
-		    && strcmp(funcname, "all")) {
+		    && strcmp(funcname, "*")) {
 		    elog(WARN, "Functions on sets are not yet supported");
 		}
 	    }
@@ -2109,35 +2008,23 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
     nargs=0;
     foreach ( i , fargs ) {
 	int vnum;
+	RangeTblEntry *rte;
 	Node *pair = lfirst(i);
-	    
+
 	if (nodeTag(pair)==T_Ident && ((Ident*)pair)->isRel) {
 	    /*
 	     * a relation
 	     */
-	    relname = ((Ident*)pair)->name;
+	    refname = ((Ident*)pair)->name;
 		    
-	    /* get the range table entry for the var node */
-	    vnum = RangeTablePosn(pstate->p_rtable, relname);
-	    if (vnum == 0) {
-		pstate->p_rtable =
-		    lappend(pstate->p_rtable ,
-			     makeRangeTableEntry(relname, FALSE,
-						 NULL, relname));
-		vnum = RangeTablePosn (pstate->p_rtable, relname);
-	    }
-		    
-	    /*
-	     *  We have to do this because the relname in the pair
-	     *  may have been a range table variable name, rather
-	     *  than a real relation name.
-	     */
-	    relname = VarnoGetRelname(pstate, vnum);
-		    
-	    rd = heap_openr(relname);
-	    relid = RelationGetRelationId(rd);
-	    heap_close(rd);
-	    
+	    rte = refnameRangeTableEntry(pstate->p_rtable, refname);
+	    if (rte == NULL)
+		rte = addRangeTableEntry(pstate, refname, refname,
+						FALSE, FALSE, NULL);
+	    relname = rte->relname;
+
+            vnum = refnameRangeTablePosn (pstate->p_rtable, rte->refname);
+	   
 	    /*
 	     *  for func(relname), the param to the function
 	     *  is the tuple under consideration.  we build a special
@@ -2225,9 +2112,9 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
      * attribute of the set tuples.
      */
     if (attisset) {
-	if (!strcmp(funcname, "all")) {
+	if (!strcmp(funcname, "*")) {
 	    funcnode->func_tlist =
-		expandAll(pstate, (char*)relname, curr_resno);
+		expandAll(pstate, relname, refname, curr_resno);
 	} else {
 	    funcnode->func_tlist = setup_tlist(funcname,argrelid);
 	    rettype = find_atttype(argrelid, funcname);
@@ -2257,55 +2144,6 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
     
     return(retval);
 }
-
-/*
- * returns (relname) if found, NIL if not a column
- */
-static char*
-ParseColumnName(ParseState *pstate, char *name, bool *isRelName)
-{
-    List *et;
-    Relation rd;
-    List *rtable;
-
-    /*
-     * see if it is a relation name. If so, leave it as it is
-     */
-    if (RangeTablePosn(pstate->p_rtable, name)!=0) {
-	*isRelName = TRUE;
-	return NULL;
-    }
-
-    if (pstate->p_query_is_rule) {
-	rtable = lnext(lnext(pstate->p_rtable));
-    } else {
-	rtable = pstate->p_rtable;
-    }
-    /*
-     * search each relation in the FROM list and see if we have a match
-     */
-    foreach(et, rtable) {
-	RangeTblEntry *rte = lfirst(et);
-	char *relname= rte->relname;
-        char *refname= rte->refname;
-	Oid relid;
-
-	rd= heap_openr(relname);
-	relid = RelationGetRelationId(rd);
-	heap_close(rd);
-	if (get_attnum(relid, name) != InvalidAttrNumber) {
-	    /* found */
-	    *isRelName = FALSE;
-	    return refname;
-	}
-
-    }
-
-    /* attribute not found */
-    *isRelName = FALSE;
-    return NULL;
-}
-
 
 /*****************************************************************************
  *
@@ -2365,9 +2203,8 @@ finalizeAggregates(ParseState *pstate, Query *qry)
     qry->qry_aggs =
 	(Aggreg **)palloc(sizeof(Aggreg *) * qry->qry_numAgg);
     i = 0;
-    foreach(l, pstate->p_aggs) {
+    foreach(l, pstate->p_aggs)
 	qry->qry_aggs[i++] = (Aggreg*)lfirst(l);
-    }
 }
 
 /*    
@@ -2390,30 +2227,26 @@ contain_agg_clause(Node *clause)
     else if (or_clause(clause)) {
 	List *temp;
 
-	foreach (temp, ((Expr*)clause)->args) {
+	foreach (temp, ((Expr*)clause)->args)
 	    if (contain_agg_clause(lfirst(temp)))
 		return TRUE;
-	}
 	return FALSE;
     } else if (is_funcclause (clause)) {
 	List *temp;
 
-	foreach(temp, ((Expr *)clause)->args) {
+	foreach(temp, ((Expr *)clause)->args)
 	    if (contain_agg_clause(lfirst(temp)))
 		return TRUE;
-	}
 	return FALSE;
     } else if (IsA(clause,ArrayRef)) {
 	List *temp;
 
-	foreach(temp, ((ArrayRef*)clause)->refupperindexpr)  {
+	foreach(temp, ((ArrayRef*)clause)->refupperindexpr)
 	    if (contain_agg_clause(lfirst(temp)))
 		return TRUE;
-	}
-	foreach(temp, ((ArrayRef*)clause)->reflowerindexpr) {
+	foreach(temp, ((ArrayRef*)clause)->reflowerindexpr)
 	    if (contain_agg_clause(lfirst(temp)))
 		return TRUE;
-	}
 	if (contain_agg_clause(((ArrayRef*)clause)->refexpr))
 	    return TRUE;
 	if (contain_agg_clause(((ArrayRef*)clause)->refassgnexpr))
@@ -2459,10 +2292,9 @@ exprIsAggOrGroupCol(Node *expr, List *groupClause)
     else if (IsA(expr,Expr)) {
 	List *temp;
 
-	foreach (temp, ((Expr*)expr)->args) {
+	foreach (temp, ((Expr*)expr)->args)
 	    if (!exprIsAggOrGroupCol(lfirst(temp),groupClause))
 		return FALSE;
-	}
 	return TRUE;
     }
 
@@ -2510,5 +2342,3 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
     
     return;
 }
-
-

@@ -1,9 +1,11 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.1.1.1 1996/07/09 06:22:24 scrappy Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.2 1996/10/30 02:02:41 momjian Exp $
 #
 if [ -d ./obj ]; then
 	cd ./obj
 fi
+
+TZ="PST8PDT"; export TZ
 
 #FRONTEND=monitor
 FRONTEND="psql -n -e -q"

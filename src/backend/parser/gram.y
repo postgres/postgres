@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.12 1996/09/20 08:34:14 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.13 1996/10/30 02:01:54 momjian Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -124,7 +124,7 @@ static Node *makeA_Expr(int op, char *opname, Node *lexpr, Node *rexpr);
 	tableElementList, OptInherit, definition,
 	opt_with_func, def_args, def_name_list, func_argtypes, 
 	oper_argtypes, OptStmtList, OptStmtBlock, opt_column_list, columnList,
-	exprList, sort_clause, sortby_list, index_params, 
+	sort_clause, sortby_list, index_params, 
 	name_list, from_clause, from_list, opt_array_bounds, nest_array_bounds,
 	expr_list, attrs, res_target_list, res_target_list2, def_list,
 	opt_indirection, group_clause, groupby_list, explain_options
@@ -143,7 +143,7 @@ static Node *makeA_Expr(int op, char *opname, Node *lexpr, Node *rexpr);
 %type <typnam>	Typename, typname, opt_type
 %type <coldef>	columnDef
 %type <defelt>	def_elem
-%type <node>	def_arg, columnElem, exprElem, where_clause, 
+%type <node>	def_arg, columnElem, where_clause, 
 		a_expr, AexprConst, having_clause, groupby
 %type <value>	NumConst
 %type <attr>	event_object, attr
@@ -1244,17 +1244,17 @@ AppendStmt:  INSERT INTO relation_name opt_column_list insert_rest
                 }
 	;
 
-insert_rest: VALUES '(' exprList ')'
+insert_rest: VALUES '(' res_target_list2 ')'
 		{
 		    $$ = makeNode(AppendStmt);
-		    $$->exprs = $3;
+		    $$->targetList = $3;
 		    $$->fromClause = NIL;
 		    $$->whereClause = NULL;
 		}
-	| SELECT exprList from_clause where_clause
+	| SELECT res_target_list2 from_clause where_clause
 		{
 		    $$ = makeNode(AppendStmt);
-		    $$->exprs = $2;
+		    $$->targetList = $2;
 		    $$->fromClause = $3;
 		    $$->whereClause = $4;
 		}
@@ -1279,36 +1279,6 @@ columnElem: Id opt_indirection
 		    $$ = (Node *)id;
 		}
 	;
-
-exprList:  exprList ',' exprElem
-		{ $$ = lappend($1, $3); }
-	| exprElem
-		{ $$ = lcons($1, NIL); }
-
-	;
-
-exprElem: a_expr 
-		{   $$ = (Node *)$1;  }
-	|  relation_name '.' '*'
-		{
-		    Attr *n = makeNode(Attr);
-		    n->relname = $1;
-		    n->paramNo = NULL;
-		    n->attrs = lcons(makeString("*"), NIL);
-		    n->indirection = NIL;
-		    $$ = (Node *)n;
-		}
-	|  '*'
-		{
-		    Attr *n = makeNode(Attr);
-		    n->relname = "*";
-		    n->paramNo = NULL;
-		    n->attrs = NIL;
-		    n->indirection = NIL;
-		    $$ = (Node *)n;
-		}
-	;
-
 
 /*****************************************************************************
  *

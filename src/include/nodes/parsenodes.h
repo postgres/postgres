@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.3 1996/10/19 04:49:29 scrappy Exp $
+ * $Id: parsenodes.h,v 1.4 1996/10/30 02:02:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -422,8 +422,7 @@ typedef struct AppendStmt {
     NodeTag		type;
     char		*relname;	/* relation to insert into */
     List		*cols;		/* names of the columns */
-    List		*exprs;		/* the expressions (same order as
-					   the columns) */
+    List		*targetList;	/* the target list (of ResTarget) */
     List		*fromClause;	/* the from clause */
     Node		*whereClause;	/* qualifications */
 } AppendStmt;

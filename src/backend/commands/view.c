@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.1.1.1 1996/07/09 06:21:22 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.2 1996/10/30 02:01:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,9 +235,11 @@ UpdateRangeTableOfViewParse(char *viewName, Query *viewParse)
      * CURRENT first, then NEW....
      */
     rt_entry1 =
-	makeRangeTableEntry((char*)viewName, FALSE, NULL, "*CURRENT*");
+	addRangeTableEntry(NULL, (char*)viewName, "*CURRENT*",
+						FALSE, FALSE, NULL);
     rt_entry2 =
-	makeRangeTableEntry((char*)viewName, FALSE, NULL, "*NEW*");
+	addRangeTableEntry(NULL, (char*)viewName, "*NEW*",
+						FALSE, FALSE, NULL);
     new_rt = lcons(rt_entry2, old_rt);
     new_rt = lcons(rt_entry1, new_rt);
     

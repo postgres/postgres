@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.2 1996/08/28 07:16:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.3 1996/10/30 02:01:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -690,10 +690,12 @@ tg_parseTeeNode(TgRecipe *r,
        same Tee. */
     if (rt_ind == 0) {
 	orig->rtable = lappend(orig->rtable,
-			       makeRangeTableEntry(tt,
+			       addRangeTableEntry(NULL,
+						   tt,
+						   tt,
 						   FALSE,
-						   NULL,
-						   tt));
+						   FALSE,
+						   NULL));
 	rt_ind = length(orig->rtable);
     }
 			
