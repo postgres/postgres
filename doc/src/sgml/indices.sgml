@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.23 2001/09/09 17:21:59 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.24 2001/10/31 20:38:26 petere Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -68,7 +68,7 @@ CREATE INDEX test1_id_index ON test1 (id);
 
   <para>
    To remove an index, use the <command>DROP INDEX</command> command.
-   Indexes can be added and removed from tables at any time.
+   Indexes can be added to and removed from tables at any time.
   </para>
 
   <para>
@@ -204,11 +204,11 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
 
 
  <sect1 id="indexes-multicolumn">
-  <title>Multi-Column Indexes</title>
+  <title>Multicolumn Indexes</title>
 
   <indexterm zone="indexes-multicolumn">
    <primary>indexes</primary>
-   <secondary>multi-column</secondary>
+   <secondary>multicolumn</secondary>
   </indexterm>
 
   <para>
@@ -235,14 +235,14 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
   </para>
 
   <para>
-   Currently, only the B-tree implementation supports multi-column
+   Currently, only the B-tree implementation supports multicolumn
    indexes.  Up to 16 columns may be specified.  (This limit can be
    altered when building <productname>Postgres</productname>; see the
    file <filename>pg_config.h</filename>.)
   </para>
 
   <para>
-   The query optimizer can use a multi-column index for queries that
+   The query optimizer can use a multicolumn index for queries that
    involve the first <parameter>n</parameter> consecutive columns in
    the index (when used with appropriate operators), up to the total
    number of columns specified in the index definition.  For example,
@@ -258,7 +258,7 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
   </para>
 
   <para>
-   Multi-column indexes can only be used if the clauses involving the
+   Multicolumn indexes can only be used if the clauses involving the
    indexed columns are joined with <literal>AND</literal>.  For instance,
 <programlisting>
 SELECT name FROM test2 WHERE major = <replaceable>constant</replaceable> OR minor = <replaceable>constant</replaceable>;
@@ -269,7 +269,7 @@ SELECT name FROM test2 WHERE major = <replaceable>constant</replaceable> OR mino
   </para>
 
   <para>
-   Multi-column indexes should be used sparingly.  Most of the time,
+   Multicolumn indexes should be used sparingly.  Most of the time,
    an index on a single column is sufficient and saves space and time.
    Indexes with more than three columns are almost certainly
    inappropriate.
@@ -304,11 +304,19 @@ CREATE UNIQUE INDEX <replaceable>name</replaceable> ON <replaceable>table</repla
    <productname>PostgreSQL</productname> automatically creates unique
    indexes when a table is declared with a unique constraint or a
    primary key, on the columns that make up the primary key or unique
-   columns (a multi-column index, if appropriate), to enforce that
+   columns (a multicolumn index, if appropriate), to enforce that
    constraint.  A unique index can be added to a table at any later
-   time, to add a unique constraint.  (But a primary key cannot be
-   added after table creation.)
+   time, to add a unique constraint.
   </para>
+
+  <note>
+   <para>
+    The preferred way to add a unique constraint to a table is
+    <literal>ALTER TABLE ... ADD CONSTRAINT</literal>.  The use of
+    indexes to enforce unique constraints could be considered an
+    implementation detail that should not be accessed directly.
+   </para>
+  </note>
  </sect1>
 
 
@@ -346,7 +354,7 @@ CREATE INDEX test1_lower_col1_idx ON test1 (lower(col1));
    argument, but they must be table columns, not constants.
    Functional indexes are always single-column (namely, the function
    result) even if the function uses more than one input field; there
-   cannot be multi-column indexes that contain function calls.
+   cannot be multicolumn indexes that contain function calls.
   </para>
 
   <tip>
@@ -580,71 +588,290 @@ CREATE MEMSTORE ON <replaceable>table</replaceable> COLUMNS <replaceable>cols</r
   </sect1>
 
 
-  <sect1 id="partial-index">
-   <title id="partial-index-title">Partial Indexes</title>
+ <sect1 id="indexes-partial">
+  <title>Partial Indexes</title>
 
-  <indexterm zone="partial-index">
+  <indexterm zone="indexes-partial">
    <primary>indexes</primary>
    <secondary>partial</secondary>
   </indexterm>
 
-   <note>
-    <title>Author</title>
+  <para>
+   A <firstterm>partial index</firstterm> is an index built over a
+   subset of a table; the subset is defined by a conditional
+   expression (called the <firstterm>predicate</firstterm> of the
+   partial index).
+  </para>
+
+  <para>
+   A major motivation for partial indexes is to avoid indexing common
+   values.  Since a query conditionalized on a common value will not
+   use the index anyway, there is no point in keeping those rows in the
+   index at all.  This reduces the size of the index, which will speed
+   up queries that do use the index.  It will also speed up many data
+   manipulation operations because the index does not need to be
+   updated in all cases.  <xref linkend="indexes-partial-ex1"> shows a
+   possible application of this idea.
+  </para>
+
+  <example id="indexes-partial-ex1">
+   <title>Setting up a Partial Index to Exclude Common Values</title>
+
+   <para>
+    Suppose you are storing web server access logs in a database.
+    Most accesses originate from the IP range of your organization but
+    some are from elsewhere (say, employees on dial-up connections).
+    So you do not want to index the IP range that corresponds to your
+    organization's subnet.
+   </para>
+
+   <para>
+    Assume a table like this:
+<programlisting>
+CREATE TABLE access_log (
+    url varchar,
+    client_ip inet,
+    ...
+);
+</programlisting>
+   </para>
+
+   <para>
+    To create a partial index that suits our example, use a command
+    such as this:
+<programlisting>
+CREATE INDEX access_log_client_ip_ix ON access_log (client_ip)
+    WHERE NOT (client_ip > inet '192.168.100.0' AND client_ip < inet '192.168.100.255');
+</programlisting>
+   </para>
+
+   <para>
+    A typical query that can use this index would be:
+<programlisting>
+SELECT * FROM access_log WHERE url = '/index.html' AND client_ip = inet '212.78.10.32';
+</programlisting>
+    A query that cannot use this index is:
+<programlisting>
+SELECT * FROM access_log WHERE client_ip = inet '192.168.100.23';
+</programlisting>
+   </para>
+
+   <para>
+    Observe that this kind of partial index requires that the common
+    values be actively tracked.  If the distribution of values is
+    inherent (due to the nature of the application) and static (does
+    not change), this is not difficult, but if the common values are
+    merely due to the coincidental data load this can require a lot of
+    maintenance work.
+   </para>
+  </example>
+
+  <para>
+   Another possibility is to exclude values from the index that the
+   typical query workload is not interested in; this is shown in <xref
+   linkend="indexes-partial-ex2">.  This results in the same
+   advantages as listed above, but it prevents the
+   <quote>uninteresting</quote> values from being accessed via an
+   index at all, even if an index scan might be profitable in that
+   case.  Obviously, setting up partial indexes for this kind of
+   scenario will require a lot of care and experimentation.
+  </para>
+
+  <example id="indexes-partial-ex2">
+   <title>Setting up a Partial Index to Exclude Uninteresting Values</title>
+
+   <para>
+    If you have a table that contains both billed and unbilled orders
+    where the unbilled orders take up a small fraction of the total
+    table and yet that is an often used section, you can improve
+    performance by creating an index on just that portion.  The
+    command the create the index would look like this:
+<programlisting>
+CREATE INDEX orders_unbilled_index ON orders (order_nr)
+    WHERE billed is not true;
+</programlisting>
+   </para>
+
+   <para>
+    A possible query to use this index would be
+<programlisting>
+SELECT * FROM orders WHERE billed is not true AND order_nr < 10000;
+</programlisting>
+    However, the index can also be used in queries that do not involve
+    <structfield>order_nr</> at all, e.g.,
+<programlisting>
+SELECT * FROM orders WHERE billed is not true AND amount > 5000.00;
+</programlisting>
+    This is not as efficient as a partial index on the
+    <structfield>amount</> column would be, since the system has to
+    scan the entire index in any case.
+   </para>
+
+   <para>
+    Note that this query cannot use this index:
+<programlisting>
+SELECT * FROM orders WHERE order_nr = 3501;
+</programlisting>
+    The order 3501 may be among the billed or among the unbilled
+    orders.
+   </para>
+  </example>
+
+  <para>
+   <xref linkend="indexes-partial-ex2"> also illustrates that the
+   indexed column and the column used in the predicate do not need to
+   match.  <productname>PostgreSQL</productname> supports partial
+   indexes with arbitrary predicates, as long as only columns of the
+   table being indexed are involved.  However, keep in mind that the
+   predicate must actually match the condition used in the query that
+   is supposed to benefit from the index.
+   <productname>PostgreSQL</productname> does not have a sophisticated
+   theorem prover that can recognize mathematically equivalent
+   predicates that are written in different forms.  (Not
+   only is such a general theorem prover extremely difficult to
+   create, it would probably be too slow to be of any real use.)
+  </para>
+
+  <para>
+   Finally, a partial index can also be used to override the system's
+   query plan choices.  It may occur that data sets with peculiar
+   distributions will cause the system to use an index when it really
+   should not.  In that case the index can be set up so that it is not
+   available for the offending query.  Normally,
+   <productname>PostgreSQL</> makes reasonable choices about index
+   usage (e.g., it avoids them when retrieving common values, so the
+   earlier example really only saves index size, it is not required to
+   avoid index usage), and grossly incorrect plan choices are cause
+   for a bug report.
+  </para>
+
+  <para>
+   Keep in mind that setting up a partial index indicates that you
+   know at least as much as the query planner knows, in particular you
+   know when an index might be profitable.  Forming this knowledge
+   requires experience and understanding of how indexes in
+   <productname>PostgreSQL</> work.  In most cases, the advantage of a
+   partial index over a regular index will not be much.
+  </para>
+
+  <para>
+   More information about partial indexes can be found in <xref
+   endterm="STON89b" linkend="STON89b-full">, <xref endterm="OLSON93"
+   linkend="OLSON93-full">, and <xref endterm="SESHADRI95"
+   linkend="SESHADRI95-full">.
+  </para>
+ </sect1>
+
+ <sect1 id="indexes-examine">
+  <title>Examining Index Usage</title>
+
+  <para>
+   Although indexes in <productname>PostgreSQL</> do not need
+   maintenance and tuning, it is still important that it is checked
+   which indexes are actually used by the real-life query workload.
+   Examining index usage is done with the <command>EXPLAIN</> command;
+   its application for this purpose is illustrated in <xref
+   linkend="using-explain">.
+  </para>
+
+  <para>
+   It is difficult to formulate a general procedure for determining
+   which indexes to set up.  There are a number of typical cases that
+   have been shown in the examples throughout the previous sections.
+   A good deal of experimentation will be necessary in most cases.
+   The rest of this section gives some tips for that.
+  </para>
+
+  <itemizedlist>
+   <listitem>
     <para>
-     This is from a reply to a question on the email list
-     by Paul M. Aoki (<email>aoki@CS.Berkeley.EDU</email>)
-     on 1998-08-11.
-<!--
-  Paul M. Aoki         | University of California at Berkeley
-  aoki@CS.Berkeley.EDU | Dept. of EECS, Computer Science Division #1776
-                       | Berkeley, CA 94720-1776
--->
+     Always run <command>ANALYZE</command> first.  This command
+     collects statistics about the distribution of the values in the
+     table.  This information is required to guess the number of rows
+     returned by a query, which is needed by the planner to assign
+     realistic costs to each possible query plan.  In absence of any
+     real statistics, some default values are assumed, which are
+     almost certain to be inaccurate.  Examining an application's
+     index usage without having run <command>ANALYZE</command> is
+     therefore a lost cause.
     </para>
-   </note>
+   </listitem>
 
-   <para>
-    A <firstterm>partial index</firstterm>
-    is an index built over a subset of a table; the subset is defined by
-    a predicate.  <productname>Postgres</productname>
-    supports partial indexes with arbitrary
-    predicates.  I believe IBM's <productname>DB2</productname>
-    for AS/400 supports partial indexes
-    using single-clause predicates.
-   </para>
+   <listitem>
+    <para>
+     Use real data for experimentation.  Using test data for setting
+     up indexes will tell you what indexes you need for the test data,
+     but that is all.
+    </para>
 
-   <para>
-    The main motivation for partial indexes is this:
-    if all of the queries you ask that can
-    profitably use an index fall into a certain range, why build an index
-    over the whole table and suffer the associated space/time costs?
+    <para>
+     It is especially fatal to use proportionally reduced data sets.
+     While selecting 1000 out of 100000 rows could be a candidate for
+     an index, selecting 1 out of 100 rows will hardly be, because the
+     100 rows will probably fit within a single disk page, and there
+     is no plan that can beat sequentially fetching 1 disk page.
+    </para>
 
-    (There are other reasons too; see 
-    <xref endterm="STON89b" linkend="STON89b-full"> for details.)
-   </para>
+    <para>
+     Also be careful when making up test data, which is often
+     unavoidable when the application is not in production use yet.
+     Values that are very similar, completely random, or inserted in
+     sorted order will skew the statistics away from the distribution
+     that real data would have.
+    </para>
+   </listitem>
 
-   <para>
-    The machinery to build, update and query partial indexes isn't too
-    bad.  The hairy parts are index selection (which indexes do I build?)
-    and query optimization (which indexes do I use?); i.e., the parts
-    that involve deciding what predicate(s) match the workload/query in
-    some useful way.  For those who are into database theory, the problems
-    are basically analogous to the corresponding materialized view
-    problems, albeit with different cost parameters and formulas.  These
-    are, in the general case, hard problems for the standard ordinal 
-    <acronym>SQL</acronym>
-    types; they're super-hard problems with black-box extension types,
-    because the selectivity estimation technology is so crude.
-   </para>
+   <listitem>
+    <para>
+     When indexes are not used, it can be useful for testing to force
+     their use.  There are run-time parameters that can turn off
+     various plan types (described in the <citetitle>Administrator's
+     Guide</citetitle>).  For instance, turning off sequential scans
+     (<varname>enable_seqscan</>) and nested-loop joins
+     (<varname>enable_nestloop</>), which are the most basic plans,
+     will force the system to use a different plan.  If the system
+     still chooses a sequential scan or nested-loop join then there is
+     probably a more fundamental problem for why the index is not
+     used, for example, the query condition does not match the index.
+     (What kind of query can use what kind of index is explained in
+     the previous sections.)
+    </para>
+   </listitem>
 
-   <para>
-    Check <xref endterm="STON89b" linkend="STON89b-full">,
-    <xref endterm="OLSON93" linkend="OLSON93-full">,
-    and
-    <xref endterm="SESHADRI95" linkend="SESHADRI95-full">
-    for more information.
-   </para>
-  </sect1>
- </chapter>
+   <listitem>
+    <para>
+     If forcing index usage does use the index, then there are two
+     possibilities: Either the system is right and using the index is
+     indeed not appropriate, or the cost estimates of the query plans
+     are not reflecting reality.  So you should time your query with
+     and without indexes.  The <command>EXPLAIN ANALYZE</command>
+     command can be useful here.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     If it turns out that the cost estimates are wrong, there are,
+     again, two possibilities.  The total cost is computed from the
+     per-row costs of each plan node times the selectivity estimate of
+     the plan node.  The costs of the plan nodes can be tuned with
+     run-time parameters (described in the <citetitle>Administrator's
+     Guide</citetitle>).  An inaccurate selectivity estimate is due to
+     insufficient statistics.  It may be possible to help this by
+     tuning the statistics-gathering parameters (see <command>ALTER
+     TABLE</command> reference).
+    </para>
+
+    <para>
+     If you do not succeed in adjusting the costs to be more
+     appropriate, then you may have to do with forcing index usage
+     explicitly.  You may also want to contact the
+     <productname>PostgreSQL</> developers to examine the issue.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect1>
+</chapter>
 
 <!-- Keep this comment at the end of the file
 Local variables:
