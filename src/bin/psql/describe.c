@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.23 2000/07/09 21:30:19 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.24 2000/09/07 04:55:27 ishii Exp $
  */
 #include "postgres.h"
 #include "describe.h"
@@ -274,7 +274,7 @@ bool
 listAllDbs(bool desc)
 {
 	PGresult   *res;
-	char		buf[512];
+	char		buf[1024];
 	printQueryOpt myopt = pset.popt;
 
 	strcpy(buf,
