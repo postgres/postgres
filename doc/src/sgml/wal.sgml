@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.17 2002/08/30 16:50:50 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.18 2002/08/30 16:53:34 momjian Exp $ -->
 
 <chapter id="wal">
  <title>Write-Ahead Logging (<acronym>WAL</acronym>)</title>
@@ -302,10 +302,10 @@
   </para>
 
   <para>
-   The number of 16MB segment files will always be at least
-   1, and will normally not exceed <varname>CHECKPOINT_SEGMENTS</varname>)
-   + 1.  This may be used to estimate space requirements for WAL. 
-   Ordinarily, when old log segment files are no longer needed, 
+   There will be at least one 16MB segment file, and will normally 
+   not be more than <varname>CHECKPOINT_SEGMENTS</varname>)
+   + 1 files.  You can use this to estimate space requirements for 
+   WAL.  Ordinarily, when old log segment files are no longer needed, 
    they are recycled (renamed to become the next sequential future 
    segments). If, due to a short-term peak of log output rate, there 
    are more than <varname>CHECKPOINT_SEGMENTS</varname>) + 1 segment files, 
