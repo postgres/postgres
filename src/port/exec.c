@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.18 2004/08/08 02:22:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.19 2004/08/08 03:21:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -374,14 +374,27 @@ static char *pipe_read_line(char *cmd, char *line, int maxsize)
 			CloseHandle(childstdoutrddup);
 			return NULL;
 		}
-		
-		
+
 		/* We try just once */
 		if (ReadFile(childstdoutrddup, line, maxsize, &bytesread, NULL) &&
 			bytesread > 0)
 		{
 			/* So we read some data */
 			retval = line;
+
+			/*
+			 *	Sometime the child returns "\r\n", which doesn't match
+			 *	our version string.  The backend uses
+			 *	setvbuf(stdout, NULL, _IONBF, 0), but pg_dump doesn't
+			 *	so we have to fix it here.
+			 */
+			if (strlen(line) >= 2 &&
+				line[strlen(line)-2] == '\r' &&
+				line[strlen(line)-1] == '\n')
+			{
+				line[strlen(line)-2] == '\n';
+				line[strlen(line)-1] == '\0';
+			}
 
 			/*
 			 *	We emulate fgets() behaviour. So if there is no newline
