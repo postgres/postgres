@@ -4,7 +4,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.sql.*;
-import postgresql.largeobject.*;
+import org.postgresql.largeobject.*;
 
 /**
  * This example is a small application that stores and displays images
@@ -14,11 +14,11 @@ import postgresql.largeobject.*;
  * on the first time you run it, select "Initialise" in the "PostgreSQL"
  * menu.
  *
- * Important note: You will notice we import the postgresql.largeobject
- * package, but don't import the postgresql package. The reason for this is
+ * Important note: You will notice we import the org.postgresql.largeobject
+ * package, but don't import the org.postgresql package. The reason for this is
  * that importing postgresql can confuse javac (we have conflicting class names
- * in postgresql.* and java.sql.*). This doesn't cause any problems, as long
- * as no code imports postgresql.
+ * in org.postgresql.* and java.sql.*). This doesn't cause any problems, as
+ * long as no code imports org.postgresql.
  *
  * Under normal circumstances, code using any jdbc driver only needs to import
  * java.sql, so this isn't a problem.
@@ -183,7 +183,7 @@ public class ImageViewer implements ItemListener
     f.add("Center",canvas = new imageCanvas());
     
     // Load the driver
-    Class.forName("postgresql.Driver");
+    Class.forName("org.postgresql.Driver");
     
     // Connect to database
     System.out.println("Connecting to Database URL = " + url);
@@ -196,7 +196,7 @@ public class ImageViewer implements ItemListener
     db.setAutoCommit(false);
     
     // Also, get the LargeObjectManager for this connection
-    lom = ((postgresql.Connection)db).getLargeObjectAPI();
+    lom = ((org.postgresql.Connection)db).getLargeObjectAPI();
     
     // Now refresh the image selection list
     refreshList();
@@ -273,7 +273,7 @@ public class ImageViewer implements ItemListener
 	
 	try {
 	  // fetch the large object manager
-	  LargeObjectManager lom = ((postgresql.Connection)db).getLargeObjectAPI();
+	  LargeObjectManager lom = ((org.postgresql.Connection)db).getLargeObjectAPI();
 	  
 	  System.out.println("Importing file");
 	  // A temporary buffer - this can be as large as you like
@@ -425,7 +425,7 @@ public class ImageViewer implements ItemListener
   {
     System.err.println("java example.ImageViewer jdbc-url user password");
     System.err.println("\nExamples:\n");
-    System.err.println("java -Djdbc.driver=postgresql.Driver example.ImageViewer jdbc:postgresql:test postgres password\n");
+    System.err.println("java -Djdbc.driver=org.postgresql.Driver example.ImageViewer jdbc:postgresql:test postgres password\n");
     
     System.err.println("This example tests the binary large object api of the driver.\nBasically, it will allow you to store and view images held in the database.");
     System.err.println("Note: If you are running this for the first time on a particular database,\nyou have to select \"Initialise\" in the \"PostgreSQL\" menu.\nThis will create a table used to store image names.");
@@ -442,7 +442,7 @@ public class ImageViewer implements ItemListener
     }
     
     try {
-      Frame frame = new Frame("PostgreSQL ImageViewer v6.4 rev 1");
+      Frame frame = new Frame("PostgreSQL ImageViewer v7.0 rev 1");
       frame.setLayout(new BorderLayout());
       ImageViewer viewer = new ImageViewer(frame,args[0],args[1],args[2]);
       frame.pack();

@@ -1,3 +1,23 @@
+Web Apr 12 22:14:00 BST 2000 peter@retep.org.uk
+	- Implemented the JDBC2 Blob interface, and ResultSet.getBlob().
+	
+Wed Apr 12 20:20:00 BST 2000 peter@retep.org.uk
+	- Fixed bug in ResultSet.absolute(). Negative rows are now supported.
+	- Implemented ResultSet.relative(), afterLast().
+	
+Tue Feb  1 21:40:00 GMT 2000 peter@retep.org.uk
+	- Finally imported the contributed javax extensions by Assaf Arkin
+	  arkin@exoffice.com
+
+Mon Jan 24 21:00:00 GMT 2000 peter@retep.org.uk
+	- Finally introduced the 7.0 additions to the core CVS repository.
+	- All source files are now under the org.postgresql package (previously
+	  they were under postgresql). The package lines now changed
+	  accordingly.
+	- The Makefile was rewritten so it should now work on machines that
+	  can't handle the $( ) syntax.
+	- Dutch translation by Arnout Kuiper (ajkuiper@wxs.nl)
+
 Mon Sep 13 23:56:00 BST 1999 peter@retep.org.uk
 	- PG_Stream.SendChar() optimised, increased default buffer size of
 	  output stream to 8k, and introduced an 8k buffer on the input stream

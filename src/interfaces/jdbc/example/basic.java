@@ -5,11 +5,16 @@ import java.sql.*;
 import java.text.*;
 
 /**
+ *
+ * $Id: basic.java,v 1.4 2000/04/26 05:32:00 peter Exp $
+ *
  * This example tests the basic components of the JDBC driver, and shows
  * how even the simplest of queries can be implemented.
  *
  * To use this example, you need a database to be in existence. This example
  * will create a table called basic.
+ *
+ * Note: This will only work with post 7.0 drivers.
  *
  */
 
@@ -25,7 +30,7 @@ public class basic
     String pwd = args[2];
     
     // Load the driver
-    Class.forName("postgresql.Driver");
+    Class.forName("org.postgresql.Driver");
     
     // Connect to database
     System.out.println("Connecting to Database URL = " + url);

@@ -13,7 +13,7 @@ import java.sql.*;
  * that an object could be changed by another client, and we need to ensure that
  * the returned data is live and accurate.
  *
- * $Id: StockDB.java,v 1.1 1999/01/25 21:22:03 scrappy Exp $
+ * $Id: StockDB.java,v 1.2 2000/04/26 05:32:01 peter Exp $
  */
 public class StockDB
 {
@@ -24,7 +24,7 @@ public class StockDB
     int id = -1;
     
     public void connect(String url,String usr,String pwd) throws Exception {
-	Class.forName("postgresql.Driver");
+	Class.forName("org.postgresql.Driver");
 	System.out.println("Connecting to "+url);
 	con = DriverManager.getConnection(url,usr,pwd);
 	st = con.createStatement();

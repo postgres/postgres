@@ -2,17 +2,17 @@ package example;
 
 import java.io.*;
 import java.sql.*;
-import postgresql.largeobject.*;
+import org.postgresql.largeobject.*;
 
 /**
  * This test attempts to create a blob in the database, then to read
  * it back.
  *
- * Important note: You will notice we import the postgresql.largeobject
- * package, but don't import the postgresql package. The reason for this is
+ * Important note: You will notice we import the org.postgresql.largeobject
+ * package, but don't import the org.postgresql package. The reason for this is
  * that importing postgresql can confuse javac (we have conflicting class names
- * in postgresql.* and java.sql.*). This doesn't cause any problems, as long
- * as no code imports postgresql.
+ * in org.postgresql.* and java.sql.*). This doesn't cause any problems, as
+ * long as no code imports org.postgresql.
  *
  * Under normal circumstances, code using any jdbc driver only needs to import
  * java.sql, so this isn't a problem.
@@ -35,12 +35,17 @@ public class blobtest
     String pwd = args[2];
     
     // Load the driver
-    Class.forName("postgresql.Driver");
+    Class.forName("org.postgresql.Driver");
     
     // Connect to database
     System.out.println("Connecting to Database URL = " + url);
     db = DriverManager.getConnection(url, usr, pwd);
-    System.out.println("Connected...Now creating a statement");
+    
+    // This is required for all LargeObject calls
+    System.out.println("Connected... First turn off autoCommit()");
+    db.setAutoCommit(false);
+    
+    System.out.println("Now creating a statement");
     s = db.createStatement();
     
     // Now run tests using postgresql's own Large object api
@@ -66,16 +71,22 @@ public class blobtest
    */
   public void ownapi() throws FileNotFoundException, IOException, SQLException
   {
-    System.out.println("\n----------------------------------------------------------------------\nTesting postgresql large object api\n");
+    System.out.println("\n----------------------------------------------------------------------\nTesting postgresql large object api\n----------------------------------------------------------------------\n");
     
     // Internally, the driver provides JDBC compliant methods to access large
-    // objects, however the unique methods available to postgresql makes things 
+    // objects, however the unique methods available to postgresql makes
+    // things a little easier.
     System.out.println("Gaining access to large object api");
-    lobj = ((postgresql.Connection)db).getLargeObjectAPI();
+    lobj = ((org.postgresql.Connection)db).getLargeObjectAPI();
     
     int oid = ownapi_test1();
     ownapi_test2(oid);
-    //ownapi_test3(oid);
+    
+    // Now call the jdbc2api test
+    jdbc2api(oid);
+    
+    // finally delete the large object
+    ownapi_test3(oid);
     System.out.println("\n\nOID="+oid);
   }
   
@@ -157,21 +168,63 @@ public class blobtest
     lobj.unlink(oid);
   }
   
-  //=========================================================================
+    //=======================================================================
+    // This tests the Blob interface of the JDBC 2.0 specification
+    public void jdbc2api(int oid) throws SQLException, IOException
+    {
+	System.out.println("Testing JDBC2 Blob interface:");
+	jdbc2api_cleanup();
+	
+	System.out.println("Creating Blob on large object "+oid);
+	s.executeUpdate("create table basic (a oid)");
+	
+	System.out.println("Inserting row");
+	s.executeUpdate("insert into basic values ("+oid+")");
+	
+	System.out.println("Selecting row");
+	ResultSet rs = s.executeQuery("select a from basic");
+	if(rs!=null) {
+	    while(rs.next()) {
+		System.out.println("Fetching Blob");
+		Blob b = rs.getBlob("a");
+		System.out.println("Blob.length() = "+b.length());
+		System.out.println("Characters 400-500:");
+		System.out.write(b.getBytes(400l,100));
+		System.out.println();
+	    }
+	    rs.close();
+	}
+	
+	System.out.println("Cleaning up");
+	jdbc2api_cleanup();
+    }
+    
+    private void jdbc2api_cleanup() throws SQLException
+    {
+	db.setAutoCommit(true);
+	try {
+	    s.executeUpdate("drop table basic");
+	} catch(Exception ex) {
+	    // We ignore any errors here
+	}
+	db.setAutoCommit(false);
+    }
+    
+    //=======================================================================
   
   public static void instructions()
   {
     System.err.println("java example.blobtest jdbc-url user password [debug]");
     System.err.println("\nExamples:\n");
-    System.err.println("java -Djdbc.driver=postgresql.Driver example.blobtest jdbc:postgresql:test postgres password\nThis will run the tests on the database test on the local host.\n");
-    System.err.println("java -Djdbc.driver=postgresql.Driver example.blobtest jdbc:postgresql:test postgres password debug\nThis is the same as above, but will output debug information.\n");
+    System.err.println("java -Djdbc.driver=org.postgresql.Driver example.blobtest jdbc:postgresql:test postgres password\nThis will run the tests on the database test on the local host.\n");
+    System.err.println("java -Djdbc.driver=org.postgresql.Driver example.blobtest jdbc:postgresql:test postgres password debug\nThis is the same as above, but will output debug information.\n");
     
     System.err.println("This example tests the binary large object api of the driver.\nThis allows images or java objects to be stored in the database, and retrieved\nusing both postgresql's own api, and the standard JDBC api.");
   }
   
   public static void main(String args[])
   {
-    System.out.println("PostgreSQL blobtest v6.3 rev 1\n");
+    System.out.println("PostgreSQL blobtest v7.0 rev 1\n");
     
     if(args.length<3) {
       instructions();

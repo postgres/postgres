@@ -5,7 +5,7 @@ import java.sql.*;
 import java.text.*;
 
 // rare in user code, but we use the LargeObject API in this test
-import postgresql.largeobject.*;
+import org.postgresql.largeobject.*;
 
 /**
  * This example tests the thread safety of the driver.
@@ -28,7 +28,7 @@ public class threadsafe
     String pwd = args[2];
     
     // Load the driver
-    Class.forName("postgresql.Driver");
+    Class.forName("org.postgresql.Driver");
     
     // Connect to database
     System.out.println("Connecting to Database URL = " + url);
@@ -263,7 +263,7 @@ public class threadsafe
       //st = c.createStatement();
       
       // create a blob
-      lom = ((postgresql.Connection)c).getLargeObjectAPI();
+      lom = ((org.postgresql.Connection)c).getLargeObjectAPI();
       oid = lom.create();
       System.out.println("Thread 3 has created a blob of oid "+oid);
     }

@@ -38,7 +38,7 @@ public class datestyle
     String pwd = args[2];
     
     // Load the driver
-    Class.forName("postgresql.Driver");
+    Class.forName("org.postgresql.Driver");
     
     // Connect to database
     System.out.println("Connecting to Database URL = " + url);
