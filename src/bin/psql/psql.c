@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.64 1997/05/23 01:53:42 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.65 1997/05/24 01:45:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1128,8 +1128,20 @@ HandleSlashCmds(PsqlSettings * settings,
 		}
 		do_connect(optarg2, optarg3, settings);
 	    }
-	    else
-		do_connect(optarg, optarg2,  settings);
+	    else {
+		char           *optarg3;
+		int            blank_loc2;
+
+	    	blank_loc2 = strcspn(optarg, " \t");
+		if (blank_loc2 == 0 || *(optarg + blank_loc2) == '\0')
+		    optarg3 = NULL;
+		else {
+	    	    optarg3 = optarg + blank_loc2 +
+					strspn(optarg + blank_loc2, " \t");
+		    *(optarg + blank_loc2) = '\0';
+		}
+		do_connect(optarg, optarg3,  settings);
+	    }
 	}
 	break;
     case 'd':			/* \d describe tables or columns in a table */
