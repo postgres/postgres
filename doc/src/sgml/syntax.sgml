@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.89 2003/11/29 19:51:37 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.90 2004/03/12 00:25:40 neilc Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -357,6 +357,23 @@ SELECT 'foo'      'bar';
 5e2
 1.925e-3
 </literallayout>
+    </para>
+
+    <para>
+     In addition, there are several special constant values that are
+     accepted as numeric constants. The <type>float4</type> and
+     <type>float8</type> types allow the following special constants:
+<literallayout>
+Infinity
+-Infinity
+NaN
+</literallayout>
+     These represent the IEEE 754 special values
+     <quote>infinity</quote>, <quote>negative infinity</quote>, and
+     <quote>not-a-number</quote>, respectively. The
+     <type>numeric</type> type only allows <literal>NaN</>, whereas
+     the integral types do not allow any of these constants. Note that
+     these constants are recognized in a case-insensitive manner.
     </para>
 
     <para>

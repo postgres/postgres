@@ -29,8 +29,17 @@ INSERT INTO FLOAT4_TBL(f1) VALUES ('123            5');
 SELECT 'NaN'::float4;
 SELECT 'nan'::float4;
 SELECT '   NAN  '::float4;
+SELECT 'infinity'::float4;
+SELECT '          -INFINiTY   '::float4;
 -- bad special inputs
 SELECT 'N A N'::float4;
+SELECT 'NaN x'::float4;
+SELECT ' INFINITY    x'::float4;
+
+SELECT 'Infinity'::float4 + 100.0;
+SELECT 'Infinity'::float4 / 'Infinity'::float4;
+SELECT 'nan'::float4 / 'nan'::float4;
+
 
 SELECT '' AS five, FLOAT4_TBL.*;
 

@@ -29,8 +29,16 @@ INSERT INTO FLOAT8_TBL(f1) VALUES ('123           5');
 SELECT 'NaN'::float8;
 SELECT 'nan'::float8;
 SELECT '   NAN  '::float8;
+SELECT 'infinity'::float8;
+SELECT '          -INFINiTY   '::float8;
 -- bad special inputs
 SELECT 'N A N'::float8;
+SELECT 'NaN x'::float8;
+SELECT ' INFINITY    x'::float8;
+
+SELECT 'Infinity'::float8 + 100.0;
+SELECT 'Infinity'::float8 / 'Infinity'::float8;
+SELECT 'nan'::float8 / 'nan'::float8;
 
 SELECT '' AS five, FLOAT8_TBL.*;
 

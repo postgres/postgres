@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.98 2004/03/11 02:11:13 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.99 2004/03/12 00:25:40 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,21 +114,14 @@ static int	float8_cmp_internal(float8 a, float8 b);
 
 
 /*
- * check to see if a float4 val is outside of
- * the FLOAT4_MIN, FLOAT4_MAX bounds.
+ * check to see if a float4 val is outside of the FLOAT4_MIN,
+ * FLOAT4_MAX bounds.
  *
- * raise an ereport warning if it is
-*/
+ * raise an ereport() error if it is
+ */
 static void
 CheckFloat4Val(double val)
 {
-	/*
-	 * defining unsafe floats's will make float4 and float8 ops faster at
-	 * the cost of safety, of course!
-	 */
-#ifdef UNSAFE_FLOATS
-	return;
-#else
 	if (fabs(val) > FLOAT4_MAX)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
@@ -137,27 +130,17 @@ CheckFloat4Val(double val)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("type \"real\" value out of range: underflow")));
-
-	return;
-#endif   /* UNSAFE_FLOATS */
 }
 
 /*
- * check to see if a float8 val is outside of
- * the FLOAT8_MIN, FLOAT8_MAX bounds.
+ * check to see if a float8 val is outside of the FLOAT8_MIN,
+ * FLOAT8_MAX bounds.
  *
- * raise an ereport error if it is
+ * raise an ereport() error if it is
  */
 static void
 CheckFloat8Val(double val)
 {
-	/*
-	 * defining unsafe floats's will make float4 and float8 ops faster at
-	 * the cost of safety, of course!
-	 */
-#ifdef UNSAFE_FLOATS
-	return;
-#else
 	if (fabs(val) > FLOAT8_MAX)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
@@ -166,7 +149,6 @@ CheckFloat8Val(double val)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("type \"double precision\" value out of range: underflow")));
-#endif   /* UNSAFE_FLOATS */
 }
 
 /*
@@ -201,10 +183,6 @@ float4in(PG_FUNCTION_ARGS)
 		 * empty strings, but emit a warning noting that the feature
 		 * is deprecated. In 7.6+, the warning should be replaced by
 		 * an error.
-		 *
-		 * XXX we should accept "Infinity" and "-Infinity" too, but
-		 * what are the correct values to assign?  HUGE_VAL will
-		 * provoke an error from CheckFloat4Val.
 		 */
 		if (*num == '\0')
 		{
@@ -217,6 +195,10 @@ float4in(PG_FUNCTION_ARGS)
 		}
 		else if (strcasecmp(num, "NaN") == 0)
 			val = NAN;
+		else if (strcasecmp(num, "Infinity") == 0)
+			val = HUGE_VAL;
+		else if (strcasecmp(num, "-Infinity") == 0)
+			val = -HUGE_VAL;
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -239,7 +221,8 @@ float4in(PG_FUNCTION_ARGS)
 	 * if we get here, we have a legal double, still need to check to see
 	 * if it's a legal float
 	 */
-	CheckFloat4Val(val);
+	if (!isinf(val))
+		CheckFloat4Val(val);
 
 	PG_RETURN_FLOAT4((float4) val);
 }
@@ -364,7 +347,8 @@ float8in(PG_FUNCTION_ARGS)
 				 errmsg("invalid input syntax for type double precision: \"%s\"",
 						num)));
 
-	CheckFloat8Val(val);
+	if (!isinf(val))
+		CheckFloat8Val(val);
 
 	PG_RETURN_FLOAT8(val);
 }

@@ -6,7 +6,7 @@
  * for developers.	If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.10 2004/02/11 22:55:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.11 2004/03/12 00:25:40 neilc Exp $
  *------------------------------------------------------------------------
  */
 
@@ -174,12 +174,6 @@
  * with the postmaster's -k switch.
  */
 #define DEFAULT_PGSOCKET_DIR  "/tmp"
-
-/*
- * Defining this will make float4 and float8 operations faster by
- * suppressing overflow/underflow checks.
- */
-/* #define UNSAFE_FLOATS */
 
 /*
  * The random() function is expected to yield values between 0 and

@@ -50,9 +50,39 @@ SELECT '   NAN  '::float4;
     NaN
 (1 row)
 
+SELECT 'infinity'::float4;
+  float4  
+----------
+ Infinity
+(1 row)
+
+SELECT '          -INFINiTY   '::float4;
+  float4   
+-----------
+ -Infinity
+(1 row)
+
 -- bad special inputs
 SELECT 'N A N'::float4;
 ERROR:  invalid input syntax for type real: "N A N"
+SELECT 'NaN x'::float4;
+ERROR:  invalid input syntax for type real: "NaN x"
+SELECT ' INFINITY    x'::float4;
+ERROR:  invalid input syntax for type real: " INFINITY    x"
+SELECT 'Infinity'::float4 + 100.0;
+ERROR:  type "double precision" value out of range: overflow
+SELECT 'Infinity'::float4 / 'Infinity'::float4;
+ ?column? 
+----------
+      NaN
+(1 row)
+
+SELECT 'nan'::float4 / 'nan'::float4;
+ ?column? 
+----------
+      NaN
+(1 row)
+
 SELECT '' AS five, FLOAT4_TBL.*;
  five |     f1      
 ------+-------------

@@ -50,9 +50,39 @@ SELECT '   NAN  '::float8;
     NaN
 (1 row)
 
+SELECT 'infinity'::float8;
+  float8  
+----------
+ Infinity
+(1 row)
+
+SELECT '          -INFINiTY   '::float8;
+  float8   
+-----------
+ -Infinity
+(1 row)
+
 -- bad special inputs
 SELECT 'N A N'::float8;
 ERROR:  invalid input syntax for type double precision: "N A N"
+SELECT 'NaN x'::float8;
+ERROR:  invalid input syntax for type double precision: "NaN x"
+SELECT ' INFINITY    x'::float8;
+ERROR:  invalid input syntax for type double precision: " INFINITY    x"
+SELECT 'Infinity'::float8 + 100.0;
+ERROR:  type "double precision" value out of range: overflow
+SELECT 'Infinity'::float8 / 'Infinity'::float8;
+ ?column? 
+----------
+      NaN
+(1 row)
+
+SELECT 'nan'::float8 / 'nan'::float8;
+ ?column? 
+----------
+      NaN
+(1 row)
+
 SELECT '' AS five, FLOAT8_TBL.*;
  five |          f1          
 ------+----------------------
