@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.20 2001/05/31 17:15:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.21 2001/06/06 18:54:41 wieck Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -385,7 +385,8 @@ decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 								*cp2++ = '\\';
 							*cp2++ = *cp1++;
 						}
-						strcat(buf, "'");
+						*cp2++ = '\'';
+						*cp2 = '\0';
 						curname_def->query = strdup(buf);
 						new->default_val = curname_def;
 
@@ -1404,6 +1405,8 @@ stmt_open		: K_OPEN lno cursor_varptr
 						{
 							if ($3->cursor_explicit_argrow >= 0)
 							{
+								char   *cp;
+
 								tok = yylex();
 
 								if (tok != '(')
@@ -1412,7 +1415,20 @@ stmt_open		: K_OPEN lno cursor_varptr
 									elog(ERROR, "cursor %s has arguments", $3->refname);
 								}
 
-								new->argquery = read_sqlstmt(';', ";", "SELECT (");
+								new->argquery = read_sqlstmt(';', ";", "SELECT ");
+								/* Remove the trailing right paren,
+                                 * because we want "select 1, 2", not
+                                 * "select (1, 2)".
+								 */
+								cp = new->argquery->query;
+								cp += strlen(cp);
+								--cp;
+								if (*cp != ')')
+								{
+									plpgsql_comperrinfo();
+									elog(ERROR, "missing )");
+								}
+								*cp = '\0';
 							}
 							else
 							{
