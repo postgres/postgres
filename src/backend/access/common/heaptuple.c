@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.16 1996/11/10 02:56:41 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.17 1996/12/04 03:05:55 bryanh Exp $
  *
  * NOTES
  *    The old interface functions have been converted to macros
@@ -35,9 +35,9 @@
 
 /* this is so the sparcstation debugger works */
 
-#if !defined(NO_ASSERT_CHECKING) && defined(sparc)
+#if !defined(NO_ASSERT_CHECKING) && defined(sparc) && defined(sunos4)
 #define register
-#endif /* !NO_ASSERT_CHECKING && sparc */
+#endif /* !NO_ASSERT_CHECKING && sparc && sunos4 */
 
 /* ----------------------------------------------------------------
  *			misc support routines

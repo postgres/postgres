@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.10 1996/11/27 08:16:38 bryanh Exp $
+ * $Id: ipc.h,v 1.11 1996/12/04 03:06:29 bryanh Exp $
  *
  * NOTES
  *    This file is very architecture-specific.  This stuff should actually
@@ -24,77 +24,9 @@
 #include <sys/types.h>
 #include <sys/ipc.h>   /* For IPC_PRIVATE */
 
-/*
- * Many architectures have support for user-level spinlocks (i.e., an
- * atomic test-and-set instruction).  However, we have only written
- * spinlock code for the architectures listed.
- * NB: for operating systems like NetBSD (covered by BSD44_derived),
- *     we may in fact have different architectures, thus make the tests
- *     based on portnames somewhat misleading.
- */
-#if defined(aix) || \
-    defined(alpha) || \
-    defined(BSD44_derived) || \
-    defined(bsdi) || \
-    defined(hpux) || \
-    defined(i386_solaris) || \
-    defined(irix5) || \
-    defined(linux) || \
-    defined(next) || \
-    defined(sparc) || \
-    defined(sparc_solaris)
-#define HAS_TEST_AND_SET
-#endif
-
-#if defined(BSD44_derived) && defined(__mips__)
-#undef HAS_TEST_AND_SET
-#endif
+#include <config.h>
 
 #if defined(HAS_TEST_AND_SET)
-
-#if defined(aix)
-/*
- * The AIX C library has the cs(3) builtin for compare-and-set that 
- * operates on ints.
- */
-typedef unsigned int	slock_t;
-#else /* aix */
-
-#if defined(alpha)
-typedef msemaphore	slock_t;
-#else /* alpha */
-
-#if defined(hpux)
-/*
- * The PA-RISC "semaphore" for the LDWCX instruction is 4 bytes aligned
- * to a 16-byte boundary.
- */
-typedef struct { int sem[4]; } slock_t;
-#else /* hpux */
-
-#if defined(irix5)
-typedef abilock_t	slock_t;
-#else /* irix5 */
-
-#if defined(next)
-/*
- * Use Mach mutex routines since these are, in effect, test-and-set
- * spinlocks.
- */
-#undef NEVER	/* definition in cthreads.h conflicts with parse.h */
-typedef struct mutex	slock_t;
-#else /* next */
-
-/*
- * On all other architectures spinlocks are a single byte.
- */
-typedef unsigned char   slock_t;
-
-#endif /* next */
-#endif /* irix5 */
-#endif /* hpux */
-#endif /* alpha */
-#endif /* aix */
 
 extern void S_LOCK(slock_t *lock);
 extern void S_UNLOCK(slock_t *lock);

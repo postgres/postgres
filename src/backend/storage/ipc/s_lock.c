@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.8 1996/11/10 03:02:26 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.9 1996/12/04 03:06:04 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,7 +266,7 @@ S_LOCK_FREE(slock_t *lock)
  * sun3
  */
  
-#if (defined(sun3) && ! defined(sparc))
+#if defined(sun3)
 
 void    
 S_LOCK(slock_t *lock)
@@ -307,13 +307,13 @@ tas_dummy()
     asm("	.data");
 }
 
-#endif
+#endif /* sun3 */
 
 /*
- * SPARC (SunOS 4)
+ * sparc machines
  */
 
-#if defined(sparc) && !defined(sparc_solaris)
+#if defined(NEED_SPARC_TAS_ASM)
 
 /* if we're using -ansi w/ gcc, use __asm__ instead of asm */
 #if defined(__STRICT_ANSI__)
@@ -375,18 +375,14 @@ S_INIT_LOCK(unsigned char *addr)
     *addr = 0;
 }
 
-#endif /* sparc */
+#endif /* NEED_SPARC_TAS_ASM */
 
 /*
- * Linux and friends
+ * i386 based things
  */
 
-#if defined(BSD44_derived) || \
-    defined(bsdi) || \
-    defined(bsdi_2_1) || \
-    defined(linux)
+#if defined(NEED_I386_TAS_ASM)
 
-    
 int
 tas(slock_t *m)
 {
@@ -414,7 +410,7 @@ S_INIT_LOCK(slock_t *lock)
     S_UNLOCK(lock);
 }
 
-#endif /* linux and friends */
+#endif /* NEED_I386_TAS_ASM */
 
 
 #endif /* HAS_TEST_AND_SET */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.6 1996/11/10 03:05:53 momjian Exp $
+ * $Id: buf_internals.h,v 1.7 1996/12/04 03:06:27 bryanh Exp $
  *
  * NOTE
  *	If BUFFERPAGE0 is defined, then 0 will be used as a
@@ -130,40 +130,11 @@ struct sbufdesc {
      * going to make some of these types bigger soon anyway... -pma 1/2/93
      */
 
-/* NO spinlock */
+    /*
+     * NOTE: This is now defined in the ..../include/config.h file!
+     */
 
-#if defined(ultrix4)
-    char		sb_pad[60];	/* no slock_t */
-#endif /* mips */
-
-/* HAS_TEST_AND_SET -- platform dependent size */
-
-#if defined(aix)
-    char		sb_pad[44];	/* typedef unsigned int slock_t; */
-#endif /* aix */
-#if defined(alpha)
-    char		sb_pad[40];	/* typedef msemaphore slock_t; */
-#endif /* alpha */
-#if defined(hpux)
-    char		sb_pad[44];	/* typedef struct { int sem[4]; } slock_t; */
-#endif /* hpux */
-#if defined(irix5)
-    char		sb_pad[44];	/* typedef abilock_t slock_t; */
-#endif /* irix5 */
-#if defined(next)
-    char		sb_pad[56];	/* typedef struct mutex slock_t; */
-#endif /* next */
-
-/* HAS_TEST_AND_SET -- default 1 byte spinlock */
-
-#if defined(BSD44_derived) || \
-    defined(bsdi) || \
-    defined(i386_solaris) || \
-    defined(linux) || \
-    defined(sparc) || \
-    defined(sparc_solaris)
-    char		sb_pad[56];	/* has slock_t */
-#endif /* 1 byte slock_t */
+    char		sb_pad[SB_PAD];
 };
 
 /*

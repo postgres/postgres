@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.13 1996/11/22 04:39:53 bryanh Exp $
+ * $Id: libpq-fe.h,v 1.14 1996/12/04 03:06:33 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -298,10 +298,10 @@ typedef void *TUPLE;
 #define palloc malloc
 #define pfree free
 
-#if defined(sparc)
+#if defined(sunos4)
 extern char *sys_errlist[];
 #define strerror(A) (sys_errlist[(A)])
-#endif /* sparc */
+#endif /* sunos4 */
 
 #ifdef __cplusplus
 };

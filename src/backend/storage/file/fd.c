@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Id: fd.c,v 1.9 1996/11/08 05:58:21 momjian Exp $
+ *    $Id: fd.c,v 1.10 1996/12/04 03:05:58 bryanh Exp $
  *
  * NOTES:
  *
@@ -52,24 +52,20 @@
 #include "utils/palloc.h"
 #include "storage/fd.h"
 
-#ifdef sparc
+#if defined(NEED_NOFILE_KLUDGE)
 /*
  * the SunOS 4 NOFILE is a lie, because the default limit is *not* the
  * maximum number of file descriptors you can have open.
  *
  * we have to either use this number (the default dtablesize) or
  * explicitly call setrlimit(RLIMIT_NOFILE, NOFILE).
+ *
+ * this braindamage apparently also affects solaris 2.X as well
  */
 #include <sys/user.h>
 #undef NOFILE
 #define NOFILE NOFILE_IN_U
-#endif /* sparc */
-
-#if defined(sparc_solaris) || defined(i386_solaris)
-#include <sys/user.h>
-#undef NOFILE
-#define NOFILE 64
-#endif /* sparc_solaris || i386_solaris */
+#endif /* NEED_NOFILE_KLUDGE */
 
 /*
  * Problem: Postgres does a system(ld...) to do dynamic loading.  This

@@ -52,13 +52,12 @@ port/BSD44_derived
 port/aix
 port/alpha
 port/bsdi
-port/bsdi_2_1
 port/dgux
 port/hpux
 port/i386_solaris
 port/irix5
 port/linux
-port/sparc
+port/sunos4
 port/sparc_solaris
 port/svr4
 port/ultrix4

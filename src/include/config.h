@@ -25,6 +25,9 @@
 #  define NEED_SYS_SELECT_H
 #  define HAVE_TZSET
 #  define HAVE_ANSI_CPP
+#  define SB_PAD 44
+#  define HAS_TEST_AND_SET
+   typedef unsigned int slock_t;
 #endif
 
 #if defined(alpha)
@@ -34,17 +37,43 @@
 #  define NEED_ISINF 
 #  define HAS_LONG_LONG
 #  define NEED_UNION_SEMUN 
+#  define SB_PAD 40
+#  define HAS_TEST_AND_SET
+   typedef msemaphore slock_t;
 #endif
 
-#if defined(BSD44_derived) || \
-    defined(bsdi)
+#if defined(BSD44_derived)
 #  define USE_LIMITS_H
 #  define USE_POSIX_TIME
 #  define NEED_CBRT
+#  define NEED_I386_TAS_ASM
+#  define SB_PAD 56
+#  define HAS_TEST_AND_SET
+#  if defined(__mips__)
+#    undef HAS_TEST_AND_SET
+#  endif
+   typedef unsigned char slock_t;
+#endif
+
+#if defined(bsdi)
+#  if defined(i386)
+#    define NEED_I386_TAS_ASM
+#    define SB_PAD 56
+#  endif
+#  if defined(sparc)
+#    define NEED_SPARC_TAS_ASM
+#    define SB_PAD 56
+#  endif
 #  if defined(PRE_BSDI_2_1)
 #    define NEED_UNION_SEMUN 
 #  endif
+#  define USE_LIMITS_H
+#  define USE_POSIX_TIME
+#  define NEED_CBRT
+#  define HAS_TEST_AND_SET
+   typedef unsigned char slock_t;
 #endif
+
 
 #if defined(dgux)
 #  define LINUX_ELF
@@ -60,6 +89,9 @@
 #  define NEED_CBRT
 #  define NEED_RINT
 #  define NEED_UNION_SEMUN 
+#  define SB_PAD 44
+#  define HAS_TEST_AND_SET
+   typedef struct { int sem[4]; } slock_t;
 #endif
 
 #if defined(i386_solaris) 
@@ -71,6 +103,10 @@
 #  define HAVE_TZSET
 #  define NEED_UNION_SEMUN 
 #  define SYSV_DIRENT
+#  define NEED_NOFILE_KLUDGE
+#  define SB_PAD 56
+#  define HAS_TEST_AND_SET
+   typedef unsigned char slock_t;
 #endif
 
 #if defined(irix5)
@@ -81,6 +117,9 @@
 #  define NO_VFORK
 #  define HAVE_TZSET
 #  define SYSV_DIRENT
+#  define SB_PAD 44
+#  define HAS_TEST_AND_SET
+   typedef abilock_t slock_t;
 #endif
 
 #if defined(linux)
@@ -94,20 +133,22 @@
 #  define USE_POSIX_TIME
 #  define HAVE_TZSET
 #  define NEED_CBRT
+#  define NEED_I386_TAS_ASM
+#  define SB_PAD 56
+#  define HAS_TEST_AND_SET
+   typedef unsigned char slock_t;
 #endif
 
+/* does anybody use this? */
 #if defined(next)
 #  define SIGJMP_BUF
 #  define NEED_SIG_JMP
+#  define SB_PAD 56
+   typedef struct mutex    slock_t;
 #endif
 
 #if defined(sequent) 
 #  define NEED_UNION_SEMUN 
-#endif
-
-#if defined(sparc) && !defined(sparc_solaris)
-#  define USE_POSIX_TIME
-#  undef HAVE_MEMMOVE
 #endif
 
 #if defined(sparc_solaris)
@@ -120,6 +161,15 @@
 #  define HAVE_TZSET
 #  define NEED_UNION_SEMUN 
 #  define SYSV_DIRENT
+#  define NEED_NOFILE_KLUDGE
+#  define SB_PAD 56
+#endif
+
+#if defined(sunos4)
+#  define USE_POSIX_TIME
+#  define NEED_NOFILE_KLUDGE
+#  define SB_PAD 56
+#  undef HAVE_MEMMOVE
 #endif
 
 #if defined(svr4) 
@@ -150,6 +200,7 @@
 #  define USE_POSIX_TIME
 #  define NEED_UNION_SEMUN 
 #  define NEED_STRDUP
+#  define SB_PAD 60
 #endif
 
 

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.15 1996/11/26 07:38:24 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.16 1996/12/04 03:06:16 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -32,7 +32,7 @@ ifeq ($(USE_READLINE), true)
    ifeq ($(PORTNAME), ultrix4)
    LD_ADD+= -ltermcap
    else
-   ifeq ($(PORTNAME), sparc)
+   ifeq ($(PORTNAME), sunos4)
    LD_ADD+= -ltermcap
    else
    ifeq ($(PORTNAME), linux)

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.4 1996/11/14 06:06:39 bryanh Exp $
+ * $Id: c.h,v 1.5 1996/12/04 03:06:21 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -747,7 +747,7 @@ extern char *form(char *fmt, ...);
 #include "port/hpux/fixade.h"		/* for 8.07 unaligned access fixup */
 #endif /* hpux */
 
-#if defined(sparc) && !defined(sparc_solaris)
+#if defined(sunos4)
 #define	memmove(d, s, l)	bcopy(s, d, l)
 #endif
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.5 1996/11/13 20:50:04 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.6 1996/12/04 03:06:09 bryanh Exp $
  *
  * Notes:
  *	XXX This needs to use exception.h to handle recovery when
@@ -740,7 +740,7 @@ SearchSysCache(struct catcache *cache,
 	       Datum v4)
 {
     unsigned	hash;
-    CatCTup	*ct; 
+    CatCTup	*ct = NULL; 
     CatCTup	*nct; 
     CatCTup	*nct2; 
     Dlelem      *elt;
