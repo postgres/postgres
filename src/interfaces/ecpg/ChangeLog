@@ -603,5 +603,9 @@ Wed Jun 16 20:21:42 CEST 1999
 Thu Jun 24 18:06:43 CEST 1999
 
 	- Fixed C comment bug that caused ecpg to not accept quoted quotes.
+
+Fri Jun 25 07:17:10 CEST 1999
+
+	- Changed error message in ecpglib.c to list correct database name.
 	- Set library version to 3.0.0
 	- Set ecpg version to 2.6.0

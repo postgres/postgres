@@ -1238,7 +1238,7 @@ ECPGconnect(int lineno, const char *dbname, const char *user, const char *passwd
 
 	actual_connection = all_connections = this;
 
-	ECPGlog("ECPGconnect: opening database %s %s%s\n", dbname ? dbname : "NULL", user ? "for user " : "", user ? user : "");
+	ECPGlog("ECPGconnect: opening database %s %s%s\n", dbname ? dbname : "<DEFAULT>", user ? "for user " : "", user ? user : "");
 
 	sqlca.sqlcode = 0;
 
@@ -1247,8 +1247,8 @@ ECPGconnect(int lineno, const char *dbname, const char *user, const char *passwd
 	if (PQstatus(this->connection) == CONNECTION_BAD)
 	{
 		ECPGfinish(this);
-		ECPGlog("connect: could not open database %s %s%s in line %d\n", dbname ? dbname : "NULL", user ? "for user " : "", user ? user : "", lineno);
-		register_error(ECPG_CONNECT, "connect: could not open database %s.", dbname ? dbname : "NULL");
+		ECPGlog("connect: could not open database %s %s%s in line %d\n", dbname ? dbname : "<DEFAULT>", user ? "for user " : "", user ? user : "", lineno);
+		register_error(ECPG_CONNECT, "connect: could not open database %s.", dbname ? dbname : "<DEFAULT>");
 		return false;
 	}
 
