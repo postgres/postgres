@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.76 1998/08/20 22:07:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.77 1998/08/28 03:36:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1143,16 +1143,14 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 			{
 				for (i = 0, idcur = Idesc; i < nindices; i++, idcur++)
 				{
-					FormIndexDatum(
-								   idcur->natts,
-							   (AttrNumber *) &(idcur->tform->indkey[0]),
+					FormIndexDatum(idcur->natts,
+								   (AttrNumber *) &(idcur->tform->indkey[0]),
 								   newtup,
 								   tupdesc,
 								   idatum,
 								   inulls,
 								   idcur->finfoP);
-					iresult = index_insert(
-										   Irel[i],
+					iresult = index_insert(Irel[i],
 										   idatum,
 										   inulls,
 										   &(newtup->t_ctid),

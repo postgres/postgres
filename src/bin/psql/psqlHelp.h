@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.50 1998/08/25 21:36:58 scrappy Exp $
+ * $Id: psqlHelp.h,v 1.51 1998/08/28 03:36:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -353,7 +353,7 @@ set R_PLANS TO 'ON'| 'OFF'"},
 		"update tuples",
 	"\
 \tUPDATE class_name SET attr1 = expr1, ...attrN = exprN\n\
-\t [FROM from_clause]\n\
+\t[FROM from_clause]\n\
 \t[WHERE qual];"},
 	{"vacuum",
 		"vacuum the database, i.e. cleans out deleted records, updates statistics",
