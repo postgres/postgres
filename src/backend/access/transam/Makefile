@@ -4,7 +4,7 @@
 #    Makefile for access/transam
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/transam/Makefile,v 1.16 2003/05/12 23:08:50 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/transam/Makefile,v 1.17 2003/06/11 22:37:45 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ subdir = src/backend/access/transam
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = clog.o transam.o varsup.o xact.o xlog.o xlogutils.o rmgr.o
+OBJS = clog.o transam.o varsup.o xact.o xlog.o xlogutils.o rmgr.o slru.o
 
 all: SUBSYS.o
 

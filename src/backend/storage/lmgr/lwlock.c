@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lwlock.c,v 1.14 2002/09/25 20:31:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lwlock.c,v 1.15 2003/06/11 22:37:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,8 +108,8 @@ NumLWLocks(void)
 	/* bufmgr.c needs two for each shared buffer */
 	numLocks += 2 * NBuffers;
 
-	/* clog.c needs one per CLOG buffer */
-	numLocks += NUM_CLOG_BUFFERS;
+	/* clog.c needs one per CLOG buffer + one control lock */
+	numLocks += NUM_CLOG_BUFFERS + 1;
 
 	/* Perhaps create a few more for use by user-defined modules? */
 
