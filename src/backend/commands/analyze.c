@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * analyze.c
- *	  the postgres optimizer analyzer
+ *	  the postgres statistics generator
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.18 2001/06/02 19:01:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.19 2001/06/06 21:29:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@ typedef struct
 	/* These fields are set up by examine_attribute */
 	int			attnum;			/* attribute number */
 	AlgCode		algcode;		/* Which algorithm to use for this column */
-	int			minrows;		/* Minimum # of rows needed for stats */
+	int			minrows;		/* Minimum # of rows wanted for stats */
 	Form_pg_attribute attr;		/* copy of pg_attribute row for column */
 	Form_pg_type attrtype;		/* copy of pg_type row for column */
 	Oid			eqopr;			/* '=' operator for datatype, if any */
@@ -990,7 +990,9 @@ compute_minimal_stats(VacAttrStats *stats,
 			 * exactly k times in our sample of r rows (from a total of n).
 			 * We assume (not very reliably!) that all the multiply-occurring
 			 * values are reflected in the final track[] list, and the other
-			 * nonnull values all appeared but once.
+			 * nonnull values all appeared but once.  (XXX this usually
+			 * results in a drastic overestimate of ndistinct.  Can we do
+			 * any better?)
 			 *----------
 			 */
 			int		f1 = nonnull_cnt - summultiple;
@@ -1011,9 +1013,49 @@ compute_minimal_stats(VacAttrStats *stats,
 		if (stats->stadistinct > 0.1 * totalrows)
 			stats->stadistinct = - (stats->stadistinct / totalrows);
 
-		/* Generate an MCV slot entry, only if we found multiples */
-		if (nmultiple < num_mcv)
-			num_mcv = nmultiple;
+		/*
+		 * Decide how many values are worth storing as most-common values.
+		 * If we are able to generate a complete MCV list (all the values
+		 * in the sample will fit, and we think these are all the ones in
+		 * the table), then do so.  Otherwise, store only those values
+		 * that are significantly more common than the (estimated) average.
+		 * We set the threshold rather arbitrarily at 25% more than average,
+		 * with at least 2 instances in the sample.
+		 */
+		if (track_cnt < track_max && toowide_cnt == 0 &&
+			stats->stadistinct > 0 &&
+			track_cnt <= num_mcv)
+		{
+			/* Track list includes all values seen, and all will fit */
+			num_mcv = track_cnt;
+		}
+		else
+		{
+			double	ndistinct = stats->stadistinct;
+			double	avgcount,
+					mincount;
+
+			if (ndistinct < 0)
+				ndistinct = - ndistinct * totalrows;
+			/* estimate # of occurrences in sample of a typical value */
+			avgcount = (double) numrows / ndistinct;
+			/* set minimum threshold count to store a value */
+			mincount = avgcount * 1.25;
+			if (mincount < 2)
+				mincount = 2;
+			if (num_mcv > track_cnt)
+				num_mcv = track_cnt;
+			for (i = 0; i < num_mcv; i++)
+			{
+				if (track[i].count < mincount)
+				{
+					num_mcv = i;
+					break;
+				}
+			}
+		}
+
+		/* Generate MCV slot entry */
 		if (num_mcv > 0)
 		{
 			MemoryContext old_context;
@@ -1080,6 +1122,7 @@ compute_scalar_stats(VacAttrStats *stats,
 	ScalarMCVItem *track;
 	int			track_cnt = 0;
 	int			num_mcv = stats->attr->attstattarget;
+	int			num_bins = stats->attr->attstattarget;
 
 	values = (ScalarItem *) palloc(numrows * sizeof(ScalarItem));
 	tupnoLink = (int *) palloc(numrows * sizeof(int));
@@ -1266,10 +1309,57 @@ compute_scalar_stats(VacAttrStats *stats,
 		if (stats->stadistinct > 0.1 * totalrows)
 			stats->stadistinct = - (stats->stadistinct / totalrows);
 
-		/* Generate an MCV slot entry, only if we found multiples */
-		if (nmultiple < num_mcv)
-			num_mcv = nmultiple;
-		Assert(track_cnt >= num_mcv);
+		/*
+		 * Decide how many values are worth storing as most-common values.
+		 * If we are able to generate a complete MCV list (all the values
+		 * in the sample will fit, and we think these are all the ones in
+		 * the table), then do so.  Otherwise, store only those values
+		 * that are significantly more common than the (estimated) average.
+		 * We set the threshold rather arbitrarily at 25% more than average,
+		 * with at least 2 instances in the sample.  Also, we won't suppress
+		 * values that have a frequency of at least 1/K where K is the
+		 * intended number of histogram bins; such values might otherwise
+		 * cause us to emit duplicate histogram bin boundaries.
+		 */
+		if (track_cnt == ndistinct && toowide_cnt == 0 &&
+			stats->stadistinct > 0 &&
+			track_cnt <= num_mcv)
+		{
+			/* Track list includes all values seen, and all will fit */
+			num_mcv = track_cnt;
+		}
+		else
+		{
+			double	ndistinct = stats->stadistinct;
+			double	avgcount,
+					mincount,
+					maxmincount;
+
+			if (ndistinct < 0)
+				ndistinct = - ndistinct * totalrows;
+			/* estimate # of occurrences in sample of a typical value */
+			avgcount = (double) numrows / ndistinct;
+			/* set minimum threshold count to store a value */
+			mincount = avgcount * 1.25;
+			if (mincount < 2)
+				mincount = 2;
+			/* don't let threshold exceed 1/K, however */
+			maxmincount = (double) numrows / (double) num_bins;
+			if (mincount > maxmincount)
+				mincount = maxmincount;
+			if (num_mcv > track_cnt)
+				num_mcv = track_cnt;
+			for (i = 0; i < num_mcv; i++)
+			{
+				if (track[i].count < mincount)
+				{
+					num_mcv = i;
+					break;
+				}
+			}
+		}
+
+		/* Generate MCV slot entry */
 		if (num_mcv > 0)
 		{
 			MemoryContext old_context;
@@ -1304,8 +1394,8 @@ compute_scalar_stats(VacAttrStats *stats,
 		 * ensures the histogram won't collapse to empty or a singleton.)
 		 */
 		num_hist = ndistinct - num_mcv;
-		if (num_hist > stats->attr->attstattarget)
-			num_hist = stats->attr->attstattarget + 1;
+		if (num_hist > num_bins)
+			num_hist = num_bins + 1;
 		if (num_hist >= 2)
 		{
 			MemoryContext old_context;
@@ -1321,6 +1411,7 @@ compute_scalar_stats(VacAttrStats *stats,
 			 *
 			 * Note we destroy the values[] array here... but we don't need
 			 * it for anything more.  We do, however, still need values_cnt.
+			 * nvals will be the number of remaining entries in values[].
 			 */
 			if (num_mcv > 0)
 			{
