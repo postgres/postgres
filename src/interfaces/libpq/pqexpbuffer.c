@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/interfaces/libpq/pqexpbuffer.c,v 1.6 2000/04/12 17:17:15 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/libpq/pqexpbuffer.c,v 1.7 2001/01/19 19:39:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,6 +99,9 @@ termPQExpBuffer(PQExpBuffer str)
 		free(str->data);
 		str->data = NULL;
 	}
+	/* just for luck, make the buffer validly empty. */
+	str->maxlen = 0;
+	str->len = 0;
 }
 
 /*------------------------
@@ -139,7 +142,7 @@ enlargePQExpBuffer(PQExpBuffer str, size_t needed)
 	 * overflows. Actually, we might need to more than double it if
 	 * 'needed' is big...
 	 */
-	newlen = str->maxlen ? (2 * str->maxlen) : 64;
+	newlen = (str->maxlen > 0) ? (2 * str->maxlen) : 64;
 	while (needed > newlen)
 		newlen = 2 * newlen;
 
@@ -177,9 +180,9 @@ printfPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 		 * just fall through to enlarge the buffer first.
 		 *----------
 		 */
-		avail = str->maxlen - str->len - 1;
-		if (avail > 16)
+		if (str->maxlen > str->len + 16)
 		{
+			avail = str->maxlen - str->len - 1;
 			va_start(args, fmt);
 			nprinted = vsnprintf(str->data + str->len, avail,
 								 fmt, args);
@@ -226,9 +229,9 @@ appendPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 		 * just fall through to enlarge the buffer first.
 		 *----------
 		 */
-		avail = str->maxlen - str->len - 1;
-		if (avail > 16)
+		if (str->maxlen > str->len + 16)
 		{
+			avail = str->maxlen - str->len - 1;
 			va_start(args, fmt);
 			nprinted = vsnprintf(str->data + str->len, avail,
 								 fmt, args);
