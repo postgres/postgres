@@ -1,6 +1,5 @@
 Todo Items for pg_autovacuum client
-
-_Allow it to detach from the tty
+--------------------------------------------------------------------------
 
 _create a FSM export function and see if I can use it for pg_autovacuum
 
@@ -9,6 +8,7 @@ _look into possible benifits of pgstattuple contrib work
 _Continue trying to reduce server load created by polling.
 
 Done:
+--------------------------------------------------------------------------
 _Check if required pg_stats are enables, if not exit with error
 
 _Reduce the number connections and queries to the server
@@ -34,3 +34,10 @@ _change name to pg_autovacuum
 
 _Add proper table and database removal functions so that we can properly
 	clear up before we exit, and make sure we don't leak memory when removing tables and such.
+
+_Decouple insert and delete thresholds
+
+_Fix Vacuum debug routine to include the database name.
+
+_Allow it to detach from the tty
+
