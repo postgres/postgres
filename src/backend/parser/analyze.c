@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.302 2004/05/30 23:40:32 neilc Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.303 2004/06/04 03:24:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3049,23 +3049,10 @@ makeFromExpr(List *fromlist, Node *quals)
 static void
 transformColumnType(ParseState *pstate, ColumnDef *column)
 {
-	TypeName   *typename = column->typename;
-	Type		ctype = typenameType(typename);
-
 	/*
-	 * Is this the name of a complex type? If so, implement it as a set.
-	 *
-	 * XXX this is a hangover from ancient Berkeley code that probably
-	 * doesn't work anymore anyway.
+	 * All we really need to do here is verify that the type is valid.
 	 */
-	if (typeTypeRelid(ctype) != InvalidOid)
-	{
-		/*
-		 * (Eventually add in here that the set can only contain one
-		 * element.)
-		 */
-		typename->setof = true;
-	}
+	Type		ctype = typenameType(column->typename);
 
 	ReleaseSysCache(ctype);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.266 2004/05/31 19:24:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.267 2004/06/04 03:24:04 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -417,9 +417,9 @@ CheckAttributeType(const char *attname, Oid atttypid)
 	 * (usually as a result of a 'retrieve into' - jolly)
 	 *
 	 * Refuse any attempt to create a pseudo-type column or one that uses a
-	 * standalone composite type.  (Eventually we should probably refuse
-	 * all references to complex types, but for now there's still some
-	 * Berkeley-derived code that thinks it can do this...)
+	 * composite type.  (Eventually we would like to allow standalone
+	 * composite types, but that needs some nontrivial work yet,
+	 * particularly TOAST support.)
 	 */
 	if (atttypid == UNKNOWNOID)
 		ereport(WARNING,
@@ -437,9 +437,11 @@ CheckAttributeType(const char *attname, Oid atttypid)
 	}
 	else if (att_typtype == 'c')
 	{
+#if 0
 		Oid			typrelid = get_typ_typrelid(atttypid);
 
-		if (get_rel_relkind(typrelid) == RELKIND_COMPOSITE_TYPE)
+		if (get_rel_relkind(typrelid) != RELKIND_COMPOSITE_TYPE)
+#endif
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 					 errmsg("column \"%s\" has composite type %s",
