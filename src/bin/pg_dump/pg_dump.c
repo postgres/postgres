@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.272 2002/07/18 04:43:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.273 2002/07/18 04:50:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4850,7 +4850,7 @@ dumpIndexes(Archive *fout, TableInfo *tblinfo, int numTables)
 	int			i_indexreloid;
 	int			i_indexrelname;
 	int			i_indexdef;
-	int			i_indisprimary;
+	int			i_contype;
 	int			i_indkey;
 	int			i_indnkeys;
 
@@ -4872,14 +4872,16 @@ dumpIndexes(Archive *fout, TableInfo *tblinfo, int numTables)
 		if (g_fout->remoteVersion >= 70300)
 			appendPQExpBuffer(query,
 							  "SELECT i.indexrelid as indexreloid, "
-							  "t.relname as indexrelname, "
+							  "coalesce(c.conname, t.relname) as indexrelname, "
 							  "pg_catalog.pg_get_indexdef(i.indexrelid) as indexdef, "
-							  "i.indisprimary, i.indkey, "
-							  "t.relnatts as indnkeys "
-							  "FROM pg_catalog.pg_index i, "
-							  "pg_catalog.pg_class t "
-							  "WHERE t.oid = i.indexrelid "
-							  "AND i.indrelid = '%s'::pg_catalog.oid "
+							  "i.indkey, "
+							  "t.relnatts as indnkeys, "
+							  "coalesce(c.contype, '0') as contype " 
+							  "FROM pg_catalog.pg_index i "
+							  "JOIN pg_catalog.pg_class t ON (t.oid = i.indexrelid) "
+							  "LEFT OUTER JOIN pg_catalog.pg_constraint c "
+							  "  ON (c.conrelid = i.indrelid AND c.conname = t.relname) "
+							  "WHERE i.indrelid = '%s'::pg_catalog.oid "
 							  "ORDER BY indexrelname",
 							  tbinfo->oid);
 		else
@@ -4887,8 +4889,11 @@ dumpIndexes(Archive *fout, TableInfo *tblinfo, int numTables)
 							  "SELECT i.indexrelid as indexreloid, "
 							  "t.relname as indexrelname, "
 							  "pg_get_indexdef(i.indexrelid) as indexdef, "
-							  "i.indisprimary, i.indkey, "
-							  "t.relnatts as indnkeys "
+							  "i.indkey, "
+							  "t.relnatts as indnkeys, "
+							  "CASE WHEN i.indisprimary IS TRUE THEN "
+							  "  'p'::char "
+							  "ELSE '0'::char END as contype "
 							  "FROM pg_index i, pg_class t "
 							  "WHERE t.oid = i.indexrelid "
 							  "AND i.indrelid = '%s'::oid "
@@ -4908,7 +4913,7 @@ dumpIndexes(Archive *fout, TableInfo *tblinfo, int numTables)
 		i_indexreloid = PQfnumber(res, "indexreloid");
 		i_indexrelname = PQfnumber(res, "indexrelname");
 		i_indexdef = PQfnumber(res, "indexdef");
-		i_indisprimary = PQfnumber(res, "indisprimary");
+		i_contype = PQfnumber(res, "contype");
 		i_indkey = PQfnumber(res, "indkey");
 		i_indnkeys = PQfnumber(res, "indnkeys");
 
@@ -4917,14 +4922,18 @@ dumpIndexes(Archive *fout, TableInfo *tblinfo, int numTables)
 			const char *indexreloid = PQgetvalue(res, j, i_indexreloid);
 			const char *indexrelname = PQgetvalue(res, j, i_indexrelname);
 			const char *indexdef = PQgetvalue(res, j, i_indexdef);
-			const char *indisprimary = PQgetvalue(res, j, i_indisprimary);
+			const char *contype = PQgetvalue(res, j, i_contype);
 
 			resetPQExpBuffer(q);
 			resetPQExpBuffer(delq);
 
-			if (strcmp(indisprimary, "t") == 0)
+			if (strcmp(contype, "p") == 0 || strcmp(contype, "u") == 0)
 			{
-				/* Handle PK indexes specially */
+				/*
+				 * Constraints which are marked as so (created with a
+				 * constraint creation utility statement, not an index
+				 * creation statment) should be regenerated as such.
+				 */
 				int indnkeys = atoi(PQgetvalue(res, j, i_indnkeys));
 				char **indkeys = (char **) malloc(indnkeys * sizeof(char *));
 				int			k;
@@ -4934,8 +4943,9 @@ dumpIndexes(Archive *fout, TableInfo *tblinfo, int numTables)
 
 				appendPQExpBuffer(q, "ALTER TABLE %s ADD ",
 								  fmtId(tbinfo->relname, force_quotes));
-				appendPQExpBuffer(q, "CONSTRAINT %s PRIMARY KEY (",
-								  fmtId(indexrelname, force_quotes));
+				appendPQExpBuffer(q, "CONSTRAINT %s %s (",
+								  fmtId(indexrelname, force_quotes),
+								  strcmp(contype, "p") == 0 ? "PRIMARY KEY" : "UNIQUE");
 
 				for (k = 0; k < indnkeys; k++)
 				{
