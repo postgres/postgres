@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.72 2001/06/20 18:07:56 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.73 2001/07/03 16:49:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -539,15 +539,18 @@ CreateLockFile(const char *filename, bool amPostmaster,
 {
 	int			fd;
 	char		buffer[MAXPGPATH + 100];
+	int			ntries;
 	int			len;
 	int			encoded_pid;
 	pid_t		other_pid;
 	pid_t		my_pid = getpid();
 
 	/*
-	 * We need a loop here because of race conditions.
+	 * We need a loop here because of race conditions.  But don't loop
+	 * forever (for example, a non-writable $PGDATA directory might cause
+	 * a failure that won't go away).  100 tries seems like plenty.
 	 */
-	for (;;)
+	for (ntries = 0; ; ntries++)
 	{
 
 		/*
@@ -560,7 +563,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		/*
 		 * Couldn't create the pid file. Probably it already exists.
 		 */
-		if (errno != EEXIST && errno != EACCES)
+		if ((errno != EEXIST && errno != EACCES) || ntries > 100)
 			elog(FATAL, "Can't create lock file %s: %m", filename);
 
 		/*
