@@ -375,3 +375,76 @@ NOTICE:  ALTER TABLE ... ADD CONSTRAINT will create implicit trigger(s) for FORE
 ERROR:  Unable to identify an operator '=' for types 'text' and 'int4'
 	You will have to retype this query using an explicit cast
 -- temp tables should go away by themselves, need not drop them.
+-- test check constraint adding
+create table atacc1 ( test int );
+-- add a check constraint
+alter table atacc1 add constraint atacc_test1 check (test>3);
+-- should fail
+insert into atacc1 (test) values (2);
+ERROR:  ExecAppend: rejected due to CHECK constraint atacc_test1
+-- should succeed
+insert into atacc1 (test) values (4);
+drop table atacc1;
+-- let's do one where the check fails when added
+create table atacc1 ( test int );
+-- insert a soon to be failing row
+insert into atacc1 (test) values (2);
+-- add a check constraint (fails)
+alter table atacc1 add constraint atacc_test1 check (test>3);
+ERROR:  AlterTableAddConstraint: rejected due to CHECK constraint atacc_test1
+insert into atacc1 (test) values (4);
+drop table atacc1;
+-- let's do one where the check fails because the column doesn't exist
+create table atacc1 ( test int );
+-- add a check constraint (fails)
+alter table atacc1 add constraint atacc_test1 check (test1>3);
+ERROR:  Attribute 'test1' not found
+drop table atacc1;
+-- something a little more complicated
+create table atacc1 ( test int, test2 int, test3 int);
+-- add a check constraint (fails)
+alter table atacc1 add constraint atacc_test1 check (test+test2<test3*4);
+-- should fail
+insert into atacc1 (test,test2,test3) values (4,4,2);
+ERROR:  ExecAppend: rejected due to CHECK constraint atacc_test1
+-- should succeed
+insert into atacc1 (test,test2,test3) values (4,4,5);
+drop table atacc1;
+-- lets do some naming tests
+create table atacc1 (test int check (test>3), test2 int);
+alter table atacc1 add check (test2>test);
+-- should fail for $2
+insert into atacc1 (test2, test) values (3, 4);
+ERROR:  ExecAppend: rejected due to CHECK constraint $2
+drop table atacc1;
+-- inheritance related tests
+create table atacc1 (test int);
+create table atacc2 (test2 int);
+create table atacc3 (test3 int) inherits (atacc1, atacc2);
+alter table atacc2 add constraint foo check (test2>0);
+-- fail and then succeed on atacc2
+insert into atacc2 (test2) values (-3);
+ERROR:  ExecAppend: rejected due to CHECK constraint foo
+insert into atacc2 (test2) values (3);
+-- fail and then succeed on atacc3
+insert into atacc3 (test2) values (-3);
+ERROR:  ExecAppend: rejected due to CHECK constraint foo
+insert into atacc3 (test2) values (3);
+drop table atacc3;
+drop table atacc2;
+drop table atacc1;
+-- let's try only to add only to the parent
+create table atacc1 (test int);
+create table atacc2 (test2 int);
+create table atacc3 (test3 int) inherits (atacc1, atacc2);
+alter table only atacc2 add constraint foo check (test2>0);
+-- fail and then succeed on atacc2
+insert into atacc2 (test2) values (-3);
+ERROR:  ExecAppend: rejected due to CHECK constraint foo
+insert into atacc2 (test2) values (3);
+-- both succeed on atacc3
+insert into atacc3 (test2) values (-3);
+insert into atacc3 (test2) values (3);
+drop table atacc3;
+drop table atacc2;
+drop table atacc1;
