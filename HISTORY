@@ -475,7 +475,7 @@ Utility Commands
    Make foreign key constraints clearer in dump file (Rod)
    Add COMMENT ON CONSTRAINT (Rod)
    Allow COPY TO/FROM to specify column names (Brent Verner)
-   Dump UNIQUE and PRIMARY KEY contraints as ALTER TABLE (Rod)
+   Dump UNIQUE and PRIMARY KEY constraints as ALTER TABLE (Rod)
    Have SHOW output a query result (Joe)
    Generate failure on short COPY lines rather than pad NULLs (Neil)
    Fix CLUSTER to preserve all table attributes (Alvaro Herrera)

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.203 2003/07/29 00:03:17 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.204 2003/07/31 04:48:15 momjian Exp $
 -->
 
 <appendix id="release">
@@ -709,7 +709,7 @@ Properly escape jdbc setObject() strings to improve security (Barry)
 <listitem><para>Make foreign key constraints clearer in dump file (Rod)</para></listitem>
 <listitem><para>Add COMMENT ON CONSTRAINT (Rod)</para></listitem>
 <listitem><para>Allow COPY TO/FROM to specify column names (Brent Verner)</para></listitem>
-<listitem><para>Dump UNIQUE and PRIMARY KEY contraints as ALTER TABLE (Rod)</para></listitem>
+<listitem><para>Dump UNIQUE and PRIMARY KEY constraints as ALTER TABLE (Rod)</para></listitem>
 <listitem><para>Have SHOW output a query result (Joe)</para></listitem>
 <listitem><para>Generate failure on short COPY lines rather than pad NULLs (Neil)</para></listitem>
 <listitem><para>Fix CLUSTER to preserve all table attributes (Alvaro Herrera)</para></listitem>
