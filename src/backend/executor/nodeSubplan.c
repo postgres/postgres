@@ -95,6 +95,9 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext)
 			break;
 	}
 	
+	if ( !found && sublink->subLinkType == ALL_SUBLINK )
+		return ((Datum) true);
+	
 	return ((Datum) result);
 }
 
@@ -192,6 +195,15 @@ ExecSetParamPlan (SubPlan *node)
 			prm->isnull = false;
 			break;
 		}
+		
+		/* 
+		 * If this is uncorrelated subquery then its plan will be closed
+		 * (see below) and this tuple will be free-ed - bad for not byval
+		 * types... But is free-ing possible in the next ExecProcNode in
+		 * this loop ? Who knows... Someday we'll keep track of saved 
+		 * tuples...
+		 */
+		tup = heap_copytuple (tup);
 		
 		foreach (lst, node->setParam)
 		{
