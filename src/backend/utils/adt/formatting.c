@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.56.2.1 2003/09/03 15:00:07 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.56.2.2 2003/09/03 19:01:35 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2002, PostgreSQL Global Development Group
@@ -2924,7 +2924,7 @@ to_timestamp(PG_FUNCTION_ARGS)
 			 */
 			DCHCacheEntry *ent;
 
-			incache = 0;
+			incache = TRUE;
 
 			if ((ent = DCH_cache_search(str)) == NULL)
 			{
@@ -2966,7 +2966,7 @@ to_timestamp(PG_FUNCTION_ARGS)
 
 		pfree(date_str);
 		pfree(str);
-		if (incache)
+		if (!incache)
 			pfree(format);
 	}
 
