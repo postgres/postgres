@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.4 1996/11/13 20:50:56 scrappy Exp $
+ * $Id: pg_class.h,v 1.5 1997/04/02 03:29:35 vadim Exp $
  *
  * NOTES
  *    ``pg_relation'' is being replaced by ``pg_class''.  currently
@@ -160,6 +160,7 @@ DATA(insert OID = 1273 (  pg_hosts 101           PGUID 0 0 0 0 0 f t s n 3 0 - -
 #define       RELKIND_INDEX           'i'     /* secondary index */
 #define       RELKIND_RELATION        'r'     /* cataloged heap */
 #define       RELKIND_SPECIAL         's'     /* special (non-heap) */
+#define       RELKIND_SEQUENCE        'S'     /* SEQUENCE relation */
 #define       RELKIND_UNCATALOGED     'u'     /* temporary heap */
 
 #endif /* PG_RELATION_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.14 1997/03/25 08:10:50 scrappy Exp $
+ * $Id: pg_proc.h,v 1.15 1997/04/02 03:29:37 vadim Exp $
  *
  * NOTES
  *    The script catalog/genbki.sh reads this file and generates .bki
@@ -813,6 +813,12 @@ DATA(insert OID =  880 (  rpad              PGUID 14 f t f 2 f 25 "25 23" 100 0 
 DATA(insert OID =  881 (  ltrim             PGUID 14 f t f 1 f 25 "25" 100 0 0 100  "select ltrim($1, \' \')" - ));
 DATA(insert OID =  882 (  rtrim             PGUID 14 f t f 1 f 25 "25" 100 0 0 100  "select rtrim($1, \' \')" - ));
 DATA(insert OID =  883 (  substr            PGUID 14 f t f 2 f 25 "25 23" 100 0 0 100  "select substr($1, $2, 10000)" - ));
+
+/* SEQUENCEs nextval & currval functions */
+DATA(insert OID =  1317 (  nextval          PGUID 11 f t f 1 f 23 "25" 100 0 0 100  foo bar ));
+DATA(insert OID =  1319 (  currval          PGUID 11 f t f 1 f 23 "25" 100 0 0 100  foo bar ));
+#define SeqNextValueRegProcedure 1317
+#define SeqCurrValueRegProcedure 1319
 
 /* 
  * prototypes for functions pg_proc.c 
