@@ -15,16 +15,15 @@
 #include "mb/pg_wchar.h"
 #endif
 
-#define EMPTY make_str("")
-
 /*
  * Variables containing simple states.
  */
 int	struct_level = 0;
+int	braces_open; /* brace level counter */
 char	errortext[128];
 char	*descriptor_index= NULL;
 char	*connection = NULL;
-char	*descriptor_name = NULL;
+char 	*input_filename = NULL;
 
 static int      QueryIsRule = 0, ForUpdateNotAllowed = 0, FoundInto = 0;
 static int	FoundSort = 0;
@@ -47,7 +46,6 @@ struct ECPGtype ecpg_query = {ECPGt_char_variable, 0L, {NULL}};
 void
 mmerror(enum errortype type, char * error)
 {
-
     switch(type)
     {
 	case ET_WARN: 
@@ -62,86 +60,6 @@ mmerror(enum errortype type, char * error)
 		exit(PARSE_ERROR);
     }
 }
-
-/*
- * Handle the filename and line numbering.
- */
-char * input_filename = NULL;
-
-void
-output_line_number()
-{
-    if (input_filename)
-       fprintf(yyout, "\n#line %d \"%s\"\n", yylineno, input_filename);
-}
-
-static void
-output_simple_statement(char *cmd)
-{
-	fputs(cmd, yyout);
-	output_line_number();
-        free(cmd);
-}
-
-/*
- * store the whenever action here
- */
-struct when when_error, when_nf, when_warn;
-
-static void
-print_action(struct when *w)
-{
-	switch (w->code)
-	{
-		case W_SQLPRINT: fprintf(yyout, "sqlprint();");
-                                 break;
-		case W_GOTO:	 fprintf(yyout, "goto %s;", w->command);
-				 break;
-		case W_DO:	 fprintf(yyout, "%s;", w->command);
-				 break;
-		case W_STOP:	 fprintf(yyout, "exit (1);");
-				 break;
-		case W_BREAK:	 fprintf(yyout, "break;");
-				 break;
-		default:	 fprintf(yyout, "{/* %d not implemented yet */}", w->code);
-				 break;
-	}
-}
-
-void
-whenever_action(int mode)
-{
-	if ((mode&1) ==  1 && when_nf.code != W_NOTHING)
-	{
-		output_line_number();
-		fprintf(yyout, "\nif (sqlca.sqlcode == ECPG_NOT_FOUND) ");
-		print_action(&when_nf);
-	}
-	if (when_warn.code != W_NOTHING)
-        {
-		output_line_number();
-                fprintf(yyout, "\nif (sqlca.sqlwarn[0] == 'W') ");
-		print_action(&when_warn);
-        }
-	if (when_error.code != W_NOTHING)
-        {
-		output_line_number();
-                fprintf(yyout, "\nif (sqlca.sqlcode < 0) ");
-		print_action(&when_error);
-        }
-	if ((mode&2) == 2)
-		fputc('}', yyout);
-	output_line_number();
-}
-
-/*
- * Handling of variables.
- */
-
-/*
- * brace level counter
- */
-int braces_open;
 
 /*
  * string concatenation
@@ -180,7 +98,7 @@ cat_str(int count, ...)
 	return(res_str);
 }
 
-static char *
+char *
 make_str(const char *str)
 {
         char * res_str = (char *)mm_alloc(strlen(str) + 1);
@@ -225,49 +143,6 @@ make_name(void)
 	return(name);
 }
 
-static char *
-hashline_number()
-{
-    if (input_filename)
-    {
-	char* line = mm_alloc(strlen("\n#line %d \"%s\"\n") + 21 + strlen(input_filename));
-	sprintf(line, "\n#line %d \"%s\"\n", yylineno, input_filename);
-
-	return line;
-    }
-
-    return EMPTY;
-}
-
-static void
-output_statement(char * stmt, int mode)
-{
-	int i, j=strlen(stmt);
-
-	fprintf(yyout, "{ ECPGdo(__LINE__, %s, \"", connection ? connection : "NULL");
-
-	/* do this char by char as we have to filter '\"' */
-	for (i = 0;i < j; i++) {
-		if (stmt[i] != '\"')
-			fputc(stmt[i], yyout);
-		else
-			fputs("\\\"", yyout);
-	}
-
-	fputs("\", ", yyout);
-
-	/* dump variables to C file*/
-	dump_variables(argsinsert, 1);
-	fputs("ECPGt_EOIT, ", yyout);
-	dump_variables(argsresult, 1);
-	fputs("ECPGt_EORT);", yyout);
-	mode |= 2;
-	whenever_action(mode);
-	free(stmt);
-	if (connection != NULL)
-		free(connection);
-}
-
 %}
 
 %union {
@@ -279,6 +154,7 @@ output_statement(char * stmt, int mode)
 	int			tagname;
 	struct this_type	type;
 	enum ECPGttype		type_enum;
+	struct fetch_desc	descriptor;
 }
 
 /* special embedded SQL token */
@@ -482,7 +358,8 @@ output_statement(char * stmt, int mode)
 %type  <str>    s_struct s_union union_type ECPGSetAutocommit on_off
 %type  <str>	ECPGAllocateDescr ECPGDeallocateDescr
 %type  <str>	ECPGGetDescriptor ECPGGetDescriptorHeader 
-%type  <str>	FetchDescriptorStmt
+
+%type  <descriptor> ECPGFetchDescStmt
 
 %type  <type_enum> simple_type signed_type unsigned_type varchar_type
 
@@ -509,64 +386,63 @@ statement: ecpgstart opt_at stmt ';'	{ connection = NULL; }
 
 opt_at:	SQL_AT connection_target	{ connection = $2; }
 
-stmt:  AlterTableStmt			{ output_statement($1, 0); }
-		| AlterGroupStmt	{ output_statement($1, 0); }
-		| AlterUserStmt		{ output_statement($1, 0); }
-		| ClosePortalStmt	{ output_statement($1, 0); }
-		| CommentStmt		{ output_statement($1, 0); }
-		| CopyStmt		{ output_statement($1, 0); }
-		| CreateStmt		{ output_statement($1, 0); }
-		| CreateAsStmt		{ output_statement($1, 0); }
-		| CreateGroupStmt	{ output_statement($1, 0); }
-		| CreateSeqStmt		{ output_statement($1, 0); }
-		| CreatePLangStmt	{ output_statement($1, 0); }
-		| CreateTrigStmt	{ output_statement($1, 0); }
-		| CreateUserStmt	{ output_statement($1, 0); }
-  		| ClusterStmt		{ output_statement($1, 0); }
-		| DefineStmt 		{ output_statement($1, 0); }
-		| DropStmt		{ output_statement($1, 0); }
-		| TruncateStmt		{ output_statement($1, 0); }
-		| DropGroupStmt		{ output_statement($1, 0); }
-		| DropPLangStmt		{ output_statement($1, 0); }
-		| DropTrigStmt		{ output_statement($1, 0); }
-		| DropUserStmt		{ output_statement($1, 0); }
-		| ExtendStmt 		{ output_statement($1, 0); }
-		| ExplainStmt		{ output_statement($1, 0); }
-		| FetchStmt		{ output_statement($1, 1); }
-		| FetchDescriptorStmt	{ output_statement_desc($1, 1); }
-		| GrantStmt		{ output_statement($1, 0); }
-		| IndexStmt		{ output_statement($1, 0); }
-		| ListenStmt		{ output_statement($1, 0); }
-		| UnlistenStmt		{ output_statement($1, 0); }
-		| LockStmt		{ output_statement($1, 0); }
-		| ProcedureStmt		{ output_statement($1, 0); }
-		| RemoveAggrStmt	{ output_statement($1, 0); }
-		| RemoveOperStmt	{ output_statement($1, 0); }
-		| RemoveFuncStmt	{ output_statement($1, 0); }
-		| RemoveStmt		{ output_statement($1, 0); }
-		| RenameStmt		{ output_statement($1, 0); }
-		| RevokeStmt		{ output_statement($1, 0); }
+stmt:  AlterTableStmt			{ output_statement($1, 0, NULL); }
+		| AlterGroupStmt	{ output_statement($1, 0, NULL); }
+		| AlterUserStmt		{ output_statement($1, 0, NULL); }
+		| ClosePortalStmt	{ output_statement($1, 0, NULL); }
+		| CommentStmt		{ output_statement($1, 0, NULL); }
+		| CopyStmt		{ output_statement($1, 0, NULL); }
+		| CreateStmt		{ output_statement($1, 0, NULL); }
+		| CreateAsStmt		{ output_statement($1, 0, NULL); }
+		| CreateGroupStmt	{ output_statement($1, 0, NULL); }
+		| CreateSeqStmt		{ output_statement($1, 0, NULL); }
+		| CreatePLangStmt	{ output_statement($1, 0, NULL); }
+		| CreateTrigStmt	{ output_statement($1, 0, NULL); }
+		| CreateUserStmt	{ output_statement($1, 0, NULL); }
+  		| ClusterStmt		{ output_statement($1, 0, NULL); }
+		| DefineStmt 		{ output_statement($1, 0, NULL); }
+		| DropStmt		{ output_statement($1, 0, NULL); }
+		| TruncateStmt		{ output_statement($1, 0, NULL); }
+		| DropGroupStmt		{ output_statement($1, 0, NULL); }
+		| DropPLangStmt		{ output_statement($1, 0, NULL); }
+		| DropTrigStmt		{ output_statement($1, 0, NULL); }
+		| DropUserStmt		{ output_statement($1, 0, NULL); }
+		| ExtendStmt 		{ output_statement($1, 0, NULL); }
+		| ExplainStmt		{ output_statement($1, 0, NULL); }
+		| FetchStmt		{ output_statement($1, 1, NULL); }
+		| GrantStmt		{ output_statement($1, 0, NULL); }
+		| IndexStmt		{ output_statement($1, 0, NULL); }
+		| ListenStmt		{ output_statement($1, 0, NULL); }
+		| UnlistenStmt		{ output_statement($1, 0, NULL); }
+		| LockStmt		{ output_statement($1, 0, NULL); }
+		| ProcedureStmt		{ output_statement($1, 0, NULL); }
+		| RemoveAggrStmt	{ output_statement($1, 0, NULL); }
+		| RemoveOperStmt	{ output_statement($1, 0, NULL); }
+		| RemoveFuncStmt	{ output_statement($1, 0, NULL); }
+		| RemoveStmt		{ output_statement($1, 0, NULL); }
+		| RenameStmt		{ output_statement($1, 0, NULL); }
+		| RevokeStmt		{ output_statement($1, 0, NULL); }
                 | OptimizableStmt	{
 						if (strncmp($1, "/* " , sizeof("/* ")-1) == 0)
 							output_simple_statement($1);
 						else
-							output_statement($1, 1);
+							output_statement($1, 1, NULL);
 					}
-		| RuleStmt		{ output_statement($1, 0); }
+		| RuleStmt		{ output_statement($1, 0, NULL); }
 		| TransactionStmt	{
 						fprintf(yyout, "{ ECPGtrans(__LINE__, %s, \"%s\");", connection ? connection : "NULL", $1);
 						whenever_action(2);
 						free($1);
 					}
-		| ViewStmt		{ output_statement($1, 0); }
-		| LoadStmt		{ output_statement($1, 0); }
-		| CreatedbStmt		{ output_statement($1, 0); }
-		| DropdbStmt		{ output_statement($1, 0); }
-		| VacuumStmt		{ output_statement($1, 0); }
-		| VariableSetStmt	{ output_statement($1, 0); }
-		| VariableShowStmt	{ output_statement($1, 0); }
-		| VariableResetStmt	{ output_statement($1, 0); }
-		| ConstraintsSetStmt	{ output_statement($1, 0); }
+		| ViewStmt		{ output_statement($1, 0, NULL); }
+		| LoadStmt		{ output_statement($1, 0, NULL); }
+		| CreatedbStmt		{ output_statement($1, 0, NULL); }
+		| DropdbStmt		{ output_statement($1, 0, NULL); }
+		| VacuumStmt		{ output_statement($1, 0, NULL); }
+		| VariableSetStmt	{ output_statement($1, 0, NULL); }
+		| VariableShowStmt	{ output_statement($1, 0, NULL); }
+		| VariableResetStmt	{ output_statement($1, 0, NULL); }
+		| ConstraintsSetStmt	{ output_statement($1, 0, NULL); }
 		| ECPGAllocateDescr	{	fprintf(yyout,"ECPGallocate_desc(__LINE__, \"%s\");",$1);
 								whenever_action(0);
 								free($1);
@@ -606,9 +482,8 @@ stmt:  AlterTableStmt			{ output_statement($1, 0); }
 						whenever_action(2);
 						free($1);
 					} 
-		| ECPGExecute		{
-						output_statement($1, 0);
-					}
+		| ECPGExecute		{	output_statement($1, 0, NULL); }
+		| ECPGFetchDescStmt	{ 	output_statement($1.str, 1, $1.name); }
 		| ECPGFree		{
 						fprintf(yyout, "{ ECPGdeallocate(__LINE__, \"%s\");", $1);
 
@@ -4754,30 +4629,30 @@ ECPGGetDescriptor:	SQL_GET SQL_DESCRIPTOR ident SQL_VALUE cvariable ECPGGetDescI
  *
  *****************************************************************************/
 
-FetchDescriptorStmt:	FETCH direction fetch_how_many from_in name INTO SQL_SQL SQL_DESCRIPTOR ident
+ECPGFetchDescStmt:	FETCH direction fetch_how_many from_in name INTO SQL_SQL SQL_DESCRIPTOR ident
 				{
-					$$ = cat_str(5, make_str("fetch"), $2, $3, $4, $5);
-					descriptor_name=$9;
+					$$.str = cat_str(5, make_str("fetch"), $2, $3, $4, $5);
+					$$.name=$9;
 				}
 		|	FETCH fetch_how_many from_in name INTO SQL_SQL SQL_DESCRIPTOR ident
   				{
-					$$ = cat_str(4, make_str("fetch"), $2, $3, $4);
-					descriptor_name=$8;
+					$$.str = cat_str(4, make_str("fetch"), $2, $3, $4);
+					$$.name=$8;
 				}
 		|	FETCH direction from_in name INTO SQL_SQL SQL_DESCRIPTOR ident
   				{
-					$$ = cat_str(4, make_str("fetch"), $2, $3, $4);
-					descriptor_name=$8;
+					$$.str = cat_str(4, make_str("fetch"), $2, $3, $4);
+					$$.name=$8;
 				}
 		|	FETCH from_in name INTO SQL_SQL SQL_DESCRIPTOR ident
   				{
-					$$ = cat_str(3, make_str("fetch"), $2, $3);
-					descriptor_name=$7;
+					$$.str = cat_str(3, make_str("fetch"), $2, $3);
+					$$.name=$7;
 				}
 		|	FETCH name INTO SQL_SQL SQL_DESCRIPTOR ident
   				{
-					$$ = cat2_str(make_str("fetch"), $2);
-					descriptor_name=$6;
+					$$.str = cat2_str(make_str("fetch"), $2);
+					$$.name=$6;
 				}
 		;
 

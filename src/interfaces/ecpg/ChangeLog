@@ -814,5 +814,10 @@ Wed Feb 16 17:04:41 CET 2000
 
 	- Apply patch by Christof Petig <christof.petig@wtal.de> that adds
 	  descriptors.
+
+Thu Feb 17 19:37:44 CET 2000
+
+	- Synced preproc.y with gram.y.
+	- Started to clean up preproc.y.
 	- Set library version to 3.1.0.
 	- Set ecpg version to 2.7.0.

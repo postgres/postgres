@@ -2,7 +2,7 @@
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/dynamic.c,v 1.2 2000/02/17 19:48:41 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/dynamic.c,v 1.3 2000/02/18 14:34:05 meskes Exp $
  */
 
 /* I borrowed the include files from ecpglib.c, maybe we don't need all of them */
@@ -211,11 +211,15 @@ bool ECPGdo_descriptor(int line,const char *connection,
 PGresult *ECPGresultByDescriptor(int line,const char *name)
 {
 	struct descriptor *i;
-	for (i=all_descriptors;i!=NULL;i=i->next)
-	{	if (!strcmp(name,i->name)) return i->result;
+	
+	for (i = all_descriptors; i != NULL; i = i->next)
+	{
+		if (!strcmp(name, i->name)) return i->result;
 	}
+	
 	ECPGraise(line,ECPG_UNKNOWN_DESCRIPTOR);
-	return 0;
+	
+	return NULL;
 } 
 
 
@@ -248,10 +252,12 @@ bool ECPGallocate_desc(int line,const char *name)
 	return true;
 }
 
-void ECPGraise(int line,int code)
-{	sqlca.sqlcode=code;
+void ECPGraise(int line, int code)
+{
+	sqlca.sqlcode=code;
 	switch (code)
-	{ 	case ECPG_NOT_FOUND: 
+	{ 
+		case ECPG_NOT_FOUND: 
 			snprintf(sqlca.sqlerrm.sqlerrmc,sizeof(sqlca.sqlerrm.sqlerrmc),
 				"No data found line %d.",line);
 			break;
@@ -268,7 +274,7 @@ void ECPGraise(int line,int code)
 				"descriptor index out of range, line %d.",line);
 			break;
 	    default:
-	    	snprintf(sqlca.sqlerrm.sqlerrmc,sizeof(sqlca.sqlerrm.sqlerrmc),
+		    	snprintf(sqlca.sqlerrm.sqlerrmc,sizeof(sqlca.sqlerrm.sqlerrmc),
 				"SQL error #%d, line %d.",code,line);
 			break;
 	}

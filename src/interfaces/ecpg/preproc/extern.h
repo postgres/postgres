@@ -5,6 +5,7 @@
 /* defines */
 
 #define STRUCT_DEPTH 128
+#define EMPTY make_str("")
 
 /* variables */
 
@@ -12,15 +13,13 @@ extern int	braces_open,
 		autocommit,
 		ret_value,
 		struct_level;
-extern char *yytext,
-			errortext[128];
-extern int	yylineno,
-			yyleng;
-extern FILE *yyin,
-		   *yyout;
 extern char *descriptor_index;
 extern char *descriptor_name;
 extern char *connection;
+extern char 	*input_filename;;
+extern char 	*yytext, errortext[128];
+extern int	yylineno, yyleng;
+extern FILE *yyin, *yyout;
 
 extern struct _include_path *include_paths;
 extern struct cursor *cur;
@@ -36,9 +35,12 @@ extern struct descriptor *descriptors;
 
 /* functions */
 
-extern void output_line_number(void);
 extern void lex_init(void);
-extern char *input_filename;
+extern char *make_str(const char *);
+extern void output_line_number(void);
+extern void output_statement(char *, int, char *);
+extern void output_simple_statement(char *);
+extern char *hashline_number(void);
 extern int	yyparse(void);
 extern int	yylex(void);
 extern void yyerror(char *);
@@ -55,7 +57,6 @@ extern void whenever_action(int);
 extern void add_descriptor(char *,char *);
 extern void drop_descriptor(char *,char *);
 extern struct descriptor *lookup_descriptor(char *,char *);
-extern void output_statement_desc(char *, int);
 extern void add_variable(struct arguments ** , struct variable * , struct variable *);
 extern void dump_variables(struct arguments *, int);
 extern struct typedefs *get_typedef(char *);

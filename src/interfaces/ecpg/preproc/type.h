@@ -154,3 +154,9 @@ struct assignment
 };
 
 enum errortype {ET_WARN, ET_ERROR, ET_FATAL};
+
+struct fetch_desc
+{
+	char *str;
+	char *name;
+};

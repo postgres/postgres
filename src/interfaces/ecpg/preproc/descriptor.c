@@ -11,33 +11,35 @@
  
 struct assignment *assignments;
 
-void push_assignment(char *var,char *value)
+void push_assignment(char *var, char *value)
 {
-	struct assignment *new=(struct assignment *)mm_alloc(sizeof(struct assignment));
+	struct assignment *new = (struct assignment *)mm_alloc(sizeof(struct assignment));
 	
-	new->next=assignments;
-	new->variable=mm_alloc(strlen(var)+1);
+	new->next = assignments;
+	new->variable = mm_alloc(strlen(var)+1);
 	strcpy(new->variable,var);
-	new->value=mm_alloc(strlen(value)+1);
+	new->value = mm_alloc(strlen(value)+1);
 	strcpy(new->value,value);
-	assignments=new;
+	assignments = new;
 }
 
 static void
 drop_assignments(void)
-{	while (assignments)
-	{	struct assignment *old_head=assignments;
+{
+	while (assignments)
+	{
+		struct assignment *old_head = assignments;
 
-		assignments=old_head->next;
+		assignments = old_head->next;
 		free(old_head->variable);
 		free(old_head->value);
 		free(old_head);
 	}
 }
 
-/* XXX: these should be more accurate (consider ECPGdump_a_* ) */
 static void ECPGnumeric_lvalue(FILE *f,char *name)
-{	const struct variable *v=find_variable(name);
+{
+	const struct variable *v=find_variable(name);
 
 	switch(v->type->typ)
 	{
@@ -54,10 +56,10 @@ static void ECPGnumeric_lvalue(FILE *f,char *name)
 					,name);
 			mmerror(ET_ERROR,errortext);
 			break;
-	}
+	}	 
 }
 
-static void ECPGstring_buffer(FILE *f,char *name)
+static void ECPGstring_buffer(FILE *f, char *name)
 { 
 	const struct variable *v=find_variable(name);
 
@@ -167,30 +169,94 @@ static void ECPGdata_assignment(char *variable,char *index_plus_1)
 	}
 }
 
+/*
+ * descriptor name lookup
+ */
+ 
+static struct descriptor *descriptors;
+
+void add_descriptor(char *name,char *connection)
+{
+	struct descriptor *new=(struct descriptor *)mm_alloc(sizeof(struct descriptor));
+	
+	new->next=descriptors;
+	new->name=mm_alloc(strlen(name)+1);
+	strcpy(new->name,name);
+	if (connection) 
+	{	new->connection=mm_alloc(strlen(connection)+1);
+		strcpy(new->connection,connection);
+	}
+	else new->connection=connection;
+	descriptors=new;
+}
+
+void
+drop_descriptor(char *name,char *connection)
+{
+	struct descriptor *i;
+	struct descriptor **lastptr=&descriptors;
+	
+	for (i=descriptors;i;lastptr=&i->next,i=i->next)
+	{
+		if (!strcmp(name,i->name))
+		{
+			if ((!connection && !i->connection) 
+				|| (connection && i->connection 
+					&& !strcmp(connection,i->connection)))
+			{
+				*lastptr=i->next;
+				if (i->connection) free(i->connection);
+				free(i->name);
+				free(i);
+				return;
+			}
+		}
+	}
+	snprintf(errortext,sizeof errortext,"unknown descriptor %s",name);
+	mmerror(ET_WARN,errortext);
+}
+
+struct descriptor
+*lookup_descriptor(char *name,char *connection)
+{
+	struct descriptor *i;
+	
+	for (i=descriptors;i;i=i->next)
+	{
+		if (!strcmp(name,i->name))
+		{
+			if ((!connection && !i->connection) 
+				|| (connection && i->connection 
+					&& !strcmp(connection,i->connection)))
+			{
+				return i;
+			}
+		}
+	}
+	snprintf(errortext,sizeof errortext,"unknown descriptor %s",name);
+	mmerror(ET_WARN,errortext);
+	return NULL;
+}
+
 void
 output_get_descr_header(char *desc_name)
 {
 	struct assignment *results;
 
-	fprintf(yyout,"{\tPGresult *ECPGresult=ECPGresultByDescriptor(%d, \"%s\");\n" ,yylineno,desc_name);
-	fputs("\tif (ECPGresult)\n\t{",yyout);
-	for (results=assignments;results!=NULL;results=results->next)
+	fprintf(yyout, "{ ECPGget_desc_header(%d, \"%s\", &(", yylineno, desc_name);
+	for (results = assignments; results != NULL; results = results->next)
 	{
-		if (!strcasecmp(results->value,"count"))
-		{
-			fputs("\t\t",yyout);
+		if (!strcasecmp(results->value, "count"))
 			ECPGnumeric_lvalue(yyout,results->variable);
-			fputs("=PQnfields(ECPGresult);\n",yyout);
-		}
 		else
-		{	snprintf(errortext,sizeof errortext,"unknown descriptor header item '%s'",results->value);
-			mmerror(ET_WARN,errortext);
+		{	snprintf(errortext, sizeof errortext, "unknown descriptor header item '%s'", results->value);
+			mmerror(ET_WARN, errortext);
 		}
 	}
-	drop_assignments();
-	fputs("}",yyout);
 	
-	whenever_action(2|1);
+	drop_assignments();
+	fprintf(yyout, "));\n");
+	whenever_action(3);
 }
 
 void
@@ -304,97 +370,4 @@ output_get_descr(char *desc_name)
 	fputs("\t\t}\n\t}\n",yyout);
 	
 	whenever_action(2|1);
-}
-
-/*
- * descriptor name lookup
- */
- 
-static struct descriptor *descriptors;
-
-void add_descriptor(char *name,char *connection)
-{
-	struct descriptor *new=(struct descriptor *)mm_alloc(sizeof(struct descriptor));
-	
-	new->next=descriptors;
-	new->name=mm_alloc(strlen(name)+1);
-	strcpy(new->name,name);
-	if (connection) 
-	{	new->connection=mm_alloc(strlen(connection)+1);
-		strcpy(new->connection,connection);
-	}
-	else new->connection=connection;
-	descriptors=new;
-}
-
-void drop_descriptor(char *name,char *connection)
-{
-	struct descriptor *i;
-	struct descriptor **lastptr=&descriptors;
-	
-	for (i=descriptors;i;lastptr=&i->next,i=i->next)
-	{
-		if (!strcmp(name,i->name))
-		{
-			if ((!connection && !i->connection) 
-				|| (connection && i->connection 
-					&& !strcmp(connection,i->connection)))
-			{
-				*lastptr=i->next;
-				if (i->connection) free(i->connection);
-				free(i->name);
-				free(i);
-				return;
-			}
-		}
-	}
-	snprintf(errortext,sizeof errortext,"unknown descriptor %s",name);
-	mmerror(ET_WARN,errortext);
-}
-
-struct descriptor *lookup_descriptor(char *name,char *connection)
-{
-	struct descriptor *i;
-	
-	for (i=descriptors;i;i=i->next)
-	{
-		if (!strcmp(name,i->name))
-		{
-			if ((!connection && !i->connection) 
-				|| (connection && i->connection 
-					&& !strcmp(connection,i->connection)))
-			{
-				return i;
-			}
-		}
-	}
-	snprintf(errortext,sizeof errortext,"unknown descriptor %s",name);
-	mmerror(ET_WARN,errortext);
-	return NULL;
-}
-
-void
-output_statement_desc(char * stmt, int mode)
-{
-	int i, j=strlen(stmt);
-
-	fprintf(yyout, "{ ECPGdo_descriptor(__LINE__, %s, \"%s\", \"", 
-		connection ? connection : "NULL", descriptor_name);
-
-	/* do this char by char as we have to filter '\"' */
-	for (i = 0;i < j; i++) {
-		if (stmt[i] != '\"')
-			fputc(stmt[i], yyout);
-		else
-			fputs("\\\"", yyout);
-	}
-
-	fputs("\");", yyout);
-
-	mode |= 2;
-	whenever_action(mode);
-	free(stmt);
-	if (connection != NULL)
-		free(connection);
-	free(descriptor_name);
 }

@@ -26,6 +26,8 @@ Add a semantic check level, e.g. check if a table really exists.
 It would be nice if there was a alternative library using SPI functions
 instead of libpq so we can write backend functions using ecpg.
 
+make ECPGnumeric_lvalue more accurate by using something like ECPGdump_a_*
+
 Missing statements:
  - exec sql ifdef
  - SQLSTATE

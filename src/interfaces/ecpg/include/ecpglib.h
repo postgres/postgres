@@ -16,8 +16,8 @@ extern		"C"
 	bool		ECPGdisconnect(int, const char *);
 	bool		ECPGprepare(int, char *, char *);
 	bool		ECPGdeallocate(int, char *);
-	char	   *ECPGprepared_statement(char *);
-
+	char		*ECPGprepared_statement(char *);
+	
 	void		ECPGlog(const char *format,...);
 
 #ifdef LIBPQ_FE_H
@@ -54,12 +54,14 @@ extern		"C"
 
 	unsigned int	ECPGDynamicType(Oid type);
 	unsigned int	ECPGDynamicType_DDT(Oid type);
-	PGresult *		ECPGresultByDescriptor(int line,const char *name);
-	bool			ECPGdo_descriptor(int line,const char *connection,
+	PGresult *	ECPGresultByDescriptor(int line,const char *name);
+	bool		ECPGdo_descriptor(int line,const char *connection,
 							const char *descriptor,const char *query);
-	bool			ECPGdeallocate_desc(int line,const char *name);
-	bool			ECPGallocate_desc(int line,const char *name);
-	void			ECPGraise(int line,int code);
+	bool		ECPGdeallocate_desc(int line,const char *name);
+	bool		ECPGallocate_desc(int line,const char *name);
+	void		ECPGraise(int line,int code);
+	bool		ECPGget_desc_header(int, char *, int *);
+	
 
 #ifdef __cplusplus
 }
