@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.182 2004/10/07 20:36:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.183 2004/10/17 21:17:27 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -58,6 +58,7 @@
 #include "commands/tablespace.h"
 #include "executor/spi.h"
 #include "lib/stringinfo.h"
+#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
@@ -777,10 +778,14 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 		 * If the index is in a different tablespace from its parent, tell
 		 * about that
 		 */
-		if (OidIsValid(idxrelrec->reltablespace) &&
-			idxrelrec->reltablespace != get_rel_tablespace(indrelid))
+		if (idxrelrec->reltablespace != get_rel_tablespace(indrelid))
 		{
-			char	   *spcname = get_tablespace_name(idxrelrec->reltablespace);
+			char	   *spcname;
+
+			if (OidIsValid(idxrelrec->reltablespace))
+				spcname = get_tablespace_name(idxrelrec->reltablespace);
+			else
+				spcname = get_tablespace_name(MyDatabaseTableSpace);
 
 			if (spcname)		/* just paranoia... */
 			{
