@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.90 2003/08/08 04:52:22 momjian Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.91 2003/08/08 16:32:45 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ override CPPFLAGS := -I$(srcdir) $(CPPFLAGS) $(THREAD_CFLAGS) -DFRONTEND -DSYSCO
 OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
       fe-protocol2.o fe-protocol3.o pqexpbuffer.o pqsignal.o fe-secure.o \
       dllist.o md5.o ip.o wchar.o encnames.o \
-      $(filter crypt.o getaddrinfo.o inet_aton.o snprintf.o sprompt.o strerror.o path.o thread.o, $(LIBOBJS))
+      $(filter crypt.o getaddrinfo.o inet_aton.o snprintf.o strerror.o path.o thread.o, $(LIBOBJS))
 
 
 # Add libraries that libpq depends (or might depend) on into the
@@ -46,7 +46,7 @@ backend_src = $(top_srcdir)/src/backend
 # For port modules, this only happens if configure decides the module
 # is needed (see filter hack in OBJS, above).
 
-crypt.c getaddrinfo.c inet_aton.c snprintf.c sprompt.c strerror.c path.c thread.c: % : $(top_srcdir)/src/port/%
+crypt.c getaddrinfo.c inet_aton.c snprintf.c strerror.c path.c thread.c: % : $(top_srcdir)/src/port/%
 	rm -f $@ && $(LN_S) $< .
 
 md5.c ip.c: % : $(backend_src)/libpq/%
