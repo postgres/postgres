@@ -1,0 +1,41 @@
+>perl Makefile.pl
+>make
+
+copy the resulting library somewhere that
+the postgresql backend can see it. assume
+that path is /usr/local/pgsql/modules/plperl.so
+
+CREATE FUNCTION plperl_call_handler() RETURNS opaque
+AS '/usr/local/pgsql/modules/plperl.so' LANGUAGE 'C';
+
+CREATE TRUSTED PROCEDURAL LANGUAGE 'plperl'
+HANDLER plperl_call_handler
+LANCOMPILER 'PL/Perl';
+
+-- here is simple example
+CREATE FUNCTION addints(int4, int4) RETURNS int4 AS '
+return $_[0] + $_[1]
+' LANGUAGE 'plperl';
+
+SELECT addints(3,4);
+
+-- of course, you can pass tuples;
+CREATE TABLE twoints ( a integer, b integer);
+CREATE FUNCTION addtwoints(twoints) RETURNS integer AS '
+$tup = shift;
+return $tup->{"a"} + $tup->{"b"};
+' LANGUAGE 'plperl';
+
+SELECT addtwoints(twoints) from twoints;
+
+-- here is one that will fail. Creating the function
+-- will work, but using it will fail.
+CREATE FUNCTION badfunc() RETURNS int4 AS '
+open(TEMP, ">/tmp/badfile");
+print TEMP "Gotcha!\n";
+return 1;
+' LANGUAGE 'plperl';
+
+SELECT badfunc();
+
+
