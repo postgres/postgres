@@ -1,0 +1,36 @@
+#!/bin/sh
+#
+# pg_dumpall [pg_dump parameters]
+# dumps all databases to standard output
+# It also dumps the pg_user table
+#
+psql -l -A -q -t|unesc|cut -d"|" -f1 | grep -v '^template1$' | \
+while read DATABASE
+do
+	/bin/echo '\connect template1'
+	/bin/echo "create database $DATABASE;"
+	/bin/echo '\connect' "$DATABASE"
+	pg_dump "$@" $DATABASE
+done
+/bin/echo '\connect template1'
+/bin/echo 'copy pg_user from stdin;'
+#
+# Dump everyone but the postgres user
+# initdb creates him
+#
+POSTGRES_SUPER_USER_ID="`psql -q template1 <<END
+\\t
+select datdba 
+from pg_database
+where datname = 'template1';
+END`"
+psql -q template1 <<END
+select pg_user.* into table tmp_pg_user
+from pg_user
+where usesysid <> $POSTGRES_SUPER_USER_ID;
+copy tmp_pg_user to stdout;
+drop table tmp_pg_user;
+END
+/bin/echo '\.'
+
+

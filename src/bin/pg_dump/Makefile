@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.11 1996/11/28 03:31:27 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.12 1997/01/16 15:28:21 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -35,6 +35,7 @@ submake:
 
 install: pg_dump
 	$(INSTALL) $(INSTL_EXE_OPTS) pg_dump $(DESTDIR)$(BINDIR)/pg_dump
+	$(INSTALL) $(INSTL_EXE_OPTS) pg_dumpall $(DESTDIR)$(BINDIR)/pg_dumpall
 
 depend dep:
 	$(CC) -MM $(INCLUDE_OPT) *.c >depend
