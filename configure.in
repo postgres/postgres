@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.336 2004/04/26 19:08:57 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.337 2004/04/27 19:51:12 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -1176,6 +1176,30 @@ PGAC_PATH_DOCBOOK_STYLESHEETS
 PGAC_PATH_COLLATEINDEX
 AC_CHECK_PROGS(SGMLSPL, sgmlspl)
 
+# Thread testing
+
+# We have to run the thread test near the end so we have all our symbols
+# defined.  Cross compiling throws a warning.
+#
+if test "$enable_thread_safety" = yes; then
+AC_MSG_CHECKING([thread safety of required library functions])
+
+_CFLAGS="$CFLAGS"
+_LIBS="$LIBS"
+CFLAGS="$CFLAGS $PTHREAD_CFLAGS -DIN_CONFIGURE"
+LIBS="$LIBS $PTHREAD_LIBS"
+AC_TRY_RUN([#include "src/tools/thread/thread_test.c"],
+  [AC_MSG_RESULT(yes)],
+  [AC_MSG_RESULT(no)
+  AC_MSG_ERROR([Thread test program failed.  Your platform is not thread-safe.  See 'config.log])],
+  [AC_MSG_RESULT(maybe)
+  AC_MSG_WARN([
+*** Skipping thread test program because of cross-compile build.
+*** Run the program in src/tools/thread on the target matchine.
+])])
+CFLAGS="$_CFLAGS"
+LIBS="$_LIBS"
+fi
 
 # prepare build tree if outside source tree
 # Note 1: test -ef might not exist, but it's more reliable than `pwd`.
@@ -1214,52 +1238,3 @@ echo >src/include/stamp-h
 ])
 
 AC_OUTPUT
-
-# Check for gmake.
-AC_CHECK_PROGS(MAKE, gmake make)
-if ! $MAKE -v | grep 'GNU Make' >/dev/null
-then	rm -f $srcdir/src/Makefile.global
-	AC_MSG_CHECKING([Can not find GNU Make.  It is required.])
-fi
-
-# Thread testing
-
-# We have to run the thread test here because it is an external program
-# that has to be runable separately for cross-compiling.
-#
-if test "$enable_thread_safety" = yes; then
-if test cross_compiling != yes; then
-#
-# Clean, compile, run, and clean thread test directory.
-# If test fails for any reason, remove Makefile.global so the user can't
-# compile (to simulate a configure failure).
-#
-AC_MSG_CHECKING([thread safety of required library functions])
-if ! $MAKE -C src/tools/thread clean >&5
-then	rm -f src/Makefile.global
-	AC_MSG_ERROR([Can not clean thread test directory.])
-fi
-if ! $MAKE -C src/tools/thread >&5
-then	rm -f src/Makefile.global
-	AC_MSG_ERROR([Can not build thread test proram.])
-fi
-if ! src/tools/thread/thread_test >&5
-then	rm -f src/Makefile.global
-	echo "no"
-	echo
-	src/tools/thread/thread_test
-	echo
-	AC_MSG_ERROR([Thread test program failed.  Your platform is not thread-safe.])
-fi
-if ! $MAKE -C src/tools/thread clean >&5
-then	rm -f src/Makefile.global
-	AC_MSG_ERROR([Can not clean thread test directory.])
-fi
-echo "yes"
-else
-AC_MSG_WARN([
-*** Skipping thread test program because of cross-compile build.
-*** Run the program in src/tools/thread on the target matchine.
-])
-fi
-fi
