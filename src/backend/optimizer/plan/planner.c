@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.166 2004/02/03 17:34:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.167 2004/02/13 22:26:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -709,19 +709,18 @@ grouping_planner(Query *parse, double tuple_fraction)
 
 		/*
 		 * Will need actual number of aggregates for estimating costs.
-		 * Also, it's possible that optimization has eliminated all
-		 * aggregates, and we may as well check for that here.
 		 *
 		 * Note: we do not attempt to detect duplicate aggregates here; a
 		 * somewhat-overestimated count is okay for our present purposes.
+		 *
+		 * Note: think not that we can turn off hasAggs if we find no aggs.
+		 * It is possible for constant-expression simplification to remove
+		 * all explicit references to aggs, but we still have to follow the
+		 * aggregate semantics (eg, producing only one output row).
 		 */
 		if (parse->hasAggs)
-		{
 			numAggs = count_agg_clause((Node *) tlist) +
 				count_agg_clause(parse->havingQual);
-			if (numAggs == 0)
-				parse->hasAggs = false;
-		}
 
 		/*
 		 * Figure out whether we need a sorted result from query_planner.
