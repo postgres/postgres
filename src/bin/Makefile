@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/Makefile,v 1.40 2003/11/29 19:52:04 pgsql Exp $
+# $PostgreSQL: pgsql/src/bin/Makefile,v 1.41 2003/12/17 18:44:08 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,7 +13,7 @@ subdir = src/bin
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
-DIRS := initdb initlocation ipcclean pg_ctl pg_dump pg_id \
+DIRS := initdb initlocation ipcclean pg_ctl pg_dump \
 	psql scripts pg_config pg_controldata pg_resetxlog \
 	pg_encoding
 

@@ -43,7 +43,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.16 2003/12/01 23:15:47 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.17 2003/12/17 18:44:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -649,7 +649,7 @@ exit_nicely(void)
 }
 
 /*
- * find the current user using code lifted from pg_id.c
+ * find the current user
  *
  * on unix make sure it isn't really root
  */
