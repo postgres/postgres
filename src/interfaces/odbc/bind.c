@@ -23,7 +23,6 @@
 #include "qresult.h"
 #include "pgtypes.h"
 #include <stdlib.h>
-#include <malloc.h>
 #include <string.h>
 
 #ifndef WIN32

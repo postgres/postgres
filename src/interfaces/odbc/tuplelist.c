@@ -13,7 +13,6 @@
  */
 
 #include <stdlib.h>
-#include <malloc.h>
 #include "tuplelist.h"
 #include "tuple.h"
 
