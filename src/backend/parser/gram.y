@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.29 1997/04/02 18:23:07 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.30 1997/04/05 06:25:59 vadim Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -112,7 +112,7 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 
 %type <str>	relation_name, copy_file_name, copy_delimiter, def_name,
 	database_name, access_method_clause, access_method, attr_name,
-	class, index_name, var_name, name, file_name, recipe_name,
+	class, index_name, name, file_name, recipe_name,
 	var_name
 
 %type <str>	opt_id, opt_portal_name,
@@ -292,9 +292,6 @@ VariableSetStmt: SET var_name TO var_value
 		
 		$$ = (Node *) n;
 		}
-	;
-
-var_name:	Id				{ $$ = $1; }
 	;
 
 var_value:	Sconst		{ $$ = $1; }
