@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.53 2000/11/16 22:30:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.54 2001/01/23 04:32:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,7 +152,7 @@ renameatt(char *relname,
 	StrNCpy(NameStr(((Form_pg_attribute) GETSTRUCT(atttup))->attname),
 			newattname, NAMEDATALEN);
 
-	heap_update(attrelation, &atttup->t_self, atttup, NULL);
+	simple_heap_update(attrelation, &atttup->t_self, atttup);
 
 	/* keep system catalog indices current */
 	{
@@ -250,7 +250,7 @@ renamerel(const char *oldrelname, const char *newrelname)
 	StrNCpy(NameStr(((Form_pg_class) GETSTRUCT(reltup))->relname),
 			newrelname, NAMEDATALEN);
 
-	heap_update(relrelation, &reltup->t_self, reltup, NULL);
+	simple_heap_update(relrelation, &reltup->t_self, reltup);
 
 	/* keep the system catalog indices current */
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, irelations);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.56 2000/11/16 22:30:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.57 2001/01/23 04:32:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -490,7 +490,7 @@ TypeCreate(char *typeName,
 							   nulls,
 							   replaces);
 
-		heap_update(pg_type_desc, &tup->t_self, tup, NULL);
+		simple_heap_update(pg_type_desc, &tup->t_self, tup);
 
 		typeObjectId = tup->t_data->t_oid;
 	}
@@ -555,7 +555,7 @@ TypeRename(const char *oldTypeName, const char *newTypeName)
 
 	namestrcpy(&(((Form_pg_type) GETSTRUCT(tuple))->typname), newTypeName);
 
-	heap_update(pg_type_desc, &tuple->t_self, tuple, NULL);
+	simple_heap_update(pg_type_desc, &tuple->t_self, tuple);
 
 	/* update the system catalog indices */
 	CatalogOpenIndices(Num_pg_type_indices, Name_pg_type_indices, idescs);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.71 2001/01/14 22:14:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.72 2001/01/23 04:32:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -347,7 +347,7 @@ dropdb(const char *dbname)
 	}
 
 	/* Remove the database's tuple from pg_database */
-	heap_delete(pgdbrel, &tup->t_self, NULL);
+	simple_heap_delete(pgdbrel, &tup->t_self);
 
 	heap_endscan(pgdbscan);
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.71 2001/01/17 17:26:44 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.72 2001/01/23 04:32:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -458,10 +458,7 @@ AlterUser(AlterUserStmt *stmt)
 	}
 
 	new_tuple = heap_formtuple(pg_shadow_dsc, new_record, new_record_nulls);
-	Assert(new_tuple);
-	/* XXX check return value of this? */
-	heap_update(pg_shadow_rel, &tuple->t_self, new_tuple, NULL);
-
+	simple_heap_update(pg_shadow_rel, &tuple->t_self, new_tuple);
 
 	/* Update indexes */
 	if (RelationGetForm(pg_shadow_rel)->relhasindex)
@@ -581,7 +578,7 @@ DropUser(DropUserStmt *stmt)
 		/*
 		 * Remove the user from the pg_shadow table
 		 */
-		heap_delete(pg_shadow_rel, &tuple->t_self, NULL);
+		simple_heap_delete(pg_shadow_rel, &tuple->t_self);
 
 		ReleaseSysCache(tuple);
 
@@ -929,7 +926,7 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 		new_record[Anum_pg_group_grolist - 1] = PointerGetDatum(newarray);
 
 		tuple = heap_formtuple(pg_group_dsc, new_record, new_record_nulls);
-		heap_update(pg_group_rel, &group_tuple->t_self, tuple, NULL);
+		simple_heap_update(pg_group_rel, &group_tuple->t_self, tuple);
 
 		/* Update indexes */
 		if (RelationGetForm(pg_group_rel)->relhasindex)
@@ -1035,7 +1032,7 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 			new_record[Anum_pg_group_grolist - 1] = PointerGetDatum(newarray);
 
 			tuple = heap_formtuple(pg_group_dsc, new_record, new_record_nulls);
-			heap_update(pg_group_rel, &group_tuple->t_self, tuple, NULL);
+			simple_heap_update(pg_group_rel, &group_tuple->t_self, tuple);
 
 			/* Update indexes */
 			if (RelationGetForm(pg_group_rel)->relhasindex)
@@ -1093,7 +1090,7 @@ DropGroup(DropGroupStmt *stmt)
 		if (datum && !null && strcmp((char *) datum, stmt->name) == 0)
 		{
 			gro_exists = true;
-			heap_delete(pg_group_rel, &tuple->t_self, NULL);
+			simple_heap_delete(pg_group_rel, &tuple->t_self);
 		}
 	}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.11 2001/01/14 05:08:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.12 2001/01/23 04:32:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -664,7 +664,7 @@ del_stats(Oid relid, int attcnt, int *attnums)
 			if (i >= attcnt)
 				continue;		/* don't delete it */
 		}
-		heap_delete(pgstatistic, &tuple->t_self, NULL);
+		simple_heap_delete(pgstatistic, &tuple->t_self);
 	}
 
 	heap_endscan(scan);

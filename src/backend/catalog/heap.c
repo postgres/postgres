@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.156 2001/01/01 21:33:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.157 2001/01/23 04:32:21 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1000,7 +1000,7 @@ RelationRemoveInheritance(Relation relation)
 
 	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 	{
-		heap_delete(catalogRelation, &tuple->t_self, NULL);
+		simple_heap_delete(catalogRelation, &tuple->t_self);
 		found = true;
 	}
 
@@ -1023,7 +1023,9 @@ RelationRemoveInheritance(Relation relation)
 						  &entry);
 
 	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
-		heap_delete(catalogRelation, &tuple->t_self, NULL);
+	{
+		simple_heap_delete(catalogRelation, &tuple->t_self);
+	}
 
 	heap_endscan(scan);
 	heap_close(catalogRelation, RowExclusiveLock);
@@ -1093,7 +1095,7 @@ DeleteRelationTuple(Relation rel)
 	 *	delete the relation tuple from pg_class, and finish up.
 	 * ----------------
 	 */
-	heap_delete(pg_class_desc, &tup->t_self, NULL);
+	simple_heap_delete(pg_class_desc, &tup->t_self);
 	heap_freetuple(tup);
 
 	heap_close(pg_class_desc, RowExclusiveLock);
@@ -1267,7 +1269,7 @@ DeleteAttributeTuples(Relation rel)
 			/*** Delete any comments associated with this attribute ***/
 			DeleteComments(tup->t_data->t_oid);
 
-			heap_delete(pg_attribute_desc, &tup->t_self, NULL);
+			simple_heap_delete(pg_attribute_desc, &tup->t_self);
 			heap_freetuple(tup);
 		}
 	}
@@ -1382,12 +1384,10 @@ DeleteTypeTuple(Relation rel)
 
 	/* ----------------
 	 *	Ok, it's safe so we delete the relation tuple
-	 *	from pg_type and finish up.  But first end the scan so that
-	 *	we release the read lock on pg_type.  -mer 13 Aug 1991
+	 *	from pg_type and finish up.
 	 * ----------------
 	 */
-
-	heap_delete(pg_type_desc, &tup->t_self, NULL);
+	simple_heap_delete(pg_type_desc, &tup->t_self);
 
 	heap_endscan(pg_type_scan);
 	heap_close(pg_type_desc, RowExclusiveLock);
@@ -1595,7 +1595,7 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
 	if (!attStruct->atthasdef)
 	{
 		attStruct->atthasdef = true;
-		heap_update(attrrel, &atttup->t_self, atttup, NULL);
+		simple_heap_update(attrrel, &atttup->t_self, atttup);
 		/* keep catalog indices current */
 		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices,
 						   attridescs);
@@ -1962,7 +1962,7 @@ AddRelationRawConstraints(Relation rel,
 
 	relStruct->relchecks = numchecks;
 
-	heap_update(relrel, &reltup->t_self, reltup, NULL);
+	simple_heap_update(relrel, &reltup->t_self, reltup);
 
 	/* keep catalog indices current */
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices,
@@ -1990,7 +1990,9 @@ RemoveAttrDefault(Relation rel)
 	adscan = heap_beginscan(adrel, 0, SnapshotNow, 1, &key);
 
 	while (HeapTupleIsValid(tup = heap_getnext(adscan, 0)))
-		heap_delete(adrel, &tup->t_self, NULL);
+	{
+		simple_heap_delete(adrel, &tup->t_self);
+	}
 
 	heap_endscan(adscan);
 	heap_close(adrel, RowExclusiveLock);
@@ -2012,7 +2014,9 @@ RemoveRelCheck(Relation rel)
 	rcscan = heap_beginscan(rcrel, 0, SnapshotNow, 1, &key);
 
 	while (HeapTupleIsValid(tup = heap_getnext(rcscan, 0)))
-		heap_delete(rcrel, &tup->t_self, NULL);
+	{
+		simple_heap_delete(rcrel, &tup->t_self);
+	}
 
 	heap_endscan(rcscan);
 	heap_close(rcrel, RowExclusiveLock);
@@ -2049,7 +2053,9 @@ RemoveStatistics(Relation rel)
 	scan = heap_beginscan(pgstatistic, false, SnapshotNow, 1, &key);
 
 	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
-		heap_delete(pgstatistic, &tuple->t_self, NULL);
+	{
+		simple_heap_delete(pgstatistic, &tuple->t_self);
+	}
 
 	heap_endscan(scan);
 	heap_close(pgstatistic, RowExclusiveLock);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_largeobject.c,v 1.5 2000/10/24 01:38:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_largeobject.c,v 1.6 2001/01/23 04:32:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,7 +118,7 @@ LargeObjectDrop(Oid loid)
 		pfree(indexRes);
 		if (tuple.t_data != NULL)
 		{
-			heap_delete(pg_largeobject, &tuple.t_self, NULL);
+			simple_heap_delete(pg_largeobject, &tuple.t_self);
 			ReleaseBuffer(buffer);
 			found = true;
 		}

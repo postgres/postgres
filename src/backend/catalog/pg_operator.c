@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.53 2000/11/16 22:30:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.54 2001/01/23 04:32:21 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -801,7 +801,7 @@ OperatorDef(char *operatorName,
 								   nulls,
 								   replaces);
 
-			heap_update(pg_operator_desc, &tup->t_self, tup, NULL);
+			simple_heap_update(pg_operator_desc, &tup->t_self, tup);
 		}
 		else
 			elog(ERROR, "OperatorDef: no operator %u", operatorObjectId);
@@ -935,7 +935,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 									   nulls,
 									   replaces);
 
-				heap_update(pg_operator_desc, &tup->t_self, tup, NULL);
+				simple_heap_update(pg_operator_desc, &tup->t_self, tup);
 
 				if (RelationGetForm(pg_operator_desc)->relhasindex)
 				{
@@ -967,7 +967,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 							   nulls,
 							   replaces);
 
-		heap_update(pg_operator_desc, &tup->t_self, tup, NULL);
+		simple_heap_update(pg_operator_desc, &tup->t_self, tup);
 
 		if (RelationGetForm(pg_operator_desc)->relhasindex)
 		{
@@ -1005,7 +1005,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 							   nulls,
 							   replaces);
 
-		heap_update(pg_operator_desc, &tup->t_self, tup, NULL);
+		simple_heap_update(pg_operator_desc, &tup->t_self, tup);
 
 		if (RelationGetForm(pg_operator_desc)->relhasindex)
 		{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.57 2000/12/15 04:08:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.58 2001/01/23 04:32:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@ RemoveOperator(char *operatorName,		/* operator name */
 
 		DeleteComments(tup->t_data->t_oid);
 
-		heap_delete(relation, &tup->t_self, NULL);
+		simple_heap_delete(relation, &tup->t_self);
 
 	}
 	else
@@ -154,8 +154,7 @@ SingleOpOperatorRemove(Oid typeOid)
 
 			DeleteComments(tup->t_data->t_oid);
 
-			heap_delete(rel, &tup->t_self, NULL);
-
+			simple_heap_delete(rel, &tup->t_self);
 		}
 
 		heap_endscan(scan);
@@ -266,7 +265,7 @@ RemoveType(char *typeName)		/* type name to be removed */
 
 	DeleteComments(typeOid);
 
-	heap_delete(relation, &tup->t_self, NULL);
+	simple_heap_delete(relation, &tup->t_self);
 
 	ReleaseSysCache(tup);
 
@@ -278,7 +277,7 @@ RemoveType(char *typeName)		/* type name to be removed */
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "RemoveType: type '%s' does not exist", shadow_type);
 
-	heap_delete(relation, &tup->t_self, NULL);
+	simple_heap_delete(relation, &tup->t_self);
 
 	ReleaseSysCache(tup);
 
@@ -354,7 +353,7 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 
 	DeleteComments(tup->t_data->t_oid);
 
-	heap_delete(relation, &tup->t_self, NULL);
+	simple_heap_delete(relation, &tup->t_self);
 
 	ReleaseSysCache(tup);
 
@@ -428,7 +427,7 @@ RemoveAggregate(char *aggName, char *aggType)
 
 	DeleteComments(tup->t_data->t_oid);
 
-	heap_delete(relation, &tup->t_self, NULL);
+	simple_heap_delete(relation, &tup->t_self);
 
 	ReleaseSysCache(tup);
 

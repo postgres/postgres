@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.82 2001/01/21 03:50:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.83 2001/01/23 04:32:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -522,7 +522,7 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 			replace[Anum_pg_largeobject_data - 1] = 'r';
 			newtup = heap_modifytuple(&oldtuple, obj_desc->heap_r,
 									  values, nulls, replace);
-			heap_update(obj_desc->heap_r, &newtup->t_self, newtup, NULL);
+			simple_heap_update(obj_desc->heap_r, &newtup->t_self, newtup);
 			if (write_indices)
 				CatalogIndexInsert(idescs, Num_pg_largeobject_indices,
 								   obj_desc->heap_r, newtup);

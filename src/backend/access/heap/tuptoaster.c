@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.14 2001/01/15 05:29:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.15 2001/01/23 04:32:20 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -937,7 +937,7 @@ toast_delete_datum(Relation rel, Datum value)
 		 * Have a chunk, delete it
 		 * ----------
 		 */
-		heap_delete(toastrel, &toasttup.t_self, NULL);
+		simple_heap_delete(toastrel, &toasttup.t_self);
 
 		ReleaseBuffer(buffer);
 	}

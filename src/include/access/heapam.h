@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.60 2000/12/27 23:59:13 tgl Exp $
+ * $Id: heapam.h,v 1.61 2001/01/23 04:32:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,6 +209,9 @@ extern int	heap_delete(Relation relation, ItemPointer tid, ItemPointer ctid);
 extern int heap_update(Relation relation, ItemPointer otid, HeapTuple tup,
 			ItemPointer ctid);
 extern int	heap_mark4update(Relation relation, HeapTuple tup, Buffer *userbuf);
+extern void simple_heap_delete(Relation relation, ItemPointer tid);
+extern void simple_heap_update(Relation relation, ItemPointer otid,
+							   HeapTuple tup);
 extern void heap_markpos(HeapScanDesc scan);
 extern void heap_restrpos(HeapScanDesc scan);
 

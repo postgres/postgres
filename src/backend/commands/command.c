@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.117 2001/01/23 01:48:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.118 2001/01/23 04:32:22 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -467,7 +467,7 @@ AlterTableAddColumn(const char *relationName,
 	newreltup = heap_copytuple(reltup);
 
 	((Form_pg_class) GETSTRUCT(newreltup))->relnatts = maxatts;
-	heap_update(rel, &newreltup->t_self, newreltup, NULL);
+	simple_heap_update(rel, &newreltup->t_self, newreltup);
 
 	/* keep catalog indices current */
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
@@ -620,7 +620,7 @@ AlterTableAlterColumn(const char *relationName,
 			/* update to false */
 			newtuple = heap_copytuple(tuple);
 			((Form_pg_attribute) GETSTRUCT(newtuple))->atthasdef = FALSE;
-			heap_update(attr_rel, &tuple->t_self, newtuple, NULL);
+			simple_heap_update(attr_rel, &tuple->t_self, newtuple);
 
 			/* keep the system catalog indices current */
 			CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, irelations);
@@ -657,10 +657,9 @@ drop_default(Oid relid, int16 attnum)
 						   Int16GetDatum(attnum));
 
 	scan = heap_beginscan(attrdef_rel, false, SnapshotNow, 2, scankeys);
-	AssertState(scan != NULL);
 
 	if (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
-		heap_delete(attrdef_rel, &tuple->t_self, NULL);
+		simple_heap_delete(attrdef_rel, &tuple->t_self);
 
 	heap_endscan(scan);
 
@@ -833,7 +832,7 @@ RemoveColumnReferences(Oid reloid, int attnum, bool checkonly, HeapTuple reltup)
 			}
 			else
 			{
-				heap_delete(rcrel, &htup->t_self, NULL);
+				simple_heap_delete(rcrel, &htup->t_self);
 				pgcform->relchecks--;
 			}
 		}
@@ -1008,7 +1007,7 @@ AlterTableDropColumn(const char *relationName,
 	namestrcpy(&(attribute->attname), dropColname);
 	ATTRIBUTE_DROP_COLUMN(attribute);
 
-	heap_update(attrdesc, &tup->t_self, tup, NULL);
+	simple_heap_update(attrdesc, &tup->t_self, tup);
 	hasindex = (!IsIgnoringSystemIndexes() && RelationGetForm(attrdesc)->relhasindex);
 	if (hasindex)
 	{
@@ -1038,7 +1037,7 @@ AlterTableDropColumn(const char *relationName,
 	{
 		if (((Form_pg_attrdef) GETSTRUCT(tup))->adnum == attnum)
 		{
-			heap_delete(adrel, &tup->t_self, NULL);
+			simple_heap_delete(adrel, &tup->t_self);
 			break;
 		}
 	}
@@ -1054,7 +1053,7 @@ AlterTableDropColumn(const char *relationName,
 
 		RemoveColumnReferences(myrelid, attnum, false, reltup);
 		/* update pg_class tuple */
-		heap_update(rel, &reltup->t_self, reltup, NULL);
+		simple_heap_update(rel, &reltup->t_self, reltup);
 		CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
 		CatalogIndexInsert(ridescs, Num_pg_class_indices, rel, reltup);
 		CatalogCloseIndices(Num_pg_class_indices, ridescs);
@@ -1496,7 +1495,7 @@ AlterTableOwner(const char *relationName, const char *newOwnerName)
 	 */
 	((Form_pg_class) GETSTRUCT(tuple))->relowner = newOwnerSysid;
 
-	heap_update(class_rel, &tuple->t_self, tuple, NULL);
+	simple_heap_update(class_rel, &tuple->t_self, tuple);
 
 	/* Keep the catalog indices up to date */
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
@@ -1692,7 +1691,7 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 	 */
 	((Form_pg_class) GETSTRUCT(reltup))->reltoastrelid = toast_relid;
 	((Form_pg_class) GETSTRUCT(reltup))->reltoastidxid = toast_idxid;
-	heap_update(class_rel, &reltup->t_self, reltup, NULL);
+	simple_heap_update(class_rel, &reltup->t_self, reltup);
 
 	/*
 	 * Keep catalog indices current

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.108 2001/01/15 05:29:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.109 2001/01/23 04:32:20 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1423,6 +1423,9 @@ heap_insert(Relation relation, HeapTuple tup)
 
 /*
  *	heap_delete		- delete a tuple
+ *
+ * NB: do not call this directly unless you are prepared to deal with
+ * concurrent-update conditions.  Use simple_heap_delete instead.
  */
 int
 heap_delete(Relation relation, ItemPointer tid, ItemPointer ctid)
@@ -1496,8 +1499,7 @@ l1:
 	if (result != HeapTupleMayBeUpdated)
 	{
 		Assert(result == HeapTupleSelfUpdated || result == HeapTupleUpdated);
-		if (ctid != NULL)
-			*ctid = tp.t_data->t_ctid;
+		*ctid = tp.t_data->t_ctid;
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		ReleaseBuffer(buffer);
 		return result;
@@ -1561,7 +1563,47 @@ l1:
 }
 
 /*
+ *	simple_heap_delete - delete a tuple
+ *
+ * This routine may be used to delete a tuple when concurrent updates of
+ * the target tuple are not expected (for example, because we have a lock
+ * on the relation associated with the tuple).  Any failure is reported
+ * via elog().
+ */
+void
+simple_heap_delete(Relation relation, ItemPointer tid)
+{
+	ItemPointerData ctid;
+	int			result;
+
+	result = heap_delete(relation, tid, &ctid);
+	switch (result)
+	{
+		case HeapTupleSelfUpdated:
+			/* Tuple was already updated in current command? */
+			elog(ERROR, "simple_heap_delete: tuple already updated by self");
+			break;
+
+		case HeapTupleMayBeUpdated:
+			/* done successfully */
+			break;
+
+		case HeapTupleUpdated:
+			elog(ERROR, "simple_heap_delete: tuple concurrently updated");
+			break;
+
+		default:
+			elog(ERROR, "Unknown status %u from heap_delete", result);
+			break;
+	}
+
+}
+
+/*
  *	heap_update - replace a tuple
+ *
+ * NB: do not call this directly unless you are prepared to deal with
+ * concurrent-update conditions.  Use simple_heap_update instead.
  */
 int
 heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
@@ -1643,8 +1685,7 @@ l2:
 	if (result != HeapTupleMayBeUpdated)
 	{
 		Assert(result == HeapTupleSelfUpdated || result == HeapTupleUpdated);
-		if (ctid != NULL)
-			*ctid = oldtup.t_data->t_ctid;
+		*ctid = oldtup.t_data->t_ctid;
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		ReleaseBuffer(buffer);
 		return result;
@@ -1781,6 +1822,42 @@ l2:
 	RelationMark4RollbackHeapTuple(relation, newtup);
 
 	return HeapTupleMayBeUpdated;
+}
+
+/*
+ *	simple_heap_update - replace a tuple
+ *
+ * This routine may be used to update a tuple when concurrent updates of
+ * the target tuple are not expected (for example, because we have a lock
+ * on the relation associated with the tuple).  Any failure is reported
+ * via elog().
+ */
+void
+simple_heap_update(Relation relation, ItemPointer otid, HeapTuple tup)
+{
+	ItemPointerData ctid;
+	int			result;
+
+	result = heap_update(relation, otid, tup, &ctid);
+	switch (result)
+	{
+		case HeapTupleSelfUpdated:
+			/* Tuple was already updated in current command? */
+			elog(ERROR, "simple_heap_update: tuple already updated by self");
+			break;
+
+		case HeapTupleMayBeUpdated:
+			/* done successfully */
+			break;
+
+		case HeapTupleUpdated:
+			elog(ERROR, "simple_heap_update: tuple concurrently updated");
+			break;
+
+		default:
+			elog(ERROR, "Unknown status %u from heap_update", result);
+			break;
+	}
 }
 
 /*

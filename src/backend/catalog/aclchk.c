@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.44 2000/11/28 23:42:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.45 2001/01/23 04:32:21 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -139,7 +139,7 @@ ChangeAcl(char *relname,
 
 	ReleaseSysCache(tuple);
 
-	heap_update(relation, &newtuple->t_self, newtuple, NULL);
+	simple_heap_update(relation, &newtuple->t_self, newtuple);
 
 	/* keep the catalog indices up to date */
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices,

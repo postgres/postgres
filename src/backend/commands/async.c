@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.74 2000/12/18 17:33:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.75 2001/01/23 04:32:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -299,7 +299,7 @@ Async_Unlisten(char *relname, int pid)
 							0, 0);
 	if (HeapTupleIsValid(lTuple))
 	{
-		heap_delete(lRel, &lTuple->t_self, NULL);
+		simple_heap_delete(lRel, &lTuple->t_self);
 		ReleaseSysCache(lTuple);
 	}
 	heap_close(lRel, AccessExclusiveLock);
@@ -349,7 +349,9 @@ Async_UnlistenAll()
 	sRel = heap_beginscan(lRel, 0, SnapshotNow, 1, key);
 
 	while (HeapTupleIsValid(lTuple = heap_getnext(sRel, 0)))
-		heap_delete(lRel, &lTuple->t_self, NULL);
+	{
+		simple_heap_delete(lRel, &lTuple->t_self);
+	}
 
 	heap_endscan(sRel);
 	heap_close(lRel, AccessExclusiveLock);
@@ -506,7 +508,7 @@ AtCommit_Notify()
 					 * just do it for any failure (certainly at least for
 					 * EPERM too...)
 					 */
-					heap_delete(lRel, &lTuple->t_self, NULL);
+					simple_heap_delete(lRel, &lTuple->t_self);
 				}
 				else
 				{
@@ -516,7 +518,7 @@ AtCommit_Notify()
 					{
 						rTuple = heap_modifytuple(lTuple, lRel,
 												  value, nulls, repl);
-						heap_update(lRel, &lTuple->t_self, rTuple, NULL);
+						simple_heap_update(lRel, &lTuple->t_self, rTuple);
 						if (RelationGetForm(lRel)->relhasindex)
 						{
 							Relation	idescs[Num_pg_listener_indices];
@@ -797,7 +799,7 @@ ProcessIncomingNotify(void)
 			NotifyMyFrontEnd(relname, sourcePID);
 			/* Rewrite the tuple with 0 in notification column */
 			rTuple = heap_modifytuple(lTuple, lRel, value, nulls, repl);
-			heap_update(lRel, &lTuple->t_self, rTuple, NULL);
+			simple_heap_update(lRel, &lTuple->t_self, rTuple);
 			if (RelationGetForm(lRel)->relhasindex)
 			{
 				Relation	idescs[Num_pg_listener_indices];

@@ -179,7 +179,7 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 		elog(ERROR, "Language %s isn't a created procedural language",
 			 languageName);
 
-	heap_delete(rel, &langTup->t_self, NULL);
+	simple_heap_delete(rel, &langTup->t_self);
 
 	heap_freetuple(langTup);
 	heap_close(rel, RowExclusiveLock);

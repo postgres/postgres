@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.135 2001/01/18 07:29:04 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.136 2001/01/23 04:32:21 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -783,7 +783,7 @@ UpdateIndexPredicate(Oid indexoid, Node *oldPred, Node *predicate)
 
 	newtup = heap_modifytuple(tuple, pg_index, values, nulls, replace);
 
-	heap_update(pg_index, &newtup->t_self, newtup, NULL);
+	simple_heap_update(pg_index, &newtup->t_self, newtup);
 
 	heap_freetuple(newtup);
 	ReleaseSysCache(tuple);
@@ -1085,7 +1085,7 @@ index_drop(Oid indexId)
 		elog(ERROR, "index_drop: cache lookup failed for index %u",
 			 indexId);
 
-	heap_delete(relationRelation, &tuple->t_self, NULL);
+	simple_heap_delete(relationRelation, &tuple->t_self);
 	heap_freetuple(tuple);
 
 	/*
@@ -1113,7 +1113,7 @@ index_drop(Oid indexId)
 												   Int16GetDatum(attnum),
 													   0, 0)))
 	{
-		heap_delete(attributeRelation, &tuple->t_self, NULL);
+		simple_heap_delete(attributeRelation, &tuple->t_self);
 		heap_freetuple(tuple);
 		attnum++;
 	}
@@ -1132,7 +1132,7 @@ index_drop(Oid indexId)
 		elog(ERROR, "index_drop: cache lookup failed for index %u",
 			 indexId);
 
-	heap_delete(indexRelation, &tuple->t_self, NULL);
+	simple_heap_delete(indexRelation, &tuple->t_self);
 	heap_freetuple(tuple);
 	heap_close(indexRelation, RowExclusiveLock);
 
@@ -1495,7 +1495,7 @@ setRelhasindex(Oid relid, bool hasindex)
 	}
 	else
 	{
-		heap_update(pg_class, &tuple->t_self, tuple, NULL);
+		simple_heap_update(pg_class, &tuple->t_self, tuple);
 
 		/* Keep the catalog indices up to date */
 		if (!IsIgnoringSystemIndexes())
@@ -1545,7 +1545,7 @@ setNewRelfilenode(Relation relation)
 		classTuple = heap_copytuple(&lockTupleData);
 		ReleaseBuffer(buffer);
 		((Form_pg_class) GETSTRUCT(classTuple))->relfilenode = newrelfilenode;
-		heap_update(pg_class, &classTuple->t_self, classTuple, NULL);
+		simple_heap_update(pg_class, &classTuple->t_self, classTuple);
 	}
 	/* unlink old relfilenode */
 	DropRelationBuffers(relation);
@@ -1751,7 +1751,7 @@ UpdateStats(Oid relid, long reltuples)
 		replace[Anum_pg_class_reltuples - 1] = 'r';
 		values[Anum_pg_class_reltuples - 1] = (Datum) reltuples;
 		newtup = heap_modifytuple(tuple, pg_class, values, nulls, replace);
-		heap_update(pg_class, &tuple->t_self, newtup, NULL);
+		simple_heap_update(pg_class, &tuple->t_self, newtup);
 		if (!IsIgnoringSystemIndexes())
 		{
 			CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.83 2001/01/22 00:50:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.84 2001/01/23 04:32:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -277,7 +277,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 			 stmt->relname);
 
 	((Form_pg_class) GETSTRUCT(tuple))->reltriggers = found + 1;
-	heap_update(pgrel, &tuple->t_self, tuple, NULL);
+	simple_heap_update(pgrel, &tuple->t_self, tuple);
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
 	CatalogIndexInsert(ridescs, Num_pg_class_indices, pgrel, tuple);
 	CatalogCloseIndices(Num_pg_class_indices, ridescs);
@@ -333,7 +333,7 @@ DropTrigger(DropTrigStmt *stmt)
 
 			DeleteComments(tuple->t_data->t_oid);
 
-			heap_delete(tgrel, &tuple->t_self, NULL);
+			simple_heap_delete(tgrel, &tuple->t_self);
 			tgfound++;
 		}
 		else
@@ -362,7 +362,7 @@ DropTrigger(DropTrigStmt *stmt)
 			 stmt->relname);
 
 	((Form_pg_class) GETSTRUCT(tuple))->reltriggers = found;
-	heap_update(pgrel, &tuple->t_self, tuple, NULL);
+	simple_heap_update(pgrel, &tuple->t_self, tuple);
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
 	CatalogIndexInsert(ridescs, Num_pg_class_indices, pgrel, tuple);
 	CatalogCloseIndices(Num_pg_class_indices, ridescs);
@@ -404,7 +404,7 @@ RelationRemoveTriggers(Relation rel)
 
 		DeleteComments(tup->t_data->t_oid);
 
-		heap_delete(tgrel, &tup->t_self, NULL);
+		simple_heap_delete(tgrel, &tup->t_self);
 
 		found = true;
 	}
@@ -435,7 +435,7 @@ RelationRemoveTriggers(Relation rel)
 				 RelationGetRelid(rel));
 
 		((Form_pg_class) GETSTRUCT(tup))->reltriggers = 0;
-		heap_update(pgrel, &tup->t_self, tup, NULL);
+		simple_heap_update(pgrel, &tup->t_self, tup);
 		CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
 		CatalogIndexInsert(ridescs, Num_pg_class_indices, pgrel, tup);
 		CatalogCloseIndices(Num_pg_class_indices, ridescs);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.45 2000/11/16 22:30:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.46 2001/01/23 04:32:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,7 @@ SetRelationRuleStatus(Oid relationId, bool relHasRules,
 	if (relIsBecomingView)
 		((Form_pg_class) GETSTRUCT(tuple))->relkind = RELKIND_VIEW;
 
-	heap_update(relationRelation, &tuple->t_self, tuple, NULL);
+	simple_heap_update(relationRelation, &tuple->t_self, tuple);
 
 	/* Keep the catalog indices up to date */
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);

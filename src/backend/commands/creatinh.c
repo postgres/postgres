@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.70 2001/01/05 02:58:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.71 2001/01/23 04:32:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -771,7 +771,7 @@ setRelhassubclassInRelation(Oid relationId, bool relhassubclass)
 		elog(ERROR, "setRelhassubclassInRelation: cache lookup failed for relation %u", relationId);
 
 	((Form_pg_class) GETSTRUCT(tuple))->relhassubclass = relhassubclass;
-	heap_update(relationRelation, &tuple->t_self, tuple, NULL);
+	simple_heap_update(relationRelation, &tuple->t_self, tuple);
 
 	/* keep the catalog indices up to date */
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
