@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.26 2001/09/06 02:54:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.27 2001/09/07 21:55:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,17 +138,32 @@ PgGetFileProc(ClientData cData, int direction)
 
 #endif
 
+/*
+ * The WatchProc and GetHandleProc are no-ops but must be present.
+ */
+static void
+PgWatchProc(ClientData instanceData, int mask)
+{
+}
+static int
+PgGetHandleProc(ClientData instanceData, int direction,
+	ClientData *handlePtr)
+{
+	return TCL_ERROR;
+}
+
 Tcl_ChannelType Pg_ConnType = {
 	"pgsql",					/* channel type */
 	NULL,						/* blockmodeproc */
 	PgDelConnectionId,			/* closeproc */
 	PgInputProc,				/* inputproc */
 	PgOutputProc,				/* outputproc */
-
-	/*
-	 * Note the additional stuff can be left NULL, or is initialized
-	 * during a PgSetConnectionId
-	 */
+	NULL,						/* SeekProc, Not used */
+	NULL,						/* SetOptionProc, Not used */
+	NULL,						/* GetOptionProc, Not used */
+	PgWatchProc,				/* WatchProc, must be defined */
+	PgGetHandleProc,			/* GetHandleProc, must be defined */
+	NULL 						/* Close2Proc, Not used */
 };
 
 /*
