@@ -1769,6 +1769,14 @@ Sun Mar 14 12:59:15 CET 2004
 Mon Mar 29 17:02:52 CEST 2004
 
 	- Fixed possible segfault in type.c (by Juergen Cappel)
+	
+Thu Apr 22 14:13:57 CEST 2004
+
+	- Fixed double usage of allocated memory.
+	
+Thu Apr 29 16:06:37 CEST 2004
+
+	- Synced parser and keyword list.
 	- Set pgtypes library version to 1.2.
 	- Set ecpg version to 3.2.0.
 	- Set compat library version to 1.2.

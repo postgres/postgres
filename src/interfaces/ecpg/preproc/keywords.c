@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.61 2003/11/29 19:52:08 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.62 2004/04/29 14:08:10 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"after", AFTER},
 	{"aggregate", AGGREGATE},
 	{"all", ALL},
+	{"also", ALSO},
 	{"alter", ALTER},
 	{"analyse", ANALYSE},		/* British spelling */
 	{"analyze", ANALYZE},
@@ -87,6 +88,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"createdb", CREATEDB},
 	{"createuser", CREATEUSER},
 	{"cross", CROSS},
+	{"csv", CSV},
 	{"current_date", CURRENT_DATE},
 	{"current_time", CURRENT_TIME},
 	{"current_timestamp", CURRENT_TIMESTAMP},
@@ -176,6 +178,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"key", KEY},
 	{"lancompiler", LANCOMPILER},
 	{"language", LANGUAGE},
+	{"large", LARGE_P},
 	{"last", LAST_P},
 	{"leading", LEADING},
 	{"left", LEFT},
@@ -208,9 +211,11 @@ static ScanKeyword ScanKeywords[] = {
 	{"nothing", NOTHING},
 	{"notify", NOTIFY},
 	{"notnull", NOTNULL},
+	{"nowait", NOWAIT},
 	{"null", NULL_P},
 	{"nullif", NULLIF},
 	{"numeric", NUMERIC},
+	{"object", OBJECT_P},
 	{"of", OF},
 	{"off", OFF},
 	{"offset", OFFSET},
@@ -239,6 +244,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"privileges", PRIVILEGES},
 	{"procedural", PROCEDURAL},
 	{"procedure", PROCEDURE},
+	{"quote", QUOTE},
 	{"read", READ},
 	{"real", REAL},
 	{"recheck", RECHECK},
@@ -246,6 +252,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"reindex", REINDEX},
 	{"relative", RELATIVE_P},
 	{"rename", RENAME},
+	{"repeatable", REPEATABLE},
 	{"replace", REPLACE},
 	{"reset", RESET},
 	{"restart", RESTART},
@@ -302,6 +309,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"truncate", TRUNCATE},
 	{"trusted", TRUSTED},
 	{"type", TYPE_P},
+	{"uncommitted", UNCOMMITTED},
 	{"unencrypted", UNENCRYPTED},
 	{"union", UNION},
 	{"unique", UNIQUE},
@@ -359,17 +367,13 @@ ScanKeywordLookup(char *text)
 
 	/*
 	 * Apply an ASCII-only downcasing.	We must not use tolower() since it
-	 * may produce the wrong translation in some locales (eg, Turkish),
-	 * and we don't trust isupper() very much either.  In an ASCII-based
-	 * encoding the tests against A and Z are sufficient, but we also
-	 * check isupper() so that we will work correctly under EBCDIC.  The
-	 * actual case conversion step should work for either ASCII or EBCDIC.
+	 * may produce the wrong translation in some locales (eg, Turkish).
 	 */
 	for (i = 0; i < len; i++)
 	{
 		char		ch = text[i];
 
-		if (ch >= 'A' && ch <= 'Z' && isupper((unsigned char) ch))
+		if (ch >= 'A' && ch <= 'Z')
 			ch += 'a' - 'A';
 		word[i] = ch;
 	}
