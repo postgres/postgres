@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
 #endif
 
   /* setup test_thread table */
-  EXEC SQL CONNECT TO:l_dbname;
+  EXEC SQL CONNECT TO :l_dbname;
   EXEC SQL DROP TABLE test_thread; /* DROP might fail */
   EXEC SQL COMMIT;
   EXEC SQL CREATE TABLE
