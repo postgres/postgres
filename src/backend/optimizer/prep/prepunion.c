@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.80 2002/09/18 21:35:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.80.2.1 2003/01/05 00:56:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +67,7 @@ static List *generate_append_tlist(List *colTypes, bool flag,
 					  List *refnames_tlist);
 static Node *adjust_inherited_attrs_mutator(Node *node,
 							   adjust_inherited_attrs_context *context);
+static List *adjust_inherited_tlist(List *tlist, Oid new_relid);
 
 
 /*
@@ -770,10 +771,17 @@ adjust_inherited_attrs(Node *node,
 		Query	   *newnode;
 
 		FLATCOPY(newnode, query, Query);
-		if (newnode->resultRelation == old_rt_index)
-			newnode->resultRelation = new_rt_index;
 		query_tree_mutator(newnode, adjust_inherited_attrs_mutator,
 						   (void *) &context, QTW_IGNORE_SUBQUERIES);
+		if (newnode->resultRelation == old_rt_index)
+		{
+			newnode->resultRelation = new_rt_index;
+			/* Fix tlist resnos too, if it's inherited UPDATE */
+			if (newnode->commandType == CMD_UPDATE)
+				newnode->targetList =
+					adjust_inherited_tlist(newnode->targetList,
+										   new_relid);
+		}
 		return (Node *) newnode;
 	}
 	else
@@ -888,4 +896,102 @@ adjust_inherited_attrs_mutator(Node *node,
 
 	return expression_tree_mutator(node, adjust_inherited_attrs_mutator,
 								   (void *) context);
+}
+
+/*
+ * Adjust the targetlist entries of an inherited UPDATE operation
+ *
+ * The expressions have already been fixed, but we have to make sure that
+ * the target resnos match the child table (they may not, in the case of
+ * a column that was added after-the-fact by ALTER TABLE).  In some cases
+ * this can force us to re-order the tlist to preserve resno ordering.
+ * (We do all this work in special cases so that preptlist.c is fast for
+ * the typical case.)
+ *
+ * The given tlist has already been through expression_tree_mutator;
+ * therefore the TargetEntry nodes are fresh copies that it's okay to
+ * scribble on.  But the Resdom nodes have not been copied; make new ones
+ * if we need to change them!
+ *
+ * Note that this is not needed for INSERT because INSERT isn't inheritable.
+ */
+static List *
+adjust_inherited_tlist(List *tlist, Oid new_relid)
+{
+	bool		changed_it = false;
+	List	   *tl;
+	List	   *new_tlist;
+	bool		more;
+	int			attrno;
+
+	/* Scan tlist and update resnos to match attnums of new_relid */
+	foreach(tl, tlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(tl);
+		Resdom	   *resdom = tle->resdom;
+
+		if (resdom->resjunk)
+			continue;			/* ignore junk items */
+
+		attrno = get_attnum(new_relid, resdom->resname);
+		if (attrno == InvalidAttrNumber)
+			elog(ERROR, "Relation \"%s\" has no column \"%s\"",
+				 get_rel_name(new_relid), resdom->resname);
+		if (resdom->resno != attrno)
+		{
+			resdom = (Resdom *) copyObject((Node *) resdom);
+			resdom->resno = attrno;
+			tle->resdom = resdom;
+			changed_it = true;
+		}
+	}
+
+	/*
+	 * If we changed anything, re-sort the tlist by resno, and make sure
+	 * resjunk entries have resnos above the last real resno.  The sort
+	 * algorithm is a bit stupid, but for such a seldom-taken path, small
+	 * is probably better than fast.
+	 */
+	if (!changed_it)
+		return tlist;
+
+	new_tlist = NIL;
+	more = true;
+	for (attrno = 1; more; attrno++)
+	{
+		more = false;
+		foreach(tl, tlist)
+		{
+			TargetEntry *tle = (TargetEntry *) lfirst(tl);
+			Resdom	   *resdom = tle->resdom;
+
+			if (resdom->resjunk)
+				continue;		/* ignore junk items */
+
+			if (resdom->resno == attrno)
+				new_tlist = lappend(new_tlist, tle);
+			else if (resdom->resno > attrno)
+				more = true;
+		}
+	}
+
+	foreach(tl, tlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(tl);
+		Resdom	   *resdom = tle->resdom;
+
+		if (!resdom->resjunk)
+			continue;			/* here, ignore non-junk items */
+
+		if (resdom->resno != attrno)
+		{
+			resdom = (Resdom *) copyObject((Node *) resdom);
+			resdom->resno = attrno;
+			tle->resdom = resdom;
+		}
+		new_tlist = lappend(new_tlist, tle);
+		attrno++;
+	}
+
+	return new_tlist;
 }
