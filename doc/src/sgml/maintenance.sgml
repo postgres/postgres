@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.1 2001/08/26 21:17:12 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.2 2001/08/27 23:42:34 tgl Exp $
 -->
 
 <chapter id="maintenance">
@@ -226,7 +226,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.1 2001/08/26 21:17:12 
     than 4 billion transactions) will suffer <firstterm>transaction ID
     wraparound</>: the XID counter wraps around to zero, and all of a sudden
     transactions that were in the past appear to be in the future --- which
-    means their outputs become invisible.  In short, catatrophic data loss.
+    means their outputs become invisible.  In short, catastrophic data loss.
     (Actually the data is still there, but that's cold comfort if you can't
     get at it.)
    </para>
@@ -237,9 +237,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.1 2001/08/26 21:17:12 
     transactions.  This of course was not very satisfactory for high-traffic
     sites, so a better solution has been devised.  The new approach allows an
     installation to remain up indefinitely, without initdb or any sort of
-    restart.  The price is this maintenance requirement: <emphasis>every table
-    in the database must be VACUUMed more often than once every billion
-    transactions</emphasis>.
+    restart.  The price is this maintenance requirement:
+    <emphasis>every table in the database must be VACUUMed at least once every
+    billion transactions</emphasis>.
    </para>
 
    <para>
@@ -261,7 +261,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.1 2001/08/26 21:17:12 
     Therefore, once a tuple has been created with a particular normal XID, the
     tuple will appear to be <quote>in the past</> for the next two billion 
     transactions, no matter which normal XID we are talking about.  If the
-    tuple still exists after more than two billion transactions, it would
+    tuple still exists after more than two billion transactions, it will
     suddenly appear to be in the future.  To prevent data loss, old tuples
     must be reassigned the XID <literal>FrozenXID</> sometime before they reach
     the two-billion-transactions-old mark.  Once they are assigned this
@@ -276,8 +276,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.1 2001/08/26 21:17:12 
     to any tuple with a normal XID more than one billion transactions in the
     past.  This policy preserves the original insertion XID until it is not
     likely to be of interest anymore (in fact, most tuples will probably
-    live and die without ever being <quote>frozen</>).  This policy means
-    that the maximum safe interval between <command>VACUUM</>s of any table
+    live and die without ever being <quote>frozen</>).  With this policy,
+    the maximum safe interval between <command>VACUUM</>s of any table
     is exactly one billion transactions: if you wait longer, it's possible
     that a tuple that was not quite old enough to be reassigned last time
     is now more than two billion transactions old and has wrapped around
@@ -335,7 +335,7 @@ VACUUM
     to be considered good by all open transactions.  In particular, if
     a <command>VACUUM FREEZE</> is performed in an otherwise-idle database,
     it is guaranteed that <emphasis>all</> tuples in that database will be
-    frozen.  Hence, as long the database is not modified in any way, it
+    frozen.  Hence, as long as the database is not modified in any way, it
     will not need subsequent vacuuming to avoid transaction ID wraparound
     problems.  This technique is used by <filename>initdb</> to prepare the
     <filename>template0</> database.  It should also be used to prepare any
