@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.95 2002/09/05 22:05:48 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.96 2002/09/05 22:09:42 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -2047,7 +2047,8 @@ sets the user name used to connect to the database and for authentication.
 <envar>PGPASSWORD</envar>
 sets the password used if the backend demands password
 authentication.  This functionality is deprecated for security
-reasons; consider migrating to <envar>PGPASSWORDFILE</envar>.
+reasons; consider migrating to use the <filename>$HOME/.pgpass</>
+file.
 </para>
 </listitem>
 <listitem>
