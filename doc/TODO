@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Jun 23 05:53:52 EDT 2004
+Last updated:		Mon Jul  5 23:23:25 EDT 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -111,7 +111,7 @@ Multi-Language Support
 * Make octet_length_client the same as octet_length() (?)
 * Prevent mismatch of frontend/backend encodings from converting bytea
   data from being interpreted as encoded strings
-* Fix upper()/lower() to work for multibyte encodings
+* -Fix upper()/lower() to work for multibyte encodings
 
 
 Views / Rules
