@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/pgbuiltin.3,v 1.3 1997/09/16 02:49:23 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/pgbuiltin.3,v 1.4 1997/09/16 03:01:43 momjian Exp $
 .TH PGBUILTIN INTRO 04/01/97 PostgreSQL PostgreSQL
 .SH "DESCRIPTION"
 This section describes the data types, functions and operators
@@ -1075,6 +1075,7 @@ registered in the system catalogs.
 This list was generated from the Postgres system catalogs with the query:
 
 .nf
+.eo
 SELECT   o.oprname AS left_unary, 
          t.typname AS operand,
          r.typname AS return_type
@@ -1112,6 +1113,7 @@ left_unary|operand  |return_type
 \|        |tinterval|abstime    
 (24 rows)
 
+.ec
 .fi
 .in
 .SH "RIGHT UNARY OPERATORS"
@@ -1121,6 +1123,7 @@ registered in the system catalogs.
 This list was generated from the Postgres system catalogs with the query:
 
 .nf
+.eo
 SELECT   o.oprname AS right_unary,
          t.typname AS operand,
          r.typname AS return_type
@@ -1136,6 +1139,7 @@ right_unary|operand|return_type
 !          |int4   |int4       
 (2 rows)
 
+.ec
 .fi
 .in
 .SH "AGGREGATE FUNCTIONS"
@@ -1145,6 +1149,7 @@ registered in the system catalogs.
 This list was generated from the Postgres system catalogs with the query:
 
 .nf
+.eo
 SELECT   a.aggname, t.typname
 FROM     pg_aggregate a, pg_type t
 WHERE    a.aggbasetype = t.oid
@@ -1184,6 +1189,7 @@ sum    |money
 sum    |timespan
 (30 rows)
 
+.ec
 .fi
 \fBcount\fR is also available, where \fBcount(*)\fR returns a count of all
 rows while \fBcount(column_name)\fR returns a count of all non-null fields
