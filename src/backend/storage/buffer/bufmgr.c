@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.175 2004/08/29 05:06:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.176 2004/08/31 16:13:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1366,6 +1366,10 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 	int			i;
 	BufferDesc *bufHdr;
 
+	/* Open rel at the smgr level if not already done */
+	if (rel->rd_smgr == NULL)
+		rel->rd_smgr = smgropen(rel->rd_node);
+
 	if (rel->rd_istemp)
 	{
 		for (i = 0; i < NLocBuffer; i++)
@@ -1383,10 +1387,6 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 					errcontext.arg = bufHdr;
 					errcontext.previous = error_context_stack;
 					error_context_stack = &errcontext;
-
-					/* Open rel at the smgr level if not already done */
-					if (rel->rd_smgr == NULL)
-						rel->rd_smgr = smgropen(rel->rd_node);
 
 					smgrwrite(rel->rd_smgr,
 							  bufHdr->tag.blockNum,
