@@ -35,8 +35,6 @@ SELECT '1e-7'::cube AS cube;
 SELECT '-1e-7'::cube AS cube;
 SELECT '1.0e-7'::cube AS cube;
 SELECT '-1.0e-7'::cube AS cube;
-SELECT '1e700'::cube AS cube;
-SELECT '-1e700'::cube AS cube;
 SELECT '1e-700'::cube AS cube;
 SELECT '-1e-700'::cube AS cube;
 

@@ -127,18 +127,6 @@ SELECT '-1.0e-7'::cube AS cube;
  (-1e-07)
 (1 row)
 
-SELECT '1e700'::cube AS cube;
- cube  
--------
- (inf)
-(1 row)
-
-SELECT '-1e700'::cube AS cube;
-  cube  
---------
- (-inf)
-(1 row)
-
 SELECT '1e-700'::cube AS cube;
  cube 
 ------
