@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.181 2004/10/17 22:01:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.182 2004/11/24 02:56:17 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1549,25 +1549,18 @@ ReleaseBuffer(Buffer buffer)
  *		at least once.
  *
  *		This function cannot be used on a buffer we do not have pinned,
- *		because it doesn't change the shared buffer state.  Therefore the
- *		Assert checks are for refcount > 0.  Someone got this wrong once...
+ *		because it doesn't change the shared buffer state.
  */
 void
 IncrBufferRefCount(Buffer buffer)
 {
-	Assert(BufferIsValid(buffer));
+	Assert(BufferIsPinned(buffer));
 	ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
 	ResourceOwnerRememberBuffer(CurrentResourceOwner, buffer);
 	if (BufferIsLocal(buffer))
-	{
-		Assert(LocalRefCount[-buffer - 1] > 0);
 		LocalRefCount[-buffer - 1]++;
-	}
 	else
-	{
-		Assert(PrivateRefCount[buffer - 1] > 0);
 		PrivateRefCount[buffer - 1]++;
-	}
 }
 
 #ifdef NOT_USED
