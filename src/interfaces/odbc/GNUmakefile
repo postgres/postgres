@@ -2,7 +2,7 @@
 #
 # GNUMakefile for psqlodbc (Postgres ODBC driver)
 #
-# $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile,v 1.21 2001/09/23 13:32:24 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile,v 1.22 2001/10/09 22:32:33 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -43,7 +43,7 @@ OBJS += gpps.o
 override CPPFLAGS += -DODBCINSTDIR='"$(odbcinst_ini_dir)"'
 endif
 
-all: all-lib
+all: all-lib odbc-drop.sql
 
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib
@@ -53,16 +53,20 @@ include $(top_srcdir)/src/Makefile.shlib
 # names and we don't want those.  (This issue is probably ELF specific.)
 LINK.shared += $(shlib_symbolic)
 
+odbc-drop.sql: odbc.sql
+	sed -n '/^CREATE OR REPLACE FUNCTION/s/CREATE OR REPLACE FUNCTION \([^ (][^ (]*([^)]*)\).*/DROP FUNCTION \1;/p' $< >$@
 
 install: all installdirs
 	$(INSTALL_DATA) $(srcdir)/odbc.sql $(DESTDIR)$(datadir)/odbc.sql
+	$(INSTALL_DATA) odbc-drop.sql $(DESTDIR)$(datadir)/odbc-drop.sql
 	$(MAKE) install-lib
 
 installdirs:
 	$(mkinstalldirs) $(DESTDIR)$(libdir) $(DESTDIR)$(datadir)
 
 uninstall: uninstall-lib
-	rm -f $(DESTDIR)$(datadir)/odbc.sql
+	rm -f $(DESTDIR)$(datadir)/odbc.sql $(DESTDIR)$(datadir)/odbc-drop.sql
 
 clean distclean maintainer-clean: clean-lib
 	rm -f $(OBJS)
+	rm -f odbc-drop.sql

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.24 2001/09/13 15:55:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.25 2001/10/09 22:32:32 petere Exp $
 -->
 
  <chapter id="odbc">
@@ -80,39 +80,69 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.24 2001/09/13 15:55:23 
    <title>Installation</title>
 
    <para>
-    The first thing to note about the <productname>psqlODBC</> driver
-    (or any <acronym>ODBC</> driver) is that there must exist a
-    <firstterm>driver manager</> on the system where the
-    <acronym>ODBC</> driver is to be used. There exists a free
-    <acronym>ODBC</> driver for Unix called
-    <indexterm><primary>iODBC</primary></indexterm>
-    <productname>iODBC</> which can be obtained via <ulink
-    url="http://www.iodbc.org">http://www.iodbc.org</ulink>.
-    Instructions for installing <productname>iODBC</> are contained in
-    the <productname>iODBC</> distribution. Having said that, any
-    driver manager that you can find for your platform should support
-    the <productname>psqlODBC</> driver, or any other <acronym>ODBC</>
-    driver for that matter.
+    In order to make use of an <acronym>ODBC</> driver there must
+    exist a <firstterm>driver manager</> on the system where the
+    <acronym>ODBC</> driver is to be used.  There are two free
+    <acronym>ODBC</> driver managers for Unix-like operating systems
+    known to us: <indexterm><primary>iODBC</primary></indexterm>
+    <ulink url="http://www.iodbc.org"><productname>iODBC</></ulink>
+    and <indexterm><primary>unixODBC</primary></indexterm> <ulink
+    url="http://www.unixodbc.org"><productname>unixODBC</></ulink>.
+    Instructions for installing these driver managers are to be found
+    in the respective distribution.  Software that provides database
+    access through <acronym>ODBC</acronym> should provide its own
+    driver manager (which may well be one of these two).  Having said
+    that, any driver manager that you can find for your platform
+    should support the <productname>PostgreSQL</> <acronym>ODBC</>
+    driver, or any other <acronym>ODBC</> driver for that matter.
+   </para>
+
+   <note>
+    <para>
+     The <productname>unixODBC</> distribution ships with a
+     <productname>PostgreSQL</> <acronym>ODBC</> driver of its own,
+     which is similar to the one contained in the
+     <productname>PostgreSQL</> distribution.  It is up to you which
+     one you want to use.  We plan to coordinate the development of
+     both drivers better in the future.
+    </para>
+   </note>
+
+   <para>
+    To install the <acronym>ODBC</> you simply need to supply the
+    <option>--enable-odbc</> option to the <filename>configure</>
+    script when you are building the entire <productname>PostgreSQL</>
+    distribution. The library will then automatically be built and
+    installed with the rest of the programs. If you forget that option
+    or want to build the ODBC driver later you can change into the
+    directory <filename>src/interfaces/odbc</> and do <literal>make</>
+    and <literal>make install</> there.
    </para>
 
    <para>
-    To install <productname>psqlODBC</> you simply need to supply the
-    <option>--enable-odbc</> option to the <filename>configure</> script when you are
-    building the entire <productname>PostgreSQL</> distribution. The library
-    and header files will then automatically be built and installed with the
-    rest of the programs. If you forget that option or want to build the ODBC
-    driver later you can change into the directory <filename>src/interfaces/odbc</>
-    and do <literal>make</> and <literal>make install</> there.
+    It is also possible to build the driver to be specifically tuned
+    for use with <productname>iODBC</> or <productname>unixODBC</>.
+    This means in particular that the driver will use the driver
+    manager's routines to process the configuration files, which is
+    probably desirable since it creates a more consistent
+    <acronym>ODBC</> environment on your system.  If you want to do
+    that, then supply the <filename>configure</> options
+    <option>--with-iodbc</> or <option>--with-unixodbc</> (but not
+    both).
    </para>
 
    <para>
-    The installation-wide configuration file <filename>odbcinst.ini</> will be
-    installed into the directory <filename>/usr/local/pgsql/etc/</>, or equivalent,
-    depending on what <option>--prefix</> and/or <option>--sysconfdir</> options
-    you supplied to <filename>configure</>. Since this file can also be shared
-    between different <acronym>ODBC</> drivers you can also install it in a shared
-    location. To do that, override the location of this file with the
-    <option>--with-odbcinst</> option.
+    If you build a <quote>stand-alone</quote> driver (not tied to
+    <productname>iODBC</> or <productname>unixODBC</>), then you can
+    specify where the driver should look for the configuration file
+    <filename>odbcinst.ini</>.  By default it will be the directory
+    <filename>/usr/local/pgsql/etc/</>, or equivalent, depending on
+    what <option>--prefix</> and/or <option>--sysconfdir</> options
+    you supplied to <filename>configure</>.  To select a specific
+    location outside the <productname>PostgreSQL</> installation
+    layout, use the <option>--with-odbcinst</> option.  To be most
+    useful, it should be arranged that the driver and the driver
+    manager read the same configuration file.
    </para>
 
    <para>
@@ -125,20 +155,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.24 2001/09/13 15:55:23 
 psql -d template1 -f <replaceable>LOCATION</>/odbc.sql
 </programlisting>
     where specifying <literal>template1</literal> as the target
-    database will ensure that all subsequent new databases will
-    have these same definitions.
+    database will ensure that all subsequent new databases will have
+    these same definitions.  If for any reason you want to remove
+    these functions again, run the file
+    <filename>odbc-drop.sql</filename> through
+    <command>psql</command>.
    </para>
-
-   <sect2>
-    <title>Supported Platforms</title>
-    <para>
-     <productname>psqlODBC</productname> has been built and tested
-     on <systemitem class="osname">Linux</>. There have been reports of success
-     with <systemitem class="osname">FreeBSD</> and with <systemitem class="osname">Solaris</>. There are no known restrictions
-     on the basic code for other platforms which already support
-     <productname>Postgres</productname>.
-    </para>
-   </sect2>
   </sect1>
 
   <sect1 id="odbc-config">

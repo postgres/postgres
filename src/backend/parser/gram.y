@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.260 2001/10/08 18:16:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.261 2001/10/09 22:32:32 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -237,6 +237,7 @@ static void doNegateFloat(Value *v);
 %type <list>	row_descriptor, row_list, in_expr_nodes
 %type <node>	row_expr
 %type <node>	case_expr, case_arg, when_clause, case_default
+%type <boolean>	opt_empty_parentheses
 %type <list>	when_clause_list
 %type <ival>	sub_type
 %type <list>	OptCreateAs, CreateAsList
@@ -4894,7 +4895,7 @@ c_expr:  attr
 					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
-		| CURRENT_DATE
+		| CURRENT_DATE opt_empty_parentheses
 				{
 					/*
 					 * Translate as "date('now'::text)".
@@ -4927,7 +4928,7 @@ c_expr:  attr
 
 					$$ = (Node *)makeTypeCast((Node *)s, d);
 				}
-		| CURRENT_TIME
+		| CURRENT_TIME opt_empty_parentheses
 				{
 					/*
 					 * Translate as "timetz('now'::text)".
@@ -4978,7 +4979,7 @@ c_expr:  attr
 
 					$$ = (Node *)makeTypeCast((Node *)s, d);
 				}
-		| CURRENT_TIMESTAMP
+		| CURRENT_TIMESTAMP opt_empty_parentheses
 				{
 					/*
 					 * Translate as "timestamptz('now'::text)".
@@ -5032,7 +5033,7 @@ c_expr:  attr
 
 					$$ = (Node *)makeTypeCast((Node *)s, d);
 				}
-		| CURRENT_USER
+		| CURRENT_USER opt_empty_parentheses
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "current_user";
@@ -5041,7 +5042,7 @@ c_expr:  attr
 					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
-		| SESSION_USER
+		| SESSION_USER opt_empty_parentheses
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "session_user";
@@ -5050,7 +5051,7 @@ c_expr:  attr
 					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
-		| USER
+		| USER opt_empty_parentheses
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "current_user";
@@ -5386,6 +5387,8 @@ attrs:	  attr_name
 				{ $$ = lappend($1, makeString("*")); }
 		;
 
+opt_empty_parentheses: '(' ')' { $$ = TRUE; }
+					| /*EMPTY*/ { $$ = TRUE; }
 
 /*****************************************************************************
  *

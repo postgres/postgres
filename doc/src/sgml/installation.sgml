@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.60 2001/10/09 18:46:00 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.61 2001/10/09 22:32:32 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -696,7 +696,25 @@ su - postgres
        <term><option>--enable-odbc</option></term>
        <listitem>
         <para>
-         Build the ODBC driver package.
+         Build the ODBC driver.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>--with-iodbc</option></term>
+       <listitem>
+        <para>
+         Build the ODBC driver for use with <productname>iODBC</>.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>--with-unixodbc</option></term>
+       <listitem>
+        <para>
+         Build the ODBC driver for use with <productname>unixODBC</>.
         </para>
        </listitem>
       </varlistentry>
@@ -708,10 +726,16 @@ su - postgres
          Specifies the directory where the ODBC driver will expect its
          <filename>odbcinst.ini</> configuration file. The default is
          <filename>/usr/local/pgsql/etc</filename> or whatever you
-         specified as <option>--sysconfdir</option>. A default file
-         will be installed there. If you intend to share the
-         <filename>odbcinst.ini</> file between several ODBC drivers
-         then you may want to use this option.
+         specified as <option>--sysconfdir</option>. It should be
+         arranged that the driver reads the same file as the driver
+         manager.
+        </para>
+
+        <para>
+         If either the option <option>--with-iodbc</option> or the
+         option <option>--with-unixodbc</option> is used, this option
+         will be ignored because in that case the driver manager
+         handles the location of the configuration file.
         </para>
        </listitem>
       </varlistentry>
