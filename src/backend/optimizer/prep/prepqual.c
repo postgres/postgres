@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.10 1998/09/01 03:23:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.11 1998/10/04 03:30:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@ static Expr *push_nots(Expr *qual);
 static Expr *normalize(Expr *qual);
 static List *or_normalize(List *orlist);
 static List *distribute_args(List *item, List *args);
-static List *qualcleanup(Expr *qual);
+static List *qual_cleanup(Expr *qual);
 static List *remove_ands(Expr *qual);
 static List *remove_duplicates(List *list);
 
@@ -52,7 +52,7 @@ static List *remove_duplicates(List *list);
 
 
 /*
- * cnfify--
+ * cnfify
  *	  Convert a qualification to conjunctive normal form by applying
  *	  successive normalizations.
  *
@@ -73,7 +73,7 @@ cnfify(Expr *qual, bool removeAndFlag)
 	{
 		newqual = find_nots(pull_args(qual));
 		newqual = normalize(pull_args(newqual));
-		newqual = (Expr *) qualcleanup(pull_args(newqual));
+		newqual = (Expr *) qual_cleanup(pull_args(newqual));
 		newqual = pull_args(newqual);;
 
 		if (removeAndFlag)
@@ -84,106 +84,12 @@ cnfify(Expr *qual, bool removeAndFlag)
 				newqual = (Expr *) remove_ands(make_andclause(lcons(newqual, NIL)));
 		}
 	}
-	else if (qual != NULL)
-		newqual = (Expr *) lcons(qual, NIL);
 
 	return (List *) (newqual);
 }
 
 /*
- * pull-args--
- *	  Given a qualification, eliminate nested 'and' and 'or' clauses.
- *
- * Returns the modified qualification.
- *
- */
-static Expr *
-pull_args(Expr *qual)
-{
-	if (qual == NULL)
-		return NULL;
-
-	if (is_opclause((Node *) qual))
-	{
-		return (make_clause(qual->opType, qual->oper,
-							lcons(pull_args((Expr *) get_leftop(qual)),
-							 lcons(pull_args((Expr *) get_rightop(qual)),
-								   NIL))));
-	}
-	else if (and_clause((Node *) qual))
-	{
-		List	   *temp = NIL;
-		List	   *t_list = NIL;
-
-		foreach(temp, qual->args)
-			t_list = lappend(t_list, pull_args(lfirst(temp)));
-		return make_andclause(pull_ands(t_list));
-	}
-	else if (or_clause((Node *) qual))
-	{
-		List	   *temp = NIL;
-		List	   *t_list = NIL;
-
-		foreach(temp, qual->args)
-			t_list = lappend(t_list, pull_args(lfirst(temp)));
-		return make_orclause(pull_ors(t_list));
-	}
-	else if (not_clause((Node *) qual))
-		return make_notclause(pull_args(get_notclausearg(qual)));
-	else
-		return qual;
-}
-
-/*
- * pull-ors--
- *	  Pull the arguments of an 'or' clause nested within another 'or'
- *	  clause up into the argument list of the parent.
- *
- * Returns the modified list.
- */
-static List *
-pull_ors(List *orlist)
-{
-	if (orlist == NIL)
-		return NIL;
-
-	if (or_clause(lfirst(orlist)))
-	{
-		List	   *args = ((Expr *) lfirst(orlist))->args;
-
-		return (pull_ors(nconc(copyObject((Node *) args),
-							   copyObject((Node *) lnext(orlist)))));
-	}
-	else
-		return lcons(lfirst(orlist), pull_ors(lnext(orlist)));
-}
-
-/*
- * pull-ands--
- *	  Pull the arguments of an 'and' clause nested within another 'and'
- *	  clause up into the argument list of the parent.
- *
- * Returns the modified list.
- */
-static List *
-pull_ands(List *andlist)
-{
-	if (andlist == NIL)
-		return NIL;
-
-	if (and_clause(lfirst(andlist)))
-	{
-		List	   *args = ((Expr *) lfirst(andlist))->args;
-
-		return (pull_ands(nconc(copyObject((Node *) args),
-								copyObject((Node *) lnext(andlist)))));
-	}
-	else
-		return lcons(lfirst(andlist), pull_ands(lnext(andlist)));
-}
-
-/*
- * find-nots--
+ * find_nots
  *	  Traverse the qualification, looking for 'not's to take care of.
  *	  For 'not' clauses, remove the 'not' and push it down to the clauses'
  *	  descendants.
@@ -231,7 +137,224 @@ find_nots(Expr *qual)
 }
 
 /*
- * push-nots--
+ * normalize
+ *	  Given a qualification tree with the 'not's pushed down, convert it
+ *	  to a tree in CNF by repeatedly applying the rule:
+ *				("OR" A ("AND" B C))  => ("AND" ("OR" A B) ("OR" A C))
+ *	  bottom-up.
+ *	  Note that 'or' clauses will always be turned into 'and' clauses.
+ *
+ * Returns the modified qualification.
+ *
+ */
+static Expr *
+normalize(Expr *qual)
+{
+	if (qual == NULL)
+		return NULL;
+
+	if (is_opclause((Node *) qual))
+	{
+		Expr	   *expr = (Expr *) qual;
+
+		return (make_clause(expr->opType, expr->oper,
+							lcons(normalize((Expr *) get_leftop(qual)),
+							 lcons(normalize((Expr *) get_rightop(qual)),
+								   NIL))));
+	}
+	else if (and_clause((Node *) qual))
+	{
+		List	   *temp = NIL;
+		List	   *t_list = NIL;
+
+		foreach(temp, qual->args)
+			t_list = lappend(t_list, normalize(lfirst(temp)));
+		return make_andclause(t_list);
+	}
+	else if (or_clause((Node *) qual))
+	{
+		/* XXX - let form, maybe incorrect */
+		List	   *orlist = NIL;
+		List	   *temp = NIL;
+		bool		has_andclause = FALSE;
+
+		foreach(temp, qual->args)
+			orlist = lappend(orlist, normalize(lfirst(temp)));
+		foreach(temp, orlist)
+		{
+			if (and_clause(lfirst(temp)))
+			{
+				has_andclause = TRUE;
+				break;
+			}
+		}
+		if (has_andclause == TRUE)
+			return make_andclause(or_normalize(orlist));
+		else
+			return make_orclause(orlist);
+
+	}
+	else if (not_clause((Node *) qual))
+		return make_notclause(normalize(get_notclausearg(qual)));
+	else
+		return qual;
+}
+
+/*
+ * qual_cleanup
+ *	  Fix up a qualification by removing duplicate entries (left over from
+ *	  normalization), and by removing 'and' and 'or' clauses which have only
+ *	  one valid expr (e.g., ("AND" A) => A).
+ *
+ * Returns the modified qualfication.
+ *
+ */
+static List *
+qual_cleanup(Expr *qual)
+{
+	if (qual == NULL)
+		return NIL;
+
+	if (is_opclause((Node *) qual))
+	{
+		return ((List *) make_clause(qual->opType, qual->oper,
+							lcons(qual_cleanup((Expr *) get_leftop(qual)),
+						   lcons(qual_cleanup((Expr *) get_rightop(qual)),
+								 NIL))));
+	}
+	else if (and_clause((Node *) qual))
+	{
+		List	   *temp = NIL;
+		List	   *t_list = NIL;
+		List	   *new_and_args = NIL;
+
+		foreach(temp, qual->args)
+			t_list = lappend(t_list, qual_cleanup(lfirst(temp)));
+
+		new_and_args = remove_duplicates(t_list);
+
+		if (length(new_and_args) > 1)
+			return (List *) make_andclause(new_and_args);
+		else
+			return lfirst(new_and_args);
+	}
+	else if (or_clause((Node *) qual))
+	{
+		List	   *temp = NIL;
+		List	   *t_list = NIL;
+		List	   *new_or_args = NIL;
+
+		foreach(temp, qual->args)
+			t_list = lappend(t_list, qual_cleanup(lfirst(temp)));
+
+		new_or_args = remove_duplicates(t_list);
+
+
+		if (length(new_or_args) > 1)
+			return (List *) make_orclause(new_or_args);
+		else
+			return lfirst(new_or_args);
+	}
+	else if (not_clause((Node *) qual))
+		return (List *) make_notclause((Expr *) qual_cleanup((Expr *) get_notclausearg(qual)));
+	else
+		return (List *) qual;
+}
+
+/*
+ * pull_args
+ *	  Given a qualification, eliminate nested 'and' and 'or' clauses.
+ *
+ * Returns the modified qualification.
+ *
+ */
+static Expr *
+pull_args(Expr *qual)
+{
+	if (qual == NULL)
+		return NULL;
+
+	if (is_opclause((Node *) qual))
+	{
+		return (make_clause(qual->opType, qual->oper,
+							lcons(pull_args((Expr *) get_leftop(qual)),
+							 lcons(pull_args((Expr *) get_rightop(qual)),
+								   NIL))));
+	}
+	else if (and_clause((Node *) qual))
+	{
+		List	   *temp = NIL;
+		List	   *t_list = NIL;
+
+		foreach(temp, qual->args)
+			t_list = lappend(t_list, pull_args(lfirst(temp)));
+		return make_andclause(pull_ands(t_list));
+	}
+	else if (or_clause((Node *) qual))
+	{
+		List	   *temp = NIL;
+		List	   *t_list = NIL;
+
+		foreach(temp, qual->args)
+			t_list = lappend(t_list, pull_args(lfirst(temp)));
+		return make_orclause(pull_ors(t_list));
+	}
+	else if (not_clause((Node *) qual))
+		return make_notclause(pull_args(get_notclausearg(qual)));
+	else
+		return qual;
+}
+
+/*
+ * pull_ors
+ *	  Pull the arguments of an 'or' clause nested within another 'or'
+ *	  clause up into the argument list of the parent.
+ *
+ * Returns the modified list.
+ */
+static List *
+pull_ors(List *orlist)
+{
+	if (orlist == NIL)
+		return NIL;
+
+	if (or_clause(lfirst(orlist)))
+	{
+		List	   *args = ((Expr *) lfirst(orlist))->args;
+
+		return (pull_ors(nconc(copyObject((Node *) args),
+							   copyObject((Node *) lnext(orlist)))));
+	}
+	else
+		return lcons(lfirst(orlist), pull_ors(lnext(orlist)));
+}
+
+/*
+ * pull_ands
+ *	  Pull the arguments of an 'and' clause nested within another 'and'
+ *	  clause up into the argument list of the parent.
+ *
+ * Returns the modified list.
+ */
+static List *
+pull_ands(List *andlist)
+{
+	if (andlist == NIL)
+		return NIL;
+
+	if (and_clause(lfirst(andlist)))
+	{
+		List	   *args = ((Expr *) lfirst(andlist))->args;
+
+		return (pull_ands(nconc(copyObject((Node *) args),
+								copyObject((Node *) lnext(andlist)))));
+	}
+	else
+		return lcons(lfirst(andlist), pull_ands(lnext(andlist)));
+}
+
+/*
+ * push_nots
  *	  Negate the descendants of a 'not' clause.
  *
  * Returns the modified qualification.
@@ -308,71 +431,7 @@ push_nots(Expr *qual)
 }
 
 /*
- * normalize--
- *	  Given a qualification tree with the 'not's pushed down, convert it
- *	  to a tree in CNF by repeatedly applying the rule:
- *				("OR" A ("AND" B C))  => ("AND" ("OR" A B) ("OR" A C))
- *	  bottom-up.
- *	  Note that 'or' clauses will always be turned into 'and' clauses.
- *
- * Returns the modified qualification.
- *
- */
-static Expr *
-normalize(Expr *qual)
-{
-	if (qual == NULL)
-		return NULL;
-
-	if (is_opclause((Node *) qual))
-	{
-		Expr	   *expr = (Expr *) qual;
-
-		return (make_clause(expr->opType, expr->oper,
-							lcons(normalize((Expr *) get_leftop(qual)),
-							 lcons(normalize((Expr *) get_rightop(qual)),
-								   NIL))));
-	}
-	else if (and_clause((Node *) qual))
-	{
-		List	   *temp = NIL;
-		List	   *t_list = NIL;
-
-		foreach(temp, qual->args)
-			t_list = lappend(t_list, normalize(lfirst(temp)));
-		return make_andclause(t_list);
-	}
-	else if (or_clause((Node *) qual))
-	{
-		/* XXX - let form, maybe incorrect */
-		List	   *orlist = NIL;
-		List	   *temp = NIL;
-		bool		has_andclause = FALSE;
-
-		foreach(temp, qual->args)
-			orlist = lappend(orlist, normalize(lfirst(temp)));
-		foreach(temp, orlist)
-		{
-			if (and_clause(lfirst(temp)))
-			{
-				has_andclause = TRUE;
-				break;
-			}
-		}
-		if (has_andclause == TRUE)
-			return make_andclause(or_normalize(orlist));
-		else
-			return make_orclause(orlist);
-
-	}
-	else if (not_clause((Node *) qual))
-		return make_notclause(normalize(get_notclausearg(qual)));
-	else
-		return qual;
-}
-
-/*
- * or-normalize--
+ * or_normalize
  *	  Given a list of exprs which are 'or'ed together, distribute any
  *	  'and' clauses.
  *
@@ -409,7 +468,7 @@ or_normalize(List *orlist)
 }
 
 /*
- * distribute-args--
+ * distribute_args
  *	  Create new 'or' clauses by or'ing 'item' with each element of 'args'.
  *	  E.g.: (distribute-args A ("AND" B C)) => ("AND" ("OR" A B) ("OR" A C))
  *
@@ -438,69 +497,7 @@ distribute_args(List *item, List *args)
 }
 
 /*
- * qualcleanup--
- *	  Fix up a qualification by removing duplicate entries (left over from
- *	  normalization), and by removing 'and' and 'or' clauses which have only
- *	  one valid expr (e.g., ("AND" A) => A).
- *
- * Returns the modified qualfication.
- *
- */
-static List *
-qualcleanup(Expr *qual)
-{
-	if (qual == NULL)
-		return NIL;
-
-	if (is_opclause((Node *) qual))
-	{
-		return ((List *) make_clause(qual->opType, qual->oper,
-							lcons(qualcleanup((Expr *) get_leftop(qual)),
-						   lcons(qualcleanup((Expr *) get_rightop(qual)),
-								 NIL))));
-	}
-	else if (and_clause((Node *) qual))
-	{
-		List	   *temp = NIL;
-		List	   *t_list = NIL;
-		List	   *new_and_args = NIL;
-
-		foreach(temp, qual->args)
-			t_list = lappend(t_list, qualcleanup(lfirst(temp)));
-
-		new_and_args = remove_duplicates(t_list);
-
-		if (length(new_and_args) > 1)
-			return (List *) make_andclause(new_and_args);
-		else
-			return lfirst(new_and_args);
-	}
-	else if (or_clause((Node *) qual))
-	{
-		List	   *temp = NIL;
-		List	   *t_list = NIL;
-		List	   *new_or_args = NIL;
-
-		foreach(temp, qual->args)
-			t_list = lappend(t_list, qualcleanup(lfirst(temp)));
-
-		new_or_args = remove_duplicates(t_list);
-
-
-		if (length(new_or_args) > 1)
-			return (List *) make_orclause(new_or_args);
-		else
-			return lfirst(new_or_args);
-	}
-	else if (not_clause((Node *) qual))
-		return (List *) make_notclause((Expr *) qualcleanup((Expr *) get_notclausearg(qual)));
-
-	else
-		return (List *) qual;
-}
-
-/*
- * remove-ands--
+ * remove_ands
  *	  Remove the explicit "AND"s from the qualification:
  *				("AND" A B) => (A B)
  *
@@ -543,12 +540,9 @@ remove_ands(Expr *qual)
 		return (List *) qual;
 }
 
-/*****************************************************************************
- *
- *
- *
- *****************************************************************************/
-
+/*
+ * remove_duplicates
+ */
 static List *
 remove_duplicates(List *list)
 {
