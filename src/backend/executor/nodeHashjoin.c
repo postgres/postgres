@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.17 1999/02/13 23:15:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.18 1999/05/06 00:30:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -650,8 +650,8 @@ ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 	heapTuple = (HeapTuple) (*position);
 	heapTuple->t_data = (HeapTupleHeader) 
 						((char *) heapTuple + HEAPTUPLESIZE);
-	(*position) = (char *) LONGALIGN(*position + 
-									 heapTuple->t_len + HEAPTUPLESIZE);
+	(*position) = (char *) MAXALIGN(*position + 
+									heapTuple->t_len + HEAPTUPLESIZE);
 
 	return ExecStoreTuple(heapTuple, tupleSlot, InvalidBuffer, false);
 }
@@ -843,7 +843,7 @@ ExecHashJoinSaveTuple(HeapTuple heapTuple,
 	}
 	memmove(position, heapTuple, HEAPTUPLESIZE);
 	memmove(position + HEAPTUPLESIZE, heapTuple->t_data, heapTuple->t_len);
-	position = (char *) LONGALIGN(position + heapTuple->t_len + HEAPTUPLESIZE);
+	position = (char *) MAXALIGN(position + heapTuple->t_len + HEAPTUPLESIZE);
 	*pageend = position - buffer;
 
 	return position;

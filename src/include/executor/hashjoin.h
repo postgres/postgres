@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hashjoin.h,v 1.8 1999/02/13 23:21:24 momjian Exp $
+ * $Id: hashjoin.h,v 1.9 1999/05/06 00:30:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,18 +17,23 @@
 
 /* -----------------
  *	have to use relative address as pointers in the hashtable
- *	because the hashtable may reallocate in difference processes
+ *	because the hashtable may reallocate in different processes
+ *
+ *  XXX: this relative-address stuff is useless on all supported platforms
+ *  and is a ever-dangerous source of bugs.  Really ought to rip it out.
  * -----------------
  */
 typedef int RelativeAddr;
 
 /* ------------------
- *	the relative addresses are always relative to the head of the
- *	hashtable, the following macro converts them to absolute address.
+ *	The relative addresses are always relative to the head of the
+ *	hashtable, the following macros convert them to/from absolute address.
+ *  NULL is represented as -1 (CAUTION: RELADDR() doesn't handle that!).
+ *  CAUTION: ABSADDR evaluates its arg twice!!
  * ------------------
  */
-#define ABSADDR(X)		((X) < 0 ? NULL: (char*)hashtable + X)
-#define RELADDR(X)		(RelativeAddr)((char*)(X) - (char*)hashtable)
+#define ABSADDR(X)		((X) < 0 ? (char*) NULL : (char*)hashtable + (X))
+#define RELADDR(X)		((RelativeAddr)((char*)(X) - (char*)hashtable))
 
 typedef char **charPP;
 typedef int *intP;
@@ -78,7 +83,5 @@ typedef struct HashBucketData
 } HashBucketData;				/* real bucket follows here */
 
 typedef HashBucketData *HashBucket;
-
-#define HASH_PERMISSION			0700
 
 #endif	 /* HASHJOIN_H */

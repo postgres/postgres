@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: nodeHash.c,v 1.32 1999/04/07 23:33:30 tgl Exp $
+ *  $Id: nodeHash.c,v 1.33 1999/05/06 00:30:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,12 +38,13 @@
 #include "utils/hsearch.h"
 
 extern int	NBuffers;
-static int	HashTBSize;
+
+#define HJ_TEMP_NAMELEN  16		/* max length for mk_hj_temp file names */
 
 static void mk_hj_temp(char *tempname);
 static int	hashFunc(Datum key, int len, bool byVal);
-static int	ExecHashPartition(Hash *node);
 static RelativeAddr hashTableAlloc(int size, HashJoinTable hashtable);
+static void * absHashTableAlloc(int size, HashJoinTable hashtable);
 static void ExecHashOverflowInsert(HashJoinTable hashtable,
 					   HashBucket bucket,
 					   HeapTuple heapTuple);
@@ -270,12 +271,18 @@ ExecEndHash(Hash *node)
 static RelativeAddr
 hashTableAlloc(int size, HashJoinTable hashtable)
 {
-	RelativeAddr p;
-
-	p = hashtable->top;
-	hashtable->top += size;
+	RelativeAddr p = hashtable->top;
+	hashtable->top += MAXALIGN(size);
 	return p;
 }
+
+static void *
+absHashTableAlloc(int size, HashJoinTable hashtable)
+{
+	RelativeAddr p = hashTableAlloc(size, hashtable);
+	return ABSADDR(p);
+}
+
 
 /* ----------------------------------------------------------------
  *		ExecHashTableCreate
@@ -290,9 +297,12 @@ HashJoinTable
 ExecHashTableCreate(Hash *node)
 {
 	Plan	   *outerNode;
+	int			HashTBSize;
 	int			nbatch;
 	int			ntuples;
 	int			tupsize;
+	int			pages;
+	int			sqrtpages;
 	IpcMemoryId shmid;
 	HashJoinTable hashtable;
 	HashBucket	bucket;
@@ -307,43 +317,72 @@ ExecHashTableCreate(Hash *node)
 	int		   *innerbatchSizes;
 	RelativeAddr tempname;
 
-	nbatch = -1;
-	HashTBSize = NBuffers / 2;
-	while (nbatch < 0)
-	{
-
-		/*
-		 * determine number of batches for the hashjoin
-		 */
-		HashTBSize *= 2;
-		nbatch = ExecHashPartition(node);
-	}
 	/* ----------------
-	 *	get information about the size of the relation
+	 *	Get information about the size of the relation to be hashed
+	 *	(it's the "outer" subtree of this node, but the inner relation of
+	 *	the hashjoin).
+	 *  Caution: this is only the planner's estimates, and so
+	 *  can't be trusted too far.  Apply a healthy fudge factor.
 	 * ----------------
 	 */
 	outerNode = outerPlan(node);
 	ntuples = outerNode->plan_size;
-	if (ntuples <= 0)
-		ntuples = 1000;			/* XXX just a hack */
+	if (ntuples <= 0)			/* force a plausible size if no info */
+		ntuples = 1000;
 	tupsize = outerNode->plan_width + sizeof(HeapTupleData);
+	pages = (int) ceil((double) ntuples * tupsize * FUDGE_FAC / BLCKSZ);
 
 	/*
-	 * totalbuckets is the total number of hash buckets needed for the
-	 * entire relation
+	 * Max hashtable size is NBuffers pages, but not less than
+	 * sqrt(estimated inner rel size), so as to avoid horrible performance.
+	 * XXX since the hashtable is not allocated in shared mem anymore,
+	 * it would probably be more appropriate to drive this from -S than -B.
 	 */
-	totalbuckets = ceil((double) ntuples / NTUP_PER_BUCKET);
-	bucketsize = LONGALIGN(NTUP_PER_BUCKET * tupsize + sizeof(*bucket));
+	sqrtpages = (int) ceil(sqrt((double) pages));
+	HashTBSize = NBuffers;
+	if (sqrtpages > HashTBSize)
+		HashTBSize = sqrtpages;
 
 	/*
-	 * nbuckets is the number of hash buckets for the first pass of hybrid
-	 * hashjoin
+	 * Count the number of hash buckets we want for the whole relation,
+	 * and the number we can actually fit in the allowed memory.
+	 * NOTE: FUDGE_FAC here determines the fraction of the hashtable space
+	 * saved for overflow records.  Need a better approach...
 	 */
-	nbuckets = (HashTBSize - nbatch) * BLCKSZ / (bucketsize * FUDGE_FAC);
-	if (totalbuckets < nbuckets)
-		totalbuckets = nbuckets;
-	if (nbatch == 0)
+	totalbuckets = (int) ceil((double) ntuples / NTUP_PER_BUCKET);
+	bucketsize = MAXALIGN(NTUP_PER_BUCKET * tupsize + sizeof(*bucket));
+	nbuckets = (int) ((HashTBSize * BLCKSZ) / (bucketsize * FUDGE_FAC));
+
+	if (totalbuckets <= nbuckets)
+	{
+		/* We have enough space, so no batching.  In theory we could
+		 * even reduce HashTBSize, but as long as we don't have a way
+		 * to deal with overflow-space overrun, best to leave the
+		 * extra space available for overflow.
+		 */
 		nbuckets = totalbuckets;
+		nbatch = 0;
+	}
+	else
+	{
+		/* Need to batch; compute how many batches we want to use.
+		 * Note that nbatch doesn't have to have anything to do with
+		 * the ratio totalbuckets/nbuckets; in fact, it is the number
+		 * of groups we will use for the part of the data that doesn't
+		 * fall into the first nbuckets hash buckets.
+		 */
+		nbatch = (int) ceil((double) (pages - HashTBSize) / HashTBSize);
+		if (nbatch <= 0)
+			nbatch = 1;
+	}
+
+	/* Now, totalbuckets is the number of (virtual) hashbuckets for the
+	 * whole relation, and nbuckets is the number of physical hashbuckets
+	 * we will use in the first pass.  Data falling into the first nbuckets
+	 * virtual hashbuckets gets handled in the first pass; everything else
+	 * gets divided into nbatch batches to be processed in additional
+	 * passes.
+	 */
 #ifdef HJDEBUG
 	printf("nbatch = %d, totalbuckets = %d, nbuckets = %d\n", 
 			nbatch, totalbuckets, nbuckets);
@@ -351,10 +390,11 @@ ExecHashTableCreate(Hash *node)
 
 	/* ----------------
 	 *	in non-parallel machines, we don't need to put the hash table
-	 *	in the shared memory.  We just palloc it.
+	 *	in the shared memory.  We just palloc it.  The space needed
+	 *  is the hash area itself plus nbatch+1 I/O buffer pages.
 	 * ----------------
 	 */
-	hashtable = (HashJoinTable) palloc((HashTBSize + 1) * BLCKSZ);
+	hashtable = (HashJoinTable) palloc((HashTBSize + nbatch + 1) * BLCKSZ);
 	shmid = 0;
 
 	if (hashtable == NULL)
@@ -367,13 +407,15 @@ ExecHashTableCreate(Hash *node)
 	hashtable->totalbuckets = totalbuckets;
 	hashtable->bucketsize = bucketsize;
 	hashtable->shmid = shmid;
-	hashtable->top = sizeof(HashTableData);
+	hashtable->top = MAXALIGN(sizeof(HashTableData));
 	hashtable->bottom = HashTBSize * BLCKSZ;
-
 	/*
-	 * hashtable->readbuf has to be long aligned!!!
+	 * hashtable->readbuf has to be maxaligned!!!
+	 * Note there are nbatch additional pages available after readbuf;
+	 * these are used for buffering the outgoing batch data.
 	 */
 	hashtable->readbuf = hashtable->bottom;
+	hashtable->batch = hashtable->bottom + BLCKSZ;
 	hashtable->nbatch = nbatch;
 	hashtable->curbatch = 0;
 	hashtable->pcount = hashtable->nprocess = 0;
@@ -383,13 +425,13 @@ ExecHashTableCreate(Hash *node)
 		 *	allocate and initialize the outer batches
 		 * ---------------
 		 */
-		outerbatchNames = (RelativeAddr *) ABSADDR(
-			   hashTableAlloc(nbatch * sizeof(RelativeAddr), hashtable));
-		outerbatchPos = (RelativeAddr *) ABSADDR(
-			   hashTableAlloc(nbatch * sizeof(RelativeAddr), hashtable));
+		outerbatchNames = (RelativeAddr *)
+			absHashTableAlloc(nbatch * sizeof(RelativeAddr), hashtable);
+		outerbatchPos = (RelativeAddr *)
+			absHashTableAlloc(nbatch * sizeof(RelativeAddr), hashtable);
 		for (i = 0; i < nbatch; i++)
 		{
-			tempname = hashTableAlloc(12, hashtable);
+			tempname = hashTableAlloc(HJ_TEMP_NAMELEN, hashtable);
 			mk_hj_temp(ABSADDR(tempname));
 			outerbatchNames[i] = tempname;
 			outerbatchPos[i] = -1;
@@ -400,15 +442,15 @@ ExecHashTableCreate(Hash *node)
 		 *	allocate and initialize the inner batches
 		 * ---------------
 		 */
-		innerbatchNames = (RelativeAddr *) ABSADDR(
-			   hashTableAlloc(nbatch * sizeof(RelativeAddr), hashtable));
-		innerbatchPos = (RelativeAddr *) ABSADDR(
-			   hashTableAlloc(nbatch * sizeof(RelativeAddr), hashtable));
-		innerbatchSizes = (int *) ABSADDR(
-						hashTableAlloc(nbatch * sizeof(int), hashtable));
+		innerbatchNames = (RelativeAddr *)
+			absHashTableAlloc(nbatch * sizeof(RelativeAddr), hashtable);
+		innerbatchPos = (RelativeAddr *)
+			absHashTableAlloc(nbatch * sizeof(RelativeAddr), hashtable);
+		innerbatchSizes = (int *)
+			absHashTableAlloc(nbatch * sizeof(int), hashtable);
 		for (i = 0; i < nbatch; i++)
 		{
-			tempname = hashTableAlloc(12, hashtable);
+			tempname = hashTableAlloc(HJ_TEMP_NAMELEN, hashtable);
 			mk_hj_temp(ABSADDR(tempname));
 			innerbatchNames[i] = tempname;
 			innerbatchPos[i] = -1;
@@ -427,9 +469,8 @@ ExecHashTableCreate(Hash *node)
 		hashtable->innerbatchSizes = (RelativeAddr) NULL;
 	}
 
-	hashtable->batch = (RelativeAddr) LONGALIGN(hashtable->top +
-												bucketsize * nbuckets);
-	hashtable->overflownext = hashtable->batch + nbatch * BLCKSZ;
+	hashtable->overflownext = hashtable->top + bucketsize * nbuckets;
+	Assert(hashtable->overflownext < hashtable->bottom);
 	/* ----------------
 	 *	initialize each hash bucket
 	 * ----------------
@@ -437,10 +478,10 @@ ExecHashTableCreate(Hash *node)
 	bucket = (HashBucket) ABSADDR(hashtable->top);
 	for (i = 0; i < nbuckets; i++)
 	{
-		bucket->top = RELADDR((char *) bucket + sizeof(*bucket));
+		bucket->top = RELADDR((char *) bucket + MAXALIGN(sizeof(*bucket)));
 		bucket->bottom = bucket->top;
 		bucket->firstotuple = bucket->lastotuple = -1;
-		bucket = (HashBucket) LONGALIGN(((char *) bucket + bucketsize));
+		bucket = (HashBucket) ((char *) bucket + bucketsize);
 	}
 	return hashtable;
 }
@@ -494,18 +535,18 @@ ExecHashTableInsert(HashJoinTable hashtable,
 		 */
 		bucket = (HashBucket)
 			(ABSADDR(hashtable->top) + bucketno * hashtable->bucketsize);
-		if ((char *) LONGALIGN(ABSADDR(bucket->bottom)) - (char *) bucket 
+		if (((char *) MAXALIGN(ABSADDR(bucket->bottom)) - (char *) bucket)
 				+ heapTuple->t_len + HEAPTUPLESIZE > hashtable->bucketsize)
 			ExecHashOverflowInsert(hashtable, bucket, heapTuple);
 		else
 		{
-			memmove((char *) LONGALIGN(ABSADDR(bucket->bottom)),
+			memmove((char *) MAXALIGN(ABSADDR(bucket->bottom)),
 					heapTuple,
 					HEAPTUPLESIZE);
-			memmove((char *) LONGALIGN(ABSADDR(bucket->bottom)) + HEAPTUPLESIZE,
+			memmove((char *) MAXALIGN(ABSADDR(bucket->bottom)) + HEAPTUPLESIZE,
 					heapTuple->t_data,
 					heapTuple->t_len);
-			bucket->bottom = ((RelativeAddr) LONGALIGN(bucket->bottom) + 
+			bucket->bottom = ((RelativeAddr) MAXALIGN(bucket->bottom) + 
 					heapTuple->t_len + HEAPTUPLESIZE);
 		}
 	}
@@ -515,9 +556,8 @@ ExecHashTableInsert(HashJoinTable hashtable,
 		 * put the tuple into a tmp file for other batches
 		 * -----------------
 		 */
-		batchno = (float) (bucketno - hashtable->nbuckets) /
-			(float) (hashtable->totalbuckets - hashtable->nbuckets)
-			* nbatch;
+		batchno = (nbatch * (bucketno - hashtable->nbuckets)) /
+			(hashtable->totalbuckets - hashtable->nbuckets);
 		buffer = ABSADDR(hashtable->batch) + batchno * BLCKSZ;
 		batchSizes[batchno]++;
 		pos = (char *)
@@ -614,19 +654,11 @@ ExecHashOverflowInsert(HashJoinTable hashtable,
 	 *	see if we run out of overflow space
 	 * ----------------
 	 */
-	newend = (RelativeAddr) LONGALIGN(hashtable->overflownext + sizeof(*otuple)
+	newend = (RelativeAddr) MAXALIGN(hashtable->overflownext + sizeof(*otuple)
 									  + heapTuple->t_len + HEAPTUPLESIZE);
 	if (newend > hashtable->bottom)
-	{
-		/* ------------------
-		 * XXX the temporary hack above doesn't work because things
-		 * above us don't know that we've moved the hash table!
-		 *	- Chris Dunlop, <chris@onthe.net.au>
-		 * ------------------
-		 */
 		elog(ERROR, 
-				"hash table out of memory. Use -B parameter to increase buffers.");
-	}
+			 "hash table out of memory. Use -B parameter to increase buffers.");
 
 	/* ----------------
 	 *	establish the overflow chain
@@ -647,7 +679,7 @@ ExecHashOverflowInsert(HashJoinTable hashtable,
 	 * ----------------
 	 */
 	otuple->next = -1;
-	otuple->tuple = RELADDR(LONGALIGN(((char *) otuple + sizeof(*otuple))));
+	otuple->tuple = RELADDR(MAXALIGN(((char *) otuple + sizeof(*otuple))));
 	memmove(ABSADDR(otuple->tuple),
 			heapTuple,
 			HEAPTUPLESIZE);
@@ -690,10 +722,10 @@ ExecScanHashBucket(HashJoinState *hjstate,
 	{
 		if (curtuple == NULL)
 			heapTuple = (HeapTuple)
-				LONGALIGN(ABSADDR(bucket->top));
+				MAXALIGN(ABSADDR(bucket->top));
 		else
 			heapTuple = (HeapTuple)
-				LONGALIGN(((char *) curtuple + curtuple->t_len + HEAPTUPLESIZE));
+				MAXALIGN(((char *) curtuple + curtuple->t_len + HEAPTUPLESIZE));
 
 		while (heapTuple < (HeapTuple) ABSADDR(bucket->bottom))
 		{
@@ -713,7 +745,7 @@ ExecScanHashBucket(HashJoinState *hjstate,
 				return heapTuple;
 
 			heapTuple = (HeapTuple)
-				LONGALIGN(((char *) heapTuple + heapTuple->t_len + HEAPTUPLESIZE));
+				MAXALIGN(((char *) heapTuple + heapTuple->t_len + HEAPTUPLESIZE));
 		}
 
 		if (firstotuple == NULL)
@@ -811,47 +843,11 @@ hashFunc(Datum key, int len, bool byVal)
 }
 
 /* ----------------------------------------------------------------
- *		ExecHashPartition
- *
- *		determine the number of batches needed for a hashjoin
- * ----------------------------------------------------------------
- */
-static int
-ExecHashPartition(Hash *node)
-{
-	Plan	   *outerNode;
-	int			b;
-	int			pages;
-	int			ntuples;
-	int			tupsize;
-
-	/*
-	 * get size information for plan node
-	 */
-	outerNode = outerPlan(node);
-	ntuples = outerNode->plan_size;
-	if (ntuples == 0)
-		ntuples = 1000;
-	tupsize = outerNode->plan_width + sizeof(HeapTupleData);
-	pages = ceil((double) ntuples * tupsize * FUDGE_FAC / BLCKSZ);
-
-	/*
-	 * if amount of buffer space below hashjoin threshold, return negative
-	 */
-	if (ceil(sqrt((double) pages)) > HashTBSize)
-		return -1;
-	if (pages <= HashTBSize)
-		b = 0;					/* fit in memory, no partitioning */
-	else
-		b = ceil((double) (pages - HashTBSize) / (double) (HashTBSize - 1));
-
-	return b;
-}
-
-/* ----------------------------------------------------------------
  *		ExecHashTableReset
  *
  *		reset hash table header for new batch
+ *
+ *		ntuples is the number of tuples in the inner relation's batch
  * ----------------------------------------------------------------
  */
 void
@@ -860,29 +856,42 @@ ExecHashTableReset(HashJoinTable hashtable, int ntuples)
 	int			i;
 	HashBucket	bucket;
 
-	hashtable->nbuckets = hashtable->totalbuckets
-		= ceil((double) ntuples / NTUP_PER_BUCKET);
+	/*
+	 * We can reset the number of hashbuckets since we are going to
+	 * recalculate the hash values of all the tuples in the new batch
+	 * anyway.  We might as well spread out the hash values as much as
+	 * we can within the available space.  Note we must set nbuckets
+	 * equal to totalbuckets since we will NOT generate any new output
+	 * batches after this point.
+	 */
+	hashtable->nbuckets = hashtable->totalbuckets =
+		(int) (hashtable->bottom / (hashtable->bucketsize * FUDGE_FAC));
 
+	/*
+	 * reinitialize the overflow area to empty, and reinit each hash bucket.
+	 */
 	hashtable->overflownext = hashtable->top + hashtable->bucketsize *
 		hashtable->nbuckets;
+	Assert(hashtable->overflownext < hashtable->bottom);
 
 	bucket = (HashBucket) ABSADDR(hashtable->top);
 	for (i = 0; i < hashtable->nbuckets; i++)
 	{
-		bucket->top = RELADDR((char *) bucket + sizeof(*bucket));
+		bucket->top = RELADDR((char *) bucket + MAXALIGN(sizeof(*bucket)));
 		bucket->bottom = bucket->top;
 		bucket->firstotuple = bucket->lastotuple = -1;
 		bucket = (HashBucket) ((char *) bucket + hashtable->bucketsize);
 	}
+
 	hashtable->pcount = hashtable->nprocess;
 }
-
-static int	hjtmpcnt = 0;
 
 static void
 mk_hj_temp(char *tempname)
 {
-	snprintf(tempname, strlen(tempname), "HJ%d.%d", (int) MyProcPid, hjtmpcnt);
+	static int	hjtmpcnt = 0;
+
+	snprintf(tempname, HJ_TEMP_NAMELEN, "HJ%d.%d", (int) MyProcPid, hjtmpcnt);
 	hjtmpcnt = (hjtmpcnt + 1) % 1000;
 }
 
