@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.16 1999/05/25 16:10:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.17 1999/05/29 03:17:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId, Oid targetTypeId,
 			int32 atttypmod)
 {
 	Node	   *result = NULL;
+	Type		targetType;
 	Oid			infunc;
 	Datum		val;
 
@@ -79,10 +80,11 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId, Oid targetTypeId,
 				Const	   *con = (Const *) node;
 
 				val = (Datum) textout((struct varlena *) con->constvalue);
-				infunc = typeidInfunc(targetTypeId);
+				targetType = typeidType(targetTypeId);
+				infunc = typeInfunc(targetType);
 				con = makeNode(Const);
 				con->consttype = targetTypeId;
-				con->constlen = typeLen(typeidType(targetTypeId));
+				con->constlen = typeLen(targetType);
 
 				/*
 				 * Use "-1" for varchar() type. For char(), we need to pad
@@ -92,10 +94,10 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId, Oid targetTypeId,
 				 */
 				con->constvalue = (Datum) fmgr(infunc,
 											   val,
-											 typeidTypElem(targetTypeId),
+											   typeTypElem(targetType),
 						   (targetTypeId != BPCHAROID) ? -1 : atttypmod);
 				con->constisnull = false;
-				con->constbyval = typeByVal(typeidType(targetTypeId));
+				con->constbyval = typeByVal(targetType);
 				con->constisset = false;
 				result = (Node *) con;
 			}

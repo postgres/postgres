@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.40 1999/05/25 16:10:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.41 1999/05/29 03:17:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -241,7 +241,7 @@ MakeTargetEntryExpr(ParseState *pstate,
 				Oid			typelem;
 
 				if (arrayRef && !(((A_Indices *) lfirst(arrayRef))->lidx))
-					typelem = typeidTypElem(attrtype);
+					typelem = typeTypElem(typeidType(attrtype));
 				else
 					typelem = attrtype;
 

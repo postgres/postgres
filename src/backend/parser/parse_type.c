@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.21 1999/05/25 16:10:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.22 1999/05/29 03:17:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ typeidTypeName(Oid id)
 	return (typetuple->typname).data;
 }
 
-/* return a Type structure, given an typid */
+/* return a Type structure, given a type id */
 Type
 typeidType(Oid id)
 {
@@ -180,7 +180,6 @@ typeidTypeRelid(Oid type_id)
 {
 	HeapTuple	typeTuple;
 	Form_pg_type type;
-	Oid			infunc;
 
 	typeTuple = SearchSysCacheTuple(TYPOID,
 									ObjectIdGetDatum(type_id),
@@ -189,8 +188,7 @@ typeidTypeRelid(Oid type_id)
 		elog(ERROR, "typeidTypeRelid: Invalid type - oid = %u", type_id);
 
 	type = (Form_pg_type) GETSTRUCT(typeTuple);
-	infunc = type->typrelid;
-	return infunc;
+	return type->typrelid;
 }
 
 Oid
@@ -204,18 +202,13 @@ typeTypeRelid(Type typ)
 }
 
 Oid
-typeidTypElem(Oid type_id)
+typeTypElem(Type typ)
 {
-	HeapTuple	typeTuple;
-	Form_pg_type type;
+	Form_pg_type typtup;
 
-	if (!(typeTuple = SearchSysCacheTuple(TYPOID,
-										  ObjectIdGetDatum(type_id),
-										  0, 0, 0)))
-		elog(ERROR, "type id lookup of %u failed", type_id);
-	type = (Form_pg_type) GETSTRUCT(typeTuple);
+	typtup = (Form_pg_type) GETSTRUCT(typ);
 
-	return type->typelem;
+	return typtup->typelem;
 }
 
 /* Given the attribute type of an array return the attribute type of
@@ -247,21 +240,13 @@ GetArrayElementType(Oid typearray)
 	return type_struct_array->typelem;
 }
 
-/* Given a type id, returns the in-conversion function of the type */
+/* Given a type structure, return the in-conversion function of the type */
 Oid
-typeidInfunc(Oid type_id)
+typeInfunc(Type typ)
 {
-	HeapTuple	typeTuple;
-	Form_pg_type type;
-	Oid			infunc;
+	Form_pg_type typtup;
 
-	typeTuple = SearchSysCacheTuple(TYPOID,
-									ObjectIdGetDatum(type_id),
-									0, 0, 0);
-	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "typeidInfunc: Invalid type - oid = %u", type_id);
+	typtup = (Form_pg_type) GETSTRUCT(typ);
 
-	type = (Form_pg_type) GETSTRUCT(typeTuple);
-	infunc = type->typinput;
-	return infunc;
+	return typtup->typinput;
 }
