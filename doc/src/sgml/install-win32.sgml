@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.21 2004/12/24 19:20:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.22 2004/12/26 23:06:56 tgl Exp $
 -->
 
 <chapter id="install-win32">
@@ -11,9 +11,9 @@ $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.21 2004/12/24 19:20:18 mo
  </indexterm>
 
  <para>
-  Although <productname>PostgreSQL</productname> is written for
-  Unix-like operating systems and can be built using
-  <productname>MinGW</productname> and
+  Although a complete <productname>PostgreSQL</productname> installation
+  for <productname>Windows</> can only be built using
+  <productname>MinGW</productname> or
   <productname>Cygwin</productname>, the C client library
   (<application>libpq</application>) and the interactive terminal
   (<application>psql</application>) can be compiled using other Windows
@@ -25,10 +25,9 @@ $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.21 2004/12/24 19:20:18 mo
 
  <tip>
   <para>
-   If you are using a Windows NT-based operating system or newer you can
-   build and use all of <productname>PostgreSQL</productname> <quote>the
-   Unix way</quote> if you install the <productname>MinGW</productname>
-   toolkit first. In that case see <xref linkend="installation">.
+   Using <productname>MinGW</productname> or
+   <productname>Cygwin</productname> is preferred.  If using one of
+   those tool sets, see <xref linkend="installation">.
   </para>
  </tip>
 
@@ -110,7 +109,7 @@ $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.21 2004/12/24 19:20:18 mo
   on this machine, you will have to add the
   <filename>src\include</filename> and
   <filename>src\interfaces\libpq</filename> subdirectories of the source
-  tree to the include path in your compilers settings.
+  tree to the include path in your compiler's settings.
  </para>
 
  <para>
@@ -123,10 +122,10 @@ $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.21 2004/12/24 19:20:18 mo
   <application>psql</application> is compiled as a <quote>console
   application</>. As the Windows console windows use a different
   encoding than the rest of the system, you must take special care
-  when using 8-bit characters at the <application>psql</application>
-  prompt. When <application>psql</application> detects a problematic
+  when using 8-bit characters within <application>psql</application>.
+  If <application>psql</application> detects a problematic
   console code page, it will warn you at startup. To change the
-  console code page, two things are neccessary:
+  console code page, two things are necessary:
 
    <itemizedlist>
     <listitem>

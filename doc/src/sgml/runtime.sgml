@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.298 2004/12/18 18:36:33 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.299 2004/12/26 23:06:56 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -7,7 +7,7 @@ $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.298 2004/12/18 18:36:33 tgl Exp
 
  <Para>
   This chapter discusses how to set up and run the database server
-  and the interactions with the operating system.
+  and its interactions with the operating system.
  </para>
 
  <sect1 id="postgres-user">
@@ -18,7 +18,7 @@ $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.298 2004/12/18 18:36:33 tgl Exp
   </indexterm>
 
   <para>
-   As with any other server daemon that is connected to outside world,
+   As with any other server daemon that is accessible to the outside world,
    it is advisable to run <productname>PostgreSQL</productname> under a
    separate user account. This user account should only own the data
    that is managed by the server, and should not be shared with other
@@ -31,8 +31,8 @@ $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.298 2004/12/18 18:36:33 tgl Exp
   <para>
    To add a Unix user account to your system, look for a command
    <command>useradd</command> or <command>adduser</command>. The user
-   name <systemitem>postgres</systemitem> is often used but is by no
-   means required.
+   name <systemitem>postgres</systemitem> is often used, and is assumed
+   throughout this book, but you can use another name if you like.
   </para>
  </sect1>
 
@@ -51,14 +51,14 @@ $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.298 2004/12/18 18:36:33 tgl Exp
   <para>
    Before you can do anything, you must initialize a database storage
    area on disk. We call this a <firstterm>database cluster</firstterm>.
-   (<acronym>SQL</acronym> uses the term catalog cluster instead.) A
-   database cluster is a collection of databases is accessible by a
+   (<acronym>SQL</acronym> uses the term catalog cluster.) A
+   database cluster is a collection of databases that is managed by a
    single instance of a running database server. After initialization, a
    database cluster will contain a database named
    <literal>template1</literal>. As the name suggests, this will be used
    as a template for subsequently created databases; it should not be
-   used for actual work.  (See <xref linkend="managing-databases"> for information
-   about creating databases.)
+   used for actual work.  (See <xref linkend="managing-databases"> for
+   information about creating new databases within a cluster.)
   </para>
 
   <para>
@@ -71,7 +71,7 @@ $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.298 2004/12/18 18:36:33 tgl Exp
    <filename>/var/lib/pgsql/data</filename> are popular. To initialize a
    database cluster, use the command <command>initdb</command>,<indexterm><primary>initdb</></> which is
    installed with <productname>PostgreSQL</productname>. The desired
-   file system location of your database system is indicated by the
+   file system location of your database cluster is indicated by the
    <option>-D</option> option, for example
 <screen>
 <prompt>$</> <userinput>initdb -D /usr/local/pgsql/data</userinput>
@@ -107,7 +107,7 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
 
   <para>
    <command>initdb</command> will refuse to run if the data directory
-   looks like it it has already been initialized.</para>
+   looks like it has already been initialized.</para>
 
   <para>
    Because the data directory contains all the data stored in the
@@ -123,14 +123,15 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
    database and even become the database superuser. If you do not
    trust other local users, we recommend you use one of
    <command>initdb</command>'s <option>-W</option>, <option>--pwprompt</option>
-   or <option>--pwfile</option> option to assign a password to the
+   or <option>--pwfile</option> options to assign a password to the
    database superuser.<indexterm><primary>password</><secondary>of the
-   superuser</></indexterm> After <command>initdb</command>, modify
-   the <filename>pg_hba.conf</filename> file to use <literal>md5</> or
-   <literal>password</> instead of <literal>trust</> authentication
+   superuser</></indexterm>  Also, specify <option>-A md5</> or
+   <option>-A password</> so that the default <literal>trust</> authentication
+   mode is not used; or modify the generated <filename>pg_hba.conf</filename>
+   file after running <command>initdb</command>,
    <emphasis>before</> you start the server for the first time. (Other
-   approaches include using <literal>ident</literal> authentication or
-   file system permissions to restrict connections. See <xref
+   reasonable approaches include using <literal>ident</literal> authentication
+   or file system permissions to restrict connections. See <xref
    linkend="client-authentication"> for more information.)
   </para>
 
@@ -185,22 +186,23 @@ $ <userinput>postmaster -D /usr/local/pgsql/data &gt;logfile 2&gt;&amp;1 &amp;</
 
   <para>
    The <command>postmaster</command> also takes a number of other
-   command line options. For more information, see the reference page
+   command line options. For more information, see the
+   <xref linkend="app-postmaster"> reference page
    and <xref linkend="runtime-config"> below.
   </para>
 
   <para>
-   This shell syntax can get tedious quickly.  Therefore the shell
-   script wrapper
-   <command>pg_ctl</command><indexterm><primary>pg_ctl</primary></indexterm>
+   This shell syntax can get tedious quickly.  Therefore the wrapper
+   program
+   <xref linkend="app-pg-ctl"><indexterm><primary>pg_ctl</primary></indexterm>
    is provided to simplify some tasks.  For example:
 <programlisting>
 pg_ctl start -l logfile
 </programlisting>
    will start the server in the background and put the output into the
    named log file. The <option>-D</option> option has the same meaning
-   here as in the <command>postmaster</command>. <command>pg_ctl</command> is also
-   capable of stopping the server.
+   here as in the <command>postmaster</command>. <command>pg_ctl</command>
+   is also capable of stopping the server.
   </para>
 
   <para>
@@ -453,19 +455,20 @@ psql: could not connect to server: No such file or directory
 
    <para>
     All parameter names are case-insensitive. Every parameter takes a
-    value of one of the four types: boolean, integer, floating point,
-    and string. Boolean values are <literal>ON</literal>,
+    value of one of four types: boolean, integer, floating point,
+    or string. Boolean values may be written as <literal>ON</literal>,
     <literal>OFF</literal>, <literal>TRUE</literal>,
     <literal>FALSE</literal>, <literal>YES</literal>,
     <literal>NO</literal>, <literal>1</literal>, <literal>0</literal>
-    (case-insensitive) or any non-ambiguous prefix of these.
+    (all case-insensitive) or any unambiguous prefix of these.
    </para>
 
    <para>
     One way to set these parameters is to edit the file
-    <filename>postgresql.conf</filename><indexterm><primary>postgresql.conf</></>
-    in the data directory. (A default file is installed there.) An
-    example of what this file might look like is:
+    <filename>postgresql.conf</><indexterm><primary>postgresql.conf</></>,
+    which is normally kept in the data directory. (<command>initdb</>
+    installs a default copy there.) An example of what this file might look
+    like is:
 <programlisting>
 # This is a comment
 log_connections = yes
@@ -476,7 +479,7 @@ search_path = '$user, public'
     value is optional. Whitespace is insignificant and blank lines are
     ignored. Hash marks (<literal>#</literal>) introduce comments
     anywhere.  Parameter values that are not simple identifiers or
-    numbers should be single-quoted.
+    numbers must be single-quoted.
    </para>
 
    <para>
@@ -502,11 +505,14 @@ search_path = '$user, public'
 postmaster -c log_connections=yes -c log_destination='syslog'
 </programlisting>
     Command-line options override any conflicting settings in
-    <filename>postgresql.conf</filename>.
+    <filename>postgresql.conf</filename>.  Note that this means you won't
+    be able to change the value on-the-fly by editing
+    <filename>postgresql.conf</filename>, so while the command-line
+    method may be convenient, it can cost you flexibility later.
    </para>
 
    <para>
-    Occasionally it is also useful to give a command line option to
+    Occasionally it is useful to give a command line option to
     one particular session only. The environment variable
     <envar>PGOPTIONS</envar> can be used for this purpose on the
     client side:
@@ -515,18 +521,16 @@ env PGOPTIONS='-c geqo=off' psql
 </programlisting>
     (This works for any <application>libpq</>-based client application, not
     just <application>psql</application>.) Note that this won't work for
-    parameters that are fixed when the server is started, nor for
-    parameters that require superuser permissions to change (not even
-    if you are logging in as superuser).
+    parameters that are fixed when the server is started or that must be
+    specified in <filename>postgresql.conf</filename>.
    </para>
 
    <para>
     Furthermore, it is possible to assign a set of option settings to
     a user or a database.  Whenever a session is started, the default
     settings for the user and database involved are loaded.  The
-    commands <xref linkend="sql-alterdatabase"
-    endterm="sql-alterdatabase-title"> and <xref
-    linkend="sql-alteruser" endterm="sql-alteruser-title">,
+    commands <xref linkend="sql-alteruser" endterm="sql-alteruser-title">
+    and <xref linkend="sql-alterdatabase" endterm="sql-alterdatabase-title">,
     respectively, are used to configure these settings.  Per-database
     settings override anything received from the
     <command>postmaster</command> command-line or the configuration
@@ -546,8 +550,8 @@ SET ENABLE_SEQSCAN TO OFF;
     <command>SET</command>: for example, if they control behavior that
     cannot reasonably be changed without restarting
     <productname>PostgreSQL</productname>.  Also, some parameters can
-    be modified via <command>SET</command> by superusers, but not by
-    ordinary users.
+    be modified via <command>SET</command> or <command>ALTER</> by superusers,
+    but not by ordinary users.
    </para>
 
    <para>
@@ -566,6 +570,20 @@ SET ENABLE_SEQSCAN TO OFF;
     
    <sect2 id="runtime-config-file-locations">
     <title>File Locations</title>
+
+     <para>
+      In addition to the <filename>postgresql.conf</filename> file
+      already mentioned, <productname>PostgreSQL</productname> uses
+      two other manually-edited configuration files, which control
+      client authentication (their use is discussed in <xref
+      linkend="client-authentication">).
+      By default, all three configuration files are stored
+      in the database cluster's data directory.  The options described
+      in this subsection allow the configuration files to be placed elsewhere.
+      (Doing so can ease administration.  In particular it is often
+      easier to ensure that the configuration files are properly backed-up
+      when they are kept separate.)
+     </para>
 
      <variablelist>
      <varlistentry id="guc-data-directory" xreflabel="data_directory">
@@ -602,7 +620,8 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-         Specifies the configuration file for host-based authentication.
+         Specifies the configuration file for host-based authentication
+         (customarily called <filename>pg_hba.conf</>).
          This option can only be set at server start.
        </para>
       </listitem>
@@ -616,7 +635,8 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
          Specifies the configuration file for
-         <application>ident</> authentication.
+         <application>ident</> authentication
+         (customarily called <filename>pg_ident.conf</>).
          This option can only be set at server start.
        </para>
       </listitem>
@@ -629,34 +649,33 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-         Specifies that the <application>postmaster</> should create an
-         additional process-id (PID) file for use by server administration
-         programs.
-         This option can only be set at server start.
+        Specifies the name of an additional process-id (PID) file that the
+        <application>postmaster</> should create for use by server
+        administration programs.
+        This option can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
      </variablelist>
 
      <para>
-      In a default installation, none of the above options is set explicitly
-      in the <filename>postgresql.conf</filename> file.  Instead, the
+      In a default installation, none of the above options are set explicitly.
+      Instead, the
       data directory is specified by the <option>-D</option> command-line
       option or the <envar>PGDATA</envar> environment variable, and the
-      configuration files are all placed within the data directory.
+      configuration files are all found within the data directory.
      </para>
 
      <para>
-      It is also possible to separate the configuration files from the data
-      directory, which can ease administration.  (In particular it is often
-      easier to ensure that the configuration files are properly backed-up
-      when they are kept separate.)  To do this, the <option>-D</option>
+      If you wish to keep the configuration files elsewhere than the
+      data directory, the postmaster's <option>-D</option>
       command-line option or <envar>PGDATA</envar> environment variable
       must point to the directory containing the configuration files,
-      and the <varname>data_directory</> option is set in
+      and the <varname>data_directory</> option must be set in
       <filename>postgresql.conf</filename> (or on the command line) to show
       where the data directory is actually located.  Notice that
-      <varname>data_directory</> overrides <option>-D</option> for the location
+      <varname>data_directory</> overrides <option>-D</option> and
+      <envar>PGDATA</envar> for the location
       of the data directory, but not for the location of the configuration
       files.
      </para>
@@ -756,7 +775,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        Determines the number of <quote>connection slots</quote> that
+        Determines the number of connection <quote>slots</quote> that
         are reserved for connections by <productname>PostgreSQL</>
         superusers.  At most <xref linkend="guc-max-connections">
         connections can ever be active simultaneously.  Whenever the
@@ -816,8 +835,8 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        Sets the access permissions of the Unix-domain socket.  Unix
-        domain sockets use the usual Unix file system permission set.
+        Sets the access permissions of the Unix-domain socket.  Unix-domain
+        sockets use the usual Unix file system permission set.
         The option value is expected to be a numeric mode
         specification in the form accepted by the
         <function>chmod</function> and <function>umask</function>
@@ -830,8 +849,8 @@ SET ENABLE_SEQSCAN TO OFF;
         anyone can connect. Reasonable alternatives are
         <literal>0770</literal> (only user and group, see also
         <varname>unix_socket_group</varname>) and <literal>0700</literal>
-        (only user). (Note that actually for a Unix domain socket, only write
-        permission matters and there is no point in setting or revoking
+        (only user). (Note that for a Unix-domain socket, only write
+        permission matters and so there is no point in setting or revoking
         read or execute permissions.)
        </para>
 
@@ -855,8 +874,8 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Specifies the <productname>Rendezvous</productname> broadcast
         name.  By default, the computer name is used, specified as an
-        empty string ''.  This option is only meaningful on platforms
-        that support <productname>Rendezvous</productname>.  This
+        empty string ''.  This option is ignored if the server was not
+        compiled with <productname>Rendezvous</productname> support.  This
         option can only be set at server start.
        </para>
       </listitem>
@@ -1163,8 +1182,8 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
 
        <para>
-        If <literal>mylib</> or <literal>mylib_init</> are not found, the
-        server will fail to start.
+        If a specified library or initialization function is not found,
+        the server will fail to start.
        </para>
 
        <para>
@@ -1179,8 +1198,9 @@ SET ENABLE_SEQSCAN TO OFF;
         By preloading a shared library (and initializing it if
         applicable), the library startup time is avoided when the
         library is first used.  However, the time to start each new
-        server process may increase, even if that process never
-        uses the library.
+        server process may increase slightly, even if that process never
+        uses the library.  So this option is recommended only for
+        libraries that will be used in most sessions.
        </para>
       </listitem>
      </varlistentry>
@@ -1589,7 +1609,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        Write a message to the server logs if checkpoints caused by
+        Write a message to the server log if checkpoints caused by
         the filling of checkpoint segment files happen closer together
         than this many seconds.  The default is 30 seconds.
         Zero turns off the warning.
@@ -1622,8 +1642,8 @@ SET ENABLE_SEQSCAN TO OFF;
         file.
        </para>
        <para>
-        It is important for the command to return a zero exit status only if
-        it succeeds.  Examples:
+        It is important for the command to return a zero exit status if
+        and only if it succeeds.  Examples:
 <programlisting>
 archive_command = 'cp "%p" /mnt/server/archivedir/"%f"'
 archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
@@ -1643,20 +1663,22 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
      <title>Planner Method Configuration</title>
 
       <para>
-       These configuration parameters provide a crude method for
+       These configuration parameters provide a crude method of
        influencing the query plans chosen by the query optimizer. If
        the default plan chosen by the optimizer for a particular query
        is not optimal, a temporary solution may be found by using one
        of these configuration parameters to force the optimizer to
-       choose a better plan. Other ways to improve the quality of the
-       plans chosen by the optimizer include configuring the <xref
+       choose a different plan.  Turning one of these settings off
+       permanently is seldom a good idea, however.
+       Better ways to improve the quality of the
+       plans chosen by the optimizer include adjusting the <xref
        linkend="runtime-config-query-constants"
        endterm="runtime-config-query-constants-title">, running <xref
        linkend="sql-analyze" endterm="sql-analyze-title"> more
        frequently, increasing the value of the <xref
        linkend="guc-default-statistics-target"> configuration parameter,
-       and increasing the amount of statistics collected for a
-       particular column using <command>ALTER TABLE SET
+       and increasing the amount of statistics collected for
+       specific columns using <command>ALTER TABLE SET
        STATISTICS</command>.
       </para>
 
@@ -1669,8 +1691,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       <listitem>
        <para>
         Enables or disables the query planner's use of hashed
-        aggregation plan types. The default is on. This is used for
-        debugging the query planner.
+        aggregation plan types. The default is on.
        </para>
       </listitem>
      </varlistentry>
@@ -1683,8 +1704,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       <listitem>
        <para>
         Enables or disables the query planner's use of hash-join plan
-        types. The default is on. This is used for debugging the query
-        planner.
+        types. The default is on.
        </para>
       </listitem>
      </varlistentry>
@@ -1700,8 +1720,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       <listitem>
        <para>
         Enables or disables the query planner's use of index-scan plan
-        types. The default is on. This is used for debugging the query
-        planner.
+        types. The default is on.
        </para>
       </listitem>
      </varlistentry>
@@ -1714,8 +1733,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       <listitem>
        <para>
         Enables or disables the query planner's use of merge-join plan
-        types. The default is on. This is used for debugging the query
-        planner.
+        types. The default is on.
        </para>
       </listitem>
      </varlistentry>
@@ -1731,7 +1749,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
         plans. It's not possible to suppress nested-loop joins entirely,
         but turning this variable off discourages the planner from using
         one if there are other methods available. The default is
-        on. This is used for debugging the query planner.
+        on.
        </para>
       </listitem>
      </varlistentry>
@@ -1750,7 +1768,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
         plan types. It's not possible to suppress sequential scans
         entirely, but turning this variable off discourages the planner
         from using one if there are other methods available. The
-        default is on. This is used for debugging the query planner.
+        default is on.
        </para>
       </listitem>
      </varlistentry>
@@ -1766,7 +1784,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
         steps. It's not possible to suppress explicit sorts entirely,
         but turning this variable off discourages the planner from
         using one if there are other methods available. The default
-        is on. This is used for debugging the query planner.
+        is on.
        </para>
       </listitem>
      </varlistentry>
@@ -1779,8 +1797,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       <listitem>
        <para>
         Enables or disables the query planner's use of <acronym>TID</>
-        scan plan types. The default is on. This is used for debugging
-        the query planner.
+        scan plan types. The default is on.
        </para>
       </listitem>
      </varlistentry>
@@ -2383,6 +2400,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
         message that is logged.  Valid values are <literal>TERSE</>,
         <literal>DEFAULT</>, and <literal>VERBOSE</>, each adding more
         fields to displayed messages.
+        Only superusers can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -2505,7 +2523,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
           <term><literal>ERROR</literal></term>
           <listitem>
            <para>
-            Reports an error that caused the current transaction to abort.
+            Reports an error that caused the current command to abort.
            </para>
           </listitem>
          </varlistentry>
@@ -2565,15 +2583,16 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       </indexterm>
       <listitem>
        <para>
-        These options enable various debugging output to be sent to
-        the client or server log. For each executed query, they print
+        These options enable various debugging output to be emitted.
+        For each executed query, they print
         the resulting parse tree, the query rewriter output, or the
         execution plan.  <varname>debug_pretty_print</varname> indents
         these displays to produce a more readable but much longer
         output format.  <varname>client_min_messages</varname> or
         <varname>log_min_messages</varname> must be
-        <literal>DEBUG1</literal> or lower to send the output to the
-        client or server logs. These options are off by default.
+        <literal>DEBUG1</literal> or lower to actually send this output
+        to the client or the server log, respectively.
+        These options are off by default.
        </para>
       </listitem>
      </varlistentry>
@@ -2585,7 +2604,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       </indexterm>
       <listitem>
        <para>
-        This outputs a line to the server logs detailing each successful
+        This outputs a line to the server log detailing each successful
         connection. This is off by default, although it is probably very
         useful. This option can only be set at server start or in the
         <filename>postgresql.conf</filename> configuration file.
@@ -2600,7 +2619,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       </indexterm>
       <listitem>
        <para>
-        This outputs a line in the server logs similar to
+        This outputs a line in the server log similar to
         <varname>log_connections</varname> but at session termination,
         and includes the duration of the session.  This is off by
         default. This option can only be set at server start or in the
@@ -2781,11 +2800,12 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       </indexterm>
       <listitem>
        <para>
-        By default, connection logs only show the IP address of the
-        connecting host. If you want it to show the host name you can
-        turn this on, but depending on your host name resolution setup
-        it might impose a non-negligible performance penalty. This
-        option can only be set at server start.
+        By default, connection log messages only show the IP address of the
+        connecting host. Turning on this option causes logging of the
+        host name as well.  Note that depending on your host name resolution
+        setup this might impose a non-negligible performance penalty. This
+        option can only be set at server start or in the
+        <filename>postgresql.conf</filename> file.
        </para>
       </listitem>
      </varlistentry>
@@ -3039,7 +3059,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       <listitem>
        <para>
         This parameter is normally true.  When set to false, it disables
-        validation of the function body string in <xref
+        validation of the function body string during <xref
         linkend="sql-createfunction"
         endterm="sql-createfunction-title">.  Disabling validation is
         occasionally useful to avoid problems such as forward
@@ -3102,7 +3122,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       </indexterm>
       <listitem>
        <para>
-        Aborts any statement that takes over the specified number of
+        Abort any statement that takes over the specified number of
         milliseconds.  A value of zero (the default) turns off the limitation.
        </para>
       </listitem>
@@ -3419,7 +3439,10 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         The shared lock table is sized on the assumption that at most
         <varname>max_locks_per_transaction</varname> *
         <varname>max_connections</varname> distinct objects will need to
-        be locked at any one time. The default, 64, has historically
+        be locked at any one time. (Thus, this parameter's name may be
+        confusing: it is not a hard limit on the number of locks taken
+        by any one transaction, but rather a maximum average value.)
+        The default, 64, has historically
         proven sufficient, but you might need to raise this value if you
         have clients that touch many different tables in a single
         transaction. This option can only be set at server start.
@@ -3469,7 +3492,8 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         <literal>advanced</>, <literal>extended</>, or <literal>basic</>.
         The default is <literal>advanced</>.  The <literal>extended</>
         setting may be useful for exact backwards compatibility with
-        pre-7.4 releases of <productname>PostgreSQL</>.
+        pre-7.4 releases of <productname>PostgreSQL</>.  See
+        <xref linkend="posix-syntax-details"> for details.
        </para>
       </listitem>
      </varlistentry>
@@ -3501,7 +3525,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       <listitem>
        <para>
         This controls whether <command>CREATE TABLE</command> and
-        <command>CREATE TABLE AS</command> will include OIDs in
+        <command>CREATE TABLE AS</command> include an OID column in
         newly-created tables, if neither <literal>WITH OIDS</literal>
         nor <literal>WITHOUT OIDS</literal> is specified. It also
         determines whether OIDs will be included in tables created by
@@ -3589,7 +3613,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      The following <quote>parameters</> are read-only, and are determined
      when <productname>PostgreSQL</productname> is compiled or when it is
      installed. As such, they have been excluded from the sample
-     <filename>postgresql.conf</> file.  These options determine
+     <filename>postgresql.conf</> file.  These options report
      various aspects of <productname>PostgreSQL</productname> behavior
      that may be of interest to certain applications, particularly
      administrative front-ends.
@@ -3919,7 +3943,7 @@ plruby.bar = true        # generates error, unknown class name
        <para>
         Detection of a damaged page header normally causes
         <productname>PostgreSQL</> to report an error, aborting the current
-        transaction.  Setting <varname>zero_damaged_pages</> to true causes
+        command.  Setting <varname>zero_damaged_pages</> to true causes
         the system to instead report a warning, zero out the damaged page,
         and continue processing.  This behavior <emphasis>will destroy data</>,
         namely all the rows on the damaged page.  But it allows you to get
@@ -4170,7 +4194,7 @@ $ <userinput>postmaster -o '-S 1024 -s'</userinput>
        <row>
         <entry><varname>SEMVMX</></>
         <entry>Maximum value of semaphore</>
-        <entry>at least 1000 (The default is often 32767, don't change unless asked to.)</>
+        <entry>at least 1000 (The default is often 32767, don't change unless forced to)</>
        </row>
 
      </tbody>
@@ -4183,16 +4207,23 @@ $ <userinput>postmaster -o '-S 1024 -s'</userinput>
     shared memory parameter is <varname>SHMMAX</>, the maximum size, in
     bytes, of a shared memory segment. If you get an error message from
     <function>shmget</> like <errorname>Invalid argument</>, it is
-    possible that this limit has been exceeded. The size of the required
+    likely that this limit has been exceeded. The size of the required
     shared memory segment varies both with the number of requested
     buffers (<option>-B</> option) and the number of allowed connections
     (<option>-N</> option), although the former is the most significant.
     (You can, as a temporary solution, lower these settings to eliminate
     the failure.) As a rough approximation, you can estimate the
-    required segment size by multiplying the number of buffers and the
-    block size (8 kB by default) plus ample overhead (at least half a
-    megabyte). Any error message you might get will contain the size of
-    the failed allocation request.
+    required segment size as suggested in <xref
+    linkend="sysvipc-parameters">.  Any error message you might get will
+    contain the size of the failed allocation request.
+   </para>
+
+   <para>
+    Some systems also have a limit on the total amount of shared memory in
+    the system (<varname>SHMALL</>).  Make sure this is large enough
+    for <productname>PostgreSQL</> plus any other applications that
+    are using shared memory segments.  (Caution: <varname>SHMALL</>
+    is measured in pages rather than bytes on many systems.)
    </para>
 
    <para>
@@ -4200,10 +4231,8 @@ $ <userinput>postmaster -o '-S 1024 -s'</userinput>
     memory segments (<varname>SHMMIN</>), which should be at most
     approximately 256 kB for <productname>PostgreSQL</> (it is
     usually just 1). The maximum number of segments system-wide
-    (<varname>SHMMNI</>) or per-process (<varname>SHMSEG</>) should
-    not cause a problem unless your system has them set to zero. Some
-    systems also have a limit on the total amount of shared memory in
-    the system; see the platform-specific instructions below.
+    (<varname>SHMMNI</>) or per-process (<varname>SHMSEG</>) are unlikely
+    to cause a problem unless your system has them set to zero.
    </para>
 
    <para>
@@ -4261,15 +4290,16 @@ $ <userinput>postmaster -o '-S 1024 -s'</userinput>
          By default, only 4 MB of shared memory is supported. Keep in
          mind that shared memory is not pageable; it is locked in RAM.
          To increase the amount of shared memory supported by your
-         system, add the following to your kernel configuration
-         file. A <varname>SHMALL</> value of 1024 represents 4 MB of
-         shared memory. The following increases the maximum shared
-         memory area to 32 MB:
+         system, add something like the following to your kernel configuration
+         file:
 <programlisting>
 options "SHMALL=8192"
 options "SHMMAX=\(SHMALL*PAGE_SIZE\)"
 </programlisting>
-         For those running 4.3 or later, you will probably need to increase
+         <varname>SHMALL</> is measured in 4KB pages, so a value of
+         1024 represents 4 MB of shared memory. Therefore the above increases
+         the maximum shared memory area to 32 MB.
+         For those running 4.3 or later, you will probably also need to increase
          <varname>KERNEL_VIRTUAL_MB</> above the default <literal>248</>.
          Once all changes have been made, recompile the kernel, and reboot.
         </para>
@@ -4296,9 +4326,9 @@ options "SYSPTSIZE=16"
        <formalpara>
         <title>Semaphores</>
         <para>
-         You may need to increase the number of semaphores. By
-         default, <productname>PostgreSQL</> allocates 34 semaphores,
-         which is over half the default system total of 60.  Set the
+         You will probably want to increase the number of semaphores
+         as well; the default system total of 60 will only allow about
+         50 <productname>PostgreSQL</productname> connections.  Set the
          values you want in your kernel configuration file, e.g.:
 <programlisting>
 options "SEMMNI=40"
@@ -4427,9 +4457,13 @@ sysctl -w kern.sysv.shmseg
 sysctl -w kern.sysv.shmall
 </programlisting>
         In OS X 10.3, these commands have been moved to <filename>/etc/rc</>
-        and must be edited there.  Note that <filename>/etc/rc</> is usually
+        and must be edited there.  You'll need to reboot to make changes
+        take effect.  Note that <filename>/etc/rc</> is usually
         overwritten by OS X updates (such as 10.3.6 to 10.3.7) so you
         should expect to have to redo your editing after each update.
+       </para>
+       <para>
+        <varname>SHMALL</> is measured in 4KB pages on this platform.
        </para>
       </listitem>
      </varlistentry>
@@ -4742,7 +4776,7 @@ sysctl -w vm.overcommit_memory=2
       This is the <firstterm>Immediate Shutdown</firstterm>, which
       will cause the <command>postmaster</command> process to send a
       <systemitem>SIGQUIT</systemitem> to all child processes and exit
-      immediately (without properly shutting itself down). The child processes
+      immediately, without properly shutting itself down. The child processes
       likewise exit immediately upon receiving
       <systemitem>SIGQUIT</systemitem>. This will lead to recovery (by
       replaying the WAL log) upon next start-up. This is recommended
@@ -4753,29 +4787,34 @@ sysctl -w vm.overcommit_memory=2
    </variablelist>
   </para>
 
-   <important>
-    <para>
-     It is best not to use <systemitem>SIGKILL</systemitem> to shut down
-     the server. This will prevent the server from releasing
-     shared memory and semaphores, which may then have to be done by
-     manually.
-    </para>
-   </important>
+  <para>
+   The <xref linkend="app-pg-ctl"> program provides a convenient
+   interface for sending these signals to shut down the server.
+  </para>
 
   <para>
-   The <acronym>PID</> of the <command>postmaster</command> process can be found using the
-   <command>ps</command> program, or from the file
-   <filename>postmaster.pid</filename> in the data directory. So for
+   Alternatively, you can send the signal directly using <command>kill</>.
+   The <acronym>PID</> of the <command>postmaster</command> process can be
+   found using the <command>ps</command> program, or from the file
+   <filename>postmaster.pid</filename> in the data directory. For
    example, to do a fast shutdown:
 <screen>
 $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput>
 </screen>
   </para>
-  <para>
-   The program <command>pg_ctl</command> is a shell script
-   that provides a more convenient interface for shutting down the
-   server.
-  </para>
+
+   <important>
+    <para>
+     It is best not to use <systemitem>SIGKILL</systemitem> to shut down
+     the server.  Doing so will prevent the server from releasing
+     shared memory and semaphores, which may then have to be done
+     manually before a new server can be started.  Furthermore,
+     <systemitem>SIGKILL</systemitem> kills the <command>postmaster</command>
+     process without letting it relay the signal to its subprocesses,
+     so it will be necessary to kill the individual subprocesses by hand as
+     well.
+    </para>
+   </important>
  </sect1>
 
  <sect1 id="ssl-tcp">
@@ -4798,10 +4837,11 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    With <acronym>SSL</> support compiled in, the
    <productname>PostgreSQL</> server can be started with
    <acronym>SSL</> enabled by setting the parameter
-   <xref linkend="guc-ssl"> to on in <filename>postgresql.conf</>. When
+   <xref linkend="guc-ssl"> to <literal>on</> in
+   <filename>postgresql.conf</>. When
    starting in <acronym>SSL</> mode, the server will look for the
    files <filename>server.key</> and <filename>server.crt</> in the
-   data directory, which should contain the server private key
+   data directory, which must contain the server private key
    and certificate, respectively. These files must be set up correctly
    before an <acronym>SSL</>-enabled server can start. If the private key is
    protected with a passphrase, the server will prompt for the
@@ -4811,16 +4851,18 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
   <para>
    The server will listen for both standard and <acronym>SSL</>
    connections on the same TCP port, and will negotiate with any
-   connecting client on whether to use <acronym>SSL</>. See <xref
+   connecting client on whether to use <acronym>SSL</>.  By default,
+   this is at the client's option; see <xref
    linkend="auth-pg-hba-conf"> about how to set up the server to
    require use of <acronym>SSL</> for some or all connections.
   </para>
 
   <para>
    For details on how to create your server private key and certificate,
-   refer to the <productname>OpenSSL</> documentation. A simple
-   self-signed certificate can be used to get started for testing, but a
-   certificate signed by a certificate authority (<acronym>CA</>) (either one of the global
+   refer to the <productname>OpenSSL</> documentation. A
+   self-signed certificate can be used for testing, but a
+   certificate signed by a certificate authority (<acronym>CA</>)
+   (either one of the global
    <acronym>CAs</> or a local one) should be used in production so the
    client can verify the server's identity. To create a quick
    self-signed certificate, use the following
@@ -4881,7 +4923,8 @@ chmod og-rwx server.key
    One can use <application>SSH</application> to encrypt the network
    connection between clients and a
    <productname>PostgreSQL</productname> server. Done properly, this
-   provides an adequately secure network connection.
+   provides an adequately secure network connection, even for non-SSL-capable
+   clients.
   </para>
 
   <para>
@@ -4896,7 +4939,7 @@ ssh -L 3333:foo.com:5432 joe@foo.com
    The first number in the <option>-L</option> argument, 3333, is the
    port number of your end of the tunnel; it can be chosen freely. The
    second number, 5432, is the remote end of the tunnel: the port
-   number your server is using. The name or the address in between
+   number your server is using. The name or IP address between
    the port numbers is the host with the database server you are going
    to connect to. In order to connect to the database server using
    this tunnel, you connect to port 3333 on the local machine:
@@ -4905,7 +4948,15 @@ psql -h localhost -p 3333 template1
 </programlisting>
    To the database server it will then look as though you are really
    user <literal>joe@foo.com</literal> and it will use whatever
-   authentication procedure was set up for this user. In order for the
+   authentication procedure was configured for connections from this
+   user and host.  Note that the server will not think the connection is
+   SSL-encrypted, since in fact it is not encrypted between the
+   <application>SSH</application> server and the
+   <productname>PostgreSQL</productname> server.  This should not pose any
+   extra security risk as long as they are on the same machine.
+  </para>
+  <para>
+   In order for the
    tunnel setup to succeed you must be allowed to connect via
    <command>ssh</command> as <literal>joe@foo.com</literal>, just
    as if you had attempted to use <command>ssh</command> to set up a

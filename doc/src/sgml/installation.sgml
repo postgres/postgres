@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.220 2004/12/24 19:20:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.221 2004/12/26 23:06:56 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -109,7 +109,10 @@ su - postgres
       <filename>configure</>.  (On <productname>NetBSD</productname>,
       the <filename>libedit</filename> library is
       <productname>Readline</productname>-compatible and is used if
-      <filename>libreadline</filename> is not found.)
+      <filename>libreadline</filename> is not found.)  If you are using
+      a package-based Linux distribution, be aware that you need both
+      the <literal>readline</> and <literal>readline-devel</> packages,
+      if those are separate in your distribution.
      </para>
     </listitem>
 
@@ -120,14 +123,22 @@ su - postgres
        <secondary>on Windows</secondary>
       </indexterm>
 
-      To build on <productname>NT</>-based versions of
-      <productname>Windows</> like Windows XP and 2003 see
-      <filename>doc/FAQ_MINGW</>. For earlier <productname>Windows</>
-      releases see <filename>doc/FAQ_CYGWIN</>.
-
-      To build <productname>Windows</> client-only interfaces using
-      tools like <productname>Visual C++</> and <productname>Borland
-      C++</> see
+      Additional software is needed to build
+      <productname>PostgreSQL</productname> on <productname>Windows</>.
+      You can build <productname>PostgreSQL</productname> for
+      <productname>NT</>-based versions of <productname>Windows</>
+      (like Windows XP and 2003) using <productname>MinGW</productname>;
+      see <filename>doc/FAQ_MINGW</> for details.  You can also build
+      <productname>PostgreSQL</productname> using
+      <productname>Cygwin</productname>; see <filename>doc/FAQ_CYGWIN</>.
+      A <productname>Cygwin</productname>-based build will work on older
+      versions of <productname>Windows</>, but if you have a choice,
+      we recommend the <productname>MinGW</productname> approach.
+      While these are the only tool sets recommended for a complete build,
+      it is possible to build just the C client library
+      (<application>libpq</application>) and the interactive terminal
+      (<application>psql</application>) using other <productname>Windows</>
+      tool sets.  For details of that see
       <![%standalone-include[the documentation chapter "Client-Only
       Installation on Windows"]]> <![%standalone-ignore[<xref
       linkend="install-win32">]]>.
@@ -245,7 +256,7 @@ su - postgres
 
     <listitem>
      <para>
-      <application>Kerberos</>, <productname>OpenSSL</>, or
+      <application>Kerberos</>, <productname>OpenSSL</>, and/or
       <application>PAM</>, if you want to support authentication or
       encryption using these services.
      </para>
@@ -271,7 +282,7 @@ su - postgres
        <primary>yacc</primary>
       </indexterm>
 
-      <application>Flex</> and <application>Bison</>
+      GNU <application>Flex</> and <application>Bison</>
       are needed to build a CVS checkout or if you changed the actual
       scanner and parser definition files. If you need them, be sure
       to get <application>Flex</> 2.5.4 or later and
@@ -299,7 +310,7 @@ su - postgres
    25 MB, databases take about five times the amount of space that a
    flat text file with the same data would take. If you are going to
    run the regression tests you will temporarily need up to an extra
-   90 MB. Use the <command>df</command> command to check for disk
+   90 MB. Use the <command>df</command> command to check free disk
    space.
   </para>
  </sect1>
@@ -416,9 +427,11 @@ su - postgres
     <para>
      Very old versions might not have <application>pg_ctl</>.  If you
      can't find it or it doesn't work, find out the process ID of the
-     old server, for
-     example by typing <userinput>ps ax | grep postmaster</>, and
-     signal it to stop this way:
+     old server, for example by typing
+<screen>
+<userinput>ps ax | grep postmaster</userinput>
+</screen>
+     and signal it to stop this way:
 <screen>
 <userinput>kill -INT <replaceable>processID</></userinput>
 </screen>
@@ -1108,8 +1121,10 @@ All of PostgreSQL is successfully made. Ready to install.
     program, so that you can rebuild everything with <command>gmake</>
     later on. To reset the source tree to the state in which it was
     distributed, use <command>gmake distclean</>. If you are going to
-    build for several platforms from the same source tree you must do
-    this and re-configure for each build.
+    build for several platforms within the same source tree you must do
+    this and re-configure for each build.  (Alternatively, use
+    a separate build tree for each platform, so that the source tree
+    remains unmodified.)
    </para>
   </formalpara>
 
