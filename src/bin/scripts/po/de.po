@@ -1,7 +1,7 @@
 # German message translation file for "scripts".
 # Peter Eisentraut <peter_e@gmx.net>, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/bin/scripts/po/de.po,v 1.5 2004/12/12 18:26:29 petere Exp $
+# $PostgreSQL: pgsql/src/bin/scripts/po/de.po,v 1.6 2004/12/14 11:11:20 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -385,7 +385,7 @@ msgstr "  -E, --encrypted           verschlüssle das gespeicherte Passwort\n"
 
 #: createuser.c:249
 #, c-format
-msgid "  -N, --unencrypted         do no encrypt stored password\n"
+msgid "  -N, --unencrypted         do not encrypt stored password\n"
 msgstr ""
 "  -N, --unencrypted         verschlüssle das gespeicherte Passwort nicht\n"
 

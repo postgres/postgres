@@ -365,7 +365,7 @@ msgstr "  -E, --encrypted           spara lösenordet krypterat\n"
 
 #: createuser.c:249
 #, c-format
-msgid "  -N, --unencrypted         do no encrypt stored password\n"
+msgid "  -N, --unencrypted         do not encrypt stored password\n"
 msgstr "  -N, --unencrypted         spara lösenordet okrypterat\n"
 
 #: createuser.c:250

@@ -330,7 +330,7 @@ msgid "  -E, --encrypted           encrypt stored password\n"
 msgstr "  -E, --encrypted           zašifruj uložené heslo\n"
 
 #: createuser.c:249
-msgid "  -N, --unencrypted         do no encrypt stored password\n"
+msgid "  -N, --unencrypted         do not encrypt stored password\n"
 msgstr "  -N, --unencrypted         nezašifruj uložené heslo\n"
 
 #: createuser.c:250

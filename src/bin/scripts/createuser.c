@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.14 2004/08/29 04:13:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.15 2004/12/14 11:11:20 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -246,7 +246,7 @@ help(const char *progname)
 	printf(_("  -D, --no-createdb         user cannot create databases\n"));
 	printf(_("  -P, --pwprompt            assign a password to new user\n"));
 	printf(_("  -E, --encrypted           encrypt stored password\n"));
-	printf(_("  -N, --unencrypted         do no encrypt stored password\n"));
+	printf(_("  -N, --unencrypted         do not encrypt stored password\n"));
 	printf(_("  -i, --sysid=SYSID         select sysid for new user\n"));
 	printf(_("  -e, --echo                show the commands being sent to the server\n"));
 	printf(_("  -q, --quiet               don't write any messages\n"));

@@ -365,7 +365,7 @@ msgstr "  -E, --encrypted           口令加密存储\n"
 
 #: createuser.c:249
 #, c-format
-msgid "  -N, --unencrypted         do no encrypt stored password\n"
+msgid "  -N, --unencrypted         do not encrypt stored password\n"
 msgstr "  -N, --unencrypted         口令不加密存储\n"
 
 #: createuser.c:250

@@ -400,7 +400,7 @@ msgid "  -E, --encrypted           encrypt stored password\n"
 msgstr "  -E, --encrypted           cifra la password salvata\n"
 
 #: createuser.c:249
-msgid "  -N, --unencrypted         do no encrypt stored password\n"
+msgid "  -N, --unencrypted         do not encrypt stored password\n"
 msgstr "  -N, --unencrypted         non cifrare la password salvata\n"
 
 #: createuser.c:250

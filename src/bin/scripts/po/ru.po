@@ -4,7 +4,7 @@
 # Copyright (c) 2003-2004 Serguei A. Mokhov, mokhov@cs.concordia.ca
 # Distributed under the same licensing terms as PostgreSQL itself.
 #
-# $PostgreSQL: pgsql/src/bin/scripts/po/ru.po,v 1.10 2004/12/12 18:26:29 petere Exp $
+# $PostgreSQL: pgsql/src/bin/scripts/po/ru.po,v 1.11 2004/12/14 11:11:20 petere Exp $
 #
 # To the new translator:
 #   PG Russian Translation Discussion Group: <http://groups.yahoo.com/group/pgsql-rus/>
@@ -416,7 +416,7 @@ msgid "  -E, --encrypted           encrypt stored password\n"
 msgstr "  -E, --encrypted           зашифровать сохранённый пароль\n"
 
 #: createuser.c:249
-msgid "  -N, --unencrypted         do no encrypt stored password\n"
+msgid "  -N, --unencrypted         do not encrypt stored password\n"
 msgstr "  -N, --unencrypted         не щифровать сохранённый пароль\n"
 
 #: createuser.c:250

@@ -1,7 +1,7 @@
 # translation of pgscripts-fr.po to FR_fr
 # French message translation file for pgscripts
 #
-# $PostgreSQL: pgsql/src/bin/scripts/po/fr.po,v 1.6 2004/12/12 18:26:29 petere Exp $
+# $PostgreSQL: pgsql/src/bin/scripts/po/fr.po,v 1.7 2004/12/14 11:11:20 petere Exp $
 #
 # Use these quotes: «%s»
 # Guillaume Lelarge <gleu@wanadoo.fr>, 2004.
@@ -341,7 +341,7 @@ msgid "  -E, --encrypted           encrypt stored password\n"
 msgstr "  -E, --encrypted           crypte le mot de passe stocké\n"
 
 #: createuser.c:249
-msgid "  -N, --unencrypted         do no encrypt stored password\n"
+msgid "  -N, --unencrypted         do not encrypt stored password\n"
 msgstr "  -N, --unencrypted         ne crypte pas le mot de passe stocké\n"
 
 #: createuser.c:250
