@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.106 2003/04/04 04:50:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.107 2003/05/04 04:30:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -320,9 +320,9 @@ tm2abstime(struct tm * tm, int tz)
 	if (tm->tm_year < 1901 || tm->tm_year > 2038
 		|| tm->tm_mon < 1 || tm->tm_mon > 12
 		|| tm->tm_mday < 1 || tm->tm_mday > 31
-		|| tm->tm_hour < 0 || tm->tm_hour >= 24
+		|| tm->tm_hour < 0 || tm->tm_hour > 23
 		|| tm->tm_min < 0 || tm->tm_min > 59
-		|| tm->tm_sec < 0 || tm->tm_sec > 59)
+		|| tm->tm_sec < 0 || tm->tm_sec > 60)
 		return INVALID_ABSTIME;
 
 	day = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - UNIX_EPOCH_JDATE;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.103 2003/04/04 04:50:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.104 2003/05/04 04:30:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2080,15 +2080,16 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 		tm->tm_hour += 12;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	if (((tm->tm_hour < 0) || (tm->tm_hour > 23))
-		|| ((tm->tm_min < 0) || (tm->tm_min > 59))
-		|| ((tm->tm_sec < 0) || (tm->tm_sec > 60))
+	if ((tm->tm_hour < 0) || (tm->tm_hour > 23)
+		|| (tm->tm_min < 0) || (tm->tm_min > 59)
+		|| (tm->tm_sec < 0) || (tm->tm_sec > 60)
 		|| (*fsec < INT64CONST(0)) || (*fsec >= INT64CONST(1000000)))
 		return -1;
 #else
-	if (((tm->tm_hour < 0) || (tm->tm_hour > 23))
-		|| ((tm->tm_min < 0) || (tm->tm_min > 59))
-		|| ((tm->tm_sec < 0) || ((tm->tm_sec + *fsec) >= 60)))
+	if ((tm->tm_hour < 0) || (tm->tm_hour > 23)
+		|| (tm->tm_min < 0) || (tm->tm_min > 59)
+		|| (tm->tm_sec < 0) || (tm->tm_sec > 60)
+		|| (*fsec < 0) || (*fsec >= 1))
 		return -1;
 #endif
 
@@ -2313,14 +2314,14 @@ DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, fsec_t *fsec)
 #ifdef HAVE_INT64_TIMESTAMP
 	if ((tm->tm_hour < 0)
 		|| (tm->tm_min < 0) || (tm->tm_min > 59)
-		|| (tm->tm_sec < 0) || (tm->tm_sec > 59)
-		|| (*fsec >= INT64CONST(1000000)))
+		|| (tm->tm_sec < 0) || (tm->tm_sec > 60)
+		|| (*fsec < INT64CONST(0)) || (*fsec >= INT64CONST(1000000)))
 		return -1;
 #else
 	if ((tm->tm_hour < 0)
 		|| (tm->tm_min < 0) || (tm->tm_min > 59)
-		|| (tm->tm_sec < 0) || (tm->tm_sec > 59)
-		|| (*fsec >= 1))
+		|| (tm->tm_sec < 0) || (tm->tm_sec > 60)
+		|| (*fsec < 0) || (*fsec >= 1))
 		return -1;
 #endif
 
