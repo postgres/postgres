@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.47 2002/03/27 19:16:13 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.48 2002/06/15 19:37:48 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -378,7 +378,8 @@ MainLoop(FILE *source)
 				{
 					out_length = strlen(value);
 
-					new = malloc(len + out_length - (1 + in_length) + 1);
+					/* Allow for 'after' character also 2002-05-27 */
+					new = malloc(len + out_length - (1 + in_length) + 1 + 1);
 					if (!new)
 					{
 						psql_error("out of memory\n");
