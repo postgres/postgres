@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.110 1999/06/05 20:22:30 tgl Exp $
+ *	$Id: analyze.c,v 1.110.2.1 1999/08/15 06:50:22 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -563,6 +563,9 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 	columns = NIL;
 	dlist = NIL;
 
+	/*
+	 * Run through each primary element in the table creation clause
+	 */
 	while (elements != NIL)
 	{
 		element = lfirst(elements);
@@ -572,6 +575,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 				column = (ColumnDef *) element;
 				columns = lappend(columns, column);
 
+				/* Special case SERIAL type? */
 				if (column->is_sequence)
 				{
 					char	   *sname;
@@ -609,6 +613,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					blist = lcons(sequence, NIL);
 				}
 
+				/* Check for column constraints, if any... */
 				if (column->constraints != NIL)
 				{
 					clist = column->constraints;
@@ -799,28 +804,43 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
  * or if a SERIAL column was defined along with a table PRIMARY KEY constraint.
  * - thomas 1999-05-11
  */
-	if ((pkey != NULL) && (length(lfirst(pkey->indexParams)) == 1))
+	if (pkey != NULL)
 	{
 		dlist = ilist;
 		ilist = NIL;
 		while (dlist != NIL)
 		{
-			int			keep = TRUE;
+			List *pcols, *icols;
+			int plen, ilen;
+			int	keep = TRUE;
 
 			index = lfirst(dlist);
+			pcols = pkey->indexParams;
+			icols = index->indexParams;
 
-			/*
-			 * has a single column argument, so might be a conflicting
-			 * index...
-			 */
-			if ((index != pkey)
-				&& (length(index->indexParams) == 1))
+			plen = length(pcols);
+			ilen = length(icols);
+
+			/* Not the same as the primary key? Then we should look... */
+			if ((index != pkey) && (ilen == plen))
 			{
-				char	   *pname = ((IndexElem *) lfirst(index->indexParams))->name;
-				char	   *iname = ((IndexElem *) lfirst(index->indexParams))->name;
+				keep = FALSE;
+				while ((pcols != NIL) && (icols != NIL))
+				{
+					IndexElem *pcol = lfirst(pcols);
+					IndexElem *icol = lfirst(icols);
+					char *pname = pcol->name;
+					char *iname = icol->name;
 
-				/* same names? then don't keep... */
-				keep = (strcmp(iname, pname) != 0);
+					/* different names? then no match... */
+					if (strcmp(iname, pname) != 0)
+					{
+						keep = TRUE;
+						break;
+					}
+					pcols = lnext(pcols);
+					icols = lnext(icols);
+				}
 			}
 
 			if (keep)
