@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.49 2002/06/20 20:29:37 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.50 2002/08/22 04:45:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -264,7 +264,7 @@ Datum
 bytealike(PG_FUNCTION_ARGS)
 {
 	bytea	   *str = PG_GETARG_BYTEA_P(0);
-	bytea	   *pat = PG_GETARG_BYTEA_P(1);
+	text	   *pat = PG_GETARG_TEXT_P(1);
 	bool		result;
 	unsigned char *s,
 			   *p;
@@ -285,7 +285,7 @@ Datum
 byteanlike(PG_FUNCTION_ARGS)
 {
 	bytea	   *str = PG_GETARG_BYTEA_P(0);
-	bytea	   *pat = PG_GETARG_BYTEA_P(1);
+	text	   *pat = PG_GETARG_TEXT_P(1);
 	bool		result;
 	unsigned char *s,
 			   *p;
