@@ -1,37 +1,33 @@
 .\" This is -*-nroff-*-
-.\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/doc/man/Attic/bki.5,v 1.1.1.1 1996/08/18 22:14:20 scrappy Exp $
-.TH BKI FILES 01/23/93 Postgres95 Postgres95
+.\" $Header: /cvsroot/pgsql/doc/man/Attic/bki.5,v 1.2 1996/11/09 10:29:44 scrappy Exp $
+.TH BKI 5 11/04/96 Postgres Postgres
 .SH NAME
-\&.../src/backend/obj/{local,dbdb}.bki \(em template scripts
+*.bki
 .SH DESCRIPTION
-Backend Interface (BKI) files are scripts that describe the contents
-of the initial Postgres database.  This database is constructed during
-system installation, by the
-.IR initdb
-command.
+Backend Interface (BKI) files are scripts that are input to the postgres
+backend running in the special "bootstrap" mode that allows it to perform
+database functions without a database system already existing.  BKI files
+can therefore be used to create the database system in the first place.
+.PP
 .IR Initdb
-executes the Postgres backend with a special set of flags, that cause it
-to consume the BKI scripts and bootstrap a database.
-.PP
-These files are automatically generated from system header files
-during installation.  They are not intended for use by humans, and you
-do not need to understand their contents in order to use Postgres.  These
-files are copied to
-.nf
-\&.../files/{global1,local1_XXX}.bki
-.fi
-during system installation.
-.PP
-All new user databases will be created by copying the template
-database that Postgres constructs from the BKI files.  Thus, a simple way
-to customize the template database is to let the Postgres initialization
-script create it for you, and then to run the terminal monitor to make
-the changes you want.
+uses BKI files to do just that -- create a database system.  However,
+.IR initdb's
+BKI files are generated internally.  It generates them using the files
+global1.bki.source and local1.template1.bki.source, which it finds in the
+Postgres "library" directory.  They get installed there as part of installing
+Postgres.  These .source files get build as part of the Postgres build
+process, by a build program called 
+.IR genbki.  Genbki
+takes as input Postgres source files that double as
+.IR genbki
+input that builds tables and C header files that describe those
+tables.
 .PP
 The Postgres backend interprets BKI files as described below.  This
-description will be easier to understand if the example in
-\*(lq.../files/global1.bki\*(rq is at hand.
+description will be easier to understand if the global1.bki.source file is
+at hand as an example.  (As explained above, this .source file isn't quite
+a BKI file, but you'll be able to guess what the resulting BKI file would be
+anyway).
 .PP
 Commands are composed of a command name followed by space separated
 arguments.  Arguments to a command which begin with a \*(lq$\*(rq are
@@ -220,5 +216,4 @@ close pg_opclass
 .SH "SEE ALSO"
 initdb(1),
 createdb(1),
-createdb(l),
-template(files).
+create_database(l).
