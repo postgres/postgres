@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.153 2005/03/12 21:11:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.154 2005/03/12 21:33:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,8 @@
 
 /* non-export function prototypes */
 static bool get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
-			int *encodingP, bool *dbIsTemplateP, Oid *dbLastSysOidP,
+			int *encodingP, bool *dbIsTemplateP, bool *dbAllowConnP,
+			Oid *dbLastSysOidP,
 			TransactionId *dbVacuumXidP, TransactionId *dbFrozenXidP,
 			Oid *dbTablespace);
 static bool have_createdb_privilege(void);
@@ -73,6 +74,7 @@ createdb(const CreatedbStmt *stmt)
 	AclId		src_owner;
 	int			src_encoding;
 	bool		src_istemplate;
+	bool		src_allowconn;
 	Oid			src_lastsysoid;
 	TransactionId src_vacuumxid;
 	TransactionId src_frozenxid;
@@ -217,7 +219,8 @@ createdb(const CreatedbStmt *stmt)
 	 * idea, so accept possibility of race to create.  We will check again
 	 * after we grab the exclusive lock.
 	 */
-	if (get_db_info(dbname, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
+	if (get_db_info(dbname, NULL, NULL, NULL,
+					NULL, NULL, NULL, NULL, NULL, NULL))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_DATABASE),
 				 errmsg("database \"%s\" already exists", dbname)));
@@ -229,7 +232,7 @@ createdb(const CreatedbStmt *stmt)
 		dbtemplate = "template1";		/* Default template database name */
 
 	if (!get_db_info(dbtemplate, &src_dboid, &src_owner, &src_encoding,
-					 &src_istemplate, &src_lastsysoid,
+					 &src_istemplate, &src_allowconn, &src_lastsysoid,
 					 &src_vacuumxid, &src_frozenxid, &src_deftablespace))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
@@ -327,6 +330,16 @@ createdb(const CreatedbStmt *stmt)
 		dst_deftablespace = src_deftablespace;
 		/* Note there is no additional permission check in this path */
 	}
+
+	/*
+	 * Normally we mark the new database with the same datvacuumxid and
+	 * datfrozenxid as the source.  However, if the source is not allowing
+	 * connections then we assume it is fully frozen, and we can set the
+	 * current transaction ID as the xid limits.  This avoids immediately
+	 * starting to generate warnings after cloning template0.
+	 */
+	if (!src_allowconn)
+		src_vacuumxid = src_frozenxid = GetCurrentTransactionId();
 
 	/*
 	 * Preassign OID for pg_database tuple, so that we can compute db
@@ -455,7 +468,8 @@ createdb(const CreatedbStmt *stmt)
 	pg_database_rel = heap_openr(DatabaseRelationName, ExclusiveLock);
 
 	/* Check to see if someone else created same DB name meanwhile. */
-	if (get_db_info(dbname, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
+	if (get_db_info(dbname, NULL, NULL, NULL,
+					NULL, NULL, NULL, NULL, NULL, NULL))
 	{
 		/* Don't hold lock while doing recursive remove */
 		heap_close(pg_database_rel, ExclusiveLock);
@@ -552,7 +566,7 @@ dropdb(const char *dbname)
 	pgdbrel = heap_openr(DatabaseRelationName, ExclusiveLock);
 
 	if (!get_db_info(dbname, &db_id, &db_owner, NULL,
-					 &db_istemplate, NULL, NULL, NULL, NULL))
+					 &db_istemplate, NULL, NULL, NULL, NULL, NULL))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", dbname)));
@@ -936,7 +950,8 @@ AlterDatabaseOwner(const char *dbname, AclId newOwnerSysId)
 
 static bool
 get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
-			int *encodingP, bool *dbIsTemplateP, Oid *dbLastSysOidP,
+			int *encodingP, bool *dbIsTemplateP, bool *dbAllowConnP,
+			Oid *dbLastSysOidP,
 			TransactionId *dbVacuumXidP, TransactionId *dbFrozenXidP,
 			Oid *dbTablespace)
 {
@@ -978,6 +993,9 @@ get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
 		/* allowed as template? */
 		if (dbIsTemplateP)
 			*dbIsTemplateP = dbform->datistemplate;
+		/* allowing connections? */
+		if (dbAllowConnP)
+			*dbAllowConnP = dbform->datallowconn;
 		/* last system OID used in database */
 		if (dbLastSysOidP)
 			*dbLastSysOidP = dbform->datlastsysoid;
