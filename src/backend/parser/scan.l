@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.102 2002/11/04 14:25:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.102.2.1 2002/11/11 03:33:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -580,7 +580,7 @@ yyerror(const char *message)
 		elog(ERROR, "parser: %s at end of input", message);
 	else
 		elog(ERROR, "parser: %s at or near \"%s\" at character %d",
-			 message, loc, (loc - scanbuf + 1));
+			 message, loc, (int) (loc - scanbuf + 1));
 }
 
 
