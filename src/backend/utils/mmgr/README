@@ -1,11 +1,14 @@
-Notes about memory allocation redesign			14-Jul-2000
+$Header: /cvsroot/pgsql/src/backend/utils/mmgr/README,v 1.3 2001/02/15 21:38:26 tgl Exp $
+
+Notes about memory allocation redesign
 --------------------------------------
 
-Up through version 7.0, Postgres has serious problems with memory leakage
+Up through version 7.0, Postgres had serious problems with memory leakage
 during large queries that process a lot of pass-by-reference data.  There
-is no provision for recycling memory until end of query.  This needs to be
+was no provision for recycling memory until end of query.  This needs to be
 fixed, even more so with the advent of TOAST which will allow very large
-chunks of data to be passed around in the system.  So, here is a proposal.
+chunks of data to be passed around in the system.  This document describes
+the new memory management plan implemented in 7.1.
 
 
 Background
@@ -194,9 +197,11 @@ usage (which can be a lot, for large joins) at completion of planning.
 The completed plan tree will be in TransactionCommandContext.
 
 The top-level executor routines, as well as most of the "plan node"
-execution code, will normally run in TransactionCommandContext.  Much
-of the memory allocated in these routines is intended to live until end
-of query, so this is appropriate for those purposes.  We already have
+execution code, will normally run in a context with command lifetime.
+(This will be TransactionCommandContext for normal queries, but when
+executing a cursor, it will be a context associated with the cursor.)
+Most of the memory allocated in these routines is intended to live until
+end of query, so this is appropriate for those purposes.  We already have
 a mechanism --- "tuple table slots" --- for avoiding leakage of tuples,
 which is the major kind of short-lived data handled by these routines.
 This still leaves a certain amount of explicit pfree'ing needed by plan
@@ -229,11 +234,11 @@ more often than once per outer tuple cycle.  Fortunately, memory contexts
 are cheap enough that giving one to each plan node doesn't seem like a
 problem.
 
-A problem with running index accesses and sorts in TransactionMemoryContext
+A problem with running index accesses and sorts in a query-lifespan context
 is that these operations invoke datatype-specific comparison functions,
 and if the comparators leak any memory then that memory won't be recovered
 till end of query.  The comparator functions all return bool or int32,
-so there's no problem with their result data, but there could be a problem
+so there's no problem with their result data, but there can be a problem
 with leakage of internal temporary data.  In particular, comparator
 functions that operate on TOAST-able data types will need to be careful
 not to leak detoasted versions of their inputs.  This is annoying, but
@@ -264,9 +269,7 @@ in a disk buffer that is only guaranteed to remain good that long.
 A more common reason for copying data will be to transfer a result from
 per-tuple context to per-run context; for example, a Unique node will
 save the last distinct tuple value in its per-run context, requiring a
-copy step.  (Actually, Unique could use the same trick with two per-tuple
-contexts as described above for Agg, but there will probably be other
-cases where doing an extra copy step is the right thing.)
+copy step.
 
 Another interesting special case is VACUUM, which needs to allocate
 working space that will survive its forced transaction commits, yet
