@@ -1,10 +1,7 @@
 PostgreSQL 6.1.1                 Sun Jul 13 15:11:47 EDT 1997
 -------------------------------------------------------------
 
-This release does not require a dump/restore.  Rerun configure.  Compile
-the new release. Recompile all your custom applications so they use the
-libpq library in this new release.  Stop the postmaster process, install
-the new release, and restart the postmaster.
+This release does NOT require a dump/restore for those running 6.1.
 
 Changes in this release
 -----------------------
