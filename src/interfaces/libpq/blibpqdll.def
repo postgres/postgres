@@ -73,7 +73,7 @@ EXPORTS
 	_PQoidValue             @ 71
 	_PQclientEncoding       @ 72
 	_PQenv2encoding         @ 73
-	_appendBinaryPQExpBuffer    @ 74
+	_appendBinaryPQExpBuffer	@ 74
 	_appendPQExpBufferStr   @ 75
 	_destroyPQExpBuffer     @ 76
 	_createPQExpBuffer      @ 77
@@ -93,3 +93,5 @@ EXPORTS
 	_appendPQExpBuffer      @ 91
 	_pg_encoding_to_char    @ 92
 	_pg_utf_mblen           @ 93
+	_PQunescapeBytea		@ 94
+	_PQfeeMem				@ 95
