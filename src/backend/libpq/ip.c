@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.20 2003/09/05 20:31:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.21 2003/09/05 23:07:21 tgl Exp $
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design
@@ -332,15 +332,15 @@ rangeSockAddrAF_INET6(const struct sockaddr_in6 * addr,
  *	SockAddr_cidr_mask - make a network mask of the appropriate family
  *	  and required number of significant bits
  *
- * Note: Returns a static pointer for the mask, so it's not thread safe,
- *		 and a second call will overwrite the data.
+ * The resulting mask is placed in *mask, which had better be big enough.
+ *
+ * Return value is 0 if okay, -1 if not.
  */
 int
-SockAddr_cidr_mask(struct sockaddr_storage ** mask, char *numbits, int family)
+SockAddr_cidr_mask(struct sockaddr_storage * mask, char *numbits, int family)
 {
 	long		bits;
 	char	   *endptr;
-	static struct sockaddr_storage sock;
 	struct sockaddr_in mask4;
 
 #ifdef	HAVE_IPV6
@@ -359,15 +359,13 @@ SockAddr_cidr_mask(struct sockaddr_storage ** mask, char *numbits, int family)
 		)
 		return -1;
 
-	*mask = &sock;
-
 	switch (family)
 	{
 		case AF_INET:
 			mask4.sin_addr.s_addr =
 				htonl((0xffffffffUL << (32 - bits))
 					  & 0xffffffffUL);
-			memcpy(&sock, &mask4, sizeof(mask4));
+			memcpy(mask, &mask4, sizeof(mask4));
 			break;
 #ifdef HAVE_IPV6
 		case AF_INET6:
@@ -387,7 +385,7 @@ SockAddr_cidr_mask(struct sockaddr_storage ** mask, char *numbits, int family)
 					}
 					bits -= 8;
 				}
-				memcpy(&sock, &mask6, sizeof(mask6));
+				memcpy(mask, &mask6, sizeof(mask6));
 				break;
 			}
 #endif
@@ -395,7 +393,7 @@ SockAddr_cidr_mask(struct sockaddr_storage ** mask, char *numbits, int family)
 			return -1;
 	}
 
-	sock.ss_family = family;
+	mask->ss_family = family;
 	return 0;
 }
 
@@ -406,8 +404,9 @@ SockAddr_cidr_mask(struct sockaddr_storage ** mask, char *numbits, int family)
  * promote_v4_to_v6_addr --- convert an AF_INET addr to AF_INET6, using
  *		the standard convention for IPv4 addresses mapped into IPv6 world
  *
- * The passed addr is modified in place.  Note that we only worry about
- * setting the fields that rangeSockAddr will look at.
+ * The passed addr is modified in place; be sure it is large enough to
+ * hold the result!  Note that we only worry about setting the fields
+ * that rangeSockAddr will look at.
  */
 void
 promote_v4_to_v6_addr(struct sockaddr_storage * addr)
@@ -440,8 +439,9 @@ promote_v4_to_v6_addr(struct sockaddr_storage * addr)
  * This must be different from promote_v4_to_v6_addr because we want to
  * set the high-order bits to 1's not 0's.
  *
- * The passed addr is modified in place.  Note that we only worry about
- * setting the fields that rangeSockAddr will look at.
+ * The passed addr is modified in place; be sure it is large enough to
+ * hold the result!  Note that we only worry about setting the fields
+ * that rangeSockAddr will look at.
  */
 void
 promote_v4_to_v6_mask(struct sockaddr_storage * addr)

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
- * $Id: ip.h,v 1.11 2003/09/05 20:31:36 tgl Exp $
+ * $Id: ip.h,v 1.12 2003/09/05 23:07:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@ extern int rangeSockAddr(const struct sockaddr_storage * addr,
 			  const struct sockaddr_storage * netaddr,
 			  const struct sockaddr_storage * netmask);
 
-extern int SockAddr_cidr_mask(struct sockaddr_storage ** mask,
+extern int SockAddr_cidr_mask(struct sockaddr_storage * mask,
 				   char *numbits, int family);
 
 #ifdef HAVE_IPV6
