@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Wed Nov  3 17:20:38 EST 2004
+Last updated:		Wed Nov  3 22:57:53 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -253,14 +253,18 @@ Indexes
 * Allow the creation of bitmap indexes which can be quickly combined
   with other bitmap indexes
 
-  Bitmap indexes index single columns and can be combined with other bitmap
+  Bitmap indexes index single columns that can be combined with other bitmap
   indexes to dynamically create a composite index to match a specific query.
   Each index is a bitmap, and the bitmaps are bitwise AND'ed or OR'ed to be
-  combined.
+  combined.  Such indexes could be more compact if there are few unique
+  value.  Also, perhaps they can be lossy requiring a scan of the heap page
+  to find matching rows.
 
 * Allow non-bitmap indexes to be combined
 
-  Do loUse bitmaps to combine non-bitmap indexes
+  Do lookups on non-bitmap indexes and create bitmaps in memory that can be
+  combined with other indexes.
+
 * Allow use of indexes to search for NULLs
 
   One solution is to create a partial index on an IS NULL expression.
