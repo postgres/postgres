@@ -764,7 +764,8 @@ PGAC_UNION_SEMUN
 
 
 AC_MSG_CHECKING(for fcntl(F_SETLK))
-AC_TRY_LINK([#include <fcntl.h>],
+AC_TRY_LINK([#include <stdio.h>
+#include <fcntl.h>],
 	    [struct flock lck;
 	     lck.l_whence = SEEK_SET; lck.l_start = lck.l_len = 0;
 	     lck.l_type = F_WRLCK;

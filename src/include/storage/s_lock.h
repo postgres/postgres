@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.70 2000/04/12 17:16:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.71 2000/07/05 16:09:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,6 +94,24 @@ __asm__("lock; xchgb %0,%1": "=q"(_res), "=m"(*lock):"0"(_res));
 
 #endif	 /* __i386__ */
 
+
+#ifdef __ia64__
+#define TAS(lock) tas(lock)
+
+static __inline__ int
+tas (volatile slock_t *lock)
+{
+  long int ret;
+
+  __asm__ __volatile__(
+       "xchg4 %0=%1,%2"
+       : "=r"(ret), "=m"(*lock)
+       : "r"(1), "1"(*lock)
+       : "memory");
+
+  return (int) ret;
+}
+#endif /* __ia64__ */
 
 
 #if defined(__arm__) || defined(__arm__)
