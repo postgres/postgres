@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.67 1996/11/14 00:26:23 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.68 1996/11/14 07:19:26 bryanh Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -133,12 +133,8 @@ OIDNAMELEN= 36
 # Compile libpq++
 #HAVE_Cplusplus= true
 
-# Set COPT to -O for optimization, or -g for debuggable binaries
-# Many people prefer -O2, and -m486 if you are using a i486 or better
-# Use -Werror to stop the compile when any warnings occur
-COPT= -O #-Werror
 
-# Commenting out CASSERT will make things go about 10% faster, but you will
+# Commenting out CASSERT will make things go a LOT faster, but you will
 # also loose a lot of useful error-checking.
 CASSERT= true
 
@@ -554,8 +550,6 @@ endif
 ifeq ($(PORTNAME), irix5)
 MK_PORT= irix5
 
-CC= cc
-
 CFLAGS_BE+= -DUSE_POSIX_SIGNALS
 
 # RANLIB is not used on IRIX 5
@@ -595,6 +589,8 @@ SLSUFF= .so
 LDFLAGS+= -rdynamic
 endif
 MK_NO_LORDER= true
+
+CC= gcc
 
 # use the regex library
 USE_REGEX= 1
@@ -740,10 +736,48 @@ endif
 # This goes here so that customization in Makefile.custom is effective
 ##############################################################################
 #
-# Flags for CC and LD. (depend on COPT and PROFILE)
+# Flags for CC and LD. 
+
+##############################################################################
+# COPT
 #
+# COPT is for options that the sophisticated builder might want to vary 
+# from one build to the next, like options to build Postgres with debugging
+# information included.  COPT is meant to be set on the make command line, 
+# for example with the command "make COPT=-g".  The value you see set here
+# is the default that gets used if the builder does not give a value for
+# COPT on his make command.
+#
+# There is a nonobvious relationship between -O (optimization) and 
+# -Werror (consider all warnings fatal).  On some systems, if you don't
+# optimize, you will always get some warnings because the system header
+# files will include some unreferenced functions in the code.  These are
+# functions that are supposed to be inline, so there wouldn't ordinarily
+# be an "unreferenced" problem, but if you don't enable optimization, no
+# inlining can happen, and hence the problem.  Therefore, we include 
+# if you override -O, you override -Werror as well.
+#
+# CUSTOM_COPT is something the user may set in Makefile.custom
+
+# Common values for COPT are: -g for debuggable binaries, -m486 if you are
+# using a i486 or better.
+
+ifneq ($(CUSTOM_COPT),)
+COPT= $(CUSTOM_COPT)
+else
+ifeq ($(CC), gcc)
+COPT= -O2 -Werror
+else
+COPT= -O
+endif
+endif
+
+
+ifeq ($(CC), gcc)
+# Some flags only gcc recognizes...
 # PostgreSQL should *always* compile with these enabled
 CFLAGS+= -Wall -Wmissing-prototypes
+endif
 
 # Globally pass debugging/optimization/profiling flags based
 # on the options selected above.
