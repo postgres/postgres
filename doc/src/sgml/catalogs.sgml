@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.89 2004/07/04 23:34:23 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.90 2004/10/11 17:24:39 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -3933,6 +3933,12 @@
       <entry>name of index</entry>
      </row>
      <row>
+      <entry><structfield>tablespace</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-tablespace"><structname>pg_tablespace</structname></link>.spcname</literal></entry>
+      <entry>name of tablespace containing index (NULL if default for database)</entry>
+     </row>
+     <row>
       <entry><structfield>indexdef</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
@@ -4448,6 +4454,12 @@
       <entry><type>name</type></entry>
       <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usename</literal></entry>
       <entry>name of table's owner</entry>
+     </row>
+     <row>
+      <entry><structfield>tablespace</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-tablespace"><structname>pg_tablespace</structname></link>.spcname</literal></entry>
+      <entry>name of tablespace containing table (NULL if default for database)</entry>
      </row>
      <row>
       <entry><structfield>hasindexes</structfield></entry>
