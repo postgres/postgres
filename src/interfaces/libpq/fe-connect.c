@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.4 1996/07/23 03:35:12 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.5 1996/08/06 16:16:45 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
 standard function? (My, my. Touchy today, are we?) */
 static
 char *
-strdup(char *string)
+strdup(const char *string)
 {
     char *nstr;
 
@@ -64,10 +64,10 @@ static void closePGconn(PGconn *conn);
  * ----------------
  */
 PGconn* 
-PQsetdb(char *pghost, char* pgport, char* pgoptions, char* pgtty, char* dbName)
+PQsetdb(const char *pghost, const char* pgport, const char* pgoptions, const char* pgtty, const char* dbName)
 {
     PGconn *conn;
-    char *tmp;
+    const char *tmp;
 
     conn = (PGconn*)malloc(sizeof(PGconn));
 

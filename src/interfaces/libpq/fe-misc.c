@@ -11,13 +11,14 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.1.1.1 1996/07/09 06:22:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.2 1996/08/06 16:16:48 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <stdlib.h>
 #include <stdio.h>
+#include "libpq-fe.h"
 
 /* pqGetc:
    get a character from stream f
@@ -41,7 +42,7 @@ pqGetc(FILE* fin, FILE* debug)
    returns 1 if there was an error, 0 otherwise.
 */
 int
-pqPutnchar(char* s, int len, FILE *f, FILE *debug)
+pqPutnchar(const char* s, int len, FILE *f, FILE *debug)
 {
     int status;
 
@@ -165,7 +166,7 @@ pqGetInt(int* result, int bytes, FILE* f, FILE *debug)
 
 
 int
-pqPuts(char* s, FILE *f, FILE *debug)
+pqPuts(const char* s, FILE *f, FILE *debug)
 {
   if (f == NULL)
     return 1;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.3 1996/07/27 02:27:55 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.4 1996/08/06 16:16:42 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,16 +162,16 @@ pg_krb4_authname(char* PQerrormsg)
  * (canonicalized to omit all domain suffixes).
  */
 static int
-pg_krb4_sendauth(char* PQerrormsg, int sock,
+pg_krb4_sendauth(const char* PQerrormsg, int sock,
 		 struct sockaddr_in *laddr,
 		 struct sockaddr_in *raddr,
-		 char *hostname)
+		 const char *hostname)
 {
     long		krbopts = 0;	/* one-way authentication */
     KTEXT_ST	clttkt;
     int		status;
     char		hostbuf[MAXHOSTNAMELEN];
-    char		*realm = getenv("PGREALM"); /* NULL == current realm */
+    const char		*realm = getenv("PGREALM"); /* NULL == current realm */
     
     if (!hostname || !(*hostname)) {
 	if (gethostname(hostbuf, MAXHOSTNAMELEN) < 0)
@@ -227,7 +227,7 @@ pg_krb4_sendauth(char* PQerrormsg, int sock,
  *     and we can't afford to punt.
  */
 static char *
-pg_an_to_ln(char *aname)
+pg_an_to_ln(const char *aname)
 {
     char	*p;
     
@@ -246,7 +246,7 @@ pg_an_to_ln(char *aname)
  * 
  */
 static int
-krb5_ccache pg_krb5_init()
+krb5_ccache pg_krb5_init(void)
 {
     krb5_error_code		code;
     char			*realm, *defname;
@@ -287,8 +287,8 @@ krb5_ccache pg_krb5_init()
  *
  * We obtain this information by digging around in the ticket file.
  */
-static char *
-pg_krb5_authname(char* PQerrormsg)
+static const char *
+pg_krb5_authname(const char* PQerrormsg)
 {
     krb5_ccache	ccache;
     krb5_principal	principal;
@@ -335,15 +335,15 @@ pg_krb5_authname(char* PQerrormsg)
  * in the PGREALM (or local) database.  This is probably a bad assumption.
  */
 static int
-pg_krb5_sendauth(char* PQerrormsg,int sock,
+pg_krb5_sendauth(const char* PQerrormsg,int sock,
 		 struct sockaddr_in *laddr,
 		 struct sockaddr_in *raddr,
-		 char *hostname)
+		 const char *hostname)
 {
     char			servbuf[MAXHOSTNAMELEN + 1 +
 					sizeof(PG_KRB_SRVNAM)];
-    char			*hostp;
-    char			*realm;
+    const char			*hostp;
+    const char			*realm;
     krb5_error_code		code;
     krb5_principal		client, server;
     krb5_ccache		ccache;
@@ -430,7 +430,7 @@ pg_krb5_sendauth(char* PQerrormsg,int sock,
  * fe_sendauth -- client demux routine for outgoing authentication information
  */
 int
-fe_sendauth(MsgType msgtype, Port *port, char *hostname, char* PQerrormsg)
+fe_sendauth(MsgType msgtype, Port *port, const char *hostname, const char* PQerrormsg)
 {
     switch (msgtype) {
 #ifdef KRB4
@@ -474,7 +474,7 @@ fe_sendauth(MsgType msgtype, Port *port, char *hostname, char* PQerrormsg)
 static pg_authsvc = -1;
 
 void
-fe_setauthsvc(char *name, char* PQerrormsg)
+fe_setauthsvc(const char *name, char* PQerrormsg)
 {
     int i;
     
