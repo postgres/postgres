@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.36 1998/01/27 03:25:01 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.37 1998/02/19 14:27:33 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@
  */
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 #include <signal.h>
 #include <errno.h>
 #include <fcntl.h>

@@ -9,7 +9,7 @@ case "$host_os" in
  solaris*)
         case "$host_cpu" in
           sparc) os=sparc_solaris need_tas=yes tas_file=sparc_solaris.s ;;
-           i386) os=i386_solaris need_tas=yes tas_file=i386_solaris ;;
+           i386) os=i386_solaris need_tas=yes tas_file=i386_solaris.s ;;
         esac ;;
    sunos*) os=sunos4 need_tas=no ;;
      aux*) os=aux need_tas=no ;;
