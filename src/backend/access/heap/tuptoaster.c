@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.3 2000/04/12 17:14:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.4 2000/05/30 00:49:39 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -21,10 +21,6 @@
 
 #include "postgres.h"
 
-#include "access/heapam.h"
-#include "access/tuptoaster.h"
-#include "catalog/catalog.h"
-#include "utils/rel.h"
 
 
 #ifdef TUPLE_TOASTER_ACTIVE

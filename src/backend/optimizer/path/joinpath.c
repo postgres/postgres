@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.54 2000/04/12 17:15:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.55 2000/05/30 00:49:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,13 +17,10 @@
 
 #include "postgres.h"
 
-#include "access/htup.h"
-#include "catalog/pg_attribute.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
-#include "optimizer/restrictinfo.h"
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 

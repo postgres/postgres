@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/tidpath.c,v 1.6 2000/04/12 17:15:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/tidpath.c,v 1.7 2000/05/30 00:49:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,23 +17,12 @@
 
 #include "postgres.h"
 
-#include "access/heapam.h"
-#include "catalog/catname.h"
-#include "catalog/pg_amop.h"
 #include "catalog/pg_operator.h"
-#include "executor/executor.h"
-#include "nodes/makefuncs.h"
-#include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
-#include "optimizer/plancat.h"
-#include "optimizer/restrictinfo.h"
 #include "parser/parse_coerce.h"
-#include "parser/parse_expr.h"
-#include "parser/parse_oper.h"
-#include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 
 static void create_tidscan_joinpaths(RelOptInfo *rel);

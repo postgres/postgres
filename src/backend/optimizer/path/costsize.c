@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.58 2000/04/18 05:43:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.59 2000/05/30 00:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,11 +53,9 @@
 
 #include "executor/nodeHash.h"
 #include "miscadmin.h"
-#include "nodes/plannodes.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/internal.h"
-#include "optimizer/tlist.h"
 #include "utils/lsyscache.h"
 
 

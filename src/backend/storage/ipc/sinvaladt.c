@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.30 2000/04/12 17:15:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.31 2000/05/30 00:49:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,11 +19,9 @@
 
 #include "miscadmin.h"
 #include "storage/backendid.h"
-#include "storage/lmgr.h"
 #include "storage/proc.h"
 #include "storage/sinval.h"
 #include "storage/sinvaladt.h"
-#include "utils/trace.h"
 
 SISeg	   *shmInvalBuffer;
 

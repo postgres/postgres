@@ -1,7 +1,7 @@
 /* ----------
  * lztext.c -
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/lztext.c,v 1.6 2000/04/12 17:15:50 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/lztext.c,v 1.7 2000/05/30 00:49:53 momjian Exp $
  *
  *	Text type with internal LZ compressed representation. Uses the
  *	standard PostgreSQL compression method.
@@ -19,8 +19,6 @@
 
 #include "postgres.h"
 #include "utils/builtins.h"
-#include "utils/palloc.h"
-#include "utils/pg_lzcompress.h"
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif

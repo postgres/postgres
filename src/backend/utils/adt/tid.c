@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.17 2000/05/29 01:59:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.18 2000/05/30 00:49:53 momjian Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
@@ -158,7 +158,6 @@ text_tid(const text *string)
  *	Maybe these implementations is moved
  *	to another place
 */
-#include <utils/relcache.h>
 ItemPointer
 currtid_byreloid(Oid reloid, ItemPointer tid)
 {

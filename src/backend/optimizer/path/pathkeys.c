@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.21 2000/04/12 17:15:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.22 2000/05/30 00:49:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,11 +16,9 @@
 
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
-#include "optimizer/joininfo.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/tlist.h"
-#include "optimizer/var.h"
 #include "parser/parsetree.h"
 #include "parser/parse_func.h"
 #include "utils/lsyscache.h"

@@ -6,7 +6,7 @@
  *
  *	1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.15 2000/05/29 01:59:08 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.16 2000/05/30 00:49:53 momjian Exp $
  *
  * ----------
  */
@@ -21,17 +21,9 @@
 
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "catalog/pg_operator.h"
-#include "catalog/catname.h"
 #include "commands/trigger.h"
-#include "executor/spi.h"
 #include "executor/spi_priv.h"
-#include "fmgr.h"
-#include "lib/hasht.h"
-#include "utils/builtins.h"
-#include "utils/mcxt.h"
-#include "utils/syscache.h"
 
 
 /* ----------

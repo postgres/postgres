@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.67 2000/05/28 20:33:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.68 2000/05/30 00:49:49 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -25,9 +25,7 @@
 #include "executor/executor.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-#include "nodes/plannodes.h"
 #include "optimizer/clauses.h"
-#include "optimizer/internal.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/parse_type.h"

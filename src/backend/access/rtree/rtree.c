@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.45 2000/04/12 17:14:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.46 2000/05/30 00:49:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,6 @@
 #include "catalog/index.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
-#include "utils/geo_decls.h"
 
 
 typedef struct SPLITVEC

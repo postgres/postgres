@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.28 2000/04/12 17:15:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.29 2000/05/30 00:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,6 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "access/printtup.h"
 #include "executor/executor.h"
 #include "executor/nodeGroup.h"
 #include "executor/nodeUnique.h"

@@ -8,22 +8,17 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.39 2000/04/12 17:15:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.40 2000/05/30 00:49:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "nodes/nodeFuncs.h"
-#include "optimizer/clauses.h"
 #include "optimizer/cost.h"
-#include "optimizer/internal.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
-#include "optimizer/plancat.h"
 #include "optimizer/restrictinfo.h"
-#include "parser/parsetree.h"
 
 
 static void best_or_subclause_indices(Query *root, RelOptInfo *rel,

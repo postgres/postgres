@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.43 2000/05/05 03:09:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.44 2000/05/30 00:49:56 momjian Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -29,7 +29,6 @@
 #include "libpq/pqcomm.h"
 #include "miscadmin.h"
 #include "storage/backendid.h"
-#include "storage/lmgr.h"
 
 ProtocolVersion FrontendProtocol = PG_PROTOCOL_LATEST;
 

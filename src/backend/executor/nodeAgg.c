@@ -32,7 +32,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.64 2000/05/28 17:55:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.65 2000/05/30 00:49:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,6 @@
 #include "optimizer/clauses.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
-#include "parser/parse_type.h"
 #include "utils/syscache.h"
 #include "utils/tuplesort.h"
 

@@ -8,13 +8,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.61 2000/05/29 21:02:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.62 2000/05/30 00:49:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
-#include "access/htup.h"
 #include "catalog/pg_type.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"

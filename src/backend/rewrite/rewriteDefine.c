@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.44 2000/04/12 17:15:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.45 2000/05/30 00:49:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
 
 #include "access/heapam.h"
 #include "utils/builtins.h"
-#include "catalog/pg_rewrite.h"
 #include "lib/stringinfo.h"
 #include "parser/parse_relation.h"
 #include "rewrite/rewriteDefine.h"

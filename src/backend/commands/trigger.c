@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.67 2000/05/29 01:59:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.68 2000/05/30 00:49:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,6 @@
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 
 
 static void DescribeTrigger(TriggerDesc *trigdesc, Trigger *trigger);

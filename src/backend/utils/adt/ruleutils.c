@@ -3,7 +3,7 @@
  *			  out of its tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.48 2000/04/12 17:15:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.49 2000/05/30 00:49:53 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -43,7 +43,6 @@
 #include "catalog/pg_index.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_shadow.h"
-#include "catalog/pg_type.h"
 #include "executor/spi.h"
 #include "lib/stringinfo.h"
 #include "optimizer/clauses.h"
@@ -51,7 +50,6 @@
 #include "parser/keywords.h"
 #include "parser/parse_expr.h"
 #include "parser/parsetree.h"
-#include "utils/builtins.h"
 #include "utils/lsyscache.h"
 
 

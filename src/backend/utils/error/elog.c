@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.57 2000/04/15 19:13:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.58 2000/05/30 00:49:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,10 +31,8 @@
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
-#include "storage/ipc.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
-#include "utils/trace.h"
 #include "commands/copy.h"
 
 extern int	errno;

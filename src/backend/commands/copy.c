@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.107 2000/05/28 17:55:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.108 2000/05/30 00:49:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,13 +21,11 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/index.h"
-#include "catalog/pg_index.h"
 #include "catalog/pg_shadow.h"
 #include "catalog/pg_type.h"
 #include "commands/copy.h"
 #include "commands/trigger.h"
 #include "executor/executor.h"
-#include "lib/stringinfo.h"
 #include "libpq/libpq.h"
 #include "miscadmin.h"
 #include "tcop/tcopprot.h"

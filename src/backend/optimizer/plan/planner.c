@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.79 2000/04/12 17:15:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.80 2000/05/30 00:49:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,6 @@
 
 #include "postgres.h"
 
-#include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
@@ -31,10 +30,7 @@
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/parse_expr.h"
-#include "parser/parse_oper.h"
-#include "utils/builtins.h"
 #include "utils/lsyscache.h"
-#include "utils/syscache.h"
 
 
 static List *make_subplanTargetList(Query *parse, List *tlist,

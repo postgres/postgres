@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.114 2000/05/29 01:59:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.115 2000/05/30 00:49:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,8 +43,6 @@
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
 #include "utils/acl.h"
-#include "utils/builtins.h"
-#include "utils/syscache.h"
 
 
 /* decls for local routines only used within this module */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.74 2000/05/29 05:44:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.75 2000/05/30 00:49:43 momjian Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -23,34 +23,20 @@
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
-#include "access/skey.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_attrdef.h"
-#include "catalog/pg_type.h"
 #include "commands/command.h"
-#include "commands/rename.h"
-#include "executor/execdefs.h"
-#include "executor/executor.h"
 #include "executor/spi.h"
 #include "catalog/heap.h"
 #include "miscadmin.h"
 #include "optimizer/prep.h"
 #include "utils/acl.h"
-#include "utils/builtins.h"
 #include "utils/fmgroids.h"
-#include "utils/syscache.h"
-#include "utils/temprel.h"
 #include "commands/trigger.h"
 #ifdef	_DROP_COLUMN_HACK__
 #include "catalog/pg_index.h"
-#include "catalog/pg_relcheck.h"
-#include "commands/defrem.h"
-#include "commands/comment.h"
-#include "access/genam.h"
-#include "optimizer/clauses.h"
 #include "parser/parse.h"
 #endif	 /* _DROP_COLUMN_HACK__ */
 

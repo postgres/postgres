@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.27 2000/05/28 17:55:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.28 2000/05/30 00:49:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,12 +22,10 @@
 #include "catalog/index.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_database.h"
-#include "catalog/pg_index.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_shadow.h"
-#include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"

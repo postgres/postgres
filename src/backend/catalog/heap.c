@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.129 2000/05/28 17:55:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.130 2000/05/30 00:49:42 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -31,15 +31,12 @@
 
 #include "access/heapam.h"
 #include "access/genam.h"
-#include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_attrdef.h"
-#include "catalog/pg_description.h"
-#include "catalog/pg_index.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_ipl.h"
 #include "catalog/pg_proc.h"
@@ -51,7 +48,6 @@
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
-#include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_clause.h"
@@ -60,11 +56,9 @@
 #include "parser/parse_target.h"
 #include "rewrite/rewriteRemove.h"
 #include "storage/smgr.h"
-#include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
 #include "utils/fmgroids.h"
-#include "utils/portal.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 #include "utils/temprel.h"

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.73 2000/04/27 20:32:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.74 2000/05/30 00:49:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,10 +23,8 @@
 #include "optimizer/var.h"
 #include "parser/analyze.h"
 #include "parser/parse_expr.h"
-#include "parser/parse_relation.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_target.h"
-#include "parser/parse_type.h"
 #include "parser/parsetree.h"
 #include "rewrite/locks.h"
 #include "rewrite/rewriteManip.h"

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.64 2000/04/12 17:14:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.65 2000/05/30 00:49:41 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -150,7 +150,6 @@
 #include "catalog/index.h"
 #include "commands/async.h"
 #include "commands/sequence.h"
-#include "commands/vacuum.h"
 #include "commands/trigger.h"
 #include "libpq/be-fsstubs.h"
 #include "storage/proc.h"

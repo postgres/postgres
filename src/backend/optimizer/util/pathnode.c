@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.63 2000/04/12 17:15:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.64 2000/05/30 00:49:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,9 +19,7 @@
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
-#include "optimizer/plancat.h"
 #include "optimizer/restrictinfo.h"
-#include "parser/parsetree.h"
 
 
 /*****************************************************************************

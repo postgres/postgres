@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.49 2000/04/12 17:15:18 momjian Exp $
+ * $Id: geqo_eval.c,v 1.50 2000/05/30 00:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,6 @@
 #endif
 #endif
 
-#include "optimizer/cost.h"
 #include "optimizer/geqo.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"

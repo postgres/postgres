@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.40 2000/05/28 17:56:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.41 2000/05/30 00:49:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
 
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "catalog/pg_proc.h"
 #include "dynloader.h"
 #include "utils/builtins.h"

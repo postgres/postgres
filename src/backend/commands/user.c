@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.55 2000/05/29 01:59:07 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.56 2000/05/30 00:49:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,15 +23,9 @@
 #include "catalog/pg_shadow.h"
 #include "catalog/pg_group.h"
 #include "catalog/indexing.h"
-#include "commands/copy.h"
 #include "commands/user.h"
-#include "commands/trigger.h"
 #include "libpq/crypt.h"
 #include "miscadmin.h"
-#include "nodes/pg_list.h"
-#include "tcop/tcopprot.h"
-#include "utils/acl.h"
-#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/syscache.h"

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.62 2000/04/12 17:15:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.63 2000/05/30 00:49:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,12 +17,10 @@
 
 #include "postgres.h"
 
-#include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
-#include "optimizer/var.h"
 
 typedef struct
 {

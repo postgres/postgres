@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.56 2000/05/28 17:55:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.57 2000/05/30 00:49:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,6 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/index.h"
-#include "catalog/pg_index.h"
 #include "catalog/catalog.h"
 #include "executor/execdebug.h"
 #include "executor/executor.h"

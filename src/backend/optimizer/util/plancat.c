@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.51 2000/05/28 17:55:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.52 2000/05/30 00:49:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,9 +23,6 @@
 #include "catalog/catname.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_inherits.h"
-#include "optimizer/clauses.h"
-#include "optimizer/internal.h"
-#include "optimizer/paths.h"
 #include "optimizer/plancat.h"
 #include "parser/parsetree.h"
 #include "utils/builtins.h"

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.72 2000/04/12 17:15:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.73 2000/05/30 00:49:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.72 2000/04/12 17:15:38 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.73 2000/05/30 00:49:52 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -61,16 +61,12 @@
 
 #include "postgres.h"
 #include "miscadmin.h"
-#include "libpq/pqsignal.h"
 
 
-#include "storage/ipc.h"
 /* In Ultrix and QNX, sem.h must be included after ipc.h */
 #include <sys/sem.h>
 
-#include "storage/lmgr.h"
 #include "storage/proc.h"
-#include "utils/trace.h"
 
 void		HandleDeadLock(SIGNAL_ARGS);
 static void ProcFreeAllSemaphores(void);

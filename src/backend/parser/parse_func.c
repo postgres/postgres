@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.80 2000/05/28 17:56:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.81 2000/05/30 00:49:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,14 +24,11 @@
 #include "catalog/pg_proc.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
 #include "parser/parse_agg.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "parser/parse_relation.h"
-#include "parser/parse_target.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"

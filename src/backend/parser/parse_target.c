@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.58 2000/04/12 17:15:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.59 2000/05/30 00:49:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,9 +20,6 @@
 #include "parser/parse_func.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
-#include "utils/builtins.h"
-#include "utils/lsyscache.h"
-#include "utils/syscache.h"
 
 
 static List *ExpandAllTables(ParseState *pstate);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.57 2000/04/12 17:14:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.58 2000/05/30 00:49:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,6 @@
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_ipl.h"
 #include "catalog/pg_type.h"
-#include "catalog/pg_description.h"
 #include "commands/creatinh.h"
 #include "utils/syscache.h"
 

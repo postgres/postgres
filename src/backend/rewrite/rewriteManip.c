@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.46 2000/04/12 17:15:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.47 2000/05/30 00:49:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 #include "parser/parsetree.h"
 #include "parser/parse_clause.h"
 #include "rewrite/rewriteManip.h"
-#include "utils/builtins.h"
 #include "utils/lsyscache.h"
 
 

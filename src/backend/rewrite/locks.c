@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.28 2000/04/12 17:15:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.29 2000/05/30 00:49:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 #include "optimizer/clauses.h"
 #include "rewrite/locks.h"
 #include "utils/acl.h"
-#include "utils/builtins.h"
 #include "utils/syscache.h"
 #include "utils/syscache.h"
 

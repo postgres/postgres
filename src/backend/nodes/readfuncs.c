@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.88 2000/04/12 17:15:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.89 2000/05/30 00:49:45 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -27,7 +27,6 @@
 
 #include "postgres.h"
 
-#include "catalog/pg_index.h"
 #include "nodes/plannodes.h"
 #include "nodes/readfuncs.h"
 #include "nodes/relation.h"

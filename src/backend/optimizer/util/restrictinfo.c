@@ -8,16 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.9 2000/01/26 05:56:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.10 2000/05/30 00:49:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 
-#include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
-#include "optimizer/internal.h"
 #include "optimizer/restrictinfo.h"
 
 /*

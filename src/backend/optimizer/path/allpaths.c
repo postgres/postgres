@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.60 2000/04/12 17:15:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.61 2000/05/30 00:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
 
 #include "optimizer/cost.h"
 #include "optimizer/geqo.h"
-#include "optimizer/internal.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 

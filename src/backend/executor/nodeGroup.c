@@ -15,7 +15,7 @@
  *	  locate group boundaries.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.34 2000/04/12 17:15:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.35 2000/05/30 00:49:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,6 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "access/printtup.h"
 #include "catalog/pg_operator.h"
 #include "executor/executor.h"
 #include "executor/nodeGroup.h"

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.53 2000/04/12 17:14:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.54 2000/05/30 00:49:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 #include "access/gistscan.h"
 #include "access/heapam.h"
 #include "catalog/index.h"
-#include "catalog/pg_index.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "utils/syscache.h"
