@@ -8,7 +8,7 @@ import org.postgresql.util.*;
 import java.sql.SQLException;
 import java.sql.Types;
 
-public abstract class AbstractJdbc1ResultSetMetaData 
+public abstract class AbstractJdbc1ResultSetMetaData
 {
 
 	protected Vector rows;

@@ -82,7 +82,7 @@ public class psql
 		if (line.startsWith("\\"))
 		{
 			processSlashCommand(line);
-			return;
+			return ;
 		}
 
 		boolean type = st.execute(line);

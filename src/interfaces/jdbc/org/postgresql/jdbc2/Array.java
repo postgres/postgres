@@ -27,7 +27,7 @@ public class Array implements java.sql.Array
 {
 	private org.postgresql.PGConnection conn = null;
 	private org.postgresql.Field field = null;
-        private ResultSet rs;
+	private ResultSet rs;
 	private int idx = 0;
 	private String rawString = null;
 
@@ -44,7 +44,7 @@ public class Array implements java.sql.Array
 	{
 		this.conn = conn;
 		this.field = field;
-                this.rs = rs;
+		this.rs = rs;
 		this.idx = idx;
 		this.rawString = ((AbstractJdbc2ResultSet)rs).getFixedString(idx);
 	}
@@ -76,9 +76,9 @@ public class Array implements java.sql.Array
 		ArrayList array = new ArrayList();
 
 		/* Check if the String is also not an empty array
-                 * otherwise there will be an exception thrown below
-                 * in the ResultSet.toX with an empty string.
-                 * -- Doug Fields <dfields-pg-jdbc@pexicom.com> Feb 20, 2002 */
+					   * otherwise there will be an exception thrown below
+					   * in the ResultSet.toX with an empty string.
+					   * -- Doug Fields <dfields-pg-jdbc@pexicom.com> Feb 20, 2002 */
 
 		if ( rawString != null && !rawString.equals("{}") )
 		{
@@ -88,9 +88,9 @@ public class Array implements java.sql.Array
 			boolean insideString = false;
 			for ( int i = 0; i < chars.length; i++ )
 			{
-			        if ( chars[i] == '\\' )
-				        //escape character that we need to skip
-				        i++;
+				if ( chars[i] == '\\' )
+					//escape character that we need to skip
+					i++;
 				if ( chars[i] == '{' )
 				{
 					if ( foundOpen )  // Only supports 1-D arrays for now

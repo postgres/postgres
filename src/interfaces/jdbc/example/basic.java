@@ -6,7 +6,7 @@ import java.text.*;
 
 /*
  *
- * $Id: basic.java,v 1.12 2002/07/23 03:59:54 barry Exp $
+ * $Id: basic.java,v 1.13 2002/09/06 21:23:05 momjian Exp $
  *
  * This example tests the basic components of the JDBC driver, and shows
  * how even the simplest of queries can be implemented.
@@ -137,6 +137,7 @@ public class basic
 		// result if you don't know what column number a value is in
 
 
+
 		System.out.println("performing another query");
 		rs = st.executeQuery("select * from basic where b>1");
 		if (rs != null)
@@ -162,6 +163,7 @@ public class basic
 		}
 
 		// Now test maxrows by setting it to 3 rows
+
 
 
 		st.setMaxRows(3);

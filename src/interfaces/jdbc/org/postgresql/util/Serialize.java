@@ -129,14 +129,16 @@ public class Serialize
 		try
 		{
 			conn = c;
-			if (Driver.logDebug) Driver.debug("Serialize: initializing instance for type: " + type);
+			if (Driver.logDebug)
+				Driver.debug("Serialize: initializing instance for type: " + type);
 			tableName = toPostgreSQL(type);
 			className = type;
 			ourClass = Class.forName(className);
 		}
 		catch (ClassNotFoundException cnfe)
 		{
-			if (Driver.logDebug) Driver.debug("Serialize: " + className + " java class not found");
+			if (Driver.logDebug)
+				Driver.debug("Serialize: " + className + " java class not found");
 			throw new PSQLException("postgresql.serial.noclass", type);
 		}
 
@@ -148,14 +150,16 @@ public class Serialize
 			if (rs.next())
 			{
 				status = true;
-				if (Driver.logDebug) Driver.debug("Serialize: " + tableName + " table found");
+				if (Driver.logDebug)
+					Driver.debug("Serialize: " + tableName + " table found");
 			}
 			rs.close();
 		}
 		// This should never occur, as org.postgresql has it's own internal checks
 		if (!status)
 		{
-			if (Driver.logDebug) Driver.debug("Serialize: " + tableName + " table not found");
+			if (Driver.logDebug)
+				Driver.debug("Serialize: " + tableName + " table not found");
 			throw new PSQLException("postgresql.serial.table", type);
 		}
 		// Finally cache the fields within the table
@@ -187,9 +191,11 @@ public class Serialize
 	{
 		try
 		{
-			if (Driver.logDebug) Driver.debug("Serialize.fetch: " + "attempting to instantiate object of type: " + ourClass.getName() );
+			if (Driver.logDebug)
+				Driver.debug("Serialize.fetch: " + "attempting to instantiate object of type: " + ourClass.getName() );
 			Object obj = ourClass.newInstance();
-			if (Driver.logDebug) Driver.debug("Serialize.fetch: " + "instantiated object of type: " + ourClass.getName() );
+			if (Driver.logDebug)
+				Driver.debug("Serialize.fetch: " + "instantiated object of type: " + ourClass.getName() );
 
 			// NB: we use java.lang.reflect here to prevent confusion with
 			// the org.postgresql.Field
@@ -220,7 +226,8 @@ public class Serialize
 			sb.append(" where oid=");
 			sb.append(oid);
 
-			if (Driver.logDebug) Driver.debug("Serialize.fetch: " + sb.toString());
+			if (Driver.logDebug)
+				Driver.debug("Serialize.fetch: " + sb.toString());
 			ResultSet rs = ((org.postgresql.jdbc1.AbstractJdbc1Connection)conn).ExecSQL(sb.toString());
 
 			if (rs != null)
@@ -270,13 +277,13 @@ public class Serialize
 
 	/*
 	 * This stores an object into a table, returning it's OID.<p>
-         * This method was deprecated in 7.2 because the value of an OID
-         * can be larger than a java signed int.
+			* This method was deprecated in 7.2 because the value of an OID
+			* can be larger than a java signed int.
 	 * @deprecated Replaced by storeObject() in 7.2
 	 */
 	public int store(Object o) throws SQLException
 	{
-	    return (int) storeObject(o);
+		return (int) storeObject(o);
 	}
 
 	/*
@@ -296,7 +303,7 @@ public class Serialize
 	 * @param o Object to store (must implement Serializable)
 	 * @return oid of stored object
 	 * @exception SQLException on error
-         * @since 7.2
+			* @since 7.2
 	 */
 	public long storeObject(Object o) throws SQLException
 	{
@@ -389,7 +396,8 @@ public class Serialize
 				sb.append(')');
 			}
 
-			if (Driver.logDebug) Driver.debug("Serialize.store: " + sb.toString() );
+			if (Driver.logDebug)
+				Driver.debug("Serialize.store: " + sb.toString() );
 			ResultSet rs = ((org.postgresql.jdbc1.AbstractJdbc1Connection)conn).ExecSQL(sb.toString());
 
 			// fetch the OID for returning
@@ -496,13 +504,15 @@ public class Serialize
 		ResultSet rs = ((org.postgresql.jdbc1.AbstractJdbc1Connection)con).ExecSQL("select relname from pg_class where relname = '" + tableName + "'");
 		if ( rs.next() )
 		{
-			if (Driver.logDebug) Driver.debug("Serialize.create: table " + tableName + " exists, skipping");
+			if (Driver.logDebug)
+				Driver.debug("Serialize.create: table " + tableName + " exists, skipping");
 			rs.close();
-			return;
+			return ;
 		}
 
 		// else table not found, so create it
-		if (Driver.logDebug) Driver.debug("Serialize.create: table " + tableName + " not found, creating" );
+		if (Driver.logDebug)
+			Driver.debug("Serialize.create: table " + tableName + " not found, creating" );
 		// No entries returned, so the table doesn't exist
 
 		StringBuffer sb = new StringBuffer("create table ");
@@ -548,7 +558,8 @@ public class Serialize
 		sb.append(")");
 
 		// Now create the table
-		if (Driver.logDebug) Driver.debug("Serialize.create: " + sb );
+		if (Driver.logDebug)
+			Driver.debug("Serialize.create: " + sb );
 		((org.postgresql.jdbc1.AbstractJdbc1Connection)con).ExecSQL(sb.toString());
 	}
 

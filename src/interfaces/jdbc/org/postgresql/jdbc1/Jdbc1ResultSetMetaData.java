@@ -4,7 +4,7 @@ public class Jdbc1ResultSetMetaData extends AbstractJdbc1ResultSetMetaData imple
 {
 	public Jdbc1ResultSetMetaData(java.util.Vector rows, org.postgresql.Field[] fields)
 	{
-	    super(rows, fields);
+		super(rows, fields);
 	}
 
 }

@@ -8,7 +8,7 @@ import java.util.Vector;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.PSQLException;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2Statement.java,v 1.5 2002/09/02 03:07:36 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2Statement.java,v 1.6 2002/09/06 21:23:06 momjian Exp $
  * This class defines methods of the jdbc2 specification.  This class extends
  * org.postgresql.jdbc1.AbstractJdbc1Statement which provides the jdbc1
  * methods.  The real Statement class (for jdbc2) is org.postgresql.jdbc2.Jdbc2Statement
@@ -45,8 +45,8 @@ public abstract class AbstractJdbc2Statement extends org.postgresql.jdbc1.Abstra
 	 */
 	public boolean execute() throws SQLException
 	{
-	        boolean l_return = super.execute();
-                //Now do the jdbc2 specific stuff
+		boolean l_return = super.execute();
+		//Now do the jdbc2 specific stuff
 		//required for ResultSet.getStatement() to work and updateable resultsets
 		((AbstractJdbc2ResultSet)result).setStatement((Statement)this);
 
@@ -64,7 +64,7 @@ public abstract class AbstractJdbc2Statement extends org.postgresql.jdbc1.Abstra
 
 	public void clearBatch() throws SQLException
 	{
-	    batch = null;
+		batch = null;
 	}
 
 	public int[] executeBatch() throws SQLException
@@ -86,7 +86,7 @@ public abstract class AbstractJdbc2Statement extends org.postgresql.jdbc1.Abstra
 
 			PBatchUpdateException updex =
 				new PBatchUpdateException("postgresql.stat.batch.error",
-						          new Integer(i), batch.elementAt(i), resultSucceeded);
+										  new Integer(i), batch.elementAt(i), resultSucceeded);
 			updex.setNextException(e);
 
 			throw updex;
@@ -183,12 +183,12 @@ public abstract class AbstractJdbc2Statement extends org.postgresql.jdbc1.Abstra
 			// is buffered internally anyhow, so there would be no performance
 			// boost gained, if anything it would be worse!
 			int bytesRemaining = (int)x.length();
-			int numRead = l_inStream.read(buf,0,Math.min(buf.length,bytesRemaining));
+			int numRead = l_inStream.read(buf, 0, Math.min(buf.length, bytesRemaining));
 			while (numRead != -1 && bytesRemaining > 0)
 			{
-			        bytesRemaining -= numRead;
-				los.write(buf,0,numRead);
-				numRead = l_inStream.read(buf,0,Math.min(buf.length,bytesRemaining));
+				bytesRemaining -= numRead;
+				los.write(buf, 0, numRead);
+				numRead = l_inStream.read(buf, 0, Math.min(buf.length, bytesRemaining));
 			}
 			los.close();
 		}
@@ -384,9 +384,10 @@ public abstract class AbstractJdbc2Statement extends org.postgresql.jdbc1.Abstra
 	}
 
 
-    //This is needed by AbstractJdbc2ResultSet to determine if the query is updateable or not
-    protected String[] getSqlFragments() {
-	return m_sqlFragments;
-    }
+	//This is needed by AbstractJdbc2ResultSet to determine if the query is updateable or not
+	protected String[] getSqlFragments()
+	{
+		return m_sqlFragments;
+	}
 
 }

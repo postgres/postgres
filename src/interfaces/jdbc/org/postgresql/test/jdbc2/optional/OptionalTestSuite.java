@@ -8,17 +8,19 @@ import junit.framework.TestSuite;
  * PooledConnection implementations.
  *
  * @author Aaron Mulder (ammulder@chariotsolutions.com)
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  */
-public class OptionalTestSuite extends TestSuite {
-    /**
-     * Gets the test suite for the entire JDBC 2.0 Optional Package
-     * implementation.
-     */
-    public static TestSuite suite() {
-        TestSuite suite = new TestSuite();
-        suite.addTestSuite(SimpleDataSourceTest.class);
-        suite.addTestSuite(ConnectionPoolTest.class);
-        return suite;
-    }
+public class OptionalTestSuite extends TestSuite
+{
+	/**
+	 * Gets the test suite for the entire JDBC 2.0 Optional Package
+	 * implementation.
+	 */
+	public static TestSuite suite()
+	{
+		TestSuite suite = new TestSuite();
+		suite.addTestSuite(SimpleDataSourceTest.class);
+		suite.addTestSuite(ConnectionPoolTest.class);
+		return suite;
+	}
 }

@@ -5,7 +5,7 @@ import java.sql.*;
 /*
  * Converts to and from the postgresql bytea datatype used by the backend.
  *
- * $Id: PGbytea.java,v 1.5 2002/08/16 17:51:38 barry Exp $
+ * $Id: PGbytea.java,v 1.6 2002/09/06 21:23:06 momjian Exp $
  */
 
 public class PGbytea
@@ -19,7 +19,7 @@ public class PGbytea
 	{
 		if (s == null)
 			return null;
-                int slength = s.length;
+		int slength = s.length;
 		byte[] buf = new byte[slength];
 		int bufpos = 0;
 		int thebyte;

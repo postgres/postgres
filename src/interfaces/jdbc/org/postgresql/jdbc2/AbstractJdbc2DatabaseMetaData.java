@@ -13,7 +13,7 @@ public abstract class AbstractJdbc2DatabaseMetaData extends org.postgresql.jdbc1
 
 	public AbstractJdbc2DatabaseMetaData(AbstractJdbc2Connection conn)
 	{
-	    super(conn);
+		super(conn);
 	}
 
 
@@ -61,18 +61,18 @@ public abstract class AbstractJdbc2DatabaseMetaData extends org.postgresql.jdbc1
 	/* lots of unsupported stuff... */
 	public boolean ownUpdatesAreVisible(int type) throws SQLException
 	{
-          return true;
+		return true;
 	}
 
 	public boolean ownDeletesAreVisible(int type) throws SQLException
 	{
-          return true;
+		return true;
 	}
 
 	public boolean ownInsertsAreVisible(int type) throws SQLException
 	{
-          // indicates that
-          return true;
+		// indicates that
+		return true;
 	}
 
 	public boolean othersUpdatesAreVisible(int type) throws SQLException
@@ -117,10 +117,10 @@ public abstract class AbstractJdbc2DatabaseMetaData extends org.postgresql.jdbc1
 	 * Return user defined types in a schema
 	 */
 	public java.sql.ResultSet getUDTs(String catalog,
-                                          String schemaPattern,
-                                          String typeNamePattern,
-                                          int[] types
-                                         ) throws SQLException
+									  String schemaPattern,
+									  String typeNamePattern,
+									  int[] types
+									 ) throws SQLException
 	{
 		throw org.postgresql.Driver.notImplemented();
 	}

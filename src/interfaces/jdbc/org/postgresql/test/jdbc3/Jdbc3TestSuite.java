@@ -7,7 +7,7 @@ import junit.framework.Test;
 import java.sql.*;
 
 /*
- * Executes all known tests for JDBC3 
+ * Executes all known tests for JDBC3
  */
 public class Jdbc3TestSuite extends TestSuite
 {
@@ -17,7 +17,7 @@ public class Jdbc3TestSuite extends TestSuite
 	 */
 	public static TestSuite suite()
 	{
-	    //Currently there are no specific jdbc3 tests so just run the jdbc2 tests
-            return org.postgresql.test.jdbc2.Jdbc2TestSuite.suite();
+		//Currently there are no specific jdbc3 tests so just run the jdbc2 tests
+		return org.postgresql.test.jdbc2.Jdbc2TestSuite.suite();
 	}
 }

@@ -21,56 +21,62 @@ import java.io.Serializable;
  * <p>This implementation supports JDK 1.3 and higher.</p>
  *
  * @author Aaron Mulder (ammulder@chariotsolutions.com)
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  */
-public class ConnectionPool extends BaseDataSource implements Serializable, ConnectionPoolDataSource {
-    private boolean defaultAutoCommit = false;
+public class ConnectionPool extends BaseDataSource implements Serializable, ConnectionPoolDataSource
+{
+	private boolean defaultAutoCommit = false;
 
-    /**
-     * Gets a description of this DataSource.
-     */
-    public String getDescription() {
-        return "ConnectionPoolDataSource from "+org.postgresql.Driver.getVersion();
-    }
+	/**
+	 * Gets a description of this DataSource.
+	 */
+	public String getDescription()
+	{
+		return "ConnectionPoolDataSource from " + org.postgresql.Driver.getVersion();
+	}
 
-    /**
-     * Gets a connection which may be pooled by the app server or middleware
-     * implementation of DataSource.
-     *
-     * @throws java.sql.SQLException
-     *         Occurs when the physical database connection cannot be established.
-     */
-    public PooledConnection getPooledConnection() throws SQLException {
-        return new PooledConnectionImpl(getConnection(), defaultAutoCommit);
-    }
+	/**
+	 * Gets a connection which may be pooled by the app server or middleware
+	 * implementation of DataSource.
+	 *
+	 * @throws java.sql.SQLException
+	 *		   Occurs when the physical database connection cannot be established.
+	 */
+	public PooledConnection getPooledConnection() throws SQLException
+	{
+		return new PooledConnectionImpl(getConnection(), defaultAutoCommit);
+	}
 
-    /**
-     * Gets a connection which may be pooled by the app server or middleware
-     * implementation of DataSource.
-     *
-     * @throws java.sql.SQLException
-     *         Occurs when the physical database connection cannot be established.
-     */
-    public PooledConnection getPooledConnection(String user, String password) throws SQLException {
-        return new PooledConnectionImpl(getConnection(user, password), defaultAutoCommit);
-    }
+	/**
+	 * Gets a connection which may be pooled by the app server or middleware
+	 * implementation of DataSource.
+	 *
+	 * @throws java.sql.SQLException
+	 *		   Occurs when the physical database connection cannot be established.
+	 */
+	public PooledConnection getPooledConnection(String user, String password) throws SQLException
+	{
+		return new PooledConnectionImpl(getConnection(user, password), defaultAutoCommit);
+	}
 
-    /**
-     * Gets whether connections supplied by this pool will have autoCommit
-     * turned on by default.  The default value is <tt>false</tt>, so that
-     * autoCommit will be turned off by default.
-     */
-    public boolean isDefaultAutoCommit() {
-        return defaultAutoCommit;
-    }
+	/**
+	 * Gets whether connections supplied by this pool will have autoCommit
+	 * turned on by default.  The default value is <tt>false</tt>, so that
+	 * autoCommit will be turned off by default.
+	 */
+	public boolean isDefaultAutoCommit()
+	{
+		return defaultAutoCommit;
+	}
 
-    /**
-     * Sets whether connections supplied by this pool will have autoCommit
-     * turned on by default.  The default value is <tt>false</tt>, so that
-     * autoCommit will be turned off by default.
-     */
-    public void setDefaultAutoCommit(boolean defaultAutoCommit) {
-        this.defaultAutoCommit = defaultAutoCommit;
-    }
+	/**
+	 * Sets whether connections supplied by this pool will have autoCommit
+	 * turned on by default.  The default value is <tt>false</tt>, so that
+	 * autoCommit will be turned off by default.
+	 */
+	public void setDefaultAutoCommit(boolean defaultAutoCommit)
+	{
+		this.defaultAutoCommit = defaultAutoCommit;
+	}
 
 }

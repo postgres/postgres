@@ -233,7 +233,7 @@ public class Unicode
 		catch (ClassNotFoundException cnfe)
 		{
 			log("Unable to load driver", cnfe);
-			return;
+			return ;
 		}
 		try
 		{

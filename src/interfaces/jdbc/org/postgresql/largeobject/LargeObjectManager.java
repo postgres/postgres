@@ -104,21 +104,22 @@ public class LargeObjectManager
 		// This is an example of Fastpath.addFunctions();
 		//
 		ResultSet res = conn.createStatement().executeQuery("select proname, oid from pg_proc" +
-								 " where proname = 'lo_open'" +
-								 "    or proname = 'lo_close'" +
-								 "    or proname = 'lo_creat'" +
-								 "    or proname = 'lo_unlink'" +
-								 "    or proname = 'lo_lseek'" +
-								 "    or proname = 'lo_tell'" +
-								 "    or proname = 'loread'" +
-								 "    or proname = 'lowrite'");
+						" where proname = 'lo_open'" +
+						"    or proname = 'lo_close'" +
+						"    or proname = 'lo_creat'" +
+						"    or proname = 'lo_unlink'" +
+						"    or proname = 'lo_lseek'" +
+						"    or proname = 'lo_tell'" +
+						"    or proname = 'loread'" +
+						"    or proname = 'lowrite'");
 
 		if (res == null)
 			throw new PSQLException("postgresql.lo.init");
 
 		fp.addFunctions(res);
 		res.close();
-		if (Driver.logDebug) Driver.debug("Large Object initialised");
+		if (Driver.logDebug)
+			Driver.debug("Large Object initialised");
 	}
 
 	/*

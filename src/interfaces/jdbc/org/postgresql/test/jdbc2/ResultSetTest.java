@@ -63,24 +63,24 @@ public class ResultSetTest extends TestCase
 
 		stmt.close();
 	}
-  public void testEmptyResult()
-  {
-    try
-    {
-      Statement stmt = con.createStatement();
-      ResultSet rs = stmt.executeQuery("SELECT * FROM testrs where id=100");
-      rs.beforeFirst();
-      rs.afterLast();
-      assertTrue(!rs.first());
-      assertTrue(!rs.last());
-      assertTrue(!rs.next());
+	public void testEmptyResult()
+	{
+		try
+		{
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery("SELECT * FROM testrs where id=100");
+			rs.beforeFirst();
+			rs.afterLast();
+			assertTrue(!rs.first());
+			assertTrue(!rs.last());
+			assertTrue(!rs.next());
 
 
-    }
-    catch ( Exception ex )
-    {
-      fail( ex.getMessage() );
-    }
+		}
+		catch ( Exception ex )
+		{
+			fail( ex.getMessage() );
+		}
 
-  }
+	}
 }

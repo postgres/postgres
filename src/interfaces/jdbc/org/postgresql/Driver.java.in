@@ -31,8 +31,8 @@ public class Driver implements java.sql.Driver
 
 	public static final int DEBUG = 2;
 	public static final int INFO = 1;
-        public static boolean logDebug = false;
-        public static boolean logInfo = false;
+	public static boolean logDebug = false;
+	public static boolean logInfo = false;
 
 	static
 	{
@@ -70,11 +70,11 @@ public class Driver implements java.sql.Driver
 	 *	 to/from the database to unicode.  If multibyte is enabled on the
 	 *	 server then the character set of the database is used as the default,
 	 *	 otherwise the jvm character encoding is used as the default.
-         * loglevel - (optional) Enable logging of messages from the driver.
-         *       The value is an integer from 1 to 2 where:
-         *         INFO = 1, DEBUG = 2
-         *       The output is sent to DriverManager.getPrintWriter() if set,
-         *       otherwise it is sent to System.out.
+			* loglevel - (optional) Enable logging of messages from the driver.
+			*		The value is an integer from 1 to 2 where:
+			*		  INFO = 1, DEBUG = 2
+			*		The output is sent to DriverManager.getPrintWriter() if set,
+			*		otherwise it is sent to System.out.
 	 * compatible - (optional) This is used to toggle
 	 *	 between different functionality as it changes across different releases
 	 *	 of the jdbc driver code.  The values here are versions of the jdbc
@@ -109,12 +109,14 @@ public class Driver implements java.sql.Driver
 	{
 		if ((props = parseURL(url, info)) == null)
 		{
-			if (Driver.logDebug) Driver.debug("Error in url" + url);
+			if (Driver.logDebug)
+				Driver.debug("Error in url" + url);
 			return null;
 		}
 		try
 		{
-			if (Driver.logDebug) Driver.debug("connect " + url);
+			if (Driver.logDebug)
+				Driver.debug("connect " + url);
 
 			@JDBCCONNECTCLASS@ con = (@JDBCCONNECTCLASS@)(Class.forName("@JDBCCONNECTCLASS@").newInstance());
 			con.openConnection (host(), port(), props, database(), url, this);
@@ -122,7 +124,8 @@ public class Driver implements java.sql.Driver
 		}
 		catch (ClassNotFoundException ex)
 		{
-			if (Driver.logDebug) Driver.debug("error", ex);
+			if (Driver.logDebug)
+				Driver.debug("error", ex);
 			throw new PSQLException("postgresql.jvm.version", ex);
 		}
 		catch (PSQLException ex1)
@@ -133,7 +136,8 @@ public class Driver implements java.sql.Driver
 		}
 		catch (Exception ex2)
 		{
-			if (Driver.logDebug) Driver.debug("error", ex2);
+			if (Driver.logDebug)
+				Driver.debug("error", ex2);
 			throw new PSQLException("postgresql.unusual", ex2);
 		}
 	}
@@ -177,7 +181,7 @@ public class Driver implements java.sql.Driver
 	 */
 	public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException
 	{
-                //This method isn't really implemented
+		//This method isn't really implemented
 		Properties p = parseURL(url, info);
 		return new DriverPropertyInfo[0];
 	}
@@ -385,16 +389,16 @@ public class Driver implements java.sql.Driver
 	}
 
 	/**
-	*	used to turn logging on to a certain level, can be called 
+	*	used to turn logging on to a certain level, can be called
 	*	by specifying fully qualified class ie org.postgresql.Driver.setLogLevel()
 	*	@param int logLevel sets the level which logging will respond to
-	* 	INFO being almost no messages
+	*	INFO being almost no messages
 	*	DEBUG most verbose
 	*/
 	public static void setLogLevel(int logLevel)
 	{
-            logDebug = (logLevel >= DEBUG) ? true : false;
-            logInfo = (logLevel >= INFO) ? true : false;
+		logDebug = (logLevel >= DEBUG) ? true : false;
+		logInfo = (logLevel >= INFO) ? true : false;
 	}
 	/*
 	 * logging message at the debug level
@@ -441,7 +445,7 @@ public class Driver implements java.sql.Driver
 		}
 	}
 
-        //The build number should be incremented for every new build
-        private static int m_buildNumber = 104;
+	//The build number should be incremented for every new build
+	private static int m_buildNumber = 104;
 
 }

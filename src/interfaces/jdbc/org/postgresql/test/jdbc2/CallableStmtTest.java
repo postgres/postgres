@@ -22,17 +22,17 @@ public class CallableStmtTest extends TestCase
 	{
 		con = TestUtil.openDB();
 		Statement stmt = con.createStatement ();
-		stmt.execute ("CREATE OR REPLACE FUNCTION testspg__getString (varchar) " + 
-					  "RETURNS varchar AS ' DECLARE inString alias for $1; begin "+
+		stmt.execute ("CREATE OR REPLACE FUNCTION testspg__getString (varchar) " +
+					  "RETURNS varchar AS ' DECLARE inString alias for $1; begin " +
 					  "return ''bob''; end; ' LANGUAGE 'plpgsql';");
-		stmt.execute ("CREATE OR REPLACE FUNCTION testspg__getDouble (float) " + 
+		stmt.execute ("CREATE OR REPLACE FUNCTION testspg__getDouble (float) " +
 					  "RETURNS float AS ' DECLARE inString alias for $1; begin " +
 					  "return 42.42; end; ' LANGUAGE 'plpgsql';");
 		stmt.execute ("CREATE OR REPLACE FUNCTION testspg__getInt (int) RETURNS int " +
-					  " AS 'DECLARE	inString alias for $1; begin " + 
-					  "return 42; end;' LANGUAGE 'plpgsql';"); 
-		stmt.execute ("CREATE OR REPLACE FUNCTION testspg__getNumeric (numeric) " + 
-					  "RETURNS numeric AS ' DECLARE	inString alias for $1; " + 
+					  " AS 'DECLARE	inString alias for $1; begin " +
+					  "return 42; end;' LANGUAGE 'plpgsql';");
+		stmt.execute ("CREATE OR REPLACE FUNCTION testspg__getNumeric (numeric) " +
+					  "RETURNS numeric AS ' DECLARE	inString alias for $1; " +
 					  "begin	return 42; end; ' LANGUAGE 'plpgsql';");
 		stmt.close ();
 	}
@@ -54,7 +54,8 @@ public class CallableStmtTest extends TestCase
 	//testGetString ();
 	//}
 
-	public void testGetDouble () throws Throwable {
+	public void testGetDouble () throws Throwable
+	{
 		// System.out.println ("Testing CallableStmt Types.DOUBLE");
 		CallableStatement call = con.prepareCall (func + pkgName + "getDouble (?) }");
 		call.setDouble (2, (double)3.04);
@@ -64,7 +65,8 @@ public class CallableStmtTest extends TestCase
 		assertTrue ("correct return from getString ()", result == 42.42);
 	}
 
-	public void testGetInt () throws Throwable {	
+	public void testGetInt () throws Throwable
+	{
 		// System.out.println ("Testing CallableStmt Types.INTEGER");
 		CallableStatement call = con.prepareCall (func + pkgName + "getInt (?) }");
 		call.setInt (2, 4);
@@ -74,18 +76,20 @@ public class CallableStmtTest extends TestCase
 		assertTrue ("correct return from getString ()", result == 42);
 	}
 
-	public void testGetNumeric () throws Throwable {	
+	public void testGetNumeric () throws Throwable
+	{
 		// System.out.println ("Testing CallableStmt Types.NUMERIC");
 		CallableStatement call = con.prepareCall (func + pkgName + "getNumeric (?) }");
 		call.setBigDecimal (2, new java.math.BigDecimal(4));
 		call.registerOutParameter (1, Types.NUMERIC);
 		call.execute ();
 		java.math.BigDecimal result = call.getBigDecimal (1);
-		assertTrue ("correct return from getString ()", 
+		assertTrue ("correct return from getString ()",
 					result.equals (new java.math.BigDecimal(42)));
 	}
 
-	public void testGetString () throws Throwable {	
+	public void testGetString () throws Throwable
+	{
 		// System.out.println ("Testing CallableStmt Types.VARCHAR");
 		CallableStatement call = con.prepareCall (func + pkgName + "getString (?) }");
 		call.setString (2, "foo");
@@ -96,20 +100,25 @@ public class CallableStmtTest extends TestCase
 
 	}
 
-	public void testBadStmt () throws Throwable {
+	public void testBadStmt () throws Throwable
+	{
 		tryOneBadStmt ("{ ?= " + pkgName + "getString (?) }");
 		tryOneBadStmt ("{ ?= call getString (?) ");
 		tryOneBadStmt ("{ = ? call getString (?); }");
 	}
 
-	protected void tryOneBadStmt (String sql) throws Throwable {
+	protected void tryOneBadStmt (String sql) throws Throwable
+	{
 		boolean wasCaught = false;
-		try {
+		try
+		{
 			CallableStatement call = con.prepareCall (sql);
-		} catch (SQLException e) {
+		}
+		catch (SQLException e)
+		{
 			wasCaught = true; // good -> this statement was missing something
 		}
-		assertTrue ("bad statment ('"+sql+"')was not caught", wasCaught);
+		assertTrue ("bad statment ('" + sql + "')was not caught", wasCaught);
 	}
-			
+
 }

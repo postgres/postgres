@@ -13,7 +13,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.PGbytea;
 import org.postgresql.util.PSQLException;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.5 2002/09/02 03:07:36 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.6 2002/09/06 21:23:06 momjian Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2ResultSet which adds the jdbc2
  * methods.  The real ResultSet class (for jdbc1) is org.postgresql.jdbc1.Jdbc1ResultSet
@@ -22,7 +22,7 @@ public abstract class AbstractJdbc1ResultSet
 {
 
 	protected Vector rows;			// The results
-        protected Statement statement;
+	protected Statement statement;
 	protected Field fields[];		// The field descriptions
 	protected String status;		// Status of the result
 	protected boolean binaryCursor = false; // is the data binary or Strings
@@ -39,13 +39,13 @@ public abstract class AbstractJdbc1ResultSet
 	protected ResultSet next = null;
 
 	protected StringBuffer sbuf = null;
-	public byte[][] rowBuffer=null;
+	public byte[][] rowBuffer = null;
 
 
 	public AbstractJdbc1ResultSet(org.postgresql.PGConnection conn, Statement statement, Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor)
 	{
 		this.connection = conn;
-                this.statement = statement;
+		this.statement = statement;
 		this.fields = fields;
 		this.rows = tuples;
 		this.status = status;
@@ -59,16 +59,16 @@ public abstract class AbstractJdbc1ResultSet
 
 	public boolean next() throws SQLException
 	{
-                if (rows == null)
-                        throw new PSQLException("postgresql.con.closed");
+		if (rows == null)
+			throw new PSQLException("postgresql.con.closed");
 
 		if (++current_row >= rows.size())
 			return false;
 
 		this_row = (byte [][])rows.elementAt(current_row);
 
-		rowBuffer=new byte[this_row.length][];
-		System.arraycopy(this_row,0,rowBuffer,0,this_row.length);
+		rowBuffer = new byte[this_row.length][];
+		System.arraycopy(this_row, 0, rowBuffer, 0, this_row.length);
 		return true;
 	}
 
@@ -230,12 +230,12 @@ public abstract class AbstractJdbc1ResultSet
 
 	public Time getTime(int columnIndex) throws SQLException
 	{
-		return toTime( getString(columnIndex), (java.sql.ResultSet)this, fields[columnIndex-1].getPGType() );
+		return toTime( getString(columnIndex), (java.sql.ResultSet)this, fields[columnIndex - 1].getPGType() );
 	}
 
 	public Timestamp getTimestamp(int columnIndex) throws SQLException
 	{
-		return toTimestamp( getString(columnIndex), (java.sql.ResultSet)this, fields[columnIndex-1].getPGType() );
+		return toTimestamp( getString(columnIndex), (java.sql.ResultSet)this, fields[columnIndex - 1].getPGType() );
 	}
 
 	public InputStream getAsciiStream(int columnIndex) throws SQLException
@@ -423,11 +423,12 @@ public abstract class AbstractJdbc1ResultSet
 		warnings = null;
 	}
 
-        public void addWarnings(SQLWarning warnings) {
-	    if ( this.warnings != null )
-		this.warnings.setNextWarning(warnings);
-	    else
-		this.warnings = warnings;
+	public void addWarnings(SQLWarning warnings)
+	{
+		if ( this.warnings != null )
+			this.warnings.setNextWarning(warnings);
+		else
+			this.warnings = warnings;
 	}
 
 	public String getCursorName() throws SQLException
@@ -612,18 +613,18 @@ public abstract class AbstractJdbc1ResultSet
 
 	/*
 	 * returns the OID of the last inserted row.  Deprecated in 7.2 because
-         * range for OID values is greater than java signed int.
+			* range for OID values is greater than java signed int.
 	 * @deprecated Replaced by getLastOID() in 7.2
 	 */
 	public int getInsertedOID()
 	{
-	    return (int) getLastOID();
+		return (int) getLastOID();
 	}
 
 
 	/*
 	 * returns the OID of the last inserted row
-         * @since 7.2
+			* @since 7.2
 	 */
 	public long getLastOID()
 	{
@@ -660,8 +661,10 @@ public abstract class AbstractJdbc1ResultSet
 
 	protected void checkResultSet( int column ) throws SQLException
 	{
-		if ( this_row == null ) throw new PSQLException("postgresql.res.nextrequired");
-		if ( column < 1 || column > fields.length ) throw new PSQLException("postgresql.res.colrange" );
+		if ( this_row == null )
+			throw new PSQLException("postgresql.res.nextrequired");
+		if ( column < 1 || column > fields.length )
+			throw new PSQLException("postgresql.res.colrange" );
 	}
 
 	//----------------- Formatting Methods -------------------
@@ -789,26 +792,34 @@ public abstract class AbstractJdbc1ResultSet
 			return null; // SQL NULL
 		try
 		{
-                   if (s.length() == 8) {
-                     //value is a time value
-                     return java.sql.Time.valueOf(s);
-                   } else if (s.indexOf(".") == 8) {
-                     //value is a time value with fractional seconds
-                     java.sql.Time l_time = java.sql.Time.valueOf(s.substring(0,8));
-                     String l_strMillis = s.substring(9);
-                     if (l_strMillis.length() > 3)
-                       l_strMillis = l_strMillis.substring(0,3);
-                     int l_millis = Integer.parseInt(l_strMillis);
-                     if (l_millis < 10) {
-                       l_millis = l_millis * 100;
-                     } else if (l_millis < 100) {
-                       l_millis = l_millis * 10;
-                     }
-                     return new java.sql.Time(l_time.getTime() + l_millis);
-                   } else {
-                     //value is a timestamp
-                     return new java.sql.Time(toTimestamp(s, resultSet, pgDataType).getTime());
-                   }
+			if (s.length() == 8)
+			{
+				//value is a time value
+				return java.sql.Time.valueOf(s);
+			}
+			else if (s.indexOf(".") == 8)
+			{
+				//value is a time value with fractional seconds
+				java.sql.Time l_time = java.sql.Time.valueOf(s.substring(0, 8));
+				String l_strMillis = s.substring(9);
+				if (l_strMillis.length() > 3)
+					l_strMillis = l_strMillis.substring(0, 3);
+				int l_millis = Integer.parseInt(l_strMillis);
+				if (l_millis < 10)
+				{
+					l_millis = l_millis * 100;
+				}
+				else if (l_millis < 100)
+				{
+					l_millis = l_millis * 10;
+				}
+				return new java.sql.Time(l_time.getTime() + l_millis);
+			}
+			else
+			{
+				//value is a timestamp
+				return new java.sql.Time(toTimestamp(s, resultSet, pgDataType).getTime());
+			}
 		}
 		catch (NumberFormatException e)
 		{
@@ -827,7 +838,7 @@ public abstract class AbstractJdbc1ResultSet
 	* From version 7.2 postgres returns fractional seconds to 6 places.
 	* If available, we drop the last 3 digits.
 	*
-	* @param s         The ISO formated date string to parse.
+	* @param s		   The ISO formated date string to parse.
 	* @param resultSet The ResultSet this date is part of.
 	*
 	* @return null if s is null or a timestamp of the parsed string s.
@@ -837,7 +848,7 @@ public abstract class AbstractJdbc1ResultSet
 	public static Timestamp toTimestamp(String s, java.sql.ResultSet resultSet, String pgDataType)
 	throws SQLException
 	{
-                AbstractJdbc1ResultSet rs = (AbstractJdbc1ResultSet)resultSet;
+		AbstractJdbc1ResultSet rs = (AbstractJdbc1ResultSet)resultSet;
 		if (s == null)
 			return null;
 
@@ -847,12 +858,14 @@ public abstract class AbstractJdbc1ResultSet
 		synchronized (rs)
 		{
 			SimpleDateFormat df = null;
-			if ( org.postgresql.Driver.logDebug ) org.postgresql.Driver.debug("the data from the DB is "+s);
+			if ( org.postgresql.Driver.logDebug )
+				org.postgresql.Driver.debug("the data from the DB is " + s);
 
 			// If first time, create the buffer, otherwise clear it.
 			if (rs.sbuf == null)
 				rs.sbuf = new StringBuffer(32);
-			else {
+			else
+			{
 				rs.sbuf.setLength(0);
 			}
 
@@ -880,7 +893,8 @@ public abstract class AbstractJdbc1ResultSet
 						if (i < 24)
 							rs.sbuf.append(c);
 						c = s.charAt(i++);
-					} while (i < slen && Character.isDigit(c));
+					}
+					while (i < slen && Character.isDigit(c));
 
 					// If there wasn't at least 3 digits we should add some zeros
 					// to make up the 3 digits we tell java to expect.
@@ -911,37 +925,43 @@ public abstract class AbstractJdbc1ResultSet
 				}
 				else
 				{
-				    // Just found fractional seconds but no timezone.
-				    //If timestamptz then we use GMT, else local timezone
-		                    if (pgDataType.equals("timestamptz")) {
-				        rs.sbuf.append(" GMT");
-					df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS z");
-			            } else {
-					df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-			            }
+					// Just found fractional seconds but no timezone.
+					//If timestamptz then we use GMT, else local timezone
+					if (pgDataType.equals("timestamptz"))
+					{
+						rs.sbuf.append(" GMT");
+						df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS z");
+					}
+					else
+					{
+						df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+					}
 				}
 			}
 			else if (slen == 19)
 			{
-			    // No tz or fractional second info.
-			    //If timestamptz then we use GMT, else local timezone
-		            if (pgDataType.equals("timestamptz")) {
-				rs.sbuf.append(" GMT");
-				df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
-			    } else {
-				df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-			    }
+				// No tz or fractional second info.
+				//If timestamptz then we use GMT, else local timezone
+				if (pgDataType.equals("timestamptz"))
+				{
+					rs.sbuf.append(" GMT");
+					df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
+				}
+				else
+				{
+					df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				}
 			}
 			else
 			{
-                                if (slen == 8 && s.equals("infinity"))
-                                    //java doesn't have a concept of postgres's infinity
-                                    //so set to an arbitrary future date
-                                    s = "9999-01-01";
+				if (slen == 8 && s.equals("infinity"))
+					//java doesn't have a concept of postgres's infinity
+					//so set to an arbitrary future date
+					s = "9999-01-01";
 				if (slen == 9 && s.equals("-infinity"))
-                                    //java doesn't have a concept of postgres's infinity
-                                    //so set to an arbitrary old date
-                                    s = "0001-01-01";
+					//java doesn't have a concept of postgres's infinity
+					//so set to an arbitrary old date
+					s = "0001-01-01";
 
 				// We must just have a date. This case is
 				// needed if this method is called on a date
@@ -952,7 +972,8 @@ public abstract class AbstractJdbc1ResultSet
 			try
 			{
 				// All that's left is to parse the string and return the ts.
-				if ( org.postgresql.Driver.logDebug ) org.postgresql.Driver.debug( "" + df.parse(rs.sbuf.toString()).getTime() );
+				if ( org.postgresql.Driver.logDebug )
+					org.postgresql.Driver.debug( "" + df.parse(rs.sbuf.toString()).getTime() );
 
 				return new Timestamp(df.parse(rs.sbuf.toString()).getTime());
 			}

@@ -10,14 +10,14 @@ import org.postgresql.Driver;
 public abstract class AbstractJdbc1DatabaseMetaData
 {
 
-  private static final String keywords = "abort,acl,add,aggregate,append,archive," +
-                                         "arch_store,backward,binary,change,cluster,"+
-                                         "copy,database,delimiter,delimiters,do,extend,"+
-                                         "explain,forward,heavy,index,inherits,isnull,"+
-                                         "light,listen,load,merge,nothing,notify,"+
-                                         "notnull,oids,purge,rename,replace,retrieve,"+
-                                         "returns,rule,recipe,setof,stdin,stdout,store,"+
-                                         "vacuum,verbose,version";
+	private static final String keywords = "abort,acl,add,aggregate,append,archive," +
+										   "arch_store,backward,binary,change,cluster," +
+										   "copy,database,delimiter,delimiters,do,extend," +
+										   "explain,forward,heavy,index,inherits,isnull," +
+										   "light,listen,load,merge,nothing,notify," +
+										   "notnull,oids,purge,rename,replace,retrieve," +
+										   "returns,rule,recipe,setof,stdin,stdout,store," +
+										   "vacuum,verbose,version";
 
 	protected AbstractJdbc1Connection connection; // The connection association
 
@@ -30,7 +30,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 
 	public AbstractJdbc1DatabaseMetaData(AbstractJdbc1Connection conn)
 	{
-          this.connection = conn;
+		this.connection = conn;
 	}
 
 	/*
@@ -42,8 +42,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean allProceduresAreCallable() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("allProceduresAreCallable");
-          return true;		// For now...
+		if (Driver.logDebug)
+			Driver.debug("allProceduresAreCallable");
+		return true;		// For now...
 	}
 
 	/*
@@ -55,7 +56,8 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean allTablesAreSelectable() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("allTablesAreSelectable");
+		if (Driver.logDebug)
+			Driver.debug("allTablesAreSelectable");
 		return true;		// For now...
 	}
 
@@ -67,9 +69,10 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public String getURL() throws SQLException
 	{
-          String url = connection.getURL();
-          if (Driver.logDebug) Driver.debug("getURL " + url);
-          return url;
+		String url = connection.getURL();
+		if (Driver.logDebug)
+			Driver.debug("getURL " + url);
+		return url;
 	}
 
 	/*
@@ -80,9 +83,10 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public String getUserName() throws SQLException
 	{
-          String userName = connection.getUserName();
-          if (Driver.logDebug) Driver.debug("getUserName " + userName);
-          return userName;
+		String userName = connection.getUserName();
+		if (Driver.logDebug)
+			Driver.debug("getUserName " + userName);
+		return userName;
 	}
 
 	/*
@@ -93,9 +97,10 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean isReadOnly() throws SQLException
 	{
-          boolean isReadOnly = connection.isReadOnly();
-          if (Driver.logDebug) Driver.debug("isReadOnly " + isReadOnly);
-          return isReadOnly;
+		boolean isReadOnly = connection.isReadOnly();
+		if (Driver.logDebug)
+			Driver.debug("isReadOnly " + isReadOnly);
+		return isReadOnly;
 	}
 
 	/*
@@ -106,9 +111,10 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean nullsAreSortedHigh() throws SQLException
 	{
-          boolean nullSortedHigh = connection.haveMinimumServerVersion("7.2");
-          if (Driver.logDebug) Driver.debug("nullsAreSortedHigh " + nullSortedHigh);
-          return nullSortedHigh;
+		boolean nullSortedHigh = connection.haveMinimumServerVersion("7.2");
+		if (Driver.logDebug)
+			Driver.debug("nullsAreSortedHigh " + nullSortedHigh);
+		return nullSortedHigh;
 	}
 
 	/*
@@ -119,8 +125,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean nullsAreSortedLow() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("nullsAreSortedLow false");
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("nullsAreSortedLow false");
+		return false;
 	}
 
 	/*
@@ -131,8 +138,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean nullsAreSortedAtStart() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("nullsAreSortedAtStart false");
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("nullsAreSortedAtStart false");
+		return false;
 	}
 
 	/*
@@ -143,9 +151,10 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean nullsAreSortedAtEnd() throws SQLException
 	{
-          boolean nullsAreSortedAtEnd = ! connection.haveMinimumServerVersion("7.2");
-          if (Driver.logDebug) Driver.debug("nullsAreSortedAtEnd " + nullsAreSortedAtEnd);
-          return nullsAreSortedAtEnd;
+		boolean nullsAreSortedAtEnd = ! connection.haveMinimumServerVersion("7.2");
+		if (Driver.logDebug)
+			Driver.debug("nullsAreSortedAtEnd " + nullsAreSortedAtEnd);
+		return nullsAreSortedAtEnd;
 	}
 
 	/*
@@ -157,8 +166,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public String getDatabaseProductName() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("getDatabaseProductName PostgresSQL");
-          return "PostgreSQL";
+		if (Driver.logDebug)
+			Driver.debug("getDatabaseProductName PostgresSQL");
+		return "PostgreSQL";
 	}
 
 	/*
@@ -169,9 +179,10 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public String getDatabaseProductVersion() throws SQLException
 	{
-          String versionNumber = connection.getDBVersionNumber();
-          if (Driver.logDebug) Driver.debug("getDatabaseProductVersion " + versionNumber);
-          return versionNumber;
+		String versionNumber = connection.getDBVersionNumber();
+		if (Driver.logDebug)
+			Driver.debug("getDatabaseProductVersion " + versionNumber);
+		return versionNumber;
 	}
 
 	/*
@@ -183,9 +194,10 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public String getDriverName() throws SQLException
 	{
-          String driverName = "PostgreSQL Native Driver";
-          if (Driver.logDebug) Driver.debug("getDriverName" + driverName);
-          return driverName;
+		String driverName = "PostgreSQL Native Driver";
+		if (Driver.logDebug)
+			Driver.debug("getDriverName" + driverName);
+		return driverName;
 	}
 
 	/*
@@ -197,9 +209,10 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public String getDriverVersion() throws SQLException
 	{
-          String driverVersion = connection.this_driver.getVersion();
-          if (Driver.logDebug) Driver.debug("getDriverVersion " + driverVersion);
-          return driverVersion;
+		String driverVersion = connection.this_driver.getVersion();
+		if (Driver.logDebug)
+			Driver.debug("getDriverVersion " + driverVersion);
+		return driverVersion;
 	}
 
 	/*
@@ -209,9 +222,10 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public int getDriverMajorVersion()
 	{
-          int majorVersion = connection.this_driver.getMajorVersion();
-          if (Driver.logDebug) Driver.debug("getMajorVersion " + majorVersion);
-          return majorVersion;
+		int majorVersion = connection.this_driver.getMajorVersion();
+		if (Driver.logDebug)
+			Driver.debug("getMajorVersion " + majorVersion);
+		return majorVersion;
 	}
 
 	/*
@@ -221,9 +235,10 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public int getDriverMinorVersion()
 	{
-          int minorVersion = connection.this_driver.getMinorVersion();
-          if (Driver.logDebug) Driver.debug("getMinorVersion " + minorVersion);
-          return minorVersion;
+		int minorVersion = connection.this_driver.getMinorVersion();
+		if (Driver.logDebug)
+			Driver.debug("getMinorVersion " + minorVersion);
+		return minorVersion;
 	}
 
 	/*
@@ -235,8 +250,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean usesLocalFiles() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("usesLocalFiles " + false);
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("usesLocalFiles " + false);
+		return false;
 	}
 
 	/*
@@ -248,8 +264,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean usesLocalFilePerTable() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("usesLocalFilePerTable " + false);
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("usesLocalFilePerTable " + false);
+		return false;
 	}
 
 	/*
@@ -266,8 +283,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsMixedCaseIdentifiers() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsMixedCaseIdentifiers " + false);
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("supportsMixedCaseIdentifiers " + false);
+		return false;
 	}
 
 	/*
@@ -278,8 +296,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean storesUpperCaseIdentifiers() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("storesUpperCaseIdentifiers " + false);
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("storesUpperCaseIdentifiers " + false);
+		return false;
 	}
 
 	/*
@@ -290,8 +309,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean storesLowerCaseIdentifiers() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("storesLowerCaseIdentifiers " + true);
-          return true;
+		if (Driver.logDebug)
+			Driver.debug("storesLowerCaseIdentifiers " + true);
+		return true;
 	}
 
 	/*
@@ -302,8 +322,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean storesMixedCaseIdentifiers() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("storesMixedCaseIdentifiers " + false);
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("storesMixedCaseIdentifiers " + false);
+		return false;
 	}
 
 	/*
@@ -316,8 +337,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsMixedCaseQuotedIdentifiers() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsMixedCaseQuotedIdentifiers " + true);
-          return true;
+		if (Driver.logDebug)
+			Driver.debug("supportsMixedCaseQuotedIdentifiers " + true);
+		return true;
 	}
 
 	/*
@@ -328,8 +350,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean storesUpperCaseQuotedIdentifiers() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("storesUpperCaseQuotedIdentifiers " + false);
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("storesUpperCaseQuotedIdentifiers " + false);
+		return false;
 	}
 
 	/*
@@ -340,8 +363,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean storesLowerCaseQuotedIdentifiers() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("storesLowerCaseQuotedIdentifiers " + false);
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("storesLowerCaseQuotedIdentifiers " + false);
+		return false;
 	}
 
 	/*
@@ -352,8 +376,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean storesMixedCaseQuotedIdentifiers() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("storesMixedCaseQuotedIdentifiers " + false);
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("storesMixedCaseQuotedIdentifiers " + false);
+		return false;
 	}
 
 	/*
@@ -366,8 +391,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public String getIdentifierQuoteString() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("getIdentifierQuoteString \"" );
-          return "\"";
+		if (Driver.logDebug)
+			Driver.debug("getIdentifierQuoteString \"" );
+		return "\"";
 	}
 
 	/*
@@ -393,26 +419,30 @@ public abstract class AbstractJdbc1DatabaseMetaData
 
 	public String getNumericFunctions() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("getNumericFunctions");
-          return "";
+		if (Driver.logDebug)
+			Driver.debug("getNumericFunctions");
+		return "";
 	}
 
 	public String getStringFunctions() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("getStringFunctions");
-          return "";
+		if (Driver.logDebug)
+			Driver.debug("getStringFunctions");
+		return "";
 	}
 
 	public String getSystemFunctions() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("getSystemFunctions");
-          return "";
+		if (Driver.logDebug)
+			Driver.debug("getSystemFunctions");
+		return "";
 	}
 
 	public String getTimeDateFunctions() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("getTimeDateFunctions");
-          return "";
+		if (Driver.logDebug)
+			Driver.debug("getTimeDateFunctions");
+		return "";
 	}
 
 	/*
@@ -424,8 +454,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public String getSearchStringEscape() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("getSearchStringEscape");
-          return "\\";
+		if (Driver.logDebug)
+			Driver.debug("getSearchStringEscape");
+		return "\\";
 	}
 
 	/*
@@ -441,8 +472,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public String getExtraNameCharacters() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("getExtraNameCharacters");
-          return "";
+		if (Driver.logDebug)
+			Driver.debug("getExtraNameCharacters");
+		return "";
 	}
 
 	/*
@@ -454,8 +486,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsAlterTableWithAddColumn() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsAlterTableWithAddColumn " + true);
-          return true;
+		if (Driver.logDebug)
+			Driver.debug("supportsAlterTableWithAddColumn " + true);
+		return true;
 	}
 
 	/*
@@ -467,7 +500,8 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsAlterTableWithDropColumn() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsAlterTableWithDropColumn " + false);
+		if (Driver.logDebug)
+			Driver.debug("supportsAlterTableWithDropColumn " + false);
 		return false;
 	}
 
@@ -491,8 +525,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsColumnAliasing() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsColumnAliasing " + true);
-          return true;
+		if (Driver.logDebug)
+			Driver.debug("supportsColumnAliasing " + true);
+		return true;
 	}
 
 	/*
@@ -504,20 +539,23 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean nullPlusNonNullIsNull() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("nullPlusNonNullIsNull " + true);
-          return true;
+		if (Driver.logDebug)
+			Driver.debug("nullPlusNonNullIsNull " + true);
+		return true;
 	}
 
 	public boolean supportsConvert() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsConvert " + false);
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("supportsConvert " + false);
+		return false;
 	}
 
 	public boolean supportsConvert(int fromType, int toType) throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsConvert " + false);
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("supportsConvert " + false);
+		return false;
 	}
 
 	/*
@@ -529,8 +567,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsTableCorrelationNames() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsTableCorrelationNames " + true);
-          return true;
+		if (Driver.logDebug)
+			Driver.debug("supportsTableCorrelationNames " + true);
+		return true;
 	}
 
 	/*
@@ -542,8 +581,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsDifferentTableCorrelationNames() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsDifferentTableCorrelationNames " + false);
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("supportsDifferentTableCorrelationNames " + false);
+		return false;
 	}
 
 	/*
@@ -556,8 +596,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsExpressionsInOrderBy() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsExpressionsInOrderBy " + true);
-          return true;
+		if (Driver.logDebug)
+			Driver.debug("supportsExpressionsInOrderBy " + true);
+		return true;
 	}
 
 	/*
@@ -568,9 +609,10 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsOrderByUnrelated() throws SQLException
 	{
-          boolean supportsOrderByUnrelated = connection.haveMinimumServerVersion("6.4");
-          if (Driver.logDebug) Driver.debug("supportsOrderByUnrelated " + supportsOrderByUnrelated);
-          return supportsOrderByUnrelated;
+		boolean supportsOrderByUnrelated = connection.haveMinimumServerVersion("6.4");
+		if (Driver.logDebug)
+			Driver.debug("supportsOrderByUnrelated " + supportsOrderByUnrelated);
+		return supportsOrderByUnrelated;
 	}
 
 	/*
@@ -582,8 +624,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsGroupBy() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsGroupBy " + true);
-          return true;
+		if (Driver.logDebug)
+			Driver.debug("supportsGroupBy " + true);
+		return true;
 	}
 
 	/*
@@ -594,9 +637,10 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsGroupByUnrelated() throws SQLException
 	{
-          boolean supportsGroupByUnrelated = connection.haveMinimumServerVersion("6.4");
-          if (Driver.logDebug) Driver.debug("supportsGroupByUnrelated " + supportsGroupByUnrelated);
-          return supportsGroupByUnrelated;
+		boolean supportsGroupByUnrelated = connection.haveMinimumServerVersion("6.4");
+		if (Driver.logDebug)
+			Driver.debug("supportsGroupByUnrelated " + supportsGroupByUnrelated);
+		return supportsGroupByUnrelated;
 	}
 
 	/*
@@ -611,9 +655,10 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsGroupByBeyondSelect() throws SQLException
 	{
-          boolean supportsGroupByBeyondSelect = connection.haveMinimumServerVersion("6.4");
-          if (Driver.logDebug) Driver.debug("supportsGroupByUnrelated " + supportsGroupByBeyondSelect);
-          return supportsGroupByBeyondSelect;
+		boolean supportsGroupByBeyondSelect = connection.haveMinimumServerVersion("6.4");
+		if (Driver.logDebug)
+			Driver.debug("supportsGroupByUnrelated " + supportsGroupByBeyondSelect);
+		return supportsGroupByBeyondSelect;
 	}
 
 	/*
@@ -625,9 +670,10 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsLikeEscapeClause() throws SQLException
 	{
-          boolean supportsLikeEscapeClause = connection.haveMinimumServerVersion("7.1");
-          if (Driver.logDebug) Driver.debug("supportsLikeEscapeClause " + supportsLikeEscapeClause);
-          return supportsLikeEscapeClause;
+		boolean supportsLikeEscapeClause = connection.haveMinimumServerVersion("7.1");
+		if (Driver.logDebug)
+			Driver.debug("supportsLikeEscapeClause " + supportsLikeEscapeClause);
+		return supportsLikeEscapeClause;
 	}
 
 	/*
@@ -640,8 +686,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsMultipleResultSets() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsMultipleResultSets " + false);
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("supportsMultipleResultSets " + false);
+		return false;
 	}
 
 	/*
@@ -654,8 +701,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsMultipleTransactions() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsMultipleTransactions " + true);
-          return true;
+		if (Driver.logDebug)
+			Driver.debug("supportsMultipleTransactions " + true);
+		return true;
 	}
 
 	/*
@@ -670,8 +718,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsNonNullableColumns() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsNonNullableColumns true");
-          return true;
+		if (Driver.logDebug)
+			Driver.debug("supportsNonNullableColumns true");
+		return true;
 	}
 
 	/*
@@ -688,8 +737,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsMinimumSQLGrammar() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsMinimumSQLGrammar TRUE");
-          return true;
+		if (Driver.logDebug)
+			Driver.debug("supportsMinimumSQLGrammar TRUE");
+		return true;
 	}
 
 	/*
@@ -701,8 +751,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsCoreSQLGrammar() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsCoreSQLGrammar FALSE ");
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("supportsCoreSQLGrammar FALSE ");
+		return false;
 	}
 
 	/*
@@ -715,8 +766,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsExtendedSQLGrammar() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsExtendedSQLGrammar FALSE");
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("supportsExtendedSQLGrammar FALSE");
+		return false;
 	}
 
 	/*
@@ -733,9 +785,10 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsANSI92EntryLevelSQL() throws SQLException
 	{
-          boolean schemas = connection.haveMinimumServerVersion("7.3");
-          if (Driver.logDebug) Driver.debug("supportsANSI92EntryLevelSQL " + schemas);
-          return schemas;
+		boolean schemas = connection.haveMinimumServerVersion("7.3");
+		if (Driver.logDebug)
+			Driver.debug("supportsANSI92EntryLevelSQL " + schemas);
+		return schemas;
 	}
 
 	/*
@@ -747,8 +800,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsANSI92IntermediateSQL() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsANSI92IntermediateSQL false ");
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("supportsANSI92IntermediateSQL false ");
+		return false;
 	}
 
 	/*
@@ -759,8 +813,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsANSI92FullSQL() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsANSI92FullSQL false ");
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("supportsANSI92FullSQL false ");
+		return false;
 	}
 
 	/*
@@ -772,8 +827,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsIntegrityEnhancementFacility() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsIntegrityEnhancementFacility false ");
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("supportsIntegrityEnhancementFacility false ");
+		return false;
 	}
 
 	/*
@@ -784,9 +840,10 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsOuterJoins() throws SQLException
 	{
-          boolean supportsOuterJoins = connection.haveMinimumServerVersion("7.1");
-          if (Driver.logDebug) Driver.debug("supportsOuterJoins " + supportsOuterJoins);
-          return supportsOuterJoins;
+		boolean supportsOuterJoins = connection.haveMinimumServerVersion("7.1");
+		if (Driver.logDebug)
+			Driver.debug("supportsOuterJoins " + supportsOuterJoins);
+		return supportsOuterJoins;
 	}
 
 	/*
@@ -797,9 +854,10 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsFullOuterJoins() throws SQLException
 	{
-          boolean supportsFullOuterJoins = connection.haveMinimumServerVersion("7.1");
-          if (Driver.logDebug) Driver.debug("supportsFullOuterJoins " + supportsFullOuterJoins);
-          return supportsFullOuterJoins;
+		boolean supportsFullOuterJoins = connection.haveMinimumServerVersion("7.1");
+		if (Driver.logDebug)
+			Driver.debug("supportsFullOuterJoins " + supportsFullOuterJoins);
+		return supportsFullOuterJoins;
 	}
 
 	/*
@@ -810,9 +868,10 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsLimitedOuterJoins() throws SQLException
 	{
-          boolean supportsLimitedOuterJoins = connection.haveMinimumServerVersion("7.1");
-          if (Driver.logDebug) Driver.debug("supportsFullOuterJoins " + supportsLimitedOuterJoins);
-          return supportsLimitedOuterJoins;
+		boolean supportsLimitedOuterJoins = connection.haveMinimumServerVersion("7.1");
+		if (Driver.logDebug)
+			Driver.debug("supportsFullOuterJoins " + supportsLimitedOuterJoins);
+		return supportsLimitedOuterJoins;
 	}
 
 	/*
@@ -825,8 +884,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public String getSchemaTerm() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("getSchemaTerm schema");
-          return "schema";
+		if (Driver.logDebug)
+			Driver.debug("getSchemaTerm schema");
+		return "schema";
 	}
 
 	/*
@@ -838,8 +898,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public String getProcedureTerm() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("getProcedureTerm function ");
-          return "function";
+		if (Driver.logDebug)
+			Driver.debug("getProcedureTerm function ");
+		return "function";
 	}
 
 	/*
@@ -850,8 +911,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public String getCatalogTerm() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("getCatalogTerm database ");
-          return "database";
+		if (Driver.logDebug)
+			Driver.debug("getCatalogTerm database ");
+		return "database";
 	}
 
 	/*
@@ -863,10 +925,11 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean isCatalogAtStart() throws SQLException
 	{
-          // return true here; we return false for every other catalog function
-          // so it won't matter what we return here D.C.
-          if (Driver.logDebug) Driver.debug("isCatalogAtStart not implemented");
-          return true;
+		// return true here; we return false for every other catalog function
+		// so it won't matter what we return here D.C.
+		if (Driver.logDebug)
+			Driver.debug("isCatalogAtStart not implemented");
+		return true;
 	}
 
 	/*
@@ -877,10 +940,11 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public String getCatalogSeparator() throws SQLException
 	{
-          // Give them something to work with here
-          // everything else returns false so it won't matter what we return here D.C.
-          if (Driver.logDebug) Driver.debug("getCatalogSeparator not implemented ");
-          return ".";
+		// Give them something to work with here
+		// everything else returns false so it won't matter what we return here D.C.
+		if (Driver.logDebug)
+			Driver.debug("getCatalogSeparator not implemented ");
+		return ".";
 	}
 
 	/*
@@ -891,8 +955,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsSchemasInDataManipulation() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsSchemasInDataManipulation false");
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("supportsSchemasInDataManipulation false");
+		return false;
 	}
 
 	/*
@@ -903,8 +968,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsSchemasInProcedureCalls() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsSchemasInProcedureCalls false");
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("supportsSchemasInProcedureCalls false");
+		return false;
 	}
 
 	/*
@@ -915,10 +981,11 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsSchemasInTableDefinitions() throws SQLException
 	{
-          boolean schemas = connection.haveMinimumServerVersion("7.3");
+		boolean schemas = connection.haveMinimumServerVersion("7.3");
 
-          if (Driver.logDebug) Driver.debug("supportsSchemasInTableDefinitions " + schemas);
-          return schemas;
+		if (Driver.logDebug)
+			Driver.debug("supportsSchemasInTableDefinitions " + schemas);
+		return schemas;
 	}
 
 	/*
@@ -929,8 +996,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsSchemasInIndexDefinitions() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsSchemasInIndexDefinitions false");
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("supportsSchemasInIndexDefinitions false");
+		return false;
 	}
 
 	/*
@@ -941,8 +1009,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsSchemasInPrivilegeDefinitions() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsSchemasInPrivilegeDefinitions false");
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("supportsSchemasInPrivilegeDefinitions false");
+		return false;
 	}
 
 	/*
@@ -953,8 +1022,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsCatalogsInDataManipulation() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsCatalogsInDataManipulation false");
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("supportsCatalogsInDataManipulation false");
+		return false;
 	}
 
 	/*
@@ -965,8 +1035,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsCatalogsInProcedureCalls() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsCatalogsInDataManipulation false");
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("supportsCatalogsInDataManipulation false");
+		return false;
 	}
 
 	/*
@@ -977,8 +1048,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsCatalogsInTableDefinitions() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsCatalogsInTableDefinitions false");
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("supportsCatalogsInTableDefinitions false");
+		return false;
 	}
 
 	/*
@@ -989,8 +1061,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsCatalogsInIndexDefinitions() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsCatalogsInIndexDefinitions false");
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("supportsCatalogsInIndexDefinitions false");
+		return false;
 	}
 
 	/*
@@ -1001,8 +1074,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsCatalogsInPrivilegeDefinitions() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsCatalogsInPrivilegeDefinitions false");
-          return false;
+		if (Driver.logDebug)
+			Driver.debug("supportsCatalogsInPrivilegeDefinitions false");
+		return false;
 	}
 
 	/*
@@ -1014,8 +1088,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsPositionedDelete() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsPositionedDelete false");
-          return false;			// For now...
+		if (Driver.logDebug)
+			Driver.debug("supportsPositionedDelete false");
+		return false;			// For now...
 	}
 
 	/*
@@ -1026,8 +1101,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsPositionedUpdate() throws SQLException
 	{
-          if (Driver.logDebug) Driver.debug("supportsPositionedUpdate false");
-          return false;			// For now...
+		if (Driver.logDebug)
+			Driver.debug("supportsPositionedUpdate false");
+		return false;			// For now...
 	}
 
 	/*
@@ -1038,7 +1114,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsSelectForUpdate() throws SQLException
 	{
-          return connection.haveMinimumServerVersion("6.5");
+		return connection.haveMinimumServerVersion("6.5");
 	}
 
 	/*
@@ -1050,7 +1126,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public boolean supportsStoredProcedures() throws SQLException
 	{
-          return false;
+		return false;
 	}
 
 	/*
@@ -1809,14 +1885,14 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			{
 				case (byte) 'r':
 					if ( r.getString(1).startsWith("pg_") )
-                                        {
-                                                relKind = "SYSTEM TABLE";
-                                        }
-                                        else
-                                        {
-                                                relKind = "TABLE";
-                                        }
- 					break;
+					{
+						relKind = "SYSTEM TABLE";
+					}
+					else
+					{
+						relKind = "TABLE";
+					}
+					break;
 				case (byte) 'i':
 					relKind = "INDEX";
 					break;
@@ -2100,7 +2176,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			// from the typmod value.
 			if (typname.equals("numeric") || typname.equals("decimal"))
 			{
-				int attypmod = r.getInt(8) -  VARHDRSZ;
+				int attypmod = r.getInt(8) - VARHDRSZ;
 				tuple[8] =
 					Integer.toString(attypmod & 0xffff).getBytes();
 				tuple[9] =
@@ -2184,7 +2260,8 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		{
 			byte[][] tuple = new byte[8][0];
 			tuple[0] = tuple[1] = "".getBytes();
-                        if (Driver.logDebug) Driver.debug("relname=\"" + r.getString(1) + "\" relacl=\"" + r.getString(2) + "\"");
+			if (Driver.logDebug)
+				Driver.debug("relname=\"" + r.getString(1) + "\" relacl=\"" + r.getString(2) + "\"");
 
 			// For now, don't add to the result as relacl needs to be processed.
 			//v.addElement(tuple);
@@ -2193,68 +2270,69 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		return connection.getResultSet(null, f, v, "OK", 1);
 	}
 
-        /*
-        * Get a description of the access rights for each table available
-        * in a catalog.
-        *
-        * This method is currently unimplemented.
-        *
-        * <P>Only privileges matching the schema and table name
-        * criteria are returned.  They are ordered by TABLE_SCHEM,
-        * TABLE_NAME, and PRIVILEGE.
-        *
-        * <P>Each privilige description has the following columns:
-        *	<OL>
-        *	<LI><B>TABLE_CAT</B> String => table catalog (may be null)
-        *	<LI><B>TABLE_SCHEM</B> String => table schema (may be null)
-        *	<LI><B>TABLE_NAME</B> String => table name
-        *	<LI><B>COLUMN_NAME</B> String => column name
-        *	<LI><B>GRANTOR</B> => grantor of access (may be null)
-        *	<LI><B>GRANTEE</B> String => grantee of access
-        *	<LI><B>PRIVILEGE</B> String => name of access (SELECT,
-        *		INSERT, UPDATE, REFRENCES, ...)
-        *	<LI><B>IS_GRANTABLE</B> String => "YES" if grantee is permitted
-        *		to grant to others; "NO" if not; null if unknown
-        *	</OL>
-        *
-        * @param catalog a catalog name; "" retrieves those without a catalog
-        * @param schemaPattern a schema name pattern; "" retrieves those
-        * without a schema
-        * @param tableNamePattern a table name pattern
-        * @return ResultSet each row is a table privilege description
-        * @see #getSearchStringEscape
-        */
-        public java.sql.ResultSet getTablePrivileges(String catalog, String schemaPattern, String tableNamePattern) throws SQLException
-        {
-          Field f[] = new Field[8];
-          Vector v = new Vector();
+	/*
+	* Get a description of the access rights for each table available
+	* in a catalog.
+	*
+	* This method is currently unimplemented.
+	*
+	* <P>Only privileges matching the schema and table name
+	* criteria are returned.  They are ordered by TABLE_SCHEM,
+	* TABLE_NAME, and PRIVILEGE.
+	*
+	* <P>Each privilige description has the following columns:
+	*	<OL>
+	*	<LI><B>TABLE_CAT</B> String => table catalog (may be null)
+	*	<LI><B>TABLE_SCHEM</B> String => table schema (may be null)
+	*	<LI><B>TABLE_NAME</B> String => table name
+	*	<LI><B>COLUMN_NAME</B> String => column name
+	*	<LI><B>GRANTOR</B> => grantor of access (may be null)
+	*	<LI><B>GRANTEE</B> String => grantee of access
+	*	<LI><B>PRIVILEGE</B> String => name of access (SELECT,
+	*		INSERT, UPDATE, REFRENCES, ...)
+	*	<LI><B>IS_GRANTABLE</B> String => "YES" if grantee is permitted
+	*		to grant to others; "NO" if not; null if unknown
+	*	</OL>
+	*
+	* @param catalog a catalog name; "" retrieves those without a catalog
+	* @param schemaPattern a schema name pattern; "" retrieves those
+	* without a schema
+	* @param tableNamePattern a table name pattern
+	* @return ResultSet each row is a table privilege description
+	* @see #getSearchStringEscape
+	*/
+	public java.sql.ResultSet getTablePrivileges(String catalog, String schemaPattern, String tableNamePattern) throws SQLException
+	{
+		Field f[] = new Field[8];
+		Vector v = new Vector();
 
-          if (tableNamePattern == null)
-            tableNamePattern = "%";
+		if (tableNamePattern == null)
+			tableNamePattern = "%";
 
-          f[0] = new Field(connection, "TABLE_CAT", iVarcharOid, 32);
-          f[1] = new Field(connection, "TABLE_SCHEM", iVarcharOid, 32);
-          f[2] = new Field(connection, "TABLE_NAME", iVarcharOid, 32);
-          f[3] = new Field(connection, "COLUMN_NAME", iVarcharOid, 32);
-          f[4] = new Field(connection, "GRANTOR", iVarcharOid, 32);
-          f[5] = new Field(connection, "GRANTEE", iVarcharOid, 32);
-          f[6] = new Field(connection, "PRIVILEGE", iVarcharOid, 32);
-          f[7] = new Field(connection, "IS_GRANTABLE", iVarcharOid, 32);
+		f[0] = new Field(connection, "TABLE_CAT", iVarcharOid, 32);
+		f[1] = new Field(connection, "TABLE_SCHEM", iVarcharOid, 32);
+		f[2] = new Field(connection, "TABLE_NAME", iVarcharOid, 32);
+		f[3] = new Field(connection, "COLUMN_NAME", iVarcharOid, 32);
+		f[4] = new Field(connection, "GRANTOR", iVarcharOid, 32);
+		f[5] = new Field(connection, "GRANTEE", iVarcharOid, 32);
+		f[6] = new Field(connection, "PRIVILEGE", iVarcharOid, 32);
+		f[7] = new Field(connection, "IS_GRANTABLE", iVarcharOid, 32);
 
-          // This is taken direct from the psql source
-          java.sql.ResultSet r = connection.ExecSQL("SELECT relname, relacl FROM pg_class, pg_user WHERE ( relkind = 'r' OR relkind = 'i') and relname !~ '^pg_' and relname !~ '^xin[vx][0-9]+' and usesysid = relowner and relname like '" + tableNamePattern.toLowerCase() + "' ORDER BY relname");
-          while (r.next())
-          {
-            byte[][] tuple = new byte[8][0];
-            tuple[0] = tuple[1] = "".getBytes();
-            if (Driver.logDebug) Driver.debug("relname=\"" + r.getString(1) + "\" relacl=\"" + r.getString(2) + "\"");
+		// This is taken direct from the psql source
+		java.sql.ResultSet r = connection.ExecSQL("SELECT relname, relacl FROM pg_class, pg_user WHERE ( relkind = 'r' OR relkind = 'i') and relname !~ '^pg_' and relname !~ '^xin[vx][0-9]+' and usesysid = relowner and relname like '" + tableNamePattern.toLowerCase() + "' ORDER BY relname");
+		while (r.next())
+		{
+			byte[][] tuple = new byte[8][0];
+			tuple[0] = tuple[1] = "".getBytes();
+			if (Driver.logDebug)
+				Driver.debug("relname=\"" + r.getString(1) + "\" relacl=\"" + r.getString(2) + "\"");
 
-            // For now, don't add to the result as relacl needs to be processed.
-            //v.addElement(tuple);
-          }
+			// For now, don't add to the result as relacl needs to be processed.
+			//v.addElement(tuple);
+		}
 
-          return connection.getResultSet(null, f, v, "OK", 1);
-        }
+		return connection.getResultSet(null, f, v, "OK", 1);
+	}
 
 	/*
 	 * Get a description of a table's optimal set of columns that
@@ -2375,7 +2453,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 				"a.attnum as KEY_SEQ," +
 				"ic.relname as PK_NAME " +
 				" FROM pg_class bc, pg_class ic, pg_index i, pg_attribute a" +
-				" WHERE bc.relkind = 'r' " +   //	-- not indices
+				" WHERE bc.relkind = 'r' " +	//	-- not indices
 				"  and upper(bc.relname) = upper('" + table + "')" +
 				"  and i.indrelid = bc.oid" +
 				"  and i.indexrelid = ic.oid" +
@@ -2385,274 +2463,275 @@ public abstract class AbstractJdbc1DatabaseMetaData
 														);
 	}
 
-/*
- SELECT
-        c.relname as primary,
-        c2.relname as foreign,
-        t.tgconstrname,
-        ic.relname as fkeyname,
-        af.attnum as fkeyseq,
-        ipc.relname as pkeyname,
-        ap.attnum as pkeyseq,
-        t.tgdeferrable,
-        t.tginitdeferred,
-        t.tgnargs,t.tgargs,
-        p1.proname as updaterule,
-        p2.proname as deleterule
-FROM
-        pg_trigger t,
-        pg_trigger t1,
-        pg_class c,
-        pg_class c2,
-        pg_class ic,
-        pg_class ipc,
-        pg_proc p1,
-        pg_proc p2,
-        pg_index if,
-        pg_index ip,
-        pg_attribute af,
-        pg_attribute ap
-WHERE
-        (t.tgrelid=c.oid
-        AND t.tgisconstraint
-        AND t.tgconstrrelid=c2.oid
-        AND t.tgfoid=p1.oid
-        and p1.proname like '%%upd')
+	/*
+	 SELECT
+			c.relname as primary,
+			c2.relname as foreign,
+			t.tgconstrname,
+			ic.relname as fkeyname,
+			af.attnum as fkeyseq,
+			ipc.relname as pkeyname,
+			ap.attnum as pkeyseq,
+			t.tgdeferrable,
+			t.tginitdeferred,
+			t.tgnargs,t.tgargs,
+			p1.proname as updaterule,
+			p2.proname as deleterule
+	FROM
+			pg_trigger t,
+			pg_trigger t1,
+			pg_class c,
+			pg_class c2,
+			pg_class ic,
+			pg_class ipc,
+			pg_proc p1,
+			pg_proc p2,
+			pg_index if,
+			pg_index ip,
+			pg_attribute af,
+			pg_attribute ap
+	WHERE
+			(t.tgrelid=c.oid
+			AND t.tgisconstraint
+			AND t.tgconstrrelid=c2.oid
+			AND t.tgfoid=p1.oid
+			and p1.proname like '%%upd')
 
-        and
-        (t1.tgrelid=c.oid
-        and t1.tgisconstraint
-        and t1.tgconstrrelid=c2.oid
-        AND t1.tgfoid=p2.oid
-        and p2.proname like '%%del')
+			and
+			(t1.tgrelid=c.oid
+			and t1.tgisconstraint
+			and t1.tgconstrrelid=c2.oid
+			AND t1.tgfoid=p2.oid
+			and p2.proname like '%%del')
 
-        AND c2.relname='users'
+			AND c2.relname='users'
 
-        AND
-        (if.indrelid=c.oid
-        AND if.indexrelid=ic.oid
-        and ic.oid=af.attrelid
-        AND if.indisprimary)
+			AND
+			(if.indrelid=c.oid
+			AND if.indexrelid=ic.oid
+			and ic.oid=af.attrelid
+			AND if.indisprimary)
 
-        and
-        (ip.indrelid=c2.oid
-        and ip.indexrelid=ipc.oid
-        and ipc.oid=ap.attrelid
-        and ip.indisprimary)
+			and
+			(ip.indrelid=c2.oid
+			and ip.indexrelid=ipc.oid
+			and ipc.oid=ap.attrelid
+			and ip.indisprimary)
 
-*/
-/**
- *
- * @param catalog
- * @param schema
- * @param primaryTable if provided will get the keys exported by this table
- * @param foreignTable if provided will get the keys imported by this table
- * @return ResultSet
- * @throws SQLException
- */
+	*/
+	/**
+	 *
+	 * @param catalog
+	 * @param schema
+	 * @param primaryTable if provided will get the keys exported by this table
+	 * @param foreignTable if provided will get the keys imported by this table
+	 * @return ResultSet
+	 * @throws SQLException
+	 */
 
-        protected java.sql.ResultSet getImportedExportedKeys(String catalog, String schema, String primaryTable, String foreignTable) throws SQLException
-        {
-                Field f[] = new Field[14];
+	protected java.sql.ResultSet getImportedExportedKeys(String catalog, String schema, String primaryTable, String foreignTable) throws SQLException
+	{
+		Field f[] = new Field[14];
 
-                f[0] = new Field(connection, "PKTABLE_CAT", iVarcharOid, 32);
-                f[1] = new Field(connection, "PKTABLE_SCHEM", iVarcharOid, 32);
-                f[2] = new Field(connection, "PKTABLE_NAME", iVarcharOid, 32);
-                f[3] = new Field(connection, "PKCOLUMN_NAME", iVarcharOid, 32);
-                f[4] = new Field(connection, "FKTABLE_CAT", iVarcharOid, 32);
-                f[5] = new Field(connection, "FKTABLE_SCHEM", iVarcharOid, 32);
-                f[6] = new Field(connection, "FKTABLE_NAME", iVarcharOid, 32);
-                f[7] = new Field(connection, "FKCOLUMN_NAME", iVarcharOid, 32);
-                f[8] = new Field(connection, "KEY_SEQ", iInt2Oid, 2);
-                f[9] = new Field(connection, "UPDATE_RULE", iInt2Oid, 2);
-                f[10] = new Field(connection, "DELETE_RULE", iInt2Oid, 2);
-                f[11] = new Field(connection, "FK_NAME", iVarcharOid, 32);
-                f[12] = new Field(connection, "PK_NAME", iVarcharOid, 32);
-                f[13] = new Field(connection, "DEFERRABILITY", iInt2Oid, 2);
+		f[0] = new Field(connection, "PKTABLE_CAT", iVarcharOid, 32);
+		f[1] = new Field(connection, "PKTABLE_SCHEM", iVarcharOid, 32);
+		f[2] = new Field(connection, "PKTABLE_NAME", iVarcharOid, 32);
+		f[3] = new Field(connection, "PKCOLUMN_NAME", iVarcharOid, 32);
+		f[4] = new Field(connection, "FKTABLE_CAT", iVarcharOid, 32);
+		f[5] = new Field(connection, "FKTABLE_SCHEM", iVarcharOid, 32);
+		f[6] = new Field(connection, "FKTABLE_NAME", iVarcharOid, 32);
+		f[7] = new Field(connection, "FKCOLUMN_NAME", iVarcharOid, 32);
+		f[8] = new Field(connection, "KEY_SEQ", iInt2Oid, 2);
+		f[9] = new Field(connection, "UPDATE_RULE", iInt2Oid, 2);
+		f[10] = new Field(connection, "DELETE_RULE", iInt2Oid, 2);
+		f[11] = new Field(connection, "FK_NAME", iVarcharOid, 32);
+		f[12] = new Field(connection, "PK_NAME", iVarcharOid, 32);
+		f[13] = new Field(connection, "DEFERRABILITY", iInt2Oid, 2);
 
-                java.sql.ResultSet rs = connection.ExecSQL(
-                "SELECT distinct "
-                  + "c.relname as prelname, "
-                  + "c2.relname as frelname, "
-                  + "t.tgconstrname, "
-                  + "a.attnum as keyseq, "
-                  + "ic.relname as fkeyname, "
-                  + "t.tgdeferrable, "
-                  + "t.tginitdeferred, "
-                  + "t.tgnargs,t.tgargs, "
-                  + "p1.proname as updaterule, "
-                  + "p2.proname as deleterule "
-          + "FROM "
-                  + "pg_trigger t, "
-                  + "pg_trigger t1, "
-                  + "pg_class c, "
-                  + "pg_class c2, "
-                  + "pg_class ic, "
-                  + "pg_proc p1, "
-                  + "pg_proc p2, "
-                  + "pg_index i, "
-                  + "pg_attribute a "
-          + "WHERE "
-                   // isolate the update rule
-                  + "(t.tgrelid=c.oid "
-                  + "AND t.tgisconstraint "
-                  + "AND t.tgconstrrelid=c2.oid "
-                  + "AND t.tgfoid=p1.oid "
-                  + "and p1.proname like '%%upd') "
+		java.sql.ResultSet rs = connection.ExecSQL(
+									"SELECT distinct "
+									+ "c.relname as prelname, "
+									+ "c2.relname as frelname, "
+									+ "t.tgconstrname, "
+									+ "a.attnum as keyseq, "
+									+ "ic.relname as fkeyname, "
+									+ "t.tgdeferrable, "
+									+ "t.tginitdeferred, "
+									+ "t.tgnargs,t.tgargs, "
+									+ "p1.proname as updaterule, "
+									+ "p2.proname as deleterule "
+									+ "FROM "
+									+ "pg_trigger t, "
+									+ "pg_trigger t1, "
+									+ "pg_class c, "
+									+ "pg_class c2, "
+									+ "pg_class ic, "
+									+ "pg_proc p1, "
+									+ "pg_proc p2, "
+									+ "pg_index i, "
+									+ "pg_attribute a "
+									+ "WHERE "
+									// isolate the update rule
+									+ "(t.tgrelid=c.oid "
+									+ "AND t.tgisconstraint "
+									+ "AND t.tgconstrrelid=c2.oid "
+									+ "AND t.tgfoid=p1.oid "
+									+ "and p1.proname like '%%upd') "
 
-                  + "and "
-                  // isolate the delete rule
-                  + "(t1.tgrelid=c.oid "
-                  + "and t1.tgisconstraint "
-                  + "and t1.tgconstrrelid=c2.oid "
-                  + "AND t1.tgfoid=p2.oid "
-                  + "and p2.proname like '%%del') "
+									+ "and "
+									// isolate the delete rule
+									+ "(t1.tgrelid=c.oid "
+									+ "and t1.tgisconstraint "
+									+ "and t1.tgconstrrelid=c2.oid "
+									+ "AND t1.tgfoid=p2.oid "
+									+ "and p2.proname like '%%del') "
 
-                  // if we are looking for exported keys then primary table will be used
-                                                                  + ((primaryTable != null) ? "AND c.relname='" + primaryTable + "' " : "")
+									// if we are looking for exported keys then primary table will be used
+									+ ((primaryTable != null) ? "AND c.relname='" + primaryTable + "' " : "")
 
-                  // if we are looking for imported keys then the foreign table will be used
-                                                                  + ((foreignTable != null) ? "AND c2.relname='" + foreignTable + "' " : "")
-                  + "AND i.indrelid=c.oid "
-                  + "AND i.indexrelid=ic.oid "
-                  + "AND ic.oid=a.attrelid "
-                  + "AND i.indisprimary "
-          + "ORDER BY "
+									// if we are looking for imported keys then the foreign table will be used
+									+ ((foreignTable != null) ? "AND c2.relname='" + foreignTable + "' " : "")
+									+ "AND i.indrelid=c.oid "
+									+ "AND i.indexrelid=ic.oid "
+									+ "AND ic.oid=a.attrelid "
+									+ "AND i.indisprimary "
+									+ "ORDER BY "
 
-                   // orderby is as follows getExported, orders by FKTABLE,
-                   // getImported orders by PKTABLE
-                   // getCrossReference orders by FKTABLE, so this should work for both,
-                   // since when getting crossreference, primaryTable will be defined
+									// orderby is as follows getExported, orders by FKTABLE,
+									// getImported orders by PKTABLE
+									// getCrossReference orders by FKTABLE, so this should work for both,
+									// since when getting crossreference, primaryTable will be defined
 
-                  +   (primaryTable != null ? "frelname" : "prelname") + ",keyseq");
+									+ (primaryTable != null ? "frelname" : "prelname") + ",keyseq");
 
-// returns the following columns
-// and some example data with a table defined as follows
+		// returns the following columns
+		// and some example data with a table defined as follows
 
-// create table people ( id int primary key);
-// create table policy ( id int primary key);
-// create table users  ( id int primary key, people_id int references people(id), policy_id int references policy(id))
+		// create table people ( id int primary key);
+		// create table policy ( id int primary key);
+		// create table users  ( id int primary key, people_id int references people(id), policy_id int references policy(id))
 
-// prelname | frelname | tgconstrname | keyseq | fkeyName    | tgdeferrable | tginitdeferred
-//    1     |    2     |      3       |    4   |     5       |       6      |    7
+		// prelname | frelname | tgconstrname | keyseq | fkeyName	 | tgdeferrable | tginitdeferred
+		//	  1		|	 2	   |	  3		  |    4   |	 5		 |		 6		|	 7
 
-//  people  | users    | <unnamed>    |    1   | people_pkey |       f      |    f
+		//	people	| users    | <unnamed>	  |    1   | people_pkey |		 f		|	 f
 
-// | tgnargs |                        tgargs                                      | updaterule           | deleterule
-// |    8    |                          9                                         |    10                |    11
-// |    6    | <unnamed>\000users\000people\000UNSPECIFIED\000people_id\000id\000 | RI_FKey_noaction_upd | RI_FKey_noaction_del
+		// | tgnargs |						  tgargs									  | updaterule			 | deleterule
+		// |	8	 |							9										  |    10				 |	  11
+		// |	6	 | <unnamed>\000users\000people\000UNSPECIFIED\000people_id\000id\000 | RI_FKey_noaction_upd | RI_FKey_noaction_del
 
-                Vector tuples = new Vector();
-
-
-                while ( rs.next() )
-                {
-                        byte tuple[][] = new byte[14][];
-
-      tuple[2] = rs.getBytes(1); //PKTABLE_NAME
-      tuple[6] = rs.getBytes(2); //FKTABLE_NAME
-      String fKeyName = rs.getString(3);
-      String updateRule = rs.getString(10);
-
-      if (updateRule != null )
-      {
-        // Rules look like this RI_FKey_noaction_del so we want to pull out the part between the 'Key_' and the last '_' s
-
-        String rule = updateRule.substring(8, updateRule.length() - 4);
-
-        int action = java.sql.DatabaseMetaData.importedKeyNoAction;
-
-        if ( rule == null || "noaction".equals(rule) )
-           action = java.sql.DatabaseMetaData.importedKeyNoAction;
-        if ("cascade".equals(rule))
-          action = java.sql.DatabaseMetaData.importedKeyCascade;
-        else if ("setnull".equals(rule))
-          action = java.sql.DatabaseMetaData.importedKeySetNull;
-        else if ("setdefault".equals(rule))
-          action = java.sql.DatabaseMetaData.importedKeySetDefault;
-        else if ("restrict".equals(rule))
-          action = java.sql.DatabaseMetaData.importedKeyRestrict;
-
-        tuple[9] = Integer.toString(action).getBytes();
-
-      }
-
-      String deleteRule = rs.getString(11);
-
-      if ( deleteRule != null )
-      {
-
-        String rule = updateRule.substring(8, updateRule.length() - 4);
-
-        int action = java.sql.DatabaseMetaData.importedKeyNoAction;
-        if ("cascade".equals(rule))
-          action = java.sql.DatabaseMetaData.importedKeyCascade;
-        else if ("setnull".equals(rule))
-          action = java.sql.DatabaseMetaData.importedKeySetNull;
-        else if ("setdefault".equals(rule))
-          action = java.sql.DatabaseMetaData.importedKeySetDefault;
-        tuple[10] = Integer.toString(action).getBytes();
-      }
+		Vector tuples = new Vector();
 
 
-      // Parse the tgargs data
-      String fkeyColumn="";
-      String pkeyColumn="";
+		while ( rs.next() )
+		{
+			byte tuple[][] = new byte[14][];
+
+			tuple[2] = rs.getBytes(1); //PKTABLE_NAME
+			tuple[6] = rs.getBytes(2); //FKTABLE_NAME
+			String fKeyName = rs.getString(3);
+			String updateRule = rs.getString(10);
+
+			if (updateRule != null )
+			{
+				// Rules look like this RI_FKey_noaction_del so we want to pull out the part between the 'Key_' and the last '_' s
+
+				String rule = updateRule.substring(8, updateRule.length() - 4);
+
+				int action = java.sql.DatabaseMetaData.importedKeyNoAction;
+
+				if ( rule == null || "noaction".equals(rule) )
+					action = java.sql.DatabaseMetaData.importedKeyNoAction;
+				if ("cascade".equals(rule))
+					action = java.sql.DatabaseMetaData.importedKeyCascade;
+				else if ("setnull".equals(rule))
+					action = java.sql.DatabaseMetaData.importedKeySetNull;
+				else if ("setdefault".equals(rule))
+					action = java.sql.DatabaseMetaData.importedKeySetDefault;
+				else if ("restrict".equals(rule))
+					action = java.sql.DatabaseMetaData.importedKeyRestrict;
+
+				tuple[9] = Integer.toString(action).getBytes();
+
+			}
+
+			String deleteRule = rs.getString(11);
+
+			if ( deleteRule != null )
+			{
+
+				String rule = updateRule.substring(8, updateRule.length() - 4);
+
+				int action = java.sql.DatabaseMetaData.importedKeyNoAction;
+				if ("cascade".equals(rule))
+					action = java.sql.DatabaseMetaData.importedKeyCascade;
+				else if ("setnull".equals(rule))
+					action = java.sql.DatabaseMetaData.importedKeySetNull;
+				else if ("setdefault".equals(rule))
+					action = java.sql.DatabaseMetaData.importedKeySetDefault;
+				tuple[10] = Integer.toString(action).getBytes();
+			}
 
 
-      // Note, I am guessing at most of this, but it should be close
-      // if not, please correct
-      // the keys are in pairs and start after the first four arguments
-      // the arguments are seperated by \000
+			// Parse the tgargs data
+			String fkeyColumn = "";
+			String pkeyColumn = "";
 
-      int keySequence = rs.getInt(4); //KEY_SEQ
 
-      // get the args
-      String targs = rs.getString(9);
+			// Note, I am guessing at most of this, but it should be close
+			// if not, please correct
+			// the keys are in pairs and start after the first four arguments
+			// the arguments are seperated by \000
 
-      // args look like this
-      //<unnamed>\000ww\000vv\000UNSPECIFIED\000m\000a\000n\000b\000
-      // we are primarily interested in the column names which are the last items in the string
+			int keySequence = rs.getInt(4); //KEY_SEQ
 
-      StringTokenizer st = new StringTokenizer(targs, "\\000");
+			// get the args
+			String targs = rs.getString(9);
 
-      int advance = 4 + (keySequence-1) * 2;
-      for( int i=0; st.hasMoreTokens() && i < advance ; i++ ) st.nextToken(); // advance to the key column of interest
+			// args look like this
+			//<unnamed>\000ww\000vv\000UNSPECIFIED\000m\000a\000n\000b\000
+			// we are primarily interested in the column names which are the last items in the string
 
-      if ( st.hasMoreTokens() )
-      {
-        fkeyColumn = st.nextToken();
-      }
-      if ( st.hasMoreTokens() )
-      {
-         pkeyColumn = st.nextToken();
-      }
+			StringTokenizer st = new StringTokenizer(targs, "\\000");
 
-      tuple[3] = pkeyColumn.getBytes(); //PKCOLUMN_NAME
-      tuple[7] = fkeyColumn.getBytes(); //FKCOLUMN_NAME
+			int advance = 4 + (keySequence - 1) * 2;
+			for ( int i = 0; st.hasMoreTokens() && i < advance ; i++ )
+				st.nextToken(); // advance to the key column of interest
 
-      tuple[8] =  rs.getBytes(4); //KEY_SEQ
-      tuple[11] = targs.getBytes(); //FK_NAME this will give us a unique name for the foreign key
-      tuple[12] = rs.getBytes(5); //PK_NAME
+			if ( st.hasMoreTokens() )
+			{
+				fkeyColumn = st.nextToken();
+			}
+			if ( st.hasMoreTokens() )
+			{
+				pkeyColumn = st.nextToken();
+			}
 
-      // DEFERRABILITY
-      int deferrability = java.sql.DatabaseMetaData.importedKeyNotDeferrable;
-      boolean deferrable = rs.getBoolean(6);
-      boolean initiallyDeferred = rs.getBoolean(7);
-      if (deferrable)
-      {
-        if (initiallyDeferred)
-                deferrability = java.sql.DatabaseMetaData.importedKeyInitiallyDeferred;
-        else
-                deferrability = java.sql.DatabaseMetaData.importedKeyInitiallyImmediate;
-      }
-      tuple[13] = Integer.toString(deferrability).getBytes();
+			tuple[3] = pkeyColumn.getBytes(); //PKCOLUMN_NAME
+			tuple[7] = fkeyColumn.getBytes(); //FKCOLUMN_NAME
 
-      tuples.addElement(tuple);
-    }
+			tuple[8] = rs.getBytes(4); //KEY_SEQ
+			tuple[11] = targs.getBytes(); //FK_NAME this will give us a unique name for the foreign key
+			tuple[12] = rs.getBytes(5); //PK_NAME
 
-    return connection.getResultSet(null, f, tuples, "OK", 1);
-  }
+			// DEFERRABILITY
+			int deferrability = java.sql.DatabaseMetaData.importedKeyNotDeferrable;
+			boolean deferrable = rs.getBoolean(6);
+			boolean initiallyDeferred = rs.getBoolean(7);
+			if (deferrable)
+			{
+				if (initiallyDeferred)
+					deferrability = java.sql.DatabaseMetaData.importedKeyInitiallyDeferred;
+				else
+					deferrability = java.sql.DatabaseMetaData.importedKeyInitiallyImmediate;
+			}
+			tuple[13] = Integer.toString(deferrability).getBytes();
+
+			tuples.addElement(tuple);
+		}
+
+		return connection.getResultSet(null, f, tuples, "OK", 1);
+	}
 
 	/*
 	 * Get a description of the primary key columns that are

@@ -6,7 +6,7 @@ import java.sql.*;
 import java.math.BigDecimal;
 
 /*
- * $Id: JBuilderTest.java,v 1.6 2002/08/14 20:35:40 barry Exp $
+ * $Id: JBuilderTest.java,v 1.7 2002/09/06 21:23:06 momjian Exp $
  *
  * Some simple tests to check that the required components needed for JBuilder
  * stay working
@@ -26,7 +26,7 @@ public class JBuilderTest extends TestCase
 		Connection con = TestUtil.openDB();
 
 		TestUtil.createTable( con, "test_c",
-								"source text,cost money,imageid int4" );
+							  "source text,cost money,imageid int4" );
 
 		TestUtil.closeDB(con);
 	}
