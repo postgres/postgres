@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.17 1996/12/04 03:05:55 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.18 1996/12/09 01:22:17 bryanh Exp $
  *
  * NOTES
  *    The old interface functions have been converted to macros
@@ -658,52 +658,61 @@ fastgetattr(HeapTuple tup,
 }
 
 /* ----------------
- *	heap_getattr
+ *      heap_getattr
  *
- *	returns an attribute from a heap tuple.  uses 
- * ----------------
- */
+ *      Find a particular field in a row represented as a heap tuple.
+ *      We return a pointer into that heap tuple, which points to the
+ *      first byte of the value of the field in question.
+ *
+ *      If the field in question has a NULL value, we return a null
+ *      pointer and return <*isnull> == true.  Otherwise, we return
+ *      <*isnull> == false.
+ *
+ *      <tup> is the pointer to the heap tuple.  <attnum> is the attribute
+ *      number of the column (field) caller wants.  <tupleDesc> is a 
+ *      pointer to the structure describing the row and all its fields.
+ * ---------------- */
 char *
 heap_getattr(HeapTuple tup,
-	     Buffer b,
-	     int attnum,
-	     TupleDesc tupleDesc,
-	     bool *isnull)
+             Buffer b,
+             int attnum,
+             TupleDesc tupleDesc,
+             bool *isnull)
 {
-    bool	localIsNull;
+    bool        localIsNull;
 
     /* ----------------
-     *	sanity checks
+     *  sanity checks
      * ----------------
      */
     Assert(tup != NULL);
     
     if (! PointerIsValid(isnull))
-	isnull = &localIsNull;
+        isnull = &localIsNull;
     
     if (attnum > (int) tup->t_natts) {
-	*isnull = true;
-	return ((char *) NULL);
+        *isnull = true;
+        return ((char *) NULL);
     }
     
     /* ----------------
-     *	take care of user defined attributes
+     *  take care of user defined attributes
      * ----------------
      */
     if (attnum > 0) {
-	char  *datum;
-	datum = fastgetattr(tup, attnum, tupleDesc, isnull);
-	
-	return (datum);
+        char  *datum;
+        datum = fastgetattr(tup, attnum, tupleDesc, isnull);
+        
+        return (datum);
     }
     
     /* ----------------
-     *	take care of system attributes
+     *  take care of system attributes
      * ----------------
      */
     *isnull = false;
     return
-	heap_getsysattr(tup, b, attnum);
+        heap_getsysattr(tup, b, attnum);
 }
 
 /* ----------------
