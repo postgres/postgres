@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.2 1996/10/30 02:02:41 momjian Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.3 1996/11/14 16:09:28 momjian Exp $
 #
 if [ -d ./obj ]; then
 	cd ./obj
@@ -28,17 +28,11 @@ fi
 
 echo =============== running regression queries ... =================
 $FRONTEND regression < queries.sql
-if [ $? -ne 0 ]; then
-     echo the queries script causes an error
-     exit 1
-fi
+# this will generate error result code
 
 echo =============== running error queries ... =================
 $FRONTEND regression < errors.sql
-if [ $? -ne 0 ]; then
-     echo the errors script has an unanticipated problem
-     exit 1
-fi
+# this will generate error result code
 
 #set this to 1 to avoid clearing the database
 debug=0

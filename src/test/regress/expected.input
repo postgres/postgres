@@ -416,15 +416,15 @@ QUERY: CREATE OPERATOR <% (
    commutator = >=%
 );
 QUERY: CREATE OPERATOR @#@ (
-   rightarg = int4,		-- left unary
+   rightarg = int4,
    procedure = int4fac
 );
 QUERY: CREATE OPERATOR #@# (
-   leftarg = int4,		-- right unary
+   leftarg = int4,
    procedure = int4fac
 );
 QUERY: CREATE OPERATOR #%# (
-   leftarg = int4,		-- right unary
+   leftarg = int4,
    procedure = int4fac
 );
 QUERY: CREATE VIEW street AS
@@ -799,7 +799,7 @@ six|f1
 (6 rows)
 
 QUERY: SELECT '' AS five, ABSTIME_TBL.*
-  WHERE  (ABSTIME_TBL.f1 + '@ 3 year'::reltime)     -- +3 years
+  WHERE  (ABSTIME_TBL.f1 + '@ 3 year'::reltime)
 	< 'Jan 14 14:00:00 1977'::abstime;
 five|f1                          
 ----+----------------------------
@@ -811,7 +811,7 @@ five|f1
 (5 rows)
 
 QUERY: SELECT '' AS five, ABSTIME_TBL.*
-   WHERE  (ABSTIME_TBL.f1 + '@ 3 year ago'::reltime) -- -3 years
+   WHERE  (ABSTIME_TBL.f1 + '@ 3 year ago'::reltime)
 	< 'Jan 14 14:00:00 1971'::abstime;
 five|f1                          
 ----+----------------------------
@@ -823,7 +823,7 @@ five|f1
 (5 rows)
 
 QUERY: SELECT '' AS five, ABSTIME_TBL.*
-   WHERE  (ABSTIME_TBL.f1 - '@ 3 year'::reltime)     -- -(+3) years
+   WHERE  (ABSTIME_TBL.f1 - '@ 3 year'::reltime)
 	< 'Jan 14 14:00:00 1971'::abstime;
 five|f1                          
 ----+----------------------------
@@ -835,7 +835,7 @@ five|f1
 (5 rows)
 
 QUERY: SELECT '' AS five, ABSTIME_TBL.*
-   WHERE  (ABSTIME_TBL.f1 - '@ 3 year ago'::reltime) -- -(-3) years
+   WHERE  (ABSTIME_TBL.f1 - '@ 3 year ago'::reltime)
 	< 'Jan 14 14:00:00 1977'::abstime;
 five|f1                          
 ----+----------------------------
