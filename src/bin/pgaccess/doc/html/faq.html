@@ -1,0 +1,85 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="GENERATOR" content="Mozilla/4.61 [en] (X11; I; Linux 2.2.12 i586) [Netscape]">
+</head>
+<body bgcolor="#FEFEDF">
+
+<h2>
+PgAccess - FAQ</h2>
+
+<hr>
+<br><b>1. When I run PgAccess I got a message complaining about the crypt
+library! What should I do?</b>
+<blockquote>Versions of PostgreSQL prior to 6.5.1 couldn't reliably detect
+the presence of the crypt library on RedHat 5.x systems. That's why the
+libpgtcl library does not include reference to crypt. You will need to
+get a proper copy of libpgtcl.so library or to compile one. Go to the postgresql
+source directory into src/interfaces/libpgtcl and edit Makefile adding
+-lcrypt to the end of the line SHLIB_LINKS. Make clean and make again.
+Your libpgtcl.so is now prepare to run PgAccess. I strongly recommend you
+to upgrade to PostgreSQL 6.5.1 where this problem has been solved.</blockquote>
+<b>2. I cannot connect to a database from another machine</b>
+<blockquote>There may be two problems here. First of all, PgAccess running
+on the localhost is using two PostgreSQL dependent libraries, libpq and
+libpgtcl. Each of them are compiled for a specific PostgreSQL version.
+If the PostgreSQL version running on your server is different you might
+experience problems. The other problem is related to access rights. On
+the PostgreSQL server, in data directory there is a file pg_hba.conf that
+will grant access rights to users based on host authentication. Ask your
+database administrator to check if your workstation is listed there with
+the appropriate access rights. Try for the beginning the 'trust' mode,
+allowing full access to the databases.</blockquote>
+<b>3. I am experiencing core dumps when trying to run PgAccess. Is PgAccess
+broken?</b>
+<blockquote>No. There were NEVER reported crashes because of PgAccess.
+All of them were related to bad libraries usage. The most frequent was
+the installing of a new PostgreSQL on a RedHat 5.x server where the postgresql-clients
+rpm still exists. So, PgAccess was trying to use the old libpgtcl.so library
+suitable for an older version of PostgreSQL. Before installing a new PostgreSQL
+(either by compiling it ot by rpm packages) remove ANY TRACE of old PostgreSQL.
+PgAccess is fully relying on libpgtcl library in order to get access to
+the database so when you are experiencing that kind of problems, double-check
+libpq and libpgtcl libraries.</blockquote>
+<b>4. When I try to run PgAccess I get the following error : Application
+initialization failed: couldn't connect to display ""</b>
+<blockquote>That kind of error was reported on some Linux RedHat 5.x systems
+when user has su - to root and tried to run PgAccess. Some unknown errors
+in login scripts are not defining the DISPLAY environment and the wish
+application cannot connect to the X display. Try typing <tt>export DISPLAY=localhost:0.0</tt>
+and run PgAccess again.</blockquote>
+<b>5. Cannot run PgAccess on a Windows machine.</b>
+<blockquote>In order to use PgAccess on Windows you must have installed
+two libraries libpq.dll and libpgtcl.dll suitable for your Tcl/Tk package
+and your PostgreSQL server. Note that libraries that work with Tcl/Tk 8.0.x
+won't work with Tcl/Tk 8.1.x and libraries that work with 6.4.2 backend
+won't work with 6.5.x. So, you must properly identify your Tcl/Tk package
+version and your PostgreSQL version and download from the Downloads section
+(or pick from the win32/dll directory of PgAccess distribution) the right
+files. Copy them into your Windows/System directory and try again. Also,
+you should be able to access over the network the machine running the PostgreSQL
+server (try ping-ing it) and have the proper access rights to the database.</blockquote>
+<b>6. How much costs PgAccess?</b>
+<blockquote>PgAccess is a free tool. You won't have to pay anything in
+order to use it. It is protected by the following <a href="copyright.html">copyright</a>
+as PostgreSQL is. I cannot guarantee technical support but I will try to
+answer to your questions as much as I can.</blockquote>
+<b>7. I want to translate PgAccess messages for xxx language. What should
+I do?</b>
+<blockquote>In the PgAccess distribution in lib/languages directory there
+are files with messages translated for different languages. Copy one of
+them and name it after your native language and then start editing it translating
+all the messages. Save it into the same directory and that's all. Don't
+forget to send me a copy in order to include it into the standard distribution.</blockquote>
+
+<p><br><b>8. I am receiving the following error: <tt>message invalid command
+name "namespace" while executing "namespace eval Mainlib</tt>&nbsp; ..."</b>
+<blockquote>That means 100% that you have an older version of Tcl/Tk that
+don't recognize namespaces command. Please upgrade to Tcl/Tk 8.0.x minimum</blockquote>
+
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+</body>
+</html>

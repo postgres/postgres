@@ -1,0 +1,25 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="GENERATOR" content="Mozilla/4.5 [en] (X11; I; Linux 2.0.36 i586) [Netscape]">
+</head>
+<body text="#000000" bgcolor="#FFFFFF" link="#0000FF" vlink="#FF0000" alink="#000088">
+
+<h1>
+PgAccess 0.93 patch to make it work with PostgreSQL 6.3.x
+<hr WIDTH="100%"></h1>
+
+<p><br>PgAccess 0.93 is working fine with PostgreSQL 6.4.x due to some
+changes in libpgtcl !
+<p>There is a small patch that you have to make in order to make it work
+with 6.3.x !
+<p>Replace in procedure <tt>wpg_exec</tt> the following line:
+<p><tt>set pgsql(errmsg) [pg_result $pgsql(res) -error]</tt>
+<p>with this one :
+<p><tt>set pgsql(errmsg) "NO ERROR INFORMATION SUPPLIED"</tt>
+<p>And it will work fine! In some error cases, you will not get the appropriate
+error message from libpgtcl.
+<p>&nbsp;<a href="index.html">Back</a>
+</body>
+</html>

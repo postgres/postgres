@@ -1,0 +1,203 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="GENERATOR" content="Mozilla/4.61 [en] (X11; I; Linux 2.2.11 i586) [Netscape]">
+</head>
+<body text="#000000" bgcolor="#FEFEDF" link="#0000EF" vlink="#51188E" alink="#FF0000">
+
+<h1>
+FORMS</h1>
+
+<hr WIDTH="100%">
+<p>This version (0.97) of PgAccess has changed the form API : variable
+handling, query results interface and control bindings naming convention.
+Please read it carefully, download the database demo and practice a while
+before trying to design your own forms.
+<p>For the moment, it has only some basic widgets : labels, entries, buttons
+, listboxes , checkboxes and radiobuttons.
+<p>Also there is a pseudo data control widget that allows you yo have access
+to a query results.
+<p><b>How do you generate widgets :</b>
+<ol>
+<li>
+select a widget from the toolbox by clicking the appropriate radiobutton</li>
+
+<li>
+move to the canvas , point with the mouse at the desired location and click
+the mouse button to begin</li>
+
+<li>
+keeping the mouse-button pressed move the mouse in order to draw a rectangle
+that will hold the widget</li>
+
+<li>
+release the mouse-button</li>
+</ol>
+In the rectangle that you have designed it will appear the selected object.
+<br>Move now to the attribute window to change some of its properties.
+<p>Renaming, resizing items are possible (for the moment) only by modifying
+appropriate parameters in attribute window. You <b>must </b>press Enter
+in the edit field after changing a value in order to be accepted.
+<p>You can also move items by dragging them or delete them by pressing
+Del key after selecting them.
+<p>In attribute window, there are some fields named <b><tt><font size=+1>Command
+</font></tt></b>and
+<b><tt><font size=+1>Variable</font></tt></b>.
+<p>The field <b><tt><font size=+1>Command </font></tt></b>have meaning
+only for Button widgets and holds the command that will be invoked when
+the button is pressed.
+<p>&nbsp;&nbsp;&nbsp; The field <b><tt><font size=+1>Variable </font></tt></b>have
+meaning only for EditField , Label widgets , checkboxes and radiobuttons
+and it is the name of the global variable that will hold the value for
+that widget. For checkboxes the values are <b>t</b> and <b>f</b> (from
+true and false) in order to simplify binding to logical data fields (PgAccess
+0.82 used 0 and 1).
+<p>&nbsp;&nbsp;&nbsp; For radiobuttons, it is usual to assign the same
+variable to the same radiobuttons within the same group. That variable
+will contain the name of the widget of the radiobutton that has been pressed.
+Let's presume that you have entered 3 radiobuttons named red, green and
+blue, all of them having the same variable named color. If you will press
+them, they will assign their names to global variable.
+<p>&nbsp;&nbsp;&nbsp; In order to make a simple test, put an entry field
+and set it's variable to <b>v1</b> and a button who's command is "set v1
+whisky". Press the button "Test form" and click on the button. In that
+entry should appear whisky.
+<br>Another test is defining in Script module a script called "My first
+script" having the following commands:
+<br><tt><font size=+1>tk_messageBox -title Warning -message "This is my
+first message!"</font></tt>
+<br>and then define a button who's command is <b><tt><font size=+1>execute_script
+"My first script"</font></tt></b>.
+<br>&nbsp;
+<h2>
+Database manipulation</h2>
+Let's presume that our form have the internal name <b><tt>mf </tt></b>(<b>m</b>y
+<b>f</b>orm). Don't forget that the Tk window names could not start with
+an uppercase letter.
+<br>The window will be referred inside the Tcl/Tk source as <b><tt>.mf</tt></b>
+<br>If you want to close the form in run-time you have to issue the command
+<b><tt>destroy
+.mf</tt></b>
+<p>Also, any widget created inside this window (form) will have the name
+prefixed by <b><tt>.mf ,</tt></b>so we will have <b><tt>.mf.button1</tt></b>
+or <b><tt>.mf.listbox1</tt></b> .
+<p>We can name the data control widget <b><tt>dc</tt></b> for example.
+The fully qualified name for that "virtual widget" will be <b><tt>.mf.dc</tt></b>
+then. A new namespace called <b><tt>DataControl(.mf.dc)</tt></b> will be
+automatically defined.
+<br>The <b><tt>Command </tt></b>property of the data control widget must
+contain the SQL command that will be executed.
+<br>When the form will be in run-time, automatically you will have access
+to the following procedures and functions from the namespace:
+<p><b><tt>open</tt></b> - opens the connection and execute the query (returns
+nothing)
+<br><b><tt>setSQL newsql</tt></b> - set the command query that will be
+executed at the next <b><tt>open</tt></b>
+<br><b><tt>getRowCount</tt></b> - returns the number of records of the
+result set
+<br><b><tt>getRowIndex </tt></b>- returns the current record number inside
+the result set
+<br><b><tt>getFieldList</tt></b> - returns a Tcl list containing the fields
+names from the current result set
+<br><b><tt>moveFirst</tt></b> - move the cursor to the first record in
+the recordset
+<br><b><tt>moveLast</tt></b><tt> , <b>moveNext</b> , <b>movePrevious</b></tt>-
+moves the cursor there
+<br><b><tt>moveTo newrecno</tt></b> - move the cursor to that new record
+number (first is 0)
+<br><b><tt>updateDataSet</tt></b> - update the variables inside the designed
+form that have a particular name (I'll explain later)
+<br><b><tt>clearDataSet</tt></b> - clear the associated DataSet variables
+<br><tt><b>fill listbox field</b> </tt>- fill the named listbox (whole
+widget name as <b><tt>.mf.listbox1</tt></b>) with the all the values of
+that field from the current result set
+<br><b><tt>close</tt></b> - close the result set (<b><font color="#FF0000">if
+you don't close it, you will loose some memory</font></b>)
+<p>These procedures and functions should be called in the normal Tcl namespace
+mode as in the following example:
+<p><tt>DataControl(.mf.dc)::setSQL "select * from phonebook"</tt>
+<br><tt>DataControl(.mf.dc)::open</tt>
+<br><tt>set nrecs [DataControl(.mf.dc)::getRowCount]</tt>
+<p>If you complaint about writting to many DataControl(...) you can include
+many commands into a single namespace eval as in the following example
+:
+<p><tt>namespace eval DataControl(.mf.dc) {</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; setSQL "select * from phonebook"</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; open</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; set nrecs [getRowCount]</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; moveLast</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; updateDataSet</tt>
+<br><tt>}</tt>
+<p>It's no need to close a query-result set if you want to assign it a
+new SQL command and open it again. That will be done automatically releasing
+the memory used for the last result set.
+<br>Opening a new <b>DataControl</b> will automatically position the current
+row index of the result set on the first row (index 0) and will define
+a new global associative array named <b>DataSet</b> that will hold data
+from the current row. The key into that array will be the fully qualified
+name of the data control widget followed by a comma and the name of every
+field in the selected rows.
+<p><i>Example:</i>
+<br><tt>DataSet(.mf.dc,name)</tt>
+<br><tt>DataSet(.mf.dc,city)</tt>
+<p>If you want to bound some controls to the fields of the recordset, you
+will have to name their associate variable like that :
+<p><b><tt>DataSet(.mf.dc,salary)</tt></b> to get the "salary" field , or
+<b><tt>DataSet(.mf.dc,name)</tt></b> to get the "name" field. Using the
+data control procedures <b><tt>DataControl(.mf.dc)::moveNext</tt></b> or
+movePrevious will automatically update the <b><tt>DataSet(.mf.dc,...)</tt></b>
+array so the database information from entries in the form will be refreshed.
+<br>&nbsp;
+<p>Here it is a dumped <b><a href="formdemo.sql">sample database</a></b>
+that contains a demo database. What should you do ?
+<br>Shift-click the above URL in order to download that tiny file (4 Kb).
+Create a empty database and <b><tt>psql yourdatabase &lt;formdemo.sql</tt></b>
+<p>You should find a single table called "phonebook" a form called "Phone
+book" and another "A simple demo form".
+<p>First of all enter and view the phonebook table in table view. Note
+the fields and their values.
+<br>Open the "Phone book" form and enter a letter (a, e or i) in the field
+to the left of "Find" button then press Find. It's fine to enter one letter
+in order to get more records in query result. You will get information
+about the number of records selected, in the listbox you will see all the
+values of field "name" from the current data set. Use buttons to move to
+first, next, previous or last record within the record set.
+<p>In order to add a new record, press the "New" button in order to get
+new, clean entries. Fill them with your data and press "Add new" button.
+A new phonebook record will be added. Also, if you want to update a record,
+change it's values in the displayed fields after finding it and press "Update"
+button. The values will be updated in the database BUT NOT IN THE CURRENT
+QUERY RESULT . If you want to see them modified, make a new query trying
+to find it again.
+<p><font color="#000080">Before using the results from a query you should
+know that the information that has been retrieved could be found only in
+your computer client memory. It has <b>no live connection</b> to the data
+from the database. That's why it isn't possible to develop a simple update
+function as interface to that query-result widget. More than that : a query
+result could be obtained from a SQL command that return a non-updatable
+data set !!! For example fields gathered from multiple tables or summary
+fields. It isn't just simple to make an automatic update procedure. The
+programmer must know how to make the update or the append procedure, sometimes
+using key fields to point to the desired record or an OID. There are examples
+in the demo database in "Phone book" form. It may be possible that in the
+future, I will develop another pseudo-widget describing a table. It would
+be more simple than to implement an update or append or even a delete procedure.</font>
+<p>There is in the demo database also another simple form called "A simple
+demo form". It will show you how to handle variables from checkboxes, radiobuttons,
+how to use listboxes, open another forms and so on. I think they will help
+you.
+<p>In order to avoid naming user defined forms with&nbsp; a particular
+name of another PgAccess form, I would recommend naming them as udf0, udf1
+(user defined form 0 , 1 )
+<p>
+<hr WIDTH="25%">
+<p>Please feel free to send me your opinion at <b>teo@flex.ro</b> on forms
+designing and usage.
+<p><b><font size=+1>KEEP IN MIND !&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+THE FORM API MAY CHANGE IN ORDER TO BE MORE SIMPLE AND BETTER!</font></b>
+<br><b><font size=+1>SEND ME YOUR WISHES, YOUR IDEAS, YOUR OPINIONS !</font></b>
+<br><b><font size=+1>ALSO ... DON'T BLAME ME IF YOU WILL HAVE TO RE-DESIGN
+YOUR OLD FORMS DUE TO SOME INCOMPATIBILITIES WITH NEWER PGACCESS VERSIONS.</font></b>
+</body>
+</html>
