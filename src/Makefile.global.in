@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.106 2000/10/27 23:59:39 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.107 2000/10/29 16:13:28 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -332,27 +332,47 @@ $(top_builddir)/config.status: $(top_srcdir)/configure
 # that make will update all files that depended on the now removed
 # file.)
 
-COMPILE.c = $(CC) -c $(CPPFLAGS) $(CFLAGS)
-
 autodepend = @autodepend@
 
 ifeq ($(autodepend), yes)
 
+ifndef COMPILE.c
+COMPILE.c = $(CC) $(CFLAGS) $(CPPFLAGS) -c
+endif
+
+ifndef COMPILE.cc
+COMPILE.cc = $(CXX) $(CXXFLAGS) $(CPPFLAGS) -c
+endif
+
 DEPDIR = .deps
 df = $(DEPDIR)/$(*F)
+
+# This converts a .d file in the current directory to a .P file in the .deps
+# subdirectory, with the dummy targets as explained above.
+define postprocess-depend
+@if test ! -d $(DEPDIR); then mkdir $(DEPDIR); fi
+@cp $*.d $(df).P
+@sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
+     -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $(df).P
+@rm -f $*.d
+endef
 
 ifeq ($(GCC), yes)
 
 # GCC allows us to create object and dependency file in one invocation.
 %.o : %.c
-	$(COMPILE.c) -MMD $< -o $@
-	@if test ! -d $(DEPDIR); then mkdir $(DEPDIR); fi; \
-	 cp $*.d $(df).P; \
-	 sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
-	     -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $(df).P; \
-	 rm -f $*.d
+	$(COMPILE.c) -o $@ $< -MMD
+	$(postprocess-depend)
 
 endif # GCC
+
+ifeq ($(GXX), yes)
+
+%.o : %.cc
+	$(COMPILE.cc) -o $@ $< -MMD
+	$(postprocess-depend)
+
+endif # GXX
 
 # Include all the dependency files generated for the current
 # directory. List /dev/null as dummy because if the wildcard expands
@@ -364,6 +384,6 @@ clean distclean maintainer-clean: clean-deps
 
 .PHONY: clean-deps
 clean-deps:
-	@rm -rf $(DEPDIR)
+	@rm -rf $(DEPDIR) *.d
 
 endif # autodepend
