@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.2 1996/10/31 10:59:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.3 1997/04/24 15:54:52 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -255,8 +255,8 @@ index_outerjoin_references(List *inner_indxqual,
 					    outer_tlist,
 					    NIL);
 	    temp = make_opclause(replace_opid((Oper*)((Expr*)clause)->oper),
-				 joinvar,
-				 get_leftop(clause));
+	    			 get_leftop(clause),
+				 joinvar);
 	    t_list = lappend(t_list,temp);
 	} 
 	
