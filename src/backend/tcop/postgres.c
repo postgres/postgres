@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.234 2001/09/27 16:29:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.235 2001/10/19 00:44:08 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -30,9 +30,6 @@
 #if HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif
@@ -76,14 +73,6 @@ extern int	optind;
 extern char *optarg;
 
 char *debug_query_string;		/* used by pgmonitor */
-
-/*
- * for ps display
- */
-bool		HostnameLookup;
-bool		ShowPortNumber;
-
-bool		Log_connections = false;
 
 /* Note: whereToSendOutput is initialized for the bootstrap/standalone case */
 CommandDest whereToSendOutput = Debug;
@@ -1131,9 +1120,6 @@ PostgresMain(int argc, char *argv[],
 	int			firstchar;
 	StringInfo	parser_input;
 
-	char	   *remote_host;
-	unsigned short remote_port;
-
 	char	   *potential_DataDir = NULL;
 
 	/*
@@ -1164,6 +1150,8 @@ PostgresMain(int argc, char *argv[],
 		EnableExceptionHandling(true);
 		MemoryContextInit();
 	}
+
+	set_ps_display("startup");
 
 	SetProcessingMode(InitProcessing);
 
@@ -1626,65 +1614,6 @@ PostgresMain(int argc, char *argv[],
 			 real_argv[0]);
 
 	/*
-	 * Find remote host name or address.
-	 */
-	remote_host = NULL;
-
-	if (IsUnderPostmaster)
-	{
-		if (MyProcPort->raddr.sa.sa_family == AF_INET)
-		{
-			struct hostent *host_ent;
-			char	   *host_addr;
-
-			remote_port = ntohs(MyProcPort->raddr.in.sin_port);
-			host_addr = inet_ntoa(MyProcPort->raddr.in.sin_addr);
-
-			if (HostnameLookup)
-			{
-				host_ent = gethostbyaddr((char *) &MyProcPort->raddr.in.sin_addr, sizeof(MyProcPort->raddr.in.sin_addr), AF_INET);
-
-				if (host_ent)
-				{
-					remote_host = palloc(strlen(host_addr) + strlen(host_ent->h_name) + 3);
-					sprintf(remote_host, "%s[%s]", host_ent->h_name, host_addr);
-				}
-			}
-
-			if (remote_host == NULL)
-				remote_host = pstrdup(host_addr);
-
-			if (ShowPortNumber)
-			{
-				char	   *str = palloc(strlen(remote_host) + 7);
-
-				sprintf(str, "%s:%hu", remote_host, remote_port);
-				pfree(remote_host);
-				remote_host = str;
-			}
-		}
-		else
-/* not AF_INET */
-			remote_host = "[local]";
-
-
-		/*
-		 * Set process parameters for ps
-		 *
-		 * WARNING: On some platforms the environment will be moved around to
-		 * make room for the ps display string. So any references to
-		 * optarg or getenv() from above will be invalid after this call.
-		 * Better use strdup or something similar.
-		 */
-		init_ps_display(real_argc, real_argv, username, DBName, remote_host);
-		set_ps_display("startup");
-	}
-
-	if (Log_connections)
-		elog(DEBUG, "connection: host=%s user=%s database=%s",
-			 remote_host, username, DBName);
-
-	/*
 	 * General initialization.
 	 *
 	 * NOTE: if you are tempted to add code in this vicinity, consider
@@ -1716,7 +1645,7 @@ PostgresMain(int argc, char *argv[],
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.234 $ $Date: 2001/09/27 16:29:12 $\n");
+		puts("$Revision: 1.235 $ $Date: 2001/10/19 00:44:08 $\n");
 	}
 
 	/*

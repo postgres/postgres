@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.245 2001/10/03 21:58:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.246 2001/10/19 00:44:08 tgl Exp $
  *
  * NOTES
  *
@@ -73,7 +73,8 @@
 #include <fcntl.h>
 #include <time.h>
 #include <sys/param.h>
-/* moved here to prevent double define */
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <limits.h>
 
@@ -103,6 +104,7 @@
 #include "utils/exc.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
+#include "utils/ps_status.h"
 #include "bootstrap/bootstrap.h"
 
 #include "pgstat.h"
@@ -193,6 +195,10 @@ bool		SilentMode = false; /* silent mode (-S) */
 int			PreAuthDelay = 0;
 int			AuthenticationTimeout = 60;
 int			CheckPointTimeout = 300;
+
+bool		HostnameLookup;		/* for ps display */
+bool		ShowPortNumber;
+bool		Log_connections = false;
 
 /* Startup/shutdown state */
 static pid_t StartupPID = 0,
@@ -821,7 +827,7 @@ ServerLoop(void)
 		struct timeval timeout_tv;
 
 		if (CheckPointPID == 0 && checkpointed &&
-			Shutdown == NoShutdown && !FatalError)
+			Shutdown == NoShutdown && !FatalError && random_seed != 0)
 		{
 			time_t		now = time(NULL);
 
@@ -981,7 +987,9 @@ initMasks(fd_set *rmask, fd_set *wmask)
  * not return at all.
  *
  * (Note that elog(FATAL) stuff is sent to the client, so only use it
- * if that's what you want.)
+ * if that's what you want.  Return STATUS_ERROR if you don't want to
+ * send anything to the client, which would typically be appropriate
+ * if we detect a communications failure.)
  */
 static int
 ProcessStartupPacket(Port *port, bool SSLdone)
@@ -991,7 +999,12 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 	int32		len;
 	void	   *buf;
 
-	pq_getbytes((char *)&len, 4);
+	if (pq_getbytes((char *) &len, 4) == EOF)
+	{
+		elog(DEBUG, "incomplete startup packet");
+		return STATUS_ERROR;
+	}
+
 	len = ntohl(len);
 	len -= 4;
 
@@ -999,7 +1012,12 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 		elog(FATAL, "invalid length of startup packet");
 
 	buf = palloc(len);
-	pq_getbytes(buf, len);
+
+	if (pq_getbytes(buf, len) == EOF)
+	{
+		elog(DEBUG, "incomplete startup packet");
+		return STATUS_ERROR;
+	}
 
 	packet = buf;
 
@@ -1913,6 +1931,7 @@ split_opts(char **argv, int *argcp, char *s)
 static int
 DoBackend(Port *port)
 {
+	char	   *remote_host;
 	char	   *av[ARGV_SIZE * 2];
 	int			ac = 0;
 	char		debugbuf[ARGV_SIZE];
@@ -1981,14 +2000,78 @@ DoBackend(Port *port)
 
 	/*
 	 * Receive the startup packet (which might turn out to be a cancel
-	 * request packet); then perform client authentication.
+	 * request packet).
 	 */
 	status = ProcessStartupPacket(port, false);
 
-	if (status == 127)
-		return 0;				/* cancel request processed */
+	if (status != STATUS_OK)
+		return 0;				/* cancel request processed, or error */
 
-	ClientAuthentication(MyProcPort); /* might not return, if failure */
+	/*
+	 * Now that we have the user and database name, we can set the process
+	 * title for ps.  It's good to do this as early as possible in startup.
+	 *
+	 * But first, we need the remote host name.
+	 */
+	if (port->raddr.sa.sa_family == AF_INET)
+	{
+		unsigned short remote_port;
+		char	   *host_addr;
+
+		remote_port = ntohs(port->raddr.in.sin_port);
+		host_addr = inet_ntoa(port->raddr.in.sin_addr);
+
+		remote_host = NULL;
+
+		if (HostnameLookup)
+		{
+			struct hostent *host_ent;
+
+			host_ent = gethostbyaddr((char *) &port->raddr.in.sin_addr,
+									 sizeof(port->raddr.in.sin_addr),
+									 AF_INET);
+
+			if (host_ent)
+			{
+				remote_host = palloc(strlen(host_addr) + strlen(host_ent->h_name) + 3);
+				sprintf(remote_host, "%s[%s]", host_ent->h_name, host_addr);
+			}
+		}
+
+		if (remote_host == NULL)
+			remote_host = pstrdup(host_addr);
+
+		if (ShowPortNumber)
+		{
+			char	   *str = palloc(strlen(remote_host) + 7);
+
+			sprintf(str, "%s:%hu", remote_host, remote_port);
+			pfree(remote_host);
+			remote_host = str;
+		}
+	}
+	else
+	{
+		/* not AF_INET */
+		remote_host = "[local]";
+	}
+
+	/*
+	 * Set process parameters for ps
+	 *
+	 * WARNING: On some platforms the environment will be moved around to
+	 * make room for the ps display string. So any references to
+	 * optarg or getenv() from above will be invalid after this call.
+	 * Better use strdup or something similar.
+	 */
+	init_ps_display(real_argc, real_argv, port->user, port->database,
+					remote_host);
+	set_ps_display("authentication");
+
+	/*
+	 * Now perform authentication exchange.
+	 */
+	ClientAuthentication(port); /* might not return, if failure */
 
 	/*
 	 * Done with authentication.  Disable timeout, and prevent SIGTERM/SIGQUIT
@@ -1997,6 +2080,10 @@ DoBackend(Port *port)
 	if (! disable_sigalrm_interrupt())
 		elog(FATAL, "DoBackend: Unable to disable timer for auth timeout");
 	PG_SETMASK(&BlockSig);
+
+	if (Log_connections)
+		elog(DEBUG, "connection: host=%s user=%s database=%s",
+			 remote_host, port->user, port->database);
 
 	/*
 	 * Don't want backend to be able to see the postmaster random number
@@ -2138,7 +2225,7 @@ schedule_checkpoint(SIGNAL_ARGS)
 
 	/* Ignore request if checkpointing is currently disabled */
 	if (CheckPointPID == 0 && checkpointed &&
-		Shutdown == NoShutdown && !FatalError)
+		Shutdown == NoShutdown && !FatalError && random_seed != 0)
 	{
 		CheckPointPID = CheckPointDataBase();
 		/* note: if fork fails, CheckPointPID stays 0; nothing happens */
@@ -2302,6 +2389,7 @@ SSDataBase(int xlop)
 
 	if ((pid = fork()) == 0)	/* child */
 	{
+		const char *statmsg;
 		char	   *av[ARGV_SIZE * 2];
 		int			ac = 0;
 		char		nbbuf[ARGV_SIZE];
@@ -2320,6 +2408,30 @@ SSDataBase(int xlop)
 
 		/* Close the postmaster's sockets */
 		ClosePostmasterPorts(true);
+
+		/*
+		 * Identify myself via ps
+		 *
+		 * WARNING: On some platforms the environment will be moved around to
+		 * make room for the ps display string.
+		 */
+		switch (xlop)
+		{
+			case BS_XLOG_STARTUP:
+				statmsg = "startup subprocess";
+				break;
+			case BS_XLOG_CHECKPOINT:
+				statmsg = "checkpoint subprocess";
+				break;
+			case BS_XLOG_SHUTDOWN:
+				statmsg = "shutdown subprocess";
+				break;
+			default:
+				statmsg = "??? subprocess";
+				break;
+		}
+		init_ps_display(real_argc, real_argv, statmsg, "", "");
+		set_ps_display("");
 
 		/* Set up command-line arguments for subprocess */
 		av[ac++] = "postgres";
