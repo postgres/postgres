@@ -122,7 +122,7 @@ From tgl@sss.pgh.pa.us Sun May 14 17:30:56 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA05808
 	for <pgman@candle.pha.pa.us>; Sun, 14 May 2000 17:30:52 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id RAA16657 for <pgman@candle.pha.pa.us>; Sun, 14 May 2000 17:29:52 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id RAA16657 for <pgman@candle.pha.pa.us>; Sun, 14 May 2000 17:29:52 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id RAA20914;
 	Sun, 14 May 2000 17:29:30 -0400 (EDT)
@@ -756,4 +756,161 @@ candidates were discarded before it.
 Comments?
 
 			regards, tom lane
+
+From pgsql-general-owner+M18949=candle.pha.pa.us=pgman@postgresql.org Sat Dec 29 15:47:47 2001
+Return-path: <pgsql-general-owner+M18949=candle.pha.pa.us=pgman@postgresql.org>
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fBTKlkT05111
+	for <pgman@candle.pha.pa.us>; Sat, 29 Dec 2001 15:47:46 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fBTKhZN74322
+	for <pgman@candle.pha.pa.us>; Sat, 29 Dec 2001 14:43:35 -0600 (CST)
+	(envelope-from pgsql-general-owner+M18949=candle.pha.pa.us=pgman@postgresql.org)
+Received: from candle.pha.pa.us (216-55-132-35.dsl.san-diego.abac.net [216.55.132.35])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fBTKaem38452
+	for <pgsql-general@postgresql.org>; Sat, 29 Dec 2001 15:36:40 -0500 (EST)
+	(envelope-from pgman@candle.pha.pa.us)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.11.6/8.10.1) id fBTKaTg04256;
+	Sat, 29 Dec 2001 15:36:29 -0500 (EST)
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-ID: <200112292036.fBTKaTg04256@candle.pha.pa.us>
+Subject: Re: [GENERAL] Casting Varchar to Numeric
+In-Reply-To: <20011206150158.O28880-100000@megazone23.bigpanda.com>
+To: Stephan Szabo <sszabo@megazone23.bigpanda.com>
+Date: Sat, 29 Dec 2001 15:36:29 -0500 (EST)
+cc: Andy Marden <amarden@usa.net>, pgsql-general@postgresql.org
+X-Mailer: ELM [version 2.4ME+ PL96 (25)]
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-general-owner@postgresql.org
+Status: OR
+
+> On Mon, 3 Dec 2001, Andy Marden wrote:
+> 
+> > Martijn,
+> >
+> > It does work (believe it or not). I've now tried the method you mention
+> > below - that also works and is much nicer. I can't believe that PostgreSQL
+> > can't work this out. Surely implementing an algorithm that understands that
+> > if you can go from a ->b and b->c then you can certainly go from a->c. If
+> 
+> It's more complicated than that (and postgres does some of this but not
+> all), for example the cast text->float8->numeric potentially loses
+> precision and should probably not be an automatic cast for that reason.
+> 
+> > this is viewed as too complex a task for the internals - at least a diagram
+> > or some way of understanding how you should go from a->c would be immensely
+> > helpful wouldn't it! Daunting for anyone picking up the database and trying
+> > to do something simple(!)
+> 
+> There may be a need for documentation on this.  Would you like to write
+> some ;)
+
+OK, I ran some tests:
+	
+	test=> create table test (x text);
+	CREATE
+	test=> insert into test values ('323');
+	INSERT 5122745 1
+	test=> select cast (x as numeric) from test;
+	ERROR:  Cannot cast type 'text' to 'numeric'
+
+I can see problems with automatically casting numeric to text because
+you have to guess the desired format, but going from text to numeric
+seems quite easy to do.  Is there a reason we don't do it?
+
+I can cast to integer and float8 fine:
+	
+	test=> select cast ( x as integer) from test;
+	 ?column? 
+	----------
+	      323
+	(1 row)
+
+	test=> select cast ( x as float8) from test;
+	 ?column? 
+	----------
+	      323
+	(1 row)
+
+-- 
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-general-owner+M18951=candle.pha.pa.us=pgman@postgresql.org Sat Dec 29 19:10:38 2001
+Return-path: <pgsql-general-owner+M18951=candle.pha.pa.us=pgman@postgresql.org>
+Received: from west.navpoint.com (west.navpoint.com [207.106.42.13])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fBU0AbT23972
+	for <pgman@candle.pha.pa.us>; Sat, 29 Dec 2001 19:10:37 -0500 (EST)
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by west.navpoint.com (8.11.6/8.10.1) with ESMTP id fBTNVj008959
+	for <pgman@candle.pha.pa.us>; Sat, 29 Dec 2001 18:31:45 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fBTNQrN78655
+	for <pgman@candle.pha.pa.us>; Sat, 29 Dec 2001 17:26:53 -0600 (CST)
+	(envelope-from pgsql-general-owner+M18951=candle.pha.pa.us=pgman@postgresql.org)
+Received: from sss.pgh.pa.us ([192.204.191.242])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fBTN8Fm47978
+	for <pgsql-general@postgresql.org>; Sat, 29 Dec 2001 18:08:15 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id fBTN7vg20245;
+	Sat, 29 Dec 2001 18:07:57 -0500 (EST)
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Stephan Szabo <sszabo@megazone23.bigpanda.com>,
+   Andy Marden <amarden@usa.net>, pgsql-general@postgresql.org
+Subject: Re: [GENERAL] Casting Varchar to Numeric 
+In-Reply-To: <200112292036.fBTKaTg04256@candle.pha.pa.us> 
+References: <200112292036.fBTKaTg04256@candle.pha.pa.us>
+Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
+	message dated "Sat, 29 Dec 2001 15:36:29 -0500"
+Date: Sat, 29 Dec 2001 18:07:57 -0500
+Message-ID: <20242.1009667277@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-general-owner@postgresql.org
+Status: OR
+
+Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> I can see problems with automatically casting numeric to text because
+> you have to guess the desired format, but going from text to numeric
+> seems quite easy to do.  Is there a reason we don't do it?
+
+I do not think it's a good idea to have implicit casts between text and
+everything under the sun, because that essentially destroys the type
+checking system.  What we need (see previous discussion) is a flag in
+pg_proc that says whether a type conversion function may be invoked
+implicitly or not.  I've got no problem with offering text(numeric) and
+numeric(text) functions that are invoked by explicit function calls or
+casts --- I just don't want the system trying to use them to make
+sense of a bogus query.
+
+> I can cast to integer and float8 fine:
+
+I don't believe that those should be available as implicit casts either.
+They are, at the moment:
+
+regression=# select 33 || 44.0;
+ ?column?
+----------
+ 3344
+(1 row)
+
+Ugh.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://archives.postgresql.org
 
