@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.119 2002/09/01 23:26:05 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.120 2002/09/02 05:53:23 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1728,6 +1728,34 @@ PostgreSQL documentation
       </row>
 
       <row>
+       <entry>
+        <function>decode</function>(<parameter>string</parameter> <type>text</type>,
+        <parameter>type</parameter> <type>text</type>)
+       </entry>
+       <entry><type>bytea</type></entry>
+       <entry>
+        Decodes binary data from <parameter>string</parameter> previously 
+        encoded with encode().  Parameter type is same as in encode().
+       </entry>
+       <entry><literal>decode('MTIzAAE=', 'base64')</literal></entry>
+       <entry><literal>123\000\001</literal></entry>
+      </row>       
+
+      <row>
+       <entry>
+        <function>encode</function>(<parameter>data</parameter> <type>bytea</type>,
+        <parameter>type</parameter> <type>text</type>)
+       </entry>
+       <entry><type>text</type></entry>
+       <entry>
+        Encodes binary data to <acronym>ASCII</acronym>-only representation.  Supported
+        types are: 'base64', 'hex', 'escape'.
+       </entry>
+       <entry><literal>encode('123\\000\\001', 'base64')</literal></entry>
+       <entry><literal>MTIzAAE=</literal></entry>
+      </row>       
+
+      <row>
        <entry><function>initcap</function>(<type>text</type>)</entry>
        <entry><type>text</type></entry>
        <entry>Converts first letter of each word (whitespace separated) to upper case.</entry>
@@ -1829,6 +1857,18 @@ PostgreSQL documentation
       </row>
 
       <row>
+       <entry><function>replace</function>(<parameter>string</parameter> <type>text</type>,
+       <parameter>from</parameter> <type>text</type>,
+       <parameter>to</parameter> <type>text</type>)</entry>
+       <entry><type>text</type></entry>
+       <entry>Replace all occurrences in <parameter>string</parameter> of substring
+        <parameter>from</parameter> with substring <parameter>to</parameter>
+       </entry>
+       <entry><literal>replace('abcdefabcdef', 'cd', 'XX')</literal></entry>
+       <entry><literal>abXXefabXXef</literal></entry>
+      </row>
+
+      <row>
        <entry>
         <function>rpad</function>(<parameter>string</parameter> <type>text</type>,
         <parameter>length</parameter> <type>integer</type>
@@ -1856,6 +1896,18 @@ PostgreSQL documentation
        </entry>
        <entry><literal>rtrim('trimxxxx','x')</literal></entry>
        <entry><literal>trim</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>split</function>(<parameter>string</parameter> <type>text</type>,
+       <parameter>delimiter</parameter> <type>text</type>,
+       <parameter>column</parameter> <type>integer</type>)</entry>
+       <entry><type>text</type></entry>
+       <entry>Split <parameter>string</parameter> on <parameter>delimiter</parameter>
+        returning the resulting (one based) <parameter>column</parameter> number.
+       </entry>
+       <entry><literal>split('abc~@~def~@~ghi','~@~',2)</literal></entry>
+       <entry><literal>def</literal></entry>
       </row>
 
       <row>
@@ -1892,6 +1944,17 @@ PostgreSQL documentation
       </row>
 
       <row>
+       <entry><function>to_hex</function>(<parameter>number</parameter> <type>integer</type>
+       or <type>bigint</type>)</entry>
+       <entry><type>text</type></entry>
+       <entry>Convert <parameter>number</parameter> to its equivalent hexadecimal
+        representation.
+       </entry>
+       <entry><literal>to_hex(9223372036854775807::bigint)</literal></entry>
+       <entry><literal>7fffffffffffffff</literal></entry>
+      </row>
+
+      <row>
        <entry>
         <function>translate</function>(<parameter>string</parameter>
         <type>text</type>,
@@ -1909,34 +1972,6 @@ PostgreSQL documentation
        <entry><literal>a23x5</literal></entry>
       </row>       
       
-      <row>
-       <entry>
-        <function>encode</function>(<parameter>data</parameter> <type>bytea</type>,
-        <parameter>type</parameter> <type>text</type>)
-       </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Encodes binary data to <acronym>ASCII</acronym>-only representation.  Supported
-        types are: 'base64', 'hex', 'escape'.
-       </entry>
-       <entry><literal>encode('123\\000\\001', 'base64')</literal></entry>
-       <entry><literal>MTIzAAE=</literal></entry>
-      </row>       
-
-      <row>
-       <entry>
-        <function>decode</function>(<parameter>string</parameter> <type>text</type>,
-        <parameter>type</parameter> <type>text</type>)
-       </entry>
-       <entry><type>bytea</type></entry>
-       <entry>
-        Decodes binary data from <parameter>string</parameter> previously 
-        encoded with encode().  Parameter type is same as in encode().
-       </entry>
-       <entry><literal>decode('MTIzAAE=', 'base64')</literal></entry>
-       <entry><literal>123\000\001</literal></entry>
-      </row>       
-
      </tbody>
     </tgroup>
    </table>
