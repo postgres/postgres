@@ -92,8 +92,8 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * should PQclear PGresult whenever it is no longer needed to avoid
-	 * memory leaks
+	 * make sure to PQclear() a PGresult whenever it is no longer
+	 * needed to avoid memory leaks
 	 */
 	PQclear(res1);
 
@@ -106,7 +106,7 @@ main(int argc, char **argv)
 	{
 		fprintf(stderr, "DECLARE CURSOR command failed\n");
 		PQclear(res1);
-		exit_nicely(conn1, NULL);
+		exit_nicely(conn1, conn2);
 	}
 	PQclear(res1);
 
@@ -115,7 +115,7 @@ main(int argc, char **argv)
 	{
 		fprintf(stderr, "FETCH ALL command didn't return tuples properly\n");
 		PQclear(res1);
-		exit_nicely(conn1, NULL);
+		exit_nicely(conn1, conn2);
 	}
 
 	/* first, print out the attribute names */
@@ -142,10 +142,10 @@ main(int argc, char **argv)
 	res1 = PQexec(conn1, "END");
 	PQclear(res1);
 
-	/* close the connection to the database and cleanup */
+	/* close the connections to the database and cleanup */
 	PQfinish(conn1);
+	PQfinish(conn2);
 
 /*	 fclose(debug); */
-	return 0;					/* Though PQfinish(conn1) has called
-								 * exit(1) */
+	return 0;
 }
