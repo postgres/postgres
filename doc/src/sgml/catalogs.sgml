@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.88 2004/06/18 06:13:02 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.89 2004/07/04 23:34:23 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -2763,7 +2763,7 @@
      <row>
       <entry><structfield>prolang</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal><link linkend="catalog-pg-language"><structname>pg_langauge</structname></link>.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-language"><structname>pg_language</structname></link>.oid</literal></entry>
       <entry>Implementation language or call interface of this function</entry>
      </row>
 
