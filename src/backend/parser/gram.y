@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.44 1999/01/18 06:32:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.45 1999/01/18 06:46:32 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2797,7 +2797,7 @@ SelectStmt:	  select_w_o_sort sort_clause for_update_clause
 				  first_select->forUpdate = $3;
 				  $$ = (Node *)first_select;
 				}		
-				if ((SelectStmt *)$$)->forUpdate != NULL)
+				if (((SelectStmt *)$$)->forUpdate != NULL)
 				{
 					SelectStmt *n = (SelectStmt *)$1;
 
