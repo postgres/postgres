@@ -2,6 +2,8 @@
 
 #include "extern.h"
 
+#define indicator_set ind_typ != NULL && ind_typ->typ != ECPGt_NO_INDICATOR
+
 struct ECPGstruct_member struct_no_indicator = {"no_indicator", &ecpg_no_indicator, NULL};
 
 /* malloc + error check */
@@ -11,10 +13,7 @@ mm_alloc(size_t size)
 	void	   *ptr = malloc(size);
 
 	if (ptr == NULL)
-	{
-		fprintf(stderr, "Out of memory\n");
-		exit(OUT_OF_MEMORY);
-	}
+		mmerror(OUT_OF_MEMORY, ET_FATAL, "Out of memory\n");
 
 	return ptr;
 }
@@ -26,11 +25,8 @@ mm_strdup(const char *string)
 	char	   *new = strdup(string);
 
 	if (new == NULL)
-	{
-		fprintf(stderr, "Out of memory\n");
-		exit(OUT_OF_MEMORY);
-	}
-
+		mmerror(OUT_OF_MEMORY, ET_FATAL, "Out of memory\n");
+		
 	return new;
 }
 
@@ -202,23 +198,19 @@ static void ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype typ,
 static void ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, long arrsiz,
 				  struct ECPGtype * typ, struct ECPGtype * ind_typ, const char *offset, const char *prefix, const char *ind_prefix);
 
-
 void
 ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * typ, const char *ind_name, struct ECPGtype * ind_typ, const char *prefix, const char *ind_prefix)
 {
-/*	if (ind_typ == NULL)
-	{
-			ind_typ = &ecpg_no_indicator;
-			ind_name = "no_indicator";
-	}*/
-
 	switch (typ->typ)
 	{
 		case ECPGt_array:
+			if (indicator_set && ind_typ->typ != ECPGt_array)
+				mmerror(INDICATOR_NOT_ARRAY, ET_FATAL, "Indicator for array/pointer has to be array/pointer.\n");
+			
 			switch (typ->u.element->typ)
 			{
 				case ECPGt_array:
-					yyerror("No nested arrays allowed (except strings)");		/* array of array */
+					mmerror(PARSE_ERROR, ET_ERROR, "No nested arrays allowed (except strings)");		/* array of array */
 					break;
 				case ECPGt_struct:
 				case ECPGt_union:
@@ -235,33 +227,38 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * typ, const char *in
 						if (ind_typ->typ == ECPGt_NO_INDICATOR)
 							ECPGdump_a_simple(o, ind_name, ind_typ->typ, ind_typ->size, -1, NULL, ind_prefix);
 						else
-						{
-							if (ind_typ->typ != ECPGt_array)
-							{
-								fprintf(stderr, "Indicator for an array has to be array too.\n");
-								exit(INDICATOR_NOT_ARRAY);
-							}
 							ECPGdump_a_simple(o, ind_name, ind_typ->u.element->typ,
 											  ind_typ->u.element->size, ind_typ->size, NULL, prefix);
-						}
 					}
 			}
 			break;
 		case ECPGt_struct:
+			if (indicator_set && ind_typ->typ != ECPGt_struct)
+				mmerror(INDICATOR_NOT_STRUCT, ET_FATAL, "Indicator for struct has to be struct.\n");
+
 			ECPGdump_a_struct(o, name, ind_name, 1, typ, ind_typ, NULL, prefix, ind_prefix);
 			break;
 		case ECPGt_union:		/* cannot dump a complete union */
 			yyerror("Type of union has to be specified");
 			break;
 		case ECPGt_char_variable:
+			if (indicator_set && (ind_typ->typ == ECPGt_struct || ind_typ->typ == ECPGt_array))
+				mmerror(INDICATOR_NOT_SIMPLE, ET_FATAL, "Indicator for simple datatype has to be simple.\n");
+
 			ECPGdump_a_simple(o, name, typ->typ, 1, 1, NULL, prefix);
 			ECPGdump_a_simple(o, ind_name, ind_typ->typ, ind_typ->size, -1, NULL, ind_prefix);
 			break;
 		case ECPGt_descriptor:
+			if (indicator_set && (ind_typ->typ == ECPGt_struct || ind_typ->typ == ECPGt_array))
+				mmerror(INDICATOR_NOT_SIMPLE, ET_FATAL, "Indicator for simple datatype has to be simple.\n");
+
 			ECPGdump_a_simple(o, name, typ->typ, 0, -1, NULL, prefix);
 			ECPGdump_a_simple(o, ind_name, ind_typ->typ, ind_typ->size, -1, NULL, ind_prefix);
 			break;
 		default:
+			if (indicator_set && (ind_typ->typ == ECPGt_struct || ind_typ->typ == ECPGt_array))
+				mmerror(INDICATOR_NOT_SIMPLE, ET_FATAL, "Indicator for simple datatype has to be simple.\n");
+
 			ECPGdump_a_simple(o, name, typ->typ, typ->size, -1, NULL, prefix);
 			if (ind_typ != NULL)
 				ECPGdump_a_simple(o, ind_name, ind_typ->typ, ind_typ->size, -1, NULL, ind_prefix);
@@ -361,7 +358,7 @@ ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, long arrsiz, 
 	struct ECPGstruct_member *p,
 			   *ind_p = NULL;
 	char		obuf[BUFSIZ];
-	char		pbuf[BUFSIZ*2],
+	char		pbuf[BUFSIZ],
 				ind_pbuf[BUFSIZ];
 	const char *offset;
 

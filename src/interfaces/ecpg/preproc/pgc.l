@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.81 2001/09/19 14:09:32 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.82 2001/12/09 15:27:49 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -306,7 +306,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 <xc>{xcinside}	{ ECHO; }
 <xc>{op_chars}  { ECHO; }
 
-<xc><<EOF>>            { mmerror(ET_ERROR, "Unterminated /* comment"); }
+<xc><<EOF>>            { mmerror(PARSE_ERROR, ET_ERROR, "Unterminated /* comment"); }
 
 <SQL>{xbitstart}		{
 					BEGIN(xbit);
@@ -315,7 +315,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 <xbit>{xbitstop}		{
 					BEGIN(SQL);
 					if (literalbuf[strspn(literalbuf, "01") + 1] != '\0')
-						mmerror(ET_ERROR, "invalid bit string input.");
+						mmerror(PARSE_ERROR, ET_ERROR, "invalid bit string input.");
 					yylval.str = literalbuf;
 			                return BITCONST;
 				}
@@ -328,7 +328,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 <xbit>{xbitcat}		{
 					/* ignore */
 				}
-<xbit><<EOF>>		{ mmerror(ET_ERROR, "Unterminated bit string"); }
+<xbit><<EOF>>		{ mmerror(PARSE_ERROR, ET_ERROR, "Unterminated bit string"); }
 
 <SQL>{xhstart}		{
 					BEGIN(xh);
@@ -347,12 +347,12 @@ cppline			{space}*#(.*\\{line_end})*.*
 	                                        || val != (long) ((int32) val)
 #endif
 						)
-						mmerror(ET_ERROR, "Bad hexadecimal integer input");
+						mmerror(PARSE_ERROR, ET_ERROR, "Bad hexadecimal integer input");
 					yylval.ival = val;
 					return ICONST;
 				}
 
-<xh><<EOF>>		{ mmerror(ET_ERROR, "Unterminated hexadecimal integer"); }
+<xh><<EOF>>		{ mmerror(PARSE_ERROR, ET_ERROR, "Unterminated hexadecimal integer"); }
 
 {xqstart}			{
 					state_before = YYSTATE;
@@ -373,7 +373,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 					/* ignore */
 				}
 
-<xq><<EOF>> 	 	        { mmerror(ET_ERROR, "Unterminated quoted string"); }
+<xq><<EOF>> 	 	        { mmerror(PARSE_ERROR, ET_ERROR, "Unterminated quoted string"); }
 
 <SQL>{xdstart}			{
 					state_before = YYSTATE;
@@ -396,7 +396,7 @@ cppline			{space}*#(.*\\{line_end})*.*
                                                         literalbuf, NAMEDATALEN-1, literalbuf);
                                                 literalbuf[NAMEDATALEN-1] = '\0';
 #endif
- 						mmerror(ET_NOTICE, errortext);
+ 						mmerror(PARSE_ERROR, ET_NOTICE, errortext);
                                         }
 
 					yylval.str = mm_strdup(literalbuf);
@@ -413,7 +413,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 <xd>{xdinside}			{
 					addlit(yytext, yyleng);
 				}
-<xd,xdc><<EOF>> 	 	        { mmerror(ET_ERROR, "Unterminated quoted identifier"); }
+<xd,xdc><<EOF>> 	 	        { mmerror(PARSE_ERROR, ET_ERROR, "Unterminated quoted identifier"); }
 {xdstart}			{
 					state_before = YYSTATE;
 					BEGIN(xdc);
@@ -687,10 +687,10 @@ cppline			{space}*#(.*\\{line_end})*.*
 
 <C,xskip>{exec_sql}{elif}{space_or_nl}*	{	/* pop stack */
 						if ( preproc_tos == 0 ) {
-						    mmerror(ET_FATAL, "Missing matching 'EXEC SQL IFDEF / EXEC SQL IFNDEF'");
+						    mmerror(PARSE_ERROR, ET_FATAL, "Missing matching 'EXEC SQL IFDEF / EXEC SQL IFNDEF'");
 						}
 						else if ( stacked_if_value[preproc_tos].else_branch ) {
-						    mmerror(ET_FATAL, "Missing 'EXEC SQL ENDIF;'");
+						    mmerror(PARSE_ERROR, ET_FATAL, "Missing 'EXEC SQL ENDIF;'");
 						}
 						else {
 						    preproc_tos--;
@@ -701,7 +701,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 
 <C,xskip>{exec_sql}{else}{space_or_nl}*";" {	/* only exec sql endif pops the stack, so take care of duplicated 'else' */
 						if ( stacked_if_value[preproc_tos].else_branch ) {
-						    mmerror(ET_FATAL, "Duplicated 'EXEC SQL ELSE;'");
+						    mmerror(PARSE_ERROR, ET_FATAL, "Duplicated 'EXEC SQL ELSE;'");
 						}
 						else {
 						    stacked_if_value[preproc_tos].else_branch = TRUE;
@@ -719,7 +719,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 					}
 <C,xskip>{exec_sql}{endif}{space_or_nl}*";" { 
 						if ( preproc_tos == 0 ) {
-						    mmerror(ET_FATAL, "Unmatched 'EXEC SQL ENDIF;'");
+						    mmerror(PARSE_ERROR, ET_FATAL, "Unmatched 'EXEC SQL ENDIF;'");
 						}
 						else {
 						    preproc_tos--;
@@ -737,7 +737,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 
 <xcond>{identifier}{space_or_nl}*";" {
 					if ( preproc_tos >= MAX_NESTED_IF-1 ) {
-					    mmerror(ET_FATAL, "Too many nested 'EXEC SQL IFDEF' conditions");
+					    mmerror(PARSE_ERROR, ET_FATAL, "Too many nested 'EXEC SQL IFDEF' conditions");
 					}
 					else {
 					    struct _defines *defptr;
@@ -864,7 +864,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 			  if ( preproc_tos > 0 ) {
 			      preproc_tos = 0;
 
-			      mmerror(ET_FATAL, "Missing 'EXEC SQL ENDIF;'");
+			      mmerror(PARSE_ERROR, ET_FATAL, "Missing 'EXEC SQL ENDIF;'");
 			  }
 
 			  if (yy_buffer == NULL)

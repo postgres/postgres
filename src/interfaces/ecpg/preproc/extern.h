@@ -55,7 +55,7 @@ extern int	yylex(void);
 extern void yyerror(char *);
 extern void *mm_alloc(size_t), *mm_realloc(void *, size_t);
 extern char *mm_strdup(const char *);
-extern void mmerror(enum errortype, char *);
+extern void mmerror(int, enum errortype, char *);
 extern ScanKeyword *ScanECPGKeywordLookup(char *);
 extern ScanKeyword *ScanCKeywordLookup(char *);
 extern void output_get_descr_header(char *);
@@ -85,3 +85,5 @@ extern ScanKeyword *ScanKeywordLookup(char *text);
 #define PARSE_ERROR			3
 #define INDICATOR_NOT_ARRAY 4
 #define OUT_OF_MEMORY		5
+#define INDICATOR_NOT_STRUCT	6
+#define INDICATOR_NOT_SIMPLE	7

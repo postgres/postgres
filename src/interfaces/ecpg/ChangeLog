@@ -1170,5 +1170,10 @@ Thu Dec  6 14:02:56 CET 2001
 Sat Dec  8 21:35:45 CET 2001
 
 	- Fix ecpg to allow pointer to structs.
+
+Sun Dec  9 16:21:30 CET 2001
+
+	- Fixed several bugs concerning indicators and added error messages
+	  instead of segfaults.
 	- Set ecpg version to 2.9.0.
         - Set library version to 3.3.0.
