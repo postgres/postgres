@@ -11,6 +11,8 @@ EXEC SQL BEGIN DECLARE SECTION;
 	int i = 3;
 	int *did = &i;
 	int a[10] = {9,8,7,6,5,4,3,2,1,0};
+	char text[10] = "klmnopqrst";
+	char *t = "uvwxyz1234";
 	double f;
 EXEC SQL END DECLARE SECTION;
 	FILE *dbgs;
@@ -26,33 +28,35 @@ EXEC SQL END DECLARE SECTION;
 
  	EXEC SQL BEGIN WORK;
 
-/*	EXEC SQL CREATE TABLE test (f decimal(8,2), i int, a int[10]);*/
-	EXEC SQL CREATE TABLE test (f float, i int, a int[10]);
+	EXEC SQL CREATE TABLE test (f float, i int, a int[10], text char(10));
 
-	EXEC SQL INSERT INTO test(f,i,a) VALUES(404.90,1,'{0,1,2,3,4,5,6,7,8,9}');
+	EXEC SQL INSERT INTO test(f,i,a,text) VALUES(404.90,1,'{0,1,2,3,4,5,6,7,8,9}','abcdefghij');
 
-	EXEC SQL INSERT INTO test(f,i,a) VALUES(140787.0,2,:a);
+	EXEC SQL INSERT INTO test(f,i,a,text) VALUES(140787.0,2,:a,:text);
 	
-	EXEC SQL INSERT INTO test(f,i,a) VALUES(14.07,:did,:a);
+	EXEC SQL INSERT INTO test(f,i,a,text) VALUES(14.07,:did,:a,:t);
 
 	EXEC SQL COMMIT;
 
 	EXEC SQL BEGIN WORK; 
 
-	EXEC SQL SELECT f
-         INTO :f
+	EXEC SQL SELECT f,text
+         INTO :f,:text
          FROM test
-         WHERE i = :i;
+         WHERE i = 1;
 
-	printf("Found f=%f\n", f);
+	printf("Found f=%f text=%10.10s\n", f, text);
 
-	EXEC SQL SELECT a
-	 INTO :a
+	f=14.07;
+	EXEC SQL SELECT a,text
+	 INTO :a,:t
 	 FROM test
 	 WHERE f = :f;
 
 	for (i = 0; i < 10; i++)
 		printf("Found a[%d] = %d\n", i, a[i]);
+
+	printf("Found text=%10.10s\n", t);
 
 	EXEC SQL DROP TABLE test;
 

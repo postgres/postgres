@@ -7,9 +7,10 @@
 #include <sqlca.h>
 
 void
-ECPGraise(int line, int code, const char *str)
+ECPGraise(int line, int code, char *str)
 {
 	sqlca.sqlcode = code;
+	
 	switch (code)
 	{ 
 		case ECPG_NOT_FOUND: 
@@ -117,9 +118,13 @@ ECPGraise(int line, int code, const char *str)
 				"Variable is not a character type in line %d.", line);
 			break;
 			
-		case ECPG_PGSQL: 
+		case ECPG_PGSQL:
+			/* strip trailing newline */
+			if (str[strlen(str)-1] == '\n') 
+				str[strlen(str)-1] = '\0';
+							
 			snprintf(sqlca.sqlerrm.sqlerrmc,sizeof(sqlca.sqlerrm.sqlerrmc),
-				"Postgres error '%s' in line %d.", str, line);
+				"'%s' in line %d.", str, line);
 			break;
 			
 		case ECPG_TRANS: 
@@ -134,12 +139,12 @@ ECPGraise(int line, int code, const char *str)
 			
 		default:
 		    	snprintf(sqlca.sqlerrm.sqlerrmc,sizeof(sqlca.sqlerrm.sqlerrmc),
-				"SQL error #%d in line %d.",code, line);
+				"SQL error #%d in line %d.", code, line);
 			break;
 	}
 	
 	sqlca.sqlerrm.sqlerrml = strlen(sqlca.sqlerrm.sqlerrmc);
-	
+
         /* free all memory we have allocated for the user */
         free_auto_mem();
 }

@@ -325,7 +325,7 @@ make_name(void)
 %type  <str>    TriggerActionTime CreateTrigStmt DropPLangStmt PLangTrusted
 %type  <str>    CreatePLangStmt IntegerOnly TriggerFuncArgs TriggerFuncArg
 %type  <str>    ViewStmt LoadStmt CreatedbStmt createdb_opt_encoding
-%type  <str>	createdb_opt_location opt_encoding AlterTableStmt
+%type  <str>	createdb_opt_location opt_encoding
 %type  <str>    DropdbStmt ClusterStmt grantee RevokeStmt table_expr Bit bit
 %type  <str>	GrantStmt privileges operation_commalist operation
 %type  <str>	opt_cursor opt_lmode ConstraintsSetStmt comment_tg
@@ -333,7 +333,7 @@ make_name(void)
 %type  <str>    select_clause opt_select_limit select_limit_value ConstraintTimeSpec
 %type  <str>    select_offset_value using_expr join_expr ReindexStmt
 %type  <str>	using_list from_expr join_clause join_type
-%type  <str>	join_qual update_list join_clause join_clause_with_union
+%type  <str>	join_qual update_list join_clause_with_union
 %type  <str>	opt_level opt_lock lock_type users_in_new_group_clause
 %type  <str>    OptConstrFromTable comment_op OptTempTableName
 %type  <str>    constraints_set_list constraints_set_namelist comment_fn
@@ -359,7 +359,7 @@ make_name(void)
 %type  <str>	enum_type civariableonly ECPGCursorStmt ECPGDeallocate
 %type  <str>	ECPGFree ECPGDeclare ECPGVar opt_at enum_definition
 %type  <str>    struct_type s_struct declaration declarations variable_declarations
-%type  <str>    s_struct s_union union_type ECPGSetAutocommit on_off
+%type  <str>    s_union union_type ECPGSetAutocommit on_off
 %type  <str>	ECPGAllocateDescr ECPGDeallocateDescr symbol opt_symbol
 %type  <str>	ECPGGetDescriptorHeader ECPGColId ECPGColLabel ECPGTypeName
 %type  <str>	ECPGLabelTypeName
@@ -4349,7 +4349,7 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_initializer
                                $$ = cat_str(4, $1, mm_strdup($2), $3.str, $4);
                                break;
                            case ECPGt_varchar:
-                               if (dimension == -1)
+                               if (dimension < 0)
                                    type = ECPGmake_simple_type(actual_type[struct_level].type_enum, length);
                                else
                                    type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length), dimension);

@@ -198,13 +198,6 @@ static void ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, l
 void
 ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * typ, const char *ind_name, struct ECPGtype * ind_typ, const char *prefix, const char *ind_prefix)
 {
-#if 0
-	if (ind_typ == NULL)
-	{
-		ind_typ = &ecpg_no_indicator;
-		ind_name = "no_indicator";
-	}
-#endif
 	switch (typ->typ)
 	{
 		case ECPGt_array:
@@ -273,23 +266,35 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype typ,
 		char	   *variable = (char *) mm_alloc(strlen(name) + ((prefix == NULL) ? 0 : strlen(prefix)) + 4);
 		char	   *offset = (char *) mm_alloc(strlen(name) + strlen("sizeof(struct varchar_)") + 1);
 
-		/* we have to use the pointer except for arrays with given bounds */
-		if (arrsize > 0)
-			sprintf(variable, "(%s%s)", prefix ? prefix : "", name);
-		else
-			sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
-
 		switch (typ)
 		{
 			case ECPGt_varchar:
+				/* we have to use the pointer except for arrays with given bounds */
+				if (arrsize > 0)
+					sprintf(variable, "(%s%s)", prefix ? prefix : "", name);
+				else
+					sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
+
 				sprintf(offset, "sizeof(struct varchar_%s)", name);
 				break;
 			case ECPGt_char:
 			case ECPGt_unsigned_char:
 			case ECPGt_char_variable:
+				/* we have to use the pointer except for arrays with given bounds */
+				if (varcharsize > 1 || arrsize > 0)
+					sprintf(variable, "(%s%s)", prefix ? prefix : "", name);
+				else
+					sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
+
 				sprintf(offset, "%ld*sizeof(char)", varcharsize == 0 ? 1 : varcharsize);
 				break;
 			default:
+				/* we have to use the pointer except for arrays with given bounds */
+				if (arrsize > 0)
+					sprintf(variable, "(%s%s)", prefix ? prefix : "", name);
+				else
+					sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
+
 				sprintf(offset, "sizeof(%s)", ECPGtype_name(typ));
 				break;
 		}

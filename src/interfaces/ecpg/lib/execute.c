@@ -479,7 +479,7 @@ ECPGexecute(struct statement * stmt)
 						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'")); 
 					}
 					else
-						sprintf(mallocedval, "%c,", (*((char *) var->value)) ? 't' : 'f');
+						sprintf(mallocedval, "%c", (*((char *) var->value)) ? 't' : 'f');
 
 					tobeinserted = mallocedval;
 					break;
@@ -541,7 +541,7 @@ ECPGexecute(struct statement * stmt)
 
 				default:
 					/* Not implemented yet */
-					ECPGraise(stmt->lineno, ECPG_UNSUPPORTED, ECPGtype_name(var->type));
+					ECPGraise(stmt->lineno, ECPG_UNSUPPORTED, (char *)ECPGtype_name(var->type));
 					return false;
 					break;
 			}
@@ -859,7 +859,7 @@ ECPGdo(int lineno, const char *connection_name, char *query, ...)
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.3 2000/04/03 19:34:25 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.4 2000/04/05 09:05:28 meskes Exp $
  */
 
 PGconn *ECPG_internal_get_connection(char *name);
@@ -1024,6 +1024,6 @@ bool ECPGdo_descriptor(int line,const char *connection,
 	    }
 	}
 	
-	ECPGraise(line, ECPG_UNKNOWN_DESCRIPTOR, descriptor);
+	ECPGraise(line, ECPG_UNKNOWN_DESCRIPTOR, (char *) descriptor);
 	return false;
 }

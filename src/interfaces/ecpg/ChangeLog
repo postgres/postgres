@@ -894,5 +894,13 @@ Mon Apr  3 21:20:27 CEST 2000
 	- Made sure pointers are correctly inserted by libecpg. My thanks go
 	  to Jan Urbanek <jan@urbanek.cz> for findin many bugs before the
 	  release. 
+
+Wed Apr  5 07:54:56 CEST 2000
+
+	- Added patch by Peter Eisentraut <e99re41@DoCS.UU.SE> to fix some
+	  duplicate definittions in preproc.y.
+	- Removed duplicate ',' in execute.c.
+	- Changed error message for backend errors so it fits into sqlca.
+	- Fixed array handling.
 	- Set library version to 3.1.0.
 	- Set ecpg version to 2.7.0.
