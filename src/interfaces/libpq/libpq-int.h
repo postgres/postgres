@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.54 2002/08/18 01:35:40 momjian Exp $
+ * $Id: libpq-int.h,v 1.55 2002/08/18 03:47:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,8 +20,9 @@
 #ifndef LIBPQ_INT_H
 #define LIBPQ_INT_H
 
-#include <sys/types.h>
 #include <time.h>
+#include <sys/time.h>
+#include <sys/types.h>
 
 #if defined(WIN32) && (!defined(ssize_t))
   typedef int ssize_t; /* ssize_t doesn't exist in VC (atleast not VC6) */
