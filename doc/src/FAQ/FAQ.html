@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Tue Apr 22 14:02:41 EDT 2003</P>
+    <P>Last updated: Mon May 26 15:25:04 EDT 2003</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -87,7 +87,7 @@
      <A href="#4.3">4.3</A>) How do I get a list of tables or other
     things I can see in <I>psql</I>?<BR>
      <A href="#4.4">4.4</A>) How do you remove a column from a
-    table?<BR>
+    table, or change it's data type?<BR>
      <A href="#4.5">4.5</A>) What is the maximum size for a row, a
     table, and a database?<BR>
      <A href="#4.6">4.6</A>) How much database disk space is required
@@ -822,9 +822,9 @@
     execute the commands you give.</P>
 
     <H4><A name="4.4">4.4</A>) How do you remove a column from a
-    table?</H4>
+    table, or change its data type?</H4>
 
-    <P>This functionality was added in release 7.3 with
+    <P><SMALL>DROP COLUMN</SMALL> functionality was added in release 7.3 with
     <SMALL>ALTER TABLE DROP COLUMN</SMALL>.  In earlier versions,
     you can do this:</P>
 <PRE>
@@ -838,6 +838,17 @@
     COMMIT;
 </PRE>
 
+    <P>To change the data type of a column, do this:</P>
+<PRE>
+    BEGIN;
+    ALTER TABLE tab ADD COLUMN new_col <i>new_data_type</i>;
+    UPDATE tab SET new_col = CAST(old_col AS <i>new_data_type</i>);
+    ALTER TABLE DROP COLUMN old_col;
+    COMMIT;
+</PRE>
+    <P>You might then want to do <I>VACUUM FULL tab</I> to reclaim the
+    disk space used by the expired rows.</P>
+    
     <H4><A name="4.5">4.5</A>) What is the maximum size for a row, a
     table, and a database?</H4>
 

@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Apr 22 14:02:41 EDT 2003
+   Last updated: Mon May 26 15:25:04 EDT 2003
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -60,7 +60,8 @@
    4.1) What is the difference between binary cursors and normal cursors?
    4.2) How do I SELECT only the first few rows of a query?
    4.3) How do I get a list of tables or other things I can see in psql?
-   4.4) How do you remove a column from a table?
+   4.4) How do you remove a column from a table, or change it's data
+   type?
    4.5) What is the maximum size for a row, a table, and a database?
    4.6) How much database disk space is required to store data from a
    typical text file?
@@ -644,10 +645,10 @@
    the -E option so it will print out the queries it uses to execute the
    commands you give.
    
-    4.4) How do you remove a column from a table?
+    4.4) How do you remove a column from a table, or change its data type?
     
-   This functionality was added in release 7.3 with ALTER TABLE DROP
-   COLUMN. In earlier versions, you can do this:
+   DROP COLUMN functionality was added in release 7.3 with ALTER TABLE
+   DROP COLUMN. In earlier versions, you can do this:
     BEGIN;
     LOCK TABLE old_table;
     SELECT ...  -- select all columns but the one you want to remove
@@ -657,6 +658,16 @@
     ALTER TABLE new_table RENAME TO old_table;
     COMMIT;
 
+   To change the data type of a column, do this:
+    BEGIN;
+    ALTER TABLE tab ADD COLUMN new_col new_data_type;
+    UPDATE tab SET new_col = CAST(old_col AS new_data_type);
+    ALTER TABLE DROP COLUMN old_col;
+    COMMIT;
+
+   You might then want to do VACUUM FULL tab to reclaim the disk space
+   used by the expired rows.
+   
     4.5) What is the maximum size for a row, a table, and a database?
     
    These are the limits:
