@@ -5,7 +5,7 @@
  * to contain some useful information. Mechanism differs wildly across
  * platforms.
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/ps_status.c,v 1.21 2004/08/29 05:06:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/ps_status.c,v 1.22 2004/12/02 22:28:22 momjian Exp $
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  * various details abducted from various places
@@ -65,6 +65,8 @@ extern char **environ;
 #define PS_USE_CHANGE_ARGV
 #elif defined(__linux__) || defined(_AIX) || defined(__sgi) || (defined(sun) && !defined(BSD)) || defined(ultrix) || defined(__ksr__) || defined(__osf__) || defined(__QNX__) || defined(__svr4__) || defined(__svr5__) || defined(__darwin__)
 #define PS_USE_CLOBBER_ARGV
+#elif defined (WIN32)
+#define PS_USE_WIN32
 #else
 #define PS_USE_NONE
 #endif
@@ -95,6 +97,28 @@ static size_t ps_buffer_fixed_size;		/* size of the constant prefix */
 static int	save_argc;
 static char **save_argv;
 
+#ifdef WIN32
+	/*
+	 * Win32 does not support showing any changed arguments. To make it
+	 * at all possible to track which backend is doing what, we create
+	 * a named object that can be viewed with for example Process Explorer
+	 */
+static HANDLE ident_handle = INVALID_HANDLE_VALUE;
+static void pgwin32_update_ident(char *ident)
+{
+	char name[PS_BUFFER_SIZE+32];
+
+	if (ident_handle != INVALID_HANDLE_VALUE)
+		CloseHandle(ident_handle);
+
+	sprintf(name,"pgident: %s",ident);
+
+	ident_handle = CreateEvent(NULL,
+							   TRUE,
+							   FALSE,
+							   name);
+}
+#endif
 
 /*
  * Call this early in startup to save the original argc/argv values.
@@ -267,6 +291,11 @@ init_ps_display(const char *username, const char *dbname,
 #endif
 
 	ps_buffer_fixed_size = strlen(ps_buffer);
+
+#ifdef WIN32
+	pgwin32_update_ident(ps_buffer);
+#endif
+
 #endif   /* not PS_USE_NONE */
 }
 
@@ -327,6 +356,11 @@ set_ps_display(const char *activity)
 		MemSet(ps_buffer + buflen, PS_PADDING, ps_buffer_size - buflen);
 	}
 #endif   /* PS_USE_CLOBBER_ARGV */
+
+#ifdef WIN32
+	pgwin32_update_ident(ps_buffer);
+#endif
+
 #endif   /* not PS_USE_NONE */
 }
 
