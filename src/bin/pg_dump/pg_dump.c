@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.39 1997/08/21 02:28:41 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.40 1997/08/22 17:15:41 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1779,8 +1779,8 @@ void dumpTables(FILE* fout, TableInfo *tblinfo, int numTables,
                                 tblinfo[i].typnames[j]);
                         actual_atts++;
                     }
-		    sprintf(q, "%s%s NULL", q,
-					(tblinfo[i].notnull[j])	? " NOT" : "");
+		    if (tblinfo[i].notnull[j])
+			sprintf(q, "%s NOT NULL", q);
                 }
             }
 
