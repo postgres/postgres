@@ -1,7 +1,7 @@
 
                Otvety na chasto zadavaemye voprosy po PostgreSQL
                                        
-   Data poslednego obnovleniya: Vtornik 6 yanvarya 16:42:01 EDT 2003
+   Data poslednego obnovleniya: Subbota 7 fevralya 22:16:21 EDT 2004
    
    Anglijskij variant soprovozhdaet: Bryus Mom'yan (Bruce Momjian)
    (pgman@candle.pha.pa.us)
@@ -126,7 +126,8 @@
                                       
     1.1) CHto takoe PostgreSQL? Kak proiznositsya `eto nazvanie?
     
-   PostgreSQL proiznositsya Post-Gres-Q-L (Post-Gres-K'yu-`El).
+   PostgreSQL proiznositsya Post-Gres-Q-L (Post-Gres-K'yu-`El). Takzhe, v
+   razgovorah ispol'zuetsya imya "Postgres".
    
    PostgreSQL - `eto rasshirenie SUBD POSTGRES, issledovatel'skij
    prototip novogo pokoleniya SUBD. PostgreSQL odnovremenno sohranyaet
@@ -140,7 +141,9 @@
    nastoyaschee vremya, ih koordinatorom yavlyaetsya Mark Fornaj (Marc G.
    Fournier) (scrappy@PostgreSQL.org). (Sm. sekciyu 1.6 o tom, kak
    podklyuchit'sya k razrabotke). `Eta komanda teper' otvechaet za vsyu
-   razrabotku PostgreSQL.
+   razrabotku PostgreSQL. Dannyj proekt yavlyaetsya obschestvennym i ne
+   upravlyaetsya kakoj-libo kompaniej. Podrobnosti smotrite v FAQ dlya
+   razrabotchikov, http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html
    
    Avtorami PostgreSQL 1.01 yavlyayutsya `Endryu YU (Andrew Yu) i Dzholi
    CHen (Jolly Chen). Mnogie drugie vnesli svoj vklad v perenos na drugie
@@ -390,8 +393,9 @@
           sravnivayuschaya PostgreSQL i MySQL na
           http://openacs.org/philosophy/why-not-mysql.html. Takzhe, MySQL
           - `eto kompaniya, kotoraya rasprostranyaet svoj produkt cherez
-          otkrytye ishodnye teksty, a ne soobschestvo razrabotchikov s
-          otkrytymi ishodnymi tekstami, kak PostgreSQL.
+          otkrytye ishodnye teksty i trebuet kommercheskuyu licenziyu na
+          zakrytoe programmnoe obespechenie, a ne soobschestvo
+          razrabotchikov s otkrytymi ishodnymi tekstami, kak PostgreSQL.
           
    Nadezhnost'
           My ponimali, chto nasha SUBD dolzhna byt' nadezhnoj ili ona
@@ -825,8 +829,8 @@ pa
    Indeksy ne trebuyut tak mnogo, no poskol'ku oni sozdayutsya dlya
    bol'shogo kolichestva dannyh, oni takzhe mogut byt' veliki.
    
-   Znacheniya NULL sohranyayutsya v bitah i po`etomu oni zanimayut ochen'
-   malo mesta.
+   Znacheniya NULL hranyatsya kak bitovae karty i po`etomu oni zanimayut
+   ochen' malo mesta.
    
     4.7) Kak mne ubedit'sya, chto suschestvuyut nuzhnye mne tablicy, indeksy,
     bazy dannyh i pol'zovateli?
