@@ -391,7 +391,7 @@ There is currently one other fixed-length character type. The <Type>name</Type> 
 only has one purpose and that is to provide <ProductName>Postgres</ProductName> with a
 special type to use for internal names.  It is not intended for use by the general user.
 It's length is currently defined as 32 chars but should be reference using NAMEDATALEN.
-This is set at compile time and may change in any future release.
+This is set at compile time and may change in a future release.
 </Para>
 
 <Para>
