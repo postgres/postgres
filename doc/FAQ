@@ -9,7 +9,7 @@
    http://www.PostgreSQL.org/docs/faq-english.html.
    
    Platform-specific questions are answered at
-   http://www.PostgreSQL.org/docs/.
+   http://www.PostgreSQL.org/users-lounge/docs/faq.html.
      _________________________________________________________________
    
                              General Questions
@@ -141,8 +141,8 @@
    
    PostgreSQL Data Base Management System
    
-   Portions copyright (c) 1996-2001, PostgreSQL Global Development Group Portions Copyright
-   (c) 1994-6 Regents of the University of California
+   Portions copyright (c) 1996-2001, PostgreSQL Global Development Group
+   Portions Copyright (c) 1994-6 Regents of the University of California
    
    Permission to use, copy, modify, and distribute this software and its
    documentation for any purpose, without fee, and without a written
@@ -245,7 +245,8 @@
     
    Several manuals, manual pages, and some small test examples are
    included in the distribution. See the /doc directory. You can also
-   browse the manual online at http://www.PostgreSQL.org/docs/postgres.
+   browse the manual online at
+   http://www.PostgreSQL.org/users-lounge/docs/postgres.
    
    There is a PostgreSQL book available at
    http://www.PostgreSQL.org/docs/awbook.html.
