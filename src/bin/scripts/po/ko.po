@@ -1,0 +1,721 @@
+# Korean message translation file for PostgreSQL pgscripts
+# Ioseph Kim <ioseph@uri.sarang.net>, 2004.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 8.0\n"
+"POT-Creation-Date: 2004-12-15 07:09+0000\n"
+"PO-Revision-Date: 2004-12-16 02:11+0900\n"
+"Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
+"Language-Team: KOREAN <pgsql-kr@postgresql.or.kr>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=euc-kr\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Korean\n"
+"X-Poedit-Country: KOREA, REPUBLIC OF\n"
+
+#: clusterdb.c:95
+#: clusterdb.c:110
+#: createdb.c:102
+#: createdb.c:121
+#: createlang.c:97
+#: createlang.c:118
+#: createlang.c:160
+#: createuser.c:117
+#: createuser.c:132
+#: dropdb.c:84
+#: dropdb.c:93
+#: dropdb.c:101
+#: droplang.c:94
+#: droplang.c:115
+#: droplang.c:157
+#: dropuser.c:84
+#: dropuser.c:99
+#: vacuumdb.c:112
+#: vacuumdb.c:127
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "보다 자세한 사용법은 \"%s --help\"\n"
+
+#: clusterdb.c:108
+#: createdb.c:119
+#: createlang.c:116
+#: createuser.c:130
+#: dropdb.c:99
+#: droplang.c:113
+#: dropuser.c:97
+#: vacuumdb.c:125
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: 너무 많은 명령행 인자들 (시작 \"%s\")\n"
+
+#: createdb.c:129
+#, c-format
+msgid "%s: \"%s\" is not a valid encoding name\n"
+msgstr "%s: \"%s\" 인코딩은 사용 가능한 인코딩 이름이 아님\n"
+
+#: createdb.c:168
+#, c-format
+msgid "%s: database creation failed: %s"
+msgstr "%s: 데이터베이스 만들기 실패: %s"
+
+#: createdb.c:196
+#, c-format
+msgid "%s: comment creation failed (database was created): %s"
+msgstr "%s: 코멘트 추가하기 실패 (데이터베이스는 만들어졌음): %s"
+
+#: createdb.c:217
+#, c-format
+msgid ""
+"%s creates a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s 프로그램은 PostgreSQL 데이터베이스를 만듭니다.\n"
+"\n"
+
+#: clusterdb.c:234
+#: createdb.c:218
+#: createlang.c:299
+#: createuser.c:240
+#: dropdb.c:147
+#: droplang.c:280
+#: dropuser.c:147
+#: vacuumdb.c:260
+msgid "Usage:\n"
+msgstr "사용법:\n"
+
+#: createdb.c:219
+#, c-format
+msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
+msgstr "  %s [옵션]... [DB이름] [설명]\n"
+
+#: clusterdb.c:236
+#: createdb.c:220
+#: createlang.c:301
+#: createuser.c:242
+#: dropdb.c:149
+#: droplang.c:282
+#: dropuser.c:149
+#: vacuumdb.c:262
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"옵션들:\n"
+
+#: createdb.c:221
+msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
+msgstr "  -D, --tablespace=TABLESPACE  데이터베이스를 위한 기본 테이블스페이스\n"
+
+#: createdb.c:222
+msgid "  -E, --encoding=ENCODING      encoding for the database\n"
+msgstr "  -E, --encoding=ENCODING      데이터베이스 인코딩\n"
+
+#: createdb.c:223
+msgid "  -O, --owner=OWNER            database user to own the new database\n"
+msgstr "  -O, --owner=OWNER            데이터베이스 소유주\n"
+
+#: createdb.c:224
+msgid "  -T, --template=TEMPLATE      template database to copy\n"
+msgstr "  -T, --template=TEMPLATE      복사할 템플릿 데이터베이스\n"
+
+#: createdb.c:225
+msgid "  -e, --echo                   show the commands being sent to the server\n"
+msgstr "  -e, --echo                   서버로 보내는 작업 명령들을 보여줌\n"
+
+#: createdb.c:226
+msgid "  -q, --quiet                  don't write any messages\n"
+msgstr "  -q, --quiet                  어떠한 메시지도 보이지 않음\n"
+
+#: createdb.c:227
+msgid "  --help                       show this help, then exit\n"
+msgstr "  --help                       이 도움말을 보여주고 마침\n"
+
+#: createdb.c:228
+msgid "  --version                    output version information, then exit\n"
+msgstr "  --version                    버전 정보를 보여주고 마침\n"
+
+#: clusterdb.c:244
+#: createdb.c:229
+#: createuser.c:255
+#: vacuumdb.c:273
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"연결 옵션들:\n"
+
+#: createdb.c:230
+msgid "  -h, --host=HOSTNAME          database server host or socket directory\n"
+msgstr "  -h, --host=HOSTNAME          데이터베이스 서버 호스트나 소켓 디렉토리\n"
+
+#: createdb.c:231
+msgid "  -p, --port=PORT              database server port\n"
+msgstr "  -p, --port=PORT              데이터베이스 서버 포트\n"
+
+#: createdb.c:232
+msgid "  -U, --username=USERNAME      user name to connect as\n"
+msgstr "  -U, --username=USERNAME      접속할 사용자\n"
+
+#: createdb.c:233
+msgid "  -W, --password               prompt for password\n"
+msgstr "  -W, --password               비밀번호 입력을 위한 프롬프트\n"
+
+#: createdb.c:234
+msgid ""
+"\n"
+"By default, a database with the same name as the current user is created.\n"
+msgstr ""
+"\n"
+"초기값으로, DB이름을 지정하지 않으면, 현재 사용자의 이름과 같은 데이터베이스가 만들어집니다.\n"
+
+#: clusterdb.c:250
+#: createdb.c:235
+#: createlang.c:312
+#: createuser.c:262
+#: dropdb.c:159
+#: droplang.c:292
+#: dropuser.c:159
+#: vacuumdb.c:279
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"오류보고: <pgsql-bugs@postgresql.org>.\n"
+
+#: createlang.c:143
+#: droplang.c:140
+msgid "Name"
+msgstr "이름"
+
+#: createlang.c:143
+#: droplang.c:140
+msgid "yes"
+msgstr "예"
+
+#: createlang.c:143
+#: droplang.c:140
+msgid "no"
+msgstr "아니오"
+
+#: createlang.c:143
+#: droplang.c:140
+msgid "Trusted?"
+msgstr "신뢰된?"
+
+#: createlang.c:150
+#: droplang.c:147
+msgid "Procedural Languages"
+msgstr "프로시쥬얼 언어들"
+
+#: createlang.c:159
+#: droplang.c:156
+#, c-format
+msgid "%s: missing required argument language name\n"
+msgstr "%s: 필수 항목인, 언어 이름을 지정할 인자가 빠졌습니다\n"
+
+#: createlang.c:210
+#, c-format
+msgid "%s: unsupported language \"%s\"\n"
+msgstr "%s: 지원하지 않은 언어 \"%s\"\n"
+
+#: createlang.c:211
+msgid "Supported languages are plpgsql, pltcl, pltclu, plperl, plperlu, and plpythonu.\n"
+msgstr "지원하는 언어: plpgsql, pltcl, pltclu, plperl, plperlu, plpythonu.\n"
+
+#: createlang.c:226
+#, c-format
+msgid "%s: language \"%s\" is already installed in database \"%s\"\n"
+msgstr "%s: \"%s\" 언어는 이미 \"%s\" 데이터베이스에 설치되어 있습니다.\n"
+
+#: createlang.c:283
+#, c-format
+msgid "%s: language installation failed: %s"
+msgstr "%s: 언어 설치 실패: %s"
+
+#: createlang.c:298
+#, c-format
+msgid ""
+"%s installs a procedural language into a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s 프로그램은 PostgreSQL 데이터베이스에 프로시쥬얼 언어를 설치합니다.\n"
+"\n"
+
+#: createlang.c:300
+#: droplang.c:281
+#, c-format
+msgid "  %s [OPTION]... LANGNAME [DBNAME]\n"
+msgstr "  %s [옵션]... 언어이름 [DB이름]\n"
+
+#: createlang.c:302
+msgid "  -d, --dbname=DBNAME       database to install language in\n"
+msgstr "  -d, --dbname=DBNAME       언어를 설치할 DB이름\n"
+
+#: clusterdb.c:240
+#: createlang.c:303
+#: createuser.c:251
+#: dropdb.c:150
+#: droplang.c:284
+#: dropuser.c:150
+msgid "  -e, --echo                show the commands being sent to the server\n"
+msgstr "  -e, --echo                서버로 보내는 작업 명령을 보여줌\n"
+
+#: createlang.c:304
+#: droplang.c:285
+msgid "  -l, --list                show a list of currently installed languages\n"
+msgstr "  -l, --list                현재 설치 되어있는 언어들을 보여줌\n"
+
+#: createlang.c:305
+msgid "  -L, --pglib=DIRECTORY     find language interpreter file in DIRECTORY\n"
+msgstr "  -L, --pglib=DIRECTORY     언어 모듈이 있는 디렉토리 지정\n"
+
+#: clusterdb.c:245
+#: createlang.c:306
+#: createuser.c:256
+#: dropdb.c:153
+#: droplang.c:286
+#: dropuser.c:153
+#: vacuumdb.c:274
+msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
+msgstr "  -h, --host=HOSTNAME       데이터베이스 서버 호스트 또는 소켓 디렉토리\n"
+
+#: clusterdb.c:246
+#: createlang.c:307
+#: createuser.c:257
+#: dropdb.c:154
+#: droplang.c:287
+#: dropuser.c:154
+#: vacuumdb.c:275
+msgid "  -p, --port=PORT           database server port\n"
+msgstr "  -p, --port=PORT           데이터베이스 서버 포트\n"
+
+#: clusterdb.c:247
+#: createlang.c:308
+#: dropdb.c:155
+#: droplang.c:288
+#: vacuumdb.c:276
+msgid "  -U, --username=USERNAME   user name to connect as\n"
+msgstr "  -U, --username=USERNAME   접속할 사용자이름\n"
+
+#: clusterdb.c:248
+#: createlang.c:309
+#: dropdb.c:156
+#: droplang.c:289
+#: vacuumdb.c:277
+msgid "  -W, --password            prompt for password\n"
+msgstr "  -W, --password            비밀번호 입력을 위한 프롬프트\n"
+
+#: clusterdb.c:242
+#: createlang.c:310
+#: createuser.c:253
+#: dropdb.c:157
+#: droplang.c:290
+#: dropuser.c:157
+msgid "  --help                    show this help, then exit\n"
+msgstr "  --help                    이 도움말을 보여주고 마침\n"
+
+#: clusterdb.c:243
+#: createlang.c:311
+#: createuser.c:254
+#: dropdb.c:158
+#: droplang.c:291
+#: dropuser.c:158
+msgid "  --version                 output version information, then exit\n"
+msgstr "  --version                 버전 정보를 보여주고 마침\n"
+
+#: createuser.c:142
+#, c-format
+msgid "%s: user ID must be a positive number\n"
+msgstr "%s: 사용자 ID 값은 양수 정수여야합니다.\n"
+
+#: createuser.c:148
+msgid "Enter name of user to add: "
+msgstr "추가할 새 사용자이름: "
+
+#: createuser.c:155
+msgid "Enter password for new user: "
+msgstr "새 사용자의 비밀번호: "
+
+#: createuser.c:156
+msgid "Enter it again: "
+msgstr "비밀번호 확인: "
+
+#: createuser.c:159
+msgid "Passwords didn't match.\n"
+msgstr "비밀번호가 서로 틀림.\n"
+
+#: createuser.c:170
+msgid "Shall the new user be allowed to create databases? (y/n) "
+msgstr "이 사용자에게 데이터베이스를 만들 수 있는 권할을 줄까요? (y/n) "
+
+#: createuser.c:181
+msgid "Shall the new user be allowed to create more new users? (y/n) "
+msgstr "이 사용자에게 새 사용자를 만들 수 있는 권한을 줄까요? (y/n) "
+
+#: createuser.c:220
+#, c-format
+msgid "%s: creation of new user failed: %s"
+msgstr "%s: 새 사용자 만들기 실패: %s"
+
+#: createuser.c:239
+#, c-format
+msgid ""
+"%s creates a new PostgreSQL user.\n"
+"\n"
+msgstr ""
+"%s 프로그램은 PostgreSQL 사용자를 만듭니다.\n"
+"\n"
+
+#: createuser.c:241
+#: dropuser.c:148
+#, c-format
+msgid "  %s [OPTION]... [USERNAME]\n"
+msgstr "  %s [옵션]... [사용자이름]\n"
+
+#: createuser.c:243
+msgid "  -a, --adduser             user can add new users\n"
+msgstr "  -a, --adduser             새 사용자를 추가 할 수 있음\n"
+
+#: createuser.c:244
+msgid "  -A, --no-adduser          user cannot add new users\n"
+msgstr "  -A, --no-adduser          새 사용자를 추가 할 수 없음\n"
+
+#: createuser.c:245
+msgid "  -d, --createdb            user can create new databases\n"
+msgstr "  -d, --createdb            새 데이터베이스를 만들 수 있음\n"
+
+#: createuser.c:246
+msgid "  -D, --no-createdb         user cannot create databases\n"
+msgstr "  -D, --no-createdb         새 데이터베이스를 만들 수 없음\n"
+
+#: createuser.c:247
+msgid "  -P, --pwprompt            assign a password to new user\n"
+msgstr "  -P, --pwprompt            비밀번호 지정\n"
+
+#: createuser.c:248
+msgid "  -E, --encrypted           encrypt stored password\n"
+msgstr "  -E, --encrypted           이미 암호화 되었는 비밀번호 지정\n"
+
+#: createuser.c:249
+msgid "  -N, --unencrypted         do not encrypt stored password\n"
+msgstr "  -N, --unencrypted         암호화 안된 비밀번호\n"
+
+#: createuser.c:250
+msgid "  -i, --sysid=SYSID         select sysid for new user\n"
+msgstr "  -i, --sysid=SYSID         사용자 ID를 지정\n"
+
+#: clusterdb.c:241
+#: createuser.c:252
+#: dropdb.c:152
+#: dropuser.c:152
+msgid "  -q, --quiet               don't write any messages\n"
+msgstr "  -q, --quiet               어떠한 메시지도 보여주지 않음\n"
+
+#: createuser.c:258
+msgid "  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
+msgstr ""
+"  -U, --username=USERNAME   서버에 접속할 사용자\n"
+"                            (사용자만들기 작업을 할 사용자)\n"
+
+#: createuser.c:259
+#: dropuser.c:156
+msgid "  -W, --password            prompt for password to connect\n"
+msgstr "  -W, --password            연결작업에 필요한 비밀번호 입력 프롬프트\n"
+
+#: createuser.c:260
+msgid ""
+"\n"
+"If one of -a, -A, -d, -D, and USERNAME is not specified, you will\n"
+"be prompted interactively.\n"
+msgstr ""
+"\n"
+"-a, -A, -d, -D, 사용자이름 인자들 중 어느 하나가 빠지면\n"
+"프로그램은 이 값을 묻는 프롬프트를 보여, 대화형으로 처리할 것입니다.\n"
+
+#: dropdb.c:92
+#, c-format
+msgid "%s: missing required argument database name\n"
+msgstr "%s: 필수 항목인 데이터베이스 이름이 빠졌습니다\n"
+
+#: dropdb.c:109
+#, c-format
+msgid "Database \"%s\" will be permanently removed.\n"
+msgstr "\"%s\" 데이터베이스가 완전히 삭제 될 것입니다.\n"
+
+#: dropdb.c:110
+#: dropuser.c:111
+msgid "Are you sure? (y/n) "
+msgstr "계속 진행할까요? (y/n) "
+
+#: dropdb.c:127
+#, c-format
+msgid "%s: database removal failed: %s"
+msgstr "%s: 데이터베이스 삭제 실패: %s"
+
+#: dropdb.c:146
+#, c-format
+msgid ""
+"%s removes a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s 프로그램은 PostgreSQL 데이터베이스를 삭제합니다.\n"
+"\n"
+
+#: dropdb.c:148
+#, c-format
+msgid "  %s [OPTION]... DBNAME\n"
+msgstr "  %s [옵션]... DB이름\n"
+
+#: dropdb.c:151
+#: dropuser.c:151
+msgid "  -i, --interactive         prompt before deleting anything\n"
+msgstr "  -i, --interactive         지우기 전에 한 번 더 물어봄\n"
+
+#: droplang.c:176
+#, c-format
+msgid "%s: language \"%s\" is not installed in database \"%s\"\n"
+msgstr "%s: \"%s\" 언어는 \"%s\" 데이터베이스에 설치 되어있지 않습니다\n"
+
+#: droplang.c:193
+#, c-format
+msgid "%s: still %s functions declared in language \"%s\"; language not removed\n"
+msgstr "%s: 현재 %s개의 함수가 \"%s\" 언어 기반으로 작성되어 사용되고 있습니다; 이 언어는 삭제될 수 없습니다.\n"
+
+#: droplang.c:265
+#, c-format
+msgid "%s: language removal failed: %s"
+msgstr "%s: 언어 삭제 실패: %s"
+
+#: droplang.c:279
+#, c-format
+msgid ""
+"%s removes a procedural language from a database.\n"
+"\n"
+msgstr ""
+"%s 프로그램은 데이터베이스에서 프로시쥬얼 언어를 삭제합니다.\n"
+"\n"
+
+#: droplang.c:283
+msgid "  -d, --dbname=DBNAME       database from which to remove the language\n"
+msgstr "  -d, --dbname=DBNAME       언어를 삭제할 데이터베이스\n"
+
+#: dropuser.c:104
+msgid "Enter name of user to drop: "
+msgstr "삭제할 사용자를 입력하십시오: "
+
+#: dropuser.c:110
+#, c-format
+msgid "User \"%s\" will be permanently removed.\n"
+msgstr "\"%s\" 사용자는 영구히 삭제될 것입니다.\n"
+
+#: dropuser.c:127
+#, c-format
+msgid "%s: removal of user \"%s\" failed: %s"
+msgstr "%s: \"%s\" 사용자 삭제 실패: %s"
+
+#: dropuser.c:146
+#, c-format
+msgid ""
+"%s removes a PostgreSQL user.\n"
+"\n"
+msgstr ""
+"%s 프로그램은 PostgreSQL 사용자를 삭제합니다.\n"
+"\n"
+
+#: dropuser.c:155
+msgid "  -U, --username=USERNAME   user name to connect as (not the one to drop)\n"
+msgstr "  -U, --username=USERNAME   이 작업을 진행할 DB에 접속할 사용자\n"
+
+#: clusterdb.c:118
+#, c-format
+msgid "%s: cannot cluster all databases and a specific one at the same time\n"
+msgstr "%s: 모든 DB 작업과 특정 DB 작업은 동시에 할 수 없습니다.\n"
+
+#: clusterdb.c:124
+#, c-format
+msgid "%s: cannot cluster a specific table in all databases\n"
+msgstr "%s: 모든 DB를 대상으로 특정 테이블을 클러스터할 수 없습니다.\n"
+
+#: clusterdb.c:180
+#, c-format
+msgid "%s: clustering of table \"%s\" in database \"%s\" failed: %s"
+msgstr "%s: \"%s\" 테이블(해당DB: \"%s\") 클러스터 작업 실패: %s"
+
+#: clusterdb.c:183
+#, c-format
+msgid "%s: clustering of database \"%s\" failed: %s"
+msgstr "%s: \"%s\" 데이터베이스 클러스터 실패: %s"
+
+#: clusterdb.c:219
+#, c-format
+msgid "%s: clustering database \"%s\"\n"
+msgstr "%s: \"%s\" 데이터베이스 클러스터 작업 중\n"
+
+#: clusterdb.c:233
+#, c-format
+msgid ""
+"%s clusters all previously clustered tables in a database.\n"
+"\n"
+msgstr ""
+"%s 프로그램은 DB 안에서 이전에 클러스터된 모든 테이블을 찾아\n"
+"다시 클러스터 작업을 합니다.\n"
+"\n"
+
+#: clusterdb.c:235
+#: vacuumdb.c:261
+#, c-format
+msgid "  %s [OPTION]... [DBNAME]\n"
+msgstr "  %s [옵션]... [DB이름]\n"
+
+#: clusterdb.c:237
+msgid "  -a, --all                 cluster all databases\n"
+msgstr "  -a, --all                 모든 데이터베이스를 대상으로\n"
+
+#: clusterdb.c:238
+msgid "  -d, --dbname=DBNAME       database to cluster\n"
+msgstr "  -d, --dbname=DBNAME       클러스터 작업할 DB\n"
+
+#: clusterdb.c:239
+msgid "  -t, --table=TABLE         cluster specific table only\n"
+msgstr "  -t, --table=TABLE         지정한 테이블만 클러스터\n"
+
+#: clusterdb.c:249
+msgid ""
+"\n"
+"Read the description of the SQL command CLUSTER for details.\n"
+msgstr ""
+"\n"
+"보다 자세한 내용은 CLUSTER SQL 명령어 설명서를 참조하십시오.\n"
+
+#: vacuumdb.c:135
+#, c-format
+msgid "%s: cannot vacuum all databases and a specific one at the same time\n"
+msgstr "%s: -a 옵션이 있을 경우는 한 데이터베이스를 대상으로 작업을 진행할 수 없습니다.\n"
+
+#: vacuumdb.c:141
+#, c-format
+msgid "%s: cannot vacuum a specific table in all databases\n"
+msgstr "%s: 모든 데이터베이스를 대상으로 특정 테이블을 청소할 수는 없음\n"
+
+#: vacuumdb.c:205
+#, c-format
+msgid "%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"
+msgstr "%s: \"%s\" 테이블 (해당 DB: \"%s\") 청소하기 실패: %s"
+
+#: vacuumdb.c:208
+#, c-format
+msgid "%s: vacuuming of database \"%s\" failed: %s"
+msgstr "%s: \"%s\" 데이터베이스 청소하기 실패: %s"
+
+#: vacuumdb.c:245
+#, c-format
+msgid "%s: vacuuming database \"%s\"\n"
+msgstr "%s: \"%s\" 데이터베이스를 청소 중\n"
+
+#: vacuumdb.c:259
+#, c-format
+msgid ""
+"%s cleans and analyzes a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s 프로그램은 PostgreSQL 데이터베이스 자료 정리 및\n"
+"퀴리 최적화기의 참고 자료를 갱신합니다.\n"
+"\n"
+
+#: vacuumdb.c:263
+msgid "  -a, --all                       vacuum all databases\n"
+msgstr "  -a, --all                       모든 데이터베이스 청소\n"
+
+#: vacuumdb.c:264
+msgid "  -d, --dbname=DBNAME             database to vacuum\n"
+msgstr "  -d, --dbname=DBNAME             DBNAME 데이터베이스 청소\n"
+
+#: vacuumdb.c:265
+msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table only\n"
+msgstr "  -t, --table='TABLE[(COLUMNS)]'  지정한 특정 테이블만 청소\n"
+
+#: vacuumdb.c:266
+msgid "  -f, --full                      do full vacuuming\n"
+msgstr "  -f, --full                      대청소\n"
+
+#: vacuumdb.c:267
+msgid "  -z, --analyze                   update optimizer hints\n"
+msgstr "  -z, --analyze                   쿼리최적화기 힌트 자료를 갱신함\n"
+
+#: vacuumdb.c:268
+msgid "  -e, --echo                      show the commands being sent to the server\n"
+msgstr "  -e, --echo                      서버로 보내는 명령들을 보여줌\n"
+
+#: vacuumdb.c:269
+msgid "  -q, --quiet                     don't write any messages\n"
+msgstr "  -q, --quiet                     어떠한 메시지도 보여주지 않음\n"
+
+#: vacuumdb.c:270
+msgid "  -v, --verbose                   write a lot of output\n"
+msgstr "  -v, --verbose                   작업내역의 자세한 출력\n"
+
+#: vacuumdb.c:271
+msgid "  --help                          show this help, then exit\n"
+msgstr "  --help                          이 도움말을 보여주고 마침\n"
+
+#: vacuumdb.c:272
+msgid "  --version                       output version information, then exit\n"
+msgstr "  --version                       버전 정보를 보여주고 마침\n"
+
+#: vacuumdb.c:278
+msgid ""
+"\n"
+"Read the description of the SQL command VACUUM for details.\n"
+msgstr ""
+"\n"
+"보다 자세한 내용은 VACUUM SQL 명령어 설명서를 참조하십시오.\n"
+
+#: common.c:33
+#, c-format
+msgid "%s: could not obtain information about current user: %s\n"
+msgstr "%s: 현재 사용자 정보를 구할 수 없음: %s\n"
+
+#: common.c:44
+#, c-format
+msgid "%s: could not get current user name: %s\n"
+msgstr "%s: 현재 사용자 이름을 구할 수 없음: %s\n"
+
+#: common.c:89
+#: common.c:115
+msgid "Password: "
+msgstr "비밀번호:"
+
+#: common.c:102
+#, c-format
+msgid "%s: could not connect to database %s\n"
+msgstr "%s: %s 데이터베이스에 연결 할 수 없음\n"
+
+#: common.c:125
+#, c-format
+msgid "%s: could not connect to database %s: %s"
+msgstr "%s: %s 데이터베이스에 연결 할 수 없음: %s"
+
+#: common.c:149
+#, c-format
+msgid "%s: query failed: %s"
+msgstr "%s: 쿼리 실패: %s"
+
+#: common.c:150
+#, c-format
+msgid "%s: query was: %s\n"
+msgstr "%s: 사용된 쿼리: %s\n"
+
+#. translator: Make sure the (y/n) prompts match the translation of this.
+#: common.c:164
+msgid "y"
+msgstr "y"
+
+#. translator: Make sure the (y/n) prompts match the translation of this.
+#: common.c:166
+msgid "n"
+msgstr "n"
+
