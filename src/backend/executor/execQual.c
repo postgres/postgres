@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.61 1999/09/26 02:28:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.62 1999/09/26 21:21:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,8 +209,8 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 static Datum
 ExecEvalAggref(Aggref *aggref, ExprContext *econtext, bool *isNull)
 {
-	*isNull = econtext->ecxt_nulls[aggref->aggno];
-	return econtext->ecxt_values[aggref->aggno];
+	*isNull = econtext->ecxt_aggnulls[aggref->aggno];
+	return econtext->ecxt_aggvalues[aggref->aggno];
 }
 
 /* ----------------------------------------------------------------
@@ -244,7 +244,6 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 	AttrNumber	attnum;
 	HeapTuple	heapTuple;
 	TupleDesc	tuple_type;
-	Buffer		buffer;
 	bool		byval;
 	int16		len;
 
@@ -272,7 +271,6 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 	 */
 	heapTuple = slot->val;
 	tuple_type = slot->ttc_tupleDescriptor;
-	buffer = slot->ttc_buffer;
 
 	attnum = variable->varattno;
 
@@ -280,14 +278,14 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 	Assert(attnum <= 0 ||
 		   (attnum - 1 <= tuple_type->natts - 1 &&
 			tuple_type->attrs[attnum - 1] != NULL &&
-			variable->vartype == tuple_type->attrs[attnum - 1]->atttypid))
+			variable->vartype == tuple_type->attrs[attnum - 1]->atttypid));
 
 	/*
 	 * If the attribute number is invalid, then we are supposed to return
 	 * the entire tuple, we give back a whole slot so that callers know
 	 * what the tuple looks like.
 	 */
-		if (attnum == InvalidAttrNumber)
+	if (attnum == InvalidAttrNumber)
 	{
 		TupleTableSlot *tempSlot;
 		TupleDesc	td;
@@ -301,7 +299,7 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 		tempSlot->ttc_whichplan = -1;
 
 		tup = heap_copytuple(heapTuple);
-		td = CreateTupleDescCopy(slot->ttc_tupleDescriptor);
+		td = CreateTupleDescCopy(tuple_type);
 
 		ExecSetSlotDescriptor(tempSlot, td);
 

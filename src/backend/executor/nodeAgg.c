@@ -11,7 +11,7 @@
  *	  SQL aggregates. (Do not expect POSTQUEL semantics.)	 -- ay 2/95
  *
  * IDENTIFICATION
- *	  /usr/local/devel/pglite/cvs/src/backend/executor/nodeAgg.c,v 1.13 1995/08/01 20:19:07 jolly Exp
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.55 1999/09/26 21:21:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,20 +27,82 @@
 #include "utils/syscache.h"
 
 /*
- * AggFuncInfo -
- *	  keeps the transition functions information around
+ * AggStatePerAggData - per-aggregate working state for the Agg scan
  */
-typedef struct AggFuncInfo
+typedef struct AggStatePerAggData
 {
+	/*
+	 * These values are set up during ExecInitAgg() and do not change
+	 * thereafter:
+	 */
+
+	/* Oids of transfer functions */
 	Oid			xfn1_oid;
 	Oid			xfn2_oid;
 	Oid			finalfn_oid;
+	/*
+	 * fmgr lookup data for transfer functions --- only valid when
+	 * corresponding oid is not InvalidOid
+	 */
 	FmgrInfo	xfn1;
 	FmgrInfo	xfn2;
 	FmgrInfo	finalfn;
-} AggFuncInfo;
+	/*
+	 * initial values from pg_aggregate entry
+	 */
+	Datum		initValue1;		/* for transtype1 */
+	Datum		initValue2;		/* for transtype2 */
+	bool		initValue1IsNull,
+				initValue2IsNull;
+	/*
+	 * We need the len and byval info for the agg's transition status types
+	 * in order to know how to copy/delete values.
+	 */
+	int			transtype1Len,
+				transtype2Len;
+	bool		transtype1ByVal,
+				transtype2ByVal;
 
-static Datum aggGetAttr(TupleTableSlot *tuple, Aggref *aggref, bool *isNull);
+	/*
+	 * These values are working state that is initialized at the start
+	 * of an input tuple group and updated for each input tuple:
+	 */
+
+	Datum		value1,			/* current transfer values 1 and 2 */
+				value2;
+	bool		value1IsNull,
+				value2IsNull;
+	bool		noInitValue;	/* true if value1 not set yet */
+	/*
+	 * Note: right now, noInitValue always has the same value as value1IsNull.
+	 * But we should keep them separate because once the fmgr interface is
+	 * fixed, we'll need to distinguish a null returned by transfn1 from
+	 * a null we haven't yet replaced with an input value.
+	 */
+} AggStatePerAggData;
+
+
+/*
+ * Helper routine to make a copy of a Datum.
+ *
+ * NB: input had better not be a NULL; might cause null-pointer dereference.
+ */
+static Datum
+copyDatum(Datum val, int typLen, bool typByVal)
+{
+	if (typByVal)
+		return val;
+	else
+	{
+		char   *newVal;
+
+		if (typLen == -1)		/* variable length type? */
+			typLen = VARSIZE((struct varlena *) DatumGetPointer(val));
+		newVal = (char *) palloc(typLen);
+		memcpy(newVal, DatumGetPointer(val), typLen);
+		return PointerGetDatum(newVal);
+	}
+}
 
 
 /* ---------------------------------------
@@ -48,39 +110,41 @@ static Datum aggGetAttr(TupleTableSlot *tuple, Aggref *aggref, bool *isNull);
  * ExecAgg -
  *
  *	  ExecAgg receives tuples from its outer subplan and aggregates over
- *	  the appropriate attribute for each (unique) aggregate in the target
- *	  list. (The number of tuples to aggregate over depends on whether a
- *	  GROUP BY clause is present. It might be the number of tuples in a
- *	  group or all the tuples that satisfy the qualifications.) The value of
- *	  each aggregate is stored in the expression context for ExecProject to
- *	  evaluate the result tuple.
+ *	  the appropriate attribute for each aggregate function use (Aggref
+ *	  node) appearing in the targetlist or qual of the node.  The number
+ *	  of tuples to aggregate over depends on whether a GROUP BY clause is
+ *	  present.  We can produce an aggregate result row per group, or just
+ *	  one for the whole query.  The value of each aggregate is stored in
+ *	  the expression context to be used when ExecProject evaluates the
+ *	  result tuple.
  *
  *	  ExecAgg evaluates each aggregate in the following steps: (initcond1,
  *	  initcond2 are the initial values and sfunc1, sfunc2, and finalfunc are
  *	  the transition functions.)
  *
- *		 value1[i] = initcond1
- *		 value2[i] = initcond2
- *		 forall tuples do
- *			value1[i] = sfunc1(value1[i], aggregated_value)
- *			value2[i] = sfunc2(value2[i])
- *		 value1[i] = finalfunc(value1[i], value2[i])
+ *		 value1 = initcond1
+ *		 value2 = initcond2
+ *		 foreach tuple do
+ *			value1 = sfunc1(value1, aggregated_value)
+ *			value2 = sfunc2(value2)
+ *		 value1 = finalfunc(value1, value2)
  *
  *	  If initcond1 is NULL then the first non-NULL aggregated_value is
- *	  assigned directly to value1[i].  sfunc1 isn't applied until value1[i]
+ *	  assigned directly to value1.  sfunc1 isn't applied until value1
  *	  is non-NULL.
+ *
+ *	  sfunc1 is never applied when the current tuple's aggregated_value
+ *	  is NULL.  sfunc2 is applied for each tuple if the aggref is marked
+ *	  'usenulls', otherwise it is only applied when aggregated_value is
+ *	  not NULL.  (usenulls is normally set only for the case of COUNT(*),
+ *	  since according to the SQL92 standard that is the only aggregate
+ *	  that considers nulls in its input.  SQL92 requires COUNT(*) and
+ *	  COUNT(field) to behave differently --- the latter doesn't count nulls
+ *	  --- so we can't make this flag a column of pg_aggregate but must
+ *	  set it according to usage.  Ugh.)
  *
  *	  If the outer subplan is a Group node, ExecAgg returns as many tuples
  *	  as there are groups.
- *
- *	  XXX handling of NULL doesn't work
- *
- *	  OLD COMMENTS
- *
- *		XXX Aggregates should probably have another option: what to do
- *		with transfn2 if we hit a null value.  "count" (transfn1 = null,
- *		transfn2 = increment) will want to have transfn2 called; "avg"
- *		(transfn1 = add, transfn2 = increment) will not. -pma 1/3/93
  *
  * ------------------------------------------
  */
@@ -90,30 +154,30 @@ ExecAgg(Agg *node)
 	AggState   *aggstate;
 	EState	   *estate;
 	Plan	   *outerPlan;
-	int			aggno,
-				numaggs;
-	Datum	   *value1,
-			   *value2;
-	int		   *noInitValue;
-	AggFuncInfo *aggFuncInfo;
-	long		nTuplesAgged = 0;
 	ExprContext *econtext;
 	ProjectionInfo *projInfo;
+	Datum	   *aggvalues;
+	bool	   *aggnulls;
+	AggStatePerAgg	peragg;
 	TupleTableSlot *resultSlot;
-	HeapTuple	oneTuple;
+	HeapTuple	inputTuple;
+	int			aggno;
 	List	   *alist;
-	char	   *nulls;
 	bool		isDone;
-	bool		isNull = FALSE,
-				isNull1 = FALSE,
-				isNull2 = FALSE;
-	bool		qual_result;
-
+	bool		isNull;
 
 	/* ---------------------
 	 *	get state info from node
 	 * ---------------------
 	 */
+	aggstate = node->aggstate;
+	estate = node->plan.state;
+	outerPlan = outerPlan(node);
+	econtext = aggstate->csstate.cstate.cs_ExprContext;
+	aggvalues = econtext->ecxt_aggvalues;
+	aggnulls = econtext->ecxt_aggnulls;
+	projInfo = aggstate->csstate.cstate.cs_ProjInfo;
+	peragg = aggstate->peragg;
 
 	/*
 	 * We loop retrieving groups until we find one matching
@@ -121,335 +185,281 @@ ExecAgg(Agg *node)
 	 */
 	do
 	{
-		aggstate = node->aggstate;
 		if (aggstate->agg_done)
 			return NULL;
 
-		estate = node->plan.state;
-		econtext = aggstate->csstate.cstate.cs_ExprContext;
-
-		numaggs = length(aggstate->aggs);
-
-		value1 = node->aggstate->csstate.cstate.cs_ExprContext->ecxt_values;
-		nulls = node->aggstate->csstate.cstate.cs_ExprContext->ecxt_nulls;
-
-		value2 = (Datum *) palloc(sizeof(Datum) * numaggs);
-		MemSet(value2, 0, sizeof(Datum) * numaggs);
-
-		aggFuncInfo = (AggFuncInfo *) palloc(sizeof(AggFuncInfo) * numaggs);
-		MemSet(aggFuncInfo, 0, sizeof(AggFuncInfo) * numaggs);
-
-		noInitValue = (int *) palloc(sizeof(int) * numaggs);
-		MemSet(noInitValue, 0, sizeof(int) * numaggs);
-
-		outerPlan = outerPlan(node);
-		oneTuple = NULL;
-
-		projInfo = aggstate->csstate.cstate.cs_ProjInfo;
-
+		/*
+		 * Initialize working state for a new input tuple group
+		 */
 		aggno = -1;
 		foreach(alist, aggstate->aggs)
 		{
-			Aggref	   *aggref = lfirst(alist);
-			char	   *aggname;
-			HeapTuple	aggTuple;
-			Form_pg_aggregate aggp;
-			Oid			xfn1_oid,
-						xfn2_oid,
-						finalfn_oid;
+			AggStatePerAgg	peraggstate = &peragg[++aggno];
 
-			aggref->aggno = ++aggno;
-
-			/* ---------------------
-			 *	find transfer functions of all the aggregates and initialize
-			 *	their initial values
-			 * ---------------------
+			/*
+			 * (Re)set value1 and value2 to their initial values.
 			 */
-			aggname = aggref->aggname;
-			aggTuple = SearchSysCacheTuple(AGGNAME,
-										   PointerGetDatum(aggname),
-									  ObjectIdGetDatum(aggref->basetype),
-										   0, 0);
-			if (!HeapTupleIsValid(aggTuple))
-				elog(ERROR, "ExecAgg: cache lookup failed for aggregate \"%s\"(%s)",
-					 aggname,
-					 typeidTypeName(aggref->basetype));
-			aggp = (Form_pg_aggregate) GETSTRUCT(aggTuple);
+			if (OidIsValid(peraggstate->xfn1_oid) &&
+				! peraggstate->initValue1IsNull)
+				peraggstate->value1 = copyDatum(peraggstate->initValue1, 
+												peraggstate->transtype1Len,
+												peraggstate->transtype1ByVal);
+			else
+				peraggstate->value1 = (Datum) NULL;
+			peraggstate->value1IsNull = peraggstate->initValue1IsNull;
 
-			xfn1_oid = aggp->aggtransfn1;
-			xfn2_oid = aggp->aggtransfn2;
-			finalfn_oid = aggp->aggfinalfn;
+			if (OidIsValid(peraggstate->xfn2_oid) &&
+				! peraggstate->initValue2IsNull)
+				peraggstate->value2 = copyDatum(peraggstate->initValue2, 
+												peraggstate->transtype2Len,
+												peraggstate->transtype2ByVal);
+			else
+				peraggstate->value2 = (Datum) NULL;
+			peraggstate->value2IsNull = peraggstate->initValue2IsNull;
 
-			if (OidIsValid(finalfn_oid))
-			{
-				fmgr_info(finalfn_oid, &aggFuncInfo[aggno].finalfn);
-				aggFuncInfo[aggno].finalfn_oid = finalfn_oid;
-			}
-
-			if (OidIsValid(xfn2_oid))
-			{
-				fmgr_info(xfn2_oid, &aggFuncInfo[aggno].xfn2);
-				aggFuncInfo[aggno].xfn2_oid = xfn2_oid;
-				value2[aggno] = (Datum) AggNameGetInitVal((char *) aggname,
-													   aggp->aggbasetype,
-														  2,
-														  &isNull2);
-				/* ------------------------------------------
-				 * If there is a second transition function, its initial
-				 * value must exist -- as it does not depend on data values,
-				 * we have no other way of determining an initial value.
-				 * ------------------------------------------
-				 */
-				if (isNull2)
-					elog(ERROR, "ExecAgg: agginitval2 is null");
-			}
-
-			if (OidIsValid(xfn1_oid))
-			{
-				fmgr_info(xfn1_oid, &aggFuncInfo[aggno].xfn1);
-				aggFuncInfo[aggno].xfn1_oid = xfn1_oid;
-				value1[aggno] = (Datum) AggNameGetInitVal((char *) aggname,
-													   aggp->aggbasetype,
-														  1,
-														  &isNull1);
-
-				/* ------------------------------------------
-				 * If the initial value for the first transition function
-				 * doesn't exist in the pg_aggregate table then we let
-				 * the first value returned from the outer procNode become
-				 * the initial value. (This is useful for aggregates like
-				 * max{} and min{}.)
-				 * ------------------------------------------
-				 */
-				if (isNull1)
-				{
-					noInitValue[aggno] = 1;
-					nulls[aggno] = 1;
-				}
-			}
+			/* ------------------------------------------
+			 * If the initial value for the first transition function
+			 * doesn't exist in the pg_aggregate table then we will let
+			 * the first value returned from the outer procNode become
+			 * the initial value. (This is useful for aggregates like
+			 * max{} and min{}.)  The noInitValue flag signals that we
+			 * still need to do this.
+			 * ------------------------------------------
+			 */
+			peraggstate->noInitValue = peraggstate->initValue1IsNull;
 		}
 
+		inputTuple = NULL;		/* no saved input tuple yet */
+
 		/* ----------------
-		 *	 for each tuple from the the outer plan, apply all the aggregates
+		 *	 for each tuple from the outer plan, update all the aggregates
 		 * ----------------
 		 */
 		for (;;)
 		{
 			TupleTableSlot *outerslot;
 
-			isNull = isNull1 = isNull2 = 0;
 			outerslot = ExecProcNode(outerPlan, (Plan *) node);
 			if (TupIsNull(outerslot))
-			{
-
-				/*
-				 * when the outerplan doesn't return a single tuple,
-				 * create a dummy heaptuple anyway because we still need
-				 * to return a valid aggregate value. The value returned
-				 * will be the initial values of the transition functions
-				 */
-				if (nTuplesAgged == 0)
-				{
-					TupleDesc	tupType;
-					Datum	   *tupValue;
-					char	   *null_array;
-					AttrNumber	attnum;
-
-					tupType = aggstate->csstate.css_ScanTupleSlot->ttc_tupleDescriptor;
-					tupValue = projInfo->pi_tupValue;
-
-					/* initially, set all the values to NULL */
-					null_array = palloc(sizeof(char) * tupType->natts);
-					for (attnum = 0; attnum < tupType->natts; attnum++)
-						null_array[attnum] = 'n';
-					oneTuple = heap_formtuple(tupType, tupValue, null_array);
-					pfree(null_array);
-				}
 				break;
-			}
+			econtext->ecxt_scantuple = outerslot;
 
 			aggno = -1;
 			foreach(alist, aggstate->aggs)
 			{
-				Aggref	   *aggref = lfirst(alist);
-				AggFuncInfo *aggfns = &aggFuncInfo[++aggno];
-				Datum		newVal;
-				Datum		args[2];
+				Aggref		   *aggref = (Aggref *) lfirst(alist);
+				AggStatePerAgg	peraggstate = &peragg[++aggno];
+				Datum			newVal;
+				Datum			args[2];
 
-				/* Do we really need the special case for Var here? */
-				if (IsA(aggref->target, Var))
-				{
-					newVal = aggGetAttr(outerslot, aggref,
-										&isNull);
-				}
-				else
-				{
-					econtext->ecxt_scantuple = outerslot;
-					newVal = ExecEvalExpr(aggref->target, econtext,
-										  &isNull, &isDone);
-				}
+				newVal = ExecEvalExpr(aggref->target, econtext,
+									  &isNull, &isDone);
 
 				if (isNull && !aggref->usenulls)
 					continue;	/* ignore this tuple for this agg */
 
-				if (aggfns->xfn1.fn_addr != NULL)
+				if (OidIsValid(peraggstate->xfn1_oid) && !isNull)
 				{
-					if (noInitValue[aggno])
+					if (peraggstate->noInitValue)
 					{
-
 						/*
 						 * value1 has not been initialized. This is the
 						 * first non-NULL input value. We use it as the
-						 * initial value for value1.
+						 * initial value for value1.  XXX We assume,
+						 * without having checked, that the agg's input type
+						 * is binary-compatible with its transtype1!
 						 *
-						 * But we can't just use it straight, we have to make
-						 * a copy of it since the tuple from which it came
-						 * will be freed on the next iteration of the
-						 * scan.  This requires finding out how to copy
-						 * the Datum.  We assume the datum is of the agg's
-						 * basetype, or at least binary compatible with
-						 * it.
+						 * We have to copy the datum since the tuple from
+						 * which it came will be freed on the next iteration
+						 * of the scan.  
 						 */
-						Type		aggBaseType = typeidType(aggref->basetype);
-						int			attlen = typeLen(aggBaseType);
-						bool		byVal = typeByVal(aggBaseType);
-
-						if (byVal)
-							value1[aggno] = newVal;
-						else
-						{
-							if (attlen == -1)	/* variable length */
-								attlen = VARSIZE((struct varlena *) newVal);
-							value1[aggno] = (Datum) palloc(attlen);
-							memcpy((char *) (value1[aggno]), (char *) newVal,
-								   attlen);
-						}
-						noInitValue[aggno] = 0;
-						nulls[aggno] = 0;
+						peraggstate->value1 = copyDatum(newVal,
+												peraggstate->transtype1Len,
+												peraggstate->transtype1ByVal);
+						peraggstate->value1IsNull = false;
+						peraggstate->noInitValue = false;
 					}
 					else
 					{
-
-						/*
-						 * apply the transition functions.
-						 */
-						args[0] = value1[aggno];
+						/* apply transition function 1 */
+						args[0] = peraggstate->value1;
 						args[1] = newVal;
-						value1[aggno] = (Datum) fmgr_c(&aggfns->xfn1,
-										  (FmgrValues *) args, &isNull1);
-						Assert(!isNull1);
+						newVal = (Datum) fmgr_c(&peraggstate->xfn1,
+												(FmgrValues *) args,
+												&isNull);
+						if (! peraggstate->transtype1ByVal)
+							pfree(peraggstate->value1);
+						peraggstate->value1 = newVal;
 					}
 				}
 
-				if (aggfns->xfn2.fn_addr != NULL)
+				if (OidIsValid(peraggstate->xfn2_oid))
 				{
-					args[0] = value2[aggno];
-					value2[aggno] = (Datum) fmgr_c(&aggfns->xfn2,
-										  (FmgrValues *) args, &isNull2);
-					Assert(!isNull2);
+					/* apply transition function 2 */
+					args[0] = peraggstate->value2;
+					isNull = false;	/* value2 cannot be null, currently */
+					newVal = (Datum) fmgr_c(&peraggstate->xfn2,
+											(FmgrValues *) args,
+											&isNull);
+					if (! peraggstate->transtype2ByVal)
+						pfree(peraggstate->value2);
+					peraggstate->value2 = newVal;
 				}
 			}
 
 			/*
-			 * keep this for the projection (we only need one of these -
-			 * all the tuples we aggregate over share the same group
-			 * column)
+			 * Keep a copy of the first input tuple for the projection.
+			 * (We only need one since only the GROUP BY columns in it
+			 * can be referenced, and these will be the same for all
+			 * tuples aggregated over.)
 			 */
-			if (!oneTuple)
-				oneTuple = heap_copytuple(outerslot->val);
-
-			nTuplesAgged++;
+			if (!inputTuple)
+				inputTuple = heap_copytuple(outerslot->val);
 		}
 
-		/* --------------
-		 * finalize the aggregate (if necessary), and get the resultant value
-		 * --------------
+		/*
+		 * Done scanning input tuple group.
+		 * Finalize each aggregate calculation.
 		 */
-
 		aggno = -1;
 		foreach(alist, aggstate->aggs)
 		{
-			char	   *args[2];
-			AggFuncInfo *aggfns = &aggFuncInfo[++aggno];
+			AggStatePerAgg	peraggstate = &peragg[++aggno];
+			char		   *args[2];
 
-			if (noInitValue[aggno])
+			/*
+			 * XXX For now, only apply finalfn if we got at least one
+			 * non-null input value.  This prevents zero divide in AVG().
+			 * If we had cleaner handling of null inputs/results in functions,
+			 * we could probably take out this hack and define the result
+			 * for no inputs as whatever finalfn returns for null input.
+			 */
+			if (OidIsValid(peraggstate->finalfn_oid) &&
+				! peraggstate->noInitValue)
 			{
-
-				/*
-				 * No values found for this agg; return current state.
-				 * This seems to fix behavior for avg() aggregate. -tgl
-				 * 12/96
-				 */
-			}
-			else if (aggfns->finalfn.fn_addr != NULL && nTuplesAgged > 0)
-			{
-				if (aggfns->finalfn.fn_nargs > 1)
+				if (peraggstate->finalfn.fn_nargs > 1)
 				{
-					args[0] = (char *) value1[aggno];
-					args[1] = (char *) value2[aggno];
+					args[0] = (char *) peraggstate->value1;
+					args[1] = (char *) peraggstate->value2;
 				}
-				else if (aggfns->xfn1.fn_addr != NULL)
-					args[0] = (char *) value1[aggno];
-				else if (aggfns->xfn2.fn_addr != NULL)
-					args[0] = (char *) value2[aggno];
+				else if (OidIsValid(peraggstate->xfn1_oid))
+					args[0] = (char *) peraggstate->value1;
+				else if (OidIsValid(peraggstate->xfn2_oid))
+					args[0] = (char *) peraggstate->value2;
 				else
-					elog(NOTICE, "ExecAgg: no valid transition functions??");
-				value1[aggno] = (Datum) fmgr_c(&aggfns->finalfn,
-								   (FmgrValues *) args, &(nulls[aggno]));
+					elog(ERROR, "ExecAgg: no valid transition functions??");
+				aggnulls[aggno] = false;
+				aggvalues[aggno] = (Datum) fmgr_c(&peraggstate->finalfn,
+												  (FmgrValues *) args,
+												  &(aggnulls[aggno]));
 			}
-			else if (aggfns->xfn1.fn_addr != NULL)
+			else if (OidIsValid(peraggstate->xfn1_oid))
 			{
-
-				/*
-				 * value in the right place, ignore. (If you remove this
-				 * case, fix the else part. -ay 2/95)
-				 */
+				/* Return value1 */
+				aggvalues[aggno] = peraggstate->value1;
+				aggnulls[aggno] = peraggstate->value1IsNull;
+				/* prevent pfree below */
+				peraggstate->value1IsNull = true;
 			}
-			else if (aggfns->xfn2.fn_addr != NULL)
-				value1[aggno] = value2[aggno];
+			else if (OidIsValid(peraggstate->xfn2_oid))
+			{
+				/* Return value2 */
+				aggvalues[aggno] = peraggstate->value2;
+				aggnulls[aggno] = peraggstate->value2IsNull;
+				/* prevent pfree below */
+				peraggstate->value2IsNull = true;
+			}
 			else
 				elog(ERROR, "ExecAgg: no valid transition functions??");
+
+			/*
+			 * Release any per-group working storage.
+			 */
+			if (OidIsValid(peraggstate->xfn1_oid) &&
+				! peraggstate->value1IsNull &&
+				! peraggstate->transtype1ByVal)
+				pfree(peraggstate->value1);
+
+			if (OidIsValid(peraggstate->xfn2_oid) &&
+				! peraggstate->value2IsNull &&
+				! peraggstate->transtype2ByVal)
+				pfree(peraggstate->value2);
 		}
 
 		/*
-		 * whether the aggregation is done depends on whether we are doing
-		 * aggregation over groups or the entire table
+		 * If the outerPlan is a Group node, we will reach here after each
+		 * group.  We are not done unless the Group node is done (a little
+		 * ugliness here while we reach into the Group's state to find out).
+		 * Furthermore, when grouping we return nothing at all unless we
+		 * had some input tuple(s).  By the nature of Group, there are
+		 * no empty groups, so if we get here with no input the whole scan
+		 * is empty.
+		 *
+		 * If the outerPlan isn't a Group, we are done when we get here,
+		 * and we will emit a (single) tuple even if there were no input
+		 * tuples.
 		 */
-		if (nodeTag(outerPlan) == T_Group)
+		if (IsA(outerPlan, Group))
 		{
 			/* aggregation over groups */
 			aggstate->agg_done = ((Group *) outerPlan)->grpstate->grp_done;
+			/* check for no groups */
+			if (inputTuple == NULL)
+				return NULL;
 		}
 		else
-			aggstate->agg_done = TRUE;
+			aggstate->agg_done = true;
 
-		/* ----------------
-		 *	form a projection tuple, store it in the result tuple
-		 *	slot and return it.
-		 * ----------------
+		/*
+		 * When the outerPlan doesn't return a single tuple,
+		 * create a dummy input tuple anyway because we still need
+		 * to return a valid aggregate tuple.  (XXX isn't this wasted
+		 * effort?  Since we're not in GROUP BY mode, it shouldn't be
+		 * possible for the projected result to refer to any raw input
+		 * columns??)  The values returned for the aggregates will be
+		 * the initial values of the transition functions.
 		 */
+		if (inputTuple == NULL)
+		{
+			TupleDesc	tupType;
+			Datum	   *tupValue;
+			char	   *null_array;
+			AttrNumber	attnum;
 
-		ExecStoreTuple(oneTuple,
+			tupType = aggstate->csstate.css_ScanTupleSlot->ttc_tupleDescriptor;
+			tupValue = projInfo->pi_tupValue;
+
+			/* set all the values to NULL */
+			null_array = palloc(sizeof(char) * tupType->natts);
+			for (attnum = 0; attnum < tupType->natts; attnum++)
+				null_array[attnum] = 'n';
+			inputTuple = heap_formtuple(tupType, tupValue, null_array);
+			pfree(null_array);
+		}
+
+		/*
+		 * Store the representative input tuple (or faked-up null tuple)
+		 * in the tuple table slot reserved for it.
+		 */
+		ExecStoreTuple(inputTuple,
 					   aggstate->csstate.css_ScanTupleSlot,
 					   InvalidBuffer,
-					   false);
+					   true);
 		econtext->ecxt_scantuple = aggstate->csstate.css_ScanTupleSlot;
 
+		/*
+		 * Form a projection tuple using the aggregate results and the
+		 * representative input tuple.  Store it in the result tuple slot,
+		 * and return it if it meets my qual condition.
+		 */
 		resultSlot = ExecProject(projInfo, &isDone);
 
 		/*
-		 * As long as the retrieved group does not match the
-		 * qualifications it is ignored and the next group is fetched
+		 * If the completed tuple does not match the qualifications,
+		 * it is ignored and we loop back to try to process another group.
 		 */
-		if (node->plan.qual != NULL)
-			qual_result = ExecQual(node->plan.qual, econtext);
-		else
-			qual_result = false;
-
-		if (oneTuple)
-			pfree(oneTuple);
 	}
-	while (node->plan.qual != NULL && qual_result != true);
+	while (! ExecQual(node->plan.qual, econtext));
 
 	return resultSlot;
 }
@@ -464,10 +474,13 @@ ExecAgg(Agg *node)
 bool
 ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 {
-	AggState   *aggstate;
-	Plan	   *outerPlan;
-	ExprContext *econtext;
-	int			numaggs;
+	AggState	   *aggstate;
+	AggStatePerAgg	peragg;
+	Plan		   *outerPlan;
+	ExprContext	   *econtext;
+	int				numaggs,
+					aggno;
+	List		   *alist;
 
 	/*
 	 * assign the node's execution state
@@ -486,9 +499,19 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	 */
 	aggstate->aggs = nconc(pull_agg_clause((Node *) node->plan.targetlist),
 						   pull_agg_clause((Node *) node->plan.qual));
-	numaggs = length(aggstate->aggs);
+	aggstate->numaggs = numaggs = length(aggstate->aggs);
 	if (numaggs <= 0)
-		elog(ERROR, "ExecInitAgg: could not find any aggregate functions");
+	{
+		/*
+		 * This used to be treated as an error, but we can't do that anymore
+		 * because constant-expression simplification could optimize away
+		 * all of the Aggrefs in the targetlist and qual.  So, just make a
+		 * debug note, and force numaggs positive so that palloc()s below
+		 * don't choke.
+		 */
+		elog(DEBUG, "ExecInitAgg: could not find any aggregate functions");
+		numaggs = 1;
+	}
 
 	/*
 	 * assign node's base id and create expression context
@@ -504,14 +527,22 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	ExecInitScanTupleSlot(estate, &aggstate->csstate);
 	ExecInitResultTupleSlot(estate, &aggstate->csstate.cstate);
 
+	/*
+	 * Set up aggregate-result storage in the expr context,
+	 * and also allocate my private per-agg working storage
+	 */
 	econtext = aggstate->csstate.cstate.cs_ExprContext;
-	econtext->ecxt_values = (Datum *) palloc(sizeof(Datum) * numaggs);
-	MemSet(econtext->ecxt_values, 0, sizeof(Datum) * numaggs);
-	econtext->ecxt_nulls = (char *) palloc(sizeof(char) * numaggs);
-	MemSet(econtext->ecxt_nulls, 0, sizeof(char) * numaggs);
+	econtext->ecxt_aggvalues = (Datum *) palloc(sizeof(Datum) * numaggs);
+	MemSet(econtext->ecxt_aggvalues, 0, sizeof(Datum) * numaggs);
+	econtext->ecxt_aggnulls = (bool *) palloc(sizeof(bool) * numaggs);
+	MemSet(econtext->ecxt_aggnulls, 0, sizeof(bool) * numaggs);
+
+	peragg = (AggStatePerAgg) palloc(sizeof(AggStatePerAggData) * numaggs);
+	MemSet(peragg, 0, sizeof(AggStatePerAggData) * numaggs);
+	aggstate->peragg = peragg;
 
 	/*
-	 * initializes child nodes
+	 * initialize child nodes
 	 */
 	outerPlan = outerPlan(node);
 	ExecInitNode(outerPlan, estate, (Plan *) node);
@@ -522,12 +553,11 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	 */
 	if (IsA(outerPlan, Result))
 	{
-		((Result *) outerPlan)->resstate->cstate.cs_ProjInfo->pi_exprContext->ecxt_values =
-			econtext->ecxt_values;
-		((Result *) outerPlan)->resstate->cstate.cs_ProjInfo->pi_exprContext->ecxt_nulls =
-			econtext->ecxt_nulls;
+		((Result *) outerPlan)->resstate->cstate.cs_ProjInfo->pi_exprContext->ecxt_aggvalues =
+			econtext->ecxt_aggvalues;
+		((Result *) outerPlan)->resstate->cstate.cs_ProjInfo->pi_exprContext->ecxt_aggnulls =
+			econtext->ecxt_aggnulls;
 	}
-
 
 	/* ----------------
 	 *	initialize tuple type.
@@ -542,6 +572,84 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	ExecAssignResultTypeFromTL((Plan *) node, &aggstate->csstate.cstate);
 	ExecAssignProjectionInfo((Plan *) node, &aggstate->csstate.cstate);
 
+	/*
+	 * Perform lookups of aggregate function info, and initialize the
+	 * unchanging fields of the per-agg data
+	 */
+	aggno = -1;
+	foreach(alist, aggstate->aggs)
+	{
+		Aggref		   *aggref = (Aggref *) lfirst(alist);
+		AggStatePerAgg	peraggstate = &peragg[++aggno];
+		char		   *aggname = aggref->aggname;
+		HeapTuple		aggTuple;
+		Form_pg_aggregate aggform;
+		Type			typeInfo;
+		Oid				xfn1_oid,
+						xfn2_oid,
+						finalfn_oid;
+
+		/* Mark Aggref node with its associated index in the result array */
+		aggref->aggno = aggno;
+
+		aggTuple = SearchSysCacheTuple(AGGNAME,
+									   PointerGetDatum(aggname),
+									   ObjectIdGetDatum(aggref->basetype),
+									   0, 0);
+		if (!HeapTupleIsValid(aggTuple))
+			elog(ERROR, "ExecAgg: cache lookup failed for aggregate %s(%s)",
+				 aggname,
+				 typeidTypeName(aggref->basetype));
+		aggform = (Form_pg_aggregate) GETSTRUCT(aggTuple);
+
+		peraggstate->initValue1 = (Datum)
+			AggNameGetInitVal(aggname,
+							  aggform->aggbasetype,
+							  1,
+							  &peraggstate->initValue1IsNull);
+
+		peraggstate->initValue2 = (Datum)
+			AggNameGetInitVal(aggname,
+							  aggform->aggbasetype,
+							  2,
+							  &peraggstate->initValue2IsNull);
+
+		peraggstate->xfn1_oid = xfn1_oid = aggform->aggtransfn1;
+		peraggstate->xfn2_oid = xfn2_oid = aggform->aggtransfn2;
+		peraggstate->finalfn_oid = finalfn_oid = aggform->aggfinalfn;
+
+		if (OidIsValid(xfn1_oid))
+		{
+			fmgr_info(xfn1_oid, &peraggstate->xfn1);
+			/* If a transfn1 is specified, transtype1 had better be, too */
+			typeInfo = typeidType(aggform->aggtranstype1);
+			peraggstate->transtype1Len = typeLen(typeInfo);
+			peraggstate->transtype1ByVal = typeByVal(typeInfo);
+		}
+
+		if (OidIsValid(xfn2_oid))
+		{
+			fmgr_info(xfn2_oid, &peraggstate->xfn2);
+			/* If a transfn2 is specified, transtype2 had better be, too */
+			typeInfo = typeidType(aggform->aggtranstype2);
+			peraggstate->transtype2Len = typeLen(typeInfo);
+			peraggstate->transtype2ByVal = typeByVal(typeInfo);
+			/* ------------------------------------------
+			 * If there is a second transition function, its initial
+			 * value must exist -- as it does not depend on data values,
+			 * we have no other way of determining an initial value.
+			 * ------------------------------------------
+			 */
+			if (peraggstate->initValue2IsNull)
+				elog(ERROR, "ExecInitAgg: agginitval2 is null");
+		}
+
+		if (OidIsValid(finalfn_oid))
+		{
+			fmgr_info(finalfn_oid, &peraggstate->finalfn);
+		}
+	}
+
 	return TRUE;
 }
 
@@ -553,18 +661,11 @@ ExecCountSlotsAgg(Agg *node)
 	AGG_NSLOTS;
 }
 
-/* ------------------------
- *		ExecEndAgg(node)
- *
- * -----------------------
- */
 void
 ExecEndAgg(Agg *node)
 {
-	AggState   *aggstate;
+	AggState   *aggstate = node->aggstate;
 	Plan	   *outerPlan;
-
-	aggstate = node->aggstate;
 
 	ExecFreeProjectionInfo(&aggstate->csstate.cstate);
 
@@ -575,80 +676,6 @@ ExecEndAgg(Agg *node)
 	ExecClearTuple(aggstate->csstate.css_ScanTupleSlot);
 }
 
-
-/*****************************************************************************
- *	Support Routines
- *****************************************************************************/
-
-/*
- * aggGetAttr -
- *	  get the attribute (specified in the Var node in agg) to aggregate
- *	  over from the tuple
- */
-static Datum
-aggGetAttr(TupleTableSlot *slot,
-		   Aggref *aggref,
-		   bool *isNull)
-{
-	Datum		result;
-	AttrNumber	attnum;
-	HeapTuple	heapTuple;
-	TupleDesc	tuple_type;
-	Buffer		buffer;
-
-	/* ----------------
-	 *	 extract tuple information from the slot
-	 * ----------------
-	 */
-	heapTuple = slot->val;
-	tuple_type = slot->ttc_tupleDescriptor;
-	buffer = slot->ttc_buffer;
-
-	attnum = ((Var *) aggref->target)->varattno;
-
-	/*
-	 * If the attribute number is invalid, then we are supposed to return
-	 * the entire tuple, we give back a whole slot so that callers know
-	 * what the tuple looks like.
-	 */
-	if (attnum == InvalidAttrNumber)
-	{
-		TupleTableSlot *tempSlot;
-		TupleDesc	td;
-		HeapTuple	tup;
-
-		tempSlot = makeNode(TupleTableSlot);
-		tempSlot->ttc_shouldFree = false;
-		tempSlot->ttc_descIsNew = true;
-		tempSlot->ttc_tupleDescriptor = (TupleDesc) NULL;
-		tempSlot->ttc_buffer = InvalidBuffer;
-		tempSlot->ttc_whichplan = -1;
-
-		tup = heap_copytuple(heapTuple);
-		td = CreateTupleDescCopy(slot->ttc_tupleDescriptor);
-
-		ExecSetSlotDescriptor(tempSlot, td);
-
-		ExecStoreTuple(tup, tempSlot, InvalidBuffer, true);
-		return (Datum) tempSlot;
-	}
-
-	result = heap_getattr(heapTuple,	/* tuple containing attribute */
-						  attnum,		/* attribute number of desired
-										 * attribute */
-						  tuple_type,	/* tuple descriptor of tuple */
-						  isNull);		/* return: is attribute null? */
-
-	/* ----------------
-	 *	return null if att is null
-	 * ----------------
-	 */
-	if (*isNull)
-		return (Datum) NULL;
-
-	return result;
-}
-
 void
 ExecReScanAgg(Agg *node, ExprContext *exprCtxt, Plan *parent)
 {
@@ -656,8 +683,8 @@ ExecReScanAgg(Agg *node, ExprContext *exprCtxt, Plan *parent)
 	ExprContext *econtext = aggstate->csstate.cstate.cs_ExprContext;
 
 	aggstate->agg_done = false;
-	MemSet(econtext->ecxt_values, 0, sizeof(Datum) * length(aggstate->aggs));
-	MemSet(econtext->ecxt_nulls, 0, sizeof(char) * length(aggstate->aggs));
+	MemSet(econtext->ecxt_aggvalues, 0, sizeof(Datum) * aggstate->numaggs);
+	MemSet(econtext->ecxt_aggnulls, 0, sizeof(bool) * aggstate->numaggs);
 
 	/*
 	 * if chgParam of subnode is not null then plan will be re-scanned by

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.48 1999/09/21 20:58:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.49 1999/09/26 21:21:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -540,22 +540,25 @@ float4div(float32 arg1, float32 arg2)
 
 	CheckFloat4Val(val);
 	result = (float32) palloc(sizeof(float32data));
-	*result = *arg1 / *arg2;
+	*result = val;
 	return result;
 }
 
 float32
 float4inc(float32 arg1)
 {
+	float32		result;
 	double		val;
 
 	if (!arg1)
 		return (float32) NULL;
 
 	val = *arg1 + (float32data) 1.0;
+
 	CheckFloat4Val(val);
-	*arg1 = val;
-	return arg1;
+	result = (float32) palloc(sizeof(float32data));
+	*result = val;
+	return result;
 }
 
 /*
@@ -639,6 +642,7 @@ float8div(float64 arg1, float64 arg2)
 float64
 float8inc(float64 arg1)
 {
+	float64		result;
 	double		val;
 
 	if (!arg1)
@@ -646,8 +650,9 @@ float8inc(float64 arg1)
 
 	val = *arg1 + (float64data) 1.0;
 	CheckFloat8Val(val);
-	*arg1 = val;
-	return arg1;
+	result = (float64) palloc(sizeof(float64data));
+	*result = val;
+	return result;
 }
 
 
@@ -1388,7 +1393,7 @@ float48eq(float32 arg1, float64 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return *arg1 == (float) *arg2;
+	return *arg1 == *arg2;
 }
 
 bool
@@ -1397,7 +1402,7 @@ float48ne(float32 arg1, float64 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return *arg1 != (float) *arg2;
+	return *arg1 != *arg2;
 }
 
 bool
@@ -1406,7 +1411,7 @@ float48lt(float32 arg1, float64 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return *arg1 < (float) *arg2;
+	return *arg1 < *arg2;
 }
 
 bool
@@ -1415,7 +1420,7 @@ float48le(float32 arg1, float64 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return *arg1 <= (float) *arg2;
+	return *arg1 <= *arg2;
 }
 
 bool
@@ -1424,7 +1429,7 @@ float48gt(float32 arg1, float64 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return *arg1 > (float) *arg2;
+	return *arg1 > *arg2;
 }
 
 bool
@@ -1433,7 +1438,7 @@ float48ge(float32 arg1, float64 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return *arg1 >= (float) *arg2;
+	return *arg1 >= *arg2;
 }
 
 /*
@@ -1445,7 +1450,7 @@ float84eq(float64 arg1, float32 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return (float) *arg1 == *arg2;
+	return *arg1 == *arg2;
 }
 
 bool
@@ -1454,7 +1459,7 @@ float84ne(float64 arg1, float32 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return (float) *arg1 != *arg2;
+	return *arg1 != *arg2;
 }
 
 bool
@@ -1463,7 +1468,7 @@ float84lt(float64 arg1, float32 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return (float) *arg1 < *arg2;
+	return *arg1 < *arg2;
 }
 
 bool
@@ -1472,7 +1477,7 @@ float84le(float64 arg1, float32 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return (float) *arg1 <= *arg2;
+	return *arg1 <= *arg2;
 }
 
 bool
@@ -1481,7 +1486,7 @@ float84gt(float64 arg1, float32 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return (float) *arg1 > *arg2;
+	return *arg1 > *arg2;
 }
 
 bool
@@ -1490,7 +1495,7 @@ float84ge(float64 arg1, float32 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return (float) *arg1 >= *arg2;
+	return *arg1 >= *arg2;
 }
 
 /* ========== PRIVATE ROUTINES ========== */

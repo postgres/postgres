@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.35 1999/09/24 00:25:22 tgl Exp $
+ * $Id: execnodes.h,v 1.36 1999/09/26 21:21:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,8 +88,8 @@ typedef struct ExprContext
 	ParamListInfo ecxt_param_list_info;
 	ParamExecData *ecxt_param_exec_vals;		/* this is for subselects */
 	List	   *ecxt_range_table;
-	Datum	   *ecxt_values;	/* precomputed values for aggreg */
-	char	   *ecxt_nulls;		/* null flags for aggreg  values */
+	Datum	   *ecxt_aggvalues;	/* precomputed values for Aggref nodes */
+	bool	   *ecxt_aggnulls;	/* null flags for Aggref nodes */
 } ExprContext;
 
 /* ----------------
@@ -565,14 +565,20 @@ typedef struct MaterialState
 /* ---------------------
  *	AggregateState information
  *
- *		done			indicated whether aggregate has been materialized
+ *	Note: the associated ExprContext contains ecxt_aggvalues and ecxt_aggnulls
+ *	arrays, which hold the computed agg values for the current input group
+ *	during evaluation of an Agg node's output tuple(s).
  * -------------------------
  */
+typedef struct AggStatePerAggData *AggStatePerAgg; /* private in nodeAgg.c */
+
 typedef struct AggState
 {
 	CommonScanState csstate;	/* its first field is NodeTag */
 	List	   *aggs;			/* all Aggref nodes in targetlist & quals */
-	bool		agg_done;
+	int			numaggs;		/* length of list (could be zero!) */
+	AggStatePerAgg peragg;		/* per-Aggref working state */
+	bool		agg_done;		/* indicates completion of Agg scan */
 } AggState;
 
 /* ---------------------
