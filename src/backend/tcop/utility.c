@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.29 1997/11/21 18:11:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.30 1997/11/21 19:02:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -391,7 +391,6 @@ ProcessUtility(Node * parsetree,
 
 				commandTag = "CREATE";
 				CHECK_IF_ABORTED();
-				/* XXX no support for ARCHIVE indices, yet */
 				DefineIndex(stmt->relname,		/* relation name */
 							stmt->idxname,		/* index name */
 							stmt->accessMethod, /* am name */

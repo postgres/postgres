@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.21 1997/11/21 18:11:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.22 1997/11/21 19:02:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,7 @@ static int	_inv_getsize(Relation hreln, TupleDesc hdesc, Relation ireln);
  *	inv_create -- create a new large object.
  *
  *		Arguments:
- *		  flags -- storage manager to use, archive mode, etc.
+ *		  flags -- was archive, smgr
  *
  *		Returns:
  *		  large object descriptor, appropriately filled in.
@@ -91,20 +91,11 @@ inv_create(int flags)
 	LargeObjectDesc *retval;
 	Relation	r;
 	Relation	indr;
-	int			smgr;
-	char		archchar;
 	TupleDesc	tupdesc;
 	AttrNumber	attNums[1];
 	Oid			classObjectId[1];
 	char		objname[NAMEDATALEN];
 	char		indname[NAMEDATALEN];
-
-	/* parse flags */
-	smgr = flags & INV_SMGRMASK;
-	if (flags & INV_ARCHIVE)
-		archchar = 'h';
-	else
-		archchar = 'n';
 
 	/*
 	 * add one here since the pg_class tuple created will have the next

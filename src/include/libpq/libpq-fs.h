@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fs.h,v 1.5 1997/09/08 02:37:07 momjian Exp $
+ * $Id: libpq-fs.h,v 1.6 1997/11/21 19:02:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,8 +88,6 @@ struct pgdirent
  *	manager to be used, and the high sixteen bits for flags.
  */
 
-#define INV_SMGRMASK	0x0000ffff
-#define INV_ARCHIVE		0x00010000
 #define INV_WRITE		0x00020000
 #define INV_READ		0x00040000
 

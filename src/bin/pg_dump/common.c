@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.18 1997/10/30 16:47:57 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.19 1997/11/21 19:02:50 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -467,17 +467,6 @@ findFuncByName(FuncInfo *finfo, int numFuncs, const char *name)
 			return i;
 	}
 	return -1;
-}
-
-/*
- * isArchiveName
- *
- *	 returns true if the relation name is an archive name, false otherwise
- */
-int
-isArchiveName(const char *relname)
-{
-	return (strlen(relname) > 1 && relname[1] == ',');
 }
 
 /*
