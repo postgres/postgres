@@ -337,3 +337,15 @@ Thu Sep 17 19:23:24 CEST 1998
 
 	- Added missing ´;´ in preproc.y
 	- Set version to 2.4.2
+
+Tue Sep 29 10:22:00 CEST 1998
+
+	- Check strdup calls for out of memory.
+	- Set library version to 2.6.2
+
+Wed Sep 30 12:15:10 CEST 1998
+
+	- Synced preproc.y with gram.y yet again.
+	- Set version to 2.4.3
+
+
