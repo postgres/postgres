@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.19 2000/12/22 18:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.20 2000/12/22 21:51:58 petere Exp $
 -->
 
  <chapter id="odbc">
@@ -21,8 +21,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.19 2000/12/22 18:57:49 
 
   <note>
    <para>
-    Background information originally by
-    <ulink url="mailto:tgoeke@xpressway.com">Tim Goeke</ulink>
+    Background information originally by Tim Goeke
+    (<email>tgoeke@xpressway.com</email>)
    </para>
   </note>
 
@@ -523,8 +523,8 @@ TextAsLongVarchar=0
 	 The September release of ApplixWare v4.4.1 (the first release with official
 	 <acronym>ODBC</acronym> support under Linux) shows problems when usernames
 	 exceed eight (8) characters in length.
-	 Problem description ontributed by 
-	 <ulink url="mailto:scampbell@lear.com">Steve Campbell</ulink>.
+	 Problem description ontributed by Steve Campbell
+	 (<email>scampbell@lear.com</email>).
 	</para>
        </listitem>
       </varlistentry>
@@ -537,9 +537,8 @@ TextAsLongVarchar=0
       <title>Author</title>
 
       <para>
-       Contributed by 
-       <ulink url="mailto:scampbell@lear.com">Steve Campbell</ulink> on
-       1998-10-20.
+       Contributed by Steve Campbell (<email>scampbell@lear.com</email>),
+       1998-10-20
       </para>
      </note>
 

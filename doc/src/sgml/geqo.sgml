@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.14 2000/12/16 22:44:47 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.15 2000/12/22 21:51:57 petere Exp $
 Genetic Optimizer
 -->
 
@@ -34,7 +34,7 @@ Genetic Optimizer
    <note>
     <title>Author</title>
     <para>
-     Written by <ulink url="mailto:utesch@aut.tu-freiberg.de">Martin Utesch</ulink>
+     Written by Martin Utesch (<email>utesch@aut.tu-freiberg.de</email>)
      for the Institute of Automatic Control at the University of Mining and Technology in Freiberg, Germany.
     </para>
    </note>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.4 2000/12/20 00:44:49 ishii Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.5 2000/12/22 21:51:57 petere Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -235,7 +235,7 @@ perl: warning: Falling back to the standard locale ("C").
     <title>Author</title>
 
     <para>
-     <ulink url="mailto:ishii@postgresql.org">Tatsuo Ishii</ulink>,
+     Tatsuo Ishii (<email>ishii@postgresql.org</email>),
      last updated 2000-03-22.
      Check <ulink
       url="http://www.sra.co.jp/people/t-ishii/PostgreSQL/">Tatsuo's
@@ -670,7 +670,7 @@ Jan 26, 1999
 	* Add support for Big5 for fronend encoding
 	  (you need to create a database with EUC_TW to use Big5)
 	* Add regression test case for EUC_TW
-	  (contributed by <ulink url="mailto:jonahkuo@mail.ttn.com.tw">Jonah Kuo</ulink>)
+	  (contributed by Jonah Kuo <email>jonahkuo@mail.ttn.com.tw</email>)
 
 Dec 15, 1998
 	* Bugs related to SQL_ASCII support fixed
@@ -701,7 +701,7 @@ April 21, 1998 some enhancements/fixes
 	* add octet_length()
 	* add --with-mb option to configure
 	* new regression tests for EUC_KR
-  	  (contributed by <ulink url="mailto:hong@lunaris.hanmesoft.co.kr">Soonmyung. Hong</ulink>)
+  	  (contributed by Soonmyung Hong <email>hong@lunaris.hanmesoft.co.kr</email>)
 	* add some test cases to the EUC_JP regression test
 	* fix problem in regress/regress.sh in case of System V
 	* fix toupper(), tolower() to handle 8bit chars
@@ -730,7 +730,7 @@ is not necceary in 6.5.1 - Tatsuo]
 Version: 0.91 for PgSQL 6.5
 Author: Pavel Behal
 Revised by: Tatsuo Ishii
-Email: <ulink url="mailto:behal@opf.slu.cz">behal@opf.slu.cz</ulink>
+Email: behal@opf.slu.cz
 Licence: The Same as PostgreSQL
 
 Sorry for my Eglish and C code, I'm not native :-)

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.17 2000/12/22 18:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.18 2000/12/22 21:51:58 petere Exp $
 -->
 
  <chapter id="jdbc">
@@ -9,7 +9,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.17 2000/12/22 18:57:49 
    <note>
     <title>Author</title>
     <para>
-     Written by <ulink url="mailto:peter@retep.org.uk">Peter T. Mount</ulink>, the
+     Written by Peter T. Mount (<email>peter@retep.org.uk</email>), the
      author of the <acronym>JDBC</acronym> driver.
     </para>
    </note>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/indexcost.sgml,v 2.5 2000/09/29 20:21:34 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/indexcost.sgml,v 2.6 2000/12/22 21:51:57 petere Exp $
 -->
 
  <chapter id="indexcost">
@@ -9,8 +9,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/indexcost.sgml,v 2.5 2000/09/29 20:21
    <title>Author</title>
 
    <para>
-    Written by <ulink url="mailto:tgl@sss.pgh.pa.us">Tom Lane</ulink>
-    on 2000-01-24.
+    Written by Tom Lane (<email>tgl@sss.pgh.pa.us</email>) on 2000-01-24
    </para>
   </note>
 

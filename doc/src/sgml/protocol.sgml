@@ -11,8 +11,8 @@
 <Para>
 <Note>
 <Para>
-Written by <ULink url="mailto:phil@river-bank.demon.co.uk">Phil Thompson</ULink>.
-Updates for protocol 2.0 by <ULink url="mailto:tgl@sss.pgh.pa.us">Tom Lane</ULink>.
+Written by Phil Thompson (<email>phil@river-bank.demon.co.uk</email>).
+Updates for protocol 2.0 by Tom Lane (<email>tgl@sss.pgh.pa.us</email>).
 </Para>
 </Note>
 </para>

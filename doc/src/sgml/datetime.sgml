@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.14 2000/12/21 22:55:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.15 2000/12/22 21:51:57 petere Exp $
 Date/time details
 -->
 
@@ -637,8 +637,7 @@ Date/time details
 
   <note>
    <para>
-    Contributed by 
-    <ulink url="mailto:jose@sferacarta.com">José Soares</ulink>.
+    Contributed by José Soares (<email>jose@sferacarta.com</email>)
    </para>
   </note>
 

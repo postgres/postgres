@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/y2k.sgml,v 1.7 2000/05/02 20:01:53 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/y2k.sgml,v 1.8 2000/12/22 21:51:58 petere Exp $
 -->
 
 <sect1 id="y2k">
@@ -9,8 +9,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/y2k.sgml,v 1.7 2000/05/02 20:01:53 th
   <title>Author</title>
 
   <para>
-   Written by 
-   <ulink url="mailto:lockhart@alumni.caltech.edu">Thomas Lockhart</ulink>
+   Written by Thomas Lockhart
+   (<email>lockhart@alumni.caltech.edu</email>)
    on 1998-10-22. Updated 2000-03-31.
   </para>
  </note>

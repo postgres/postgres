@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.12 2000/12/22 19:31:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.13 2000/12/22 21:51:58 petere Exp $
 -->
 
 <sect1 id="terminology">
@@ -101,8 +101,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.12 2000/12/22 19:31:56 pe
    the notation for
    flagging commands is not universally consistant throughout the
    documentation set.
-   Please report problems to
-   <ulink url="mailto:docs@postgresql.org">the Documentation Mailing List</ulink>.
+   Please report problems to the documentation mailing list
+   <email>pgsql-docs@postgresql.org</email>.
   </para>
  </note>
 

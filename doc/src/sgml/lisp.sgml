@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/lisp.sgml,v 2.3 2000/05/02 20:01:52 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/lisp.sgml,v 2.4 2000/12/22 21:51:58 petere Exp $
 -->
 
  <chapter id="lisp">
@@ -15,9 +15,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/lisp.sgml,v 2.3 2000/05/02 20:01:52 t
   <note>
    <title>Author</title>
    <para>
-    Written by
-    <ulink url="mailto:emarsden@mail.dotcom.fr">Eric Marsden</ulink>
-    on 21 Jul 1999.
+    Written by Eric Marsden <email>emarsden@mail.dotcom.fr</email>
+    on 1999-07-21
    </para>
   </note>
 

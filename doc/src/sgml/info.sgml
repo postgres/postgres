@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.9 2000/09/29 20:21:34 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.10 2000/12/22 21:51:57 petere Exp $
 -->
 
 <sect1 id="resources">
@@ -125,7 +125,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.9 2000/09/29 20:21:34 petere 
    <listitem>
     <para>
      The
-     <ulink url="mailto:pgsql-general@postgresql.org">pgsql-general</ulink>
+     <email>pgsql-general@postgresql.org</email>
      (<ulink url="http://www.postgresql.org/mhonarc/pgsql-general/">archive</ulink>)
      mailing list is a good place to have user questions answered.
      Other mailing lists are available; consult the Info Central section of the
@@ -152,8 +152,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.9 2000/09/29 20:21:34 petere 
      Even those without a lot of experience can provide corrections and
      minor changes in the documentation, and that is a good way to start.
      The 
-     <ulink url="mailto:pgsql-docs@postgresql.org">pgsql-docs</ulink>
-     (<ulink url="http://www.PostgreSQL.ORG/mhonarc/pgsql-docs/">archive</ulink>)
+     <email>pgsql-docs@postgresql.org</email>
+     (<ulink url="http://www.postgresql.org/mhonarc/pgsql-docs/">archive</ulink>)
      mailing list is the place to get going.
     </para>
    </listitem>

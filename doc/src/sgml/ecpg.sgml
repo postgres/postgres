@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.17 2000/09/29 20:21:33 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.18 2000/12/22 21:51:57 petere Exp $
 -->
 
  <chapter id="ecpg">
@@ -31,8 +31,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.17 2000/09/29 20:21:33 petere
   <para>
    This describes an embedded <acronym>SQL</acronym> in <acronym>C</acronym> 
    package for <productname>Postgres</productname>.
-   It is written by <ulink url="mailto:linus@epact.se">Linus Tolke</ulink>
-   and <ulink url="mailto:meskes@debian.org">Michael Meskes</ulink>.
+   It was written by Linus Tolke (<email>linus@epact.se</email>)
+   and Michael Meskes (<email>meskes@debian.org</email>).
    The package is installed with the <productname>Postgres</> distribution.
 
    <note>

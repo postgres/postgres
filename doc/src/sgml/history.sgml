@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.11 2000/12/21 22:55:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.12 2000/12/22 21:51:57 petere Exp $
 -->
 
 <sect1 id="history">
@@ -96,10 +96,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.11 2000/12/21 22:55:27 pet
   <title><productname>Postgres95</productname></title>
 
   <para>
-   In 1994,
-   <ulink url="mailto:ayu@informix.com">Andrew Yu</ulink>
-   and
-   <ulink url="http://http.cs.berkeley.edu/~jolly/">Jolly Chen</ulink>
+   In 1994, Andrew Yu and Jolly Chen
    added a SQL language interpreter to <productname>Postgres</productname>.
    <productname>Postgres95</productname> was subsequently released to
    the Web to find its own way in the world as an

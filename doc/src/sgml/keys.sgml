@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/keys.sgml,v 1.6 2000/12/22 18:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/keys.sgml,v 1.7 2000/12/22 21:51:58 petere Exp $
 Indices and Keys
 -->
 
@@ -19,8 +19,8 @@ Indices and Keys
   <note>
    <title>Author</title>
    <para>
-    Written by 
-    <ulink url="mailto:herouth@oumail.openu.ac.il">Herouth Maoz</ulink>
+    Written by Herouth Maoz
+    (<email>herouth@oumail.openu.ac.il</email>)
    </para>
   </note>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.12 2000/12/22 18:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.13 2000/12/22 21:51:57 petere Exp $
 CVS code repository
 Thomas Lockhart
 -->
@@ -44,7 +44,7 @@ Thomas Lockhart
    <note>
     <title>Author</title>
     <para>
-     Written by <ulink url="mailto:scrappy@hub.org">Marc G. Fournier</ulink> on 1998-11-05.
+     Written by Marc G. Fournier (<email>scrappy@hub.org</email>) on 1998-11-05
     </para>
    </note>
   </para>
@@ -294,7 +294,7 @@ $ chmod -R go-w pgsql
    the <productname>Postgres</productname> source tree
    is <productname>CVSup</productname>.
    <productname>CVSup</productname> was developed by
-   <ulink url="mailto:jdp@polstra.com">John Polstra</ulink> to
+   John Polstra (<email>jdp@polstra.com</email>) to
    distribute CVS repositories and other file trees for
    <ulink url="http://www.freebsd.org">the FreeBSD project</ulink>.
   </para>

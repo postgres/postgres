@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.70 2000/12/21 22:55:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.71 2000/12/22 21:51:58 petere Exp $
 -->
 
  <chapter id="release">
@@ -724,7 +724,7 @@ Enhancements
 ------------
 New CLI interface include file sqlcli.h, based on SQL3/SQL98
 Remove all limits on query length, row length limit still exists (Tom)
-Update jdbc protocol to 2.0 (<ulink url="mailto:jens@jens.de">Jens Glaser</ulink>)
+Update jdbc protocol to 2.0 (Jens Glaser <email>jens@jens.de</email>)
 Add TRUNCATE command to quickly truncate relation (Mike Mascari)
 Fix to give super user and createdb user proper update catalog rights (Peter E)
 Allow ecpg bool variables to have NULL values (Christof)
@@ -745,7 +745,7 @@ Allow WHERE restriction on ctid (physical heap location) (Hiroshi)
 Move pginterface from contrib to interface directory, rename to pgeasy (Bruce)
 Change pgeasy connectdb() parameter ordering (Bruce)
 Require SELECT DISTINCT target list to have all ORDER BY columns (Tom)
-Add Oracle's COMMENT ON command (<ulink url="mailto:mascarim@yahoo">Mike Mascari</ulink>)
+Add Oracle's COMMENT ON command (Mike Mascari <email>mascarim@yahoo.com</email>)
 libpq's PQsetNoticeProcessor function now returns previous hook(Peter E)
 Prevent PQsetNoticeProcessor from being set to NULL (Peter E)
 Make USING in COPY optional (Bruce)
@@ -939,7 +939,7 @@ Add scripts for checking includes (Bruce)
 Remove un-needed #include's from *.c files (Bruce)
 Change #include's to use &lt;&gt; and "" as appropriate (Bruce)
 Enable WIN32 compilation of libpq
-Alpha spinlock fix from <ulink url="mailto:gatgul@voicenet.com">Uncle George</ulink>
+Alpha spinlock fix from Uncle George <email>gatgul@voicenet.com</email>
 Overhaul of optimizer data structures (Tom)
 Fix to cygipc library (Yutaka Tanida)
 Allow pgsql to work on newer Cygwin snapshots (Dan)
@@ -957,7 +957,7 @@ Fix for plpgsql on BSDI
 Add SQL_ASCII test case to the regression test (Tatsuo)
 configure --with-mb now deprecated (Tatsuo)
 NT fixes
-NetBSD fixes <ulink url="mailto:lamj@stat.cmu.edu">Johnny C. Lam</ulink>
+NetBSD fixes (Johnny C. Lam <email>lamj@stat.cmu.edu</email>)
 Fixes for Alpha compiles
 New multibyte encodings
      </programlisting>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.10 2000/10/11 18:29:52 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.11 2000/12/22 21:51:58 petere Exp $
 -->
 
  <chapter id="mvcc">
@@ -11,7 +11,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.10 2000/10/11 18:29:52 tgl Ex
     (MVCC)
     is an advanced technique for improving database performance in a
     multi-user environment. 
-    <ulink url="mailto:vadim@krs.ru">Vadim Mikheev</ulink> provided
+    Vadim Mikheev (<email>vadim@krs.ru</email>) provided
     the implementation for <productname>Postgres</productname>.
    </para>
   </abstract>

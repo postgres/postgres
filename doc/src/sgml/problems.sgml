@@ -251,21 +251,16 @@
   <title>Where to report bugs</title>
 
   <para>
-   In general, send bug reports to
-   <ulink url="mailto:pgsql-bugs@postgresql.org">the bug report
-    mailing list</ulink>.
+   In general, send bug reports to the bug report mailing list at
+   <email>pgsql-bugs@postgresql.org</email>.
    You are invited to find a descriptive subject for your email
    message, perhaps parts of the error message.
   </para>
 
   <para> 
    Do not send bug reports to any of the user mailing lists, such as
-
-   <ulink url="mailto:pgsql-sql@postgresql.org">the SQL language
-    mailing list</ulink>
-   or
-   <ulink url="mailto:pgsql-general@postgresql.org">the general topics
-    mailing list</ulink>.
+   <email>pgsql-sql@postgresql.org</email> or
+   <email>pgsql-general@postgresql.org</email>.
    These mailing lists are for answering
    user questions and their subscribers normally do not wish to receive
    bug reports. More importantly, they are unlikely to fix them.
@@ -273,8 +268,7 @@
 
   <para>
    Also, please do <emphasis>not</emphasis> send reports to
-   <ulink url="mailto:pgsql-hackers@postgresql.org">the developers'
-    mailing list</ulink>.
+   the developers' mailing list <email>pgsql-hackers@postgresql.org</email>.
    This list is for discussing the
    development of <productname>PostgreSQL</productname> and it would be nice
    if we could keep the bug reports separate. We might choose to take up a
@@ -284,15 +278,13 @@
 
   <para>
    If you have a problem with the documentation, send email to
-   <ulink url="mailto:pgsql-docs@postgresql.org">the documentation
-    mailing list</ulink>.
+   the documentation mailing list <email>pgsql-docs@postgresql.org</email>.
    Mention the document, chapter, and sections in your problem report.
   </para>
  
   <para>
    If your bug is a portability problem on a non-supported platform,
-   send mail to
-   <ulink url="mailto:pgsql-ports@postgresql.org">the porting issues mail list</ulink>,
+   send mail to <email>pgsql-ports@postgresql.org</email>,
    so we (and you) can work on
    porting <productname>PostgreSQL</productname> to your platform.
   </para>
@@ -306,7 +298,7 @@
     subscribe to the special pgsql-loophole mailing list, which
     allows you to post to all <productname>PostgreSQL</productname>
     mailing lists without receiving any messages. Send email to
-    <ulink url="mailto:pgsql-loophole-request@postgresql.org">pgsql-loophole-request@postgresql.org</ulink>
+    <email>pgsql-loophole-request@postgresql.org</email>
     to subscribe.
    </para>
   </note>
