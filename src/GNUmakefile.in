@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.32 1998/10/09 04:07:49 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.33 1998/10/09 07:01:24 thomas Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -42,6 +42,9 @@ install:
 	$(MAKE) -C bin install
 	$(MAKE) -C pl install
 	cat ../register.txt
+
+install-man:
+	$(MAKE) -C man install
 
 lexverify:
 	$(MAKE) -C lextest all

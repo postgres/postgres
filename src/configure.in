@@ -277,11 +277,11 @@ AC_ARG_WITH(
 #fi
 export USE_PERL
 
-dnl We disable odbc support unless we override it with --with-odbc
+dnl We include odbc support unless we disable it with --with-odbc=false
 AC_MSG_CHECKING(setting USE_ODBC)
 AC_ARG_WITH(
    odbc,
-   [   --with-odbc            use odbc ],
+   [  --with-odbc              build ODBC driver package ],
    [
 	case "$withval" in
 	y | ye | yes)		USE_ODBC=true; AC_MSG_RESULT(enabled) ;;
@@ -295,8 +295,13 @@ export USE_ODBC
 dnl Allow for overriding the default location of the odbcinst.ini
 dnl file which is normally ${prefix}/share or ${prefix} if this is
 dnl being compiled inside the postgres distribution.
+dnl Link in the port and template directories
+dnl to help build a "standalone ODBC" tar file
 if test "X$USE_ODBC" = "Xtrue"
 then
+   AC_LINK_FILES(include/port, interfaces/odbc/port)
+   AC_LINK_FILES(makefiles, interfaces/odbc/makefiles)
+   AC_LINK_FILES(template, interfaces/odbc/template)
    AC_LINK_FILES(include/config.h, interfaces/odbc/config.h)
 
    AC_MSG_CHECKING(setting ODBCINST)
@@ -823,6 +828,30 @@ if test "$USE_TCL"; then
 	fi
 fi
 
+dnl Check for Tcl configuration script tclConfig.sh
+if test "$USE_TCL"; then
+	AC_MSG_CHECKING(for tclConfig.sh)
+	library_dirs="/usr/lib $LIBRARY_DIRS"
+	TCL_CONFIG_SH=
+	for dir in $library_dirs; do
+		for tcl_dir in $tcl_dirs; do
+			if test -z "$TCL_CONFIG_SH"; then
+				if test -d "$dir/$tcl_dir" -a -r "$dir/$tcl_dir/tclConfig.sh"; then
+					TCL_CONFIG_SH=$dir/$tcl_dir/tclConfig.sh
+				fi
+			fi
+		done
+	done
+	if test -z "$TCL_CONFIG_SH"; then
+		AC_MSG_RESULT(no)
+		AC_MSG_WARN(tcl support disabled; Tcl configuration script missing)
+		USE_TCL=
+	else
+		AC_MSG_RESULT($TCL_CONFIG_SH)
+		AC_SUBST(TCL_CONFIG_SH)
+	fi
+fi
+
 dnl Check for location of Tk support (only if Tcl used)
 dnl Disable Tcl support if Tk not found
 
@@ -908,6 +937,24 @@ fi
 AC_CONFIG_HEADER(interfaces/odbc/config.h)
 
 AC_OUTPUT(
+	GNUmakefile
+	Makefile.global
+	backend/port/Makefile 
+	backend/utils/Gen_fmgrtab.sh
+	bin/pg_dump/Makefile
+	bin/pg_version/Makefile
+	bin/psql/Makefile
+	include/version.h
+	interfaces/libpq/Makefile
+	interfaces/ecpg/lib/Makefile
+	interfaces/libpq++/Makefile
+	interfaces/libpgtcl/Makefile
+	interfaces/odbc/GNUmakefile
+	interfaces/odbc/Makefile.global
+	pl/plpgsql/src/Makefile
+	pl/tcl/mkMakefile.tcldefs.sh
+)
+
   GNUmakefile
   Makefile.global
   backend/port/Makefile
