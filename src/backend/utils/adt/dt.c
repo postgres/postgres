@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.14 1997/04/02 18:33:32 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.15 1997/04/05 02:51:41 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2165,7 +2165,7 @@ printf( "DecodeNumber- match %d (%s) as month\n", val, str);
 
     /* no year and EuroDates enabled? then could be day */
     } else if ((EuroDates || (fmask & DTK_M(MONTH)))
-      && (! ((fmask & DTK_M(YEAR)) && (fmask & DTK_M(DAY))))
+      && (!(fmask & DTK_M(YEAR)) && !(fmask & DTK_M(DAY)))
       && ((val >= 1) && (val <= 31))) {
 #ifdef DATEDEBUG
 printf( "DecodeNumber- match %d (%s) as day\n", val, str);
