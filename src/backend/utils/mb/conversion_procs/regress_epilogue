@@ -1,0 +1,5 @@
+--
+-- return to the super user
+--
+RESET SESSION AUTHORIZATION;
+DROP USER foo;

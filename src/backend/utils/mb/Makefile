@@ -4,7 +4,7 @@
 #    Makefile for utils/mb
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/mb/Makefile,v 1.18 2002/07/18 02:02:30 ishii Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/mb/Makefile,v 1.19 2002/08/06 05:40:45 ishii Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,7 +24,7 @@ clean distclean maintainer-clean:
 
 SUBSYS.o: $(OBJS)
 	@for dir in $(DIRS); do $(MAKE) -C $$dir all || exit; done
-	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) $(LDOUT) $@ $^
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

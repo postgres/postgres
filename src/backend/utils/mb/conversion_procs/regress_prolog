@@ -1,0 +1,25 @@
+--
+-- create user defined conversion
+--
+CREATE USER foo WITH NOCREATEDB NOCREATEUSER;
+SET SESSION AUTHORIZATION foo;
+CREATE CONVERSION myconv FOR 'LATIN1' TO 'UNICODE' FROM iso8859_1_to_utf8;
+--
+-- cannot make same name conversion in same schema
+--
+CREATE CONVERSION myconv FOR 'LATIN1' TO 'UNICODE' FROM iso8859_1_to_utf8;
+--
+-- create default conversion with qualified name
+--
+CREATE DEFAULT CONVERSION public.mydef FOR 'LATIN1' TO 'UNICODE' FROM iso8859_1_to_utf8;
+--
+-- cannot make default conversion with same shcema/for_encoding/to_encoding
+--
+CREATE DEFAULT CONVERSION public.mydef2 FOR 'LATIN1' TO 'UNICODE' FROM iso8859_1_to_utf8;
+--
+-- drop user defined conversion
+--
+DROP CONVERSION myconv;
+DROP CONVERSION mydef;
+--
+-- make sure all pre-defined conversions are fine.

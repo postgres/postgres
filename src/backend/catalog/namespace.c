@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.27 2002/07/29 23:46:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.28 2002/08/06 05:40:44 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1236,6 +1236,43 @@ PopSpecialNamespace(Oid namespaceId)
 	Assert(mySpecialNamespace == namespaceId);
 	mySpecialNamespace = InvalidOid;
 	namespaceSearchPathValid = false;
+}
+
+/*
+ * FindConversionByName - find a conversion by possibly qualified name
+ */
+Oid FindConversionByName(List *name)
+{
+	char		*conversion_name;
+	Oid	namespaceId;
+	Oid conoid;
+	List	   *lptr;
+
+	/* Convert list of names to a name and namespace */
+	namespaceId = QualifiedNameGetCreationNamespace(name, &conversion_name);
+
+	if (length(name) > 1)
+	{
+		/* Check we have usage rights in target namespace */
+		if (pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_USAGE) != ACLCHECK_OK)
+			return InvalidOid;
+
+		return FindConversion(conversion_name, namespaceId);
+	}
+
+	recomputeNamespacePath();
+
+	foreach(lptr, namespaceSearchPath)
+	{
+		Oid			namespaceId = (Oid) lfirsti(lptr);
+
+		conoid = FindConversion(conversion_name, namespaceId);
+		if (OidIsValid(conoid))
+			return conoid;
+	}
+
+	/* Not found in path */
+	return InvalidOid;
 }
 
 /*

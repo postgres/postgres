@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_conversion.h,v 1.3 2002/08/04 06:54:10 thomas Exp $
+ * $Id: pg_conversion.h,v 1.4 2002/08/06 05:40:45 ishii Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -90,7 +90,9 @@ extern Oid	ConversionCreate(const char *conname, Oid connamespace,
 extern void ConversionDrop(const char *conname, Oid connamespace,
 						   int32 conowner, DropBehavior behavior);
 extern void RemoveConversionById(Oid conversionOid);
-extern Oid FindDefaultConversion(Oid name_space, int4 for_encoding, int4 to_encoding);
-extern Oid FindConversionByName(List *conname);
+extern Oid FindConversion(const char *conname, Oid connamespace);
+extern Oid FindDefaultConversion(Oid connamespace, int4 for_encoding, int4 to_encoding);
+
+extern Datum pg_convert3(PG_FUNCTION_ARGS);
 
 #endif   /* PG_CONVERSION_H */

@@ -4,7 +4,7 @@
 #    Makefile for utils/mb/conversion_procs
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/Makefile,v 1.2 2002/07/18 22:58:08 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/Makefile,v 1.3 2002/08/06 05:40:45 ishii Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,6 +14,9 @@ include $(top_builddir)/src/Makefile.global
 
 SQLSCRIPT = conversion_create.sql
 
+# This file can be placed as src/test/regress/conversion.sql
+REGRESSION_SCRIPT = conversion.sql
+
 DIRS = \
 	utf8_and_ascii utf8_and_iso8859_1 \
 	utf8_and_euc_jp utf8_and_euc_kr utf8_and_euc_cn utf8_and_euc_tw \
@@ -21,9 +24,7 @@ DIRS = \
 	utf8_and_uhc utf8_and_johab utf8_and_tcvn utf8_and_iso8859 \
 	euc_jp_and_sjis euc_tw_and_big5
 
-# conversion_name source_encoding destination_encoding function object
-$(SQLSCRIPT): Makefile
-	@set \
+CONVERSIONS = \
 		utf8_to_ascii UNICODE SQL_ASCII utf8_to_ascii utf8_and_ascii \
 		ascii_to_utf8 SQL_ASCII UNICODE ascii_to_utf8 utf8_and_ascii \
 		utf8_to_iso8859_1 UNICODE LATIN1 utf8_to_iso8859_1 utf8_and_iso8859_1 \
@@ -87,8 +88,11 @@ $(SQLSCRIPT): Makefile
 		euc_tw_to_mic	EUC_TW MULE_INTERNAL euc_tw_to_mic euc_tw_and_big5 \
 		big5_to_mic	BIG5 MULE_INTERNAL big5_to_mic euc_tw_and_big5 \
 		mic_to_euc_tw	MULE_INTERNAL EUC_TW mic_to_euc_tw euc_tw_and_big5 \
-		mic_to_big5	MULE_INTERNAL BIG5 mic_to_big5 euc_tw_and_big5 \
-	; \
+		mic_to_big5	MULE_INTERNAL BIG5 mic_to_big5 euc_tw_and_big5
+
+# conversion_name source_encoding destination_encoding function object
+$(SQLSCRIPT): Makefile
+	@set $(CONVERSIONS) ; \
 	while [ "$$#" -gt 0 ] ; \
 	do \
 		name=$$1;shift; \
@@ -101,6 +105,22 @@ $(SQLSCRIPT): Makefile
 		echo "DROP CONVERSION pg_catalog.$$name;"; \
 		echo "CREATE DEFAULT CONVERSION pg_catalog.$$name FOR '$$se' TO '$$de' FROM $$func;"; \
 	done > $@
+
+$(REGRESSION_SCRIPT): Makefile
+	@cp regress_prolog $@; \
+	set $(CONVERSIONS) ; \
+	while [ "$$#" -gt 0 ] ; \
+	do \
+		name=$$1;shift; \
+		se=$$1;shift; \
+		de=$$1; shift; \
+		func=$$1; shift; \
+		obj=$$1; shift; \
+		echo "-- $$se --> $$de"; \
+		echo "SELECT CONVERT('foo' USING $$name);"; \
+		echo "SELECT CONVERT('foo', '$$se', '$$de');"; \
+	done >> $@; \
+	cat regress_epilogue >> $@;
 
 install: all installdirs
 	$(INSTALL_DATA) $(SQLSCRIPT) $(DESTDIR)$(datadir)

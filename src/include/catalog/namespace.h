@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: namespace.h,v 1.17 2002/07/29 23:46:35 tgl Exp $
+ * $Id: namespace.h,v 1.18 2002/08/06 05:40:45 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,6 +80,7 @@ extern bool isTempNamespace(Oid namespaceId);
 extern void PushSpecialNamespace(Oid namespaceId);
 extern void PopSpecialNamespace(Oid namespaceId);
 
+extern Oid FindConversionByName(List *conname);
 extern Oid FindDefaultConversionProc(int4 for_encoding, int4 to_encoding);
 
 /* initialization & transaction cleanup code */

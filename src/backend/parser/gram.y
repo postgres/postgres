@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.356 2002/08/05 02:30:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.357 2002/08/06 05:40:45 ishii Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -53,6 +53,7 @@
 #include "access/htup.h"
 #include "catalog/index.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_conversion.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "nodes/params.h"
@@ -216,7 +217,8 @@ static void doNegateFloat(Value *v);
 				insert_target_list, def_list, opt_indirection,
 				group_clause, TriggerFuncArgs, select_limit,
 				opt_select_limit, opclass_item_list, trans_options,
-				TableFuncElementList, OptTableFuncElementList
+				TableFuncElementList, OptTableFuncElementList,
+				convert_args
 
 %type <range>	into_clause, OptTempTableName
 
@@ -232,7 +234,7 @@ static void doNegateFloat(Value *v);
 %type <jtype>	join_type
 
 %type <list>	extract_list, overlay_list, position_list
-%type <list>	substr_list, trim_list
+%type <list>	substr_list, trim_list, convert_list
 %type <ival>	opt_interval
 %type <node>	overlay_placing, substr_from, substr_for
 
@@ -329,7 +331,7 @@ static void doNegateFloat(Value *v);
 	CACHE, CALLED, CASCADE, CASE, CAST, CHAIN, CHAR_P,
 	CHARACTER, CHARACTERISTICS, CHECK, CHECKPOINT, CLASS, CLOSE,
 	CLUSTER, COALESCE, COLLATE, COLUMN, COMMENT, COMMIT,
-	COMMITTED, CONSTRAINT, CONSTRAINTS, CONVERSION_P, COPY, CREATE, CREATEDB,
+	COMMITTED, CONSTRAINT, CONSTRAINTS, CONVERSION_P, CONVERT, COPY, CREATE, CREATEDB,
 	CREATEUSER, CROSS, CURRENT_DATE, CURRENT_TIME,
 	CURRENT_TIMESTAMP, CURRENT_USER, CURSOR, CYCLE,
 
@@ -6253,6 +6255,15 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
+			| CONVERT '(' convert_list ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = SystemFuncName("convert");
+					n->args = $3;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
+					$$ = (Node *)n;
+				}
 			| select_with_parens			%prec UMINUS
 				{
 					SubLink *n = makeNode(SubLink);
@@ -6417,6 +6428,48 @@ trim_list:	a_expr FROM expr_list					{ $$ = lappend($3, $1); }
 			| FROM expr_list						{ $$ = $2; }
 			| expr_list								{ $$ = $1; }
 		;
+
+/* CONVERT() arguments. We accept followings:
+ * SQL99 syntax
+ * o CONVERT(TEXT string USING conversion_name)
+ *
+ * Function calls
+ * o CONVERT(TEXT string, NAME src_encoding_name, NAME dest_encoding_name)
+ * o CONVERT(TEXT string, NAME encoding_name)
+ */
+convert_list:
+			a_expr USING any_name
+				{
+					Oid oid = FindConversionByName($3);
+					Const *convoid = makeNode(Const);
+
+					if (!OidIsValid(oid))
+					{
+					    elog(ERROR, "Conversion \"%s\" does not exist",
+						 NameListToString($3));
+					}
+
+					convoid->consttype = OIDOID;
+					convoid->constlen = sizeof(Oid);
+					convoid->constvalue = oid;
+					convoid->constisnull = FALSE;
+					convoid->constbyval = TRUE;
+					convoid->constisset = FALSE;
+					convoid->constiscast = FALSE;
+					$$ = makeList2($1, convoid);
+				}
+			| convert_args
+				{
+				  $$ = $1;
+				}
+			| /*EMPTY*/
+				{ $$ = NIL; }
+		;
+
+convert_args:	a_expr								{ $$ = makeList1($1); }
+			| convert_args ',' a_expr					{ $$ = lappend($1, $3); }
+  		;
+  
 
 in_expr:	select_with_parens
 				{

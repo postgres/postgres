@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.4 2002/08/05 03:29:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.5 2002/08/06 05:40:45 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -221,7 +221,7 @@ RemoveConversionById(Oid conversionOid)
 	if (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection)))
 		simple_heap_delete(rel, &tuple->t_self);
 	else
-		elog(ERROR, "Conversion %u does not exist", conversionOid);
+		elog(ERROR, "conversion %u does not exist", conversionOid);
 	heap_endscan(scan);
 	heap_close(rel, RowExclusiveLock);
 }
@@ -233,47 +233,6 @@ RemoveConversionById(Oid conversionOid)
  * If found, returns the procedure's oid, otherwise InvalidOid.
  * ---------------
  */
-#ifdef NOT_USED
-Oid FindDefaultConversion(Oid name_space, int4 for_encoding, int4 to_encoding)
-{
-	Relation rel;
-	HeapScanDesc scan;
-	ScanKeyData scanKeyData;
-	HeapTuple	tuple;
-	Form_pg_conversion body;
-	Oid proc = InvalidOid;
-
-	/* Check we have usage rights in target namespace */
-	if (pg_namespace_aclcheck(name_space, GetUserId(), ACL_USAGE) != ACLCHECK_OK)
-		return InvalidOid;
-
-	ScanKeyEntryInitialize(&scanKeyData,
-						   0,
-						   Anum_pg_conversion_connamespace,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(name_space));
-
-	rel = heap_openr(ConversionRelationName, AccessShareLock);
-	scan = heap_beginscan(rel, SnapshotNow,
-							  1, &scanKeyData);
-
-	while (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection)))
-	{
-		body = (Form_pg_conversion)GETSTRUCT(tuple);
-		if (body->conforencoding == for_encoding &&
-			body->contoencoding == to_encoding &&
-			body->condefault == TRUE)
-		{
-			proc = body->conproc;
-			break;
-		}
-	}
-	heap_endscan(scan);
-	heap_close(rel, AccessShareLock);
-	return proc;
-}
-#endif
-
 Oid FindDefaultConversion(Oid name_space, int4 for_encoding, int4 to_encoding)
 {
 	CatCList	*catlist;
@@ -309,34 +268,27 @@ Oid FindDefaultConversion(Oid name_space, int4 for_encoding, int4 to_encoding)
 /* ----------------
  * FindConversionByName
  *
- * Find conversion proc by possibly qualified conversion name.
+ * Find conversion by namespace and conversion name.
+ * Returns conversion oid.
  * ---------------
  */
-Oid FindConversionByName(List *name)
+Oid FindConversion(const char *conname, Oid connamespace)
 {
 	HeapTuple	tuple;
-	char		*conversion_name;
-	Oid	namespaceId;
 	Oid procoid;
+	Oid conoid;
 	AclResult	aclresult;
 
-	/* Convert list of names to a name and namespace */
-	namespaceId = QualifiedNameGetCreationNamespace(name, &conversion_name);
-
-	/* Check we have usage rights in target namespace */
-	if (pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_USAGE) != ACLCHECK_OK)
-		return InvalidOid;
-
-	/* search pg_conversion by namespaceId and conversion name */
+	/* search pg_conversion by connamespace and conversion name */
 	tuple = SearchSysCache(CONNAMESP,
-						   PointerGetDatum(conversion_name),
-						   ObjectIdGetDatum(namespaceId),
+						   PointerGetDatum(conname),
+						   ObjectIdGetDatum(connamespace),
 						   0,0);
 
 	if (!HeapTupleIsValid(tuple))
 		return InvalidOid;
-
 	procoid = ((Form_pg_conversion)GETSTRUCT(tuple))->conproc;
+	conoid = HeapTupleGetOid(tuple);
 
 	ReleaseSysCache(tuple);
 
@@ -345,6 +297,69 @@ Oid FindConversionByName(List *name)
 	if (aclresult != ACLCHECK_OK)
 		return InvalidOid;
 
-	return procoid;
+	return conoid;
 }
 
+/*
+ * Execute SQL99's CONVERT function.
+ *
+ * CONVERT <left paren> <character value expression>
+ * USING <form-of-use conversion name> <right paren>
+ *
+ * TEXT convert3(TEXT string, OID conversion_oid);
+ */
+Datum
+pg_convert3(PG_FUNCTION_ARGS)
+{
+	text	   *string = PG_GETARG_TEXT_P(0);
+	Oid			convoid = PG_GETARG_OID(1);
+	HeapTuple	tuple;
+	Form_pg_conversion body;
+	text	   *retval;
+	unsigned char *str;
+	unsigned char *result;
+	int len;
+
+	if (!OidIsValid(convoid))
+		elog(ERROR, "Conversion does not exist");
+
+	/* make sure that source string is null terminated */
+	len = VARSIZE(string) - VARHDRSZ;
+	str = palloc(len + 1);
+	memcpy(str, VARDATA(string), len);
+	*(str + len) = '\0';
+
+	tuple = SearchSysCache(CONOID,
+						   ObjectIdGetDatum(convoid),
+						   0,0,0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "Conversion %u search from syscache failed", convoid);
+
+	result = palloc(len * 4 + 1);
+
+	body = (Form_pg_conversion)GETSTRUCT(tuple);
+	OidFunctionCall5(body->conproc,
+					 Int32GetDatum(body->conforencoding),
+					 Int32GetDatum(body->contoencoding),
+					 CStringGetDatum(str),
+					 CStringGetDatum(result),
+					 Int32GetDatum(len));
+
+	ReleaseSysCache(tuple);
+
+	/* build text data type structre. we cannot use textin() here,
+	   since textin assumes that input string encoding is same as
+	   database encoding.  */
+	len = strlen(result) + VARHDRSZ;
+	retval = palloc(len);
+	VARATT_SIZEP(retval) = len;
+	memcpy(VARDATA(retval), result, len - VARHDRSZ);
+
+	pfree(result);
+	pfree(str);
+
+	/* free memory if allocated by the toaster */
+	PG_FREE_IF_COPY(string, 0);
+
+	PG_RETURN_TEXT_P(retval);
+}

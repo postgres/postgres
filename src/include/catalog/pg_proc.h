@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.251 2002/08/04 23:46:38 tgl Exp $
+ * $Id: pg_proc.h,v 1.252 2002/08/06 05:40:45 ishii Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2148,6 +2148,9 @@ DESCR("convert string with specified destination encoding name");
 
 DATA(insert OID = 1813 (  convert		   PGNSP PGUID 12 f f t f s 3 25 "25 19 19"  pg_convert2 - _null_ ));
 DESCR("convert string with specified encoding names");
+
+DATA(insert OID = 90 (  convert		   PGNSP PGUID 12 f f t f s 2 25 "25 26"  pg_convert3 - _null_ ));
+DESCR("convert string with specified conversion oid");
 
 DATA(insert OID = 1264 (  pg_char_to_encoding	   PGNSP PGUID 12 f f t f s 1 23 "19"  PG_char_to_encoding - _null_ ));
 DESCR("convert encoding name to encoding id");

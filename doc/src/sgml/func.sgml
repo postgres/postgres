@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.107 2002/08/04 19:51:30 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.108 2002/08/06 05:40:44 ishii Exp $
 PostgreSQL documentation
 -->
 
@@ -858,6 +858,19 @@ PostgreSQL documentation
       </row>
 
       <row>
+       <entry><function>convert</function>(<parameter>string</parameter>
+       using <parameter>conversion_name</parameter>)</entry>
+       <entry><type>text</type></entry>
+       <entry>Change encoding using specified conversion name.
+       Conversions can be defined by <command>CREATE CONVERSION</command>.
+       Also there are some pre-defined conversion names. 
+       See <xref linkend="conversion-names"> for available
+       conversion names. </entry>
+       <entry><literal>convert('PostgreSQL' using iso8859_1_to_utf8)</literal></entry>
+       <entry><literal>'PostgreSQL' in UNICODE(UTF-8) encoding</literal></entry>
+      </row>
+
+      <row>
        <entry><function>lower</function>(<parameter>string</parameter>)</entry>
        <entry><type>text</type></entry>
        <entry>Convert string to lower case.</entry>
@@ -943,6 +956,405 @@ PostgreSQL documentation
        <entry><literal>upper('tom')</literal></entry>
        <entry><literal>TOM</literal></entry>
       </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <table id="conversion-names">
+    <title>Available conversion names</title>
+    <tgroup cols="3">
+     <thead>
+      <row>
+       <entry>conversion</entry>
+       <entry>source encoding</entry>
+       <entry>destination encoding</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>ascii_to_utf8</entry>
+       <entry>SQL_ASCII</entry>
+       <entry>UNICODE</entry>
+      </row>
+
+      <row>
+       <entry>big5_to_euc_tw</entry>
+       <entry>BIG5</entry>
+       <entry>EUC_TW</entry>
+      </row>
+
+      <row>
+       <entry>big5_to_mic</entry>
+       <entry>BIG5</entry>
+       <entry>MULE_INTERNAL</entry>
+      </row>
+
+      <row>
+       <entry>big5_to_utf8</entry>
+       <entry>BIG5</entry>
+       <entry>UNICODE</entry>
+      </row>
+
+      <row>
+       <entry>euc_cn_to_utf8</entry>
+       <entry>EUC_CN</entry>
+       <entry>UNICODE</entry>
+      </row>
+
+      <row>
+       <entry>euc_jp_to_mic</entry>
+       <entry>EUC_JP</entry>
+       <entry>MULE_INTERNAL</entry>
+      </row>
+
+      <row>
+       <entry>euc_jp_to_sjis</entry>
+       <entry>EUC_JP</entry>
+       <entry>SJIS</entry>
+      </row>
+
+      <row>
+       <entry>euc_jp_to_utf8</entry>
+       <entry>EUC_JP</entry>
+       <entry>UNICODE</entry>
+      </row>
+
+      <row>
+       <entry>euc_kr_to_utf8</entry>
+       <entry>EUC_KR</entry>
+       <entry>UNICODE</entry>
+      </row>
+
+      <row>
+       <entry>euc_tw_to_big5</entry>
+       <entry>EUC_TW</entry>
+       <entry>BIG5</entry>
+      </row>
+
+      <row>
+       <entry>euc_tw_to_mic</entry>
+       <entry>EUC_TW</entry>
+       <entry>MULE_INTERNAL</entry>
+      </row>
+
+      <row>
+       <entry>euc_tw_to_utf8</entry>
+       <entry>EUC_TW</entry>
+       <entry>UNICODE</entry>
+      </row>
+
+      <row>
+       <entry>gb18030_to_utf8</entry>
+       <entry>GB18030</entry>
+       <entry>UNICODE</entry>
+      </row>
+
+      <row>
+       <entry>gbk_to_utf8</entry>
+       <entry>GBK</entry>
+       <entry>UNICODE</entry>
+      </row>
+
+      <row>
+       <entry>iso8859_10_to_utf8</entry>
+       <entry>LATIN6</entry>
+       <entry>UNICODE</entry>
+      </row>
+
+      <row>
+       <entry>iso8859_13_to_utf8</entry>
+       <entry>LATIN7</entry>
+       <entry>UNICODE</entry>
+      </row>
+
+      <row>
+       <entry>iso8859_14_to_utf8</entry>
+       <entry>LATIN8</entry>
+       <entry>UNICODE</entry>
+      </row>
+
+      <row>
+       <entry>iso8859_15_to_utf8</entry>
+       <entry>LATIN9</entry>
+       <entry>UNICODE</entry>
+      </row>
+
+      <row>
+       <entry>iso8859_16_to_utf8</entry>
+       <entry>LATIN10</entry>
+       <entry>UNICODE</entry>
+      </row>
+
+      <row>
+       <entry>iso8859_1_to_utf8</entry>
+       <entry>LATIN1</entry>
+       <entry>UNICODE</entry>
+      </row>
+
+      <row>
+       <entry>iso8859_2_to_utf8</entry>
+       <entry>LATIN2</entry>
+       <entry>UNICODE</entry>
+      </row>
+
+      <row>
+       <entry>iso8859_3_to_utf8</entry>
+       <entry>LATIN3</entry>
+       <entry>UNICODE</entry>
+      </row>
+
+      <row>
+       <entry>iso8859_4_to_utf8</entry>
+       <entry>LATIN4</entry>
+       <entry>UNICODE</entry>
+      </row>
+
+      <row>
+       <entry>iso8859_5_to_utf8</entry>
+       <entry>ISO_8859_5</entry>
+       <entry>UNICODE</entry>
+      </row>
+
+      <row>
+       <entry>iso8859_6_to_utf8</entry>
+       <entry>ISO_8859_6</entry>
+       <entry>UNICODE</entry>
+      </row>
+
+      <row>
+       <entry>iso8859_7_to_utf8</entry>
+       <entry>ISO_8859_7</entry>
+       <entry>UNICODE</entry>
+      </row>
+
+      <row>
+       <entry>iso8859_8_to_utf8</entry>
+       <entry>ISO_8859_8</entry>
+       <entry>UNICODE</entry>
+      </row>
+
+      <row>
+       <entry>iso8859_9_to_utf8</entry>
+       <entry>LATIN5</entry>
+       <entry>UNICODE</entry>
+      </row>
+
+      <row>
+       <entry>johab_to_utf8</entry>
+       <entry>JOHAB</entry>
+       <entry>UNICODE</entry>
+      </row>
+
+      <row>
+       <entry>mic_to_big5</entry>
+       <entry>MULE_INTERNAL</entry>
+       <entry>BIG5</entry>
+      </row>
+
+      <row>
+       <entry>mic_to_euc_jp</entry>
+       <entry>MULE_INTERNAL</entry>
+       <entry>EUC_JP</entry>
+      </row>
+
+      <row>
+       <entry>mic_to_euc_tw</entry>
+       <entry>MULE_INTERNAL</entry>
+       <entry>EUC_TW</entry>
+      </row>
+
+      <row>
+       <entry>mic_to_sjis</entry>
+       <entry>MULE_INTERNAL</entry>
+       <entry>SJIS</entry>
+      </row>
+
+      <row>
+       <entry>sjis_to_euc_jp</entry>
+       <entry>SJIS</entry>
+       <entry>EUC_JP</entry>
+      </row>
+
+      <row>
+       <entry>sjis_to_mic</entry>
+       <entry>SJIS</entry>
+       <entry>MULE_INTERNAL</entry>
+      </row>
+
+      <row>
+       <entry>sjis_to_utf8</entry>
+       <entry>SJIS</entry>
+       <entry>UNICODE</entry>
+      </row>
+
+      <row>
+       <entry>tcvn_to_utf8</entry>
+       <entry>TCVN</entry>
+       <entry>UNICODE</entry>
+      </row>
+
+      <row>
+       <entry>uhc_to_utf8</entry>
+       <entry>UHC</entry>
+       <entry>UNICODE</entry>
+      </row>
+
+      <row>
+       <entry>utf8_to_ascii</entry>
+       <entry>UNICODE</entry>
+       <entry>SQL_ASCII</entry>
+      </row>
+
+      <row>
+       <entry>utf8_to_big5</entry>
+       <entry>UNICODE</entry>
+       <entry>BIG5</entry>
+      </row>
+
+      <row>
+       <entry>utf8_to_euc_cn</entry>
+       <entry>UNICODE</entry>
+       <entry>EUC_CN</entry>
+      </row>
+
+      <row>
+       <entry>utf8_to_euc_jp</entry>
+       <entry>UNICODE</entry>
+       <entry>EUC_JP</entry>
+      </row>
+
+      <row>
+       <entry>utf8_to_euc_kr</entry>
+       <entry>UNICODE</entry>
+       <entry>EUC_KR</entry>
+      </row>
+
+      <row>
+       <entry>utf8_to_euc_tw</entry>
+       <entry>UNICODE</entry>
+       <entry>EUC_TW</entry>
+      </row>
+
+      <row>
+       <entry>utf8_to_gb18030</entry>
+       <entry>UNICODE</entry>
+       <entry>GB18030</entry>
+      </row>
+
+      <row>
+       <entry>utf8_to_gbk</entry>
+       <entry>UNICODE</entry>
+       <entry>GBK</entry>
+      </row>
+
+      <row>
+       <entry>utf8_to_iso8859_1</entry>
+       <entry>UNICODE</entry>
+       <entry>LATIN1</entry>
+      </row>
+
+      <row>
+       <entry>utf8_to_iso8859_10</entry>
+       <entry>UNICODE</entry>
+       <entry>LATIN6</entry>
+      </row>
+
+      <row>
+       <entry>utf8_to_iso8859_13</entry>
+       <entry>UNICODE</entry>
+       <entry>LATIN7</entry>
+      </row>
+
+      <row>
+       <entry>utf8_to_iso8859_14</entry>
+       <entry>UNICODE</entry>
+       <entry>LATIN8</entry>
+      </row>
+
+      <row>
+       <entry>utf8_to_iso8859_15</entry>
+       <entry>UNICODE</entry>
+       <entry>LATIN9</entry>
+      </row>
+
+      <row>
+       <entry>utf8_to_iso8859_16</entry>
+       <entry>UNICODE</entry>
+       <entry>LATIN10</entry>
+      </row>
+
+      <row>
+       <entry>utf8_to_iso8859_2</entry>
+       <entry>UNICODE</entry>
+       <entry>LATIN2</entry>
+      </row>
+
+      <row>
+       <entry>utf8_to_iso8859_3</entry>
+       <entry>UNICODE</entry>
+       <entry>LATIN3</entry>
+      </row>
+
+      <row>
+       <entry>utf8_to_iso8859_4</entry>
+       <entry>UNICODE</entry>
+       <entry>LATIN4</entry>
+      </row>
+
+      <row>
+       <entry>utf8_to_iso8859_5</entry>
+       <entry>UNICODE</entry>
+       <entry>ISO_8859_5</entry>
+      </row>
+
+      <row>
+       <entry>utf8_to_iso8859_6</entry>
+       <entry>UNICODE</entry>
+       <entry>ISO_8859_6</entry>
+      </row>
+
+      <row>
+       <entry>utf8_to_iso8859_7</entry>
+       <entry>UNICODE</entry>
+       <entry>ISO_8859_7</entry>
+      </row>
+
+      <row>
+       <entry>utf8_to_iso8859_8</entry>
+       <entry>UNICODE</entry>
+       <entry>ISO_8859_8</entry>
+      </row>
+
+      <row>
+       <entry>utf8_to_iso8859_9</entry>
+       <entry>UNICODE</entry>
+       <entry>LATIN5</entry>
+      </row>
+
+      <row>
+       <entry>utf8_to_johab</entry>
+       <entry>UNICODE</entry>
+       <entry>JOHAB</entry>
+      </row>
+
+      <row>
+       <entry>utf8_to_sjis</entry>
+       <entry>UNICODE</entry>
+       <entry>SJIS</entry>
+      </row>
+
+      <row>
+       <entry>utf8_to_tcvn</entry>
+       <entry>UNICODE</entry>
+       <entry>TCVN</entry>
+      </row>
+
+      <row>
+       <entry>utf8_to_uhc</entry>
+       <entry>UNICODE</entry>
+       <entry>UHC</entry>
+      </row>
+
      </tbody>
     </tgroup>
    </table>
