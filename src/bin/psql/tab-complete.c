@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.95 2003/12/01 22:08:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.96 2003/12/01 22:14:40 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -49,9 +49,6 @@
 #ifdef USE_READLINE
 
 #include <ctype.h>
-#ifdef USE_ASSERT_CHECKING
-#include <assert.h>
-#endif
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"
 #include "common.h"
@@ -1345,7 +1342,6 @@ psql_completion(char *text, int start, int end)
 		}
 	}
 
-
 	/*
 	 * If we still don't have anything to match we have to fabricate some
 	 * sort of default list. If we were to just return NULL, readline
@@ -1359,7 +1355,6 @@ psql_completion(char *text, int start, int end)
 		rl_completion_append_character = '\0';
 #endif
 	}
-
 
 	/* free storage */
 	free(prev_wd);
@@ -1382,7 +1377,7 @@ psql_completion(char *text, int start, int end)
    directly but through the readline interface.
    The return value is expected to be the full completion of the text, going
    through a list each time, or NULL if there are no more matches. The string
-   will be free()'d be readline, so you must run it through strdup() or
+   will be free()'d by readline, so you must run it through strdup() or
    something of that sort.
 */
 
@@ -1637,9 +1632,7 @@ complete_from_list(const char *text, int state)
 	const char *item;
 
 	/* need to have a list */
-#ifdef USE_ASSERT_CHECKING
-	assert(completion_charpp);
-#endif
+	psql_assert(completion_charpp);
 
 	/* Initialization */
 	if (state == 0)
@@ -1693,9 +1686,7 @@ complete_from_const(const char *text, int state)
 	(void) text;				/* We don't care about what was entered
 								 * already. */
 
-#ifdef USE_ASSERT_CHECKING
-	assert(completion_charp);
-#endif
+	psql_assert(completion_charp);
 	if (state == 0)
 		return xstrdup(completion_charp);
 	else
@@ -1809,7 +1800,7 @@ previous_word(int point, int skip)
 
 /*
  * Surround a string with single quotes. This works for both SQL and
- * psql internal. Currently disable because it is reported not to
+ * psql internal. Currently disabled because it is reported not to
  * cooperate with certain versions of readline.
  */
 static char *

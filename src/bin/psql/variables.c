@@ -3,13 +3,11 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/variables.c,v 1.14 2003/11/29 19:52:07 pgsql Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/variables.c,v 1.15 2003/12/01 22:14:40 momjian Exp $
  */
 #include "postgres_fe.h"
+#include "common.h"
 #include "variables.h"
-
-#include <assert.h>
-
 
 VariableSpace
 CreateVariableSpace(void)
@@ -46,10 +44,8 @@ GetVariable(VariableSpace space, const char *name)
 
 	for (current = space; current; current = current->next)
 	{
-#ifdef USE_ASSERT_CHECKING
-		assert(current->name);
-		assert(current->value);
-#endif
+		psql_assert(current->name);
+		psql_assert(current->value);
 		if (strcmp(current->name, name) == 0)
 			return current->value;
 	}
@@ -161,10 +157,8 @@ SetVariable(VariableSpace space, const char *name, const char *value)
 
 	for (current = space, previous = NULL; current; previous = current, current = current->next)
 	{
-#ifdef USE_ASSERT_CHECKING
-		assert(current->name);
-		assert(current->value);
-#endif
+		psql_assert(current->name);
+		psql_assert(current->value);
 		if (strcmp(current->name, name) == 0)
 		{
 			free(current->value);
@@ -203,10 +197,8 @@ DeleteVariable(VariableSpace space, const char *name)
 
 	for (current = space, previous = NULL; current; previous = current, current = current->next)
 	{
-#ifdef USE_ASSERT_CHECKING
-		assert(current->name);
-		assert(current->value);
-#endif
+		psql_assert(current->name);
+		psql_assert(current->value);
 		if (strcmp(current->name, name) == 0)
 		{
 			free(current->name);

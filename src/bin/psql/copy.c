@@ -3,13 +3,12 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.34 2003/11/29 19:52:06 pgsql Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.35 2003/12/01 22:14:40 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
 
 #include <errno.h>
-#include <assert.h>
 #include <signal.h>
 #include <sys/stat.h>
 #ifndef WIN32
