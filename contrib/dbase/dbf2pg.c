@@ -1,7 +1,7 @@
 /* This program reads in an xbase-dbf file and sends 'inserts' to an
    PostgreSQL-server with the records in the xbase-file
 
-   M. Boekhold (boekhold@cindy.et.tudelft.nl)  okt. 1995
+   M. Boekhold (maarten.boekhold@reuters.com)  okt. 1995
    oktober 1996: merged sources of dbf2msql.c and dbf2pg.c
    oktober 1997: removed msql support
 */

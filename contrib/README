@@ -44,7 +44,9 @@ cube -
 
 dbase -
 	Converts from dbase/xbase to PostgreSQL
-	by Ivan Baldo, lubaldo@adinet.com.uy
+	by Maarten.Boekhold <Maarten.Boekhold@reuters.com>,
+	   Frank Koormann <fkoorman@usf.uni-osnabrueck.de>,
+	   Ivan Baldo <lubaldo@adinet.com.uy>
 
 dblink -
 	Allows remote query execution

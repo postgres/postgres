@@ -1,4 +1,4 @@
-/* Maarten Boekhold (boekhold@cindy.et.tudelft.nl) oktober 1995 */
+/* Maarten Boekhold (maarten.boekhold@reuters.com) oktober 1995 */
 
 #include <sys/types.h>
 #include "dbf.h"

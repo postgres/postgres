@@ -2,7 +2,7 @@
    declares routines for reading and writing xBase-files (.dbf), and
    associated structures
 
-   Maarten Boekhold (boekhold@cindy.et.tudelft.nl) 29 oktober 1995
+   Maarten Boekhold (maarten.boekhold@reuters.com) 29 oktober 1995
 */
 
 #ifndef _DBF_H
