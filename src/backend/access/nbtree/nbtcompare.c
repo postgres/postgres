@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.6 1996/11/10 02:58:37 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.7 1997/04/07 06:45:41 vadim Exp $
  *
  *  NOTES
  *	These functions are stored in pg_amproc.  For each operator class
@@ -88,9 +88,9 @@ int32
 btabstimecmp(AbsoluteTime a, AbsoluteTime b)
 {
     if (AbsoluteTimeIsBefore(a, b))
-	return (1);
-    else if (AbsoluteTimeIsBefore(b, a))
 	return (-1);
+    else if (AbsoluteTimeIsBefore(b, a))
+	return (1);
     else
 	return (0);
 }
