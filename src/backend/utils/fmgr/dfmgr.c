@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.69 2004/01/19 02:06:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.70 2004/02/17 03:35:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,9 @@ typedef struct df_files
 {
 	struct df_files *next;		/* List link */
 	dev_t		device;			/* Device file is on */
+#ifndef WIN32 /* ensures we never again depend on this under win32 */
 	ino_t		inode;			/* Inode number of file */
+#endif
 	void	   *handle;			/* a handle for pg_dl* functions */
 	char		filename[1];	/* Full pathname of file */
 
@@ -43,7 +45,12 @@ typedef struct df_files
 static DynamicFileList *file_list = NULL;
 static DynamicFileList *file_tail = NULL;
 
+/* stat() call under Win32 returns an st_ino field, but it has no meaning */
+#ifndef WIN32
 #define SAME_INODE(A,B) ((A).st_ino == (B).inode && (A).st_dev == (B).device)
+#else
+#define SAME_INODE(A,B) false
+#endif
 
 char	   *Dynamic_library_path;
 
@@ -121,7 +128,9 @@ load_external_function(char *filename, char *funcname,
 		MemSet((char *) file_scanner, 0, sizeof(DynamicFileList));
 		strcpy(file_scanner->filename, fullname);
 		file_scanner->device = stat_buf.st_dev;
+#ifndef WIN32
 		file_scanner->inode = stat_buf.st_ino;
+#endif
 		file_scanner->next = NULL;
 
 		file_scanner->handle = pg_dlopen(fullname);
