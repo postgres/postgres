@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.34 2001/12/23 12:17:41 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.35 2002/01/08 14:25:04 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -142,7 +142,7 @@ create_statement(int lineno, struct connection * connection, struct statement **
 				return false;
 
 			var->type = type;
-			var->pointer = va_arg(ap, void *);
+			var->pointer = va_arg(ap, char *);
 
 			/* if variable is NULL, the statement hasn't been prepared */
 			if (var->pointer == NULL)
@@ -157,12 +157,12 @@ create_statement(int lineno, struct connection * connection, struct statement **
 			var->offset = va_arg(ap, long);
 
 			if (var->arrsize == 0 || var->varcharsize == 0)
-				var->value = *((void **) (var->pointer));
+				var->value = *((char **) (var->pointer));
 			else
 				var->value = var->pointer;
 
 			var->ind_type = va_arg(ap, enum ECPGttype);
-			var->ind_pointer = va_arg(ap, void *);
+			var->ind_pointer = va_arg(ap, char *);
 			var->ind_varcharsize = va_arg(ap, long);
 			var->ind_arrsize = va_arg(ap, long);
 			var->ind_offset = va_arg(ap, long);
@@ -170,7 +170,7 @@ create_statement(int lineno, struct connection * connection, struct statement **
 
 			if (var->ind_type != ECPGt_NO_INDICATOR
 					&& (var->ind_arrsize == 0 || var->ind_varcharsize == 0))
-				var->ind_value = *((void **) (var->ind_pointer));
+				var->ind_value = *((char **) (var->ind_pointer));
 			else
 				var->ind_value = var->ind_pointer;
 
@@ -422,8 +422,8 @@ ECPGstore_result(const PGresult *results, int act_field,
 				len = var->offset * ntuples;
 				break;
 		}
-		var->value = (void *) ECPGalloc(len, stmt->lineno);
-		*((void **) var->pointer) = var->value;
+		var->value = (char *) ECPGalloc(len, stmt->lineno);
+		*((char **) var->pointer) = var->value;
 		ECPGadd_mem(var->value, stmt->lineno);
 	}
 
@@ -431,8 +431,8 @@ ECPGstore_result(const PGresult *results, int act_field,
 	if ((var->ind_arrsize == 0 || var->ind_varcharsize == 0) && var->ind_value == NULL && var->ind_pointer!=NULL)
 	{
 		int	len = var->ind_offset * ntuples;
-		var->ind_value = (void *) ECPGalloc(len, stmt->lineno);
-		*((void **) var->ind_pointer) = var->ind_value;
+		var->ind_value = (char *) ECPGalloc(len, stmt->lineno);
+		*((char **) var->ind_pointer) = var->ind_value;
 		ECPGadd_mem(var->ind_value, stmt->lineno);
 	}
 	

@@ -183,7 +183,7 @@ get_type(enum ECPGttype type)
 /* Dump a type.
    The type is dumped as:
    type-tag <comma>				   - enum ECPGttype
-   reference-to-variable <comma>   - void *
+   reference-to-variable <comma>   		   - char *
    size <comma>					   - long size of this field (if varchar)
    arrsize <comma>				   - long number of elements in the arr
    offset <comma>				   - offset to the next element
