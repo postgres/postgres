@@ -361,39 +361,90 @@ DELETE FROM classname;
     Like  most  other  query  languages, 
     <ProductName>PostgreSQL</ProductName> supports
     aggregate functions.
-    The current  implementation  of
-    <ProductName>Postgres</ProductName> aggregate functions have some limitations.
-    Specifically, while there  are  aggregates  to  compute
-    such  functions as the <Function>count</Function>, <Function>sum</Function>,
+    An aggregate function computes a single result from multiple input rows.
+    For example, there are aggregates to compute the
+    <Function>count</Function>, <Function>sum</Function>,
     <Function>avg</Function> (average), <Function>max</Function> (maximum) and
-    <Function>min</Function> (minimum) over a set of instances,  aggregates  can  only
-    appear  in  the  target  list of a query and not directly in the
-    qualification (the where clause). As an example,
+    <Function>min</Function> (minimum) over a set of instances.
+   </para>
+
+   <Para>
+    It is important to understand the interaction between aggregates and
+    SQL's <Command>where</Command> and <Command>having</Command> clauses.
+    The fundamental difference between <Command>where</Command> and
+    <Command>having</Command> is this: <Command>where</Command> selects
+    input rows before groups and aggregates are computed (thus, it controls
+    which rows go into the aggregate computation), whereas
+    <Command>having</Command> selects group rows after groups and
+    aggregates are computed.  Thus, the
+    <Command>where</Command> clause may not contain aggregate functions;
+    it makes no sense to try to use an aggregate to determine which rows
+    will be inputs to the aggregates.  On the other hand,
+    <Command>having</Command> clauses always contain aggregate functions.
+    (Strictly speaking, you are allowed to write a <Command>having</Command>
+    clause that doesn't use aggregates, but it's wasteful; the same condition
+    could be used more efficiently at the <Command>where</Command> stage.)
+   </para>
+
+   <Para>
+    As an example, we can find the highest low-temperature reading anywhere
+    with
 
     <ProgramListing>
 SELECT max(temp_lo) FROM weather;
     </ProgramListing>
 
-    is allowed, while
+    If we want to know which city (or cities) that reading occurred in,
+    we might try
 
     <ProgramListing>
 SELECT city FROM weather WHERE temp_lo = max(temp_lo);
     </ProgramListing>
 
-    is not. However, as is often the case the query can be restated to accomplish 
-    the intended result; here by using a <FirstTerm>subselect</FirstTerm>:
+    but this will not work since the aggregate max() can't be used in
+    <Command>where</Command>. However, as is often the case the query can be
+    restated to accomplish the intended result; here by using a
+    <FirstTerm>subselect</FirstTerm>:
     <ProgramListing>
 SELECT city FROM weather WHERE temp_lo = (SELECT max(temp_lo) FROM weather);
     </ProgramListing>
+    This is OK because the sub-select is an independent computation that
+    computes its own aggregate separately from what's happening in the outer
+    select.
    </Para>
 
    <Para>
-    Aggregates may also have <FirstTerm>group by</FirstTerm> clauses:
+    Aggregates are also very useful in combination with
+    <FirstTerm>group by</FirstTerm> clauses.  For example, we can get the
+    maximum low temperature observed in each city with
     <ProgramListing>
 SELECT city, max(temp_lo)
     FROM weather
     GROUP BY city;
     </ProgramListing>
+    which gives us one output row per city.  We can filter these grouped
+    rows using <Command>having</Command>:
+    <ProgramListing>
+SELECT city, max(temp_lo)
+    FROM weather
+    GROUP BY city
+    HAVING min(temp_lo) < 0;
+    </ProgramListing>
+    which gives us the same results for only the cities that have some
+    below-zero readings.  Finally, if we only care about cities whose
+    names begin with 'P', we might do
+    <ProgramListing>
+SELECT city, max(temp_lo)
+    FROM weather
+    WHERE city like 'P%'
+    GROUP BY city
+    HAVING min(temp_lo) < 0;
+    </ProgramListing>
+    Note that we can apply the city-name restriction in
+    <Command>where</Command>, since it needs no aggregate.  This is
+    more efficient than adding the restriction to <Command>having</Command>,
+    because we avoid doing the grouping and aggregate calculations
+    for all rows that fail the <Command>where</Command> check.
    </Para>
   </sect1>
  </Chapter>

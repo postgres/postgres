@@ -642,15 +642,16 @@ CAST '<replaceable>string</replaceable>' AS <replaceable>type</replaceable>
      <member><replaceable>a_expr</replaceable> <replaceable>right_unary_operator</replaceable></member>
      <member><replaceable>left_unary_operator</replaceable> <replaceable>a_expr</replaceable></member>
      <member>parameter</member>
-     <member>functional expressions</member>
-     <member>aggregate expressions</member>
+     <member>functional expression</member>
+     <member>aggregate expression</member>
     </simplelist>
    </para>
 
    <para>
-    We have already discussed constants and attributes.  The two kinds of
-    operator expressions indicate respectively binary and left_unary
-    expressions.  The following sections discuss the remaining options.
+    We have already discussed constants and attributes.  The three kinds of
+    operator expressions indicate respectively binary (infix), right-unary
+    (suffix) and left-unary (prefix) operators.  The following sections
+    discuss the remaining options.
    </para>
 
    <sect2>
@@ -690,7 +691,7 @@ CREATE FUNCTION dept (name)
      enclosed in parentheses:
 
      <synopsis>
-<replaceable>function</replaceable> (<replaceable>a_expr</replaceable> [, <replaceable>a_expr</replaceable> )
+<replaceable>function</replaceable> (<replaceable>a_expr</replaceable> [, <replaceable>a_expr</replaceable> ... ] )
      </synopsis>
     </para>
 
@@ -705,20 +706,40 @@ sqrt(emp.salary)
    </sect2>
 
    <sect2>
-    <title>Aggregate Expression</title>
+    <title>Aggregate Expressions</title>
 
     <para>
-     An <firstterm>aggregate expression</firstterm>
-     represents a simple aggregate (i.e., one that computes a single value)
-     or an aggregate function (i.e., one that computes a set of values).
-     The syntax is the following:
+     An <firstterm>aggregate expression</firstterm> represents the application
+     of an aggregate function across the rows selected by a query.
+     An aggregate function reduces multiple inputs to a single output value,
+     such as the sum or average of the inputs.
+     The syntax of an aggregate expression is one of the following:
 
-     <synopsis>
-<replaceable>aggregate_name</replaceable> (<replaceable>attribute</replaceable>)
-     </synopsis>
+    <simplelist>
+     <member><replaceable>aggregate_name</replaceable> (<replaceable>expression</replaceable>)</member>
+     <member><replaceable>aggregate_name</replaceable> (DISTINCT <replaceable>expression</replaceable>)</member>
+     <member><replaceable>aggregate_name</replaceable> ( * )</member>
+    </simplelist>
 
-     where <replaceable>aggregate_name</replaceable>
-     must be a previously defined aggregate.
+     where <replaceable>aggregate_name</replaceable> is a previously defined
+     aggregate, and <replaceable>expression</replaceable> is any expression
+     that doesn't itself contain an aggregate expression.
+    </para>
+
+    <para>
+     The first form of aggregate expression invokes the aggregate across all
+     input rows for which the given expression yields a non-null value.
+     The second form invokes the aggregate for all distinct non-null values
+     of the expression found in the input rows.  The last form invokes the
+     aggregate once for each input row regardless of null or non-null values;
+     since no particular input value is specified, it is generally only useful
+     for the count() aggregate.
+    </para>
+
+    <para>
+      For example, count(*) yields the total number of input rows;
+      count(f1) yields the number of input rows in which f1 is non-null;
+      count(distinct f1) yields the number of distinct non-null values of f1.
     </para>
    </sect2>
 

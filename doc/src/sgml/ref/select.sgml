@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.22 1999/08/06 13:50:31 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.23 1999/12/13 17:39:38 tgl Exp $
 Postgres documentation
 -->
 
@@ -202,10 +202,10 @@ SELECT [ ALL | DISTINCT [ ON <replaceable class="PARAMETER">column</replaceable>
 
   <para>
    <command>DISTINCT</command> will eliminate all duplicate rows from the
-   selection.
+   result.
    <command>DISTINCT ON <replaceable class="PARAMETER">column</replaceable></command>
    will eliminate all duplicates in the specified column; this is
-   equivalent to using
+   similar to using
    <command>GROUP BY <replaceable class="PARAMETER">column</replaceable></command>.
    <command>ALL</command> will return all candidate rows,
    including duplicates.
@@ -320,11 +320,13 @@ GROUP BY <replaceable class="PARAMETER">column</replaceable> [, ...]
 
    <para>
     GROUP BY will condense into a single row all rows that share the
-    same values for the
-    grouped columns; aggregates return values derived from all rows
-    that make up the group.  The value returned for an ungrouped
-    and unaggregated column is dependent on the order in which rows
-    happen to be read from the database.
+    same values for the grouped columns.  Aggregate functions, if any,
+    are computed across all rows making up each group, producing a
+    separate value for each group (whereas without GROUP BY, an
+    aggregate produces a single value computed across all the selected
+    rows).  When GROUP BY is present, it is not valid to refer to
+    ungrouped columns except within aggregate functions, since there
+    would be more than one possible value to return for an ungrouped column.
    </para>
   </refsect2>
 
@@ -354,7 +356,8 @@ HAVING <replaceable class="PARAMETER">cond_expr</replaceable>
    <para>
     Each column referenced in 
     <replaceable class="PARAMETER">cond_expr</replaceable> shall unambiguously
-    reference a grouping column.
+    reference a grouping column, unless the reference appears within an
+    aggregate function.
    </para>
   </refsect2>
   
