@@ -40,3 +40,31 @@ SELECT * FROM aggtest;
   42 |  324.78
 (4 rows)
 
+-- Read-only tests
+CREATE TABLE writetest (a int);
+CREATE TEMPORARY TABLE temptest (a int);
+SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY;
+DROP TABLE writetest; -- fail
+ERROR:  transaction is read-only
+INSERT INTO writetest VALUES (1); -- fail
+ERROR:  transaction is read-only
+SELECT * FROM writetest; -- ok
+ a 
+---
+(0 rows)
+
+DELETE FROM temptest; -- ok
+UPDATE temptest SET a = 0 WHERE a = 1 AND writetest.a = temptest.a; -- ok
+PREPARE test AS UPDATE writetest SET a = 0; -- ok
+EXECUTE test; -- fail
+ERROR:  transaction is read-only
+SELECT * FROM writetest, temptest; -- ok
+ a | a 
+---+---
+(0 rows)
+
+CREATE TABLE test AS SELECT * FROM writetest; -- fail
+ERROR:  transaction is read-only
+START TRANSACTION READ WRITE;
+DROP TABLE writetest; -- ok
+COMMIT;

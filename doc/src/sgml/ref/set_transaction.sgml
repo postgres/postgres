@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.9 2002/08/04 04:31:44 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.10 2003/01/10 22:03:27 petere Exp $ -->
 <refentry id="SQL-SET-TRANSACTION">
  <docinfo>
   <date>2000-11-24</date>
@@ -16,9 +16,10 @@
 
  <refsynopsisdiv>
   <synopsis>
-SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
-SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL
-    { READ COMMITTED | SERIALIZABLE }
+SET TRANSACTION
+    [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] [ READ WRITE | READ ONLY ]
+SET SESSION CHARACTERISTICS AS TRANSACTION
+    [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] [ READ WRITE | READ ONLY ]
   </synopsis>
  </refsynopsisdiv>
 
@@ -26,17 +27,19 @@ SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL
   <title>Description</title>
 
   <para>
-   This command sets the transaction isolation level.  The
-   <command>SET TRANSACTION</command> command sets the characteristics
-   for the current SQL-transaction. It has no effect on any subsequent
-   transactions.  This command cannot be used after the first query or data-modification
-   statement (<command>SELECT</command>, <command>INSERT</command>,
-   <command>DELETE</command>, <command>UPDATE</command>,
-   <command>FETCH</command>, <command>COPY</command>) of a transaction
-   has been executed.  <command>SET SESSION CHARACTERISTICS</command>
-   sets the default transaction isolation level for each transaction
-   for a session.  <command>SET TRANSACTION</command> can override it
-   for an individual transaction.
+   The <command>SET TRANSACTION</command> command sets the transaction
+   characteristics of the current SQL-transaction. It has no effect on
+   any subsequent transactions.  <command>SET SESSION
+   CHARACTERISTICS</command> sets the default transaction
+   characteristics for each transaction of a session.  <command>SET
+   TRANSACTION</command> can override it for an individual
+   transaction.
+  </para>
+
+  <para>
+   The available transaction characteristics are the transaction
+   isolation level and the transaction access mode (read/write or
+   read-only).
   </para>
 
   <para>
@@ -45,7 +48,7 @@ SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL
 
    <variablelist>
     <varlistentry>
-     <term>READ COMMITTED</term>
+     <term><literal>READ COMMITTED<literal></term>
      <listitem>
       <para>
        A statement can only see rows committed before it began. This
@@ -55,7 +58,7 @@ SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL
     </varlistentry>
 
     <varlistentry>
-     <term>SERIALIZABLE</term>
+     <term><literal>SERIALIZABLE</literal></term>
      <listitem>
       <para>
        The current transaction can only see rows committed before
@@ -72,6 +75,28 @@ SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL
      </listitem>
     </varlistentry>
    </variablelist>
+
+   The transaction isolation level cannot be set after the first query
+   or data-modification statement (<command>SELECT</command>,
+   <command>INSERT</command>, <command>DELETE</command>,
+   <command>UPDATE</command>, <command>FETCH</command>,
+   <command>COPY</command>) of a transaction has been executed.
+  </para>
+
+  <para>
+   The transaction access mode determines whether the transaction is
+   read/write or read-only.  Read/write is the default.  When a
+   transaction is read-only, the following SQL commands are
+   disallowed: <literal>INSERT</literal>, <literal>UPDATE</literal>,
+   <literal>DELETE</literal>, and <literal>COPY TO</literal> if the
+   table they would write to is not a temporary table; all
+   <literal>CREATE</literal>, <literal>ALTER</literal>, and
+   <literal>DROP</literal> commands; <literal>COMMENT</literal>,
+   <literal>GRANT</literal>, <literal>REVOKE</literal>,
+   <literal>TRUNCATE</literal>; and <literal>EXPLAIN ANALYZE</literal>
+   and <literal>EXECUTE</literal> if the command they would execute is
+   among those listed.  This is a high-level notion of read-only that
+   does not prevent writes to disk.
   </para>
  </refsect1>
 
@@ -97,7 +122,7 @@ SET default_transaction_isolation = '<replaceable>value</replaceable>'
    <title>SQL92, SQL99</title>
 
    <para>
-    <option>SERIALIZABLE</option> is the default level in
+    <option>SERIALIZABLE</option> is the default transaction isolation level in
     <acronym>SQL</acronym>.  <productname>PostgreSQL</productname> does
     not provide the isolation levels <option>READ UNCOMMITTED</option> 
     and <option>REPEATABLE READ</option>. Because of multiversion
@@ -107,11 +132,10 @@ SET default_transaction_isolation = '<replaceable>value</replaceable>'
    </para>
 
    <para>
-    In <acronym>SQL</acronym> there are two other transaction
-    characteristics that can be set with these commands: whether the
-    transaction is read-only and the size of the diagnostics area.
-    Neither of these concepts are supported in
-    <productname>PostgreSQL</productname>. 
+    In <acronym>SQL</acronym> there is one other transaction
+    characteristic that can be set with these commands: the size of
+    the diagnostics area.  This concept is not supported in
+    <productname>PostgreSQL</productname>.
    </para>
   </refsect2>
  </refsect1>

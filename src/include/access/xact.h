@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.48 2002/11/18 01:17:39 tgl Exp $
+ * $Id: xact.h,v 1.49 2003/01/10 22:03:30 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,9 @@
 
 extern int	DefaultXactIsoLevel;
 extern int	XactIsoLevel;
+extern bool	DefaultXactReadOnly;
+extern bool	XactReadOnly;
+
 
 /* ----------------
  *		transaction state structure

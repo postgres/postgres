@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.187 2002/12/15 16:17:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.188 2003/01/10 22:03:27 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -347,6 +347,10 @@ DoCopy(const CopyStmt *stmt)
 	 * Open and lock the relation, using the appropriate lock type.
 	 */
 	rel = heap_openrv(relation, (is_from ? RowExclusiveLock : AccessShareLock));
+
+	/* check read-only transaction */
+	if (XactReadOnly && !is_from && !isTempNamespace(RelationGetNamespace(rel)))
+		elog(ERROR, "transaction is read-only");
 
 	/* Check permissions. */
 	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),

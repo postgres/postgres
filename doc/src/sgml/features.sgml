@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.13 2003/01/10 11:02:41 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.14 2003/01/10 22:03:26 petere Exp $
 -->
 
 <appendix id="features">
@@ -643,10 +643,23 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.13 2003/01/10 11:02:41 pe
         <entry></entry>
        </row>
        <row>
+        <entry>E152</entry>
+        <entry>Core</entry>
+        <entry>Basic SET TRANSACTION statement</entry>
+        <entry></entry>
+       </row>
+       <row>
         <entry>E152-01</entry>
         <entry>Core</entry>
         <entry>SET TRANSACTION statement: ISOLATION LEVEL SERIALIZABLE
          clause</entry> 
+        <entry></entry>
+       </row>
+       <row>
+        <entry>E152-02</entry>
+        <entry>Core</entry>
+        <entry>SET TRANSACTION statement: READ ONLY and READ WRITE
+         clauses</entry> 
         <entry></entry>
        </row>
        <row>
@@ -1597,19 +1610,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.13 2003/01/10 11:02:41 pe
         <entry>Core</entry>
         <entry>WITH HOLD cursors</entry>
         <entry>Cursor to stay open across transactions</entry>
-       </row>
-       <row>
-        <entry>E152</entry>
-        <entry>Core</entry>
-        <entry>Basic SET TRANSACTION statement</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>E152-02</entry>
-        <entry>Core</entry>
-        <entry>SET TRANSACTION statement: READ ONLY and READ WRITE
-         clauses</entry> 
-        <entry>Syntax accepted; READ ONLY not supported</entry>
        </row>
        <row>
         <entry>E153</entry>

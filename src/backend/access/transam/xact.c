@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.140 2002/11/23 03:59:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.141 2003/01/10 22:03:27 petere Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -207,6 +207,9 @@ TransactionState CurrentTransactionState = &CurrentTransactionStateData;
  */
 int			DefaultXactIsoLevel = XACT_READ_COMMITTED;
 int			XactIsoLevel;
+
+bool		DefaultXactReadOnly = false;
+bool		XactReadOnly;
 
 bool		autocommit = true;
 
@@ -848,6 +851,7 @@ StartTransaction(void)
 
 	FreeXactSnapshot();
 	XactIsoLevel = DefaultXactIsoLevel;
+	XactReadOnly = DefaultXactReadOnly;
 
 	/*
 	 * Check the current transaction state.  If the transaction system is

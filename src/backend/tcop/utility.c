@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.188 2003/01/06 00:31:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.189 2003/01/10 22:03:28 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,6 +168,66 @@ CheckOwnership(RangeVar *rel, bool noCatalogs)
 }
 
 
+static void
+check_xact_readonly(Node *parsetree)
+{
+	if (!XactReadOnly)
+		return;
+
+	/*
+	 * Note: Commands that need to do more complicated checking are
+	 * handled elsewhere.
+	 */
+
+	switch (nodeTag(parsetree))
+	{
+		case T_AlterDatabaseSetStmt:
+		case T_AlterDomainStmt:
+		case T_AlterGroupStmt:
+		case T_AlterTableStmt:
+		case T_RenameStmt:
+		case T_AlterUserStmt:
+		case T_AlterUserSetStmt:
+		case T_CommentStmt:
+		case T_DefineStmt:
+		case T_CreateCastStmt:
+		case T_CreateConversionStmt:
+		case T_CreatedbStmt:
+		case T_CreateDomainStmt:
+		case T_CreateFunctionStmt:
+		case T_CreateGroupStmt:
+		case T_IndexStmt:
+		case T_CreatePLangStmt:
+		case T_CreateOpClassStmt:
+		case T_RuleStmt:
+		case T_CreateSchemaStmt:
+		case T_CreateSeqStmt:
+		case T_CreateStmt:
+		case T_CreateTrigStmt:
+		case T_CompositeTypeStmt:
+		case T_CreateUserStmt:
+		case T_ViewStmt:
+		case T_RemoveAggrStmt:
+		case T_DropCastStmt:
+		case T_DropStmt:
+		case T_DropdbStmt:
+		case T_RemoveFuncStmt:
+		case T_DropGroupStmt:
+		case T_DropPLangStmt:
+		case T_RemoveOperStmt:
+		case T_RemoveOpClassStmt:
+		case T_DropPropertyStmt:
+		case T_DropUserStmt:
+		case T_GrantStmt:
+		case T_TruncateStmt:
+			elog(ERROR, "transaction is read-only");
+			break;
+		default:
+			/*nothing*/;
+	}
+}
+
+
 /*
  * ProcessUtility
  *		general utility function invoker
@@ -187,6 +247,8 @@ ProcessUtility(Node *parsetree,
 			   CommandDest dest,
 			   char *completionTag)
 {
+	check_xact_readonly(parsetree);
+
 	if (completionTag)
 		completionTag[0] = '\0';
 
@@ -214,16 +276,21 @@ ProcessUtility(Node *parsetree,
 						{
 							BeginTransactionBlock();
 
-							/*
-							 * Currently, the only option that can be set
-							 * by START TRANSACTION is the isolation
-							 * level.
-							 */
 							if (stmt->options)
 							{
-								SetPGVariable("TRANSACTION ISOLATION LEVEL",
-											  stmt->options,
-											  false);
+								List *head;
+
+								foreach(head, stmt->options)
+								{
+									DefElem *item = (DefElem *) lfirst(head);
+
+									if (strcmp(item->defname, "transaction_isolation")==0)
+										SetPGVariable("transaction_isolation",
+													  makeList1(item->arg), false);
+									else if (strcmp(item->defname, "transaction_read_only")==0)
+										SetPGVariable("transaction_read_only",
+													  makeList1(item->arg), false);
+								}
 							}
 						}
 						break;
@@ -765,7 +832,45 @@ ProcessUtility(Node *parsetree,
 			{
 				VariableSetStmt *n = (VariableSetStmt *) parsetree;
 
-				SetPGVariable(n->name, n->args, n->is_local);
+				/*
+				 * Special cases for special SQL syntax that
+				 * effectively sets more than one variable per
+				 * statement.
+				 */
+				if (strcmp(n->name, "TRANSACTION")==0)
+				{
+					List *head;
+
+					foreach(head, n->args)
+					{
+						DefElem *item = (DefElem *) lfirst(head);
+
+						if (strcmp(item->defname, "transaction_isolation")==0)
+							SetPGVariable("transaction_isolation",
+										  makeList1(item->arg), n->is_local);
+						else if (strcmp(item->defname, "transaction_read_only")==0)
+							SetPGVariable("transaction_read_only",
+										  makeList1(item->arg), n->is_local);
+					}
+				}
+				else if (strcmp(n->name, "SESSION CHARACTERISTICS")==0)
+				{
+					List *head;
+
+					foreach(head, n->args)
+					{
+						DefElem *item = (DefElem *) lfirst(head);
+
+						if (strcmp(item->defname, "transaction_isolation")==0)
+							SetPGVariable("default_transaction_isolation",
+										  makeList1(item->arg), n->is_local);
+						else if (strcmp(item->defname, "transaction_read_only")==0)
+							SetPGVariable("default_transaction_read_only",
+										  makeList1(item->arg), n->is_local);
+					}
+				}
+				else
+					SetPGVariable(n->name, n->args, n->is_local);
 			}
 			break;
 

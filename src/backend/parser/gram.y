@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.394 2003/01/10 21:08:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.395 2003/01/10 22:03:27 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -162,7 +162,7 @@ static void doNegateFloat(Value *v);
 %type <defelt>	createdb_opt_item copy_opt_item
 
 %type <ival>	opt_lock lock_type cast_context
-%type <boolean>	opt_force opt_or_replace
+%type <boolean>	opt_force opt_or_replace transaction_access_mode
 
 %type <list>	user_list
 
@@ -215,7 +215,8 @@ static void doNegateFloat(Value *v);
 				target_list update_target_list insert_column_list
 				insert_target_list def_list opt_indirection
 				group_clause TriggerFuncArgs select_limit
-				opt_select_limit opclass_item_list trans_options
+				opt_select_limit opclass_item_list transaction_mode_list
+				transaction_mode_list_or_empty
 				TableFuncElementList
 				prep_type_clause prep_type_list
 				execute_param_clause
@@ -863,18 +864,18 @@ set_rest:  ColId TO var_list_or_default
 						n->args = makeList1($3);
 					$$ = n;
 				}
-			| TRANSACTION ISOLATION LEVEL iso_level opt_mode
+			| TRANSACTION transaction_mode_list
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
-					n->name = "TRANSACTION ISOLATION LEVEL";
-					n->args = makeList1(makeStringConst($4, NULL));
+					n->name = "TRANSACTION";
+					n->args = $2;
 					$$ = n;
 				}
-			| SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL iso_level
+			| SESSION CHARACTERISTICS AS TRANSACTION transaction_mode_list
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
-					n->name = "default_transaction_isolation";
-					n->args = makeList1(makeStringConst($7, NULL));
+					n->name = "SESSION CHARACTERISTICS";
+					n->args = $5;
 					$$ = n;
 				}
 			| NAMES opt_encoding
@@ -920,16 +921,6 @@ var_value:	opt_boolean
 
 iso_level:	READ COMMITTED							{ $$ = "read committed"; }
 			| SERIALIZABLE							{ $$ = "serializable"; }
-		;
-
-opt_mode:  READ WRITE
-				{}
-		| READ ONLY
-				{
-					elog(ERROR, "SET TRANSACTION/READ ONLY not yet supported");
-				}
-		| /*EMPTY*/
-				{}
 		;
 
 opt_boolean:
@@ -1020,7 +1011,7 @@ VariableShowStmt:
 			| SHOW TRANSACTION ISOLATION LEVEL
 				{
 					VariableShowStmt *n = makeNode(VariableShowStmt);
-					n->name = "TRANSACTION ISOLATION LEVEL";
+					n->name = "transaction_isolation";
 					$$ = (Node *) n;
 				}
 			| SHOW SESSION AUTHORIZATION
@@ -1053,7 +1044,7 @@ VariableResetStmt:
 			| RESET TRANSACTION ISOLATION LEVEL
 				{
 					VariableResetStmt *n = makeNode(VariableResetStmt);
-					n->name = "TRANSACTION ISOLATION LEVEL";
+					n->name = "transaction_isolation";
 					$$ = (Node *) n;
 				}
 			| RESET SESSION AUTHORIZATION
@@ -3500,42 +3491,42 @@ UnlistenStmt:
  *****************************************************************************/
 
 TransactionStmt:
-			ABORT_TRANS opt_trans
+			ABORT_TRANS opt_transaction
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->command = ROLLBACK;
 					n->options = NIL;
 					$$ = (Node *)n;
 				}
-			| BEGIN_TRANS opt_trans
+			| BEGIN_TRANS opt_transaction
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->command = BEGIN_TRANS;
 					n->options = NIL;
 					$$ = (Node *)n;
 				}
-			| START TRANSACTION trans_options
+			| START TRANSACTION transaction_mode_list_or_empty
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->command = START;
 					n->options = $3;
 					$$ = (Node *)n;
 				}
-			| COMMIT opt_trans
+			| COMMIT opt_transaction
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->command = COMMIT;
 					n->options = NIL;
 					$$ = (Node *)n;
 				}
-			| END_TRANS opt_trans
+			| END_TRANS opt_transaction
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->command = COMMIT;
 					n->options = NIL;
 					$$ = (Node *)n;
 				}
-			| ROLLBACK opt_trans
+			| ROLLBACK opt_transaction
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->command = ROLLBACK;
@@ -3544,15 +3535,45 @@ TransactionStmt:
 				}
 		;
 
-trans_options:	ISOLATION LEVEL iso_level
-									{ $$ = makeList1(makeStringConst($3, NULL)); }
-			 |	/* EMPTY */			{ $$ = NIL; }
-			 ;
-
-opt_trans:	WORK									{}
+opt_transaction:	WORK							{}
 			| TRANSACTION							{}
 			| /*EMPTY*/								{}
 		;
+
+transaction_mode_list:
+			ISOLATION LEVEL iso_level
+					{ $$ = makeList1(makeDefElem("transaction_isolation",
+												 makeStringConst($3, NULL))); }
+			| transaction_access_mode
+					{ $$ = makeList1(makeDefElem("transaction_read_only",
+												 makeIntConst($1))); }
+			| ISOLATION LEVEL iso_level transaction_access_mode
+					{
+						$$ = makeList2(makeDefElem("transaction_isolation",
+												   makeStringConst($3, NULL)),
+									   makeDefElem("transaction_read_only",
+												   makeIntConst($4)));
+					}
+			| transaction_access_mode ISOLATION LEVEL iso_level
+					{
+						$$ = makeList2(makeDefElem("transaction_read_only",
+												   makeIntConst($1)),
+									   makeDefElem("transaction_isolation",
+												   makeStringConst($4, NULL)));
+					}
+		;
+
+transaction_mode_list_or_empty:
+			transaction_mode_list
+			| /* EMPTY */
+					{ $$ = NIL; }
+		;
+
+transaction_access_mode:
+			READ ONLY { $$ = TRUE; }
+			| READ WRITE { $$ = FALSE; }
+		;
+
 
 /*****************************************************************************
  *

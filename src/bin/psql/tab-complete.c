@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.70 2002/12/13 05:36:24 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.71 2003/01/10 22:03:30 petere Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -212,13 +212,7 @@ psql_completion(char *text, int start, int end)
 		"CONSTRAINTS",
 		"NAMES",
 		"SESSION",
-		"TRANSACTION ISOLATION LEVEL",
-		/* these are treated in backend/commands/variable.c */
-		"DateStyle",
-		"TimeZone",
-		"client_encoding",
-		"server_encoding",
-		"seed",
+		"TRANSACTION",
 
 		/*
 		 * the rest should match USERSET entries in
@@ -229,12 +223,14 @@ psql_completion(char *text, int start, int end)
 		"autocommit",
 		"checkpoint_segments",
 		"checkpoint_timeout",
+		"client_encoding",
 		"client_min_messages",
 		"commit_delay",
 		"commit_siblings",
 		"cpu_index_tuple_cost",
 		"cpu_operator_cost",
 		"cpu_tuple_cost",
+		"DateStyle",
 		"db_user_namespace",
 		"deadlock_timeout",
 		"debug_pretty_print",
@@ -269,7 +265,7 @@ psql_completion(char *text, int start, int end)
 		"lc_messages",
 		"lc_monetary",
 		"lc_numeric",
-		"lc_timeC",
+		"lc_time",
 		"log_connections",
 		"log_duration",
 		"log_min_error_statement",
@@ -294,6 +290,8 @@ psql_completion(char *text, int start, int end)
 		"log_planner_stats",
 		"log_source_port",
 		"log_statement_stats",
+		"seed",
+		"server_encoding",
 		"silent_mode",
 		"sort_mem",
 		"sql_inheritance",
@@ -309,6 +307,7 @@ psql_completion(char *text, int start, int end)
 		"syslog_facility",
 		"syslog_ident",
 		"tcpip_socket",
+		"TimeZone",
 		"trace_notify",
 		"transform_null_equals",
 		"unix_socket_directory",
@@ -817,10 +816,18 @@ psql_completion(char *text, int start, int end)
 			 strcasecmp(prev_wd, "RESET") == 0 ||
 			 strcasecmp(prev_wd, "SHOW") == 0)
 		COMPLETE_WITH_LIST(pgsql_variables);
-	/* Complete "SET TRANSACTION ISOLOLATION LEVEL" */
-	else if (strcasecmp(prev2_wd, "SET") == 0 &&
-			 strcasecmp(prev_wd, "TRANSACTION") == 0)
-		COMPLETE_WITH_CONST("ISOLATION");
+	/* Complete "SET TRANSACTION" */
+	else if ((strcasecmp(prev2_wd, "SET") == 0 &&
+			  strcasecmp(prev_wd, "TRANSACTION") == 0) ||
+			 (strcasecmp(prev4_wd, "SESSION") == 0 &&
+			  strcasecmp(prev3_wd, "CHARACTERISTICS") == 0 &&
+			  strcasecmp(prev2_wd, "AS") == 0 &&
+			  strcasecmp(prev_wd, "TRANSACTION") == 0))
+	{
+		char	   *my_list[] = {"ISOLATION", "READ", NULL};
+
+		COMPLETE_WITH_LIST(my_list);
+	}
 	else if (strcasecmp(prev3_wd, "SET") == 0 &&
 			 strcasecmp(prev2_wd, "TRANSACTION") == 0 &&
 			 strcasecmp(prev_wd, "ISOLATION") == 0)
@@ -840,6 +847,15 @@ psql_completion(char *text, int start, int end)
 			 strcasecmp(prev2_wd, "LEVEL") == 0 &&
 			 strcasecmp(prev_wd, "READ") == 0)
 		COMPLETE_WITH_CONST("COMMITTED");
+	else if ((strcasecmp(prev3_wd, "SET") == 0 ||
+			  strcasecmp(prev3_wd, "AS") == 0) &&
+			 strcasecmp(prev2_wd, "TRANSACTION") == 0 &&
+			 strcasecmp(prev_wd, "READ") == 0)
+	{
+		char	   *my_list[] = {"ONLY", "WRITE", NULL};
+
+		COMPLETE_WITH_LIST(my_list);
+	}
 	/* Complete SET CONSTRAINTS <foo> with DEFERRED|IMMEDIATE */
 	else if (strcasecmp(prev3_wd, "SET") == 0 &&
 			 strcasecmp(prev2_wd, "CONSTRAINTS") == 0)
@@ -853,7 +869,7 @@ psql_completion(char *text, int start, int end)
 			 strcasecmp(prev_wd, "SESSION") == 0)
 	{
 		char	   *my_list[] = {"AUTHORIZATION",
-			"CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL",
+			"CHARACTERISTICS AS TRANSACTION",
 		NULL};
 
 		COMPLETE_WITH_LIST(my_list);

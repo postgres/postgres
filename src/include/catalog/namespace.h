@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: namespace.h,v 1.24 2003/01/07 20:56:07 tgl Exp $
+ * $Id: namespace.h,v 1.25 2003/01/10 22:03:30 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,7 @@ typedef struct _OpclassCandidateList
 extern Oid	RangeVarGetRelid(const RangeVar *relation, bool failOK);
 extern Oid	RangeVarGetCreationNamespace(const RangeVar *newRelation);
 extern Oid	RelnameGetRelid(const char *relname);
+extern Oid	RelidGetNamespaceId(Oid relid);
 extern bool RelationIsVisible(Oid relid);
 
 extern Oid	TypenameGetTypid(const char *typname);

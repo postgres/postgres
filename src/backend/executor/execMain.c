@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.196 2003/01/08 23:32:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.197 2003/01/10 22:03:27 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,6 +85,7 @@ static void ExecUpdate(TupleTableSlot *slot, ItemPointer tupleid,
 static TupleTableSlot *EvalPlanQualNext(EState *estate);
 static void EndEvalPlanQual(EState *estate);
 static void ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation);
+static void ExecCheckXactReadOnly(Query *parsetree, CmdType operation);
 static void EvalPlanQualStart(evalPlanQual *epq, EState *estate,
 							  evalPlanQual *priorepq);
 static void EvalPlanQualStop(evalPlanQual *epq);
@@ -200,6 +201,14 @@ ExecutorRun(QueryDesc *queryDesc,
 	 */
 	operation = queryDesc->operation;
 	dest = queryDesc->dest;
+
+	/*
+	 * If the transaction is read-only, we need to check if any writes
+	 * are planned to non-temporary tables.  This is done here at this
+	 * rather late stage so that we can handle EXPLAIN vs. EXPLAIN
+	 * ANALYZE easily.
+	 */
+	ExecCheckXactReadOnly(queryDesc->parsetree, operation);
 
 	/*
 	 * startup tuple receiver
@@ -383,6 +392,45 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
  * ===============================================================
  * ===============================================================
  */
+
+
+static void
+ExecCheckXactReadOnly(Query *parsetree, CmdType operation)
+{
+	if (!XactReadOnly)
+		return;
+
+	/* CREATE TABLE AS or SELECT INTO */
+	if (operation == CMD_SELECT && parsetree->into != NULL)
+		goto fail;
+
+	if (operation == CMD_DELETE || operation == CMD_INSERT
+		|| operation == CMD_UPDATE)
+	{
+		List *lp;
+
+		foreach(lp, parsetree->rtable)
+		{
+			RangeTblEntry *rte = lfirst(lp);
+
+			if (rte->rtekind != RTE_RELATION)
+				continue;
+
+			if (!rte->checkForWrite)
+				continue;
+
+			if (isTempNamespace(RelidGetNamespaceId(rte->relid)))
+				continue;
+
+			goto fail;
+		}
+	}
+
+	return;
+
+fail:
+	elog(ERROR, "transaction is read-only");
+}
 
 
 /* ----------------------------------------------------------------

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.176 2003/01/08 00:22:26 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.177 2003/01/10 22:03:26 petere Exp $
 -->
 
 <appendix id="release">
@@ -36,6 +36,7 @@ System can use either hash- or sort-based strategy for grouped aggregation
 ON COMMIT options for temp tables
 extra_float_digits option allows pg_dump to dump float data accurately
 Long options for psql and pg_dump are now available on all platforms
+Read-only transactions
 ]]></literallayout>
 
  </sect1>

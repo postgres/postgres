@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/start_transaction.sgml,v 1.3 2002/08/30 22:45:25 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/start_transaction.sgml,v 1.4 2003/01/10 22:03:27 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
   <synopsis>
-START TRANSACTION [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ]
+START TRANSACTION [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] [ READ WRITE | READ ONLY ]
   </synopsis>
 
   <refsect2 id="R2-SQL-START-TRANSACTION-1">
@@ -77,52 +77,23 @@ WARNING:  BEGIN: already a transaction in progress
   <title>Description</title>
 
   <para>
-   This command begins a new transaction. If the isolation level is
-   specified, the new transaction has that isolation level. In all other
-   respects, the behavior of this command is identical to the
-   <xref linkend="sql-begin" endterm="sql-begin-title"> command.
+   This command begins a new transaction. If the isolation level or
+   read/write mode is specified, the new transaction has those
+   characteristics, as if <xref linkend="sql-set-transaction"
+   endterm="sql-set-transaction-title"> was executed. In all other
+   respects, the behavior of this command is identical to the <xref
+   linkend="sql-begin" endterm="sql-begin-title"> command.
   </para>
 
- </refsect1>
-
- <refsect1>
-  <title>Notes</title>
-
-  <para>
-   The isolation level of a transaction can also be set with the <xref
-   linkend="sql-set-transaction" endterm="sql-set-transaction-title">
-   command. If no isolation level is specified, the default isolation
-   level is used.
-  </para>
  </refsect1>
 
  <refsect1 id="R1-SQL-START-TRANSACTION-3">
   <title>Compatibility</title>
 
-  <refsect2 id="R2-SQL-START-TRANSACTION-4">
-   <title>SQL99</title>
-
-   <para>
-    <option>SERIALIZABLE</option> is the default isolation level in
-    <acronym>SQL99</acronym>, but it is not the usual default in
-    <productname>PostgreSQL</productname>: the factory default setting
-    is READ COMMITTED.
-    <productname>PostgreSQL</productname> 
-    does not provide the isolation levels <option>READ UNCOMMITTED</option>
-    and <option>REPEATABLE READ</option>. Because of lack of predicate
-    locking, the <option>SERIALIZABLE</option> level is
-    not truly serializable. See the <citetitle>User's Guide</citetitle>
-    for details.
-   </para>
-
-   <para>
-    In <acronym>SQL99</acronym> this statement can specify two other
-    properties of the new transaction: whether the transaction is
-    read-only and the size of the diagnostics area. Neither of these
-    concepts are currently supported in
-    <productname>PostgreSQL</productname>.
-   </para>
-  </refsect2>
+  <para>
+   SQL99; but see also the compatibility section of <xref
+   linkend="sql-set-transaction" endterm="sql-set-transaction-title">.
+  </para>
  </refsect1>
 </refentry>
 

@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.109 2002/12/27 14:06:34 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.110 2003/01/10 22:03:29 petere Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -516,6 +516,14 @@ static struct config_bool
 		{"autocommit", PGC_USERSET}, &autocommit,
 		true, NULL, NULL
 	},
+	{
+		{"default_transaction_read_only", PGC_USERSET}, &DefaultXactReadOnly,
+		false, NULL, NULL
+	},
+	{
+		{"transaction_read_only", PGC_USERSET, GUC_NO_RESET_ALL}, &XactReadOnly,
+		false, NULL, NULL
+	},
 
 	{
 		{NULL, 0}, NULL, false, NULL, NULL
@@ -841,7 +849,7 @@ static struct config_string
 	},
 
 	{
-		{"TRANSACTION ISOLATION LEVEL", PGC_USERSET, GUC_NO_RESET_ALL},
+		{"transaction_isolation", PGC_USERSET, GUC_NO_RESET_ALL},
 		&XactIsoLevel_string,
 		NULL, assign_XactIsoLevel, show_XactIsoLevel
 	},
@@ -1157,10 +1165,12 @@ InitializeGUCOptions(void)
 	guc_string_workspace = NULL;
 
 	/*
-	 * Prevent any attempt to override TRANSACTION ISOLATION LEVEL from
+	 * Prevent any attempt to override the transaction modes from
 	 * non-interactive sources.
 	 */
-	SetConfigOption("TRANSACTION ISOLATION LEVEL", "default",
+	SetConfigOption("transaction_isolation", "default",
+					PGC_POSTMASTER, PGC_S_OVERRIDE);
+	SetConfigOption("transaction_read_only", "no",
 					PGC_POSTMASTER, PGC_S_OVERRIDE);
 
 	/*
