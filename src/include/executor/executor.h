@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.66 2002/06/20 20:29:49 momjian Exp $
+ * $Id: executor.h,v 1.67 2002/06/25 17:27:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ extern TupleDesc ExecutorStart(QueryDesc *queryDesc, EState *estate);
 extern TupleTableSlot *ExecutorRun(QueryDesc *queryDesc, EState *estate,
 								   ScanDirection direction, long count);
 extern void ExecutorEnd(QueryDesc *queryDesc, EState *estate);
-extern void ExecConstraints(char *caller, ResultRelInfo *resultRelInfo,
+extern void ExecConstraints(const char *caller, ResultRelInfo *resultRelInfo,
 				TupleTableSlot *slot, EState *estate);
 extern TupleTableSlot *EvalPlanQual(EState *estate, Index rti,
 			 ItemPointer tid);

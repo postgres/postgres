@@ -88,14 +88,14 @@ create table nulltest
            , col4 dnull
            );
 INSERT INTO nulltest DEFAULT VALUES;
-ERROR:  ExecAppend: Fail to add null value in not null attribute col1
+ERROR:  ExecInsert: Fail to add null value in not null attribute col1
 INSERT INTO nulltest values ('a', 'b', 'c', 'd');  -- Good
 INSERT INTO nulltest values (NULL, 'b', 'c', 'd');
-ERROR:  ExecAppend: Fail to add null value in not null attribute col1
+ERROR:  ExecInsert: Fail to add null value in not null attribute col1
 INSERT INTO nulltest values ('a', NULL, 'c', 'd');
-ERROR:  ExecAppend: Fail to add null value in not null attribute col2
+ERROR:  ExecInsert: Fail to add null value in not null attribute col2
 INSERT INTO nulltest values ('a', 'b', NULL, 'd');
-ERROR:  ExecAppend: Fail to add null value in not null attribute col3
+ERROR:  ExecInsert: Fail to add null value in not null attribute col3
 INSERT INTO nulltest values ('a', 'b', 'c', NULL); -- Good
 select * from nulltest;
  col1 | col2 | col3 | col4 

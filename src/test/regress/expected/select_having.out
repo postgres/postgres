@@ -21,6 +21,15 @@ SELECT b, c FROM test_having
  3 | bbbb    
 (2 rows)
 
+-- HAVING is equivalent to WHERE in this case
+SELECT b, c FROM test_having
+	GROUP BY b, c HAVING b = 3; 
+ b |    c     
+---+----------
+ 3 | BBBB    
+ 3 | bbbb    
+(2 rows)
+
 SELECT lower(c), count(c) FROM test_having
 	GROUP BY lower(c) HAVING count(*) > 2 OR min(a) = max(a);
   lower   | count 
