@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/Makefile,v 1.12 1998/11/29 05:30:13 tgl Exp $
+#    $Header: /cvsroot/pgsql/doc/Makefile,v 1.13 1999/08/08 15:09:04 thomas Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -56,8 +56,9 @@ clean::
 distclean::
 	$(MAKE) clean
 
-man::
-	$(MAKE) -C $(SRCDIR) install-man
+man::	man.tar.gz
+	if test ! -d $(POSTMANDIR) ; then mkdir $(POSTMANDIR) ; fi
+	$(GZCAT) $< | (cd $(POSTMANDIR) ; $(TAR) xf - )
 
 #
 # Generic production rules
