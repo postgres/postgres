@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.14 2000/04/07 19:17:30 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.15 2000/04/12 20:07:13 momjian Exp $
 Postgres documentation
 -->
 
@@ -71,7 +71,7 @@ CREATE RULE <replaceable class="parameter">name</replaceable> AS ON <replaceable
       <listitem>
        <para>
 	Any SQL WHERE clause, <literal>new</literal> or
-	<literal>current</literal> can appear instead of an instance
+	<literal>old</literal> can appear instead of an instance
 	variable whenever an instance variable is permissible in SQL.
        </para>
       </listitem>
@@ -81,7 +81,7 @@ CREATE RULE <replaceable class="parameter">name</replaceable> AS ON <replaceable
       <listitem>
        <para>
 	Any SQL statement, <literal>new</literal> or
-	<literal>current</literal> can appear instead of an instance
+	<literal>old</literal> can appear instead of an instance
 	variable whenever an instance variable is permissible in SQL.
        </para>
       </listitem>
@@ -133,17 +133,17 @@ CREATE
 
   <para>
    The semantics of a rule is that at the time an individual instance is
-   accessed, inserted, updated, or deleted, there is a current instance (for
+   accessed, inserted, updated, or deleted, there is a old instance (for
    selects, updates and deletes) and a new instance (for inserts and
   updates).
   If the <replaceable class="parameter">event</replaceable>
    specified in the ON clause and the
    <replaceable class="parameter">condition</replaceable> specified in the
-   WHERE clause are true for the current instance, the
+   WHERE clause are true for the old instance, the
    <replaceable class="parameter">action</replaceable> part of the rule is
-   executed. First, however, values from fields in the current instance
+   executed. First, however, values from fields in the old instance
    and/or the new instance are substituted for
-   <literal>current.</literal><replaceable class="parameter">attribute-name</replaceable>
+   <literal>old.</literal><replaceable class="parameter">attribute-name</replaceable>
    and <literal>new.</literal><replaceable class="parameter">attribute-name</replaceable>.
   </para>
 
@@ -167,7 +167,7 @@ CREATE
     <replaceable class="parameter">condition</replaceable> and
     <replaceable class="parameter">action</replaceable> parts of a rule,
     they are all considered different tuple variables. More accurately,
-    <literal>new</literal> and <literal>current</literal> are the only tuple
+    <literal>new</literal> and <literal>old</literal> are the only tuple
     variables that are shared between these clauses. For example, the following
     two rules have the same semantics:
     <programlisting>
@@ -263,7 +263,7 @@ SELECT * FROM emp;
    
    <programlisting>
 CREATE RULE example_1 AS
-    ON UPDATE emp.salary WHERE current.name = "Joe"
+    ON UPDATE emp.salary WHERE old.name = "Joe"
     DO 
 	UPDATE emp 
 	SET salary = new.salary
@@ -271,7 +271,7 @@ CREATE RULE example_1 AS
    </programlisting>
 
    At the time Joe receives a salary adjustment, the event
-   will become true and Joe's current instance and proposed
+   will become true and Joe's old instance and proposed
    new instance are available to the execution routines.
    Hence, his new salary is substituted into the action part
    of the rule which is subsequently executed.  This propagates
@@ -282,7 +282,7 @@ CREATE RULE example_1 AS
    <programlisting>
 CREATE RULE example_2 AS
     ON SELECT TO EMP.salary
-    WHERE current.name = "Bill"
+    WHERE old.name = "Bill"
     DO INSTEAD
 	SELECT emp.salary
 	FROM emp
@@ -297,7 +297,7 @@ CREATE RULE example_2 AS
 CREATE RULE example_3 AS
     ON 
 	SELECT TO emp.salary
-   	WHERE current.dept = "shoe" AND current_user = "Joe"
+   	WHERE old.dept = "shoe" AND current_user = "Joe"
     DO INSTEAD NOTHING;
    </programlisting>
   </para>
