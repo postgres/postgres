@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeLimit.c,v 1.6 2001/03/23 04:49:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeLimit.c,v 1.7 2001/08/06 18:05:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,10 +164,11 @@ recompute_limits(Limit *node)
 
 	if (node->limitOffset)
 	{
-		limitstate->offset = DatumGetInt32(ExecEvalExpr(node->limitOffset,
-														econtext,
-														&isNull,
-														NULL));
+		limitstate->offset =
+			DatumGetInt32(ExecEvalExprSwitchContext(node->limitOffset,
+													econtext,
+													&isNull,
+													NULL));
 		/* Interpret NULL offset as no offset */
 		if (isNull)
 			limitstate->offset = 0;
@@ -182,10 +183,11 @@ recompute_limits(Limit *node)
 
 	if (node->limitCount)
 	{
-		limitstate->count = DatumGetInt32(ExecEvalExpr(node->limitCount,
-													   econtext,
-													   &isNull,
-													   NULL));
+		limitstate->count =
+			DatumGetInt32(ExecEvalExprSwitchContext(node->limitCount,
+													econtext,
+													&isNull,
+													NULL));
 		/* Interpret NULL count as no count (LIMIT ALL) */
 		if (isNull)
 			limitstate->noCount = true;
