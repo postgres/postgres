@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.8 2000/01/19 20:08:36 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.9 2000/03/25 14:36:58 momjian Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -154,7 +154,7 @@ fi
 # Don't want to leave the user blind if he breaks
 # during password entry.
 
-trap 'stty echo >& /dev/null' 1 2 3 15
+trap 'stty echo >/dev/null 2>&1' 1 2 3 15
 
 # Get missing user attributes
 
@@ -166,14 +166,14 @@ fi
 
 if [ "$PwPrompt" ]; then
 	$ECHO_N "Enter password for user \"$NewUser\": "$ECHO_C
-        stty -echo >& /dev/null
+        stty -echo >/dev/null 2>&1
         read FirstPw
-        stty echo >& /dev/null
+        stty echo >/dev/null 2>&1
         echo
         $ECHO_N "Enter it again: "$ECHO_C
-        stty -echo >& /dev/null
+        stty -echo >/dev/null 2>&1
         read SecondPw
-        stty echo >& /dev/null
+        stty echo >/dev/null 2>&1
         echo
         if [ "$FirstPw" != "$SecondPw" ]; then
             echo "Passwords didn't match."
