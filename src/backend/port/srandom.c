@@ -5,7 +5,7 @@
 #include "port-protos.h"
 
 void
-srandom(int seed)
+srandom(unsigned int seed)
 {
 	srand48((long int) seed);
 }

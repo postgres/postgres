@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/hpux/Attic/port.c,v 1.3 1997/09/07 04:45:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/hpux/Attic/port.c,v 1.4 1997/12/19 02:45:44 scrappy Exp $
  *
  * NOTES
  *	  For the most part, this file gets around some non-POSIX calls
@@ -29,21 +29,4 @@ init_address_fixup()
 	 * On PA-RISC, unaligned access fixup is handled by the compiler, not
 	 * by the kernel.
 	 */
-}
-
-long
-random()
-{
-	return (lrand48());
-}
-
-void
-srandom(unsigned seed)
-{
-	srand48((long int) seed);
-}
-
-getrusage(int who, struct rusage * ru)
-{
-	return (syscall(SYS_GETRUSAGE, who, ru));
 }

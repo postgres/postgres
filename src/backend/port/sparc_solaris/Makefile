@@ -4,7 +4,7 @@
 #    Makefile for port/sparc_solaris
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/sparc_solaris/Attic/Makefile,v 1.3 1996/11/10 00:38:38 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/sparc_solaris/Attic/Makefile,v 1.4 1997/12/19 02:46:16 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ INCLUDE_OPT = -I.. \
 
 CFLAGS+=$(INCLUDE_OPT)
 
-OBJS = port.o tas.o
+OBJS = tas.o
 
 all: SUBSYS.o
 

@@ -4,6 +4,11 @@
 #include "rusagestub.h"
 #include "port-protos.h"
 
+#ifdef 0 /* this is from univel port ... how does compiler define? */
+         /* same for i386_solaris port ... how does compiler define? */
+         /* same for sco port ... how does compiler define? */
+         /* same for sparc_solaris port ... how does compiler define? */
+         /* same for svr4 port ... how does compiler define? */
 int
 getrusage(int who, struct rusage * rusage)
 {
@@ -44,4 +49,11 @@ getrusage(int who, struct rusage * rusage)
 	rusage->ru_stime.tv_usec = TICK_TO_USEC(u, tick_rate);
 	return (0);
 }
+#endif
 
+#ifdef 0 /* this is for hpux port ... how does compiler define? */
+getrusage(int who, struct rusage * ru)
+{
+    return (syscall(SYS_GETRUSAGE, who, ru));
+}
+#endif
