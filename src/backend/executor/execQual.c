@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.4 1996/10/07 02:50:19 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.5 1996/10/07 19:53:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -231,8 +231,9 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
     attnum =  	variable->varattno;
 
     /* (See prolog for explanation of this Assert) */
-    Assert(attnum < 0 ||
-     	(tuple_type->attrs[attnum-1] != NULL &&
+    Assert(attnum <= 0 ||
+    	(attnum - 1 <= tuple_type->natts - 1 &&
+     	 tuple_type->attrs[attnum-1] != NULL &&
          variable->vartype == tuple_type->attrs[attnum-1]->atttypid))
     
       /*
