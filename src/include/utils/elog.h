@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.46 2003/07/04 02:51:34 tgl Exp $
+ * $Id: elog.h,v 1.47 2003/07/14 23:36:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,9 +35,7 @@
 #define WARNING		19			/* Warnings */
 #define ERROR		20			/* user error - abort transaction; return
 								 * to known state */
-#define ERROR		20			/* user error - abort transaction; return
-								 * to known state */
-/* Save ERROR value in PGERROR so it can bve restored when Win32 includes
+/* Save ERROR value in PGERROR so it can be restored when Win32 includes
  * modify it.  We have to use a constant rather than ERROR because macros
  * are expanded only when referenced outside macros.
  */
