@@ -88,7 +88,7 @@ To install Postgres95 on UNIX platforms:
    will go over some of the more commonly-changed options:
 
      - PORTNAME specifies the platform on which Postgres95 is being build
-       (linux is the default). You might need to change it to reflect
+       (BSD44_derived is the default). You might need to change it to reflect
        your platform. (sparc for SunOS 4.1.x, sparc_solaris for Solaris
        2.4, ultrix4 for Ultrix 4.4, and hpux for HP-UX 9.0)
 
