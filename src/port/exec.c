@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.16 2004/06/10 22:26:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.17 2004/07/26 01:48:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -279,6 +279,128 @@ find_my_exec(const char *argv0, char *retpath)
 #endif
 }
 
+/*
+ * The runtime librarys popen() on win32 does not work when being
+ * called from a service when running on windows <= 2000, because
+ * there is no stdin/stdout/stderr.
+ *
+ * Executing a command in a pipe and reading the first line from it
+ * is all we need.
+ */
+	
+static char *pipe_read_line(char *cmd, char *line, int maxsize)
+{
+#ifndef WIN32
+	FILE *pgver;
+
+	/* flush output buffers in case popen does not... */
+	fflush(stdout);
+	fflush(stderr);
+
+	if ((pgver = popen(cmd, "r")) == NULL)
+		return NULL;
+	
+	if (fgets(line, maxsize, pgver) == NULL)
+	{
+		perror("fgets failure");
+		return NULL;
+	}
+
+	if (pclose_check(pgver))
+		return NULL;
+	
+	return line;
+#else
+	/* Win32 */
+	SECURITY_ATTRIBUTES sattr;
+	HANDLE childstdoutrd, childstdoutwr, childstdoutrddup;
+	PROCESS_INFORMATION pi;
+	STARTUPINFO si;
+	char *retval = NULL;
+
+	sattr.nLength = sizeof(SECURITY_ATTRIBUTES);
+	sattr.bInheritHandle = TRUE;
+	sattr.lpSecurityDescriptor = NULL;
+
+	if (!CreatePipe(&childstdoutrd, &childstdoutwr, &sattr, 0))
+		return NULL;
+	
+	if (!DuplicateHandle(GetCurrentProcess(),
+						 childstdoutrd,
+						 GetCurrentProcess(),
+						 &childstdoutrddup,
+						 0,
+						 FALSE,
+						 DUPLICATE_SAME_ACCESS))
+	{
+		CloseHandle(childstdoutrd);
+		CloseHandle(childstdoutwr);
+		return NULL;
+	}
+
+	CloseHandle(childstdoutrd);
+	
+	ZeroMemory(&pi,sizeof(pi));
+	ZeroMemory(&si,sizeof(si));
+	si.cb = sizeof(si);
+	si.dwFlags = STARTF_USESTDHANDLES;
+	si.hStdError = childstdoutwr;
+	si.hStdOutput = childstdoutwr;
+	si.hStdInput = INVALID_HANDLE_VALUE;
+	
+	if (CreateProcess(NULL,
+					  cmd,
+					  NULL,
+					  NULL,
+					  TRUE,
+					  0,
+					  NULL,
+					  NULL,
+					  &si,
+					  &pi))
+	{
+		DWORD bytesread = 0;
+		/* Successfully started the process */
+
+		ZeroMemory(line,maxsize);
+		
+		/* Let's see if we can read */
+		if (WaitForSingleObject(childstdoutrddup, 10000) != WAIT_OBJECT_0) 
+		{
+			/* Got timeout */
+			CloseHandle(pi.hProcess);
+			CloseHandle(pi.hThread);
+			CloseHandle(childstdoutwr);
+			CloseHandle(childstdoutrddup);
+			return NULL;
+		}
+		
+		
+		/* We try just once */
+		if (ReadFile(childstdoutrddup, line, maxsize, &bytesread, NULL) &&
+			bytesread > 0)
+		{
+			/* So we read some data */
+			retval = line;
+
+			/* We emulate fgets() behaviour. So if there is no newline
+			 * at the end, we add one... */
+			if (line[strlen(line)-1] != '\n')
+				strcat(line,"\n");
+		}
+
+		CloseHandle(pi.hProcess);
+		CloseHandle(pi.hThread);
+	}
+	
+	CloseHandle(childstdoutwr);
+	CloseHandle(childstdoutrddup);
+
+	return retval;
+#endif
+}
+	
+
 
 /*
  * Find our binary directory, then make sure the "target" executable
@@ -290,14 +412,12 @@ find_other_exec(const char *argv0, const char *target,
 {
 	char		cmd[MAXPGPATH];
 	char		line[100];
-	FILE	   *pgver;
-
+	
 	if (find_my_exec(argv0, retpath) < 0)
 		return -1;
 
 	/* Trim off program name and keep just directory */	
 	*last_dir_separator(retpath) = '\0';
-
 	snprintf(retpath + strlen(retpath), MAXPGPATH - strlen(retpath),
 			 "/%s%s", target, EXE);
 
@@ -306,19 +426,9 @@ find_other_exec(const char *argv0, const char *target,
 	
 	snprintf(cmd, sizeof(cmd), "\"%s\" -V 2>%s", retpath, DEVNULL);
 
-	/* flush output buffers in case popen does not... */
-	fflush(stdout);
-	fflush(stderr);
-
-	if ((pgver = popen(cmd, "r")) == NULL)
+	if (!pipe_read_line(cmd, line, sizeof(line)))
 		return -1;
-
-	if (fgets(line, sizeof(line), pgver) == NULL)
-		perror("fgets failure");
-
-	if (pclose_check(pgver))
-		return -1;
-
+	
 	if (strcmp(line, versionstr) != 0)
 		return -2;
 
