@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.32 2001/05/27 09:59:30 petere Exp $
+ * $Id: acl.h,v 1.33 2001/06/05 19:34:56 tgl Exp $
  *
  * NOTES
  *	  For backward-compatibility purposes we have to allow there
@@ -164,7 +164,7 @@ typedef ArrayType IdList;
 #define ACLCHECK_NO_CLASS		  2
 #define ACLCHECK_NOT_OWNER		  3
 
-/* warning messages.  set these in aclchk.c. */
+/* error messages (index by ACL_CHECK_* result code).  set in aclchk.c. */
 extern char *aclcheck_error_strings[];
 
 /*
@@ -201,10 +201,12 @@ extern AclId get_grosysid(char *groname);
 extern char *get_groname(AclId grosysid);
 
 extern int32 pg_aclcheck(char *relname, Oid userid, AclMode mode);
-extern int32 pg_ownercheck(Oid userid, const char *value, int cacheid);
-extern int32 pg_func_ownercheck(Oid userid, char *funcname,
-				   int nargs, Oid *arglist);
-extern int32 pg_aggr_ownercheck(Oid userid, char *aggname,
-				   Oid basetypeID);
+
+extern bool pg_ownercheck(Oid userid, const char *name, int cacheid);
+extern bool pg_oper_ownercheck(Oid userid, Oid oprid);
+extern bool pg_func_ownercheck(Oid userid, char *funcname,
+							   int nargs, Oid *arglist);
+extern bool pg_aggr_ownercheck(Oid userid, char *aggname,
+							   Oid basetypeID);
 
 #endif	 /* ACL_H */

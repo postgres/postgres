@@ -7,7 +7,7 @@
  * Copyright (c) 1999, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.28 2001/05/27 09:59:29 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.29 2001/06/05 19:34:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -507,13 +507,9 @@ CommentType(char *type, char *comment)
 
 	/*** First, validate user ***/
 
-#ifndef NO_SECURITY
 	if (!pg_ownercheck(GetUserId(), type, TYPENAME))
-	{
 		elog(ERROR, "you are not permitted to comment on type '%s'",
 			 type);
-	}
-#endif
 
 	/*** Next, find the type's oid ***/
 
@@ -561,21 +557,15 @@ CommentAggregate(char *aggregate, List *arguments, char *comment)
 
 	/*** Next, validate the user's attempt to comment ***/
 
-#ifndef NO_SECURITY
 	if (!pg_aggr_ownercheck(GetUserId(), aggregate, baseoid))
 	{
 		if (aggtypename)
-		{
 			elog(ERROR, "you are not permitted to comment on aggregate '%s' %s '%s'",
 				 aggregate, "with type", aggtypename);
-		}
 		else
-		{
 			elog(ERROR, "you are not permitted to comment on aggregate '%s'",
 				 aggregate);
-		}
 	}
-#endif
 
 	/*** Now, attempt to find the actual tuple in pg_aggregate ***/
 
@@ -646,11 +636,9 @@ CommentProc(char *function, List *arguments, char *comment)
 
 	/*** Now, validate the user's ability to comment on this function ***/
 
-#ifndef NO_SECURITY
 	if (!pg_func_ownercheck(GetUserId(), function, argcount, argoids))
 		elog(ERROR, "you are not permitted to comment on function '%s'",
 			 function);
-#endif
 
 	/*** Now, find the corresponding oid for this procedure ***/
 
@@ -745,13 +733,9 @@ CommentOperator(char *opername, List *arguments, char *comment)
 
 	/*** Valid user's ability to comment on this operator ***/
 
-#ifndef NO_SECURITY
-	if (!pg_ownercheck(GetUserId(), (char *) ObjectIdGetDatum(oid), OPEROID))
-	{
+	if (!pg_oper_ownercheck(GetUserId(), oid))
 		elog(ERROR, "you are not permitted to comment on operator '%s'",
 			 opername);
-	}
-#endif
 
 	/*** Get the procedure associated with the operator ***/
 
@@ -792,13 +776,9 @@ CommentTrigger(char *trigger, char *relname, char *comment)
 
 	/*** First, validate the user's action ***/
 
-#ifndef NO_SECURITY
 	if (!pg_ownercheck(GetUserId(), relname, RELNAME))
-	{
 		elog(ERROR, "you are not permitted to comment on trigger '%s' %s '%s'",
 			 trigger, "defined for relation", relname);
-	}
-#endif
 
 	/*** Now, fetch the trigger oid from pg_trigger  ***/
 

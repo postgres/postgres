@@ -8,13 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.59 2001/05/27 09:59:30 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.60 2001/06/05 19:34:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <ctype.h>
-
 #include "postgres.h"
+
+#include <ctype.h>
 
 #include "access/heapam.h"
 #include "catalog/catalog.h"
@@ -392,7 +392,8 @@ acldefault(char *relname, AclId ownerid)
 
 
 /*
- * Add or replace an item in an ACL array.
+ * Add or replace an item in an ACL array.  The result is a modified copy;
+ * the input object is not changed.
  *
  * NB: caller is responsible for having detoasted the input ACL, if needed.
  */
@@ -402,8 +403,7 @@ aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg)
 	Acl		   *new_acl;
 	AclItem    *old_aip,
 			   *new_aip;
-	int			src,
-				dst,
+	int			dst,
 				num;
 
 	/* These checks for null input are probably dead code, but... */
@@ -431,14 +431,14 @@ aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg)
 
 	if (dst < num && aclitemeq(mod_aip, old_aip + dst))
 	{
-		/* modify in-place */
+		/* found a match, so modify existing item */
 		new_acl = makeacl(num);
 		new_aip = ACL_DAT(new_acl);
 		memcpy((char *) new_acl, (char *) old_acl, ACL_SIZE(old_acl));
-		src = dst;
 	}
 	else
 	{
+		/* need to insert a new item */
 		new_acl = makeacl(num + 1);
 		new_aip = ACL_DAT(new_acl);
 		if (dst == 0)
@@ -460,20 +460,21 @@ aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg)
 				   (char *) (old_aip + dst),
 				   (num - dst) * sizeof(AclItem));
 		}
+		/* initialize the new entry with no permissions */
 		new_aip[dst].ai_id = mod_aip->ai_id;
 		new_aip[dst].ai_idtype = mod_aip->ai_idtype;
+		new_aip[dst].ai_mode = 0;
 		num++;					/* set num to the size of new_acl */
-		src = 0;				/* if add or del, start from world entry */
 	}
 
 	/* apply the permissions mod */
 	switch (modechg)
 	{
 		case ACL_MODECHG_ADD:
-			new_aip[dst].ai_mode = old_aip[src].ai_mode | mod_aip->ai_mode;
+			new_aip[dst].ai_mode |= mod_aip->ai_mode;
 			break;
 		case ACL_MODECHG_DEL:
-			new_aip[dst].ai_mode = old_aip[src].ai_mode & ~mod_aip->ai_mode;
+			new_aip[dst].ai_mode &= ~mod_aip->ai_mode;
 			break;
 		case ACL_MODECHG_EQL:
 			new_aip[dst].ai_mode = mod_aip->ai_mode;
@@ -487,16 +488,10 @@ aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg)
 	 */
 	if (new_aip[dst].ai_mode == 0 && dst > 0)
 	{
-		int			i;
-
-		for (i = dst + 1; i < num; i++)
-		{
-			new_aip[i - 1].ai_id = new_aip[i].ai_id;
-			new_aip[i - 1].ai_idtype = new_aip[i].ai_idtype;
-			new_aip[i - 1].ai_mode = new_aip[i].ai_mode;
-		}
+		memmove((char *) (new_aip + dst),
+				(char *) (new_aip + dst + 1),
+				(num - dst - 1) * sizeof(AclItem));
 		ARR_DIMS(new_acl)[0] = num - 1;
-		/* Adjust also the array size because it is used for memcpy */
 		ARR_SIZE(new_acl) -= sizeof(AclItem);
 	}
 

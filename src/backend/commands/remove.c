@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.60 2001/03/22 03:59:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.61 2001/06/05 19:34:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,9 +81,7 @@ RemoveOperator(char *operatorName,		/* operator name */
 
 	if (HeapTupleIsValid(tup))
 	{
-		if (!pg_ownercheck(GetUserId(),
-						   (char *) ObjectIdGetDatum(tup->t_data->t_oid),
-						   OPEROID))
+		if (!pg_oper_ownercheck(GetUserId(), tup->t_data->t_oid))
 			elog(ERROR, "RemoveOperator: operator '%s': permission denied",
 				 operatorName);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.48 2001/05/27 09:59:28 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.49 2001/06/05 19:34:56 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -33,8 +33,7 @@
 #include "utils/acl.h"
 #include "utils/syscache.h"
 
-static int32 aclcheck(char *relname, Acl *acl, AclId id,
-		 AclIdType idtype, AclMode mode);
+static int32 aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode);
 
 /* warning messages, now more explicit. */
 /* MUST correspond to the order of the ACLCHK_* result codes in acl.h. */
@@ -192,6 +191,9 @@ get_groname(AclId grosysid)
 	return name;
 }
 
+/*
+ * Is user a member of group?
+ */
 static bool
 in_group(AclId uid, AclId gid)
 {
@@ -199,7 +201,7 @@ in_group(AclId uid, AclId gid)
 	HeapTuple	tuple;
 	Datum		att;
 	bool		isNull;
-	IdList	   *tmp;
+	IdList	   *glist;
 	AclId	   *aidp;
 	int			i,
 				num;
@@ -216,10 +218,10 @@ in_group(AclId uid, AclId gid)
 		if (!isNull)
 		{
 			/* be sure the IdList is not toasted */
-			tmp = DatumGetIdListP(att);
+			glist = DatumGetIdListP(att);
 			/* scan it */
-			num = IDLIST_NUM(tmp);
-			aidp = IDLIST_DAT(tmp);
+			num = IDLIST_NUM(glist);
+			aidp = IDLIST_DAT(glist);
 			for (i = 0; i < num; ++i)
 			{
 				if (aidp[i] == uid)
@@ -228,6 +230,9 @@ in_group(AclId uid, AclId gid)
 					break;
 				}
 			}
+			/* if IdList was toasted, free detoasted copy */
+			if ((Pointer) glist != DatumGetPointer(att))
+				pfree(glist);
 		}
 		ReleaseSysCache(tuple);
 	}
@@ -238,11 +243,15 @@ in_group(AclId uid, AclId gid)
 
 /*
  * aclcheck
- * Returns 1 if the 'id' of type 'idtype' has ACL entries in 'acl' to satisfy
- * any one of the requirements of 'mode'.  Returns 0 otherwise.
+ *
+ * Returns ACLCHECK_OK if the 'id' of type 'idtype' has ACL entries in 'acl'
+ * to satisfy any one of the requirements of 'mode'.  Returns an appropriate
+ * ACLCHECK_* error code otherwise.
+ *
+ * The ACL list is expected to be sorted in standard order.
  */
 static int32
-aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
+aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 {
 	AclItem    *aip,
 			   *aidat;
@@ -255,7 +264,7 @@ aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 	 */
 	if (!acl)
 	{
-		elog(DEBUG, "aclcheck: null ACL, returning 1");
+		elog(DEBUG, "aclcheck: null ACL, returning OK");
 		return ACLCHECK_OK;
 	}
 
@@ -270,15 +279,28 @@ aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 	 */
 	if (num < 1)
 	{
-		elog(DEBUG, "aclcheck: zero-length ACL, returning 1");
+		elog(DEBUG, "aclcheck: zero-length ACL, returning OK");
 		return ACLCHECK_OK;
 	}
-	Assert(aidat->ai_idtype == ACL_IDTYPE_WORLD);
+
+	/*
+	 * "World" rights are applicable regardless of the passed-in ID,
+	 * and since they're much the cheapest to check, check 'em first.
+	 */
+	if (aidat->ai_idtype != ACL_IDTYPE_WORLD)
+		elog(ERROR, "aclcheck: first entry in ACL is not 'world' entry");
+	if (aidat->ai_mode & mode)
+	{
+#ifdef ACLDEBUG
+		elog(DEBUG, "aclcheck: using world=%d", aidat->ai_mode);
+#endif
+		return ACLCHECK_OK;
+	}
 
 	switch (idtype)
 	{
 		case ACL_IDTYPE_UID:
-			/* Look for exact match to user */
+			/* See if permission is granted directly to user */
 			for (i = 1, aip = aidat + 1;		/* skip world entry */
 				 i < num && aip->ai_idtype == ACL_IDTYPE_UID;
 				 ++i, ++aip)
@@ -289,7 +311,8 @@ aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 					elog(DEBUG, "aclcheck: found user %u/%d",
 						 aip->ai_id, aip->ai_mode);
 #endif
-					return (aip->ai_mode & mode) ? ACLCHECK_OK : ACLCHECK_NO_PRIV;
+					if (aip->ai_mode & mode)
+						return ACLCHECK_OK;
 				}
 			}
 			/* See if he has the permission via any group */
@@ -309,15 +332,13 @@ aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 					}
 				}
 			}
-			/* Else, look to the world entry */
 			break;
 		case ACL_IDTYPE_GID:
 			/* Look for this group ID */
-			for (i = 1, aip = aidat + 1;		/* skip world entry and
-												 * UIDs */
+			for (i = 1, aip = aidat + 1;		/* skip world entry */
 				 i < num && aip->ai_idtype == ACL_IDTYPE_UID;
 				 ++i, ++aip)
-				;
+				/* skip UID entry */;
 			for (;
 				 i < num && aip->ai_idtype == ACL_IDTYPE_GID;
 				 ++i, ++aip)
@@ -328,10 +349,10 @@ aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 					elog(DEBUG, "aclcheck: found group %u/%d",
 						 aip->ai_id, aip->ai_mode);
 #endif
-					return (aip->ai_mode & mode) ? ACLCHECK_OK : ACLCHECK_NO_PRIV;
+					if (aip->ai_mode & mode)
+						return ACLCHECK_OK;
 				}
 			}
-			/* Else, look to the world entry */
 			break;
 		case ACL_IDTYPE_WORLD:
 			/* Only check the world entry */
@@ -341,12 +362,15 @@ aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 			break;
 	}
 
-#ifdef ACLDEBUG
-	elog(DEBUG, "aclcheck: using world=%d", aidat->ai_mode);
-#endif
-	return (aidat->ai_mode & mode) ? ACLCHECK_OK : ACLCHECK_NO_PRIV;
+	/* If get here, he doesn't have the privilege nohow */
+	return ACLCHECK_NO_PRIV;
 }
 
+/*
+ * Exported routine for checking a user's access privileges to a table
+ *
+ * Returns an ACLCHECK_* result code.
+ */
 int32
 pg_aclcheck(char *relname, Oid userid, AclMode mode)
 {
@@ -357,6 +381,9 @@ pg_aclcheck(char *relname, Oid userid, AclMode mode)
 	bool		isNull;
 	Acl		   *acl;
 
+	/*
+	 * Validate userid, find out if he is superuser
+	 */
 	tuple = SearchSysCache(SHADOWSYSID,
 						   ObjectIdGetDatum(userid),
 						   0, 0, 0);
@@ -371,13 +398,15 @@ pg_aclcheck(char *relname, Oid userid, AclMode mode)
 	 * pg_shadow.usecatupd is set.	(This is to let superusers protect
 	 * themselves from themselves.)
 	 */
-	if (((mode & ACL_UPDATE) || (mode & ACL_INSERT) || (mode & ACL_DELETE)) &&
+	if ((mode & (ACL_INSERT | ACL_UPDATE | ACL_DELETE)) &&
 		!allowSystemTableMods && IsSystemRelationName(relname) &&
 		strncmp(relname, "pg_temp.", strlen("pg_temp.")) != 0 &&
 		!((Form_pg_shadow) GETSTRUCT(tuple))->usecatupd)
 	{
+#ifdef ACLDEBUG
 		elog(DEBUG, "pg_aclcheck: catalog update to \"%s\": permission denied",
 			 relname);
+#endif
 		ReleaseSysCache(tuple);
 		return ACLCHECK_NO_PRIV;
 	}
@@ -416,25 +445,35 @@ pg_aclcheck(char *relname, Oid userid, AclMode mode)
 
 		ownerId = ((Form_pg_class) GETSTRUCT(tuple))->relowner;
 		acl = acldefault(relname, ownerId);
+		aclDatum = (Datum) 0;
 	}
 	else
 	{
-		/* get a detoasted copy of the rel's ACL */
-		acl = DatumGetAclPCopy(aclDatum);
+		/* detoast rel's ACL if necessary */
+		acl = DatumGetAclP(aclDatum);
 	}
 
-	result = aclcheck(relname, acl, userid, (AclIdType) ACL_IDTYPE_UID, mode);
+	result = aclcheck(acl, userid, (AclIdType) ACL_IDTYPE_UID, mode);
 
-	if (acl)
+	/* if we have a detoasted copy, free it */
+	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))
 		pfree(acl);
+
 	ReleaseSysCache(tuple);
 
 	return result;
 }
 
-int32
+/*
+ * Check ownership of an object identified by name (which will be looked
+ * up in the system cache identified by cacheid).
+ *
+ * Returns true if userid owns the item, or should be allowed to modify
+ * the item as if he owned it.
+ */
+bool
 pg_ownercheck(Oid userid,
-			  const char *value,
+			  const char *name,
 			  int cacheid)
 {
 	HeapTuple	tuple;
@@ -459,39 +498,27 @@ pg_ownercheck(Oid userid,
 			 usename);
 #endif
 		ReleaseSysCache(tuple);
-		return 1;
+		return true;
 	}
 
 	ReleaseSysCache(tuple);
 	/* caution: usename is inaccessible beyond this point... */
 
 	tuple = SearchSysCache(cacheid,
-						   PointerGetDatum(value),
+						   PointerGetDatum(name),
 						   0, 0, 0);
 	switch (cacheid)
 	{
-		case OPEROID:
-			if (!HeapTupleIsValid(tuple))
-				elog(ERROR, "pg_ownercheck: operator %ld not found",
-					 PointerGetDatum(value));
-			owner_id = ((Form_pg_operator) GETSTRUCT(tuple))->oprowner;
-			break;
-		case PROCNAME:
-			if (!HeapTupleIsValid(tuple))
-				elog(ERROR, "pg_ownercheck: function \"%s\" not found",
-					 value);
-			owner_id = ((Form_pg_proc) GETSTRUCT(tuple))->proowner;
-			break;
 		case RELNAME:
 			if (!HeapTupleIsValid(tuple))
 				elog(ERROR, "pg_ownercheck: class \"%s\" not found",
-					 value);
+					 name);
 			owner_id = ((Form_pg_class) GETSTRUCT(tuple))->relowner;
 			break;
 		case TYPENAME:
 			if (!HeapTupleIsValid(tuple))
 				elog(ERROR, "pg_ownercheck: type \"%s\" not found",
-					 value);
+					 name);
 			owner_id = ((Form_pg_type) GETSTRUCT(tuple))->typowner;
 			break;
 		default:
@@ -505,7 +532,58 @@ pg_ownercheck(Oid userid,
 	return userid == owner_id;
 }
 
-int32
+/*
+ * Ownership check for an operator (specified by OID).
+ */
+bool
+pg_oper_ownercheck(Oid userid, Oid oprid)
+{
+	HeapTuple	tuple;
+	AclId		owner_id;
+	char	   *usename;
+
+	tuple = SearchSysCache(SHADOWSYSID,
+						   ObjectIdGetDatum(userid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "pg_oper_ownercheck: invalid user id %u",
+			 (unsigned) userid);
+	usename = NameStr(((Form_pg_shadow) GETSTRUCT(tuple))->usename);
+
+	/*
+	 * Superusers bypass all permission-checking.
+	 */
+	if (((Form_pg_shadow) GETSTRUCT(tuple))->usesuper)
+	{
+#ifdef ACLDEBUG
+		elog(DEBUG, "pg_ownercheck: user \"%s\" is superuser",
+			 usename);
+#endif
+		ReleaseSysCache(tuple);
+		return true;
+	}
+
+	ReleaseSysCache(tuple);
+	/* caution: usename is inaccessible beyond this point... */
+
+	tuple = SearchSysCache(OPEROID,
+						   ObjectIdGetDatum(oprid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "pg_ownercheck: operator %u not found",
+			 oprid);
+
+	owner_id = ((Form_pg_operator) GETSTRUCT(tuple))->oprowner;
+
+	ReleaseSysCache(tuple);
+
+	return userid == owner_id;
+}
+
+/*
+ * Ownership check for a function (specified by name and argument types).
+ */
+bool
 pg_func_ownercheck(Oid userid,
 				   char *funcname,
 				   int nargs,
@@ -533,7 +611,7 @@ pg_func_ownercheck(Oid userid,
 			 usename);
 #endif
 		ReleaseSysCache(tuple);
-		return 1;
+		return true;
 	}
 
 	ReleaseSysCache(tuple);
@@ -554,7 +632,11 @@ pg_func_ownercheck(Oid userid,
 	return userid == owner_id;
 }
 
-int32
+/*
+ * Ownership check for an aggregate function (specified by name and
+ * argument type).
+ */
+bool
 pg_aggr_ownercheck(Oid userid,
 				   char *aggname,
 				   Oid basetypeID)
@@ -581,7 +663,7 @@ pg_aggr_ownercheck(Oid userid,
 			 usename);
 #endif
 		ReleaseSysCache(tuple);
-		return 1;
+		return true;
 	}
 
 	ReleaseSysCache(tuple);
