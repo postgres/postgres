@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.251 2002/04/21 05:21:17 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.252 2002/04/24 02:38:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4368,6 +4368,20 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 				objoid = tblinfo[i].viewoid;
 				appendPQExpBuffer(delq, "DROP VIEW %s;\n", fmtId(tblinfo[i].relname, force_quotes));
 				appendPQExpBuffer(q, "CREATE VIEW %s as %s\n", fmtId(tblinfo[i].relname, force_quotes), tblinfo[i].viewdef);
+
+				/*
+				 * Views can have default values -- however, they must be
+				 * specified in an ALTER TABLE command after the view has
+				 * been created, not in the view definition itself.
+				 */
+				for (j = 0; j < tblinfo[i].numatts; j++)
+				{
+					if (tblinfo[i].adef_expr[j] != NULL && tblinfo[i].inhAttrDef[j] == 0)
+						appendPQExpBuffer(q, "ALTER TABLE %s ALTER COLUMN %s SET DEFAULT %s;\n",
+										  tblinfo[i].relname, tblinfo[i].attnames[j],
+										  tblinfo[i].adef_expr[j]);
+				}
+
 				commentDeps = malloc(sizeof(char *) * 2);
 				(*commentDeps)[0] = strdup(objoid);
 				(*commentDeps)[1] = NULL;		/* end of list */

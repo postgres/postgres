@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.7 2002/04/22 21:56:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.8 2002/04/24 02:38:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -620,8 +620,14 @@ AlterTableAlterColumnDefault(Oid myrelid,
 
 	rel = heap_open(myrelid, AccessExclusiveLock);
 
-	if (rel->rd_rel->relkind != RELKIND_RELATION)
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
+	/*
+	 * We allow defaults on views so that INSERT into a view can have
+	 * default-ish behavior.  This works because the rewriter substitutes
+	 * default values into INSERTs before it expands rules.
+	 */
+	if (rel->rd_rel->relkind != RELKIND_RELATION &&
+		rel->rd_rel->relkind != RELKIND_VIEW)
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table or view",
 			 RelationGetRelationName(rel));
 
 	if (!allowSystemTableMods
