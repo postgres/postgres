@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.108 2001/08/21 16:36:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.109 2001/09/21 04:06:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1827,7 +1827,16 @@ make_result(List *tlist,
 #ifdef NOT_USED
 	tlist = generate_fjoin(tlist);
 #endif
-	copy_plan_costsize(plan, subplan);
+	if (subplan)
+		copy_plan_costsize(plan, subplan);
+	else
+	{
+		plan->startup_cost = 0;
+		plan->total_cost = cpu_tuple_cost;
+		plan->plan_rows = 1;	/* wrong if we have a set-valued function? */
+		plan->plan_width = 0;	/* XXX try to be smarter? */
+	}
+
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NIL;
