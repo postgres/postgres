@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.60 2001/12/03 14:49:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.61 2002/03/04 02:41:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -909,7 +909,7 @@ Pg_execute(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 
 		sprintf(oid_buf, "%u", PQoidValue(result));
 		if (Tcl_SetVar(interp, oid_varname, oid_buf,
-					   TCL_LEAVE_ERR_MSG) != TCL_OK)
+					   TCL_LEAVE_ERR_MSG) == NULL)
 		{
 			PQclear(result);
 			return TCL_ERROR;
