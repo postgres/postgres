@@ -1,10 +1,10 @@
 # ru.po
 # POSTGRES Translated Messages into the Russian Language (KOI8-R)
 #
-# $Header: /cvsroot/pgsql/src/backend/po/Attic/ru.po,v 1.21 2004/08/14 19:16:07 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/po/Attic/ru.po,v 1.22 2004/08/24 21:45:40 petere Exp $
 #
 # ChangeLog:
-#   - March 27 - August 14, 2004: Updates for 7.4/8.0 branches; <mokhov@cs.concordia.ca>
+#   - March 27 - August 21, 2004: Updates for 7.4.x/8.0 branches; <mokhov@cs.concordia.ca>
 #   - July - August 23, 2003: Updates for 7.4.x; <mokhov@cs.concordia.ca>
 #   - January 2, 2003: Fuzzy fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - October 12, 2002: Post-7.3 beta 2, Fuzzy fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
@@ -15,8 +15,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4.x\n"
-"POT-Creation-Date: 2004-08-13 19:12-0300\n"
-"PO-Revision-Date: 2004-08-14 13:28-0500\n"
+"POT-Creation-Date: 2004-08-18 01:09-0300\n"
+"PO-Revision-Date: 2004-08-21 16:45-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -1127,7 +1127,7 @@ msgstr "тип колонки \"%s\" -- \"unknown\""
 
 #: catalog/heap.c:430
 msgid "Proceeding with relation creation anyway."
-msgstr ""
+msgstr "Продолжаем с созданием отношения в любом случае."
 
 #: catalog/heap.c:437
 #, c-format
@@ -1176,25 +1176,25 @@ msgstr ""
 
 #: catalog/heap.c:1754
 msgid "cannot use column references in default expression"
-msgstr ""
+msgstr "нельзя использовать ссылки на колонки в выражении по умолчанию"
 
 #: catalog/heap.c:1762
 msgid "default expression must not return a set"
-msgstr ""
+msgstr "выражение по умолчанию не может возвращать множество"
 
 #: catalog/heap.c:1770
 msgid "cannot use subquery in default expression"
-msgstr ""
+msgstr "нельзя использовать подзапрос в выражении по умолчанию"
 
 #: catalog/heap.c:1774
 msgid "cannot use aggregate function in default expression"
-msgstr ""
+msgstr "нельзя использовать агрегатную функцию  в выражении по умолчанию"
 
 #: catalog/heap.c:1792
 #: rewrite/rewriteHandler.c:558
 #, c-format
 msgid "column \"%s\" is of type %s but default expression is of type %s"
-msgstr ""
+msgstr "колонка \"%s\" имеет тип %s но тип выражения по умолчанию %s"
 
 #: catalog/heap.c:1797
 #: parser/analyze.c:2790
@@ -1311,7 +1311,7 @@ msgstr "\"%s\" не является верным именем оператора"
 
 #: catalog/pg_operator.c:412
 msgid "at least one of leftarg or rightarg must be specified"
-msgstr ""
+msgstr "либо аргумент слева либо справа должен быть указан как минимум"
 
 #: catalog/pg_operator.c:420
 msgid "only binary operators can have commutators"
@@ -1353,7 +1353,7 @@ msgstr ""
 #: catalog/pg_proc.c:172
 #, c-format
 msgid "\"%s\" is already an attribute of type %s"
-msgstr ""
+msgstr "\"%s\" уже является атрибутом типа %s"
 
 #: catalog/pg_proc.c:224
 #, c-format
@@ -1388,43 +1388,43 @@ msgstr "функция \"%s\" не является агрегатом"
 #: catalog/pg_proc.c:518
 #, c-format
 msgid "return type mismatch in function declared to return %s"
-msgstr ""
+msgstr "несовпадение типа возврата в функции задекларированой как возвращающей %s"
 
 #: catalog/pg_proc.c:373
 #: catalog/pg_proc.c:404
 msgid "Function's final statement must be a SELECT."
-msgstr ""
+msgstr "Последней командой функции должен быть SELECT."
 
 #: catalog/pg_proc.c:394
 msgid "Function's final statement must not be a SELECT."
-msgstr ""
+msgstr "Последней командой функции должен быть не SELECT."
 
 #: catalog/pg_proc.c:428
 msgid "Final SELECT must return exactly one column."
-msgstr ""
+msgstr "Последний SELECT должен возвращать только одну колонку."
 
 #: catalog/pg_proc.c:436
 #, c-format
 msgid "Actual return type is %s."
-msgstr ""
+msgstr "На самом деле тип возврата: %s."
 
 #: catalog/pg_proc.c:488
 msgid "Final SELECT returns too many columns."
-msgstr ""
+msgstr "Последний SELECT возвращает слишком много колонок."
 
 #: catalog/pg_proc.c:500
 #, c-format
 msgid "Final SELECT returns %s instead of %s at column %d."
-msgstr ""
+msgstr "Последний SELECT возвращает %s вместо %s для колонки %d."
 
 #: catalog/pg_proc.c:520
 msgid "Final SELECT returns too few columns."
-msgstr ""
+msgstr "Последний SELECT возвращает слишком мало колонок."
 
 #: catalog/pg_proc.c:545
 #, c-format
 msgid "return type %s is not supported for SQL functions"
-msgstr ""
+msgstr "тип возврата %s не поддерживается для SQL-функций"
 
 #: catalog/pg_proc.c:587
 #, c-format
@@ -1511,7 +1511,7 @@ msgstr "функция %s уже существует в схеме \"%s\""
 #: commands/analyze.c:200
 #, c-format
 msgid "skipping \"%s\" --- only table or database owner can analyze it"
-msgstr ""
+msgstr "пропускается \"%s\" --- только владелец таблицы или базы может анализировать этот объект"
 
 #: commands/analyze.c:215
 #, c-format
@@ -1642,7 +1642,7 @@ msgstr ""
 
 #: commands/comment.c:449
 msgid "database comments may only be applied to the current database"
-msgstr ""
+msgstr "комментарии базы могут применяться только к текущей базе данных"
 
 #: commands/comment.c:481
 #: commands/schemacmds.c:172
@@ -1661,7 +1661,7 @@ msgstr "имеется больше одного правила с именем \"%s\""
 
 #: commands/comment.c:573
 msgid "Specify a relation name as well as a rule name."
-msgstr ""
+msgstr "Укажите имя отношения и также имя правила."
 
 #: commands/comment.c:815
 #: commands/trigger.c:484
@@ -1809,11 +1809,11 @@ msgstr "не получилось инициализировать  директорию баз данных; также не удалось 
 
 #: commands/dbcommands.c:483
 msgid "cannot drop the currently open database"
-msgstr ""
+msgstr "нельзя удалить открытую в данный момент базу"
 
 #: commands/dbcommands.c:516
 msgid "cannot drop a template database"
-msgstr ""
+msgstr "нельзя удалить базу-шаблон"
 
 #: commands/dbcommands.c:527
 #: commands/dbcommands.c:643
@@ -2151,7 +2151,7 @@ msgstr ""
 
 #: commands/functioncmds.c:448
 msgid "You need to use \"createlang\" to load the language into the database."
-msgstr ""
+msgstr "Вам нужно использовать \"createlang\" для загрузки языка в базу."
 
 #: commands/functioncmds.c:567
 #: commands/functioncmds.c:673
@@ -2161,7 +2161,7 @@ msgstr "функция \"%s\" является агрегатом"
 
 #: commands/functioncmds.c:569
 msgid "Use DROP AGGREGATE to drop aggregate functions."
-msgstr ""
+msgstr "Используйте DROP AGGREGATE для удаления агрегатных функций."
 
 #: commands/functioncmds.c:576
 #, c-format
@@ -2170,7 +2170,7 @@ msgstr "удаление встроенной функции \"%s\""
 
 #: commands/functioncmds.c:675
 msgid "Use ALTER AGGREGATE to rename aggregate functions."
-msgstr ""
+msgstr "Используйте ALTER AGGREGATE для переименования агрегатных функций."
 
 #: commands/functioncmds.c:813
 #: commands/functioncmds.c:1047
@@ -2186,7 +2186,7 @@ msgstr "тип данных назначения %s не существует"
 
 #: commands/functioncmds.c:826
 msgid "source data type and target data type are the same"
-msgstr ""
+msgstr "исходные тип данных и тип назначения одинаковы"
 
 #: commands/functioncmds.c:832
 #, c-format
@@ -2212,19 +2212,19 @@ msgstr ""
 #: commands/functioncmds.c:1073
 #, c-format
 msgid "must be owner of type %s or type %s"
-msgstr ""
+msgstr "нужно быть владельцем типа %s или типа %s"
 
 #: commands/functioncmds.c:880
 msgid "cast function must take one argument"
-msgstr ""
+msgstr "функция преобразованиятипов должна принимать один аргумент"
 
 #: commands/functioncmds.c:884
 msgid "argument of cast function must match source data type"
-msgstr ""
+msgstr "аргумент функции преобразования должен совпадать с исходным типом данных"
 
 #: commands/functioncmds.c:888
 msgid "return data type of cast function must match target data type"
-msgstr ""
+msgstr "тип данных возврата функции преобразования должен совпадать с типом назначения"
 
 #: commands/functioncmds.c:899
 msgid "cast function must not be volatile"
@@ -2298,7 +2298,7 @@ msgstr "неверный аргумент для %s: \"%s\""
 #: commands/opclasscmds.c:647
 #, c-format
 msgid "access method \"%s\" does not exist"
-msgstr ""
+msgstr "метод доступа \"%s\" не существует"
 
 #: commands/opclasscmds.c:112
 msgid "must be superuser to create an operator class"
@@ -2336,7 +2336,7 @@ msgstr ""
 #: commands/opclasscmds.c:259
 #, c-format
 msgid "operator class \"%s\" for access method \"%s\" already exists"
-msgstr ""
+msgstr "класс операторов \"%s\" для метода доступа \"%s\" уже существует"
 
 #: commands/opclasscmds.c:287
 #, c-format
@@ -2356,12 +2356,12 @@ msgstr "Класс операторов \"%s\" уже существует является классом по умолчанию."
 #: commands/opclasscmds.c:680
 #, c-format
 msgid "operator class \"%s\" does not exist for access method \"%s\""
-msgstr ""
+msgstr "класс операторов \"%s\" для медота доступа \"%s\" не существует"
 
 #: commands/opclasscmds.c:701
 #, c-format
 msgid "operator class \"%s\" for access method \"%s\" already exists in schema \"%s\""
-msgstr ""
+msgstr "класс операторов \"%s\" для метода доступа \"%s\" уже существует в схеме \"%s\""
 
 #: commands/indexcmds.c:92
 msgid "must specify at least one column"
@@ -2388,7 +2388,7 @@ msgstr ""
 
 #: commands/indexcmds.c:202
 msgid "primary keys cannot be expressions"
-msgstr ""
+msgstr "первичные ключи не могут быть выражениями"
 
 #: commands/indexcmds.c:232
 #: parser/analyze.c:1442
@@ -2398,15 +2398,15 @@ msgstr "колонка \"%s\" указанная в ключе не существует"
 
 #: commands/indexcmds.c:291
 msgid "cannot use subquery in index predicate"
-msgstr ""
+msgstr "нельзя использовать подзапрос в предикате индекса"
 
 #: commands/indexcmds.c:295
 msgid "cannot use aggregate in index predicate"
-msgstr ""
+msgstr "нельзя использовать агрегат в предикате индекса"
 
 #: commands/indexcmds.c:304
 msgid "functions in index predicate must be marked IMMUTABLE"
-msgstr ""
+msgstr "фунции в идексном предикате должны быть помечены как IMMUTABLE"
 
 #: commands/indexcmds.c:337
 #: commands/tablecmds.c:1119
@@ -2417,20 +2417,20 @@ msgstr "колонка \"%s\" не существует"
 
 #: commands/indexcmds.c:369
 msgid "cannot use subquery in index expression"
-msgstr ""
+msgstr "нельзя использовать подзапрос в индексном выражении"
 
 #: commands/indexcmds.c:373
 msgid "cannot use aggregate function in index expression"
-msgstr ""
+msgstr "нельзя использовать агрегатную функцию в индексном выражении"
 
 #: commands/indexcmds.c:384
 msgid "functions in index expression must be marked IMMUTABLE"
-msgstr ""
+msgstr "фунции в идексном выражении должны быть помечены как IMMUTABLE"
 
 #: commands/indexcmds.c:439
 #, c-format
 msgid "data type %s has no default operator class for access method \"%s\""
-msgstr ""
+msgstr "тип данных %s не имеет класса операторов по умолчанию для метода доступа \"%s\""
 
 #: commands/indexcmds.c:441
 msgid "You must specify an operator class for the index or define a default operator class for the data type."
@@ -2439,7 +2439,7 @@ msgstr ""
 #: commands/indexcmds.c:494
 #, c-format
 msgid "operator class \"%s\" does not accept data type %s"
-msgstr ""
+msgstr "класс операторов \"%s\" не принимает тип данных %s"
 
 #: commands/indexcmds.c:551
 #: utils/cache/typcache.c:286
@@ -2484,7 +2484,7 @@ msgstr ""
 #: commands/portalcmds.c:164
 #: commands/portalcmds.c:209
 msgid "invalid cursor name: must not be empty"
-msgstr ""
+msgstr "неверное имя курсора: имя не должно быть пустым"
 
 #: commands/portalcmds.c:80
 msgid "DECLARE CURSOR may not specify INTO"
@@ -2496,7 +2496,7 @@ msgstr "DECLARE CURSOR ... FOR UPDATE не поддерживается"
 
 #: commands/portalcmds.c:85
 msgid "Cursors must be READ ONLY."
-msgstr ""
+msgstr "Курсоры должны быть READ ONLY."
 
 #: commands/portalcmds.c:172
 #: commands/portalcmds.c:219
@@ -2517,7 +2517,7 @@ msgstr ""
 
 #: commands/prepare.c:61
 msgid "invalid statement name: must not be empty"
-msgstr ""
+msgstr "неверное имя команды: имя не должно быть пустым"
 
 #: commands/prepare.c:80
 msgid "utility statements cannot be prepared"
@@ -2560,7 +2560,7 @@ msgstr ""
 #: commands/proclang.c:104
 #, c-format
 msgid "function %s must return type \"language_handler\""
-msgstr ""
+msgstr "функция %s должна возвращать тип \"language_handler\""
 
 #: commands/proclang.c:188
 msgid "must be superuser to drop procedural language"
@@ -2585,12 +2585,12 @@ msgstr ""
 #: commands/schemacmds.c:272
 #, c-format
 msgid "unacceptable schema name \"%s\""
-msgstr ""
+msgstr "неприемлемое имя схемы: \"%s\""
 
 #: commands/schemacmds.c:101
 #: commands/schemacmds.c:273
 msgid "The prefix \"pg_\" is reserved for system schemas."
-msgstr ""
+msgstr "Префикс \"pg_\" зарезервирован для системных схем."
 
 #: commands/sequence.c:400
 #: commands/sequence.c:592
@@ -2955,7 +2955,7 @@ msgstr ""
 #: commands/trigger.c:2306
 #, c-format
 msgid "constraint \"%s\" does not exist"
-msgstr ""
+msgstr "констрейнт \"%s\" не существует"
 
 #: commands/tablecmds.c:3821
 #, c-format
