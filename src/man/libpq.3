@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/libpq.3,v 1.17 1998/06/24 13:21:27 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/libpq.3,v 1.18 1998/07/04 17:50:04 momjian Exp $
 .TH LIBPQ INTRO 03/12/94 PostgreSQL PostgreSQL
 .SH DESCRIPTION
 Libpq is the programmer's interface to Postgres.  Libpq is a set of
@@ -109,8 +109,14 @@ The following routines deal with making a connection to a backend
 from a C program.
 .PP
 .B PQsetdb
+.br
+.B PQsetdbLogin
 .IP
 Makes a new connection to a backend.
+.B PQsetdb
+is the method usually used to
+connect to the database when username/password authentication is not
+needed.
 .nf
 PGconn *PQsetdb(char *pghost,
                 char *pgport,
@@ -118,12 +124,30 @@ PGconn *PQsetdb(char *pghost,
                 char *pgtty,
                 char *dbName); 
 .fi
+
+.IP
+.B PQsetdbLogin
+is the method used to
+connect to the database when username/password authentication is
+needed.
+.nf
+PGconn *PQsetdbLogin(char *pghost,
+                     char *pgport,
+                     char *pgoptions,
+                     char *pgtty,
+                     char *dbName,
+                     char *login,
+                     char *pwd);
+.fi
+
 If any argument is NULL, then the corresponding environment variable
 is checked.  If the environment variable is also not set, then hardwired
 defaults are used. 
 .IP
 .I PQsetdb
-always returns a valid PGconn pointer.  The 
+and
+.I PQsetdbLogin
+always return a valid PGconn pointer.  The 
 .I PQstatus
 (see below) command should be called to ensure that a connection was
 properly made before queries are sent via the connection.  Libpq
@@ -132,37 +156,44 @@ the accessor functions below to get at the contents of PGconn.  Avoid
 directly referencing the fields of the PGconn structure as they are
 subject to change in the future.
 .IP
+
 .B PQdb
 returns the database name of the connection.
 .nf
 char *PQdb(PGconn *conn)
 .fi
+
 .B PQhost
 returns the host name of the connection.
 .nf
 char *PQhost(PGconn *conn)
 .fi
+
 .B PQoptions
 returns the pgoptions used in the connection.
 .nf
 char *PQoptions(PGconn *conn)
 .fi
+
 .B PQport
 returns the pgport of the connection.
 .nf
 char *PQport(PGconn *conn)
 .fi
+
 .B PQtty
 returns the pgtty of the connection.
 .nf
 char *PQtty(PGconn *conn)
 .fi
+
 .B PQstatus
 Returns the status of the connection. The status can be CONNECTION_OK or
 CONNECTION_BAD.  
 .nf
 ConnStatusType *PQstatus(PGconn *conn)
 .fi
+
 .B PQerrorMessage
 returns the error message associated with the connection
 .nf
@@ -638,112 +669,129 @@ be silently truncated.
 .nf M
 /*
  * testlibpq.c
- * 	Test the C version of Libpq, the Postgres frontend library.
+ *  Test the C version of Libpq, the Postgres frontend library.
  *
  *
  */
 #include <stdio.h>
 #include "libpq-fe.h"
 
-void 
-exit_nicely(PGconn* conn)
+void
+exit_nicely(PGconn *conn)
 {
-  PQfinish(conn);
-  exit(1);
+    PQfinish(conn);
+    exit(1);
 }
 
 main()
 {
-  char *pghost, *pgport, *pgoptions, *pgtty;
-  char* dbName;
-  int nFields;
-  int i,j;
+    char       *pghost,
+               *pgport,
+               *pgoptions,
+               *pgtty;
+    char       *dbName;
+    int         nFields;
+    int         i,
+                j;
 
 /*  FILE *debug; */
 
-  PGconn* conn;
-  PGresult* res;
+    PGconn     *conn;
+    PGresult   *res;
 
-  /* begin, by setting the parameters for a backend connection
-     if the parameters are null, then the system will try to use
-     reasonable defaults by looking up environment variables 
-     or, failing that, using hardwired constants */
-  pghost = NULL;  /* host name of the backend server */
-  pgport = NULL;  /* port of the backend server */
-  pgoptions = NULL; /* special options to start up the backend server */
-  pgtty = NULL;     /* debugging tty for the backend server */
-  dbName = "template1";
+    /*
+     * begin, by setting the parameters for a backend connection if the
+     * parameters are null, then the system will try to use reasonable
+     * defaults by looking up environment variables or, failing that,
+     * using hardwired constants
+     */
+    pghost = NULL;              /* host name of the backend server */
+    pgport = NULL;              /* port of the backend server */
+    pgoptions = NULL;           /* special options to start up the backend
+                                 * server */
+    pgtty = NULL;               /* debugging tty for the backend server */
+    dbName = "template1";
 
-  /* make a connection to the database */
-  conn = PQsetdb(pghost, pgport, pgoptions, pgtty, dbName);
+    /* make a connection to the database */
+    conn = PQsetdb(pghost, pgport, pgoptions, pgtty, dbName);
 
-  /* check to see that the backend connection was successfully made */
-  if (PQstatus(conn) == CONNECTION_BAD) {
-    fprintf(stderr,"Connection to database '%s' failed.\\n", dbName);
-    fprintf(stderr,"%s",PQerrorMessage(conn));
-    exit_nicely(conn);
-  }
+    /* check to see that the backend connection was successfully made */
+    if (PQstatus(conn) == CONNECTION_BAD)
+    {
+        fprintf(stderr, "Connection to database '%s' failed.\\n", dbName);
+        fprintf(stderr, "%s", PQerrorMessage(conn));
+        exit_nicely(conn);
+    }
 
 /*  debug = fopen("/tmp/trace.out","w");  */
 /*   PQtrace(conn, debug);  */
 
-  /* start a transaction block */
-  res = PQexec(conn,"BEGIN"); 
-  if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-    fprintf(stderr,"BEGIN command failed\\n");
-    PQclear(res);
-    exit_nicely(conn);
-  }
-  /* should PQclear PGresult whenever it is no longer needed to avoid
-     memory leaks */
-  PQclear(res); 
-
-  /* fetch instances from the pg_database, the system catalog of databases*/
-  res = PQexec(conn,"DECLARE mycursor CURSOR FOR select * from pg_database");
-  if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-    fprintf(stderr,"DECLARE CURSOR command failed\\n");
-    PQclear(res);
-    exit_nicely(conn);
-  }
-  PQclear(res);
-
-  res = PQexec(conn,"FETCH ALL in mycursor");
-  if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-    fprintf(stderr,"FETCH ALL command didn't return tuples properly\\n");
-    PQclear(res);
-    exit_nicely(conn);
-  }
- 
-  /* first, print out the attribute names */
-  nFields = PQnfields(res);
-  for (i=0; i < nFields; i++) {
-    printf("%-15s",PQfname(res,i));
-  }
-  printf("\\n\\n");
-
-  /* next, print out the instances */
-  for (i=0; i < PQntuples(res); i++) {
-    for (j=0  ; j < nFields; j++) {
-      printf("%-15s", PQgetvalue(res,i,j));
+    /* start a transaction block */
+    res = PQexec(conn, "BEGIN");
+    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+    {
+        fprintf(stderr, "BEGIN command failed\\n");
+        PQclear(res);
+        exit_nicely(conn);
     }
-    printf("\\n");
-  }
 
-  PQclear(res);
-  
-  /* close the cursor */
-  res = PQexec(conn, "CLOSE mycursor");
-  PQclear(res);
+    /*
+     * should PQclear PGresult whenever it is no longer needed to avoid
+     * memory leaks
+     */
+    PQclear(res);
 
-  /* commit the transaction */
-  res = PQexec(conn, "COMMIT");
-  PQclear(res);
+    /*
+     * fetch instances from the pg_database, the system catalog of
+     * databases
+     */
+    res = PQexec(conn, "DECLARE mycursor CURSOR FOR select * from pg_database");
+    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+    {
+        fprintf(stderr, "DECLARE CURSOR command failed\\n");
+        PQclear(res);
+        exit_nicely(conn);
+    }
+    PQclear(res);
 
-  /* close the connection to the database and cleanup */
-  PQfinish(conn);
+    res = PQexec(conn, "FETCH ALL in mycursor");
+    if (PQresultStatus(res) != PGRES_TUPLES_OK)
+    {
+        fprintf(stderr, "FETCH ALL command didn't return tuples properly\\n");
+        PQclear(res);
+        exit_nicely(conn);
+    }
+
+    /* first, print out the attribute names */
+    nFields = PQnfields(res);
+    for (i = 0; i < nFields; i++)
+        printf("%-15s", PQfname(res, i));
+    printf("\\n\\n");
+
+    /* next, print out the instances */
+    for (i = 0; i < PQntuples(res); i++)
+    {
+        for (j = 0; j < nFields; j++)
+            printf("%-15s", PQgetvalue(res, i, j));
+        printf("\\n");
+    }
+
+    PQclear(res);
+
+    /* close the cursor */
+    res = PQexec(conn, "CLOSE mycursor");
+    PQclear(res);
+
+    /* commit the transaction */
+    res = PQexec(conn, "COMMIT");
+    PQclear(res);
+
+    /* close the connection to the database and cleanup */
+    PQfinish(conn);
 
 /*   fclose(debug); */
 }
+
 .fi
 .bp
 .SH "Sample Program 2"
@@ -751,7 +799,7 @@ main()
 .nf M
 /*
  * testlibpq2.c
- * 	Test of the asynchronous notification interface
+ *  Test of the asynchronous notification interface
  *
    populate a database with the following:
 
@@ -772,74 +820,91 @@ INSERT INTO TBL1 values (10);
 #include <stdio.h>
 #include "libpq-fe.h"
 
-void exit_nicely(PGconn* conn)
+void
+exit_nicely(PGconn *conn)
 {
-  PQfinish(conn);
-  exit(1);
+    PQfinish(conn);
+    exit(1);
 }
 
 main()
 {
-  char *pghost, *pgport, *pgoptions, *pgtty;
-  char* dbName;
-  int nFields;
-  int i,j;
+    char       *pghost,
+               *pgport,
+               *pgoptions,
+               *pgtty;
+    char       *dbName;
+    int         nFields;
+    int         i,
+                j;
 
-  PGconn* conn;
-  PGresult* res;
-  PGnotify* notify;
+    PGconn     *conn;
+    PGresult   *res;
+    PGnotify   *notify;
 
-  /* begin, by setting the parameters for a backend connection
-     if the parameters are null, then the system will try to use
-     reasonable defaults by looking up environment variables 
-     or, failing that, using hardwired constants */
-  pghost = NULL;  /* host name of the backend server */
-  pgport = NULL;  /* port of the backend server */
-  pgoptions = NULL; /* special options to start up the backend server */
-  pgtty = NULL;     /* debugging tty for the backend server */
-  dbName = getenv("USER"); /* change this to the name of your test database*/
+    /*
+     * begin, by setting the parameters for a backend connection if the
+     * parameters are null, then the system will try to use reasonable
+     * defaults by looking up environment variables or, failing that,
+     * using hardwired constants
+     */
+    pghost = NULL;              /* host name of the backend server */
+    pgport = NULL;              /* port of the backend server */
+    pgoptions = NULL;           /* special options to start up the backend
+                                 * server */
+    pgtty = NULL;               /* debugging tty for the backend server */
+    dbName = getenv("USER");    /* change this to the name of your test
+                                 * database */
 
-  /* make a connection to the database */
-  conn = PQsetdb(pghost, pgport, pgoptions, pgtty, dbName);
+    /* make a connection to the database */
+    conn = PQsetdb(pghost, pgport, pgoptions, pgtty, dbName);
 
-  /* check to see that the backend connection was successfully made */
-  if (PQstatus(conn) == CONNECTION_BAD) {
-    fprintf(stderr,"Connection to database '%s' failed.\\n", dbName);
-    fprintf(stderr,"%s",PQerrorMessage(conn));
-    exit_nicely(conn);
-  }
+    /* check to see that the backend connection was successfully made */
+    if (PQstatus(conn) == CONNECTION_BAD)
+    {
+        fprintf(stderr, "Connection to database '%s' failed.\\n", dbName);
+        fprintf(stderr, "%s", PQerrorMessage(conn));
+        exit_nicely(conn);
+    }
 
-  res = PQexec(conn, "LISTEN TBL2");
-  if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-    fprintf(stderr,"LISTEN command failed\\n");
+    res = PQexec(conn, "LISTEN TBL2");
+    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+    {
+        fprintf(stderr, "LISTEN command failed\\n");
+        PQclear(res);
+        exit_nicely(conn);
+    }
+
+    /*
+     * should PQclear PGresult whenever it is no longer needed to avoid
+     * memory leaks
+     */
     PQclear(res);
-    exit_nicely(conn);
-  }
-  /* should PQclear PGresult whenever it is no longer needed to avoid
-     memory leaks */
-  PQclear(res); 
 
-  while (1) {
-      /* async notification only come back as a result of a query*/
-      /* we can send empty queries */
-      res = PQexec(conn, "");
+    while (1)
+    {
+        /* async notification only come back as a result of a query */
+        /* we can send empty queries */
+        res = PQexec(conn, "");
 /*      printf("res->status = %s\\n", pgresStatus[PQresultStatus(res)]); */
-      /* check for asynchronous returns */
-      notify = PQnotifies(conn);
-      if (notify) {
-	  fprintf(stderr,
-		  "ASYNC NOTIFY of '%s' from backend pid '%d' received\\n",
-		  notify->relname, notify->be_pid);
-	  free(notify);
-	  break;
-      }
-      PQclear(res);
-  }
-      
-  /* close the connection to the database and cleanup */
-  PQfinish(conn);
+        /* check for asynchronous returns */
+        notify = PQnotifies(conn);
+        if (notify)
+        {
+            fprintf(stderr,
+                "ASYNC NOTIFY of '%s' from backend pid '%d' received\\n",
+                    notify->relname, notify->be_pid);
+            free(notify);
+            break;
+        }
+        PQclear(res);
+    }
+
+    /* close the connection to the database and cleanup */
+    PQfinish(conn);
 
 }
+
 .fi
 .bp
 .SH "Sample Program 3"
@@ -847,13 +912,13 @@ main()
 .nf M
 /*
  * testlibpq3.c
- * 	Test the C version of Libpq, the Postgres frontend library.
+ *  Test the C version of Libpq, the Postgres frontend library.
  *   tests the binary cursor interface
  *
  *
  *
  populate a database by doing the following:
- 
+
 CREATE TABLE test1 (i int4, d float4, p polygon);
 
 INSERT INTO test1 values (1, 3.567, '(3.0, 4.0, 1.0, 2.0)'::polygon);
@@ -875,123 +940,149 @@ tuple 1: got
  */
 #include <stdio.h>
 #include "libpq-fe.h"
-#include "utils/geo-decls.h" /* for the POLYGON type */
+#include "utils/geo-decls.h"    /* for the POLYGON type */
 
-void exit_nicely(PGconn* conn)
+void
+exit_nicely(PGconn *conn)
 {
-  PQfinish(conn);
-  exit(1);
+    PQfinish(conn);
+    exit(1);
 }
 
 main()
 {
-  char *pghost, *pgport, *pgoptions, *pgtty;
-  char* dbName;
-  int nFields;
-  int i,j;
-  int i_fnum, d_fnum, p_fnum;
+    char       *pghost,
+               *pgport,
+               *pgoptions,
+               *pgtty;
+    char       *dbName;
+    int         nFields;
+    int         i,
+                j;
+    int         i_fnum,
+                d_fnum,
+                p_fnum;
 
-  PGconn* conn;
-  PGresult* res;
+    PGconn     *conn;
+    PGresult   *res;
 
-  /* begin, by setting the parameters for a backend connection
-     if the parameters are null, then the system will try to use
-     reasonable defaults by looking up environment variables 
-     or, failing that, using hardwired constants */
-  pghost = NULL;  /* host name of the backend server */
-  pgport = NULL;  /* port of the backend server */
-  pgoptions = NULL; /* special options to start up the backend server */
-  pgtty = NULL;     /* debugging tty for the backend server */
+    /*
+     * begin, by setting the parameters for a backend connection if the
+     * parameters are null, then the system will try to use reasonable
+     * defaults by looking up environment variables or, failing that,
+     * using hardwired constants
+     */
+    pghost = NULL;              /* host name of the backend server */
+    pgport = NULL;              /* port of the backend server */
+    pgoptions = NULL;           /* special options to start up the backend
+                                 * server */
+    pgtty = NULL;               /* debugging tty for the backend server */
 
-  dbName = getenv("USER");  /* change this to the name of your test database*/
+    dbName = getenv("USER");    /* change this to the name of your test
+                                 * database */
 
-  /* make a connection to the database */
-  conn = PQsetdb(pghost, pgport, pgoptions, pgtty, dbName);
+    /* make a connection to the database */
+    conn = PQsetdb(pghost, pgport, pgoptions, pgtty, dbName);
 
-  /* check to see that the backend connection was successfully made */
-  if (PQstatus(conn) == CONNECTION_BAD) {
-    fprintf(stderr,"Connection to database '%s' failed.\\n", dbName);
-    fprintf(stderr,"%s",PQerrorMessage(conn));
-    exit_nicely(conn);
-  }
+    /* check to see that the backend connection was successfully made */
+    if (PQstatus(conn) == CONNECTION_BAD)
+    {
+        fprintf(stderr, "Connection to database '%s' failed.\\n", dbName);
+        fprintf(stderr, "%s", PQerrorMessage(conn));
+        exit_nicely(conn);
+    }
 
-  /* start a transaction block */
-  res = PQexec(conn,"BEGIN"); 
-  if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-    fprintf(stderr,"BEGIN command failed\\n");
+    /* start a transaction block */
+    res = PQexec(conn, "BEGIN");
+    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+    {
+        fprintf(stderr, "BEGIN command failed\\n");
+        PQclear(res);
+        exit_nicely(conn);
+    }
+
+    /*
+     * should PQclear PGresult whenever it is no longer needed to avoid
+     * memory leaks
+     */
     PQclear(res);
-    exit_nicely(conn);
-  }
-  /* should PQclear PGresult whenever it is no longer needed to avoid
-     memory leaks */
-  PQclear(res); 
 
-  /* fetch instances from the pg_database, the system catalog of databases*/
-  res = PQexec(conn,"DECLARE mycursor BINARY CURSOR FOR select * from test1");
-  if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-    fprintf(stderr,"DECLARE CURSOR command failed\\n");
+    /*
+     * fetch instances from the pg_database, the system catalog of
+     * databases
+     */
+    res = PQexec(conn, "DECLARE mycursor BINARY CURSOR FOR select * from test1");
+    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+    {
+        fprintf(stderr, "DECLARE CURSOR command failed\\n");
+        PQclear(res);
+        exit_nicely(conn);
+    }
     PQclear(res);
-    exit_nicely(conn);
-  }
-  PQclear(res);
 
-  res = PQexec(conn,"FETCH ALL in mycursor");
-  if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-    fprintf(stderr,"FETCH ALL command didn't return tuples properly\\n");
+    res = PQexec(conn, "FETCH ALL in mycursor");
+    if (PQresultStatus(res) != PGRES_TUPLES_OK)
+    {
+        fprintf(stderr, "FETCH ALL command didn't return tuples properly\\n");
+        PQclear(res);
+        exit_nicely(conn);
+    }
+
+    i_fnum = PQfnumber(res, "i");
+    d_fnum = PQfnumber(res, "d");
+    p_fnum = PQfnumber(res, "p");
+
+    for (i = 0; i < 3; i++)
+    {
+        printf("type[%d] = %d, size[%d] = %d\\n",
+               i, PQftype(res, i),
+               i, PQfsize(res, i));
+    }
+    for (i = 0; i < PQntuples(res); i++)
+    {
+        int        *ival;
+        float      *dval;
+        int         plen;
+        POLYGON    *pval;
+
+        /* we hard-wire this to the 3 fields we know about */
+        ival = (int *) PQgetvalue(res, i, i_fnum);
+        dval = (float *) PQgetvalue(res, i, d_fnum);
+        plen = PQgetlength(res, i, p_fnum);
+
+        /*
+         * plen doesn't include the length field so need to increment by
+         * VARHDSZ
+         */
+        pval = (POLYGON *) malloc(plen + VARHDRSZ);
+        pval->size = plen;
+        memmove((char *) &pval->npts, PQgetvalue(res, i, p_fnum), plen);
+        printf("tuple %d: got\\n", i);
+        printf(" i = (%d bytes) %d,\\n",
+               PQgetlength(res, i, i_fnum), *ival);
+        printf(" d = (%d bytes) %f,\\n",
+               PQgetlength(res, i, d_fnum), *dval);
+        printf(" p = (%d bytes) %d points \\tboundbox = (hi=%f/%f, lo = %f,%f)\\n",
+               PQgetlength(res, i, d_fnum),
+               pval->npts,
+               pval->boundbox.xh,
+               pval->boundbox.yh,
+               pval->boundbox.xl,
+               pval->boundbox.yl);
+    }
+
     PQclear(res);
-    exit_nicely(conn);
-  }
- 
-  i_fnum = PQfnumber(res,"i");
-  d_fnum = PQfnumber(res,"d");
-  p_fnum = PQfnumber(res,"p");
-  
-  for (i=0;i<3;i++) {
-      printf("type[%d] = %d, size[%d] = %d\\n",
-	     i, PQftype(res,i), 
-	     i, PQfsize(res,i));
-  }
-  for (i=0; i < PQntuples(res); i++) {
-    int *ival; 
-    float *dval;
-    int plen;
-    POLYGON* pval;
-    /* we hard-wire this to the 3 fields we know about */
-    ival =  (int*)PQgetvalue(res,i,i_fnum);
-    dval =  (float*)PQgetvalue(res,i,d_fnum);
-    plen = PQgetlength(res,i,p_fnum);
 
-    /* plen doesn't include the length field so need to increment by VARHDSZ*/
-    pval = (POLYGON*) malloc(plen + VARHDRSZ); 
-    pval->size = plen;
-    memmove((char*)&pval->npts, PQgetvalue(res,i,p_fnum), plen);
-    printf("tuple %d: got\\n", i);
-    printf(" i = (%d bytes) %d,\\n",
-	   PQgetlength(res,i,i_fnum), *ival);
-    printf(" d = (%d bytes) %f,\\n",
-	   PQgetlength(res,i,d_fnum), *dval);
-    printf(" p = (%d bytes) %d points \\tboundbox = (hi=%f/%f, lo = %f,%f)\\n",
-	   PQgetlength(res,i,d_fnum),
-	   pval->npts,
-	   pval->boundbox.xh,
-	   pval->boundbox.yh,
-	   pval->boundbox.xl,
-	   pval->boundbox.yl);
-  }
+    /* close the cursor */
+    res = PQexec(conn, "CLOSE mycursor");
+    PQclear(res);
 
-  PQclear(res);
-  
-  /* close the cursor */
-  res = PQexec(conn, "CLOSE mycursor");
-  PQclear(res);
+    /* commit the transaction */
+    res = PQexec(conn, "COMMIT");
+    PQclear(res);
 
-  /* commit the transaction */
-  res = PQexec(conn, "COMMIT");
-  PQclear(res);
-
-  /* close the connection to the database and cleanup */
-  PQfinish(conn);
+    /* close the connection to the database and cleanup */
+    PQfinish(conn);
 
 }
 .fi
-
