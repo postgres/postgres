@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.51 2002/10/19 22:51:45 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.52 2002/10/19 23:09:20 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -41,9 +41,9 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
     ADD <replaceable class="PARAMETER">table_constraint</replaceable>
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
-	DROP CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
+    DROP CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
 ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
-	OWNER TO <replaceable class="PARAMETER">new_owner</replaceable> 
+    OWNER TO <replaceable class="PARAMETER">new_owner</replaceable> 
   </synopsis>
 
   <refsect2 id="R2-SQL-ALTERTABLE-1">
