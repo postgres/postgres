@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Nov 21 21:46:38 EST 2001
+Last updated:		Wed Nov 21 22:05:23 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -16,7 +16,6 @@ RELIABILITY
 -----------
 
 * -SELECT pg_class FROM pg_class generates strange error (Bruce)
-* PL/PgSQL does not handle quoted mixed-case identifiers
 
 
 ENHANCEMENTS
@@ -164,6 +163,7 @@ COMMANDS
 * Remove LIMIT #,# and force use LIMIT and OFFSET clauses in 7.3 (Bruce)
 * Allow LIMIT/OFFSET to use expressions
 * Allow PL/PgSQL's RAISE function to take expressions
+* PL/PgSQL does not handle quoted mixed-case identifiers
 * Change PL/PgSQL to use palloc() instead of malloc()
 * Add untrusted version of plpython
 * -Allow GRANT/REVOKE to handle multiple user/group names
