@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.62 2002/06/03 01:05:45 momjian Exp $
+ * $Id: pqcomm.h,v 1.63 2002/06/03 22:57:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,6 +110,7 @@ typedef uint32 PacketLen;
  * there is room.
  */
 
+/* These should all be of near-unlimited length, perhap 10k */
 #define SM_DATABASE		64
 /* SM_USER should be the same size as the others.  bjm 2002-06-02 */
 #define SM_USER			32
