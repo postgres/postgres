@@ -1,10 +1,11 @@
 --
 -- DATETIME
 --
-
 -- Shorthand values
 -- Not directly usable for regression testing since these are not constants.
 -- So, just try to test parser and hope for the best - thomas 97/04/26
+-- needed so tests pass
+SET australian_timezones = 'off';
 
 SELECT (timestamp 'today' = (timestamp 'yesterday' + interval '1 day')) as "True";
 SELECT (timestamp 'today' = (timestamp 'tomorrow' - interval '1 day')) as "True";

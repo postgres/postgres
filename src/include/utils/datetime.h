@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datetime.h,v 1.18 2001/05/03 22:53:07 tgl Exp $
+ * $Id: datetime.h,v 1.19 2001/06/18 16:14:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,6 +182,7 @@ typedef struct
 	char		value;			/* this may be unsigned, alas */
 } datetkn;
 
+extern datetkn datetktbl[];
 
 /* TMODULO()
  * Macro to replace modf(), which is broken on some platforms.
@@ -264,6 +265,7 @@ extern int	EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str);
 
 extern int	DecodeSpecial(int field, char *lowtoken, int *val);
 extern int	DecodeUnits(int field, char *lowtoken, int *val);
+extern void ClearDateCache(bool);
 
 extern int	j2day(int jd);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.64 2001/05/03 22:53:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.65 2001/06/18 16:14:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include <limits.h>
 
 #include "miscadmin.h"
+#include "utils/guc.h"
 #include "utils/datetime.h"
 
 static int DecodeNumber(int flen, char *field,
@@ -36,7 +37,6 @@ static int	DecodeTimezone(char *str, int *tzp);
 static datetkn *datebsearch(char *key, datetkn *base, unsigned int nel);
 static int	DecodeDate(char *str, int fmask, int *tmask, struct tm * tm);
 
-#define USE_DATE_CACHE 1
 #define ROUND_ALL 0
 
 static int	DecodePosixTimezone(char *str, int *val);
@@ -117,11 +117,7 @@ static datetkn datetktbl[] = {
 	{"cdt", DTZ, NEG(30)},		/* Central Daylight Time */
 	{"cet", TZ, 6},				/* Central European Time */
 	{"cetdst", DTZ, 12},		/* Central European Dayl.Time */
-#if USE_AUSTRALIAN_RULES
-	{"cst", TZ, 63},			/* Australia Eastern Std Time */
-#else
 	{"cst", TZ, NEG(36)},		/* Central Standard Time */
-#endif
 	{DCURRENT, RESERV, DTK_CURRENT},	/* "current" is always now */
 	{"dec", MONTH, 12},
 	{"december", MONTH, 12},
@@ -134,11 +130,7 @@ static datetkn datetktbl[] = {
 	{"eet", TZ, 12},			/* East. Europe, USSR Zone 1 */
 	{"eetdst", DTZ, 18},		/* Eastern Europe */
 	{EPOCH, RESERV, DTK_EPOCH}, /* "epoch" reserved for system epoch time */
-#if USE_AUSTRALIAN_RULES
-	{"est", TZ, 60},			/* Australia Eastern Std Time */
-#else
 	{"est", TZ, NEG(30)},		/* Eastern Standard Time */
-#endif
 	{"feb", MONTH, 2},
 	{"february", MONTH, 2},
 	{"fri", DOW, 5},
@@ -199,11 +191,7 @@ static datetkn datetktbl[] = {
 	{"pst", TZ, NEG(48)},		/* Pacific Standard Time */
 	{"sadt", DTZ, 63},			/* S. Australian Dayl. Time */
 	{"sast", TZ, 57},			/* South Australian Std Time */
-#if USE_AUSTRALIAN_RULES
-	{"sat", TZ, 57},
-#else
 	{"sat", DOW, 6},
-#endif
 	{"saturday", DOW, 6},
 	{"sep", MONTH, 9},
 	{"sept", MONTH, 9},
@@ -246,6 +234,16 @@ static datetkn datetktbl[] = {
 };
 
 static unsigned int szdatetktbl = sizeof datetktbl / sizeof datetktbl[0];
+
+/* Used for SET australian_timezones to override North American ones */
+static datetkn australian_datetktbl[] = {
+	{"cst", TZ, 63},			/* Australia Eastern Std Time */
+	{"est", TZ, 60},			/* Australia Eastern Std Time */
+	{"sat", TZ, 57},
+};
+
+static unsigned int australian_szdatetktbl = sizeof australian_datetktbl /
+											 sizeof australian_datetktbl[0];
 
 static datetkn deltatktbl[] = {
 /*		text			token	lexval */
@@ -327,12 +325,9 @@ static datetkn deltatktbl[] = {
 
 static unsigned int szdeltatktbl = sizeof deltatktbl / sizeof deltatktbl[0];
 
-#if USE_DATE_CACHE
 datetkn    *datecache[MAXDATEFIELDS] = {NULL};
 
 datetkn    *deltacache[MAXDATEFIELDS] = {NULL};
-
-#endif
 
 
 /*
@@ -1618,18 +1613,19 @@ DecodeSpecial(int field, char *lowtoken, int *val)
 	int			type;
 	datetkn    *tp;
 
-#if USE_DATE_CACHE
 	if ((datecache[field] != NULL)
 		&& (strncmp(lowtoken, datecache[field]->token, TOKMAXLEN) == 0))
 		tp = datecache[field];
 	else
 	{
-#endif
-		tp = datebsearch(lowtoken, datetktbl, szdatetktbl);
-#if USE_DATE_CACHE
+		tp = NULL;
+		if (Australian_timezones)
+			tp = datebsearch(lowtoken, australian_datetktbl,
+									   australian_szdatetktbl);
+		if (!tp)
+			tp = datebsearch(lowtoken, datetktbl, szdatetktbl);
 	}
 	datecache[field] = tp;
-#endif
 	if (tp == NULL)
 	{
 		type = IGNORE;
@@ -1937,18 +1933,14 @@ DecodeUnits(int field, char *lowtoken, int *val)
 	int			type;
 	datetkn    *tp;
 
-#if USE_DATE_CACHE
 	if ((deltacache[field] != NULL)
 		&& (strncmp(lowtoken, deltacache[field]->token, TOKMAXLEN) == 0))
 		tp = deltacache[field];
 	else
 	{
-#endif
 		tp = datebsearch(lowtoken, deltatktbl, szdeltatktbl);
-#if USE_DATE_CACHE
 	}
 	deltacache[field] = tp;
-#endif
 	if (tp == NULL)
 	{
 		type = IGNORE;
@@ -2455,3 +2447,12 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 
 	return 0;
 }	/* EncodeTimeSpan() */
+
+
+void ClearDateCache(bool dummy)
+{
+	int i;
+
+	for (i=0; i < MAXDATEFIELDS; i++)
+		datecache[i] = NULL;
+}

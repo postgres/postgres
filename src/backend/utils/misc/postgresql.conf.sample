@@ -85,24 +85,6 @@
 
 
 #
-#	Inheritance
-#
-#sql_inheritance = true
-
-
-#
-#	Deadlock
-#
-#deadlock_timeout = 1000
-
-
-#
-#	Expression Depth Limitation
-#
-#max_expr_depth = 10000 # min 10
-
-
-#
 #	Write-ahead log (WAL)
 #
 #wal_buffers = 8 # min 4
@@ -172,3 +154,13 @@
 #trace_lock_oidmin = 16384
 #trace_lock_table = 0
 #endif
+
+
+#
+#	Misc
+#
+#sql_inheritance = true
+#australian_timezones = false
+#deadlock_timeout = 1000
+#max_expr_depth = 10000 # min 10
+

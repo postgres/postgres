@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.38 2001/06/12 22:54:06 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.39 2001/06/18 16:14:43 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -33,6 +33,7 @@
 #include "parser/parse_expr.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
+#include "utils/datetime.h"
 
 
 /* XXX these should be in other modules' header files */
@@ -68,6 +69,8 @@ bool		Show_query_stats = false;	/* this is sort of all three above
 bool		Show_btree_build_stats = false;
 
 bool		SQL_inheritance = true;
+
+bool		Australian_timezones = false;
 
 #ifndef PG_KRB_SRVTAB
 #define PG_KRB_SRVTAB ""
@@ -229,6 +232,9 @@ static struct config_bool
 
 	{"sql_inheritance", PGC_USERSET, &SQL_inheritance, true, NULL},
 
+	{"australian_timezones", PGC_USERSET, &Australian_timezones,
+	false, ClearDateCache},
+
 	{"fixbtree", PGC_POSTMASTER, &FixBTree, true, NULL},
 
 	{NULL, 0, NULL, false, NULL}
@@ -327,8 +333,8 @@ static struct config_real
 	DEFAULT_CPU_OPERATOR_COST, 0, DBL_MAX, NULL, NULL},
 
 	{"geqo_selection_bias", PGC_USERSET, &Geqo_selection_bias,
-	 DEFAULT_GEQO_SELECTION_BIAS, MIN_GEQO_SELECTION_BIAS,
-	 MAX_GEQO_SELECTION_BIAS, NULL, NULL},
+	DEFAULT_GEQO_SELECTION_BIAS, MIN_GEQO_SELECTION_BIAS,
+	MAX_GEQO_SELECTION_BIAS, NULL, NULL},
 
 	{NULL, 0, NULL, 0.0, 0.0, 0.0, NULL, NULL}
 };
@@ -360,8 +366,8 @@ static struct config_string
 	"", NULL, NULL},
 
 	{"wal_sync_method", PGC_SIGHUP, &XLOG_sync_method,
-		XLOG_sync_method_default,
-	check_xlog_sync_method, assign_xlog_sync_method},
+	XLOG_sync_method_default, check_xlog_sync_method,
+	assign_xlog_sync_method},
 
 	{NULL, 0, NULL, NULL, NULL, NULL}
 };
@@ -956,6 +962,7 @@ _ShowOption(enum config_type opttype, struct config_generic *record)
 		case PGC_BOOL:
 			val = *((struct config_bool *) record)->variable ? "on" : "off";
 			break;
+
 		case PGC_INT:
 			snprintf(buffer, sizeof(buffer), "%d",
 					 *((struct config_int *) record)->variable);
