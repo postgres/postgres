@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.56 2000/01/10 16:13:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.57 2000/01/17 23:57:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1047,8 +1047,7 @@ SearchSysCache(struct catcache * cache,
 	 *	if this isn't bootstrap (initdb) time, use the index.
 	 * ----------------
 	 */
-	CACHE2_elog(DEBUG, "SearchSysCache: performing scan (override==%d)",
-				heapisoverride());
+	CACHE1_elog(DEBUG, "SearchSysCache: performing scan");
 
 	if ((RelationGetForm(relation))->relhasindex
 		&& !IsBootstrapProcessingMode())

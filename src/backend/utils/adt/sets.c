@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.28 1999/11/24 00:44:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.29 2000/01/17 23:57:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,9 +113,7 @@ SetDefine(char *querystr, char *typename)
 									  replNull,
 									  repl);
 
-			setheapoverride(true);
 			heap_update(procrel, &tup->t_self, newtup, NULL);
-			setheapoverride(false);
 
 			setoid = newtup->t_data->t_oid;
 		}

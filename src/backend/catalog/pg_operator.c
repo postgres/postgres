@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.47 2000/01/10 17:14:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.48 2000/01/17 23:57:43 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -775,6 +775,9 @@ OperatorDef(char *operatorName,
 		opKey[1].sk_argument = ObjectIdGetDatum(leftTypeId);
 		opKey[2].sk_argument = ObjectIdGetDatum(rightTypeId);
 
+		/* Make sure we can see the shell even if it is new in current cmd */
+		CommandCounterIncrement();
+
 		pg_operator_scan = heap_beginscan(pg_operator_desc,
 										  0,
 										  SnapshotSelf, /* no cache? */
@@ -790,9 +793,7 @@ OperatorDef(char *operatorName,
 								   nulls,
 								   replaces);
 
-			setheapoverride(true);
 			heap_update(pg_operator_desc, &tup->t_self, tup, NULL);
-			setheapoverride(false);
 		}
 		else
 			elog(ERROR, "OperatorDef: no operator %u", operatorObjectId);
@@ -875,7 +876,13 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 
 	pg_operator_desc = heap_openr(OperatorRelationName, RowExclusiveLock);
 
-	/* check and update the commutator, if necessary */
+	/*
+	 * check and update the commutator & negator, if necessary
+	 *
+	 * First make sure we can see them...
+	 */
+	CommandCounterIncrement();
+
 	opKey[0].sk_argument = ObjectIdGetDatum(commId);
 
 	pg_operator_scan = heap_beginscan(pg_operator_desc,
@@ -920,9 +927,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 									   nulls,
 									   replaces);
 
-				setheapoverride(true);
 				heap_update(pg_operator_desc, &tup->t_self, tup, NULL);
-				setheapoverride(false);
 
 				if (RelationGetForm(pg_operator_desc)->relhasindex)
 				{
@@ -954,9 +959,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 							   nulls,
 							   replaces);
 
-		setheapoverride(true);
 		heap_update(pg_operator_desc, &tup->t_self, tup, NULL);
-		setheapoverride(false);
 
 		if (RelationGetForm(pg_operator_desc)->relhasindex)
 		{
@@ -994,9 +997,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 							   nulls,
 							   replaces);
 
-		setheapoverride(true);
 		heap_update(pg_operator_desc, &tup->t_self, tup, NULL);
-		setheapoverride(false);
 
 		if (RelationGetForm(pg_operator_desc)->relhasindex)
 		{

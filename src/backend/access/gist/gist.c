@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.48 1999/12/10 03:55:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.49 2000/01/17 23:57:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,9 +98,9 @@ gistbuild(Relation heap,
 
 	/* no locking is needed */
 
-	setheapoverride(true);		/* so we can see the new pg_index tuple */
+	CommandCounterIncrement();		/* so we can see the new pg_index tuple */
+
 	initGISTstate(&giststate, index);
-	setheapoverride(false);
 
 	pred = predInfo->pred;
 	oldPred = predInfo->oldPred;

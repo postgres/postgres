@@ -165,9 +165,7 @@ void CreateComments(Oid oid, char *comment) {
     } else {
       desctuple = heap_modifytuple(searchtuple, description, values,
 				   nulls, replaces);
-      setheapoverride(true);
       heap_update(description, &searchtuple->t_self, desctuple, NULL);
-      setheapoverride(false);
       modified = TRUE;
     }
 

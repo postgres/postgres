@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.26 1999/12/10 12:34:15 wieck Exp $
+ * $Id: tqual.h,v 1.27 2000/01/17 23:57:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,13 +17,14 @@
 #include "access/htup.h"
 #include "access/xact.h"
 
+
 typedef struct SnapshotData
 {
-	TransactionId xmin;			/* XID < xmin are visible to me */
-	TransactionId xmax;			/* XID >= xmax are invisible to me */
-	uint32		xcnt;			/* # of xact below */
-	TransactionId *xip;			/* array of xacts in progress */
-	ItemPointerData tid;		/* required for Dirty snapshot -:( */
+	TransactionId	xmin;		/* XID < xmin are visible to me */
+	TransactionId	xmax;		/* XID >= xmax are invisible to me */
+	uint32			xcnt;		/* # of xact below */
+	TransactionId  *xip;		/* array of xacts in progress */
+	ItemPointerData	tid;		/* required for Dirty snapshot -:( */
 } SnapshotData;
 
 typedef SnapshotData *Snapshot;
@@ -38,20 +39,19 @@ extern Snapshot SerializableSnapshot;
 
 extern bool ReferentialIntegritySnapshotOverride;
 
-#define IsSnapshotNow(snapshot)		((Snapshot) snapshot == SnapshotNow)
-#define IsSnapshotSelf(snapshot)	((Snapshot) snapshot == SnapshotSelf)
-#define IsSnapshotAny(snapshot)		((Snapshot) snapshot == SnapshotAny)
-#define IsSnapshotDirty(snapshot)	((Snapshot) snapshot == SnapshotDirty)
+#define IsSnapshotNow(snapshot)		((Snapshot) (snapshot) == SnapshotNow)
+#define IsSnapshotSelf(snapshot)	((Snapshot) (snapshot) == SnapshotSelf)
+#define IsSnapshotAny(snapshot)		((Snapshot) (snapshot) == SnapshotAny)
+#define IsSnapshotDirty(snapshot)	((Snapshot) (snapshot) == SnapshotDirty)
 
-extern TransactionId HeapSpecialTransactionId;
-extern CommandId HeapSpecialCommandId;
 
 /*
  * HeapTupleSatisfiesVisibility
  *		True iff heap tuple satsifies a time qual.
  *
- * Note:
+ * Notes:
  *		Assumes heap tuple is valid.
+ *		Beware of multiple evaluations of arguments.
  */
 #define HeapTupleSatisfiesVisibility(tuple, snapshot) \
 ( \
@@ -59,40 +59,22 @@ extern CommandId HeapSpecialCommandId;
 		false \
 	: \
 	( \
-		(IsSnapshotAny(snapshot) || heapisoverride()) ? \
+		IsSnapshotAny(snapshot) ? \
 			true \
 		: \
-			((IsSnapshotSelf(snapshot) || heapisoverride()) ? \
+			(IsSnapshotSelf(snapshot) ? \
 				HeapTupleSatisfiesItself((tuple)->t_data) \
 			: \
-				((IsSnapshotDirty(snapshot)) ? \
+				(IsSnapshotDirty(snapshot) ? \
 					HeapTupleSatisfiesDirty((tuple)->t_data) \
 				: \
-					((IsSnapshotNow(snapshot)) ? \
+					(IsSnapshotNow(snapshot) ? \
 						HeapTupleSatisfiesNow((tuple)->t_data) \
 					: \
 						HeapTupleSatisfiesSnapshot((tuple)->t_data, snapshot) \
 					) \
 			) \
 		) \
-	) \
-)
-
-#define heapisoverride() \
-( \
-	(!TransactionIdIsValid(HeapSpecialTransactionId)) ? \
-		false \
-	: \
-	( \
-		(!TransactionIdEquals(GetCurrentTransactionId(), \
-							 HeapSpecialTransactionId) || \
-		 GetCurrentCommandId() != HeapSpecialCommandId) ? \
-		( \
-			HeapSpecialTransactionId = InvalidTransactionId, \
-			false \
-		) \
-		: \
-			true \
 	) \
 )
 
@@ -105,10 +87,9 @@ extern CommandId HeapSpecialCommandId;
 extern bool HeapTupleSatisfiesItself(HeapTupleHeader tuple);
 extern bool HeapTupleSatisfiesNow(HeapTupleHeader tuple);
 extern bool HeapTupleSatisfiesDirty(HeapTupleHeader tuple);
-extern bool HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot);
+extern bool HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple,
+									   Snapshot snapshot);
 extern int	HeapTupleSatisfiesUpdate(HeapTuple tuple);
-
-extern void setheapoverride(bool on);
 
 extern Snapshot GetSnapshotData(bool serializable);
 extern void SetQuerySnapshot(void);

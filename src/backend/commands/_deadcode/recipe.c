@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/recipe.c,v 1.8 2000/01/10 17:14:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/recipe.c,v 1.9 2000/01/17 23:57:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -211,9 +211,10 @@ beginRecipe(RecipeStmt *stmt)
 		/*
 		 * before we plan, we want to see all the changes we did, during
 		 * the rewrite phase, such as creating the tee tables,
-		 * setheapoverride() allows us to see the changes
+		 * CommandCounterIncrement() allows us to see the changes
 		 */
-		setheapoverride(true);
+		CommandCounterIncrement();
+
 		plan = planner(parsetree);
 
 		/* ----------------------------------------------------------
@@ -264,8 +265,6 @@ beginRecipe(RecipeStmt *stmt)
 			plan = replaceTeeScans(plan, parsetree, teeInfo);
 
 		}						/* if (teeInfo) */
-
-		setheapoverride(false);
 
 		/* define a portal for this viewer input */
 		/* for now, eyes can only have one input */

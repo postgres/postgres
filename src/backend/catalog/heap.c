@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.116 2000/01/17 02:04:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.117 2000/01/17 23:57:43 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1065,7 +1065,7 @@ DeleteRelationTuple(Relation rel)
 	pg_class_desc = heap_openr(RelationRelationName, RowExclusiveLock);
 
 	tup = SearchSysCacheTupleCopy(RELOID,
-					   ObjectIdGetDatum(rel->rd_att->attrs[0]->attrelid),
+								  ObjectIdGetDatum(rel->rd_id),
 								  0, 0, 0);
 	if (!HeapTupleIsValid(tup))
 	{
@@ -1509,39 +1509,31 @@ heap_drop_with_catalog(char *relname)
 	DeleteAttributeTuples(rel);
 
 	/* ----------------
-	 *	delete comments
+	 *	delete comments, statistics, and constraints
 	 * ----------------
 	 */
 	DeleteComments(RelationGetRelid(rel));
 
-	/* ----------------
-	 *	delete statistics
-	 * ----------------
-	 */
 	RemoveStatistics(rel);
 
+	RemoveConstraints(rel);
+
 	/* ----------------
-	 *	delete type tuple.	here we want to see the effects
-	 *	of the deletions we just did, so we use setheapoverride().
+	 *	delete type tuple
 	 * ----------------
 	 */
-	setheapoverride(true);
 	DeleteTypeTuple(rel);
-	setheapoverride(false);
 
 	/* ----------------
 	 *	delete relation tuple
 	 * ----------------
 	 */
-	/* must delete fake tuple in cache */
 	DeleteRelationTuple(rel);
 
 	/*
 	 * release dirty buffers of this relation
 	 */
 	ReleaseRelationBuffers(rel);
-
-	RemoveConstraints(rel);
 
 	/* ----------------
 	 *	unlink the relation's physical file and finish up.
