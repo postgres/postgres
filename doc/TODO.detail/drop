@@ -2,7 +2,7 @@ From pgsql-hackers-owner+M3040@hub.org Thu Jun  8 00:31:01 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id AAA13157
 	for <pgman@candle.pha.pa.us>; Thu, 8 Jun 2000 00:31:00 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id AAA01089 for <pgman@candle.pha.pa.us>; Thu, 8 Jun 2000 00:17:19 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.5 $) with ESMTP id AAA01089 for <pgman@candle.pha.pa.us>; Thu, 8 Jun 2000 00:17:19 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5846ib99782;
 	Thu, 8 Jun 2000 00:06:44 -0400 (EDT)
@@ -280,7 +280,7 @@ From Inoue@tpf.co.jp Sat Jun 10 01:01:01 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA10355
 	for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 01:01:00 -0400 (EDT)
-Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id AAA25467 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 00:41:32 -0400 (EDT)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.5 $) with ESMTP id AAA25467 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 00:41:32 -0400 (EDT)
 Received: from mcadnote1 (ppm110.noc.fukui.nsk.ne.jp [210.161.188.29] (may be forged))
           by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
    id NAA03125; Sat, 10 Jun 2000 13:40:40 +0900
@@ -411,7 +411,7 @@ From tgl@sss.pgh.pa.us Sat Jun 10 01:31:04 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA10922
 	for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 01:31:03 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id BAA27265 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 01:16:07 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.5 $) with ESMTP id BAA27265 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 01:16:07 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id BAA06206;
 	Sat, 10 Jun 2000 01:14:37 -0400 (EDT)
@@ -457,7 +457,7 @@ From dhogaza@pacifier.com Sat Jun 10 09:30:59 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id JAA25987
 	for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 09:30:58 -0400 (EDT)
-Received: from smtp.pacifier.com (comet.pacifier.com [199.2.117.155]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id JAA18716 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 09:15:08 -0400 (EDT)
+Received: from smtp.pacifier.com (comet.pacifier.com [199.2.117.155]) by renoir.op.net (o1/$Revision: 1.5 $) with ESMTP id JAA18716 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 09:15:08 -0400 (EDT)
 Received: from desktop (dsl-dhogaza.pacifier.net [207.202.226.68])
 	by smtp.pacifier.com (8.9.3/8.9.3pop) with SMTP id GAA15799;
 	Sat, 10 Jun 2000 06:14:28 -0700 (PDT)
@@ -509,7 +509,7 @@ From tgl@sss.pgh.pa.us Sun Jun 11 12:31:03 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA05771
 	for <pgman@candle.pha.pa.us>; Sun, 11 Jun 2000 12:31:01 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id MAA19315 for <pgman@candle.pha.pa.us>; Sun, 11 Jun 2000 12:24:06 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.5 $) with ESMTP id MAA19315 for <pgman@candle.pha.pa.us>; Sun, 11 Jun 2000 12:24:06 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id MAA09503;
 	Sun, 11 Jun 2000 12:22:42 -0400 (EDT)
@@ -929,4 +929,935 @@ Hiroshi Inoue
 ---------------------------(end of broadcast)---------------------------
 TIP 2: you can get off all lists at once with the unregister command
     (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From chriskl@familyhealth.com.au Thu Apr 11 12:00:22 2002
+Return-path: <chriskl@familyhealth.com.au>
+Received: from houston.familyhealth.com.au (root@i231-006.nv.iinet.net.au [203.59.231.6])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g3BG0KS02910
+	for <pgman@candle.pha.pa.us>; Thu, 11 Apr 2002 12:00:20 -0400 (EDT)
+Received: from localhost (chriskl@localhost)
+	by houston.familyhealth.com.au (8.11.6/8.11.6) with ESMTP id g3BG0GJ70765;
+	Fri, 12 Apr 2002 00:00:16 +0800 (WST)
+	(envelope-from chriskl@familyhealth.com.au)
+Date: Fri, 12 Apr 2002 00:00:16 +0800 (WST)
+From: Christopher Kings-Lynne <chriskl@familyhealth.com.au>
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Hiroshi Inoue <Inoue@tpf.co.jp>, Tom Lane <tgl@sss.pgh.pa.us>,
+   <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] RFC: Restructuring pg_aggregate
+In-Reply-To: <200204110419.g3B4J8v29682@candle.pha.pa.us>
+Message-ID: <20020411233659.O69846-100000@houston.familyhealth.com.au>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Status: OR
+
+> Actually, what we need to do to reclaim space is to enable table
+> recreation without the column, now that we have relfilenode for file
+> renaming.  It isn't hard to do, but no one has focused on it.  I want to
+> focus on it, but have not had the time, obviously, and would be very
+> excited to assist someone else.
+>
+> Hiroshi's fine idea of marking certain columns as unused would not have
+> reclaimed the missing space, just as my idea of physical/logical column
+> distinction would not reclaim the space either.  Again, my
+> physical/logical idea is more for fixing other problems and
+> optimization, not DROP COLUMN.
+
+Hmmm.  Personally, I think that a DROP COLUMN that cannot reclaim space is
+kinda useless - you may as well just use a view!!!
+
+So how would this occur?:
+
+1. Lock target table for writing (allow reads)
+2. Begin a table scan on target table, writing
+   a new file with a particular filenode
+3. Delete the attribute row from pg_attribute
+4. Point the table in the catalog to the new filenode
+5. Release locks
+6. Commit transaction
+7. Delete orhpan filenode
+
+i. Upon postmaster startup, remove any orphaned filenodes
+
+The real problem here is the fact that there are now missing attnos in
+pg_attribute.  Either that's handled or we renumber the attnos - which is
+also quite hard?
+
+This, of course, suffers from the double size data problem - but I believe
+that it does not matter - we just need to document it.
+
+Interestingly enough, Oracle support
+
+ALTER TABLE foo SET UNUSED col;
+
+Which invalidates the attribute entry, and:
+
+ALTER TABLE foo DROP col CHECKPOINT 1000;
+
+Which actually reclaims the space.  The optional CHECKPOINT [n] clause
+tells Oracle to do a checkpoint every [n] rows.
+
+"Checkpointing cuts down the amount of undo logs accumulated during the
+drop column operation to avoid running out of rollback segment space.
+However, if this statement is interrupted after a checkpoint has been
+applied, the table remains in an unusable state. While the table is
+unusable, the only operations allowed on it are DROP TABLE, TRUNCATE
+TABLE, and ALTER TABLE DROP COLUMNS CONTINUE (described below). "
+
+Chris
+
+
+
+From pgsql-hackers-owner+M21180@postgresql.org Thu Apr 11 12:02:54 2002
+Return-path: <pgsql-hackers-owner+M21180@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g3BG2sS03611
+	for <pgman@candle.pha.pa.us>; Thu, 11 Apr 2002 12:02:54 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 6446B478F0A; Thu, 11 Apr 2002 12:01:19 -0400 (EDT)
+Received: from houston.familyhealth.com.au (i231-006.nv.iinet.net.au [203.59.231.6])
+	by postgresql.org (Postfix) with ESMTP id B6271478E4C
+	for <pgsql-hackers@postgresql.org>; Thu, 11 Apr 2002 12:00:24 -0400 (EDT)
+Received: from localhost (chriskl@localhost)
+	by houston.familyhealth.com.au (8.11.6/8.11.6) with ESMTP id g3BG0GJ70765;
+	Fri, 12 Apr 2002 00:00:16 +0800 (WST)
+	(envelope-from chriskl@familyhealth.com.au)
+Date: Fri, 12 Apr 2002 00:00:16 +0800 (WST)
+From: Christopher Kings-Lynne <chriskl@familyhealth.com.au>
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Hiroshi Inoue <Inoue@tpf.co.jp>, Tom Lane <tgl@sss.pgh.pa.us>,
+   <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] RFC: Restructuring pg_aggregate
+In-Reply-To: <200204110419.g3B4J8v29682@candle.pha.pa.us>
+Message-ID: <20020411233659.O69846-100000@houston.familyhealth.com.au>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: ORr
+
+> Actually, what we need to do to reclaim space is to enable table
+> recreation without the column, now that we have relfilenode for file
+> renaming.  It isn't hard to do, but no one has focused on it.  I want to
+> focus on it, but have not had the time, obviously, and would be very
+> excited to assist someone else.
+>
+> Hiroshi's fine idea of marking certain columns as unused would not have
+> reclaimed the missing space, just as my idea of physical/logical column
+> distinction would not reclaim the space either.  Again, my
+> physical/logical idea is more for fixing other problems and
+> optimization, not DROP COLUMN.
+
+Hmmm.  Personally, I think that a DROP COLUMN that cannot reclaim space is
+kinda useless - you may as well just use a view!!!
+
+So how would this occur?:
+
+1. Lock target table for writing (allow reads)
+2. Begin a table scan on target table, writing
+   a new file with a particular filenode
+3. Delete the attribute row from pg_attribute
+4. Point the table in the catalog to the new filenode
+5. Release locks
+6. Commit transaction
+7. Delete orhpan filenode
+
+i. Upon postmaster startup, remove any orphaned filenodes
+
+The real problem here is the fact that there are now missing attnos in
+pg_attribute.  Either that's handled or we renumber the attnos - which is
+also quite hard?
+
+This, of course, suffers from the double size data problem - but I believe
+that it does not matter - we just need to document it.
+
+Interestingly enough, Oracle support
+
+ALTER TABLE foo SET UNUSED col;
+
+Which invalidates the attribute entry, and:
+
+ALTER TABLE foo DROP col CHECKPOINT 1000;
+
+Which actually reclaims the space.  The optional CHECKPOINT [n] clause
+tells Oracle to do a checkpoint every [n] rows.
+
+"Checkpointing cuts down the amount of undo logs accumulated during the
+drop column operation to avoid running out of rollback segment space.
+However, if this statement is interrupted after a checkpoint has been
+applied, the table remains in an unusable state. While the table is
+unusable, the only operations allowed on it are DROP TABLE, TRUNCATE
+TABLE, and ALTER TABLE DROP COLUMNS CONTINUE (described below). "
+
+Chris
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From tgl@sss.pgh.pa.us Thu Apr 11 12:22:44 2002
+Return-path: <tgl@sss.pgh.pa.us>
+Received: from sss.pgh.pa.us (root@[192.204.191.242])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g3BGMhS05541
+	for <pgman@candle.pha.pa.us>; Thu, 11 Apr 2002 12:22:43 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id g3BGMaF01827;
+	Thu, 11 Apr 2002 12:22:36 -0400 (EDT)
+To: Christopher Kings-Lynne <chriskl@familyhealth.com.au>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>, Hiroshi Inoue <Inoue@tpf.co.jp>,
+   pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] RFC: Restructuring pg_aggregate 
+In-Reply-To: <20020411233659.O69846-100000@houston.familyhealth.com.au> 
+References: <20020411233659.O69846-100000@houston.familyhealth.com.au>
+Comments: In-reply-to Christopher Kings-Lynne <chriskl@familyhealth.com.au>
+	message dated "Fri, 12 Apr 2002 00:00:16 +0800"
+Date: Thu, 11 Apr 2002 12:22:35 -0400
+Message-ID: <1824.1018542155@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: ORr
+
+Christopher Kings-Lynne <chriskl@familyhealth.com.au> writes:
+> The real problem here is the fact that there are now missing attnos in
+> pg_attribute.  Either that's handled or we renumber the attnos - which is
+> also quite hard?
+
+Updating pg_attribute per se is not so hard --- just store new copies of
+all the rows for the table.  However, propagating the changes into other
+places could be quite painful (I'm thinking of column numbers in stored
+constraints, rules, etc).
+
+It seems to me that reducing the column to NULLs already gets you the
+majority of the space savings.  I don't think there is a case to be made
+that getting back that last bit is worth the pain involved, either in
+implementation effort or direct runtime costs (do you really want a DROP
+COLUMN to force an immediate rewrite of the whole table?)
+
+			regards, tom lane
+
+From pgsql-hackers-owner+M21186@postgresql.org Thu Apr 11 13:03:13 2002
+Return-path: <pgsql-hackers-owner+M21186@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g3BH3DS08942
+	for <pgman@candle.pha.pa.us>; Thu, 11 Apr 2002 13:03:13 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 517ED479415; Thu, 11 Apr 2002 12:29:32 -0400 (EDT)
+Received: from sss.pgh.pa.us (unknown [192.204.191.242])
+	by postgresql.org (Postfix) with ESMTP id B87BC479327
+	for <pgsql-hackers@postgresql.org>; Thu, 11 Apr 2002 12:22:51 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id g3BGMaF01827;
+	Thu, 11 Apr 2002 12:22:36 -0400 (EDT)
+To: Christopher Kings-Lynne <chriskl@familyhealth.com.au>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>, Hiroshi Inoue <Inoue@tpf.co.jp>,
+   pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] RFC: Restructuring pg_aggregate 
+In-Reply-To: <20020411233659.O69846-100000@houston.familyhealth.com.au> 
+References: <20020411233659.O69846-100000@houston.familyhealth.com.au>
+Comments: In-reply-to Christopher Kings-Lynne <chriskl@familyhealth.com.au>
+	message dated "Fri, 12 Apr 2002 00:00:16 +0800"
+Date: Thu, 11 Apr 2002 12:22:35 -0400
+Message-ID: <1824.1018542155@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Christopher Kings-Lynne <chriskl@familyhealth.com.au> writes:
+> The real problem here is the fact that there are now missing attnos in
+> pg_attribute.  Either that's handled or we renumber the attnos - which is
+> also quite hard?
+
+Updating pg_attribute per se is not so hard --- just store new copies of
+all the rows for the table.  However, propagating the changes into other
+places could be quite painful (I'm thinking of column numbers in stored
+constraints, rules, etc).
+
+It seems to me that reducing the column to NULLs already gets you the
+majority of the space savings.  I don't think there is a case to be made
+that getting back that last bit is worth the pain involved, either in
+implementation effort or direct runtime costs (do you really want a DROP
+COLUMN to force an immediate rewrite of the whole table?)
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M21187@postgresql.org Thu Apr 11 13:25:05 2002
+Return-path: <pgsql-hackers-owner+M21187@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g3BHP4S10960
+	for <pgman@candle.pha.pa.us>; Thu, 11 Apr 2002 13:25:05 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 2BC27479442; Thu, 11 Apr 2002 12:30:28 -0400 (EDT)
+Received: from candle.pha.pa.us (216-55-132-35.dsl.san-diego.abac.net [216.55.132.35])
+	by postgresql.org (Postfix) with ESMTP id 265E5479340
+	for <pgsql-hackers@postgresql.org>; Thu, 11 Apr 2002 12:23:30 -0400 (EDT)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.11.6/8.10.1) id g3BGNS405576;
+	Thu, 11 Apr 2002 12:23:28 -0400 (EDT)
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-ID: <200204111623.g3BGNS405576@candle.pha.pa.us>
+Subject: Re: [HACKERS] RFC: Restructuring pg_aggregate
+In-Reply-To: <20020411233659.O69846-100000@houston.familyhealth.com.au>
+To: Christopher Kings-Lynne <chriskl@familyhealth.com.au>
+Date: Thu, 11 Apr 2002 12:23:28 -0400 (EDT)
+cc: Hiroshi Inoue <Inoue@tpf.co.jp>, Tom Lane <tgl@sss.pgh.pa.us>,
+   pgsql-hackers@postgresql.org
+X-Mailer: ELM [version 2.4ME+ PL97 (25)]
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Christopher Kings-Lynne wrote:
+> > Actually, what we need to do to reclaim space is to enable table
+> > recreation without the column, now that we have relfilenode for file
+> > renaming.  It isn't hard to do, but no one has focused on it.  I want to
+> > focus on it, but have not had the time, obviously, and would be very
+> > excited to assist someone else.
+> >
+> > Hiroshi's fine idea of marking certain columns as unused would not have
+> > reclaimed the missing space, just as my idea of physical/logical column
+> > distinction would not reclaim the space either.  Again, my
+> > physical/logical idea is more for fixing other problems and
+> > optimization, not DROP COLUMN.
+> 
+> Hmmm.  Personally, I think that a DROP COLUMN that cannot reclaim space is
+> kinda useless - you may as well just use a view!!!
+
+Yep, kind of a problem.  It is a tradeoff between double diskspace/speed
+and removing column from disk.  I guess that's why Oracle has both.
+
+> 
+> So how would this occur?:
+> 
+> 1. Lock target table for writing (allow reads)
+> 2. Begin a table scan on target table, writing
+>    a new file with a particular filenode
+> 3. Delete the attribute row from pg_attribute
+> 4. Point the table in the catalog to the new filenode
+> 5. Release locks
+> 6. Commit transaction
+> 7. Delete orhpan filenode
+
+Yep, something like that.  CLUSTER is a good start.  DROP COLUMN just
+deals with the attno too.  You would have to renumber them to fill the
+gap.
+
+> i. Upon postmaster startup, remove any orphaned filenodes
+
+Actually, we don't have a good solution for finding orphaned filenodes
+right now.  I do have some code that tries to do this as part of VACUUM
+but it was not 100% perfect, so it was rejected.  I am willing to open
+the discussion to see if a perfect solution can be found.
+
+
+-- 
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M21190@postgresql.org Thu Apr 11 13:40:34 2002
+Return-path: <pgsql-hackers-owner+M21190@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g3BHeXS12137
+	for <pgman@candle.pha.pa.us>; Thu, 11 Apr 2002 13:40:33 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 2BD6C479604; Thu, 11 Apr 2002 12:35:51 -0400 (EDT)
+Received: from candle.pha.pa.us (216-55-132-35.dsl.san-diego.abac.net [216.55.132.35])
+	by postgresql.org (Postfix) with ESMTP id 2DF9D47946A
+	for <pgsql-hackers@postgresql.org>; Thu, 11 Apr 2002 12:31:25 -0400 (EDT)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.11.6/8.10.1) id g3BGVM806114;
+	Thu, 11 Apr 2002 12:31:22 -0400 (EDT)
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-ID: <200204111631.g3BGVM806114@candle.pha.pa.us>
+Subject: Re: [HACKERS] RFC: Restructuring pg_aggregate
+In-Reply-To: <1824.1018542155@sss.pgh.pa.us>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+Date: Thu, 11 Apr 2002 12:31:22 -0400 (EDT)
+cc: Christopher Kings-Lynne <chriskl@familyhealth.com.au>,
+   Hiroshi Inoue <Inoue@tpf.co.jp>, pgsql-hackers@postgresql.org
+X-Mailer: ELM [version 2.4ME+ PL97 (25)]
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Tom Lane wrote:
+> Christopher Kings-Lynne <chriskl@familyhealth.com.au> writes:
+> > The real problem here is the fact that there are now missing attnos in
+> > pg_attribute.  Either that's handled or we renumber the attnos - which is
+> > also quite hard?
+> 
+> Updating pg_attribute per se is not so hard --- just store new copies of
+> all the rows for the table.  However, propagating the changes into other
+> places could be quite painful (I'm thinking of column numbers in stored
+> constraints, rules, etc).
+> 
+> It seems to me that reducing the column to NULLs already gets you the
+> majority of the space savings.  I don't think there is a case to be made
+> that getting back that last bit is worth the pain involved, either in
+> implementation effort or direct runtime costs (do you really want a DROP
+> COLUMN to force an immediate rewrite of the whole table?)
+
+That is an excellent point about having to fix all the places that refer
+to attno.  In fact, we have been moving away from attname references to
+attno references for a while, so it only gets worse.  Tom is also
+correct that setting it to NULL removes the problem of disk space usage
+quite easily.
+
+That only leaves the problem of having gaps in the pg_attribute for that
+relation, and as I remember, that was the problem for Hiroshi's DROP
+COLUMN change, but at this point, after years of delay with no great
+solution on the horizon, we may as well just get this working.
+
+-- 
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From Inoue@tpf.co.jp Thu Apr 11 19:55:08 2002
+Return-path: <Inoue@tpf.co.jp>
+Received: from sd.tpf.co.jp (IDENT:qmailr@sd.tpf.co.jp [210.161.239.34])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g3BNt6S19759
+	for <pgman@candle.pha.pa.us>; Thu, 11 Apr 2002 19:55:06 -0400 (EDT)
+Received: (qmail 31013 invoked from network); 11 Apr 2002 23:55:06 -0000
+Received: from unknown (HELO viscomail.tpf.co.jp) (100.0.0.108)
+  by sd2.tpf-fw-c.co.jp with SMTP; 11 Apr 2002 23:55:06 -0000
+Received: from tpf.co.jp (3dgateway1 [126.0.1.60])
+	by viscomail.tpf.co.jp (8.8.8+Sun/8.8.8) with ESMTP id IAA22335;
+	Fri, 12 Apr 2002 08:55:05 +0900 (JST)
+Message-ID: <3CB62298.88565A54@tpf.co.jp>
+Date: Fri, 12 Apr 2002 08:56:08 +0900
+From: Hiroshi Inoue <Inoue@tpf.co.jp>
+X-Mailer: Mozilla 4.73 [ja] (Windows NT 5.0; U)
+X-Accept-Language: ja
+MIME-Version: 1.0
+To: Christopher Kings-Lynne <chriskl@familyhealth.com.au>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>, Tom Lane <tgl@sss.pgh.pa.us>,
+   pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] RFC: Restructuring pg_aggregate
+References: <20020411233659.O69846-100000@houston.familyhealth.com.au>
+Content-Type: text/plain; charset=iso-2022-jp
+Content-Transfer-Encoding: 7bit
+Status: OR
+
+Christopher Kings-Lynne wrote:
+> 
+> Hmmm.  Personally, I think that a DROP COLUMN that cannot reclaim space is
+> kinda useless - you may as well just use a view!!!
+> 
+> So how would this occur?:
+> 
+> 1. Lock target table for writing (allow reads)
+> 2. Begin a table scan on target table, writing
+>    a new file with a particular filenode
+> 3. Delete the attribute row from pg_attribute
+> 4. Point the table in the catalog to the new filenode
+> 5. Release locks
+> 6. Commit transaction
+> 7. Delete orhpan filenode
+> 
+> i. Upon postmaster startup, remove any orphaned filenodes
+> 
+> The real problem here is the fact that there are now missing attnos in
+> pg_attribute.  Either that's handled or we renumber the attnos - which is
+> also quite hard?
+
+The attnos should be renumbered and it's easy.
+But the above seems only 20% of the total implementation.
+If the attnos are renumbered, all objects which refer to 
+the numbers must be invalidated or re-compiled ...
+For example the parameters of foreign key constraints
+triggers are consist of relname and colnames currently.
+There has been a proposal that change to use relid or
+column numbers instead. Certainly it makes RENAME happy
+but DROP COLUMN unhappy. If there's a foreign key a_rel/1/3
+and the second column of the relation is dropped the
+parameter must be changed to be a_rel/1/2. If neither
+foreign key stuff nor DROP COLUMN take the other into
+account, the consistency is easily broken. 
+
+regards,
+Hiroshi Inoue
+
+From pgsql-hackers-owner+M21205@postgresql.org Thu Apr 11 19:56:20 2002
+Return-path: <pgsql-hackers-owner+M21205@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g3BNuJS19855
+	for <pgman@candle.pha.pa.us>; Thu, 11 Apr 2002 19:56:19 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 2B38A47656E; Thu, 11 Apr 2002 19:55:57 -0400 (EDT)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34])
+	by postgresql.org (Postfix) with SMTP id 6C92E475C96
+	for <pgsql-hackers@postgresql.org>; Thu, 11 Apr 2002 19:55:04 -0400 (EDT)
+Received: (qmail 31013 invoked from network); 11 Apr 2002 23:55:06 -0000
+Received: from unknown (HELO viscomail.tpf.co.jp) (100.0.0.108)
+  by sd2.tpf-fw-c.co.jp with SMTP; 11 Apr 2002 23:55:06 -0000
+Received: from tpf.co.jp (3dgateway1 [126.0.1.60])
+	by viscomail.tpf.co.jp (8.8.8+Sun/8.8.8) with ESMTP id IAA22335;
+	Fri, 12 Apr 2002 08:55:05 +0900 (JST)
+Message-ID: <3CB62298.88565A54@tpf.co.jp>
+Date: Fri, 12 Apr 2002 08:56:08 +0900
+From: Hiroshi Inoue <Inoue@tpf.co.jp>
+X-Mailer: Mozilla 4.73 [ja] (Windows NT 5.0; U)
+X-Accept-Language: ja
+MIME-Version: 1.0
+To: Christopher Kings-Lynne <chriskl@familyhealth.com.au>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>, Tom Lane <tgl@sss.pgh.pa.us>,
+   pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] RFC: Restructuring pg_aggregate
+References: <20020411233659.O69846-100000@houston.familyhealth.com.au>
+Content-Type: text/plain; charset=iso-2022-jp
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: ORr
+
+Christopher Kings-Lynne wrote:
+> 
+> Hmmm.  Personally, I think that a DROP COLUMN that cannot reclaim space is
+> kinda useless - you may as well just use a view!!!
+> 
+> So how would this occur?:
+> 
+> 1. Lock target table for writing (allow reads)
+> 2. Begin a table scan on target table, writing
+>    a new file with a particular filenode
+> 3. Delete the attribute row from pg_attribute
+> 4. Point the table in the catalog to the new filenode
+> 5. Release locks
+> 6. Commit transaction
+> 7. Delete orhpan filenode
+> 
+> i. Upon postmaster startup, remove any orphaned filenodes
+> 
+> The real problem here is the fact that there are now missing attnos in
+> pg_attribute.  Either that's handled or we renumber the attnos - which is
+> also quite hard?
+
+The attnos should be renumbered and it's easy.
+But the above seems only 20% of the total implementation.
+If the attnos are renumbered, all objects which refer to 
+the numbers must be invalidated or re-compiled ...
+For example the parameters of foreign key constraints
+triggers are consist of relname and colnames currently.
+There has been a proposal that change to use relid or
+column numbers instead. Certainly it makes RENAME happy
+but DROP COLUMN unhappy. If there's a foreign key a_rel/1/3
+and the second column of the relation is dropped the
+parameter must be changed to be a_rel/1/2. If neither
+foreign key stuff nor DROP COLUMN take the other into
+account, the consistency is easily broken. 
+
+regards,
+Hiroshi Inoue
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://archives.postgresql.org
+
+From pgsql-hackers-owner+M21209@postgresql.org Thu Apr 11 22:27:40 2002
+Return-path: <pgsql-hackers-owner+M21209@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g3C2ReS27660
+	for <pgman@candle.pha.pa.us>; Thu, 11 Apr 2002 22:27:40 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id A89AF4766D0; Thu, 11 Apr 2002 22:27:35 -0400 (EDT)
+Received: from candle.pha.pa.us (216-55-132-35.dsl.san-diego.abac.net [216.55.132.35])
+	by postgresql.org (Postfix) with ESMTP id 4CE13475EB9
+	for <pgsql-hackers@postgresql.org>; Thu, 11 Apr 2002 22:26:25 -0400 (EDT)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.11.6/8.10.1) id g3C2Q5I27551;
+	Thu, 11 Apr 2002 22:26:05 -0400 (EDT)
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-ID: <200204120226.g3C2Q5I27551@candle.pha.pa.us>
+Subject: Re: [HACKERS] RFC: Restructuring pg_aggregate
+In-Reply-To: <3CB62298.88565A54@tpf.co.jp>
+To: Hiroshi Inoue <Inoue@tpf.co.jp>
+Date: Thu, 11 Apr 2002 22:26:05 -0400 (EDT)
+cc: Christopher Kings-Lynne <chriskl@familyhealth.com.au>,
+   Tom Lane <tgl@sss.pgh.pa.us>, pgsql-hackers@postgresql.org
+X-Mailer: ELM [version 2.4ME+ PL97 (25)]
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Hiroshi Inoue wrote:
+> Christopher Kings-Lynne wrote:
+> > 
+> > Hmmm.  Personally, I think that a DROP COLUMN that cannot reclaim space is
+> > kinda useless - you may as well just use a view!!!
+> > 
+> > So how would this occur?:
+> > 
+> > 1. Lock target table for writing (allow reads)
+> > 2. Begin a table scan on target table, writing
+> >    a new file with a particular filenode
+> > 3. Delete the attribute row from pg_attribute
+> > 4. Point the table in the catalog to the new filenode
+> > 5. Release locks
+> > 6. Commit transaction
+> > 7. Delete orhpan filenode
+> > 
+> > i. Upon postmaster startup, remove any orphaned filenodes
+> > 
+> > The real problem here is the fact that there are now missing attnos in
+> > pg_attribute.  Either that's handled or we renumber the attnos - which is
+> > also quite hard?
+> 
+> The attnos should be renumbered and it's easy.
+> But the above seems only 20% of the total implementation.
+> If the attnos are renumbered, all objects which refer to 
+> the numbers must be invalidated or re-compiled ...
+> For example the parameters of foreign key constraints
+> triggers are consist of relname and colnames currently.
+> There has been a proposal that change to use relid or
+> column numbers instead. Certainly it makes RENAME happy
+> but DROP COLUMN unhappy. If there's a foreign key a_rel/1/3
+> and the second column of the relation is dropped the
+> parameter must be changed to be a_rel/1/2. If neither
+> foreign key stuff nor DROP COLUMN take the other into
+> account, the consistency is easily broken. 
+
+I think that is why Tom was suggesting making all the column values NULL
+and removing the pg_attribute row for the column.  With a NULL value, it
+doesn't take up any room in the tuple, and with the pg_attribute column
+gone, no one will see that row.  The only problem is the gap in attno
+numbering.  How big a problem is that?
+
+-- 
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M21211@postgresql.org Thu Apr 11 22:55:44 2002
+Return-path: <pgsql-hackers-owner+M21211@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g3C2tiS29394
+	for <pgman@candle.pha.pa.us>; Thu, 11 Apr 2002 22:55:44 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id B86AF476739; Thu, 11 Apr 2002 22:55:39 -0400 (EDT)
+Received: from sss.pgh.pa.us (unknown [192.204.191.242])
+	by postgresql.org (Postfix) with ESMTP id 56D8747593C
+	for <pgsql-hackers@postgresql.org>; Thu, 11 Apr 2002 22:54:26 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id g3C2s1F24007;
+	Thu, 11 Apr 2002 22:54:01 -0400 (EDT)
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Hiroshi Inoue <Inoue@tpf.co.jp>,
+   Christopher Kings-Lynne <chriskl@familyhealth.com.au>,
+   pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] RFC: Restructuring pg_aggregate 
+In-Reply-To: <200204120226.g3C2Q5I27551@candle.pha.pa.us> 
+References: <200204120226.g3C2Q5I27551@candle.pha.pa.us>
+Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
+	message dated "Thu, 11 Apr 2002 22:26:05 -0400"
+Date: Thu, 11 Apr 2002 22:54:01 -0400
+Message-ID: <24004.1018580041@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> I think that is why Tom was suggesting making all the column values NULL
+> and removing the pg_attribute row for the column.
+
+That was not my suggestion.
+
+> With a NULL value, it
+> doesn't take up any room in the tuple, and with the pg_attribute column
+> gone, no one will see that row.  The only problem is the gap in attno
+> numbering.  How big a problem is that?
+
+You can't do it that way unless you're intending to rewrite all rows of
+the relation before committing the ALTER; which would be the worst of
+both worlds.  The pg_attribute row *must* be retained to show the
+datatype of the former column, so that we can correctly skip over it
+in tuples where the column isn't yet nulled out.
+
+Hiroshi did this by renumbering the attnum; I propose leaving attnum
+alone and instead adding an attisdropped flag.  That would avoid
+creating a gap in the column numbers, but either way is likely to affect
+some applications that inspect pg_attribute.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M21214@postgresql.org Fri Apr 12 00:09:26 2002
+Return-path: <pgsql-hackers-owner+M21214@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g3C49PS05093
+	for <pgman@candle.pha.pa.us>; Fri, 12 Apr 2002 00:09:25 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id B1BE6476810; Fri, 12 Apr 2002 00:09:20 -0400 (EDT)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34])
+	by postgresql.org (Postfix) with SMTP id A8E07476444
+	for <pgsql-hackers@postgresql.org>; Fri, 12 Apr 2002 00:08:22 -0400 (EDT)
+Received: (qmail 25808 invoked from network); 12 Apr 2002 04:08:26 -0000
+Received: from unknown (HELO viscomail.tpf.co.jp) (100.0.0.108)
+  by sd2.tpf-fw-c.co.jp with SMTP; 12 Apr 2002 04:08:26 -0000
+Received: from tpf.co.jp (3dgateway1 [126.0.1.60])
+	by viscomail.tpf.co.jp (8.8.8+Sun/8.8.8) with ESMTP id NAA22497;
+	Fri, 12 Apr 2002 13:08:24 +0900 (JST)
+Message-ID: <3CB65DF7.8FCFC024@tpf.co.jp>
+Date: Fri, 12 Apr 2002 13:09:28 +0900
+From: Hiroshi Inoue <Inoue@tpf.co.jp>
+X-Mailer: Mozilla 4.73 [ja] (Windows NT 5.0; U)
+X-Accept-Language: ja
+MIME-Version: 1.0
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Christopher Kings-Lynne <chriskl@familyhealth.com.au>,
+   Tom Lane <tgl@sss.pgh.pa.us>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] RFC: Restructuring pg_aggregate
+References: <200204120226.g3C2Q5I27551@candle.pha.pa.us>
+Content-Type: text/plain; charset=iso-2022-jp
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Bruce Momjian wrote:
+> 
+> Hiroshi Inoue wrote:
+> > Christopher Kings-Lynne wrote:
+> > >
+> I think that is why Tom was suggesting making all the column values NULL
+> and removing the pg_attribute row for the column.  With a NULL value, it
+> doesn't take up any room in the tuple, and with the pg_attribute column
+> gone, no one will see that row.  The only problem is the gap in attno
+> numbering.  How big a problem is that?
+
+There's no problem with applications which don't inquire
+of system catalogs(pg_attribute). Unfortunately we have 
+been very tolerant of users' access on system tables and
+there would be pretty many applications which inquire of
+pg_attribute.
+
+regards,
+Hiroshi Inoue
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M21221@postgresql.org Fri Apr 12 05:11:00 2002
+Return-path: <pgsql-hackers-owner+M21221@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g3C9AxS28516
+	for <pgman@candle.pha.pa.us>; Fri, 12 Apr 2002 05:11:00 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 28FF0476B9D; Fri, 12 Apr 2002 04:35:54 -0400 (EDT)
+Received: from tele-post-20.mail.demon.net (tele-post-20.mail.demon.net [194.217.242.20])
+	by postgresql.org (Postfix) with ESMTP id BFDE74769AC
+	for <pgsql-hackers@postgresql.org>; Fri, 12 Apr 2002 04:30:29 -0400 (EDT)
+Received: from mailgate.vale-housing.co.uk ([193.195.77.162] helo=dogbert.vale-housing.co.uk)
+	by tele-post-20.mail.demon.net with esmtp (Exim 3.35 #1)
+	id 16vwRc-0006GP-0K; Fri, 12 Apr 2002 08:30:08 +0000
+Received: by dogbert.vale-housing.co.uk with Internet Mail Service (5.5.2650.21)
+	id <2H2ZS6HB>; Fri, 12 Apr 2002 09:35:53 +0100
+Message-ID: <FED2B709E3270E4B903EB0175A49BCB1293387@dogbert.vale-housing.co.uk>
+From: Dave Page <dpage@vale-housing.co.uk>
+To: "'Tom Lane'" <tgl@sss.pgh.pa.us>, Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Hiroshi Inoue <Inoue@tpf.co.jp>,
+   Christopher Kings-Lynne <chriskl@familyhealth.com.au>,
+   pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] RFC: Restructuring pg_aggregate 
+Date: Fri, 12 Apr 2002 09:35:52 +0100
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2650.21)
+Content-Type: text/plain
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+
+
+> -----Original Message-----
+> From: Tom Lane [mailto:tgl@sss.pgh.pa.us] 
+> Sent: 12 April 2002 03:54
+> To: Bruce Momjian
+> Cc: Hiroshi Inoue; Christopher Kings-Lynne; 
+> pgsql-hackers@postgresql.org
+> Subject: Re: RFC: Restructuring pg_aggregate 
+> 
+> 
+> Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> > I think that is why Tom was suggesting making all the column values 
+> > NULL and removing the pg_attribute row for the column.
+> 
+> That was not my suggestion.
+> 
+> > With a NULL value, it
+> > doesn't take up any room in the tuple, and with the pg_attribute 
+> > column gone, no one will see that row.  The only problem is 
+> the gap in 
+> > attno numbering.  How big a problem is that?
+> 
+> You can't do it that way unless you're intending to rewrite 
+> all rows of the relation before committing the ALTER; which 
+> would be the worst of both worlds.  The pg_attribute row 
+> *must* be retained to show the datatype of the former column, 
+> so that we can correctly skip over it in tuples where the 
+> column isn't yet nulled out.
+> 
+> Hiroshi did this by renumbering the attnum; I propose leaving 
+> attnum alone and instead adding an attisdropped flag.  That 
+> would avoid creating a gap in the column numbers, but either 
+> way is likely to affect some applications that inspect pg_attribute.
+
+Applications like pgAdmin that inspect pg_attribute are being seriously
+hacked to incorporate schema support anyway for 7.3. Personnally I'd be glad
+to spend some time re-coding to allow for this, just to not have to answer
+the numerous 'how do I drop a column' emails I get reguarly.
+
+Regards, Dave.
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From chriskl@familyhealth.com.au Sat Apr 13 02:25:23 2002
+Return-path: <chriskl@familyhealth.com.au>
+Received: from mail.iinet.net.au (symphony-01.iinet.net.au [203.59.3.33])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g3D6PLS06807
+	for <pgman@candle.pha.pa.us>; Sat, 13 Apr 2002 02:25:22 -0400 (EDT)
+Received: (qmail 7569 invoked by uid 666); 13 Apr 2002 06:25:20 -0000
+Received: from unknown (HELO SOL) (203.59.103.193)
+  by mail.iinet.net.au with SMTP; 13 Apr 2002 06:25:20 -0000
+Message-ID: <001701c1e2b2$e7b10a40$0200a8c0@SOL>
+From: "Christopher Kings-Lynne" <chriskl@familyhealth.com.au>
+To: "Tom Lane" <tgl@sss.pgh.pa.us>
+cc: "Bruce Momjian" <pgman@candle.pha.pa.us>,
+   "Hiroshi Inoue" <Inoue@tpf.co.jp>, <pgsql-hackers@postgresql.org>
+References: <20020411233659.O69846-100000@houston.familyhealth.com.au> <1824.1018542155@sss.pgh.pa.us>
+Subject: Re: [HACKERS] RFC: Restructuring pg_aggregate 
+Date: Sat, 13 Apr 2002 14:17:34 +0800
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook Express 5.50.4522.1200
+X-MimeOLE: Produced By Microsoft MimeOLE V5.50.4522.1200
+Status: OR
+
+> Updating pg_attribute per se is not so hard --- just store new copies of
+> all the rows for the table.  However, propagating the changes into other
+> places could be quite painful (I'm thinking of column numbers in stored
+> constraints, rules, etc).
+>
+> It seems to me that reducing the column to NULLs already gets you the
+> majority of the space savings.  I don't think there is a case to be made
+> that getting back that last bit is worth the pain involved, either in
+> implementation effort or direct runtime costs (do you really want a DROP
+> COLUMN to force an immediate rewrite of the whole table?)
+
+OK, sounds fair.  However, is there a more aggressive way of reclaiming the
+space?  The problem with updating all the rows to null for that column is
+that the on-disk size is doubled anyway, right?  So, could a VACUUM FULL
+process do the nulling for us?  Vacuum works outside of normal transaction
+constraints anyway...?
+
+Also, it seems to me that at some point we are forced to break client
+compatibility.  Either we add attisdropped field to pg_attribute, or we use
+Hiroshi's (-1 * attnum - offset) idea.  Both Tom and Hiroshi have good
+reasons for each of these - would it be possible for you guys to post with
+your reasons for and against both the techniques.  I just want to get to an
+implementation specification we all agree on that can be written up and then
+the coding can proceed.  Maybe we should add it to the 'Postgres Major
+Projects' page - and remove those old ones that have already been
+implemented.
+
+Chris
+
+
+
+From Inoue@tpf.co.jp Sun Apr 14 23:47:08 2002
+Return-path: <Inoue@tpf.co.jp>
+Received: from sd.tpf.co.jp (IDENT:qmailr@sd.tpf.co.jp [210.161.239.34])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g3F3l6S23155
+	for <pgman@candle.pha.pa.us>; Sun, 14 Apr 2002 23:47:07 -0400 (EDT)
+Received: (qmail 9638 invoked from network); 15 Apr 2002 03:47:06 -0000
+Received: from unknown (HELO viscomail.tpf.co.jp) (100.0.0.108)
+  by sd2.tpf-fw-c.co.jp with SMTP; 15 Apr 2002 03:47:06 -0000
+Received: from tpf.co.jp (3dgateway1 [126.0.1.60])
+	by viscomail.tpf.co.jp (8.8.8+Sun/8.8.8) with ESMTP id MAA24068;
+	Mon, 15 Apr 2002 12:47:04 +0900 (JST)
+Message-ID: <3CBA4D7A.9E61DECA@tpf.co.jp>
+Date: Mon, 15 Apr 2002 12:48:10 +0900
+From: Hiroshi Inoue <Inoue@tpf.co.jp>
+X-Mailer: Mozilla 4.73 [ja] (Windows NT 5.0; U)
+X-Accept-Language: ja
+MIME-Version: 1.0
+To: Christopher Kings-Lynne <chriskl@familyhealth.com.au>
+cc: Tom Lane <tgl@sss.pgh.pa.us>, Bruce Momjian <pgman@candle.pha.pa.us>,
+   pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] RFC: Restructuring pg_aggregate
+References: <20020411233659.O69846-100000@houston.familyhealth.com.au> <1824.1018542155@sss.pgh.pa.us> <001701c1e2b2$e7b10a40$0200a8c0@SOL>
+Content-Type: text/plain; charset=iso-2022-jp
+Content-Transfer-Encoding: 7bit
+Status: OR
+
+Christopher Kings-Lynne wrote:
+> 
+> Also, it seems to me that at some point we are forced to break client
+> compatibility.
+
+It's not a users' consensus at all. I'm suspicious if
+DROP COLUMN is such a significant feature to break
+client compatibility at our ease.
+
+> Either we add attisdropped field to pg_attribute, or we use
+> Hiroshi's (-1 * attnum - offset) idea.  Both Tom and Hiroshi have good
+> reasons for each of these - would it be possible for you guys to post with
+> your reasons for and against both the techniques. 
+
+I don't object to adding attisdropped field. What
+I meant to say is that the differene is very small.
+
+regards,
+Hiroshi Inoue
 
