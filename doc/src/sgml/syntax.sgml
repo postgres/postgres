@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.54 2001/12/01 04:19:20 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.55 2001/12/08 03:24:23 thomas Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -265,7 +265,8 @@ SELECT 'foobar';
 <programlisting>
 SELECT 'foo'      'bar';
 </programlisting>
-     is not valid syntax.
+     is not valid syntax, and <productname>PostgreSQL</productname> is
+      consistant with <acronym>SQL9x</acronym> in this regard.
     </para>
    </sect3>
 
@@ -293,7 +294,7 @@ SELECT 'foo'      'bar';
 
     <para>
      Integer constants in SQL are sequences of decimal digits (0
-     though 9) with no decimal point.  The range of legal values
+     though 9) with no decimal point and no exponent.  The range of legal values
      depends on which integer data type is used, but the plain
      <type>integer</type> type accepts values ranging from -2147483648
      to +2147483647.  (The optional plus or minus sign is actually a
@@ -318,25 +319,26 @@ SELECT 'foo'      'bar';
 </synopsis>
      where <replaceable>digits</replaceable> is one or more decimal
      digits.  At least one digit must be before or after the decimal
-     point, and after the <literal>e</literal> if you use that option.
+     point. At least one digit must follow the exponent delimiter
+      (<literal>e</literal>) if that field is present.
      Thus, a floating point constant is distinguished from an integer
      constant by the presence of either the decimal point or the
      exponent clause (or both).  There must not be a space or other
      characters embedded in the constant.
     </para>
 
-    <informalexample>
-     <para>
-      These are some examples of valid floating point constants:
-<literallayout>
+     <informalexample>
+      <para>
+       These are some examples of valid floating point constants:
+       <literallayout>
 3.5
 4.
 .001
 5e2
 1.925e-3
-</literallayout>
-     </para>
-    </informalexample>
+       </literallayout>
+      </para>
+     </informalexample>
 
     <para>
      Floating point constants are of type <type>DOUBLE
@@ -344,12 +346,12 @@ SELECT 'foo'      'bar';
      by using <acronym>SQL</acronym> string notation or
      <productname>PostgreSQL</productname> type notation:
 
-<programlisting>
+      <programlisting>
 REAL '1.23'  -- string style
-'1.23'::REAL -- Postgres (historical) style
-     </programlisting>
-    </para>
-   </sect3>
+'1.23'::REAL -- PostgreSQL (historical) style
+      </programlisting>
+     </para>
+    </sect3>
 
    <sect3 id="sql-syntax-constants-generic">
     <title>Constants of Other Types</title>

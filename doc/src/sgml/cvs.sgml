@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.20 2001/11/21 05:53:40 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.21 2001/12/08 03:24:22 thomas Exp $
 CVS code repository
 Thomas Lockhart
 -->
@@ -409,12 +409,12 @@ $ cvsup -L 2 <replaceable class="parameter">postgres.cvsup</replaceable>
 # at the date specified below
 #*default date=97.08.29.00.00.00
 
-# base directory points to where CVSup will store its 'bookmarks' file(s)
+# base directory where CVSup will store its 'bookmarks' file(s)
 # will create subdirectory sup/
 #*default base=/opt/postgres # /usr/local/pgsql
 *default base=/home/cvs
 
-# prefix directory points to where CVSup will store the actual distribution(s)
+# prefix directory where CVSup will store the actual distribution(s)
 *default prefix=/home/cvs
 
 # complete distribution, including all below 
@@ -444,10 +444,10 @@ pgsql
 *default delete use-rel-suffix
 *default tag=.
 
-# base directory points to where CVSup will store its 'bookmarks' file(s)
+# base directory where CVSup will store its 'bookmarks' file(s)
 *default base=<replaceable class="parameter">/usr/local/pgsql</replaceable>
 
-# prefix directory points to where CVSup will store the actual distribution(s)
+# prefix directory where CVSup will store the actual distribution(s)
 *default prefix=<replaceable class="parameter">/usr/local/pgsql</replaceable>
 
 # complete distribution, including all below 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.77 2001/11/28 20:49:09 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.78 2001/12/08 03:24:22 thomas Exp $
 -->
 
  <chapter id="datatype">
@@ -219,25 +219,25 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.77 2001/11/28 20:49:09 pe
       </row>
 
       <row>
-       <entry><type>time [ without time zone ]</type></entry>
+       <entry><type>time [ (<replaceable>p</replaceable>) ] [ without time zone ]</type></entry>
        <entry></entry>
        <entry>time of day</entry>
       </row>
 
       <row>
-       <entry><type>time with time zone</type></entry>
+       <entry><type>time [ (<replaceable>p</replaceable>) ] with time zone</type></entry>
        <entry><type>timetz</type></entry>
        <entry>time of day, including time zone</entry>
       </row>
 
       <row>
-       <entry><type>timestamp without time zone</type></entry>
+       <entry><type>timestamp [ (<replaceable>p</replaceable>) ] without time zone</type></entry>
        <entry><type>timestamp</type></entry>
        <entry>date and time</entry>
       </row>
 
       <row>
-       <entry><type>timestamp [ with time zone ]</type></entry>
+       <entry><type>timestamp [ (<replaceable>p</replaceable>) ] [ with time zone ]</type></entry>
        <entry><type>timestamptz</type></entry>
        <entry>date and time, including time zone</entry>
       </row>
@@ -1274,7 +1274,7 @@ SELECT b, char_length(b) FROM test2;
       </thead>
       <tbody>
        <row>
-        <entry><type>timestamp without time zone</type></entry>
+        <entry><type>timestamp [ (<replaceable>p</replaceable>) ] without time zone</type></entry>
         <entry>both date and time</entry>
         <entry>8 bytes</entry>
         <entry>4713 BC</entry>
@@ -1282,7 +1282,7 @@ SELECT b, char_length(b) FROM test2;
         <entry>1 microsecond / 14 digits</entry>
        </row>
        <row>
-        <entry><type>timestamp [ with time zone ]</type></entry>
+        <entry><type>timestamp [ (<replaceable>p</replaceable>) ] [ with time zone ]</type></entry>
         <entry>both date and time</entry>
         <entry>8 bytes</entry>
         <entry>4713 BC</entry>
@@ -1324,28 +1324,38 @@ SELECT b, char_length(b) FROM test2;
       </tbody>
      </tgroup>
     </table>
+   </para>
 
-    <note>
-     <para>
-      Time zones, and time-zone conventions, are influenced by
-      political conventions, not just physical effects. Time zones have
-      become somewhat standardized during the 1900's, but continue to
-      be prone to arbitrary changes with time.
-      <productname>PostgreSQL</productname> uses your operating
-      system's underlying features to provide time-zone
-      support, and these systems usually contain information for only
-      the time period 1902 through 2038 (corresponding to the full
-      range of conventional Unix system time).
-      <type>timestamp with time zone</type> will use time zone
-      information only within that year range, and assumes that times
-      are in UTC outside that range.
-     </para>
-    </note>
+   <para>
+    <type>time</type> and <type>timestamp</type> both accept an
+    option precision field <replaceable>p</replaceable> which
+    determines the number of digits retained beyond the seconds
+    decimal point. By default, there is no explicit bound on precision
+    and the actual precision is determined by the underlying double
+    precision floating point number used to store values in seconds
+    for <type>interval</type> and
+    since 2000-01-01 in the case of <type>timestamp</type>.
+   </para>
+
+   <para>
+    Time zones, and time-zone conventions, are influenced by
+    political decisions, not just physical effects. Time zones have
+    become somewhat standardized around the world during the 1900's,
+    but continue to 
+    be prone to arbitrary changes.
+    <productname>PostgreSQL</productname> uses your operating
+    system's underlying features to provide time-zone
+    support, and these systems usually contain information for only
+    the time period 1902 through 2038 (corresponding to the full
+    range of conventional Unix system time).
+    <type>timestamp with time zone</type> will use time zone
+    information only within that year range, and assumes that times
+    are in UTC outside that range.
    </para>
 
    <para>
     To ensure compatibility to earlier versions of <productname>PostgreSQL</productname>
-    we also continue to provide <type>datetime</type>
+    we continue to provide <type>datetime</type>
     (equivalent to <type>timestamp</type>) and
     <type>timespan</type> (equivalent to <type>interval</type>),
     however support for these is now restricted to having an
@@ -1384,11 +1394,16 @@ SELECT b, char_length(b) FROM test2;
      Remember that any date or time input needs to be enclosed into
      single quotes, like text strings.  Refer to <xref
      linkend="sql-syntax-constants-generic"> for more information.
-     SQL requires the following syntax
+     <acronym>SQL9x</acronym> requires the following syntax
 <synopsis>
-<replaceable>type</replaceable> '<replaceable>value</replaceable>'
+<replaceable>type</replaceable> [ (<replaceable>p</replaceable>) ] '<replaceable>value</replaceable>'
 </synopsis>
-     but <productname>PostgreSQL</productname> is more flexible.
+     where <replaceable>p</replaceable> is an integer specifying the
+     number of fractional digits in the seconds field, and is allowed
+     for <type>time</type>, <type>timestamp</type>, and <type>interval</type> types.
+     <productname>PostgreSQL</productname> is more flexible in
+     handling date/time than the
+     <acronym>SQL</acronym> standard requires.
     </para>
 
     <sect3>
@@ -1569,7 +1584,7 @@ SELECT b, char_length(b) FROM test2;
     </sect3>
 
     <sect3>
-     <title><type>time [ without time zone ]</type></title>
+     <title><type>time [ ( <replaceable>p</replaceable> ) ] [ without time zone ]</type></title>
 
      <indexterm>
       <primary>time</primary>
@@ -1581,8 +1596,10 @@ SELECT b, char_length(b) FROM test2;
      </indexterm>
 
      <para>
-      Per SQL99, this type can be referenced as <type>time</type> and
-      as <type>time without time zone</type>.
+      Per SQL99, this type can be specified as <type>time</type> or
+      as <type>time without time zone</type>. The optional precision
+      <replaceable>p</replaceable> should be between 0 and 13, and
+      defaults to the precision of the input time literal.
      </para>
 
      <para>
@@ -1641,7 +1658,7 @@ SELECT b, char_length(b) FROM test2;
     </sect3>
 
     <sect3>
-     <title><type>time with time zone</type></title>
+     <title><type>time [ ( <replaceable>precision</replaceable> ) ] with time zone</type></title>
 
      <indexterm>
       <primary>time with time zone</primary>
@@ -1660,6 +1677,12 @@ SELECT b, char_length(b) FROM test2;
       and <type>timestamp with time zone</type>
       should provide a complete range of date/time functionality
       required by any application.
+     </para>
+
+     <para>
+      The optional precision
+      <replaceable>p</replaceable> should be between 0 and 13, and
+      defaults to the precision of the input time literal.
      </para>
 
      <para>
@@ -1705,7 +1728,7 @@ SELECT b, char_length(b) FROM test2;
     </sect3>
 
     <sect3>
-    <title><type>timestamp without time zone</type></title>
+    <title><type>timestamp [ (<replaceable>precision</replaceable>) ] without time zone</type></title>
 
     <indexterm>
      <primary>timestamp without time zone</primary>
@@ -1713,7 +1736,7 @@ SELECT b, char_length(b) FROM test2;
     </indexterm>
 
      <para>
-      Valid input for the <type>timestamp without time zone</type>
+      Valid input for the <type>timestamp [ (<replaceable>p</replaceable>) ] without time zone</type>
       type consists of a concatenation
       of a date and a time, followed by an optional <literal>AD</literal> or
       <literal>BC</literal>, followed by an optional time zone. (See below.)
@@ -1734,6 +1757,12 @@ January 8 04:05:06 1999 PST
      </para>
 
      <para>
+      The optional precision
+      <replaceable>p</replaceable> should be between 0 and 13, and
+      defaults to the precision of the input <type>timestamp</type> literal.
+     </para>
+
+     <para>
       For <type>timestamp without time zone</type>, any explicit time
       zone specified in the input is silently swallowed. That is, the
       resulting date/time value is derived from the explicit date/time
@@ -1742,7 +1771,7 @@ January 8 04:05:06 1999 PST
     </sect3>
 
     <sect3>
-    <title><type>timestamp with time zone</type></title>
+    <title><type>timestamp [ (<replaceable>precision</replaceable>) ] with time zone</type></title>
 
     <indexterm>
      <primary>timestamp</primary>
@@ -1766,6 +1795,12 @@ January 8 04:05:06 1999 PST
 January 8 04:05:06 1999 PST
 </programlisting>
       is supported.
+     </para>
+
+     <para>
+      The optional precision
+      <replaceable>p</replaceable> should be between 0 and 13, and
+      defaults to the precision of the input <type>timestamp</type> literal.
      </para>
 
      <para>
@@ -1852,7 +1887,9 @@ January 8 04:05:06 1999 PST
       The following <acronym>SQL</acronym>-compatible functions can be
       used as date or time
       input for the corresponding data type: <literal>CURRENT_DATE</literal>,
-      <literal>CURRENT_TIME</literal>, <literal>CURRENT_TIMESTAMP</literal>.
+      <literal>CURRENT_TIME</literal>,
+      <literal>CURRENT_TIMESTAMP</literal>. The latter two accept an
+      optional precision specification.
      </para>
 
      <para>

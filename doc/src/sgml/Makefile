@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.45 2001/11/18 20:35:02 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.46 2001/12/08 03:24:21 thomas Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -96,16 +96,27 @@ programmer.html: catalogs.gif connections.gif
 postgres.html: catalogs.gif connections.gif
 
 
-COLLATEINDEX = $(PERL) $(DOCBOOKSTYLE)/bin/collateindex.pl -f -g -t 'Index'
+#COLLATEINDEX = $(PERL) $(DOCBOOKSTYLE)/bin/collateindex.pl -f -g -t 'Index'
+COLLATEINDEX = $(PERL) /usr/bin/collateindex.pl -f -g -t 'Index'
 
 ifeq (,$(wildcard HTML.index))
 bookindex.sgml:
+ifeq (,$(wildcard $(COLLATEINDEX)))
+	touch $@
+else
 	$(COLLATEINDEX) -o $@ -N
+endif
+
 setindex.sgml:
+ifeq (,$(wildcard $(COLLATEINDEX)))
+	touch $@
+else
 	$(COLLATEINDEX) -x -o $@ -N
+endif
 else
 bookindex.sgml: HTML.index
 	$(COLLATEINDEX) -i 'bookindex' -o $@ $<
+
 setindex.sgml: HTML.index
 	$(COLLATEINDEX) -i 'setindex' -x -o $@ $<
 endif

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.68 2001/12/04 02:21:35 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.69 2001/12/08 03:24:22 thomas Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1367,208 +1367,250 @@ gunzip -c user.ps.gz \
       </thead>
       <tbody>
        <row>
-	<entry><systemitem class="osname">AIX 4.3.3</></entry>
+	<entry><systemitem class="osname">AIX</></entry>
 	<entry><systemitem>RS6000</></entry>
-	<entry>7.1</entry>
-	<entry>2001-03-21, Gilles Darold (<email>gilles@darold.net</email>)</entry>
-        <entry>see also <filename>doc/FAQ_AIX</filename></entry>
+	<entry>7.2</entry>
+	<entry>2001-11-28,
+	 Andreas Zeugswetter (<email>ZeugswetterA@spardat.at</email>)</entry>
+        <entry>4.3; see also <filename>doc/FAQ_AIX</filename></entry>
        </row>
        <row>
-	<entry><systemitem class="osname">BeOS 5.0.4</></entry>
-	<entry><systemitem>x86</></entry>
-	<entry>7.1</entry>
-	<entry>2001-02-26, Cyril Velter (<email>cyril.velter@libertysurf.fr</email>)</entry>
-        <entry>requires new BONE networking stack</entry>
-       </row>
-       <row>
-	<entry><systemitem class="osname">BSD/OS 4.2</></entry>
+	<entry><systemitem class="osname">BeOS</></entry>
 	<entry><systemitem>x86</></entry>
 	<entry>7.2</entry>
-	<entry>2001-11-27, Bruce Momjian (<email>pgman@candle.pha.pa.us</email>)</entry>
-        <entry></entry>
+	<entry>2001-11-29,
+	 Cyril Velter (<email>cyril.velter@libertysurf.fr</email>)</entry>
+        <entry>5.0.4</entry>
+       </row>
+       <row>
+	<entry><systemitem class="osname">BSD/OS</></entry>
+	<entry><systemitem>x86</></entry>
+	<entry>7.2</entry>
+	<entry>2001-11-27,
+	 Bruce Momjian (<email>pgman@candle.pha.pa.us</email>)</entry>
+        <entry>4.2</entry>
        </row>
        <row>
 	<entry><systemitem class="osname">FreeBSD</></entry>
 	<entry><systemitem>x86</></entry>
 	<entry>7.2</entry>
-	<entry>2001-11-14, Chris Kings-Lynne
-	(<email>chriskl@familyhealth.com.au</email>)</entry>
+	<entry>2001-11-14,
+	 Chris Kings-Lynne (<email>chriskl@familyhealth.com.au</email>)</entry>
         <entry></entry>
        </row>
        <row>
 	<entry><systemitem class="osname">HP-UX</></entry>
 	<entry><systemitem>PA-RISC</></entry>
 	<entry>7.2</entry>
-	<entry>2001-11-16, 10.20 Tom Lane (<email>tgl@sss.pgh.pa.us</email>),
-	       2001-03-22, 11.00, 11i Giles Lean (<email>giles@nemeton.com.au</email>)</entry>
-        <entry>32- and 64-bit on 11.00; see also <filename>doc/FAQ_HPUX</filename></entry>
+        <entry>2001-11-29,
+	 Joseph Conway (<email>Joseph.Conway@home.com</email>),
+	 Tom Lane (<email>tgl@sss.pgh.pa.us</email>)</entry>
+        <entry>11.00 and 10.20; see also <filename>doc/FAQ_HPUX</filename></entry>
        </row>
        <row>
-	<entry><systemitem class="osname">IRIX 6.5.11</></entry>
+	<entry><systemitem class="osname">IRIX</></entry>
 	<entry><systemitem>MIPS</></entry>
-	<entry>7.1</entry>
-	<entry>2001-03-22, Robert Bruccoleri (<email>bruc@acm.org</email>)</entry>
-	<entry>32-bit compilation model</entry>
+	<entry>7.2</entry>
+	<entry>2001-11-28,
+	 Luis Amigo (<email>lamigo@atc.unican.es</email>)</entry>
+	<entry>6.5.13, MIPSPro 7.30</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Linux 2.2.18</></entry>
+	<entry><systemitem class="osname">Linux</></entry>
 	<entry><systemitem>Alpha</></entry>
 	<entry>7.2</entry>
-	<entry>2001-11-16, Tom Lane (<email>tgl@sss.pgh.pa.us</email>)</entry>
-	<entry>Tested at SourceForge</entry>
+	<entry>2001-11-16,
+	 Tom Lane (<email>tgl@sss.pgh.pa.us</email>)</entry>
+	<entry>2.2.18; tested at SourceForge</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Linux 2.2.x</></entry>
+	<entry><systemitem class="osname">Linux</></entry>
 	<entry><systemitem>armv4l</></entry>
 	<entry>7.1</entry>
-	<entry>2001-02-22, Mark Knox (<email>segfault@hardline.org</email>)</entry>
-	<entry></entry>
+	<entry>2001-02-22,
+	 Mark Knox (<email>markk@pixin.net</email>)</entry>
+	<entry>2.2.x</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Linux 2.0.x</></entry>
+	<entry><systemitem class="osname">Linux</></entry>
 	<entry><systemitem>MIPS</></entry>
 	<entry>7.2</entry>
-	<entry>2001-11-15, Hisao Shibuya (<email>shibuya@alpha.or.jp</>)</entry>
-	<entry><productname>Cobalt Qube2</></entry>
+	<entry>2001-11-15,
+	 Hisao Shibuya (<email>shibuya@alpha.or.jp</>)</entry>
+	<entry>2.0.x; <productname>Cobalt Qube2</></entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Linux 2.2.18</></entry>
+	<entry><systemitem class="osname">Linux</></entry>
 	<entry><systemitem>PPC74xx</></entry>
 	<entry>7.2</entry>
-	<entry>2001-11-16, Tom Lane (<email>tgl@sss.pgh.pa.us</email>)</entry>
-	<entry>Apple G3</entry>
+	<entry>2001-11-16,
+	 Tom Lane (<email>tgl@sss.pgh.pa.us</email>)</entry>
+	<entry>2.2.18; Apple G3</entry>
        </row>
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
 	<entry><systemitem>S/390</></entry>
 	<entry>7.1</entry>
-	<entry>2000-11-17, Neale Ferguson (<email>Neale.Ferguson@softwareAG-usa.com</email>)</entry>
+	<entry>2000-11-17,
+	 Neale Ferguson (<email>Neale.Ferguson@softwareAG-usa.com</email>)</entry>
 	<entry></entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Linux 2.2.15</></entry>
+	<entry><systemitem class="osname">Linux</></entry>
 	<entry><systemitem>Sparc</></entry>
-	<entry>7.1</entry>
-	<entry>2001-01-30, Ryan Kirkpatrick (<email>pgsql@rkirkpat.net</email>)</entry>
-	<entry></entry>
+	<entry>7.2</entry>
+	<entry>2001-11-28, 
+	 Doug McNaught (<email>doug@wireboard.com</email>)</entry>
+	<entry>2.2.19</entry>
        </row>
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
 	<entry><systemitem>x86</></entry>
 	<entry>7.2</entry>
-	<entry>2001-11-15, Thomas Lockhart (<email>lockhart@fourpalms.org</email>)</entry>
+	<entry>2001-11-15,
+	 Thomas Lockhart (<email>lockhart@fourpalms.org</email>)</entry>
 	<entry>2.0.x, 2.2.x, 2.4.x</entry>
        </row>
        <row>
 	<entry><systemitem class="osname">MacOS X</></entry>
 	<entry><systemitem>PPC</></entry>
 	<entry>7.2</entry>
-	<entry>2001-11-16, Tom Lane (<email>tgl@sss.pgh.pa.us</email>)</entry>
-	<entry>Darwin 10.1</entry>
+	<entry>2001-11-28,
+	 Gavin Sherry (<email>swm@linuxworld.com.au</email>)</entry>
+	<entry>Darwin 10.1.x</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">NetBSD 1.5W</></entry>
+	<entry><systemitem class="osname">NetBSD</></entry>
 	<entry><systemitem>Alpha</></entry>
 	<entry>7.2</entry>
-	<entry>2001-11-20, Thomas Thai (<email>tom@minnesota.com</email>)</entry>
-	<entry></entry>
+	<entry>2001-11-20,
+	 Thomas Thai (<email>tom@minnesota.com</email>)</entry>
+	<entry>1.5W</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">NetBSD 1.5E</></entry>
+	<entry><systemitem class="osname">NetBSD</></entry>
 	<entry><systemitem>arm32</></entry>
 	<entry>7.1</entry>
-	<entry>2001-03-21, Patrick Welche (<email>prlw1@cam.ac.uk</email>)</entry>
-	<entry></entry>
+	<entry>2001-03-21,
+	 Patrick Welche (<email>prlw1@cam.ac.uk</email>)</entry>
+	<entry>1.5E</entry>
        </row>
        <row>
 	<entry><systemitem class="osname">NetBSD</></entry>
 	<entry><systemitem>m68k</></entry>
 	<entry>7.0</entry>
-	<entry>2000-04-10, Henry B. Hotz (<email>hotz@jpl.nasa.gov</email>)</entry>
+	<entry>2000-04-10,
+	 Henry B. Hotz (<email>hotz@jpl.nasa.gov</email>)</entry>
 	<entry>Mac 8xx</entry>
        </row>
        <row>
 	<entry><systemitem class="osname">NetBSD</></entry>
 	<entry><systemitem>PPC</></entry>
-	<entry>7.1</entry>
-	<entry>2001-04-05, Henry B. Hotz (<email>hotz@jpl.nasa.gov</email>)</entry>
-	<entry>Mac G4</entry>
+	<entry>7.2</entry>
+	<entry>2001-11-28,
+	 Bill Studenmund (<email>wrstuden@netbsd.org</email>)</entry>
+	<entry>1.5</entry>
        </row>
        <row>
 	<entry><systemitem class="osname">NetBSD</></entry>
 	<entry><systemitem>Sparc</></entry>
-	<entry>7.1</entry>
-	<entry>2000-04-05, Matthew Green (<email>mrg@eterna.com.au</email>)</entry>
+	<entry>7.2</entry>
+	<entry>2001-12-03,
+	 Matthew Green (<email>mrg@eterna.com.au</email>)</entry>
 	<entry>32- and 64-bit builds</entry>
        </row>
        <row>
-        <entry><systemitem class="osname">NetBSD 1.5</></entry>
+        <entry><systemitem class="osname">NetBSD</></entry>
         <entry><systemitem>VAX</></entry>
         <entry>7.1</entry>
-        <entry>2001-03-30, Tom I. Helbekkmo (<email>tih@kpnQwest.no</email>)</entry>
-        <entry></entry>
+        <entry>2001-03-30,
+	 Tom I. Helbekkmo (<email>tih@kpnQwest.no</email>)</entry>
+        <entry>1.5</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">NetBSD 1.5</></entry>
+	<entry><systemitem class="osname">NetBSD</></entry>
 	<entry><systemitem>x86</></entry>
-	<entry>7.1</entry>
-	<entry>2001-03-23, Giles Lean (<email>giles@nemeton.com.au</email>)</entry>
-	<entry></entry>
+	<entry>7.2</entry>
+	<entry>2001-11-28,
+	 Bill Studenmund (<email>wrstuden@netbsd.org</email>)</entry>
+	<entry>1.5</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">OpenBSD 2.8</></entry>
+	<entry><systemitem class="osname">OpenBSD</></entry>
 	<entry><systemitem>Sparc</></entry>
-	<entry>7.1</entry>
-	<entry>2001-03-23, Brandon Palmer (<email>bpalmer@crimelabs.net</email>)</entry>
-        <entry></entry>
+	<entry>7.2</entry>
+	<entry>2001-11-27,
+	 Brandon Palmer (<email>bpalmer@crimelabs.net</email>)</entry>
+        <entry>OBSD-3.0</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">OpenBSD 2.8</></entry>
+	<entry><systemitem class="osname">OpenBSD</></entry>
 	<entry><systemitem>x86</></entry>
-	<entry>7.1</entry>
-	<entry>2001-03-21, Brandon Palmer (<email>bpalmer@crimelabs.net</email>)</entry>
-        <entry></entry>
+	<entry>7.2</entry>
+	<entry>2001-11-26,
+	 Brandon Palmer (<email>bpalmer@crimelabs.net</email>)</entry>
+        <entry>OBSD-3.0</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">SCO UnixWare 7.1.1</></entry>
+	<entry><systemitem class="osname">OpenUnix</></entry>
 	<entry><systemitem>x86</></entry>
-	<entry>7.1</entry>
-	<entry>2001-03-19, Larry Rosenman (<email>ler@lerctr.org</email>)</entry>
-	<entry><productname>UDK FS</productname> compiler; see also <filename>doc/FAQ_SCO</filename></entry>
+	<entry>7.2</entry>
+	<entry>2001-11-28,
+	 OU-8 Larry Rosenman (<email>ler@lerctr.org</email>),
+	 UW-7 Olivier Prenant (<email>ohp@pyrenet.fr</email>)</entry>
+	<entry>see also <filename>doc/FAQ_SCO</filename></entry>
        </row>
+     <row>
+      <entry><systemitem class="osname">QNX 4.25</></entry>
+      <entry><systemitem>x86</></entry>
+      <entry>7.1</entry>
+      <entry>2001-05-24,
+       Bernd Tegge (<email>tegge@repas-aeg.de</email>)
+      </entry>
+      <entry>7.2 w/patches on QNX 6; see also <filename>doc/FAQ_QNX4</filename></entry>
+     </row>
        <row>
 	<entry><systemitem class="osname">Solaris</></entry>
 	<entry><systemitem>Sparc</></entry>
 	<entry>7.2</entry>
-	<entry>2001-11-12, Andrew Sullivan (<email>andrew@libertyrms.com</email>)</entry>
+	<entry>2001-11-12,
+	 Andrew Sullivan (<email>andrew@libertyrms.com</email>)</entry>
 	<entry>2.6-8; see also <filename>doc/FAQ_Solaris</filename></entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Solaris 2.8</></entry>
+	<entry><systemitem class="osname">Solaris</></entry>
 	<entry><systemitem>x86</></entry>
-	<entry>7.1</entry>
-	<entry>2001-03-27, Mathijs Brands (<email>mathijs@ilse.nl</email>)</entry>
-	<entry>see also <filename>doc/FAQ_Solaris</filename></entry>
+	<entry>7.2</entry>
+	<entry>2001-11-28, 
+	 Martin Renters (<email>martin@datafax.com</email>)</entry>
+	<entry>2.8; see also <filename>doc/FAQ_Solaris</filename></entry>
        </row>
+<!--
+No longer compiles without error, but not really needing to be listed
+as unsupported either since it is superceded by Solaris. - thomas 2001-12-03
        <row>
-	<entry><systemitem class="osname">SunOS 4.1.4</></entry>
+	<entry><systemitem class="osname">SunOS</></entry>
 	<entry><systemitem>Sparc</></entry>
 	<entry>7.1</entry>
-	<entry>2001-03-23, Tatsuo Ishii (<email>t-ishii@sra.co.jp</email>)</entry>
-	<entry></entry>
+	<entry>2001-03-23,
+	 Tatsuo Ishii (<email>t-ishii@sra.co.jp</email>)</entry>
+	<entry>4.1.4</entry>
        </row>
+-->
        <row>
-	<entry><systemitem class="osname">Tru64 UNIX</></entry>
+	<entry><systemitem class="osname">Tru64</></entry>
 	<entry><systemitem>Alpha</></entry>
-	<entry>7.1</entry>
-	<entry>2001-03-26, Adriaan Joubert (<email>a.joubert@albourne.com</email>)</entry>
-        <entry>4.0-5.0, <command>cc</> and <command>gcc</></entry>
+	<entry>7.2</entry>
+	<entry>2001-11-26,
+	 Alessio Bragadini (<email>alessio@albourne.com</email>)</entry>
+        <entry>4.0g, with cc and gcc</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Windows NT/2000</> with <application>Cygwin</></entry>
+	<entry><systemitem class="osname">Windows NT/2000</></entry>
 	<entry><systemitem>x86</></entry>
 	<entry>7.1</entry>
-	<entry>2001-03-16, Jason Tishler (<email>Jason.Tishler@dothill.com</email>)</entry>
+	<entry>2001-03-16,
+	 Jason Tishler (<email>jason@tishler.net</email>)</entry>
         <entry>with <application>Cygwin</application> tool set, see <filename>doc/FAQ_MSWIN</filename></entry>
        </row>
       </tbody>
@@ -1607,6 +1649,8 @@ gunzip -c user.ps.gz \
       <entry>1998-03-01, Brian E Gallew (<email>geek+@cmu.edu</email>)</entry>
       <entry>6.4 probably OK</entry>
      </row>
+<!--
+Obsolete platform? This distro was merged into PPC afaik. - thomas 2001-12-07
      <row>
       <entry><systemitem class="osname">MkLinux DR1</></entry>
       <entry><systemitem>PPC750</></entry>
@@ -1614,19 +1658,13 @@ gunzip -c user.ps.gz \
       <entry>2001-04-03, Tatsuo Ishii (<email>t-ishii@sra.co.jp</email>)</entry>
       <entry>7.1 needs OS update?</entry>
      </row>
+-->
      <row>
       <entry><systemitem class="osname">NextStep</></entry>
       <entry><systemitem>x86</></entry>
       <entry>6.x</entry>
       <entry>1998-03-01, David Wetzel (<email>dave@turbocat.de</email>)</entry>
       <entry>bit rot suspected</entry>
-     </row>
-     <row>
-      <entry><systemitem class="osname">QNX 4.25</></entry>
-      <entry><systemitem>x86</></entry>
-      <entry>7.0</entry>
-      <entry>2000-04-01, Dr. Andreas Kardos (<email>kardos@repas-aeg.de</email>)</entry>
-      <entry>Spinlock code needs work.  See also <filename>doc/FAQ_QNX4</filename>.</entry>
      </row>
      <row>
       <entry><systemitem class="osname">SCO OpenServer 5</></entry>
@@ -1661,7 +1699,7 @@ gunzip -c user.ps.gz \
       <entry><systemitem>VAX</></entry>
       <entry>6.x</entry>
       <entry>1998-03-01</entry>
-      <entry>No recent reports. Obsolete?</entry>
+      <entry>No recent reports</entry>
      </row>
      <row>
       <entry><systemitem class="osname">Windows 9x, ME, NT, 2000</> (native)</entry>
