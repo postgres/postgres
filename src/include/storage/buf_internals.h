@@ -1,16 +1,12 @@
 /*-------------------------------------------------------------------------
  *
  * buf_internals.h
- *	  Internal definitions.
+ *	  Internal definitions for buffer manager.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.33 1999/09/24 00:25:27 tgl Exp $
- *
- * NOTE
- *		If BUFFERPAGE0 is defined, then 0 will be used as a
- *		valid buffer page number.
+ * $Id: buf_internals.h,v 1.34 1999/11/21 19:56:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,18 +38,14 @@ extern int	Num_Descriptors;
 
 typedef bits16 BufFlags;
 
-typedef struct sbufdesc BufferDesc;
-typedef struct sbufdesc BufferHdr;
-typedef struct buftag BufferTag;
-
 /* long * so alignment will be correct */
 typedef long **BufferBlock;
 
-struct buftag
+typedef struct buftag
 {
 	LockRelId	relId;
 	BlockNumber blockNum;		/* blknum relative to begin of reln */
-};
+} BufferTag;
 
 #define CLEAR_BUFFERTAG(a) \
 ( \
@@ -72,8 +64,8 @@ struct buftag
 #define INVALID_DESCRIPTOR (-3)
 
 /*
- *	struct sbufdesc -- shared buffer cache metadata for a single
- *					   shared buffer descriptor.
+ *	BufferDesc -- shared buffer cache metadata for a single
+ *				  shared buffer descriptor.
  *
  *		We keep the name of the database and relation in which this
  *		buffer appears in order to avoid a catalog lookup on cache
@@ -83,9 +75,9 @@ struct buftag
  *		Dbname, relname, dbid, and relid are enough to determine where
  *		to put the buffer, for all storage managers.
  */
-struct sbufdesc
+typedef struct sbufdesc
 {
-	Buffer		freeNext;		/* link for freelist chain */
+	Buffer		freeNext;		/* links for freelist chain */
 	Buffer		freePrev;
 	SHMEM_OFFSET data;			/* pointer to data in buf pool */
 
@@ -93,7 +85,7 @@ struct sbufdesc
 	BufferTag	tag;			/* file/block identifier */
 	int			buf_id;			/* maps global desc to local desc */
 
-	BufFlags	flags;			/* described below */
+	BufFlags	flags;			/* see bit definitions above */
 	unsigned	refcount;		/* # of times buffer is pinned */
 
 #ifdef HAS_TEST_AND_SET
@@ -107,10 +99,12 @@ struct sbufdesc
 
 	char		sb_dbname[NAMEDATALEN]; /* name of db in which buf belongs */
 	char		sb_relname[NAMEDATALEN];		/* name of reln */
-};
+} BufferDesc;
 
 /*
- * Buffer lock infos in BufferLocks below.
+ * Each backend has its own BufferLocks[] array holding flag bits
+ * showing what locks it has set on each buffer.
+ *
  * We have to free these locks in elog(ERROR)...
  */
 #define BL_IO_IN_PROGRESS	(1 << 0)	/* unimplemented */
@@ -178,7 +172,7 @@ extern BufferDesc *LocalBufferDescriptors;
 extern int	NLocBuffer;
 
 extern BufferDesc *LocalBufferAlloc(Relation reln, BlockNumber blockNum,
-				 bool *foundPtr);
+									bool *foundPtr);
 extern int	WriteLocalBuffer(Buffer buffer, bool release);
 extern int	FlushLocalBuffer(Buffer buffer, bool release);
 extern void InitLocalBuffer(void);
