@@ -2,6 +2,70 @@
   <title>Release Notes</title>
 
 <sect1>
+<title>Release 6.5.2</title>
+<!--
+<docinfo>
+<authorgroup>
+<author>
+<firstname>Bruce</firstname>
+<surname>Momjian</surname>
+</author>
+</authorgroup>
+<date>1999-09-15</date>
+</docinfo>
+-->
+
+<para>
+This is basically a cleanup release for 6.5.1.  We have fixed a variety of
+problems reported by 6.5.1 users.
+</para>
+
+
+<sect2>
+<title>Migration to v6.5.2</title>
+
+<para>
+A dump/restore is <emphasis>not</emphasis> required for those running
+6.5.*.
+</para>
+</sect2>
+<sect2>
+<title>Detailed Change List</title>
+
+<para>
+<programlisting>
+subselect+CASE fixes(Tom)
+Add SHLIB_LINK setting for solaris_i386 and solaris_sparc ports(Daren Sefcik)
+Fixes for CASE in WHERE join clauses(Tom)
+Fix BTScan abort(Tom)
+Repair the check for redundant UNIQUE and PRIMARY KEY indices(Tom)
+Improve it so that it checks for multi-column constraints(Tom)
+Fix for Win32 making problem with MB enabled(Hiroki Kataoka)
+Allow BSD yacc and bison to compile pl code(Bruce)
+Fix SET NAMES working
+int8 fixes(Thomas)
+Fix vacuum's memory consumption(Tom)
+Reduce the total memory consumption of vacuum(Tom)
+Fix for timestamp(datetime)
+Rule deparsing bugfixes(Tom)
+Fix quoting problems in mkMakefile.tcldefs.sh.in and mkMakefile.tkdefs.sh.in(Tom)
+Update frontend libpq to remove limits on query lengths,
+ error/notice message lengths, and number of fields per tuple(Tom)
+This is to re-use space on index pages freed by vacuum(Tom)
+document -x for pg_dump(Bruce)
+Fix for unary operators in rule deparser(Tom)
+Comment out FileUnlink of excess segments during mdtruncate()(Tom)
+Irix linking fix from Yu Cao <yucao@falcon.kla-tencor.com>
+Repair logic error in LIKE: should not return LIKE_ABORT
+   when reach end of pattern before end of text(Tom)
+Repair incorrect cleanup of heap memory allocation during transaction abort(Tom)
+</programlisting>
+</para>
+</sect2>
+</sect1>
+
+
+<sect1>
 <title>Release 6.5.1</title>
 <!--
 <docinfo>
@@ -63,8 +127,8 @@ Add Win1250 (Czech) support (Pavel Behal)
 </sect1>
 
 
-  <sect1>
-   <title>Release 6.5</title>
+<sect1>
+<title>Release 6.5</title>
 <!--
 <docinfo>
 <authorgroup>
