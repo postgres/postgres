@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.54 1999/11/22 17:56:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.55 1999/12/16 22:19:54 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -839,7 +839,7 @@ SearchSelfReferences(struct catcache * cache)
 				elog(ERROR, "SearchSelfReferences: %s not found in %s",
 					IndexRelidIndex, RelationRelationName);
 			indexSelfOid = ntp->t_data->t_oid;
-			pfree(ntp);
+			heap_freetuple(ntp);
 			heap_close(rel, AccessShareLock);
 		}
 		/* Looking for something other than pg_index_indexrelid_index? */

@@ -77,7 +77,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.3 1999/12/13 01:27:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.4 1999/12/16 22:19:56 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1697,7 +1697,7 @@ writetup_heap(Tuplesortstate *state, int tapenum, void *tup)
 						 (void*) &tuplen, sizeof(tuplen));
 
 	FREEMEM(state, HEAPTUPLESIZE + tuple->t_len);
-	pfree(tuple);
+	heap_freetuple(tuple);
 }
 
 static void *
@@ -1710,6 +1710,7 @@ readtup_heap(Tuplesortstate *state, int tapenum, unsigned int len)
 	/* reconstruct the HeapTupleData portion */
 	tuple->t_len = len - sizeof(unsigned int);
 	ItemPointerSetInvalid(&(tuple->t_self));
+	tuple->t_datamcxt = CurrentMemoryContext;
 	tuple->t_data = (HeapTupleHeader) (((char *) tuple) + HEAPTUPLESIZE);
 	/* read in the tuple proper */
 	if (LogicalTapeRead(state->tapeset, tapenum, (void *) tuple->t_data,

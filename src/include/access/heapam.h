@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.48 1999/11/24 00:44:37 momjian Exp $
+ * $Id: heapam.h,v 1.49 1999/12/16 22:19:58 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -281,6 +281,7 @@ extern HeapTuple heap_formtuple(TupleDesc tupleDescriptor,
 			   Datum *value, char *nulls);
 extern HeapTuple heap_modifytuple(HeapTuple tuple,
 		Relation relation, Datum *replValue, char *replNull, char *repl);
+extern void heap_freetuple(HeapTuple tuple);
 HeapTuple	heap_addheader(uint32 natts, int structlen, char *structure);
 
 /* in common/heap/stats.c */

@@ -190,7 +190,7 @@ void CreateComments(Oid oid, char *comment) {
 			 desctuple);
       CatalogCloseIndices(Num_pg_description_indices, idescs);
     }
-    pfree(desctuple);
+    heap_freetuple(desctuple);
 
   }
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.25 1999/07/19 07:07:28 momjian Exp $
+ * $Id: htup.h,v 1.26 1999/12/16 22:19:58 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,11 +78,17 @@ extern long heap_sysoffset[];
  *	  updated version of tuple (required by MVCC);
  * 3. someday someone let tuple to cross block boundaries -
  *	  he have to add something below...
+ *
+ * Change for 7.0:
+ *    Up to now t_data could be NULL, the memory location directly following
+ *    HeapTupleData or pointing into a buffer. Now, it could also point to
+ *    a separate allocation that was done in the t_datamcxt memory context.
  */
 typedef struct HeapTupleData
 {
 	uint32		t_len;			/* length of *t_data */
 	ItemPointerData t_self;		/* SelfItemPointer */
+	MemoryContext   t_datamcxt; /* */
 	HeapTupleHeader t_data;		/* */
 } HeapTupleData;
 

@@ -7,15 +7,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.28 1999/11/23 20:06:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.29 1999/12/16 22:19:47 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-
 #include "optimizer/planmain.h"
+#include "access/heapam.h"
 
 /* ****************************************************************
  *					 plannodes.h free functions
@@ -465,7 +465,7 @@ _freeSubPlan(SubPlan *node)
 	freeObject(node->sublink);
 
 	if (node->curTuple)
-		pfree(node->curTuple);
+		heap_freetuple(node->curTuple);
 
 	pfree(node);
 }

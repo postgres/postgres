@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.56 1999/11/24 00:44:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.57 1999/12/16 22:19:41 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -247,7 +247,7 @@ Async_Listen(char *relname, int pid)
 	tupDesc = lRel->rd_att;
 	newtup = heap_formtuple(tupDesc, values, nulls);
 	heap_insert(lRel, newtup);
-	pfree(newtup);
+	heap_freetuple(newtup);
 
 	heap_close(lRel, AccessExclusiveLock);
 

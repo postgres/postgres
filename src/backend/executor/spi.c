@@ -3,7 +3,7 @@
  * spi.c
  *				Server Programming Interface
  *
- * $Id: spi.c,v 1.43 1999/12/10 03:55:51 momjian Exp $
+ * $Id: spi.c,v 1.44 1999/12/16 22:19:44 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -536,6 +536,26 @@ SPI_pfree(void *pointer)
 	}
 
 	pfree(pointer);
+
+	if (oldcxt)
+		MemoryContextSwitchTo(oldcxt);
+
+	return;
+}
+
+void
+SPI_freetuple(HeapTuple tuple)
+{
+	MemoryContext oldcxt = NULL;
+
+	if (_SPI_curid + 1 == _SPI_connected)		/* connected */
+	{
+		if (_SPI_current != &(_SPI_stack[_SPI_curid + 1]))
+			elog(FATAL, "SPI: stack corrupted");
+		oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
+	}
+
+	heap_freetuple(tuple);
 
 	if (oldcxt)
 		MemoryContextSwitchTo(oldcxt);

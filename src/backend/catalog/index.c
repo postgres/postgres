@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.99 1999/12/10 03:55:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.100 1999/12/16 22:19:39 wieck Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -489,7 +489,7 @@ UpdateRelationRelation(Relation indexRelation, char *temp_relname)
 	}
 
 	tupleOid = tuple->t_data->t_oid;
-	pfree(tuple);
+	heap_freetuple(tuple);
 	heap_close(pg_class, RowExclusiveLock);
 
 	return tupleOid;
@@ -581,7 +581,7 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 								 value,
 								 nullv,
 								 replace);
-	pfree(init_tuple);
+	heap_freetuple(init_tuple);
 
 	heap_insert(pg_attribute, cur_tuple);
 	if (hasind)
@@ -611,7 +611,7 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 									 value,
 									 nullv,
 									 replace);
-		pfree(cur_tuple);
+		heap_freetuple(cur_tuple);
 
 		heap_insert(pg_attribute, new_tuple);
 		if (hasind)
@@ -626,7 +626,7 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 	}
 
 	if (cur_tuple)
-		pfree(cur_tuple);
+		heap_freetuple(cur_tuple);
 	heap_close(pg_attribute, RowExclusiveLock);
 	if (hasind)
 		CatalogCloseIndices(Num_pg_attr_indices, idescs);
@@ -768,7 +768,7 @@ UpdateIndexRelation(Oid indexoid,
 	heap_close(pg_index, RowExclusiveLock);
 	pfree(predText);
 	pfree(indexForm);
-	pfree(tuple);
+	heap_freetuple(tuple);
 }
 
 /* ----------------------------------------------------------------
@@ -841,7 +841,7 @@ UpdateIndexPredicate(Oid indexoid, Node *oldPred, Node *predicate)
 
 	heap_update(pg_index, &newtup->t_self, newtup, NULL);
 
-	pfree(newtup);
+	heap_freetuple(newtup);
 	heap_close(pg_index, RowExclusiveLock);
 	pfree(predText);
 }
@@ -1170,7 +1170,7 @@ index_drop(Oid indexId)
 	Assert(HeapTupleIsValid(tuple));
 
 	heap_delete(relationRelation, &tuple->t_self, NULL);
-	pfree(tuple);
+	heap_freetuple(tuple);
 	heap_close(relationRelation, RowExclusiveLock);
 
 	/* ----------------
@@ -1187,7 +1187,7 @@ index_drop(Oid indexId)
 															0, 0)))
 	{
 		heap_delete(attributeRelation, &tuple->t_self, NULL);
-		pfree(tuple);
+		heap_freetuple(tuple);
 		attnum++;
 	}
 	heap_close(attributeRelation, RowExclusiveLock);
@@ -1204,7 +1204,7 @@ index_drop(Oid indexId)
 	Assert(HeapTupleIsValid(tuple));
 
 	heap_delete(indexRelation, &tuple->t_self, NULL);
-	pfree(tuple);
+	heap_freetuple(tuple);
 	heap_close(indexRelation, RowExclusiveLock);
 
 	/*
@@ -1433,11 +1433,11 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 		CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
 		CatalogIndexInsert(idescs, Num_pg_class_indices, pg_class, newtup);
 		CatalogCloseIndices(Num_pg_class_indices, idescs);
-		pfree(newtup);
+		heap_freetuple(newtup);
 	}
 
 	if (!IsBootstrapProcessingMode())
-		pfree(tuple);
+		heap_freetuple(tuple);
 	else
 		heap_endscan(pg_class_scan);
 

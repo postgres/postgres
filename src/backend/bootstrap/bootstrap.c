@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.72 1999/11/24 00:58:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.73 1999/12/16 22:19:37 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -628,7 +628,7 @@ InsertOneTuple(Oid objectid)
 	if (objectid != (Oid) 0)
 		tuple->t_data->t_oid = objectid;
 	heap_insert(reldesc, tuple);
-	pfree(tuple);
+	heap_freetuple(tuple);
 	if (DebugMode)
 	{
 		printf("End InsertOneTuple, objectid=%u\n", objectid);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.81 1999/11/22 17:56:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.82 1999/12/16 22:19:54 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -871,7 +871,7 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	 *	and for lock data pointed to by pg_class_tuple
 	 * -------------------
 	 */
-	pfree(pg_class_tuple);
+	heap_freetuple(pg_class_tuple);
 
 	MemoryContextSwitchTo(oldcxt);
 
@@ -1714,6 +1714,7 @@ AttrDefaultFetch(Relation relation)
 	adrel = heap_openr(AttrDefaultRelationName, AccessShareLock);
 	irel = index_openr(AttrDefaultIndex);
 	sd = index_beginscan(irel, false, 1, &skey);
+	tuple.t_datamcxt = NULL;
 	tuple.t_data = NULL;
 
 	for (found = 0;;)
@@ -1793,6 +1794,7 @@ RelCheckFetch(Relation relation)
 	rcrel = heap_openr(RelCheckRelationName, AccessShareLock);
 	irel = index_openr(RelCheckIndex);
 	sd = index_beginscan(irel, false, 1, &skey);
+	tuple.t_datamcxt = NULL;
 	tuple.t_data = NULL;
 
 	for (found = 0;;)

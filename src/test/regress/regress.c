@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.34 1999/10/22 02:08:37 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.35 1999/12/16 22:20:03 wieck Exp $
  */
 
 #include <float.h>				/* faked on sunos */
@@ -608,7 +608,7 @@ ttdummy()
 
 		tmptuple = SPI_copytuple(trigtuple);
 		rettuple = SPI_modifytuple(rel, tmptuple, 1, &(attnum[1]), &newoff, NULL);
-		SPI_pfree(tmptuple);
+		SPI_freetuple(tmptuple);
 	}
 	else
 /* DELETE */

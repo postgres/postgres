@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.58 1999/07/19 07:07:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.59 1999/12/16 22:19:34 wieck Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -562,6 +562,7 @@ heap_copytuple(HeapTuple tuple)
 	newTuple = (HeapTuple) palloc(HEAPTUPLESIZE + tuple->t_len);
 	newTuple->t_len = tuple->t_len;
 	newTuple->t_self = tuple->t_self;
+	newTuple->t_datamcxt = CurrentMemoryContext;
 	newTuple->t_data = (HeapTupleHeader) ((char *) newTuple + HEAPTUPLESIZE);
 	memmove((char *) newTuple->t_data,
 			(char *) tuple->t_data, (int) tuple->t_len);
@@ -585,6 +586,7 @@ heap_copytuple_with_tuple(HeapTuple src, HeapTuple dest)
 
 	dest->t_len = src->t_len;
 	dest->t_self = src->t_self;
+	dest->t_datamcxt = CurrentMemoryContext;
 	dest->t_data = (HeapTupleHeader) palloc(src->t_len);
 	memmove((char *) dest->t_data,
 			(char *) src->t_data, (int) src->t_len);
@@ -682,6 +684,7 @@ heap_formtuple(TupleDesc tupleDescriptor,
 	len += ComputeDataSize(tupleDescriptor, value, nulls);
 
 	tuple = (HeapTuple) palloc(HEAPTUPLESIZE + len);
+	tuple->t_datamcxt = CurrentMemoryContext;
 	td = tuple->t_data = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
 
 	MemSet((char *) td, 0, (int) len);
@@ -792,6 +795,27 @@ heap_modifytuple(HeapTuple tuple,
 	return newTuple;
 }
 
+
+/* ----------------
+ *		heap_freetuple
+ * ----------------
+ */
+void
+heap_freetuple(HeapTuple htup)
+{
+	extern int getpid();
+
+	if (htup->t_data != NULL)
+		if (htup->t_datamcxt != NULL && (char *)(htup->t_data) != 
+									((char *) htup + HEAPTUPLESIZE))
+		{
+			elog(NOTICE, "TELL Jan Wieck: heap_freetuple() found separate t_data");
+		}
+
+	pfree(htup);
+}
+
+
 /* ----------------------------------------------------------------
  *						other misc functions
  * ----------------------------------------------------------------
@@ -814,6 +838,7 @@ heap_addheader(uint32 natts,	/* max domain index */
 	hoff = len = MAXALIGN(len);		/* be conservative */
 	len += structlen;
 	tuple = (HeapTuple) palloc(HEAPTUPLESIZE + len);
+	tuple->t_datamcxt = CurrentMemoryContext;
 	td = tuple->t_data = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
 
 	MemSet((char *) td, 0, (int) len);

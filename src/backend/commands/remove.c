@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.41 1999/12/10 03:55:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.42 1999/12/16 22:19:41 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,7 +125,7 @@ RemoveOperator(char *operatorName,		/* operator name */
 				 typeName2);
 		}
 	}
-	pfree(tup);
+	heap_freetuple(tup);
 	heap_close(relation, RowExclusiveLock);
 }
 

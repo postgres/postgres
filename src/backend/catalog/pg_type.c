@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.43 1999/11/24 00:44:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.44 1999/12/16 22:19:39 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,7 +218,7 @@ TypeShellMakeWithOpenRelation(Relation pg_type_desc, char *typeName)
 	 *	free the tuple and return the type-oid
 	 * ----------------
 	 */
-	pfree(tup);
+	heap_freetuple(tup);
 
 	return typoid;
 }
@@ -551,7 +551,7 @@ TypeRename(char *oldTypeName, char *newTypeName)
 								 0, 0, 0);
 	if (HeapTupleIsValid(newtup))
 	{
-		pfree(oldtup);
+		heap_freetuple(oldtup);
 		heap_close(pg_type_desc, RowExclusiveLock);
 		elog(ERROR, "TypeRename: type %s already defined", newTypeName);
 	}
@@ -567,7 +567,7 @@ TypeRename(char *oldTypeName, char *newTypeName)
 	CatalogIndexInsert(idescs, Num_pg_type_indices, pg_type_desc, oldtup);
 	CatalogCloseIndices(Num_pg_type_indices, idescs);
 
-	pfree(oldtup);
+	heap_freetuple(oldtup);
 	heap_close(pg_type_desc, RowExclusiveLock);
 }
 

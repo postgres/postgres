@@ -93,5 +93,6 @@ extern char *SPI_getrelname(Relation rel);
 extern void *SPI_palloc(Size size);
 extern void *SPI_repalloc(void *pointer, Size size);
 extern void SPI_pfree(void *pointer);
+extern void SPI_freetuple(HeapTuple pointer);
 
 #endif	 /* SPI_H */

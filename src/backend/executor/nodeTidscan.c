@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.1 1999/11/23 20:06:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.2 1999/12/16 22:19:44 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,6 +148,7 @@ TidNext(TidScan *node)
 		bool		slot_is_valid = false;
 
 		itemptr = tidList[tidstate->tss_TidPtr];
+		tuple->t_datamcxt = NULL;
 		tuple->t_data = NULL;
 		if (itemptr)
 		{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.44 1999/11/24 00:44:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.45 1999/12/16 22:19:39 wieck Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -306,7 +306,7 @@ OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
 	 *	free the tuple and return the operator oid
 	 * ----------------
 	 */
-	pfree(tup);
+	heap_freetuple(tup);
 
 	return operatorObjectId;
 }

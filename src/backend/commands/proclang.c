@@ -183,6 +183,6 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 
 	heap_delete(rel, &langTup->t_self, NULL);
 
-	pfree(langTup);
+	heap_freetuple(langTup);
 	heap_close(rel, RowExclusiveLock);
 }

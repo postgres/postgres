@@ -13,7 +13,7 @@
  *	  columns. (ie. tuples from the same group are consecutive)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.30 1999/09/24 00:24:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.31 1999/12/16 22:19:44 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,7 @@ ExecGroupEveryTuple(Group *node)
 						   ExecGetScanType(&grpstate->csstate)))
 			{
 				grpstate->grp_useFirstTuple = TRUE;
-				pfree(firsttuple);
+				heap_freetuple(firsttuple);
 				grpstate->grp_firstTuple = heap_copytuple(outerTuple);
 
 				return NULL;	/* signifies the end of the group */
@@ -242,7 +242,7 @@ ExecGroupOneTuple(Group *node)
 	/* save outerTuple if we are not done yet */
 	if (!grpstate->grp_done)
 	{
-		pfree(firsttuple);
+		heap_freetuple(firsttuple);
 		grpstate->grp_firstTuple = heap_copytuple(outerTuple);
 	}
 
@@ -341,7 +341,7 @@ ExecEndGroup(Group *node)
 	ExecClearTuple(grpstate->csstate.css_ScanTupleSlot);
 	if (grpstate->grp_firstTuple != NULL)
 	{
-		pfree(grpstate->grp_firstTuple);
+		heap_freetuple(grpstate->grp_firstTuple);
 		grpstate->grp_firstTuple = NULL;
 	}
 }
@@ -429,7 +429,7 @@ ExecReScanGroup(Group *node, ExprContext *exprCtxt, Plan *parent)
 	grpstate->grp_done = FALSE;
 	if (grpstate->grp_firstTuple != NULL)
 	{
-		pfree(grpstate->grp_firstTuple);
+		heap_freetuple(grpstate->grp_firstTuple);
 		grpstate->grp_firstTuple = NULL;
 	}
 

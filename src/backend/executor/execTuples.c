@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.33 1999/12/10 03:55:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.34 1999/12/16 22:19:44 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,6 +120,7 @@
 #undef ExecStoreTuple
 
 #include "catalog/pg_type.h"
+#include "access/heapam.h"
 
 static TupleTableSlot *NodeGetResultTupleSlot(Plan *node);
 
@@ -420,7 +421,7 @@ ExecClearTuple(TupleTableSlot *slot)	/* slot in which to store tuple */
 	 * ----------------
 	 */
 	if (slot->ttc_shouldFree && oldtuple != NULL)
-		pfree(oldtuple);
+		heap_freetuple(oldtuple);
 
 	slot->val = (HeapTuple) NULL;
 

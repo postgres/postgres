@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.15 1999/12/10 03:55:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.16 1999/12/16 22:19:41 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -518,7 +518,7 @@ NormIndexAttrs(List *attList,	/* list of IndexElem's */
 				 attribute->class);
 		}
 		*classOidP++ = tuple->t_data->t_oid;
-		pfree(atttuple);
+		heap_freetuple(atttuple);
 	}
 }
 

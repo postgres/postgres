@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.38 1999/12/14 03:35:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.39 1999/12/16 22:19:42 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,7 +147,7 @@ renameatt(char *relname,
 	/* should not already exist */
 	if (HeapTupleIsValid(newatttup))
 	{
-		pfree(oldatttup);
+		heap_freetuple(oldatttup);
 		elog(ERROR, "renameatt: attribute \"%s\" exists", newattname);
 	}
 
@@ -164,7 +164,7 @@ renameatt(char *relname,
 		CatalogCloseIndices(Num_pg_attr_indices, irelations);
 	}
 	
-	pfree(oldatttup);
+	heap_freetuple(oldatttup);
 	heap_close(attrelation, RowExclusiveLock);
 }
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.130 1999/12/10 03:55:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.131 1999/12/16 22:19:42 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -710,6 +710,7 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 				continue;
 			}
 
+			tuple.t_datamcxt = NULL;
 			tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
 			tuple.t_len = ItemIdGetLength(itemid);
 			ItemPointerSet(&(tuple.t_self), blkno, offnum);
@@ -1153,6 +1154,7 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 			if (!ItemIdIsUsed(itemid))
 				continue;
 
+			tuple.t_datamcxt = NULL;
 			tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
 			tuple_len = tuple.t_len = ItemIdGetLength(itemid);
 			ItemPointerSet(&(tuple.t_self), blkno, offnum);
@@ -1264,6 +1266,7 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 						elog(NOTICE, "Child itemid in update-chain marked as unused - can't continue vc_rpfheap");
 						break;
 					}
+					tp.t_datamcxt = NULL;
 					tp.t_data = (HeapTupleHeader) PageGetItem(Cpage, Citemid);
 					tp.t_self = Ctid;
 					tlen = tp.t_len = ItemIdGetLength(Citemid);
@@ -1360,6 +1363,7 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 							   ItemPointerGetOffsetNumber(&(tp.t_self)));
 						if (!ItemIdIsUsed(Pitemid))
 							elog(ERROR, "Parent itemid marked as unused");
+						Ptp.t_datamcxt = NULL;
 						Ptp.t_data = (HeapTupleHeader) PageGetItem(Ppage, Pitemid);
 						Assert(ItemPointerEquals(&(vtld.new_tid),
 												&(Ptp.t_data->t_ctid)));
@@ -1409,6 +1413,7 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 							continue;
 						}
 #endif
+						tp.t_datamcxt = Ptp.t_datamcxt;
 						tp.t_data = Ptp.t_data;
 						tlen = tp.t_len = ItemIdGetLength(Pitemid);
 						if (freeCbuf)
@@ -1437,6 +1442,7 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 					Cpage = BufferGetPage(Cbuf);
 					Citemid = PageGetItemId(Cpage,
 							ItemPointerGetOffsetNumber(&(tuple.t_self)));
+					tuple.t_datamcxt = NULL;
 					tuple.t_data = (HeapTupleHeader) PageGetItem(Cpage, Citemid);
 					tuple_len = tuple.t_len = ItemIdGetLength(Citemid);
 					/* Get page to move in */
@@ -1468,6 +1474,7 @@ moving chain: failed to add item with len = %u to page %u",
 					}
 					newitemid = PageGetItemId(ToPage, newoff);
 					pfree(newtup.t_data);
+					newtup.t_datamcxt = NULL;
 					newtup.t_data = (HeapTupleHeader) PageGetItem(ToPage, newitemid);
 					ItemPointerSet(&(newtup.t_self), vtmove[ti].vpd->vpd_blkno, newoff);
 
@@ -1599,6 +1606,7 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 			}
 			newitemid = PageGetItemId(ToPage, newoff);
 			pfree(newtup.t_data);
+			newtup.t_datamcxt = NULL;
 			newtup.t_data = (HeapTupleHeader) PageGetItem(ToPage, newitemid);
 			ItemPointerSet(&(newtup.t_data->t_ctid), cur_page->vpd_blkno, newoff);
 			newtup.t_self = newtup.t_data->t_ctid;
@@ -1652,6 +1660,7 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 				itemid = PageGetItemId(page, off);
 				if (!ItemIdIsUsed(itemid))
 					continue;
+				tuple.t_datamcxt = NULL;
 				tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
 				if (tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED)
 					continue;
@@ -1756,6 +1765,7 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 				itemid = PageGetItemId(page, newoff);
 				if (!ItemIdIsUsed(itemid))
 					continue;
+				tuple.t_datamcxt = NULL;
 				tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
 				if (!(tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED))
 				{
@@ -1827,6 +1837,7 @@ Elapsed %u/%u sec.",
 				itemid = PageGetItemId(page, offnum);
 				if (!ItemIdIsUsed(itemid))
 					continue;
+				tuple.t_datamcxt = NULL;
 				tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
 
 				if (!(tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED))
@@ -2332,7 +2343,7 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex,
 	/* get the buffer cache tuple */
 	rtup.t_self = ctup->t_self;
 	heap_fetch(rd, SnapshotNow, &rtup, &buffer);
-	pfree(ctup);
+	heap_freetuple(ctup);
 
 	/* overwrite the existing statistics in the tuple */
 	pgcform = (Form_pg_class) GETSTRUCT(&rtup);
@@ -2521,7 +2532,7 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex,
 					pfree(DatumGetPointer(values[Anum_pg_statistic_stacommonval-1]));
 					pfree(DatumGetPointer(values[Anum_pg_statistic_staloval-1]));
 					pfree(DatumGetPointer(values[Anum_pg_statistic_stahival-1]));
-					pfree(stup);
+					heap_freetuple(stup);
 				}
 			}
 		}

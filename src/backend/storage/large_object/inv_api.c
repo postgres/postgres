@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.62 1999/12/10 03:55:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.63 1999/12/16 22:19:51 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -654,6 +654,7 @@ inv_fetchtup(LargeObjectDesc *obj_desc, HeapTuple tuple, Buffer *buffer)
 			if (res == (RetrieveIndexResult) NULL)
 			{
 				ItemPointerSetInvalid(&(obj_desc->htid));
+				tuple->t_datamcxt = NULL;
 				tuple->t_data = NULL;
 				return;
 			}
@@ -797,7 +798,7 @@ inv_wrnew(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 
 	ntup = inv_newtuple(obj_desc, buffer, page, buf, nwritten);
 	inv_indextup(obj_desc, ntup);
-	pfree(ntup);
+	heap_freetuple(ntup);
 
 	/* new tuple is inserted */
 	WriteBuffer(buffer);
@@ -971,7 +972,7 @@ inv_wrold(LargeObjectDesc *obj_desc,
 
 	/* index the new tuple */
 	inv_indextup(obj_desc, ntup);
-	pfree(ntup);
+	heap_freetuple(ntup);
 
 	/*
 	 * move the scandesc forward so we don't reread the newly inserted
@@ -1059,6 +1060,7 @@ inv_newtuple(LargeObjectDesc *obj_desc,
 	ph->pd_lower = lower;
 	ph->pd_upper = upper;
 
+	ntup->t_datamcxt = NULL;
 	ntup->t_data = (HeapTupleHeader) ((char *) page + upper);
 
 	/*

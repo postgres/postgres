@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.45 1999/11/22 17:56:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.46 1999/12/16 22:19:52 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,6 +84,8 @@ regprocin(char *pro_name_or_oid)
 			sd = index_beginscan(idesc, false, 1, skey);
 			while ((indexRes = index_getnext(sd, ForwardScanDirection)))
 			{
+				tuple.t_datamcxt = NULL;
+				tuple.t_data = NULL;
 				tuple.t_self = indexRes->heap_iptr;
 				heap_fetch(hdesc, SnapshotNow,
 						   &tuple,

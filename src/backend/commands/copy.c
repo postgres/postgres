@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.93 1999/12/14 00:08:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.94 1999/12/16 22:19:41 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -837,7 +837,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 				skip_tuple = true;
 			else if (newtuple != tuple) /* modified by Trigger(s) */
 			{
-				pfree(tuple);
+				heap_freetuple(tuple);
 				tuple = newtuple;
 			}
 		}
@@ -905,7 +905,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 				nulls[i] = ' ';
 		}
 
-		pfree(tuple);
+		heap_freetuple(tuple);
 		tuples_read++;
 
 		if (!reading_to_eof && ntuples == tuples_read)

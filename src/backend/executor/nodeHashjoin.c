@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.27 1999/10/13 15:02:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.28 1999/12/16 22:19:44 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -485,6 +485,7 @@ ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 		elog(ERROR, "Read from hashjoin temp file failed");
 	heapTuple = palloc(HEAPTUPLESIZE + htup.t_len);
 	memcpy((char *) heapTuple, (char *) &htup, sizeof(HeapTupleData));
+	heapTuple->t_datamcxt = CurrentMemoryContext;
 	heapTuple->t_data = (HeapTupleHeader)
 		((char *) heapTuple + HEAPTUPLESIZE);
 	nread = BufFileRead(file, (void *) heapTuple->t_data, htup.t_len);

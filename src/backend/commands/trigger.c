@@ -235,7 +235,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 	CatalogOpenIndices(Num_pg_trigger_indices, Name_pg_trigger_indices, idescs);
 	CatalogIndexInsert(idescs, Num_pg_trigger_indices, tgrel, tuple);
 	CatalogCloseIndices(Num_pg_trigger_indices, idescs);
-	pfree(tuple);
+	heap_freetuple(tuple);
 	heap_close(tgrel, RowExclusiveLock);
 
 	pfree(DatumGetPointer(values[Anum_pg_trigger_tgname - 1]));
@@ -255,7 +255,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
 	CatalogIndexInsert(ridescs, Num_pg_class_indices, pgrel, tuple);
 	CatalogCloseIndices(Num_pg_class_indices, ridescs);
-	pfree(tuple);
+	heap_freetuple(tuple);
 	heap_close(pgrel, RowExclusiveLock);
 
 	CommandCounterIncrement();
@@ -334,7 +334,7 @@ DropTrigger(DropTrigStmt *stmt)
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
 	CatalogIndexInsert(ridescs, Num_pg_class_indices, pgrel, tuple);
 	CatalogCloseIndices(Num_pg_class_indices, ridescs);
-	pfree(tuple);
+	heap_freetuple(tuple);
 	heap_close(pgrel, RowExclusiveLock);
 
 	CommandCounterIncrement();
@@ -690,7 +690,7 @@ ExecBRInsertTriggers(Relation rel, HeapTuple trigtuple)
 		if (newtuple == NULL)
 			break;
 		else if (oldtuple != newtuple && oldtuple != trigtuple)
-			pfree(oldtuple);
+			heap_freetuple(oldtuple);
 	}
 	CurrentTriggerData = NULL;
 	pfree(SaveTriggerData);
@@ -735,11 +735,11 @@ ExecBRDeleteTriggers(EState *estate, ItemPointer tupleid)
 		if (newtuple == NULL)
 			break;
 		if (newtuple != trigtuple)
-			pfree(newtuple);
+			heap_freetuple(newtuple);
 	}
 	CurrentTriggerData = NULL;
 	pfree(SaveTriggerData);
-	pfree(trigtuple);
+	heap_freetuple(trigtuple);
 
 	return (newtuple == NULL) ? false : true;
 }
@@ -793,11 +793,11 @@ ExecBRUpdateTriggers(EState *estate, ItemPointer tupleid, HeapTuple newtuple)
 		if (newtuple == NULL)
 			break;
 		else if (oldtuple != newtuple && oldtuple != intuple)
-			pfree(oldtuple);
+			heap_freetuple(oldtuple);
 	}
 	CurrentTriggerData = NULL;
 	pfree(SaveTriggerData);
-	pfree(trigtuple);
+	heap_freetuple(trigtuple);
 	return newtuple;
 }
 
@@ -886,6 +886,7 @@ ltrmark:;
 
 		Assert(ItemIdIsUsed(lp));
 
+		tuple.t_datamcxt = NULL;
 		tuple.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
 		tuple.t_len = ItemIdGetLength(lp);
 		tuple.t_self = *tid;
@@ -1150,7 +1151,7 @@ deferredTriggerExecute(DeferredTriggerEvent event, int itemno)
 	rettuple = ExecCallTriggerFunc(SaveTriggerData.tg_trigger);
 	CurrentTriggerData = NULL;
 	if (rettuple != NULL && rettuple != &oldtuple && rettuple != &newtuple)
-		pfree(rettuple);
+		heap_freetuple(rettuple);
 
 	/* ----------
 	 * Might have been a referential integrity constraint trigger.

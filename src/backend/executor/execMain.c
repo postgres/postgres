@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.102 1999/12/10 03:55:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.103 1999/12/16 22:19:44 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1147,7 +1147,7 @@ ExecAppend(TupleTableSlot *slot,
 		if (newtuple != tuple)	/* modified by Trigger(s) */
 		{
 			Assert(slot->ttc_shouldFree);
-			pfree(tuple);
+			heap_freetuple(tuple);
 			slot->val = tuple = newtuple;
 		}
 	}
@@ -1334,7 +1334,7 @@ ExecReplace(TupleTableSlot *slot,
 		if (newtuple != tuple)	/* modified by Trigger(s) */
 		{
 			Assert(slot->ttc_shouldFree);
-			pfree(tuple);
+			heap_freetuple(tuple);
 			slot->val = tuple = newtuple;
 		}
 	}
@@ -1472,7 +1472,7 @@ ExecAttrDefault(Relation rel, HeapTuple tuple)
 	newtuple = heap_modifytuple(tuple, rel, replValue, replNull, repl);
 
 	pfree(repl);
-	pfree(tuple);
+	heap_freetuple(tuple);
 	pfree(replNull);
 	pfree(replValue);
 
@@ -1614,7 +1614,7 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 			/* stop execution */
 			ExecEndNode(epq->plan, epq->plan);
 		    epqstate->es_tupleTable->next = 0;
-			pfree(epqstate->es_evTuple[epq->rti - 1]);
+			heap_freetuple(epqstate->es_evTuple[epq->rti - 1]);
 			epqstate->es_evTuple[epq->rti - 1] = NULL;
 			/* push current PQ to freePQ stack */
 			oldepq->free = epq;
@@ -1689,7 +1689,7 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 	/* free old RTE' tuple */
 	if (epqstate->es_evTuple[epq->rti - 1] != NULL)
 	{
-		pfree(epqstate->es_evTuple[epq->rti - 1]);
+		heap_freetuple(epqstate->es_evTuple[epq->rti - 1]);
 		epqstate->es_evTuple[epq->rti - 1] = NULL;
 	}
 
@@ -1738,7 +1738,7 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 			 * Nice! We got tuple - now copy it.
 			 */
 			if (epqstate->es_evTuple[epq->rti - 1] != NULL)
-				pfree(epqstate->es_evTuple[epq->rti - 1]);
+				heap_freetuple(epqstate->es_evTuple[epq->rti - 1]);
 			epqstate->es_evTuple[epq->rti - 1] = heap_copytuple(&tuple);
 			ReleaseBuffer(buffer);
 			break;
@@ -1815,7 +1815,7 @@ lpqnext:;
 	{
 		ExecEndNode(epq->plan, epq->plan);
 	    epqstate->es_tupleTable->next = 0;
-		pfree(epqstate->es_evTuple[epq->rti - 1]);
+		heap_freetuple(epqstate->es_evTuple[epq->rti - 1]);
 		epqstate->es_evTuple[epq->rti - 1] = NULL;
 		/* pop old PQ from the stack */
 		oldepq = (evalPlanQual *) epqstate->es_evalPlanQual;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.32 1999/11/07 23:08:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.33 1999/12/16 22:19:55 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -222,6 +222,7 @@ GetRawDatabaseInfo(char *name, Oid *db_id, char *path)
 
 			/* get a pointer to the tuple itself */
 			offset = (int) ph->pd_linp[i].lp_off;
+			tup.t_datamcxt = NULL;
 			tup.t_data = (HeapTupleHeader) (((char *) pg) + offset);
 
 			/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.53 1999/11/25 00:15:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.54 1999/12/16 22:19:39 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,7 +178,7 @@ CatalogIndexInsert(Relation *idescs,
 		if (indexRes)
 			pfree(indexRes);
 
-		pfree(index_tup);
+		heap_freetuple(index_tup);
 	}
 }
 
@@ -248,6 +248,7 @@ CatalogIndexFetchTuple(Relation heapRelation,
 	Buffer		buffer;
 
 	sd = index_beginscan(idesc, false, num_keys, skey);
+	tuple.t_datamcxt = CurrentMemoryContext;
 	tuple.t_data = NULL;
 	while ((indexRes = index_getnext(sd, ForwardScanDirection)))
 	{

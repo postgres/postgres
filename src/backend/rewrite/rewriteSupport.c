@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.39 1999/11/24 00:44:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.40 1999/12/16 22:19:50 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,7 +113,7 @@ setRelhasrulesInRelation(Oid relationId, bool relhasrules)
 	CatalogIndexInsert(idescs, Num_pg_class_indices, relationRelation, tuple);
 	CatalogCloseIndices(Num_pg_class_indices, idescs);
 
-	pfree(tuple);
+	heap_freetuple(tuple);
 	heap_close(relationRelation, RowExclusiveLock);
 }
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.112 1999/12/10 03:55:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.113 1999/12/16 22:19:38 wieck Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -608,7 +608,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
 		if (hasindex)
 			CatalogIndexInsert(idescs, Num_pg_attr_indices, rel, tup);
 
-		pfree(tup);
+		heap_freetuple(tup);
 		dpp++;
 	}
 
@@ -631,7 +631,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
 		if (hasindex)
 			CatalogIndexInsert(idescs, Num_pg_attr_indices, rel, tup);
 
-		pfree(tup);
+		heap_freetuple(tup);
 		dpp++;
 	}
 
@@ -727,7 +727,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 		CatalogCloseIndices(Num_pg_class_indices, idescs);
 	}
 
-	pfree(tup);
+	heap_freetuple(tup);
 }
 
 
@@ -1084,7 +1084,7 @@ DeleteRelationTuple(Relation rel)
 	 * ----------------
 	 */
 	heap_delete(pg_class_desc, &tup->t_self, NULL);
-	pfree(tup);
+	heap_freetuple(tup);
 
 	heap_close(pg_class_desc, RowExclusiveLock);
 }
@@ -1314,7 +1314,7 @@ DeleteAttributeTuples(Relation rel)
 		  DeleteComments(tup->t_data->t_oid);
 
 		  heap_delete(pg_attribute_desc, &tup->t_self, NULL);
-		  pfree(tup);
+		  heap_freetuple(tup);
 
 		}
 	}
@@ -1753,7 +1753,7 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
 
 	pfree(DatumGetPointer(values[Anum_pg_attrdef_adbin - 1]));
 	pfree(DatumGetPointer(values[Anum_pg_attrdef_adsrc - 1]));
-	pfree(tuple);
+	heap_freetuple(tuple);
 	pfree(adsrc);
 
 	if (! updatePgAttribute)
@@ -1778,7 +1778,7 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
 		CatalogCloseIndices(Num_pg_attr_indices, attridescs);
 	}
 	heap_close(attrrel, RowExclusiveLock);
-	pfree(atttup);
+	heap_freetuple(atttup);
 }
 
 /*
@@ -1833,7 +1833,7 @@ StoreRelCheck(Relation rel, char *ccname, char *ccbin)
 	pfree(DatumGetPointer(values[Anum_pg_relcheck_rcname - 1]));
 	pfree(DatumGetPointer(values[Anum_pg_relcheck_rcbin - 1]));
 	pfree(DatumGetPointer(values[Anum_pg_relcheck_rcsrc - 1]));
-	pfree(tuple);
+	heap_freetuple(tuple);
 	pfree(ccsrc);
 }
 
@@ -2101,7 +2101,7 @@ AddRelationRawConstraints(Relation rel,
 	CatalogCloseIndices(Num_pg_class_indices, relidescs);
 
 	heap_close(relrel, RowExclusiveLock);
-	pfree(reltup);
+	heap_freetuple(reltup);
 
 	/*
 	 * Force rebuild of our own relcache entry, otherwise subsequent commands

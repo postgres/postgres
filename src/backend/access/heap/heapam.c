@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.60 1999/11/24 00:44:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.61 1999/12/16 22:19:36 wieck Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -117,6 +117,8 @@ initscan(HeapScanDesc scan,
 		 *	relation is empty
 		 * ----------------
 		 */
+		scan->rs_ntup.t_datamcxt = scan->rs_ctup.t_datamcxt =
+		scan->rs_ptup.t_datamcxt = NULL;
 		scan->rs_ntup.t_data = scan->rs_ctup.t_data =
 		scan->rs_ptup.t_data = NULL;
 		scan->rs_nbuf = scan->rs_cbuf = scan->rs_pbuf = InvalidBuffer;
@@ -127,8 +129,10 @@ initscan(HeapScanDesc scan,
 		 *	reverse scan
 		 * ----------------
 		 */
+		scan->rs_ntup.t_datamcxt = scan->rs_ctup.t_datamcxt = NULL;
 		scan->rs_ntup.t_data = scan->rs_ctup.t_data = NULL;
 		scan->rs_nbuf = scan->rs_cbuf = InvalidBuffer;
+		scan->rs_ptup.t_datamcxt = NULL;
 		scan->rs_ptup.t_data = NULL;
 		scan->rs_pbuf = UnknownBuffer;
 	}
@@ -138,8 +142,10 @@ initscan(HeapScanDesc scan,
 		 *	forward scan
 		 * ----------------
 		 */
+		scan->rs_ctup.t_datamcxt = scan->rs_ptup.t_datamcxt = NULL;
 		scan->rs_ctup.t_data = scan->rs_ptup.t_data = NULL;
 		scan->rs_cbuf = scan->rs_pbuf = InvalidBuffer;
+		scan->rs_ntup.t_datamcxt = NULL;
 		scan->rs_ntup.t_data = NULL;
 		scan->rs_nbuf = UnknownBuffer;
 	}							/* invalid too */
@@ -272,6 +278,7 @@ heapgettup(Relation relation,
 	 */
 	if (!(pages = relation->rd_nblocks))
 	{
+		tuple->t_datamcxt = NULL;
 		tuple->t_data = NULL;
 		return;
 	}
@@ -290,6 +297,7 @@ heapgettup(Relation relation,
 		if (ItemPointerIsValid(tid) == false)
 		{
 			*buffer = InvalidBuffer;
+			tuple->t_datamcxt = NULL;
 			tuple->t_data = NULL;
 			return;
 		}
@@ -306,6 +314,7 @@ heapgettup(Relation relation,
 		lineoff = ItemPointerGetOffsetNumber(tid);
 		lpp = PageGetItemId(dp, lineoff);
 
+		tuple->t_datamcxt = NULL;
 		tuple->t_data = (HeapTupleHeader) PageGetItem((Page) dp, lpp);
 		tuple->t_len = ItemIdGetLength(lpp);
 		LockBuffer(*buffer, BUFFER_LOCK_UNLOCK);
@@ -376,6 +385,7 @@ heapgettup(Relation relation,
 		if (page >= pages)
 		{
 			*buffer = InvalidBuffer;
+			tuple->t_datamcxt = NULL;
 			tuple->t_data = NULL;
 			return;
 		}
@@ -415,6 +425,7 @@ heapgettup(Relation relation,
 		{
 			if (ItemIdIsUsed(lpp))
 			{
+				tuple->t_datamcxt = NULL;
 				tuple->t_data = (HeapTupleHeader) PageGetItem((Page) dp, lpp);
 				tuple->t_len = ItemIdGetLength(lpp);
 				ItemPointerSet(&(tuple->t_self), page, lineoff);
@@ -466,6 +477,7 @@ heapgettup(Relation relation,
 			if (BufferIsValid(*buffer))
 				ReleaseBuffer(*buffer);
 			*buffer = InvalidBuffer;
+			tuple->t_datamcxt = NULL;
 			tuple->t_data = NULL;
 			return;
 		}
@@ -836,6 +848,7 @@ heap_getnext(HeapScanDesc scandesc, int backw)
 		{
 			if (BufferIsValid(scan->rs_nbuf))
 				ReleaseBuffer(scan->rs_nbuf);
+			scan->rs_ntup.t_datamcxt = NULL;
 			scan->rs_ntup.t_data = NULL;
 			scan->rs_nbuf = UnknownBuffer;
 			return NULL;
@@ -892,10 +905,12 @@ heap_getnext(HeapScanDesc scandesc, int backw)
 		{
 			if (BufferIsValid(scan->rs_pbuf))
 				ReleaseBuffer(scan->rs_pbuf);
+			scan->rs_ptup.t_datamcxt = NULL;
 			scan->rs_ptup.t_data = NULL;
 			scan->rs_pbuf = InvalidBuffer;
 			if (BufferIsValid(scan->rs_nbuf))
 				ReleaseBuffer(scan->rs_nbuf);
+			scan->rs_ntup.t_datamcxt = NULL;
 			scan->rs_ntup.t_data = NULL;
 			scan->rs_nbuf = InvalidBuffer;
 			return NULL;
@@ -903,6 +918,7 @@ heap_getnext(HeapScanDesc scandesc, int backw)
 
 		if (BufferIsValid(scan->rs_pbuf))
 			ReleaseBuffer(scan->rs_pbuf);
+		scan->rs_ptup.t_datamcxt = NULL;
 		scan->rs_ptup.t_data = NULL;
 		scan->rs_pbuf = UnknownBuffer;
 
@@ -918,6 +934,7 @@ heap_getnext(HeapScanDesc scandesc, int backw)
 		{
 			if (BufferIsValid(scan->rs_pbuf))
 				ReleaseBuffer(scan->rs_pbuf);
+			scan->rs_ptup.t_datamcxt = NULL;
 			scan->rs_ptup.t_data = NULL;
 			scan->rs_pbuf = UnknownBuffer;
 			HEAPDEBUG_3;		/* heap_getnext returns NULL at end */
@@ -976,10 +993,12 @@ heap_getnext(HeapScanDesc scandesc, int backw)
 		{
 			if (BufferIsValid(scan->rs_nbuf))
 				ReleaseBuffer(scan->rs_nbuf);
+			scan->rs_ntup.t_datamcxt = NULL;
 			scan->rs_ntup.t_data = NULL;
 			scan->rs_nbuf = InvalidBuffer;
 			if (BufferIsValid(scan->rs_pbuf))
 				ReleaseBuffer(scan->rs_pbuf);
+			scan->rs_ptup.t_datamcxt = NULL;
 			scan->rs_ptup.t_data = NULL;
 			scan->rs_pbuf = InvalidBuffer;
 			HEAPDEBUG_6;		/* heap_getnext returning EOS */
@@ -988,6 +1007,7 @@ heap_getnext(HeapScanDesc scandesc, int backw)
 
 		if (BufferIsValid(scan->rs_nbuf))
 			ReleaseBuffer(scan->rs_nbuf);
+		scan->rs_ntup.t_datamcxt = NULL;
 		scan->rs_ntup.t_data = NULL;
 		scan->rs_nbuf = UnknownBuffer;
 	}
@@ -1066,10 +1086,12 @@ heap_fetch(Relation relation,
 	{
 		ReleaseBuffer(buffer);
 		*userbuf = InvalidBuffer;
+		tuple->t_datamcxt = NULL;
 		tuple->t_data = NULL;
 		return;
 	}
 
+	tuple->t_datamcxt = NULL;
 	tuple->t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
 	tuple->t_len = ItemIdGetLength(lp);
 
@@ -1156,6 +1178,7 @@ heap_get_latest_tid(Relation relation,
 	 * ----------------
 	 */
 
+	tp.t_datamcxt = NULL;
 	t_data = tp.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
 	tp.t_len = ItemIdGetLength(lp);
 	tp.t_self = *tid;
@@ -1270,6 +1293,7 @@ heap_delete(Relation relation, ItemPointer tid, ItemPointer ctid)
 
 	dp = (PageHeader) BufferGetPage(buffer);
 	lp = PageGetItemId(dp, ItemPointerGetOffsetNumber(tid));
+	tp.t_datamcxt = NULL;
 	tp.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
 	tp.t_len = ItemIdGetLength(lp);
 	tp.t_self = *tid;
@@ -1365,6 +1389,7 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	dp = (PageHeader) BufferGetPage(buffer);
 	lp = PageGetItemId(dp, ItemPointerGetOffsetNumber(otid));
 
+	oldtup.t_datamcxt = NULL;
 	oldtup.t_data = (HeapTupleHeader) PageGetItem(dp, lp);
 	oldtup.t_len = ItemIdGetLength(lp);
 	oldtup.t_self = *otid;
@@ -1488,6 +1513,7 @@ heap_mark4update(Relation relation, HeapTuple tuple, Buffer *buffer)
 
 	dp = (PageHeader) BufferGetPage(*buffer);
 	lp = PageGetItemId(dp, ItemPointerGetOffsetNumber(tid));
+	tuple->t_datamcxt = NULL;
 	tuple->t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
 	tuple->t_len = ItemIdGetLength(lp);
 
@@ -1665,10 +1691,14 @@ heap_restrpos(HeapScanDesc scan)
 	scan->rs_nbuf = InvalidBuffer;
 
 	if (!ItemPointerIsValid(&scan->rs_mptid))
+	{
+		scan->rs_ptup.t_datamcxt = NULL;
 		scan->rs_ptup.t_data = NULL;
+	}
 	else
 	{
 		scan->rs_ptup.t_self = scan->rs_mptid;
+		scan->rs_ptup.t_datamcxt = NULL;
 		scan->rs_ptup.t_data = (HeapTupleHeader) 0x1;	/* for heapgettup */
 		heapgettup(scan->rs_rd,
 				   &(scan->rs_ptup),
@@ -1680,10 +1710,14 @@ heap_restrpos(HeapScanDesc scan)
 	}
 
 	if (!ItemPointerIsValid(&scan->rs_mctid))
+	{
+		scan->rs_ctup.t_datamcxt = NULL;
 		scan->rs_ctup.t_data = NULL;
+	}
 	else
 	{
 		scan->rs_ctup.t_self = scan->rs_mctid;
+		scan->rs_ctup.t_datamcxt = NULL;
 		scan->rs_ctup.t_data = (HeapTupleHeader) 0x1;	/* for heapgettup */
 		heapgettup(scan->rs_rd,
 				   &(scan->rs_ctup),
@@ -1695,9 +1729,13 @@ heap_restrpos(HeapScanDesc scan)
 	}
 
 	if (!ItemPointerIsValid(&scan->rs_mntid))
+	{
+		scan->rs_ntup.t_datamcxt = NULL;
 		scan->rs_ntup.t_data = NULL;
+	}
 	else
 	{
+		scan->rs_ntup.t_datamcxt = NULL;
 		scan->rs_ntup.t_self = scan->rs_mntid;
 		scan->rs_ntup.t_data = (HeapTupleHeader) 0x1;	/* for heapgettup */
 		heapgettup(scan->rs_rd,

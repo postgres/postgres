@@ -14,7 +14,7 @@
  *		ExecInitTee
  *		ExecEndTee
  *
- *	$Id: nodeTee.c,v 1.6 1999/12/10 03:55:52 momjian Exp $
+ *	$Id: nodeTee.c,v 1.7 1999/12/16 22:19:45 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -350,7 +350,7 @@ ExecTee(Tee * node, Plan *parent)
 			heap_insert(bufferRel, heapTuple);
 
 			if (slot->ttc_buffer != InvalidBuffer)
-				pfree(heapTuple);
+				heap_freetuple(heapTuple);
 
 			/*
 			 * once there is data in the temporary relation, ensure that

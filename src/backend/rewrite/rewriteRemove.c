@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.33 1999/11/22 17:56:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.34 1999/12/16 22:19:49 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,7 +108,7 @@ RemoveRewriteRule(char *ruleName)
 	if (isNull)
 	{
 		/* XXX strange!!! */
-		pfree(tuple);
+		heap_freetuple(tuple);
 		elog(ERROR, "RemoveRewriteRule: internal error; null event target relation!");
 	}
 	eventRelationOid = DatumGetObjectId(eventRelationOidDatum);
@@ -133,7 +133,7 @@ RemoveRewriteRule(char *ruleName)
 	 */
 	heap_delete(RewriteRelation, &tuple->t_self, NULL);
 
-	pfree(tuple);
+	heap_freetuple(tuple);
 	heap_close(RewriteRelation, RowExclusiveLock);
 }
 

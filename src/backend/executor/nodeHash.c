@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.40 1999/12/10 03:55:51 momjian Exp $
+ *	$Id: nodeHash.c,v 1.41 1999/12/16 22:19:44 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -482,6 +482,7 @@ ExecHashTableInsert(HashJoinTable hashtable,
 		memcpy((char *) &hashTuple->htup,
 			   (char *) heapTuple,
 			   sizeof(hashTuple->htup));
+		hashTuple->htup.t_datamcxt = hashtable->batchCxt;
 		hashTuple->htup.t_data = (HeapTupleHeader)
 			(((char *) hashTuple) + MAXALIGN(sizeof(*hashTuple)));
 		memcpy((char *) hashTuple->htup.t_data,

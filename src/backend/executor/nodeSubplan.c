@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.17 1999/11/15 03:28:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.18 1999/12/16 22:19:44 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,7 +117,7 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 			 */
 			tup = heap_copytuple(tup);
 			if (node->curTuple)
-				pfree(node->curTuple);
+				heap_freetuple(node->curTuple);
 			node->curTuple = tup;
 			result = heap_getattr(tup, col, tdesc, isNull);
 			/* keep scanning subplan to make sure there's only one tuple */
@@ -351,7 +351,7 @@ ExecSetParamPlan(SubPlan *node)
 		 */
 		tup = heap_copytuple(tup);
 		if (node->curTuple)
-			pfree(node->curTuple);
+			heap_freetuple(node->curTuple);
 		node->curTuple = tup;
 
 		foreach(lst, node->setParam)
@@ -408,7 +408,7 @@ ExecEndSubPlan(SubPlan *node)
 	}
 	if (node->curTuple)
 	{
-		pfree(node->curTuple);
+		heap_freetuple(node->curTuple);
 		node->curTuple = NULL;
 	}
 }
