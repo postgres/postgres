@@ -1,12 +1,13 @@
 # ru.po
 # PG_DUMP Translated Messages into the Russian Language (KOI8-R)
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/po/Attic/ru.po,v 1.3 2002/09/22 20:57:21 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/po/Attic/ru.po,v 1.4 2002/10/14 19:04:28 petere Exp $
 #
 # Changelog:
-#   - September 2001 - August 2002: Maintenance, Serguei A. Mokhov <mokhov@cs.concordia.ca>
-#   - September 7, 2002: Post-7.3 beta 1 fuzzy messages fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
+#   - October 12, 2002: Post-7.3 beta 2, Fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - September 14, 2002: Post-7.3 beta 1, Take II, Serguei A. Mokhov <mokhov@cs.concordia.ca>
+#   - September 7, 2002: Post-7.3 beta 1 fuzzy messages fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
+#   - September 2001 - August 2002: Maintenance, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #
 msgid ""
 msgstr ""
@@ -1273,7 +1274,7 @@ msgstr "не получилось записать в выходной файл (%lu != %lu)\n"
 
 #: pg_backup_archiver.c:1480
 msgid "attempting to ascertain archive format\n"
-msgstr ""
+msgstr "попытка удостовериться в формате архива\n"
 
 #: pg_backup_archiver.c:1500 pg_backup_files.c:148
 #, c-format
