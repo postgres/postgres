@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.35 1998/02/26 04:35:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.36 1998/04/05 21:04:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -643,7 +643,7 @@ BufferAlloc(Relation reln,
 
 	/* record the database name and relation name for this buffer */
 	strcpy(buf->sb_relname, reln->rd_rel->relname.data);
-	strcpy(buf->sb_dbname, GetDatabaseName());
+	strcpy(buf->sb_dbname, DatabaseName);
 
 	INIT_BUFFERTAG(&(buf->tag), reln, blockNum);
 	if (!BufTableInsert(buf))

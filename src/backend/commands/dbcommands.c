@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.9 1998/03/30 17:22:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.10 1998/04/05 21:04:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -229,7 +229,7 @@ check_permissions(char *command,
 	}
 
 	/* Check to make sure database is not the currently open database */
-	if (!strcmp(dbname, GetDatabaseName()))
+	if (!strcmp(dbname, DatabaseName))
 	{
 		elog(ERROR, "%s cannot be executed on an open database", command);
 	}

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.26 1998/04/05 05:52:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.27 1998/04/05 21:04:43 momjian Exp $
  *
  * NOTES
  *		InitPostgres() is the function called from PostgresMain
@@ -126,7 +126,7 @@ InitMyDatabaseInfo(char *name)
 	if (!OidIsValid(MyDatabaseId))
 		elog(FATAL,
 			 "Database %s does not exist in %s",
-			 GetDatabaseName(),
+			 DatabaseName,
 			 DatabaseRelationName);
 
 	path = ExpandDatabasePath(myPath);
@@ -203,8 +203,8 @@ VerifyMyDatabase()
 	int			fd;
 	char		errormsg[1000];
 
-	name = GetDatabaseName();
-	myPath = GetDatabasePath();
+	name = DatabaseName;
+	myPath = DatabasePath;
 
 	if ((fd = open(myPath, O_RDONLY, 0)) == -1)
 		sprintf(errormsg,

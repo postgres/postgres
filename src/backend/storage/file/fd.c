@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Id: fd.c,v 1.30 1998/02/26 04:35:29 momjian Exp $
+ *	  $Id: fd.c,v 1.31 1998/04/05 21:04:27 momjian Exp $
  *
  * NOTES:
  *
@@ -460,8 +460,6 @@ FreeVfd(File file)
  * Open specified file name.
  * Fill in absolute path fields if necessary.
  *
- * Modify to use GetDatabasePath() rather than hardcoded paths.
- * - thomas 1997-11-02
  */
 static char *
 filepath(char *filename)
@@ -472,9 +470,9 @@ filepath(char *filename)
 	/* Not an absolute path name? Then fill in with database path... */
 	if (*filename != SEP_CHAR)
 	{
-		len = strlen(GetDatabasePath()) + strlen(filename) + 2;
+		len = strlen(DatabasePath) + strlen(filename) + 2;
 		buf = (char *) palloc(len);
-		sprintf(buf, "%s%c%s", GetDatabasePath(), SEP_CHAR, filename);
+		sprintf(buf, "%s%c%s", DatabasePath, SEP_CHAR, filename);
 	}
 	else
 	{
