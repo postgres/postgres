@@ -1,44 +1,235 @@
- <chapter id="charset">
-  <title>Character Sets</title>
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.3 2000/09/30 16:58:20 petere Exp $ -->
 
-  <abstract>
-   <para>
-    Describes the available language and character set support in
-    <productname>Postgres</productname>.
-   </para>
-  </abstract>
+<chapter id="charset">
+ <title>Localization</>
+
+ <abstract>
+  <para>
+   Describes the available localization features from the point of
+   view of the administrator.
+  </para>
+ </abstract>
 
   <para>
-   <productname>Postgres</productname> supports non-ASCII character
-   sets with two approaches: 
+   <productname>Postgres</productname> supports localization with
+   three approaches:
 
    <itemizedlist>
     <listitem>
      <para>
-      Using locale features in underlying
-      system libraries. This allows single-byte character sets to be
-      configured with a locale-specific collation order, provided that
-      the underlying system supports the required locale. This
-      technique supports only one character set per server, and can
-      not support multi-byte character sets.
+      Using the locale features of the operating system to provide
+      locale-specific collation order, number formatting, and other
+      aspects.
      </para>
     </listitem>
 
     <listitem>
      <para>
       Using explicit multiple-byte character sets defined in the
-      <productname>Postgres</productname> server. These character sets
-      are also known to some client libraries. The number of character
-      sets is fixed at the time the server is compiled, and internal
-      operations such as string comparisons require expansion of each
-      character into a 32-bit word.
+      <productname>Postgres</productname> server to support languages
+      that require more characters than will fit into a single byte,
+      and to provide character set recoding between client and server.
+      The number of supported character sets is fixed at the time the
+      server is compiled, and internal operations such as string
+      comparisons require expansion of each character into a 32-bit
+      word.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Single byte character recoding provides a more light-weight
+      solution for users of multiple, yet single-byte character sets.
      </para>
     </listitem>
    </itemizedlist>
   </para>
 
+
+ <sect1 id="locale">
+  <title>Locale Support</title>
+  
+  <para>
+   <firstterm>Locale</> support refers to an application respecting
+   cultural preferences regarding alphabets, sorting, number
+   formatting, etc.  <productname>PostgreSQL</> uses the standard ISO
+   C and POSIX-like locale facilities provided by the server operating
+   system.  For additional information refer the documentation of your
+   system.
+  </para>
+
+  <sect2>
+   <title>Overview</>
+
+  <para>
+    Locale support is not build into <productname>PostgreSQL</> by
+    default; to enable it, supply the <option>--enable-locale</> option
+    to the <filename>configure</> script:
+<informalexample>
+<screen>
+<prompt>$ </><userinput>./configure --enable-locale</>
+</screen>
+</informalexample>
+    Locale support only affects the server; all clients are compatible
+    with servers with or without locale support.
+   </para>
+
+   <para>
+    The information about which particular cultural rules to use is
+    determined by standard environment variables.  If you are getting
+    localized behavior from other programs you probably have them set
+    up already.  The simplest way to set the localization information
+    is the <envar>LANG</> variable, for example:
+<programlisting>
+export LANG=sv_SE
+</programlisting>
+    This sets the locale to Swedish (<literal>sv</>) as spoken in
+    Sweden (<literal>SE</>).  Other possibilities might be
+    <literal>en_US</> (U.S. English) and <literal>fr_CA</> (Canada,
+    French).  If more than one character set can be useful for a locale
+    then the specifications look like this:
+    <literal>cs_CZ.ISO8859-2</>. What locales are available under what
+    names on your system depends on what was provided by the operating
+    system vendor and what was installed.
+   </para>
+
+   <para>
+    Occasionally it is useful to mix rules from several locales, e.g.,
+    use U.S. rules but Spanish messages.  To do that a set of
+    environment variables exist that override the default of
+    <envar>LANG</> for a particular category:
+
+    <informaltable>
+     <tgroup cols="2">
+      <tbody>
+       <row>
+        <entry>LC_COLLATE</>
+        <entry>String sort order</>
+       </row>
+       <row>
+        <entry>LC_CTYPE</>
+        <entry>Character classification (What is a letter? What is the upper-case equivalent of this letter?)</>
+       </row>
+       <row>
+        <entry>LC_MESSAGES</>
+        <entry>Language of messages</>
+       </row>
+       <row>
+        <entry>LC_MONETARY</>
+        <entry>Formatting of currency amounts</>
+       </row>
+       <row>
+        <entry>LC_NUMERIC</>
+        <entry>Formatting of numbers</>
+       </row>
+       <row>
+        <entry>LC_TIME</>
+        <entry>Formatting of dates and times</>
+       </row>
+      </tbody>
+     </tgroup>
+    </informaltable>
+
+    <envar>LC_MESSAGES</> only affects the messages that come from the
+    operating system, not <productname>PostgreSQL</>.
+   </para>
+
+   <para>
+    If you want the system to behave as if it had no locale support,
+    use the special locale <literal>C</> or <literal>POSIX</>, or
+    simply unset all locale related variables.
+   </para>
+
+   <para>
+    Once you have chosen a set of localization rules this way you must
+    keep them fixed for any particular database cluster.  That means
+    that the locales that were active when you ran <filename>initdb</>
+    must be kept the same when you start the postmaster.  Otherwise,
+    the changed sort order can corrupt indexes or make your data
+    disappear mysteriously.  It is currently not possible to change the
+    locales after database initialization or to use more than one set
+    of locales for a given database cluster.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Benefits</>
+
+   <para>
+    Locale support influences in particular the following features:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       Sort order in <command>ORDER BY</> queries.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The <function>to_char</> family of functions
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The <literal>LIKE</> and <literal>~</> operators for pattern
+       matching
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+
+   <para>
+    The only severe drawback of using the locale support in
+    <productname>PostgreSQL</> is its speed.  So use locale only if you
+    actually need it.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Problems</>
+
+   <para>
+    If locale support doesn't work in spite of the explanation above,
+    check that the locale support in your operating system is okay.
+    To check whether a given locale is installed and functional you
+    can use <application>Perl</>, for example.  Perl has also support
+    for locales and if a locale is broken <command>perl -v</> will
+    complain something like this:
+<screen>
+<prompt>$</> <userinput>export LC_CTYPE='not_exist'</>
+<prompt>$</> <userinput>perl -v</>
+<computeroutput>
+perl: warning: Setting locale failed.
+perl: warning: Please check that your locale settings:
+LC_ALL = (unset),
+LC_CTYPE = "not_exist",
+LANG = (unset)
+are supported and installed on your system.
+perl: warning: Falling back to the standard locale ("C").
+</computeroutput>
+</screen>
+   </para>
+
+   <para>
+    Check that your locale files are in the right location.  Possible
+    locations include: <filename>/usr/lib/locale</filename> (Linux,
+    Solaris), <filename>/usr/share/locale</filename> (Linux),
+    <filename>/usr/lib/nls/loc</filename> (DUX 4.0).  Check the locale
+    man page of your system if you are not sure.
+   </para>
+
+   <para>
+    The directory <filename>src/test/locale</> contains a test suite
+    for <productname>PostgreSQL</>'s locale support.
+   </para>
+  </sect2>
+ </sect1>
+
+
   <sect1 id="multibyte">
-   <title>Multi-byte Support</title>
+   <title>Multibyte Support</title>
 
    <note>
     <title>Author</title>
@@ -53,7 +244,7 @@
    </note>
 
    <para>
-    Multi-byte (<acronym>MB</acronym>) support is intended to allow
+    Multibyte (<acronym>MB</acronym>) support is intended to allow
     <productname>Postgres</productname> to handle
     multiple-byte character sets such as EUC (Extended Unix Code), Unicode and
     Mule internal code. With <acronym>MB</acronym> enabled you can use multi-byte
@@ -680,7 +871,78 @@ SET CLIENT_ENCODING = 'WIN1250';
     </procedure>
    </sect2>
   </sect1>
- </chapter>
+
+
+ <sect1 id="recode">
+  <title>Single-byte character set recoding</>
+<!-- formerly in README.charsets, by Josef Balatka, <balatka@email.cz> -->
+
+  <para>
+   You can set up this feature with the <option>--enable-recode</> option
+   to <filename>configure</>. This option was formerly described as
+   <quote>Cyrillic recode support</> which doesn't express all its
+   power. It can be used for <emphasis>any</> single-byte character
+   set recoding.
+  </para>
+
+  <para>
+   This method uses a file <filename>charset.conf</> file located in
+   the database directory (<envar>PGDATA</>).  It's a typical
+   configuration text file where spaces and newlines separate items
+   and records and # specifies comments.  Three keywords with the
+   following syntax are recognized here:
+<synopsis>
+BaseCharset      <replaceable>server_charset</>
+RecodeTable      <replaceable>from_charset</> <replaceable>to_charset</> <replaceable>file_name</>
+HostCharset      <replaceable>host_spec</>    <replaceable>host_charset</>
+</synopsis>
+  </para>
+
+  <para>
+   <token>BaseCharset</> defines the encoding of the database server.
+   All character set names are only used for mapping inside of
+   <filename>charset.conf</> so you can freely use typing-friendly
+   names.
+  </para>
+
+  <para>
+   <token>RecodeTable</> records specify translation tables between
+   server and client.  The file name is relative to the
+   <envar>PGDATA</> directory.  The table file format is very
+   simple. There are no keywords and characters are represented by a
+   pair of decimal or hexadecimal (0x prefixed) values on single
+   lines:
+<synopsis>
+<replaceable>char_value</>   <replaceable>translated_char_value</>
+</synopsis>
+  </para>
+
+  <para>
+   <token>HostCharset</> records define the client character set by IP
+   address. You can use a single IP address, an IP mask range starting
+   from the given address or an IP interval (e.g., 127.0.0.1,
+   192.168.1.100/24, 192.168.1.20-192.168.1.40).
+  </para>
+
+  <para>
+   The <filename>charset.conf</> file is always processed up to the
+   end, so you can easily specify exceptions from the previous
+   rules. In the src/data you will find charset.conf example and a few
+   recoding tables.
+  </para>
+
+  <para>
+   As this solution is based on the client's IP address and character
+   set mapping there are obviously some restrictions as well. You
+   cannot use different encodings on the same host at the same
+   time. It is also inconvenient when you boot your client hosts into
+   more operating systems.  Nevertheless, when these restrictions are
+   not limiting and you do not need multi-byte characters than it is a
+   simple and effective solution.
+  </para>
+ </sect1>
+
+</chapter>
 
 <!-- Keep this comment at the end of the file
 Local variables:

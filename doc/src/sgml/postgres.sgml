@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.41 2000/09/12 05:37:09 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.42 2000/09/30 16:58:20 petere Exp $
 -->
 
 <!doctype set PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
@@ -173,9 +173,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.41 2000/09/12 05:37:09 th
 -->
   &installation;
   &installw;
-  &charset;
   &runtime;
   &client-auth;
+  &charset;
   &manage-ag;
   &user-manag;
   &backup;

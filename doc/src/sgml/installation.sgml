@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.21 2000/09/29 20:21:34 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.22 2000/09/30 16:58:20 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</> ]]>Installation Instructions</title>
@@ -447,8 +447,9 @@ su - postgres
        <term>--enable-recode</term>
        <listitem>
         <para>
-         Enables character set recode support. See
-         <filename>doc/README.Charsets</> for details on this feature.
+         Enables single-byte character set recode support. See
+         <![%flattext-install-include[the <citetitle>Administrator's Guide</citetitle>]]>
+         <![%flattext-install-ignore[<xref linkend="recode">]]> about this feature.
         </para>
        </listitem>
       </varlistentry>
@@ -459,7 +460,10 @@ su - postgres
         <para>
          Allows the use of multibyte character encodings. This is
          primarily for languages like Japanese, Korean, and Chinese.
-         Read <filename>doc/README.mb</> for details.
+         Read 
+         <![%flattext-install-include[the <citetitle>Administrator's Guide</citetitle>]]>
+         <![%flattext-install-ignore[<xref linkend="multibyte">]]>
+         for details.
         </para>
        </listitem>
       </varlistentry>
