@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.99 2004/01/05 23:39:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.100 2004/01/19 03:49:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 #include "utils/syscache.h"
 
 
+static bool is_distinct_query(Query *query);
 static bool hash_safe_tlist(List *tlist);
 
 
@@ -553,16 +554,14 @@ create_unique_path(Query *root, RelOptInfo *rel, Path *subpath)
 	pathnode->subpath = subpath;
 
 	/*
-	 * If the input is a subquery that uses DISTINCT, we don't need to do
-	 * anything; its output is already unique.  (Are there any other cases
-	 * in which we can easily prove the input must be distinct?)
+	 * If the input is a subquery whose output must be unique already,
+	 * we don't need to do anything.
 	 */
 	if (rel->rtekind == RTE_SUBQUERY)
 	{
 		RangeTblEntry *rte = rt_fetch(rel->relid, root->rtable);
-		Query	   *subquery = rte->subquery;
 
-		if (has_distinct_clause(subquery))
+		if (is_distinct_query(rte->subquery))
 		{
 			pathnode->umethod = UNIQUE_PATH_NOOP;
 			pathnode->rows = rel->rows;
@@ -665,6 +664,36 @@ create_unique_path(Query *root, RelOptInfo *rel, Path *subpath)
 	rel->cheapest_unique_path = (Path *) pathnode;
 
 	return pathnode;
+}
+
+/*
+ * is_distinct_query - does query never return duplicate rows?
+ */
+static bool
+is_distinct_query(Query *query)
+{
+	/* DISTINCT (but not DISTINCT ON) guarantees uniqueness */
+	if (has_distinct_clause(query))
+		return true;
+
+	/* UNION, INTERSECT, EXCEPT guarantee uniqueness, except with ALL */
+	if (query->setOperations)
+	{
+		SetOperationStmt *topop = (SetOperationStmt *) query->setOperations;
+
+		Assert(IsA(topop, SetOperationStmt));
+		Assert(topop->op != SETOP_NONE);
+
+		if (!topop->all)
+			return true;
+	}
+
+	/*
+	 * XXX Are there any other cases in which we can easily see the result
+	 * must be distinct?
+	 */
+
+	return false;
 }
 
 /*
