@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Oct 30 10:57:33 PST 2001
+Last updated:		Tue Oct 30 20:56:47 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -226,7 +226,16 @@ CLIENTS
 	o Error Codes (pending backend implementation)
 	o -Support for binary data/bytea
 	o Move to using 'make' rather than 'ant'(?)
+<<<<<<< TODO
+* ECPG
+	o implement set descriptor, using descriptor
+	o make casts work in variable initializations
+	o allow variable to specify the connection name
+	o implement SQLDA
+	o allow SELECT of array of strings into a auto-sized variable
+=======
 	o Use cursors implicitly to avoid large results (see setCursorName())
+>>>>>>> 1.608
 
 REFERENTIAL INTEGRITY
 
