@@ -26,12 +26,12 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.86 2000/02/16 21:25:59 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.87 2000/03/25 14:32:50 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 exit_nicely(){
-    stty echo >& /dev/null
+    stty echo > /dev/null 2>&1
     echo
     echo "$CMDNAME failed."
     if [ "$noclean" -eq 0 ]; then
@@ -499,14 +499,14 @@ echo "REVOKE ALL on pg_shadow FROM public" \
 # set up password
 if [ "$PwPrompt" ]; then
     $ECHO_N "Enter new superuser password: "$ECHO_C
-    stty -echo >& /dev/null
+    stty -echo > /dev/null 2>&1
     read FirstPw
-    stty echo >& /dev/null
+    stty echo > /dev/null 2>&1
     echo
     $ECHO_N "Enter it again: "$ECHO_C
-    stty -echo >& /dev/null
+    stty -echo > /dev/null 2>&1
     read SecondPw
-    stty echo >& /dev/null
+    stty echo > /dev/null 2>&1
     echo
     if [ "$FirstPw" != "$SecondPw" ]; then
         echo "Passwords didn't match."
