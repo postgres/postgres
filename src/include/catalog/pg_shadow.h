@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_shadow.h,v 1.8 2000/06/09 15:51:00 momjian Exp $
+ * $Id: pg_shadow.h,v 1.9 2000/06/12 03:40:54 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -38,8 +38,6 @@ CATALOG(pg_shadow) BOOTSTRAP
 	NameData	usename;
 	int4		usesysid;
 	bool		usecreatedb;
-	bool		usecreatetable;
-	bool		uselocktable;
 	bool		usetrace;
 	bool		usesuper;
 	bool		usecatupd;
@@ -58,17 +56,15 @@ typedef FormData_pg_shadow *Form_pg_shadow;
  *		compiler constants for pg_shadow
  * ----------------
  */
-#define Natts_pg_shadow				10
+#define Natts_pg_shadow				8
 #define Anum_pg_shadow_usename			1
 #define Anum_pg_shadow_usesysid			2
 #define Anum_pg_shadow_usecreatedb		3
-#define Anum_pg_shadow_usecreatetable		4
-#define Anum_pg_shadow_uselocktable		5
-#define Anum_pg_shadow_usetrace			6
-#define Anum_pg_shadow_usesuper			7
-#define Anum_pg_shadow_usecatupd		8
-#define Anum_pg_shadow_passwd			9
-#define Anum_pg_shadow_valuntil			10
+#define Anum_pg_shadow_usetrace			4
+#define Anum_pg_shadow_usesuper			5
+#define Anum_pg_shadow_usecatupd		6
+#define Anum_pg_shadow_passwd			7
+#define Anum_pg_shadow_valuntil			8
 
 /* ----------------
  *		initial contents of pg_shadow
@@ -77,6 +73,6 @@ typedef FormData_pg_shadow *Form_pg_shadow;
  * user choices.
  * ----------------
  */
-DATA(insert OID = 0 ( POSTGRES PGUID t t t t t t _null_ _null_ ));
+DATA(insert OID = 0 ( POSTGRES PGUID t t t t _null_ _null_ ));
 
 #endif	 /* PG_SHADOW_H */

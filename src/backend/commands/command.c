@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.78 2000/06/09 15:50:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.79 2000/06/12 03:40:29 momjian Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -30,7 +30,6 @@
 #include "commands/command.h"
 #include "executor/spi.h"
 #include "catalog/heap.h"
-#include "catalog/pg_shadow.h"
 #include "miscadmin.h"
 #include "optimizer/prep.h"
 #include "utils/acl.h"
@@ -1212,21 +1211,6 @@ LockTableCommand(LockStmt *lockstmt)
 {
 	Relation	rel;
 	int			aclresult;
-	HeapTuple	tup;
-
-	
-	/* ----------
-	 * Check pg_shadow for global lock setting 
-	 * ----------
-	 */
-	tup = SearchSysCacheTuple(SHADOWNAME, PointerGetDatum(GetPgUserName()), 0, 0, 0);
-
-	if (!HeapTupleIsValid(tup))
- 		elog(ERROR, "LOCK TABLE: look at pg_shadow failed"); 
-
- 	if (!((Form_pg_shadow) GETSTRUCT(tup))->uselocktable)
- 		elog(ERROR, "LOCK TABLE: permission denied");	
-
 
 	rel = heap_openr(lockstmt->relname, NoLock);
 	if (!RelationIsValid(rel))

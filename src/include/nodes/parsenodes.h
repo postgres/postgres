@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.107 2000/06/09 15:51:02 momjian Exp $
+ * $Id: parsenodes.h,v 1.108 2000/06/12 03:41:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -290,7 +290,7 @@ typedef struct DropPLangStmt
 
 
 /* ----------------------
- *		Create/Alter/Drop User Statements
+ *				Create/Alter/Drop User Statements
  * ----------------------
  */
 typedef struct CreateUserStmt
@@ -301,8 +301,6 @@ typedef struct CreateUserStmt
 	int			sysid;			/* PgSQL system id (-1 if don't care) */
 	bool		createdb;		/* Can the user create databases?	  */
 	bool		createuser;		/* Can this user create users?		  */
-	bool        createtable;	/* Can this user create tables?		  */
-	bool        locktable;		/* Can this user lock tables?		  */
 	List	   *groupElts;		/* The groups the user is a member of */
 	char	   *validUntil;		/* The time the login is valid until  */
 } CreateUserStmt;
@@ -314,8 +312,6 @@ typedef struct AlterUserStmt
 	char	   *password;		/* PostgreSQL user password			  */
 	int			createdb;		/* Can the user create databases?	  */
 	int			createuser;		/* Can this user create users?		  */
-	bool        createtable;	/* Can this user create tables?		  */
-	bool        locktable;		/* Can this user lock tables?		  */
 	char	   *validUntil;		/* The time the login is valid until  */
 } AlterUserStmt;
 
