@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.70 2002/04/24 02:26:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.71 2002/06/14 03:56:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,6 +55,13 @@
 #include "mb/pg_wchar.h"
 #endif
 
+/* these functions are misnamed - they handle both SSL and non-SSL case */
+extern ssize_t read_SSL (PGconn *, void *ptr, size_t);
+extern ssize_t write_SSL (PGconn *, const void *ptr, size_t);
+
+#ifdef USE_SSL
+extern ssize_t close_SSL (PGconn *);
+#endif
 
 #define DONOTICE(conn,message) \
 	((*(conn)->noticeHook) ((conn)->noticeArg, (message)))
@@ -477,14 +484,8 @@ pqReadData(PGconn *conn)
 
 	/* OK, try to read some data */
 retry3:
-#ifdef USE_SSL
-	if (conn->ssl)
-		nread = SSL_read(conn->ssl, conn->inBuffer + conn->inEnd,
-						 conn->inBufSize - conn->inEnd);
-	else
-#endif
-		nread = recv(conn->sock, conn->inBuffer + conn->inEnd,
-					 conn->inBufSize - conn->inEnd, 0);
+	nread = read_SSL(conn, conn->inBuffer + conn->inEnd,
+					 conn->inBufSize - conn->inEnd);
 	if (nread < 0)
 	{
 		if (SOCK_ERRNO == EINTR)
@@ -563,14 +564,8 @@ retry3:
 	 * arrived.
 	 */
 retry4:
-#ifdef USE_SSL
-	if (conn->ssl)
-		nread = SSL_read(conn->ssl, conn->inBuffer + conn->inEnd,
-						 conn->inBufSize - conn->inEnd);
-	else
-#endif
-		nread = recv(conn->sock, conn->inBuffer + conn->inEnd,
-					 conn->inBufSize - conn->inEnd, 0);
+	nread = read_SSL(conn, conn->inBuffer + conn->inEnd,
+					 conn->inBufSize - conn->inEnd);
 	if (nread < 0)
 	{
 		if (SOCK_ERRNO == EINTR)
@@ -611,6 +606,9 @@ definitelyFailed:
 			   "\tThis probably means the server terminated abnormally\n"
 						 "\tbefore or while processing the request.\n"));
 	conn->status = CONNECTION_BAD;		/* No more connection to backend */
+#ifdef USE_SSL
+	close_SSL(conn);
+#endif
 #ifdef WIN32
 	closesocket(conn->sock);
 #else
@@ -650,23 +648,9 @@ pqSendSome(PGconn *conn)
 	/* while there's still data to send */
 	while (len > 0)
 	{
-		/* Prevent being SIGPIPEd if backend has closed the connection. */
-#ifndef WIN32
-		pqsigfunc	oldsighandler = pqsignal(SIGPIPE, SIG_IGN);
-#endif
-
 		int			sent;
 
-#ifdef USE_SSL
-		if (conn->ssl)
-			sent = SSL_write(conn->ssl, ptr, len);
-		else
-#endif
-			sent = send(conn->sock, ptr, len, 0);
-
-#ifndef WIN32
-		pqsignal(SIGPIPE, oldsighandler);
-#endif
+		sent = write_SSL(conn, ptr, len);
 
 		if (sent < 0)
 		{
@@ -732,7 +716,7 @@ pqSendSome(PGconn *conn)
 			 */
 #ifdef USE_SSL
 			/* can't do anything for our SSL users yet */
-			if (conn->ssl == NULL)
+			if (PQgetssl(conn) == NULL)
 			{
 #endif
 				if (pqIsnonblocking(conn))

@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.133 2002/05/05 00:03:28 tgl Exp $
+ *	$Id: pqcomm.c,v 1.134 2002/06/14 03:56:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,6 +80,14 @@
 #include "libpq/libpq.h"
 #include "miscadmin.h"
 #include "storage/ipc.h"
+
+/* these functions are misnamed - they handle both SSL and non-SSL case */
+extern ssize_t read_SSL(Port *, void *ptr, size_t len);
+extern ssize_t write_SSL(Port *, const void *ptr, size_t len);
+
+#ifdef USE_SSL
+extern void close_SSL(Port *);
+#endif /* USE_SSL */
 
 
 static void pq_close(void);
@@ -138,6 +146,9 @@ pq_close(void)
 {
 	if (MyProcPort != NULL)
 	{
+#ifdef USE_SSL
+		close_SSL(MyProcPort);
+#endif /* USE_SSL */
 		close(MyProcPort->sock);
 		/* make sure any subsequent attempts to do I/O fail cleanly */
 		MyProcPort->sock = -1;
@@ -416,6 +427,7 @@ StreamConnection(int server_fd, Port *port)
 void
 StreamClose(int sock)
 {
+	/* FIXME - what about closing SSL connections? */
 	close(sock);
 }
 
@@ -457,14 +469,8 @@ pq_recvbuf(void)
 	{
 		int			r;
 
-#ifdef USE_SSL
-		if (MyProcPort->ssl)
-			r = SSL_read(MyProcPort->ssl, PqRecvBuffer + PqRecvLength,
-						 PQ_BUFFER_SIZE - PqRecvLength);
-		else
-#endif
-			r = recv(MyProcPort->sock, PqRecvBuffer + PqRecvLength,
-					 PQ_BUFFER_SIZE - PqRecvLength, 0);
+		r = read_SSL(MyProcPort, PqRecvBuffer + PqRecvLength,
+					 PQ_BUFFER_SIZE - PqRecvLength);
 
 		if (r < 0)
 		{
@@ -480,7 +486,11 @@ pq_recvbuf(void)
 			elog(COMMERROR, "pq_recvbuf: recv() failed: %m");
 			return EOF;
 		}
+#ifdef USE_SSL
+		if (r == 0 && !MyProcPort->ssl)
+#else /* USE_SSL */
 		if (r == 0)
+#endif /* USE_SSL */
 		{
 			/* as above, only write to postmaster log */
 			elog(COMMERROR, "pq_recvbuf: unexpected EOF on client connection");
@@ -651,14 +661,13 @@ pq_flush(void)
 	{
 		int			r;
 
-#ifdef USE_SSL
-		if (MyProcPort->ssl)
-			r = SSL_write(MyProcPort->ssl, bufptr, bufend - bufptr);
-		else
-#endif
-			r = send(MyProcPort->sock, bufptr, bufend - bufptr, 0);
+		r = write_SSL(MyProcPort, bufptr, bufend - bufptr);
 
+#ifdef USE_SSL
+		if (r < 0 || (r == 0 && !MyProcPort->ssl))
+#else /* USE_SSL */
 		if (r <= 0)
+#endif /* USE_SSL */
 		{
 			if (errno == EINTR)
 				continue;		/* Ok if we were interrupted */
@@ -703,8 +712,9 @@ int
 pq_eof(void)
 {
 	char		x;
-	int			res;
+	int			res = 1;
 
+#ifndef USE_SSL /* not a good solution, but better than nothing */
 	res = recv(MyProcPort->sock, &x, 1, MSG_PEEK);
 
 	if (res < 0)
@@ -713,6 +723,8 @@ pq_eof(void)
 		elog(COMMERROR, "pq_eof: recv() failed: %m");
 		return EOF;
 	}
+#endif /* USE_SSL */
+
 	if (res == 0)
 		return EOF;
 	else

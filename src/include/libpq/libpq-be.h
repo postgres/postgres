@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-be.h,v 1.27 2001/11/12 05:43:25 tgl Exp $
+ * $Id: libpq-be.h,v 1.28 2002/06/14 03:56:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,6 +70,7 @@ typedef struct Port
 	 */
 #ifdef USE_SSL
 	SSL		   *ssl;
+	X509	   *peer;
 #endif
 } Port;
 

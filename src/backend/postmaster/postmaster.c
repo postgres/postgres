@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.276 2002/06/11 13:40:51 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.277 2002/06/14 03:56:47 momjian Exp $
  *
  * NOTES
  *
@@ -165,10 +165,6 @@ static int	ServerSock_INET = INVALID_SOCK;		/* stream socket server */
 static int	ServerSock_UNIX = INVALID_SOCK;		/* stream socket server */
 #endif
 
-#ifdef USE_SSL
-static SSL_CTX *SSL_context = NULL;		/* Global SSL context */
-#endif
-
 /*
  * Set by the -o option
  */
@@ -274,8 +270,10 @@ __attribute__((format(printf, 1, 2)));
 #define ShutdownDataBase()		SSDataBase(BS_XLOG_SHUTDOWN)
 
 #ifdef USE_SSL
-static void InitSSL(void);
-static const char *SSLerrmessage(void);
+extern int initialize_ctx(const char *, void (*err)(const char *fmt,...));
+extern void destroy_ctx(void);
+extern int open_SSL_server(Port *);
+extern void close_SSL(Port *);
 #endif
 
 
@@ -609,7 +607,10 @@ PostmasterMain(int argc, char *argv[])
 		ExitPostmaster(1);
 	}
 	if (EnableSSL)
-		InitSSL();
+		{
+		if (initialize_ctx(NULL, postmaster_error) == -1)
+			ExitPostmaster(1);
+		}
 #endif
 
 	/*
@@ -1114,13 +1115,9 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 
 #ifdef USE_SSL
 		if (SSLok == 'S')
-		{
-			if (!(port->ssl = SSL_new(SSL_context)) ||
-				!SSL_set_fd(port->ssl, port->sock) ||
-				SSL_accept(port->ssl) <= 0)
+  		{
+			if (open_SSL_server(port) != STATUS_OK)
 			{
-				elog(LOG, "failed to initialize SSL connection: %s (%m)",
-					 SSLerrmessage());
 				return STATUS_ERROR;
 			}
 		}
@@ -1322,9 +1319,10 @@ static void
 ConnFree(Port *conn)
 {
 #ifdef USE_SSL
-	if (conn->ssl)
-		SSL_free(conn->ssl);
+	close_SSL(conn);
 #endif
+	if (conn->sock != -1)
+		close(conn->sock);
 	free(conn);
 }
 
@@ -2424,72 +2422,6 @@ CountChildren(void)
 	return cnt;
 }
 
-#ifdef USE_SSL
-
-/*
- * Initialize SSL library and structures
- */
-static void
-InitSSL(void)
-{
-	char		fnbuf[2048];
-
-	SSL_load_error_strings();
-	SSL_library_init();
-	SSL_context = SSL_CTX_new(SSLv23_method());
-	if (!SSL_context)
-	{
-		postmaster_error("failed to create SSL context: %s",
-						 SSLerrmessage());
-		ExitPostmaster(1);
-	}
-	snprintf(fnbuf, sizeof(fnbuf), "%s/server.crt", DataDir);
-	if (!SSL_CTX_use_certificate_file(SSL_context, fnbuf, SSL_FILETYPE_PEM))
-	{
-		postmaster_error("failed to load server certificate (%s): %s",
-						 fnbuf, SSLerrmessage());
-		ExitPostmaster(1);
-	}
-	snprintf(fnbuf, sizeof(fnbuf), "%s/server.key", DataDir);
-	if (!SSL_CTX_use_PrivateKey_file(SSL_context, fnbuf, SSL_FILETYPE_PEM))
-	{
-		postmaster_error("failed to load private key file (%s): %s",
-						 fnbuf, SSLerrmessage());
-		ExitPostmaster(1);
-	}
-	if (!SSL_CTX_check_private_key(SSL_context))
-	{
-		postmaster_error("check of private key failed: %s",
-						 SSLerrmessage());
-		ExitPostmaster(1);
-	}
-}
-
-/*
- * Obtain reason string for last SSL error
- *
- * Some caution is needed here since ERR_reason_error_string will
- * return NULL if it doesn't recognize the error code.  We don't
- * want to return NULL ever.
- */
-static const char *
-SSLerrmessage(void)
-{
-	unsigned long	errcode;
-	const char	   *errreason;
-	static char		errbuf[32];
-
-	errcode = ERR_get_error();
-	if (errcode == 0)
-		return "No SSL error reported";
-	errreason = ERR_reason_error_string(errcode);
-	if (errreason != NULL)
-		return errreason;
-	snprintf(errbuf, sizeof(errbuf), "SSL error code %lu", errcode);
-	return errbuf;
-}
-
-#endif /* USE_SSL */
 
 /*
  * Fire off a subprocess for startup/shutdown/checkpoint.

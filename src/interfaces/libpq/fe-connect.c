@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.183 2002/04/15 23:34:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.184 2002/06/14 03:56:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,10 +61,6 @@ inet_aton(const char *cp, struct in_addr * inp)
 }
 #endif
 
-
-#ifdef USE_SSL
-static SSL_CTX *SSL_context = NULL;
-#endif
 
 #define NOTIFYLIST_INITIAL_SIZE 10
 #define NOTIFYLIST_GROWBY 10
@@ -186,8 +182,13 @@ static char *conninfo_getval(PQconninfoOption *connOptions,
 static void defaultNoticeProcessor(void *arg, const char *message);
 static int parseServiceInfo(PQconninfoOption *options,
 				 PQExpBuffer errorMessage);
+
 #ifdef USE_SSL
-static const char *SSLerrmessage(void);
+extern int initialize_ctx(const char *passwd, void (*err)(const char *fmt,...), PGconn *);
+extern void destroy_ctx(PGconn *);
+extern int open_SSL_client(PGconn *);
+extern void close_SSL(PGconn *);
+extern SSL *PQgetssl(PGconn *);
 #endif
 
 
@@ -969,28 +970,10 @@ retry2:
 		}
 		if (SSLok == 'S')
 		{
-			if (!SSL_context)
-			{
-				SSL_load_error_strings();
-				SSL_library_init();
-				SSL_context = SSL_CTX_new(SSLv23_method());
-				if (!SSL_context)
-				{
-					printfPQExpBuffer(&conn->errorMessage,
-					 libpq_gettext("could not create SSL context: %s\n"),
-									  SSLerrmessage());
-					goto connect_errReturn;
-				}
-			}
-			if (!(conn->ssl = SSL_new(SSL_context)) ||
-				!SSL_set_fd(conn->ssl, conn->sock) ||
-				SSL_connect(conn->ssl) <= 0)
-			{
-				printfPQExpBuffer(&conn->errorMessage,
-				libpq_gettext("could not establish SSL connection: %s\n"),
-								  SSLerrmessage());
+			if (initialize_ctx(NULL, NULL, conn) == -1)
 				goto connect_errReturn;
-			}
+			if (open_SSL_client(conn) == -1)
+				goto connect_errReturn;
 			/* SSL connection finished. Continue to send startup packet */
 		}
 		else if (SSLok == 'E')
@@ -1015,7 +998,7 @@ retry2:
 			goto connect_errReturn;
 		}
 	}
-	if (conn->require_ssl && !conn->ssl)
+	if (conn->require_ssl && !PQgetssl(conn))
 	{
 		/* Require SSL, but server does not support/want it */
 		printfPQExpBuffer(&conn->errorMessage,
@@ -1914,8 +1897,7 @@ freePGconn(PGconn *conn)
 		return;
 	pqClearAsyncResult(conn);	/* deallocate result and curTuple */
 #ifdef USE_SSL
-	if (conn->ssl)
-		SSL_free(conn->ssl);
+	close_SSL(conn);
 #endif
 	if (conn->sock >= 0)
 	{
@@ -2641,35 +2623,6 @@ PQconninfoFree(PQconninfoOption *connOptions)
 }
 
 
-#ifdef USE_SSL
-
-/*
- * Obtain reason string for last SSL error
- *
- * Some caution is needed here since ERR_reason_error_string will
- * return NULL if it doesn't recognize the error code.  We don't
- * want to return NULL ever.
- */
-static const char *
-SSLerrmessage(void)
-{
-	unsigned long	errcode;
-	const char	   *errreason;
-	static char		errbuf[32];
-
-	errcode = ERR_get_error();
-	if (errcode == 0)
-		return "No SSL error reported";
-	errreason = ERR_reason_error_string(errcode);
-	if (errreason != NULL)
-		return errreason;
-	snprintf(errbuf, sizeof(errbuf), "SSL error code %lu", errcode);
-	return errbuf;
-}
-
-#endif /* USE_SSL */
-
-
 /* =========== accessor functions for PGconn ========= */
 char *
 PQdb(const PGconn *conn)
@@ -2811,16 +2764,6 @@ int
 PQsetClientEncoding(PGconn *conn, const char *encoding)
 {
 	return -1;
-}
-#endif
-
-#ifdef USE_SSL
-SSL *
-PQgetssl(PGconn *conn)
-{
-	if (!conn)
-		return NULL;
-	return conn->ssl;
 }
 #endif
 
