@@ -61,3 +61,10 @@ SELECT join_sequences(sequences) FROM sequences
 -- error in trigger
 --
 
+--
+-- Check Universal Newline Support
+--
+
+SELECT newline_lf();
+SELECT newline_cr();
+SELECT newline_crlf();

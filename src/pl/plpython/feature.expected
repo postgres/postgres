@@ -137,3 +137,21 @@ SELECT join_sequences(sequences) FROM sequences
 ----------------
 (0 rows)
 
+SELECT newline_lf();
+ newline_lf 
+------------
+        123
+(1 row)
+
+SELECT newline_cr();
+ newline_cr 
+------------
+        123
+(1 row)
+
+SELECT newline_crlf();
+ newline_crlf 
+--------------
+          123
+(1 row)
+
