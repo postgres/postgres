@@ -18,6 +18,7 @@ symbol	{letter}({letter}|{digit})*
 string	'[^']*'
 
 exec	[eE][xX][eE][cC]
+execute	[eE][xX][eE][cC][uU][tT][eE]
 sql	[sS][qQ][lL]
 varchar	[vV][aA][rR][cC][hH][aA][rR]
 varchar2	[vV][aA][rR][cC][hH][aA][rR]2
@@ -30,18 +31,25 @@ include [iI][nN][cC][lL][uU][dD][eE]
 connect [cC][oO][nN][nN][eE][cC][tT]
 open	[oO][pP][eE][nN]
 commit  [cC][oO][mM][mM][iI][tT]
+immediate [iI][mM][mM][eE][dD][iI][aA][tT][eE]
+release [rR][eE][lL][eE][aA][sS][eE]
 rollback [rR][oO][lL][lL][bB][aA][cC][kK]
+work    [wW][oO][rR][kK]
 %%
 <C>{exec}{ws}{sql}	{ BEGIN SQL; dbg(SQL_START); return SQL_START; }
 <SQL>";"		{ BEGIN C; dbg(SQL_SEMI); return SQL_SEMI; }
 <SQL>{begin}		{ dbg(SQL_BEGIN); return SQL_BEGIN; }
 <SQL>{end}		{ dbg(SQL_END); return SQL_END; }
 <SQL>{declare}		{ dbg(SQL_DECLARE); return SQL_DECLARE; }
+<SQL>{execute}		{ dbg(SQL_EXECUTE); return SQL_EXECUTE; }
+<SQL>{immediate}	{ dbg(SQL_IMMEDIATE); return SQL_IMMEDIATE; }
 <SQL>{section}		{ dbg(SQL_SECTION); return SQL_SECTION; }
 <SQL>{include}		{ dbg(SQL_INCLUDE); return SQL_INCLUDE; }
 <SQL>{connect}		{ dbg(SQL_CONNECT); return SQL_CONNECT; }
 <SQL>{open}		{ dbg(SQL_OPEN); return SQL_OPEN; }
 <SQL>{commit}		{ dbg(SQL_COMMIT); return SQL_COMMIT; }
+<SQL>{release}		{ dbg(SQL_RELEASE); return SQL_RELEASE; }
+<SQL>{work}		{ dbg(SQL_WORK); return SQL_WORK; }
 <SQL>{rollback}		{ dbg(SQL_ROLLBACK); return SQL_ROLLBACK; }
 
 <SQL>{into}		{ dbg(SQL_INTO); return SQL_INTO; }
@@ -104,9 +112,11 @@ struct			{ dbg(S_STRUCT); return S_STRUCT; }
 "["			{ dbg([); return '['; }
 "]"			{ dbg(]); return ']'; }
 ";"			{ dbg(;); return ';'; }
+"="			{ dbg(=); return '='; }
 ","			{ dbg(komma); return ','; }
 \{			{ dbg(blockstart); return '{'; }
 \}			{ dbg(blockend); return'}'; }
+\*			{ dbg(*); return('*'); }
 
 <SQL>":"		{ dbg(:); return ':'; }
 

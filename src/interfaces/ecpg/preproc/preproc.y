@@ -180,22 +180,22 @@ dump_variables(struct arguments * list)
 
 %token <tagname> SQL_START SQL_SEMI SQL_STRING SQL_INTO
 %token <tagname> SQL_BEGIN SQL_END SQL_DECLARE SQL_SECTION SQL_INCLUDE 
-%token <tagname> SQL_CONNECT SQL_OPEN
-%token <tagname> SQL_COMMIT SQL_ROLLBACK
+%token <tagname> SQL_CONNECT SQL_OPEN SQL_EXECUTE SQL_IMMEDIATE
+%token <tagname> SQL_COMMIT SQL_ROLLBACK SQL_RELEASE SQL_WORK
 
 %token <tagname> S_SYMBOL S_LENGTH S_ANYTHING
 %token <tagname> S_VARCHAR S_VARCHAR2
 %token <tagname> S_EXTERN S_STATIC S_AUTO S_CONST S_REGISTER S_STRUCT
 %token <tagname> S_UNSIGNED S_SIGNED
 %token <tagname> S_LONG S_SHORT S_INT S_CHAR S_FLOAT S_DOUBLE S_BOOL
-%token <tagname> '[' ']' ';' ',' '{' '}'
+%token <tagname> '[' ']' ';' ',' '{' '}' '=' '*'
 
 %type <type> type type_detailed varchar_type simple_type array_type struct_type
 %type <symbolname> symbol
-%type <tagname> maybe_storage_clause varchar_tag
+%type <tagname> maybe_storage_clause varchar_tag db_name
 %type <type_enum> simple_tag
 %type <indexsize> index length
-%type <tagname> canything sqlanything both_anything
+%type <tagname> canything sqlanything both_anything vartext commit_release
 
 
 %%
@@ -210,6 +210,7 @@ statement : sqldeclaration
 	  | sqlopen
 	  | sqlcommit
 	  | sqlrollback
+	  | sqlexecute
 	  | sqlstatement
 	  | cthing
 	  | blockstart
@@ -222,17 +223,18 @@ sqldeclaration : sql_startdeclare
 sql_startdeclare : SQL_START SQL_BEGIN SQL_DECLARE SQL_SECTION SQL_SEMI	{
     fprintf(yyout, "/* exec sql begin declare section */\n"); 
     output_line_number();
-};
+}
+
 sql_enddeclare : SQL_START SQL_END SQL_DECLARE SQL_SECTION SQL_SEMI {
     fprintf(yyout,"/* exec sql end declare section */\n"); 
     output_line_number();
-};
+}
 
 variable_declarations : /* empty */
-		      | variable_declarations variable_declaration ;
+		      | variable_declarations variable_declaration;
 
 /* Here is where we can enter support for typedef. */
-variable_declaration : type ';'	{ 
+variable_declaration : type initializer ';'	{ 
     /* don't worry about our list when we're working on a struct */
     if (struct_level == 0)
     {
@@ -241,6 +243,12 @@ variable_declaration : type ';'	{
     }
     fprintf(yyout, ";"); 
 }
+
+initializer : /*empty */
+	    | '=' {fwrite(yytext, yyleng, 1, yyout);} vartext;
+
+vartext : both_anything {fwrite(yytext, yyleng, 1, yyout);}
+	| vartext both_anything {fwrite(yytext, yyleng, 1, yyout);}
 
 symbol : S_SYMBOL { 
     char * name = (char *)malloc(yyleng + 1);
@@ -255,10 +263,14 @@ type : maybe_storage_clause type_detailed { $<type>$ = $<type>2; };
 type_detailed : varchar_type { $<type>$ = $<type>1; }
 	      | simple_type { $<type>$ = $<type>1; }
 	      | array_type {$<type>$ = $<type>1; }
+	      | pointer_type {$<type>$ = $<type>1; }
 	      | struct_type {$<type>$ = $<type>1; };
 
 varchar_type : varchar_tag symbol index {
-    fprintf(yyout, "struct varchar_%s { int len; char arr[%d]; } %s", $<symbolname>2, $<indexsize>3, $<symbolname>2);
+    if ($<indexsize>3 > 0)
+	fprintf(yyout, "struct varchar_%s { int len; char arr[%d]; } %s", $<symbolname>2, $<indexsize>3, $<symbolname>2);
+    else
+	fprintf(yyout, "struct varchar_%s { int len; char arr[%d]; } %s", $<symbolname>2, $<indexsize>3, $<symbolname>2);
     if (struct_level == 0)
     {
 	$<type>$.name = $<symbolname>2;
@@ -283,7 +295,10 @@ simple_type : simple_tag symbol {
 }
 
 array_type : simple_tag symbol index {
-    fprintf(yyout, "%s %s [%d]", ECPGtype_name($<type_enum>1), $<symbolname>2, $<indexsize>3);
+    if ($<indexsize>3 > 0)
+	    fprintf(yyout, "%s %s [%d]", ECPGtype_name($<type_enum>1), $<symbolname>2, $<indexsize>3);
+    else
+	    fprintf(yyout, "%s %s []", ECPGtype_name($<type_enum>1), $<symbolname>2);
     if (struct_level == 0)
     {
 	$<type>$.name = $<symbolname>2;
@@ -291,6 +306,17 @@ array_type : simple_tag symbol index {
     }
     else
 	ECPGmake_record_member($<symbolname>2, ECPGmake_array_type(ECPGmake_simple_type($<type_enum>1), $<indexsize>3), &(record_member_list[struct_level-1]));
+}
+
+pointer_type : simple_tag '*' symbol {
+    fprintf(yyout, "%s * %s", ECPGtype_name($<type_enum>1), $<symbolname>3);
+    if (struct_level == 0)
+    {
+	$<type>$.name = $<symbolname>3;
+	$<type>$.typ = ECPGmake_array_type(ECPGmake_simple_type($<type_enum>1), 0);
+    }
+    else
+	ECPGmake_record_member($<symbolname>3, ECPGmake_array_type(ECPGmake_simple_type($<type_enum>1), 0), &(record_member_list[struct_level-1]));
 }
 
 s_struct : S_STRUCT symbol {
@@ -330,9 +356,8 @@ maybe_storage_clause : S_EXTERN { fwrite(yytext, yyleng, 1, yyout); }
 		       | S_AUTO { fwrite(yytext, yyleng, 1, yyout); }
                        | /* empty */ { };
   	 
-index : '[' length ']' {
-    $<indexsize>$ = $<indexsize>2; 
-};
+index : '[' length ']' { $<indexsize>$ = $<indexsize>2; }
+	| '[' ']' { $<indexsize>$ = 0; }
 
 length : S_LENGTH { $<indexsize>$ = atoi(yytext); }
 
@@ -342,9 +367,24 @@ sqlinclude : SQL_START SQL_INCLUDE { fprintf(yyout, "#include \""); }
 filename : cthing
 	 | filename cthing;
 
-sqlconnect : SQL_START SQL_CONNECT { fprintf(yyout, "ECPGconnect(\""); }
-	SQL_STRING { fwrite(yytext + 1, yyleng - 2, 1, yyout); }
-	SQL_SEMI { fprintf(yyout, "\");"); output_line_number(); };
+sqlconnect : SQL_START SQL_CONNECT { fprintf(yyout, "ECPGconnect("); }
+	     db_name
+	     SQL_SEMI { fprintf(yyout, ");"); output_line_number();}
+
+db_name : SQL_STRING { fprintf(yyout, "\""); fwrite(yytext + 1, yyleng - 2, 1, yyout); fprintf(yyout, "\""); }
+	| ':' symbol { /* check if we have a char variabnle */
+			struct variable *p = find_variable($<symbolname>2);
+			enum ECPGttype typ = p->type->typ;
+
+			/* if array see what's inside */
+			if (typ == ECPGt_array)
+				typ = p->type->u.element->typ;
+
+			if (typ != ECPGt_char && typ != ECPGt_unsigned_char)
+				yyerror("invalid datatype");
+
+			fprintf(yyout, "%s", $<symbolname>2);
+	}
 
 /* Open is an open cursor. Removed. */
 sqlopen : SQL_START SQL_OPEN sqlgarbage SQL_SEMI { output_line_number(); };
@@ -353,21 +393,37 @@ sqlgarbage : /* Empty */
 	   | sqlgarbage sqlanything;
 	    
 
-sqlcommit : SQL_START SQL_COMMIT SQL_SEMI {
+sqlcommit : SQL_START commit_release SQL_SEMI {
     fprintf(yyout, "ECPGcommit(__LINE__);"); 
     output_line_number();
-};
+}
+
+commit_release : SQL_COMMIT
+	       | SQL_COMMIT SQL_RELEASE
+	       | SQL_COMMIT SQL_WORK SQL_RELEASE;
+
 sqlrollback : SQL_START SQL_ROLLBACK SQL_SEMI {
     fprintf(yyout, "ECPGrollback(__LINE__);");
+    output_line_number();
+};
+
+sqlexecute : SQL_START { /* Reset stack */
+    reset_variables();
+    fprintf(yyout, "ECPGdo(__LINE__, \"");
+} SQL_EXECUTE SQL_IMMEDIATE sqlstatement_words SQL_SEMI {  
+    /* Dump */
+    fprintf(yyout, "\", ");		   
+    dump_variables(argsinsert);
+    fprintf(yyout, "ECPGt_EOIT, ");
+    dump_variables(argsresult);
+    fprintf(yyout, "ECPGt_EORT );");
     output_line_number();
 };
 
 sqlstatement : SQL_START { /* Reset stack */
     reset_variables();
     fprintf(yyout, "ECPGdo(__LINE__, \"");
-}
-               sqlstatement_words
-	       SQL_SEMI {  
+} sqlstatement_words SQL_SEMI {  
     /* Dump */
     fprintf(yyout, "\", ");		   
     dump_variables(argsinsert);
@@ -416,7 +472,7 @@ canything : both_anything
 sqlanything : both_anything;
 
 both_anything : S_LENGTH | S_VARCHAR | S_VARCHAR2 
-	  | S_LONG | S_SHORT | S_INT | S_CHAR | S_FLOAT | S_DOUBLE | S_BOOL
+	  | S_LONG | S_SHORT | S_INT | S_CHAR | S_FLOAT | S_DOUBLE | S_BOOL 
 	  | SQL_OPEN | SQL_CONNECT
 	  | SQL_STRING
 	  | SQL_BEGIN | SQL_END 
@@ -424,7 +480,7 @@ both_anything : S_LENGTH | S_VARCHAR | S_VARCHAR2
 	  | SQL_INCLUDE 
 	  | S_SYMBOL
 	  | S_STATIC | S_EXTERN | S_AUTO | S_CONST | S_REGISTER | S_STRUCT
-	  | '[' | ']' | ','
+	  | '[' | ']' | ',' | '=' | '*'
 	  | S_ANYTHING;
 
 blockstart : '{' {

@@ -2,16 +2,16 @@
 SRCDIR= ../../..
 include $(SRCDIR)/Makefile.global
 
-MAJOR_VERSION=0
-MINOR_VERSION=5
-PATCHLEVEL=1
+MAJOR_VERSION=1
+MINOR_VERSION=0
+PATCHLEVEL=0
 
 CFLAGS=-I../include -O2 -g -Wall -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION) -DPATCHLEVEL=$(PATCHLEVEL)
 
 all:: ecpg
 
 clean:
-	rm -f *.o core a.out ecpg preproc.tab.h y.tab.c *~
+	rm -f *.o core a.out ecpg y.tab.h y.tab.c *~
 
 install: all
 	install -c -m 755 ecpg $(DESTDIR)$(BINDIR)
