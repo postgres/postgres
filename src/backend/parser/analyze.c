@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.147 2000/06/12 19:40:40 momjian Exp $
+ *	$Id: analyze.c,v 1.148 2000/06/17 21:48:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,8 @@
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/relcache.h"
+#include "utils/syscache.h"
 
 void		CheckSelectForUpdate(Query *qry);	/* no points for style... */
 
@@ -2003,13 +2005,9 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint)
 {
 	Relation	pkrel;
 	Form_pg_attribute *pkrel_attrs;
-	Relation	indexRd;
-	HeapScanDesc indexSd;
-	ScanKeyData key;
-	HeapTuple	indexTup;
+	List	   *indexoidlist,
+			   *indexoidscan;
 	Form_pg_index indexStruct = NULL;
-	Ident	   *pkattr;
-	int			pkattno;
 	int			i;
 
 	/* ----------
@@ -2023,37 +2021,37 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint)
 	pkrel_attrs = pkrel->rd_att->attrs;
 
 	/* ----------
-	 * Open pg_index and begin a scan for all indices defined on
-	 * the referenced table
+	 * Get the list of index OIDs for the table from the relcache,
+	 * and look up each one in the pg_index syscache until we find one
+	 * marked primary key (hopefully there isn't more than one such).
 	 * ----------
 	 */
-	indexRd = heap_openr(IndexRelationName, AccessShareLock);
-	ScanKeyEntryInitialize(&key, 0, Anum_pg_index_indrelid,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(pkrel->rd_id));
-	indexSd = heap_beginscan(indexRd,	/* scan desc */
-							 false,		/* scan backward flag */
-							 SnapshotNow,		/* NOW snapshot */
-							 1, /* number scan keys */
-							 &key);		/* scan keys */
+	indexoidlist = RelationGetIndexList(pkrel);
 
-	/* ----------
-	 * Fetch the index with indisprimary == true
-	 * ----------
-	 */
-	while (HeapTupleIsValid(indexTup = heap_getnext(indexSd, 0)))
+	foreach(indexoidscan, indexoidlist)
 	{
-		indexStruct = (Form_pg_index) GETSTRUCT(indexTup);
+		Oid		indexoid = lfirsti(indexoidscan);
+		HeapTuple	indexTuple;
 
+		indexTuple = SearchSysCacheTuple(INDEXRELID,
+										 ObjectIdGetDatum(indexoid),
+										 0, 0, 0);
+		if (!HeapTupleIsValid(indexTuple))
+			elog(ERROR, "transformFkeyGetPrimaryKey: index %u not found",
+				 indexoid);
+		indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
 		if (indexStruct->indisprimary)
 			break;
+		indexStruct = NULL;
 	}
+
+	freeList(indexoidlist);
 
 	/* ----------
 	 * Check that we found it
 	 * ----------
 	 */
-	if (!HeapTupleIsValid(indexTup))
+	if (indexStruct == NULL)
 		elog(ERROR, "PRIMARY KEY for referenced table \"%s\" not found",
 			 fkconstraint->pktable_name);
 
@@ -2064,8 +2062,9 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint)
 	 */
 	for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++)
 	{
-		pkattno = indexStruct->indkey[i];
-		pkattr = (Ident *) makeNode(Ident);
+		int			pkattno = indexStruct->indkey[i];
+		Ident	   *pkattr = makeNode(Ident);
+
 		pkattr->name = nameout(&(pkrel_attrs[pkattno - 1]->attname));
 		pkattr->indirection = NIL;
 		pkattr->isRel = false;
@@ -2073,12 +2072,6 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint)
 		fkconstraint->pk_attrs = lappend(fkconstraint->pk_attrs, pkattr);
 	}
 
-	/* ----------
-	 * End index scan and close relations
-	 * ----------
-	 */
-	heap_endscan(indexSd);
-	heap_close(indexRd, AccessShareLock);
 	heap_close(pkrel, AccessShareLock);
 }
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.43 2000/05/29 01:59:11 tgl Exp $
+ * $Id: executor.h,v 1.44 2000/06/17 21:48:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,8 +142,7 @@ extern void ExecAssignScanTypeFromOuterPlan(Plan *node,
 								CommonScanState *csstate);
 extern Form_pg_attribute ExecGetTypeInfo(Relation relDesc);
 
-extern void ExecOpenIndices(Oid resultRelationOid,
-				RelationInfo *resultRelationInfo);
+extern void ExecOpenIndices(RelationInfo *resultRelationInfo);
 extern void ExecCloseIndices(RelationInfo *resultRelationInfo);
 extern void ExecInsertIndexTuples(TupleTableSlot *slot, ItemPointer tupleid,
 					  EState *estate, bool is_update);

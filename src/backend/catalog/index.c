@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.116 2000/06/17 04:56:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.117 2000/06/17 21:48:39 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1105,6 +1105,7 @@ index_create(char *heapRelationName,
 void
 index_drop(Oid indexId)
 {
+	Oid			heapId;
 	Relation	userHeapRelation;
 	Relation	userIndexRelation;
 	Relation	indexRelation;
@@ -1125,8 +1126,8 @@ index_drop(Oid indexId)
 	 *	else other backends will still see this index in pg_index.
 	 * ----------------
 	 */
-	userHeapRelation = heap_open(IndexGetRelation(indexId),
-								 AccessExclusiveLock);
+	heapId = IndexGetRelation(indexId);
+	userHeapRelation = heap_open(heapId, AccessExclusiveLock);
 
 	userIndexRelation = index_open(indexId);
 	LockRelation(userIndexRelation, AccessExclusiveLock);
@@ -1158,6 +1159,7 @@ index_drop(Oid indexId)
 	 */
 	relationRelation = heap_openr(RelationRelationName, RowExclusiveLock);
 
+	/* Remove the pg_class tuple for the index itself */
 	tuple = SearchSysCacheTupleCopy(RELOID,
 									ObjectIdGetDatum(indexId),
 									0, 0, 0);
@@ -1166,6 +1168,23 @@ index_drop(Oid indexId)
 
 	heap_delete(relationRelation, &tuple->t_self, NULL);
 	heap_freetuple(tuple);
+
+	/*
+	 * Find the pg_class tuple for the owning relation.  We do not attempt
+	 * to clear relhasindex, since we are too lazy to test whether any other
+	 * indexes remain (the next VACUUM will fix it if necessary).  But we
+	 * must send out a shared-cache-inval notice on the owning relation
+	 * to ensure other backends update their relcache lists of indexes.
+	 */
+	tuple = SearchSysCacheTupleCopy(RELOID,
+									ObjectIdGetDatum(heapId),
+									0, 0, 0);
+
+	Assert(HeapTupleIsValid(tuple));
+
+	ImmediateInvalidateSharedHeapTuple(relationRelation, tuple);
+	heap_freetuple(tuple);
+
 	heap_close(relationRelation, RowExclusiveLock);
 
 	/* ----------------
@@ -1447,9 +1466,6 @@ setRelhasindexInplace(Oid relid, bool hasindex, bool immediate)
 	 */
 	if (pg_class_scan)
 	{
-
-		if (!IsBootstrapProcessingMode())
-			ImmediateInvalidateSharedHeapTuple(pg_class, tuple);
 		rd_rel = (Form_pg_class) GETSTRUCT(tuple);
 		rd_rel->relhasindex = hasindex;
 		WriteNoReleaseBuffer(pg_class_scan->rs_cbuf);
@@ -1461,11 +1477,17 @@ setRelhasindexInplace(Oid relid, bool hasindex, bool immediate)
 
 		htup.t_self = tuple->t_self;
 		heap_fetch(pg_class, SnapshotNow, &htup, &buffer);
-		ImmediateInvalidateSharedHeapTuple(pg_class, tuple);
 		rd_rel = (Form_pg_class) GETSTRUCT(&htup);
 		rd_rel->relhasindex = hasindex;
 		WriteBuffer(buffer);
 	}
+
+	/*
+	 * Send out a shared-cache-inval message so other backends notice the
+	 * update and fix their syscaches/relcaches.
+	 */
+	if (!IsBootstrapProcessingMode())
+		ImmediateInvalidateSharedHeapTuple(pg_class, tuple);
 
 	if (!pg_class_scan)
 		heap_freetuple(tuple);

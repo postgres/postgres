@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.114 2000/06/15 03:32:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.115 2000/06/17 21:48:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/relcache.h"
 #include "utils/syscache.h"
 
 #ifdef MULTIBYTE
@@ -1081,78 +1082,43 @@ IsTypeByVal(Oid type)
  * Space for the array itself is palloc'ed.
  */
 
-typedef struct rel_list
-{
-	Oid			index_rel_oid;
-	struct rel_list *next;
-} RelationList;
-
 static void
 GetIndexRelations(Oid main_relation_oid,
 				  int *n_indices,
 				  Relation **index_rels)
 {
-	RelationList *head,
-			   *scan;
-	Relation	pg_index_rel;
-	HeapScanDesc scandesc;
-	Oid			index_relation_oid;
-	HeapTuple	tuple;
-	TupleDesc	tupDesc;
+	Relation	relation;
+	List	   *indexoidlist,
+			   *indexoidscan;
 	int			i;
-	bool		isnull;
 
-	pg_index_rel = heap_openr(IndexRelationName, AccessShareLock);
-	scandesc = heap_beginscan(pg_index_rel, 0, SnapshotNow, 0, NULL);
-	tupDesc = RelationGetDescr(pg_index_rel);
+	relation = heap_open(main_relation_oid, AccessShareLock);
+	indexoidlist = RelationGetIndexList(relation);
 
-	*n_indices = 0;
+	*n_indices = length(indexoidlist);
 
-	head = (RelationList *) palloc(sizeof(RelationList));
-	scan = head;
-	head->next = NULL;
+	if (*n_indices > 0)
+		*index_rels = (Relation *) palloc(*n_indices * sizeof(Relation));
+	else
+		*index_rels = NULL;
 
-	while (HeapTupleIsValid(tuple = heap_getnext(scandesc, 0)))
+	i = 0;
+	foreach(indexoidscan, indexoidlist)
 	{
+		Oid			indexoid = lfirsti(indexoidscan);
+		Relation	index = index_open(indexoid);
 
-		index_relation_oid = (Oid) DatumGetInt32(heap_getattr(tuple, 2,
-													  tupDesc, &isnull));
-		if (index_relation_oid == main_relation_oid)
-		{
-			scan->index_rel_oid = (Oid) DatumGetInt32(heap_getattr(tuple,
-												Anum_pg_index_indexrelid,
-													  tupDesc, &isnull));
-			(*n_indices)++;
-			scan->next = (RelationList *) palloc(sizeof(RelationList));
-			scan = scan->next;
-		}
-	}
-
-	heap_endscan(scandesc);
-	heap_close(pg_index_rel, AccessShareLock);
-
-	/* We cannot trust to relhasindex of the main_relation now, so... */
-	if (*n_indices == 0)
-		return;
-
-	*index_rels = (Relation *) palloc(*n_indices * sizeof(Relation));
-
-	for (i = 0, scan = head; i < *n_indices; i++, scan = scan->next)
-	{
-		(*index_rels)[i] = index_open(scan->index_rel_oid);
 		/* see comments in ExecOpenIndices() in execUtils.c */
-		if ((*index_rels)[i] != NULL &&
-			((*index_rels)[i])->rd_rel->relam != BTREE_AM_OID &&
-			((*index_rels)[i])->rd_rel->relam != HASH_AM_OID)
-			LockRelation((*index_rels)[i], AccessExclusiveLock);
+		if (index != NULL &&
+			index->rd_rel->relam != BTREE_AM_OID &&
+			index->rd_rel->relam != HASH_AM_OID)
+			LockRelation(index, AccessExclusiveLock);
+		(*index_rels)[i] = index;
+		i++;
 	}
 
-	for (i = 0, scan = head; i < *n_indices + 1; i++)
-	{
-		scan = head->next;
-		pfree(head);
-		head = scan;
-	}
+	freeList(indexoidlist);
+	heap_close(relation, AccessShareLock);
 }
 
 /*

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.36 2000/04/12 17:16:55 momjian Exp $
+ * $Id: rel.h,v 1.37 2000/06/17 21:49:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,14 +92,15 @@ typedef struct RelationData
 	bool		rd_isnailed;	/* rel is nailed in cache */
 	bool		rd_isnoname;	/* rel has no name */
 	bool		rd_unlinked;	/* rel already unlinked or not created yet */
+	bool		rd_indexfound;	/* true if rd_indexlist is valid */
 	Form_pg_am	rd_am;			/* AM tuple */
 	Form_pg_class rd_rel;		/* RELATION tuple */
 	Oid			rd_id;			/* relation's object id */
-	LockInfoData rd_lockInfo;	/* lock manager's info for locking
-								 * relation */
+	List	   *rd_indexlist;	/* list of OIDs of indexes on relation */
+	LockInfoData rd_lockInfo;	/* lock mgr's info for locking relation */
 	TupleDesc	rd_att;			/* tuple descriptor */
 	RuleLock   *rd_rules;		/* rewrite rules */
-	IndexStrategy rd_istrat;
+	IndexStrategy rd_istrat;	/* info needed if rel is an index */
 	RegProcedure *rd_support;
 	TriggerDesc *trigdesc;		/* Trigger info, or NULL if rel has none */
 } RelationData;
@@ -138,13 +139,15 @@ typedef Relation *RelationPtr;
  * RelationSetReferenceCount
  *		Sets relation reference count.
  */
-#define RelationSetReferenceCount(relation,count) ((relation)->rd_refcnt = (count))
+#define RelationSetReferenceCount(relation,count) \
+	((relation)->rd_refcnt = (count))
 
 /*
  * RelationIncrementReferenceCount
  *		Increments relation reference count.
  */
-#define RelationIncrementReferenceCount(relation) ((relation)->rd_refcnt += 1)
+#define RelationIncrementReferenceCount(relation) \
+	((relation)->rd_refcnt += 1)
 
 /*
  * RelationDecrementReferenceCount
@@ -199,7 +202,8 @@ typedef Relation *RelationPtr;
  *
  *	  Returns a Relation Name
  */
-#define RelationGetPhysicalRelationName(relation) (NameStr((relation)->rd_rel->relname))
+#define RelationGetPhysicalRelationName(relation) \
+	(NameStr((relation)->rd_rel->relname))
 
 /*
  * RelationGetNumberOfAttributes
@@ -224,9 +228,11 @@ typedef Relation *RelationPtr;
  */
 #define RelationGetIndexStrategy(relation) ((relation)->rd_istrat)
 
-
+/*
+ * Routines in utils/cache/rel.c
+ */
 extern void RelationSetIndexSupport(Relation relation,
-						IndexStrategy strategy,
-						RegProcedure *support);
+									IndexStrategy strategy,
+									RegProcedure *support);
 
 #endif	 /* REL_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.159 2000/05/29 17:40:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.160 2000/06/17 21:48:43 tgl Exp $
  *
 
  *-------------------------------------------------------------------------
@@ -72,7 +72,7 @@ static void update_relstats(Oid relid, int num_pages, int num_tuples, bool hasin
 static VacPage tid_reaped(ItemPointer itemptr, VacPageList vacpagelist);
 static void reap_page(VacPageList vacpagelist, VacPage vacpage);
 static void vpage_insert(VacPageList vacpagelist, VacPage vpnew);
-static void get_indices(Oid relid, int *nindices, Relation **Irel);
+static void get_indices(Relation relation, int *nindices, Relation **Irel);
 static void close_indices(int nindices, Relation *Irel);
 static void get_index_desc(Relation onerel, int nindices, Relation *Irel, IndDesc **Idesc);
 static void *vac_find_eq(void *bot, int nelem, int size, void *elm,
@@ -416,7 +416,7 @@ vacuum_rel(Oid relid, bool analyze)
 	/* Now open indices */
 	nindices = 0;
 	Irel = (Relation *) NULL;
-	get_indices(vacrelstats->relid, &nindices, &Irel);
+	get_indices(onerel, &nindices, &Irel);
 	if (!Irel)
 		reindex = false;
 	else if (!RelationGetForm(onerel)->relhasindex)
@@ -2331,80 +2331,33 @@ CommonSpecialPortalIsOpen(void)
 	return CommonSpecialPortalInUse;
 }
 
+
 static void
-get_indices(Oid relid, int *nindices, Relation **Irel)
+get_indices(Relation relation, int *nindices, Relation **Irel)
 {
-	Relation	pgindex;
-	Relation	irel;
-	TupleDesc	tupdesc;
-	HeapTuple	tuple;
-	HeapScanDesc scan;
-	Datum		d;
-	int			i,
-				k;
-	bool		n;
-	ScanKeyData key;
-	Oid		   *ioid;
+	List	   *indexoidlist,
+			   *indexoidscan;
+	int			i;
 
-	*nindices = i = 0;
+	indexoidlist = RelationGetIndexList(relation);
 
-	ioid = (Oid *) palloc(10 * sizeof(Oid));
+	*nindices = length(indexoidlist);
 
-	/* prepare a heap scan on the pg_index relation */
-	pgindex = heap_openr(IndexRelationName, AccessShareLock);
-	tupdesc = RelationGetDescr(pgindex);
+	if (*nindices > 0)
+		*Irel = (Relation *) palloc(*nindices * sizeof(Relation));
+	else
+		*Irel = NULL;
 
-	ScanKeyEntryInitialize(&key, 0x0, Anum_pg_index_indrelid,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(relid));
-
-	scan = heap_beginscan(pgindex, false, SnapshotNow, 1, &key);
-
-	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+	i = 0;
+	foreach(indexoidscan, indexoidlist)
 	{
-		d = heap_getattr(tuple, Anum_pg_index_indexrelid,
-						 tupdesc, &n);
+		Oid			indexoid = lfirsti(indexoidscan);
+
+		(*Irel)[i] = index_open(indexoid);
 		i++;
-		if (i % 10 == 0)
-			ioid = (Oid *) repalloc(ioid, (i + 10) * sizeof(Oid));
-		ioid[i - 1] = DatumGetObjectId(d);
 	}
 
-	heap_endscan(scan);
-	heap_close(pgindex, AccessShareLock);
-
-	if (i == 0)
-	{							/* No one index found */
-		pfree(ioid);
-		return;
-	}
-
-	if (Irel != (Relation **) NULL)
-		*Irel = (Relation *) palloc(i * sizeof(Relation));
-
-	for (k = 0; i > 0;)
-	{
-		irel = index_open(ioid[--i]);
-		if (irel != (Relation) NULL)
-		{
-			if (Irel != (Relation **) NULL)
-				(*Irel)[k] = irel;
-			else
-				index_close(irel);
-			k++;
-		}
-		else
-			elog(NOTICE, "CAN'T OPEN INDEX %u - SKIP IT", ioid[i]);
-	}
-	*nindices = k;
-	pfree(ioid);
-
-	if (Irel != (Relation **) NULL && *nindices == 0)
-	{
-		pfree(*Irel);
-		*Irel = (Relation *) NULL;
-	}
-
+	freeList(indexoidlist);
 }
 
 

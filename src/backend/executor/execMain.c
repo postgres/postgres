@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.117 2000/06/15 04:09:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.118 2000/06/17 21:48:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -735,7 +735,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 		 */
 		if (resultRelationDesc->rd_rel->relhasindex &&
 			operation != CMD_DELETE)
-			ExecOpenIndices(resultRelationOid, resultRelationInfo);
+			ExecOpenIndices(resultRelationInfo);
 
 		estate->es_result_relation_info = resultRelationInfo;
 	}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.100 2000/06/17 04:56:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.101 2000/06/17 21:48:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,7 @@
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_attrdef.h"
+#include "catalog/pg_index.h"
 #include "catalog/pg_log.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_relcheck.h"
@@ -1063,16 +1064,14 @@ formrdesc(char *relationName,
 		  FormData_pg_attribute *att)
 {
 	Relation	relation;
-	Size		len;
 	u_int		i;
 
 	/* ----------------
 	 *	allocate new relation desc
 	 * ----------------
 	 */
-	len = sizeof(RelationData);
-	relation = (Relation) palloc(len);
-	MemSet((char *) relation, 0, len);
+	relation = (Relation) palloc(sizeof(RelationData));
+	MemSet((char *) relation, 0, sizeof(RelationData));
 
 	/* ----------------
 	 *	don't open the unix file yet..
@@ -1090,9 +1089,8 @@ formrdesc(char *relationName,
 	 *	initialize relation tuple form
 	 * ----------------
 	 */
-	relation->rd_rel = (Form_pg_class)
-		palloc((Size) (sizeof(*relation->rd_rel)));
-	MemSet(relation->rd_rel, 0, sizeof(FormData_pg_class));
+	relation->rd_rel = (Form_pg_class) palloc(CLASS_TUPLE_SIZE);
+	MemSet(relation->rd_rel, 0, CLASS_TUPLE_SIZE);
 	strcpy(RelationGetPhysicalRelationName(relation), relationName);
 
 	/* ----------------
@@ -1414,6 +1412,7 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 		pfree(relation->rd_istrat);
 	if (relation->rd_support)
 		pfree(relation->rd_support);
+	freeList(relation->rd_indexlist);
 
 	/*
 	 * If we're really done with the relcache entry, blow it away. But if
@@ -2073,6 +2072,125 @@ RelCheckFetch(Relation relation)
 	else
 		heap_endscan(rcscan);
 	heap_close(rcrel, AccessShareLock);
+}
+
+/*
+ * RelationGetIndexList -- get a list of OIDs of indexes on this relation
+ *
+ * The index list is created only if someone requests it.  We scan pg_index
+ * to find relevant indexes, and add the list to the relcache entry so that
+ * we won't have to compute it again.  Note that shared cache inval of a
+ * relcache entry will delete the old list and set rd_indexfound to false,
+ * so that we must recompute the index list on next request.  This handles
+ * creation or deletion of an index.
+ *
+ * Since shared cache inval causes the relcache's copy of the list to go away,
+ * we return a copy of the list palloc'd in the caller's context.  The caller
+ * may freeList() the returned list after scanning it.  This is necessary
+ * since the caller will typically be doing syscache lookups on the relevant
+ * indexes, and syscache lookup could cause SI messages to be processed!
+ */
+List *
+RelationGetIndexList(Relation relation)
+{
+	Relation	indrel;
+	Relation	irel = (Relation) NULL;
+	ScanKeyData skey;
+	IndexScanDesc sd = (IndexScanDesc) NULL;
+	HeapScanDesc hscan = (HeapScanDesc) NULL;
+	bool		hasindex;
+	List	   *result;
+	MemoryContext oldcxt;
+
+	/* Quick exit if we already computed the list. */
+	if (relation->rd_indexfound)
+		return listCopy(relation->rd_indexlist);
+
+	/* Prepare to scan pg_index for entries having indrelid = this rel. */
+	indrel = heap_openr(IndexRelationName, AccessShareLock);
+	hasindex = (indrel->rd_rel->relhasindex && !IsIgnoringSystemIndexes());
+	if (hasindex)
+	{
+		irel = index_openr(IndexIndrelidIndex);
+		ScanKeyEntryInitialize(&skey,
+							   (bits16) 0x0,
+							   (AttrNumber) 1,
+							   (RegProcedure) F_OIDEQ,
+							   ObjectIdGetDatum(RelationGetRelid(relation)));
+		sd = index_beginscan(irel, false, 1, &skey);
+	}
+	else
+	{
+		ScanKeyEntryInitialize(&skey,
+							   (bits16) 0x0,
+							   (AttrNumber) Anum_pg_index_indrelid,
+							   (RegProcedure) F_OIDEQ,
+							   ObjectIdGetDatum(RelationGetRelid(relation)));
+		hscan = heap_beginscan(indrel, false, SnapshotNow, 1, &skey);
+	}
+
+	/*
+	 * We build the list we intend to return (in the caller's context) while
+	 * doing the scan.  After successfully completing the scan, we copy that
+	 * list into the relcache entry.  This avoids cache-context memory leakage
+	 * if we get some sort of error partway through.
+	 */
+	result = NIL;
+	
+	for (;;)
+	{
+		HeapTupleData tuple;
+		HeapTuple	htup;
+		Buffer		buffer;
+		Form_pg_index index;
+
+		if (hasindex)
+		{
+			RetrieveIndexResult indexRes;
+
+			indexRes = index_getnext(sd, ForwardScanDirection);
+			if (!indexRes)
+				break;
+			tuple.t_self = indexRes->heap_iptr;
+			tuple.t_datamcxt = NULL;
+			tuple.t_data = NULL;
+			heap_fetch(indrel, SnapshotNow, &tuple, &buffer);
+			pfree(indexRes);
+			if (tuple.t_data == NULL)
+				continue;
+			htup = &tuple;
+		}
+		else
+		{
+			htup = heap_getnext(hscan, 0);
+			if (!HeapTupleIsValid(htup))
+				break;
+		}
+
+		index = (Form_pg_index) GETSTRUCT(htup);
+
+		result = lappendi(result, index->indexrelid);
+
+		if (hasindex)
+			ReleaseBuffer(buffer);
+	}
+
+	if (hasindex)
+	{
+		index_endscan(sd);
+		index_close(irel);
+	}
+	else
+		heap_endscan(hscan);
+	heap_close(indrel, AccessShareLock);
+
+	/* Now we can save the completed list in the relcache entry. */
+	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+	relation->rd_indexlist = listCopy(result);
+	relation->rd_indexfound = true;
+	MemoryContextSwitchTo(oldcxt);
+
+	return result;
 }
 
 /*

@@ -9,11 +9,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< plancat.c
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.56 2000/06/15 03:32:16 momjian Exp $
-=======
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.56 2000/06/15 03:32:16 momjian Exp $
->>>>>>> 1.53
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.57 2000/06/17 21:48:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +28,7 @@
 #include "parser/parsetree.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/relcache.h"
 #include "utils/syscache.h"
 #include "catalog/catalog.h"
 #include "miscadmin.h"
@@ -54,7 +51,7 @@ relation_info(Query *root, Index relid,
 	Form_pg_class relation;
 
 	relationTuple = SearchSysCacheTuple(RELOID,
-									  ObjectIdGetDatum(relationObjectId),
+										ObjectIdGetDatum(relationObjectId),
 										0, 0, 0);
 	if (!HeapTupleIsValid(relationTuple))
 		elog(ERROR, "relation_info: Relation %u not found",
@@ -81,32 +78,39 @@ relation_info(Query *root, Index relid,
 List *
 find_secondary_indexes(Query *root, Index relid)
 {
-	List	   *indexes = NIL;
+	List	   *indexinfos = NIL;
+	List	   *indexoidlist,
+			   *indexoidscan;
 	Oid			indrelid = getrelid(relid, root->rtable);
 	Relation	relation;
-	HeapScanDesc scan;
-	ScanKeyData indexKey;
-	HeapTuple	indexTuple;
 
-	/* Scan pg_index for tuples describing indexes of this rel */
-	relation = heap_openr(IndexRelationName, AccessShareLock);
+	/*
+	 * We used to scan pg_index directly, but now the relcache offers
+	 * a cached list of OID indexes for each relation.  So, get that list
+	 * and then use the syscache to obtain pg_index entries.
+	 */
+	relation = heap_open(indrelid, AccessShareLock);
+	indexoidlist = RelationGetIndexList(relation);
 
-	ScanKeyEntryInitialize(&indexKey, 0,
-						   Anum_pg_index_indrelid,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(indrelid));
-
-	scan = heap_beginscan(relation, 0, SnapshotNow,
-						  1, &indexKey);
-
-	while (HeapTupleIsValid(indexTuple = heap_getnext(scan, 0)))
+	foreach(indexoidscan, indexoidlist)
 	{
-		Form_pg_index index = (Form_pg_index) GETSTRUCT(indexTuple);
-		IndexOptInfo *info = makeNode(IndexOptInfo);
+		Oid		indexoid = lfirsti(indexoidscan);
+		HeapTuple	indexTuple;
+		Form_pg_index index;
+		IndexOptInfo *info;
 		int			i;
 		Relation	indexRelation;
 		Oid			relam;
 		uint16		amorderstrategy;
+
+		indexTuple = SearchSysCacheTupleCopy(INDEXRELID,
+											 ObjectIdGetDatum(indexoid),
+											 0, 0, 0);
+		if (!HeapTupleIsValid(indexTuple))
+			elog(ERROR, "find_secondary_indexes: index %u not found",
+				 indexoid);
+		index = (Form_pg_index) GETSTRUCT(indexTuple);
+		info = makeNode(IndexOptInfo);
 
 		/*
 		 * Need to make these arrays large enough to be sure there is a
@@ -172,13 +176,17 @@ find_secondary_indexes(Query *root, Index relid)
 			}
 		}
 
-		indexes = lcons(info, indexes);
+		heap_freetuple(indexTuple);
+
+		indexinfos = lcons(info, indexinfos);
 	}
 
-	heap_endscan(scan);
+	freeList(indexoidlist);
+
+	/* XXX keep the lock here? */
 	heap_close(relation, AccessShareLock);
 
-	return indexes;
+	return indexinfos;
 }
 
 /*

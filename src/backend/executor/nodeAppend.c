@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.33 2000/06/15 04:09:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.34 2000/06/17 21:48:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -285,7 +285,7 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 				 * indices, but how to tell that here?
 				 */
 				if (rri->ri_RelationDesc->rd_rel->relhasindex)
-					ExecOpenIndices(reloid, rri);
+					ExecOpenIndices(rri);
 			}
 
 			/*

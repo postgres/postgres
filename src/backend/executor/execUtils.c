@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.59 2000/06/15 04:09:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.60 2000/06/17 21:48:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,8 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/relcache.h"
+#include "utils/syscache.h"
 
 static void ExecGetIndexKeyInfo(Form_pg_index indexTuple, int *numAttsOutP,
 					AttrNumber **attsOutP, FuncIndexInfoPtr fInfoP);
@@ -657,7 +659,7 @@ ExecGetIndexKeyInfo(Form_pg_index indexTuple,
 	 *	check parameters
 	 * ----------------
 	 */
-	if (numAttsOutP == NULL && attsOutP == NULL)
+	if (numAttsOutP == NULL || attsOutP == NULL)
 	{
 		elog(DEBUG, "ExecGetIndexKeyInfo: %s",
 		"invalid parameters: numAttsOutP and attsOutP must be non-NULL");
@@ -724,115 +726,112 @@ ExecGetIndexKeyInfo(Form_pg_index indexTuple,
 /* ----------------------------------------------------------------
  *		ExecOpenIndices
  *
- *		Here we scan the pg_index relation to find indices
- *		associated with a given heap relation oid.	Since we
- *		don't know in advance how many indices we have, we
- *		form lists containing the information we need from
- *		pg_index and then process these lists.
+ *		Find the indices associated with a result relation, open them,
+ *		and save information about them in the result RelationInfo.
  *
- *		Note: much of this code duplicates effort done by
- *		the IndexCatalogInformation function in plancat.c
- *		because IndexCatalogInformation is poorly written.
+ *		At entry, caller has already opened and locked
+ *		resultRelationInfo->ri_RelationDesc.
  *
- *		It would be much better if the functionality provided
- *		by this function and IndexCatalogInformation was
- *		in the form of a small set of orthogonal routines..
- *		If you are trying to understand this, I suggest you
- *		look at the code to IndexCatalogInformation and
- *		FormIndexTuple.. -cim 9/27/89
+ *		This used to be horribly ugly code, and slow too because it
+ *		did a sequential scan of pg_index.  Now we rely on the relcache
+ *		to cache a list of the OIDs of the indices associated with any
+ *		specific relation, and we use the pg_index syscache to get the
+ *		entries we need from pg_index.
  * ----------------------------------------------------------------
  */
 void
-ExecOpenIndices(Oid resultRelationOid,
-				RelationInfo *resultRelationInfo)
+ExecOpenIndices(RelationInfo *resultRelationInfo)
 {
-	Relation	indexRd;
-	HeapScanDesc indexSd;
-	ScanKeyData key;
-	HeapTuple	tuple;
-	Form_pg_index indexStruct;
-	Oid			indexOid;
-	List	   *oidList;
-	List	   *nkeyList;
-	List	   *keyList;
-	List	   *fiList;
-	char	   *predString;
-	List	   *predList;
-	List	   *indexoid;
-	List	   *numkeys;
-	List	   *indexkeys;
-	List	   *indexfuncs;
-	List	   *indexpreds;
-	int			len;
-
+	Relation	resultRelation = resultRelationInfo->ri_RelationDesc;
+	List	   *indexoidlist,
+			   *indexoidscan;
+	int			len,
+				i;
 	RelationPtr relationDescs;
 	IndexInfo **indexInfoArray;
-	FuncIndexInfoPtr fInfoP;
-	int			numKeyAtts;
-	AttrNumber *indexKeyAtts;
-	PredInfo   *predicate;
-	int			i;
 
 	resultRelationInfo->ri_NumIndices = 0;
-	if (!RelationGetForm(resultRelationInfo->ri_RelationDesc)->relhasindex)
+
+	/* checks for disabled indexes */
+	if (! RelationGetForm(resultRelation)->relhasindex)
 		return;
 	if (IsIgnoringSystemIndexes() &&
-		IsSystemRelationName(RelationGetRelationName(resultRelationInfo->ri_RelationDesc)))
+		IsSystemRelationName(RelationGetRelationName(resultRelation)))
 		return;
-	/* ----------------
-	 *	open pg_index
-	 * ----------------
-	 */
-	indexRd = heap_openr(IndexRelationName, AccessShareLock);
 
 	/* ----------------
-	 *	form a scan key
+	 *	 Get cached list of index OIDs
 	 * ----------------
 	 */
-	ScanKeyEntryInitialize(&key, 0, Anum_pg_index_indrelid,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(resultRelationOid));
+	indexoidlist = RelationGetIndexList(resultRelation);
+	len = length(indexoidlist);
+	if (len == 0)
+		return;
 
 	/* ----------------
-	 *	scan the index relation, looking for indices for our
-	 *	result relation..
+	 *	 allocate space for result arrays
 	 * ----------------
 	 */
-	indexSd = heap_beginscan(indexRd,	/* scan desc */
-							 false,		/* scan backward flag */
-							 SnapshotNow,		/* NOW snapshot */
-							 1, /* number scan keys */
-							 &key);		/* scan keys */
+	relationDescs = (RelationPtr) palloc(len * sizeof(Relation));
+	indexInfoArray = (IndexInfo **) palloc(len * sizeof(IndexInfo *));
 
-	oidList = NIL;
-	nkeyList = NIL;
-	keyList = NIL;
-	fiList = NIL;
-	predList = NIL;
+	resultRelationInfo->ri_NumIndices = len;
+	resultRelationInfo->ri_IndexRelationDescs = relationDescs;
+	resultRelationInfo->ri_IndexRelationInfo = indexInfoArray;
 
-	while (HeapTupleIsValid(tuple = heap_getnext(indexSd, 0)))
+	/* ----------------
+	 *	 For each index, open the index relation and save pg_index info.
+	 * ----------------
+	 */
+	i = 0;
+	foreach(indexoidscan, indexoidlist)
 	{
+		Oid			indexOid = lfirsti(indexoidscan);
+		Relation	indexDesc;
+		HeapTuple	indexTuple;
+		Form_pg_index indexStruct;
+		int			numKeyAtts;
+		AttrNumber *indexKeyAtts;
+		FuncIndexInfoPtr fInfoP;
+		PredInfo   *predicate;
+		IndexInfo  *ii;
 
 		/* ----------------
-		 *	For each index relation we find, extract the information
-		 *	we need and store it in a list..
+		 * Open (and lock, if necessary) the index relation
 		 *
-		 *	first get the oid of the index relation from the tuple
+		 * Hack for not btree and hash indices: they use relation
+		 * level exclusive locking on update (i.e. - they are not
+		 * ready for MVCC) and so we have to exclusively lock
+		 * indices here to prevent deadlocks if we will scan them
+		 * - index_beginscan places AccessShareLock, indices
+		 * update methods don't use locks at all. We release this
+		 * lock in ExecCloseIndices. Note, that hashes use page
+		 * level locking - i.e. are not deadlock-free, - let's
+		 * them be on their way -:)) vadim 03-12-1998
 		 * ----------------
 		 */
-		indexStruct = (Form_pg_index) GETSTRUCT(tuple);
-		indexOid = indexStruct->indexrelid;
+		indexDesc = index_open(indexOid);
+
+		if (indexDesc->rd_rel->relam != BTREE_AM_OID &&
+			indexDesc->rd_rel->relam != HASH_AM_OID)
+			LockRelation(indexDesc, AccessExclusiveLock);
 
 		/* ----------------
-		 * allocate space for functional index information.
+		 *	Get the pg_index tuple for the index
+		 * ----------------
+		 */
+		indexTuple = SearchSysCacheTupleCopy(INDEXRELID,
+											 ObjectIdGetDatum(indexOid),
+											 0, 0, 0);
+		if (!HeapTupleIsValid(indexTuple))
+			elog(ERROR, "ExecOpenIndices: index %u not found", indexOid);
+		indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
+
+		/* ----------------
+		 *	extract the index key information from the tuple
 		 * ----------------
 		 */
 		fInfoP = (FuncIndexInfoPtr) palloc(sizeof(*fInfoP));
-
-		/* ----------------
-		 *	next get the index key information from the tuple
-		 * ----------------
-		 */
 		ExecGetIndexKeyInfo(indexStruct,
 							&numKeyAtts,
 							&indexKeyAtts,
@@ -844,6 +843,8 @@ ExecOpenIndices(Oid resultRelationOid,
 		 */
 		if (VARSIZE(&indexStruct->indpred) != 0)
 		{
+			char	   *predString;
+
 			predString = textout(&indexStruct->indpred);
 			predicate = (PredInfo *) stringToNode(predString);
 			pfree(predString);
@@ -851,152 +852,21 @@ ExecOpenIndices(Oid resultRelationOid,
 		else
 			predicate = NULL;
 
-		/* ----------------
-		 *	save the index information into lists
-		 * ----------------
-		 */
-		oidList = lconsi(indexOid, oidList);
-		nkeyList = lconsi(numKeyAtts, nkeyList);
-		keyList = lcons(indexKeyAtts, keyList);
-		fiList = lcons(fInfoP, fiList);
-		predList = lcons(predicate, predList);
+		/* Save the index info */
+		ii = makeNode(IndexInfo);
+		ii->ii_NumKeyAttributes = numKeyAtts;
+		ii->ii_KeyAttributeNumbers = indexKeyAtts;
+		ii->ii_FuncIndexInfo = fInfoP;
+		ii->ii_Predicate = (Node *) predicate;
+
+		heap_freetuple(indexTuple);
+
+		relationDescs[i] = indexDesc;
+		indexInfoArray[i] = ii;
+		i++;
 	}
 
-	/* ----------------
-	 *	we have the info we need so close the pg_index relation..
-	 * ----------------
-	 */
-	heap_endscan(indexSd);
-	heap_close(indexRd, AccessShareLock);
-
-	/* ----------------
-	 *	Now that we've collected the index information into three
-	 *	lists, we open the index relations and store the descriptors
-	 *	and the key information into arrays.
-	 * ----------------
-	 */
-	len = length(oidList);
-	if (len > 0)
-	{
-		/* ----------------
-		 *	 allocate space for relation descs
-		 * ----------------
-		 */
-		CXT1_printf("ExecOpenIndices: context is %d\n", CurrentMemoryContext);
-		relationDescs = (RelationPtr)
-			palloc(len * sizeof(Relation));
-
-		/* ----------------
-		 *	 initialize index info array
-		 * ----------------
-		 */
-		CXT1_printf("ExecOpenIndices: context is %d\n", CurrentMemoryContext);
-		indexInfoArray = (IndexInfo **)
-			palloc(len * sizeof(IndexInfo *));
-
-		for (i = 0; i < len; i++)
-		{
-			IndexInfo  *ii = makeNode(IndexInfo);
-
-			ii->ii_NumKeyAttributes = 0;
-			ii->ii_KeyAttributeNumbers = (AttrNumber *) NULL;
-			ii->ii_FuncIndexInfo = (FuncIndexInfoPtr) NULL;
-			ii->ii_Predicate = NULL;
-			indexInfoArray[i] = ii;
-		}
-
-		/* ----------------
-		 *	 attempt to open each of the indices.  If we succeed,
-		 *	 then store the index relation descriptor into the
-		 *	 relation descriptor array.
-		 * ----------------
-		 */
-		i = 0;
-		foreach(indexoid, oidList)
-		{
-			Relation	indexDesc;
-
-			indexOid = lfirsti(indexoid);
-			indexDesc = index_open(indexOid);
-			if (indexDesc != NULL)
-			{
-				relationDescs[i++] = indexDesc;
-
-				/*
-				 * Hack for not btree and hash indices: they use relation
-				 * level exclusive locking on update (i.e. - they are not
-				 * ready for MVCC) and so we have to exclusively lock
-				 * indices here to prevent deadlocks if we will scan them
-				 * - index_beginscan places AccessShareLock, indices
-				 * update methods don't use locks at all. We release this
-				 * lock in ExecCloseIndices. Note, that hashes use page
-				 * level locking - i.e. are not deadlock-free, - let's
-				 * them be on their way -:)) vadim 03-12-1998
-				 */
-				if (indexDesc->rd_rel->relam != BTREE_AM_OID &&
-					indexDesc->rd_rel->relam != HASH_AM_OID)
-					LockRelation(indexDesc, AccessExclusiveLock);
-			}
-		}
-
-		/* ----------------
-		 *	 store the relation descriptor array and number of
-		 *	 descs into the result relation info.
-		 * ----------------
-		 */
-		resultRelationInfo->ri_NumIndices = i;
-		resultRelationInfo->ri_IndexRelationDescs = relationDescs;
-
-		/* ----------------
-		 *	 store the index key information collected in our
-		 *	 lists into the index info array
-		 * ----------------
-		 */
-		i = 0;
-		foreach(numkeys, nkeyList)
-		{
-			numKeyAtts = lfirsti(numkeys);
-			indexInfoArray[i++]->ii_NumKeyAttributes = numKeyAtts;
-		}
-
-		i = 0;
-		foreach(indexkeys, keyList)
-		{
-			indexKeyAtts = (AttrNumber *) lfirst(indexkeys);
-			indexInfoArray[i++]->ii_KeyAttributeNumbers = indexKeyAtts;
-		}
-
-		i = 0;
-		foreach(indexfuncs, fiList)
-		{
-			FuncIndexInfoPtr fiP = (FuncIndexInfoPtr) lfirst(indexfuncs);
-
-			indexInfoArray[i++]->ii_FuncIndexInfo = fiP;
-		}
-
-		i = 0;
-		foreach(indexpreds, predList)
-			indexInfoArray[i++]->ii_Predicate = lfirst(indexpreds);
-		/* ----------------
-		 *	 store the index info array into relation info
-		 * ----------------
-		 */
-		resultRelationInfo->ri_IndexRelationInfo = indexInfoArray;
-	}
-
-	/* ----------------
-	 *	All done,  resultRelationInfo now contains complete information
-	 *	on the indices associated with the result relation.
-	 * ----------------
-	 */
-
-	/* should free oidList, nkeyList and keyList here */
-	/* OK - let's do it   -jolly */
-	freeList(oidList);
-	freeList(nkeyList);
-	freeList(keyList);
-	freeList(fiList);
-	freeList(predList);
+	freeList(indexoidlist);
 }
 
 /* ----------------------------------------------------------------
@@ -1034,91 +904,6 @@ ExecCloseIndices(RelationInfo *resultRelationInfo)
 	 * XXX should free indexInfo array here too.
 	 */
 }
-
-/* ----------------------------------------------------------------
- *		ExecFormIndexTuple
- *
- *		Most of this code is cannabilized from DefaultBuild().
- *		As said in the comments for ExecOpenIndices, most of
- *		this functionality should be rearranged into a proper
- *		set of routines..
- * ----------------------------------------------------------------
- */
-#ifdef NOT_USED
-IndexTuple
-ExecFormIndexTuple(HeapTuple heapTuple,
-				   Relation heapRelation,
-				   Relation indexRelation,
-				   IndexInfo *indexInfo)
-{
-	IndexTuple	indexTuple;
-	TupleDesc	heapDescriptor;
-	TupleDesc	indexDescriptor;
-	Datum	   *datum;
-	char	   *nulls;
-
-	int			numberOfAttributes;
-	AttrNumber *keyAttributeNumbers;
-	FuncIndexInfoPtr fInfoP;
-
-	/* ----------------
-	 *	get information from index info structure
-	 * ----------------
-	 */
-	numberOfAttributes = indexInfo->ii_NumKeyAttributes;
-	keyAttributeNumbers = indexInfo->ii_KeyAttributeNumbers;
-	fInfoP = indexInfo->ii_FuncIndexInfo;
-
-	/* ----------------
-	 *	datum and null are arrays in which we collect the index attributes
-	 *	when forming a new index tuple.
-	 * ----------------
-	 */
-	CXT1_printf("ExecFormIndexTuple: context is %d\n", CurrentMemoryContext);
-	datum = (Datum *) palloc(numberOfAttributes * sizeof *datum);
-	nulls = (char *) palloc(numberOfAttributes * sizeof *nulls);
-
-	/* ----------------
-	 *	get the tuple descriptors from the relations so we know
-	 *	how to form the index tuples..
-	 * ----------------
-	 */
-	heapDescriptor = RelationGetDescr(heapRelation);
-	indexDescriptor = RelationGetDescr(indexRelation);
-
-	/* ----------------
-	 *	FormIndexDatum fills in its datum and null parameters
-	 *	with attribute information taken from the given heap tuple.
-	 * ----------------
-	 */
-	FormIndexDatum(numberOfAttributes,	/* num attributes */
-				   keyAttributeNumbers, /* array of att nums to extract */
-				   heapTuple,	/* tuple from base relation */
-				   heapDescriptor,		/* heap tuple's descriptor */
-				   datum,		/* return: array of attributes */
-				   nulls,		/* return: array of char's */
-				   fInfoP);		/* functional index information */
-
-	indexTuple = index_formtuple(indexDescriptor,
-								 datum,
-								 nulls);
-
-	/* ----------------
-	 *	free temporary arrays
-	 *
-	 *	XXX should store these in the IndexInfo instead of allocating
-	 *	   and freeing on every insertion, but efficency here is not
-	 *	   that important and FormIndexTuple is wasteful anyways..
-	 *	   -cim 9/27/89
-	 * ----------------
-	 */
-	pfree(nulls);
-	pfree(datum);
-
-	return indexTuple;
-}
-
-#endif
 
 /* ----------------------------------------------------------------
  *		ExecInsertIndexTuples
