@@ -2128,6 +2128,18 @@ on (x1 = xx1) where (xx2 is not null);
 (3 rows)
 
 --
+-- regression test: check for bug with propagation of implied equality
+-- to outside an IN
+--
+select count(*) from tenk1 a where unique1 in
+  (select unique1 from tenk1 b join tenk1 c using (unique1)
+   where b.unique2 = 42);
+ count 
+-------
+     1
+(1 row)
+
+--
 -- Clean up
 --
 DROP TABLE t1;

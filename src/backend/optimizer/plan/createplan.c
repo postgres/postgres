@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.151 2003/08/04 02:40:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.152 2003/08/07 19:20:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -504,52 +504,87 @@ create_unique_plan(Query *root, UniquePath * best_path)
 {
 	Plan	   *plan;
 	Plan	   *subplan;
-	List	   *sub_targetlist;
+	List	   *uniq_exprs;
+	int			numGroupCols;
+	AttrNumber *groupColIdx;
+	int			groupColPos;
+	List	   *newtlist;
+	int			nextresno;
+	bool		newitems;
 	List	   *my_tlist;
 	List	   *l;
 
 	subplan = create_plan(root, best_path->subpath);
 
 	/*
-	 * If the subplan came from an IN subselect (currently always the
-	 * case), we need to instantiate the correct output targetlist for the
-	 * subselect, rather than using the flattened tlist.
+	 * As constructed, the subplan has a "flat" tlist containing just the
+	 * Vars needed here and at upper levels.  The values we are supposed
+	 * to unique-ify may be expressions in these variables.  We have to
+	 * add any such expressions to the subplan's tlist.  We then build
+	 * control information showing which subplan output columns are to be
+	 * examined by the grouping step.  (Since we do not remove any existing
+	 * subplan outputs, not all the output columns may be used for grouping.)
+	 *
+	 * Note: the reason we don't remove any subplan outputs is that there
+	 * are scenarios where a Var is needed at higher levels even though it
+	 * is not one of the nominal outputs of an IN clause.  Consider
+	 *		WHERE x IN (SELECT y FROM t1,t2 WHERE y = z)
+	 * Implied equality deduction will generate an "x = z" clause, which may
+	 * get used instead of "x = y" in the upper join step.  Therefore the
+	 * sub-select had better deliver both y and z in its targetlist.  It is
+	 * sufficient to unique-ify on y, however.
+	 *
+	 * To find the correct list of values to unique-ify, we look in the
+	 * information saved for IN expressions.  If this code is ever used in
+	 * other scenarios, some other way of finding what to unique-ify will
+	 * be needed.
 	 */
-	sub_targetlist = NIL;
+	uniq_exprs = NIL;			/* just to keep compiler quiet */
 	foreach(l, root->in_info_list)
 	{
 		InClauseInfo *ininfo = (InClauseInfo *) lfirst(l);
 
 		if (bms_equal(ininfo->righthand, best_path->path.parent->relids))
 		{
-			sub_targetlist = ininfo->sub_targetlist;
+			uniq_exprs = ininfo->sub_targetlist;
 			break;
 		}
 	}
+	if (l == NIL)				/* fell out of loop? */
+		elog(ERROR, "could not find UniquePath in in_info_list");
 
-	if (sub_targetlist)
+	/* set up to record positions of unique columns */
+	numGroupCols = length(uniq_exprs);
+	groupColIdx = (AttrNumber *) palloc(numGroupCols * sizeof(AttrNumber));
+	groupColPos = 0;
+	/* not sure if tlist might be shared with other nodes, so copy */
+	newtlist = copyObject(subplan->targetlist);
+	nextresno = length(newtlist) + 1;
+	newitems = false;
+
+	foreach(l, uniq_exprs)
 	{
-		/*
-		 * Transform list of plain Vars into targetlist
-		 */
-		List	   *newtlist = NIL;
-		int			resno = 1;
+		Node	   *uniqexpr = lfirst(l);
+		TargetEntry *tle;
 
-		foreach(l, sub_targetlist)
+		tle = tlistentry_member(uniqexpr, newtlist);
+		if (!tle)
 		{
-			Node	   *tlexpr = lfirst(l);
-			TargetEntry *tle;
-
-			tle = makeTargetEntry(makeResdom(resno,
-											 exprType(tlexpr),
-											 exprTypmod(tlexpr),
+			tle = makeTargetEntry(makeResdom(nextresno,
+											 exprType(uniqexpr),
+											 exprTypmod(uniqexpr),
 											 NULL,
 											 false),
-								  (Expr *) tlexpr);
+								  (Expr *) uniqexpr);
 			newtlist = lappend(newtlist, tle);
-			resno++;
+			nextresno++;
+			newitems = true;
 		}
+		groupColIdx[groupColPos++] = tle->resdom->resno;
+	}
 
+	if (newitems)
+	{
 		/*
 		 * If the top plan node can't do projections, we need to add a
 		 * Result node to help it along.
@@ -563,20 +598,14 @@ create_unique_plan(Query *root, UniquePath * best_path)
 			subplan->targetlist = newtlist;
 	}
 
+	/* Copy tlist again to make one we can put sorting labels on */
 	my_tlist = copyObject(subplan->targetlist);
 
 	if (best_path->use_hash)
 	{
-		int			numGroupCols = length(my_tlist);
 		long		numGroups;
-		AttrNumber *groupColIdx;
-		int			i;
 
 		numGroups = (long) Min(best_path->rows, (double) LONG_MAX);
-
-		groupColIdx = (AttrNumber *) palloc(numGroupCols * sizeof(AttrNumber));
-		for (i = 0; i < numGroupCols; i++)
-			groupColIdx[i] = i + 1;
 
 		plan = (Plan *) make_agg(root,
 								 my_tlist,
@@ -590,9 +619,17 @@ create_unique_plan(Query *root, UniquePath * best_path)
 	}
 	else
 	{
-		List	   *sortList;
+		List	   *sortList = NIL;
 
-		sortList = addAllTargetsToSortList(NULL, NIL, my_tlist, false);
+		for (groupColPos = 0; groupColPos < numGroupCols; groupColPos++)
+		{
+			TargetEntry *tle;
+
+			tle = nth(groupColIdx[groupColPos] - 1, my_tlist);
+			Assert(tle->resdom->resno == groupColIdx[groupColPos]);
+			sortList = addTargetToSortList(NULL, tle, sortList,
+										   my_tlist, NIL, false);
+		}
 		plan = (Plan *) make_sort_from_sortclauses(root, my_tlist,
 												   subplan, sortList);
 		plan = (Plan *) make_unique(my_tlist, plan, sortList);

@@ -330,6 +330,14 @@ on (x1 = xx1) where (y2 is not null);
 select * from (x left join y on (x1 = y1)) left join x xx(xx1,xx2)
 on (x1 = xx1) where (xx2 is not null);
 
+--
+-- regression test: check for bug with propagation of implied equality
+-- to outside an IN
+--
+select count(*) from tenk1 a where unique1 in
+  (select unique1 from tenk1 b join tenk1 c using (unique1)
+   where b.unique2 = 42);
+
 
 --
 -- Clean up
