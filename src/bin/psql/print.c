@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.16 2001/02/27 08:13:27 ishii Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.17 2001/03/01 18:52:50 petere Exp $
  */
 #include "postgres_fe.h"
 #include "print.h"
@@ -1116,6 +1116,7 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout)
 		free(footers[0]);
 		free(footers);
 	}
+	free(align);
 }
 
 
