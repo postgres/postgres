@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupdesc.h,v 1.7 1997/08/21 04:10:25 vadim Exp $
+ * $Id: tupdesc.h,v 1.8 1997/08/22 03:55:39 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,6 +56,10 @@ extern TupleDesc CreateTemplateTupleDesc(int natts);
 extern TupleDesc CreateTupleDesc(int natts, AttributeTupleForm *attrs);
 
 extern TupleDesc CreateTupleDescCopy(TupleDesc tupdesc);
+
+extern TupleDesc CreateTupleDescCopyConstr(TupleDesc tupdesc);
+
+extern void FreeTupleDesc(TupleDesc tupdesc);
 
 extern bool TupleDescInitEntry(TupleDesc desc,
 			       AttrNumber attributeNumber,
