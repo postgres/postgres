@@ -1,7 +1,7 @@
 
                Otvety na chasto zadavaemye voprosy po PostgreSQL
                                        
-   Data poslednego obnovleniya: CHetverg 5 Dekabrya 00:47:26 EDT 2002
+   Data poslednego obnovleniya: CHetverg 13 Fevralya 23:07:35 EDT 2002
    
    Anglijskij variant soprovozhdaet: Bryus Mom'yan (Bruce Momjian)
    (pgman@candle.pha.pa.us)
@@ -275,7 +275,7 @@
    
     1.7) Kakaya poslednyaya versiya?
     
-   Poslednij vypusk PostgreSQL - `eto versiya 7.2.3.
+   Poslednij vypusk PostgreSQL - `eto versiya 7.3.1.
    
    My planiruem vypuskat' novye versii kazhdye chetyre mesyaca.
    
@@ -469,16 +469,12 @@
     2.3) Est' li u PostgreSQL graficheskij interfejs pol'zovatelya?
     
    Da, suschestvuet neskol'ko graficheskih interfejsov dlya PostgreSQL.
-   `Eto PgAccess (http://www.pgaccess.com, PgAdmin II
+   `Eto PgAccess (http://www.pgaccess.org, PgAdmin II
    (http://www.pgadmin.org, Win32-only), RHDB Admin (
    http://sources.redhat.com/rhdb/) i Rekall (
    http://www.thekompany.com/products/rekall/, kommercheskij). Takzhe
    est' PHPPgAdmin ( http://phppgadmin.sourceforge.net/) - interfejs k
    PostgreSQL, osnovannyj na Web.
-   
-   U nas est' prekrasnyj goraficheskij interfejs, nazyvaemyj PgAccess,
-   kotoryj takzhe mozhno ispol'zovat' kak generator otchetov. Ego
-   stranichka http://www.pgaccess.org/
    
     2.4) Kakie yazyki mogut vzaimodejstvovat' s PostgreSQL?
     
@@ -669,10 +665,6 @@
    sozdaniya ogranicheniya na kolichestvo backend processov kak raz i
    sostoit v tom, chtoby vashej sisteme hvatilo resursov.
    
-   V PostgreSQL do versii 6.5, maksimal'noe kolichestvo backend processov
-   bylo 64, i izmenenie `etogo kolichestva trebovalo perekompilyacii
-   posle ustanovki konstanty MaxBackendId v include/storage/sinvaladt.h.
-   
     3.9) CHto nahoditsya v kataloge pgsql_tmp?
     
    Dannyj katalog soderzhit vremennye fajly, generiruemye obrabotchikom
@@ -853,6 +845,11 @@ pa
     ORDER BY col [ DESC ]
     LIMIT 1;
 
+   Esli vam kazhetsya, chto optimizator nekorretno vybiraet
+   posledovatel'nyj perebor, ispol'zujte SET enable_seqscan TO 'off' i
+   zapustite testy, chtoby uvidet', ne stalo-li skanirovanie indeksov
+   bystree.
+   
    Kogda ispol'zuyutsya operacii s shablonami, naprimer LIKE ili ~,
    indeksy mogut byt' ispol'zovany v sleduyuschih sluchayah:
      * Nachalo stroki poiska dolzhno sovpadat' s nachalom iskomoj stroki,
@@ -929,12 +926,12 @@ pa
     
 Tip            Vnutrennee imya   Zamechaniya
 --------------------------------------------------
-"char"          char            1 simvol
-CHAR(n)         bpchar          zapolnyaetsya pustotoj do fiksirovannoj dliny
 VARCHAR(n)      varchar         razmer zadaet maksimal'nuyu dlinu, net zapolnen
 iya
+CHAR(n)         bpchar          zapolnyaetsya pustotoj do fiksirovannoj dliny
 TEXT            text            net zadavaemogo verhnego ogranicheniya ili dlin
 y
+"char"          char            odin simvol
 BYTEA           bytea           massiv bajt peremennoj dliny (mozhno ispol'zova
 t' null-bajt bez opaski)
 
@@ -948,15 +945,17 @@ t' null-bajt bez opaski)
    szhatiyu ili mogut byt' sohraneny ne v strokom vide cherez TOAST, tak
    chto zanimaemoe diskovoe prostranstvo mozhet takzhe byt' i men'she,
    chem ozhidalos'.
+   VARCHAR(n) - `eto luchshee reshenie, kogda nuzhno hranit' stroki
+   peremennoj dliny, ne prevyshayuschie opredelennogo razmera. TEXT -
+   `eto luchshee reshenie dlya strok neogranichennoj dliny, s maksimal'no
+   dopustimoj dlinoj v 1 gigabajt.
    
    CHAR(n) - `eto luchshee reshenie dlya hraneniya strok, kotorye obychno
-   imeyut odinakovuyu dlinu. VARCHAR(n) - `eto luchshee reshenie, kogda
-   nuzhno hranit' stroki peremennoj dliny, no ne prevyshayuschie
-   opredelennogo razmera. TEXT - `eto luchshee reshenie dlya strok
-   neogranichennoj dliny, s maksimal'no dopustimoj dlinoj v 1 gigabajt.
-   BYTEA dlya hraneniya binarnyh dannyh, znacheniya kotoryh mogut
-   vklyuchat' NULL bajty. `Eti tipy imeyut shodnye harakteristiki
-   proizvoditel'nosti.
+   imeyut odinakovuyu dlinu. CHAR(n) zapolnyaetsya pustotoj do zadannoj
+   dliny, v to vremya kak VARCHAR(n) hranit tol'ko simvoly, iz kotoryh
+   sostoit stroka. BYTEA ispol'zuetsya dlya hraneniya binarnyh dannyh,
+   znacheniya kotoryh mogut vklyuchat' NULL bajty. `Eti tipy imeyut
+   shodnye harakteristiki proizvoditel'nosti.
    
     4.15.1) Kak mne sozdat' pole serial/s-avto-uvelicheniem?
     
@@ -1146,8 +1145,8 @@ CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
     WHERE EXISTS (SELECT subcol FROM subtab WHERE subcol = col);
 
    CHtoby takaya konstrukciya rabotala bystro, kolonka subcol dolzhna
-   byt' proindeksirovana. My nadeemsya ubrat' `eto ogranichenie v
-   buduschem vypuske.
+   byt' proindeksirovana. `Eta problema proizvoditel'nosti budet
+   ustranena v versii 7.4.
    
     4.23) Kak mne vypolnit' vneshnee svyazyvanie?
     

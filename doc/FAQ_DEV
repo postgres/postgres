@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Nov 5 16:52:46 EST 2002
+   Last updated: Fri Feb 14 08:59:10 EST 2003
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -643,9 +643,8 @@ List *i, *list;
           return the i'th element in list.
           
    lconsi, ...
-          There are integer versions of these: lconsi, lappendi, nthi.
-          List's containing integers instead of Node pointers are used to
-          hold list of relation object id's and other integer quantities.
+          There are integer versions of these: lconsi, lappendi, etc.
+          Also versions for OID lists: lconso, lappendo, etc.
           
    You can print nodes easily inside gdb. First, to disable output
    truncation when you use the gdb print command:

@@ -12,7 +12,7 @@
     <H1>Developer's Frequently Asked Questions (FAQ) for
     PostgreSQL</H1>
 
-    <P>Last updated: Tue Nov  5 16:52:46 EST 2002</P>
+    <P>Last updated: Fri Feb 14 08:59:10 EST 2003</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -779,10 +779,8 @@
 
         <DT>lconsi, ...</DT>
 
-        <DD>There are integer versions of these: <I>lconsi, lappendi,
-        nthi.</I> <I>List's</I> containing integers instead of Node
-        pointers are used to hold list of relation object id's and
-        other integer quantities.</DD>
+        <DD>There are integer versions of these: <I>lconsi, lappendi</I>,
+        etc. Also versions for OID lists: <I>lconso, lappendo</I>, etc.</DD>
       </DL>
     </BLOCKQUOTE>
     You can print nodes easily inside <I>gdb.</I> First, to disable
