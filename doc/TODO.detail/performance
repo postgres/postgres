@@ -345,7 +345,7 @@ From owner-pgsql-hackers@hub.org Tue Oct 19 10:31:10 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id KAA29087
 	for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:31:08 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.5 $) with ESMTP id KAA27535 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:19:47 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.6 $) with ESMTP id KAA27535 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:19:47 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id KAA30328;
 	Tue, 19 Oct 1999 10:12:10 -0400 (EDT)
@@ -454,7 +454,7 @@ From owner-pgsql-hackers@hub.org Tue Oct 19 21:25:30 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA28130
 	for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:25:26 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.5 $) with ESMTP id VAA10512 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:15:28 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.6 $) with ESMTP id VAA10512 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:15:28 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id VAA50745;
 	Tue, 19 Oct 1999 21:07:23 -0400 (EDT)
@@ -738,4 +738,267 @@ So, we probably should put new unfree dirty buffer just before first
 dirty one in LRU.
 
 Vadim
+
+From markw@mohawksoft.com Thu Jun  7 14:40:02 2001
+Return-path: <markw@mohawksoft.com>
+Received: from gromit.dotclick.com (ipn9-f8366.net-resource.net [216.204.83.66])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f57Ie1c14004
+	for <pgman@candle.pha.pa.us>; Thu, 7 Jun 2001 14:40:02 -0400 (EDT)
+Received: from mohawksoft.com (IDENT:markw@localhost.localdomain [127.0.0.1])
+	by gromit.dotclick.com (8.9.3/8.9.3) with ESMTP id OAA04973;
+	Thu, 7 Jun 2001 14:37:00 -0400
+Sender: markw@gromit.dotclick.com
+Message-ID: <3B1FC9CB.57C72AD6@mohawksoft.com>
+Date: Thu, 07 Jun 2001 14:36:59 -0400
+From: mlw <markw@mohawksoft.com>
+X-Mailer: Mozilla 4.75 [en] (X11; U; Linux 2.4.2 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Bruce Momjian <pgman@candle.pha.pa.us>,
+   "pgsql-hackers@postgresql.org" <pgsql-hackers@postgresql.org>
+Subject: Re: 7.2 items
+References: <200106071503.f57F32n03924@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Status: OR
+
+Bruce Momjian wrote:
+
+> > Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> >
+> > > Here is a small list of big TODO items.  I was wondering which ones
+> > > people were thinking about for 7.2?
+> >
+> > A friend of mine wants to use PostgreSQL instead of Oracle for a large
+> > application, but has run into a snag when speed comparisons looked
+> > good until the Oracle folks added a couple of BITMAP indexes.  I can't
+> > recall seeing any discussion about that here -- are there any plans?
+>
+> It is not on our list and I am not sure what they do.
+
+Do you have access to any Oracle Documentation? There is a good explanation
+of them.
+
+However, I will try to explain.
+
+If you have a table, locations. It has 1,000,000 records.
+
+In oracle you do this:
+
+create bitmap index bitmap_foo on locations (state) ;
+
+For each unique value of 'state' oracle will create a bitmap with 1,000,000
+bits in it. With a one representing a match and a zero representing no
+match. Record '0' in the table is represented by bit '0' in the bitmap,
+record '1' is represented by bit '1', record two by bit '2' and so on.
+
+In a table where comparatively few different values are to be indexed in a
+large table, a bitmap index can be quite small and not suffer the N * log(N)
+disk I/O most tree based indexes suffer. If the bitmap is fairly sparse or
+dense (or have periods of denseness and sparseness), it can be compressed
+very efficiently as well.
+
+When the statement:
+
+select * from locations where state = 'MA';
+
+Is executed, the bitmap is read into memory in very few disk operations.
+(Perhaps even as few as one or two). It is a simple operation of rifling
+through the bitmap for '1's that indicate the record has the property,
+'state' = 'MA';
+
+
+From mascarm@mascari.com Thu Jun  7 15:36:25 2001
+Return-path: <mascarm@mascari.com>
+Received: from corvette.mascari.com (dhcp065-024-161-045.columbus.rr.com [65.24.161.45])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f57JaOc21943
+	for <pgman@candle.pha.pa.us>; Thu, 7 Jun 2001 15:36:24 -0400 (EDT)
+Received: from ferrari (ferrari.mascari.com [192.168.2.1])
+	by corvette.mascari.com (8.9.3/8.9.3) with SMTP id PAA25607;
+	Thu, 7 Jun 2001 15:29:31 -0400
+Received: by localhost with Microsoft MAPI; Thu, 7 Jun 2001 15:34:18 -0400
+Message-ID: <01C0EF67.5105D2E0.mascarm@mascari.com>
+From: Mike Mascari <mascarm@mascari.com>
+Reply-To: "mascarm@mascari.com" <mascarm@mascari.com>
+To: "'mlw'" <markw@mohawksoft.com>, Bruce Momjian <pgman@candle.pha.pa.us>,
+   "pgsql-hackers@postgresql.org" <pgsql-hackers@postgresql.org>
+Subject: RE: [HACKERS] Re: 7.2 items
+Date: Thu, 7 Jun 2001 15:34:17 -0400
+Organization: Mascari Development Inc.
+X-Mailer: Microsoft Internet E-mail/MAPI - 8.0.0.4211
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Status: OR
+
+And in addition,
+
+If you submitted the query:
+
+SELECT * FROM addresses WHERE state = 'OH'
+AND areacode = '614'
+
+Then, with bitmap indexes, the bitmaps are just logically ANDed 
+together, and the final bitmap determines the matching rows.
+
+Mike Mascari
+mascarm@mascari.com
+
+-----Original Message-----
+From:	mlw [SMTP:markw@mohawksoft.com]
+
+Bruce Momjian wrote:
+
+> > Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> >
+> > > Here is a small list of big TODO items.  I was wondering which 
+ones
+> > > people were thinking about for 7.2?
+> >
+> > A friend of mine wants to use PostgreSQL instead of Oracle for a 
+large
+> > application, but has run into a snag when speed comparisons 
+looked
+> > good until the Oracle folks added a couple of BITMAP indexes.  I 
+can't
+> > recall seeing any discussion about that here -- are there any 
+plans?
+>
+> It is not on our list and I am not sure what they do.
+
+Do you have access to any Oracle Documentation? There is a good 
+explanation
+of them.
+
+However, I will try to explain.
+
+If you have a table, locations. It has 1,000,000 records.
+
+In oracle you do this:
+
+create bitmap index bitmap_foo on locations (state) ;
+
+For each unique value of 'state' oracle will create a bitmap with 
+1,000,000
+bits in it. With a one representing a match and a zero representing 
+no
+match. Record '0' in the table is represented by bit '0' in the 
+bitmap,
+record '1' is represented by bit '1', record two by bit '2' and so 
+on.
+
+In a table where comparatively few different values are to be indexed 
+in a
+large table, a bitmap index can be quite small and not suffer the N * 
+log(N)
+disk I/O most tree based indexes suffer. If the bitmap is fairly 
+sparse or
+dense (or have periods of denseness and sparseness), it can be 
+compressed
+very efficiently as well.
+
+When the statement:
+
+select * from locations where state = 'MA';
+
+Is executed, the bitmap is read into memory in very few disk 
+operations.
+(Perhaps even as few as one or two). It is a simple operation of 
+rifling
+through the bitmap for '1's that indicate the record has the 
+property,
+'state' = 'MA';
+
+
+
+From oleg@sai.msu.su Thu Jun  7 15:39:15 2001
+Return-path: <oleg@sai.msu.su>
+Received: from ra.sai.msu.su (ra.sai.msu.su [158.250.29.2])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f57Jd7c22010
+	for <pgman@candle.pha.pa.us>; Thu, 7 Jun 2001 15:39:08 -0400 (EDT)
+Received: from ra (ra [158.250.29.2])
+	by ra.sai.msu.su (8.9.3/8.9.3) with ESMTP id WAA07783;
+	Thu, 7 Jun 2001 22:38:20 +0300 (GMT)
+Date: Thu, 7 Jun 2001 22:38:20 +0300 (GMT)
+From: Oleg Bartunov <oleg@sai.msu.su>
+X-X-Sender: <megera@ra.sai.msu.su>
+To: mlw <markw@mohawksoft.com>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>,
+   "pgsql-hackers@postgresql.org" <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Re: 7.2 items
+In-Reply-To: <3B1FC9CB.57C72AD6@mohawksoft.com>
+Message-ID: <Pine.GSO.4.33.0106072234120.6015-100000@ra.sai.msu.su>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Status: OR
+
+I think it's possible to implement bitmap indexes with a little
+effort using GiST. at least I know one implementation
+http://www.it.iitb.ernet.in/~rvijay/dbms/proj/
+if you have interests you could implement bitmap indexes yourself
+unfortunately, we're very busy
+
+	Oleg
+On Thu, 7 Jun 2001, mlw wrote:
+
+> Bruce Momjian wrote:
+>
+> > > Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> > >
+> > > > Here is a small list of big TODO items.  I was wondering which ones
+> > > > people were thinking about for 7.2?
+> > >
+> > > A friend of mine wants to use PostgreSQL instead of Oracle for a large
+> > > application, but has run into a snag when speed comparisons looked
+> > > good until the Oracle folks added a couple of BITMAP indexes.  I can't
+> > > recall seeing any discussion about that here -- are there any plans?
+> >
+> > It is not on our list and I am not sure what they do.
+>
+> Do you have access to any Oracle Documentation? There is a good explanation
+> of them.
+>
+> However, I will try to explain.
+>
+> If you have a table, locations. It has 1,000,000 records.
+>
+> In oracle you do this:
+>
+> create bitmap index bitmap_foo on locations (state) ;
+>
+> For each unique value of 'state' oracle will create a bitmap with 1,000,000
+> bits in it. With a one representing a match and a zero representing no
+> match. Record '0' in the table is represented by bit '0' in the bitmap,
+> record '1' is represented by bit '1', record two by bit '2' and so on.
+>
+> In a table where comparatively few different values are to be indexed in a
+> large table, a bitmap index can be quite small and not suffer the N * log(N)
+> disk I/O most tree based indexes suffer. If the bitmap is fairly sparse or
+> dense (or have periods of denseness and sparseness), it can be compressed
+> very efficiently as well.
+>
+> When the statement:
+>
+> select * from locations where state = 'MA';
+>
+> Is executed, the bitmap is read into memory in very few disk operations.
+> (Perhaps even as few as one or two). It is a simple operation of rifling
+> through the bitmap for '1's that indicate the record has the property,
+> 'state' = 'MA';
+>
+>
+> ---------------------------(end of broadcast)---------------------------
+> TIP 6: Have you searched our list archives?
+>
+> http://www.postgresql.org/search.mpl
+>
+
+	Regards,
+		Oleg
+_____________________________________________________________
+Oleg Bartunov, sci.researcher, hostmaster of AstroNet,
+Sternberg Astronomical Institute, Moscow University (Russia)
+Internet: oleg@sai.msu.su, http://www.sai.msu.su/~megera/
+phone: +007(095)939-16-83, +007(095)939-23-83
+
 
