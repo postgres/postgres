@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.147 2003/03/31 20:47:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.148 2003/04/20 17:03:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1626,12 +1626,18 @@ static List *deftrig_trigstates;
  * Because this can grow pretty large, we don't use separate List nodes,
  * but instead thread the list through the dte_next fields of the member
  * nodes.  Saves just a few bytes per entry, but that adds up.
+ * 
+ * deftrig_events_imm holds the tail pointer as of the last 
+ * deferredTriggerInvokeEvents call; we can use this to avoid rescanning
+ * entries unnecessarily.  It is NULL if deferredTriggerInvokeEvents
+ * hasn't run since the last state change.
  *
  * XXX Need to be able to shove this data out to a file if it grows too
  *	   large...
  * ----------
  */
 static DeferredTriggerEvent deftrig_events;
+static DeferredTriggerEvent deftrig_events_imm;
 static DeferredTriggerEvent deftrig_event_tail;
 
 
@@ -1845,7 +1851,7 @@ static void
 deferredTriggerInvokeEvents(bool immediate_only)
 {
 	DeferredTriggerEvent event,
-				prev_event = NULL;
+				prev_event;
 	MemoryContext per_tuple_context;
 	Relation	rel = NULL;
 	TriggerDesc *trigdesc = NULL;
@@ -1857,13 +1863,12 @@ deferredTriggerInvokeEvents(bool immediate_only)
 	 * are going to discard the whole event queue on return anyway, so no
 	 * need to bother with "retail" pfree's.
 	 *
-	 * In a scenario with many commands in a transaction and many
-	 * deferred-to-end-of-transaction triggers, it could get annoying to
-	 * rescan all the deferred triggers at each command end. To speed this
-	 * up, we could remember the actual end of the queue at EndQuery and
-	 * examine only events that are newer. On state changes we simply
-	 * reset the saved position to the beginning of the queue and process
-	 * all events once with the new states.
+	 * If immediate_only is true, we need only scan from where the end of
+	 * the queue was at the previous deferredTriggerInvokeEvents call;
+	 * any non-deferred events before that point are already fired.
+	 * (But if the deferral state changes, we must reset the saved position
+	 * to the beginning of the queue, so as to process all events once with
+	 * the new states.  See DeferredTriggerSetState.)
 	 */
 
 	/* Make a per-tuple memory context for trigger function calls */
@@ -1874,7 +1879,22 @@ deferredTriggerInvokeEvents(bool immediate_only)
 							  ALLOCSET_DEFAULT_INITSIZE,
 							  ALLOCSET_DEFAULT_MAXSIZE);
 
-	event = deftrig_events;
+	/*
+	 * If immediate_only is true, then the only events that could need firing
+	 * are those since deftrig_events_imm.  (But if deftrig_events_imm is
+	 * NULL, we must scan the entire list.)
+	 */
+	if (immediate_only && deftrig_events_imm != NULL)
+	{
+		prev_event = deftrig_events_imm;
+		event = prev_event->dte_next;
+	}
+	else
+	{
+		prev_event = NULL;
+		event = deftrig_events;
+	}
+
 	while (event != NULL)
 	{
 		bool		still_deferred_ones = false;
@@ -1993,6 +2013,9 @@ deferredTriggerInvokeEvents(bool immediate_only)
 	/* Update list tail pointer in case we just deleted tail event */
 	deftrig_event_tail = prev_event;
 
+	/* Set the immediate event pointer for next time */
+	deftrig_events_imm = prev_event;
+
 	/* Release working resources */
 	if (rel)
 		heap_close(rel, NoLock);
@@ -2051,6 +2074,7 @@ DeferredTriggerBeginXact(void)
 	deftrig_trigstates = NIL;
 
 	deftrig_events = NULL;
+	deftrig_events_imm = NULL;
 	deftrig_event_tail = NULL;
 }
 
@@ -2280,8 +2304,11 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 	 * CONSTRAINTS command applies retroactively. This happens "for free"
 	 * since we have already made the necessary modifications to the
 	 * constraints, and deferredTriggerEndQuery() is called by
-	 * finish_xact_command().
+	 * finish_xact_command().  But we must reset deferredTriggerInvokeEvents'
+	 * tail pointer to make it rescan the entire list, in case some deferred
+	 * events are now immediately invokable.
 	 */
+	deftrig_events_imm = NULL;
 }
 
 
