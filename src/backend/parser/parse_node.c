@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.25 1999/05/10 00:45:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.26 1999/05/22 04:12:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,9 +75,7 @@ make_operand(char *opname,
 
 		/* must coerce? */
 		if (true_typeId != orig_typeId)
-		{
-			result = coerce_type(NULL, tree, orig_typeId, true_typeId);
-		}
+			result = coerce_type(NULL, tree, orig_typeId, true_typeId, -1);
 	}
 	/* otherwise, this is a NULL value */
 	else

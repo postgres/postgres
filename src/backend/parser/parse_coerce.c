@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.14 1999/05/22 02:55:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.15 1999/05/22 04:12:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,8 @@ static Oid PreferredType(CATEGORY category, Oid type);
  * Convert a function argument to a different type.
  */
 Node *
-coerce_type(ParseState *pstate, Node *node, Oid inputTypeId, Oid targetTypeId)
+coerce_type(ParseState *pstate, Node *node, Oid inputTypeId, Oid targetTypeId,
+		int32 atttypmod)
 {
 	Node	   *result = NULL;
 	Oid			infunc;
@@ -82,11 +83,16 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId, Oid targetTypeId)
 				con->consttype = targetTypeId;
 				con->constlen = typeLen(typeidType(targetTypeId));
 
-				/* use "-1" for varchar() type */
+				/*
+				 *	Use "-1" for varchar() type.
+				 *	For char(), we need to pad out the type with the proper
+				 *	number of spaces.  This was a major problem for
+				 *  DEFAULT string constants to char() types.
+				 */
 				con->constvalue = (Datum) fmgr(infunc,
 											   val,
 											   typeidTypElem(targetTypeId),
-											   -1);
+								(targetTypeId != BPCHAROID) ? -1 : atttypmod);
 				con->constisnull = false;
 				con->constbyval = typeByVal(typeidType(targetTypeId));
 				con->constisset = false;
@@ -100,7 +106,7 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId, Oid targetTypeId)
 		result = node;
 
 	return result;
-}	/* coerce_type() */
+}
 
 
 /* can_coerce_type()
@@ -178,7 +184,7 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 	}
 
 	return true;
-}	/* can_coerce_type() */
+}
 
 
 /* TypeCategory()

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.44 1999/05/17 17:03:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.45 1999/05/22 04:12:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -352,7 +352,6 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		}
 		else
 		{
-
 			/*
 			 * Parsing aggregates.
 			 */
@@ -360,7 +359,6 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			Oid				basetype;
 			int				ncandidates;
 			CandidateList	candidates;
-
 
 			/*
 			 * the aggregate COUNT is a special case, ignore its base
@@ -392,7 +390,8 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 				type = agg_select_candidate(basetype, candidates);
 				if (OidIsValid(type))
 				{
-					lfirst(fargs) = coerce_type(pstate, lfirst(fargs), basetype, type);
+					lfirst(fargs) = coerce_type(pstate, lfirst(fargs),
+												basetype, type, -1);
 					basetype = type;
 
 					return (Node *) ParseAgg(pstate, funcname, basetype,
@@ -1316,7 +1315,7 @@ make_arguments(ParseState *pstate,
 			lfirst(current_fargs) = coerce_type(pstate,
 												lfirst(current_fargs),
 												input_typeids[i],
-												function_typeids[i]);
+												function_typeids[i], -1);
 		}
 	}
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.37 1999/05/17 17:03:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.38 1999/05/22 04:12:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,7 +121,9 @@ MakeTargetEntryIdent(ParseState *pstate,
 		{
 			if (can_coerce_type(1, &attrtype_id, &attrtype_target))
 			{
-				expr = coerce_type(pstate, node, attrtype_id, attrtype_target);
+				expr = coerce_type(pstate, node, attrtype_id,
+									attrtype_target,
+			get_atttypmod(pstate->p_target_relation->rd_id, resdomno_target));
 				expr = transformExpr(pstate, expr, EXPR_COLUMN_FIRST);
 				tent = MakeTargetEntryExpr(pstate, *resname, expr, false, false);
 				expr = tent->expr;
@@ -666,7 +668,7 @@ CoerceTargetExpr(ParseState *pstate,
 {
 	if (can_coerce_type(1, &type_id, &attrtype))
 	{
-		expr = coerce_type(pstate, expr, type_id, attrtype);
+		expr = coerce_type(pstate, expr, type_id, attrtype, -1);
 	}
 
 #ifndef DISABLE_STRING_HACKS
@@ -683,7 +685,7 @@ CoerceTargetExpr(ParseState *pstate,
 		{
 		}
 		else if (can_coerce_type(1, &type_id, &text_id))
-			expr = coerce_type(pstate, expr, type_id, text_id);
+			expr = coerce_type(pstate, expr, type_id, text_id, -1);
 		else
 			expr = NULL;
 	}

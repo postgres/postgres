@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.83 1999/05/21 18:33:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.84 1999/05/22 04:12:24 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1538,26 +1538,11 @@ start:
 
 	if (type != atp->atttypid)
 	{
-		/*
-		 *	Though these types are binary compatible, bpchar has a fixed
-		 *	length on the disk, requiring non-bpchar types to be padded
-		 *	before storage in the default table.  bjm 1999/05/18
-		 */
-		if (1==0 && atp->atttypid == BPCHAROID &&
-			(type == TEXTOID || type == BPCHAROID || type == UNKNOWNOID))
-		{
-
-			FuncCall   *n = makeNode(FuncCall);
-
-			n->funcname = typeidTypeName(atp->atttypid);
-			n->args = lcons((Node *)expr, NIL);
-			expr = transformExpr(NULL, (Node *) n, EXPR_COLUMN_FIRST);
-
-		}
-		else if (IS_BINARY_COMPATIBLE(type, atp->atttypid))
+		if (IS_BINARY_COMPATIBLE(type, atp->atttypid))
 			; /* use without change */
 		else if (can_coerce_type(1, &(type), &(atp->atttypid)))
-			expr = coerce_type(NULL, (Node *)expr, type, atp->atttypid);
+			expr = coerce_type(NULL, (Node *)expr, type, atp->atttypid,
+														 atp->atttypmod);
 		else if (IsA(expr, Const))
 		{
 			if (*cast != 0)

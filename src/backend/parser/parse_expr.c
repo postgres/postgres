@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.46 1999/05/18 23:40:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.47 1999/05/22 04:12:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -417,7 +417,8 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					}
 					else if (can_coerce_type(1, &c->casetype, &ptype))
 					{
-						c->defresult = coerce_type(pstate, c->defresult, c->casetype, ptype);
+						c->defresult = coerce_type(pstate, c->defresult,
+													c->casetype, ptype, -1);
 						c->casetype = ptype;
 					}
 					else
@@ -439,7 +440,8 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					{
 						if (can_coerce_type(1, &wtype, &ptype))
 						{
-							w->result = coerce_type(pstate, w->result, wtype, ptype);
+							w->result = coerce_type(pstate, w->result, wtype,
+													ptype, -1);
 						}
 						else
 						{
