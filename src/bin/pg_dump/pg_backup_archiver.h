@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.51 2003/08/04 00:43:27 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.52 2003/10/03 20:10:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -231,14 +231,18 @@ typedef struct _archiveHandle
 	struct _tocEntry *toc;		/* List of TOC entries */
 	int			tocCount;		/* Number of TOC entries */
 	struct _tocEntry *currToc;	/* Used when dumping data */
-	char	   *currUser;		/* Restore: current username in script */
-	char	   *currSchema;		/* Restore: current schema in script */
 	int			compression;	/* Compression requested on open */
 	ArchiveMode mode;			/* File mode - r or w */
 	void	   *formatData;		/* Header data specific to file format */
 
 	RestoreOptions *ropt;		/* Used to check restore options in
 								 * ahwrite etc */
+
+	/* these vars track state to avoid sending redundant SET commands */
+	char	   *currUser;		/* current username */
+	char	   *currSchema;		/* current schema */
+	bool		chk_fn_bodies;	/* current state of check_function_bodies */
+
 	void	   *lo_buf;
 	size_t		lo_buf_used;
 	size_t		lo_buf_size;

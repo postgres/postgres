@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.49 2003/07/23 08:47:30 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.50 2003/10/03 20:10:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,11 +115,6 @@ ReconnectToServer(ArchiveHandle *AH, const char *dbname, const char *username)
 
 	PQfinish(AH->connection);
 	AH->connection = newConn;
-
-	/* don't assume we still know the output schema */
-	if (AH->currSchema)
-		free(AH->currSchema);
-	AH->currSchema = strdup("");
 
 	return 1;
 }
