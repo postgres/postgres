@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.60 2000/06/12 03:40:29 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.61 2000/06/25 14:24:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -202,15 +202,6 @@ CreateUser(CreateUserStmt *stmt)
 		elog(ERROR, "CREATE USER: permission denied");
 
 	/*
-	 * The reason for the following is this: If you start a transaction
-	 * block, create a user, then roll back the transaction, the pg_pwd
-	 * won't get rolled back due to a bug in the Unix file system ( :}).
-	 * Hence this is in the interest of security.
-	 */
-	if (IsTransactionBlock())
-		elog(ERROR, "CREATE USER: may not be called in a transaction block");
-
-	/*
 	 * Scan the pg_shadow relation to be certain the user or id doesn't
 	 * already exist.  Note we secure exclusive lock, because we also need
 	 * to be sure of what the next usesysid should be, and we need to
@@ -356,9 +347,9 @@ AlterUser(AlterUserStmt *stmt)
 		&& stmt->password && strcmp(GetPgUserName(), stmt->user) == 0))
 		elog(ERROR, "ALTER USER: permission denied");
 
-	/* see comments in create user */
-	if (IsTransactionBlock())
-		elog(ERROR, "ALTER USER: may not be called in a transaction block");
+	/* changes to the flat password file cannot be rolled back */
+	if (IsTransactionBlock() && stmt->password)
+		elog(NOTICE, "ALTER USER: password changes cannot be rolled back");
 
 	/*
 	 * Scan the pg_shadow relation to be certain the user exists. Note we
@@ -503,7 +494,7 @@ DropUser(DropUserStmt *stmt)
 		elog(ERROR, "DROP USER: permission denied");
 
 	if (IsTransactionBlock())
-		elog(ERROR, "DROP USER: may not be called in a transaction block");
+		elog(NOTICE, "DROP USER cannot be rolled back completely");
 
 	/*
 	 * Scan the pg_shadow relation to find the usesysid of the user to be
@@ -675,14 +666,6 @@ CreateGroup(CreateGroupStmt *stmt)
 	if (!superuser())
 		elog(ERROR, "CREATE GROUP: permission denied");
 
-	/*
-	 * There is not real reason for this, but it makes it consistent with
-	 * create user, and it seems like a good idea anyway.
-	 */
-	if (IsTransactionBlock())
-		elog(ERROR, "CREATE GROUP: may not be called in a transaction block");
-
-
 	pg_group_rel = heap_openr(GroupRelationName, AccessExclusiveLock);
 	pg_group_dsc = RelationGetDescr(pg_group_rel);
 
@@ -815,14 +798,6 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 	 */
 	if (!superuser())
 		elog(ERROR, "%s: permission denied", tag);
-
-	/*
-	 * There is not real reason for this, but it makes it consistent with
-	 * alter user, and it seems like a good idea anyway.
-	 */
-	if (IsTransactionBlock())
-		elog(ERROR, "%s: may not be called in a transaction block", tag);
-
 
 	pg_group_rel = heap_openr(GroupRelationName, AccessExclusiveLock);
 	pg_group_dsc = RelationGetDescr(pg_group_rel);
@@ -1091,13 +1066,6 @@ DropGroup(DropGroupStmt *stmt)
 	 */
 	if (!superuser())
 		elog(ERROR, "DROP GROUP: permission denied");
-
-	/*
-	 * There is not real reason for this, but it makes it consistent with
-	 * drop user, and it seems like a good idea anyway.
-	 */
-	if (IsTransactionBlock())
-		elog(ERROR, "DROP GROUP: may not be called in a transaction block");
 
 	/*
 	 * Scan the pg_group table and delete all matching groups.
