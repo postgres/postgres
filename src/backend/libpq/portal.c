@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: portal.c,v 1.27 1999/07/17 20:17:02 momjian Exp $
+ *	$Id: portal.c,v 1.28 1999/10/23 03:13:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,7 @@ in_range(char *msg, int value, int min, int max)
 {
 	if (value < min || value >= max)
 	{
-		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 		"FATAL: %s, %d is not in range [%d,%d)\n", msg, value, min, max);
 		pqdebug("%s", PQerrormsg);
 		fputs(PQerrormsg, stderr);
@@ -80,7 +80,7 @@ valid_pointer(char *msg, void *ptr)
 {
 	if (!ptr)
 	{
-		snprintf(PQerrormsg, ERROR_MSG_LENGTH, "FATAL: %s\n", msg);
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH, "FATAL: %s\n", msg);
 		pqdebug("%s", PQerrormsg);
 		fputs(PQerrormsg, stderr);
 		return 0;

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: util.c,v 1.13 1999/07/17 20:17:03 momjian Exp $
+ *	$Id: util.c,v 1.14 1999/10/23 03:13:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,15 @@
 
 
 /* ----------------
+ *		global variables for backend libpq
+ * ----------------
+ */
+char		PQerrormsg[PQERRORMSG_LENGTH];
+
+int			PQtracep = 0;		/* 1 to print out debugging messages */
+FILE	   *debug_port = (FILE *) NULL;
+
+/* ----------------
  *		exceptions
  * ----------------
  */
@@ -30,15 +39,12 @@ Exception	MemoryError = {"Memory Allocation Error"};
 Exception	PortalError = {"Invalid arguments to portal functions"};
 Exception	PostquelError = {"Sql Error"};
 Exception	ProtocolError = {"Protocol Error"};
-char		PQerrormsg[ERROR_MSG_LENGTH];
-
-int			PQtracep = 0;		/* 1 to print out debugging messages */
-FILE	   *debug_port = (FILE *) NULL;
 
 /* ----------------------------------------------------------------
  *						PQ utility routines
  * ----------------------------------------------------------------
  */
+
 void
 pqdebug(char *target, char *msg)
 {

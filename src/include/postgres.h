@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.26 1999/07/17 04:12:10 momjian Exp $
+ * $Id: postgres.h,v 1.27 1999/10/23 03:13:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ typedef double float8;
 typedef int4 aclitem;
 
 #define InvalidOid		0
-#define OidIsValid(objectId)  ((bool) (objectId != InvalidOid))
+#define OidIsValid(objectId)  ((bool) ((objectId) != InvalidOid))
 
 /* unfortunately, both regproc and RegProcedure are used */
 typedef Oid regproc;
@@ -147,7 +147,7 @@ typedef uint32 CommandId;
 
 /* ----------------------------------------------------------------
  *				Section 5:	random stuff
- *							CSIGNBIT, MAXPGPATH, STATUS...
+ *							CSIGNBIT, STATUS...
  * ----------------------------------------------------------------
  */
 
@@ -158,12 +158,8 @@ typedef uint32 CommandId;
 /* msb for char */
 #define CSIGNBIT (0x80)
 
-/* ----------------
- *		global variables which should probably go someplace else.
- * ----------------
- */
+/* this should probably be somewhere else */
 #define MAXPGPATH		128
-#define MAX_QUERY_SIZE	(BLCKSZ*2)
 
 #define STATUS_OK				(0)
 #define STATUS_ERROR			(-1)
@@ -180,8 +176,7 @@ typedef uint32 CommandId;
  * ---------------
  */
 #ifdef CYR_RECODE
-void		SetCharSet();
-
+extern void		SetCharSet();
 #endif	 /* CYR_RECODE */
 
 #endif	 /* POSTGRES_H */

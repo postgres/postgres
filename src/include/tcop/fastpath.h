@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fastpath.h,v 1.5 1999/02/13 23:22:12 momjian Exp $
+ * $Id: fastpath.h,v 1.6 1999/10/23 03:13:32 tgl Exp $
  *
  * NOTES
  *	  This information pulled out of tcop/fastpath.c and put
@@ -24,7 +24,6 @@
  */
 #define VAR_LENGTH_RESULT		(-1)
 #define VAR_LENGTH_ARG			(-5)
-#define MAX_STRING_LENGTH		256
 
 extern int	HandleFunctionRequest(void);
 

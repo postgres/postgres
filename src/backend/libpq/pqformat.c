@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqformat.c,v 1.10 1999/09/12 22:27:47 scrappy Exp $
+ *	$Id: pqformat.c,v 1.11 1999/10/23 03:13:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,7 +213,7 @@ pq_endmessage(StringInfo buf)
 {
 	if (pq_putmessage('\0', buf->data, buf->len))
 	{
-		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "FATAL: pq_endmessage failed: errno=%d\n", errno);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);

@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.44 1999/10/08 04:28:52 momjian Exp $
+ * $Id: miscadmin.h,v 1.45 1999/10/23 03:13:30 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -100,9 +100,6 @@ extern bool allowSystemTableMods;
 extern int	SortMem;
 
 extern Oid	LastOidProcessed;	/* for query rewrite */
-
-/* #define MAX_QUERY_SIZE	 (BLCKSZ*2) */
-#define MAX_PARSE_BUFFER MAX_QUERY_SIZE
 
 /*****************************************************************************
  *	  pdir.h --																 *

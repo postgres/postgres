@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.33 1999/07/17 20:18:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.34 1999/10/23 03:13:26 tgl Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -20,12 +20,9 @@
 
 
 #include <ctype.h>
-#include <sys/param.h>			/* for MAXHOSTNAMELEN on most */
-#ifdef solaris_sparc
-#include <netdb.h>				/* for MAXHOSTNAMELEN on some */
-#endif
 
 #include "postgres.h"
+
 #include "libpq-fe.h"
 #ifndef HAVE_STRDUP
 #include "strdup.h"

@@ -8,28 +8,16 @@
  *		align.h							alignment macros
  *		aset.h							memory allocation set stuff
  *		oset.h							  (used by aset.h)
- *		(bit.h							bit array type / extern)
- *		clib.h							mem routines
- *		limit.h							max bits/byte, etc.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.31 1999/08/24 20:11:19 tgl Exp $
- *
- * NOTES
- *	  some of the information in this file will be moved to
- *	  other files, (like MaxHeapTupleSize and MaxAttributeSize).
+ * $Id: memutils.h,v 1.32 1999/10/23 03:13:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef MEMUTILS_H
 #define MEMUTILS_H
-
-/*
- *	This is not needed by this include file, but by almost every file
- *	that includes this file.
- */
 
 /* ----------------
  * Alignment macros: align a length or address appropriately for a given type.
@@ -235,41 +223,6 @@ extern AllocPointer AllocSetRealloc(AllocSet set, AllocPointer pointer,
 				Size size);
 
 extern void AllocSetDump(AllocSet set);
-
-/*****************************************************************************
- *	  clib.h --			Standard C library definitions						 *
- *****************************************************************************/
-/*
- * Note:
- *		This file is OPERATING SYSTEM dependent!!!
- *
- */
-
-/*
- *		LibCCopyLength is only used within this file. -cim 6/12/90
- *
- */
-typedef int LibCCopyLength;
-
-/*
- * MemoryCopy
- *		Copies fixed length block of memory to another.
- */
-#define MemoryCopy(toBuffer, fromBuffer, length)\
-	memcpy(toBuffer, fromBuffer, length)
-
-/*****************************************************************************
- *	  limit.h --		POSTGRES limit definitions.							 *
- *****************************************************************************/
-
-#define MaxBitsPerByte	8
-
-typedef uint32 AttributeSize;	/* XXX should be defined elsewhere */
-
-#define MaxHeapTupleSize		0x7fffffff
-#define MaxAttributeSize		0x7fffffff
-
-#define MaxIndexAttributeNumber 7
 
 
 #endif	 /* MEMUTILS_H */

@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.122 1999/10/10 17:00:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.123 1999/10/23 03:13:26 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -53,30 +53,26 @@
 
 #include <unistd.h>				/* for getopt() */
 #include <ctype.h>
-#include <sys/param.h>			/* for MAXHOSTNAMELEN on most */
-#ifdef solaris_sparc
-#include <netdb.h>				/* for MAXHOSTNAMELEN on some */
-#endif
 
 #include "postgres.h"
-#include "access/htup.h"
-#include "catalog/pg_type.h"
-#include "catalog/pg_language.h"
-#include "catalog/pg_index.h"
-#include "catalog/pg_trigger.h"
-#include "access/attnum.h"
 
-#include "libpq-fe.h"
-#ifndef HAVE_STRDUP
-#include "strdup.h"
+#ifdef HAVE_GETOPT_H
+#include <getopt.h>
 #endif
-
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
 #endif
 
-#ifdef HAVE_GETOPT_H
-#include <getopt.h>
+#include "access/attnum.h"
+#include "access/htup.h"
+#include "catalog/pg_index.h"
+#include "catalog/pg_language.h"
+#include "catalog/pg_trigger.h"
+#include "catalog/pg_type.h"
+
+#include "libpq-fe.h"
+#ifndef HAVE_STRDUP
+#include "strdup.h"
 #endif
 
 #include "pg_dump.h"

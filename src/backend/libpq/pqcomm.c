@@ -28,7 +28,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.84 1999/09/27 03:12:59 momjian Exp $
+ *	$Id: pqcomm.c,v 1.85 1999/10/23 03:13:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -195,7 +195,7 @@ StreamServerPort(char *hostName, unsigned short portName, int *fdP)
 
 	if ((fd = socket(family, SOCK_STREAM, 0)) < 0)
 	{
-		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "FATAL: StreamServerPort: socket() failed: %s\n",
 				 strerror(errno));
 		fputs(PQerrormsg, stderr);
@@ -211,7 +211,7 @@ StreamServerPort(char *hostName, unsigned short portName, int *fdP)
 		if ((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one,
 						sizeof(one))) == -1)
 		{
-			snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 					 "FATAL: StreamServerPort: setsockopt(SO_REUSEADDR) failed: %s\n",
 					 strerror(errno));
 			fputs(PQerrormsg, stderr);
@@ -266,20 +266,19 @@ StreamServerPort(char *hostName, unsigned short portName, int *fdP)
 	err = bind(fd, &saddr.sa, len);
 	if (err < 0)
 	{
-		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
-				 "FATAL: StreamServerPort: bind() failed: %s\n",
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+				 "FATAL: StreamServerPort: bind() failed: %s\n"
+				 "\tIs another postmaster already running on that port?\n",
 				 strerror(errno));
-		strcat(PQerrormsg,
-			   "\tIs another postmaster already running on that port?\n");
 		if (family == AF_UNIX)
-		{
 			snprintf(PQerrormsg + strlen(PQerrormsg),
-					 ERROR_MSG_LENGTH - strlen(PQerrormsg),
+					 PQERRORMSG_LENGTH - strlen(PQerrormsg),
 					 "\tIf not, remove socket node (%s) and retry.\n",
 					 sock_path);
-		}
 		else
-			strcat(PQerrormsg, "\tIf not, wait a few seconds and retry.\n");
+			snprintf(PQerrormsg + strlen(PQerrormsg),
+					 PQERRORMSG_LENGTH - strlen(PQerrormsg),
+					 "\tIf not, wait a few seconds and retry.\n");
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 		return STATUS_ERROR;

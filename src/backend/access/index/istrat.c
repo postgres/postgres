@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.36 1999/09/18 19:06:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.37 1999/10/23 03:13:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -544,7 +544,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 	StrategyMap map;
 	AttrNumber	attributeNumber;
 	int			attributeIndex;
-	Oid			operatorClassObjectId[MaxIndexAttributeNumber];
+	Oid			operatorClassObjectId[INDEX_MAX_KEYS];
 
 	if (!IsBootstrapProcessingMode())
 	{

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.39 1999/05/26 21:51:11 tgl Exp $
+ * $Id: pg_dump.h,v 1.40 1999/10/23 03:13:26 tgl Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -19,7 +19,16 @@
  *-------------------------------------------------------------------------
  */
 
-#include <catalog/pg_index.h>
+#ifndef PG_DUMP_H
+#define PG_DUMP_H
+
+#include "catalog/pg_index.h"
+
+/*
+ * Very temporary hack --- remove this when all pg_dump's uses of it are gone!
+ */
+#define MAX_QUERY_SIZE	(BLCKSZ*2)
+
 
 /* The *Info data structures run-time C structures used to store
    system catalog information */
@@ -225,3 +234,5 @@ extern void dumpTables(FILE *fout, TableInfo *tbinfo, int numTables,
 extern void dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 			TableInfo *tbinfo, int numTables, const char *tablename);
 extern const char *fmtId(const char *identifier, bool force_quotes);
+
+#endif /* PG_DUMP_H */

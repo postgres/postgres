@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.41 1999/09/27 03:12:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.42 1999/10/23 03:13:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,23 +96,25 @@ pg_krb4_recvauth(Port *port)
 						  version);
 	if (status != KSUCCESS)
 	{
-		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
-		  "pg_krb4_recvauth: kerberos error: %s\n", krb_err_txt[status]);
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+				 "pg_krb4_recvauth: kerberos error: %s\n",
+				 krb_err_txt[status]);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 		return STATUS_ERROR;
 	}
 	if (strncmp(version, PG_KRB4_VERSION, KRB_SENDAUTH_VLEN))
 	{
-		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
-				 "pg_krb4_recvauth: protocol version != \"%s\"\n", PG_KRB4_VERSION);
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+				 "pg_krb4_recvauth: protocol version != \"%s\"\n",
+				 PG_KRB4_VERSION);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 		return STATUS_ERROR;
 	}
 	if (strncmp(port->user, auth_data.pname, SM_USER))
 	{
-		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "pg_krb4_recvauth: name \"%s\" != \"%s\"\n",
 				 port->user, auth_data.pname);
 		fputs(PQerrormsg, stderr);
@@ -126,8 +128,8 @@ pg_krb4_recvauth(Port *port)
 static int
 pg_krb4_recvauth(Port *port)
 {
-	snprintf(PQerrormsg, ERROR_MSG_LENGTH,
-		 "pg_krb4_recvauth: Kerberos not implemented on this server.\n");
+	snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+			 "pg_krb4_recvauth: Kerberos not implemented on this server.\n");
 	fputs(PQerrormsg, stderr);
 	pqdebug("%s", PQerrormsg);
 
@@ -220,7 +222,7 @@ pg_krb5_recvauth(Port *port)
 		*hostp = '\0';
 	if (code = krb5_parse_name(servbuf, &server))
 	{
-		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 		"pg_krb5_recvauth: Kerberos error %d in krb5_parse_name\n", code);
 		com_err("pg_krb5_recvauth", code, "in krb5_parse_name");
 		return STATUS_ERROR;
@@ -253,7 +255,7 @@ pg_krb5_recvauth(Port *port)
 							 (krb5_ticket **) NULL,
 							 (krb5_authenticator **) NULL))
 	{
-		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 		 "pg_krb5_recvauth: Kerberos error %d in krb5_recvauth\n", code);
 		com_err("pg_krb5_recvauth", code, "in krb5_recvauth");
 		krb5_free_principal(server);
@@ -268,7 +270,7 @@ pg_krb5_recvauth(Port *port)
 	 */
 	if ((code = krb5_unparse_name(client, &kusername)))
 	{
-		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "pg_krb5_recvauth: Kerberos error %d in krb5_unparse_name\n", code);
 		com_err("pg_krb5_recvauth", code, "in krb5_unparse_name");
 		krb5_free_principal(client);
@@ -277,7 +279,7 @@ pg_krb5_recvauth(Port *port)
 	krb5_free_principal(client);
 	if (!kusername)
 	{
-		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "pg_krb5_recvauth: could not decode username\n");
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
@@ -286,7 +288,7 @@ pg_krb5_recvauth(Port *port)
 	kusername = pg_an_to_ln(kusername);
 	if (strncmp(username, kusername, SM_USER))
 	{
-		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "pg_krb5_recvauth: name \"%s\" != \"%s\"\n", port->user, kusername);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
@@ -301,7 +303,7 @@ pg_krb5_recvauth(Port *port)
 static int
 pg_krb5_recvauth(Port *port)
 {
-	snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+	snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 		 "pg_krb5_recvauth: Kerberos not implemented on this server.\n");
 	fputs(PQerrormsg, stderr);
 	pqdebug("%s", PQerrormsg);
@@ -356,7 +358,7 @@ pg_passwordv0_recvauth(void *arg, PacketLen len, void *pkt)
 
 	if (user == NULL || password == NULL)
 	{
-		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "pg_password_recvauth: badly formed password packet.\n");
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);

@@ -6,19 +6,18 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ibit.h,v 1.10 1999/07/15 23:03:34 momjian Exp $
+ * $Id: ibit.h,v 1.11 1999/10/23 03:13:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef IBIT_H
 #define IBIT_H
 
-#include "utils/memutils.h"
+#include "catalog/pg_index.h"
 
 typedef struct IndexAttributeBitMapData
 {
-	char		bits[(MaxIndexAttributeNumber + MaxBitsPerByte - 1)
-					 /			 MaxBitsPerByte];
+	bits8		bits[(INDEX_MAX_KEYS + 8 - 1)/8];
 } IndexAttributeBitMapData;
 
 typedef IndexAttributeBitMapData *IndexAttributeBitMap;

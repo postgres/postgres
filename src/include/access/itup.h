@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itup.h,v 1.21 1999/07/19 07:07:28 momjian Exp $
+ * $Id: itup.h,v 1.22 1999/10/23 03:13:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 #include "access/tupmacs.h"
 #include "storage/itemptr.h"
 
-#define MaxIndexAttributeNumber 7
 
 typedef struct IndexTupleData
 {

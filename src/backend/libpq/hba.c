@@ -5,7 +5,7 @@
  *	  wherein you authenticate a user by seeing what IP address the system
  *	  says he comes from and possibly using ident).
  *
- *	$Id: hba.c,v 1.48 1999/09/27 03:12:59 momjian Exp $
+ *	$Id: hba.c,v 1.49 1999/10/23 03:13:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,8 +19,17 @@
 #include <unistd.h>
 
 #include "postgres.h"
+
 #include "libpq/libpq.h"
 #include "miscadmin.h"
+
+
+#define MAX_TOKEN 80
+/* Maximum size of one token in the configuration file	*/
+
+#define IDENT_USERNAME_MAX 512
+ /* Max size of username ident server can return */
+
 
 /* Some standard C libraries, including GNU, have an isblank() function.
    Others, including Solaris, do not.  So we have our own.
@@ -30,7 +39,6 @@ isblank(const char c)
 {
 	return c == ' ' || c == 9 /* tab */ ;
 }
-
 
 
 static void
@@ -302,9 +310,8 @@ process_hba_record(FILE *file, hbaPort *port, bool *matches_p, bool *error_p)
 	return;
 
 syntax:
-	snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+	snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 			 "process_hba_record: invalid syntax in pg_hba.conf file\n");
-
 	fputs(PQerrormsg, stderr);
 	pqdebug("%s", PQerrormsg);
 
@@ -397,7 +404,7 @@ find_hba_entry(hbaPort *port, bool *hba_ok_p)
 	{
 		/* Old config file exists.	Tell this guy he needs to upgrade. */
 		close(fd);
-		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 		  "A file exists by the name used for host-based authentication "
 		   "in prior releases of Postgres (%s).  The name and format of "
 		   "the configuration file have changed, so this file should be "
@@ -421,7 +428,7 @@ find_hba_entry(hbaPort *port, bool *hba_ok_p)
 		{
 			/* The open of the config file failed.	*/
 
-			snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "find_hba_entry: Host-based authentication config file "
 				"does not exist or permissions are not setup correctly! "
 					 "Unable to open file \"%s\".\n",
@@ -553,7 +560,7 @@ ident(const struct in_addr remote_ip_addr, const struct in_addr local_ip_addr,
 	sock_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
 	if (sock_fd == -1)
 	{
-		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 			 "Failed to create socket on which to talk to Ident server. "
 				 "socket() returned errno = %s (%d)\n",
 				 strerror(errno), errno);
@@ -590,7 +597,7 @@ ident(const struct in_addr remote_ip_addr, const struct in_addr local_ip_addr,
 		}
 		if (rc != 0)
 		{
-			snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				"Unable to connect to Ident server on the host which is "
 					 "trying to connect to Postgres "
 					 "(IP address %s, Port %d). "
@@ -610,7 +617,7 @@ ident(const struct in_addr remote_ip_addr, const struct in_addr local_ip_addr,
 			rc = send(sock_fd, ident_query, strlen(ident_query), 0);
 			if (rc < 0)
 			{
-				snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+				snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 						 "Unable to send query to Ident server on the host which is "
 					  "trying to connect to Postgres (Host %s, Port %d),"
 						 "even though we successfully connected to it.  "
@@ -627,7 +634,7 @@ ident(const struct in_addr remote_ip_addr, const struct in_addr local_ip_addr,
 				rc = recv(sock_fd, ident_response, sizeof(ident_response) - 1, 0);
 				if (rc < 0)
 				{
-					snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+					snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 						  "Unable to receive response from Ident server "
 							 "on the host which is "
 					  "trying to connect to Postgres (Host %s, Port %d),"
@@ -692,7 +699,7 @@ parse_map_record(FILE *file,
 				return;
 			}
 		}
-		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "Incomplete line in pg_ident: %s", file_map);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
@@ -775,7 +782,7 @@ verify_against_usermap(const char *pguser,
 	if (usermap_name[0] == '\0')
 	{
 		*checks_out_p = false;
-		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 			   "verify_against_usermap: hba configuration file does not "
 		   "have the usermap field filled in in the entry that pertains "
 		  "to this connection.  That field is essential for Ident-based "
@@ -813,7 +820,7 @@ verify_against_usermap(const char *pguser,
 
 			*checks_out_p = false;
 
-			snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				  "verify_against_usermap: usermap file for Ident-based "
 					 "authentication "
 				"does not exist or permissions are not setup correctly! "
