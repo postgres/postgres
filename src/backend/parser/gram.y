@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.153 2000/03/01 05:18:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.154 2000/03/12 00:39:52 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -77,6 +77,7 @@ static Node *makeTypeCast(Node *arg, TypeName *typename);
 static Node *makeRowExpr(char *opr, List *largs, List *rargs);
 static void mapTargetColumns(List *source, List *target);
 static void param_type_init(Oid *typev, int nargs);
+static bool exprIsNullConstant(Node *arg);
 static Node *doNegate(Node *n);
 static void doNegateFloat(Value *v);
 
@@ -229,7 +230,7 @@ static void doNegateFloat(Value *v);
 %type <node>	columnDef
 %type <defelt>	def_elem
 %type <node>	def_arg, columnElem, where_clause,
-				a_expr, a_expr_or_null, b_expr, c_expr, AexprConst,
+				a_expr, b_expr, c_expr, AexprConst,
 				in_expr, having_clause
 %type <list>	row_descriptor, row_list, in_expr_nodes
 %type <node>	row_expr
@@ -873,8 +874,14 @@ AlterTableStmt:
 		;
 
 alter_column_action:
-		SET DEFAULT a_expr				{ $$ = $3; }
-		| SET DEFAULT NULL_P			{ $$ = NULL; }
+		SET DEFAULT a_expr
+			{
+				/* Treat SET DEFAULT NULL the same as DROP DEFAULT */
+				if (exprIsNullConstant($3))
+					$$ = NULL;
+				else
+					$$ = $3;
+			}
 		| DROP DEFAULT					{ $$ = NULL; }
         ;
 
@@ -1155,22 +1162,20 @@ ColConstraintElem:
 					n->keys = NULL;
 					$$ = (Node *)n;
 				}
-			| DEFAULT NULL_P
-				{
-					Constraint *n = makeNode(Constraint);
-					n->contype = CONSTR_DEFAULT;
-					n->name = NULL;
-					n->raw_expr = NULL;
-					n->cooked_expr = NULL;
-					n->keys = NULL;
-					$$ = (Node *)n;
-				}
 			| DEFAULT b_expr
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_DEFAULT;
 					n->name = NULL;
-					n->raw_expr = $2;
+					if (exprIsNullConstant($2))
+					{
+						/* DEFAULT NULL should be reported as empty expr */
+						n->raw_expr = NULL;
+					}
+					else
+					{
+						n->raw_expr = $2;
+					}
 					n->cooked_expr = NULL;
 					n->keys = NULL;
 					$$ = (Node *)n;
@@ -4017,16 +4022,6 @@ opt_interval:  datetime							{ $$ = lcons($1, NIL); }
  *
  *****************************************************************************/
 
-a_expr_or_null:  a_expr
-				{ $$ = $1; }
-		| NULL_P
-				{
-					A_Const *n = makeNode(A_Const);
-					n->val.type = T_Null;
-					$$ = (Node *)n;
-				}
-		;
-
 /* Expressions using row descriptors
  * Define row_descriptor to allow yacc to break the reduce/reduce conflict
  *  with singleton expressions.
@@ -4138,17 +4133,6 @@ a_expr:  c_expr
 		| a_expr TYPECAST Typename
 				{	$$ = makeTypeCast($1, $3); }
 		/*
-		 * Can't collapse this into prior rule by using a_expr_or_null;
-		 * that creates reduce/reduce conflicts.  Grumble.
-		 */
-		| NULL_P TYPECAST Typename
-				{
-					A_Const *n = makeNode(A_Const);
-					n->val.type = T_Null;
-					n->typename = $3;
-					$$ = (Node *)n;
-				}
-		/*
 		 * These operators must be called out explicitly in order to make use
 		 * of yacc/bison's automatic operator-precedence handling.  All other
 		 * operator names are handled by the generic productions using "Op",
@@ -4193,15 +4177,20 @@ a_expr:  c_expr
 				{	$$ = makeA_Expr(OP, "<", $1, $3); }
 		| a_expr '>' a_expr
 				{	$$ = makeA_Expr(OP, ">", $1, $3); }
-
-  		| a_expr '=' NULL_P
-  				{	$$ = makeA_Expr(ISNULL, NULL, $1, NULL); }
-		/* We allow this for standards-broken SQL products, like MS stuff */
-  		| NULL_P '=' a_expr
-  				{	$$ = makeA_Expr(ISNULL, NULL, $3, NULL); }
-
 		| a_expr '=' a_expr
-				{	$$ = makeA_Expr(OP, "=", $1, $3); }
+				{
+					/*
+					 * Special-case "foo = NULL" and "NULL = foo" for
+					 * compatibility with standards-broken products
+					 * (like Microsoft's).  Turn these into IS NULL exprs.
+					 */
+					if (exprIsNullConstant($3))
+						$$ = makeA_Expr(ISNULL, NULL, $1, NULL);
+					else if (exprIsNullConstant($1))
+						$$ = makeA_Expr(ISNULL, NULL, $3, NULL);
+					else
+						$$ = makeA_Expr(OP, "=", $1, $3);
+				}
 
 		| a_expr Op a_expr
 				{	$$ = makeA_Expr(OP, $2, $1, $3); }
@@ -4360,7 +4349,7 @@ a_expr:  c_expr
  *
  * b_expr is a subset of the complete expression syntax defined by a_expr.
  *
- * Presently, AND, NOT, IS, IN, and NULL are the a_expr keywords that would
+ * Presently, AND, NOT, IS, and IN are the a_expr keywords that would
  * cause trouble in the places where b_expr is used.  For simplicity, we
  * just eliminate all the boolean-keyword-operator productions from b_expr.
  */
@@ -4368,13 +4357,6 @@ b_expr:  c_expr
 				{	$$ = $1;  }
 		| b_expr TYPECAST Typename
 				{	$$ = makeTypeCast($1, $3); }
-		| NULL_P TYPECAST Typename
-				{
-					A_Const *n = makeNode(A_Const);
-					n->val.type = T_Null;
-					n->typename = $3;
-					$$ = (Node *)n;
-				}
 		| '-' b_expr %prec UMINUS
 				{	$$ = doNegate($2); }
 		| '%' b_expr
@@ -4442,9 +4424,9 @@ c_expr:  attr
 				}
 		| AexprConst
 				{	$$ = $1;  }
-		| '(' a_expr_or_null ')'
+		| '(' a_expr ')'
 				{	$$ = $2; }
-		| CAST '(' a_expr_or_null AS Typename ')'
+		| CAST '(' a_expr AS Typename ')'
 				{	$$ = makeTypeCast($3, $5); }
 		| case_expr
 				{	$$ = $1; }
@@ -4788,9 +4770,9 @@ opt_indirection:  '[' a_expr ']' opt_indirection
 				{	$$ = NIL; }
 		;
 
-expr_list:  a_expr_or_null
+expr_list:  a_expr
 				{ $$ = lcons($1, NIL); }
-		| expr_list ',' a_expr_or_null
+		| expr_list ',' a_expr
 				{ $$ = lappend($1, $3); }
 		| expr_list USING a_expr
 				{ $$ = lappend($1, $3); }
@@ -4928,7 +4910,7 @@ when_clause_list:  when_clause_list when_clause
 				{ $$ = lcons($1, NIL); }
 		;
 
-when_clause:  WHEN a_expr THEN a_expr_or_null
+when_clause:  WHEN a_expr THEN a_expr
 				{
 					CaseWhen *w = makeNode(CaseWhen);
 					w->expr = $2;
@@ -4937,7 +4919,7 @@ when_clause:  WHEN a_expr THEN a_expr_or_null
 				}
 		;
 
-case_default:  ELSE a_expr_or_null				{ $$ = $2; }
+case_default:  ELSE a_expr						{ $$ = $2; }
 		| /*EMPTY*/								{ $$ = NULL; }
 		;
 
@@ -4989,14 +4971,14 @@ target_list:  target_list ',' target_el
 		;
 
 /* AS is not optional because shift/red conflict with unary ops */
-target_el:  a_expr_or_null AS ColLabel
+target_el:  a_expr AS ColLabel
 				{
 					$$ = makeNode(ResTarget);
 					$$->name = $3;
 					$$->indirection = NULL;
 					$$->val = (Node *)$1;
 				}
-		| a_expr_or_null
+		| a_expr
 				{
 					$$ = makeNode(ResTarget);
 					$$->name = NULL;
@@ -5037,7 +5019,7 @@ update_target_list:  update_target_list ',' update_target_el
 				{	$$ = lcons($1, NIL);  }
 		;
 
-update_target_el:  ColId opt_indirection '=' a_expr_or_null
+update_target_el:  ColId opt_indirection '=' a_expr
 				{
 					$$ = makeNode(ResTarget);
 					$$->name = $1;
@@ -5140,6 +5122,12 @@ AexprConst:  Iconst
 					n->typename = makeNode(TypeName);
 					n->typename->name = xlateSqlType("bool");
 					n->typename->typmod = -1;
+					$$ = (Node *)n;
+				}
+		| NULL_P
+				{
+					A_Const *n = makeNode(A_Const);
+					n->val.type = T_Null;
 					$$ = (Node *)n;
 				}
 		;
@@ -5530,6 +5518,23 @@ Oid param_type(int t)
 	if ((t > pfunc_num_args) || (t == 0))
 		return InvalidOid;
 	return param_type_info[t - 1];
+}
+
+/*
+ * Test whether an a_expr is a plain NULL constant or not.
+ */
+static bool
+exprIsNullConstant(Node *arg)
+{
+	if (arg && IsA(arg, A_Const))
+	{
+		A_Const *con = (A_Const *) arg;
+
+		if (con->val.type == T_Null &&
+			con->typename == NULL)
+			return true;
+	}
+	return false;
 }
 
 /*
