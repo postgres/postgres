@@ -473,8 +473,66 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 	// This can hook into our PG_Object mechanism
 	public String getColumnClassName(int column) throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
-	}
+ /*
+     The following data type mapping came from ../Field.java.
 
+     "int2",
+     "int4","oid",
+     "int8",
+     "cash","money",
+     "numeric",
+     "float4",
+     "float8",
+     "bpchar","char","char2","char4","char8","char16",
+     "varchar","text","name","filename",
+     "bool",
+     "date",
+     "time",
+     "abstime","timestamp"
+
+     Types.SMALLINT,
+     Types.INTEGER,Types.INTEGER,
+     Types.BIGINT,
+     Types.DOUBLE,Types.DOUBLE,
+     Types.NUMERIC,
+     Types.REAL,
+     Types.DOUBLE,
+     Types.CHAR,Types.CHAR,Types.CHAR,Types.CHAR,Types.CHAR,Types.CHAR,
+     Types.VARCHAR,Types.VARCHAR,Types.VARCHAR,Types.VARCHAR,
+     Types.BIT,
+     Types.DATE,
+     Types.TIME,
+     Types.TIMESTAMP,Types.TIMESTAMP
+ */
+
+	int sql_type = getField(column).getSQLType();
+
+     	switch (sql_type)
+        {
+       		case Types.BIT:
+         		return("java.lang.Boolean");
+       		case Types.SMALLINT:
+         		return("java.lang.Integer");
+       		case Types.INTEGER:
+         		return("java.lang.Integer");
+       		case Types.BIGINT:
+         		return("java.lang.Long");
+      		case Types.NUMERIC:
+         		return("java.math.BigDecimal");
+       		case Types.REAL:
+         		return("java.lang.Float");
+       		case Types.DOUBLE:
+         		return("java.lang.Double");
+       		case Types.CHAR:
+       		case Types.VARCHAR:
+         		return("java.lang.String");
+       		case Types.DATE:
+       		case Types.TIME:
+       		case Types.TIMESTAMP:
+         		return("java.sql.Timestamp");
+       		default:
+	 		throw org.postgresql.Driver.notImplemented();
+       }
+       
 }
 
