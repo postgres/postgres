@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.40 2001/03/22 06:16:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.41 2001/04/30 20:05:40 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2569,8 +2569,7 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 
 
 /* ----------
- * exec_move_row			Move one tuples values into a
- *					record or row
+ * exec_move_row			Move one tuple's values into a record or row
  * ----------
  */
 static void
@@ -2579,12 +2578,6 @@ exec_move_row(PLpgSQL_execstate * estate,
 			  PLpgSQL_row * row,
 			  HeapTuple tup, TupleDesc tupdesc)
 {
-	PLpgSQL_var *var;
-	int			i;
-	Datum		value;
-	Oid			valtype;
-	bool		isnull;
-
 	/*
 	 * Record is simple - just put the tuple and its descriptor into the
 	 * record
@@ -2605,41 +2598,49 @@ exec_move_row(PLpgSQL_execstate * estate,
 		return;
 	}
 
-
 	/*
-	 * Row is a bit more complicated in that we assign the single
-	 * attributes of the query to the variables the row points to.
+	 * Row is a bit more complicated in that we assign the individual
+	 * attributes of the tuple to the variables the row points to.
+	 *
+	 * NOTE: this code used to demand row->nfields == tup->t_data->t_natts,
+	 * but that's wrong.  The tuple might have more fields than we expected
+	 * if it's from an inheritance-child table of the current table, or it
+	 * might have fewer if the table has had columns added by ALTER TABLE.
+	 * Ignore extra columns and assume NULL for missing columns, the same
+	 * as heap_getattr would do.
 	 */
 	if (row != NULL)
 	{
+		int			t_natts;
+		int			i;
+
 		if (HeapTupleIsValid(tup))
-		{
-			if (row->nfields != tup->t_data->t_natts)
-			{
-				elog(ERROR, "query didn't return correct # of attributes for %s",
-					 row->refname);
-			}
-
-			for (i = 0; i < row->nfields; i++)
-			{
-				var = (PLpgSQL_var *) (estate->datums[row->varnos[i]]);
-
-				valtype = SPI_gettypeid(tupdesc, i + 1);
-				value = SPI_getbinval(tup, tupdesc, i + 1, &isnull);
-				exec_assign_value(estate, estate->datums[row->varnos[i]],
-								  value, valtype, &isnull);
-
-			}
-		}
+			t_natts = tup->t_data->t_natts;
 		else
-		{
-			for (i = 0; i < row->nfields; i++)
-			{
-				bool		nullval = true;
+			t_natts = 0;
 
-				exec_assign_value(estate, estate->datums[row->varnos[i]],
-								  (Datum) 0, 0, &nullval);
+		for (i = 0; i < row->nfields; i++)
+		{
+			PLpgSQL_var *var;
+			Datum		value;
+			bool		isnull;
+			Oid			valtype;
+
+			var = (PLpgSQL_var *) (estate->datums[row->varnos[i]]);
+			if (i < t_natts)
+			{
+				value = SPI_getbinval(tup, tupdesc, i + 1, &isnull);
 			}
+			else
+			{
+				value = (Datum) 0;
+				isnull = true;
+			}
+			/* tupdesc should have entries for all columns I expect... */
+			valtype = SPI_gettypeid(tupdesc, i + 1);
+
+			exec_assign_value(estate, estate->datums[row->varnos[i]],
+							  value, valtype, &isnull);
 		}
 
 		return;
