@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.160 2002/03/06 19:58:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.161 2002/03/14 22:44:50 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -1619,11 +1619,13 @@ AlterTableOwnerId(Oid relationOid, int32 newOwnerSysId)
 	CatalogCloseIndices(Num_pg_class_indices, idescs);
 
 	/*
-	 * If we are operating on a table, also change the ownership
-	 * of all of its indexes.
+	 * If we are operating on a table, also change the ownership of any
+	 * indexes that belong to the table, as well as the table's toast
+	 * table (if it has one)
 	 */
 	if (tuple_class->relkind == RELKIND_RELATION)
 	{
+		/* Search for indexes belonging to this table */
 		Relation target_rel;
 		List *index_oid_list, *i;
 
@@ -1639,6 +1641,12 @@ AlterTableOwnerId(Oid relationOid, int32 newOwnerSysId)
 		}
 
 		freeList(index_oid_list);
+
+		/* If it has a toast table, recurse to change its ownership */
+		if (tuple_class->reltoastrelid != InvalidOid)
+		{
+			AlterTableOwnerId(tuple_class->reltoastrelid, newOwnerSysId);
+		}
 	}
 
 	heap_freetuple(tuple);
@@ -1654,10 +1662,11 @@ CheckTupleType(Form_pg_class tuple_class)
 		case RELKIND_INDEX:
 		case RELKIND_VIEW:
 		case RELKIND_SEQUENCE:
+		case RELKIND_TOASTVALUE:
 			/* ok to change owner */
 			break;
 		default:
-			elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table, index, view, or sequence",
+			elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table, TOAST table, index, view, or sequence",
 				 NameStr(tuple_class->relname));
 	}
 }
