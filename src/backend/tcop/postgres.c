@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.21 1996/11/18 02:26:57 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.22 1996/11/27 13:47:05 momjian Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -1262,7 +1262,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
         puts("\nPOSTGRES backend interactive interface");
-        puts("$Revision: 1.21 $ $Date: 1996/11/18 02:26:57 $");
+        puts("$Revision: 1.22 $ $Date: 1996/11/27 13:47:05 $");
     }
     
     /* ----------------
@@ -1387,7 +1387,7 @@ PostgresMain(int argc, char *argv[])
         case 'Q':
             fflush(stdout);
             
-            if ( parser_input[0] ==  ' ' && parser_input[1] == '\0' ) {
+            if ( strspn(parser_input," \t\n") == strlen(parser_input)) {
                 /* ----------------
                  *  if there is nothing in the input buffer, don't bother
                  *  trying to parse and execute anything..
