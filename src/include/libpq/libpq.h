@@ -6,12 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.10 1998/01/26 01:42:18 scrappy Exp $
+ * $Id: libpq.h,v 1.11 1998/01/26 01:49:19 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef LIBPQ_H
 #define LIBPQ_H
+
+#include <sys/types.h>
 
 #include <netinet/in.h>
 
