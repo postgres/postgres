@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.30 2002/08/28 20:46:24 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.31 2002/09/01 23:30:46 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "print.h"
@@ -1017,8 +1017,9 @@ printTable(const char *title,
 			lines = (col_count + 1) * row_count;
 		else
 			lines = row_count + 1;
-		if (!opt->tuples_only)
-			lines += 5;
+		if (footers && !opt->tuples_only)
+			for (ptr = footers; *ptr; ptr++)
+				lines++;
 
 		result = ioctl(fileno(stdout), TIOCGWINSZ, &screen_size);
 		if (result == -1 || lines > screen_size.ws_row)
