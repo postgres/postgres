@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.35 2004/01/09 02:02:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.36 2004/01/09 02:17:15 momjian Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -1099,7 +1099,11 @@ check_sigpipe_handler(void)
 void
 sigpipe_handler_ignore_send(int signo)
 {
-	/* If we have gotten a SIGPIPE outside send(), exit */
+	/*
+	 *	If we have gotten a SIGPIPE outside send(), exit.
+	 *	Synchronous signals are delivered to the thread
+	 *	that caused the signal.
+	 */
 	if (!PQinSend())
 		exit(128 + SIGPIPE);	/* typical return value for SIG_DFL */
 }
