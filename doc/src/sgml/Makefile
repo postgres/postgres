@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.9 1999/08/06 13:46:17 thomas Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.10 1999/08/08 04:18:29 thomas Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -150,13 +150,16 @@ distclean::
 #
 
 %.1: %-ref.sgml
-	nsgmls $< | sgmlspl $(D2MSCRIPT) --lowercase --section 1
+	nsgmls $(NSGMLS_FLAGS) refentry.sgml $< \
+	| sgmlspl $(D2MSCRIPT) --lowercase --blockformat --section 1
 
 %.1: %.sgml
-	nsgmls $< | sgmlspl $(D2MSCRIPT) --lowercase --section 1
+	nsgmls $(NSGMLS_FLAGS) refentry.sgml $< \
+	| sgmlspl $(D2MSCRIPT) --lowercase --blockformat --section 1
 
 %.l: %.sgml
-	nsgmls $< | sgmlspl $(D2MSCRIPT) --lowercase --section l
+	nsgmls $(NSGMLS_FLAGS) refentry.sgml $< \
+	| sgmlspl $(D2MSCRIPT) --lowercase --blockformat --section l
 
 # HTML
 # Include some softlinks to the generic default file names
