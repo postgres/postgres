@@ -901,6 +901,10 @@ ECPGexecute(struct statement * stmt)
 				sqlca.sqlerrd[1] = atol(PQoidStatus(results));
 				sqlca.sqlerrd[2] = atol(PQcmdTuples(results));
 				ECPGlog("ECPGexecute line %d Ok: %s\n", stmt->lineno, PQcmdStatus(results));
+				if (!sqlca.sqlerrd[2] && (!strncmp(PQcmdStatus(results),"UPDATE",6) 
+									|| !strncmp(PQcmdStatus(results),"INSERT",6) 
+									|| !strncmp(PQcmdStatus(results),"DELETE",6)))
+					ECPGraise(stmt->lineno, ECPG_NOT_FOUND, NULL);
 				break;
 			case PGRES_NONFATAL_ERROR:
 			case PGRES_FATAL_ERROR:
@@ -989,7 +993,7 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.10 2000/09/21 11:56:07 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.11 2000/09/26 11:41:43 meskes Exp $
  */
 
 PGconn	   *ECPG_internal_get_connection(char *name);

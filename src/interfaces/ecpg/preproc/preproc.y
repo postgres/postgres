@@ -231,13 +231,19 @@ make_name(void)
 		INDEX, INHERITS, INSTEAD, ISNULL, LANCOMPILER, LIMIT,
 		LISTEN, UNLISTEN, LOAD, LOCATION, LOCK_P, MAXVALUE,
 		MINVALUE, MODE, MOVE, NEW, NOCREATEDB, NOCREATEUSER,
-		NONE, NOTHING, NOTIFY, NOTNULL, OFFSET, OLD, OIDS,
-		OPERATOR, PASSWORD, PROCEDURAL, REINDEX, RENAME, RESET,
+		NONE, NOTHING, NOTIFY, NOTNULL, OFFSET, OIDS,
+		OPERATOR, OWNER, PASSWORD, PROCEDURAL, REINDEX, RENAME, RESET,
 		RETURNS, ROW, RULE, SEQUENCE, SERIAL, SETOF, SHARE,
 		SHOW, START, STATEMENT, STDIN, STDOUT, SYSID TEMP,
 		TRUNCATE, TRUSTED, UNDER, UNLISTEN, UNTIL, VACUUM,
 		VALID, VERBOSE, VERSION
 
+/* The grammar thinks these are keywords, but they are not in the keywords.c
+ * list and so can never be entered directly.  The filter in parser.c
+ * creates these tokens when required.
+ */
+%token                 UNIONJOIN
+                
 /* Special keywords, not in the query language - see the "lex" file */
 %token <str>    IDENT SCONST Op CSTRING CVARIABLE CPP_LINE IP
 %token <ival>   ICONST PARAM
@@ -247,13 +253,16 @@ make_name(void)
 %token                  OP
 
 /* precedence: lowest to highest */
-%left		UNION INTERSECT EXCEPT
+%left		UNION EXCEPT
+%left		INTERSECT
+%left		JOIN UNIONJOIN CROSS LEFT FULL RIGHT INNER_P NATURAL 
 %left		OR
 %left		AND
 %right		NOT
 %right		'='
 %nonassoc	'<' '>'
 %nonassoc	LIKE ILIKE
+%nonassoc	ESCAPE
 %nonassoc	OVERLAPS
 %nonassoc	BETWEEN
 %nonassoc	IN
@@ -271,7 +280,6 @@ make_name(void)
 %left		'.'
 %left		'[' ']'
 %left		TYPECAST
-%left		ESCAPE
 
 %type  <str>	Iconst Fconst Sconst TransactionStmt CreateStmt UserId
 %type  <str>	CreateAsElement OptCreateAs CreateAsList CreateAsStmt
@@ -290,7 +298,7 @@ make_name(void)
 %type  <str>	trim_list in_expr substr_for attr attrs drop_behavior
 %type  <str>	Typename SimpleTypename Generic Numeric generic opt_float opt_numeric
 %type  <str> 	opt_decimal Character character opt_varying opt_charset
-%type  <str>	opt_collate datetime opt_timezone opt_interval
+%type  <str>	opt_collate datetime opt_timezone opt_interval table_ref
 %type  <str>	row_expr row_descriptor row_list ConstDatetime opt_chain
 %type  <str>	SelectStmt SubSelect result OptTemp ConstraintAttributeSpec
 %type  <str>	opt_table opt_all sort_clause sortby_list ConstraintAttr 
@@ -325,26 +333,20 @@ make_name(void)
 %type  <str>    CreatePLangStmt IntegerOnly TriggerFuncArgs TriggerFuncArg
 %type  <str>    ViewStmt LoadStmt CreatedbStmt createdb_opt_encoding
 %type  <str>	createdb_opt_location opt_encoding OptInherit Geometric
-%type  <str>    DropdbStmt ClusterStmt grantee RevokeStmt table_expr Bit bit
+%type  <str>    DropdbStmt ClusterStmt grantee RevokeStmt Bit bit
 %type  <str>	GrantStmt privileges operation_commalist operation
 %type  <str>	opt_cursor opt_lmode ConstraintsSetStmt comment_tg
 %type  <str>	case_expr when_clause_list case_default case_arg when_clause
 %type  <str>    select_clause opt_select_limit select_limit_value ConstraintTimeSpec
-%type  <str>    select_offset_value using_expr join_expr ReindexStmt
-%type  <str>	using_list from_expr join_clause join_type opt_only opt_boolean
-%type  <str>	join_qual update_list join_clause_with_union AlterSchemaStmt
+%type  <str>    select_offset_value ReindexStmt join_type opt_only opt_boolean
+%type  <str>	join_qual update_list AlterSchemaStmt joined_table
 %type  <str>	opt_level opt_lock lock_type users_in_new_group_clause
 %type  <str>    OptConstrFromTable comment_op OptTempTableName
 %type  <str>    constraints_set_list constraints_set_namelist comment_fn
 %type  <str>	constraints_set_mode comment_type comment_cl comment_ag
 %type  <str>	CreateGroupStmt AlterGroupStmt DropGroupStmt key_delete
-%type  <str>	join_expr_with_union opt_force key_update CreateSchemaStmt
+%type  <str>	opt_force key_update CreateSchemaStmt
 %type  <str>    SessionList SessionClause SetSessionStmt
-/***
-#ifdef ENABLE_ORACLE_JOIN_SYNTAX
-%type  <str>   oracle_list oracle_expr oracle_outer
-#endif
-***/
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen
 %type  <str>	indicator ECPGExecute ECPGPrepare ecpg_using
@@ -977,6 +979,11 @@ DEFAULT} */
 	| ALTER TABLE relation_name opt_inh_star DROP CONSTRAINT name drop_behavior
 		{
 			$$ = cat_str(6, make_str("alter table"), $3, $4, make_str("drop constraint"), $7, $8);
+		}
+/* ALTER TABLE <name> OWNER TO UserId */     
+	| ALTER TABLE relation_name OWNER TO UserId   
+		{
+			$$ = cat_str(4, make_str("alter table"), $3, make_str("owner to"), $6);
 		}
 		;
 
@@ -2299,7 +2306,7 @@ LoadStmt:  LOAD file_name
 CreatedbStmt:  CREATE DATABASE database_name WITH createdb_opt_location createdb_opt_encoding
 			{
 				if (strlen($5) == 0 || strlen($6) == 0) 
-					mmerror(ET_ERROR, "CREATE DATABASE WITH requires at least an option");
+					mmerror(ET_ERROR, "CREATE DATABASE WITH requires at least an option.");
 
 				$$ = cat_str(5, make_str("create database"), $3, make_str("with"), $5, $6);
 			}
@@ -2628,7 +2635,7 @@ SelectStmt:      select_clause
 /* This rule parses Select statements including UNION INTERSECT and EXCEPT.
  * '(' and ')' can be used to specify the order of the operations 
  * (UNION EXCEPT INTERSECT). Without the use of '(' and ')' we want the
- * operations to be left associative.
+ * operations to be ordered per the precedence specs at the head of this file.
  *
  *  The sort_clause is not handled here!
  */
@@ -2641,9 +2648,12 @@ select_clause: '(' select_clause ')'
 				FoundInto = 0;
                                 $$ = $1; 
                         }
-                | select_clause EXCEPT select_clause
+                | select_clause EXCEPT opt_all select_clause
 			{
-				$$ = cat_str(3, $1, make_str("except"), $3);
+				if (strlen($3) != 0)
+					mmerror(ET_WARN, "EXCEPT ALL is not implemented yet.");
+
+				$$ = cat_str(4, $1, make_str("except"), $3, $4);
 				ForUpdateNotAllowed = 1;
 			}
 		| select_clause UNION opt_all select_clause
@@ -2653,7 +2663,10 @@ select_clause: '(' select_clause ')'
 			}
 		| select_clause INTERSECT opt_all select_clause
 			{
-				$$ = cat_str(3, $1, make_str("intersect"), $3);
+				if (strlen($3) != 0)
+					mmerror(ET_WARN, "INTERSECT ALL is not implemented yet.");
+
+				$$ = cat_str(4, $1, make_str("intersect"), $3, $4);
 				ForUpdateNotAllowed = 1;
 			}
 		;
@@ -2841,54 +2854,91 @@ update_list:  OF va_list
  *****************************************************************************/
 
 from_clause:    FROM from_list		{ $$ = cat2_str(make_str("from"), $2); }
-/***
-#ifdef ENABLE_ORACLE_JOIN_SYNTAX
-		| FROM oracle_list 	{ $$ = cat2_str(make_str("from"), $2); }
-#endif
-***/
-		| FROM from_expr	{ $$ = cat2_str(make_str("from"), $2); }
 		| /* EMPTY */		{ $$ = EMPTY; }
 		;
 
-from_list:  from_list ',' table_expr	{ $$ = cat_str(3, $1, make_str(","), $3); }
-                | table_expr		{ $$ = $1; }
+from_list:  from_list ',' table_ref	{ $$ = cat_str(3, $1, make_str(","), $3); }
+                | table_ref		{ $$ = $1; }
                 ;
 
-/***********
- * This results in one shift/reduce conflict, presumably due to the trailing "(
- * - Thomas 1999-09-20
+/*
+ * table_ref is where an alias clause can be attached.  Note we cannot make
+ * alias_clause have an empty production because that causes parse conflicts
+ * between table_ref := '(' joined_table ')' alias_clause
+ * and joined_table := '(' joined_table ')'.  So, we must have the
+ * redundant-looking productions here instead.
  *
-#ifdef ENABLE_ORACLE_JOIN_SYNTAX
-oracle_list:  oracle_expr	{ $$ = $1; }
-                ;
-
-oracle_expr:  ColId ',' ColId oracle_outer
+ * Note that the SQL spec does not permit a subselect (<derived_table>)
+ * without an alias clause, so we don't either.  This avoids the problem
+ * of needing to invent a refname for an unlabeled subselect.
+ */        
+table_ref:  relation_expr 
+                {
+                	$$ = $1;
+                }
+	| relation_expr alias_clause 
 		{
-			mmerror(ET_ERROR, "Oracle OUTER JOIN not yet supported");
-			$$ = cat_str(3, $1, make_str(","), $3); }
+			cat2_str($1, $2);
 		}
-		|  oracle_outer ColId ',' ColId
+	| '(' select_clause ')' alias_clause 
 		{
-			mmerror(ET_ERROR, "Oracle OUTER JOIN not yet supported");
-			$$ = cat_str(4, $1, $2, make_str(","), $3); } 
+			cat_str(4, make_str("("), $2, make_str(")"), $4);
 		}
-		;
+	| joined_table  
+		{
+                        $$ = $1;
+                }  
+	| '(' joined_table ')' alias_clause   
+                {
+                        cat_str(4, make_str("("), $2, make_str(")"), $4);
+                }             
+	;
 
-oracle_outer:  '(' '+' ')'	{ $$ = make_str("(+)"); }
-                ;
-#endif
-*************/
+/*
+ * It may seem silly to separate joined_table from table_ref, but there is
+ * method in SQL92's madness: if you don't do it this way you get reduce-
+ * reduce conflicts, because it's not clear to the parser generator whether
+ * to expect alias_clause after ')' or not.  For the same reason we must
+ * treat 'JOIN' and 'join_type JOIN' separately, rather than allowing
+ * join_type to expand to empty; if we try it, the parser generator can't
+ * figure out when to reduce an empty join_type right after table_ref.
+ *                                                        
+ * Note that a CROSS JOIN is the same as an unqualified       
+ * INNER JOIN, and an INNER JOIN/ON has the same shape
+ * but a qualification expression to limit membership.
+ * A NATURAL JOIN implicitly matches column names between
+ * tables and the shape is determined by which columns are
+ * in common. We'll collect columns during the later transformations.
+ */       
 
-from_expr:  '(' join_clause_with_union ')' alias_clause
-                                { $$ = cat_str(4, make_str("("), $2, make_str(")"), $4); }
-                | join_clause
-                                { $$ = $1; }
-                ;
-
-table_expr:  relation_expr alias_clause
-                                {
-                                        $$ = cat2_str($1, $2);
-                                }
+joined_table:  '(' joined_table ')'   
+		{
+                	$$ = cat_str(3, make_str("("), $2, make_str(")"));
+                } 
+		| table_ref CROSS JOIN table_ref 
+		{
+			$$ = cat_str(3, $1, make_str("cross join"), $4);
+		}
+		| table_ref UNIONJOIN table_ref    
+                {
+                        $$ = cat_str(3, $1, make_str("unionjoin"), $3);
+                }                                 
+		| table_ref join_type JOIN table_ref join_qual 
+                {
+                        $$ = cat_str(5, $1, $2, make_str("join"), $4, $5);
+                }   
+		| table_ref JOIN table_ref join_qual   
+                {
+                        $$ = cat_str(4, $1, make_str("join"), $3, $4);
+                }   
+		| table_ref NATURAL join_type JOIN table_ref   
+		{
+                        $$ = cat_str(5, $1, make_str("natural"), $3, make_str("join"), $5);
+                }  
+		| table_ref NATURAL JOIN table_ref     
+		{
+                        $$ = cat_str(3, $1, make_str("natural join"), $4);
+                }  
                 ;
 
 alias_clause:  AS ColId '(' name_list ')'
@@ -2899,61 +2949,15 @@ alias_clause:  AS ColId '(' name_list ')'
 			{ $$ = cat_str(4, $1, make_str("("), $3, make_str(")")); }
 		| ColId
 			{ $$ = $1; }
-		| /*EMPTY*/
-			{ $$ = EMPTY; }
 		;
 
-/* A UNION JOIN is the same as a FULL OUTER JOIN which *omits*
- * all result rows which would have matched on an INNER JOIN.
- * Syntactically, must enclose the UNION JOIN in parens to avoid
- * conflicts with SELECT/UNION.
- */
-join_clause:  join_clause join_expr
-			{ $$ = cat2_str($1, $2); }
-		| table_expr join_expr
-			{ $$ = cat2_str($1, $2); }
-                ;
-
-/* This is everything but the left side of a join.
- * Note that a CROSS JOIN is the same as an unqualified
- * inner join, so just pass back the right-side table.
- * A NATURAL JOIN implicitly matches column names between
- * tables, and the shape is determined by which columns are
- * in common. We'll collect columns during the later transformations.
- */
-join_expr:  join_type JOIN table_expr join_qual
-                                {
-					$$ = cat_str(4, $1, make_str("join"), $3, $4);
-                                }
-                | NATURAL join_type JOIN table_expr
-                                {
-					$$ = cat_str(4, make_str("natural"), $2, make_str("join"), $4);
-                                }
-                | CROSS JOIN table_expr
-                                { 	$$ = cat2_str(make_str("cross join"), $3); }
-                ;
-
-join_clause_with_union:  join_clause_with_union join_expr_with_union
-                                { $$ = cat2_str($1, $2); }
-                | table_expr join_expr_with_union 
-                                { $$ = cat2_str($1, $2); }
-                ;
-
-join_expr_with_union:  join_expr
-                                { $$ = $1; }
-                | UNION JOIN table_expr
-				{ $$ = cat2_str(make_str("union join"), $3); }
-		;
-
-/* OUTER is just noise... */
 join_type:  FULL join_outer		{ $$ = cat2_str(make_str("full"), $2); }
 		| LEFT join_outer	{ $$ = cat2_str(make_str("left"), $2); }
                 | RIGHT join_outer      { $$ = cat2_str(make_str("right"), $2); }
-                | OUTER_P               { $$ = make_str("outer"); }
                 | INNER_P               { $$ = make_str("inner"); }
-                | /* EMPTY */           { $$ = EMPTY; }
 		;
 
+/* OUTER is just noise... */
 join_outer:  OUTER_P				{ $$ = make_str("outer"); }
 		| /*EMPTY*/			{ $$ = EMPTY;  /* no qualifiers */ }
 		;
@@ -2963,26 +2967,11 @@ join_outer:  OUTER_P				{ $$ = make_str("outer"); }
  *  USING ( column list ) allows only unqualified column names,
  *                        which must match between tables.
  *  ON expr allows more general qualifications.
- * - thomas 1999-01-07
  */
 
-join_qual:  USING '(' using_list ')'                   { $$ = cat_str(3, make_str("using ("), $3, make_str(")")); }
+join_qual:  USING '(' name_list ')'                   { $$ = cat_str(3, make_str("using ("), $3, make_str(")")); }
                | ON a_expr			       { $$ = cat2_str(make_str("on"), $2); }
                 ;
-
-using_list:  using_list ',' using_expr                  { $$ = cat_str(3, $1, make_str(","), $3); }
-               | using_expr				{ $$ = $1; }
-               ;
-
-using_expr:  ColId
-				{
-					$$ = $1;
-				}
-		;
-
-where_clause:  WHERE a_expr			{ $$ = cat2_str(make_str("where"), $2); }
-		| /*EMPTY*/				{ $$ = EMPTY;  /* no qualifiers */ }
-		;
 
 relation_expr:	relation_name
 				{
@@ -2999,6 +2988,31 @@ relation_expr:	relation_name
 					/* inheritance query */
             			        $$ = cat2_str(make_str("ONLY "), $2);
 				}
+
+where_clause:  WHERE a_expr			{ $$ = cat2_str(make_str("where"), $2); }
+		| /*EMPTY*/				{ $$ = EMPTY;  /* no qualifiers */ }
+		;
+
+/*****************************************************************************
+ *
+ *	Type syntax
+ *		SQL92 introduces a large amount of type-specific syntax.
+ *		Define individual clauses to handle these cases, and use
+ *		 the generic case to handle regular type-extensible Postgres syntax.
+ *		- thomas 1997-10-10
+ *
+ *****************************************************************************/
+
+Typename:  SimpleTypename opt_array_bounds
+				{
+					$$ = cat2_str($1, $2.str);
+				}
+		| SETOF SimpleTypename
+				{
+					$$ = cat2_str(make_str("setof"), $2);
+				}
+		;
+
 
 opt_array_bounds:  '[' ']' opt_array_bounds
 			{
@@ -3031,27 +3045,6 @@ Iresult:	Iconst			{ $$ = atol($1); }
 	|	Iresult '/' Iresult	{ $$ = $1 / $3; }
 	|	Iresult '%' Iresult	{ $$ = $1 % $3; }
 	;
-
-
-/*****************************************************************************
- *
- *	Type syntax
- *		SQL92 introduces a large amount of type-specific syntax.
- *		Define individual clauses to handle these cases, and use
- *		 the generic case to handle regular type-extensible Postgres syntax.
- *		- thomas 1997-10-10
- *
- *****************************************************************************/
-
-Typename:  SimpleTypename opt_array_bounds
-				{
-					$$ = cat2_str($1, $2.str);
-				}
-		| SETOF SimpleTypename
-				{
-					$$ = cat2_str(make_str("setof"), $2);
-				}
-		;
 
 SimpleTypename:  ConstTypename	{ $$ = $1; }
                | ConstInterval	{ $$ = $1; }
@@ -5113,6 +5106,7 @@ TokenId:  ABSOLUTE			{ $$ = make_str("absolute"); }
 	| OIDS				{ $$ = make_str("oids"); }
 	| OPERATOR			{ $$ = make_str("operator"); }
 	| OPTION			{ $$ = make_str("option"); }
+	| OWNER				{ $$ = make_str("owner"); }
 	| PARTIAL			{ $$ = make_str("partial"); }
 	| PASSWORD			{ $$ = make_str("password"); }
 	| PENDANT			{ $$ = make_str("pendant"); }

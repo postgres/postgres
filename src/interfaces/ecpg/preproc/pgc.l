@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.63 2000/09/26 05:42:15 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.64 2000/09/26 11:41:44 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */

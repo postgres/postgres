@@ -1,14 +1,8 @@
 The complete structure definition has to be listed inside the declare
 section of the structure variable for ecpg to be able to understand it.
 
-The error message for "no data" in an exec sql insert select from statement
-has to be 100.
-
 sqlwarn[6] should be 'W' if the PRECISION or SCALE value specified in a SET
 DESCRIPTOR statement will be ignored.
-
-If a NOTICE message is given by the backend it should not be printed to
-stderr. Instead it should be listed as a warning.
 
 The error handling has to be improved by adding additional error-rules to
 the parser.
@@ -28,4 +22,3 @@ remove space_or_nl and line_end from pgc.l
 
 Missing features:
  - SQLSTATE
- - LONG LONG datatype

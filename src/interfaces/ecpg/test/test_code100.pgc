@@ -1,4 +1,4 @@
-// $Id: test_code100.pgc,v 1.1 2000/09/20 13:25:52 meskes Exp $
+// $Id: test_code100.pgc,v 1.2 2000/09/26 11:41:45 meskes Exp $
 
 exec sql include sqlca;
 #include <stdio.h>
@@ -11,7 +11,7 @@ int main(int argc, char **argv)
 
    // ECPGdebug(1,stdout);
    
-   exec sql connect to test;
+   exec sql connect to mm;
    if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
 
    exec sql create table test (
