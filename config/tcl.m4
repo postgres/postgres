@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/config/tcl.m4,v 1.1 2000/09/25 22:22:53 petere Exp $
+# $Header: /cvsroot/pgsql/config/tcl.m4,v 1.2 2000/09/30 10:45:17 petere Exp $
 
 # Autoconf macros to check for Tcl related things
 
@@ -23,7 +23,7 @@ if test -z "$TCL_CONFIG_SH"; then
         set X `echo 'puts $auto_path' | $TCLSH`; shift
     fi
 
-    for pgac_dir; do
+    for pgac_dir do
         if test -r "$pgac_dir/tclConfig.sh"; then
             TCL_CONFIG_SH=$pgac_dir/tclConfig.sh
             break
@@ -57,7 +57,7 @@ if test -z "$TK_CONFIG_SH"; then
         set X `echo 'puts $auto_path' | $TCLSH`; shift
     fi
 
-    for pgac_dir; do
+    for pgac_dir do
         if test -r "$pgac_dir/tkConfig.sh"; then
             TK_CONFIG_SH=$pgac_dir/tkConfig.sh
             break
