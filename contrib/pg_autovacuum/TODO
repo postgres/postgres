@@ -1,0 +1,36 @@
+Todo Items for pg_autovacuum client
+
+_Allow it to detach from the tty
+
+_create a FSM export function and see if I can use it for pg_autovacuum
+
+_look into possible benifits of pgstattuple contrib work
+
+_Continue trying to reduce server load created by polling.
+
+Done:
+_Check if required pg_stats are enables, if not exit with error
+
+_Reduce the number connections and queries to the server
+	_Make database adding and removal part of the normal loop
+	_make table adding and removal part of the normal loop
+
+_Separate logic for vacuum and analyze
+
+_all pg_autovacuum specific functions are now static
+
+_correct usage of snprintf
+
+_reworked database and table update functions, now they
+	use the existing database connection and only one query
+
+_fixed -h option output
+
+_cleanup of 'constant == variable' used much more consistently now.
+
+_Guarantee database wide vacuum prior to Xid wraparound
+
+_change name to pg_autovacuum
+
+_Add proper table and database removal functions so that we can properly
+	clear up before we exit, and make sure we don't leak memory when removing tables and such.

@@ -1,0 +1,80 @@
+pg_autovacuum README
+
+pg_autovacuum is a libpq client program that monitors all the databases of a
+postgresql server.  It uses the stats collector to monitor insert, update and
+delete activity.  When an individual table exceeds it's insert or delete
+threshold (more detail on thresholds below) then that table is vacuumed or
+analyzed.  This allows postgresql to keep the fsm and table statistics up to
+date without having to schedule periodic vacuums with cron regardless of need.
+
+The primary benefit of pg_autovacuum is that the FSM and table statistic information
+are updated as needed.  When a table is actively changed pg_autovacuum performs the
+necessary vacuums and analyzes, when a table is inactive, no cycles are wasted
+performing vacuums and analyzes that are not needed.
+
+A secondary benefit of pg_autovacuum is that it guarantees that a database wide
+vacuum is performed prior to xid wraparound.  This is important as failing to do
+so can result in major data loss.
+
+INSTALL:
+To use pg_autovacuum, uncompress the tar.gz into the contrib directory and modify the
+contrib/Makefile to include the pg_autovacuum directory.  pg_autovacuum will then be made as
+part of the standard postgresql install.
+
+make sure that the folowing are set in postgresql.conf
+stats_start_collector = true
+stats_row_level = true
+
+start up the postmaster
+then, just execute the pg_autovacuum executable.
+
+
+Command line arguments:
+pg_autovacuum has the following optional arguments:
+-d debug: 0 silent, 1 basic info, 2 more debug info,  etc...
+-s sleep base value: see "Sleeping" below.
+-S sleep scaling factor: see "Sleeping" below.
+-t tuple base threshold: see Vacuuming.
+-T tuple scaling factor: see Vacuuming.
+-U username: Username pg_autovacuum will use to connect with, if not specified the
+   current username is used
+-P password: Password pg_autovacuum will use to connect with.
+-H host: host name or IP to connect too.
+-p port: port used for connection.
+-h help: list of command line options.
+
+All arguments have default values defined in pg_autovacuum.h.  At the time of this
+writing they are:
+#define AUTOVACUUM_DEBUG    1
+#define BASETHRESHOLD       100
+#define SCALINGFACTOR       2
+#define SLEEPVALUE          3
+#define SLEEPSCALINGFACTOR  2
+#define UPDATE_INTERVAL     2
+
+
+Vacuum and Analyze:
+pg_autovacuum performes either a vacuums analyze or just analyze depending on the table activity.
+If the number of (inserts + updates) > insertThreshold, then an only an analyze is performed.
+If the number of (deletes + updates ) > deleteThreshold, then a vacuum analyze is performed.
+deleteThreshold is equal to: tuple_base_value + (tuple_scaling_factor * "number of tuples in the table")
+insertThreshold is equal to: 0.5 * tuple_base_value + (tuple_scaling_factor * "number of tuples in the table")
+The insertThreshold is half the deleteThreshold because it's a much lighter operation (approx 5%-10% of vacuum),
+so running it more often costs us little in performance degredation.
+
+Sleeping:
+pg_autovacuum sleeps after it is done checking all the databases.  It does this so as
+to limit the amount of system resources it consumes.  This also allows the system
+administrator to configure pg_autovacuum to be more or less aggressive.  Reducing the
+sleep time will cause pg_autovacuum to respond more quickly to changes, be they database
+addition / removal, table addition / removal, or just normal table activity.  However,
+setting these values to high can have a negative net effect on the server.  If a table
+gets vacuumed 5 times during the course of a large update, it might take much longer
+than if it was vacuumed only once.
+The total time it sleeps is equal to:
+base_sleep_value + sleep_scaling_factor * "duration of the previous loop"
+
+What it monitors:
+pg_autovacuum dynamically generates a list of databases and tables to monitor, in
+addition it will dynamically add and remove databases and tables that are
+removed from the database server while pg_autovacuum is running.
