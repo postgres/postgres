@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.179 2000/07/15 00:01:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.180 2000/07/28 14:47:23 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -251,8 +251,8 @@ static void doNegateFloat(Value *v);
 %type <paramno> ParamNo
 
 %type <typnam>	Typename, SimpleTypename, ConstTypename
-				Generic, Numeric, Character, ConstDatetime, ConstInterval, Bit
-%type <str>		typename, generic, numeric, character, datetime, bit
+				Generic, Numeric, Geometric, Character, ConstDatetime, ConstInterval, Bit
+%type <str>		typename, generic, numeric, geometric, character, datetime, bit
 %type <str>		extract_arg
 %type <str>		opt_charset, opt_collate
 %type <str>		opt_float
@@ -1864,11 +1864,7 @@ def_type:  OPERATOR							{ $$ = OPERATOR; }
 def_name:  PROCEDURE						{ $$ = "procedure"; }
 		| JOIN								{ $$ = "join"; }
 		| all_Op							{ $$ = $1; }
-		| typename							{ $$ = $1; }
-		| TokenId							{ $$ = $1; }
-		| INTERVAL							{ $$ = "interval"; }
-		| TIME								{ $$ = "time"; }
-		| TIMESTAMP							{ $$ = "timestamp"; }
+		| ColId								{ $$ = $1; }
 		;
 
 definition:  '(' def_list ')'				{ $$ = $2; }
@@ -2361,18 +2357,21 @@ index_elem:  attr_name opt_class
 				}
 		;
 
-opt_class:  class								{
-	/*
-	 * Release 7.0 removed network_ops, timespan_ops, and datetime_ops, 
-	 * so we suppress it from being passed to the backend so the default 
-	 * *_ops is used.  This can be removed in some later release.  
-	 * bjm 2000/02/07 
-	 */ 
-										 if (strcmp($1, "network_ops") != 0 &&
-										     strcmp($1, "timespan_ops") != 0 &&
-										     strcmp($1, "datetime_ops") != 0)
-										 		$$ = $1;
-										 else	$$ = NULL; }
+opt_class:  class
+				{
+					/*
+					 * Release 7.0 removed network_ops, timespan_ops, and datetime_ops, 
+					 * so we suppress it from being passed to the backend so the default 
+					 * *_ops is used.  This can be removed in some later release.  
+					 * bjm 2000/02/07 
+					 */
+					if (strcmp($1, "network_ops") != 0 &&
+						strcmp($1, "timespan_ops") != 0 &&
+						strcmp($1, "datetime_ops") != 0)
+						$$ = $1;
+					else
+						$$ = NULL;
+				}
 		| USING class							{ $$ = $2; }
 		| /*EMPTY*/								{ $$ = NULL; }
 		;
@@ -2465,21 +2464,23 @@ func_args_list:  func_arg
  * so that won't work here. The only thing we give up is array notation,
  * which isn't meaningful in this context anyway.
  * - thomas 2000-03-25
+ * The following productions are difficult, since it is difficult to
+ * distinguish between TokenId and SimpleTypename:
+		opt_arg TokenId SimpleTypename
+				{
+					$$ = $3;
+				}
+		| TokenId SimpleTypename
+				{
+					$$ = $2;
+				}
  */
-func_arg:  opt_arg TokenId SimpleTypename
+func_arg:  opt_arg SimpleTypename
 				{
 					/* We can catch over-specified arguments here if we want to,
 					 * but for now better to silently swallow typmod, etc.
 					 * - thomas 2000-03-22
 					 */
-					$$ = $3;
-				}
-		| opt_arg SimpleTypename
-				{
-					$$ = $2;
-				}
-		| TokenId SimpleTypename
-				{
 					$$ = $2;
 				}
 		| SimpleTypename
@@ -3964,6 +3965,7 @@ SimpleTypename:  ConstTypename
 
 ConstTypename:  Generic
 		| Numeric
+		| Geometric
 		| Bit
 		| Character
 		| ConstDatetime
@@ -3971,6 +3973,7 @@ ConstTypename:  Generic
 
 typename:  generic								{ $$ = $1; }
 		| numeric								{ $$ = $1; }
+		| geometric								{ $$ = $1; }
 		| bit									{ $$ = $1; }
 		| character								{ $$ = $1; }
 		| datetime								{ $$ = $1; }
@@ -3985,7 +3988,6 @@ Generic:  generic
 		;
 
 generic:  IDENT									{ $$ = $1; }
-		| PATH_P								{ $$ = "path"; }
 		| TYPE_P								{ $$ = "type"; }
 		;
 
@@ -4031,6 +4033,17 @@ numeric:  FLOAT							{ $$ = xlateSqlType("float"); }
 		| DECIMAL 						{ $$ = xlateSqlType("decimal"); }
 		| DEC							{ $$ = xlateSqlType("decimal"); }
 		| NUMERIC 						{ $$ = xlateSqlType("numeric"); }
+		;
+
+Geometric:  PATH_P
+				{
+					$$ = makeNode(TypeName);
+					$$->name = xlateSqlType("path");
+					$$->typmod = -1;
+				}
+		;
+
+geometric:  PATH_P						{ $$ = xlateSqlType("path"); }
 		;
 
 opt_float:  '(' Iconst ')'
@@ -5451,14 +5464,15 @@ UserId:  ColId							{ $$ = $1; };
  *  BETWEEN, IN, IS, ISNULL, NOTNULL, OVERLAPS
  * Thanks to Tom Lane for pointing this out. - thomas 2000-03-29
  */
-ColId:  IDENT							{ $$ = $1; }
-		| TokenId						{ $$ = $1; }
+ColId:  generic							{ $$ = $1; }
 		| datetime						{ $$ = $1; }
+		| TokenId						{ $$ = $1; }
 		| INTERVAL						{ $$ = "interval"; }
 		| NATIONAL						{ $$ = "national"; }
+		| PATH_P						{ $$ = "path"; }
+		| SERIAL						{ $$ = "serial"; }
 		| TIME							{ $$ = "time"; }
 		| TIMESTAMP						{ $$ = "timestamp"; }
-		| TYPE_P						{ $$ = "type"; }
 		;
 
 /* Parser tokens to be used as identifiers.
@@ -5553,7 +5567,6 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| SCROLL						{ $$ = "scroll"; }
 		| SESSION						{ $$ = "session"; }
 		| SEQUENCE						{ $$ = "sequence"; }
-		| SERIAL						{ $$ = "serial"; }
 		| SERIALIZABLE					{ $$ = "serializable"; }
 		| SET							{ $$ = "set"; }
 		| SHARE							{ $$ = "share"; }
@@ -5680,7 +5693,6 @@ ColLabel:  ColId						{ $$ = $1; }
 		| OUT							{ $$ = "out"; }
 		| OUTER_P						{ $$ = "outer"; }
 		| OVERLAPS						{ $$ = "overlaps"; }
-		| PATH_P						{ $$ = "path"; }
 		| POSITION						{ $$ = "position"; }
 		| PRECISION						{ $$ = "precision"; }
 		| PRIMARY						{ $$ = "primary"; }
