@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.90 2001/09/08 15:24:00 petere Exp $
+ * $Id: miscadmin.h,v 1.91 2001/09/21 03:32:36 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -170,6 +170,7 @@ extern char DateFormat[];
 extern bool enableFsync;
 extern bool allowSystemTableMods;
 extern int	SortMem;
+extern int	VacuumMem;
 
 /*
  *	A few postmaster startup options are exported here so the

@@ -10,7 +10,7 @@
  * relations with finite memory space usage.  To do that, we set upper bounds
  * on the number of tuples and pages we will keep track of at once.
  *
- * We are willing to use at most SortMem memory space to keep track of
+ * We are willing to use at most VacuumMem memory space to keep track of
  * dead tuples.  We initially allocate an array of TIDs of that size.
  * If the array threatens to overflow, we suspend the heap scan phase
  * and perform a pass of index cleanup and page compaction, then resume
@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.6 2001/09/04 19:12:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.7 2001/09/21 03:32:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -865,8 +865,6 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
  * lazy_space_alloc - space allocation decisions for lazy vacuum
  *
  * See the comments at the head of this file for rationale.
- *
- * XXX Should we have our own GUC parameter, instead of using SortMem?
  */
 static void
 lazy_space_alloc(LVRelStats *vacrelstats, BlockNumber relblocks)
@@ -874,8 +872,8 @@ lazy_space_alloc(LVRelStats *vacrelstats, BlockNumber relblocks)
 	int			maxtuples;
 	int			maxpages;
 
-	maxtuples = (int) ((SortMem * 1024L) / sizeof(ItemPointerData));
-	/* stay sane if small SortMem */
+	maxtuples = (int) ((VacuumMem * 1024L) / sizeof(ItemPointerData));
+	/* stay sane if small VacuumMem */
 	if (maxtuples < MAX_TUPLES_PER_PAGE)
 		maxtuples = MAX_TUPLES_PER_PAGE;
 
@@ -910,7 +908,7 @@ lazy_record_dead_tuple(LVRelStats *vacrelstats,
 {
 	/*
 	 * The array shouldn't overflow under normal behavior,
-	 * but perhaps it could if we are given a really small SortMem.
+	 * but perhaps it could if we are given a really small VacuumMem.
 	 * In that case, just forget the last few tuples.
 	 */
 	if (vacrelstats->num_dead_tuples < vacrelstats->max_dead_tuples)

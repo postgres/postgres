@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.81 2001/09/20 14:20:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.82 2001/09/21 03:32:35 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -781,6 +781,45 @@ env PGOPTIONS='-c geqo=off' psql
    <para>
     <variablelist>
      <varlistentry>
+      <term><varname>COLLECT_STARTCOLLECTOR</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Controls whether the postmaster should start the statistics-collection
+	subprocess.  This is on by default, but may be turned off if you
+	know you have no interest in collecting statistics.  This option
+	can only be set at postmaster start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>COLLECT_RESETONPMSTART</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        If on, collected statistics are zeroed out whenever the postmaster
+	is restarted.  If off, statistics are accumulated across postmaster
+	restarts.  The default is on.  This option
+	can only be set at postmaster start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>COLLECT_QUERYSTRING</varname> (<type>boolean</type>)</term>
+      <term><varname>COLLECT_BLOCKLEVEL</varname> (<type>boolean</type>)</term>
+      <term><varname>COLLECT_TUPLELEVEL</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        These flags determine what information backends send to the statistics
+	collector process: current queries, block-level activity statistics,
+	or tuple-level activity statistics.  All default to off.  Enabling
+	statistics collection costs a small amount of time per query, but
+	is invaluable for debugging and performance tuning.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><varname>DEBUG_ASSERTIONS</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -1013,7 +1052,7 @@ env PGOPTIONS='-c geqo=off' psql
        <primary>transaction isolation level</primary>
       </indexterm>
 
-      <term><varname>DEFAUL_TRANSACTION_ISOLATION</varname> (<type>string</type>)</term>
+      <term><varname>DEFAULT_TRANSACTION_ISOLATION</varname> (<type>string</type>)</term>
       <listitem>
        <para>
         Each SQL transaction has an isolation level, which can be
@@ -1202,6 +1241,19 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
      </varlistentry>
 
      <varlistentry>
+      <term><varname>PASSWORD_ENCRYPTION</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        When a password is specified in <command>CREATE USER</> or
+	<command>ALTER USER</> without writing either ENCRYPTED or
+	UNENCRYPTED, this flag determines whether the password is encrypted.
+	The default is off (do not encrypt the password), but this choice
+	may change in a future release.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><varname>TRANSFORM_NULL_EQUALS</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -1285,7 +1337,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       <listitem>
        <para>
 	Specifies the amount of memory to be used by internal sorts
-	and hashes before resorting to temporary disk files. The value
+	and hashes before switching to temporary disk files. The value
 	is specified in kilobytes, and defaults to 512 kilobytes. Note
 	that for a complex query, several sorts and/or hashes might be
 	running in parallel, and each one will be allowed to use as
@@ -1399,6 +1451,19 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
 
        <para>
         This option can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>VACUUM_MEM</varname> (<type>integer</type>)</term>
+      <listitem>
+       <para>
+	Specifies the maximum amount of memory to be used by
+	<command>VACUUM</command> to keep track of to-be-reclaimed tuples.
+	The value is specified in kilobytes, and defaults to 8192 kilobytes.
+	Larger settings may improve the speed of vacuuming large tables
+	that have many deleted tuples.
        </para>
       </listitem>
      </varlistentry>

@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.49 2001/09/20 14:20:27 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.50 2001/09/21 03:32:35 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -176,12 +176,11 @@ struct config_string
  *
  * 4. Add a record below.
  *
- * 5. Add it to postgresql.conf.sample
+ * 5. Add it to src/backend/utils/misc/postgresql.conf.sample.
  *
- * 6. Don't forget to document that option.
+ * 6. Add it to src/bin/psql/tab-complete.c, if it's a USERSET option.
  *
- * WHEN MAKING MODIFICATIONS, remember to update postgresql.conf.sample
- *
+ * 7. Don't forget to document the option.
  */
 
 
@@ -297,6 +296,9 @@ static struct config_int
 
 	{"sort_mem", PGC_USERSET, &SortMem,
 	512, 4*BLCKSZ/1024, INT_MAX, NULL, NULL},
+
+	{"vacuum_mem", PGC_USERSET, &VacuumMem,
+	8192, 1024, INT_MAX, NULL, NULL},
 
 	{"debug_level", PGC_USERSET, &DebugLvl,
 	0, 0, 16, NULL, NULL},

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.37 2001/09/07 01:24:18 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.38 2001/09/21 03:32:36 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -226,8 +226,8 @@ psql_completion(char *text, int start, int end)
 		"enable_nestloop",
 		"enable_mergejoin",
 		"enable_hashjoin",
-		"geqo",
 		"ksqo",
+		"geqo",
 		"fsync",
 		"debug_assertions",
 		"debug_print_query",
@@ -241,6 +241,9 @@ psql_completion(char *text, int start, int end)
 		"show_query_stats",
 		"trace_notify",
 		"sql_inheritance",
+		"australian_timezones",
+		"password_encryption",
+		"transform_null_equals",
 
 		"geqo_threshold",
 		"geqo_pool_size",
@@ -248,6 +251,7 @@ psql_completion(char *text, int start, int end)
 		"geqo_generations",
 		"geqo_random_seed",
 		"sort_mem",
+		"vacuum_mem",
 		"debug_level",
 		"max_expr_depth",
 		"commit_delay",
@@ -259,6 +263,9 @@ psql_completion(char *text, int start, int end)
 		"cpu_index_tuple_cost",
 		"cpu_operator_cost",
 		"geqo_selection_bias",
+
+		"default_transaction_isolation",
+
 		NULL
 	};
 
