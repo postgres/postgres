@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.10 1996/11/03 10:57:21 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.11 1996/11/05 05:26:31 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@
 #include "access/itup.h"
 #include "access/relscan.h"
 #include "access/tupmacs.h"
-#include "utils/palloc.h"
 
 #ifndef HAVE_MEMMOVE
 # include "regex/utils.h"
