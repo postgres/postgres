@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Feb 28 22:30:09 EST 2001
+Last updated:		Fri Mar  2 11:10:30 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -350,6 +350,7 @@ SOURCE CODE
 * Merge LockMethodCtl and LockMethodTable into one shared structure (Bruce)
 * HOLDER/HOLDERTAB reanme to PROCLOCKLINK/PROCLOCKLINKTAG (Tom)
 * Correct CRC WAL code to be a real CRC64 algorithm
+* Add version file format stamp to heap and other table types
 
 ---------------------------------------------------------------------------
 
