@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.106 1999/06/03 13:25:54 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.107 1999/06/06 20:19:34 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1238,11 +1238,28 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 					Citemid = PageGetItemId(Cpage,
 									  ItemPointerGetOffsetNumber(&Ctid));
 					if (!ItemIdIsUsed(Citemid))
-						elog(ERROR, "Child itemid marked as unused");
+					{
+						/*
+						 * This means that in the middle of chain there was
+						 * tuple updated by older (than XmaxRecent) xaction
+						 * and this tuple is already deleted by me. Actually,
+						 * upper part of chain should be removed and seems 
+						 * that this should be handled in vc_scanheap(), but
+						 * it's not implemented at the moment and so we
+						 * just stop shrinking here.
+						 */
+						ReleaseBuffer(Cbuf);
+						pfree(vtmove);
+						vtmove = NULL;
+						elog(NOTICE, "Child itemid in update-chain marked as unused - can't continue vc_rpfheap");
+						break;
+					}
 					tp.t_data = (HeapTupleHeader) PageGetItem(Cpage, Citemid);
 					tp.t_self = Ctid;
 					tlen = tp.t_len = ItemIdGetLength(Citemid);
 				}
+				if (vtmove == NULL)
+					break;
 				/* first, can chain be moved ? */
 				for (;;)
 				{
@@ -1336,6 +1353,7 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 						Ptp.t_data = (HeapTupleHeader) PageGetItem(Ppage, Pitemid);
 						Assert(Ptp.t_data->t_xmax == tp.t_data->t_xmin);
 
+#ifdef NOT_USED			/* I'm not sure that this will wotk properly... */
 						/*
 						 * If this tuple is updated version of row and it
 						 * was created by the same transaction then no one
@@ -1353,6 +1371,7 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 							WriteBuffer(Pbuf);
 							continue;
 						}
+#endif
 						tp.t_data = Ptp.t_data;
 						tlen = tp.t_len = ItemIdGetLength(Pitemid);
 						if (freeCbuf)
@@ -1763,7 +1782,7 @@ Elapsed %u/%u sec.",
 			page = BufferGetPage(buf);
 			num_tuples = 0;
 			for (offnum = FirstOffsetNumber;
-				 offnum < maxoff;
+				 offnum <= maxoff;
 				 offnum = OffsetNumberNext(offnum))
 			{
 				itemid = PageGetItemId(page, offnum);

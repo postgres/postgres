@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.41 1999/06/03 13:33:13 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.42 1999/06/06 20:19:35 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -652,9 +652,15 @@ GetSnapshotData(bool serializable)
 
 	snapshot->xip = (TransactionId *) malloc(have * sizeof(TransactionId));
 	snapshot->xmin = cid;
-	ReadNewTransactionId(&(snapshot->xmax));
 
 	SpinAcquire(ShmemIndexLock);
+	/*
+	 * Unfortunately, we have to call ReadNewTransactionId()
+	 * after acquiring ShmemIndexLock above. It's not good because of
+	 * ReadNewTransactionId() does SpinAcquire(OidGenLockId) but
+	 * _necessary_.
+	 */
+	ReadNewTransactionId(&(snapshot->xmax));
 
 	hash_seq((HTAB *) NULL);
 	while ((result = (ShmemIndexEnt *) hash_seq(ShmemIndex)) != NULL)

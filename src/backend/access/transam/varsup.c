@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.21 1999/06/03 04:41:40 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.22 1999/06/06 20:19:33 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -335,16 +335,13 @@ ReadNewTransactionId(TransactionId *xid)
 
 	SpinAcquire(OidGenLockId);	/* not good for concurrency... */
 
-	if (ShmemVariableCache->xid_count == 0)
-	{
-		TransactionId nextid;
-
-		VariableRelationGetNextXid(&nextid);
-		TransactionIdStore(nextid, &(ShmemVariableCache->nextXid));
-		ShmemVariableCache->xid_count = VAR_XID_PREFETCH;
-		TransactionIdAdd(&nextid, VAR_XID_PREFETCH);
-		VariableRelationPutNextXid(nextid);
-	}
+	/*
+	 * Note that we don't check is ShmemVariableCache->xid_count equal
+	 * to 0 or not. This will work as long as we don't call 
+	 * ReadNewTransactionId() before GetNewTransactionId().
+	 */
+	if (ShmemVariableCache->nextXid == 0)
+		elog(ERROR, "ReadNewTransactionId: ShmemVariableCache->nextXid is not initialized");
 
 	TransactionIdStore(ShmemVariableCache->nextXid, xid);
 
