@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.145 2000/02/19 08:25:49 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.146 2000/02/19 19:37:21 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4544,6 +4544,19 @@ c_expr:  attr
 					n->args = $3;
 					n->agg_star = false;
 					n->agg_distinct = false;
+					$$ = (Node *)n;
+				}
+		| func_name '(' ALL expr_list ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = $1;
+					n->args = $4;
+					n->agg_star = false;
+					n->agg_distinct = false;
+					/* Ideally we'd mark the FuncCall node to indicate
+					 * "must be an aggregate", but there's no provision
+					 * for that in FuncCall at the moment.
+					 */
 					$$ = (Node *)n;
 				}
 		| func_name '(' DISTINCT expr_list ')'
