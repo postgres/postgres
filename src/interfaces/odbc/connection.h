@@ -266,6 +266,7 @@ struct ConnectionClass_
 	Int2		pg_version_major;
 	Int2		pg_version_minor;
 	char		ms_jet;
+	char		unicode;
 #ifdef	MULTIBYTE
 	char	   *client_encoding;
 	char	   *server_encoding;
