@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.81 2003/04/08 17:02:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.82 2003/05/12 23:08:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include <float.h>
 
 #include "access/hash.h"
+#include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
@@ -116,6 +117,32 @@ date_out(PG_FUNCTION_ARGS)
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
 }
+
+/*
+ *		date_recv			- converts external binary format to date
+ */
+Datum
+date_recv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+
+	PG_RETURN_DATEADT((DateADT) pq_getmsgint(buf, sizeof(DateADT)));
+}
+
+/*
+ *		date_send			- converts date to binary format
+ */
+Datum
+date_send(PG_FUNCTION_ARGS)
+{
+	DateADT		date = PG_GETARG_DATEADT(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+	pq_sendint(&buf, date, sizeof(date));
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+}
+
 
 Datum
 date_eq(PG_FUNCTION_ARGS)
@@ -593,6 +620,43 @@ time_out(PG_FUNCTION_ARGS)
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
 }
+
+/*
+ *		time_recv			- converts external binary format to time
+ *
+ * We make no attempt to provide compatibility between int and float
+ * time representations ...
+ */
+Datum
+time_recv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+
+#ifdef HAVE_INT64_TIMESTAMP
+	PG_RETURN_TIMEADT((TimeADT) pq_getmsgint64(buf));
+#else
+	PG_RETURN_TIMEADT((TimeADT) pq_getmsgfloat8(buf));
+#endif
+}
+
+/*
+ *		time_send			- converts time to binary format
+ */
+Datum
+time_send(PG_FUNCTION_ARGS)
+{
+	TimeADT		time = PG_GETARG_TIMEADT(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+#ifdef HAVE_INT64_TIMESTAMP
+	pq_sendint64(&buf, time);
+#else
+	pq_sendfloat8(&buf, time);
+#endif
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+}
+
 
 /* time_scale()
  * Adjust time type for specified scale factor.
@@ -1348,6 +1412,47 @@ timetz_out(PG_FUNCTION_ARGS)
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
 }
+
+/*
+ *		timetz_recv			- converts external binary format to timetz
+ */
+Datum
+timetz_recv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	TimeTzADT  *time;
+
+	time = (TimeTzADT *) palloc(sizeof(TimeTzADT));
+
+#ifdef HAVE_INT64_TIMESTAMP
+	time->time = pq_getmsgint64(buf);
+#else
+	time->time = pq_getmsgfloat8(buf);
+#endif
+	time->zone = pq_getmsgint(buf, sizeof(time->zone));
+
+	PG_RETURN_TIMETZADT_P(time);
+}
+
+/*
+ *		timetz_send			- converts timetz to binary format
+ */
+Datum
+timetz_send(PG_FUNCTION_ARGS)
+{
+	TimeTzADT  *time = PG_GETARG_TIMETZADT_P(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+#ifdef HAVE_INT64_TIMESTAMP
+	pq_sendint64(&buf, time->time);
+#else
+	pq_sendfloat8(&buf, time->time);
+#endif
+	pq_sendint(&buf, time->zone, sizeof(time->zone));
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+}
+
 
 /* timetz2tm()
  * Convert TIME WITH TIME ZONE data type to POSIX time structure.

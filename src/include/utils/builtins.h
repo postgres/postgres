@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.214 2003/05/09 21:19:50 tgl Exp $
+ * $Id: builtins.h,v 1.215 2003/05/12 23:08:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,6 +57,8 @@ extern Datum has_schema_privilege_id(PG_FUNCTION_ARGS);
 /* bool.c */
 extern Datum boolin(PG_FUNCTION_ARGS);
 extern Datum boolout(PG_FUNCTION_ARGS);
+extern Datum boolrecv(PG_FUNCTION_ARGS);
+extern Datum boolsend(PG_FUNCTION_ARGS);
 extern Datum booleq(PG_FUNCTION_ARGS);
 extern Datum boolne(PG_FUNCTION_ARGS);
 extern Datum boollt(PG_FUNCTION_ARGS);
@@ -71,6 +73,8 @@ extern Datum isnotfalse(PG_FUNCTION_ARGS);
 /* char.c */
 extern Datum charin(PG_FUNCTION_ARGS);
 extern Datum charout(PG_FUNCTION_ARGS);
+extern Datum charrecv(PG_FUNCTION_ARGS);
+extern Datum charsend(PG_FUNCTION_ARGS);
 extern Datum chareq(PG_FUNCTION_ARGS);
 extern Datum charne(PG_FUNCTION_ARGS);
 extern Datum charlt(PG_FUNCTION_ARGS);
@@ -83,9 +87,6 @@ extern Datum charmul(PG_FUNCTION_ARGS);
 extern Datum chardiv(PG_FUNCTION_ARGS);
 extern Datum text_char(PG_FUNCTION_ARGS);
 extern Datum char_text(PG_FUNCTION_ARGS);
-extern Datum cidin(PG_FUNCTION_ARGS);
-extern Datum cidout(PG_FUNCTION_ARGS);
-extern Datum cideq(PG_FUNCTION_ARGS);
 
 /* int.c */
 extern Datum int2in(PG_FUNCTION_ARGS);
@@ -400,16 +401,28 @@ extern const char *assign_regex_flavor(const char *value,
 /* regproc.c */
 extern Datum regprocin(PG_FUNCTION_ARGS);
 extern Datum regprocout(PG_FUNCTION_ARGS);
+extern Datum regprocrecv(PG_FUNCTION_ARGS);
+extern Datum regprocsend(PG_FUNCTION_ARGS);
 extern Datum regprocedurein(PG_FUNCTION_ARGS);
 extern Datum regprocedureout(PG_FUNCTION_ARGS);
+extern Datum regprocedurerecv(PG_FUNCTION_ARGS);
+extern Datum regproceduresend(PG_FUNCTION_ARGS);
 extern Datum regoperin(PG_FUNCTION_ARGS);
 extern Datum regoperout(PG_FUNCTION_ARGS);
+extern Datum regoperrecv(PG_FUNCTION_ARGS);
+extern Datum regopersend(PG_FUNCTION_ARGS);
 extern Datum regoperatorin(PG_FUNCTION_ARGS);
 extern Datum regoperatorout(PG_FUNCTION_ARGS);
+extern Datum regoperatorrecv(PG_FUNCTION_ARGS);
+extern Datum regoperatorsend(PG_FUNCTION_ARGS);
 extern Datum regclassin(PG_FUNCTION_ARGS);
 extern Datum regclassout(PG_FUNCTION_ARGS);
+extern Datum regclassrecv(PG_FUNCTION_ARGS);
+extern Datum regclasssend(PG_FUNCTION_ARGS);
 extern Datum regtypein(PG_FUNCTION_ARGS);
 extern Datum regtypeout(PG_FUNCTION_ARGS);
+extern Datum regtyperecv(PG_FUNCTION_ARGS);
+extern Datum regtypesend(PG_FUNCTION_ARGS);
 extern List *stringToQualifiedNameList(const char *string, const char *caller);
 extern char *format_procedure(Oid procedure_oid);
 extern char *format_operator(Oid operator_oid);
@@ -437,16 +450,20 @@ extern char *quote_qualified_identifier(const char *namespace,
 						   const char *ident);
 
 /* tid.c */
-extern void setLastTid(const ItemPointer tid);
 extern Datum tidin(PG_FUNCTION_ARGS);
 extern Datum tidout(PG_FUNCTION_ARGS);
+extern Datum tidrecv(PG_FUNCTION_ARGS);
+extern Datum tidsend(PG_FUNCTION_ARGS);
 extern Datum tideq(PG_FUNCTION_ARGS);
 extern Datum currtid_byreloid(PG_FUNCTION_ARGS);
 extern Datum currtid_byrelname(PG_FUNCTION_ARGS);
+extern void setLastTid(const ItemPointer tid);
 
 /* varchar.c */
 extern Datum bpcharin(PG_FUNCTION_ARGS);
 extern Datum bpcharout(PG_FUNCTION_ARGS);
+extern Datum bpcharrecv(PG_FUNCTION_ARGS);
+extern Datum bpcharsend(PG_FUNCTION_ARGS);
 extern Datum bpchar(PG_FUNCTION_ARGS);
 extern Datum char_bpchar(PG_FUNCTION_ARGS);
 extern Datum name_bpchar(PG_FUNCTION_ARGS);
@@ -464,6 +481,8 @@ extern Datum hashbpchar(PG_FUNCTION_ARGS);
 
 extern Datum varcharin(PG_FUNCTION_ARGS);
 extern Datum varcharout(PG_FUNCTION_ARGS);
+extern Datum varcharrecv(PG_FUNCTION_ARGS);
+extern Datum varcharsend(PG_FUNCTION_ARGS);
 extern Datum varchar(PG_FUNCTION_ARGS);
 extern Datum varchareq(PG_FUNCTION_ARGS);
 extern Datum varcharne(PG_FUNCTION_ARGS);
@@ -536,6 +555,19 @@ extern Datum bytea_substr_no_len(PG_FUNCTION_ARGS);
 
 /* version.c */
 extern Datum pgsql_version(PG_FUNCTION_ARGS);
+
+/* xid.c */
+extern Datum xidin(PG_FUNCTION_ARGS);
+extern Datum xidout(PG_FUNCTION_ARGS);
+extern Datum xidrecv(PG_FUNCTION_ARGS);
+extern Datum xidsend(PG_FUNCTION_ARGS);
+extern Datum xideq(PG_FUNCTION_ARGS);
+extern Datum xid_age(PG_FUNCTION_ARGS);
+extern Datum cidin(PG_FUNCTION_ARGS);
+extern Datum cidout(PG_FUNCTION_ARGS);
+extern Datum cidrecv(PG_FUNCTION_ARGS);
+extern Datum cidsend(PG_FUNCTION_ARGS);
+extern Datum cideq(PG_FUNCTION_ARGS);
 
 /* like.c */
 extern Datum namelike(PG_FUNCTION_ARGS);
@@ -625,6 +657,8 @@ extern Datum hashmacaddr(PG_FUNCTION_ARGS);
 /* numeric.c */
 extern Datum numeric_in(PG_FUNCTION_ARGS);
 extern Datum numeric_out(PG_FUNCTION_ARGS);
+extern Datum numeric_recv(PG_FUNCTION_ARGS);
+extern Datum numeric_send(PG_FUNCTION_ARGS);
 extern Datum numeric(PG_FUNCTION_ARGS);
 extern Datum numeric_abs(PG_FUNCTION_ARGS);
 extern Datum numeric_uminus(PG_FUNCTION_ARGS);

@@ -1,20 +1,21 @@
 /*-------------------------------------------------------------------------
  *
  * char.c
- *	  Functions for the built-in type "char".
- *	  Functions for the built-in type "cid" (what's that doing here?)
+ *	  Functions for the built-in type "char" (not to be confused with
+ *	  bpchar, which is the SQL CHAR(n) type).
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.34 2003/03/11 21:01:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.35 2003/05/12 23:08:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "libpq/pqformat.h"
 #include "utils/builtins.h"
 
 /*****************************************************************************
@@ -50,6 +51,35 @@ charout(PG_FUNCTION_ARGS)
 	result[0] = ch;
 	result[1] = '\0';
 	PG_RETURN_CSTRING(result);
+}
+
+/*
+ *		charrecv			- converts external binary format to char
+ *
+ * The external representation is one byte, with no character set
+ * conversion.  This is somewhat dubious, perhaps, but in many
+ * cases people use char for a 1-byte binary type.
+ */
+Datum
+charrecv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+
+	PG_RETURN_CHAR(pq_getmsgbyte(buf));
+}
+
+/*
+ *		charsend			- converts char to binary format
+ */
+Datum
+charsend(PG_FUNCTION_ARGS)
+{
+	char		arg1 = PG_GETARG_CHAR(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+	pq_sendbyte(&buf, arg1);
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
 /*****************************************************************************
@@ -195,52 +225,4 @@ char_text(PG_FUNCTION_ARGS)
 		VARATT_SIZEP(result) = VARHDRSZ;
 
 	PG_RETURN_TEXT_P(result);
-}
-
-
-/*****************************************************************************
- *	 USER I/O ROUTINES														 *
- *****************************************************************************/
-
-/*
- *		cidin	- converts CommandId to internal representation.
- */
-Datum
-cidin(PG_FUNCTION_ARGS)
-{
-	char	   *s = PG_GETARG_CSTRING(0);
-	CommandId	c;
-
-	c = atoi(s);
-
-	/* XXX assume that CommandId is 32 bits... */
-	PG_RETURN_INT32((int32) c);
-}
-
-/*
- *		cidout	- converts a cid to external representation.
- */
-Datum
-cidout(PG_FUNCTION_ARGS)
-{
-	/* XXX assume that CommandId is 32 bits... */
-	CommandId	c = PG_GETARG_INT32(0);
-	char	   *result = (char *) palloc(16);
-
-	sprintf(result, "%u", (unsigned int) c);
-	PG_RETURN_CSTRING(result);
-}
-
-/*****************************************************************************
- *	 PUBLIC ROUTINES														 *
- *****************************************************************************/
-
-Datum
-cideq(PG_FUNCTION_ARGS)
-{
-	/* XXX assume that CommandId is 32 bits... */
-	CommandId	arg1 = PG_GETARG_INT32(0);
-	CommandId	arg2 = PG_GETARG_INT32(1);
-
-	PG_RETURN_BOOL(arg1 == arg2);
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nabstime.h,v 1.38 2003/04/04 04:50:44 tgl Exp $
+ * $Id: nabstime.h,v 1.39 2003/05/12 23:08:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,8 +100,10 @@ typedef TimeIntervalData *TimeInterval;
 /*
  * nabstime.c prototypes
  */
-extern Datum nabstimein(PG_FUNCTION_ARGS);
-extern Datum nabstimeout(PG_FUNCTION_ARGS);
+extern Datum abstimein(PG_FUNCTION_ARGS);
+extern Datum abstimeout(PG_FUNCTION_ARGS);
+extern Datum abstimerecv(PG_FUNCTION_ARGS);
+extern Datum abstimesend(PG_FUNCTION_ARGS);
 
 extern Datum abstimeeq(PG_FUNCTION_ARGS);
 extern Datum abstimene(PG_FUNCTION_ARGS);
@@ -118,8 +120,12 @@ extern Datum abstime_timestamptz(PG_FUNCTION_ARGS);
 
 extern Datum reltimein(PG_FUNCTION_ARGS);
 extern Datum reltimeout(PG_FUNCTION_ARGS);
+extern Datum reltimerecv(PG_FUNCTION_ARGS);
+extern Datum reltimesend(PG_FUNCTION_ARGS);
 extern Datum tintervalin(PG_FUNCTION_ARGS);
 extern Datum tintervalout(PG_FUNCTION_ARGS);
+extern Datum tintervalrecv(PG_FUNCTION_ARGS);
+extern Datum tintervalsend(PG_FUNCTION_ARGS);
 extern Datum interval_reltime(PG_FUNCTION_ARGS);
 extern Datum reltime_interval(PG_FUNCTION_ARGS);
 extern Datum mktinterval(PG_FUNCTION_ARGS);

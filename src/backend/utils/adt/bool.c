@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.26 2002/06/20 20:29:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.27 2003/05/12 23:08:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "libpq/pqformat.h"
 #include "utils/builtins.h"
 
 /*****************************************************************************
@@ -92,6 +93,36 @@ boolout(PG_FUNCTION_ARGS)
 	result[0] = (b) ? 't' : 'f';
 	result[1] = '\0';
 	PG_RETURN_CSTRING(result);
+}
+
+/*
+ *		boolrecv			- converts external binary format to bool
+ *
+ * The external representation is one byte.  Any nonzero value is taken
+ * as "true".
+ */
+Datum
+boolrecv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	int			ext;
+
+	ext = pq_getmsgbyte(buf);
+	PG_RETURN_BOOL((ext != 0) ? true : false);
+}
+
+/*
+ *		boolsend			- converts bool to binary format
+ */
+Datum
+boolsend(PG_FUNCTION_ARGS)
+{
+	bool		arg1 = PG_GETARG_BOOL(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+	pq_sendbyte(&buf, arg1 ? 1 : 0);
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
 

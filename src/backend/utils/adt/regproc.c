@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.76 2002/09/18 21:35:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.77 2003/05/12 23:08:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,6 +200,26 @@ regprocout(PG_FUNCTION_ARGS)
 	PG_RETURN_CSTRING(result);
 }
 
+/*
+ *		regprocrecv			- converts external binary format to regproc
+ */
+Datum
+regprocrecv(PG_FUNCTION_ARGS)
+{
+	/* Exactly the same as oidrecv, so share code */
+	return oidrecv(fcinfo);
+}
+
+/*
+ *		regprocsend			- converts regproc to binary format
+ */
+Datum
+regprocsend(PG_FUNCTION_ARGS)
+{
+	/* Exactly the same as oidsend, so share code */
+	return oidsend(fcinfo);
+}
+
 
 /*
  * regprocedurein		- converts "proname(args)" to proc OID
@@ -341,6 +361,26 @@ regprocedureout(PG_FUNCTION_ARGS)
 		result = format_procedure(proid);
 
 	PG_RETURN_CSTRING(result);
+}
+
+/*
+ *		regprocedurerecv			- converts external binary format to regprocedure
+ */
+Datum
+regprocedurerecv(PG_FUNCTION_ARGS)
+{
+	/* Exactly the same as oidrecv, so share code */
+	return oidrecv(fcinfo);
+}
+
+/*
+ *		regproceduresend			- converts regprocedure to binary format
+ */
+Datum
+regproceduresend(PG_FUNCTION_ARGS)
+{
+	/* Exactly the same as oidsend, so share code */
+	return oidsend(fcinfo);
 }
 
 
@@ -506,6 +546,26 @@ regoperout(PG_FUNCTION_ARGS)
 	PG_RETURN_CSTRING(result);
 }
 
+/*
+ *		regoperrecv			- converts external binary format to regoper
+ */
+Datum
+regoperrecv(PG_FUNCTION_ARGS)
+{
+	/* Exactly the same as oidrecv, so share code */
+	return oidrecv(fcinfo);
+}
+
+/*
+ *		regopersend			- converts regoper to binary format
+ */
+Datum
+regopersend(PG_FUNCTION_ARGS)
+{
+	/* Exactly the same as oidsend, so share code */
+	return oidsend(fcinfo);
+}
+
 
 /*
  * regoperatorin		- converts "oprname(args)" to operator OID
@@ -666,6 +726,26 @@ regoperatorout(PG_FUNCTION_ARGS)
 	PG_RETURN_CSTRING(result);
 }
 
+/*
+ *		regoperatorrecv			- converts external binary format to regoperator
+ */
+Datum
+regoperatorrecv(PG_FUNCTION_ARGS)
+{
+	/* Exactly the same as oidrecv, so share code */
+	return oidrecv(fcinfo);
+}
+
+/*
+ *		regoperatorsend			- converts regoperator to binary format
+ */
+Datum
+regoperatorsend(PG_FUNCTION_ARGS)
+{
+	/* Exactly the same as oidsend, so share code */
+	return oidsend(fcinfo);
+}
+
 
 /*
  * regclassin		- converts "classname" to class OID
@@ -804,6 +884,26 @@ regclassout(PG_FUNCTION_ARGS)
 	PG_RETURN_CSTRING(result);
 }
 
+/*
+ *		regclassrecv			- converts external binary format to regclass
+ */
+Datum
+regclassrecv(PG_FUNCTION_ARGS)
+{
+	/* Exactly the same as oidrecv, so share code */
+	return oidrecv(fcinfo);
+}
+
+/*
+ *		regclasssend			- converts regclass to binary format
+ */
+Datum
+regclasssend(PG_FUNCTION_ARGS)
+{
+	/* Exactly the same as oidsend, so share code */
+	return oidsend(fcinfo);
+}
+
 
 /*
  * regtypein		- converts "typename" to type OID
@@ -934,6 +1034,26 @@ regtypeout(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_CSTRING(result);
+}
+
+/*
+ *		regtyperecv			- converts external binary format to regtype
+ */
+Datum
+regtyperecv(PG_FUNCTION_ARGS)
+{
+	/* Exactly the same as oidrecv, so share code */
+	return oidrecv(fcinfo);
+}
+
+/*
+ *		regtypesend			- converts regtype to binary format
+ */
+Datum
+regtypesend(PG_FUNCTION_ARGS)
+{
+	/* Exactly the same as oidsend, so share code */
+	return oidsend(fcinfo);
 }
 
 

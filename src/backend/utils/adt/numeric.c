@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.60 2003/04/21 00:22:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.61 2003/05/12 23:08:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include <errno.h>
 
 #include "catalog/pg_type.h"
+#include "libpq/pqformat.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/int8.h"
@@ -368,6 +369,79 @@ numeric_out(PG_FUNCTION_ARGS)
 	free_var(&x);
 
 	PG_RETURN_CSTRING(str);
+}
+
+/*
+ *		numeric_recv			- converts external binary format to numeric
+ *
+ * External format is a sequence of int16's:
+ * ndigits, weight, sign, dscale, NumericDigits.
+ */
+Datum
+numeric_recv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	NumericVar	value;
+	Numeric		res;
+	int			len,
+				i;
+
+	init_var(&value);
+
+	len = (uint16) pq_getmsgint(buf, sizeof(uint16));
+	if (len < 0 || len > NUMERIC_MAX_PRECISION + NUMERIC_MAX_RESULT_SCALE)
+		elog(ERROR, "Invalid length in external numeric");
+
+	alloc_var(&value, len);
+
+	value.weight = (int16) pq_getmsgint(buf, sizeof(int16));
+	value.sign = (uint16) pq_getmsgint(buf, sizeof(uint16));
+	if (!(value.sign == NUMERIC_POS ||
+		  value.sign == NUMERIC_NEG ||
+		  value.sign == NUMERIC_NAN))
+		elog(ERROR, "Invalid sign in external numeric");
+	value.dscale = (uint16) pq_getmsgint(buf, sizeof(uint16));
+	for (i = 0; i < len; i++)
+	{
+		NumericDigit	d = pq_getmsgint(buf, sizeof(NumericDigit));
+
+		if (d < 0 || d >= NBASE)
+			elog(ERROR, "Invalid digit in external numeric");
+		value.digits[i] = d;
+	}
+
+	res = make_result(&value);
+	free_var(&value);
+
+	PG_RETURN_NUMERIC(res);
+}
+
+/*
+ *		numeric_send			- converts numeric to binary format
+ */
+Datum
+numeric_send(PG_FUNCTION_ARGS)
+{
+	Numeric		num = PG_GETARG_NUMERIC(0);
+	NumericVar	x;
+	StringInfoData buf;
+	int			i;
+
+	init_var(&x);
+	set_var_from_num(num, &x);
+
+	pq_begintypsend(&buf);
+
+	pq_sendint(&buf, x.ndigits, sizeof(int16));
+	pq_sendint(&buf, x.weight, sizeof(int16));
+	pq_sendint(&buf, x.sign, sizeof(int16));
+	pq_sendint(&buf, x.dscale, sizeof(int16));
+	for (i = 0; i < x.ndigits; i++)
+		pq_sendint(&buf, x.digits[i], sizeof(NumericDigit));
+
+	free_var(&x);
+
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
 

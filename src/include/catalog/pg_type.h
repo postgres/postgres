@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.143 2003/05/09 21:19:50 tgl Exp $
+ * $Id: pg_type.h,v 1.144 2003/05/12 23:08:51 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -238,7 +238,7 @@ typedef FormData_pg_type *Form_pg_type;
 */
 
 /* OIDS 1 - 99 */
-DATA(insert OID = 16 (	bool	   PGNSP PGUID	1 t b t \054 0	 0 boolin boolout - - c p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 16 (	bool	   PGNSP PGUID	1 t b t \054 0	 0 boolin boolout boolrecv boolsend c p f 0 -1 0 _null_ _null_ ));
 DESCR("boolean, 'true'/'false'");
 #define BOOLOID			16
 
@@ -246,7 +246,7 @@ DATA(insert OID = 17 (	bytea	   PGNSP PGUID -1 f b t \054 0	0 byteain byteaout b
 DESCR("variable-length string, binary values escaped");
 #define BYTEAOID		17
 
-DATA(insert OID = 18 (	char	   PGNSP PGUID	1 t b t \054 0	 0 charin charout - - c p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 18 (	char	   PGNSP PGUID	1 t b t \054 0	 0 charin charout charrecv charsend c p f 0 -1 0 _null_ _null_ ));
 DESCR("single character");
 #define CHAROID			18
 
@@ -270,7 +270,7 @@ DATA(insert OID = 23 (	int4	   PGNSP PGUID	4 t b t \054 0	 0 int4in int4out int4
 DESCR("-2 billion to 2 billion integer, 4-byte storage");
 #define INT4OID			23
 
-DATA(insert OID = 24 (	regproc    PGNSP PGUID	4 t b t \054 0	 0 regprocin regprocout - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 24 (	regproc    PGNSP PGUID	4 t b t \054 0	 0 regprocin regprocout regprocrecv regprocsend i p f 0 -1 0 _null_ _null_ ));
 DESCR("registered procedure");
 #define REGPROCOID		24
 
@@ -282,15 +282,15 @@ DATA(insert OID = 26 (	oid		   PGNSP PGUID	4 t b t \054 0	 0 oidin oidout oidrec
 DESCR("object identifier(oid), maximum 4 billion");
 #define OIDOID			26
 
-DATA(insert OID = 27 (	tid		   PGNSP PGUID	6 f b t \054 0	 0 tidin tidout - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 27 (	tid		   PGNSP PGUID	6 f b t \054 0	 0 tidin tidout tidrecv tidsend i p f 0 -1 0 _null_ _null_ ));
 DESCR("(Block, offset), physical location of tuple");
 #define TIDOID		27
 
-DATA(insert OID = 28 (	xid		   PGNSP PGUID	4 t b t \054 0	 0 xidin xidout - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 28 (	xid		   PGNSP PGUID	4 t b t \054 0	 0 xidin xidout xidrecv xidsend i p f 0 -1 0 _null_ _null_ ));
 DESCR("transaction id");
 #define XIDOID 28
 
-DATA(insert OID = 29 (	cid		   PGNSP PGUID	4 t b t \054 0	 0 cidin cidout - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 29 (	cid		   PGNSP PGUID	4 t b t \054 0	 0 cidin cidout cidrecv cidsend i p f 0 -1 0 _null_ _null_ ));
 DESCR("command identifier type, sequence in transaction id");
 #define CIDOID 29
 
@@ -353,13 +353,13 @@ DESCR("single-precision floating point number, 4-byte storage");
 DATA(insert OID = 701 (  float8    PGNSP PGUID	8 f b t \054 0	 0 float8in float8out float8recv float8send d p f 0 -1 0 _null_ _null_ ));
 DESCR("double-precision floating point number, 8-byte storage");
 #define FLOAT8OID 701
-DATA(insert OID = 702 (  abstime   PGNSP PGUID	4 t b t \054 0	 0 nabstimein nabstimeout - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 702 (  abstime   PGNSP PGUID	4 t b t \054 0	 0 abstimein abstimeout abstimerecv abstimesend i p f 0 -1 0 _null_ _null_ ));
 DESCR("absolute, limited-range date and time (Unix system time)");
 #define ABSTIMEOID		702
-DATA(insert OID = 703 (  reltime   PGNSP PGUID	4 t b t \054 0	 0 reltimein reltimeout - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 703 (  reltime   PGNSP PGUID	4 t b t \054 0	 0 reltimein reltimeout reltimerecv reltimesend i p f 0 -1 0 _null_ _null_ ));
 DESCR("relative, limited-range time interval (Unix delta time)");
 #define RELTIMEOID		703
-DATA(insert OID = 704 (  tinterval PGNSP PGUID 12 f b t \054 0	 0 tintervalin tintervalout - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 704 (  tinterval PGNSP PGUID 12 f b t \054 0	 0 tintervalin tintervalout tintervalrecv tintervalsend i p f 0 -1 0 _null_ _null_ ));
 DESCR("(abstime,abstime), time interval");
 #define TINTERVALOID	704
 DATA(insert OID = 705 (  unknown   PGNSP PGUID -1 f b t \054 0	 0 unknownin unknownout unknownrecv unknownsend i p f 0 -1 0 _null_ _null_ ));
@@ -423,49 +423,49 @@ DATA(insert OID = 1034 (  _aclitem	 PGNSP PGUID -1 f b t \054 0 1033 array_in ar
 DATA(insert OID = 1040 (  _macaddr	 PGNSP PGUID -1 f b t \054 0  829 array_in array_out array_recv array_send i x f 0 -1 0 _null_ _null_ ));
 DATA(insert OID = 1041 (  _inet    PGNSP PGUID -1 f b t \054 0	869 array_in array_out array_recv array_send i x f 0 -1 0 _null_ _null_ ));
 DATA(insert OID = 651  (  _cidr    PGNSP PGUID -1 f b t \054 0	650 array_in array_out array_recv array_send i x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1042 ( bpchar		 PGNSP PGUID -1 f b t \054 0	0 bpcharin bpcharout - - i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 1042 ( bpchar		 PGNSP PGUID -1 f b t \054 0	0 bpcharin bpcharout bpcharrecv bpcharsend i x f 0 -1 0 _null_ _null_ ));
 DESCR("char(length), blank-padded string, fixed storage length");
 #define BPCHAROID		1042
-DATA(insert OID = 1043 ( varchar	 PGNSP PGUID -1 f b t \054 0	0 varcharin varcharout - - i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 1043 ( varchar	 PGNSP PGUID -1 f b t \054 0	0 varcharin varcharout varcharrecv varcharsend i x f 0 -1 0 _null_ _null_ ));
 DESCR("varchar(length), non-blank-padded string, variable storage length");
 #define VARCHAROID		1043
 
-DATA(insert OID = 1082 ( date		 PGNSP PGUID	4 t b t \054 0	0 date_in date_out - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 1082 ( date		 PGNSP PGUID	4 t b t \054 0	0 date_in date_out date_recv date_send i p f 0 -1 0 _null_ _null_ ));
 DESCR("ANSI SQL date");
 #define DATEOID			1082
-DATA(insert OID = 1083 ( time		 PGNSP PGUID	8 f b t \054 0	0 time_in time_out - - d p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 1083 ( time		 PGNSP PGUID	8 f b t \054 0	0 time_in time_out time_recv time_send d p f 0 -1 0 _null_ _null_ ));
 DESCR("hh:mm:ss, ANSI SQL time");
 #define TIMEOID			1083
 
 /* OIDS 1100 - 1199 */
-DATA(insert OID = 1114 ( timestamp	 PGNSP PGUID	8 f b t \054 0	0 timestamp_in timestamp_out - - d p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 1114 ( timestamp	 PGNSP PGUID	8 f b t \054 0	0 timestamp_in timestamp_out timestamp_recv timestamp_send d p f 0 -1 0 _null_ _null_ ));
 DESCR("date and time");
 #define TIMESTAMPOID	1114
 DATA(insert OID = 1115 ( _timestamp  PGNSP PGUID	-1 f b t \054 0 1114 array_in array_out array_recv array_send d x f 0 -1 0 _null_ _null_ ));
 DATA(insert OID = 1182 ( _date		 PGNSP PGUID	-1 f b t \054 0 1082 array_in array_out array_recv array_send i x f 0 -1 0 _null_ _null_ ));
 DATA(insert OID = 1183 ( _time		 PGNSP PGUID	-1 f b t \054 0 1083 array_in array_out array_recv array_send d x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1184 ( timestamptz PGNSP PGUID	8 f b t \054 0	0 timestamptz_in timestamptz_out - - d p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 1184 ( timestamptz PGNSP PGUID	8 f b t \054 0	0 timestamptz_in timestamptz_out timestamptz_recv timestamptz_send d p f 0 -1 0 _null_ _null_ ));
 DESCR("date and time with time zone");
 #define TIMESTAMPTZOID	1184
 DATA(insert OID = 1185 ( _timestamptz PGNSP PGUID -1 f b t \054 0	1184 array_in array_out array_recv array_send d x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1186 ( interval	 PGNSP PGUID 12 f b t \054 0	0 interval_in interval_out - - d p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 1186 ( interval	 PGNSP PGUID 12 f b t \054 0	0 interval_in interval_out interval_recv interval_send d p f 0 -1 0 _null_ _null_ ));
 DESCR("@ <number> <units>, time interval");
 #define INTERVALOID		1186
 DATA(insert OID = 1187 ( _interval	 PGNSP PGUID	-1 f b t \054 0 1186 array_in array_out array_recv array_send d x f 0 -1 0 _null_ _null_ ));
 
 /* OIDS 1200 - 1299 */
 DATA(insert OID = 1231 (  _numeric	 PGNSP PGUID -1 f b t \054 0	1700 array_in array_out array_recv array_send i x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1266 ( timetz		 PGNSP PGUID 12 f b t \054 0	0 timetz_in timetz_out - - d p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 1266 ( timetz		 PGNSP PGUID 12 f b t \054 0	0 timetz_in timetz_out timetz_recv timetz_send d p f 0 -1 0 _null_ _null_ ));
 DESCR("hh:mm:ss, ANSI SQL time");
 #define TIMETZOID		1266
 DATA(insert OID = 1270 ( _timetz	 PGNSP PGUID -1 f b t \054 0	1266 array_in array_out array_recv array_send d x f 0 -1 0 _null_ _null_ ));
 
 /* OIDS 1500 - 1599 */
-DATA(insert OID = 1560 ( bit		 PGNSP PGUID -1 f b t \054 0	0 bit_in bit_out - - i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 1560 ( bit		 PGNSP PGUID -1 f b t \054 0	0 bit_in bit_out bit_recv bit_send i x f 0 -1 0 _null_ _null_ ));
 DESCR("fixed-length bit string");
 #define BITOID	 1560
 DATA(insert OID = 1561 ( _bit		 PGNSP PGUID -1 f b t \054 0	1560 array_in array_out array_recv array_send i x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1562 ( varbit		 PGNSP PGUID -1 f b t \054 0	0 varbit_in varbit_out - - i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 1562 ( varbit		 PGNSP PGUID -1 f b t \054 0	0 varbit_in varbit_out varbit_recv varbit_send i x f 0 -1 0 _null_ _null_ ));
 DESCR("variable-length bit string");
 #define VARBITOID	  1562
 DATA(insert OID = 1563 ( _varbit	 PGNSP PGUID -1 f b t \054 0	1562 array_in array_out array_recv array_send i x f 0 -1 0 _null_ _null_ ));
@@ -473,7 +473,7 @@ DATA(insert OID = 1563 ( _varbit	 PGNSP PGUID -1 f b t \054 0	1562 array_in arra
 /* OIDS 1600 - 1699 */
 
 /* OIDS 1700 - 1799 */
-DATA(insert OID = 1700 ( numeric	   PGNSP PGUID -1 f b t \054 0	0 numeric_in numeric_out - - i m f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 1700 ( numeric	   PGNSP PGUID -1 f b t \054 0	0 numeric_in numeric_out numeric_recv numeric_send i m f 0 -1 0 _null_ _null_ ));
 DESCR("numeric(precision, decimal), arbitrary precision number");
 #define NUMERICOID		1700
 
@@ -484,23 +484,23 @@ DESCR("reference cursor (portal name)");
 /* OIDS 2200 - 2299 */
 DATA(insert OID = 2201 ( _refcursor    PGNSP PGUID -1 f b t \054 0 1790 array_in array_out array_recv array_send i x f 0 -1 0 _null_ _null_ ));
 
-DATA(insert OID = 2202 ( regprocedure  PGNSP PGUID	4 t b t \054 0	 0 regprocedurein regprocedureout - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 2202 ( regprocedure  PGNSP PGUID	4 t b t \054 0	 0 regprocedurein regprocedureout regprocedurerecv regproceduresend i p f 0 -1 0 _null_ _null_ ));
 DESCR("registered procedure (with args)");
 #define REGPROCEDUREOID 2202
 
-DATA(insert OID = 2203 ( regoper	   PGNSP PGUID	4 t b t \054 0	 0 regoperin regoperout - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 2203 ( regoper	   PGNSP PGUID	4 t b t \054 0	 0 regoperin regoperout regoperrecv regopersend i p f 0 -1 0 _null_ _null_ ));
 DESCR("registered operator");
 #define REGOPEROID		2203
 
-DATA(insert OID = 2204 ( regoperator   PGNSP PGUID	4 t b t \054 0	 0 regoperatorin regoperatorout - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 2204 ( regoperator   PGNSP PGUID	4 t b t \054 0	 0 regoperatorin regoperatorout regoperatorrecv regoperatorsend i p f 0 -1 0 _null_ _null_ ));
 DESCR("registered operator (with args)");
 #define REGOPERATOROID	2204
 
-DATA(insert OID = 2205 ( regclass	   PGNSP PGUID	4 t b t \054 0	 0 regclassin regclassout - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 2205 ( regclass	   PGNSP PGUID	4 t b t \054 0	 0 regclassin regclassout regclassrecv regclasssend i p f 0 -1 0 _null_ _null_ ));
 DESCR("registered class");
 #define REGCLASSOID		2205
 
-DATA(insert OID = 2206 ( regtype	   PGNSP PGUID	4 t b t \054 0	 0 regtypein regtypeout - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 2206 ( regtype	   PGNSP PGUID	4 t b t \054 0	 0 regtypein regtypeout regtyperecv regtypesend i p f 0 -1 0 _null_ _null_ ));
 DESCR("registered type");
 #define REGTYPEOID		2206
 

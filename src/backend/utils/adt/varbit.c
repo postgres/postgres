@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.29 2002/11/13 00:39:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.30 2003/05/12 23:08:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "postgres.h"
 
 #include "catalog/pg_type.h"
+#include "libpq/pqformat.h"
 #include "utils/array.h"
 #include "utils/fmgroids.h"
 #include "utils/memutils.h"
@@ -202,6 +203,26 @@ bit_out(PG_FUNCTION_ARGS)
 
 	PG_RETURN_CSTRING(result);
 #endif
+}
+
+/*
+ *		bit_recv			- converts external binary format to bit
+ */
+Datum
+bit_recv(PG_FUNCTION_ARGS)
+{
+	/* Exactly the same as varbit_recv, so share code */
+	return varbit_recv(fcinfo);
+}
+
+/*
+ *		bit_send			- converts bit to binary format
+ */
+Datum
+bit_send(PG_FUNCTION_ARGS)
+{
+	/* Exactly the same as varbit_send, so share code */
+	return varbit_send(fcinfo);
 }
 
 /* bit()
@@ -405,6 +426,58 @@ varbit_out(PG_FUNCTION_ARGS)
 	*r = '\0';
 
 	PG_RETURN_CSTRING(result);
+}
+
+/*
+ *		varbit_recv			- converts external binary format to varbit
+ *
+ * External format is the bitlen as an int32, then the byte array.
+ */
+Datum
+varbit_recv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	VarBit	   *result;
+	int			len,
+				bitlen;
+	int			ipad;
+	bits8		mask;
+
+	bitlen = pq_getmsgint(buf, sizeof(int32));
+	if (bitlen < 0)
+		elog(ERROR, "Invalid length in external bit string");
+
+	len = VARBITTOTALLEN(bitlen);
+	result = (VarBit *) palloc(len);
+	VARATT_SIZEP(result) = len;
+	VARBITLEN(result) = bitlen;
+
+	pq_copymsgbytes(buf, (char *) VARBITS(result), VARBITBYTES(result));
+
+	/* Make sure last byte is zero-padded if needed */
+	ipad = VARBITPAD(result);
+	if (ipad > 0)
+	{
+		mask = BITMASK << ipad;
+		*(VARBITS(result) + VARBITBYTES(result) - 1) &= mask;
+	}
+
+	PG_RETURN_VARBIT_P(result);
+}
+
+/*
+ *		varbit_send			- converts varbit to binary format
+ */
+Datum
+varbit_send(PG_FUNCTION_ARGS)
+{
+	VarBit	   *s = PG_GETARG_VARBIT_P(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+	pq_sendint(&buf, VARBITLEN(s), sizeof(int32));
+	pq_sendbytes(&buf, VARBITS(s), VARBITBYTES(s));
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
 /* varbit()

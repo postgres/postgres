@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.107 2003/05/04 04:30:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.108 2003/05/12 23:08:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include <limits.h>
 
 #include "access/xact.h"
+#include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
 
@@ -347,11 +348,11 @@ tm2abstime(struct tm * tm, int tz)
 }
 
 
-/* nabstimein()
+/* abstimein()
  * Decode date/time string and return abstime.
  */
 Datum
-nabstimein(PG_FUNCTION_ARGS)
+abstimein(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
 	AbsoluteTime result;
@@ -409,11 +410,11 @@ nabstimein(PG_FUNCTION_ARGS)
 }
 
 
-/* nabstimeout()
+/* abstimeout()
  * Given an AbsoluteTime return the English text version of the date
  */
 Datum
-nabstimeout(PG_FUNCTION_ARGS)
+abstimeout(PG_FUNCTION_ARGS)
 {
 	AbsoluteTime time = PG_GETARG_ABSOLUTETIME(0);
 	char	   *result;
@@ -448,6 +449,31 @@ nabstimeout(PG_FUNCTION_ARGS)
 
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
+}
+
+/*
+ *		abstimerecv			- converts external binary format to abstime
+ */
+Datum
+abstimerecv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+
+	PG_RETURN_ABSOLUTETIME((AbsoluteTime) pq_getmsgint(buf, sizeof(AbsoluteTime)));
+}
+
+/*
+ *		abstimesend			- converts abstime to binary format
+ */
+Datum
+abstimesend(PG_FUNCTION_ARGS)
+{
+	AbsoluteTime time = PG_GETARG_ABSOLUTETIME(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+	pq_sendint(&buf, time, sizeof(time));
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
 
@@ -751,7 +777,6 @@ reltimein(PG_FUNCTION_ARGS)
 	PG_RETURN_RELATIVETIME(result);
 }
 
-
 /*
  *		reltimeout		- converts the internal format to a reltime string
  */
@@ -769,6 +794,31 @@ reltimeout(PG_FUNCTION_ARGS)
 
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
+}
+
+/*
+ *		reltimerecv			- converts external binary format to reltime
+ */
+Datum
+reltimerecv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+
+	PG_RETURN_RELATIVETIME((RelativeTime) pq_getmsgint(buf, sizeof(RelativeTime)));
+}
+
+/*
+ *		reltimesend			- converts reltime to binary format
+ */
+Datum
+reltimesend(PG_FUNCTION_ARGS)
+{
+	RelativeTime time = PG_GETARG_RELATIVETIME(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+	pq_sendint(&buf, time, sizeof(time));
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
 
@@ -817,7 +867,6 @@ tintervalin(PG_FUNCTION_ARGS)
 
 /*
  *		tintervalout	- converts an internal interval format to a string
- *
  */
 Datum
 tintervalout(PG_FUNCTION_ARGS)
@@ -832,18 +881,55 @@ tintervalout(PG_FUNCTION_ARGS)
 		strcat(i_str, INVALID_INTERVAL_STR);
 	else
 	{
-		p = DatumGetCString(DirectFunctionCall1(nabstimeout,
+		p = DatumGetCString(DirectFunctionCall1(abstimeout,
 							   AbsoluteTimeGetDatum(interval->data[0])));
 		strcat(i_str, p);
 		pfree(p);
 		strcat(i_str, "\" \"");
-		p = DatumGetCString(DirectFunctionCall1(nabstimeout,
+		p = DatumGetCString(DirectFunctionCall1(abstimeout,
 							   AbsoluteTimeGetDatum(interval->data[1])));
 		strcat(i_str, p);
 		pfree(p);
 	}
 	strcat(i_str, "\"]\0");
 	PG_RETURN_CSTRING(i_str);
+}
+
+/*
+ *		tintervalrecv			- converts external binary format to tinterval
+ */
+Datum
+tintervalrecv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	TimeInterval interval;
+
+	interval = (TimeInterval) palloc(sizeof(TimeIntervalData));
+
+	interval->status = pq_getmsgint(buf, sizeof(interval->status));
+	if (!(interval->status == T_INTERVAL_INVAL ||
+		  interval->status == T_INTERVAL_VALID))
+		elog(ERROR, "Invalid status in external tinterval");
+	interval->data[0] = pq_getmsgint(buf, sizeof(interval->data[0]));
+	interval->data[1] = pq_getmsgint(buf, sizeof(interval->data[1]));
+
+	PG_RETURN_TIMEINTERVAL(interval);
+}
+
+/*
+ *		tintervalsend			- converts tinterval to binary format
+ */
+Datum
+tintervalsend(PG_FUNCTION_ARGS)
+{
+	TimeInterval interval = PG_GETARG_TIMEINTERVAL(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+	pq_sendint(&buf, interval->status, sizeof(interval->status));
+	pq_sendint(&buf, interval->data[0], sizeof(interval->data[0]));
+	pq_sendint(&buf, interval->data[1], sizeof(interval->data[1]));
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
 
@@ -1558,7 +1644,7 @@ istinterval(char *i_string,
 		p1++;
 	}
 	/* get the first date */
-	*i_start = DatumGetAbsoluteTime(DirectFunctionCall1(nabstimein,
+	*i_start = DatumGetAbsoluteTime(DirectFunctionCall1(abstimein,
 													CStringGetDatum(p)));
 	/* rechange NULL at the end of the first date to a "'" */
 	*p1 = '"';
@@ -1586,7 +1672,7 @@ istinterval(char *i_string,
 		p1++;
 	}
 	/* get the second date */
-	*i_end = DatumGetAbsoluteTime(DirectFunctionCall1(nabstimein,
+	*i_end = DatumGetAbsoluteTime(DirectFunctionCall1(abstimein,
 													CStringGetDatum(p)));
 	/* rechange NULL at the end of the first date to a ''' */
 	*p1 = '"';

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/libpq/crypt.c,v 1.52 2003/04/17 22:26:01 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/libpq/crypt.c,v 1.53 2003/05/12 23:08:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,7 +145,7 @@ md5_crypt_verify(const Port *port, const char *user, char *client_pass)
 		if (!valuntil)
 			vuntil = INVALID_ABSTIME;
 		else
-			vuntil = DatumGetAbsoluteTime(DirectFunctionCall1(nabstimein,
+			vuntil = DatumGetAbsoluteTime(DirectFunctionCall1(abstimein,
 											 CStringGetDatum(valuntil)));
 		current = GetCurrentAbsoluteTime();
 		if (vuntil != INVALID_ABSTIME && vuntil < current)

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: timestamp.h,v 1.29 2002/09/04 20:31:46 momjian Exp $
+ * $Id: timestamp.h,v 1.30 2003/05/12 23:08:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,6 +155,8 @@ typedef double fsec_t;
 
 extern Datum timestamp_in(PG_FUNCTION_ARGS);
 extern Datum timestamp_out(PG_FUNCTION_ARGS);
+extern Datum timestamp_recv(PG_FUNCTION_ARGS);
+extern Datum timestamp_send(PG_FUNCTION_ARGS);
 extern Datum timestamp_scale(PG_FUNCTION_ARGS);
 extern Datum timestamp_eq(PG_FUNCTION_ARGS);
 extern Datum timestamp_ne(PG_FUNCTION_ARGS);
@@ -169,6 +171,8 @@ extern Datum timestamp_larger(PG_FUNCTION_ARGS);
 
 extern Datum interval_in(PG_FUNCTION_ARGS);
 extern Datum interval_out(PG_FUNCTION_ARGS);
+extern Datum interval_recv(PG_FUNCTION_ARGS);
+extern Datum interval_send(PG_FUNCTION_ARGS);
 extern Datum interval_scale(PG_FUNCTION_ARGS);
 extern Datum interval_eq(PG_FUNCTION_ARGS);
 extern Datum interval_ne(PG_FUNCTION_ARGS);
@@ -196,6 +200,8 @@ extern Datum timestamp_timestamptz(PG_FUNCTION_ARGS);
 
 extern Datum timestamptz_in(PG_FUNCTION_ARGS);
 extern Datum timestamptz_out(PG_FUNCTION_ARGS);
+extern Datum timestamptz_recv(PG_FUNCTION_ARGS);
+extern Datum timestamptz_send(PG_FUNCTION_ARGS);
 extern Datum timestamptz_scale(PG_FUNCTION_ARGS);
 extern Datum timestamptz_timestamp(PG_FUNCTION_ARGS);
 extern Datum timestamptz_zone(PG_FUNCTION_ARGS);

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.116 2003/01/27 00:47:37 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.117 2003/05/12 23:08:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -324,7 +324,7 @@ write_user_file(Relation urel)
 		if (isnull)
 			valuntil = pstrdup("");
 		else
-			valuntil = DatumGetCString(DirectFunctionCall1(nabstimeout, datum));
+			valuntil = DatumGetCString(DirectFunctionCall1(abstimeout, datum));
 
 		/*
 		 * Check for illegal characters in the username and password.
@@ -649,7 +649,7 @@ CreateUser(CreateUserStmt *stmt)
 
 	if (validUntil)
 		new_record[Anum_pg_shadow_valuntil - 1] =
-			DirectFunctionCall1(nabstimein, CStringGetDatum(validUntil));
+			DirectFunctionCall1(abstimein, CStringGetDatum(validUntil));
 	else
 		new_record_nulls[Anum_pg_shadow_valuntil - 1] = 'n';
 
@@ -851,7 +851,7 @@ AlterUser(AlterUserStmt *stmt)
 	if (validUntil)
 	{
 		new_record[Anum_pg_shadow_valuntil - 1] =
-			DirectFunctionCall1(nabstimein, CStringGetDatum(validUntil));
+			DirectFunctionCall1(abstimein, CStringGetDatum(validUntil));
 		new_record_repl[Anum_pg_shadow_valuntil - 1] = 'r';
 	}
 

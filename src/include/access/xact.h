@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.50 2003/04/26 20:22:59 tgl Exp $
+ * $Id: xact.h,v 1.51 2003/05/12 23:08:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,11 +139,5 @@ extern void XactPopRollback(void);
 extern void xact_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void xact_undo(XLogRecPtr lsn, XLogRecord *record);
 extern void xact_desc(char *buf, uint8 xl_info, char *rec);
-
-/* defined in xid.c */
-extern Datum xidin(PG_FUNCTION_ARGS);
-extern Datum xidout(PG_FUNCTION_ARGS);
-extern Datum xideq(PG_FUNCTION_ARGS);
-extern Datum xid_age(PG_FUNCTION_ARGS);
 
 #endif   /* XACT_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.83 2003/04/07 15:04:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.84 2003/05/12 23:08:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "access/hash.h"
 #include "access/xact.h"
 #include "catalog/pg_type.h"
+#include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
@@ -141,6 +142,43 @@ timestamp_out(PG_FUNCTION_ARGS)
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
 }
+
+/*
+ *		timestamp_recv			- converts external binary format to timestamp
+ *
+ * We make no attempt to provide compatibility between int and float
+ * timestamp representations ...
+ */
+Datum
+timestamp_recv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+
+#ifdef HAVE_INT64_TIMESTAMP
+	PG_RETURN_TIMESTAMP((Timestamp) pq_getmsgint64(buf));
+#else
+	PG_RETURN_TIMESTAMP((Timestamp) pq_getmsgfloat8(buf));
+#endif
+}
+
+/*
+ *		timestamp_send			- converts timestamp to binary format
+ */
+Datum
+timestamp_send(PG_FUNCTION_ARGS)
+{
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+#ifdef HAVE_INT64_TIMESTAMP
+	pq_sendint64(&buf, timestamp);
+#else
+	pq_sendfloat8(&buf, timestamp);
+#endif
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+}
+
 
 /* timestamp_scale()
  * Adjust time type for specified scale factor.
@@ -300,7 +338,7 @@ timestamptz_in(PG_FUNCTION_ARGS)
 Datum
 timestamptz_out(PG_FUNCTION_ARGS)
 {
-	TimestampTz dt = PG_GETARG_TIMESTAMP(0);
+	TimestampTz dt = PG_GETARG_TIMESTAMPTZ(0);
 	char	   *result;
 	int			tz;
 	struct tm	tt,
@@ -320,6 +358,43 @@ timestamptz_out(PG_FUNCTION_ARGS)
 	PG_RETURN_CSTRING(result);
 }
 
+/*
+ *		timestamptz_recv			- converts external binary format to timestamptz
+ *
+ * We make no attempt to provide compatibility between int and float
+ * timestamp representations ...
+ */
+Datum
+timestamptz_recv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+
+#ifdef HAVE_INT64_TIMESTAMP
+	PG_RETURN_TIMESTAMPTZ((TimestampTz) pq_getmsgint64(buf));
+#else
+	PG_RETURN_TIMESTAMPTZ((TimestampTz) pq_getmsgfloat8(buf));
+#endif
+}
+
+/*
+ *		timestamptz_send			- converts timestamptz to binary format
+ */
+Datum
+timestamptz_send(PG_FUNCTION_ARGS)
+{
+	TimestampTz	timestamp = PG_GETARG_TIMESTAMPTZ(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+#ifdef HAVE_INT64_TIMESTAMP
+	pq_sendint64(&buf, timestamp);
+#else
+	pq_sendfloat8(&buf, timestamp);
+#endif
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+}
+
+
 /* timestamptz_scale()
  * Adjust time type for specified scale factor.
  * Used by PostgreSQL type system to stuff columns.
@@ -327,7 +402,7 @@ timestamptz_out(PG_FUNCTION_ARGS)
 Datum
 timestamptz_scale(PG_FUNCTION_ARGS)
 {
-	TimestampTz timestamp = PG_GETARG_TIMESTAMP(0);
+	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(0);
 	int32		typmod = PG_GETARG_INT32(1);
 	TimestampTz result;
 
@@ -422,6 +497,47 @@ interval_out(PG_FUNCTION_ARGS)
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
 }
+
+/*
+ *		interval_recv			- converts external binary format to interval
+ */
+Datum
+interval_recv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	Interval   *interval;
+
+	interval = (Interval *) palloc(sizeof(Interval));
+
+#ifdef HAVE_INT64_TIMESTAMP
+	interval->time = pq_getmsgint64(buf);
+#else
+	interval->time = pq_getmsgfloat8(buf);
+#endif
+	interval->month = pq_getmsgint(buf, sizeof(interval->month));
+
+	PG_RETURN_INTERVAL_P(interval);
+}
+
+/*
+ *		interval_send			- converts interval to binary format
+ */
+Datum
+interval_send(PG_FUNCTION_ARGS)
+{
+	Interval   *interval = PG_GETARG_INTERVAL_P(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+#ifdef HAVE_INT64_TIMESTAMP
+	pq_sendint64(&buf, interval->time);
+#else
+	pq_sendfloat8(&buf, interval->time);
+#endif
+	pq_sendint(&buf, interval->month, sizeof(interval->month));
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+}
+
 
 /* interval_scale()
  * Adjust interval type for specified fields.
@@ -1594,7 +1710,7 @@ timestamp_mi_span(PG_FUNCTION_ARGS)
 Datum
 timestamptz_pl_span(PG_FUNCTION_ARGS)
 {
-	TimestampTz timestamp = PG_GETARG_TIMESTAMP(0);
+	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(0);
 	Interval   *span = PG_GETARG_INTERVAL_P(1);
 	TimestampTz result;
 	int			tz;
@@ -1651,7 +1767,7 @@ timestamptz_pl_span(PG_FUNCTION_ARGS)
 Datum
 timestamptz_mi_span(PG_FUNCTION_ARGS)
 {
-	TimestampTz timestamp = PG_GETARG_TIMESTAMP(0);
+	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(0);
 	Interval   *span = PG_GETARG_INTERVAL_P(1);
 	Interval	tspan;
 
@@ -2094,8 +2210,8 @@ timestamp_age(PG_FUNCTION_ARGS)
 Datum
 timestamptz_age(PG_FUNCTION_ARGS)
 {
-	TimestampTz dt1 = PG_GETARG_TIMESTAMP(0);
-	TimestampTz dt2 = PG_GETARG_TIMESTAMP(1);
+	TimestampTz dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	TimestampTz dt2 = PG_GETARG_TIMESTAMPTZ(1);
 	Interval   *result;
 	fsec_t		fsec,
 				fsec1,
@@ -2463,7 +2579,7 @@ Datum
 timestamptz_trunc(PG_FUNCTION_ARGS)
 {
 	text	   *units = PG_GETARG_TEXT_P(0);
-	TimestampTz timestamp = PG_GETARG_TIMESTAMP(1);
+	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(1);
 	TimestampTz result;
 	int			tz;
 	int			type,
@@ -2918,7 +3034,7 @@ Datum
 timestamptz_part(PG_FUNCTION_ARGS)
 {
 	text	   *units = PG_GETARG_TEXT_P(0);
-	TimestampTz timestamp = PG_GETARG_TIMESTAMP(1);
+	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(1);
 	float8		result;
 	int			tz;
 	int			type,
@@ -3349,7 +3465,7 @@ timestamp_timestamptz(PG_FUNCTION_ARGS)
 Datum
 timestamptz_timestamp(PG_FUNCTION_ARGS)
 {
-	TimestampTz timestamp = PG_GETARG_TIMESTAMP(0);
+	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(0);
 	Timestamp	result;
 	struct tm	tt,
 			   *tm = &tt;
@@ -3379,7 +3495,7 @@ Datum
 timestamptz_zone(PG_FUNCTION_ARGS)
 {
 	text	   *zone = PG_GETARG_TEXT_P(0);
-	TimestampTz timestamp = PG_GETARG_TIMESTAMP(1);
+	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(1);
 	Timestamp	result;
 
 	int			tz;
@@ -3428,7 +3544,7 @@ Datum
 timestamptz_izone(PG_FUNCTION_ARGS)
 {
 	Interval   *zone = PG_GETARG_INTERVAL_P(0);
-	TimestampTz timestamp = PG_GETARG_TIMESTAMP(1);
+	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(1);
 	Timestamp	result;
 	int			tz;
 

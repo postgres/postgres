@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.36 2002/09/04 20:31:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.37 2003/05/12 23:08:50 tgl Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
@@ -24,8 +24,10 @@
 
 #include "access/heapam.h"
 #include "catalog/namespace.h"
-#include "utils/builtins.h"
 #include "catalog/pg_type.h"
+#include "libpq/pqformat.h"
+#include "utils/builtins.h"
+
 
 #define DatumGetItemPointer(X)	 ((ItemPointer) DatumGetPointer(X))
 #define ItemPointerGetDatum(X)	 PointerGetDatum(X)
@@ -91,19 +93,60 @@ tidout(PG_FUNCTION_ARGS)
 	BlockNumber blockNumber;
 	OffsetNumber offsetNumber;
 	char		buf[32];
-	static char *invalidTid = "()";
 
 	if (!ItemPointerIsValid(itemPtr))
-		PG_RETURN_CSTRING(pstrdup(invalidTid));
+		PG_RETURN_CSTRING(pstrdup("()"));
 
 	blockId = &(itemPtr->ip_blkid);
-
 	blockNumber = BlockIdGetBlockNumber(blockId);
 	offsetNumber = itemPtr->ip_posid;
 
 	snprintf(buf, sizeof(buf), "(%u,%u)", blockNumber, offsetNumber);
 
 	PG_RETURN_CSTRING(pstrdup(buf));
+}
+
+/*
+ *		tidrecv			- converts external binary format to tid
+ */
+Datum
+tidrecv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	ItemPointer result;
+	BlockNumber blockNumber;
+	OffsetNumber offsetNumber;
+
+	blockNumber = pq_getmsgint(buf, sizeof(blockNumber));
+	offsetNumber = pq_getmsgint(buf, sizeof(offsetNumber));
+
+	result = (ItemPointer) palloc(sizeof(ItemPointerData));
+
+	ItemPointerSet(result, blockNumber, offsetNumber);
+
+	PG_RETURN_ITEMPOINTER(result);
+}
+
+/*
+ *		tidsend			- converts tid to binary format
+ */
+Datum
+tidsend(PG_FUNCTION_ARGS)
+{
+	ItemPointer itemPtr = PG_GETARG_ITEMPOINTER(0);
+	BlockId		blockId;
+	BlockNumber blockNumber;
+	OffsetNumber offsetNumber;
+	StringInfoData buf;
+
+	blockId = &(itemPtr->ip_blkid);
+	blockNumber = BlockIdGetBlockNumber(blockId);
+	offsetNumber = itemPtr->ip_posid;
+
+	pq_begintypsend(&buf);
+	pq_sendint(&buf, blockNumber, sizeof(blockNumber));
+	pq_sendint(&buf, offsetNumber, sizeof(offsetNumber));
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
 /*****************************************************************************

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: varbit.h,v 1.16 2002/09/18 21:35:25 tgl Exp $
+ * $Id: varbit.h,v 1.17 2003/05/12 23:08:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,8 +63,12 @@ typedef struct
 
 extern Datum bit_in(PG_FUNCTION_ARGS);
 extern Datum bit_out(PG_FUNCTION_ARGS);
+extern Datum bit_recv(PG_FUNCTION_ARGS);
+extern Datum bit_send(PG_FUNCTION_ARGS);
 extern Datum varbit_in(PG_FUNCTION_ARGS);
 extern Datum varbit_out(PG_FUNCTION_ARGS);
+extern Datum varbit_recv(PG_FUNCTION_ARGS);
+extern Datum varbit_send(PG_FUNCTION_ARGS);
 extern Datum bit(PG_FUNCTION_ARGS);
 extern Datum varbit(PG_FUNCTION_ARGS);
 extern Datum biteq(PG_FUNCTION_ARGS);
