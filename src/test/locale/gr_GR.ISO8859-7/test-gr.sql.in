@@ -1,4 +1,4 @@
-COPY usastates FROM stdin USING DELIMITERS '|';
+COPY usastates FROM stdin WITH DELIMITER '|';
 AK|Alaska        |Αλάσκα
 WA|Washington    |Γουόσινγκτον
 OR|Oregon        |Ορεγκον

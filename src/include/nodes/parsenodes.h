@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.180 2002/06/18 17:27:58 momjian Exp $
+ * $Id: parsenodes.h,v 1.181 2002/06/20 16:00:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -851,13 +851,10 @@ typedef struct ClosePortalStmt
 typedef struct CopyStmt
 {
 	NodeTag		type;
-	bool		binary;			/* is a binary copy? */
 	RangeVar   *relation;		/* the relation to copy */
-	bool		oids;			/* copy oid's? */
-	int			direction;		/* TO or FROM */
+	bool		is_from;		/* TO or FROM */
 	char	   *filename;		/* if NULL, use stdin/stdout */
-	char	   *delimiter;		/* delimiter character, \t by default */
-	char	   *null_print;		/* how to print NULLs, `\N' by default */
+	List	   *options;		/* List of DefElem nodes */
 } CopyStmt;
 
 /* ----------------------

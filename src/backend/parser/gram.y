@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.331 2002/06/19 15:40:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.332 2002/06/20 16:00:43 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -159,8 +159,8 @@ static void doNegateFloat(Value *v);
 %type <node>	alter_column_default
 %type <ival>	add_drop, drop_behavior, opt_drop_behavior
 
-%type <list>	createdb_opt_list
-%type <defelt>	createdb_opt_item
+%type <list>	createdb_opt_list, copy_opt_list
+%type <defelt>	createdb_opt_item, copy_opt_item
 
 %type <ival>	opt_lock, lock_type
 %type <boolean> opt_force, opt_or_replace
@@ -182,7 +182,7 @@ static void doNegateFloat(Value *v);
 %type <str>		TriggerEvents
 %type <value>	TriggerFuncArg
 
-%type <str>		relation_name, copy_file_name, copy_delimiter, copy_null,
+%type <str>		relation_name, copy_file_name,
 				database_name, access_method_clause, access_method, attr_name,
 				index_name, name, function_name, file_name
 
@@ -236,11 +236,14 @@ static void doNegateFloat(Value *v);
 %type <ival>	opt_interval
 %type <node>	overlay_placing, substr_from, substr_for
 
-%type <boolean> opt_binary, opt_instead, opt_cursor
-%type <boolean> opt_with_copy, index_opt_unique, opt_verbose, opt_full
+%type <boolean> opt_instead, opt_cursor
+%type <boolean> index_opt_unique, opt_verbose, opt_full
 %type <boolean> opt_freeze
+%type <defelt>	opt_binary, opt_oids, copy_delimiter
 
-%type <ival>	copy_dirn, direction, reindex_type, drop_type,
+%type <boolean> copy_from
+
+%type <ival>	direction, reindex_type, drop_type,
 				opt_column, event, comment_type
 
 %type <ival>	fetch_how_many
@@ -330,8 +333,8 @@ static void doNegateFloat(Value *v);
 	CURRENT_TIMESTAMP, CURRENT_USER, CURSOR, CYCLE,
 
 	DATABASE, DAY_P, DEC, DECIMAL, DECLARE, DEFAULT,
-	DEFERRABLE, DEFERRED, DEFINER, DELETE_P, DELIMITERS, DESC,
-	DISTINCT, DO, DOMAIN_P, DOUBLE, DROP,
+	DEFERRABLE, DEFERRED, DEFINER, DELETE_P, DELIMITER, DELIMITERS,
+    DESC, DISTINCT, DO, DOMAIN_P, DOUBLE, DROP,
 
 	EACH, ELSE, ENCODING, ENCRYPTED, END_TRANS, ESCAPE, EXCEPT,
 	EXCLUSIVE, EXECUTE, EXISTS, EXPLAIN, EXTERNAL, EXTRACT,
@@ -1293,27 +1296,38 @@ opt_id: 	ColId									{ $$ = $1; }
 /*****************************************************************************
  *
  *		QUERY :
- *				COPY [BINARY] <relname> FROM/TO
- *				[USING DELIMITERS <delimiter>]
+ *				COPY <relname> FROM/TO [WITH options]
+ *
+ *				BINARY, OIDS, and DELIMITERS kept in old locations
+ *				for backward compatibility.  2002-06-18
  *
  *****************************************************************************/
 
-CopyStmt:	COPY opt_binary qualified_name opt_with_copy copy_dirn copy_file_name copy_delimiter copy_null
+CopyStmt:	COPY opt_binary qualified_name opt_oids copy_from
+			copy_file_name copy_delimiter opt_with copy_opt_list
 				{
 					CopyStmt *n = makeNode(CopyStmt);
-					n->binary = $2;
 					n->relation = $3;
-					n->oids = $4;
-					n->direction = $5;
+					n->is_from = $5;
 					n->filename = $6;
-					n->delimiter = $7;
-					n->null_print = $8;
+
+					n->options = NIL;
+					/* Concatenate user-supplied flags */
+					if ($2)
+						n->options = lappend(n->options, $2);
+					if ($4)
+						n->options = lappend(n->options, $4);
+					if ($7)
+						n->options = lappend(n->options, $7);
+					if ($9)
+						n->options = nconc(n->options, $9);
 					$$ = (Node *)n;
 				}
 		;
 
-copy_dirn:	TO									{ $$ = TO; }
-			| FROM								{ $$ = FROM; }
+copy_from:
+			FROM									{ $$ = TRUE; }
+			| TO									{ $$ = FALSE; }
 		;
 
 /*
@@ -1327,30 +1341,79 @@ copy_file_name:
 			| STDOUT								{ $$ = NULL; }
 		;
 
-opt_binary: BINARY									{ $$ = TRUE; }
-			| /*EMPTY*/								{ $$ = FALSE; }
+
+
+copy_opt_list:
+			copy_opt_list copy_opt_item				{ $$ = lappend($1, $2); }
+			| /* EMPTY */							{ $$ = NIL; }
 		;
 
-opt_with_copy:
-			WITH OIDS								{ $$ = TRUE; }
-			| /*EMPTY*/								{ $$ = FALSE; }
+
+copy_opt_item:
+			BINARY
+				{
+					$$ = makeNode(DefElem);
+					$$->defname = "binary";
+					$$->arg = (Node *)makeInteger(TRUE);
+				}
+			| OIDS
+				{
+					$$ = makeNode(DefElem);
+					$$->defname = "oids";
+					$$->arg = (Node *)makeInteger(TRUE);
+				}
+			| DELIMITER opt_as Sconst
+				{
+					$$ = makeNode(DefElem);
+					$$->defname = "delimiter";
+					$$->arg = (Node *)makeString($3);
+				}
+			| NULL_P opt_as Sconst
+				{
+					$$ = makeNode(DefElem);
+					$$->defname = "null";
+					$$->arg = (Node *)makeString($3);
+				}
 		;
 
-/*
- * the default copy delimiter is tab but the user can configure it
- */
+/* The following exist for backward compatibility */
+
+opt_binary:
+			BINARY
+				{
+					$$ = makeNode(DefElem);
+					$$->defname = "binary";
+					$$->arg = (Node *)makeInteger(TRUE);
+				}
+			| /*EMPTY*/								{ $$ = NULL; }
+		;
+
+opt_oids:
+			WITH OIDS
+				{
+					$$ = makeNode(DefElem);
+					$$->defname = "oids";
+					$$->arg = (Node *)makeInteger(TRUE);
+				}
+			| /*EMPTY*/								{ $$ = NULL; }
+		;
+
 copy_delimiter:
-			opt_using DELIMITERS Sconst				{ $$ = $3; }
-			| /*EMPTY*/								{ $$ = "\t"; }
+			/* USING DELIMITERS kept for backward compatibility. 2002-06-15 */
+			opt_using DELIMITERS Sconst
+				{
+					$$ = makeNode(DefElem);
+					$$->defname = "delimiter";
+					$$->arg = (Node *)makeString($3);
+				}
+			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
-opt_using:	USING									{}
+opt_using:
+			USING									{}
 			| /*EMPTY*/								{}
 		;
 
-copy_null:	WITH NULL_P AS Sconst					{ $$ = $4; }
-			| /*EMPTY*/								{ $$ = "\\N"; }
-		;
 
 /*****************************************************************************
  *
@@ -3422,10 +3485,6 @@ createdb_opt_list:
 			| /* EMPTY */							{ $$ = NIL; }
 		;
 
-/*
- * createdb_opt_item returns 2-element lists, with the first element
- * being an integer code to indicate which item was specified.
- */
 createdb_opt_item:
 			LOCATION opt_equal Sconst
 				{
@@ -6529,6 +6588,7 @@ unreserved_keyword:
 			| DEFERRED
 			| DEFINER
 			| DELETE_P
+			| DELIMITER
 			| DELIMITERS
 			| DOMAIN_P
 			| DOUBLE

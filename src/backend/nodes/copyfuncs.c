@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.189 2002/06/18 17:27:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.190 2002/06/20 16:00:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1992,16 +1992,11 @@ _copyCopyStmt(CopyStmt *from)
 {
 	CopyStmt   *newnode = makeNode(CopyStmt);
 
-	newnode->binary = from->binary;
 	Node_Copy(from, newnode, relation);
-	newnode->oids = from->oids;
-	newnode->direction = from->direction;
+	newnode->is_from = from->is_from;
 	if (from->filename)
 		newnode->filename = pstrdup(from->filename);
-	if (from->delimiter)
-		newnode->delimiter = pstrdup(from->delimiter);
-	if (from->null_print)
-		newnode->null_print = pstrdup(from->null_print);
+	Node_Copy(from, newnode, options);
 
 	return newnode;
 }

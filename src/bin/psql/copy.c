@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.22 2002/04/24 21:00:10 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.23 2002/06/20 16:00:44 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -36,8 +36,11 @@ bool		copy_in_state;
  * parse_slash_copy
  * -- parses \copy command line
  *
- * Accepted syntax: \copy [binary] table|"table" [with oids] from|to filename|'filename' [ using delimiters '<char>'] [ with null as 'string' ]
+ * Accepted syntax: \copy table|"table" [with oids] from|to filename|'filename' [with ] [ oids ] [ delimiter '<char>'] [ null as 'string' ]
  * (binary is not here yet)
+ *
+ * Old syntax for backward compatibility: (2002-06-19):
+ * \copy table|"table" [with oids] from|to filename|'filename' [ using delimiters '<char>'] [ with null as 'string' ]
  *
  * returns a malloc'ed structure with the options, or NULL on parsing error
  */
@@ -120,6 +123,7 @@ parse_slash_copy(const char *args)
 			error = true;
 		else
 		{
+			/* Allows old COPY syntax for backward compatibility 2002-06-19 */
 			if (strcasecmp(token, "with") == 0)
 			{
 				token = strtokx(NULL, " \t\n\r", NULL, '\\', NULL, NULL, pset.encoding);
@@ -161,12 +165,11 @@ parse_slash_copy(const char *args)
 		token = strtokx(NULL, " \t\n\r", NULL, '\\', NULL, NULL, pset.encoding);
 		if (token)
 		{
+			/* Allows old COPY syntax for backward compatibility 2002-06-19 */
 			if (strcasecmp(token, "using") == 0)
 			{
 				token = strtokx(NULL, " \t\n\r", NULL, '\\', NULL, NULL, pset.encoding);
-				if (!token || strcasecmp(token, "delimiters") != 0)
-					error = true;
-				else
+				if (token && strcasecmp(token, "delimiters") == 0)
 				{
 					token = strtokx(NULL, " \t\n\r", "'", '\\', NULL, NULL, pset.encoding);
 					if (token)
@@ -177,32 +180,42 @@ parse_slash_copy(const char *args)
 					else
 						error = true;
 				}
-			}
-
-			if (!error && token)
-			{
-				if (strcasecmp(token, "with") == 0)
-				{
-					token = strtokx(NULL, " \t\n\r", NULL, '\\', NULL, NULL, pset.encoding);
-					if (!token || strcasecmp(token, "null") != 0)
-						error = true;
-					else
-					{
-						token = strtokx(NULL, " \t\n\r", NULL, '\\', NULL, NULL, pset.encoding);
-						if (!token || strcasecmp(token, "as") != 0)
-							error = true;
-						else
-						{
-							token = strtokx(NULL, " \t\n\r", "'", '\\', NULL, NULL, pset.encoding);
-							if (token)
-								result->null = xstrdup(token);
-						}
-					}
-				}
 				else
 					error = true;
 			}
 		}
+	}
+
+	if (!error && token)
+	{
+		if (strcasecmp(token, "with") == 0)
+		{
+			while (!error && (token = strtokx(NULL, " \t\n\r", NULL, '\\', NULL, NULL, pset.encoding)))
+			{
+				if (strcasecmp(token, "delimiter") == 0)
+				{
+					token = strtokx(NULL, " \t\n\r", "'", '\\', NULL, NULL, pset.encoding);
+					if (token && strcasecmp(token, "as") == 0)
+						token = strtokx(NULL, " \t\n\r", "'", '\\', NULL, NULL, pset.encoding);
+					if (token)
+						result->delim = xstrdup(token);
+					else
+						error = true;
+				}
+				else if (strcasecmp(token, "null") == 0)
+				{
+					token = strtokx(NULL, " \t\n\r", "'", '\\', NULL, NULL, pset.encoding);
+					if (token && strcasecmp(token, "as") == 0)
+						token = strtokx(NULL, " \t\n\r", "'", '\\', NULL, NULL, pset.encoding);
+					if (token)
+						result->null = xstrdup(token);
+					else
+						error = true;
+				}
+				else error = true;
+			}
+		}
+		else error = true;
 	}
 
 	free(line);
@@ -250,6 +263,7 @@ do_copy(const char *args)
 		appendPQExpBuffer(&query, "BINARY ");
 
 	appendPQExpBuffer(&query, "\"%s\" ", options->table);
+	/* Uses old COPY syntax for backward compatibility 2002-06-19 */
 	if (options->oids)
 		appendPQExpBuffer(&query, "WITH OIDS ");
 
@@ -259,6 +273,7 @@ do_copy(const char *args)
 		appendPQExpBuffer(&query, "TO STDOUT");
 
 
+	/* Uses old COPY syntax for backward compatibility 2002-06-19 */
 	if (options->delim)
 		appendPQExpBuffer(&query, " USING DELIMITERS '%s'", options->delim);
 
@@ -298,7 +313,7 @@ do_copy(const char *args)
 		free_copy_options(options);
 		return false;
 	}
-  
+
 	result = PSQLexec(query.data);
 	termPQExpBuffer(&query);
 

@@ -1,4 +1,4 @@
-COPY wordlist FROM stdin USING DELIMITERS '|';
+COPY wordlist FROM stdin WITH DELIMITER '|';
 AAA           |ÄÄÄ
 AAAAa         |ÄÄÄÄä
 BBBB          |BBBB

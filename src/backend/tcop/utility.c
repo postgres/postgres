@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.157 2002/06/18 17:27:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.158 2002/06/20 16:00:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -347,22 +347,10 @@ ProcessUtility(Node *parsetree,
 			{
 				CopyStmt   *stmt = (CopyStmt *) parsetree;
 
-				if (stmt->direction != FROM)
+				if (!stmt->is_from)
 					SetQuerySnapshot();
 
-				DoCopy(stmt->relation,
-					   stmt->binary,
-					   stmt->oids,
-					   (bool) (stmt->direction == FROM),
-					   (bool) (stmt->filename == NULL),
-
-				/*
-				 * null filename means copy to/from stdout/stdin, rather
-				 * than to/from a file.
-				 */
-					   stmt->filename,
-					   stmt->delimiter,
-					   stmt->null_print);
+				DoCopy(stmt);
 			}
 			break;
 

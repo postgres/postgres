@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.114 2002/06/15 03:00:03 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.115 2002/06/20 16:00:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,6 +98,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"deferred", DEFERRED},
 	{"definer", DEFINER},
 	{"delete", DELETE_P},
+	{"delimiter", DELIMITER},
 	{"delimiters", DELIMITERS},
 	{"desc", DESC},
 	{"distinct", DISTINCT},

@@ -29,7 +29,7 @@ a text file named <samp>newref.txt</samp> that starts like this:<p>
 Notice that there are two consecutive tildes to allow for the fact that this
 particular entry doesn't have anything in the <b>Editor</b> field.
 You can then perform a <em>Query</em> as follows:<p>
-<samp>COPY psyref FROM '/home/jim/newref.txt' USING DELIMITERS
+<samp>COPY psyref FROM '/home/jim/newref.txt' WITH DELIMITER
 '~';</samp><p>
 This will read the records from <samp>newref.txt</samp> and insert them into the
 table <samp>psyref</samp>. See the PostgreSQL documentation under the headings 

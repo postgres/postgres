@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.136 2002/06/18 17:27:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.137 2002/06/20 16:00:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -799,19 +799,13 @@ _equalClusterStmt(ClusterStmt *a, ClusterStmt *b)
 static bool
 _equalCopyStmt(CopyStmt *a, CopyStmt *b)
 {
-	if (a->binary != b->binary)
-		return false;
 	if (!equal(a->relation, b->relation))
 		return false;
-	if (a->oids != b->oids)
-		return false;
-	if (a->direction != b->direction)
+	if (a->is_from != b->is_from)
 		return false;
 	if (!equalstr(a->filename, b->filename))
 		return false;
-	if (!equalstr(a->delimiter, b->delimiter))
-		return false;
-	if (!equalstr(a->null_print, b->null_print))
+	if (!equal(a->options, b->options))
 		return false;
 
 	return true;

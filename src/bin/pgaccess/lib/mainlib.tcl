@@ -636,6 +636,8 @@ proc vTclWindow.pgaw:ImportExport {base} {
 	if {$PgAcVar(impexp,delimiter)==""} {
 		set sup ""
 	} else {
+		# now we use WITH DELIMITER, but keep old syntax for
+		# backward compatibility.  2002-06-15
 		set sup " USING DELIMITERS '$PgAcVar(impexp,delimiter)'"
 	}
 	if {[.pgaw:ImportExport.expbtn cget -text]=="Import"} {

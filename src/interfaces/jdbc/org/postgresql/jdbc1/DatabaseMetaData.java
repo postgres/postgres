@@ -13,7 +13,7 @@ import org.postgresql.util.PSQLException;
 /*
  * This class provides information about the database as a whole.
  *
- * $Id: DatabaseMetaData.java,v 1.46 2002/06/11 02:55:16 barry Exp $
+ * $Id: DatabaseMetaData.java,v 1.47 2002/06/20 16:00:44 momjian Exp $
  *
  * <p>Many of the methods here return lists of information in ResultSets.  You
  * can use the normal ResultSet methods such as getString and getInt to
@@ -370,7 +370,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public String getSQLKeywords() throws SQLException
 	{
-		return "abort,acl,add,aggregate,append,archive,arch_store,backward,binary,change,cluster,copy,database,delimiters,do,extend,explain,forward,heavy,index,inherits,isnull,light,listen,load,merge,nothing,notify,notnull,oids,purge,rename,replace,retrieve,returns,rule,recipe,setof,stdin,stdout,store,vacuum,verbose,version";
+		return "abort,acl,add,aggregate,append,archive,arch_store,backward,binary,change,cluster,copy,database,delimiter,delimiters,do,extend,explain,forward,heavy,index,inherits,isnull,light,listen,load,merge,nothing,notify,notnull,oids,purge,rename,replace,retrieve,returns,rule,recipe,setof,stdin,stdout,store,vacuum,verbose,version";
 	}
 
 	public String getNumericFunctions() throws SQLException

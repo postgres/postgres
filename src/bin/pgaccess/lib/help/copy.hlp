@@ -5,10 +5,10 @@ and the name must be specified from the viewpoint of the backend. If stdin or st
 " {} "
 COPY \[ BINARY \] table \[ WITH OIDS \]
     FROM { 'filename' | stdin }
-    \[ USING DELIMITERS 'delimiter' \]
+    \[ WITH DELIMITER 'delimiter' \]
 COPY \[ BINARY \] table \[ WITH OIDS \]
     TO { 'filename' | stdout }
-    \[ USING DELIMITERS 'delimiter' \]    
+    \[ WITH DELIMITER 'delimiter' \]    
 
 " {code} "Inputs" {bold} "
 
@@ -44,7 +44,7 @@ COPY \[ BINARY \] table \[ WITH OIDS \]
 " {} "Usage" {bold} "
 
 The following example copies a table to standard output, using a vertical bar \(\"|\"\) as the field delimiter:
-COPY country TO stdout USING DELIMITERS '|';
+COPY country TO stdout WITH DELIMITER '|';
 
 To copy data from a Unix file into a table \"country\": 
 COPY country FROM '/usr1/proj/bray/sql/country_data';
@@ -93,13 +93,12 @@ The format for each instance in the file is as follows. Note that this format mu
 
 The " {} "BINARY" {bold} " keyword will force all data to be stored/read as binary objects rather than as text. It is somewhat faster than the normal copy command, but is not generally portable, and the files \
 generated are somewhat larger, although this factor is highly dependent on the data itself. By default, a text copy uses a tab \
-\(\"\\t\"\) character as a delimiter. The delimiter may also be changed to any other single character with the keyword phrase USING DELIMITERS. Characters in data fields which happen to match the delimiter character will be quoted.
+\(\"\\t\"\) character as a delimiter. The delimiter may also be changed to any other single character with the keyword phrase WITH DELIMITER. Characters in data fields which happen to match the delimiter character will be quoted.
 
 You must have select access on any table whose values are read by " {} "COPY" {bold} ", and either insert or update access to a table into which values are being inserted by \
 " {} "COPY" {bold} ". The backend also needs appropriate Unix permissions for any file read or written by \
 " {} "COPY" {bold} ". 
 
-The keyword phrase " {} "USING DELIMITERS" {bold} " specifies a single character to be used for all delimiters between columns. If multiple characters are specified in the delimiter string, only the first \
-character is used. 
+The keyword phrase " {} "WITH DELIMITER" {bold} " specifies a single character to be used for all delimiters between columns.
 
        Tip: Do not confuse " {} "COPY" {bold} " with the psql instruction \\copy. "

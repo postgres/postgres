@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/keywords.sgml,v 2.5 2002/01/08 15:38:42 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/keywords.sgml,v 2.6 2002/06/20 16:00:43 momjian Exp $ -->
 
 <appendix id="sql-keywords-appendix">
  <title><acronym>SQL</acronym> Key Words</title>
@@ -889,6 +889,12 @@
     <entry>non-reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
+   </row>
+   <row>
+    <entry><token>DELIMITER</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
    </row>
    <row>
     <entry><token>DELIMITERS</token></entry>

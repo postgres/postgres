@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.93 2002/06/18 17:27:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.94 2002/06/20 16:00:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ static bool remove_dbdirs(const char *real_loc, const char *altloc);
  */
 
 void
-createdb(CreatedbStmt *stmt)
+createdb(const CreatedbStmt *stmt)
 {
 	char	   *nominal_loc;
 	char	   *alt_loc;

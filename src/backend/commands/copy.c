@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.156 2002/05/21 22:59:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.157 2002/06/20 16:00:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -261,18 +261,79 @@ CopyDonePeek(FILE *fp, int c, bool pickup)
  * the table.
  */
 void
-DoCopy(const RangeVar *relation, bool binary, bool oids, bool from, bool pipe,
-	   char *filename, char *delim, char *null_print)
+DoCopy(const CopyStmt *stmt)
 {
+	RangeVar *relation = stmt->relation;
+	char *filename = stmt->filename;
+	bool is_from = stmt->is_from;
+	bool pipe = (stmt->filename == NULL);
+	List	   *option;
+	DefElem    *dbinary = NULL;
+	DefElem    *doids = NULL;
+	DefElem    *ddelim = NULL;
+	DefElem    *dnull = NULL;
+	bool binary = false;
+	bool oids = false;
+	char *delim = "\t";
+	char *null_print = "\\N";
 	FILE	   *fp;
 	Relation	rel;
-	AclMode		required_access = (from ? ACL_INSERT : ACL_SELECT);
+	AclMode		required_access = (is_from ? ACL_INSERT : ACL_SELECT);
 	AclResult	aclresult;
 
+	/* Extract options from the statement node tree */
+	foreach(option, stmt->options)
+	{
+		DefElem    *defel = (DefElem *) lfirst(option);
+
+		if (strcmp(defel->defname, "binary") == 0)
+		{
+			if (dbinary)
+				elog(ERROR, "COPY: conflicting options");
+			dbinary = defel;
+		}
+		else if (strcmp(defel->defname, "oids") == 0)
+		{
+			if (doids)
+				elog(ERROR, "COPY: conflicting options");
+			doids = defel;
+		}
+		else if (strcmp(defel->defname, "delimiter") == 0)
+		{
+			if (ddelim)
+				elog(ERROR, "COPY: conflicting options");
+			ddelim = defel;
+		}
+		else if (strcmp(defel->defname, "null") == 0)
+		{
+			if (dnull)
+				elog(ERROR, "COPY: conflicting options");
+			dnull = defel;
+		}
+		else
+			elog(ERROR, "COPY: option \"%s\" not recognized",
+				 defel->defname);
+	}
+
+	if (dbinary)
+		binary = intVal(dbinary->arg);
+	if (doids)
+		oids = intVal(doids->arg);
+	if (ddelim)
+		delim = strVal(ddelim->arg);
+	if (dnull)
+		null_print = strVal(dnull->arg);
+
+	if (binary && ddelim)
+		elog(ERROR, "You can not specify the DELIMITER in BINARY mode.");
+
+	if (binary && dnull)
+		elog(ERROR, "You can not specify NULL in BINARY mode.");
+	
 	/*
 	 * Open and lock the relation, using the appropriate lock type.
 	 */
-	rel = heap_openrv(relation, (from ? RowExclusiveLock : AccessShareLock));
+	rel = heap_openrv(relation, (is_from ? RowExclusiveLock : AccessShareLock));
 
 	/* Check permissions. */
 	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
@@ -306,7 +367,7 @@ DoCopy(const RangeVar *relation, bool binary, bool oids, bool from, bool pipe,
 	server_encoding = GetDatabaseEncoding();
 #endif
 
-	if (from)
+	if (is_from)
 	{							/* copy from file to database */
 		if (rel->rd_rel->relkind != RELKIND_RELATION)
 		{
@@ -410,7 +471,7 @@ DoCopy(const RangeVar *relation, bool binary, bool oids, bool from, bool pipe,
 
 	if (!pipe)
 		FreeFile(fp);
-	else if (!from)
+	else if (!is_from)
 	{
 		if (!binary)
 			CopySendData("\\.\n", 3, fp);
@@ -425,7 +486,7 @@ DoCopy(const RangeVar *relation, bool binary, bool oids, bool from, bool pipe,
 	 * transaction to ensure that updates will be committed before lock is
 	 * released.
 	 */
-	heap_close(rel, (from ? NoLock : AccessShareLock));
+	heap_close(rel, (is_from ? NoLock : AccessShareLock));
 }
 
 

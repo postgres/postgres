@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.31 2002/05/14 18:47:58 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.32 2002/06/20 16:00:43 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -21,14 +21,20 @@ PostgreSQL documentation
    <date>1999-12-11</date>
   </refsynopsisdivinfo>
   <synopsis>
-COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
+COPY <replaceable class="parameter">table</replaceable>
     FROM { '<replaceable class="parameter">filename</replaceable>' | <filename>stdin</filename> }
-    [ [USING] DELIMITERS '<replaceable class="parameter">delimiter</replaceable>' ]
-    [ WITH NULL AS '<replaceable class="parameter">null string</replaceable>' ]
-COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
+    [ [ WITH ] 
+          [ BINARY ] 
+          [ OIDS ]
+          [ DELIMITER [ AS ] '<replaceable class="parameter">delimiter</replaceable>' ]
+          [ NULL [ AS ] '<replaceable class="parameter">null string</replaceable>' ] ]
+COPY <replaceable class="parameter">table</replaceable>
     TO { '<replaceable class="parameter">filename</replaceable>' | <filename>stdout</filename> }
-    [ [USING] DELIMITERS '<replaceable class="parameter">delimiter</replaceable>' ]
-    [ WITH NULL AS '<replaceable class="parameter">null string</replaceable>' ]
+    [ [ WITH ] 
+          [ BINARY ]
+          [ OIDS ]
+          [ DELIMITER [ AS ] '<replaceable class="parameter">delimiter</replaceable>' ]
+          [ NULL [ AS ] '<replaceable class="parameter">null string</replaceable>' ] ]
   </synopsis>
   
   <refsect2 id="R2-SQL-COPY-1">
@@ -42,30 +48,10 @@ COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
 
     <variablelist>
      <varlistentry>
-      <term>BINARY</term>
-      <listitem>
-       <para>
-	Changes the behavior of field formatting, forcing all data to be
-	stored or read in binary format rather than as text.
-	The DELIMITERS and WITH NULL options are irrelevant for binary format.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><replaceable class="parameter">table</replaceable></term>
       <listitem>
        <para>
 	The name (possibly schema-qualified) of an existing table.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>WITH OIDS</term>
-      <listitem>
-       <para>
-	Specifies copying the internal object id (OID) for each row.
        </para>
       </listitem>
      </varlistentry>
@@ -98,6 +84,26 @@ COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
      </varlistentry>
 
      <varlistentry>
+      <term>BINARY</term>
+      <listitem>
+       <para>
+	Changes the behavior of field formatting, forcing all data to be
+	stored or read in binary format rather than as text. You can not
+	specify DELIMITER or NULL in binary mode.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>OIDS</term>
+      <listitem>
+       <para>
+	Specifies copying the internal object id (OID) for each row.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><replaceable class="parameter">delimiter</replaceable></term>
       <listitem>
        <para>
@@ -111,8 +117,8 @@ COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
       <listitem>
        <para>
         The string that represents a NULL value. The default is
-        <quote><literal>\N</literal></quote> (backslash-N).
-	You might prefer an empty string, for example.
+        <quote><literal>\N</literal></quote> (backslash-N). You might
+        prefer an empty string, for example.
        </para>
        <note>
         <para>
@@ -172,34 +178,33 @@ ERROR: <replaceable>reason</replaceable>
   </title>
   <para>
    <command>COPY</command> moves data between
-   <productname>PostgreSQL</productname> tables and
-   standard file-system files.
+   <productname>PostgreSQL</productname> tables and standard file-system
+   files.
 
    <command>COPY TO</command> copies the entire contents of a table
-   <emphasis>to</>
-   a file, while <command>COPY FROM</command> copies data <emphasis>from</> a
-   file to a
-   table (appending the data to whatever is in the table already).
+   <emphasis>to</> a file, while <command>COPY FROM</command> copies
+   data <emphasis>from</> a file to a table (appending the data to
+   whatever is in the table already).
   </para>
 
   <para>
-   <command>COPY</command> with a file name instructs
-   the <productname>PostgreSQL</productname> backend
-   to directly read from or write to a file.
-   The file must be accessible to the backend and the name must be specified
-   from the viewpoint of the backend.
-   When <filename>stdin</filename> or <filename>stdout</filename> is
-   specified, data flows through the client frontend to  the backend.
+   <command>COPY</command> with a file name instructs the
+   <productname>PostgreSQL</productname> backend to directly read from
+   or write to a file. The file must be accessible to the backend and
+   the name must be specified from the viewpoint of the backend. When
+   <filename>stdin</filename> or <filename>stdout</filename> is
+   specified, data flows through the client frontend to the backend.
     
     <tip>
      <para>
       Do not confuse <command>COPY</command> with the
-      <application>psql</application> instruction <command>\copy</command>.
-      <command>\copy</command> invokes <command>COPY FROM stdin</command> 
-      or <command>COPY TO stdout</command>, and then fetches/stores the data
-      in a file accessible to the <application>psql</application> client.
-      Thus, file accessibility and access rights depend on the client
-      rather than the backend when <command>\copy</command> is used.
+      <application>psql</application> instruction
+      <command>\copy</command>. <command>\copy</command> invokes
+      <command>COPY FROM stdin</command> or <command>COPY TO
+      stdout</command>, and then fetches/stores the data in a file
+      accessible to the <application>psql</application> client. Thus,
+      file accessibility and access rights depend on the client rather
+      than the backend when <command>\copy</command> is used.
      </para>
     </tip>
    </para>
@@ -225,20 +230,19 @@ ERROR: <replaceable>reason</replaceable>
 
     <para>
     By default, a text copy uses a tab ("\t") character as a delimiter
-    between fields.  The field delimiter may be changed to any other single
-    character with the keyword phrase USING DELIMITERS.  Characters
-    in data fields that happen to match the delimiter character will
-    be backslash quoted.
+    between fields. The field delimiter may be changed to any other
+    single character with the keyword DELIMITER. Characters in data
+    fields that happen to match the delimiter character will be
+    backslash quoted.
    </para>
    
    <para>
     You must have <firstterm>select privilege</firstterm> on any table
-    whose values are read by
-    <command>COPY TO</command>, and
-    <firstterm>insert privilege</firstterm> on a
-    table into which values are being inserted by <command>COPY FROM</command>.
-    The backend also needs appropriate Unix permissions for any file read
-    or written by <command>COPY</command>.
+    whose values are read by <command>COPY TO</command>, and
+    <firstterm>insert privilege</firstterm> on a table into which values
+    are being inserted by <command>COPY FROM</command>. The backend also
+    needs appropriate Unix permissions for any file read or written by
+    <command>COPY</command>.
    </para>
 
    <para>
@@ -247,28 +251,25 @@ ERROR: <replaceable>reason</replaceable>
    </para>
 
    <para>
-    <command>COPY</command> stops operation at the first error.  This
-    should not lead to problems in the event of
-    a <command>COPY TO</command>, but the
-    target relation will already have received earlier rows in a
-    <command>COPY FROM</command>.  These rows will not be visible or
-    accessible, but they still occupy disk space.  This may amount to a
-    considerable amount
-    of wasted disk space if the failure happened well into a large copy
-    operation.  You may wish to invoke <command>VACUUM</command> to recover
-    the wasted space.
+    <command>COPY</command> stops operation at the first error. This
+    should not lead to problems in the event of a <command>COPY
+    TO</command>, but the target relation will already have received
+    earlier rows in a <command>COPY FROM</command>. These rows will not
+    be visible or accessible, but they still occupy disk space. This may
+    amount to a considerable amount of wasted disk space if the failure
+    happened well into a large copy operation. You may wish to invoke
+    <command>VACUUM</command> to recover the wasted space.
    </para>
 
    <para>
     Files named in a <command>COPY</command> command are read or written
-    directly by the backend, not by the client application.  Therefore,
+    directly by the backend, not by the client application. Therefore,
     they must reside on or be accessible to the database server machine,
-    not the client.  They must be accessible to and readable or writable
+    not the client. They must be accessible to and readable or writable
     by the <application>PostgreSQL</application> user (the user ID the
-    server runs as), not the client.
-    <command>COPY</command> naming a file is only allowed to database
-    superusers, since it allows reading or writing any file that the backend
-    has privileges to access.
+    server runs as), not the client. <command>COPY</command> naming a
+    file is only allowed to database superusers, since it allows reading
+    or writing any file that the backend has privileges to access.
     
     <tip>
      <para>
@@ -282,11 +283,11 @@ ERROR: <replaceable>reason</replaceable>
 
    <para>
     It is recommended that the file name used in <command>COPY</command>
-    always be specified as an absolute path.  This is enforced by the backend
-    in the case of <command>COPY TO</command>, but for <command>COPY
-    FROM</command> you do have the option of reading from a file specified
-    by a relative path.  The path will be interpreted relative to the
-    backend's working directory (somewhere below
+    always be specified as an absolute path. This is enforced by the
+    backend in the case of <command>COPY TO</command>, but for
+    <command>COPY FROM</command> you do have the option of reading from
+    a file specified by a relative path. The path will be interpreted
+    relative to the backend's working directory (somewhere below
     <filename>$PGDATA</filename>), not the client's working directory.
    </para>
   </refsect2>
@@ -312,8 +313,8 @@ ERROR: <replaceable>reason</replaceable>
     place of attributes that are NULL.
    </para>
    <para>
-    If WITH OIDS is specified, the OID is read or written as the first column,
-    preceding the user data columns.  (An error is raised if WITH OIDS is
+    If OIDS is specified, the OID is read or written as the first column,
+    preceding the user data columns.  (An error is raised if OIDS is
     specified for a table that does not have OIDs.)
    </para>
    <para>
@@ -325,11 +326,11 @@ ERROR: <replaceable>reason</replaceable>
    </para>
    <para>
     Backslash characters (<literal>\</>) may be used in the
-    <command>COPY</command> data to quote data characters that might otherwise
-    be taken as row or column delimiters.  In particular, the following
-    characters <emphasis>must</> be preceded by a backslash if they appear
-    as part of an attribute value: backslash itself, newline, and the current
-    delimiter character.
+    <command>COPY</command> data to quote data characters that might
+    otherwise be taken as row or column delimiters. In particular, the
+    following characters <emphasis>must</> be preceded by a backslash if
+    they appear as part of an attribute value: backslash itself,
+    newline, and the current delimiter character.
    </para>
    <para>
     The following special backslash sequences are recognized by
@@ -412,9 +413,8 @@ ERROR: <replaceable>reason</replaceable>
    <title>Binary Format</title>
    <para>
     The file format used for <command>COPY BINARY</command> changed in
-    <application>PostgreSQL</application> v7.1.
-    The new format consists of a file header, zero or more
-    tuples, and a file trailer.
+    <application>PostgreSQL</application> v7.1. The new format consists
+    of a file header, zero or more tuples, and a file trailer.
    </para>
 
    <refsect3>
@@ -446,9 +446,9 @@ filters, dropped nulls, dropped high bits, or parity changes.)
       <term>Integer layout field</term>
       <listitem>
        <para>
-int32 constant 0x01020304 in source's byte order.
-Potentially, a reader could engage in byte-flipping of subsequent fields
-if the wrong byte order is detected here.
+int32 constant 0x01020304 in source's byte order. Potentially, a reader
+could engage in byte-flipping of subsequent fields if the wrong byte
+order is detected here.
        </para>
       </listitem>
      </varlistentry>
@@ -457,14 +457,14 @@ if the wrong byte order is detected here.
       <term>Flags field</term>
       <listitem>
        <para>
-int32 bit mask to denote important aspects of the file
-format.  Bits are numbered from 0 (LSB) to 31 (MSB) --- note that this
-field is stored with source's endianness, as are all subsequent integer
-fields.  Bits 16-31 are reserved to denote critical file format issues;
-a reader should abort if it finds an unexpected bit set in this range.
-Bits 0-15 are reserved to signal backwards-compatible format issues;
-a reader should simply ignore any unexpected bits set in this range.
-Currently only one flag bit is defined, and the rest must be zero:
+int32 bit mask to denote important aspects of the file format. Bits are
+numbered from 0 (LSB) to 31 (MSB) --- note that this field is stored
+with source's endianness, as are all subsequent integer fields. Bits
+16-31 are reserved to denote critical file format issues; a reader
+should abort if it finds an unexpected bit set in this range. Bits 0-15
+are reserved to signal backwards-compatible format issues; a reader
+should simply ignore any unexpected bits set in this range. Currently
+only one flag bit is defined, and the rest must be zero:
         <variablelist>
          <varlistentry>
           <term>Bit 16</term>
@@ -620,7 +620,7 @@ The following example copies a table to standard output,
  delimiter:
   </para>
   <programlisting>
-COPY country TO <filename>stdout</filename> USING DELIMITERS '|';
+COPY country TO <filename>stdout</filename> WITH DELIMITER '|';
   </programlisting>
   <para>
    To copy data from a Unix file into a table country:
@@ -629,9 +629,9 @@ COPY country TO <filename>stdout</filename> USING DELIMITERS '|';
 COPY country FROM '/usr1/proj/bray/sql/country_data';
   </programlisting>
   <para>
-   Here is a sample of data suitable for copying into a table
- from <filename>stdin</filename> (so it
-has the termination sequence on the last line):
+   Here is a sample of data suitable for copying into a table from
+   <filename>stdin</filename> (so it has the termination sequence on the
+   last line):
   </para>
   <programlisting>
 AF      AFGHANISTAN
@@ -645,13 +645,12 @@ ZW      ZIMBABWE
    Note that the white space on each line is actually a TAB.
   </para>
   <para>
-   The following is the same data, output in binary format on a Linux/i586
-   machine. The data is shown after filtering through
-   the Unix utility <command>od -c</command>. The table has
-   three fields; the first is <type>char(2)</type>,
-   the second is <type>text</type>, and the third is
-   <type>integer</type>. All the
-   rows have a null value in the third field.
+   The following is the same data, output in binary format on a
+   Linux/i586 machine. The data is shown after filtering through the
+   Unix utility <command>od -c</command>. The table has three fields;
+   the first is <type>char(2)</type>, the second is <type>text</type>,
+   and the third is <type>integer</type>. All the rows have a null value
+   in the third field.
   </para>
   <programlisting>
 0000000   P   G   B   C   O   P   Y  \n 377  \r  \n  \0 004 003 002 001
