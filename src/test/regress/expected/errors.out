@@ -197,13 +197,15 @@ drop operator === ();
 ERROR:  syntax error at or near ")" at character 20
 -- no such operator 
 drop operator === (int4);
-ERROR:  argument type missing (use NONE for unary operators)
+ERROR:  missing argument
+HINT:  Use NONE to denote the missing argument of a unary operator.
 -- no such operator by that name 
 drop operator === (int4, int4);
 ERROR:  operator does not exist: integer === integer
 -- no such type1 
 drop operator = (nonesuch);
-ERROR:  argument type missing (use NONE for unary operators)
+ERROR:  missing argument
+HINT:  Use NONE to denote the missing argument of a unary operator.
 -- no such type1 
 drop operator = ( , int4);
 ERROR:  syntax error at or near "," at character 19
