@@ -1,0 +1,126 @@
+From scrappy@ki.net Wed Jul 31 18:12:17 1996
+Status: RO
+X-Status: 
+Received: from daemun.ilt.com ([204.247.102.21]) by ki.net (8.7.5/8.7.5) with ESMTP id SAA22940 for <scrappy@ki.net>; Wed, 31 Jul 1996 18:12:13 -0400 (EDT)
+Received: from venus (venus [199.26.203.13]) by daemun.ilt.com (8.7.5/8.7.3) with SMTP id PAA27566 for <scrappy@ki.net>; Wed, 31 Jul 1996 15:11:27 -0700 (PDT)
+Received: by venus (4.1/ILT-1.1)
+	id AA01608; Wed, 31 Jul 96 15:11:22 PDT
+Date: Wed, 31 Jul 96 15:11:22 PDT
+From: drgeorge@ilt.com (Dr_George_D_Detlefsen)
+Message-Id: <9607312211.AA01608@venus>
+To: scrappy@ki.net
+Subject: src/test/regress/README
+
+src/test/regress/README
+
+Introduction
+
+  The Postgres95 regression tests are a comprehensive set of tests for the
+  SQL implementation embeded in Postgres95 developed by Jolly Chen and
+  Andrew Yu. It tests standard SQL operations as well as the extensability
+  capabilities of Postgres95.
+
+Preparation
+
+  The regression test is invoked thru by the 'make' command which compiles
+  a 'c' program with Postgres95 extension functions into a shared library
+  in the 'obj' directory.  Localised shell scripts are also created in
+  the 'obj' directory. The 'expected.input' file is massaged into the
+  'obj/expected.out' file.  The localization replaces macros in the source
+  files with absolute pathnames and user names.
+
+The 'expected.input' file and the 'sample.regress.out' file
+
+  The 'expected.input' file was created on a SPARC Solaris 2.4 system
+  using the 'postgres5-1.02a5.tar.gz' source tree. It has been compared
+  with a file created on an I386 Solaris 2.4 system and the differences
+  are only in the floating point polygons in the 3rd digit to the right
+  of the decimal point. (see below)
+
+  The 'sample.regress.out' file is from the postgres-1.01 release
+  constructed by Jolly Chen and is included here for reference. It may
+  have been created on a DEC ALPHA machine as the 'Makefile.global'
+  in the postgres-1.01 release has PORTNAME=alpha.
+
+Running the regression test
+
+  Change directory to the regression test directory:
+
+        cd ...../src/test/regress
+
+  If you have prevously invoked the regression test, clean up the
+  working directory with:
+
+        make clean
+
+  The regression test is invoked with the command:
+
+        make all runtest
+
+  Normally, the regression test should be run as the 'postgres' user as the
+  'src/test/regress' directory and sub-directories are owned by the
+  'postgres' user. If you run the regression test as another user the
+  'src/test/regress/obj' directory should be writeable to that user.
+
+Comparing expected/actual output
+
+  The results are in the file 'obj/regress.out' which can be compared
+  with the 'obj/expected.out' file using 'diff'. The files will NOT
+  compare exactly. The following paragraphs attempt to explain the
+  differences.
+
+OID differences
+
+  There are several places where Postgres95 OID (object identifiers) appear
+  in 'regress.out'. OID's are unique 32-bit integers which are generated
+  by the Postgres95 backend whenever a table row is inserted or updated.
+  If you run the regression test on a non-virgin database or run it multiple
+  times, the OID's reported will have different values. 
+
+  The following SQL statements in 'regress.out' have shown this behavior:
+
+  QUERY: SELECT user_relns() AS user_relns ORDER BY user_relns;
+
+    The 'a,523676' row is composed from an OID.
+
+TIME differences
+
+  Some of the tests involving date/time functions use the implicit
+  time zone in effect at the time the regression test is run. In other
+  tests the timezone to be inserted into the regression data base is
+  explicitly specified.
+
+  The 'expected.input' file was prepared in the 'US/Pacific' timezone
+  so there may be differences where the 'expected.out' file has
+  PST/PDT times and the 'regress.out' file has your local timezone.
+
+FLOATING POINT differences
+
+  Some of the tests involve computing 64-bit (FLOAT8) number from table
+  columns. Differences in results involving mathematical functions of
+  FLOAT8 columns have been observed. These differences occur where
+  different operating systems are used on the same platform ie:
+  BSDI and SOLARIS on Intel/86, and where the same operating system is
+  used used on different platforms, ie: SOLARIS on SPARC and Intel/86.
+
+  Human eyeball comparison is needed to determine the real significance
+  of these differences which are usually 10 places to the right of
+  the decimal point.
+
+POLYGON differences
+
+  Several of the tests involve operations on geographic date about the
+  Oakland/Berkley CA street map. The map data is expressed as polygons
+  whose verticies are represened as pairs of FLOAT8 numbers (decimal
+  lattitude and longitude). Initially, some tables are created and
+  loaded with geographic data, then some views are created which join
+  two tables using the polygon intersection operator (##), then a select
+  is done on the view. 
+
+  When comparing the results from different platforms, differences occur
+  in the 2nd or 3rd place to the right of the decimal point. The SQL
+  statements where these problems occur are the folowing:
+
+    QUERY: SELECT * from street;
+    QUERY: SELECT * from iexit;
+
