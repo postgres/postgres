@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.12 2000/11/16 21:43:28 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.13 2000/11/18 16:18:41 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@
 Datum
 zpbit_in(PG_FUNCTION_ARGS)
 {
-	char	   *s = PG_GETARG_CSTRING(0);
+	char	   *input_string = PG_GETARG_CSTRING(0);
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
@@ -67,17 +67,27 @@ zpbit_in(PG_FUNCTION_ARGS)
 	bits8		x = 0;
 
 	/* Check that the first character is a b or an x */
-	if (s[0] == 'b' || s[0] == 'B')
+	if (input_string[0] == 'b' || input_string[0] == 'B')
+	{
 		bit_not_hex = true;
-	else if (s[0] == 'x' || s[0] == 'X')
+		sp = input_string + 1;
+	}
+	else if (input_string[0] == 'x' || input_string[0] == 'X')
+	{
 		bit_not_hex = false;
+		sp = input_string + 1;
+	}
 	else
 	{
-		elog(ERROR, "zpbit_in: %s is not a valid bitstring", s);
-		bit_not_hex = false;	/* keep compiler quiet */
+		/*
+		 * Otherwise it's binary.  This allows things like cast('1001'
+		 * as bit) to work transparently.
+		 */
+		bit_not_hex = true;
+		sp = input_string;
 	}
 
-	slen = strlen(s) - 1;
+	slen = strlen(sp);
 	/* Determine bitlength from input string */
 	if (bit_not_hex)
 		bitlen = slen;
@@ -104,7 +114,6 @@ zpbit_in(PG_FUNCTION_ARGS)
 	VARATT_SIZEP(result) = len;
 	VARBITLEN(result) = atttypmod;
 
-	sp = s + 1;
 	r = VARBITS(result);
 	if (bit_not_hex)
 	{
@@ -283,7 +292,7 @@ _zpbit(PG_FUNCTION_ARGS)
 Datum
 varbit_in(PG_FUNCTION_ARGS)
 {
-	char	   *s = PG_GETARG_CSTRING(0);
+	char	   *input_string = PG_GETARG_CSTRING(0);
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
@@ -300,17 +309,23 @@ varbit_in(PG_FUNCTION_ARGS)
 	bits8		x = 0;
 
 	/* Check that the first character is a b or an x */
-	if (s[0] == 'b' || s[0] == 'B')
+	if (input_string[0] == 'b' || input_string[0] == 'B')
+	{
 		bit_not_hex = true;
-	else if (s[0] == 'x' || s[0] == 'X')
+		sp = input_string + 1;
+	}
+	else if (input_string[0] == 'x' || input_string[0] == 'X')
+	{
 		bit_not_hex = false;
+		sp = input_string + 1;
+	}
 	else
 	{
-		elog(ERROR, "varbit_in: %s is not a valid bitstring", s);
-		bit_not_hex = false;	/* keep compiler quiet */
+		bit_not_hex = true;
+		sp = input_string;
 	}
 
-	slen = strlen(s) - 1;
+	slen = strlen(sp);
 	/* Determine bitlength from input string */
 	if (bit_not_hex)
 		bitlen = slen;
@@ -337,7 +352,6 @@ varbit_in(PG_FUNCTION_ARGS)
 	VARATT_SIZEP(result) = len;
 	VARBITLEN(result) = Min(bitlen, atttypmod);
 
-	sp = s + 1;
 	r = VARBITS(result);
 	if (bit_not_hex)
 	{
@@ -418,10 +432,9 @@ varbit_out(PG_FUNCTION_ARGS)
 				len;
 
 	len = VARBITLEN(s);
-	result = (char *) palloc(len + 2);
+	result = (char *) palloc(len + 1);
 	sp = VARBITS(s);
 	r = result;
-	*r++ = 'B';
 	for (i = 0; i < len - BITS_PER_BYTE; i += BITS_PER_BYTE, sp++)
 	{
 		x = *sp;
@@ -1224,8 +1237,10 @@ bitposition(PG_FUNCTION_ARGS)
 				if (p == VARBITEND(arg)) {
 					mask2 = end_mask << (BITS_PER_BYTE - is);
 					is_match = mask2 == 0;
+#if 0
 					elog(NOTICE,"S. %d %d em=%2x sm=%2x r=%d",
 						 i,is,end_mask,mask2,is_match);
+#endif
 					break;
 				}
 				cmp = *s << (BITS_PER_BYTE - is);
