@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.16 2000/07/17 22:32:44 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.17 2000/07/22 14:49:00 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -267,13 +267,13 @@ FATAL: StreamServerPort: bind() failed: Permission denied
     <para>
      A message like
 <screen>
-IpcMemoryCreate: shmget(5440001, 83918612, 01600) failed: Invalid argument
+IpcMemoryCreate: shmget(key=5440001, size=83918612, 01600) failed: Invalid argument
 FATAL 1:  ShmemCreate: cannot create region
 </screen>
      probably means that your kernel's limit on the size of shared
      memory areas is smaller than the buffer area that Postgres is
      trying to create (83918612 bytes in this example). Or it could
-     mean that you don't have SysV-style shared memory support
+     mean that you don't have System-V-style shared memory support
      configured into your kernel at all. As a temporary workaround,
      you can try starting the postmaster with a smaller-than-normal
      number of buffers (<option>-B</option> switch). You will
@@ -286,16 +286,21 @@ FATAL 1:  ShmemCreate: cannot create region
     <para>
      An error like
 <screen>
-IpcSemaphoreCreate: semget(5440026, 16, 0600) failed: No space left on device
+IpcSemaphoreCreate: semget(key=5440026, num=16, 01600) failed: No space left on device
 </screen>
      does <emphasis>not</emphasis> mean that you've run out of disk
-     space; it means that your kernel's limit on the number of SysV
-     semaphores is smaller than the number
+     space; it means that your kernel's limit on the number of System
+     V semaphores is smaller than the number
      <productname>Postgres</productname> wants to create. As above,
      you may be able to work around the problem by starting the
      postmaster with a reduced number of backend processes
      (<option>-N</option> switch), but you'll eventually want to
      increase the kernel limit.
+    </para>
+
+    <para>
+     Details about configuring System V IPC facilities are given in
+     <xref linkend="sysvipc">.
     </para>
    </sect2>
 
@@ -1073,6 +1078,445 @@ env PGOPTIONS='--geqo=off' psql
  </sect1>
 
 
+ <sect1 id="kernel-resources">
+  <title>Managing Kernel Resources</title>
+
+  <para>
+   A large <productname>Postgres</> installation can quickly hit
+   various operating system resource limits. (On some systems, the
+   factory defaults are so low that you don't even need a really
+   <quote>large</> installation.) If you have encountered this kind of
+   problem then keep reading.
+  </para>
+
+  <sect2 id="sysvipc">
+   <title>Shared Memory and Semaphores</title>
+
+   <para>
+    Shared memory and semaphores are collectively referred to as
+    <quote>System V IPC</> (together with message queues, which are
+    not relevant for <productname>Postgres</>). Almost all modern
+    operating systems provide these features, but not all of them have
+    them turned on or sufficiently sized by default, especially
+    systems with BSD heritage. (For the QNX port,
+    <productname>Postgres</> provides its own replacement
+    implementation of these facilities.)
+   </para>
+
+   <para>
+    The complete lack of these facilities is usually manifested by an
+    <errorname>Illegal system call</> error upon postmaster start. In
+    that case there's nothing left to do but to reconfigure your
+    kernel -- <productname>Postgres</> won't work without them.
+   </para>
+
+   <para>
+    When <productname>Postgres</> exceeds one of the various hard
+    limits of the IPC resources then the postmaster will refuse to
+    start up and should leave a marginally instructive error message
+    about which problem was encountered and what needs to be done
+    about it. The relevant kernel parameters have a relatively
+    consistent nomenclature across systems; <xref
+    linkend="sysvipc-parameters"> gives an overview. The methods to
+    set them, however, vary; suggestions for some platforms are given
+    below. Be aware, however, that you will have to reboot your
+    machine at best, or possibly recompile the kernel, to change these
+    settings.
+   </para>
+
+
+   <table id="sysvipc-parameters">
+    <title>System V IPC parameters</>
+
+    <tgroup cols="3">
+     <thead>
+      <row>
+       <entry>Name</>
+       <entry>Description</>
+       <entry>Reasonable values</>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry><varname>SHMMAX</></>
+       <entry>Maximum size of shared memory segment (bytes)</>
+       <entry>512 kB + 8192 * buffers + extra ... infinity</entry>
+      </row>
+
+      <row>
+       <entry><varname>SHMMIN</></>
+       <entry>Minimum size of shared memory segment (bytes)</>
+       <entry>1 (at most 144)</>
+      </row>
+
+      <row>
+       <entry><varname>SHMSEG</></>
+       <entry>Maximum number of shared memory segments per process</>
+       <entry>Must be at least 3, but the default is much higher.</>
+      </row>
+
+       <row>
+        <entry><varname>SHMMNI</></>
+        <entry>Maximum number of shared memory segments system-wide</>
+        <entry>like <varname>SHMSEG</> + room for other applications</>
+       </row>
+
+       <row>
+        <entry><varname>SEMMNI</></>
+        <entry>Maximum number of semaphore identifiers (i.e., sets)</>
+        <entry>&gt;= ceil(max_connections % 16)</>
+       </row>
+
+       <row>
+        <entry><varname>SEMMNS</></>
+        <entry>Maximum number of semaphores system-wide</>
+        <entry>number of allowed connections, rounded up to multiple of 16</>
+       </row>
+
+       <row>
+        <entry><varname>SEMMSL</></>
+        <entry>Maximum number of semaphores per set</>
+        <entry>&gt;= 16</>
+       </row>
+
+       <row>
+        <entry><varname>SEMMAP</></>
+        <entry>Number of entries in semaphore map</>
+        <entry>see text</>
+       </row>
+
+       <row>
+        <entry><varname>SEMVMX</></>
+        <entry>Maximum value of semaphore</>
+        <entry>&gt;= 255  (The default is often 32767, don't change unless asked to.)</>
+       </row>
+
+     </tbody>
+    </tgroup>
+   </table>
+
+
+   <para>
+    The most important shared memory parameter is <varname>SHMMAX</>,
+    the maximum size, in bytes, that a shared memory segment can have.
+    If you get an error message from <function>shmget</> along the
+    lines of <errorname>Invalid argument</> then it is possible that
+    this limit has been exceeded. The size of the required shared
+    memory segments varies both with the number of requested buffers
+    (<option>-B</> option) and the number of allowed connections
+    (<option>-N</> option), although the former is the dominant item.
+    (You can therefore, as a temporary solution, lower these settings
+    to get rid of the failures.) As a rough approximation you can
+    estimate the required segment size as the number of buffers times
+    the block size (8192 kB by default) plus ample overhead (at least
+    half a megabyte). Any error message you might get will contain the
+    size of the failed allocation. (<productname>Postgres</> will
+    actually use three shared memory segments, but the size of the
+    other two is negligible for this consideration.)
+   </para>
+
+   <para>
+    Less likely to cause problems is the minimum size for shared
+    memory segments (<varname>SHMMIN</>), which must be at least 144
+    for <productname>Postgres</> (it's usually just 1), and the
+    maximum number of segments system-wide (<varname>SHMMNI</>, as
+    mentioned, 3 are needed) or per-process (<varname>SHMSEG</>,
+    ditto). Some systems also have a limit on the total amount of
+    shared memory in the system; see the platform-specific
+    instructions below.
+   </para>
+
+   <para>
+    <productname>Postgres</> uses one semaphore per allowed connection
+    (<option>-N</> option), in sets of 16. The maximum number of
+    semaphores in the system is set by <varname>SEMMNS</>, which
+    consequently must be at least as high as the connection setting.
+    The parameter <varname>SEMMNI</> determines the limit on the
+    number of semaphore sets that can exist on the system at one time.
+    Hence this parameter must be at least
+    <literal>ceil(max_connections % 16)</>. Lowering the number of
+    allowed connections is a temporary workaround for failures, which
+    are usually confusingly worded <quote><errorname>No space left on
+    device</></>, from the function <function>semget()</>.
+   </para>
+
+   <para>
+    In some cases it might also turn out to be necessary to increase
+    <varname>SEMMAP</> to be at least on the order of
+    <varname>SEMMNS</>. This parameter defines the size of the
+    semaphore resource map, in which each contiguous block of available
+    semaphores needs an entry. When a semaphore set is freed it is
+    either added to an existing entry that is adjacent to the freed
+    block or it is registered under a new map entry. If the map is
+    full, the freed semaphores gets lost (until reboot). Fragmentation
+    of the semaphore space could therefore over time lead to less
+    available semaphores than there should be.
+   </para>
+
+   <para>
+    The <varname>SEMMSL</> parameter, which determines how many
+    semaphores can be in a set, must be at least 16 for
+    <productname>Postgres</>.
+   </para>
+
+   <para>
+    Various settings related to <quote>semaphore undo</>, such as
+    <varname>SEMMNU</> and <varname>SEMUME</>, are not of relevance
+    with <productname>Postgres</>.
+   </para>
+
+
+   <para>
+    <variablelist>
+
+     <varlistentry>
+      <term>BSD/OS</>
+      <listitem>
+       <formalpara>
+        <title>Shared Memory</>
+        <para>
+         By default, only 4 MB of shared memory is supported. Keep in
+         mind that shared memory is not pageable; it is locked in RAM.
+         To increase the number of buffers supported by the
+         postmaster, increase <varname>SHMMAXPGS</> by 1024 for every
+         additional 4 MB of shared memory:
+<programlisting>
+/sys/sys/shm.h:69:#define       SHMMAXPGS       1024    /* max hardware pages... */
+</programlisting>
+         The default setting of 1024 is for a maximum of 4 MB of shared
+         memory.
+        </para>
+       </formalpara>
+
+       <para>
+        For those running 4.1 or later, just recompile the kernel and
+        reboot. For those running earlier releases, use
+        <application>bpatch</> to find the <varname>sysptsize</> value
+        for the current kernel. This is computed dynamically at
+        bootup.
+<screen>
+$ <userinput>bpatch -r sysptsize</>
+<computeroutput>0x9 = 9</>
+</screen>
+        Next, change <varname>SYSPTSIZE</> to a hard-coded value. Use
+        the bpatch value, plus add 1 for every additional 4 MB of
+        shared memory you desire.
+<programlisting>
+/sys/i386/i386/i386_param.c:28:#define  SYSPTSIZE 0        /* dynamically... */
+</programlisting>
+        <varname>sysptsize</> can not be changed by sysctl on the fly.
+       </para>
+
+       <formalpara>
+        <title>Semaphores</>
+        <para>
+         You may need to increase the number of semaphores. By
+         default, <productname>Postgres</> allocates 32 semaphores,
+         one for each backend connection. This is just over half the
+         default system total of 60.
+        </para>
+       </formalpara>
+
+       <para>
+        The defaults are in <filename>/sys/sys/sem.h</>:
+<programlisting>
+/* Configuration parameters */
+#ifndef SEMMNI
+#define SEMMNI  10              /* # of semaphore identifiers */
+#endif
+#ifndef SEMMNS
+#define SEMMNS  60              /* # of semaphores in system */
+#endif
+#ifndef SEMUME
+#define SEMUME  10              /* max # of undo entries per process */
+#endif
+#ifndef SEMMNU
+#define SEMMNU  30              /* # of undo structures in system */
+#endif
+</programlisting>
+        Set the values you want in your kernel config file, e.g.:
+<programlisting>
+options "SEMMNI=40"
+options "SEMMNS=240"
+options "SEMUME=40"
+options "SEMMNU=120"
+</programlisting>
+       </para>
+      </listitem>
+     </varlistentry>
+
+
+     <varlistentry>
+      <term>FreeBSD</>
+      <listitem>
+       <para>
+        The options <varname>SYSVSHM</> and <varname>SYSVSEM</> need
+        to be enabled when the kernel is compiled. (They are by
+        default.) The maximum size of shared memory is determined by
+        the option <varname>SHMMAXPGS</> (in pages). The following
+        shows an example on how to set the various parameters:
+<programlisting>
+options         SYSVSHM                                                           
+options         SHMMAXPGS=4096                                                    
+options         SHMSEG=256                                                        
+                                                                                  
+options         SYSVSEM                                                           
+options         SEMMNI=256                                                        
+options         SEMMNS=512                                                        
+options         SEMMNU=256                                                        
+options         SEMMAP=256
+</programlisting>
+       </para>
+      </listitem>
+     </varlistentry>
+
+
+     <varlistentry>
+      <term>HPUX</>
+      <listitem>
+       <para>
+        The default settings tend to suffice for normal installations.
+        On <productname>HPUX</> 10, the factory default for
+        <varname>SEMMNS</> is 128, which might be too low for larger
+        database sites.
+       </para>
+       <para>
+        IPC parameters can be set in the <application>System
+        Administration Manager</> (<acronym>SAM</>) under
+        <menuchoice><guimenu>Kernel
+        Configuration</><guimenuitem>Configurable Parameters</></>.
+        Hit <guibutton>Create A New Kernel</> when you're done.
+       </para>
+      </listitem>
+     </varlistentry>
+
+
+     <varlistentry>
+      <term>Linux</>
+      <listitem>
+       <para>
+        System V IPC is enabled by default and sufficiently sized for
+        most uses. The relevant parameters are in
+        <filename>/usr/src/linux/include/asm-<replaceable>xxx</>/shmparam.h</>
+        and <filename>/usr/src/linux/include/linux/sem.h</>. Be sure
+        to do <command>make dep</> before rebuilding the kernel.
+       </para>
+      </listitem>
+     </varlistentry>
+
+
+     <varlistentry>
+      <term>SCO OpenServer</>
+      <listitem>
+       <para>
+        In the default configuration, only 512 kB of shared memory per
+        segment is allowed, which is about enough for <option>-B 24 -N
+        12</>. To increase the setting, first change the directory to
+        <filename>/etc/conf/cf.d</>. To display the current value of
+        <varname>SHMMAX</>, in bytes, run
+<programlisting>
+./configure -y SHMMAX
+</programlisting>
+        To set a new value for <varname>SHMMAX</>, run:
+<programlisting>
+./configure SHMMAX=<replaceable>value</>
+</programlisting>
+        where <replaceable>value</> is the new value you want to use
+        (in bytes). After setting <varname>SHMMAX</>, rebuild the kernel
+<programlisting>
+./link_unix
+</programlisting>
+        and reboot.
+       </para>
+      </listitem>
+     </varlistentry>
+
+
+     <varlistentry>
+      <term>Solaris</>
+      <listitem>
+       <para>
+        At least in version 2.6, the maximum size of a shared memory
+        segment is set too low for <productname>Postgres</>. The
+        relevant settings can be changed in <filename>/etc/system</>,
+        for example:
+<programlisting>
+set shmsys:shminfo_shmmax=0x2000000
+set shmsys:shminfo_shmmin=1
+set shmsys:shminfo_shmmni=256
+set shmsys:shminfo_shmseg=256
+
+set semsys:seminfo_semmap=256
+set semsys:seminfo_semmni=512
+set semsys:seminfo_semmns=512
+set semsys:seminfo_semmsl=32
+</programlisting>
+        You need to reboot to make the changes effective.
+       </para>
+
+       <para>
+        See also <ulink
+        url="http://www.sunworld.com/swol-09-1997/swol-09-insidesolaris.html">http://www.sunworld.com/swol-09-1997/swol-09-insidesolaris.html</>
+        for information on shared memory under
+        <productname>Solaris</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+
+     <varlistentry>
+      <term>UnixWare</>
+      <listitem>
+       <para>
+        On <productname>UnixWare</> 7, the maximum size for shared
+        memory segments is 512 kB in the default configuration. This
+        is enough for about <option>-B 24 -N 12</>. To display the
+        current value of <varname>SHMMAX</>, run
+<programlisting>
+/etc/conf/bin/idtune -g SHMMAX
+</programlisting>
+        which displays the current, default, minimum, and maximum
+        values, in bytes. To set a new value for <varname>SHMMAX</>,
+        run:
+<programlisting>
+/etc/conf/bin/idtune SHMMAX <replaceable>value</>
+</programlisting>
+        where <replaceable>value</> is the new value you want to use
+        (in bytes). After setting <varname>SHMMAX</>, rebuild the
+        kernel
+<programlisting>
+/etc/conf/bin/idbuild -B
+</programlisting>
+        and reboot.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    </variablelist>
+
+    <note>
+     <para>
+      If your platform is not listed here, please consider
+      contributing some information.
+     </para>
+    </note>
+   </para>
+  </sect2>
+
+<!--
+ Other fun things to write about one day:
+ * number of processes per user and system-wide (soft/hard limit)
+ * open files/inodes per user and system-wide (soft/hard limit)
+   (Think about this both ways: Increasing it to allow Postgres to
+   open more files, and decreasing it to prevent Postgres from taking
+   up all file descriptors.)
+ * stack and data segment size, plain-old memory limit
+--> 
+
+ </sect1>
+
+
  <sect1 id="locale">
   <title>Locale Support</title>
   
@@ -1142,8 +1586,9 @@ postmaster -B 1024 -S -D/usr/local/pgsql/data/ -o '-Fe'
       and if locale is broken <command>perl -v</> will complain
       something like:
 <screen>
-8:17[mira]:~/WWW/postgres>setenv LC_CTYPE not_exist
-8:18[mira]:~/WWW/postgres>perl -v
+<prompt>$</> <userinput>export LC_CTYPE='not_exist'</>
+<prompt>$</> <userinput>perl -v</>
+<computeroutput>
 perl: warning: Setting locale failed.
 perl: warning: Please check that your locale settings:
 LC_ALL = (unset),
@@ -1151,6 +1596,7 @@ LC_CTYPE = "not_exist",
 LANG = (unset)
 are supported and installed on your system.
 perl: warning: Falling back to the standard locale ("C").
+</computeroutput>
 </screen>
      </para>
     </listitem>

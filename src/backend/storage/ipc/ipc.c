@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.48 2000/05/31 00:28:29 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.49 2000/07/22 14:49:01 petere Exp $
  *
  * NOTES
  *
@@ -54,7 +54,6 @@ bool		proc_exit_inprogress = false;
 static int	UsePrivateMemory = 0;
 
 static void IpcMemoryDetach(int status, char *shmaddr);
-static void IpcConfigTip(void);
 
 /* ----------------------------------------------------------------
  *						exit() handling stuff
@@ -241,7 +240,9 @@ IPCPrivateSemaphoreKill(int status,
 	union semun semun;
 	semun.val = 0;		/* unused */
 
-	semctl(semId, 0, IPC_RMID, semun);
+	if (semctl(semId, 0, IPC_RMID, semun) == -1)
+		elog(NOTICE, "IPCPrivateSemaphoreKill: semctl(%d, 0, IPC_RMID, ...) failed: %s",
+			 semId, strerror(errno));
 }
 
 
@@ -261,8 +262,8 @@ IPCPrivateMemoryKill(int status,
 	{
 		if (shmctl(shmId, IPC_RMID, (struct shmid_ds *) NULL) < 0)
 		{
-			elog(NOTICE, "IPCPrivateMemoryKill: shmctl(%d, %d, 0) failed: %m",
-				 shmId, IPC_RMID);
+			elog(NOTICE, "IPCPrivateMemoryKill: shmctl(id=%d, IPC_RMID, NULL) failed: %m",
+				 shmId);
 		}
 	}
 }
@@ -307,10 +308,19 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 
 		if (semId < 0)
 		{
-			fprintf(stderr, "IpcSemaphoreCreate: semget(%d, %d, 0%o) failed: %s\n",
+			fprintf(stderr, "IpcSemaphoreCreate: semget(key=%d, num=%d, 0%o) failed: %s\n",
 					semKey, semNum, (unsigned)(permission|IPC_CREAT),
 					strerror(errno));
-			IpcConfigTip();
+
+			if (errno == ENOSPC)
+				fprintf(stderr,
+						"\nThis error does *not* mean that you have run out of disk space.\n\n"
+						"It occurs either because system limit for the maximum number of\n"
+						"semaphore sets (SEMMNI), or the system wide maximum number of\n"
+						"semaphores (SEMMNS), would be exceeded.  You need to raise the\n"
+						"respective kernel parameter.  Look into the PostgreSQL documentation\n"
+						"for details.\n\n");
+
 			return (-1);
 		}
 		for (i = 0; i < semNum; i++)
@@ -319,10 +329,16 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 		errStatus = semctl(semId, 0, SETALL, semun);
 		if (errStatus == -1)
 		{
-			fprintf(stderr, "IpcSemaphoreCreate: semctl(id=%d) failed: %s\n",
+			fprintf(stderr, "IpcSemaphoreCreate: semctl(id=%d, 0, SETALL, ...) failed: %s\n",
 					semId, strerror(errno));
+
+			if (errno == ERANGE)
+				fprintf(stderr,
+						"You possibly need to raise your kernel's SEMVMX value to be at least\n"
+						"%d.  Look into the PostgreSQL documentation for details.\n",
+						semStartValue);
+
 			semctl(semId, 0, IPC_RMID, semun);
-			IpcConfigTip();
 			return (-1);
 		}
 
@@ -516,9 +532,35 @@ IpcMemoryCreate(IpcMemoryKey memKey, uint32 size, int permission)
 
 	if (shmid < 0)
 	{
-		fprintf(stderr, "IpcMemoryCreate: shmget(%d, %d, 0%o) failed: %s\n",
-				memKey, size, (unsigned)(IPC_CREAT|permission), strerror(errno));
-		IpcConfigTip();
+		fprintf(stderr, "IpcMemoryCreate: shmget(key=%d, size=%d, 0%o) failed: %s\n",
+				(int)memKey, size, (unsigned)(IPC_CREAT|permission),
+				strerror(errno));
+
+		if (errno == EINVAL)
+			fprintf(stderr,
+					"\nThis error can be caused by one of three things:\n\n"
+					"1. The maximum size for shared memory segments on your system was\n"
+					"   exceeded.  You need to raise the SHMMAX parameter in your kernel\n"
+					"   to be at least %d bytes.\n\n"
+					"2. The requested shared memory segment was too small for your system.\n"
+					"   You need to lower the SHMMIN parameter in your kernel.\n\n"
+					"3. The requested shared memory segment already exists but is of the\n"
+					"   wrong size.  This is most likely the case if an old version of\n"
+					"   PostgreSQL crashed and didn't clean up.  The `ipcclean' utility\n"
+					"   can be used to remedy this.\n\n"
+					"The PostgreSQL Administrator's Guide contains more information about\n"
+					"shared memory configuration.\n\n",
+					size);
+
+		else if (errno == ENOSPC)
+			fprintf(stderr,
+					"\nThis error does *not* mean that you have run out of disk space.\n\n"
+					"It occurs either if all available shared memory ids have been taken,\n"
+					"in which case you need to raise the SHMMNI parameter in your kernel,\n"
+					"or because the system's overall limit for shared memory has been\n"
+					"reached.  The PostgreSQL Administrator's Guide contains more\n"
+					"information about shared memory configuration.\n\n");
+
 		return IpcMemCreationFailed;
 	}
 
@@ -541,7 +583,7 @@ IpcMemoryIdGet(IpcMemoryKey memKey, uint32 size)
 
 	if (shmid < 0)
 	{
-		fprintf(stderr, "IpcMemoryIdGet: shmget(%d, %d, 0) failed: %s\n",
+		fprintf(stderr, "IpcMemoryIdGet: shmget(key=%d, size=%d, 0) failed: %s\n",
 				memKey, size, strerror(errno));
 		return IpcMemIdGetFailed;
 	}
@@ -558,7 +600,7 @@ static void
 IpcMemoryDetach(int status, char *shmaddr)
 {
 	if (shmdt(shmaddr) < 0)
-		elog(NOTICE, "IpcMemoryDetach: shmdt(0x%p): %m", shmaddr);
+		elog(NOTICE, "IpcMemoryDetach: shmdt(0x%p) failed: %m", shmaddr);
 }
 
 /****************************************************************************/
@@ -694,13 +736,3 @@ LockIsFree(int lockid)
 #endif
 
 #endif	 /* HAS_TEST_AND_SET */
-
-static void
-IpcConfigTip(void)
-{
-	fprintf(stderr, "This type of error is usually caused by an improper\n");
-	fprintf(stderr, "shared memory or System V IPC semaphore configuration.\n");
-	fprintf(stderr, "For more information, see the FAQ and platform-specific\n");
-	fprintf(stderr, "FAQ's in the source directory pgsql/doc or on our\n");
-	fprintf(stderr, "web site at http://www.postgresql.org.\n");
-}
