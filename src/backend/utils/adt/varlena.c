@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.53 1999/07/17 20:18:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.54 1999/11/07 23:08:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -801,12 +801,12 @@ text_name(text *s)
 #endif
 
 	result = palloc(NAMEDATALEN);
-	StrNCpy(result->data, VARDATA(s), NAMEDATALEN);
+	StrNCpy(NameStr(*result), VARDATA(s), NAMEDATALEN);
 
 	/* now null pad to full length... */
 	while (len < NAMEDATALEN)
 	{
-		*(result->data + len) = '\0';
+		*(NameStr(*result) + len) = '\0';
 		len++;
 	}
 
@@ -825,7 +825,7 @@ name_text(NameData *s)
 	if (s == NULL)
 		return NULL;
 
-	len = strlen(s->data);
+	len = strlen(NameStr(*s));
 
 #ifdef STRINGDEBUG
 	printf("text- convert string length %d (%d) ->%d\n",
@@ -833,7 +833,7 @@ name_text(NameData *s)
 #endif
 
 	result = palloc(VARHDRSZ + len);
-	strncpy(VARDATA(result), s->data, len);
+	strncpy(VARDATA(result), NameStr(*s), len);
 	VARSIZE(result) = len + VARHDRSZ;
 
 	return result;

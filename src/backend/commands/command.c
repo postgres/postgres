@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.55 1999/10/03 23:55:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.56 1999/11/07 23:08:01 momjian Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -358,7 +358,7 @@ PerformAddAttribute(char *relationName,
 				if (childrelid == myrelid)
 					continue;
 				rel = heap_open(childrelid, AccessExclusiveLock);
-				PerformAddAttribute((rel->rd_rel->relname).data,
+				PerformAddAttribute(RelationGetRelationName(rel),
 									userName, false, colDef);
 				heap_close(rel, AccessExclusiveLock);
 			}

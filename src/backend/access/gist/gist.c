@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.46 1999/09/24 00:23:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.47 1999/11/07 23:07:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,7 +111,7 @@ gistbuild(Relation heap,
 	 */
 
 	if (oldPred == NULL && (nb = RelationGetNumberOfBlocks(index)) != 0)
-		elog(ERROR, "%s already contains data", index->rd_rel->relname.data);
+		elog(ERROR, "%s already contains data", RelationGetRelationName(index));
 
 	/* initialize the root page (if this is a new index) */
 	if (oldPred == NULL)

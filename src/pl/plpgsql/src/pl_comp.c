@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.11 1999/09/21 21:10:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.12 1999/11/07 23:08:34 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1212,7 +1212,7 @@ plpgsql_parse_wordrowtype(char *string)
 		strcat(var->refname, ".");
 		strcat(var->refname, cp);
 		var->datatype = malloc(sizeof(PLpgSQL_type));
-		var->datatype->typname = strdup(nameout(&(typeStruct->typname)));
+		var->datatype->typname = strdup(NameStr(typeStruct->typname));
 		var->datatype->typoid = typetup->t_data->t_oid;
 		fmgr_info(typeStruct->typinput, &(var->datatype->typinput));
 		var->datatype->typbyval = typeStruct->typbyval;

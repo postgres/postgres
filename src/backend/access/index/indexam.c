@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.36 1999/09/18 19:06:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.37 1999/11/07 23:07:54 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relationId
@@ -147,7 +147,7 @@ index_open(Oid relationId)
 		elog(ERROR, "Index %u does not exist", relationId);
 
 	if (r->rd_rel->relkind != RELKIND_INDEX)
-		elog(ERROR, "%s is not an index relation", r->rd_rel->relname.data);
+		elog(ERROR, "%s is not an index relation", RelationGetRelationName(r));
 
 	return r;
 }
@@ -169,7 +169,7 @@ index_openr(char *relationName)
 		elog(ERROR, "Index '%s' does not exist", relationName);
 
 	if (r->rd_rel->relkind != RELKIND_INDEX)
-		elog(ERROR, "%s is not an index relation", r->rd_rel->relname.data);
+		elog(ERROR, "%s is not an index relation", RelationGetRelationName(r));
 
 	return r;
 }

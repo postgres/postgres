@@ -133,7 +133,7 @@ MainLoop(PsqlSettings *pset, FILE *source)
 		 */
 
 		/* No more input.  Time to quit, or \i done */
-		if (line == NULL || (!pset->cur_cmd_interactive && *line == '\0'))
+		if (line == NULL)
 		{
 			if (GetVariableBool(pset->vars, "echo") && !GetVariableBool(pset->vars, "quiet"))
 				puts("EOF\n");

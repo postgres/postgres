@@ -3,7 +3,7 @@
  *			  procedural language (PL)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.13 1999/07/15 15:21:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.14 1999/11/07 23:08:36 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -920,7 +920,8 @@ pltcl_trigger_handler(FmgrInfo *proinfo)
 	/* A list of attribute names for argument TG_relatts */
 	Tcl_DStringAppendElement(&tcl_trigtup, "");
 	for (i = 0; i < tupdesc->natts; i++)
-		Tcl_DStringAppendElement(&tcl_trigtup, tupdesc->attrs[i]->attname.data);
+		Tcl_DStringAppendElement(&tcl_trigtup,
+			NameStr(tupdesc->attrs[i]->attname));
 	Tcl_DStringAppendElement(&tcl_cmd, Tcl_DStringValue(&tcl_trigtup));
 	Tcl_DStringFree(&tcl_trigtup);
 	Tcl_DStringInit(&tcl_trigtup);
@@ -2125,7 +2126,7 @@ pltcl_set_tuple_values(Tcl_Interp *interp, char *arrayname,
 		/************************************************************
 		 * Get the attribute name
 		 ************************************************************/
-		attname = tupdesc->attrs[i]->attname.data;
+		attname = NameStr(tupdesc->attrs[i]->attname);
 
 		/************************************************************
 		 * Get the attributes value
@@ -2198,7 +2199,7 @@ pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
 		/************************************************************
 		 * Get the attribute name
 		 ************************************************************/
-		attname = tupdesc->attrs[i]->attname.data;
+		attname = NameStr(tupdesc->attrs[i]->attname);
 
 		/************************************************************
 		 * Get the attributes value

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.28 1999/11/04 08:01:09 inoue Exp $
+ * $Id: rel.h,v 1.29 1999/11/07 23:08:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,7 +176,7 @@ typedef Relation *RelationPtr;
  *
  *	  Returns a Relation Name
  */
-#define RelationGetRelationName(relation) (&(relation)->rd_rel->relname)
+#define RelationGetRelationName(relation) (NameStr((relation)->rd_rel->relname))
 
 /*
  * RelationGetNumberOfAttributes

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.63 1999/10/12 14:54:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.64 1999/11/07 23:08:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.63 1999/10/12 14:54:27 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.64 1999/11/07 23:08:17 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -155,7 +155,6 @@ InitProcGlobal(IPCKey key, int maxBackends)
 			{
 				IPCKey		semKey = ProcGlobal->currKey + i;
 				int			semId;
-				int			semstat;
 
 				semId = IpcSemaphoreCreate(semKey,
 										   PROC_NSEMS_PER_SET,
@@ -180,7 +179,6 @@ void
 InitProcess(IPCKey key)
 {
 	bool		found = false;
-	int			semstat;
 	unsigned long location,
 				myOffset;
 

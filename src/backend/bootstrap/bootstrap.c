@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.70 1999/10/25 03:07:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.71 1999/11/07 23:07:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -479,7 +479,7 @@ boot_openrel(char *relname)
 		 */
 		if (namestrcmp(&attrtypes[i]->attname, "attisset") == 0)
 			attrtypes[i]->attisset = get_attisset(RelationGetRelid(reldesc),
-											 attrtypes[i]->attname.data);
+											 NameStr(attrtypes[i]->attname));
 		else
 			attrtypes[i]->attisset = false;
 
@@ -488,7 +488,7 @@ boot_openrel(char *relname)
 			Form_pg_attribute at = attrtypes[i];
 
 			printf("create attribute %d name %s len %d num %d type %d\n",
-				   i, at->attname.data, at->attlen, at->attnum,
+				   i, NameStr(at->attname), at->attlen, at->attnum,
 				   at->atttypid
 				);
 			fflush(stdout);
@@ -507,7 +507,7 @@ closerel(char *name)
 	{
 		if (reldesc)
 		{
-			if (namestrcmp(RelationGetRelationName(reldesc), name) != 0)
+			if (strcmp(RelationGetRelationName(reldesc), name) != 0)
 				elog(ERROR, "closerel: close of '%s' when '%s' was expected",
 					 name, relname ? relname : "(null)");
 		}
@@ -558,7 +558,7 @@ DefineAttr(char *name, char *type, int attnum)
 		attrtypes[attnum]->atttypid = Ap->am_oid;
 		namestrcpy(&attrtypes[attnum]->attname, name);
 		if (!Quiet)
-			printf("<%s %s> ", attrtypes[attnum]->attname.data, type);
+			printf("<%s %s> ", NameStr(attrtypes[attnum]->attname), type);
 		attrtypes[attnum]->attnum = 1 + attnum; /* fillatt */
 		attlen = attrtypes[attnum]->attlen = Ap->am_typ.typlen;
 		attrtypes[attnum]->attbyval = Ap->am_typ.typbyval;
@@ -569,7 +569,7 @@ DefineAttr(char *name, char *type, int attnum)
 		attrtypes[attnum]->atttypid = Procid[typeoid].oid;
 		namestrcpy(&attrtypes[attnum]->attname, name);
 		if (!Quiet)
-			printf("<%s %s> ", attrtypes[attnum]->attname.data, type);
+			printf("<%s %s> ", NameStr(attrtypes[attnum]->attname), type);
 		attrtypes[attnum]->attnum = 1 + attnum; /* fillatt */
 		attlen = attrtypes[attnum]->attlen = Procid[typeoid].len;
 
@@ -792,7 +792,7 @@ gettype(char *type)
 	{
 		for (app = Typ; *app != (struct typmap *) NULL; app++)
 		{
-			if (strncmp((*app)->am_typ.typname.data, type, NAMEDATALEN) == 0)
+			if (strncmp(NameStr((*app)->am_typ.typname), type, NAMEDATALEN) == 0)
 			{
 				Ap = *app;
 				return (*app)->am_oid;

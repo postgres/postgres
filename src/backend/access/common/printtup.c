@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.49 1999/07/17 20:16:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.50 1999/11/07 23:07:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -245,7 +245,7 @@ printatt(unsigned attributeId,
 {
 	printf("\t%2d: %s%s%s%s\t(typeid = %u, len = %d, typmod = %d, byval = %c)\n",
 		   attributeId,
-		   attributeP->attname.data,
+		   NameStr(attributeP->attname),
 		   value != NULL ? " = \"" : "",
 		   value != NULL ? value : "",
 		   value != NULL ? "\"" : "",

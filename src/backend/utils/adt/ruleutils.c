@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.29 1999/10/31 18:57:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.30 1999/11/07 23:08:24 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -138,7 +138,7 @@ pg_get_ruledef(NameData *rname)
 	 * We need the rules name somewhere deep down
 	 * ----------
 	 */
-	rulename = nameout(rname);
+	rulename = pstrdup(NameStr(*rname));
 
 	/* ----------
 	 * Connect to SPI manager
@@ -238,7 +238,7 @@ pg_get_viewdef(NameData *rname)
 	 * We need the rules name somewhere deep down
 	 * ----------
 	 */
-	rulename = nameout(rname);
+	rulename = pstrdup(NameStr(*rname));
 
 	/* ----------
 	 * Connect to SPI manager
@@ -410,10 +410,10 @@ pg_get_indexdef(Oid indexrelid)
 	spirc = SPI_execp(plan_getam, spi_args, spi_nulls, 1);
 	if (spirc != SPI_OK_SELECT)
 		elog(ERROR, "failed to get pg_am tuple for index %s",
-			 nameout(&(idxrelrec->relname)));
+			 idxrelrec->relname);
 	if (SPI_processed != 1)
 		elog(ERROR, "failed to get pg_am tuple for index %s",
-			 nameout(&(idxrelrec->relname)));
+			 idxrelrec->relname);
 	spi_tup = SPI_tuptable->vals[0];
 	spi_ttc = SPI_tuptable->tupdesc;
 	spi_fno = SPI_fnumber(spi_ttc, "amname");
@@ -425,8 +425,8 @@ pg_get_indexdef(Oid indexrelid)
 	initStringInfo(&buf);
 	appendStringInfo(&buf, "CREATE %sINDEX %s ON %s USING %s (",
 					 idxrec->indisunique ? "UNIQUE " : "",
-					 quote_identifier(nameout(&(idxrelrec->relname))),
-					 quote_identifier(nameout(&(indrelrec->relname))),
+					 quote_identifier(pstrdup(NameStr(idxrelrec->relname))),
+					 quote_identifier(pstrdup(NameStr(indrelrec->relname))),
 					 quote_identifier(SPI_getvalue(spi_tup, spi_ttc,
 												   spi_fno)));
 
@@ -491,7 +491,7 @@ pg_get_indexdef(Oid indexrelid)
 
 		procStruct = (Form_pg_proc) GETSTRUCT(proctup);
 		appendStringInfo(&buf, "%s(%s) ",
-						 quote_identifier(nameout(&(procStruct->proname))),
+						 quote_identifier(pstrdup(NameStr(procStruct->proname))),
 						 keybuf.data);
 
 		spi_args[0] = ObjectIdGetDatum(idxrec->indclass[0]);
@@ -561,7 +561,7 @@ pg_get_userbyid(int32 uid)
 	 * ----------
 	 */
 	result = (NameData *) palloc(NAMEDATALEN);
-	memset(result->data, 0, NAMEDATALEN);
+	memset(NameStr(*result), 0, NAMEDATALEN);
 
 	/* ----------
 	 * Get the pg_shadow entry and print the result
@@ -572,7 +572,7 @@ pg_get_userbyid(int32 uid)
 	if (HeapTupleIsValid(usertup))
 	{
 		user_rec = (Form_pg_shadow) GETSTRUCT(usertup);
-		StrNCpy(result->data, (&(user_rec->usename))->data, NAMEDATALEN);
+		StrNCpy(NameStr(*result), NameStr(user_rec->usename), NAMEDATALEN);
 	}
 	else
 		sprintf((char *) result, "unknown (UID=%d)", uid);
@@ -1446,7 +1446,7 @@ get_func_expr(Expr *expr, deparse_context *context)
 		elog(ERROR, "cache lookup for proc %u failed", func->funcid);
 
 	procStruct = (Form_pg_proc) GETSTRUCT(proctup);
-	proname = nameout(&(procStruct->proname));
+	proname = pstrdup(NameStr(procStruct->proname));
 
 	/*
 	 * nullvalue() and nonnullvalue() should get turned into special syntax
@@ -1555,7 +1555,8 @@ get_tle_expr(TargetEntry *tle, deparse_context *context)
 		elog(ERROR, "cache lookup for type %u failed",
 			 procStruct->prorettype);
 	typeStruct = (Form_pg_type) GETSTRUCT(tup);
-	if (strncmp(procStruct->proname.data, typeStruct->typname.data,
+	if (strncmp(NameStr(procStruct->proname),
+				NameStr(typeStruct->typname),
 				NAMEDATALEN) != 0)
 	{
 		get_rule_expr(tle->expr, context);
@@ -1662,7 +1663,7 @@ get_const_expr(Const *constval, deparse_context *context)
 			/* These types can be left unlabeled */
 			break;
 		default:
-			extval = (char *) nameout(&(typeStruct->typname));
+			extval = pstrdup(NameStr(typeStruct->typname));
 			appendStringInfo(buf, "::%s", quote_identifier(extval));
 			pfree(extval);
 			break;
@@ -1800,7 +1801,7 @@ get_relation_name(Oid relid)
 		elog(ERROR, "cache lookup of relation %u failed", relid);
 
 	classStruct = (Form_pg_class) GETSTRUCT(classtup);
-	return nameout(&(classStruct->relname));
+	return pstrdup(NameStr(classStruct->relname));
 }
 
 
@@ -1823,7 +1824,7 @@ get_attribute_name(Oid relid, int2 attnum)
 			 attnum, relid);
 
 	attStruct = (Form_pg_attribute) GETSTRUCT(atttup);
-	return nameout(&(attStruct->attname));
+	return pstrdup(NameStr(attStruct->attname));
 }
 
 

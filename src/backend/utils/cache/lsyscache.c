@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.34 1999/09/09 02:36:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.35 1999/11/07 23:08:26 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -62,7 +62,7 @@ get_attname(Oid relid, AttrNumber attnum)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_attribute att_tup = (Form_pg_attribute) GETSTRUCT(tp);
-		return pstrdup(att_tup->attname.data);
+		return pstrdup(NameStr(att_tup->attname));
 	}
 	else
 		return NULL;
@@ -292,7 +292,7 @@ get_opname(Oid opno)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tp);
-		return pstrdup(optup->oprname.data);
+		return pstrdup(NameStr(optup->oprname));
 	}
 	else
 		return NULL;
@@ -529,7 +529,7 @@ get_rel_name(Oid relid)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_class reltup = (Form_pg_class) GETSTRUCT(tp);
-		return pstrdup(reltup->relname.data);
+		return pstrdup(NameStr(reltup->relname));
 	}
 	else
 		return NULL;

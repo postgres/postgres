@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.14 1999/09/04 22:03:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.15 1999/11/07 23:08:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,8 +62,8 @@ create_temp_relation(char *relname, HeapTuple pg_class_tuple)
 
 	/* save user-supplied name */
 	strcpy(temp_rel->user_relname, relname);
-	StrNCpy(temp_rel->relname, ((Form_pg_class)
-		GETSTRUCT(pg_class_tuple))->relname.data, NAMEDATALEN);
+	StrNCpy(temp_rel->relname, NameStr(((Form_pg_class)
+		GETSTRUCT(pg_class_tuple))->relname), NAMEDATALEN);
 	temp_rel->relid = pg_class_tuple->t_data->t_oid;
 	temp_rel->relkind = ((Form_pg_class) GETSTRUCT(pg_class_tuple))->relkind;
 	temp_rel->xid = GetCurrentTransactionId();

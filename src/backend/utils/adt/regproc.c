@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.43 1999/09/18 19:07:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.44 1999/11/07 23:08:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,7 +173,7 @@ regprocout(RegProcedure proid)
 		{
 			char	   *s;
 
-			s = ((Form_pg_proc) GETSTRUCT(proctup))->proname.data;
+			s = NameStr(((Form_pg_proc) GETSTRUCT(proctup))->proname);
 			StrNCpy(result, s, NAMEDATALEN);
 		}
 		else
@@ -261,7 +261,7 @@ oid8types(Oid *oidArray)
 			{
 				char	   *s;
 
-				s = ((Form_pg_type) GETSTRUCT(typetup))->typname.data;
+				s = NameStr(((Form_pg_type) GETSTRUCT(typetup))->typname);
 				StrNCpy(VARDATA(result) + strlen(VARDATA(result)), s,
 						NAMEDATALEN);
 				strcat(VARDATA(result), " ");

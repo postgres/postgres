@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.24 1999/07/17 20:16:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.25 1999/11/07 23:08:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -314,7 +314,7 @@ ExecInitUnique(Unique *node, EState *estate, Plan *parent)
 		 * the parser should have ensured that uniqueAttr is a legal
 		 * attribute name
 		 */
-		while (strcmp((tupDesc->attrs[i]->attname).data, uniqueAttr) != 0)
+		while (strcmp(NameStr(tupDesc->attrs[i]->attname), uniqueAttr) != 0)
 			i++;
 		node->uniqueAttrNum = i + 1;	/* attribute numbers start from 1 */
 	}

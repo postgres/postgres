@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.122 1999/11/01 05:06:21 tgl Exp $
+ *	$Id: analyze.c,v 1.123 1999/11/07 23:08:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -407,7 +407,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 				makeResdom(attrno,
 						   thisatt->atttypid,
 						   thisatt->atttypmod,
-						   pstrdup(nameout(&(thisatt->attname))),
+						   pstrdup(NameStr(thisatt->attname)),
 						   0, 0, false),
 				stringToNode(defval[ndef].adbin));
 			qry->targetList = lappend(qry->targetList, te);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.30 1999/10/26 03:12:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.31 1999/11/07 23:08:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ RewriteGetRuleEventRel(char *rulename)
 	if (!HeapTupleIsValid(htup))
 		elog(ERROR, "Class '%u' not found", eventrel);
 
-	return ((Form_pg_class) GETSTRUCT(htup))->relname.data;
+	return NameStr(((Form_pg_class) GETSTRUCT(htup))->relname);
 }
 
 /* ----------------------------------------------------------------

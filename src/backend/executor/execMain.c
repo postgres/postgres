@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.99 1999/11/01 05:09:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.100 1999/11/07 23:08:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -559,7 +559,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 
 		if (resultRelationDesc->rd_rel->relkind == RELKIND_SEQUENCE)
 			elog(ERROR, "You can't change sequence relation %s",
-				 resultRelationDesc->rd_rel->relname.data);
+				 RelationGetRelationName(resultRelationDesc));
 
 		resultRelationInfo = makeNode(RelationInfo);
 		resultRelationInfo->ri_RangeTableIndex = resultRelationIndex;
@@ -1501,7 +1501,7 @@ ExecRelCheck(Relation rel, HeapTuple tuple, EState *estate)
 	slot->ttc_tupleDescriptor = rel->rd_att;
 	slot->ttc_buffer = InvalidBuffer;
 	slot->ttc_whichplan = -1;
-	rte->relname = nameout(&(rel->rd_rel->relname));
+	rte->relname = RelationGetRelationName(rel);
 	rte->refname = rte->relname;
 	rte->relid = RelationGetRelid(rel);
 	/* inh, inFromCl, inJoinSet, skipAcl won't be used, leave them zero */
@@ -1538,7 +1538,6 @@ ExecRelCheck(Relation rel, HeapTuple tuple, EState *estate)
 	}
 
 	pfree(slot);
-	pfree(rte->relname);
 	pfree(rte);
 	pfree(rtlist);
 	pfree(econtext);
@@ -1561,7 +1560,7 @@ ExecConstraints(char *caller, Relation rel, HeapTuple tuple, EState *estate)
 		{
 			if (rel->rd_att->attrs[attrChk - 1]->attnotnull && heap_attisnull(tuple, attrChk))
 				elog(ERROR, "%s: Fail to add null value in not null attribute %s",
-				  caller, rel->rd_att->attrs[attrChk - 1]->attname.data);
+				  caller, NameStr(rel->rd_att->attrs[attrChk - 1]->attname));
 		}
 	}
 

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994-5, Regents of the University of California
  *
- *	  $Id: explain.c,v 1.48 1999/09/18 19:06:40 tgl Exp $
+ *	  $Id: explain.c,v 1.49 1999/11/07 23:08:02 momjian Exp $
  *
  */
 
@@ -216,7 +216,7 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 				if (++i > 1)
 					appendStringInfo(str, ", ");
 				appendStringInfo(str,
-								 stringStringInfo((RelationGetRelationName(relation))->data));
+								 stringStringInfo(RelationGetRelationName(relation)));
 				/* drop relcache refcount from RelationIdGetRelation */
 				RelationDecrementReferenceCount(relation);
 			}

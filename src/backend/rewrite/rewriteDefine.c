@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.38 1999/10/21 02:33:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.39 1999/11/07 23:08:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,9 +118,9 @@ InsertRule(char *rulname,
 	appendStringInfo(&rulebuf, "::text, '%s'::bool);",
 					 is_instead);
 
-	pg_exec_query_dest(rulebuf.data, None, true);
+	pg_exec_query_dest(NameStr(rulebuf), None, true);
 
-	pfree(rulebuf.data);
+	pfree(NameStr(rulebuf));
 
 	return LastOidProcessed;
 }
@@ -272,7 +272,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 			tle = (TargetEntry *) nth(i - 1, query->targetList);
 			resdom = tle->resdom;
 			attr = event_relation->rd_att->attrs[i - 1];
-			attname = nameout(&(attr->attname));
+			attname = pstrdup(NameStr(attr->attname));
 
 			if (strcmp(resdom->resname, attname) != 0)
 				elog(ERROR, "select rules target entry %d has different column name from %s", i, attname);
@@ -295,7 +295,8 @@ DefineQueryRewrite(RuleStmt *stmt)
 
 				rule = event_relation->rd_rules->rules[i];
 				if (rule->event == CMD_SELECT)
-					elog(ERROR, "%s is already a view", nameout(&(event_relation->rd_rel->relname)));
+					elog(ERROR, "%s is already a view",
+						RelationGetRelationName(event_relation));
 			}
 		}
 

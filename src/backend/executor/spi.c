@@ -3,7 +3,7 @@
  * spi.c
  *				Server Programming Interface
  *
- * $Id: spi.c,v 1.40 1999/07/15 22:39:11 momjian Exp $
+ * $Id: spi.c,v 1.41 1999/11/07 23:08:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -369,7 +369,7 @@ SPI_fnumber(TupleDesc tupdesc, char *fname)
 
 	for (res = 0; res < tupdesc->natts; res++)
 	{
-		if (strcasecmp(tupdesc->attrs[res]->attname.data, fname) == 0)
+		if (strcasecmp(NameStr(tupdesc->attrs[res]->attname), fname) == 0)
 			return res + 1;
 	}
 
@@ -387,7 +387,7 @@ SPI_fname(TupleDesc tupdesc, int fnumber)
 		return NULL;
 	}
 
-	return nameout(&(tupdesc->attrs[fnumber - 1]->attname));
+	return pstrdup(NameStr(tupdesc->attrs[fnumber - 1]->attname));
 }
 
 char *
@@ -459,7 +459,7 @@ SPI_gettype(TupleDesc tupdesc, int fnumber)
 		return NULL;
 	}
 
-	return pstrdup(((Form_pg_type) GETSTRUCT(typeTuple))->typname.data);
+	return pstrdup(NameStr(((Form_pg_type) GETSTRUCT(typeTuple))->typname));
 }
 
 Oid
@@ -479,7 +479,7 @@ SPI_gettypeid(TupleDesc tupdesc, int fnumber)
 char *
 SPI_getrelname(Relation rel)
 {
-	return pstrdup(rel->rd_rel->relname.data);
+	return pstrdup(RelationGetRelationName(rel));
 }
 
 void *

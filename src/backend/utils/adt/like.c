@@ -10,7 +10,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.31 1999/09/07 19:09:46 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.32 1999/11/07 23:08:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,7 @@ namelike(NameData *n, struct varlena * p)
 {
 	if (!n)
 		return FALSE;
-	return fixedlen_like(n->data, p, NAMEDATALEN);
+	return fixedlen_like(NameStr(*n), p, NAMEDATALEN);
 }
 
 bool

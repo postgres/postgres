@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.60 1999/10/13 15:02:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.61 1999/11/07 23:08:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -210,7 +210,7 @@ inv_open(Oid lobjId, int flags)
 
 	r = heap_open(lobjId, AccessShareLock);
 
-	indname = pstrdup((r->rd_rel->relname).data);
+	indname = pstrdup(RelationGetRelationName(r));
 
 	/*
 	 * hack hack hack...  we know that the fourth character of the
@@ -282,7 +282,7 @@ inv_destroy(Oid lobjId)
 	if (!RelationIsValid(r) || r->rd_rel->relkind != RELKIND_LOBJECT)
 		return -1;
 
-	heap_destroy_with_catalog(r->rd_rel->relname.data);
+	heap_destroy_with_catalog(RelationGetRelationName(r));
 	return 1;
 }
 

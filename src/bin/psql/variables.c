@@ -79,7 +79,7 @@ SetVariable(VariableSpace space, const char *name, const char *value)
 	if (strspn(name, VALID_VARIABLE_CHARS) != strlen(name))
 		return false;
 
-	for (current = space; current; previous = current, current = current->next)
+	for (current = space, previous = NULL; current; previous = current, current = current->next)
 	{
 #ifdef USE_ASSERT_CHECKING
 		assert(current->name);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.35 1999/10/02 21:33:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.36 1999/11/07 23:08:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
 	}
 
 	procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
-	proname = procedureStruct->proname.data;
+	proname = NameStr(procedureStruct->proname);
 	pronargs_save = *pronargs = procedureStruct->pronargs;
 	probinattr = heap_getattr(procedureTuple,
 							  Anum_pg_proc_probin,

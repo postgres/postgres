@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.12 1999/10/02 21:33:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.13 1999/11/07 23:08:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -533,7 +533,7 @@ GetDefaultOpClass(Oid atttypid)
 	if (!HeapTupleIsValid(tuple))
 		return 0;
 
-	return nameout(&(((Form_pg_opclass) GETSTRUCT(tuple))->opcname));
+	return nameout(&((Form_pg_opclass) GETSTRUCT(tuple))->opcname);
 }
 
 /*

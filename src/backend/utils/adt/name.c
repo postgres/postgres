@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.23 1999/07/17 20:17:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.24 1999/11/07 23:08:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,11 +40,11 @@ namein(char *s)
 		return NULL;
 	result = (NameData *) palloc(NAMEDATALEN);
 	/* always keep it null-padded */
-	StrNCpy(result->data, s, NAMEDATALEN);
-	len = strlen(result->data);
+	StrNCpy(NameStr(*result), s, NAMEDATALEN);
+	len = strlen(NameStr(*result));
 	while (len < NAMEDATALEN)
 	{
-		*(result->data + len) = '\0';
+		*(NameStr(*result) + len) = '\0';
 		len++;
 	}
 	return result;
@@ -59,7 +59,7 @@ nameout(NameData *s)
 	if (s == NULL)
 		return "-";
 	else
-		return pstrdup(s->data);
+		return pstrdup(NameStr(*s));
 }
 
 
@@ -87,7 +87,7 @@ nameeq(NameData *arg1, NameData *arg2)
 	if (!arg1 || !arg2)
 		return 0;
 	else
-		return (bool) strncmp(arg1->data, arg2->data, NAMEDATALEN) == 0;
+		return (bool) strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) == 0;
 }
 
 bool
@@ -95,7 +95,7 @@ namene(NameData *arg1, NameData *arg2)
 {
 	if (arg1 == NULL || arg2 == NULL)
 		return (bool) 0;
-	return (bool) (strncmp(arg1->data, arg2->data, NAMEDATALEN) != 0);
+	return (bool) (strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) != 0);
 }
 
 bool
@@ -103,7 +103,7 @@ namelt(NameData *arg1, NameData *arg2)
 {
 	if (arg1 == NULL || arg2 == NULL)
 		return (bool) 0;
-	return (bool) (strncmp(arg1->data, arg2->data, NAMEDATALEN) < 0);
+	return (bool) (strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) < 0);
 }
 
 bool
@@ -111,7 +111,7 @@ namele(NameData *arg1, NameData *arg2)
 {
 	if (arg1 == NULL || arg2 == NULL)
 		return (bool) 0;
-	return (bool) (strncmp(arg1->data, arg2->data, NAMEDATALEN) <= 0);
+	return (bool) (strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) <= 0);
 }
 
 bool
@@ -120,7 +120,7 @@ namegt(NameData *arg1, NameData *arg2)
 	if (arg1 == NULL || arg2 == NULL)
 		return (bool) 0;
 
-	return (bool) (strncmp(arg1->data, arg2->data, NAMEDATALEN) > 0);
+	return (bool) (strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) > 0);
 }
 
 bool
@@ -129,7 +129,7 @@ namege(NameData *arg1, NameData *arg2)
 	if (arg1 == NULL || arg2 == NULL)
 		return (bool) 0;
 
-	return (bool) (strncmp(arg1->data, arg2->data, NAMEDATALEN) >= 0);
+	return (bool) (strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) >= 0);
 }
 
 
@@ -140,7 +140,7 @@ namecpy(Name n1, Name n2)
 {
 	if (!n1 || !n2)
 		return -1;
-	strncpy(n1->data, n2->data, NAMEDATALEN);
+	strncpy(NameStr(*n1), NameStr(*n2), NAMEDATALEN);
 	return 0;
 }
 
@@ -148,7 +148,7 @@ namecpy(Name n1, Name n2)
 int
 namecat(Name n1, Name n2)
 {
-	return namestrcat(n1, n2->data);	/* n2 can't be any longer than n1 */
+	return namestrcat(n1, NameStr(*n2));	/* n2 can't be any longer than n1 */
 }
 
 #endif
@@ -157,7 +157,7 @@ namecat(Name n1, Name n2)
 int
 namecmp(Name n1, Name n2)
 {
-	return strncmp(n1->data, n2->data, NAMEDATALEN);
+	return strncmp(NameStr(*n1), NameStr(*n2), NAMEDATALEN);
 }
 
 #endif
@@ -167,7 +167,7 @@ namestrcpy(Name name, char *str)
 {
 	if (!name || !str)
 		return -1;
-	StrNCpy(name->data, str, NAMEDATALEN);
+	StrNCpy(NameStr(*name), str, NAMEDATALEN);
 	return 0;
 }
 
@@ -181,7 +181,7 @@ namestrcat(Name name, char *str)
 
 	if (!name || !str)
 		return -1;
-	for (i = 0, p = name->data; i < NAMEDATALEN && *p; ++i, ++p)
+	for (i = 0, p = NameStr(*name); i < NAMEDATALEN && *p; ++i, ++p)
 		;
 	for (q = str; i < NAMEDATALEN; ++i, ++p, ++q)
 	{
@@ -203,7 +203,7 @@ namestrcmp(Name name, char *str)
 		return -1;				/* NULL < anything */
 	if (!str)
 		return 1;				/* NULL < anything */
-	return strncmp(name->data, str, NAMEDATALEN);
+	return strncmp(NameStr(*name), str, NAMEDATALEN);
 }
 
 /*****************************************************************************
@@ -217,7 +217,7 @@ NameComputeLength(Name name)
 	char	   *charP;
 	int			length;
 
-	for (length = 0, charP = name->data;
+	for (length = 0, charP = NameStr(*name);
 		 length < NAMEDATALEN && *charP != '\0';
 		 length++, charP++)
 		;

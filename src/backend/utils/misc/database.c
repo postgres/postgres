@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.31 1999/10/25 03:07:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.32 1999/11/07 23:08:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -254,7 +254,7 @@ GetRawDatabaseInfo(char *name, Oid *db_id, char *path)
 			 */
 			tup_db = (Form_pg_database) GETSTRUCT(&tup);
 
-			if (strcmp(name, tup_db->datname.data) == 0)
+			if (strcmp(name, NameStr(tup_db->datname)) == 0)
 			{
 				/* Found it; extract the OID and the database path. */
 				*db_id = tup.t_data->t_oid;

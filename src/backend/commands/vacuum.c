@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.122 1999/09/28 11:41:04 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.123 1999/11/07 23:08:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +122,7 @@ vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec)
 
 	/* vacrel gets de-allocated on transaction commit */
 	if (vacrel)
-		strcpy(VacRel.data, vacrel);
+		strcpy(NameStr(VacRel), vacrel);
 
 	pmem = PortalGetVariableMemory(vc_portal);
 	old = MemoryContextSwitchTo((MemoryContext) pmem);
@@ -288,11 +288,11 @@ vc_getrels(NameData *VacRelP)
 
 	StartTransactionCommand();
 
-	if (VacRelP->data)
+	if (NameStr(*VacRelP))
 	{
 		ScanKeyEntryInitialize(&key, 0x0, Anum_pg_class_relname,
 							   F_NAMEEQ,
-							   PointerGetDatum(VacRelP->data));
+							   PointerGetDatum(NameStr(*VacRelP)));
 	}
 	else
 	{
@@ -402,7 +402,7 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 	vacrelstats->relid = relid;
 	vacrelstats->num_pages = vacrelstats->num_tuples = 0;
 	vacrelstats->hasindex = false;
-	if (analyze && !IsSystemRelationName((RelationGetRelationName(onerel))->data))
+	if (analyze && !IsSystemRelationName(RelationGetRelationName(onerel)))
 	{
 		int			attr_cnt,
 				   *attnums = NULL;
@@ -418,7 +418,7 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 
 			if (length(va_cols) > attr_cnt)
 				elog(ERROR, "vacuum: too many attributes specified for relation %s",
-					 (RelationGetRelationName(onerel))->data);
+					 RelationGetRelationName(onerel));
 			attnums = (int *) palloc(attr_cnt * sizeof(int));
 			foreach(le, va_cols)
 			{
@@ -434,7 +434,7 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 				else
 				{
 					elog(ERROR, "vacuum: there is no attribute %s in %s",
-						 col, (RelationGetRelationName(onerel))->data);
+						 col, RelationGetRelationName(onerel));
 				}
 			}
 			attr_cnt = tcnt;
@@ -625,7 +625,7 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 
 	getrusage(RUSAGE_SELF, &ru0);
 
-	relname = (RelationGetRelationName(onerel))->data;
+	relname = RelationGetRelationName(onerel);
 	elog(MESSAGE_LEVEL, "--Relation %s--", relname);
 
 	tups_vacuumed = num_tuples = nkeep = nunused = ncrash = empty_pages =
@@ -1762,7 +1762,7 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 
 	elog(MESSAGE_LEVEL, "Rel %s: Pages: %u --> %u; Tuple(s) moved: %u. \
 Elapsed %u/%u sec.",
-		 (RelationGetRelationName(onerel))->data,
+		 RelationGetRelationName(onerel),
 		 nblocks, blkno, num_moved,
 		 ru1.ru_stime.tv_sec - ru0.ru_stime.tv_sec,
 		 ru1.ru_utime.tv_sec - ru0.ru_utime.tv_sec);
@@ -1895,7 +1895,7 @@ vc_vacheap(VRelStats *vacrelstats, Relation onerel, VPageList vacuum_pages)
 		Assert(vacrelstats->num_pages >= vacuum_pages->vpl_empty_end_pages);
 		nblocks = vacrelstats->num_pages - vacuum_pages->vpl_empty_end_pages;
 		elog(MESSAGE_LEVEL, "Rel %s: Pages: %u --> %u.",
-			 (RelationGetRelationName(onerel))->data,
+			 RelationGetRelationName(onerel),
 			 vacrelstats->num_pages, nblocks);
 
 		/*
@@ -1971,13 +1971,13 @@ vc_scanoneind(Relation indrel, int num_tuples)
 	getrusage(RUSAGE_SELF, &ru1);
 
 	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %u. Elapsed %u/%u sec.",
-		 indrel->rd_rel->relname.data, nipages, nitups,
+		 RelationGetRelationName(indrel), nipages, nitups,
 		 ru1.ru_stime.tv_sec - ru0.ru_stime.tv_sec,
 		 ru1.ru_utime.tv_sec - ru0.ru_utime.tv_sec);
 
 	if (nitups != num_tuples)
 		elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u)",
-			 indrel->rd_rel->relname.data, nitups, num_tuples);
+			 RelationGetRelationName(indrel), nitups, num_tuples);
 
 }	/* vc_scanoneind */
 
@@ -2030,7 +2030,7 @@ vc_vaconeind(VPageList vpl, Relation indrel, int num_tuples, int keep_tuples)
 			if (vp->vpd_offsets_free == 0)
 			{					/* this is EmptyPage !!! */
 				elog(NOTICE, "Index %s: pointer to EmptyPage (blk %u off %u) - fixing",
-					 indrel->rd_rel->relname.data,
+					 RelationGetRelationName(indrel),
 					 vp->vpd_blkno, ItemPointerGetOffsetNumber(heapptr));
 			}
 			++tups_vacuumed;
@@ -2051,14 +2051,14 @@ vc_vaconeind(VPageList vpl, Relation indrel, int num_tuples, int keep_tuples)
 	getrusage(RUSAGE_SELF, &ru1);
 
 	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %u: Deleted %u. Elapsed %u/%u sec.",
-		 indrel->rd_rel->relname.data, num_pages,
+		 RelationGetRelationName(indrel), num_pages,
 		 num_index_tuples - keep_tuples, tups_vacuumed,
 		 ru1.ru_stime.tv_sec - ru0.ru_stime.tv_sec,
 		 ru1.ru_utime.tv_sec - ru0.ru_utime.tv_sec);
 
 	if (num_index_tuples != num_tuples + keep_tuples)
 		elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u)",
-			 indrel->rd_rel->relname.data, num_index_tuples, num_tuples);
+			 RelationGetRelationName(indrel), num_index_tuples, num_tuples);
 
 }	/* vc_vaconeind */
 
@@ -2398,7 +2398,7 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 				 * problem
 				 */
 				if (VacAttrStatsLtGtValid(stats) && stats->initialized
-					/* && !IsSystemRelationName(pgcform->relname.data)
+					/* && !IsSystemRelationName(NameData(pgcform->relname))
 					 */ )
 				{
 					float32data nullratio;

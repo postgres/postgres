@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.27 1999/07/16 05:00:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.28 1999/11/07 23:08:26 momjian Exp $
  *
  * Note - this code is real crufty...
  *
@@ -584,7 +584,7 @@ RelationInvalidateHeapTuple(Relation relation, HeapTuple tuple)
 	 *	this only works for system relations now
 	 * ----------------
 	 */
-	if (!IsSystemRelationName(RelationGetForm(relation)->relname.data))
+	if (!IsSystemRelationName(NameStr(RelationGetForm(relation)->relname)))
 		return;
 
 	/* ----------------

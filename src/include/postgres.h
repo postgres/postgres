@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.29 1999/11/04 08:01:07 inoue Exp $
+ * $Id: postgres.h,v 1.30 1999/11/07 23:08:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,6 +114,8 @@ typedef union nameData
 	int			alignmentDummy;
 } NameData;
 typedef NameData *Name;
+
+#define NameStr(name)	((name).data)
 
 /* ----------------------------------------------------------------
  *				Section 3: TransactionId and CommandId

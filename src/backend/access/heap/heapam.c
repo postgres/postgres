@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.57 1999/10/30 23:10:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.58 1999/11/07 23:07:52 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -259,7 +259,7 @@ heapgettup(Relation relation,
 	elog(DEBUG, "heapgettup(..., b=0x%x, nkeys=%d, key=0x%x", buffer, nkeys, key);
 
 	elog(DEBUG, "heapgettup: relation(%c)=`%s', %p",
-		 relation->rd_rel->relkind, &relation->rd_rel->relname,
+		 relation->rd_rel->relkind, RelationGetRelationName(relation),
 		 snapshot);
 #endif	 /* !defined(HEAPDEBUGALL) */
 
@@ -525,7 +525,7 @@ heap_open(Oid relationId, LOCKMODE lockmode)
 
 	/* Under no circumstances will we return an index as a relation. */
 	if (RelationIsValid(r) && r->rd_rel->relkind == RELKIND_INDEX)
-		elog(ERROR, "%s is an index relation", r->rd_rel->relname.data);
+		elog(ERROR, "%s is an index relation", RelationGetRelationName(r));
 
 	if (lockmode == NoLock)
 		return r;				/* caller must check RelationIsValid! */
@@ -567,7 +567,7 @@ heap_openr(char *relationName, LOCKMODE lockmode)
 
 	/* Under no circumstances will we return an index as a relation. */
 	if (RelationIsValid(r) && r->rd_rel->relkind == RELKIND_INDEX)
-		elog(ERROR, "%s is an index relation", r->rd_rel->relname.data);
+		elog(ERROR, "%s is an index relation", RelationGetRelationName(r));
 
 	if (lockmode == NoLock)
 		return r;				/* caller must check RelationIsValid! */
@@ -765,7 +765,7 @@ heap_endscan(HeapScanDesc scan)
 #ifdef HEAPDEBUGALL
 #define HEAPDEBUG_1 \
 elog(DEBUG, "heap_getnext([%s,nkeys=%d],backw=%d) called", \
-	 scan->rs_rd->rd_rel->relname.data, scan->rs_nkeys, backw)
+	 RelationGetRelationName(scan->rs_rd), scan->rs_nkeys, backw)
 
 #define HEAPDEBUG_2 \
 	 elog(DEBUG, "heap_getnext called with backw (no tracing yet)")
@@ -1045,7 +1045,7 @@ heap_fetch(Relation relation,
 
 	if (!BufferIsValid(buffer))
 		elog(ERROR, "heap_fetch: %s relation: ReadBuffer(%lx) failed",
-			 &relation->rd_rel->relname, (long) tid);
+			 RelationGetRelationName(relation), (long) tid);
 
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
@@ -1121,7 +1121,7 @@ heap_get_latest_tid(Relation relation,
 
 	if (!BufferIsValid(buffer))
 		elog(ERROR, "heap_get_latest_tid: %s relation: ReadBuffer(%lx) failed",
-			 &relation->rd_rel->relname, (long) tid);
+			 RelationGetRelationName(relation), (long) tid);
 
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
@@ -1231,7 +1231,7 @@ heap_insert(Relation relation, HeapTuple tup)
 
 	RelationPutHeapTupleAtEnd(relation, tup);
 
-	if (IsSystemRelationName(RelationGetRelationName(relation)->data))
+	if (IsSystemRelationName(RelationGetRelationName(relation)))
 		RelationInvalidateHeapTuple(relation, tup);
 
 	return tup->t_data->t_oid;

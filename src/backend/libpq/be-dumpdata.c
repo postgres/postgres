@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: be-dumpdata.c,v 1.30 1999/07/17 20:17:01 momjian Exp $
+ *	$Id: be-dumpdata.c,v 1.31 1999/11/07 23:08:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,7 +182,8 @@ be_typeinit(PortalEntry *entry,
 		group->types = pbuf_addTypes(natts);
 		for (i = 0; i < natts; ++i)
 		{
-			strncpy(group->types[i].name, attrs[i]->attname.data, NAMEDATALEN);
+			strncpy(group->types[i].name,
+				NameStr(attrs[i]->attname), NAMEDATALEN);
 			group->types[i].typid = attrs[i]->atttypid;
 			group->types[i].typlen = attrs[i]->attlen;
 		}

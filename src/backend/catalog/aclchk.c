@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.28 1999/09/18 19:06:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.29 1999/11/07 23:08:00 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -192,7 +192,7 @@ get_groname(AclId grosysid)
 								ObjectIdGetDatum(grosysid),
 								0, 0, 0);
 	if (HeapTupleIsValid(tuple))
-		name = (((Form_pg_group) GETSTRUCT(tuple))->groname).data;
+		name = NameStr(((Form_pg_group) GETSTRUCT(tuple))->groname);
 	else
 		elog(NOTICE, "get_groname: group %d not found", grosysid);
 	return name;

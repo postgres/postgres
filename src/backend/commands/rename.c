@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.34 1999/09/24 00:24:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.35 1999/11/07 23:08:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,7 +123,7 @@ renameatt(char *relname,
 			}
 			/* make copy of cache value, could disappear in call */
 			StrNCpy(childname,
-					((Form_pg_class) GETSTRUCT(reltup))->relname.data,
+					NameStr(((Form_pg_class) GETSTRUCT(reltup))->relname),
 					NAMEDATALEN);
 			/* note we need not recurse again! */
 			renameatt(childname, oldattname, newattname, userName, 0);
@@ -153,7 +153,7 @@ renameatt(char *relname,
 		elog(ERROR, "renameatt: attribute \"%s\" exists", newattname);
 	}
 
-	StrNCpy((((Form_pg_attribute) (GETSTRUCT(oldatttup)))->attname.data),
+	StrNCpy(NameStr(((Form_pg_attribute) GETSTRUCT(oldatttup))->attname),
 			newattname, NAMEDATALEN);
 
 	heap_replace(attrelation, &oldatttup->t_self, oldatttup, NULL);
@@ -288,7 +288,7 @@ renamerel(char *oldrelname, char *newrelname)
 	/*
 	 * Update pg_class tuple with new relname.
 	 */
-	StrNCpy((((Form_pg_class) GETSTRUCT(oldreltup))->relname.data),
+	StrNCpy(NameStr(((Form_pg_class) GETSTRUCT(oldreltup))->relname),
 			newrelname, NAMEDATALEN);
 
 	heap_replace(relrelation, &oldreltup->t_self, oldreltup, NULL);

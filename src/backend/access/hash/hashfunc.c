@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.19 1999/07/15 22:38:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.20 1999/11/07 23:07:49 momjian Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -177,7 +177,7 @@ hashname(NameData *n)
 	int			len;
 	char	   *key;
 
-	key = n->data;
+	key = NameStr(*n);
 
 	h = 0;
 	len = NAMEDATALEN;

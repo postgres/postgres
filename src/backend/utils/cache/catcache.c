@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.50 1999/11/01 02:29:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.51 1999/11/07 23:08:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,7 +209,7 @@ CatalogCacheInitializeCache(struct catcache * cache,
 			cache->cc_skey[i].sk_nargs = cache->cc_skey[i].sk_func.fn_nargs;
 
 			CACHE5_elog(DEBUG, "CatalogCacheInit %s %d %d %x",
-						&relation->rd_rel->relname,
+						RelationGetRelationName(relation),
 						i,
 						tupdesc->attrs[cache->cc_key[i] - 1]->attlen,
 						cache);
@@ -304,7 +304,7 @@ comphash(long l, char *v)
 		 * typelen so this may break them	  - XXX
 		 */
 		namestrcpy(&n, v);
-		v = n.data;
+		v = NameStr(n);
 	}
 	else if (l < 0)
 		l = VARSIZE(v);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.60 1999/10/07 04:23:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.61 1999/11/07 23:08:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -321,7 +321,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 				rd = heap_openr(typeidTypeName(toid), NoLock);
 				if (RelationIsValid(rd))
 				{
-					relname = RelationGetRelationName(rd)->data;
+					relname = RelationGetRelationName(rd);
 					heap_close(rd, NoLock);
 				}
 				else
@@ -1160,7 +1160,7 @@ find_inheritors(Oid relid, Oid **supervec)
 			rd = heap_open(qentry->sqe_relid, NoLock);
 			if (! RelationIsValid(rd))
 				elog(ERROR, "Relid %u does not exist", qentry->sqe_relid);
-			qentry->sqe_relid = typeTypeId(typenameType(RelationGetRelationName(rd)->data));
+			qentry->sqe_relid = typeTypeId(typenameType(RelationGetRelationName(rd)));
 			heap_close(rd, NoLock);
 
 			DLAddTail(visited, qe);

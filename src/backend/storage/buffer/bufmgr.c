@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.64 1999/09/28 11:41:06 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.65 1999/11/07 23:08:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -622,7 +622,7 @@ BufferAlloc(Relation reln,
 	}
 
 	/* record the database name and relation name for this buffer */
-	strcpy(buf->sb_relname, reln->rd_rel->relname.data);
+	strcpy(buf->sb_relname, RelationGetRelationName(reln));
 	strcpy(buf->sb_dbname, DatabaseName);
 
 	INIT_BUFFERTAG(&(buf->tag), reln, blockNum);
@@ -1598,21 +1598,23 @@ FlushRelationBuffers(Relation rel, BlockNumber block, bool doFlush)
 						if (FlushBuffer(-i-1, false) != STATUS_OK)
 						{
 							elog(NOTICE, "FlushRelationBuffers(%s (local), %u): block %u is dirty, could not flush it",
-								 rel->rd_rel->relname.data, block, buf->tag.blockNum);
+								 RelationGetRelationName(rel),
+								 block, buf->tag.blockNum);
 							return -1;
 						}
 					}
 					else
 					{
 						elog(NOTICE, "FlushRelationBuffers(%s (local), %u): block %u is dirty",
-							 rel->rd_rel->relname.data, block, buf->tag.blockNum);
+							 RelationGetRelationName(rel),
+							 block, buf->tag.blockNum);
 						return -1;
 					}
 				}
 				if (LocalRefCount[i] > 0)
 				{
 					elog(NOTICE, "FlushRelationBuffers(%s (local), %u): block %u is referenced (%d)",
-						 rel->rd_rel->relname.data, block,
+						 RelationGetRelationName(rel), block,
 						 buf->tag.blockNum, LocalRefCount[i]);
 					return -2;
 				}

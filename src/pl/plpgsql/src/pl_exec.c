@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.13 1999/07/15 15:21:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.14 1999/11/07 23:08:35 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -659,7 +659,7 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 
 	var = (PLpgSQL_var *) (estate.datums[func->tg_relname_varno]);
 	var->isnull = false;
-	var->value = (Datum) namein(nameout(&(trigdata->tg_relation->rd_rel->relname)));
+	var->value = (Datum) namein(RelationGetRelationName(trigdata->tg_relation));
 
 	var = (PLpgSQL_var *) (estate.datums[func->tg_nargs_varno]);
 	var->isnull = false;

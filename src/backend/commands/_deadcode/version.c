@@ -9,7 +9,7 @@
  *	doesn't work! - jolly 8/19/95
  *
  *
- *	$Id: version.c,v 1.22 1999/07/17 20:16:55 momjian Exp $
+ *	$Id: version.c,v 1.23 1999/11/07 23:08:03 momjian Exp $
  *
  * NOTES
  *	At the point the version is defined, 2 physical relations are created
@@ -190,7 +190,7 @@ setAttrList(char *bname)
 
 	for (i = maxattrs - 1; i > -1; --i)
 	{
-		attrname = (rel->rd_att->attrs[i]->attname).data;
+		attrname = NameStr(rel->rd_att->attrs[i]->attname);
 
 		if (notfirst == 1)
 			sprintf(temp_buf, ", %s = new.%s", attrname, attrname);

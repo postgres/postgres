@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.106 1999/11/04 08:00:56 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.107 1999/11/07 23:08:00 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -290,7 +290,7 @@ heap_create(char *relname,
 	 * ----------------
 	 */
 	MemSet((char *) rel->rd_rel, 0, sizeof *rel->rd_rel);
-	namestrcpy(&(rel->rd_rel->relname), relname);
+	strcpy(RelationGetRelationName(rel), relname);
 	rel->rd_rel->relkind = RELKIND_UNCATALOGED;
 	rel->rd_rel->relnatts = natts;
 	if (tupDesc->constr)
@@ -440,14 +440,14 @@ CheckAttributeNames(TupleDesc tupdesc)
 			{
 				elog(ERROR, "Attribute '%s' has a name conflict"
 					 "\n\tName matches an existing system attribute",
-					 HeapAtt[j]->attname.data);
+					 NameStr(HeapAtt[j]->attname));
 			}
 		}
 		if (tupdesc->attrs[i]->atttypid == UNKNOWNOID)
 		{
 			elog(NOTICE, "Attribute '%s' has an unknown type"
 				 "\n\tRelation created; continue",
-				 tupdesc->attrs[i]->attname.data);
+				 NameStr(tupdesc->attrs[i]->attname));
 		}
 	}
 
@@ -463,7 +463,7 @@ CheckAttributeNames(TupleDesc tupdesc)
 					   &(tupdesc->attrs[i]->attname)))
 			{
 				elog(ERROR, "Attribute '%s' is repeated",
-					 tupdesc->attrs[j]->attname.data);
+					 NameStr(tupdesc->attrs[j]->attname));
 			}
 		}
 	}
@@ -1074,7 +1074,7 @@ DeleteRelationTuple(Relation rel)
 	{
 		heap_close(pg_class_desc, RowExclusiveLock);
 		elog(ERROR, "Relation '%s' does not exist",
-			 &rel->rd_rel->relname);
+					RelationGetRelationName(rel));
 	}
 
 	/* ----------------
@@ -1376,7 +1376,7 @@ DeleteTypeTuple(Relation rel)
 		heap_endscan(pg_type_scan);
 		heap_close(pg_type_desc, RowExclusiveLock);
 		elog(ERROR, "DeleteTypeTuple: %s type nonexistent",
-			 &rel->rd_rel->relname);
+			 RelationGetRelationName(rel));
 	}
 
 	/* ----------------
@@ -1420,7 +1420,7 @@ DeleteTypeTuple(Relation rel)
 		heap_close(pg_type_desc, RowExclusiveLock);
 
 		elog(ERROR, "DeleteTypeTuple: att of type %s exists in relation %u",
-			 &rel->rd_rel->relname, relid);
+			 RelationGetRelationName(rel), relid);
 	}
 	heap_endscan(pg_attribute_scan);
 	heap_close(pg_attribute_desc, RowExclusiveLock);
@@ -1463,9 +1463,9 @@ heap_destroy_with_catalog(char *relname)
 	 */
 	/* allow temp of pg_class? Guess so. */
 	if (!istemp && !allowSystemTableMods &&
-		IsSystemRelationName(RelationGetRelationName(rel)->data))
+		IsSystemRelationName(RelationGetRelationName(rel)))
 		elog(ERROR, "System relation '%s' cannot be destroyed",
-			 &rel->rd_rel->relname);
+			 RelationGetRelationName(rel));
 
 	/* ----------------
 	 *	DROP TABLE within a transaction block is dangerous, because
@@ -1723,8 +1723,8 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
 	 * deparse_expression needs a RangeTblEntry list, so make one
 	 */
 	rte = makeNode(RangeTblEntry);
-	rte->relname = RelationGetRelationName(rel)->data;
-	rte->refname = RelationGetRelationName(rel)->data;
+	rte->relname = RelationGetRelationName(rel);
+	rte->refname = RelationGetRelationName(rel);
 	rte->relid = RelationGetRelid(rel);
 	rte->inh = false;
 	rte->inFromCl = true;
@@ -1802,8 +1802,8 @@ StoreRelCheck(Relation rel, char *ccname, char *ccbin)
 	 * deparse_expression needs a RangeTblEntry list, so make one
 	 */
 	rte = makeNode(RangeTblEntry);
-	rte->relname = RelationGetRelationName(rel)->data;
-	rte->refname = RelationGetRelationName(rel)->data;
+	rte->relname = RelationGetRelationName(rel);
+	rte->refname = RelationGetRelationName(rel);
 	rte->relid = RelationGetRelid(rel);
 	rte->inh = false;
 	rte->inFromCl = true;
@@ -1882,7 +1882,7 @@ AddRelationRawConstraints(Relation rel,
 						  List *rawColDefaults,
 						  List *rawConstraints)
 {
-	char	   *relname = RelationGetRelationName(rel)->data;
+	char	   *relname = RelationGetRelationName(rel);
 	TupleDesc	tupleDesc;
 	TupleConstr *oldconstr;
 	int			numoldchecks;
@@ -1961,7 +1961,7 @@ AddRelationRawConstraints(Relation rel,
 					elog(ERROR, "Attribute '%s' is of type '%s'"
 						 " but default expression is of type '%s'"
 						 "\n\tYou will need to rewrite or cast the expression",
-						 atp->attname.data,
+						 NameStr(atp->attname),
 						 typeidTypeName(atp->atttypid),
 						 typeidTypeName(type_id));
 			}

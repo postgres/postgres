@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.36 1999/07/17 20:17:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.37 1999/11/07 23:08:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,7 @@ BeginCommand(char *pname,
 
 				for (i = 0; i < natts; ++i)
 				{
-					pq_sendstring(&buf, attrs[i]->attname.data);
+					pq_sendstring(&buf, NameStr(attrs[i]->attname));
 					pq_sendint(&buf, (int) attrs[i]->atttypid,
 							   sizeof(attrs[i]->atttypid));
 					pq_sendint(&buf, attrs[i]->attlen,

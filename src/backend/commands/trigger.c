@@ -391,8 +391,8 @@ RelationRemoveTriggers(Relation rel)
 		pg_trigger = (Form_pg_trigger) GETSTRUCT(tup);
 		refrel = heap_open(pg_trigger->tgrelid, NoLock);
 
-		stmt.relname = nameout(&(refrel->rd_rel->relname));
-		stmt.trigname = nameout(&(pg_trigger->tgname));
+		stmt.relname = pstrdup(RelationGetRelationName(refrel));
+		stmt.trigname = nameout(&pg_trigger->tgname);
 
 		DropTrigger(&stmt);
 
@@ -450,7 +450,7 @@ RelationBuildTriggers(Relation relation)
 			continue;
 		if (found == ntrigs)
 			elog(ERROR, "RelationBuildTriggers: unexpected record found for rel %.*s",
-				 NAMEDATALEN, relation->rd_rel->relname.data);
+				 NAMEDATALEN, RelationGetRelationName(relation));
 
 		pg_trigger = (Form_pg_trigger) GETSTRUCT(&tuple);
 
@@ -461,7 +461,7 @@ RelationBuildTriggers(Relation relation)
 		build = &(triggers[found]);
 
 		build->tgoid = tuple.t_data->t_oid;
-		build->tgname = nameout(&(pg_trigger->tgname));
+		build->tgname = nameout(&pg_trigger->tgname);
 		build->tgfoid = pg_trigger->tgfoid;
 		build->tgfunc.fn_addr = NULL;
 		build->tgtype = pg_trigger->tgtype;
@@ -476,7 +476,7 @@ RelationBuildTriggers(Relation relation)
 											 tgrel->rd_att, &isnull);
 		if (isnull)
 			elog(ERROR, "RelationBuildTriggers: tgargs IS NULL for rel %.*s",
-				 NAMEDATALEN, relation->rd_rel->relname.data);
+				 NAMEDATALEN, RelationGetRelationName(relation));
 		if (build->tgnargs > 0)
 		{
 			char	   *p;
@@ -487,7 +487,7 @@ RelationBuildTriggers(Relation relation)
 												 tgrel->rd_att, &isnull);
 			if (isnull)
 				elog(ERROR, "RelationBuildTriggers: tgargs IS NULL for rel %.*s",
-					 NAMEDATALEN, relation->rd_rel->relname.data);
+					 NAMEDATALEN, RelationGetRelationName(relation));
 			p = (char *) VARDATA(val);
 			build->tgargs = (char **) palloc(build->tgnargs * sizeof(char *));
 			for (i = 0; i < build->tgnargs; i++)
@@ -507,7 +507,7 @@ RelationBuildTriggers(Relation relation)
 	if (found < ntrigs)
 		elog(ERROR, "RelationBuildTriggers: %d record not found for rel %.*s",
 			 ntrigs - found,
-			 NAMEDATALEN, relation->rd_rel->relname.data);
+			 NAMEDATALEN, RelationGetRelationName(relation));
 
 	index_endscan(sd);
 	pfree(sd);

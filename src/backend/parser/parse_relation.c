@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.32 1999/10/07 04:23:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.33 1999/11/07 23:08:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -265,7 +265,7 @@ expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
 		Var		   *varnode;
 		TargetEntry *te = makeNode(TargetEntry);
 
-		attrname = pstrdup(rel->rd_att->attrs[varattno]->attname.data);
+		attrname = pstrdup(NameStr(rel->rd_att->attrs[varattno]->attname));
 		varnode = make_var(pstate, rte->relid, refname, attrname);
 
 		/*

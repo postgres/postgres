@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.30 1999/09/24 00:24:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.31 1999/11/07 23:08:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -913,7 +913,7 @@ ExecTypeFromTL(List *targetList)
 							(Oid) restype,
 							resdom->resno,
 							resdom->reslen,
-							resdom->resname->data,
+							NameStr(*resdom->resname),
 							get_typbyval(restype),
 							get_typalign(restype));
 */

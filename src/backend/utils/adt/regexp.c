@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.28 1999/07/17 20:17:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.29 1999/11/07 23:08:24 momjian Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -200,7 +200,7 @@ nameregexeq(NameData *n, struct varlena * p)
 {
 	if (!n)
 		return FALSE;
-	return fixedlen_regexeq(n->data, p, NAMEDATALEN, REG_EXTENDED);
+	return fixedlen_regexeq(NameStr(*n), p, NAMEDATALEN, REG_EXTENDED);
 }
 
 bool
@@ -248,7 +248,7 @@ nameicregexeq(NameData *n, struct varlena * p)
 {
 	if (!n)
 		return FALSE;
-	return (fixedlen_regexeq(n->data, p, NAMEDATALEN,
+	return (fixedlen_regexeq(NameStr(*n), p, NAMEDATALEN,
 							 REG_ICASE | REG_EXTENDED));
 }
 

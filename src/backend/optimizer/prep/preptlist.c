@@ -14,7 +14,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.32 1999/10/30 23:06:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.33 1999/11/07 23:08:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,7 @@ expand_targetlist(List *tlist, int command_type,
 	for (attrno = 1; attrno <= numattrs; attrno++)
 	{
 		Form_pg_attribute att_tup = rel->rd_att->attrs[attrno-1];
-		char		   *attrname = att_tup->attname.data;
+		char		   *attrname = NameStr(att_tup->attname);
 		TargetEntry	   *new_tle = NULL;
 
 		/*
