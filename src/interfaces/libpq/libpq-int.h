@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.34 2001/07/06 17:58:53 petere Exp $
+ * $Id: libpq-int.h,v 1.35 2001/07/06 19:04:23 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -278,7 +278,6 @@ struct pg_conn
 	PQExpBufferData workBuffer; /* expansible string */
 
 	int			client_encoding;/* encoding id */
-	int			startup_complete;
 };
 
 /* String descriptions of the ExecStatusTypes.
