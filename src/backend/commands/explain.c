@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.74 2002/03/24 04:31:07 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.75 2002/03/24 17:11:36 tgl Exp $
  *
  */
 
@@ -389,7 +389,7 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 	{
 		case T_IndexScan:
 			show_scan_qual(((IndexScan *) plan)->indxqualorig, true,
-						   "Index Filter",
+						   "Index Cond",
 						   ((Scan *) plan)->scanrelid,
 						   outer_plan,
 						   str, indent, es);
@@ -409,7 +409,7 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 			break;
 		case T_NestLoop:
 			show_upper_qual(((NestLoop *) plan)->join.joinqual,
-							"Join Cond",
+							"Join Filter",
 							"outer", OUTER, outerPlan(plan),
 							"inner", INNER, innerPlan(plan),
 							str, indent, es);
@@ -426,7 +426,7 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 							"inner", INNER, innerPlan(plan),
 							str, indent, es);
 			show_upper_qual(((MergeJoin *) plan)->join.joinqual,
-							"Join Cond",
+							"Join Filter",
 							"outer", OUTER, outerPlan(plan),
 							"inner", INNER, innerPlan(plan),
 							str, indent, es);
@@ -443,7 +443,7 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 							"inner", INNER, innerPlan(plan),
 							str, indent, es);
 			show_upper_qual(((HashJoin *) plan)->join.joinqual,
-							"Join Cond",
+							"Join Filter",
 							"outer", OUTER, outerPlan(plan),
 							"inner", INNER, innerPlan(plan),
 							str, indent, es);

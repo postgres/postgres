@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.19 2002/03/24 04:31:05 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.20 2002/03/24 17:11:37 tgl Exp $
 -->
 
  <chapter id="performance-tips">
@@ -116,7 +116,7 @@ SELECT * FROM pg_class WHERE relname = 'tenk1';
    </para>
 
    <para>
-    Now let's modify the query to add a qualification clause:
+    Now let's modify the query to add a WHERE condition:
 
     <programlisting>
 regression=# EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 1000;
@@ -142,14 +142,14 @@ regression=# EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 1000;
    </para>
 
    <para>
-    Modify the query to restrict the qualification even more:
+    Modify the query to restrict the condition even more:
 
     <programlisting>
 regression=# EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 50;
                                    QUERY PLAN
 -------------------------------------------------------------------------------
  Index Scan using tenk1_unique1 on tenk1  (cost=0.00..179.33 rows=49 width=148)
-   Index Filter: (unique1 &lt; 50)
+   Index Cond: (unique1 &lt; 50)
     </programlisting>
 
     and you will see that if we make the WHERE condition selective
@@ -161,7 +161,7 @@ regression=# EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 50;
    </para>
 
    <para>
-    Add another condition to the qualification:
+    Add another clause to the WHERE condition:
 
     <programlisting>
 regression=# EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 50 AND
@@ -169,7 +169,7 @@ regression-# stringu1 = 'xxx';
                                   QUERY PLAN
 -------------------------------------------------------------------------------
  Index Scan using tenk1_unique1 on tenk1  (cost=0.00..179.45 rows=1 width=148)
-   Index Filter: (unique1 &lt; 50)
+   Index Cond: (unique1 &lt; 50)
    Filter: (stringu1 = 'xxx'::name)
     </programlisting>
 
@@ -193,10 +193,10 @@ regression-# AND t1.unique2 = t2.unique2;
  Nested Loop  (cost=0.00..327.02 rows=49 width=296)
    -&gt;  Index Scan using tenk1_unique1 on tenk1 t1
                                       (cost=0.00..179.33 rows=49 width=148)
-         Index Filter: (unique1 &lt; 50)
+         Index Cond: (unique1 &lt; 50)
    -&gt;  Index Scan using tenk2_unique2 on tenk2 t2
                                       (cost=0.00..3.01 rows=1 width=148)
-         Index Filter: ("outer".unique2 = t2.unique2)
+         Index Cond: ("outer".unique2 = t2.unique2)
     </programlisting>
    </para>
 
@@ -208,7 +208,7 @@ regression-# AND t1.unique2 = t2.unique2;
     affect row count of the outer scan.  For the inner scan, the unique2 value of the
     current
     outer-scan tuple is plugged into the inner index scan
-    to produce an index qualification like
+    to produce an index condition like
     <literal>t2.unique2 = <replaceable>constant</replaceable></literal>.  So we get the
      same inner-scan plan and costs that we'd get from, say, <literal>explain select
      * from tenk2 where unique2 = 42</literal>.  The costs of the loop node are then set
@@ -246,7 +246,7 @@ regression-# AND t1.unique2 = t2.unique2;
    -&gt;  Hash  (cost=179.33..179.33 rows=49 width=148)
          -&gt;  Index Scan using tenk1_unique1 on tenk1 t1
                                     (cost=0.00..179.33 rows=49 width=148)
-               Index Filter: (unique1 &lt; 50)
+               Index Cond: (unique1 &lt; 50)
     </programlisting>
 
     This plan proposes to extract the 50 interesting rows of <classname>tenk1</classname>
@@ -279,11 +279,11 @@ regression-# WHERE t1.unique1 &lt; 50 AND t1.unique2 = t2.unique2;
    -&gt;  Index Scan using tenk1_unique1 on tenk1 t1
                   (cost=0.00..179.33 rows=49 width=148)
                                  (actual time=0.63..8.91 rows=50 loops=1)
-         Index Filter: (unique1 &lt; 50)
+         Index Cond: (unique1 &lt; 50)
    -&gt;  Index Scan using tenk2_unique2 on tenk2 t2
                   (cost=0.00..3.01 rows=1 width=148)
                                  (actual time=0.29..0.32 rows=1 loops=50)
-         Index Filter: ("outer".unique2 = t2.unique2)
+         Index Cond: ("outer".unique2 = t2.unique2)
  Total runtime: 31.60 msec
 </screen>
 
