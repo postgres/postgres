@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Jan 29 23:06:02 EST 2005
+   Last updated: Sat Jan 29 23:15:42 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -58,33 +58,31 @@
    typical text file?
    4.6) Why are my queries slow? Why don't they use my indexes?
    4.7) How do I see how the query optimizer is evaluating my query?
-   4.8) What is an R-tree index?
-   4.9) What is the Genetic Query Optimizer?
-   4.10) How do I perform regular expression searches and
-   case-insensitive regular expression searches? How do I use an index
-   for case-insensitive searches?
-   4.11) In a query, how do I detect if a field is NULL?
-   4.12) What is the difference between the various character types?
-   4.13.0) How do I create a serial/auto-incrementing field?
-   4.13.1) How do I get the value of a SERIAL insert?
-   4.13.2) Doesn't currval() lead to a race condition with other users?
-   4.13.3) Why aren't my sequence numbers reused on transaction abort?
+   4.8) How do I perform regular expression searches and case-insensitive
+   regular expression searches? How do I use an index for
+   case-insensitive searches?
+   4.9) In a query, how do I detect if a field is NULL?
+   4.10) What is the difference between the various character types?
+   4.11.0) How do I create a serial/auto-incrementing field?
+   4.11.1) How do I get the value of a SERIAL insert?
+   4.11.2) Doesn't currval() lead to a race condition with other users?
+   4.11.3) Why aren't my sequence numbers reused on transaction abort?
    Why are there gaps in the numbering of my sequence/SERIAL column?
-   4.14) What is an OID? What is a TID?
-   4.15) What is the meaning of some of the terms used in PostgreSQL?
-   4.16) Why do I get the error "ERROR: Memory exhausted in
+   4.12) What is an OID? What is a TID?
+   4.13) What is the meaning of some of the terms used in PostgreSQL?
+   4.14) Why do I get the error "ERROR: Memory exhausted in
    AllocSetAlloc()"?
-   4.17) How do I tell what PostgreSQL version I am running?
-   4.18) Why does my large-object operations get "invalid large obj
+   4.15) How do I tell what PostgreSQL version I am running?
+   4.16) Why does my large-object operations get "invalid large obj
    descriptor"?
-   4.19) How do I create a column that will default to the current time?
-   4.20) Why are my subqueries using IN so slow?
-   4.21) How do I perform an outer join?
-   4.22) How do I perform queries using multiple databases?
-   4.23) How do I return multiple rows or columns from a function?
-   4.24) Why can't I reliably create/drop temporary tables in PL/PgSQL
+   4.17) How do I create a column that will default to the current time?
+   4.18) Why are my subqueries using IN so slow?
+   4.19) How do I perform an outer join?
+   4.20) How do I perform queries using multiple databases?
+   4.21) How do I return multiple rows or columns from a function?
+   4.22) Why can't I reliably create/drop temporary tables in PL/PgSQL
    functions?
-   4.25) What encryption options are available?
+   4.23) What encryption options are available?
    
                             Extending PostgreSQL
                                       
@@ -742,36 +740,7 @@ LIKE
     
    See the EXPLAIN manual page.
    
-    4.8) What is an R-tree index?
-    
-   An R-tree index is used for indexing spatial data. A hash index can't
-   handle range searches. A B-tree index only handles range searches in a
-   single dimension. R-trees can handle multi-dimensional data. For
-   example, if an R-tree index can be built on an attribute of type
-   point, the system can more efficiently answer queries such as "select
-   all points within a bounding rectangle."
-   
-   The canonical paper that describes the original R-tree design is:
-   
-   Guttman, A. "R-trees: A Dynamic Index Structure for Spatial
-   Searching." Proceedings of the 1984 ACM SIGMOD Int'l Conf on Mgmt of
-   Data, 45-57.
-   
-   You can also find this paper in Stonebraker's "Readings in Database
-   Systems".
-   
-   Built-in R-trees can handle polygons and boxes. In theory, R-trees can
-   be extended to handle higher number of dimensions. In practice,
-   extending R-trees requires a bit of work and we don't currently have
-   any documentation on how to do it.
-   
-    4.9) What is the Genetic Query Optimizer?
-    
-   The GEQO module speeds query optimization when joining many tables by
-   means of a Genetic Algorithm (GA). It allows the handling of large
-   join queries through nonexhaustive search.
-   
-    4.10) How do I perform regular expression searches and case-insensitive
+    4.8) How do I perform regular expression searches and case-insensitive
     regular expression searches? How do I use an index for case-insensitive
     searches?
     
@@ -788,11 +757,11 @@ LIKE
    functional index, it will be used:
     CREATE INDEX tabindex ON tab (lower(col));
 
-    4.11) In a query, how do I detect if a field is NULL?
+    4.9) In a query, how do I detect if a field is NULL?
     
    You test the column with IS NULL and IS NOT NULL.
    
-    4.12) What is the difference between the various character types?
+    4.10) What is the difference between the various character types?
     
 Type            Internal Name   Notes
 --------------------------------------------------
@@ -820,7 +789,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
    particularly values that include NULL bytes. All the types described
    here have similar performance characteristics.
    
-    4.13.1) How do I create a serial/auto-incrementing field?
+    4.11.1) How do I create a serial/auto-incrementing field?
     
    PostgreSQL supports a SERIAL data type. It auto-creates a sequence.
    For example, this:
@@ -841,11 +810,11 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
    However, if you need to dump and reload the database, you need to use
    pg_dump's -o option or COPY WITH OIDS option to preserve the OIDs.
    
-    4.13.2) How do I get the value of a SERIAL insert?
+    4.11.2) How do I get the value of a SERIAL insert?
     
    One approach is to retrieve the next SERIAL value from the sequence
    object with the nextval() function before inserting and then insert it
-   explicitly. Using the example table in 4.13.1, an example in a
+   explicitly. Using the example table in 4.11.1, an example in a
    pseudo-language would look like this:
     new_id = execute("SELECT nextval('person_id_seq')");
     execute("INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal')");
@@ -867,19 +836,19 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
    billion. In Perl, using DBI with the DBD::Pg module, the oid value is
    made available via $sth->{pg_oid_status} after $sth->execute().
    
-    4.13.3) Doesn't currval() lead to a race condition with other users?
+    4.11.3) Doesn't currval() lead to a race condition with other users?
     
    No. currval() returns the current value assigned by your backend, not
    by all users.
    
-    4.13.4) Why aren't my sequence numbers reused on transaction abort? Why are
+    4.11.4) Why aren't my sequence numbers reused on transaction abort? Why are
     there gaps in the numbering of my sequence/SERIAL column?
     
    To improve concurrency, sequence values are given out to running
    transactions as needed and are not locked until the transaction
    completes. This causes gaps in numbering from aborted transactions.
    
-    4.14) What is an OID? What is a TID?
+    4.12) What is an OID? What is a TID?
     
    Every row that is created in PostgreSQL gets a unique OID unless
    created WITHOUT OIDS. OIDs are autotomatically assigned unique 4-byte
@@ -896,7 +865,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
    values. TIDs change after rows are modified or reloaded. They are used
    by index entries to point to physical rows.
    
-    4.15) What is the meaning of some of the terms used in PostgreSQL?
+    4.13) What is the meaning of some of the terms used in PostgreSQL?
     
    Some of the source code and older documentation use terms that have
    more common usage. Here are some:
@@ -914,7 +883,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
    http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary
    /glossary.html
    
-    4.16) Why do I get the error "ERROR: Memory exhausted in AllocSetAlloc()"?
+    4.14) Why do I get the error "ERROR: Memory exhausted in AllocSetAlloc()"?
     
    You probably have run out of virtual memory on your system, or your
    kernel has a low limit for certain resources. Try this before starting
@@ -929,11 +898,11 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
    problem with the SQL client because the backend is returning too much
    data, try it before starting the client.
    
-    4.17) How do I tell what PostgreSQL version I am running?
+    4.15) How do I tell what PostgreSQL version I am running?
     
    From psql, type SELECT version();
    
-    4.18) Why does my large-object operations get "invalid large obj
+    4.16) Why does my large-object operations get "invalid large obj
     descriptor"?
     
    You need to put BEGIN WORK and COMMIT around any use of a large object
@@ -948,12 +917,12 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
    If you are using a client interface like ODBC you may need to set
    auto-commit off.
    
-    4.19) How do I create a column that will default to the current time?
+    4.17) How do I create a column that will default to the current time?
     
    Use CURRENT_TIMESTAMP:
 CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
 
-    4.20) Why are my subqueries using IN so slow?
+    4.18) Why are my subqueries using IN so slow?
     
    In versions prior to 7.4, subqueries were joined to outer queries by
    sequentially scanning the result of the subquery for each row of the
@@ -974,7 +943,7 @@ CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
    In version 7.4 and later, IN actually uses the same sophisticated join
    techniques as normal queries, and is prefered to using EXISTS.
    
-    4.21) How do I perform an outer join?
+    4.19) How do I perform an outer join?
     
    PostgreSQL supports outer joins using the SQL standard syntax. Here
    are two examples:
@@ -1004,7 +973,7 @@ CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
     WHERE tab1.col1 NOT IN (SELECT tab2.col1 FROM tab2)
     ORDER BY col1
 
-    4.22) How do I perform queries using multiple databases?
+    4.20) How do I perform queries using multiple databases?
     
    There is no way to query a database other than the current one.
    Because PostgreSQL loads database-specific system catalogs, it is
@@ -1014,12 +983,12 @@ CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
    course, a client can make simultaneous connections to different
    databases and merge the results on the client side.
    
-    4.23) How do I return multiple rows or columns from a function?
+    4.21) How do I return multiple rows or columns from a function?
     
    In 7.3, you can easily return multiple rows or columns from a
    function, http://techdocs.postgresql.org/guides/SetReturningFunctions.
    
-    4.24) Why can't I reliably create/drop temporary tables in PL/PgSQL
+    4.22) Why can't I reliably create/drop temporary tables in PL/PgSQL
     functions?
     
    PL/PgSQL caches function contents, and an unfortunate side effect is
@@ -1030,7 +999,7 @@ CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
    table access in PL/PgSQL. This will cause the query to be reparsed
    every time.
    
-    4.25) What encryption options are available?
+    4.23) What encryption options are available?
     
      * contrib/pgcrypto contains many encryption functions for use in SQL
        queries.
