@@ -7,7 +7,7 @@
  * Copyright (c) 1999-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.43 2002/04/19 16:36:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.44 2002/04/24 02:50:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -437,6 +437,10 @@ CommentDatabase(List *qualname, char *comment)
 	if (length(qualname) != 1)
 		elog(ERROR, "CommentDatabase: database name may not be qualified");
 	database = strVal(lfirst(qualname));
+
+	/* Only allow comments on the current database */
+	if (strcmp(database, DatabaseName) != 0)
+		elog(ERROR, "Database comments may only be applied to the current database");
 
 	/* First find the tuple in pg_database for the database */
 
