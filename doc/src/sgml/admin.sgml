@@ -1,11 +1,14 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.10 1999/01/19 16:06:25 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.11 1999/05/04 02:16:57 thomas Exp $
 
 Postgres Administrator's Guide.
 Derived from postgres.sgml.
 - thomas 1998-10-27
 
 $Log: admin.sgml,v $
+Revision 1.11  1999/05/04 02:16:57  thomas
+Include chapter on security.
+
 Revision 1.10  1999/01/19 16:06:25  thomas
 Merge current.sgml into release.sgml so all release notes are in the same
  file. Per Bruce's preference. Go to it Bruce!
@@ -46,6 +49,7 @@ Bigger updates to the installation instructions (install and config).
 <!entity regress  SYSTEM "regress.sgml">
 <!entity release  SYSTEM "release.sgml">
 <!entity runtime  SYSTEM "runtime.sgml">
+<!entity security SYSTEM "security.sgml">
 <!entity start-ag SYSTEM "start-ag.sgml">
 
 <!entity biblio   SYSTEM "biblio.sgml">
@@ -127,6 +131,7 @@ It provides SQL92/SQL3 language support,
 &install;
 &installw;
 &runtime;
+&security;
 &options;
 &start-ag;
 &recovery;
