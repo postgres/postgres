@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.347.2.1 2003/11/11 21:37:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.347.2.2 2004/02/23 20:46:16 tgl Exp $
  *
  * NOTES
  *
@@ -806,6 +806,12 @@ PostmasterMain(int argc, char *argv[])
 	 * Set up shared memory and semaphores.
 	 */
 	reset_shared(PostPortNumber);
+
+	/*
+	 * Estimate number of openable files.  This must happen after setting up
+	 * semaphores, because on some platforms semaphores count as open files.
+	 */
+	set_max_safe_fds();
 
 	/*
 	 * Initialize the list of active backends.
