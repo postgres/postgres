@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.25 1999/02/13 23:19:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.26 1999/03/18 19:59:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -437,7 +437,6 @@ btreenpage(Oid operatorObjectId,
 
 	if (FunctionalSelectivity(nIndexKeys, attributeNumber))
 	{
-
 		/*
 		 * Need to call the functions selectivity function here.  For now
 		 * simply assume it's 1/3 since functions don't currently have

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.27 1999/03/08 14:01:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.28 1999/03/18 19:59:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -579,7 +579,7 @@ IndexSelectivity(Oid indexrelid,
 
 		amopTuple = SearchSysCacheTuple(AMOPOPID,
 										ObjectIdGetDatum(indclass),
-								  ObjectIdGetDatum(operatorObjectIds[n]),
+								  		ObjectIdGetDatum(operatorObjectIds[n]),
 										ObjectIdGetDatum(relam),
 										0);
 		if (!HeapTupleIsValid(amopTuple))

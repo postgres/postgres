@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.53 1999/02/22 05:26:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.54 1999/03/18 19:59:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -597,7 +597,6 @@ match_clause_to_indexkey(RelOptInfo *rel,
 	 */
 	if (!join)
 	{
-
 		/*
 		 * Check for standard s-argable clause
 		 */
@@ -736,7 +735,6 @@ match_clause_to_indexkey(RelOptInfo *rel,
 		if (rightop
 		&& match_index_to_operand(indexkey, (Expr *) rightop, rel, index))
 		{
-
 			join_op = get_commutator(((Oper *) ((Expr *) clause)->oper)->opno);
 
 		}
