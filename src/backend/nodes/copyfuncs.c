@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.18 1997/12/18 04:33:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.19 1997/12/18 05:58:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1519,6 +1519,7 @@ static Query *
 _copyQuery(Query *from)
 {
 	Query	   *newnode = makeNode(Query);
+	int i;
 	
 	newnode->commandType = from->commandType;
 	newnode->resultRelation = from->resultRelation;
@@ -1559,7 +1560,10 @@ _copyQuery(Query *from)
 	Node_Copy(from, newnode, havingQual); /* currently ignored */
 
 	newnode->qry_numAgg = from->qry_numAgg;
-	Node_Copy(from, newnode, qry_aggs);
+	newnode->qry_aggs =
+		(Aggreg **) palloc(sizeof(Aggreg *) * from->qry_numAgg);
+	for (i=0; i < from->qry_numAgg; i++)
+		newnode->qry_aggs[i] = _copyAggreg(from->qry_aggs[i]);
 
 	return newnode;
 }
