@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.74 2002/09/21 19:52:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.75 2002/11/12 00:39:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -906,14 +906,6 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
 
 #if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
 			tx = localtime(&utime);
-#ifdef NO_MKTIME_BEFORE_1970
-			if (tx->tm_year < 70 && tx->tm_isdst == 1)
-			{
-				utime -= 3600;
-				tx = localtime(&utime);
-				tx->tm_isdst = 0;
-			}
-#endif
 			tm->tm_year = tx->tm_year + 1900;
 			tm->tm_mon = tx->tm_mon + 1;
 			tm->tm_mday = tx->tm_mday;
