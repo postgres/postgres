@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.53 1997/01/25 22:51:56 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.54 1997/01/25 23:54:02 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -404,7 +404,14 @@ gets_noreadline(char *prompt, FILE * source)
 char           *
 gets_readline(char *prompt, FILE * source)
 {
-    char *s = readline(prompt);
+    char *s;
+#ifdef HAVE_LIBREADLINE
+    s = readline(prompt);
+#else
+    char buf[500];
+    printf("%s", prompt);
+    s = fgets(buf, 500, stdin);
+#endif
     fputc('\r', stdout);
     fflush(stdout);
     return s;
@@ -1158,8 +1165,10 @@ HandleSlashCmds(PsqlSettings * settings,
     case 's':			/* \s is save history to a file */
 	if (!optarg)
 	    optarg = "/dev/tty";
+#ifdef HAVE_HISTORY
 	if (write_history(optarg) != 0)
 	    fprintf(stderr, "cannot write history to %s\n", optarg);
+#endif
 	break;
     case 'm':			/* monitor like type-setting */
 	if (toggle(settings, &settings->opt.standard, "standard SQL separaters and padding")) {
@@ -1254,7 +1263,9 @@ MainLoop(PsqlSettings * settings, FILE * source)
 	else
 	    sprintf(settings->prompt, "%s%s", PQdb(settings->db), PROMPT);
 	if (settings->useReadline) {
+#ifdef HAVE_HISTORY
 	    using_history();
+#endif
 	    GetNextLine = gets_readline;
 	} else
 	    GetNextLine = gets_noreadline;
@@ -1282,8 +1293,10 @@ MainLoop(PsqlSettings * settings, FILE * source)
 	    	    settings->prompt[strlen(settings->prompt)-3] = '=';
 	    }
 	    line = GetNextLine(settings->prompt, source);
+#ifdef HAVE_HISTORY
 	    if (interactive && settings->useReadline && line != NULL)
 		add_history(line);	/* save non-empty lines in history */
+#endif
 	}
 
 	query_start = line;
@@ -1448,7 +1461,7 @@ main(int argc, char **argv)
     settings.opt.pager = 1;
     if (!isatty(0) || !isatty(1))
 	settings.quiet = settings.notty = 1;
-#ifndef NOREADLINE
+#ifdef HAVE_LIBREADLINE
     else
 	settings.useReadline = 1;
 #endif

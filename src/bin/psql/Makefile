@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.18 1997/01/25 22:51:26 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.19 1997/01/25 23:53:59 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -50,10 +50,9 @@ ifeq ($(USE_READLINE), true)
        endif
      endif
    endif
-   OBJS= psql.o stringutils.o  
-else
-   OBJS= psql.o stringutils.o  rlstubs.o
 endif
+
+OBJS= psql.o stringutils.o  
 
 ifeq ($(PORTNAME), ultrix4)
 OBJS+= ../../utils/strdup.o
