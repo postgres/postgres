@@ -20,29 +20,29 @@ INSERT INTO TEMP_TIMESTAMP (f1)
   WHERE d1 BETWEEN '13-jun-1957' AND '1-jan-1997'
    OR d1 BETWEEN '1-jan-1999' AND '1-jan-2010';
 
-SELECT '' AS "11", f1 AS timestamp
+SELECT '' AS "15", f1 AS timestamp
   FROM TEMP_TIMESTAMP
   ORDER BY timestamp;
 
-SELECT '' AS "110", d.f1 AS timestamp, t.f1 AS interval, d.f1 + t.f1 AS plus
+SELECT '' AS "150", d.f1 AS timestamp, t.f1 AS interval, d.f1 + t.f1 AS plus
   FROM TEMP_TIMESTAMP d, INTERVAL_TBL t
   ORDER BY plus, timestamp, interval;
 
-SELECT '' AS "110", d.f1 AS timestamp, t.f1 AS interval, d.f1 - t.f1 AS minus
+SELECT '' AS "150", d.f1 AS timestamp, t.f1 AS interval, d.f1 - t.f1 AS minus
   FROM TEMP_TIMESTAMP d, INTERVAL_TBL t
   WHERE isfinite(d.f1)
   ORDER BY minus, timestamp, interval;
 
-SELECT '' AS "11", d.f1 AS timestamp, timestamp '1980-01-06 00:00 GMT' AS gpstime_zero,
+SELECT '' AS "15", d.f1 AS timestamp, timestamp '1980-01-06 00:00 GMT' AS gpstime_zero,
    d.f1 - timestamp '1980-01-06 00:00 GMT' AS difference
   FROM TEMP_TIMESTAMP d
   ORDER BY difference;
 
-SELECT '' AS "121", d1.f1 AS timestamp1, d2.f1 AS timestamp2, d1.f1 - d2.f1 AS difference
+SELECT '' AS "225", d1.f1 AS timestamp1, d2.f1 AS timestamp2, d1.f1 - d2.f1 AS difference
   FROM TEMP_TIMESTAMP d1, TEMP_TIMESTAMP d2
   ORDER BY timestamp1, timestamp2, difference;
 
-SELECT '' as fifty, d1 as timestamp,
+SELECT '' as "54", d1 as timestamp,
   date_part('year', d1) AS year, date_part('month', d1) AS month,
   date_part('day',d1) AS day, date_part('hour', d1) AS hour,
   date_part('minute', d1) AS minute, date_part('second', d1) AS second
@@ -66,12 +66,12 @@ SELECT '' AS four, f1 AS abstime,
 -- Conversions
 --
 
-SELECT '' AS "11", f1 AS timestamp, date( f1) AS date
+SELECT '' AS "15", f1 AS timestamp, date( f1) AS date
   FROM TEMP_TIMESTAMP
   WHERE f1 <> timestamp 'current'
   ORDER BY date;
 
-SELECT '' AS "11", f1 AS timestamp, abstime( f1) AS abstime
+SELECT '' AS "15", f1 AS timestamp, abstime( f1) AS abstime
   FROM TEMP_TIMESTAMP
   ORDER BY abstime;
 
@@ -102,13 +102,13 @@ SET DateStyle TO 'US,Postgres';
 
 SHOW DateStyle;
 
-SELECT '' AS sixty_two, d1 AS us_postgres FROM TIMESTAMP_TBL;
+SELECT '' AS "66", d1 AS us_postgres FROM TIMESTAMP_TBL;
 
 SELECT '' AS eight, f1 AS us_postgres FROM ABSTIME_TBL;
 
 SET DateStyle TO 'US,ISO';
 
-SELECT '' AS sixty_two, d1 AS us_iso FROM TIMESTAMP_TBL;
+SELECT '' AS "66", d1 AS us_iso FROM TIMESTAMP_TBL;
 
 SELECT '' AS eight, f1 AS us_iso FROM ABSTIME_TBL;
 
@@ -116,7 +116,7 @@ SET DateStyle TO 'US,SQL';
 
 SHOW DateStyle;
 
-SELECT '' AS sixty_two, d1 AS us_sql FROM TIMESTAMP_TBL;
+SELECT '' AS "66", d1 AS us_sql FROM TIMESTAMP_TBL;
 
 SELECT '' AS eight, f1 AS us_sql FROM ABSTIME_TBL;
 
@@ -128,7 +128,7 @@ INSERT INTO TIMESTAMP_TBL VALUES('13/06/1957');
 
 SELECT count(*) as one FROM TIMESTAMP_TBL WHERE d1 = 'Jun 13 1957';
 
-SELECT '' AS sixty_three, d1 AS european_postgres FROM TIMESTAMP_TBL;
+SELECT '' AS "67", d1 AS european_postgres FROM TIMESTAMP_TBL;
 
 SELECT '' AS eight, f1 AS european_postgres FROM ABSTIME_TBL;
 
@@ -136,7 +136,7 @@ SET DateStyle TO 'European,ISO';
 
 SHOW DateStyle;
 
-SELECT '' AS sixty_three, d1 AS european_iso FROM TIMESTAMP_TBL;
+SELECT '' AS "67", d1 AS european_iso FROM TIMESTAMP_TBL;
 
 SELECT '' AS eight, f1 AS european_iso FROM ABSTIME_TBL;
 
@@ -144,7 +144,7 @@ SET DateStyle TO 'European,SQL';
 
 SHOW DateStyle;
 
-SELECT '' AS sixty_three, d1 AS european_sql FROM TIMESTAMP_TBL;
+SELECT '' AS "67", d1 AS european_sql FROM TIMESTAMP_TBL;
 
 SELECT '' AS eight, f1 AS european_sql FROM ABSTIME_TBL;
 

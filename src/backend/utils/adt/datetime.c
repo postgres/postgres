@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.43 2000/03/14 23:06:36 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.44 2000/03/16 14:36:51 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,8 @@
 #define USE_DATE_CACHE 1
 #define ROUND_ALL 0
 
+static int DecodePosixTimezone(char *str, int *val);
+
 int			day_tab[2][13] = {
 	{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0},
 {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0}};
@@ -45,15 +47,6 @@ char	   *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 
 char	   *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
 "Thursday", "Friday", "Saturday", NULL};
-
-
-#if 0
-
-
-static void GetEpochTime(struct tm * tm);
-
-
-#endif
 
 
 #define UTIME_MINYEAR (1901)
@@ -399,35 +392,6 @@ j2day(int date)
 }	/* j2day() */
 
 
-#if 0
-
-
-static double
-time2t(const int hour, const int min, const double sec)
-{
-	return (((hour * 60) + min) * 60) + sec;
-}	/* time2t() */
-
-static void
-dt2time(Timestamp jd, int *hour, int *min, double *sec)
-{
-	double		time;
-
-	time = jd;
-
-	*hour = (time / 3600);
-	time -= ((*hour) * 3600);
-	*min = (time / 60);
-	time -= ((*min) * 60);
-	*sec = JROUND(time);
-
-	return;
-}	/* dt2time() */
-
-
-#endif
-
-
 /*
  * parse and convert date in timestr (the normal interface)
  *
@@ -493,9 +457,12 @@ ParseDateTime(char *timestr, char *lowstr,
 			while (isalpha(*cp))
 				*lp++ = tolower(*cp++);
 
-			/* full date string with leading text month? */
+			/* Full date string with leading text month?
+			 * Could also be a POSIX time zone...
+			 */
 			if ((*cp == '-') || (*cp == '/') || (*cp == '.'))
 			{
+#if 0
 				/*
 				 * special case of Posix timezone "GMT-0800"
 				 * Note that other sign (e.g. "GMT+0800"
@@ -512,6 +479,7 @@ ParseDateTime(char *timestr, char *lowstr,
 					*cp = '+';
 					continue;
 				}
+#endif
 
 				ftype[nf] = DTK_DATE;
 				while (isdigit(*cp) || (*cp == '-') || (*cp == '/') || (*cp == '.'))
@@ -627,7 +595,21 @@ DecodeDateTime(char **field, int *ftype, int nf,
 		switch (ftype[i])
 		{
 			case DTK_DATE:
-				if (DecodeDate(field[i], fmask, &tmask, tm) != 0)
+				/* Already have a date?
+				 * Then this might be a POSIX time zone
+				 *  with an embedded dash (e.g. "PST-3" == "EST")
+				 * - thomas 2000-03-15
+				 */
+				if ((fmask & DTK_DATE_M) == DTK_DATE_M)
+				{
+					if ((tzp == NULL)
+						|| (DecodePosixTimezone(field[i], tzp) != 0))
+						return -1;
+
+					ftype[i] = DTK_TZ;
+					tmask = DTK_M(TZ);
+				}
+				else if (DecodeDate(field[i], fmask, &tmask, tm) != 0)
 					return -1;
 				break;
 
@@ -646,9 +628,29 @@ DecodeDateTime(char **field, int *ftype, int nf,
 			case DTK_TZ:
 				if (tzp == NULL)
 					return -1;
-				if (DecodeTimezone(field[i], tzp) != 0)
-					return -1;
-				tmask = DTK_M(TZ);
+
+				{
+					int tz;
+
+					if (DecodeTimezone(field[i], &tz) != 0)
+						return -1;
+
+					/* Already have a time zone?
+					 * Then maybe this is the second field of a POSIX time:
+					 *  EST+3 (equivalent to PST)
+					 */
+					if ((i > 0) && ((fmask & DTK_M(TZ)) != 0)
+						&& (ftype[i-1] == DTK_TZ) && (isalpha(*field[i-1])))
+					{
+						*tzp -= tz;
+						tmask = 0;
+					}
+					else
+					{
+						*tzp = tz;
+						tmask = DTK_M(TZ);
+					}
+				}
 				break;
 
 			case DTK_NUMBER:
@@ -779,6 +781,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						if (tzp == NULL)
 							return -1;
 						*tzp = val * 60;
+						ftype[i] = DTK_TZ;
 						break;
 
 					case TZ:
@@ -786,25 +789,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						if (tzp == NULL)
 							return -1;
 						*tzp = val * 60;
-
-						/* Swallow an immediately succeeding timezone if this is GMT
-						 * This handles the odd case in FreeBSD of "GMT+0800"
-						 * but note that we need to flip the sign on this too.
-						 * Claims to be some sort of POSIX standard format :(
-						 * - thomas 2000-01-20
-						 */
-						if ((i < (nf-1)) && (ftype[i+1] == DTK_TZ)
-							&& (strcmp(field[i], "gmt") == 0))
-						{
-							i++;
-							if (DecodeTimezone(field[i], tzp) != 0)
-								return -1;
-
-							/* flip the sign per POSIX standard */
-							*tzp = -(*tzp);
-						}
-
-
+						ftype[i] = DTK_TZ;
 						break;
 
 					case IGNORE:
@@ -962,6 +947,19 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 	{
 		switch (ftype[i])
 		{
+			case DTK_DATE:
+				/* This might be a POSIX time zone
+				 *  with an embedded dash (e.g. "PST-3" == "EST")
+				 * - thomas 2000-03-15
+				 */
+				if ((tzp == NULL)
+					|| (DecodePosixTimezone(field[i], tzp) != 0))
+					return -1;
+
+				ftype[i] = DTK_TZ;
+				tmask = DTK_M(TZ);
+				break;
+
 			case DTK_TIME:
 				if (DecodeTime(field[i], fmask, &tmask, tm, fsec) != 0)
 					return -1;
@@ -970,9 +968,29 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 			case DTK_TZ:
 				if (tzp == NULL)
 					return -1;
-				if (DecodeTimezone(field[i], tzp) != 0)
-					return -1;
-				tmask = DTK_M(TZ);
+
+				{
+					int tz;
+
+					if (DecodeTimezone(field[i], &tz) != 0)
+						return -1;
+
+					/* Already have a time zone?
+					 * Then maybe this is the second field of a POSIX time:
+					 *  EST+3 (equivalent to PST)
+					 */
+					if ((i > 0) && ((fmask & DTK_M(TZ)) != 0)
+						&& (ftype[i-1] == DTK_TZ) && (isalpha(*field[i-1])))
+					{
+						*tzp -= tz;
+						tmask = 0;
+					}
+					else
+					{
+						*tzp = tz;
+						tmask = DTK_M(TZ);
+					}
+				}
 				break;
 
 			case DTK_NUMBER:
@@ -1013,6 +1031,41 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 								return -1;
 						}
 
+						break;
+
+					case DTZMOD:
+
+						/*
+						 * daylight savings time modifier (solves "MET
+						 * DST" syntax)
+						 */
+						tmask |= DTK_M(DTZ);
+						tm->tm_isdst = 1;
+						if (tzp == NULL)
+							return -1;
+						*tzp += val * 60;
+						break;
+
+					case DTZ:
+
+						/*
+						 * set mask for TZ here _or_ check for DTZ later
+						 * when getting default timezone
+						 */
+						tmask |= DTK_M(TZ);
+						tm->tm_isdst = 1;
+						if (tzp == NULL)
+							return -1;
+						*tzp = val * 60;
+						ftype[i] = DTK_TZ;
+						break;
+
+					case TZ:
+						tm->tm_isdst = 0;
+						if (tzp == NULL)
+							return -1;
+						*tzp = val * 60;
+						ftype[i] = DTK_TZ;
 						break;
 
 					case IGNORE:
@@ -1484,6 +1537,47 @@ DecodeTimezone(char *str, int *tzp)
 	*tzp = -tz;
 	return *cp != '\0';
 }	/* DecodeTimezone() */
+
+
+/* DecodePosixTimezone()
+ * Interpret string as a POSIX-compatible timezone:
+ *  PST-hh:mm
+ *  PST+h
+ * - thomas 2000-03-15
+ */
+static int
+DecodePosixTimezone(char *str, int *tzp)
+{
+	int			val, tz;
+	int			type;
+	char	   *cp;
+	char		delim;
+
+	cp = str;
+	while ((*cp != '\0') && isalpha(*cp))
+		cp++;
+
+	if (DecodeTimezone(cp, &tz) != 0)
+		return -1;
+
+	delim = *cp;
+	*cp = '\0';
+	type = DecodeSpecial(MAXDATEFIELDS-1, str, &val);
+	*cp = delim;
+
+	switch(type)
+	{
+		case DTZ:
+		case TZ:
+			*tzp = (val * 60) - tz;
+			break;
+
+		default:
+			return -1;
+	}
+
+	return 0;
+}	/* DecodePosixTimezone() */
 
 
 /* DecodeSpecial()

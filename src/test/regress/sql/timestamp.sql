@@ -72,8 +72,11 @@ INSERT INTO TIMESTAMP_TBL VALUES ('19970210 173201 -0800');
 INSERT INTO TIMESTAMP_TBL VALUES ('1997-06-10 17:32:01 -07:00');
 
 -- POSIX format
-INSERT INTO TIMESTAMP_TBL VALUES ('2000-02-15 23:14:30 GMT+8');
-INSERT INTO TIMESTAMP_TBL VALUES ('2000-02-15 23:14:30 EST+3');
+INSERT INTO TIMESTAMP_TBL VALUES ('2000-03-15 08:14:01 GMT+8');
+INSERT INTO TIMESTAMP_TBL VALUES ('2000-03-15 13:14:02 GMT-1');
+INSERT INTO TIMESTAMP_TBL VALUES ('2000-03-15 12:14:03 GMT -2');
+INSERT INTO TIMESTAMP_TBL VALUES ('2000-03-15 03:14:04 EST+3');
+INSERT INTO TIMESTAMP_TBL VALUES ('2000-03-15 02:14:05 EST +2:00');
 
 -- Variations for acceptable input formats
 INSERT INTO TIMESTAMP_TBL VALUES ('Feb 10 17:32:01 1997 -0800');
@@ -129,43 +132,45 @@ INSERT INTO TIMESTAMP_TBL VALUES ('Jan 01 17:32:01 2001');
 INSERT INTO TIMESTAMP_TBL VALUES ('Feb 16 17:32:01 -0097');
 INSERT INTO TIMESTAMP_TBL VALUES ('Feb 16 17:32:01 5097 BC');
 
-SELECT '' AS sixtythree, d1 FROM TIMESTAMP_TBL; 
+SELECT '' AS "66", d1 FROM TIMESTAMP_TBL; 
 
 -- Demonstrate functions and operators
-SELECT '' AS fortythree, d1 FROM TIMESTAMP_TBL
+SELECT '' AS "47", d1 FROM TIMESTAMP_TBL
    WHERE d1 > timestamp '1997-01-02' and d1 != timestamp 'current';
 
-SELECT '' AS fifteen, d1 FROM TIMESTAMP_TBL
+SELECT '' AS "15", d1 FROM TIMESTAMP_TBL
    WHERE d1 < timestamp '1997-01-02' and d1 != timestamp 'current';
 
 SELECT '' AS one, d1 FROM TIMESTAMP_TBL
    WHERE d1 = timestamp '1997-01-02' and d1 != timestamp 'current';
 
-SELECT '' AS fiftyeight, d1 FROM TIMESTAMP_TBL
+SELECT '' AS "62", d1 FROM TIMESTAMP_TBL
    WHERE d1 != timestamp '1997-01-02' and d1 != timestamp 'current';
 
-SELECT '' AS sixteen, d1 FROM TIMESTAMP_TBL
+SELECT '' AS "16", d1 FROM TIMESTAMP_TBL
    WHERE d1 <= timestamp '1997-01-02' and d1 != timestamp 'current';
 
-SELECT '' AS fortyfour, d1 FROM TIMESTAMP_TBL
+SELECT '' AS "48", d1 FROM TIMESTAMP_TBL
    WHERE d1 >= timestamp '1997-01-02' and d1 != timestamp 'current';
 
-SELECT '' AS sixtythree, d1 + interval '1 year' AS one_year FROM TIMESTAMP_TBL;
+SELECT '' AS "66", d1 + interval '1 year' AS one_year FROM TIMESTAMP_TBL;
 
-SELECT '' AS sixtythree, d1 - interval '1 year' AS one_year FROM TIMESTAMP_TBL;
+SELECT '' AS "66", d1 - interval '1 year' AS one_year FROM TIMESTAMP_TBL;
 
--- Casting within a BETWEEN qualifier should probably be allowed by the parser. - tgl 97/04/26
---SELECT '' AS fifty, d1 - timestamp '1997-01-02' AS diff
---   FROM TIMESTAMP_TBL WHERE d1 BETWEEN timestamp '1902-01-01' AND timestamp '2038-01-01';
-SELECT '' AS fifty, d1 - timestamp '1997-01-02' AS diff
+SELECT '' AS "53", d1 - timestamp '1997-01-02' AS diff
    FROM TIMESTAMP_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
 
-SELECT '' AS fortynine, date_part( 'year', d1) AS year, date_part( 'month', d1) AS month,
+-- Test casting within a BETWEEN qualifier
+SELECT '' AS "53", d1 - timestamp '1997-01-02' AS diff
+  FROM TIMESTAMP_TBL
+  WHERE d1 BETWEEN timestamp '1902-01-01' AND timestamp '2038-01-01';
+
+SELECT '' AS "53", date_part( 'year', d1) AS year, date_part( 'month', d1) AS month,
    date_part( 'day', d1) AS day, date_part( 'hour', d1) AS hour,
    date_part( 'minute', d1) AS minute, date_part( 'second', d1) AS second
    FROM TIMESTAMP_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
 
-SELECT '' AS fortynine, date_part( 'quarter', d1) AS quarter, date_part( 'msec', d1) AS msec,
+SELECT '' AS "53", date_part( 'quarter', d1) AS quarter, date_part( 'msec', d1) AS msec,
    date_part( 'usec', d1) AS usec
    FROM TIMESTAMP_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
 
