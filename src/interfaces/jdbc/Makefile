@@ -4,7 +4,7 @@
 #    Makefile for Java JDBC interface
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.18 2000/03/14 15:55:17 momjian Exp $
+#    $Id: Makefile,v 1.19 2000/04/26 14:19:29 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,6 +24,10 @@ TOUCH		= touch
 .SUFFIXES:	.class .java
 .PHONY:		all clean doc examples msg
 
+# This is the base directory of the driver. In 7.0, this changed from
+# postgresql to org/postgresql
+PGBASE		= org/postgresql
+
 # In 6.5, the all rule builds the makeVersion class which then calls make using
 # the jdbc1 or jdbc2 rules
 all:	
@@ -34,11 +38,16 @@ all:
 	@echo
 	@echo If you are using JDK1.1.x, you will need the JDBC1.2 driver.
 	@echo To compile, type:
-	@echo "  $(MAKE) jdbc1"
+	@echo "  make jdbc1 jar"
 	@echo
 	@echo "If you are using JDK1.2 (aka Java2) you need the JDBC2."
 	@echo To compile, type:
-	@echo "  $(MAKE) jdbc2"
+	@echo "  make jdbc2 jar"
+	@echo
+	@echo Once you have done this, a postgresql.jar file will be
+	@echo produced. This file will only work with that particular
+	@echo JVM.
+	@echo
 	@echo ------------------------------------------------------------
 
 msg:	
@@ -59,10 +68,10 @@ msg:
 	@echo
 	@echo ------------------------------------------------------------
 	@echo To build the examples, type:
-	@echo "  $(MAKE) examples"
+	@echo "  make examples"
 	@echo
 	@echo "To build the CORBA example (requires Java2):"
-	@echo "  $(MAKE) corba"
+	@echo "  make corba"
 	@echo ------------------------------------------------------------
 	@echo
 
@@ -72,88 +81,89 @@ dep depend:
 doc:
 	export CLASSPATH=.;\
 		$(JAVADOC) -public \
-			postgresql \
-			postgresql.fastpath \
-			postgresql.largeobject
+			org.postgresql \
+			org.postgresql.fastpath \
+			org.postgresql.largeobject
 
 # These classes form the driver. These, and only these are placed into
 # the jar file.
-OBJ_COMMON=	postgresql/Connection.class \
-		postgresql/Driver.class \
-		postgresql/Field.class \
-		postgresql/PG_Stream.class \
-		postgresql/ResultSet.class \
-		postgresql/errors.properties \
-		postgresql/errors_fr.properties \
-		postgresql/fastpath/Fastpath.class \
-		postgresql/fastpath/FastpathArg.class \
-		postgresql/geometric/PGbox.class \
-		postgresql/geometric/PGcircle.class \
-		postgresql/geometric/PGline.class \
-		postgresql/geometric/PGlseg.class \
-		postgresql/geometric/PGpath.class \
-		postgresql/geometric/PGpoint.class \
-		postgresql/geometric/PGpolygon.class \
-		postgresql/largeobject/LargeObject.class \
-		postgresql/largeobject/LargeObjectManager.class \
-		postgresql/util/PGmoney.class \
-		postgresql/util/PGobject.class \
-		postgresql/util/PGtokenizer.class \
-		postgresql/util/PSQLException.class \
-		postgresql/util/Serialize.class \
-		postgresql/util/UnixCrypt.class
+OBJ_COMMON=	$(PGBASE)/Connection.class \
+		$(PGBASE)/Driver.class \
+		$(PGBASE)/Field.class \
+		$(PGBASE)/PG_Stream.class \
+		$(PGBASE)/ResultSet.class \
+		$(PGBASE)/errors.properties \
+		$(PGBASE)/errors_fr.properties \
+		$(PGBASE)/fastpath/Fastpath.class \
+		$(PGBASE)/fastpath/FastpathArg.class \
+		$(PGBASE)/geometric/PGbox.class \
+		$(PGBASE)/geometric/PGcircle.class \
+		$(PGBASE)/geometric/PGline.class \
+		$(PGBASE)/geometric/PGlseg.class \
+		$(PGBASE)/geometric/PGpath.class \
+		$(PGBASE)/geometric/PGpoint.class \
+		$(PGBASE)/geometric/PGpolygon.class \
+		$(PGBASE)/largeobject/LargeObject.class \
+		$(PGBASE)/largeobject/LargeObjectManager.class \
+		$(PGBASE)/util/PGmoney.class \
+		$(PGBASE)/util/PGobject.class \
+		$(PGBASE)/util/PGtokenizer.class \
+		$(PGBASE)/util/PSQLException.class \
+		$(PGBASE)/util/Serialize.class \
+		$(PGBASE)/util/UnixCrypt.class
 
 # These files are unique to the JDBC 1 (JDK 1.1) driver
-OBJ_JDBC1=	postgresql/jdbc1/CallableStatement.class \
-		postgresql/jdbc1/Connection.class \
-		postgresql/jdbc1/DatabaseMetaData.class \
-		postgresql/jdbc1/PreparedStatement.class \
-		postgresql/jdbc1/ResultSet.class \
-		postgresql/jdbc1/ResultSetMetaData.class \
-		postgresql/jdbc1/Statement.class
+OBJ_JDBC1=	$(PGBASE)/jdbc1/CallableStatement.class \
+		$(PGBASE)/jdbc1/Connection.class \
+		$(PGBASE)/jdbc1/DatabaseMetaData.class \
+		$(PGBASE)/jdbc1/PreparedStatement.class \
+		$(PGBASE)/jdbc1/ResultSet.class \
+		$(PGBASE)/jdbc1/ResultSetMetaData.class \
+		$(PGBASE)/jdbc1/Statement.class
 
 # These files are unique to the JDBC 2 (JDK 2 nee 1.2) driver
-OBJ_JDBC2=	postgresql/jdbc2/ResultSet.class \
-		postgresql/jdbc2/PreparedStatement.class \
-		postgresql/jdbc2/CallableStatement.class \
-		postgresql/jdbc2/Connection.class \
-		postgresql/jdbc2/DatabaseMetaData.class \
-		postgresql/jdbc2/ResultSetMetaData.class \
-		postgresql/jdbc2/Statement.class
+OBJ_JDBC2=	$(PGBASE)/jdbc2/ResultSet.class \
+		$(PGBASE)/jdbc2/PreparedStatement.class \
+		$(PGBASE)/jdbc2/CallableStatement.class \
+		$(PGBASE)/jdbc2/Connection.class \
+		$(PGBASE)/jdbc2/DatabaseMetaData.class \
+		$(PGBASE)/jdbc2/ResultSetMetaData.class \
+		$(PGBASE)/jdbc2/Statement.class \
+		$(PGBASE)/largeobject/PGblob.class
 
 # This rule builds the JDBC1 compliant driver
 jdbc1:
-	(echo "package postgresql;" ;\
+	(echo "package org.postgresql;" ;\
 	 echo "public class DriverClass {" ;\
-	 echo "public static String connectClass=\"postgresql.jdbc1.Connection\";" ;\
+	 echo "public static String connectClass=\"org.postgresql.jdbc1.Connection\";" ;\
 	 echo "}" \
-	) >postgresql/DriverClass.java
+	) >$(PGBASE)/DriverClass.java
 	@$(MAKE) jdbc1real
 
-jdbc1real: postgresql/DriverClass.class \
+jdbc1real: $(PGBASE)/DriverClass.class \
 	$(OBJ_COMMON) $(OBJ_JDBC1) postgresql.jar msg
 
 # This rule builds the JDBC2 compliant driver
 jdbc2:	
-	(echo "package postgresql;" ;\
+	(echo "package org.postgresql;" ;\
 	 echo "public class DriverClass {" ;\
-	 echo "public static String connectClass=\"postgresql.jdbc2.Connection\";" ;\
+	 echo "public static String connectClass=\"org.postgresql.jdbc2.Connection\";" ;\
 	 echo "}" \
-	) >postgresql/DriverClass.java
+	) >$(PGBASE)/DriverClass.java
 	@$(MAKE) jdbc2real
 
-jdbc2real: postgresql/DriverClass.class \
+jdbc2real: $(PGBASE)/DriverClass.class \
 	$(OBJ_COMMON) $(OBJ_JDBC2) postgresql.jar msg
 
 # If you have problems with this rule, replace the $( ) with ` ` as some
 # shells (mainly sh under Solaris) doesn't recognise $( )
 #
-# Note:	This works by storing all compiled classes under the postgresql
+# Note:	This works by storing all compiled classes under the $(PGBASE)
 #	directory. We use this later for compiling the dual-mode driver.
 #
-postgresql.jar: $(OBJ_COMMON)
-	$(JAR) -c0f $@ `$(FIND) postgresql -name "*.class" -print` \
-		$(wildcard postgresql/*.properties)
+postgresql.jar: $(OBJ) $(OBJ_COMMON)
+	$(JAR) -c0f $@ `$(FIND) $(PGBASE) -name "*.class" -print` \
+		$(wildcard $(PGBASE)/*.properties)
 
 # This rule removes any temporary and compiled files from the source tree.
 clean:
@@ -170,30 +180,30 @@ clean:
 # Java is unlike C in that one source file can generate several
 # _Different_ file names
 #
-postgresql/Connection.class:		postgresql/Connection.java
-postgresql/DatabaseMetaData.class:	postgresql/DatabaseMetaData.java
-postgresql/Driver.class:		postgresql/Driver.java
-postgresql/Field.class:			postgresql/Field.java
-postgresql/PG_Stream.class:		postgresql/PG_Stream.java
-postgresql/PreparedStatement.class:	postgresql/PreparedStatement.java
-postgresql/ResultSet.class:		postgresql/ResultSet.java
-postgresql/ResultSetMetaData.class:	postgresql/ResultSetMetaData.java
-postgresql/Statement.class:		postgresql/Statement.java
-postgresql/fastpath/Fastpath.class:	postgresql/fastpath/Fastpath.java
-postgresql/fastpath/FastpathArg.class:	postgresql/fastpath/FastpathArg.java
-postgresql/geometric/PGbox.class:	postgresql/geometric/PGbox.java
-postgresql/geometric/PGcircle.class:	postgresql/geometric/PGcircle.java
-postgresql/geometric/PGlseg.class:	postgresql/geometric/PGlseg.java
-postgresql/geometric/PGpath.class:	postgresql/geometric/PGpath.java
-postgresql/geometric/PGpoint.class:	postgresql/geometric/PGpoint.java
-postgresql/geometric/PGpolygon.class:	postgresql/geometric/PGpolygon.java
-postgresql/largeobject/LargeObject.class: postgresql/largeobject/LargeObject.java
-postgresql/largeobject/LargeObjectManager.class: postgresql/largeobject/LargeObjectManager.java
-postgresql/util/PGmoney.class:		postgresql/util/PGmoney.java
-postgresql/util/PGobject.class:		postgresql/util/PGobject.java
-postgresql/util/PGtokenizer.class:	postgresql/util/PGtokenizer.java
-postgresql/util/Serialize.class:	postgresql/util/Serialize.java
-postgresql/util/UnixCrypt.class:	postgresql/util/UnixCrypt.java
+$(PGBASE)/Connection.class:		$(PGBASE)/Connection.java
+$(PGBASE)/DatabaseMetaData.class:	$(PGBASE)/DatabaseMetaData.java
+$(PGBASE)/Driver.class:		$(PGBASE)/Driver.java
+$(PGBASE)/Field.class:			$(PGBASE)/Field.java
+$(PGBASE)/PG_Stream.class:		$(PGBASE)/PG_Stream.java
+$(PGBASE)/PreparedStatement.class:	$(PGBASE)/PreparedStatement.java
+$(PGBASE)/ResultSet.class:		$(PGBASE)/ResultSet.java
+$(PGBASE)/ResultSetMetaData.class:	$(PGBASE)/ResultSetMetaData.java
+$(PGBASE)/Statement.class:		$(PGBASE)/Statement.java
+$(PGBASE)/fastpath/Fastpath.class:	$(PGBASE)/fastpath/Fastpath.java
+$(PGBASE)/fastpath/FastpathArg.class:	$(PGBASE)/fastpath/FastpathArg.java
+$(PGBASE)/geometric/PGbox.class:	$(PGBASE)/geometric/PGbox.java
+$(PGBASE)/geometric/PGcircle.class:	$(PGBASE)/geometric/PGcircle.java
+$(PGBASE)/geometric/PGlseg.class:	$(PGBASE)/geometric/PGlseg.java
+$(PGBASE)/geometric/PGpath.class:	$(PGBASE)/geometric/PGpath.java
+$(PGBASE)/geometric/PGpoint.class:	$(PGBASE)/geometric/PGpoint.java
+$(PGBASE)/geometric/PGpolygon.class:	$(PGBASE)/geometric/PGpolygon.java
+$(PGBASE)/largeobject/LargeObject.class: $(PGBASE)/largeobject/LargeObject.java
+$(PGBASE)/largeobject/LargeObjectManager.class: $(PGBASE)/largeobject/LargeObjectManager.java
+$(PGBASE)/util/PGmoney.class:		$(PGBASE)/util/PGmoney.java
+$(PGBASE)/util/PGobject.class:		$(PGBASE)/util/PGobject.java
+$(PGBASE)/util/PGtokenizer.class:	$(PGBASE)/util/PGtokenizer.java
+$(PGBASE)/util/Serialize.class:	$(PGBASE)/util/Serialize.java
+$(PGBASE)/util/UnixCrypt.class:	$(PGBASE)/util/UnixCrypt.java
 
 #######################################################################
 # These classes are in the example directory, and form the examples
