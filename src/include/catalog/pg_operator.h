@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.21 1997/11/24 13:43:22 momjian Exp $
+ * $Id: pg_operator.h,v 1.22 1997/11/30 22:49:22 thomas Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -339,7 +339,7 @@ DATA(insert OID = 665 (  "<="	   PGUID 0 b t f  25  25  16 667 666  0 0 text_le 
 DATA(insert OID = 666 (  ">"	   PGUID 0 b t f  25  25  16 664 665  0 0 text_gt intltsel intltjoinsel ));
 DATA(insert OID = 667 (  ">="	   PGUID 0 b t f  25  25  16 665 664  0 0 text_ge intltsel intltjoinsel ));
 
-DATA(insert OID = 670 (  "="	   PGUID 0 b t f  701  701	16 670 671	0 0 float8eq eqsel eqjoinsel ));
+DATA(insert OID = 670 (  "="	   PGUID 0 b t t  701  701	16 670 671	0 0 float8eq eqsel eqjoinsel ));
 DATA(insert OID = 671 (  "<>"	   PGUID 0 b t f  701  701	16 671 670	0 0 float8ne neqsel neqjoinsel ));
 DATA(insert OID = 672 (  "<"	   PGUID 0 b t f  701  701	16 674 675	0 0 float8lt intltsel intltjoinsel ));
 DATA(insert OID = 673 (  "<="	   PGUID 0 b t f  701  701	16 675 674	0 0 float8le intltsel intltjoinsel ));
@@ -497,31 +497,6 @@ DATA(insert OID = 1111 ( "<="	   PGUID 0 b t f  1083	1083  16 1113 1112	0 0 time
 DATA(insert OID = 1112 ( ">"	   PGUID 0 b t f  1083	1083  16 1110 1111	0 0 time_gt intltsel intltjoinsel ));
 DATA(insert OID = 1113 ( ">="	   PGUID 0 b t f  1083	1083  16 1111 1065	0 0 time_ge intltsel intltjoinsel ));
 
-/* datetime operators */
-/* name, owner, prec, kind, isleft, canhash, left, right, result, com, negate, lsortop, rsortop, oprcode, operrest, oprjoin */
-DATA(insert OID = 1320 (  "="	   PGUID 0 b t f 1184 1184	 16 1320 1321 1322 1322 datetime_eq eqsel eqjoinsel ));
-DATA(insert OID = 1321 (  "<>"	   PGUID 0 b t f 1184 1184	 16 1321 1320 0 0 datetime_ne neqsel neqjoinsel ));
-DATA(insert OID = 1322 (  "<"	   PGUID 0 b t f 1184 1184	 16 1325 1325 0 0 datetime_lt intltsel intltjoinsel ));
-DATA(insert OID = 1323 (  "<="	   PGUID 0 b t f 1184 1184	 16 1324 1324 0 0 datetime_le intltsel intltjoinsel ));
-DATA(insert OID = 1324 (  ">"	   PGUID 0 b t f 1184 1184	 16 1323 1323 0 0 datetime_gt intltsel intltjoinsel ));
-DATA(insert OID = 1325 (  ">="	   PGUID 0 b t f 1184 1184	 16 1322 1322 0 0 datetime_ge intltsel intltjoinsel ));
-
-DATA(insert OID = 1327 (  "+"	   PGUID 0 b t f 1184 1186 1184 1327	0 0 0 datetime_pl_span - - ));
-DATA(insert OID = 1328 (  "-"	   PGUID 0 b t f 1184 1184 1186    0	0 0 0 datetime_mi - - ));
-DATA(insert OID = 1329 (  "-"	   PGUID 0 b t f 1184 1186 1184    0	0 0 0 datetime_mi_span - - ));
-
-/* timespan operators */
-DATA(insert OID = 1330 (  "="	   PGUID 0 b t f 1186 1186	 16 1330 1331 1332 1332 timespan_eq eqsel eqjoinsel ));
-DATA(insert OID = 1331 (  "<>"	   PGUID 0 b t f 1186 1186	 16 1331 1330 0 0 timespan_ne neqsel neqjoinsel ));
-DATA(insert OID = 1332 (  "<"	   PGUID 0 b t f 1186 1186	 16 1335 1335 0 0 timespan_lt intltsel intltjoinsel ));
-DATA(insert OID = 1333 (  "<="	   PGUID 0 b t f 1186 1186	 16 1334 1334 0 0 timespan_le intltsel intltjoinsel ));
-DATA(insert OID = 1334 (  ">"	   PGUID 0 b t f 1186 1186	 16 1333 1333 0 0 timespan_gt intltsel intltjoinsel ));
-DATA(insert OID = 1335 (  ">="	   PGUID 0 b t f 1186 1186	 16 1332 1332 0 0 timespan_ge intltsel intltjoinsel ));
-
-DATA(insert OID = 1336 (  "-"	   PGUID 0 l t f	0 1186 1186    0	0 0 0 timespan_um 0 0 ));
-DATA(insert OID = 1337 (  "+"	   PGUID 0 b t f 1186 1186 1186 1337	0 0 0 timespan_pl - - ));
-DATA(insert OID = 1338 (  "-"	   PGUID 0 b t f 1186 1186 1186    0	0 0 0 timespan_mi - - ));
-
 /* float48 operators */
 DATA(insert OID = 1116 (  "+"		PGUID 0 b t f 700 701 701 1116	 0	 0	 0 float48pl - - ));
 DATA(insert OID = 1117 (  "-"		PGUID 0 b t f 700 701 701	 0	 0	 0	 0 float48mi - - ));
@@ -590,6 +565,31 @@ DATA(insert OID = 1302 (  "<"		PGUID 0 b t f  1296 1296 16 1303 1305 0 0 timesta
 DATA(insert OID = 1303 (  ">"		PGUID 0 b t f  1296 1296 16 1302 1304 0 0 timestampgt intltsel intltjoinsel ));
 DATA(insert OID = 1304 (  "<="		PGUID 0 b t f  1296 1296 16 1305 1303 0 0 timestample intltsel intltjoinsel ));
 DATA(insert OID = 1305 (  ">="		PGUID 0 b t f  1296 1296 16 1304 1302 0 0 timestampge intltsel intltjoinsel ));
+
+/* datetime operators */
+/* name, owner, prec, kind, isleft, canhash, left, right, result, com, negate, lsortop, rsortop, oprcode, operrest, oprjoin */
+DATA(insert OID = 1320 (  "="	   PGUID 0 b t t 1184 1184	 16 1320 1321 1322 1322 datetime_eq eqsel eqjoinsel ));
+DATA(insert OID = 1321 (  "<>"	   PGUID 0 b t f 1184 1184	 16 1321 1320 0 0 datetime_ne neqsel neqjoinsel ));
+DATA(insert OID = 1322 (  "<"	   PGUID 0 b t f 1184 1184	 16 1325 1325 0 0 datetime_lt intltsel intltjoinsel ));
+DATA(insert OID = 1323 (  "<="	   PGUID 0 b t f 1184 1184	 16 1324 1324 0 0 datetime_le intltsel intltjoinsel ));
+DATA(insert OID = 1324 (  ">"	   PGUID 0 b t f 1184 1184	 16 1323 1323 0 0 datetime_gt intltsel intltjoinsel ));
+DATA(insert OID = 1325 (  ">="	   PGUID 0 b t f 1184 1184	 16 1322 1322 0 0 datetime_ge intltsel intltjoinsel ));
+
+DATA(insert OID = 1327 (  "+"	   PGUID 0 b t f 1184 1186 1184 1327	0 0 0 datetime_pl_span - - ));
+DATA(insert OID = 1328 (  "-"	   PGUID 0 b t f 1184 1184 1186    0	0 0 0 datetime_mi - - ));
+DATA(insert OID = 1329 (  "-"	   PGUID 0 b t f 1184 1186 1184    0	0 0 0 datetime_mi_span - - ));
+
+/* timespan operators */
+DATA(insert OID = 1330 (  "="	   PGUID 0 b t t 1186 1186	 16 1330 1331 1332 1332 timespan_eq eqsel eqjoinsel ));
+DATA(insert OID = 1331 (  "<>"	   PGUID 0 b t f 1186 1186	 16 1331 1330 0 0 timespan_ne neqsel neqjoinsel ));
+DATA(insert OID = 1332 (  "<"	   PGUID 0 b t f 1186 1186	 16 1335 1335 0 0 timespan_lt intltsel intltjoinsel ));
+DATA(insert OID = 1333 (  "<="	   PGUID 0 b t f 1186 1186	 16 1334 1334 0 0 timespan_le intltsel intltjoinsel ));
+DATA(insert OID = 1334 (  ">"	   PGUID 0 b t f 1186 1186	 16 1333 1333 0 0 timespan_gt intltsel intltjoinsel ));
+DATA(insert OID = 1335 (  ">="	   PGUID 0 b t f 1186 1186	 16 1332 1332 0 0 timespan_ge intltsel intltjoinsel ));
+
+DATA(insert OID = 1336 (  "-"	   PGUID 0 l t f	0 1186 1186    0	0 0 0 timespan_um 0 0 ));
+DATA(insert OID = 1337 (  "+"	   PGUID 0 b t f 1186 1186 1186 1337	0 0 0 timespan_pl - - ));
+DATA(insert OID = 1338 (  "-"	   PGUID 0 b t f 1186 1186 1186    0	0 0 0 timespan_mi - - ));
 
 /* additional geometric operators - thomas 97/04/18 */
 DATA(insert OID = 1420 (  "@@"	  PGUID 0 l t f    0  718  600	  0    0	0	 0 circle_center - - ));
