@@ -55,7 +55,6 @@ GetPrivateProfileString(char *theSection,	/* section name */
 	char *aString;
 	size_t aLineLength;
 	size_t aReturnLength = 0;
-
 	BOOL aSectionFound = FALSE;
 	BOOL aKeyFound = FALSE;
 	int j = 0;
@@ -151,9 +150,9 @@ GetPrivateProfileString(char *theSection,	/* section name */
 					/* accept as matched if NULL key or exact match */
 
 					if(!theSection || !strcmp(aStart, theSection))
-					{
 						aSectionFound = TRUE;
-					}
+					else
+						aSectionFound = FALSE;
 				}
 
 			break;
