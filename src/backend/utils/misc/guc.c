@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.54 2001/09/30 18:57:45 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.55 2001/09/30 20:16:21 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -704,37 +704,49 @@ set_config_option(const char *name, const char *value,
 	 * precise rules. Note that we don't want to throw errors if we're in
 	 * the SIGHUP context. In that case we just ignore the attempt.
 	 */
-	if (record->context == PGC_POSTMASTER && context != PGC_POSTMASTER)
+	switch (record->context)
 	{
-		if (context != PGC_SIGHUP)
-			elog(ERROR, "'%s' cannot be changed after server start", name);
-		else
-			return true;
+		case PGC_POSTMASTER:
+			if (context == PGC_SIGHUP)
+				return true;
+			if (context != PGC_POSTMASTER)
+				elog(ERROR, "'%s' cannot be changed after server start", name);
+			break;
+		case PGC_SIGHUP:
+			if (context != PGC_SIGHUP && context != PGC_POSTMASTER)
+				elog(ERROR, "'%s' cannot be changed now", name);
+			/*
+			 * Hmm, the idea of the SIGHUP context is "ought to be global, but
+			 * can be changed after postmaster start". But there's nothing
+			 * that prevents a crafty administrator from sending SIGHUP
+			 * signals to individual backends only.
+			 */
+			break;
+		case PGC_BACKEND:
+			if (context == PGC_SIGHUP)
+			{
+				/*
+				 * If a PGC_BACKEND parameter is changed in the config file,
+				 * we want to accept the new value in the postmaster (whence
+				 * it will propagate to subsequently-started backends), but
+				 * ignore it in existing backends.  This is a tad klugy, but
+				 * necessary because we don't re-read the config file during
+				 * backend start.
+				 */
+				if (IsUnderPostmaster)
+					return true;
+			}
+			else if (context != PGC_BACKEND && context != PGC_POSTMASTER)
+				elog(ERROR, "'%s' cannot be set after connection start", name);
+			break;
+		case PGC_SUSET:
+			if (context == PGC_USERSET || context == PGC_BACKEND)
+				elog(ERROR, "permission denied");
+			break;
+		case PGC_USERSET:
+			/* always okay */
+			break;
 	}
-	else if (record->context == PGC_SIGHUP && context != PGC_SIGHUP &&
-			 context != PGC_POSTMASTER)
-	{
-		elog(ERROR, "'%s' cannot be changed now", name);
-
-		/*
-		 * Hmm, the idea of the SIGHUP context is "ought to be global, but
-		 * can be changed after postmaster start". But there's nothing
-		 * that prevents a crafty administrator from sending SIGHUP
-		 * signals to individual backends only.
-		 */
-	}
-	else if (record->context == PGC_BACKEND && context != PGC_BACKEND
-			 && context != PGC_POSTMASTER)
-	{
-		if (context != PGC_SIGHUP)
-			elog(ERROR, "'%s' cannot be set after connection start", name);
-		else
-			return true;
-	}
-	else if (record->context == PGC_SUSET &&
-			 (context == PGC_USERSET || context == PGC_BACKEND))
-		elog(ERROR, "permission denied");
-
 
 	/*
 	 * Evaluate value and set variable

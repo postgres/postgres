@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.86 2001/09/30 18:57:45 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.87 2001/09/30 20:16:21 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -845,10 +845,11 @@ env PGOPTIONS='-c geqo=off' psql
       <term><varname>LOG_CONNECTIONS</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        Prints a line informing about each successful connection to
+        Prints a line informing about each successful connection in
         the server log. This is off by default, although it is
         probably very useful. This option can only be set at server
-        start.
+        start or in the <filename>postgresql.conf</filename>
+        configuration file.
        </para>
       </listitem>
      </varlistentry>
@@ -1223,7 +1224,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       <listitem>
        <para>
         Sets the maximum number of simultaneously open files in each server
-	process.  The default is 1000.  The limit actually used by the code
+	subprocess.  The default is 1000.  The limit actually used by the code
 	is the smaller of this setting and the result of
 	<literal>sysconf(_SC_OPEN_MAX)</literal>.
 	Therefore, on systems where sysconf returns a reasonable limit,
@@ -1233,7 +1234,10 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
 	processes all try to open that many files.  If you find yourself
 	seeing <quote>Too many open files</> failures, try reducing this
 	setting.
-        This option can only be set at server start.
+        This option can only be set at server start or in the
+	<filename>postgresql.conf</filename> configuration file;
+	if changed in the configuration file, it only affects
+	subsequently-started server subprocesses.
        </para>
       </listitem>
      </varlistentry>

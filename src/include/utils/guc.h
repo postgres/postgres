@@ -4,7 +4,7 @@
  * External declarations pertaining to backend/utils/misc/guc.c and
  * backend/utils/misc/guc-file.l
  *
- * $Id: guc.h,v 1.9 2001/06/18 16:14:43 momjian Exp $
+ * $Id: guc.h,v 1.10 2001/09/30 20:16:21 tgl Exp $
  */
 #ifndef GUC_H
 #define GUC_H
@@ -23,11 +23,12 @@
  * certain point in their main loop. It's safer to wait than to read a
  * file asynchronously.)
  *
- * BACKEND options can only be set at postmaster startup or with the
- * PGOPTIONS variable from the client when the connection is
- * initiated. Note that you cannot change this kind of option using
- * the SIGHUP mechanism, that would defeat the purpose of this being
- * fixed for a given backend once started.
+ * BACKEND options can only be set at postmaster startup, from the
+ * configuration file, or with the PGOPTIONS variable from the client
+ * when the connection is initiated.  Furthermore, an already-started
+ * backend will ignore changes to such an option in the configuration
+ * file.  The idea is that these options are fixed for a given backend
+ * once it's started, but they can vary across backends.
  *
  * SUSET options can be set at postmaster startup, with the SIGHUP
  * mechanism, or from SQL if you're a superuser. These options cannot
