@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.296 2002/11/15 01:57:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.297 2002/11/15 02:44:55 momjian Exp $
  *
  * NOTES
  *
@@ -198,6 +198,8 @@ bool		SilentMode = false; /* silent mode (-S) */
 int			PreAuthDelay = 0;
 int			AuthenticationTimeout = 60;
 int			CheckPointTimeout = 300;
+int			CheckPointWarning = 30;
+time_t		LastSignalledCheckpoint = 0;
 
 bool		log_hostname;		/* for ps display */
 bool		LogSourcePort;
@@ -2329,6 +2331,22 @@ sigusr1_handler(SIGNAL_ARGS)
 
 	if (CheckPostmasterSignal(PMSIGNAL_DO_CHECKPOINT))
 	{
+		if (CheckPointWarning != 0)
+		{
+			/*
+			 *	This only times checkpoints forced by running out of
+			 *	segment files.  Other checkpoints could reduce
+			 *	the frequency of forced checkpoints.
+			 */
+			time_t now = time(NULL);
+
+			if (now - LastSignalledCheckpoint < CheckPointWarning)
+				elog(LOG, "Checkpoint segments are being created too frequently (%d secs)\n
+				Consider increasing CHECKPOINT_SEGMENTS",
+				now - LastSignalledCheckpoint);
+			LastSignalledCheckpoint = now;
+		}
+
 		/*
 		 * Request to schedule a checkpoint
 		 *

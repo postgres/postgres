@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.154 2002/11/15 01:57:25 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.155 2002/11/15 02:44:50 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -2077,6 +2077,18 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
         Maximum time between automatic WAL checkpoints, in seconds.
 	This option can only be set at server start or in the
 	<filename>postgresql.conf</filename> file.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    <variablelist>
+     <varlistentry>
+      <term><varname>CHECKPOINT_WARNING</varname> (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        Send a message to the server logs if checkpoints caused by the
+        filling of checkpoint segment files happens more frequently than
+        this number of seconds.  Zero turns off the warning.
        </para>
       </listitem>
      </varlistentry>

@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.105 2002/11/15 01:57:27 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.106 2002/11/15 02:44:57 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -658,6 +658,11 @@ static struct config_int
 	{
 		{"checkpoint_timeout", PGC_SIGHUP}, &CheckPointTimeout,
 		300, 30, 3600, NULL, NULL
+	},
+
+	{
+		{"checkpoint_warning", PGC_SIGHUP}, &CheckPointWarning,
+		30, 0, INT_MAX, NULL, NULL
 	},
 
 	{

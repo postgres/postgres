@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xlog.h,v 1.39 2002/09/26 22:58:34 tgl Exp $
+ * $Id: xlog.h,v 1.40 2002/11/15 02:44:57 momjian Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -184,6 +184,7 @@ extern XLogRecPtr ProcLastRecEnd;
 
 /* these variables are GUC parameters related to XLOG */
 extern int	CheckPointSegments;
+extern int	CheckPointWarning;
 extern int	XLOGbuffers;
 extern int	XLOG_DEBUG;
 extern char *XLOG_sync_method;

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.21 2002/11/02 22:23:01 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.22 2002/11/15 02:44:54 momjian Exp $ -->
 
 <chapter id="wal">
  <title>Write-Ahead Logging (<acronym>WAL</acronym>)</title>
@@ -298,6 +298,16 @@
    WAL_BUFFERS</varname> parameter. The default number of <acronym>
    WAL</acronym> buffers is 8.  Increasing this value will 
    correspondingly increase shared memory usage.
+  </para>
+
+  <para>
+   Checkpoints are fairly expensive because they force all dirty kernel
+   buffers to disk using the operating system <literal>sync()</> call.
+   Busy servers may fill checkpoint segment files too quickly,
+   causing excessive checkpointing. If such forced checkpoints happen
+   more frequently than <varname>CHECKPOINT_WARNING</varname> seconds, 
+   a message, will be output to the server logs recommending increasing 
+   <varname>CHECKPOINT_SEGMENTS</varname>.
   </para>
 
   <para>
