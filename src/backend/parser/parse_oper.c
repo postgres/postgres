@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.33 1999/11/22 17:56:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.34 1999/12/12 20:51:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@ static int unary_oper_get_candidates(char *op,
 static void op_error(char *op, Oid arg1, Oid arg2);
 
 Oid
-any_ordering_op(int restype)
+any_ordering_op(Oid restype)
 {
 	Operator	order_op;
 	Oid			order_opid;
