@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.22 1997/03/06 18:38:35 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.23 1997/03/07 00:59:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -427,8 +427,8 @@ vc_vacone (Oid relid)
 	memmove(stats->attr,attr[i],ATTRIBUTE_TUPLE_SIZE);
 	stats->best = stats->guess1 = stats->guess2 = 0;
 	stats->max = stats->min = 0;
-	stats->best_len = stats->guess1_len = stats->guess2_len = -1;
-	stats->max_len = stats->min_len = -1;
+	stats->best_len = stats->guess1_len = stats->guess2_len = 0;
+	stats->max_len = stats->min_len = 0;
 	stats->initialized = false;
 	stats->best_cnt = stats->guess1_cnt = stats->guess1_hits = stats->guess2_hits = 0;
 	stats->max_cnt = stats->min_cnt = stats->null_cnt = stats->nonnull_cnt = 0;
@@ -1628,14 +1628,14 @@ vc_bucketcpy(AttributeTupleForm attr, Datum value, Datum *bucket, int16 *bucket_
     else {
     	int len = (attr->attlen != -1 ? attr->attlen : VARSIZE(value));
 
- 	if (len > *bucket_len) /* bucket_len only grows, prevents thrashing */
+ 	if (len > *bucket_len)
     	{
-	    if (*bucket_len != -1) /* have we allocated before? */
+	    if (*bucket_len != 0)
 	    	pfree(DatumGetPointer(*bucket));
-	    *bucket = PointerGetDatum(palloc(len+VARHDRSZ));
+	    *bucket = PointerGetDatum(palloc(len));
 	    *bucket_len = len;
 	}
-    	memmove(DatumGetPointer(*bucket), DatumGetPointer(value), len+VARHDRSZ);
+    	memmove(DatumGetPointer(*bucket), DatumGetPointer(value), len);
     }
 }
 
