@@ -1,9 +1,13 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.17 2002/09/21 18:32:53 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.18 2002/11/03 01:31:32 momjian Exp $
 -->
 
  <chapter id="extend">
   <title>Extending <acronym>SQL</acronym>: An Overview</title>
+
+   <indexterm zone="extend">
+    <primary>extending SQL</primary>
+   </indexterm>
 
   <para>
    In  the  sections  that follow, we will discuss how you
@@ -75,6 +79,15 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.17 2002/09/21 18:32:53 pete
   <sect1 id="type-system">
    <title>The <productname>PostgreSQL</productname> Type System</title>
 
+   <indexterm zone="type-system">
+    <primary>extending SQL</primary>
+    <secondary>types</secondary>
+   </indexterm>
+
+   <indexterm zone="type-system">
+    <primary>data types</primary>
+   </indexterm>
+
    <para>
     The <productname>PostgreSQL</productname> type system
     can be broken down in several ways.
@@ -108,6 +121,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.17 2002/09/21 18:32:53 pete
 
   <sect1 id="pg-system-catalogs">
    <title>About the <productname>PostgreSQL</productname> System Catalogs</title>
+
+   <indexterm zone="pg-system-catalogs">
+    <primary>catalogs</primary>
+   </indexterm>
 
    <para>
     Having  introduced the basic extensibility concepts, we

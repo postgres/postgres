@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.146 2002/10/20 01:43:32 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.147 2002/11/03 01:31:32 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1311,11 +1311,6 @@ env PGOPTIONS='-c geqo=off' psql
         Sets the client-side encoding for multibyte character sets.
 	The default is to use the database encoding.
        </para>
-       <para>
-        This option is only available if
-        <productname>PostgreSQL</productname> was built with multibyte
-        support.
-      </para>
       </listitem>
      </varlistentry>
 
