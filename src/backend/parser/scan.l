@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.68 2000/03/18 18:03:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.69 2000/05/27 05:13:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,7 @@ static char *parseCh;
 /* set up my input handler --- need one flavor for flex, one for lex */
 #if defined(FLEX_SCANNER)
 
+#define YY_NEVER_INTERACTIVE 1
 #define YY_NO_UNPUT
 static int myinput(char* buf, int max);
 #undef YY_INPUT
