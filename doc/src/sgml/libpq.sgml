@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.152 2004/04/24 00:14:28 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.153 2004/04/24 22:53:44 neilc Exp $
 -->
 
  <chapter id="libpq">
@@ -1941,14 +1941,19 @@ char *PQcmdTuples(PGresult *res);
 </para>
 
 <para>
-          If the <acronym>SQL</acronym> command that generated the
-          <structname>PGresult</structname> was <command>INSERT</>,
-          <command>UPDATE</>, <command>DELETE</command>, <command>MOVE</>,
-          or <command>FETCH</>, this returns a
-          string containing the number of rows affected.  If the
-          command was anything else, it returns the empty string. The
-          caller should not free the result directly. It will be freed 
-          when the associated <structname>PGresult</> handle is passed to
+          This function returns a string containing the number of rows
+          affected by the <acronym>SQL</> statement that generated the
+          <structname>PGresult</>. This function can only be used
+          following the execution of an <command>INSERT</>,
+          <command>UPDATE</>, <command>DELETE</>, <command>MOVE</>, or
+          <command>FETCH</> statement, or an <command>EXECUTE</> of a
+          prepared query that contains a <command>INSERT</>,
+          <command>UPDATE</>, or <command>DELETE</> statement.  If the
+          command that generated the <structname>PGresult</> was
+          anything else, <function>PQcmdTuples</> returns the empty
+          string. The caller should not free the return value
+          directly. It will be freed when the associated
+          <structname>PGresult</> handle is passed to
           <function>PQclear</function>.
 </para>
 </listitem>
@@ -1959,11 +1964,14 @@ char *PQcmdTuples(PGresult *res);
 <listitem>
 <para>
           Returns the OID<indexterm><primary>OID</><secondary>in
-          libpq</></> of the inserted row, if the
-          <acronym>SQL</acronym> command was an
-          <command>INSERT</command> that inserted exactly one row into
-          a table that has OIDs.  Otherwise, returns
-          <literal>InvalidOid</literal>.
+          libpq</></> of the inserted row, if the <acronym>SQL</>
+          command was an <command>INSERT</> that inserted exactly one
+          row into a table that has OIDs, or a <command>EXECUTE</> of
+          a prepared query containing a suitable <command>INSERT</>
+          statement.  Otherwise, this function returns
+          <literal>InvalidOid</literal>. This function will also
+          return <literal>InvalidOid</literal> if the table affected
+          by the <command>INSERT</> statement does not contain OIDs.
 <synopsis>
 Oid PQoidValue(const PGresult *res);
 </synopsis>
@@ -1977,7 +1985,9 @@ Oid PQoidValue(const PGresult *res);
 <para>
           Returns a string with the OID of the inserted row, if the
           <acronym>SQL</acronym> command was an
-          <command>INSERT</command>.  (The string will be
+          <command>INSERT</command> that inserted exactly one row, or
+          a <command>EXECUTE</command> of a prepared statement
+          consisting of a suitable <command>INSERT</command>.  (The string will be
           <literal>0</> if the <command>INSERT</command> did not
           insert exactly one row, or if the target table does not have
           OIDs.)  If the command was not an <command>INSERT</command>,
