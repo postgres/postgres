@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: cost.h,v 1.22 1999/07/24 23:21:05 tgl Exp $
+ * $Id: cost.h,v 1.23 1999/08/06 04:00:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,6 @@
 extern bool _enable_seqscan_;
 extern bool _enable_indexscan_;
 extern bool _enable_sort_;
-extern bool _enable_hash_;
 extern bool _enable_nestloop_;
 extern bool _enable_mergejoin_;
 extern bool _enable_hashjoin_;
@@ -43,9 +42,10 @@ extern Cost cost_nestloop(Cost outercost, Cost innercost, int outertuples,
 extern Cost cost_mergejoin(Cost outercost, Cost innercost,
 			   List *outersortkeys, List *innersortkeys,
 		   int outersize, int innersize, int outerwidth, int innerwidth);
-extern Cost cost_hashjoin(Cost outercost, Cost innercost, List *outerkeys,
-			  List *innerkeys, int outersize, int innersize,
-			  int outerwidth, int innerwidth);
+extern Cost cost_hashjoin(Cost outercost, Cost innercost,
+						  int outersize, int innersize,
+						  int outerwidth, int innerwidth,
+						  Cost innerdisbursion);
 extern int	compute_rel_size(RelOptInfo *rel);
 extern int	compute_rel_width(RelOptInfo *rel);
 extern int	compute_joinrel_size(JoinPath *joinpath);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pathnode.h,v 1.19 1999/07/30 04:07:22 tgl Exp $
+ * $Id: pathnode.h,v 1.20 1999/08/06 04:00:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,9 +33,9 @@ extern MergePath *create_mergejoin_path(RelOptInfo *joinrel, int outersize,
 		   List *mergeclauses, List *outersortkeys, List *innersortkeys);
 
 extern HashPath *create_hashjoin_path(RelOptInfo *joinrel, int outersize,
-		 int innersize, int outerwidth, int innerwidth, Path *outer_path,
-	   Path *inner_path, List *pathkeys, Oid operator, List *hashclauses,
-					 List *outerkeys, List *innerkeys);
+		int innersize, int outerwidth, int innerwidth, Path *outer_path,
+		Path *inner_path, List *pathkeys, Oid operator, List *hashclauses,
+		List *outerkeys, List *innerkeys, Cost innerdisbursion);
 
 /*
  * prototypes for rel.c

@@ -3,11 +3,22 @@
  * costsize.c
  *	  Routines to compute (and set) relation sizes and path costs
  *
+ * Path costs are measured in units of disk accesses: one page fetch
+ * has cost 1.  The other primitive unit is the CPU time required to
+ * process one tuple, which we set at "_cpu_page_weight_" of a page
+ * fetch.  Obviously, the CPU time per tuple depends on the query
+ * involved, but the relative CPU and disk speeds of a given platform
+ * are so variable that we are lucky if we can get useful numbers
+ * at all.  _cpu_page_weight_ is user-settable, in case a particular
+ * user is clueful enough to have a better-than-default estimate
+ * of the ratio for his platform.  There is also _cpu_index_page_weight_,
+ * the cost to process a tuple of an index during an index scan.
+ *
+ * 
  * Copyright (c) 1994, Regents of the University of California
  *
- *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.43 1999/07/16 04:59:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.44 1999/08/06 04:00:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +26,7 @@
 #include <math.h>
 
 #include "postgres.h"
+
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #ifndef MAXINT
@@ -26,25 +38,24 @@
 #endif
 #endif
 
-
+#include "miscadmin.h"
 #include "optimizer/cost.h"
 #include "optimizer/internal.h"
 #include "optimizer/tlist.h"
 #include "utils/lsyscache.h"
 
-extern int	NBuffers;
 
+static int	compute_targetlist_width(List *targetlist);
 static int	compute_attribute_width(TargetEntry *tlistentry);
 static double relation_byte_size(int tuples, int width);
 static double base_log(double x, double b);
-static int	compute_targetlist_width(List *targetlist);
+
 
 int			_disable_cost_ = 30000000;
 
 bool		_enable_seqscan_ = true;
 bool		_enable_indexscan_ = true;
 bool		_enable_sort_ = true;
-bool		_enable_hash_ = true;
 bool		_enable_nestloop_ = true;
 bool		_enable_mergejoin_ = true;
 bool		_enable_hashjoin_ = true;
@@ -316,43 +327,34 @@ cost_mergejoin(Cost outercost,
 }
 
 /*
- * cost_hashjoin--				XXX HASH
+ * cost_hashjoin
+ *
  *	  'outercost' and 'innercost' are the (disk+cpu) costs of scanning the
  *				outer and inner relations
- *	  'outerkeys' and 'innerkeys' are lists of the keys to be used
- *				to hash the outer and inner relations
  *	  'outersize' and 'innersize' are the number of tuples in the outer
  *				and inner relations
  *	  'outerwidth' and 'innerwidth' are the (typical) widths (in bytes)
  *				of the tuples of the outer and inner relations
+ *	  'innerdisbursion' is an estimate of the disbursion statistic
+ *				for the inner hash key.
  *
  * Returns a flonum.
  */
 Cost
 cost_hashjoin(Cost outercost,
 			  Cost innercost,
-			  List *outerkeys,
-			  List *innerkeys,
 			  int outersize,
 			  int innersize,
 			  int outerwidth,
-			  int innerwidth)
+			  int innerwidth,
+			  Cost innerdisbursion)
 {
 	Cost		temp = 0;
-	int			outerpages = page_size(outersize, outerwidth);
-	int			innerpages = page_size(innersize, innerwidth);
+	double		outerbytes = relation_byte_size(outersize, outerwidth);
+	double		innerbytes = relation_byte_size(innersize, innerwidth);
+	long		hashtablebytes = SortMem * 1024L;
 
 	if (!_enable_hashjoin_)
-		temp += _disable_cost_;
-
-	/*
-	 * Bias against putting larger relation on inside.
-	 *
-	 * Code used to use "outerpages < innerpages" but that has poor
-	 * resolution when both relations are small.
-	 */
-	if (relation_byte_size(outersize, outerwidth) <
-		relation_byte_size(innersize, innerwidth))
 		temp += _disable_cost_;
 
 	/* cost of source data */
@@ -361,16 +363,32 @@ cost_hashjoin(Cost outercost,
 	/* cost of computing hash function: must do it once per tuple */
 	temp += _cpu_page_weight_ * (outersize + innersize);
 
-	/* cost of main-memory hashtable */
-	temp += (innerpages < NBuffers) ? innerpages : NBuffers;
+	/* the number of tuple comparisons needed is the number of outer
+	 * tuples times the typical hash bucket size, which we estimate
+	 * conservatively as the inner disbursion times the inner tuple
+	 * count.  The cost per comparison is set at _cpu_index_page_weight_;
+	 * is that reasonable, or do we need another basic parameter?
+	 */
+	temp += _cpu_index_page_weight_ * outersize *
+		(innersize * innerdisbursion);
 
 	/*
 	 * if inner relation is too big then we will need to "batch" the join,
 	 * which implies writing and reading most of the tuples to disk an
-	 * extra time.
+	 * extra time.  Charge one cost unit per page of I/O.
 	 */
-	if (innerpages > NBuffers)
-		temp += 2 * (outerpages + innerpages);
+	if (innerbytes > hashtablebytes)
+		temp += 2 * (page_size(outersize, outerwidth) +
+					 page_size(innersize, innerwidth));
+
+	/*
+	 * Bias against putting larger relation on inside.  We don't want
+	 * an absolute prohibition, though, since larger relation might have
+	 * better disbursion --- and we can't trust the size estimates
+	 * unreservedly, anyway.
+	 */
+	if (innerbytes > outerbytes)
+		temp *= 1.1;			/* is this an OK fudge factor? */
 
 	Assert(temp >= 0);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.42 1999/07/27 06:23:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.43 1999/08/06 04:00:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,11 +16,14 @@
 
 #include "postgres.h"
 
-
-
+#include "access/htup.h"
+#include "catalog/pg_attribute.h"
+#include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
+#include "parser/parsetree.h"
+#include "utils/syscache.h"
 
 static Path *best_innerjoin(List *join_paths, List *outer_relid);
 static List *sort_inner_and_outer(RelOptInfo *joinrel, RelOptInfo *outerrel, RelOptInfo *innerrel,
@@ -30,8 +33,9 @@ static List *match_unsorted_outer(RelOptInfo *joinrel, RelOptInfo *outerrel, Rel
 					 List *mergeinfo_list);
 static List *match_unsorted_inner(RelOptInfo *joinrel, RelOptInfo *outerrel, RelOptInfo *innerrel,
 					 List *innerpath_list, List *mergeinfo_list);
-static List *hash_inner_and_outer(RelOptInfo *joinrel, RelOptInfo *outerrel, RelOptInfo *innerrel,
-					 List *hashinfo_list);
+static List *hash_inner_and_outer(Query *root, RelOptInfo *joinrel,
+								  RelOptInfo *outerrel, RelOptInfo *innerrel);
+static Cost estimate_disbursion(Query *root, Var *var);
 
 /*
  * update_rels_pathlist_for_joins
@@ -46,7 +50,7 @@ static List *hash_inner_and_outer(RelOptInfo *joinrel, RelOptInfo *outerrel, Rel
  *
  * 'joinrels' is the list of relation entries to be joined
  *
- * Modifies the pathlist field of the appropriate rel node to contain
+ * Modifies the pathlist field of each joinrel node to contain
  * the unique join paths.
  * If bushy trees are considered, may modify the relid field of the
  * join rel nodes to flatten the lists.
@@ -56,8 +60,6 @@ static List *hash_inner_and_outer(RelOptInfo *joinrel, RelOptInfo *outerrel, Rel
 void
 update_rels_pathlist_for_joins(Query *root, List *joinrels)
 {
-	List	   *mergeinfo_list = NIL;
-	List	   *hashinfo_list = NIL;
 	List	   *j;
 
 	foreach(j, joinrels)
@@ -69,13 +71,23 @@ update_rels_pathlist_for_joins(Query *root, List *joinrels)
 		RelOptInfo *outerrel;
 		Path	   *bestinnerjoin;
 		List	   *pathlist = NIL;
+		List	   *mergeinfo_list = NIL;
 
-		/* flatten out relids later in this function */
+		/*
+		 * On entry, joinrel->relids is a list of two sublists of relids,
+		 * namely the outer and inner member relids.  Extract these sublists
+		 * and change joinrel->relids to a flattened single list.
+		 * (Use listCopy so as not to damage the member lists...)
+		 */
 		outerrelids = lfirst(joinrel->relids);
 		innerrelids = lsecond(joinrel->relids);
 
+		joinrel->relids = nconc(listCopy(outerrelids),
+								listCopy(innerrelids));
+
 		/*
-		 * base relation id is an integer and join relation relid is a
+		 * Get the corresponding RelOptInfos for the outer and inner sides.
+		 * Base relation id is an integer and join relation relid is a
 		 * list of integers.
 		 */
 		innerrel = (length(innerrelids) == 1) ?
@@ -85,19 +97,14 @@ update_rels_pathlist_for_joins(Query *root, List *joinrels)
 			get_base_rel(root, lfirsti(outerrelids)) :
 			get_join_rel(root, outerrelids);
 
+		/*
+		 * Get the best inner join for match_unsorted_outer.
+		 */
 		bestinnerjoin = best_innerjoin(innerrel->innerjoin, outerrel->relids);
 
 		if (_enable_mergejoin_)
 			mergeinfo_list = group_clauses_by_order(joinrel->restrictinfo,
 													innerrel->relids);
-
-		if (_enable_hashjoin_)
-			hashinfo_list = group_clauses_by_hashop(joinrel->restrictinfo,
-													innerrel->relids);
-
-		/* need to flatten the relids list */
-		joinrel->relids = nconc(listCopy(outerrelids),
-								listCopy(innerrelids));
 
 		/*
 		 * 1. Consider mergejoin paths where both relations must be
@@ -136,10 +143,13 @@ update_rels_pathlist_for_joins(Query *root, List *joinrels)
 		 * 4. Consider paths where both outer and inner relations must be
 		 * hashed before being joined.
 		 */
-		pathlist = add_pathlist(joinrel, pathlist,
-								hash_inner_and_outer(joinrel, outerrel,
-											   innerrel, hashinfo_list));
+		if (_enable_hashjoin_)
+			pathlist = add_pathlist(joinrel, pathlist,
+									hash_inner_and_outer(root, joinrel,
+														 outerrel,
+														 innerrel));
 
+		/* Save the completed pathlist in the join rel */
 		joinrel->pathlist = pathlist;
 	}
 }
@@ -488,70 +498,124 @@ match_unsorted_inner(RelOptInfo *joinrel,
 }
 
 /*
- * hash_inner_and_outer--				XXX HASH
+ * hash_inner_and_outer
  *	  Create hashjoin join paths by explicitly hashing both the outer and
- *	  inner join relations on each available hash op.
+ *	  inner join relations of each available hash clause.
  *
  * 'joinrel' is the join relation
  * 'outerrel' is the outer join relation
  * 'innerrel' is the inner join relation
- * 'hashinfo_list' is a list of nodes containing info on(hashjoinable)
- *		clauses for joining the relations
  *
  * Returns a list of hashjoin paths.
  */
 static List *
-hash_inner_and_outer(RelOptInfo *joinrel,
+hash_inner_and_outer(Query *root,
+					 RelOptInfo *joinrel,
 					 RelOptInfo *outerrel,
-					 RelOptInfo *innerrel,
-					 List *hashinfo_list)
+					 RelOptInfo *innerrel)
 {
-	List	   *hjoin_list = NIL;
+	List	   *hpath_list = NIL;
 	List	   *i;
 
-	foreach(i, hashinfo_list)
+	foreach(i, joinrel->restrictinfo)
 	{
-		HashInfo   *xhashinfo = (HashInfo *) lfirst(i);
-		List	   *outerkeys;
-		List	   *innerkeys;
-		List	   *hash_pathkeys;
-		HashPath   *temp_node;
+		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(i);
+		Oid			hashjoinop = restrictinfo->hashjoinoperator;
 
-		outerkeys = make_pathkeys_from_joinkeys(
-									  ((JoinMethod *) xhashinfo)->jmkeys,
-												outerrel->targetlist,
-												OUTER);
-		innerkeys = make_pathkeys_from_joinkeys(
-									  ((JoinMethod *) xhashinfo)->jmkeys,
-												innerrel->targetlist,
-												INNER);
+		/* we consider only clauses previously marked hashjoinable */
+		if (hashjoinop)
+		{
+			Expr	   *clause = restrictinfo->clause;
+			Var		   *leftop = get_leftop(clause);
+			Var		   *rightop = get_rightop(clause);
+			JoinKey    *joinkey = makeNode(JoinKey);
+			List	   *joinkey_list;
+			List	   *outerkeys;
+			List	   *innerkeys;
+			Cost		innerdisbursion;
+			List	   *hash_pathkeys;
+			HashPath   *hash_path;
 
-		/*
-		 * We cannot assume that the output of the hashjoin appears in any
-		 * particular order, so it should have NIL pathkeys.
-		 */
-#ifdef NOT_USED
-		hash_pathkeys = new_join_pathkeys(outerkeys,
-										  joinrel->targetlist,
-									((JoinMethod *) xhashinfo)->clauses);
-#else
-		hash_pathkeys = NIL;
-#endif
+			/* construct joinkey and pathkeys for this clause */
+			if (intMember(leftop->varno, innerrel->relids))
+			{
+				joinkey->outer = rightop;
+				joinkey->inner = leftop;
+			}
+			else
+			{
+				joinkey->outer = leftop;
+				joinkey->inner = rightop;
+			}
+			joinkey_list = lcons(joinkey, NIL);
 
-		temp_node = create_hashjoin_path(joinrel,
-										 outerrel->size,
-										 innerrel->size,
-										 outerrel->width,
-										 innerrel->width,
-										 (Path *) outerrel->cheapestpath,
-										 (Path *) innerrel->cheapestpath,
-										 hash_pathkeys,
-										 xhashinfo->hashop,
-									 ((JoinMethod *) xhashinfo)->clauses,
-										 outerkeys,
-										 innerkeys);
-		hjoin_list = lappend(hjoin_list, temp_node);
+			outerkeys = make_pathkeys_from_joinkeys(joinkey_list,
+													outerrel->targetlist,
+													OUTER);
+			innerkeys = make_pathkeys_from_joinkeys(joinkey_list,
+													innerrel->targetlist,
+													INNER);
+
+			innerdisbursion = estimate_disbursion(root, joinkey->inner);
+
+			/*
+			 * We cannot assume that the output of the hashjoin appears in
+			 * any particular order, so it should have NIL pathkeys.
+			 */
+			hash_pathkeys = NIL;
+
+			hash_path = create_hashjoin_path(joinrel,
+											 outerrel->size,
+											 innerrel->size,
+											 outerrel->width,
+											 innerrel->width,
+											 (Path *) outerrel->cheapestpath,
+											 (Path *) innerrel->cheapestpath,
+											 hash_pathkeys,
+											 hashjoinop,
+											 lcons(clause, NIL),
+											 outerkeys,
+											 innerkeys,
+											 innerdisbursion);
+			hpath_list = lappend(hpath_list, hash_path);
+		}
 	}
 
-	return hjoin_list;
+	return hpath_list;
+}
+
+/*
+ * Estimate disbursion of the specified Var
+ *	  Generate some kind of estimate, no matter what...
+ *
+ * We use a default of 0.1 if we can't figure out anything better.
+ * This will typically discourage use of a hash rather strongly,
+ * if the inner relation is large.  We do not want to hash unless
+ * we know that the inner rel is well-dispersed (or the alternatives
+ * seem much worse).
+ */
+static Cost
+estimate_disbursion(Query *root, Var *var)
+{
+	Oid			relid;
+	HeapTuple	atp;
+	double		disbursion;
+
+	if (! IsA(var, Var))
+		return 0.1;
+
+	relid = getrelid(var->varno, root->rtable);
+
+	atp = SearchSysCacheTuple(ATTNUM,
+							  ObjectIdGetDatum(relid),
+							  Int16GetDatum(var->varattno),
+							  0, 0);
+	if (! HeapTupleIsValid(atp))
+		return 0.1;
+
+	disbursion = ((Form_pg_attribute) GETSTRUCT(atp))->attdisbursion;
+	if (disbursion > 0.0)
+		return disbursion;
+
+	return 0.1;
 }

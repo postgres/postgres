@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.52 1999/07/30 22:34:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.53 1999/08/06 04:00:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -550,7 +550,7 @@ create_mergejoin_path(RelOptInfo *joinrel,
 }
 
 /*
- * create_hashjoin_path--						XXX HASH
+ * create_hashjoin_path
  *	  Creates a pathnode corresponding to a hash join between two relations.
  *
  * 'joinrel' is the join relation
@@ -558,13 +558,14 @@ create_mergejoin_path(RelOptInfo *joinrel,
  * 'innersize' is the number of tuples in the inner relation
  * 'outerwidth' is the number of bytes per tuple in the outer relation
  * 'innerwidth' is the number of bytes per tuple in the inner relation
- * 'outer_path' is the outer path
- * 'inner_path' is the inner path
- * 'pathkeys' are the new keys of the join relation
+ * 'outer_path' is the cheapest outer path
+ * 'inner_path' is the cheapest inner path
+ * 'pathkeys' are the path keys of the new join path
  * 'operator' is the hashjoin operator
- * 'hashclauses' are the applicable join/restriction clauses
+ * 'hashclauses' is a list of the hash join clause (always a 1-element list)
  * 'outerkeys' are the sort varkeys for the outer relation
  * 'innerkeys' are the sort varkeys for the inner relation
+ * 'innerdisbursion' is an estimate of the disbursion of the inner hash key
  *
  */
 HashPath   *
@@ -579,7 +580,8 @@ create_hashjoin_path(RelOptInfo *joinrel,
 					 Oid operator,
 					 List *hashclauses,
 					 List *outerkeys,
-					 List *innerkeys)
+					 List *innerkeys,
+					 Cost innerdisbursion)
 {
 	HashPath   *pathnode = makeNode(HashPath);
 
@@ -600,10 +602,9 @@ create_hashjoin_path(RelOptInfo *joinrel,
 	pathnode->innerhashkeys = innerkeys;
 	pathnode->jpath.path.path_cost = cost_hashjoin(outer_path->path_cost,
 												   inner_path->path_cost,
-												   outerkeys,
-												   innerkeys,
 												   outersize, innersize,
-												 outerwidth, innerwidth);
+												   outerwidth, innerwidth,
+												   innerdisbursion);
 
 	return pathnode;
 }
