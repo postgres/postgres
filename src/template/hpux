@@ -5,7 +5,13 @@ if test "$GCC" != yes ; then
   CFLAGS="+O2"
 fi
 
-# Pick right test-and-set (TAS) code.
+# Pick right test-and-set (TAS) code.  We need out-of-line assembler
+# when not using gcc.
 case $host in
-  hppa*-*-hpux*)        need_tas=yes; tas_file=hpux_hppa.s ;;
+  hppa*-*-hpux*)
+	if test "$GCC" != yes ; then
+		need_tas=yes
+		tas_file=hpux_hppa.s
+	fi
+    ;;
 esac

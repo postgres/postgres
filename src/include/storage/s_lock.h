@@ -63,7 +63,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.122 2003/12/23 18:13:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.123 2003/12/23 22:15:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -497,9 +497,12 @@ typedef unsigned long slock_t;
 /*
  * HP's PA-RISC
  *
- * a "set" slock_t has a single word cleared (the one that is on a 16-byte
- * boundary; we use a 16-byte struct to ensure there is one).  a "clear"
- * slock_t has all words set to non-zero. tas() is in tas.s
+ * See src/backend/port/hpux/tas.c.template for details about LDCWX.  Because
+ * LDCWX requires a 16-byte-aligned address, we declare slock_t as a 16-byte
+ * struct.  The active word in the struct is whichever has the aligned address;
+ * the other three words just sit at -1.
+ *
+ * When using gcc, we can inline the required assembly code.
  */
 #define HAS_TEST_AND_SET
 
@@ -508,16 +511,37 @@ typedef struct
 	int			sema[4];
 } slock_t;
 
-#define S_UNLOCK(lock) \
+#define TAS_ACTIVE_WORD(lock)	((volatile int *) (((long) (lock) + 15) & ~15))
+
+#if defined(__GNUC__)
+
+static __inline__ int
+tas(volatile slock_t *lock)
+{
+	volatile int *lockword = TAS_ACTIVE_WORD(lock);
+	register int lockval;
+
+	__asm__ __volatile__(
+		"	ldcwx	0(0,%2),%0	\n"
+:		"=r"(lockval), "=m"(*lockword)
+:		"r"(lockword));
+	return (lockval == 0);
+}
+
+#endif /* __GNUC__ */
+
+#define S_UNLOCK(lock)	(*TAS_ACTIVE_WORD(lock) = -1)
+
+#define S_INIT_LOCK(lock) \
 	do { \
-		volatile slock_t *lock_ = (volatile slock_t *) (lock); \
+		volatile slock_t *lock_ = (lock); \
 		lock_->sema[0] = -1; \
 		lock_->sema[1] = -1; \
 		lock_->sema[2] = -1; \
 		lock_->sema[3] = -1; \
 	} while (0)
 
-#define S_LOCK_FREE(lock)	( *(int *) (((long) (lock) + 15) & ~15) != 0)
+#define S_LOCK_FREE(lock)	(*TAS_ACTIVE_WORD(lock) != 0)
 
 #endif	 /* __hppa */
 
