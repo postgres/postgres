@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Jan 16 02:04:18 EST 2000
+Last updated:		Sun Jan 16 21:41:53 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -19,7 +19,7 @@ RELIABILITY
 RESOURCES
 
 * -Elog() does not free all its memory
-* spinlock stuck problem when elog(FATAL) and elog(ERROR) inside bufmgr
+* -spinlock stuck problem when elog(FATAL) and elog(ERROR) inside bufmgr
 * -Recover or force failure when disk space is exhausted(Hiroshi)
 
 PARSER
