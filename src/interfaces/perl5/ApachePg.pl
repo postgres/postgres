@@ -2,11 +2,11 @@
 
 # demo script, has been tested with:
 #  - Postgres-6.1
-#  - apache_1.2b8
-#  - mod_perl-0.97
-#  - perl5.003_93
+#  - apache_1.2
+#  - mod_perl-1.0
+#  - perl5.004
 
-use CGI::Apache;
+use CGI;
 use Pg;
 use strict;
 

@@ -51,7 +51,7 @@ Revision history for Perl extension Pg.
         - changed test.pl for large objects:
           test only lo_import and lo_export
 
-1.6.0  Apr 29, 1997
+1.6.1  Jun 02 1997
 	- renamed to pgsql_perl5
 	- adapted to PostgreSQL-6.1
 	- test only functions, which are also

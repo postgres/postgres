@@ -1,6 +1,6 @@
 #-------------------------------------------------------
 #
-# $Id: test.pl.oldstyle,v 1.1.1.1 1997/04/29 19:37:10 mergl Exp $
+# $Id: test.pl.oldstyle,v 1.2 1997/06/02 19:42:13 mergl Exp $
 #
 # Copyright (c) 1997  Edmund Mergl
 #
@@ -68,6 +68,7 @@ $| = 1;
 #	PQtty()
 #	PQgetlength()
 #	PQgetisnull()
+#	PQdisplayTuples()
 #	PQprintTuples()
 #	PQlo_open()
 #	PQlo_close()

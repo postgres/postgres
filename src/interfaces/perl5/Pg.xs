@@ -1,6 +1,6 @@
 /*-------------------------------------------------------
  *
- * $Id: Pg.xs,v 1.1.1.1 1997/04/29 19:37:10 mergl Exp $
+ * $Id: Pg.xs,v 1.2 1997/06/02 19:42:03 mergl Exp $
  *
  * Copyright (c) 1997  Edmund Mergl
  *
@@ -422,6 +422,18 @@ PQgetisnull(res, tup_num, field_num)
 void
 PQclear(res)
 	PGresult *	res
+
+
+void
+PQdisplayTuples(res, fp, fillAlign, fieldSep, printHeader, quiet)
+	PGresult *	res
+	FILE *	fp
+	int	fillAlign
+	char *	fieldSep
+	int	printHeader
+	int	quiet
+	CODE:
+		PQdisplayTuples(res, fp, fillAlign, (const char *)fieldSep, printHeader, quiet);
 
 
 void
@@ -902,6 +914,18 @@ PQgetisnull(res, tup_num, field_num)
 	PG_result	res
 	int	tup_num
 	int	field_num
+
+
+void
+PQdisplayTuples(res, fp, fillAlign, fieldSep, printHeader, quiet)
+	PGresult *	res
+	FILE *	fp
+	int	fillAlign
+	char *	fieldSep
+	int	printHeader
+	int	quiet
+	CODE:
+		PQdisplayTuples(res, fp, fillAlign, (const char *)fieldSep, printHeader, quiet);
 
 
 void

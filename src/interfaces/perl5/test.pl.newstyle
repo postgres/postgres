@@ -1,6 +1,6 @@
 #-------------------------------------------------------
 #
-# $Id: test.pl.newstyle,v 1.1.1.1 1997/04/29 19:37:10 mergl Exp $
+# $Id: test.pl.newstyle,v 1.2 1997/06/02 19:42:11 mergl Exp $
 #
 # Copyright (c) 1997  Edmund Mergl
 #
@@ -68,6 +68,7 @@ $| = 1;
 #	tty
 #	getlength
 #	getisnull
+#	displayTuples
 #	printTuples
 #	lo_open
 #	lo_close

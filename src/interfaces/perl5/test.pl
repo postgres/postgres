@@ -1,6 +1,6 @@
 #-------------------------------------------------------
 #
-# $Id: test.pl,v 1.1.1.1 1997/04/29 19:37:10 mergl Exp $
+# $Id: test.pl,v 1.2 1997/06/02 19:42:07 mergl Exp $
 #
 # Copyright (c) 1997  Edmund Mergl
 #
@@ -65,6 +65,7 @@ $| = 1;
 #	getisnull
 #	print
 #	notifies
+#	displayTuples
 #	printTuples
 #	lo_import
 #	lo_export

@@ -1,6 +1,6 @@
 #-------------------------------------------------------
 #
-# $Id: README,v 1.1.1.1 1997/04/29 19:37:10 mergl Exp $
+# $Id: README,v 1.2 1997/06/02 19:42:05 mergl Exp $
 #
 # Copyright (c) 1997  Edmund Mergl
 #
@@ -25,13 +25,17 @@ programmers.
 
 
 
-COPYRIGHT INFO
---------------
+COPYRIGHT:
+----------
 
-This Postgres-Perl interface is copyright 1996, 1997 Edmund Mergl. You are 
-free to use it for any purpose, commercial or noncommercial, provided 
-that if you redistribute the source code, this statement of copyright 
-remains attached.
+This program is free software; you can redistribute it and/or modify
+it under the terms of either:
+
+        a) the GNU General Public License as published by the Free
+           Software Foundation; or
+
+        b) the "Artistic License", as specified in the Perl README file.
+
 
 
 IF YOU HAVE PROBLEMS:
@@ -98,8 +102,15 @@ If you have compile errors like "XS_VERSION_BOOTCHECK undeclared", make a
 If this file is not present, you need to recompile and reinstall perl.
 
 
+DOCUMENTATION:
+--------------
+
+Detailed documentation can be found in Pg.pm. Use 'perldoc Pg' after 
+installation to read the documentation. 
+
+
 ---------------------------------------------------------------------------
 
-   Edmund Mergl <E.Mergl@bawue.de>                       April 29, 1997
+   Edmund Mergl <E.Mergl@bawue.de>                       June 02, 1997
 
 ---------------------------------------------------------------------------
