@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.85 1998/09/01 04:30:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.86 1998/09/03 14:21:06 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,8 +269,8 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		int			ndef = pstate->p_target_relation->rd_att->constr->num_defval;
 
 		/*
-		 * if stmt->cols == NIL then makeTargetNames returns list of all
-		 * attrs: have to shorter icolumns list...
+		 * if stmt->cols == NIL then makeTargetNames returns list of all attrs.
+		 * May have to shorten icolumns list...
 		 */
 		if (stmt->cols == NIL)
 		{
@@ -279,11 +279,26 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 
 			foreach(extrl, icolumns)
 			{
+				/*
+				 * decrements first, so if we started with zero items
+				 * it will now be negative
+				 */
 				if (--i <= 0)
 					break;
 			}
-			freeList(lnext(extrl));
-			lnext(extrl) = NIL;
+			/*
+			 * this an index into the targetList,
+			 * so make sure we had one to start...
+			 */
+			if (i >= 0)
+			{
+				freeList(lnext(extrl));
+				lnext(extrl) = NIL;
+			}
+			else
+			{
+				icolumns = NIL;
+			}
 		}
 
 		while (ndef-- > 0)
@@ -295,7 +310,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 			foreach(tl, icolumns)
 			{
 				id = (Ident *) lfirst(tl);
-				if (!namestrcmp(&(att[defval[ndef].adnum - 1]->attname), id->name))
+				if (namestrcmp(&(att[defval[ndef].adnum - 1]->attname), id->name) == 0)
 					break;
 			}
 			if (tl != NIL)		/* something given for this attr */
