@@ -280,7 +280,8 @@ mkdir man.1sql
 cd /usr/local/pgsql/man/manl
 for i in *.l
 do
-	sed -e '/^\.TH/s/"l"/"1sql"/' $i >../man.1sql/${i%.l}.1sql
+	sed -e '/^\.TH/s/"l"/"1sql"/'	\
+		-e 's/\\fR(l)/\\fR(1sql)/' $i >../man.1sql/${i%.l}.1sql
 done
 cd /usr/local/pgsql/man
 rm -rf manl
