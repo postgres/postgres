@@ -731,12 +731,12 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %nonassoc	LIKE
 %nonassoc	BETWEEN
 %nonassoc	IN
-%nonassoc	Op				/* multi-character ops and user-defined operators */
+%left		Op				/* multi-character ops and user-defined operators */
 %nonassoc	NOTNULL
 %nonassoc	ISNULL
 %nonassoc	IS
 %left		'+' '-'
-%left		'*' '/'
+%left		'*' '/' '%'
 %left		'|'				/* this is the relation union op, not logical or */
 /* Unary Operators */
 %right		':'
@@ -1420,6 +1420,8 @@ default_expr:  AexprConst
 				{	$$ = cat3_str($1, make1_str("-"), $3); }
 			| default_expr '/' default_expr
 				{	$$ = cat3_str($1, make1_str("/"), $3); }
+			| default_expr '%' default_expr
+				{	$$ = cat3_str($1, make1_str("%"), $3); }
 			| default_expr '*' default_expr
 				{	$$ = cat3_str($1, make1_str("*"), $3); }
 			| default_expr '=' default_expr
@@ -1540,6 +1542,8 @@ constraint_expr:  AexprConst
 				{	$$ = cat3_str($1, make1_str("-"), $3); }
 			| constraint_expr '/' constraint_expr
 				{	$$ = cat3_str($1, make1_str("/"), $3); }
+			| constraint_expr '%' constraint_expr
+				{	$$ = cat3_str($1, make1_str("%"), $3); }
 			| constraint_expr '*' constraint_expr
 				{	$$ = cat3_str($1, make1_str("*"), $3); }
 			| constraint_expr '=' constraint_expr
@@ -2260,6 +2264,7 @@ all_Op:  Op | MathOp;
 MathOp:	'+'				{ $$ = make1_str("+"); }
 		| '-'			{ $$ = make1_str("-"); }
 		| '*'			{ $$ = make1_str("*"); }
+		| '%'			{ $$ = make1_str("%"); }
 		| '/'			{ $$ = make1_str("/"); }
 		| '<'			{ $$ = make1_str("<"); }
 		| '>'			{ $$ = make1_str(">"); }
@@ -3524,6 +3529,7 @@ row_op:  Op			{ $$ = $1; }
         | '+'                   { $$ = "+"; }
         | '-'                   { $$ = "-"; }
         | '*'                   { $$ = "*"; }
+        | '%'                   { $$ = "%"; }
         | '/'                   { $$ = "/"; }
               ;
 
@@ -3571,6 +3577,8 @@ a_expr:  attr opt_indirection
 				{	$$ = cat3_str($1, make1_str("-"), $3); }
 		| a_expr '/' a_expr
 				{	$$ = cat3_str($1, make1_str("/"), $3); }
+		| a_expr '%' a_expr
+				{	$$ = cat3_str($1, make1_str("%"), $3); }
 		| a_expr '*' a_expr
 				{	$$ = cat3_str($1, make1_str("*"), $3); }
 		| a_expr '<' a_expr
@@ -3747,6 +3755,10 @@ a_expr:  attr opt_indirection
 				{
 					$$ = make4_str($1, make1_str("/("), $4, make1_str(")")); 
 				}
+		| a_expr '%' '(' SubSelect ')'
+				{
+					$$ = make4_str($1, make1_str("%("), $4, make1_str(")")); 
+				}
 		| a_expr '*' '(' SubSelect ')'
 				{
 					$$ = make4_str($1, make1_str("*("), $4, make1_str(")")); 
@@ -3769,31 +3781,35 @@ a_expr:  attr opt_indirection
 				}
 		| a_expr '+' ANY '(' SubSelect ')'
 				{
-					$$ = make4_str($1, make1_str("+any("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str("+ any("), $5, make1_str(")")); 
 				}
 		| a_expr '-' ANY '(' SubSelect ')'
 				{
-					$$ = make4_str($1, make1_str("-any("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str("- any("), $5, make1_str(")")); 
 				}
 		| a_expr '/' ANY '(' SubSelect ')'
 				{
-					$$ = make4_str($1, make1_str("/any("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str("/ any("), $5, make1_str(")")); 
+				}
+		| a_expr '%' ANY '(' SubSelect ')'
+				{
+					$$ = make4_str($1, make1_str("% any("), $5, make1_str(")")); 
 				}
 		| a_expr '*' ANY '(' SubSelect ')'
 				{
-					$$ = make4_str($1, make1_str("*any("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str("* any("), $5, make1_str(")")); 
 				}
 		| a_expr '<' ANY '(' SubSelect ')'
 				{
-					$$ = make4_str($1, make1_str("<any("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str("< any("), $5, make1_str(")")); 
 				}
 		| a_expr '>' ANY '(' SubSelect ')'
 				{
-					$$ = make4_str($1, make1_str(">any("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str("> any("), $5, make1_str(")")); 
 				}
 		| a_expr '=' ANY '(' SubSelect ')'
 				{
-					$$ = make4_str($1, make1_str("=any("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str("= any("), $5, make1_str(")")); 
 				}
 		| a_expr Op ALL '(' SubSelect ')'
 				{
@@ -3801,31 +3817,35 @@ a_expr:  attr opt_indirection
 				}
 		| a_expr '+' ALL '(' SubSelect ')'
 				{
-					$$ = make4_str($1, make1_str("+all("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str("+ all("), $5, make1_str(")")); 
 				}
 		| a_expr '-' ALL '(' SubSelect ')'
 				{
-					$$ = make4_str($1, make1_str("-all("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str("- all("), $5, make1_str(")")); 
 				}
 		| a_expr '/' ALL '(' SubSelect ')'
 				{
-					$$ = make4_str($1, make1_str("/all("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str("/ all("), $5, make1_str(")")); 
+				}
+		| a_expr '%' ALL '(' SubSelect ')'
+				{
+					$$ = make4_str($1, make1_str("% all("), $5, make1_str(")")); 
 				}
 		| a_expr '*' ALL '(' SubSelect ')'
 				{
-					$$ = make4_str($1, make1_str("*all("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str("* all("), $5, make1_str(")")); 
 				}
 		| a_expr '<' ALL '(' SubSelect ')'
 				{
-					$$ = make4_str($1, make1_str("<all("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str("< all("), $5, make1_str(")")); 
 				}
 		| a_expr '>' ALL '(' SubSelect ')'
 				{
-					$$ = make4_str($1, make1_str(">all("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str("> all("), $5, make1_str(")")); 
 				}
 		| a_expr '=' ALL '(' SubSelect ')'
 				{
-					$$ = make4_str($1, make1_str("=all("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str("= all("), $5, make1_str(")")); 
 				}
 		| a_expr AND a_expr
 				{	$$ = cat3_str($1, make1_str("and"), $3); }
@@ -3862,6 +3882,8 @@ b_expr:  attr opt_indirection
 				{	$$ = cat3_str($1, make1_str("-"), $3); }
 		| b_expr '/' b_expr
 				{	$$ = cat3_str($1, make1_str("/"), $3); }
+		| b_expr '%' b_expr
+				{	$$ = cat3_str($1, make1_str("%"), $3); }
 		| b_expr '*' b_expr
 				{	$$ = cat3_str($1, make1_str("*"), $3); }
 /* not possible in embedded sql		| ':' b_expr
@@ -4011,6 +4033,8 @@ position_expr:  attr opt_indirection
 				{	$$ = cat3_str($1, make1_str("-"), $3); }
 		| position_expr '/' position_expr
 				{	$$ = cat3_str($1, make1_str("/"), $3); }
+		| position_expr '%' position_expr
+				{	$$ = cat3_str($1, make1_str("%"), $3); }
 		| position_expr '*' position_expr
 				{	$$ = cat3_str($1, make1_str("*"), $3); }
 		| '|' position_expr
@@ -5583,6 +5607,8 @@ ecpg_expr:  attr opt_indirection
 				{	$$ = cat3_str($1, make1_str("-"), $3); }
 		| a_expr '/' ecpg_expr
 				{	$$ = cat3_str($1, make1_str("/"), $3); }
+		| a_expr '%' ecpg_expr
+				{	$$ = cat3_str($1, make1_str("%"), $3); }
 		| a_expr '*' ecpg_expr
 				{	$$ = cat3_str($1, make1_str("*"), $3); }
 		| a_expr '<' ecpg_expr
@@ -5751,6 +5777,10 @@ ecpg_expr:  attr opt_indirection
 				{
 					$$ = make4_str($1, make1_str("/("), $4, make1_str(")")); 
 				}
+		| a_expr '%' '(' SubSelect ')'
+				{
+					$$ = make4_str($1, make1_str("%("), $4, make1_str(")")); 
+				}
 		| a_expr '*' '(' SubSelect ')'
 				{
 					$$ = make4_str($1, make1_str("*("), $4, make1_str(")")); 
@@ -5773,31 +5803,35 @@ ecpg_expr:  attr opt_indirection
 				}
 		| a_expr '+' ANY '(' SubSelect ')'
 				{
-					$$ = make4_str($1, make1_str("+any("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str("+ any("), $5, make1_str(")")); 
 				}
 		| a_expr '-' ANY '(' SubSelect ')'
 				{
-					$$ = make4_str($1, make1_str("-any("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str("- any("), $5, make1_str(")")); 
 				}
 		| a_expr '/' ANY '(' SubSelect ')'
 				{
-					$$ = make4_str($1, make1_str("/any("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str("/ any("), $5, make1_str(")")); 
+				}
+		| a_expr '%' ANY '(' SubSelect ')'
+				{
+					$$ = make4_str($1, make1_str("% any("), $5, make1_str(")")); 
 				}
 		| a_expr '*' ANY '(' SubSelect ')'
 				{
-					$$ = make4_str($1, make1_str("*any("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str("* any("), $5, make1_str(")")); 
 				}
 		| a_expr '<' ANY '(' SubSelect ')'
 				{
-					$$ = make4_str($1, make1_str("<any("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str("< any("), $5, make1_str(")")); 
 				}
 		| a_expr '>' ANY '(' SubSelect ')'
 				{
-					$$ = make4_str($1, make1_str(">any("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str("> any("), $5, make1_str(")")); 
 				}
 		| a_expr '=' ANY '(' SubSelect ')'
 				{
-					$$ = make4_str($1, make1_str("=any("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str("= any("), $5, make1_str(")")); 
 				}
 		| a_expr Op ALL '(' SubSelect ')'
 				{
@@ -5805,27 +5839,31 @@ ecpg_expr:  attr opt_indirection
 				}
 		| a_expr '+' ALL '(' SubSelect ')'
 				{
-					$$ = make4_str($1, make1_str("+all("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str("+ all("), $5, make1_str(")")); 
 				}
 		| a_expr '-' ALL '(' SubSelect ')'
 				{
-					$$ = make4_str($1, make1_str("-all("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str("- all("), $5, make1_str(")")); 
 				}
 		| a_expr '/' ALL '(' SubSelect ')'
 				{
-					$$ = make4_str($1, make1_str("/all("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str("/ all("), $5, make1_str(")")); 
+				}
+		| a_expr '%' ALL '(' SubSelect ')'
+				{
+					$$ = make4_str($1, make1_str("% all("), $5, make1_str(")")); 
 				}
 		| a_expr '*' ALL '(' SubSelect ')'
 				{
-					$$ = make4_str($1, make1_str("*all("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str("* all("), $5, make1_str(")")); 
 				}
 		| a_expr '<' ALL '(' SubSelect ')'
 				{
-					$$ = make4_str($1, make1_str("<all("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str("< all("), $5, make1_str(")")); 
 				}
 		| a_expr '>' ALL '(' SubSelect ')'
 				{
-					$$ = make4_str($1, make1_str(">all("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str("> all("), $5, make1_str(")")); 
 				}
 		| a_expr '=' ALL '(' SubSelect ')'
 				{
