@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.329 2002/06/18 17:27:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.330 2002/06/18 17:56:41 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -132,21 +132,26 @@ static void doNegateFloat(Value *v);
 }
 
 %type <node>	stmt, schema_stmt,
-		AlterDatabaseSetStmt, AlterGroupStmt, AlterSchemaStmt, AlterTableStmt,
-		AlterUserStmt, AlterUserSetStmt, AnalyzeStmt,
-		ClosePortalStmt, ClusterStmt, CommentStmt, ConstraintsSetStmt,
-		CopyStmt, CreateAsStmt, CreateDomainStmt, CreateGroupStmt, CreatePLangStmt,
-		CreateSchemaStmt, CreateSeqStmt, CreateStmt, CreateAssertStmt, CreateTrigStmt,
-		CreateUserStmt, CreatedbStmt, CursorStmt, DefineStmt, DeleteStmt,
-		DropGroupStmt, DropPLangStmt, DropSchemaStmt, DropStmt, DropAssertStmt, DropTrigStmt,
-		DropRuleStmt, DropUserStmt, DropdbStmt, ExplainStmt, FetchStmt,
-		GrantStmt, IndexStmt, InsertStmt, ListenStmt, LoadStmt, LockStmt,
-		NotifyStmt, OptimizableStmt, CreateFunctionStmt, ReindexStmt,
-		RemoveAggrStmt, RemoveFuncStmt, RemoveOperStmt,
-		RenameStmt, RevokeStmt, RuleActionStmt, RuleActionStmtOrEmpty,
-		RuleStmt, SelectStmt, TransactionStmt, TruncateStmt,
-		UnlistenStmt, UpdateStmt, VacuumStmt, VariableResetStmt,
-		VariableSetStmt, VariableShowStmt, ViewStmt, CheckPointStmt
+		AlterDatabaseSetStmt, AlterGroupStmt, AlterSchemaStmt,
+		AlterTableStmt, AlterUserStmt, AlterUserSetStmt,
+		AnalyzeStmt, ClosePortalStmt, ClusterStmt, CommentStmt,
+		ConstraintsSetStmt, CopyStmt, CreateAsStmt,
+		CreateDomainStmt, CreateGroupStmt, CreatePLangStmt,
+		CreateSchemaStmt, CreateSeqStmt, CreateStmt,
+		CreateAssertStmt, CreateTrigStmt, CreateUserStmt,
+		CreatedbStmt, CursorStmt, DefineStmt, DeleteStmt,
+		DropGroupStmt, DropPLangStmt, DropSchemaStmt, DropStmt,
+		DropAssertStmt, DropTrigStmt, DropRuleStmt,
+		DropUserStmt, DropdbStmt, ExplainStmt, FetchStmt,
+		GrantStmt, IndexStmt, InsertStmt, ListenStmt, LoadStmt,
+		LockStmt, NotifyStmt, OptimizableStmt,
+		CreateFunctionStmt, ReindexStmt, RemoveAggrStmt,
+		RemoveFuncStmt, RemoveOperStmt, RenameStmt, RevokeStmt,
+		RuleActionStmt, RuleActionStmtOrEmpty, RuleStmt,
+		SelectStmt, TransactionStmt, TruncateStmt,
+		UnlistenStmt, UpdateStmt, VacuumStmt,
+		VariableResetStmt, VariableSetStmt, VariableShowStmt,
+		ViewStmt, CheckPointStmt
 
 %type <node>	select_no_parens, select_with_parens, select_clause,
 				simple_select
@@ -316,69 +321,82 @@ static void doNegateFloat(Value *v);
 
 /* ordinary key words in alphabetical order */
 %token <keyword> ABORT_TRANS, ABSOLUTE, ACCESS, ACTION, ADD, AFTER,
-	AGGREGATE, ALL, ALTER, ANALYSE, ANALYZE, AND, ANY, AS, ASC, ASSERTION,
-	AT, AUTHORIZATION,
+	AGGREGATE, ALL, ALTER, ANALYSE, ANALYZE, AND, ANY, AS, ASC,
+	ASSERTION, AT, AUTHORIZATION,
 
 	BACKWARD, BEFORE, BEGIN_TRANS, BETWEEN, BIGINT, BINARY, BIT, BOTH,
 	BOOLEAN, BY,
 
-	CACHE, CALLED, CASCADE, CASE, CAST, CHAIN, CHAR_P, CHARACTER,
-	CHARACTERISTICS, CHECK, CHECKPOINT, CLOSE, CLUSTER, COALESCE, COLLATE,
-	COLUMN, COMMENT, COMMIT, COMMITTED, CONSTRAINT, CONSTRAINTS, COPY,
-	CREATE, CREATEDB, CREATEUSER, CROSS, CURRENT_DATE, CURRENT_TIME,
+	CACHE, CALLED, CASCADE, CASE, CAST, CHAIN, CHAR_P,
+	CHARACTER, CHARACTERISTICS, CHECK, CHECKPOINT, CLOSE,
+	CLUSTER, COALESCE, COLLATE, COLUMN, COMMENT, COMMIT,
+	COMMITTED, CONSTRAINT, CONSTRAINTS, COPY, CREATE, CREATEDB,
+	CREATEUSER, CROSS, CURRENT_DATE, CURRENT_TIME,
 	CURRENT_TIMESTAMP, CURRENT_USER, CURSOR, CYCLE,
 
-	DATABASE, DAY_P, DEC, DECIMAL, DECLARE, DEFAULT, DEFERRABLE, DEFERRED,
-	DEFINER, DELETE_P, DELIMITERS, DESC, DISTINCT, DO, DOMAIN_P, DOUBLE, DROP,
+	DATABASE, DAY_P, DEC, DECIMAL, DECLARE, DEFAULT,
+	DEFERRABLE, DEFERRED, DEFINER, DELETE_P, DELIMITERS, DESC,
+	DISTINCT, DO, DOMAIN_P, DOUBLE, DROP,
 
-	EACH, ELSE, ENCODING, ENCRYPTED, END_TRANS, ESCAPE, EXCEPT, EXCLUSIVE,
-	EXECUTE, EXISTS, EXPLAIN, EXTERNAL, EXTRACT,
+	EACH, ELSE, ENCODING, ENCRYPTED, END_TRANS, ESCAPE, EXCEPT,
+	EXCLUSIVE, EXECUTE, EXISTS, EXPLAIN, EXTERNAL, EXTRACT,
 
-	FALSE_P, FETCH, FLOAT_P, FOR, FORCE, FOREIGN, FORWARD, FREEZE, FROM,
-	FULL, FUNCTION,
+	FALSE_P, FETCH, FLOAT_P, FOR, FORCE, FOREIGN, FORWARD,
+	FREEZE, FROM, FULL, FUNCTION,
 
 	GET, GLOBAL, GRANT, GROUP_P,
+
 	HANDLER, HAVING, HOUR_P,
 
-	ILIKE, IMMEDIATE, IMMUTABLE, IMPLICIT, IN_P, INCREMENT, INDEX, INHERITS,
-	INITIALLY, INNER_P, INOUT, INPUT, INSENSITIVE, INSERT, INSTEAD, INT,
-	INTEGER, INTERSECT, INTERVAL, INTO, INVOKER, IS, ISNULL, ISOLATION,
+	ILIKE, IMMEDIATE, IMMUTABLE, IMPLICIT, IN_P, INCREMENT,
+	INDEX, INHERITS, INITIALLY, INNER_P, INOUT, INPUT,
+	INSENSITIVE, INSERT, INSTEAD, INT, INTEGER, INTERSECT,
+	INTERVAL, INTO, INVOKER, IS, ISNULL, ISOLATION,
 
 	JOIN,
 	KEY,
 
-	LANCOMPILER, LANGUAGE, LEADING, LEFT, LEVEL, LIKE, LIMIT, LISTEN,
-	LOAD, LOCAL, LOCALTIME, LOCALTIMESTAMP, LOCATION, LOCK_P,
+	LANCOMPILER, LANGUAGE, LEADING, LEFT, LEVEL, LIKE, LIMIT,
+	LISTEN, LOAD, LOCAL, LOCALTIME, LOCALTIMESTAMP, LOCATION,
+	LOCK_P,
 
 	MATCH, MAXVALUE, MINUTE_P, MINVALUE, MODE, MONTH_P, MOVE,
 
 	NAMES, NATIONAL, NATURAL, NCHAR, NEW, NEXT, NO, NOCREATEDB,
-	NOCREATEUSER, NONE, NOT, NOTHING, NOTIFY, NOTNULL, NULL_P, NULLIF,
-	NUMERIC,
+	NOCREATEUSER, NONE, NOT, NOTHING, NOTIFY, NOTNULL, NULL_P,
+	NULLIF, NUMERIC,
 
-	OF, OFF, OFFSET, OIDS, OLD, ON, ONLY, OPERATOR, OPTION, OR, ORDER,
-	OUT_P, OUTER_P, OVERLAPS, OVERLAY, OWNER,
+	OF, OFF, OFFSET, OIDS, OLD, ON, ONLY, OPERATOR, OPTION, OR,
+	ORDER, OUT_P, OUTER_P, OVERLAPS, OVERLAY, OWNER,
 
-	PARTIAL, PASSWORD, PATH_P, PENDANT, PLACING, POSITION, PRECISION, PRIMARY,
-	PRIOR, PRIVILEGES, PROCEDURE, PROCEDURAL,
+	PARTIAL, PASSWORD, PATH_P, PENDANT, PLACING, POSITION,
+	PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE,
+	PROCEDURAL,
 
-	READ, REAL, REFERENCES, REINDEX, RELATIVE, RENAME, REPLACE, RESET,
-	RESTRICT, RETURNS, REVOKE, RIGHT, ROLLBACK, ROW, RULE,
+	READ, REAL, REFERENCES, REINDEX, RELATIVE, RENAME, REPLACE,
+	RESET, RESTRICT, RETURNS, REVOKE, RIGHT, ROLLBACK, ROW,
+	RULE,
 
-	SCHEMA, SCROLL, SECOND_P, SECURITY, SELECT, SEQUENCE, SERIALIZABLE,
-	SESSION, SESSION_USER, SET, SETOF, SHARE, SHOW, SIMILAR, SMALLINT, SOME,
-	STABLE, START, STATEMENT, STATISTICS, STDIN, STDOUT, STORAGE, STRICT,
-	SUBSTRING, SYSID,
+	SCHEMA, SCROLL, SECOND_P, SECURITY, SELECT, SEQUENCE,
+	SERIALIZABLE, SESSION, SESSION_USER, SET, SETOF, SHARE,
+	SHOW, SIMILAR, SMALLINT, SOME, STABLE, START, STATEMENT,
+	STATISTICS, STDIN, STDOUT, STORAGE, STRICT, SUBSTRING,
+	SYSID,
 
-	TABLE, TEMP, TEMPLATE, TEMPORARY, THEN, TIME, TIMESTAMP, TO, TOAST,
-	TRAILING, TRANSACTION, TRIGGER, TRIM, TRUE_P, TRUNCATE, TRUSTED, TYPE_P,
+	TABLE, TEMP, TEMPLATE, TEMPORARY, THEN, TIME, TIMESTAMP,
+	TO, TOAST, TRAILING, TRANSACTION, TRIGGER, TRIM, TRUE_P,
+	TRUNCATE, TRUSTED, TYPE_P,
 
-	UNENCRYPTED, UNION, UNIQUE, UNKNOWN, UNLISTEN, UNTIL, UPDATE, USAGE,
-	USER, USING,
+	UNENCRYPTED, UNION, UNIQUE, UNKNOWN, UNLISTEN, UNTIL,
+	UPDATE, USAGE, USER, USING,
 
-	VACUUM, VALID, VALIDATOR, VALUES, VARCHAR, VARYING, VERBOSE, VERSION, VIEW, VOLATILE,
+	VACUUM, VALID, VALIDATOR, VALUES, VARCHAR, VARYING,
+	VERBOSE, VERSION, VIEW, VOLATILE,
+
 	WHEN, WHERE, WITH, WITHOUT, WORK,
+
 	YEAR_P,
+
 	ZONE
 
 /* The grammar thinks these are keywords, but they are not in the keywords.c
@@ -412,7 +430,7 @@ static void doNegateFloat(Value *v);
 %left		Op OPERATOR		/* multi-character ops and user-defined operators */
 %nonassoc	NOTNULL
 %nonassoc	ISNULL
-%nonassoc	IS NULL_P TRUE_P FALSE_P UNKNOWN	/* sets precedence for IS NULL, etc */
+%nonassoc	IS NULL_P TRUE_P FALSE_P UNKNOWN /* sets precedence for IS NULL, etc */
 %left		'+' '-'
 %left		'*' '/' '%'
 %left		'^'
@@ -758,7 +776,7 @@ CreateSchemaStmt:
 			CREATE SCHEMA OptSchemaName AUTHORIZATION UserId OptSchemaEltList
 				{
 					CreateSchemaStmt *n = makeNode(CreateSchemaStmt);
-					/* One can omit the schema name or the authorization id... */
+					/* One can omit the schema name or the authorization id. */
 					if ($3 != NULL)
 						n->schemaname = $3;
 					else
@@ -955,7 +973,7 @@ zone_value:
 					{
 						if (($3 & ~(MASK(HOUR) | MASK(MINUTE))) != 0)
 							elog(ERROR,
-								"Time zone interval must be HOUR or HOUR TO MINUTE");
+						"Time zone interval must be HOUR or HOUR TO MINUTE");
 						n->typename->typmod = ((($3 & 0x7FFF) << 16) | 0xFFFF);
 					}
 					$$ = (Node *)n;
@@ -971,7 +989,7 @@ zone_value:
 					{
 						if (($6 & ~(MASK(HOUR) | MASK(MINUTE))) != 0)
 							elog(ERROR,
-								"Time zone interval must be HOUR or HOUR TO MINUTE");
+						"Time zone interval must be HOUR or HOUR TO MINUTE");
 						n->typename->typmod = ((($6 & 0x7FFF) << 16) | $3);
 					}
 					else
@@ -1114,8 +1132,11 @@ AlterTableStmt:
 					n->def = $6;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <relation> ALTER [COLUMN] <colname> {SET DEFAULT <expr>|DROP DEFAULT} */
-			| ALTER TABLE relation_expr ALTER opt_column ColId alter_column_default
+			/* ALTER TABLE <relation> ALTER [COLUMN] <colname>
+			 * {SET DEFAULT <expr>|DROP DEFAULT}
+			 */
+			| ALTER TABLE relation_expr ALTER opt_column
+			ColId alter_column_default
 				{
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'T';
@@ -1124,8 +1145,11 @@ AlterTableStmt:
 					n->def = $7;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <relation> ALTER [COLUMN] <colname> DROP NOT NULL */
-			| ALTER TABLE relation_expr ALTER opt_column ColId DROP NOT NULL_P
+			/* ALTER TABLE <relation> ALTER [COLUMN] <colname>
+			 * DROP NOT NULL
+			 */
+			| ALTER TABLE relation_expr ALTER opt_column
+			ColId DROP NOT NULL_P
 				{
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'N';
@@ -1133,8 +1157,11 @@ AlterTableStmt:
 					n->name = $6;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <relation> ALTER [COLUMN] <colname> SET NOT NULL */
-			| ALTER TABLE relation_expr ALTER opt_column ColId SET NOT NULL_P
+			/* ALTER TABLE <relation> ALTER [COLUMN] <colname>
+			 * SET NOT NULL
+			 */
+			| ALTER TABLE relation_expr ALTER opt_column ColId
+			SET NOT NULL_P
 				{
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'O';
@@ -1142,8 +1169,11 @@ AlterTableStmt:
 					n->name = $6;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <relation> ALTER [COLUMN] <colname> SET STATISTICS <Iconst> */
-			| ALTER TABLE relation_expr ALTER opt_column ColId SET STATISTICS Iconst
+			/* ALTER TABLE <relation> ALTER [COLUMN] <colname>
+			 * SET STATISTICS <Iconst>
+			 */
+			| ALTER TABLE relation_expr ALTER opt_column ColId
+			SET STATISTICS Iconst
 				{
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'S';
@@ -1152,8 +1182,11 @@ AlterTableStmt:
 					n->def = (Node *) makeInteger($9);
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <relation> ALTER [COLUMN] <colname> SET STORAGE <storagemode> */
-			| ALTER TABLE relation_expr ALTER opt_column ColId SET STORAGE ColId
+			/* ALTER TABLE <relation> ALTER [COLUMN] <colname>
+			 * SET STORAGE <storagemode>
+			 */
+			| ALTER TABLE relation_expr ALTER opt_column ColId
+			SET STORAGE ColId
 				{
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'M';
@@ -1162,7 +1195,9 @@ AlterTableStmt:
 					n->def = (Node *) makeString($9);
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <relation> DROP [COLUMN] <colname> {RESTRICT|CASCADE} */
+			/* ALTER TABLE <relation> DROP [COLUMN] <colname>
+			 * {RESTRICT|CASCADE}
+			 */
 			| ALTER TABLE relation_expr DROP opt_column ColId drop_behavior
 				{
 					AlterTableStmt *n = makeNode(AlterTableStmt);
@@ -1181,7 +1216,9 @@ AlterTableStmt:
 					n->def = $5;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <relation> DROP CONSTRAINT <name> {RESTRICT|CASCADE} */
+			/* ALTER TABLE <relation> DROP CONSTRAINT <name>
+			 * {RESTRICT|CASCADE}
+			 */
 			| ALTER TABLE relation_expr DROP CONSTRAINT name drop_behavior
 				{
 					AlterTableStmt *n = makeNode(AlterTableStmt);
@@ -1327,7 +1364,8 @@ copy_null:	WITH NULL_P AS Sconst					{ $$ = $4; }
  *
  *****************************************************************************/
 
-CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')' OptInherit OptWithOids
+CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
+			OptInherit OptWithOids
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					$4->istemp = $2;
@@ -1350,12 +1388,14 @@ OptTemp:	TEMPORARY						{ $$ = TRUE; }
 			| LOCAL TEMP					{ $$ = TRUE; }
 			| GLOBAL TEMPORARY
 				{
-					elog(ERROR, "GLOBAL TEMPORARY TABLE is not currently supported");
+					elog(ERROR,
+					"GLOBAL TEMPORARY TABLE is not currently supported");
 					$$ = TRUE;
 				}
 			| GLOBAL TEMP
 				{
-					elog(ERROR, "GLOBAL TEMPORARY TABLE is not currently supported");
+					elog(ERROR,
+					"GLOBAL TEMPORARY TABLE is not currently supported");
 					$$ = TRUE;
 				}
 			| /*EMPTY*/						{ $$ = FALSE; }
@@ -1392,8 +1432,9 @@ columnDef:	ColId Typename ColQualList opt_collate
 					n->constraints = $3;
 
 					if ($4 != NULL)
-						elog(NOTICE, "CREATE TABLE / COLLATE %s not yet implemented"
-							 "; clause ignored", $4);
+						elog(NOTICE,
+							"CREATE TABLE / COLLATE %s not yet implemented; "
+							"clause ignored", $4);
 
 					$$ = (Node *)n;
 				}
@@ -1627,7 +1668,8 @@ ConstraintElem:
 					n->keys = $4;
 					$$ = (Node *)n;
 				}
-			| FOREIGN KEY '(' columnList ')' REFERENCES qualified_name opt_column_list
+			| FOREIGN KEY '(' columnList ')' REFERENCES qualified_name
+			opt_column_list
 				key_match key_actions ConstraintAttributeSpec
 				{
 					FkConstraint *n = makeNode(FkConstraint);
@@ -1681,18 +1723,20 @@ key_actions:
 			| /*EMPTY*/								{ $$ = 0; }
 		;
 
-key_delete: ON DELETE_P key_reference	{ $$ = $3 << FKCONSTR_ON_DELETE_SHIFT; }
+key_delete: ON DELETE_P key_reference
+								{ $$ = $3 << FKCONSTR_ON_DELETE_SHIFT; }
 		;
 
-key_update: ON UPDATE key_reference { $$ = $3 << FKCONSTR_ON_UPDATE_SHIFT; }
+key_update: ON UPDATE key_reference
+								{ $$ = $3 << FKCONSTR_ON_UPDATE_SHIFT; }
 		;
 
 key_reference:
-			NO ACTION								{ $$ = FKCONSTR_ON_KEY_NOACTION; }
-			| RESTRICT								{ $$ = FKCONSTR_ON_KEY_RESTRICT; }
-			| CASCADE								{ $$ = FKCONSTR_ON_KEY_CASCADE; }
-			| SET NULL_P							{ $$ = FKCONSTR_ON_KEY_SETNULL; }
-			| SET DEFAULT							{ $$ = FKCONSTR_ON_KEY_SETDEFAULT; }
+			NO ACTION					{ $$ = FKCONSTR_ON_KEY_NOACTION; }
+			| RESTRICT					{ $$ = FKCONSTR_ON_KEY_RESTRICT; }
+			| CASCADE					{ $$ = FKCONSTR_ON_KEY_CASCADE; }
+			| SET NULL_P				{ $$ = FKCONSTR_ON_KEY_SETNULL; }
+			| SET DEFAULT				{ $$ = FKCONSTR_ON_KEY_SETDEFAULT; }
 		;
 
 OptInherit: INHERITS '(' qualified_name_list ')'	{ $$ = $3; }
@@ -1873,7 +1917,8 @@ opt_trusted:
  * Work around by using name and dotted_name separately.
  */
 handler_name:
-			name									{ $$ = makeList1(makeString($1)); }
+			name
+							{ $$ = makeList1(makeString($1)); }
 			| dotted_name							{ $$ = $1; }
 		;
 
@@ -2038,7 +2083,8 @@ ConstraintAttributeSpec:
 			| ConstraintDeferrabilitySpec ConstraintTimeSpec
 				{
 					if ($1 == 0 && $2 != 0)
-						elog(ERROR, "INITIALLY DEFERRED constraint must be DEFERRABLE");
+						elog(ERROR,
+						"INITIALLY DEFERRED constraint must be DEFERRABLE");
 					$$ = $1 | $2;
 				}
 			| ConstraintTimeSpec
@@ -2051,7 +2097,8 @@ ConstraintAttributeSpec:
 			| ConstraintTimeSpec ConstraintDeferrabilitySpec
 				{
 					if ($2 == 0 && $1 != 0)
-						elog(ERROR, "INITIALLY DEFERRED constraint must be DEFERRABLE");
+						elog(ERROR,
+						"INITIALLY DEFERRED constraint must be DEFERRABLE");
 					$$ = $1 | $2;
 				}
 			| /*EMPTY*/
@@ -2090,7 +2137,8 @@ DropTrigStmt:
  *****************************************************************************/
 
 CreateAssertStmt:
-			CREATE ASSERTION name CHECK '(' a_expr ')' ConstraintAttributeSpec
+			CREATE ASSERTION name CHECK '(' a_expr ')'
+			ConstraintAttributeSpec
 				{
 					CreateTrigStmt *n = makeNode(CreateTrigStmt);
 					n->trigname = $3;
@@ -2182,10 +2230,10 @@ def_elem:  ColLabel '=' def_arg
 		;
 
 /* Note: any simple identifier will be returned as a type name! */
-def_arg:	func_return								{ $$ = (Node *)$1; }
-			| all_Op								{ $$ = (Node *)makeString($1); }
-			| NumericOnly							{ $$ = (Node *)$1; }
-			| Sconst								{ $$ = (Node *)makeString($1); }
+def_arg:	func_return						{ $$ = (Node *)$1; }
+			| all_Op						{ $$ = (Node *)makeString($1); }
+			| NumericOnly					{ $$ = (Node *)$1; }
+			| Sconst						{ $$ = (Node *)makeString($1); }
 		;
 
 
@@ -2220,8 +2268,8 @@ any_name_list:
 			| any_name_list ',' any_name			{ $$ = lappend($1, $3); }
 		;
 
-any_name:	ColId									{ $$ = makeList1(makeString($1)); }
-			| dotted_name							{ $$ = $1; }
+any_name:	ColId						{ $$ = makeList1(makeString($1)); }
+			| dotted_name				{ $$ = $1; }
 		;
 
 /*****************************************************************************
@@ -2263,7 +2311,8 @@ CommentStmt:
 					n->comment = $6;
 					$$ = (Node *) n;
 				}
-			| COMMENT ON AGGREGATE func_name '(' aggr_argtype ')' IS comment_text
+			| COMMENT ON AGGREGATE func_name '(' aggr_argtype ')'
+			IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = AGGREGATE;
@@ -2281,7 +2330,8 @@ CommentStmt:
 					n->comment = $7;
 					$$ = (Node *) n;
 				}
-			| COMMENT ON OPERATOR any_operator '(' oper_argtypes ')' IS comment_text
+			| COMMENT ON OPERATOR any_operator '(' oper_argtypes ')'
+			IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OPERATOR;
@@ -2352,7 +2402,8 @@ FetchStmt:	FETCH direction fetch_how_many from_in name
 					if ($2 == RELATIVE)
 					{
 						if ($3 == 0)
-							elog(ERROR,"FETCH / RELATIVE at current position is not supported");
+							elog(ERROR,
+					"FETCH / RELATIVE at current position is not supported");
 						$2 = FORWARD;
 					}
 					if ($3 < 0)
@@ -2479,7 +2530,8 @@ direction:	FORWARD									{ $$ = FORWARD; }
 			| RELATIVE								{ $$ = RELATIVE; }
 			| ABSOLUTE
 				{
-					elog(NOTICE,"FETCH / ABSOLUTE not supported, using RELATIVE");
+					elog(NOTICE,
+					"FETCH / ABSOLUTE not supported, using RELATIVE");
 					$$ = RELATIVE;
 				}
 		;
@@ -2487,7 +2539,8 @@ direction:	FORWARD									{ $$ = FORWARD; }
 fetch_how_many:
 			Iconst									{ $$ = $1; }
 			| '-' Iconst							{ $$ = - $2; }
-			| ALL									{ $$ = 0; /* 0 means fetch all tuples*/ }
+											/* 0 means fetch all tuples*/
+			| ALL									{ $$ = 0; }
 			| NEXT									{ $$ = 1; }
 			| PRIOR									{ $$ = -1; }
 		;
@@ -2503,7 +2556,8 @@ from_in:	IN_P									{}
  *
  *****************************************************************************/
 
-GrantStmt:	GRANT privileges ON privilege_target TO grantee_list opt_grant_grant_option
+GrantStmt:	GRANT privileges ON privilege_target TO grantee_list
+			opt_grant_grant_option
 				{
 					GrantStmt *n = makeNode(GrantStmt);
 					n->is_grant = true;
@@ -2515,7 +2569,8 @@ GrantStmt:	GRANT privileges ON privilege_target TO grantee_list opt_grant_grant_
 				}
 		;
 
-RevokeStmt: REVOKE opt_revoke_grant_option privileges ON privilege_target FROM grantee_list
+RevokeStmt: REVOKE opt_revoke_grant_option privileges ON privilege_target
+			FROM grantee_list
 				{
 					GrantStmt *n = makeNode(GrantStmt);
 					n->is_grant = false;
@@ -2529,9 +2584,9 @@ RevokeStmt: REVOKE opt_revoke_grant_option privileges ON privilege_target FROM g
 
 
 /* either ALL [PRIVILEGES] or a list of individual privileges */
-privileges: privilege_list							{ $$ = $1; }
-			| ALL									{ $$ = makeListi1(ACL_ALL_RIGHTS); }
-			| ALL PRIVILEGES						{ $$ = makeListi1(ACL_ALL_RIGHTS); }
+privileges: privilege_list				{ $$ = $1; }
+			| ALL						{ $$ = makeListi1(ACL_ALL_RIGHTS); }
+			| ALL PRIVILEGES			{ $$ = makeListi1(ACL_ALL_RIGHTS); }
 		;
 
 privilege_list:
@@ -2613,7 +2668,7 @@ grantee_list:
 grantee:	ColId
 				{
 					PrivGrantee *n = makeNode(PrivGrantee);
-					/* This hack lets us avoid reserving PUBLIC as a keyword */
+					/* This hack lets us avoid reserving PUBLIC as a keyword*/
 					if (strcmp($1, "public") == 0)
 						n->username = NULL;
 					else
@@ -2838,12 +2893,14 @@ func_arg:	opt_arg func_type
 opt_arg:	IN_P									{ $$ = FALSE; }
 			| OUT_P
 				{
-					elog(ERROR, "CREATE FUNCTION / OUT parameters are not supported");
+					elog(ERROR,
+					"CREATE FUNCTION / OUT parameters are not supported");
 					$$ = TRUE;
 				}
 			| INOUT
 				{
-					elog(ERROR, "CREATE FUNCTION / INOUT parameters are not supported");
+					elog(ERROR,
+					"CREATE FUNCTION / INOUT parameters are not supported");
 					$$ = FALSE;
 				}
 		;
@@ -2961,8 +3018,11 @@ createfunc_opt_item:
 				}
 		;
 
-func_as:	Sconst									{ $$ = makeList1(makeString($1)); }
-			| Sconst ',' Sconst						{ $$ = makeList2(makeString($1), makeString($3)); }
+func_as:	Sconst						{ $$ = makeList1(makeString($1)); }
+			| Sconst ',' Sconst
+				{
+					$$ = makeList2(makeString($1), makeString($3));
+				}
 		;
 
 opt_definition:
@@ -3021,14 +3081,19 @@ oper_argtypes:
 				{
 				   elog(ERROR,"parser: argument type missing (use NONE for unary operators)");
 				}
-			| Typename ',' Typename					{ $$ = makeList2($1, $3); }
-			| NONE ',' Typename /* left unary */	{ $$ = makeList2(NULL, $3); }
-			| Typename ',' NONE /* right unary */	{ $$ = makeList2($1, NULL); }
+			| Typename ',' Typename
+					{ $$ = makeList2($1, $3); }
+			| NONE ',' Typename /* left unary */
+					{ $$ = makeList2(NULL, $3); }
+			| Typename ',' NONE /* right unary */
+					{ $$ = makeList2($1, NULL); }
 		;
 
 any_operator:
-			all_Op									{ $$ = makeList1(makeString($1)); }
-			| ColId '.' any_operator				{ $$ = lcons(makeString($1), $3); }
+			all_Op
+					{ $$ = makeList1(makeString($1)); }
+			| ColId '.' any_operator
+					{ $$ = lcons(makeString($1), $3); }
 		;
 
 
@@ -3732,7 +3797,8 @@ insert_rest:
 
 insert_column_list:
 			insert_column_item						{ $$ = makeList1($1); }
-			| insert_column_list ',' insert_column_item	{ $$ = lappend($1, $3); }
+			| insert_column_list ',' insert_column_item
+					{ $$ = lappend($1, $3); }
 		;
 
 insert_column_item:
@@ -3773,18 +3839,18 @@ LockStmt:	LOCK_P opt_table qualified_name_list opt_lock
 				}
 		;
 
-opt_lock:	IN_P lock_type MODE 					{ $$ = $2; }
-			| /*EMPTY*/								{ $$ = AccessExclusiveLock; }
+opt_lock:	IN_P lock_type MODE 			{ $$ = $2; }
+			| /*EMPTY*/						{ $$ = AccessExclusiveLock; }
 		;
 
-lock_type:	ACCESS SHARE							{ $$ = AccessShareLock; }
-			| ROW SHARE								{ $$ = RowShareLock; }
-			| ROW EXCLUSIVE							{ $$ = RowExclusiveLock; }
-			| SHARE UPDATE EXCLUSIVE				{ $$ = ShareUpdateExclusiveLock; }
-			| SHARE									{ $$ = ShareLock; }
-			| SHARE ROW EXCLUSIVE					{ $$ = ShareRowExclusiveLock; }
-			| EXCLUSIVE								{ $$ = ExclusiveLock; }
-			| ACCESS EXCLUSIVE						{ $$ = AccessExclusiveLock; }
+lock_type:	ACCESS SHARE					{ $$ = AccessShareLock; }
+			| ROW SHARE						{ $$ = RowShareLock; }
+			| ROW EXCLUSIVE					{ $$ = RowExclusiveLock; }
+			| SHARE UPDATE EXCLUSIVE		{ $$ = ShareUpdateExclusiveLock; }
+			| SHARE							{ $$ = ShareLock; }
+			| SHARE ROW EXCLUSIVE			{ $$ = ShareRowExclusiveLock; }
+			| EXCLUSIVE						{ $$ = ExclusiveLock; }
+			| ACCESS EXCLUSIVE				{ $$ = AccessExclusiveLock; }
 		;
 
 
@@ -3998,13 +4064,15 @@ OptTempTableName:
 				}
 			| GLOBAL TEMPORARY opt_table qualified_name
 				{
-					elog(ERROR, "GLOBAL TEMPORARY TABLE is not currently supported");
+					elog(ERROR,
+						"GLOBAL TEMPORARY TABLE is not currently supported");
 					$$ = $4;
 					$$->istemp = true;
 				}
 			| GLOBAL TEMP opt_table qualified_name
 				{
-					elog(ERROR, "GLOBAL TEMPORARY TABLE is not currently supported");
+					elog(ERROR,
+						"GLOBAL TEMPORARY TABLE is not currently supported");
 					$$ = $4;
 					$$->istemp = true;
 				}
@@ -4076,13 +4144,15 @@ select_limit:
 				{ $$ = makeList2($2, NULL); }
 			| LIMIT select_limit_value ',' select_offset_value
 				/* Disabled because it was too confusing, bjm 2002-02-18 */
-				{ elog(ERROR, "LIMIT #,# syntax not supported.\n\tUse separate LIMIT and OFFSET clauses."); }
+				{ elog(ERROR,
+					"LIMIT #,# syntax not supported.\n\tUse separate LIMIT and OFFSET clauses."); }
 		;
 
 
 opt_select_limit:
 			select_limit							{ $$ = $1; }
-			| /* EMPTY */							{ $$ = makeList2(NULL,NULL); }
+			| /* EMPTY */
+					{ $$ = makeList2(NULL,NULL); }
 		;
 
 select_limit_value:
@@ -4469,7 +4539,8 @@ func_table: func_name '(' ')'
 
 where_clause:
 			WHERE a_expr							{ $$ = $2; }
-			| /*EMPTY*/								{ $$ = NULL;  /* no qualifiers */ }
+													/* no qualifiers */
+			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
 
@@ -4524,7 +4595,8 @@ SimpleTypename:
 				{
 					$$ = $1;
 					if (($3 < 0) || ($3 > MAX_INTERVAL_PRECISION))
-						elog(ERROR, "INTERVAL(%d) precision must be between %d and %d",
+						elog(ERROR,
+						"INTERVAL(%d) precision must be between %d and %d",
 							 $3, 0, MAX_INTERVAL_PRECISION);
 					$$->typmod = ((($5 & 0x7FFF) << 16) | $3);
 				}
@@ -4608,13 +4680,15 @@ Numeric:	INT
 opt_float:	'(' Iconst ')'
 				{
 					if ($2 < 1)
-						elog(ERROR, "precision for FLOAT must be at least 1");
+						elog(ERROR,
+							"precision for FLOAT must be at least 1");
 					else if ($2 < 7)
 						$$ = SystemTypeName("float4");
 					else if ($2 < 16)
 						$$ = SystemTypeName("float8");
 					else
-						elog(ERROR, "precision for FLOAT must be less than 16");
+						elog(ERROR,
+							"precision for FLOAT must be less than 16");
 				}
 			| /*EMPTY*/
 				{
@@ -4626,10 +4700,12 @@ opt_numeric:
 			'(' Iconst ',' Iconst ')'
 				{
 					if ($2 < 1 || $2 > NUMERIC_MAX_PRECISION)
-						elog(ERROR, "NUMERIC precision %d must be between 1 and %d",
+						elog(ERROR,
+							"NUMERIC precision %d must be between 1 and %d",
 							 $2, NUMERIC_MAX_PRECISION);
 					if ($4 < 0 || $4 > $2)
-						elog(ERROR, "NUMERIC scale %d must be between 0 and precision %d",
+						elog(ERROR,
+						"NUMERIC scale %d must be between 0 and precision %d",
 							 $4,$2);
 
 					$$ = (($2 << 16) | $4) + VARHDRSZ;
@@ -4637,7 +4713,8 @@ opt_numeric:
 			| '(' Iconst ')'
 				{
 					if ($2 < 1 || $2 > NUMERIC_MAX_PRECISION)
-						elog(ERROR, "NUMERIC precision %d must be between 1 and %d",
+						elog(ERROR,
+							"NUMERIC precision %d must be between 1 and %d",
 							 $2, NUMERIC_MAX_PRECISION);
 
 					$$ = ($2 << 16) + VARHDRSZ;
@@ -4653,10 +4730,12 @@ opt_decimal:
 			'(' Iconst ',' Iconst ')'
 				{
 					if ($2 < 1 || $2 > NUMERIC_MAX_PRECISION)
-						elog(ERROR, "DECIMAL precision %d must be between 1 and %d",
+						elog(ERROR,
+							"DECIMAL precision %d must be between 1 and %d",
 									$2, NUMERIC_MAX_PRECISION);
 					if ($4 < 0 || $4 > $2)
-						elog(ERROR, "DECIMAL scale %d must be between 0 and precision %d",
+						elog(ERROR,
+							"DECIMAL scale %d must be between 0 and precision %d",
 									$4,$2);
 
 					$$ = (($2 << 16) | $4) + VARHDRSZ;
@@ -4664,7 +4743,8 @@ opt_decimal:
 			| '(' Iconst ')'
 				{
 					if ($2 < 1 || $2 > NUMERIC_MAX_PRECISION)
-						elog(ERROR, "DECIMAL precision %d must be between 1 and %d",
+						elog(ERROR,
+							"DECIMAL precision %d must be between 1 and %d",
 									$2, NUMERIC_MAX_PRECISION);
 
 					$$ = ($2 << 16) + VARHDRSZ;
@@ -4809,8 +4889,10 @@ ConstDatetime:
 					 */
 					$$->timezone = $5;
 					if (($3 < 0) || ($3 > MAX_TIMESTAMP_PRECISION))
-						elog(ERROR, "TIMESTAMP(%d)%s precision must be between %d and %d",
-							 $3, ($5 ? " WITH TIME ZONE": ""), 0, MAX_TIMESTAMP_PRECISION);
+						elog(ERROR,
+						"TIMESTAMP(%d)%s precision must be between %d and %d",
+							 $3, ($5 ? " WITH TIME ZONE": ""), 0,
+							 MAX_TIMESTAMP_PRECISION);
 					$$->typmod = $3;
 				}
 			| TIMESTAMP opt_timezone
@@ -4839,8 +4921,10 @@ ConstDatetime:
 					else
 						$$ = SystemTypeName("time");
 					if (($3 < 0) || ($3 > MAX_TIME_PRECISION))
-						elog(ERROR, "TIME(%d)%s precision must be between %d and %d",
-							 $3, ($5 ? " WITH TIME ZONE": ""), 0, MAX_TIME_PRECISION);
+						elog(ERROR,
+						"TIME(%d)%s precision must be between %d and %d",
+							 $3, ($5 ? " WITH TIME ZONE": ""), 0,
+							 MAX_TIME_PRECISION);
 					$$->typmod = $3;
 				}
 			| TIME opt_timezone
@@ -4874,13 +4958,20 @@ opt_interval:
 			| HOUR_P								{ $$ = MASK(HOUR); }
 			| MINUTE_P								{ $$ = MASK(MINUTE); }
 			| SECOND_P								{ $$ = MASK(SECOND); }
-			| YEAR_P TO MONTH_P						{ $$ = MASK(YEAR) | MASK(MONTH); }
-			| DAY_P TO HOUR_P						{ $$ = MASK(DAY) | MASK(HOUR); }
-			| DAY_P TO MINUTE_P						{ $$ = MASK(DAY) | MASK(HOUR) | MASK(MINUTE); }
-			| DAY_P TO SECOND_P						{ $$ = MASK(DAY) | MASK(HOUR) | MASK(MINUTE) | MASK(SECOND); }
-			| HOUR_P TO MINUTE_P					{ $$ = MASK(HOUR) | MASK(MINUTE); }
-			| HOUR_P TO SECOND_P					{ $$ = MASK(HOUR) | MASK(MINUTE) | MASK(SECOND); }
-			| MINUTE_P TO SECOND_P					{ $$ = MASK(MINUTE) | MASK(SECOND); }
+			| YEAR_P TO MONTH_P
+					{ $$ = MASK(YEAR) | MASK(MONTH); }
+			| DAY_P TO HOUR_P
+					{ $$ = MASK(DAY) | MASK(HOUR); }
+			| DAY_P TO MINUTE_P
+					{ $$ = MASK(DAY) | MASK(HOUR) | MASK(MINUTE); }
+			| DAY_P TO SECOND_P
+					{ $$ = MASK(DAY) | MASK(HOUR) | MASK(MINUTE) | MASK(SECOND); }
+			| HOUR_P TO MINUTE_P
+					{ $$ = MASK(HOUR) | MASK(MINUTE); }
+			| HOUR_P TO SECOND_P
+					{ $$ = MASK(HOUR) | MASK(MINUTE) | MASK(SECOND); }
+			| MINUTE_P TO SECOND_P
+					{ $$ = MASK(MINUTE) | MASK(SECOND); }
 			| /*EMPTY*/								{ $$ = -1; }
 		;
 
@@ -4915,7 +5006,8 @@ row_expr:	'(' row_descriptor ')' IN_P select_with_parens
 					n->subselect = $6;
 					$$ = (Node *)n;
 				}
-			| '(' row_descriptor ')' qual_all_Op sub_type select_with_parens	%prec Op
+			| '(' row_descriptor ')' qual_all_Op sub_type select_with_parens
+			%prec Op
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
@@ -4928,7 +5020,8 @@ row_expr:	'(' row_descriptor ')' IN_P select_with_parens
 					n->subselect = $6;
 					$$ = (Node *)n;
 				}
-			| '(' row_descriptor ')' qual_all_Op select_with_parens		%prec Op
+			| '(' row_descriptor ')' qual_all_Op select_with_parens
+			%prec Op
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
@@ -4941,7 +5034,8 @@ row_expr:	'(' row_descriptor ')' IN_P select_with_parens
 					n->subselect = $5;
 					$$ = (Node *)n;
 				}
-			| '(' row_descriptor ')' qual_all_Op '(' row_descriptor ')'		%prec Op
+			| '(' row_descriptor ')' qual_all_Op '(' row_descriptor ')'
+			%prec Op
 				{
 					$$ = makeRowExpr($4, $2, $6);
 				}
@@ -4996,12 +5090,14 @@ MathOp:		 '+'									{ $$ = "+"; }
 			| '='									{ $$ = "="; }
 		;
 
-qual_Op:	Op										{ $$ = makeList1(makeString($1)); }
+qual_Op:	Op
+					{ $$ = makeList1(makeString($1)); }
 			| OPERATOR '(' any_operator ')'			{ $$ = $3; }
 		;
 
 qual_all_Op:
-			all_Op									{ $$ = makeList1(makeString($1)); }
+			all_Op
+					{ $$ = makeList1(makeString($1)); }
 			| OPERATOR '(' any_operator ')'			{ $$ = $3; }
 		;
 
@@ -5022,7 +5118,8 @@ qual_all_Op:
  * it's factored out just to eliminate redundant coding.
  */
 a_expr:		c_expr									{ $$ = $1; }
-			| a_expr TYPECAST Typename				{ $$ = makeTypeCast($1, $3); }
+			| a_expr TYPECAST Typename
+					{ $$ = makeTypeCast($1, $3); }
 			| a_expr COLLATE ColId
 				{
 					FuncCall *n = makeNode(FuncCall);
@@ -5325,7 +5422,7 @@ a_expr:		c_expr									{ $$ = $1; }
 						$$ = n;
 					}
 				}
-			| a_expr qual_all_Op sub_type select_with_parens		%prec Op
+			| a_expr qual_all_Op sub_type select_with_parens %prec Op
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = makeList1($1);
@@ -5553,7 +5650,8 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 					s->typename = SystemTypeName("text");
 					d = SystemTypeName("timetz");
 					if (($3 < 0) || ($3 > MAX_TIME_PRECISION))
-						elog(ERROR, "CURRENT_TIME(%d) precision must be between %d and %d",
+						elog(ERROR,
+						"CURRENT_TIME(%d) precision must be between %d and %d",
 							 $3, 0, MAX_TIME_PRECISION);
 					d->typmod = $3;
 
@@ -5597,7 +5695,9 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 
 					d = SystemTypeName("timestamptz");
 					if (($3 < 0) || ($3 > MAX_TIMESTAMP_PRECISION))
-						elog(ERROR, "CURRENT_TIMESTAMP(%d) precision must be between %d and %d",
+						elog(ERROR,
+						"CURRENT_TIMESTAMP(%d) precision "
+						"must be between %d and %d",
 							 $3, 0, MAX_TIMESTAMP_PRECISION);
 					d->typmod = $3;
 
@@ -5640,7 +5740,8 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 					s->typename = SystemTypeName("text");
 					d = SystemTypeName("time");
 					if (($3 < 0) || ($3 > MAX_TIME_PRECISION))
-						elog(ERROR, "LOCALTIME(%d) precision must be between %d and %d",
+						elog(ERROR,
+						"LOCALTIME(%d) precision must be between %d and %d",
 							 $3, 0, MAX_TIME_PRECISION);
 					d->typmod = $3;
 
@@ -5684,7 +5785,9 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 
 					d = SystemTypeName("timestamp");
 					if (($3 < 0) || ($3 > MAX_TIMESTAMP_PRECISION))
-						elog(ERROR, "LOCALTIMESTAMP(%d) precision must be between %d and %d",
+						elog(ERROR,
+						"LOCALTIMESTAMP(%d) precision must be "
+						"between %d and %d",
 							 $3, 0, MAX_TIMESTAMP_PRECISION);
 					d->typmod = $3;
 
@@ -6066,12 +6169,16 @@ columnref:	relation_name opt_indirection
 		;
 
 dotted_name:
-			relation_name attrs						{ $$ = lcons(makeString($1), $2); }
+			relation_name attrs
+					{ $$ = lcons(makeString($1), $2); }
 		;
 
-attrs:		'.' attr_name							{ $$ = makeList1(makeString($2)); }
-			| '.' '*'								{ $$ = makeList1(makeString("*")); }
-			| '.' attr_name attrs					{ $$ = lcons(makeString($2), $3); }
+attrs:		'.' attr_name
+					{ $$ = makeList1(makeString($2)); }
+			| '.' '*'
+					{ $$ = makeList1(makeString("*")); }
+			| '.' attr_name attrs
+					{ $$ = lcons(makeString($2), $3); }
 		;
 
 
@@ -6194,15 +6301,19 @@ qualified_name:
 							$$->relname = strVal(lfirst(lnext(lnext($1))));
 							break;
 						default:
-							elog(ERROR, "Improper qualified name (too many dotted names): %s",
+							elog(ERROR,
+							"Improper qualified name "
+							"(too many dotted names): %s",
 								 NameListToString($1));
 							break;
 					}
 				}
 		;
 
-name_list:	name									{ $$ = makeList1(makeString($1)); }
-			| name_list ',' name					{ $$ = lappend($1, makeString($3)); }
+name_list:	name
+					{ $$ = makeList1(makeString($1)); }
+			| name_list ',' name
+					{ $$ = lappend($1, makeString($3)); }
 		;
 
 
@@ -6220,7 +6331,8 @@ index_name: ColId									{ $$ = $1; };
 
 file_name:	Sconst									{ $$ = $1; };
 
-func_name:	function_name							{ $$ = makeList1(makeString($1)); }
+func_name:	function_name
+					{ $$ = makeList1(makeString($1)); }
 			| dotted_name							{ $$ = $1; }
 		;
 
@@ -6289,7 +6401,8 @@ AexprConst: Iconst
 					n->val.val.str = $5;
 					/* precision specified, and fields may be... */
 					if (($3 < 0) || ($3 > MAX_INTERVAL_PRECISION))
-						elog(ERROR, "INTERVAL(%d) precision must be between %d and %d",
+						elog(ERROR,
+						"INTERVAL(%d) precision must be between %d and %d",
 							 $3, 0, MAX_INTERVAL_PRECISION);
 					n->typename->typmod = ((($6 & 0x7FFF) << 16) | $3);
 					$$ = (Node *)n;
