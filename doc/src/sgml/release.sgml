@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.164 2002/11/08 03:44:15 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.165 2002/11/11 20:05:59 petere Exp $
 -->
 
 <appendix id="release">
@@ -47,11 +47,11 @@ worries about funny characters.
       <term>Schemas</term>
       <listitem>
        <para>
-           Schemas allow users to create objects in their own namespace
-           so two people or applications can have tables with the same
-           name. There is also a public schema for shared tables.
-           Table/index creation can be restricted by removing
-           permissions on the public schema.
+        Schemas allow users to create objects in their own namespace
+        so two people or applications can have tables with the same
+        name. There is also a public schema for shared tables.
+        Table/index creation can be restricted by removing permissions
+        on the public schema.
        </para>
       </listitem>
      </varlistentry>
@@ -60,7 +60,8 @@ worries about funny characters.
       <term>Drop Column</term>
       <listitem>
        <para>
-           PostgreSQL now supports ALTER TABLE ... DROP COLUMN functionality.
+        PostgreSQL now supports the <literal>ALTER TABLE ... DROP
+        COLUMN</literal> functionality.
        </para>
       </listitem>
      </varlistentry>
@@ -69,10 +70,12 @@ worries about funny characters.
       <term>Table Functions</term>
       <listitem>
        <para>
-           Functions returning multiple rows and/or multiple columns are
-           now much easier to use than before.  You can call such a
-           "table function" in the SELECT FROM clause, treating its output
-           like a table. Also, plpgsql functions can now return sets.
+        Functions returning multiple rows and/or multiple columns are
+        now much easier to use than before.  You can call such a
+        <quote>table function</quote> in the <literal>SELECT</literal>
+        <literal>FROM</literal> clause, treating its output like a
+        table. Also, <application>PL/pgSQL</application> functions can
+        now return sets.
        </para>
       </listitem>
      </varlistentry>
@@ -81,7 +84,8 @@ worries about funny characters.
       <term>Prepared Queries</term>
       <listitem>
        <para>
-           For performance, PostgreSQL now supports prepared queries.
+        PostgreSQL now supports prepared queries, for improved
+        performance.
        </para>
       </listitem>
      </varlistentry>
@@ -90,8 +94,11 @@ worries about funny characters.
       <term>Dependency Tracking</term>
       <listitem>
        <para>
-           PostgreSQL now records object dependencies, which allows
-           improvements in many areas.
+        PostgreSQL now records object dependencies, which allows
+        improvements in many areas.  <command>DROP</command>
+        statements now take either <literal>CASCADE</> or
+        <literal>RESTRICT</> to control whether dependent objects are
+        also dropped.
        </para>
       </listitem>
      </varlistentry>
@@ -100,17 +107,18 @@ worries about funny characters.
       <term>Privileges</term>
       <listitem>
        <para>
-           Functions and procedural languages now have privileges, and
-           people running them can take on the privileges of their creators.
+        Functions and procedural languages now have privileges, and
+        functions can be defined to run with the privileges of their
+        creator.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term>Multibyte/Locale</term>
+      <term>Internationalization</term>
       <listitem>
        <para>
-           Both multibyte and locale are now always enabled.
+        Both multibyte and locale support are now always enabled.
        </para>
       </listitem>
      </varlistentry>
@@ -119,7 +127,7 @@ worries about funny characters.
       <term>Logging</term>
       <listitem>
        <para>
-           A variety of logging options have been enhanced.
+        A variety of logging options have been enhanced.
        </para>
       </listitem>
      </varlistentry>
@@ -128,10 +136,9 @@ worries about funny characters.
       <term>Interfaces</term>
       <listitem>
        <para>
-           A large number of interfaces have been moved to 
-           <ulink url="http://gborg.postgresql.org">
-	   http://gborg.postgresql.org</>where they can be developed
-           and released independently.
+        A large number of interfaces have been moved to <ulink
+        url="http://gborg.postgresql.org">http://gborg.postgresql.org</>
+        where they can be developed and released independently.
        </para>
       </listitem>
      </varlistentry>
@@ -140,8 +147,8 @@ worries about funny characters.
       <term>Functions/Identifiers</term>
       <listitem>
        <para>
-           By default, functions can now take up to 32 parameters, and 
-           identifiers can be up to 63 bytes long.
+        By default, functions can now take up to 32 parameters, and
+        identifiers can be up to 63 bytes long.
        </para>
       </listitem>
      </varlistentry>
@@ -154,16 +161,13 @@ worries about funny characters.
    <title>Migration to version 7.3</title>
 
    <para>
-   A dump/restore using <command>pg_dump</> is required for those
-   wishing to migrate data from any previous release. If your
-   application examines the system catalogs, additional changes will be
-   required due to the introduction of schemas in 7.3; for more
-   information, see:
-
-    <ulink
-     url="http://www.ca.postgresql.org/docs/momjian/upgrade_tips_7.3">
-     http://www.ca.postgresql.org/docs/momjian/upgrade_tips_7.3</>
-
+    A dump/restore using <application>pg_dump</> is required for those
+    wishing to migrate data from any previous release. If your
+    application examines the system catalogs, additional changes will
+    be required due to the introduction of schemas in 7.3; for more
+    information, see: <ulink
+    url="http://www.ca.postgresql.org/docs/momjian/upgrade_tips_7.3">
+    http://www.ca.postgresql.org/docs/momjian/upgrade_tips_7.3</>.
    </para>
 
    <para>
@@ -178,66 +182,69 @@ worries about funny characters.
 
      <listitem>
       <para>
-       pg_hba.conf now has a USER column and additional features.
+       <filename>pg_hba.conf</filename> now has a column for the user
+       name and additional features.  Existing files need to be
+       adjusted.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Several GUC logging parameters have been renamed and improved.
+       Several <filename>postgresql.conf</filename> logging parameters
+       have been renamed and improved.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       LIMIT #,# is disabled, use LIMIT # OFFSET #.
+       <literal>LIMIT #,#</literal> has been disabled; use
+       <literal>LIMIT # OFFSET #</literal>.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       INSERTs with column lists must specify all values, e.g. 
-       INSERT INTO tab (col1, col2) VALUES ('val1') is now invalid.
+       <command>INSERT</command> statements with column lists must
+       specify all values; e.g., <literal>INSERT INTO tab (col1, col2)
+       VALUES ('val1')</literal> is now invalid.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       DROP object now takes either CASCADE or RESTRICT to control
-       whether dependent objects are also dropped.
+       An index is now not automatically created for <type>serial</type> columns.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       An index is now not automatically created for SERIAL columns.
+       A <command>SET</command> command inside an aborted transaction
+       is now rolled back.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       A SET inside an aborted transaction is now rolled back.
+       <command>COPY</command> no longer considers missing trailing
+       columns to be null.  All columns need to be specified.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       COPY no longer considers missing trailing columns to be NULL.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       TIMESTAMP and TIME data types now default to WITHOUT TIMEZONE.
+       The data type <type>timestamp</type> is now equivalent to
+       <type>timestamp without timezone</type>, instead of
+       <type>timestamp with timezone</type>.
       </para>
      </listitem>
 
      <listitem>
       <para>
        Pre-7.3 databases loaded into 7.3 will not have the new object
-       dependencies for SERIAL, UNIQUE constraints, and foreign keys. See
-       /contrib/adddepend for a detailed description and a script that
-       will add the such dependencies.
+       dependencies for <type>serial</type> columns, unique
+       constraints, and foreign keys. See the directory
+       <filename>contrib/adddepend/</filename> for a detailed
+       description and a script that will add the such dependencies.
       </para>
      </listitem>
 
@@ -252,11 +259,11 @@ worries about funny characters.
    <sect3>
     <title>Server Operation</title>
 <literallayout>
-Kerberos V Heimdal support (KTH)
 Add pg_locks view to show locks (Neil)
 Security fixes for password negotiation memory allocation (Neil)
-Remove support for version 0, &lt;=6.2 FE/BE protocol (Tom)
-Reserve the last few backend slots for superusers, add GUC variable
+Remove support for version 0 FE/BE protocol (PostgreSQL 6.2 and
+  earlier) (Tom)
+Reserve the last few backend slots for superusers, add parameter
   superuser_reserved_connections to control this (Nigel J. Andrews)
 </literallayout>
    </sect3>
@@ -265,22 +272,26 @@ Reserve the last few backend slots for superusers, add GUC variable
     <title>Performance</title>
 <literallayout>
 Improve startup by calling localtime() only once (Tom)
-Cache system catalog information in flat files for faster startup (Tom)
+Cache system catalog information in flat files for faster startup
+  (Tom)
 Improve caching of index information (Tom)
 Optimizer improvements (Tom, Fernando Nasser)
 Catalog caches now store failed lookups (Tom)
 Hash function improvements (Neil)
 Improve performance of query tokenization and network handling (Peter)
 Speed improvement for large object restore (Mario Weilguni)
-Mark expired index entries on first lookup, saving later heap fetches (Tom)
+Mark expired index entries on first lookup, saving later heap fetches
+  (Tom)
 Eliminate NULL bitmap padding when not required (Manfred)
 Add BSD-licensed qsort() for Solaris, for performance (Bruce)
 Reduce per-row overhead by four bytes (Manfred Koizar)
 Fix GEQO optimizer bug (Neil Conway)
 Make WITHOUT OID actually save four bytes per row (Manfred Koizar)
-Add GUC default_statistics_target variable to specify ANALYZE buckets (Neil)
+Add default_statistics_target variable to specify ANALYZE buckets
+  (Neil)
 Use local buffer cache for temporary tables so no WAL overhead (Tom)
-Improve free space map performance on large tables (Stephen Marshall, Tom)
+Improve free space map performance on large tables (Stephen Marshall,
+  Tom)
 Improved WAL write concurrency (Tom)
 </literallayout>
    </sect3>
@@ -292,15 +303,10 @@ Add privileges on functions and procedural languages (Peter)
 Add OWNER to CREATE DATABASE so superusers can create databases
   on behalf of unprivileged users.  (Gavin Sherry, Tom)
 Add new object permission bits EXECUTE and USAGE (Tom)
-Add SET SESSION AUTHORIZATION DEFAULT and RESET SESSION AUTHORIZATION (Peter)
-Allow functions to be executed with the privilege of the function owner (Peter)
-</literallayout>
-   </sect3>
-
-   <sect3>
-    <title>Client Authentication</title>
-<literallayout>
-Allow $HOME/.pgpass to store host/user password combinations (Alvaro Herrera)
+Add SET SESSION AUTHORIZATION DEFAULT and RESET SESSION AUTHORIZATION
+  (Tom)
+Allow functions to be executed with the privilege of the function
+  owner (Peter)
 </literallayout>
    </sect3>
 
@@ -308,26 +314,30 @@ Allow $HOME/.pgpass to store host/user password combinations (Alvaro Herrera)
     <title>Server Configuration</title>
 <literallayout>
 Server log messages now tagged with LOG, not DEBUG (Bruce)
-Add USER column to pg_hba.conf (Bruce)
+Add user column to pg_hba.conf (Bruce)
 Have log_connections output two lines in log file (Tom)
-Remove debug_level from postgresql.conf, now SERVER_MIN_MESSAGES (Bruce)
-New ALTER DATABASE/USER ... SET command for per-user/db initialization (Peter)
-New GUC variables server_min_messages and client_min_messages which control
-  which messages are sent to the server logs or client applications (Bruce)
-Allow pg_hba.conf to specify lists of users/dbs separated by commas, 
-  group names prepended with +, and file names prepended with @ (Bruce)
-Allow group names specified by +
-Add samegroup in pg_hba.conf for group name/dbname restriction (Bruce)
-Remove secondary password file capability (Bruce)
-Remove pg_passwd utility (Bruce)
-Add GUC variable db_user_namespace for db-local user names (Bruce)
+Remove debug_level from postgresql.conf, now server_min_messages
+  (Bruce)
+New ALTER DATABASE/USER ... SET command for per-user/database
+   initialization (Peter)
+New parameters server_min_messages and client_min_messages to
+  control which messages are sent to the server logs or client
+  applications (Bruce)
+Allow pg_hba.conf to specify lists of users/databases separated by
+  commas, group names prepended with +, and file names prepended
+  with @ (Bruce)
+Remove secondary password file capability and pg_password utility
+  (Bruce)
+Add variable db_user_namespace for database-local user names (Bruce)
 SSL improvements (Bear Giles)
 Make encryption of stored passwords the default (Bruce)
-Allow pg_statistics to be reset by calling pg_stat_reset() (Christopher)
-Add log_duration GUC parameter (Bruce)
-Rename GUC debug_print_query to log_statement (Bruce)
-Rename GUC show_query_stats to show_statement_stats (Bruce)
-Add GUC param log_min_error_statement to print query to logs on error (Gavin)
+Allow pg_statistics to be reset by calling pg_stat_reset()
+  (Christopher)
+Add log_duration parameter (Bruce)
+Rename debug_print_query to log_statement (Bruce)
+Rename show_query_stats to show_statement_stats (Bruce)
+Add param log_min_error_statement to print commands to logs on error
+  (Gavin)
 </literallayout>
    </sect3>
 
@@ -338,10 +348,12 @@ Make cursors insensitive, meaning their contents do not change (Tom)
 Disable LIMIT #,# syntax; now only LIMIT # OFFSET # supported (Bruce)
 Increase identifier length to 63 (Neil, Bruce)
 UNION fixes for merging >= 3 columns of different lengths (Tom)
-Add DEFAULT keyword to INSERT, i.e INSERT ... (..., DEFAULT, ) (Rod)
-Allow views to have default values using ALTER COLUMN ... SET DEFAULT (Neil)
-Fail on INSERTs with column lists that don't supply all column values,
-  e.g. INSERT INTO tab (col1, col2) VALUES ('val1');  (Rod)
+Add DEFAULT keyword to INSERT, e.g., INSERT ... (..., DEFAULT, )
+  (Rod)
+Allow views to have default values using ALTER COLUMN ... SET DEFAULT
+  (Neil)
+Fail on INSERTs with column lists that don't supply all column
+  values, e.g., INSERT INTO tab (col1, col2) VALUES ('val1');  (Rod)
 Fix for join aliases (Tom)
 Fix for FULL OUTER JOINs (Tom)
 Improve reporting of invalid identifier and location (Tom, Gavin)
@@ -349,10 +361,10 @@ Fix OPEN cursor(args) (Tom)
 Allow 'ctid' to be used in a view and currtid(viewname) (Hiroshi)
 Fix for CREATE TABLE AS with UNION (Tom)
 SQL99 syntax improvements (Thomas)
-Add GUC statement_timeout variable to cancel queries (Bruce)
+Add statement_timeout variable to cancel queries (Bruce)
 Allow prepared queries with PREPARE/EXECUTE (Neil)
 Allow FOR UPDATE to appear after LIMIT/OFFSET (Bruce)
-Add auto-transactions with GUC variable autocommit (Tom, David Van Wie)
+Add variable autocommit (Tom, David Van Wie)
 </literallayout>
    </sect3>
 
@@ -361,55 +373,63 @@ Add auto-transactions with GUC variable autocommit (Tom, David Van Wie)
 <literallayout>
 Make equals signs optional in CREATE DATABASE (Gavin Sherry)
 Make ALTER TABLE OWNER to change index ownership (Neil)
-Add per-database and per-user startup commands, ALTER DATABASE ... SET and 
-  ALTER USER ... SET (Peter)
-New ALTER TABLE tabname ALTER COLUMN colname SET STORAGE controls TOAST
-  storage, compression (John Gray)
-Add SCHEMA support with CREATE/DROP SCHEMA (Tom)
+New ALTER TABLE tabname ALTER COLUMN colname SET STORAGE controls
+  TOAST storage, compression (John Gray)
+Add schema support, CREATE/DROP SCHEMA (Tom)
 Create schema for temporary tables (Tom)
-Add GUC variable search_path for namespace schema search (Tom)
+Add variable search_path for schema search (Tom)
 Add ALTER TABLE SET/DROP NOT NULL (Christopher)
 New CREATE FUNCTION volatility levels (Tom)
 Make rule names unique only per table (Tom)
 Add 'ON tablename' clause to DROP RULE and COMMENT ON RULE (Tom)
 Add ALTER TRIGGER RENAME (Joe)
 New current_schema() and current_schemas() inquiry functions (Tom)
-Allow functions to return multiple rows, also called table functions (Joe)
+Allow functions to return multiple rows (table functions) (Joe)
 Make WITH optional in CREATE DATABASE, for consistency (Bruce)
 Add object dependency tracking (Rod, Tom)
 Add RESTRICT/CASCADE to DROP commands (Rod)
-Add ALTER TABLE DROP non-CHECK CONSTRAINT (Rod)
-Auto-destroy sequence on DROP of table with SERIAL (Rod)
+Add ALTER TABLE DROP for non-CHECK CONSTRAINT (Rod)
+Autodestroy sequence on DROP of table with SERIAL (Rod)
 Prevent column dropping if column is used by foreign key (Rod)
 Automatically drop constraints/functions when object is dropped (Rod)
 Add CREATE/DROP OPERATOR CLASS (Bill Studenmund, Tom)
 Add ALTER TABLE DROP COLUMN (Christopher, Tom, Hiroshi)
-Prevent inherited columns from being removed or renamed (Alvaro Herrera)
-Fix foreign key constraints to not error on intermediate db states (Stephan)
+Prevent inherited columns from being removed or renamed (Alvaro
+  Herrera)
+Fix foreign key constraints to not error on intermediate database
+  states (Stephan)
 Propagate column or table renaming to foreign key constraints
 Add CREATE OR REPLACE VIEW (Gavin, Neil, Tom)
 Add CREATE OR REPLACE RULE (Gavin, Neil, Tom)
-Have rules execute alphabetically, returning more accurate values (Tom)
+Have rules execute alphabetically, returning more predictable values
+  (Tom)
+Triggers are now fired in alphabetical order (Tom)
+Add /contrib/adddepend to handle pre-7.3 object dependencies (Rod)
+Allow better casting when inserting/updating values (Tom)
 </literallayout>
    </sect3>
 
    <sect3>
     <title>Utility Commands</title>
 <literallayout>
-Have COPY TO output embedded carriage returns and newlines as \r and \n (Tom)
+Have COPY TO output embedded carriage returns and newlines as \r and
+  \n (Tom)
 Allow DELIMITER in COPY FROM to be 8-bit clean (Tatsuo)
 Make pg_dump use ALTER TABLE ADD PRIMARY KEY, for performance (Neil)
-Disable brackets in multi-statement rules (Bruce)
+Disable brackets in multistatement rules (Bruce)
 Disable VACUUM from being called inside a function (Bruce)
 Allow dropdb and other scripts to use identifiers with spaces (Bruce)
-Restrict comment to the current database
-Allow comments on operators, independent of the underlying function (Rod)
+Restrict database comment changes to the current database
+Allow comments on operators, independent of the underlying function
+  (Rod)
 Rollback SET commands in aborted transactions (Tom)
 EXPLAIN now outputs as a query (Tom)
 Display sort keys in EXPLAIN (Tom)
-Add 'SET LOCAL var = value' to set GUC variables for a single transaction (Tom)
+Add 'SET LOCAL var = value' to set configuration variables for a
+  single transaction (Tom)
 Allow ANALYZE to run in a transaction (Bruce)
-Improve COPY syntax using new WITH clauses, keep backward compatibility (Bruce)
+Improve COPY syntax using new WITH clauses, keep backward
+  compatibility (Bruce)
 Fix pg_dump to consistently output tags in non-ASCII dumps (Bruce)
 Make foreign key constraints clearer in dump file (Rod)
 Add COMMENT ON CONSTRAINT (Rod)
@@ -421,11 +441,13 @@ Fix CLUSTER to preserve all table attributes (Alvaro Herrera)
 New pg_settings table to view/modify GUC settings (Joe)
 Add smart quoting, portability improvements to pg_dump output (Peter)
 Dump serial columns out as SERIAL (Tom)
-Enable large file support, >2G for pg_dump (Peter, Philip Warner, Bruce)
-Disallow TRUNCATE on tables that are involved in referential constraints (Rod)
+Enable large file support, >2G for pg_dump (Peter, Philip Warner,
+  Bruce)
+Disallow TRUNCATE on tables that are involved in referential
+  constraints (Rod)
 Have TRUNCATE also auto-truncate the toast table of the relation (Tom)
-Add clusterdb utility that will auto-cluster an entire database based on
-  previous CLUSTER operations (Alvaro Herrera)
+Add clusterdb utility that will auto-cluster an entire database
+  based on previous CLUSTER operations (Alvaro Herrera)
 Overhaul pg_dumpall (Peter)
 Allow REINDEX of TOAST tables (Tom)
 Implemented START TRANSACTION, per SQL99 (Neil)
@@ -440,34 +462,41 @@ Fix ALTER TABLE ... ADD COLUMN for inheritance (Alvaro Herrera)
 Fix factorial(0) to return 1 (Bruce)
 Date/time/timezone improvements (Thomas)
 Fix for array slice extraction (Tom)
-Fix extract/date_part to report proper microseconds for timestamp (Tatsuo)
+Fix extract/date_part to report proper microseconds for timestamp
+  (Tatsuo)
 Allow text_substr() and bytea_substr() to read TOAST values more
   efficiently (John Gray)
-Add DOMAIN type support (Rod)
-Make WITHOUT TIME ZONE the default for TIMESTAMP and TIME data types (Thomas)
+Add domain support (Rod)
+Make WITHOUT TIME ZONE the default for TIMESTAMP and TIME data types
+  (Thomas)
 Allow alternate storage scheme of 64-bit integers for date/time types
   using --enable-integer-datetimes in configure (Thomas)
-Make timezone(timestamptz) return timestamp rather than a string (Thomas)
-Allow fractional seconds in date/time types for dates prior to 1BC (Thomas)
+Make timezone(timestamptz) return timestamp rather than a string
+  (Thomas)
+Allow fractional seconds in date/time types for dates prior to 1BC
+  (Thomas)
 Limit timestamp data types to 6 decimal places of precision (Thomas)
-Change timezone conversion functions from timetz() to timezone() (Thomas)
-Add GUC variables datestyle and timezone (Tom)
-Add OVERLAY(), which allows substitution of a substring in a string (Thomas)
-Add SIMILAR TO as a synonym for our existing operator "~" (Thomas, Tom)
+Change timezone conversion functions from timetz() to timezone()
+  (Thomas)
+Add configuration variables datestyle and timezone (Tom)
+Add OVERLAY(), which allows substitution of a substring in a string
+  (Thomas)
+Add SIMILAR TO (Thomas, Tom)
 Add regular expression SUBSTRING(string FROM pat FOR escape) (Thomas)
 Add LOCALTIME and LOCALTIMESTAMP functions (Thomas)
-Add named composite types using CREATE TYPE typename AS (column) (Joe)
+Add named composite types using CREATE TYPE typename AS (column)
+  (Joe)
 Allow composite type definition in the table alias clause (Joe)
 Add new API to simplify creation of C language table functions (Joe)
-Remove ODBC-compatible empty parentheses from calls to SQL99 functions
- for which these parentheses do not match the standar (Thomas)
-Add appendix in the User's Guide which lists SQL92 features (Thomas)
-Allow macaddr data type to accept 12 hex digits with no separators (Mike Wyer)
-Add CREATE/DROP CAST (Thomas)
+Remove ODBC-compatible empty parentheses from calls to SQL99
+  functions for which these parentheses do not match the standard
+  (Thomas)
+Allow macaddr data type to accept 12 hex digits with no separators
+  (Mike Wyer)
+Add CREATE/DROP CAST (Peter)
 Add IS DISTINCT FROM operator (Thomas)
 Add SQL99 TREAT() function, synonym for CAST() (Thomas)
 Add pg_backend_pid() to output backend pid (Bruce)
-Allow inet arrays in /contrib/array (Neil)
 Add IS OF / IS NOT OF type predicate (Thomas)
 Allow bit string constants without fully-specified length (Thomas)
 Allow conversion between 8-byte integers and bit strings (Thomas)
@@ -479,30 +508,33 @@ Add current_database() (Rod)
 Fix cash_words() to not overflow buffer (Tom)
 Add functions replace(), split_part(), to_hex() (Joe)
 Fix LIKE for bytea as a right-hand argument (Joe)
-Prevent crashes caused by SELECT cash_out(2)
-Triggers are now fired in alphabetical order (Tom)
-Add /contrib/adddepend to handle pre-7.3 object dependencies (Rod)
-Allow better casting when INSERTing/UPDATing values (Tom)
+Prevent crashes caused by SELECT cash_out(2) (Tom)
 Fix to_char(1,'FM999.99') to return a period (Karel)
-Fix trigger/type/language functions returning OPAQUE to return proper type (Tom)
+Fix trigger/type/language functions returning OPAQUE to return
+  proper type (Tom)
 </literallayout>
    </sect3>
 
    <sect3>
     <title>Internationalization</title>
 <literallayout>
-Add additional encodings (Korean (JOHAB), Thai (WIN874), Vietnamese (TCVN), 
-  Arabic (WIN1256), Simplified Chinese (GBK), Korean (UHC) (Eiji Tokuya)
+Add additional encodings (Korean (JOHAB), Thai (WIN874), Vietnamese
+  (TCVN), Arabic (WIN1256), Simplified Chinese (GBK), Korean (UHC)
+  (Eiji Tokuya)
 Enable locale support by default (Peter)
-Add GUC locale variables (Peter)
-Escape byes >= 0x7f for multibyte in PQescapeBytea/PQunescapeBytea (Tatsuo)
+Add locale variables (Peter)
+Escape byes >= 0x7f for multibyte in PQescapeBytea/PQunescapeBytea
+  (Tatsuo)
 Add locale awareness to regular expression character classes
 Enable multibyte support by default (Tatso)
-Add GUC variables client_encoding (Tom)
 Add GB18030 multibyte support (Bill Huang)
-Add CREATE/DROP CONVERSION, allowing loadable encodings (Tatsuo, Kaori)
+Add CREATE/DROP CONVERSION, allowing loadable encodings (Tatsuo,
+  Kaori)
 Add pg_conversion table (Tatsuo)
 Add SQL99 CONVERT() function (Tatsuo)
+pg_dumpall, pg_controldata, and pg_resetxlog now national-language
+  aware (Peter)
+New and updated translations
 </literallayout>
    </sect3>
 
@@ -510,8 +542,10 @@ Add SQL99 CONVERT() function (Tatsuo)
     <title>Server-side Languages</title>
 <literallayout>
 Allow recursive SQL function (Peter)
-Change PL/Tcl build to use configured compiler and Makefile.shlib (Peter)
-Overhaul the PL/pgSQL FOUND variable to be more Oracle-compatible (Tom, Neil)
+Change PL/Tcl build to use configured compiler and Makefile.shlib
+  (Peter)
+Overhaul the PL/pgSQL FOUND variable to be more Oracle-compatible
+  (Tom, Neil)
 Allow PL/pgSQL to handle quoted identifiers (Tom)
 Allow set-returning PL/pgSQL functions (Neil)
 Make PL/pgSQL schema-aware (Joe)
@@ -522,7 +556,8 @@ Remove some memory leaks (Nigel J. Andrews, Tom)
    <sect3>
     <title>Psql</title>
 <literallayout>
-Don't lowercase psql \connect database name for 7.2.0 compatibility (Tom)
+Don't lowercase psql \connect database name for 7.2.0 compatibility
+  (Tom)
 Add psql \timing to time user queries (Greg Sabino Mullane)
 Have psql \d show index information (Greg Sabino Mullane)
 New psql \dD shows domains (Jonathan Eisler)
@@ -539,10 +574,14 @@ Allow \copy to specify column names (Tom)
    <sect3>
     <title>Libpq</title>
 <literallayout>
+Add $HOME/.pgpass to store host/user password combinations (Alvaro
+  Herrera)
 Add PQunescapeBytea() function to libpq (Patrick Welche)
-Fix for sending large queries over non-blocking connections (Bernhard Herzog)
+Fix for sending large queries over non-blocking connections
+  (Bernhard Herzog)
 Fix for libpq using timers on Win9X (David Ford)
-Allow libpq notify to handle servers with different-length identifiers (Tom)
+Allow libpq notify to handle servers with different-length
+  identifiers (Tom)
 Add libpq PQescapeString() and PQescapeBytea() to Win32 (Bruce)
 Fix for SSL with non-blocking connections (Jack Bates)
 Add libpq connection timeout parameter (Denis A Ustimenko)
@@ -552,73 +591,73 @@ Add libpq connection timeout parameter (Denis A Ustimenko)
    <sect3>
     <title>JDBC</title>
 <literallayout>
-Allow jdbc to compile with jdk 1.4 (Dave)
-Add jdbc3 support (Barry)
-Allows jdbc to set loglevel by adding ?loglevel=X to the connection URL (Barry)
-Add jdbc Driver.info() message that prints out the version number (Barry)
-Add jdbc updateable result sets (Raghu Nidagal, Dave)
-Add jdbc support for callable statements (Paul Bethe)
-Add jdbc query cancel capability
-Add refresh row to jdbc (Dave)
-Fix jdbc MD5 encryption handling for multibyte servers (Jun Kawai)
-Add JDBC support for prepared statements (Barry)
-</literallayout>
-   </sect3>
-
-   <sect3>
-    <title>ECPG</title>
-<literallayout>
-Fixed ecpg bug concerning octal numbers in single quotes (Michael)
+Allow JDBC to compile with JDK 1.4 (Dave)
+Add JDBC 3 support (Barry)
+Allows JDBC to set loglevel by adding ?loglevel=X to the connection
+  URL (Barry)
+Add Driver.info() message that prints out the version number (Barry)
+Add updateable result sets (Raghu Nidagal, Dave)
+Add support for callable statements (Paul Bethe)
+Add query cancel capability
+Add refresh row (Dave)
+Fix MD5 encryption handling for multibyte servers (Jun Kawai)
+Add support for prepared statements (Barry)
 </literallayout>
    </sect3>
 
    <sect3>
     <title>Miscellaneous Interfaces</title>
 <literallayout>
-Move /interfaces/libpgeasy to http://gborg.postgresql.org (Marc, Bruce)
-Improve python (Elliot Lee, Andrew Johnson, Greg Copeland)
+Fixed ECPG bug concerning octal numbers in single quotes (Michael)
+Move src/interfaces/libpgeasy to http://gborg.postgresql.org (Marc,
+  Bruce)
+Improve Python interface (Elliot Lee, Andrew Johnson, Greg Copeland)
 Add libpgtcl connection close event (Gerhard Hintermayer)
-Move /interfaces/libpq++ to http://gborg.postgresql.org (Marc, Bruce)
-Move /interfaces/odbc to http://gborg.postgresql.org (Marc)
-Move /interfaces/libpgeasy to http://gborg.postgresql.org (Marc, Bruce)
-Move /interfaces/perl5 to http://gborg.postgresql.org (Marc, Bruce)
-Remove /bin/pgaccess from main tree, now at http://www.pgaccess.org (Bruce)
-Add pg_on_connection_loss command to libpgtcl (Gerhard Hintermayer, Tom)
-</literallayout>
-   </sect3>
-
-   <sect3>
-    <title>Build and Install</title>
-<literallayout>
-Fix for parallel make (Peter)
-AIX fixes for linking TCL (Andreas Zeugswetter)
-Allow plperl to build under Cygwin (Jason Tishler)
-Improve MIPS compiles (Peter, Oliver Elphick)
-Require autoconf version 2.53 (Peter)
-Require readline and zlib by default in configure (Peter)
-Allow Solaris to use Intimate Shared Memory (ISM), for performance
-  (Scott Brunza, P.J. Josh Rovero)
-Always enable syslog in compile, remove --enable-syslog option (Tatsuo)
-Always enable multibyte in compile, remove --enable-multibyte option (Tatsuo)
-Always enable locale in compile, remove --enable-locale option (Tatsuo)
-Fix for Win9x DLL creation (Magnus Naeslund)
-Fix for link() usage by WAL code on Win32, Netware, BeOS (Jason Tishler)
-Add sys/types.h to c.h, remove from main files (Peter, Bruce)
-Fix AIX hang on SMP machines (Tomoyuki Niijima)
-AIX SMP hang fix (Tomoyuki Niijima)
-Fix pre-1970 date handling on newer glibc libraries (Tom)
-Fix PowerPC SMP locking (Tom)
-Prevent gcc -ffast-math from being used (Tom)
-Bison &gt;= 1.50 now required for developer builds
+Move src/interfaces/libpq++ to http://gborg.postgresql.org (Marc,
+  Bruce)
+Move src/interfaces/odbc to http://gborg.postgresql.org (Marc)
+Move src/interfaces/libpgeasy to http://gborg.postgresql.org (Marc,
+  Bruce)
+Move src/interfaces/perl5 to http://gborg.postgresql.org (Marc,
+  Bruce)
+Remove src/bin/pgaccess from main tree, now at
+  http://www.pgaccess.org (Bruce)
+Add pg_on_connection_loss command to libpgtcl (Gerhard Hintermayer,
+  Tom)
 </literallayout>
    </sect3>
 
    <sect3>
     <title>Source Code</title>
 <literallayout>
+Fix for parallel make (Peter)
+AIX fixes for linking Tcl (Andreas Zeugswetter)
+Allow PL/Perl to build under Cygwin (Jason Tishler)
+Improve MIPS compiles (Peter, Oliver Elphick)
+Require Autoconf version 2.53 (Peter)
+Require readline and zlib by default in configure (Peter)
+Allow Solaris to use Intimate Shared Memory (ISM), for performance
+  (Scott Brunza, P.J. Josh Rovero)
+Always enable syslog in compile, remove --enable-syslog option
+  (Tatsuo)
+Always enable multibyte in compile, remove --enable-multibyte option
+  (Tatsuo)
+Always enable locale in compile, remove --enable-locale option
+  (Peter)
+Fix for Win9x DLL creation (Magnus Naeslund)
+Fix for link() usage by WAL code on Win32, BeOS (Jason Tishler)
+Add sys/types.h to c.h, remove from main files (Peter, Bruce)
+Fix AIX hang on SMP machines (Tomoyuki Niijima)
+AIX SMP hang fix (Tomoyuki Niijima)
+Fix pre-1970 date handling on newer glibc libraries (Tom)
+Fix PowerPC SMP locking (Tom)
+Prevent gcc -ffast-math from being used (Peter, Tom)
+Bison &gt;= 1.50 now required for developer builds
+Kerberos 5 support now builds with Heimdal (Peter)
+Add appendix in the User's Guide which lists SQL features (Thomas)
 Improve loadable module linking to use RTLD_NOW (Tom)
 New error levels WARNING, INFO, LOG, DEBUG[1-5] (Bruce)
-New src/port directory holds replace libc functions (Peter, Bruce)
+New src/port directory holds replaced libc functions (Peter, Bruce)
 New pg_namespace system catalog for schemas (Tom)
 Add pg_class.relnamespace for schemas (Tom)
 Add pg_type.typnamespace for schemas (Tom)
@@ -632,7 +671,8 @@ Add additional checks to server control file (Thomas)
 New Polish FAQ (Marcin Mazurek)
 Add Posix semaphore support (Tom)
 Document need for reindex (Bruce)
-Rename some internal identifiers to simplify Win32 compile (Jan, Katherine Ward)
+Rename some internal identifiers to simplify Win32 compile (Jan,
+  Katherine Ward)
 Add documentation on computing disk space (Bruce)
 Remove KSQO from GUC (Bruce)
 Fix memory leak in rtree (Kenneth Been)
@@ -643,7 +683,7 @@ Clean up use of sprintf in favor of snprintf() (Neil, Jukka Holappa)
 Remove OPAQUE and create specific subtypes (Tom)
 Cleanups in array internal handling (Joe, Tom)
 Disallow pg_atoi('') (Bruce)
-Remove GUC parameter wal_files because WAL files are now recycled (Bruce)
+Remove parameter wal_files because WAL files are now recycled (Bruce)
 Add version numbers to heap pages (Tom)
 </literallayout>
    </sect3>
@@ -651,24 +691,26 @@ Add version numbers to heap pages (Tom)
    <sect3>
     <title>Contrib</title>
 <literallayout>
+Allow inet arrays in /contrib/array (Neil)
 Gist fixes (Teodor Sigaev, Neil)
 Upgrade /contrib/mysql
 Add /contrib/dbsize which shows table sizes without vacuum (Peter)
 Add /contrib/intagg, integer aggregator routines (mlw)
-Improve /contrib/Oid2name (Neil, Bruce)
-Improve /contrib/tsearch (Teodor Sigaev)
-Improve /contrib/tsearch (Oleg)
+Improve /contrib/oid2name (Neil, Bruce)
+Improve /contrib/tsearch (Oleg, Teodor Sigaev)
 Cleanups of /contrib/rserver (Alexey V. Borzov)
 Update /contrib/oracle conversion utility (Gilles Darold)
 Update /contrib/dblink (Joe)
 Improve options supported by /contrib/vacuumlo (Mario Weilguni)
-Improvements to /contrib/intarray (Oleg, Teodor Sigaev, Andrey Oktyabrski)
+Improvements to /contrib/intarray (Oleg, Teodor Sigaev, Andrey
+  Oktyabrski)
 Add /contrib/reindexdb utility (Shaun Thomas)
 Add indexing to /contrib/isbn_issn (Dan Weston)
 Add /contrib/dbmirror (Steven Singer)
 Improve /contrib/pgbench (Neil)
 Add /contrib/tablefunc table function examples (Joe)
-Add /contrib/ltree data type for tree structures (Teodor Sigaev, Oleg Bartunov)
+Add /contrib/ltree data type for tree structures (Teodor Sigaev,
+  Oleg Bartunov)
 Move /contrib/pg_controldata into main tree (Bruce)
 Fixes to /contrib/cube (Bruno Wolff)
 Improve /contrib/fulltextindex (Christopher)
