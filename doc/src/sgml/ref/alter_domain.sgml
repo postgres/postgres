@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.5 2002/12/06 05:07:16 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.6 2002/12/06 16:40:13 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -192,25 +192,25 @@ ALTER DOMAIN <replaceable class="PARAMETER">domain</replaceable>
    Usage
   </title>
   <para>
-   To add a NOT NULL constraint to a column:
+   To add a NOT NULL constraint to a domain:
    <programlisting>
 ALTER DOMAIN zipcode SET NOT NULL;
    </programlisting>
-   To remove a NOT NULL constraint from a column:
+   To remove a NOT NULL constraint from a domain:
    <programlisting>
 ALTER DOMAIN zipcode DROP NOT NULL;
    </programlisting>
   </para>
 
   <para> 
-   To add a check constraint to a table:
+   To add a check constraint to a domain:
    <programlisting>
 ALTER DOMAIN zipcode ADD CONSTRAINT zipchk CHECK (char_length(VALUE) = 5);
    </programlisting>
   </para>
 
   <para> 
-   To remove a check constraint from a table and all its children:
+   To remove a check constraint from a domain:
    <programlisting>
 ALTER DOMAIN zipcode DROP CONSTRAINT zipchk;
    </programlisting>
