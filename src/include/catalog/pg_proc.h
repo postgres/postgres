@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.139 2000/06/13 07:35:19 tgl Exp $
+ * $Id: pg_proc.h,v 1.140 2000/06/17 23:41:51 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -677,7 +677,7 @@ DATA(insert OID = 321 (  rtdelete		   PGUID 12 f t f t 2 f 23 "0 0" 100 0 0 100 
 DESCR("r-tree(internal)");
 DATA(insert OID = 322 (  rtgettuple		   PGUID 12 f t f t 2 f 23 "0 0" 100 0 0 100  rtgettuple - ));
 DESCR("r-tree(internal)");
-DATA(insert OID = 323 (  rtbuild		   PGUID 12 f t f t 9 f 23 "0 0 0 0 0 0 0 0 0" 100 0 0 100  rtbuild - ));
+DATA(insert OID = 323 (  rtbuild		   PGUID 12 f t f t 8 f 23 "0 0 0 0 0 0 0 0" 100 0 0 100  rtbuild - ));
 DESCR("r-tree(internal)");
 DATA(insert OID = 324 (  rtbeginscan	   PGUID 12 f t f t 4 f 23 "0 0 0 0" 100 0 0 100  rtbeginscan - ));
 DESCR("r-tree(internal)");
@@ -706,7 +706,7 @@ DATA(insert OID = 336 (  btmarkpos		   PGUID 12 f t f t 1 f 23 "0" 100 0 0 100  
 DESCR("btree(internal)");
 DATA(insert OID = 337 (  btrestrpos		   PGUID 12 f t f t 1 f 23 "0" 100 0 0 100  btrestrpos - ));
 DESCR("btree(internal)");
-DATA(insert OID = 338 (  btbuild		   PGUID 12 f t f t 9 f 23 "0 0 0 0 0 0 0 0 0" 100 0 0 100  btbuild - ));
+DATA(insert OID = 338 (  btbuild		   PGUID 12 f t f t 8 f 23 "0 0 0 0 0 0 0 0" 100 0 0 100  btbuild - ));
 DESCR("btree(internal)");
 
 DATA(insert OID = 339 (  poly_same		   PGUID 11 f t t t 2 f 16 "604 604" 100 0 1 0  poly_same - ));
@@ -814,7 +814,7 @@ DATA(insert OID = 446 (  hashmarkpos	   PGUID 12 f t f t 1 f 23 "0" 100 0 0 100 
 DESCR("hash(internal)");
 DATA(insert OID = 447 (  hashrestrpos	   PGUID 12 f t f t 1 f 23 "0" 100 0 0 100  hashrestrpos - ));
 DESCR("hash(internal)");
-DATA(insert OID = 448 (  hashbuild		   PGUID 12 f t f t 9 f 23 "0 0 0 0 0 0 0 0 0" 100 0 0 100  hashbuild - ));
+DATA(insert OID = 448 (  hashbuild		   PGUID 12 f t f t 8 f 23 "0 0 0 0 0 0 0 0" 100 0 0 100  hashbuild - ));
 DESCR("hash(internal)");
 DATA(insert OID = 449 (  hashint2		   PGUID 12 f t t t 1 f 23 "21" 100 0 0 100  hashint2 - ));
 DESCR("hash");
@@ -1040,7 +1040,7 @@ DATA(insert OID = 780 (  gistmarkpos	   PGUID 12 f t f t 1 f 23 "0" 100 0 0 100 
 DESCR("gist(internal)");
 DATA(insert OID = 781 (  gistrestrpos	   PGUID 12 f t f t 1 f 23 "0" 100 0 0 100  gistrestrpos - ));
 DESCR("gist(internal)");
-DATA(insert OID = 782 (  gistbuild		   PGUID 12 f t f t 9 f 23 "0 0 0 0 0 0 0 0 0" 100 0 0 100  gistbuild - ));
+DATA(insert OID = 782 (  gistbuild		   PGUID 12 f t f t 8 f 23 "0 0 0 0 0 0 0 0" 100 0 0 100  gistbuild - ));
 DESCR("gist(internal)");
 
 DATA(insert OID = 784 (  tintervaleq	   PGUID 12 f t f t 2 f 16 "704 704" 100 0 0 100	tintervaleq - ));

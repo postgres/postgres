@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.55 2000/06/15 03:32:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.56 2000/06/17 23:41:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,7 +273,6 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 				 natts,
 				 Old_pg_index_Form->indkey,
 				 Old_pg_index_Form->indclass,
-				 (uint16) 0, (Datum *) NULL,
 				 (Node *) NULL,	/* XXX where's the predicate? */
 				 Old_pg_index_Form->indislossy,
 				 Old_pg_index_Form->indisunique,

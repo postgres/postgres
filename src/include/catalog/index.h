@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.24 2000/06/08 22:37:39 momjian Exp $
+ * $Id: index.h,v 1.25 2000/06/17 23:41:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,8 +33,6 @@ extern void index_create(char *heapRelationName,
 			 int numatts,
 			 AttrNumber *attNums,
 			 Oid *classObjectId,
-			 uint16 parameterCount,
-			 Datum *parameter,
 			 Node *predicate,
 			 bool islossy,
 			 bool unique,
@@ -57,12 +55,11 @@ extern void FillDummyExprContext(ExprContext *econtext, TupleTableSlot *slot,
 					 TupleDesc tupdesc, Buffer buffer);
 
 extern void index_build(Relation heapRelation, Relation indexRelation,
-			int numberOfAttributes, AttrNumber *attributeNumber,
-		uint16 parameterCount, Datum *parameter, FuncIndexInfo *funcInfo,
-			PredInfo *predInfo);
+						int numberOfAttributes, AttrNumber *attributeNumber,
+						FuncIndexInfo *funcInfo, PredInfo *predInfo,
+						bool unique);
 
 extern bool IndexIsUnique(Oid indexId);
-extern bool IndexIsUniqueNoCache(Oid indexId);
 
 extern bool reindex_index(Oid indexId, bool force);
 extern bool activate_indexes_of_a_table(Oid relid, bool activate);

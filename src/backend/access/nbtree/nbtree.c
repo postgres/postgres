@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.58 2000/06/15 04:09:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.59 2000/06/17 23:41:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,13 +47,12 @@ btbuild(PG_FUNCTION_ARGS)
 	Relation		index = (Relation) PG_GETARG_POINTER(1);
 	int32			natts = PG_GETARG_INT32(2);
 	AttrNumber	   *attnum = (AttrNumber *) PG_GETARG_POINTER(3);
+	FuncIndexInfo  *finfo = (FuncIndexInfo *) PG_GETARG_POINTER(4);
+	PredInfo	   *predInfo = (PredInfo *) PG_GETARG_POINTER(5);
+	bool			unique = PG_GETARG_BOOL(6);
 #ifdef NOT_USED
-	IndexStrategy	istrat = (IndexStrategy) PG_GETARG_POINTER(4);
-	uint16			pcount = PG_GETARG_UINT16(5);
-	Datum		   *params = (Datum *) PG_GETARG_POINTER(6);
+	IndexStrategy	istrat = (IndexStrategy) PG_GETARG_POINTER(7);
 #endif
-	FuncIndexInfo  *finfo = (FuncIndexInfo *) PG_GETARG_POINTER(7);
-	PredInfo	   *predInfo = (PredInfo *) PG_GETARG_POINTER(8);
 	HeapScanDesc hscan;
 	HeapTuple	htup;
 	IndexTuple	itup;
@@ -76,7 +75,6 @@ btbuild(PG_FUNCTION_ARGS)
 	Node	   *pred,
 			   *oldPred;
 	BTSpool    *spool = NULL;
-	bool		isunique;
 	bool		usefast;
 
 	/* note that this is a new btree */
@@ -97,9 +95,6 @@ btbuild(PG_FUNCTION_ARGS)
 	if (Show_btree_build_stats)
 		ResetUsage();
 #endif /* BTREE_BUILD_STATS */
-
-	/* see if index is unique */
-	isunique = IndexIsUniqueNoCache(RelationGetRelid(index));
 
 	/* initialize the btree index metadata page (if this is a new index) */
 	if (oldPred == NULL)
@@ -146,7 +141,7 @@ btbuild(PG_FUNCTION_ARGS)
 
 	if (usefast)
 	{
-		spool = _bt_spoolinit(index, isunique);
+		spool = _bt_spoolinit(index, unique);
 		res = (InsertIndexResult) NULL;
 	}
 
@@ -254,7 +249,7 @@ btbuild(PG_FUNCTION_ARGS)
 		if (usefast)
 			_bt_spool(btitem, spool);
 		else
-			res = _bt_doinsert(index, btitem, isunique, heap);
+			res = _bt_doinsert(index, btitem, unique, heap);
 
 		pfree(btitem);
 		pfree(itup);

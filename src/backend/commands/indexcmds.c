@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.30 2000/06/17 21:48:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.31 2000/06/17 23:41:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,11 +90,9 @@ DefineIndex(char *heapRelationName,
 	int			numberOfAttributes;
 	AttrNumber *attributeNumberA;
 	HeapTuple	tuple;
-	uint16		parameterCount = 0;
-	Datum	   *parameterA = NULL;
 	FuncIndexInfo fInfo;
 	List	   *cnfPred = NULL;
-	bool		lossy = FALSE;
+	bool		lossy = false;
 	List	   *pl;
 
 	/*
@@ -198,7 +196,7 @@ DefineIndex(char *heapRelationName,
 		index_create(heapRelationName, indexRelationName,
 					 &fInfo, NULL,
 					 accessMethodId, numberOfAttributes, attributeNumberA,
-					 classObjectId, parameterCount, parameterA,
+					 classObjectId,
 					 (Node *) cnfPred,
 					 lossy, unique, primary);
 	}
@@ -216,7 +214,7 @@ DefineIndex(char *heapRelationName,
 		index_create(heapRelationName, indexRelationName,
 					 NULL, attributeList,
 					 accessMethodId, numberOfAttributes, attributeNumberA,
-					 classObjectId, parameterCount, parameterA,
+					 classObjectId,
 					 (Node *) cnfPred,
 					 lossy, unique, primary);
 	}
@@ -252,6 +250,7 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 	HeapTuple	tuple;
 	FuncIndexInfo fInfo;
 	FuncIndexInfo *funcInfo = NULL;
+	bool		unique;
 	Form_pg_index index;
 	Node	   *oldPred = NULL;
 	List	   *cnfPred = NULL;
@@ -293,6 +292,7 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 	Assert(index->indexrelid == indexId);
 	relationId = index->indrelid;
 	indproc = index->indproc;
+	unique = index->indisunique;
 
 	for (i = 0; i < INDEX_MAX_KEYS; i++)
 	{
@@ -366,7 +366,7 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 	InitIndexStrategy(numberOfAttributes, indexRelation, accessMethodId);
 
 	index_build(heapRelation, indexRelation, numberOfAttributes,
-				attributeNumberA, 0, NULL, funcInfo, predInfo);
+				attributeNumberA, funcInfo, predInfo, unique);
 
 	/* heap and index rels are closed as a side-effect of index_build */
 }

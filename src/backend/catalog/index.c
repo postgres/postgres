@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.117 2000/06/17 21:48:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.118 2000/06/17 23:41:34 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -72,9 +72,9 @@ static void UpdateIndexRelation(Oid indexoid, Oid heapoid,
 					AttrNumber *attNums, Oid *classOids, Node *predicate,
 		   List *attributeList, bool islossy, bool unique, bool primary);
 static void DefaultBuild(Relation heapRelation, Relation indexRelation,
-			 int numberOfAttributes, AttrNumber *attributeNumber,
-			 IndexStrategy indexStrategy, uint16 parameterCount,
-		Datum *parameter, FuncIndexInfoPtr funcInfo, PredInfo *predInfo);
+						 int numberOfAttributes, AttrNumber *attributeNumber,
+						 FuncIndexInfoPtr funcInfo, PredInfo *predInfo,
+						 bool unique, IndexStrategy indexStrategy);
 static Oid	IndexGetRelation(Oid indexId);
 static bool activate_index(Oid indexId, bool activate);
 
@@ -952,8 +952,6 @@ index_create(char *heapRelationName,
 			 int numatts,
 			 AttrNumber *attNums,
 			 Oid *classObjectId,
-			 uint16 parameterCount,
-			 Datum *parameter,
 			 Node *predicate,
 			 bool islossy,
 			 bool unique,
@@ -1086,13 +1084,13 @@ index_create(char *heapRelationName,
 	if (IsBootstrapProcessingMode())
 	{
 		index_register(heapRelationName, indexRelationName, numatts, attNums,
-					   parameterCount, parameter, funcInfo, predInfo);
+					   funcInfo, predInfo, unique);
 		/* XXX shouldn't we close the heap and index rels here? */
 	}
 	else
 	{
 		index_build(heapRelation, indexRelation, numatts, attNums,
-					parameterCount, parameter, funcInfo, predInfo);
+					funcInfo, predInfo, unique);
 	}
 }
 
@@ -1706,6 +1704,11 @@ FillDummyExprContext(ExprContext *econtext,
 
 /* ----------------
  *		DefaultBuild
+ *
+ * NB: this routine is dead code, and likely always has been, because
+ * there are no access methods that don't supply their own ambuild procedure.
+ *
+ * Anyone want to wager whether it would actually work if executed?
  * ----------------
  */
 static void
@@ -1713,11 +1716,10 @@ DefaultBuild(Relation heapRelation,
 			 Relation indexRelation,
 			 int numberOfAttributes,
 			 AttrNumber *attributeNumber,
-			 IndexStrategy indexStrategy,		/* not used */
-			 uint16 parameterCount,		/* not used */
-			 Datum *parameter,	/* not used */
 			 FuncIndexInfoPtr funcInfo,
-			 PredInfo *predInfo)
+			 PredInfo *predInfo,
+			 bool unique,		/* not used */
+			 IndexStrategy indexStrategy) /* not used */
 {
 	HeapScanDesc scan;
 	HeapTuple	heapTuple;
@@ -1925,10 +1927,9 @@ index_build(Relation heapRelation,
 			Relation indexRelation,
 			int numberOfAttributes,
 			AttrNumber *attributeNumber,
-			uint16 parameterCount,
-			Datum *parameter,
 			FuncIndexInfo *funcInfo,
-			PredInfo *predInfo)
+			PredInfo *predInfo,
+			bool unique)
 {
 	RegProcedure procedure;
 
@@ -1942,30 +1943,28 @@ index_build(Relation heapRelation,
 	procedure = indexRelation->rd_am->ambuild;
 
 	/* ----------------
-	 *	use the access method build procedure if supplied..
+	 *	use the access method build procedure if supplied, else default.
 	 * ----------------
 	 */
 	if (RegProcedureIsValid(procedure))
-		OidFunctionCall9(procedure,
+		OidFunctionCall8(procedure,
 						 PointerGetDatum(heapRelation),
 						 PointerGetDatum(indexRelation),
 						 Int32GetDatum(numberOfAttributes),
 						 PointerGetDatum(attributeNumber),
-						 PointerGetDatum(RelationGetIndexStrategy(indexRelation)),
-						 UInt16GetDatum(parameterCount),
-						 PointerGetDatum(parameter),
 						 PointerGetDatum(funcInfo),
-						 PointerGetDatum(predInfo));
+						 PointerGetDatum(predInfo),
+						 BoolGetDatum(unique),
+						 PointerGetDatum(RelationGetIndexStrategy(indexRelation)));
 	else
 		DefaultBuild(heapRelation,
 					 indexRelation,
 					 numberOfAttributes,
 					 attributeNumber,
-					 RelationGetIndexStrategy(indexRelation),
-					 parameterCount,
-					 parameter,
 					 funcInfo,
-					 predInfo);
+					 predInfo,
+					 unique,
+					 RelationGetIndexStrategy(indexRelation));
 }
 
 /*
@@ -2016,51 +2015,6 @@ IndexIsUnique(Oid indexId)
 	return index->indisunique;
 }
 
-/*
- * IndexIsUniqueNoCache: same as above function, but don't use the
- * system cache.  if we are called from btbuild, the transaction
- * that is adding the entry to pg_index has not been committed yet.
- * the system cache functions will do a heap scan, but only with
- * NowTimeQual, not SelfTimeQual, so it won't find tuples added
- * by the current transaction (which is good, because if the transaction
- * is aborted, you don't want the tuples sitting around in the cache).
- * so anyway, we have to do our own scan with SelfTimeQual.
- * this is only called when a new index is created, so it's OK
- * if it's slow.
- */
-bool
-IndexIsUniqueNoCache(Oid indexId)
-{
-	Relation	pg_index;
-	ScanKeyData skey[1];
-	HeapScanDesc scandesc;
-	HeapTuple	tuple;
-	Form_pg_index index;
-	bool		isunique;
-
-	pg_index = heap_openr(IndexRelationName, AccessShareLock);
-
-	ScanKeyEntryInitialize(&skey[0], (bits16) 0x0,
-						   Anum_pg_index_indexrelid,
-						   (RegProcedure) F_OIDEQ,
-						   ObjectIdGetDatum(indexId));
-
-	scandesc = heap_beginscan(pg_index, 0, SnapshotSelf, 1, skey);
-
-	/* NO CACHE */
-	tuple = heap_getnext(scandesc, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "IndexIsUniqueNoCache: can't find index id %u", indexId);
-
-	index = (Form_pg_index) GETSTRUCT(tuple);
-	Assert(index->indexrelid == indexId);
-	isunique = index->indisunique;
-
-	heap_endscan(scandesc);
-	heap_close(pg_index, AccessShareLock);
-	return isunique;
-}
-
 
 /* ---------------------------------
  * activate_index -- activate/deactivate the specified index.
@@ -2102,6 +2056,7 @@ reindex_index(Oid indexId, bool force)
 			   *funcInfo = NULL;
 	int			i,
 				numberOfAttributes;
+	bool		unique;
 	char	   *predString;
 	bool		old;
 
@@ -2121,6 +2076,7 @@ reindex_index(Oid indexId, bool force)
 	index = (Form_pg_index) GETSTRUCT(indexTuple);
 	heapId = index->indrelid;
 	procId = index->indproc;
+	unique = index->indisunique;
 
 	for (i = 0; i < INDEX_MAX_KEYS; i++)
 	{
@@ -2189,7 +2145,7 @@ reindex_index(Oid indexId, bool force)
 	/* Initialize the index and rebuild */
 	InitIndexStrategy(numberOfAttributes, iRel, accessMethodId);
 	index_build(heapRelation, iRel, numberOfAttributes,
-				attributeNumberA, 0, NULL, funcInfo, predInfo);
+				attributeNumberA, funcInfo, predInfo, unique);
 
 	/*
 	 * index_build will close both the heap and index relations (but not

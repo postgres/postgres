@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bootstrap.h,v 1.17 2000/01/26 05:57:53 momjian Exp $
+ * $Id: bootstrap.h,v 1.18 2000/06/17 23:41:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,14 +34,11 @@ extern int	numattr;
 extern int	DebugMode;
 
 extern int	BootstrapMain(int ac, char *av[]);
-extern void index_register(char *heap,
-			   char *ind,
-			   int natts,
-			   AttrNumber *attnos,
-			   uint16 nparams,
-			   Datum *params,
-			   FuncIndexInfo *finfo,
-			   PredInfo *predInfo);
+
+extern void index_register(char *heap, char *ind,
+						   int natts, AttrNumber *attnos,
+						   FuncIndexInfo *finfo, PredInfo *predInfo,
+						   bool unique);
 
 extern void err_out(void);
 extern void InsertOneTuple(Oid objectid);

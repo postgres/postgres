@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.85 2000/06/05 07:28:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.86 2000/06/17 23:41:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,10 +161,9 @@ typedef struct _IndexList
 	char	   *il_ind;
 	int			il_natts;
 	AttrNumber *il_attnos;
-	uint16		il_nparams;
-	Datum	   *il_params;
 	FuncIndexInfo *il_finfo;
 	PredInfo   *il_predInfo;
+	bool		il_unique;
 	struct _IndexList *il_next;
 } IndexList;
 
@@ -1071,12 +1070,10 @@ index_register(char *heap,
 			   char *ind,
 			   int natts,
 			   AttrNumber *attnos,
-			   uint16 nparams,
-			   Datum *params,
 			   FuncIndexInfo *finfo,
-			   PredInfo *predInfo)
+			   PredInfo *predInfo,
+			   bool unique)
 {
-	Datum	   *v;
 	IndexList  *newind;
 	int			len;
 	MemoryContext oldcxt;
@@ -1103,25 +1100,12 @@ index_register(char *heap,
 		len = natts * sizeof(AttrNumber);
 
 	newind->il_attnos = (AttrNumber *) palloc(len);
-	memmove(newind->il_attnos, attnos, len);
+	memcpy(newind->il_attnos, attnos, len);
 
-	if ((newind->il_nparams = nparams) > 0)
-	{
-		v = newind->il_params = (Datum *) palloc(2 * nparams * sizeof(Datum));
-		nparams *= 2;
-		while (nparams-- > 0)
-		{
-			*v = (Datum) palloc(strlen((char *) (*params)) + 1);
-			strcpy((char *) *v++, (char *) *params++);
-		}
-	}
-	else
-		newind->il_params = (Datum *) NULL;
-
-	if (finfo != (FuncIndexInfo *) NULL)
+	if (PointerIsValid(finfo))
 	{
 		newind->il_finfo = (FuncIndexInfo *) palloc(sizeof(FuncIndexInfo));
-		memmove(newind->il_finfo, finfo, sizeof(FuncIndexInfo));
+		memcpy(newind->il_finfo, finfo, sizeof(FuncIndexInfo));
 	}
 	else
 		newind->il_finfo = (FuncIndexInfo *) NULL;
@@ -1134,6 +1118,8 @@ index_register(char *heap,
 	}
 	else
 		newind->il_predInfo = NULL;
+
+	newind->il_unique = unique;
 
 	newind->il_next = ILHead;
 
@@ -1155,8 +1141,8 @@ build_indices()
 		ind = index_openr(ILHead->il_ind);
 		Assert(ind);
 		index_build(heap, ind, ILHead->il_natts, ILHead->il_attnos,
-				 ILHead->il_nparams, ILHead->il_params, ILHead->il_finfo,
-					ILHead->il_predInfo);
+					ILHead->il_finfo, ILHead->il_predInfo,
+					ILHead->il_unique);
 
 		/*
 		 * In normal processing mode, index_build would close the heap and

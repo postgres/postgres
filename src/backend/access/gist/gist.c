@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.58 2000/06/15 03:31:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.59 2000/06/17 23:41:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,13 +67,12 @@ gistbuild(PG_FUNCTION_ARGS)
 	Relation		index = (Relation) PG_GETARG_POINTER(1);
 	int32			natts = PG_GETARG_INT32(2);
 	AttrNumber	   *attnum = (AttrNumber *) PG_GETARG_POINTER(3);
+	FuncIndexInfo  *finfo = (FuncIndexInfo *) PG_GETARG_POINTER(4);
+	PredInfo	   *predInfo = (PredInfo *) PG_GETARG_POINTER(5);
 #ifdef NOT_USED
-	IndexStrategy	istrat = (IndexStrategy) PG_GETARG_POINTER(4);
-	uint16			pcount = PG_GETARG_UINT16(5);
-	Datum		   *params = (Datum *) PG_GETARG_POINTER(6);
+	bool			unique = PG_GETARG_BOOL(6);
+	IndexStrategy	istrat = (IndexStrategy) PG_GETARG_POINTER(7);
 #endif
-	FuncIndexInfo  *finfo = (FuncIndexInfo *) PG_GETARG_POINTER(7);
-	PredInfo	   *predInfo = (PredInfo *) PG_GETARG_POINTER(8);
 	HeapScanDesc scan;
 	AttrNumber	i;
 	HeapTuple	htup;
