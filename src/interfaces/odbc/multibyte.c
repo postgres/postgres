@@ -15,7 +15,7 @@ int multibyte_status ;		/* Multibyte Odds and ends character. */
 unsigned char *multibyte_strchr(unsigned char *s,unsigned char c)
 {
 	int mb_st = 0 ,i = 0;
-	while (!(mb_st == 0 && s[i] == c || s[i] == 0))
+	while (!(mb_st == 0 && (s[i] == c || s[i] == 0)))
 	{
 		if (s[i] == 0)
 			return (0);
