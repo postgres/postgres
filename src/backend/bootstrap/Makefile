@@ -4,7 +4,7 @@
 #    Makefile for the bootstrap module
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.7 1997/04/15 17:24:07 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.8 1997/04/18 08:55:55 vadim Exp $
 #
 #
 # We must build bootparse.c and bootscanner.c with yacc and lex and sed,
@@ -27,7 +27,7 @@ INCLUDE_OPT= -I.. \
 
 CFLAGS+= $(INCLUDE_OPT)  
 
-ifeq ($CC), gcc)
+ifeq ($(CC), gcc)
 CFLAGS+= -Wno-error
 endif
 

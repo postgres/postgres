@@ -4,7 +4,7 @@
 #    Makefile for parser
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.7 1997/04/15 17:24:26 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.8 1997/04/18 08:57:39 vadim Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ INCLUDE_OPT= -I.. \
 
 CFLAGS+= $(INCLUDE_OPT)
 
-ifeq ($CC), gcc)
+ifeq ($(CC), gcc)
 CFLAGS+= -Wno-error
 endif
 
