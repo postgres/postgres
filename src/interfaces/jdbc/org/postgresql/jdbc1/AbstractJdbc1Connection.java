@@ -14,7 +14,7 @@ import org.postgresql.largeobject.LargeObjectManager;
 import org.postgresql.util.*;
 
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.14 2003/02/04 09:20:08 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.15 2003/02/05 11:12:39 davec Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Connection which adds the jdbc2
  * methods.  The real Connection class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Connection
@@ -1159,6 +1159,56 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 		return dbVersionNumber;
 	}
 
+	// Parse a "dirty" integer surrounded by non-numeric characters
+	private static int integerPart(String dirtyString)
+	{
+		int start, end;
+
+		for (start = 0; start < dirtyString.length() && !Character.isDigit(dirtyString.charAt(start)); ++start)
+			;
+		
+		for (end = start; end < dirtyString.length() && Character.isDigit(dirtyString.charAt(end)); ++end)
+			;
+
+		if (start == end)
+			return 0;
+
+		return Integer.parseInt(dirtyString.substring(start, end));
+	}
+
+	/*
+	 * Get server major version
+	 */
+	public int getServerMajorVersion()
+	{        
+		try
+		{
+			StringTokenizer versionTokens = new StringTokenizer(dbVersionNumber, ".");  // aaXbb.ccYdd       
+			return integerPart(versionTokens.nextToken()); // return X
+		}
+		catch (NoSuchElementException e)
+		{
+			return 0;
+		}
+	}
+
+	/*
+	 * Get server minor version
+	 */
+	public int getServerMinorVersion()
+	{        
+		try
+		{
+			StringTokenizer versionTokens = new StringTokenizer(dbVersionNumber, ".");  // aaXbb.ccYdd
+			versionTokens.nextToken(); // Skip aaXbb
+			return integerPart(versionTokens.nextToken()); // return Y
+		}
+		catch (NoSuchElementException e)
+		{
+			return 0;
+		}
+	}
+	
 	/**
 	 * Is the server we are connected to running at least this version?
 	 * This comparison method will fail whenever a major or minor version
