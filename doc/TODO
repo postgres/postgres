@@ -43,6 +43,7 @@ PARSER
 * SELECT ... UNION ... GROUP BY fails if column types disagree
 * redesign INSERT ... SELECT to have two levels of target list
 * -select * from pg_class where oid in (0,-1)
+* have INTERSECT/EXCEPT prevent duplicates unless ALL is specified
 
 VIEWS
 
