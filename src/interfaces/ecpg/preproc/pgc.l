@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.67 2000/11/03 10:47:54 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.68 2000/11/20 03:51:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -316,8 +316,6 @@ cppline			{space}*#(.*\\{line_end})*.*
 					startlit();
 				}
 <xbit>{xbitstop}		{
-					char* endptr;
-
 					BEGIN(SQL);
 					if (literalbuf[strspn(literalbuf, "01") + 1] != '\0')
 						mmerror(ET_ERROR, "invalid bit string input.");
