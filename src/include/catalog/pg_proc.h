@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.99.2.1 1999/07/30 18:52:53 scrappy Exp $
+ * $Id: pg_proc.h,v 1.99.2.2 1999/08/29 01:39:57 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1641,7 +1641,7 @@ DATA(insert OID = 1362 (  time				 PGUID 14 f t f 1 f 1083 "1083" 100 0 0 100  "
 DESCR("convert (noop)");
 DATA(insert OID = 1363 (  time				 PGUID 11 f t f 1 f 1083 "1184" 100 0 0 100  datetime_time - ));
 DESCR("convert datetime to time");
-DATA(insert OID = 1364 (  time				 PGUID 14 f t f 1 f 1083 "702" 100 0 0 100	"select abstime_time($1)" - ));
+DATA(insert OID = 1364 (  time				 PGUID 14 f t f 1 f 1083 "702" 100 0 0 100	"select time(datetime($1))" - ));
 DESCR("convert abstime to time");
 DATA(insert OID = 1365 (  abstime			 PGUID 14 f t f 1 f  702 "702" 100 0 0 100	"select $1" - ));
 DESCR("convert (noop)");
@@ -1653,7 +1653,7 @@ DATA(insert OID = 1368 (  reltime			 PGUID 11 f t f 1 f  703 "1186" 100 0 0 100 
 DESCR("convert timespan to reltime");
 DATA(insert OID = 1369 (  timestamp			 PGUID 14 f t f 1 f 1296 "1296" 100 0 0 100  "select $1" - ));
 DESCR("convert (noop)");
-DATA(insert OID = 1370 (  timestamp			 PGUID 14 f t f 1 f 1296 "1184" 100 0 0 100  "select datetime_stamp($1)" - ));
+DATA(insert OID = 1370 (  timestamp			 PGUID 11 f t f 1 f 1296 "1184" 100 0 0 100  datetime_timestamp - ));
 DESCR("convert datetime to timestamp");
 DATA(insert OID = 1371 (  length			 PGUID 11 f t f 1 f   23   "25" 100 0 0 100  textlen - ));
 DESCR("character length");
