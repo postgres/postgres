@@ -32,5 +32,3 @@ copy tmp_pg_user to stdout;
 drop table tmp_pg_user;
 END
 /bin/echo '\.'
-
-
