@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.230 2003/10/31 19:24:17 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.231 2003/10/31 19:33:17 momjian Exp $
 -->
 
 <appendix id="release">
@@ -266,7 +266,7 @@ required for those wishing to migrate data from any previous release.</para>
     administration scripts from removing server socket files.
    </para>
    </listitem>
-<listitem><para>Enable PAM for MAC OS X (Aaron Hillegass)</para></listitem>
+<listitem><para>Enable PAM for Mac OS X (Aaron Hillegass)</para></listitem>
 <listitem><para>Make btree indexes fully WAL-safe (Tom)</para>
    <para>
     In prior releases, under certain rare cases, a server crash could
@@ -409,9 +409,9 @@ required for those wishing to migrate data from any previous release.</para>
     be sent to either the client or server logs.
    </para>
    </listitem>
-<listitem><para>Add OS X Rendezvous server support (Chris Campbell)</para>
+<listitem><para>Add Mac OS X Rendezvous server support (Chris Campbell)</para>
    <para>
-    This allows OS X machines to query the network for available
+    This allows Mac OS X machines to query the network for available
     PostgreSQL servers.
    </para>
    </listitem>
