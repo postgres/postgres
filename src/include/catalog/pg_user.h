@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_user.h,v 1.2 1996/10/31 09:48:00 scrappy Exp $
+ * $Id: pg_user.h,v 1.3 1996/11/03 23:49:07 scrappy Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -18,12 +18,10 @@
 #ifndef PG_USER_H
 #define PG_USER_H
 
-/* ----------------
- *	postgres.h contains the system type definintions and the
- *	CATALOG(), BOOTSTRAP and DATA() sugar words so this file
- *	can be read by both genbki.sh and the C compiler.
- * ----------------
- */
+
+/* Prototype required for superuser() from superuser.c */
+
+bool superuser(void);
 
 /* ----------------
  *	pg_user definition.  cpp turns this into
