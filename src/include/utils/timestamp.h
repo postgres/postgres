@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: timestamp.h,v 1.24 2001/11/05 17:46:36 momjian Exp $
+ * $Id: timestamp.h,v 1.25 2002/04/21 19:48:31 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,8 +18,11 @@
 #include <limits.h>
 #include <float.h>
 
+#include "c.h"
 #include "fmgr.h"
-
+#ifdef HAVE_INT64_TIMESTAMP
+#include "utils/int8.h"
+#endif
 
 /*
  * Timestamp represents absolute time.
@@ -31,16 +34,22 @@
  *	consisting of a beginning and ending time, not a time span - thomas 97/03/20
  */
 
+#ifdef HAVE_INT64_TIMESTAMP
+typedef int64 Timestamp;
+typedef int64 TimestampTz;
+#else
 typedef double Timestamp;
-
 typedef double TimestampTz;
+#endif
 
 typedef struct
 {
-	double		time;			/* all time units other than months and
-								 * years */
-	int32		month;			/* months and years, after time for
-								 * alignment */
+#ifdef HAVE_INT64_TIMESTAMP
+	int64		time;	/* all time units other than months and years */
+#else
+	double		time;	/* all time units other than months and years */
+#endif
+	int32		month;	/* months and years, after time for alignment */
 } Interval;
 
 
@@ -50,6 +59,27 @@ typedef struct
  * For Timestamp, we make use of the same support routines as for float8.
  * Therefore Timestamp is pass-by-reference if and only if float8 is!
  */
+#ifdef HAVE_INT64_TIMESTAMP
+#define DatumGetTimestamp(X)  ((Timestamp) DatumGetInt64(X))
+#define DatumGetTimestampTz(X)	((TimestampTz) DatumGetInt64(X))
+#define DatumGetIntervalP(X)  ((Interval *) DatumGetPointer(X))
+
+#define TimestampGetDatum(X) Int64GetDatum(X)
+#define TimestampTzGetDatum(X) Int64GetDatum(X)
+#define IntervalPGetDatum(X) PointerGetDatum(X)
+
+#define PG_GETARG_TIMESTAMP(n) PG_GETARG_INT64(n)
+#define PG_GETARG_TIMESTAMPTZ(n) PG_GETARG_INT64(n)
+#define PG_GETARG_INTERVAL_P(n) DatumGetIntervalP(PG_GETARG_DATUM(n))
+
+#define PG_RETURN_TIMESTAMP(x) PG_RETURN_INT64(x)
+#define PG_RETURN_TIMESTAMPTZ(x) PG_RETURN_INT64(x)
+#define PG_RETURN_INTERVAL_P(x) return IntervalPGetDatum(x)
+
+#define DT_NOBEGIN		(-INT64CONST(0x7fffffffffffffff) - 1)
+#define DT_NOEND		(INT64CONST(0x7fffffffffffffff))
+
+#else
 #define DatumGetTimestamp(X)  ((Timestamp) DatumGetFloat8(X))
 #define DatumGetTimestampTz(X)	((TimestampTz) DatumGetFloat8(X))
 #define DatumGetIntervalP(X)  ((Interval *) DatumGetPointer(X))
@@ -66,13 +96,13 @@ typedef struct
 #define PG_RETURN_TIMESTAMPTZ(x) return TimestampTzGetDatum(x)
 #define PG_RETURN_INTERVAL_P(x) return IntervalPGetDatum(x)
 
-
 #ifdef HUGE_VAL
 #define DT_NOBEGIN		(-HUGE_VAL)
 #define DT_NOEND		(HUGE_VAL)
 #else
 #define DT_NOBEGIN		(-DBL_MAX)
 #define DT_NOEND		(DBL_MAX)
+#endif
 #endif
 
 #define TIMESTAMP_NOBEGIN(j)	do {j = DT_NOBEGIN;} while (0)
@@ -83,8 +113,21 @@ typedef struct
 
 #define TIMESTAMP_NOT_FINITE(j) (TIMESTAMP_IS_NOBEGIN(j) || TIMESTAMP_IS_NOEND(j))
 
+
+#define MAX_TIMESTAMP_PRECISION 6
+#define MAX_INTERVAL_PRECISION 6
+
+#ifdef HAVE_INT64_TIMESTAMP
+typedef int32 fsec_t;
+
+#define SECONDS_TO_TIMESTAMP(x) (INT64CONST(x000000))
+#else
+typedef double fsec_t;
+
+#define SECONDS_TO_TIMESTAMP(x) (xe0)
 #define TIME_PREC_INV 1000000.0
 #define JROUND(j) (rint(((double) (j))*TIME_PREC_INV)/TIME_PREC_INV)
+#endif
 
 
 /*
@@ -167,13 +210,13 @@ extern Datum now(PG_FUNCTION_ARGS);
 
 /* Internal routines (not fmgr-callable) */
 
-extern int	tm2timestamp(struct tm * tm, double fsec, int *tzp, Timestamp *dt);
+extern int	tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, Timestamp *dt);
 extern int timestamp2tm(Timestamp dt, int *tzp, struct tm * tm,
-			 double *fsec, char **tzn);
-extern void dt2time(Timestamp dt, int *hour, int *min, double *sec);
+			 fsec_t *fsec, char **tzn);
+extern void dt2time(Timestamp dt, int *hour, int *min, int *sec, fsec_t *fsec);
 
-extern int	interval2tm(Interval span, struct tm * tm, float8 *fsec);
-extern int	tm2interval(struct tm * tm, double fsec, Interval *span);
+extern int	interval2tm(Interval span, struct tm * tm, fsec_t *fsec);
+extern int	tm2interval(struct tm * tm, fsec_t fsec, Interval *span);
 
 extern Timestamp SetEpochTimestamp(void);
 extern void GetEpochTime(struct tm * tm);

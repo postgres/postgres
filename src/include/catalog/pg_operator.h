@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.102 2002/04/16 23:08:11 tgl Exp $
+ * $Id: pg_operator.h,v 1.103 2002/04/21 19:48:23 thomas Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -476,6 +476,8 @@ DATA(insert OID = 1068 ( ">"	   PGNSP PGUID 0 b t f 1043 1043	16 1066 1067  0 0 
 DATA(insert OID = 1069 ( ">="	   PGNSP PGUID 0 b t f 1043 1043	16 1067 1066  0 0 0 0 varcharge scalargtsel scalargtjoinsel ));
 
 /* date operators */
+DATA(insert OID = 1076 ( "+"	   PGNSP PGUID 0 b t f  1082	1186 1114 0 0 0 0 0 0 date_pl_interval - - ));
+DATA(insert OID = 1077 ( "-"	   PGNSP PGUID 0 b t f  1082	1186 1114 0 0 0 0 0 0 date_mi_interval - - ));
 DATA(insert OID = 1093 ( "="	   PGNSP PGUID 0 b t t  1082	1082   16 1093 1094 1095 1095 1095 1097 date_eq eqsel eqjoinsel ));
 DATA(insert OID = 1094 ( "<>"	   PGNSP PGUID 0 b t f  1082	1082   16 1094 1093  0 0 0 0 date_ne neqsel neqjoinsel ));
 DATA(insert OID = 1095 ( "<"	   PGNSP PGUID 0 b t f  1082	1082   16 1097 1098  0 0 0 0 date_lt scalarltsel scalarltjoinsel ));

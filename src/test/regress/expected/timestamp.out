@@ -183,7 +183,7 @@ SELECT '' AS "64", d1 FROM TIMESTAMP_TBL;
     | Fri Feb 14 17:32:01 1997
     | Sat Feb 15 17:32:01 1997
     | Sun Feb 16 17:32:01 1997
-    | Tue Feb 16 17:32 0097 BC
+    | Tue Feb 16 17:32:01 0097 BC
     | Sat Feb 16 17:32:01 0097
     | Thu Feb 16 17:32:01 0597
     | Tue Feb 16 17:32:01 1097
@@ -265,11 +265,11 @@ SELECT '' AS "48", d1 FROM TIMESTAMP_TBL
 
 SELECT '' AS "15", d1 FROM TIMESTAMP_TBL
    WHERE d1 < timestamp without time zone '1997-01-02';
- 15 |            d1            
-----+--------------------------
+ 15 |             d1              
+----+-----------------------------
     | -infinity
     | Thu Jan 01 00:00:00 1970
-    | Tue Feb 16 17:32 0097 BC
+    | Tue Feb 16 17:32:01 0097 BC
     | Sat Feb 16 17:32:01 0097
     | Thu Feb 16 17:32:01 0597
     | Tue Feb 16 17:32:01 1097
@@ -335,7 +335,7 @@ SELECT '' AS "63", d1 FROM TIMESTAMP_TBL
     | Fri Feb 14 17:32:01 1997
     | Sat Feb 15 17:32:01 1997
     | Sun Feb 16 17:32:01 1997
-    | Tue Feb 16 17:32 0097 BC
+    | Tue Feb 16 17:32:01 0097 BC
     | Sat Feb 16 17:32:01 0097
     | Thu Feb 16 17:32:01 0597
     | Tue Feb 16 17:32:01 1097
@@ -362,12 +362,12 @@ SELECT '' AS "63", d1 FROM TIMESTAMP_TBL
 
 SELECT '' AS "16", d1 FROM TIMESTAMP_TBL
    WHERE d1 <= timestamp without time zone '1997-01-02';
- 16 |            d1            
-----+--------------------------
+ 16 |             d1              
+----+-----------------------------
     | -infinity
     | Thu Jan 01 00:00:00 1970
     | Thu Jan 02 00:00:00 1997
-    | Tue Feb 16 17:32 0097 BC
+    | Tue Feb 16 17:32:01 0097 BC
     | Sat Feb 16 17:32:01 0097
     | Thu Feb 16 17:32:01 0597
     | Tue Feb 16 17:32:01 1097

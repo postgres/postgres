@@ -7,26 +7,40 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: date.h,v 1.17 2001/11/05 17:46:36 momjian Exp $
+ * $Id: date.h,v 1.18 2002/04/21 19:48:31 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef DATE_H
 #define DATE_H
 
+#include "c.h"
 #include "fmgr.h"
 
 
 typedef int32 DateADT;
 
+#ifdef HAVE_INT64_TIMESTAMP
+typedef int64 TimeADT;
+#else
 typedef float8 TimeADT;
+#endif
 
 typedef struct
 {
-	double		time;			/* all time units other than months and
-								 * years */
-	int32		zone;			/* numeric time zone, in seconds */
+#ifdef HAVE_INT64_TIMESTAMP
+	int64		time;	/* all time units other than months and years */
+#else
+	double		time;	/* all time units other than months and years */
+#endif
+	int32		zone;	/* numeric time zone, in seconds */
 } TimeTzADT;
+
+#ifdef HAVE_INT64_TIMESTAMP
+#define MAX_TIME_PRECISION 6
+#else
+#define MAX_TIME_PRECISION 13
+#endif
 
 /*
  * Macros for fmgr-callable functions.
@@ -90,6 +104,7 @@ extern Datum time_larger(PG_FUNCTION_ARGS);
 extern Datum time_smaller(PG_FUNCTION_ARGS);
 extern Datum time_mi_time(PG_FUNCTION_ARGS);
 extern Datum timestamp_time(PG_FUNCTION_ARGS);
+extern Datum timestamptz_time(PG_FUNCTION_ARGS);
 extern Datum time_interval(PG_FUNCTION_ARGS);
 extern Datum interval_time(PG_FUNCTION_ARGS);
 extern Datum text_time(PG_FUNCTION_ARGS);
@@ -97,6 +112,7 @@ extern Datum time_text(PG_FUNCTION_ARGS);
 extern Datum time_pl_interval(PG_FUNCTION_ARGS);
 extern Datum time_mi_interval(PG_FUNCTION_ARGS);
 extern Datum interval_pl_time(PG_FUNCTION_ARGS);
+extern Datum time_part(PG_FUNCTION_ARGS);
 
 extern Datum timetz_in(PG_FUNCTION_ARGS);
 extern Datum timetz_out(PG_FUNCTION_ARGS);

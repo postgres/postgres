@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.108 2002/04/16 23:08:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.109 2002/04/21 19:48:13 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2427,17 +2427,30 @@ convert_timevalue_to_scalar(Datum value, Oid typid)
 				 * assumed average month length of 365.25/12.0 days.  Not
 				 * too accurate, but plenty good enough for our purposes.
 				 */
+#ifdef HAVE_INT64_TIMESTAMP
+				return (interval->time + (interval->month * ((365.25 / 12.0) * 86400000000.0)));
+#else
 				return interval->time +
 					interval->month * (365.25 / 12.0 * 24.0 * 60.0 * 60.0);
+#endif
 			}
 		case RELTIMEOID:
+#ifdef HAVE_INT64_TIMESTAMP
+			return (DatumGetRelativeTime(value) * 1000000.0);
+#else
 			return DatumGetRelativeTime(value);
+#endif
 		case TINTERVALOID:
 			{
 				TimeInterval interval = DatumGetTimeInterval(value);
 
+#ifdef HAVE_INT64_TIMESTAMP
+				if (interval->status != 0)
+					return ((interval->data[1] - interval->data[0]) * 1000000.0);
+#else
 				if (interval->status != 0)
 					return interval->data[1] - interval->data[0];
+#endif
 				return 0;		/* for lack of a better idea */
 			}
 		case TIMEOID:
@@ -2447,7 +2460,11 @@ convert_timevalue_to_scalar(Datum value, Oid typid)
 				TimeTzADT  *timetz = DatumGetTimeTzADTP(value);
 
 				/* use GMT-equivalent time */
+#ifdef HAVE_INT64_TIMESTAMP
+				return (double) (timetz->time + (timetz->zone * 1000000.0));
+#else
 				return (double) (timetz->time + timetz->zone);
+#endif
 			}
 	}
 

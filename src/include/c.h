@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.115 2002/03/29 17:32:55 petere Exp $
+ * $Id: c.h,v 1.116 2002/04/21 19:48:18 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -301,6 +301,10 @@ typedef unsigned long int uint64;
 #define INT64_IS_BUSTED
 
 #endif /* not HAVE_LONG_INT_64 and not HAVE_LONG_LONG_INT_64 */
+
+#if defined(USE_INTEGER_DATETIMES) && !defined(INT64_IS_BUSTED)
+#define HAVE_INT64_TIMESTAMP
+#endif
 
 /* sig_atomic_t is required by ANSI C, but may be missing on old platforms */
 #ifndef HAVE_SIG_ATOMIC_T

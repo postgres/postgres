@@ -264,22 +264,22 @@ SELECT date '2001-02-03' + time with time zone '04:05:06 UTC' AS "Date + Time UT
 (1 row)
 
 SELECT date '1991-02-03' + interval '2 years' AS "Add Two Years";
-        Add Two Years         
-------------------------------
- Wed Feb 03 00:00:00 1993 PST
+      Add Two Years       
+--------------------------
+ Wed Feb 03 00:00:00 1993
 (1 row)
 
 SELECT date '2001-12-13' - interval '2 years' AS "Subtract Two Years";
-      Subtract Two Years      
-------------------------------
- Mon Dec 13 00:00:00 1999 PST
+    Subtract Two Years    
+--------------------------
+ Mon Dec 13 00:00:00 1999
 (1 row)
 
 -- subtract time from date should not make sense; use interval instead
 SELECT date '1991-02-03' - time '04:05:06' AS "Subtract Time";
-        Subtract Time         
-------------------------------
- Sat Feb 02 19:54:54 1991 PST
+      Subtract Time       
+--------------------------
+ Sat Feb 02 19:54:54 1991
 (1 row)
 
 SELECT date '1991-02-03' - time with time zone '04:05:06 UTC' AS "Subtract Time UTC";
@@ -406,7 +406,7 @@ SELECT '' AS "64", d1 + interval '1 year' AS one_year FROM TIMESTAMP_TBL;
     | Sat Feb 14 17:32:01 1998
     | Sun Feb 15 17:32:01 1998
     | Mon Feb 16 17:32:01 1998
-    | Thu Feb 16 17:32 0096 BC
+    | Thu Feb 16 17:32:01 0096 BC
     | Sun Feb 16 17:32:01 0098
     | Fri Feb 16 17:32:01 0598
     | Wed Feb 16 17:32:01 1098
@@ -475,7 +475,7 @@ SELECT '' AS "64", d1 - interval '1 year' AS one_year FROM TIMESTAMP_TBL;
     | Wed Feb 14 17:32:01 1996
     | Thu Feb 15 17:32:01 1996
     | Fri Feb 16 17:32:01 1996
-    | Mon Feb 16 17:32 0098 BC
+    | Mon Feb 16 17:32:01 0098 BC
     | Thu Feb 16 17:32:01 0096
     | Tue Feb 16 17:32:01 0596
     | Sun Feb 16 17:32:01 1096
@@ -622,7 +622,7 @@ SELECT '' AS "64", d1 + interval '1 year' AS one_year FROM TIMESTAMPTZ_TBL;
     | Sat Feb 14 17:32:01 1998 PST
     | Sun Feb 15 17:32:01 1998 PST
     | Mon Feb 16 17:32:01 1998 PST
-    | Thu Feb 16 17:32 0096 BC
+    | Thu Feb 16 17:32:01 0096 BC
     | Sun Feb 16 17:32:01 0098
     | Fri Feb 16 17:32:01 0598
     | Wed Feb 16 17:32:01 1098
@@ -691,7 +691,7 @@ SELECT '' AS "64", d1 - interval '1 year' AS one_year FROM TIMESTAMPTZ_TBL;
     | Wed Feb 14 17:32:01 1996 PST
     | Thu Feb 15 17:32:01 1996 PST
     | Fri Feb 16 17:32:01 1996 PST
-    | Mon Feb 16 17:32 0098 BC
+    | Mon Feb 16 17:32:01 0098 BC
     | Thu Feb 16 17:32:01 0096
     | Tue Feb 16 17:32:01 0596
     | Sun Feb 16 17:32:01 1096
@@ -1519,7 +1519,7 @@ SELECT (time '00:00', interval '1 hour')
  f
 (1 row)
 
-CREATE TABLE TEMP_TIMESTAMP (f1 timestamp);
+CREATE TABLE TEMP_TIMESTAMP (f1 timestamp with time zone);
 -- get some candidate input values
 INSERT INTO TEMP_TIMESTAMP (f1)
   SELECT d1 FROM TIMESTAMP_TBL
@@ -1883,8 +1883,9 @@ SELECT '' AS "160", d.f1 AS "timestamp", t.f1 AS "interval", d.f1 - t.f1 AS minu
      | Sat Sep 22 18:19:20 2001 PDT | @ 14 secs ago                 | Sat Sep 22 18:19:34 2001 PDT
 (160 rows)
 
-SELECT '' AS "16", d.f1 AS "timestamp", timestamp '1980-01-06 00:00 GMT' AS gpstime_zero,
-   d.f1 - timestamp '1980-01-06 00:00 GMT' AS difference
+SELECT '' AS "16", d.f1 AS "timestamp",
+   timestamp with time zone '1980-01-06 00:00 GMT' AS gpstime_zero,
+   d.f1 - timestamp with time zone '1980-01-06 00:00 GMT' AS difference
   FROM TEMP_TIMESTAMP d
   ORDER BY difference;
  16 |          timestamp           |         gpstime_zero         |             difference              
@@ -2305,7 +2306,7 @@ SELECT '' AS two, d1 AS "timestamp", abstime(d1) AS abstime
 
 SELECT '' AS three, f1 as abstime, cast(f1 as timestamp) AS "timestamp"
   FROM ABSTIME_TBL WHERE NOT isfinite(f1);
-ERROR:  Unable to convert abstime 'invalid' to timestamptz
+ERROR:  Unable to convert abstime 'invalid' to timestamp
 SELECT '' AS ten, f1 AS interval, reltime(f1) AS reltime
   FROM INTERVAL_TBL;
  ten |           interval            |            reltime            
@@ -2385,7 +2386,7 @@ SELECT '' AS "64", d1 AS us_postgres FROM TIMESTAMP_TBL;
     | Fri Feb 14 17:32:01 1997
     | Sat Feb 15 17:32:01 1997
     | Sun Feb 16 17:32:01 1997
-    | Tue Feb 16 17:32 0097 BC
+    | Tue Feb 16 17:32:01 0097 BC
     | Sat Feb 16 17:32:01 0097
     | Thu Feb 16 17:32:01 0597
     | Tue Feb 16 17:32:01 1097
@@ -2467,7 +2468,7 @@ SELECT '' AS "64", d1 AS us_iso FROM TIMESTAMP_TBL;
     | 1997-02-14 17:32:01
     | 1997-02-15 17:32:01
     | 1997-02-16 17:32:01
-    | 0097-02-16 17:32 BC
+    | 0097-02-16 17:32:01 BC
     | 0097-02-16 17:32:01
     | 0597-02-16 17:32:01
     | 1097-02-16 17:32:01
@@ -2551,7 +2552,7 @@ SELECT '' AS "64", d1 AS us_sql FROM TIMESTAMP_TBL;
     | 02/14/1997 17:32:01
     | 02/15/1997 17:32:01
     | 02/16/1997 17:32:01
-    | 02/16/0097 17:32 BC
+    | 02/16/0097 17:32:01 BC
     | 02/16/0097 17:32:01
     | 02/16/0597 17:32:01
     | 02/16/1097 17:32:01
@@ -2642,7 +2643,7 @@ SELECT '' AS "65", d1 AS european_postgres FROM TIMESTAMP_TBL;
     | Fri 14 Feb 17:32:01 1997
     | Sat 15 Feb 17:32:01 1997
     | Sun 16 Feb 17:32:01 1997
-    | Tue 16 Feb 17:32 0097 BC
+    | Tue 16 Feb 17:32:01 0097 BC
     | Sat 16 Feb 17:32:01 0097
     | Thu 16 Feb 17:32:01 0597
     | Tue 16 Feb 17:32:01 1097
@@ -2727,7 +2728,7 @@ SELECT '' AS "65", d1 AS european_iso FROM TIMESTAMP_TBL;
     | 1997-02-14 17:32:01
     | 1997-02-15 17:32:01
     | 1997-02-16 17:32:01
-    | 0097-02-16 17:32 BC
+    | 0097-02-16 17:32:01 BC
     | 0097-02-16 17:32:01
     | 0597-02-16 17:32:01
     | 1097-02-16 17:32:01
@@ -2812,7 +2813,7 @@ SELECT '' AS "65", d1 AS european_sql FROM TIMESTAMP_TBL;
     | 14/02/1997 17:32:01
     | 15/02/1997 17:32:01
     | 16/02/1997 17:32:01
-    | 16/02/0097 17:32 BC
+    | 16/02/0097 17:32:01 BC
     | 16/02/0097 17:32:01
     | 16/02/0597 17:32:01
     | 16/02/1097 17:32:01

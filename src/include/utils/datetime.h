@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datetime.h,v 1.28 2002/01/01 02:54:33 thomas Exp $
+ * $Id: datetime.h,v 1.29 2002/04/21 19:48:31 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,15 +198,26 @@ typedef struct
 
 /* TMODULO()
  * Macro to replace modf(), which is broken on some platforms.
+ * t = input and remainder
+ * q = integer part
+ * u = divisor
  */
+#ifdef HAVE_INT64_TIMESTAMP
+#define TMODULO(t,q,u) \
+do { \
+	q = (t / u); \
+	if (q != 0) t -= (q * u); \
+} while(0)
+#else
 #define TMODULO(t,q,u) \
 do { \
 	q = ((t < 0)? ceil(t / u): floor(t / u)); \
-	if (q != 0) \
-		t -= rint(q * u); \
+	if (q != 0) t -= rint(q * u); \
 } while(0)
+#endif
 
-#ifdef __CYGWIN__
+/* Global variable holding time zone information. */
+#if defined(__CYGWIN__) || defined(N_PLAT_NLM)
 #define TIMEZONE_GLOBAL _timezone
 #else
 #define TIMEZONE_GLOBAL timezone
@@ -250,7 +261,7 @@ extern int	day_tab[2][13];
 
 
 extern void GetCurrentTime(struct tm * tm);
-extern void GetCurrentTimeUsec(struct tm * tm, double *fsec);
+extern void GetCurrentTimeUsec(struct tm * tm, fsec_t *fsec);
 extern void j2date(int jd, int *year, int *month, int *day);
 extern int	date2j(int year, int month, int day);
 
@@ -259,22 +270,22 @@ extern int ParseDateTime(char *timestr, char *lowstr,
 			  int maxfields, int *numfields);
 extern int DecodeDateTime(char **field, int *ftype,
 			   int nf, int *dtype,
-			   struct tm * tm, double *fsec, int *tzp);
+			   struct tm * tm, fsec_t *fsec, int *tzp);
 
 extern int DecodeTimeOnly(char **field, int *ftype,
 			   int nf, int *dtype,
-			   struct tm * tm, double *fsec, int *tzp);
+			   struct tm * tm, fsec_t *fsec, int *tzp);
 
-extern int DecodeDateDelta(char **field, int *ftype,
+extern int DecodeInterval(char **field, int *ftype,
 				int nf, int *dtype,
-				struct tm * tm, double *fsec);
+				struct tm * tm, fsec_t *fsec);
 
 extern int	DetermineLocalTimeZone(struct tm * tm);
 
 extern int	EncodeDateOnly(struct tm * tm, int style, char *str);
-extern int	EncodeTimeOnly(struct tm * tm, double fsec, int *tzp, int style, char *str);
-extern int	EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, char *str);
-extern int	EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str);
+extern int	EncodeTimeOnly(struct tm * tm, fsec_t fsec, int *tzp, int style, char *str);
+extern int	EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, char *str);
+extern int	EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str);
 
 extern int	DecodeSpecial(int field, char *lowtoken, int *val);
 extern int	DecodeUnits(int field, char *lowtoken, int *val);

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_control.h,v 1.6 2001/11/05 17:46:32 momjian Exp $
+ * $Id: pg_control.h,v 1.7 2002/04/21 19:48:23 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 
 
 /* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	71
+#define PG_CONTROL_VERSION	72
 
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep
@@ -106,7 +106,15 @@ typedef struct ControlFileData
 	 */
 	uint32		blcksz;			/* block size for this DB */
 	uint32		relseg_size;	/* blocks per segment of large relation */
+
+	uint32		nameDataLen;	/* catalog name field width */
+	uint32		funcMaxArgs;	/* maximum number of function arguments */
+
+	/* flag indicating internal format of timestamp, interval, time */
+	uint32		enableIntTimes;	/* int64 storage enabled? */
+
 	/* active locales --- "C" if compiled without USE_LOCALE: */
+	uint32		localeBuflen;
 	char		lc_collate[LOCALE_NAME_BUFLEN];
 	char		lc_ctype[LOCALE_NAME_BUFLEN];
 } ControlFileData;

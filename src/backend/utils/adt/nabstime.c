@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.92 2002/03/06 06:10:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.93 2002/04/21 19:48:12 thomas Exp $
  *
  * NOTES
  *
@@ -76,21 +76,6 @@
 				  AbsoluteTimeGetDatum(t1), \
 				  AbsoluteTimeGetDatum(t2))) ? (t2) : (t1))
 
-#ifdef NOT_USED
-static char *unit_tab[] = {
-	"second", "seconds", "minute", "minutes",
-	"hour", "hours", "day", "days", "week", "weeks",
-"month", "months", "year", "years"};
-
-#define UNITMAXLEN 7			/* max length of a unit name */
-#define NUNITS 14				/* number of different units */
-
-/* table of seconds per unit (month = 30 days, year = 365 days)  */
-static int	sec_tab[] = {
-	1, 1, 60, 60,
-	3600, 3600, 86400, 86400, 604800, 604800,
-2592000, 2592000, 31536000, 31536000};
-#endif
 
 /*
  * Function prototypes -- internal to this file only
@@ -98,12 +83,6 @@ static int	sec_tab[] = {
 
 static AbsoluteTime tm2abstime(struct tm * tm, int tz);
 static void reltime2tm(RelativeTime time, struct tm * tm);
-
-#ifdef NOT_USED
-static int	correct_unit(char *unit, int *unptr);
-static int	correct_dir(char *direction, int *signptr);
-#endif
-
 static int istinterval(char *i_string,
 			AbsoluteTime *i_start,
 			AbsoluteTime *i_end);
@@ -177,7 +156,7 @@ GetCurrentAbsoluteTime(void)
 }	/* GetCurrentAbsoluteTime() */
 
 
-/* GetCurrentAbsoluteTime()
+/* GetCurrentAbsoluteTimeUsec()
  * Get the current system time. Set timezone parameters if not specified elsewhere.
  * Define HasCTZSet to allow clients to specify the default timezone.
  *
@@ -271,13 +250,17 @@ GetCurrentTime(struct tm * tm)
 
 
 void
-GetCurrentTimeUsec(struct tm * tm, double *fsec)
+GetCurrentTimeUsec(struct tm * tm, fsec_t *fsec)
 {
 	int			tz;
 	int			usec;
 
 	abstime2tm(GetCurrentTransactionStartTimeUsec(&usec), &tz, tm, NULL);
+#ifdef HAVE_INT64_TIMESTAMP
+	*fsec = usec;
+#else
 	*fsec = usec * 1.0e-6;
+#endif
 
 	return;
 }	/* GetCurrentTimeUsec() */
@@ -493,7 +476,7 @@ nabstimein(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
 	AbsoluteTime result;
-	double		fsec;
+	fsec_t		fsec;
 	int			tz = 0;
 	struct tm	date,
 			   *tm = &date;
@@ -713,7 +696,7 @@ timestamp_abstime(PG_FUNCTION_ARGS)
 {
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 	AbsoluteTime result;
-	double		fsec;
+	fsec_t		fsec;
 	int			tz;
 	struct tm	tt,
 			   *tm = &tt;
@@ -767,7 +750,9 @@ abstime_timestamp(PG_FUNCTION_ARGS)
 
 		default:
 			abstime2tm(abstime, &tz, tm, &tzn);
-			result = abstime + ((date2j(1970, 1, 1) - date2j(2000, 1, 1)) * 86400) + tz;
+			if (tm2timestamp(tm, 0, NULL, &result) != 0)
+				elog(ERROR, "Unable convert ABSTIME to TIMESTAMP"
+					 "\n\tabstime_timestamp() internal error");
 			break;
 	};
 
@@ -783,7 +768,7 @@ timestamptz_abstime(PG_FUNCTION_ARGS)
 {
 	TimestampTz timestamp = PG_GETARG_TIMESTAMP(0);
 	AbsoluteTime result;
-	double		fsec;
+	fsec_t		fsec;
 	struct tm	tt,
 			   *tm = &tt;
 
@@ -810,6 +795,11 @@ abstime_timestamptz(PG_FUNCTION_ARGS)
 {
 	AbsoluteTime abstime = PG_GETARG_ABSOLUTETIME(0);
 	TimestampTz result;
+	struct tm	tt,
+			   *tm = &tt;
+	int			tz;
+	char		zone[MAXDATELEN + 1],
+			   *tzn = zone;
 
 	switch (abstime)
 	{
@@ -827,7 +817,10 @@ abstime_timestamptz(PG_FUNCTION_ARGS)
 			break;
 
 		default:
-			result = abstime + ((date2j(1970, 1, 1) - date2j(2000, 1, 1)) * 86400);
+			abstime2tm(abstime, &tz, tm, &tzn);
+			if (tm2timestamp(tm, 0, &tz, &result) != 0)
+				elog(ERROR, "Unable convert ABSTIME to TIMESTAMP WITH TIME ZONE"
+					 "\n\tabstime_timestamp() internal error");
 			break;
 	};
 
@@ -849,7 +842,7 @@ reltimein(PG_FUNCTION_ARGS)
 	RelativeTime result;
 	struct tm	tt,
 			   *tm = &tt;
-	double		fsec;
+	fsec_t		fsec;
 	int			dtype;
 	char	   *field[MAXDATEFIELDS];
 	int			nf,
@@ -860,14 +853,14 @@ reltimein(PG_FUNCTION_ARGS)
 		elog(ERROR, "Bad (length) reltime external representation '%s'", str);
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
-		|| (DecodeDateDelta(field, ftype, nf, &dtype, tm, &fsec) != 0))
+		|| (DecodeInterval(field, ftype, nf, &dtype, tm, &fsec) != 0))
 		elog(ERROR, "Bad reltime external representation '%s'", str);
 
 	switch (dtype)
 	{
 		case DTK_DELTA:
 			result = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec);
-			result += (((tm->tm_year * 365) + (tm->tm_mon * 30) + tm->tm_mday) * (24 * 60 * 60));
+			result += ((tm->tm_year * 36525 * 864) + (((tm->tm_mon * 30) + tm->tm_mday) * 86400));
 			break;
 
 		default:
@@ -893,7 +886,7 @@ reltimeout(PG_FUNCTION_ARGS)
 	char		buf[MAXDATELEN + 1];
 
 	reltime2tm(time, tm);
-	EncodeTimeSpan(tm, 0, DateStyle, buf);
+	EncodeInterval(tm, 0, DateStyle, buf);
 
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
@@ -903,7 +896,7 @@ reltimeout(PG_FUNCTION_ARGS)
 static void
 reltime2tm(RelativeTime time, struct tm * tm)
 {
-	TMODULO(time, tm->tm_year, 31536000);
+	TMODULO(time, tm->tm_year, 31557600);
 	TMODULO(time, tm->tm_mon, 2592000);
 	TMODULO(time, tm->tm_mday, 86400);
 	TMODULO(time, tm->tm_hour, 3600);
@@ -988,7 +981,11 @@ interval_reltime(PG_FUNCTION_ARGS)
 	RelativeTime time;
 	int			year,
 				month;
+#ifdef HAVE_INT64_TIMESTAMP
+	int64		span;
+#else
 	double		span;
+#endif
 
 	if (interval->month == 0)
 	{
@@ -1006,7 +1003,13 @@ interval_reltime(PG_FUNCTION_ARGS)
 		month = interval->month;
 	}
 
-	span = (((((double) 365 * year) + ((double) 30 * month)) * 86400) + interval->time);
+#ifdef HAVE_INT64_TIMESTAMP
+	span = ((((INT64CONST(365250000) * year) + (INT64CONST(30000000) * month))
+			 * INT64CONST(86400)) + interval->time);
+	span /= INT64CONST(1000000);
+#else
+	span = (((((double) 365.25 * year) + ((double) 30 * month)) * 86400) + interval->time);
+#endif
 
 	if ((span < INT_MIN) || (span > INT_MAX))
 		time = INVALID_RELTIME;
@@ -1036,10 +1039,19 @@ reltime_interval(PG_FUNCTION_ARGS)
 			break;
 
 		default:
-			TMODULO(reltime, year, 31536000);
-			TMODULO(reltime, month, 2592000);
+#ifdef HAVE_INT64_TIMESTAMP
+			year = (reltime / (36525 * 864));
+			reltime -= (year * (36525 * 864));
+			month = (reltime / (30 * 86400));
+			reltime -= (month * (30 * 86400));
+
+			result->time = (reltime * INT64CONST(1000000));
+#else
+			TMODULO(reltime, year, (36525 * 864));
+			TMODULO(reltime, month, (30 * 86400));
 
 			result->time = reltime;
+#endif
 			result->month = ((12 * year) + month);
 			break;
 	}
@@ -1090,11 +1102,6 @@ timepl(PG_FUNCTION_ARGS)
 	AbsoluteTime t1 = PG_GETARG_ABSOLUTETIME(0);
 	RelativeTime t2 = PG_GETARG_RELATIVETIME(1);
 
-#if 0
-	if (t1 == CURRENT_ABSTIME)
-		t1 = GetCurrentTransactionStartTime();
-#endif
-
 	if (AbsoluteTimeIsReal(t1) &&
 		RelativeTimeIsValid(t2) &&
 		((t2 > 0) ? (t1 < NOEND_ABSTIME - t2)
@@ -1113,11 +1120,6 @@ timemi(PG_FUNCTION_ARGS)
 {
 	AbsoluteTime t1 = PG_GETARG_ABSOLUTETIME(0);
 	RelativeTime t2 = PG_GETARG_RELATIVETIME(1);
-
-#if 0
-	if (t1 == CURRENT_ABSTIME)
-		t1 = GetCurrentTransactionStartTime();
-#endif
 
 	if (AbsoluteTimeIsReal(t1) &&
 		RelativeTimeIsValid(t2) &&

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.52 2002/04/03 05:39:29 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.53 2002/04/21 19:48:12 thomas Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
@@ -410,7 +410,7 @@ typedef struct
 typedef struct TmToChar
 {
 	struct tm	tm;				/* classic 'tm' struct */
-	double		fsec;			/* milliseconds */
+	fsec_t		fsec;			/* fractional seconds */
 	char	   *tzn;			/* timezone */
 } TmToChar;
 
@@ -1831,7 +1831,11 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 		case DCH_MS:			/* millisecond */
 			if (flag == TO_CHAR)
 			{
+#ifdef HAVE_INT64_TIMESTAMP
+				sprintf(inout, "%03d", (int) (tmtc->fsec / INT64CONST(1000)));
+#else
 				sprintf(inout, "%03d", (int) rint(tmtc->fsec * 1000));
+#endif
 				if (S_THth(suf))
 					str_numth(p_inout, inout, S_TH_TYPE(suf));
 				if (S_THth(suf))
@@ -1874,7 +1878,11 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 		case DCH_US:			/* microsecond */
 			if (flag == TO_CHAR)
 			{
+#ifdef HAVE_INT64_TIMESTAMP
+				sprintf(inout, "%06d", (int) tmtc->fsec);
+#else
 				sprintf(inout, "%06d", (int) rint(tmtc->fsec * 1000000));
+#endif
 				if (S_THth(suf))
 					str_numth(p_inout, inout, S_TH_TYPE(suf));
 				if (S_THth(suf))
@@ -2868,7 +2876,7 @@ to_timestamp(PG_FUNCTION_ARGS)
 				date_len,
 				tz = 0;
 	struct tm	tm;
-	double		fsec = 0;
+	fsec_t		fsec = 0;
 
 	ZERO_tm(&tm);
 	ZERO_tmfc(&tmfc);
@@ -3071,10 +3079,17 @@ to_timestamp(PG_FUNCTION_ARGS)
 				tm.tm_yday - y[i - 1];
 	}
 
+#ifdef HAVE_INT64_TIMESTAMP
+	if (tmfc.ms)
+		fsec += tmfc.ms * 1000;
+	if (tmfc.us)
+		fsec += tmfc.us;
+#else
 	if (tmfc.ms)
 		fsec += (double) tmfc.ms / 1000;
 	if (tmfc.us)
 		fsec += (double) tmfc.us / 1000000;
+#endif
 
 	/* -------------------------------------------------------------- */
 

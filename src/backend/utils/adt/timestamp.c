@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.65 2002/03/09 17:35:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.66 2002/04/21 19:48:13 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,11 @@
 #include "utils/builtins.h"
 
 
-static double time2t(const int hour, const int min, const double sec);
+#ifdef HAVE_INT64_TIMESTAMP
+static int64 time2t(const int hour, const int min, const int sec, const fsec_t fsec);
+#else
+static double time2t(const int hour, const int min, const int sec, const fsec_t fsec);
+#endif
 static int	EncodeSpecialTimestamp(Timestamp dt, char *str);
 static Timestamp dt2local(Timestamp dt, int timezone);
 static void AdjustTimestampForTypmod(Timestamp *time, int32 typmod);
@@ -53,7 +57,7 @@ timestamp_in(PG_FUNCTION_ARGS)
 #endif
 	int32		typmod = PG_GETARG_INT32(2);
 	Timestamp	result;
-	double		fsec;
+	fsec_t		fsec;
 	struct tm	tt,
 			   *tm = &tt;
 	int			tz;
@@ -111,7 +115,7 @@ timestamp_out(PG_FUNCTION_ARGS)
 	char	   *result;
 	struct tm	tt,
 			   *tm = &tt;
-	double		fsec;
+	fsec_t		fsec;
 	char	   *tzn = NULL;
 	char		buf[MAXDATELEN + 1];
 
@@ -147,19 +151,81 @@ timestamp_scale(PG_FUNCTION_ARGS)
 static void
 AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 {
-	if (!TIMESTAMP_NOT_FINITE(*time) &&
-		(typmod >= 0) && (typmod <= 13))
+#ifdef HAVE_INT64_TIMESTAMP
+	static const int64 TimestampScales[MAX_TIMESTAMP_PRECISION+1] = {
+		INT64CONST(1000000),
+		INT64CONST(100000),
+		INT64CONST(10000),
+		INT64CONST(1000),
+		INT64CONST(100),
+		INT64CONST(10),
+		INT64CONST(1)
+	};
+
+	static const int64 TimestampOffsets[MAX_TIMESTAMP_PRECISION+1] = {
+		INT64CONST(-500000),
+		INT64CONST(-50000),
+		INT64CONST(-5000),
+		INT64CONST(-500),
+		INT64CONST(-50),
+		INT64CONST(-5),
+		INT64CONST(0)
+	};
+#else
+	static const double TimestampScales[MAX_TIMESTAMP_PRECISION+1] = {
+		1,
+		10,
+		100,
+		1000,
+		10000,
+		100000,
+		1000000
+	};
+
+	static const double TimestampOffsets[MAX_TIMESTAMP_PRECISION+1] = {
+		0.5,
+		0.05,
+		0.005,
+		0.0005,
+		0.00005,
+		0.000005,
+		0.0000005
+	};
+#endif
+
+	if (!TIMESTAMP_NOT_FINITE(*time)
+		&& (typmod != -1) && (typmod != MAX_TIMESTAMP_PRECISION))
 	{
-		static double TimestampScale = 1;
-		static int32 TimestampTypmod = 0;
+		if ((typmod < 0) || (typmod > MAX_TIMESTAMP_PRECISION))
+			elog(ERROR, "TIMESTAMP(%d) precision must be between %d and %d",
+				 typmod, 0, MAX_TIMESTAMP_PRECISION);
 
-		if (typmod != TimestampTypmod)
+#ifdef HAVE_INT64_TIMESTAMP
+		/* we have different truncation behavior depending on sign */
+		if (*time >= INT64CONST(0))
 		{
-			TimestampScale = pow(10.0, typmod);
-			TimestampTypmod = typmod;
+			*time = ((*time / TimestampScales[typmod])
+					 * TimestampScales[typmod]);
 		}
-
-		*time = (rint(((double) *time) * TimestampScale) / TimestampScale);
+		else
+		{
+			*time = (((*time + TimestampOffsets[typmod]) / TimestampScales[typmod])
+					 * TimestampScales[typmod]);
+		}
+#else
+		/* we have different truncation behavior depending on sign */
+		if (*time >= 0)
+		{
+			*time = (rint(((double) *time) * TimestampScales[typmod])
+					 / TimestampScales[typmod]);
+		}
+		else
+		{
+			/* Scale and truncate first, then add to help the rounding behavior */
+			*time = (rint((((double) *time) * TimestampScales[typmod]) + TimestampOffsets[typmod])
+					 / TimestampScales[typmod]);
+		}
+#endif
 	}
 }
 
@@ -177,7 +243,7 @@ timestamptz_in(PG_FUNCTION_ARGS)
 #endif
 	int32		typmod = PG_GETARG_INT32(2);
 	TimestampTz result;
-	double		fsec;
+	fsec_t		fsec;
 	struct tm	tt,
 			   *tm = &tt;
 	int			tz;
@@ -236,7 +302,7 @@ timestamptz_out(PG_FUNCTION_ARGS)
 	int			tz;
 	struct tm	tt,
 			   *tm = &tt;
-	double		fsec;
+	fsec_t		fsec;
 	char	   *tzn;
 	char		buf[MAXDATELEN + 1];
 
@@ -286,7 +352,7 @@ interval_in(PG_FUNCTION_ARGS)
 #endif
 	int32		typmod = PG_GETARG_INT32(2);
 	Interval   *result;
-	double		fsec;
+	fsec_t		fsec;
 	struct tm	tt,
 			   *tm = &tt;
 	int			dtype;
@@ -304,7 +370,7 @@ interval_in(PG_FUNCTION_ARGS)
 	fsec = 0;
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
-		|| (DecodeDateDelta(field, ftype, nf, &dtype, tm, &fsec) != 0))
+		|| (DecodeInterval(field, ftype, nf, &dtype, tm, &fsec) != 0))
 		elog(ERROR, "Bad interval external representation '%s'", str);
 
 	result = (Interval *) palloc(sizeof(Interval));
@@ -338,13 +404,13 @@ interval_out(PG_FUNCTION_ARGS)
 	char	   *result;
 	struct tm	tt,
 			   *tm = &tt;
-	double		fsec;
+	fsec_t		fsec;
 	char		buf[MAXDATELEN + 1];
 
 	if (interval2tm(*span, tm, &fsec) != 0)
 		elog(ERROR, "Unable to encode interval; internal coding error");
 
-	if (EncodeTimeSpan(tm, fsec, DateStyle, buf) != 0)
+	if (EncodeInterval(tm, fsec, DateStyle, buf) != 0)
 		elog(ERROR, "Unable to format interval; internal coding error");
 
 	result = pstrdup(buf);
@@ -375,6 +441,48 @@ interval_scale(PG_FUNCTION_ARGS)
 static void
 AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 {
+#ifdef HAVE_INT64_TIMESTAMP
+	static const int64 IntervalScales[MAX_INTERVAL_PRECISION+1] = {
+		INT64CONST(1000000),
+		INT64CONST(100000),
+		INT64CONST(10000),
+		INT64CONST(1000),
+		INT64CONST(100),
+		INT64CONST(10),
+		INT64CONST(1)
+	};
+
+	static const int64 IntervalOffsets[MAX_INTERVAL_PRECISION+1] = {
+		INT64CONST(-500000),
+		INT64CONST(-50000),
+		INT64CONST(-5000),
+		INT64CONST(-500),
+		INT64CONST(-50),
+		INT64CONST(-5),
+		INT64CONST(0)
+	};
+#else
+	static const double IntervalScales[MAX_INTERVAL_PRECISION+1] = {
+		1000000,
+		100000,
+		10000,
+		1000,
+		100,
+		10,
+		1
+	};
+
+	static const double IntervalOffsets[MAX_INTERVAL_PRECISION+1] = {
+		-500000,
+		-50000,
+		-5000,
+		-500,
+		-50,
+		-5,
+		0
+	};
+#endif
+
 	if (typmod != -1)
 	{
 		int			range = ((typmod >> 16) & 0x7FFF);
@@ -396,102 +504,190 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		}
 		/* YEAR TO MONTH */
 		else if (range == (MASK(YEAR) | MASK(MONTH)))
+		{
 			interval->time = 0;
+		}
 		else if (range == MASK(DAY))
 		{
 			interval->month = 0;
+#ifdef HAVE_INT64_TIMESTAMP
+			interval->time = (((int) (interval->time / INT64CONST(86400000000)))
+							  * INT64CONST(86400000000));
+#else
 			interval->time = (((int) (interval->time / 86400)) * 86400);
+#endif
 		}
 		else if (range == MASK(HOUR))
 		{
+#ifdef HAVE_INT64_TIMESTAMP
+			int64		day;
+#else
 			double		day;
+#endif
 
 			interval->month = 0;
+#ifdef HAVE_INT64_TIMESTAMP
+			day = (interval->time / INT64CONST(86400000000));
+			interval->time -= (day * INT64CONST(86400000000));
+			interval->time = ((interval->time / INT64CONST(3600000000))
+							  * INT64CONST(3600000000));
+#else
 			TMODULO(interval->time, day, 86400.0);
 			interval->time = (((int) (interval->time / 3600)) * 3600.0);
+#endif
 		}
 		else if (range == MASK(MINUTE))
 		{
+#ifdef HAVE_INT64_TIMESTAMP
+			int64		hour;
+#else
 			double		hour;
+#endif
 
 			interval->month = 0;
+#ifdef HAVE_INT64_TIMESTAMP
+			hour = (interval->time / INT64CONST(3600000000));
+			interval->time -= (hour * INT64CONST(3600000000));
+			interval->time = ((interval->time / INT64CONST(60000000))
+							  * INT64CONST(60000000));
+#else
 			TMODULO(interval->time, hour, 3600.0);
 			interval->time = (((int) (interval->time / 60)) * 60);
+#endif
 		}
 		else if (range == MASK(SECOND))
 		{
-			double		hour;
+#ifdef HAVE_INT64_TIMESTAMP
+			int64		minute;
+#else
+			double		minute;
+#endif
 
 			interval->month = 0;
-			TMODULO(interval->time, hour, 60.0);
+#ifdef HAVE_INT64_TIMESTAMP
+			minute = (interval->time / INT64CONST(60000000));
+			interval->time -= (minute * INT64CONST(60000000));
+#else
+			TMODULO(interval->time, minute, 60.0);
 /*			interval->time = (int)(interval->time); */
+#endif
 		}
 		/* DAY TO HOUR */
 		else if (range == (MASK(DAY) | MASK(HOUR)))
 		{
 			interval->month = 0;
+#ifdef HAVE_INT64_TIMESTAMP
+			interval->time = ((interval->time / INT64CONST(3600000000))
+							  * INT64CONST(3600000000));
+#else
 			interval->time = (((int) (interval->time / 3600)) * 3600);
+#endif
 		}
 		/* DAY TO MINUTE */
 		else if (range == (MASK(DAY) | MASK(HOUR) | MASK(MINUTE)))
 		{
 			interval->month = 0;
+#ifdef HAVE_INT64_TIMESTAMP
+			interval->time = ((interval->time / INT64CONST(60000000))
+							  * INT64CONST(60000000));
+#else
 			interval->time = (((int) (interval->time / 60)) * 60);
+#endif
 		}
 		/* DAY TO SECOND */
 		else if (range == (MASK(DAY) | MASK(HOUR) | MASK(MINUTE) | MASK(SECOND)))
+		{
 			interval->month = 0;
+		}
 		/* HOUR TO MINUTE */
 		else if (range == (MASK(HOUR) | MASK(MINUTE)))
 		{
+#ifdef HAVE_INT64_TIMESTAMP
+			int64		day;
+#else
 			double		day;
+#endif
 
 			interval->month = 0;
+#ifdef HAVE_INT64_TIMESTAMP
+			day = (interval->time / INT64CONST(86400000000));
+			interval->time -= (day * INT64CONST(86400000000));
+			interval->time = ((interval->time / INT64CONST(60000000))
+							  * INT64CONST(60000000));
+#else
 			TMODULO(interval->time, day, 86400.0);
 			interval->time = (((int) (interval->time / 60)) * 60);
+#endif
 		}
 		/* HOUR TO SECOND */
 		else if (range == (MASK(HOUR) | MASK(MINUTE) | MASK(SECOND)))
 		{
+#ifdef HAVE_INT64_TIMESTAMP
+			int64		day;
+#else
 			double		day;
+#endif
 
 			interval->month = 0;
+#ifdef HAVE_INT64_TIMESTAMP
+			day = (interval->time / INT64CONST(86400000000));
+			interval->time -= (day * INT64CONST(86400000000));
+#else
 			TMODULO(interval->time, day, 86400.0);
+#endif
 		}
 		/* MINUTE TO SECOND */
 		else if (range == (MASK(MINUTE) | MASK(SECOND)))
 		{
+#ifdef HAVE_INT64_TIMESTAMP
+			int64		hour;
+#else
 			double		hour;
+#endif
 
 			interval->month = 0;
+#ifdef HAVE_INT64_TIMESTAMP
+			hour = (interval->time / INT64CONST(3600000000));
+			interval->time -= (hour * INT64CONST(3600000000));
+#else
 			TMODULO(interval->time, hour, 3600.0);
+#endif
 		}
 		else
 			elog(ERROR, "AdjustIntervalForTypmod(): internal coding error");
 
+		/* Need to adjust precision? If not, don't even try! */
 		if (precision != 0xFFFF)
 		{
-			static double IntervalScale = 1;
-			static int	IntervalTypmod = 0;
+			if ((precision < 0) || (precision > MAX_INTERVAL_PRECISION))
+				elog(ERROR, "INTERVAL(%d) precision must be between %d and %d",
+					 precision, 0, MAX_INTERVAL_PRECISION);
 
-			if (precision != IntervalTypmod)
+#ifdef HAVE_INT64_TIMESTAMP
+			/* we have different truncation behavior depending on sign */
+			if (interval->time >= INT64CONST(0))
 			{
-				IntervalTypmod = precision;
-				IntervalScale = pow(10.0, IntervalTypmod);
+				interval->time = ((interval->time / IntervalScales[precision])
+								  * IntervalScales[precision]);
 			}
-
-			/*
-			 * Hmm. For the time field, we can get to a large value since
-			 * we store everything related to an absolute interval (e.g.
-			 * years worth of days) in this one field. So we have
-			 * precision problems doing rint() on this field if the field
-			 * is too large. This resulted in an annoying "...0001"
-			 * appended to the printed result on my Linux box. I hate
-			 * doing an expensive math operation like log10() to avoid
-			 * this, but what else can we do?? - thomas 2001-10-19
-			 */
-			if ((log10(interval->time) + IntervalTypmod) <= 13)
-				interval->time = (rint(interval->time * IntervalScale) / IntervalScale);
+			else
+			{
+				interval->time = (((interval->time + IntervalOffsets[precision]) / IntervalScales[precision])
+								  * IntervalScales[precision]);
+			}
+#else
+			/* we have different truncation behavior depending on sign */
+			if (interval->time >= 0)
+			{
+				interval->time = (rint(((double) interval->time) * IntervalScales[precision])
+								  / IntervalScales[precision]);
+			}
+			else
+			{
+				interval->time = (rint((((double) interval->time) + IntervalOffsets[precision])
+									   * IntervalScales[precision]) / IntervalScales[precision]);
+			}
+#endif
 		}
 	}
 
@@ -524,23 +720,42 @@ now(PG_FUNCTION_ARGS)
 
 	sec = GetCurrentTransactionStartTimeUsec(&usec);
 
+#ifdef HAVE_INT64_TIMESTAMP
+	result = (((sec - ((date2j(2000, 1, 1) - date2j(1970, 1, 1)) * 86400))
+			   * INT64CONST(1000000)) + usec);
+#else
 	result = (sec + (usec * 1.0e-6) - ((date2j(2000, 1, 1) - date2j(1970, 1, 1)) * 86400));
+#endif
 
 	PG_RETURN_TIMESTAMPTZ(result);
 }
 
 void
-dt2time(Timestamp jd, int *hour, int *min, double *sec)
+dt2time(Timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
 {
+#ifdef HAVE_INT64_TIMESTAMP
+	int64		time;
+#else
 	double		time;
+#endif
 
 	time = jd;
 
+#ifdef HAVE_INT64_TIMESTAMP
+	*hour = (time / INT64CONST(3600000000));
+	time -= ((*hour) * INT64CONST(3600000000));
+	*min = (time / INT64CONST(60000000));
+	time -= ((*min) * INT64CONST(60000000));
+	*sec = (time / INT64CONST(1000000));
+	*fsec = (time - (*sec * INT64CONST(1000000)));
+#else
 	*hour = (time / 3600);
 	time -= ((*hour) * 3600);
 	*min = (time / 60);
 	time -= ((*min) * 60);
-	*sec = JROUND(time);
+	*sec = time;
+	*fsec = JROUND(time - *sec);
+#endif
 
 	return;
 }	/* dt2time() */
@@ -558,13 +773,18 @@ dt2time(Timestamp jd, int *hour, int *min, double *sec)
  *	local time zone. If out of this range, leave as GMT. - tgl 97/05/27
  */
 int
-timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
+timestamp2tm(Timestamp dt, int *tzp, struct tm *tm, fsec_t *fsec, char **tzn)
 {
-	double		date,
-				date0,
-				time,
-				sec;
-	time_t		utime;
+#ifdef HAVE_INT64_TIMESTAMP
+	int		date,
+			date0;
+	int64	time;
+#else
+	double	date,
+			date0;
+	double	time;
+#endif
+	time_t	utime;
 
 #if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
 	struct tm  *tx;
@@ -578,9 +798,22 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 	 * later bypass any calls which adjust the tm fields.
 	 */
 	if (HasCTZSet && (tzp != NULL))
+#ifdef HAVE_INT64_TIMESTAMP
+		dt -= (CTimeZone * INT64CONST(1000000));
+#else
 		dt -= CTimeZone;
+#endif
 
 	time = dt;
+#ifdef HAVE_INT64_TIMESTAMP
+	TMODULO(time, date, INT64CONST(86400000000));
+
+	if (time < INT64CONST(0))
+	{
+		time += INT64CONST(86400000000);
+		date -= 1;
+	}
+#else
 	TMODULO(time, date, 86400e0);
 
 	if (time < 0)
@@ -588,6 +821,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 		time += 86400;
 		date -= 1;
 	}
+#endif
 
 	/* Julian day routine does not work for negative Julian days */
 	if (date < -date0)
@@ -597,10 +831,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 	date += date0;
 
 	j2date((int) date, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
-	dt2time(time, &tm->tm_hour, &tm->tm_min, &sec);
-
-	*fsec = JROUND(sec);
-	TMODULO(*fsec, tm->tm_sec, 1e0);
+	dt2time(time, &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
 
 	if (tzp != NULL)
 	{
@@ -626,7 +857,12 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 		 */
 		else if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
 		{
-			utime = (dt + (date0 - date2j(1970, 1, 1)) * 86400);
+#ifdef HAVE_INT64_TIMESTAMP
+			utime = ((dt / INT64CONST(1000000))
+					 + ((date0 - date2j(1970, 1, 1)) * INT64CONST(86400)));
+#else
+			utime = (dt + ((date0 - date2j(1970, 1, 1)) * 86400));
+#endif
 
 #if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
 			tx = localtime(&utime);
@@ -703,19 +939,27 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
  * Also, month is one-based, _not_ zero-based.
  */
 int
-tm2timestamp(struct tm * tm, double fsec, int *tzp, Timestamp *result)
+tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
 {
-
+#ifdef HAVE_INT64_TIMESTAMP
+	int		date;
+	int64	time;
+#else
 	double		date,
 				time;
+#endif
 
 	/* Julian day routines are not correct for negative Julian days */
 	if (!IS_VALID_JULIAN(tm->tm_year, tm->tm_mon, tm->tm_mday))
 		return -1;
 
 	date = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1);
-	time = time2t(tm->tm_hour, tm->tm_min, (tm->tm_sec + fsec));
-	*result = (date * 86400 + time);
+	time = time2t(tm->tm_hour, tm->tm_min, tm->tm_sec, fsec);
+#ifdef HAVE_INT64_TIMESTAMP
+	*result = ((date * INT64CONST(86400000000)) + time);
+#else
+	*result = ((date * 86400) + time);
+#endif
 	if (tzp != NULL)
 		*result = dt2local(*result, -(*tzp));
 
@@ -727,9 +971,13 @@ tm2timestamp(struct tm * tm, double fsec, int *tzp, Timestamp *result)
  * Convert a interval data type to a tm structure.
  */
 int
-interval2tm(Interval span, struct tm * tm, float8 *fsec)
+interval2tm(Interval span, struct tm * tm, fsec_t *fsec)
 {
+#ifdef HAVE_INT64_TIMESTAMP
+	int64		time;
+#else
 	double		time;
+#endif
 
 	if (span.month != 0)
 	{
@@ -743,45 +991,71 @@ interval2tm(Interval span, struct tm * tm, float8 *fsec)
 		tm->tm_mon = 0;
 	}
 
-#ifdef ROUND_ALL
-	time = JROUND(span.time);
-#else
 	time = span.time;
-#endif
 
+#ifdef HAVE_INT64_TIMESTAMP
+	tm->tm_mday = (time / INT64CONST(86400000000));
+	time -= (tm->tm_mday * INT64CONST(86400000000));
+	tm->tm_hour = (time / INT64CONST(3600000000));
+	time -= (tm->tm_hour * INT64CONST(3600000000));
+	tm->tm_min = (time / INT64CONST(60000000));
+	time -= (tm->tm_min * INT64CONST(60000000));
+	tm->tm_sec = (time / INT64CONST(1000000));
+	*fsec = (time - (tm->tm_sec * INT64CONST(1000000)));
+#else
 	TMODULO(time, tm->tm_mday, 86400e0);
 	TMODULO(time, tm->tm_hour, 3600e0);
 	TMODULO(time, tm->tm_min, 60e0);
 	TMODULO(time, tm->tm_sec, 1e0);
 	*fsec = time;
+#endif
 
 	return 0;
 }	/* interval2tm() */
 
 int
-tm2interval(struct tm * tm, double fsec, Interval *span)
+tm2interval(struct tm * tm, fsec_t fsec, Interval *span)
 {
 	span->month = ((tm->tm_year * 12) + tm->tm_mon);
+#ifdef HAVE_INT64_TIMESTAMP
+	span->time = ((((((((tm->tm_mday * INT64CONST(24))
+					  + tm->tm_hour) * INT64CONST(60))
+					+ tm->tm_min) * INT64CONST(60))
+				  + tm->tm_sec) * INT64CONST(1000000)) + fsec);
+#else
 	span->time = ((((((tm->tm_mday * 24.0)
 					  + tm->tm_hour) * 60.0)
 					+ tm->tm_min) * 60.0)
 				  + tm->tm_sec);
 	span->time = JROUND(span->time + fsec);
+#endif
 
 	return 0;
 }	/* tm2interval() */
 
-static double
-time2t(const int hour, const int min, const double sec)
+#ifdef HAVE_INT64_TIMESTAMP
+static int64
+time2t(const int hour, const int min, const int sec, const fsec_t fsec)
 {
-	return (((hour * 60) + min) * 60) + sec;
+	return ((((((hour * 60) + min) * 60) + sec) * INT64CONST(1000000)) + fsec);
 }	/* time2t() */
+#else
+static double
+time2t(const int hour, const int min, const int sec, const fsec_t fsec)
+{
+	return ((((hour * 60) + min) * 60) + sec + fsec);
+}	/* time2t() */
+#endif
 
 static Timestamp
 dt2local(Timestamp dt, int tz)
 {
+#ifdef HAVE_INT64_TIMESTAMP
+	dt -= (tz * INT64CONST(1000000));
+#else
 	dt -= tz;
 	dt = JROUND(dt);
+#endif
 	return dt;
 }	/* dt2local() */
 
@@ -928,15 +1202,28 @@ timestamp_cmp(PG_FUNCTION_ARGS)
 static int
 interval_cmp_internal(Interval *interval1, Interval *interval2)
 {
+#ifdef HAVE_INT64_TIMESTAMP
+	int64		span1,
+				span2;
+#else
 	double		span1,
 				span2;
+#endif
 
 	span1 = interval1->time;
+	span2 = interval2->time;
+
+#ifdef HAVE_INT64_TIMESTAMP
+	if (interval1->month != 0)
+		span1 += ((interval1->month * INT64CONST(30) * INT64CONST(86400000000)));
+	if (interval2->month != 0)
+		span2 += ((interval2->month * INT64CONST(30) * INT64CONST(86400000000)));
+#else
 	if (interval1->month != 0)
 		span1 += (interval1->month * (30.0 * 86400));
-	span2 = interval2->time;
 	if (interval2->month != 0)
 		span2 += (interval2->month * (30.0 * 86400));
+#endif
 
 	return ((span1 < span2) ? -1 : (span1 > span2) ? 1 : 0);
 }
@@ -1017,7 +1304,7 @@ interval_hash(PG_FUNCTION_ARGS)
 	 * sizeof(Interval), so that any garbage pad bytes in the structure
 	 * won't be included in the hash!
 	 */
-	return hash_any((unsigned char *) key, sizeof(double) + sizeof(int4));
+	return hash_any((unsigned char *) key, sizeof(key->time) + sizeof(key->month));
 }
 
 /* overlaps_timestamp() --- implements the SQL92 OVERLAPS operator.
@@ -1195,7 +1482,11 @@ timestamp_mi(PG_FUNCTION_ARGS)
 		result->time = 0;
 	}
 	else
+#ifdef HAVE_INT64_TIMESTAMP
+		result->time = (dt1 - dt2);
+#else
 		result->time = JROUND(dt1 - dt2);
+#endif
 
 	result->month = 0;
 
@@ -1220,14 +1511,16 @@ timestamp_pl_span(PG_FUNCTION_ARGS)
 	Timestamp	result;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
+	{
 		result = timestamp;
+	}
 	else
 	{
 		if (span->month != 0)
 		{
 			struct tm	tt,
 					   *tm = &tt;
-			double		fsec;
+			fsec_t		fsec;
 
 			if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) == 0)
 			{
@@ -1262,12 +1555,7 @@ timestamp_pl_span(PG_FUNCTION_ARGS)
 			}
 		}
 
-#ifdef ROUND_ALL
-		timestamp = JROUND(timestamp + span->time);
-#else
 		timestamp += span->time;
-#endif
-
 		result = timestamp;
 	}
 
@@ -1316,7 +1604,7 @@ timestamptz_pl_span(PG_FUNCTION_ARGS)
 		{
 			struct tm	tt,
 					   *tm = &tt;
-			double		fsec;
+			fsec_t		fsec;
 
 			if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) == 0)
 			{
@@ -1349,12 +1637,7 @@ timestamptz_pl_span(PG_FUNCTION_ARGS)
 			}
 		}
 
-#ifdef ROUND_ALL
-		timestamp = JROUND(timestamp + span->time);
-#else
 		timestamp += span->time;
-#endif
-
 		result = timestamp;
 	}
 
@@ -1398,17 +1681,29 @@ interval_smaller(PG_FUNCTION_ARGS)
 	Interval   *interval1 = PG_GETARG_INTERVAL_P(0);
 	Interval   *interval2 = PG_GETARG_INTERVAL_P(1);
 	Interval   *result;
+#ifdef HAVE_INT64_TIMESTAMP
+	int64		span1,
+				span2;
+#else
 	double		span1,
 				span2;
+#endif
 
 	result = (Interval *) palloc(sizeof(Interval));
 
 	span1 = interval1->time;
+	span2 = interval2->time;
+#ifdef HAVE_INT64_TIMESTAMP
+	if (interval1->month != 0)
+		span1 += ((interval1->month * INT64CONST(30) * INT64CONST(86400000000)));
+	if (interval2->month != 0)
+		span2 += ((interval2->month * INT64CONST(30) * INT64CONST(86400000000)));
+#else
 	if (interval1->month != 0)
 		span1 += (interval1->month * (30.0 * 86400));
-	span2 = interval2->time;
 	if (interval2->month != 0)
 		span2 += (interval2->month * (30.0 * 86400));
+#endif
 
 	if (span2 < span1)
 	{
@@ -1430,17 +1725,29 @@ interval_larger(PG_FUNCTION_ARGS)
 	Interval   *interval1 = PG_GETARG_INTERVAL_P(0);
 	Interval   *interval2 = PG_GETARG_INTERVAL_P(1);
 	Interval   *result;
+#ifdef HAVE_INT64_TIMESTAMP
+	int64		span1,
+				span2;
+#else
 	double		span1,
 				span2;
+#endif
 
 	result = (Interval *) palloc(sizeof(Interval));
 
 	span1 = interval1->time;
+	span2 = interval2->time;
+#ifdef HAVE_INT64_TIMESTAMP
+	if (interval1->month != 0)
+		span1 += ((interval1->month * INT64CONST(30) * INT64CONST(86400000000)));
+	if (interval2->month != 0)
+		span2 += ((interval2->month * INT64CONST(30) * INT64CONST(86400000000)));
+#else
 	if (interval1->month != 0)
 		span1 += (interval1->month * (30.0 * 86400));
-	span2 = interval2->time;
 	if (interval2->month != 0)
 		span2 += (interval2->month * (30.0 * 86400));
+#endif
 
 	if (span2 > span1)
 	{
@@ -1466,7 +1773,11 @@ interval_pl(PG_FUNCTION_ARGS)
 	result = (Interval *) palloc(sizeof(Interval));
 
 	result->month = (span1->month + span2->month);
+#ifdef HAVE_INT64_TIMESTAMP
+	result->time = (span1->time + span2->time);
+#else
 	result->time = JROUND(span1->time + span2->time);
+#endif
 
 	PG_RETURN_INTERVAL_P(result);
 }
@@ -1481,7 +1792,11 @@ interval_mi(PG_FUNCTION_ARGS)
 	result = (Interval *) palloc(sizeof(Interval));
 
 	result->month = (span1->month - span2->month);
+#ifdef HAVE_INT64_TIMESTAMP
+	result->time = (span1->time - span2->time);
+#else
 	result->time = JROUND(span1->time - span2->time);
+#endif
 
 	PG_RETURN_INTERVAL_P(result);
 }
@@ -1492,15 +1807,26 @@ interval_mul(PG_FUNCTION_ARGS)
 	Interval   *span1 = PG_GETARG_INTERVAL_P(0);
 	float8		factor = PG_GETARG_FLOAT8(1);
 	Interval   *result;
+#ifdef HAVE_INT64_TIMESTAMP
+	int64		months;
+#else
 	double		months;
+#endif
 
 	result = (Interval *) palloc(sizeof(Interval));
 
 	months = (span1->month * factor);
+#ifdef HAVE_INT64_TIMESTAMP
+	result->month = months;
+	result->time = (span1->time * factor);
+	result->time += ((months - result->month) * INT64CONST(30)
+					 * INT64CONST(86400000000));
+#else
 	result->month = rint(months);
 	result->time = JROUND(span1->time * factor);
 	/* evaluate fractional months as 30 days */
 	result->time += JROUND((months - result->month) * 30 * 86400);
+#endif
 
 	PG_RETURN_INTERVAL_P(result);
 }
@@ -1518,21 +1844,31 @@ mul_d_interval(PG_FUNCTION_ARGS)
 Datum
 interval_div(PG_FUNCTION_ARGS)
 {
-	Interval   *span1 = PG_GETARG_INTERVAL_P(0);
+	Interval   *span = PG_GETARG_INTERVAL_P(0);
 	float8		factor = PG_GETARG_FLOAT8(1);
 	Interval   *result;
+#ifndef HAVE_INT64_TIMESTAMP
 	double		months;
+#endif
 
 	result = (Interval *) palloc(sizeof(Interval));
 
 	if (factor == 0.0)
 		elog(ERROR, "interval_div: divide by 0.0 error");
 
-	months = (span1->month / factor);
+#ifdef HAVE_INT64_TIMESTAMP
+	result->month = (span->month / factor);
+	result->time = (span->time / factor);
+	/* evaluate fractional months as 30 days */
+	result->time += (((span->month - (result->month * factor))
+					  * INT64CONST(30) * INT64CONST(86400000000)) / factor);
+#else
+	months = (span->month / factor);
 	result->month = rint(months);
-	result->time = JROUND(span1->time / factor);
+	result->time = JROUND(span->time / factor);
 	/* evaluate fractional months as 30 days */
 	result->time += JROUND((months - result->month) * 30 * 86400);
+#endif
 
 	PG_RETURN_INTERVAL_P(result);
 }
@@ -1641,7 +1977,7 @@ timestamp_age(PG_FUNCTION_ARGS)
 	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
 	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
 	Interval   *result;
-	double		fsec,
+	fsec_t		fsec,
 				fsec1,
 				fsec2;
 	struct tm	tt,
@@ -1750,7 +2086,7 @@ timestamptz_age(PG_FUNCTION_ARGS)
 	TimestampTz dt1 = PG_GETARG_TIMESTAMP(0);
 	TimestampTz dt2 = PG_GETARG_TIMESTAMP(1);
 	Interval   *result;
-	double		fsec,
+	fsec_t		fsec,
 				fsec1,
 				fsec2;
 	struct tm	tt,
@@ -2033,7 +2369,7 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 	char	   *up,
 			   *lp,
 				lowunits[MAXDATELEN + 1];
-	double		fsec;
+	fsec_t		fsec;
 	struct tm	tt,
 			   *tm = &tt;
 
@@ -2079,11 +2415,17 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 				break;
 
 			case DTK_MILLISEC:
+#ifdef HAVE_INT64_TIMESTAMP
+				fsec = ((fsec / 1000) * 1000);
+#else
 				fsec = rint(fsec * 1000) / 1000;
+#endif
 				break;
 
 			case DTK_MICROSEC:
+#ifndef HAVE_INT64_TIMESTAMP
 				fsec = rint(fsec * 1000000) / 1000000;
+#endif
 				break;
 
 			default:
@@ -2119,7 +2461,7 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 	char	   *up,
 			   *lp,
 				lowunits[MAXDATELEN + 1];
-	double		fsec;
+	fsec_t		fsec;
 	char	   *tzn;
 	struct tm	tt,
 			   *tm = &tt;
@@ -2166,10 +2508,16 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 				break;
 
 			case DTK_MILLISEC:
+#ifdef HAVE_INT64_TIMESTAMP
+				fsec = ((fsec / 1000) * 1000);
+#else
 				fsec = rint(fsec * 1000) / 1000;
+#endif
 				break;
 			case DTK_MICROSEC:
+#ifndef HAVE_INT64_TIMESTAMP
 				fsec = rint(fsec * 1000000) / 1000000;
+#endif
 				break;
 
 			default:
@@ -2206,7 +2554,7 @@ interval_trunc(PG_FUNCTION_ARGS)
 	char	   *up,
 			   *lp,
 				lowunits[MAXDATELEN + 1];
-	double		fsec;
+	fsec_t		fsec;
 	struct tm	tt,
 			   *tm = &tt;
 
@@ -2253,11 +2601,16 @@ interval_trunc(PG_FUNCTION_ARGS)
 					break;
 
 				case DTK_MILLISEC:
+#ifdef HAVE_INT64_TIMESTAMP
+					fsec = ((fsec / 1000) * 1000);
+#else
 					fsec = rint(fsec * 1000) / 1000;
+#endif
 					break;
-
 				case DTK_MICROSEC:
+#ifndef HAVE_INT64_TIMESTAMP
 					fsec = rint(fsec * 1000000) / 1000000;
+#endif
 					break;
 
 				default:
@@ -2380,7 +2733,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 	char	   *up,
 			   *lp,
 				lowunits[MAXDATELEN + 1];
-	double		fsec;
+	fsec_t		fsec;
 	struct tm	tt,
 			   *tm = &tt;
 
@@ -2410,15 +2763,27 @@ timestamp_part(PG_FUNCTION_ARGS)
 		switch (val)
 		{
 			case DTK_MICROSEC:
+#ifdef HAVE_INT64_TIMESTAMP
+				result = ((tm->tm_sec * 1000000e0) + fsec);
+#else
 				result = (tm->tm_sec + fsec) * 1000000;
+#endif
 				break;
 
 			case DTK_MILLISEC:
+#ifdef HAVE_INT64_TIMESTAMP
+				result = ((tm->tm_sec * 1000e0) + (fsec / 1000e0));
+#else
 				result = (tm->tm_sec + fsec) * 1000;
+#endif
 				break;
 
 			case DTK_SECOND:
+#ifdef HAVE_INT64_TIMESTAMP
+				result = (tm->tm_sec + (fsec / 1000000e0));
+#else
 				result = (tm->tm_sec + fsec);
+#endif
 				break;
 
 			case DTK_MINUTE:
@@ -2463,7 +2828,13 @@ timestamp_part(PG_FUNCTION_ARGS)
 
 			case DTK_JULIAN:
 				result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
-				result += (((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec) / 86400e0);
+#ifdef HAVE_INT64_TIMESTAMP
+				result += (((((tm->tm_hour * 60) + tm->tm_min) * 60)
+							+ tm->tm_sec + (fsec / 1000000e0)) / 86400e0);
+#else
+				result += (((((tm->tm_hour * 60) + tm->tm_min) * 60)
+							+ tm->tm_sec + fsec) / 86400e0);
+#endif
 				break;
 
 			case DTK_TZ:
@@ -2479,7 +2850,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 		switch (val)
 		{
 			case DTK_EPOCH:
-				result = timestamp - SetEpochTimestamp();
+				result = ((timestamp - SetEpochTimestamp()) / 1000000e0);
 				break;
 
 			case DTK_DOW:
@@ -2529,7 +2900,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 			   *lp,
 				lowunits[MAXDATELEN + 1];
 	double		dummy;
-	double		fsec;
+	fsec_t		fsec;
 	char	   *tzn;
 	struct tm	tt,
 			   *tm = &tt;
@@ -2574,15 +2945,27 @@ timestamptz_part(PG_FUNCTION_ARGS)
 				break;
 
 			case DTK_MICROSEC:
+#ifdef HAVE_INT64_TIMESTAMP
+				result = ((tm->tm_sec * 1000000e0) + fsec);
+#else
 				result = (tm->tm_sec + fsec) * 1000000;
+#endif
 				break;
 
 			case DTK_MILLISEC:
+#ifdef HAVE_INT64_TIMESTAMP
+				result = ((tm->tm_sec * 1000e0) + (fsec / 1000e0));
+#else
 				result = (tm->tm_sec + fsec) * 1000;
+#endif
 				break;
 
 			case DTK_SECOND:
+#ifdef HAVE_INT64_TIMESTAMP
+				result = (tm->tm_sec + (fsec / 1000000e0));
+#else
 				result = (tm->tm_sec + fsec);
+#endif
 				break;
 
 			case DTK_MINUTE:
@@ -2627,7 +3010,13 @@ timestamptz_part(PG_FUNCTION_ARGS)
 
 			case DTK_JULIAN:
 				result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
-				result += (((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec) / 86400e0);
+#ifdef HAVE_INT64_TIMESTAMP
+				result += (((((tm->tm_hour * 60) + tm->tm_min) * 60)
+							+ tm->tm_sec + (fsec / 1000000e0)) / 86400e0);
+#else
+				result += (((((tm->tm_hour * 60) + tm->tm_min) * 60)
+							+ tm->tm_sec + fsec) / 86400e0);
+#endif
 				break;
 
 			default:
@@ -2641,7 +3030,11 @@ timestamptz_part(PG_FUNCTION_ARGS)
 		switch (val)
 		{
 			case DTK_EPOCH:
+#ifdef HAVE_INT64_TIMESTAMP
+				result = ((timestamp - SetEpochTimestamp()) / 100000e0);
+#else
 				result = timestamp - SetEpochTimestamp();
+#endif
 				break;
 
 			case DTK_DOW:
@@ -2689,7 +3082,7 @@ interval_part(PG_FUNCTION_ARGS)
 	char	   *up,
 			   *lp,
 				lowunits[MAXDATELEN + 1];
-	double		fsec;
+	fsec_t		fsec;
 	struct tm	tt,
 			   *tm = &tt;
 
@@ -2713,17 +3106,29 @@ interval_part(PG_FUNCTION_ARGS)
 		{
 			switch (val)
 			{
-				case DTK_MICROSEC:
-					result = ((tm->tm_sec + fsec) * 1000000);
-					break;
+			case DTK_MICROSEC:
+#ifdef HAVE_INT64_TIMESTAMP
+				result = ((tm->tm_sec * 1000000e0) + fsec);
+#else
+				result = (tm->tm_sec + fsec) * 1000000;
+#endif
+				break;
 
-				case DTK_MILLISEC:
-					result = ((tm->tm_sec + fsec) * 1000);
-					break;
+			case DTK_MILLISEC:
+#ifdef HAVE_INT64_TIMESTAMP
+				result = ((tm->tm_sec * 1000e0) + (fsec / 1000e0));
+#else
+				result = (tm->tm_sec + fsec) * 1000;
+#endif
+				break;
 
-				case DTK_SECOND:
-					result = (tm->tm_sec + fsec);
-					break;
+			case DTK_SECOND:
+#ifdef HAVE_INT64_TIMESTAMP
+				result = (tm->tm_sec + (fsec / 1000000e0));
+#else
+				result = (tm->tm_sec + fsec);
+#endif
+				break;
 
 				case DTK_MINUTE:
 					result = tm->tm_min;
@@ -2778,11 +3183,15 @@ interval_part(PG_FUNCTION_ARGS)
 	}
 	else if ((type == RESERV) && (val == DTK_EPOCH))
 	{
+#ifdef HAVE_INT64_TIMESTAMP
+		result = (interval->time / 1000000e0);
+#else
 		result = interval->time;
+#endif
 		if (interval->month != 0)
 		{
 			result += ((365.25 * 86400) * (interval->month / 12));
-			result += ((30 * 86400) * (interval->month % 12));
+			result += ((30.0 * 86400) * (interval->month % 12));
 		}
 	}
 	else
@@ -2799,6 +3208,8 @@ interval_part(PG_FUNCTION_ARGS)
 
 /* timestamp_zone()
  * Encode timestamp type with specified time zone.
+ * Returns timestamp with time zone, with the input
+ *  rotated from local time to the specified zone.
  */
 Datum
 timestamp_zone(PG_FUNCTION_ARGS)
@@ -2832,8 +3243,9 @@ timestamp_zone(PG_FUNCTION_ARGS)
 
 	if ((type == TZ) || (type == DTZ))
 	{
-		tz = val * 60;
-		result = timestamp - tz;
+		tz = -(val * 60);
+
+		result = dt2local(timestamp, tz);
 	}
 	else
 	{
@@ -2846,7 +3258,6 @@ timestamp_zone(PG_FUNCTION_ARGS)
 
 /* timestamp_izone()
  * Encode timestamp type with specified time interval as time zone.
- * Require ISO-formatted result, since character-string time zone is not available.
  */
 Datum
 timestamp_izone(PG_FUNCTION_ARGS)
@@ -2864,8 +3275,13 @@ timestamp_izone(PG_FUNCTION_ARGS)
 			 DatumGetCString(DirectFunctionCall1(interval_out,
 												 PointerGetDatum(zone))));
 
-	tz = -(zone->time);
-	result = timestamp - tz;
+#ifdef HAVE_INT64_TIMESTAMP
+	tz = (zone->time / INT64CONST(1000000));
+#else
+	tz = (zone->time);
+#endif
+
+	result = dt2local(timestamp, tz);
 
 	PG_RETURN_TIMESTAMPTZ(result);
 }	/* timestamp_izone() */
@@ -2880,7 +3296,7 @@ timestamp_timestamptz(PG_FUNCTION_ARGS)
 	TimestampTz result;
 	struct tm	tt,
 			   *tm = &tt;
-	double		fsec;
+	fsec_t		fsec;
 	int			tz;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
@@ -2909,7 +3325,7 @@ timestamptz_timestamp(PG_FUNCTION_ARGS)
 	Timestamp	result;
 	struct tm	tt,
 			   *tm = &tt;
-	double		fsec;
+	fsec_t		fsec;
 	char	   *tzn;
 	int			tz;
 
@@ -2928,15 +3344,16 @@ timestamptz_timestamp(PG_FUNCTION_ARGS)
 }
 
 /* timestamptz_zone()
- * Encode timestamp with time zone type with specified time zone.
+ * Evaluate timestamp with time zone type at the specified time zone.
+ * Returns a timestamp without time zone.
  */
 Datum
 timestamptz_zone(PG_FUNCTION_ARGS)
 {
 	text	   *zone = PG_GETARG_TEXT_P(0);
 	TimestampTz timestamp = PG_GETARG_TIMESTAMP(1);
-	text	   *result;
-	TimestampTz dt;
+	Timestamp	result;
+
 	int			tz;
 	int			type,
 				val;
@@ -2944,13 +3361,6 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 	char	   *up,
 			   *lp,
 				lowzone[MAXDATELEN + 1];
-	char	   *tzn,
-				upzone[MAXDATELEN + 1];
-	double		fsec;
-	struct tm	tt,
-			   *tm = &tt;
-	char		buf[MAXDATELEN + 1];
-	int			len;
 
 	if (VARSIZE(zone) - VARHDRSZ > MAXDATELEN)
 		elog(ERROR, "Time zone '%s' not recognized",
@@ -2965,86 +3375,50 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 	type = DecodeSpecial(0, lowzone, &val);
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
-		PG_RETURN_TEXT_P(pstrdup(""));
+		PG_RETURN_NULL();
 
 	if ((type == TZ) || (type == DTZ))
 	{
-		tm->tm_isdst = ((type == DTZ) ? 1 : 0);
 		tz = val * 60;
 
-		dt = dt2local(timestamp, tz);
-
-		if (timestamp2tm(dt, NULL, tm, &fsec, NULL) != 0)
-			elog(ERROR, "Unable to decode TIMESTAMP WITH TIME ZONE"
-				 "\n\ttimestamptz_zone() internal coding error");
-
-		up = upzone;
-		lp = lowzone;
-		for (i = 0; *lp != '\0'; i++)
-			*up++ = toupper((unsigned char) *lp++);
-		*up = '\0';
-
-		tzn = upzone;
-		EncodeDateTime(tm, fsec, &tz, &tzn, DateStyle, buf);
-
-		len = (strlen(buf) + VARHDRSZ);
-
-		result = palloc(len);
-
-		VARATT_SIZEP(result) = len;
-		memmove(VARDATA(result), buf, (len - VARHDRSZ));
+		result = dt2local(timestamp, tz);
 	}
 	else
 	{
 		elog(ERROR, "Time zone '%s' not recognized", lowzone);
-		PG_RETURN_TEXT_P(pstrdup(""));
+		PG_RETURN_NULL();
 	}
 
-	PG_RETURN_TEXT_P(result);
+	PG_RETURN_TIMESTAMP(result);
 }	/* timestamptz_zone() */
 
 /* timestamptz_izone()
  * Encode timestamp with time zone type with specified time interval as time zone.
- * Require ISO-formatted result, since character-string time zone is not available.
+ * Returns a timestamp without time zone.
  */
 Datum
 timestamptz_izone(PG_FUNCTION_ARGS)
 {
 	Interval   *zone = PG_GETARG_INTERVAL_P(0);
 	TimestampTz timestamp = PG_GETARG_TIMESTAMP(1);
-	text	   *result;
-	TimestampTz dt;
+	Timestamp	result;
 	int			tz;
-	char	   *tzn = "";
-	double		fsec;
-	struct tm	tt,
-			   *tm = &tt;
-	char		buf[MAXDATELEN + 1];
-	int			len;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
-		PG_RETURN_TEXT_P(pstrdup(""));
+		PG_RETURN_NULL();
 
 	if (zone->month != 0)
 		elog(ERROR, "INTERVAL time zone '%s' not legal (month specified)",
 			 DatumGetCString(DirectFunctionCall1(interval_out,
 												 PointerGetDatum(zone))));
 
-	tm->tm_isdst = -1;
+#ifdef HAVE_INT64_TIMESTAMP
+	tz = -(zone->time / INT64CONST(1000000));
+#else
 	tz = -(zone->time);
+#endif
 
-	dt = dt2local(timestamp, tz);
+	result = dt2local(timestamp, tz);
 
-	if (timestamp2tm(dt, NULL, tm, &fsec, NULL) != 0)
-		elog(ERROR, "Unable to decode TIMESTAMP WITH TIME ZONE"
-			 "\n\ttimestamptz_izone() internal coding error");
-
-	EncodeDateTime(tm, fsec, &tz, &tzn, USE_ISO_DATES, buf);
-	len = (strlen(buf) + VARHDRSZ);
-
-	result = palloc(len);
-	VARATT_SIZEP(result) = len;
-	memmove(VARDATA(result), buf, (len - VARHDRSZ));
-
-	PG_RETURN_TEXT_P(result);
+	PG_RETURN_TIMESTAMP(result);
 }	/* timestamptz_izone() */

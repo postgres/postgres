@@ -214,7 +214,7 @@ SELECT (time '00:00', interval '1 hour')
 SELECT (time '00:00', interval '1 hour')
   OVERLAPS (time '01:30', interval '1 day') AS "False";
 
-CREATE TABLE TEMP_TIMESTAMP (f1 timestamp);
+CREATE TABLE TEMP_TIMESTAMP (f1 timestamp with time zone);
 
 -- get some candidate input values
 
@@ -236,8 +236,9 @@ SELECT '' AS "160", d.f1 AS "timestamp", t.f1 AS "interval", d.f1 - t.f1 AS minu
   WHERE isfinite(d.f1)
   ORDER BY minus, "timestamp", "interval";
 
-SELECT '' AS "16", d.f1 AS "timestamp", timestamp '1980-01-06 00:00 GMT' AS gpstime_zero,
-   d.f1 - timestamp '1980-01-06 00:00 GMT' AS difference
+SELECT '' AS "16", d.f1 AS "timestamp",
+   timestamp with time zone '1980-01-06 00:00 GMT' AS gpstime_zero,
+   d.f1 - timestamp with time zone '1980-01-06 00:00 GMT' AS difference
   FROM TEMP_TIMESTAMP d
   ORDER BY difference;
 

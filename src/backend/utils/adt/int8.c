@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.37 2002/02/23 01:01:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.38 2002/04/21 19:48:12 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 
 /* this should be set in pg_config.h, but just in case it wasn't: */
 #ifndef INT64_FORMAT
+#warning "Broken pg_config.h should have defined INT64_FORMAT"
 #define INT64_FORMAT "%ld"
 #endif
 
