@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup.h,v 1.17 2001/10/28 06:25:58 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup.h,v 1.18 2002/02/11 00:18:20 tgl Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -136,10 +136,11 @@ extern void
 exit_horribly(Archive *AH, const char *modulename, const char *fmt,...)
 __attribute__((format(printf, 3, 4)));
 
-extern char *
-			simple_prompt(const char *prompt, int maxlen, bool echo);
+extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
 
-/* Lets the archibe know we have a DB connection to shutdown if it dies */
+extern const char *fmtId(const char *identifier, bool force_quotes);
+
+/* Lets the archive know we have a DB connection to shutdown if it dies */
 
 PGconn *ConnectDatabase(Archive *AH,
 				const char *dbname,

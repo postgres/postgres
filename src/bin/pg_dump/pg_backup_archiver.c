@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.41 2002/02/06 17:27:50 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.42 2002/02/11 00:18:20 tgl Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -74,6 +74,7 @@
 #include "pg_backup_archiver.h"
 #include "pg_backup_db.h"
 
+#include <ctype.h>
 #include <errno.h>
 #include <unistd.h>				/* for dup */
 
@@ -1953,7 +1954,7 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt)
  * user, this won't do anything.
  *
  * If we're currently restoring right into a database, this will
- * actuall establish a connection.	Otherwise it puts a \connect into
+ * actually establish a connection.	Otherwise it puts a \connect into
  * the script output.
  */
 static void
@@ -1974,7 +1975,8 @@ _reconnectAsUser(ArchiveHandle *AH, const char *dbname, const char *user)
 			PQExpBuffer qry = createPQExpBuffer();
 			PGresult   *res;
 
-			appendPQExpBuffer(qry, "SET SESSION AUTHORIZATION '%s';", user);
+			appendPQExpBuffer(qry, "SET SESSION AUTHORIZATION %s;",
+							  fmtId(user, false));
 			res = PQexec(AH->connection, qry->data);
 
 			if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
@@ -1985,19 +1987,29 @@ _reconnectAsUser(ArchiveHandle *AH, const char *dbname, const char *user)
 			destroyPQExpBuffer(qry);
 		}
 		else
-			ahprintf(AH, "SET SESSION AUTHORIZATION '%s';\n\n", user);
+			ahprintf(AH, "SET SESSION AUTHORIZATION %s;\n\n",
+					 fmtId(user, false));
 	}
-	/* When -R was given, don't do anything. */
 	else if (AH->ropt && AH->ropt->noReconnect)
+	{
+		/* When -R was given, don't do anything. */
 		return;
-
+	}
 	else if (RestoringToDB(AH))
 		ReconnectToServer(AH, dbname, user);
 	else
-		/* FIXME: does not handle mixed case user names */
-		ahprintf(AH, "\\connect %s %s\n\n",
-				 dbname ? dbname : "-",
-				 user ? user : "-");
+	{
+		PQExpBuffer qry = createPQExpBuffer();
+
+		appendPQExpBuffer(qry, "\\connect %s",
+						  dbname ? fmtId(dbname, false) : "-");
+		appendPQExpBuffer(qry, " %s\n\n",
+						  fmtId(user, false));
+
+		ahprintf(AH, qry->data);
+
+		destroyPQExpBuffer(qry);
+	}
 
 	/*
 	 * NOTE: currUser keeps track of what the imaginary session user in
@@ -2022,6 +2034,69 @@ _reconnectAsOwner(ArchiveHandle *AH, const char *dbname, TocEntry *te)
 		return;
 
 	_reconnectAsUser(AH, dbname, te->owner);
+}
+
+
+/*
+ * fmtId
+ *
+ *	checks input string for non-lowercase characters
+ *	returns pointer to input string or string surrounded by double quotes
+ *
+ *	Note that the returned string should be used immediately since it
+ *	uses a static buffer to hold the string. Non-reentrant but faster?
+ */
+const char *
+fmtId(const char *rawid, bool force_quotes)
+{
+	static PQExpBuffer id_return = NULL;
+	const char *cp;
+
+	if (!force_quotes)
+	{
+		/* do a quick check on the first character... */
+		if (!islower((unsigned char) *rawid))
+			force_quotes = true;
+		/* otherwise check the entire string */
+		else
+			for (cp = rawid; *cp; cp++)
+			{
+				if (!(islower((unsigned char) *cp) ||
+					  isdigit((unsigned char) *cp) ||
+					  (*cp == '_')))
+				{
+					force_quotes = true;
+					break;
+				}
+			}
+	}
+
+	if (!force_quotes)
+		return rawid;			/* no quoting needed */
+
+	if (id_return)
+		resetPQExpBuffer(id_return);
+	else
+		id_return = createPQExpBuffer();
+
+	appendPQExpBufferChar(id_return, '\"');
+	for (cp = rawid; *cp; cp++)
+	{
+		/*
+		 * Did we find a double-quote in the string? Then make this a
+		 * double double-quote per SQL99. Before, we put in a
+		 * backslash/double-quote pair. - thomas 2000-08-05
+		 */
+		if (*cp == '\"')
+		{
+			appendPQExpBufferChar(id_return, '\"');
+			appendPQExpBufferChar(id_return, '\"');
+		}
+		appendPQExpBufferChar(id_return, *cp);
+	}
+	appendPQExpBufferChar(id_return, '\"');
+
+	return id_return->data;
 }
 
 

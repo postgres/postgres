@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.61 2002/01/11 23:21:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.62 2002/02/11 00:18:20 tgl Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -590,65 +590,3 @@ findFuncByName(FuncInfo *finfo, int numFuncs, const char *name)
 	}
 	return -1;
 }
-
-/*
- * fmtId
- *
- *	checks input string for non-lowercase characters
- *	returns pointer to input string or string surrounded by double quotes
- *
- *	Note that the returned string should be used immediately since it
- *	uses a static buffer to hold the string. Non-reentrant but faster?
- */
-const char *
-fmtId(const char *rawid, bool force_quotes)
-{
-	static PQExpBuffer id_return = NULL;
-	const char *cp;
-
-	if (!force_quotes)
-	{
-		/* do a quick check on the first character... */
-		if (!islower((unsigned char) *rawid))
-			force_quotes = true;
-		/* otherwise check the entire string */
-		else
-			for (cp = rawid; *cp; cp++)
-			{
-				if (!(islower((unsigned char) *cp) ||
-					  isdigit((unsigned char) *cp) ||
-					  (*cp == '_')))
-				{
-					force_quotes = true;
-					break;
-				}
-			}
-	}
-
-	if (!force_quotes)
-		return rawid;			/* no quoting needed */
-
-	if (id_return)
-		resetPQExpBuffer(id_return);
-	else
-		id_return = createPQExpBuffer();
-
-	appendPQExpBufferChar(id_return, '\"');
-	for (cp = rawid; *cp; cp++)
-	{
-		/*
-		 * Did we find a double-quote in the string? Then make this a
-		 * double double-quote per SQL99. Before, we put in a
-		 * backslash/double-quote pair. - thomas 2000-08-05
-		 */
-		if (*cp == '\"')
-		{
-			appendPQExpBufferChar(id_return, '\"');
-			appendPQExpBufferChar(id_return, '\"');
-		}
-		appendPQExpBufferChar(id_return, *cp);
-	}
-	appendPQExpBufferChar(id_return, '\"');
-
-	return id_return->data;
-}	/* fmtId() */

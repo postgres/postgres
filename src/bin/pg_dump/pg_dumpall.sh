@@ -6,7 +6,7 @@
 # and "pg_group" tables, which belong to the whole installation rather
 # than any one individual database.
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.14 2002/01/09 04:56:44 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.15 2002/02/11 00:18:20 tgl Exp $
 
 CMDNAME=`basename $0`
 
@@ -217,7 +217,7 @@ while read DATABASE DBOWNER ENCODING ISTEMPLATE DBPATH; do
     echo "--"
     echo "-- Database $DATABASE"
     echo "--"
-    echo "${BS}connect template1 $DBOWNER"
+    echo "${BS}connect template1 \"$DBOWNER\""
 
     if [ "$cleanschema" = yes -a "$DATABASE" != template1 ] ; then
         echo "DROP DATABASE \"$DATABASE\";"
@@ -234,7 +234,7 @@ while read DATABASE DBOWNER ENCODING ISTEMPLATE DBPATH; do
 	echo "$createdbcmd;"
     fi
 
-    echo "${BS}connect $DATABASE $DBOWNER"
+    echo "${BS}connect \"$DATABASE\" \"$DBOWNER\""
     echo "dumping database \"$DATABASE\"..." 1>&2
     $PGDUMP "$DATABASE" <&4
     if [ "$?" -ne 0 ] ; then

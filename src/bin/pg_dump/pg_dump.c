@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.240 2002/02/06 17:27:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.241 2002/02/11 00:18:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1141,15 +1141,24 @@ dumpDatabase(Archive *AH)
 	PQExpBuffer creaQry = createPQExpBuffer();
 	PGresult   *res;
 	int			ntups;
-	int			i_dba;
+	int			i_dba,
+				i_encoding,
+				i_datpath;
+	const char *datname,
+			   *dba,
+			   *encoding,
+			   *datpath;
+
+	datname = PQdb(g_conn);
 
 	if (g_verbose)
 		write_msg(NULL, "saving database definition\n");
 
-	/* Get the dba */
-	appendPQExpBuffer(dbQry, "select (select usename from pg_user where datdba = usesysid) as dba from pg_database"
+	/* Get the database owner and parameters from pg_database */
+	appendPQExpBuffer(dbQry, "select (select usename from pg_user where usesysid = datdba) as dba,"
+					  " encoding, datpath from pg_database"
 					  " where datname = ");
-	formatStringLiteral(dbQry, PQdb(g_conn), CONV_ALL);
+	formatStringLiteral(dbQry, datname, CONV_ALL);
 
 	res = PQexec(g_conn, dbQry->data);
 	if (!res ||
@@ -1165,24 +1174,39 @@ dumpDatabase(Archive *AH)
 
 	if (ntups <= 0)
 	{
-		write_msg(NULL, "missing pg_database entry for database \"%s\"\n", PQdb(g_conn));
+		write_msg(NULL, "missing pg_database entry for database \"%s\"\n",
+				  datname);
 		exit_nicely();
 	}
 
 	if (ntups != 1)
 	{
 		write_msg(NULL, "query returned more than one (%d) pg_database entry for database \"%s\"\n",
-				  ntups, PQdb(g_conn));
+				  ntups, datname);
 		exit_nicely();
 	}
 
-	appendPQExpBuffer(creaQry, "Create Database \"%s\";\n", PQdb(g_conn));
-	appendPQExpBuffer(delQry, "Drop Database \"%s\";\n", PQdb(g_conn));
 	i_dba = PQfnumber(res, "dba");
+	i_encoding = PQfnumber(res, "encoding");
+	i_datpath = PQfnumber(res, "datpath");
+	dba = PQgetvalue(res, 0, i_dba);
+	encoding = PQgetvalue(res, 0, i_encoding);
+	datpath = PQgetvalue(res, 0, i_datpath);
 
-	ArchiveEntry(AH, "0" /* OID */ , PQdb(g_conn) /* Name */ , "DATABASE", NULL,
+	appendPQExpBuffer(creaQry, "CREATE DATABASE %s WITH TEMPLATE = template0",
+					  fmtId(datname, force_quotes));
+	if (strlen(encoding) > 0)
+		appendPQExpBuffer(creaQry, " ENCODING = %s", encoding);
+	if (strlen(datpath) > 0)
+		appendPQExpBuffer(creaQry, " LOCATION = '%s'", datpath);
+	appendPQExpBuffer(creaQry, ";\n");
+
+	appendPQExpBuffer(delQry, "DROP DATABASE %s;\n",
+					  fmtId(datname, force_quotes));
+
+	ArchiveEntry(AH, "0" /* OID */ , datname /* Name */ , "DATABASE", NULL,
 				 creaQry->data /* Create */ , delQry->data /* Del */ ,
-				 "" /* Copy */ , PQgetvalue(res, 0, i_dba) /* Owner */ ,
+				 "" /* Copy */ , dba /* Owner */ ,
 				 NULL /* Dumper */ , NULL /* Dumper Arg */ );
 
 	PQclear(res);
