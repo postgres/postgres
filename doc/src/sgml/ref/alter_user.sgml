@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.24 2003/01/19 00:13:29 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.25 2003/03/20 20:05:32 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -124,7 +124,8 @@ ALTER USER <replaceable class="PARAMETER">username</replaceable> RESET <replacea
       <listitem>
        <para>
 	The date (and, optionally, the time)
-	at which this user's password is to expire.
+	at which this user's password is to expire.  To set the password
+	never to expire, use 'infinity'.
        </para>
       </listitem>
      </varlistentry>
@@ -229,6 +230,13 @@ ALTER USER manuel VALID UNTIL 'Jan 31 2030';
    the time zone which is one hour ahead of <acronym>UTC</>:
 <programlisting>
 ALTER USER chris VALID UNTIL 'May 4 12:00:00 1998 +1';
+</programlisting>
+  </para>
+
+  <para>
+   Make a user valid forever:
+<programlisting>
+ALTER USER fred VALID UNTIL 'infinity';
 </programlisting>
   </para>
 
