@@ -9,7 +9,7 @@ import java.sql.*;
  *
  * PS: Do you know how difficult it is to type on a train? ;-)
  *
- * $Id: DatabaseMetaDataTest.java,v 1.1 2001/02/13 16:39:05 peter Exp $
+ * $Id: DatabaseMetaDataTest.java,v 1.2 2001/09/10 15:07:58 momjian Exp $
  */
 
 public class DatabaseMetaDataTest extends TestCase {
@@ -29,11 +29,11 @@ public class DatabaseMetaDataTest extends TestCase {
       Connection con = JDBC2Tests.openDB();
 
       DatabaseMetaData dbmd = con.getMetaData();
-      assert(dbmd!=null);
+      assertNotNull(dbmd);
 
       JDBC2Tests.closeDB(con);
     } catch(SQLException ex) {
-      assert(ex.getMessage(),false);
+      fail(ex.getMessage());
     }
   }
 
@@ -45,32 +45,32 @@ public class DatabaseMetaDataTest extends TestCase {
       Connection con = JDBC2Tests.openDB();
 
       DatabaseMetaData dbmd = con.getMetaData();
-      assert(dbmd!=null);
+      assertNotNull(dbmd);
 
-      assert(dbmd.allProceduresAreCallable()==true);
-      assert(dbmd.allTablesAreSelectable()==true); // not true all the time
+      assertTrue(dbmd.allProceduresAreCallable());
+      assertTrue(dbmd.allTablesAreSelectable()); // not true all the time
 
       // This should always be false for postgresql (at least for 7.x)
-      assert(!dbmd.isReadOnly());
+      assertTrue(!dbmd.isReadOnly());
 
       // does the backend support this yet? The protocol does...
-      assert(!dbmd.supportsMultipleResultSets());
+      assertTrue(!dbmd.supportsMultipleResultSets());
 
       // yes, as multiple backends can have transactions open
-      assert(dbmd.supportsMultipleTransactions());
+      assertTrue(dbmd.supportsMultipleTransactions());
 
-      assert(dbmd.supportsMinimumSQLGrammar());
-      assert(!dbmd.supportsCoreSQLGrammar());
-      assert(!dbmd.supportsExtendedSQLGrammar());
-      assert(!dbmd.supportsANSI92EntryLevelSQL());
-      assert(!dbmd.supportsANSI92IntermediateSQL());
-      assert(!dbmd.supportsANSI92FullSQL());
+      assertTrue(dbmd.supportsMinimumSQLGrammar());
+      assertTrue(!dbmd.supportsCoreSQLGrammar());
+      assertTrue(!dbmd.supportsExtendedSQLGrammar());
+      assertTrue(!dbmd.supportsANSI92EntryLevelSQL());
+      assertTrue(!dbmd.supportsANSI92IntermediateSQL());
+      assertTrue(!dbmd.supportsANSI92FullSQL());
 
-      assert(!dbmd.supportsIntegrityEnhancementFacility());
+      assertTrue(!dbmd.supportsIntegrityEnhancementFacility());
 
       JDBC2Tests.closeDB(con);
     } catch(SQLException ex) {
-      assert(ex.getMessage(),false);
+      fail(ex.getMessage());
     }
   }
 
@@ -80,15 +80,15 @@ public class DatabaseMetaDataTest extends TestCase {
       Connection con = JDBC2Tests.openDB();
 
       DatabaseMetaData dbmd = con.getMetaData();
-      assert(dbmd!=null);
+      assertNotNull(dbmd);
 
-      assert(dbmd.supportsOuterJoins());
-      assert(dbmd.supportsFullOuterJoins());
-      assert(dbmd.supportsLimitedOuterJoins());
+      assertTrue(dbmd.supportsOuterJoins());
+      assertTrue(dbmd.supportsFullOuterJoins());
+      assertTrue(dbmd.supportsLimitedOuterJoins());
 
       JDBC2Tests.closeDB(con);
     } catch(SQLException ex) {
-      assert(ex.getMessage(),false);
+      fail(ex.getMessage());
     }
   }
 
@@ -97,14 +97,14 @@ public class DatabaseMetaDataTest extends TestCase {
       Connection con = JDBC2Tests.openDB();
 
       DatabaseMetaData dbmd = con.getMetaData();
-      assert(dbmd!=null);
+      assertNotNull(dbmd);
 
-      assert(!dbmd.supportsPositionedDelete());
-      assert(!dbmd.supportsPositionedUpdate());
+      assertTrue(!dbmd.supportsPositionedDelete());
+      assertTrue(!dbmd.supportsPositionedUpdate());
 
       JDBC2Tests.closeDB(con);
     } catch(SQLException ex) {
-      assert(ex.getMessage(),false);
+      fail(ex.getMessage());
     }
   }
 
@@ -113,21 +113,27 @@ public class DatabaseMetaDataTest extends TestCase {
       Connection con = JDBC2Tests.openDB();
 
       DatabaseMetaData dbmd = con.getMetaData();
-      assert(dbmd!=null);
+      assertNotNull(dbmd);
 
-      // these need double checking
-      assert(!dbmd.nullsAreSortedAtStart());
-      assert(dbmd.nullsAreSortedAtEnd());
-      assert(!dbmd.nullsAreSortedHigh());
-      assert(!dbmd.nullsAreSortedLow());
+	  // We need to type cast the connection to get access to the 
+	  // PostgreSQL-specific method haveMinimumServerVersion().
+	  // This is not available through the java.sql.Connection interface.
+	  assertTrue( con instanceof org.postgresql.Connection );
 
-      assert(dbmd.nullPlusNonNullIsNull());
+      assertTrue(!dbmd.nullsAreSortedAtStart());
+      assertTrue( dbmd.nullsAreSortedAtEnd() !=
+	  	((org.postgresql.Connection)con).haveMinimumServerVersion("7.2"));
+      assertTrue( dbmd.nullsAreSortedHigh() ==
+	  	((org.postgresql.Connection)con).haveMinimumServerVersion("7.2"));
+      assertTrue(!dbmd.nullsAreSortedLow());
 
-      assert(dbmd.supportsNonNullableColumns());
+      assertTrue(dbmd.nullPlusNonNullIsNull());
+
+      assertTrue(dbmd.supportsNonNullableColumns());
 
       JDBC2Tests.closeDB(con);
     } catch(SQLException ex) {
-      assert(ex.getMessage(),false);
+      fail(ex.getMessage());
     }
   }
 
@@ -136,14 +142,14 @@ public class DatabaseMetaDataTest extends TestCase {
       Connection con = JDBC2Tests.openDB();
 
       DatabaseMetaData dbmd = con.getMetaData();
-      assert(dbmd!=null);
+      assertNotNull(dbmd);
 
-      assert(!dbmd.usesLocalFilePerTable());
-      assert(!dbmd.usesLocalFiles());
+      assertTrue(!dbmd.usesLocalFilePerTable());
+      assertTrue(!dbmd.usesLocalFiles());
 
       JDBC2Tests.closeDB(con);
     } catch(SQLException ex) {
-      assert(ex.getMessage(),false);
+      fail(ex.getMessage());
     }
   }
 
@@ -152,23 +158,23 @@ public class DatabaseMetaDataTest extends TestCase {
       Connection con = JDBC2Tests.openDB();
 
       DatabaseMetaData dbmd = con.getMetaData();
-      assert(dbmd!=null);
+      assertNotNull(dbmd);
 
-      assert(!dbmd.supportsMixedCaseIdentifiers()); // always false
-      assert(dbmd.supportsMixedCaseQuotedIdentifiers());  // always true
+      assertTrue(!dbmd.supportsMixedCaseIdentifiers()); // always false
+      assertTrue(dbmd.supportsMixedCaseQuotedIdentifiers());  // always true
 
-      assert(!dbmd.storesUpperCaseIdentifiers());   // always false
-      assert(dbmd.storesLowerCaseIdentifiers());    // always true
-      assert(!dbmd.storesUpperCaseQuotedIdentifiers()); // always false
-      assert(!dbmd.storesLowerCaseQuotedIdentifiers()); // always false
-      assert(!dbmd.storesMixedCaseQuotedIdentifiers()); // always false
+      assertTrue(!dbmd.storesUpperCaseIdentifiers());   // always false
+      assertTrue(dbmd.storesLowerCaseIdentifiers());    // always true
+      assertTrue(!dbmd.storesUpperCaseQuotedIdentifiers()); // always false
+      assertTrue(!dbmd.storesLowerCaseQuotedIdentifiers()); // always false
+      assertTrue(!dbmd.storesMixedCaseQuotedIdentifiers()); // always false
 
-      assert(dbmd.getIdentifierQuoteString().equals("\""));
+      assertTrue(dbmd.getIdentifierQuoteString().equals("\""));
 
 
       JDBC2Tests.closeDB(con);
     } catch(SQLException ex) {
-      assert(ex.getMessage(),false);
+      fail(ex.getMessage());
     }
   }
 
@@ -177,17 +183,17 @@ public class DatabaseMetaDataTest extends TestCase {
       Connection con = JDBC2Tests.openDB();
 
       DatabaseMetaData dbmd = con.getMetaData();
-      assert(dbmd!=null);
+      assertNotNull(dbmd);
 
       // we can add columns
-      assert(dbmd.supportsAlterTableWithAddColumn());
+      assertTrue(dbmd.supportsAlterTableWithAddColumn());
 
       // we can't drop columns (yet)
-      assert(!dbmd.supportsAlterTableWithDropColumn());
+      assertTrue(!dbmd.supportsAlterTableWithDropColumn());
 
       JDBC2Tests.closeDB(con);
     } catch(SQLException ex) {
-      assert(ex.getMessage(),false);
+      fail(ex.getMessage());
     }
   }
 
@@ -196,23 +202,25 @@ public class DatabaseMetaDataTest extends TestCase {
       Connection con = JDBC2Tests.openDB();
 
       DatabaseMetaData dbmd = con.getMetaData();
-      assert(dbmd!=null);
+      assertNotNull(dbmd);
 
       // yes we can?: SELECT col a FROM a;
-      assert(dbmd.supportsColumnAliasing());
+      assertTrue(dbmd.supportsColumnAliasing());
 
       // yes we can have expressions in ORDERBY
-      assert(dbmd.supportsExpressionsInOrderBy());
+      assertTrue(dbmd.supportsExpressionsInOrderBy());
 
-      assert(!dbmd.supportsOrderByUnrelated());
+	  // Yes, an ORDER BY clause can contain columns that are not in the 
+	  // SELECT clause.
+      assertTrue(dbmd.supportsOrderByUnrelated());
 
-      assert(dbmd.supportsGroupBy());
-      assert(dbmd.supportsGroupByUnrelated());
-      assert(dbmd.supportsGroupByBeyondSelect()); // needs checking
+      assertTrue(dbmd.supportsGroupBy());
+      assertTrue(dbmd.supportsGroupByUnrelated());
+      assertTrue(dbmd.supportsGroupByBeyondSelect()); // needs checking
 
       JDBC2Tests.closeDB(con);
     } catch(SQLException ex) {
-      assert(ex.getMessage(),false);
+      fail(ex.getMessage());
     }
   }
 
@@ -221,53 +229,53 @@ public class DatabaseMetaDataTest extends TestCase {
       Connection con = JDBC2Tests.openDB();
 
       DatabaseMetaData dbmd = con.getMetaData();
-      assert(dbmd!=null);
+      assertNotNull(dbmd);
 
-      assert(dbmd.getURL().equals(JDBC2Tests.getURL()));
-      assert(dbmd.getUserName().equals(JDBC2Tests.getUser()));
+      assertTrue(dbmd.getURL().equals(JDBC2Tests.getURL()));
+      assertTrue(dbmd.getUserName().equals(JDBC2Tests.getUser()));
 
       JDBC2Tests.closeDB(con);
     } catch(SQLException ex) {
-      assert(ex.getMessage(),false);
+      fail(ex.getMessage());
     }
   }
 
   public void testDbProductDetails() {
     try {
       Connection con = JDBC2Tests.openDB();
-      assert(con instanceof org.postgresql.Connection);
+      assertTrue(con instanceof org.postgresql.Connection);
       org.postgresql.Connection pc = (org.postgresql.Connection) con;
 
       DatabaseMetaData dbmd = con.getMetaData();
-      assert(dbmd!=null);
+      assertNotNull(dbmd);
 
-      assert(dbmd.getDatabaseProductName().equals("PostgreSQL"));
-      assert(dbmd.getDatabaseProductVersion().startsWith(Integer.toString(pc.this_driver.getMajorVersion())+"."+Integer.toString(pc.this_driver.getMinorVersion())));
-      assert(dbmd.getDriverName().equals("PostgreSQL Native Driver"));
+      assertTrue(dbmd.getDatabaseProductName().equals("PostgreSQL"));
+      assertTrue(dbmd.getDatabaseProductVersion().startsWith(Integer.toString(pc.this_driver.getMajorVersion())+"."+Integer.toString(pc.this_driver.getMinorVersion())));
+      assertTrue(dbmd.getDriverName().equals("PostgreSQL Native Driver"));
 
       JDBC2Tests.closeDB(con);
     } catch(SQLException ex) {
-      assert(ex.getMessage(),false);
+      fail(ex.getMessage());
     }
   }
 
   public void testDriverVersioning() {
     try {
       Connection con = JDBC2Tests.openDB();
-      assert(con instanceof org.postgresql.Connection);
+      assertTrue(con instanceof org.postgresql.Connection);
       org.postgresql.Connection pc = (org.postgresql.Connection) con;
 
       DatabaseMetaData dbmd = con.getMetaData();
-      assert(dbmd!=null);
+      assertNotNull(dbmd);
 
-      assert(dbmd.getDriverVersion().equals(pc.this_driver.getVersion()));
-      assert(dbmd.getDriverMajorVersion()==pc.this_driver.getMajorVersion());
-      assert(dbmd.getDriverMinorVersion()==pc.this_driver.getMinorVersion());
+      assertTrue(dbmd.getDriverVersion().equals(pc.this_driver.getVersion()));
+      assertTrue(dbmd.getDriverMajorVersion()==pc.this_driver.getMajorVersion());
+      assertTrue(dbmd.getDriverMinorVersion()==pc.this_driver.getMinorVersion());
 
 
       JDBC2Tests.closeDB(con);
     } catch(SQLException ex) {
-      assert(ex.getMessage(),false);
+      fail(ex.getMessage());
     }
   }
 }
