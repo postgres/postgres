@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.16 1996/11/13 20:49:00 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.17 1996/11/20 22:58:22 momjian Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -181,7 +181,7 @@ static Node *makeA_Expr(int op, char *opname, Node *lexpr, Node *rexpr);
         PNULL, PRIVILEGES, PUBLIC, PURGE, P_TYPE, 
         RENAME, REPLACE, RETRIEVE, RETURNS, REVOKE, ROLLBACK, RULE, 
         SELECT, SET, SETOF, STDIN, STDOUT, STORE, 
-	TABLE, TO, TRANSACTION, UPDATE, USING, VACUUM, VALUES
+	TABLE, TO, TRANSACTION, UNIQUE, UPDATE, USING, VACUUM, VALUES
 	VERSION, VIEW, WHERE, WITH, WORK
 %token	EXECUTE, RECIPE, EXPLAIN, LIKE 
 
