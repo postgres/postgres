@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.20 1997/03/28 06:54:51 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.21 1997/03/28 07:12:53 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,7 @@ GetCurrentTime(struct tm *tm)
     time_t now;
     struct tm *tt;
 
-    now = GetCurrentTransactionStartTime();
+    now = GetCurrentTransactionStartTime()-CTimeZone;
     tt = gmtime( &now);
 
     tm->tm_year = tt->tm_year+1900;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.11 1997/03/28 06:53:50 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.12 1997/03/28 07:12:46 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,57 +33,12 @@
 
 #define USE_DATE_CACHE 1
 
-#if FALSE
-#ifdef NAN
-#define DT_INVALID		(NAN)
-#else
-#define DT_INVALID		(DBL_MIN+DBL_MIN)
-#endif
-#ifdef HUGE_VAL
-#define DT_NOBEGIN		(-HUGE_VAL)
-#define DT_NOEND		(HUGE_VAL)
-#else
-#define DT_NOBEGIN		(-DBL_MAX)
-#define DT_NOEND		(DBL_MAX)
-#endif
-#define DT_CURRENT		(DBL_MIN)
-#define DT_EPOCH		(-DBL_MIN)
 
-#define DATETIME_INVALID(j)	{j = DT_INVALID;}
-#ifdef NAN
-#define DATETIME_IS_INVALID(j)	(isnan(j))
-#else
-#define DATETIME_IS_INVALID(j)	(j == DT_INVALID)
-#endif
+char *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+ "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", NULL};
 
-#define DATETIME_NOBEGIN(j)	{j = DT_NOBEGIN;}
-#define DATETIME_IS_NOBEGIN(j)	(j == DT_NOBEGIN)
-
-#define DATETIME_NOEND(j)	{j = DT_NOEND;}
-#define DATETIME_IS_NOEND(j)	(j == DT_NOEND)
-
-#define DATETIME_CURRENT(j)	{j = DT_CURRENT;}
-#define DATETIME_IS_CURRENT(j)	(j == DT_CURRENT)
-
-#define DATETIME_EPOCH(j)	{j = DT_EPOCH;}
-#define DATETIME_IS_EPOCH(j)	(j == DT_EPOCH)
-
-#define DATETIME_IS_RELATIVE(j)	(DATETIME_IS_CURRENT(j) || DATETIME_IS_EPOCH(j))
-#define DATETIME_NOT_FINITE(j)	(DATETIME_IS_INVALID(j) \
-				 || DATETIME_IS_NOBEGIN(j) || DATETIME_IS_NOEND(j))
-#define DATETIME_IS_RESERVED(j)	(DATETIME_IS_RELATIVE(j) || DATETIME_NOT_FINITE(j))
-
-
-#define TIMESPAN_INVALID(j)	{j->time = DT_INVALID;}
-#ifdef NAN
-#define TIMESPAN_IS_INVALID(j)	(isnan((j).time))
-#else
-#define TIMESPAN_IS_INVALID(j)	((j).time == DT_INVALID)
-#endif
-
-#define TIME_PREC 1e-6
-#define JROUND(j) (rint(((double) j)/TIME_PREC)*TIME_PREC)
-#endif
+char *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
+ "Thursday", "Friday", "Saturday", NULL};
 
 
 /***************************************************************************** 
@@ -98,9 +53,6 @@ datetime_in(char *str)
 {
     DateTime *result;
 
-#if FALSE
-    double date, time;
-#endif
     double fsec;
     struct tm tt, *tm = &tt;
     int tzp;
@@ -122,13 +74,6 @@ datetime_in(char *str)
 
     switch (dtype) {
     case DTK_DATE:
-#if FALSE
-	if (tzp != 0) {
-	    *result = tm2datetime( tm, fsec, tzp);
-	} else {
-	    *result = tm2datetime( tm, fsec, CTimeZone);
-	};
-#endif
 	*result = tm2datetime( tm, fsec, tzp);
 
 #ifdef DATEDEBUG
@@ -182,7 +127,7 @@ datetime_out(DateTime *dt)
 	EncodeSpecialDateTime(*dt, buf);
 
     } else if (datetime2tm( *dt, tm, &fsec) == 0) {
-	EncodePostgresDate(tm, fsec, buf);
+	EncodeDateTime(tm, fsec, DateStyle, buf);
 
     } else {
 	EncodeSpecialDateTime(DT_INVALID, buf);
@@ -268,7 +213,7 @@ timespan_out(TimeSpan *span)
     if (timespan2tm(*span, tm, &fsec) != 0)
 	return(NULL);
 
-    if (EncodePostgresSpan(tm, fsec, buf) != 0)
+    if (EncodeTimeSpan(tm, fsec, DateStyle, buf) != 0)
 	  elog(WARN,"Unable to format timespan",NULL);
 
     if (!PointerIsValid(result = PALLOC(strlen(buf)+1)))
@@ -306,6 +251,7 @@ GetEpochTime( struct tm *tm)
     tm->tm_sec = t0->tm_sec;
 
     if (tm->tm_year < 1900) tm->tm_year += 1900;
+    tm->tm_mon++;
 
 #ifdef DATEDEBUG
 printf( "GetEpochTime- %04d-%02d-%02d %02d:%02d:%02d\n",
@@ -350,10 +296,6 @@ datetime_eq(DateTime *datetime1, DateTime *datetime2)
     dt1 = *datetime1;
     dt2 = *datetime2;
 
-#if FALSE
-    if (DATETIME_NOT_FINITE(dt1) || DATETIME_NOT_FINITE(dt2))
-	return FALSE;
-#endif
     if (DATETIME_IS_INVALID(dt1) || DATETIME_IS_INVALID(dt2))
 	return FALSE;
 
@@ -374,10 +316,6 @@ datetime_ne(DateTime *datetime1, DateTime *datetime2)
     dt1 = *datetime1;
     dt2 = *datetime2;
 
-#if FALSE
-    if (DATETIME_NOT_FINITE(dt1) || DATETIME_NOT_FINITE(dt2))
-	return FALSE;
-#endif
     if (DATETIME_IS_INVALID(dt1) || DATETIME_IS_INVALID(dt2))
 	return FALSE;
 
@@ -398,10 +336,6 @@ datetime_lt(DateTime *datetime1, DateTime *datetime2)
     dt1 = *datetime1;
     dt2 = *datetime2;
 
-#if FALSE
-    if (DATETIME_NOT_FINITE(dt1) || DATETIME_NOT_FINITE(dt2))
-	return FALSE;
-#endif
     if (DATETIME_IS_INVALID(dt1) || DATETIME_IS_INVALID(dt2))
 	return FALSE;
 
@@ -422,10 +356,6 @@ datetime_gt(DateTime *datetime1, DateTime *datetime2)
     dt1 = *datetime1;
     dt2 = *datetime2;
 
-#if FALSE
-    if (DATETIME_NOT_FINITE(dt1) || DATETIME_NOT_FINITE(dt2))
-	return FALSE;
-#endif
     if (DATETIME_IS_INVALID(dt1) || DATETIME_IS_INVALID(dt2))
 	return FALSE;
 
@@ -449,10 +379,6 @@ datetime_le(DateTime *datetime1, DateTime *datetime2)
     dt1 = *datetime1;
     dt2 = *datetime2;
 
-#if FALSE
-    if (DATETIME_NOT_FINITE(dt1) || DATETIME_NOT_FINITE(dt2))
-	return FALSE;
-#endif
     if (DATETIME_IS_INVALID(dt1) || DATETIME_IS_INVALID(dt2))
 	return FALSE;
 
@@ -473,10 +399,6 @@ datetime_ge(DateTime *datetime1, DateTime *datetime2)
     dt1 = *datetime1;
     dt2 = *datetime2;
 
-#if FALSE
-    if (DATETIME_NOT_FINITE(dt1) || DATETIME_NOT_FINITE(dt2))
-	return FALSE;
-#endif
     if (DATETIME_IS_INVALID(dt1) || DATETIME_IS_INVALID(dt2))
 	return FALSE;
 
@@ -608,9 +530,6 @@ TimeSpan *datetime_sub(DateTime *datetime1, DateTime *datetime2)
 	DATETIME_INVALID( result->time);
 
     } else {
-#if FALSE
-	result->time = JROUND(dt1 - dt2);
-#endif
 	result->time = (dt1 - dt2);
     };
     result->month = 0;
@@ -1292,6 +1211,12 @@ int j2day( int date)
     return(day);
 } /* j2day() */
 
+
+/* datetime2tm()
+ * Convert datetime data type to POSIX time structure.
+ * Note that year is _not_ 1900-based, but is an explicit full value.
+ * Also, month is one-based, _not_ zero-based.
+ */
 int
 datetime2tm( DateTime dt, struct tm *tm, double *fsec)
 {
@@ -1336,8 +1261,11 @@ printf( "datetime2tm- timezone is %s; offset is %d; daylight is %d\n",
     return 0;
 } /* datetime2tm() */
 
+
 /* tm2datetime()
  * Convert a tm structure to a datetime data type.
+ * Note that year is _not_ 1900-based, but is an explicit full value.
+ * Also, month is one-based, _not_ zero-based.
  */
 DateTime
 tm2datetime( struct tm *tm, double fsec, int tzp) {
@@ -1639,7 +1567,7 @@ printf( "DecodeDateTime- RESERV field %s value is %d\n", field[i], val);
 #endif
 		switch (val) {
 		case DTK_NOW:
-		    tmask = (DTK_DATE_M | DTK_TIME_M);
+		    tmask = (DTK_DATE_M | DTK_TIME_M | DTK_M(TZ));
 		    *dtype = DTK_DATE;
 		    GetCurrentTime(tm);
 		    break;
@@ -1681,7 +1609,7 @@ printf( "DecodeDateTime- RESERV field %s value is %d\n", field[i], val);
 		    tm->tm_hour = 0;
 		    tm->tm_min = 0;
 		    tm->tm_sec = 0;
-		    *tzp = 0;
+		    if (tzp != NULL) *tzp = 0;
 		    break;
 
 		default:
@@ -2472,7 +2400,7 @@ DecodeUnits(int field, char *lowtoken, int *val)
 } /* DecodeUnits() */
 
 
-/*
+/* datebsearch()
  * Binary search -- from Knuth (6.2.1) Algorithm B.  Special case like this
  * is WAY faster than the generic bsearch().
  */
@@ -2499,30 +2427,9 @@ datebsearch(char *key, datetkn *base, unsigned int nel)
 }
 
 
-/***************************************************************************/
-/***************************************************************************/
-/***************************************************************************/
-
-char *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
- "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", NULL};
-
-char *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
- "Thursday", "Friday", "Saturday", NULL};
-
-#if FALSE
-int EncodeMonth(int mon, char *str);
-
-int EncodeMonth(int mon, char *str)
-{
-    strcpy( str, months[mon-1]);
-
-    return(TRUE);
-} /* EncodeMonth() */
-#endif
-
-#define EncodeMonth(m,s)	strcpy(s,months[m-1])
-
-
+/* EncodeSpecialDateTime()
+ * Convert reserved datetime data type to string.
+ */
 int EncodeSpecialDateTime(DateTime dt, char *str)
 {
     if (DATETIME_IS_RESERVED(dt)) {
@@ -2554,10 +2461,10 @@ printf( "EncodeSpecialDateTime- unrecognized date\n");
 } /* EncodeSpecialDateTime() */
 
 
-int EncodePostgresDate(struct tm *tm, double fsec, char *str)
+int EncodeDateTime(struct tm *tm, double fsec, int style, char *str)
 {
     char mabbrev[4], dabbrev[4];
-    int day;
+    int day, hour, min;
     double sec;
 
     sec = (tm->tm_sec + fsec);
@@ -2565,13 +2472,13 @@ int EncodePostgresDate(struct tm *tm, double fsec, char *str)
     tm->tm_isdst = -1;
 
 #ifdef DATEDEBUG
-printf( "EncodePostgresDate- timezone is %s; offset is %d; daylight is %d\n",
+printf( "EncodeDateTime- timezone is %s; offset is %d; daylight is %d\n",
  CTZName, CTimeZone, CDayLight);
 #endif
 
     day = date2j( tm->tm_year, tm->tm_mon, tm->tm_mday);
 #ifdef DATEDEBUG
-printf( "EncodePostgresDate- day is %d\n", day);
+printf( "EncodeDateTime- day is %d\n", day);
 #endif
     tm->tm_wday = j2day( day);
 
@@ -2583,19 +2490,37 @@ printf( "EncodePostgresDate- day is %d\n", day);
 
     strcpy( mabbrev, months[tm->tm_mon-1]);
 
-    if (DateStyle == USE_ISO_DATES) {
+    /* compatible with ISO date formats */
+    if (style == USE_ISO_DATES) {
 	if (tm->tm_year > 0) {
-	    sprintf( str, "%04d-%02d-%02d %02d:%02d:%5.2f %s",
+#if FALSE
+	    sprintf( str, "%04d-%02d-%02d %02d:%02d:%05.2f %s",
 	      tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, sec, CTZName);
-	    /* XXX brute-force fill in leading zero on seconds */
-	    if (*(str+17) == ' ') *(str+17) = '0';
+#endif
+	    sprintf( str, "%04d-%02d-%02d %02d:%02d:",
+	      tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min);
+	    sprintf( (str+17), ((fsec != 0)? "%05.2f": "%02.0f"), sec);
+	    hour = -(CTimeZone / 3600);
+	    min = ((abs(CTimeZone) / 60) % 60);
+	    sprintf( (str+strlen(str)), ((min != 0)? "%+03d:%02d": "%+03d"), hour, min);
+#if FALSE
+	    sprintf( str, "%04d-%02d-%02d %02d:%02d:%05.2f%+03d:%02d",
+	      tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, sec,
+	      hour, min);
+#endif
 
 	} else {
-	    sprintf( str, "%04d-%02d-%02d %02d:%02d %s",
-	      -(tm->tm_year-1), tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, "BC");
+	    if (tm->tm_hour || tm->tm_min) {
+		sprintf( str, "%04d-%02d-%02d %02d:%02d %s",
+		  -(tm->tm_year-1), tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, "BC");
+	    } else {
+		sprintf( str, "%04d-%02d-%02d %s",
+		  -(tm->tm_year-1), tm->tm_mon, tm->tm_mday, "BC");
+	    };
 	};
 
-    } else if (DateStyle == USE_SQL_DATES) {
+    /* compatible with Oracle/Ingres date formats */
+    } else if (style == USE_SQL_DATES) {
 	if (EuroDates) {
 	    sprintf( str, "%02d/%02d", tm->tm_mday, tm->tm_mon);
 	} else {
@@ -2612,7 +2537,8 @@ printf( "EncodePostgresDate- day is %d\n", day);
 	      -(tm->tm_year-1), tm->tm_hour, tm->tm_min, "BC");
 	};
 
-    } else { /* if (DateStyle == USE_POSTGRES_DATES) */
+    /* backward-compatible with traditional Postgres abstime dates */
+    } else { /* if (style == USE_POSTGRES_DATES) */
 	sprintf( str, "%3s ", dabbrev);
 	if (EuroDates) {
 	    sprintf( (str+4), "%02d %3s", tm->tm_mday, mabbrev);
@@ -2632,21 +2558,27 @@ printf( "EncodePostgresDate- day is %d\n", day);
     };
 
 #ifdef DATEDEBUG
-printf( "EncodePostgresDate- date result is %s\n", str);
+printf( "EncodeDateTime- date result is %s\n", str);
 #endif
 
 #ifdef DATEDEBUG
     if (tm->tm_year >= 1000) tm->tm_year -= 1900;
     tm->tm_mon -= 1;
     strftime( buf, sizeof(buf), "%y.%m.%d %H:%M:%S %Z", tm);
-printf( "EncodePostgresDate- strftime result is %s\n", buf);
+printf( "EncodeDateTime- strftime result is %s\n", buf);
 #endif
 
     return(TRUE);
-} /* EncodePostgresDate() */
+} /* EncodeDateTime() */
 
 
-int EncodePostgresSpan(struct tm *tm, double fsec, char *str)
+/* EncodeTimeSpan()
+ * Interpret time structure as a delta time and convert to string.
+ *
+ * Pass a flag to specify the style of string, but only implement
+ *  the traditional Postgres style for now. - tgl 97/03/27
+ */
+int EncodeTimeSpan(struct tm *tm, double fsec, int style, char *str)
 {
     int is_before = FALSE;
     int is_nonzero = FALSE;
@@ -2702,8 +2634,8 @@ int EncodePostgresSpan(struct tm *tm, double fsec, char *str)
     };
 
 #ifdef DATEDEBUG
-printf( "EncodePostgresSpan- result is %s\n", str);
+printf( "EncodeTimeSpan- result is %s\n", str);
 #endif
 
     return 0;
-} /* EncodePostgresSpan() */
+} /* EncodeTimeSpan() */
