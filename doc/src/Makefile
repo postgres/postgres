@@ -6,7 +6,7 @@ SRCDIR= ../../src
 
 TAR= tar
 ZIP= gzip
-TAREXCLUDE= --exclude=Makefile --exclude='*.sgml'
+TAREXCLUDE= --exclude=Makefile --exclude='*.sgml' --exclude=ref
 
 # Pick up Makefile.global from the source area
 # This is the only resource from the code source area and is optional
@@ -43,27 +43,32 @@ sources.tar:
 admin.tar:
 	$(MAKE) -C sgml clean
 	$(MAKE) -C sgml admin.html
-	($(TAR) -cf $@ $(TAREXCLUDE) -C sgml . -C .. -C graphics layout.gif)
+	(cd sgml; $(TAR) -cf ../$@ $(TAREXCLUDE) *.html *.htm -C ../graphics layout.gif)
+
+installation.tar:
+	$(MAKE) -C sgml clean
+	$(MAKE) -C sgml installation.html
+	(cd sgml; $(TAR) -cf ../$@ $(TAREXCLUDE) *.html *.htm)
 
 postgres.tar:
 	$(MAKE) -C sgml clean
 	$(MAKE) -C sgml postgres.html
-	($(TAR) -cf $@ $(TAREXCLUDE) -C sgml . -C .. -C graphics catalogs.gif connections.gif layout.gif)
+	(cd sgml; $(TAR) -cf ../$@ $(TAREXCLUDE) *.html *.htm -C ../graphics catalogs.gif connections.gif layout.gif)
 
 programmer.tar:
 	$(MAKE) -C sgml clean
 	$(MAKE) -C sgml programmer.html
-	($(TAR) -cf $@ $(TAREXCLUDE) -C sgml . -C .. -C graphics catalogs.gif connections.gif)
+	(cd sgml; $(TAR) -cf ../$@ $(TAREXCLUDE) *.html *.htm -C ../graphics catalogs.gif connections.gif)
 
 tutorial.tar:
 	$(MAKE) -C sgml clean
 	$(MAKE) -C sgml tutorial.html
-	($(TAR) -cf $@ $(TAREXCLUDE) -C sgml . -C .. -C graphics clientserver.gif)
+	(cd sgml; $(TAR) -cf ../$@ $(TAREXCLUDE) -C sgml . -C .. -C graphics clientserver.gif)
 
 user.tar:
 	$(MAKE) -C sgml clean
 	$(MAKE) -C sgml user.html
-	($(TAR) -cf $@ $(TAREXCLUDE) -C sgml .)
+	(cd sgml; $(TAR) -cf ../$@ $(TAREXCLUDE) *.html *.htm)
 
 # Generic production rules
 
