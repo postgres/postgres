@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.10 1997/01/01 06:01:16 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.11 1997/01/14 05:38:23 vadim Exp $
  *
  * INTERFACE ROUTINES
  *	heap_creatr()		- Create an uncataloged heap relation
@@ -1233,6 +1233,8 @@ heap_destroy(char *relname)
     rdesc = heap_openr(relname);
     if (rdesc == NULL)
 	elog(WARN,"Relation %s Does Not Exist!", relname);
+
+    RelationSetLockForWrite(rdesc);
     
     /* ----------------
      *	prevent deletion of system relations
@@ -1285,6 +1287,11 @@ heap_destroy(char *relname)
      */
     DeletePgRelationTuple(rdesc);
     
+    /*
+     * release dirty buffers of this relation
+     */
+    ReleaseRelationBuffers (rdesc);
+    
     /* ----------------
      *	flush the relation from the relcache
      * ----------------
@@ -1299,6 +1306,9 @@ heap_destroy(char *relname)
     if(rdesc->rd_istemp) {
         rdesc->rd_tmpunlinked = TRUE;
     }
+
+    RelationUnsetLockForWrite(rdesc);
+
     heap_close(rdesc);
 }
 
@@ -1311,7 +1321,7 @@ heap_destroy(char *relname)
 void 
 heap_destroyr(Relation rdesc)
 {
-    ReleaseTmpRelBuffers(rdesc);
+    ReleaseRelationBuffers(rdesc);
     (void) smgrunlink(rdesc->rd_rel->relsmgr, rdesc);
     if(rdesc->rd_istemp) {
         rdesc->rd_tmpunlinked = TRUE;
