@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.149 1998/07/26 01:18:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.150 1998/08/04 18:29:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -408,12 +408,7 @@ tableList(PsqlSettings *pset, bool deep_tablelist, char info_type,
 		strcat(listbuf, "  and relname !~ '^pg_'");
 	else
 		strcat(listbuf, "  and relname ~ '^pg_'");
-	strcat(listbuf, "  and relname !~ '^xin[vx][0-9]+'");
-
-	/*
-	 * the usesysid = relowner won't work on stock 1.0 dbs, need to add in
-	 * the int4oideq function
-	 */
+	strcat(listbuf, " and relname !~ '^xin[vx][0-9]+'");
 	strcat(listbuf, " and usesysid = relowner");
 	strcat(listbuf, " ORDER BY relname ");
 	if (!(res = PSQLexec(pset, listbuf)))
@@ -595,6 +590,7 @@ rightsList(PsqlSettings *pset)
 	}
 	else
 	{
+		PQclear(res);
 		fprintf(stderr, "Couldn't find any tables!\n");
 		return -1;
 	}
@@ -611,7 +607,7 @@ int
 tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 {
 	char		descbuf[512];
-	int			nColumns;
+	int			nColumns, nIndices;
 	char	   *rtype;
 	char	   *rnotnull;
 	char	   *rhasdef;
@@ -765,6 +761,40 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 		}
 		fprintf(fout, "+----------------------------------+----------------------------------+-------+\n");
 		PQclear(res);
+
+		/* display defined indexes for this table */
+		descbuf[0] = '\0';
+		strcat(descbuf, "SELECT c2.relname ");
+		strcat(descbuf, "FROM pg_class c, pg_class c2, pg_index i ");
+		strcat(descbuf, "WHERE c.relname = '");
+		strcat(descbuf, table);
+		strcat(descbuf, "'");
+		strcat(descbuf, "    and c.oid = i.indrelid ");
+		strcat(descbuf, "    and i.indexrelid = c2.oid ");
+		strcat(descbuf, "  ORDER BY c2.relname ");
+		if ((res = PSQLexec(pset, descbuf)))
+		{
+			nIndices = PQntuples(res);
+			if (nIndices > 0)
+			{
+				/*
+				 * Display the information
+				 */
+
+				if (nIndices == 1)
+					fprintf(fout, "Indices:  ");
+				else	
+					fprintf(fout, "Index:     ");
+					
+				/* next, print out the instances */
+				for (i = 0; i < PQntuples(res); i++)
+				if (i == 0)
+					fprintf(fout, "%s\n", PQgetvalue(res, i, 0));
+				else
+					fprintf(fout, "          %s\n", PQgetvalue(res, i, 0));
+			}
+			PQclear(res);
+		}
 		if (usePipe)
 		{
 			pclose(fout);
@@ -774,6 +804,7 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 	}
 	else
 	{
+		PQclear(res);
 		fprintf(stderr, "Couldn't find table %s!\n", table);
 		return -1;
 	}
