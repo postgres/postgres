@@ -4,7 +4,7 @@
 #    Makefile for regex
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/regex/Makefile,v 1.16 2000/11/30 20:36:10 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/regex/Makefile,v 1.17 2001/10/04 04:16:16 ishii Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -26,6 +26,8 @@ all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
+
+regexec.o: regexec.c engine.c
 
 retest: retest.o SUBSYS.o $(DEBUGOBJ)
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBS) -o $@
