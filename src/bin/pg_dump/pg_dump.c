@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.305.2.6 2003/05/16 13:57:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.305.2.7 2003/06/25 04:09:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5388,8 +5388,7 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 				if (actual_atts + j > 0)
 					appendPQExpBuffer(q, ",\n    ");
 
-				if (name[0] != '$')
-					appendPQExpBuffer(q, "CONSTRAINT %s ",
+				appendPQExpBuffer(q, "CONSTRAINT %s ",
 									  fmtId(name));
 				appendPQExpBuffer(q, "CHECK (%s)", expr);
 			}
