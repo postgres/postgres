@@ -740,7 +740,7 @@ fi
 
 rm -f conftest.sh
 sed 's/^\([A-Za-z_]*\):\(.*\)$/\1="\2"/' "template/$TEMPLATE" >conftest.sh
-. conftest.sh
+. ./conftest.sh
 rm -f conftest.sh
 
 
