@@ -442,17 +442,6 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 	return (fmask != 0) ? 0 : -1;
 }	/* DecodeInterval() */
 
-
-/* 
- * Small helper function to avoid cut&paste in EncodeInterval below
- */
-static char * AppendISO8601Fragment(char * cp, int value, char character) 
-{
-    sprintf(cp,"%d%c",value,character);
-    return cp + strlen(cp);
-}
-
-
 /* EncodeInterval()
  * Interpret time structure as a delta time and convert to string.
  *
@@ -460,14 +449,6 @@ static char * AppendISO8601Fragment(char * cp, int value, char character)
  * Actually, afaik ISO does not address time interval formatting,
  *	but this looks similar to the spec for absolute date/time.
  * - thomas 1998-04-30
- * 
- * Actually, afaik, ISO 8601 does specify formats for "time
- * intervals...[of the]...format with time-unit designators", which
- * are pretty ugly.  The format looks something like
- *     P1Y1M1DT1H1M1.12345S
- * If you want this (perhaps for interoperability with computers
- * rather than humans), datestyle 'iso8601basic' will output these.
- * - ron 2003-07-14
  */
 int
 EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str)
@@ -484,12 +465,7 @@ EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str)
 	 */
 	switch (style)
 	{
-			/* compatible with ISO date formats 
-			   ([ram] Not for ISO 8601, perhaps some other ISO format.
-			   but I'm leaving it that way because it's more human
-			   readable than ISO8601 time intervals and for backwards
-			   compatability.)
-			*/
+			/* compatible with ISO date formats */
 		case USE_ISO_DATES:
 			if (tm->tm_year != 0)
 			{
@@ -554,48 +530,6 @@ EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str)
 					cp += strlen(cp);
 					is_nonzero = TRUE;
 				}
-			}
-			break;
-
-		case USE_ISO8601BASIC_DATES:
-			sprintf(cp,"P");
-			cp++;
-			if (tm->tm_year != 0) cp = AppendISO8601Fragment(cp,tm->tm_year,'Y');
-			if (tm->tm_mon  != 0) cp = AppendISO8601Fragment(cp,tm->tm_mon ,'M');
-			if (tm->tm_mday != 0) cp = AppendISO8601Fragment(cp,tm->tm_mday,'D');
-			if ((tm->tm_hour != 0) || (tm->tm_min != 0) ||
-				(tm->tm_sec  != 0) || (fsec       != 0))
-			{
-				sprintf(cp,"T"),
-				cp++;
-			}
-			if (tm->tm_hour != 0) cp = AppendISO8601Fragment(cp,tm->tm_hour,'H');
-			if (tm->tm_min  != 0) cp = AppendISO8601Fragment(cp,tm->tm_min ,'M');
-
-			if ((tm->tm_year == 0) && (tm->tm_mon == 0) && (tm->tm_mday == 0) &&
-				(tm->tm_hour == 0) && (tm->tm_min == 0) && (tm->tm_sec  == 0) &&
-				(fsec        == 0))
-            {
-				sprintf(cp,"T0S"),
-				cp+=2;
-            }
-            else if (fsec != 0)
-            {
-#ifdef HAVE_INT64_TIMESTAMP
-				sprintf(cp, "%d", abs(tm->tm_sec));
-				cp += strlen(cp);
-				sprintf(cp, ".%6dS", ((fsec >= 0) ? fsec : -(fsec)));
-#else
-				fsec += tm->tm_sec;
-				sprintf(cp, "%fS", fabs(fsec));
-#endif
-				TrimTrailingZeros(cp);
-				cp += strlen(cp);
-			}
-			else if (tm->tm_sec != 0)
-			{
-				cp = AppendISO8601Fragment(cp,tm->tm_sec ,'S');
-				cp += strlen(cp);
 			}
 			break;
 

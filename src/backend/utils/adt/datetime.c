@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.122 2003/12/20 15:32:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.123 2003/12/21 04:34:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,6 @@ static int	DecodeTimezone(char *str, int *tzp);
 static datetkn *datebsearch(char *key, datetkn *base, unsigned int nel);
 static int	DecodeDate(char *str, int fmask, int *tmask, struct tm * tm);
 static void TrimTrailingZeros(char *str);
-static int  DecodeISO8601Interval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fsec_t *fsec);
 
 
 int			day_tab[2][13] = {
@@ -2889,246 +2888,6 @@ DecodeSpecial(int field, char *lowtoken, int *val)
 }
 
 
-/*
- * A small helper function to avoid cut&paste code in DecodeIso8601Interval
- */
-static void adjust_fval(double fval,struct tm * tm, fsec_t *fsec, int scale)
-{
-	int	sec;
-	fval	   *= scale;
-	sec		    = fval;
-	tm->tm_sec += sec;
-#ifdef HAVE_INT64_TIMESTAMP
-	*fsec	   += ((fval - sec) * 1000000);
-#else
-	*fsec	   += (fval - sec);
-#endif
-}
-
-
-/* DecodeISO8601Interval()
- *
- *  Check if it's a ISO 8601 Section 5.5.4.2 "Representation of
- *  time-interval by duration only." 
- *  Basic extended format:  PnYnMnDTnHnMnS
- *                          PnW
- *  For more info.
- *  http://www.astroclark.freeserve.co.uk/iso8601/index.html
- *  ftp://ftp.qsl.net/pub/g1smd/154N362_.PDF
- *
- *  Examples:  P1D  for 1 day
- *             PT1H for 1 hour
- *             P2Y6M7DT1H30M for 2 years, 6 months, 7 days 1 hour 30 min
- *
- *  The first field is exactly "p" or "pt" it may be of this type.
- *
- *  Returns -1 if the field is not of this type.
- *
- *  It pretty strictly checks the spec, with the two exceptions
- *  that a week field ('W') may coexist with other units, and that
- *  this function allows decimals in fields other than the least
- *  significant units.
- */
-int
-DecodeISO8601Interval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fsec_t *fsec) 
-{
-	char	   *cp;
-	int			fmask = 0,
-				tmask;
-	int			val;
-	double		fval;
-	int			arg;
-	int			datepart;
-
-    /*
-	 * An ISO 8601 "time-interval by duration only" must start
-	 * with a 'P'.  If it contains a date-part, 'p' will be the
-	 * only character in the field.  If it contains no date part
-	 * it will contain exactly to characters 'PT' indicating a
-	 * time part.
-	 * Anything else is illegal and will be treated like a 
-	 * traditional postgresql interval.
-	 */
-    if (!(field[0][0] == 'p' &&
-          ((field[0][1] == 0) || (field[0][1] == 't' && field[0][2] == 0))))
-	{
-	  return -1;
-	}
-
-
-    /*
-	 * If the first field is exactly 1 character ('P'), it starts
-	 * with date elements.  Otherwise it's two characters ('PT');
-	 * indicating it starts with a time part.
-	 */
-	datepart = (field[0][1] == 0);
-
-	/*
-	 * Every value must have a unit, so we require an even
-	 * number of value/unit pairs. Therefore we require an
-	 * odd nubmer of fields, including the prefix 'P'.
-	 */
-	if ((nf & 1) == 0)
-		return -1;
-
-	/*
-	 * Process pairs of fields at a time.
-	 */
-	for (arg = 1 ; arg < nf ; arg+=2) 
-	{
-		char * value = field[arg  ];
-		char * units = field[arg+1];
-
-		/*
-		 * The value part must be a number.
-		 */
-		if (ftype[arg] != DTK_NUMBER) 
-			return -1;
-
-		/*
-		 * extract the number, almost exactly like the non-ISO interval.
-		 */
-		val = strtol(value, &cp, 10);
-
-		/*
-		 * One difference from the normal postgresql interval below...
-		 * ISO 8601 states that "Of these, the comma is the preferred 
-		 * sign" so I allow it here for locales that support it.
-		 * Note: Perhaps the old-style interval code below should
-		 * allow for this too, but I didn't want to risk backward
-		 * compatability.
-		 */
-		if (*cp == '.' || *cp == ',') 
-		{
-			fval = strtod(cp, &cp);
-			if (*cp != '\0')
-				return -1;
-
-			if (val < 0)
-				fval = -(fval);
-		}
-		else if (*cp == '\0')
-			fval = 0;
-		else
-			return -1;
-
-
-		if (datepart)
-		{
-			/*
-			 * All the 8601 unit specifiers are 1 character, but may
-			 * be followed by a 'T' character if transitioning between
-			 * the date part and the time part.  If it's not either
-			 * one character or two characters with the second being 't'
-			 * it's an error.
-			 */
-			if (!(units[1] == 0 || (units[1] == 't' && units[2] == 0)))
-				return -1;
-
-			if (units[1] == 't')
-				datepart = 0;
-
-			switch (units[0]) /* Y M D W */
-			{
-				case 'd':
-					tm->tm_mday += val;
-					if (fval != 0)
-					  adjust_fval(fval,tm,fsec, 86400);
-					tmask = ((fmask & DTK_M(DAY)) ? 0 : DTK_M(DAY));
-					break;
-
-				case 'w':
-					tm->tm_mday += val * 7;
-					if (fval != 0)
-					  adjust_fval(fval,tm,fsec,7 * 86400);
-					tmask = ((fmask & DTK_M(DAY)) ? 0 : DTK_M(DAY));
-					break;
-
-				case 'm':
-					tm->tm_mon += val;
-					if (fval != 0)
-					  adjust_fval(fval,tm,fsec,30 * 86400);
-					tmask = DTK_M(MONTH);
-					break;
-
-				case 'y':
-					/*
-					 * Why can fractional months produce seconds,
-					 * but fractional years can't?  Well the older
-					 * interval code below has the same property
-					 * so this one follows the other one too.
-					 */
-					tm->tm_year += val;
-					if (fval != 0)
-						tm->tm_mon += (fval * 12);
-					tmask = ((fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR));
-					break;
-
-				default:
-					return -1;  /* invald date unit prefix */
-			}
-		}
-		else
-		{
-			/*
-			 * ISO 8601 time part.
-			 * In the time part, only one-character
-			 * unit prefixes are allowed.  If it's more
-			 * than one character, it's not a valid ISO 8601
-			 * time interval by duration.
-			 */
-			if (units[1] != 0)
-				return -1;
-
-			switch (units[0]) /* H M S */
-			{
-				case 's':
-					tm->tm_sec += val;
-#ifdef HAVE_INT64_TIMESTAMP
-					*fsec += (fval * 1000000);
-#else
-					*fsec += fval;
-#endif
-					tmask = DTK_M(SECOND);
-					break;
-
-				case 'm':
-					tm->tm_min += val;
-					if (fval != 0)
-					  adjust_fval(fval,tm,fsec,60);
-					tmask = DTK_M(MINUTE);
-					break;
-
-				case 'h':
-					tm->tm_hour += val;
-					if (fval != 0)
-					  adjust_fval(fval,tm,fsec,3600);
-					tmask = DTK_M(HOUR);
-					break;
-
-				default:
-					return -1; /* invald time unit prefix */
-			}
-		}
-		fmask |= tmask;
-	}
-
-	if (*fsec != 0)
-	{
-		int			sec;
-
-#ifdef HAVE_INT64_TIMESTAMP
-		sec = (*fsec / INT64CONST(1000000));
-		*fsec -= (sec * INT64CONST(1000000));
-#else
-		TMODULO(*fsec, sec, 1e0);
-#endif
-		tm->tm_sec += sec;
-	}
-	return (fmask != 0) ? 0 : -1;
-}
-
-
 /* DecodeInterval()
  * Interpret previously parsed fields for general time interval.
  * Returns 0 if successful, DTERR code if bogus input detected.
@@ -3138,11 +2897,7 @@ DecodeISO8601Interval(char **field, int *ftype, int nf, int *dtype, struct tm * 
  *
  * Allow ISO-style time span, with implicit units on number of days
  *	preceding an hh:mm:ss field. - thomas 1998-04-30
- * 
- * Allow ISO-8601 style "Representation of time-interval by duration only"
- *  of the format 'PnYnMnDTnHnMnS' and 'PnW' - ron 2003-08-30
  */
-
 int
 DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fsec_t *fsec)
 {
@@ -3166,23 +2921,6 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 	tm->tm_min = 0;
 	tm->tm_sec = 0;
 	*fsec = 0;
-
-	/*
-	 *  Check if it's a ISO 8601 Section 5.5.4.2 "Representation of
-     *  time-interval by duration only." 
-	 *  Basic extended format:  PnYnMnDTnHnMnS
-	 *                          PnW
-	 *  http://www.astroclark.freeserve.co.uk/iso8601/index.html
-	 *  ftp://ftp.qsl.net/pub/g1smd/154N362_.PDF
-	 *  Examples:  P1D  for 1 day
-	 *             PT1H for 1 hour
-	 *             P2Y6M7DT1H30M for 2 years, 6 months, 7 days 1 hour 30 min
-	 *
-	 *  The first field is exactly "p" or "pt" it may be of this type.
-	 */
-	if (DecodeISO8601Interval(field,ftype,nf,dtype,tm,fsec) == 0) {
-	    return 0;
-    }
 
 	/* read through list backwards to pick up units before values */
 	for (i = nf - 1; i >= 0; i--)
@@ -3261,7 +2999,6 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 				if (type == IGNORE_DTF)
 					type = DTK_SECOND;
 
-				/* should this allow ',' for locales that use it ? */
 				if (*cp == '.')
 				{
 					fval = strtod(cp, &cp);
@@ -3633,16 +3370,6 @@ EncodeDateOnly(struct tm * tm, int style, char *str)
 					  -(tm->tm_year - 1), tm->tm_mon, tm->tm_mday, "BC");
 			break;
 
-		case USE_ISO8601BASIC_DATES:
-			/* compatible with ISO date formats */
-			if (tm->tm_year > 0)
-				sprintf(str, "%04d%02d%02d",
-						tm->tm_year, tm->tm_mon, tm->tm_mday);
-			else
-				sprintf(str, "%04d%02d%02d %s",
-					  -(tm->tm_year - 1), tm->tm_mon, tm->tm_mday, "BC");
-			break;
-
 		case USE_SQL_DATES:
 			/* compatible with Oracle/Ingres date formats */
 			if (DateOrder == DATEORDER_DMY)
@@ -3780,51 +3507,6 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 			}
 			else
 				sprintf((str + strlen(str)), ":%02d", tm->tm_sec);
-
-			if (tm->tm_year <= 0)
-				sprintf((str + strlen(str)), " BC");
-
-			/*
-			 * tzp == NULL indicates that we don't want *any* time zone
-			 * info in the output string. *tzn != NULL indicates that we
-			 * have alpha time zone info available. tm_isdst != -1
-			 * indicates that we have a valid time zone translation.
-			 */
-			if ((tzp != NULL) && (tm->tm_isdst >= 0))
-			{
-				hour = -(*tzp / 3600);
-				min = ((abs(*tzp) / 60) % 60);
-				sprintf((str + strlen(str)), ((min != 0) ? "%+03d:%02d" : "%+03d"), hour, min);
-			}
-			break;
-
-		case USE_ISO8601BASIC_DATES: // BASIC 
-			/* Compatible with ISO-8601 date formats */
-
-			sprintf(str, "%04d%02d%02dT%02d%02d",
-				  ((tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1)),
-					tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min);
-
-			/*
-			 * Print fractional seconds if any.  The field widths here
-			 * should be at least equal to MAX_TIMESTAMP_PRECISION.
-			 *
-			 * In float mode, don't print fractional seconds before 1 AD,
-			 * since it's unlikely there's any precision left ...
-			 */
-#ifdef HAVE_INT64_TIMESTAMP
-			if (fsec != 0)
-			{
-				sprintf((str + strlen(str)), "%02d.%06d", tm->tm_sec, fsec);
-#else
-			if ((fsec != 0) && (tm->tm_year > 0))
-			{
-				sprintf((str + strlen(str)), "%09.6f", tm->tm_sec + fsec);
-#endif
-				TrimTrailingZeros(str);
-			}
-			else
-				sprintf((str + strlen(str)), "%02d", tm->tm_sec);
 
 			if (tm->tm_year <= 0)
 				sprintf((str + strlen(str)), " BC");
@@ -4006,15 +3688,6 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 }	/* EncodeDateTime() */
 
 
-/* 
- * Small helper function to avoid cut&paste in EncodeInterval below
- */
-static char * AppendISO8601Fragment(char * cp, int value, char character) 
-{
-    sprintf(cp,"%d%c",value,character);
-    return cp + strlen(cp);
-}
-
 /* EncodeInterval()
  * Interpret time structure as a delta time and convert to string.
  *
@@ -4022,14 +3695,6 @@ static char * AppendISO8601Fragment(char * cp, int value, char character)
  * Actually, afaik ISO does not address time interval formatting,
  *	but this looks similar to the spec for absolute date/time.
  * - thomas 1998-04-30
- * 
- * Actually, afaik, ISO 8601 does specify formats for "time
- * intervals...[of the]...format with time-unit designators", which
- * are pretty ugly.  The format looks something like
- *     P1Y1M1DT1H1M1.12345S
- * If you want this (perhaps for interoperability with computers
- * rather than humans), datestyle 'iso8601basic' will output these.
- * - ron 2003-07-14
  */
 int
 EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str)
@@ -4109,48 +3774,6 @@ EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str)
 					sprintf(cp, ":%02d", abs(tm->tm_sec));
 					cp += strlen(cp);
 				}
-			}
-			break;
-
-		case USE_ISO8601BASIC_DATES:
-			sprintf(cp,"P");
-			cp++;
-			if (tm->tm_year != 0) cp = AppendISO8601Fragment(cp,tm->tm_year,'Y');
-			if (tm->tm_mon  != 0) cp = AppendISO8601Fragment(cp,tm->tm_mon ,'M');
-			if (tm->tm_mday != 0) cp = AppendISO8601Fragment(cp,tm->tm_mday,'D');
-			if ((tm->tm_hour != 0) || (tm->tm_min != 0) ||
-				(tm->tm_sec  != 0) || (fsec       != 0))
-			{
-				sprintf(cp,"T"),
-				cp++;
-			}
-			if (tm->tm_hour != 0) cp = AppendISO8601Fragment(cp,tm->tm_hour,'H');
-			if (tm->tm_min  != 0) cp = AppendISO8601Fragment(cp,tm->tm_min ,'M');
-
-			if ((tm->tm_year == 0) && (tm->tm_mon == 0) && (tm->tm_mday == 0) &&
-				(tm->tm_hour == 0) && (tm->tm_min == 0) && (tm->tm_sec  == 0) &&
-				(fsec        == 0))
-            {
-				sprintf(cp,"T0S"),
-				cp+=2;
-            }
-            else if (fsec != 0)
-            {
-#ifdef HAVE_INT64_TIMESTAMP
-				sprintf(cp, "%d", abs(tm->tm_sec));
-				cp += strlen(cp);
-				sprintf(cp, ".%6dS", ((fsec >= 0) ? fsec : -(fsec)));
-#else
-				fsec += tm->tm_sec;
-				sprintf(cp, "%fS", fabs(fsec));
-#endif
-				TrimTrailingZeros(cp);
-				cp += strlen(cp);
-			}
-			else if (tm->tm_sec != 0)
-			{
-				cp = AppendISO8601Fragment(cp,tm->tm_sec ,'S');
-				cp += strlen(cp);
 			}
 			break;
 
@@ -4278,7 +3901,7 @@ EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str)
 	}
 
 	/* identically zero? then put in a unitless zero... */
-	if (!is_nonzero && (style!=USE_ISO8601BASIC_DATES))
+	if (!is_nonzero)
 	{
 		strcat(cp, "0");
 		cp += strlen(cp);
