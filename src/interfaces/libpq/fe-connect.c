@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.213 2002/10/24 23:35:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.213.2.1 2003/01/08 21:33:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -304,6 +304,9 @@ PQconnectStart(const char *conninfo)
 	conn->pguser = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "password");
 	conn->pgpass = tmp ? strdup(tmp) : NULL;
+	if (conn->pgpass == NULL || conn->pgpass[0] == '\0')
+		conn->pgpass = PasswordFromFile(conn->pghost, conn->pgport,
+									 conn->dbName, conn->pguser);
 	tmp = conninfo_getval(connOptions, "connect_timeout");
 	conn->connect_timeout = tmp ? strdup(tmp) : NULL;
 #ifdef USE_SSL
@@ -501,9 +504,6 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 		conn->pgpass = strdup(pwd);
 	else if ((tmp = getenv("PGPASSWORD")) != NULL)
 		conn->pgpass = strdup(tmp);
-	else if ((tmp = PasswordFromFile(conn->pghost, conn->pgport,
-									 conn->dbName, conn->pguser)))
-		conn->pgpass = tmp;
 	else
 		conn->pgpass = strdup(DefaultPassword);
 
