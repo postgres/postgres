@@ -286,6 +286,7 @@ get_type_array(PGresult *result, int nfields)
 		{
 			case INT2OID:
 			case INT4OID:
+			case INT8OID:
 			case OIDOID:
 				typ[j] = 1;
 				break;
@@ -1793,6 +1794,7 @@ pgquery_getresult(pgqueryobject * self, PyObject * args)
 		{
 			case INT2OID:
 			case INT4OID:
+			case INT8OID:
 			case OIDOID:
 				typ[j] = 1;
 				break;
@@ -1940,6 +1942,7 @@ pgquery_dictresult(pgqueryobject * self, PyObject * args)
 		{
 			case INT2OID:
 			case INT4OID:
+			case INT8OID:
 			case OIDOID:
 				typ[j] = 1;
 				break;
