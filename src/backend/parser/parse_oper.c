@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.17 1998/09/01 04:30:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.18 1998/09/16 14:22:22 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,15 +21,13 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
 #include "fmgr.h"
-#include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_type.h"
 #include "parser/parse_coerce.h"
 #include "storage/bufmgr.h"
 #include "utils/syscache.h"
 
-Oid *
-			oper_select_candidate(int nargs, Oid *input_typeids, CandidateList candidates);
+Oid * oper_select_candidate(int nargs, Oid *input_typeids, CandidateList candidates);
 static int binary_oper_get_candidates(char *opname,
 						   Oid leftTypeId,
 						   Oid rightTypeId,
@@ -38,8 +36,7 @@ static int unary_oper_get_candidates(char *op,
 						  Oid typeId,
 						  CandidateList *candidates,
 						  char rightleft);
-static void
-			op_error(char *op, Oid arg1, Oid arg2);
+static void op_error(char *op, Oid arg1, Oid arg2);
 
 Oid
 any_ordering_op(int restype)
@@ -312,7 +309,7 @@ oper_select_candidate(int nargs,
 	if (ncandidates <= 1)
 	{
 		if (!can_coerce_type(1, &input_typeids[0], &candidates->args[0])
-		 || !can_coerce_type(1, &input_typeids[1], &candidates->args[1]))
+		 || ((nargs > 1) && !can_coerce_type(1, &input_typeids[1], &candidates->args[1])))
 		{
 			ncandidates = 0;
 #ifdef PARSEDEBUG
@@ -718,7 +715,7 @@ right_oper(char *op, Oid arg)
 		}
 		else
 		{
-			targetOid = func_select_candidate(1, &arg, candidates);
+			targetOid = oper_select_candidate(1, &arg, candidates);
 
 			if (targetOid != NULL)
 			{
@@ -729,12 +726,14 @@ right_oper(char *op, Oid arg)
 										  CharGetDatum('r'));
 			}
 			else
+			{
 				tup = NULL;
+			}
 
 			if (!HeapTupleIsValid(tup))
 			{
-				elog(ERROR, "Unable to convert right operator '%s' from type %s to %s",
-					 op, typeidTypeName(arg), typeidTypeName(*targetOid));
+				elog(ERROR, "Unable to convert right operator '%s' from type %s",
+					 op, typeidTypeName(arg));
 				return NULL;
 			}
 		}
@@ -782,17 +781,24 @@ left_oper(char *op, Oid arg)
 		}
 		else
 		{
-			targetOid = func_select_candidate(1, &arg, candidates);
-			tup = SearchSysCacheTuple(OPRNAME,
-									  PointerGetDatum(op),
-									  ObjectIdGetDatum(InvalidOid),
-									  ObjectIdGetDatum(*targetOid),
-									  CharGetDatum('l'));
+			targetOid = oper_select_candidate(1, &arg, candidates);
+			if (targetOid != NULL)
+			{
+				tup = SearchSysCacheTuple(OPRNAME,
+										  PointerGetDatum(op),
+										  ObjectIdGetDatum(InvalidOid),
+										  ObjectIdGetDatum(*targetOid),
+										  CharGetDatum('l'));
+			}
+			else
+			{
+				tup = NULL;
+			}
 
 			if (!HeapTupleIsValid(tup))
 			{
-				elog(ERROR, "Unable to convert left operator '%s' from type %s to %s",
-					 op, typeidTypeName(arg), typeidTypeName(*targetOid));
+				elog(ERROR, "Unable to convert left operator '%s' from type %s",
+					 op, typeidTypeName(arg));
 				return NULL;
 			}
 #ifdef PARSEDEBUG
