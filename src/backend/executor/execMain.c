@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.21 1997/09/01 08:01:46 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.22 1997/09/04 13:22:36 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -921,7 +921,7 @@ ExecAppend(TupleTableSlot *slot,
     
     /* BEFORE ROW INSERT Triggers */
     if ( resultRelationDesc->trigdesc && 
-    		resultRelationDesc->trigdesc->n_before_row[TRIGGER_ACTION_INSERT] > 0 )
+    		resultRelationDesc->trigdesc->n_before_row[TRIGGER_EVENT_INSERT] > 0 )
     {
     	HeapTuple newtuple;
     	
@@ -982,7 +982,7 @@ ExecAppend(TupleTableSlot *slot,
     
     /* AFTER ROW INSERT Triggers */
     if ( resultRelationDesc->trigdesc && 
-    		resultRelationDesc->trigdesc->n_after_row[TRIGGER_ACTION_INSERT] > 0 )
+    		resultRelationDesc->trigdesc->n_after_row[TRIGGER_EVENT_INSERT] > 0 )
     	ExecARInsertTriggers (resultRelationDesc, tuple);
 }
 
@@ -1010,7 +1010,7 @@ ExecDelete(TupleTableSlot *slot,
     
     /* BEFORE ROW DELETE Triggers */
     if ( resultRelationDesc->trigdesc && 
-    		resultRelationDesc->trigdesc->n_before_row[TRIGGER_ACTION_DELETE] > 0 )
+    		resultRelationDesc->trigdesc->n_before_row[TRIGGER_EVENT_DELETE] > 0 )
     {
     	bool dodelete;
     	
@@ -1045,7 +1045,7 @@ ExecDelete(TupleTableSlot *slot,
     
     /* AFTER ROW DELETE Triggers */
     if ( resultRelationDesc->trigdesc && 
-    		resultRelationDesc->trigdesc->n_after_row[TRIGGER_ACTION_DELETE] > 0 )
+    		resultRelationDesc->trigdesc->n_after_row[TRIGGER_EVENT_DELETE] > 0 )
     	ExecARDeleteTriggers (resultRelationDesc, tupleid);
 
 }
@@ -1104,7 +1104,7 @@ ExecReplace(TupleTableSlot *slot,
     
     /* BEFORE ROW UPDATE Triggers */
     if ( resultRelationDesc->trigdesc && 
-    		resultRelationDesc->trigdesc->n_before_row[TRIGGER_ACTION_UPDATE] > 0 )
+    		resultRelationDesc->trigdesc->n_before_row[TRIGGER_EVENT_UPDATE] > 0 )
     {
     	HeapTuple newtuple;
     	
@@ -1186,7 +1186,7 @@ ExecReplace(TupleTableSlot *slot,
     
     /* AFTER ROW UPDATE Triggers */
     if ( resultRelationDesc->trigdesc && 
-    		resultRelationDesc->trigdesc->n_after_row[TRIGGER_ACTION_UPDATE] > 0 )
+    		resultRelationDesc->trigdesc->n_after_row[TRIGGER_EVENT_UPDATE] > 0 )
     	ExecARUpdateTriggers (resultRelationDesc, tupleid, tuple);
 }
 
