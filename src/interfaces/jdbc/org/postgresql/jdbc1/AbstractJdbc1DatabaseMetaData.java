@@ -858,7 +858,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 
 	/*
 	 * Is the SQL Integrity Enhancement Facility supported?
-	 * I haven't seen this mentioned anywhere, so I guess not
+	 * Our best guess is that this means support for constraints
 	 *
 	 * @return true if so
 	 * @exception SQLException if a database access error occurs
@@ -866,8 +866,8 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	public boolean supportsIntegrityEnhancementFacility() throws SQLException
 	{
 		if (Driver.logDebug)
-			Driver.debug("supportsIntegrityEnhancementFacility false ");
-		return false;
+			Driver.debug("supportsIntegrityEnhancementFacility true ");
+		return true;
 	}
 
 	/*
