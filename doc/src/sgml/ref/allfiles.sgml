@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.61 2004/08/12 19:12:21 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.62 2004/08/21 16:16:04 tgl Exp $
 PostgreSQL documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -12,6 +12,7 @@ Complete list of usable sgml source files in this directory.
 <!entity alterDomain        system "alter_domain.sgml">
 <!entity alterFunction      system "alter_function.sgml">
 <!entity alterGroup         system "alter_group.sgml">
+<!entity alterIndex         system "alter_index.sgml">
 <!entity alterLanguage      system "alter_language.sgml">
 <!entity alterOperator      system "alter_operator.sgml">
 <!entity alterOperatorClass system "alter_opclass.sgml">

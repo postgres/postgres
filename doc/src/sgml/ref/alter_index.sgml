@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_index.sgml,v 1.2 2004/08/20 14:56:57 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_index.sgml,v 1.3 2004/08/21 16:16:04 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -46,7 +46,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
     <listitem>
      <para>
       This form changes the owner of the index to the
-      specified user.
+      specified user.  This can only be done by a superuser.
      </para>
     </listitem>
    </varlistentry>
@@ -67,7 +67,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
     <term><literal>RENAME</literal></term>
     <listitem>
      <para>
-      The <literal>RENAME</literal> forms change the name of the index. 
+      The <literal>RENAME</literal> form changes the name of the index. 
 	  There is no effect on the stored data.
      </para>
     </listitem>
@@ -134,8 +134,10 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
   <title>Notes</title>
 
    <para>
-	This same operations are supported by <literal>ALTER TABLE</>. See also
-	<xref linkend="SQL-ALTERTABLE" endterm="SQL-ALTERTABLE-TITLE">.
+    These operations are also possible using
+    <xref linkend="SQL-ALTERTABLE" endterm="SQL-ALTERTABLE-TITLE">.
+    <command>ALTER INDEX</> is in fact just an alias for the forms
+    of <command>ALTER TABLE</> that apply to indexes.
    </para>
 
    <para>
