@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.12 1996/11/05 07:42:42 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.13 1997/03/26 02:24:38 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -328,6 +328,9 @@ fastgetiattr(IndexTuple tup,
 		    break;
 		case sizeof(short):
 		    off = SHORTALIGN(off) + sizeof(short);
+		    break;
+		case sizeof(int32):
+		    off = INTALIGN(off) + sizeof(int32);
 		    break;
 		case -1:
 		    usecache = false;
