@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.151 2004/04/20 01:11:49 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.152 2004/04/24 00:14:28 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -3623,7 +3623,9 @@ If the permissions are less strict than this, the file will be ignored.
 addition, you might need to use additional compiler command-line
 options when you compile your application code.  Refer to your
 system's documentation for information about how to build
-thread-enabled applications.
+thread-enabled applications, or look in 
+<filename>src/Makefile.global</filename> for <literal>PTHREAD_CFLAGS</>
+and <literal>PTHREAD_LIBS</>.
 </para>
 
 <para>
@@ -3673,6 +3675,14 @@ its own <literal>SIGPIPE</> signal handler, it should call
 <function>PQinSend()</> to determine if it should ignore the
 <literal>SIGPIPE</> signal. This function is available in both
 thread-safe and non-thread-safe versions of <application>libpq</>.
+</para>
+
+<para>
+If you experience problems with threaded applications, run
+the program in <filename>src/tools/thread</> to see if your
+platform has thread-unsafe functions.  This program is run 
+by <filename>configure</filename>, but for binary distributions
+your library might not match the library used to build the binaries.
 </para>
 </sect1>
 
