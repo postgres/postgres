@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.5 2003/04/02 20:00:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.6 2003/04/03 21:50:23 tgl Exp $
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design
@@ -212,17 +212,10 @@ int
 SockAddr_pton(SockAddr *sa, const char *src)
 {
 	int			family = AF_INET;
-#ifdef HAVE_IPV6
-	const char		*ch;
 
-	for (ch = src; *ch != '\0'; ch++)
-	{
-		if (*ch == ':')
-		{
-			family = AF_INET6;
-			break;
-		}
-	}
+#ifdef HAVE_IPV6
+	if (strchr(src, ':'))
+		family = AF_INET6;
 #endif
 
 	sa->sa.sa_family = family;
