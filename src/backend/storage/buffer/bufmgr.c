@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.67 1999/11/22 01:19:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.68 1999/11/22 02:03:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -831,7 +831,7 @@ FlushBuffer(Buffer buffer, bool release)
 	 */
 	if (bufHdr->flags & BM_JUST_DIRTIED)
 	{
-		elog(NOTICE, "FlusfBuffer: content of block %u (%s) changed while flushing",
+		elog(NOTICE, "FlushBuffer: content of block %u (%s) changed while flushing",
 			 bufHdr->tag.blockNum, bufHdr->sb_relname);
 	}
 	else
@@ -1476,9 +1476,8 @@ ReleaseRelationBuffers(Relation rel)
  *		This function marks all the buffers in the buffer cache for a
  *		particular database as clean.  This is used when we destroy a
  *		database, to avoid trying to flush data to disk when the directory
- *		tree no longer exists.
- *
- *		This is an exceedingly non-public interface.
+ *		tree no longer exists.  Implementation is pretty similar to
+ *		ReleaseRelationBuffers() which is for destroying just one relation.
  * --------------------------------------------------------------------
  */
 void
@@ -1491,8 +1490,30 @@ DropBuffers(Oid dbid)
 	for (i = 1; i <= NBuffers; i++)
 	{
 		buf = &BufferDescriptors[i - 1];
-		if ((buf->tag.relId.dbId == dbid) && (buf->flags & BM_DIRTY))
-			buf->flags &= ~BM_DIRTY;
+	recheck:
+		if (buf->tag.relId.dbId == dbid)
+		{
+			/*
+			 * If there is I/O in progress, better wait till it's done;
+			 * don't want to delete the database out from under someone
+			 * who's just trying to flush the buffer!
+			 */
+			if (buf->flags & BM_IO_IN_PROGRESS)
+			{
+				WaitIO(buf, BufMgrLock);
+				/* By now, the buffer very possibly belongs to some other
+				 * DB, so check again before proceeding.
+				 */
+				goto recheck;
+			}
+			/* Now we can do what we came for */
+			buf->flags &= ~ ( BM_DIRTY | BM_JUST_DIRTIED);
+			/*
+			 * The thing should be free, if caller has checked that
+			 * no backends are running in that database.
+			 */
+			Assert(buf->flags & BM_FREE);
+		}
 	}
 	SpinRelease(BufMgrLock);
 }
