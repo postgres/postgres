@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.16 1998/02/24 15:56:45 scrappy Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.17 1998/02/25 15:02:18 scrappy Exp $
 #
 if echo '\c' | grep -s c >/dev/null 2>&1
 then
@@ -55,7 +55,7 @@ do
   
 	if [ `diff ${EXPECTED} results/${i}.out | wc -l` -ne 0 ]
 	then
-		( diff -u ${EXPECTED} results/${i}.out; \
+		( diff -wC3 ${EXPECTED} results/${i}.out; \
 		echo "";  \
 		echo "----------------------"; \
 		echo "" ) >> regression.diffs
