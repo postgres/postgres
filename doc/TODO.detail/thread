@@ -1427,3 +1427,69 @@ TIP 5: Have you checked our extensive FAQ?
 
 http://www.postgresql.org/users-lounge/docs/faq.html
 
+From pgsql-hackers-owner+M16320=candle.pha.pa.us=pgman@postgresql.org Thu Dec  6 10:16:20 2001
+Return-path: <pgsql-hackers-owner+M16320=candle.pha.pa.us=pgman@postgresql.org>
+Received: from west.navpoint.com (west.navpoint.com [207.106.42.13])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fB6FGJZ29347
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 10:16:19 -0500 (EST)
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by west.navpoint.com (8.11.6/8.10.1) with ESMTP id fB6FGIE25797
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 10:16:18 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fB6F8MR55154
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 09:12:12 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M16320=candle.pha.pa.us=pgman@postgresql.org)
+Received: from dendrite.sacadia.com (adsl-64-168-22-137.dsl.snfc21.pacbell.net [64.168.22.137])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fB3NNfm32380
+	for <pgsql-hackers@postgresql.org>; Mon, 3 Dec 2001 18:23:42 -0500 (EST)
+	(envelope-from mkscott@sacadia.com)
+Received: from sacadia.com (localhost [127.0.0.1])
+	by dendrite.sacadia.com (8.10.2+Sun/8.10.2) with ESMTP id fB3NKiK16816
+	for <pgsql-hackers@postgresql.org>; Mon, 3 Dec 2001 15:20:44 -0800 (PST)
+Message-ID: <3C0C08CC.917CC04B@sacadia.com>
+Date: Mon, 03 Dec 2001 15:20:44 -0800
+From: mkscott@sacadia.com
+X-Mailer: Mozilla 4.78 [en] (X11; U; SunOS 5.8 sun4u)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: PostgreSQL Hackers Mailing List <pgsql-hackers@postgresql.org>
+Subject: [HACKERS] Using Threads (again)
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+
+Hi All,
+
+
+Since I last posted to this list I have done some work
+on a multi-threaded port of Postgres 7.0.2 that I have been kicking
+around for a while.  There has been some mild interest
+in this in the past so I thought I might try and start a sourceforge
+project with what I have so far.
+
+>From past discussions, it is clear to me that a direct port
+of postgres which uses threads instead of processes is not a
+good idea, how about an embedded version that uses threads.
+A multi-threaded postgres might be good for that.
+The version I am working on is slower in terms of transaction
+throughput than the current postgres but it uses less system
+resources and does not require shared memory.
+
+I know it is possible to embed the current postgres but I
+believe that is a single user system.
+
+Comments?
+
+
+Myron Scott
+mkscott@sacadia.com
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
