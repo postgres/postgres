@@ -15,6 +15,16 @@ fi
 
 ls template
 TEMPLATE=generic
+#
+#     Use the file template/.similar to find an appropriate file
+#     We get the architecture from the config.guess script.
+#
+CONFIG=`./config.guess`
+GUESS=`grep $CONFIG template/.similar 2>/dev/null`
+if [ $GUESS ]; then
+      TEMPLATE=`echo $GUESS | sed 's/.*=//'`
+fi
+
 $ECHO_N "Appropriate template file [$TEMPLATE]: $ECHO_C"
 read a
 if [ "$a." = " ." ]
