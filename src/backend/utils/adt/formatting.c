@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.21 2000/08/29 04:41:47 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.22 2000/09/25 12:58:47 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -1742,7 +1742,7 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node)
 			break;
 		case DCH_tz:
 		case DCH_TZ:
-			if (flag == TO_CHAR)
+			if (flag == TO_CHAR && tzn)
 			{
 				int siz = strlen(tzn);
 				
@@ -2452,7 +2452,7 @@ timestamp_to_char(PG_FUNCTION_ARGS)
 	len = VARSIZE(fmt) - VARHDRSZ;
 
 	if (len <= 0 || TIMESTAMP_NOT_FINITE(dt))
-		return DirectFunctionCall1(textin, CStringGetDatum(""));
+		PG_RETURN_NULL();
 
 	ZERO_tm(tm);	
 	tzn = NULL;
@@ -2552,7 +2552,12 @@ timestamp_to_char(PG_FUNCTION_ARGS)
 	 * needs, now it must be re-allocate to result real size
 	 * ----------
 	 */
-	len = strlen(VARDATA(result));
+	if (!(len = strlen(VARDATA(result))))
+	{
+		pfree(result);
+		PG_RETURN_NULL();
+	}
+	
 	result_tmp = result;
 	result = (text *) palloc(len + 1 + VARHDRSZ);
 
@@ -4017,12 +4022,17 @@ do { \
 	if (flag)							\
 		pfree(format);						\
 									\
-	/* ----------						\
+	/* ----------							\
 	 * for result is allocated max memory, which current format-picture\
 	 * needs, now it must be re-allocate to result real size	\
 	 * ----------							\
 	 */								\
-	len		= strlen(VARDATA(result));			\
+	if (!(len = strlen(VARDATA(result))))				\
+	{								\
+		pfree(result);						\
+		PG_RETURN_NULL();					\
+	}								\
+									\
 	result_tmp	= result;					\
 	result		= (text *) palloc( len + 1 + VARHDRSZ);		\
 									\

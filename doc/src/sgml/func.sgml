@@ -356,10 +356,16 @@
       </thead>
       <tbody>
        <row>
-	<entry>to_ascii(text [,name|int])</entry>
+	<entry>ascii(text)</entry>
+	<entry>int</entry>
+	<entry>returns the decimal representation of the first character from text</entry>
+	<entry>ascii('x')</entry>
+       </row>
+       <row>
+	<entry>btrim(text,set)</entry>
 	<entry>text</entry>
-	<entry>convert text from multibyte encoding to ASCII</entry>
-	<entry>to_ascii('Karel')</entry>
+	<entry>both (left and right) trim characters from text</entry>
+	<entry>btrim('xxxtrimxxx','x')</entry>
        </row>
        <row>
 	<entry>char(text)</entry>
@@ -374,6 +380,12 @@
 	<entry>char(varchar 'varchar string')</entry>
        </row>
        <row>
+       <row>
+	<entry>chr(int)</entry>
+	<entry>text</entry>
+	<entry>returns the character having the binary equivalent to int</entry>
+	<entry>chr(65)</entry>
+       </row>
 	<entry>initcap(text)</entry>
 	<entry>text</entry>
 	<entry>first letter of each word to upper case</entry>
@@ -392,10 +404,10 @@
 	<entry>ltrim('xxxxtrim','x')</entry>
        </row>
        <row>
-	<entry>textpos(text,text)</entry>
+	<entry>repeat(text,int)</entry>
 	<entry>text</entry>
-	<entry>locate specified substring</entry>
-	<entry>position('high','ig')</entry>
+	<entry>repeat text by int</entry>
+	<entry>repeat('Pg', 4)</entry>
        </row>
        <row>
 	<entry>rpad(text,int,text)</entry>
@@ -428,11 +440,23 @@
 	<entry>text(varchar 'varchar string')</entry>
        </row>
        <row>
+	<entry>textpos(text,text)</entry>
+	<entry>text</entry>
+	<entry>locate specified substring</entry>
+	<entry>position('high','ig')</entry>
+       </row>
+       <row>
+	<entry>to_ascii(text [,name|int])</entry>
+	<entry>text</entry>
+	<entry>convert text from multibyte encoding to ASCII</entry>
+	<entry>to_ascii('Karel')</entry>
+       </row>
+       <row>
 	<entry>translate(text,from,to)</entry>
 	<entry>text</entry>
 	<entry>convert character in string</entry>
 	<entry>translate('12345', '1', 'a')</entry>
-       </row>
+       </row>       
        <row>
 	<entry>varchar(char)</entry>
 	<entry>varchar</entry>

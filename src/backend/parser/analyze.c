@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.157 2000/09/12 21:07:00 tgl Exp $
+ *	$Id: analyze.c,v 1.158 2000/09/25 12:58:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1083,7 +1083,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 				foreach(fkattrs, fkconstraint->fk_attrs) {
 					found=0;
 					fkattr=lfirst(fkattrs);
-					foreach(cols, columns) {
+					foreach(cols, stmt->tableElts) {
 						col=lfirst(cols);
 						if (strcmp(col->colname, fkattr->name)==0) {
 							found=1;
