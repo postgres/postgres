@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.86 2001/04/03 13:38:08 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.87 2001/05/03 16:26:21 momjian Exp $
 -->
 
  <appendix id="release">
@@ -10,7 +10,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.86 2001/04/03 13:38:08 mom
 
    <note>
    <title>Release date</title>
-   <simpara>2001-??-??</simpara>
+   <simpara>2001-04-13</simpara>
    </note>
 
    <!--

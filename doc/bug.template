@@ -27,9 +27,9 @@ System Configuration
 
   Operating System (example: Linux 2.0.26 ELF) 	:
 
-  PostgreSQL version (example: PostgreSQL-7.1):   PostgreSQL-7.1
+  PostgreSQL version (example: PostgreSQL-7.1.1):   PostgreSQL-7.1.1
 
-  Compiler used (example:  gcc 2.8.0)		:
+  Compiler used (example:  gcc 2.95.2)		:
 
 
 Please enter a FULL description of your problem:
