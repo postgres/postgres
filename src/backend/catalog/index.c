@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.108 2000/04/12 17:14:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.109 2000/05/19 03:22:31 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2159,8 +2159,6 @@ reindex_index(Oid indexId, bool force)
 	 * they're just dropped without bothering to flush to disk.
 	 */
 	ReleaseRelationBuffers(iRel);
-	if (FlushRelationBuffers(iRel, (BlockNumber) 0, false) < 0)
-		elog(ERROR, "reindex_index: unable to flush index from buffer pool");
 
 	/* Now truncate the actual data and set blocks to zero */
 	smgrtruncate(DEFAULT_SMGR, iRel, 0);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.16 2000/01/26 05:56:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.17 2000/05/19 03:22:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,6 +118,15 @@ BufTableDelete(BufferDesc *buf)
 		elog(ERROR, "BufTableDelete: BufferLookup table corrupted");
 		return FALSE;
 	}
+
+	/*
+	 * Clear the buffer's tag.  This doesn't matter for the hash table,
+	 * since the buffer is already removed from it, but it ensures that
+	 * sequential searches through the buffer table won't think the
+	 * buffer is still valid for its old page.
+	 */
+	buf->tag.relId.relId = InvalidOid;
+	buf->tag.relId.dbId = InvalidOid;
 
 	return TRUE;
 }

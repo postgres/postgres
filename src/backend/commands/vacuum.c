@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.147 2000/04/12 17:14:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.148 2000/05/19 03:22:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1968,10 +1968,10 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 		pfree(Nvpl.vpl_pagedesc);
 	}
 
-	/* truncate relation */
+	/* truncate relation, after flushing any dirty pages out to disk */
 	if (blkno < nblocks)
 	{
-		i = FlushRelationBuffers(onerel, blkno, false);
+		i = FlushRelationBuffers(onerel, blkno);
 		if (i < 0)
 			elog(FATAL, "VACUUM (vc_repair_frag): FlushRelationBuffers returned %d", i);
 		blkno = smgrtruncate(DEFAULT_SMGR, onerel, blkno);
@@ -2035,10 +2035,12 @@ vc_vacheap(VRelStats *vacrelstats, Relation onerel, VPageList vacuum_pages)
 		/*
 		 * We have to flush "empty" end-pages (if changed, but who knows
 		 * it) before truncation
+		 *
+		 * XXX is FlushBufferPool() still needed here?
 		 */
 		FlushBufferPool();
 
-		i = FlushRelationBuffers(onerel, nblocks, false);
+		i = FlushRelationBuffers(onerel, nblocks);
 		if (i < 0)
 			elog(FATAL, "VACUUM (vc_vacheap): FlushRelationBuffers returned %d", i);
 

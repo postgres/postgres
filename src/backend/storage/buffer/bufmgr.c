@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.80 2000/04/12 17:15:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.81 2000/05/19 03:22:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -607,7 +607,6 @@ BufferAlloc(Relation reln,
 	{
 		SpinRelease(BufMgrLock);
 		elog(FATAL, "buffer wasn't in the buffer table\n");
-
 	}
 
 	/* record the database name and relation name for this buffer */
@@ -1585,9 +1584,9 @@ RelationGetNumberOfBlocks(Relation relation)
 /* ---------------------------------------------------------------------
  *		ReleaseRelationBuffers
  *
- *		this function unmarks all the dirty pages of a relation
- *		in the buffer pool so that at the end of transaction
- *		these pages will not be flushed.  This is used when the
+ *		This function removes all the buffered pages for a relation
+ *		from the buffer pool.  Dirty pages are simply dropped, without
+ *		bothering to write them out first.  This is used when the
  *		relation is about to be deleted.  We assume that the caller
  *		holds an exclusive lock on the relation, which should assure
  *		that no new buffers will be acquired for the rel meanwhile.
@@ -1600,7 +1599,6 @@ void
 ReleaseRelationBuffers(Relation rel)
 {
 	Oid			relid = RelationGetRelid(rel);
-	bool		holding = false;
 	int			i;
 	BufferDesc *buf;
 
@@ -1610,22 +1608,23 @@ ReleaseRelationBuffers(Relation rel)
 		{
 			buf = &LocalBufferDescriptors[i];
 			if (buf->tag.relId.relId == relid)
+			{
 				buf->flags &= ~(BM_DIRTY | BM_JUST_DIRTIED);
+				LocalRefCount[i] = 0;
+				buf->tag.relId.relId = InvalidOid;
+			}
 		}
 		return;
 	}
 
+	SpinAcquire(BufMgrLock);
 	for (i = 1; i <= NBuffers; i++)
 	{
 		buf = &BufferDescriptors[i - 1];
-		if (!holding)
-		{
-			SpinAcquire(BufMgrLock);
-			holding = true;
-		}
 recheck:
-		if (buf->tag.relId.dbId == MyDatabaseId &&
-			buf->tag.relId.relId == relid)
+		if (buf->tag.relId.relId == relid &&
+			(buf->tag.relId.dbId == MyDatabaseId ||
+			 buf->tag.relId.dbId == (Oid) NULL))
 		{
 
 			/*
@@ -1661,21 +1660,24 @@ recheck:
 					   buf->refcount == 1);
 				/* ReleaseBuffer expects we do not hold the lock at entry */
 				SpinRelease(BufMgrLock);
-				holding = false;
 				ReleaseBuffer(i);
+				SpinAcquire(BufMgrLock);
 			}
+			/*
+			 * And mark the buffer as no longer occupied by this rel.
+			 */
+			BufTableDelete(buf);
 		}
 	}
-
-	if (holding)
-		SpinRelease(BufMgrLock);
+	SpinRelease(BufMgrLock);
 }
 
 /* ---------------------------------------------------------------------
  *		DropBuffers
  *
- *		This function marks all the buffers in the buffer cache for a
- *		particular database as clean.  This is used when we destroy a
+ *		This function removes all the buffers in the buffer cache for a
+ *		particular database.  Dirty pages are simply dropped, without
+ *		bothering to write them out first.  This is used when we destroy a
  *		database, to avoid trying to flush data to disk when the directory
  *		tree no longer exists.	Implementation is pretty similar to
  *		ReleaseRelationBuffers() which is for destroying just one relation.
@@ -1719,6 +1721,10 @@ recheck:
 			 * backends are running in that database.
 			 */
 			Assert(buf->flags & BM_FREE);
+			/*
+			 * And mark the buffer as no longer occupied by this page.
+			 */
+			BufTableDelete(buf);
 		}
 	}
 	SpinRelease(BufMgrLock);
@@ -1812,34 +1818,39 @@ BufferPoolBlowaway()
 /* ---------------------------------------------------------------------
  *		FlushRelationBuffers
  *
- *		This function removes from the buffer pool all pages of a relation
- *		that have blocknumber >= specified block.  Pages that are dirty are
- *		written out first.	If expectDirty is false, a notice is emitted
- *		warning of dirty buffers, but we proceed anyway.  An error code is
- *		returned if we fail to dump a dirty buffer or if we find one of
+ *		This function flushes all dirty pages of a relation out to disk.
+ *		Furthermore, pages that have blocknumber >= firstDelBlock are
+ *		actually removed from the buffer pool.  An error code is returned
+ *		if we fail to dump a dirty buffer or if we find one of
  *		the target pages is pinned into the cache.
  *
  *		This is used by VACUUM before truncating the relation to the given
- *		number of blocks.  For VACUUM, we pass expectDirty = false since it
- *		could mean a bug in VACUUM if any of the unwanted pages were still
- *		dirty.	(TRUNCATE TABLE also uses it in the same way.)
+ *		number of blocks.  (TRUNCATE TABLE also uses it in the same way.)
+ *		It might seem unnecessary to flush dirty pages before firstDelBlock,
+ *		since VACUUM should already have committed its changes.  However,
+ *		it is possible for there still to be dirty pages: if some page
+ *		had unwritten on-row tuple status updates from a prior transaction,
+ *		and VACUUM had no additional changes to make to that page, then
+ *		VACUUM won't have written it.  This is harmless in most cases but
+ *		will break pg_upgrade, which relies on VACUUM to ensure that *all*
+ *		tuples have correct on-row status.  So, we check and flush all
+ *		dirty pages of the rel regardless of block number.
  *
- *		This is also used by RENAME TABLE (with block=0 and expectDirty=true)
+ *		This is also used by RENAME TABLE (with firstDelBlock = 0)
  *		to clear out the buffer cache before renaming the physical files of
  *		a relation.  Without that, some other backend might try to do a
  *		blind write of a buffer page (relying on the BlindId of the buffer)
  *		and fail because it's not got the right filename anymore.
  *
- *		In both cases, the caller should be holding AccessExclusiveLock on
+ *		In all cases, the caller should be holding AccessExclusiveLock on
  *		the target relation to ensure that no other backend is busy reading
  *		more blocks of the relation.
  *
- *		Formerly, we considered it an error condition if we found unexpectedly
- *		dirty buffers.	However, since BufferSync no longer forces out all
+ *		Formerly, we considered it an error condition if we found dirty
+ *		buffers here.	However, since BufferSync no longer forces out all
  *		dirty buffers at every xact commit, it's possible for dirty buffers
  *		to still be present in the cache due to failure of an earlier
- *		transaction.  So, downgrade the error to a mere notice.  Maybe we
- *		shouldn't even emit a notice...
+ *		transaction.  So, must flush dirty buffers without complaint.
  *
  *		Returns: 0 - Ok, -1 - FAILED TO WRITE DIRTY BUFFER, -2 - PINNED
  *
@@ -1848,8 +1859,9 @@ BufferPoolBlowaway()
  * --------------------------------------------------------------------
  */
 int
-FlushRelationBuffers(Relation rel, BlockNumber block, bool expectDirty)
+FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 {
+	Oid			relid = RelationGetRelid(rel);
 	int			i;
 	BufferDesc *buf;
 
@@ -1858,31 +1870,29 @@ FlushRelationBuffers(Relation rel, BlockNumber block, bool expectDirty)
 		for (i = 0; i < NLocBuffer; i++)
 		{
 			buf = &LocalBufferDescriptors[i];
-			if (buf->tag.relId.relId == RelationGetRelid(rel) &&
-				buf->tag.blockNum >= block)
+			if (buf->tag.relId.relId == relid)
 			{
 				if (buf->flags & BM_DIRTY)
 				{
-					if (!expectDirty)
-						elog(NOTICE, "FlushRelationBuffers(%s (local), %u): block %u is dirty",
-							 RelationGetRelationName(rel),
-							 block, buf->tag.blockNum);
 					if (FlushBuffer(-i - 1, false) != STATUS_OK)
 					{
 						elog(NOTICE, "FlushRelationBuffers(%s (local), %u): block %u is dirty, could not flush it",
-							 RelationGetRelationName(rel),
-							 block, buf->tag.blockNum);
+							 RelationGetRelationName(rel), firstDelBlock,
+							 buf->tag.blockNum);
 						return -1;
 					}
 				}
 				if (LocalRefCount[i] > 0)
 				{
 					elog(NOTICE, "FlushRelationBuffers(%s (local), %u): block %u is referenced (%ld)",
-						 RelationGetRelationName(rel), block,
+						 RelationGetRelationName(rel), firstDelBlock,
 						 buf->tag.blockNum, LocalRefCount[i]);
 					return -2;
 				}
-				buf->tag.relId.relId = InvalidOid;
+				if (buf->tag.blockNum >= firstDelBlock)
+				{
+					buf->tag.relId.relId = InvalidOid;
+				}
 			}
 		}
 		return 0;
@@ -1891,26 +1901,20 @@ FlushRelationBuffers(Relation rel, BlockNumber block, bool expectDirty)
 	SpinAcquire(BufMgrLock);
 	for (i = 0; i < NBuffers; i++)
 	{
-recheck:
 		buf = &BufferDescriptors[i];
-		if (buf->tag.relId.relId == RelationGetRelid(rel) &&
+recheck:
+		if (buf->tag.relId.relId == relid &&
 			(buf->tag.relId.dbId == MyDatabaseId ||
-			 buf->tag.relId.dbId == (Oid) NULL) &&
-			buf->tag.blockNum >= block)
+			 buf->tag.relId.dbId == (Oid) NULL))
 		{
 			if (buf->flags & BM_DIRTY)
 			{
 				PinBuffer(buf);
 				SpinRelease(BufMgrLock);
-				if (!expectDirty)
-					elog(NOTICE, "FlushRelationBuffers(%s, %u): block %u is dirty (private %ld, global %d)",
-						 RelationGetRelationName(rel), block,
-						 buf->tag.blockNum,
-						 PrivateRefCount[i], buf->refcount);
 				if (FlushBuffer(i + 1, true) != STATUS_OK)
 				{
 					elog(NOTICE, "FlushRelationBuffers(%s, %u): block %u is dirty (private %ld, global %d), could not flush it",
-						 RelationGetRelationName(rel), block,
+						 RelationGetRelationName(rel), firstDelBlock,
 						 buf->tag.blockNum,
 						 PrivateRefCount[i], buf->refcount);
 					return -1;
@@ -1927,12 +1931,15 @@ recheck:
 			{
 				SpinRelease(BufMgrLock);
 				elog(NOTICE, "FlushRelationBuffers(%s, %u): block %u is referenced (private %ld, global %d)",
-					 RelationGetRelationName(rel), block,
+					 RelationGetRelationName(rel), firstDelBlock,
 					 buf->tag.blockNum,
 					 PrivateRefCount[i], buf->refcount);
 				return -2;
 			}
-			BufTableDelete(buf);
+			if (buf->tag.blockNum >= firstDelBlock)
+			{
+				BufTableDelete(buf);
+			}
 		}
 	}
 	SpinRelease(BufMgrLock);
