@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sun Aug  1 09:55:09 EDT 2004
+Last updated:		Sun Aug  1 10:08:04 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -777,13 +777,13 @@ Source Code
 Developers who have claimed items are:
 --------------------------------------
 * Alvaro is Alvaro Herrera <alvherre@dcc.uchile.cl>
-* Andrew is Andrew Dunstan 
+* Andrew is Andrew Dunstan <andrew@dunslane.net>
 * Bruce is Bruce Momjian <pgman@candle.pha.pa.us> of Software Research Assoc.
 * Christopher is Christopher Kings-Lynne <chriskl@familyhealth.com.au> of
     Family Health Network
-* Claudio is ?
+* Claudio is Claudio Natoli <claudio.natoli@memetrics.com>
 * D'Arcy is D'Arcy J.M. Cain <darcy@druid.net> of The Cain Gang Ltd.
-* Fabien is Fabien Coelho
+* Fabien is Fabien Coelho <coelho@cri.ensmp.fr>
 * Gavin is Gavin Sherry <swm@linuxworld.com.au> of Alcove Systems Engineering
 * Greg is Greg Sabino Mullane <greg@turnstep.com>
 * Hiroshi is Hiroshi Inoue <Inoue@tpf.co.jp>
@@ -792,7 +792,6 @@ Developers who have claimed items are:
 * Karel is Karel Zak <zakkr@zf.jcu.cz>
 * Kris is Kris Jurka 
 * Magnus is Magnus Hagander <mha@sollentuna.net>
-* Manfred is Manfred Koizar <
 * Marc is Marc Fournier <scrappy@hub.org> of PostgreSQL, Inc.
 * Matthew T. O'Connor <matthew@zeut.net>
 * Michael is Michael Meskes <meskes@postgresql.org> of Credativ
