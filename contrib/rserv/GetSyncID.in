@@ -37,6 +37,8 @@ $sinfo = "$sinfo password=$opt_password" if (defined($opt_password));
 print("Connecting to '$sinfo'\n") if ($debug || $verbose);
 my $conn = Pg::connectdb($sinfo);
 
+$RServ::quiet = !$verbose;
+
 $res = GetSyncID($conn);
 
 die "ERROR\n" if $res < 0;

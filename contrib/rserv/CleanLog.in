@@ -38,6 +38,8 @@ print "Slave connection is $sinfo\n" if ($debug);
 
 my $conn = Pg::connectdb($minfo);
 
+$RServ::quiet = !$verbose;
+
 $res = CleanLog($conn, $howold);
 
 exit(1) if $res < 0;

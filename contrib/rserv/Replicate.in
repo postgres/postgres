@@ -49,6 +49,8 @@ print "Slave connection is $sinfo\n" if ($debug);
 my $mconn = Pg::connectdb($minfo);
 my $sconn = Pg::connectdb($sinfo);
 
+$RServ::quiet = !$verbose;
+
 SyncSync($mconn, $sconn);
 
 my $outf = new IO::File;

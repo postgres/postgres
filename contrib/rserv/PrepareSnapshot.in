@@ -39,6 +39,8 @@ my $conn = Pg::connectdb($minfo);
 my $outf = new IO::File;
 $outf = STDOUT;
 
+$RServ::quiet = !$verbose;
+
 $res = PrepareSnapshot ($conn, $outf, $server);
 
 if ($res == 0)

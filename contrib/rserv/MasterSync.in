@@ -36,6 +36,8 @@ $minfo = "$minfo password=$opt_password" if (defined($opt_password));
 
 my $conn = Pg::connectdb($minfo);
 
+$RServ::quiet = !$verbose;
+
 $res = SyncSyncID($conn, $server, $syncid);
 
 if ($res == 0)

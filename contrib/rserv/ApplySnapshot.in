@@ -32,10 +32,12 @@ $sinfo = "$sinfo host=$opt_host" if (defined($opt_host));
 $sinfo = "$sinfo user=$opt_user" if (defined($opt_user));
 $sinfo = "$sinfo password=$opt_password" if (defined($opt_password));
 
-my $conn = Pg::connectdb(sinfo);
+my $conn = Pg::connectdb($sinfo);
 
 my $inpf = new IO::File;
 $inpf = STDIN;
+
+$RServ::quiet = !$verbose;
 
 $res = ApplySnapshot ($conn, $inpf);
 
