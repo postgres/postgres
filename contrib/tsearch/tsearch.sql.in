@@ -1,5 +1,8 @@
 BEGIN TRANSACTION;
 
+-- Adjust this setting to control where the objects get created.
+SET search_path = public;
+
 -- TXTIDX type
 
 CREATE FUNCTION txtidx_in(opaque)
@@ -134,6 +137,7 @@ input = gtxtidx_in,
 output = gtxtidx_out
 );
 
+-- support functions
 CREATE FUNCTION gtxtidx_consistent(gtxtidx,opaque,int4) RETURNS bool
         AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
@@ -155,97 +159,19 @@ CREATE FUNCTION gtxtidx_union(bytea, opaque) RETURNS _int4
 CREATE FUNCTION gtxtidx_same(gtxtidx, gtxtidx, opaque) RETURNS opaque
         AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
-INSERT INTO pg_opclass (opcamid, opcname, opcnamespace, opcowner, opcintype, opcdefault, opckeytype)
-    VALUES (
-        (SELECT oid FROM pg_am WHERE amname = 'gist'),
-        'gist_txtidx_ops',
-        (SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog'),
-        1,	-- UID of superuser is hardwired to 1 as of PG 7.3
-        (SELECT oid FROM pg_type WHERE typname = 'txtidx'),
-        true,
-        (SELECT oid FROM pg_type WHERE typname = 'gtxtidx'));
-
-SELECT o.oid AS opoid, o.oprname
-INTO TEMP TABLE txtidx_ops_tmp
-FROM pg_operator o, pg_type t, pg_type tq
-WHERE o.oprleft = t.oid and o.oprright=tq.oid
-   and t.typname = 'txtidx'
-   and ( tq.typname='query_txt' or tq.typname='mquery_txt' );
-
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 1, true, c.opoid
-   FROM pg_opclass opcl, txtidx_ops_tmp c
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist_txtidx_ops'
-      and c.oprname = '@@';
-
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 2, true, c.opoid
-   FROM pg_opclass opcl, txtidx_ops_tmp c
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist_txtidx_ops'
-      and c.oprname = '##';
-
-DROP TABLE txtidx_ops_tmp;
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 1, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist_txtidx_ops'
-      and proname = 'gtxtidx_consistent';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 2, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist_txtidx_ops'
-      and proname = 'gtxtidx_union';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 3, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist_txtidx_ops'
-      and proname = 'gtxtidx_compress';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 4, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist_txtidx_ops'
-      and proname = 'gtxtidx_decompress';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 5, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist_txtidx_ops'
-      and proname = 'gtxtidx_penalty';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 6, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist_txtidx_ops'
-      and proname = 'gtxtidx_picksplit';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 7, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist_txtidx_ops'
-      and proname = 'gtxtidx_same';
-
+-- create the operator class
+CREATE OPERATOR CLASS gist_txtidx_ops
+    DEFAULT FOR TYPE txtidx USING gist AS
+	OPERATOR	1	@@ (txtidx, query_txt)	RECHECK ,
+	OPERATOR	2	## (txtidx, mquery_txt)	RECHECK ,
+	FUNCTION	1	gtxtidx_consistent (gtxtidx, opaque, int4),
+	FUNCTION	2	gtxtidx_union (bytea, opaque),
+	FUNCTION	3	gtxtidx_compress (opaque),
+	FUNCTION	4	gtxtidx_decompress (opaque),
+	FUNCTION	5	gtxtidx_penalty (opaque, opaque, opaque),
+	FUNCTION	6	gtxtidx_picksplit (opaque, opaque),
+	FUNCTION	7	gtxtidx_same (gtxtidx, gtxtidx, opaque),
+	STORAGE		gtxtidx;
 
 
 END TRANSACTION;

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.15 2002/01/07 02:29:11 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.16 2002/07/30 17:34:37 tgl Exp $
 -->
 
  <chapter id="extend">
@@ -255,11 +255,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.15 2002/01/07 02:29:11 pete
        There are many columns and relationships that
        have obvious meanings, but there are many  
        (particularly  those  that  have  to  do with access
-       methods) that do not.  The relationships between
-       <classname>pg_am</>, <classname>pg_amop</>, <classname>pg_amproc</>, <classname>pg_operator</>, and
-       <classname>pg_opclass</> are particularly hard  to  understand
-       and  will  be described in depth (in <xref linkend="xindex">)
-       after we have discussed basic extensions.
+       methods) that do not.
       </para>
      </listitem>
     </itemizedlist>

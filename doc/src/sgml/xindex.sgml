@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.27 2002/07/30 05:24:56 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.28 2002/07/30 17:34:37 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -97,7 +97,7 @@ PostgreSQL documentation
    Because
    <productname>PostgreSQL</productname> allows the user to define operators,
    <productname>PostgreSQL</productname> cannot look at the name of an operator
-   (e.g., <literal>&gt;</> or <literal>&lt;</>) and tell what kind of
+   (e.g., <literal>&lt;</> or <literal>&gt;=</>) and tell what kind of
    comparison it is.  Instead, the index access method defines a set of
    <quote>strategies</>, which can be thought of as generalized operators.
    Each operator class shows which actual operator corresponds to each
@@ -279,18 +279,16 @@ PostgreSQL documentation
     <tgroup cols="2">
      <thead>
       <row>
-       <entry>Operation</entry>
+       <entry>Function</entry>
        <entry>Support Number</entry>
       </row>
      </thead>
      <tbody>
       <row>
        <entry>
-   Compare two keys and return -1, 0,
-   or +1, depending on whether the first key is less than, equal to,
-   or greater than the second. (Actually, this routine can
-   return any negative int32 value (&lt; 0), zero, or any non-zero positive
-   int32 value (&gt; 0).)
+   Compare two keys and return an integer less than zero, zero, or
+   greater than zero, indicating whether the first key is less than, equal to,
+   or greater than the second.
        </entry>
        <entry>1</entry>
       </row>
@@ -309,13 +307,13 @@ PostgreSQL documentation
     <tgroup cols="2">
      <thead>
       <row>
-       <entry>Operation</entry>
+       <entry>Function</entry>
        <entry>Support Number</entry>
       </row>
      </thead>
      <tbody>
       <row>
-       <entry>compute the hash value for a key</entry>
+       <entry>Compute the hash value for a key</entry>
        <entry>1</entry>
       </row>
      </tbody>
@@ -333,7 +331,7 @@ PostgreSQL documentation
     <tgroup cols="2">
      <thead>
       <row>
-       <entry>Operation</entry>
+       <entry>Function</entry>
        <entry>Support Number</entry>
       </row>
      </thead>
@@ -365,7 +363,7 @@ PostgreSQL documentation
     <tgroup cols="2">
      <thead>
       <row>
-       <entry>Operation</entry>
+       <entry>Function</entry>
        <entry>Support Number</entry>
       </row>
      </thead>
@@ -442,8 +440,8 @@ PostgreSQL documentation
              return (amag==bmag);
          }
 </programlisting>
-   (Note that we will only show the equality operator for the rest of
-   the examples.  The other four operators are very similar.  Refer to
+   (Note that we will only show the equality operator in this text.
+   The other four operators are very similar.  Refer to
    <filename>complex.c</filename> or
    <filename>complex.source</filename> for the details.)
   </para>
@@ -555,11 +553,11 @@ CREATE FUNCTION complex_abs_cmp(complex, complex)
 <programlisting>
 CREATE OPERATOR CLASS complex_abs_ops
     DEFAULT FOR TYPE complex USING btree AS
-        OPERATOR        1       < ,
-        OPERATOR        2       <= ,
+        OPERATOR        1       &lt; ,
+        OPERATOR        2       &lt;= ,
         OPERATOR        3       = ,
-        OPERATOR        4       >= ,
-        OPERATOR        5       > ,
+        OPERATOR        4       &gt;= ,
+        OPERATOR        5       &gt; ,
         FUNCTION        1       complex_abs_cmp(complex, complex);
 </programlisting>
   </para>
@@ -572,7 +570,7 @@ CREATE OPERATOR CLASS complex_abs_ops
   <para>
    We could have written the operator entries more verbosely, as in
 <programlisting>
-        OPERATOR        1       < (complex, complex) ,
+        OPERATOR        1       &lt; (complex, complex) ,
 </programlisting>
    but there is no need to do so when the operators take the same datatype
    we are defining the operator class for.
@@ -599,7 +597,7 @@ CREATE OPERATOR CLASS complex_abs_ops
    that the index access method can retrieve exactly the set of rows
    that satisfy a WHERE condition using the operator.  For example,
 <programlisting>
-SELECT * FROM table WHERE integer_column < 4;
+SELECT * FROM table WHERE integer_column &lt; 4;
 </programlisting>
    can be satisfied exactly by a B-tree index on the integer column.
    But there are cases where an index is useful as an inexact guide to
@@ -610,8 +608,8 @@ SELECT * FROM table WHERE integer_column < 4;
    box overlaps the bounding box of the target object, and then do the
    exact overlap test only on the objects found by the index.  If this
    scenario applies, the index is said to be <quote>lossy</> for the
-   operator, and we mark the <literal>OPERATOR</> clause in the
-   <command>CREATE OPERATOR CLASS</> command with <literal>RECHECK</>.
+   operator, and we add <literal>RECHECK</> to the <literal>OPERATOR</> clause
+   in the <command>CREATE OPERATOR CLASS</> command.
    <literal>RECHECK</> is valid if the index is guaranteed to return
    all the required tuples, plus perhaps some additional tuples, which
    can be eliminated by performing the original operator comparison.

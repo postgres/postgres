@@ -1,6 +1,9 @@
 begin transaction;
--- create type of int4 key
 
+-- Adjust this setting to control where the objects get created.
+SET search_path = public;
+
+-- create type of int4 key
 CREATE FUNCTION int4key_in(opaque)
 RETURNS opaque
 AS 'MODULE_PATHNAME'
@@ -40,101 +43,23 @@ create function gint4_union(bytea, opaque) returns int4 as 'MODULE_PATHNAME' lan
 
 create function gint4_same(opaque, opaque, opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
 
--- add a new opclass
-INSERT INTO pg_opclass (opcamid, opcname, opcnamespace, opcowner, opcintype, opcdefault, opckeytype)
-    VALUES (
-        (SELECT oid FROM pg_am WHERE amname = 'gist'),
-        'gist_int4_ops',
-        (SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog'),
-        1,	-- UID of superuser is hardwired to 1 as of PG 7.3
-        (SELECT oid FROM pg_type WHERE typname = 'int4'),
-        true,
-        (SELECT oid FROM pg_type WHERE typname = 'int4key'));
+-- Create the operator class
+CREATE OPERATOR CLASS gist_int4_ops
+    DEFAULT FOR TYPE int4 USING gist AS
+	OPERATOR	1	< ,
+	OPERATOR	2	<= ,
+	OPERATOR	3	= ,
+	OPERATOR	4	>= ,
+	OPERATOR	5	> ,
+	FUNCTION	1	gint4_consistent (opaque, int4, int2),
+	FUNCTION	2	gint4_union (bytea, opaque),
+	FUNCTION	3	gint4_compress (opaque),
+	FUNCTION	4	btree_decompress (opaque),
+	FUNCTION	5	gint4_penalty (opaque, opaque, opaque),
+	FUNCTION	6	gint4_picksplit (opaque, opaque),
+	FUNCTION	7	gint4_same (opaque, opaque, opaque),
+	STORAGE		int4key;
 
-
-SELECT o.oid AS opoid, o.oprname
-INTO TABLE int_ops_tmp
-FROM pg_operator o, pg_type t
-WHERE o.oprleft = t.oid and o.oprright = t.oid
-   and t.typname = 'int4';
-
--- get the comparators for int4es and store them in a tmp table
-INSERT INTO pg_amop (amopclaid, amopopr, amopstrategy, amopreqcheck)
-   SELECT opcl.oid, c.opoid, 1, 'f'
-   FROM pg_opclass opcl, int_ops_tmp c
-   WHERE opcname = 'gist_int4_ops'
-      and c.oprname = '<';
-
-INSERT INTO pg_amop (amopclaid, amopopr, amopstrategy, amopreqcheck)
-   SELECT opcl.oid, c.opoid, 2, 'f'
-   FROM pg_opclass opcl, int_ops_tmp c
-   WHERE opcname = 'gist_int4_ops'
-      and c.oprname = '<=';
-
-INSERT INTO pg_amop (amopclaid, amopopr, amopstrategy, amopreqcheck)
-   SELECT opcl.oid, c.opoid, 3, 'f'
-   FROM pg_opclass opcl, int_ops_tmp c
-   WHERE opcname = 'gist_int4_ops'
-      and c.oprname = '=';
-
-INSERT INTO pg_amop (amopclaid, amopopr, amopstrategy, amopreqcheck)
-   SELECT opcl.oid, c.opoid, 4, 'f'
-   FROM pg_opclass opcl, int_ops_tmp c
-   WHERE opcname = 'gist_int4_ops'
-      and c.oprname = '>=';
-
-INSERT INTO pg_amop (amopclaid, amopopr, amopstrategy, amopreqcheck)
-   SELECT opcl.oid, c.opoid, 5, 'f'
-   FROM pg_opclass opcl, int_ops_tmp c
-   WHERE opcname = 'gist_int4_ops'
-      and c.oprname = '>';
-
-
-DROP table int_ops_tmp;
-
--- add the entries to amproc for the support methods
--- note the amprocnum numbers associated with each are specific!
-INSERT INTO pg_amproc (amopclaid, amproc, amprocnum)
-   SELECT opcl.oid, pro.oid, 1
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE  opcname = 'gist_int4_ops'
-      and proname = 'gint4_consistent';
-
-INSERT INTO pg_amproc (amopclaid, amproc, amprocnum)
-   SELECT opcl.oid, pro.oid, 2
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE  opcname = 'gist_int4_ops'
-      and proname = 'gint4_union';
-
-INSERT INTO pg_amproc (amopclaid, amproc, amprocnum)
-   SELECT opcl.oid, pro.oid, 3
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE  opcname = 'gist_int4_ops'
-      and proname = 'gint4_compress';
-
-INSERT INTO pg_amproc (amopclaid, amproc, amprocnum)
-   SELECT opcl.oid, pro.oid, 4
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE  opcname = 'gist_int4_ops'
-      and proname = 'btree_decompress';
-
-INSERT INTO pg_amproc (amopclaid, amproc, amprocnum)
-   SELECT opcl.oid, pro.oid, 5
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE  opcname = 'gist_int4_ops'
-      and proname = 'gint4_penalty';
-
-INSERT INTO pg_amproc (amopclaid, amproc, amprocnum)
-   SELECT opcl.oid, pro.oid, 6
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE  opcname = 'gist_int4_ops'
-      and proname = 'gint4_picksplit';
-
-INSERT INTO pg_amproc (amopclaid, amproc, amprocnum)
-   SELECT opcl.oid, pro.oid, 7
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE  opcname = 'gist_int4_ops'
-      and proname = 'gint4_same';
 
 --
 --
@@ -173,98 +98,22 @@ create function gts_union(bytea, opaque) returns int4 as 'MODULE_PATHNAME' langu
 
 create function gts_same(opaque, opaque, opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
 
--- add a new opclass
-INSERT INTO pg_opclass (opcamid, opcname, opcnamespace, opcowner, opcintype, opcdefault, opckeytype)
-    VALUES (
-        (SELECT oid FROM pg_am WHERE amname = 'gist'),
-        'gist_timestamp_ops',
-        (SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog'),
-        1,	-- UID of superuser is hardwired to 1 as of PG 7.3
-        (SELECT oid FROM pg_type WHERE typname = 'timestamp'),
-        true,
-        (SELECT oid FROM pg_type WHERE typname = 'tskey'));
+-- Create the operator class
+CREATE OPERATOR CLASS gist_timestamp_ops
+    DEFAULT FOR TYPE timestamp USING gist AS
+	OPERATOR	1	< ,
+	OPERATOR	2	<= ,
+	OPERATOR	3	= ,
+	OPERATOR	4	>= ,
+	OPERATOR	5	> ,
+	FUNCTION	1	gts_consistent (opaque, timestamp, int2),
+	FUNCTION	2	gts_union (bytea, opaque),
+	FUNCTION	3	gts_compress (opaque),
+	FUNCTION	4	btree_decompress (opaque),
+	FUNCTION	5	gts_penalty (opaque, opaque, opaque),
+	FUNCTION	6	gts_picksplit (opaque, opaque),
+	FUNCTION	7	gts_same (opaque, opaque, opaque),
+	STORAGE		tskey;
 
-SELECT o.oid AS opoid, o.oprname
-INTO TABLE timestamp_ops_tmp
-FROM pg_operator o, pg_type t
-WHERE o.oprleft = t.oid and o.oprright = t.oid
-   and t.typname = 'timestamp';
-
-INSERT INTO pg_amop (amopclaid, amopopr, amopstrategy, amopreqcheck)
-   SELECT opcl.oid, c.opoid, 1, 'f'
-   FROM pg_opclass opcl, timestamp_ops_tmp c
-   WHERE opcname = 'gist_timestamp_ops'
-      and c.oprname = '<';
-
-INSERT INTO pg_amop (amopclaid, amopopr, amopstrategy, amopreqcheck)
-   SELECT opcl.oid, c.opoid, 2, 'f'
-   FROM pg_opclass opcl, timestamp_ops_tmp c
-   WHERE opcname = 'gist_timestamp_ops'
-      and c.oprname = '<=';
-
-INSERT INTO pg_amop (amopclaid, amopopr, amopstrategy, amopreqcheck)
-   SELECT opcl.oid, c.opoid, 3, 'f'
-   FROM pg_opclass opcl, timestamp_ops_tmp c
-   WHERE opcname = 'gist_timestamp_ops'
-      and c.oprname = '=';
-
-INSERT INTO pg_amop (amopclaid, amopopr, amopstrategy, amopreqcheck)
-   SELECT opcl.oid, c.opoid, 4, 'f'
-   FROM pg_opclass opcl, timestamp_ops_tmp c
-   WHERE opcname = 'gist_timestamp_ops'
-      and c.oprname = '>=';
-
-INSERT INTO pg_amop (amopclaid, amopopr, amopstrategy, amopreqcheck)
-   SELECT opcl.oid, c.opoid, 5, 'f'
-   FROM pg_opclass opcl, timestamp_ops_tmp c
-   WHERE opcname = 'gist_timestamp_ops'
-      and c.oprname = '>';
-
-DROP table timestamp_ops_tmp;
-
--- add the entries to amproc for the support methods
--- note the amprocnum numbers associated with each are specific!
-INSERT INTO pg_amproc (amopclaid, amproc, amprocnum)
-   SELECT opcl.oid, pro.oid, 1
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE  opcname = 'gist_timestamp_ops'
-      and proname = 'gts_consistent';
-
-INSERT INTO pg_amproc (amopclaid, amproc, amprocnum)
-   SELECT opcl.oid, pro.oid, 2
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE  opcname = 'gist_timestamp_ops'
-      and proname = 'gts_union';
-
-INSERT INTO pg_amproc (amopclaid, amproc, amprocnum)
-   SELECT opcl.oid, pro.oid, 3
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE  opcname = 'gist_timestamp_ops'
-      and proname = 'gts_compress';
-
-INSERT INTO pg_amproc (amopclaid, amproc, amprocnum)
-   SELECT opcl.oid, pro.oid, 4
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE  opcname = 'gist_timestamp_ops'
-      and proname = 'btree_decompress';
-
-INSERT INTO pg_amproc (amopclaid, amproc, amprocnum)
-   SELECT opcl.oid, pro.oid, 5
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE  opcname = 'gist_timestamp_ops'
-      and proname = 'gts_penalty';
-
-INSERT INTO pg_amproc (amopclaid, amproc, amprocnum)
-   SELECT opcl.oid, pro.oid, 6
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE  opcname = 'gist_timestamp_ops'
-      and proname = 'gts_picksplit';
-
-INSERT INTO pg_amproc (amopclaid, amproc, amprocnum)
-   SELECT opcl.oid, pro.oid, 7
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE  opcname = 'gist_timestamp_ops'
-      and proname = 'gts_same';
 
 end transaction;
-

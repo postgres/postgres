@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.34 2002/06/21 19:06:44 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.35 2002/07/30 17:34:37 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -382,13 +382,10 @@ ERROR: Cannot create index: 'index_name' already exists.
 
     <programlisting>
 SELECT am.amname AS acc_method,
-       opc.opcname AS ops_name,
-       opr.oprname AS ops_comp
-    FROM pg_am am, pg_opclass opc, pg_amop amop, pg_operator opr
-    WHERE opc.opcamid = am.oid AND
-          amop.amopclaid = opc.oid AND
-          amop.amopopr = opr.oid
-    ORDER BY acc_method, ops_name, ops_comp;
+       opc.opcname AS ops_name
+    FROM pg_am am, pg_opclass opc
+    WHERE opc.opcamid = am.oid
+    ORDER BY acc_method, ops_name;
     </programlisting>
    </para>
   </refsect2>
