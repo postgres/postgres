@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.24 1997/06/03 06:32:56 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.25 1997/06/20 17:12:54 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,23 @@ char *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
  * Macro to replace modf(), which is broken on some platforms.
  */
 #define TMODULO(t,q,u) {q = ((t < 0)? ceil(t / u): floor(t / u)); \
-                      if (q != 0) t -= rint(q * u);}
+			if (q != 0) t -= rint(q * u);}
+
+void GetEpochTime( struct tm *tm);
+
+#define UTIME_MINYEAR (1901)
+#define UTIME_MINMONTH (12)
+#define UTIME_MINDAY (14)
+#define UTIME_MAXYEAR (2038)
+#define UTIME_MAXMONTH (01)
+#define UTIME_MAXDAY (18)
+
+#define IS_VALID_UTIME(y,m,d) (((y > UTIME_MINYEAR) \
+ || ((y == UTIME_MINYEAR) && ((m > UTIME_MINMONTH) \
+  || ((m == UTIME_MINMONTH) && (d >= UTIME_MINDAY))))) \
+ && ((y < UTIME_MAXYEAR) \
+ || ((y == UTIME_MAXYEAR) && ((m < UTIME_MAXMONTH) \
+  || ((m == UTIME_MAXMONTH) && (d <= UTIME_MAXDAY))))))
 
 
 /***************************************************************************** 
@@ -79,8 +95,7 @@ datetime_in(char *str)
       || (DecodeDateTime( field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
 	elog(WARN,"Bad datetime external representation %s",str);
 
-    if (!PointerIsValid(result = PALLOCTYPE(DateTime)))
-	elog(WARN,"Memory allocation failed, can't input datetime '%s'",str);
+    result = PALLOCTYPE(DateTime);
 
     switch (dtype) {
     case DTK_DATE:
@@ -146,8 +161,7 @@ datetime_out(DateTime *dt)
 	EncodeSpecialDateTime(DT_INVALID, buf);
     };
 
-    if (!PointerIsValid(result = PALLOC(strlen(buf)+1)))
-	elog(WARN,"Memory allocation failed, can't output datetime",NULL);
+    result = PALLOC(strlen(buf)+1);
 
     strcpy( result, buf);
 
@@ -189,8 +203,7 @@ timespan_in(char *str)
       || (DecodeDateDelta( field, ftype, nf, &dtype, tm, &fsec) != 0))
 	elog(WARN,"Bad timespan external representation '%s'",str);
 
-    if (!PointerIsValid(span = PALLOCTYPE(TimeSpan)))
-	elog(WARN,"Memory allocation failed, can't input timespan '%s'",str);
+    span = PALLOCTYPE(TimeSpan);
 
     switch (dtype) {
     case DTK_DELTA:
@@ -230,8 +243,7 @@ timespan_out(TimeSpan *span)
     if (EncodeTimeSpan(tm, fsec, DateStyle, buf) != 0)
 	  elog(WARN,"Unable to format timespan",NULL);
 
-    if (!PointerIsValid(result = PALLOC(strlen(buf)+1)))
-	elog(WARN,"Memory allocation failed, can't output timespan",NULL);
+    result = PALLOC(strlen(buf)+1);
 
     strcpy( result, buf);
     return( result);
@@ -266,8 +278,6 @@ timespan_finite(TimeSpan *timespan)
 /*----------------------------------------------------------
  *  Relational operators for datetime.
  *---------------------------------------------------------*/
-
-void GetEpochTime( struct tm *tm);
 
 void
 GetEpochTime( struct tm *tm)
@@ -556,7 +566,8 @@ timespan_ge(TimeSpan *timespan1, TimeSpan *timespan2)
  *			actual value.
  *---------------------------------------------------------*/
 
-DateTime *datetime_smaller(DateTime *datetime1, DateTime *datetime2)
+DateTime *
+datetime_smaller(DateTime *datetime1, DateTime *datetime2)
 {
     DateTime *result;
 
@@ -568,8 +579,7 @@ DateTime *datetime_smaller(DateTime *datetime1, DateTime *datetime2)
     dt1 = *datetime1;
     dt2 = *datetime2;
 
-    if (!PointerIsValid(result = PALLOCTYPE(DateTime)))
-	elog(WARN,"Memory allocation failed, can't find smaller date",NULL);
+    result = PALLOCTYPE(DateTime);
 
     if (DATETIME_IS_RELATIVE(dt1)) dt1 = SetDateTime(dt1);
     if (DATETIME_IS_RELATIVE(dt2)) dt2 = SetDateTime(dt2);
@@ -585,7 +595,8 @@ DateTime *datetime_smaller(DateTime *datetime1, DateTime *datetime2)
     return(result);
 } /* datetime_smaller() */
 
-DateTime *datetime_larger(DateTime *datetime1, DateTime *datetime2)
+DateTime *
+datetime_larger(DateTime *datetime1, DateTime *datetime2)
 {
     DateTime *result;
 
@@ -597,8 +608,7 @@ DateTime *datetime_larger(DateTime *datetime1, DateTime *datetime2)
     dt1 = *datetime1;
     dt2 = *datetime2;
 
-    if (!PointerIsValid(result = PALLOCTYPE(DateTime)))
-	elog(WARN,"Memory allocation failed, can't find larger date",NULL);
+    result = PALLOCTYPE(DateTime);
 
     if (DATETIME_IS_RELATIVE(dt1)) dt1 = SetDateTime(dt1);
     if (DATETIME_IS_RELATIVE(dt2)) dt2 = SetDateTime(dt2);
@@ -615,7 +625,8 @@ DateTime *datetime_larger(DateTime *datetime1, DateTime *datetime2)
 } /* datetime_larger() */
 
 
-TimeSpan *datetime_sub(DateTime *datetime1, DateTime *datetime2)
+TimeSpan *
+datetime_sub(DateTime *datetime1, DateTime *datetime2)
 {
     TimeSpan *result;
 
@@ -627,8 +638,7 @@ TimeSpan *datetime_sub(DateTime *datetime1, DateTime *datetime2)
     dt1 = *datetime1;
     dt2 = *datetime2;
 
-    if (!PointerIsValid(result = PALLOCTYPE(TimeSpan)))
-	elog(WARN,"Memory allocation failed, can't subtract dates",NULL);
+    result = PALLOCTYPE(TimeSpan);
 
     if (DATETIME_IS_RELATIVE(dt1)) dt1 = SetDateTime(dt1);
     if (DATETIME_IS_RELATIVE(dt2)) dt2 = SetDateTime(dt2);
@@ -654,15 +664,18 @@ TimeSpan *datetime_sub(DateTime *datetime1, DateTime *datetime2)
  * Then, if the next month has fewer days, set the day of month
  *  to the last day of month.
  */
-DateTime *datetime_add_span(DateTime *datetime, TimeSpan *span)
+DateTime *
+datetime_add_span(DateTime *datetime, TimeSpan *span)
 {
     DateTime *result;
+    DateTime dt;
+    int tz;
+    char *tzn;
 
     if ((!PointerIsValid(datetime)) || (!PointerIsValid(span)))
 	return NULL;
 
-    if (!PointerIsValid(result = PALLOCTYPE(DateTime)))
-	elog(WARN,"Memory allocation failed, can't add dates",NULL);
+    result = PALLOCTYPE(DateTime);
 
 #ifdef DATEDEBUG
 printf( "datetime_add_span- add %f to %d %f\n", *datetime, span->month, span->time);
@@ -675,13 +688,19 @@ printf( "datetime_add_span- add %f to %d %f\n", *datetime, span->month, span->ti
 	DATETIME_INVALID(*result);
 
     } else {
-	*result = (DATETIME_IS_RELATIVE(*datetime)? SetDateTime(*datetime): *datetime);
+	dt = (DATETIME_IS_RELATIVE(*datetime)? SetDateTime(*datetime): *datetime);
+
+#ifdef ROUND_ALL
+	dt = JROUND(dt + span->time);
+#else
+	dt = span->time;
+#endif
 
 	if (span->month != 0) {
 	    struct tm tt, *tm = &tt;
 	    double fsec;
 
-	    if (datetime2tm( *result, NULL, tm, &fsec, NULL) == 0) {
+	    if (datetime2tm( dt, &tz, tm, &fsec, &tzn) == 0) {
 #ifdef DATEDEBUG
 printf( "datetime_add_span- date was %d.%02d.%02d\n", tm->tm_year, tm->tm_mon, tm->tm_mday);
 #endif
@@ -706,26 +725,22 @@ printf( "datetime_add_span- date was %d.%02d.%02d\n", tm->tm_year, tm->tm_mon, t
 #ifdef DATEDEBUG
 printf( "datetime_add_span- date becomes %d.%02d.%02d\n", tm->tm_year, tm->tm_mon, tm->tm_mday);
 #endif
-		if (tm2datetime( tm, fsec, NULL, result) != 0)
+		if (tm2datetime( tm, fsec, &tz, &dt) != 0)
 		    elog(WARN,"Unable to add datetime and timespan",NULL);
-
 
 	    } else {
 		DATETIME_INVALID(*result);
 	    };
 	};
 
-#ifdef ROUND_ALL
-	*result = JROUND(*result + span->time);
-#else
-	*result += span->time;
-#endif
+	*result = dt;
     };
 
     return(result);
 } /* datetime_add_span() */
 
-DateTime *datetime_sub_span(DateTime *datetime, TimeSpan *span)
+DateTime *
+datetime_sub_span(DateTime *datetime, TimeSpan *span)
 {
     DateTime *result;
     TimeSpan tspan;
@@ -742,15 +757,15 @@ DateTime *datetime_sub_span(DateTime *datetime, TimeSpan *span)
 } /* datetime_sub_span() */
 
 
-TimeSpan *timespan_um(TimeSpan *timespan)
+TimeSpan *
+timespan_um(TimeSpan *timespan)
 {
     TimeSpan *result;
 
     if (!PointerIsValid(timespan))
 	return NULL;
 
-    if (!PointerIsValid(result = PALLOCTYPE(TimeSpan)))
-	elog(WARN,"Memory allocation failed, can't subtract dates",NULL);
+    result = PALLOCTYPE(TimeSpan);
 
     result->time = -(timespan->time);
     result->month = -(timespan->month);
@@ -759,7 +774,8 @@ TimeSpan *timespan_um(TimeSpan *timespan)
 } /* timespan_um() */
 
 
-TimeSpan *timespan_smaller(TimeSpan *timespan1, TimeSpan *timespan2)
+TimeSpan *
+timespan_smaller(TimeSpan *timespan1, TimeSpan *timespan2)
 {
     TimeSpan *result;
 
@@ -768,8 +784,7 @@ TimeSpan *timespan_smaller(TimeSpan *timespan1, TimeSpan *timespan2)
     if (!PointerIsValid(timespan1) || !PointerIsValid(timespan2))
 	return NULL;
 
-    if (!PointerIsValid(result = PALLOCTYPE(TimeSpan)))
-	elog(WARN,"Memory allocation failed, can't find smaller timespan",NULL);
+    result = PALLOCTYPE(TimeSpan);
 
     if (TIMESPAN_IS_INVALID(*timespan1)) {
 	result->time = timespan2->time;
@@ -803,7 +818,8 @@ printf( "timespan_smaller- months %d %d times %f %f spans %f %f\n",
     return(result);
 } /* timespan_smaller() */
 
-TimeSpan *timespan_larger(TimeSpan *timespan1, TimeSpan *timespan2)
+TimeSpan *
+timespan_larger(TimeSpan *timespan1, TimeSpan *timespan2)
 {
     TimeSpan *result;
 
@@ -812,8 +828,7 @@ TimeSpan *timespan_larger(TimeSpan *timespan1, TimeSpan *timespan2)
     if (!PointerIsValid(timespan1) || !PointerIsValid(timespan2))
 	return NULL;
 
-    if (!PointerIsValid(result = PALLOCTYPE(TimeSpan)))
-	elog(WARN,"Memory allocation failed, can't find larger timespan",NULL);
+    result = PALLOCTYPE(TimeSpan);
 
     if (TIMESPAN_IS_INVALID(*timespan1)) {
 	result->time = timespan2->time;
@@ -848,15 +863,15 @@ printf( "timespan_larger- months %d %d times %f %f spans %f %f\n",
 } /* timespan_larger() */
 
 
-TimeSpan *timespan_add(TimeSpan *span1, TimeSpan *span2)
+TimeSpan *
+timespan_add(TimeSpan *span1, TimeSpan *span2)
 {
     TimeSpan *result;
 
     if ((!PointerIsValid(span1)) || (!PointerIsValid(span2)))
 	return NULL;
 
-    if (!PointerIsValid(result = PALLOCTYPE(TimeSpan)))
-	elog(WARN,"Memory allocation failed, can't add timespans",NULL);
+    result = PALLOCTYPE(TimeSpan);
 
     result->month = (span1->month + span2->month);
     result->time = JROUND(span1->time + span2->time);
@@ -864,15 +879,15 @@ TimeSpan *timespan_add(TimeSpan *span1, TimeSpan *span2)
     return(result);
 } /* timespan_add() */
 
-TimeSpan *timespan_sub(TimeSpan *span1, TimeSpan *span2)
+TimeSpan *
+timespan_sub(TimeSpan *span1, TimeSpan *span2)
 {
     TimeSpan *result;
 
     if ((!PointerIsValid(span1)) || (!PointerIsValid(span2)))
 	return NULL;
 
-    if (!PointerIsValid(result = PALLOCTYPE(TimeSpan)))
-	elog(WARN,"Memory allocation failed, can't subtract timespans",NULL);
+    result = PALLOCTYPE(TimeSpan);
 
     result->month = (span1->month - span2->month);
     result->time = JROUND(span1->time - span2->time);
@@ -906,8 +921,7 @@ datetime_text(DateTime *datetime)
 
     len = (strlen(str)+VARHDRSZ);
 
-    if (!PointerIsValid(result = PALLOC(len)))
-	elog(WARN,"Memory allocation failed, can't convert datetime to text",NULL);
+    result = PALLOC(len);
 
     VARSIZE(result) = len;
     memmove(VARDATA(result), str, (len-VARHDRSZ));
@@ -964,8 +978,7 @@ timespan_text(TimeSpan *timespan)
 
     len = (strlen(str)+VARHDRSZ);
 
-    if (!PointerIsValid(result = PALLOC(len)))
-	elog(WARN,"Memory allocation failed, can't convert timespan to text",NULL);
+    result = PALLOC(len);
 
     VARSIZE(result) = len;
     memmove(VARDATA(result), str, (len-VARHDRSZ));
@@ -1022,8 +1035,7 @@ datetime_part(text *units, DateTime *datetime)
     if ((!PointerIsValid(units)) || (!PointerIsValid(datetime)))
 	return NULL;
 
-    if (!PointerIsValid(result = PALLOCTYPE(float64data)))
-	elog(WARN,"Memory allocation failed, can't get date part",NULL);
+    result = PALLOCTYPE(float64data);
 
     up = VARDATA(units);
     lp = lowunits;
@@ -1031,6 +1043,9 @@ datetime_part(text *units, DateTime *datetime)
     *lp = '\0';
 
     type = DecodeUnits( 0, lowunits, &val);
+    if (type == IGNORE) {
+	type = DecodeSpecial( 0, lowunits, &val);
+    };
 
 #ifdef DATEDEBUG
 if (type == IGNORE) strcpy(lowunits, "(unknown)");
@@ -1039,15 +1054,15 @@ printf( "datetime_part- units %s type=%d value=%d\n", lowunits, type, val);
 
     if (DATETIME_NOT_FINITE(*datetime)) {
 #if FALSE
+/* should return null but Postgres doesn't like that currently. - tgl 97/06/12 */
 	elog(WARN,"Datetime is not finite",NULL);
 #endif
 	*result = 0;
 
-    } else if (type == UNITS) {
-
+    } else {
 	dt = (DATETIME_IS_RELATIVE(*datetime)? SetDateTime(*datetime): *datetime); 
 
-	if (datetime2tm( dt, &tz, tm, &fsec, &tzn) == 0) {
+	if ((type == UNITS) && (datetime2tm( dt, &tz, tm, &fsec, &tzn) == 0)) {
 	    switch (val) {
 	    case DTK_TZ:
 		*result = tz;
@@ -1102,19 +1117,18 @@ printf( "datetime_part- units %s type=%d value=%d\n", lowunits, type, val);
 		break;
 
 	    default:
-		elog(WARN,"Datetime units %s not supported",units);
+		elog(WARN,"Datetime units %s not supported",lowunits);
 		*result = 0;
 	    };
 
+	} else if ((type == RESERV) && (val == DTK_EPOCH)) {
+	    DATETIME_EPOCH(*result);
+	    *result = dt - SetDateTime(*result);
+
 	} else {
-	    elog(NOTICE,"Datetime out of range",NULL);
+	    elog(WARN,"Datetime units %s not recognized",lowunits);
 	    *result = 0;
 	};
-
-
-    } else {
-	elog(WARN,"Datetime units %s not recognized",units);
-	*result = 0;
     };
 
     return(result);
@@ -1138,8 +1152,7 @@ timespan_part(text *units, TimeSpan *timespan)
     if ((!PointerIsValid(units)) || (!PointerIsValid(timespan)))
 	return NULL;
 
-    if (!PointerIsValid(result = PALLOCTYPE(float64data)))
-	elog(WARN,"Memory allocation failed, can't get date part",NULL);
+    result = PALLOCTYPE(float64data);
 
     up = VARDATA(units);
     lp = lowunits;
@@ -1147,6 +1160,9 @@ timespan_part(text *units, TimeSpan *timespan)
     *lp = '\0';
 
     type = DecodeUnits( 0, lowunits, &val);
+    if (type == IGNORE) {
+	type = DecodeSpecial( 0, lowunits, &val);
+    };
 
 #ifdef DATEDEBUG
 if (type == IGNORE) strcpy(lowunits, "(unknown)");
@@ -1221,6 +1237,12 @@ printf( "timespan_part- units %s type=%d value=%d\n", lowunits, type, val);
 	    *result = 0;
 	};
 
+    } else if ((type == RESERV) && (val == DTK_EPOCH)) {
+	*result = timespan->time;
+	if (timespan->month != 0) {
+	    *result += ((365.25*86400)*(timespan->month / 12));
+	    *result += ((30*86400)*(timespan->month % 12));
+	};
 
     } else {
 	elog(WARN,"Timespan units %s not recognized",units);
@@ -1284,7 +1306,7 @@ static datetkn datetktbl[] = {
 {	"dec",		MONTH,	12},
 {	"december",	MONTH,	12},
 {	"dnt",		TZ,	6},		/* Dansk Normal Tid */
-{	"dst",		IGNORE,	0},
+{	"dst",		DTZMOD,	6},
 {	"east",		TZ,	NEG(60)},	/* East Australian Std Time */
 {	"edt",		DTZ,	NEG(24)},	/* Eastern Daylight Time */
 {	"eet",		TZ,	12},		/* East. Europe, USSR Zone 1 */
@@ -1491,20 +1513,6 @@ datetkn *deltacache[MAXDATEFIELDS] = {NULL};
  *  to avoid having to check year and day both. - tgl 97/05/08
  */
 
-#define UTIME_MINYEAR (1901)
-#define UTIME_MINMONTH (12)
-#define UTIME_MINDAY (14)
-#define UTIME_MAXYEAR (2038)
-#define UTIME_MAXMONTH (01)
-#define UTIME_MAXDAY (18)
-
-#define IS_VALID_UTIME(y,m,d) (((y > UTIME_MINYEAR) \
- || ((y == UTIME_MINYEAR) && ((m > UTIME_MINMONTH) \
-  || ((m == UTIME_MINMONTH) && (d >= UTIME_MINDAY))))) \
- && ((y < UTIME_MAXYEAR) \
- || ((y == UTIME_MAXYEAR) && ((m < UTIME_MAXMONTH) \
-  || ((m == UTIME_MAXMONTH) && (d <= UTIME_MAXDAY))))))
-
 #define JULIAN_MINYEAR (-4713)
 #define JULIAN_MINMONTH (11)
 #define JULIAN_MINDAY (23)
@@ -1522,7 +1530,8 @@ date2j(int y, int m, int d)
      - (3*((y+4900+m12)/100))/4 + d - 32075);
 } /* date2j() */
 
-void j2date( int jd, int *year, int *month, int *day)
+void
+j2date( int jd, int *year, int *month, int *day)
 {
     int j, y, m, d;
 
@@ -1545,7 +1554,8 @@ void j2date( int jd, int *year, int *month, int *day)
     return;
 } /* j2date() */
 
-int j2day( int date)
+int
+j2day( int date)
 {
     int day;
 
@@ -1766,19 +1776,22 @@ printf( "tm2timespan- %d %f = %04d-%02d-%02d %02d:%02d:%02d %.2f\n", span->month
 } /* tm2timespan() */
 
 
-DateTime dt2local(DateTime dt, int tz)
+DateTime
+dt2local(DateTime dt, int tz)
 {
     dt -= tz;
     dt = JROUND(dt);
     return(dt);
 } /* dt2local() */
 
-double time2t(const int hour, const int min, const double sec)
+double
+time2t(const int hour, const int min, const double sec)
 {
     return((((hour*60)+min)*60)+sec);
 } /* time2t() */
 
-void dt2time(DateTime jd, int *hour, int *min, double *sec)
+void
+dt2time(DateTime jd, int *hour, int *min, double *sec)
 {
     double time;
 
@@ -1940,7 +1953,7 @@ DecodeDateTime( char *field[], int ftype[], int nf,
     tm->tm_sec = 0;
     *fsec = 0;
     tm->tm_isdst = -1;	/* don't know daylight savings time status apriori */
-    if (tzp != NULL) *tzp = CTimeZone;
+    if (tzp != NULL) *tzp = 0;
 
     for (i = 0; i < nf; i++) {
 #ifdef DATEDEBUG
@@ -1995,6 +2008,7 @@ printf( "DecodeDateTime- RESERV field %s value is %d\n", field[i], val);
 		    tmask = (DTK_DATE_M | DTK_TIME_M | DTK_M(TZ));
 		    *dtype = DTK_DATE;
 		    GetCurrentTime(tm);
+		    if (tzp != NULL) *tzp = CTimeZone;
 		    break;
 
 		case DTK_YESTERDAY:
@@ -2050,7 +2064,17 @@ printf( "DecodeDateTime- month field %s value is %d\n", field[i], val);
 		tm->tm_mon = val;
 		break;
 
+	    /* daylight savings time modifier (solves "MET DST" syntax) */
+	    case DTZMOD:
+		tmask |= DTK_M(DTZ);
+		tm->tm_isdst = 1;
+		if (tzp == NULL) return -1;
+		*tzp += val * 60;
+		break;
+
 	    case DTZ:
+		/* set mask for TZ here _or_ check for DTZ later when getting default timezone */
+		tmask |= DTK_M(TZ);
 		tm->tm_isdst = 1;
 		if (tzp == NULL) return -1;
 		*tzp = val * 60;
@@ -2628,7 +2652,7 @@ DecodeSpecial(int field, char *lowtoken, int *val)
 	*val = 0;
     } else {
 	type = tp->type;
-	if ((type == TZ) || (type == DTZ)) {
+	if ((type == TZ) || (type == DTZ) || (type == DTZMOD)) {
 	    *val = FROMVAL(tp);
 	} else {
 	    *val = tp->value;
