@@ -1,6 +1,30 @@
  
                                Release Notes
 
+                               Release 7.3.4
+
+     Release date: 2003-07-24
+
+   This has a variety of fixes from 7.3.3.
+     _________________________________________________________________
+
+                         Migration to version 7.3.4
+
+   A dump/restore is *not* required for those running 7.3.*.
+     _________________________________________________________________
+
+                                  Changes
+
+   Fix rare possibility of recovery failure after a system crash (Tom)
+   Fix bugs in interval-to-time conversion (Tom)
+   Add constraint names in a few places in pg_dump (Rod)
+   Improve performance of functions with many parameters (Tom)
+   Fix to_ascii() buffer overruns (Tom)
+   Prevent restore of database comments from throwing an error (Tom)
+   Work around buggy strxfrm() present in some Solaris releases (Tom)
+   Properly escape jdbc setObject() strings to improve security (Barry)
+     _________________________________________________________________
+
                                Release 7.3.3
 
      Release date: 2003-05-22
