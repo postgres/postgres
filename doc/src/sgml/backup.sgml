@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.55 2005/01/22 22:56:35 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.56 2005/02/25 04:56:01 momjian Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -177,7 +177,7 @@ pg_dumpall &gt; <replaceable>outfile</>
 </synopsis>
     The resulting dump can be restored with <application>psql</>:
 <synopsis>
-psql template1 &lt; <replaceable class="parameter">infile</replaceable>
+psql -f <replaceable class="parameter">infile</replaceable> template1
 </synopsis>
     (Actually, you can specify any existing database name to start from,
     but if you are reloading in an empty cluster then <literal>template1</>
@@ -1210,7 +1210,7 @@ cd ~/postgresql-&version;
 gmake install
 initdb -D /usr/local/pgsql/data
 postmaster -D /usr/local/pgsql/data
-psql template1 &lt; backup
+psql -f backup template1
 </programlisting>
 
    See <xref linkend="runtime"> about ways to start and stop the
