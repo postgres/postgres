@@ -232,4 +232,10 @@ Tue May 19 11:49:34 CEST 1998
 
 	- Tested (and fixed) 'set connection'
 	- Fixed string notation in C
+
+Wed May 20 10:46:48 CEST 1998
+
+	- Fixed handling of preprocessor directives and variable
+	  initialization.
+	- Added enum datatype.
 	- Set version to 2.3.2

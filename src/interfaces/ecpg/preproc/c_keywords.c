@@ -27,6 +27,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"char", S_CHAR},
 	{"const", S_CONST},
 	{"double", S_DOUBLE},
+	{"enum", S_ENUM},
 	{"extern", S_EXTERN},
 	{"float", S_FLOAT},
 	{"int", S_INT},

@@ -25,7 +25,7 @@ struct ECPGtype
 };
 
 /* Everything is malloced. */
-struct ECPGstruct_member *ECPGmake_struct_member(char *, struct ECPGtype *, struct ECPGstruct_member **);
+void ECPGmake_struct_member(char *, struct ECPGtype *, struct ECPGstruct_member **);
 struct ECPGtype *ECPGmake_simple_type(enum ECPGttype, long);
 struct ECPGtype *ECPGmake_varchar_type(enum ECPGttype, long);
 struct ECPGtype *ECPGmake_array_type(struct ECPGtype *, long);
@@ -80,4 +80,10 @@ struct index
     int index1;
     int index2;
     char *str;
+};
+
+struct this_type
+{
+	enum ECPGttype	type_enum;
+	char 		*type_str;
 };

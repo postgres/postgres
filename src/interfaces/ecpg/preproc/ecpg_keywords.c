@@ -10,8 +10,8 @@
 
 #include "postgres.h"
 #include "type.h"
-#include "y.tab.h"
 #include "extern.h"
+#include "y.tab.h"
 
 /*
  * List of (keyword-name, keyword-token-value) pairs.

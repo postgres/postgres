@@ -500,6 +500,7 @@ output_statement(char * stmt, int mode)
 	whenever_action(mode);
 	free(stmt);
 }
+
 %}
 
 %union {
@@ -509,6 +510,7 @@ output_statement(char * stmt, int mode)
 	struct when             action;
 	struct index		index;
 	int			tagname;
+	struct this_type	type;
 	enum ECPGttype		type_enum;
 }
 
@@ -520,8 +522,8 @@ output_statement(char * stmt, int mode)
 %token		SQL_STOP SQL_WHENEVER
 
 /* C token */
-%token		S_ANYTHING S_AUTO S_BOOL S_CHAR S_CONST S_DOUBLE S_EXTERN
-%token		S_FLOAT S_INT
+%token		S_ANYTHING S_AUTO S_BOOL S_CHAR S_CONST S_DOUBLE S_ENUM S_EXTERN
+%token		S_FLOAT S_INT S
 %token		S_LONG S_REGISTER S_SHORT S_SIGNED S_STATIC S_STRUCT 
 %token		S_UNSIGNED S_VARCHAR
 
@@ -582,7 +584,7 @@ output_statement(char * stmt, int mode)
 %token  PASSWORD, CREATEDB, NOCREATEDB, CREATEUSER, NOCREATEUSER, VALID, UNTIL
 
 /* Special keywords, not in the query language - see the "lex" file */
-%token <str>    IDENT SCONST Op CSTRING CVARIABLE
+%token <str>    IDENT SCONST Op CSTRING CVARIABLE CPP_LINE
 %token <ival>   ICONST PARAM
 %token <dval>   FCONST
 
@@ -676,12 +678,15 @@ output_statement(char * stmt, int mode)
 %type  <str>    blockend variable_list variable var_anything do_anything
 %type  <str>	opt_pointer cvariable ECPGDisconnect dis_name
 %type  <str>	stmt symbol opt_symbol ECPGRelease execstring server_name
-%type  <str>	connection_object opt_server opt_port
+%type  <str>	connection_object opt_server opt_port c_thing
 %type  <str>    user_name opt_user char_variable ora_user ident
 %type  <str>    db_prefix server opt_options opt_connection_name
-%type  <str>	ECPGSetConnection
+%type  <str>	ECPGSetConnection c_line cpp_line s_enum
+%type  <str>	enum_type
 
-%type  <type_enum> simple_type type struct_type
+%type  <type_enum> simple_type
+
+%type  <type>	type
 
 %type  <action> action
 
@@ -694,7 +699,8 @@ statements: /* empty */
 
 statement: ecpgstart stmt SQL_SEMI
 	| ECPGDeclaration
-	| c_anything			{ fputs($1, yyout); free($1); }
+	| c_thing 			{ fprintf(yyout, "%s", $1); free($1); }
+	| cpp_line			{ fprintf(yyout, "%s", $1); free($1); }
 	| blockstart			{ fputs($1, yyout); free($1); }
 	| blockend			{ fputs($1, yyout); free($1); }
 
@@ -3795,29 +3801,49 @@ variable_declarations: /* empty */
 declaration: storage_clause type
 	{
 		actual_storage[struct_level] = $1;
-		actual_type[struct_level] = $2;
-		if ($2 != ECPGt_varchar && $2 != ECPGt_struct)
-			fprintf(yyout, "%s %s", $1, ECPGtype_name($2));
+		actual_type[struct_level] = $2.type_enum;
+		if ($2.type_enum != ECPGt_varchar && $2.type_enum != ECPGt_struct)
+			fprintf(yyout, "%s %s", $1, $2.type_str);
+		free($2.type_str);
 	}
 	variable_list ';' { fputc(';', yyout); }
 
-storage_clause : S_EXTERN	{ $$ = make1_str("extern"); }
-       | S_STATIC		{ $$ = make1_str("static"); }
-       | S_SIGNED		{ $$ = make1_str("signed"); }
-       | S_CONST		{ $$ = make1_str("const"); }
-       | S_REGISTER		{ $$ = make1_str("register"); }
-       | S_AUTO			{ $$ = make1_str("auto"); }
-       | /* empty */		{ $$ = make1_str("") ; }
+storage_clause : S_EXTERN	{ $$ = "extern"; }
+       | S_STATIC		{ $$ = "static"; }
+       | S_SIGNED		{ $$ = "signed"; }
+       | S_CONST		{ $$ = "const"; }
+       | S_REGISTER		{ $$ = "register"; }
+       | S_AUTO			{ $$ = "auto"; }
+       | /* empty */		{ $$ = ""; }
 
 type: simple_type
+		{
+			$$.type_enum = $1;
+			$$.type_str = strdup(ECPGtype_name($1));
+		}
 	| struct_type
+		{
+			$$.type_enum = ECPGt_struct;
+			$$.type_str = make1_str("");
+		}
+	| enum_type
+		{
+			$$.type_str = $1;
+			$$.type_enum = ECPGt_int;
+		}
+
+enum_type: s_enum '{' c_line '}'
+	{
+		$$ = cat4_str($1, make1_str("{"), $3, make1_str("}"));
+	}
+	
+s_enum: S_ENUM opt_symbol	{ $$ = cat2_str(make1_str("enum"), $2); }
 
 struct_type: s_struct '{' variable_declarations '}'
 	{
 	    ECPGfree_struct_member(struct_member_list[struct_level]);
 	    free(actual_storage[struct_level--]);
 	    fputs("} ", yyout);
-	    $$ = ECPGt_struct;
 	}
 
 s_struct : S_STRUCT opt_symbol
@@ -3957,7 +3983,7 @@ variable: opt_pointer symbol opt_array_bounds opt_initializer
 			if (struct_level == 0)
 				new_variable($2, type);
 			else
-				ECPGmake_struct_member($2, type, &(struct_member_list[struct_level - 1]))->typ;
+				ECPGmake_struct_member($2, type, &(struct_member_list[struct_level - 1]));
 
 			free($1);
 			free($2);
@@ -4562,27 +4588,36 @@ civariableonly : cvariable name {
 		add_variable(&argsinsert, find_variable($1), &no_indicator); 
 }
 
-cvariable: CVARIABLE			{ $$ = make1_str($1); }
+cvariable: CVARIABLE			{ $$ = $1; }
 
 indicator: /* empty */			{ $$ = NULL; }
 	| cvariable		 	{ check_indicator((find_variable($1))->type); $$ = $1; }
 	| SQL_INDICATOR cvariable 	{ check_indicator((find_variable($2))->type); $$ = $2; }
 	| SQL_INDICATOR name		{ check_indicator((find_variable($2))->type); $$ = $2; }
 
-ident: IDENT	{ $$ = make1_str($1); }
+ident: IDENT	{ $$ = $1; }
 	| CSTRING	{ $$ = $1; }
 /*
  * C stuff
  */
 
-symbol: IDENT	{ $$ = make1_str($1); }
+symbol: IDENT	{ $$ = $1; }
 
-c_anything:  IDENT 	{ $$ = make1_str($1); }
+cpp_line: CPP_LINE	{ $$ = $1; }
+
+c_line: c_anything { $$ = $1; }
+	| c_line c_anything
+		{
+			$$ = make2_str($1, $2);
+		}
+
+c_thing: c_anything | ';' { $$ = make1_str(";"); }
+
+c_anything:  IDENT 	{ $$ = $1; }
 	| CSTRING	{ $$ = make3_str(make1_str("\""), $1, make1_str("\"")); }
 	| Iconst	{ $$ = $1; }
 	| FCONST	{ $$ = make_name(); }
-	| '*'			{ $$ = make1_str("*"); }
-	| ';'			{ $$ = make1_str(";"); }
+	| '*'		{ $$ = make1_str("*"); }
 	| S_AUTO	{ $$ = make1_str("auto"); }
 	| S_BOOL	{ $$ = make1_str("bool"); }
 	| S_CHAR	{ $$ = make1_str("char"); }
@@ -4607,19 +4642,17 @@ c_anything:  IDENT 	{ $$ = make1_str($1); }
 	| '='		{ $$ = make1_str("="); }
 	| ','		{ $$ = make1_str(","); }
 
-do_anything: IDENT	{ $$ = make1_str($1); }
+do_anything: IDENT	{ $$ = $1; }
         | CSTRING       { $$ = make3_str(make1_str("\""), $1, make1_str("\""));}
         | Iconst        { $$ = $1; }
 	| FCONST	{ $$ = make_name(); }
 	| ','		{ $$ = make1_str(","); }
 
-var_anything: IDENT 	{ $$ = make1_str($1); }
-	| CSTRING       { $$ = make3_str(make1_str("\""), $1, make1_str("\"")); }
-	| Iconst	{ $$ = $1; }
-	| FCONST	{ $$ = make_name(); }
-/*FIXME:	| ','		{ $$ = make1_str(","); }*/
-	| '{'		{ $$ = make1_str("{"); }
-	| '}'		{ $$ = make1_str("}"); }
+var_anything: IDENT 		{ $$ = $1; }
+	| CSTRING       	{ $$ = make3_str(make1_str("\""), $1, make1_str("\"")); }
+	| Iconst		{ $$ = $1; }
+	| FCONST		{ $$ = make_name(); }
+	| '{' c_line '}'	{ $$ = make3_str(make1_str("{"), $2, make1_str("}")); }
 
 blockstart : '{' {
     braces_open++;
@@ -4635,6 +4668,6 @@ blockend : '}' {
 
 void yyerror(char * error)
 {
-    fprintf(stderr, "%s in line %d\n", error, yylineno);
+    fprintf(stderr, "%s in line %d of file %s\n", error, yylineno, input_filename);
     exit(PARSE_ERROR);
 }

@@ -25,10 +25,9 @@
 #include "parser/gramparse.h"
 #include "parser/scansup.h"
 #include "type.h"
+#include "extern.h"
 #include "y.tab.h"
 #include "utils/builtins.h"
-
-#include "extern.h"
 
 /* some versions of lex define this as a macro */
 #if defined(yywrap)
@@ -160,6 +159,8 @@ exec    [eE][xX][eE][cC]
 include [iI][nN][cC][lL][uU][dD][eE]
 sql     [sS][qQ][lL]
 
+cppline		{space}*#.*(\\{space}*\n)*\n*
+
 /* DO NOT PUT ANY COMMENTS IN THE FOLLOWING SECTION.
  * AT&T lex does not properly handle C-style comments in this second lex block.
  * So, put comments here. tgl - 1997-09-08
@@ -281,7 +282,7 @@ sql     [sS][qQ][lL]
 					memcpy(literal+llen, yytext, yyleng+1);
 					llen += yyleng;
 				}
-<C>{xdstart}		{
+{xdstart}		{
 					BEGIN(xdc);
 					llen = 0;
 					*literal = '\0';
@@ -442,6 +443,10 @@ sql     [sS][qQ][lL]
 
 <C>{exec}{space}{sql}		{ BEGIN SQL; return SQL_START; }
 <C>{ccomment}			{ /* ignore */ } 
+<C>{cppline}			{
+					yylval.str = strdup((char*)yytext);
+					return(CPP_LINE);
+				}
 <C>{identifier}	{
 					ScanKeyword		*keyword;
 

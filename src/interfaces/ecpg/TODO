@@ -1,5 +1,3 @@
-ecpg does not understand enum datatypes.
-
 The complete structure definition has to be listed inside the declare
 section of the structure variable for ecpg to be able to understand it.
 

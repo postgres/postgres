@@ -8,7 +8,8 @@ ECPGtype_name(enum ECPGttype typ)
 {
 	switch (typ)
 	{
-		case ECPGt_char:return "char";
+		case ECPGt_char:
+			return "char";
 		case ECPGt_unsigned_char:
 			return "unsigned char";
 		case ECPGt_short:
@@ -29,6 +30,8 @@ ECPGtype_name(enum ECPGttype typ)
 			return "double";
 		case ECPGt_bool:
 			return "bool";
+		case ECPGt_varchar:
+			return "varchar";
 		default:
 			abort();
 	}
