@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.14 2000/04/18 23:21:04 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.15 2000/04/18 23:43:24 momjian Exp $
 Postgres documentation
 -->
 
@@ -48,7 +48,7 @@ COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
       <listitem>
        <para>
 	Changes the behavior of field formatting, forcing all data to be
-	stored or read as binary objects rather than as text.
+	stored or read in binary format rather than as text.
        </para>
       </listitem>
      </varlistentry>
@@ -193,7 +193,7 @@ ERROR: <replaceable>reason</replaceable>
    </title>
    <para>
     The BINARY keyword will force all data to be
-    stored/read as binary objects rather than as text.  It is
+    stored/read as binary format rather than as text.  It is
     somewhat faster than the normal copy command, but is not
     generally portable, and the files generated are somewhat larger,
     although this factor is highly dependent on the data itself.  By
