@@ -1106,3 +1106,157 @@ extensions afterwards?
 
 			regards, tom lane
 
+From zakkr@zf.jcu.cz Wed May  9 05:12:41 2001
+Return-path: <zakkr@zf.jcu.cz>
+Received: from ara.zf.jcu.cz (zakkr@ara.zf.jcu.cz [160.217.161.4])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f499Cbu05406
+	for <pgman@candle.pha.pa.us>; Wed, 9 May 2001 05:12:37 -0400 (EDT)
+Received: (from zakkr@localhost)
+	by ara.zf.jcu.cz (8.9.3/8.9.3/Debian 8.9.3-21) id LAA20000;
+	Wed, 9 May 2001 11:12:35 +0200
+Date: Wed, 9 May 2001 11:12:35 +0200
+From: Karel Zak <zakkr@zf.jcu.cz>
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: pgsql-hackers <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] NOCREATETABLE patch (was: Re: Please, help!(about Postgres))
+Message-ID: <20010509111235.A18101@ara.zf.jcu.cz>
+References: <Pine.LNX.3.96.1010129230017.31607B-100000@ara.zf.jcu.cz> <200105071848.f47ImBh20345@candle.pha.pa.us>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+User-Agent: Mutt/1.0.1i
+In-Reply-To: <200105071848.f47ImBh20345@candle.pha.pa.us>; from pgman@candle.pha.pa.us on Mon, May 07, 2001 at 02:48:11PM -0400
+Status: ORr
+
+On Mon, May 07, 2001 at 02:48:11PM -0400, Bruce Momjian wrote:
+> 
+> Can someone remind me what we are going to do with this?
+> 
+> > This patch add to 7.0.2 code NOCREATETABLE and NOLOCKTABLE feature:
+
+
+ It's my old patch, it's usable and some people use it for 7.0.x. But 
+it's really temporary solution and it was 1 day in official CVS :-) 
+We remove it after discussion with Peter E. More correct will implement 
+better privilege system.
+
+ A privilege system is *very* important for real multiuser and 
+sophisticated systems. For example if you compare PostgreSQL with Oracle, 
+the PostgreSQL is really not winner in this part. Peter has some idea
+about it and Jan sent something about it too, but I not sure if somebody
+works on this and plannig it for some next release (or...? -- will good 
+if I not right:-) 
+
+			Karel 
+
+From pgsql-hackers-owner+M8485@postgresql.org Wed May  9 10:11:53 2001
+Return-path: <pgsql-hackers-owner+M8485@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f49EBqu24085
+	for <pgman@candle.pha.pa.us>; Wed, 9 May 2001 10:11:52 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f49EBiA44525;
+	Wed, 9 May 2001 10:11:44 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M8485@postgresql.org)
+Received: from corvette.mascari.com (dhcp065-024-161-045.columbus.rr.com [65.24.161.45])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f49DVoA25183
+	for <pgsql-hackers@postgresql.org>; Wed, 9 May 2001 09:31:51 -0400 (EDT)
+	(envelope-from mascarm@mascari.com)
+Received: from ferrari (ferrari.mascari.com [192.168.2.1])
+	by corvette.mascari.com (8.9.3/8.9.3) with SMTP id JAA11700;
+	Wed, 9 May 2001 09:20:46 -0400
+Received: by localhost with Microsoft MAPI; Wed, 9 May 2001 09:29:01 -0400
+Message-ID: <01C0D86A.7B6E19C0.mascarm@mascari.com>
+From: Mike Mascari <mascarm@mascari.com>
+Reply-To: "mascarm@mascari.com" <mascarm@mascari.com>
+To: "'Zeugswetter Andreas SB'" <ZeugswetterA@wien.spardat.at>,
+   "'Bruce Momjian'"
+  <pgman@candle.pha.pa.us>
+cc: Karel Zak <zakkr@zf.jcu.cz>,
+   pgsql-hackers
+  <pgsql-hackers@postgresql.org>
+Subject: RE: [HACKERS] NOCREATETABLE patch (was: Re: Please, help!(about P	ostgres))
+Date: Wed, 9 May 2001 09:29:01 -0400
+Organization: Mascari Development Inc.
+X-Mailer: Microsoft Internet E-mail/MAPI - 8.0.0.4211
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+That makes perfect sense to me. I was only going by what System 
+Privileges are granted to the Oracle roles of the same name. Oracle 
+has:
+
+CONNECT -
+ALTER SESSION	
+CREATE CLUSTER	
+CREATE DATABASE LINK	
+CREATE SEQUENCE	
+CREATE SESSION	
+CREATE SYNONYM	
+CREATE TABLE	
+CREATE VIEW	
+
+RESOURCE -
+CREATE CLUSTER	
+CREATE PROCEDURE	
+CREATE SEQUENCE	
+CREATE TABLE	
+CREATE TRIGGER	
+
+DBA -
+All systems privileges WITH ADMIN OPTION	
+
+But I agree with you. When I was first learning Oracle, I thought it 
+strange that the CONNECT role had anything more than CREATE/ALTER 
+SESSION privilege.
+
+Mike Mascari
+mascarm@mascari.com
+
+-----Original Message-----
+From:	Zeugswetter Andreas SB [SMTP:ZeugswetterA@wien.spardat.at]
+Sent:	Wednesday, May 09, 2001 3:20 AM
+To:	'Bruce Momjian'; mascarm@mascari.com
+Cc:	Karel Zak; pgsql-hackers
+Subject:	AW: [HACKERS] NOCREATETABLE patch (was: Re: Please, 
+help!(about P	ostgres))
+
+
+> > The connect group would be granted these System Privileges:
+
+If we keep it like others (e.g. Informix) this System Privilege would 
+be called
+"resource". I like this name better, because it more describes the 
+detailed
+priviledges.
+
+> >
+> > CREATE AGGREGATE privilege
+> > CREATE INDEX privilege
+> > CREATE FUNCTION privilege
+> > CREATE OPERATOR privilege
+> > CREATE RULE privilege
+> > CREATE SESSION privilege
+> > CREATE SYNONYM privilege
+> > CREATE TABLE privilege
+> > CREATE TRIGGER privilege
+> > CREATE TYPE privilege
+> > CREATE VIEW privilege
+
+The "connect" group would only have the priviledge to connect to the 
+db [and
+create temp tables ?] and rights they where granted, or that were 
+granted to public.
+They would not be allowed to create anything.
+
+Andreas
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://www.postgresql.org/search.mpl
+
