@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.40 1998/10/18 02:33:54 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.41 1998/10/18 04:16:07 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -80,8 +80,6 @@ distclean: clean
 		backend/port/tas.s \
 		backend/port/dynloader.c \
 		backend/utils/Gen_fmgrtab.sh \
-		bin/pgtclsh/Makefile.tcldefs \
-		bin/pgtclsh/Makefile.tkdefs \
 \
 \
 \

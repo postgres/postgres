@@ -134,7 +134,7 @@ if test "$INCLUDE_DIRS"; then
 fi
 
 AC_ARG_WITH(libs,
-    [  --with-libs=DIR         site library directories for tk/tcl, etc in DIR],
+    [  --with-libs=DIR         also search for libraries in DIR],
     [
 	case "$withval" in
 	"" | y | ye | yes | n | no)
@@ -145,7 +145,7 @@ AC_ARG_WITH(libs,
     ])
 
 AC_ARG_WITH(libraries,
-    [  --with-libraries=DIR    site library directories for tk/tcl, etc in DIR],
+    [  --with-libraries=DIR    also search for libraries in DIR],
     [
 	case "$withval" in
 	"" | y | ye | yes | n | no)
@@ -232,6 +232,21 @@ AC_ARG_WITH(
 export USE_TCL
 export USE_TK
 
+dnl We see if the path to the TCL/TK configuration scripts is specified.
+dnl This will overide the use of tclsh to find the paths to search.
+
+AC_ARG_WITH(tclconfig,
+    [  --with-tclconfig=DIR    tclConfig.sh and tkConfig.sh are in DIR],
+    [
+	case "$withval" in
+	"" | y | ye | yes | n | no)
+	    AC_MSG_ERROR([*** You must supply an argument to the --with-tclconfig option.])
+	  ;;
+	esac
+	TCL_DIRS="$withval"
+    ]
+)
+
 dnl We exclude perl support unless we override it with --with-perl
 AC_MSG_CHECKING(setting USE_PERL)
 AC_ARG_WITH(
@@ -250,7 +265,7 @@ dnl We include odbc support unless we disable it with --with-odbc=false
 AC_MSG_CHECKING(setting USE_ODBC)
 AC_ARG_WITH(
    odbc,
-   [  --with-odbc              build ODBC driver package ],
+   [  --with-odbc             build ODBC driver package ],
    [
 	case "$withval" in
 	y | ye | yes)		USE_ODBC=true; AC_MSG_RESULT(enabled) ;;
@@ -276,7 +291,7 @@ then
    AC_MSG_CHECKING(setting ODBCINST)
    AC_ARG_WITH(
       odbcinst,
-      [  --with-odbcinst=dir    change default directory for odbcinst.ini],
+      [  --with-odbcinst=dir     change default directory for odbcinst.ini],
       AC_DEFINE_UNQUOTED(ODBCINST, ${with_odbcinst}) AC_MSG_RESULT($with_odbcinst),
       AC_DEFINE_UNQUOTED(ODBCINST, ${ODBCINSTDIR}) AC_MSG_RESULT(${ODBCINSTDIR})
    )
@@ -754,20 +769,31 @@ fi
 
 dnl Check for Tcl configuration script tclConfig.sh
 
-AC_PATH_PROG(TCLSH, tclsh)
-
-if test -z "$TCLSH"
+dnl If --with-tclconfig was given, don't check for tclsh, tcl
+if test -z "$TCL_DIRS"
 then
-	AC_MSG_WARN(TCL/TK support disabled; tclsh is not in your path)
-	USE_TCL=
+	AC_PATH_PROG(TCLSH, tclsh)
+	if test -z "$TCLSH"
+	then
+		AC_PATH_PROG(TCLSH, tcl)
+		if test -z "$TCLSH"
+		then
+			AC_MSG_WARN(TCL/TK support disabled; tcl shell is not in your path)
+			USE_TCL=
+		fi
+	fi
 fi
 	
 if test "$USE_TCL" = true
 then
 	AC_MSG_CHECKING(for tclConfig.sh)
 	TCL_CONFIG_SH=
-	library_dirs=`echo 'puts $auto_path' | $TCLSH`
-	library_dirs="$LIBRARY_DIRS $library_dirs"
+	library_dirs=
+	if test -z "$TCL_DIRS"
+	then
+		library_dirs=`echo 'puts $auto_path' | $TCLSH`
+	fi
+	library_dirs="$TCL_DIRS $library_dirs"
 	for dir in $library_dirs; do
 		if test -d "$dir" -a -r "$dir/tclConfig.sh"; then
 			TCL_CONFIG_SH=$dir/tclConfig.sh
