@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.79 2001/01/24 19:42:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.80 2001/02/12 18:30:52 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1606,7 +1606,7 @@ simplify_op_or_func(Expr *expr, List *args)
  * {
  *		if (node == NULL)
  *			return false;
- *		// check for nodes that special work is required for, eg:
+ *		# check for nodes that special work is required for, eg:
  *		if (IsA(node, Var))
  *		{
  *			... do special actions for Var nodes
@@ -1615,7 +1615,7 @@ simplify_op_or_func(Expr *expr, List *args)
  *		{
  *			... do special actions for other node types
  *		}
- *		// for any node type not specially processed, do:
+ *		# for any node type not specially processed, do:
  *		return expression_tree_walker(node, my_walker, (void *) context);
  * }
  *
@@ -1659,7 +1659,7 @@ simplify_op_or_func(Expr *expr, List *args)
  *		{
  *			adjust context for subquery;
  *			result = query_tree_walker((Query *) node, my_walker, context,
- *									   true); // to visit subquery RTEs too
+ *									   true); # to visit subquery RTEs too
  *			restore context if needed;
  *			return result;
  *		}
@@ -1909,7 +1909,7 @@ query_tree_walker(Query *query,
  * {
  *		if (node == NULL)
  *			return NULL;
- *		// check for nodes that special work is required for, eg:
+ *		# check for nodes that special work is required for, eg:
  *		if (IsA(node, Var))
  *		{
  *			... create and return modified copy of Var node
@@ -1918,7 +1918,7 @@ query_tree_walker(Query *query,
  *		{
  *			... do special transformations of other node types
  *		}
- *		// for any node type not specially processed, do:
+ *		# for any node type not specially processed, do:
  *		return expression_tree_mutator(node, my_mutator, (void *) context);
  * }
  *

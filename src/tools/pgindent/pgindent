@@ -25,6 +25,9 @@ fi
 for FILE
 do
 	cat $FILE |
+# convert // comments to /* */
+	sed 's;^\([ 	]*\)//\(.*\)$;\1/* \2 */;g' |
+# mark some comments for special treatment later
 	sed 's;/\*  *---;/*---X_X;g' |
 # workaround for indent bug with 'else' handling
 	sed 's;\([} 	]\)else[ 	]*\(/\*.*\)$;\1else\

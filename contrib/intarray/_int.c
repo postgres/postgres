@@ -194,7 +194,7 @@ g_int_compress(GISTENTRY *entry)
 
 #ifdef GIST_DEBUG
     elog(NOTICE, "COMP IN: %d leaf; %d rel; %d page; %d offset; %d bytes; %d elems", entry->leafkey, (int)entry->rel, (int)entry->page, (int)entry->offset, (int)entry->bytes, len);
-    //printarr( r, len );
+    /* printarr( r, len ); */
 #endif
 
     if ( len >= 2*MAXNUMRANGE ) {  /*compress*/
@@ -260,7 +260,7 @@ g_int_decompress(GISTENTRY *entry)
 
 #ifdef GIST_DEBUG
     elog(NOTICE, "DECOMP IN: %d leaf; %d rel; %d page; %d offset; %d bytes; %d elems", entry->leafkey, (int)entry->rel, (int)entry->page, (int)entry->offset, (int)entry->bytes, lenin);
-    //printarr( in, lenin );
+    /* printarr( in, lenin ); */
 #endif
 
     lenr = internal_size(din, lenin);
@@ -653,7 +653,7 @@ inner_int_union ( ArrayType *a, ArrayType *b ) {
 	int i,j;
 
 #ifdef GIST_DEBUG
-    //elog(NOTICE, "inner_union %d %d", ARRISNULL( a ) , ARRISNULL( b ) );
+    /* elog(NOTICE, "inner_union %d %d", ARRISNULL( a ) , ARRISNULL( b ) ); */
 #endif
 
 	if ( ARRISNULL( a ) && ARRISNULL( b ) ) return new_intArrayType(0);
@@ -709,7 +709,7 @@ inner_int_inter ( ArrayType *a, ArrayType *b ) {
 	int i,j;
 
 #ifdef GIST_DEBUG
-    //elog(NOTICE, "inner_inter %d %d", ARRISNULL( a ), ARRISNULL( b ) );
+    /* elog(NOTICE, "inner_inter %d %d", ARRISNULL( a ), ARRISNULL( b ) ); */
 #endif
 
 	if ( ARRISNULL( a ) || ARRISNULL( b ) ) return NULL;
