@@ -19,8 +19,6 @@
 
 #define MAXINT8LEN		25
 
-#define USE_LOCAL_CODE	1
-
 #if defined(__alpha) || defined(__GNUC__)
 #define HAVE_64BIT_INTS 1
 #endif
@@ -79,18 +77,6 @@ int16		int82(int64 * val);
 float64		i8tod(int64 * val);
 int64	   *dtoi8(float64 val);
 
-#if USE_LOCAL_CODE
-
-#ifndef PALLOC
-#define PALLOC(p) palloc(p)
-#endif
-
-#ifndef PALLOCTYPE
-#define PALLOCTYPE(p) palloc(sizeof(p))
-#endif
-
-#endif
-
 /***********************************************************************
  **
  **		Routines for 64-bit integers.
@@ -106,7 +92,7 @@ int64	   *dtoi8(float64 val);
 int64	   *
 int8in(char *str)
 {
-	int64	   *result = PALLOCTYPE(int64);
+	int64	   *result = palloc(sizeof(int64));
 
 #if HAVE_64BIT_INTS
 	if (!PointerIsValid(str))
@@ -141,7 +127,7 @@ int8out(int64 * val)
 	if ((len = snprintf(buf, MAXINT8LEN, INT64_FORMAT, *val)) < 0)
 		elog(ERROR, "Unable to format int8", NULL);
 
-	result = PALLOC(len + 1);
+	result = palloc(len + 1);
 
 	strcpy(result, buf);
 
@@ -245,7 +231,7 @@ int84ge(int64 * val1, int32 val2)
 int64	   *
 int8um(int64 * val)
 {
-	int64	   *result = PALLOCTYPE(int64);
+	int64	   *result = palloc(sizeof(int64));
 
 	if (!PointerIsValid(val))
 		return NULL;
@@ -258,7 +244,7 @@ int8um(int64 * val)
 int64	   *
 int8pl(int64 * val1, int64 * val2)
 {
-	int64	   *result = PALLOCTYPE(int64);
+	int64	   *result = palloc(sizeof(int64));
 
 	if ((!PointerIsValid(val1)) || (!PointerIsValid(val2)))
 		return NULL;
@@ -271,7 +257,7 @@ int8pl(int64 * val1, int64 * val2)
 int64	   *
 int8mi(int64 * val1, int64 * val2)
 {
-	int64	   *result = PALLOCTYPE(int64);
+	int64	   *result = palloc(sizeof(int64));
 
 	if ((!PointerIsValid(val1)) || (!PointerIsValid(val2)))
 		return NULL;
@@ -284,7 +270,7 @@ int8mi(int64 * val1, int64 * val2)
 int64	   *
 int8mul(int64 * val1, int64 * val2)
 {
-	int64	   *result = PALLOCTYPE(int64);
+	int64	   *result = palloc(sizeof(int64));
 
 	if ((!PointerIsValid(val1)) || (!PointerIsValid(val2)))
 		return NULL;
@@ -297,7 +283,7 @@ int8mul(int64 * val1, int64 * val2)
 int64	   *
 int8div(int64 * val1, int64 * val2)
 {
-	int64	   *result = PALLOCTYPE(int64);
+	int64	   *result = palloc(sizeof(int64));
 
 	if ((!PointerIsValid(val1)) || (!PointerIsValid(val2)))
 		return NULL;
@@ -315,7 +301,7 @@ int8div(int64 * val1, int64 * val2)
 int64	   *
 int48(int32 val)
 {
-	int64	   *result = PALLOCTYPE(int64);
+	int64	   *result = palloc(sizeof(int64));
 
 	*result = val;
 
@@ -344,7 +330,7 @@ int28		(int16 val)
 {
 	int64	   *result;
 
-	if (!PointerIsValid(result = PALLOCTYPE(int64)))
+	if (!PointerIsValid(result = palloc(sizeof(int64))))
 		elog(ERROR, "Memory allocation failed, can't convert int8 to int2", NULL);
 
 	*result = val;
@@ -370,7 +356,7 @@ int82(int64 * val)
 float64
 i8tod(int64 * val)
 {
-	float64		result = PALLOCTYPE(float64data);
+	float64		result = palloc(sizeof(float64data));
 
 	*result = *val;
 
@@ -380,7 +366,7 @@ i8tod(int64 * val)
 int64	   *
 dtoi8(float64 val)
 {
-	int64	   *result = PALLOCTYPE(int64);
+	int64	   *result = palloc(sizeof(int64));
 
 	if ((*val < (-pow(2, 64) + 1)) || (*val > (pow(2, 64) - 1)))
 		elog(ERROR, "Floating point conversion to int64 is out of range", NULL);

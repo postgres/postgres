@@ -66,7 +66,7 @@ hhmm_in(char *str)
 	elog(ERROR,"Second must be limited to values 0 through < 60 in '%s'",
 	     str);
 
-    time = PALLOCTYPE(TimeADT);
+    time = palloc(sizeof(TimeADT));
 
     *time = ((((tm->tm_hour*60)+tm->tm_min)*60));
 
@@ -99,7 +99,7 @@ hhmm_out(TimeADT *time)
 	sprintf(buf, "%02d:%02d:%02d", tm->tm_hour, tm->tm_min, tm->tm_sec);
     }
 
-    result = PALLOC(strlen(buf)+1);
+    result = palloc(strlen(buf)+1);
 
     strcpy( result, buf);
 
@@ -109,7 +109,7 @@ hhmm_out(TimeADT *time)
 TimeADT *
 hhmm(TimeADT *time)
 {
-    TimeADT *result = PALLOCTYPE(TimeADT);
+    TimeADT *result = palloc(sizeof(TimeADT));
 
     *result = (((int) *time) / 60 * 60);
 
@@ -119,7 +119,7 @@ hhmm(TimeADT *time)
 TimeADT *
 time_difference(TimeADT *time1, TimeADT *time2)
 {
-    TimeADT *time = PALLOCTYPE(TimeADT);
+    TimeADT *time = palloc(sizeof(TimeADT));
 
     *time = (*time1 - *time2);
     return(time);
@@ -188,7 +188,7 @@ date_year(DateADT val)
 TimeADT *
 currenttime()
 {
-    TimeADT *result = PALLOCTYPE(TimeADT);
+    TimeADT *result = palloc(sizeof(TimeADT));
     struct tm *tm;
     time_t current_time;
 

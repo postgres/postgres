@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.21 1998/01/05 16:39:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.22 1998/01/07 18:46:37 momjian Exp $
  *
  * NOTES
  *	 This code is actually (almost) unused.
@@ -180,7 +180,7 @@ reltimeout(int32 time)
 		EncodeTimeSpan(tm, 0, DateStyle, buf);
 	}
 
-	result = PALLOC(strlen(buf) + 1);
+	result = palloc(strlen(buf) + 1);
 	strcpy(result, buf);
 
 	return (result);
@@ -360,7 +360,7 @@ reltime_timespan(RelativeTime reltime)
 	int			year,
 				month;
 
-	if (!PointerIsValid(result = PALLOCTYPE(TimeSpan)))
+	if (!PointerIsValid(result = palloc(sizeof(TimeSpan))))
 		elog(ERROR, "Memory allocation failed, can't convert reltime to timespan", NULL);
 
 	switch (reltime)

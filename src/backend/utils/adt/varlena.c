@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.28 1998/01/05 16:40:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.29 1998/01/07 18:46:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,7 +236,7 @@ textcat(text *t1, text *t2)
 	while (len2 > 0 && VARDATA(t2)[len2 - 1] == '\0')
 		len2--;
 
-	result = PALLOC(len = len1 + len2 + VARHDRSZ);
+	result = palloc(len = len1 + len2 + VARHDRSZ);
 
 	/* Fill data field of result string... */
 	ptr = VARDATA(result);
@@ -293,7 +293,7 @@ text_substr(text *string, int32 m, int32 n)
 			n = (len-m);
 	}
 
-	ret = (text *) PALLOC(VARHDRSZ + n);
+	ret = (text *) palloc(VARHDRSZ + n);
 	VARSIZE(ret) = VARHDRSZ + n;
 
 	memcpy(VARDATA(ret), VARDATA(string)+m, n);

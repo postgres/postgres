@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.20 1998/01/06 19:24:52 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.21 1998/01/07 18:47:07 momjian Exp $
  */
 
 #include <float.h>				/* faked on sunos */
@@ -43,7 +43,7 @@ PATH	   *path;
 	switch (path->npts)
 	{
 		case 0:
-			result = PALLOCTYPE(double);
+			result = palloc(sizeof(double));
 			*result = Abs((double) DBL_MAX);	/* +infinity */
 			break;
 		case 1:
@@ -56,14 +56,14 @@ PATH	   *path;
 			 * distance from the point to any of its constituent segments.
 			 */
 			Assert(path->npts > 1);
-			result = PALLOCTYPE(double);
+			result = palloc(sizeof(double));
 			for (i = 0; i < path->npts - 1; ++i)
 			{
 				regress_lseg_construct(&lseg, &path->p[i], &path->p[i + 1]);
 				tmp = dist_ps(pt, &lseg);
 				if (i == 0 || *tmp < *result)
 					*result = *tmp;
-				PFREE(tmp);
+				pfree(tmp);
 
 			}
 			break;
@@ -97,7 +97,7 @@ PATH	   *p2;
 
 			if (*min < *(tmp = lseg_distance(&seg1, &seg2)))
 				*min = *tmp;
-			PFREE(tmp);
+			pfree(tmp);
 		}
 
 	return (min);
@@ -108,7 +108,7 @@ poly2path(poly)
 POLYGON    *poly;
 {
 	int			i;
-	char	   *output = (char *) PALLOC(2 * (P_MAXDIG + 1) * poly->npts + 64);
+	char	   *output = (char *) palloc(2 * (P_MAXDIG + 1) * poly->npts + 64);
 	char		buf[2 * (P_MAXDIG) + 20];
 
 	sprintf(output, "(1, %*d", P_MAXDIG, poly->npts);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.13 1998/01/05 03:29:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.14 1998/01/07 18:46:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@ rt_poly_union(POLYGON *a, POLYGON *b)
 {
 	POLYGON    *p;
 
-	p = (POLYGON *) PALLOCTYPE(POLYGON);
+	p = (POLYGON *) palloc(sizeof(POLYGON));
 
 	if (!PointerIsValid(p))
 		elog(ABORT, "Cannot allocate polygon for union");
@@ -133,7 +133,7 @@ rt_poly_inter(POLYGON *a, POLYGON *b)
 {
 	POLYGON    *p;
 
-	p = (POLYGON *) PALLOCTYPE(POLYGON);
+	p = (POLYGON *) palloc(sizeof(POLYGON));
 
 	if (!PointerIsValid(p))
 		elog(ABORT, "Cannot allocate polygon for intersection");

@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO',
  *  'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.1 1998/01/05 18:42:50 momjian Exp $
+ * $Id: variable.c,v 1.2 1998/01/07 18:46:26 momjian Exp $
  *
  */
 
@@ -73,7 +73,7 @@ get_token(char **tok, char **val, const char *str)
 		len++;
 	}
 
-	*tok = (char *) PALLOC(len + 1);
+	*tok = (char *) palloc(len + 1);
 	StrNCpy(*tok, start, len+1);
 
 	/* skip white spaces */
@@ -119,7 +119,7 @@ get_token(char **tok, char **val, const char *str)
 		len++;
 	}
 
-	*val = (char *) PALLOC(len + 1);
+	*val = (char *) palloc(len + 1);
 	StrNCpy(*val, start, len+1);
 
 	/* skip white spaces */
@@ -186,7 +186,7 @@ parse_geqo(const char *value)
 			geqo_rels = pg_atoi(val, sizeof(int32), '\0');
 			if (geqo_rels <= 1)
 				elog(ERROR, "Bad value for # of relations (%s)", val);
-			PFREE(val);
+			pfree(val);
 		}
 		_use_geqo_ = true;
 		_use_geqo_rels_ = geqo_rels;
@@ -200,7 +200,7 @@ parse_geqo(const char *value)
 	else
 		elog(ERROR, "Bad value for GEQO (%s)", value);
 
-	PFREE(tok);
+	pfree(tok);
 	return TRUE;
 }
 
@@ -394,7 +394,7 @@ parse_date(const char *value)
 		{
 			elog(ERROR, "Bad value for date style (%s)", tok);
 		}
-		PFREE(tok);
+		pfree(tok);
 	}
 
 	if (dcnt > 1 || ecnt > 1)
@@ -493,7 +493,7 @@ parse_timezone(const char *value)
 			elog(ERROR, "Unable to set TZ environment variable to %s", tok);
 
 		tzset();
-		PFREE(tok);
+		pfree(tok);
 	}
 
 	return TRUE;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.28 1998/01/05 16:40:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.29 1998/01/07 18:46:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -272,7 +272,7 @@ path_decode(int opentype, int npts, char *str, int *isopen, char **ss, Point *p)
 static char *
 path_encode(bool closed, int npts, Point *pt)
 {
-	char	   *result = PALLOC(npts * (P_MAXLEN + 3) + 2);
+	char	   *result = palloc(npts * (P_MAXLEN + 3) + 2);
 
 	char	   *cp;
 	int			i;
@@ -356,7 +356,7 @@ pair_count(char *s, char delim)
 BOX *
 box_in(char *str)
 {
-	BOX		   *box = PALLOCTYPE(BOX);
+	BOX		   *box = palloc(sizeof(BOX));
 
 	int			isopen;
 	char	   *s;
@@ -404,7 +404,7 @@ box_out(BOX *box)
 static BOX *
 box_construct(double x1, double x2, double y1, double y2)
 {
-	BOX		   *result = PALLOCTYPE(BOX);
+	BOX		   *result = palloc(sizeof(BOX));
 
 	return (box_fill(result, x1, x2, y1, y2));
 }
@@ -445,7 +445,7 @@ box_fill(BOX *result, double x1, double x2, double y1, double y2)
 static BOX *
 box_copy(BOX *box)
 {
-	BOX		   *result = PALLOCTYPE(BOX);
+	BOX		   *result = palloc(sizeof(BOX));
 
 	memmove((char *) result, (char *) box, sizeof(BOX));
 
@@ -601,7 +601,7 @@ box_ge(BOX *box1, BOX *box2)
 double *
 box_area(BOX *box)
 {
-	double	   *result = PALLOCTYPE(double);
+	double	   *result = palloc(sizeof(double));
 
 	*result = box_wd(box) * box_ht(box);
 
@@ -615,7 +615,7 @@ box_area(BOX *box)
 double *
 box_width(BOX *box)
 {
-	double	   *result = PALLOCTYPE(double);
+	double	   *result = palloc(sizeof(double));
 
 	*result = box->high.x - box->low.x;
 
@@ -629,7 +629,7 @@ box_width(BOX *box)
 double *
 box_height(BOX *box)
 {
-	double	   *result = PALLOCTYPE(double);
+	double	   *result = palloc(sizeof(double));
 
 	*result = box->high.y - box->low.y;
 
@@ -643,7 +643,7 @@ box_height(BOX *box)
 double *
 box_distance(BOX *box1, BOX *box2)
 {
-	double	   *result = PALLOCTYPE(double);
+	double	   *result = palloc(sizeof(double));
 	Point	   *a,
 			   *b;
 
@@ -651,8 +651,8 @@ box_distance(BOX *box1, BOX *box2)
 	b = box_center(box2);
 	*result = HYPOT(a->x - b->x, a->y - b->y);
 
-	PFREE(a);
-	PFREE(b);
+	pfree(a);
+	pfree(b);
 	return (result);
 }
 
@@ -662,7 +662,7 @@ box_distance(BOX *box1, BOX *box2)
 Point *
 box_center(BOX *box)
 {
-	Point	   *result = PALLOCTYPE(Point);
+	Point	   *result = palloc(sizeof(Point));
 
 	result->x = (box->high.x + box->low.x) / 2.0;
 	result->y = (box->high.y + box->low.y) / 2.0;
@@ -715,8 +715,8 @@ box_dt(BOX *box1, BOX *box2)
 	b = box_center(box2);
 	result = HYPOT(a->x - b->x, a->y - b->y);
 
-	PFREE(a);
-	PFREE(b);
+	pfree(a);
+	pfree(b);
 	return (result);
 }
 
@@ -738,7 +738,7 @@ box_intersect(BOX *box1, BOX *box2)
 	if (!box_overlap(box1, box2))
 		return (NULL);
 
-	result = PALLOCTYPE(BOX);
+	result = palloc(sizeof(BOX));
 
 	result->high.x = Min(box1->high.x, box2->high.x);
 	result->low.x = Max(box1->low.x, box2->low.x);
@@ -785,7 +785,7 @@ box_diagonal(BOX *box)
 static LINE *					/* point-slope */
 line_construct_pm(Point *pt, double m)
 {
-	LINE	   *result = PALLOCTYPE(LINE);
+	LINE	   *result = palloc(sizeof(LINE));
 
 	/* use "mx - y + yinter = 0" */
 	result->A = m;
@@ -801,7 +801,7 @@ line_construct_pm(Point *pt, double m)
 static LINE *					/* two points */
 line_construct_pp(Point *pt1, Point *pt2)
 {
-	LINE	   *result = PALLOCTYPE(LINE);
+	LINE	   *result = palloc(sizeof(LINE));
 
 	if (FPeq(pt1->x, pt2->x))
 	{							/* vertical */
@@ -941,7 +941,7 @@ line_eq(LINE *l1, LINE *l2)
 double	   *					/* distance between l1, l2 */
 line_distance(LINE *l1, LINE *l2)
 {
-	double	   *result = PALLOCTYPE(double);
+	double	   *result = palloc(sizeof(double));
 	Point	   *tmp;
 
 	if (line_intersect(l1, l2))
@@ -955,7 +955,7 @@ line_distance(LINE *l1, LINE *l2)
 	{
 		tmp = point_construct(0.0, l1->C);
 		result = dist_pl(tmp, l2);
-		PFREE(tmp);
+		pfree(tmp);
 	}
 	return (result);
 }
@@ -1075,7 +1075,7 @@ path_in(char *str)
 	}
 
 	size = offsetof(PATH, p[0]) +(sizeof(path->p[0]) * npts);
-	path = PALLOC(size);
+	path = palloc(size);
 
 	path->size = size;
 	path->npts = npts;
@@ -1208,7 +1208,7 @@ path_copy(PATH *path)
 	int			size;
 
 	size = offsetof(PATH, p[0]) +(sizeof(path->p[0]) * path->npts);
-	result = PALLOC(size);
+	result = palloc(size);
 
 	memmove((char *) result, (char *) path, size);
 	return (result);
@@ -1295,12 +1295,12 @@ path_distance(PATH *p1, PATH *p2)
 			if ((min == NULL) || (*min < *tmp))
 			{
 				if (min != NULL)
-					PFREE(min);
+					pfree(min);
 				min = tmp;
 			}
 			else
 			{
-				PFREE(tmp);
+				pfree(tmp);
 			}
 		}
 
@@ -1318,7 +1318,7 @@ path_length(PATH *path)
 	double	   *result;
 	int			i;
 
-	result = PALLOCTYPE(double);
+	result = palloc(sizeof(double));
 
 	*result = 0;
 	for (i = 0; i < (path->npts - 1); i++)
@@ -1372,7 +1372,7 @@ point_in(char *str)
 	if (!pair_decode(str, &x, &y, &s) || (strlen(s) > 0))
 		elog(ERROR, "Bad point external representation '%s'", str);
 
-	point = PALLOCTYPE(Point);
+	point = palloc(sizeof(Point));
 
 	point->x = x;
 	point->y = y;
@@ -1393,7 +1393,7 @@ point_out(Point *pt)
 static Point *
 point_construct(double x, double y)
 {
-	Point	   *result = PALLOCTYPE(Point);
+	Point	   *result = palloc(sizeof(Point));
 
 	result->x = x;
 	result->y = y;
@@ -1409,7 +1409,7 @@ point_copy(Point *pt)
 	if (!PointerIsValid(pt))
 		return (NULL);
 
-	result = PALLOCTYPE(Point);
+	result = palloc(sizeof(Point));
 
 	result->x = pt->x;
 	result->y = pt->y;
@@ -1490,7 +1490,7 @@ pointdist(Point *p1, Point *p2)
 double *
 point_distance(Point *pt1, Point *pt2)
 {
-	double	   *result = PALLOCTYPE(double);
+	double	   *result = palloc(sizeof(double));
 
 	*result = HYPOT(pt1->x - pt2->x, pt1->y - pt2->y);
 	return (result);
@@ -1506,7 +1506,7 @@ point_dt(Point *pt1, Point *pt2)
 double *
 point_slope(Point *pt1, Point *pt2)
 {
-	double	   *result = PALLOCTYPE(double);
+	double	   *result = palloc(sizeof(double));
 
 	if (point_vert(pt1, pt2))
 		*result = (double) DBL_MAX;
@@ -1551,7 +1551,7 @@ lseg_in(char *str)
 	if (!PointerIsValid(str))
 		elog(ERROR, " Bad (null) lseg external representation", NULL);
 
-	lseg = PALLOCTYPE(LSEG);
+	lseg = palloc(sizeof(LSEG));
 
 	if ((!path_decode(TRUE, 2, str, &isopen, &s, &(lseg->p[0])))
 		|| (*s != '\0'))
@@ -1579,7 +1579,7 @@ lseg_out(LSEG *ls)
 LSEG *
 lseg_construct(Point *pt1, Point *pt2)
 {
-	LSEG	   *result = PALLOCTYPE(LSEG);
+	LSEG	   *result = palloc(sizeof(LSEG));
 
 	result->p[0].x = pt1->x;
 	result->p[0].y = pt1->y;
@@ -1626,8 +1626,8 @@ lseg_intersect(LSEG *l1, LSEG *l2)
 	else
 		retval = FALSE;
 	if (interpt != NULL)
-		PFREE(interpt);
-	PFREE(ln);
+		pfree(interpt);
+	pfree(ln);
 	return (retval);
 }
 
@@ -1692,7 +1692,7 @@ lseg_eq(LSEG *l1, LSEG *l2)
 double *
 lseg_distance(LSEG *l1, LSEG *l2)
 {
-	double	   *result = PALLOCTYPE(double);
+	double	   *result = palloc(sizeof(double));
 
 	*result = lseg_dt(l1, l2);
 
@@ -1711,20 +1711,20 @@ lseg_dt(LSEG *l1, LSEG *l2)
 
 	d = dist_ps(&l1->p[0], l2);
 	result = *d;
-	PFREE(d);
+	pfree(d);
 	d = dist_ps(&l1->p[1], l2);
 	result = Min(result, *d);
-	PFREE(d);
+	pfree(d);
 #if FALSE
 /* XXX Why are we checking distances from all endpoints to the other segment?
  * One set of endpoints should be sufficient - tgl 97/07/03
  */
 	d = dist_ps(&l2->p[0], l1);
 	result = Min(result, *d);
-	PFREE(d);
+	pfree(d);
 	d = dist_ps(&l2->p[1], l1);
 	result = Min(result, *d);
-	PFREE(d);
+	pfree(d);
 #endif
 
 	return (result);
@@ -1739,7 +1739,7 @@ lseg_center(LSEG *lseg)
 	if (!PointerIsValid(lseg))
 		return (NULL);
 
-	result = PALLOCTYPE(Point);
+	result = palloc(sizeof(Point));
 
 	result->x = (lseg->p[0].x - lseg->p[1].x) / 2;
 	result->y = (lseg->p[0].y - lseg->p[1].y) / 2;
@@ -1790,12 +1790,12 @@ lseg_interpt(LSEG *l1, LSEG *l2)
 		}
 		else
 		{
-			PFREE(result);
+			pfree(result);
 			result = NULL;
 		}
 	}
-	PFREE(tmp1);
-	PFREE(tmp2);
+	pfree(tmp1);
+	pfree(tmp2);
 
 	return (result);
 }								/* lseg_interpt() */
@@ -1820,7 +1820,7 @@ lseg_interpt(LSEG *l1, LSEG *l2)
 double *
 dist_pl(Point *pt, LINE *line)
 {
-	double	   *result = PALLOCTYPE(double);
+	double	   *result = palloc(sizeof(double));
 
 	*result = (line->A * pt->x + line->B * pt->y + line->C) /
 		HYPOT(line->A, line->B);
@@ -1886,12 +1886,12 @@ dist_ps(Point *pt, LSEG *lseg)
 		tmpdist = point_distance(pt, &lseg->p[1]);
 		if (*tmpdist < *result)
 			*result = *tmpdist;
-		PFREE(tmpdist);
+		pfree(tmpdist);
 	}
 
 	if (ip != NULL)
-		PFREE(ip);
-	PFREE(ln);
+		pfree(ip);
+	pfree(ln);
 	return (result);
 }
 
@@ -1925,14 +1925,14 @@ dist_ppath(Point *pt, PATH *path)
 			 * the distance from a point to a path is the smallest
 			 * distance from the point to any of its constituent segments.
 			 */
-			result = PALLOCTYPE(double);
+			result = palloc(sizeof(double));
 			for (i = 0; i < path->npts - 1; i++)
 			{
 				statlseg_construct(&lseg, &path->p[i], &path->p[i + 1]);
 				tmp = dist_ps(pt, &lseg);
 				if (i == 0 || *tmp < *result)
 					*result = *tmp;
-				PFREE(tmp);
+				pfree(tmp);
 			}
 			break;
 	}
@@ -1947,7 +1947,7 @@ dist_pb(Point *pt, BOX *box)
 
 	tmp = close_pb(pt, box);
 	result = point_distance(tmp, pt);
-	PFREE(tmp);
+	pfree(tmp);
 
 	return (result);
 }
@@ -1961,7 +1961,7 @@ dist_sl(LSEG *lseg, LINE *line)
 
 	if (inter_sl(lseg, line))
 	{
-		result = PALLOCTYPE(double);
+		result = palloc(sizeof(double));
 		*result = 0.0;
 
 	}
@@ -1971,12 +1971,12 @@ dist_sl(LSEG *lseg, LINE *line)
 		d2 = dist_pl(&lseg->p[1], line);
 		if (*d2 > *result)
 		{
-			PFREE(result);
+			pfree(result);
 			result = d2;
 		}
 		else
 		{
-			PFREE(d2);
+			pfree(d2);
 		}
 	}
 
@@ -1993,13 +1993,13 @@ dist_sb(LSEG *lseg, BOX *box)
 	tmp = close_sb(lseg, box);
 	if (tmp == NULL)
 	{
-		result = PALLOCTYPE(double);
+		result = palloc(sizeof(double));
 		*result = 0.0;
 	}
 	else
 	{
 		result = dist_pb(tmp, box);
-		PFREE(tmp);
+		pfree(tmp);
 	}
 
 	return (result);
@@ -2015,13 +2015,13 @@ dist_lb(LINE *line, BOX *box)
 	tmp = close_lb(line, box);
 	if (tmp == NULL)
 	{
-		result = PALLOCTYPE(double);
+		result = palloc(sizeof(double));
 		*result = 0.0;
 	}
 	else
 	{
 		result = dist_pb(tmp, box);
-		PFREE(tmp);
+		pfree(tmp);
 	}
 
 	return (result);
@@ -2044,7 +2044,7 @@ dist_cpoly(CIRCLE *circle, POLYGON *poly)
 #ifdef GEODEBUG
 		printf("dist_cpoly- center inside of polygon\n");
 #endif
-		result = PALLOCTYPE(double);
+		result = palloc(sizeof(double));
 
 		*result = 0;
 		return (result);
@@ -2073,7 +2073,7 @@ dist_cpoly(CIRCLE *circle, POLYGON *poly)
 #endif
 		if (*d < *result)
 			*result = *d;
-		PFREE(d);
+		pfree(d);
 	}
 
 	*result -= circle->radius;
@@ -2119,12 +2119,12 @@ interpt_sl(LSEG *lseg, LINE *line)
 		}
 		else
 		{
-			PFREE(p);
+			pfree(p);
 			p = NULL;
 		}
 	}
 
-	PFREE(tmp);
+	pfree(tmp);
 	return (p);
 }
 
@@ -2145,7 +2145,7 @@ close_pl(Point *pt, LINE *line)
 	LINE	   *tmp;
 	double		invm;
 
-	result = PALLOCTYPE(Point);
+	result = palloc(sizeof(Point));
 #if FALSE
 	if (FPeq(line->A, -1.0) && FPzero(line->B))
 	{							/* vertical */
@@ -2264,8 +2264,8 @@ close_sl(LSEG *lseg, LINE *line)
 	else
 		result = point_copy(&lseg->p[1]);
 
-	PFREE(d1);
-	PFREE(d2);
+	pfree(d1);
+	pfree(d2);
 	return (result);
 }
 
@@ -2469,7 +2469,7 @@ inter_sl(LSEG *lseg, LINE *line)
 	tmp = interpt_sl(lseg, line);
 	if (tmp)
 	{
-		PFREE(tmp);
+		pfree(tmp);
 		return (1);
 	}
 	return (0);
@@ -2559,7 +2559,7 @@ poly_in(char *str)
 		elog(ERROR, "Bad polygon external representation '%s'", str);
 
 	size = offsetof(POLYGON, p[0]) +(sizeof(poly->p[0]) * npts);
-	poly = PALLOC(size);
+	poly = palloc(size);
 
 	MemSet((char *) poly, 0, size);		/* zero any holes */
 	poly->size = size;
@@ -2784,7 +2784,7 @@ poly_distance(POLYGON *polya, POLYGON *polyb)
 	if (!PointerIsValid(polya) || !PointerIsValid(polyb))
 		return (NULL);
 
-	result = PALLOCTYPE(double);
+	result = palloc(sizeof(double));
 
 	*result = 0;
 
@@ -2816,7 +2816,7 @@ point_add(Point *p1, Point *p2)
 	if (!(PointerIsValid(p1) && PointerIsValid(p2)))
 		return (NULL);
 
-	result = PALLOCTYPE(Point);
+	result = palloc(sizeof(Point));
 
 	result->x = (p1->x + p2->x);
 	result->y = (p1->y + p2->y);
@@ -2832,7 +2832,7 @@ point_sub(Point *p1, Point *p2)
 	if (!(PointerIsValid(p1) && PointerIsValid(p2)))
 		return (NULL);
 
-	result = PALLOCTYPE(Point);
+	result = palloc(sizeof(Point));
 
 	result->x = (p1->x - p2->x);
 	result->y = (p1->y - p2->y);
@@ -2848,7 +2848,7 @@ point_mul(Point *p1, Point *p2)
 	if (!(PointerIsValid(p1) && PointerIsValid(p2)))
 		return (NULL);
 
-	result = PALLOCTYPE(Point);
+	result = palloc(sizeof(Point));
 
 	result->x = (p1->x * p2->x) - (p1->y * p2->y);
 	result->y = (p1->x * p2->y) + (p1->y * p2->x);
@@ -2865,7 +2865,7 @@ point_div(Point *p1, Point *p2)
 	if (!(PointerIsValid(p1) && PointerIsValid(p2)))
 		return (NULL);
 
-	result = PALLOCTYPE(Point);
+	result = palloc(sizeof(Point));
 
 	div = (p2->x * p2->x) + (p2->y * p2->y);
 
@@ -2940,8 +2940,8 @@ box_mul(BOX *box, Point *p)
 	low = point_mul(&box->low, p);
 
 	result = box_construct(high->x, low->x, high->y, low->y);
-	PFREE(high);
-	PFREE(low);
+	pfree(high);
+	pfree(low);
 
 	return (result);
 }								/* box_mul() */
@@ -2960,8 +2960,8 @@ box_div(BOX *box, Point *p)
 	low = point_div(&box->low, p);
 
 	result = box_construct(high->x, low->x, high->y, low->y);
-	PFREE(high);
-	PFREE(low);
+	pfree(high);
+	pfree(low);
 
 	return (result);
 }								/* box_div() */
@@ -2998,7 +2998,7 @@ path_add(PATH *p1, PATH *p2)
 		return (NULL);
 
 	size = offsetof(PATH, p[0]) +(sizeof(p1->p[0]) * (p1->npts + p2->npts));
-	result = PALLOC(size);
+	result = palloc(size);
 
 	result->size = size;
 	result->npts = (p1->npts + p2->npts);
@@ -3082,7 +3082,7 @@ path_mul_pt(PATH *path, Point *point)
 		p = point_mul(&path->p[i], point);
 		result->p[i].x = p->x;
 		result->p[i].y = p->y;
-		PFREE(p);
+		pfree(p);
 	}
 
 	return (result);
@@ -3105,7 +3105,7 @@ path_div_pt(PATH *path, Point *point)
 		p = point_div(&path->p[i], point);
 		result->p[i].x = p->x;
 		result->p[i].y = p->y;
-		PFREE(p);
+		pfree(p);
 	}
 
 	return (result);
@@ -3141,7 +3141,7 @@ path_center(PATH *path)
 
 	elog(ERROR, "path_center not implemented", NULL);
 
-	result = PALLOCTYPE(Point);
+	result = palloc(sizeof(Point));
 	result = NULL;
 
 	return (result);
@@ -3161,7 +3161,7 @@ path_poly(PATH *path)
 		elog(ERROR, "Open path cannot be converted to polygon", NULL);
 
 	size = offsetof(POLYGON, p[0]) +(sizeof(poly->p[0]) * path->npts);
-	poly = PALLOC(size);
+	poly = palloc(size);
 
 	poly->size = size;
 	poly->npts = path->npts;
@@ -3201,7 +3201,7 @@ upgradepath(PATH *path)
 
 	npts = (path->npts - 1);
 	size = offsetof(PATH, p[0]) +(sizeof(path->p[0]) * npts);
-	result = PALLOC(size);
+	result = palloc(size);
 	MemSet((char *) result, 0, size);
 
 	result->size = size;
@@ -3255,7 +3255,7 @@ poly_center(POLYGON *poly)
 	if (PointerIsValid(circle = poly_circle(poly)))
 	{
 		result = circle_center(circle);
-		PFREE(circle);
+		pfree(circle);
 
 	}
 	else
@@ -3295,7 +3295,7 @@ box_poly(BOX *box)
 
 	/* map four corners of the box to a polygon */
 	size = offsetof(POLYGON, p[0]) +(sizeof(poly->p[0]) * 4);
-	poly = PALLOC(size);
+	poly = palloc(size);
 
 	poly->size = size;
 	poly->npts = 4;
@@ -3326,7 +3326,7 @@ poly_path(POLYGON *poly)
 		return (NULL);
 
 	size = offsetof(PATH, p[0]) +(sizeof(path->p[0]) * poly->npts);
-	path = PALLOC(size);
+	path = palloc(size);
 
 	path->size = size;
 	path->npts = poly->npts;
@@ -3360,7 +3360,7 @@ upgradepoly(POLYGON *poly)
 		return (NULL);
 
 	size = offsetof(POLYGON, p[0]) +(sizeof(poly->p[0]) * poly->npts);
-	result = PALLOC(size);
+	result = palloc(size);
 	MemSet((char *) result, 0, size);
 
 	result->size = size;
@@ -3406,7 +3406,7 @@ revertpoly(POLYGON *poly)
 		return (NULL);
 
 	size = offsetof(POLYGON, p[0]) +(sizeof(poly->p[0]) * poly->npts);
-	result = PALLOC(size);
+	result = palloc(size);
 	MemSet((char *) result, 0, size);
 
 	result->size = size;
@@ -3465,7 +3465,7 @@ circle_in(char *str)
 	if (!PointerIsValid(str))
 		elog(ERROR, " Bad (null) circle external representation", NULL);
 
-	circle = PALLOCTYPE(CIRCLE);
+	circle = palloc(sizeof(CIRCLE));
 
 	s = str;
 	while (isspace(*s))
@@ -3526,7 +3526,7 @@ circle_out(CIRCLE *circle)
 	if (!PointerIsValid(circle))
 		return (NULL);
 
-	result = PALLOC(3 * (P_MAXLEN + 1) + 3);
+	result = palloc(3 * (P_MAXLEN + 1) + 3);
 
 	cp = result;
 	*cp++ = LDELIM_C;
@@ -3694,7 +3694,7 @@ circle_copy(CIRCLE *circle)
 	if (!PointerIsValid(circle))
 		return NULL;
 
-	result = PALLOCTYPE(CIRCLE);
+	result = palloc(sizeof(CIRCLE));
 
 	memmove((char *) result, (char *) circle, sizeof(CIRCLE));
 	return (result);
@@ -3754,7 +3754,7 @@ circle_mul_pt(CIRCLE *circle, Point *point)
 	p = point_mul(&circle->center, point);
 	result->center.x = p->x;
 	result->center.y = p->y;
-	PFREE(p);
+	pfree(p);
 	result->radius *= HYPOT(point->x, point->y);
 
 	return (result);
@@ -3774,7 +3774,7 @@ circle_div_pt(CIRCLE *circle, Point *point)
 	p = point_div(&circle->center, point);
 	result->center.x = p->x;
 	result->center.y = p->y;
-	PFREE(p);
+	pfree(p);
 	result->radius /= HYPOT(point->x, point->y);
 
 	return (result);
@@ -3788,7 +3788,7 @@ circle_area(CIRCLE *circle)
 {
 	double	   *result;
 
-	result = PALLOCTYPE(double);
+	result = palloc(sizeof(double));
 	*result = circle_ar(circle);
 
 	return (result);
@@ -3802,7 +3802,7 @@ circle_diameter(CIRCLE *circle)
 {
 	double	   *result;
 
-	result = PALLOCTYPE(double);
+	result = palloc(sizeof(double));
 	*result = (2 * circle->radius);
 
 	return (result);
@@ -3816,7 +3816,7 @@ circle_radius(CIRCLE *circle)
 {
 	double	   *result;
 
-	result = PALLOCTYPE(double);
+	result = palloc(sizeof(double));
 	*result = circle->radius;
 
 	return (result);
@@ -3831,7 +3831,7 @@ circle_distance(CIRCLE *circle1, CIRCLE *circle2)
 {
 	double	   *result;
 
-	result = PALLOCTYPE(double);
+	result = palloc(sizeof(double));
 	*result = (point_dt(&circle1->center, &circle2->center)
 			   - (circle1->radius + circle2->radius));
 	if (*result < 0)
@@ -3852,7 +3852,7 @@ circle_contain_pt(CIRCLE *circle, Point *point)
 
 	d = point_distance(&(circle->center), point);
 	within = (*d <= circle->radius);
-	PFREE(d);
+	pfree(d);
 
 	return (within);
 }								/* circle_contain_pt() */
@@ -3873,7 +3873,7 @@ dist_pc(Point *point, CIRCLE *circle)
 {
 	double	   *result;
 
-	result = PALLOCTYPE(double);
+	result = palloc(sizeof(double));
 
 	*result = (point_dt(point, &circle->center) - circle->radius);
 	if (*result < 0)
@@ -3890,7 +3890,7 @@ circle_center(CIRCLE *circle)
 {
 	Point	   *result;
 
-	result = PALLOCTYPE(Point);
+	result = palloc(sizeof(Point));
 	result->x = circle->center.x;
 	result->y = circle->center.y;
 
@@ -3935,7 +3935,7 @@ circle(Point *center, float8 *radius)
 	if (!(PointerIsValid(center) && PointerIsValid(radius)))
 		return (NULL);
 
-	result = PALLOCTYPE(CIRCLE);
+	result = palloc(sizeof(CIRCLE));
 
 	result->center.x = center->x;
 	result->center.y = center->y;
@@ -3954,7 +3954,7 @@ circle_box(CIRCLE *circle)
 	if (!PointerIsValid(circle))
 		return (NULL);
 
-	box = PALLOCTYPE(BOX);
+	box = palloc(sizeof(BOX));
 
 	delta = circle->radius / sqrt(2.0e0);
 
@@ -3977,7 +3977,7 @@ box_circle(BOX *box)
 	if (!PointerIsValid(box))
 		return (NULL);
 
-	circle = PALLOCTYPE(CIRCLE);
+	circle = palloc(sizeof(CIRCLE));
 
 	circle->center.x = (box->high.x + box->low.x) / 2;
 	circle->center.y = (box->high.y + box->low.y) / 2;
@@ -4003,7 +4003,7 @@ circle_poly(int npts, CIRCLE *circle)
 		elog(ERROR, "Unable to convert circle to polygon", NULL);
 
 	size = offsetof(POLYGON, p[0]) +(sizeof(poly->p[0]) * npts);
-	poly = PALLOC(size);
+	poly = palloc(size);
 
 	MemSet((char *) poly, 0, size);		/* zero any holes */
 	poly->size = size;
@@ -4038,7 +4038,7 @@ poly_circle(POLYGON *poly)
 	if (poly->npts < 2)
 		elog(ERROR, "Unable to convert polygon to circle", NULL);
 
-	circle = PALLOCTYPE(CIRCLE);
+	circle = palloc(sizeof(CIRCLE));
 
 	circle->center.x = 0;
 	circle->center.y = 0;

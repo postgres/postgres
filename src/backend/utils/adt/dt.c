@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.49 1998/01/05 16:39:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.50 1998/01/07 18:46:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,7 +115,7 @@ datetime_in(char *str)
 	  || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
 		elog(ERROR, "Bad datetime external representation '%s'", str);
 
-	result = PALLOCTYPE(DateTime);
+	result = palloc(sizeof(DateTime));
 
 	switch (dtype)
 	{
@@ -188,7 +188,7 @@ datetime_out(DateTime *dt)
 		EncodeSpecialDateTime(DT_INVALID, buf);
 	}
 
-	result = PALLOC(strlen(buf) + 1);
+	result = palloc(strlen(buf) + 1);
 
 	strcpy(result, buf);
 
@@ -231,7 +231,7 @@ timespan_in(char *str)
 		|| (DecodeDateDelta(field, ftype, nf, &dtype, tm, &fsec) != 0))
 		elog(ERROR, "Bad timespan external representation '%s'", str);
 
-	span = PALLOCTYPE(TimeSpan);
+	span = palloc(sizeof(TimeSpan));
 
 	switch (dtype)
 	{
@@ -274,7 +274,7 @@ timespan_out(TimeSpan *span)
 	if (EncodeTimeSpan(tm, fsec, DateStyle, buf) != 0)
 		elog(ERROR, "Unable to format timespan", NULL);
 
-	result = PALLOC(strlen(buf) + 1);
+	result = palloc(strlen(buf) + 1);
 
 	strcpy(result, buf);
 	return (result);
@@ -715,7 +715,7 @@ datetime_smaller(DateTime *datetime1, DateTime *datetime2)
 	dt1 = *datetime1;
 	dt2 = *datetime2;
 
-	result = PALLOCTYPE(DateTime);
+	result = palloc(sizeof(DateTime));
 
 	if (DATETIME_IS_RELATIVE(dt1))
 		dt1 = SetDateTime(dt1);
@@ -752,7 +752,7 @@ datetime_larger(DateTime *datetime1, DateTime *datetime2)
 	dt1 = *datetime1;
 	dt2 = *datetime2;
 
-	result = PALLOCTYPE(DateTime);
+	result = palloc(sizeof(DateTime));
 
 	if (DATETIME_IS_RELATIVE(dt1))
 		dt1 = SetDateTime(dt1);
@@ -790,7 +790,7 @@ datetime_mi(DateTime *datetime1, DateTime *datetime2)
 	dt1 = *datetime1;
 	dt2 = *datetime2;
 
-	result = PALLOCTYPE(TimeSpan);
+	result = palloc(sizeof(TimeSpan));
 
 	if (DATETIME_IS_RELATIVE(dt1))
 		dt1 = SetDateTime(dt1);
@@ -836,7 +836,7 @@ datetime_pl_span(DateTime *datetime, TimeSpan *span)
 	if ((!PointerIsValid(datetime)) || (!PointerIsValid(span)))
 		return NULL;
 
-	result = PALLOCTYPE(DateTime);
+	result = palloc(sizeof(DateTime));
 
 #ifdef DATEDEBUG
 	printf("datetime_pl_span- add %f to %d %f\n", *datetime, span->month, span->time);
@@ -945,7 +945,7 @@ timespan_um(TimeSpan *timespan)
 	if (!PointerIsValid(timespan))
 		return NULL;
 
-	result = PALLOCTYPE(TimeSpan);
+	result = palloc(sizeof(TimeSpan));
 
 	result->time = -(timespan->time);
 	result->month = -(timespan->month);
@@ -965,7 +965,7 @@ timespan_smaller(TimeSpan *timespan1, TimeSpan *timespan2)
 	if (!PointerIsValid(timespan1) || !PointerIsValid(timespan2))
 		return NULL;
 
-	result = PALLOCTYPE(TimeSpan);
+	result = palloc(sizeof(TimeSpan));
 
 	if (TIMESPAN_IS_INVALID(*timespan1))
 	{
@@ -1020,7 +1020,7 @@ timespan_larger(TimeSpan *timespan1, TimeSpan *timespan2)
 	if (!PointerIsValid(timespan1) || !PointerIsValid(timespan2))
 		return NULL;
 
-	result = PALLOCTYPE(TimeSpan);
+	result = palloc(sizeof(TimeSpan));
 
 	if (TIMESPAN_IS_INVALID(*timespan1))
 	{
@@ -1073,7 +1073,7 @@ timespan_pl(TimeSpan *span1, TimeSpan *span2)
 	if ((!PointerIsValid(span1)) || (!PointerIsValid(span2)))
 		return NULL;
 
-	result = PALLOCTYPE(TimeSpan);
+	result = palloc(sizeof(TimeSpan));
 
 	result->month = (span1->month + span2->month);
 	result->time = JROUND(span1->time + span2->time);
@@ -1089,7 +1089,7 @@ timespan_mi(TimeSpan *span1, TimeSpan *span2)
 	if ((!PointerIsValid(span1)) || (!PointerIsValid(span2)))
 		return NULL;
 
-	result = PALLOCTYPE(TimeSpan);
+	result = palloc(sizeof(TimeSpan));
 
 	result->month = (span1->month - span2->month);
 	result->time = JROUND(span1->time - span2->time);
@@ -1105,7 +1105,7 @@ timespan_div(TimeSpan *span1, float8 *arg2)
 	if ((!PointerIsValid(span1)) || (!PointerIsValid(arg2)))
 		return NULL;
 
-	if (!PointerIsValid(result = PALLOCTYPE(TimeSpan)))
+	if (!PointerIsValid(result = palloc(sizeof(TimeSpan))))
 		elog(ERROR, "Memory allocation failed, can't subtract timespans", NULL);
 
 	if (*arg2 == 0.0)
@@ -1143,7 +1143,7 @@ datetime_age(DateTime *datetime1, DateTime *datetime2)
 	if (!PointerIsValid(datetime1) || !PointerIsValid(datetime2))
 		return NULL;
 
-	result = PALLOCTYPE(TimeSpan);
+	result = palloc(sizeof(TimeSpan));
 
 	dt1 = *datetime1;
 	dt2 = *datetime2;
@@ -1287,12 +1287,12 @@ datetime_text(DateTime *datetime)
 
 	len = (strlen(str) + VARHDRSZ);
 
-	result = PALLOC(len);
+	result = palloc(len);
 
 	VARSIZE(result) = len;
 	memmove(VARDATA(result), str, (len - VARHDRSZ));
 
-	PFREE(str);
+	pfree(str);
 
 	return (result);
 } /* datetime_text() */
@@ -1347,12 +1347,12 @@ timespan_text(TimeSpan *timespan)
 
 	len = (strlen(str) + VARHDRSZ);
 
-	result = PALLOC(len);
+	result = palloc(len);
 
 	VARSIZE(result) = len;
 	memmove(VARDATA(result), str, (len - VARHDRSZ));
 
-	PFREE(str);
+	pfree(str);
 
 	return (result);
 } /* timespan_text() */
@@ -1410,7 +1410,7 @@ datetime_trunc(text *units, DateTime *datetime)
 	if ((!PointerIsValid(units)) || (!PointerIsValid(datetime)))
 		return NULL;
 
-	result = PALLOCTYPE(DateTime);
+	result = palloc(sizeof(DateTime));
 
 	up = VARDATA(units);
 	lp = lowunits;
@@ -1555,7 +1555,7 @@ timespan_trunc(text *units, TimeSpan *timespan)
 	if ((!PointerIsValid(units)) || (!PointerIsValid(timespan)))
 		return NULL;
 
-	result = PALLOCTYPE(TimeSpan);
+	result = palloc(sizeof(TimeSpan));
 
 	up = VARDATA(units);
 	lp = lowunits;
@@ -1684,7 +1684,7 @@ datetime_part(text *units, DateTime *datetime)
 	if ((!PointerIsValid(units)) || (!PointerIsValid(datetime)))
 		return NULL;
 
-	result = PALLOCTYPE(float64data);
+	result = palloc(sizeof(float64data));
 
 	up = VARDATA(units);
 	lp = lowunits;
@@ -1841,7 +1841,7 @@ timespan_part(text *units, TimeSpan *timespan)
 	if ((!PointerIsValid(units)) || (!PointerIsValid(timespan)))
 		return NULL;
 
-	result = PALLOCTYPE(float64data);
+	result = palloc(sizeof(float64data));
 
 	up = VARDATA(units);
 	lp = lowunits;
@@ -2031,7 +2031,7 @@ datetime_zone(text *zone, DateTime *datetime)
 
 		len = (strlen(buf) + VARHDRSZ);
 
-		result = PALLOC(len);
+		result = palloc(len);
 
 		VARSIZE(result) = len;
 		memmove(VARDATA(result), buf, (len - VARHDRSZ));

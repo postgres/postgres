@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.12 1998/01/05 16:40:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.13 1998/01/07 18:46:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -250,12 +250,12 @@ int2_text(int16 arg1)
 	str = int2out(arg1);
 	len = (strlen(str) + VARHDRSZ);
 
-	result = PALLOC(len);
+	result = palloc(len);
 
 	VARSIZE(result) = len;
 	memmove(VARDATA(result), str, (len - VARHDRSZ));
 
-	PFREE(str);
+	pfree(str);
 
 	return(result);
 } /* int2_text() */
@@ -270,12 +270,12 @@ text_int2(text *string)
 
 	len = (VARSIZE(string) - VARHDRSZ);
 
-	str = PALLOC(len+1);
+	str = palloc(len+1);
 	memmove(str, VARDATA(string), len);
 	*(str+len) = '\0';
 
 	result = int2in(str);
-	PFREE(str);
+	pfree(str);
  
 	return(result);
 } /* text_int2() */
@@ -291,12 +291,12 @@ int4_text(int32 arg1)
 	str = int4out(arg1);
 	len = (strlen(str) + VARHDRSZ);
 
-	result = PALLOC(len);
+	result = palloc(len);
 
 	VARSIZE(result) = len;
 	memmove(VARDATA(result), str, (len - VARHDRSZ));
 
-	PFREE(str);
+	pfree(str);
 
 	return(result);
 } /* int4_text() */
@@ -311,12 +311,12 @@ text_int4(text *string)
 
 	len = (VARSIZE(string) - VARHDRSZ);
 
-	str = PALLOC(len+1);
+	str = palloc(len+1);
 	memmove(str, VARDATA(string), len);
 	*(str+len) = '\0';
 
 	result = int4in(str);
-	PFREE(str);
+	pfree(str);
  
 	return(result);
 } /* text_int4() */

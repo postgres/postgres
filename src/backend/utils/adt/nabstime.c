@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.38 1998/01/05 16:40:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.39 1998/01/07 18:46:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -345,7 +345,7 @@ nabstimeout(AbsoluteTime time)
 			break;
 	}
 
-	result = PALLOC(strlen(buf) + 1);
+	result = palloc(strlen(buf) + 1);
 	strcpy(result, buf);
 
 	return (result);
@@ -546,7 +546,7 @@ abstime_datetime(AbsoluteTime abstime)
 {
 	DateTime   *result;
 
-	if (!PointerIsValid(result = PALLOCTYPE(DateTime)))
+	if (!PointerIsValid(result = palloc(sizeof(DateTime))))
 		elog(ERROR, "Unable to allocate space to convert abstime to datetime", NULL);
 
 	switch (abstime)

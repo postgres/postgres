@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.20 1998/01/05 16:39:45 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.21 1998/01/07 18:46:34 momjian Exp $
  */
 
 #include <stdio.h>
@@ -158,7 +158,7 @@ printf( "cashin- precision %d; decimal %c; thousands %c; currency %c; positive %
 	if (*s != '\0')
 		elog(ERROR, "Bad money external representation %s", str);
 
-	if (!PointerIsValid(result = PALLOCTYPE(Cash)))
+	if (!PointerIsValid(result = palloc(sizeof(Cash))))
 		elog(ERROR, "Memory allocation failed, can't input cash '%s'", str);
 
 	*result = (value * sgn);
@@ -256,7 +256,7 @@ cash_out(Cash *in_value)
 	/* see if we need to signify negative amount */
 	if (minus)
 	{
-		if (!PointerIsValid(result = PALLOC(CASH_BUFSZ + 2 - count + strlen(nsymbol))))
+		if (!PointerIsValid(result = palloc(CASH_BUFSZ + 2 - count + strlen(nsymbol))))
 			elog(ERROR, "Memory allocation failed, can't output cash", NULL);
 
 		/* Position code of 0 means use parens */
@@ -269,7 +269,7 @@ cash_out(Cash *in_value)
 	}
 	else
 	{
-		if (!PointerIsValid(result = PALLOC(CASH_BUFSZ + 2 - count)))
+		if (!PointerIsValid(result = palloc(CASH_BUFSZ + 2 - count)))
 			elog(ERROR, "Memory allocation failed, can't output cash", NULL);
 
 		strcpy(result, buf + count);
@@ -345,7 +345,7 @@ cash_pl(Cash *c1, Cash *c2)
 	if (!PointerIsValid(c1) || !PointerIsValid(c2))
 		return (NULL);
 
-	if (!PointerIsValid(result = PALLOCTYPE(Cash)))
+	if (!PointerIsValid(result = palloc(sizeof(Cash))))
 		elog(ERROR, "Memory allocation failed, can't add cash", NULL);
 
 	*result = (*c1 + *c2);
@@ -365,7 +365,7 @@ cash_mi(Cash *c1, Cash *c2)
 	if (!PointerIsValid(c1) || !PointerIsValid(c2))
 		return (NULL);
 
-	if (!PointerIsValid(result = PALLOCTYPE(Cash)))
+	if (!PointerIsValid(result = palloc(sizeof(Cash))))
 		elog(ERROR, "Memory allocation failed, can't subtract cash", NULL);
 
 	*result = (*c1 - *c2);
@@ -385,7 +385,7 @@ cash_mul_flt8(Cash *c, float8 *f)
 	if (!PointerIsValid(f) || !PointerIsValid(c))
 		return (NULL);
 
-	if (!PointerIsValid(result = PALLOCTYPE(Cash)))
+	if (!PointerIsValid(result = palloc(sizeof(Cash))))
 		elog(ERROR, "Memory allocation failed, can't multiply cash", NULL);
 
 	*result = ((*f) * (*c));
@@ -418,7 +418,7 @@ cash_div_flt8(Cash *c, float8 *f)
 	if (!PointerIsValid(f) || !PointerIsValid(c))
 		return (NULL);
 
-	if (!PointerIsValid(result = PALLOCTYPE(Cash)))
+	if (!PointerIsValid(result = palloc(sizeof(Cash))))
 		elog(ERROR, "Memory allocation failed, can't divide cash", NULL);
 
 	if (*f == 0.0)
@@ -440,7 +440,7 @@ cash_mul_flt4(Cash *c, float4 *f)
 	if (!PointerIsValid(f) || !PointerIsValid(c))
 		return (NULL);
 
-	if (!PointerIsValid(result = PALLOCTYPE(Cash)))
+	if (!PointerIsValid(result = palloc(sizeof(Cash))))
 		elog(ERROR, "Memory allocation failed, can't multiply cash", NULL);
 
 	*result = ((*f) * (*c));
@@ -473,7 +473,7 @@ cash_div_flt4(Cash *c, float4 *f)
 	if (!PointerIsValid(f) || !PointerIsValid(c))
 		return (NULL);
 
-	if (!PointerIsValid(result = PALLOCTYPE(Cash)))
+	if (!PointerIsValid(result = palloc(sizeof(Cash))))
 		elog(ERROR, "Memory allocation failed, can't divide cash", NULL);
 
 	if (*f == 0.0)
@@ -496,7 +496,7 @@ cash_mul_int4(Cash *c, int4 i)
 	if (!PointerIsValid(c))
 		return (NULL);
 
-	if (!PointerIsValid(result = PALLOCTYPE(Cash)))
+	if (!PointerIsValid(result = palloc(sizeof(Cash))))
 		elog(ERROR, "Memory allocation failed, can't multiply cash", NULL);
 
 	*result = ((i) * (*c));
@@ -529,7 +529,7 @@ cash_div_int4(Cash *c, int4 i)
 	if (!PointerIsValid(c))
 		return (NULL);
 
-	if (!PointerIsValid(result = PALLOCTYPE(Cash)))
+	if (!PointerIsValid(result = palloc(sizeof(Cash))))
 		elog(ERROR, "Memory allocation failed, can't divide cash", NULL);
 
 	if (i == 0)
@@ -552,7 +552,7 @@ cash_mul_int2(Cash *c, int2 s)
 	if (!PointerIsValid(c))
 		return (NULL);
 
-	if (!PointerIsValid(result = PALLOCTYPE(Cash)))
+	if (!PointerIsValid(result = palloc(sizeof(Cash))))
 		elog(ERROR, "Memory allocation failed, can't multiply cash", NULL);
 
 	*result = ((s) * (*c));
@@ -585,7 +585,7 @@ cash_div_int2(Cash *c, int2 s)
 	if (!PointerIsValid(c))
 		return (NULL);
 
-	if (!PointerIsValid(result = PALLOCTYPE(Cash)))
+	if (!PointerIsValid(result = palloc(sizeof(Cash))))
 		elog(ERROR, "Memory allocation failed, can't divide cash", NULL);
 
 	if (s == 0)
@@ -608,7 +608,7 @@ cashlarger(Cash *c1, Cash *c2)
 	if (!PointerIsValid(c1) || !PointerIsValid(c2))
 		return (NULL);
 
-	if (!PointerIsValid(result = PALLOCTYPE(Cash)))
+	if (!PointerIsValid(result = palloc(sizeof(Cash))))
 		elog(ERROR, "Memory allocation failed, can't return larger cash", NULL);
 
 	*result = ((*c1 > *c2) ? *c1 : *c2);
@@ -628,7 +628,7 @@ cashsmaller(Cash *c1, Cash *c2)
 	if (!PointerIsValid(c1) || !PointerIsValid(c2))
 		return (NULL);
 
-	if (!PointerIsValid(result = PALLOCTYPE(Cash)))
+	if (!PointerIsValid(result = palloc(sizeof(Cash))))
 		elog(ERROR, "Memory allocation failed, can't return smaller cash", NULL);
 
 	*result = ((*c1 < *c2) ? *c1 : *c2);

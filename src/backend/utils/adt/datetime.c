@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.20 1998/01/05 16:39:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.21 1998/01/07 18:46:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,7 +128,7 @@ date_out(DateADT date)
 
 	EncodeDateOnly(tm, DateStyle, buf);
 
-	result = PALLOC(strlen(buf) + 1);
+	result = palloc(strlen(buf) + 1);
 
 	strcpy(result, buf);
 
@@ -236,7 +236,7 @@ date_datetime(DateADT dateVal)
 	double		fsec = 0;
 	char	   *tzn;
 
-	result = PALLOCTYPE(DateTime);
+	result = palloc(sizeof(DateTime));
 
 	if (date2tm(dateVal, &tz, tm, &fsec, &tzn) != 0)
 		elog(ERROR, "Unable to convert date to datetime", NULL);
@@ -453,7 +453,7 @@ time_in(char *str)
 	if ((tm->tm_sec < 0) || ((tm->tm_sec + fsec) >= 60))
 		elog(ERROR, "Second must be limited to values 0 through < 60 in '%s'", str);
 
-	time = PALLOCTYPE(TimeADT);
+	time = palloc(sizeof(TimeADT));
 
 	*time = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
 
@@ -482,7 +482,7 @@ time_out(TimeADT *time)
 
 	EncodeTimeOnly(tm, fsec, DateStyle, buf);
 
-	result = PALLOC(strlen(buf) + 1);
+	result = palloc(strlen(buf) + 1);
 
 	strcpy(result, buf);
 
@@ -586,7 +586,7 @@ datetime_time(DateTime *datetime)
 			elog(ERROR, "Unable to convert datetime to date", NULL);
 	}
 
-	result = PALLOCTYPE(TimeADT);
+	result = palloc(sizeof(TimeADT));
 
 	*result = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
 
@@ -604,7 +604,7 @@ datetime_datetime(DateADT date, TimeADT *time)
 
 	if (!PointerIsValid(time))
 	{
-		result = PALLOCTYPE(DateTime);
+		result = palloc(sizeof(DateTime));
 		DATETIME_INVALID(*result);
 	} else {
 		result = date_datetime(date);

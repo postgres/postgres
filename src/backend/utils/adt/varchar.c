@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.16 1998/01/05 16:40:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.17 1998/01/07 18:46:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,16 +70,14 @@ bpcharin(char *s, int dummy, int typlen)
 		typlen = len + VARHDRSZ;
 	}
 	else
-	{
 		len = typlen - VARHDRSZ;
-	}
 
 	if (len > 4096)
 		elog(ERROR, "bpcharin: length of char() must be less than 4096");
 
 	result = (char *) palloc(typlen);
-	*(int32 *) result = typlen;
-	r = result + VARHDRSZ;
+	VARSIZE(result) = typlen;
+	r = VARDATA(result);
 	for (i = 0; i < len; i++, r++, s++)
 	{
 		*r = *s;
@@ -108,9 +106,9 @@ bpcharout(char *s)
 	}
 	else
 	{
-		len = *(int32 *) s - VARHDRSZ;
+		len = VARSIZE(s) - VARHDRSZ;
 		result = (char *) palloc(len + 1);
-		StrNCpy(result, s + VARHDRSZ, len+1);	/* these are blank-padded */
+		StrNCpy(result, VARDATA(s), len+1);	/* these are blank-padded */
 	}
 	return (result);
 }
@@ -129,27 +127,21 @@ char *
 varcharin(char *s, int dummy, int typlen)
 {
 	char	   *result;
-	int			len = typlen - VARHDRSZ;
+	int			len;
 
 	if (s == NULL)
 		return ((char *) NULL);
 
-	if (typlen == -1)
-	{
-
-		/*
-		 * this is here because some functions can't supply the typlen
-		 */
-		len = strlen(s);
-		typlen = len + VARHDRSZ;
-	}
+	len = strlen(s) + VARHDRSZ;
+	if (typlen != -1 && len > typlen)
+		len = typlen;	/* clip the string at max length */
 
 	if (len > 4096)
 		elog(ERROR, "varcharin: length of char() must be less than 4096");
 
-	result = (char *) palloc(typlen);
-	*(int32 *) result = typlen;
-	strncpy(result + VARHDRSZ, s, len+1);
+	result = (char *) palloc(len);
+	VARSIZE(result) = len;
+	memmove(VARDATA(result), s, len - VARHDRSZ);
 
 	return (result);
 }
@@ -168,9 +160,9 @@ varcharout(char *s)
 	}
 	else
 	{
-		len = *(int32 *) s - VARHDRSZ;
+		len = VARSIZE(s) - VARHDRSZ;
 		result = (char *) palloc(len + 1);
-		StrNCpy(result, s + VARHDRSZ, len+1);
+		StrNCpy(result, VARDATA(s), len+1);
 	}
 	return (result);
 }
@@ -182,11 +174,11 @@ varcharout(char *s)
 static int
 bcTruelen(char *arg)
 {
-	char	   *s = arg + VARHDRSZ;
+	char	   *s = VARDATA(arg);
 	int			i;
 	int			len;
 
-	len = *(int32 *) arg - VARHDRSZ;
+	len = VARSIZE(arg) - VARHDRSZ;
 	for (i = len - 1; i >= 0; i--)
 	{
 		if (s[i] != ' ')
@@ -218,7 +210,7 @@ bpchareq(char *arg1, char *arg2)
 	if (len1 != len2)
 		return 0;
 
-	return (strncmp(arg1 + VARHDRSZ, arg2 + VARHDRSZ, len1) == 0);
+	return (strncmp(VARDATA(arg1), VARDATA(arg2), len1) == 0);
 }
 
 bool
@@ -235,7 +227,7 @@ bpcharne(char *arg1, char *arg2)
 	if (len1 != len2)
 		return 1;
 
-	return (strncmp(arg1 + VARHDRSZ, arg2 + VARHDRSZ, len1) != 0);
+	return (strncmp(VARDATA(arg1), VARDATA(arg2), len1) != 0);
 }
 
 bool
@@ -250,7 +242,7 @@ bpcharlt(char *arg1, char *arg2)
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = strncmp(arg1 + VARHDRSZ, arg2 + VARHDRSZ, Min(len1, len2));
+	cmp = strncmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2));
 	if (cmp == 0)
 		return (len1 < len2);
 	else
@@ -269,7 +261,7 @@ bpcharle(char *arg1, char *arg2)
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = strncmp(arg1 + VARHDRSZ, arg2 + VARHDRSZ, Min(len1, len2));
+	cmp = strncmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2));
 	if (0 == cmp)
 		return (bool) (len1 <= len2 ? 1 : 0);
 	else
@@ -288,7 +280,7 @@ bpchargt(char *arg1, char *arg2)
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = strncmp(arg1 + VARHDRSZ, arg2 + VARHDRSZ, Min(len1, len2));
+	cmp = strncmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2));
 	if (cmp == 0)
 		return (len1 > len2);
 	else
@@ -307,7 +299,7 @@ bpcharge(char *arg1, char *arg2)
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = strncmp(arg1 + VARHDRSZ, arg2 + VARHDRSZ, Min(len1, len2));
+	cmp = strncmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2));
 	if (0 == cmp)
 		return (bool) (len1 >= len2 ? 1 : 0);
 	else
@@ -324,7 +316,7 @@ bpcharcmp(char *arg1, char *arg2)
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = strncmp(arg1 + VARHDRSZ, arg2 + VARHDRSZ, Min(len1, len2));
+	cmp = strncmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2));
 	if ((0 == cmp) && (len1 != len2))
 		return (int32) (len1 < len2 ? -1 : 1);
 	else
@@ -335,30 +327,14 @@ bpcharcmp(char *arg1, char *arg2)
  *	Comparison Functions used for varchar
  *****************************************************************************/
 
-static int
-vcTruelen(char *arg)
-{
-	char	   *s = arg + VARHDRSZ;
-	int			i;
-	int			len;
-
-	len = *(int32 *) arg - VARHDRSZ;
-	for (i = 0; i < len; i++)
-	{
-		if (*s++ == '\0')
-			break;
-	}
-	return i;
-}
-
 int32
 varcharlen(char *arg)
 {
 	if (!PointerIsValid(arg))
 		elog(ERROR, "Bad (null) varchar() external representation", NULL);
 
-	return(vcTruelen(arg));
-} /* vclen() */
+	return VARSIZE(arg);
+}
 
 bool
 varchareq(char *arg1, char *arg2)
@@ -368,13 +344,13 @@ varchareq(char *arg1, char *arg2)
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) 0);
-	len1 = vcTruelen(arg1);
-	len2 = vcTruelen(arg2);
+	len1 = VARSIZE(arg1);
+	len2 = VARSIZE(arg2);
 
 	if (len1 != len2)
 		return 0;
 
-	return (strncmp(arg1 + VARHDRSZ, arg2 + VARHDRSZ, len1) == 0);
+	return (strncmp(VARDATA(arg1), VARDATA(arg2), len1) == 0);
 }
 
 bool
@@ -385,13 +361,13 @@ varcharne(char *arg1, char *arg2)
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) 0);
-	len1 = vcTruelen(arg1);
-	len2 = vcTruelen(arg2);
+	len1 = VARSIZE(arg1);
+	len2 = VARSIZE(arg2);
 
 	if (len1 != len2)
 		return 1;
 
-	return (strncmp(arg1 + VARHDRSZ, arg2 + VARHDRSZ, len1) != 0);
+	return (strncmp(VARDATA(arg1), VARDATA(arg2), len1) != 0);
 }
 
 bool
@@ -403,10 +379,10 @@ varcharlt(char *arg1, char *arg2)
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) 0);
-	len1 = vcTruelen(arg1);
-	len2 = vcTruelen(arg2);
+	len1 = VARSIZE(arg1);
+	len2 = VARSIZE(arg2);
 
-	cmp = strncmp(arg1 + VARHDRSZ, arg2 + VARHDRSZ, Min(len1, len2));
+	cmp = strncmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2));
 	if (cmp == 0)
 		return (len1 < len2);
 	else
@@ -422,10 +398,10 @@ varcharle(char *arg1, char *arg2)
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) 0);
-	len1 = vcTruelen(arg1);
-	len2 = vcTruelen(arg2);
+	len1 = VARSIZE(arg1);
+	len2 = VARSIZE(arg2);
 
-	cmp = strncmp(arg1 + VARHDRSZ, arg2 + VARHDRSZ, Min(len1, len2));
+	cmp = strncmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2));
 	if (0 == cmp)
 		return (bool) (len1 <= len2 ? 1 : 0);
 	else
@@ -441,10 +417,10 @@ varchargt(char *arg1, char *arg2)
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) 0);
-	len1 = vcTruelen(arg1);
-	len2 = vcTruelen(arg2);
+	len1 = VARSIZE(arg1);
+	len2 = VARSIZE(arg2);
 
-	cmp = strncmp(arg1 + VARHDRSZ, arg2 + VARHDRSZ, Min(len1, len2));
+	cmp = strncmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2));
 	if (cmp == 0)
 		return (len1 > len2);
 	else
@@ -460,10 +436,10 @@ varcharge(char *arg1, char *arg2)
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) 0);
-	len1 = vcTruelen(arg1);
-	len2 = vcTruelen(arg2);
+	len1 = VARSIZE(arg1);
+	len2 = VARSIZE(arg2);
 
-	cmp = strncmp(arg1 + VARHDRSZ, arg2 + VARHDRSZ, Min(len1, len2));
+	cmp = strncmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2));
 	if (0 == cmp)
 		return (bool) (len1 >= len2 ? 1 : 0);
 	else
@@ -478,9 +454,9 @@ varcharcmp(char *arg1, char *arg2)
 				len2;
 	int			cmp;
 
-	len1 = vcTruelen(arg1);
-	len2 = vcTruelen(arg2);
-	cmp = (strncmp(arg1 + VARHDRSZ, arg2 + VARHDRSZ, Min(len1, len2)));
+	len1 = VARSIZE(arg1);
+	len2 = VARSIZE(arg2);
+	cmp = (strncmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2)));
 	if ((0 == cmp) && (len1 != len2))
 		return (int32) (len1 < len2 ? -1 : 1);
 	else
@@ -544,7 +520,7 @@ hashvarchar(struct varlena * key)
 	int			loop;
 
 	keydata = VARDATA(key);
-	keylen = vcTruelen((char *) key);
+	keylen = VARSIZE((char *) key);
 
 #define HASHC	n = *keydata++ + 65599 * n
 

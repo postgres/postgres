@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geo_decls.h,v 1.15 1997/09/25 16:52:23 momjian Exp $
+ * $Id: geo_decls.h,v 1.16 1998/01/07 18:46:59 momjian Exp $
  *
  * NOTE
  *	  These routines do *not* use the float types from adt/.
@@ -20,8 +20,6 @@
 #define GEO_DECLS_H
 
 #include "access/attnum.h"
-
-/*#ifndef FmgrIncluded -- seems like always included. (it's FMgrIncluded) AY */
 
 /*--------------------------------------------------------------------
  * Useful floating point utilities and constants.
@@ -49,16 +47,6 @@
 #endif
 
 #define HYPOT(A, B)				sqrt((A) * (A) + (B) * (B))
-
-/*--------------------------------------------------------------------
- * Memory management.
- *-------------------------------------------------------------------*/
-
-#define PALLOC(SIZE)			palloc(SIZE)
-#define PFREE(P)				pfree(P)
-#define PALLOCTYPE(TYPE)		(TYPE *) PALLOC(sizeof(TYPE))
-
-/*#endif !FmgrIncluded */
 
 /*---------------------------------------------------------------------
  * Point - (x,y)
