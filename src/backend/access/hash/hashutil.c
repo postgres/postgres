@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.7 1996/11/05 09:40:25 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.8 1997/08/12 23:03:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,17 +126,16 @@ _hash_log2(uint32 num)
 void
 _hash_checkpage(Page page, int flags)
 {
-    PageHeader ph = (PageHeader) page;
     HashPageOpaque opaque;
 
     Assert(page);
-    Assert(ph->pd_lower >= (sizeof(PageHeaderData) - sizeof(ItemIdData)));
+    Assert(((PageHeader)(ph))->pd_lower >= (sizeof(PageHeaderData) - sizeof(ItemIdData)));
 #if 1
-    Assert(ph->pd_upper <=
+    Assert(((PageHeader)(ph))->pd_upper <=
 	   (BLCKSZ - DOUBLEALIGN(sizeof(HashPageOpaqueData))));
-    Assert(ph->pd_special ==
+    Assert(((PageHeader)(ph))->pd_special ==
 	   (BLCKSZ - DOUBLEALIGN(sizeof(HashPageOpaqueData))));
-    Assert(ph->pd_opaque.od_pagesize == BLCKSZ);
+    Assert(((PageHeader)(ph))->pd_opaque.od_pagesize == BLCKSZ);
 #endif
     if (flags) {
 	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
