@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.7 1996/11/05 09:40:23 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.8 1996/11/21 06:06:52 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,6 @@ _hash_next(IndexScanDesc scan, ScanDirection dir)
     OffsetNumber offnum;
     RetrieveIndexResult res;
     ItemPointer current;
-    ItemPointer iptr;
     HashItem hitem;
     IndexTuple itup;
     HashScanOpaque so;
@@ -116,9 +115,7 @@ _hash_next(IndexScanDesc scan, ScanDirection dir)
     _hash_checkpage(page, LH_BUCKET_PAGE|LH_OVERFLOW_PAGE);
     hitem = (HashItem) PageGetItem(page, PageGetItemId(page, offnum));
     itup = &hitem->hash_itup;
-    iptr = (ItemPointer) palloc(sizeof(ItemPointerData));
-    memmove((char *) iptr, (char *) &(itup->t_tid),  sizeof(ItemPointerData));
-    res = FormRetrieveIndexResult(current, iptr);
+    res = FormRetrieveIndexResult(current, &(itup->t_tid));
 
     return (res);
 }
@@ -184,7 +181,6 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
     HashItem hitem;
     IndexTuple itup;
     ItemPointer current;
-    ItemPointer iptr;
     OffsetNumber offnum;
     RetrieveIndexResult res;
     HashScanOpaque so;
@@ -245,9 +241,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
     _hash_checkpage(page, LH_BUCKET_PAGE|LH_OVERFLOW_PAGE);
     hitem = (HashItem) PageGetItem(page, PageGetItemId(page, offnum));
     itup = &hitem->hash_itup;
-    iptr = (ItemPointer) palloc(sizeof(ItemPointerData));
-    memmove((char *) iptr, (char *) &(itup->t_tid), sizeof(ItemPointerData));
-    res = FormRetrieveIndexResult(current, iptr);
+    res = FormRetrieveIndexResult(current, &(itup->t_tid));
 
     return (res);
 }
