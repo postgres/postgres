@@ -163,3 +163,33 @@ ALTER TABLE ten_k RENAME TO tenk1;
 -- 5 values, sorted 
 SELECT unique1 FROM tenk1 WHERE unique1 < 5;
 
+-- FOREIGN KEY CONSTRAINT adding TEST
+
+CREATE TABLE tmp2 (a int primary key);
+
+CREATE TABLE tmp3 (a int, b int);
+
+-- Insert rows into tmp2 (pktable)
+INSERT INTO tmp2 values (1);
+INSERT INTO tmp2 values (2);
+INSERT INTO tmp2 values (3);
+INSERT INTO tmp2 values (4);
+
+-- Insert rows into tmp3
+INSERT INTO tmp3 values (1,10);
+INSERT INTO tmp3 values (1,20);
+INSERT INTO tmp3 values (5,50);
+
+-- Try (and fail) to add constraint due to invalid data
+ALTER TABLE tmp3 add constraint tmpconstr foreign key (a) references tmp2 match full;
+
+-- Delete failing row
+DELETE FROM tmp3 where a=5;
+
+-- Try (and succeed)
+ALTER TABLE tmp3 add constraint tmpconstr foreign key (a) references tmp2 match full;
+
+DROP TABLE tmp3
+
+DROP TABLE tmp2
+

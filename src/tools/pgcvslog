@@ -1,0 +1,96 @@
+:
+# This utility is used to generate a compact list of changes for each
+# release, bjm 2000-02-22
+
+# Usage $0 [-r 'revision pattern'] file
+
+# cvs log -d '>1999-06-14 00:00:00 GMT' > log
+# pgcvslog -r '\.2\.[0-9]*$' log
+
+if [ "X$1" = "X-r" ]
+then	REV="$2"
+	shift 2
+else	REV=".*"
+fi
+
+cat "$@" |
+
+# mark each line with a datetime and line number, for sorting and merging
+# we don't print anything from the -- or == line and the date:
+
+awk '
+	$0 ~ /^Working file:/	{workingfile = $0}
+
+	$1 == "revision" && $2 !~ /'"$REV"'/ {skip = "Y"}
+
+	($0 ~ /^====*$/ || $0 ~ /^----*$/) && skip == "N" \
+	{
+		/* print blank line separating entries */
+		if (datetime != "")
+		{
+			printf ("%s| %10d|%s\n", datetime, NR, "");
+			printf ("%s| %10d|%s\n", datetime, NR, "---");
+			printf ("%s| %10d|%s\n", datetime, NR+1, "");
+		}
+	}
+
+	$0 ~ /^====*$/ || $0 ~ /^----*$/ \
+	{
+		datetime="";
+		skip="N";
+	}
+
+	datetime != "" && skip == "N" \
+		{printf ("%s| %10d| %s\n", datetime, NR, $0);}
+
+	$1 == "date:"	\
+	{
+		/* get entry date */
+		datetime=$2"-"$3
+		if (workingfile != "" && skip == "N")
+		{
+			printf ("%s| %10d|%s\n", datetime, NR-1, workingfile);
+			printf ("%s| %10d|%s\n", datetime, NR, $0);
+			printf ("%s| %10d|%s\n", datetime, NR+1, "");
+		}
+	}
+
+	$0 ~ /^====*$/ 			{workingfile=""}' |
+
+sort | cut -d'|' -f3 | cat |
+
+# collect duplicate narratives
+awk '	BEGIN	{ slot = 0;}
+	{
+		if ($0 ~ /^Working file:/)
+		{
+			if (slot != oldslot)
+				same = 0;
+			else
+			{
+				same = 1;
+				for (i=1; i <= slot; i++)
+				{
+					if (oldnarr[i] != narr[i])
+						same = 0;
+				}
+			}
+
+			if (oldslot && !same)
+				for (i=1; i <= oldslot; i++)
+					print oldnarr[i];
+			for (i=1; i <= slot; i++)
+				oldnarr[i] = narr[i];
+			oldslot = slot;
+			slot = 0;
+			print save_working;
+			save_working = $0;
+ 		}
+		else if ($1 != "date:")
+			narr[++slot] = $0;
+	}
+	END	{
+			print save_working;
+			for (i=1; i <= slot; i++)
+				print narr[i];
+		}'

@@ -119,6 +119,7 @@ parallel	group5
 	test	alter_table
 	test	portals_p2
 	test	rules
+	test	foreign_key
 endparallel
 
 # ----------
