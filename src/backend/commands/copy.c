@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.209 2003/08/13 18:56:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.210 2003/08/28 13:52:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -432,7 +432,7 @@ CopyGetData(void *databuf, int datasize)
 					avail = datasize;
 				pq_copymsgbytes(copy_msgbuf, databuf, avail);
 				databuf = (void *) ((char *) databuf + avail);
-				datasize = -avail;
+				datasize -= avail;
 			}
 			break;
 	}
