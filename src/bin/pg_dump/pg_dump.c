@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.327 2003/04/25 02:28:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.328 2003/05/03 22:18:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3591,7 +3591,7 @@ dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs)
 		resetPQExpBuffer(delqry);
 
 		/* Make a dependency to ensure function is dumped first */
-		deps = malloc(sizeof(char *) * (2 + (strcmp(lanvalidator, "0") != 0) ? 1 : 0));
+		deps = malloc(sizeof(char *) * 10);
 		depIdx = 0;
 
 		(*deps)[depIdx++] = strdup(lanplcallfoid);
