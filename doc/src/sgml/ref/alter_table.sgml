@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.8 1999/07/22 15:09:06 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.9 2000/01/09 17:35:27 momjian Exp $
 Postgres documentation
 -->
 
@@ -24,10 +24,10 @@ Postgres documentation
   </refsynopsisdivinfo>
   <synopsis>
 ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
-    [ * ] ADD [ COLUMN ] <replaceable class="PARAMETER">ER">co</replaceable>BLE> <replaceable
+    [ * ] ADD [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> <replaceable
     class="PARAMETER">type</replaceable>
 ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
-    [ * ] RENAME [ COLUMN ] <replaceable class="PARAMETER">ER">co</replaceable>BLE> TO <replaceable
+    [ * ] RENAME [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> TO <replaceable
     class="PARAMETER">newcolumn</replaceable>
 ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
     RENAME TO <replaceable class="PARAMETER">newtable</replaceable>
