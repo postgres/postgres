@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.75 2003/04/14 21:15:13 tgl Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.76 2003/04/22 02:21:34 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ override CPPFLAGS := -I$(srcdir) $(CPPFLAGS) -DFRONTEND -DSYSCONFDIR='"$(sysconf
 OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
       pqexpbuffer.o pqsignal.o fe-secure.o \
       dllist.o md5.o ip.o wchar.o encnames.o \
-      $(filter getaddrinfo.o inet_aton.o snprintf.o strerror.o path.o, $(LIBOBJS))
+      $(filter getaddrinfo.o inet_aton.o snprintf.o strerror.o dirmod.o path.o, $(LIBOBJS))
 
 
 # Add libraries that libpq depends (or might depend) on into the
