@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.230 2004/01/10 23:28:43 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.231 2004/01/21 23:33:34 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1404,23 +1404,25 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>geqo_effort</varname> (<type>integer</type>)</term>
-      <term><varname>geqo_generations</varname> (<type>integer</type>)</term>
       <term><varname>geqo_pool_size</varname> (<type>integer</type>)</term>
+      <term><varname>geqo_generations</varname> (<type>integer</type>)</term>
+      <term><varname>geqo_effort</varname> (<type>integer</type>)</term>
       <term><varname>geqo_selection_bias</varname> (<type>floating point</type>)</term>
       <listitem>
        <para>
         Various tuning parameters for the genetic query optimization
-        algorithm: The pool size is the number of individuals in one
+        algorithm. The pool size is the number of individuals in one
         population. Valid values are between 128 and 1024. If it is set
         to 0 (the default) a pool size of 2^(QS+1), where QS is the
-        number of <literal>FROM</> items in the query, is taken. The effort is used
-        to calculate a default for generations. Valid values are between
-        1 and 80, 40 being the default. Generations specifies the number
-        of iterations in the algorithm. The number must be a positive
-        integer. If 0 is specified then <literal>Effort *
-        Log2(PoolSize)</literal> is used. The run time of the algorithm
-        is roughly proportional to the sum of pool size and generations.
+        number of <literal>FROM</> items in the query, is used.
+	Generations specifies the number of iterations of the algorithm.
+	The value must be a positive integer. If 0 is specified then
+	<literal>Effort * Log2(PoolSize)</literal> is used.
+	The run time of the algorithm is roughly proportional to the sum of
+	pool size and generations.
+	<varname>geqo_effort</varname> is only used in computing the default
+	generations setting, as just described.  The default value is 40,
+	and the allowed range 1 to 100.
         The selection bias is the selective pressure within the
         population. Values can be from 1.50 to 2.00; the latter is the
         default.

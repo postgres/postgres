@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.177 2004/01/19 19:04:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.178 2004/01/21 23:33:34 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -932,21 +932,21 @@ static struct config_int ConfigureNamesInt[] =
 		DEFAULT_GEQO_POOL_SIZE, 0, MAX_GEQO_POOL_SIZE, NULL, NULL
 	},
 	{
-		{"geqo_effort", PGC_USERSET, QUERY_TUNING_GEQO,
-			gettext_noop("GEQO: effort is used to calculate a default for generations."),
-			NULL
-		},
-		&Geqo_effort,
-		1, 1, INT_MAX, NULL, NULL
-	},
-	{
 		{"geqo_generations", PGC_USERSET, QUERY_TUNING_GEQO,
-			gettext_noop("GEQO: number of iterations in the algorithm."),
-			gettext_noop("The number must be a positive integer. If 0 is "
+			gettext_noop("GEQO: number of iterations of the algorithm."),
+			gettext_noop("The value must be a positive integer. If 0 is "
 						 "specified then effort * log2(poolsize) is used.")
 		},
 		&Geqo_generations,
 		0, 0, INT_MAX, NULL, NULL
+	},
+	{
+		{"geqo_effort", PGC_USERSET, QUERY_TUNING_GEQO,
+			gettext_noop("GEQO: effort is used to set the default for generations."),
+			NULL
+		},
+		&Geqo_effort,
+		DEFAULT_GEQO_EFFORT, MIN_GEQO_EFFORT, MAX_GEQO_EFFORT, NULL, NULL
 	},
 
 	{

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_main.c,v 1.41 2003/11/29 19:51:50 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_main.c,v 1.42 2004/01/21 23:33:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,13 +38,13 @@
  * Configuration options
  */
 int			Geqo_pool_size;
-int			Geqo_effort;
 int			Geqo_generations;
+int			Geqo_effort;
 double		Geqo_selection_bias;
 
 
 static int	gimme_pool_size(int nr_rel);
-static int	gimme_number_generations(int pool_size, int effort);
+static int	gimme_number_generations(int pool_size);
 
 /* define edge recombination crossover [ERX] per default */
 #if !defined(ERX) && \
@@ -92,7 +92,7 @@ geqo(Query *root, int number_of_rels, List *initial_rels)
 
 /* set GA parameters */
 	pool_size = gimme_pool_size(number_of_rels);
-	number_generations = gimme_number_generations(pool_size, Geqo_effort);
+	number_generations = gimme_number_generations(pool_size);
 	status_interval = 10;
 
 /* allocate genetic pool memory */
@@ -284,7 +284,7 @@ gimme_pool_size(int nr_rel)
 {
 	double		size;
 
-	if (Geqo_pool_size != 0)
+	if (Geqo_pool_size > 0)
 		return Geqo_pool_size;
 
 	size = pow(2.0, nr_rel + 1.0);
@@ -305,10 +305,20 @@ gimme_pool_size(int nr_rel)
  * = Effort * Log2(PoolSize)
  */
 static int
-gimme_number_generations(int pool_size, int effort)
+gimme_number_generations(int pool_size)
 {
-	if (Geqo_generations <= 0)
-		return effort * (int) ceil(log((double) pool_size) / log(2.0));
-	else
+	double		gens;
+
+	if (Geqo_generations > 0)
 		return Geqo_generations;
+
+	gens = Geqo_effort * log((double) pool_size) / log(2.0);
+
+	/* bound it to a sane range */
+	if (gens <= 0)
+		gens = 1;
+	else if (gens > 10000)
+		gens = 10000;
+
+	return (int) ceil(gens);
 }
