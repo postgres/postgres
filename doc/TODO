@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat May 19 21:11:38 EDT 2001
+Last updated:		Mon May 21 14:36:45 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -18,11 +18,8 @@ RELIABILITY
 
 PARSER
 
-* SELECT pg_class FROM pg_class generates strange error
+* -SELECT pg_class FROM pg_class generates strange error
 * ALTER TABLE ADD COLUMN does not honor DEFAULT or add CONSTRAINT
-* UNIQUE INDEX on base column not honored on inserts from inherited table
-  INSERT INTO inherit_table (unique_index_col) VALUES (dup) should fail
-  [inheritance]
 
 MISC
 
@@ -103,6 +100,9 @@ INDEXES
 * Add FILLFACTOR to index creation
 * Re-enable partial indexes
 * Allow inherited tables to inherit index, UNIQUE constraint, and primary key
+  [inheritance]
+* UNIQUE INDEX on base column not honored on inserts from inherited table
+  INSERT INTO inherit_table (unique_index_col) VALUES (dup) should fail
   [inheritance]
 * Prevent pg_attribute from having duplicate oids for indexes (Tom)
 * Add UNIQUE capability to non-btree indexes
