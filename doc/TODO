@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Feb 23 14:14:34 EST 2001
+Last updated:		Fri Feb 23 14:21:34 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -344,7 +344,7 @@ SOURCE CODE
 * Fix username/password length limits in all areas
 * Remove compile-time upper limit on number of backends (MAXBACKENDS) (Tom)
 * Make sure all block numbers are unsigned to increase maximum table size
-* Merge LockMethodCtl and LockMethodTable into on shared structure (Bruce)
+* Merge LockMethodCtl and LockMethodTable into one shared structure (Bruce)
 
 ---------------------------------------------------------------------------
 
