@@ -36,6 +36,8 @@
 <ListItem>
 <Para>
 <Acronym>PGHOST</Acronym> sets the default server name.
+If it is set to a non-zero-length string, it causes TCP/IP
+communication to be used, rather than the default local Unix domain sockets.
 </Para>
 </ListItem>
 <ListItem>
@@ -45,7 +47,9 @@
 </ListItem>
 <ListItem>
 <Para>
-<Acronym>PGPORT</Acronym>  sets the default port for communicating with the <ProductName>Postgres</ProductName> backend.
+<Acronym>PGPORT</Acronym>  sets the default port or local Unix domain socket
+file extension for communicating with the <ProductName>Postgres</ProductName>
+backend.
 </Para>
 </ListItem>
 <ListItem>
@@ -71,6 +75,63 @@
 </ListItem>
 </ItemizedList>
 </Para>
+
+<Para>
+The following environment variables can be used to specify user-level default
+behavior for every Postgres session:
+
+<ItemizedList>
+<ListItem>
+<Para>
+<Acronym>PGDATESTYLE</Acronym>
+sets the default style of date/time representation.
+</Para>
+</ListItem>
+<ListItem>
+<Para>
+<Acronym>PGTZ</Acronym>
+sets the default time zone.
+</Para>
+</ListItem>
+</ItemizedList>
+</Para>
+
+<Para>
+The following environment variables can be used to specify default internal
+behavior for every Postgres session:
+
+<ItemizedList>
+<ListItem>
+<Para>
+<Acronym>PGGEQO</Acronym>
+sets the default mode for the genetic optimizer.
+</Para>
+</ListItem>
+<ListItem>
+<Para>
+<Acronym>PGRPLANS</Acronym>
+sets the default mode to allow or disable right-sided plans in the optimizer.
+</Para>
+</ListItem>
+<ListItem>
+<Para>
+<Acronym>PGCOSTHEAP</Acronym>
+sets the default cost for heap searches for the optimizer.
+</Para>
+</ListItem>
+<ListItem>
+<Para>
+<Acronym>PGCOSTINDEX</Acronym>
+sets the default cost for indexed searches for the optimizer.
+</Para>
+</ListItem>
+</ItemizedList>
+</Para>
+
+<Para>
+See the set(l)
+man page for information on the arguments for these environment variables.
+
 </Sect1>
 
 <Sect1>
@@ -250,30 +311,6 @@ void PQreset(PGconn *conn)
 </ProgramListing>
 </Para>
 </ListItem>
-
-<ListItem>
-<Para>
-<Function>PQtrace</Function>
-          Enables  tracing  of  messages  passed between the
-          frontend and the backend.  The messages are echoed
-          to the debug_port file stream.
-<ProgramListing>
-void PQtrace(PGconn *conn,
-             FILE* debug_port);
-</ProgramListing>
-</Para>
-</ListItem>
-
-<ListItem>
-<Para>
-<Function>PQuntrace</Function>
-          Disables  tracing  of  messages passed between the
-          frontend and the backend.
-<ProgramListing>
-void PQuntrace(PGconn *conn);
-</ProgramListing>
-</Para>
-</ListItem>
 </ItemizedList>
 </Para>
 </Sect1>
@@ -445,7 +482,7 @@ int PQgetisnull(PGresult *res,
                 int field_num);
 </ProgramListing>
             This function returns  1 if the field contains a NULL, 0 if
-            it contains a known value..
+            it contains a known value.
 </Para>
 </ListItem>
 
@@ -597,8 +634,9 @@ want to block waiting for the response.
 </ListItem>
 <ListItem>
 <Para>
-Since control is buried inside PQexec, there is no way for the frontend
-to decide it would like to try to cancel the ongoing query.
+Since control is buried inside PQexec, it is hard for the frontend
+to decide it would like to try to cancel the ongoing query.  (It can be
+done from a signal handler, but not otherwise.)
 </Para>
 </ListItem>
 <ListItem>
@@ -773,10 +811,13 @@ Note that if the current query is part of a transaction, cancellation
 will abort the whole transaction.
 
 <Para>
-The current implementation of cancel requests uses "out of band" messages.
-This feature is supported only on TCP/IP connections.  If the backend
-communication is being done through a Unix socket, PQrequestCancel will
-always fail.
+PQrequestCancel can safely be invoked from a signal handler.  So, it is
+also possible to use it in conjunction with plain PQexec, if the decision
+to cancel can be made in a signal handler.  For example, psql invokes
+PQrequestCancel from a SIGINT signal handler, thus allowing interactive
+cancellation of queries that it issues through PQexec.  Note that
+PQrequestCancel will have no effect if the connection is not currently open
+or the backend is not currently processing a query.
 
 </Sect1>
 
@@ -819,7 +860,7 @@ typedef struct {
 </ProgramListing>
      PQfn always returns a valid PGresult*.  The  resultStatus  should be checked before the result is used.   The
      caller is responsible for  freeing  the  PGresult  with
-     PQclear when it is not longer needed.
+     PQclear when it is no longer needed.
 </Para>
 </ListItem>
 </ItemizedList>
@@ -966,6 +1007,10 @@ void PQputline(PGconn *conn,
 <ProgramListing>
 int PQendcopy(PGconn *conn);
 </ProgramListing>
+
+<Para>
+As an example:
+
 <ProgramListing>
 PQexec(conn, "create table foo (a int4, b char16, d float8)");
 PQexec(conn, "copy foo from stdin");
@@ -1036,7 +1081,9 @@ void PQuntrace(PGconn *conn)
   (e.g.,  obtaining <Acronym>Kerberos</Acronym> tickets),
      the frontend/backend authentication process is  handled
      by  <Function>PQexec</Function>  without any further intervention.
-  The following routines may be called by <FileName>libpq</FileName> programs to tailor the behavior of the authentication process.
+The authentication method is now
+determined entirely by the DBA (see pga_hba.conf(5)).  The following
+routines no longer have any effect and should not be used.
 </Para>
 
 <Para>
@@ -1157,7 +1204,7 @@ void fe_setauthsvc(char *name,
            PQclear(res);
 
            /* fetch instances from the pg_database, the system catalog of databases*/
-           res = PQexec(conn,"DECLARE myportal CURSOR FOR select * from pg_database");
+           res = PQexec(conn,"DECLARE mycursor CURSOR FOR select * from pg_database");
            if (PQresultStatus(res) != PGRES_COMMAND_OK) {
              fprintf(stderr,"DECLARE CURSOR command failed\n");
              PQclear(res);
@@ -1165,7 +1212,7 @@ void fe_setauthsvc(char *name,
            }
            PQclear(res);
 
-           res = PQexec(conn,"FETCH ALL in myportal");
+           res = PQexec(conn,"FETCH ALL in mycursor");
            if (PQresultStatus(res) != PGRES_TUPLES_OK) {
              fprintf(stderr,"FETCH ALL command didn't return tuples properly\n");
              PQclear(res);
@@ -1189,8 +1236,8 @@ void fe_setauthsvc(char *name,
 
            PQclear(res);
 
-           /* close the portal */
-           res = PQexec(conn, "CLOSE myportal");
+           /* close the cursor */
+           res = PQexec(conn, "CLOSE mycursor");
            PQclear(res);
 
            /* end the transaction */
@@ -1446,7 +1493,7 @@ void fe_setauthsvc(char *name,
 
            PQclear(res);
 
-           /* close the portal */
+           /* close the cursor */
            res = PQexec(conn, "CLOSE mycursor");
            PQclear(res);
 
