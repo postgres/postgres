@@ -95,7 +95,7 @@ E121	Basic cursor support	06	Positioned UPDATE statement	NO
 E121	Basic cursor support	07	Positioned DELETE statement	NO	
 E121	Basic cursor support	08	CLOSE statement	YES	
 E121	Basic cursor support	10	FETCH statement implicit NEXT	YES	
-E121	Basic cursor support	17	WITH HOLD cursors	NO	
+E121	Basic cursor support	17	WITH HOLD cursors	YES	
 E131	Null value support (nulls in lieu of values)			YES	
 E141	Basic integrity constraints			YES	
 E141	Basic integrity constraints	01	NOT NULL constraints	YES	
@@ -214,12 +214,12 @@ F401	Extended joined table	03	UNION JOIN	YES
 F401	Extended joined table	04	CROSS JOIN	YES	
 F411	Time zone specification			YES	
 F421	National character			YES	
-F431	Read-only scrollable cursors			NO	
+F431	Read-only scrollable cursors			YES	
 F431	Read-only scrollable cursors	01	FETCH with explicit NEXT	YES	
-F431	Read-only scrollable cursors	02	FETCH FIRST	NO	
-F431	Read-only scrollable cursors	03	FETCH LAST	NO	
+F431	Read-only scrollable cursors	02	FETCH FIRST	YES	
+F431	Read-only scrollable cursors	03	FETCH LAST	YES	
 F431	Read-only scrollable cursors	04	FETCH PRIOR	YES	
-F431	Read-only scrollable cursors	05	FETCH ABSOLUTE	NO	
+F431	Read-only scrollable cursors	05	FETCH ABSOLUTE	YES	
 F431	Read-only scrollable cursors	06	FETCH RELATIVE	YES	
 F441	Extended set function support			YES	
 F451	Character set definition			NO	
@@ -319,7 +319,7 @@ T211	Basic trigger capability	04	FOR EACH ROW triggers	YES
 T211	Basic trigger capability	05	Ability to specify a search condition that must be true before the trigger is invoked	NO	
 T211	Basic trigger capability	06	Support for run-time rules for the interaction of triggers and constraints	NO	
 T211	Basic trigger capability	07	TRIGGER privilege	YES	
-T211	Basic trigger capability	08	Multiple triggers for the same the event are executed in the order in which they were created	NO	
+T211	Basic trigger capability	08	Multiple triggers for the same event are executed in the order in which they were created	NO	intentionally omitted
 T212	Enhanced trigger capability			YES	
 T231	SENSITIVE cursors			YES	
 T241	START TRANSACTION statement			YES	

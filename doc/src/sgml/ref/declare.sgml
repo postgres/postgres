@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.22 2003/04/06 22:41:52 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.23 2003/04/29 03:21:28 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -70,8 +70,8 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
       <term>NO SCROLL</term>
       <listitem>
        <para>
-    Specifies that the cursor cannot be used to retrieve rows in a
-    nonsequential fashion (e.g., backward).
+        Specifies that the cursor cannot be used to retrieve rows in a
+        nonsequential fashion (e.g., backward).
        </para>
       </listitem>
      </varlistentry>
@@ -83,7 +83,7 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
 	Specifies that the cursor may be used to retrieve rows in a
 	nonsequential fashion (e.g., backward). Depending upon the
 	complexity of the query's execution plan, specifying
-	<literal>SCROLL</literal> may impose a slight performance penalty
+	<literal>SCROLL</literal> may impose a performance penalty
 	on the query's execution time.
        </para>
       </listitem>
@@ -96,7 +96,7 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
         Specifies that the cursor cannot be used outside of the
         transaction that created it. If neither <literal>WITHOUT
         HOLD</literal> nor <literal>WITH HOLD</literal> is specified,
-        <literal>WITH HOLD</literal> is the default.
+        <literal>WITHOUT HOLD</literal> is the default.
        </para>
       </listitem>
      </varlistentry>
@@ -105,8 +105,8 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
       <term>WITH HOLD</term>
       <listitem>
        <para>
-        Specifies that the cursor may be used after the transaction
-        that creates it successfully commits.
+        Specifies that the cursor may continue to be used after the
+	transaction that creates it successfully commits.
        </para>
       </listitem>
      </varlistentry>
@@ -163,7 +163,7 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
 
    <para>
     The <literal>BINARY</literal>, <literal>INSENSITIVE</literal>,
-    <literal>SCROLL</literal> keywords may appear in any order.
+    and <literal>SCROLL</literal> keywords may appear in any order.
    </para>
   </refsect2>
 
@@ -296,11 +296,14 @@ ERROR:  DECLARE CURSOR may only be used in begin/end transaction blocks
    <para>
     If <literal>WITH HOLD</literal> is specified and the transaction
     that created the cursor successfully commits, the cursor can be
-    accessed outside the creating transaction. If the creating
-    transaction is aborted, the cursor is removed. A cursor created
+    continue to be accessed by subsequent transactions in the same session.
+    (But if the creating
+    transaction is aborted, the cursor is removed.) A cursor created
     with <literal>WITH HOLD</literal> is closed when an explicit
-    <command>CLOSE</command> command is issued on it, or the client
-    connection is terminated.
+    <command>CLOSE</command> command is issued on it, or when the client
+    connection is terminated.  In the current implementation, the rows
+    represented by a held cursor are copied into a temporary file or
+    memory area so that they remain available for subsequent transactions.
    </para>
 
    <para>
@@ -312,7 +315,8 @@ ERROR:  DECLARE CURSOR may only be used in begin/end transaction blocks
     plan is simple enough that no extra overhead is needed to support
     it. However, application developers are advised not to rely on
     using backward fetches from a cursor that has not been created
-    with <literal>SCROLL</literal>.
+    with <literal>SCROLL</literal>.  If <literal>NO SCROLL</> is specified,
+    then backward fetches are disallowed in any case.
    </para>
 
    <para>

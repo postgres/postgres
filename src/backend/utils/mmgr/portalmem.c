@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.54 2003/03/27 16:51:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.55 2003/04/29 03:21:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 
 #include "postgres.h"
 
+#include "commands/portalcmds.h"
 #include "executor/executor.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
@@ -156,14 +157,14 @@ GetPortalByName(const char *name)
 
 /*
  * PortalSetQuery
- *		Attaches a "query" to the specified portal. Note that in the
- *		case of DECLARE CURSOR, some Portal options have already been
- *		set based upon the parsetree of the original DECLARE statement.
+ *		Attaches a QueryDesc to the specified portal.  This should be
+ *		called only after successfully doing ExecutorStart for the query.
+ *
+ * Note that in the case of DECLARE CURSOR, some Portal options have
+ * already been set in portalcmds.c's PreparePortal().  This is grotty.
  */
 void
-PortalSetQuery(Portal portal,
-			   QueryDesc *queryDesc,
-			   void (*cleanup) (Portal portal))
+PortalSetQuery(Portal portal, QueryDesc *queryDesc)
 {
 	AssertArg(PortalIsValid(portal));
 
@@ -174,18 +175,15 @@ PortalSetQuery(Portal portal,
 	 */
 	if (portal->scrollType == DEFAULT_SCROLL)
 	{
-		bool backwardPlan;
-
-		backwardPlan = ExecSupportsBackwardScan(queryDesc->plantree);
-
-		if (backwardPlan)
+		if (ExecSupportsBackwardScan(queryDesc->plantree))
 			portal->scrollType = ENABLE_SCROLL;
 		else
 			portal->scrollType = DISABLE_SCROLL;
 	}
 
 	portal->queryDesc = queryDesc;
-	portal->cleanup = cleanup;
+	portal->executorRunning = true;	/* now need to shut down executor */
+
 	portal->atStart = true;
 	portal->atEnd = false;		/* allow fetches */
 	portal->portalPos = 0;
@@ -228,12 +226,13 @@ CreatePortal(const char *name)
 
 	/* initialize portal query */
 	portal->queryDesc = NULL;
-	portal->cleanup = NULL;
+	portal->cleanup = PortalCleanup;
 	portal->scrollType = DEFAULT_SCROLL;
+	portal->executorRunning = false;
 	portal->holdOpen = false;
+	portal->createXact = GetCurrentTransactionId();
 	portal->holdStore = NULL;
 	portal->holdContext = NULL;
-	portal->createXact = GetCurrentTransactionId();
 	portal->atStart = true;
 	portal->atEnd = true;		/* disallow fetches until query is set */
 	portal->portalPos = 0;
@@ -249,66 +248,33 @@ CreatePortal(const char *name)
  * PortalDrop
  *		Destroy the portal.
  *
- *		keepHoldable: if true, holdable portals should not be removed by
- *		this function. More specifically, invoking this function with
- *		keepHoldable = true on a holdable portal prepares the portal for
- *		access outside of its creating transaction.
+ *		isError: if true, we are destroying portals at the end of a failed
+ *		transaction.  (This causes PortalCleanup to skip unneeded steps.)
  */
 void
-PortalDrop(Portal portal, bool persistHoldable)
+PortalDrop(Portal portal, bool isError)
 {
 	AssertArg(PortalIsValid(portal));
 
-	if (portal->holdOpen && persistHoldable)
-	{
-		/*
-		 * We're "dropping" a holdable portal, but what we really need
-		 * to do is prepare the portal for access outside of its
-		 * creating transaction.
-		 */
-
-		/*
-		 * Create the memory context that is used for storage of
-		 * long-term (cross transaction) data needed by the holdable
-		 * portal.
-		 */
-		portal->holdContext =
-			AllocSetContextCreate(PortalMemory,
-								  "PortalHeapMemory",
-								  ALLOCSET_DEFAULT_MINSIZE,
-								  ALLOCSET_DEFAULT_INITSIZE,
-								  ALLOCSET_DEFAULT_MAXSIZE);
-
-		/*
-		 * Note that PersistHoldablePortal() releases any resources used
-		 * by the portal that are local to the creating txn.
-		 */
-		PersistHoldablePortal(portal);
-
-		return;
-	}
-
-	/* remove portal from hash table */
+	/*
+	 * Remove portal from hash table.  Because we do this first, we will
+	 * not come back to try to remove the portal again if there's any error
+	 * in the subsequent steps.  Better to leak a little memory than to get
+	 * into an infinite error-recovery loop.
+	 */
 	PortalHashTableDelete(portal);
 
-	/* reset portal */
+	/* let portalcmds.c clean up the state it knows about */
 	if (PointerIsValid(portal->cleanup))
-		(*portal->cleanup) (portal);
+		(*portal->cleanup) (portal, isError);
 
-	/*
-	 * delete short-term memory context; in the case of a holdable
-	 * portal, this has already been done
-	 */
-	if (PortalGetHeapMemory(portal))
-		MemoryContextDelete(PortalGetHeapMemory(portal));
-
-	/*
-	 * delete long-term memory context; in the case of a non-holdable
-	 * portal, this context has never been created, so we don't need to
-	 * do anything
-	 */
+	/* delete tuplestore storage, if any */
 	if (portal->holdContext)
 		MemoryContextDelete(portal->holdContext);
+
+	/* release subsidiary storage */
+	if (PortalGetHeapMemory(portal))
+		MemoryContextDelete(PortalGetHeapMemory(portal));
 
 	/* release name and portal data (both are in PortalMemory) */
 	pfree(portal->name);
@@ -320,8 +286,8 @@ PortalDrop(Portal portal, bool persistHoldable)
  * transaction was aborted, all the portals created in this transaction
  * should be removed. If the transaction was successfully committed, any
  * holdable cursors created in this transaction need to be kept
- * open. Only cursors created in the current transaction should be
- * removed in this fashion.
+ * open. In any case, portals remaining from prior transactions should
+ * be left untouched.
  *
  * XXX This assumes that portals can be deleted in a random order, ie,
  * no portal has a reference to any other (at least not one that will be
@@ -340,7 +306,42 @@ AtEOXact_portals(bool isCommit)
 
 	while ((hentry = (PortalHashEnt *) hash_seq_search(&status)) != NULL)
 	{
-		if (hentry->portal->createXact == xact)
-			PortalDrop(hentry->portal, isCommit);
+		Portal portal = hentry->portal;
+
+		if (portal->createXact != xact)
+			continue;
+
+		if (portal->holdOpen && isCommit)
+		{
+			/*
+			 * We are exiting the transaction that created a holdable
+			 * cursor.  Instead of dropping the portal, prepare it for
+			 * access by later transactions.
+			 */
+
+			/*
+			 * Create the memory context that is used for storage of
+			 * the held cursor's tuple set.
+			 */
+			portal->holdContext =
+				AllocSetContextCreate(PortalMemory,
+									  "PortalHeapMemory",
+									  ALLOCSET_DEFAULT_MINSIZE,
+									  ALLOCSET_DEFAULT_INITSIZE,
+									  ALLOCSET_DEFAULT_MAXSIZE);
+
+			/*
+			 * Transfer data into the held tuplestore.
+			 *
+			 * Note that PersistHoldablePortal() must release all
+			 * resources used by the portal that are local to the creating
+			 * transaction.
+			 */
+			PersistHoldablePortal(portal);
+		}
+		else
+		{
+			PortalDrop(portal, !isCommit);
+		}
 	}
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/buffile.c,v 1.15 2003/03/27 16:51:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/buffile.c,v 1.16 2003/04/29 03:21:29 tgl Exp $
  *
  * NOTES:
  *
@@ -64,7 +64,7 @@ struct BufFile
 	 */
 
 	bool		isTemp;			/* can only add files if this is TRUE */
-	bool		isInterTxn;		/* keep open over transactions? */
+	bool		isInterXact;	/* keep open over transactions? */
 	bool		dirty;			/* does buffer need to be written? */
 
 	/*
@@ -119,7 +119,7 @@ extendBufFile(BufFile *file)
 	File		pfile;
 
 	Assert(file->isTemp);
-	pfile = OpenTemporaryFile(file->isInterTxn);
+	pfile = OpenTemporaryFile(file->isInterXact);
 	Assert(pfile >= 0);
 
 	file->files = (File *) repalloc(file->files,
@@ -135,19 +135,22 @@ extendBufFile(BufFile *file)
  * Create a BufFile for a new temporary file (which will expand to become
  * multiple temporary files if more than MAX_PHYSICAL_FILESIZE bytes are
  * written to it).
+ *
+ * Note: if interXact is true, the caller had better be calling us in a
+ * memory context that will survive across transaction boundaries.
  */
 BufFile *
-BufFileCreateTemp(bool interTxn)
+BufFileCreateTemp(bool interXact)
 {
 	BufFile    *file;
 	File		pfile;
 
-	pfile = OpenTemporaryFile(interTxn);
+	pfile = OpenTemporaryFile(interXact);
 	Assert(pfile >= 0);
 
 	file = makeBufFile(pfile);
 	file->isTemp = true;
-	file->isInterTxn = interTxn;
+	file->isInterXact = interXact;
 
 	return file;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.91 2003/04/27 20:09:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.92 2003/04/29 03:21:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -809,7 +809,7 @@ SPI_cursor_open(const char *name, void *plan, Datum *Values, const char *Nulls)
 	ExecutorStart(queryDesc);
 
 	/* Arrange to shut down the executor if portal is dropped */
-	PortalSetQuery(portal, queryDesc, PortalCleanup);
+	PortalSetQuery(portal, queryDesc);
 
 	/* Switch back to the callers memory context */
 	MemoryContextSwitchTo(oldcontext);

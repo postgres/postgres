@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.411 2003/04/08 23:20:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.412 2003/04/29 03:21:29 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4236,10 +4236,8 @@ DeclareCursorStmt: DECLARE name cursor_options CURSOR opt_hold FOR SelectStmt
 					n->portalname = $2;
 					n->options = $3;
 					n->query = $7;
-
 					if ($5)
 						n->options |= CURSOR_OPT_HOLD;
-
 					$$ = (Node *)n;
 				}
 		;
@@ -7191,6 +7189,7 @@ unreserved_keyword:
 			| FUNCTION
 			| GLOBAL
 			| HANDLER
+			| HOLD
 			| HOUR_P
 			| IMMEDIATE
 			| IMMUTABLE

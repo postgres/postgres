@@ -36,7 +36,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplestore.c,v 1.12 2003/03/27 16:51:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplestore.c,v 1.13 2003/04/29 03:21:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ struct Tuplestorestate
 {
 	TupStoreStatus status;		/* enumerated value as shown above */
 	bool		randomAccess;	/* did caller request random access? */
-	bool		interTxn;		/* keep open through transactions? */
+	bool		interXact;		/* keep open through transactions? */
 	long		availMem;		/* remaining memory available, in bytes */
 	BufFile    *myfile;			/* underlying file, or NULL if none */
 
@@ -191,7 +191,7 @@ struct Tuplestorestate
 
 
 static Tuplestorestate *tuplestore_begin_common(bool randomAccess,
-												bool interTxn,
+												bool interXact,
 												int maxKBytes);
 static void dumptuples(Tuplestorestate *state);
 static unsigned int getlen(Tuplestorestate *state, bool eofOK);
@@ -205,9 +205,8 @@ static void *readtup_heap(Tuplestorestate *state, unsigned int len);
  *
  * Initialize for a tuple store operation.
  */
-
 static Tuplestorestate *
-tuplestore_begin_common(bool randomAccess, bool interTxn, int maxKBytes)
+tuplestore_begin_common(bool randomAccess, bool interXact, int maxKBytes)
 {
 	Tuplestorestate *state;
 
@@ -215,7 +214,7 @@ tuplestore_begin_common(bool randomAccess, bool interTxn, int maxKBytes)
 
 	state->status = TSS_INMEM;
 	state->randomAccess = randomAccess;
-	state->interTxn = interTxn;
+	state->interXact = interXact;
 	state->availMem = maxKBytes * 1024L;
 	state->myfile = NULL;
 
@@ -244,17 +243,21 @@ tuplestore_begin_common(bool randomAccess, bool interTxn, int maxKBytes)
  * randomAccess: if true, both forward and backward accesses to the
  * tuple store are allowed.
  *
- * interTxn: if true, the files used by on-disk storage persist beyond
- * the end of the current transaction.
+ * interXact: if true, the files used for on-disk storage persist beyond the
+ * end of the current transaction.  NOTE: It's the caller's responsibility to
+ * create such a tuplestore in a memory context that will also survive
+ * transaction boundaries, and to ensure the tuplestore is closed when it's
+ * no longer wanted.
  *
  * maxKBytes: how much data to store in memory (any data beyond this
  * amount is paged to disk).
  */
 Tuplestorestate *
-tuplestore_begin_heap(bool randomAccess, bool interTxn, int maxKBytes)
+tuplestore_begin_heap(bool randomAccess, bool interXact, int maxKBytes)
 {
 	Tuplestorestate *state = tuplestore_begin_common(randomAccess,
-													 interTxn, maxKBytes);
+													 interXact,
+													 maxKBytes);
 
 	state->copytup = copytup_heap;
 	state->writetup = writetup_heap;
@@ -341,7 +344,7 @@ tuplestore_puttuple(Tuplestorestate *state, void *tuple)
 			/*
 			 * Nope; time to switch to tape-based operation.
 			 */
-			state->myfile = BufFileCreateTemp(state->interTxn);
+			state->myfile = BufFileCreateTemp(state->interXact);
 			state->status = TSS_WRITEFILE;
 			dumptuples(state);
 			break;

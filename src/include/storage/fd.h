@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fd.h,v 1.37 2003/03/27 16:51:29 momjian Exp $
+ * $Id: fd.h,v 1.38 2003/04/29 03:21:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ extern int	max_files_per_process;
 /* Operations on virtual Files --- equivalent to Unix kernel file ops */
 extern File FileNameOpenFile(FileName fileName, int fileFlags, int fileMode);
 extern File PathNameOpenFile(FileName fileName, int fileFlags, int fileMode);
-extern File OpenTemporaryFile(bool keepOverTxn);
+extern File OpenTemporaryFile(bool interXact);
 extern void FileClose(File file);
 extern void FileUnlink(File file);
 extern int	FileRead(File file, char *buffer, int amount);

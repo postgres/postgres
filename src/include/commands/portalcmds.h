@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portalcmds.h,v 1.6 2003/03/11 19:40:23 tgl Exp $
+ * $Id: portalcmds.h,v 1.7 2003/04/29 03:21:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,6 @@ extern long DoPortalFetch(Portal portal,
 
 extern void PerformPortalClose(char *name);
 
-extern void PortalCleanup(Portal portal);
+extern void PortalCleanup(Portal portal, bool isError);
 
 #endif   /* PORTALCMDS_H */

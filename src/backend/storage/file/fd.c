@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.97 2003/04/04 20:42:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.98 2003/04/29 03:21:29 tgl Exp $
  *
  * NOTES:
  *
@@ -113,8 +113,8 @@ int			max_files_per_process = 1000;
 #define FileUnknownPos (-1L)
 
 /* these are the assigned bits in fdstate below: */
-#define FD_TEMPORARY		(1 << 0)
-#define FD_TXN_TEMPORARY	(1 << 1)
+#define FD_TEMPORARY		(1 << 0)		/* T = delete when closed */
+#define FD_XACT_TEMPORARY	(1 << 1)		/* T = delete at eoXact */
 
 typedef struct vfd
 {
@@ -156,7 +156,7 @@ static int	numAllocatedFiles = 0;
 static FILE *allocatedFiles[MAX_ALLOCATED_FILES];
 
 /*
- * Number of temporary files opened during the current transaction;
+ * Number of temporary files opened during the current session;
  * this is used in generation of tempfile names.
  */
 static long tempFileCounter = 0;
@@ -205,6 +205,9 @@ static int	FileAccess(File file);
 static File fileNameOpenFile(FileName fileName, int fileFlags, int fileMode);
 static char *filepath(const char *filename);
 static long pg_nofile(void);
+static void AtProcExit_Files(void);
+static void CleanupTempFiles(bool isProcExit);
+
 
 /*
  * pg_fsync --- same as fsync except does nothing if enableFsync is off
@@ -522,7 +525,7 @@ AllocateVfd(void)
 		 * register proc-exit call to ensure temp files are dropped at
 		 * exit
 		 */
-		on_proc_exit(AtEOXact_Files, 0);
+		on_proc_exit(AtProcExit_Files, 0);
 	}
 
 	if (VfdCache[0].nextFree == 0)
@@ -751,21 +754,21 @@ PathNameOpenFile(FileName fileName, int fileFlags, int fileMode)
  * There's no need to pass in fileFlags or fileMode either, since only
  * one setting makes any sense for a temp file.
  *
- * keepOverTxn: if true, don't close the file at end-of-transaction. In
+ * interXact: if true, don't close the file at end-of-transaction. In
  * most cases, you don't want temporary files to outlive the transaction
  * that created them, so this should be false -- but if you need
  * "somewhat" temporary storage, this might be useful. In either case,
- * the file is removed when the File is explicitely closed.
+ * the file is removed when the File is explicitly closed.
  */
 File
-OpenTemporaryFile(bool keepOverTxn)
+OpenTemporaryFile(bool interXact)
 {
-	char		tempfilepath[128];
+	char		tempfilepath[MAXPGPATH];
 	File		file;
 
 	/*
-	 * Generate a tempfile name that's unique within the current
-	 * transaction and database instance.
+	 * Generate a tempfile name that should be unique within the current
+	 * database instance.
 	 */
 	snprintf(tempfilepath, sizeof(tempfilepath),
 			 "%s/%s%d.%ld", PG_TEMP_FILES_DIR, PG_TEMP_FILE_PREFIX,
@@ -798,15 +801,16 @@ OpenTemporaryFile(bool keepOverTxn)
 								O_RDWR | O_CREAT | O_TRUNC | PG_BINARY,
 								0600);
 		if (file <= 0)
-			elog(ERROR, "Failed to create temporary file %s", tempfilepath);
+			elog(ERROR, "Failed to create temporary file %s: %m",
+				 tempfilepath);
 	}
 
 	/* Mark it for deletion at close */
 	VfdCache[file].fdstate |= FD_TEMPORARY;
 
 	/* Mark it for deletion at EOXact */
-	if (!keepOverTxn)
-		VfdCache[file].fdstate |= FD_TXN_TEMPORARY;
+	if (!interXact)
+		VfdCache[file].fdstate |= FD_XACT_TEMPORARY;
 
 	return file;
 }
@@ -1108,44 +1112,79 @@ closeAllVfds(void)
 /*
  * AtEOXact_Files
  *
- * This routine is called during transaction commit or abort or backend
- * exit (it doesn't particularly care which).  All still-open temporary-file
- * VFDs are closed, which also causes the underlying files to be deleted.
- * Furthermore, all "allocated" stdio files are closed.
+ * This routine is called during transaction commit or abort (it doesn't
+ * particularly care which).  All still-open per-transaction temporary file
+ * VFDs are closed, which also causes the underlying files to be
+ * deleted. Furthermore, all "allocated" stdio files are closed.
  */
 void
 AtEOXact_Files(void)
 {
-	Index		i;
+	CleanupTempFiles(false);
+}
+
+/*
+ * AtProcExit_Files
+ *
+ * on_proc_exit hook to clean up temp files during backend shutdown.
+ * Here, we want to clean up *all* temp files including interXact ones.
+ */
+static void
+AtProcExit_Files(void)
+{
+	CleanupTempFiles(true);
+}
+
+/*
+ * Close temporary files and delete their underlying files.
+ *
+ * isProcExit: if true, this is being called as the backend process is
+ * exiting. If that's the case, we should remove all temporary files; if
+ * that's not the case, we are being called for transaction commit/abort
+ * and should only remove transaction-local temp files.  In either case,
+ * also clean up "allocated" stdio files.
+ */
+static void
+CleanupTempFiles(bool isProcExit)
+{
+	Index i;
 
 	if (SizeVfdCache > 0)
 	{
 		Assert(FileIsNotOpen(0));		/* Make sure ring not corrupted */
 		for (i = 1; i < SizeVfdCache; i++)
 		{
-			if ((VfdCache[i].fdstate & FD_TEMPORARY) &&
-				(VfdCache[i].fdstate & FD_TXN_TEMPORARY) &&
-				VfdCache[i].fileName != NULL)
-				FileClose(i);
+			unsigned short fdstate = VfdCache[i].fdstate;
+
+			if ((fdstate & FD_TEMPORARY) && VfdCache[i].fileName != NULL)
+			{
+				/*
+				 * If we're in the process of exiting a backend process,
+				 * close all temporary files. Otherwise, only close
+				 * temporary files local to the current transaction.
+				 */
+				if (isProcExit || (fdstate & FD_XACT_TEMPORARY))
+					FileClose(i);
+			}
 		}
 	}
 
 	while (numAllocatedFiles > 0)
 		FreeFile(allocatedFiles[0]);
-
-	/*
-	 * Reset the tempfile name counter to 0; not really necessary, but
-	 * helps keep the names from growing unreasonably long.
-	 */
-	tempFileCounter = 0;
 }
 
 
 /*
- * Remove old temporary files
+ * Remove temporary files left over from a prior postmaster session
  *
  * This should be called during postmaster startup.  It will forcibly
  * remove any leftover files created by OpenTemporaryFile.
+ *
+ * NOTE: we could, but don't, call this during a post-backend-crash restart
+ * cycle.  The argument for not doing it is that someone might want to examine
+ * the temp files for debugging purposes.  This does however mean that
+ * OpenTemporaryFile had better allow for collision with an existing temp
+ * file name.
  */
 void
 RemovePgTempFiles(void)
@@ -1194,15 +1233,9 @@ RemovePgTempFiles(void)
 								strlen(PG_TEMP_FILE_PREFIX)) == 0)
 						unlink(rm_path);
 					else
-					{
-						/*
-						 * would prefer to use elog here, but it's not up
-						 * and running during postmaster startup...
-						 */
-						fprintf(stderr,
-								"Unexpected file found in temporary-files directory: %s\n",
-								rm_path);
-					}
+						elog(LOG,
+							 "Unexpected file found in temporary-files directory: %s",
+							 rm_path);
 				}
 				closedir(temp_dir);
 			}

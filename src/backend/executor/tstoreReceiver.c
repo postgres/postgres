@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/tstoreReceiver.c,v 1.1 2003/03/27 16:53:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/tstoreReceiver.c,v 1.2 2003/04/29 03:21:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,8 +27,9 @@ typedef struct
 	MemoryContext		cxt;
 } TStoreState;
 
+
 /*
- * Receive a tuple from the executor and store it in the tuplestore.
+ * Prepare to receive tuples from executor.
  *
  * XXX: As currently implemented, this routine is a hack: there should
  * be no tie between this code and the portal system. Instead, the
@@ -56,6 +57,9 @@ tstoreSetupReceiver(DestReceiver *self, int operation,
 	myState->cxt = portal->holdContext;
 }
 
+/*
+ * Receive a tuple from the executor and store it in the tuplestore.
+ */
 static void
 tstoreReceiveTuple(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 {
@@ -67,12 +71,18 @@ tstoreReceiveTuple(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 	MemoryContextSwitchTo(oldcxt);
 }
 
+/*
+ * Clean up
+ */
 static void
 tstoreCleanupReceiver(DestReceiver *self)
 {
-	; /* do nothing */
+	/* do nothing */
 }
 
+/*
+ * Initially create a DestReceiver object.
+ */
 DestReceiver *
 tstoreReceiverCreateDR(void)
 {

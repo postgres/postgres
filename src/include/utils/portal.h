@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.40 2003/03/27 16:51:29 momjian Exp $
+ * $Id: portal.h,v 1.41 2003/04/29 03:21:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,14 +48,15 @@ typedef struct PortalData *Portal;
 typedef struct PortalData
 {
 	char	   *name;			/* Portal's name */
-	MemoryContext heap;			/* memory for storing short-term data */
+	MemoryContext heap;			/* subsidiary memory */
 	QueryDesc  *queryDesc;		/* Info about query associated with portal */
-	void		(*cleanup) (Portal);	/* Cleanup routine (optional) */
+	void		(*cleanup) (Portal portal, bool isError);	/* Cleanup hook */
 	ScrollType	scrollType;		/* Allow backward fetches? */
-	bool		holdOpen;		/* hold open after txn ends? */
-	TransactionId createXact;	/* the xid of the creating txn */
+	bool		executorRunning;	/* T if we need to call ExecutorEnd */
+	bool		holdOpen;		/* hold open after xact ends? */
+	TransactionId createXact;	/* the xid of the creating xact */
 	Tuplestorestate *holdStore;	/* store for holdable cursors */
-	MemoryContext holdContext;  /* memory for long-term data */
+	MemoryContext holdContext;  /* memory containing holdStore */
 
 	/*
 	 * atStart, atEnd and portalPos indicate the current cursor position.
@@ -88,10 +89,9 @@ typedef struct PortalData
 extern void EnablePortalManager(void);
 extern void AtEOXact_portals(bool isCommit);
 extern Portal CreatePortal(const char *name);
-extern void PortalDrop(Portal portal, bool persistHoldable);
+extern void PortalDrop(Portal portal, bool isError);
 extern Portal GetPortalByName(const char *name);
-extern void PortalSetQuery(Portal portal, QueryDesc *queryDesc,
-						   void (*cleanup) (Portal portal));
+extern void PortalSetQuery(Portal portal, QueryDesc *queryDesc);
 extern void PersistHoldablePortal(Portal portal);
 
 #endif   /* PORTAL_H */

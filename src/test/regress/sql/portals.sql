@@ -166,7 +166,7 @@ CLOSE foo11;
 
 CLOSE foo12;
 
--- is there a reason why we don't close the rest of the open cursors?
+-- leave some cursors open, to test that auto-close works.
 
 END;
 
