@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_conversion.sgml,v 1.1 2002/07/22 08:57:15 ishii Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_conversion.sgml,v 1.2 2002/07/22 13:00:00 ishii Exp $ -->
 
 <refentry id="SQL-DROPCONVERSION">
  <refmeta>
@@ -90,7 +90,7 @@ DROP CONVERSION myname;
   <para>
     <command>DROP CONVERSION</command>
     is a <productname>PostgreSQL</productname> extension.
-    There is no <command>DROP OPERATOR</command>
+    There is no <command>DROP CONVERSION</command>
     statement in <acronym>SQL99</acronym>.
   </para>
  </refsect1>
