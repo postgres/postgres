@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.53.2.1 2003/11/12 20:05:14 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.53.2.2 2003/12/16 01:06:51 momjian Exp $
 -->
 
 <chapter id="ecpg">
@@ -362,7 +362,7 @@ EXEC SQL AT <replaceable>connection-name</replaceable> SELECT ...;
 EXEC SQL SET CONNECTION <replaceable>connection-name</replaceable>;
 </programlisting>
    This option is particularly convenient if many statements are to be
-   executed on the same connection.
+   executed on the same connection.  It is not thread-aware.
   </para>
  </sect1>
 
