@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.22 1998/08/19 02:02:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.23 1998/08/25 21:20:28 scrappy Exp $
  *
  * NOTES:
  *	 (1) The lock.c module assumes that the caller here is doing
@@ -29,12 +29,10 @@
 #include "utils/rel.h"
 #include "miscadmin.h"			/* MyDatabaseId */
 
-static bool
-MultiAcquire(LOCKMETHOD lockmethod, LOCKTAG *tag, LOCKMODE lockmode,
-			 PG_LOCK_LEVEL level);
-static bool
-MultiRelease(LOCKMETHOD lockmethod, LOCKTAG *tag, LOCKMODE lockmode,
-			 PG_LOCK_LEVEL level);
+static bool MultiAcquire(LOCKMETHOD lockmethod, LOCKTAG *tag,
+						 LOCKMODE lockmode, PG_LOCK_LEVEL level);
+static bool MultiRelease(LOCKMETHOD lockmethod, LOCKTAG *tag,
+						 LOCKMODE lockmode, PG_LOCK_LEVEL level);
 
 #ifdef LowLevelLocking
 
@@ -130,6 +128,7 @@ static int	MultiPrios[] = {
  * lock table is ONE lock table, not three.
  */
 LOCKMETHOD MultiTableId = (LOCKMETHOD) NULL;
+LOCKMETHOD LongTermTableId = (LOCKMETHOD) NULL;
 #ifdef NOT_USED
 LOCKMETHOD ShortTermTableId = (LOCKMETHOD) NULL;
 #endif
@@ -150,12 +149,25 @@ InitMultiLevelLocks()
 	/* -----------------------
 	 * No short term lock table for now.  -Jeff 15 July 1991
 	 *
-	 * ShortTermTableId = LockTableRename(lockmethod);
+	 * ShortTermTableId = LockMethodTableRename(lockmethod);
 	 * if (! (ShortTermTableId)) {
 	 *	 elog(ERROR,"InitMultiLocks: couldnt rename lock table");
 	 * }
 	 * -----------------------
 	 */
+
+#ifdef USER_LOCKS
+	/*
+	 * Allocate another tableId for long-term locks
+	 */
+	LongTermTableId = LockMethodTableRename(MultiTableId);
+	if (!(LongTermTableId))
+	{
+		elog(ERROR,
+			 "InitMultiLevelLocks: couldn't rename long-term lock table");
+	}
+#endif
+
 	return MultiTableId;
 }
 

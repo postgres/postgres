@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.40 1998/07/27 19:38:15 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.41 1998/08/25 21:20:29 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.40 1998/07/27 19:38:15 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.41 1998/08/25 21:20:29 scrappy Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -75,9 +75,12 @@
 #include "storage/shmem.h"
 #include "storage/spin.h"
 #include "storage/proc.h"
+#include "utils/trace.h"
 
 static void HandleDeadLock(int sig);
 static PROC *ProcWakeup(PROC *proc, int errType);
+
+#define DeadlockCheckTimer pg_options[OPT_DEADLOCKTIMEOUT]
 
 /* --------------------
  * Spin lock for manipulating the shared process data structure:
@@ -247,10 +250,7 @@ InitProcess(IPCKey key)
 	 */
 	SpinRelease(ProcStructLock);
 
-	MyProc->pid = 0;
-#if 0
 	MyProc->pid = MyProcPid;
-#endif
 	MyProc->xid = InvalidTransactionId;
 #ifdef LowLevelLocking
 	MyProc->xmin = InvalidTransactionId;
@@ -361,10 +361,13 @@ ProcKill(int exitStatus, int pid)
 	 * ---------------
 	 */
 	ProcReleaseSpins(proc);
-	LockReleaseAll(1, &proc->lockQueue);
+	LockReleaseAll(DEFAULT_LOCKMETHOD, &proc->lockQueue);
 
 #ifdef USER_LOCKS
-	LockReleaseAll(0, &proc->lockQueue);
+	/*
+	 * Assume we have a second lock table.
+	 */
+	LockReleaseAll(USER_LOCKMETHOD, &proc->lockQueue);
 #endif
 
 	/* ----------------
@@ -437,11 +440,12 @@ ProcQueueInit(PROC_QUEUE *queue)
  * NOTES: The process queue is now a priority queue for locking.
  */
 int
-ProcSleep(PROC_QUEUE *waitQueue,
+ProcSleep(PROC_QUEUE *waitQueue,		/* lock->waitProcs */
 		  SPINLOCK spinlock,
-		  int token,
+		  int token,					/* lockmode */
 		  int prio,
-		  LOCK *lock)
+		  LOCK *lock,
+		  TransactionId xid)		    /* needed by user locks, see below */
 {
 	int			i;
 	PROC	   *proc;
@@ -470,7 +474,6 @@ ProcSleep(PROC_QUEUE *waitQueue,
 	proc = (PROC *) MAKE_PTR(waitQueue->links.prev);
 
 	/* If we are a reader, and they are writers, skip past them */
-
 	for (i = 0; i < waitQueue->size && proc->prio > prio; i++)
 		proc = (PROC *) MAKE_PTR(proc->links.prev);
 
@@ -482,12 +485,22 @@ ProcSleep(PROC_QUEUE *waitQueue,
 	MyProc->token = token;
 	MyProc->waitLock = lock;
 
+#ifdef USER_LOCKS
+	/* -------------------
+	 * Currently, we only need this for the ProcWakeup routines.
+	 * This must be 0 for user lock, so we can't just use the value
+	 * from GetCurrentTransactionId().
+	 * -------------------
+	 */
+	TransactionIdStore(xid, &MyProc->xid);
+#else
 #ifndef LowLevelLocking
 	/* -------------------
 	 * currently, we only need this for the ProcWakeup routines
 	 * -------------------
 	 */
 	TransactionIdStore((TransactionId) GetCurrentTransactionId(), &MyProc->xid);
+#endif
 #endif
 
 	/* -------------------
@@ -510,7 +523,8 @@ ProcSleep(PROC_QUEUE *waitQueue,
 	 * --------------
 	 */
 	MemSet(&timeval, 0, sizeof(struct itimerval));
-	timeval.it_value.tv_sec = DEADLOCK_CHECK_TIMER;
+	timeval.it_value.tv_sec = \
+		(DeadlockCheckTimer ? DeadlockCheckTimer : DEADLOCK_CHECK_TIMER);
 
 	do
 	{
@@ -525,7 +539,8 @@ ProcSleep(PROC_QUEUE *waitQueue,
 		 * the semaphore implementation.
 		 * --------------
 		 */
-		IpcSemaphoreLock(MyProc->sem.semId, MyProc->sem.semNum, IpcExclusiveLock);
+		IpcSemaphoreLock(MyProc->sem.semId, MyProc->sem.semNum,
+						 IpcExclusiveLock);
 	} while (MyProc->errType == STATUS_NOT_FOUND);		/* sleep after deadlock
 														 * check */
 
@@ -534,8 +549,6 @@ ProcSleep(PROC_QUEUE *waitQueue,
 	 * ---------------
 	 */
 	timeval.it_value.tv_sec = 0;
-
-
 	if (setitimer(ITIMER_REAL, &timeval, &dummy))
 		elog(FATAL, "ProcSleep: Unable to diable timer for process wakeup");
 
@@ -545,6 +558,11 @@ ProcSleep(PROC_QUEUE *waitQueue,
 	 * ----------------
 	 */
 	SpinAcquire(spinlock);
+
+#ifdef LOCK_MGR_DEBUG
+	/* Just to get meaningful debug messages from DumpLocks() */
+	MyProc->waitLock = (LOCK *)NULL;
+#endif
 
 	return (MyProc->errType);
 }
@@ -589,17 +607,39 @@ ProcLockWakeup(PROC_QUEUE *queue, LOCKMETHOD lockmethod, LOCK *lock)
 {
 	PROC	   *proc;
 	int			count;
+	int			trace_flag;
+	int			last_locktype = -1;
+	int			queue_size = queue->size;
+
+	Assert(queue->size >= 0);
 
 	if (!queue->size)
 		return (STATUS_NOT_FOUND);
 
 	proc = (PROC *) MAKE_PTR(queue->links.prev);
 	count = 0;
-	while ((LockResolveConflicts(lockmethod,
+	while ((queue_size--) && (proc))
+	{
+		/*
+		 * This proc will conflict as the previous one did, don't even try.
+		 */
+		if (proc->token == last_locktype)
+		{
+			continue;
+		}
+
+		/*
+		 * This proc conflicts with locks held by others, ignored.
+		 */
+		if (LockResolveConflicts(lockmethod,
 								 lock,
 								 proc->token,
-								 proc->xid) == STATUS_OK))
-	{
+								 proc->xid,
+								 (XIDLookupEnt *) NULL) != STATUS_OK)
+		{
+			last_locktype = proc->token;
+			continue;
+		}
 
 		/*
 		 * there was a waiting process, grant it the lock before waking it
@@ -608,24 +648,34 @@ ProcLockWakeup(PROC_QUEUE *queue, LOCKMETHOD lockmethod, LOCK *lock)
 		 * time that the awoken process begins executing again.
 		 */
 		GrantLock(lock, proc->token);
-		queue->size--;
 
 		/*
 		 * ProcWakeup removes proc from the lock waiting process queue and
 		 * returns the next proc in chain.
 		 */
-		proc = ProcWakeup(proc, NO_ERROR);
 
 		count++;
-		if (!proc || queue->size == 0)
-			break;
+		queue->size--;
+		proc = ProcWakeup(proc, NO_ERROR);
 	}
+
+	Assert(queue->size >= 0);
 
 	if (count)
 		return (STATUS_OK);
-	else
+	else {
 		/* Something is still blocking us.	May have deadlocked. */
+		trace_flag = (lock->tag.lockmethod == USER_LOCKMETHOD) ? \
+			TRACE_USERLOCKS : TRACE_LOCKS;
+		TPRINTF(trace_flag,
+				"ProcLockWakeup: lock(%x) can't wake up any process",
+				MAKE_OFFSET(lock));
+#ifdef DEADLOCK_DEBUG
+		if (pg_options[trace_flag] >= 2)
+			DumpAllLocks();
+#endif
 		return (STATUS_NOT_FOUND);
+	}
 }
 
 void
@@ -685,7 +735,7 @@ HandleDeadLock(int sig)
 	}
 
 #ifdef DEADLOCK_DEBUG
-	DumpLocks();
+	DumpAllLocks();
 #endif
 
 	if (!DeadLockCheck(&(MyProc->lockQueue), MyProc->waitLock, true))
@@ -711,7 +761,8 @@ HandleDeadLock(int sig)
 	 * I was awoken by a signal, not by someone unlocking my semaphore.
 	 * ------------------
 	 */
-	IpcSemaphoreUnlock(MyProc->sem.semId, MyProc->sem.semNum, IpcExclusiveLock);
+	IpcSemaphoreUnlock(MyProc->sem.semId, MyProc->sem.semNum,
+					   IpcExclusiveLock);
 
 	/* -------------
 	 * Set MyProc->errType to STATUS_ERROR so that we abort after

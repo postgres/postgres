@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.16 1998/08/01 15:26:37 vadim Exp $
+ * $Id: lock.h,v 1.17 1998/08/25 21:20:31 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,8 @@
 
 #include <storage/shmem.h>
 #include <storage/itemptr.h>
+#include <storage/sinvaladt.h>
+#include <utils/array.h>
 
 extern SPINLOCK LockMgrLock;
 typedef int MASK;
@@ -32,7 +34,7 @@ typedef int MASK;
  * NLOCKENTS - The maximum number of lock entries in the lock table.
  * ----------------------
  */
-#define NBACKENDS 50
+#define NBACKENDS MaxBackendId
 #define NLOCKS_PER_XACT 40
 #define NLOCKENTS NLOCKS_PER_XACT*NBACKENDS
 
@@ -51,9 +53,14 @@ typedef int LOCKMETHOD;
  * CreateSpinLocks() or the number of shared memory locations allocated
  * for lock table spin locks in the case of machines with TAS instructions.
  */
-#define MAX_LOCK_METHODS 2
+#define MAX_LOCK_METHODS 	3
 
-#define INVALID_TABLEID 0
+#define INVALID_TABLEID		0
+
+#define INVALID_LOCKMETHOD	INVALID_TABLEID
+#define DEFAULT_LOCKMETHOD	1
+#define USER_LOCKMETHOD		2
+#define MIN_LOCKMETHOD		DEFAULT_LOCKMETHOD
 
 /*typedef struct LOCK LOCK; */
 
@@ -63,9 +70,11 @@ typedef struct LTAG
 	Oid			relId;
 	Oid			dbId;
 	ItemPointerData tupleId;
+	uint16		lockmethod;				/* needed by user locks */
 } LOCKTAG;
 
 #define TAGSIZE (sizeof(LOCKTAG))
+#define LOCKTAG_LOCKMETHOD(locktag) ((locktag).lockmethod)
 
 /* This is the control structure for a lock table.	It
  * lives in shared memory:
@@ -143,7 +152,17 @@ typedef struct XIDTAG
 	SHMEM_OFFSET lock;
 	int			pid;
 	TransactionId xid;
+#ifdef USE_XIDTAG_LOCKMETHOD
+	uint16		lockmethod;				/* for debug or consistency checking */
+#endif
 } XIDTAG;
+
+#ifdef USE_XIDTAG_LOCKMETHOD
+#define XIDTAG_LOCKMETHOD(xidtag) ((xidtag).lockmethod)
+#else
+#define XIDTAG_LOCKMETHOD(xidtag) \
+		(((LOCK*) MAKE_PTR((xidtag).lock))->tag.lockmethod)
+#endif
 
 typedef struct XIDLookupEnt
 {
@@ -157,6 +176,7 @@ typedef struct XIDLookupEnt
 } XIDLookupEnt;
 
 #define XID_TAGSIZE (sizeof(XIDTAG))
+#define XIDENT_LOCKMETHOD(xident) (XIDTAG_LOCKMETHOD((xident).tag))
 
 /* originally in procq.h */
 typedef struct PROC_QUEUE
@@ -191,14 +211,16 @@ typedef struct LOCK
 	int			nActive;
 } LOCK;
 
-#define LockGetLock_nHolders(l) l->nHolders
+#define LOCK_LOCKMETHOD(lock) (LOCKTAG_LOCKMETHOD((lock).tag))
 
+#define LockGetLock_nHolders(l) l->nHolders
+#ifdef NOT_USED
 #define LockDecrWaitHolders(lock, lockmode) \
 ( \
   lock->nHolding--, \
   lock->holders[lockmode]-- \
 )
-
+#endif
 #define LockLockTable() SpinAcquire(LockMgrLock);
 #define UnlockLockTable() SpinRelease(LockMgrLock);
 
@@ -209,23 +231,27 @@ extern SPINLOCK LockMgrLock;
  */
 extern void InitLocks(void);
 extern void LockDisable(int status);
-extern LOCKMETHOD
-LockMethodTableInit(char *tabName, MASK *conflictsP, int *prioP,
-			int numModes);
-extern bool LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode);
-extern int
-LockResolveConflicts(LOCKMETHOD lockmethod, LOCK *lock, LOCKMODE lockmode,
-					 TransactionId xid);
-extern bool LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode);
+extern LOCKMETHOD LockMethodTableInit(char *tabName, MASK *conflictsP,
+									  int *prioP, int numModes);
+extern LOCKMETHOD LockMethodTableRename(LOCKMETHOD lockmethod);
+extern bool LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
+						LOCKMODE lockmode);
+extern int LockResolveConflicts(LOCKMETHOD lockmethod, LOCK *lock,
+								LOCKMODE lockmode, TransactionId xid,
+								XIDLookupEnt *xidentP);
+extern bool LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
+						LOCKMODE lockmode);
 extern void GrantLock(LOCK *lock, LOCKMODE lockmode);
 extern bool LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue);
 extern int	LockShmemSize(void);
 extern bool LockingDisabled(void);
-extern bool DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check);
+extern bool DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock,
+						  bool skip_check);
+ArrayType* LockOwners(LOCKMETHOD lockmethod, LOCKTAG *locktag);
 
 #ifdef DEADLOCK_DEBUG
 extern void DumpLocks(void);
-
+extern void DumpAllLocks(void);
 #endif
 
 #endif							/* LOCK_H */
