@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.66 2000/04/16 01:55:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.67 2000/05/28 20:33:28 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1307,7 +1307,7 @@ eval_const_expressions_mutator(Node *node, void *context)
  * the expression here.  This would avoid much runtime overhead, and perhaps
  * expose opportunities for constant-folding within the expression even if
  * not all the func's input args are constants.  It'd be appropriate to do
- * here, and not in the parser, since we wouldn't want it to happen until
+ * that here, not in the parser, since we wouldn't want it to happen until
  * after rule substitution/rewriting.
  */
 static Expr *
@@ -1321,26 +1321,38 @@ simplify_op_or_func(Expr *expr, List *args)
 	Type		resultType;
 	Expr	   *newexpr;
 	Datum		const_val;
+	bool		has_nonconst_input = false;
+	bool		has_null_input = false;
 	bool		const_is_null;
 	bool		isDone;
 
 	/*
-	 * For an operator or function, we cannot simplify unless all the
-	 * inputs are constants.  (XXX possible future improvement: if the
-	 * op/func is strict and at least one input is NULL, we could simplify
-	 * to NULL. But we do not currently have any way to know if the
-	 * op/func is strict or not.  For now, a NULL input is treated the
-	 * same as any other constant node.)
+	 * Check for constant inputs and especially constant-NULL inputs.
 	 */
 	foreach(arg, args)
 	{
-		if (!IsA(lfirst(arg), Const))
-			return NULL;
+		if (IsA(lfirst(arg), Const))
+			has_null_input |= ((Const *) lfirst(arg))->constisnull;
+		else
+			has_nonconst_input = true;
 	}
+
+	/*
+	 * If the function is strict and has a constant-NULL input, it will
+	 * never be called at all, so we can replace the call by a NULL
+	 * constant even if there are other inputs that aren't constant.
+	 * Otherwise, we can only simplify if all inputs are constants.
+	 * We can skip the function lookup if neither case applies.
+	 */
+	if (has_nonconst_input && !has_null_input)
+		return NULL;
 
 	/*
 	 * Get the function procedure's OID and look to see whether it is
 	 * marked proiscachable.
+	 *
+	 * XXX would it be better to take the result type from the pg_proc tuple,
+	 * rather than the Oper or Func node?
 	 */
 	if (expr->opType == OP_EXPR)
 	{
@@ -1374,6 +1386,31 @@ simplify_op_or_func(Expr *expr, List *args)
 		return NULL;
 
 	/*
+	 * Now that we know if the function is strict, we can finish the
+	 * checks for simplifiable inputs that we started above.
+	 */
+	if (funcform->proisstrict && has_null_input)
+	{
+		/*
+		 * It's strict and has NULL input, so must produce NULL output.
+		 * Return a NULL constant of the right type.
+		 */
+		resultType = typeidType(result_typeid);
+		return (Expr *) makeConst(result_typeid, typeLen(resultType),
+								  (Datum) 0, true,
+								  typeByVal(resultType),
+								  false, false);
+	}
+
+	/*
+	 * Otherwise, can simplify only if all inputs are constants.
+	 * (For a non-strict function, constant NULL inputs are treated
+	 * the same as constant non-NULL inputs.)
+	 */
+	if (has_nonconst_input)
+		return NULL;
+
+	/*
 	 * OK, looks like we can simplify this operator/function.
 	 *
 	 * We use the executor's routine ExecEvalExpr() to avoid duplication of
@@ -1402,9 +1439,6 @@ simplify_op_or_func(Expr *expr, List *args)
 
 	/*
 	 * Make the constant result node.
-	 *
-	 * XXX would it be better to take the result type from the pg_proc tuple,
-	 * rather than the Oper or Func node?
 	 */
 	resultType = typeidType(result_typeid);
 	return (Expr *) makeConst(result_typeid, typeLen(resultType),
