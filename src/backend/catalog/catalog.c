@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.53 2004/06/21 01:04:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.54 2004/06/21 04:06:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,8 +119,7 @@ GetDatabasePath(Oid dbNode, Oid spcNode)
  *
  *		We now just test if the relation is in the system catalog namespace;
  *		so it's no longer necessary to forbid user relations from having
- *		names starting with pg_.  Now only schema names have the pg_
- *		distinction/requirement.
+ *		names starting with pg_.
  */
 bool
 IsSystemRelation(Relation relation)
@@ -200,8 +199,8 @@ IsToastNamespace(Oid namespaceId)
  *		True iff name starts with the pg_ prefix.
  *
  *		For some classes of objects, the prefix pg_ is reserved for
- *		system objects only. As of 7.3, this is now only true for
- *		schema names.
+ *		system objects only.  As of 7.5, this is only true for
+ *		schema and tablespace names.
  */
 bool
 IsReservedName(const char *name)

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.49 2004/03/23 06:09:00 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.50 2004/06/21 04:06:04 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -413,18 +413,6 @@ PostgreSQL documentation
     <listitem>
      <para>
       Server time zone
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>others</term>
-
-    <listitem>
-     <para>
-      Other environment variables may be used to designate alternative
-      data storage locations.  See <xref linkend="manage-ag-alternate-locs"> for more
-      information.
      </para>
     </listitem>
    </varlistentry>

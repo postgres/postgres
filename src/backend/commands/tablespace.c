@@ -19,8 +19,8 @@
  * Thus the full path to an arbitrary file is
  *			$PGDATA/pg_tblspc/spcoid/dboid/relfilenode
  *
- * There are two tablespaces created at initdb time: global (for shared
- * tables) and default (for everything else).  For backwards compatibility
+ * There are two tablespaces created at initdb time: pg_global (for shared
+ * tables) and pg_default (for everything else).  For backwards compatibility
  * and to remain functional on platforms without symlinks, these tablespaces
  * are accessed specially: they are respectively
  *			$PGDATA/global/relfilenode
@@ -45,7 +45,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.2 2004/06/21 01:04:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.3 2004/06/21 04:06:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -232,6 +232,17 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("tablespace location \"%s\" is too long",
 						location)));
+
+	/*
+	 * Disallow creation of tablespaces named "pg_xxx"; we reserve this
+	 * namespace for system purposes.
+	 */
+	if (!allowSystemTableMods && IsReservedName(stmt->tablespacename))
+		ereport(ERROR,
+				(errcode(ERRCODE_RESERVED_NAME),
+				 errmsg("unacceptable tablespace name \"%s\"",
+						stmt->tablespacename),
+		errdetail("The prefix \"pg_\" is reserved for system tablespaces.")));
 
 	/*
 	 * Check that there is no other tablespace by this name.  (The

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.30 2004/06/18 06:13:02 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.31 2004/06/21 04:06:03 tgl Exp $
 -->
 
 <chapter id="managing-databases">
@@ -295,86 +295,6 @@ ALTER DATABASE mydb SET geqo TO off;
   </para>
  </sect1>
 
- <sect1 id="manage-ag-alternate-locs">
-  <title>Alternative Locations</title>
-
-   <para>
-    XXX this is entirely dead now, and needs to be replaced by a DBA-level
-    description of tablespaces.
-   </para>
-
-   <para>
-    It is possible to create a database in a location other than the
-    default location for the installation. But remember that all database access
-    occurs through the 
-    database server, so any location specified must be
-    accessible by the server.
-   </para>
-
-   <para>
-    Alternative database locations are referenced by an environment
-    variable which gives the absolute path to the intended storage
-    location. This environment variable must be present in the server's
-    environment, so it must have been defined before the server
-    was started.  (Thus, the set of available alternative locations is
-    under the site administrator's control; ordinary users can't
-    change it.)  Any valid environment variable name may
-    be used to reference an alternative location, although using
-    variable names with a prefix of <literal>PGDATA</> is recommended
-    to avoid confusion and conflict with other variables.
-   </para>
-
-   <para>
-    To create the variable in the environment of the server process
-    you must first shut down the server, define the variable,
-    initialize the data area, and finally restart the server. (See also
-    <xref linkend="postmaster-shutdown"> and <xref
-    linkend="postmaster-start">.) To set an environment variable, type
-<programlisting>
-PGDATA2=/home/postgres/data
-export PGDATA2
-</programlisting>
-    in Bourne shells, or
-<programlisting>
-setenv PGDATA2 /home/postgres/data
-</programlisting>
-    in <command>csh</> or <command>tcsh</>. You have to make sure that this environment
-    variable is always defined in the server environment, otherwise
-    you won't be able to access that database. Therefore you probably
-    want to set it in some sort of shell start-up file or server
-    start-up script.
-   </para>
-
-   <para>
-    <indexterm><primary>initlocation</></>
-    To create a data storage area in <envar>PGDATA2</>, ensure that
-    the containing directory (here, <filename>/home/postgres</filename>)
-    already exists and is writable
-    by the user account that runs the server (see <xref
-    linkend="postgres-user">). Then from the command line, type
-<programlisting>
-initlocation PGDATA2
-</programlisting>
-    (<emphasis>not</emphasis> <literal>initlocation
-    $PGDATA2</literal>).  Then you can restart the server.
-   </para>
-
-   <para>
-    To create a database within the new location, use the command
-<synopsis>
-CREATE DATABASE <replaceable>name</> WITH LOCATION '<replaceable>location</>';
-</synopsis>
-    where <replaceable>location</> is the environment variable you
-    used, <envar>PGDATA2</> in this example. The <command>createdb</>
-    command has the option <option>-D</> for this purpose.
-   </para>
-
-   <para>
-    Databases created in alternative locations can be
-    accessed and dropped like any other database.
-   </para>
- </sect1>
-
  <sect1 id="manage-ag-dropdb">
   <title>Destroying a Database</title>
 
@@ -409,6 +329,116 @@ dropdb <replaceable class="parameter">dbname</replaceable>
    (Unlike <command>createdb</>, it is not the default action to drop
    the database with the current user name.)
   </para>
+ </sect1>
+
+ <sect1 id="manage-ag-tablespaces">
+  <title>Tablespaces</title>
+
+   <para>
+    Tablespaces in <productname>PostgreSQL</> allow database superusers to
+    define locations in the file system where the files representing
+    database objects can be stored. Once created, a tablespace can be referred
+    to by name when creating database objects.
+   </para>
+
+   <para>
+    By using tablespaces, a database administrator can control the disk
+    layout of a <productname>PostgreSQL</> installation. This is useful in
+    at least two ways. Firstly, if the partition or volume on which the cluster
+    was initialized runs out of space and cannot be extended logically
+    or otherwise, a tablespace can be created on a different partition
+    and used until the system can be reconfigured.
+   </para>
+
+   <para>
+    Secondly, tablespaces allow a database administrator to arrange data
+    locations based on the usage patterns of database objects. For
+    example, an index which is very heavily used can be placed on very fast,
+    highly available disk, such as an expensive solid state device. At the same
+    time a table storing archived data which is rarely used or not performance
+    critical could be stored on a less expensive, slower disk system.
+   </para>
+
+   <para>
+    Databases, schemas, tables, indexes and sequences can all be placed in
+    particular tablespaces. To do so, a user with the <literal>CREATE</>
+    privilege on a given tablespace must pass the tablespace name as a 
+    parameter to the relevant command. For example, the following creates 
+    a table in the tablespace <literal>space1</>:
+<programlisting>
+CREATE TABLE foo(i int) TABLESPACE space1;
+</programlisting>
+   </para>
+
+   <para>
+    The tablespace associated with a database is used to store the system
+    catalogs of that database, as well as any temporary files created by
+    server processes using that database.  Furthermore, it is the default
+    tablespace selected for any objects created within the database, if
+    no specific <literal>TABLESPACE</> clause is given when those objects
+    are created.  If a database is created without specifying a tablespace
+    for it, it uses the same tablespace as the template database it is copied
+    from.
+   </para>
+
+   <para>
+    A schema does not in itself occupy any storage (other than a system
+    catalog entry), so assigning a tablespace to a schema does not in itself
+    do anything.  What this actually does is to set a default tablespace
+    for tables, indexes, and sequences later created within the schema.  If
+    no tablespace is mentioned when creating a schema, it inherits its
+    default tablespace from the current database.
+   </para>
+
+   <para>
+    The default choice of tablespace for an index is the same tablespace
+    already assigned to the table the index is for.
+   </para>
+
+   <para>
+    Another way to state the above rules is that when a schema, table, index
+    or sequence is created without specifying a tablespace, the object
+    inherits its logical parent's tablespace. A schema will be created in the
+    current database's tablespace; a table or sequence will be created in the
+    tablespace of the schema it is being created in; an index will be created
+    in the tablespace of the table underlying the index.
+   </para>
+
+   <para>
+    Two tablespaces are automatically created by <literal>initdb</>. The
+    <literal>pg_global</> tablespace is used for shared system catalogs. The
+    <literal>pg_default</> tablespace is the default tablespace of the
+    <literal>template1</> and <literal>template0</> databases (and, therefore,
+    will be the default tablespace for everything else as well, unless
+    explicit <literal>TABLESPACE</> clauses are used somewhere along the
+    line).
+   </para>
+
+   <para>
+    Once created, a tablespace can be used from any database, provided
+    the requesting user has sufficient privilege. This means that a tablespace
+    cannot be dropped until all objects in all databases using the tablespace
+    have been removed.
+   </para>
+
+   <para>
+    To simplify the implementation of tablespaces, 
+    <productname>PostgreSQL</> makes extensive use of symbolic links. This
+    means that tablespaces can be used <emphasis>only</> on systems
+    that support symbolic links.
+   </para>
+
+   <para>
+    The directory <filename>$PGDATA/pg_tblspc</> contains symbolic links that
+    point to each of the non-built-in tablespaces defined in the cluster.
+    Although not recommended, it is possible to adjust the tablespace
+    layout by hand by redefining these links.  Two warnings: do not do so
+    while the postmaster is running; and after you restart the postmaster,
+    update the <structname>pg_tablespace</> catalog to show the new
+    locations.  (If you do not, <literal>pg_dump</> will continue to show
+    the old tablespace locations.)
+   </para> 
+
  </sect1>
 </chapter>
 

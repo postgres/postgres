@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/diskusage.sgml,v 1.10 2003/11/29 19:51:36 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/diskusage.sgml,v 1.11 2004/06/21 04:06:03 tgl Exp $
 -->
 
 <chapter id="diskusage">
@@ -124,20 +124,15 @@ SELECT relname, relpages FROM pg_class ORDER BY relpages DESC;
 
   <para>
    If you cannot free up additional space on the disk by deleting
-   other things you can move some of the database files to other file
-   systems and create a symlink from the original location.  But
-   note that <application>pg_dump</> cannot save the location layout
-   information of such a setup; a restore would put everything back in
-   one place.  To avoid running out of disk space, you can place the
-   WAL files or individual databases in other locations while creating
-   them.  See the <command>initdb</> documentation and <xref
-   linkend="manage-ag-alternate-locs"> for more information about that.
+   other things, you can move some of the database files to other file
+   systems by making use of tablespaces. See <xref
+   linkend="manage-ag-tablespaces"> for more information about that.
   </para>
 
   <tip>
    <para>
     Some file systems perform badly when they are almost full, so do
-    not wait until the disk is full to take action.
+    not wait until the disk is completely full to take action.
    </para>
   </tip>
  </sect1>
