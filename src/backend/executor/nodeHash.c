@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.60 2001/10/25 05:49:28 momjian Exp $
+ *	$Id: nodeHash.c,v 1.60.2.1 2003/01/29 19:37:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
  */
 #include "postgres.h"
 
+#include <limits.h>
 #include <sys/types.h>
 #include <math.h>
 
@@ -343,7 +344,8 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 {
 	int			tupsize;
 	double		inner_rel_bytes;
-	double		hash_table_bytes;
+	long		hash_table_bytes;
+	double		dtmp;
 	int			nbatch;
 	int			nbuckets;
 	int			totalbuckets;
@@ -361,20 +363,22 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 	inner_rel_bytes = ntuples * tupsize * FUDGE_FAC;
 
 	/*
-	 * Target hashtable size is SortMem kilobytes, but not less than
-	 * sqrt(estimated inner rel size), so as to avoid horrible
-	 * performance.
+	 * Target in-memory hashtable size is SortMem kilobytes.
 	 */
-	hash_table_bytes = sqrt(inner_rel_bytes);
-	if (hash_table_bytes < (SortMem * 1024L))
-		hash_table_bytes = SortMem * 1024L;
+	hash_table_bytes = SortMem * 1024L;
 
 	/*
 	 * Count the number of hash buckets we want for the whole relation,
 	 * for an average bucket load of NTUP_PER_BUCKET (per virtual
-	 * bucket!).
+	 * bucket!).  It has to fit in an int, however.
 	 */
-	totalbuckets = (int) ceil(ntuples * FUDGE_FAC / NTUP_PER_BUCKET);
+	dtmp = ceil(ntuples * FUDGE_FAC / NTUP_PER_BUCKET);
+	if (dtmp < INT_MAX)
+		totalbuckets = (int) dtmp;
+	else
+		totalbuckets = INT_MAX;
+	if (totalbuckets <= 0)
+		totalbuckets = 1;
 
 	/*
 	 * Count the number of buckets we think will actually fit in the
@@ -408,10 +412,16 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 		 * that nbatch doesn't have to have anything to do with the ratio
 		 * totalbuckets/nbuckets; in fact, it is the number of groups we
 		 * will use for the part of the data that doesn't fall into the
-		 * first nbuckets hash buckets.
+		 * first nbuckets hash buckets.  We try to set it to make all the
+		 * batches the same size.  But we have to keep nbatch small
+		 * enough to avoid integer overflow in ExecHashJoinGetBatch().
 		 */
-		nbatch = (int) ceil((inner_rel_bytes - hash_table_bytes) /
-							hash_table_bytes);
+		dtmp = ceil((inner_rel_bytes - hash_table_bytes) /
+					hash_table_bytes);
+		if (dtmp < INT_MAX / totalbuckets)
+			nbatch = (int) dtmp;
+		else
+			nbatch = INT_MAX / totalbuckets;
 		if (nbatch <= 0)
 			nbatch = 1;
 	}
