@@ -3,9 +3,9 @@
  *
  * This file defines C-like input/output conversion routines for strings.
  *
- * Copyright (c) 1998, Massimo Dal Zotto <dz@cs.unitn.it>
+ * Copyright (C) 1999, Massimo Dal Zotto <dz@cs.unitn.it>
  *
- * This file is distributed under the GNU General Public License
+ * This software is distributed under the GNU General Public License
  * either version 2, or (at your option) any later version.
  */
 

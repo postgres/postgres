@@ -4,9 +4,9 @@
  * This loadable module, together with my user-lock.patch applied to the
  * backend, provides support for user-level long-term cooperative locks.
  *
- * Copyright (c) 1998, Massimo Dal Zotto <dz@cs.unitn.it>
+ * Copyright (C) 1999, Massimo Dal Zotto <dz@cs.unitn.it>
  *
- * This file is distributed under the GNU General Public License
+ * This software is distributed under the GNU General Public License
  * either version 2, or (at your option) any later version.
  */
 

@@ -1,4 +1,9 @@
 Array iterator functions, by Massimo Dal Zotto <dz@cs.unitn.it>
+Copyright (C) 1999, Massimo Dal Zotto <dz@cs.unitn.it>
+
+This software is distributed under the GNU General Public License
+either version 2, or (at your option) any later version.
+
 
 This loadable module defines a new class of functions which take
 an array and a scalar value, iterate a scalar operator over the

@@ -6,9 +6,12 @@
  * elements of the array and the value and compute a result as
  * the logical OR or AND of the iteration results.
  *
- * Copyright (c) 1997, Massimo Dal Zotto <dz@cs.unitn.it>
+ * Copyright (C) 1999, Massimo Dal Zotto <dz@cs.unitn.it>
  * ported to postgreSQL 6.3.2,added oid_functions, 18.1.1999,
  * Tobias Gabele <gabele@wiz.uni-kassel.de>
+ *
+ * This software is distributed under the GNU General Public License
+ * either version 2, or (at your option) any later version.
  */
 
 #include <ctype.h>

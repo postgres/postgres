@@ -30,6 +30,13 @@ install:
 	    fi; \
 	done
 
+install-doc:	
+	for dir in *; do \
+	    if [ -e $$dir/Makefile ]; then \
+		$(MAKE) -C $$dir $@ ; \
+	    fi; \
+	done || exit 0
+
 clean:	
 	for dir in *; do \
 	    if [ -e $$dir/Makefile ]; then \

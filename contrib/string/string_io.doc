@@ -1,3 +1,10 @@
+String io module for postgresql.
+Copyright (C) 1999, Massimo Dal Zotto <dz@cs.unitn.it>
+
+This software is distributed under the GNU General Public License
+either version 2, or (at your option) any later version.
+
+
 These output functions can be used as substitution of the standard text
 output functions to get the value of text fields printed in the format
 used for C strings. This allows the output of queries or the exported

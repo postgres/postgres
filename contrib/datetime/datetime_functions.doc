@@ -1,3 +1,10 @@
+Datetime functions.
+Copyright (C) 1999, Massimo Dal Zotto <dz@cs.unitn.it>
+
+This software is distributed under the GNU General Public License
+either version 2, or (at your option) any later version.
+
+
 I have written some new funtions for time and date data types which can
 be used to extract hour,minutes,seconds from time values, and year,
 month,day from a date. There is also a time_difference and functions

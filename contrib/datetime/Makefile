@@ -39,6 +39,13 @@ install:	$(MODULE) $(SQLDEFS) $(MODDIR) $(SQLDIR)
 		strip $(MODDIR)/$(MODULE)
 		cp -p $(SQLDEFS) $(SQLDIR)/
 
+install-doc:	
+		if [ -d "$(DOCDIR)" ]; then \
+		    cp -p *.doc $(DOCDIR); \
+		else \
+		    cp -p *.doc $(SQLDIR); \
+		fi
+
 $(MODDIR):
 		mkdir -p $@
 
