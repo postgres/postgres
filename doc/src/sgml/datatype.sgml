@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.58 2001/08/16 20:38:53 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.59 2001/08/24 20:03:41 petere Exp $
 -->
 
  <chapter id="datatype">
@@ -51,6 +51,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.58 2001/08/16 20:38:53 tg
        <entry><type>bigint</type></entry>
        <entry><type>int8</type></entry>
        <entry>signed eight-byte integer</entry>
+      </row>
+
+      <row>
+       <entry><type>bigserial</type></entry>
+       <entry><type>serial8</type></entry>
+       <entry>autoincrementing eight-byte integer</entry>
       </row>
 
       <row>
@@ -204,12 +210,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.58 2001/08/16 20:38:53 tg
       </row>
 
       <row>
-       <entry><type>serial8</type></entry>
-       <entry></entry>
-       <entry>autoincrementing eight-byte integer</entry>
-      </row>
-
-      <row>
        <entry><type>text</type></entry>
        <entry></entry>
        <entry>variable-length character string</entry>
@@ -346,8 +346,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.58 2001/08/16 20:38:53 tg
      <tgroup cols="4">
       <thead>
        <row>
-	<entry>Type Name</entry>
-	<entry>Storage</entry>
+	<entry>Type name</entry>
+	<entry>Storage size</entry>
 	<entry>Description</entry>
 	<entry>Range</entry>
        </row>
@@ -370,46 +370,46 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.58 2001/08/16 20:38:53 tg
 	<entry>bigint</entry>
 	<entry>8 bytes</entry>
 	<entry>Very large range fixed-precision</entry>
-	<entry>about 18 decimal places</entry>
+	<entry>about 18 decimal digits</entry>
        </row>
 
        <row>
 	<entry>decimal</entry>
 	<entry>variable</entry>
-	<entry>User-specified precision</entry>
+	<entry>user-specified precision, exact</entry>
 	<entry>no limit</entry>
        </row>
        <row>
 	<entry>numeric</entry>
 	<entry>variable</entry>
-	<entry>User-specified precision</entry>
+	<entry>user-specified precision, exact</entry>
 	<entry>no limit</entry>
        </row>
 
        <row>
 	<entry>real</entry>
 	<entry>4 bytes</entry>
-	<entry>Variable-precision</entry>
-	<entry>6 decimal places</entry>
+	<entry>variable-precision, inexact</entry>
+	<entry>6 decimal digits precision</entry>
        </row>
        <row>
 	<entry>double precision</entry>
 	<entry>8 bytes</entry>
-	<entry>Variable-precision</entry>
-	<entry>15 decimal places</entry>
+	<entry>variable-precision, inexact</entry>
+	<entry>15 decimal digits precision</entry>
        </row>
 
        <row>
-	<entry>serial4</entry>
+	<entry>serial</entry>
 	<entry>4 bytes</entry>
-	<entry>Identifier or cross-reference</entry>
+	<entry>autoincrementing integer</entry>
 	<entry>1 to 2147483647</entry>
        </row>
 
        <row>
-	<entry>serial8</entry>
+	<entry>bigserial</entry>
 	<entry>8 bytes</entry>
-	<entry>Identifier or cross-reference</entry>
+	<entry>autoincrementing integer</entry>
 	<entry>1 to 9223372036854775807</entry>
        </row>
       </tbody>
@@ -422,15 +422,187 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.58 2001/08/16 20:38:53 tg
     <xref linkend="sql-syntax-constants">.  The numeric types have a
     full set of corresponding arithmetic operators and
     functions. Refer to <xref linkend="functions"> for more
-    information.
+    information.  The following sections describe the types in detail.
    </para>
 
-   <para>
-    The <type>bigint</type> type may not function correctly on all platforms,
-    since it relies on compiler support for eight-byte integers.  On a machine
-    without such support, <type>bigint</type> acts the same
-    as <type>integer</type> (but still takes up eight bytes of storage).
-   </para>
+   <sect2 id="datatype-int">
+    <title>The Integer Types</title>
+
+    <para>
+     The types <type>smallint</type>, <type>integer</type>,
+     <type>bigint</type> store whole numbers, that is, numbers without
+     fractional components, of various ranges.  Attempts to store
+     values outside of the allowed range will result in an error.
+    </para>
+
+    <para>
+     The type <type>integer</type> is the usual choice, as it offers
+     the best balance between range, storage size, and performance.
+     The <type>smallint</type> type is generally only used if disk
+     space is at a premium.  The <type>bigint</type> type should only
+     be used if the <type>integer</type> range is not sufficient,
+     because the latter is definitely faster.
+    </para>
+
+    <para>
+     The <type>bigint</type> type may not function correctly on all
+     platforms, since it relies on compiler support for eight-byte
+     integers.  On a machine without such support, <type>bigint</type>
+     acts the same as <type>integer</type> (but still takes up eight
+     bytes of storage).  However, we are not aware of any reasonable
+     platform where this is actually the case.
+    </para>
+
+    <note>
+     <para>
+      If you have a column of type <type>smallint</type> or
+      <type>bigint</type> with an index, you may encounter problems
+      getting the system to use that index.  For instance, a clause of
+      the form
+<programlisting>
+... WHERE smallint_column = 42
+</programlisting>
+      will not use an index, because the system assigns type
+      <type>integer</type> to the 42, and PostgreSQL currently cannot
+      use an index when two different data types are involved.  A
+      workaround is to single-quote the constant, thus:
+<programlisting>
+... WHERE smallint_column = '42'
+</programlisting>
+      This will cause the system to delay the type resolution and will
+      assign the right type to the constant.
+     </para>
+    </note>
+
+    <para>
+     SQL only specifies the integer types <type>integer</type> (or
+     <type>int</type>) and <type>smallint</type>.  The type
+     <type>bigint</type>, and the type names <type>int2</type>,
+     <type>int4</type>, and <type>int8</type> are extensions, which
+     are shared with various other RDBMS products.
+    </para>
+
+   </sect2>
+
+   <sect2 id="datatype-numeric-decimal">
+    <title>Arbitrary Precision Numbers</title>
+
+    <para>
+     The type <type>numeric</type> can store numbers of practically
+     unlimited size and precision, while being able to store all
+     numbers and carry out all calculations exactly.  It is especially
+     recommended for storing monetary amounts and other quantities
+     where exactness is required.  However, the <type>numeric</type>
+     type is very slow compared to the floating point types described
+     in the next section.
+    </para>
+
+    <para>
+     In what follows we use these terms:  The
+     <firstterm>scale</firstterm> of a <type>numeric</type> is the
+     count of decimal digits in the fractional part, to the right of
+     the decimal point.  The <firstterm>precision</firstterm> of a
+     <type>numeric</type> is the total count of significant digits in
+     the whole number, that is, the number of digits to both sides of
+     the decimal point.  So the number 23.5141 has a precision of 6
+     and a scale of 4.  Integers can be considered to have a scale of
+     zero.
+    </para>
+
+    <para>
+     Both the precision and the scale of the numeric type can be
+     configured.  To declare a column of type <type>numeric</type> use
+     the syntax
+<programlisting>
+NUMERIC(<replaceable>precision</replaceable>, <replaceable>scale</replaceable>)
+</programlisting>
+     The precision must be positive, the scale zero or positive.
+     Alternatively,
+<programlisting>
+NUMERIC(<replaceable>precision</replaceable>)
+</programlisting>
+     selects a scale of 0.  Merely specifying
+<programlisting>
+NUMERIC
+</programlisting>
+     uses a default precision and scale, which is currently (30,6).
+     (The SQL standard requires a default scale of 0.  We find this a
+     bit useless.  If you're concerned about portability, always
+     specify the precision and scale explicitly.)
+    </para>
+
+    <para>
+     If the precision or scale of a value is greater than the declared
+     precision or scale of a column, the system will attempt to round
+     the value.  If the value cannot be rounded so as to satisfy the
+     declared limits, an error is raised.
+    </para>
+
+    <para>
+     The types <type>decimal</type> and <type>numeric</type> are
+     equivalent.  Both types are part of the SQL standard.
+    </para>
+   </sect2>
+
+
+   <sect2 id="datatype-float">
+    <title>Floating Point Types</title>
+
+    <para>
+     The data types <type>real</type> and <type>double
+     precision</type> are inexact, variable precision numeric types.
+     In practice, these types are usually implementations of IEEE 754
+     binary floating point (single and double precision,
+     respectively), to the extent that the underlying processor,
+     operating system, and compiler support it.
+    </para>
+
+    <para>
+     Inexact means that some values cannot be converted exactly to the
+     internal format and are stored as approximations, so that storing
+     and printing back out a value may show slight discrepancies.
+     Managing these errors and how they propagate through calculations
+     is the subject of an entire branch of mathematics and computer
+     science and will not be discussed further here, except for the
+     following points:
+     <itemizedlist>
+      <listitem>
+       <para>
+        If you require exact storage and calculations (such as for
+        monetary amounts), use the <type>numeric</type> type instead.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        If you want to do complicated calculations with these types
+        for anything important, especially if you rely on certain
+        behavior in boundary cases (infinity, underflow), you should
+        evaluate the implementation carefully.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Comparing two floating point values for equality may or may
+        not work as expected.
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+
+    <para>
+     Normally, the <type>real</type> type has a range of at least
+     -1E+37 to +1E+37 with a precision of at least 6.  The
+     <type>double precision</type> type normally has a range of around
+     -1E+308 to +1E+308 with a precision of at least 15.  Values that
+     are too large or too small will cause an error.  Rounding may
+     take place if the precision of an input number is too high.
+     Numbers too close to zero that are not representable as distinct
+     from zero will cause an underflow error.
+    </para>
+
+   </sect2>
 
    <sect2 id="datatype-serial">
     <title>The Serial Types</title>
@@ -463,17 +635,17 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.58 2001/08/16 20:38:53 tg
      in tables.
      In the current implementation, specifying
 
-     <programlisting>
+<programlisting>
 CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceable class="parameter">colname</replaceable> SERIAL);
-     </programlisting>
+</programlisting>
 
      is equivalent to specifying:
 
-     <programlisting>
+<programlisting>
 CREATE SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq;
 CREATE TABLE <replaceable class="parameter">tablename</replaceable>
-    (<replaceable class="parameter">colname</replaceable> integer DEFAULT nextval('<replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq') UNIQUE NOT NULL;
-     </programlisting>
+    (<replaceable class="parameter">colname</replaceable> integer DEFAULT nextval('<replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq') UNIQUE NOT NULL);
+</programlisting>
 
      Thus, we have created an integer column and arranged for its default
      values to be assigned from a sequence generator.  UNIQUE and NOT NULL
@@ -492,10 +664,10 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable>
     <para>
      The type names <type>serial</type> and <type>serial4</type> are
      equivalent: both create <type>integer</type> columns.  The type
-     name <type>serial8</type> works just the same way, except that it
-     creates a <type>bigint</type> column.  <type>serial8</type> should
-     be used if you anticipate use of more than 2^31 identifiers over
-     the lifetime of the table.
+     names <type>bigserial</type> and <type>serial8</type> works just
+     the same way, except that it creates a <type>bigint</type>
+     column.  <type>serial8</type> should be used if you anticipate
+     use of more than 2^31 identifiers over the lifetime of the table.
     </para>
 
     <para>
@@ -503,11 +675,11 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable>
      not automatically dropped when a table containing a serial type
      is dropped. So, the following commands executed in order will likely fail:
 
-     <programlisting>
+<programlisting>
 CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceable class="parameter">colname</replaceable> SERIAL);
 DROP TABLE <replaceable class="parameter">tablename</replaceable>;
 CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceable class="parameter">colname</replaceable> SERIAL);
-     </programlisting>
+</programlisting>
 
      The sequence will remain in the database until explicitly dropped using
      <command>DROP SEQUENCE</command>.

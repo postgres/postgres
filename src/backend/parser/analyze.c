@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.196 2001/08/21 16:36:03 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.197 2001/08/24 20:03:45 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -732,7 +732,8 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					is_serial = true;
 					column->typename->name = pstrdup("int4");
 				}
-				else if (strcmp(column->typename->name, "serial8") == 0)
+				else if (strcmp(column->typename->name, "bigserial") == 0 ||
+						 strcmp(column->typename->name, "serial8") == 0)
 				{
 					is_serial = true;
 					column->typename->name = pstrdup("int8");
