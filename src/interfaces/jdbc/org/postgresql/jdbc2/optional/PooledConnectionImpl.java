@@ -12,7 +12,7 @@ import java.lang.reflect.*;
  * @see ConnectionPool
  *
  * @author Aaron Mulder (ammulder@chariotsolutions.com)
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class PooledConnectionImpl implements PooledConnection
 {
@@ -204,7 +204,14 @@ public class PooledConnectionImpl implements PooledConnection
 						return Boolean.FALSE;
 					}
 				}
-				return method.invoke(con, args);
+                                try
+                                {
+                                    return method.invoke(con, args);
+                                }
+                                catch (InvocationTargetException e)
+                                {
+                                    throw e.getTargetException();
+                                }
 			}
 			// All the rest is from the Connection interface
 			if (method.getName().equals("isClosed"))
@@ -355,7 +362,14 @@ public class PooledConnectionImpl implements PooledConnection
             }
             else
             {
-                return method.invoke(st, args);
+                try 
+                {
+                    return method.invoke(st, args);
+                }
+                catch (InvocationTargetException e)
+                {
+                    throw e.getTargetException();
+                }
             }
         }
     }
