@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.21 2004/07/12 19:18:18 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.22 2004/07/15 15:23:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1034,8 +1034,8 @@ do_help(void)
 	printf(_("  -s, --silent only print errors, no informational messages\n"));
 #ifdef WIN32
 	printf(_("  -N       service name with which to register PostgreSQL server\n"));
-	printf(_("  -P       user name of account to register PostgreSQL server\n"));
-	printf(_("  -U       password  of account to register PostgreSQL server\n"));
+	printf(_("  -P       password of account to register PostgreSQL server\n"));
+	printf(_("  -U       user name of account to register PostgreSQL server\n"));
 #endif
 	printf(_("  -w           wait until operation completes\n"));
 	printf(_("  -W           do not wait until operation completes\n"));
