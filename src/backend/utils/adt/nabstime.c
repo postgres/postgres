@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.39 1998/01/07 18:46:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.40 1998/02/01 19:43:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,11 +138,9 @@ abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char *tzn)
 	{
 		tx = gmtime((time_t *) &time);
 	};
-#else
 #endif
 
-#ifdef DATEDEBUG
-#ifdef HAVE_INT_TIMEZONE
+#if defined(DATEDEBUG) && defined(HAVE_INT_TIMEZONE)
 	printf("datetime2tm- (localtime) %d.%02d.%02d %02d:%02d:%02d %s %s dst=%d\n",
 		   tx->tm_year, tx->tm_mon, tx->tm_mday, tx->tm_hour, tx->tm_min, tx->tm_sec,
 		   tzname[0], tzname[1], tx->tm_isdst);
@@ -150,8 +148,6 @@ abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char *tzn)
 	printf("datetime2tm- (localtime) %d.%02d.%02d %02d:%02d:%02d %s dst=%d\n",
 		   tx->tm_year, tx->tm_mon, tx->tm_mday, tx->tm_hour, tx->tm_min, tx->tm_sec,
 		   tx->tm_zone, tx->tm_isdst);
-#endif
-#else
 #endif
 
 #ifdef USE_POSIX_TIME

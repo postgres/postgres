@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.99 1998/01/25 04:12:28 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.100 1998/02/01 19:43:34 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -124,8 +124,6 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		UpdateStmt, InsertStmt, SelectStmt, NotifyStmt, DeleteStmt, ClusterStmt,
 		ExplainStmt, VariableSetStmt, VariableShowStmt, VariableResetStmt,
 		CreateUserStmt, AlterUserStmt, DropUserStmt
-
-%type <rtstmt> 
 
 %type <str>		opt_database, location
 
@@ -261,7 +259,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		SECOND_P, SELECT, SET, SUBSTRING,
 		TABLE, TIME, TIMESTAMP, TO, TRAILING, TRANSACTION, TRIM,
 		UNION, UNIQUE, UPDATE, USING,
-		VALUES, VARCHAR, VARYING, VERBOSE, VERSION, VIEW,
+		VALUES, VARCHAR, VARYING, VIEW,
 		WHERE, WITH, WORK, YEAR_P, ZONE
 
 /* Keywords (in SQL3 reserved words) */
@@ -2222,7 +2220,7 @@ LockStmt:  LOCK_P relation_name
 					c->typename->name = xlateSqlType("bool");
 
 					n->relname = $2;
-					n->whereClause = c;
+					n->whereClause = (Node *)c;
 					$$ = (Node *)n;
 				}
 		;
@@ -3284,8 +3282,9 @@ a_expr:  attr opt_indirection
 						makeA_Expr(OP, "<", $1, $4),
 						makeA_Expr(OP, ">", $1, $6));
 				}
-		| a_expr IN { saved_In_Expr = lcons($1,saved_In_Expr); } '(' in_expr ')' { saved_In_Expr = lnext(saved_In_Expr); }
+		| a_expr IN { saved_In_Expr = lcons($1,saved_In_Expr); } '(' in_expr ')'
 				{
+					saved_In_Expr = lnext(saved_In_Expr);
 					if (nodeTag($5) == T_SubLink)
 					{
 							SubLink *n = (SubLink *)$5;
@@ -3297,8 +3296,9 @@ a_expr:  attr opt_indirection
 					}
 					else	$$ = $5;
 				}
-		| a_expr NOT IN { saved_In_Expr = lcons($1,saved_In_Expr); } '(' not_in_expr ')' { saved_In_Expr = lnext(saved_In_Expr); }
+		| a_expr NOT IN { saved_In_Expr = lcons($1,saved_In_Expr); } '(' not_in_expr ')'
 				{
+					saved_In_Expr = lnext(saved_In_Expr);
 					if (nodeTag($6) == T_SubLink)
 					{
 							SubLink *n = (SubLink *)$6;
