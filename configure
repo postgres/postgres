@@ -4407,7 +4407,7 @@ else
   cat conftest.$ac_ext >&5
 fi
 rm -f conftest*
-test "$ac_cv_search_fdatasync" = "no" && for i in rt; do
+test "$ac_cv_search_fdatasync" = "no" && for i in rt posix4; do
 LIBS="-l$i  $ac_func_search_save_LIBS"
 cat > conftest.$ac_ext <<EOF
 #line 4414 "configure"
@@ -8051,7 +8051,7 @@ EOF
 
 else
   echo "$ac_t""no" 1>&6
-{ echo "configure: error: atexi() nor on_exit() found" 1>&2; exit 1; }
+{ echo "configure: error: neither atexit() nor on_exit() found" 1>&2; exit 1; }
 fi
 done
 

@@ -751,7 +751,7 @@ AC_EGREP_HEADER(z_streamp, zlib.h, [
 AC_CHECK_LIB(z,        inflate)
 ])
 # Solaris:
-AC_SEARCH_LIBS(fdatasync, rt)
+AC_SEARCH_LIBS(fdatasync, [rt posix4])
 
 if test "$with_krb4" = yes ; then
   AC_CHECK_LIB(des, [des_encrypt], [], [AC_MSG_ERROR([library 'des' is required for Kerberos 4])])
@@ -1161,7 +1161,7 @@ AC_CHECK_FUNC(atexit,
 	[AC_DEFINE(HAVE_ATEXIT)],
 	[AC_CHECK_FUNCS(on_exit,
 		[AC_DEFINE(HAVE_ON_EXIT)],
-		[AC_MSG_ERROR([atexi() nor on_exit() found])])])
+		[AC_MSG_ERROR([neither atexit() nor on_exit() found])])])
 
 dnl Need a #define for the size of Datum (unsigned long)
 
