@@ -1066,8 +1066,6 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 				}
 				else
 				{
-					char		clear = 0;
-
 					mylog("send_query: ok - 'C' - %s\n", cmdbuffer);
 
 					if (res == NULL)	/* allow for "show" style notices */
@@ -1273,9 +1271,9 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 		}
 	}
 	/*	
-	 *	If retres isn't set yet.
+	 *	Break before being ready to return.
 	 */
-	if (!retres)
+	if (!ReadyToReturn)
 	{
 		if (res && QR_get_aborted(res))
 			retres = res;
