@@ -124,9 +124,3 @@ There's C source, Makefile for FreeBSD, and SQL for installing and
 testing the function.
 
 Let me know if anything looks fishy!
-
-A note on testing C extensions - it seems not enough to drop a function
-and re-create it - if I change a function, I have to stop and restart
-the backend for the new version to be seen. I guess it would be too
-messy to track which functions are added from a .so and do a dlclose
-when the last one is dropped.
