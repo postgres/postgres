@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Oct 16 16:05:46 EDT 2000
+Last updated:		Mon Oct 16 17:14:25 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -112,6 +112,9 @@ VIEWS
 * Allow DISTINCT on views
 * Allow views of aggregate columns
 * Allow views with subselects
+* Create insert, update and delete rules for simple one table views
+* Change elog for complex view ins|upd|del to "cannot {ins|upd|del}
+* Add the functionality for "with check option" clause of create view
 
 INDEXES
 
