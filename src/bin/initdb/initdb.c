@@ -43,7 +43,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.20 2004/01/31 21:18:00 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.21 2004/01/31 22:10:00 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -553,7 +553,7 @@ mkdir_p(char *path, mode_t omode)
 		else if (p[0] != '/')
 			continue;
 		*p = '\0';
-		if (p[1] == '\0')
+		if (!last && p[1] == '\0')
 			last = 1;
 		if (first)
 		{
