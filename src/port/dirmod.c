@@ -10,14 +10,20 @@
  *	Win32 (NT, Win2k, XP).	replace() doesn't work on Win95/98/Me.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.9 2004/02/02 00:17:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.10 2004/02/02 22:20:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #ifndef TEST_VERSION
 
+#if defined(WIN32) || defined(CYGWIN)
+
+#ifndef FRONTEND
 #include "postgres.h"
+#else
+#include "postgres_fe.h"
+#endif
 
 #undef rename
 #undef unlink
@@ -95,6 +101,7 @@ pgunlink(const char *path)
 	return 0;
 }
 
+#endif
 
 #else
 
