@@ -3,7 +3,7 @@
 # pg_upgrade: update a database without needing a full dump/reload cycle.
 # CAUTION: Read the manual page before trying to use this!
 
-# $Header: /cvsroot/pgsql/contrib/pg_upgrade/Attic/pg_upgrade,v 1.8 2002/01/15 05:10:57 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/pg_upgrade/Attic/pg_upgrade,v 1.9 2002/01/15 05:41:55 momjian Exp $
 #
 # To migrate this to newer versions of PostgreSQL:  
 #	1)  Update the version numbers at the top of the file
@@ -84,11 +84,11 @@ make_dbobjoidmap()
 	grep -v '^template0$' |
 	while read DB
 	do	
-		QUERY="`echo \"	SELECT 	relname, oid
-				FROM 	pg_class
-				WHERE 	relkind = 'r' OR
-					relkind = 'i' OR
-					relkind = 't'\"`"
+		QUERY="SELECT 	relname, oid
+			FROM 	pg_class
+			WHERE 	relkind = 'r' OR
+				relkind = 'i' OR
+				relkind = 't'"
 		# Don't move over 7.1 int4 sequences;  use setval() file.
 		# Sequence XIDs changed from 7.2beta4 to beta5;  don't copy them.
 		if [ "$SRC_VERSION" != "7.1" -a \
