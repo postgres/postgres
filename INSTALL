@@ -21,12 +21,12 @@ Postgres95 has been tested on the following platforms:
 	sparc_solaris	-	SUN SPARC on Solaris 2.4
 	sparc		-	SUN SPARC on SunOS 4.1.3
 	ultrix4		-	DEC MIPS on Ultrix 4.4
-	linux		-	Intel x86 on Linux 1.2 and Linux ELF
+	linux		-	Intel x86 on Linux 1.2 (or above) ELF or a.out
 	BSD44_derived	-	OSs derived from 4.4-lite BSD (NetBSD, FreeBSD)
         bsdi            -       BSD/OS 2.0 and 2.01
         bsdi_2_1        -       BSD/OS 2.1
 	aix		-	IBM on AIX 3.2.5
-	irix5		-	SGI MIPS on IRIX 5.3
+	irix5		-	SGI MIPS on IRIX 5.3 
 	dgux            -       DG/UX 5.4R3.10
   Some hooks are provided for
 	svr4		-	Intel x86 on Intel SVR4
@@ -73,6 +73,8 @@ To install Postgres95 on UNIX platforms:
    If you're installing Postgres95 on Ultrix 4.x or Linux, see the 
    porting notes at the end for additional packages that you need to install
    before installing Postgres95.
+
+   If using Linux or Irix, you should also read the machine-specific FAQs.
 
    Our Makefiles require GNU make (called gmake in this document) and
    also assume that "install" accepts BSD options. The INSTALL
