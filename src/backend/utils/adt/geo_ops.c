@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.29 1998/01/07 18:46:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.30 1998/02/03 15:55:58 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,14 +135,14 @@ single_decode(char *str, float8 *x, char **s)
 		*s = cp;
 
 	return (TRUE);
-}								/* single_decode() */
+} /* single_decode() */
 
 static int
 single_encode(float8 x, char *str)
 {
 	sprintf(str, "%.*g", digits8, x);
 	return (TRUE);
-}								/* single_encode() */
+} /* single_encode() */
 
 static int
 pair_decode(char *str, float8 *x, float8 *y, char **s)
@@ -267,7 +267,7 @@ path_decode(int opentype, int npts, char *str, int *isopen, char **ss, Point *p)
 	*ss = s;
 
 	return (TRUE);
-}								/* path_decode() */
+} /* path_decode() */
 
 static char *
 path_encode(bool closed, int npts, Point *pt)
@@ -315,7 +315,7 @@ path_encode(bool closed, int npts, Point *pt)
 	*cp = '\0';
 
 	return (result);
-}								/* path_encode() */
+} /* path_encode() */
 
 /*-------------------------------------------------------------
  * pair_count - count the number of points
@@ -385,7 +385,7 @@ box_in(char *str)
 	}
 
 	return (box);
-}								/* box_in() */
+} /* box_in() */
 
 /*		box_out -		convert a box to external form.
  */
@@ -396,7 +396,7 @@ box_out(BOX *box)
 		return (NULL);
 
 	return (path_encode(-1, 2, (Point *) &(box->high)));
-}								/* box_out() */
+} /* box_out() */
 
 
 /*		box_construct	-		fill in a new box.
@@ -620,7 +620,7 @@ box_width(BOX *box)
 	*result = box->high.x - box->low.x;
 
 	return (result);
-}								/* box_width() */
+} /* box_width() */
 
 
 /*		box_height		-		returns the height of the box
@@ -765,7 +765,6 @@ box_diagonal(BOX *box)
 	p2.x = box->low.x;
 	p2.y = box->low.y;
 	return (lseg_construct(&p1, &p2));
-
 }
 
 /***********************************************************************
@@ -792,10 +791,12 @@ line_construct_pm(Point *pt, double m)
 	result->B = -1.0;
 	result->C = pt->y - m * pt->x;
 
+#if FALSE
 	result->m = m;
+#endif
 
 	return (result);
-}								/* line_construct_pm() */
+} /* line_construct_pm() */
 
 
 static LINE *					/* two points */
@@ -812,7 +813,9 @@ line_construct_pp(Point *pt1, Point *pt2)
 #ifdef GEODEBUG
 		printf("line_construct_pp- line is vertical\n");
 #endif
+#if FALSE
 		result->m = DBL_MAX;
+#endif
 
 	}
 	else if (FPeq(pt1->y, pt2->y))
@@ -824,7 +827,9 @@ line_construct_pp(Point *pt1, Point *pt2)
 #ifdef GEODEBUG
 		printf("line_construct_pp- line is horizontal\n");
 #endif
+#if FALSE
 		result->m = 0.0;
+#endif
 
 	}
 	else
@@ -840,10 +845,12 @@ line_construct_pp(Point *pt1, Point *pt2)
 		printf("line_construct_pp- line is neither vertical nor horizontal (diffs x=%.*g, y=%.*g\n",
 			   digits8, (pt2->x - pt1->x), digits8, (pt2->y - pt1->y));
 #endif
+#if FALSE
 		result->m = result->A;
+#endif
 	}
 	return (result);
-}								/* line_construct_pp() */
+} /* line_construct_pp() */
 
 
 /*----------------------------------------------------------
@@ -868,7 +875,7 @@ line_parallel(LINE *l1, LINE *l2)
 	}
 
 	return (FPeq(l2->A, l1->A * (l2->B / l1->B)));
-}								/* line_parallel() */
+} /* line_parallel() */
 
 #ifdef NOT_USED
 bool
@@ -890,7 +897,7 @@ line_perp(LINE *l1, LINE *l2)
 	}
 
 	return (FPeq(((l1->A * l2->B) / (l1->B * l2->A)), -1.0));
-}								/* line_perp() */
+} /* line_perp() */
 
 #endif
 
@@ -901,7 +908,7 @@ line_vertical(LINE *line)
 	return (FPeq(line->A, -1.0) && FPzero(line->B));
 #endif
 	return (FPzero(line->B));
-}								/* line_vertical() */
+} /* line_vertical() */
 
 static bool
 line_horizontal(LINE *line)
@@ -910,7 +917,7 @@ line_horizontal(LINE *line)
 	return (FPzero(line->m));
 #endif
 	return (FPzero(line->A));
-}								/* line_horizontal() */
+} /* line_horizontal() */
 
 #ifdef NOT_USED
 bool
@@ -1021,7 +1028,7 @@ line_interpt(LINE *l1, LINE *l2)
 	printf("line_interpt- lines intersect at (%.*g,%.*g)\n", digits8, x, digits8, y);
 #endif
 	return (result);
-}								/* line_interpt() */
+} /* line_interpt() */
 
 
 /***********************************************************************
@@ -1087,7 +1094,7 @@ path_in(char *str)
 	path->closed = (!isopen);
 
 	return (path);
-}								/* path_in() */
+} /* path_in() */
 
 
 char *
@@ -1097,7 +1104,7 @@ path_out(PATH *path)
 		return NULL;
 
 	return (path_encode(path->closed, path->npts, (Point *) &(path->p[0])));
-}								/* path_out() */
+} /* path_out() */
 
 
 /*----------------------------------------------------------
@@ -1150,7 +1157,7 @@ path_isclosed(PATH *path)
 		return FALSE;
 
 	return (path->closed);
-}								/* path_isclosed() */
+} /* path_isclosed() */
 
 bool
 path_isopen(PATH *path)
@@ -1159,7 +1166,7 @@ path_isopen(PATH *path)
 		return FALSE;
 
 	return (!path->closed);
-}								/* path_isopen() */
+} /* path_isopen() */
 
 
 int4
@@ -1169,7 +1176,7 @@ path_npoints(PATH *path)
 		return 0;
 
 	return (path->npts);
-}								/* path_npoints() */
+} /* path_npoints() */
 
 PATH *
 path_close(PATH *path)
@@ -1183,7 +1190,7 @@ path_close(PATH *path)
 	result->closed = TRUE;
 
 	return (result);
-}								/* path_close() */
+} /* path_close() */
 
 
 PATH *
@@ -1198,7 +1205,7 @@ path_open(PATH *path)
 	result->closed = FALSE;
 
 	return (result);
-}								/* path_open() */
+} /* path_open() */
 
 
 PATH *
@@ -1212,7 +1219,7 @@ path_copy(PATH *path)
 
 	memmove((char *) result, (char *) path, size);
 	return (result);
-}								/* path_copy() */
+} /* path_copy() */
 
 
 /* path_inter -
@@ -1249,7 +1256,7 @@ path_inter(PATH *p1, PATH *p2)
 		b2.low.y = Min(p2->p[i].y, b2.low.y);
 	}
 	if (!box_overlap(&b1, &b2))
-		return (0);
+		return (FALSE);
 
 	/* pairwise check lseg intersections */
 	for (i = 0; i < p1->npts - 1; i++)
@@ -1259,16 +1266,18 @@ path_inter(PATH *p1, PATH *p2)
 			statlseg_construct(&seg1, &p1->p[i], &p1->p[i + 1]);
 			statlseg_construct(&seg2, &p2->p[j], &p2->p[j + 1]);
 			if (lseg_intersect(&seg1, &seg2))
-				return (1);
+				return (TRUE);
 		}
 	}
 
 	/* if we dropped through, no two segs intersected */
-	return (0);
-}
+	return (FALSE);
+} /* path_inter() */
 
-/* this essentially does a cartesian product of the lsegs in the
-   two paths, and finds the min distance between any two lsegs */
+/* path_distance()
+ * This essentially does a cartesian product of the lsegs in the
+ *  two paths, and finds the min distance between any two lsegs
+ */
 double *
 path_distance(PATH *p1, PATH *p2)
 {
@@ -1305,7 +1314,7 @@ path_distance(PATH *p1, PATH *p2)
 		}
 
 	return (min);
-}
+} /* path_distance() */
 
 
 /*----------------------------------------------------------
@@ -1325,7 +1334,7 @@ path_length(PATH *path)
 		*result += point_dt(&path->p[i], &path->p[i + 1]);
 
 	return (result);
-}								/* path_length() */
+} /* path_length() */
 
 
 #ifdef NOT_USED
@@ -1340,7 +1349,7 @@ path_ln(PATH *path)
 		result += point_dt(&path->p[i], &path->p[i + 1]);
 
 	return (result);
-}								/* path_ln() */
+} /* path_ln() */
 
 #endif
 
@@ -1378,7 +1387,7 @@ point_in(char *str)
 	point->y = y;
 
 	return (point);
-}								/* point_in() */
+} /* point_in() */
 
 char *
 point_out(Point *pt)
@@ -1387,7 +1396,7 @@ point_out(Point *pt)
 		return (NULL);
 
 	return (path_encode(-1, 1, pt));
-}								/* point_out() */
+} /* point_out() */
 
 
 static Point *
@@ -1500,6 +1509,10 @@ point_distance(Point *pt1, Point *pt2)
 double
 point_dt(Point *pt1, Point *pt2)
 {
+#ifdef GEODEBUG
+printf("point_dt- segment (%f,%f),(%f,%f) length is %f\n",
+ pt1->x, pt1->y, pt2->x, pt2->y, HYPOT(pt1->x - pt2->x, pt1->y - pt2->y));
+#endif
 	return (HYPOT(pt1->x - pt2->x, pt1->y - pt2->y));
 }
 
@@ -1557,10 +1570,12 @@ lseg_in(char *str)
 		|| (*s != '\0'))
 		elog(ERROR, "Bad lseg external representation '%s'", str);
 
+#if FALSE
 	lseg->m = point_sl(&lseg->p[0], &lseg->p[1]);
+#endif
 
 	return (lseg);
-}								/* lseg_in() */
+} /* lseg_in() */
 
 
 char *
@@ -1570,7 +1585,7 @@ lseg_out(LSEG *ls)
 		return (NULL);
 
 	return (path_encode(FALSE, 2, (Point *) &(ls->p[0])));
-}								/* lseg_out() */
+} /* lseg_out() */
 
 
 /* lseg_construct -
@@ -1586,7 +1601,9 @@ lseg_construct(Point *pt1, Point *pt2)
 	result->p[1].x = pt2->x;
 	result->p[1].y = pt2->y;
 
+#if FALSE
 	result->m = point_sl(pt1, pt2);
+#endif
 
 	return (result);
 }
@@ -1600,8 +1617,23 @@ statlseg_construct(LSEG *lseg, Point *pt1, Point *pt2)
 	lseg->p[1].x = pt2->x;
 	lseg->p[1].y = pt2->y;
 
+#if FALSE
 	lseg->m = point_sl(pt1, pt2);
+#endif
 }
+
+double *
+lseg_length(LSEG *lseg)
+{
+	double	   *result;
+
+	if (!PointerIsValid(lseg))
+		return (NULL);
+
+	result = point_distance(&lseg->p[0], &lseg->p[1]);
+
+	return (result);
+} /* lseg_length() */
 
 /*----------------------------------------------------------
  *	Relative position routines.
@@ -1639,8 +1671,17 @@ lseg_parallel(LSEG *l1, LSEG *l2)
 #endif
 	return (FPeq(point_sl(&(l1->p[0]), &(l1->p[1])),
 				 point_sl(&(l2->p[0]), &(l2->p[1]))));
-}								/* lseg_parallel() */
+} /* lseg_parallel() */
 
+/* lseg_perp()
+ * Determine if two line segments are perpendicular.
+ *
+ * This code did not get the correct answer for
+ *  '((0,0),(0,1))'::lseg ?-| '((0,0),(1,0))'::lseg
+ * So, modified it to check explicitly for slope of vertical line
+ *  returned by point_sl() and the results seem better.
+ * - thomas 1998-01-31
+ */
 bool
 lseg_perp(LSEG *l1, LSEG *l2)
 {
@@ -1650,12 +1691,16 @@ lseg_perp(LSEG *l1, LSEG *l2)
 	m1 = point_sl(&(l1->p[0]), &(l1->p[1]));
 	m2 = point_sl(&(l2->p[0]), &(l2->p[1]));
 
-	if (!FPzero(m1))
-		return (FPeq(m2 / m1, -1.0));
-	else if (!FPzero(m2))
-		return (FPeq(m1 / m2, -1.0));
-	return (0);					/* both 0.0 */
-}								/* lseg_perp() */
+#ifdef GEODEBUG
+printf("lseg_perp- slopes are %g and %g\n", m1, m2);
+#endif
+	if (FPzero(m1))
+		return(FPeq(m2, DBL_MAX));
+	else if (FPzero(m2))
+		return(FPeq(m1, DBL_MAX));
+
+	return (FPeq(m1 / m2, -1.0));
+} /* lseg_perp() */
 
 bool
 lseg_vertical(LSEG *lseg)
@@ -1677,7 +1722,40 @@ lseg_eq(LSEG *l1, LSEG *l2)
 			FPeq(l1->p[1].y, l2->p[1].y) &&
 			FPeq(l1->p[0].x, l2->p[0].x) &&
 			FPeq(l1->p[1].y, l2->p[1].y));
-}
+} /* lseg_eq() */
+
+bool
+lseg_ne(LSEG *l1, LSEG *l2)
+{
+	return (!FPeq(l1->p[0].x, l2->p[0].x) ||
+			!FPeq(l1->p[1].y, l2->p[1].y) ||
+			!FPeq(l1->p[0].x, l2->p[0].x) ||
+			!FPeq(l1->p[1].y, l2->p[1].y));
+} /* lseg_ne() */
+
+bool
+lseg_lt(LSEG *l1, LSEG *l2)
+{
+	return (FPlt(point_dt(&l1->p[0], &l1->p[1]), point_dt(&l2->p[0], &l2->p[1])));
+} /* lseg_lt() */
+
+bool
+lseg_le(LSEG *l1, LSEG *l2)
+{
+	return (FPle(point_dt(&l1->p[0], &l1->p[1]), point_dt(&l2->p[0], &l2->p[1])));
+} /* lseg_le() */
+
+bool
+lseg_gt(LSEG *l1, LSEG *l2)
+{
+	return (FPgt(point_dt(&l1->p[0], &l1->p[1]), point_dt(&l2->p[0], &l2->p[1])));
+} /* lseg_gt() */
+
+bool
+lseg_ge(LSEG *l1, LSEG *l2)
+{
+	return (FPge(point_dt(&l1->p[0], &l1->p[1]), point_dt(&l2->p[0], &l2->p[1])));
+} /* lseg_ge() */
 
 
 /*----------------------------------------------------------
@@ -1699,7 +1777,11 @@ lseg_distance(LSEG *l1, LSEG *l2)
 	return (result);
 }
 
-/* distance between l1, l2 */
+/* lseg_dt()
+ * Distance between two line segments.
+ * Must check both sets of endpoints to ensure minimum distance is found.
+ * - thomas 1998-02-01
+ */
 static double
 lseg_dt(LSEG *l1, LSEG *l2)
 {
@@ -1715,20 +1797,15 @@ lseg_dt(LSEG *l1, LSEG *l2)
 	d = dist_ps(&l1->p[1], l2);
 	result = Min(result, *d);
 	pfree(d);
-#if FALSE
-/* XXX Why are we checking distances from all endpoints to the other segment?
- * One set of endpoints should be sufficient - tgl 97/07/03
- */
 	d = dist_ps(&l2->p[0], l1);
 	result = Min(result, *d);
 	pfree(d);
 	d = dist_ps(&l2->p[1], l1);
 	result = Min(result, *d);
 	pfree(d);
-#endif
 
 	return (result);
-}								/* lseg_dt() */
+} /* lseg_dt() */
 
 
 Point *
@@ -1745,7 +1822,7 @@ lseg_center(LSEG *lseg)
 	result->y = (lseg->p[0].y - lseg->p[1].y) / 2;
 
 	return (result);
-}								/* lseg_center() */
+} /* lseg_center() */
 
 
 /* lseg_interpt -
@@ -1798,7 +1875,7 @@ lseg_interpt(LSEG *l1, LSEG *l2)
 	pfree(tmp2);
 
 	return (result);
-}								/* lseg_interpt() */
+} /* lseg_interpt() */
 
 /***********************************************************************
  **
@@ -2081,7 +2158,7 @@ dist_cpoly(CIRCLE *circle, POLYGON *poly)
 		*result = 0;
 
 	return (result);
-}								/* dist_cpoly() */
+} /* dist_cpoly() */
 
 
 /*---------------------------------------------------------------------
@@ -2178,13 +2255,17 @@ close_pl(Point *pt, LINE *line)
 	tmp = line_construct_pm(pt, invm);
 	result = line_interpt(tmp, line);
 	return (result);
-}								/* close_pl() */
+} /* close_pl() */
 
 
-/* close_ps -
- *		Take the closest endpoint if the point is left, right,
- *		above, or below the segment, otherwise find the intersection
- *		point of the segment and its perpendicular through the point.
+/* close_ps()
+ * Closest point on line segment to specified point.
+ * Take the closest endpoint if the point is left, right,
+ *  above, or below the segment, otherwise find the intersection
+ *  point of the segment and its perpendicular through the point.
+ *
+ * Some tricky code here, relying on boolean expressions
+ *  evaluating to only zero or one to use as an array index.
  */
 Point *
 close_ps(Point *pt, LSEG *lseg)
@@ -2206,47 +2287,149 @@ close_ps(Point *pt, LSEG *lseg)
 		result = point_copy(&lseg->p[!yh]);
 	else if (pt->y > lseg->p[yh].y)
 		result = point_copy(&lseg->p[yh]);
-	if (result)
+	if (result != NULL)
 		return (result);
-#if FALSE
-	if (FPeq(lseg->p[0].x, lseg->p[1].x))		/* vertical */
-#endif
-		if (lseg_vertical(lseg))
-		{
-			result->x = lseg->p[0].x;
-			result->y = pt->y;
-			return (result);
-#if FALSE
-		}
-		else if (FPzero(lseg->m))
-		{						/* horizontal */
-#endif
-		}
-		else if (lseg_horizontal(lseg))
-		{
-			result->x = pt->x;
-			result->y = lseg->p[0].y;
-			return (result);
-		}
 
-#if FALSE
-	invm = -1.0 / lseg->m;
+	/* vertical segment? */
+	if (lseg_vertical(lseg))
+	{
+#ifdef GEODEBUG
+printf("close_ps- segment is vertical\n");
 #endif
+		result = palloc(sizeof(*result));
+		result->x = lseg->p[0].x;
+		result->y = pt->y;
+		return (result);
+	}
+	else if (lseg_horizontal(lseg))
+	{
+#ifdef GEODEBUG
+printf("close_ps- segment is horizontal\n");
+#endif
+		result = palloc(sizeof(*result));
+		result->x = pt->x;
+		result->y = lseg->p[0].y;
+		return (result);
+	}
+
 	invm = -1.0 / point_sl(&(lseg->p[0]), &(lseg->p[1]));
 	tmp = line_construct_pm(pt, invm);
 	result = interpt_sl(lseg, tmp);
 	return (result);
-}								/* close_ps() */
+} /* close_ps() */
 
+/* close_lseg()
+ * Closest point to l1 on l2.
+ */
+Point *
+close_lseg(LSEG *l1, LSEG *l2)
+{
+	Point	   *result = NULL;
+	Point		point;
+	double		dist;
+	double	   *d;
+
+	d = dist_ps(&l1->p[0], l2);
+	dist = *d;
+	memcpy(&point, &l1->p[0], sizeof(point));
+	pfree(d);
+
+	if (*(d = dist_ps(&l1->p[1], l2)) < dist)
+	{
+		dist = *d;
+		memcpy(&point, &l1->p[1], sizeof(point));
+	}
+	pfree(d);
+
+	if (*(d = dist_ps(&l2->p[0], l1)) < dist)
+	{
+		result = close_ps(&l2->p[0], l1);
+		memcpy(&point, result, sizeof(point));
+		pfree(result);
+		result = close_ps(&point, l2);
+	}
+	pfree(d);
+
+	if (*(d = dist_ps(&l2->p[1], l1)) < dist)
+	{
+		if (result != NULL) pfree(result);
+
+		result = close_ps(&l2->p[1], l1);
+		memcpy(&point, result, sizeof(point));
+		pfree(result);
+		result = close_ps(&point, l2);
+	}
+	pfree(d);
+
+	if (result == NULL)
+	{
+		result = palloc(sizeof(*result));
+		memcpy(result, &point, sizeof(*result));
+	}
+
+	return (result);
+} /* close_lseg() */
+
+/* close_pb()
+ * Closest point on or in box to specified point.
+ */
 Point *
 close_pb(Point *pt, BOX *box)
 {
-	/* think about this one for a while */
-	elog(ERROR, "close_pb not implemented", NULL);
+	LSEG		lseg,
+				seg;
+	Point		point;
+	double		dist,
+			   *d;
 
-	return (NULL);
-}
+	if (on_pb(pt, box))
+		return (pt);
 
+	/* pairwise check lseg distances */
+	point.x = box->low.x;
+	point.y = box->high.y;
+	statlseg_construct(&lseg, &box->low, &point);
+	dist = *(d = dist_ps(pt, &lseg));
+	pfree(d);
+
+	statlseg_construct(&seg, &box->high, &point);
+	if (*(d = dist_ps(pt, &seg)) < dist)
+	{
+		dist = *d;
+		memcpy(&lseg,&seg,sizeof(lseg));
+	}
+	pfree(d);
+
+	point.x = box->high.x;
+	point.y = box->low.y;
+	statlseg_construct(&seg, &box->low, &point);
+	if (*(d = dist_ps(pt, &seg)) < dist)
+	{
+		dist = *d;
+		memcpy(&lseg,&seg,sizeof(lseg));
+	}
+	pfree(d);
+
+	statlseg_construct(&seg, &box->high, &point);
+	if (*(d = dist_ps(pt, &seg)) < dist)
+	{
+		dist = *d;
+		memcpy(&lseg,&seg,sizeof(lseg));
+	}
+	pfree(d);
+
+	return (close_ps(pt, &lseg));
+} /* close_pb() */
+
+/* close_sl()
+ * Closest point on line to line segment.
+ *
+ * XXX THIS CODE IS WRONG
+ * The code is actually calculating the point on the line segment
+ *  which is backwards from the routine naming convention.
+ * Copied code to new routine close_ls() but haven't fixed this one yet.
+ * - thomas 1998-01-31
+ */
 Point *
 close_sl(LSEG *lseg, LINE *line)
 {
@@ -2257,6 +2440,7 @@ close_sl(LSEG *lseg, LINE *line)
 	result = interpt_sl(lseg, line);
 	if (result)
 		return (result);
+
 	d1 = dist_pl(&lseg->p[0], line);
 	d2 = dist_pl(&lseg->p[1], line);
 	if (d1 < d2)
@@ -2269,14 +2453,88 @@ close_sl(LSEG *lseg, LINE *line)
 	return (result);
 }
 
+/* close_ls()
+ * Closest point on line segment to line.
+ */
+Point *
+close_ls(LINE *line, LSEG *lseg)
+{
+	Point	   *result;
+	double	   *d1,
+			   *d2;
+
+	result = interpt_sl(lseg, line);
+	if (result)
+		return (result);
+
+	d1 = dist_pl(&lseg->p[0], line);
+	d2 = dist_pl(&lseg->p[1], line);
+	if (d1 < d2)
+		result = point_copy(&lseg->p[0]);
+	else
+		result = point_copy(&lseg->p[1]);
+
+	pfree(d1);
+	pfree(d2);
+	return (result);
+} /* close_ls() */
+
+/* close_sb()
+ * Closest point on or in box to line segment.
+ */
 Point *
 close_sb(LSEG *lseg, BOX *box)
 {
-	/* think about this one for a while */
-	elog(ERROR, "close_sb not implemented", NULL);
+	Point	   *result;
+	Point	   *pt;
+	Point		point;
 
-	return (NULL);
-}
+	LSEG		bseg,
+				seg;
+	double		dist,
+				d;
+
+	/* segment intersects box? then just return closest point to center */
+	if (inter_sb(lseg, box))
+	{
+		pt = box_center(box);
+		result = close_ps(pt, lseg);
+		pfree(pt);
+		return (result);
+	}
+
+	/* pairwise check lseg distances */
+	point.x = box->low.x;
+	point.y = box->high.y;
+	statlseg_construct(&bseg, &box->low, &point);
+	dist = lseg_dt(lseg, &bseg);
+
+	statlseg_construct(&seg, &box->high, &point);
+	if ((d = lseg_dt(lseg, &seg)) < dist)
+	{
+		dist = d;
+		memcpy(&bseg, &seg, sizeof(bseg));
+	}
+
+	point.x = box->high.x;
+	point.y = box->low.y;
+	statlseg_construct(&seg, &box->low, &point);
+	if ((d = lseg_dt(lseg, &seg)) < dist)
+	{
+		dist = d;
+		memcpy(&bseg, &seg, sizeof(bseg));
+	}
+
+	statlseg_construct(&seg, &box->high, &point);
+	if ((d = lseg_dt(lseg, &seg)) < dist)
+	{
+		dist = d;
+		memcpy(&bseg, &seg, sizeof(bseg));
+	}
+
+	/* OK, we now have the closest line segment on the box boundary */
+	return (close_lseg(lseg, &bseg));
+} /* close_sb() */
 
 Point *
 close_lb(LINE *line, BOX *box)
@@ -2374,10 +2632,10 @@ on_ppath(Point *pt, PATH *path)
 			b = point_dt(pt, &path->p[i + 1]);
 			if (FPeq(a + b,
 					 point_dt(&path->p[i], &path->p[i + 1])))
-				return (1);
+				return (TRUE);
 			a = b;
 		}
-		return (0);
+		return (FALSE);
 	}
 
 	return (point_inside(pt, path->npts, path->p));
@@ -2404,7 +2662,7 @@ on_ppath(Point *pt, PATH *path)
 		if (FPeq(yh, yl))		/* horizontal seg? */
 			if (FPge(pt->x, xl) && FPle(pt->x, xh) &&
 				FPeq(pt->y, yh))
-				return (1);		/* pt lies on seg */
+				return (TRUE);		/* pt lies on seg */
 			else
 				continue;		/* skip other hz segs */
 		if (FPlt(yh, pt->y) ||	/* pt is strictly below seg */
@@ -2420,7 +2678,7 @@ on_ppath(Point *pt, PATH *path)
 					 &path->p[NEXT(i)]) +
 			path->p[i].x;
 		if (FPeq(x, pt->x))		/* pt lies on this seg */
-			return (1);
+			return (TRUE);
 
 		/* does the seg actually cross the ray? */
 
@@ -2432,7 +2690,7 @@ on_ppath(Point *pt, PATH *path)
 	return (above == UNDEF ||	/* path is horizontal */
 			inter % 2);			/* odd # of intersections */
 #endif
-}								/* on_ppath() */
+} /* on_ppath() */
 
 
 bool
@@ -2442,7 +2700,7 @@ on_sl(LSEG *lseg, LINE *line)
 		return (FALSE);
 
 	return (on_pl(&lseg->p[0], line) && on_pl(&lseg->p[1], line));
-}								/* on_sl() */
+} /* on_sl() */
 
 bool
 on_sb(LSEG *lseg, BOX *box)
@@ -2451,7 +2709,7 @@ on_sb(LSEG *lseg, BOX *box)
 		return (FALSE);
 
 	return (on_pb(&lseg->p[0], box) && on_pb(&lseg->p[1], box));
-}								/* on_sb() */
+} /* on_sb() */
 
 /*---------------------------------------------------------------------
  *		inter_
@@ -2470,25 +2728,108 @@ inter_sl(LSEG *lseg, LINE *line)
 	if (tmp)
 	{
 		pfree(tmp);
-		return (1);
+		return (TRUE);
 	}
-	return (0);
+	return (FALSE);
 }
 
-/* XXX segment and box should be able to intersect; tgl - 97/01/09 */
-
+/* inter_sb()
+ * Do line segment and box intersect?
+ *
+ * Segment completely inside box counts as intersection.
+ * If you want only segments crossing box boundaries,
+ *  try converting box to path first.
+ *
+ * Optimize for non-intersection by checking for box intersection first.
+ * - thomas 1998-01-30
+ */
 bool
 inter_sb(LSEG *lseg, BOX *box)
 {
-	return (0);
-}
+	BOX			lbox;
+	LSEG		bseg;
+	Point		point;
 
-/* XXX line and box should be able to intersect; tgl - 97/01/09 */
+	if (!PointerIsValid(lseg) || !PointerIsValid(box))
+		return (FALSE);
 
+	lbox.low.x = Min(lseg->p[0].x, lseg->p[1].x);
+	lbox.low.y = Min(lseg->p[0].y, lseg->p[1].y);
+	lbox.high.x = Max(lseg->p[0].x, lseg->p[1].x);
+	lbox.high.y = Max(lseg->p[0].y, lseg->p[1].y);
+
+	/* nothing close to overlap? then not going to intersect */
+	if (!box_overlap(&lbox, box))
+		return (FALSE);
+
+	/* an endpoint of segment is inside box? then clearly intersects */
+	if (on_pb(&lseg->p[0], box) || on_pb(&lseg->p[1], box))
+		return (TRUE);
+
+	/* pairwise check lseg intersections */
+	point.x = box->low.x;
+	point.y = box->high.y;
+	statlseg_construct(&bseg, &box->low, &point);
+	if (lseg_intersect(&bseg, lseg))
+		return (TRUE);
+
+	statlseg_construct(&bseg, &box->high, &point);
+	if (lseg_intersect(&bseg, lseg))
+		return (TRUE);
+
+	point.x = box->high.x;
+	point.y = box->low.y;
+	statlseg_construct(&bseg, &box->low, &point);
+	if (lseg_intersect(&bseg, lseg))
+		return (TRUE);
+
+	statlseg_construct(&bseg, &box->high, &point);
+	if (lseg_intersect(&bseg, lseg))
+		return (TRUE);
+
+	/* if we dropped through, no two segs intersected */
+	return (FALSE);
+} /* inter_sb() */
+
+/* inter_lb()
+ * Do line and box intersect?
+ */
 bool
 inter_lb(LINE *line, BOX *box)
 {
-	return (0);
+	LSEG		bseg;
+	Point		p1,
+				p2;
+
+	if (!PointerIsValid(line) || !PointerIsValid(box))
+		return (FALSE);
+
+	/* pairwise check lseg intersections */
+	p1.x = box->low.x;
+	p1.y = box->low.y;
+	p2.x = box->low.x;
+	p2.y = box->high.y;
+	statlseg_construct(&bseg, &p1, &p2);
+	if (inter_sl(&bseg, line))
+		return (TRUE);
+	p1.x = box->high.x;
+	p1.y = box->high.y;
+	statlseg_construct(&bseg, &p1, &p2);
+	if (inter_sl(&bseg, line))
+		return (TRUE);
+	p2.x = box->high.x;
+	p2.y = box->low.y;
+	statlseg_construct(&bseg, &p1, &p2);
+	if (inter_sl(&bseg, line))
+		return (TRUE);
+	p1.x = box->low.x;
+	p1.y = box->low.y;
+	statlseg_construct(&bseg, &p1, &p2);
+	if (inter_sl(&bseg, line))
+		return (TRUE);
+
+	/* if we dropped through, no intersection */
+	return (FALSE);
 }
 
 /*------------------------------------------------------------------
@@ -2572,7 +2913,7 @@ poly_in(char *str)
 	make_bound_box(poly);
 
 	return (poly);
-}								/* poly_in() */
+} /* poly_in() */
 
 /*---------------------------------------------------------------
  * poly_out - convert internal POLYGON representation to the
@@ -2586,7 +2927,7 @@ poly_out(POLYGON *poly)
 		return NULL;
 
 	return (path_encode(TRUE, poly->npts, &(poly->p[0])));
-}								/* poly_out() */
+} /* poly_out() */
 
 
 /*-------------------------------------------------------
@@ -2724,7 +3065,7 @@ poly_contain(POLYGON *polya, POLYGON *polyb)
 		   polya->boundbox.low.x, polya->boundbox.low.y, polya->boundbox.high.x, polya->boundbox.high.y);
 #endif
 	return (FALSE);
-}								/* poly_contain() */
+} /* poly_contain() */
 
 
 /*-----------------------------------------------------------------
@@ -2744,7 +3085,7 @@ bool
 poly_contained(POLYGON *polya, POLYGON *polyb)
 {
 	return (poly_contain(polyb, polya));
-}								/* poly_contained() */
+} /* poly_contained() */
 
 
 /* poly_contain_pt()
@@ -2764,7 +3105,7 @@ poly_contain_pt(POLYGON *poly, Point *p)
 		return (FALSE);
 
 	return (point_inside(p, poly->npts, &(poly->p[0])) != 0);
-}								/* poly_contain_pt() */
+} /* poly_contain_pt() */
 
 bool
 pt_contained_poly(Point *p, POLYGON *poly)
@@ -2773,7 +3114,7 @@ pt_contained_poly(Point *p, POLYGON *poly)
 		return (FALSE);
 
 	return (poly_contain_pt(poly, p));
-}								/* pt_contained_poly() */
+} /* pt_contained_poly() */
 
 
 double *
@@ -2789,7 +3130,7 @@ poly_distance(POLYGON *polya, POLYGON *polyb)
 	*result = 0;
 
 	return (result);
-}								/* poly_distance() */
+} /* poly_distance() */
 
 
 /***********************************************************************
@@ -2805,7 +3146,7 @@ point(float8 *x, float8 *y)
 		return (NULL);
 
 	return (point_construct(*x, *y));
-}								/* point() */
+} /* point() */
 
 
 Point *
@@ -2822,7 +3163,7 @@ point_add(Point *p1, Point *p2)
 	result->y = (p1->y + p2->y);
 
 	return (result);
-}								/* point_add() */
+} /* point_add() */
 
 Point *
 point_sub(Point *p1, Point *p2)
@@ -2838,7 +3179,7 @@ point_sub(Point *p1, Point *p2)
 	result->y = (p1->y - p2->y);
 
 	return (result);
-}								/* point_sub() */
+} /* point_sub() */
 
 Point *
 point_mul(Point *p1, Point *p2)
@@ -2854,7 +3195,7 @@ point_mul(Point *p1, Point *p2)
 	result->y = (p1->x * p2->y) + (p1->y * p2->x);
 
 	return (result);
-}								/* point_mul() */
+} /* point_mul() */
 
 Point *
 point_div(Point *p1, Point *p2)
@@ -2876,7 +3217,7 @@ point_div(Point *p1, Point *p2)
 	result->y = ((p2->x * p1->y) - (p2->y * p1->x)) / div;
 
 	return (result);
-}								/* point_div() */
+} /* point_div() */
 
 
 /***********************************************************************
@@ -2896,7 +3237,7 @@ box(Point *p1, Point *p2)
 	result = box_construct(p1->x, p2->x, p1->y, p2->y);
 
 	return (result);
-}								/* box() */
+} /* box() */
 
 BOX *
 box_add(BOX *box, Point *p)
@@ -2910,7 +3251,7 @@ box_add(BOX *box, Point *p)
 						   (box->high.y + p->y), (box->low.y + p->y));
 
 	return (result);
-}								/* box_add() */
+} /* box_add() */
 
 BOX *
 box_sub(BOX *box, Point *p)
@@ -2924,7 +3265,7 @@ box_sub(BOX *box, Point *p)
 						   (box->high.y - p->y), (box->low.y - p->y));
 
 	return (result);
-}								/* box_sub() */
+} /* box_sub() */
 
 BOX *
 box_mul(BOX *box, Point *p)
@@ -2944,7 +3285,7 @@ box_mul(BOX *box, Point *p)
 	pfree(low);
 
 	return (result);
-}								/* box_mul() */
+} /* box_mul() */
 
 BOX *
 box_div(BOX *box, Point *p)
@@ -2964,7 +3305,7 @@ box_div(BOX *box, Point *p)
 	pfree(low);
 
 	return (result);
-}								/* box_div() */
+} /* box_div() */
 
 
 /***********************************************************************
@@ -3016,7 +3357,7 @@ path_add(PATH *p1, PATH *p2)
 	}
 
 	return (result);
-}								/* path_add() */
+} /* path_add() */
 
 /* path_add_pt()
  * Translation operator.
@@ -3039,7 +3380,7 @@ path_add_pt(PATH *path, Point *point)
 	}
 
 	return (result);
-}								/* path_add_pt() */
+} /* path_add_pt() */
 
 PATH *
 path_sub_pt(PATH *path, Point *point)
@@ -3059,7 +3400,7 @@ path_sub_pt(PATH *path, Point *point)
 	}
 
 	return (result);
-}								/* path_sub_pt() */
+} /* path_sub_pt() */
 
 
 /* path_mul_pt()
@@ -3086,7 +3427,7 @@ path_mul_pt(PATH *path, Point *point)
 	}
 
 	return (result);
-}								/* path_mul_pt() */
+} /* path_mul_pt() */
 
 PATH *
 path_div_pt(PATH *path, Point *point)
@@ -3109,7 +3450,7 @@ path_div_pt(PATH *path, Point *point)
 	}
 
 	return (result);
-}								/* path_div_pt() */
+} /* path_div_pt() */
 
 
 bool
@@ -3119,7 +3460,7 @@ path_contain_pt(PATH *path, Point *p)
 		return (FALSE);
 
 	return ((path->closed ? (point_inside(p, path->npts, &(path->p[0])) != 0) : FALSE));
-}								/* path_contain_pt() */
+} /* path_contain_pt() */
 
 bool
 pt_contained_path(Point *p, PATH *path)
@@ -3128,7 +3469,7 @@ pt_contained_path(Point *p, PATH *path)
 		return (FALSE);
 
 	return (path_contain_pt(path, p));
-}								/* pt_contained_path() */
+} /* pt_contained_path() */
 
 
 Point *
@@ -3145,7 +3486,7 @@ path_center(PATH *path)
 	result = NULL;
 
 	return (result);
-}								/* path_center() */
+} /* path_center() */
 
 POLYGON *
 path_poly(PATH *path)
@@ -3175,7 +3516,7 @@ path_poly(PATH *path)
 	make_bound_box(poly);
 
 	return (poly);
-}								/* path_polygon() */
+} /* path_polygon() */
 
 
 /* upgradepath()
@@ -3215,7 +3556,7 @@ upgradepath(PATH *path)
 	}
 
 	return (result);
-}								/* upgradepath() */
+} /* upgradepath() */
 
 bool
 isoldpath(PATH *path)
@@ -3224,7 +3565,7 @@ isoldpath(PATH *path)
 		return (FALSE);
 
 	return (path->npts == (path->p[0].y + 1));
-}								/* isoldpath() */
+} /* isoldpath() */
 
 
 /***********************************************************************
@@ -3237,10 +3578,10 @@ int4
 poly_npoints(POLYGON *poly)
 {
 	if (!PointerIsValid(poly))
-		return (0);
+		return (FALSE);
 
 	return (poly->npts);
-}								/* poly_npoints() */
+} /* poly_npoints() */
 
 
 Point *
@@ -3264,7 +3605,7 @@ poly_center(POLYGON *poly)
 	}
 
 	return (result);
-}								/* poly_center() */
+} /* poly_center() */
 
 
 BOX *
@@ -3278,7 +3619,7 @@ poly_box(POLYGON *poly)
 	box = box_copy(&poly->boundbox);
 
 	return (box);
-}								/* poly_box() */
+} /* poly_box() */
 
 
 /* box_poly()
@@ -3312,7 +3653,7 @@ box_poly(BOX *box)
 	box_fill(&poly->boundbox, box->high.x, box->low.x, box->high.y, box->low.y);
 
 	return (poly);
-}								/* box_poly() */
+} /* box_poly() */
 
 
 PATH *
@@ -3339,7 +3680,7 @@ poly_path(POLYGON *poly)
 	}
 
 	return (path);
-}								/* poly_path() */
+} /* poly_path() */
 
 
 /* upgradepoly()
@@ -3388,7 +3729,7 @@ upgradepoly(POLYGON *poly)
 	}
 
 	return (result);
-}								/* upgradepoly() */
+} /* upgradepoly() */
 
 /* revertpoly()
  * Reverse effect of upgradepoly().
@@ -3434,7 +3775,7 @@ revertpoly(POLYGON *poly)
 	}
 
 	return (result);
-}								/* revertpoly() */
+} /* revertpoly() */
 
 
 /***********************************************************************
@@ -3513,7 +3854,7 @@ circle_in(char *str)
 		elog(ERROR, "Bad circle external representation '%s'", str);
 
 	return (circle);
-}								/* circle_in() */
+} /* circle_in() */
 
 /*		circle_out		-		convert a circle to external form.
  */
@@ -3545,7 +3886,7 @@ circle_out(CIRCLE *circle)
 	*cp = '\0';
 
 	return (result);
-}								/* circle_out() */
+} /* circle_out() */
 
 
 /*----------------------------------------------------------
@@ -3645,37 +3986,37 @@ bool
 circle_eq(CIRCLE *circle1, CIRCLE *circle2)
 {
 	return (FPeq(circle_ar(circle1), circle_ar(circle2)));
-}								/* circle_eq() */
+} /* circle_eq() */
 
 bool
 circle_ne(CIRCLE *circle1, CIRCLE *circle2)
 {
 	return (!circle_eq(circle1, circle2));
-}								/* circle_ne() */
+} /* circle_ne() */
 
 bool
 circle_lt(CIRCLE *circle1, CIRCLE *circle2)
 {
 	return (FPlt(circle_ar(circle1), circle_ar(circle2)));
-}								/* circle_lt() */
+} /* circle_lt() */
 
 bool
 circle_gt(CIRCLE *circle1, CIRCLE *circle2)
 {
 	return (FPgt(circle_ar(circle1), circle_ar(circle2)));
-}								/* circle_gt() */
+} /* circle_gt() */
 
 bool
 circle_le(CIRCLE *circle1, CIRCLE *circle2)
 {
 	return (FPle(circle_ar(circle1), circle_ar(circle2)));
-}								/* circle_le() */
+} /* circle_le() */
 
 bool
 circle_ge(CIRCLE *circle1, CIRCLE *circle2)
 {
 	return (FPge(circle_ar(circle1), circle_ar(circle2)));
-}								/* circle_ge() */
+} /* circle_ge() */
 
 
 /*----------------------------------------------------------
@@ -3698,7 +4039,7 @@ circle_copy(CIRCLE *circle)
 
 	memmove((char *) result, (char *) circle, sizeof(CIRCLE));
 	return (result);
-}								/* circle_copy() */
+} /* circle_copy() */
 
 
 /* circle_add_pt()
@@ -3718,7 +4059,7 @@ circle_add_pt(CIRCLE *circle, Point *point)
 	result->center.y += point->y;
 
 	return (result);
-}								/* circle_add_pt() */
+} /* circle_add_pt() */
 
 CIRCLE *
 circle_sub_pt(CIRCLE *circle, Point *point)
@@ -3734,7 +4075,7 @@ circle_sub_pt(CIRCLE *circle, Point *point)
 	result->center.y -= point->y;
 
 	return (result);
-}								/* circle_sub_pt() */
+} /* circle_sub_pt() */
 
 
 /* circle_mul_pt()
@@ -3758,7 +4099,7 @@ circle_mul_pt(CIRCLE *circle, Point *point)
 	result->radius *= HYPOT(point->x, point->y);
 
 	return (result);
-}								/* circle_mul_pt() */
+} /* circle_mul_pt() */
 
 CIRCLE *
 circle_div_pt(CIRCLE *circle, Point *point)
@@ -3778,7 +4119,7 @@ circle_div_pt(CIRCLE *circle, Point *point)
 	result->radius /= HYPOT(point->x, point->y);
 
 	return (result);
-}								/* circle_div_pt() */
+} /* circle_div_pt() */
 
 
 /*		circle_area		-		returns the area of the circle.
@@ -3838,7 +4179,7 @@ circle_distance(CIRCLE *circle1, CIRCLE *circle2)
 		*result = 0;
 
 	return (result);
-}								/* circle_distance() */
+} /* circle_distance() */
 
 
 bool
@@ -3855,14 +4196,14 @@ circle_contain_pt(CIRCLE *circle, Point *point)
 	pfree(d);
 
 	return (within);
-}								/* circle_contain_pt() */
+} /* circle_contain_pt() */
 
 
 bool
 pt_contained_circle(Point *point, CIRCLE *circle)
 {
 	return (circle_contain_pt(circle, point));
-}								/* circle_contain_pt() */
+} /* circle_contain_pt() */
 
 
 /*		dist_pc -		returns the distance between
@@ -3880,7 +4221,7 @@ dist_pc(Point *point, CIRCLE *circle)
 		*result = 0;
 
 	return (result);
-}								/* dist_pc() */
+} /* dist_pc() */
 
 
 /*		circle_center	-		returns the center point of the circle.
@@ -3964,7 +4305,7 @@ circle_box(CIRCLE *circle)
 	box->low.y = circle->center.y - delta;
 
 	return (box);
-}								/* circle_box() */
+} /* circle_box() */
 
 /* box_circle()
  * Convert a box to a circle.
@@ -3985,7 +4326,7 @@ box_circle(BOX *box)
 	circle->radius = point_dt(&circle->center, &box->high);
 
 	return (circle);
-}								/* box_circle() */
+} /* box_circle() */
 
 
 POLYGON *
@@ -4062,7 +4403,7 @@ poly_circle(POLYGON *poly)
 		elog(ERROR, "Unable to convert polygon to circle", NULL);
 
 	return (circle);
-}								/* poly_circle() */
+} /* poly_circle() */
 
 
 /***********************************************************************
@@ -4130,7 +4471,7 @@ point_inside(Point *p, int npts, Point plist[])
 		return 1;
 	}
 	return 0;
-}								/* point_inside() */
+} /* point_inside() */
 
 
 /* lseg_crossing()
@@ -4193,7 +4534,7 @@ lseg_crossing(double x, double y, double px, double py)
 			return (HIT_IT);
 		return (FPgt((sgn * z), 0) ? 0 : 2 * sgn);
 	}
-}								/* lseg_crossing() */
+} /* lseg_crossing() */
 
 
 static bool
