@@ -976,7 +976,8 @@ if test x"${with_pgport+set}" = xset; then
 else
   default_port=5432
 fi
-# Need both of these because backend wants an integer and frontend a string
+echo "$ac_t""$default_port" 1>&6
+# Need both of these because some places want an integer and some a string
 cat >> confdefs.h <<EOF
 #define DEF_PGPORT ${default_port}
 EOF
@@ -985,7 +986,6 @@ cat >> confdefs.h <<EOF
 #define DEF_PGPORT_STR "${default_port}"
 EOF
 
-echo "$ac_t""$default_port" 1>&6
 
 
 #
@@ -7903,6 +7903,7 @@ s%@host_os@%$host_os%g
 s%@PORTNAME@%$PORTNAME%g
 s%@TAS@%$TAS%g
 s%@MULTIBYTE@%$MULTIBYTE%g
+s%@default_port@%$default_port%g
 s%@enable_shared@%$enable_shared%g
 s%@enable_rpath@%$enable_rpath%g
 s%@CC@%$CC%g

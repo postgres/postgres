@@ -223,11 +223,11 @@ AC_MSG_CHECKING([for default port number])
 PGAC_ARG_REQ(with, pgport, [  --with-pgport=PORTNUM   change default port number [5432]],
              [default_port=$withval],
              [default_port=5432])
-# Need both of these because backend wants an integer and frontend a string
+AC_MSG_RESULT([$default_port])
+# Need both of these because some places want an integer and some a string
 AC_DEFINE_UNQUOTED(DEF_PGPORT, ${default_port})
 AC_DEFINE_UNQUOTED(DEF_PGPORT_STR, "${default_port}")
-AC_MSG_RESULT([$default_port])
-
+AC_SUBST(default_port)
 
 #
 # Maximum number of allowed connections (--with-maxbackends), default 32
