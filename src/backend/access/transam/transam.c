@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.43 2001/03/22 06:16:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.44 2001/05/14 20:30:19 momjian Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -38,7 +38,6 @@ static void TransactionLogUpdate(TransactionId transactionId,
  */
 
 Relation	LogRelation = (Relation) NULL;
-Relation	VariableRelation = (Relation) NULL;
 
 /* ----------------
  *		global variables holding cached transaction id's and statuses.
@@ -283,46 +282,6 @@ TransactionLogUpdate(TransactionId transactionId,		/* trans id to update */
 static void
 TransRecover(Relation logRelation)
 {
-#ifdef NOT_USED
-
-	/*
-	 * first get the last recorded transaction in the log.
-	 */
-	TransGetLastRecordedTransaction(logRelation, logLastXid, &fail);
-	if (fail == true)
-		elog(ERROR, "TransRecover: failed TransGetLastRecordedTransaction");
-
-	/*
-	 * next get the "last" and "next" variables
-	 */
-	VariableRelationGetLastXid(&varLastXid);
-	VariableRelationGetNextXid(&varNextXid);
-
-	/*
-	 * intregity test (1)
-	 */
-	if (TransactionIdIsLessThan(varNextXid, logLastXid))
-		elog(ERROR, "TransRecover: varNextXid < logLastXid");
-
-	/*
-	 * intregity test (2)
-	 */
-
-	/*
-	 * intregity test (3)
-	 */
-
-	/*
-	 * here we have a valid "
-	 *
-	**** RESUME HERE ****
-	 */
-	varNextXid = TransactionIdDup(varLastXid);
-	TransactionIdIncrement(&varNextXid);
-
-	VarPut(var, VAR_PUT_LASTXID, varLastXid);
-	VarPut(var, VAR_PUT_NEXTXID, varNextXid);
-#endif
 }
 
 /* ----------------------------------------------------------------
@@ -386,7 +345,6 @@ InitializeTransactionLog(void)
 	 * so they are guaranteed to exist)
 	 */
 	logRelation = heap_openr(LogRelationName, NoLock);
-	VariableRelation = heap_openr(VariableRelationName, NoLock);
 
 	/*
 	 * XXX TransactionLogUpdate requires that LogRelation is valid so we

@@ -267,7 +267,6 @@ do
 -TFormData_pg_group \
 -TFormData_pg_index \
 -TFormData_pg_inherits \
--TFormData_pg_ipl \
 -TFormData_pg_language \
 -TFormData_pg_largeobject \
 -TFormData_pg_listener \
@@ -295,7 +294,6 @@ do
 -TForm_pg_group \
 -TForm_pg_index \
 -TForm_pg_inherits \
--TForm_pg_ipl \
 -TForm_pg_language \
 -TForm_pg_largeobject \
 -TForm_pg_log \

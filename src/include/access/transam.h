@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.32 2001/03/22 04:00:31 momjian Exp $
+ * $Id: transam.h,v 1.33 2001/05/14 20:30:21 momjian Exp $
  *
  *	 NOTES
  *		Transaction System Version 101 now support proper oid
@@ -91,38 +91,6 @@ typedef struct LogRelationContentsData
 
 typedef LogRelationContentsData *LogRelationContents;
 
-/* ----------------
- *		VariableRelationContents structure
- *
- *		The variable relation is a special "relation" which
- *		is used to store various system "variables" persistantly.
- *		Unlike other relations in the system, this relation
- *		is updated in place whenever the variables change.
- *
- *		The first 4 bytes of this relation store the version
- *		number of the transaction system.
- *
- *		Currently, the relation has only one page and the next
- *		available xid, the last committed xid and the next
- *		available oid are stored there.
- *
- *		XXX As of 7.1, pg_variable isn't used anymore; this is dead code.
- * ----------------
- */
-#ifdef NOT_USED
-typedef struct VariableRelationContentsData
-{
-	XLogRecPtr	LSN;
-	int			TransSystemVersion;
-	TransactionId nextXidData;
-	TransactionId lastXidData;	/* unused */
-	Oid			nextOid;
-} VariableRelationContentsData;
-
-typedef VariableRelationContentsData *VariableRelationContents;
-
-#endif	 /* NOT_USED */
-
 /*
  * VariableCache is placed in shmem and used by
  * backends to get next available XID & OID.
@@ -161,7 +129,6 @@ extern void TransBlockNumberSetXidStatus(Relation relation,
 							 bool *failP);
 
 /* in transam/varsup.c */
-extern void VariableRelationPutNextXid(TransactionId xid);
 extern void GetNewTransactionId(TransactionId *xid);
 extern void ReadNewTransactionId(TransactionId *xid);
 extern void GetNewObjectId(Oid *oid_return);
@@ -174,7 +141,6 @@ extern void CheckMaxObjectId(Oid assigned_oid);
 
 /* in transam.c */
 extern Relation LogRelation;
-extern Relation VariableRelation;
 
 extern TransactionId cachedTestXid;
 extern XidStatus cachedTestXidStatus;

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.225 2001/05/09 16:50:44 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.226 2001/05/14 20:30:20 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5301,8 +5301,7 @@ relation_name:	SpecialRuleRelation
 		| ColId
 				{
 					/* disallow refs to variable system tables */
-					if (strcmp(LogRelationName, $1) == 0
-						|| strcmp(VariableRelationName, $1) == 0)
+					if (strcmp(LogRelationName, $1) == 0)
 						elog(ERROR,"%s cannot be accessed by users",$1);
 					else
 						$$ = $1;

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.104 2001/05/03 16:18:02 tgl Exp $
+ * $Id: pg_type.h,v 1.105 2001/05/14 20:30:21 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -239,7 +239,6 @@ DATA(insert OID = 83 (	pg_class	 PGUID 4 4 t c t \054 1259 0 int4in int4out int4
 DATA(insert OID = 86 (	pg_shadow	 PGUID 4 4 t c t \054 1260 0 int4in int4out int4in int4out i p _null_));
 DATA(insert OID = 87 (	pg_group	 PGUID 4 4 t c t \054 1261 0 int4in int4out int4in int4out i p _null_));
 DATA(insert OID = 88 (	pg_database  PGUID 4 4 t c t \054 1262 0 int4in int4out int4in int4out i p _null_));
-DATA(insert OID = 90 (	pg_variable  PGUID 4 4 t c t \054 1264 0 int4in int4out int4in int4out i p _null_));
 DATA(insert OID = 99 (	pg_log		 PGUID 4 4 t c t \054 1269 0 int4in int4out int4in int4out i p _null_));
 
 /* OIDS 100 - 199 */

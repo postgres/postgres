@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.16 2001/05/07 00:43:14 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.17 2001/05/14 20:30:19 momjian Exp $
  -->
 
 <chapter id="catalogs">
@@ -92,18 +92,8 @@
      </row>
 
      <row>
-      <entry>pg_inheritproc</entry>
-      <entry>(not used)</entry>
-     </row>
-
-     <row>
       <entry>pg_inherits</entry>
       <entry>table inheritance hierarchy</entry>
-     </row>
-
-     <row>
-      <entry>pg_ipl</entry>
-      <entry>(not used)</entry>
      </row>
 
      <row>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.164 2001/05/09 21:13:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.165 2001/05/14 20:30:19 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -39,7 +39,6 @@
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_index.h"
-#include "catalog/pg_ipl.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_relcheck.h"
 #include "catalog/pg_statistic.h"
@@ -257,11 +256,6 @@ heap_create(char *relname,
 		{
 			tblNode = InvalidOid;
 			relid = RelOid_pg_database;
-		}
-		else if (strcmp(VariableRelationName, relname) == 0)
-		{
-			tblNode = InvalidOid;
-			relid = RelOid_pg_variable;
 		}
 		else if (strcmp(LogRelationName, relname) == 0)
 		{
@@ -986,26 +980,6 @@ RelationRemoveInheritance(Relation relation)
 		simple_heap_delete(catalogRelation, &tuple->t_self);
 		found = true;
 	}
-
-	heap_endscan(scan);
-	heap_close(catalogRelation, RowExclusiveLock);
-
-	/*
-	 * now remove dead IPL tuples
-	 */
-	catalogRelation = heap_openr(InheritancePrecidenceListRelationName,
-								 RowExclusiveLock);
-
-	entry.sk_attno = Anum_pg_ipl_iplrelid;
-
-	scan = heap_beginscan(catalogRelation,
-						  false,
-						  SnapshotNow,
-						  1,
-						  &entry);
-
-	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
-		simple_heap_delete(catalogRelation, &tuple->t_self);
 
 	heap_endscan(scan);
 	heap_close(catalogRelation, RowExclusiveLock);
@@ -1858,7 +1832,7 @@ AddRelationRawConstraints(Relation rel,
 					foreach(listptr2, rawConstraints)
 					{
 						Constraint *cdef2 = (Constraint *) lfirst(listptr2);
-		
+
 						if (cdef2 == cdef ||
 							cdef2->contype != CONSTR_CHECK ||
 							cdef2->raw_expr == NULL ||

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.131 2001/04/02 23:30:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.132 2001/05/14 20:30:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2117,7 +2117,6 @@ RelationCacheInitialize(void)
 	formrdesc(AttributeRelationName, Natts_pg_attribute, Desc_pg_attribute);
 	formrdesc(ProcedureRelationName, Natts_pg_proc, Desc_pg_proc);
 	formrdesc(TypeRelationName, Natts_pg_type, Desc_pg_type);
-	formrdesc(VariableRelationName, Natts_pg_variable, Desc_pg_variable);
 	formrdesc(LogRelationName, Natts_pg_log, Desc_pg_log);
 
 	/*
