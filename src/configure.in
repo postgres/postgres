@@ -6,27 +6,27 @@ AC_CANONICAL_HOST
 case "$host_os" in
  solaris*)
         case "$host_cpu" in
-          sparc) PORTNAME='sparc_solaris' ;;
-           i386) PORTNAME='i386_solaris' ;;
+          sparc) os=sparc_solaris ;;
+           i386) os=i386_solaris ;;
         esac ;;
-   sunos*) PORTNAME='sunos4' ;;
-   linux*) PORTNAME='linux' ;;
-    bsdi*) PORTNAME='bsdi' ;;
+   sunos*) os=sunos4 ;;
+   linux*) os=linux ;;
+    bsdi*) os=bsdi ;;
  freebsd*|netbsd*) os=bsd ;;
-    dgux*) PORTNAME='dgux';;
+    dgux*) os=dgux;;
      aix*) os=aix ;;
-nextstep*) PORTNAME='nextstep';;
-  ultrix*) PORTNAME='ultrix4';;
-    irix*) PORTNAME='irix5';;
-    hpux*) PORTNAME='hpux';;
-     osf*) PORTNAME='alpha';;
-     sco*) PORTNAME='sco';;
-   sysv4*) PORTNAME='svr4';;
- machten*) PORTNAME='machten';;
+nextstep*) os=nextstep;;
+  ultrix*) os=ultrix4;;
+    irix*) os=irix5;;
+    hpux*) os=hpux;;
+     osf*) os=alpha;;
+     sco*) os=sco;;
+   sysv4*) os=svr4;;
+ machten*) os=machten;;
  sysv4.2*) 
        case "$host_vendor" in
-               univel) PORTNAME='univel';;
-                    *) PORTNAME='unknown';;
+               univel) os=univel;;
+                    *) os=unknown;;
        esac ;;
 *) echo ""
    echo "*************************************************************"
@@ -40,6 +40,7 @@ nextstep*) PORTNAME='nextstep';;
    exit;;
 esac
 
+PORTNAME=${os}
 AC_LINK_FILES(backend/port/dynloader/${os}.c, backend/port/dynloader.c)
 AC_LINK_FILES(backend/port/dynloader/${os}.h, include/dynloader.h)
 AC_LINK_FILES(include/port/${os}.h, include/os.h)
