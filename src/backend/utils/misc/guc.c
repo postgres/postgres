@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.125 2003/05/27 17:49:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.126 2003/05/27 17:55:50 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -400,11 +400,11 @@ static struct config_bool
 #endif
 
 	{
-		{"log_statement", PGC_USERSET}, &log_statement,
+		{"log_statement", PGC_SUSET}, &log_statement,
 		false, NULL, NULL
 	},
 	{
-		{"log_duration", PGC_USERSET}, &log_duration,
+		{"log_duration", PGC_SUSET}, &log_duration,
 		false, NULL, NULL
 	},
 	{
@@ -425,19 +425,19 @@ static struct config_bool
 	},
 
 	{
-		{"log_parser_stats", PGC_USERSET}, &log_parser_stats,
+		{"log_parser_stats", PGC_SUSET}, &log_parser_stats,
 		false, NULL, NULL
 	},
 	{
-		{"log_planner_stats", PGC_USERSET}, &log_planner_stats,
+		{"log_planner_stats", PGC_SUSET}, &log_planner_stats,
 		false, NULL, NULL
 	},
 	{
-		{"log_executor_stats", PGC_USERSET}, &log_executor_stats,
+		{"log_executor_stats", PGC_SUSET}, &log_executor_stats,
 		false, NULL, NULL
 	},
 	{
-		{"log_statement_stats", PGC_USERSET}, &log_statement_stats,
+		{"log_statement_stats", PGC_SUSET}, &log_statement_stats,
 		false, NULL, NULL
 	},
 #ifdef BTREE_BUILD_STATS
@@ -791,7 +791,7 @@ static struct config_string
 	},
 
 	{
-		{"log_min_error_statement", PGC_USERSET}, &log_min_error_statement_str,
+		{"log_min_error_statement", PGC_SUSET}, &log_min_error_statement_str,
 		"panic", assign_min_error_statement, NULL
 	},
 
@@ -878,7 +878,7 @@ static struct config_string
 	},
 
 	{
-		{"log_min_messages", PGC_USERSET}, &log_min_messages_str,
+		{"log_min_messages", PGC_SUSET}, &log_min_messages_str,
 		"notice", assign_log_min_messages, NULL
 	},
 
