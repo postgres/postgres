@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.134 2002/05/17 18:32:52 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.135 2002/05/22 17:20:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1251,6 +1251,8 @@ _equalCreatePLangStmt(CreatePLangStmt *a, CreatePLangStmt *b)
 	if (!equalstr(a->plname, b->plname))
 		return false;
 	if (!equal(a->plhandler, b->plhandler))
+		return false;
+	if (!equal(a->plvalidator, b->plvalidator))
 		return false;
 	if (!equalstr(a->plcompiler, b->plcompiler))
 		return false;

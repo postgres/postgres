@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.47 2002/05/21 22:05:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.48 2002/05/22 17:20:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,6 +136,7 @@ AggregateCreate(const char *aggName,
 							  false,		/* doesn't return a set */
 							  finaltype,	/* returnType */
 							  INTERNALlanguageId,	/* languageObjectId */
+							  0,
 							  "aggregate_dummy",	/* placeholder proc */
 							  "-",			/* probin */
 							  true,			/* isAgg */

@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.263 2002/05/19 10:08:25 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.264 2002/05/22 17:21:00 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3108,6 +3108,7 @@ dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs)
 	int			i_lanname;
 	int			i_lanpltrusted;
 	int			i_lanplcallfoid;
+	int			i_lanvalidator = -1;
 	int			i_lancompiler;
 	int			i_lanacl = -1;
 	char	   *lanoid;
@@ -3115,10 +3116,12 @@ dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs)
 	char	   *lancompiler;
 	char	   *lanacl;
 	const char *lanplcallfoid;
+	const char *lanvalidator;
 	const char *((*deps)[]);
 	int			depIdx;
 	int			i,
-				fidx;
+				fidx,
+				vidx = -1;
 
 	/* Make sure we are in proper schema */
 	selectSourceSchema("pg_catalog");
@@ -3142,7 +3145,10 @@ dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs)
 	i_lancompiler = PQfnumber(res, "lancompiler");
 	i_oid = PQfnumber(res, "oid");
 	if (fout->remoteVersion >= 70300)
+	{
+		i_lanvalidator = PQfnumber(res, "lanvalidator");
 		i_lanacl = PQfnumber(res, "lanacl");
+	}
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -3151,9 +3157,15 @@ dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs)
 		lanname = PQgetvalue(res, i, i_lanname);
 		lancompiler = PQgetvalue(res, i, i_lancompiler);
 		if (fout->remoteVersion >= 70300)
+		{
+			lanvalidator = PQgetvalue(res, i, i_lanvalidator);
 			lanacl = PQgetvalue(res, i, i_lanacl);
+		}
 		else
-			lanacl = "{=U}";				
+		{
+			lanvalidator = "0";
+			lanacl = "{=U}";
+		}
 
 		fidx = findFuncByOid(finfo, numFuncs, lanplcallfoid);
 		if (fidx < 0)
@@ -3161,6 +3173,17 @@ dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs)
 			write_msg(NULL, "handler procedure for procedural language %s not found\n",
 					  lanname);
 			exit_nicely();
+		}
+
+		if (strcmp(lanvalidator, "0") != 0)
+		{
+			vidx = findFuncByOid(finfo, numFuncs, lanvalidator);
+			if (vidx < 0)
+			{
+				write_msg(NULL, "validator procedure for procedural language %s not found\n",
+						  lanname);
+				exit_nicely();
+			}
 		}
 
 		/*
@@ -3178,7 +3201,7 @@ dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs)
 		resetPQExpBuffer(delqry);
 
 		/* Make a dependency to ensure function is dumped first */
-		deps = malloc(sizeof(char *) * 2);
+		deps = malloc(sizeof(char *) * (2 + (strcmp(lanvalidator, "0")!=0) ? 1 : 0));
 		depIdx = 0;
 
 		(*deps)[depIdx++] = strdup(lanplcallfoid);
@@ -3189,8 +3212,15 @@ dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs)
 						  (PQgetvalue(res, i, i_lanpltrusted)[0] == 't') ?
 						  "TRUSTED " : "",
 						  fmtId(lanname, force_quotes));
-		appendPQExpBuffer(defqry, " HANDLER %s;\n",
+		appendPQExpBuffer(defqry, " HANDLER %s",
 						  fmtId(finfo[fidx].proname, force_quotes));
+		if (strcmp(lanvalidator, "0")!=0)
+		{
+			appendPQExpBuffer(defqry, " VALIDATOR %s",
+							  fmtId(finfo[vidx].proname, force_quotes));
+			(*deps)[depIdx++] = strdup(lanvalidator);
+		}
+		appendPQExpBuffer(defqry, ";\n");
 
 		(*deps)[depIdx++] = NULL;		/* End of List */
 

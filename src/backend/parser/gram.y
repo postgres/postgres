@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.318 2002/05/19 15:16:55 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.319 2002/05/22 17:20:59 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -182,7 +182,7 @@ static void doNegateFloat(Value *v);
 		index_name, name, function_name, file_name
 
 %type <list>	func_name, handler_name, qual_Op, qual_all_Op, OptUseOp,
-		opt_class
+		opt_class, opt_validator
 
 %type <range>	qualified_name, OptConstrFromTable
 
@@ -375,7 +375,7 @@ static void doNegateFloat(Value *v);
 	UNENCRYPTED, UNION, UNIQUE, UNKNOWN, UNLISTEN, UNTIL, UPDATE, USAGE,
 	USER, USING,
 
-	VACUUM, VALID, VALUES, VARCHAR, VARYING, VERBOSE, VERSION, VIEW, VOLATILE,
+	VACUUM, VALID, VALIDATOR, VALUES, VARCHAR, VARYING, VERBOSE, VERSION, VIEW, VOLATILE,
 	WHEN, WHERE, WITH, WITHOUT, WORK,
 	YEAR_P,
 	ZONE
@@ -1835,12 +1835,13 @@ IntegerOnly:  Iconst
  *****************************************************************************/
 
 CreatePLangStmt:  CREATE opt_trusted opt_procedural LANGUAGE ColId_or_Sconst
-			HANDLER handler_name opt_lancompiler
+			HANDLER handler_name opt_validator opt_lancompiler
 			{
 				CreatePLangStmt *n = makeNode(CreatePLangStmt);
 				n->plname = $5;
 				n->plhandler = $7;
-				n->plcompiler = $8;
+				n->plvalidator = $8;
+				n->plcompiler = $9;
 				n->pltrusted = $2;
 				$$ = (Node *)n;
 			}
@@ -1862,6 +1863,10 @@ handler_name: name
 
 opt_lancompiler: LANCOMPILER Sconst { $$ = $2; }
 			| /*EMPTY*/			{ $$ = ""; }
+		;
+
+opt_validator: VALIDATOR handler_name { $$ = $2; }
+			| /*EMPTY*/ { $$ = NULL; }
 		;
 
 DropPLangStmt:  DROP opt_procedural LANGUAGE ColId_or_Sconst
@@ -6357,6 +6362,7 @@ unreserved_keyword:
 		| USAGE
 		| VACUUM
 		| VALID
+		| VALIDATOR
 		| VALUES
 		| VARYING
 		| VERSION

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.178 2002/05/17 18:32:52 petere Exp $
+ * $Id: parsenodes.h,v 1.179 2002/05/22 17:21:01 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -990,6 +990,7 @@ typedef struct CreatePLangStmt
 	NodeTag		type;
 	char	   *plname;			/* PL name */
 	List	   *plhandler;		/* PL call handler function (qual. name) */
+	List	   *plvalidator;	/* optional validator function (qual. name) */
 	char	   *plcompiler;		/* lancompiler text */
 	bool		pltrusted;		/* PL is trusted */
 } CreatePLangStmt;

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.5 2002/05/18 13:47:59 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.6 2002/05/22 17:20:58 petere Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -388,6 +388,7 @@ CreateFunction(CreateFunctionStmt *stmt)
 	char	   *language;
 	char		languageName[NAMEDATALEN];
 	Oid			languageOid;
+	Oid			languageValidator;
 	char	   *funcname;
 	Oid			namespaceId;
 	AclResult	aclresult;
@@ -457,6 +458,8 @@ CreateFunction(CreateFunctionStmt *stmt)
 			aclcheck_error(ACLCHECK_NO_PRIV, NameStr(languageStruct->lanname));
 	}
 
+	languageValidator = languageStruct->lanvalidator;
+
 	ReleaseSysCache(languageTuple);
 
 	/*
@@ -477,6 +480,28 @@ CreateFunction(CreateFunctionStmt *stmt)
 	interpret_AS_clause(languageOid, languageName, as_clause,
 						&prosrc_str, &probin_str);
 
+	if (languageOid == INTERNALlanguageId)
+	{
+		/*
+		 * In PostgreSQL versions before 6.5, the SQL name of the
+		 * created function could not be different from the internal
+		 * name, and "prosrc" wasn't used.  So there is code out there
+		 * that does CREATE FUNCTION xyz AS '' LANGUAGE 'internal'.
+		 * To preserve some modicum of backwards compatibility, accept
+		 * an empty "prosrc" value as meaning the supplied SQL
+		 * function name.
+		 */
+		if (strlen(prosrc_str) == 0)
+			prosrc_str = funcname;
+	}
+
+	if (languageOid == ClanguageId)
+	{
+		/* If link symbol is specified as "-", substitute procedure name */
+		if (strcmp(prosrc_str, "-") == 0)
+			prosrc_str = funcname;
+	}
+
 	/*
 	 * And now that we have all the parameters, and know we're permitted
 	 * to do so, go ahead and create the function.
@@ -487,6 +512,7 @@ CreateFunction(CreateFunctionStmt *stmt)
 					returnsSet,
 					prorettype,
 					languageOid,
+					languageValidator,
 					prosrc_str, /* converted to text later */
 					probin_str, /* converted to text later */
 					false,		/* not an aggregate */

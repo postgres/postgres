@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.32 2002/05/21 22:05:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.33 2002/05/22 17:20:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_type.h"
 #include "commands/proclang.h"
 #include "commands/defrem.h"
 #include "fmgr.h"
@@ -39,7 +40,7 @@ void
 CreateProceduralLanguage(CreatePLangStmt *stmt)
 {
 	char		languageName[NAMEDATALEN];
-	Oid			procOid;
+	Oid			procOid, valProcOid;
 	Oid			typev[FUNC_MAX_ARGS];
 	char		nulls[Natts_pg_language];
 	Datum		values[Natts_pg_language];
@@ -76,8 +77,20 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 		elog(ERROR, "PL handler function %s() doesn't exist",
 			 NameListToString(stmt->plhandler));
 	if (get_func_rettype(procOid) != InvalidOid)
-		elog(ERROR, "PL handler function %s() isn't of return type Opaque",
+		elog(ERROR, "PL handler function %s() does not return type \"opaque\"",
 			 NameListToString(stmt->plhandler));
+
+	/* validate the validator function */
+	if (stmt->plvalidator)
+	{
+		typev[0] = OIDOID;
+		valProcOid = LookupFuncName(stmt->plvalidator, 1, typev);
+		if (!OidIsValid(valProcOid))
+			elog(ERROR, "PL validator function %s(oid) doesn't exist",
+				 NameListToString(stmt->plvalidator));
+	}
+	else
+		valProcOid = 0;
 
 	/*
 	 * Insert the new language into pg_language
@@ -93,6 +106,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	values[i++] = BoolGetDatum(true);	/* lanispl */
 	values[i++] = BoolGetDatum(stmt->pltrusted);
 	values[i++] = ObjectIdGetDatum(procOid);
+	values[i++] = ObjectIdGetDatum(valProcOid);
 	values[i++] = DirectFunctionCall1(textin,
 									  CStringGetDatum(stmt->plcompiler));
 	nulls[i] = 'n';				/* lanacl */

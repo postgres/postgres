@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.238 2002/05/20 23:51:43 tgl Exp $
+ * $Id: pg_proc.h,v 1.239 2002/05/22 17:21:01 petere Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2962,6 +2962,13 @@ DESCR("(internal)");
 DATA(insert OID = 2221 (  regtypeout		PGNSP PGUID 12 f f f t f s 1   23 "0" 100 0 0 100	regtypeout - _null_ ));
 DESCR("(internal)");
 
+DATA(insert OID = 2246 ( fmgr_internal_validator PGNSP PGUID 12 f f f t f s 1 26 "23" 100 0 0 100 fmgr_internal_validator - _null_ ));
+DESCR("(internal)");
+DATA(insert OID = 2247 ( fmgr_c_validator	PGNSP PGUID 12 f f f t f s 1   26 "23" 100 0 0 100	fmgr_c_validator - _null_ ));
+DESCR("(internal)");
+DATA(insert OID = 2248 ( fmgr_sql_validator	PGNSP PGUID 12 f f f t f s 1   26 "23" 100 0 0 100	fmgr_sql_validator - _null_ ));
+DESCR("(internal)");
+#define SQLvalidatorId 2248
 
 /*
  * Symbolic values for provolatile column: these indicate whether the result
@@ -2985,6 +2992,7 @@ extern Oid ProcedureCreate(const char *procedureName,
 				bool returnsSet,
 				Oid returnType,
 				Oid languageObjectId,
+				Oid languageValidator,
 				const char *prosrc,
 				const char *probin,
 				bool isAgg,

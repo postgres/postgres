@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.23 2002/05/18 15:44:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.24 2002/05/22 17:20:58 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -17,7 +17,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">langname</replaceable>
-    HANDLER <replaceable class="parameter">call_handler</replaceable>
+    HANDLER <replaceable class="parameter">call_handler</replaceable> [ VALIDATOR <replaceable>valfunction</replaceable> ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -110,6 +110,32 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">langna
        function taking no arguments and returning the
        <type>opaque</type> type, a placeholder for unspecified or
        undefined types.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>VALIDATOR</literal> <replaceable class="parameter">valfunction</replaceable></term>
+
+     <listitem>
+      <para>
+       <replaceable class="parameter">valfunction</replaceable> is the
+       name of a previously registered function that will be called
+       when a new function in the language is created, to validate the
+       new function.  The validator function must take one argument of
+       type <type>oid</type>, which will be the OID of the
+       to-be-created function, and can have any return type.  If no
+       validator function is specified, then a new function will not
+       be checked when it is created.
+      </para>
+
+      <para>
+       A validator function would typically inspect the function body
+       for syntactical correctness, but it can also look at other
+       properties of the function, for example if the language cannot
+       handle certain argument types.  To signal an error, the
+       validator function should use the <function>elog()</function>
+       function.  The return value of the function is ignored.
       </para>
      </listitem>
     </varlistentry>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.73 2002/05/21 22:05:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.74 2002/05/22 17:20:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "executor/executor.h"
+#include "fmgr.h"
 #include "miscadmin.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
@@ -32,6 +33,9 @@
 
 
 static void checkretval(Oid rettype, List *queryTreeList);
+Datum fmgr_internal_validator(PG_FUNCTION_ARGS);
+Datum fmgr_c_validator(PG_FUNCTION_ARGS);
+Datum fmgr_sql_validator(PG_FUNCTION_ARGS);
 
 
 /* ----------------------------------------------------------------
@@ -45,6 +49,7 @@ ProcedureCreate(const char *procedureName,
 				bool returnsSet,
 				Oid returnType,
 				Oid languageObjectId,
+				Oid languageValidator,
 				const char *prosrc,
 				const char *probin,
 				bool isAgg,
@@ -66,7 +71,6 @@ ProcedureCreate(const char *procedureName,
 	char		nulls[Natts_pg_proc];
 	Datum		values[Natts_pg_proc];
 	char		replaces[Natts_pg_proc];
-	List	   *querytree_list;
 	Oid			typev[FUNC_MAX_ARGS];
 	Oid			relid;
 	NameData	procname;
@@ -126,12 +130,6 @@ ProcedureCreate(const char *procedureName,
 		}
 	}
 
-	if (!OidIsValid(returnType))
-	{
-		if (languageObjectId == SQLlanguageId)
-			elog(ERROR, "SQL functions cannot return type \"opaque\"");
-	}
-
 	/*
 	 * don't allow functions of complex types that have the same name as
 	 * existing attributes of the type
@@ -142,65 +140,6 @@ ProcedureCreate(const char *procedureName,
 		elog(ERROR, "method %s already an attribute of type %s",
 			 procedureName, format_type_be(typev[0]));
 
-	/*
-	 * If this is a postquel procedure, we parse it here in order to be
-	 * sure that it contains no syntax errors.	We should store the plan
-	 * in an Inversion file for use later, but for now, we just store the
-	 * procedure's text in the prosrc attribute.
-	 */
-
-	if (languageObjectId == SQLlanguageId)
-	{
-		querytree_list = pg_parse_and_rewrite((char *) prosrc,
-											  typev,
-											  parameterCount);
-		/* typecheck return value */
-		checkretval(returnType, querytree_list);
-	}
-
-	/*
-	 * If this is an internal procedure, check that the given internal
-	 * function name (the 'prosrc' value) is a known builtin function.
-	 *
-	 * NOTE: in Postgres versions before 6.5, the SQL name of the created
-	 * function could not be different from the internal name, and
-	 * 'prosrc' wasn't used.  So there is code out there that does CREATE
-	 * FUNCTION xyz AS '' LANGUAGE 'internal'.	To preserve some modicum
-	 * of backwards compatibility, accept an empty 'prosrc' value as
-	 * meaning the supplied SQL function name.
-	 */
-	if (languageObjectId == INTERNALlanguageId)
-	{
-		if (strlen(prosrc) == 0)
-			prosrc = procedureName;
-		if (fmgr_internal_function((char *) prosrc) == InvalidOid)
-			elog(ERROR,
-				 "there is no built-in function named \"%s\"",
-				 prosrc);
-	}
-
-	/*
-	 * If this is a dynamically loadable procedure, make sure that the
-	 * library file exists, is loadable, and contains the specified link
-	 * symbol.	Also check for a valid function information record.
-	 *
-	 * We used to perform these checks only when the function was first
-	 * called, but it seems friendlier to verify the library's validity at
-	 * CREATE FUNCTION time.
-	 */
-	if (languageObjectId == ClanguageId)
-	{
-		void	   *libraryhandle;
-
-		/* If link symbol is specified as "-", substitute procedure name */
-		if (strcmp(prosrc, "-") == 0)
-			prosrc = procedureName;
-		(void) load_external_function((char *) probin,
-									  (char *) prosrc,
-									  true,
-									  &libraryhandle);
-		(void) fetch_finfo_record(libraryhandle, (char *) prosrc);
-	}
 
 	/*
 	 * All seems OK; prepare the data to be inserted into pg_proc.
@@ -315,6 +254,14 @@ ProcedureCreate(const char *procedureName,
 	heap_freetuple(tup);
 
 	heap_close(rel, RowExclusiveLock);
+
+	/* Verify function body */
+	if (OidIsValid(languageValidator))
+	{
+		/* Advance command counter so recursive functions can be defined */
+		CommandCounterIncrement();
+		OidFunctionCall1(languageValidator, retval);
+	}
 
 	return retval;
 }
@@ -453,4 +400,123 @@ checkretval(Oid rettype, List *queryTreeList)
 			 format_type_be(rettype), relnatts);
 
 	heap_close(reln, AccessShareLock);
+}
+
+
+
+/*
+ * Validator for internal functions
+ *
+ * Check that the given internal function name (the "prosrc" value) is
+ * a known builtin function.
+ */
+Datum
+fmgr_internal_validator(PG_FUNCTION_ARGS)
+{
+	Oid			funcoid = PG_GETARG_OID(0);
+	HeapTuple	tuple;
+	Form_pg_proc proc;
+	bool		isnull;
+	Datum		tmp;
+	char	   *prosrc;
+
+	tuple = SearchSysCache(PROCOID, funcoid, 0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup of function %u failed", funcoid);
+	proc = (Form_pg_proc) GETSTRUCT(tuple);
+
+	tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
+	if (isnull)
+		elog(ERROR, "null prosrc");
+	prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
+
+	if (fmgr_internal_function(prosrc) == InvalidOid)
+		elog(ERROR, "there is no built-in function named \"%s\"", prosrc);
+
+	ReleaseSysCache(tuple);
+	PG_RETURN_BOOL(true);
+}
+
+
+
+/*
+ * Validator for C language functions
+ *
+ * Make sure that the library file exists, is loadable, and contains
+ * the specified link symbol. Also check for a valid function
+ * information record.
+ */
+Datum
+fmgr_c_validator(PG_FUNCTION_ARGS)
+{
+	Oid			funcoid = PG_GETARG_OID(0);
+	void	   *libraryhandle;
+	HeapTuple	tuple;
+	Form_pg_proc proc;
+	bool		isnull;
+	Datum		tmp;
+	char	   *prosrc;
+	char	   *probin;
+
+	tuple = SearchSysCache(PROCOID, funcoid, 0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup of function %u failed", funcoid);
+	proc = (Form_pg_proc) GETSTRUCT(tuple);
+
+	tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
+	if (isnull)
+		elog(ERROR, "null prosrc");
+	prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
+
+	tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_probin, &isnull);
+	if (isnull)
+		elog(ERROR, "null probin");
+	probin = DatumGetCString(DirectFunctionCall1(textout, tmp));
+	
+	(void) load_external_function(probin, prosrc, true, &libraryhandle);
+	(void) fetch_finfo_record(libraryhandle, prosrc);
+
+	ReleaseSysCache(tuple);
+	PG_RETURN_BOOL(true);
+}
+
+
+
+/*
+ * Validator for SQL language functions
+ *
+ * Parse it here in order to be sure that it contains no syntax
+ * errors.
+ */
+Datum
+fmgr_sql_validator(PG_FUNCTION_ARGS)
+{
+	Oid			funcoid = PG_GETARG_OID(0);
+	HeapTuple	tuple;
+	Form_pg_proc proc;
+	List	   *querytree_list;
+	bool		isnull;
+	Datum		tmp;
+	char	   *prosrc;
+
+	tuple = SearchSysCache(PROCOID, funcoid, 0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup of function %u failed", funcoid);
+
+	proc = (Form_pg_proc) GETSTRUCT(tuple);
+
+	if (!OidIsValid(proc->prorettype))
+			elog(ERROR, "SQL functions cannot return type \"opaque\"");
+
+	tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
+	if (isnull)
+		elog(ERROR, "null prosrc");
+
+	prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
+
+	querytree_list = pg_parse_and_rewrite(prosrc, proc->proargtypes, proc->pronargs);
+	checkretval(proc->prorettype, querytree_list);
+
+	ReleaseSysCache(tuple);
+	PG_RETURN_BOOL(true);
 }

@@ -34,3 +34,28 @@ CREATE FUNCTION set_ttdummy (int4)
         RETURNS int4
         AS '@abs_builddir@/regress@DLSUFFIX@'
         LANGUAGE 'C';
+-- Things that shouldn't work:
+CREATE FUNCTION test1 (int) RETURNS int LANGUAGE sql
+    AS 'SELECT ''not an integer'';';
+ERROR:  return type mismatch in function: declared to return integer, returns "unknown"
+CREATE FUNCTION test1 (int) RETURNS int LANGUAGE sql
+    AS 'not even SQL';
+ERROR:  parser: parse error at or near "not"
+CREATE FUNCTION test1 (int) RETURNS int LANGUAGE sql
+    AS 'SELECT 1, 2, 3;';
+ERROR:  function declared to return integer returns multiple columns in final SELECT
+CREATE FUNCTION test1 (int) RETURNS int LANGUAGE sql
+    AS 'SELECT $2;';
+ERROR:  Parameter '$2' is out of range
+CREATE FUNCTION test1 (int) RETURNS int LANGUAGE sql
+    AS 'a', 'b';
+ERROR:  CREATE FUNCTION: only one AS item needed for sql language
+CREATE FUNCTION test1 (int) RETURNS int LANGUAGE c
+    AS 'nosuchfile';
+ERROR:  stat failed on file 'nosuchfile': No such file or directory
+CREATE FUNCTION test1 (int) RETURNS int LANGUAGE c
+    AS '@abs_builddir@/regress@DLSUFFIX@', 'nosuchsymbol';
+ERROR:  Can't find function nosuchsymbol in file @abs_builddir@/regress@DLSUFFIX@
+CREATE FUNCTION test1 (int) RETURNS int LANGUAGE internal
+    AS 'nosuch';
+ERROR:  there is no built-in function named "nosuch"
