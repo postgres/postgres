@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.49 1999/03/19 22:31:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.50 1999/03/20 02:07:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -279,8 +279,8 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 		tempSlot = makeNode(TupleTableSlot);
 		tempSlot->ttc_shouldFree = false;
 		tempSlot->ttc_descIsNew = true;
-		tempSlot->ttc_tupleDescriptor = (TupleDesc) NULL,
-			tempSlot->ttc_buffer = InvalidBuffer;
+		tempSlot->ttc_tupleDescriptor = (TupleDesc) NULL;
+		tempSlot->ttc_buffer = InvalidBuffer;
 		tempSlot->ttc_whichplan = -1;
 
 		tup = heap_copytuple(heapTuple);
