@@ -233,6 +233,12 @@ extern		"C"
 											PTR rgbValue,
 											SDWORD FAR * pcbValue);
 
+	RETCODE SQL_API SQLDataSources(HENV henv,
+                           UWORD Direction, UCHAR FAR *ServerName,
+                           WORD BufferLength1, WORD *NameLength1,
+                           UCHAR FAR *Description, WORD BufferLength2,
+                           WORD *NameLength2);
+
 #ifdef __cplusplus
 }
 #endif
