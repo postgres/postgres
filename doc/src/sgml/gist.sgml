@@ -15,10 +15,11 @@ The information about GIST is at
  <ULink url="http://GiST.CS.Berkeley.EDU:8000/gist/">http://GiST.CS.Berkeley.EDU:8000/gist/</ULink>
 
 with more on different indexing and sorting schemes at
-<ULink url="http://s2k-ftp.CS.Berkeley.EDU:8000/personal/jmh/">http://s2k-ftp.CS.Berkeley.EDU:8000/personal/jmh/</ULink>
+<ULink url="http://s2k-ftp.CS.Berkeley.EDU:8000/personal/jmh/">http://s2k-ftp.CS.Berkeley.EDU:8000/personal/jmh/</ULink>.
 
-And there is more interesting reading at the Berkely database site at 
-<ULink url="http://epoch.cs.berkeley.edu:8000/">http://epoch.cs.berkeley.edu:8000/</ULink>.
+And there is more interesting reading at
+<ULink url="http://epoch.cs.berkeley.edu:8000/">http://epoch.cs.berkeley.edu:8000/</ULink> and
+<ULink url="http://www.sai.msu.su/~megera/postgres/gist/">http://www.sai.msu.su/~megera/postgres/gist/</ULink>.
 </para>
 
 <Para>

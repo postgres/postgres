@@ -2,7 +2,7 @@
 #
 
 subdir = contrib/oid2name
-top_builddir = /pgtop/
+top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
 override CPPFLAGS += -I$(libpq_srcdir)

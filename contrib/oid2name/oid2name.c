@@ -331,9 +331,9 @@ void sql_exec_dumptable(PGconn *conn, int systables)
 
   /* don't exclude the systables if this is set */
   if(systables == 1)
-    sprintf(todo, "select oid,relname from pg_class order by relname");
+    sprintf(todo, "select relfilenode,relname from pg_class order by relname");
   else
-    sprintf(todo, "select oid,relname from pg_class where relname not like 'pg_%%' order by relname");
+    sprintf(todo, "select relfilenode,relname from pg_class where relname not like 'pg_%%' order by relname");
 
   sql_exec(conn, todo, NULL);
 }
@@ -348,7 +348,7 @@ void sql_exec_searchtable(PGconn *conn, char *tablename)
   todo = (char *) malloc (1024);
 
   /* get the oid and tablename where the name matches tablename */
-  sprintf(todo, "select oid,relname from pg_class where relname = '%s'", tablename);
+  sprintf(todo, "select relfilenode,relname from pg_class where relname = '%s'", tablename);
 
   returnvalue = sql_exec(conn, todo, 1);
 
@@ -372,7 +372,7 @@ void sql_exec_searchoid(PGconn *conn, int oid)
 
   todo = (char *) malloc (1024);
 
-  sprintf(todo, "select oid,relname from pg_class where oid = %i", oid);
+  sprintf(todo, "select relfilenode,relname from pg_class where oid = %i", oid);
 
   returnvalue = sql_exec(conn, todo, 1);
 
