@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.147.2.2 2002/11/06 23:30:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.147.2.3 2002/11/21 06:36:27 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1867,6 +1867,28 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
      </varlistentry>
 
      <varlistentry>
+      <term><varname>SUPERUSER_RESERVED_CONNECTIONS</varname>
+      (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        Determines the number of <quote>connection slots</quote> that
+        are reserved for connections by <productname>PostgreSQL</>
+        superusers.  At most <varname>max_connections</> connections can
+	ever be active simultaneously.  Whenever the number of active
+	concurrent connections is at least <varname>max_connections</> minus
+        <varname>superuser_reserved_connections</varname>, new connections
+	will be accepted only from superuser accounts.
+       </para>
+
+       <para>
+        The default value is 2. The value must be less than the value of
+        <varname>max_connections</varname>. This parameter can only be
+        set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><varname>TCPIP_SOCKET</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -2903,24 +2925,25 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
   </para>
 
   <para>
-   With SSL support compiled in, the <productname>PostgreSQL</> server
-   can be started with SSL support by setting the parameter
-   <varname>ssl</varname> to on in
-   <filename>postgresql.conf</filename>. When starting in SSL mode,
-   the server will look for the files <filename>server.key</> and
-   <filename>server.crt</> in the data directory.  These files should
-   contain the server private key and certificate respectively. These
-   files must be set up correctly before an SSL-enabled server can
-   start. If the private key is protected with a passphrase, the
-   server will prompt for the passphrase and will not start until it
-   has been entered.
+   With <acronym>SSL</> support compiled in, the
+   <productname>PostgreSQL</> server can be started with
+   <acronym>SSL</> support by setting the parameter
+   <varname>ssl</varname> to on in <filename>postgresql.conf</>. When
+   starting in <acronym>SSL</> mode, the server will look for the
+   files <filename>server.key</> and <filename>server.crt</> in the
+   data directory.  These files should contain the server private key
+   and certificate respectively. These files must be set up correctly
+   before an <acronym>SSL</>-enabled server can start. If the private key is
+   protected with a passphrase, the server will prompt for the
+   passphrase and will not start until it has been entered.
   </para>
 
   <para>
-   The server will listen for both standard and SSL connections on the
-   same TCP/IP port, and will negotiate with any connecting client on
-   whether to use SSL. See <xref linkend="client-authentication"> about
-   how to force the server to only use of SSL for certain connections.
+   The server will listen for both standard and <acronym>SSL</>
+   connections on the same TCP/IP port, and will negotiate with any
+   connecting client on whether to use <acronym>SSL</>. See <xref
+   linkend="client-authentication"> about how to force the server to
+   require use of <acronym>SSL</> for certain connections.
   </para>
 
   <para>

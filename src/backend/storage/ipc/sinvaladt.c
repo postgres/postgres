@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.48 2002/08/29 21:02:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.48.2.1 2002/11/21 06:36:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,13 +92,6 @@ SIBackendInit(SISeg *segP)
 	int			index;
 	ProcState  *stateP = NULL;
 
-	if (segP->freeBackends == 0)
-	{
-		/* out of procState slots */
-		MyBackendId = InvalidBackendId;
-		return 0;
-	}
-
 	/* Look for a free entry in the procState array */
 	for (index = 0; index < segP->lastBackend; index++)
 	{
@@ -111,9 +104,18 @@ SIBackendInit(SISeg *segP)
 
 	if (stateP == NULL)
 	{
-		stateP = &segP->procState[segP->lastBackend];
-		Assert(stateP->nextMsgNum < 0);
-		segP->lastBackend++;
+		if (segP->lastBackend < segP->maxBackends)
+		{
+			stateP = &segP->procState[segP->lastBackend];
+			Assert(stateP->nextMsgNum < 0);
+			segP->lastBackend++;
+		}
+		else
+		{
+			/* out of procState slots */
+			MyBackendId = InvalidBackendId;
+			return 0;
+		}
 	}
 
 	MyBackendId = (stateP - &segP->procState[0]) + 1;

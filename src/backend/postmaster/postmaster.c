@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.290 2002/10/18 22:05:35 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.290.2.1 2002/11/21 06:36:27 tgl Exp $
  *
  * NOTES
  *
@@ -154,12 +154,11 @@ int			MaxBackends = DEF_MAXBACKENDS;
 /*
  * ReservedBackends is the number of backends reserved for superuser use.
  * This number is taken out of the pool size given by MaxBackends so
- * number of backend slots available to none super users is
- * (MaxBackends - ReservedBackends). Note, existing super user
- * connections are not taken into account once this lower limit has
- * been reached, i.e. superuser connections made before the lower limit
- * is reached always count towards that limit and are not taken from
- * ReservedBackends.
+ * number of backend slots available to non-superusers is
+ * (MaxBackends - ReservedBackends).  Note what this really means is
+ * "if there are <= ReservedBackends connections available, only superusers
+ * can make new connections" --- pre-existing superuser connections don't
+ * count against the limit.
  */
 int			ReservedBackends = 2;
 
@@ -566,7 +565,15 @@ PostmasterMain(int argc, char *argv[])
 	}
 
 	/*
-	 * Check for invalid combinations of switches
+	 * Now we can set the data directory, and then read postgresql.conf.
+	 */
+	checkDataDir(potential_DataDir);	/* issues error messages */
+	SetDataDir(potential_DataDir);
+
+	ProcessConfigFile(PGC_POSTMASTER);
+
+	/*
+	 * Check for invalid combinations of GUC settings.
 	 */
 	if (NBuffers < 2 * MaxBackends || NBuffers < 16)
 	{
@@ -579,16 +586,11 @@ PostmasterMain(int argc, char *argv[])
 		ExitPostmaster(1);
 	}
 
-	checkDataDir(potential_DataDir);	/* issues error messages */
-	SetDataDir(potential_DataDir);
-
-	ProcessConfigFile(PGC_POSTMASTER);
-
-	/*
-	 * Force an exit if ReservedBackends is not less than MaxBackends.
-	 */
 	if (ReservedBackends >= MaxBackends)
-		elog(FATAL, "superuser_reserved_connections must be less than max_connections.");
+	{
+		postmaster_error("superuser_reserved_connections must be less than max_connections.");
+		ExitPostmaster(1);
+	}
 
 	/*
 	 * Now that we are done processing the postmaster arguments, reset
