@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.188 1999/07/20 17:20:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.189 1999/09/06 23:30:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 
 #include "postgres.h"
 #include "libpq-fe.h"
+#include "pqexpbuffer.h"
 #include "pqsignal.h"
 #include "stringutils.h"
 #include "psqlHelp.h"
@@ -108,7 +109,7 @@ static char *has_client_encoding = 0;
 /* Backslash command handling:
  *	0 - send currently constructed query to backend (i.e. we got a \g)
  *	1 - skip processing of this line, continue building up query
- *	2 - terminate processing of this query entirely
+ *	2 - terminate processing (i.e. we got a \q)
  *	3 - new query supplied by edit
  */
 #define CMD_UNKNOWN		-1
@@ -116,8 +117,6 @@ static char *has_client_encoding = 0;
 #define CMD_SKIP_LINE	1
 #define CMD_TERMINATE	2
 #define CMD_NEWEDIT		3
-
-#define MAX_QUERY_BUFFER MAX_QUERY_SIZE
 
 #define COPYBUFSIZ	8192
 
@@ -187,9 +186,10 @@ static char *gets_readline(char *prompt, FILE *source);
 static char *gets_fromFile(char *prompt, FILE *source);
 static int	listAllDbs(PsqlSettings *pset);
 static bool SendQuery(PsqlSettings *pset, const char *query,
-		  FILE *copy_in_stream, FILE *copy_out_stream);
-static int	HandleSlashCmds(PsqlSettings *pset, char *line, char *query);
-static int	MainLoop(PsqlSettings *pset, char *query, FILE *source);
+					  FILE *copy_in_stream, FILE *copy_out_stream);
+static int	HandleSlashCmds(PsqlSettings *pset, char *line,
+							PQExpBuffer query_buf);
+static int	MainLoop(PsqlSettings *pset, FILE *source);
 static FILE *setFout(PsqlSettings *pset, char *fname);
 
 static char *selectVersion(PsqlSettings *pset);
@@ -1100,11 +1100,18 @@ objectDescription(PsqlSettings *pset, char *object)
 	return 0;
 }
 
+/*
+ * Basic routines to read a line of input
+ *
+ * All three routines will return a malloc'd string of indefinite size.
+ */
 typedef char *(*READ_ROUTINE) (char *prompt, FILE *source);
 
 /*
- * gets_noreadline	prompt source gets a line of input without calling
- * readline, the source is ignored
+ * gets_noreadline
+ *		gets a line of interactive input (without using readline)
+ *
+ * the source is ignored
  */
 static char *
 gets_noreadline(char *prompt, FILE *source)
@@ -1115,8 +1122,10 @@ gets_noreadline(char *prompt, FILE *source)
 }
 
 /*
- * gets_readline  prompt source the routine to get input from GNU readline(),
- * the source is ignored the prompt argument is used as the prompting string
+ * gets_readline
+ *		gets a line of interactive input using readline library
+ *
+ * the source is ignored
  */
 static char *
 gets_readline(char *prompt, FILE *source)
@@ -1126,10 +1135,7 @@ gets_readline(char *prompt, FILE *source)
 #ifdef USE_READLINE
 	s = readline(prompt);
 #else
-	char		buf[500];
-
-	printf("%s", prompt);
-	s = fgets(buf, 500, stdin);
+	s = gets_noreadline(prompt, source);
 #endif
 	fputc('\r', stdout);
 	fflush(stdout);
@@ -1137,32 +1143,32 @@ gets_readline(char *prompt, FILE *source)
 }
 
 /*
- * gets_fromFile  prompt source
+ * gets_fromFile
+ *		gets a line of noninteractive input from a file
  *
- * the routine to read from a file, the prompt argument is ignored the source
- * argument is a FILE *
+ * the prompt is ignored
  */
 static char *
 gets_fromFile(char *prompt, FILE *source)
 {
-	char	   *line;
+	PQExpBufferData	buffer;
+	char			line[COPYBUFSIZ];
 
-	line = malloc(MAX_QUERY_BUFFER);
+	initPQExpBuffer(&buffer);
 
-	/* read up to MAX_QUERY_BUFFER characters */
-	if (fgets(line, MAX_QUERY_BUFFER, source) == NULL)
+	while (fgets(line, COPYBUFSIZ, source) != NULL)
 	{
-		free(line);
-		return NULL;
+		appendPQExpBufferStr(&buffer, line);
+		if (buffer.data[buffer.len-1] == '\n')
+			return buffer.data;
 	}
 
-	line[MAX_QUERY_BUFFER - 1] = '\0';	/* this is unnecessary, I think */
-	if (strlen(line) == MAX_QUERY_BUFFER - 1)
-	{
-		fprintf(stderr, "line read exceeds maximum length.  Truncating at %d\n",
-				MAX_QUERY_BUFFER - 1);
-	}
-	return line;
+	if (buffer.len > 0)
+		return buffer.data;		/* EOF after reading some bufferload(s) */
+
+	/* EOF, so return null */
+	termPQExpBuffer(&buffer);
+	return NULL;
 }
 
 /*
@@ -1630,15 +1636,15 @@ do_connect(const char *new_dbname,
 
 
 static void
-do_edit(const char *filename_arg, char *query, int *status_p)
+do_edit(const char *filename_arg, PQExpBuffer query_buf, int *status_p)
 {
-
 	int			fd;
-	char		tmp[64];
+	char		fnametmp[64];
 	char	   *fname;
 	int			cc;
-	const int	ql = strlen(query);
+	int			ql = query_buf->len;
 	bool		error;
+	char		line[COPYBUFSIZ+1];
 
 	if (filename_arg)
 	{
@@ -1648,37 +1654,38 @@ do_edit(const char *filename_arg, char *query, int *status_p)
 	else
 	{
 #ifndef WIN32
-		sprintf(tmp, "/tmp/psql.%ld.%ld", (long) geteuid(), (long) getpid());
+		sprintf(fnametmp, "/tmp/psql.%ld.%ld",
+				(long) geteuid(), (long) getpid());
 #else
-		GetTempFileName(".", "psql", 0, tmp);
+		GetTempFileName(".", "psql", 0, fnametmp);
 #endif
-		fname = tmp;
-		unlink(tmp);
-		if (ql > 0)
+		fname = fnametmp;
+		unlink(fname);
+		if ((fd = open(fname, O_EXCL | O_CREAT | O_WRONLY, 0600)) < 0)
 		{
-			if ((fd = open(tmp, O_EXCL | O_CREAT | O_WRONLY, 0600)) == -1)
+			perror(fname);
+			error = true;
+		}
+		else
+		{
+			if (ql == 0 || query_buf->data[ql - 1] != '\n')
 			{
-				perror(tmp);
+				appendPQExpBufferChar(query_buf, '\n');
+				ql++;
+			}
+			if (write(fd, query_buf->data, ql) != ql)
+			{
+				perror(fname);
+				close(fd);
+				unlink(fname);
 				error = true;
 			}
 			else
 			{
-				if (query[ql - 1] != '\n')
-					strcat(query, "\n");
-				if (write(fd, query, ql) != ql)
-				{
-					perror(tmp);
-					close(fd);
-					unlink(tmp);
-					error = true;
-				}
-				else
-					error = false;
 				close(fd);
+				error = false;
 			}
 		}
-		else
-			error = false;
 	}
 
 	if (error)
@@ -1686,36 +1693,28 @@ do_edit(const char *filename_arg, char *query, int *status_p)
 	else
 	{
 		editFile(fname);
-		if ((fd = open(fname, O_RDONLY, 0)) == -1)
+		if ((fd = open(fname, O_RDONLY, 0)) < 0)
 		{
 			perror(fname);
-			if (!filename_arg)
-				unlink(fname);
 			*status_p = CMD_SKIP_LINE;
 		}
 		else
 		{
-			if ((cc = read(fd, query, MAX_QUERY_BUFFER)) == -1)
+			resetPQExpBuffer(query_buf);
+			while ((cc = (int) read(fd, line, COPYBUFSIZ)) > 0)
 			{
-				perror(fname);
-				close(fd);
-				if (!filename_arg)
-					unlink(fname);
-				*status_p = CMD_SKIP_LINE;
+				line[cc] = '\0';
+				appendPQExpBufferStr(query_buf, line);
 			}
-			else
-			{
-				query[cc] = '\0';
-				close(fd);
-				if (!filename_arg)
-					unlink(fname);
-				rightTrim(query);
-				*status_p = CMD_NEWEDIT;
-			}
+			close(fd);
+			rightTrim(query_buf->data);
+			query_buf->len = strlen(query_buf->data);
+			*status_p = CMD_NEWEDIT;
 		}
+		if (!filename_arg)
+			unlink(fname);
 	}
 }
-
 
 
 static void
@@ -1832,48 +1831,49 @@ do_shell(const char *command)
 
 
 
-/*
+/*----------
  * HandleSlashCmds:
  *
  * Handles all the different commands that start with \
- * db_ptr is a pointer to the TgDb* structure line is the current input
- * line prompt_ptr is a pointer to the prompt string, a pointer is used
- * because the prompt can be used with a connection to a new database.
- * Returns a status:
+ *
+ * 'line' is the current input line (ie, the backslash command)
+ * 'query_buf' contains the query-so-far, which may be modified by
+ * execution of the backslash command (for example, \r clears it)
+ *
+ * query_buf can be NULL if there is no query-so-far.
+ *
+ * Returns a status code:
  *	0 - send currently constructed query to backend (i.e. we got a \g)
  *	1 - skip processing of this line, continue building up query
- *	2 - terminate processing of this query entirely
+ *	2 - terminate processing (i.e. we got a \q)
  *	3 - new query supplied by edit
+ *----------
  */
 static int
 HandleSlashCmds(PsqlSettings *pset,
 				char *line,
-				char *query)
+				PQExpBuffer query_buf)
 {
 	int			status = CMD_SKIP_LINE;
-	char	   *optarg;
 	bool		success;
-
+	char	   *cmd;
+	/*
+	 * String: value of the slash command, less the slash and with escape
+	 * sequences decoded.
+	 */
+	char	   *optarg;
 	/*
 	 * Pointer inside the <cmd> string to the argument of the slash
 	 * command, assuming it is a one-character slash command.  If it's not
 	 * a one-character command, this is meaningless.
 	 */
 	char	   *optarg2;
-
 	/*
 	 * Pointer inside the <cmd> string to the argument of the slash
 	 * command assuming it's not a one-character command.  If it's a
 	 * one-character command, this is meaningless.
 	 */
-	char	   *cmd;
-
-	/*
-	 * String: value of the slash command, less the slash and with escape
-	 * sequences decoded.
-	 */
 	int			blank_loc;
-
 	/* Offset within <cmd> of first blank */
 
 	cmd = malloc(strlen(line)); /* unescaping better not make string grow. */
@@ -2202,10 +2202,9 @@ HandleSlashCmds(PsqlSettings *pset,
 			break;
 
 		case 'e':				/* edit */
-			{
-				do_edit(optarg, query, &status);
-				break;
-			}
+			if (query_buf)
+				do_edit(optarg, query_buf, &status);
+			break;
 
 		case 'E':
 			{
@@ -2249,7 +2248,7 @@ HandleSlashCmds(PsqlSettings *pset,
 					fclose(fd);
 					break;
 				}
-				MainLoop(pset, query, fd);
+				MainLoop(pset, fd);
 				fclose(fd);
 				break;
 			}
@@ -2316,7 +2315,7 @@ HandleSlashCmds(PsqlSettings *pset,
 					fprintf(stderr, "file named %s could not be opened\n", optarg);
 					break;
 				}
-				MainLoop(pset, query, fd);
+				MainLoop(pset, fd);
 				fclose(fd);
 				break;
 			}
@@ -2356,9 +2355,9 @@ HandleSlashCmds(PsqlSettings *pset,
 			break;
 
 		case 'p':
-			if (query)
+			if (query_buf && query_buf->len > 0)
 			{
-				fputs(query, stdout);
+				fputs(query_buf->data, stdout);
 				fputc('\n', stdout);
 			}
 			break;
@@ -2368,9 +2367,12 @@ HandleSlashCmds(PsqlSettings *pset,
 			break;
 
 		case 'r':				/* reset(clear) the buffer */
-			query[0] = '\0';
-			if (!pset->quiet)
-				printf("buffer reset(cleared)\n");
+			if (query_buf)
+			{
+				resetPQExpBuffer(query_buf);
+				if (!pset->quiet)
+					printf("buffer reset(cleared)\n");
+			}
 			break;
 
 		case 's':				/* \s is save history to a file */
@@ -2416,8 +2418,9 @@ HandleSlashCmds(PsqlSettings *pset,
 					fprintf(stderr, "file named %s could not be opened\n", optarg);
 					break;
 				}
-				fputs(query, fd);
-				fputs("\n", fd);
+				if (query_buf)
+					fputs(query_buf->data, fd);
+				fputc('\n', fd);
 				fclose(fd);
 				break;
 			}
@@ -2453,9 +2456,10 @@ HandleSlashCmds(PsqlSettings *pset,
  */
 
 static int
-MainLoop(PsqlSettings *pset, char *query, FILE *source)
+MainLoop(PsqlSettings *pset, FILE *source)
 {
-	char	   *line;			/* line of input */
+	PQExpBuffer	query_buf;		/* buffer for query being accumulated */
+	char	   *line;			/* current line of input */
 	char	   *xcomment;		/* start of extended comment */
 	int			len;			/* length of the line */
 	int			successResult = 1;
@@ -2491,9 +2495,6 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 	cur_cmd_source = source;
 	cur_cmd_interactive = ((source == stdin) && !pset->notty);
 
-	if ((query = malloc(MAX_QUERY_BUFFER)) == NULL)
-		perror("Memory Allocation Failed");
-
 	if (cur_cmd_interactive)
 	{
 		if (pset->prompt)
@@ -2516,7 +2517,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 	else
 		GetNextLine = gets_fromFile;
 
-	query[0] = '\0';
+	query_buf = createPQExpBuffer();
 	xcomment = NULL;
 	in_quote = false;
 	paren_level = 0;
@@ -2525,24 +2526,25 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 	/* main loop to get queries and execute them */
 	while (!eof)
 	{
-
-		/*
-		 * just returned from editing the line? then just copy to the
-		 * input buffer
-		 */
 		if (slashCmdStatus == CMD_NEWEDIT)
 		{
-			paren_level = 0;
-			line = strdup(query);
-			query[0] = '\0';
-
 			/*
-			 * otherwise, get another line and set interactive prompt if
-			 * necessary
+			 * just returned from editing the line? then just copy to the
+			 * input buffer
 			 */
+			line = strdup(query_buf->data);
+			resetPQExpBuffer(query_buf);
+			/* reset parsing state since we are rescanning whole query */
+			xcomment = NULL;
+			in_quote = false;
+			paren_level = 0;
 		}
 		else
 		{
+			/*
+			 * otherwise, set interactive prompt if necessary
+			 * and get another line
+			 */
 			if (cur_cmd_interactive && !pset->quiet)
 			{
 				if (in_quote && in_quote == PROMPT_SINGLEQUOTE)
@@ -2551,7 +2553,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 					pset->prompt[strlen(pset->prompt) - 3] = PROMPT_DOUBLEQUOTE;
 				else if (xcomment != NULL)
 					pset->prompt[strlen(pset->prompt) - 3] = PROMPT_COMMENT;
-				else if (query[0] != '\0' && !querySent)
+				else if (query_buf->len > 0 && !querySent)
 					pset->prompt[strlen(pset->prompt) - 3] = PROMPT_CONTINUE;
 				else
 					pset->prompt[strlen(pset->prompt) - 3] = PROMPT_READY;
@@ -2564,8 +2566,9 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 		}
 
 		/*
-		 * query - pointer to current command query_start - placeholder
-		 * for next command
+		 * query_buf holds query already accumulated.  line is the malloc'd
+		 * new line of input (note it must be freed before looping around!)
+		 * query_start is the next command start location within the line.
 		 */
 		if (line == NULL || (!cur_cmd_interactive && *line == '\0'))
 		{						/* No more input.  Time to quit, or \i
@@ -2580,11 +2583,10 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 		if (xcomment == NULL)
 		{
 			query_start = line;
-
-			/* otherwise, continue the extended comment... */
 		}
 		else
 		{
+			/* otherwise, continue the extended comment... */
 			query_start = line;
 			xcomment = line;
 		}
@@ -2617,6 +2619,8 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 			int			i;
 
 			/*
+			 * Parse line, looking for command separators.
+			 *
 			 * The current character is at line[i], the prior character at
 			 * line[i - prevlen], the next character at line[i + thislen].
 			 */
@@ -2636,29 +2640,28 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 			{
 				if (line[i] == '\\' && !in_quote)
 				{
+					/* backslash command.  Copy whatever is before \ to
+					 * query_buf.
+					 */
 					char		hold_char = line[i];
 
 					line[i] = '\0';
 					if (query_start[0] != '\0')
 					{
-						if (query[0] != '\0')
-						{
-							strcat(query, "\n");
-							strcat(query, query_start);
-						}
-						else
-							strcpy(query, query_start);
+						if (query_buf->len > 0)
+							appendPQExpBufferChar(query_buf, '\n');
+						appendPQExpBufferStr(query_buf, query_start);
 					}
 					line[i] = hold_char;
 					query_start = line + i;
-					break;		/* handle command */
+					break;		/* go handle backslash command */
 				}
 
 				if (querySent &&
 					isascii((unsigned char) (line[i])) &&
 					!isspace(line[i]))
 				{
-					query[0] = '\0';
+					resetPQExpBuffer(query_buf);
 					querySent = false;
 				}
 
@@ -2705,18 +2708,13 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 					char		hold_char = line[i + thislen];
 
 					line[i + thislen] = '\0';
-					if ((query_start[0] != '\0') &&
-						(strlen(query) + strlen(query_start) <= MAX_QUERY_BUFFER))
+					if (query_start[0] != '\0')
 					{
-						if (query[0] != '\0')
-						{
-							strcat(query, "\n");
-							strcat(query, query_start);
-						}
-						else
-							strcpy(query, query_start);
+						if (query_buf->len > 0)
+							appendPQExpBufferChar(query_buf, '\n');
+						appendPQExpBufferStr(query_buf, query_start);
 					}
-					success = SendQuery(pset, query, NULL, NULL);
+					success = SendQuery(pset, query_buf->data, NULL, NULL);
 					successResult &= success;
 					line[i + thislen] = hold_char;
 					query_start = line + i + thislen;
@@ -2745,7 +2743,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 
 		if (!in_quote && query_start[0] == '\\')
 		{
-			/* handle \p\g and other backslash combinations */
+			/* loop to handle \p\g and other backslash combinations */
 			while (query_start[0] != '\0')
 			{
 				char		hold_char;
@@ -2766,11 +2764,11 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 
 				slashCmdStatus = HandleSlashCmds(pset,
 												 query_start,
-												 query);
+												 query_buf);
 
 				if (slashCmdStatus == CMD_SKIP_LINE && !hold_char)
 				{
-					if (query[0] == '\0')
+					if (query_buf->len == 0)
 						paren_level = 0;
 					break;
 				}
@@ -2782,29 +2780,17 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 					query_start[0] = hold_char;
 			}
 			free(line);
-			/* They did \q, leave the loop */
 			if (slashCmdStatus == CMD_TERMINATE)
-				break;
-		}
-		else if (strlen(query) + strlen(query_start) > MAX_QUERY_BUFFER)
-		{
-			fprintf(stderr, "query buffer max length of %d exceeded\n",
-					MAX_QUERY_BUFFER);
-			fprintf(stderr, "query line ignored\n");
-			free(line);
+				break;			/* They did \q, leave the loop */
 		}
 		else
 		{
 			if (query_start[0] != '\0')
 			{
 				querySent = false;
-				if (query[0] != '\0')
-				{
-					strcat(query, "\n");
-					strcat(query, query_start);
-				}
-				else
-					strcpy(query, query_start);
+				if (query_buf->len > 0)
+					appendPQExpBufferChar(query_buf, '\n');
+				appendPQExpBufferStr(query_buf, query_start);
 			}
 			free(line);
 		}
@@ -2812,7 +2798,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 		/* had a backslash-g? force the query to be sent */
 		if (slashCmdStatus == CMD_SEND)
 		{
-			success = SendQuery(pset, query, NULL, NULL);
+			success = SendQuery(pset, query_buf->data, NULL, NULL);
 			successResult &= success;
 			xcomment = NULL;
 			in_quote = false;
@@ -2821,8 +2807,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 		}
 	}							/* while */
 
-	if (query)
-		free(query);
+	destroyPQExpBuffer(query_buf);
 
 	cur_cmd_source = prev_cmd_source;
 	cur_cmd_interactive = prev_cmd_interactive;
@@ -3025,7 +3010,7 @@ main(int argc, char **argv)
 	 * 20.06.97 ACRM See if we've got a /etc/psqlrc or .psqlrc file
 	 */
 	if (!access("/etc/psqlrc", R_OK))
-		HandleSlashCmds(&settings, "\\i /etc/psqlrc", "");
+		HandleSlashCmds(&settings, "\\i /etc/psqlrc", NULL);
 	if ((home = getenv("HOME")) != NULL)
 	{
 		char	   *psqlrc = NULL,
@@ -3039,7 +3024,7 @@ main(int argc, char **argv)
 				if ((line = (char *) malloc(strlen(psqlrc) + 5)) != NULL)
 				{
 					sprintf(line, "\\i %s", psqlrc);
-					HandleSlashCmds(&settings, line, "");
+					HandleSlashCmds(&settings, line, NULL);
 					free(line);
 				}
 			}
@@ -3067,7 +3052,7 @@ main(int argc, char **argv)
 			line = malloc(strlen(qfilename) + 5);
 			sprintf(line, "\\i %s", qfilename);
 		}
-		HandleSlashCmds(&settings, line, "");
+		HandleSlashCmds(&settings, line, NULL);
 		free(line);
 	}
 	else
@@ -3075,7 +3060,7 @@ main(int argc, char **argv)
 		if (singleQuery)
 			successResult = SendQuery(&settings, singleQuery, NULL, NULL);
 		else
-			successResult = MainLoop(&settings, NULL, stdin);
+			successResult = MainLoop(&settings, stdin);
 	}
 
 	PQfinish(settings.db);
@@ -3085,8 +3070,6 @@ main(int argc, char **argv)
 
 	return !successResult;
 }
-
-#define COPYBUFSIZ	8192
 
 static bool
 handleCopyOut(PGconn *conn, FILE *copystream)
