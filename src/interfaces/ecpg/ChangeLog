@@ -1864,6 +1864,11 @@ Mon Sep 27 11:05:49 CEST 2004
 
 	- Synced parser.
 	- Removed Oracle transaction syntax to fix shift/reduce error.
+	
+Tue Oct  5 12:45:48 CEST 2004
+
+	- '::' is no longer interpreted as a variable in a prepare statement.
+	  Added patch by Daniel Verite to fix this.
 	- Set ecpg version to 3.2.0.
 	- Set compat library version to 1.2.
 	- Set ecpg library version to 4.2.
