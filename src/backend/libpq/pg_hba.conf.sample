@@ -1,5 +1,5 @@
 #
-# Example Postgres95 host access control file.
+# Example PostgreSQL host access control file.
 #
 # 
 # This file controls what hosts are allowed to connect to what databases
