@@ -822,3 +822,171 @@ TIP 5: Have you checked our extensive FAQ?
 
 http://www.postgresql.org/users-lounge/docs/faq.html
 
+From pgsql-hackers-owner+M28358@postgresql.org Fri Sep  6 01:19:36 2002
+Return-path: <pgsql-hackers-owner+M28358@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g865JY225103
+	for <pgman@candle.pha.pa.us>; Fri, 6 Sep 2002 01:19:35 -0400 (EDT)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id 15A1C475B47; Fri,  6 Sep 2002 01:19:37 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 5D8C9475FC5; Fri,  6 Sep 2002 01:19:33 -0400 (EDT)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 50F2C475E88
+	for <pgsql-hackers@postgresql.org>; Fri,  6 Sep 2002 01:19:29 -0400 (EDT)
+Received: from houston.familyhealth.com.au (unknown [203.59.48.253])
+	by postgresql.org (Postfix) with ESMTP id 633FA4759E8
+	for <pgsql-hackers@postgresql.org>; Fri,  6 Sep 2002 01:19:27 -0400 (EDT)
+Received: (from root@localhost)
+	by houston.familyhealth.com.au (8.11.6/8.11.6) id g865JQh24183
+	for pgsql-hackers@postgresql.org; Fri, 6 Sep 2002 13:19:26 +0800 (WST)
+	(envelope-from chriskl@familyhealth.com.au)
+Received: from mariner (mariner.internal [192.168.0.101])
+	by houston.familyhealth.com.au (8.11.6/8.9.3) with SMTP id g865JPk24139
+	for <pgsql-hackers@postgresql.org>; Fri, 6 Sep 2002 13:19:25 +0800 (WST)
+From: "Christopher Kings-Lynne" <chriskl@familyhealth.com.au>
+To: "Hackers" <pgsql-hackers@postgresql.org>
+Subject: [HACKERS] Foreign keys in pg_dump
+Date: Fri, 6 Sep 2002 13:19:44 +0800
+Message-ID: <GNELIHDDFBOCMGBFGEFOKEBMCEAA.chriskl@familyhealth.com.au>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook IMO, Build 9.0.2416 (9.0.2910.0)
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2600.0000
+Importance: Normal
+X-scanner: scanned by Inflex 0.1.5c - (http://www.inflex.co.za/)
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+OK,
+
+The argument about using ALTER TABLE/ADD FOREIGN KEY in dumps was that it
+caused an actual check of the data in the table, right?  This was going to
+be much slower than using CREATE CONSTRAINT TRIGGER.
+
+So, why can't we do this in the SQL that pg_dump creates (TODO):
+
+CREATE TABLE ...
+ALTER TABLE/ADD FOREIGN KEY ...
+update catalogs and disable triggers that the ADD FOREIGN KEY just created
+...
+COPY .. FROM ...
+\.
+update catalogs and enable triggers
+
+Doesn't this give us the best of both worlds? ie. Keeps dependencies but
+does fast COPYing?
+
+Also, I think a new super-user (or owner) only SQL command would be nice
+(TODO):
+
+ALTER TABLE foo {DISABLE|ENABLE} TRIGGER { ALL | trigger_name [ ,... ] };
+
+This is like MSSQL syntax (IIRC):
+
+http://msdn.microsoft.com/library/default.asp?url=/library/en-us/tsqlref/ts_
+aa-az_3ied.asp
+Specifies that trigger_name is enabled or disabled. When a trigger is
+disabled it is still defined for the table; however, when INSERT, UPDATE, or
+DELETE statements are executed against the table, the actions in the trigger
+are not performed until the trigger is re-enabled.
+
+
+It would certainly tidy up the dumps a bit...
+
+Chris
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M28381@postgresql.org Fri Sep  6 09:34:27 2002
+Return-path: <pgsql-hackers-owner+M28381@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g86DYQ201524
+	for <pgman@candle.pha.pa.us>; Fri, 6 Sep 2002 09:34:26 -0400 (EDT)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id C0CA0476E5C; Fri,  6 Sep 2002 09:34:19 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id C788C476A92; Fri,  6 Sep 2002 09:34:16 -0400 (EDT)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 5CD18475EF0
+	for <pgsql-hackers@postgresql.org>; Fri,  6 Sep 2002 09:34:12 -0400 (EDT)
+Received: from squire.barchord.com (squire.barchord.com [216.194.67.18])
+	by postgresql.org (Postfix) with ESMTP id 2A0AB476EAE
+	for <pgsql-hackers@postgresql.org>; Fri,  6 Sep 2002 09:34:11 -0400 (EDT)
+Received: from [10.0.2.49] (nat.inquent.com [216.6.14.45])
+	by squire.barchord.com (Postfix) with ESMTP
+	id D4B60415; Fri,  6 Sep 2002 09:34:14 -0400 (EDT)
+Subject: Re: [HACKERS] Foreign keys in pg_dump
+From: Rod Taylor <rbt@zort.ca>
+To: Christopher Kings-Lynne <chriskl@familyhealth.com.au>
+cc: Hackers <pgsql-hackers@postgresql.org>
+In-Reply-To: <GNELIHDDFBOCMGBFGEFOKEBMCEAA.chriskl@familyhealth.com.au>
+References: <GNELIHDDFBOCMGBFGEFOKEBMCEAA.chriskl@familyhealth.com.au>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+X-Mailer: Ximian Evolution 1.0.8 
+Date: 06 Sep 2002 09:34:21 -0400
+Message-ID: <1031319261.3555.9.camel@jester>
+MIME-Version: 1.0
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: ORr
+
+On Fri, 2002-09-06 at 01:19, Christopher Kings-Lynne wrote:
+> OK,
+> 
+> The argument about using ALTER TABLE/ADD FOREIGN KEY in dumps was that it
+> caused an actual check of the data in the table, right?  This was going to
+> be much slower than using CREATE CONSTRAINT TRIGGER.
+> 
+> So, why can't we do this in the SQL that pg_dump creates (TODO):
+> 
+> CREATE TABLE ...
+> ALTER TABLE/ADD FOREIGN KEY ...
+> update catalogs and disable triggers that the ADD FOREIGN KEY just created
+> ...
+> COPY .. FROM ...
+> \.
+> update catalogs and enable triggers
+
+The problem with this is you may enable a trigger that was disabled by
+the user.  It cannot be done to all triggers.  We could figure out which
+triggers were created for the foreign key via pg_depend, then re-enable
+only those.
+
+If we did most of this in a single transaction it should be fairly safe.
+
+> Doesn't this give us the best of both worlds? ie. Keeps dependencies but
+> does fast COPYing?
+> 
+> Also, I think a new super-user (or owner) only SQL command would be nice
+> (TODO):
+> 
+> ALTER TABLE foo {DISABLE|ENABLE} TRIGGER { ALL | trigger_name [ ,... ] };
+
+pg_dump shouldn't need to know that a trigger is involved for foreign
+keys.  A SET CONSTRAINTS DISABLED  would be more appropriate in a binary
+mode dump -- but I firmly believe that text mode dumps should run full
+checks on the data to ensure the user didn't muck with it.
+
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
