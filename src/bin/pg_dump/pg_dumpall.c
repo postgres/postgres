@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.2 2002/08/27 21:33:41 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.3 2002/08/28 18:25:05 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,10 +36,15 @@
 static char *progname;
 
 static void help(void);
+
 static void dumpUsers(PGconn *conn);
 static void dumpGroups(PGconn *conn);
 static void dumpCreateDB(PGconn *conn);
+static void dumpDatabaseConfig(PGconn *conn, const char *dbname);
+static void dumpUserConfig(PGconn *conn, const char *username);
+static void makeAlterConfigCommand(const char *arrayitem, const char *type, const char *name);
 static void dumpDatabases(PGconn *conn);
+
 static int runPgDump(const char *dbname);
 static PGconn *connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 							   const char *pguser, bool require_password);
@@ -254,6 +259,7 @@ dumpUsers(PGconn *conn)
 	PGresult *res;
 	int i;
 
+	printf("--\n-- Users\n--\n\n");
 	printf("DELETE FROM pg_shadow WHERE usesysid <> (SELECT datdba FROM pg_database WHERE datname = 'template0');\n\n");
 
 	res = executeQuery(conn,
@@ -264,9 +270,11 @@ dumpUsers(PGconn *conn)
 	for (i = 0; i < PQntuples(res); i++)
 	{
 		PQExpBuffer buf = createPQExpBuffer();
+		const char *username;
 
+		username = PQgetvalue(res, i, 0);
 		appendPQExpBuffer(buf, "CREATE USER %s WITH SYSID %s",
-						  fmtId(PQgetvalue(res, i, 0)),
+						  fmtId(username),
 						  PQgetvalue(res, i, 1));
 
 		if (!PQgetisnull(res, i, 2))
@@ -292,6 +300,8 @@ dumpUsers(PGconn *conn)
 
 		printf("%s", buf->data);
 		destroyPQExpBuffer(buf);
+
+		dumpUserConfig(conn, username);
 	}
 
 	PQclear(res);
@@ -309,6 +319,7 @@ dumpGroups(PGconn *conn)
 	PGresult *res;
 	int i;
 
+	printf("--\n-- Groups\n--\n\n");
 	printf("DELETE FROM pg_group;\n\n");
 
 	res = executeQuery(conn, "SELECT groname, grosysid, grolist FROM pg_group;");
@@ -374,6 +385,8 @@ dumpCreateDB(PGconn *conn)
 	PGresult *res;
 	int i;
 
+	printf("--\n-- Database creation\n--\n\n");
+
 	/* Basically this query returns: dbname, dbowner, encoding, istemplate, dbpath */
 	res = executeQuery(conn, "SELECT datname, coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), pg_encoding_to_char(d.encoding), datistemplate, datpath FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) WHERE datallowconn ORDER BY 1;");
 
@@ -414,10 +427,112 @@ dumpCreateDB(PGconn *conn)
 		}
 		printf("%s", buf->data);
 		destroyPQExpBuffer(buf);
+
+		dumpDatabaseConfig(conn, dbname);
 	}
 
 	PQclear(res);
 	printf("\n\n");
+}
+
+
+
+/*
+ * Dump database-specific configuration
+ */
+static void
+dumpDatabaseConfig(PGconn *conn, const char *dbname)
+{
+	PQExpBuffer buf = createPQExpBuffer();
+	int count = 1;
+
+	for(;;)
+	{
+		PGresult   *res;
+
+		printfPQExpBuffer(buf, "SELECT datconfig[%d] FROM pg_database WHERE datname = ", count);
+		appendStringLiteral(buf, dbname, true);
+		appendPQExpBuffer(buf, ";");
+
+		res = executeQuery(conn, buf->data);
+		if (!PQgetisnull(res, 0, 0))
+		{
+			makeAlterConfigCommand(PQgetvalue(res, 0, 0), "DATABASE", dbname);
+			PQclear(res);
+			count++;
+		}
+		else
+		{
+			PQclear(res);
+			break;
+		}
+	}
+
+	destroyPQExpBuffer(buf);
+}
+
+
+
+/*
+ * Dump user-specific configuration
+ */
+static void
+dumpUserConfig(PGconn *conn, const char *username)
+{
+	PQExpBuffer buf = createPQExpBuffer();
+	int count = 1;
+
+	for(;;)
+	{
+		PGresult   *res;
+
+		printfPQExpBuffer(buf, "SELECT useconfig[%d] FROM pg_shadow WHERE usename = ", count);
+		appendStringLiteral(buf, username, true);
+		appendPQExpBuffer(buf, ";");
+
+		res = executeQuery(conn, buf->data);
+		if (!PQgetisnull(res, 0, 0))
+		{
+			makeAlterConfigCommand(PQgetvalue(res, 0, 0), "USER", username);
+			PQclear(res);
+			count++;
+		}
+		else
+		{
+			PQclear(res);
+			break;
+		}
+	}
+
+	destroyPQExpBuffer(buf);
+}
+
+
+
+/*
+ * Helper function for dumpXXXConfig().
+ */
+static void
+makeAlterConfigCommand(const char *arrayitem, const char *type, const char *name)
+{
+	char *pos;
+	char *mine;
+	PQExpBuffer buf = createPQExpBuffer();
+
+	mine = strdup(arrayitem);
+	pos = strchr(mine, '=');
+	if (pos == NULL)
+		return;
+
+	*pos = 0;
+	appendPQExpBuffer(buf, "ALTER %s %s ", type, fmtId(name));
+	appendPQExpBuffer(buf, "SET %s TO ", fmtId(mine));
+	appendStringLiteral(buf, pos + 1, false);
+	appendPQExpBuffer(buf, ";\n");
+
+	printf("%s", buf->data);
+	destroyPQExpBuffer(buf);
+	free(mine);
 }
 
 
