@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.85 2005/03/16 21:38:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.86 2005/03/17 15:25:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@
  *		Suppose we have a query such as retrieve (EMP.name) and we have
  *		a single SeqScan node in the query plan.
  *
- *		At ExecStart()
+ *		At ExecutorStart()
  *		----------------
  *		- InitPlan() calls ExecCreateTupleTable() to create the tuple
  *		  table which will hold tuples processed by the executor.
@@ -61,7 +61,7 @@
  *		  table for the tuples returned by the access methods and the
  *		  tuples resulting from performing target list projections.
  *
- *		During ExecRun()
+ *		During ExecutorRun()
  *		----------------
  *		- SeqNext() calls ExecStoreTuple() to place the tuple returned
  *		  by the access methods into the scan tuple slot.
@@ -69,11 +69,11 @@
  *		- ExecSeqScan() calls ExecStoreTuple() to take the result
  *		  tuple from ExecProject() and place it into the result tuple slot.
  *
- *		- ExecutePlan() calls ExecRetrieve() which gets the tuple out of
- *		  the slot passed to it (by direct access to slot->val, which is
- *		  ugly but not worth changing).  this tuple is then returned.
+ *		- ExecutePlan() calls ExecSelect(), which passes the result slot
+ *		  to printtup(), which uses slot_getallattrs() to extract the
+ *		  individual Datums for printing.
  *
- *		At ExecEnd()
+ *		At ExecutorEnd()
  *		----------------
  *		- EndPlan() calls ExecDropTupleTable() to clean up any remaining
  *		  tuples left over from executing the query.
