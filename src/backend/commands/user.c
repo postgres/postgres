@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.107 2002/08/05 03:29:17 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.108 2002/08/25 17:20:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@ static List *IdArrayToList(IdList *oldarray);
  *	fputs_quote
  *
  *	Outputs string in quotes, with double-quotes duplicated.
- *	We could use quote_ident(), but that expects varlena.
+ *	We could use quote_ident(), but that expects a TEXT argument.
  */
 static void fputs_quote(char *str, FILE *fp)
 {

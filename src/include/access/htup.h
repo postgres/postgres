@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.57 2002/07/20 05:16:59 momjian Exp $
+ * $Id: htup.h,v 1.58 2002/08/25 17:20:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,8 +95,7 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
  * information stored in t_infomask:
  */
 #define HEAP_HASNULL			0x0001	/* has null attribute(s) */
-#define HEAP_HASVARLENA			0x0002	/* has variable length
-										 * attribute(s) */
+#define HEAP_HASVARWIDTH		0x0002	/* has variable-width attribute(s) */
 #define HEAP_HASEXTERNAL		0x0004	/* has external stored
 										 * attribute(s) */
 #define HEAP_HASCOMPRESSED		0x0008	/* has compressed stored
@@ -425,7 +424,7 @@ typedef HeapTupleData *HeapTuple;
 		(!(((HeapTuple) (tuple))->t_data->t_infomask & HEAP_HASNULL))
 
 #define HeapTupleAllFixed(tuple) \
-		(!(((HeapTuple) (tuple))->t_data->t_infomask & HEAP_HASVARLENA))
+		(!(((HeapTuple) (tuple))->t_data->t_infomask & HEAP_HASVARWIDTH))
 
 #define HeapTupleHasExternal(tuple) \
 		((((HeapTuple)(tuple))->t_data->t_infomask & HEAP_HASEXTERNAL) != 0)

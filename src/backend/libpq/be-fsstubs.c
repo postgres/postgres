@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.61 2002/06/20 20:29:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.62 2002/08/25 17:20:01 tgl Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -313,24 +313,24 @@ loread(PG_FUNCTION_ARGS)
 {
 	int32		fd = PG_GETARG_INT32(0);
 	int32		len = PG_GETARG_INT32(1);
-	struct varlena *retval;
+	bytea	   *retval;
 	int			totalread;
 
 	if (len < 0)
 		len = 0;
 
-	retval = (struct varlena *) palloc(VARHDRSZ + len);
+	retval = (bytea *) palloc(VARHDRSZ + len);
 	totalread = lo_read(fd, VARDATA(retval), len);
 	VARATT_SIZEP(retval) = totalread + VARHDRSZ;
 
-	PG_RETURN_POINTER(retval);
+	PG_RETURN_BYTEA_P(retval);
 }
 
 Datum
 lowrite(PG_FUNCTION_ARGS)
 {
 	int32		fd = PG_GETARG_INT32(0);
-	struct varlena *wbuf = PG_GETARG_VARLENA_P(1);
+	bytea	   *wbuf = PG_GETARG_BYTEA_P(1);
 	int			bytestowrite;
 	int			totalwritten;
 

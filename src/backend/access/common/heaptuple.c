@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.79 2002/08/24 15:00:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.80 2002/08/25 17:20:00 tgl Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -116,7 +116,7 @@ DataFill(char *data,
 		else if (att[i]->attlen == -1)
 		{
 			/* varlena */
-			*infomask |= HEAP_HASVARLENA;
+			*infomask |= HEAP_HASVARWIDTH;
 			if (VARATT_IS_EXTERNAL(value[i]))
 				*infomask |= HEAP_HASEXTERNAL;
 			if (VARATT_IS_COMPRESSED(value[i]))
@@ -127,7 +127,7 @@ DataFill(char *data,
 		else if (att[i]->attlen == -2)
 		{
 			/* cstring */
-			*infomask |= HEAP_HASVARLENA;
+			*infomask |= HEAP_HASVARWIDTH;
 			data_length = strlen(DatumGetCString(value[i])) + 1;
 			memcpy(data, DatumGetPointer(value[i]), data_length);
 		}
@@ -230,9 +230,9 @@ nocachegetattr(HeapTuple tuple,
 	/* ----------------
 	 *	 Three cases:
 	 *
-	 *	 1: No nulls and no variable length attributes.
-	 *	 2: Has a null or a varlena AFTER att.
-	 *	 3: Has nulls or varlenas BEFORE att.
+	 *	 1: No nulls and no variable-width attributes.
+	 *	 2: Has a null or a var-width AFTER att.
+	 *	 3: Has nulls or var-widths BEFORE att.
 	 * ----------------
 	 */
 
@@ -326,7 +326,7 @@ nocachegetattr(HeapTuple tuple,
 
 	/*
 	 * If slow is false, and we got here, we know that we have a tuple
-	 * with no nulls or varlenas before the target attribute. If possible,
+	 * with no nulls or var-widths before the target attribute. If possible,
 	 * we also want to initialize the remainder of the attribute cached
 	 * offset values.
 	 */

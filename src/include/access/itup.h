@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itup.h,v 1.35 2002/06/20 20:29:43 momjian Exp $
+ * $Id: itup.h,v 1.36 2002/08/25 17:20:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@ typedef struct IndexTupleData
 	 * t_info is layed out in the following fashion:
 	 *
 	 * 15th (high) bit: has nulls
-	 * 14th bit: has varlenas
+	 * 14th bit: has var-width attributes
 	 * 13th bit: unused
 	 * 12-0 bit: size of tuple
 	 * ---------------
@@ -67,7 +67,7 @@ typedef InsertIndexResultData *InsertIndexResult;
 #define IndexTupleSize(itup)		((Size) (((IndexTuple) (itup))->t_info & INDEX_SIZE_MASK))
 #define IndexTupleDSize(itup)		((Size) ((itup).t_info & INDEX_SIZE_MASK))
 #define IndexTupleHasNulls(itup)	((((IndexTuple) (itup))->t_info & INDEX_NULL_MASK))
-#define IndexTupleHasVarlenas(itup) ((((IndexTuple) (itup))->t_info & INDEX_VAR_MASK))
+#define IndexTupleHasVarwidths(itup) ((((IndexTuple) (itup))->t_info & INDEX_VAR_MASK))
 
 #define IndexTupleHasMinHeader(itup) (!IndexTupleHasNulls(itup))
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.58 2002/08/24 15:00:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.59 2002/08/25 17:20:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,7 +151,7 @@ index_formtuple(TupleDesc tupleDescriptor,
 	 * already set the hasnull bit above.
 	 */
 
-	if (tupmask & HEAP_HASVARLENA)
+	if (tupmask & HEAP_HASVARWIDTH)
 		infomask |= INDEX_VAR_MASK;
 
 	/*
@@ -211,9 +211,9 @@ nocache_index_getattr(IndexTuple tup,
 	/* ----------------
 	 *	 Three cases:
 	 *
-	 *	 1: No nulls and no variable length attributes.
-	 *	 2: Has a null or a varlena AFTER att.
-	 *	 3: Has nulls or varlenas BEFORE att.
+	 *	 1: No nulls and no variable-width attributes.
+	 *	 2: Has a null or a var-width AFTER att.
+	 *	 3: Has nulls or var-widths BEFORE att.
 	 * ----------------
 	 */
 
@@ -302,7 +302,7 @@ nocache_index_getattr(IndexTuple tup,
 			return fetchatt(att[attnum],
 							tp + att[attnum]->attcacheoff);
 		}
-		else if (IndexTupleHasVarlenas(tup))
+		else if (IndexTupleHasVarwidths(tup))
 		{
 			int			j;
 
@@ -319,7 +319,7 @@ nocache_index_getattr(IndexTuple tup,
 
 	/*
 	 * If slow is false, and we got here, we know that we have a tuple
-	 * with no nulls or varlenas before the target attribute. If possible,
+	 * with no nulls or var-widths before the target attribute. If possible,
 	 * we also want to initialize the remainder of the attribute cached
 	 * offset values.
 	 */

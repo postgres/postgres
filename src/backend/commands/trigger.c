@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.128 2002/08/22 00:01:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.129 2002/08/25 17:20:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -261,7 +261,7 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 
 		foreach(le, stmt->args)
 		{
-			char	   *ar = ((Value *) lfirst(le))->val.str;
+			char	   *ar = strVal(lfirst(le));
 
 			len += strlen(ar) + 4;
 			for (; *ar; ar++)
@@ -274,7 +274,7 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 		args[0] = '\0';
 		foreach(le, stmt->args)
 		{
-			char	   *s = ((Value *) lfirst(le))->val.str;
+			char	   *s = strVal(lfirst(le));
 			char	   *d = args + strlen(args);
 
 			while (*s)
@@ -653,8 +653,6 @@ RelationBuildTriggers(Relation relation)
 	ScanKeyData skey;
 	SysScanDesc	tgscan;
 	HeapTuple	htup;
-	struct varlena *val;
-	bool		isnull;
 
 	triggers = (Trigger *) MemoryContextAlloc(CacheMemoryContext,
 											  ntrigs * sizeof(Trigger));
@@ -702,12 +700,14 @@ RelationBuildTriggers(Relation relation)
 			   FUNC_MAX_ARGS * sizeof(int16));
 		if (build->tgnargs > 0)
 		{
+			bytea	   *val;
+			bool		isnull;
 			char	   *p;
 			int			i;
 
-			val = (struct varlena *) fastgetattr(htup,
-												 Anum_pg_trigger_tgargs,
-												 tgrel->rd_att, &isnull);
+			val = (bytea *) fastgetattr(htup,
+										Anum_pg_trigger_tgargs,
+										tgrel->rd_att, &isnull);
 			if (isnull)
 				elog(ERROR, "RelationBuildTriggers: tgargs IS NULL for rel %s",
 					 RelationGetRelationName(relation));

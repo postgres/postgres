@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.94 2002/08/05 03:29:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.95 2002/08/25 17:20:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -396,7 +396,7 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 	bool		pfreeit;
 	struct
 	{
-		struct varlena hdr;
+		bytea		hdr;
 		char		data[LOBLKSIZE];
 	}			workbuf;
 	char	   *workb = VARATT_DATA(&workbuf.hdr);
