@@ -6,7 +6,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Nov 12 13:12:06 EST 2004
+Last updated:		Fri Nov 12 18:26:29 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -769,8 +769,7 @@ Write-Ahead Log
   remove the 'fsync' parameter (which results in an an inconsistent
   database) in favor of this capability.
 
-* Eliminate WAL logging for CREATE INDEX/REINDEX/CREATE TABLE AS when
-  not doing WAL archiving
+* Eliminate WAL logging for CREATE TABLE AS when not doing WAL archiving
 
 Optimizer / Executor
 ====================
