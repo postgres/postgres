@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.26 1997/01/10 18:55:24 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.27 1997/01/20 00:51:38 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -60,8 +60,8 @@ fe-lobj.o: ../backend/fmgr.h
 ../backend/lib/dllist.o:
 	$(MAKE) -C ../backend/lib dllist.o
 
-$(shlib): $(OBJS)
-	$(LD) $(LDFLAGS) -shared $(OBJS) -o $(shlib)
+libpq.so.1: $(OBJS)
+	gcc $(LDFLAGS) -shared -o $@ $(OBJS)
 
 c.h: ../include/c.h
 	rm -f c.h
