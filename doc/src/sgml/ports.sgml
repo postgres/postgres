@@ -91,7 +91,7 @@ At the time of publication, the following platforms have been tested:
            (<ULink url="mailto:rkirkpat@nag.cs.colorado.edu">Ryan Kirkpatrick</ULink>)</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>linux 2.0.x</ENTRY>
+    <ENTRY>linux 2.0.x/libc5</ENTRY>
     <ENTRY>x86</ENTRY>
     <ENTRY>v6.4</ENTRY>
     <ENTRY>1998-10-27</ENTRY>
@@ -104,6 +104,13 @@ At the time of publication, the following platforms have been tested:
     <ENTRY>1998-10-25</ENTRY>
     <ENTRY>(<ulink url="mailto:olly@lfix.co.uk">Oliver Elphick</ulink>,
             <ulink url="mailto:taral@mail.utexas.edu">Taral</ulink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>linux 2.0.x</ENTRY>
+    <ENTRY>MIPS</ENTRY>
+    <ENTRY>v6.4</ENTRY>
+    <ENTRY>1998-12-16</ENTRY>
+    <ENTRY>Cobalt Qube (<ULink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ULink>)</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>linux 2.0.x</ENTRY>
@@ -138,7 +145,7 @@ At the time of publication, the following platforms have been tested:
     <ENTRY>NS32532</ENTRY>
     <ENTRY>v6.4</ENTRY>
     <ENTRY>1998-10-27</ENTRY>
-    <ENTRY>(small problems in date/time math (<ULink url="mailto:jonb@metronet.com">Jon Buller</ULink>)</ENTRY>
+    <ENTRY>small problems in date/time math (<ULink url="mailto:jonb@metronet.com">Jon Buller</ULink>)</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>NetBSD/sparc 1.3H</ENTRY>
