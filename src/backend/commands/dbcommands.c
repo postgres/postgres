@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.141 2004/08/29 05:06:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.142 2004/08/29 21:08:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -385,6 +385,30 @@ createdb(const CreatedbStmt *stmt)
 					(errmsg("could not initialize database directory")));
 		}
 #endif   /* WIN32 */
+
+		/* Record the filesystem change in XLOG */
+		{
+			xl_dbase_create_rec xlrec;
+			XLogRecData rdata[3];
+
+			xlrec.db_id = dboid;
+			rdata[0].buffer = InvalidBuffer;
+			rdata[0].data = (char *) &xlrec;
+			rdata[0].len = offsetof(xl_dbase_create_rec, src_path);
+			rdata[0].next = &(rdata[1]);
+
+			rdata[1].buffer = InvalidBuffer;
+			rdata[1].data = (char *) srcpath;
+			rdata[1].len = strlen(srcpath) + 1;
+			rdata[1].next = &(rdata[2]);
+
+			rdata[2].buffer = InvalidBuffer;
+			rdata[2].data = (char *) dstpath;
+			rdata[2].len = strlen(dstpath) + 1;
+			rdata[2].next = NULL;
+
+			(void) XLogInsert(RM_DBASE_ID, XLOG_DBASE_CREATE, rdata);
+		}
 	}
 	heap_endscan(scan);
 	heap_close(rel, AccessShareLock);
@@ -970,11 +994,27 @@ remove_dbtablespaces(Oid db_id)
 		}
 
 		if (!rmtree(dstpath, true))
-		{
 			ereport(WARNING,
 					(errmsg("could not remove database directory \"%s\"",
-							dstpath),
-					 errhint("Look in the postmaster's stderr log for more information.")));
+							dstpath)));
+
+		/* Record the filesystem change in XLOG */
+		{
+			xl_dbase_drop_rec xlrec;
+			XLogRecData rdata[2];
+
+			xlrec.db_id = db_id;
+			rdata[0].buffer = InvalidBuffer;
+			rdata[0].data = (char *) &xlrec;
+			rdata[0].len = offsetof(xl_dbase_drop_rec, dir_path);
+			rdata[0].next = &(rdata[1]);
+
+			rdata[1].buffer = InvalidBuffer;
+			rdata[1].data = (char *) dstpath;
+			rdata[1].len = strlen(dstpath) + 1;
+			rdata[1].next = NULL;
+
+			(void) XLogInsert(RM_DBASE_ID, XLOG_DBASE_DROP, rdata);
 		}
 
 		pfree(dstpath);
@@ -1062,4 +1102,106 @@ get_database_name(Oid dbid)
 	heap_close(pg_database, AccessShareLock);
 
 	return result;
+}
+
+/*
+ * DATABASE resource manager's routines
+ */
+void
+dbase_redo(XLogRecPtr lsn, XLogRecord *record)
+{
+	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+
+	if (info == XLOG_DBASE_CREATE)
+	{
+		xl_dbase_create_rec *xlrec = (xl_dbase_create_rec *) XLogRecGetData(record);
+		char	   *dst_path = xlrec->src_path + strlen(xlrec->src_path) + 1;
+		struct stat st;
+#ifndef WIN32
+		char		buf[2 * MAXPGPATH + 100];
+#endif
+
+		/*
+		 * Our theory for replaying a CREATE is to forcibly drop the target
+		 * subdirectory if present, then re-copy the source data.  This
+		 * may be more work than needed, but it is simple to implement.
+		 */
+		if (stat(dst_path, &st) == 0 && S_ISDIR(st.st_mode))
+		{
+			if (!rmtree(dst_path, true))
+				ereport(WARNING,
+						(errmsg("could not remove database directory \"%s\"",
+								dst_path)));
+		}
+
+#ifndef WIN32
+		/*
+		 * Copy this subdirectory to the new location
+		 *
+		 * XXX use of cp really makes this code pretty grotty, particularly
+		 * with respect to lack of ability to report errors well.  Someday
+		 * rewrite to do it for ourselves.
+		 */
+
+		/* We might need to use cp -R one day for portability */
+		snprintf(buf, sizeof(buf), "cp -r '%s' '%s'",
+				 xlrec->src_path, dst_path);
+		if (system(buf) != 0)
+			ereport(ERROR,
+					(errmsg("could not initialize database directory"),
+					 errdetail("Failing system command was: %s", buf),
+					 errhint("Look in the postmaster's stderr log for more information.")));
+#else							/* WIN32 */
+		if (copydir(xlrec->src_path, dst_path) != 0)
+		{
+			/* copydir should already have given details of its troubles */
+			ereport(ERROR,
+					(errmsg("could not initialize database directory")));
+		}
+#endif   /* WIN32 */
+	}
+	else if (info == XLOG_DBASE_DROP)
+	{
+		xl_dbase_drop_rec *xlrec = (xl_dbase_drop_rec *) XLogRecGetData(record);
+
+		/* Drop pages for this database that are in the shared buffer cache */
+		DropBuffers(xlrec->db_id);
+
+		if (!rmtree(xlrec->dir_path, true))
+			ereport(WARNING,
+					(errmsg("could not remove database directory \"%s\"",
+							xlrec->dir_path)));
+	}
+	else
+		elog(PANIC, "dbase_redo: unknown op code %u", info);
+}
+
+void
+dbase_undo(XLogRecPtr lsn, XLogRecord *record)
+{
+	elog(PANIC, "dbase_undo: unimplemented");
+}
+
+void
+dbase_desc(char *buf, uint8 xl_info, char *rec)
+{
+	uint8		info = xl_info & ~XLR_INFO_MASK;
+
+	if (info == XLOG_DBASE_CREATE)
+	{
+		xl_dbase_create_rec *xlrec = (xl_dbase_create_rec *) rec;
+		char	   *dst_path = xlrec->src_path + strlen(xlrec->src_path) + 1;
+
+		sprintf(buf + strlen(buf), "create db: %u copy \"%s\" to \"%s\"",
+				xlrec->db_id, xlrec->src_path, dst_path);
+	}
+	else if (info == XLOG_DBASE_DROP)
+	{
+		xl_dbase_drop_rec *xlrec = (xl_dbase_drop_rec *) rec;
+
+		sprintf(buf + strlen(buf), "drop db: %u directory: \"%s\"",
+				xlrec->db_id, xlrec->dir_path);
+	}
+	else
+		strcat(buf, "UNKNOWN");
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.33 2004/08/29 05:07:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.34 2004/08/29 21:08:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -324,6 +324,39 @@ get_locale_path(const char *my_exec_path, char *ret_path)
 }
 
 
+/*
+ *	get_home_path
+ */
+bool
+get_home_path(char *ret_path)
+{
+	if (getenv(HOMEDIR) == NULL)
+	{
+		*ret_path = '\0';
+		return false;
+	}
+	else
+	{
+		StrNCpy(ret_path, getenv(HOMEDIR), MAXPGPATH);
+		canonicalize_path(ret_path);
+		return true;
+	}
+}
+
+
+/*
+ * get_parent_directory
+ *
+ * Modify the given string in-place to name the parent directory of the
+ * named file.
+ */
+void
+get_parent_directory(char *path)
+{
+	trim_directory(path);
+	trim_trailing_separator(path);
+}
+
 
 /*
  *	set_pglocale_pgservice
@@ -371,27 +404,6 @@ set_pglocale_pgservice(const char *argv0, const char *app)
 		putenv(strdup(env_path));
 	}
 }
-
-
-/*
- *	get_include_path
- */
-bool
-get_home_path(char *ret_path)
-{
-	if (getenv(HOMEDIR) == NULL)
-	{
-		*ret_path = '\0';
-		return false;
-	}
-	else
-	{
-		StrNCpy(ret_path, getenv(HOMEDIR), MAXPGPATH);
-		canonicalize_path(ret_path);
-		return true;
-	}
-}
-
 
 
 /*

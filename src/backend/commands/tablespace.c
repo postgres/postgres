@@ -45,7 +45,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.9 2004/08/29 05:06:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.10 2004/08/29 21:08:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,6 +73,7 @@
 #include "utils/syscache.h"
 
 
+static bool remove_tablespace_directories(Oid tablespaceoid, bool redo);
 static void set_short_version(const char *path);
 static bool directory_is_empty(const char *path);
 
@@ -89,6 +90,13 @@ static bool directory_is_empty(const char *path);
  * isRedo indicates that we are creating an object during WAL replay;
  * we can skip doing locking in that case (and should do so to avoid
  * any possible problems with pg_tablespace not being valid).
+ *
+ * Also, when isRedo is true, we will cope with the possibility of the
+ * tablespace not being there either --- this could happen if we are
+ * replaying an operation on a table in a subsequently-dropped tablespace.
+ * We handle this by making a directory in the place where the tablespace
+ * symlink would normally be.  This isn't an exact replay of course, but
+ * it's the best we can do given the available information.
  */
 void
 TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
@@ -137,10 +145,29 @@ TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
 			{
 				/* OK, go for it */
 				if (mkdir(dir, S_IRWXU) < 0)
-					ereport(ERROR,
-							(errcode_for_file_access(),
-						  errmsg("could not create directory \"%s\": %m",
-								 dir)));
+				{
+					char   *parentdir;
+
+					if (errno != ENOENT || !isRedo)
+						ereport(ERROR,
+								(errcode_for_file_access(),
+								 errmsg("could not create directory \"%s\": %m",
+										dir)));
+					/* Try to make parent directory too */
+					parentdir = pstrdup(dir);
+					get_parent_directory(parentdir);
+					if (mkdir(parentdir, S_IRWXU) < 0)
+						ereport(ERROR,
+								(errcode_for_file_access(),
+								 errmsg("could not create directory \"%s\": %m",
+										parentdir)));
+					pfree(parentdir);
+					if (mkdir(dir, S_IRWXU) < 0)
+						ereport(ERROR,
+								(errcode_for_file_access(),
+								 errmsg("could not create directory \"%s\": %m",
+										dir)));
+				}
 			}
 
 			/* OK to drop the exclusive lock */
@@ -282,11 +309,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 
 	tuple = heap_formtuple(rel->rd_att, values, nulls);
 
-	tablespaceoid = newoid();
-
-	HeapTupleSetOid(tuple, tablespaceoid);
-
-	simple_heap_insert(rel, tuple);
+	tablespaceoid = simple_heap_insert(rel, tuple);
 
 	CatalogUpdateIndexes(rel, tuple);
 
@@ -332,10 +355,30 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 				 errmsg("could not create symbolic link \"%s\": %m",
 						linkloc)));
 
+	/* Record the filesystem change in XLOG */
+	{
+		xl_tblspc_create_rec xlrec;
+		XLogRecData rdata[2];
+
+		xlrec.ts_id = tablespaceoid;
+		rdata[0].buffer = InvalidBuffer;
+		rdata[0].data = (char *) &xlrec;
+		rdata[0].len = offsetof(xl_tblspc_create_rec, ts_path);
+		rdata[0].next = &(rdata[1]);
+
+		rdata[1].buffer = InvalidBuffer;
+		rdata[1].data = (char *) location;
+		rdata[1].len = strlen(location) + 1;
+		rdata[1].next = NULL;
+
+		(void) XLogInsert(RM_TBLSPC_ID, XLOG_TBLSPC_CREATE, rdata);
+	}
+
 	pfree(linkloc);
 	pfree(location);
 
-	heap_close(rel, RowExclusiveLock);
+	/* We keep the lock on pg_tablespace until commit */
+	heap_close(rel, NoLock);
 
 #else							/* !HAVE_SYMLINK */
 	ereport(ERROR,
@@ -358,11 +401,7 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 	Relation	rel;
 	HeapTuple	tuple;
 	ScanKeyData entry[1];
-	char	   *location;
 	Oid			tablespaceoid;
-	DIR		   *dirdesc;
-	struct dirent *de;
-	char	   *subfile;
 
 	/* don't call this in a transaction block */
 	PreventTransactionChain((void *) stmt, "DROP TABLESPACE");
@@ -404,7 +443,63 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 		aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_TABLESPACE,
 					   tablespacename);
 
-	location = (char *) palloc(strlen(DataDir) + 16 + 10 + 1);
+	/*
+	 * Remove the pg_tablespace tuple (this will roll back if we fail below)
+	 */
+	simple_heap_delete(rel, &tuple->t_self);
+
+	heap_endscan(scandesc);
+
+	/*
+	 * Try to remove the physical infrastructure
+	 */
+	if (!remove_tablespace_directories(tablespaceoid, false))
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("tablespace \"%s\" is not empty",
+						tablespacename)));
+
+	/* Record the filesystem change in XLOG */
+	{
+		xl_tblspc_drop_rec xlrec;
+		XLogRecData rdata[1];
+
+		xlrec.ts_id = tablespaceoid;
+		rdata[0].buffer = InvalidBuffer;
+		rdata[0].data = (char *) &xlrec;
+		rdata[0].len = sizeof(xl_tblspc_drop_rec);
+		rdata[0].next = NULL;
+
+		(void) XLogInsert(RM_TBLSPC_ID, XLOG_TBLSPC_DROP, rdata);
+	}
+
+	/* We keep the lock on pg_tablespace until commit */
+	heap_close(rel, NoLock);
+
+#else							/* !HAVE_SYMLINK */
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("tablespaces are not supported on this platform")));
+#endif   /* HAVE_SYMLINK */
+}
+
+/*
+ * remove_tablespace_directories: attempt to remove filesystem infrastructure
+ *
+ * Returns TRUE if successful, FALSE if some subdirectory is not empty
+ *
+ * redo indicates we are redoing a drop from XLOG; okay if nothing there
+ */
+static bool
+remove_tablespace_directories(Oid tablespaceoid, bool redo)
+{
+	char	   *location;
+	DIR		   *dirdesc;
+	struct dirent *de;
+	char	   *subfile;
+	struct stat st;
+
+	location = (char *) palloc(strlen(DataDir) + 11 + 10 + 1);
 	sprintf(location, "%s/pg_tblspc/%u", DataDir, tablespaceoid);
 
 	/*
@@ -422,10 +517,17 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 	 */
 	dirdesc = AllocateDir(location);
 	if (dirdesc == NULL)
+	{
+		if (redo && errno == ENOENT)
+		{
+			pfree(location);
+			return true;
+		}
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not open directory \"%s\": %m",
 						location)));
+	}
 
 	errno = 0;
 	while ((de = readdir(dirdesc)) != NULL)
@@ -444,10 +546,10 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 
 		/* This check is just to deliver a friendlier error message */
 		if (!directory_is_empty(subfile))
-			ereport(ERROR,
-					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("tablespace \"%s\" is not empty",
-							tablespacename)));
+		{
+			FreeDir(dirdesc);
+			return false;
+		}
 
 		/* Do the real deed */
 		if (rmdir(subfile) < 0)
@@ -457,6 +559,7 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 							subfile)));
 
 		pfree(subfile);
+		errno = 0;
 	}
 #ifdef WIN32
 
@@ -475,53 +578,50 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 	FreeDir(dirdesc);
 
 	/*
-	 * Okay, try to unlink PG_VERSION and then remove the symlink.
+	 * Okay, try to unlink PG_VERSION (we allow it to not be there, even
+	 * in non-REDO case, for robustness).
 	 */
 	subfile = palloc(strlen(location) + 11 + 1);
 	sprintf(subfile, "%s/PG_VERSION", location);
 
 	if (unlink(subfile) < 0)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not unlink file \"%s\": %m",
-						subfile)));
-
-#ifndef WIN32
-	if (unlink(location) < 0)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not unlink symbolic link \"%s\": %m",
-						location)));
-#else
-	/* The junction is a directory, not a file */
-	if (rmdir(location) < 0)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not remove junction dir \"%s\": %m",
-						location)));
-#endif
+	{
+		if (errno != ENOENT)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not unlink file \"%s\": %m",
+							subfile)));
+	}
 
 	pfree(subfile);
-	pfree(location);
 
 	/*
-	 * We have successfully destroyed the infrastructure ... there is now
-	 * no way to roll back the DROP ... so proceed to remove the
-	 * pg_tablespace tuple.
+	 * Okay, try to remove the symlink.  We must however deal with the
+	 * possibility that it's a directory instead of a symlink --- this
+	 * could happen during WAL replay (see TablespaceCreateDbspace),
+	 * and it is also the normal case on Windows.
 	 */
-	simple_heap_delete(rel, &tuple->t_self);
+	if (lstat(location, &st) == 0 && S_ISDIR(st.st_mode))
+	{
+		if (rmdir(location) < 0)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not remove directory \"%s\": %m",
+							location)));
+	}
+	else
+	{
+		if (unlink(location) < 0)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not unlink symbolic link \"%s\": %m",
+							location)));
+	}
 
-	heap_endscan(scandesc);
+	pfree(location);
 
-	heap_close(rel, ExclusiveLock);
-
-#else							/* !HAVE_SYMLINK */
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("tablespaces are not supported on this platform")));
-#endif   /* HAVE_SYMLINK */
+	return true;
 }
-
 
 /*
  * write out the PG_VERSION file in the specified directory
@@ -842,4 +942,89 @@ AlterTableSpaceOwner(const char *name, AclId newOwnerSysId)
 
 	heap_endscan(scandesc);
 	heap_close(rel, NoLock);
+}
+
+/*
+ * TABLESPACE resource manager's routines
+ */
+void
+tblspc_redo(XLogRecPtr lsn, XLogRecord *record)
+{
+	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+
+	if (info == XLOG_TBLSPC_CREATE)
+	{
+		xl_tblspc_create_rec *xlrec = (xl_tblspc_create_rec *) XLogRecGetData(record);
+		char	   *location = xlrec->ts_path;
+		char	   *linkloc;
+
+		/*
+		 * Attempt to coerce target directory to safe permissions.	If this
+		 * fails, it doesn't exist or has the wrong owner.
+		 */
+		if (chmod(location, 0700) != 0)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not set permissions on directory \"%s\": %m",
+							location)));
+
+		/* Create or re-create the PG_VERSION file in the target directory */
+		set_short_version(location);
+
+		/* Create the symlink if not already present */
+		linkloc = (char *) palloc(strlen(DataDir) + 11 + 10 + 1);
+		sprintf(linkloc, "%s/pg_tblspc/%u", DataDir, xlrec->ts_id);
+
+		if (symlink(location, linkloc) < 0)
+		{
+			if (errno != EEXIST)
+				ereport(ERROR,
+						(errcode_for_file_access(),
+						 errmsg("could not create symbolic link \"%s\": %m",
+								linkloc)));
+		}
+
+		pfree(linkloc);
+	}
+	else if (info == XLOG_TBLSPC_DROP)
+	{
+		xl_tblspc_drop_rec *xlrec = (xl_tblspc_drop_rec *) XLogRecGetData(record);
+
+		if (!remove_tablespace_directories(xlrec->ts_id, true))
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("tablespace %u is not empty",
+							xlrec->ts_id)));
+	}
+	else
+		elog(PANIC, "tblspc_redo: unknown op code %u", info);
+}
+
+void
+tblspc_undo(XLogRecPtr lsn, XLogRecord *record)
+{
+	elog(PANIC, "tblspc_undo: unimplemented");
+}
+
+void
+tblspc_desc(char *buf, uint8 xl_info, char *rec)
+{
+	uint8		info = xl_info & ~XLR_INFO_MASK;
+
+	if (info == XLOG_TBLSPC_CREATE)
+	{
+		xl_tblspc_create_rec *xlrec = (xl_tblspc_create_rec *) rec;
+
+		sprintf(buf + strlen(buf), "create ts: %u \"%s\"",
+				xlrec->ts_id, xlrec->ts_path);
+	}
+	else if (info == XLOG_TBLSPC_DROP)
+	{
+		xl_tblspc_drop_rec *xlrec = (xl_tblspc_drop_rec *) rec;
+
+		sprintf(buf + strlen(buf), "drop ts: %u",
+				xlrec->ts_id);
+	}
+	else
+		strcat(buf, "UNKNOWN");
 }
