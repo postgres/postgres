@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.339 2004/06/25 17:20:28 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.340 2004/07/02 18:59:24 joe Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3594,6 +3594,9 @@ DATA(insert OID = 2242 ( bit_and 					   PGNSP PGUID 12 t f f f i 1 1560 "1560" 
 DESCR("bitwise-and bit aggregate");
 DATA(insert OID = 2243 ( bit_or						   PGNSP PGUID 12 t f f f i 1 1560 "1560" _null_ aggregate_dummy - _null_));
 DESCR("bitwise-or bit aggregate");
+
+DATA(insert OID = 2554(  pg_tablespace_databases       PGNSP PGUID 12 f f t t s 1 26 "26" _null_ pg_tablespace_databases - _null_));
+DESCR("returns database oids in a tablespace");
 
 /*
  * Symbolic values for provolatile column: these indicate whether the result

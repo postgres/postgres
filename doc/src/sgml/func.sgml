@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.211 2004/06/25 17:20:21 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.212 2004/07/02 18:59:20 joe Exp $
 PostgreSQL documentation
 -->
 
@@ -7232,6 +7232,10 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
     <primary>pg_get_serial_sequence</primary>
    </indexterm>
 
+   <indexterm zone="functions-misc">
+    <primary>pg_tablespace_databases</primary>
+   </indexterm>
+
   <para>
    <xref linkend="functions-misc-catalog-table"> lists functions that
    extract information from the system catalogs.
@@ -7325,6 +7329,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry>get name of the sequence that a serial or bigserial column
        uses</entry>
       </row>
+      <row>
+       <entry><literal><function>pg_tablespace_databases</function>(<parameter>tablespace_oid</parameter>)</literal></entry>
+       <entry><type>setof oid</type></entry>
+       <entry>get set of database oids that have objects in the tablespace</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
@@ -7360,6 +7369,16 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    for passing to the sequence functions (see <xref
    linkend="functions-sequence">).
    NULL is returned if the column does not have a sequence attached.
+  </para>
+
+  <para>
+  <function>pg_tablespace_databases</function> allows usage examination of a
+  tablespace. It will return a set of database oids, that have objects
+  stored in the tablespace. If this function returns any row, the
+  tablespace is assumed not to be empty and cannot be dropped. To
+  display the actual objects populating the tablespace, you will need
+  to connect to the databases returned by 
+  <function>pg_tablespace_databases</function> to query pg_class.
   </para>
 
    <indexterm zone="functions-misc">

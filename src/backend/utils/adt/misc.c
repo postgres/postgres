@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.34 2004/06/02 21:29:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.35 2004/07/02 18:59:22 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,11 +16,16 @@
 
 #include <sys/file.h>
 #include <signal.h>
+#include <dirent.h>
 
 #include "commands/dbcommands.h"
 #include "miscadmin.h"
 #include "storage/sinval.h"
+#include "storage/fd.h"
 #include "utils/builtins.h"
+#include "funcapi.h"
+#include "catalog/pg_type.h"
+#include "catalog/pg_tablespace.h"
 
 
 /*
@@ -102,4 +107,98 @@ Datum
 pg_cancel_backend(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_INT32(pg_signal_backend(PG_GETARG_INT32(0),SIGINT));
+}
+
+
+typedef struct 
+{
+	char *location;
+	DIR *dirdesc;
+} ts_db_fctx;
+
+Datum pg_tablespace_databases(PG_FUNCTION_ARGS)
+{
+	FuncCallContext *funcctx;
+	struct dirent *de;
+	ts_db_fctx *fctx;
+
+	if (SRF_IS_FIRSTCALL())
+	{
+		MemoryContext oldcontext;
+		Oid tablespaceOid=PG_GETARG_OID(0);
+
+		funcctx=SRF_FIRSTCALL_INIT();
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+		fctx = palloc(sizeof(ts_db_fctx));
+
+		/*
+		 * size = path length + tablespace dirname length
+		 *        + 2 dir sep chars + oid + terminator
+		 */
+		fctx->location = (char*) palloc(strlen(DataDir) + 11 + 10 + 1);
+		if (tablespaceOid == GLOBALTABLESPACE_OID)
+		{
+			fctx->dirdesc = NULL;
+			ereport(NOTICE,
+					(errcode(ERRCODE_WARNING),
+					 errmsg("global tablespace never has databases.")));
+		}
+		else
+		{
+			if (tablespaceOid == DEFAULTTABLESPACE_OID)
+				sprintf(fctx->location, "%s/base", DataDir);
+			else
+				sprintf(fctx->location, "%s/pg_tblspc/%u", DataDir,
+														   tablespaceOid);
+		
+			fctx->dirdesc = AllocateDir(fctx->location);
+
+			if (!fctx->dirdesc)  /* not a tablespace */
+				ereport(NOTICE,
+						(errcode(ERRCODE_WARNING),
+						 errmsg("%d is no tablespace oid.", tablespaceOid)));
+		}
+		funcctx->user_fctx = fctx;
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	funcctx=SRF_PERCALL_SETUP();
+	fctx = (ts_db_fctx*) funcctx->user_fctx;
+
+	if (!fctx->dirdesc)  /* not a tablespace */
+		SRF_RETURN_DONE(funcctx);
+
+	while ((de = readdir(fctx->dirdesc)) != NULL)
+	{
+		char *subdir;
+		DIR *dirdesc;
+
+		Oid datOid = atol(de->d_name);
+		if (!datOid)
+			continue;
+
+		/* size = path length + dir sep char + file name + terminator */
+		subdir = palloc(strlen(fctx->location) + 1 + strlen(de->d_name) + 1);
+		sprintf(subdir, "%s/%s", fctx->location, de->d_name);
+		dirdesc = AllocateDir(subdir);
+		if (dirdesc)
+		{
+			while ((de = readdir(dirdesc)) != 0)
+			{
+				if (strcmp(de->d_name, ".") && strcmp(de->d_name, ".."))
+					break;
+			}
+			pfree(subdir);
+			FreeDir(dirdesc);
+
+			if (!de)   /* database subdir is empty; don't report tablespace as used */
+				continue;
+		}
+
+		SRF_RETURN_NEXT(funcctx, ObjectIdGetDatum(datOid));
+	}
+
+	FreeDir(fctx->dirdesc);
+	SRF_RETURN_DONE(funcctx);
 }
