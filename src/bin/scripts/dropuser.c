@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/bin/scripts/dropuser.c,v 1.2 2003/05/14 03:26:03 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/scripts/dropuser.c,v 1.3 2003/05/27 19:36:55 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,7 +108,7 @@ main(int argc, char *argv[])
 
 		printf(_("User \"%s\" will be permanently deleted.\n"), dropuser);
 		reply = simple_prompt("Are you sure? (y/n) ", 1, true);
-		if (reply[0] != 'y' && reply[0] != 'Y')
+		if (check_yesno_response(reply) != 1)
 			exit(0);
 	}
 

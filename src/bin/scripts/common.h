@@ -32,3 +32,6 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 
 PGresult *
 executeQuery(PGconn *conn, const char *command, const char *progname, bool echo);
+
+int
+check_yesno_response(const char *string);
