@@ -113,10 +113,12 @@ char **argv;
 
 					if (col_in_tab == tab_size)
 					{
-						/* Is the next character going to be a tab?
-						   Needed to do tab replacement in current spot if
-						   next char is going to be a tab, ignoring
-						   min_spaces */
+						/*
+							Is the next character going to be a tab?
+							Needed to do tab replacement in current spot if
+							next char is going to be a tab, ignoring
+							min_spaces
+						 */
 						nxt_spaces = 0;
 						while (1)
 						{
@@ -133,17 +135,20 @@ char **argv;
 								break;
 							}
 						}
-						if ((prv_spaces >= min_spaces || nxt_spaces == tab_size) &&
-							 quote_char == ' ' &&
-							 del_tabs == FALSE )
+						if (quote_char == ' ')
 						{
-							*(dst++) = '\t';
-							prv_spaces = 0;
-						}
-						else
-						{
-							for (; prv_spaces > 0; prv_spaces--)
-								*(dst++) = ' ';
+							if ((prv_spaces >= min_spaces ||
+								nxt_spaces == tab_size) &&
+								del_tabs == FALSE)
+							{
+								*(dst++) = '\t';
+								prv_spaces = 0;
+							}
+							else
+							{
+								for (; prv_spaces > 0; prv_spaces--)
+									*(dst++) = ' ';
+							}
 						}
 					}
 				}
