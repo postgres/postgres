@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.247 2003/12/15 22:24:59 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.248 2003/12/17 07:07:00 momjian Exp $
 -->
 
 <appendix id="release">
@@ -25,6 +25,22 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.247 2003/12/15 22:24:59 momjian
      A dump/restore is <emphasis>not</emphasis> required for those
      running 7.4.
     </para>
+
+    <para>
+     If you want to install the fixes in the information schema
+     concerning the bit types, you need to reload the information
+     schema.  This is either accomplished by initializing a new cluster
+     by running <command>initdb</command>, or by running the following
+     sequence of SQL commands in each database (ideally including
+     <literal>template1</literal>) as a superuser in
+     <application>psql</application>, after installing the new release:
+<programlisting>
+DROP SCHEMA information_schema CASCADE;
+\i /usr/local/pgsql/share/information_schema.sql
+</programlisting>
+     Substitute your installation path in the second command.
+    </para>
+
    </sect2>
 
    <sect2>
