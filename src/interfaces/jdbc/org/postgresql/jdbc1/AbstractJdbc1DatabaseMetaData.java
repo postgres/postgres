@@ -314,10 +314,6 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 * as case sensitive and as a result store them in mixed case?
 	 * A JDBC-Compliant driver will always return false.
 	 *
-	 * <p>Predicament - what do they mean by "SQL identifiers" - if it
-	 * means the names of the tables and columns, then the answers
-	 * given below are correct - otherwise I don't know.
-	 *
 	 * @return true if so
 	 * @exception SQLException if a database access error occurs
 	 */
@@ -1725,10 +1721,10 @@ public abstract class AbstractJdbc1DatabaseMetaData
 				" LEFT JOIN pg_catalog.pg_namespace pn ON (c.relnamespace=pn.oid AND pn.nspname='pg_catalog') "+
 				" WHERE p.pronamespace=n.oid ";
 				if (schemaPattern != null && !"".equals(schemaPattern)) {
-					sql += " AND n.nspname LIKE '"+escapeQuotes(schemaPattern.toLowerCase())+"' ";
+					sql += " AND n.nspname LIKE '"+escapeQuotes(schemaPattern)+"' ";
 				}
 				if (procedureNamePattern != null) {
-					sql += " AND p.proname LIKE '"+escapeQuotes(procedureNamePattern.toLowerCase())+"' ";
+					sql += " AND p.proname LIKE '"+escapeQuotes(procedureNamePattern)+"' ";
 				}
 				sql += " ORDER BY PROCEDURE_SCHEM, PROCEDURE_NAME ";
 		} else if (connection.haveMinimumServerVersion("7.1")) {
@@ -1737,14 +1733,14 @@ public abstract class AbstractJdbc1DatabaseMetaData
 				" LEFT JOIN pg_description d ON (p.oid=d.objoid) "+
 				" LEFT JOIN pg_class c ON (d.classoid=c.oid AND c.relname='pg_proc') ";
 				if (procedureNamePattern != null) {
-					sql += " WHERE p.proname LIKE '"+escapeQuotes(procedureNamePattern.toLowerCase())+"' ";
+					sql += " WHERE p.proname LIKE '"+escapeQuotes(procedureNamePattern)+"' ";
 				}
 				sql += " ORDER BY PROCEDURE_NAME ";
 		} else {
 			sql = "SELECT NULL AS PROCEDURE_CAT, NULL AS PROCEDURE_SCHEM, p.proname AS PROCEDURE_NAME, NULL, NULL, NULL, NULL AS REMARKS, "+java.sql.DatabaseMetaData.procedureReturnsResult+" AS PROCEDURE_TYPE "+
 				" FROM pg_proc p ";
 				if (procedureNamePattern != null) {
-					sql += " WHERE p.proname LIKE '"+escapeQuotes(procedureNamePattern.toLowerCase())+"' ";
+					sql += " WHERE p.proname LIKE '"+escapeQuotes(procedureNamePattern)+"' ";
 				}
 				sql += " ORDER BY PROCEDURE_NAME ";
 		}
@@ -1822,10 +1818,10 @@ public abstract class AbstractJdbc1DatabaseMetaData
 				" FROM pg_catalog.pg_proc p,pg_catalog.pg_namespace n, pg_catalog.pg_type t "+
 				" WHERE p.pronamespace=n.oid AND p.prorettype=t.oid ";
 			if (schemaPattern != null && !"".equals(schemaPattern)) {
-				sql += " AND n.nspname LIKE '"+escapeQuotes(schemaPattern.toLowerCase())+"' ";
+				sql += " AND n.nspname LIKE '"+escapeQuotes(schemaPattern)+"' ";
 			}
 			if (procedureNamePattern != null) {
-				sql += " AND p.proname LIKE '"+escapeQuotes(procedureNamePattern.toLowerCase())+"' ";
+				sql += " AND p.proname LIKE '"+escapeQuotes(procedureNamePattern)+"' ";
 			}
 			sql += " ORDER BY n.nspname, p.proname ";
 		} else {
@@ -1833,7 +1829,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 				" FROM pg_proc p,pg_type t "+
 				" WHERE p.prorettype=t.oid ";
 			if (procedureNamePattern != null) {
-				sql += " AND p.proname LIKE '"+escapeQuotes(procedureNamePattern.toLowerCase())+"' ";
+				sql += " AND p.proname LIKE '"+escapeQuotes(procedureNamePattern)+"' ";
 			}
 			sql += " ORDER BY p.proname ";
 		}
@@ -1997,10 +1993,10 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			" LEFT JOIN pg_catalog.pg_namespace dn ON (dn.oid=dc.relnamespace AND dn.nspname='pg_catalog') "+
 			" WHERE c.relnamespace = n.oid ";
 			if (schemaPattern != null && !"".equals(schemaPattern)) {
-				select += " AND n.nspname LIKE '"+escapeQuotes(schemaPattern.toLowerCase())+"' ";
+				select += " AND n.nspname LIKE '"+escapeQuotes(schemaPattern)+"' ";
 			}
 			if (tableNamePattern != null) {
-				select += " AND c.relname LIKE '"+escapeQuotes(tableNamePattern.toLowerCase())+"' ";
+				select += " AND c.relname LIKE '"+escapeQuotes(tableNamePattern)+"' ";
 			}
 			orderby = " ORDER BY TABLE_TYPE,TABLE_SCHEM,TABLE_NAME ";
 		} else {
@@ -2290,7 +2286,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 				" LEFT JOIN pg_catalog.pg_namespace dn ON (dc.relnamespace=dn.oid AND dn.nspname='pg_catalog') "+
 				" WHERE a.attnum > 0 AND NOT a.attisdropped ";
 			if (schemaPattern != null && !"".equals(schemaPattern)) {
-				sql += " AND n.nspname LIKE '"+escapeQuotes(schemaPattern.toLowerCase())+"' ";
+				sql += " AND n.nspname LIKE '"+escapeQuotes(schemaPattern)+"' ";
 			}
 		} else if (connection.haveMinimumServerVersion("7.1")) {
 			sql = "SELECT NULL::text AS nspname,c.relname,a.attname,a.atttypid,a.attnotnull,a.atttypmod,a.attlen,a.attnum,def.adsrc,dsc.description "+
@@ -2308,10 +2304,10 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		}
 
 		if (tableNamePattern != null && !"".equals(tableNamePattern)) {
-			sql += " AND c.relname LIKE '"+escapeQuotes(tableNamePattern.toLowerCase())+"' ";
+			sql += " AND c.relname LIKE '"+escapeQuotes(tableNamePattern)+"' ";
 		}
 		if (columnNamePattern != null && !"".equals(columnNamePattern)) {
-			sql += " AND a.attname LIKE '"+escapeQuotes(columnNamePattern.toLowerCase())+"' ";
+			sql += " AND a.attname LIKE '"+escapeQuotes(columnNamePattern)+"' ";
 		}
 		sql += " ORDER BY nspname,relname,attname ";
 
@@ -2410,8 +2406,6 @@ public abstract class AbstractJdbc1DatabaseMetaData
 
 		if (columnNamePattern == null)
 			columnNamePattern = "%";
-		else
-			columnNamePattern = columnNamePattern.toLowerCase();
 
 		f[0] = new Field(connection, "TABLE_CAT", iVarcharOid, getMaxNameLength());
 		f[1] = new Field(connection, "TABLE_SCHEM", iVarcharOid, getMaxNameLength());
@@ -2432,7 +2426,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 				" AND c.relkind = 'r' "+
 				" AND a.attnum > 0 AND NOT a.attisdropped ";
 			if (schema != null && !"".equals(schema)) {
-				sql += " AND n.nspname = '"+escapeQuotes(schema.toLowerCase())+"' ";
+				sql += " AND n.nspname = '"+escapeQuotes(schema)+"' ";
 			}
 		} else {
 			sql = "SELECT NULL::text AS nspname,c.relname,u.usename,c.relacl,a.attname "+
@@ -2443,9 +2437,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 				" AND c.relkind = 'r' ";
 		}
 
-		sql += " AND c.relname = '"+escapeQuotes(table.toLowerCase())+"' ";
+		sql += " AND c.relname = '"+escapeQuotes(table)+"' ";
 		if (columnNamePattern != null && !"".equals(columnNamePattern)) {
-			sql += " AND a.attname LIKE '"+escapeQuotes(columnNamePattern.toLowerCase())+"' ";
+			sql += " AND a.attname LIKE '"+escapeQuotes(columnNamePattern)+"' ";
 		}
 		sql += " ORDER BY attname ";
 
@@ -2538,7 +2532,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 				" AND u.usesysid = c.relowner "+
 				" AND c.relkind = 'r' ";
 			if (schemaPattern != null && !"".equals(schemaPattern)) {
-				sql += " AND n.nspname LIKE '"+escapeQuotes(schemaPattern.toLowerCase())+"' ";
+				sql += " AND n.nspname LIKE '"+escapeQuotes(schemaPattern)+"' ";
 			}
 		} else {
 			sql = "SELECT NULL::text AS nspname,c.relname,u.usename,c.relacl "+
@@ -2548,7 +2542,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		}
 
 		if (tableNamePattern != null && !"".equals(tableNamePattern)) {
-			sql += " AND c.relname LIKE '"+escapeQuotes(tableNamePattern.toLowerCase())+"' ";
+			sql += " AND c.relname LIKE '"+escapeQuotes(tableNamePattern)+"' ";
 		}
 		sql += " ORDER BY nspname, relname ";
 
@@ -2752,7 +2746,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			from = " FROM pg_catalog.pg_namespace n, pg_catalog.pg_class ct, pg_catalog.pg_class ci, pg_catalog.pg_attribute a, pg_catalog.pg_index i ";
 			where = " AND ct.relnamespace = n.oid ";
 			if (schema != null && !"".equals(schema)) {
-				where += " AND n.nspname = '"+escapeQuotes(schema.toLowerCase())+"' ";
+				where += " AND n.nspname = '"+escapeQuotes(schema)+"' ";
 			}
 		} else {
 			from = " FROM pg_class ct, pg_class ci, pg_attribute a, pg_index i ";
@@ -2761,7 +2755,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			from+
 			" WHERE ct.oid=i.indrelid AND ci.oid=i.indexrelid "+
 			" AND a.attrelid=ci.oid AND i.indisprimary "+
-			" AND ct.relname = '"+escapeQuotes(table.toLowerCase())+"' "+
+			" AND ct.relname = '"+escapeQuotes(table)+"' "+
 			where+
 			" ORDER BY a.attnum ";
 
@@ -2882,7 +2876,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			from = " FROM pg_catalog.pg_namespace n, pg_catalog.pg_class ct, pg_catalog.pg_class ci, pg_catalog.pg_attribute a, pg_catalog.pg_index i ";
 			where = " AND ct.relnamespace = n.oid ";
 			if (schema != null && !"".equals(schema)) {
-				where += " AND n.nspname = '"+escapeQuotes(schema.toLowerCase())+"' ";
+				where += " AND n.nspname = '"+escapeQuotes(schema)+"' ";
 			}
 		} else {
 			select = "SELECT NULL AS TABLE_CAT, NULL AS TABLE_SCHEM, ";
@@ -2896,7 +2890,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			from+
 			" WHERE ct.oid=i.indrelid AND ci.oid=i.indexrelid "+
 			" AND a.attrelid=ci.oid AND i.indisprimary "+
-			" AND ct.relname = '"+escapeQuotes(table.toLowerCase())+"' "+
+			" AND ct.relname = '"+escapeQuotes(table)+"' "+
 			where+
 			" ORDER BY table_name, pk_name, key_seq";
 		return connection.createStatement().executeQuery(sql);
@@ -3008,10 +3002,10 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			from = " FROM pg_catalog.pg_namespace n, pg_catalog.pg_namespace n2, pg_catalog.pg_trigger t, pg_catalog.pg_trigger t1, pg_catalog.pg_class c, pg_catalog.pg_class c2, pg_catalog.pg_class ic, pg_catalog.pg_proc p1, pg_catalog.pg_proc p2, pg_catalog.pg_index i, pg_catalog.pg_attribute a ";
 			where = " AND c.relnamespace = n.oid AND c2.relnamespace=n2.oid ";
 			if (primarySchema != null && !"".equals(primarySchema)) {
-				where += " AND n.nspname = '"+escapeQuotes(primarySchema.toLowerCase())+"' ";
+				where += " AND n.nspname = '"+escapeQuotes(primarySchema)+"' ";
 			}
 			if (foreignSchema != null && !"".equals(foreignSchema)) {
-				where += " AND n2.nspname = '"+escapeQuotes(foreignSchema.toLowerCase())+"' ";
+				where += " AND n2.nspname = '"+escapeQuotes(foreignSchema)+"' ";
 			}
 		} else {
 			select = "SELECT DISTINCT NULL::text as pnspname, NULL::text as fnspname, ";
@@ -3052,10 +3046,10 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			+ where;
 
 		if (primaryTable != null) {
-			sql += "AND c.relname='" + escapeQuotes(primaryTable.toLowerCase()) + "' ";
+			sql += "AND c.relname='" + escapeQuotes(primaryTable) + "' ";
 		}
 		if (foreignTable != null) {
-			sql += "AND c2.relname='" + escapeQuotes(foreignTable.toLowerCase()) + "' ";
+			sql += "AND c2.relname='" + escapeQuotes(foreignTable) + "' ";
 		}
 
 		sql += "ORDER BY ";
@@ -3548,7 +3542,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			from = " FROM pg_catalog.pg_namespace n, pg_catalog.pg_class ct, pg_catalog.pg_class ci, pg_catalog.pg_index i, pg_catalog.pg_attribute a, pg_catalog.pg_am am ";
 			where = " AND n.oid = ct.relnamespace ";
 			if (schema != null && ! "".equals(schema)) {
-				where += " AND n.nspname = '"+escapeQuotes(schema.toLowerCase())+"' ";
+				where += " AND n.nspname = '"+escapeQuotes(schema)+"' ";
 			}
 		} else {
 			select = "SELECT NULL AS TABLE_CAT, NULL AS TABLE_SCHEM, ";
@@ -3573,7 +3567,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			from+
 			" WHERE ct.oid=i.indrelid AND ci.oid=i.indexrelid AND a.attrelid=ci.oid AND ci.relam=am.oid "+
 			where+
-			" AND ct.relname = '"+escapeQuotes(tableName.toLowerCase())+"' ";
+			" AND ct.relname = '"+escapeQuotes(tableName)+"' ";
 
 		if (unique) {
 			sql += " AND i.indisunique ";

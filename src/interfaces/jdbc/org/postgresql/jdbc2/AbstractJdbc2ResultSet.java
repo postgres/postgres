@@ -15,7 +15,7 @@ import org.postgresql.util.PGbytea;
 import org.postgresql.util.PSQLException;
 
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.9 2002/10/17 19:17:08 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.10 2002/11/04 06:42:33 barry Exp $
  * This class defines methods of the jdbc2 specification.  This class extends
  * org.postgresql.jdbc1.AbstractJdbc1ResultSet which provides the jdbc1
  * methods.  The real Statement class (for jdbc2) is org.postgresql.jdbc2.Jdbc2ResultSet
@@ -1406,34 +1406,42 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 			String columnName = (String) columns.nextElement();
 			int columnIndex = _findColumn( columnName ) - 1;
 
-			switch ( connection.getSQLType( fields[columnIndex].getPGType() ) )
-			{
-
-				case Types.DECIMAL:
-				case Types.BIGINT:
-				case Types.DOUBLE:
-				case Types.BIT:
-				case Types.VARCHAR:
-				case Types.DATE:
-				case Types.TIME:
-				case Types.TIMESTAMP:
-				case Types.SMALLINT:
-				case Types.FLOAT:
-				case Types.INTEGER:
-				case Types.CHAR:
-				case Types.NUMERIC:
-				case Types.REAL:
-				case Types.TINYINT:
-
-					rowBuffer[columnIndex] = connection.getEncoding().encode(String.valueOf( updateValues.get( columnName ) ));
-
-				case Types.NULL:
-					continue;
-
-				default:
-					rowBuffer[columnIndex] = (byte[]) updateValues.get( columnName );
+			Object valueObject = updateValues.get(columnName);
+			if (valueObject instanceof NullObject) {
+				rowBuffer[columnIndex] = null;
 			}
+			else
+			{
+				
+				switch ( connection.getSQLType( fields[columnIndex].getPGType() ) )
+				{
 
+					case Types.DECIMAL:
+					case Types.BIGINT:
+					case Types.DOUBLE:
+					case Types.BIT:
+					case Types.VARCHAR:
+					case Types.DATE:
+					case Types.TIME:
+					case Types.TIMESTAMP:
+					case Types.SMALLINT:
+					case Types.FLOAT:
+					case Types.INTEGER:
+					case Types.CHAR:
+					case Types.NUMERIC:
+					case Types.REAL:
+					case Types.TINYINT:
+
+						rowBuffer[columnIndex] = connection.getEncoding().encode(String.valueOf( valueObject));
+
+					case Types.NULL:
+						continue;
+
+					default:
+						rowBuffer[columnIndex] = (byte[]) valueObject;
+				}
+
+			}
 		}
 	}
 
