@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.136 1998/02/26 04:39:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.137 1998/03/16 14:27:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1788,7 +1788,7 @@ HandleSlashCmds(PsqlSettings *pset,
 					SELECT	t.typname as return_type, \
 							p.proname as function, \
 							substr(oid8types(p.proargtypes),1,20) as arguments, \
-							substr(obj_description(p.oid),1,28) \
+							substr(obj_description(p.oid),1,28) as description \
 					FROM 	pg_proc p, pg_type t \
 					WHERE 	p.prorettype = t.oid and \
 							(pronargs = 0 or oid8types(p.proargtypes) != '') and \
@@ -1799,7 +1799,7 @@ HandleSlashCmds(PsqlSettings *pset,
 					SELECT	t.typname as rtns, \
 							p.proname as function, \
 							oid8types(p.proargtypes) as arguments, \
-							substr(obj_description(p.oid),1,34) \
+							substr(obj_description(p.oid),1,34) as description \
 					FROM pg_proc p, pg_type t \
 					WHERE p.prorettype = t.oid and \
 							(pronargs = 0 or oid8types(p.proargtypes) != '') and \
@@ -1818,7 +1818,7 @@ HandleSlashCmds(PsqlSettings *pset,
 							t0.typname AS result, \
 							t1.typname AS left_type, \
 							t2.typname AS right_type, \
-							obj_description(p.oid) as description \
+							substr(obj_description(p.oid),1,42) as description \
 					FROM	pg_proc p, pg_type t0, \
 							pg_type t1, pg_type t2, \
 							pg_operator o \
