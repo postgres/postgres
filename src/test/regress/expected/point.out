@@ -179,14 +179,14 @@ thirty|point1    |point2
 QUERY: SELECT '' AS fifteen, p1.f1 AS point1, p2.f1 AS point2, (p1.f1 <-> p2.f1) AS distance
    FROM POINT_TBL p1, POINT_TBL p2
    WHERE (p1.f1 <-> p2.f1) > 3 and p1.f1 << p2.f1
-   ORDER BY distance;
+   ORDER BY distance, point1 using <<, point2 using <<;
 fifteen|point1    |point2    |        distance
 -------+----------+----------+----------------
        |(-3,4)    |(0,0)     |               5
        |(-10,0)   |(-3,4)    |8.06225774829855
        |(-10,0)   |(0,0)     |              10
-       |(-5,-12)  |(0,0)     |              13
        |(-10,0)   |(-5,-12)  |              13
+       |(-5,-12)  |(0,0)     |              13
        |(0,0)     |(10,10)   | 14.142135623731
        |(-3,4)    |(10,10)   |14.3178210632764
        |(-5,-12)  |(-3,4)    |16.1245154965971
