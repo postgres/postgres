@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.111 2004/01/22 02:23:21 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.112 2004/02/28 19:46:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -765,8 +765,10 @@ typedef ScanState SeqScanState;
 /* ----------------
  *	 IndexScanState information
  *
+ *		indxqualorig	   execution state for indxqualorig expressions
  *		NumIndices		   number of indices in this scan
  *		IndexPtr		   current index in use
+ *		MarkIndexPtr	   IndexPtr for marked scan point
  *		ScanKeys		   Skey structures to scan index rels
  *		NumScanKeys		   array of no of keys in each Skey struct
  *		RuntimeKeyInfo	   array of array of exprstates for Skeys
@@ -783,7 +785,6 @@ typedef ScanState SeqScanState;
 typedef struct IndexScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
-	List	   *indxqual;
 	List	   *indxqualorig;
 	int			iss_NumIndices;
 	int			iss_IndexPtr;

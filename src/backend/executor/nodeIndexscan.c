@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.91 2004/02/03 17:34:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.92 2004/02/28 19:46:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -669,15 +669,18 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 
 	/*
 	 * initialize child expressions
+	 *
+	 * Note: we don't initialize all of the indxqual expression, only the
+	 * sub-parts corresponding to runtime keys (see below).  The indxqualorig
+	 * expression is always initialized even though it will only be used in
+	 * some uncommon cases --- would be nice to improve that.  (Problem is
+	 * that any SubPlans present in the expression must be found now...)
 	 */
 	indexstate->ss.ps.targetlist = (List *)
 		ExecInitExpr((Expr *) node->scan.plan.targetlist,
 					 (PlanState *) indexstate);
 	indexstate->ss.ps.qual = (List *)
 		ExecInitExpr((Expr *) node->scan.plan.qual,
-					 (PlanState *) indexstate);
-	indexstate->indxqual = (List *)
-		ExecInitExpr((Expr *) node->indxqual,
 					 (PlanState *) indexstate);
 	indexstate->indxqualorig = (List *)
 		ExecInitExpr((Expr *) node->indxqualorig,
