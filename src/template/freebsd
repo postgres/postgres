@@ -1,6 +1,6 @@
 CFLAGS='-pipe'
 
 case $host_cpu in
-  alpha*)   CFLAGS="$CFLAGS -O"
-            GCC_CXXFLAGS="-O";;
+  alpha*)   CFLAGS="$CFLAGS -O2"
+            GCC_CXXFLAGS="-O2";;
 esac
