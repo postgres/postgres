@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.86 2004/05/12 13:38:48 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.87 2004/05/17 14:35:34 momjian Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -120,7 +120,9 @@ main(int argc, char *const argv[])
 				out_option = 0;
 	struct _include_path *ip;
 	const char *progname;
-
+	char	   my_exec_path[MAXPGPATH];
+	char	   include_path[MAXPGPATH];
+	
 	progname = get_progname(argv[0]);
 
 	if (argc > 1)
@@ -137,6 +139,8 @@ main(int argc, char *const argv[])
 			exit(0);
 		}
 	}
+
+	find_my_exec(argv[0], my_exec_path);
 
 	while ((c = getopt(argc, argv, "vcio:I:tD:dC:r:h")) != -1)
 	{
@@ -175,12 +179,18 @@ main(int argc, char *const argv[])
 			case 'C':
 				if (strncmp(optarg, "INFORMIX", strlen("INFORMIX")) == 0)
 				{
+					char	   pkginclude_path[MAXPGPATH];
+					char	   informix_path[MAXPGPATH];
+				
 					compat = (strcmp(optarg, "INFORMIX") == 0) ? ECPG_COMPAT_INFORMIX : ECPG_COMPAT_INFORMIX_SE;
 					/* system_includes = true; */
 					add_preprocessor_define("dec_t=decimal");
 					add_preprocessor_define("intrvl_t=interval");
 					add_preprocessor_define("dtime_t=timestamp");
-					add_include_path(PKGINCLUDEDIR "/informix/esql");
+
+					get_pkginclude_path(my_exec_path, pkginclude_path);
+					snprintf(informix_path, MAXPGPATH, "%s/informix/esql", pkginclude_path);
+					add_include_path(informix_path);
 				}
 				else
 				{
@@ -216,7 +226,8 @@ main(int argc, char *const argv[])
 
 	add_include_path(".");
 	add_include_path("/usr/local/include");
-	add_include_path(INCLUDEDIR);
+	get_include_path(my_exec_path, include_path);
+	add_include_path(include_path);
 	add_include_path("/usr/include");
 
 	if (verbose)

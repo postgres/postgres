@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.30 2004/05/17 13:17:29 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.31 2004/05/17 14:35:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,11 +69,8 @@ int			optreset;
 
 /*
  * these values are passed in by makefile defines
- *
- * Note that "datadir" is not the directory we're going to initialize,
- * it's merely how Autoconf names PREFIX/share.
  */
-char	   *datadir = PGDATADIR;
+char		*share_path = NULL;
 
 /* values to be obtained from arguments */
 char	   *pg_data = "";
@@ -129,7 +126,7 @@ static const char *backend_options = "-F -O -c search_path=pg_catalog -c exit_on
 
 
 /* path to 'initdb' binary directory */
-char	   bindir[MAXPGPATH];
+char	   bin_path[MAXPGPATH];
 char	   backend_exec[MAXPGPATH];
 
 static void *xmalloc(size_t size);
@@ -730,8 +727,8 @@ mkdatadir(char *subdir)
 static void
 set_input(char **dest, char *filename)
 {
-	*dest = xmalloc(strlen(datadir) + strlen(filename) + 2);
-	sprintf(*dest, "%s/%s", datadir, filename);
+	*dest = xmalloc(strlen(share_path) + strlen(filename) + 2);
+	sprintf(*dest, "%s/%s", share_path, filename);
 }
 
 /*
@@ -1849,7 +1846,7 @@ main(int argc, char *argv[])
 				printf(_("Running in noclean mode.  Mistakes will not be cleaned up.\n"));
 				break;
 			case 'L':
-				datadir = xstrdup(optarg);
+				share_path = xstrdup(optarg);
 				break;
 			case 1:
 				locale = xstrdup(optarg);
@@ -1951,9 +1948,15 @@ main(int argc, char *argv[])
 	}
 
 	/* store binary directory */
-	strcpy(bindir, backend_exec);
-	*last_path_separator(bindir) = '\0';
-	
+	strcpy(bin_path, backend_exec);
+	*last_path_separator(bin_path) = '\0';
+
+	if (!share_path)
+	{
+		share_path = xmalloc(MAXPGPATH);
+		get_share_path(backend_exec, share_path);
+	}
+
 	if ((short_version = get_short_version()) == NULL)
 	{
 		fprintf(stderr, _("%s: could not determine valid short version string\n"), progname);
@@ -1983,13 +1986,13 @@ main(int argc, char *argv[])
 	{
 		fprintf(stderr,
 				"VERSION=%s\n"
-				"PGDATA=%s\ndatadir=%s\nPGPATH=%s\n"
+				"PGDATA=%s\nshare_path=%s\nPGPATH=%s\n"
 				"ENCODING=%s\nENCODINGID=%s\n"
 				"POSTGRES_SUPERUSERNAME=%s\nPOSTGRES_BKI=%s\n"
 				"POSTGRES_DESCR=%s\nPOSTGRESQL_CONF_SAMPLE=%s\n"
 				"PG_HBA_SAMPLE=%s\nPG_IDENT_SAMPLE=%s\n",
 				PG_VERSION,
-				pg_data, datadir, bindir,
+				pg_data, share_path, bin_path,
 				encoding, encodingid,
 				username, bki_file,
 				desc_file, conf_file,
@@ -2182,8 +2185,8 @@ main(int argc, char *argv[])
 		   "    %s%s%s/postmaster -D %s%s%s\n"
 		   "or\n"
 		   "    %s%s%s/pg_ctl -D %s%s%s -l logfile start\n\n"),
-		 QUOTE_PATH, bindir, QUOTE_PATH, QUOTE_PATH, pg_data, QUOTE_PATH,
-		QUOTE_PATH, bindir, QUOTE_PATH, QUOTE_PATH, pg_data, QUOTE_PATH);
+		 QUOTE_PATH, bin_path, QUOTE_PATH, QUOTE_PATH, pg_data, QUOTE_PATH,
+		QUOTE_PATH, bin_path, QUOTE_PATH, QUOTE_PATH, pg_data, QUOTE_PATH);
 
 	return 0;
 }

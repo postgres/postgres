@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.387 2004/05/14 17:04:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.388 2004/05/17 14:35:29 momjian Exp $
  *
  * NOTES
  *
@@ -697,6 +697,8 @@ PostmasterMain(int argc, char *argv[])
 		ereport(FATAL,
 				(errmsg("%s: could not locate my own executable path",
 						progname)));
+	if (strlen(pkglib_path) == 0)
+		get_pkglib_path(my_exec_path, pkglib_path);
 
 #ifdef EXEC_BACKEND
 	if (find_other_exec(argv[0], "postgres", PG_VERSIONSTR, postgres_exec_path) < 0)

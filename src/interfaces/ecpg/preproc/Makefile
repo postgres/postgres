@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.103 2004/04/30 04:14:06 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.104 2004/05/17 14:35:34 momjian Exp $
 
 subdir = src/interfaces/ecpg/preproc
 top_builddir = ../../../..
@@ -11,8 +11,6 @@ PATCHLEVEL=0
 override CPPFLAGS := -I$(srcdir)/../include -I$(srcdir) $(CPPFLAGS) \
 	-DMAJOR_VERSION=$(MAJOR_VERSION) \
 	-DMINOR_VERSION=$(MINOR_VERSION) -DPATCHLEVEL=$(PATCHLEVEL) \
-	-DINCLUDEDIR=\"$(includedir)\" \
-	-DPKGINCLUDEDIR=\"$(pkgincludedir)\" \
 	-DFRONTEND
 
 ifeq ($(GCC), yes)
@@ -20,14 +18,17 @@ override CFLAGS += -Wno-error
 endif
 override CFLAGS += $(PTHREAD_CFLAGS)
 
-OBJS=preproc.o type.o ecpg.o ecpg_keywords.o output.o\
-    keywords.o c_keywords.o ../ecpglib/typename.o descriptor.o variable.o
-
+OBJS=	preproc.o type.o ecpg.o ecpg_keywords.o output.o\
+	keywords.o c_keywords.o ../ecpglib/typename.o descriptor.o variable.o \
+	$(filter exec.o, $(LIBOBJS))
 
 all: submake-libpgport ecpg
 
 ecpg: $(OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBS) $(PTHREAD_LIBS) -o $@$(X)
+
+exec.c: % : $(top_srcdir)/src/port/%
+	rm -f $@ && $(LN_S) $< .
 
 # pgc is compiled as part of preproc
 preproc.o: $(srcdir)/pgc.c
@@ -65,7 +66,7 @@ uninstall:
 	rm -f $(DESTDIR)$(bindir)/ecpg$(X)
 
 clean distclean:
-	rm -f *.o ecpg$(X)
+	rm -f *.o ecpg$(X) exec.c
 # garbage from partial builds
 	@rm -f y.tab.c y.tab.h
 # garbage from development

@@ -8,13 +8,31 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.7 2004/05/12 13:38:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.8 2004/05/17 14:35:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "c.h"
 #include <ctype.h>
+
+#ifndef WIN32
+#define	ISSEP(ch)	((ch) == '/')
+#else
+#define	ISSEP(ch)	((ch) == '/' || (ch) == '\\')
+#endif
+
+static bool relative_path(const char *path1, const char *path2);
+static void trim_directory(char *path);
+static void trim_trailing_separator(char *path);
+
+/* Move to last of consecutive separators or to null byte */
+#define MOVE_TO_SEP_END(p) \
+{ \
+	while (ISSEP((p)[0]) && (ISSEP((p)[1]) || !(p)[1])) \
+		(p)++; \
+}
+
 
 /*
  *	is_absolute_path
@@ -40,22 +58,12 @@ is_absolute_path(const char *filename)
 char *
 first_path_separator(const char *filename)
 {
-#ifndef WIN32
-	return strchr(filename, '/');
-#else
-	char	   *slash,
-			   *bslash;
+	char	   *p;
 
-	/* How should we handle "C:file.c"? */
-	slash = strchr(filename, '/');
-	bslash = strchr(filename, '\\');
-	if (slash == NULL)
-		return bslash;
-	else if (bslash == NULL)
-		return slash;
-	else
-		return (slash < bslash) ? slash : bslash;
-#endif
+	for (p = (char *)filename; *p; p++)
+		if (ISSEP(*p))
+			return p;
+	return NULL;
 }
 
 
@@ -65,22 +73,12 @@ first_path_separator(const char *filename)
 char *
 last_path_separator(const char *filename)
 {
-#ifndef WIN32
-	return strrchr(filename, '/');
-#else
-	char	   *slash,
-			   *bslash;
+	char	   *p, *ret = NULL;
 
-	/* How should we handle "C:file.c"? */
-	slash = strrchr(filename, '/');
-	bslash = strrchr(filename, '\\');
-	if (slash == NULL)
-		return bslash;
-	else if (bslash == NULL)
-		return slash;
-	else
-		return (slash > bslash) ? slash : bslash;
-#endif
+	for (p = (char *)filename; *p; p++)
+		if (ISSEP(*p))
+			ret = p;
+	return ret;
 }
 
 
@@ -96,17 +94,17 @@ last_path_separator(const char *filename)
 void
 canonicalize_path(char *path)
 {
+#ifdef WIN32
 	char	   *p;
 
 	for (p = path; *p; p++)
 	{
-#ifdef WIN32
 		if (*p == '\\')
 			*p = '/';
-#endif
 	}
-	if (p > path+1 && *--p == '/')
-		*p = '\0';
+#endif
+
+	trim_trailing_separator(path);
 }
 
 
@@ -120,5 +118,211 @@ get_progname(const char *argv0)
 		return argv0;
 	else
 		return last_path_separator(argv0) + 1;
+}
+
+
+/*
+ *	get_share_path
+ */
+void
+get_share_path(const char *my_exec_path, char *ret_path)
+{
+	if (relative_path(PGBINDIR, PGDATADIR))
+	{
+		/* Autoconf calls our /share 'datadir' */
+		StrNCpy(ret_path, my_exec_path, MAXPGPATH);
+		trim_directory(ret_path);	/* trim off binary */
+		trim_directory(ret_path);	/* trim off /bin */
+		strcat(ret_path, "/share");	/* add /share */
+	}
+	else
+		StrNCpy(ret_path, PGDATADIR, MAXPGPATH);
+}
+
+
+
+/*
+ *	get_etc_path
+ */
+void
+get_etc_path(const char *my_exec_path, char *ret_path)
+{
+	if (relative_path(PGBINDIR, SYSCONFDIR))
+	{
+		StrNCpy(ret_path, my_exec_path, MAXPGPATH);
+		trim_directory(ret_path);
+		trim_directory(ret_path);
+		strcat(ret_path, "/etc");
+	}
+	else
+		StrNCpy(ret_path, SYSCONFDIR, MAXPGPATH);
+}
+
+
+
+/*
+ *	get_include_path
+ */
+void
+get_include_path(const char *my_exec_path, char *ret_path)
+{
+	if (relative_path(PGBINDIR, INCLUDEDIR))
+	{
+		StrNCpy(ret_path, my_exec_path, MAXPGPATH);
+		trim_directory(ret_path);
+		trim_directory(ret_path);
+		strcat(ret_path, "/include");
+	}
+	else
+		StrNCpy(ret_path, INCLUDEDIR, MAXPGPATH);
+}
+
+
+
+/*
+ *	get_pkginclude_path
+ */
+void
+get_pkginclude_path(const char *my_exec_path, char *ret_path)
+{
+	if (relative_path(PGBINDIR, PKGINCLUDEDIR))
+	{
+		StrNCpy(ret_path, my_exec_path, MAXPGPATH);
+		trim_directory(ret_path);
+		trim_directory(ret_path);
+		strcat(ret_path, "/include");
+	}
+	else
+		StrNCpy(ret_path, PKGINCLUDEDIR, MAXPGPATH);
+}
+
+
+
+/*
+ *	get_pkglib_path
+ *
+ *	Return library path, either relative to /bin or hardcoded
+ */
+void
+get_pkglib_path(const char *my_exec_path, char *ret_path)
+{
+	if (relative_path(PGBINDIR, PKGLIBDIR))
+	{
+		StrNCpy(ret_path, my_exec_path, MAXPGPATH);
+		trim_directory(ret_path);
+		trim_directory(ret_path);
+		strcat(ret_path, "/lib");
+	}
+	else
+		StrNCpy(ret_path, PKGLIBDIR, MAXPGPATH);
+}
+
+
+
+/*
+ *	relative_path
+ *
+ *	Do the supplied paths differ only in their last component?
+ */
+static bool
+relative_path(const char *path1, const char *path2)
+{
+
+#ifdef WIN32
+	/* Driver letters match? */
+	if (isalpha(*path1) && path1[1] == ':' &&
+		(!isalpha(*path2) || !path2[1] == ':'))
+		return false;
+	if ((!isalpha(*path1) || !path1[1] == ':') &&
+		(isalpha(*path2) && path2[1] == ':')
+		return false;
+	if (isalpha(*path1) && path1[1] == ':' &&
+		isalpha(*path2) && path2[1] == ':')
+	{
+		if (toupper(*path1) != toupper(*path2))
+			return false;
+		path1 += 2;
+		path2 += 2;
+	}
+#endif
+
+	while (1)
+	{
+		/* Move past adjacent slashes like //, and trailing ones */
+		MOVE_TO_SEP_END(path1);
+		MOVE_TO_SEP_END(path2);
+
+		/* One of the paths is done? */
+		if (!*path1 || !*path2)
+			break;
+
+		/* Win32 filesystem is case insensitive */
+#ifndef WIN32
+		if (*path1 != *path2)
+#else
+		if (toupper((unsigned char) *path1) != toupper((unsigned char)*path2))
+#endif
+			break;
+
+		path1++;
+		path2++;
+	}
+
+	/* both done, identical? */
+	if (!*path1 && !*path2)
+		return false;
+
+	/* advance past directory name */	
+	while (!ISSEP(*path1) && *path1)
+		path1++;
+	while (!ISSEP(*path2) && *path2)
+		path2++;
+
+	MOVE_TO_SEP_END(path1);
+	MOVE_TO_SEP_END(path2);
+
+	/* Are both strings done? */
+	if (!*path1 && !*path2)
+		return true;
+	else
+		return false;
+}
+
+
+/*
+ *	trim_directory
+ *
+ *	Trim trailing directory from path
+ */
+static void
+trim_directory(char *path)
+{
+	char *p;
+	
+	if (path[0] == '\0')
+		return;
+
+	for (p = path + strlen(path) - 1; ISSEP(*p) && p > path; p--)
+		;
+	for (; !ISSEP(*p) && p > path; p--)
+		;
+	*p = '\0';
+	return;
+}
+
+
+
+/*
+ *	trim_trailing_separator
+ */
+static void
+trim_trailing_separator(char *path)
+{
+	char *p = path + strlen(path);
+	
+	/* trim off trailing slashes */
+	if (p > path)
+		for (p--; p >= path && ISSEP(*p); p--)
+			*p = '\0';
 }
 

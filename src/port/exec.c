@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.5 2004/05/14 17:04:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.6 2004/05/17 14:35:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,13 @@
 #include <unistd.h>
 
 #include "miscadmin.h"
+
+/* $PATH (or %PATH%) path separator */
+#ifdef WIN32
+#define PATHSEP ';'
+#else
+#define PATHSEP ':'
+#endif
 
 #ifndef S_IRUSR					/* XXX [TRH] should be in a header */
 #define S_IRUSR		 S_IREAD
@@ -265,6 +272,16 @@ find_my_exec(const char *argv0, char *full_path)
 
 	log_debug("could not find a \"%s\" to execute", argv0);
 	return -1;
+
+#if 0
+	/*
+	 *	Win32 has a native way to find the executable name, but the above
+	 *	method works too.
+	 */
+	if (GetModuleFileName(NULL,basename,MAXPGPATH) == 0)
+		ereport(FATAL,
+				(errmsg("GetModuleFileName failed (%i)",(int)GetLastError())));
+#endif
 }
 
 

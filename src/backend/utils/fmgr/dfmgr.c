@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.71 2004/03/09 05:06:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.72 2004/05/17 14:35:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -270,12 +270,6 @@ file_exists(const char *name)
 #error "DLSUFFIX must be defined to compile this file."
 #endif
 
-/* Example format: "/usr/local/pgsql/lib" */
-#ifndef PKGLIBDIR
-#error "PKGLIBDIR needs to be defined to compile this file."
-#endif
-
-
 /*
  * If name contains a slash, check if the file exists, if so return
  * the name.  Else (no slash) try to expand using search path (see
@@ -341,62 +335,29 @@ expand_dynamic_library_name(const char *name)
 static char *
 substitute_libpath_macro(const char *name)
 {
-	size_t		macroname_len;
-	char	   *replacement = NULL;
-#ifdef WIN32
-	char		basename[MAXPGPATH];
-#endif
-
+	const char *sep_ptr;
+	char	   *ret;
+	
 	AssertArg(name != NULL);
 
 	if (name[0] != '$')
 		return pstrdup(name);
 
-#ifndef WIN32
-	macroname_len = strcspn(name + 1, "/") + 1;
-#else
-	macroname_len = strcspn(name + 1, "/\\") + 1;
-#endif
-
-	if (strncmp(name, "$libdir", macroname_len) == 0)
-#ifndef WIN32
-		replacement = PKGLIBDIR;
-#else
-	{
-		char *p;
-		if (GetModuleFileName(NULL,basename,MAXPGPATH) == 0)
-			ereport(FATAL,
-					(errmsg("GetModuleFileName failed (%i)",(int)GetLastError())));
-
-		canonicalize_path(basename);
-		if ((p = last_path_separator(basename)) == NULL)
-			ereport(FATAL,
-					(errmsg("unexpected failure in determining PKGLIBDIR (%s)",basename)));
-		else
-			*p = '\0';
-
-		strcat(basename,"/../lib");
-		replacement = basename;
-	}
-#endif
-	else
+	if ((sep_ptr = first_path_separator(name)) == NULL)
+		sep_ptr = name + strlen(name);
+		
+	if (strlen("$libdir") != sep_ptr - name ||
+		strncmp(name, "$libdir", strlen("$libdir")) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_NAME),
 				 errmsg("invalid macro name in dynamic library path")));
 
-	if (name[macroname_len] == '\0')
-		return pstrdup(replacement);
-	else
-	{
-		char	   *new;
+	ret = palloc(strlen(pkglib_path) + strlen(sep_ptr) + 1);
 
-		new = palloc(strlen(replacement) + (strlen(name) - macroname_len) + 1);
+	strcpy(ret, pkglib_path);
+	strcat(ret, sep_ptr);
 
-		strcpy(new, replacement);
-		strcat(new, name + macroname_len);
-
-		return new;
-	}
+	return ret;
 }
 
 

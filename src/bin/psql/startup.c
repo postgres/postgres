@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.92 2004/05/02 04:25:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.93 2004/05/17 14:35:33 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -74,7 +74,7 @@ struct adhoc_opts
 
 static void parse_psql_options(int argc, char *argv[],
 				   struct adhoc_opts * options);
-static void process_psqlrc(void);
+static void process_psqlrc(char *argv0);
 static void process_psqlrc_file(char *filename);
 static void showVersion(void);
 
@@ -239,7 +239,7 @@ main(int argc, char *argv[])
 	if (options.action == ACT_FILE && strcmp(options.action_string, "-") != 0)
 	{
 		if (!options.no_psqlrc)
-			process_psqlrc();
+			process_psqlrc(argv[0]);
 
 		successResult = process_file(options.action_string);
 	}
@@ -305,7 +305,7 @@ main(int argc, char *argv[])
 		SetVariable(pset.vars, "PROMPT3", DEFAULT_PROMPT3);
 
 		if (!options.no_psqlrc)
-			process_psqlrc();
+			process_psqlrc(argv[0]);
 		if (!pset.notty)
 			initializeInput(options.no_readline ? 0 : 1);
 		if (options.action_string)		/* -f - was used */
@@ -567,22 +567,24 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 
 }
 
-#ifndef SYSCONFDIR
-#error "You must compile this file with SYSCONFDIR defined."
-#endif
-
 
 /*
  * Load .psqlrc file, if found.
  */
 static void
-process_psqlrc(void)
+process_psqlrc(char *argv0)
 {
-	char	   *globalFile = SYSCONFDIR "/" SYSPSQLRC;
 	char	   *home;
 	char	   *psqlrc;
+	char	   global_file[MAXPGPATH];
+	char	   my_exec_path[MAXPGPATH];
+	char	   etc_path[MAXPGPATH];
 
-	process_psqlrc_file(globalFile);
+	find_my_exec(argv0, my_exec_path);
+	get_etc_path(my_exec_path, etc_path);
+
+	snprintf(global_file, MAXPGPATH, "%s/%s", etc_path, SYSPSQLRC);
+	process_psqlrc_file(global_file);
 
 	if ((home = getenv("HOME")) != NULL)
 	{

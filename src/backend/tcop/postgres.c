@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.406 2004/05/14 17:04:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.407 2004/05/17 14:35:31 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2652,6 +2652,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 			ereport(FATAL,
 					(errmsg("%s: could not locate postgres executable",
 							argv[0])));
+		if (strlen(pkglib_path) == 0)
+			get_pkglib_path(my_exec_path, pkglib_path);
+			
 		/*
 		 * Validate we have been given a reasonable-looking DataDir (if
 		 * under postmaster, assume postmaster did this already).

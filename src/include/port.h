@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.31 2004/05/14 17:04:47 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.32 2004/05/17 14:35:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,12 +26,17 @@ extern char *first_path_separator(const char *filename);
 extern char *last_path_separator(const char *filename);
 extern void canonicalize_path(char *path);
 extern const char *get_progname(const char *argv0);
+extern void get_share_path(const char *my_exec_path, char *ret_path);
+extern void get_etc_path(const char *my_exec_path, char *ret_path);
+extern void get_include_path(const char *my_exec_path, char *ret_path);
+extern void get_pkginclude_path(const char *my_exec_path, char *ret_path);
+extern void get_pkglib_path(const char *my_exec_path, char *ret_path);
+
 
 /* Portable way to find binaries */
 extern int find_my_exec(const char *argv0, char *full_path);
 extern int find_other_exec(const char *argv0, char const *target,
 						   const char *versionstr, char *retpath);
-
 #if defined(__CYGWIN__) || defined(WIN32)
 #define EXE ".exe"
 #define DEVNULL "nul"
@@ -179,13 +184,6 @@ extern int pqGethostbyname(const char *name,
 				char *buffer, size_t buflen,
 				struct hostent **result,
 				int *herrno);
-
-/* $PATH (or %PATH%) path separator */
-#ifdef WIN32
-#define PATHSEP ';'
-#else
-#define PATHSEP ':'
-#endif
 
 /* FIXME: [win32] Placeholder win32 replacements, to allow continued development */
 #ifdef WIN32

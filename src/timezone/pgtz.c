@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.7 2004/05/02 03:12:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.8 2004/05/17 14:35:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,22 +25,7 @@ pg_TZDIR(void)
 	if (done_tzdir)
 		return tzdir;
 
-#ifndef WIN32
-	StrNCpy(tzdir, PGDATADIR, MAXPGPATH);
-#else
-	if (GetModuleFileName(NULL, tzdir, MAXPGPATH) == 0)
-		return NULL;
-#endif
-
-	canonicalize_path(tzdir);
-#ifdef WIN32
-	/* trim off binary name, then go up a directory */
-	if ((p = last_path_separator(tzdir)) == NULL)
-		return NULL;
-	else
-		*p = '\0';
-	strcat(tzdir, "/../share");
-#endif
+	get_share_dir(my_exec_path, tzdir);
 	strcat(tzdir, "/timezone");
 
 	done_tzdir = 1;
