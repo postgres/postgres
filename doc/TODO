@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Feb 28 10:00:29 EST 1998
+Last updated:		Sun Mar  1 00:18:59 EST 1998
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -62,24 +62,17 @@ RELIABILITY
 -----------
 * Overhaul mdmgr/smgr to fix double unlinking and double opens, cleanup
 * Overhaul bufmgr/lockmgr/transaction manager
-* -Fix CLUSTER
 * Remove EXTEND?
-* -Aggregates on VIEW always returns zero (maybe because there is no oid for views?)
 * CREATE VIEW requires super-user priviledge
 * Can lo_export()/lo_import() read/write anywhere, causing a security problem?
 * Tables that start with xinv confused to be large objects
 * Two and three dimmensional arrays display improperly, missing {}
-* -Add GROUP BY to INSERT INTO table SELECT * FROM table2
+* GROUP BY in INSERT INTO table SELECT * FROM table2 fails
 * lo_unlink() crashes server
 * Prevent auto-table reference, like SELECT table.col WHERE col = 3 (?)
-* -Remove un-needed malloc() calls and replace with palloc().
 * SELECT * FROM table WHERE int4_column = '1' fails
 * SELECT a[1] FROM test fails, it needs test.a[1]
-* -SELECT COUNT(*) FROM TAB1, TAB2 fails
-* -SELECT SUM(2+2) FROM table dumps core
 * UPDATE table SET table.value = 3 fails
-* -UPDATE key_table SET keyval=count(reftab.num) fails
-* -INSERT INTO ... SELECT DISTINCT ... does not accept DISTINCT
 * Make pg_dump preserve inheritance column order, do non-inherits first
 * User who can create databases can modify pg_database table
 * optimizer memory exhaustion with many OR's
@@ -88,20 +81,14 @@ RELIABILITY
 ENHANCEMENTS
 ------------
 * Replace table-level locking with row or page-level locking(Vadim)
-* -PRIMARY KEY during table creation(Thomas)
 * Add SERIAL type
-* -Preserve GRANT/REVOKE/pg_group in pg_dump
 * Transaction log, so re-do log can be on a separate disk
 * Allow transaction commits with rollback with no-fsync performance
 * More access control over who can create tables and access the database
 * Add full ANSI SQL capabilities
-	* -add subselects(Vadim)
 	* Implement HAVING clause
-	* -Implement EXISTS qualifier
-	* -report "Not implemented" if valid syntax is supplied
 	* add OUTER joins, left and right (Thomas)
 	* make VIEWs updateable where possible
-	* -add UNIONS(Bruce)
 	* add INTERSECTS, SUBTRACTS
 	* add temporary tables(Bruce)
 	* add sql3 recursive unions
@@ -116,8 +103,6 @@ ENHANCEMENTS
 * Full set of text operations and functions
 	* word searches, concat,max() on text, char
 * Large objects
-	* -overwriting blocks has problems(Peter)
-	* -there are other problems, too.(Peter)
 	* Fix large object mapping scheme, own reltype
 	* not to stuff everything as files in a single directory
 * Better interface for adding to pg_group
@@ -126,13 +111,6 @@ ENHANCEMENTS
 * Threaded version of the server or libpq
 * Allow libpq to cancel query requests
 * Add REGEX internationalization
-* -Add other language types for built-in functions
-	* expand to allow tcl, perl, java
-	* generalize the function manager switch to pass 
-		* function sources to interpreter engines.
-* -remove time-travel feature(Vadim)
-* -reduce system column overhead(Vadmin)
-* -remove pg_time table(Vadim)
 * allow row re-use without vacuum, maybe?(Vadim)
 * Remove restriction that ORDER BY field must be in SELECT list
 * Add word index for text fields, maybe with trigrams, i.e.:
@@ -142,29 +120,19 @@ ENHANCEMENTS
 * Allow INSERT INTO ... SELECT to convert column types
 * Add syslog functionality(Marc)
 * Add STDDEV/VARIANCE() function for standard deviation computation/variance
-* -Add table/column/function discription table indexed by oid
-* -add pg_type attribute to identify types that need length (bpchar, varchar)
 * add UNIQUE capability to non-btree indexes
 * make number of backends a config parameter, storage/sinvaladt.h:MaxBackendId
 * certain indexes will not shrink, i.e. oid indexes with many inserts
 * make NULL's come out at the beginning or end depending on the ORDER BY direction
 * change the library/backend interface to use network byte order
-* -allow unix domain sockets for local connections for performance and security
-* -Add PAGER for psql's \dt, \d, \z tablename
-* -Make timezone set-able by client applications(Thomas)
 * Restore unused oid's on backend exit if no one else has gotten oids
 * remove non-standard types from the system, and make them loadable
-* -make reads queue behind a write waiting for a lock(Bruce)
-* -add LOCK statement(Bruce)
-* -add report of offending line when COPY command fails
 * have UPDATE/DELETE clean out indexes
-* -allow varchar() to only store used bytes, not maximum
 * allow WHERE restriction on ctid
 * allow pg_descriptions when creating types, tables, columns, and functions
 * Fix compile and security of Kerberos/GSSAPI code
 * Allow psql to print nulls as distinct from ""(?)
 * Allow variable casts with BETWEEN 'today'::asbtime AND 'today'::abstime
-* -Allow VIEW permissions to be set separately from the underlying tables
 * Allow INSERT INTO ... SELECT ... FROM view to work
 * Allow text, char(), and varchar() overhead to be only 2 bytes, not 4 bytes
 * Make VACUUM on database not lock pg_class
@@ -180,7 +148,6 @@ ENHANCEMENTS
 PERFORMANCE
 -----------
 * Use indexes in ORDER BY, min(), max()(Costin Oproiu)
-* -Allow LIKE/wildcard matches to use indexes if the wildcard character is not first
 * Optimizing disjunctive queries
 * Fix bushy-plans (Martin)
 * Other optimizer bugs
@@ -380,7 +347,6 @@ New frontend/backend protocol has a version number, network byte order(Phil)
 Security features in pg_hba.conf enhanced and documented, many cleanups(Phil)
 CHAR() now faster access than VARCHAR() or TEXT
 ecpg embedded SQL preprocessor
-Add GROUP BY to INSERT INTO table SELECT * FROM table2
 Reduce system column overhead(Vadmin)
 Remove pg_time table(Vadim)
 Add pg_type attribute to identify types that need length (bpchar, varchar)
@@ -389,6 +355,7 @@ Allow VIEW permissions to be set separately from the underlying tables.
 	For security, use GRANT/REVOKE on views as appropriate(Jan)
 Tables now have no default GRANT SELECT TO PUBLIC.  You must
 	explicitly grant such permissions.
+Clean up tutorial examples(Darren)
 
 Source Tree Changes
 -------------------

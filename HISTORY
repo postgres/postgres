@@ -125,7 +125,6 @@ New frontend/backend protocol has a version number, network byte order(Phil)
 Security features in pg_hba.conf enhanced and documented, many cleanups(Phil)
 CHAR() now faster access than VARCHAR() or TEXT
 ecpg embedded SQL preprocessor
-Add GROUP BY to INSERT INTO table SELECT * FROM table2
 Reduce system column overhead(Vadmin)
 Remove pg_time table(Vadim)
 Add pg_type attribute to identify types that need length (bpchar, varchar)
@@ -134,6 +133,7 @@ Allow VIEW permissions to be set separately from the underlying tables.
 	For security, use GRANT/REVOKE on views as appropriate(Jan)
 Tables now have no default GRANT SELECT TO PUBLIC.  You must
 	explicitly grant such permissions.
+Clean up tutorial examples(Darren)
 
 Source Tree Changes
 -------------------
