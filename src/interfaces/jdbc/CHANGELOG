@@ -1,3 +1,14 @@
+Tue Jan 30 22:24:00 GMT 2001 peter@retep.org.uk
+        - Fixed bug where Statement.setMaxRows() was a global setting. Now
+          limited to just itself.
+        - Changed LargeObject.read(byte[],int,int) to return the actual number
+          of bytes read (used to be void).
+        - LargeObject now supports InputStream's!
+        - PreparedStatement.setBinaryStream() now works!
+        - ResultSet.getBinaryStream() now returns an InputStream that doesn't
+          copy the blob into memory first!
+        - Connection.isClosed() now tests to see if the connection is still alive
+          rather than if it thinks it's alive.
 Thu Jan 25 09:11:00 GMT 2001 peter@retep.org.uk
         - Added an alternative constructor to PGSQLException so that debugging
           some more osteric bugs is easier. If only 1 arg is supplied and it's

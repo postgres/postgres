@@ -23,13 +23,13 @@ import org.postgresql.util.*;
  * parameter.  For instance, if the IN parameter has SQL type Integer, then
  * setInt should be used.
  *
- * <p>If arbitrary parameter type conversions are required, then the setObject 
+ * <p>If arbitrary parameter type conversions are required, then the setObject
  * method should be used with a target SQL type.
  *
  * @see ResultSet
  * @see java.sql.PreparedStatement
  */
-public class PreparedStatement extends Statement implements java.sql.PreparedStatement 
+public class PreparedStatement extends Statement implements java.sql.PreparedStatement
 {
 	String sql;
 	String[] templateStrings;
@@ -124,7 +124,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		}
 		s.append(templateStrings[inStrings.length]);
 		return super.executeUpdate(s.toString()); 	// in Statement class
-	}	
+	}
 
 	/**
 	 * Set a parameter to SQL NULL
@@ -264,7 +264,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	  else {
 	    StringBuffer b = new StringBuffer();
 	    int i;
-	    
+
 	    b.append('\'');
 	    for (i = 0 ; i < x.length() ; ++i)
 	      {
@@ -327,7 +327,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	  //
 	  //set(parameterIndex, df.format(new java.util.Date(x.getTime()+86400000)));
 	}
-  
+
 	/**
 	 * Set a parameter to a java.sql.Time value.  The driver converts
 	 * this to a SQL TIME value when it sends it to the database.
@@ -406,7 +406,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 * When a very large binary value is input to a LONGVARBINARY parameter,
 	 * it may be more practical to send it via a java.io.InputStream.
 	 * JDBC will read the data from the stream as needed, until it reaches
-	 * end-of-file.  
+	 * end-of-file.
 	 *
 	 * <P><B>Note:</B> This stream object can either be a standard Java
 	 * stream object or your own subclass that implements the standard
@@ -418,7 +418,25 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setBinaryStream(int parameterIndex, InputStream x, int length) throws SQLException
 	{
-		throw new PSQLException("postgresql.prep.is");
+          LargeObjectManager lom = connection.getLargeObjectAPI();
+          int oid = lom.create();
+          LargeObject lob = lom.open(oid);
+          OutputStream los = lob.getOutputStream();
+          try {
+            // could be buffered, but then the OutputStream returned by LargeObject
+            // is buffered internally anyhow, so there would be no performance
+            // boost gained, if anything it would be worse!
+            int c=x.read();
+            while(c>-1) {
+              los.write(c);
+              c=x.read();
+            }
+            los.close();
+          } catch(IOException se) {
+            throw new PSQLException("postgresql.prep.is",se);
+          }
+          // lob is closed by the stream so don't call lob.close()
+          setInt(parameterIndex,oid);
 	}
 
 	/**
@@ -453,7 +471,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 * @param x the object containing the input parameter value
 	 * @param targetSqlType The SQL type to be send to the database
 	 * @param scale For java.sql.Types.DECIMAL or java.sql.Types.NUMERIC
-	 *	types this is the number of digits after the decimal.  For 
+	 *	types this is the number of digits after the decimal.  For
 	 *	all other types this value will be ignored.
 	 * @exception SQLException if a database access error occurs
 	 */
@@ -501,7 +519,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	{
 		setObject(parameterIndex, x, targetSqlType, 0);
 	}
-	
+
   /**
    * This stores an Object into a parameter.
    * <p>New for 6.4, if the object is not recognised, but it is
@@ -542,7 +560,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 
 	/**
 	 * Some prepared statements return multiple results; the execute method
-	 * handles these complex statements as well as the simpler form of 
+	 * handles these complex statements as well as the simpler form of
 	 * statements handled by executeQuery and executeUpdate
 	 *
 	 * @return true if the next result is a ResultSet; false if it is an
@@ -584,11 +602,11 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		s.append(templateStrings[inStrings.length]);
 		return s.toString();
 	}
-	
+
 	// **************************************************************
-	//	END OF PUBLIC INTERFACE	
+	//	END OF PUBLIC INTERFACE
 	// **************************************************************
-	
+
 	/**
 	 * There are a lot of setXXX classes which all basically do
 	 * the same thing.  We need a method which actually does the
@@ -604,62 +622,62 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 			throw new PSQLException("postgresql.prep.range");
 		inStrings[paramIndex - 1] = s;
 	}
-    
+
     // ** JDBC 2 Extensions **
-    
+
     public void addBatch() throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public java.sql.ResultSetMetaData getMetaData() throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void setArray(int i,Array x) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void setBlob(int i,Blob x) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void setCharacterStream(int i,java.io.Reader x,int length) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void setClob(int i,Clob x) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void setNull(int i,int t,String s) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void setRef(int i,Ref x) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void setDate(int i,java.sql.Date d,java.util.Calendar cal) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void setTime(int i,Time t,java.util.Calendar cal) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void setTimestamp(int i,Timestamp t,java.util.Calendar cal) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
 }

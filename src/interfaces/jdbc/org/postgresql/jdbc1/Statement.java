@@ -29,6 +29,7 @@ public class Statement implements java.sql.Statement
     SQLWarning warnings = null;	// The warnings chain.
     int timeout = 0;		// The timeout for a query (not used)
     boolean escapeProcessing = true;// escape processing flag
+    int maxrows=0;
 
 	/**
 	 * Constructor for a Statement.  It simply sets the connection
@@ -129,7 +130,7 @@ public class Statement implements java.sql.Statement
 	 */
 	public int getMaxRows() throws SQLException
 	{
-		return connection.maxrows;
+		return maxrows;
 	}
 
 	/**
@@ -141,7 +142,7 @@ public class Statement implements java.sql.Statement
 	 */
 	public void setMaxRows(int max) throws SQLException
 	{
-	  connection.maxrows = max;
+	  maxrows = max;
 	}
 
 	/**

@@ -32,6 +32,7 @@ public class Statement implements java.sql.Statement
     private Vector batch=null;
     int resultsettype;                // the resultset type to return
     int concurrency;         // is it updateable or not?
+    int maxrows=0;            // the maximum number of rows to return 0=unlimited
 
 	/**
 	 * Constructor for a Statement.  It simply sets the connection
@@ -134,7 +135,7 @@ public class Statement implements java.sql.Statement
 	 */
 	public int getMaxRows() throws SQLException
 	{
-		return connection.maxrows;
+		return maxrows;
 	}
 
 	/**
@@ -146,7 +147,7 @@ public class Statement implements java.sql.Statement
 	 */
 	public void setMaxRows(int max) throws SQLException
 	{
-	  connection.maxrows = max;
+	  maxrows = max;
 	}
 
 	/**
@@ -274,7 +275,8 @@ public class Statement implements java.sql.Statement
 	if(escapeProcessing)
 	    sql=connection.EscapeSQL(sql);
 
-	result = connection.ExecSQL(sql);
+        // New in 7.1, pass Statement so that ExecSQL can customise to it
+	result = connection.ExecSQL(sql,this);
 
         // New in 7.1, required for ResultSet.getStatement() to work
         ((org.postgresql.jdbc2.ResultSet)result).setStatement(this);
@@ -388,11 +390,6 @@ public class Statement implements java.sql.Statement
 	throw org.postgresql.Driver.notImplemented();
     }
 
-    //public int getKeysetSize() throws SQLException
-    //{
-//	throw org.postgresql.Driver.notImplemented();
-    //}
-
     public int getResultSetConcurrency() throws SQLException
     {
       // new in 7.1
@@ -415,11 +412,6 @@ public class Statement implements java.sql.Statement
 	throw org.postgresql.Driver.notImplemented();
     }
 
-    //public void setKeysetSize(int keys) throws SQLException
-    //{
-//	throw org.postgresql.Driver.notImplemented();
-    //}
-
     public void setResultSetConcurrency(int value) throws SQLException
     {
       concurrency=value;
@@ -428,6 +420,19 @@ public class Statement implements java.sql.Statement
     public void setResultSetType(int value) throws SQLException
     {
       resultsettype=value;
+    }
+
+    /**
+     * New in 7.1: Returns the Last inserted oid. This should be used, rather
+     * than the old method using getResultSet, which for executeUpdate returns
+     * null.
+     * @return OID of last insert
+     */
+    public int getInsertedOID() throws SQLException
+    {
+      if(result!=null)
+        return ((org.postgresql.ResultSet)result).getInsertedOID();
+      return 0;
     }
 
 }

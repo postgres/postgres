@@ -16,7 +16,7 @@ import org.postgresql.fastpath.*;
  * for this object.
  *
  * <p>Normally, client code would use the getAsciiStream, getBinaryStream,
- * or getUnicodeStream methods in ResultSet, or setAsciiStream, 
+ * or getUnicodeStream methods in ResultSet, or setAsciiStream,
  * setBinaryStream, or setUnicodeStream methods in PreparedStatement to
  * access Large Objects.
  *
@@ -47,21 +47,21 @@ public class LargeObject
    * Indicates a seek from the begining of a file
    */
   public static final int SEEK_SET = 0;
-  
+
   /**
    * Indicates a seek from the current position
    */
   public static final int SEEK_CUR = 1;
-  
+
   /**
    * Indicates a seek from the end of a file
    */
   public static final int SEEK_END = 2;
-  
+
   private Fastpath	fp;	// Fastpath API to use
   private int		oid;	// OID of this object
   private int		fd;	// the descriptor of the open large object
-  
+
   /**
    * This opens a large object.
    *
@@ -78,13 +78,13 @@ public class LargeObject
   {
     this.fp = fp;
     this.oid = oid;
-    
+
     FastpathArg args[] = new FastpathArg[2];
     args[0] = new FastpathArg(oid);
     args[1] = new FastpathArg(mode);
     this.fd = fp.getInteger("lo_open",args);
   }
-  
+
   /**
    * @return the OID of this LargeObject
    */
@@ -92,7 +92,7 @@ public class LargeObject
   {
     return oid;
   }
-  
+
   /**
    * This method closes the object. You must not call methods in this
    * object after this is called.
@@ -104,7 +104,7 @@ public class LargeObject
     args[0] = new FastpathArg(fd);
     fp.fastpath("lo_close",false,args); // true here as we dont care!!
   }
-  
+
   /**
    * Reads some data from the object, and return as a byte[] array
    *
@@ -120,7 +120,7 @@ public class LargeObject
 	args[0] = new FastpathArg(fd);
 	args[1] = new FastpathArg(len);
 	return fp.getData("loread",args);
-	
+
 	// This version allows us to break this down into 4k blocks
 	//if(len<=4048) {
 	//// handle as before, return the whole block in one go
@@ -145,20 +145,25 @@ public class LargeObject
 	//return buf;
 	//}
     }
-    
+
   /**
    * Reads some data from the object into an existing array
    *
    * @param buf destination array
    * @param off offset within array
    * @param len number of bytes to read
+   * @return the number of bytes actually read
    * @exception SQLException if a database-access error occurs.
    */
-  public void read(byte buf[],int off,int len) throws SQLException
+  public int read(byte buf[],int off,int len) throws SQLException
   {
-    System.arraycopy(read(len),0,buf,off,len);
+    byte b[] = read(len);
+    if(b.length<len)
+      len=b.length;
+    System.arraycopy(b,0,buf,off,len);
+    return len;
   }
-  
+
   /**
    * Writes an array to the object
    *
@@ -172,7 +177,7 @@ public class LargeObject
     args[1] = new FastpathArg(buf);
     fp.fastpath("lowrite",false,args);
   }
-  
+
   /**
    * Writes some data from an array to the object
    *
@@ -187,7 +192,7 @@ public class LargeObject
     System.arraycopy(buf,off,data,0,len);
     write(data);
   }
-  
+
   /**
    * Sets the current position within the object.
    *
@@ -206,7 +211,7 @@ public class LargeObject
     args[2] = new FastpathArg(ref);
     fp.fastpath("lo_lseek",false,args);
   }
-  
+
   /**
    * Sets the current position within the object.
    *
@@ -220,7 +225,7 @@ public class LargeObject
   {
     seek(pos,SEEK_SET);
   }
-  
+
   /**
    * @return the current position within the object
    * @exception SQLException if a database-access error occurs.
@@ -231,7 +236,7 @@ public class LargeObject
     args[0] = new FastpathArg(fd);
     return fp.getInteger("lo_tell",args);
   }
-  
+
   /**
    * This method is inefficient, as the only way to find out the size of
    * the object is to seek to the end, record the current position, then
@@ -250,7 +255,7 @@ public class LargeObject
     seek(cp,SEEK_SET);
     return sz;
   }
-  
+
   /**
    * Returns an InputStream from this object.
    *
@@ -261,9 +266,9 @@ public class LargeObject
    */
   public InputStream getInputStream() throws SQLException
   {
-    throw org.postgresql.Driver.notImplemented();
+    return new BlobInputStream(this);
   }
-  
+
   /**
    * Returns an OutputStream to this object
    *
@@ -274,6 +279,7 @@ public class LargeObject
    */
   public OutputStream getOutputStream() throws SQLException
   {
-    throw org.postgresql.Driver.notImplemented();
+    return new BlobOutputStream(this);
   }
+
 }

@@ -581,6 +581,15 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    */
   public InputStream getBinaryStream(int columnIndex) throws SQLException
   {
+    // New in 7.1 Handle OID's as BLOBS so return the input stream
+    if(!wasNullFlag)
+      if( fields[columnIndex - 1].getOID() == 26) {
+	LargeObjectManager lom = connection.getLargeObjectAPI();
+	LargeObject lob = lom.open(getInt(columnIndex));
+        return lob.getInputStream();
+      }
+
+    // Not an OID so fake the stream
     byte b[] = getBytes(columnIndex);
 
     if (b != null)

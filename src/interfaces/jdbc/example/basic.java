@@ -6,7 +6,7 @@ import java.text.*;
 
 /**
  *
- * $Id: basic.java,v 1.5 2000/06/06 11:05:57 peter Exp $
+ * $Id: basic.java,v 1.6 2001/01/31 08:26:01 peter Exp $
  *
  * This example tests the basic components of the JDBC driver, and shows
  * how even the simplest of queries can be implemented.
@@ -22,40 +22,40 @@ public class basic
 {
   Connection db;	// The connection to the database
   Statement  st;	// Our statement to run queries with
-  
+
   public basic(String args[]) throws ClassNotFoundException, FileNotFoundException, IOException, SQLException
   {
     String url = args[0];
     String usr = args[1];
     String pwd = args[2];
-    
+
     // Load the driver
     Class.forName("org.postgresql.Driver");
-    
+
     // Connect to database
     System.out.println("Connecting to Database URL = " + url);
     db = DriverManager.getConnection(url, usr, pwd);
-    
+
     System.out.println("Connected...Now creating a statement");
     st = db.createStatement();
-    
+
     // Clean up the database (in case we failed earlier) then initialise
     cleanup();
-    
+
     // Now run tests using JDBC methods
     doexample();
-    
+
     // Clean up the database
     cleanup();
-    
+
     // Finally close the database
     System.out.println("Now closing the connection");
     st.close();
     db.close();
-    
+
     //throw postgresql.Driver.notImplemented();
   }
-  
+
   /**
    * This drops the table (if it existed). No errors are reported.
    */
@@ -67,35 +67,36 @@ public class basic
       // We ignore any errors here
     }
   }
-  
+
   /**
    * This performs the example
    */
   public void doexample() throws SQLException
   {
     System.out.println("\nRunning tests:");
-    
+
     // First we need a table to store data in
     st.executeUpdate("create table basic (a int2, b int2)");
-    
+
     // Now insert some data, using the Statement
     st.executeUpdate("insert into basic values (1,1)");
     st.executeUpdate("insert into basic values (2,1)");
     st.executeUpdate("insert into basic values (3,1)");
-    
+
     // This shows how to get the oid of a just inserted row
+    // updated for 7.1
     st.executeUpdate("insert into basic values (4,1)");
-    int insertedOID = ((org.postgresql.ResultSet)st.getResultSet()).getInsertedOID();
+    int insertedOID = ((org.postgresql.jdbc2.Statement)st).getInsertedOID();
     System.out.println("Inserted row with oid "+insertedOID);
-    
+
     // Now change the value of b from 1 to 8
     st.executeUpdate("update basic set b=8");
     System.out.println("Updated "+st.getUpdateCount()+" rows");
-    
+
     // Now delete 2 rows
     st.executeUpdate("delete from basic where a<3");
     System.out.println("deleted "+st.getUpdateCount()+" rows");
-    
+
     // For large inserts, a PreparedStatement is more efficient, because it
     // supports the idea of precompiling the SQL statement, and to store
     // directly, a Java object into any column. PostgreSQL doesnt support
@@ -112,7 +113,7 @@ public class basic
       ps.executeUpdate();	// executeUpdate because insert returns no data
     }
     ps.close();			// Always close when we are done with it
-    
+
     // Finally perform a query on the table
     System.out.println("performing a query");
     ResultSet rs = st.executeQuery("select a, b from basic");
@@ -126,7 +127,7 @@ public class basic
       }
       rs.close();	// again, you must close the result when done
     }
-    
+
     // Now run the query again, showing a more efficient way of getting the
     // result if you don't know what column number a value is in
     System.out.println("performing another query");
@@ -140,7 +141,7 @@ public class basic
       //
       int col_a = rs.findColumn("a");
       int col_b = rs.findColumn("b");
-      
+
       // Now we run through the result set, printing out the result.
       // Again, we must call .next() before attempting to read any results
       while(rs.next()) {
@@ -150,11 +151,22 @@ public class basic
       }
       rs.close();	// again, you must close the result when done
     }
-    
+
+    // Now test maxrows by setting it to 3 rows
+    st.setMaxRows(3);
+    System.out.println("performing a query limited to "+st.getMaxRows());
+    rs = st.executeQuery("select a, b from basic");
+    while(rs.next()) {
+      int a = rs.getInt("a");	// This shows how to get the value by name
+      int b = rs.getInt(2);	// This shows how to get the value by column
+      System.out.println("  a="+a+" b="+b);
+    }
+    rs.close();	// again, you must close the result when done
+
     // The last thing to do is to drop the table. This is done in the
     // cleanup() method.
   }
-  
+
   /**
    * Display some instructions on how to run the example
    */
@@ -164,22 +176,22 @@ public class basic
     System.out.println("Useage:\n java example.basic jdbc:postgresql:database user password [debug]\n\nThe debug field can be anything. It's presence will enable DriverManager's\ndebug trace. Unless you want to see screens of items, don't put anything in\nhere.");
     System.exit(1);
   }
-  
+
   /**
    * This little lot starts the test
    */
   public static void main(String args[])
   {
     System.out.println("PostgreSQL basic test v6.3 rev 1\n");
-    
+
     if(args.length<3)
       instructions();
-    
+
     // This line outputs debug information to stderr. To enable this, simply
     // add an extra parameter to the command line
     if(args.length>3)
       DriverManager.setLogStream(System.err);
-    
+
     // Now run the tests
     try {
       basic test = new basic(args);
