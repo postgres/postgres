@@ -4,7 +4,7 @@
 #    Makefile for Java JDBC interface
 #
 # IDENTIFICATION
-#    $Id: Makefile,v 1.19 2000/04/26 14:19:29 momjian Exp $
+#    $Id: Makefile,v 1.20 2000/05/03 15:58:08 peter Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -28,8 +28,8 @@ TOUCH		= touch
 # postgresql to org/postgresql
 PGBASE		= org/postgresql
 
-# In 6.5, the all rule builds the makeVersion class which then calls make using
-# the jdbc1 or jdbc2 rules
+# For 6.5.3 and 7.0+, we need to select the correct JDBC API, so prompt
+# for the version.
 all:	
 	@echo ------------------------------------------------------------
 	@echo Due to problems with some JVMs that dont return a meaningful
@@ -89,6 +89,7 @@ doc:
 # the jar file.
 OBJ_COMMON=	$(PGBASE)/Connection.class \
 		$(PGBASE)/Driver.class \
+		$(PGBASE)/DriverClass.class \
 		$(PGBASE)/Field.class \
 		$(PGBASE)/PG_Stream.class \
 		$(PGBASE)/ResultSet.class \
@@ -138,8 +139,12 @@ jdbc1:
 	 echo "public static String connectClass=\"org.postgresql.jdbc1.Connection\";" ;\
 	 echo "}" \
 	) >$(PGBASE)/DriverClass.java
+	-$(RM) postgresql.jar
 	@$(MAKE) jdbc1real
 
+# This rule does the real work for JDBC1.2, however do not call it directly.
+# This is because the JDBC driver relies on the org.postgresql.DriverClass
+# class to determine the driver version.
 jdbc1real: $(PGBASE)/DriverClass.class \
 	$(OBJ_COMMON) $(OBJ_JDBC1) postgresql.jar msg
 
@@ -150,16 +155,17 @@ jdbc2:
 	 echo "public static String connectClass=\"org.postgresql.jdbc2.Connection\";" ;\
 	 echo "}" \
 	) >$(PGBASE)/DriverClass.java
+	-$(RM) postgresql.jar
 	@$(MAKE) jdbc2real
 
+# This rule does the real work for JDBC2, however do not call it directly.
+# This is because the JDBC driver relies on the org.postgresql.DriverClass
+# class to determine the driver version.
 jdbc2real: $(PGBASE)/DriverClass.class \
 	$(OBJ_COMMON) $(OBJ_JDBC2) postgresql.jar msg
 
 # If you have problems with this rule, replace the $( ) with ` ` as some
 # shells (mainly sh under Solaris) doesn't recognise $( )
-#
-# Note:	This works by storing all compiled classes under the $(PGBASE)
-#	directory. We use this later for compiling the dual-mode driver.
 #
 postgresql.jar: $(OBJ) $(OBJ_COMMON)
 	$(JAR) -c0f $@ `$(FIND) $(PGBASE) -name "*.class" -print` \
@@ -182,7 +188,7 @@ clean:
 #
 $(PGBASE)/Connection.class:		$(PGBASE)/Connection.java
 $(PGBASE)/DatabaseMetaData.class:	$(PGBASE)/DatabaseMetaData.java
-$(PGBASE)/Driver.class:		$(PGBASE)/Driver.java
+$(PGBASE)/Driver.class:			$(PGBASE)/Driver.java
 $(PGBASE)/Field.class:			$(PGBASE)/Field.java
 $(PGBASE)/PG_Stream.class:		$(PGBASE)/PG_Stream.java
 $(PGBASE)/PreparedStatement.class:	$(PGBASE)/PreparedStatement.java

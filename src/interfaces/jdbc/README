@@ -1,55 +1,37 @@
 This is a simple readme describing how to compile and use the jdbc driver.
 
+This file was amended on May 2 2000 to document the changes made in the 7.0
+release.
+
+---------------------------------------------------------------------------
+
 This isn't a guide on how to use JDBC - for that refer to Javasoft's web site:
 
 	http://www.javasoft.com
-
-or the JDBC mailing list:
-
-	jdbc@java.blackdown.org
-
-	http://www.blackdown.org
 
 For problems with this driver, then refer to the postgres-interfaces email
 list:
 
 	http://www.postgresql.org
 
-When PostgreSQL V6.4 was released, full documentation for the driver was
-included in the main documentation tree (under the doc directory).
-
-This file was finally amended on December 29 1998 to account for the major
-changes made to the driver since V6.4 was released.
-
 ---------------------------------------------------------------------------
 
 COMPILING
 
-To compile the driver, simply use make in the src/interfaces/jdbc directory.
-This will compile the driver, and build a .jar file (Java ARchive).
+There are actually two versions of the driver. One for the JDBC1.2 specification, and one for the JDBC2 specification. To compile the driver, you need to select the correct one.
 
-REMEMBER: once you have compiled the driver, it will work on ALL platforms
-that support the JDK 1.1 api or later.
+If you have JDK1.1.x you need to type: make jdbc1
 
-The V6.5 driver introduced support for the JDBC2 specification (which is used
-with JDK 1.2 api and later). This caused us some problems because classes
-written for JDBC1 and JDBC2 are not compatible, so a large chunk of the
-driver had to be re-written to accomodate this.
+If you have JDK1.2 or JDK1.3, you need to type: make jdbc2
 
-Running make will build a .jar file (postgresql.jar) which contains the driver.
-That jar file will contain the driver for _your_ version of the JDK. That is,
-if you run make using JDK 1.1.7, then you will get the JDBC1 driver. If you
-run using 1.2 then you will get the JDBC2 driver.
+This will compile the driver, and build a .jar file (Java ARchive) called
+postgresql.jar
 
-Tip: If you want the driver to run on both JDBC1 or JDBC2, first compile under
-JDK 1.1.x, then recompile under JDK 1.2.
+That jar file will contain the driver for _your_ version of the JDK.
 
-In testing, I've done this using 1.1.6 (running under linux), and running make
-on my Win95 based Laptop (CygWin B20.1 was used to get a GNUMake - and a
-decent shell {bash}).
-
-When the .jar file is built, it includes all the classes under postgresql, and
-the driver automatically selects the correct classes.
+REMEMBER: Once you have compiled the driver, it will work on ALL platforms
+that support that version of the API. You don't need to build it for each
+platform.
 
 That means you don't have to compile it on every platform. Believe me, I
 still hear from people who ask me "I've compiled it ok under Solaris, but it
@@ -78,20 +60,12 @@ versions of the backend) on my web site http://www.retep.org.uk/postgres/
 
 INSTALLING THE DRIVER
 
-To install the driver, the .class files have to be in the classpath. This can be
-done in two ways:
+To install the driver, the .class files have to be in the classpath. To do
+this, copy the postgres.jar file into a directory, and add it to the classpath.
 
-1: create a directory "postgresql" (and it must be called this) in the current
-   directory (or a directory in the class path), and copy all .class files
-   into it.
+ie: under LINUX/SOLARIS (the example here is my linux box):
 
-2: copy the postgres.jar file into a directory, and add it to the classpath.
-
-   ie: under LINUX/SOLARIS (the example here is my linux box):
-
-	export CLASSPATH=.:/usr/local/lib/postgresql.jar:/usr/local/jdk1.1.1/lib/classes.zip
-
-   note: in java, .zip and .jar files hold collections of classes.
+	export CLASSPATH=.:/usr/local/lib/postgresql.jar
 
 ---------------------------------------------------------------------------
 
@@ -106,23 +80,24 @@ of doing this:
    introduce the driver using the following snippet of code:
 
 	try {
-	  Class.forName("postgresql.Driver");
+	  Class.forName("org.postgresql.Driver");
 	} catch(Exception e) {
 	  // your error handling code goes here
 	}
 
    Remember, this method restricts your code to just the postgresql database.
+   However, this is how most people load the driver.
 
 2: Parameters
 
    This method specifies the driver from the command line. When running the
    application, you specify the driver using the option:
 
-	-Djdbc.drivers=postgresql.Driver
+	-Djdbc.drivers=org.postgresql.Driver
 
    eg: This is an example of running one of my other projects with the driver:
 
-	java -Djdbc.drivers=postgresql.Driver finder.finder
+	java -Djdbc.drivers=org.postgresql.Driver uk.org.retep.finder.Main
 
    note: This method only works with Applications (not for Applets).
 	 However, the application is not tied to one driver, so if you needed
@@ -147,19 +122,87 @@ them to the URL. eg:
 	jdbc:postgresql:database?user=me
 	jdbc:postgresql:database?user=me&password=mypass
 
-Previous versions you had to use an auth argument to tell the driver what
-authentication scheme to use when connecting to the database.
-
-However, this is no longer supported because the database tells the driver
-what scheme it's expecting.
-
 ---------------------------------------------------------------------------
 
 That's the basics related to this driver. You'll need to read the JDBC Docs
-on how to use it.
+on how to use it. However, there are some examples included in the example
+directory. To build, type: make examples
+
+To run them, they follow the same syntax. For example, the basic example shows
+how to insert data, and perform queries:
+
+	java example.basic jdbc:postgresql:test user password
+
+---------------------------------------------------------------------------
 
 POSTGRESQL SPECIFICS
 --------------------
+
+Large Objects:
+
+A "feature" of PostgreSQL is that access to LargeObjects is only permitted
+within a Transaction. Because of this, any use of LargeObjects (also known
+as Blobs) requires that the Connection.setAutoCommit() method be called
+disabling the autocommit feature.
+
+For example:
+
+	Connection db;			// open the connection here
+	db.setAutoCommit(false);	// Turn off AutoCommit
+
+			------------------
+
+Large Object API
+
+Most of the time, you can use the getBytes()/setBytes() methods to read and
+write small Large Objects. However, PostgreSQL's own internal api's are
+available. These allow you to access the object as if it was a file.
+
+The first thing you need to do is to open the LargeObjectManager. This class
+handles the opening of existing objects, and creating new ones. To do this,
+you use the following line of code:
+
+	LargeObjectManager lobj;
+	lobj = ((org.postgresql.Connection)db).getLargeObjectAPI();
+
+where db is a reference to an open Connection object.
+
+Once that is done, you can use the API for the lifetime of that Connection.
+
+To create an object, you call the create() method. This takes an argument
+with the file modes you intend to use. The following line is normally
+sufficient:
+
+       int oid = lobj.create(LargeObjectManager.READ|LargeObjectManager.WRITE);
+
+Here, lobj is the LargeObjectManager we have opened earlier, and oid is the
+Large Object's oid in the database.
+
+To open an existing object, you use the open() method. This takes an oid, and
+the file permissions. It then returns a LargeObject object.
+
+	LargeObject obj = lobj.open(oid,LargeObjectManager.WRITE);
+
+Once the LargeObject is open, you can call methods to read, write, seek etc.
+Here's the supported methods:
+
+	int oid = obj.getOID();			Return the objects oid
+	obj.close();				Close the object
+	byte data[] = obj.read(int len);	Read len bytes
+	onj.read(byte data[],int off,int len);	Read into data[off] len bytes
+	obj.write(byte data[]);			Write the array data
+	obj.write(byte data[],int off,int len);	Write len bytes from data[off]
+	obj.seek(int pos,int ref);		As fseek in C.
+	obj.seek(int pos);			Move to pos (from the begining)
+	int pos = obj.tell();			Returns the current position
+	int size = obj.size();			Returns the objects size
+
+Caveat: If you commit(), rollback() a transaction, or turn on autocommit whilst
+an object is open PostgreSQL will close it. You will need to reopen the object
+before using it again. Using the existing LargeObject will cause an
+SQLException to be thrown.
+
+			------------------
 
 Date datatype:
 

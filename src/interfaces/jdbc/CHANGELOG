@@ -1,4 +1,14 @@
-Web Apr 12 22:14:00 BST 2000 peter@retep.org.uk
+Wed May 02 16:47:00 BST 2000 petermount@it.maidstone.gov.uk
+	- Fixed the Makefile so that postgresql.jar is built everytime
+	  the jdbc1 or jdbc2 rules are called.
+	- Fixed the threadsafe example. It had problems with autocommit
+	
+Wed May 02 14:32:00 BST 2000 petermount@it.maidstone.gov.uk
+	- Rewrote the README file (the old one was 18 months old!)
+	- Added @deprecated tags to org.postgresql.jdbc2.ResultSet
+	  to clear some warnings issued during compilation.
+	
+Wed Apr 12 22:14:00 BST 2000 peter@retep.org.uk
 	- Implemented the JDBC2 Blob interface, and ResultSet.getBlob().
 	
 Wed Apr 12 20:20:00 BST 2000 peter@retep.org.uk

@@ -490,7 +490,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    * @exception SQLException if a database access error occurs
    * @see getAsciiStream
    * @see getBinaryStream
-   * @deprecated
+   * @deprecated in JDBC2.0
    */
   public InputStream getUnicodeStream(int columnIndex) throws SQLException
   {

@@ -40,6 +40,9 @@ public class threadsafe
     // Clean up the database (in case we failed earlier) then initialise
     cleanup();
     
+    // Because we use LargeObjects, we must use Transactions
+    db.setAutoCommit(false);
+    
     // Now run tests using JDBC methods, then LargeObjects
     doexample();
     
@@ -59,7 +62,13 @@ public class threadsafe
   public void cleanup()
   {
     try {
-      st.executeUpdate("drop table basic");
+      st.executeUpdate("drop table basic1");
+    } catch(Exception ex) {
+      // We ignore any errors here
+    }
+    
+    try {
+      st.executeUpdate("drop table basic2");
     } catch(Exception ex) {
       // We ignore any errors here
     }
@@ -119,12 +128,12 @@ public class threadsafe
 	System.out.println("Thread 1 running...");
 	
 	// First we need a table to store data in
-	st.executeUpdate("create table basic (a int2, b int2)");
+	st.executeUpdate("create table basic1 (a int2, b int2)");
 	
 	// Now insert some data, using the Statement
-	st.executeUpdate("insert into basic values (1,1)");
-	st.executeUpdate("insert into basic values (2,1)");
-	st.executeUpdate("insert into basic values (3,1)");
+	st.executeUpdate("insert into basic1 values (1,1)");
+	st.executeUpdate("insert into basic1 values (2,1)");
+	st.executeUpdate("insert into basic1 values (3,1)");
 	
 	// For large inserts, a PreparedStatement is more efficient, because it
 	// supports the idea of precompiling the SQL statement, and to store
@@ -135,11 +144,12 @@ public class threadsafe
 	// Also, this is the only way of writing dates in a datestyle independent
 	// manner. (DateStyles are PostgreSQL's way of handling different methods
 	// of representing dates in the Date data type.)
-	PreparedStatement ps = db.prepareStatement("insert into basic values (?,?)");
+	PreparedStatement ps = db.prepareStatement("insert into basic1 values (?,?)");
 	for(int i=2;i<200;i++) {
 	  ps.setInt(1,4);		// "column a" = 5
 	  ps.setInt(2,i);		// "column b" = i
 	  ps.executeUpdate();	// executeUpdate because insert returns no data
+//	  c.commit();
 	  if((i%50)==0)
 	    DriverManager.println("Thread 1 done "+i+" inserts");
 	}
@@ -147,7 +157,7 @@ public class threadsafe
 	
 	// Finally perform a query on the table
 	DriverManager.println("Thread 1 performing a query");
-	ResultSet rs = st.executeQuery("select a, b from basic");
+	ResultSet rs = st.executeQuery("select a, b from basic1");
 	int cnt=0;
 	if(rs!=null) {
 	  // Now we run through the result set, printing out the result.
@@ -189,6 +199,9 @@ public class threadsafe
       try {
 	System.out.println("Thread 2 running...");
 	
+	// First we need a table to store data in
+	st.executeUpdate("create table basic2 (a int2, b int2)");
+	
 	// For large inserts, a PreparedStatement is more efficient, because it
 	// supports the idea of precompiling the SQL statement, and to store
 	// directly, a Java object into any column. PostgreSQL doesnt support
@@ -198,11 +211,12 @@ public class threadsafe
 	// Also, this is the only way of writing dates in a datestyle independent
 	// manner. (DateStyles are PostgreSQL's way of handling different methods
 	// of representing dates in the Date data type.)
-	PreparedStatement ps = db.prepareStatement("insert into basic values (?,?)");
+	PreparedStatement ps = db.prepareStatement("insert into basic2 values (?,?)");
 	for(int i=2;i<200;i++) {
 	  ps.setInt(1,4);		// "column a" = 5
 	  ps.setInt(2,i);		// "column b" = i
 	  ps.executeUpdate();	// executeUpdate because insert returns no data
+//	  c.commit();
 	  if((i%50)==0)
 	    DriverManager.println("Thread 2 done "+i+" inserts");
 	}
@@ -210,7 +224,7 @@ public class threadsafe
 	
 	// Finally perform a query on the table
 	DriverManager.println("Thread 2 performing a query");
-	ResultSet rs = st.executeQuery("select * from basic where b>1");
+	ResultSet rs = st.executeQuery("select * from basic2 where b>1");
 	int cnt=0;
 	if(rs!=null) {
 	  // First find out the column numbers.

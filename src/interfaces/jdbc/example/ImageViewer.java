@@ -210,9 +210,17 @@ public class ImageViewer implements ItemListener
   public void init()
   {
     try {
+      db.setAutoCommit(true);
       stat.executeUpdate("create table images (imgname name,imgoid oid)");
       label.setText("Initialised database");
       db.commit();
+    } catch(SQLException ex) {
+      label.setText(ex.toString());
+    }
+    
+    // This must run outside the previous try{} catch{} segment
+    try {
+      db.setAutoCommit(true);
     } catch(SQLException ex) {
       label.setText(ex.toString());
     }
