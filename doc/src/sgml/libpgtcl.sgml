@@ -65,6 +65,9 @@
     <ENTRY>loop over the result of a SELECT statement</ENTRY>
   </ROW>
   <ROW>
+    <ENTRY><function>pg_execute</function></ENTRY>
+    <ENTRY>send a query and optionally loop over the results</ENTRY>
+  <ROW>
     <ENTRY><function>pg_listen</function></ENTRY>
     <ENTRY>establish a callback for NOTIFY messages</ENTRY>
   </ROW>
@@ -986,6 +989,202 @@ This would work if table <classname>table</> has fields <structfield>control</> 
 	pg_select $pgconn "SELECT * FROM table" array {
 		puts [format "%5d %s" $array(control) $array(name)]
 	}
+</ProgramListing>
+</PARA>
+</REFSECT1>
+
+</REFENTRY>
+
+<!-- ********************************************************** -->
+
+<REFENTRY ID="PGTCL-PGEXECUTE">
+<REFMETA>
+<REFENTRYTITLE>pg_execute</REFENTRYTITLE>
+<REFMISCINFO>PGTCL - Query Processing</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>pg_execute
+</REFNAME>
+<REFPURPOSE>
+send a query and optionally loop over the results
+</REFPURPOSE>
+<INDEXTERM ID="IX-PGTCL-PGEXECUTE-1"><PRIMARY>pgtcl</PRIMARY><SECONDARY>query</SECONDARY></INDEXTERM>
+<INDEXTERM ID="IX-PGTCL-PGEXECUTE-2"><PRIMARY>pg_execute</PRIMARY></INDEXTERM>
+</REFNAMEDIV>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>2002-03-06</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+pg_execute <OPTIONAL>-array <REPLACEABLE CLASS="PARAMETER">arrayVar</REPLACEABLE></OPTIONAL> <OPTIONAL>-oid <REPLACEABLE CLASS="PARAMETER">oidVar</REPLACEABLE></OPTIONAL> <REPLACEABLE CLASS="PARAMETER">dbHandle</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">queryString</REPLACEABLE> <OPTIONAL><REPLACEABLE CLASS="PARAMETER">queryProcedure</REPLACEABLE></OPTIONAL>
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-PGTCL-PGEXECUTE-1">
+<REFSECT2INFO>
+<DATE>2002-03-06</DATE>
+</REFSECT2INFO>
+<TITLE>Inputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+  <OPTIONAL>-array <REPLACEABLE CLASS="PARAMETER">arrayVar</REPLACEABLE></OPTIONAL>
+</TERM>
+<LISTITEM>
+<PARA>Specifies the name of an array variable where result tuples are stored,
+indexed by the field names.
+This is ignored if queryString is not a SELECT statement. For SELECT
+statements, if this option is not used, result tuples values are stored
+in individual variables named according to the field names in the result.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+  <OPTIONAL>-oid <REPLACEABLE CLASS="PARAMETER">oidVar</REPLACEABLE></OPTIONAL>
+</TERM>
+<LISTITEM>
+<PARA>Specifies the name of a variable into which the OID from an INSERT
+statement will be stored.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+  <REPLACEABLE CLASS="PARAMETER">dbHandle</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>Specifies a valid database handle.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+  <REPLACEABLE CLASS="PARAMETER">queryString</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>Specifies a valid SQL query.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+  <OPTIONAL><REPLACEABLE CLASS="PARAMETER">queryProcedure</REPLACEABLE></OPTIONAL>
+</TERM>
+<LISTITEM>
+<PARA>Optional command to execute for each result tuple of a SELECT statement.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+
+</REFSECT2>
+
+<REFSECT2 ID="R2-PGTCL-PGEXECUTE-2">
+<REFSECT2INFO>
+<DATE>2002-03-06</DATE>
+</REFSECT2INFO>
+<TITLE>Outputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+  <REPLACEABLE CLASS="PARAMETER">ntuples</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+The number of tuples affected or returned by the query.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2></REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-PGTCL-PGEXECUTE-1">
+<REFSECT1INFO>
+<DATE>2002-03-06</DATE>
+</REFSECT1INFO>
+<TITLE>Description
+</TITLE>
+<PARA>
+<FUNCTION>pg_execute</FUNCTION> submits a query to the PostgreSQL backend.
+</PARA>
+<PARA>
+If the query is not a SELECT statement, the query is executed and the
+number of tuples affected by the query is returned.  If the query is an
+INSERT and a single tuple is inserted, the OID of the inserted tuple is
+stored in the oidVar variable if the optional <PARAMETER>-oid</PARAMETER>
+argument is supplied.
+</PARA>
+<PARA>
+If the query is a SELECT statement, the query is executed. For each tuple
+in the result, the tuple field values are stored in the
+<PARAMETER>arrayVar</PARAMETER> variable,
+if supplied, using the field names as the array indexes, else in variables
+named by the field names, and then the optional
+<PARAMETER>queryProcedure</PARAMETER> is executed if supplied.
+(Omitting the <PARAMETER>queryProcedure</PARAMETER> probably makes sense
+only if the query will return a single tuple.)
+The number of tuples selected is returned.
+</PARA>
+<PARA>
+The <PARAMETER>queryProcedure</PARAMETER> can use the Tcl
+<LITERAL>break</LITERAL>, <LITERAL>continue</LITERAL>, and
+<LITERAL>return</LITERAL> commands, with the expected behavior.
+Note that if the <PARAMETER>queryProcedure</PARAMETER> executes
+<LITERAL>return</LITERAL>, <FUNCTION>pg_execute</FUNCTION> does
+not return <PARAMETER>ntuples</PARAMETER>.
+</PARA>
+<PARA>
+<FUNCTION>pg_execute</FUNCTION> is a newer function which provides a
+superset of the features of <FUNCTION>pg_select</FUNCTION>, and can
+replace <FUNCTION>pg_exec</FUNCTION> in many cases where access to
+the result handle is not needed.
+</PARA>
+<PARA>
+For backend-handled errors, <FUNCTION>pg_execute</FUNCTION> will
+throw a Tcl error and return two element list. The first element
+is an error code such as <LITERAL>PGRES_FATAL_ERROR</LITERAL>, and
+the second element is the backend error text. For more serious
+errors, such as failure to communicate with the backend,
+<FUNCTION>pg_execute</FUNCTION> will throw a Tcl error and return
+just the error message text.
+</PARA>
+
+</REFSECT1>
+
+<REFSECT1 ID="R1-PGTCL-PGEXECUTE-2">
+<TITLE>Usage
+</TITLE>
+<PARA>
+In the following examples, error checking with <LITERAL>catch</LITERAL>
+has been omitted for clarity.
+</PARA>
+<PARA>
+Insert a row and save the OID in result_oid:
+<ProgramListing>
+    pg_execute -oid result_oid $pgconn "insert into mytable values (1)"
+</ProgramListing>
+</PARA>
+<PARA>
+Print the item and value fields from each row:
+<ProgramListing>
+    pg_execute -array d $pgconn "select item, value from mytable" {
+       puts "Item=$d(item) Value=$d(value)"
+    }
+</ProgramListing>
+</PARA>
+<PARA>
+Find the maximum and minimum values and store them in $s(max) and $s(min):
+<ProgramListing>
+    pg_execute -array s $pgconn "select max(value) as max,\
+      min(value) as min from mytable"
+</ProgramListing>
+</PARA>
+<PARA>
+Find the maximum and minimum values and store them in $max and $min:
+<ProgramListing>
+    pg_execute $pgconn "select max(value) as max, min(value) as min from mytable"
 </ProgramListing>
 </PARA>
 </REFSECT1>
