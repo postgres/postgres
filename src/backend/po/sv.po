@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 7.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-01-11 20:39+0100\n"
-"PO-Revision-Date: 2004-01-21 08:21+0100\n"
+"PO-Revision-Date: 2004-01-22 08:24+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1629,17 +1629,17 @@ msgstr ""
 #: commands/functioncmds.c:1083
 #, c-format
 msgid "must be owner of type %s or type %s"
-msgstr ""
+msgstr "måste vara ägaren till typ %s eller typ %s"
 
 #: commands/conversioncmds.c:66
 #, c-format
 msgid "source encoding \"%s\" does not exist"
-msgstr ""
+msgstr "källkodning \"%s\" finns inte"
 
 #: commands/conversioncmds.c:73
 #, c-format
 msgid "destination encoding \"%s\" does not exist"
-msgstr ""
+msgstr "målkodning \"%s\" finns inte"
 
 #: commands/conversioncmds.c:151
 #, c-format
@@ -2871,7 +2871,7 @@ msgstr "BEFORE STATEMENT-utlösare kan inte returnera ett värde"
 #: commands/trigger.c:1584 executor/execMain.c:1141 executor/execMain.c:1442
 #: executor/execMain.c:1578
 msgid "could not serialize access due to concurrent update"
-msgstr ""
+msgstr "kunde inte serialisera åtkomst på grund av samtidig uppdatering"
 
 #: commands/trigger.c:2259
 msgid "unnamed constraints cannot be set explicitly"
@@ -3172,7 +3172,7 @@ msgstr "måste vara superanvändare för att döpa om grupper"
 
 #: commands/vacuum.c:475
 msgid "oldest xmin is far in the past"
-msgstr ""
+msgstr "äldsta xmin är från lång tid tillbaka"
 
 #: commands/vacuum.c:476
 msgid "Close open transactions soon to avoid wraparound problems."
@@ -3180,7 +3180,7 @@ msgstr ""
 
 #: commands/vacuum.c:694
 msgid "some databases have not been vacuumed in over 2 billion transactions"
-msgstr ""
+msgstr "några databaser har inte städats (vacuum) på över 2 miljarder transaktioner"
 
 #: commands/vacuum.c:695
 msgid "You may have already suffered transaction-wraparound data loss."
@@ -3188,7 +3188,7 @@ msgstr ""
 
 #: commands/vacuum.c:706
 msgid "some databases have not been vacuumed in over 1 billion transactions"
-msgstr ""
+msgstr "en del databaser har inte städats (vacuum) på över en miljard transaktioner"
 
 #: commands/vacuum.c:707
 msgid "Better vacuum them soon, or you may have a wraparound failure."
@@ -3228,21 +3228,21 @@ msgstr "kör vaccum på \"%s.%s\""
 #: commands/vacuum.c:1097 commands/vacuumlazy.c:263
 #, c-format
 msgid "relation \"%s\" page %u is uninitialized --- fixing"
-msgstr ""
+msgstr "relation \"%s\" sida %u är inte initierad --- fixar"
 
 #: commands/vacuum.c:1214
 #, c-format
 msgid ""
 "relation \"%s\" TID %u/%u: InsertTransactionInProgress %u --- can't shrink "
 "relation"
-msgstr ""
+msgstr "relation \"%s\" TID %u/%u: InsertTransactionInProgress %u --- kan inte krympa relationen"
 
 #: commands/vacuum.c:1227
 #, c-format
 msgid ""
 "relation \"%s\" TID %u/%u: DeleteTransactionInProgress %u --- can't shrink "
 "relation"
-msgstr ""
+msgstr "relation \"%s\" TID %u/%u: DeleteTransactionInProgress %u --- kan inte krympa relationen"
 
 #: commands/vacuum.c:1389 commands/vacuumlazy.c:428
 #, c-format
@@ -3372,7 +3372,7 @@ msgstr "konvertering mellan %s och %s stöds inte"
 
 #: commands/view.c:89
 msgid "view must have at least one column"
-msgstr ""
+msgstr "en vy måste ha minst en kolumn"
 
 #: commands/view.c:169 commands/view.c:181
 msgid "cannot change number of columns in view"
@@ -3537,19 +3537,19 @@ msgid "query-specified return row and actual function return row do not match"
 msgstr ""
 
 #: executor/nodeHashjoin.c:562 executor/nodeHashjoin.c:572
-#, fuzzy, c-format
+#, c-format
 msgid "could not read from hash-join temporary file: %m"
-msgstr "kunde inte läsa serverfil \"%s\": %m"
+msgstr ""
 
 #: executor/nodeHashjoin.c:630 executor/nodeHashjoin.c:637
-#, fuzzy, c-format
+#, c-format
 msgid "could not rewind hash-join temporary file: %m"
-msgstr "kunde inte läsa serverfil \"%s\": %m"
+msgstr ""
 
 #: executor/nodeHashjoin.c:688 executor/nodeHashjoin.c:693
-#, fuzzy, c-format
+#, c-format
 msgid "could not write to hash-join temporary file: %m"
-msgstr "kunde inte skriva till temp-fil \"%s\": %m"
+msgstr ""
 
 #: executor/nodeMergejoin.c:1479
 msgid "RIGHT JOIN is only supported with merge-joinable join conditions"
@@ -3816,28 +3816,28 @@ msgstr ""
 #: libpq/be-secure.c:651
 #, c-format
 msgid "could not access private key file \"%s\": %m"
-msgstr ""
+msgstr "kunde inte läsa privata nyckelfilen \"%s\": %m"
 
 #: libpq/be-secure.c:657
 #, c-format
 msgid "unsafe permissions on private key file \"%s\""
-msgstr ""
+msgstr "ej säkra rättigheter på privata nyckelfilen \"%s\""
 
 #: libpq/be-secure.c:659
 msgid ""
 "File must be owned by the database user and must have no permissions for "
 "\"group\" or \"other\"."
-msgstr ""
+msgstr "Filen måste ägas av databasanvändaren och får inte ha några rättigheter för \"gruppen\" eller \"andra\"."
 
 #: libpq/be-secure.c:663
 #, c-format
 msgid "could not load private key file \"%s\": %s"
-msgstr ""
+msgstr "kunde inte läsa in privata nyckelfilen \"%s\": %s"
 
 #: libpq/be-secure.c:668
 #, c-format
 msgid "check of private key failed: %s"
-msgstr ""
+msgstr "kontroll av privat nyckel misslyckades: %s"
 
 #: libpq/be-secure.c:686
 #, c-format
@@ -4040,7 +4040,7 @@ msgstr ""
 #: libpq/pqcomm.c:678
 #, c-format
 msgid "could not receive data from client: %m"
-msgstr ""
+msgstr "kunde inte ta emot data från klient: %m"
 
 #: libpq/pqcomm.c:841
 msgid "unexpected EOF within message length word"
@@ -4057,7 +4057,7 @@ msgstr "inkomplett meddelande från klient"
 #: libpq/pqcomm.c:946
 #, c-format
 msgid "could not send data to client: %m"
-msgstr ""
+msgstr "kunde inte skicka data till klient: %m"
 
 #: libpq/pqformat.c:443
 msgid "no data left in message"
@@ -4070,7 +4070,7 @@ msgstr ""
 
 #: libpq/pqformat.c:671
 msgid "invalid string in message"
-msgstr ""
+msgstr "ogiltig sträng i meddelande"
 
 #: libpq/pqformat.c:687
 msgid "invalid message format"
@@ -4126,7 +4126,7 @@ msgstr ""
 #: optimizer/plan/initsplan.c:743
 #, c-format
 msgid "could not identify an equality operator for types %s and %s"
-msgstr ""
+msgstr "kunde inte hitta en likhetsoperator för typerna %s och %s"
 
 #: optimizer/plan/initsplan.c:756
 #, c-format
@@ -4137,11 +4137,11 @@ msgstr ""
 #: optimizer/plan/planner.c:594 parser/analyze.c:2119 parser/analyze.c:2283
 #: parser/analyze.c:2838
 msgid "SELECT FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT"
-msgstr ""
+msgstr "SELECT FOR UPDATE tillåts inte med UNION/INTERSECT/EXCEPT"
 
 #: optimizer/plan/planner.c:660
 msgid "SELECT FOR UPDATE is not allowed in subqueries"
-msgstr ""
+msgstr "SELECT FOR UPDATE tillåts inte i subfrågor"
 
 #: optimizer/util/clauses.c:2023
 #, c-format
@@ -4589,7 +4589,7 @@ msgstr ""
 
 #: parser/parse_expr.c:497
 msgid "subquery must return a column"
-msgstr ""
+msgstr "subfråga måste returnera en kolumn"
 
 #: parser/parse_expr.c:503
 msgid "subquery must return only one column"
@@ -4601,9 +4601,8 @@ msgid "row comparison cannot use operator %s"
 msgstr "radjämförelse kan inte använda operator %s"
 
 #: parser/parse_expr.c:586
-#, fuzzy
 msgid "subquery has too many columns"
-msgstr "subselect har för många kolumner"
+msgstr "subfråga har för många kolumner"
 
 #: parser/parse_expr.c:604
 #, fuzzy, c-format
@@ -4621,9 +4620,8 @@ msgid "operator %s must not return a set"
 msgstr "operator %s får inte returnera en mängd"
 
 #: parser/parse_expr.c:624
-#, fuzzy
 msgid "subquery has too few columns"
-msgstr "subselect har för många kolumner"
+msgstr "subfråga har för få kolumner"
 
 #: parser/parse_expr.c:1531
 #, c-format
@@ -4643,12 +4641,12 @@ msgstr ""
 #: parser/parse_func.c:265
 #, c-format
 msgid "%s(*) specified, but %s is not an aggregate function"
-msgstr ""
+msgstr "%s(*) angivet, men %s är inte en aggregatfunktion"
 
 #: parser/parse_func.c:271
 #, c-format
 msgid "DISTINCT specified, but %s is not an aggregate function"
-msgstr ""
+msgstr "DISTINCT angiven, men %s är inte en aggregatfunktion"
 
 #: parser/parse_func.c:296
 #, c-format
@@ -4656,14 +4654,14 @@ msgid "attribute notation .%s applied to type %s, which is not a complex type"
 msgstr ""
 
 #: parser/parse_func.c:301
-#, fuzzy, c-format
+#, c-format
 msgid "attribute \"%s\" not found in data type %s"
-msgstr "attributet \"%s\" har sammanslagen typ %s"
+msgstr ""
 
 #: parser/parse_func.c:311
 #, c-format
 msgid "function %s is not unique"
-msgstr ""
+msgstr "funktionen %s är inte unik"
 
 #: parser/parse_func.c:314
 msgid ""
@@ -4920,7 +4918,7 @@ msgstr ""
 #: scan.l:408 scan.l:566
 #, c-format
 msgid "identifier \"%s\" will be truncated to \"%.*s\""
-msgstr ""
+msgstr "identifierare \"%s\" trunkeras till \"%.*s\""
 
 #: scan.l:422
 msgid "unterminated quoted identifier"
@@ -4940,7 +4938,7 @@ msgstr "%s vid eller nära \"%s\""
 
 #: y.tab.c:9106
 msgid "syntax error: cannot back up"
-msgstr ""
+msgstr "syntaxfel: kan inte backa tillbaka"
 
 #: gram.y:971 gram.y:997
 msgid "time zone interval must be HOUR or HOUR TO MINUTE"
@@ -4949,12 +4947,12 @@ msgstr ""
 #: gram.y:982 gram.y:5172 gram.y:7270
 #, c-format
 msgid "INTERVAL(%d) precision must not be negative"
-msgstr ""
+msgstr "INTERVAL(%d)-precision kan inte vara negativ"
 
 #: gram.y:988 gram.y:5178 gram.y:7276
 #, c-format
 msgid "INTERVAL(%d) precision reduced to maximum allowed, %d"
-msgstr ""
+msgstr "INTERVAL(%d)-precision reducerad till maximalt tillåtna, %d"
 
 #: gram.y:1780 utils/adt/ri_triggers.c:300 utils/adt/ri_triggers.c:362
 #: utils/adt/ri_triggers.c:541 utils/adt/ri_triggers.c:780
@@ -4969,7 +4967,7 @@ msgstr "MATCH PARTIAL är inte implementerat ännu"
 
 #: gram.y:1862
 msgid "CREATE TABLE AS may not specify INTO"
-msgstr ""
+msgstr "CREATE TABLE AS kan inte ange INTO"
 
 #: gram.y:2283
 msgid "CREATE ASSERTION is not yet implemented"
@@ -4997,7 +4995,7 @@ msgstr ""
 
 #: gram.y:4231
 msgid "column name list not allowed in CREATE TABLE / AS EXECUTE"
-msgstr ""
+msgstr "kolumnnamnlista tillåts inte i CREATE TABLE / AS EXECUTE"
 
 #: gram.y:4697
 msgid "LIMIT #,# syntax is not supported"
@@ -5012,13 +5010,12 @@ msgid "For example, FROM (SELECT ...) [AS] foo."
 msgstr "Till exempel, FROM (SELECT ...) [AS] foo"
 
 #: gram.y:5275
-#, fuzzy
 msgid "precision for type float must be at least 1 bit"
-msgstr "längden för typ %s måste vara minst 1"
+msgstr "precisionen för typen float måste vara minst 1 bit"
 
 #: gram.y:5283
 msgid "precision for type float must be less than 54 bits"
-msgstr ""
+msgstr "precisionen för typen float måste vara mindre än 54 bits"
 
 #: gram.y:5297 gram.y:5312
 #, c-format
@@ -5063,12 +5060,12 @@ msgstr ""
 #: gram.y:5592
 #, c-format
 msgid "TIME(%d)%s precision must not be negative"
-msgstr ""
+msgstr "TIME(%d)%s-precisionen får inte vara negativ"
 
 #: gram.y:5598
 #, c-format
 msgid "TIME(%d)%s precision reduced to maximum allowed, %d"
-msgstr ""
+msgstr "TIME(%d)%s-precisionen reducerad till maximalt tillåtna, %d"
 
 #: gram.y:5744 gram.y:7852 gram.y:7908
 msgid "unequal number of entries in row expression"
@@ -5120,20 +5117,19 @@ msgstr ""
 
 #: gram.y:7721
 msgid "OLD used in query that is not in a rule"
-msgstr ""
+msgstr "OLD använd i en fråga som inte är i en regel"
 
 #: gram.y:7730
 msgid "NEW used in query that is not in a rule"
-msgstr ""
+msgstr "NEW använd i en fråga som inte är i en regel"
 
 #: y.tab.c:18355
 msgid "syntax error; also virtual memory exhausted"
 msgstr ""
 
 #: y.tab.c:18359
-#, fuzzy
 msgid "syntax error"
-msgstr "syntaxfel i \""
+msgstr "syntaxfel\""
 
 #: y.tab.c:18458
 msgid "parser stack overflow"
@@ -5154,19 +5150,19 @@ msgstr ""
 
 #: gram.y:8030
 msgid "multiple ORDER BY clauses not allowed"
-msgstr ""
+msgstr "multipla ORDER BY-klausuler tillåts inte"
 
 #: gram.y:8038
 msgid "multiple FOR UPDATE clauses not allowed"
-msgstr ""
+msgstr "multipla FOR UPDATE-klausuler tillåts inte"
 
 #: gram.y:8046
 msgid "multiple OFFSET clauses not allowed"
-msgstr ""
+msgstr "multipla OFFSET-klausuler tillåts inte"
 
 #: gram.y:8054
 msgid "multiple LIMIT clauses not allowed"
-msgstr ""
+msgstr "multipla LIMIT-klausuler tillåts inte"
 
 #: port/sysv_sema.c:117 port/pg_sema.c:117
 #, c-format
@@ -5255,9 +5251,9 @@ msgid "could not resolve \"localhost\": %s"
 msgstr ""
 
 #: postmaster/pgstat.c:250
-#, fuzzy, c-format
+#, c-format
 msgid "could not create socket for statistics collector: %m"
-msgstr "kan inte skapa låsfil \"%s\": %m"
+msgstr ""
 
 #: postmaster/pgstat.c:262
 #, c-format
@@ -5352,19 +5348,19 @@ msgid "could not read statistics message: %m"
 msgstr "kunde inte läsa \"%s\": %m"
 
 #: postmaster/pgstat.c:1949
-#, fuzzy, c-format
+#, c-format
 msgid "could not write to statistics collector pipe: %m"
-msgstr "kunde inte skriva till temp-fil \"%s\": %m"
+msgstr ""
 
 #: postmaster/pgstat.c:2003
-#, fuzzy, c-format
+#, c-format
 msgid "invalid server process ID %d"
-msgstr "serverprocess"
+msgstr ""
 
 #: postmaster/pgstat.c:2198
-#, fuzzy, c-format
+#, c-format
 msgid "could not open temporary statistics file \"%s\": %m"
-msgstr "kunde inte öppna serverfil \"%s\": %m"
+msgstr ""
 
 #: postmaster/pgstat.c:2225
 msgid "database hash table corrupted during cleanup --- abort"
@@ -5381,9 +5377,9 @@ msgid "could not close temporary statistics file \"%s\": %m"
 msgstr "kan inte skapa skapa init-fil \"%s\": %m"
 
 #: postmaster/pgstat.c:2320
-#, fuzzy, c-format
+#, c-format
 msgid "could not rename temporary statistics file \"%s\" to \"%s\": %m"
-msgstr "kunde inte döpa om \"%s\" till \"%s\": %m"
+msgstr "kunde inte döpa om temporär statistikfil \"%s\" till \"%s\": %m"
 
 #: postmaster/pgstat.c:2342
 msgid "dead-server-process hash table corrupted during cleanup --- abort"
@@ -5472,9 +5468,8 @@ msgid "could not create TCP/IP listen socket"
 msgstr ""
 
 #: postmaster/postmaster.c:813
-#, fuzzy
 msgid "could not create Unix-domain socket"
-msgstr "kan inte skapa semafor: %m"
+msgstr ""
 
 #: postmaster/postmaster.c:938
 #, c-format
@@ -5482,9 +5477,9 @@ msgid "could not fork background process: %s"
 msgstr ""
 
 #: postmaster/postmaster.c:960
-#, fuzzy, c-format
+#, c-format
 msgid "could not dissociate from controlling TTY: %s"
-msgstr "kunde inte skapa kontrollfil \"%s\": %m"
+msgstr ""
 
 #: postmaster/postmaster.c:980
 #, c-format
@@ -5588,7 +5583,7 @@ msgstr ""
 #: postmaster/postmaster.c:1005
 msgid ""
 "  -n              do not reinitialize shared memory after abnormal exit\n"
-msgstr ""
+msgstr "  -n              initiera inte delat minne på nytt efter onormal avstängning\n"
 
 #: postmaster/postmaster.c:1006
 msgid "  -s              send SIGSTOP to all backend servers if one dies\n"
@@ -5811,7 +5806,7 @@ msgstr ""
 
 #: rewrite/rewriteDefine.c:239
 msgid "Use triggers instead."
-msgstr ""
+msgstr "Använd utlösare istället."
 
 #: rewrite/rewriteDefine.c:256
 #, fuzzy
@@ -5820,7 +5815,7 @@ msgstr "CREATE FUNCTION / OUT -parametrar är inte implementerart ännu"
 
 #: rewrite/rewriteDefine.c:257
 msgid "Use views instead."
-msgstr ""
+msgstr "Använd vyer istället."
 
 #: rewrite/rewriteDefine.c:265
 msgid "multiple actions for rules on SELECT are not implemented"
@@ -5968,7 +5963,7 @@ msgstr ""
 #: storage/buffer/bufmgr.c:2092
 #, c-format
 msgid "writing block %u of relation %u/%u"
-msgstr ""
+msgstr "skriver block %u i relation %u/%u"
 
 #: storage/buffer/localbuf.c:85
 msgid "no empty local buffer available"
@@ -5986,7 +5981,7 @@ msgstr ""
 #: storage/file/fd.c:330
 #, c-format
 msgid "System allows %ld, we need at least %d."
-msgstr ""
+msgstr "Systemet tillåter %ld, vi behöver minst %d."
 
 #: storage/freespace/freespace.c:275 storage/freespace/freespace.c:293
 #: storage/freespace/freespace.c:312
@@ -6000,7 +5995,7 @@ msgstr ""
 
 #: storage/freespace/freespace.c:340
 msgid "max_fsm_pages is too large"
-msgstr ""
+msgstr "max_fsm_pages är för stor"
 
 #: storage/freespace/freespace.c:711
 #, c-format
@@ -6013,9 +6008,9 @@ msgid "Allocated FSM size: %d relations + %d pages = %.0f kB shared memory."
 msgstr ""
 
 #: storage/ipc/shmem.c:408
-#, fuzzy, c-format
+#, c-format
 msgid "could not allocate shared memory segment \"%s\""
-msgstr "kunde inte allokera \"%s\""
+msgstr "kunde inte allokera delat minnessegment \"%s\""
 
 #: storage/lmgr/deadlock.c:867
 #, c-format
@@ -6030,7 +6025,7 @@ msgstr ""
 
 #: storage/lmgr/deadlock.c:887
 msgid "deadlock detected"
-msgstr ""
+msgstr "deadlock upptäckt"
 
 #: storage/lmgr/lock.c:466 storage/lmgr/lock.c:514
 msgid "You may need to increase max_locks_per_transaction."
@@ -6142,17 +6137,17 @@ msgstr ""
 #: tcop/postgres.c:463
 #, c-format
 msgid "statement: %s"
-msgstr ""
+msgstr "sats: %s"
 
 #: tcop/postgres.c:956
 #, c-format
 msgid "duration: %ld.%03ld ms"
-msgstr ""
+msgstr "varaktighet: %ld.%03ld ms"
 
 #: tcop/postgres.c:969
 #, c-format
 msgid "duration: %ld.%03ld ms  statement: %s"
-msgstr ""
+msgstr "varaktighet: %ld.%03ld ms  sats: %s"
 
 #: tcop/postgres.c:1077
 msgid "cannot insert multiple commands into a prepared statement"
@@ -6239,18 +6234,16 @@ msgstr ""
 "\n"
 
 #: tcop/postgres.c:1981
-#, fuzzy
 msgid "  -d 0-5          debugging level (0 is off)\n"
-msgstr "  -d 1-5          debug-nivå\n"
+msgstr "  -d 1-5          debug-nivå (0 är av)\n"
 
 #: tcop/postgres.c:1983
 msgid "  -e              use European date input format (DMY)\n"
 msgstr ""
 
 #: tcop/postgres.c:1984
-#, fuzzy
 msgid "  -E              echo query before execution\n"
-msgstr "  -l              tillåt SSL-anslutningar\n"
+msgstr "  -E              skriv ut frågan före körning\n"
 
 #: tcop/postgres.c:1986
 msgid "  -N              do not use newline as interactive query delimiter\n"
@@ -6261,9 +6254,8 @@ msgid "  -o FILENAME     send stdout and stderr to given file\n"
 msgstr ""
 
 #: tcop/postgres.c:1988
-#, fuzzy
 msgid "  -P              disable system indexes\n"
-msgstr "  -l              tillåt SSL-anslutningar\n"
+msgstr "  -P              stäng av systemindex\n"
 
 #: tcop/postgres.c:1989
 msgid "  -s              show statistics after each query\n"
@@ -6282,14 +6274,12 @@ msgid "  -f s|i|n|m|h    forbid use of some plan types\n"
 msgstr ""
 
 #: tcop/postgres.c:1996
-#, fuzzy
 msgid "  -i              do not execute queries\n"
-msgstr "  -i              tillåt TCP/IP-uppkopplingar\n"
+msgstr "  -i              utför inga frågor\n"
 
 #: tcop/postgres.c:1997
-#, fuzzy
 msgid "  -O              allow system table structure changes\n"
-msgstr "  -l              tillåt SSL-anslutningar\n"
+msgstr ""
 
 #: tcop/postgres.c:1998
 msgid "  -t pa|pl|ex     show timings after each query\n"
@@ -6303,7 +6293,7 @@ msgstr ""
 msgid ""
 "\n"
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-msgstr ""
+msgstr "\nRapportera buggar till <pgsql-bugs@postgresql.org>.\n"
 
 #: tcop/postgres.c:2448
 msgid ""
@@ -6319,7 +6309,7 @@ msgstr "%s: ogiltigt kommandoradsargument"
 #: tcop/postgres.c:2536 tcop/postgres.c:2554
 #, c-format
 msgid "Try \"%s --help\" for more information."
-msgstr ""
+msgstr "Försök med \"%s --help\" för mer information."
 
 #: tcop/postgres.c:2552
 #, c-format
