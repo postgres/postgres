@@ -19,9 +19,9 @@ LIBS := -lxnet $(LIBS)
 # Set up rpath so that the executables don't need SHLIB_PATH to be set.
 # (Note: --disable-rpath is a really bad idea on this platform...)
 ifeq ($(with_gnu_ld), yes)
-   rpath = -Wl,-rpath,$(rpathdir)
+   rpath = -Wl,-rpath -Wl,$(rpathdir)
 else
-   rpath = -Wl,+b,$(rpathdir)
+   rpath = -Wl,+b -Wl,$(rpathdir)
 endif
 
 # catch null pointer dereferences

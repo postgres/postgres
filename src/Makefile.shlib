@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.88 2004/11/17 17:08:15 tgl Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.89 2004/11/19 21:27:42 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -154,9 +154,15 @@ ifeq ($(PORTNAME), hpux)
     SHLIB_LINK		+= `$(CC) $(LDFLAGS) -print-libgcc-file-name`
   endif
   ifeq ($(with_gnu_ld), yes)
-    LINK.shared		= $(CC) $(LDFLAGS) -shared -Wl,-h -Wl,$(soname) -Wl,+b -Wl,$(libdir)
+    LINK.shared		= $(CC) $(LDFLAGS) -shared -Wl,-h -Wl,$(soname)
   else
-    LINK.shared		= $(LD) +h $(soname) -b +b $(libdir)
+    # can't use the CC-syntax rpath pattern here
+    rpath =
+    ifeq ($(enable_rpath), yes)
+      LINK.shared	= $(LD) +h $(soname) -b +b $(rpathdir)
+    else
+      LINK.shared	= $(LD) +h $(soname) -b
+    endif
   endif
 endif
 
