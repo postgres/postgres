@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.151 2000/02/24 16:34:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.152 2000/02/26 18:13:41 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4010,7 +4010,7 @@ character:  CHARACTER opt_varying opt_charset
 					char *type, *c;
 					if (($3 == NULL) || (strcasecmp($3, "sql_text") == 0)) {
 						if ($2) type = xlateSqlType("varchar");
-						else type = xlateSqlType("char");
+						else type = xlateSqlType("bpchar");
 					} else {
 						if ($2) {
 							c = palloc(strlen("var") + strlen($3) + 1);
@@ -4023,10 +4023,10 @@ character:  CHARACTER opt_varying opt_charset
 					};
 					$$ = type;
 				}
-		| CHAR opt_varying						{ $$ = xlateSqlType($2? "varchar": "char"); }
+		| CHAR opt_varying						{ $$ = xlateSqlType($2? "varchar": "bpchar"); }
 		| VARCHAR								{ $$ = xlateSqlType("varchar"); }
-		| NATIONAL CHARACTER opt_varying		{ $$ = xlateSqlType($3? "varchar": "char"); }
-		| NCHAR opt_varying						{ $$ = xlateSqlType($2? "varchar": "char"); }
+		| NATIONAL CHARACTER opt_varying		{ $$ = xlateSqlType($3? "varchar": "bpchar"); }
+		| NCHAR opt_varying						{ $$ = xlateSqlType($2? "varchar": "bpchar"); }
 		;
 
 opt_varying:  VARYING							{ $$ = TRUE; }
@@ -5536,7 +5536,8 @@ mapTargetColumns(List *src, List *dst)
 
 
 /* xlateSqlFunc()
- * Convert alternate type names to internal Postgres types.
+ * Convert alternate function names to internal Postgres functions.
+ *
  * Do not convert "float", since that is handled elsewhere
  *  for FLOAT(p) syntax.
  */
@@ -5552,6 +5553,10 @@ xlateSqlFunc(char *name)
 
 /* xlateSqlType()
  * Convert alternate type names to internal Postgres types.
+ *
+ * NB: do NOT put "char" -> "bpchar" here, because that renders it impossible
+ * to refer to our single-byte char type, even with quotes.  (Without quotes,
+ * CHAR is a keyword, and the code above produces "bpchar" for it.)
  */
 static char *
 xlateSqlType(char *name)
@@ -5566,8 +5571,6 @@ xlateSqlType(char *name)
 		return "float8";
 	else if (!strcasecmp(name, "decimal"))
 		return "numeric";
-	else if (!strcasecmp(name, "char"))
-		return "bpchar";
 	else if (!strcasecmp(name, "datetime"))
 		return "timestamp";
 	else if (!strcasecmp(name, "timespan"))
