@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.137 2003/06/08 17:43:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.138 2003/06/12 01:17:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1690,6 +1690,8 @@ PQescapeBytea(const unsigned char *bintext, size_t binlen, size_t *bytealen)
 	return result;
 }
 
+#define VAL(CH) ((CH) - '0')
+
 /*
  *		PQunescapeBytea - converts the null terminated string representation
  *		of a bytea, strtext, into binary, filling a buffer. It returns a
@@ -1697,99 +1699,64 @@ PQescapeBytea(const unsigned char *bintext, size_t binlen, size_t *bytealen)
  *		buffer in retbuflen. The pointer may subsequently be used as an
  *		argument to the function free(3). It is the reverse of PQescapeBytea.
  *
- *		The following transformations are reversed:
- *		'\0' == ASCII  0 == \000
- *		'\'' == ASCII 39 == \'
- *		'\\' == ASCII 92 == \\
+ *		The following transformations are made:
+ *		\'   == ASCII 39 == '
+ *		\\   == ASCII 92 == \
+ *		\ooo == a byte whose value = ooo (ooo is an octal number)
+ *		\x   == x (x is any character not matched by the above transformations)
  *
- *		States:
- *		0	normal		0->1->2->3->4
- *		1	\			   1->5
- *		2	\0			   1->6
- *		3	\00
- *		4	\000
- *		5	\'
- *		6	\\
  */
 unsigned char *
 PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 {
-	size_t		buflen;
-	unsigned char *buffer,
-			   *bp;
-	const unsigned char *sp;
-	unsigned int state = 0;
+	size_t strtextlen, buflen;
+	unsigned char *buffer, *tmpbuf;
+	int i, j, byte;
 
-	if (strtext == NULL)
+	if (strtext == NULL) {
 		return NULL;
-	buflen = strlen(strtext);	/* will shrink, also we discover if
-								 * strtext */
-	buffer = (unsigned char *) malloc(buflen);	/* isn't NULL terminated */
+	}
+
+	strtextlen = strlen(strtext);	/* will shrink, also we discover if
+									 * strtext isn't NULL terminated */
+	buffer = (unsigned char *)malloc(strtextlen);
 	if (buffer == NULL)
 		return NULL;
-	for (bp = buffer, sp = strtext; *sp != '\0'; bp++, sp++)
-	{
-		switch (state)
-		{
-			case 0:
-				if (*sp == '\\')
-					state = 1;
-				*bp = *sp;
-				break;
-			case 1:
-				if (*sp == '\'')	/* state=5 */
-				{				/* replace \' with 39 */
-					bp--;
-					*bp = '\'';
-					buflen--;
-					state = 0;
-				}
-				else if (*sp == '\\')	/* state=6 */
-				{				/* replace \\ with 92 */
-					bp--;
-					*bp = '\\';
-					buflen--;
-					state = 0;
-				}
-				else
-				{
-					if (isdigit(*sp))
-						state = 2;
-					else
-						state = 0;
-					*bp = *sp;
-				}
-				break;
-			case 2:
-				if (isdigit(*sp))
-					state = 3;
-				else
-					state = 0;
-				*bp = *sp;
-				break;
-			case 3:
-				if (isdigit(*sp))		/* state=4 */
-				{
-					int			v;
 
-					bp -= 3;
-					sscanf(sp - 2, "%03o", &v);
-					*bp = v;
-					buflen -= 3;
-					state = 0;
-				}
+	for (i = j = buflen = 0; i < strtextlen;)
+	{
+		switch (strtext[i])
+		{
+			case '\\':
+				i++;
+				if (strtext[i] == '\\')
+					buffer[j++] = strtext[i++];
 				else
 				{
-					*bp = *sp;
-					state = 0;
+					if ((isdigit(strtext[i]))   &&
+						(isdigit(strtext[i+1])) &&
+						(isdigit(strtext[i+2])))
+					{
+						byte = VAL(strtext[i++]);
+						byte = (byte << 3) + VAL(strtext[i++]);
+						buffer[j++] = (byte << 3) + VAL(strtext[i++]);
+					}
 				}
 				break;
+
+			default:
+				buffer[j++] = strtext[i++];
 		}
 	}
-	buffer = realloc(buffer, buflen);
-	if (buffer == NULL)
-		return NULL;
+	buflen = j; /* buflen is the length of the unquoted data */
+	tmpbuf = realloc(buffer, buflen);
+
+	if (!tmpbuf)
+	{
+		free(buffer);
+		return 0;
+	}
 
 	*retbuflen = buflen;
-	return buffer;
+	return tmpbuf;
 }
