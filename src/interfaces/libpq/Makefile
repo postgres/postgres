@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.85 2003/08/08 02:55:08 momjian Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.86 2003/08/08 03:00:31 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -48,10 +48,6 @@ backend_src = $(top_srcdir)/src/backend
 
 crypt.c getaddrinfo.c inet_aton.c snprintf.c strerror.c path.c thread.c: %.c : $(top_srcdir)/src/port/%.c
 	rm -f $@ && $(LN_S) $< .
-
-# compile this with thread flags
-thread.o: thread.c
-	$(CC) $(CFLAGS) $(CPPFLAGS) $(THREAD_CFLAGS) -c thread.c
 
 dllist.c: $(backend_src)/lib/dllist.c
 	rm -f $@ && $(LN_S) $< .
