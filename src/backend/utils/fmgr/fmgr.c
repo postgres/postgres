@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.86 2004/10/25 00:46:42 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.87 2004/12/26 23:20:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,11 +40,10 @@
  * *additionally* into %d0 for compatibility.) The price is that there are
  * some warnings about int->pointer conversions...
  */
-#if defined(__mc68000__) && defined(__ELF__)
-typedef int32 ((*func_ptr) ());
-
+#if (defined(__mc68000__) || (defined(__m68k__))) && defined(__ELF__)
+typedef int32  (*func_ptr) ();
 #else
-typedef char *((*func_ptr) ());
+typedef char * (*func_ptr) ();
 #endif
 
 /*

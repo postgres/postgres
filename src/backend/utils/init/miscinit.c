@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.135 2004/10/09 23:13:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.136 2004/12/26 23:20:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -915,12 +915,7 @@ ValidatePgVersion(const char *path)
  *-------------------------------------------------------------------------
  */
 
-#if defined(__mc68000__) && defined(__ELF__)
-typedef int32 ((*func_ptr) ());
-
-#else
-typedef char *((*func_ptr) ());
-#endif
+typedef void (*func_ptr) ();
 
 /*
  * process any libraries that should be preloaded and
