@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.35 2001/03/04 18:54:07 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.36 2001/05/08 19:14:52 momjian Exp $
 
 PostgreSQL Programmer's Guide.
 -->
@@ -49,7 +49,6 @@ PostgreSQL Programmer's Guide.
   &odbc;
   &jdbc;
   &pygresql;
-  &lisp;
  </part>
 
  <part id="programmer-server">
