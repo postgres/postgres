@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.4 1996/10/23 07:39:10 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.5 1996/10/30 06:08:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,6 +269,18 @@ _bt_skeycmp(Relation rel,
 				  &isNull);
 	keyDatum  = entry->sk_argument;
 	
+	/*
+	 * This may happen in a nested loop if an attribute used
+	 * as scan key is null.			DZ 29-10-1996
+	 */
+	if ((entry->sk_flags & SK_ISNULL) || (isNull)) {
+	    if ((entry->sk_flags & SK_ISNULL) && (isNull)) {
+		return (true);
+	    } else {
+		return (false);
+	    }
+	}
+
 	compare = _bt_invokestrat(rel, i, strat, keyDatum, attrDatum);
 	if (!compare)
 	    return (false);
@@ -501,6 +513,19 @@ _bt_compare(Relation rel,
 	entry = &scankey[i - 1];
 	attno = entry->sk_attno;
 	datum = index_getattr(itup, attno, itupdesc, &null);
+
+	/*
+	 * This may happen in a nested loop if an attribute used
+	 * as scan key is null.			DZ 29-10-1996
+	 */
+	if ((entry->sk_flags & SK_ISNULL) || (null)) {
+	    if ((entry->sk_flags & SK_ISNULL) && (null)) {
+		return (0);
+	    } else {
+		return (null ? +1 : -1);
+	    }
+	}
+
 	tmpres = (long) FMGR_PTR2(entry->sk_func, entry->sk_procedure,
 				  entry->sk_argument, datum);
 	result = tmpres;
@@ -641,7 +666,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
      *	       hardwired attno == 1.
      */
     proc = index_getprocid(rel, 1, BTORDER_PROC);
-    ScanKeyEntryInitialize(&skdata, 0x0, 1, proc,
+    ScanKeyEntryInitialize(&skdata, so->keyData[0].sk_flags, 1, proc,
 			   so->keyData[0].sk_argument);
     
     stack = _bt_search(rel, 1, &skdata, &buf);
