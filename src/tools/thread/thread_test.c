@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/tools/thread/Attic/thread_test.c,v 1.2 2003/09/27 16:24:45 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/tools/thread/Attic/thread_test.c,v 1.3 2003/10/24 20:48:10 momjian Exp $
  *
  *	This program tests to see if your standard libc functions use
  *	pthread_setspecific()/pthread_getspecific() to be thread-safe.
@@ -21,7 +21,9 @@
  */
 
 
+#ifdef USE_THREADS
 #include <pthread.h>
+#endif
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>

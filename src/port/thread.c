@@ -7,14 +7,16 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $Id: thread.c,v 1.10 2003/09/29 03:32:05 momjian Exp $
+ * $Id: thread.c,v 1.11 2003/10/24 20:48:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#if defined(USE_THREADS)
 #include <pthread.h>
+#endif
 #include <sys/types.h>
 #include <pwd.h>
 #include <errno.h>
