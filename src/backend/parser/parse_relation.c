@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.30 1999/09/28 17:50:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.31 1999/09/29 18:16:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -241,9 +241,11 @@ expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
 	if (rte == NULL)
 	{
 		rte = addRangeTableEntry(pstate, relname, refname, FALSE, FALSE);
+#ifdef WARN_FROM
 		elog(NOTICE,"Adding missing FROM-clause entry%s for table %s",
 			pstate->parentParseState != NULL ? " in subquery" : "",
 			refname);
+#endif
 	}
 
 	rel = heap_open(rte->relid, AccessShareLock);
