@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.31 2002/12/18 20:40:24 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.32 2003/01/11 00:00:02 petere Exp $
 -->
 
  <chapter id="mvcc">
@@ -874,6 +874,7 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
     situation, application developers should be aware of the
     relatively poor concurrent performance of GiST and R-tree
     indexes.
+   </para>
   </sect1>
  </chapter>
 

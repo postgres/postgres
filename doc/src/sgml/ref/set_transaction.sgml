@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.10 2003/01/10 22:03:27 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.11 2003/01/11 00:00:03 petere Exp $ -->
 <refentry id="SQL-SET-TRANSACTION">
  <docinfo>
   <date>2000-11-24</date>
@@ -48,7 +48,7 @@ SET SESSION CHARACTERISTICS AS TRANSACTION
 
    <variablelist>
     <varlistentry>
-     <term><literal>READ COMMITTED<literal></term>
+     <term><literal>READ COMMITTED</literal></term>
      <listitem>
       <para>
        A statement can only see rows committed before it began. This
