@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.114 2000/12/22 23:12:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.115 2001/01/07 00:05:22 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -57,8 +57,7 @@
 
 
 static bool needs_toast_table(Relation rel);
-static bool is_viewr(char *relname);
-static bool is_view(Relation rel);
+static bool is_relation(char *name);
 
 
 /* --------------------------------
@@ -302,6 +301,11 @@ AlterTableAddColumn(const char *relationName,
 	 * release until end of transaction.
 	 */
 	rel = heap_openr(relationName, AccessExclusiveLock);
+
+	if (rel->rd_rel->relkind != RELKIND_RELATION)
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
+			 relationName);
+
 	myrelid = RelationGetRelid(rel);
 	heap_close(rel, NoLock);	/* close rel but keep lock! */
 
@@ -365,13 +369,6 @@ AlterTableAddColumn(const char *relationName,
 
 	if (!HeapTupleIsValid(reltup))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
-			 relationName);
-
-	/*
-	 * XXX is the following check sufficient?
-	 */
-	if (((Form_pg_class) GETSTRUCT(reltup))->relkind != RELKIND_RELATION)
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
 			 relationName);
 
 	minattnum = ((Form_pg_class) GETSTRUCT(reltup))->relnatts;
@@ -517,8 +514,9 @@ AlterTableAlterColumn(const char *relationName,
 #endif
 
 	rel = heap_openr(relationName, AccessExclusiveLock);
-	if ( rel->rd_rel->relkind == RELKIND_VIEW )
-		elog(ERROR, "ALTER TABLE: %s is a view", relationName);
+	if (rel->rd_rel->relkind != RELKIND_RELATION)
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
+			 relationName);
 	myrelid = RelationGetRelid(rel);
 	heap_close(rel, NoLock);
 
@@ -936,6 +934,11 @@ AlterTableDropColumn(const char *relationName,
 	 * release until end of transaction.
 	 */
 	rel = heap_openr(relationName, AccessExclusiveLock);
+
+	if (rel->rd_rel->relkind != RELKIND_RELATION)
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
+			 relationName);
+
 	myrelid = RelationGetRelid(rel);
 	heap_close(rel, NoLock);	/* close rel but keep lock! */
 
@@ -968,15 +971,6 @@ AlterTableDropColumn(const char *relationName,
 	}
 	reltup = heap_copytuple(&classtuple);
 	ReleaseBuffer(buffer);
-
-	/*
-	 * XXX is the following check sufficient?
-	 */
-	if (((Form_pg_class) GETSTRUCT(reltup))->relkind != RELKIND_RELATION)
-	{
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
-			 relationName);
-	}
 
 	attrdesc = heap_openr(AttributeRelationName, RowExclusiveLock);
 
@@ -1090,9 +1084,10 @@ AlterTableAddConstraint(char *relationName,
 		elog(ERROR, "ALTER TABLE: permission denied");
 #endif
 
-	/* check to see if the table to be constrained is a view. */
-	if (is_viewr(relationName))
-		 elog(ERROR, "ALTER TABLE: Cannot add constraints to views.");
+	/* Disallow ADD CONSTRAINT on views, indexes, sequences, etc */
+	if (! is_relation(relationName))
+		elog(ERROR, "ALTER TABLE ADD CONSTRAINT: %s is not a table",
+			 relationName);
 
 	switch (nodeTag(newConstraint))
 	{
@@ -1482,9 +1477,18 @@ AlterTableOwner(const char *relationName, const char *newOwnerName)
 		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
 			 relationName);
 
-	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_RELATION)
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
-				relationName);
+	switch (((Form_pg_class) GETSTRUCT(tuple))->relkind)
+	{
+		case RELKIND_RELATION:
+		case RELKIND_INDEX:
+		case RELKIND_VIEW:
+		case RELKIND_SEQUENCE:
+			/* ok to change owner */
+			break;
+		default:
+			elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table, index, view, or sequence",
+				 relationName);
+	}
 
 	/*
 	 * modify the table's entry and write to the heap
@@ -1541,6 +1545,11 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 	 * release until end of transaction.
 	 */
 	rel = heap_openr(relationName, AccessExclusiveLock);
+
+	if (rel->rd_rel->relkind != RELKIND_RELATION)
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
+			 relationName);
+
 	myrelid = RelationGetRelid(rel);
 
 	/*
@@ -1569,19 +1578,8 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 	ReleaseBuffer(buffer);
 
 	/*
-	 * XXX is the following check sufficient? At least it would
-	 * allow to create TOAST tables for views. But why not - someone
-	 * can insert into a view, so it shouldn't be impossible to hide
-	 * huge data there :-)
-	 *
-	 * Not any more.
+	 * Is it already toasted?
 	 */
-	if (((Form_pg_class) GETSTRUCT(reltup))->relkind != RELKIND_RELATION)
-	{
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
-				relationName);
-	}
-
 	if (((Form_pg_class) GETSTRUCT(reltup))->reltoastrelid != InvalidOid)
 	{
 		if (silent)
@@ -1781,9 +1779,6 @@ LockTableCommand(LockStmt *lockstmt)
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 			elog(ERROR, "LOCK TABLE: %s is not a table", lockstmt->relname);
 
-	if (is_view(rel))
-			elog(ERROR, "LOCK TABLE: cannot lock a view");
-
 	if (lockstmt->mode == AccessShareLock)
 		aclresult = pg_aclcheck(lockstmt->relname, GetUserId(), ACL_RD);
 	else
@@ -1799,60 +1794,13 @@ LockTableCommand(LockStmt *lockstmt)
 
 
 static bool
-is_viewr(char *name)
+is_relation(char *name)
 {
 	Relation rel = heap_openr(name, NoLock);
 
-	bool retval = is_view(rel);
+	bool retval = (rel->rd_rel->relkind == RELKIND_RELATION);
 
 	heap_close(rel, NoLock);
 
 	return retval;
-}
-
-static bool
-is_view(Relation rel)
-{
-	Relation	RewriteRelation;
-	HeapScanDesc scanDesc;
-	ScanKeyData scanKeyData;
-	HeapTuple	tuple;
-	Form_pg_rewrite data;
-	bool retval = false;
-
-	/*
-	 * Open the pg_rewrite relation.
-	 */
-	RewriteRelation = heap_openr(RewriteRelationName, RowExclusiveLock);
-
-	/*
-	 * Scan the RuleRelation ('pg_rewrite') for all the tuples that has
-	 * the same ev_class as the relation being checked.
-	 */
-	ScanKeyEntryInitialize(&scanKeyData,
-						   0,
-						   Anum_pg_rewrite_ev_class,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(rel->rd_id));
-	scanDesc = heap_beginscan(RewriteRelation,
-							  0, SnapshotNow, 1, &scanKeyData);
-
-	while (HeapTupleIsValid(tuple = heap_getnext(scanDesc, 0)))
-	{
-		if (tuple->t_data != NULL)
-		{
-			data = (Form_pg_rewrite) GETSTRUCT(tuple);
-			if (data->ev_type == '1')
-			{
-				retval = true;
-				break;
-			}
-		}
-
-	}
-
-	heap_endscan(scanDesc);
-	heap_close(RewriteRelation, RowExclusiveLock);
-
-  return retval;
 }
