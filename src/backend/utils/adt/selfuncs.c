@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.102 2001/11/05 17:46:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.103 2002/01/03 04:02:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,6 +123,19 @@
 #define DEFAULT_UNK_SEL			0.005
 #define DEFAULT_NOT_UNK_SEL		(1.0 - DEFAULT_UNK_SEL)
 #define DEFAULT_BOOL_SEL		0.5
+
+/*
+ * Clamp a computed probability estimate (which may suffer from roundoff or
+ * estimation errors) to valid range.  Argument must be a float variable.
+ */
+#define CLAMP_PROBABILITY(p) \
+	do { \
+		if (p < 0.0) \
+			p = 0.0; \
+		else if (p > 1.0) \
+			p = 1.0; \
+	} while (0)
+
 
 static bool convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 				  Datum lobound, Datum hibound, Oid boundstypid,
@@ -285,6 +298,7 @@ eqsel(PG_FUNCTION_ARGS)
 				for (i = 0; i < nnumbers; i++)
 					sumcommon += numbers[i];
 				selec = 1.0 - sumcommon - stats->stanullfrac;
+				CLAMP_PROBABILITY(selec);
 
 				/*
 				 * and in fact it's probably a good deal less. We
@@ -356,10 +370,7 @@ eqsel(PG_FUNCTION_ARGS)
 	}
 
 	/* result should be in range, but make sure... */
-	if (selec < 0.0)
-		selec = 0.0;
-	else if (selec > 1.0)
-		selec = 1.0;
+	CLAMP_PROBABILITY(selec);
 
 	PG_RETURN_FLOAT8((float8) selec);
 }
@@ -669,10 +680,7 @@ scalarineqsel(Query *root, Oid operator, bool isgt,
 	ReleaseSysCache(statsTuple);
 
 	/* result should be in range, but make sure... */
-	if (selec < 0.0)
-		selec = 0.0;
-	else if (selec > 1.0)
-		selec = 1.0;
+	CLAMP_PROBABILITY(selec);
 
 	return selec;
 }
@@ -867,10 +875,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 		restsel = pattern_selectivity(rest, ptype);
 		selec = prefixsel * restsel;
 		/* result should be in range, but make sure... */
-		if (selec < 0.0)
-			selec = 0.0;
-		else if (selec > 1.0)
-			selec = 1.0;
+		CLAMP_PROBABILITY(selec);
 		result = selec;
 	}
 
@@ -1179,10 +1184,7 @@ booltestsel(Query *root, BooleanTest *clause, int varRelid)
 	}
 
 	/* result should be in range, but make sure... */
-	if (selec < 0.0)
-		selec = 0.0;
-	else if (selec > 1.0)
-		selec = 1.0;
+	CLAMP_PROBABILITY(selec);
 
 	return (Selectivity) selec;
 }
@@ -1285,10 +1287,7 @@ nulltestsel(Query *root, NullTest *clause, int varRelid)
 	}
 
 	/* result should be in range, but make sure... */
-	if (selec < 0.0)
-		selec = 0.0;
-	else if (selec > 1.0)
-		selec = 1.0;
+	CLAMP_PROBABILITY(selec);
 
 	return (Selectivity) selec;
 }
@@ -1448,6 +1447,7 @@ eqjoinsel(PG_FUNCTION_ARGS)
 					}
 				}
 			}
+			CLAMP_PROBABILITY(matchprodfreq);
 			/* Sum up frequencies of matched and unmatched MCVs */
 			matchfreq1 = unmatchfreq1 = 0.0;
 			for (i = 0; i < nvalues1; i++)
@@ -1457,6 +1457,8 @@ eqjoinsel(PG_FUNCTION_ARGS)
 				else
 					unmatchfreq1 += numbers1[i];
 			}
+			CLAMP_PROBABILITY(matchfreq1);
+			CLAMP_PROBABILITY(unmatchfreq1);
 			matchfreq2 = unmatchfreq2 = 0.0;
 			for (i = 0; i < nvalues2; i++)
 			{
@@ -1465,6 +1467,8 @@ eqjoinsel(PG_FUNCTION_ARGS)
 				else
 					unmatchfreq2 += numbers2[i];
 			}
+			CLAMP_PROBABILITY(matchfreq2);
+			CLAMP_PROBABILITY(unmatchfreq2);
 			pfree(hasmatch1);
 			pfree(hasmatch2);
 
@@ -1474,6 +1478,8 @@ eqjoinsel(PG_FUNCTION_ARGS)
 			 */
 			otherfreq1 = 1.0 - stats1->stanullfrac - matchfreq1 - unmatchfreq1;
 			otherfreq2 = 1.0 - stats2->stanullfrac - matchfreq2 - unmatchfreq2;
+			CLAMP_PROBABILITY(otherfreq1);
+			CLAMP_PROBABILITY(otherfreq2);
 
 			/*
 			 * We can estimate the total selectivity from the point of
@@ -1544,6 +1550,9 @@ eqjoinsel(PG_FUNCTION_ARGS)
 		if (HeapTupleIsValid(statsTuple2))
 			ReleaseSysCache(statsTuple2);
 	}
+
+	CLAMP_PROBABILITY(selec);
+
 	PG_RETURN_FLOAT8((float8) selec);
 }
 
@@ -2213,6 +2222,9 @@ convert_timevalue_to_scalar(Datum value, Oid typid)
  *
  * var: identifies the attribute to examine.
  * stats: pg_statistic tuple for attribute, or NULL if not available.
+ *
+ * NB: be careful to produce an integral result, since callers may compare
+ * the result to exact integer counts.
  */
 static double
 get_att_numdistinct(Query *root, Var *var, Form_pg_statistic stats)
@@ -2254,7 +2266,7 @@ get_att_numdistinct(Query *root, Var *var, Form_pg_statistic stats)
 		if (stats->stadistinct > 0.0)
 			return stats->stadistinct;
 		if (stats->stadistinct < 0.0)
-			return -stats->stadistinct * ntuples;
+			return floor((-stats->stadistinct * ntuples) + 0.5);
 	}
 
 	/*
