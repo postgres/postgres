@@ -15,6 +15,7 @@
 
                                   Changes
 
+   Repair breakage in timestamp-to-date conversion for dates before 2000
    Prevent rare possibility of server startup failure (Tom)
    Fix bugs in interval-to-time conversion (Tom)
    Add constraint names in a few places in pg_dump (Rod)
