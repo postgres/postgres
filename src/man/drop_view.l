@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/remove_view.l,v 1.2 1996/12/11 00:28:05 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_view.l,v 1.1 1997/04/26 18:43:35 scrappy Exp $
 .TH "DROP VIEW" SQL 04/25/94 PostgreSQL PostgreSQL
 .SH NAME
 drop view \(em removes a view from Postgres
