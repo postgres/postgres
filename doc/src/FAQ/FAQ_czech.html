@@ -1,0 +1,1088 @@
+<html><head>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-2">
+    <meta http-equiv="Content-language" content="cs">
+    <meta name="robots" content="index,FOLLOW">
+    <meta name="description" lang="en" content="Czech translation of FAQ for PostgreSQL"> 
+    <meta name="description" lang="cs" content="Český překlad FAQ PostgreSQL"><title>PostgreSQL FAQ cz</title> 
+  
+    
+    <style type="text/css">
+      A {font-family:helvetica,arial,sans-serif; font-weight:normal; color:#0201FF; text-decoration:none;}
+      A:active {color:#0201FF;;}
+      A:visited {color:#0F0169;}
+      A:hover{text-decoration:underline; color:#020169;}
+      body {font-family:helvetica,arial,sans-serif; font-weight:normal;}
+    </style></head>
+  <body leftmargin="10" topmargin="10" marginwidth="10" marginheight="10" bgcolor="white">
+
+
+<h1>Často kladené dotazy (FAQ) PostgreSQL</h1>
+
+<h2>Obecné otázky</h2>
+<a href="#1.1">1.1</a> Co je PostgreSQL? Jak se vyslovuje?<br>
+<a href="#1.2">1.2</a> Jaká je licence na PostgreSQL?<br>
+<a href="#1.3">1.3</a> Na kterých Unixex lze spustit PostgreSQL?<br>
+<a href="#1.4">1.4</a> Které ne-unixové platformy jsou podporované?<br>
+<a href="#1.5">1.5</a> Kde mohu získat PostgreSQL?<br>
+<a href="#1.6">1.6</a> Kde mohu získat podporu?<br>
+<a href="#1.7">1.7</a> Kde je poslední verze?<br>
+<a href="#1.8">1.8</a> Jaká je dostupná dokumentace?<br>
+<a href="#1.9">1.9</a> Kde najdu seznam známých chyb nebo nepodporovaných vlastností?<br>
+<a href="#1.10">1.10</a> Jak se mohu naučit SQL?<br>
+<a href="#1.11">1.11</a> Nemá PostgreSQL problémy s rokem 2000?<br>
+<a href="#1.12">1.12</a> Jak se připojit k vývojářskému týmu?<br>
+<a href="#1.13">1.13</a> Kam podat report o chybě?<br>
+<a href="#1.14">1.14</a> Jak je na tom PostgreSQL v porovnání s jinými databázemi?<br>
+<a href="#1.15">1.15</a> Jak lze finančně pomoci PostgreSQL?<br>
+
+<h2>User client dotazy</h2>
+
+<a href="#2.1">2.1</a> Kde naleznu ODBC ovladače pro PostgreSQL?<br>
+<a href="#2.2">2.2</a> Jaké nástroje lze použít pro PostgreSQL a web?<br>
+<a href="#2.3">2.3</a> Existuje grafické rozhraní pro PostgreSQL?<br>
+<a href="#2.4">2.4</a> Které programovací jazyky mají podporu pro PostgreSQL?<br>
+
+<h2>Administrativní dotazy</h2>
+<a href="#3.1">3.1</a> Jak nainstalovat PostgreSQL jinam než do /usr/local/pgsql?<br>
+<a href="#3.2">3.2</a> Při startu postmaster, dostanu chybové hlášení Bad System Call nebo
+core dump. Proč?<br>
+<a href="#3.3">3.3</a> Při startu postmastera dostanu hlášení o chybě IpcMemoryCreate. Proč?<br>
+<a href="#3.4">3.4</a> Při startu postmastera dostanu hlášení o chybě
+IpcSemaphoreCreate. Proč?<br>
+<a href="#3.5">3.5</a> Jak povolit nebo zakázat přístup z jiných stanic?<br>
+<a href="#3.6">3.6</a> Jak ladit databázový stroj na lepší výkon?<br>
+<a href="#3.7">3.7</a> Jaké jsou možnosti ladění?<br>
+<a href="#3.8">3.8</a> Proč dostanu "Sorry, too many clients", když se zkouším připojit?<br>
+<a href="#3.9">3.9</a> K čemu slouží adresář pgsql_tmp?<br>
+<a href="#3.10">3.10</a> Proč je požadováno dump a obnovení (load) databáze během upgrade
+mezi velkými verzemi PostgreSQL?<br>
+<h2>Provozní dotazy</h2>
+<a href="#4.1">4.1</a> Čím se liší binární a normální kurzor?<br>
+<a href="#4.2">4.2</a> Jak získat pouze první řádek dotazu? Náhodný řádek?<br>
+<a href="#4.3">4.3</a> Jak získám seznam tabulek nebo jinak jak jej získá psql?<br>
+<a href="#4.4">4.4</a> Jak odstraním sloupec tabulky, jak změním jeho typ?<br>
+<a href="#4.5">4.5</a> Jaká je maximální velikost řádku, tabulky a databáze?<br>
+<a href="#4.6">4.6</a> Kolik diskového prostoru je potřeba k uložení dat z normálního
+textového souboru? <br>
+<a href="#4.7">4.7</a> Jak získám seznam vytvořených tabulek, indexů, databází?<br>
+<a href="#4.8">4.8</a> Můj dotaz je pomalý a nepoužívá vytvořené indexy. Proč?<br>
+<a href="#4.9">4.9</a> Jak zjistím, jak optimizer dotazu vyhodnocuje můj dotaz?<br>
+<a href="#4.10">4.10</a> Co to je R-tree index?<br>
+<a href="#4.11">4.11</a> Co je Genetic Query Optimizer?<br>
+<a href="#4.12">4.12</a> Jak provést vyhledávání regulárního výrazu case sensitiv,
+insensitiv? Jak použít index pro case insensitive vyhledávání?<br>
+<a href="#4.13">4.13</a> Jak v dotazu detekovat, že položka je NULL?<br>
+<a href="#4.14">4.14</a> Jaké jsou rozdíly mezi různými znakovými typy?<br>
+<a href="#4.15.1">4.15.1</a> Jak vytvořit serial/auto-increment pole?<br>
+<a href="#4.15.2">4.15.2</a> Jak získat hodnotu SERIAL po vložení řádku?<br>
+<a href="#4.15.3">4.15.3</a> Nepovede currval() a nextval() k rozhození podmínek při souběhu s jinými uživateli?<br>
+<a href="#4.15.4">4.15.4</a> Proč není vygenerované číslo použito při přerušení
+transakce? Proč vznikají díry v číslování vlastní sekvencí/SERIAL
+sloupce?<br>
+<a href="#4.16">4.16</a> Co to je OID? Co je to TID?<br>
+<a href="#4.17">4.17</a> Jaký je význam některých výrazů použitých v PostgreSQL?<br>
+<a href="#4.18">4.18</a> Proč jsem získal chybové hlášení "ERROR: Memory exhausted in
+AllocSetAlloc()"?<br>
+<a href="#4.19">4.19</a> Jak se dozvím, kterou verzi PostgreSQL používám?<br>
+<a href="#4.20">4.20</a> Proč operace s velkými objekty končí "invalid large obj descriptor"?<br>
+<a href="#4.21">4.21</a> Jak vytvořit sloupec obsahující implicitně aktuální datum?<br>
+<a href="#4.22">4.22</a> Proč jsou moje vnořené dotazy používající IN tak pomalé?<br>
+<a href="#4.23">4.23</a> Jak provést vnější spojení (outer join)?<br>
+<a href="#4.24">4.24</a> Jak provést dotaz napříč několika databázemi?<br>
+<a href="#4.25">4.25</a> Může funkce vrátit více řádků nebo sloupců?<br>
+<a href="#4.26">4.26</a> Proč nelze spolehlivě vytvářet a rušit dočasné tabulky v
+PL/pgSQL funkcích?<br>
+<a href="#4.27">4.27</a> Jaké jsou možnosti replikace databází?<br>
+<a href="#4.28">4.28</a> Jaké jsou možnosti šifrování databází?<br>
+<h2>Rozšiřování PostgreSQL</h2>
+<a href="#5.1">5.1</a> Napsal jsem UDF funkci, PostgreSQL však končí dump core?<br>
+<a href="#5.2">5.2</a> Jak mohu přispět nějakými šikovnými datovými typy a funkcemi
+do PostgreSQL?<br>
+<a href="#5.3">5.3</a> Jak napsat funkci v C vracející ntici?<br>
+<a href="#5.4">5.4</a> Modifikoval jsem zdrojové soubory. Tato změna nebyla při
+rekompilaci vzata v potaz. Proč?<br>
+
+
+
+
+<hr>
+<h2>Obecné otázky</h2>
+
+<h3><a name="1.1">1.1</a> Co je PostgreSQL? Jak se vyslovuje?</h3>
+
+<p>PostgreSQL se vyslovuje Post-Gres-Q-L.</p>
+
+<p></p>PostgreSQL vychází z databáze POSTGRES - výzkumného prototypu DBMS
+nové generace. Z postgresu byl převzat silný datový model a bohatý
+soubor datových typů a jeho dotazovací jazyk PostQuel byl nahrazen
+rozšířenou podmnožinou jazyka SQL. PostgreSQL lze používat bez
+omezení a jeho zdrojové kódy jsou volně k dispozici.<p></p>
+
+<p>PostgreSQL vyvýjí tým vývojářů přihlášených do vývojářské konference
+PostgreSQL. Současným koordinátorem je Marc G. Fournier. (Odpověď
+1.6. - jak se zapojit). Tento tým je zodpovědný za veškerý vývoj
+PostgreSQL.</p>
+
+<p>Autory první verze PostgreSQL 1.01 byli Andrew Yu and Jolly
+Chen. Do portace, testování, ladění a
+rozšiřování kódu se zapojilo mnoho dalších vývojářů . Původni kód Postgresu, ze kterého PostgreSQL
+vychází, je výsledkem úsilí mnoha studentů a programátorů pracujících
+pod vedením prof. Michaela Stonebrakera na University of California v
+Berkley.</p>
+
+<p>Původní název software z Berkley byl Postgres. Po přidání jazyka SQL
+se název změnil na Postgres95. Koncem roku 1996 byl RDBMS 
+přejmenován na PostgreSQL.</p>
+
+<h3><a name="1.2">1.2</a> Jaká je licence na PostgreSQL?</h3>
+
+ <p>PostgreSQL je předmětem následujících autorských práv:</p>
+
+ <p>Dílčí copyright (c) 1996-2002, PostgreSQL Global Development Group</p>
+
+ <p>Dílčí copyright (c) 1994-6, Regents of the University of California</p>
+
+
+ <p>Uděluje se oprávnění k užití, rozmnožování, provádění úprav a
+ rozšiřování tohoto softwaru a dokumentace k němu, pro jakékoli účely,
+ bez licenčního poplatku a bez písemné licenční smlouvy, za podmínky, že
+ na všech jeho kopiích je uvedeno oznámení o výše uvedených právech,
+ jakož i obsah tohoto a dvou následujících odstavců.</p>
+
+
+ <p>THE UNIVERSITY OF CALIFORNIA ("KALIFORNSKÁ UNIVERZITA") NENÍ V ŽÁDNÉM
+ PŘÍPADĚ ODPOVĚDNA ŽÁDNÉ TŘETÍ OSOBĚ ZA PŘÍMOU, NEPŘÍMOU, ZVLÁŠTNÍ,
+ NAHODILOU NEBO VýSLEDNOU ŠKODU, VČETNĚ UŠLÉHO ZISKU, ZPůSOBENOU UŽITÍM
+ TOHOTO SOFTWARU A DOKUMENTACE K NĚMU, A TO I V PŘÍPADĚ, ŽE THE
+ UNIVERSITY OF CALIFORNIA BYLA INFORMOVÁNA O MOŽNOSTI VZNIKU TAKOVÉ ŠKODY.</p>
+
+
+  <p>THE UNIVERSITY OF CALIFORNIA ZEJMÉNA NEPOSKYTUJE JAKÉKOLI ZÁRUKY, A TO
+ NEJEN ZÁRUKY OBCHODOVATELNOSTI A VHODNOSTI TOHOTO VýROBKU KE SPECIFICKýM
+ ÚČELůM. NÍŽE UVEDENý SOFTWARE JE POSKYTNUT "JAK STOJÍ A LEŽÍ" A THE
+ UNIVERSITY OF CALIFORNIA NENÍ POVINNA ZAJISTIT JEHO ÚDRŽBU, PODPORU,
+ AKTUALIZACI, VYLEPŠENÍ NEBO MODIFIKACI.</p>
+
+ <p>Výše uvedené je BSD licence, běžná licence otevřeného zdroje. Není zde
+ žádné omezení ohledně užití kódu zdroje. Jsme s tím spokojeni a nemáme v
+ úmyslu na této skutečnosti cokoli měnit.</p>
+
+
+<h3><a name="1.3">1.3</a> Na kterých Unixex lze spustit PostgreSQL?</h3>
+
+<p>PostgreSQL běží na všech moderních unixových platformách. V instalačních
+instrukcích naleznete aktuální seznam všech platforem na kterých byla
+testováním ověřena funkcionalita PostgreSQL.</p>
+
+<h3><a name="1.4">1.4</a> Které ne-unixové platformy jsou podporované?</h3>
+
+<h4>Klient</h4>
+
+<p>Knihovna libpq, psql a některé další moduly byly přeloženy pro 
+MS Windows. Klienta lze provozovat na MS Windows, ten prostřednictvím
+TCP/IP protokolu komunikuje se serverem běžícím na některé z podporovaných
+Unixových platforem. K překladu lze použít win32.mak a
+Win32 knihovny libpq a psql. K databázi PostgerSQL lze přistupovat skrze
+rozhraní ODBC.</p>
+
+<h4>Server</h4>
+<p>Server může být na WindowsNT a Win2k provozován pouze s knihovnou Cygwin,
+Cygnus Unix/NT porting library. Na nativním portu pro MS Win NT/2000/XP
+se pracuje. Existující port pro Novell Netware 6 naleznete na 
+<a href="http://forge.novell.com/">http://forge.novell.com</a>. </p>
+
+<h3><a name="1.5">1.5</a> Kde mohu získat PostgreSQL?</h3>
+
+<p>Primárním anonymním ftp serverem pro PostgreSQL je
+<a href="ftp://ftp.postgresql.org/pub">ftp://ftp.PostgreSQL.org/pub</a>
+. Seznam zrcadel naleznete na našich
+webových stránkách.</p><p>
+
+</p><h3><a name="1.6">1.6</a> Kde mohu získat podporu?</h3>
+
+<p>Hlavním mailová konference je pgsql-general@PostgreSQL.org. Slouží
+k diskuzím ohledně PostgreSQL. Přihlásíte se zasláním mailu 
+obsahující následující řádky v těle dopisu (nikoliv v záhlaví - subjectu)</p>
+<pre>subscribe
+end
+</pre>
+na adresu <a href="mailto:pgsql-general-request@PostgreSQL.org">mailto:pgsql-general-request@PostgreSQL.org</a>.<p></p>
+
+<p>Můžete si vyžádat denní přehled (diggest), který má zhruba 30K denně zpráv.
+
+</p><p>Konference psql-bugs je určena k zasílání zpráv o chybách. Pro přihlášení 
+pošlete mail se stejným obsahem jako v předchozím případě na adresu 
+<href ="mailto:pgsql-bugs-request@PostgreSQL.org">mailto:pgsql-bugs-request@PostgreSQL.org.</href></p>
+
+<p>Do vývojářské konference se přihlásíte odesláním dopisu s 
+již zmiňovaným obsahem na <a href="mailto:pgsql-hackers-request@PostgreSQL.org">mailto:pgsql-hackers-request@PostgreSQL.org</a>.</p>
+
+<p>Seznam dalších konferencí naleznete na stránkách PostgreSQL 
+<a href="http://www.postgresql.org/">http://www.postgresql.org</a></p>
+
+<h3><a name="1.7">1.7</a> Kde je poslední verze?</h3>
+
+<p>Poslední verzí je PostgreSQL 7.4.. Plánujeme uvolnit velkou verzi
+každých šest až osm měsíců.</p>
+
+<h3><a name="1.8">1.8</a> Jaká je dostupná dokumentace?</h3>
+
+<p>Různé manuály, manuálové stránky a několik malých testovacích příkladů
+jsou součásti distribuce. Podívejte se do adresáře /doc. Manuály jsou
+přístupné online na <a href="http://www.postgresql.org/docs">http://www.PostgreSQL.org/docs</a>.</p>
+
+<p>Na adresách <a href="http://www.postgresql.org/docs/awbook.html">http://www.PostgreSQL.org/docs/awbook.html</a> a
+<a href="http://www.commandprompt.com/ppbook/">http://www.commandprompt.com/ppbook/</a> naleznezte dvě online knihy o
+PostgreSQL. Seznam dostupné literatury je na
+<a href="http://techdocs.postgresql.org/techdocs/bookreviews.php">http://techdocs.PostgreSQL.org/techdocs/bookreviews.php</a>. Soubor
+technických článků s tematikou PostgresQL najdete na
+<a href="http://techdocs.postgresql.org/">http://techdocs.PostgreSQL.org/</a>.</p> 
+
+<p>psql má užitečný metapříkaz \d sloužící k zobrazení informací
+o typech, operátorech, funkcí, agregačních funkcí atd.</p>
+
+<p>Více dokumentace naleznete na našich webových stránkách.</p>
+
+<h3><a name="1.9">1.9</a> Kde najdu seznam známých chyb nebo nepodporovaných vlastností?</h3>
+
+<p>PostgreSQL podporuje rozšířenou podmnožinu SQL-92. V našem <a href="http://developer.postgresql.org/todo.php">TODO</a> najdete
+seznam známých chyb, chybějících vlastností a seznam vlastností,
+které budou do systému implementovány v budoucnu (včetně priorit).</p>
+
+<h3><a name="1.10">1.10</a> Jak se mohu naučit SQL?</h3>
+
+<p>V knize The PostgreSQL book na <a href="http://www.postgresql.org/docs/awbook.html">http://www.PostgreSQL.org/docs/awbook.html</a>
+je vysvětlen jazyk SQL (vyšla česky). Další dostupnou knihou je
+<a href="http://www.commandprompt.com/ppbook">http://www.commandprompt.com/ppbook</a>. Kvalitní návody naleznete na
+<a href="http://www.intermedia.net/support/sql/sqltut.shtm">http://www.intermedia.net/support/sql/sqltut.shtm</a>, na
+<a href="http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM">http://www.intermedia.net/support/sql/sqltut.shtm</a>,
+a na <a href="http://sqlcourse.com/">http://sqlcourse.com</a>.</p>
+
+<p>Další je Teach Yourself SQL in 21 days, Second Edition na
+<a href="http://members.tripod.com/er4ebus/sql/index.htm">http://members.tripod.com/er4ebus/sql/index.htm</a>.</p>
+
+<p>Mnoho uživatelů doporučuje The Practical SQL Handbook, Bowman, Judith
+S., et al., Addison-Wesley. Jiní preferují The Complete Reference SQL,
+Groff et al., McGraw-Hill.</p>
+
+<h3><a name="1.11">1.11</a> Nemá PostgreSQL problémy s rokem 2000?</h3>
+
+<p>Nemá, můžeme pracovat s datumy po roce 2000 našeho letopočtu i před
+rokem 2000 př.n.l. </p>
+
+<h3><a name="1.12">1.12</a> Jak se připojit k vývojářskému týmu?</h3>
+
+<p>Nejdříve si stáhněte nejnovější zdroje a přečtěte si vývojářskou
+dokumentaci na našem webu nebo v distribuci. Pak se přihlašte do
+konferencí pgsql-hackers a pgsql-patches. Kvalitní záplaty
+posílejte do pgsql-patches.</p>
+
+<p>Právo commit má v cvs archivu asi třinácti lidí. Každý z nich
+poslal mnoho kvalitních záplat, takže tehdejší commiters měli
+jistotu, že budou předkládat jenom kvalitní záplaty a mohli jim
+předělit větší práva.</p>
+
+<h3><a name="1.13">1.13</a> Kam podat report o chybě?</h3>
+
+<p>Navštivte naši PostgreSQL BugTool stránku na
+<a href="http://www.postgresql.org/bugs/bugs.php">http://www.PostgreSQL.org/bugs/bugs.php</a>, která obsahuje návod a
+směrnice jak podat chybový report. </p>
+
+<p>Ověřte si na našem ftp serveru <a href="ftp://ftp.postgresql.org/pub">ftp://ftp.PostgreSQL.org/pub</a>, zda-li
+máte nejnovější verzi PostgreSQL a zda-li k ní neexistují nějaké záplaty.</p>
+
+<h3><a name="1.14">1.14</a> Jak je na tom PostgreSQL v porovnání s jinými databázemi?</h3>
+
+<p>Existuje několik hledisek jak porovnávat software: vlastnosti, výkon,
+spolehlivost, podpora a cena.</p>
+
+<h4>Vlastnosti</h4>
+	<p>PostgreSQL má hodně společných vlastností s velkými komerčními
+	DBMS, např. transakce, vnořené dotazy, spouště, pohledy,
+	kontrolu referenční integrity a sofistikované
+	zamykání. Podporuje některé vlastnosti, které tyto systémy
+	nemají, uživatelem definované typy, dědičnost, pravidla, MVCC
+	redukující zamykání.</p>
+
+<h4>Výkon</h4>
+	<p>Výkonnostně je na tom PostgreSQL podobně jako další komerční
+	ale i open source databáze, v něčem je rychlejší, jindy
+	pomalejší. V porovnání s MySQL a podobnými databázovými
+	systémy je PostgreSQL rychlejší při víceuživatelském
+	přístupu, složitějších dotazech a zatížení read/write dotazy. MySQL
+	je rychlejší v jednodušších dotazech s malým počtem
+	uživatelů. Navíc, MySQL nepodporuje mnohé vlatnosti zmíněné v
+	sekci vlastnosti. Zapracovali jsme na spolehlivosti a podporovaných
+	vlastnostech, a výkon zvyšujeme v každé
+	verzi. Zajímavou stránku porovnávající PostgreSQL a MySQL
+	naleznete na
+	<a href="http://openacs.org/philosophy/why-not-mysql.html">http://openacs.org/philosophy/why-not-mysql.html</a>. Za vývojem MySQL 
+ 	není Open Source komunita, ale komerční společnost, přestože 
+	svoje produkty distribuuje jako Open Source.</p>
+
+<h4>Spolehlivost</h4>
+	<p>Jsme si vědomi, že databáze musí být spolehlivá, jinak je
+	nepoužitelná. Snažíme se zveřejňovat dobře otestovaný, stabilní kód s
+	minimem chyb. Každá verze je více než měsíc v beta testování,
+	a naše historie verzí ukazuje, že můžeme nabídnout stabilní,
+	solidní verze, které jsou připraveny pro reálné nasazení. V
+	této oblasti jsme srovnatelní s dalšími databázemi. </p>
+
+<h4>Podpora</h4>
+	<p>Na naší mailové konferenci můžete kontaktovat velkou skupinu
+	vývojářů a uživatelů.problémů. Nemůžeme garantovat opravu, 
+	nicméně komerční databáze také ne vždy nabídnou opravu. Podle ohlasů
+	je naše podpora hodnocena lépe než u jiných DBMS a to díky
+	přímému kontaktu s vývojáři, velkou komunitou uživatelů, 
+	kvalitními manuály a přístupným zdrojovým kódem. Pro uživatele, 
+	kteří vyžadují podporu ke konkrétním případům, existuje placená podpora
+	(FAQ sekce 1.6).</p>
+
+<h4>Cena</h4>
+	<p>PosgreSQL lze volně používat pro nekomerční i komerční
+	použití. Můžete do svých produktů přidat náš kód bez omezení,
+	respektive v souladu s podmínkami naší licenční smlouvy (v duchu BSD
+	licence).</p>
+
+<h3><a name="1.15">1.15</a> Jak lze finančně pomoci PostgreSQL?</h3>
+
+<p>PosgreSQL má prvotřídní infrastrukturu od našeho začátku v roce
+1996. Vděčíme za to Marku Fournierovi, který založil a spravoval tuto
+infrastrukturu několik let.</p>
+
+<p>Kvalitní infrastruktura je velice důležitá pro každý open source
+projekt. Předchází nedorozuměním, která velice zdržují pokrok v projektu.</p>
+
+<p>Tato infrastruktura není laciná. K jejímu zajištění je třeba stále hradit určité
+měsíční a jednorázové částky. Pokud máte Vy nebo Vaše společnost
+peníze, které nám můžete darovat, obraťe se na <a href="http://store.pgsql.com/shopping/">http://store.pgsql.com/shopping/</a> a darujte je.</p>
+
+<p>Ačkoliv webová stránka zmiňuje PostgreSQL, Inc. vklady jsou určeny
+pouze k podpoře projektu PostgreSQL a nepodporují žádnou existující
+společnost. Pokud to vyžadujete, můžete poslat kontrolu na naši kontaktní
+adresu.</p> 
+
+<p>Pokud máte příklad úspěšného nasazení PostgreSQL, přihlaště se na náš
+advocacy site na  <a href="http://advocacy.postgresql.org/">http://advocacy.postgresql.org</a>.</p>
+<hr>
+
+<h2>User client dotazy</h2>
+
+<h3><a name="2.1">2.1</a> Kde naleznu ODBC ovladače pro PostgreSQL?</h3>
+
+<p>Pro PostgreSQL existují dva ODBC ovladače - PsqlODBC a OpenLink ODBC.</p>
+
+<p>PsqlODBC je ke stažení na <a href="http://gborg.postgresql.org/project/psqlodbc/projdisplay.php">http://gborg.postgresql.org/project/psqlodbc/projdisplay.php</a>.</p> 
+
+<p>OpenLink můžete získat na <a href="http://www.openlinksw.com/">http://www.openlinksw.com</a>. Spolupracuje 
+s jejich klientským programovým vybavením a je dostupný pro všechny jimi 
+podporované platformy (Win, Mac, Unix, VMS).</p> 
+
+<p>Tento ovladač je určen pro ty, kteří vyžadují podporu komerční kvality,
+nicméně freeware verze je dostupná a funkční. Dotazy zasílejte
+na postgres95@openlink.co.uk.</p>
+
+<h3><a name="2.2">2.2</a> Jaké nástroje lze použít pro PostgreSQL a web?</h3>
+
+<p>Pěkný úvod do databázových technologií zabezpečujících chod
+webových stránek najdete na <a href="http://www.webreview.com/">http://www.webreview.com</a>.</p>
+
+<p>Pro tvorbu webu existuje excelentní rozhraní PHP, které naleznete na
+<a href="http://www.php.net/">http://www.php.net</a>.</p> 
+
+<p>Pro složitější případy se často používá Perl a CGI.pm nebo mod_perl.</p>
+
+<h3><a name="2.3">2.3</a> Existuje grafické rozhraní pro PostgreSQL?</h3>
+
+<p>Pro PostgreSQL existuje několik grafických rozhraní: 
+PgAccess (<a href="http://www.php.net/">http://www.php.net</a>), PgAdmin (<a href="http://www.php.net/">http://www.php.net</a>), RHDB
+Admin (<a href="http://sources.redhat.com/rhdb/">http://sources.redhat.com/rhdb/</a>) a Rekall
+(<a href="http://www.thekompany.com/products/rekall/">http://www.thekompany.com/products/rekall/</a>). Dále existuje
+PHPPgAdmin (<a href="http://phppgadmin.sourceforge.net/">http://phppgadmin.sourceforge.net/</a>) rozhraní
+PostgreSQL založené na web technologii.</p>
+
+<p>Úplnější seznam najdete na <a href="http://techdocs.postgresql.org/guides/GUITools">http://techdocs.postgresql.org/guides/GUITools</a>.</p>
+
+<h3><a name="2.4">2.4</a> Které programovací jazyky mají podporu pro PostgreSQL?</h3>
+
+<p>Většina programovacích jazyků obsahuje rozhraní pro
+PostgreSQL. Podívejte se do rozšiřujících modulů Vašeho programovacího
+jazyka.</p>
+
+<p>Distribuce PostgreSQL obsahuje tato rozhraní:
+  </p><ul>
+  <li> C (libpq)
+  </li><li> Embbedded C (ecpg)
+  </li><li> Java (jdbc)
+  </li><li> Python (PyGreSQL)
+  </li><li> TCL (libpgtcl)
+</li></ul>
+<p>Další rozhraní jsou dostupná na <a href="http://gborg.postgresql.org/">http://gborg.postgresql.org</a> v sekci
+Drivers/Interfaces. </p>
+<hr>
+
+<h2>Administrativní dotazy</h2>
+
+<h3><a name="3.1">3.1</a> Jak nainstalovat PostgreSQL jinam než do /usr/local/pgsql?</h3>
+
+<p>Použijte volbu --prefix při spuštění configure</p>
+
+<h3><a name="3.2">3.2</a> Při startu postmaster, dostanu chybové hlášení Bad System Call nebo
+core dump. Proč?</h3>
+
+<p>Důvody mohou být různé, ale nejprve zkontrolujte, zda Váš systém
+podporuje System V extensions. PostgreSQL vyžaduje v jádře podporu
+sdílené paměti a semaforů.</p>
+
+<h3><a name="3.3">3.3</a> Při startu postmastera dostanu hlášení o chybě IpcMemoryCreate. Proč?</h3>
+
+<p>Buďto nemáte správně nakonfigurovanou sdílenou paměť v jádře nebo
+musite zvětšit její velikost. Potřebná velikost je závislá na
+architektuře a na tom, kolik paměťových bufferů a backendů máte povoleno 
+pro postmastera. Pro většinu systémů s 
+předdefinovaným počtem backendů a paměťových bufferů je
+minimum zhruba 1MB. V <a href="http://postgresql.ok.cz/PostgreSQL%20Administrator%27sGuide">http://www.postgresql.org/docs/view.php?version=current&amp;idoc=1&amp;file=kernel-resources.html</a>
+naleznete podrobnější informace o sdílené paměti a semaforech.</p> 
+
+<h3><a name="3.4">3.4</a> Při startu postmastera dostanu hlášení o chybě
+IpcSemaphoreCreate. Proč?</h3>
+
+<p>Pokud dostane chybovou zprávu IpcSemaphoreCreate: semget failed (No
+space left on device), pak vaše jádro nemá dost volných  semaforů. PostgreSQL
+vyžaduje jeden semafor pro každý backend v pozadí. Dočasným
+řešením je start postmastera s limitem backendů. Použijte
+přepínač -N s hodnotou menší než 32. Úplným řešením je zvýšení hodnot
+SEMMNS a SEMMNI jadra.</p>
+
+<p>Nefunkční semafory mohou způsobit pád během intenzivních databázových
+operací.</p>
+
+<p>Pokud se tato chyba vyskytuje ještě někde jinde, možná nemáte vůbec
+nakonfigurovány semafory ve vašem jádře. V PostgreSQL
+Administrator's Guide najdete podrobnější popis požadavků na sdílenou
+pamět a semafory.</p>
+
+<h3><a name="3.5">3.5</a> Jak povolit nebo zakázat přístup z jiných stanic?</h3>
+
+<p>Při výchozím nastavení PostgreSQL odepře přístup z jiných stanic než
+lokální s použitím UDP. Databáze se zpřístupní jiným stanicím
+nastavením přepínače -i postmastera a povolením stanice a určením
+režimu autentifikace v $PGDATA/pg_hba.conf. Tím se povolí TCP/IP
+spojení. ZASTARALÉ</p>
+
+<h3><a name="3.6">3.6</a> Jak ladit databázový stroj na lepší výkon?</h3>
+
+<p>Určitě pomohou indexy. Příkaz EXPLAIN zobrazí způsob interpretace
+Vašeho dotazu a použití indexů.</p>
+
+<p>Při větší dávce INSERTů uvažujte o náhradě příkazem COPY. Ten je
+mnohem rychlejší nežli samotný INSERT. Každý příkaz mimo blok
+BEGIN WORK/COMMIT se provádí ve vlastní transakci. Zvažte, zda-li by
+se nedalo několik příkazů spojit do jedné transakce. Tím se sníží
+režie na transakce. Před provedením rozsáhlých změn zrušte indexy, 
+které po dokončení změn opět vytvořte.</p>
+
+<p>Máte několik dalších možností, jak zlepšit výkon. Můžete zakázat fsyn()
+při startu postmastera přepínači -o -F. Tyto přepínače zabrání
+fsync(), tj. zápisu na disk po každé transakci.</p>
+
+<p>Můžete zvýšit velikost paměťových bufferů použitých backendy
+tj. parametr -B postmasteru. Pokud ale tato hodnota bude příliš
+velká, tak možná nespustíte postmastera jelikož dosáhnete limitu
+sdílené paměti. Každý buffer má 8K a implicitně je 64 bufferů.</p>
+
+<p>Dále můžete použít přepínač -S k zvýšení limitu paměti pro backendy
+na dočasné třídění. Hodnota je míněna v kilobytech a výchozí
+nastavení je 512, tj. 512K. </p>
+
+<p>Můžete použít příkaz CLUSTER, který uspořádá fyzicky data v
+tabulkách podle indexu. Více na manuálových stránkách příkazu
+CLUSTER.</p>
+
+<h3><a name="3.7">3.7</a> Jaké jsou možnosti ladění?</h3>
+
+<p>Máte několik možností jak se dostat k užitečným stavovým informacím.</p>
+
+<p>Zaprvé, při překladu použijte přepínač --enable-cassert, tím se zapne
+monitorování a následné zastavení aplikace, když se proces v backendu
+dostane do neočekávaného stavu.</p>
+
+<p>Jak postmaster tak postgres má několik přepínačů umožňujících
+ladění. Postmaster nastartujte tak, abyste si byli jisti, že je
+standartní výstup a standartní chybový výstup přesměrován do souboru
+logu, například:</p>
+<pre>cd /usr/local/pgsql
+./bin/postmaster &gt; server.log 2&gt;&amp;1 &amp;
+</pre>
+<p>Tím se vytvoří log v adresáři PostgreSQL, Tento soubor obsahuje
+užitečné informace o problémech a chybách vyskytlých se na
+serveru. Postmaster má přepínač -d určující, jak podrobné mají být
+reportované informace, tj. debug level. Pozor, při velké hodnotě debug
+levelu rychle roste velikost souboru logu.</p>
+
+<p>Pokud neběží postmaster, můžete spustit backend PostgreSQL z příkazové
+řádky a napsat svůj SQL dotaz přímo v backendu (doporučeno pouze pro
+ladění). Dotaz je v tomto případě ukončen novou řádkou, nikoliv
+středníkem. Pokud máte aplikaci přeloženou s ladícími symboly, můžete
+použít debbuger k monitorování procesu. Pokud není backend spuštěn 
+postmasterem, pak neběží ve svém obvyklém prostředí a tudíž některé problémy
+dané interakcí mezi backendy nemohou být nasimulovány.</p>
+
+<p>Pokud běží postmaster, spusťe psql v jednom okně a pak si zjistěte PID
+procesu postgres použitého psql. V debuggeru sepřipojte k postgresql
+PID. Pak nastavte breakpointy v debuggeru a zadejte dotaz v
+psql. Pokud ladíte startup postgresu, pak nastavte PGOPTIONS="-W n" a
+spusťe psql. Tento přepínač způsobí pauzu n sekund, takže budete mít
+čas se připojit k procesu, a nastavit breakpointy a pokračovat v
+startup posloupnosti.</p>
+
+<p>Pro ladění a měření výkonu mohou být užitečné přepínače -s, -A a -t
+programu postgres (backend).</p>
+
+<p>Můžete provést překlad s profilací, tak abyste viděli kolik času
+zabírají jednotlivé funkce. Soubory s profily backendů jsou uloženy v
+adresáři pgsql/data/base/dbname. Profil klienta pak v jeho aktuálním
+adresáři. Korektní profilace v prostředí Linux požaduje konfiguraci 
+systému s parametrem -DLINUX_PROFILE.</p>
+
+<h3><a name="3.8">3.8</a> Proč dostanu "Sorry, too many clients", když se zkouším připojit?</h3>
+
+<p>Zvyšte limit postmastera na maximální počet současně spuštěných backendů.</p>
+
+<p>Výchozí hodnota je 32 backendů. Tuto hodnotu zvýšíte zastavením a 
+opětovným spuštěním postmastera s parametrem -N nebo úpravou postgresql.conf.</p>
+
+<p>Při zvýšení hodnoty -N nad 32 musíte zvýšit hodnotu -B nad výchozí 64,
+-B musí být minimálně dvakrát větší, nebo ještě lépe více. Pravděpodobně
+zjistíte, že pro velký počet procesů backendu je nutné zvýšit některé 
+parametry jádra. Jsou to především maximální velikost sdílené paměti SHMMAX, 
+maximální počet semafórů SEMMNS a SEMMNI, maximální počet procesů NPROC, 
+maximální počet procesů uživatele MAXUPRC a maximální počet otevřených souborů
+NFILE a NINODE. Důvod pro omezení maximálního počtu backendů je fakt,
+že by mohlo dojít k vyčerpání zdrojů Vašeho systému.</p>
+
+<h3><a name="3.9">3.9</a> K čemu slouží adresář pgsql_tmp?</h3>
+
+<p>Tento adresář obsahuje dočasné soubory vytvořené exekutorem
+dotazů. Například, když je nutné třídění k zajištění ORDER BY a
+třídění má větší nároky na prostor než povoluje parametr -S
+backendu, pak je vytvořen dočasný soubor k uložení extra údajů.</p>
+
+<p>Dočasné soubory jsou obvykle mazány automaticky, ale může se stát, že
+během třídění server spadne. Zastavení a další start postmastera zajistí
+odstranění souborů s těchto adresářů.</p>
+
+<h3><a name="3.10">3.10</a> Proč je požadováno dump a obnovení (load) databáze během upgrade
+mezi velkými verzemi PostgreSQL?</h3>
+
+<p>PostgreSQL se minimálně mění během malých verzí, takže např. při upgrade z
+7.2 na 7.2.1 není nutné dump a load databáze. Ale velké verze často mění
+interní formát systémových tabulek a datových souborů. Tyto změny jsou
+natolik rozsáhlé, že nelze zajistit zpětnou kompatibilitu pro datové
+soubory. Dump uloží data v obecném formátu, takže mohou být načtena a
+používána v novém interním formátu.</p>
+<hr>
+
+<h2>Provozní dotazy</h2>
+
+<h3><a name="4.1">4.1</a> Čím se liší binární a normální kurzor?</h3>
+
+<p>Popis najdete v manuálové stránce DECLARE</p>
+
+<h3><a name="4.2">4.2</a> Jak získat pouze první řádek dotazu? Náhodný řádek?</h3>
+
+<p>Podívejte se do man. stránky příkazu FETCH, nebo použijte SELECT ...
+LIMIT ... </p>
+
+<p>Není nutné zpracovávat celý dotaz, když potřebujete pouze několik prvních
+řádků. Pokud existuje index ORDER BY, PostgreSQL je schopen přerušit
+zpracování dotazu po získání požadovaného počtu řádků.</p>
+
+<p>K získání náhodného řádku použijte:</p>
+<pre>SELECT col FROM tab
+  ORDER BY random() LIMIT 1;
+</pre>
+<h3><a name="4.3">4.3</a> Jak získám seznam tabulek nebo jinak jak jej získá psql?</h3>
+
+<p>Podívejte se do zdrojových kódů psql do souboru
+pgsql/src/bin/psql/describe.c. Ten obsahuje SQL příkazy, které se
+používají v psql metapříkazech. Dále můžete spustit psql s přepínačem
+-E, který způsobí zobrazení každého dotazu, které zpracování
+metapříkazu vyvolá.</p>
+
+<h3><a name="4.4">4.4</a> Jak odstraním sloupec tabulky, jak změním jeho typ?</h3>
+
+<p>Počínaje verzí 7.3 můžete použít příkaz ALTER TABLE DROP COLUMN. Ve
+starších verzích můžete použít následující postup:</p>
+<pre>BEGIN;
+LOCK TABLE old_table;
+SELECT ... -- mimo sloupec, který chceme odstranit
+  INTO TABLE new_table;
+DROP TABLE old_table;
+ALTER TABLE new_table RENAME TO old_table;
+COMMIT;
+</pre>
+<p>Pro změnu typu sloupce je třeba provést:</p>
+<pre>BEGIN;
+ALTER TABLE tab ADD COLUMN new_col new_data_type;
+UPDATE tab SET new_col = CAST(old_col AS new_data_type;
+ALTER TABLE tab DROP COLUMN old_col;
+COMMIT;
+</pre>
+<p>Poté proveďte VACUUM FULL tab - uvolníte tím diskový prostor zabraný
+nyní již neplatnými řádky.</p>
+
+<h3><a name="4.5">4.5</a> Jaká je maximální velikost řádku, tabulky a databáze?</h3>
+
+<p>PostgreSQL má tato omezení:</p>
+<table>
+<tbody><tr><td>Maximální velikost databáze:</td><td>	neomezena (existují 32TB db)
+</td></tr><tr><td>Maximálné velikost tabulky:</td><td>		32 TB
+</td></tr><tr><td>Maximální velikost řádky:</td><td>		1.6 TB
+</td></tr><tr><td>Maximální velikost položky</td><td>		1 GB
+</td></tr><tr><td>Maximální počet řádků v tabulce:</td><td>	neomezeno
+</td></tr><tr><td>Maximální počet sloupců v tabulce:</td><td>	250-1600 podle typů
+</td></tr><tr><td>Maximální počet indexů na tabulce:</td><td>	neomezeno
+</td></tr></tbody></table>
+<p>Ve skutečnosti nic není neomezeno, limitem bývá vždy dostupná disková
+paměť nebo velikost operační paměti. Pokud máte některou z těchto
+hodnot neobvykle velkou, může dojít ke snížení výkonu.</p>
+
+<p>Maximální velikost tabulky je 32 TB a nevyžaduje podporu velkých souborů
+operačním systémem. Velké tabulky se ukládají do několika 1 GB souborů
+takže limity souborového systému nejsou podstatné.</p>
+
+<p>Maximální velikost tabulky a maximální počet sloupců můžeme
+zečtyřnásobit nastavením velikosti bloku na 32K.</p>
+
+<h3><a name="4.6">4.6</a> Kolik diskového prostoru je potřeba k uložení dat z normálního
+textového souboru? </h3>
+
+<p>PostgreSQL vyžaduje až pětinásobek diskového prostoru k uložení dat z
+textového souboru.</p>
+
+<p>Například, uvažujme soubor se 100 tisíci řádky obsahující na každé
+řádce celé číslo a textový popis. Text je v průměru dvacet bytů
+dlouhý. Textový soubor bude 2.8 MB dlouhý. Velikost 
+databáze obsahující odpovídající data bude zhruba 6.4 MB.</p>
+<pre> 36 bytů: hlavička řádku (přibližně)
+ 24 bytů: jedna celočíselná položka a jedna textová
+  4 byty: ukazatel na stránku k ntici
+------------------------------------------------------
+ 64 bytů na řádek
+</pre>
+<p>Velikost datové stránky PostgreSQL je 8KB</p>
+<pre> 8192 bytů na stránce
+---------------------- = 128 řádek na stránku
+  64 bytů za řádek
+
+100000 řádek
+-------------------- = 782 stránek (zaokrouhleno nahoru)
+128 řádek na stránce
+
+782 * 8192 = 6, 406, 144 bytů (6.4 MB)
+</pre>
+<p>Indexy nemají tak velkou režii, ale mohou být také velké, 
+protože obsahují indexovaná data.</p>
+
+<p>Hodnoty NULL jsou uloženy v bitmapách, takže spotřebují jen velmi málo
+diskového prostoru.</p>
+
+<h3><a name="4.7">4.7</a> Jak získám seznam vytvořených tabulek, indexů, databází?</h3>
+
+<p>psql má sadu metapříkazů k zobrazení těchto informací. Jejich seznam
+získáte příkazem \?. Dále se můžete podívat na obsah systémových
+tabulek začínajících pg_. Spuštění psql s parametrem -l provede
+výpis názvů všech databází.</p>
+
+<p>Soubor pgsql/src/tutorial/syscat.source obsahuje SELECTy přistupující
+k systémovým tabulkámm.</p>
+
+<h3><a name="4.8">4.8</a> Můj dotaz je pomalý a nepoužívá vytvořené indexy. Proč?</h3>
+
+<p>Každý dotaz nemusí nutně použít existující indexy. Index se použije tehdy,
+když je tabulka větší než určitá minimální velikost, a dotaz vybírá
+pouze procentuálně malou část řádků tabulky. To proto, že náhodný
+přístup k disku daný čtením indexu může být pomalejší než lineární
+čtení tabulky nebo sekvenční čtení,</p>
+
+<p>PostgreSQL rozhoduje o použití indexů na základě statistiky přístupů k
+tabulce. Tyto statistiky se shromažďují příkazy VACUUM ANALYZE nebo
+ANALYZE. Díky statistikám má optimizer informaci o počtu řádek v
+tabulce a může lépe rozhodnout o použití indexů. Statistiky se uplatní
+při určení optimálního pořadí a metody spojení tabulek. Statistiky by 
+se měli aktualizovat opakovaně, tak jak se mění obsah tabulek.</p>
+
+<p>Indexy nejsou obyčejně použity pro setřídění nebo spojení
+tabulek. Sekvenční zpracování následované explicitním tříděním je
+obyčejně rychlejší než indexní čtení na velké tabulce.</p>
+
+<p>Jinak je tomu v případě použití LIMIT a ORDER BY, při kterém se
+většinou index použije, výsledkem je pouze malá část tabulky. Funkce
+MAX() a MIN() nepoužívají indexy, ale je možné tutéž hodnotu získat </p>
+<pre>SELECT col FROM tab
+  ORDER BY col [ DESC ] LIMIT 1;
+</pre>
+<p>Pokud si myslíte, že optimizer mylně zvolil sekvenční prohledávání
+tabulky, použijte příkaz SET enable_seqscan TO 'off' a zkuste zda je
+indexní prohledávání rychlejší.</p>
+
+<p>Při vyhledávání na základě vzoru jako je např. operátor LIKE nebo ~ se
+indexy použíjí pouze za určitých skutečností:</p>
+<ul>
+  <li> začátek hledaného vzoru musí být ukotven k začátku, tj.
+    <ul>
+     <li>vzor LIKE nesmí začínat %
+     </li><li>regulární výraz musí začínat ^
+    </li></ul>
+  </li><li>vzor nesmí začínat intervalem, např. [a-e]
+  </li><li>vyhledávaní, které není Case sensitiv nepoužívá indexy. Můžete ale
+     použít funkcionální indexy, které jsou posány v sekci 4.12 
+  </li><li>při inicializaci databáze (initdb) musí být použito C locale
+     (pozn. překladatele - tudíž v našich podmínkách nepoužitelné,
+     nepracovalo by české třídění). 
+</li></ul>
+
+<h3><a name="4.9">4.9</a> Jak zjistím, jak optimizer dotazu vyhodnocuje můj dotaz?</h3>
+
+<p>Podívejte se do manuálové stránky příkazu EXPLAIN.</p>
+
+<h3><a name="4.10">4.10</a> Co to je R-tree index?</h3>
+
+<p>R-tree index se používá pro indexování prostorových dat. Hash index
+nemůže obsloužit prohledávání oblastí. B-tree index může řídit
+vyhledání oblastí v jedné dimenzi. R-tree index může podporovat hledání v
+multidimenzionálních datech. Použijeme-li například R-tree index na
+atributy typu point, pak systém může efektivně odpovědět na dotaz -
+vyber všechny body uvnitř obdélníků.</p>
+
+<p>Původní návrh R-tree je Guttman, A. "R-trees: A Dynamic Index
+Structure for Spatial Searching." Proceedings of the 1984 ACM SIGMOD
+Int'l Conf on Mgmt of Data, 45-57</p>
+
+<p>Tyto materiály naleznete v  Stonebraker's "Readings in Database Systems".</p>
+
+<p>Vestavěné R-tree může sloužit k indexaci polygonů a
+oblastí. Teoreticky můžeme R-tree použít i pro více dimenzí (jiné než 3D).
+Ve skutečnosti ale takové rozšíření R-tree vyžaduje trochu práce a 
+ve součastnosti chybí dokumentace jak na to.</p>
+
+<h3><a name="4.11">4.11</a> Co je Genetic Query Optimizer?</h3>
+
+<p>GEQO modul urychluje optimalizaci dotazů při spojování množství
+tabulek metodou Genetických algoritmů (GA). To umožňuje získat
+velkého množství variant spojení při neúplném prohledáváním.</p>
+
+<h3><a name="4.12">4.12</a> Jak provést vyhledávání regulárního výrazu case sensitiv,
+insensitiv? Jak použít index pro case insensitive vyhledávání?</h3>
+
+<p>Operátor ~ slouží k porování s regulárním výrazem, jeho modifikace *~
+představuje case insensitive vyhledávání. Jedná se o obdobu LIKE a
+ILIKE.</p>
+
+<p>Pro vyhledávání bez ohledu na velká malá písmena použijeme</p>
+<pre>SELECT * FROM tab
+  WHERE lower(col) = 'abc';
+</pre>
+<p>V tomto případě se nepoužije standardní index. Nicméně, použije se
+funkcionální index, pokud jej vytvoříte </p>
+<pre>CREATE INDEX tabindex ON tab (lower(col));
+</pre>
+<h3><a name="4.13">4.13</a> Jak v dotazu detekovat, že položka je NULL?</h3>
+
+<p>Určíte pomocí IS NULL nebo IS NOT NULL</p>
+
+<h3><a name="4.14">4.14</a> Jaké jsou rozdíly mezi různými znakovými typy?</h3>
+<pre>Typ         Interní název       Poznámka
+--------------------------------------------------------------------------
+VARCHAR(n)  varchar		omezeno maximální délkou, bez doplnění mezerami
+CHAR(n)	    bpchar		řetězec je doplněn mezerami do dané délky
+TEXT	    text		bez horního limitu na délku 
+BYTEA	    bytea		pole bytů (bezpečně lze uložit i znak NULL)
+"char"	    char		jeden znak
+</pre>
+<p>S interními názvy se setkáte v systémovém katalogu a v některých
+chybových hlášeních.</p>
+
+<p>První čtyři uvedené typy jsou tzv. varlena typy (tj. první čtyři byty
+na disku nesou údaj o délce, následují samotná data). Proto skutečný
+použitý prostor je vždy o něco málo větší než deklarovaná délka. Naopak, 
+tyto datové typy jsou komprimovánty TOASTem, takže prostor na disku
+může být nižší než je očekáváno.</p>
+
+<p>VARCHAR(n) je vhodný pro ukládání textů promměné délky s pevně
+stanovenou maximální délkou. TEXT je pro řetězce bez omezení délky s
+maximem jeden gigabajt.</p>
+
+<p>CHAR(n) slouží k ukládání řetězců stejné délky. CHAR(n) doplní prázdné
+znaky do specifikované délky, zatímco VARCHAR(n) uloží pouze předané
+znaky. BYTEA je určeno pro ukládání binárních dat, včetně NULL
+byte. Všechny zde popsané typy mají podobné výkonnostní
+charakteristiky.</p>
+
+<h3><a name="4.15.1">4.15.1</a> Jak vytvořit serial/auto-increment pole?</h3>
+
+<p>PostgreSQL podporuje typ SERIAL. Při jeho použití se automaticky
+vytvoří SEQUENCE a index na sloupci (Pro vyšší verze to neplatí
+OVĚŘIT). Například:</p>
+<pre>CREATE TABLE person (
+  id SERIAL,
+  name TEXT
+);
+</pre>
+je automaticky převedeno do
+<pre>CREATE SEQUENCE person_id_seq;
+CREATE TABLE person (
+  id INT4 NOT NULL DEFAULT nextval('person_id_seq'),
+  name TEXT
+);
+CREATE UNIQUE INDEX person_id_key ON person(id);
+</pre>
+<p>Viz dokumentace create_sequence v manuálových stránkách. Dále můžete použít
+unikátní hodnotu OID každého řádku. Potom ale musíte spouštět pg_dump
+s přepínačem -o, tak aby zůstaly zachovány hodnoty OID (u příkazu
+copy COPY WITH OIDS).</p>
+
+<h3><a name="4.15.2">4.15.2</a> Jak získat hodnotu SERIAL po vložení řádku?</h3>
+
+<p>Jednou z možností je získat budoucí hodnotu SERIAL funkcí nextval před
+samotným vložením a pak ji vložit explicitně. Například v jakémsi
+pseudojazyku</p>
+<pre>newid = execute("SELECT nextval('person_id_seq')");
+execute("INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal')");
+</pre>
+<p>Můžete pak ještě použít hodnotu newid v dalších dotazech, např. jako
+hodnotu cizího klíče. Název automaticky vytvořené sekvence je
+tabulka_sloupec_seq.</p>
+
+<p>Alternativně můžete získat hodnotu posledně generovou sekvencí funkcí
+currval() po vložení</p>
+<pre>execute("INSERT INTO person (name) VALUES ('Blaise Pascal')");
+new_id = execute("SELECT currval('person_id_seq')");
+</pre>
+<p>Konečně můžete použít OID hodnotu vrácenou příkazem INSERT, ale to je
+pravděpodobně nejméně přenositelné řešení. V Perlu při použití DBI
+modulu Edmunda Mergleho DBD:Pg oid hodnotu získáme
+$sth-&gt;{pg_oid_status} po každém $sth-&gt;execute().</p>
+
+<h3><a name="4.15.3">4.15.3</a> Nepovede currval() a nextval() k rozhození podmínek při souběhu s jinými uživateli?</h3>
+
+<p>Nikoliv, currval() vrací hodnotu naposledy generovanou ve vašem
+backendu, a ta tudíž není společná všem uživatelům.</p>
+
+<h3><a name="4.15.4">4.15.4</a> Proč není vygenerované číslo použito při přerušení
+transakce? Proč vznikají díry v číslování vlastní sekvencí/SERIAL
+sloupce?</h3>
+
+<p>K zajištění efektivnosti souběhu, jsou hodnoty posloupnosti, když se o ně
+požádá, a sekvence není zamčena do ukončení transakce. To způsobuje
+díry v číslování ze zrušených transakcí.</p>
+
+<h3><a name="4.16">4.16</a> Co to je OID? Co je to TID?</h3>
+
+<p>Každý řádek vytvořený v PostgreSQL získá jedinečné OID. Všechna OID
+generovaná během inicializace databáze jsou menší než 16384
+(include/access/transam.h). Všechna OID generovaná na požadavek
+uživatele jsou rovna nebo vyšší této hodnotě. Normálně, všechna OID
+jsou jedinečná nejen uvnitř tabulky nebo databáze, ale v rámci celé
+instalace PostgreSQL</p>
+
+<p>PostgreSQL používá OID ve svém interním systému tabulek k vytvoření
+relací. Tato OID mohou být použita k identifikaci konkrétního
+uživatele a použita v spojení. Pro OID hodnoty je doporučen typ
+OID. Nad tímto sloupcem můžete vytvořit index pro urychlení přístupu.</p>
+
+<p>OID jsou dána všem řádkům z centrální oblasti a jsou použita v každé
+databázi. Pokud potřebujete změnit OID, nebo chcete zkopírovat tabulku
+s původními OID, lze použít</p>
+<pre>CREATE TABLE new_table(old_oid oid, mycol int);
+SELECT old_oid, mycol INTO new FROM old;
+COPY new TO '/tmp/pgtable';
+DELETE FROM new;
+COPY new WITH OIDS FROM '/tmp/pgtable';
+</pre>
+<p>OID jsou uložena jako 4bajtový integer a přetečou po čtyřech
+miliardách. Nebylo hlášeno, že by se tak někdy stalo, přesto ale plánujeme
+odstranit tento limit dřív než se tak stane.</p>
+
+<p>TID se používají i identifikaci fyzických řádků s hodnotou bloku a
+offsetu. TIDs se mění modifikací řádků (používá se jako ukazatel
+indexu fyzického řádku).</p>
+
+<h3><a name="4.17">4.17</a> Jaký je význam některých výrazů použitých v PostgreSQL?</h3>
+
+<p>V některých zdrojových kódech nebo starší dokumentaci se můžete setkat
+s následujícími výrazy, které mají širší význam. Zde je příklad
+nekterých:</p>
+<ul>
+<li>tabulka, relace, třída (table, relation, class)
+</li><li>řádek, záznam, ntice (row, record, tuple)
+</li><li>sloupec, položka, atribut (column, field, attribute)
+</li><li>vyhledání, výběr (retrieve, select)
+</li><li>náhrada, úprava (replace, update)
+</li><li>přidání, vkládání (append, insert)
+</li><li>OID, serial value (OID, serial value)
+</li><li>portal, kurzor (portal, cursor)
+</li><li>range variable, jméno tabulky, alias tabulky (range variable, table name, table alias)
+</li></ul>
+<p>seznam těchto výrazů můžete nalézt na
+<a href="http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glossary.html">http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glossary.html</a>.</p>
+
+<h3><a name="4.18">4.18</a> Proč jsem získal chybové hlášení "ERROR: Memory exhausted in
+AllocSetAlloc()"?</h3>
+
+<p>Pravděpodobně došlo k vyčerpání virtuální paměťi na Vašem systému, nebo
+jádro má nízký limit pro určité zdroje. Vyzkoušejte před startem
+posmatera</p>
+<pre>ulimit -d 262144
+limit datasize 256m
+</pre>
+<p>Záleží na Vašem shellu, zda budou tyto příkazy úspěšné, měly by zvýšit
+limit datového segmentu pro Vaše procesy a umožnit tak dokončení
+dotazu. Tyto příkazy se aplikují na aktuální proces a všechny synovské
+procesy vytvořené po provedení příkazu. Pokud máte problémy s SQL
+klientem protože backend vrací příliš mnoho dat, zkuste zvýšit limity 
+před startem klienta.</p>
+
+<h3><a name="4.19">4.19</a> Jak se dozvím, kterou verzi PostgreSQL používám?</h3>
+
+<p>V psql spusťte</p>
+<pre>SELECT version();
+</pre>
+<h3><a name="4.20">4.20</a> Proč operace s velkými objekty končí "invalid large obj descriptor"?</h3>
+
+<p>Všechny operace s velkými objekty - lo_open, lo_close, ... musíte
+spouštět v transakci, tj. mezi příkazy BEGIN WORK a COMMIT.</p>
+
+<p>PostgreSQL uvolňuje handle velkých objektů při skončení transakce. Pokud
+budete pracovat s velkými objekty mimo transakci, pravděpodobně dostanete
+toto chybové hlášení, protože handle již budou neplatné.</p>
+
+<p>Pokud používáte interface podobné ODBC musíte nastavit set auto_commit off</p>
+
+<h3><a name="4.21">4.21</a> Jak vytvořit sloupec obsahující implicitně aktuální datum?</h3>
+
+<p>Použijte CURRENT_TIMESTAMP</p>
+<pre>CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
+</pre>
+<h3><a name="4.22">4.22</a> Proč jsou moje vnořené dotazy používající IN tak pomalé?</h3>
+
+<p>Aktuálně spojujeme tabulky se sekvenčním skenováním výsledku pro každý
+řádek vnějšího dotazu. Pokud vnořený dotaz má pouze několik řádků a
+vnější dotaz vrací hodně řádek, IN je rychlé. V jiných případech
+nahraďte IN EXISTS:</p>
+<pre>SELECT * FROM tab
+  WHERE col IN (SELECT subcol FROM subtab);
+</pre>
+takto
+<pre>SELECT * FROM tab
+  WHERE EXISTS (SELECT subcol FROM subtab WHERE subcol = col);
+</pre>
+<p>Pro urychlení vytvořete index pro subcol. Tento výkonnostní problém
+byl odstraněn ve verzi 7.4.</p>
+
+<h3><a name="4.23">4.23</a> Jak provést vnější spojení (outer join)?</h3>
+
+<p>PostgreSQL podporuje vnější spojení tabulek standardními SQL
+příkazy. Zde jsou dva příklady:</p>
+<pre>SELECT * FROM t1 LEFT OUTER JOIN t2 ON (t1.col = t2.col);
+</pre>
+nebo
+<pre>SELECT * FROM t1 LEFT OUTER JOIN USING (col);
+</pre>
+<p>Tyto identické dotazy napojí t1.col na t2.col a ještě přidá
+nepřipojené řádky z t1 (které nemají obdoby v t2). Pravé spojení
+(RIGHT JOIN) přidá nepřipojené řádky z t2. FULL JOIN vrátí všechny
+řádky, včetně nepřipojených z tbulek t1 a t2. Klíčové slovo OUTER je
+nepovinné a váže se na LEFT, RIGHT a FULL join. Běžné spojení se
+nazývá INNER JOIN.</p>
+
+<p>V dřívějších verzích se vnější spojení tabulek mohlo simulovat pomocí
+UNION a NOT IN. Například pro spojení tabulek tab1 a tab2, je
+následující dotaz ekvivalentní k vnějšímu spojení dvou tabulek:</p>
+<pre>SELECT tab1.col2, tab2.col2 FROM tab1, tab2
+  WHERE tab1.col1 = tab2.col1
+UNION ALL
+SELECT tab1.col2, NULL FROM tab1
+  WHERE tab1.col1 NOT IN (SELECT tab2.col1 FROM tab2)
+ORDER BY col1;
+</pre>
+<h3><a name="4.24">4.24</a> Jak provést dotaz napříč několika databázemi?</h3>
+
+<p>PostgreSQL nenabízí žádný způsob, jak se dotázat do jiné databáze než
+do aktuální. Doplněk contrib/dblink umožňuje dotaz do cizí databáze
+prostřednictvím funkce. Na straně klienta není problém si otevřít více
+simultálních přístupů do různých databází a spojovat výsledek na
+straně klienta.</p>
+
+<h3><a name="4.25">4.25</a> Může funkce vrátit více řádků nebo sloupců?</h3>
+
+<p>V PostgreSQL 7.3 můžete jednoduše vracet více řádků nebo sloupců z
+funkce, viz:
+<a href="http://techdocs.postgresql.org/guides/SetReturningFunctions">http://techdocs.postgresql.org/guides/SetReturningFunctions</a>.</p> 
+
+<h3><a name="4.26">4.26</a> Proč nelze spolehlivě vytvářet a rušit dočasné tabulky v
+PL/pgSQL funkcích?</h3>
+
+Přeložený kód PL/pgSQL funkce je uložen ve vyrovnávací paměti, tj. funkce 
+je překládána pouze při změně kódu, nikoliv před každým voláním funkce.
+Nechtěným vedlejším efektem je, že volání funkce selže, když se funkce 
+odkazuje na dočasnou tabulku, pokud tato tabulka byla od překladu funkce 
+zrušena (ačkoliv již byla znovu vytvořena a existuje). 
+Jediným řešením problému je přístup k dočasné tabulce pomocí
+EXECUTE, tj. dynamické provádění dotazu. Tento příkaz zajistí opakovaný 
+překlad dotazu při každém volání funkce.<p></p>
+
+<h3><a name="4.27">4.27</a> Jaké jsou možnosti replikace databází?</h3>
+
+<p>Existuje několik dostupných řešení master/slave replikací. Ty povolují
+modifikace master databáze a slave databázím umožňují pouze čtení. Na
+konci  <a href="http://gborg.postgresql.org/genpage?replication_research">http://gborg.PostgreSQL.org/genpage?replication_research</a>
+najdete jejich seznam. Na řešení multi-master replikaci se pracuje na
+<a href="http://gborg.postgresql.org/project/pgreplication/projdisplay.php">http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</a>.</p> 
+
+<h3><a name="4.28">4.28</a> Jaké jsou možnosti šifrování databází?</h3>
+<ul>
+<li><p>contrib/pgcrypto obsahuje šifrovací funkce použitelné v SQL
+dotazech.</p>
+
+</li><li><p>K šifrování přenosu dat z klienta na server, musí být
+server přeložen s podporou ssl a přepínač sslv postgresql.conf musí
+být nastaven na hodnotu true. Klient musí mít vytvořen záznam
+hostssl v pg_hba.conf a také mít povolen režim ssl. Lze použít i jiné
+prostředky, nejen nativní podporu ssl v PostgreSQL, např. stunel a ssh.</p>
+
+</li><li><p>Hesla uživatelů databáze jsou zašifrována počínaje verzí 7.3. Ve
+starších verzích toto chování muselo být vynuceno volbou 
+PASSWORD_ENCRYPTION v postgresql.conf</p>
+
+</li><li><p>Server může běžet na šifrovaném souborovém systému.</p>
+</li></ul>
+<hr>
+<h2>Rozšiřování PostgreSQL</h2>
+
+<h3><a name="5.1">5.1</a> Napsal jsem UDF funkci, PostgreSQL však končí dump core?</h3>
+
+<p>Problém může být způsoben mnoha okolnostmi. Vyzkoušejte si svoji
+funkci nejdříve v nějaké jednoduché aplikaci.</p>
+
+<h3><a name="5.2">5.2</a> Jak mohu přispět nějakými šikovnými datovými typy a funkcemi
+do PostgreSQL?</h3>
+
+<p>Pošlete své rozšíření do konference pgsql-hackers, a ono pak možná
+skončí v podadresáři contrib.</p>
+
+<h3><a name="5.3">5.3</a> Jak napsat funkci v C vracející ntici?</h3>
+
+<p>Funkce vracející tabulky jsou podporované PostgreSQL 7.3 a vyšší pro
+jazyky C, PL/PgSQL a SQL. Více naleznete v The Programmer's
+Guide. Příklady těchto funkcí pro C naleznete v contrib/tablefunc.</p>
+
+<h3><a name="5.4">5.4</a> Modifikoval jsem zdrojové soubory. Tato změna nebyla při
+rekompilaci vzata v potaz. Proč?</h3>
+
+<p>Makefile nemá informace o závislostech mezi hlavičkovými soubory. Musíte
+provést make clean a pak make. Pokud používáte gcc, můžete použít
+přepínač --enable-depend příkazu configure k automatickému řešení
+závislostí překladačem.</p>
+</body></html>
