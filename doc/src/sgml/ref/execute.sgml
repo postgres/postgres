@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/execute.sgml,v 1.11 2004/09/20 00:04:19 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/execute.sgml,v 1.12 2004/09/30 04:23:27 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -16,6 +16,11 @@ PostgreSQL documentation
 
  <indexterm zone="sql-execute">
   <primary>EXECUTE</primary>
+ </indexterm>
+
+ <indexterm zone="sql-execute">
+  <primary>prepared statements</primary>
+  <secondary>executing</secondary>
  </indexterm>
 
  <refsynopsisdiv>

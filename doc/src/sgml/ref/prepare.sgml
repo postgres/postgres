@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/prepare.sgml,v 1.13 2004/09/20 00:04:19 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/prepare.sgml,v 1.14 2004/09/30 04:23:27 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -16,6 +16,11 @@ PostgreSQL documentation
 
  <indexterm zone="sql-prepare">
   <primary>PREPARE</primary>
+ </indexterm>
+
+ <indexterm zone="sql-prepare">
+  <primary>prepared statements</primary>
+  <secondary>creating</secondary>
  </indexterm>
 
  <refsynopsisdiv>
