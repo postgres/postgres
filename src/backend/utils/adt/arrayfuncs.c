@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.103 2004/06/06 00:41:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.104 2004/06/08 20:28:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1836,6 +1836,12 @@ array_set_slice(ArrayType *array,
 			dim[i] = 1 + upperIndx[i] - lowerIndx[i];
 			lb[i] = lowerIndx[i];
 		}
+
+		/* complain if too few source items; we ignore extras, however */
+		if (nelems < ArrayGetNItems(nSubscripts, dim))
+			ereport(ERROR,
+					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+					 errmsg("source array too small")));
 
 		return construct_md_array(dvalues, nSubscripts, dim, lb, elmtype,
 								  elmlen, elmbyval, elmalign);
