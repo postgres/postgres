@@ -1,5 +1,5 @@
-From: Zeugswetter Andreas <ZeugswetterA@wien.spardat.at>
-Tue Mar 27 10:47:31 MSZ 2001
+From: Zeugswetter Andreas <ZeugswetterA@spardat.at>
+Fri Feb  1 17:24:51 NFT 2002
 
 On AIX 4.3.2 PostgreSQL compiled with the native IBM compiler xlc 
 (vac.C 5.0.1) passes all regression tests.
@@ -16,10 +16,10 @@ installed the appropriate C++ include files and use a C++ version that
 supports the string class (e.g. VisualAge C++ filesets vacpp.cmp.batch 5.0
 and vacpp.cmp.include 5.0).
 
-There will probably be warnings about int8 - int64 redefines, 0.0/0.0
-division and duplicate symbol warnings which you can safely ignore.
+There will probably be warnings about 0.0/0.0 division and duplicate symbols 
+which you can safely ignore.
 
-Compiling PostgreSQL with gcc (2.95.2) on AIX also works.
+Compiling PostgreSQL with gcc (2.95.3) on AIX also works.
 Use the configure flags: --with-CC=gcc
 
 Since the mktime() function does not work on AIX for dates before
