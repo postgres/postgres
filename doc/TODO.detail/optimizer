@@ -1059,7 +1059,7 @@ From owner-pgsql-hackers@hub.org Thu Jan 20 18:45:32 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA00672
 	for <pgman@candle.pha.pa.us>; Thu, 20 Jan 2000 19:45:30 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.18 $) with ESMTP id TAA01989 for <pgman@candle.pha.pa.us>; Thu, 20 Jan 2000 19:39:15 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.19 $) with ESMTP id TAA01989 for <pgman@candle.pha.pa.us>; Thu, 20 Jan 2000 19:39:15 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id TAA00957;
 	Thu, 20 Jan 2000 19:35:19 -0500 (EST)
@@ -1918,4 +1918,88 @@ purposes).
 Best Regards,
 Tiago
 PS - again: I'm starting, so, some of my comments can be completly dumb.
+
+From pgsql-hackers-owner+M7514@hub.org Sun Oct 15 20:38:12 2000
+Received: from hub.org (hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA18459
+	for <pgman@candle.pha.pa.us>; Sun, 15 Oct 2000 19:38:12 -0400 (EDT)
+Received: from hub.org.org (localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e9FNaUR59496;
+	Sun, 15 Oct 2000 19:36:30 -0400 (EDT)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [209.114.132.154])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e9FNYuR58276
+	for <pgsql-hackers@postgresql.org>; Sun, 15 Oct 2000 19:34:56 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.0/8.11.0) with ESMTP id e9FNXaB06046;
+	Sun, 15 Oct 2000 19:33:36 -0400 (EDT)
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Jules Bean <jules@jellybean.co.uk>,
+        Alfred Perlstein <bright@wintelcom.net>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Performance on inserts 
+In-reply-to: <200010152320.TAA17944@candle.pha.pa.us> 
+References: <200010152320.TAA17944@candle.pha.pa.us>
+Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
+	message dated "Sun, 15 Oct 2000 19:20:35 -0400"
+Date: Sun, 15 Oct 2000 19:33:36 -0400
+Message-ID: <6043.971652816@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: ORr
+
+Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> However, assume tab2.col2 equals 3.  I assume this would cause an index
+> scan because the executor doesn't know about the most common value,
+> right? Is it worth trying to improve that?
+
+Oh, I see: you are assuming that a nestloop join is being done, and
+wondering if it's worthwhile to switch dynamically between seqscan
+and indexscan for each scan of the inner relation, depending on exactly
+what value is being supplied from the outer relation for that scan.
+Hmm.
+
+Not sure if it's worth the trouble or not.  Nestloop is usually a
+last-resort join strategy anyway, and is unlikely to be picked when the
+tables are large enough to make performance be a big issue.
+
+			regards, tom lane
+
+From tgl@sss.pgh.pa.us Mon Oct 16 01:48:27 2000
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [209.114.132.154])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id AAA01602
+	for <pgman@candle.pha.pa.us>; Mon, 16 Oct 2000 00:48:26 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.1/8.11.1) with ESMTP id e9G4mu521809;
+	Mon, 16 Oct 2000 00:48:56 -0400 (EDT)
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Jules Bean <jules@jellybean.co.uk>,
+        Alfred Perlstein <bright@wintelcom.net>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Performance on inserts 
+In-reply-to: <200010160441.AAA01374@candle.pha.pa.us> 
+References: <200010160441.AAA01374@candle.pha.pa.us>
+Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
+	message dated "Mon, 16 Oct 2000 00:41:49 -0400"
+Date: Mon, 16 Oct 2000 00:48:56 -0400
+Message-ID: <21806.971671736@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: OR
+
+Bruce Momjian <pgman@candle.pha.pa.us> writes:
+>> So an inner indexscan for tab1 is definitely a possible plan.
+
+> Yes, that was my point, that a nested loop could easily be involved if
+> the joined table has a restriction.  Is there a TODO item here?
+
+More like a "to investigate" --- I'm not sold on the idea that a
+dynamic switch in plan types would be a win.  Maybe it would be,
+but...
+
+One thing to think about is that it'd be critically dependent on having
+accurate statistics.  Currently, the planner only places bets on the
+average behavior over a whole join.  If you make a separate bet on each
+scan, then you open up the risk of betting wrong every time, should
+your stats be out-of-date or otherwise misleading.
+
+			regards, tom lane
 
