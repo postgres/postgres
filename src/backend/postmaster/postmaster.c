@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.27 1996/11/27 08:15:36 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.28 1996/12/07 04:38:40 momjian Exp $
  *
  * NOTES
  *
@@ -1108,7 +1108,7 @@ DoExec(StartupInfo *packet, int portFd)
      */
     
     if (DebugLvl > 1) {
-        (void) sprintf(debugbuf, "-d%d", DebugLvl - 1);
+        (void) sprintf(debugbuf, "-d%d", DebugLvl);
         av[ac++] = debugbuf;
     }
     else
