@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.399 2005/01/11 05:14:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.400 2005/01/11 17:55:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2349,8 +2349,13 @@ getTables(int *numTables)
 	 * We include system catalogs, so that we can work if a user table is
 	 * defined to inherit from a system catalog (pretty weird, but...)
 	 *
-	 * We ignore tables that are not type 'r' (ordinary relation) or 'S'
-	 * (sequence) or 'v' (view).
+	 * We ignore tables that are not type 'r' (ordinary relation), 'S'
+	 * (sequence), 'v' (view), or 'c' (composite type).
+	 *
+	 * Composite-type table entries won't be dumped as such, but we have
+	 * to make a DumpableObject for them so that we can track dependencies
+	 * of the composite type (pg_depend entries for columns of the composite
+	 * type link to the pg_class entry not the pg_type entry).
 	 *
 	 * Note: in this phase we should collect only a minimal amount of
 	 * information about each table, basically just enough to decide if it
@@ -2380,10 +2385,11 @@ getTables(int *numTables)
 						"d.classid = c.tableoid and d.objid = c.oid and "
 						  "d.objsubid = 0 and "
 						"d.refclassid = c.tableoid and d.deptype = 'i') "
-						  "where relkind in ('%c', '%c', '%c') "
+						  "where relkind in ('%c', '%c', '%c', '%c') "
 						  "order by c.oid",
 						  RELKIND_SEQUENCE,
-					   RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
+						  RELKIND_RELATION, RELKIND_SEQUENCE,
+						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE);
 	}
 	else if (g_fout->remoteVersion >= 70300)
 	{
@@ -2406,10 +2412,11 @@ getTables(int *numTables)
 						"d.classid = c.tableoid and d.objid = c.oid and "
 						  "d.objsubid = 0 and "
 						"d.refclassid = c.tableoid and d.deptype = 'i') "
-						  "where relkind in ('%c', '%c', '%c') "
+						  "where relkind in ('%c', '%c', '%c', '%c') "
 						  "order by c.oid",
 						  RELKIND_SEQUENCE,
-					   RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
+						  RELKIND_RELATION, RELKIND_SEQUENCE,
+						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE);
 	}
 	else if (g_fout->remoteVersion >= 70200)
 	{
@@ -2545,7 +2552,9 @@ getTables(int *numTables)
 		 * serial columns are never dumpable on their own; we will
 		 * transpose their owning table's dump flag to them below.
 		 */
-		if (OidIsValid(tblinfo[i].owning_tab))
+		if (tblinfo[i].relkind == RELKIND_COMPOSITE_TYPE)
+			tblinfo[i].dump = false;
+		else if (OidIsValid(tblinfo[i].owning_tab))
 			tblinfo[i].dump = false;
 		else
 			selectDumpableTable(&tblinfo[i]);
@@ -7796,7 +7805,19 @@ getDependencies(void)
 			continue;
 		}
 
-		addObjectDependency(dobj, refdobj->dumpId);
+		/*
+		 * Ordinarily, table rowtypes have implicit dependencies on their
+		 * tables.  However, for a composite type the implicit dependency
+		 * goes the other way in pg_depend; which is the right thing for
+		 * DROP but it doesn't produce the dependency ordering we need.
+		 * So in that one case, we reverse the direction of the dependency.
+		 */
+		if (deptype == 'i' &&
+			dobj->objType == DO_TABLE &&
+			refdobj->objType == DO_TYPE)
+			addObjectDependency(refdobj, dobj->dumpId);
+		else					/* normal case */
+			addObjectDependency(dobj, refdobj->dumpId);
 	}
 
 	PQclear(res);
