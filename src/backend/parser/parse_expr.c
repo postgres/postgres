@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.37 1998/12/04 15:34:30 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.38 1998/12/13 23:56:43 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -251,8 +251,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 			{
 
 				/*
-				 * look for a column name or a relation name (the default
-				 * behavior)
+				 * look for a column name or a relation name (the default behavior)
 				 */
 				result = transformIdent(pstate, expr, precedence);
 				break;
@@ -358,13 +357,6 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 						w->expr = (Node *)a;
 					}
 					lfirst(args) = transformExpr(pstate, (Node *) w, precedence);
-
-					if (w->result == NULL)
-					{
-						A_Const *n = makeNode(A_Const);
-						n->val.type = T_Null;
-						w->result = (Node *)n;
-					}
 				}
 
 				if (c->defresult == NULL)
@@ -413,7 +405,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					}
 				}
 
-				/* Convert default clause, if necessary */
+				/* Convert default result clause, if necessary */
 				if (c->casetype != ptype)
 				{
 					if (! c->casetype)
@@ -469,8 +461,13 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					elog(ERROR,"WHEN clause must have a boolean result");
 
 				/* result is NULL for NULLIF() construct - thomas 1998-11-11 */
-				if (w->result != NULL)
-					w->result = transformExpr(pstate, (Node *) w->result, precedence);
+				if (w->result == NULL)
+				{
+					A_Const *n = makeNode(A_Const);
+					n->val.type = T_Null;
+					w->result = (Node *)n;
+				}
+				w->result = transformExpr(pstate, (Node *) w->result, precedence);
 				result = expr;
 				break;
 			}

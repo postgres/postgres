@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.31 1998/12/04 15:34:30 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.32 1998/12/13 23:56:44 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@
 
 
 static List *ExpandAllTables(ParseState *pstate);
-static char *FigureColname(Node *expr, Node *resval);
+char *FigureColname(Node *expr, Node *resval);
 
 static Node *SizeTargetExpr(ParseState *pstate,
 			   Node *expr,
@@ -867,7 +867,7 @@ ExpandAllTables(ParseState *pstate)
  *	  list, we have to guess.
  *
  */
-static char *
+char *
 FigureColname(Node *expr, Node *resval)
 {
 	switch (nodeTag(expr))
@@ -879,6 +879,15 @@ FigureColname(Node *expr, Node *resval)
 			{
 				if (nodeTag(resval) == T_FuncCall)
 					return ((FuncCall *) resval)->funcname;
+			}
+			break;
+		case T_CaseExpr:
+			{
+				char *name;
+				name = FigureColname(((CaseExpr *) expr)->defresult, resval);
+				if (!strcmp(name, "?column?"))
+					name = "case";
+				return name;
 			}
 			break;
 		default:
