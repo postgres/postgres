@@ -1101,3 +1101,703 @@ Let us cross over the river, and rest under the shade of the trees.
 ---------------------------(end of broadcast)---------------------------
 TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
 
+From pgsql-jdbc-owner+M2545@postgresql.org Tue Dec  4 12:49:03 2001
+Return-path: <pgsql-jdbc-owner+M2545@postgresql.org>
+Received: from west.navpoint.com (west.navpoint.com [207.106.42.13])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fB4Hn1r09487
+	for <pgman@candle.pha.pa.us>; Tue, 4 Dec 2001 12:49:01 -0500 (EST)
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by west.navpoint.com (8.11.6/8.10.1) with ESMTP id fB4HmxY25870
+	for <pgman@candle.pha.pa.us>; Tue, 4 Dec 2001 12:48:59 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fB4HiLN75867;
+	Tue, 4 Dec 2001 11:44:21 -0600 (CST)
+	(envelope-from pgsql-jdbc-owner+M2545@postgresql.org)
+Received: from barry.xythos.com ([64.139.0.223])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fB4H9bm94568;
+	Tue, 4 Dec 2001 12:09:38 -0500 (EST)
+	(envelope-from barry@xythos.com)
+Received: from xythos.com (localhost.localdomain [127.0.0.1])
+	by barry.xythos.com (8.11.6/8.11.6) with ESMTP id fB4Gior02314;
+	Tue, 4 Dec 2001 08:44:50 -0800
+Message-ID: <3C0CFD82.1030600@xythos.com>
+Date: Tue, 04 Dec 2001 08:44:50 -0800
+From: Barry Lind <barry@xythos.com>
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:0.9.6) Gecko/20011120
+X-Accept-Language: en-us
+MIME-Version: 1.0
+To: Laszlo Hornyak <hornyakl@freemail.hu>
+cc: pgsql-general@postgresql.org, pgsql-jdbc@postgresql.org
+Subject: Re: [JDBC] [GENERAL] java stored procedures
+References: <3C074DE4.9040905@freemail.hu> <3C0BE325.3020809@xythos.com> <3C0C937E.9000405@freemail.hu>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-jdbc-owner@postgresql.org
+Status: OR
+
+Laszlo,
+
+I think it would help a lot if you could take a little time to write 
+down what your planned architecture for a pljava would be.  It then 
+becomes much easier for myself and probably others reading these lists 
+to make suggestions on ways to improve what you are planning (or 
+possible problems with your strategy).  Without knowing what exactly you 
+are thinking of doing it is difficult to comment.
+
+But let me try throwing out a few thoughts about how I think this should 
+be done.
+
+First question is how will the jvm be run?  Since postgres is a 
+multiprocess implementation (i.e. each connection has a separate process 
+on the server) and since java is a multithreaded implementation (i.e. 
+one process supporting multiple threads), what should the pljava 
+implementation look like?  I think there should be a single jvm process 
+for the entire db server that each postgresql process connects to 
+through sockets/rmi.  It will be too expensive to create a new jvm 
+process for each postgresql connection (expensive in both terms of 
+memory and cpu, since the startup time for the jvm is significant and it 
+requires a lot of memory).
+
+Having one jvm that all the postgres backend processes communicate with 
+makes the whole feature much more complicated, but is necessary in my 
+opinion.
+
+Then the question becomes how does the jvm process interact with the 
+database since they are two different processes.  You will need some 
+sort of interprocess communication between the two to execute sql 
+statements.  This could be accomplished by using the existing jdbc 
+driver.  But the bigest problem here is getting the transaction 
+semantics right.  How does a sql statement being run by a java stored 
+procedure get access to the same connection/transaction as the original 
+client?  What you don't want happening is that sql issued in a stored 
+java procedure executes in a different transaction as the caller, what 
+would rollback of the stored function call mean in that case?
+
+I am very interested in hearing what your plans are for pl/java.  I 
+think this is a very difficult project, but one that would be very 
+useful and welcome.
+
+thanks,
+--Barry
+
+
+
+
+Laszlo Hornyak wrote:
+
+> Hi!
+> 
+> I am such a lame in the licensing area. As much as I know, BSD license 
+> is more free than GPL. I think it is too early to think about licensing, 
+> but it`s ok, you won :), when it will be ready(or it will seem to get 
+> closer to a working thing, currently it looks more like a interresting 
+> test), I will ask you if you want to distribute it with Postgres, and if 
+> you say yes, the license will be the same as Postgresql`s license. 
+> Anyway is this neccessary when it is the part of the distribution?
+> Is this ok for you?
+> 
+> thanks,
+> Laszlo Hornyak
+> 
+> ps: still waiting for your ideas, suggestions, etc :) I am not memeber 
+> of the mailing list, please write me dirrectly!
+> 
+> Barry Lind wrote:
+> 
+>> Laszlo,
+>>
+>> In my mind it would be more useful if this code was under the same 
+>> license as the rest of postgresql.  That way it could become part of 
+>> the product as opposed to always being a separate component.  (Just 
+>> like plpgsql, pltcl and the other procedural languages).
+>>
+>> thanks,
+>> --Barry
+>>
+>>
+> 
+> 
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-jdbc-owner+M2555@postgresql.org Thu Dec  6 10:16:31 2001
+Return-path: <pgsql-jdbc-owner+M2555@postgresql.org>
+Received: from west.navpoint.com (west.navpoint.com [207.106.42.13])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fB6FGUZ29382
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 10:16:30 -0500 (EST)
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by west.navpoint.com (8.11.6/8.10.1) with ESMTP id fB6FGTE25863
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 10:16:29 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fB6F9lN55201;
+	Thu, 6 Dec 2001 09:09:48 -0600 (CST)
+	(envelope-from pgsql-jdbc-owner+M2555@postgresql.org)
+Received: from tiger.tigrasoft (fw.tigrasoft.hu [195.70.42.161])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fB4JB2m99252;
+	Tue, 4 Dec 2001 14:11:03 -0500 (EST)
+	(envelope-from hornyakl@freemail.hu)
+Received: from freemail.hu ([192.168.0.200])
+	by tiger.tigrasoft (8.9.3/8.9.3/Debian 8.9.3-21) with ESMTP id UAA07040;
+	Tue, 4 Dec 2001 20:10:17 +0100
+X-Authentication-Warning: tiger.tigrasoft: Host [192.168.0.200] claimed to be freemail.hu
+Message-ID: <3C0D219C.1090804@freemail.hu>
+Date: Tue, 04 Dec 2001 20:18:52 +0100
+From: Laszlo Hornyak <hornyakl@freemail.hu>
+Reply-To: hornyakl@users.sourceforge.net
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:0.9.4) Gecko/20010913
+X-Accept-Language: hu, en-us
+MIME-Version: 1.0
+To: Barry Lind <barry@xythos.com>
+cc: pgsql-general@postgresql.org, pgsql-jdbc@postgresql.org
+Subject: Re: [JDBC] [GENERAL] java stored procedures
+References: <3C074DE4.9040905@freemail.hu> <3C0BE325.3020809@xythos.com> <3C0C937E.9000405@freemail.hu> <3C0CFD82.1030600@xythos.com>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-jdbc-owner@postgresql.org
+Status: OR
+
+Hi!
+
+Barry Lind wrote:
+
+> Laszlo,
+>
+> I think it would help a lot if you could take a little time to write 
+> down what your planned architecture for a pljava would be.  It then 
+> becomes much easier for myself and probably others reading these lists 
+> to make suggestions on ways to improve what you are planning (or 
+> possible problems with your strategy).  Without knowing what exactly 
+> you are thinking of doing it is difficult to comment. 
+
+>
+>
+> But let me try throwing out a few thoughts about how I think this 
+> should be done.
+>
+> First question is how will the jvm be run?  Since postgres is a 
+> multiprocess implementation (i.e. each connection has a separate 
+> process on the server) and since java is a multithreaded 
+> implementation (i.e. one process supporting multiple threads), what 
+> should the pljava implementation look like?  I think there should be a 
+> single jvm process for the entire db server that each postgresql 
+> process connects to through sockets/rmi.  It will be too expensive to 
+> create a new jvm process for each postgresql connection (expensive in 
+> both terms of memory and cpu, since the startup time for the jvm is 
+> significant and it requires a lot of memory). 
+
+I absolutely agree. OK, it`s done.
+
+So, a late-night-brainstorming here:
+What I would like to see in PL/JAVA is the object oriented features, 
+that makes postgresql nice. Creating a new table creates a new class in 
+the java side too. Instantiating an object of the newly created class 
+inserts a row into the table. In postgresql tables can be inherited, and 
+this could be easyly done by pl/java too. I think this would look nice.
+But this is not the main feature. Why I would like to see a nice java 
+procedural language inside postgres is java`s advanced communication 
+features (I mean CORBA, jdbc, other protocols). This is the sugar in the 
+caffe.
+
+I am very far from features like this.
+PL/JAVA now:
+-there is a separate process running java (kaffe). this process creates 
+a sys v message queue, that holds requests. almost forgot, a shared 
+memory segment too. I didn`t find better way to tell postgres the 
+informations about the java process.
+-the java request_handler function on the server side attaches to the 
+shared memory, reads the key of the message queue., attaches to it, 
+sends the data of the function, and a signal for the pl/java. after, it 
+is waiting for a signal from the java thread.
+-when java thread receives the signal, it reads the message(s) from the 
+queue, and starts some actions. When done it tells postgres with a 
+signal that it is ready, and it can come for its results. This will be 
+rewritten see below problems.
+-And postgres is runing, while java is waiting for postgres to say 
+something.
+
+Threading on the java process side is not done yet, ok, it is not that 
+hard, I will write it, if it will be realy neccessary.
+
+The problems, for now:
+I had a very simple system, that passed a very limited scale of argument 
+types, with a very limited quantity of parameters (int, varchar, bool). 
+Postgres has limits for the argument count too, but not for types. It 
+had too much limits, so I am working (or to tell the truth now only 
+thinking) on a new type handling that fits the felxibility of 
+Postgresql`s type flexibility. For this I will have to learn a lot about 
+Postgres`s type system. This will be my program this weekend. :)
+
+thanks,
+Laszlo Hornyak
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-jdbc-owner+M2549@postgresql.org Tue Dec  4 22:34:48 2001
+Return-path: <pgsql-jdbc-owner+M2549@postgresql.org>
+Received: from west.navpoint.com (west.navpoint.com [207.106.42.13])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fB53Ykr17433
+	for <pgman@candle.pha.pa.us>; Tue, 4 Dec 2001 22:34:47 -0500 (EST)
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by west.navpoint.com (8.11.6/8.10.1) with ESMTP id fB53YkY26794
+	for <pgman@candle.pha.pa.us>; Tue, 4 Dec 2001 22:34:46 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fB53UcN93073;
+	Tue, 4 Dec 2001 21:30:38 -0600 (CST)
+	(envelope-from pgsql-jdbc-owner+M2549@postgresql.org)
+Received: from barry.xythos.com (h-64-105-36-191.SNVACAID.covad.net [64.105.36.191])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fB53Obm35215;
+	Tue, 4 Dec 2001 22:24:37 -0500 (EST)
+	(envelope-from barry@xythos.com)
+Received: from xythos.com (localhost.localdomain [127.0.0.1])
+	by barry.xythos.com (8.11.6/8.11.6) with ESMTP id fB51YLJ03883;
+	Tue, 4 Dec 2001 17:34:21 -0800
+Message-ID: <3C0D799D.4010808@xythos.com>
+Date: Tue, 04 Dec 2001 17:34:21 -0800
+From: Barry Lind <barry@xythos.com>
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:0.9.6) Gecko/20011120
+X-Accept-Language: en-us
+MIME-Version: 1.0
+To: hornyakl@users.sourceforge.net
+cc: pgsql-general@postgresql.org, pgsql-jdbc@postgresql.org
+Subject: Re: [JDBC] [GENERAL] java stored procedures
+References: <3C074DE4.9040905@freemail.hu> <3C0BE325.3020809@xythos.com> <3C0C937E.9000405@freemail.hu> <3C0CFD82.1030600@xythos.com> <3C0D219C.1090804@freemail.hu>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-jdbc-owner@postgresql.org
+Status: OR
+
+Laszlo,
+
+
+> I am very far from features like this.
+> PL/JAVA now:
+> -there is a separate process running java (kaffe). this process creates 
+> a sys v message queue, that holds requests. almost forgot, a shared 
+> memory segment too. I didn`t find better way to tell postgres the 
+> informations about the java process.
+
+
+Does the mechanism you are planning support running any JVM?  In my 
+opionion Kaffe isn't good enough to be widely useful.  I think you 
+should be able to plugin whatever jvm is best on your platform, which 
+will likely be either the Sun or IBM JVMs.
+
+Also, can you explain this a little bit more.  How does the jvm process 
+get started? (I would hope that the postgresql server processes would 
+start it when needed, as opposed to requiring that it be started 
+separately.)  How does the jvm access these shared memory structures? 
+Since there aren't any methods in the java API to do such things that I 
+am aware of.
+
+> -the java request_handler function on the server side attaches to the 
+> shared memory, reads the key of the message queue., attaches to it, 
+> sends the data of the function, and a signal for the pl/java. after, it 
+> is waiting for a signal from the java thread.
+
+
+I don't understand how you do this in java?  I must not be understanding 
+  something correctly here.
+
+> -when java thread receives the signal, it reads the message(s) from the 
+> queue, and starts some actions. When done it tells postgres with a 
+> signal that it is ready, and it can come for its results. This will be 
+> rewritten see below problems.
+
+
+Are signals the best way to accomplish this?
+
+> -And postgres is runing, while java is waiting for postgres to say 
+> something.
+
+
+But in reality if the postgres process is executing a stored function it 
+needs to wait for the result of that function call before continuing 
+doesn't it?
+
+> 
+> Threading on the java process side is not done yet, ok, it is not that 
+> hard, I will write it, if it will be realy neccessary.
+
+
+Agreed, this is important.
+
+> 
+> The problems, for now:
+> I had a very simple system, that passed a very limited scale of argument 
+> types, with a very limited quantity of parameters (int, varchar, bool). 
+> Postgres has limits for the argument count too, but not for types. It 
+> had too much limits, so I am working (or to tell the truth now only 
+> thinking) on a new type handling that fits the felxibility of 
+> Postgresql`s type flexibility. For this I will have to learn a lot about 
+> Postgres`s type system. This will be my program this weekend. :)
+
+
+Shouldn't this code use all or most of the logic found in the FE/BE 
+protocol?  Why invent and code another mechanism to transfer data when 
+one already exists.  (I will admit that the current FE/BE mechanism 
+isn't the ideal choice, but it seems easier to reuse what exists for now 
+and improve on it later).
+
+
+> 
+> thanks,
+> Laszlo Hornyak
+> 
+
+You didn't mention how you plan to deal with the transaction symantics. 
+  So what happens when the pl/java function calls through jdbc back to 
+the server to insert some data?  That should happen in the same 
+transaction as the caller correct?
+
+thanks,
+--Barry
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-jdbc-owner+M2559@postgresql.org Thu Dec  6 10:18:55 2001
+Return-path: <pgsql-jdbc-owner+M2559@postgresql.org>
+Received: from west.navpoint.com (west.navpoint.com [207.106.42.13])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fB6FIrZ29672
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 10:18:54 -0500 (EST)
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by west.navpoint.com (8.11.6/8.10.1) with ESMTP id fB6FIrE26972
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 10:18:53 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fB6F9nN55205;
+	Thu, 6 Dec 2001 09:09:49 -0600 (CST)
+	(envelope-from pgsql-jdbc-owner+M2559@postgresql.org)
+Received: from tiger.tigrasoft (fw.tigrasoft.hu [195.70.42.161])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fB58wVm49422;
+	Wed, 5 Dec 2001 03:58:31 -0500 (EST)
+	(envelope-from hornyakl@freemail.hu)
+Received: from freemail.hu ([192.168.0.200])
+	by tiger.tigrasoft (8.9.3/8.9.3/Debian 8.9.3-21) with ESMTP id JAA12365;
+	Wed, 5 Dec 2001 09:57:35 +0100
+X-Authentication-Warning: tiger.tigrasoft: Host [192.168.0.200] claimed to be freemail.hu
+Message-ID: <3C0DE382.1050400@freemail.hu>
+Date: Wed, 05 Dec 2001 10:06:10 +0100
+From: Laszlo Hornyak <hornyakl@freemail.hu>
+Reply-To: hornyakl@users.sourceforge.net
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:0.9.4) Gecko/20010913
+X-Accept-Language: hu, en-us
+MIME-Version: 1.0
+To: Barry Lind <barry@xythos.com>
+cc: hornyakl@users.sourceforge.net, pgsql-general@postgresql.org,
+   pgsql-jdbc@postgresql.org
+Subject: Re: [JDBC] [GENERAL] java stored procedures
+References: <3C074DE4.9040905@freemail.hu> <3C0BE325.3020809@xythos.com> <3C0C937E.9000405@freemail.hu> <3C0CFD82.1030600@xythos.com> <3C0D219C.1090804@freemail.hu> <3C0D799D.4010808@xythos.com>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-jdbc-owner@postgresql.org
+Status: OR
+
+Hi!
+
+Barry Lind wrote:
+
+> Does the mechanism you are planning support running any JVM?  In my 
+> opionion Kaffe isn't good enough to be widely useful.  I think you 
+> should be able to plugin whatever jvm is best on your platform, which 
+> will likely be either the Sun or IBM JVMs.
+
+Ok, I also had problems with caffe, but it may work. I like it becouse 
+it is small (the source is about 6M). As much as I know Java VM`s has a 
+somewhat standard native interface called JNI. I use this to start the 
+VM, and communicate with it. If you think I should change I will do it, 
+but it may take a long time to get the new VM. For then I have to run kaffe.
+
+> Also, can you explain this a little bit more.  How does the jvm 
+> process get started? (I would hope that the postgresql server 
+> processes would start it when needed, as opposed to requiring that it 
+> be started separately.)  How does the jvm access these shared memory 
+> structures? Since there aren't any methods in the java API to do such 
+> things that I am aware of.
+
+JVM does not. 'the java process' does with simple posix calls. I use 
+debian potatoe, on any other posix system it should work, on any other 
+somewhat posix compatible system it may work, I am not sure...
+
+>
+> I don't understand how you do this in java?  I must not be 
+> understanding  something correctly here.
+
+My failure.
+The 'java request_handler' is not a java function, it is the C 
+call_handler in the Postgres side, that is started when a function of 
+language 'pljava' is called.
+I made some failure in my previous mail. At home I named the pl/java 
+language pl/pizza (something that is not caffe, but well known enough 
+:). The application has two running binaries:
+-pizza (which was called 'java process' last time) This is a small C 
+program that uses JNI to start VM and call java methods.
+-plpizza.so the shared object that contains the call_handler function.
+
+
+>
+>
+>> -when java thread receives the signal, it reads the message(s) from 
+>> the queue, and starts some actions. When done it tells postgres with 
+>> a signal that it is ready, and it can come for its results. This will 
+>> be rewritten see below problems.
+>
+>
+>
+> Are signals the best way to accomplish this? 
+
+I don`t know if it is the best, it is the only way I know :)
+Do you know any other ways?
+
+>
+>
+>> -And postgres is runing, while java is waiting for postgres to say 
+>> something.
+>
+> But in reality if the postgres process is executing a stored function 
+> it needs to wait for the result of that function call before 
+> continuing doesn't it? 
+
+Surely, this is done. How could Postgres tell the result anyway ? :)
+
+>
+>>
+>> Threading on the java process side is not done yet, ok, it is not 
+>> that hard, I will write it, if it will be realy neccessary.
+>
+> Agreed, this is important.
+>
+> Shouldn't this code use all or most of the logic found in the FE/BE 
+> protocol?  Why invent and code another mechanism to transfer data when 
+> one already exists.  (I will admit that the current FE/BE mechanism 
+> isn't the ideal choice, but it seems easier to reuse what exists for 
+> now and improve on it later). 
+
+Well, I am relatively new to Postgres, and I don`t know these protocols. 
+In the weekend I will start to learn it, and in Sunday or Monday I maybe 
+I will understand it, if not, next weekend..
+
+>
+> You didn't mention how you plan to deal with the transaction 
+> symantics.  So what happens when the pl/java function calls through 
+> jdbc back to the server to insert some data?  That should happen in 
+> the same transaction as the caller correct? 
+
+I don`t think this will be a problem, I have ideas for this. Idea mean: 
+I know how I will start it, it may be good, or it may be fataly stupid 
+idea, it will turn out when I tried it. Simply: The same way plpizza 
+tells pizza the request, pizza can talk back to plpizza. This is planed 
+to work with similar mechanism I described last time (shm+signals).
+
+Monday I will try to send a little pieces of code to make thing clear, ok?
+
+thanks,
+Laszlo Hornyak
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-jdbc-owner+M2567@postgresql.org Thu Dec  6 12:05:50 2001
+Return-path: <pgsql-jdbc-owner+M2567@postgresql.org>
+Received: from west.navpoint.com (west.navpoint.com [207.106.42.13])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fB6H5nZ07357
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 12:05:49 -0500 (EST)
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by west.navpoint.com (8.11.6/8.10.1) with ESMTP id fB6H5ma17427
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 12:05:48 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fB6H1DN59312;
+	Thu, 6 Dec 2001 11:01:13 -0600 (CST)
+	(envelope-from pgsql-jdbc-owner+M2567@postgresql.org)
+Received: from barry.xythos.com (h-64-105-36-191.SNVACAID.covad.net [64.105.36.191])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fB6Gtsm73872;
+	Thu, 6 Dec 2001 11:55:55 -0500 (EST)
+	(envelope-from barry@xythos.com)
+Received: from xythos.com (localhost.localdomain [127.0.0.1])
+	by barry.xythos.com (8.11.6/8.11.6) with ESMTP id fB5HWJ902835;
+	Wed, 5 Dec 2001 09:32:19 -0800
+Message-ID: <3C0E5A23.7060701@xythos.com>
+Date: Wed, 05 Dec 2001 09:32:19 -0800
+From: Barry Lind <barry@xythos.com>
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:0.9.6) Gecko/20011120
+X-Accept-Language: en-us
+MIME-Version: 1.0
+To: hornyakl@users.sourceforge.net
+cc: pgsql-hackers@postgresql.org, pgsql-jdbc@postgresql.org
+Subject: Re: [JDBC] [GENERAL] java stored procedures
+References: <3C074DE4.9040905@freemail.hu> <3C0BE325.3020809@xythos.com> <3C0C937E.9000405@freemail.hu> <3C0CFD82.1030600@xythos.com> <3C0D219C.1090804@freemail.hu> <3C0D799D.4010808@xythos.com> <3C0DE382.1050400@freemail.hu>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-jdbc-owner@postgresql.org
+Status: OR
+
+Laszlo,
+
+I have cc'ed the hackers mail list since that group of developers is 
+probably better able than I to make suggestions on the best interprocess 
+communication mechanism to use for this.  See 
+http://archives2.us.postgresql.org/pgsql-general/2001-12/msg00092.php 
+for background on this thread.
+
+I also stopped cc'ing the general list, since this is getting too 
+detailed for most of the members on that list.
+
+Now to your mail:
+
+Laszlo Hornyak wrote:
+
+> Hi!
+> 
+> Barry Lind wrote:
+> 
+>> Does the mechanism you are planning support running any JVM?  In my 
+>> opionion Kaffe isn't good enough to be widely useful.  I think you 
+>> should be able to plugin whatever jvm is best on your platform, which 
+>> will likely be either the Sun or IBM JVMs.
+> 
+> 
+> Ok, I also had problems with caffe, but it may work. I like it becouse 
+> it is small (the source is about 6M). As much as I know Java VM`s has a 
+> somewhat standard native interface called JNI. I use this to start the 
+> VM, and communicate with it. If you think I should change I will do it, 
+> but it may take a long time to get the new VM. For then I have to run 
+> kaffe.
+> 
+
+
+This seems like a reasonable approach and should work across different 
+JVMs.  It would probably be a good experiment to try this with the Sun 
+or IBM jvm at some point to verify.  What I was afraid of was that you 
+were hacking the Kaffe code to perform the integration which would limit 
+this solution to only using Kaffe.
+
+
+>> Also, can you explain this a little bit more.  How does the jvm 
+>> process get started? (I would hope that the postgresql server 
+>> processes would start it when needed, as opposed to requiring that it 
+>> be started separately.)  How does the jvm access these shared memory 
+>> structures? Since there aren't any methods in the java API to do such 
+>> things that I am aware of.
+> 
+> 
+> JVM does not. 'the java process' does with simple posix calls. I use 
+> debian potatoe, on any other posix system it should work, on any other 
+> somewhat posix compatible system it may work, I am not sure...
+> 
+>>
+>> I don't understand how you do this in java?  I must not be 
+>> understanding  something correctly here.
+> 
+> 
+> My failure.
+> The 'java request_handler' is not a java function, it is the C 
+> call_handler in the Postgres side, that is started when a function of 
+> language 'pljava' is called.
+> I made some failure in my previous mail. At home I named the pl/java 
+> language pl/pizza (something that is not caffe, but well known enough 
+> :). The application has two running binaries:
+> -pizza (which was called 'java process' last time) This is a small C 
+> program that uses JNI to start VM and call java methods.
+> -plpizza.so the shared object that contains the call_handler function.
+> 
+
+
+Just a suggestion:  PL/J might be a good name, since as you probably 
+know it can't be called pl/java because of the trademark restrictions on 
+the word 'java'.
+
+I am a little concerned about the stability and complexity of having 
+this '-pizza' program be responsible for handling the calls on the java 
+side.  My concern is that this will need to be a multithreaded program 
+since multiple backends will concurrently be needing to interact with 
+multiple java threads through this one program.  It might be simpler if 
+each postgres process directly communicated to a java thread via a tcpip 
+socket.  Then the "-pizza" program would only need to be responsible for 
+starting up the jvm and creating java threads and sockets for a postgres 
+process (it would perform a similar role to postmaster for postgres 
+client connections).
+
+
+> 
+>>
+>>
+>>> -when java thread receives the signal, it reads the message(s) from 
+>>> the queue, and starts some actions. When done it tells postgres with 
+>>> a signal that it is ready, and it can come for its results. This will 
+>>> be rewritten see below problems.
+>>
+>>
+>>
+>>
+>> Are signals the best way to accomplish this? 
+> 
+> 
+> I don`t know if it is the best, it is the only way I know :)
+> Do you know any other ways?
+> 
+
+
+I don't know, but hopefully someone on the hackers list will chip in 
+here with a comment.
+
+
+>>
+>>>
+>>> Threading on the java process side is not done yet, ok, it is not 
+>>> that hard, I will write it, if it will be realy neccessary.
+>>
+>>
+>> Agreed, this is important.
+>>
+>> Shouldn't this code use all or most of the logic found in the FE/BE 
+>> protocol?  Why invent and code another mechanism to transfer data when 
+>> one already exists.  (I will admit that the current FE/BE mechanism 
+>> isn't the ideal choice, but it seems easier to reuse what exists for 
+>> now and improve on it later). 
+> 
+> 
+> Well, I am relatively new to Postgres, and I don`t know these protocols. 
+> In the weekend I will start to learn it, and in Sunday or Monday I maybe 
+> I will understand it, if not, next weekend..
+> 
+>>
+>> You didn't mention how you plan to deal with the transaction 
+>> symantics.  So what happens when the pl/java function calls through 
+>> jdbc back to the server to insert some data?  That should happen in 
+>> the same transaction as the caller correct? 
+> 
+> 
+> I don`t think this will be a problem, I have ideas for this. Idea mean: 
+> I know how I will start it, it may be good, or it may be fataly stupid 
+> idea, it will turn out when I tried it. Simply: The same way plpizza 
+> tells pizza the request, pizza can talk back to plpizza. This is planed 
+> to work with similar mechanism I described last time (shm+signals).
+> 
+
+
+OK, so the same backend process that called the function gets messaged 
+to process the sql.  This should work.  However it means you will need a 
+special version of the jdbc driver that uses this shm+signals 
+communication mechanism instead of what the current jdbc driver does. 
+This is something I would be happy to help you with.
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
