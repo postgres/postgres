@@ -516,214 +516,226 @@ This is set at compile time and may change in a future release.
 
 </sect1>
 
-<sect1>
-<title>Date/Time Types</title>
+  <sect1>
+   <title>Date/Time Types</title>
 
-<para>
-There are two fundamental kinds of date and time measurements:
- absolute clock times and relative time intervals.
-Both kinds of quantities should have behaviors demonstrating both
-continuity and smoothness.
-<productname>Postgres</productname> supplies two primary user-oriented 
-date and time types,
-<type>datetime</type> and <type>timespan</type>, as well as 
-the related <acronym>SQL92</acronym> types <type>timestamp</type>,
-<type>interval</type>,
-<type>date</type> and <type>time</type>.
-</para>
+   <para>
+    There are two fundamental kinds of date and time measurements
+    provided by <productname>Postgres</productname>:
+    absolute clock times and relative time intervals.
+    Both kinds of time measurements should demonstrate both
+    continuity and smoothness.
+   </para>
 
-<para>
-In a future release, <type>datetime</type> and <type>timespan</type> are likely
-to merge with the <acronym>SQL92</acronym> types <type>timestamp</type>,
-<type>interval</type>.
-Other date and time types are also available, mostly
-for historical reasons.
-</para>
+   <para>
+    <productname>Postgres</productname> supplies two primary user-oriented 
+    date and time types,
+    <type>datetime</type> and <type>timespan</type>, as well as 
+    the related <acronym>SQL92</acronym> types <type>timestamp</type>,
+    <type>interval</type>,
+    <type>date</type> and <type>time</type>.
+   </para>
 
-<para>
-<table tocentry="1">
-<title><productname>Postgres</productname> Date/Time Types</title>
-<titleabbrev>Date/Time</titleabbrev>
-<tgroup cols="4">
-<thead>
-  <row>
-    <entry>Date/Time Type</entry>
-    <entry>Storage</entry>
-    <entry>Recommendation</entry>
-    <entry>Description</entry>
-  </row>
-</thead>
-<tbody>
-  <row>
-    <entry>abstime</entry>
-    <entry>4 bytes</entry>
-    <entry>original date and time</entry>
-    <entry>limited range</entry>
-  </row>
-  <row>
-    <entry>date</entry>
-    <entry>4 bytes</entry>
-    <entry><acronym>SQL92</acronym> type</entry>
-    <entry>wide range</entry>
-  </row>
-  <row>
-    <entry>datetime</entry>
-    <entry>8 bytes</entry>
-    <entry>best general date and time</entry>
-    <entry>wide range, high precision</entry>
-  </row>
-  <row>
-    <entry>interval</entry>
-    <entry>12 bytes</entry>
-    <entry><acronym>SQL92</acronym> type</entry>
-    <entry>equivalent to timespan</entry>
-  </row>
-  <row>
-    <entry>reltime</entry>
-    <entry>4 bytes</entry>
-    <entry>original time interval</entry>
-    <entry>limited range, low precision</entry>
-  </row>
-  <row>
-    <entry>time</entry>
-    <entry>4 bytes</entry>
-    <entry><acronym>SQL92</acronym> type</entry>
-    <entry>wide range</entry>
-  </row>
-  <row>
-    <entry>timespan</entry>
-    <entry>12 bytes</entry>
-    <entry>best general time interval</entry>
-    <entry>wide range, high precision</entry>
-  </row>
-  <row>
-    <entry>timestamp</entry>
-    <entry>4 bytes</entry>
-    <entry><acronym>SQL92</acronym> type</entry>
-    <entry>limited range</entry>
-  </row>
-</tbody>
-</tgroup>
-</table>
+   <para>
+    In a future release, <type>datetime</type> and <type>timespan</type> are likely
+    to merge with the <acronym>SQL92</acronym> types <type>timestamp</type>,
+    <type>interval</type>.
+    Other date and time types are also available, mostly
+    for historical reasons.
+   </para>
 
-<type>timestamp</type> is currently implemented separately from
-<type>datetime</type>, although they share input and output routines.
-</para>
+   <para>
+    <table tocentry="1">
+     <title><productname>Postgres</productname> Date/Time Types</title>
+     <titleabbrev>Date/Time</titleabbrev>
+     <tgroup cols="4">
+      <thead>
+       <row>
+	<entry>Date/Time Type</entry>
+	<entry>Storage</entry>
+	<entry>Recommendation</entry>
+	<entry>Description</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry>abstime</entry>
+	<entry>4 bytes</entry>
+	<entry>original date and time</entry>
+	<entry>limited range</entry>
+       </row>
+       <row>
+	<entry>date</entry>
+	<entry>4 bytes</entry>
+	<entry><acronym>SQL92</acronym> type</entry>
+	<entry>wide range</entry>
+       </row>
+       <row>
+	<entry>datetime</entry>
+	<entry>8 bytes</entry>
+	<entry>best general date and time</entry>
+	<entry>wide range, high precision</entry>
+       </row>
+       <row>
+	<entry>interval</entry>
+	<entry>12 bytes</entry>
+	<entry><acronym>SQL92</acronym> type</entry>
+	<entry>equivalent to timespan</entry>
+       </row>
+       <row>
+	<entry>reltime</entry>
+	<entry>4 bytes</entry>
+	<entry>original time interval</entry>
+	<entry>limited range, low precision</entry>
+       </row>
+       <row>
+	<entry>time</entry>
+	<entry>4 bytes</entry>
+	<entry><acronym>SQL92</acronym> type</entry>
+	<entry>wide range</entry>
+       </row>
+       <row>
+	<entry>timespan</entry>
+	<entry>12 bytes</entry>
+	<entry>best general time interval</entry>
+	<entry>wide range, high precision</entry>
+       </row>
+       <row>
+	<entry>timestamp</entry>
+	<entry>4 bytes</entry>
+	<entry><acronym>SQL92</acronym> type</entry>
+	<entry>limited range</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
 
-<para>
-<table tocentry="1">
-<title><productname>Postgres</productname> Date/Time Ranges</title>
-<titleabbrev>Ranges</titleabbrev>
-<tgroup cols="4">
-<thead>
-  <row>
-    <entry>Date/Time Type</entry>
-    <entry>Earliest</entry>
-    <entry>Latest</entry>
-    <entry>Resolution</entry>
-  </row>
-</thead>
-<tbody>
-  <row>
-    <entry>abstime</entry>
-    <entry>1901-12-14</entry>
-    <entry>2038-01-19</entry>
-    <entry>1 sec</entry>
-  </row>
-  <row>
-    <entry>date</entry>
-    <entry>4713 BC</entry>
-    <entry>32767 AD</entry>
-    <entry>1 day</entry>
-  </row>
-  <row>
-    <entry>datetime</entry>
-    <entry>4713 BC</entry>
-    <entry>1465001 AD</entry>
-    <entry>1 microsec to 14 digits</entry>
-  </row>
-  <row>
-    <entry>interval</entry>
-    <entry>-178000000 years</entry>
-    <entry>178000000 years</entry>
-    <entry>1 microsec</entry>
-  </row>
-  <row>
-    <entry>reltime</entry>
-    <entry>-68 years</entry>
-    <entry>+68 years</entry>
-    <entry>1 sec</entry>
-  </row>
-  <row>
-    <entry>time</entry>
-    <entry>00:00:00.00</entry>
-    <entry>23:59:59.99</entry>
-    <entry>1 microsec</entry>
-  </row>
-  <row>
-    <entry>timespan</entry>
-    <entry>-178000000 years</entry>
-    <entry>178000000 years</entry>
-    <entry>1 microsec (14 digits)</entry>
-  </row>
-  <row>
-    <entry>timestamp</entry>
-    <entry>1901-12-14</entry>
-    <entry>2038-01-19</entry>
-    <entry>1 sec</entry>
-  </row>
-</tbody>
-</tgroup>
-</table>
-</para>
+    <type>timestamp</type> is currently implemented separately from
+    <type>datetime</type>, although they share input and output routines.
+   </para>
 
-<para>
-<productname>Postgres</productname> endeavors to be compatible with
-<acronym>SQL92</acronym> definitions for typical usage.
-The <acronym>SQL92</acronym> standard has an odd mix of date and
-time types and capabilities. Two obvious problems are:
+   <para>
+    <table tocentry="1">
+     <title><productname>Postgres</productname> Date/Time Ranges</title>
+     <titleabbrev>Ranges</titleabbrev>
+     <tgroup cols="4">
+      <thead>
+       <row>
+	<entry>Date/Time Type</entry>
+	<entry>Earliest</entry>
+	<entry>Latest</entry>
+	<entry>Resolution</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry>abstime</entry>
+	<entry>1901-12-14</entry>
+	<entry>2038-01-19</entry>
+	<entry>1 sec</entry>
+       </row>
+       <row>
+	<entry>date</entry>
+	<entry>4713 BC</entry>
+	<entry>32767 AD</entry>
+	<entry>1 day</entry>
+       </row>
+       <row>
+	<entry>datetime</entry>
+	<entry>4713 BC</entry>
+	<entry>1465001 AD</entry>
+	<entry>1 microsec to 14 digits</entry>
+       </row>
+       <row>
+	<entry>interval</entry>
+	<entry>-178000000 years</entry>
+	<entry>178000000 years</entry>
+	<entry>1 microsec</entry>
+       </row>
+       <row>
+	<entry>reltime</entry>
+	<entry>-68 years</entry>
+	<entry>+68 years</entry>
+	<entry>1 sec</entry>
+       </row>
+       <row>
+	<entry>time</entry>
+	<entry>00:00:00.00</entry>
+	<entry>23:59:59.99</entry>
+	<entry>1 microsec</entry>
+       </row>
+       <row>
+	<entry>timespan</entry>
+	<entry>-178000000 years</entry>
+	<entry>178000000 years</entry>
+	<entry>1 microsec (14 digits)</entry>
+       </row>
+       <row>
+	<entry>timestamp</entry>
+	<entry>1901-12-14</entry>
+	<entry>2038-01-19</entry>
+	<entry>1 sec</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
 
-<itemizedlist>
-<listitem>
-<para>
-Although the <type>date</type> type 
-does not have an associated time zone, the
-<type>time</type> type can or does.</para></listitem>
+   <sect2>
+    <title>SQL92 Conventions</title>
 
-<listitem>
-<para>
-The default time zone is specified as a constant integer offset 
-from GMT/UTC.</para></listitem>
+    <para>
+     <productname>Postgres</productname> endeavors to be compatible with
+     <acronym>SQL92</acronym> definitions for typical usage.
+     However, the <acronym>SQL92</acronym> standard has an odd mix of date and
+     time types and capabilities. Two obvious problems are:
 
-</itemizedlist>
+     <itemizedlist>
+      <listitem>
+       <para>
+	Although the <type>date</type> type 
+	does not have an associated time zone, the
+	<type>time</type> type can or does.
+       </para>
+      </listitem>
 
-However, time zones in the real world can have no meaning unless 
-associated with a date as well as a time
-since the offset may vary through the year with daylight savings
-time boundaries.
-</para>
+      <listitem>
+       <para>
+	The default time zone is specified as a constant integer offset 
+	from GMT/UTC.
+       </para>
+      </listitem>
 
-<para>
-To address these difficulties, <productname>Postgres</productname> 
-associates time zones only with date and time
-types which contain both date and time,
- and assumes local time for any type containing only
-date or time. Further, time zone support is derived from 
-the underlying operating system
-time zone capabilities, and hence can handle daylight savings time 
-and other expected behavior.
-</para>
+     </itemizedlist>
 
-<para>
-In future releases, the number of date/time types will decrease, 
-with the current implementation of 
-<type>datetime</type> becoming <type>timestamp</type>, 
-<type>timespan</type> becoming <type>interval</type>,
-and (possibly) <type>abstime</type> and <type>reltime</type> 
-being deprecated in favor of <type>timestamp</type> and <type>interval</type>.
-The more arcane features of the date/time definitions from 
-the <acronym>SQL92</acronym> standard are not likely to be pursued.
-</para>
+     Time zones in the real world can have no meaning unless 
+     associated with a date as well as a time
+     since the offset may vary through the year with daylight savings
+     time boundaries.
+    </para>
+
+    <para>
+     To address these difficulties, <productname>Postgres</productname> 
+     associates time zones only with date and time
+     types which contain both date and time,
+     and assumes local time for any type containing only
+     date or time. Further, time zone support is derived from 
+     the underlying operating system
+     time zone capabilities, and hence can handle daylight savings time 
+     and other expected behavior.
+    </para>
+
+    <para>
+     In future releases, the number of date/time types will decrease, 
+     with the current implementation of 
+     <type>datetime</type> becoming <type>timestamp</type>, 
+     <type>timespan</type> becoming <type>interval</type>,
+     and (possibly) <type>abstime</type> and <type>reltime</type> 
+     being deprecated in favor of <type>timestamp</type> and <type>interval</type>.
+     The more arcane features of the date/time definitions from 
+     the <acronym>SQL92</acronym> standard are not likely to be pursued.
+    </para>
+   </sect2>
 
 <sect2>
 <title>Date/Time Styles</title>
@@ -840,46 +852,71 @@ which alleviates date specification ambiguities and Y2K collation problems.
 
 </sect2>
 
-<sect2>
-<title>Time Zones</title>
+   <sect2>
+    <title>Calendar</title>
 
-<para>
-<productname>Postgres</productname> obtains time zone support 
-from the underlying operating system.
-All dates and times are stored internally in Universal Coordinated Time (UTC),
- alternately known as Greenwich Mean Time (GMT). 
-Times are converted to local time on the database server before being
-sent to the client frontend, hence by default are in the server time zone.</para>
+    <para>
+     <productname>Postgres</productname> uses Julian dates
+     for all date/time calculations. They have the nice property of correctly
+     predicting/calculating any date more recent than something like 4013BC
+     to far into the future, using the assumption that the length of the
+     year is 365.2425 days.
+    </para>
 
-<para>
-There are several ways to affect the time zone behavior:
+    <para>
+     Date conventions before the 19th century make for interesting reading,
+     but are not consistant enough to warrant coding into a date/time handler.
+    </para>
+   </sect2>
 
-<itemizedlist spacing="compact" mark="bullet">
-<listitem>
-<para>
-The TZ environment variable used by the backend directly
- on postmaster startup as the default time zone.
-</para>
-</listitem>
-<listitem>
-<para>
-The PGTZ environment variable set at the client used by libpq 
-to send time zone information to the backend upon connection.
-</para>
-</listitem>
-<listitem>
-<para>
-The <acronym>SQL</acronym> command <command>SET TIME ZONE</command>
-sets the time zone for the session.
-</para>
-</listitem>
-</itemizedlist></para>
+   <sect2>
+    <title>Time Zones</title>
 
-<para>
- If an invalid time zone is specified,
-the time zone becomes GMT (on most systems anyway).
-</para>
-</sect2>
+    <para>
+     <productname>Postgres</productname> obtains time zone support 
+     from the underlying operating system for dates between 1902 and
+     2038 (near the typical date limits for Unix-style
+     systems). Outside of this range, all dates are assumed to be
+     specified and used in Universal Coordinated Time (UTC).
+    </para>
+
+    <para>
+     All dates and times are stored internally in Universal UTC,
+     alternately known as Greenwich Mean Time (GMT). 
+     Times are converted to local time on the database server before being
+     sent to the client frontend, hence by default are in the server
+     time zone.
+    </para>
+
+    <para>
+     There are several ways to affect the time zone behavior:
+
+     <itemizedlist spacing="compact" mark="bullet">
+      <listitem>
+       <para>
+	The TZ environment variable used by the backend directly
+	on postmaster startup as the default time zone.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	The PGTZ environment variable set at the client used by libpq 
+	to send time zone information to the backend upon connection.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	The <acronym>SQL</acronym> command <command>SET TIME ZONE</command>
+	sets the time zone for the session.
+       </para>
+      </listitem>
+     </itemizedlist></para>
+
+    <para>
+     If an invalid time zone is specified,
+     the time zone becomes GMT (on most systems anyway).
+    </para>
+   </sect2>
 
    <sect2>
     <title>Date/Time Input</title>
