@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.104 2003/07/22 19:00:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.105 2003/07/23 23:30:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -434,11 +434,10 @@ ClientAuthentication(Port *port)
 			{
 				char	hostinfo[NI_MAXHOST];
 
-				getnameinfo((struct sockaddr *) &port->raddr.addr,
-							port->raddr.salen,
-							hostinfo, sizeof(hostinfo),
-							NULL, 0,
-							NI_NUMERICHOST);
+				getnameinfo_all(&port->raddr.addr, port->raddr.salen,
+								hostinfo, sizeof(hostinfo),
+								NULL, 0,
+								NI_NUMERICHOST);
 
 				ereport(FATAL,
 						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),

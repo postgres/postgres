@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.158 2003/07/22 19:00:10 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.159 2003/07/23 23:30:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,16 +190,18 @@ StreamDoUnlink(void)
 #endif   /* HAVE_UNIX_SOCKETS */
 
 /*
- * StreamServerPort -- open a sock stream "listening" port.
+ * StreamServerPort -- open a "listening" port to accept connections.
  *
- * This initializes the Postmaster's connection-accepting port *fdP.
+ * Successfully opened sockets are added to the ListenSocket[] array,
+ * at the first position that isn't -1.
  *
  * RETURNS: STATUS_OK or STATUS_ERROR
  */
 
 int
 StreamServerPort(int family, char *hostName, unsigned short portNumber,
-	 char *unixSocketName, int ListenSocket[], int MaxListen)
+				 char *unixSocketName,
+				 int ListenSocket[], int MaxListen)
 {
 	int			fd,
 				err;
@@ -216,7 +218,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 	/* Initialize hint structure */
 	MemSet(&hint, 0, sizeof(hint));
 	hint.ai_family = family;
-	hint.ai_flags = AI_PASSIVE | AI_ADDRCONFIG;
+	hint.ai_flags = AI_PASSIVE;
 	hint.ai_socktype = SOCK_STREAM;
 
 #ifdef HAVE_UNIX_SOCKETS
@@ -234,13 +236,18 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		service = portNumberStr;
 	}
 
-	ret = getaddrinfo2(hostName, service, &hint, &addrs);
-	if (ret || addrs == NULL)
+	ret = getaddrinfo_all(hostName, service, &hint, &addrs);
+	if (ret || !addrs)
 	{
-		ereport(LOG,
-				(errmsg("failed to translate hostname to address: %s",
-						gai_strerror(ret))));
-		freeaddrinfo2(hint.ai_family, addrs);
+		if (hostName)
+			ereport(LOG,
+					(errmsg("could not translate hostname \"%s\", service \"%s\" to address: %s",
+							hostName, service, gai_strerror(ret))));
+		else
+			ereport(LOG,
+					(errmsg("could not translate service \"%s\" to address: %s",
+							service, gai_strerror(ret))));
+		freeaddrinfo_all(hint.ai_family, addrs);
 		return STATUS_ERROR;
 	}
 
@@ -250,7 +257,8 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		{
 			/* Only set up a unix domain socket when
 			 * they really asked for it.  The service/port
-			 * is different in that case. */
+			 * is different in that case.
+			 */
 			continue;
 		}
 
@@ -258,25 +266,21 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		for (; listen_index < MaxListen; listen_index++)
 		{
 			if (ListenSocket[listen_index] == -1)
-			{
 				break;
-			}
 		}
-		if (listen_index == MaxListen)
+		if (listen_index >= MaxListen)
 		{
 			/* Nothing found. */
 			break;
 		}
-		if ((fd = socket(addr->ai_family, addr->ai_socktype,
-			addr->ai_protocol)) < 0)
+
+		if ((fd = socket(addr->ai_family, SOCK_STREAM, 0)) < 0)
 		{
 			ereport(LOG,
 					(errcode_for_socket_access(),
 					 errmsg("failed to create socket: %m")));
 			continue;
 		}
-
-
 
 		if (!IS_AF_UNIX(addr->ai_family))
 		{
@@ -363,12 +367,11 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		added++;
 	}
 
-	freeaddrinfo(addrs);
+	freeaddrinfo_all(hint.ai_family, addrs);
 
 	if (!added)
-	{
 		return STATUS_ERROR;
-	}
+
 	return STATUS_OK;
 }
 

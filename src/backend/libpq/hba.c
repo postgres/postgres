@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.106 2003/07/22 21:19:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.107 2003/07/23 23:30:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -648,31 +648,33 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 		hints.ai_next = NULL;
 
 		/* Get the IP address either way */
-		ret = getaddrinfo2(token, NULL, &hints, &file_ip_addr);
+		ret = getaddrinfo_all(token, NULL, &hints, &file_ip_addr);
 		if (ret || !file_ip_addr)
 		{
 			ereport(LOG,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("failed to interpret IP address \"%s\" in config file: %s",
+					 errmsg("could not interpret IP address \"%s\" in config file: %s",
 							token, gai_strerror(ret))));
 			if (cidr_slash)
 				*cidr_slash = '/';
 			goto hba_syntax;
 		}
 
+		if (cidr_slash)
+			*cidr_slash = '/';
+
 		if (file_ip_addr->ai_family != port->raddr.addr.ss_family)
 		{
 			/* Wrong address family. */
-			freeaddrinfo2(hints.ai_family, file_ip_addr);
+			freeaddrinfo_all(hints.ai_family, file_ip_addr);
 			return;
 		}
 
 		/* Get the netmask */
 		if (cidr_slash)
 		{
-			*cidr_slash = '/';
 			if (SockAddr_cidr_mask(&mask, cidr_slash + 1,
-				file_ip_addr->ai_family) < 0)
+								   file_ip_addr->ai_family) < 0)
 				goto hba_syntax;
 		}
 		else
@@ -683,13 +685,13 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 				goto hba_syntax;
 			token = lfirst(line);
 
-			ret = getaddrinfo2(token, NULL, &hints, &file_ip_mask);
+			ret = getaddrinfo_all(token, NULL, &hints, &file_ip_mask);
 			if (ret || !file_ip_mask)
 				goto hba_syntax;
 
 			mask = (struct sockaddr_storage *)file_ip_mask->ai_addr;
 
-			if(file_ip_addr->ai_family != mask->ss_family)
+			if (file_ip_addr->ai_family != mask->ss_family)
 				goto hba_syntax;
 		}
 
@@ -703,12 +705,13 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 
 		/* Must meet network restrictions */
 		if (!rangeSockAddr(&port->raddr.addr,
-			(struct sockaddr_storage *)file_ip_addr->ai_addr, mask))
+						   (struct sockaddr_storage *)file_ip_addr->ai_addr,
+						   mask))
 			goto hba_freeaddr;
 
-		freeaddrinfo2(hints.ai_family, file_ip_addr);
+		freeaddrinfo_all(hints.ai_family, file_ip_addr);
 		if (file_ip_mask)
-			freeaddrinfo2(hints.ai_family, file_ip_mask);
+			freeaddrinfo_all(hints.ai_family, file_ip_mask);
 	}
 	else
 		goto hba_syntax;
@@ -731,16 +734,16 @@ hba_syntax:
 	else
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 errmsg("missing entry in pg_hba.conf file at end of line %d",
+				 errmsg("missing field in pg_hba.conf file at end of line %d",
 						line_number)));
 
 	*error_p = true;
 
 hba_freeaddr:
 	if (file_ip_addr)
-		freeaddrinfo2(hints.ai_family, file_ip_addr);
+		freeaddrinfo_all(hints.ai_family, file_ip_addr);
 	if (file_ip_mask)
-		freeaddrinfo2(hints.ai_family, file_ip_mask);
+		freeaddrinfo_all(hints.ai_family, file_ip_mask);
 }
 
 
@@ -1209,14 +1212,14 @@ ident_inet(const SockAddr remote_addr,
 	 * Might look a little weird to first convert it to text and
 	 * then back to sockaddr, but it's protocol independent.
 	 */
-	getnameinfo((struct sockaddr *)&remote_addr.addr, remote_addr.salen,
-				remote_addr_s, sizeof(remote_addr_s),
-				remote_port, sizeof(remote_port),
-				NI_NUMERICHOST | NI_NUMERICSERV);
-	getnameinfo((struct sockaddr *)&local_addr.addr, local_addr.salen,
-				local_addr_s, sizeof(local_addr_s),
-				local_port, sizeof(local_port),
-				NI_NUMERICHOST | NI_NUMERICSERV);
+	getnameinfo_all(&remote_addr.addr, remote_addr.salen,
+					remote_addr_s, sizeof(remote_addr_s),
+					remote_port, sizeof(remote_port),
+					NI_NUMERICHOST | NI_NUMERICSERV);
+	getnameinfo_all(&local_addr.addr, local_addr.salen,
+					local_addr_s, sizeof(local_addr_s),
+					local_port, sizeof(local_port),
+					NI_NUMERICHOST | NI_NUMERICSERV);
 
 	snprintf(ident_port, sizeof(ident_port), "%d", IDENT_PORT);
 	hints.ai_flags = AI_NUMERICHOST;
@@ -1227,7 +1230,7 @@ ident_inet(const SockAddr remote_addr,
 	hints.ai_canonname = NULL;
 	hints.ai_addr = NULL;
 	hints.ai_next = NULL;
-	rc = getaddrinfo2(remote_addr_s, ident_port, &hints, &ident_serv);
+	rc = getaddrinfo_all(remote_addr_s, ident_port, &hints, &ident_serv);
 	if (rc || !ident_serv)
 		return false;			/* we don't expect this to happen */
 
@@ -1239,7 +1242,7 @@ ident_inet(const SockAddr remote_addr,
 	hints.ai_canonname = NULL;
 	hints.ai_addr = NULL;
 	hints.ai_next = NULL;
-	rc = getaddrinfo2(local_addr_s, NULL, &hints, &la);
+	rc = getaddrinfo_all(local_addr_s, NULL, &hints, &la);
 	if (rc || !la)
 		return false;			/* we don't expect this to happen */
 	
@@ -1323,8 +1326,8 @@ ident_inet(const SockAddr remote_addr,
 ident_inet_done:
 	if (sock_fd >= 0)
 		closesocket(sock_fd);
-	freeaddrinfo2(remote_addr.addr.ss_family, ident_serv);
-	freeaddrinfo2(local_addr.addr.ss_family, la);
+	freeaddrinfo_all(remote_addr.addr.ss_family, ident_serv);
+	freeaddrinfo_all(local_addr.addr.ss_family, la);
 	return ident_return;
 }
 

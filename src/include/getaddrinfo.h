@@ -3,7 +3,6 @@
  * getaddrinfo.h
  *	  Support getaddrinfo() on platforms that don't have it.
  *
- *
  * Note: we use our own routines on platforms that don't HAVE_STRUCT_ADDRINFO,
  * whether or not the library routine getaddrinfo() can be found.  This
  * policy is needed because on some platforms a manually installed libbind.a
@@ -16,7 +15,7 @@
  *
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
- * $Id: getaddrinfo.h,v 1.6 2003/06/12 08:15:29 momjian Exp $
+ * $Id: getaddrinfo.h,v 1.7 2003/07/23 23:30:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */

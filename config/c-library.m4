@@ -1,5 +1,5 @@
 # Macros that test various C library quirks
-# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.22 2003/06/23 23:51:59 momjian Exp $
+# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.23 2003/07/23 23:30:39 tgl Exp $
 
 
 # PGAC_VAR_INT_TIMEZONE
@@ -100,8 +100,8 @@ AC_DEFUN([PGAC_STRUCT_SOCKADDR_UN],
 
 # PGAC_STRUCT_SOCKADDR_STORAGE
 # ----------------------------
-# If `struct sockaddr_storage' exists, define HAVE_STRUCT_SOCKADDR_STORAGE. If
-# it is missing then one could define it.
+# If `struct sockaddr_storage' exists, define HAVE_STRUCT_SOCKADDR_STORAGE.
+# If it is missing then one could define it.
 AC_DEFUN([PGAC_STRUCT_SOCKADDR_STORAGE],
 [AC_CHECK_TYPES([struct sockaddr_storage], [], [],
 [#include <sys/types.h>
@@ -110,18 +110,24 @@ AC_DEFUN([PGAC_STRUCT_SOCKADDR_STORAGE],
 #endif
 ])])# PGAC_STRUCT_SOCKADDR_STORAGE
 
-# PGAC_STRUCT_SOCKADDR_STORAGE_SS_FAMILY
+# PGAC_STRUCT_SOCKADDR_STORAGE_MEMBERS
 # --------------------------------------
-# This checks if the struct sockaddr has a proper ss_family and not an
-# __ss_family as rfc2553 defined.
-AC_DEFUN([PGAC_STRUCT_SOCKADDR_STORAGE_SS_FAMILY],
+# Check the members of `struct sockaddr_storage'.  We need to know about
+# ss_family and ss_len.  (Some platforms follow RFC 2553 and call them
+# __ss_family and __ss_len.)  We also check struct sockaddr's sa_len;
+# if we have to define our own `struct sockaddr_storage', this tells us
+# whether we need to provide an ss_len field.
+AC_DEFUN([PGAC_STRUCT_SOCKADDR_STORAGE_MEMBERS],
 [AC_CHECK_MEMBERS([struct sockaddr_storage.ss_family,
-	struct sockaddr_storage.__ss_family], [], [],
+		   struct sockaddr_storage.__ss_family,
+		   struct sockaddr_storage.ss_len,
+		   struct sockaddr_storage.__ss_len,
+		   struct sockaddr.sa_len], [], [],
 [#include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
-])])# PGAC_STRUCT_SOCKADDR_STORAGE_SS_FAMILY
+])])# PGAC_STRUCT_SOCKADDR_STORAGE_MEMBERS
 
 
 # PGAC_STRUCT_ADDRINFO

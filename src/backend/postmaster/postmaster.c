@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.335 2003/07/22 20:29:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.336 2003/07/23 23:30:40 tgl Exp $
  *
  * NOTES
  *
@@ -168,9 +168,9 @@ int			ReservedBackends;
 
 static char *progname = (char *) NULL;
 
-/* The sockets we're listening to. */
+/* The socket(s) we're listening to. */
 #define	MAXLISTEN	10
-int	ListenSocket[MAXLISTEN];
+static int	ListenSocket[MAXLISTEN];
 
 /* Used to reduce macros tests */
 #ifdef EXEC_BACKEND
@@ -277,7 +277,7 @@ static int	ServerLoop(void);
 static int	BackendStartup(Port *port);
 static int	ProcessStartupPacket(Port *port, bool SSLdone);
 static void processCancelRequest(Port *port, void *pkt);
-static int	initMasks(fd_set *rmask, fd_set *wmask);
+static int	initMasks(fd_set *rmask);
 static void report_fork_failure_to_client(Port *port, int errnum);
 enum CAC_state
 {
@@ -727,73 +727,80 @@ PostmasterMain(int argc, char *argv[])
 	 * Establish input sockets.
 	 */
 	for (i = 0; i < MAXLISTEN; i++)
-	{
 		ListenSocket[i] = -1;
-	}
+
 	if (NetServer)
 	{
 		if (VirtualHost && VirtualHost[0])
 		{
-			char	*p, *q;
+			char	*curhost, *endptr;
 			char	c = 0;
 
-			q = VirtualHost;
-			do
+			curhost = VirtualHost;
+			for (;;)
 			{
-				p = strchr(q, ' ');
-				if (p)
+				while (*curhost == ' ')	/* skip any extra spaces */
+					curhost++;
+				if (*curhost == '\0')
+					break;
+				endptr = strchr(curhost, ' ');
+				if (endptr)
 				{
-					c = *p;
-					*p = '\0';
+					c = *endptr;
+					*endptr = '\0';
 				}
-				status = StreamServerPort(AF_UNSPEC, q,
-					(unsigned short) PostPortNumber,
-					UnixSocketDir, ListenSocket, MAXLISTEN);
+				status = StreamServerPort(AF_UNSPEC, curhost,
+										  (unsigned short) PostPortNumber,
+										  UnixSocketDir,
+										  ListenSocket, MAXLISTEN);
 				if (status != STATUS_OK)
 				{
-					postmaster_error("cannot create tcpip "
-						"listen socket for: %s", p);
+					postmaster_error("could not create listen socket for \"%s\"",
+									 curhost);
 				}
-				if (p)
+				if (endptr)
 				{
-					*p = c;
-					q = p + 1;
+					*endptr = c;
+					curhost = endptr + 1;
 				}
+				else
+					break;
 			}
-			while (p);
 		}
 		else
 		{
 			status = StreamServerPort(AF_UNSPEC, NULL,
-				(unsigned short) PostPortNumber,
-				UnixSocketDir, ListenSocket, MAXLISTEN);
+									  (unsigned short) PostPortNumber,
+									  UnixSocketDir,
+									  ListenSocket, MAXLISTEN);
 			if (status != STATUS_OK)
 			{
-				postmaster_error("cannot create tcpip listen "
-					"socket.");
+				postmaster_error("could not create TCP/IP listen socket");
 			}
 		}
+
 #ifdef USE_RENDEZVOUS					 
-				if (rendezvous_name != NULL)
-				{
-						DNSServiceRegistrationCreate(rendezvous_name,
-													 "_postgresql._tcp.",
-													 "",
-													 htonl(PostPortNumber),
-													 "",
-													 (DNSServiceRegistrationReply)reg_reply,
-													 NULL);
-				}
+		if (rendezvous_name != NULL)
+		{
+			DNSServiceRegistrationCreate(rendezvous_name,
+										 "_postgresql._tcp.",
+										 "",
+										 htonl(PostPortNumber),
+										 "",
+										 (DNSServiceRegistrationReply)reg_reply,
+										 NULL);
+		}
 #endif
 	}
 
 #ifdef HAVE_UNIX_SOCKETS
 	status = StreamServerPort(AF_UNIX, NULL,
-			(unsigned short) PostPortNumber,
-			UnixSocketDir, ListenSocket, MAXLISTEN);
+							  (unsigned short) PostPortNumber,
+							  UnixSocketDir,
+							  ListenSocket, MAXLISTEN);
 	if (status != STATUS_OK)
 	{
-		postmaster_error("cannot create UNIX stream port");
+		postmaster_error("could not create UNIX stream port");
 		ExitPostmaster(1);
 	}
 #endif
@@ -994,7 +1001,7 @@ usage(const char *progname)
 static int
 ServerLoop(void)
 {
-	fd_set			readmask, writemask;
+	fd_set			readmask;
 	int			nSockets;
 	struct timeval		now, later;
 	struct timezone		tz;
@@ -1002,13 +1009,12 @@ ServerLoop(void)
 
 	gettimeofday(&now, &tz);
 
-	nSockets = initMasks(&readmask, &writemask);
+	nSockets = initMasks(&readmask);
 
 	for (;;)
 	{
 		Port	   *port;
-		fd_set		rmask,
-					wmask;
+		fd_set		rmask;
 		struct timeval timeout;
 
 		/*
@@ -1057,11 +1063,11 @@ ServerLoop(void)
 		 * Wait for something to happen.
 		 */
 		memcpy((char *) &rmask, (char *) &readmask, sizeof(fd_set));
-		memcpy((char *) &wmask, (char *) &writemask, sizeof(fd_set));
 
 		PG_SETMASK(&UnBlockSig);
 
-		if (select(nSockets, &rmask, &wmask, (fd_set *) NULL, &timeout) < 0)
+		if (select(nSockets, &rmask, (fd_set *) NULL,
+				   (fd_set *) NULL, &timeout) < 0)
 		{
 			PG_SETMASK(&BlockSig);
 			if (errno == EINTR || errno == EWOULDBLOCK)
@@ -1096,12 +1102,14 @@ ServerLoop(void)
 		}
 
 		/*
-		 * New connection pending on our well-known port's socket? If so,
+		 * New connection pending on any of our sockets? If so,
 		 * fork a child process to deal with it.
 		 */
 		for (i = 0; i < MAXLISTEN; i++)
 		{
-			if (ListenSocket[i] != -1 && FD_ISSET(ListenSocket[i], &rmask))
+			if (ListenSocket[i] == -1)
+				break;
+			if (FD_ISSET(ListenSocket[i], &rmask))
 			{
 				port = ConnCreate(ListenSocket[i]);
 				if (port)
@@ -1126,28 +1134,27 @@ ServerLoop(void)
 
 
 /*
- * Initialise the read and write masks for select() for the well-known ports
+ * Initialise the masks for select() for the ports
  * we are listening on.  Return the number of sockets to listen on.
  */
 
 static int
-initMasks(fd_set *rmask, fd_set *wmask)
+initMasks(fd_set *rmask)
 {
 	int			nsocks = -1;
 	int			i;
 
 	FD_ZERO(rmask);
-	FD_ZERO(wmask);
 
 	for (i = 0; i < MAXLISTEN; i++)
 	{
 		int	fd = ListenSocket[i];
-		if (fd != -1)
-		{
-			FD_SET(fd, rmask);
-			if (fd > nsocks)
-				nsocks = fd;
-		}
+
+		if (fd == -1)
+			break;
+		FD_SET(fd, rmask);
+		if (fd > nsocks)
+			nsocks = fd;
 	}
 
 	return nsocks + 1;
@@ -2352,17 +2359,15 @@ BackendFork(Port *port)
 	 */
 	remote_host[0] = '\0';
 	remote_port[0] = '\0';
-	if (!getnameinfo((struct sockaddr *)&port->raddr.addr,
-					 port->raddr.salen,
-					 remote_host, sizeof(remote_host),
-					 remote_port, sizeof(remote_host),
-					 (log_hostname ? 0 : NI_NUMERICHOST) | NI_NUMERICSERV))
+	if (getnameinfo_all(&port->raddr.addr, port->raddr.salen,
+						remote_host, sizeof(remote_host),
+						remote_port, sizeof(remote_port),
+						(log_hostname ? 0 : NI_NUMERICHOST) | NI_NUMERICSERV))
 	{
-		getnameinfo((struct sockaddr *)&port->raddr.addr,
-			port->raddr.salen,
-			remote_host, sizeof(remote_host),
-			remote_port, sizeof(remote_host),
-			NI_NUMERICHOST | NI_NUMERICSERV);
+		getnameinfo_all(&port->raddr.addr, port->raddr.salen,
+						remote_host, sizeof(remote_host),
+						remote_port, sizeof(remote_port),
+						NI_NUMERICHOST | NI_NUMERICSERV);
 	}
 
 	if (Log_connections)
@@ -2373,7 +2378,7 @@ BackendFork(Port *port)
 	if (LogSourcePort)
 	{
 		/* modify remote_host for use in ps status */
-		char	tmphost[sizeof(remote_host) + 10];
+		char	tmphost[NI_MAXHOST];
 
 		snprintf(tmphost, sizeof(tmphost), "%s:%s", remote_host, remote_port);
 		StrNCpy(remote_host, tmphost, sizeof(remote_host));

@@ -3,12 +3,16 @@
  * getaddrinfo.c
  *	  Support getaddrinfo() on platforms that don't have it.
  *
+ * We also supply getnameinfo() here, assuming that the platform will have
+ * it if and only if it has getaddrinfo().  If this proves false on some
+ * platform, we'll need to split this file and provide a separate configure
+ * test for getnameinfo().
+ *
  *
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
- *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/port/getaddrinfo.c,v 1.9 2003/06/23 23:52:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/port/getaddrinfo.c,v 1.10 2003/07/23 23:30:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,9 +26,6 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#ifdef	HAVE_UNIX_SOCKETS
-#include <sys/un.h>
-#endif
 #endif
 
 #include "getaddrinfo.h"
@@ -124,8 +125,9 @@ getaddrinfo(const char *node, const char *service,
 
 	if (service)
 		sin.sin_port = htons((unsigned short) atoi(service));
-#if SALEN
-        sin.sin_len = sizeof(sin);
+
+#ifdef HAVE_STRUCT_SOCKADDR_STORAGE_SS_LEN
+	sin.sin_len = sizeof(sin);
 #endif
 
 	ai = malloc(sizeof(*ai));
@@ -209,7 +211,7 @@ gai_strerror(int errcode)
 }
 
 /*
- * Convert an address to a hostname.
+ * Convert an ipv4 address to a hostname.
  * 
  * Bugs:	- Only supports NI_NUMERICHOST and NI_NUMERICSERV
  *		  It will never resolv a hostname.
@@ -217,11 +219,9 @@ gai_strerror(int errcode)
  */
 int
 getnameinfo(const struct sockaddr *sa, int salen,
-		char *node, int nodelen,
-		char *service, int servicelen, int flags)
+			char *node, int nodelen,
+			char *service, int servicelen, int flags)
 {
-	int		ret = -1;
-
 	/* Invalid arguments. */
 	if (sa == NULL || (node == NULL && service == NULL))
 	{
@@ -242,41 +242,32 @@ getnameinfo(const struct sockaddr *sa, int salen,
 	}
 #endif
 
-	if (service)
-	{
-		if (sa->sa_family == AF_INET)
-		{
-			ret = snprintf(service, servicelen, "%d",
-				ntohs(((struct sockaddr_in *)sa)->sin_port));
-		}
-#ifdef	HAVE_UNIX_SOCKETS
-		else if (sa->sa_family == AF_UNIX)
-		{
-			ret = snprintf(service, servicelen, "%s",
-				((struct sockaddr_un *)sa)->sun_path);
-		}
-#endif
-		if (ret == -1 || ret > servicelen)
-		{
-			return EAI_MEMORY;
-		}
-	}
-
 	if (node)
 	{
+		int		ret = -1;
+
 		if (sa->sa_family == AF_INET)
 		{
 			char	*p;
 			p = inet_ntoa(((struct sockaddr_in *)sa)->sin_addr);
 			ret = snprintf(node, nodelen, "%s", p);
 		}
-#ifdef	HAVE_UNIX_SOCKETS
-		else if (sa->sa_family == AF_UNIX)
-		{
-			ret = snprintf(node, nodelen, "%s", "localhost");
-		}
-#endif
 		if (ret == -1 || ret > nodelen)
+		{
+			return EAI_MEMORY;
+		}
+	}
+
+	if (service)
+	{
+		int		ret = -1;
+
+		if (sa->sa_family == AF_INET)
+		{
+			ret = snprintf(service, servicelen, "%d",
+						   ntohs(((struct sockaddr_in *)sa)->sin_port));
+		}
+		if (ret == -1 || ret > servicelen)
 		{
 			return EAI_MEMORY;
 		}

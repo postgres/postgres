@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.15 2003/06/12 08:15:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.16 2003/07/23 23:30:40 tgl Exp $
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design
@@ -53,15 +53,20 @@ static int	rangeSockAddrAF_INET6(const struct sockaddr_in6 *addr,
 static int	getaddrinfo_unix(const char *path,
 			const struct addrinfo *hintsp,
 			struct addrinfo **result);
+
+static int	getnameinfo_unix(const struct sockaddr_un *sa, int salen,
+							 char *node, int nodelen,
+							 char *service, int servicelen,
+							 int flags);
 #endif
 
 
 /*
- *	getaddrinfo2 - get address info for Unix, IPv4 and IPv6 sockets
+ *	getaddrinfo_all - get address info for Unix, IPv4 and IPv6 sockets
  */
 int
-getaddrinfo2(const char *hostname, const char *servname,
-			 const struct addrinfo *hintp, struct addrinfo **result)
+getaddrinfo_all(const char *hostname, const char *servname,
+				const struct addrinfo *hintp, struct addrinfo **result)
 {
 #ifdef HAVE_UNIX_SOCKETS
 	if (hintp != NULL && hintp->ai_family == AF_UNIX)
@@ -75,7 +80,7 @@ getaddrinfo2(const char *hostname, const char *servname,
 
 
 /*
- *	freeaddrinfo2 - free addrinfo structures for IPv4, IPv6, or Unix
+ *	freeaddrinfo_all - free addrinfo structures for IPv4, IPv6, or Unix
  *
  * Note: the ai_family field of the original hint structure must be passed
  * so that we can tell whether the addrinfo struct was built by the system's
@@ -84,12 +89,12 @@ getaddrinfo2(const char *hostname, const char *servname,
  * not safe to look at ai_family in the addrinfo itself.
  */
 void
-freeaddrinfo2(int hint_ai_family, struct addrinfo *ai)
+freeaddrinfo_all(int hint_ai_family, struct addrinfo *ai)
 {
 #ifdef HAVE_UNIX_SOCKETS
 	if (hint_ai_family == AF_UNIX)
 	{
-		/* struct was built by getaddrinfo_unix (see getaddrinfo2) */
+		/* struct was built by getaddrinfo_unix (see getaddrinfo_all) */
 		while (ai != NULL)
 		{
 			struct addrinfo *p = ai;
@@ -109,11 +114,53 @@ freeaddrinfo2(int hint_ai_family, struct addrinfo *ai)
 }
 
 
+/*
+ *	getnameinfo_all - get name info for Unix, IPv4 and IPv6 sockets
+ *
+ * The API of this routine differs from the standard getnameinfo() definition
+ * in two ways: first, the addr parameter is declared as sockaddr_storage
+ * rather than struct sockaddr, and second, the node and service fields are
+ * guaranteed to be filled with something even on failure return.
+ */
+int
+getnameinfo_all(const struct sockaddr_storage *addr, int salen,
+				char *node, int nodelen,
+				char *service, int servicelen,
+				int flags)
+{
+	int		rc;
+
+#ifdef HAVE_UNIX_SOCKETS
+	if (addr && addr->ss_family == AF_UNIX)
+		rc = getnameinfo_unix((const struct sockaddr_un *) addr, salen,
+							  node, nodelen,
+							  service, servicelen,
+							  flags);
+	else
+#endif
+		rc = getnameinfo((const struct sockaddr *) addr, salen,
+						 node, nodelen,
+						 service, servicelen,
+						 flags);
+
+	if (rc != 0)
+	{
+		if (node)
+			StrNCpy(node, "???", nodelen);
+		if (service)
+			StrNCpy(service, "???", servicelen);
+	}
+
+	return rc;
+}
+
+
 #if defined(HAVE_UNIX_SOCKETS)
+
 /* -------
  *	getaddrinfo_unix - get unix socket info using IPv6-compatible API
  *
- *	Bug:  only one addrinfo is set even though hintsp is NULL or
+ *	Bugs: only one addrinfo is set even though hintsp is NULL or
  *		  ai_socktype is 0
  *		  AI_CANONNAME is not supported.
  * -------
@@ -176,12 +223,59 @@ getaddrinfo_unix(const char *path, const struct addrinfo *hintsp,
 
 	strcpy(unp->sun_path, path);
 
-#if SALEN
+#ifdef HAVE_STRUCT_SOCKADDR_STORAGE_SS_LEN
 	unp->sun_len = sizeof(struct sockaddr_un);
-#endif   /* SALEN */
+#endif
 
 	return 0;
 }
+
+/*
+ * Convert an address to a hostname.
+ */
+static int
+getnameinfo_unix(const struct sockaddr_un *sa, int salen,
+				 char *node, int nodelen,
+				 char *service, int servicelen,
+				 int flags)
+{
+	int		ret = -1;
+
+	/* Invalid arguments. */
+	if (sa == NULL || sa->sun_family != AF_UNIX ||
+		(node == NULL && service == NULL))
+	{
+		return EAI_FAIL;
+	}
+
+	/* We don't support those. */
+	if ((node && !(flags & NI_NUMERICHOST))
+		|| (service && !(flags & NI_NUMERICSERV)))
+	{
+		return EAI_FAIL;
+	}
+
+	if (node)
+	{
+		ret = snprintf(node, nodelen, "%s", "localhost");
+		if (ret == -1 || ret > nodelen)
+		{
+			return EAI_MEMORY;
+		}
+	}
+
+	if (service)
+	{
+		ret = snprintf(service, servicelen, "%s", sa->sun_path);
+		if (ret == -1 || ret > servicelen)
+		{
+			return EAI_MEMORY;
+		}
+	}
+
+	return 0;
+}
+
 #endif   /* HAVE_UNIX_SOCKETS */
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.252 2003/06/23 19:20:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.253 2003/07/23 23:30:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -759,26 +759,33 @@ connectNoDelay(PGconn *conn)
 static void
 connectFailureMessage(PGconn *conn, int errorno)
 {
-	char	hostname[NI_MAXHOST];
-	char	service[NI_MAXHOST];
 	char	sebuf[256];
 
-	getnameinfo((struct sockaddr *)&conn->raddr.addr, conn->raddr.salen,
-		hostname, sizeof(hostname), service, sizeof(service),
-		NI_NUMERICHOST | NI_NUMERICSERV);
-	if (conn->raddr.addr.ss_family == AF_UNIX)
+#ifdef HAVE_UNIX_SOCKETS
+	if (IS_AF_UNIX(conn->raddr.addr.ss_family))
+	{
+		char	service[NI_MAXHOST];
+
+		getnameinfo_all(&conn->raddr.addr, conn->raddr.salen,
+						NULL, 0,
+						service, sizeof(service),
+						NI_NUMERICSERV);
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext(
 									  "could not connect to server: %s\n"
 						"\tIs the server running locally and accepting\n"
 						  "\tconnections on Unix domain socket \"%s\"?\n"
 										),
-			SOCK_STRERROR(errorno, sebuf, sizeof(sebuf)), service);
+						  SOCK_STRERROR(errorno, sebuf, sizeof(sebuf)),
+						  service);
+	}
 	else
+#endif   /* HAVE_UNIX_SOCKETS */
+	{
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext(
 									  "could not connect to server: %s\n"
-					 "\tIs the server running on host %s and accepting\n"
+					 "\tIs the server running on host \"%s\" and accepting\n"
 									 "\tTCP/IP connections on port %s?\n"
 										),
 						  SOCK_STRERROR(errorno, sebuf, sizeof(sebuf)),
@@ -788,6 +795,7 @@ connectFailureMessage(PGconn *conn, int errorno)
 							 ? conn->pghost
 							 : "???"),
 						  conn->pgport);
+	}
 }
 
 
@@ -802,7 +810,7 @@ static int
 connectDBStart(PGconn *conn)
 {
 	int			portnum;
-	char			portstr[64];
+	char			portstr[128];
 	struct addrinfo		*addrs = NULL;
 	struct addrinfo		hint;
 	const char		*node = NULL;
@@ -816,7 +824,7 @@ connectDBStart(PGconn *conn)
 	conn->outCount = 0;
 
 	/*
-	 * Determine the parameters to pass to getaddrinfo2.
+	 * Determine the parameters to pass to getaddrinfo_all.
 	 */
 
 	/* Initialize hint structure */
@@ -854,14 +862,19 @@ connectDBStart(PGconn *conn)
 	}
 #endif   /* HAVE_UNIX_SOCKETS */
 
-	/* Use getaddrinfo2() to resolve the address */
-	ret = getaddrinfo2(node, portstr, &hint, &addrs);
-	if (ret || addrs == NULL)
+	/* Use getaddrinfo_all() to resolve the address */
+	ret = getaddrinfo_all(node, portstr, &hint, &addrs);
+	if (ret || !addrs)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("getaddrinfo() failed: %s\n"),
-						  gai_strerror(ret));
-		freeaddrinfo2(hint.ai_family, addrs);
+		if (node)
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("could not translate hostname \"%s\" to address: %s\n"),
+							  node, gai_strerror(ret));
+		else
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("could not translate local service to address: %s\n"),
+							  gai_strerror(ret));
+		freeaddrinfo_all(hint.ai_family, addrs);
 		goto connect_errReturn;
 	}
 
@@ -1068,7 +1081,7 @@ keep_going:						/* We will come back to here until there
 			{
 				/*
 				 * Try to initiate a connection to one of the addresses
-				 * returned by getaddrinfo2().  conn->addr_cur is the
+				 * returned by getaddrinfo_all().  conn->addr_cur is the
 				 * next one to try.  We fail when we run out of addresses
 				 * (reporting the error returned for the *last* alternative,
 				 * which may not be what users expect :-().
@@ -1083,9 +1096,7 @@ keep_going:						/* We will come back to here until there
 					conn->raddr.salen = addr_cur->ai_addrlen;
 
 					/* Open a socket */
-					conn->sock = socket(addr_cur->ai_family,
-							addr_cur->ai_socktype,
-							addr_cur->ai_protocol);
+					conn->sock = socket(addr_cur->ai_family, SOCK_STREAM, 0);
 					if (conn->sock < 0)
 					{
 						/*
@@ -1263,15 +1274,12 @@ retry_connect:
 				 * If SSL is enabled and we haven't already got it running,
 				 * request it instead of sending the startup message.
 				 */
-
-#ifdef HAVE_UNIX_SOCKETS
-				if (conn->raddr.addr.ss_family == AF_UNIX)
+				if (IS_AF_UNIX(conn->raddr.addr.ss_family))
 				{
 					/* Don't bother requesting SSL over a Unix socket */
 					conn->allow_ssl_try = false;
 					conn->require_ssl = false;
 				}
-#endif
 				if (conn->allow_ssl_try && conn->ssl == NULL)
 				{
 					ProtocolVersion pv;
@@ -1712,7 +1720,7 @@ retry_ssl_read:
 				}
 
 				/* We can release the address list now. */
-				freeaddrinfo2(conn->addrlist_family, conn->addrlist);
+				freeaddrinfo_all(conn->addrlist_family, conn->addrlist);
 				conn->addrlist = NULL;
 				conn->addr_cur = NULL;
 
@@ -1886,7 +1894,7 @@ freePGconn(PGconn *conn)
 	/* Note that conn->Pfdebug is not ours to close or free */
 	if (conn->notifyList)
 		DLFreeList(conn->notifyList);
-	freeaddrinfo2(conn->addrlist_family, conn->addrlist);
+	freeaddrinfo_all(conn->addrlist_family, conn->addrlist);
 	if (conn->lobjfuncs)
 		free(conn->lobjfuncs);
 	if (conn->inBuffer)

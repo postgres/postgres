@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.89 2003/07/15 17:54:34 tgl Exp $
+ * $Id: pqcomm.h,v 1.90 2003/07/23 23:30:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,38 +32,9 @@
 #include <netinet/in.h>
 #endif   /* not WIN32 */
 
-#ifndef	HAVE_STRUCT_SOCKADDR_STORAGE
-/* Define a struct sockaddr_storage if we don't have one. */
+#ifdef HAVE_STRUCT_SOCKADDR_STORAGE
 
-#define _SS_MAXSIZE    128		/* Implementation specific max size */
-
-#ifdef __CYGWIN__
-typedef unsigned short sa_family_t;
-#endif
-
-/* This must exactly match the non-padding fields of sockaddr_storage! */
-struct nopad_sockaddr_storage {
-#ifdef SALEN
-    uint8	__ss_len;			/* address length */
-#endif
-    sa_family_t	ss_family;		/* address family */
-
-    int64	__ss_align;			/* ensures struct is properly aligned */
-};
-
-struct sockaddr_storage {
-#ifdef SALEN
-    uint8	__ss_len;			/* address length */
-#endif
-    sa_family_t	ss_family;		/* address family */
-
-    int64	__ss_align;			/* ensures struct is properly aligned */
-
-    char	__ss_pad[_SS_MAXSIZE - sizeof(struct nopad_sockaddr_storage)];
-								/* ensures struct has desired size */
-};
-
-#elif !defined(HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY)
+#ifndef HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY
 # ifdef HAVE_STRUCT_SOCKADDR_STORAGE___SS_FAMILY
 #  define ss_family __ss_family
 # else
@@ -71,16 +42,36 @@ struct sockaddr_storage {
 # endif
 #endif
 
+#ifdef HAVE_STRUCT_SOCKADDR_STORAGE___SS_LEN
+#define ss_len __ss_len
+#define HAVE_STRUCT_SOCKADDR_STORAGE_SS_LEN 1
+#endif
+
+#else /* !HAVE_STRUCT_SOCKADDR_STORAGE */
+
+/* Define a struct sockaddr_storage if we don't have one. */
+
+struct sockaddr_storage {
+	union {
+		struct sockaddr sa;		/* get the system-dependent fields */
+		int64	ss_align;		/* ensures struct is properly aligned */
+		char	ss_pad[128];	/* ensures struct has desired size */
+	} ss_stuff;
+};
+
+#define ss_family	ss_stuff.sa.sa_family
+/* It should have an ss_len field if sockaddr has sa_len. */
+#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
+#define ss_len		ss_stuff.sa.sa_len
+#define HAVE_STRUCT_SOCKADDR_STORAGE_SS_LEN 1
+#endif
+
+#endif /* HAVE_STRUCT_SOCKADDR_STORAGE */
+
 typedef struct {
 	struct sockaddr_storage	addr;
 	ACCEPT_TYPE_ARG3	salen;
 } SockAddr;
-
-/* Some systems don't have it, so default it to 0 so it doesn't
- * have any effect on those systems. */
-#ifndef	AI_ADDRCONFIG
-#define	AI_ADDRCONFIG 0
-#endif
 
 /* Configure the UNIX socket location for the well known port. */
 

@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.269 2003/07/23 17:27:28 momjian Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.270 2003/07/23 23:30:40 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -778,7 +778,7 @@ PGAC_STRUCT_TIMEZONE
 PGAC_UNION_SEMUN
 PGAC_STRUCT_SOCKADDR_UN
 PGAC_STRUCT_SOCKADDR_STORAGE
-PGAC_STRUCT_SOCKADDR_STORAGE_SS_FAMILY
+PGAC_STRUCT_SOCKADDR_STORAGE_MEMBERS
 PGAC_STRUCT_ADDRINFO
 
 AC_CHECK_TYPES([struct cmsgcred, struct fcred, struct sockcred], [], [],
