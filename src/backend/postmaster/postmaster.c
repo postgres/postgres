@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.323 2003/05/08 14:49:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.324 2003/05/08 18:33:25 tgl Exp $
  *
  * NOTES
  *
@@ -1216,16 +1216,6 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 	 * if we fail during startup.
 	 */
 	FrontendProtocol = proto;
-
-	/*
-	 * XXX temporary for 3.0 protocol development: we are using the minor
-	 * number as a test-version number.  Insist it match exactly so people
-	 * don't get burnt by using yesterday's libpq with today's server.
-	 * XXX this must go away before release!!!
-	 */
-	if (PG_PROTOCOL_MAJOR(proto) == 3 &&
-		PG_PROTOCOL_MINOR(proto) != PG_PROTOCOL_MINOR(PG_PROTOCOL_LATEST))
-		elog(FATAL, "Your development libpq is out of sync with the server");
 
 	/* Check we can handle the protocol the frontend is using. */
 
