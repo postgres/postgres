@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.35 1999/11/22 17:56:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.36 1999/12/27 15:42:43 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -38,6 +38,8 @@ static int	findTableByOid(TableInfo *tbinfo, int numTables, const char *oid);
 static void flagInhAttrs(TableInfo *tbinfo, int numTables,
 			 InhInfo *inhinfo, int numInherits);
 static int	strInArray(const char *pattern, char **arr, int arr_size);
+
+PQExpBuffer id_return;
 
 /*
  * findTypeByOid
@@ -496,8 +498,12 @@ const char *
 fmtId(const char *rawid, bool force_quotes)
 {
 	const char *cp;
-	static char id[MAX_QUERY_SIZE];
 
+	if (id_return)
+		resetPQExpBuffer(id_return);
+	else
+		id_return = createPQExpBuffer();
+	
 	if (!force_quotes)
 		for (cp = rawid; *cp != '\0'; cp++)
 			if (!(islower(*cp) || isdigit(*cp) || (*cp == '_')))
@@ -505,12 +511,13 @@ fmtId(const char *rawid, bool force_quotes)
 
 	if (force_quotes || (*cp != '\0'))
 	{
-		strcpy(id, "\"");
-		strcat(id, rawid);
-		strcat(id, "\"");
-		cp = id;
+		appendPQExpBuffer(id_return, "\"");
+		appendPQExpBuffer(id_return, rawid);
+		appendPQExpBuffer(id_return, "\"");
 	}
 	else
-		cp = rawid;
+		appendPQExpBuffer(id_return, rawid);
+
+	cp = id_return->data;
 	return cp;
 }	/* fmtId() */

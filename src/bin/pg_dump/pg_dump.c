@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.126 1999/12/16 20:09:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.127 1999/12/27 15:42:43 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -195,14 +195,14 @@ isViewRule(char *relname)
 {
 	PGresult   *res;
 	int			ntups;
-	char		query[MAX_QUERY_SIZE];
+	PQExpBuffer	query = createPQExpBuffer();
 
-	sprintf(query, "select relname from pg_class, pg_rewrite "
-			"where pg_class.oid = ev_class "
-			"and pg_rewrite.ev_type = '1' "
-			"and rulename = '_RET%s'", relname);
+	appendPQExpBuffer(query, "select relname from pg_class, pg_rewrite ");
+	appendPQExpBuffer(query, "where pg_class.oid = ev_class ");
+	appendPQExpBuffer(query, "and pg_rewrite.ev_type = '1' ");
+	appendPQExpBuffer(query, "and rulename = '_RET%s'", relname);
 
-	res = PQexec(g_conn, query);
+	res = PQexec(g_conn, query->data);
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
@@ -313,14 +313,14 @@ dumpClasses_nodumpData(FILE *fout, const char *classname, const bool oids)
 static void
 dumpClasses_dumpData(FILE *fout, const char *classname)
 {
-	PGresult   *res;
-	char		q[MAX_QUERY_SIZE];
+	PGresult	*res;
+	PQExpBuffer	q = createPQExpBuffer();
 	int			tuple;
 	int			field;
-	const char *expsrc;
+	const char	*expsrc;
 
-	sprintf(q, "SELECT * FROM %s", fmtId(classname, force_quotes));
-	res = PQexec(g_conn, q);
+	appendPQExpBuffer(q, "SELECT * FROM %s", fmtId(classname, force_quotes));
+	res = PQexec(g_conn, q->data);
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
@@ -332,15 +332,16 @@ dumpClasses_dumpData(FILE *fout, const char *classname)
 		fprintf(fout, "INSERT INTO %s ", fmtId(classname, force_quotes));
 		if (attrNames == true)
 		{
-			sprintf(q, "(");
+			resetPQExpBuffer(q);
+			appendPQExpBuffer(q, "(");
 			for (field = 0; field < PQnfields(res); field++)
 			{
 				if (field > 0)
-					strcat(q, ",");
-				strcat(q, fmtId(PQfname(res, field), force_quotes));
+					appendPQExpBuffer(q, ",");
+				appendPQExpBuffer(q, fmtId(PQfname(res, field), force_quotes));
 			}
-			strcat(q, ") ");
-			fprintf(fout, "%s", q);
+			appendPQExpBuffer(q, ") ");
+			fprintf(fout, "%s", q->data);
 		}
 		fprintf(fout, "VALUES (");
 		for (field = 0; field < PQnfields(res); field++)
@@ -815,7 +816,7 @@ getTypes(int *numTypes)
 	PGresult   *res;
 	int			ntups;
 	int			i;
-	char		query[MAX_QUERY_SIZE];
+	PQExpBuffer	query = createPQExpBuffer();
 	TypeInfo   *tinfo;
 
 	int			i_oid;
@@ -845,12 +846,12 @@ getTypes(int *numTypes)
 	 * we filter out the built-in types when we dump out the types
 	 */
 
-	sprintf(query, "SELECT pg_type.oid, typowner,typname, typlen, typprtlen, "
+	appendPQExpBuffer(query, "SELECT pg_type.oid, typowner, typname, typlen, typprtlen, "
 		  "typinput, typoutput, typreceive, typsend, typelem, typdelim, "
-		  "typdefault, typrelid,typbyval, usename from pg_type, pg_user "
+		  "typdefault, typrelid, typbyval, usename from pg_type, pg_user "
 			"where typowner = usesysid");
 
-	res = PQexec(g_conn, query);
+	res = PQexec(g_conn, query->data);
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
@@ -929,10 +930,10 @@ getTypes(int *numTypes)
 OprInfo    *
 getOperators(int *numOprs)
 {
-	PGresult   *res;
+	PGresult	*res;
 	int			ntups;
 	int			i;
-	char		query[MAX_QUERY_SIZE];
+	PQExpBuffer	query = createPQExpBuffer();
 
 	OprInfo    *oprinfo;
 
@@ -956,13 +957,13 @@ getOperators(int *numOprs)
 	 * system-defined operators at dump-out time
 	 */
 
-	sprintf(query, "SELECT pg_operator.oid, oprname, oprkind, oprcode, "
+	appendPQExpBuffer(query, "SELECT pg_operator.oid, oprname, oprkind, oprcode, "
 			"oprleft, oprright, oprcom, oprnegate, oprrest, oprjoin, "
 			"oprcanhash, oprlsortop, oprrsortop, usename "
 			"from pg_operator, pg_user "
 			"where oprowner = usesysid");
 
-	res = PQexec(g_conn, query);
+	res = PQexec(g_conn, query->data);
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
@@ -1266,7 +1267,7 @@ getAggregates(int *numAggs)
 	PGresult   *res;
 	int			ntups;
 	int			i;
-	char		query[MAX_QUERY_SIZE];
+	PQExpBuffer	query = createPQExpBuffer();
 	AggInfo    *agginfo;
 
 	int			i_oid;
@@ -1283,13 +1284,13 @@ getAggregates(int *numAggs)
 
 	/* find all user-defined aggregates */
 
-	sprintf(query,
+	appendPQExpBuffer(query,
 			"SELECT pg_aggregate.oid, aggname, aggtransfn1, aggtransfn2, "
 			"aggfinalfn, aggtranstype1, aggbasetype, aggtranstype2, "
 		  "agginitval1, agginitval2, usename from pg_aggregate, pg_user "
 			"where aggowner = usesysid");
 
-	res = PQexec(g_conn, query);
+	res = PQexec(g_conn, query->data);
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
@@ -1346,11 +1347,11 @@ getAggregates(int *numAggs)
 FuncInfo   *
 getFuncs(int *numFuncs)
 {
-	PGresult   *res;
+	PGresult	*res;
 	int			ntups;
 	int			i;
-	char		query[MAX_QUERY_SIZE];
-	FuncInfo   *finfo;
+	PQExpBuffer	query = createPQExpBuffer();
+	FuncInfo	*finfo;
 
 	int			i_oid;
 	int			i_proname;
@@ -1365,14 +1366,14 @@ getFuncs(int *numFuncs)
 
 	/* find all user-defined funcs */
 
-	sprintf(query,
+	appendPQExpBuffer(query,
 			"SELECT pg_proc.oid, proname, prolang, pronargs, prorettype, "
 			"proretset, proargtypes, prosrc, probin, usename "
 			"from pg_proc, pg_user "
 			"where pg_proc.oid > '%u'::oid and proowner = usesysid",
 			g_last_builtin_oid);
 
-	res = PQexec(g_conn, query);
+	res = PQexec(g_conn, query->data);
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
@@ -1435,11 +1436,11 @@ getFuncs(int *numFuncs)
 TableInfo  *
 getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 {
-	PGresult   *res;
+	PGresult	*res;
 	int			ntups;
 	int			i;
-	char		query[MAX_QUERY_SIZE];
-	TableInfo  *tblinfo;
+	PQExpBuffer	query = createPQExpBuffer();
+	TableInfo	*tblinfo;
 
 	int			i_oid;
 	int			i_relname;
@@ -1460,7 +1461,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	 * (type 'l') are ignored.
 	 */
 
-	sprintf(query,
+	appendPQExpBuffer(query,
 			"SELECT pg_class.oid, relname, relkind, relacl, usename, "
 			"relchecks, reltriggers, relhasindex "
 			"from pg_class, pg_user "
@@ -1468,7 +1469,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			"(relkind = 'r' or relkind = 'S') and relname !~ '^pg_' "
 			"order by oid");
 
-	res = PQexec(g_conn, query);
+	res = PQexec(g_conn, query->data);
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
@@ -1489,7 +1490,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	i_usename = PQfnumber(res, "usename");
 	i_relchecks = PQfnumber(res, "relchecks");
 	i_reltriggers = PQfnumber(res, "reltriggers");
-    i_relhasindex = PQfnumber(res, "relhasindex");
+	i_relhasindex = PQfnumber(res, "relhasindex");
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -1518,7 +1519,8 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 						tblinfo[i].relname,
 						g_comment_end);
 
-			sprintf(query, "SELECT rcname from pg_relcheck, pg_inherits as i "
+			resetPQExpBuffer(query);
+			appendPQExpBuffer(query, "SELECT rcname from pg_relcheck, pg_inherits as i "
 					"where rcrelid = '%s'::oid "
 					" and rcrelid = i.inhrelid"
 					" and exists "
@@ -1527,7 +1529,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 					"      and c.rcsrc = pg_relcheck.rcsrc "
 					"      and c.rcrelid = i.inhparent) ",
 					tblinfo[i].oid);
-			res2 = PQexec(g_conn, query);
+			res2 = PQexec(g_conn, query->data);
 			if (!res2 ||
 				PQresultStatus(res2) != PGRES_TUPLES_OK)
 			{
@@ -1561,7 +1563,8 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 						tblinfo[i].relname,
 						g_comment_end);
 
-			sprintf(query, "SELECT rcname, rcsrc from pg_relcheck "
+			resetPQExpBuffer(query);
+			appendPQExpBuffer(query, "SELECT rcname, rcsrc from pg_relcheck "
 					"where rcrelid = '%s'::oid "
 					"   and not exists "
 					"  (select * from pg_relcheck as c, pg_inherits as i "
@@ -1570,7 +1573,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 					"     and c.rcsrc = pg_relcheck.rcsrc "
 					"     and c.rcrelid = i.inhparent) ",
 					tblinfo[i].oid);
-			res2 = PQexec(g_conn, query);
+			res2 = PQexec(g_conn, query->data);
 			if (!res2 ||
 				PQresultStatus(res2) != PGRES_TUPLES_OK)
 			{
@@ -1592,11 +1595,11 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 				const char *name = PQgetvalue(res2, i2, i_rcname);
 				const char *expr = PQgetvalue(res2, i2, i_rcsrc);
 
-				query[0] = '\0';
+				resetPQExpBuffer(query);
 				if (name[0] != '$')
-					sprintf(query, "CONSTRAINT %s ", fmtId(name, force_quotes));
-				sprintf(query + strlen(query), "CHECK (%s)", expr);
-				tblinfo[i].check_expr[i2] = strdup(query);
+					appendPQExpBuffer(query, "CONSTRAINT %s ", fmtId(name, force_quotes));
+				appendPQExpBuffer(query, "CHECK (%s)", expr);
+				tblinfo[i].check_expr[i2] = strdup(query->data);
 			}
 			PQclear(res2);
 		}
@@ -1610,14 +1613,15 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
             char str[INDEX_MAX_KEYS * NAMEDATALEN + 3] = "";
             int j;
 
-            sprintf(query,
+			resetPQExpBuffer(query);
+            appendPQExpBuffer(query,
                     "SELECT a.attname "
                     "FROM pg_index i, pg_class c, pg_attribute a "
                     "WHERE i.indisprimary AND i.indrelid = %s "
                     "  AND i.indexrelid = c.oid AND a.attnum > 0 AND a.attrelid = c.oid "
                     "ORDER BY a.attnum ",
                     tblinfo[i].oid);
-            res2 = PQexec(g_conn, query);
+            res2 = PQexec(g_conn, query->data);
 			if (!res2 || PQresultStatus(res2) != PGRES_TUPLES_OK)
 			{
 				fprintf(stderr, "getTables(): SELECT (for PRIMARY KEY) failed.  Explanation from backend: %s",
@@ -1663,11 +1667,12 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 						tblinfo[i].relname,
 						g_comment_end);
 
-			sprintf(query, "SELECT tgname, tgfoid, tgtype, tgnargs, tgargs "
+			resetPQExpBuffer(query);
+			appendPQExpBuffer(query, "SELECT tgname, tgfoid, tgtype, tgnargs, tgargs "
 					"from pg_trigger "
 					"where tgrelid = '%s'::oid ",
 					tblinfo[i].oid);
-			res2 = PQexec(g_conn, query);
+			res2 = PQexec(g_conn, query->data);
 			if (!res2 ||
 				PQresultStatus(res2) != PGRES_TUPLES_OK)
 			{
@@ -1687,7 +1692,8 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			i_tgnargs = PQfnumber(res2, "tgnargs");
 			i_tgargs = PQfnumber(res2, "tgargs");
 			tblinfo[i].triggers = (char **) malloc(ntups2 * sizeof(char *));
-			for (i2 = 0, query[0] = 0; i2 < ntups2; i2++)
+			resetPQExpBuffer(query);
+			for (i2 = 0; i2 < ntups2; i2++)
 			{
 				const char *tgfunc = PQgetvalue(res2, i2, i_tgfoid);
 				int2		tgtype = atoi(PQgetvalue(res2, i2, i_tgtype));
@@ -1716,42 +1722,44 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 				/* XXX - how to emit this DROP TRIGGER? */
 				if (dropSchema)
 				{
-					sprintf(query, "DROP TRIGGER %s ON %s;\n",
+					resetPQExpBuffer(query);
+					appendPQExpBuffer(query, "DROP TRIGGER %s ON %s;\n",
 					 fmtId(PQgetvalue(res2, i2, i_tgname), force_quotes),
 							fmtId(tblinfo[i].relname, force_quotes));
-					fputs(query, fout);
+					fputs(query->data, fout);
 				}
 #endif
 
-				sprintf(query, "CREATE TRIGGER %s ", fmtId(PQgetvalue(res2, i2, i_tgname), force_quotes));
+				resetPQExpBuffer(query);
+				appendPQExpBuffer(query, "CREATE TRIGGER %s ", fmtId(PQgetvalue(res2, i2, i_tgname), force_quotes));
 				/* Trigger type */
 				findx = 0;
 				if (TRIGGER_FOR_BEFORE(tgtype))
-					strcat(query, "BEFORE");
+					appendPQExpBuffer(query, "BEFORE");
 				else
-					strcat(query, "AFTER");
+					appendPQExpBuffer(query, "AFTER");
 				if (TRIGGER_FOR_INSERT(tgtype))
 				{
-					strcat(query, " INSERT");
+					appendPQExpBuffer(query, " INSERT");
 					findx++;
 				}
 				if (TRIGGER_FOR_DELETE(tgtype))
 				{
 					if (findx > 0)
-						strcat(query, " OR DELETE");
+						appendPQExpBuffer(query, " OR DELETE");
 					else
-						strcat(query, " DELETE");
+						appendPQExpBuffer(query, " DELETE");
 					findx++;
 				}
 				if (TRIGGER_FOR_UPDATE(tgtype))
 				{
 					if (findx > 0)
-						strcat(query, " OR UPDATE");
+						appendPQExpBuffer(query, " OR UPDATE");
 					else
-						strcat(query, " UPDATE");
+						appendPQExpBuffer(query, " UPDATE");
 				}
-				sprintf(query, "%s ON %s FOR EACH ROW EXECUTE PROCEDURE %s (",
-				 query, fmtId(tblinfo[i].relname, force_quotes), tgfunc);
+				appendPQExpBuffer(query, " ON %s FOR EACH ROW EXECUTE PROCEDURE %s (",
+					fmtId(tblinfo[i].relname, force_quotes), tgfunc);
 				for (findx = 0; findx < tgnargs; findx++)
 				{
 					const char	   *s;
@@ -1785,12 +1793,12 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 						*d++ = *s++;
 					}
 					*d = 0;
-					sprintf(query, "%s'%s'%s", query, farg,
+					appendPQExpBuffer(query, "'%s'%s", farg,
 							(findx < tgnargs - 1) ? ", " : "");
 					tgargs = p + 4;
 				}
-				strcat(query, ");\n");
-				tblinfo[i].triggers[i2] = strdup(query);
+				appendPQExpBuffer(query, ");\n");
+				tblinfo[i].triggers[i2] = strdup(query->data);
 			}
 			PQclear(res2);
 		}
@@ -1816,20 +1824,20 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 InhInfo    *
 getInherits(int *numInherits)
 {
-	PGresult   *res;
+	PGresult	*res;
 	int			ntups;
 	int			i;
-	char		query[MAX_QUERY_SIZE];
-	InhInfo    *inhinfo;
+	PQExpBuffer	query = createPQExpBuffer();
+	InhInfo		*inhinfo;
 
 	int			i_inhrelid;
 	int			i_inhparent;
 
 	/* find all the inheritance information */
 
-	sprintf(query, "SELECT inhrelid, inhparent from pg_inherits");
+	appendPQExpBuffer(query, "SELECT inhrelid, inhparent from pg_inherits");
 
-	res = PQexec(g_conn, query);
+	res = PQexec(g_conn, query->data);
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
@@ -1871,13 +1879,13 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 {
 	int			i,
 				j;
-	char		q[MAX_QUERY_SIZE];
+	PQExpBuffer	q = createPQExpBuffer();
 	int			i_attname;
 	int			i_typname;
 	int			i_atttypmod;
 	int			i_attnotnull;
 	int			i_atthasdef;
-	PGresult   *res;
+	PGresult	*res;
 	int			ntups;
 
 	for (i = 0; i < numTables; i++)
@@ -1899,13 +1907,14 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 					tblinfo[i].relname,
 					g_comment_end);
 
-		sprintf(q, "SELECT a.attnum, a.attname, t.typname, a.atttypmod, "
+		resetPQExpBuffer(q);
+		appendPQExpBuffer(q, "SELECT a.attnum, a.attname, t.typname, a.atttypmod, "
 				"a.attnotnull, a.atthasdef "
 				"from pg_attribute a, pg_type t "
 				"where a.attrelid = '%s'::oid and a.atttypid = t.oid "
 				"and a.attnum > 0 order by attnum",
 				tblinfo[i].oid);
-		res = PQexec(g_conn, q);
+		res = PQexec(g_conn, q->data);
 		if (!res ||
 			PQresultStatus(res) != PGRES_TUPLES_OK)
 		{
@@ -1948,10 +1957,11 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 							tblinfo[i].attnames[j],
 							g_comment_end);
 
-				sprintf(q, "SELECT adsrc from pg_attrdef "
+				resetPQExpBuffer(q);
+				appendPQExpBuffer(q, "SELECT adsrc from pg_attrdef "
 						"where adrelid = '%s'::oid and adnum = %d ",
 						tblinfo[i].oid, j + 1);
-				res2 = PQexec(g_conn, q);
+				res2 = PQexec(g_conn, q->data);
 				if (!res2 ||
 					PQresultStatus(res2) != PGRES_TUPLES_OK)
 				{
@@ -1982,7 +1992,7 @@ IndInfo    *
 getIndices(int *numIndices)
 {
 	int			i;
-	char		query[MAX_QUERY_SIZE];
+	PQExpBuffer	query = createPQExpBuffer();
 	PGresult   *res;
 	int			ntups;
 	IndInfo    *indinfo;
@@ -2004,7 +2014,7 @@ getIndices(int *numIndices)
 	 * this is a 4-way join !!
 	 */
 
-	sprintf(query,
+	appendPQExpBuffer(query,
             "SELECT t1.relname as indexrelname, t2.relname as indrelname, "
 			"i.indproc, i.indkey, i.indclass, "
 			"a.amname as indamname, i.indisunique "
@@ -2014,7 +2024,7 @@ getIndices(int *numIndices)
 			"and t2.relname !~ '^pg_' and t2.relkind != 'l' and not i.indisprimary",
 			g_last_builtin_oid);
 
-	res = PQexec(g_conn, query);
+	res = PQexec(g_conn, query->data);
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
@@ -2062,7 +2072,7 @@ dumpTypes(FILE *fout, FuncInfo *finfo, int numFuncs,
 		  TypeInfo *tinfo, int numTypes)
 {
 	int			i;
-	char		q[MAX_QUERY_SIZE];
+	PQExpBuffer	q = createPQExpBuffer();
 	int			funcInd;
 
 	for (i = 0; i < numTypes; i++)
@@ -2097,11 +2107,13 @@ dumpTypes(FILE *fout, FuncInfo *finfo, int numFuncs,
 
 		if (dropSchema)
 		{
-			sprintf(q, "DROP TYPE %s;\n", fmtId(tinfo[i].typname, force_quotes));
-			fputs(q, fout);
+			resetPQExpBuffer(q);
+			appendPQExpBuffer(q, "DROP TYPE %s;\n", fmtId(tinfo[i].typname, force_quotes));
+			fputs(q->data, fout);
 		}
 
-		sprintf(q,
+		resetPQExpBuffer(q);
+		appendPQExpBuffer(q,
 				"CREATE TYPE %s "
 				"( internallength = %s, externallength = %s, input = %s, "
 				"output = %s, send = %s, receive = %s, default = '%s'",
@@ -2120,15 +2132,15 @@ dumpTypes(FILE *fout, FuncInfo *finfo, int numFuncs,
 
 			elemType = findTypeByOid(tinfo, numTypes, tinfo[i].typelem);
 
-			sprintf(q, "%s, element = %s, delimiter = '%s'",
-					q, elemType, tinfo[i].typdelim);
+			appendPQExpBuffer(q, ", element = %s, delimiter = '%s'",
+					elemType, tinfo[i].typdelim);
 		}
 		if (tinfo[i].passedbyvalue)
-			strcat(q, ",passedbyvalue);\n");
+			appendPQExpBuffer(q, ",passedbyvalue);\n");
 		else
-			strcat(q, ");\n");
+			appendPQExpBuffer(q, ");\n");
 
-		fputs(q, fout);
+		fputs(q->data, fout);
 	}
 }
 
@@ -2141,23 +2153,23 @@ void
 dumpProcLangs(FILE *fout, FuncInfo *finfo, int numFuncs,
 			  TypeInfo *tinfo, int numTypes)
 {
-	PGresult   *res;
-	char		query[MAX_QUERY_SIZE];
+	PGresult	*res;
+	PQExpBuffer	query = createPQExpBuffer();
 	int			ntups;
 	int			i_lanname;
 	int			i_lanpltrusted;
 	int			i_lanplcallfoid;
 	int			i_lancompiler;
-	char	   *lanname;
-	char	   *lancompiler;
-	const char *lanplcallfoid;
+	char		*lanname;
+	char		*lancompiler;
+	const char	*lanplcallfoid;
 	int			i,
 				fidx;
 
-	sprintf(query, "SELECT * FROM pg_language "
+	appendPQExpBuffer(query, "SELECT * FROM pg_language "
 			"WHERE lanispl "
 			"ORDER BY oid");
-	res = PQexec(g_conn, query);
+	res = PQexec(g_conn, query->data);
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
@@ -2234,9 +2246,9 @@ static void
 dumpOneFunc(FILE *fout, FuncInfo *finfo, int i,
 			TypeInfo *tinfo, int numTypes)
 {
-	char		q[MAX_QUERY_SIZE];
+	PQExpBuffer	q = createPQExpBuffer();
 	int			j;
-	char	   *func_def;
+	char		*func_def;
 	char		func_lang[NAMEDATALEN + 1];
 
 	if (finfo[i].dumped)
@@ -2297,39 +2309,38 @@ dumpOneFunc(FILE *fout, FuncInfo *finfo, int i,
 
 	if (dropSchema)
 	{
-		sprintf(q, "DROP FUNCTION %s (", fmtId(finfo[i].proname, force_quotes));
+		resetPQExpBuffer(q);
+		appendPQExpBuffer(q, "DROP FUNCTION %s (", fmtId(finfo[i].proname, force_quotes));
 		for (j = 0; j < finfo[i].nargs; j++)
 		{
 			char	   *typname;
 
 			typname = findTypeByOid(tinfo, numTypes, finfo[i].argtypes[j]);
-			sprintf(q, "%s%s%s",
-					q,
+			appendPQExpBuffer(q, "%s%s",
 					(j > 0) ? "," : "",
 					fmtId(typname, false));
 		}
-		sprintf(q, "%s);\n", q);
-		fputs(q, fout);
+		appendPQExpBuffer(q, ");\n");
+		fputs(q->data, fout);
 	}
 
-	sprintf(q, "CREATE FUNCTION %s (", fmtId(finfo[i].proname, force_quotes));
+	resetPQExpBuffer(q);
+	appendPQExpBuffer(q, "CREATE FUNCTION %s (", fmtId(finfo[i].proname, force_quotes));
 	for (j = 0; j < finfo[i].nargs; j++)
 	{
 		char	   *typname;
 
 		typname = findTypeByOid(tinfo, numTypes, finfo[i].argtypes[j]);
-		sprintf(q, "%s%s%s",
-				q,
+		appendPQExpBuffer(q, "%s%s",
 				(j > 0) ? "," : "",
 				fmtId(typname, false));
 	}
-	sprintf(q, "%s ) RETURNS %s%s AS '%s' LANGUAGE '%s';\n",
-			q,
+	appendPQExpBuffer(q, " ) RETURNS %s%s AS '%s' LANGUAGE '%s';\n",
 			(finfo[i].retset) ? " SETOF " : "",
-	   fmtId(findTypeByOid(tinfo, numTypes, finfo[i].prorettype), false),
+			fmtId(findTypeByOid(tinfo, numTypes, finfo[i].prorettype), false),
 			func_def, func_lang);
 
-	fputs(q, fout);
+	fputs(q->data, fout);
 
 }
 
@@ -2343,18 +2354,27 @@ dumpOprs(FILE *fout, OprInfo *oprinfo, int numOperators,
 		 TypeInfo *tinfo, int numTypes)
 {
 	int			i;
-	char		q[MAX_QUERY_SIZE];
-	char		leftarg[MAX_QUERY_SIZE/8];
-	char		rightarg[MAX_QUERY_SIZE/8];
-	char		commutator[MAX_QUERY_SIZE/8];
-	char		negator[MAX_QUERY_SIZE/8];
-	char		restrictor[MAX_QUERY_SIZE/8];
-	char		join[MAX_QUERY_SIZE/8];
-	char		sort1[MAX_QUERY_SIZE/8];
-	char		sort2[MAX_QUERY_SIZE/8];
+	PQExpBuffer	q = createPQExpBuffer();
+	PQExpBuffer	leftarg = createPQExpBuffer();
+	PQExpBuffer	rightarg = createPQExpBuffer();
+	PQExpBuffer	commutator = createPQExpBuffer();
+	PQExpBuffer	negator = createPQExpBuffer();
+	PQExpBuffer	restrictor = createPQExpBuffer();
+	PQExpBuffer	join = createPQExpBuffer();
+	PQExpBuffer	sort1 = createPQExpBuffer();
+	PQExpBuffer	sort2 = createPQExpBuffer();
 
 	for (i = 0; i < numOperators; i++)
 	{
+
+		resetPQExpBuffer(leftarg);
+		resetPQExpBuffer(rightarg);
+		resetPQExpBuffer(commutator);
+		resetPQExpBuffer(negator);
+		resetPQExpBuffer(restrictor);
+		resetPQExpBuffer(join);
+		resetPQExpBuffer(sort1);
+		resetPQExpBuffer(sort2);
 
 		/* skip all the builtin oids */
 		if (atoi(oprinfo[i].oid) < g_last_builtin_oid)
@@ -2367,9 +2387,6 @@ dumpOprs(FILE *fout, OprInfo *oprinfo, int numOperators,
 		if (strcmp(oprinfo[i].oprcode, "-") == 0)
 			continue;
 
-		leftarg[0] = '\0';
-		rightarg[0] = '\0';
-
 		/*
 		 * right unary means there's a left arg and left unary means
 		 * there's a right arg
@@ -2377,75 +2394,65 @@ dumpOprs(FILE *fout, OprInfo *oprinfo, int numOperators,
 		if (strcmp(oprinfo[i].oprkind, "r") == 0 ||
 			strcmp(oprinfo[i].oprkind, "b") == 0)
 		{
-			sprintf(leftarg, ",\n\tLEFTARG = %s ",
+			appendPQExpBuffer(leftarg, ",\n\tLEFTARG = %s ",
 					fmtId(findTypeByOid(tinfo, numTypes, oprinfo[i].oprleft), false));
 		}
 		if (strcmp(oprinfo[i].oprkind, "l") == 0 ||
 			strcmp(oprinfo[i].oprkind, "b") == 0)
 		{
-			sprintf(rightarg, ",\n\tRIGHTARG = %s ",
+			appendPQExpBuffer(rightarg, ",\n\tRIGHTARG = %s ",
 					fmtId(findTypeByOid(tinfo, numTypes, oprinfo[i].oprright), false));
 		}
-		if (strcmp(oprinfo[i].oprcom, "0") == 0)
-			commutator[0] = '\0';
-		else
-			sprintf(commutator, ",\n\tCOMMUTATOR = %s ",
+		if (!(strcmp(oprinfo[i].oprcom, "0") == 0))
+			appendPQExpBuffer(commutator, ",\n\tCOMMUTATOR = %s ",
 				 findOprByOid(oprinfo, numOperators, oprinfo[i].oprcom));
 
-		if (strcmp(oprinfo[i].oprnegate, "0") == 0)
-			negator[0] = '\0';
-		else
-			sprintf(negator, ",\n\tNEGATOR = %s ",
+		if (!(strcmp(oprinfo[i].oprnegate, "0") == 0))
+			appendPQExpBuffer(negator, ",\n\tNEGATOR = %s ",
 			  findOprByOid(oprinfo, numOperators, oprinfo[i].oprnegate));
 
-		if (strcmp(oprinfo[i].oprrest, "-") == 0)
-			restrictor[0] = '\0';
-		else
-			sprintf(restrictor, ",\n\tRESTRICT = %s ", oprinfo[i].oprrest);
+		if (!(strcmp(oprinfo[i].oprrest, "-") == 0))
+			appendPQExpBuffer(restrictor, ",\n\tRESTRICT = %s ", oprinfo[i].oprrest);
 
-		if (strcmp(oprinfo[i].oprjoin, "-") == 0)
-			join[0] = '\0';
-		else
-			sprintf(join, ",\n\tJOIN = %s ", oprinfo[i].oprjoin);
+		if (!(strcmp(oprinfo[i].oprjoin, "-") == 0))
+			appendPQExpBuffer(join, ",\n\tJOIN = %s ", oprinfo[i].oprjoin);
 
-		if (strcmp(oprinfo[i].oprlsortop, "0") == 0)
-			sort1[0] = '\0';
-		else
-			sprintf(sort1, ",\n\tSORT1 = %s ",
+		if (!(strcmp(oprinfo[i].oprlsortop, "0") == 0))
+			appendPQExpBuffer(sort1, ",\n\tSORT1 = %s ",
 			 findOprByOid(oprinfo, numOperators, oprinfo[i].oprlsortop));
 
-		if (strcmp(oprinfo[i].oprrsortop, "0") == 0)
-			sort2[0] = '\0';
-		else
-			sprintf(sort2, ",\n\tSORT2 = %s ",
+		if (!(strcmp(oprinfo[i].oprrsortop, "0") == 0))
+			appendPQExpBuffer(sort2, ",\n\tSORT2 = %s ",
 			 findOprByOid(oprinfo, numOperators, oprinfo[i].oprrsortop));
 
 		becomeUser(fout, oprinfo[i].usename);
 
 		if (dropSchema)
 		{
-			sprintf(q, "DROP OPERATOR %s (%s, %s);\n", oprinfo[i].oprname,
+			resetPQExpBuffer(q);
+			appendPQExpBuffer(q, "DROP OPERATOR %s (%s, %s);\n", oprinfo[i].oprname,
 					fmtId(findTypeByOid(tinfo, numTypes, oprinfo[i].oprleft), false),
 					fmtId(findTypeByOid(tinfo, numTypes, oprinfo[i].oprright), false));
-			fputs(q, fout);
+			fputs(q->data, fout);
 		}
 
-		sprintf(q,
+		resetPQExpBuffer(q);
+		appendPQExpBuffer(q,
 				"CREATE OPERATOR %s "
 				"(PROCEDURE = %s %s%s%s%s%s%s%s%s%s);\n",
 				oprinfo[i].oprname,
 				oprinfo[i].oprcode,
-				leftarg,
-				rightarg,
-				commutator,
-				negator,
-				restrictor,
+				leftarg->data,
+				rightarg->data,
+				commutator->data,
+				negator->data,
+				restrictor->data,
 		  (strcmp(oprinfo[i].oprcanhash, "t") == 0) ? ",\n\tHASHES" : "",
-				join,
-				sort1,
-				sort2);
+				join->data,
+				sort1->data,
+				sort2->data);
 
-		fputs(q, fout);
+		fputs(q->data, fout);
 	}
 }
 
@@ -2459,56 +2466,56 @@ dumpAggs(FILE *fout, AggInfo *agginfo, int numAggs,
 		 TypeInfo *tinfo, int numTypes)
 {
 	int			i;
-	char		q[MAX_QUERY_SIZE];
-	char		sfunc1[MAX_QUERY_SIZE];
-	char		sfunc2[MAX_QUERY_SIZE];
-	char		basetype[MAX_QUERY_SIZE];
-	char		finalfunc[MAX_QUERY_SIZE];
+	PQExpBuffer	q = createPQExpBuffer();
+	PQExpBuffer	sfunc1 = createPQExpBuffer();
+	PQExpBuffer	sfunc2 = createPQExpBuffer();
+	PQExpBuffer	basetype = createPQExpBuffer();
+	PQExpBuffer	finalfunc = createPQExpBuffer();
 	char		comma1[2],
 				comma2[2];
 
 	for (i = 0; i < numAggs; i++)
 	{
+
+		resetPQExpBuffer(sfunc1);
+		resetPQExpBuffer(sfunc2);
+		resetPQExpBuffer(basetype);
+		resetPQExpBuffer(finalfunc);
+
 		/* skip all the builtin oids */
 		if (atoi(agginfo[i].oid) < g_last_builtin_oid)
 			continue;
 
-		sprintf(basetype,
+		appendPQExpBuffer(basetype,
 				"BASETYPE = %s, ",
 				fmtId(findTypeByOid(tinfo, numTypes, agginfo[i].aggbasetype), false));
 
-		if (strcmp(agginfo[i].aggtransfn1, "-") == 0)
-			sfunc1[0] = '\0';
-		else
+		if (!(strcmp(agginfo[i].aggtransfn1, "-") == 0))
 		{
-			sprintf(sfunc1,
+			appendPQExpBuffer(sfunc1,
 					"SFUNC1 = %s, STYPE1 = %s",
 					agginfo[i].aggtransfn1,
 					fmtId(findTypeByOid(tinfo, numTypes, agginfo[i].aggtranstype1), false));
 			if (agginfo[i].agginitval1)
-				sprintf(sfunc1, "%s, INITCOND1 = '%s'",
-						sfunc1, agginfo[i].agginitval1);
+				appendPQExpBuffer(sfunc1, ", INITCOND1 = '%s'",
+						agginfo[i].agginitval1);
 
 		}
 
-		if (strcmp(agginfo[i].aggtransfn2, "-") == 0)
-			sfunc2[0] = '\0';
-		else
+		if (!(strcmp(agginfo[i].aggtransfn2, "-") == 0))
 		{
-			sprintf(sfunc2,
+			appendPQExpBuffer(sfunc2,
 					"SFUNC2 = %s, STYPE2 = %s",
 					agginfo[i].aggtransfn2,
 					fmtId(findTypeByOid(tinfo, numTypes, agginfo[i].aggtranstype2), false));
 			if (agginfo[i].agginitval2)
-				sprintf(sfunc2, "%s, INITCOND2 = '%s'",
-						sfunc2, agginfo[i].agginitval2);
+				appendPQExpBuffer(sfunc2, ", INITCOND2 = '%s'",
+						agginfo[i].agginitval2);
 		}
 
-		if (strcmp(agginfo[i].aggfinalfn, "-") == 0)
-			finalfunc[0] = '\0';
-		else
-			sprintf(finalfunc, "FINALFUNC = %s", agginfo[i].aggfinalfn);
-		if (sfunc1[0] != '\0' && sfunc2[0] != '\0')
+		if (!(strcmp(agginfo[i].aggfinalfn, "-") == 0))
+			appendPQExpBuffer(finalfunc, "FINALFUNC = %s", agginfo[i].aggfinalfn);
+		if (sfunc1->data[0] != '\0' && sfunc2->data[0] != '\0')
 		{
 			comma1[0] = ',';
 			comma1[1] = '\0';
@@ -2516,7 +2523,7 @@ dumpAggs(FILE *fout, AggInfo *agginfo, int numAggs,
 		else
 			comma1[0] = '\0';
 
-		if (finalfunc[0] != '\0' && (sfunc1[0] != '\0' || sfunc2[0] != '\0'))
+		if (finalfunc->data[0] != '\0' && (sfunc1->data[0] != '\0' || sfunc2->data[0] != '\0'))
 		{
 			comma2[0] = ',';
 			comma2[1] = '\0';
@@ -2528,21 +2535,23 @@ dumpAggs(FILE *fout, AggInfo *agginfo, int numAggs,
 
 		if (dropSchema)
 		{
-			sprintf(q, "DROP AGGREGATE %s %s;\n", agginfo[i].aggname,
+			resetPQExpBuffer(q);
+			appendPQExpBuffer(q, "DROP AGGREGATE %s %s;\n", agginfo[i].aggname,
 					fmtId(findTypeByOid(tinfo, numTypes, agginfo[i].aggbasetype), false));
-			fputs(q, fout);
+			fputs(q->data, fout);
 		}
 
-		sprintf(q, "CREATE AGGREGATE %s ( %s %s%s %s%s %s );\n",
+		resetPQExpBuffer(q);
+		appendPQExpBuffer(q, "CREATE AGGREGATE %s ( %s %s%s %s%s %s );\n",
 				agginfo[i].aggname,
-				basetype,
-				sfunc1,
+				basetype->data,
+				sfunc1->data,
 				comma1,
-				sfunc2,
+				sfunc2->data,
 				comma2,
-				finalfunc);
+				finalfunc->data);
 
-		fputs(q, fout);
+		fputs(q->data, fout);
 	}
 }
 
@@ -2694,8 +2703,8 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 	int			i,
 				j,
 				k;
-	char		q[MAX_QUERY_SIZE];
-	char	   *serialSeq = NULL;		/* implicit sequence name created
+	PQExpBuffer	q = createPQExpBuffer();
+	char		*serialSeq = NULL;		/* implicit sequence name created
 										 * by SERIAL datatype */
 	const char *serialSeqSuffix = "_id_seq";	/* suffix for implicit
 												 * SERIAL sequences */
@@ -2751,19 +2760,21 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 
 			if (dropSchema)
 			{
-				sprintf(q, "DROP TABLE %s;\n", fmtId(tblinfo[i].relname, force_quotes));
-				fputs(q, fout);
+				resetPQExpBuffer(q);
+				appendPQExpBuffer(q, "DROP TABLE %s;\n", fmtId(tblinfo[i].relname, force_quotes));
+				fputs(q->data, fout);
 			}
 
-			sprintf(q, "CREATE TABLE %s (\n\t", fmtId(tblinfo[i].relname, force_quotes));
+			resetPQExpBuffer(q);
+			appendPQExpBuffer(q, "CREATE TABLE %s (\n\t", fmtId(tblinfo[i].relname, force_quotes));
 			actual_atts = 0;
 			for (j = 0; j < tblinfo[i].numatts; j++)
 			{
 				if (tblinfo[i].inhAttrs[j] == 0)
 				{
 					if (actual_atts > 0)
-						strcat(q, ",\n\t");
-					sprintf(q + strlen(q), "%s ",
+						appendPQExpBuffer(q, ",\n\t");
+					appendPQExpBuffer(q, "%s ",
 							fmtId(tblinfo[i].attnames[j], force_quotes));
 
 					/* Show lengths on bpchar and varchar */
@@ -2771,29 +2782,29 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 					{
 						int			len = (tblinfo[i].atttypmod[j] - VARHDRSZ);
 
-						sprintf(q + strlen(q), "character");
+						appendPQExpBuffer(q, "character");
 						if (len > 1)
-							sprintf(q + strlen(q), "(%d)",
+							appendPQExpBuffer(q, "(%d)",
 									tblinfo[i].atttypmod[j] - VARHDRSZ);
 					}
 					else if (!strcmp(tblinfo[i].typnames[j], "varchar"))
 					{
-						sprintf(q + strlen(q), "character varying");
+						appendPQExpBuffer(q, "character varying");
 						if (tblinfo[i].atttypmod[j] != -1)
 						{
-							sprintf(q + strlen(q), "(%d)",
+							appendPQExpBuffer(q, "(%d)",
 									tblinfo[i].atttypmod[j] - VARHDRSZ);
 						}
 					}
 					else if (!strcmp(tblinfo[i].typnames[j], "numeric"))
 					{
-						sprintf(q + strlen(q), "numeric");
+						appendPQExpBuffer(q, "numeric");
 						if (tblinfo[i].atttypmod[j] != -1)
 						{
 							tmp_typmod = tblinfo[i].atttypmod[j] - VARHDRSZ;
 							precision = (tmp_typmod >> 16) & 0xffff;
 							scale = tmp_typmod & 0xffff;
-							sprintf(q + strlen(q), "(%d,%d)",
+							appendPQExpBuffer(q, "(%d,%d)",
 									precision, scale);
 						}
 					}
@@ -2805,19 +2816,19 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 					 */
 					else if (!strcmp(tblinfo[i].typnames[j], "char"))
 					{
-						sprintf(q + strlen(q), "%s",
+						appendPQExpBuffer(q, "%s",
 								fmtId(tblinfo[i].typnames[j], true));
 					}
 					else
 					{
-						sprintf(q + strlen(q), "%s",
+						appendPQExpBuffer(q, "%s",
 								fmtId(tblinfo[i].typnames[j], false));
 					}
 					if (tblinfo[i].adef_expr[j] != NULL)
-						sprintf(q + strlen(q), " DEFAULT %s",
+						appendPQExpBuffer(q, " DEFAULT %s",
 								tblinfo[i].adef_expr[j]);
 					if (tblinfo[i].notnull[j])
-						strcat(q, " NOT NULL");
+						appendPQExpBuffer(q, " NOT NULL");
 					actual_atts++;
 				}
 			}
@@ -2826,34 +2837,34 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 			for (k = 0; k < tblinfo[i].ncheck; k++)
 			{
 				if (actual_atts + k > 0)
-					strcat(q, ",\n\t");
-				sprintf(q + strlen(q), "%s",
+					appendPQExpBuffer(q, ",\n\t");
+				appendPQExpBuffer(q, "%s",
 						tblinfo[i].check_expr[k]);
 			}
 
             /* PRIMARY KEY */
             if (tblinfo[i].primary_key) {
                 if (actual_atts + tblinfo[i].ncheck > 0)
-                    strcat(q, ",\n\t");
-                sprintf(q + strlen(q), "PRIMARY KEY (%s)", tblinfo[i].primary_key);
+                    appendPQExpBuffer(q, ",\n\t");
+                appendPQExpBuffer(q, "PRIMARY KEY (%s)", tblinfo[i].primary_key);
             }
 
-            strcat(q, "\n)");
+            appendPQExpBuffer(q, "\n)");
 
 			if (numParents > 0)
 			{
-				strcat(q, "\ninherits (");
+				appendPQExpBuffer(q, "\ninherits (");
 				for (k = 0; k < numParents; k++)
 				{
-					sprintf(q + strlen(q), "%s%s",
+					appendPQExpBuffer(q, "%s%s",
 							(k > 0) ? ", " : "",
 							fmtId(parentRels[k], force_quotes));
 				}
-				strcat(q, ")");
+				appendPQExpBuffer(q, ")");
 			}
 
-			strcat(q, ";\n");
-			fputs(q, fout);
+			appendPQExpBuffer(q, ";\n");
+			fputs(q->data, fout);
 			if (!aclsSkip)
 				dumpACL(fout, tblinfo[i]);
 
@@ -2872,7 +2883,7 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 	int			i,
 				k;
 	int			tableInd;
-	char		attlist[1000];
+	PQExpBuffer	attlist = createPQExpBuffer();
 	char	   *classname[INDEX_MAX_KEYS];
 	char	   *funcname;		/* the name of the function to comput the
 								 * index key from */
@@ -2880,9 +2891,9 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 				indclass;
 	int			nclass;
 
-	char		q[MAX_QUERY_SIZE],
-				id1[MAX_QUERY_SIZE],
-				id2[MAX_QUERY_SIZE];
+	PQExpBuffer	q = createPQExpBuffer(),
+				id1 = createPQExpBuffer(),
+				id2 = createPQExpBuffer();
 	PGresult   *res;
 
 	for (i = 0; i < numIndices; i++)
@@ -2907,11 +2918,12 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 			 * in the user-defined funcs not all the funcs.  We might not
 			 * find what we want by looking in FuncInfo*
 			 */
-			sprintf(q,
+			resetPQExpBuffer(q);
+			appendPQExpBuffer(q,
 					"SELECT proname from pg_proc "
 					"where pg_proc.oid = '%s'::oid",
 					indinfo[i].indproc);
-			res = PQexec(g_conn, q);
+			res = PQexec(g_conn, q->data);
 			if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
 			{
 				fprintf(stderr, "dumpIndices(): SELECT (funcname) failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
@@ -2928,11 +2940,12 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 			indclass = atoi(indinfo[i].indclass[nclass]);
 			if (indclass == 0)
 				break;
-			sprintf(q,
+			resetPQExpBuffer(q);
+			appendPQExpBuffer(q,
 					"SELECT opcname from pg_opclass "
 					"where pg_opclass.oid = '%u'::oid",
 					indclass);
-			res = PQexec(g_conn, q);
+			res = PQexec(g_conn, q->data);
 			if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
 			{
 				fprintf(stderr, "dumpIndices(): SELECT (classname) failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
@@ -2951,7 +2964,8 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 		}
 
 		/* convert attribute numbers into attribute list */
-		for (k = 0, attlist[0] = 0; k < INDEX_MAX_KEYS; k++)
+		resetPQExpBuffer(attlist);
+		for (k = 0; k < INDEX_MAX_KEYS; k++)
 		{
 			char	   *attname;
 
@@ -2964,7 +2978,7 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 			else
 				attname = tblinfo[tableInd].attnames[indkey];
 			if (funcname)
-				sprintf(attlist + strlen(attlist), "%s%s",
+				appendPQExpBuffer(attlist, "%s%s",
 					 (k == 0) ? "" : ", ", fmtId(attname, force_quotes));
 			else
 			{
@@ -2975,10 +2989,12 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 							attname, indinfo[i].indexrelname);
 					exit_nicely(g_conn);
 				}
-				strcpy(id1, fmtId(attname, force_quotes));
-				strcpy(id2, fmtId(classname[k], force_quotes));
-				sprintf(attlist + strlen(attlist), "%s%s %s",
-						(k == 0) ? "" : ", ", id1, id2);
+				resetPQExpBuffer(id1);
+				resetPQExpBuffer(id2);
+				appendPQExpBuffer(id1, fmtId(attname, force_quotes));
+				appendPQExpBuffer(id2, fmtId(classname[k], force_quotes));
+				appendPQExpBuffer(attlist, "%s%s %s",
+						(k == 0) ? "" : ", ", id1->data, id2->data);
 				free(classname[k]);
 			}
 		}
@@ -2993,30 +3009,33 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 			 */
 			becomeUser(fout, tblinfo[tableInd].usename);
 
-			strcpy(id1, fmtId(indinfo[i].indexrelname, force_quotes));
-			strcpy(id2, fmtId(indinfo[i].indrelname, force_quotes));
+			resetPQExpBuffer(id1);
+			resetPQExpBuffer(id2);
+			appendPQExpBuffer(id1, fmtId(indinfo[i].indexrelname, force_quotes));
+			appendPQExpBuffer(id2, fmtId(indinfo[i].indrelname, force_quotes));
 
 			if (dropSchema)
 			{
-				sprintf(q, "DROP INDEX %s;\n", id1);
-				fputs(q, fout);
+				resetPQExpBuffer(q);
+				appendPQExpBuffer(q, "DROP INDEX %s;\n", id1->data);
+				fputs(q->data, fout);
 			}
 
 			fprintf(fout, "CREATE %s INDEX %s on %s using %s (",
 			  (strcmp(indinfo[i].indisunique, "t") == 0) ? "UNIQUE" : "",
-					id1,
-					id2,
+					id1->data,
+					id2->data,
 					indinfo[i].indamname);
 			if (funcname)
 			{
 				/* need 2 printf's here cuz fmtId has static return area */
 				fprintf(fout, " %s", fmtId(funcname, false));
-				fprintf(fout, " (%s) %s );\n", attlist, fmtId(classname[0], force_quotes));
+				fprintf(fout, " (%s) %s );\n", attlist->data, fmtId(classname[0], force_quotes));
 				free(funcname);
 				free(classname[0]);
 			}
 			else
-				fprintf(fout, " %s );\n", attlist);
+				fprintf(fout, " %s );\n", attlist->data);
 		}
 	}
 
@@ -3218,7 +3237,7 @@ checkForQuote(const char *s)
 static void
 dumpSequence(FILE *fout, TableInfo tbinfo)
 {
-	PGresult   *res;
+	PGresult	*res;
 	int4		last,
 				incby,
 				maxv,
@@ -3226,15 +3245,15 @@ dumpSequence(FILE *fout, TableInfo tbinfo)
 				cache;
 	char		cycled,
 				called;
-    const char *t;
-	char		query[MAX_QUERY_SIZE];
+    const char	*t;
+	PQExpBuffer	query = createPQExpBuffer();
 
-	sprintf(query,
+	appendPQExpBuffer(query,
 			"SELECT sequence_name, last_value, increment_by, max_value, "
 			"min_value, cache_value, is_cycled, is_called from %s",
 			fmtId(tbinfo.relname, force_quotes));
 
-	res = PQexec(g_conn, query);
+	res = PQexec(g_conn, query->data);
 	if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		fprintf(stderr, "dumpSequence(%s): SELECT failed.  Explanation from backend: '%s'.\n", tbinfo.relname, PQerrorMessage(g_conn));
@@ -3271,23 +3290,26 @@ dumpSequence(FILE *fout, TableInfo tbinfo)
 
 	if (dropSchema)
 	{
-		sprintf(query, "DROP SEQUENCE %s;\n", fmtId(tbinfo.relname, force_quotes));
-		fputs(query, fout);
+		resetPQExpBuffer(query);
+		appendPQExpBuffer(query, "DROP SEQUENCE %s;\n", fmtId(tbinfo.relname, force_quotes));
+		fputs(query->data, fout);
 	}
 
-	sprintf(query,
+	resetPQExpBuffer(query);
+	appendPQExpBuffer(query,
 			"CREATE SEQUENCE %s start %d increment %d maxvalue %d "
 			"minvalue %d  cache %d %s;\n",
 	 fmtId(tbinfo.relname, force_quotes), last, incby, maxv, minv, cache,
 			(cycled == 't') ? "cycle" : "");
 
-	fputs(query, fout);
+	fputs(query->data, fout);
 
 	if (called == 'f')
 		return;					/* nothing to do more */
 
-	sprintf(query, "SELECT nextval ('%s');\n", fmtId(tbinfo.relname, force_quotes));
-	fputs(query, fout);
+	resetPQExpBuffer(query);
+	appendPQExpBuffer(query, "SELECT nextval ('%s');\n", fmtId(tbinfo.relname, force_quotes));
+	fputs(query->data, fout);
 
 }
 
@@ -3324,7 +3346,7 @@ dumpRules(FILE *fout, const char *tablename,
 	int			nrules;
 	int			i,
 				t;
-	char		query[MAX_QUERY_SIZE];
+	PQExpBuffer	query = createPQExpBuffer();
 
 	int			i_definition;
 
@@ -3343,13 +3365,14 @@ dumpRules(FILE *fout, const char *tablename,
 		/*
 		 * Get all rules defined for this table
 		 */
-		sprintf(query, "SELECT pg_get_ruledef(pg_rewrite.rulename) "
+		resetPQExpBuffer(query);
+		appendPQExpBuffer(query, "SELECT pg_get_ruledef(pg_rewrite.rulename) "
 				"AS definition FROM pg_rewrite, pg_class "
 				"WHERE pg_class.relname = '%s' "
 				"AND pg_rewrite.ev_class = pg_class.oid "
 				"ORDER BY pg_rewrite.oid",
 				tblinfo[t].relname);
-		res = PQexec(g_conn, query);
+		res = PQexec(g_conn, query->data);
 		if (!res ||
 			PQresultStatus(res) != PGRES_TUPLES_OK)
 		{

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.42 1999/12/11 00:31:05 momjian Exp $
+ * $Id: pg_dump.h,v 1.43 1999/12/27 15:42:44 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -22,6 +22,7 @@
 #ifndef PG_DUMP_H
 #define PG_DUMP_H
 
+#include "pqexpbuffer.h"
 #include "catalog/pg_index.h"
 
 /*
