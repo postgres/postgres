@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.12 1997/01/20 04:01:50 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.13 1997/04/02 03:41:16 vadim Exp $
  *
  * INTERFACE ROUTINES
  *	heap_creatr()		- Create an uncataloged heap relation
@@ -622,7 +622,8 @@ AddPgRelationTuple(Relation pg_class_desc,
     HeapTuple		tup;
     Relation		idescs[Num_pg_class_indices];
     bool		isBootstrap;
-    
+    extern bool		ItsSequenceCreation;    /* It's hack, I know... 
+    						 * - vadim 03/28/97	*/
     /* ----------------
      *	first we munge some of the information in our
      *  uncataloged relation's relation descriptor.
@@ -634,7 +635,10 @@ AddPgRelationTuple(Relation pg_class_desc,
     /*   new_rel_reltup->reltuples = 1; */ /* XXX */
     
     new_rel_reltup->relowner = GetUserId();
-    new_rel_reltup->relkind = RELKIND_RELATION;
+    if ( ItsSequenceCreation )
+    	new_rel_reltup->relkind = RELKIND_SEQUENCE;
+    else
+    	new_rel_reltup->relkind = RELKIND_RELATION;
     new_rel_reltup->relarch = arch;
     new_rel_reltup->relnatts = natts;
     
