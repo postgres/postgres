@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.147.2.5 2002/12/27 14:07:14 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.147.2.6 2003/01/11 05:04:26 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -380,11 +380,12 @@ FATAL 1:  ShmemCreate: cannot create region
 <screen>
 IpcSemaphoreCreate: semget(key=5440026, num=16, 01600) failed: No space left on device
 </screen>
-     does <emphasis>not</emphasis> mean you've run out of disk space. It
-     means your kernel's limit on the number of System V semaphores is
-     smaller than the number <productname>PostgreSQL</productname> wants
-     to create. As above, you may be able to work around the problem by
-     starting the postmaster with a reduced number of allowed connections
+     does <emphasis>not</emphasis> mean you've run out of disk
+     space. It means your kernel's limit on the number of <systemitem
+     class="osname">System V</> semaphores is smaller than the number
+     <productname>PostgreSQL</productname> wants to create. As above,
+     you may be able to work around the problem by starting the
+     postmaster with a reduced number of allowed connections
      (<option>-N</option> switch), but you'll eventually want to
      increase the kernel limit.
     </para>
@@ -1796,8 +1797,21 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       <listitem>
        <para>
         Sets the number of shared memory buffers used by the database
-        server. The default is 64. Each buffer is typically 8192 bytes.
-        This option can only be set at server start.
+        server. The default is 64. Each buffer is typically 8192
+        bytes. This must be greater than 16, as well as at least twice
+        the value of <varname>MAX_CONNECTIONS</varname>; however, a
+        higher value can often improve performance on modern
+        machines. Values of at least a few thousand are recommended
+        for production installations. This option can only be set at
+        server start.
+       </para>
+
+       <para>
+        Increasing this parameter may cause <productname>PostgreSQL</>
+        to request more <systemitem class="osname">System V</> shared
+        memory than your operating system's default configuration
+        allows. See <xref linkend="sysvipc"> for information on how to
+        adjust these parameters, if necessary.
        </para>
       </listitem>
      </varlistentry>
@@ -2112,8 +2126,9 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       <term><varname>WAL_BUFFERS</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
-        Number of disk-page buffers in shared memory for WAL logging.
-	This option can only be set at server start.
+        Number of disk-page buffers in shared memory for WAL
+        logging. The default is 4. This option can only be set at
+        server start.
        </para>
       </listitem>
      </varlistentry>
