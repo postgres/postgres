@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.34 2000/01/31 04:35:57 tgl Exp $
+ * $Id: rel.h,v 1.35 2000/02/27 07:31:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,7 +149,9 @@ typedef Relation *RelationPtr;
  * RelationDecrementReferenceCount
  *		Decrements relation reference count.
  */
-#define RelationDecrementReferenceCount(relation) ((relation)->rd_refcnt -= 1)
+#define RelationDecrementReferenceCount(relation) \
+	(AssertMacro((relation)->rd_refcnt > 0), \
+	 (relation)->rd_refcnt -= 1)
 
 /*
  * RelationGetForm
