@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.190 2002/07/20 05:43:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.191 2002/08/15 02:56:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,6 +182,9 @@ static char *conninfo_getval(PQconninfoOption *connOptions,
 static void defaultNoticeProcessor(void *arg, const char *message);
 static int parseServiceInfo(PQconninfoOption *options,
 				 PQExpBuffer errorMessage);
+char *pwdfMatchesString(char *buf, char *token);
+char *PasswordFromFile(char *hostname, char *port, char *dbname,
+		char *username, char *pwdfile);
 
 /*
  *		Connecting to a Database
@@ -388,6 +391,10 @@ PQconndefaults(void)
  *
  *	  PGPASSWORD   The user's password.
  *
+ *	  PGPASSWORDFILE
+ *	  			   A file that contains host:port:database:user:password
+ *	  			   for authentication
+ *
  *	  PGDATABASE   name of database to which to connect if <pgdatabase>
  *				   argument is NULL or a null string
  *
@@ -476,13 +483,6 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 						  libpq_gettext("could not determine the PostgreSQL user name to use\n"));
 	}
 
-	if (pwd)
-		conn->pgpass = strdup(pwd);
-	else if ((tmp = getenv("PGPASSWORD")) != NULL)
-		conn->pgpass = strdup(tmp);
-	else
-		conn->pgpass = strdup(DefaultPassword);
-
 	if (dbName == NULL)
 	{
 		if ((tmp = getenv("PGDATABASE")) != NULL)
@@ -493,6 +493,17 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 	else
 		conn->dbName = strdup(dbName);
 
+	/* getPasswordFromFile mallocs its result, so we don't need strdup here */
+	if (pwd)
+		conn->pgpass = strdup(pwd);
+	else if ((tmp = getenv("PGPASSWORD")) != NULL)
+		conn->pgpass = strdup(tmp);
+	else if ((tmp = PasswordFromFile(conn->pghost, conn->pgport,
+					conn->dbName, conn->pguser,
+					getenv("PGPASSWORDFILE"))) != NULL)
+		conn->pgpass = tmp;
+	else
+		conn->pgpass = strdup(DefaultPassword);
 
 #ifdef USE_SSL
 	if ((tmp = getenv("PGREQUIRESSL")) != NULL)
@@ -2809,4 +2820,93 @@ defaultNoticeProcessor(void *arg, const char *message)
 	(void) arg;					/* not used */
 	/* Note: we expect the supplied string to end with a newline already. */
 	fprintf(stderr, "%s", message);
+}
+
+/* returns a pointer to the next token or NULL if the current
+ * token doesn't match */
+char *
+pwdfMatchesString(char *buf, char *token)
+{
+	char   *tbuf,
+		   *ttok;
+	bool	bslash = false;
+	if (buf == NULL || token == NULL)
+		return NULL;
+	tbuf = buf;
+	ttok = token;
+	if (*tbuf == '*')
+		return tbuf + 2;
+	while (*tbuf != 0)
+	{
+		if (*tbuf == '\\' && !bslash)
+		{
+			tbuf++;
+			bslash = true;
+		}
+		if (*tbuf == ':' && *ttok == 0 && !bslash)
+			return tbuf+1;
+		bslash = false;
+		if (*ttok == 0)
+			return NULL;
+		if (*tbuf == *ttok)
+		{
+			tbuf++;
+			ttok++;
+		}
+		else
+			return NULL;
+	}
+	return NULL;
+}
+
+/* get a password from the password file. */
+char *
+PasswordFromFile(char *hostname, char *port, char *dbname,
+		char *username, char *pwdfile)
+{
+	FILE   *fp;
+#define LINELEN NAMEDATALEN*5
+	char	buf[LINELEN];
+
+	if (pwdfile == NULL || strcmp(pwdfile, "") == 0)
+		return NULL;
+
+	if (dbname == NULL || strcmp(dbname, "") == 0)
+		return NULL;
+
+	if (username == NULL || strcmp(username, "") == 0)
+		return NULL;
+
+	if (hostname == NULL)
+		hostname = DefaultHost;
+
+	if (port == NULL)
+		port = DEF_PGPORT_STR;
+
+	fp = fopen(pwdfile, "r");
+	if (fp == NULL)
+		return NULL;
+
+	while (!feof(fp)) {
+		char *t = buf,
+		     *ret;
+		fgets(buf, LINELEN - 1, fp);
+		if (strlen(buf) == 0)
+			continue;
+
+		buf[strlen(buf) - 1] = 0;
+		if ((t = pwdfMatchesString(t, hostname)) == NULL ||
+				(t = pwdfMatchesString(t, port)) == NULL ||
+				(t = pwdfMatchesString(t, dbname)) == NULL ||
+				(t = pwdfMatchesString(t, username)) == NULL)
+			continue;
+		ret=(char *)malloc(sizeof(char)*strlen(t));
+		strncpy(ret, t, strlen(t));
+		fclose(fp);
+		return ret;
+	}
+	fclose(fp);
+	return NULL;
+
+#undef LINELEN
 }
