@@ -1,4 +1,6 @@
---  ****************** test built-in type box ********************
+--
+-- BOX
+--
 
 --
 -- box logic
@@ -43,67 +45,67 @@ SELECT '' AS four, b.*, box_area(b.f1) as barea
 -- overlap 
 SELECT '' AS three, b.f1
    FROM BOX_TBL b  
-   WHERE b.f1 && '(2.5,2.5,1.0,1.0)'::box;
+   WHERE b.f1 && box '(2.5,2.5,1.0,1.0)';
 
 -- left-or-overlap (x only) 
 SELECT '' AS two, b1.*
    FROM BOX_TBL b1
-   WHERE b1.f1 &< '(2.0,2.0,2.5,2.5)'::box;
+   WHERE b1.f1 &< box '(2.0,2.0,2.5,2.5)';
 
 -- right-or-overlap (x only) 
 SELECT '' AS two, b1.*
    FROM BOX_TBL b1
-   WHERE b1.f1 &> '(2.0,2.0,2.5,2.5)'::box;
+   WHERE b1.f1 &> box '(2.0,2.0,2.5,2.5)';
 
 -- left of 
 SELECT '' AS two, b.f1
    FROM BOX_TBL b
-   WHERE b.f1 << '(3.0,3.0,5.0,5.0)'::box;
+   WHERE b.f1 << box '(3.0,3.0,5.0,5.0)';
 
 -- area <= 
 SELECT '' AS four, b.f1
    FROM BOX_TBL b
-   WHERE b.f1 <= '(3.0,3.0,5.0,5.0)'::box;
+   WHERE b.f1 <= box '(3.0,3.0,5.0,5.0)';
 
 -- area < 
 SELECT '' AS two, b.f1
    FROM BOX_TBL b
-   WHERE b.f1 < '(3.0,3.0,5.0,5.0)'::box;
+   WHERE b.f1 < box '(3.0,3.0,5.0,5.0)';
 
 -- area = 
 SELECT '' AS two, b.f1
    FROM BOX_TBL b
-   WHERE b.f1 = '(3.0,3.0,5.0,5.0)'::box;
+   WHERE b.f1 = box '(3.0,3.0,5.0,5.0)';
 
 -- area > 
 SELECT '' AS two, b.f1
    FROM BOX_TBL b				-- zero area 
-   WHERE b.f1 > '(3.5,3.0,4.5,3.0)'::box;	
+   WHERE b.f1 > box '(3.5,3.0,4.5,3.0)';	
 
 -- area >= 
 SELECT '' AS four, b.f1
    FROM BOX_TBL b				-- zero area 
-   WHERE b.f1 >= '(3.5,3.0,4.5,3.0)'::box;
+   WHERE b.f1 >= box '(3.5,3.0,4.5,3.0)';
 
 -- right of 
 SELECT '' AS two, b.f1
    FROM BOX_TBL b
-   WHERE '(3.0,3.0,5.0,5.0)'::box >> b.f1;
+   WHERE box '(3.0,3.0,5.0,5.0)' >> b.f1;
 
 -- contained in 
 SELECT '' AS three, b.f1
    FROM BOX_TBL b
-   WHERE b.f1 @ '(0,0,3,3)'::box;
+   WHERE b.f1 @ box '(0,0,3,3)';
 
 -- contains 
 SELECT '' AS three, b.f1
    FROM BOX_TBL b
-   WHERE '(0,0,3,3)'::box ~ b.f1;
+   WHERE box '(0,0,3,3)' ~ b.f1;
 
 -- box equality 
 SELECT '' AS one, b.f1
    FROM BOX_TBL b
-   WHERE '(1,1,3,3)'::box ~= b.f1;
+   WHERE box '(1,1,3,3)' ~= b.f1;
 
 -- center of box, left unary operator 
 SELECT '' AS four, @@(b1.f1) AS p

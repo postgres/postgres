@@ -1,4 +1,5 @@
 --
+-- TYPE_SANITY
 -- Sanity checks for common errors in making type-related system tables:
 -- pg_type, pg_class, pg_attribute.
 --

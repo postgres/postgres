@@ -1,5 +1,5 @@
 --
--- path.sql
+-- PATH
 --
 
 --DROP TABLE PATH_TBL;

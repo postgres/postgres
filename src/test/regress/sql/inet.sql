@@ -1,4 +1,5 @@
--- INET regression tests
+--
+-- INET
 --
 
 -- prepare the table...

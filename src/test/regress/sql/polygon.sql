@@ -1,4 +1,5 @@
--- *************testing built-in type polygon ****************
+--
+-- POLYGON
 --
 -- polygon logic
 --
@@ -67,17 +68,17 @@ SELECT '' AS zero, p.*
 -- contained 
 SELECT '' AS one, p.* 
    FROM POLYGON_TBL p
-   WHERE p.f1 @ '(3.0,1.0),(3.0,3.0),(1.0,0.0)'::polygon;
+   WHERE p.f1 @ polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)';
 
 -- same 
 SELECT '' AS one, p.*
    FROM POLYGON_TBL p
-   WHERE p.f1 ~= '(3.0,1.0),(3.0,3.0),(1.0,0.0)'::polygon;
+   WHERE p.f1 ~= polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)';
 
 -- contains 
 SELECT '' AS one, p.*
    FROM POLYGON_TBL p
-   WHERE p.f1 ~ '(3.0,1.0),(3.0,3.0),(1.0,0.0)'::polygon;
+   WHERE p.f1 ~ polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)';
 
 --
 -- polygon logic
@@ -93,26 +94,26 @@ SELECT '' AS one, p.*
 --	0 1 2 3 4
 --
 -- left of 
-SELECT '(2.0,0.0),(2.0,4.0),(0.0,0.0)'::polygon << '(3.0,1.0),(3.0,3.0),(1.0,0.0)'::polygon AS false;
+SELECT polygon '(2.0,0.0),(2.0,4.0),(0.0,0.0)' << polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)' AS false;
 
 -- left overlap 
-SELECT '(2.0,0.0),(2.0,4.0),(0.0,0.0)'::polygon << '(3.0,1.0),(3.0,3.0),(1.0,0.0)'::polygon AS true;
+SELECT polygon '(2.0,0.0),(2.0,4.0),(0.0,0.0)' << polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)' AS true;
 
 -- right overlap 
-SELECT '(2.0,0.0),(2.0,4.0),(0.0,0.0)'::polygon &> '(3.0,1.0),(3.0,3.0),(1.0,0.0)'::polygon AS true;
+SELECT polygon '(2.0,0.0),(2.0,4.0),(0.0,0.0)' &> polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)' AS true;
 
 -- right of 
-SELECT '(2.0,0.0),(2.0,4.0),(0.0,0.0)'::polygon >> '(3.0,1.0),(3.0,3.0),(1.0,0.0)'::polygon AS false;
+SELECT polygon '(2.0,0.0),(2.0,4.0),(0.0,0.0)' >> polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)' AS false;
 
 -- contained in 
-SELECT '(2.0,0.0),(2.0,4.0),(0.0,0.0)'::polygon @ '(3.0,1.0),(3.0,3.0),(1.0,0.0)'::polygon AS false;
+SELECT polygon '(2.0,0.0),(2.0,4.0),(0.0,0.0)' @ polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)' AS false;
 
 -- contains 
-SELECT '(2.0,0.0),(2.0,4.0),(0.0,0.0)'::polygon ~ '(3.0,1.0),(3.0,3.0),(1.0,0.0)'::polygon AS false;
+SELECT polygon '(2.0,0.0),(2.0,4.0),(0.0,0.0)' ~ polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)' AS false;
 
 -- same 
-SELECT '(2.0,0.0),(2.0,4.0),(0.0,0.0)'::polygon ~= '(3.0,1.0),(3.0,3.0),(1.0,0.0)'::polygon AS false;
+SELECT polygon '(2.0,0.0),(2.0,4.0),(0.0,0.0)' ~= polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)' AS false;
 
 -- overlap 
-SELECT '(2.0,0.0),(2.0,4.0),(0.0,0.0)'::polygon && '(3.0,1.0),(3.0,3.0),(1.0,0.0)'::polygon AS true;
+SELECT polygon '(2.0,0.0),(2.0,4.0),(0.0,0.0)' && polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)' AS true;
 

@@ -1,4 +1,6 @@
---  ************testing built-in type point ****************
+--
+-- POINT
+--
 
 CREATE TABLE POINT_TBL(f1 point);
 
@@ -41,15 +43,15 @@ SELECT '' AS one, p.* FROM POINT_TBL p WHERE p.f1 ~= '(5.1, 34.5)';
 
 -- point in box 
 SELECT '' AS three, p.* FROM POINT_TBL p
-   WHERE p.f1 @ '(0,0,100,100)'::box;
+   WHERE p.f1 @ box '(0,0,100,100)';
 
 SELECT '' AS three, p.* FROM POINT_TBL p
-   WHERE not p.f1 @ '(0,0,100,100)'::box;
+   WHERE not p.f1 @ box '(0,0,100,100)';
 
 SELECT '' AS two, p.* FROM POINT_TBL p
-   WHERE p.f1 @ '[(0,0),(-10,0),(-10,10)]'::path;
+   WHERE p.f1 @ path '[(0,0),(-10,0),(-10,10)]';
 
-SELECT '' AS six, p.f1, p.f1 <-> '(0,0)'::point AS dist
+SELECT '' AS six, p.f1, p.f1 <-> point '(0,0)' AS dist
    FROM POINT_TBL p
    ORDER BY dist;
 

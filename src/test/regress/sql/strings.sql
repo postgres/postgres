@@ -1,4 +1,5 @@
 --
+-- STRINGS
 -- Test various data entry syntaxes.
 --
 

@@ -1,6 +1,6 @@
--- ******************************
--- * Test suite for the Postgres NUMERIC data type
--- ******************************
+--
+-- NUMERIC
+--
 
 CREATE TABLE num_data (id int4, val numeric(210,10));
 CREATE TABLE num_exp_add (id1 int4, id2 int4, expected numeric(210,10));
@@ -614,7 +614,7 @@ SELECT t1.id1, t1.result, t2.expected
 -- * Logarithm base 10 check
 -- ******************************
 DELETE FROM num_result;
-INSERT INTO num_result SELECT id, 0, LOG('10'::numeric, ABS(val))
+INSERT INTO num_result SELECT id, 0, LOG(numeric '10', ABS(val))
     FROM num_data
     WHERE val != '0.0';
 SELECT t1.id1, t1.result, t2.expected
@@ -626,7 +626,7 @@ SELECT t1.id1, t1.result, t2.expected
 -- * POWER(10, LN(value)) check
 -- ******************************
 DELETE FROM num_result;
-INSERT INTO num_result SELECT id, 0, POWER('10'::numeric, LN(ABS(round(val,200))))
+INSERT INTO num_result SELECT id, 0, POWER(numeric '10', LN(ABS(round(val,200))))
     FROM num_data
     WHERE val != '0.0';
 SELECT t1.id1, t1.result, t2.expected

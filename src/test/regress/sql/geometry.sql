@@ -1,4 +1,8 @@
 --
+-- GEOMETRY
+--
+
+--
 -- Points
 --
 
@@ -21,22 +25,22 @@ SELECT '' AS two, (@@ f1) AS center
 -- "is horizontal" function
 SELECT '' AS two, p1.f1
    FROM POINT_TBL p1
-   WHERE ishorizontal(p1.f1, '(0,0)'::point);
+   WHERE ishorizontal(p1.f1, point '(0,0)');
 
 -- "is horizontal" operator
 SELECT '' AS two, p1.f1
    FROM POINT_TBL p1
-   WHERE p1.f1 ?- '(0,0)'::point;
+   WHERE p1.f1 ?- point '(0,0)';
 
 -- "is vertical" function
 SELECT '' AS one, p1.f1
    FROM POINT_TBL p1
-   WHERE isvertical(p1.f1, '(5.1,34.5)'::point);
+   WHERE isvertical(p1.f1, point '(5.1,34.5)');
 
 -- "is vertical" operator
 SELECT '' AS one, p1.f1
    FROM POINT_TBL p1
-   WHERE p1.f1 ?| '(5.1,34.5)'::point;
+   WHERE p1.f1 ?| point '(5.1,34.5)';
 
 --
 -- Line segments
@@ -73,7 +77,7 @@ SELECT '' AS twentyfour, b.f1 * p.f1 AS rotation
 
 SELECT '' AS twenty, b.f1 / p.f1 AS rotation
    FROM BOX_TBL b, POINT_TBL p
-   WHERE (p.f1 <-> '(0,0)'::point) >= 1;
+   WHERE (p.f1 <-> point '(0,0)') >= 1;
 
 --
 -- Paths
@@ -86,11 +90,11 @@ SELECT '' AS eight, points(f1) AS npoints, f1 AS path FROM PATH_TBL;
 SELECT '' AS four, path(f1) FROM POLYGON_TBL;
 
 -- translation
-SELECT '' AS eight, p1.f1 + '(10,10)'::point AS dist_add
+SELECT '' AS eight, p1.f1 + point '(10,10)' AS dist_add
    FROM PATH_TBL p1;
 
 -- scaling and rotation
-SELECT '' AS eight, p1.f1 * '(2,-1)'::point AS dist_mul
+SELECT '' AS eight, p1.f1 * point '(2,-1)' AS dist_mul
    FROM PATH_TBL p1;
 
 RESET geqo;

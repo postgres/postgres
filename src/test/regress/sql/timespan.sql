@@ -1,3 +1,7 @@
+--
+-- TIMESPAN
+--
+
 CREATE TABLE TIMESPAN_TBL (f1 timespan);
 
 INSERT INTO TIMESPAN_TBL (f1) VALUES ('@ 1 minute');
@@ -11,7 +15,7 @@ INSERT INTO TIMESPAN_TBL (f1) VALUES ('6 years');
 INSERT INTO TIMESPAN_TBL (f1) VALUES ('5 months');
 INSERT INTO TIMESPAN_TBL (f1) VALUES ('5 months 12 hours');
 
--- badly formatted timespan:   
+-- badly formatted timespan
 INSERT INTO TIMESPAN_TBL (f1) VALUES ('badly formatted timespan');
 INSERT INTO TIMESPAN_TBL (f1) VALUES ('@ 30 eons ago');
 
@@ -20,22 +24,22 @@ INSERT INTO TIMESPAN_TBL (f1) VALUES ('@ 30 eons ago');
 SELECT '' AS ten, TIMESPAN_TBL.*;
 
 SELECT '' AS nine, TIMESPAN_TBL.*
-   WHERE TIMESPAN_TBL.f1 <> '@ 10 days'::timespan;
+   WHERE TIMESPAN_TBL.f1 <> timespan '@ 10 days';
 
 SELECT '' AS three, TIMESPAN_TBL.*
-   WHERE TIMESPAN_TBL.f1 <= '@ 5 hours'::timespan;
+   WHERE TIMESPAN_TBL.f1 <= timespan '@ 5 hours';
 
 SELECT '' AS three, TIMESPAN_TBL.*
-   WHERE TIMESPAN_TBL.f1 < '@ 1 day'::timespan;
+   WHERE TIMESPAN_TBL.f1 < timespan '@ 1 day';
 
 SELECT '' AS one, TIMESPAN_TBL.*
-   WHERE TIMESPAN_TBL.f1 = '@ 34 years'::timespan;
+   WHERE TIMESPAN_TBL.f1 = timespan '@ 34 years';
 
 SELECT '' AS five, TIMESPAN_TBL.* 
-   WHERE TIMESPAN_TBL.f1 >= '@ 1 month'::timespan;
+   WHERE TIMESPAN_TBL.f1 >= timespan '@ 1 month';
 
 SELECT '' AS nine, TIMESPAN_TBL.*
-   WHERE TIMESPAN_TBL.f1 > '@ 3 seconds ago'::timespan;
+   WHERE TIMESPAN_TBL.f1 > timespan '@ 3 seconds ago';
 
 SELECT '' AS fortyfive, r1.*, r2.*
    FROM TIMESPAN_TBL r1, TIMESPAN_TBL r2

@@ -1,3 +1,7 @@
+--
+-- TINTERVAL
+--
+
 CREATE TABLE TINTERVAL_TBL (f1  tinterval);
 
 INSERT INTO TINTERVAL_TBL (f1)
@@ -61,7 +65,7 @@ SELECT '' AS three, t.*
 SELECT '' AS three, t1.*
    FROM TINTERVAL_TBL t1
    WHERE t1.f1 &&
-        '["Aug 15 14:23:19 1983" "Sep 16 14:23:19 1983"]'::tinterval;
+        tinterval '["Aug 15 14:23:19 1983" "Sep 16 14:23:19 1983"]';
 
 SET geqo TO 'off';
 
@@ -80,15 +84,15 @@ SELECT '' AS fourteen, t1.f1 AS interval1, t2.f1 AS interval2
 SELECT '' AS five, t1.f1
    FROM TINTERVAL_TBL t1
    WHERE not t1.f1 << 
-        '["Aug 15 14:23:19 1980" "Sep 16 14:23:19 1990"]'::tinterval
+        tinterval '["Aug 15 14:23:19 1980" "Sep 16 14:23:19 1990"]'
    ORDER BY t1.f1;
 
 -- make time interval
 SELECT '' AS three, t1.f1
    FROM TINTERVAL_TBL t1
    WHERE t1.f1 &&
-        ('Aug 15 14:23:19 1983'::abstime <#>
-         'Sep 16 14:23:19 1983'::abstime)
+        (abstime 'Aug 15 14:23:19 1983' <#>
+         abstime 'Sep 16 14:23:19 1983')
    ORDER BY t1.f1;
 
 RESET geqo;

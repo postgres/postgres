@@ -1,10 +1,15 @@
 --
--- horology.sql
+-- HOROLOGY
 --
 
 --
 -- datetime, timespan arithmetic
 --
+
+SELECT datetime '1996-03-01' - timespan '1 second' AS "Feb 29";
+SELECT datetime '1999-03-01' - timespan '1 second' AS "Feb 28";
+SELECT datetime '2000-03-01' - timespan '1 second' AS "Feb 29";
+SELECT datetime '1999-12-01' + timespan '1 month - 1 second' AS "Dec 31";
 
 CREATE TABLE TEMP_DATETIME (f1 datetime);
 
@@ -28,8 +33,8 @@ SELECT '' AS hundred, d.f1 AS datetime, t.f1 AS timespan, d.f1 - t.f1 AS minus
   WHERE isfinite(d.f1)
   ORDER BY minus, datetime, timespan;
 
-SELECT '' AS ten, d.f1 AS datetime, '1980-01-06 00:00 GMT'::datetime AS gpstime_zero,
-   d.f1 - '1980-01-06 00:00 GMT'::datetime AS difference
+SELECT '' AS ten, d.f1 AS datetime, datetime '1980-01-06 00:00 GMT' AS gpstime_zero,
+   d.f1 - datetime '1980-01-06 00:00 GMT' AS difference
   FROM TEMP_DATETIME d
   ORDER BY difference;
 
@@ -54,7 +59,7 @@ SELECT '' AS four, f1 AS abstime,
   date_part('day',f1) AS day, date_part('hour', f1) AS hour,
   date_part('minute', f1) AS minute, date_part('second', f1) AS second
   FROM ABSTIME_TBL
-  WHERE isfinite(f1) and f1 <> 'current'::abstime
+  WHERE isfinite(f1) and f1 <> abstime 'current'
   ORDER BY abstime;
 
 --
@@ -63,7 +68,7 @@ SELECT '' AS four, f1 AS abstime,
 
 SELECT '' AS ten, f1 AS datetime, date( f1) AS date
   FROM TEMP_DATETIME
-  WHERE f1 <> 'current'::datetime
+  WHERE f1 <> datetime 'current'
   ORDER BY date;
 
 SELECT '' AS ten, f1 AS datetime, abstime( f1) AS abstime
@@ -72,7 +77,7 @@ SELECT '' AS ten, f1 AS datetime, abstime( f1) AS abstime
 
 SELECT '' AS five, f1 AS abstime, date( f1) AS date
   FROM ABSTIME_TBL
-  WHERE isfinite(f1) AND f1 <> 'current'::abstime
+  WHERE isfinite(f1) AND f1 <> abstime 'current'
   ORDER BY date;
 
 SELECT '' AS five, d1 AS datetime, abstime(d1) AS abstime

@@ -1,4 +1,5 @@
 --
+-- OPR_SANITY
 -- Sanity checks for common errors in making operator/procedure system tables:
 -- pg_operator, pg_proc, pg_aggregate, pg_am, pg_amop, pg_amproc, pg_opclass.
 --

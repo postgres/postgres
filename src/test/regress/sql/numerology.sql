@@ -1,5 +1,6 @@
 --
--- numerology.sql
+-- NUMEROLOGY
+-- Test various combinations of numeric types and functions.
 --
 
 --

@@ -1,14 +1,16 @@
--- *** testing new built-in time types: datetime, timespan ***
+--
+-- DATETIME
+--
 
 -- Shorthand values
 -- Not directly usable for regression testing since these are not constants.
 -- So, just try to test parser and hope for the best - tgl 97/04/26
 
-SELECT ('today'::datetime = ('yesterday'::datetime + '1 day'::timespan)) as "True";
-SELECT ('today'::datetime = ('tomorrow'::datetime - '1 day'::timespan)) as "True";
-SELECT ('tomorrow'::datetime = ('yesterday'::datetime + '2 days'::timespan)) as "True";
-SELECT ('current'::datetime = 'now'::datetime) as "True";
-SELECT ('now'::datetime - 'current'::datetime) AS "ZeroSecs";
+SELECT (datetime 'today' = (datetime 'yesterday' + timespan '1 day')) as "True";
+SELECT (datetime 'today' = (datetime 'tomorrow' - timespan '1 day')) as "True";
+SELECT (datetime 'tomorrow' = (datetime 'yesterday' + timespan '2 days')) as "True";
+SELECT (datetime 'current' = 'now') as "True";
+SELECT (datetime 'now' - 'current') AS "ZeroSecs";
 
 SET DateStyle = 'Postgres,noneuropean';
 SELECT datetime('1994-01-01', '11:00') AS "Jan_01_1994_11am";
@@ -22,13 +24,13 @@ INSERT INTO DATETIME_TBL VALUES ('tomorrow');
 INSERT INTO DATETIME_TBL VALUES ('tomorrow EST');
 INSERT INTO DATETIME_TBL VALUES ('tomorrow zulu');
 
-SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = 'today'::datetime;
-SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = 'tomorrow'::datetime;
-SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = 'yesterday'::datetime;
-SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = 'today'::datetime + '1 day'::timespan;
-SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = 'today'::datetime - '1 day'::timespan;
+SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = datetime 'today';
+SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = datetime 'tomorrow';
+SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = datetime 'yesterday';
+SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = datetime 'today' + timespan '1 day';
+SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = datetime 'today' - timespan '1 day';
 
-SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = 'now'::datetime;
+SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = datetime 'now';
 
 DELETE FROM DATETIME_TBL;
 
@@ -36,7 +38,7 @@ DELETE FROM DATETIME_TBL;
 INSERT INTO DATETIME_TBL VALUES ('current');
 BEGIN;
 INSERT INTO DATETIME_TBL VALUES ('now');
-SELECT count(*) AS two FROM DATETIME_TBL WHERE d1 = 'now'::datetime;
+SELECT count(*) AS two FROM DATETIME_TBL WHERE d1 = datetime 'now';
 END;
 DELETE FROM DATETIME_TBL;
 
@@ -125,31 +127,31 @@ SELECT '' AS sixtythree, d1 FROM DATETIME_TBL;
 
 -- Demonstrate functions and operators
 SELECT '' AS fortythree, d1 FROM DATETIME_TBL
-   WHERE d1 > '1997-01-02'::datetime and d1 != 'current'::datetime;
+   WHERE d1 > datetime '1997-01-02' and d1 != datetime 'current';
 
 SELECT '' AS fifteen, d1 FROM DATETIME_TBL
-   WHERE d1 < '1997-01-02'::datetime and d1 != 'current'::datetime;
+   WHERE d1 < datetime '1997-01-02' and d1 != datetime 'current';
 
 SELECT '' AS one, d1 FROM DATETIME_TBL
-   WHERE d1 = '1997-01-02'::datetime and d1 != 'current'::datetime;
+   WHERE d1 = datetime '1997-01-02' and d1 != datetime 'current';
 
 SELECT '' AS fiftyeight, d1 FROM DATETIME_TBL
-   WHERE d1 != '1997-01-02'::datetime and d1 != 'current'::datetime;
+   WHERE d1 != datetime '1997-01-02' and d1 != datetime 'current';
 
 SELECT '' AS sixteen, d1 FROM DATETIME_TBL
-   WHERE d1 <= '1997-01-02'::datetime and d1 != 'current'::datetime;
+   WHERE d1 <= datetime '1997-01-02' and d1 != datetime 'current';
 
 SELECT '' AS fortyfour, d1 FROM DATETIME_TBL
-   WHERE d1 >= '1997-01-02'::datetime and d1 != 'current'::datetime;
+   WHERE d1 >= datetime '1997-01-02' and d1 != datetime 'current';
 
-SELECT '' AS sixtythree, d1 + '1 year'::timespan AS one_year FROM DATETIME_TBL;
+SELECT '' AS sixtythree, d1 + timespan '1 year' AS one_year FROM DATETIME_TBL;
 
-SELECT '' AS sixtythree, d1 - '1 year'::timespan AS one_year FROM DATETIME_TBL;
+SELECT '' AS sixtythree, d1 - timespan '1 year' AS one_year FROM DATETIME_TBL;
 
 -- Casting within a BETWEEN qualifier should probably be allowed by the parser. - tgl 97/04/26
---SELECT '' AS fifty, d1 - '1997-01-02'::datetime AS diff
---   FROM DATETIME_TBL WHERE d1 BETWEEN '1902-01-01'::datetime AND '2038-01-01'::datetime;
-SELECT '' AS fifty, d1 - '1997-01-02'::datetime AS diff
+--SELECT '' AS fifty, d1 - datetime '1997-01-02' AS diff
+--   FROM DATETIME_TBL WHERE d1 BETWEEN datetime '1902-01-01' AND datetime '2038-01-01';
+SELECT '' AS fifty, d1 - datetime '1997-01-02' AS diff
    FROM DATETIME_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
 
 SELECT '' AS fortynine, date_part( 'year', d1) AS year, date_part( 'month', d1) AS month,

@@ -1,4 +1,5 @@
 --
+-- LSEG
 -- Line segments
 --
 
@@ -19,7 +20,7 @@ INSERT INTO LSEG_TBL VALUES ('[(1,2),(3,4)');
 
 select * from LSEG_TBL;
 
-SELECT * FROM LSEG_TBL WHERE s <= '[(1,2),(3,4)]'::lseg;
+SELECT * FROM LSEG_TBL WHERE s <= lseg '[(1,2),(3,4)]';
 
-SELECT * FROM LSEG_TBL WHERE (s <-> '[(1,2),(3,4)]'::lseg) < 10;
+SELECT * FROM LSEG_TBL WHERE (s <-> lseg '[(1,2),(3,4)]') < 10;
 
