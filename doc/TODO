@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Jun  7 15:55:34 EDT 2000
+Last updated:		Thu Jun  8 11:47:25 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -129,6 +129,7 @@ COMMANDS
 * Allow DELETE and UPDATE to use inheritance using tablename*
 * Allow INSERT INTO my_table VALUES (a, b, c, DEFAULT, x, y, z, ...)
 * Allow BINARY option to SELECT, like we do with DECLARE
+* Prevent truncate on table acting as foreign key
   
 CLIENTS
 
