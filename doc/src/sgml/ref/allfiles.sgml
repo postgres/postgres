@@ -110,4 +110,12 @@
 <!entity vacuum             system "vacuum.sgml">
 
 <!-- these are in the "utilities" reference chapter -->
+<!entity createdb           system "createdb.sgml">
+<!entity createuser         system "createuser.sgml">
+<!entity destroydb          system "destroydb.sgml">
+<!entity destroyuser        system "destroyuser.sgml">
+<!entity initdb             system "initdb.sgml">
+<!entity initlocation       system "initlocation.sgml">
+<!entity pgDump            system "pg_dump.sgml">
+<!entity pgDumpall         system "pg_dumpall.sgml">
 <!entity psqlRef            system "psql-ref.sgml">

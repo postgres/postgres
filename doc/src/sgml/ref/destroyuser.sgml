@@ -1,0 +1,200 @@
+<REFENTRY ID="APP-DESTROYUSER">
+<REFMETA>
+<REFENTRYTITLE>
+<application>destroyuser</application>
+</REFENTRYTITLE>
+<REFMISCINFO>Application</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>
+<application>destroyuser</application>
+</REFNAME>
+<REFPURPOSE>
+Destroy a <productname>Postgres</productname> user and associated databases
+</REFPURPOSE>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>1998-10-02</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+destroyuser [ <replaceable class="parameter">username</replaceable> ]
+destroyuser [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ]
+    [ <replaceable class="parameter">username</replaceable> ]
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-APP-DESTROYUSER-1">
+<REFSECT2INFO>
+<DATE>1998-10-02</DATE>
+</REFSECT2INFO>
+<TITLE>
+Inputs
+</TITLE>
+<PARA>
+
+<variablelist>
+<varlistentry>
+<term>
+-h <replaceable class="parameter">host</replaceable>
+</term>
+<listitem>
+<para>
+Specifies the hostname of the machine on which the 
+<application>postmaster</application>
+is running.  Defaults to using a local Unix domain socket
+ rather than an IP connection..
+
+<varlistentry>
+<term>
+-p <replaceable class="parameter">port</replaceable>
+</term>
+<listitem>
+<para>
+Specifies the Internet TCP/IP port or local Unix domain socket file 
+extension on which the <application>postmaster</application>
+is listening for connections.  The port number defaults to 5432,
+ or the value of the <envar>PGPORT</envar>
+environment variable (if set).
+
+<varlistentry>
+<term>
+<replaceable class="parameter">username</replaceable>
+</term>
+<listitem>
+<para>
+Specifies the name of the <productname>Postgres</productname> user to be removed. 
+This name must exist in the <productname>Postgres</productname> installation.
+You will be prompted for a name if none is specified on the command line.
+
+</variablelist>
+
+<REFSECT2 ID="R2-APP-DESTROYUSER-2">
+<REFSECT2INFO>
+<DATE>1998-10-02</DATE>
+</REFSECT2INFO>
+<TITLE>
+Outputs
+</TITLE>
+<PARA>
+<application>destroyuser</application> will remove an entry in the
+<literal>pg_user</literal> or <literal>pg_shadow</literal> system table,
+and will remove all databases for which that user is the administrator
+ (<acronym>DBA</acronym>).
+
+<variablelist>
+<varlistentry>
+<term>
+Connection to database 'template1' failed.
+connectDB() failed: Is the postmaster running and accepting connections
+ at 'UNIX Socket' on port '<replaceable class="parameter">port</replaceable>'?
+destroyuser: database access failed.
+<listitem>
+<para>
+<application>destroyuser</application> could not attach to the 
+<application>postmaster</application> 
+process on the specified host and port.  If you see this message,
+ensure that the <application>postmaster</application> 
+is running on the proper host and that you have specified the proper
+port.  If your site uses an authentication system, ensure that you
+have obtained the required authentication credentials.
+
+<varlistentry>
+<term>
+Connection to database 'template1' failed.
+FATAL 1:  SetUserId: user '<replaceable class="parameter">username</replaceable>' is not in 'pg_shadow'
+destroyuser: database access failed.
+<listitem>
+<para>
+You do not have a valid entry in the relation <literal>pg_shadow</literal>
+and and will not be allowed to access <productname>Postgres</productname>. Contact your
+<productname>Postgres</productname> administrator.
+
+<varlistentry>
+<term>
+destroyuser: <replaceable class="parameter">username</replaceable> cannot delete users.
+<listitem>
+<para>
+You do not have permission to delete users; contact your
+<productname>Postgres</productname> site administrator.
+
+<varlistentry>
+<term>
+destroyuser: user "<replaceable class="parameter">username</replaceable>" already exists
+<listitem>
+<para>
+The user to be added already has an entry in the <literal>pg_shadow</literal>
+class.
+
+<varlistentry>
+<term>
+database access failed
+<listitem>
+<para>
+An internal error occurred in <application>psql</application>
+or in the backend server.  Ensure that your site administrator has
+properly installed <productname>Postgres</productname>and initialized the site with 
+<application>initdb</application>.
+
+<varlistentry>
+<term>
+destroydb on <replaceable class="parameter">dbname</replaceable> failed - exiting
+<listitem>
+<para>
+An internal error occurred in <application>psql</application>
+or in the backend server. There was possibly a Unix permissions problem with the
+specified database.
+
+
+<varlistentry>
+<term>
+delete of user <replaceable class="parameter">username</replaceable> was UNSUCCESSFUL
+<listitem>
+<para>
+An internal error occurred in <application>psql</application>
+or in the backend server.
+
+</variablelist>
+
+<note>
+<para>
+<application>destroyuser</application> internally runs
+DROP USER from <application>psql</application>
+while connected to the <literal>template1</literal> database.
+</note>
+
+<REFSECT1 ID="R1-APP-DESTROYUSER-1">
+<REFSECT1INFO>
+<DATE>1998-10-02</DATE>
+</REFSECT1INFO>
+<TITLE>
+Description
+</TITLE>
+<PARA>
+<application>destroyuser</application> removes an existing
+ <productname>Postgres</productname> user
+and the databases for which that user
+is database administrator.
+Only users with <literal>usesuper</literal> set in
+the <literal>pg_shadow</literal> class can destroy 
+ <productname>Postgres</productname> users.  As shipped,
+the user <literal>postgres</literal> can remove users.
+
+<para>
+<application>destroyuser</application> is a shell script that invokes
+<application>psql</application>.
+Hence, a <application>postmaster</application>
+process must be running on the database server host before
+<application>destroyuser</application> is executed.
+ The 
+<envar>PGOPTION</envar>
+and
+<envar>PGREALM</envar>
+environment variables will be passed on to
+<application>psql</application>
+and processed as described in <xref linkend="app-psql" endterm="app-psql">.
+
+<para>
+Once invoked, <application>destroyuser</application>
+will warn you about the databases that will be destroyed in the
+process and permit you to abort the removal of the user if desired.
+
+</REFENTRY>

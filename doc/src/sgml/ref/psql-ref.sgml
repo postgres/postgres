@@ -6,7 +6,7 @@
 <REFMISCINFO>Application</REFMISCINFO>
 </REFMETA>
 <REFNAMEDIV>
-<REFNAME>
+<REFNAME id="psql-ref">
 <application>psql</application>
 </REFNAME>
 <REFPURPOSE>
@@ -177,7 +177,6 @@ any reason.
 Description
 </TITLE>
 <PARA>
-
 <application>psql</application> is a character-based front-end to 
 <productname>Postgres</productname>.
 It enables you to

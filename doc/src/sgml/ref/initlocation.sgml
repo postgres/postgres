@@ -1,0 +1,201 @@
+<REFENTRY ID="APP-INITLOCATION">
+<REFMETA>
+<REFENTRYTITLE>
+<application>initlocation</application>
+</REFENTRYTITLE>
+<REFMISCINFO>Application</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>
+<application>initlocation</application>
+</REFNAME>
+<REFPURPOSE>
+Create a secondary <productname>Postgres</productname> database storage area
+</REFPURPOSE>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>1998-10-02</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+initlocation [ --location=<replaceable class="parameter">altdir</replaceable> | -D <replaceable class="parameter">altdir</replaceable> ]
+    [ --username=<replaceable class="parameter">name</replaceable> | -u <replaceable class="parameter">name</replaceable> ]
+    [ <replaceable class="parameter">altdir</replaceable> ]
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-APP-INITLOCATION-1">
+<REFSECT2INFO>
+<DATE>1998-10-02</DATE>
+</REFSECT2INFO>
+<TITLE>
+Inputs
+</TITLE>
+<PARA>
+
+<variablelist>
+<varlistentry>
+<term>
+--location=<replaceable class="parameter">altdir</replaceable>
+</term>
+<term>
+-D <replaceable class="parameter">altdir</replaceable>
+</term>
+<term>
+<replaceable class="parameter">altdir</replaceable>
+</term>
+<listitem>
+<para>
+Where in your Unix filesystem do you want alternate databases to go?
+The top level directory is called the <envar>PGDATA</envar> directory, so you
+might want to point your first alternate location at <envar>PGDATA2</envar>.
+
+<varlistentry>
+<term>
+--username=<replaceable class="parameter">name</replaceable>
+</term>
+<term>
+-u <replaceable class="parameter">name</replaceable>
+</term>
+<term>
+<envar>PGUSER</envar>
+</term>
+<listitem>
+<para>
+Who will be the Unix filesystem owner of this database storage area?
+The
+<productname>Postgres</productname> superuser is a Unix user 
+who owns all files that store the database
+system and also owns the postmaster and backend processes that access them.
+Usually, this is the user who should run <application>initlocation</application>
+and who will thus have ownership of the directories and files.
+
+<note>
+<para>
+Only the Unix superuser can create a database system with a
+different user as the <productname>Postgres</productname> superuser.
+Specifying a user other than the <productname>Postgres</productname> superuser
+may lead to database security and data integrity problems. Refer to the
+<citetitle><productname>PostgreSQL</productname> Administrator's Guide</citetitle>
+ for more information.
+</note>
+
+</variablelist>
+
+<REFSECT2 ID="R2-APP-INITLOCATION-2">
+<REFSECT2INFO>
+<DATE>1998-09-26</DATE>
+</REFSECT2INFO>
+<TITLE>
+Outputs
+</TITLE>
+<PARA>
+<application>initlocation</application> will create directories in 
+the specified place.
+
+<variablelist>
+<varlistentry>
+<term>
+We are initializing the database area with username postgres (uid=500).
+This user will own all the files and must also own the server process.
+Creating Postgres database system directory <replaceable class="parameter">altdir</replaceable>
+Creating Postgres database system directory <replaceable class="parameter">altdir</replaceable>
+</term>
+<listitem>
+<para>
+Successful completion.
+
+<varlistentry>
+<term>
+We are initializing the database area with username postgres (uid=500).
+This user will own all the files and must also own the server process.
+Creating Postgres database system directory /usr/local/src/testlocation
+mkdir: cannot make directory `<replaceable class="parameter">altdir</replaceable>': Permission denied
+</term>
+<listitem>
+<para>
+You do not have filesystem permission to write to the specified directory area.
+
+<varlistentry>
+<term>
+Valid username not given.  You must specify the username for
+the Postgres superuser for the database system you are
+initializing, either with the --username option or by default
+to the USER environment variable.
+</term>
+<listitem>
+<para>
+The username which you have specified is not the
+<productname>Postgres</productname> superuser.
+
+<varlistentry>
+<term>
+Can't tell what username to use.  You don't have the USER
+environment variable set to your username and didn't specify the
+--username option
+</term>
+<listitem>
+<para>
+Specify the <option>--username</option> command line option.
+
+</variablelist>
+
+<REFSECT1 ID="R1-APP-INITLOCATION-1">
+<REFSECT1INFO>
+<DATE>1998-09-26</DATE>
+</REFSECT1INFO>
+<TITLE>
+Description
+</TITLE>
+<PARA>
+<application>initlocation</application> 
+creates a new <productname>Postgres</productname> secondary database storage area. 
+A secondary storage area contains a required tree of directories with
+the correct file permissions on those directories.
+
+<para>
+Creating a database storage area consists of creating the directories in which
+database data might live.
+
+<para>
+There are two kinds of arguments for <application>initlocation</application>.
+First, you can specify an environment variable (e.g. <envar>PGDATA2</envar>).
+This environment variable should be known to the backend for later use in
+<command>CREATE DATABASE/WITH LOCATION</command>
+ or 
+<command>createdb -D <replaceable class="parameter">altdir</replaceable></command>.
+However, <emphasis>the backend daemon must have this variable in it's
+environment</emphasis> for this to succeed.
+
+Second, you may be able to specify an explicit
+absolute path to the top directory of the storage area. However,this second
+option is possible only if explicitly enabled during the
+<productname>Postgres</productname> installation. It is usually disabled
+ to alleviate security and data integrity concerns.
+
+<note>
+<para>
+<productname>Postgres</productname> will add <filename>/base/</filename>
+to the specified path to create the storage area.
+
+<para>
+The backend requires that any argument to <option>WITH LOCATION</option> which is
+in all uppercase and which has no path delimiters is an environment variable.
+</note>
+
+<REFSECT1 ID="R1-APP-INITLOCATION-2">
+<REFSECT1INFO>
+<DATE>1998-09-26</DATE>
+</REFSECT1INFO>
+<TITLE>
+Usage
+</TITLE>
+<PARA>
+To create a database in an alternate location, using an environment variable:
+
+<programlisting>
+% setenv PGDATA2 /opt/postgres/data
+
+% initlocation PGDATA2
+% createdb -D PGDATA2
+</programlisting>
+
+</REFENTRY>

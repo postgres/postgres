@@ -58,6 +58,7 @@ commands supported by <productname>Postgres</productname>.
 &set;
 &show;
 &update;
+&vacuum;
 
 </Chapter>
 
@@ -84,6 +85,14 @@ This is reference information for the
 <productname>Postgres</productname> support utilities.
 </para>
 
+&createdb;
+&createuser;
+&destroydb;
+&destroyuser;
+&initdb;
+&initlocation;
+&pgDump;
+&pgDumpall;
 &psqlRef;
 
 </chapter>
