@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jul 27 14:51:15 EDT 2000
+Last updated:		Thu Jul 27 22:27:39 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -172,6 +172,7 @@ EXOTIC FEATURES
 * Add replication of distributed databases [replication]
 * Allow queries across multiple databases
 * Allow nested transactions (Vadim)
+* Allow INSERT/UPDATE to return new.col or old.col (Philip)
 
 MISC
 
