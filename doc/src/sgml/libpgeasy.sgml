@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpgeasy.sgml,v 2.1 2000/03/31 03:26:21 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpgeasy.sgml,v 2.2 2000/04/27 18:45:43 momjian Exp $
 -->
 
  <chapter id="pgeasy-chapter">
@@ -10,7 +10,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpgeasy.sgml,v 2.1 2000/03/31 03:26
 
    <para>
     Written by Bruce Momjian
-    (<ulink url="mailto:root@candle.pha.pa.us">root@candle.pha.pa.us</ulink>)
+    (<ulink url="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</ulink>)
     and last updated 2000-03-30.
    </para>
   </note>
