@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.17 1996/10/28 09:05:29 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.18 1996/10/29 21:51:13 bryanh Exp $
  *
  * NOTES
  *
@@ -663,13 +663,19 @@ static void
 send_error_reply(Port *port, const char *errormsg)
 {
     int rc;  /* return code from sendto */
+    char *reply;   
+      /* The literal reply string we put into the socket.  This is a pointer
+         to storage we malloc.
+         */
     char reply[201];
     const struct linger linger_parm = {true, LINGER_TIME};
     /* A parameter for setsockopt() that tells it to have close() block for
        a while waiting for the frontend to read its outstanding messages.
        */
 
-    snprintf(reply, sizeof(reply), "E%s", errormsg);
+    reply = malloc(strlen(errormsg)+10);
+
+    sprintf(reply, "E%s", errormsg);
 
     rc = send(port->sock, (Addr) reply, strlen(reply)+1, /* flags */ 0);
     if (rc < 0)
@@ -683,7 +689,8 @@ send_error_reply(Port *port, const char *errormsg)
               "Only partial error reply sent to front end.\n",
               progname);
 
-    /* Now we have to make sure frontend has a chance to see what we
+    free(reply);
+   /* Now we have to make sure frontend has a chance to see what we
        just wrote.
        */
     rc = setsockopt(port->sock, SOL_SOCKET, SO_LINGER, 
