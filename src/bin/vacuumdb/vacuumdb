@@ -1,0 +1,98 @@
+#!/bin/sh
+#-------------------------------------------------------------------------
+#
+# vacuumdb--
+#    vacuum a postgres database
+#
+#    this program runs the monitor with the "-c" option to vacuum
+#    the requested database.
+#
+# Copyright (c) 1994, Regents of the University of California
+#
+#
+# IDENTIFICATION
+#    $Header: /cvsroot/pgsql/src/bin/vacuumdb/Attic/vacuumdb,v 1.1 1998/11/14 01:58:15 thomas Exp $
+#
+#-------------------------------------------------------------------------
+
+CMDNAME=`basename $0`
+
+if [ -z "$USER" ]; then
+	if [ -z "$LOGNAME" ]; then
+		if [ -z "`whoami`" ]; then
+			echo "$CMDNAME: cannot determine user name"
+			exit 1
+		fi
+	else
+		USER=$LOGNAME
+		export USER
+	fi
+fi
+
+dbname=$USER
+
+PASSWDOPT="";
+
+while test -n "$1"
+do
+	case $1 in
+		--help) usage=1;;
+		--analyze) analyze="analyze";;
+		--table) table=$2; shift;;
+		--verbose) verbose="verbose";;
+
+		-a) AUTHSYS=$2; shift;;
+		-h) PGHOST=$2; shift;;
+		-p) PGPORT=$2; shift;;
+		-t) table=$2; shift;;
+		-u) PASSWDOPT=$1;;
+		-v) verbose="verbose";;
+		-z) analyze="analyze";;
+		-*) echo "$CMDNAME: unrecognized parameter $1"; usage=1;;
+		 *) dbname=$1;;
+	esac
+	shift;
+done
+
+if [ "$usage" ]; then
+	echo "Usage: $CMDNAME -a <authtype> -h <server> -p <portnumber> --analyze --verbose [--table 'table[(cols)]'] [dbname]"
+	exit 1
+fi
+
+if [ -z "$AUTHSYS" ]; then
+	AUTHOPT=""
+else
+	AUTHOPT="-a $AUTHSYS"
+fi
+
+if [ -z "$PGHOST" ]; then
+	PGHOSTOPT=""
+else
+	PGHOSTOPT="-h $PGHOST"
+fi
+
+if [ -z "$PGPORT" ]; then
+	PGPORTOPT=""
+else
+	PGPORTOPT="-p $PGPORT"
+fi
+
+if [ -z "$dbpath" ]; then
+	location=""
+else
+#	if [ ! -d "$dbpath"/base ]; then
+#		echo "$CMDNAME: database creation failed on $dbname."
+#		echo "directory $dbpath/base not found."
+#		exit 1
+#	fi
+	location="with location = '$dbpath'"
+fi
+
+psql $PASSWDOPT -tq $AUTHOPT $PGHOSTOPT $PGPORTOPT -c "vacuum $verbose $analyze $table" $dbname
+
+if [ $? -ne 0 ]; then
+	echo "$CMDNAME: database vacuum failed on $dbname."
+	exit 1
+fi
+
+exit 0
