@@ -8,24 +8,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.14 2002/09/04 20:31:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.15 2002/09/05 21:19:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres_fe.h"
 
-#include <pg_config.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#ifdef HAVE_TERMIOS_H
-#include <termios.h>
-#endif
-
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#ifdef HAVE_TERMIOS_H
+#include <termios.h>
+#endif
 
 #include "libpq-fe.h"
 #include "libpq/libpq-fs.h"
