@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.63 1998/02/26 04:44:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.64 1998/03/26 23:46:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -667,6 +667,7 @@ connectDB(PGconn *conn)
 	if (conn->pgpass != NULL)
 	{
 		free(conn->pgpass);
+		conn->pgpass = NULL;
 	}
 
 	return CONNECTION_OK;
