@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.85 2001/04/02 17:59:17 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.86 2001/04/03 13:38:08 momjian Exp $
 -->
 
  <appendix id="release">
@@ -123,8 +123,6 @@ Subqueries in FROM are now supported.
 
     <para>
      <programlisting>
-Last updated from CVS logs:  2001-04-02
-
 Bug Fixes
 ---------
 Many multi-byte/Unicode/locale fixes (Tatsuo and others)
