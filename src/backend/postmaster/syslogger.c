@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.5 2004/08/09 20:28:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.6 2004/08/29 00:38:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -706,6 +706,7 @@ pipeThread(void *arg)
 			if (error == ERROR_HANDLE_EOF ||
 				error == ERROR_BROKEN_PIPE)
 				break;
+			_dosmaperr(error);
 			ereport(LOG,
 					(errcode_for_file_access(),
 					 errmsg("could not read from logger pipe: %m")));

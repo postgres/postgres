@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.27 2004/07/23 01:58:36 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.28 2004/08/29 00:38:03 momjian Exp $ */
 
 /* undefine and redefine after #include */
 #undef mkdir
@@ -147,6 +147,9 @@ extern int pgwin32_is_admin(void);
 extern int pgwin32_is_service(void);
 #endif
 
+/* in backend/port/win32/error.c */
+void _dosmaperr(unsigned long);
+
 
 #define WEXITSTATUS(w)  (((w) >> 8) & 0xff)
 #define WIFEXITED(w)    (((w) & 0xff) == 0)
@@ -222,3 +225,4 @@ int setitimer(int which, const struct itimerval *value, struct itimerval *ovalue
 #define ECONNREFUSED WSAECONNREFUSED
 #define EBADFD WSAENOTSOCK
 #define EOPNOTSUPP WSAEOPNOTSUPP
+
