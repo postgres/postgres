@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.1 2004/05/11 21:57:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.2 2004/05/12 13:38:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,7 +165,7 @@ validate_exec(char *path)
 }
 
 /*
- * find_my_binary -- find an absolute path to a valid executable
+ * find_my_exec -- find an absolute path to a valid executable
  *
  * The reason we have to work so hard to find an absolute path is that
  * on some platforms we can't do dynamic loading unless we know the
@@ -177,13 +177,14 @@ validate_exec(char *path)
  * non-threaded binaries, not in library routines.
  */
 int
-find_my_binary(char *full_path, const char *argv0, const char *binary_name)
+find_my_exec(char *full_path, const char *argv0)
 {
 	char		buf[MAXPGPATH + 2];
 	char	   *p;
 	char	   *path,
 			   *startp,
 			   *endp;
+	const char *binary_name = get_progname(argv0);
 
 	/*
 	 * First try: use the binary that's located in the
@@ -273,14 +274,14 @@ find_my_binary(char *full_path, const char *argv0, const char *binary_name)
  * Find our binary directory, then make sure the "target" executable
  * is the proper version.
  */
-int find_other_binary(char *retpath, const char *argv0, const char *progname,
+int find_other_exec(char *retpath, const char *argv0,
 			    char const *target, const char *versionstr)
 {
 	char		cmd[MAXPGPATH];
 	char		line[100];
 	FILE	   *pgver;
 
-	if (find_my_binary(retpath, argv0, progname) < 0)
+	if (find_my_exec(retpath, argv0) < 0)
 		return -1;
 
 	/* Trim off program name and keep just directory */	

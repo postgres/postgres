@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.384 2004/05/12 03:48:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.385 2004/05/12 13:38:39 momjian Exp $
  *
  * NOTES
  *
@@ -172,7 +172,7 @@ int			MaxBackends;
 int			ReservedBackends;
 
 
-static char *progname = NULL;
+static const char *progname = NULL;
 
 /* The socket(s) we're listening to. */
 #define MAXLISTEN	10
@@ -412,7 +412,7 @@ PostmasterMain(int argc, char *argv[])
 
 	*original_extraoptions = '\0';
 
-	progname = argv[0];
+	progname = get_progname(argv[0]);
 
 	IsPostmasterEnvironment = true;
 
@@ -692,7 +692,7 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * On some systems our dynloader code needs the executable's pathname.
 	 */
-	if (find_my_binary(pg_pathname, argv[0], "postgres") < 0)
+	if (find_my_exec(pg_pathname, argv[0]) < 0)
 		ereport(FATAL,
 				(errmsg("%s: could not locate postgres executable",
 						progname)));
@@ -3222,7 +3222,7 @@ CreateOptsFile(int argc, char *argv[])
 	FILE	   *fp;
 	int			i;
 
-	if (find_my_binary(fullprogname, argv[0], "postmaster") < 0)
+	if (find_my_exec(fullprogname, argv[0]) < 0)
 	{
 		elog(LOG, "could not locate postmaster");
 		return false;

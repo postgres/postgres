@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.85 2004/01/28 20:43:03 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.86 2004/05/12 13:38:48 momjian Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -119,7 +119,7 @@ main(int argc, char *const argv[])
 				verbose = false,
 				out_option = 0;
 	struct _include_path *ip;
-	char	   *progname;
+	const char *progname;
 
 	progname = get_progname(argv[0]);
 

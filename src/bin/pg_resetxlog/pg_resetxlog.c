@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.17 2004/03/22 16:46:28 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.18 2004/05/12 13:38:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@ static ControlFileData ControlFile;		/* pg_control values */
 static uint32 newXlogId,
 			newXlogSeg;			/* ID/Segment of new XLOG segment */
 static bool guessed = false;	/* T if we had to guess at any values */
-static char *progname;
+static const char *progname;
 
 static bool ReadControlFile(void);
 static void GuessControlValues(void);

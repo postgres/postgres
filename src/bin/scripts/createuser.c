@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.9 2004/01/09 00:15:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.10 2004/05/12 13:38:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ main(int argc, char *argv[])
 		{NULL, 0, NULL, 0}
 	};
 
-	char	   *progname;
+	const char *progname;
 	int			optindex;
 	int			c;
 

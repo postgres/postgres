@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.403 2004/05/11 21:57:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.404 2004/05/12 13:38:40 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2083,7 +2083,7 @@ assign_max_stack_depth(int newval, bool doit, GucSource source)
 
 
 static void
-usage(char *progname)
+usage(const char *progname)
 {
 	printf(gettext("%s is the PostgreSQL stand-alone backend.  It is not\nintended to be used by normal users.\n\n"), progname);
 
@@ -2649,7 +2649,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 * On some systems our dynloader code needs the executable's
 		 * pathname.  (If under postmaster, this was done already.)
 		 */
-		if (find_my_binary(pg_pathname, argv[0], "postgres") < 0)
+		if (find_my_exec(pg_pathname, argv[0]) < 0)
 			ereport(FATAL,
 					(errmsg("%s: could not locate postgres executable",
 							argv[0])));

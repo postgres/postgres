@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.27 2004/05/11 21:57:14 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.28 2004/05/12 13:38:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,7 @@ bool		show_setting = false;
 
 
 /* internal vars */
-char	   *progname;
+const char *progname;
 char	   *postgres;
 char	   *encodingid = "0";
 char	   *bki_file;
@@ -1932,7 +1932,7 @@ main(int argc, char *argv[])
 	sprintf(pgdenv, "PGDATA=%s", pg_data);
 	putenv(pgdenv);
 
-	if ((ret = find_other_binary(backendbin, argv[0], progname, "postgres",
+	if ((ret = find_other_exec(backendbin, argv[0], "postgres",
 						   PG_VERSIONSTR)) < 0)
 	{
 		if (ret == -1)

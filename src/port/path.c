@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.6 2004/05/11 21:57:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.7 2004/05/12 13:38:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,8 +113,8 @@ canonicalize_path(char *path)
 /*
  * Extracts the actual name of the program as called.
  */
-char *
-get_progname(char *argv0)
+const char *
+get_progname(const char *argv0)
 {
 	if (!last_path_separator(argv0))
 		return argv0;

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.29 2004/05/11 21:57:15 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.30 2004/05/12 13:38:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,12 +25,11 @@ extern bool is_absolute_path(const char *filename);
 extern char *first_path_separator(const char *filename);
 extern char *last_path_separator(const char *filename);
 extern void canonicalize_path(char *path);
-extern char *get_progname(char *argv0);
+extern const char *get_progname(const char *argv0);
 
 /* Portable way to find binaries */
-extern int find_my_binary(char *full_path, const char *argv0,
-					 const char *binary_name);
-extern int find_other_binary(char *retpath, const char *argv0, const char *progname,
+extern int find_my_exec(char *full_path, const char *argv0);
+extern int find_other_exec(char *retpath, const char *argv0,
 					   char const *target, const char *versionstr);
 
 #if defined(__CYGWIN__) || defined(WIN32)

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.31 2004/05/11 21:57:14 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.32 2004/05/12 13:38:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ int			optreset;
 #define PG_VERSIONSTR "pg_dump (PostgreSQL) " PG_VERSION "\n"
 
 
-static char *progname;
+static const char *progname;
 
 static void help(void);
 
@@ -123,7 +123,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if ((ret = find_other_binary(pg_dump_bin, argv[0], progname, "pg_dump",
+	if ((ret = find_other_exec(pg_dump_bin, argv[0], "pg_dump",
 						   PG_VERSIONSTR)) < 0)
 	{
 		if (ret == -1)
