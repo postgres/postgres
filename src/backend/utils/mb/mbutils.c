@@ -3,7 +3,7 @@
  * client encoding and server internal encoding.
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.22 2001/09/09 01:15:11 ishii Exp $
+ * $Id: mbutils.c,v 1.23 2001/09/21 15:27:38 tgl Exp $
  */
 #include "postgres.h"
 
@@ -24,10 +24,10 @@
 static pg_enc2name	*ClientEncoding = &pg_enc2name_tbl[ PG_SQL_ASCII ];
 static pg_enc2name	*DatabaseEncoding = &pg_enc2name_tbl[ PG_SQL_ASCII ];
 
-static void	(*client_to_mic) ();	/* something to MIC */
-static void	(*client_from_mic) ();	/* MIC to something */
-static void	(*server_to_mic) ();	/* something to MIC */
-static void	(*server_from_mic) ();	/* MIC to something */
+static to_mic_converter client_to_mic;	/* something to MIC */
+static from_mic_converter client_from_mic;	/* MIC to something */
+static to_mic_converter server_to_mic;	/* something to MIC */
+static from_mic_converter server_from_mic;	/* MIC to something */
 
 /*
  * find encoding table entry by encoding
@@ -60,7 +60,9 @@ pg_get_enconv_by_encoding(int encoding)
  * appropriate function found, set to 0.
  */
 int
-pg_find_encoding_converters(int src, int dest, void (**src_to_mic)(), void (**dest_from_mic)())
+pg_find_encoding_converters(int src, int dest,
+							to_mic_converter *src_to_mic,
+							from_mic_converter *dest_from_mic)
 {
 	if (src == dest)
 	{							/* src == dest? */
@@ -132,7 +134,7 @@ pg_set_client_encoding(int encoding)
  * returns the current client encoding
  */
 int
-pg_get_client_encoding()
+pg_get_client_encoding(void)
 {
 	Assert(ClientEncoding);
 	return (ClientEncoding->encoding);
@@ -142,7 +144,7 @@ pg_get_client_encoding()
  * returns the current client encoding name
  */
 const char *
-pg_get_client_encoding_name()
+pg_get_client_encoding_name(void)
 {
 	Assert(ClientEncoding);
 	return (ClientEncoding->name);
@@ -176,7 +178,9 @@ pg_get_client_encoding_name()
  * in the length of the string --- is this enough?  */
 
 unsigned char *
-pg_do_encoding_conversion(unsigned char *src, int len, void (*src_to_mic)(), void (*dest_from_mic)())
+pg_do_encoding_conversion(unsigned char *src, int len,
+						  to_mic_converter src_to_mic,
+						  from_mic_converter dest_from_mic)
 {
 	unsigned char *result = src;
 	unsigned char *buf;
@@ -212,7 +216,8 @@ pg_convert(PG_FUNCTION_ARGS)
 	Name	s = PG_GETARG_NAME(1);
 	int encoding = pg_char_to_encoding(NameStr(*s));
 	int db_encoding = DatabaseEncoding->encoding;
-	void (*src)(), (*dest)();
+	to_mic_converter src;
+	from_mic_converter dest;
 	unsigned char	*result;
 	text	*retval;
 
@@ -253,7 +258,8 @@ pg_convert2(PG_FUNCTION_ARGS)
 	int src_encoding = pg_char_to_encoding(src_encoding_name);
 	char *dest_encoding_name = NameStr(*PG_GETARG_NAME(2));
 	int dest_encoding = pg_char_to_encoding(dest_encoding_name);
-	void (*src)(), (*dest)();
+	to_mic_converter src;
+	from_mic_converter dest;
 	unsigned char	*result;
 	text	*retval;
 
@@ -446,14 +452,14 @@ SetDatabaseEncoding(int encoding)
 }
 
 int
-GetDatabaseEncoding()
+GetDatabaseEncoding(void)
 {
 	Assert(DatabaseEncoding);
 	return (DatabaseEncoding->encoding);
 }
 
 const char *
-GetDatabaseEncodingName()
+GetDatabaseEncodingName(void)
 {
 	Assert(DatabaseEncoding);
 	return (DatabaseEncoding->name);

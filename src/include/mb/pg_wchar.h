@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.30 2001/09/11 04:50:36 ishii Exp $ */
+/* $Id: pg_wchar.h,v 1.31 2001/09/21 15:27:38 tgl Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -17,7 +17,6 @@
  */
 #ifdef MULTIBYTE
 typedef unsigned int pg_wchar;
-
 #else
 #define pg_wchar char
 #endif
@@ -152,6 +151,9 @@ extern pg_encname	*pg_char_to_encname_struct(const char *name);
 extern int		pg_char_to_encoding(const char *s);
 extern const char	*pg_encoding_to_char(int encoding);
 
+typedef void (*to_mic_converter) (unsigned char *l, unsigned char *p, int len);
+typedef void (*from_mic_converter) (unsigned char *mic, unsigned char *p, int len);
+
 /*
  * The backend encoding conversion routines
  * Careful:
@@ -162,11 +164,11 @@ extern const char	*pg_encoding_to_char(int encoding);
 #ifndef FRONTEND
 typedef struct pg_enconv
 {
-	pg_enc		encoding;		/* encoding identificator */
-	void		(*to_mic) ();		/* client encoding to MIC */
-	void		(*from_mic) (); 	/* MIC to client encoding */
-	void		(*to_unicode) ();	/* client encoding to UTF-8 */
-	void		(*from_unicode) ();	/* UTF-8 to client encoding */
+	pg_enc		encoding;					/* encoding identifier */
+	to_mic_converter	to_mic;				/* client encoding to MIC */
+	from_mic_converter	from_mic;			/* MIC to client encoding */
+	to_mic_converter to_unicode;			/* client encoding to UTF-8 */
+	from_mic_converter from_unicode;		/* UTF-8 to client encoding */
 } pg_enconv;
 
 extern pg_enconv pg_enconv_tbl[];
@@ -177,13 +179,16 @@ extern pg_enconv *pg_get_enconv_by_encoding(int encoding);
 /*
  * pg_wchar stuff
  */
+typedef int (*mb2wchar_with_len_converter) (const unsigned char *from,
+											pg_wchar *to,
+											int len);
+typedef int (*mblen_converter) (const unsigned char *mbstr);
+
 typedef struct
 {
-	int		(*mb2wchar_with_len) ();	/* convert a multi-byte	
-							 * string to a wchar */
-	int		(*mblen) ();			/* returns the length of a multi-byte word */
-	int		maxmblen;			/* max bytes for a letter in this charset */
-
+	mb2wchar_with_len_converter mb2wchar_with_len; /* convert a multi-byte string to a wchar */
+	mblen_converter mblen;		/* returns the length of a multi-byte char */
+	int		maxmblen;			/* max bytes for a char in this charset */
 } pg_wchar_tbl;
 
 extern pg_wchar_tbl pg_wchar_table[];
@@ -220,6 +225,7 @@ extern int	pg_mbstrlen(const unsigned char *);
 extern int	pg_mbstrlen_with_len(const unsigned char *, int);
 extern int	pg_mbcliplen(const unsigned char *, int, int);
 extern int	pg_mbcharcliplen(const unsigned char *, int, int);
+extern int	pg_encoding_max_length(int);
 
 extern int		pg_set_client_encoding(int);
 extern int		pg_get_client_encoding(void);
@@ -233,8 +239,12 @@ extern int	pg_valid_client_encoding(const char *name);
 extern int	pg_valid_server_encoding(const char *name);
 
 extern int	pg_utf_mblen(const unsigned char *);
-extern int	pg_find_encoding_converters(int, int, void (**)(), void (**)());
-extern unsigned char *pg_do_encoding_conversion(unsigned char *, int, void (*)(), void (*)());
+extern int	pg_find_encoding_converters(int src, int dest,
+										to_mic_converter *src_to_mic,
+										from_mic_converter *dest_from_mic);
+extern unsigned char *pg_do_encoding_conversion(unsigned char *src, int len,
+												to_mic_converter src_to_mic,
+												from_mic_converter dest_from_mic);
 
 extern unsigned char *pg_client_to_server(unsigned char *, int);
 extern unsigned char *pg_server_to_client(unsigned char *, int);

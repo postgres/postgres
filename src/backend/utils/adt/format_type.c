@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.14 2001/08/09 18:28:18 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.15 2001/09/21 15:27:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,10 @@
 #include "utils/builtins.h"
 #include "utils/numeric.h"
 #include "utils/syscache.h"
+#ifdef MULTIBYTE
+#include "mb/pg_wchar.h"
+#endif
+
 
 #define MAX_INT32_LEN 11
 #define _textin(str) DirectFunctionCall1(textin, CStringGetDatum(str))
@@ -249,9 +253,9 @@ format_type_internal(Oid type_oid, int32 typemod, bool allow_invalid)
 
 
 /*
- * type_maximum_size --- determine maximum length of a varlena column
+ * type_maximum_size --- determine maximum width of a varlena column
  *
- * If the max length is indeterminate, return -1.  In particular, we return
+ * If the max width is indeterminate, return -1.  In particular, we return
  * -1 for any type not known to this routine.  We assume the caller has
  * already determined that the type is a varlena type, so it's not
  * necessary to look up the type's pg_type tuple here.
@@ -271,7 +275,14 @@ type_maximum_size(Oid type_oid, int32 typemod)
 		case BPCHAROID:
 		case VARCHAROID:
 			/* typemod includes varlena header */
+#ifdef MULTIBYTE
+			/* typemod is in characters not bytes */
+			return (typemod - VARHDRSZ) *
+				pg_encoding_max_length(GetDatabaseEncoding())
+				+ VARHDRSZ;
+#else
 			return typemod;
+#endif
 
 		case NUMERICOID:
 			/* precision (ie, max # of digits) is in upper bits of typmod */
@@ -291,7 +302,7 @@ type_maximum_size(Oid type_oid, int32 typemod)
 				+ 2 * sizeof(int32);
 	}
 
-	/* Unknown type, or unlimited-length type such as 'text' */
+	/* Unknown type, or unlimited-width type such as 'text' */
 	return -1;
 }
 
