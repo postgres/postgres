@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.37 2000/12/31 18:04:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.38 2001/01/24 03:50:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,7 @@ main(int argc, char *argv[])
 {
 	int			len;
 	struct passwd *pw;
+	char * pw_name_persist;
 
 	/*
 	 * Place platform-specific startup hacks here.  This is the right
@@ -158,6 +159,7 @@ main(int argc, char *argv[])
 		fprintf(stderr, "%s: invalid current euid", argv[0]);
 		exit(1);
 	}
+	pw_name_persist = strdup(pw->pw_name);
 
-	exit(PostgresMain(argc, argv, argc, argv, pw->pw_name));
+	exit(PostgresMain(argc, argv, argc, argv, pw_name_persist));
 }
