@@ -1,0 +1,66 @@
+QUERY: CREATE TABLE OIDINT2_TBL(f1 oidint2);
+QUERY: INSERT INTO OIDINT2_TBL(f1) VALUES ('1234/9873');
+QUERY: INSERT INTO OIDINT2_TBL(f1) VALUES ('1235/9873');
+QUERY: INSERT INTO OIDINT2_TBL(f1) VALUES ('987/-1234');
+QUERY: INSERT INTO OIDINT2_TBL(f1) VALUES ('123456');
+QUERY: INSERT INTO OIDINT2_TBL(f1) VALUES ('123456/123456');
+ERROR:  pg_atoi: error reading "123456": Result too large
+QUERY: INSERT INTO OIDINT2_TBL(f1) VALUES ('');
+QUERY: INSERT INTO OIDINT2_TBL(f1) VALUES ('asdfasd');
+ERROR:  pg_atoi: error in "asdfasd": can't parse "asdfasd"
+QUERY: SELECT '' AS five, OIDINT2_TBL.*;
+five|f1       
+----+---------
+    |1234/9873
+    |1235/9873
+    |987/-1234
+    |123456/0 
+    |0/0      
+(5 rows)
+
+QUERY: SELECT '' AS one, o.* FROM OIDINT2_TBL o WHERE o.f1 = '1235/9873';
+one|f1       
+---+---------
+   |1235/9873
+(1 row)
+
+QUERY: SELECT '' AS four, o.* FROM OIDINT2_TBL o WHERE o.f1 <> '1235/9873';
+four|f1       
+----+---------
+    |1234/9873
+    |987/-1234
+    |123456/0 
+    |0/0      
+(4 rows)
+
+QUERY: SELECT '' AS four, o.* FROM OIDINT2_TBL o WHERE o.f1 <= '1235/9873';
+four|f1       
+----+---------
+    |1234/9873
+    |1235/9873
+    |987/-1234
+    |0/0      
+(4 rows)
+
+QUERY: SELECT '' AS three, o.* FROM OIDINT2_TBL o WHERE o.f1 < '1235/9873';
+three|f1       
+-----+---------
+     |1234/9873
+     |987/-1234
+     |0/0      
+(3 rows)
+
+QUERY: SELECT '' AS two, o.* FROM OIDINT2_TBL o WHERE o.f1 >= '1235/9873';
+two|f1       
+---+---------
+   |1235/9873
+   |123456/0 
+(2 rows)
+
+QUERY: SELECT '' AS one, o.* FROM OIDINT2_TBL o WHERE o.f1 > '1235/9873';
+one|f1      
+---+--------
+   |123456/0
+(1 row)
+
+QUERY: DROP TABLE  OIDINT2_TBL;

@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.13 1997/12/16 16:01:05 thomas Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.14 1998/02/01 11:42:47 scrappy Exp $
 #
 if echo '\c' | grep -s c >/dev/null 2>&1
 then
@@ -20,6 +20,8 @@ PGDATESTYLE="Postgres,US"; export PGDATESTYLE
 #FRONTEND=monitor
 FRONTEND="psql -n -e -q"
 
+SYSTEM=`uname -s`
+
 echo "=============== Notes...                              ================="
 echo "postmaster must already be running for the regression tests to succeed."
 echo "The time zone is now set to PST8PDT explicitly by this regression test"
@@ -39,12 +41,24 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "=============== running regression queries...         ================="
+echo "" > regression.${SYSTEM}
 for i in `cat sql/tests`
 do
 	$ECHO_N "${i} .. " $ECHO_C
 	$FRONTEND regression < sql/${i}.sql > results/${i}.out 2>&1
-	if [ `diff expected/${i}.out results/${i}.out | wc -l` -ne 0 ]
+  if [ -f expected/${i}-${SYSTEM}.out ]
+  then
+		EXPECTED="expected/${i}-${SYSTEM}.out"
+	else
+		EXPECTED="expected/${i}.out"
+	fi
+  
+	if [ `diff ${EXPECTED} results/${i}.out | wc -l` -ne 0 ]
 	then
+		( diff -c ${EXPECTED} results/${i}.out; \
+			echo "";  \
+			echo "----------------------"; \
+			echo "" ) >> regression.${SYSTEM}
 		echo failed
 	else
 		echo ok
