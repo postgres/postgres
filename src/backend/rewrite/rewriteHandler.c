@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.113.2.1 2003/02/13 21:40:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.113.2.2 2004/01/14 03:39:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,11 +62,9 @@ rewriteRuleAction(Query *parsetree,
 {
 	int			current_varno,
 				new_varno;
-	List	   *main_rtable;
 	int			rt_length;
 	Query	   *sub_action;
 	Query	  **sub_action_ptr;
-	List	   *rt;
 
 	/*
 	 * Make modifiable copies of rule action and qual (what we're passed
@@ -108,24 +106,9 @@ rewriteRuleAction(Query *parsetree,
 	 * NOTE: because planner will destructively alter rtable, we must ensure
 	 * that rule action's rtable is separate and shares no substructure
 	 * with the main rtable.  Hence do a deep copy here.
-	 *
-	 * Also, we must disable write-access checking in all the RT entries
-	 * copied from the main query.  This is safe since in fact the rule action
-	 * won't write on them, and it's necessary because the rule action may
-	 * have a different commandType than the main query, causing
-	 * ExecCheckRTEPerms() to make an inappropriate check.  The read-access
-	 * checks can be left enabled, although they're probably redundant.
 	 */
-	main_rtable = (List *) copyObject(parsetree->rtable);
-
-	foreach(rt, main_rtable)
-	{
-		RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
-
-		rte->checkForWrite = false;
-	}
-
-	sub_action->rtable = nconc(main_rtable, sub_action->rtable);
+	sub_action->rtable = nconc((List *) copyObject(parsetree->rtable),
+							   sub_action->rtable);
 
 	/*
 	 * Each rule action's jointree should be the main parsetree's jointree
