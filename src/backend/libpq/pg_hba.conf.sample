@@ -151,15 +151,15 @@
 #   krb5:	Kerberos V5 authentication is used.  Allowed only for
 #		TCP/IP connections, not for local UNIX-domain sockets.
 # 
-#   reject: 	Reject the connection. This is used to reject certain hosts
-#		that are part of a network specified later in the file.
-#		To be effective, "reject" must appear before the later
-#		entries.
-#
 #   pam:        Authentication is passed off to PAM (PostgreSQL must be
 #               configured --with-pam), using the default service name
 #               "postgresql" - you can specify your own service name, by
 #               setting AUTH_ARGUMENT to the desired service name.
+#
+#   reject: 	Reject the connection. This is used to reject certain hosts
+#		that are part of a network specified later in the file.
+#		To be effective, "reject" must appear before the later
+#		entries.
 #
 # 
 # 
