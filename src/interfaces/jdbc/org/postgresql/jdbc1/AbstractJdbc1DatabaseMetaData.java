@@ -2352,7 +2352,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			}
 			else if (pgType.equals("numeric") || pgType.equals("decimal")) 
 			{
-				int attypmod = rs.getInt(8) - VARHDRSZ;
+				int attypmod = rs.getInt("atttypmod") - VARHDRSZ;
 				tuple[6] = Integer.toString( ( attypmod >> 16 ) & 0xffff ).getBytes();
 				tuple[8] = Integer.toString(attypmod & 0xffff).getBytes();
 				tuple[9] = "10".getBytes();
