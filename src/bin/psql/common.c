@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.73 2003/09/03 22:05:08 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.74 2003/09/16 17:59:02 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -33,6 +33,7 @@
 #include "prompt.h"
 #include "print.h"
 #include "mainloop.h"
+#include "mb/pg_wchar.h"
 
 
 /* Workarounds for Windows */
@@ -360,6 +361,9 @@ AcceptResult(const PGresult *result)
  * In autocommit-off mode, a new transaction block is started if start_xact
  * is true; nothing special is done when start_xact is false.  Typically,
  * start_xact = false is used for SELECTs and explicit BEGIN/COMMIT commands.
+ *
+ * Note: we don't bother to check PQclientEncoding; it is assumed that no
+ * caller uses this path to issue "SET CLIENT_ENCODING".
  */
 PGresult *
 PSQLexec(const char *query, bool start_xact)
@@ -416,7 +420,6 @@ PSQLexec(const char *query, bool start_xact)
 
 /*
  * PrintNotifications: check for asynchronous notifications, and print them out
- *
  */
 static void
 PrintNotifications(void)
@@ -427,8 +430,8 @@ PrintNotifications(void)
 	{
 		fprintf(pset.queryFout, gettext("Asynchronous notification \"%s\" received from server process with PID %d.\n"),
 				notify->relname, notify->be_pid);
-		PQfreemem(notify);
 		fflush(pset.queryFout);
+		PQfreemem(notify);
 	}
 }
 
@@ -625,7 +628,20 @@ SendQuery(const char *query)
 	OK = (AcceptResult(results) && PrintQueryResults(results, &before, &after));
 	PQclear(results);
 
+	/* check for events that may occur during query execution */
+
+	if (pset.encoding != PQclientEncoding(pset.db) &&
+		PQclientEncoding(pset.db) >= 0)
+	{
+		/* track effects of SET CLIENT_ENCODING */
+		pset.encoding = PQclientEncoding(pset.db);
+		pset.popt.topt.encoding = pset.encoding;
+		SetVariable(pset.vars, "ENCODING",
+					pg_encoding_to_char(pset.encoding));
+	}
+
 	PrintNotifications();
+
 	return OK;
 }
 

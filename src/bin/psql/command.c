@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.101 2003/08/04 23:59:39 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.102 2003/09/16 17:59:02 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -458,15 +458,7 @@ exec_command(const char *cmd,
 
 		if (!encoding)
 		{
-			/* show encoding --- first check for change sent from server */
-			if (pset.encoding != PQclientEncoding(pset.db) &&
-				PQclientEncoding(pset.db) >= 0)
-			{
-				pset.encoding = PQclientEncoding(pset.db);
-				pset.popt.topt.encoding = pset.encoding;
-				SetVariable(pset.vars, "ENCODING",
-							pg_encoding_to_char(pset.encoding));
-			}
+			/* show encoding */
 			puts(pg_encoding_to_char(pset.encoding));
 		}
 		else
