@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.10 1997/08/21 02:28:52 momjian Exp $
+ * $Id: pg_attribute.h,v 1.11 1997/08/21 03:02:13 momjian Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -48,7 +48,7 @@ CATALOG(pg_attribute) BOOTSTRAP {
          attributes of this instance, so they had better match or Postgres
          will fail.
          */
-    float4	attnvals;
+    float4	attdisbursion;
     int2 	attlen;
       /* attlen is a copy of the typlen field from pg_type for this
          attribute.  See atttypid above.  See struct TypeTupleFormData for
@@ -118,7 +118,7 @@ typedef FormData_pg_attribute	*AttributeTupleForm;
 #define Anum_pg_attribute_attname	2
 #define Anum_pg_attribute_atttypid	3
 
-#define Anum_pg_attribute_attnvals	4
+#define Anum_pg_attribute_attdisbursion	4
 
 #define Anum_pg_attribute_attlen	5
 #define Anum_pg_attribute_attnum	6
@@ -362,7 +362,7 @@ DATA(insert OID = 0 ( 1261 vtype            18 0  1 -11 0 -1 t f c f f));
 { 1249l, {"attrelid"},    26l, 0l,  4,  1, 0l, -1l, '\001', '\0', 'i', '\0', '\0' }, \
 { 1249l, {"attname"},     19l, 0l, NAMEDATALEN,  2, 0l, -1l, '\0', '\0', 'i', '\0', '\0' }, \
 { 1249l, {"atttypid"},    26l, 0l,  4,  3, 0l, -1l, '\001', '\0', 'i', '\0', '\0' }, \
-{ 1249l, {"attnvals"},   700l, 0l,  4,  4, 0l, -1l, '\001', '\0', 'i', '\0', '\0' }, \
+{ 1249l, {"attdisbursion"},   700l, 0l,  4,  4, 0l, -1l, '\001', '\0', 'i', '\0', '\0' }, \
 { 1249l, {"attlen"},      21l, 0l,  2,  5, 0l, -1l, '\001', '\0', 's', '\0', '\0' }, \
 { 1249l, {"attnum"},      21l, 0l,  2,  6, 0l, -1l, '\001', '\0', 's', '\0', '\0' }, \
 { 1249l, {"attnelems"},   23l, 0l,  4,  7, 0l, -1l, '\001', '\0', 'i', '\0', '\0' }, \
@@ -376,7 +376,7 @@ DATA(insert OID = 0 ( 1261 vtype            18 0  1 -11 0 -1 t f c f f));
 DATA(insert OID = 0 ( 1249 attrelid         26 0  4   1 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1249 attname          19 0 NAMEDATALEN  2 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1249 atttypid         26 0  4   3 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1249 attnvals        700 0  4   4 0 -1 t f i f f));
+DATA(insert OID = 0 ( 1249 attdisbursion   700 0  4   4 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1249 attlen           21 0  2   5 0 -1 t f s f f));
 DATA(insert OID = 0 ( 1249 attnum           21 0  2   6 0 -1 t f s f f));
 DATA(insert OID = 0 ( 1249 attnelems        23 0  4   7 0 -1 t f i f f));

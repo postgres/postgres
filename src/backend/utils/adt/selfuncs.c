@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.7 1997/08/21 02:28:34 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.8 1997/08/21 03:02:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@
  */
 #define FunctionalSelectivity(nIndKeys,attNum) (attNum==InvalidAttrNumber)
 
-static float32data getattnvals(Oid relid, AttrNumber attnum);
+static float32data getattdisbursion(Oid relid, AttrNumber attnum);
 static void gethilokey(Oid relid, AttrNumber attnum, Oid opid,
 		       char **high, char **low);
 
@@ -62,7 +62,7 @@ eqsel(Oid opid,
     if (NONVALUE(attno) || NONVALUE(relid))
 	*result = 0.1;
     else
-	*result = (float64data)getattnvals(relid, (int) attno);
+	*result = (float64data)getattdisbursion(relid, (int) attno);
     return(result);
 }
 
@@ -114,7 +114,7 @@ intltsel(Oid opid,
 	if ((flag & SEL_RIGHT && val < low) ||
 	    (!(flag & SEL_RIGHT) && val > high)) {
 	    float32data nvals;
-	    nvals = getattnvals(relid, (int) attno);
+	    nvals = getattdisbursion(relid, (int) attno);
 	    if (nvals == 0)
 		*result = 1.0 / 3.0;
 	    else {
@@ -182,8 +182,8 @@ eqjoinsel(Oid opid,
 	NONVALUE(attno2) || NONVALUE(relid2))
 	*result = 0.1;
     else {
-	num1 = getattnvals(relid1, (int) attno1);
-	num2 = getattnvals(relid2, (int) attno2);
+	num1 = getattdisbursion(relid1, (int) attno1);
+	num2 = getattdisbursion(relid2, (int) attno2);
 	max = (num1 > num2) ? num1 : num2;
 	if (max == 0)
 	    *result = 1.0;
@@ -245,10 +245,10 @@ intgtjoinsel(Oid opid,
 }
 
 /*
- *	getattnvals	- Retrieves the number of values within an attribute.
+ *	getattdisbursion	- Retrieves the number of values within an attribute.
  *
  *	Note:
- *		getattnvals and gethilokey both currently use keyed
+ *		getattdisbursion and gethilokey both currently use keyed
  *		relation scans and amgetattr.  Alternatively,
  *		the relation scan could be non-keyed and the tuple
  *		returned could be cast (struct X *) tuple + tuple->t_hoff.
@@ -259,7 +259,7 @@ intgtjoinsel(Oid opid,
  *		for gethilokey which accesses stahikey in struct statistic.
  */
 static float32data
-getattnvals(Oid relid, AttrNumber attnum)
+getattdisbursion(Oid relid, AttrNumber attnum)
 {
     HeapTuple	atp;
     float32data	nvals;
@@ -270,11 +270,11 @@ getattnvals(Oid relid, AttrNumber attnum)
 			      Int16GetDatum(attnum),
 			      0,0);
     if (!HeapTupleIsValid(atp)) {
-	elog(WARN, "getattnvals: no attribute tuple %d %d",
+	elog(WARN, "getattdisbursion: no attribute tuple %d %d",
 	     relid, attnum);
 	return(0);
     }
-    nvals = ((AttributeTupleForm ) GETSTRUCT(atp))->attnvals;
+    nvals = ((AttributeTupleForm ) GETSTRUCT(atp))->attdisbursion;
     if (nvals > 0) return(nvals);
     
     atp = SearchSysCacheTuple(RELOID, ObjectIdGetDatum(relid),
@@ -283,7 +283,7 @@ getattnvals(Oid relid, AttrNumber attnum)
        just for now, in case number of distinctive values is
        not cached */
     if (!HeapTupleIsValid(atp)) {
-	elog(WARN, "getattnvals: no relation tuple %d", relid);
+	elog(WARN, "getattdisbursion: no relation tuple %d", relid);
 	return(0);
     }
     ntuples = ((Form_pg_class) GETSTRUCT(atp))->reltuples;

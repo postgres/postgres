@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.40 1997/08/21 02:27:58 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.41 1997/08/21 03:01:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1814,7 +1814,7 @@ vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VRelStats *vacrelst
 		}
 		if (selratio > 1.0)
 		    selratio = 1.0;
-	    	attp->attnvals = selratio;
+	    	attp->attdisbursion = selratio;
 		WriteNoReleaseBuffer(abuf);
 
 		/* DO PG_STATISTIC INSERTS */

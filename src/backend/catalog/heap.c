@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.19 1997/08/21 02:27:53 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.20 1997/08/21 03:01:21 momjian Exp $
  *
  * INTERFACE ROUTINES
  *	heap_creatr()		- Create an uncataloged heap relation
@@ -374,7 +374,7 @@ heap_creatr(char *name,
  *	work?  Is it automatic now?  Expects the caller to have
  *	attname, atttypid, atttyparg, attproc, and attlen domains filled.
  *	Create fills the attnum domains sequentually from zero,
- *	fills the attnvals domains with zeros, and fills the
+ *	fills the attdisbursion domains with zeros, and fills the
  *	attrelid fields with the relid.
  *
  *	scan relation catalog for name conflict
@@ -571,7 +571,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
     dpp = tupdesc->attrs;
     for (i = 0; i < natts; i++) {
 	(*dpp)->attrelid = new_rel_oid;
-	(*dpp)->attnvals = 0;
+	(*dpp)->attdisbursion = 0;
 	
 	tup = heap_addheader(Natts_pg_attribute,
 			     ATTRIBUTE_TUPLE_SIZE,
@@ -592,7 +592,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
     dpp = HeapAtt;
     for (i = 0; i < -1 - FirstLowInvalidHeapAttributeNumber; i++) {
 	(*dpp)->attrelid = new_rel_oid;
-	/*	(*dpp)->attnvals = 0;	unneeded */
+	/*	(*dpp)->attdisbursion = 0;	unneeded */
 	
 	tup = heap_addheader(Natts_pg_attribute,
 			     ATTRIBUTE_TUPLE_SIZE,
