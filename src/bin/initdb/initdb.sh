@@ -23,7 +23,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.108 2000/10/29 11:36:44 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.109 2000/11/02 19:48:39 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -321,16 +321,6 @@ then
     exit 1
 fi
 
-# The data path must be absolute, because the backend doesn't like
-# '.' and '..' stuff. (Should perhaps be fixed there.)
-
-echo "$PGDATA" | grep '^/' > /dev/null 2>&1
-if [ "$?" -ne 0 ]
-then
-    echo "$CMDNAME: data path must be specified as an absolute path"
-    exit 1
-fi
-
 
 #-------------------------------------------------------------------------
 # Find the input files
@@ -433,6 +423,11 @@ else
         mkdir "$PGDATA"/pg_xlog || exit_nicely
     fi
 fi
+
+# Be sure that PGDATA is an absolute path, otherwise backend croaks.
+
+unset CDPATH
+PGDATA=`cd $PGDATA && pwd`
 
 
 ##########################################################################
