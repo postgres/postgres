@@ -355,7 +355,9 @@ sql_exec_dumptable(PGconn *conn, int systables)
 	if (systables == 1)
 		snprintf(todo, 1024, "select relfilenode,relname from pg_class order by relname");
 	else
-		snprintf(todo, 1024, "select relfilenode,relname from pg_class where relname not like 'pg_%%' order by relname");
+		snprintf(todo, 1024, "select relfilenode,relname from pg_class "
+							"where reltype not in ('v','c') and "
+							"relname not like 'pg_%%' order by relname");
 
 	sql_exec(conn, todo, 0);
 }

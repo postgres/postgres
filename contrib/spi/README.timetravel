@@ -1,0 +1,116 @@
+2. timetravel.c - functions for implementing time travel feature.
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+I rewritten this, because:
+
+on original version of postgresql 7.3.2-7.3.3:
+
+the UPDATE not work on timetravel.example if I added
+>create unique index tttest_idx on tttest (price_id,price_off);
+>update tttest set price_val = 30 where price_id = 3;
+ERROR:  Cannot insert a duplicate key into unique index tttest_idx
+
+And UPDATE not work on table tttest after
+>alter table tttest add column q1 text;
+>alter table tttest add column q2 int;
+>alter table tttest drop column q1;
+>update tttest set price_val = 30 where price_id = 3;
+ERROR:  Parameter '$5' is out of range
+
+And I add a new optional feature: my new timetravel have +3 optional parameters:
+inserter_user, updater_user, deleter_user.
+
+And I add a new function: get_timetravel for get timetravel status
+without change it.
+
+A big difference: 
+the old version on UPDATE changed oid on active ('infinity') record,
+the new version UPDATE keep oid, and the overdued record have a new oid.
+I sign with '!!!' my comment in this file.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+   Old internally supported time-travel (TT) used insert/delete
+transaction commit times. To get the same feature using triggers
+you are to add to a table two columns of abstime type to store
+date when a tuple was inserted (start_date) and changed/deleted 
+(stop_date):
+
+CREATE TABLE XXX (
+	...		...
+	date_on		abstime default currabstime(),
+	date_off	abstime default 'infinity'
+	...		...
+/* !!! and (if have) */
+	ins_user	text	/* user, who insert this record */
+	upd_user	text	/* user, who updated this record */
+	del_user	text	/* user, who deleted this record */
+	...		...
+);
+
+!!! on INSERT my new version:
+ ... and optionally set ins_user to current user, upd_user and del_user to null.
+
+- so, tuples being inserted with NULLs in date_on/date_off will get
+_current_date_ in date_on (name of start_date column in XXX) and INFINITY in
+date_off (name of stop_date column in XXX).
+
+   Tuples with stop_date equal INFINITY are "valid now": when trigger will
+be fired for UPDATE/DELETE of a tuple with stop_date NOT equal INFINITY then
+this tuple will not be changed/deleted!
+
+   If stop_date equal INFINITY then on
+
+UPDATE: 
+original version was:
+ only stop_date in tuple being updated will be changed to current
+ date and new tuple with new data (coming from SET ... in UPDATE) will be
+ inserted. Start_date in this new tuple will be setted to current date and
+ stop_date - to INFINITY.
+On my new version:
+ insert a new tuple with old values, but stop_date changed to current date;
+ and update original tuple with new data, and update start_date to current date
+ and optionally set upd_user to current user and clear ins_user,del_user.
+
+DELETE: new tuple will be inserted with stop_date setted to current date
+(and with the same data in other columns as in tuple being deleted).
+On my new version:
+ ... and optionally set del_user to current user.
+
+   NOTE:
+1. To get tuples "valid now" you are to add _stop_date_ = 'infinity'
+   to WHERE. Internally supported TT allowed to avoid this...
+   Fixed rewriting RULEs could help here...
+   As work arround you may use VIEWs...
+2. You can't change start/stop date columns with UPDATE! 
+   Use set_timetravel (below) if you need in this.
+
+   FUNCTIONs:
+
+timetravel() is general trigger function.
+
+   You are to create trigger BEFORE UPDATE OR DELETE using this
+function on a time-traveled table. You are to specify two arguments: name of
+start_date column and name of stop_date column in triggered table.
+Or add +3 arguments: 
+  name of insert_user column, name of update_user column, name of delete_user column
+
+currabstime() may be used in DEFAULT for start_date column to get
+current date.
+!!! I deleted this function, because I newer used this.
+
+set_timetravel() allows you turn time-travel ON/OFF for a table:
+
+   set_timetravel('XXX', 1) will turn TT ON for table XXX (and report
+old status).
+   set_timetravel('XXX', 0) will turn TT OFF for table XXX (-"-).
+
+Turning TT OFF allows you do with a table ALL what you want.
+
+get_timetravel() reports time-travel status ON(1)/OFF(0) for a table.
+get_timetravel() and set_timetravel() not checking existing of table and
+existing of timetravel trigger on specified table.
+
+   There is example in timetravel.example.
+
+   To CREATE FUNCTIONs use timetravel.sql (will be made by gmake from
+timetravel.source).
