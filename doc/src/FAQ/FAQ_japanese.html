@@ -7,10 +7,12 @@
 <H1>
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)</H1>
 <P>
-原文最終更新日:		Sat Sep 22 20:07:41 EDT 2001
+原文最終更新日:		Mon Mar 18 14:34:57 EST 2002
 <P>
 現在の維持管理者:	Bruce Momjian (<A
-HREF="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR><P>
+HREF="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
+Maintainer of Japanese Translation:	Jun Kuwamura (<A
+HREF="mailto:juk@postgresql.jp">juk@postgresql.jp</A>)<BR><P>
 <P>
 この文書の最新版は
 <A HREF="http://www.PostgreSQL.org/docs/faq-english.html">
@@ -18,8 +20,9 @@ http://www.PostgreSQL.org/docs/faq-english.html</A>
 で見ることができます。
 <P>
 
-プラットホームに特有の質問については:<A
- HREF="http://www.PostgreSQL.org/docs/">http://www.PostgreSQL.org/users-lounge/docs/faq.html</A>
+プラットホームに特有の質問については:
+ <A HREF="http://www.PostgreSQL.org/docs/">
+ http://www.PostgreSQL.org/users-lounge/docs/faq.html</A>
 <BR>に回答があります。
 <P>
 
@@ -45,7 +48,7 @@ http://www.PostgreSQL.org/docs/faq-english.html</A>
 
 <H2><CENTER> 一般的な質問</CENTER></H2>
 
-<A HREF="#1.1">1.1</A>)	PostgreSQLとは何ですか？<BR>
+<A HREF="#1.1">1.1</A>)	PostgreSQLとは何ですか？ 何と読みますか？<BR>
 <A HREF="#1.2">1.2</A>)	PostgreSQLの著作権はどうなってますか？<BR>
 <A HREF="#1.3">1.3</A>)	PostgreSQLの動作するUnixプラットホームは？<BR>
 <A HREF="#1.4">1.4</A>)	Unix以外の移植版で使えるものは？<BR>
@@ -54,19 +57,20 @@ http://www.PostgreSQL.org/docs/faq-english.html</A>
 <A HREF="#1.7">1.7</A>)	最新版はどれですか<BR>
 <A HREF="#1.8">1.8</A>)	どのような文書がありますか？<BR>
 <A HREF="#1.9">1.9</A>)	既知のバグや未だ無い機能はどうやって見つけますか？<BR>
-<A HREF="#1.10">1.10</A>)	<font size=-1>SQL</font>はどうすれば学べますか？<BR>
+<A HREF="#1.10">1.10</A>)	<small>SQL</small>はどうすれば学べますか？<BR>
 <A HREF="#1.11">1.11</A>)	PostgreSQLは西暦2000年問題(Y2K)に対応していますか？<BR>
 <A HREF="#1.12">1.12</A>)	開発チームにはどのように参加しますか？<BR>
 <A HREF="#1.13">1.13</A>)	バグレポートはどのように発信しますか？<BR>
-<A HREF="#1.14">1.14</A>)	他の<font size=-1>DBMS</font>のと比べてPostgreSQLはどうなのですか？<BR>
+<A HREF="#1.14">1.14</A>)	他の<small>DBMS</small>のと比べてPostgreSQLはどうなのですか？<BR>
+<A HREF="#1.15">1.15</A>)	PostgreSQLを資金面で援助するにはどうすればよいですか？<BR>
 
 
 <H2><CENTER>ユーザー・クライアントの質問</CENTER></H2>
 
-<A HREF="#2.1">2.1</A>)	PostgreSQL の <font size=-1>ODBC</font> ドライバーはありますか？<BR>
+<A HREF="#2.1">2.1</A>)	PostgreSQL の <small>ODBC</small> ドライバーはありますか？<BR>
 <A HREF="#2.2">2.2</A>)	PostgreSQL を Web ページと連携させるにはどんなツールがありますか？<BR>
 <A HREF="#2.3">2.3</A>)	PostgreSQL にグラフィカル・ユーザインターフェースはありますか？
-レポートジェネレータは？ 埋め込み問い合わせ言語インターフェースは？<BR>
+レポートジェネレータや埋め込み問い合わせ言語インターフェースはありますか？<BR>
 <A HREF="#2.4">2.4</A>)	PostgreSQL と通信するにはどんな言語が使えますか？<BR>
 
 
@@ -79,45 +83,43 @@ http://www.PostgreSQL.org/docs/faq-english.html</A>
 <I>IpcMemoryCreate</I> エラーが出ます。なぜですか？<BR>
 <A HREF="#3.4">3.4</A>)	<I>postmasterを</I>走らせようとすると、
 <I>IpcSemaphoreCreate</I> エラーが出ます。なぜですか？<BR>
-<A HREF="#3.5">3.5</A>)	他のホストから自分のPostgreSQLデータベースへのアクセスを防ぐにはどうしますか？<BR>
-<A HREF="#3.6">3.6</A>)	なぜ、他のマシンから自分のデータベースに接続できないのでしょうか？<BR>
-<A HREF="#3.7">3.7</A>)	より良い性能を得るためには、データベース・エンジンをどのように調整すれば良いですか？<BR>
-<A HREF="#3.8">3.8</A>)	どのようなデバグ機能が使えますか？<BR>
-<A HREF="#3.9">3.9</A>)	接続しようとするときに <I>'Sorry, too many clients'</I> が出ます。なぜですか？<BR>
-<A HREF="#3.10">3.10</A>)	自分のデータベース・ディレクトリにある <I>pg_sorttemp.XXX</I> ファイルは何ですか？<BR>
+<A HREF="#3.5">3.5</A>)	他のホストからの接続はどのように制御しますか？<BR>
+<A HREF="#3.6">3.6</A>)	より良い性能を得るためには、データベース・エンジンをどのように調整すれば良いですか？<BR>
+<A HREF="#3.7">3.7</A>)	どのようなデバグ機能が使えますか？<BR>
+<A HREF="#3.8">3.8</A>)	接続しようとするときに <I>'Sorry, too many clients'</I> が出るのはなぜですか？<BR>
+<A HREF="#3.9">3.9</A>)	自分のデータベース・ディレクトリにある <I>pg_sorttemp.XXX</I> ファイルは何ですか？<BR>
+
 
 
 <H2><CENTER>操作上の質問</CENTER></H2>
 
-<A HREF="#4.1">4.1</A>)	なぜ、システムはカンマや小数点や日付フォーマットで混乱するのですか？<BR>
-<A HREF="#4.2">4.2</A>)	バイナリ・カーソルと通常カーソルとの厳密な違いは何ですか？<BR>
-<A HREF="#4.3">4.3</A>)	最初の数行のみを <font size=-1>select</font> するにはどうしますか？<BR>
-<A HREF="#4.4">4.4</A>)	テーブルやその他の情報のリストを <I>psql</I> で見るにはどうしますか？<BR>
-<A HREF="#4.5">4.5</A>)	テーブルから列の削除はどのようにしますか？<BR>
-<A HREF="#4.6">4.6</A>)	行、テーブル、データベースの最大サイズは？<BR>
-<A HREF="#4.7">4.7</A>)	一般的なテキストファイルからデータを保存するには、
-データベースのディスク容量はどのくらい必要ですか？<BR>
-<A HREF="#4.8">4.8</A>)	データベース内に定義されたテーブルやインデックスをどのようにして見つけ出しますか？<BR>
-<A HREF="#4.9">4.9</A>)	問い合わせが遅いうえ、インデックスを使っている様子がありません。なぜですか？<BR>
-<A HREF="#4.10">4.10</A>) 問い合わせオブティマイザがどのように問い合わせを評価するかを見るにはどうしますか？<BR>
-<A HREF="#4.11">4.11</A>) R-tree インデックスとは何ですか？<BR>
-<A HREF="#4.12">4.12</A>) 遺伝的問い合わせ最適化とは何ですか？<BR>
-<A HREF="#4.13">4.13</A>) 正規表現での検索や大文字と小文字とを区別しない正規表現検索はどのように実現しますか？大文字と小文字とを区別しない検索のためのインデックスはどのように使いますか？
-<BR>
-<A HREF="#4.14">4.14</A>) 問い合わせの中で、フィールドが <font size=-1>NULL</font> であることを検出するにはどうしますか？<BR>
-<A HREF="#4.15">4.15</A>) 色々な文字型のそれぞれの違いは何ですか？<BR>
-<A HREF="#4.16.1">4.16.1</A>) 通番(serial)／自動増分フィールドはどのようにつくりますか？<BR>
-<A HREF="#4.16.2">4.16.2</A>) <font size=-1>SERIAL</font>データ型に挿入される値は、どうすれば得られますか？<BR>
-<A HREF="#4.16.3">4.16.3</A>) 他のユーザとの競合状態を避けるためには、<I>currval()</I> と <I>nextval()</I> は使わないほうがよいのでしょうか？<BR>
-<A HREF="#4.17">4.17</A>) <font size=-1>OID</font> とは何ですか？ <font size=-1>TID</font> とは何ですか？<BR>
-<A HREF="#4.18">4.18</A>) PostgreSQL で使われるいくつかの用語の意味は何ですか？<BR>
-<A HREF="#4.19">4.19</A>) エラーメッセージ <I>"ERROR: Memory exhausted in AllocSetAlloc()"</I>が出るのはなぜですか？<BR>
-<A HREF="#4.20">4.20</A>) どのバージョンの PostgreSQL を走らせているのかを調べるにはどうしますか？<BR>
-<A HREF="#4.21">4.21</A>) ラージオブジェクトの操作で、<I>invalid large obj descriptor</I>と出ます。なぜですか？<BR>
-<A HREF="#4.22">4.22</A>) 現在の時刻がデフォルトとなるような列はどのようにつくりますか？<BR>
-<A HREF="#4.23">4.23</A>) なぜ、<font size=-1>IN</font>を使う副問い合わせがとても遅いのですか？<BR>
-<A HREF="#4.24">4.24</A>) <i>外部</i>結合(<i>outer</i> join)はどのように実現しますか?<BR>
-<A HREF="#4.25">4.25</A>) 複数のデータベースを使う問い合わせはどのようにすればできますか？
+<A HREF="#4.1">4.1</A>)	バイナリ・カーソルと通常カーソルとの違いは何ですか？<BR>
+<A HREF="#4.2">4.2</A>)	最初の数行のみを <small>select</small> するにはどうしますか？<BR>
+<A HREF="#4.3">4.3</A>)	テーブルやその他の情報のリストを <I>psql</I> で見るにはどうしますか？<BR>
+<A HREF="#4.4">4.4</A>)	テーブルから列の削除はどのようにしますか？<BR>
+<A HREF="#4.5">4.5</A>)	行、テーブル、データベースの最大サイズは？<BR>
+<A HREF="#4.6">4.6</A>)	一般的なテキストファイルからデータを保存するには、データベースのディスク容量はどのくらい必要ですか？<BR>
+<A HREF="#4.7">4.7</A>)	データベース内に定義されたテーブルやインデックスをどのようにして見つけ出しますか？<BR>
+<A HREF="#4.8">4.8</A>)	問い合わせが遅いうえ、インデックスを使っている様子がありません。なぜですか？<BR>
+<A HREF="#4.9">4.9</A>)	問い合わせオブティマイザがどのように問い合わせを評価するかを見るにはどうしますか？<BR>
+<A HREF="#4.10">4.10</A>) R-tree インデックスとは何ですか？<BR>
+<A HREF="#4.11">4.11</A>) 遺伝的問い合わせ最適化とは何ですか？<BR>
+<A HREF="#4.12">4.12</A>) 正規表現での検索や大文字と小文字とを区別しない正規表現検索はどのように実現しますか？大文字と小文字とを区別しない検索のためのインデックスはどのように使いますか？<BR>
+<A HREF="#4.13">4.13</A>) 問い合わせの中で、フィールドが <small>NULL</small> であることを検出するにはどうしますか？<BR>
+<A HREF="#4.14">4.14</A>) 色々な文字型のそれぞれの違いは何ですか？<BR>
+<A HREF="#4.15.1">4.15.1</A>) 通番(serial)／自動増分フィールドはどのようにつくりますか？<BR>
+<A HREF="#4.15.2">4.15.2</A>) <small>SERIAL</small>データ型に挿入される値は、どうすれば得られますか？<BR>
+<A HREF="#4.15.3">4.15.3</A>) 他のユーザとの競合状態を避けるためには、<I>currval()</I> と <I>nextval()</I> は使わないほうがよいのでしょうか？<BR>
+<A HREF="#4.15.4">4.15.4</A>) トランザクションが中断したときにもういちどシーケンス番号が使われないのはなぜですか？シーケンス／SERIALカラムに空きがあるのはなぜですか？<BR>
+<A HREF="#4.15">4.16</A>) <small>OID</small> とは何ですか？ <small>TID</small> とは何ですか？<BR>
+<A HREF="#4.17">4.17</A>) PostgreSQL で使われるいくつかの用語の意味は何ですか？<BR>
+<A HREF="#4.18">4.18</A>) エラーメッセージ <I>"ERROR: Memory exhausted in AllocSetAlloc()"</I>が出るのはなぜですか？<BR>
+<A HREF="#4.19">4.19</A>) どのバージョンの PostgreSQL を走らせているのかを調べるにはどうしますか？<BR>
+<A HREF="#4.20">4.20</A>) ラージオブジェクトの操作で、<I>invalid large obj descriptor</I>と出るのはなぜですか？<BR>
+<A HREF="#4.21">4.21</A>) 現在の時刻がデフォルトとなるような列はどのようにつくりますか？<BR>
+<A HREF="#4.22">4.22</A>) なぜ、<small>IN</small>を使う副問い合わせがとても遅いのですか？<BR>
+<A HREF="#4.23">4.23</A>) <i>外部</i>結合(<i>outer</i> join)はどのように実現しますか?<BR>
+<A HREF="#4.24">4.24</A>) 複数のデータベースを使う問い合わせはどのようにすればできますか？
 
 
 <H2><CENTER>PostgreSQLの拡張についての質問</CENTER></H2>
@@ -133,15 +135,14 @@ http://www.PostgreSQL.org/docs/faq-english.html</A>
 
 <H4><A NAME="1.1">1.1</A>)	PostgreSQL とは何ですか？</H4>
 
-<P>PostgreSQL は次世代 <font size=-1>DBMS</font> 研究用のプロトタイプであった POSTGRES データベース管理システムの改良版です。PostgreSQL は POSTGRES の強力なデータ・モデルと豊富なデータ・タイプ(型)を保持しながら、POSTGRES で使われた PostQuel 問い合わせ言語を、拡張した <font size=-1>SQL</font> のサブセットに置き換えています。PostgreSQL は無料で完全なソースを利用できます。
+<P><I>Post-Gres-Q-L.</I>(ポスト - グレス - キュー - エル) と発音します。</P>
+<P>PostgreSQL は次世代 <small>DBMS</small> 研究用のプロトタイプであった POSTGRES データベース管理システムの改良版です。PostgreSQL は POSTGRES の強力なデータ・モデルと豊富なデータ・タイプ(型)を保持しながら、POSTGRES で使われた PostQuel 問い合わせ言語を、拡張した <small>SQL</small> のサブセットに置き換えています。PostgreSQL は無料で完全なソースを利用できます。
 
 <P>PostgreSQL の開発は、PostgreSQL 開発メーリングリストに参加しているインターネット上の開発者チームですべて行なわれています。現在の座長は Marc G. Fournier ( <A HREF="mailto:scrappy@PostgreSQL.org">scrappy@PostgreSQL.org</A> )です。(以下に参加の仕方があります。)現在、このチームが PostgreSQL 開発のすべての面倒をみています。
 
 <P>Postgres95-1.01 の中心的な開発者は Andrew Yu と Jolly Chen でしたが、その他大勢の人々がこのコードの移植、テスト、デバグ、および、改良に参加しました。PostgreSQL の派生元コードである POSTGRES はカリフォルニア大学バークレイ校において、 Michael Stonebraker 教授の指揮のもと、多くの学生、卒業生、本職のプログラマたちの努力により作られました。
 
-<P>バークレイにおけるこのソフトウェアのもとの名前は Postgres でしたが、<FONT SIZE=-1>SQL</FONT> の機能が追加された 1995 年にその名前は Postgres95 に変更され、1996 年の終りにその名前は PostgreSQL に変更されました。
-
-<I>Post-Gres-Q-L.</I>(ポスト - グレス - キュー - エル) と発音します。
+<P>バークレイにおけるこのソフトウェアのもとの名前は Postgres でしたが、<SMALL>SQL</small> の機能が追加された 1995 年にその名前は Postgres95 に変更され、1996 年の終りにその名前は PostgreSQL に変更されました。
 
 <P>
 <H4><A NAME="1.2">1.2</A>)	PostgreSQL の著作権はどうなってますか？</H4>
@@ -155,7 +156,7 @@ http://www.PostgreSQL.org/docs/faq-english.html</A>
 <P>
 PostgreSQL Data Base Management System<P>
 
-Portions Copyright (c) 1996-2000, PostgreSQL Global Development Group
+Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 Portions Copyright (c) 1994-6 Regents of the University of California<P>
 
 Permission to use, copy, modify, and distribute this software and its
@@ -183,7 +184,7 @@ MODIFICATIONS.
 <small><PRE>
 	POSTGRESQL データベース管理システム
 
-	部分的著作権 (c) 1996-2001, PostgreSQL国際開発チーム
+	部分的著作権 (c) 1996-2002, PostgreSQL国際開発チーム
 	部分的著作権 (c) 1994-6 カリフォルニア大学本校
 
 
@@ -209,6 +210,10 @@ MODIFICATIONS.
     ]
 </PRE></small>
 
+<p>上記はBSDライセンスで古きオープンソースのライセンスです。ソースコード
+がどのように使われようとも制限しません。好ましいことなので、我々もそれを
+変えるつもりはありません。</p>
+
 <P>
 <H4><A NAME="1.3">1.3</A>)	PostgreSQL の動作環境は？</H4>
 
@@ -221,7 +226,7 @@ MODIFICATIONS.
 <h6>
 クライアント</h6>
 <P> MS Windows プラットホーム上で、<I>libpq</I> C ライブラリ、psql、それとその他のインターフェースは コンパイル可能で、バイナリーが走ります。この場合、クライアントを MS Windows 上で走らせて、TCP/IP 経由でサポートされている Unix プラットホーム上で走るサーバと通信します。
-<P> Win32 <I>libpq</I> ライブラリと psql を作るために、<I>win31.mak</I> が配布に含まれてます。PostgreSQLは <font size=-1>ODBC</font> クライアントとも通信できます。
+<P> Win32 <I>libpq</I> ライブラリと psql を作るために、<I>win31.mak</I> が配布に含まれてます。PostgreSQLは <small>ODBC</small> クライアントとも通信できます。
 
 <h6>
 サーバ</h6>
@@ -323,13 +328,14 @@ HREF="mailto:bugs-request@PostgreSQL.org">bugs-request@PostgreSQL.org</A>
 <P>
 
  EFNet に <I>#PostgreSQL</I> という IRC チャンネルもあります。
-unix コマンドで<tt>irc -c '#PostgreSQL' "$USER" <A HREF="http://irc.phoenix.net">irc.phoenix.net</A>/ を使います。<P>
+UNIX コマンドで<tt>irc -c '#PostgreSQL' "$USER" <A HREF="http://irc.phoenix.net">irc.phoenix.net</A> を使います。<P>
 
 <small><PRE>
     [訳注:
 	  1999年7月23日、日本PostgreSQLユーザー会(にほん ぽすとぐれす ゆーざー かい)、略称JPUGが設立されました。
 	JPUG は非営利組織で、PostgreSQLを利用する人達の相互協力の場です。
-	正会員の会費は無料ですが、会員の積極的な貢献が会の運営を助けています。詳しくは、JPUGのWeb サイト:
+	正会員の会費は無料ですが、協賛会員の会費と会員の積極的な貢献が会の運営を助けています。
+	詳しくは、JPUG のWeb サイト:
 		<A HREF="http://www.postgresql.jp/">http://www.postgresql.jp/</A>
 	をご覧ください。会員登録も可能となっています。
 	  1990年代中ごろより、ポストグレスの日本語メーリング・リストを石井 達夫さんが主催しています。詳細は、
@@ -355,7 +361,7 @@ unix コマンドで<tt>irc -c '#PostgreSQL' "$USER" <A HREF="http://irc.phoenix.net"
 
 <H4><A NAME="1.7">1.7</A>)	最新版はどれですか</H4>
 
-<P> PostgreSQL の最新版はバージョン 7.2 です。
+<P> PostgreSQL の最新版はバージョン 7.2.1 です。
 <P>
 我々は、4カ月毎にメジャーリリースを行なうことを計画しています。
 <P>
@@ -367,16 +373,37 @@ HREF="http://www.PostgreSQL.org/users-lounge/docs/">
 http://www.PostgreSQL.org/users-lounge/docs/</A>
 でオンラインでも閲覧できます。
 
-<P>  PostgreSQL の本もあります。 <A
-HREF="http://www.PostgreSQL.org/docs/awbook.html">
-http://www.PostgreSQL.org/docs/awbook.html</A><P>
-
 <small><PRE>
     [訳注:
-	日本ポストグレスユーザー会の<A HREF="http://www.postgresql.jp/subcommittee/psqltrans/">PostgreSQL Book翻訳分科会</A>で、
-	翻訳作業が進行中。
+	（株）SRAと日本ポストグレスユーザー会で翻訳され、
+	<A HREF="http://osb.sra.co.jp/PostgreSQL/Manual/">「PostgreSQL オフィシャルマニュアル」</A>
+	として出版されています。
     ]
 </PRE></small>
+
+
+<P>  オンラインで参照できる PostgreSQL の本も2冊あります。<A href=
+    "http://www.PostgreSQL.org/docs/awbook.html">http://www.PostgreSQL.org/docs/awbook.html</A>
+<small><PRE>
+    [訳注:
+	日本ポストグレスユーザー会の<A HREF="http://www.postgresql.jp/subcommittee/psqltrans/">	「PostgreSQL Book翻訳分科会」</A>
+	にて翻訳されました。
+    ]
+</PRE></small>
+
+    および、 <A href=
+    "http://www.commandprompt.com/ppbook/">http://www.commandprompt.com/ppbook/</A>
+です。
+  
+
+    購入可能な書籍の目録は、<A href=
+    "http://www.postgresql.org/books/">http://www.postgresql.org/books/</A>
+    にあります。
+
+    PostgreSQL 技術情報記事も、<A href=
+    "http://techdocs.postgresql.org/">http://techdocs.postgresql.org/</A>
+    にあります。</P>
+
 
 <P> <I>psql</I> も、型、演算子、関数、集約、その他の情報をお見せする、いくつかの素晴らしい \d コマンドを持ちます。
 
@@ -392,29 +419,45 @@ PostgreSQLは拡張されたSQL-92のサブセットをサポートします。
 TODO</A> リストに、既知のバグや欠落機能や将来計画についての記述があります。
 
 <P> 
-<H3><A NAME="1.10">1.10</A>)	<font size=-1>SQL</font> はどうすれば学べますか？</H3>
+<H3><A NAME="1.10">1.10</A>)	<small>SQL</small> はどうすれば学べますか？</H3>
 <P>
 <A HREF="http://www.PostgreSQL.org/docs/awbook.html">
 http://www.PostgreSQL.org/docs/awbook.html</A>
-にあるPostgreSQL本で <font size=-1>SQL</font> を教えています。
+にあるPostgreSQL本で <small>SQL</small> を教えています。
+
+<small><PRE>
+    [訳注:
+	日本ポストグレスユーザー会の<A HREF="http://www.postgresql.jp/subcommittee/psqltrans/">	「PostgreSQL Book翻訳分科会」</A>
+	にて翻訳され出版されています。
+    ]
+</PRE></small>
 
 <P>
-素晴らしい学習書には、
-<A HREF="http://w3.one.net/~jhoffman/sqltut.htm">
-http://w3.one.net/~jhoffman/sqltut.htm</A> と
-<A HREF="http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM">
-http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM.</A><P>
-とがあります。その他に、
-"Teach Yourself SQL in 21 Days, Second Edition" が、
-<A HREF="http://members.tripod.com/er4ebus/sql/index.htm">
-http://members.tripod.com/er4ebus/sql/index.htm </A>
-にあります。
+その他にも PostgreSQL本として、<A href=
+    "http://www.commandprompt.com/ppbook/">http://www.commandprompt.com/ppbook</A>
+があります。
+
+素晴らしい手引書は、<A href=
+    "http://www.intermedia.net/support/sql/sqltut.shtm">http://www.intermedia.net/support/sql/sqltut.shtm,</A>
+    <A href=
+    "http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM">
+    http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM,</A>
+    そして、<A href=
+    "http://sqlcourse.com/">http://sqlcourse.com</A>
+にあります。</P>
+
+
+    <P>その他では、 "Teach Yourself SQL in 21 Days, Second Edition" が <A href=
+    "http://members.tripod.com/er4ebus/sql/index.htm">http://members.tripod.com/er4ebus/sql/index.htm</A>にあります。</P>
+
 <P>
 多くのユーザに、
 <I>The Practical SQL Handbook</I>, Bowman Judith S. et al., Addison-Wesley
 が好評です。
 その他に、<I>The Complete Reference SQL</I>, Groff et al., McGraw-Hill 
 のようなのもあります。
+</P>
+
 <P>
 <small><PRE>
     [訳注:
@@ -429,7 +472,7 @@ http://members.tripod.com/er4ebus/sql/index.htm </A>
 	ではオンラインマニュアルの検索ができます。
 	 丸山不二夫氏のUNIX データベース入門
 		<A HREF="http://www.wakhok.ac.jp/DB/DB.html">http://www.wakhok.ac.jp/DB/DB.html</A>
-	はオンラインで読むことができます。
+	もオンラインで読むことができます。
     ]
 </PRE></small>
 
@@ -446,20 +489,22 @@ PostgreSQL Developersの文書を読みます。
 ２番目に、<I>pgsql-hackers</I> と <I>pgsql-patches</I> メーリング・リストを購読(subscribe)します。
 ３番目に、高品質のパッチをpgsql-patchesに発信します。
 
-およそ十人ちょっとの人達が、PostgreSQL <font size=-1>CVS</font>アーカイブにコミットする権限を持っています。
+およそ十人ちょっとの人達が、PostgreSQL <small>CVS</small>アーカイブにコミットする権限を持っています。
 そのそれぞれの人達が沢山の高品質なパッチを発信するので、現在コミッターとなっている人達はそれに追い付くのが大変ですが、我々は彼らがコミットしたパッチは高品質であると確信しています。
 <P>
 <H4><A NAME="1.13">1.13</A>)	バグレポートはどのように発信しますか？
 </H4>
 
-<P>"bug-template" ファイルの項目を満たして、<A HREF="mailto:pgsql-bugs@PostgreSQL.org">pgsql-bugs@PostgreSQL.org</A>に送って下さい。
+    <P>バグを報告する仕方についてのガイドラインと方向づけがある<A href=
+    "http://www.postgresql.org/bugs/bugs.php">PostgreSQL BugTool</A>
+    (バグツール)のページを訪れてみて下さい。 </P>
 
 <P> その前に <A HREF="http://postgreSQL.org">http://postgreSQL.org</A>にある最新の FAQ をチェックして下さい。
 
 <P> それと同時に ftp サイト <A HREF="ftp://ftp.postgreSQL.org/pub/">ftp://ftp.postgreSQL.org/pub/</A>で、もっと新しいバージョンの PostgreSQL あるいはパッチをさがしてみて下さい。
 
 <P>
-<H4><A NAME="1.14">1.14</A>)	他の<font size=-1>DBMS</font>のと比べてPostgreSQLはどうなのですか？
+<H4><A NAME="1.14">1.14</A>)	他の<small>DBMS</small>のと比べてPostgreSQLはどうなのですか？
 </H4><P>
 
 ソフトウェアを計る方法にはいくつかあります。機能と性能と信頼性とサポートと価格です。
@@ -467,16 +512,13 @@ PostgreSQL Developersの文書を読みます。
 <DL>
 <DT> <B>機能(Features)</B>
 <DD>
-
-PostgreSQLは、トランザクション、副問い合わせやトリガーやビューや外部キー
-参照や、そして、洗練されたロック機構など、大規模商用<font size=-1>DBMS</font>が持つ機能をほ
-とんど持っています。PostgreSQLは、さらに、ユーザ定義型や継承やマルチ-
-バージョン・コンテンションなど、商用<font size=-1>DBMS</font>が持ち合わせない機能をいくつか
-持ち合わせています。外部キーの参照整合性(foreign key referential
-integrity)やロック・コンテンションを減らすための外部競合状態制御
-(outer concurrency control)は持ち合わせません。
-
-<BR><BR>
+PostgreSQLは、トランザクション、副問い合わせ、トリガー、ビュー、外部キー
+整合性参照、および、洗練されたロック機構など、大規模商用<small>
+DBMS</small>が持つ機能をほとんど持っています。さらに PostgreSQLは、ユーザ
+定義型、継承、ルール、それから、ロック競合を縮小するマルチバージョン同時
+性制御など、商用<small>DBMS</small>も持ち合わせないような機能をい
+くつか持ち合わせています。<BR>
+<BR>
 
 <DT> <B>性能(Performance)</B>
 <DD>
@@ -514,7 +556,7 @@ PostgreSQLは、Unixプロセスを起動することによりユーザー接続を操作します。
 <DT> <B>信頼性(Reliability)</B>
 <DD>
 
-我々は、<font size=-1>DBMS</font>の信頼性が高くなくてはその価値が無いことを理解してます。十
+我々は、<small>DBMS</small>の信頼性が高くなくてはその価値が無いことを理解してます。十
 分テストして、安定したコードをバグを最小にしてからリリースするように勤
 めてます。それぞれのリリースは少なくとも1カ月以上のベータ・テストを行
 ない、これまでのリリースの履歴が、製品版として安定した堅固なリリースで
@@ -529,7 +571,7 @@ PostgreSQLは、Unixプロセスを起動することによりユーザー接続を操作します。
 問題の解決を保証することはできませんが、商用データベースであっても常に
 解決されるわけではありません。開発者や、ユーザ・コミュニティ、マニュア
 ル類、それに、ソースコードなどへ直接アクセスできることよって、
-PostgreSQLのサポートは、他の<font size=-1>DBMS</font>サポートよりも優れたものとなっています。
+PostgreSQLのサポートは、他の<small>DBMS</small>サポートよりも優れたものとなっています。
 御要望に答えて、事柄毎の商用サポートなどもあります（サポートFAQ項目をご覧
 下さい）。
 
@@ -542,14 +584,40 @@ PostgreSQLの利用は、商用でも非商用でも、すべて無料です。上記に示してあ
 <BR><BR>
 </DL>
 <P>
+
+<H4><A name="1.15">1.15</A>) PostgreSQLを資金面で援助するにはどうすればよいですか？
+</H4>
+
+    <P>PostgreSQLは、我々が6年前に始めたとき以来、最高クラスの基盤を
+持っています。これはすべて、Marc Fournieさんのおかげで、彼はこの基盤
+を何年にもわたって創造し管理してきました。</P>
+
+    <P>質の良い基盤はオープンソース・プロジェクトにとってはとても大切な
+もので、前進する勢いを失うプロジェクトの分裂を回避します。
+</P>
+
+    <P>もちろん、この基盤は安いものではありません。維持し続けるためには
+毎月あるいは一時の経費がかかります。もし、あなたやあなたの会社に、こうし
+た努力のための資金を助けるために施すことができるようでしたら、<A
+href=
+"http://www.pgsql.com/pg_goodies">http://www.pgsql.com/pg_goodies</A>
+から寄付をお願いします。
+
+    <P>また、Webページには PostgreSQL,Inc とありますが、そこの"義援
+(contributions)"アイテムは PostgreSQL プロジェクトをサポートするためだけ
+のためで、決して特定の会社のための資金のためではありません。もし、手形
+(check)の方が都合がよければ連絡先の住所へお送り下さい。</P>
+
+
 <HR>
+
 <H2><CENTER>ユーザー・クライアントの質問</CENTER></H2>
 <P>
 
-<H4><A NAME="2.1">2.1</A>)	PostgreSQL のための <font size=-1>ODBC</font> ドライバーはありますか？
+<H4><A NAME="2.1">2.1</A>)	PostgreSQL のための <small>ODBC</small> ドライバーはありますか？
 </H4>
 
-<P> PsqlODBC と OpenLink <font size=-1>ODBC</font> の二つの <font size=-1>ODBC</font> ドライバーが利用可能です。
+<P> PsqlODBC と OpenLink <small>ODBC</small> の二つの <small>ODBC</small> ドライバーが利用可能です。
 
 <P> PsqlODBC は PostgreSQL の配布に含まれています。それについてのさらに詳細な情報は 
 <A HREF="ftp://ftp.PostgreSQL.org/pub/odbc/">ftp://ftp.PostgreSQL.org/pub/odbc/</A>
@@ -562,13 +630,16 @@ PostgreSQLの利用は、商用でも非商用でも、すべて無料です。上記に示してあ
     ]
 </PRE></small>
 
-<P> OpenLink <font size=-1>ODBC</font> は <A HREF="http://www.openlinksw.com/">http://www.openlinksw.com/</A>から入手できます。標準的な <font size=-1>ODBC</font> クライアント・ソフトウェアで使えますので、支援しているすべてのプラットホーム(Win, Mac, Unix, <STRONG>VMS</STRONG>)から PostgreSQL の <font size=-1>ODBC</font> が利用できます。
+<P> OpenLink <small>ODBC</small> は <A HREF="http://www.openlinksw.com/">http://www.openlinksw.com/</A>から入手できます。標準的な <small>ODBC</small> クライアント・ソフトウェアで使えますので、支援しているすべてのプラットホーム(Win, Mac, Unix, <STRONG>VMS</STRONG>)から PostgreSQL の <small>ODBC</small> が利用できます。
 
-<P> たぶん彼らは、商用品質のサポートの必要な人々に売っていると思いますが、フリーウェア版はいつでも入手可能のようです。質問は、<A HREF="mailto:postgres95@openlink.co.uk">postgres95@openlink.co.uk</A>にお願いします。
+<P> たぶん彼らは、商用品質のサポートの必要な人々に売っていると思いますが、
+    フリーウェア版はいつでも入手可能のようです。質問は、<A href=
+    "mailto:postgres95@openlink.co.uk">postgres95@openlink.co.uk</A>
+    へ送って下さい。</P>
 
 <A HREF="http://www.postgresql.org/docs/programmer/odbc.html">
 Programmer's Guide</A>
-の <font size=-1>ODBC</font> の章もご覧ください。
+の <small>ODBC</small> の章もご覧ください。
 
 
 <P>
@@ -576,7 +647,7 @@ Programmer's Guide</A>
 </H4>
 
 <P> データベースを裏に持つ Web ページについての素晴らしい紹介が、<BR>
-<A HREF="http://www.webtools.com">http://www.webtools.com</A> にあります。
+    <A href="http://www.webreview.com">http://www.webreview.com</A>にあります。</P>
 <P><A HREF="http://www.phone.net/home/mwm/hotlist/">http://www.phone.net/home/mwm/hotlist/</A>にも、もう一つあります。
 <P> Web への拡張のためには、PHP が卓越したインターフェースとなっています。<A HREF="http://www.php.net">http://www.php.net/</A>にあります。
 
@@ -585,7 +656,7 @@ Programmer's Guide</A>
 	  PHPに関する日本語の情報は、2000年4月19日に発足した日本PHPユーザ会のサイト
 		<A HREF="http://www.php.gr.jp/">http://www.php.gr.jp/</A>
 	あるいは、廣川 類さんのサイト
-		<A HREF="http://www.cityfujisawa.ne.jp/~louis/apps/phpfi/index.html">http://www.cityfujisawa.ne.jp/~louis/apps/phpfi/index.html</A>
+		<A HREF="http://www.geocities.jp/rui_hirokawa/php/">http://www.geocities.jp/rui_hirokawa/php/</A>
 	にかなりまとめられています。
 	  前田 充宏さんにより作られた<A HREF="http://pg.cni.co.jp/">PHP/FIの日本語パッチ</A>が様々な人の手を経てPHP3.0.7に適用されました。
 	現在はPHPJ-DEVにて、
@@ -614,12 +685,12 @@ Programmer's Guide</A>
 
 <P>
 <H4><A NAME="2.3">2.3</A>)	PostgreSQL にグラフィカル・ユーザインターフェースはありますか？
-レポート・ジェネレータは？ 埋め込み問い合わせ言語へのインターフェースは？
+レポートジェネレータや埋め込み問い合わせ言語インターフェースはありますか？
 </H4>
 
 <P> <I>pgaccess</I> と呼ばれる素晴らしいグラフィカル・ユーザ・インターフェースがあり、この配布と共に出荷されます。<I>Pgaccess</I> にはレポート・ジェネレータもあります。Web ページは<A HREF="http://www.flex.ro/pgaccess">http://www.flex.ro/pgaccess</A>です。
 
-<P> <I>ecpg</I> という C 言語のための埋め込み <font size=-1>SQL</font> 問い合わせ言語インターフェースもあります。
+<P> <I>ecpg</I> という C 言語のための埋め込み <small>SQL</small> 問い合わせ言語インターフェースもあります。
 
 <P>
 <H4><A NAME="2.4">2.4</A>)	PostgreSQL と通信するにはどんな言語が使えますか？
@@ -637,7 +708,7 @@ Programmer's Guide</A>
 <LI>Python (<A HREF="http://www.druid.net/pygresql/">PyGreSQL</A>)
 <LI>TCL (libpgtcl)
 <LI>C Easy API (libpgeasy)
-<LI>埋め込み<font size=-1>HTML</font> (<A HREF="http://www.php.net">PHP from http://www.php.net</A>)
+<LI>埋め込み<small>HTML</small> (<A HREF="http://www.php.net">PHP from http://www.php.net</A>)
 </UL>
 <P>
 
@@ -681,30 +752,29 @@ PostgreSQL Administrator's Gide に共有メモリーとセマフォについての情報の詳細があ
 <H4><A NAME="3.4">3.4</A>)	<I>postmasterを</I>走らせようとすると、<I>IpcSemaphoreCreate</I> エラーが出ます。なぜですか？
 </H4>
 
-<P>もしエラーメッセージが<I>IpcSemaphoreCreate: semget failed (No space left on device)</I>であれば、カーネルが十分なセマフォを使えるように構成されていません。Postgresは潜在的なバックエンドプロセス毎に一つのセマフォを必要とします。とりあえずの解決策は<I>postmaster</I>を起動するときに、バックエンドプロセスの数をより少なく制限をすることです。既定値の32より小さな数のパラメータを<I>-N</I>で使います。より恒久的な解決策は、カーネルの<font size=-1>SEMMNS</font> と <font size=-1>SEMMNI</font> パラメータを増やすことです。
+<P>もしエラーメッセージが<I>IpcSemaphoreCreate: semget failed (No space left on device)</I>であれば、カーネルが十分なセマフォを使えるように構成されていません。Postgresは潜在的なバックエンドプロセス毎に一つのセマフォを必要とします。とりあえずの解決策は<I>postmaster</I>を起動するときに、バックエンドプロセスの数をより少なく制限をすることです。既定値の32より小さな数のパラメータを<I>-N</I>で使います。より恒久的な解決策は、カーネルの<small>SEMMNS</small> と <small>SEMMNI</small> パラメータを増やすことです。
+
+    <P>操作不能のセマフォも過度なデータベースアクセスの間にクラッシュを
+起こす可能性があります。
+</P>
+
 <P>もし、エラーメッセージがなにか他のものであれば、カーネルの構成でまったくセマフォのサポートをしていないかもしれません。
 PostgreSQL Administrator's Gide に共有メモリーとセマフォについての情報の詳細があります。</P>
 
 <P>
 
-<H4><A NAME="3.5">3.5</A>)	他のホストから自分の PostgreSQL データベースへのアクセスを防ぐにはどうしますか？
+<H4><A NAME="3.5">3.5</A>)	他のホストからの接続はどのように制御しますか？
 </H4>
 
 <P>	既定値では、PostgreSQL は unix ドメインソケットを使うローカルマシンからの接続しか許しません。<I>postmaster</I> 起動に <I>-i</I> フラッグを加え、<I>$PGDATA/pg_hba.conf</I> ファイルを適切に直して、ホスト主導型の認証を使わないかぎりは他のマシンからは接続できないでしょう。これによりTCP/IPの接続が可能になります。
 <p>操作不能なセマフォも過度のデータベースアクセス中にクラッシュを引き起こすことがあります。
 
 <P>
-<H4><A NAME="3.6">3.6</A>)	他のマシンから自分のデータベースに接続できないのはなぜですか？
+<H4><A NAME="3.6">3.6</A>)	より良い性能を得るためには、データベース・エンジンをどのように調整すれば良いですか？
 </H4>
 
-<P> 既定の設定ではローカルマシンからの unix ドメインのソケット接続しか許しません。TCP/IP 接続を可能にするには postmaster が <I>-i</I> オプションで開始されていて、<I>pgsql/data/pg_hba.conf</I> ファイルに適切なホストの記載が追加されていることを確認してください。
-
-<P>
-<H4><A NAME="3.7">3.7</A>)	より良い性能を得るためには、データベース・エンジンをどのように調整すれば良いですか？
-</H4>
-
-<P> 確かにインデックスは問い合わせの速度を増します。<font size=-1>EXPLAIN</font>コマンドで PostgreSQL がどのようにあなたの問い合わせを翻訳しているかを見ることができ、そして、どのインデックスが使われているかを見ることができます。
-<P>もし <font size=-1>INSERT</font> を多用している場合は、<font size=-1>COPY</font> コマンドを使って大きなバッチ処理でそれを行なうことを検討して下さい。これは、<font size=-1>INSERT</font> を別々に行なうよりもっと高速です。次に、<font size=-1>BEGIN WORK/COMMIT</font> のトランザクション・ブロックの中に無い文は、それら自身がそれぞれのトランザクションに入っていると見なされます。いくつかの文を一つのトランザクション・ブロックの中で行なうことを考えて下さい。これによりトランザクションのオーバーヘッドが減ります。また、大きなデータの変更を行なう際はインデックスを一度外して、作り直すことを考えてみて下さい。
+<P> 確かにインデックスは問い合わせの速度を増します。<small>EXPLAIN</small>コマンドで PostgreSQL がどのようにあなたの問い合わせを翻訳しているかを見ることができ、そして、どのインデックスが使われているかを見ることができます。
+<P>もし <small>INSERT</small> を多用している場合は、<small>COPY</small> コマンドを使って大きなバッチ処理でそれを行なうことを検討して下さい。これは、<small>INSERT</small> を別々に行なうよりもっと高速です。次に、<small>BEGIN WORK/COMMIT</small> のトランザクション・ブロックの中に無い文は、それら自身がそれぞれのトランザクションに入っていると見なされます。いくつかの文を一つのトランザクション・ブロックの中で行なうことを考えて下さい。これによりトランザクションのオーバーヘッドが減ります。また、大きなデータの変更を行なう際はインデックスを一度外して、作り直すことを考えてみて下さい。
 
 <P> チューニングのオプションがいくつかあります。<I>postmaster</I> を <I>-o -F</I> オプションで起動することによって、<I>fsync()</I> を無効にすることができます。これによって、各トランザクション毎に <I>fsync()</I> でディスクを更新するのを止めさせます。
 
@@ -712,10 +782,10 @@ PostgreSQL Administrator's Gide に共有メモリーとセマフォについての情報の詳細があ
 
 <P> バックエンドを <I>-S</I> オプションを使って、それぞれのバックエンド・プロセスが一時的な並べ替えによって使うメモリーの最大サイズを増やすこともできます。 その <I>-S</I> の値はキロバイト単位で、既定値は 512 (すなわち、512K)です。
 
-<P> また、<font size=-1>CLUSTER</font> コマンドを使って、テーブルのデータをインデックスに合わせるためにグループ化することもできます。詳しくは、オンラインマニュアルで <I>CLUSTER</I> を見て下さい。
+<P> また、<small>CLUSTER</small> コマンドを使って、テーブルのデータをインデックスに合わせるためにグループ化することもできます。詳しくは、オンラインマニュアルで <I>CLUSTER</I> を見て下さい。
 
 <P>
-<H4><A NAME="3.8">3.8</A>)	どのようなデバグ機能が使えますか？</H4>
+<H4><A NAME="3.7">3.7</A>)	どのようなデバグ機能が使えますか？</H4>
 
 <P> PostgreSQL は、デバグのために意味のある、状態情報を報告するいくつかの機能を持ちます。
 
@@ -730,9 +800,17 @@ PostgreSQL Administrator's Gide に共有メモリーとセマフォについての情報の詳細があ
 
 <P> これにより PostgreSQL の最上部のディレクトリに server.log ファイルが置かれます。このファイルはサーバーが遭遇した問題やエラーについて有用な情報を含みます。<I>Postmaster</I> は更に詳細な情報を報告するための <I>-d</I> オプションを持ちます。その <I>-d</I> オプションは、デバグ・レベルを指定します。高いデバグ・レベルでは、大きなログファイルを生成することに注意しなくてはなりません。
 
-<P>もし、<i>postmaster</i>が走っていなければ、<I>postgres</I>バックエンドをコマンド行から走らせることができ、直接<font size=-1>SQL</font>文をタイプすることができます。このやりかたは、デバグ目的のとき<B>だけ</B>お奨めします。セミコロンではなく、改行が問い合わせの終りになることに注意してください。もし、デバグシンボルを入れてコンパイルしていれば、デバッガを使って何が起きているかを見ることができます。postmaster からバックエンドを開始したわけではないので、独立な環境で走っているのではなくロック／バックエンドとの対話の問題が重複することはありません。
+<P>もし、<i>postmaster</i>が走っていなければ、<I>postgres</I>バックエンドをコマンド行から走らせることができ、直接<small>SQL</small>文をタイプすることができます。このやりかたは、デバグ目的のとき<B>だけ</B>お奨めします。セミコロンではなく、改行が問い合わせの終りになることに注意してください。もし、デバグシンボルを入れてコンパイルしていれば、デバッガを使って何が起きているかを見ることができます。postmaster からバックエンドを開始したわけではないので、独立な環境で走っているのではなくロック／バックエンドとの対話の問題が重複することはありません。
 
-<P> もし、<i>postmaster</i>が走っていれば、あるウィンドウで<I>psql</I>を開始すると、<i>psql</i> で使われる <i>postgres</i>プロセスの<font size=-1>PID</font>が見つかります。デバッガを使って<i>postgres</i>の<font size=-1>PID</font>にアタッチ(attach)します。デバッガの中からブレーク・ポイントをセットし、<i>psql</i>から問い合わせを発行します。デバグのために<i>postgres</i>を始動する場合は、PGOPTIONS="-W n" を設定でき、それから、<i>psql</i> を開始します。これにより、<i>n</i> 秒開始を遅らせるはずなので、デバッガでアタッチして始動を順を追って見ることができます。
+	<P> もし、<i>postmaster</i>が走っていれば、あるウィンドウで
+<I>psql</I>を開始すると、<i>psql</i> で使われる <i>postgres</i> プロセス
+の<small>PID</small>が見つかります。デバッガを使って
+<i>postgres</i>の<small>PID</small>にアタッチ(attach)します。デバッ
+ガの中からブレーク・ポイントをセットし、<i>psql</i> から問い合わせを発行
+します。デバグのために<i>postgres</i>を始動する場合は、PGOPTIONS="-W n" 
+を設定でき、それから、<i>psql</i> を開始します。これにより、<i>n</i> 秒
+開始を遅らせるはずなので、デバッガでプロセスにアタッチして、ブレークポイ
+ントを設定し、開始から順を追って見てゆくことができます。
 
 <P> postgreSQL プログラムには、デバグと性能測定にとても役に立つ <I>-s</I>や <I>-A</I>や <I>-t</I> 等のオプションがあります。
 
@@ -740,20 +818,20 @@ PostgreSQL Administrator's Gide に共有メモリーとセマフォについての情報の詳細があ
 
 
 <P>
-<H4><A NAME="3.9">3.9</A>)	接続しようとするときに <I>'Sorry, too many clients'</I> が出ます。なぜですか？
+<H4><A NAME="3.8">3.8</A>)	接続しようとするときに <I>'Sorry, too many clients'</I> が出るのはなぜですか？
 </H4>
 
 <P> <I>postmasterが</I>同時始動できるバックエンドプロセスに対する制限数を増やす必要があります。
 <P>既定の最大プロセスは32プロセスです。<I>-N</I>に適切な値を引数にして<I>postmaster</I>を再起動するか、postgresql.conf を修正することによって、その値を増やすことができます。
 
-。既定の構成では<I>-N</I>は最大1024まで設定できます。もし、もっと必要であれば<I>include/config.h</I>の中の<font size=-1>MAXBACKENDS</font>を増加させ、再構築します。もし、望むなら<I>configure</I>の <I>--with-maxbackends</I>切替を使って、<I>-N</I>の既定値を構成時に設定できます。
+。既定の構成では<I>-N</I>は最大1024まで設定できます。もし、もっと必要であれば<I>include/config.h</I>の中の<small>MAXBACKENDS</small>を増加させ、再構築します。もし、望むなら<I>configure</I>の <I>--with-maxbackends</I>切替を使って、<I>-N</I>の既定値を構成時に設定できます。
 
 <P>もし、<I>-N</I> を 32よりも大きくするのであれば、<I>-B</I>も既定の64より大きい値に増加させなくてはならないし、<I>-B</I> は少なくとも <I>-N</I> の2倍はなくてはならず、おそらく最高性能を望むならばそれより大きい値が必要なはずです。バックエンドプロセスをたくさんにすると、いろいろなUnixカーネル構成パラメータも増やすことが必要になるかもしれません。
-共有メモリー・ブロックの最大値(<font size=-1>SHMMAX</font>)、
-セマフォの最大数(<font size=-1>SEMMNS</font>と<font size=-1>SEMMNI</font>)、
-プロセスの最大数(<font size=-1>NPROC</font>)、
-ユーザ毎の最大プロセス数(<font size=-1>MAXUPRC</font>)、
-開くファイルの最大数(<font size=-1>NFILE</font>と<font size=-1>NINODE</font>
+共有メモリー・ブロックの最大値(<small>SHMMAX</small>)、
+セマフォの最大数(<small>SEMMNS</small>と<small>SEMMNI</small>)、
+プロセスの最大数(<small>NPROC</small>)、
+ユーザ毎の最大プロセス数(<small>MAXUPRC</small>)、
+開くファイルの最大数(<small>NFILE</small>と<small>NINODE</small>
 も確認事項に含まれます。
 PostgreSQLに許されるバックエンドのプロセス数が制限されているのは、
 システムのリソースを使い果してしまうことを避けるためです。
@@ -761,10 +839,10 @@ PostgreSQLに許されるバックエンドのプロセス数が制限されているのは、
 <P>6.5より前のバージョンのPostgreSQLではバックエンドの最大数は64でしたが、変更するには、<I>include/storage/sinvaladt.h</I>の中のMaxBackendId定数を修正した後に再構築が必要でした。
 
 <P>
-<H4><A NAME="3.10">3.10</A>)	自分のデータベース・ディレクトリにある <I>pg_sorttemp.XXX</I>ファイルは何ですか？
+<H4><A NAME="3.9">3.9</A>)	自分のデータベース・ディレクトリにある <I>pg_sorttemp.XXX</I>ファイルは何ですか？
 </H4>
 
-<P> 問い合わせ実行モジュールによって生成された一時的なファイルです。例えば、もし <font size=-1>ORDER BY</font> 句を満たすためにバックエンドの <I>-S</I> パラメータで許可した値よりも大きなスペースがソートの際に必要だとすると、溢れたデータを保持するために一時的なファイルがいくつか生成されます。
+<P> 問い合わせ実行モジュールによって生成された一時的なファイルです。例えば、もし <small>ORDER BY</small> 句を満たすためにバックエンドの <I>-S</I> パラメータで許可した値よりも大きなスペースがソートの際に必要だとすると、溢れたデータを保持するために一時的なファイルがいくつか生成されます。
 <P>
 一時的なファイルは自動的に消し去られるはずですが、もし、ソートの途中でバックエンドがクラッシュしてしまうとそうはなりません。そのときバックエンドがひとつも走ってなければ、pg_tempNNN.NNファイルを消しても大丈夫です。
 
@@ -788,40 +866,34 @@ PostgreSQLに許されるバックエンドのプロセス数が制限されているのは、
 <H2><CENTER>操作上の質問</CENTER></H2>
 <P>
 
-<H4><A NAME="4.1">4.1</A>)	なぜ、システムはカンマや小数点や日付フォーマットで混乱するのですか？
+<H4><A NAME="4.1">4.1</A>)	バイナリ・カーソルと通常カーソルとの厳密な違いは何ですか？
 </H4>
 
-<P> ロケールの設定を確かめて下さい。PostgreSQL は <I>postmaster</I> プロセスを走らせたユーザーのロケールの設定を使います。postgres とpsql には SET コマンドがあり、データ書式を制御できます。これらをあなたの操作環境に合わせて設定して下さい。
+<P> 詳述は、オンラインマニュアルで <small>DECLARE</small> を見て下さい。
 
 <P>
-<H4><A NAME="4.2">4.2</A>)	バイナリ・カーソルと通常カーソルとの厳密な違いは何ですか？
+<H4><A NAME="4.2">4.2</A>)	最初の数行のみを <small>SELECT</small> するにはどうしますか？
 </H4>
 
-<P> 詳述は、オンラインマニュアルで <font size=-1>DECLARE</font> を見て下さい。
+<P> オンラインマニュアルで<small>FETCH</small>を見てください。あるいは、SELECT ... LIMIT....を使ってみて下さい。
+
+<P>たとえ、欲しいのは最初の数行だけでも、すべての問い合わせを評価しなくてはならないかもしれません。<small>ORDER BY</small> を持った問い合わせを考えてみて下さい。
+もし、<small>ORDER BY</small>に合ったインデックスがあるとすると PostgreSQLは要求された最初の数行だけで評価できるかもしれませんが、でなれば、PostgreSQL は意図した行が生成されるまですべての行を評価しなければならないかもしれません。
 
 <P>
-<H4><A NAME="4.3">4.3</A>)	最初の数行のみを <font size=-1>SELECT</font> するにはどうしますか？
-</H4>
-
-<P> オンラインマニュアルで<font size=-1>FETCH</font>を見てください。あるいは、SELECT ... LIMIT....を使ってみて下さい。
-
-<P>たとえ、欲しいのは最初の数行だけでも、すべての問い合わせを評価しなくてはならないかもしれません。<font size=-1>ORDER BY</font> を持った問い合わせを考えてみて下さい。
-もし、<font size=-1>ORDER BY</font>に合ったインデックスがあるとすると PostgreSQLは要求された最初の数行だけで評価できるかもしれませんが、でなれば、PostgreSQL は意図した行が生成されるまですべての行を評価しなければならないかもしれません。
-
-<P>
-<H4><A NAME="4.4">4.4</A>)	テーブルやその他の情報のリストを <I>psql</I> で見るにはどうしますか？
+<H4><A NAME="4.3">4.3</A>)	テーブルやその他の情報のリストを <I>psql</I> で見るにはどうしますか？
 </H4>
 
 <P>
   <I>psql</I>のソースコードとして書かれた <I>pgsql/src/bin/psql/describe.c</I> ファイルを読むことがその答えです。
-そこには、psqlのバックスラッシュコマンドによる出力のための<font size=-1>SQL</font>コマンドが含まれています。 <I>psql</I> に <I>-E</I> オプションをつけて起動すれば、与えたコマンドを実行するための問い合わせが出力されます。
+そこには、psqlのバックスラッシュコマンドによる出力のための<small>SQL</small>コマンドが含まれています。 <I>psql</I> に <I>-E</I> オプションをつけて起動すれば、与えたコマンドを実行するための問い合わせが出力されます。
 <P>
 
 
-<H4><A NAME="4.5">4.5</A>)	テーブルから列の削除はどのようにしますか？
+<H4><A NAME="4.4">4.4</A>)	テーブルから列の削除はどのようにしますか？
 </H4>
 
-<P> <font size=-1>ALTER TABLE DROP COLUMN</font> はサポートしていませんが、その代わりにこうします:
+<P> <small>ALTER TABLE DROP COLUMN</small> はサポートしていませんが、その代わりにこうします:
 
 <PRE>
 	SELECT ...  -- 削除したい列以外の列をすべて選択します。
@@ -835,12 +907,12 @@ PostgreSQLに許されるバックエンドのプロセス数が制限されているのは、
 
 
 <P>
-<H4><A NAME="4.6">4.6</A>)	行、テーブル、データベースの最大サイズは？
+<H4><A NAME="4.5">4.5</A>)	行、テーブル、データベースの最大サイズは？
 </H4>
 
 <P> 制限は以下のとおりです。
 <PRE>
-データベースの最大サイズ? 	制限無し (60GB のデータベースも存在します)
+データベースの最大サイズ? 	制限無し (500GB のデータベースも存在します)
 テーブルの最大サイズ?           16TB
 行の最大サイズ?                 7.1以降で制限無し
 フィールドの最大サイズ?         7.1以降で1GB
@@ -857,74 +929,96 @@ PostgreSQLに許されるバックエンドのプロセス数が制限されているのは、
 
 
 <P>
-<H4><A NAME="4.7">4.7</A>)	一般的なテキストファイルからデータを保存するには、データベースのディスク容量はどのくらい必要です？
+<H4><A NAME="4.6">4.6</A>)	一般的なテキストファイルからデータを保存するには、データベースのディスク容量はどのくらい必要です？
 </H4>
 
-PostgreSQL のデータベースに保存するには、普通のファイルの約6.5倍のディスク容量を必要とします。<P>
-<P> 各行に二つずつ整数を持つ 300,000行のファイルを考えてみましょう。ただのファイルでは 2.4MB です。このデータを含む PostgreSQL データベースファイルの大きさは次のように約14MBと見積もることができます：
+普通のテキストファイルを PostgreSQL のデータベースに保存するには、最大で約5倍のディスク容量を必要とします。<P>
+
+<P> 例題として、各行に整数とテキスト記述を持つ 100,000行のファイルを考え
+てみましょう。テキストの文字列の平均長さを20バイトと仮定すると、フラット
+ファイルの大きさは約2.8MB です。このデータを含む PostgreSQL データベース
+ファイルの大きさは次のように約6.4MBと見積もることができます：
 
 <PRE>
     36 bytes: 各行のヘッダ(概算)
-   + 8 bytes: 各4バイトの二つの整数(int)フィールド
+    24 bytes: 整数(int)フィールドとテキスト(text)フィールド
    + 4 bytes: ページ上のタップルへのポインタ
    ----------------------------------------
-   48 bytes per row
+   64 bytes per row
 
    PostgreSQL のデータページサイズは 8192バイト(8KB)なので:
 
    8192 bytes per page
-   -------------------   =  171 rows per database page (切り上げ)
-     48 bytes per row
+   -------------------   =  128 rows per database page (切り上げ)
+     64 bytes per row
 
-   300000 data rows
-   --------------------  =  1755 database pages
-      171 rows per page
+   100000 data rows
+   --------------------  =  782 database pages
+      128 rows per page
  
-1755 database pages * 8192 bytes per page  =  14,376,960 bytes (14MB)
+782 database pages * 8192 bytes per page  =  6,406,144 bytes (6.4 MB)
 </PRE>
 
 <P>
 インデックスは、これほどのオーバヘッドは要求しませんが、インデックス付けされるデータを含む以上、それなりに大きくなります。
 
 <P>
-<H4><A NAME="4.8">4.8</A>)	データベース内に定義されたテーブルやインデックスをどのようにして見つけ出しますか？
+<H4><A NAME="4.7">4.7</A>)	データベース内に定義されたテーブルやインデックスをどのようにして見つけ出しますか？
 </H4>
 
 <P> <I>psql</I> にはいろいろなバックスラッシュ・コマンドがあり、こうした情報を表示します。バックスラッシュ・コマンドの種類を見るには \? を使って下さい。
-<P> また、<I>pgsql/src/tutorial/syscat.source</I> ファイルを走らせてみて下さい。それは、沢山の <font size=-1>SELECT</font> 文により必要な情報をデータベースのシステム・テーブルから取り出して例示してくれます。
+<P> また、<I>pgsql/src/tutorial/syscat.source</I> ファイルを走らせてみて下さい。それは、沢山の <small>SELECT</small> 文により必要な情報をデータベースのシステム・テーブルから取り出して例示してくれます。
 
 <P>
-<H4><A NAME="4.9">4.9</A>)	問い合わせが遅いうえ、インデックスを使っている様子がありません。なぜですか？
+<H4><A NAME="4.8">4.8</A>)	問い合わせが遅いうえ、インデックスを使っている様子がありません。なぜですか？
 </H4>
 
-<P> PostgreSQL は統計情報を自動的には保守しません。統計情報を更新するためには、<font size=-1>VACUUM</font> を走らせなくてはなりません。統計情報が更新された後は、オブティマイザがテーブルに何行あるかを知って、インデックスを使うべきかの決定をより良く下します。オブティマイザはテーブルが小さくて連続スキャンの方が速いであろう場合はインデックスを使わないことにご注意下さい。
+インデックスは自動的にすべての問い合わせで使われるわけではありません。テー
+ブルが最小サイズより大きく、問い合わせでそのわずかなパーセンテージの行を
+選択する時だけ、インデックスは使われます。これはインデックススキャンによ
+り起こされるランダムなディスクアクセスは、テーブルをストレートに読む順次
+走査よりも遅くなることがときどきあるからです。
 
-<P> 列特定の最適化統計のために<font size=-1>VACUUM ANALYZE</font>を使います。<font size=-1>VACUUM ANALYZE</font>は複雑な複合結合(multi-join)問い合わせのために大切ですので、オブティマイザはそれぞれのテーブルから返される行の数を見積ることができ、特定の結合順序を選びます。バックエンドはそれ自身では列の統計を保持しないので、定期的にそれらを集めるためには <font size=-1>VACUUM ANALYZE</font> を走らせなくてはなりません。
+    <P>インデックスを使うかを決定するために、PostgreSQL はテーブルについ
+ての統計情報を持たなければなりません。この統計情報は、<SMALL>VACUUM
+ANALYZE</SMALL>または、単に <SMALL>ANALYZE</SMALL> を使って収集すること
+ができます。統計情報を使ってオブティマイザはテーブルの中に何行あるかを知
+り、インデックスを使うべきかのの決定をより正しくできます。統計情報は最適
+な結合順や結合方法を決める上でも貴重なものもあります。統計情報の収集は、
+テーブルの内容がかわると毎に繰返しなされるべきです。</P>
 
-<P> 普通、インデックスは <font size=-1>ORDER BY</font> や結合の操作のためには使われません。ランダムなディスクアクセスはとても遅いので、順次スキャンに続く明示的ソートは、巨大なテーブルの全件をインデックススキャンするよりも高速です。
+    <P> インデックスは、通常 <SMALL>ORDER BY</SMALL> や結合を行な
+うためには使われません。順次スキャンに続く明示的ソートは、巨大なテーブル
+のインデックススキャンよりも普通は高速です。</P>
+    しかし、<SMALL>ORDER BY</SMALL>と組み合わされた<SMALL>LIMIT</SMALL> 
+は、テーブルの小さな部分を返すためにたびたびインデックスを使うでしょう。
 
-<P> <font size=-1>LIKE</font> あるいは <I>~</I> のようなワイルドカード演算子(wild-card  operators)を使うとき、検索の開始が文字列の始めの部分に固定されているときにのみ、インデックスが使われます。
-そういうわけで、インデックスを使うためには、<font size=-1>LIKE</font> 検索では<I>%</I>で始めないようにして、また、<I>~</I>(正規表現検索)は<I>^</I> で始めるようにするべきです。
+    <P> <SMALL>LIKE</SMALL> あるいは <I>~</I> のようなワイルドカード演算
+子を使うとき、検索の開始が文字列の始めの部分に固定されているときにのみ、
+インデックスが使われます。そういうわけで、インデックスを使うためには、
+<SMALL>LIKE</SMALL> パターンは<I>%</I>で始めないようにして、また、
+<I>~</I>(正規表現)パターンは<I>^</I> で始めなくてはなりません。
 
-[訳注：強制的にインデックスを使うには
-        SET enable_seqscan = off を実行します]
+[訳注：
+	強制的にインデックスを使うには SET enable_seqscan = off を実行します
+]
 
 
 <P>
-<H4><A NAME="4.10">4.10</A>)	問い合わせオブティマイザがどのように問い合わせを評価するのかを見るにはどうしますか？
+<H4><A NAME="4.9">4.9</A>)	問い合わせオブティマイザがどのように問い合わせを評価するのかを見るにはどうしますか？
 </H4>
 
-<P> オンラインマニュアルで <font size=-1>EXPLAIN</font> を見て下さい。
+<P> オンラインマニュアルで <small>EXPLAIN</small> を見て下さい。
 
 <P>
-<H3><A NAME="4.11">4.11</A>)	R-tree インデックスとは何ですか？</H3>
+<H3><A NAME="4.10">4.10</A>)	R-tree インデックスとは何ですか？</H3>
 
 <P> R-tree インデックスは空間的なデータにインデックスを付けるために使われます。ハッシュインデックスでは範囲の検索ができません。また、B-tree インデックスでは、１次元でしか範囲の検索ができません。R-tree インデックスであれば多次元のデータを扱えます。たとえば、もし R-tree インデックスを <I>point</I> 型の属性に付けることができるとするとシステムは、「長方形に囲まれた点をすべて選択する」というような問い合わせに、より効率良く答えられます。
 
 <P> R-Tree の設計の原典となる権威ある論文は:
 
 <P> Guttman, A. "R-Trees: A Dynamic Index Structure for Spatial Searching."
-Proc of the 1984 ACM SIGMOD Int'l Conf on Mgmt of Data, 45-57.
+Proceedings of the 1984 ACM SIGMOD Int'l Conf on Mgmt of Data, 45-57.
 
 <P> この論文は、Stonebraker 教授の "Readings in Database Systems"
 でも取り上げられています。
@@ -952,17 +1046,17 @@ Proc of the 1984 ACM SIGMOD Int'l Conf on Mgmt of Data, 45-57.
 
 
 <P>
-<H4><A NAME="4.12">4.12</A>)	遺伝的問い合わせ最適化とは何ですか？
+<H4><A NAME="4.11">4.11</A>)	遺伝的問い合わせ最適化とは何ですか？
 </H4>
 
 <P> GEQO モジュールは、沢山のテーブルを結合するときに、遺伝的アルゴリズム(GA)で問合わせを高速化します。これにより、しらみつぶしに探索を行なわなくても、大きな結合(join queries)を扱うことができるようになります。
 
 <P>
-<H4><A NAME="4.13">4.13</A>)	正規表現での検索や大文字と小文字とを区別しない正規表現検索はどのように実現しますか？大文字と小文字とを区別しない検索のためのインデックスはどのように使いますか？
+<H4><A NAME="4.12">4.12</A>)	正規表現での検索や大文字と小文字とを区別しない正規表現検索はどのように実現しますか？大文字と小文字とを区別しない検索のためのインデックスはどのように使いますか？
 </H4>
 
 <P>
-<I>~</I>演算子は正規表現照合を行ない、<I>~*</I> は大文字と小文字を区別しない(case-insensitive)正規表現照合を行います。 PostgreSQL 7.1 以降では、大文字と小文字を区別しない <font size=-1>LIKE</font> 演算子を <font size=-1>ILIKE</font> といいます。
+<I>~</I>演算子は正規表現照合を行ない、<I>~*</I> は大文字と小文字を区別しない(case-insensitive)正規表現照合を行います。 PostgreSQL 7.1 以降では、大文字と小文字を区別しない <small>LIKE</small> 演算子を <small>ILIKE</small> といいます。
 
 
 <P>大文字と小文字を区別しない等値比較次のように表現できる：
@@ -989,13 +1083,14 @@ Proc of the 1984 ACM SIGMOD Int'l Conf on Mgmt of Data, 45-57.
 
 
 <P>
-<H4><A NAME="4.14">4.14</A>)	問い合わせの中で、フィールドが <font size=-1>NULL</font> であることを検出するにはどうしますか？
+<H4><A NAME="4.13">4.13</A>)	問い合わせの中で、フィールドが <small>NULL</small> であることを検出するにはどうしますか？
 </H4>
 
-<P> <font size=-1>IS NULL</font>のカラムを IS NOT NULL で試してみて下さい。
+    <P>カラムを <SMALL>IS NULL</SMALL> と <SMALL>IS NOT NULL</SMALL>
+とで試してみます。</P>
 
 <P>
-<H4><A NAME="4.15">4.15</A>)	様々な文字型のそれぞれの違いは何ですか？
+<H4><A NAME="4.14">4.14</A>)	様々な文字型のそれぞれの違いは何ですか？
 </H4>
 
 <PRE>
@@ -1005,19 +1100,27 @@ Type            Internal Name   Notes
 CHAR(#)         bpchar          指定された固定長となるように空白が詰められる
 VARCHAR(#)      varchar         長さの上限の無いテキスト
 TEXT            text            長さの制限は最大行長による
-BYTEA           bytea           可変長のバイト配列
+BYTEA           bytea           可変長のバイト配列(null-byte safe)
 </PRE>
 
 <P> 内部名にお目にかかるのは、システム・カタログを調べるときや、エラーメッセージを受け取るときです。
 
 
-<P> 上記の型のうち後の４つの型は "varlena" 型です(すなわち、ディスクの最初の４バイトがデータ長で、それの後に実際のデータが続きます)。このように実際の空間は宣言された大きさよりも少し大きくなります。しかし、これらのデータ型は<font size=-1>TOAST</font>により圧縮されたり複数行に渡って保存されたりして、ディスク上の空間は思ったより小さくなります。
+<P> 上記の型のうち後の４つの型は "varlena" 型です(すなわち、ディスクの最初の４バイトがデータ長で、それの後に実際のデータが続きます)。このように実際の空間は宣言された大きさよりも少し大きくなります。しかし、これらのデータ型は<small>TOAST</small>により圧縮されたり複数行に渡って保存されたりして、ディスク上の空間は思ったより小さくなります。
+
+    <P><SMALL>CHAR()</SMALL>はいつも長さが同じ文字列を保存するのに最適で
+す。<SMALL>VARCHAR()</SMALL> は可変長の文字列を保存するのに最適ですが、
+保存できる文字列の長さに制限があります。<SMALL>TEXT</SMALL> は長さに制限
+の無い文字列の保存ためのもので、最大1ギガバイトです。
+<SMALL>BYTEA</SMALL>は、部分的に<SMALL>NULL</SMALL> のバイトを含むバイナ
+リデータを保存するためのものです。</P>
+
 
 <P>
-<H4><A NAME="4.16.1">4.16.1</A>)	通番(serial)／自動増分フィールドはどのようにつくりますか？
+<H4><A NAME="4.15.1">4.15.1</A>)	通番(serial)／自動増分フィールドはどのようにつくりますか？
 </H4>
 
-<P> PostgreSQL は <font size=-1>SERIAL</font> データ型をサポートします。列上に通番とインデックスを自動作成します。たとえば、
+<P> PostgreSQL は <small>SERIAL</small> データ型をサポートします。列上に通番とインデックスを自動作成します。たとえば、
 
 <PRE>
 	CREATE TABLE person ( 
@@ -1035,49 +1138,62 @@ BYTEA           bytea           可変長のバイト配列
 	CREATE UNIQUE INDEX person_id_key ON person ( id );
 </PRE>
 通番についてのもっと詳しい情報は、オンラインマニュアルで <I>create_sequence</I> をご覧下さい。
-<P> また、各行の<I>OID</I>フィールドを一意値として使うこともできます。しかしながら、もしもデータベースをダンプしてりロードする必要がある場合は、<font size=-1>OID</font>を温存するために<I>pg_dump</I> で <I>-o</I>オプションを使うか、または、<font size=-1>COPY WITH OIDS</I>オプションを使う必要があります。
+<P> また、各行の<I>OID</I>フィールドを一意値として使うこともできます。しかしながら、もしもデータベースをダンプしてりロードする必要がある場合は、<small>OID</small>を温存するために<I>pg_dump</I> で <I>-o</I>オプションを使うか、または、<small>COPY WITH OIDS</I>オプションを使う必要があります。
 
  Bruce Momjian の<A HREF="http://www.PostgreSQL.org/docs/aw_pgsql_book">(http://www.PostgreSQL.org/docs/aw_pgsql_book)の Numbering Rows</A>の章にありあます。
 
 
-<H4><A NAME="4.16.2">4.16.2</A>)	<font size=-1>SERIAL</font>データ型に挿入される値は、どうすれば得られますか？
-</H4><P>
-  ひとつの方法は、<I>nextval()</I> 関数を使ってその値を挿入する<I>前(before)に</I> SEQUENCE オブジェクトから次の <font size=-1>SERIAL</font> 値を取り出し、それから実際に挿入をすることです。 <A HREF="#4.16.1">4.16.1</A> の例で使ったテーブルを使うとすると、次のようになります。
+<H4><A NAME="4.15.2">4.15.2</A>)	<small>SERIAL</small>データ型に挿入される値は、どうすれば得られますか？
+</H4>
+    <P>ひとつの方法は、<I>nextval()</I> 関数を使ってその値を挿入する<I>
+前(before)に</I> SEQUENCE オブジェクトから次の <small>SERIAL</small> 値を取り出し、それから実際に挿入をすることです。<A
+HREF="#4.16.1">4.16.1</A> の例で使ったテーブルを使うとすると、Perl では
+次のようになります。
 
 <PRE>
-	$newSerialID = nextval('person_id_seq');
-	INSERT INTO person (id, name) VALUES ($newSerialID, 'Blaise Pascal');
+	new_id = output of "SELECT nextval('person_id_seq')"
+	INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal');
 </PRE>
 
-そうして、<tt>$newSerialID</tt> に保存した新しい値を他の問い合わせに(たとえば、<tt>person</tt> テーブルに対する外部キー(foreign key)のように)使うとよいでしょう。自動的に作られた<font size=-1>SEQUENCE</font>オブジェクトの名前は、&lt;<I>table</I>&gt;_&lt;<I>serialcolumn</I>&gt;_<I>seq</I> のようになり、このうち、<I>table</I> と <I>serialcolumn</I> はそれぞれテーブルの名前と<font size=-1>SERIAL</font>列の名前です。
+そうして、<tt>new_id</tt> に保存した新しい値を他の問い合わせに(たとえば、<tt>person</tt> テーブルに対する外部キー(foreign key)のように)使うとよいでしょう。自動的に作られた<small>SEQUENCE</small>オブジェクトの名前は、&lt;<I>table</I>&gt;_&lt;<I>serialcolumn</I>&gt;_<I>seq</I> のようになり、このうち、<I>table</I> と <I>serialcolumn</I> はそれぞれテーブルの名前と<small>SERIAL</small>列の名前です。
 <P>
 
-あるいは、与えられた<font size=-1>SERIAL</font>値を、それが既定値として挿入された<I>後で(after)</I>、 <I>currval</I>() 関数を使って取り出すこともできます。たとえば、
+あるいは、与えられた<small>SERIAL</small>値を、それが既定値として挿入された<I>後で(after)</I>、 <I>currval</I>() 関数を使って取り出すこともできます。たとえば、
 
 <PRE>
 	INSERT INTO person (name) VALUES ('Blaise Pascal');
-	$newID = currval('person_id_seq');
+	new_id = currval('person_id_seq');
 </PRE>
 
-最後に、<font size=-1>INSERT</font>文から返る<A HREF="#4.17"><font size=-1>OID</font></A>を使って、既定値をみつけることもできますが、しかし、これは最も移植性の低いやり方でしょう。PerlのDBIで Edmund Mergl の作った DBD::Pg モジュールを使えば、$sth->execute() の後に $sth-&gt{pg_oid_status} を経由してその OID 値を使えるようにすることはできます。
+最後に、<small>INSERT</small>文から返る<A HREF="#4.17"><small>OID</small></A>を使って、既定値をみつけることもできますが、しかし、これは最も移植性の低いやり方でしょう。PerlのDBIで Edmund Mergl の作った DBD::Pg モジュールを使えば、$sth->execute() の後に $sth-&gt{pg_oid_status} を経由してその OID 値を使えるようにすることはできます。
 
 <P> 
-<H4><A NAME="4.16.3">4.16.3</A>)	他のユーザとの競合状態を避けるためには、<I>currval()</I> と <I>nextval()</I> は使わないほうがよいのでしょうか？
-</H4><P>
-
-バックエンドが上手に処理するので、競合状態になることは有りません。
-
-
-<P> 
-<H4><A NAME="4.17">4.17</A>)	<font size=-1>OID</font> とは何ですか？ <font size=-1>TID</font> とは何ですか？
+<H4><A NAME="4.15.3">4.15.3</A>)	他のユーザとの競合状態を避けるためには、<I>currval()</I> と <I>nextval()</I> は使わないほうがよいのでしょうか？
 </H4>
 
-<P> <font size=-1>OID</font> とは一意の行 ID に対する PostgreSQL の答えです。PostgreSQL の中でつくられるすべての行は一意の <font size=-1>OID</font> を得ます。<I>initdb</I> で発生される <font size=-1>OID</font> はすべて 16384 (<I>backend/access/transam.h</I> から)より小さな値です。<I>initdb</I> 後のすべての <font size=-1>OID</font> (ユーザ作成)はそれ以上の値になります。
-既定では、これらすべての <font size=-1>OID</font>は一つのデーブルやデータベース内に留まらず、PostgreSQL インストレーション全体の中で一意です。
+    <P>それはありません。Currval() は、すべてのユーザではありませんが、あなたのバックエンドに与えられた現在の値を返します。
 
-<P> PostgreSQL はテーブル間の行を結びつけるために、そのシステムテーブル内に <font size=-1>OID</font> を使います。この <font size=-1>OID</font> は特定のユーザの行を識別するためや結合の中で使われることができます。<font size=-1>OID</font> の値を保存するためには <I>OID</I> 型を列に使うことを奨めます。より速くアクセスするために <I>OID</I> フィールドにインデックスを作ることができます。
 
-  O<font size=-1>ID</font> は、全てのデータベースで使われる中央領域から、全ての新しい行に割り当てられます。<font size=-1>OID</font> を他の何かに変えたい、あるいは元の <font size=-1>OID</font> もテーブルと一緒にコピーしたいのなら、できなくはありません。
+<H4><A name="4.15.4">4.15.4</A>) トランザクションが中断したときにもうい
+ちどシーケンス番号が使われないのはなぜですか？シーケンス／SERIALカラムに
+空きがあるのはなぜですか？
+</H4>
+
+    <P>同時性を改善するために、実行中のトランザクションに、必要でト
+ランザクションが終了するまでロックされないシーケンス値を与えています。
+このためトランザクションが中断されると番号割り当てにギャップを生じます。
+</P>
+
+<P> 
+<H4><A NAME="4.16">4.16</A>)	<small>OID</small> とは何ですか？ <small>TID</small> とは何ですか？
+</H4>
+
+<P> <small>OID</small> とは一意の行 ID に対する PostgreSQL の答えです。PostgreSQL の中でつくられるすべての行は一意の <small>OID</small> を得ます。<I>initdb</I> で発生される <small>OID</small> はすべて 16384 (<I>backend/access/transam.h</I> から)より小さな値です。<I>initdb</I> 後のすべての <small>OID</small> (ユーザ作成)はそれ以上の値になります。
+既定では、これらすべての <small>OID</small>は一つのデーブルやデータベース内に留まらず、PostgreSQL インストレーション全体の中で一意です。
+
+<P> PostgreSQL はテーブル間の行を結びつけるために、そのシステムテーブル内に <small>OID</small> を使います。この <small>OID</small> は特定のユーザの行を識別するためや結合の中で使われることができます。<small>OID</small> の値を保存するためには <I>OID</I> 型を列に使うことを奨めます。より速くアクセスするために <I>OID</I> フィールドにインデックスを作ることができます。
+
+  O<small>ID</small> は、全てのデータベースで使われる中央領域から、全ての新しい行に割り当てられます。<small>OID</small> を他の何かに変えたい、あるいは元の <small>OID</small> もテーブルと一緒にコピーしたいのなら、できなくはありません。
 
 
 <PRE>
@@ -1092,12 +1208,12 @@ BYTEA           bytea           可変長のバイト配列
 -->
 </PRE>
 
-<P> O<font size=-1>ID</font> は、4バイトの整数として保存されているので、40億を越えると溢れてしまうでしょう。誰もこれが起きたと報告してくる人はいませんでしたが、そうなる前にこの制限を取り除くことを計画しています。
+<P> O<small>ID</small> は、4バイトの整数として保存されているので、40億を越えると溢れてしまうでしょう。誰もこれが起きたと報告してくる人はいませんでしたが、そうなる前にこの制限を取り除くことを計画しています。
 
-<P> T<font size=-1>ID</font> は特定の物理行をそのブロックとオフセット値で識別するために使われます。<font size=-1>TID</font> は行が修正されたり再ロードされると変わります。それらの <font size=-1>TID</font> は、物理行を指すためにインデックス記載で使われます。
+<P> T<small>ID</small> は特定の物理行をそのブロックとオフセット値で識別するために使われます。<small>TID</small> は行が修正されたり再ロードされると変わります。それらの <small>TID</small> は、物理行を指すためにインデックス記載で使われます。
 
 <P>
-<H4><A NAME="4.18">4.18</A>)	PostgreSQL で使われるいくつかの用語の意味は何ですか？
+<H4><A NAME="4.17">4.17</A>)	PostgreSQL で使われるいくつかの用語の意味は何ですか？
 </H4>
 
 <P> いくつかのソースコードや古い文書の中には、それぞの専門分野の中でもっと一般的に使われる専門用語が使われています。
@@ -1109,7 +1225,7 @@ BYTEA           bytea           可変長のバイト配列
 <LI> 取得(retrieve)、選択(select)
 <LI> 置換(replace)、更新(update)
 <LI> 追加(append)、挿入(insert)
-<LI> <font size=-1>OID</font>, 連番(serial value)
+<LI> <small>OID</small>, 連番(serial value)
 <LI> ポータル(portal), カーソル(cursor)
 <LI> 領域変数(range variable)、テーブル名(table name)、テーブル別名(table alias)
 </UL>
@@ -1119,7 +1235,7 @@ http://www.comptechnews.com/~reaster/dbdesign.html</a>
 で見つけられます。
 
 <P>
-<H4><A NAME="4.19">4.19</A>) エラーメッセージ <I>"ERROR: Memory exhausted in AllocSetAlloc()"</I>が出るのはなぜですか？
+<H4><A NAME="4.18">4.18</A>) エラーメッセージ <I>"ERROR: Memory exhausted in AllocSetAlloc()"</I>が出るのはなぜですか？
 </H4>
 <P>
 もし、7.1 よりも古いバージョンをお使いの場合は、アップデートによってこの問題を
@@ -1132,40 +1248,40 @@ http://www.comptechnews.com/~reaster/dbdesign.html</a>
 </PRE>
 
 <P> 
-シェルによって、どちらかひとつが成功するでしょうが、これはプロセスのデータセグメント制限をより高く設定し、たぶん問い合わせが完結するようになるでしょう。このコマンドは現行のプロセスと、このコマンドを走らせた後に作られる全てのサブプロセスについて適用されます。バックエンドがとても多くのデータを返すために<font size=-1>SQL</font> クライアントで問題が続いているのであれば、クライアントを開始する前にこれを試してみてください。
+シェルによって、どちらかひとつが成功するでしょうが、これはプロセスのデータセグメント制限をより高く設定し、たぶん問い合わせが完結するようになるでしょう。このコマンドは現行のプロセスと、このコマンドを走らせた後に作られる全てのサブプロセスについて適用されます。バックエンドがとても多くのデータを返すために<small>SQL</small> クライアントで問題が続いているのであれば、クライアントを開始する前にこれを試してみてください。
 
 <P>
-<H4><A NAME="4.20">4.20</A>) どのバージョンの PostgreSQL を走らせているかを調べるにはどうしますか？<BR>
+<H4><A NAME="4.19">4.19</A>) どのバージョンの PostgreSQL を走らせているかを調べるにはどうしますか？<BR>
 </H4>
 <P>
 <I>psql</I> から <tt>select version();</tt> をタイプします。
 <P>
 
 
-<H4><A NAME="4.21">4.21</A>)	ラージ・オブジェクトの操作で<I>invalid large obj descriptor</I> を受け取りました。なぜでしょうか？
+<H4><A NAME="4.20">4.20</A>)	ラージ・オブジェクトの操作で<I>invalid large obj descriptor</I> を受け取りました。なぜでしょうか？
 </H4>
 
 <P>ラージ・オブジェクト操作をするときは、前後に<tt>BEGIN WORK</tt>と<tt>COMMIT</tt>を付ける必要があります。すなわち、<tt>lo_open</tt> ... <tt>lo_close</tt>をはさみ込みます。
 
 <P>現在は、PostgreSQLのトランザクションのコミット時にラージ・オブジェクト・ハンドルを閉じることにより、<I>lo_open</I>コマンドが完了した直後に強制的にルールを実行します。このため、最初にハンドルに対して何かをしようとすると、<I>invalid large obj descriptor(ラージオブジェクトの記述子が不正)</I>となります。それで、もし、トランザクションを使うのを忘れると、（少なくともほとんどの時間）働いていたコードがエラーメッセージを出すのです。
 
-<P>もし、<font size=-1>ODBC</font>のようなクライアントインターフェースをお使いなら、<tt>auto-commit off</tt>を設定する必要があるかもしれません。
+<P>もし、<small>ODBC</small>のようなクライアントインターフェースをお使いなら、<tt>auto-commit off</tt>を設定する必要があるかもしれません。
 <P>
 
 
-<H4><A NAME="4.22">4.22</A>) 現在の時刻がデフォルトとなるような列はどのようにつくりますか？<BR></H4>
+<H4><A NAME="4.21">4.21</A>) 現在の時刻がデフォルトとなるような列はどのようにつくりますか？<BR></H4>
 
-<P><i>now()</i>を使います:
+<P><i>CURRENT_TIMESTAMP</i>を使います:
 <PRE>
-	CREATE TABLE test (x int, modtime timestamp DEFAULT now() );
+	CREATE TABLE test (x int, modtime timestamp DEFAULT >CURRENT_TIMESTAMP );
 </PRE>
 <P>
 
 
-<H4><A NAME="4.23">4.23</A>)	なぜ、<font size=-1>IN</font>を使う副問い合わせがとても遅いのですか？
+<H4><A NAME="4.22">4.22</A>)	なぜ、<small>IN</small>を使う副問い合わせがとても遅いのですか？
 </H4>
 <P>
-現在、外部問い合わせの各行について副問い合わせの結果を順番にスキャンすることにより、副問い合わせを外部問い合わせに結合しています。当面は<font size=-1>IN</font>を<font size=-1>EXIST</font>Sで置き換えることです：
+現在、外部問い合わせの各行について副問い合わせの結果を順番にスキャンすることにより、副問い合わせを外部問い合わせに結合しています。当面は<small>IN</small>を<small>EXIST</small>Sで置き換えることです：
 <PRE>
 	<STRONG>SELECT *</STRONG>
 	FROM tab
@@ -1181,9 +1297,9 @@ http://www.comptechnews.com/~reaster/dbdesign.html</a>
 この制限は将来のリリースで直したいと思っています。
 <P>
 
-<H4><A NAME="4.24">4.24</A>) <i>外部</i>結合(<i>outer</i> join)はどのように実現しますか?<BR></H4>
+<H4><A NAME="4.23">4.23</A>) <i>外部</i>結合(<i>outer</i> join)はどのように実現しますか?<BR></H4>
 <P>
-PostgreSQL 7.1 以降では<font size=-1>SQL</font>標準構文を使う外部結合(アウタージョイン)をサポートします。ここに、例題が2つあります。
+PostgreSQL 7.1 以降では<small>SQL</small>標準構文を使う外部結合(アウタージョイン)をサポートします。ここに、例題が2つあります。
 
 <pre>
 <STRONG>SELECT *</STRONG>
@@ -1193,9 +1309,9 @@ PostgreSQL 7.1 以降では<font size=-1>SQL</font>標準構文を使う外部結合(アウタージ
 <STRONG>SELECT *</STRONG>
  FROM t1 LEFT OUTER JOIN t2 USING (col);</pre>
 
-これらの象徴的な問い合わせでは t1.col を t2.col と結合して、t1 の結合されなかった行(t2 と一致しなかった行)も返しています。<font size=-1>RIGHT</font> 結合は t2 の結合されなかった行を加えるでしょう。<font size=-1>FULL</font> 結合は、一致した行に t1 と t2 からは結合されなかった行を返すでしょう。<font size=-1>OUTER</font> という言葉はオプションで <font size=-1>LEFT</font>, <font size=-1>RIGHT</font>, または <font size=-1>FULL</font> などの結合を仮定されています。
+これらの象徴的な問い合わせでは t1.col を t2.col と結合して、t1 の結合されなかった行(t2 と一致しなかった行)も返しています。<small>RIGHT</small> 結合は t2 の結合されなかった行を加えるでしょう。<small>FULL</small> 結合は、一致した行に t1 と t2 からは結合されなかった行を返すでしょう。<small>OUTER</small> という言葉はオプションで <small>LEFT</small>, <small>RIGHT</small>, または <small>FULL</small> などの結合を仮定されています。
 
-以前のリリースでは外部結合(outer join)を<font size=-1>UNION</font> と <font size=-1>NOT IN</font> を使ってシミュレートできます。
+以前のリリースでは外部結合(outer join)を<small>UNION</small> と <small>NOT IN</small> を使ってシミュレートできます。
 たとえば、<i>tab1</i> と <i>tab2</i> を結合するときは、次の問い合わせで二つのテーブルを<i>外部</i>結合します。
 
 <PRE>
@@ -1210,7 +1326,7 @@ PostgreSQL 7.1 以降では<font size=-1>SQL</font>標準構文を使う外部結合(アウタージ
 </PRE>
 
 <P>
-<H4><A NAME="4.25">4.25</A>)  複数のデータベースを使う問い合わせはどのようにすればできますか？<BR></H4>
+<H4><A NAME="4.24">4.24</A>)  複数のデータベースを使う問い合わせはどのようにすればできますか？<BR></H4>
 
 <P>
 現行(current)を除いて、データベースへの問い合わせ方法はありません。というのもPostgreSQLがデータベース仕様のシステムカタログを読み込むためで、そこには、たとえそのふりをするだけにしろ、データベースを越えて問い合わせをするすべがありません。
@@ -1243,7 +1359,7 @@ PostgreSQL 7.1 以降では<font size=-1>SQL</font>標準構文を使う外部結合(アウタージ
 <P><H4><A NAME="5.4">5.4</A>)	ソース・ファイルを変更しました。再コンパイルしても変化が見られないのはなぜですか？
 </H4>
 
-<P> いくつかの <I>Makefile</I> がインクルード・ファイルに対して適切な依存関係を持っていません。<I>make clean</I> をしてからもう一度 <I>make</I> を行なわなくてはなりません。もし、<font size=-1>GCC</font> をお使いであれば <i>configure</i> の <i>--enable-depend</i> オプションを使って、コンパイラに依存関係を自動的に調べさせることもできます。
+<P> いくつかの <I>Makefile</I> がインクルード・ファイルに対して適切な依存関係を持っていません。<I>make clean</I> をしてからもう一度 <I>make</I> を行なわなくてはなりません。もし、<small>GCC</small> をお使いであれば <i>configure</i> の <i>--enable-depend</i> オプションを使って、コンパイラに依存関係を自動的に調べさせることもできます。
 
 
 <HR>
@@ -1252,7 +1368,7 @@ PostgreSQL 7.1 以降では<font size=-1>SQL</font>標準構文を使う外部結合(アウタージ
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:	2001年12月10日
+  最終更新日:	2002年04月05日
   翻訳者:	桑村 潤 (<A HREF="mailto:juk@postgresql.jp">Jun Kuwamura &lt;juk@postgresql.jp&gt;</A>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
