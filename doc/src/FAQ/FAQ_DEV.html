@@ -12,7 +12,7 @@
     <H1>Developer's Frequently Asked Questions (FAQ) for
     PostgreSQL</H1>
 
-    <P>Last updated: Mon Nov 26 21:48:19 EST 2001</P>
+    <P>Last updated: Tue Nov 27 15:45:22 EST 2001</P>
 
     
     <P>Current maintainer: Bruce Momjian (<A href=
@@ -651,51 +651,13 @@ for a stable release just before starting the development cycle for the
 next release.
 
 The first thing you have to know is the branch name for the branch you
-are interested in getting at.  Unfortunately Marc has been less than
-100% consistent in naming the things.  One way to check is to apply
-"cvs log" to any file that goes back a long time, for example HISTORY
-in the top directory:
+are interested in getting at.  Ian Lance Taylor points out that branches
+and tags can be distiguished by using "cvs status -v".  Typical branch
+names are:
 
-$ cvs log HISTORY | more
-
-RCS file: /home/projects/pgsql/cvsroot/pgsql/HISTORY,v
-Working file: HISTORY
-head: 1.106
-branch:
-locks: strict
-access list:
-symbolic names:
-        REL7_1_STABLE: 1.106.0.2
-        REL7_1_BETA: 1.79
-        REL7_1_BETA3: 1.86
-        REL7_1_BETA2: 1.86
-        REL7_1: 1.102
-        REL7_0_PATCHES: 1.70.0.2
-        REL7_0: 1.70
-        REL6_5_PATCHES: 1.52.0.2
-        REL6_5: 1.52
-        REL6_4: 1.44.0.2
-        release-6-3: 1.33
-        SUPPORT: 1.1.1.1
-        PG95-DIST: 1.1.1
-keyword substitution: kv
-total revisions: 129;   selected revisions: 129
-More---q
-
-Unfortunately "cvs log" isn't all that great about distinguishing
-branches from tags --- it calls 'em all "symbolic names".  (A "tag" just
-marks a specific timepoint across all files --- it's essentially a
-snapshot whereas a branch is a changeable fileset.)  Rule of thumb is
-that names attached to four-number versions where the third number is
-zero represent branches, the others are just tags.  Here we can see that
-the extant branches are
     REL7_1_STABLE
     REL7_0_PATCHES
     REL6_5_PATCHES
-The next commit to the head will be revision 1.107, whereas any changes
-committed into the REL7_1_STABLE branch will have revision numbers like
-1.106.2.*, corresponding to the branch number 1.106.0.2 (don't ask where
-the zero went...).
 
 OK, so how do you do work on a branch?  By far the best way is to create
 a separate checkout tree for the branch and do your work in that.  Not
@@ -735,9 +697,6 @@ tree.  This is kind of a pain, which is why we don't normally fork
 the tree right away after a major release --- we wait for a dot-release
 or two, so that we won't have to double-patch the first wave of fixes.
 </PRE>
-
-    <P>Also, Ian Lance Taylor points out that branches and tags can be
-    distiguished by using "cvs status -v".</P>
 
     <H3><A name="17">17</A>) How go I get involved in PostgreSQL
     development?</H3>
