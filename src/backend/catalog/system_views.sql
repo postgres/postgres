@@ -1,9 +1,9 @@
 /*
  * PostgreSQL System Views
  *
- * Copyright 1996-2003, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.10 2004/10/11 17:24:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.11 2005/01/01 20:44:14 tgl Exp $
  */
 
 CREATE VIEW pg_user AS 

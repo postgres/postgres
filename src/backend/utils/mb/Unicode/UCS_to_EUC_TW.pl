@@ -1,8 +1,8 @@
 #! /usr/bin/perl
 #
-# Copyright (c) 2001-2004, PostgreSQL Global Development Group
+# Copyright (c) 2001-2005, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/UCS_to_EUC_TW.pl,v 1.5 2004/08/29 04:12:55 momjian Exp $
+# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/UCS_to_EUC_TW.pl,v 1.6 2005/01/01 20:44:18 tgl Exp $
 #
 # Generate UTF-8 <--> EUC_TW code conversion tables from
 # map files provided by Unicode organization.

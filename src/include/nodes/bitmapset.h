@@ -11,9 +11,9 @@
  * bms_is_empty() in preference to testing for NULL.)
  *
  *
- * Copyright (c) 2003, PostgreSQL Global Development Group
+ * Copyright (c) 2003-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/nodes/bitmapset.h,v 1.5 2003/11/29 22:41:06 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/bitmapset.h,v 1.6 2005/01/01 20:44:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */

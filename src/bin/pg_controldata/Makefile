@@ -2,9 +2,9 @@
 #
 # Makefile for src/bin/pg_controldata
 #
-# Copyright (c) 1998-2002, PostgreSQL Global Development Group
+# Copyright (c) 1998-2005, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/bin/pg_controldata/Makefile,v 1.11 2004/10/05 19:30:21 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/pg_controldata/Makefile,v 1.12 2005/01/01 20:44:22 tgl Exp $
 #
 #-------------------------------------------------------------------------
 

@@ -9,10 +9,10 @@
  * test for getnameinfo().
  *
  *
- * Copyright (c) 2003, PostgreSQL Global Development Group
+ * Copyright (c) 2003-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/getaddrinfo.c,v 1.15 2004/09/28 00:07:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/getaddrinfo.c,v 1.16 2005/01/01 20:44:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
