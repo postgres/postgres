@@ -1,9 +1,5 @@
-/* $Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.3 2001/05/25 15:48:33 momjian Exp $ */
-
-/*
+/**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
- *
- * IDENTIFICATION
  *
  * This software is copyright by Andrew Bosma
  * but is really shameless cribbed from pltcl.c by Jan Weick, and
@@ -32,7 +28,11 @@
  * AND THE AUTHOR AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
- **********************************************************************/
+ * IDENTIFICATION
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.4 2001/06/01 18:17:44 tgl Exp $
+ *
+ *********************************************************************
+ */
 
 #include "postgres.h"
 
@@ -296,8 +296,32 @@ volatile int func_enter_calls = 0;
 volatile int func_leave_calls = 0;
 #endif
 
-/* the function definitions
+/*
+ * the function definitions
  */
+
+/*
+ * This routine is a crock, and so is everyplace that calls it.  The problem
+ * is that the cached form of plpython functions/queries is allocated permanently
+ * (mostly via malloc()) and never released until backend exit.  Subsidiary
+ * data structures such as fmgr info records therefore must live forever
+ * as well.  A better implementation would store all this stuff in a per-
+ * function memory context that could be reclaimed at need.  In the meantime,
+ * fmgr_info must be called in TopMemoryContext so that whatever it might
+ * allocate, and whatever the eventual function might allocate using fn_mcxt,
+ * will live forever too.
+ */
+static void
+perm_fmgr_info(Oid functionId, FmgrInfo *finfo)
+{
+	MemoryContext	oldcontext;
+
+	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+	fmgr_info(functionId, finfo);
+	MemoryContextSwitchTo(oldcontext);
+}
+
+
 Datum
 plpython_call_handler(PG_FUNCTION_ARGS)
 {
@@ -1282,7 +1306,7 @@ PLy_output_datum_func2(PLyObToDatum *arg, Form_pg_type typeStruct)
 {
   enter();
 
-  fmgr_info(typeStruct->typinput, &arg->typfunc);
+  perm_fmgr_info(typeStruct->typinput, &arg->typfunc);
   arg->typelem = (Oid) typeStruct->typelem;
   arg->typlen = typeStruct->typlen;
 }
@@ -1304,7 +1328,7 @@ PLy_input_datum_func2(PLyDatumToOb *arg, Form_pg_type typeStruct)
   char *type;
 
   arg->typoutput = typeStruct->typoutput;
-  fmgr_info(typeStruct->typoutput, &arg->typfunc);
+  perm_fmgr_info(typeStruct->typoutput, &arg->typfunc);
   arg->typlen = typeStruct->typlen;
   arg->typelem = typeStruct->typelem;
 

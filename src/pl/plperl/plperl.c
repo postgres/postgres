@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.19 2001/03/22 04:01:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.20 2001/06/01 18:17:44 tgl Exp $
  *
  **********************************************************************/
 
@@ -162,6 +162,27 @@ static void plperl_set_tuple_values(Tcl_Interp *interp, char *arrayname,
 
 #endif
 
+
+/*
+ * This routine is a crock, and so is everyplace that calls it.  The problem
+ * is that the cached form of plperl functions/queries is allocated permanently
+ * (mostly via malloc()) and never released until backend exit.  Subsidiary
+ * data structures such as fmgr info records therefore must live forever
+ * as well.  A better implementation would store all this stuff in a per-
+ * function memory context that could be reclaimed at need.  In the meantime,
+ * fmgr_info must be called in TopMemoryContext so that whatever it might
+ * allocate, and whatever the eventual function might allocate using fn_mcxt,
+ * will live forever too.
+ */
+static void
+perm_fmgr_info(Oid functionId, FmgrInfo *finfo)
+{
+	MemoryContext	oldcontext;
+
+	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+	fmgr_info(functionId, finfo);
+	MemoryContextSwitchTo(oldcontext);
+}
 
 /**********************************************************************
  * plperl_init_all()		- Initialize all
@@ -562,7 +583,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 			elog(ERROR, "plperl: return types of tuples not supported yet");
 		}
 
-		fmgr_info(typeStruct->typinput, &(prodesc->result_in_func));
+		perm_fmgr_info(typeStruct->typinput, &(prodesc->result_in_func));
 		prodesc->result_in_elem = (Oid) (typeStruct->typelem);
 		prodesc->result_in_len = typeStruct->typlen;
 
@@ -595,7 +616,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 			else
 				prodesc->arg_is_rel[i] = 0;
 
-			fmgr_info(typeStruct->typoutput, &(prodesc->arg_out_func[i]));
+			perm_fmgr_info(typeStruct->typoutput, &(prodesc->arg_out_func[i]));
 			prodesc->arg_out_elem[i] = (Oid) (typeStruct->typelem);
 			prodesc->arg_out_len[i] = typeStruct->typlen;
 			ReleaseSysCache(typeTup);
@@ -1560,8 +1581,8 @@ plperl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 		if (!HeapTupleIsValid(typeTup))
 			elog(ERROR, "plperl: Cache lookup of type %s failed", args[i]);
 		qdesc->argtypes[i] = typeTup->t_data->t_oid;
-		fmgr_info(((Form_pg_type) GETSTRUCT(typeTup))->typinput,
-				  &(qdesc->arginfuncs[i]));
+		perm_fmgr_info(((Form_pg_type) GETSTRUCT(typeTup))->typinput,
+					   &(qdesc->arginfuncs[i]));
 		qdesc->argtypelems[i] = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;
 		qdesc->argvalues[i] = (Datum) NULL;
 		qdesc->arglen[i] = (int) (((Form_pg_type) GETSTRUCT(typeTup))->typlen);
