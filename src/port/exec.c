@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.13 2004/05/21 16:06:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.14 2004/05/24 20:23:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,7 @@ static void win32_make_absolute(char *path);
  *		  -2 if the file is otherwise valid but cannot be read.
  */
 static int
-validate_exec(char *path)
+validate_exec(const char *path)
 {
 	struct stat buf;
 
