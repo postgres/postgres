@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.31 2003/08/01 00:15:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.32 2003/08/04 00:43:16 momjian Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -80,8 +80,8 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 			if (languageOid == SQLlanguageId)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-						 errmsg("SQL function cannot return shell type %s",
-								TypeNameToString(returnType))));
+					   errmsg("SQL function cannot return shell type %s",
+							  TypeNameToString(returnType))));
 			else
 				ereport(NOTICE,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -147,8 +147,8 @@ compute_parameter_types(List *argTypes, Oid languageOid,
 		if (parameterCount >= FUNC_MAX_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-					 errmsg("functions cannot have more than %d arguments",
-							FUNC_MAX_ARGS)));
+				   errmsg("functions cannot have more than %d arguments",
+						  FUNC_MAX_ARGS)));
 
 		toid = LookupTypeName(t);
 		if (OidIsValid(toid))
@@ -159,8 +159,8 @@ compute_parameter_types(List *argTypes, Oid languageOid,
 				if (languageOid == SQLlanguageId)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-							 errmsg("SQL function cannot accept shell type %s",
-									TypeNameToString(t))));
+					   errmsg("SQL function cannot accept shell type %s",
+							  TypeNameToString(t))));
 				else
 					ereport(NOTICE,
 							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -330,8 +330,8 @@ compute_attributes_with_style(List *parameters, bool *isStrict_p, char *volatili
 		else
 			ereport(WARNING,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("unrecognized function attribute \"%s\" ignored",
-							param->defname)));
+				 errmsg("unrecognized function attribute \"%s\" ignored",
+						param->defname)));
 	}
 }
 
@@ -558,7 +558,7 @@ RemoveFunction(RemoveFuncStmt *stmt)
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is an aggregate function",
 						NameListToString(functionName)),
-				 errhint("Use DROP AGGREGATE to drop aggregate functions.")));
+			errhint("Use DROP AGGREGATE to drop aggregate functions.")));
 
 	if (((Form_pg_proc) GETSTRUCT(tup))->prolang == INTERNALlanguageId)
 	{
@@ -664,7 +664,7 @@ RenameFunction(List *name, List *argtypes, const char *newname)
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is an aggregate function",
 						NameListToString(name)),
-				 errhint("Use ALTER AGGREGATE to rename aggregate functions.")));
+		 errhint("Use ALTER AGGREGATE to rename aggregate functions.")));
 
 	namespaceOid = procForm->pronamespace;
 
@@ -728,7 +728,7 @@ SetFunctionReturnType(Oid funcOid, Oid newRetType)
 		elog(ERROR, "cache lookup failed for function %u", funcOid);
 	procForm = (Form_pg_proc) GETSTRUCT(tup);
 
-	if (procForm->prorettype != OPAQUEOID) /* caller messed up */
+	if (procForm->prorettype != OPAQUEOID)		/* caller messed up */
 		elog(ERROR, "function %u doesn't return OPAQUE", funcOid);
 
 	/* okay to overwrite copied tuple */
@@ -815,7 +815,7 @@ CreateCast(CreateCastStmt *stmt)
 	if (sourcetypeid == targettypeid)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("source data type and target data type are the same")));
+		  errmsg("source data type and target data type are the same")));
 
 	/* No shells, no pseudo-types allowed */
 	if (!get_typisdefined(sourcetypeid))
@@ -878,10 +878,11 @@ CreateCast(CreateCastStmt *stmt)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 errmsg("return data type of cast function must match target data type")));
+
 		/*
 		 * Restricting the volatility of a cast function may or may not be
 		 * a good idea in the abstract, but it definitely breaks many old
-		 * user-defined types.  Disable this check --- tgl 2/1/03
+		 * user-defined types.	Disable this check --- tgl 2/1/03
 		 */
 #ifdef NOT_USED
 		if (procstruct->provolatile == PROVOLATILE_VOLATILE)
@@ -892,7 +893,7 @@ CreateCast(CreateCastStmt *stmt)
 		if (procstruct->proisagg)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("cast function must not be an aggregate function")));
+			 errmsg("cast function must not be an aggregate function")));
 		if (procstruct->proretset)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -902,12 +903,12 @@ CreateCast(CreateCastStmt *stmt)
 	}
 	else
 	{
-		int16	typ1len;
-		int16	typ2len;
-		bool	typ1byval;
-		bool	typ2byval;
-		char	typ1align;
-		char	typ2align;
+		int16		typ1len;
+		int16		typ2len;
+		bool		typ1byval;
+		bool		typ2byval;
+		char		typ1align;
+		char		typ2align;
 
 		/* indicates binary coercibility */
 		funcid = InvalidOid;
@@ -924,7 +925,7 @@ CreateCast(CreateCastStmt *stmt)
 		/*
 		 * Also, insist that the types match as to size, alignment, and
 		 * pass-by-value attributes; this provides at least a crude check
-		 * that they have similar representations.  A pair of types that
+		 * that they have similar representations.	A pair of types that
 		 * fail this test should certainly not be equated.
 		 */
 		get_typlenbyvalalign(sourcetypeid, &typ1len, &typ1byval, &typ1align);
@@ -958,9 +959,9 @@ CreateCast(CreateCastStmt *stmt)
 	relation = heap_openr(CastRelationName, RowExclusiveLock);
 
 	/*
-	 * Check for duplicate.  This is just to give a friendly error message,
-	 * the unique index would catch it anyway (so no need to sweat about
-	 * race conditions).
+	 * Check for duplicate.  This is just to give a friendly error
+	 * message, the unique index would catch it anyway (so no need to
+	 * sweat about race conditions).
 	 */
 	tuple = SearchSysCache(CASTSOURCETARGET,
 						   ObjectIdGetDatum(sourcetypeid),

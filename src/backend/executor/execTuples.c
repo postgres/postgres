@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.67 2003/07/21 17:05:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.68 2003/08/04 00:43:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -482,7 +482,7 @@ ExecSetSlotDescriptorIsNew(TupleTableSlot *slot,		/* slot to change */
  * ----------------
  */
 void
-ExecInitResultTupleSlot(EState *estate, PlanState *planstate)
+ExecInitResultTupleSlot(EState *estate, PlanState * planstate)
 {
 	INIT_SLOT_DEFS;
 	INIT_SLOT_ALLOC;
@@ -494,7 +494,7 @@ ExecInitResultTupleSlot(EState *estate, PlanState *planstate)
  * ----------------
  */
 void
-ExecInitScanTupleSlot(EState *estate, ScanState *scanstate)
+ExecInitScanTupleSlot(EState *estate, ScanState * scanstate)
 {
 	INIT_SLOT_DEFS;
 	INIT_SLOT_ALLOC;
@@ -807,7 +807,7 @@ do_text_output_multiline(TupOutputState *tstate, char *text)
 		if (eol)
 			*eol++ = '\0';
 		else
-			eol = text + strlen(text);
+			eol = text +strlen(text);
 
 		do_tup_output(tstate, &text);
 		text = eol;

@@ -83,49 +83,49 @@ Datum
 ltree_cmp(PG_FUNCTION_ARGS)
 {
 	RUNCMP
-	PG_RETURN_INT32(res);
+		PG_RETURN_INT32(res);
 }
 
 Datum
 ltree_lt(PG_FUNCTION_ARGS)
 {
 	RUNCMP
-	PG_RETURN_BOOL((res < 0) ? true : false);
+		PG_RETURN_BOOL((res < 0) ? true : false);
 }
 
 Datum
 ltree_le(PG_FUNCTION_ARGS)
 {
 	RUNCMP
-	PG_RETURN_BOOL((res <= 0) ? true : false);
+		PG_RETURN_BOOL((res <= 0) ? true : false);
 }
 
 Datum
 ltree_eq(PG_FUNCTION_ARGS)
 {
 	RUNCMP
-	PG_RETURN_BOOL((res == 0) ? true : false);
+		PG_RETURN_BOOL((res == 0) ? true : false);
 }
 
 Datum
 ltree_ge(PG_FUNCTION_ARGS)
 {
 	RUNCMP
-	PG_RETURN_BOOL((res >= 0) ? true : false);
+		PG_RETURN_BOOL((res >= 0) ? true : false);
 }
 
 Datum
 ltree_gt(PG_FUNCTION_ARGS)
 {
 	RUNCMP
-	PG_RETURN_BOOL((res > 0) ? true : false);
+		PG_RETURN_BOOL((res > 0) ? true : false);
 }
 
 Datum
 ltree_ne(PG_FUNCTION_ARGS)
 {
 	RUNCMP
-	PG_RETURN_BOOL((res != 0) ? true : false);
+		PG_RETURN_BOOL((res != 0) ? true : false);
 }
 
 Datum
@@ -331,46 +331,55 @@ ltree_index(PG_FUNCTION_ARGS)
 {
 	ltree	   *a = PG_GETARG_LTREE(0);
 	ltree	   *b = PG_GETARG_LTREE(1);
-	int	start=(fcinfo->nargs == 3) ? PG_GETARG_INT32(2) : 0;
-	int i,j;
-	ltree_level *startptr, *aptr, *bptr;
-	bool found=false;
+	int			start = (fcinfo->nargs == 3) ? PG_GETARG_INT32(2) : 0;
+	int			i,
+				j;
+	ltree_level *startptr,
+			   *aptr,
+			   *bptr;
+	bool		found = false;
 
-	if ( start < 0 ) {
-		if ( -start >= a->numlevel ) 
-			start=0;
-		else 
-			start = (int)(a->numlevel)+start;
+	if (start < 0)
+	{
+		if (-start >= a->numlevel)
+			start = 0;
+		else
+			start = (int) (a->numlevel) + start;
 	}
 
-	if ( a->numlevel - start < b->numlevel || a->numlevel==0 || b->numlevel==0 ) {
+	if (a->numlevel - start < b->numlevel || a->numlevel == 0 || b->numlevel == 0)
+	{
 		PG_FREE_IF_COPY(a, 0);
 		PG_FREE_IF_COPY(b, 1);
 		PG_RETURN_INT32(-1);
 	}
 
-	startptr=LTREE_FIRST(a);
-	for(i=0; i<=a->numlevel-b->numlevel; i++) {
-		if ( i>=start ) {
-			aptr=startptr;
-			bptr=LTREE_FIRST(b);
-			for(j=0;j<b->numlevel;j++) {
-				if ( !(aptr->len==bptr->len && strncmp(aptr->name,bptr->name, aptr->len)==0) )
-					break; 
-				aptr=LEVEL_NEXT(aptr);
-				bptr=LEVEL_NEXT(bptr);
+	startptr = LTREE_FIRST(a);
+	for (i = 0; i <= a->numlevel - b->numlevel; i++)
+	{
+		if (i >= start)
+		{
+			aptr = startptr;
+			bptr = LTREE_FIRST(b);
+			for (j = 0; j < b->numlevel; j++)
+			{
+				if (!(aptr->len == bptr->len && strncmp(aptr->name, bptr->name, aptr->len) == 0))
+					break;
+				aptr = LEVEL_NEXT(aptr);
+				bptr = LEVEL_NEXT(bptr);
 			}
-	
-			if ( j==b->numlevel ) {
-				found=true;
+
+			if (j == b->numlevel)
+			{
+				found = true;
 				break;
 			}
 		}
-		startptr=LEVEL_NEXT(startptr);	
+		startptr = LEVEL_NEXT(startptr);
 	}
-	
-	if ( !found ) 
-		i=-1;
+
+	if (!found)
+		i = -1;
 
 	PG_FREE_IF_COPY(a, 0);
 	PG_FREE_IF_COPY(b, 1);
@@ -496,18 +505,18 @@ Datum
 text2ltree(PG_FUNCTION_ARGS)
 {
 	text	   *in = PG_GETARG_TEXT_P(0);
-	char *s = (char *) palloc(VARSIZE(in) - VARHDRSZ + 1);
-	ltree *out;
+	char	   *s = (char *) palloc(VARSIZE(in) - VARHDRSZ + 1);
+	ltree	   *out;
 
 	memcpy(s, VARDATA(in), VARSIZE(in) - VARHDRSZ);
 	s[VARSIZE(in) - VARHDRSZ] = '\0';
 
 	out = (ltree *) DatumGetPointer(DirectFunctionCall1(
-				ltree_in,
-				PointerGetDatum(s)
-			));
+														ltree_in,
+														PointerGetDatum(s)
+														));
 	pfree(s);
-	PG_FREE_IF_COPY(in,0);
+	PG_FREE_IF_COPY(in, 0);
 	PG_RETURN_POINTER(out);
 }
 
@@ -516,16 +525,18 @@ Datum
 ltree2text(PG_FUNCTION_ARGS)
 {
 	ltree	   *in = PG_GETARG_LTREE(0);
-	char       *ptr;
-	int                     i;
+	char	   *ptr;
+	int			i;
 	ltree_level *curlevel;
-	text	*out;
-                    
-	out=(text*)palloc(in->len+VARHDRSZ);
-	ptr = VARDATA(out); 
+	text	   *out;
+
+	out = (text *) palloc(in->len + VARHDRSZ);
+	ptr = VARDATA(out);
 	curlevel = LTREE_FIRST(in);
-	for (i = 0; i < in->numlevel; i++) {
-		if (i != 0) {
+	for (i = 0; i < in->numlevel; i++)
+	{
+		if (i != 0)
+		{
 			*ptr = '.';
 			ptr++;
 		}
@@ -533,13 +544,9 @@ ltree2text(PG_FUNCTION_ARGS)
 		ptr += curlevel->len;
 		curlevel = LEVEL_NEXT(curlevel);
 	}
-               
-	VARATT_SIZEP(out) = VARHDRSZ + (ptr-VARDATA(out)); 
+
+	VARATT_SIZEP(out) = VARHDRSZ + (ptr - VARDATA(out));
 	PG_FREE_IF_COPY(in, 0);
-        
+
 	PG_RETURN_POINTER(out);
 }
-
-	
-
-

@@ -3,7 +3,7 @@
 
 #include <pgtypes_timestamp.h>
 
-#define MAXTZLEN             10
+#define MAXTZLEN			 10
 
 #ifdef HAVE_INT64_TIMESTAMP
 
@@ -17,10 +17,10 @@ typedef double fsec_t;
 #define JROUND(j) (rint(((double) (j))*TIME_PREC_INV)/TIME_PREC_INV)
 #endif
 
-#define USE_POSTGRES_DATES              0
-#define USE_ISO_DATES                   1
-#define USE_SQL_DATES                   2
-#define USE_GERMAN_DATES                3
+#define USE_POSTGRES_DATES				0
+#define USE_ISO_DATES					1
+#define USE_SQL_DATES					2
+#define USE_GERMAN_DATES				3
 
 #define DAGO			"ago"
 #define EPOCH			"epoch"
@@ -49,7 +49,7 @@ typedef double fsec_t;
 #define DA_D			"ad"
 #define DB_C			"bc"
 #define DTIMEZONE		"timezone"
-#define DCURRENT           "current"
+#define DCURRENT		   "current"
 
 /*
  * Fundamental time field definitions for parsing.
@@ -275,13 +275,12 @@ do { \
 #define DT_NOBEGIN		(-DBL_MAX)
 #define DT_NOEND		(DBL_MAX)
 #endif
-
 #endif   /* HAVE_INT64_TIMESTAMP */
 
-#define TIMESTAMP_NOBEGIN(j)    do {j = DT_NOBEGIN;} while (0)
-#define TIMESTAMP_NOEND(j)          do {j = DT_NOEND;} while (0)
+#define TIMESTAMP_NOBEGIN(j)	do {j = DT_NOBEGIN;} while (0)
+#define TIMESTAMP_NOEND(j)			do {j = DT_NOEND;} while (0)
 #define TIMESTAMP_IS_NOBEGIN(j) ((j) == DT_NOBEGIN)
-#define TIMESTAMP_IS_NOEND(j)   ((j) == DT_NOEND)
+#define TIMESTAMP_IS_NOEND(j)	((j) == DT_NOEND)
 #define TIMESTAMP_NOT_FINITE(j) (TIMESTAMP_IS_NOBEGIN(j) || TIMESTAMP_IS_NOEND(j))
 
 int DecodeTimeOnly(char **field, int *ftype,
@@ -292,31 +291,30 @@ int DecodeInterval(char **field, int *ftype,
 			   int nf, int *dtype,
 			   struct tm * tm, fsec_t *fsec);
 
-int	EncodeTimeOnly(struct tm * tm, fsec_t fsec, int *tzp, int style, char *str);
-int	EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, char *str, bool);
-int	EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str);
+int			EncodeTimeOnly(struct tm * tm, fsec_t fsec, int *tzp, int style, char *str);
+int			EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, char *str, bool);
+int			EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str);
 
-int tm2timestamp(struct tm *, fsec_t, int *, Timestamp *);
+int			tm2timestamp(struct tm *, fsec_t, int *, Timestamp *);
 
-int	DecodeUnits(int field, char *lowtoken, int *val);
-bool	ClearDateCache(bool, bool, bool);
+int			DecodeUnits(int field, char *lowtoken, int *val);
+bool		ClearDateCache(bool, bool, bool);
 
-int	j2day(int jd);
+int			j2day(int jd);
 
-bool CheckDateTokenTables(void);
+bool		CheckDateTokenTables(void);
 
-int EncodeDateOnly(struct tm *, int, char *, bool);
-void GetEpochTime(struct tm *);
-int ParseDateTime(char *, char *, char **, int *, int, int *, char **);
-int DecodeDateTime(char **, int *, int, int *, struct tm *, fsec_t *, int *, bool);
-void j2date(int, int *, int *, int *);
-void GetCurrentDateTime(struct tm*);
-int date2j(int, int, int);
+int			EncodeDateOnly(struct tm *, int, char *, bool);
+void		GetEpochTime(struct tm *);
+int			ParseDateTime(char *, char *, char **, int *, int, int *, char **);
+int			DecodeDateTime(char **, int *, int, int *, struct tm *, fsec_t *, int *, bool);
+void		j2date(int, int *, int *, int *);
+void		GetCurrentDateTime(struct tm *);
+int			date2j(int, int, int);
 
-extern char* pgtypes_date_weekdays_short[];
-extern char* pgtypes_date_months[];
-extern char* months[];
-extern char* days[];
+extern char *pgtypes_date_weekdays_short[];
+extern char *pgtypes_date_months[];
+extern char *months[];
+extern char *days[];
 
 #endif   /* DT_H */
-	

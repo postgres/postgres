@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.137 2003/07/24 22:04:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.138 2003/08/04 00:43:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@
 
 
 /* GUC variable */
-bool	zero_damaged_pages = false;
+bool		zero_damaged_pages = false;
 
 
 static void WaitIO(BufferDesc *buf);
@@ -232,14 +232,14 @@ ReadBufferInternal(Relation reln, BlockNumber blockNum,
 				ereport(WARNING,
 						(errcode(ERRCODE_DATA_CORRUPTED),
 						 errmsg("invalid page header in block %u of \"%s\"; zeroing out page",
-								blockNum, RelationGetRelationName(reln))));
+							  blockNum, RelationGetRelationName(reln))));
 				MemSet((char *) MAKE_PTR(bufHdr->data), 0, BLCKSZ);
 			}
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_DATA_CORRUPTED),
-						 errmsg("invalid page header in block %u of \"%s\"",
-								blockNum, RelationGetRelationName(reln))));
+					  errmsg("invalid page header in block %u of \"%s\"",
+							 blockNum, RelationGetRelationName(reln))));
 		}
 	}
 
@@ -959,8 +959,8 @@ AtEOXact_Buffers(bool isCommit)
 
 			if (isCommit)
 				elog(WARNING,
-					 "buffer refcount leak: [%03d] (freeNext=%d, freePrev=%d, "
-					 "rel=%u/%u, blockNum=%u, flags=0x%x, refcount=%d %ld)",
+				"buffer refcount leak: [%03d] (freeNext=%d, freePrev=%d, "
+				  "rel=%u/%u, blockNum=%u, flags=0x%x, refcount=%d %ld)",
 					 i, buf->freeNext, buf->freePrev,
 					 buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
 					 buf->tag.blockNum, buf->flags,
@@ -1509,10 +1509,10 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 					if (status == SM_FAIL)		/* disk failure ?! */
 						ereport(PANIC,
 								(errcode(ERRCODE_IO_ERROR),
-								 errmsg("could not write block %u of %u/%u",
-										bufHdr->tag.blockNum,
-										bufHdr->tag.rnode.tblNode,
-										bufHdr->tag.rnode.relNode)));
+							  errmsg("could not write block %u of %u/%u",
+									 bufHdr->tag.blockNum,
+									 bufHdr->tag.rnode.tblNode,
+									 bufHdr->tag.rnode.relNode)));
 
 					BufferFlushCount++;
 

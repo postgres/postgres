@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.49 2003/07/27 04:53:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.50 2003/08/04 00:43:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -222,9 +222,7 @@ oidvectorrecv(PG_FUNCTION_ARGS)
 	int			slot;
 
 	for (slot = 0; slot < INDEX_MAX_KEYS; slot++)
-	{
 		result[slot] = (Oid) pq_getmsgint(buf, sizeof(Oid));
-	}
 	PG_RETURN_POINTER(result);
 }
 
@@ -240,9 +238,7 @@ oidvectorsend(PG_FUNCTION_ARGS)
 
 	pq_begintypsend(&buf);
 	for (slot = 0; slot < INDEX_MAX_KEYS; slot++)
-	{
 		pq_sendint(&buf, oidArray[slot], sizeof(Oid));
-	}
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 

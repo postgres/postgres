@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/pseudotypes.c,v 1.9 2003/07/28 00:09:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/pseudotypes.c,v 1.10 2003/08/04 00:43:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -191,7 +191,7 @@ anyarray_out(PG_FUNCTION_ARGS)
  * anyarray_recv		- binary input routine for pseudo-type ANYARRAY.
  *
  * XXX this could actually be made to work, since the incoming array
- * data will contain the element type OID.  Need to think through
+ * data will contain the element type OID.	Need to think through
  * type-safety issues before allowing it, however.
  */
 Datum

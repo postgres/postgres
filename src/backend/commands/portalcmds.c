@@ -4,17 +4,17 @@
  *	  Utility commands affecting portals (that is, SQL cursor commands)
  *
  * Note: see also tcop/pquery.c, which implements portal operations for
- * the FE/BE protocol.  This module uses pquery.c for some operations.
+ * the FE/BE protocol.	This module uses pquery.c for some operations.
  * And both modules depend on utils/mmgr/portalmem.c, which controls
  * storage management for portals (but doesn't run any queries in them).
- * 
+ *
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.19 2003/08/01 13:53:36 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.20 2003/08/04 00:43:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@
  *		Execute SQL DECLARE CURSOR command.
  */
 void
-PerformCursorOpen(DeclareCursorStmt *stmt)
+PerformCursorOpen(DeclareCursorStmt * stmt)
 {
 	List	   *rewritten;
 	Query	   *query;
@@ -64,7 +64,8 @@ PerformCursorOpen(DeclareCursorStmt *stmt)
 	/*
 	 * The query has been through parse analysis, but not rewriting or
 	 * planning as yet.  Note that the grammar ensured we have a SELECT
-	 * query, so we are not expecting rule rewriting to do anything strange.
+	 * query, so we are not expecting rule rewriting to do anything
+	 * strange.
 	 */
 	rewritten = QueryRewrite((Query *) stmt->query);
 	if (length(rewritten) != 1 || !IsA(lfirst(rewritten), Query))
@@ -86,8 +87,9 @@ PerformCursorOpen(DeclareCursorStmt *stmt)
 	plan = planner(query, true, stmt->options);
 
 	/*
-	 * Create a portal and copy the query and plan into its memory context.
-	 * (If a duplicate cursor name already exists, warn and drop it.)
+	 * Create a portal and copy the query and plan into its memory
+	 * context. (If a duplicate cursor name already exists, warn and drop
+	 * it.)
 	 */
 	portal = CreatePortal(stmt->portalname, true, false);
 
@@ -98,7 +100,7 @@ PerformCursorOpen(DeclareCursorStmt *stmt)
 
 	PortalDefineQuery(portal,
 					  NULL,		/* unfortunately don't have sourceText */
-					  "SELECT",	/* cursor's query is always a SELECT */
+					  "SELECT", /* cursor's query is always a SELECT */
 					  makeList1(query),
 					  makeList1(plan),
 					  PortalGetHeapMemory(portal));
@@ -108,9 +110,9 @@ PerformCursorOpen(DeclareCursorStmt *stmt)
 	/*
 	 * Set up options for portal.
 	 *
-	 * If the user didn't specify a SCROLL type, allow or disallow
-	 * scrolling based on whether it would require any additional
-	 * runtime overhead to do so.
+	 * If the user didn't specify a SCROLL type, allow or disallow scrolling
+	 * based on whether it would require any additional runtime overhead
+	 * to do so.
 	 */
 	portal->cursorOptions = stmt->options;
 	if (!(portal->cursorOptions & (CURSOR_OPT_SCROLL | CURSOR_OPT_NO_SCROLL)))
@@ -129,8 +131,8 @@ PerformCursorOpen(DeclareCursorStmt *stmt)
 	Assert(portal->strategy == PORTAL_ONE_SELECT);
 
 	/*
-	 * We're done; the query won't actually be run until PerformPortalFetch
-	 * is called.
+	 * We're done; the query won't actually be run until
+	 * PerformPortalFetch is called.
 	 */
 }
 
@@ -169,7 +171,7 @@ PerformPortalFetch(FetchStmt *stmt,
 		/* FIXME: shouldn't this be an ERROR? */
 		ereport(WARNING,
 				(errcode(ERRCODE_UNDEFINED_CURSOR),
-				 errmsg("portal \"%s\" does not exist", stmt->portalname)));
+			  errmsg("portal \"%s\" does not exist", stmt->portalname)));
 		if (completionTag)
 			strcpy(completionTag, stmt->ismove ? "MOVE 0" : "FETCH 0");
 		return;
@@ -219,7 +221,7 @@ PerformPortalClose(const char *name)
 		ereport(WARNING,
 				(errcode(ERRCODE_UNDEFINED_CURSOR),
 				 errmsg("portal \"%s\" does not exist", name),
-				 errfunction("PerformPortalClose"))); /* for ecpg */
+				 errfunction("PerformPortalClose")));	/* for ecpg */
 		return;
 	}
 
@@ -249,7 +251,8 @@ PortalCleanup(Portal portal, bool isError)
 	/*
 	 * Shut down executor, if still running.  We skip this during error
 	 * abort, since other mechanisms will take care of releasing executor
-	 * resources, and we can't be sure that ExecutorEnd itself wouldn't fail.
+	 * resources, and we can't be sure that ExecutorEnd itself wouldn't
+	 * fail.
 	 */
 	queryDesc = PortalGetQueryDesc(portal);
 	if (queryDesc)
@@ -271,14 +274,14 @@ PortalCleanup(Portal portal, bool isError)
 void
 PersistHoldablePortal(Portal portal)
 {
-	QueryDesc *queryDesc = PortalGetQueryDesc(portal);
+	QueryDesc  *queryDesc = PortalGetQueryDesc(portal);
 	MemoryContext savePortalContext;
 	MemoryContext saveQueryContext;
 	MemoryContext oldcxt;
 
 	/*
-	 * If we're preserving a holdable portal, we had better be
-	 * inside the transaction that originally created it.
+	 * If we're preserving a holdable portal, we had better be inside the
+	 * transaction that originally created it.
 	 */
 	Assert(portal->createXact == GetCurrentTransactionId());
 	Assert(queryDesc != NULL);
@@ -321,9 +324,8 @@ PersistHoldablePortal(Portal portal)
 	MemoryContextSwitchTo(PortalContext);
 
 	/*
-	 * Rewind the executor: we need to store the entire result set in
-	 * the tuplestore, so that subsequent backward FETCHs can be
-	 * processed.
+	 * Rewind the executor: we need to store the entire result set in the
+	 * tuplestore, so that subsequent backward FETCHs can be processed.
 	 */
 	ExecutorRewind(queryDesc);
 
@@ -351,17 +353,17 @@ PersistHoldablePortal(Portal portal)
 	/*
 	 * Reset the position in the result set: ideally, this could be
 	 * implemented by just skipping straight to the tuple # that we need
-	 * to be at, but the tuplestore API doesn't support that. So we
-	 * start at the beginning of the tuplestore and iterate through it
-	 * until we reach where we need to be.  FIXME someday?
+	 * to be at, but the tuplestore API doesn't support that. So we start
+	 * at the beginning of the tuplestore and iterate through it until we
+	 * reach where we need to be.  FIXME someday?
 	 */
 	MemoryContextSwitchTo(portal->holdContext);
 
 	if (!portal->atEnd)
 	{
-		long	store_pos;
+		long		store_pos;
 
-		if (portal->posOverflow)		/* oops, cannot trust portalPos */
+		if (portal->posOverflow)	/* oops, cannot trust portalPos */
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					 errmsg("could not reposition held cursor")));
@@ -370,8 +372,8 @@ PersistHoldablePortal(Portal portal)
 
 		for (store_pos = 0; store_pos < portal->portalPos; store_pos++)
 		{
-			HeapTuple tup;
-			bool should_free;
+			HeapTuple	tup;
+			bool		should_free;
 
 			tup = tuplestore_gettuple(portal->holdStore, true,
 									  &should_free);
@@ -389,8 +391,8 @@ PersistHoldablePortal(Portal portal)
 	/*
 	 * We can now release any subsidiary memory of the portal's heap
 	 * context; we'll never use it again.  The executor already dropped
-	 * its context, but this will clean up anything that glommed onto
-	 * the portal's heap via PortalContext.
+	 * its context, but this will clean up anything that glommed onto the
+	 * portal's heap via PortalContext.
 	 */
 	MemoryContextDeleteChildren(PortalGetHeapMemory(portal));
 }

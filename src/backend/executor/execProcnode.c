@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.37 2003/07/21 17:05:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.38 2003/08/04 00:43:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@
  *	  * ExecInitNode() notices that it is looking at a nest loop and
  *		as the code below demonstrates, it calls ExecInitNestLoop().
  *		Eventually this calls ExecInitNode() on the right and left subplans
- *		and so forth until the entire plan is initialized.  The result
+ *		and so forth until the entire plan is initialized.	The result
  *		of ExecInitNode() is a plan state tree built with the same structure
  *		as the underlying plan tree.
  *
@@ -226,7 +226,7 @@ ExecInitNode(Plan *node, EState *estate)
 	subps = NIL;
 	foreach(subp, node->initPlan)
 	{
-		SubPlan	   *subplan = (SubPlan *) lfirst(subp);
+		SubPlan    *subplan = (SubPlan *) lfirst(subp);
 		SubPlanState *sstate;
 
 		Assert(IsA(subplan, SubPlan));
@@ -237,9 +237,9 @@ ExecInitNode(Plan *node, EState *estate)
 	result->initPlan = subps;
 
 	/*
-	 * Initialize any subPlans present in this node.  These were found
-	 * by ExecInitExpr during initialization of the PlanState.  Note we
-	 * must do this after initializing initPlans, in case their arguments
+	 * Initialize any subPlans present in this node.  These were found by
+	 * ExecInitExpr during initialization of the PlanState.  Note we must
+	 * do this after initializing initPlans, in case their arguments
 	 * contain subPlans (is that actually possible? perhaps not).
 	 */
 	subps = NIL;
@@ -268,7 +268,7 @@ ExecInitNode(Plan *node, EState *estate)
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecProcNode(PlanState *node)
+ExecProcNode(PlanState * node)
 {
 	TupleTableSlot *result;
 
@@ -280,7 +280,7 @@ ExecProcNode(PlanState *node)
 	if (node == NULL)
 		return NULL;
 
-	if (node->chgParam != NULL)	/* something changed */
+	if (node->chgParam != NULL) /* something changed */
 		ExecReScan(node, NULL); /* let ReScan handle this */
 
 	if (node->instrument)
@@ -484,7 +484,7 @@ ExecCountSlotsNode(Plan *node)
  * ----------------------------------------------------------------
  */
 void
-ExecEndNode(PlanState *node)
+ExecEndNode(PlanState * node)
 {
 	List	   *subp;
 

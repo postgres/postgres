@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.67 2003/05/26 00:11:28 tgl Exp $
+ * $Id: paths.h,v 1.68 2003/08/04 00:43:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,12 +37,12 @@ extern void debug_print_rel(Query *root, RelOptInfo *rel);
  */
 extern void create_index_paths(Query *root, RelOptInfo *rel);
 extern Path *best_inner_indexscan(Query *root, RelOptInfo *rel,
-								  Relids outer_relids, JoinType jointype);
+					 Relids outer_relids, JoinType jointype);
 extern List *extract_or_indexqual_conditions(RelOptInfo *rel,
 								IndexOptInfo *index,
 								Expr *orsubclause);
 extern List *expand_indexqual_conditions(IndexOptInfo *index,
-										 List *clausegroups);
+							List *clausegroups);
 
 /*
  * orindxpath.c
@@ -73,8 +73,8 @@ extern void add_paths_to_joinrel(Query *root, RelOptInfo *joinrel,
 extern List *make_rels_by_joins(Query *root, int level, List **joinrels);
 extern RelOptInfo *make_jointree_rel(Query *root, Node *jtnode);
 extern RelOptInfo *make_join_rel(Query *root,
-								 RelOptInfo *rel1, RelOptInfo *rel2,
-								 JoinType jointype);
+			  RelOptInfo *rel1, RelOptInfo *rel2,
+			  JoinType jointype);
 
 /*
  * pathkeys.c
@@ -106,7 +106,7 @@ extern List *build_index_pathkeys(Query *root, RelOptInfo *rel,
 					 IndexOptInfo *index,
 					 ScanDirection scandir);
 extern List *build_subquery_pathkeys(Query *root, RelOptInfo *rel,
-									 Query *subquery);
+						Query *subquery);
 extern List *build_join_pathkeys(Query *root,
 					RelOptInfo *joinrel,
 					List *outer_pathkeys);

@@ -61,17 +61,17 @@
 
 typedef struct remoteConn
 {
-	PGconn *con;			/* Hold the remote connection */
-	bool remoteTrFlag;		/* Indicates whether or not a transaction
-							 * on remote database is in progress*/
-} remoteConn;
+	PGconn	   *con;			/* Hold the remote connection */
+	bool		remoteTrFlag;	/* Indicates whether or not a transaction
+								 * on remote database is in progress */
+}	remoteConn;
 
 /*
  * Internal declarations
  */
 static remoteConn *getConnectionByName(const char *name);
 static HTAB *createConnHash(void);
-static void createNewConnection(const char *name,remoteConn *con);
+static void createNewConnection(const char *name, remoteConn * con);
 static void deleteConnection(const char *name);
 static char **get_pkey_attnames(Oid relid, int16 *numatts);
 static char *get_sql_insert(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattvals, char **tgt_pkattvals);
@@ -86,15 +86,15 @@ static TupleDesc pgresultGetTupleDesc(PGresult *res);
 static char *generate_relation_name(Oid relid);
 
 /* Global */
-List   *res_id = NIL;
-int		res_id_index = 0;
-PGconn *persistent_conn = NULL;
-static HTAB *remoteConnHash=NULL;
+List	   *res_id = NIL;
+int			res_id_index = 0;
+PGconn	   *persistent_conn = NULL;
+static HTAB *remoteConnHash = NULL;
 
-/* 
+/*
 Following is list that holds multiple remote connections.
 Calling convention of each dblink function changes to accept
-connection name as the first parameter. The connection list is 
+connection name as the first parameter. The connection list is
 much like ecpg e.g. a mapping between a name and a PGconn object.
 */
 
@@ -102,7 +102,7 @@ typedef struct remoteConnHashEnt
 {
 	char		name[NAMEDATALEN];
 	remoteConn *rcon;
-} remoteConnHashEnt;
+}	remoteConnHashEnt;
 
 /* initial number of connection hashes */
 #define NUMCONN 16
@@ -186,18 +186,18 @@ dblink_connect(PG_FUNCTION_ARGS)
 	PGconn	   *conn = NULL;
 	remoteConn *rcon = NULL;
 
-	if(PG_NARGS()==2)
+	if (PG_NARGS() == 2)
 	{
 		connstr = GET_STR(PG_GETARG_TEXT_P(1));
 		connname = GET_STR(PG_GETARG_TEXT_P(0));
 	}
-	else if(PG_NARGS()==1)
+	else if (PG_NARGS() == 1)
 		connstr = GET_STR(PG_GETARG_TEXT_P(0));
 
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 
-	if(connname)
-		rcon=(remoteConn *) palloc(sizeof(remoteConn));
+	if (connname)
+		rcon = (remoteConn *) palloc(sizeof(remoteConn));
 	conn = PQconnectdb(connstr);
 
 	MemoryContextSwitchTo(oldcontext);
@@ -206,16 +206,16 @@ dblink_connect(PG_FUNCTION_ARGS)
 	{
 		msg = pstrdup(PQerrorMessage(conn));
 		PQfinish(conn);
-		if(rcon)
+		if (rcon)
 			pfree(rcon);
 
 		ereport(ERROR,
-				(errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
-				 errmsg("could not establish connection"),
-				 errdetail("%s", msg)));
+		   (errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
+			errmsg("could not establish connection"),
+			errdetail("%s", msg)));
 	}
 
-	if(connname)
+	if (connname)
 	{
 		rcon->con = conn;
 		createNewConnection(connname, rcon);
@@ -237,7 +237,7 @@ dblink_disconnect(PG_FUNCTION_ARGS)
 	remoteConn *rcon = NULL;
 	PGconn	   *conn = NULL;
 
-	if (PG_NARGS() ==1 )
+	if (PG_NARGS() == 1)
 	{
 		conname = GET_STR(PG_GETARG_TEXT_P(0));
 		rcon = getConnectionByName(conname);
@@ -276,13 +276,13 @@ dblink_open(PG_FUNCTION_ARGS)
 	StringInfo	str = makeStringInfo();
 	remoteConn *rcon = NULL;
 
-	if(PG_NARGS() == 2)
+	if (PG_NARGS() == 2)
 	{
 		curname = GET_STR(PG_GETARG_TEXT_P(0));
 		sql = GET_STR(PG_GETARG_TEXT_P(1));
 		conn = persistent_conn;
 	}
-	else if(PG_NARGS() == 3)
+	else if (PG_NARGS() == 3)
 	{
 		conname = GET_STR(PG_GETARG_TEXT_P(0));
 		curname = GET_STR(PG_GETARG_TEXT_P(1));
@@ -333,12 +333,12 @@ dblink_close(PG_FUNCTION_ARGS)
 		curname = GET_STR(PG_GETARG_TEXT_P(0));
 		conn = persistent_conn;
 	}
-	else if (PG_NARGS()==2)
+	else if (PG_NARGS() == 2)
 	{
 		conname = GET_STR(PG_GETARG_TEXT_P(0));
 		curname = GET_STR(PG_GETARG_TEXT_P(1));
 		rcon = getConnectionByName(conname);
-		if(rcon)
+		if (rcon)
 			conn = rcon->con;
 	}
 
@@ -381,7 +381,7 @@ dblink_fetch(PG_FUNCTION_ARGS)
 	PGresult   *res = NULL;
 	MemoryContext oldcontext;
 	char	   *conname = NULL;
-	remoteConn *rcon=NULL;
+	remoteConn *rcon = NULL;
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
@@ -401,7 +401,7 @@ dblink_fetch(PG_FUNCTION_ARGS)
 			howmany = PG_GETARG_INT32(2);
 
 			rcon = getConnectionByName(conname);
-			if(rcon)
+			if (rcon)
 				conn = rcon->con;
 		}
 		else if (PG_NARGS() == 2)
@@ -411,7 +411,7 @@ dblink_fetch(PG_FUNCTION_ARGS)
 			conn = persistent_conn;
 		}
 
-		if(!conn)
+		if (!conn)
 			DBLINK_CONN_NOT_AVAIL;
 
 		/* create a function context for cross-call persistence */
@@ -429,9 +429,7 @@ dblink_fetch(PG_FUNCTION_ARGS)
 		if (!res ||
 			(PQresultStatus(res) != PGRES_COMMAND_OK &&
 			 PQresultStatus(res) != PGRES_TUPLES_OK))
-		{
 			DBLINK_RES_ERROR("sql error");
-		}
 		else if (PQresultStatus(res) == PGRES_COMMAND_OK)
 		{
 			/* cursor does not exist - closed already or bad name */
@@ -549,7 +547,7 @@ dblink_record(PG_FUNCTION_ARGS)
 		char	   *connstr = NULL;
 		char	   *sql = NULL;
 		char	   *conname = NULL;
-		remoteConn *rcon=NULL;
+		remoteConn *rcon = NULL;
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -574,7 +572,7 @@ dblink_record(PG_FUNCTION_ARGS)
 			/* shouldn't happen */
 			elog(ERROR, "wrong number of arguments");
 
-		if(!conn)
+		if (!conn)
 			DBLINK_CONN_NOT_AVAIL;
 
 		res = PQexec(conn, sql);
@@ -591,8 +589,8 @@ dblink_record(PG_FUNCTION_ARGS)
 							   TEXTOID, -1, 0, false);
 
 			/*
-			 * and save a copy of the command status string to return
-			 * as our result tuple
+			 * and save a copy of the command status string to return as
+			 * our result tuple
 			 */
 			sql_cmd_status = PQcmdStatus(res);
 			funcctx->max_calls = 1;
@@ -707,7 +705,7 @@ dblink_exec(PG_FUNCTION_ARGS)
 	char	   *connstr = NULL;
 	char	   *sql = NULL;
 	char	   *conname = NULL;
-	remoteConn *rcon=NULL;
+	remoteConn *rcon = NULL;
 	bool		freeconn = true;
 
 	if (PG_NARGS() == 2)
@@ -724,7 +722,7 @@ dblink_exec(PG_FUNCTION_ARGS)
 		/* shouldn't happen */
 		elog(ERROR, "wrong number of arguments");
 
-	if(!conn)
+	if (!conn)
 		DBLINK_CONN_NOT_AVAIL;
 
 	res = PQexec(conn, sql);
@@ -741,15 +739,15 @@ dblink_exec(PG_FUNCTION_ARGS)
 						   TEXTOID, -1, 0, false);
 
 		/*
-		 * and save a copy of the command status string to return as
-		 * our result tuple
+		 * and save a copy of the command status string to return as our
+		 * result tuple
 		 */
 		sql_cmd_status = GET_TEXT(PQcmdStatus(res));
 	}
 	else
 		ereport(ERROR,
-				(errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
-				 errmsg("statement returning results not allowed")));
+			  (errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
+			   errmsg("statement returning results not allowed")));
 
 	PQclear(res);
 
@@ -802,6 +800,7 @@ dblink_get_pkey(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_UNDEFINED_TABLE),
 					 errmsg("relation \"%s\" does not exist",
 							GET_STR(PG_GETARG_TEXT_P(0)))));
+
 		/*
 		 * need a tuple descriptor representing one INT and one TEXT
 		 * column
@@ -980,8 +979,8 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 	if (src_nitems != pknumatts)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-				 errmsg("source key array length must match number of key " \
-						"attributes")));
+			 errmsg("source key array length must match number of key " \
+					"attributes")));
 
 	/*
 	 * get array of pointers to c-strings from the input source array
@@ -1013,8 +1012,8 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 	if (tgt_nitems != pknumatts)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-				 errmsg("target key array length must match number of key " \
-						"attributes")));
+			 errmsg("target key array length must match number of key " \
+					"attributes")));
 
 	/*
 	 * get array of pointers to c-strings from the input target array
@@ -1126,8 +1125,8 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 	if (tgt_nitems != pknumatts)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-				 errmsg("target key array length must match number of key " \
-						"attributes")));
+			 errmsg("target key array length must match number of key " \
+					"attributes")));
 
 	/*
 	 * get array of pointers to c-strings from the input target array
@@ -1249,8 +1248,8 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 	if (src_nitems != pknumatts)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-				 errmsg("source key array length must match number of key " \
-						"attributes")));
+			 errmsg("source key array length must match number of key " \
+					"attributes")));
 
 	/*
 	 * get array of pointers to c-strings from the input source array
@@ -1282,8 +1281,8 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 	if (tgt_nitems != pknumatts)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-				 errmsg("target key array length must match number of key " \
-						"attributes")));
+			 errmsg("target key array length must match number of key " \
+					"attributes")));
 
 	/*
 	 * get array of pointers to c-strings from the input target array
@@ -1839,10 +1838,10 @@ pgresultGetTupleDesc(PGresult *res)
 			ereport(ERROR,
 					(errcode(ERRCODE_MOST_SPECIFIC_TYPE_MISMATCH),
 					 errmsg("field size mismatch"),
-					 errdetail("Size of remote field \"%s\" does not match " \
-								"size of local type \"%s\".", attname,
-								format_type_with_typemod(atttypid,
-														 atttypmod))));
+				errdetail("Size of remote field \"%s\" does not match " \
+						  "size of local type \"%s\".", attname,
+						  format_type_with_typemod(atttypid,
+												   atttypmod))));
 
 		attdim = 0;
 		attisset = false;
@@ -1893,50 +1892,50 @@ generate_relation_name(Oid relid)
 static remoteConn *
 getConnectionByName(const char *name)
 {
-	remoteConnHashEnt  *hentry;
-	char				key[NAMEDATALEN];
+	remoteConnHashEnt *hentry;
+	char		key[NAMEDATALEN];
 
-	if(!remoteConnHash)
-		remoteConnHash=createConnHash();
+	if (!remoteConnHash)
+		remoteConnHash = createConnHash();
 
 	MemSet(key, 0, NAMEDATALEN);
 	snprintf(key, NAMEDATALEN - 1, "%s", name);
-	hentry = (remoteConnHashEnt*) hash_search(remoteConnHash,
-											  key, HASH_FIND, NULL);
+	hentry = (remoteConnHashEnt *) hash_search(remoteConnHash,
+											   key, HASH_FIND, NULL);
 
-	if(hentry)
-		return(hentry->rcon);
+	if (hentry)
+		return (hentry->rcon);
 
-	return(NULL);
+	return (NULL);
 }
 
 static HTAB *
 createConnHash(void)
 {
-	HASHCTL	ctl;
-	HTAB   *ptr;
+	HASHCTL		ctl;
+	HTAB	   *ptr;
 
 	ctl.keysize = NAMEDATALEN;
 	ctl.entrysize = sizeof(remoteConnHashEnt);
 
-	ptr=hash_create("Remote Con hash", NUMCONN, &ctl, HASH_ELEM);
+	ptr = hash_create("Remote Con hash", NUMCONN, &ctl, HASH_ELEM);
 
-	if(!ptr)
+	if (!ptr)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
 
-	return(ptr);
+	return (ptr);
 }
 
 static void
-createNewConnection(const char *name, remoteConn *con)
+createNewConnection(const char *name, remoteConn * con)
 {
-	remoteConnHashEnt  *hentry;
-	bool				found;
-	char				key[NAMEDATALEN];
+	remoteConnHashEnt *hentry;
+	bool		found;
+	char		key[NAMEDATALEN];
 
-	if(!remoteConnHash)
+	if (!remoteConnHash)
 		remoteConnHash = createConnHash();
 
 	MemSet(key, 0, NAMEDATALEN);
@@ -1944,12 +1943,12 @@ createNewConnection(const char *name, remoteConn *con)
 	hentry = (remoteConnHashEnt *) hash_search(remoteConnHash, key,
 											   HASH_ENTER, &found);
 
-	if(!hentry)
+	if (!hentry)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
 
-	if(found)
+	if (found)
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("duplicate connection name")));
@@ -1961,12 +1960,12 @@ createNewConnection(const char *name, remoteConn *con)
 static void
 deleteConnection(const char *name)
 {
-	remoteConnHashEnt  *hentry;
-	bool				found;
-	char				key[NAMEDATALEN];
+	remoteConnHashEnt *hentry;
+	bool		found;
+	char		key[NAMEDATALEN];
 
-	if(!remoteConnHash)
-		remoteConnHash=createConnHash();
+	if (!remoteConnHash)
+		remoteConnHash = createConnHash();
 
 	MemSet(key, 0, NAMEDATALEN);
 	snprintf(key, NAMEDATALEN - 1, "%s", name);
@@ -1974,7 +1973,7 @@ deleteConnection(const char *name)
 	hentry = (remoteConnHashEnt *) hash_search(remoteConnHash,
 											   key, HASH_REMOVE, &found);
 
-	if(!hentry)
+	if (!hentry)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("undefined connection name")));

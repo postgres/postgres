@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/clog.c,v 1.16 2003/06/11 22:37:45 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/clog.c,v 1.17 2003/08/04 00:43:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,7 @@
 
 static SlruCtlData ClogCtlData;
 static SlruCtl ClogCtl = &ClogCtlData;
-  
+
 
 static int	ZeroCLOGPage(int pageno, bool writeXlog);
 static bool CLOGPagePrecedes(int page1, int page2);

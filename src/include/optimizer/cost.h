@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: cost.h,v 1.54 2003/07/14 22:35:54 tgl Exp $
+ * $Id: cost.h,v 1.55 2003/08/04 00:43:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,20 +62,20 @@ extern void cost_functionscan(Path *path, Query *root,
 extern void cost_sort(Path *path, Query *root,
 		  List *pathkeys, Cost input_cost, double tuples, int width);
 extern void cost_material(Path *path,
-						  Cost input_cost, double tuples, int width);
+			  Cost input_cost, double tuples, int width);
 extern void cost_agg(Path *path, Query *root,
-					 AggStrategy aggstrategy, int numAggs,
-					 int numGroupCols, double numGroups,
-					 Cost input_startup_cost, Cost input_total_cost,
-					 double input_tuples);
+		 AggStrategy aggstrategy, int numAggs,
+		 int numGroupCols, double numGroups,
+		 Cost input_startup_cost, Cost input_total_cost,
+		 double input_tuples);
 extern void cost_group(Path *path, Query *root,
-					   int numGroupCols, double numGroups,
-					   Cost input_startup_cost, Cost input_total_cost,
-					   double input_tuples);
+		   int numGroupCols, double numGroups,
+		   Cost input_startup_cost, Cost input_total_cost,
+		   double input_tuples);
 extern void cost_nestloop(NestPath *path, Query *root);
 extern void cost_mergejoin(MergePath *path, Query *root);
 extern void cost_hashjoin(HashPath *path, Query *root);
-extern void cost_qual_eval(QualCost *cost, List *quals);
+extern void cost_qual_eval(QualCost * cost, List *quals);
 extern void set_baserel_size_estimates(Query *root, RelOptInfo *rel);
 extern void set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
 						   RelOptInfo *outer_rel,
@@ -89,16 +89,16 @@ extern void set_function_size_estimates(Query *root, RelOptInfo *rel);
  *	  routines to compute clause selectivities
  */
 extern Selectivity restrictlist_selectivity(Query *root,
-											List *restrictinfo_list,
-											int varRelid,
-											JoinType jointype);
+						 List *restrictinfo_list,
+						 int varRelid,
+						 JoinType jointype);
 extern Selectivity clauselist_selectivity(Query *root,
-										  List *clauses,
-										  int varRelid,
-										  JoinType jointype);
+					   List *clauses,
+					   int varRelid,
+					   JoinType jointype);
 extern Selectivity clause_selectivity(Query *root,
-									  Node *clause,
-									  int varRelid,
-									  JoinType jointype);
+				   Node *clause,
+				   int varRelid,
+				   JoinType jointype);
 
 #endif   /* COST_H */

@@ -4,7 +4,7 @@
  *	  Support getaddrinfo() on platforms that don't have it.
  *
  * We also supply getnameinfo() here, assuming that the platform will have
- * it if and only if it has getaddrinfo().  If this proves false on some
+ * it if and only if it has getaddrinfo().	If this proves false on some
  * platform, we'll need to split this file and provide a separate configure
  * test for getnameinfo().
  *
@@ -12,7 +12,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/port/getaddrinfo.c,v 1.10 2003/07/23 23:30:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/port/getaddrinfo.c,v 1.11 2003/08/04 00:43:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,23 +40,22 @@
  */
 int
 getaddrinfo(const char *node, const char *service,
-			const struct addrinfo *hintp,
-			struct addrinfo **res)
+			const struct addrinfo * hintp,
+			struct addrinfo ** res)
 {
-	struct addrinfo		*ai;
-	struct sockaddr_in	sin, *psin;
-	struct addrinfo		hints;
+	struct addrinfo *ai;
+	struct sockaddr_in sin,
+			   *psin;
+	struct addrinfo hints;
 
-	if (hintp == NULL)	
+	if (hintp == NULL)
 	{
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = AF_INET;
 		hints.ai_socktype = SOCK_STREAM;
 	}
 	else
-	{
 		memcpy(&hints, hintp, sizeof(hints));
-	}
 
 	if (hints.ai_family != AF_INET && hints.ai_family != AF_UNSPEC)
 		return EAI_FAMILY;
@@ -78,20 +77,19 @@ getaddrinfo(const char *node, const char *service,
 		else if (hints.ai_flags & AI_NUMERICHOST)
 		{
 			if (!inet_aton(node, &sin.sin_addr))
-			{
 				return EAI_FAIL;
-			}
 		}
 		else
 		{
 			struct hostent *hp;
+
 #ifdef FRONTEND
 			struct hostent hpstr;
-			char buf[BUFSIZ];
-			int herrno = 0;
+			char		buf[BUFSIZ];
+			int			herrno = 0;
 
 			pqGethostbyname(node, &hpstr, buf, sizeof(buf),
-			                &hp, &herrno);
+							&hp, &herrno);
 #else
 			hp = gethostbyname(node);
 #endif
@@ -132,9 +130,7 @@ getaddrinfo(const char *node, const char *service,
 
 	ai = malloc(sizeof(*ai));
 	if (!ai)
-	{
 		return EAI_MEMORY;
-	}
 
 	psin = malloc(sizeof(*psin));
 	if (!psin)
@@ -161,7 +157,7 @@ getaddrinfo(const char *node, const char *service,
 
 
 void
-freeaddrinfo(struct addrinfo *res)
+freeaddrinfo(struct addrinfo * res)
 {
 	if (res)
 	{
@@ -176,7 +172,7 @@ const char *
 gai_strerror(int errcode)
 {
 #ifdef HAVE_HSTRERROR
-	int hcode;
+	int			hcode;
 
 	switch (errcode)
 	{
@@ -194,7 +190,7 @@ gai_strerror(int errcode)
 
 	return hstrerror(hcode);
 
-#else /* !HAVE_HSTRERROR */
+#else							/* !HAVE_HSTRERROR */
 
 	switch (errcode)
 	{
@@ -206,71 +202,61 @@ gai_strerror(int errcode)
 		default:
 			return "Unknown server error";
 	}
-
-#endif /* HAVE_HSTRERROR */
+#endif   /* HAVE_HSTRERROR */
 }
 
 /*
  * Convert an ipv4 address to a hostname.
- * 
+ *
  * Bugs:	- Only supports NI_NUMERICHOST and NI_NUMERICSERV
  *		  It will never resolv a hostname.
  *		- No IPv6 support.
  */
 int
-getnameinfo(const struct sockaddr *sa, int salen,
+getnameinfo(const struct sockaddr * sa, int salen,
 			char *node, int nodelen,
 			char *service, int servicelen, int flags)
 {
 	/* Invalid arguments. */
 	if (sa == NULL || (node == NULL && service == NULL))
-	{
 		return EAI_FAIL;
-	}
 
 	/* We don't support those. */
 	if ((node && !(flags & NI_NUMERICHOST))
 		|| (service && !(flags & NI_NUMERICSERV)))
-	{
 		return EAI_FAIL;
-	}
 
 #ifdef	HAVE_IPV6
 	if (sa->sa_family == AF_INET6)
-	{
-		return	EAI_FAMILY;
-	}
+		return EAI_FAMILY;
 #endif
 
 	if (node)
 	{
-		int		ret = -1;
+		int			ret = -1;
 
 		if (sa->sa_family == AF_INET)
 		{
-			char	*p;
-			p = inet_ntoa(((struct sockaddr_in *)sa)->sin_addr);
+			char	   *p;
+
+			p = inet_ntoa(((struct sockaddr_in *) sa)->sin_addr);
 			ret = snprintf(node, nodelen, "%s", p);
 		}
 		if (ret == -1 || ret > nodelen)
-		{
 			return EAI_MEMORY;
-		}
 	}
 
 	if (service)
 	{
-		int		ret = -1;
+		int			ret = -1;
 
 		if (sa->sa_family == AF_INET)
 		{
 			ret = snprintf(service, servicelen, "%d",
-						   ntohs(((struct sockaddr_in *)sa)->sin_port));
+						   ntohs(((struct sockaddr_in *) sa)->sin_port));
 		}
 		if (ret == -1 || ret > servicelen)
-		{
 			return EAI_MEMORY;
-		}
 	}
 
 	return 0;

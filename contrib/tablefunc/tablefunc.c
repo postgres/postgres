@@ -42,11 +42,11 @@
 
 #include "tablefunc.h"
 
-static int load_categories_hash(char *cats_sql, MemoryContext per_query_ctx);
+static int	load_categories_hash(char *cats_sql, MemoryContext per_query_ctx);
 static Tuplestorestate *get_crosstab_tuplestore(char *sql,
-												int num_categories,
-												TupleDesc tupdesc,
-												MemoryContext per_query_ctx);
+						int num_categories,
+						TupleDesc tupdesc,
+						MemoryContext per_query_ctx);
 static void validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial);
 static bool compatCrosstabTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
 static bool compatConnectbyTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
@@ -56,7 +56,7 @@ static TupleDesc make_crosstab_tupledesc(TupleDesc spi_tupdesc,
 static Tuplestorestate *connectby(char *relname,
 		  char *key_fld,
 		  char *parent_key_fld,
-			char *orderby_fld,
+		  char *orderby_fld,
 		  char *branch_delim,
 		  char *start_with,
 		  int max_depth,
@@ -115,7 +115,7 @@ static HTAB *crosstab_HashTable;
 typedef struct crosstab_cat_desc
 {
 	char	   *catname;
-	int			attidx;	/* zero based */
+	int			attidx;			/* zero based */
 }	crosstab_cat_desc;
 
 #define MAX_CATNAME_LEN			NAMEDATALEN
@@ -157,9 +157,9 @@ do { \
 /* hash table */
 typedef struct crosstab_hashent
 {
-	char				internal_catname[MAX_CATNAME_LEN];
-	crosstab_cat_desc  *catdesc;
-} crosstab_HashEnt;
+	char		internal_catname[MAX_CATNAME_LEN];
+	crosstab_cat_desc *catdesc;
+}	crosstab_HashEnt;
 
 /*
  * normal_rand - return requested number of random values
@@ -414,7 +414,7 @@ crosstab(PG_FUNCTION_ARGS)
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("invalid source data SQL statement"),
 						 errdetail("The provided SQL must return 3 " \
-								   " columns; rowid, category, and values.")));
+							 " columns; rowid, category, and values.")));
 		}
 		else
 		{
@@ -667,10 +667,10 @@ crosstab(PG_FUNCTION_ARGS)
 }
 
 /*
- * crosstab_hash - reimplement crosstab as materialized function and 
+ * crosstab_hash - reimplement crosstab as materialized function and
  * properly deal with missing values (i.e. don't pack remaining
  * values to the left)
- * 
+ *
  * crosstab - create a crosstab of rowids and values columns from a
  * SQL statement returning one rowid column, one category column,
  * and one value column.
@@ -705,13 +705,13 @@ PG_FUNCTION_INFO_V1(crosstab_hash);
 Datum
 crosstab_hash(PG_FUNCTION_ARGS)
 {
-	char			   *sql = GET_STR(PG_GETARG_TEXT_P(0));
-	char			   *cats_sql = GET_STR(PG_GETARG_TEXT_P(1));
-	ReturnSetInfo	   *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	TupleDesc			tupdesc;
-	MemoryContext		per_query_ctx;
-	MemoryContext		oldcontext;
-	int					num_categories;
+	char	   *sql = GET_STR(PG_GETARG_TEXT_P(0));
+	char	   *cats_sql = GET_STR(PG_GETARG_TEXT_P(1));
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	TupleDesc	tupdesc;
+	MemoryContext per_query_ctx;
+	MemoryContext oldcontext;
+	int			num_categories;
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (!rsinfo || !(rsinfo->allowedModes & SFRM_Materialize))
@@ -729,9 +729,9 @@ crosstab_hash(PG_FUNCTION_ARGS)
 	/*
 	 * Check to make sure we have a reasonable tuple descriptor
 	 *
-	 * Note we will attempt to coerce the values into whatever
-	 * the return attribute type is and depend on the "in"
-	 * function to complain if needed.
+	 * Note we will attempt to coerce the values into whatever the return
+	 * attribute type is and depend on the "in" function to complain if
+	 * needed.
 	 */
 	if (tupdesc->natts < 2)
 		ereport(ERROR,
@@ -770,19 +770,19 @@ crosstab_hash(PG_FUNCTION_ARGS)
 static int
 load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 {
-	HASHCTL			ctl;
-	int				ret;
-	int				proc;
-	MemoryContext	SPIcontext;
-	int				num_categories = 0;
+	HASHCTL		ctl;
+	int			ret;
+	int			proc;
+	MemoryContext SPIcontext;
+	int			num_categories = 0;
 
 	/* initialize the category hash table */
 	ctl.keysize = MAX_CATNAME_LEN;
 	ctl.entrysize = sizeof(crosstab_HashEnt);
 
 	/*
-	 * use INIT_CATS, defined above as a guess of how
-	 * many hash table entries to create, initially
+	 * use INIT_CATS, defined above as a guess of how many hash table
+	 * entries to create, initially
 	 */
 	crosstab_HashTable = hash_create("crosstab hash", INIT_CATS, &ctl, HASH_ELEM);
 
@@ -798,13 +798,13 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 	/* Check for qualifying tuples */
 	if ((ret == SPI_OK_SELECT) && (proc > 0))
 	{
-		SPITupleTable  *spi_tuptable = SPI_tuptable;
-		TupleDesc		spi_tupdesc = spi_tuptable->tupdesc;
-		int				i;
+		SPITupleTable *spi_tuptable = SPI_tuptable;
+		TupleDesc	spi_tupdesc = spi_tuptable->tupdesc;
+		int			i;
 
 		/*
-		 * The provided categories SQL query must always return one column:
-		 * category - the label or identifier for each column
+		 * The provided categories SQL query must always return one
+		 * column: category - the label or identifier for each column
 		 */
 		if (spi_tupdesc->natts != 1)
 			ereport(ERROR,
@@ -814,9 +814,9 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 
 		for (i = 0; i < proc; i++)
 		{
-			crosstab_cat_desc  *catdesc;
-			char			   *catname;
-			HeapTuple			spi_tuple;
+			crosstab_cat_desc *catdesc;
+			char	   *catname;
+			HeapTuple	spi_tuple;
 
 			/* get the next sql result tuple */
 			spi_tuple = spi_tuptable->vals[i];
@@ -862,13 +862,13 @@ get_crosstab_tuplestore(char *sql,
 						TupleDesc tupdesc,
 						MemoryContext per_query_ctx)
 {
-	Tuplestorestate	   *tupstore;
-	AttInMetadata	   *attinmeta = TupleDescGetAttInMetadata(tupdesc);
-	char			  **values;
-	HeapTuple			tuple;
-	int					ret;
-	int					proc;
-	MemoryContext		SPIcontext;
+	Tuplestorestate *tupstore;
+	AttInMetadata *attinmeta = TupleDescGetAttInMetadata(tupdesc);
+	char	  **values;
+	HeapTuple	tuple;
+	int			ret;
+	int			proc;
+	MemoryContext SPIcontext;
 
 	/* initialize our tuplestore */
 	tupstore = tuplestore_begin_heap(true, false, SortMem);
@@ -885,33 +885,36 @@ get_crosstab_tuplestore(char *sql,
 	/* Check for qualifying tuples */
 	if ((ret == SPI_OK_SELECT) && (proc > 0))
 	{
-		SPITupleTable  *spi_tuptable = SPI_tuptable;
-		TupleDesc		spi_tupdesc = spi_tuptable->tupdesc;
-		int				ncols = spi_tupdesc->natts;
-		char		   *rowid;
-		char		   *lastrowid = NULL;
-		int				i, j;
-		int				result_ncols;
+		SPITupleTable *spi_tuptable = SPI_tuptable;
+		TupleDesc	spi_tupdesc = spi_tuptable->tupdesc;
+		int			ncols = spi_tupdesc->natts;
+		char	   *rowid;
+		char	   *lastrowid = NULL;
+		int			i,
+					j;
+		int			result_ncols;
 
 		/*
-		 * The provided SQL query must always return at least three columns:
+		 * The provided SQL query must always return at least three
+		 * columns:
 		 *
 		 * 1. rowname	the label for each row - column 1 in the final result
-		 * 2. category  the label for each value-column in the final result
-		 * 3. value		the values used to populate the value-columns
-		 * 
+		 * 2. category	the label for each value-column in the final
+		 * result 3. value	   the values used to populate the
+		 * value-columns
+		 *
 		 * If there are more than three columns, the last two are taken as
-		 * "category" and "values". The first column is taken as "rowname".
-		 * Additional columns (2 thru N-2) are assumed the same for the same
-		 * "rowname", and are copied into the result tuple from the first
-		 * time we encounter a particular rowname.
+		 * "category" and "values". The first column is taken as
+		 * "rowname". Additional columns (2 thru N-2) are assumed the same
+		 * for the same "rowname", and are copied into the result tuple
+		 * from the first time we encounter a particular rowname.
 		 */
 		if (ncols < 3)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("invalid source data SQL statement"),
 					 errdetail("The provided SQL must return 3 " \
-							   " columns; rowid, category, and values.")));
+							 " columns; rowid, category, and values.")));
 
 		result_ncols = (ncols - 2) + num_categories;
 
@@ -922,7 +925,7 @@ get_crosstab_tuplestore(char *sql,
 					 errmsg("invalid return type"),
 					 errdetail("query-specified return " \
 							   "tuple has %d columns but crosstab " \
-							   "returns %d", tupdesc->natts, result_ncols)));
+						   "returns %d", tupdesc->natts, result_ncols)));
 
 		/* allocate space */
 		values = (char **) palloc(result_ncols * sizeof(char *));
@@ -932,9 +935,9 @@ get_crosstab_tuplestore(char *sql,
 
 		for (i = 0; i < proc; i++)
 		{
-			HeapTuple			spi_tuple;
-			crosstab_cat_desc  *catdesc;
-			char			   *catname;
+			HeapTuple	spi_tuple;
+			crosstab_cat_desc *catdesc;
+			char	   *catname;
 
 			/* get the next sql result tuple */
 			spi_tuple = spi_tuptable->vals[i];
@@ -958,7 +961,10 @@ get_crosstab_tuplestore(char *sql,
 				 */
 				if (lastrowid != NULL)
 				{
-					/* switch to appropriate context while storing the tuple */
+					/*
+					 * switch to appropriate context while storing the
+					 * tuple
+					 */
 					SPIcontext = MemoryContextSwitchTo(per_query_ctx);
 
 					/* rowid changed, flush the previous output row */
@@ -984,7 +990,7 @@ get_crosstab_tuplestore(char *sql,
 				crosstab_HashTableLookup(catname, catdesc);
 
 				if (catdesc)
-					values[catdesc->attidx + ncols - 2] = 
+					values[catdesc->attidx + ncols - 2] =
 						SPI_getvalue(spi_tuple, spi_tupdesc, ncols);
 			}
 
@@ -1026,29 +1032,29 @@ get_crosstab_tuplestore(char *sql,
  *
  *			keyid	parent_keyid pos
  *			------+------------+--
- *			row1	NULL         0
- *			row2	row1         0
- *			row3	row1         0
- *			row4	row2         1
- *			row5	row2         0
- *			row6	row4         0
- *			row7	row3         0
- *			row8	row6         0
- *			row9	row5         0
+ *			row1	NULL		 0
+ *			row2	row1		 0
+ *			row3	row1		 0
+ *			row4	row2		 1
+ *			row5	row2		 0
+ *			row6	row4		 0
+ *			row7	row3		 0
+ *			row8	row6		 0
+ *			row9	row5		 0
  *
  *
  * connectby(text relname, text keyid_fld, text parent_keyid_fld
- *            [, text orderby_fld], text start_with, int max_depth
- *            [, text branch_delim])
+ *			  [, text orderby_fld], text start_with, int max_depth
+ *			  [, text branch_delim])
  * connectby('foo', 'keyid', 'parent_keyid', 'pos', 'row2', 0, '~') returns:
  *
- *		keyid	parent_id	level	 branch             serial
+ *		keyid	parent_id	level	 branch				serial
  *		------+-----------+--------+-----------------------
- *		row2	NULL		  0		  row2                1
- *		row5	row2		  1		  row2~row5           2
- *		row9	row5		  2		  row2~row5~row9      3
- *		row4	row2		  1		  row2~row4           4
- *		row6	row4		  2		  row2~row4~row6      5
+ *		row2	NULL		  0		  row2				  1
+ *		row5	row2		  1		  row2~row5			  2
+ *		row9	row5		  2		  row2~row5~row9	  3
+ *		row4	row2		  1		  row2~row4			  4
+ *		row6	row4		  2		  row2~row4~row6	  5
  *		row8	row6		  3		  row2~row4~row6~row8 6
  *
  */
@@ -1114,7 +1120,7 @@ connectby_text(PG_FUNCTION_ARGS)
 	rsinfo->setResult = connectby(relname,
 								  key_fld,
 								  parent_key_fld,
-									NULL,
+								  NULL,
 								  branch_delim,
 								  start_with,
 								  max_depth,
@@ -1149,7 +1155,7 @@ connectby_text_serial(PG_FUNCTION_ARGS)
 	char	   *branch_delim = NULL;
 	bool		show_branch = false;
 	bool		show_serial = true;
-	
+
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	TupleDesc	tupdesc;
 	AttInMetadata *attinmeta;
@@ -1192,7 +1198,7 @@ connectby_text_serial(PG_FUNCTION_ARGS)
 	rsinfo->setResult = connectby(relname,
 								  key_fld,
 								  parent_key_fld,
-									orderby_fld,
+								  orderby_fld,
 								  branch_delim,
 								  start_with,
 								  max_depth,
@@ -1222,12 +1228,12 @@ static Tuplestorestate *
 connectby(char *relname,
 		  char *key_fld,
 		  char *parent_key_fld,
-			char *orderby_fld,
+		  char *orderby_fld,
 		  char *branch_delim,
 		  char *start_with,
 		  int max_depth,
 		  bool show_branch,
-			bool show_serial,
+		  bool show_serial,
 		  MemoryContext per_query_ctx,
 		  AttInMetadata *attinmeta)
 {
@@ -1235,7 +1241,7 @@ connectby(char *relname,
 	int			ret;
 	MemoryContext oldcontext;
 
-	int serial = 1;
+	int			serial = 1;
 
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)
@@ -1303,25 +1309,25 @@ build_tuplestore_recursively(char *key_fld,
 	if (!show_serial)
 	{
 		appendStringInfo(sql, "SELECT %s, %s FROM %s WHERE %s = '%s' AND %s IS NOT NULL",
-					 key_fld,
-					 parent_key_fld,
-					 relname,
-					 parent_key_fld,
-					 start_with,
-					 key_fld);
-					 serial_column=0;
+						 key_fld,
+						 parent_key_fld,
+						 relname,
+						 parent_key_fld,
+						 start_with,
+						 key_fld);
+		serial_column = 0;
 	}
 	else
 	{
 		appendStringInfo(sql, "SELECT %s, %s FROM %s WHERE %s = '%s' AND %s IS NOT NULL ORDER BY %s",
-					 key_fld,
-					 parent_key_fld,
-					 relname,
-					 parent_key_fld,
-					 start_with,
-					 key_fld,
-					 orderby_fld);		
-					 serial_column=1;
+						 key_fld,
+						 parent_key_fld,
+						 relname,
+						 parent_key_fld,
+						 start_with,
+						 key_fld,
+						 orderby_fld);
+		serial_column = 1;
 	}
 
 	/* Retrieve the desired rows */
@@ -1371,8 +1377,8 @@ build_tuplestore_recursively(char *key_fld,
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("invalid return type"),
-						 errdetail("Return and SQL tuple descriptions are " \
-								   "incompatible.")));
+					 errdetail("Return and SQL tuple descriptions are " \
+							   "incompatible.")));
 
 			/* root value is the one we initially start with */
 			values[0] = start_with;
@@ -1395,7 +1401,7 @@ build_tuplestore_recursively(char *key_fld,
 				if (show_branch)
 					values[4] = serial_str;
 				else
-					values[3] = serial_str;					
+					values[3] = serial_str;
 			}
 
 			/* construct the tuple */
@@ -1508,11 +1514,11 @@ build_tuplestore_recursively(char *key_fld,
 static void
 validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial)
 {
-	int serial_column=0;
+	int			serial_column = 0;
 
 	if (show_serial)
-		serial_column=1;
-		
+		serial_column = 1;
+
 	/* are there the correct number of columns */
 	if (show_branch)
 	{
@@ -1546,7 +1552,7 @@ validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("invalid return type"),
 				 errdetail("Third column must be type %s.",
-						 format_type_be(INT4OID))));
+						   format_type_be(INT4OID))));
 
 	/* check that the type of the fourth column is TEXT if applicable */
 	if (show_branch && tupdesc->attrs[3]->atttypid != TEXTOID)
@@ -1554,7 +1560,7 @@ validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("invalid return type"),
 				 errdetail("Fourth column must be type %s.",
-						 format_type_be(TEXTOID))));
+						   format_type_be(TEXTOID))));
 
 	/* check that the type of the fifth column is INT4 */
 	if (show_branch && show_serial && tupdesc->attrs[4]->atttypid != INT4OID)
@@ -1565,7 +1571,7 @@ validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial
 	if (!show_branch && show_serial && tupdesc->attrs[3]->atttypid != INT4OID)
 		elog(ERROR, "Query-specified return tuple not valid for Connectby: "
 			 "fourth column must be type %s", format_type_be(INT4OID));
-			 
+
 	/* OK, the tupdesc is valid for our purposes */
 }
 
@@ -1596,7 +1602,7 @@ compatConnectbyTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("invalid return type"),
 				 errdetail("SQL parent key field datatype does " \
-						   "not match return parent key field datatype.")));
+						"not match return parent key field datatype.")));
 
 	/* OK, the two tupdescs are compatible for our purposes */
 	return true;

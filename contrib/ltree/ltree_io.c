@@ -22,7 +22,7 @@ Datum		lquery_out(PG_FUNCTION_ARGS);
 
 #define UNCHAR ereport(ERROR, \
 					   (errcode(ERRCODE_SYNTAX_ERROR), \
-					    errmsg("syntax error at position %d near \"%c\"", \
+						errmsg("syntax error at position %d near \"%c\"", \
 						(int)(ptr-buf), *ptr)));
 
 
@@ -81,8 +81,8 @@ ltree_in(PG_FUNCTION_ARGS)
 							(errcode(ERRCODE_NAME_TOO_LONG),
 							 errmsg("name of level is too long"),
 							 errdetail("name length is %d, must " \
-									"be < 256, in position %d",
-						 			lptr->len, (int) (lptr->start - buf))));
+									   "be < 256, in position %d",
+								 lptr->len, (int) (lptr->start - buf))));
 
 				totallen += MAXALIGN(lptr->len + LEVEL_HDRSIZE);
 				lptr++;
@@ -105,8 +105,8 @@ ltree_in(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_NAME_TOO_LONG),
 					 errmsg("name of level is too long"),
 					 errdetail("name length is %d, must " \
-								"be < 256, in position %d",
-					 			lptr->len, (int) (lptr->start - buf))));
+							   "be < 256, in position %d",
+							   lptr->len, (int) (lptr->start - buf))));
 
 		totallen += MAXALIGN(lptr->len + LEVEL_HDRSIZE);
 		lptr++;
@@ -283,8 +283,8 @@ lquery_in(PG_FUNCTION_ARGS)
 							(errcode(ERRCODE_NAME_TOO_LONG),
 							 errmsg("name of level is too long"),
 							 errdetail("name length is %d, must " \
-										"be < 256, in position %d",
-							 			lptr->len, (int) (lptr->start - buf))));
+									   "be < 256, in position %d",
+								 lptr->len, (int) (lptr->start - buf))));
 
 				state = LQPRS_WAITVAR;
 			}
@@ -299,8 +299,8 @@ lquery_in(PG_FUNCTION_ARGS)
 							(errcode(ERRCODE_NAME_TOO_LONG),
 							 errmsg("name of level is too long"),
 							 errdetail("name length is %d, must " \
-										"be < 256, in position %d",
-							 			lptr->len, (int) (lptr->start - buf))));
+									   "be < 256, in position %d",
+								 lptr->len, (int) (lptr->start - buf))));
 
 				state = LQPRS_WAITLEVEL;
 				curqlevel = NEXTLEV(curqlevel);
@@ -412,8 +412,8 @@ lquery_in(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_NAME_TOO_LONG),
 					 errmsg("name of level is too long"),
 					 errdetail("name length is %d, must " \
-							"be < 256, in position %d",
-				 			lptr->len, (int) (lptr->start - buf))));
+							   "be < 256, in position %d",
+							   lptr->len, (int) (lptr->start - buf))));
 	}
 	else if (state == LQPRS_WAITOPEN)
 		curqlevel->high = 0xffff;
@@ -442,7 +442,7 @@ lquery_in(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("syntax error"),
 					 errdetail("Low limit(%d) is greater than upper(%d).",
-								curqlevel->low, curqlevel->high)));
+							   curqlevel->low, curqlevel->high)));
 
 		curqlevel = NEXTLEV(curqlevel);
 	}

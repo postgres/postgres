@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.41 2003/07/25 20:17:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.42 2003/08/04 00:43:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,6 +45,7 @@ MemoryContext PostmasterContext = NULL;
 MemoryContext CacheMemoryContext = NULL;
 MemoryContext MessageContext = NULL;
 MemoryContext TopTransactionContext = NULL;
+
 /* These two are transient links to contexts owned by other objects: */
 MemoryContext QueryContext = NULL;
 MemoryContext PortalContext = NULL;
@@ -494,7 +495,7 @@ MemoryContextAlloc(MemoryContext context, Size size)
 void *
 MemoryContextAllocZero(MemoryContext context, Size size)
 {
-	void *ret;
+	void	   *ret;
 
 	AssertArg(MemoryContextIsValid(context));
 
@@ -519,7 +520,7 @@ MemoryContextAllocZero(MemoryContext context, Size size)
 void *
 MemoryContextAllocZeroAligned(MemoryContext context, Size size)
 {
-	void *ret;
+	void	   *ret;
 
 	AssertArg(MemoryContextIsValid(context));
 

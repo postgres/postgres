@@ -1,21 +1,21 @@
 /*
  * regfree - free an RE
  *
- * Copyright (c) 1998, 1999 Henry Spencer.  All rights reserved.
- * 
+ * Copyright (c) 1998, 1999 Henry Spencer.	All rights reserved.
+ *
  * Development of this software was funded, in part, by Cray Research Inc.,
  * UUNET Communications Services Inc., Sun Microsystems Inc., and Scriptics
  * Corporation, none of whom are responsible for the results.  The author
- * thanks all of them. 
- * 
+ * thanks all of them.
+ *
  * Redistribution and use in source and binary forms -- with or without
  * modification -- are permitted for any purpose, provided that
  * redistributions in source form retain this entire copyright notice and
  * indicate the origin and nature of any modifications.
- * 
+ *
  * I'd appreciate being given credit for this package in the documentation
  * of software which uses it, but that is not a requirement.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
@@ -27,7 +27,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Header: /cvsroot/pgsql/src/backend/regex/regfree.c,v 1.16 2003/02/05 17:41:33 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/regex/regfree.c,v 1.17 2003/08/04 00:43:21 momjian Exp $
  *
  *
  * You might think that this could be incorporated into regcomp.c, and
@@ -50,5 +50,5 @@ pg_regfree(regex_t *re)
 {
 	if (re == NULL)
 		return;
-	(*((struct fns *)re->re_fns)->free)(re);
+	(*((struct fns *) re->re_fns)->free) (re);
 }

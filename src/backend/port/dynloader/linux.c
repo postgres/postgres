@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/linux.c,v 1.24 2003/07/22 23:30:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/linux.c,v 1.25 2003/08/04 00:43:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,4 +131,4 @@ pg_dlerror(void)
 #endif
 }
 
-#endif /* !HAVE_DLOPEN */
+#endif   /* !HAVE_DLOPEN */

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.73 2003/07/23 08:47:30 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.74 2003/08/04 00:43:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,7 +206,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		sav = SetOutput(AH, ropt->filename, ropt->compression);
 
 	ahprintf(AH, "--\n-- PostgreSQL database dump\n--\n\n");
-	
+
 	/*
 	 * Drop the items at the start, in reverse order
 	 */
@@ -280,7 +280,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 				/*
 				 * If we can output the data, then restore it.
 				 */
-				if (AH->PrintTocDataPtr != NULL && (reqs & REQ_DATA) != 0)
+				if (AH->PrintTocDataPtr !=NULL && (reqs & REQ_DATA) != 0)
 				{
 #ifndef HAVE_LIBZ
 					if (AH->compression != 0)
@@ -1292,7 +1292,8 @@ _die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt, va_lis
 {
 	_write_msg(modulename, fmt, ap);
 
-	if (AH) {
+	if (AH)
+	{
 		if (AH->public.verbose)
 			write_msg(NULL, "*** aborted because of error\n");
 		if (AH->connection)
@@ -1383,7 +1384,7 @@ TocIDRequired(ArchiveHandle *AH, int id, RestoreOptions *ropt)
 size_t
 WriteOffset(ArchiveHandle *AH, off_t o, int wasSet)
 {
-	int 			off;
+	int			off;
 
 	/* Save the flag */
 	(*AH->WriteBytePtr) (AH, wasSet);
@@ -1391,7 +1392,7 @@ WriteOffset(ArchiveHandle *AH, off_t o, int wasSet)
 	/* Write out off_t smallest byte first, prevents endian mismatch */
 	for (off = 0; off < sizeof(off_t); off++)
 	{
-	    (*AH->WriteBytePtr) (AH, o & 0xFF);
+		(*AH->WriteBytePtr) (AH, o & 0xFF);
 		o >>= 8;
 	}
 	return sizeof(off_t) + 1;
@@ -1400,9 +1401,9 @@ WriteOffset(ArchiveHandle *AH, off_t o, int wasSet)
 int
 ReadOffset(ArchiveHandle *AH, off_t *o)
 {
-	int				i;
-	int 			off;
-	int				offsetFlg;
+	int			i;
+	int			off;
+	int			offsetFlg;
 
 	/* Initialize to zero */
 	*o = 0;
@@ -1414,21 +1415,21 @@ ReadOffset(ArchiveHandle *AH, off_t *o)
 		i = ReadInt(AH);
 		/* -1 means not set */
 		if (i < 0)
-		    return K_OFFSET_POS_NOT_SET;
+			return K_OFFSET_POS_NOT_SET;
 		else if (i == 0)
-		    return K_OFFSET_NO_DATA;
+			return K_OFFSET_NO_DATA;
 
 		/* Cast to off_t because it was written as an int. */
-		*o = (off_t)i;
+		*o = (off_t) i;
 		return K_OFFSET_POS_SET;
 	}
 
 	/*
-	 * Read the flag indicating the state of the data pointer.
-	 * Check if valid and die if not.
+	 * Read the flag indicating the state of the data pointer. Check if
+	 * valid and die if not.
 	 *
-	 * This used to be handled by a negative or zero pointer,
-	 * now we use an extra byte specifically for the state.
+	 * This used to be handled by a negative or zero pointer, now we use an
+	 * extra byte specifically for the state.
 	 */
 	offsetFlg = (*AH->ReadBytePtr) (AH) & 0xFF;
 
@@ -1438,10 +1439,10 @@ ReadOffset(ArchiveHandle *AH, off_t *o)
 		case K_OFFSET_NO_DATA:
 		case K_OFFSET_POS_SET:
 
-				break;
+			break;
 
 		default:
-				die_horribly(AH, modulename, "Unexpected data offset flag %d\n", offsetFlg);
+			die_horribly(AH, modulename, "Unexpected data offset flag %d\n", offsetFlg);
 	}
 
 	/*
@@ -1454,7 +1455,7 @@ ReadOffset(ArchiveHandle *AH, off_t *o)
 		else
 		{
 			if ((*AH->ReadBytePtr) (AH) != 0)
-	    	    die_horribly(AH, modulename, "file offset in dump file is too large\n");
+				die_horribly(AH, modulename, "file offset in dump file is too large\n");
 		}
 	}
 
@@ -2121,7 +2122,7 @@ _reconnectAsUser(ArchiveHandle *AH, const char *dbname, const char *user)
 						  dbname ? fmtId(dbname) : "-");
 		appendPQExpBuffer(qry, " %s\n\n",
 						  fmtId(user));
-		
+
 		ahprintf(AH, qry->data);
 
 		destroyPQExpBuffer(qry);
@@ -2304,9 +2305,9 @@ ReadHead(ArchiveHandle *AH)
 			write_msg(modulename, "WARNING: archive was made on a machine with larger integers, some operations may fail\n");
 
 		if (AH->version >= K_VERS_1_7)
-		    AH->offSize = (*AH->ReadBytePtr) (AH);
+			AH->offSize = (*AH->ReadBytePtr) (AH);
 		else
-		    AH->offSize = AH->intSize;
+			AH->offSize = AH->intSize;
 
 		fmt = (*AH->ReadBytePtr) (AH);
 
@@ -2363,10 +2364,11 @@ checkSeek(FILE *fp)
 	if (fseeko(fp, 0, SEEK_CUR) != 0)
 		return false;
 	else if (sizeof(off_t) > sizeof(long))
-	/*
-	 *	At this point, off_t is too large for long, so we return
-	 *	based on whether an off_t version of fseek is available.
-	 */
+
+		/*
+		 * At this point, off_t is too large for long, so we return based
+		 * on whether an off_t version of fseek is available.
+		 */
 #ifdef HAVE_FSEEKO
 		return true;
 #else

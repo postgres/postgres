@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/operatorcmds.c,v 1.10 2003/08/01 00:15:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/operatorcmds.c,v 1.11 2003/08/04 00:43:16 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -103,7 +103,7 @@ DefineOperator(List *names, List *parameters)
 			if (typeName1->setof)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-						 errmsg("setof type not allowed for operator argument")));
+				errmsg("setof type not allowed for operator argument")));
 		}
 		else if (strcasecmp(defel->defname, "rightarg") == 0)
 		{
@@ -111,7 +111,7 @@ DefineOperator(List *names, List *parameters)
 			if (typeName2->setof)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-						 errmsg("setof type not allowed for operator argument")));
+				errmsg("setof type not allowed for operator argument")));
 		}
 		else if (strcasecmp(defel->defname, "procedure") == 0)
 			functionName = defGetQualifiedName(defel);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.91 2003/07/30 19:48:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.92 2003/08/04 00:43:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,13 +104,13 @@ static double cbrt(double x);
 
 
 /* Configurable GUC parameter */
-int		extra_float_digits = 0;	/* Added to DBL_DIG or FLT_DIG */
+int			extra_float_digits = 0;		/* Added to DBL_DIG or FLT_DIG */
 
 
 static void CheckFloat4Val(double val);
 static void CheckFloat8Val(double val);
-static int float4_cmp_internal(float4 a, float4 b);
-static int float8_cmp_internal(float8 a, float8 b);
+static int	float4_cmp_internal(float4 a, float4 b);
+static int	float8_cmp_internal(float8 a, float8 b);
 
 
 /*
@@ -198,7 +198,7 @@ float4in(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("invalid input syntax for float4: \"%s\"",
-							 num)));
+							num)));
 	}
 	else
 	{

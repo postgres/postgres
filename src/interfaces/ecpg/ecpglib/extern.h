@@ -5,7 +5,11 @@
 #include "libpq-fe.h"
 #include "sqlca.h"
 
-enum COMPAT_MODE { ECPG_COMPAT_PGSQL = 0, ECPG_COMPAT_INFORMIX, ECPG_COMPAT_INFORMIX_SE};
+enum COMPAT_MODE
+{
+	ECPG_COMPAT_PGSQL = 0, ECPG_COMPAT_INFORMIX, ECPG_COMPAT_INFORMIX_SE
+};
+
 #define INFORMIX_MODE(X) ((X) == ECPG_COMPAT_INFORMIX || (X) == ECPG_COMPAT_INFORMIX_SE)
 
 /* Here are some methods used by the lib. */
@@ -51,7 +55,7 @@ struct statement
 	char	   *command;
 	struct connection *connection;
 	enum COMPAT_MODE compat;
-	bool force_indicator;
+	bool		force_indicator;
 	struct variable *inlist;
 	struct variable *outlist;
 };
@@ -109,7 +113,7 @@ bool ECPGstore_result(const PGresult *results, int act_field,
 #define ECPG_SQLSTATE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION	"08001"
 #define ECPG_SQLSTATE_CONNECTION_DOES_NOT_EXIST		"08003"
 #define ECPG_SQLSTATE_TRANSACTION_RESOLUTION_UNKNOWN	"08007"
-#define ECPG_SQLSTATE_CARDINALITY_VIOLATION	"21000"
+#define ECPG_SQLSTATE_CARDINALITY_VIOLATION "21000"
 #define ECPG_SQLSTATE_NULL_VALUE_NO_INDICATOR_PARAMETER "22002"
 #define ECPG_SQLSTATE_ACTIVE_SQL_TRANSACTION		"25001"
 #define ECPG_SQLSTATE_NO_ACTIVE_SQL_TRANSACTION		"25P01"
@@ -124,4 +128,4 @@ bool ECPGstore_result(const PGresult *results, int act_field,
 #define ECPG_SQLSTATE_ECPG_INTERNAL_ERROR	"YE000"
 #define ECPG_SQLSTATE_ECPG_OUT_OF_MEMORY	"YE001"
 
-#endif /* _ECPG_LIB_EXTERN_H */
+#endif   /* _ECPG_LIB_EXTERN_H */

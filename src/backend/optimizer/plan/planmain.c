@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.76 2003/07/25 00:01:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.77 2003/08/04 00:43:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@
  *	  which may involve joins but not any fancier features.
  *
  * Since query_planner does not handle the toplevel processing (grouping,
- * sorting, etc) it cannot select the best path by itself.  It selects
+ * sorting, etc) it cannot select the best path by itself.	It selects
  * two paths: the cheapest path that produces all the required tuples,
  * independent of any ordering considerations, and the cheapest path that
  * produces the expected fraction of the required tuples in the required
@@ -84,7 +84,7 @@ query_planner(Query *root, List *tlist, double tuple_fraction,
 	if (root->jointree->fromlist == NIL)
 	{
 		*cheapest_path = (Path *) create_result_path(NULL, NULL,
-											(List *) root->jointree->quals);
+										 (List *) root->jointree->quals);
 		*sorted_path = NULL;
 		return;
 	}
@@ -125,9 +125,9 @@ query_planner(Query *root, List *tlist, double tuple_fraction,
 	 * relations.  We also build lists of equijoined keys for pathkey
 	 * construction.
 	 *
-	 * Note: all subplan nodes will have "flat" (var-only) tlists.
-	 * This implies that all expression evaluations are done at the root of
-	 * the plan tree.  Once upon a time there was code to try to push
+	 * Note: all subplan nodes will have "flat" (var-only) tlists. This
+	 * implies that all expression evaluations are done at the root of the
+	 * plan tree.  Once upon a time there was code to try to push
 	 * expensive function calls down to lower plan nodes, but that's dead
 	 * code and has been for a long time...
 	 */
@@ -223,7 +223,8 @@ query_planner(Query *root, List *tlist, double tuple_fraction,
 	}
 
 	/*
-	 * If we have constant quals, add a toplevel Result step to process them.
+	 * If we have constant quals, add a toplevel Result step to process
+	 * them.
 	 */
 	if (constant_quals)
 	{

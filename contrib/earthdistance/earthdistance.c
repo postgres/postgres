@@ -6,8 +6,8 @@
 
 
 /* Earth's radius is in statute miles. */
-const double	EARTH_RADIUS = 3958.747716;
-const double	TWO_PI = 2.0 * M_PI;
+const double EARTH_RADIUS = 3958.747716;
+const double TWO_PI = 2.0 * M_PI;
 
 double	   *geo_distance(Point *pt1, Point *pt2);
 
@@ -66,10 +66,11 @@ geo_distance(Point *pt1, Point *pt2)
 	if (longdiff > M_PI)
 		longdiff = TWO_PI - longdiff;
 
-        sino = sqrt(sin(fabs(lat1-lat2)/2.)*sin(fabs(lat1-lat2)/2.) +
-                cos(lat1) * cos(lat2) * sin(longdiff/2.)*sin(longdiff/2.));
-        if (sino > 1.) sino = 1.;
-        *resultp = 2. * EARTH_RADIUS * asin(sino);
+	sino = sqrt(sin(fabs(lat1 - lat2) / 2.) * sin(fabs(lat1 - lat2) / 2.) +
+		cos(lat1) * cos(lat2) * sin(longdiff / 2.) * sin(longdiff / 2.));
+	if (sino > 1.)
+		sino = 1.;
+	*resultp = 2. * EARTH_RADIUS * asin(sino);
 
 	return resultp;
 }

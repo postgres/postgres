@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.64 2003/07/27 04:53:05 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.65 2003/08/04 00:43:25 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2002, PostgreSQL Global Development Group
@@ -279,15 +279,15 @@ typedef struct
 #define NUM_F_DECIMAL		(1 << 1)
 #define NUM_F_LDECIMAL		(1 << 2)
 #define NUM_F_ZERO		(1 << 3)
-#define NUM_F_BLANK 		(1 << 4)
+#define NUM_F_BLANK			(1 << 4)
 #define NUM_F_FILLMODE		(1 << 5)
-#define NUM_F_LSIGN 		(1 << 6)
+#define NUM_F_LSIGN			(1 << 6)
 #define NUM_F_BRACKET		(1 << 7)
-#define NUM_F_MINUS 		(1 << 8)
+#define NUM_F_MINUS			(1 << 8)
 #define NUM_F_PLUS		(1 << 9)
-#define NUM_F_ROMAN 		(1 << 10)
+#define NUM_F_ROMAN			(1 << 10)
 #define NUM_F_MULTI		(1 << 11)
-#define NUM_F_PLUS_POST 	(1 << 12)
+#define NUM_F_PLUS_POST		(1 << 12)
 #define NUM_F_MINUS_POST	(1 << 13)
 
 #define NUM_LSIGN_PRE	-1
@@ -1018,7 +1018,7 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 				NUM_cache_remove(last_NUMCacheEntry);
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("cannot use \"V\" and decimal point together")));
+				 errmsg("cannot use \"V\" and decimal point together")));
 			}
 			num->flag |= NUM_F_DECIMAL;
 			break;
@@ -1123,7 +1123,7 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 				NUM_cache_remove(last_NUMCacheEntry);
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("cannot use \"V\" and decimal point together")));
+				 errmsg("cannot use \"V\" and decimal point together")));
 			}
 			num->flag |= NUM_F_MULTI;
 			break;
@@ -3072,7 +3072,7 @@ to_timestamp(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 					 errmsg("inconsistent use of year %04d and \"BC\"",
-							 tm.tm_year)));
+							tm.tm_year)));
 	}
 
 	if (tmfc.j)
@@ -3106,7 +3106,7 @@ to_timestamp(PG_FUNCTION_ARGS)
 		if (!tm.tm_year)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-					 errmsg("cannot convert yday without year information")));
+				errmsg("cannot convert yday without year information")));
 
 		y = ysum[isleap(tm.tm_year)];
 
@@ -3600,7 +3600,7 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 		 * simple + - < >
 		 */
 		if (*Np->inout_p == '-' || (IS_BRACKET(Np->Num) &&
-			*Np->inout_p == '<'))
+									*Np->inout_p == '<'))
 		{
 
 			*Np->number = '-';	/* set - */
@@ -3678,7 +3678,7 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 		(IS_ZERO((_n)->Num)==FALSE && \
 		 (_n)->number == (_n)->number_p && \
 		 *(_n)->number == '0' && \
-                 (_n)->Num->post != 0)
+				 (_n)->Num->post != 0)
 
 /* ----------
  * Add digit or sign to number-string
@@ -3687,8 +3687,8 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 static void
 NUM_numpart_to_char(NUMProc *Np, int id)
 {
-	int end;
-	
+	int			end;
+
 	if (IS_ROMAN(Np->Num))
 		return;
 
@@ -3710,13 +3710,13 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 	Np->num_in = FALSE;
 
 	/*
-	 * Write sign if real number will write to output
-	 * Note: IS_PREDEC_SPACE() handle "9.9" --> " .1"
+	 * Write sign if real number will write to output Note:
+	 * IS_PREDEC_SPACE() handle "9.9" --> " .1"
 	 */
-	if (Np->sign_wrote == FALSE && 
-		(Np->num_curr >= Np->num_pre || (IS_ZERO(Np->Num) && Np->Num->zero_start == Np->num_curr )) && 
-		(IS_PREDEC_SPACE(Np)==FALSE || (Np->last_relevant && *Np->last_relevant == '.')))
-	{	
+	if (Np->sign_wrote == FALSE &&
+		(Np->num_curr >= Np->num_pre || (IS_ZERO(Np->Num) && Np->Num->zero_start == Np->num_curr)) &&
+		(IS_PREDEC_SPACE(Np) == FALSE || (Np->last_relevant && *Np->last_relevant == '.')))
+	{
 		if (IS_LSIGN(Np->Num))
 		{
 			if (Np->Num->lsign == NUM_LSIGN_PRE)
@@ -3739,7 +3739,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 		{
 			if (!IS_FILLMODE(Np->Num))
 			{
-				*Np->inout_p = ' '; /* Write + */
+				*Np->inout_p = ' ';		/* Write + */
 				++Np->inout_p;
 			}
 			Np->sign_wrote = TRUE;
@@ -3751,8 +3751,8 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 			Np->sign_wrote = TRUE;
 		}
 	}
-	 
-	
+
+
 	/*
 	 * digits / FM / Zero / Dec. point
 	 */
@@ -3796,10 +3796,11 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 					strcpy(Np->inout_p, Np->decimal);	/* Write DEC/D */
 					Np->inout_p += strlen(Np->inout_p);
 				}
+
 				/*
 				 * Ora 'n' -- FM9.9 --> 'n.'
 				 */
-				else if (IS_FILLMODE(Np->Num)  &&
+				else if (IS_FILLMODE(Np->Num) &&
 						 Np->last_relevant && *Np->last_relevant == '.')
 				{
 
@@ -3816,6 +3817,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 				if (Np->last_relevant && Np->number_p > Np->last_relevant &&
 					id != NUM_0)
 					;
+
 				/*
 				 * '0.1' -- 9.9 --> '  .1'
 				 */
@@ -3826,6 +3828,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 						*Np->inout_p = ' ';
 						++Np->inout_p;
 					}
+
 					/*
 					 * '0' -- FM9.9 --> '0.'
 					 */
@@ -3846,11 +3849,11 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 		}
 
 		end = Np->num_count + (Np->num_pre ? 1 : 0) + (IS_DECIMAL(Np->Num) ? 1 : 0);
-		
+
 		if (Np->last_relevant && Np->last_relevant == Np->number_p)
 			end = Np->num_curr;
-		
-		if (Np->num_curr+1 == end)
+
+		if (Np->num_curr + 1 == end)
 		{
 			if (Np->sign_wrote == TRUE && IS_BRACKET(Np->Num))
 			{
@@ -3895,7 +3898,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 
 	if (Np->Num->zero_start)
 		--Np->Num->zero_start;
-	
+
 	/*
 	 * Roman correction
 	 */
@@ -3923,20 +3926,18 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 	 * Sign
 	 */
 	if (type == FROM_CHAR)
-	{
 		Np->sign = FALSE;
-	}
 	else
 	{
 		Np->sign = sign;
-		
+
 		/* MI/PL/SG - write sign itself and not in number */
 		if (IS_PLUS(Np->Num) || IS_MINUS(Np->Num))
 		{
-			if (IS_PLUS(Np->Num) && IS_MINUS(Np->Num)==FALSE)
-				Np->sign_wrote = FALSE;		/* need sign */
+			if (IS_PLUS(Np->Num) && IS_MINUS(Np->Num) == FALSE)
+				Np->sign_wrote = FALSE; /* need sign */
 			else
-				Np->sign_wrote = TRUE;		/* needn't sign */
+				Np->sign_wrote = TRUE;	/* needn't sign */
 		}
 		else
 		{
@@ -3950,10 +3951,10 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 			else if (Np->sign != '+' && IS_PLUS(Np->Num))
 				Np->Num->flag &= ~NUM_F_PLUS;
 
-			if (Np->sign == '+' && IS_FILLMODE(Np->Num) && IS_LSIGN(Np->Num)==FALSE)
-				Np->sign_wrote = TRUE;		/* needn't sign */
+			if (Np->sign == '+' && IS_FILLMODE(Np->Num) && IS_LSIGN(Np->Num) == FALSE)
+				Np->sign_wrote = TRUE;	/* needn't sign */
 			else
-				Np->sign_wrote = FALSE;		/* need sign */
+				Np->sign_wrote = FALSE; /* need sign */
 
 			if (Np->Num->lsign == NUM_LSIGN_PRE && Np->Num->pre == Np->Num->pre_lsign_num)
 				Np->Num->lsign = NUM_LSIGN_POST;
@@ -3973,12 +3974,12 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 		{
 			if (IS_DECIMAL(Np->Num))
 				Np->last_relevant = get_last_relevant_decnum(
-								 Np->number +
+															 Np->number +
 								 ((Np->Num->zero_end - Np->num_pre > 0) ?
 								  Np->Num->zero_end - Np->num_pre : 0));
 		}
 
-		if (Np->sign_wrote==FALSE && Np->num_pre == 0)
+		if (Np->sign_wrote == FALSE && Np->num_pre == 0)
 			++Np->num_count;
 	}
 	else
@@ -4010,7 +4011,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 		 IS_MINUS(Np->Num) ? "Yes" : "No",
 		 IS_FILLMODE(Np->Num) ? "Yes" : "No",
 		 IS_ROMAN(Np->Num) ? "Yes" : "No"
-	);
+		);
 #endif
 
 	/*

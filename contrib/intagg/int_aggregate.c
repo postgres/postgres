@@ -132,9 +132,9 @@ ShrinkPGArray(PGARRAY * p)
 
 		/* use current transaction context */
 		pnew = palloc(cb);
+
 		/*
-		 * Fix up the fields in the new structure, so Postgres
-		 * understands
+		 * Fix up the fields in the new structure, so Postgres understands
 		 */
 		memcpy(pnew, p, cb);
 		pnew->a.size = cb;
@@ -194,7 +194,7 @@ int_enum(PG_FUNCTION_ARGS)
 	if (!rsi || !IsA(rsi, ReturnSetInfo))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("int_enum called in context that cannot accept a set")));
+		 errmsg("int_enum called in context that cannot accept a set")));
 
 	if (!p)
 	{

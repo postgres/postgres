@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pathnode.h,v 1.50 2003/02/15 20:12:41 tgl Exp $
+ * $Id: pathnode.h,v 1.51 2003/08/04 00:43:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,10 +37,10 @@ extern TidPath *create_tidscan_path(Query *root, RelOptInfo *rel,
 					List *tideval);
 extern AppendPath *create_append_path(RelOptInfo *rel, List *subpaths);
 extern ResultPath *create_result_path(RelOptInfo *rel, Path *subpath,
-									  List *constantqual);
+				   List *constantqual);
 extern MaterialPath *create_material_path(RelOptInfo *rel, Path *subpath);
 extern UniquePath *create_unique_path(Query *root, RelOptInfo *rel,
-									  Path *subpath);
+				   Path *subpath);
 extern Path *create_subqueryscan_path(RelOptInfo *rel, List *pathkeys);
 extern Path *create_functionscan_path(Query *root, RelOptInfo *rel);
 
@@ -78,10 +78,10 @@ extern void build_base_rel(Query *root, int relid);
 extern RelOptInfo *build_other_rel(Query *root, int relid);
 extern RelOptInfo *find_base_rel(Query *root, int relid);
 extern RelOptInfo *build_join_rel(Query *root,
-								  Relids joinrelids,
-								  RelOptInfo *outer_rel,
-								  RelOptInfo *inner_rel,
-								  JoinType jointype,
-								  List **restrictlist_ptr);
+			   Relids joinrelids,
+			   RelOptInfo *outer_rel,
+			   RelOptInfo *inner_rel,
+			   JoinType jointype,
+			   List **restrictlist_ptr);
 
 #endif   /* PATHNODE_H */

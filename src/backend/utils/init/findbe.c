@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.35 2003/07/25 20:17:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.36 2003/08/04 00:43:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@ static int
 ValidateBinary(char *path)
 {
 	struct stat buf;
+
 #ifndef WIN32
 	uid_t		euid;
 	struct group *gp;
@@ -85,9 +86,9 @@ ValidateBinary(char *path)
 	 * dynamic loading).
 	 */
 #ifdef WIN32
-		is_r = buf.st_mode & S_IRUSR;
-		is_x = buf.st_mode & S_IXUSR;
-		return is_x ? (is_r ? 0 : -2) : -1;
+	is_r = buf.st_mode & S_IRUSR;
+	is_x = buf.st_mode & S_IXUSR;
+	return is_x ? (is_r ? 0 : -2) : -1;
 #else
 	euid = geteuid();
 	if (euid == buf.st_uid)

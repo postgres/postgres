@@ -6,7 +6,7 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.10 2003/07/23 08:47:25 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.11 2003/08/04 00:43:27 momjian Exp $
  */
 #include "postgres.h"
 
@@ -27,17 +27,17 @@ usage(const char *progname)
 {
 	printf(_("%s displays control information of a PostgreSQL database cluster.\n\n"), progname);
 	printf
-	(
-		_(
-			"Usage:\n"
-			"  %s [OPTION]\n\n"
-			"Options:\n"
-			"  DATADIR        show cluster control information for DATADIR\n"
-			"  --help         show this help, then exit\n"
-			"  --version      output version information, then exit\n"
-		),
-		progname
-	);
+		(
+		 _(
+		   "Usage:\n"
+		   "  %s [OPTION]\n\n"
+		   "Options:\n"
+		"  DATADIR        show cluster control information for DATADIR\n"
+		   "  --help         show this help, then exit\n"
+		   "  --version      output version information, then exit\n"
+		   ),
+		 progname
+		);
 	printf(_("\nIf no data directory is specified, the environment variable PGDATA\nis used.\n\n"));
 	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
 }

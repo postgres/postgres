@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.76 2003/08/01 08:21:04 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.77 2003/08/04 00:43:33 momjian Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -23,7 +23,7 @@ int			ret_value = 0,
 			system_includes = false,
 			force_indicator = true;
 
-enum COMPAT_MODE	compat = ECPG_COMPAT_PGSQL;
+enum COMPAT_MODE compat = ECPG_COMPAT_PGSQL;
 
 struct _include_path *include_paths = NULL;
 struct cursor *cur = NULL;
@@ -49,7 +49,7 @@ help(const char *progname)
 		   "                 \"INFORMIX\"\n"
 		   "                 \"INFORMIX_SE\"\n");
 	printf("  -r <option>    specify runtime behaviour\n"
-	           "		     option may be only \"no_indicator\" at the moment\n");	
+		   "		     option may be only \"no_indicator\" at the moment\n");
 	printf("  -D SYMBOL      define SYMBOL\n");
 	printf("  -I DIRECTORY   search DIRECTORY for include files\n");
 	printf("  -o OUTFILE     write result to OUTFILE\n");
@@ -65,7 +65,8 @@ help(const char *progname)
 static void
 add_include_path(char *path)
 {
-	struct _include_path *ip = include_paths, *new;
+	struct _include_path *ip = include_paths,
+			   *new;
 
 	new = mm_alloc(sizeof(struct _include_path));
 	new->path = path;
@@ -75,7 +76,7 @@ add_include_path(char *path)
 		include_paths = new;
 	else
 	{
-		for (;ip->next != NULL; ip=ip->next);
+		for (; ip->next != NULL; ip = ip->next);
 		ip->next = new;
 	}
 }
@@ -84,21 +85,22 @@ static void
 add_preprocessor_define(char *define)
 {
 	struct _defines *pd = defines;
-	char *ptr, *define_copy = mm_strdup(define);
-	
+	char	   *ptr,
+			   *define_copy = mm_strdup(define);
+
 	defines = mm_alloc(sizeof(struct _defines));
-	
+
 	/* look for = sign */
 	ptr = strchr(define_copy, '=');
 	if (ptr != NULL)
 	{
-		char *tmp;
-		
+		char	   *tmp;
+
 		/* symbol gets a value */
-		for (tmp=ptr-1; *tmp == ' '; tmp--);
+		for (tmp = ptr - 1; *tmp == ' '; tmp--);
 		tmp[1] = '\0';
 		defines->old = define_copy;
-		defines->new = ptr+1;
+		defines->new = ptr + 1;
 	}
 	else
 	{
@@ -141,11 +143,11 @@ main(int argc, char *const argv[])
 		switch (c)
 		{
 			case 'o':
-				if (strcmp(optarg, "-") == 0) 
+				if (strcmp(optarg, "-") == 0)
 					yyout = stdout;
 				else
 					yyout = fopen(optarg, PG_BINARY_W);
-				
+
 				if (yyout == NULL)
 					perror(optarg);
 				else
@@ -179,7 +181,7 @@ main(int argc, char *const argv[])
 				{
 					fprintf(stderr, "Try '%s --help' for more information.\n", argv[0]);
 					return ILLEGAL_OPTION;
-				}				
+				}
 				break;
 			case 'r':
 				if (strcmp(optarg, "no_indicator") == 0)
@@ -240,7 +242,7 @@ main(int argc, char *const argv[])
 			/* If argv[fnr] is "-" we have to read from stdin */
 			if (strcmp(argv[fnr], "-") == 0)
 			{
-				input_filename = mm_alloc(strlen("stdin")+1);
+				input_filename = mm_alloc(strlen("stdin") + 1);
 				strcpy(input_filename, "stdin");
 				yyin = stdin;
 			}
@@ -265,7 +267,7 @@ main(int argc, char *const argv[])
 					ptr2ext[3] = 'c';
 					ptr2ext[4] = '\0';
 				}
-				
+
 				yyin = fopen(input_filename, PG_BINARY_R);
 			}
 
@@ -377,7 +379,7 @@ main(int argc, char *const argv[])
 
 				/* finally the actual connection */
 				connection = NULL;
-				
+
 				/* initialize lex */
 				lex_init();
 
@@ -387,7 +389,7 @@ main(int argc, char *const argv[])
 				/* add some compatibility headers */
 				if (INFORMIX_MODE)
 					fprintf(yyout, "/* Needed for informix compatibility */\n#include <ecpg_informix.h>\n");
-				
+
 				fprintf(yyout, "/* End of automatic include section */\n");
 
 				/* and parse the source */

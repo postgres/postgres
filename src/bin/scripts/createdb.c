@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/bin/scripts/createdb.c,v 1.4 2003/07/23 08:47:41 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/scripts/createdb.c,v 1.5 2003/08/04 00:43:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,7 +115,7 @@ main(int argc, char *argv[])
 			comment = argv[optind + 1];
 			break;
 		default:
-			fprintf(stderr,	_("%s: too many command-line arguments (first is \"%s\")\n"),
+			fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
 					progname, argv[optind + 2]);
 			fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 			exit(1);

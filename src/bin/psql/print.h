@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.h,v 1.17 2003/06/12 07:52:51 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.h,v 1.18 2003/08/04 00:43:29 momjian Exp $
  */
 #ifndef PRINT_H
 #define PRINT_H
@@ -32,8 +32,7 @@ typedef struct _printTableOpt
 	bool		expanded;		/* expanded/vertical output (if supported
 								 * by output format) */
 	unsigned short int pager;	/* use pager for output (if to stdout and
-								 * stdout is a tty)
- 								 * 0=off 1=on 2=always */
+								 * stdout is a tty) 0=off 1=on 2=always */
 	bool		tuples_only;	/* don't output headers, row counts, etc. */
 	unsigned short int border;	/* Print a border around the table.
 								 * 0=none, 1=dividing lines, 2=full */

@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.24 2003/07/23 08:47:30 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.25 2003/08/04 00:43:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,7 +248,7 @@ _WriteExtraToc(ArchiveHandle *AH, TocEntry *te)
 static void
 _ReadExtraToc(ArchiveHandle *AH, TocEntry *te)
 {
-	int	junk;
+	int			junk;
 	lclTocEntry *ctx = (lclTocEntry *) te->formatData;
 
 	if (ctx == NULL)
@@ -257,11 +257,11 @@ _ReadExtraToc(ArchiveHandle *AH, TocEntry *te)
 		te->formatData = (void *) ctx;
 	}
 
-	ctx->dataState = ReadOffset(AH, &(ctx->dataPos) );
+	ctx->dataState = ReadOffset(AH, &(ctx->dataPos));
 
 	/*
-	 * Prior to V1.7 (pg7.3), we dumped the data size as an int
-	 * now we don't dump it at all.
+	 * Prior to V1.7 (pg7.3), we dumped the data size as an int now we
+	 * don't dump it at all.
 	 */
 	if (AH->version < K_VERS_1_7)
 		junk = ReadInt(AH);
@@ -551,7 +551,7 @@ _PrintData(ArchiveHandle *AH)
 		cnt = fread(in, 1, blkLen, AH->FH);
 		if (cnt != blkLen)
 			die_horribly(AH, modulename,
-				   "could not read data block -- expected %lu, got %lu\n",
+				  "could not read data block -- expected %lu, got %lu\n",
 						 (unsigned long) blkLen, (unsigned long) cnt);
 
 		ctx->filePos += blkLen;
@@ -674,7 +674,7 @@ _skipData(ArchiveHandle *AH)
 		cnt = fread(in, 1, blkLen, AH->FH);
 		if (cnt != blkLen)
 			die_horribly(AH, modulename,
-				   "could not read data block -- expected %lu, got %lu\n",
+				  "could not read data block -- expected %lu, got %lu\n",
 						 (unsigned long) blkLen, (unsigned long) cnt);
 
 		ctx->filePos += blkLen;
@@ -841,10 +841,10 @@ _getFilePos(ArchiveHandle *AH, lclContext *ctx)
 		if (pos != ctx->filePos)
 		{
 			write_msg(modulename, "WARNING: ftell mismatch with expected position -- ftell used\n");
+
 			/*
-			 * Prior to 1.7 (pg7.3) we relied on the internally maintained pointer.
-			 * Now we rely on off_t always.
-			 * pos = ctx->filePos;
+			 * Prior to 1.7 (pg7.3) we relied on the internally maintained
+			 * pointer. Now we rely on off_t always. pos = ctx->filePos;
 			 */
 		}
 	}

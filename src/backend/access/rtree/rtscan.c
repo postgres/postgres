@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.45 2003/07/28 00:09:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.46 2003/08/04 00:43:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,10 +109,10 @@ rtrescan(PG_FUNCTION_ARGS)
 				s->numberOfKeys * sizeof(ScanKeyData));
 
 		/*
-		 * Scans on internal pages use different operators than they
-		 * do on leaf pages.  For example, if the user wants all boxes
-		 * that exactly match (x1,y1,x2,y2), then on internal pages we
-		 * need to find all boxes that contain (x1,y1,x2,y2).
+		 * Scans on internal pages use different operators than they do on
+		 * leaf pages.	For example, if the user wants all boxes that
+		 * exactly match (x1,y1,x2,y2), then on internal pages we need to
+		 * find all boxes that contain (x1,y1,x2,y2).
 		 */
 		for (i = 0; i < s->numberOfKeys; i++)
 		{

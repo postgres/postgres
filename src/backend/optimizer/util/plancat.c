@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.85 2003/07/25 00:01:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.86 2003/08/04 00:43:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,8 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 	rel->max_attr = RelationGetNumberOfAttributes(relation);
 
 	/*
-	 * Make list of indexes.  Ignore indexes on system catalogs if told to.
+	 * Make list of indexes.  Ignore indexes on system catalogs if told
+	 * to.
 	 */
 	if (IsIgnoringSystemIndexes() && IsSystemClass(relation->rd_rel))
 		hasindex = false;
@@ -99,8 +100,8 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 			info->ncolumns = ncolumns = index->indnatts;
 
 			/*
-			 * Need to make classlist and ordering arrays large enough to put
-			 * a terminating 0 at the end of each one.
+			 * Need to make classlist and ordering arrays large enough to
+			 * put a terminating 0 at the end of each one.
 			 */
 			info->indexkeys = (int *) palloc(sizeof(int) * ncolumns);
 			info->classlist = (Oid *) palloc0(sizeof(Oid) * (ncolumns + 1));
@@ -118,7 +119,8 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 			info->amcostestimate = index_cost_estimator(indexRelation);
 
 			/*
-			 * Fetch the ordering operators associated with the index, if any.
+			 * Fetch the ordering operators associated with the index, if
+			 * any.
 			 */
 			amorderstrategy = indexRelation->rd_am->amorderstrategy;
 			if (amorderstrategy != 0)
@@ -135,8 +137,8 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 			/*
 			 * Fetch the index expressions and predicate, if any.  We must
 			 * modify the copies we obtain from the relcache to have the
-			 * correct varno for the parent relation, so that they match up
-			 * correctly against qual clauses.
+			 * correct varno for the parent relation, so that they match
+			 * up correctly against qual clauses.
 			 */
 			info->indexprs = RelationGetIndexExpressions(indexRelation);
 			info->indpred = RelationGetIndexPredicate(indexRelation);
@@ -177,7 +179,7 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
  * Exception: if there are any dropped columns, we punt and return NIL.
  * Ideally we would like to handle the dropped-column case too.  However this
  * creates problems for ExecTypeFromTL, which may be asked to build a tupdesc
- * for a tlist that includes vars of no-longer-existent types.  In theory we
+ * for a tlist that includes vars of no-longer-existent types.	In theory we
  * could dig out the required info from the pg_attribute entries of the
  * relation, but that data is not readily available to ExecTypeFromTL.
  * For now, we don't apply the physical-tlist optimization when there are
@@ -389,11 +391,11 @@ has_unique_index(RelOptInfo *rel, AttrNumber attno)
 		IndexOptInfo *index = (IndexOptInfo *) lfirst(ilist);
 
 		/*
-		 * Note: ignore partial indexes, since they don't allow us to conclude
-		 * that all attr values are distinct.  We don't take any interest in
-		 * expressional indexes either. Also, a multicolumn unique index
-		 * doesn't allow us to conclude that just the specified attr is
-		 * unique.
+		 * Note: ignore partial indexes, since they don't allow us to
+		 * conclude that all attr values are distinct.	We don't take any
+		 * interest in expressional indexes either. Also, a multicolumn
+		 * unique index doesn't allow us to conclude that just the
+		 * specified attr is unique.
 		 */
 		if (index->unique &&
 			index->ncolumns == 1 &&

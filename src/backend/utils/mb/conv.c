@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conv.c,v 1.46 2003/07/25 20:17:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conv.c,v 1.47 2003/08/04 00:43:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -313,7 +313,7 @@ compare1(const void *p1, const void *p2)
 
 	v1 = *(unsigned int *) p1;
 	v2 = ((pg_utf_to_local *) p2)->utf;
-	return (v1 > v2)?1:((v1 == v2)?0:-1);
+	return (v1 > v2) ? 1 : ((v1 == v2) ? 0 : -1);
 }
 
 /*
@@ -328,7 +328,7 @@ compare2(const void *p1, const void *p2)
 
 	v1 = *(unsigned int *) p1;
 	v2 = ((pg_local_to_utf *) p2)->code;
-	return (v1 > v2)?1:((v1 == v2)?0:-1);
+	return (v1 > v2) ? 1 : ((v1 == v2) ? 0 : -1);
 }
 
 /*
@@ -373,8 +373,8 @@ UtfToLocal(unsigned char *utf, unsigned char *iso,
 		{
 			ereport(WARNING,
 					(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
-					 errmsg("ignoring unconvertible UTF-8 character 0x%04x",
-							iutf)));
+				  errmsg("ignoring unconvertible UTF-8 character 0x%04x",
+						 iutf)));
 			continue;
 		}
 		if (p->code & 0xff000000)

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.77 2003/07/29 22:18:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.78 2003/08/04 00:43:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,8 +64,8 @@ _bt_search(Relation rel, int keysz, ScanKey scankey,
 
 		/*
 		 * Race -- the page we just grabbed may have split since we read
-		 * its pointer in the parent (or metapage).  If it has, we may need
-		 * to move right to its new sibling.  Do that.
+		 * its pointer in the parent (or metapage).  If it has, we may
+		 * need to move right to its new sibling.  Do that.
 		 */
 		*bufP = _bt_moveright(rel, *bufP, keysz, scankey, BT_READ);
 
@@ -87,14 +87,14 @@ _bt_search(Relation rel, int keysz, ScanKey scankey,
 		par_blkno = BufferGetBlockNumber(*bufP);
 
 		/*
-		 * We need to save the location of the index entry we chose in
-		 * the parent page on a stack. In case we split the tree, we'll
-		 * use the stack to work back up to the parent page.  We also save
-		 * the actual downlink (TID) to uniquely identify the index entry,
-		 * in case it moves right while we're working lower in the
-		 * tree.  See the paper by Lehman and Yao for how this is detected
-		 * and handled. (We use the child link to disambiguate duplicate
-		 * keys in the index -- Lehman and Yao disallow duplicate keys.)
+		 * We need to save the location of the index entry we chose in the
+		 * parent page on a stack. In case we split the tree, we'll use
+		 * the stack to work back up to the parent page.  We also save the
+		 * actual downlink (TID) to uniquely identify the index entry, in
+		 * case it moves right while we're working lower in the tree.  See
+		 * the paper by Lehman and Yao for how this is detected and
+		 * handled. (We use the child link to disambiguate duplicate keys
+		 * in the index -- Lehman and Yao disallow duplicate keys.)
 		 */
 		new_stack = (BTStack) palloc(sizeof(BTStackData));
 		new_stack->bts_blkno = par_blkno;
@@ -151,8 +151,8 @@ _bt_moveright(Relation rel,
 	 * might not need to move right; have to scan the page first anyway.)
 	 * It could even have split more than once, so scan as far as needed.
 	 *
-	 * We also have to move right if we followed a link that brought us to
-	 * a dead page.
+	 * We also have to move right if we followed a link that brought us to a
+	 * dead page.
 	 */
 	while (!P_RIGHTMOST(opaque) &&
 		   (P_IGNORE(opaque) ||
@@ -599,8 +599,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	/*
 	 * At this point we are positioned at the first item >= scan key, or
 	 * possibly at the end of a page on which all the existing items are
-	 * less than the scan key and we know that everything on later
-	 * pages is greater than or equal to scan key.
+	 * less than the scan key and we know that everything on later pages
+	 * is greater than or equal to scan key.
 	 *
 	 * We could step forward in the latter case, but that'd be a waste of
 	 * time if we want to scan backwards.  So, it's now time to examine
@@ -851,7 +851,8 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 			}
 		}
 	}
-	else						/* backwards scan */
+	else
+/* backwards scan */
 	{
 		if (offnum > P_FIRSTDATAKEY(opaque))
 			offnum = OffsetNumberPrev(offnum);
@@ -860,9 +861,9 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 			/*
 			 * Walk left to the next page with data.  This is much more
 			 * complex than the walk-right case because of the possibility
-			 * that the page to our left splits while we are in flight to it,
-			 * plus the possibility that the page we were on gets deleted
-			 * after we leave it.  See nbtree/README for details.
+			 * that the page to our left splits while we are in flight to
+			 * it, plus the possibility that the page we were on gets
+			 * deleted after we leave it.  See nbtree/README for details.
 			 */
 			for (;;)
 			{
@@ -877,10 +878,11 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 				}
 				page = BufferGetPage(*bufP);
 				opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+
 				/*
 				 * Okay, we managed to move left to a non-deleted page.
-				 * Done if it's not half-dead and not empty.  Else loop back
-				 * and do it all again.
+				 * Done if it's not half-dead and not empty.  Else loop
+				 * back and do it all again.
 				 */
 				if (!P_IGNORE(opaque))
 				{
@@ -946,17 +948,18 @@ _bt_walk_left(Relation rel, Buffer buf)
 		buf = _bt_getbuf(rel, blkno, BT_READ);
 		page = BufferGetPage(buf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+
 		/*
-		 * If this isn't the page we want, walk right till we find
-		 * what we want --- but go no more than four hops (an
-		 * arbitrary limit).  If we don't find the correct page by then,
-		 * the most likely bet is that the original page got deleted
-		 * and isn't in the sibling chain at all anymore, not that its
-		 * left sibling got split more than four times.
+		 * If this isn't the page we want, walk right till we find what we
+		 * want --- but go no more than four hops (an arbitrary limit).
+		 * If we don't find the correct page by then, the most likely bet
+		 * is that the original page got deleted and isn't in the sibling
+		 * chain at all anymore, not that its left sibling got split more
+		 * than four times.
 		 *
-		 * Note that it is correct to test P_ISDELETED not P_IGNORE
-		 * here, because half-dead pages are still in the sibling
-		 * chain.  Caller must reject half-dead pages if wanted.
+		 * Note that it is correct to test P_ISDELETED not P_IGNORE here,
+		 * because half-dead pages are still in the sibling chain.	Caller
+		 * must reject half-dead pages if wanted.
 		 */
 		tries = 0;
 		for (;;)
@@ -983,8 +986,8 @@ _bt_walk_left(Relation rel, Buffer buf)
 		if (P_ISDELETED(opaque))
 		{
 			/*
-			 * It was deleted.  Move right to first nondeleted page
-			 * (there must be one); that is the page that has acquired the
+			 * It was deleted.	Move right to first nondeleted page (there
+			 * must be one); that is the page that has acquired the
 			 * deleted one's keyspace, so stepping left from it will take
 			 * us where we want to be.
 			 */
@@ -1001,18 +1004,18 @@ _bt_walk_left(Relation rel, Buffer buf)
 				if (!P_ISDELETED(opaque))
 					break;
 			}
+
 			/*
-			 * Now return to top of loop, resetting obknum to
-			 * point to this nondeleted page, and try again.
+			 * Now return to top of loop, resetting obknum to point to
+			 * this nondeleted page, and try again.
 			 */
 		}
 		else
 		{
 			/*
-			 * It wasn't deleted; the explanation had better be
-			 * that the page to the left got split or deleted.
-			 * Without this check, we'd go into an infinite loop
-			 * if there's anything wrong.
+			 * It wasn't deleted; the explanation had better be that the
+			 * page to the left got split or deleted. Without this check,
+			 * we'd go into an infinite loop if there's anything wrong.
 			 */
 			if (opaque->btpo_prev == lblkno)
 				elog(ERROR, "could not find left sibling in \"%s\"",
@@ -1028,7 +1031,7 @@ _bt_walk_left(Relation rel, Buffer buf)
  * _bt_get_endpoint() -- Find the first or last page on a given tree level
  *
  * If the index is empty, we will return InvalidBuffer; any other failure
- * condition causes ereport().  We will not return a dead page.
+ * condition causes ereport().	We will not return a dead page.
  *
  * The returned buffer is pinned and read-locked.
  */
@@ -1045,8 +1048,8 @@ _bt_get_endpoint(Relation rel, uint32 level, bool rightmost)
 
 	/*
 	 * If we are looking for a leaf page, okay to descend from fast root;
-	 * otherwise better descend from true root.  (There is no point in being
-	 * smarter about intermediate levels.)
+	 * otherwise better descend from true root.  (There is no point in
+	 * being smarter about intermediate levels.)
 	 */
 	if (level == 0)
 		buf = _bt_getroot(rel, BT_READ);
@@ -1066,9 +1069,9 @@ _bt_get_endpoint(Relation rel, uint32 level, bool rightmost)
 	{
 		/*
 		 * If we landed on a deleted page, step right to find a live page
-		 * (there must be one).  Also, if we want the rightmost page,
-		 * step right if needed to get to it (this could happen if the
-		 * page split since we obtained a pointer to it).
+		 * (there must be one).  Also, if we want the rightmost page, step
+		 * right if needed to get to it (this could happen if the page
+		 * split since we obtained a pointer to it).
 		 */
 		while (P_IGNORE(opaque) ||
 			   (rightmost && !P_RIGHTMOST(opaque)))

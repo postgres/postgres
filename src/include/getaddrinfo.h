@@ -15,7 +15,7 @@
  *
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
- * $Id: getaddrinfo.h,v 1.7 2003/07/23 23:30:40 tgl Exp $
+ * $Id: getaddrinfo.h,v 1.8 2003/08/04 00:43:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,14 +30,15 @@
 
 #ifndef HAVE_STRUCT_ADDRINFO
 
-struct addrinfo {
-	int     ai_flags;
-	int     ai_family;
-	int     ai_socktype;
-	int     ai_protocol;
-	size_t  ai_addrlen;
+struct addrinfo
+{
+	int			ai_flags;
+	int			ai_family;
+	int			ai_socktype;
+	int			ai_protocol;
+	size_t		ai_addrlen;
 	struct sockaddr *ai_addr;
-	char   *ai_canonname;
+	char	   *ai_canonname;
 	struct addrinfo *ai_next;
 };
 
@@ -56,10 +57,9 @@ struct addrinfo {
 
 #define NI_NUMERICHOST	1
 #define NI_NUMERICSERV	2
+#endif   /* HAVE_STRUCT_ADDRINFO */
 
-#endif /* HAVE_STRUCT_ADDRINFO */
-
-#ifndef	NI_MAXHOST
+#ifndef NI_MAXHOST
 #define NI_MAXHOST	1025
 #define NI_MAXSERV	32
 #endif
@@ -87,16 +87,15 @@ struct addrinfo {
 #ifdef getnameinfo
 #undef getnameinfo
 #endif
-#define	getnameinfo pg_getnameinfo
+#define getnameinfo pg_getnameinfo
 
 extern int getaddrinfo(const char *node, const char *service,
-					   const struct addrinfo *hints, struct addrinfo **res);
-extern void freeaddrinfo(struct addrinfo *res);
+			const struct addrinfo * hints, struct addrinfo ** res);
+extern void freeaddrinfo(struct addrinfo * res);
 extern const char *gai_strerror(int errcode);
-extern int getnameinfo(const struct sockaddr *sa, int salen,
+extern int getnameinfo(const struct sockaddr * sa, int salen,
 			char *node, int nodelen,
 			char *service, int servicelen, int flags);
+#endif   /* HAVE_GETADDRINFO */
 
-#endif /* HAVE_GETADDRINFO */
-
-#endif /* GETADDRINFO_H */
+#endif   /* GETADDRINFO_H */

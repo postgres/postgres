@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.81 2003/08/01 00:15:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.82 2003/08/04 00:43:16 momjian Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -409,7 +409,7 @@ OperatorCreate(const char *operatorName,
 	if (!OidIsValid(leftTypeId) && !OidIsValid(rightTypeId))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				 errmsg("at least one of leftarg or rightarg must be specified")));
+		errmsg("at least one of leftarg or rightarg must be specified")));
 
 	if (!(OidIsValid(leftTypeId) && OidIsValid(rightTypeId)))
 	{
@@ -417,11 +417,11 @@ OperatorCreate(const char *operatorName,
 		if (commutatorName)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("only binary operators can have commutators")));
+				  errmsg("only binary operators can have commutators")));
 		if (joinName)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("only binary operators can have join selectivity")));
+			 errmsg("only binary operators can have join selectivity")));
 		if (canHash)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),

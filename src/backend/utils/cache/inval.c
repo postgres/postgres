@@ -74,7 +74,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.56 2003/07/25 20:17:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.57 2003/08/04 00:43:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -449,9 +449,7 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 		}
 	}
 	else
-	{
 		elog(FATAL, "unrecognized SI message id: %d", msg->id);
-	}
 }
 
 /*

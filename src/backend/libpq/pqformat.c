@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/libpq/pqformat.c,v 1.32 2003/07/22 19:00:10 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/libpq/pqformat.c,v 1.33 2003/08/04 00:43:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,12 +58,12 @@
  *		pq_getmsgbyte	- get a raw byte from a message buffer
  *		pq_getmsgint	- get a binary integer from a message buffer
  *		pq_getmsgint64	- get a binary 8-byte int from a message buffer
- *		pq_getmsgfloat4	- get a float4 from a message buffer
- *		pq_getmsgfloat8	- get a float8 from a message buffer
+ *		pq_getmsgfloat4 - get a float4 from a message buffer
+ *		pq_getmsgfloat8 - get a float8 from a message buffer
  *		pq_getmsgbytes	- get raw data from a message buffer
- *		pq_copymsgbytes	- copy raw data from a message buffer
+ *		pq_copymsgbytes - copy raw data from a message buffer
  *		pq_getmsgtext	- get a counted text string (with conversion)
- *		pq_getmsgstring	- get a null-terminated text string (with conversion)
+ *		pq_getmsgstring - get a null-terminated text string (with conversion)
  *		pq_getmsgend	- verify message fully consumed
  */
 
@@ -90,10 +90,12 @@ void
 pq_beginmessage(StringInfo buf, char msgtype)
 {
 	initStringInfo(buf);
+
 	/*
 	 * We stash the message type into the buffer's cursor field, expecting
-	 * that the pq_sendXXX routines won't touch it.  We could alternatively
-	 * make it the first byte of the buffer contents, but this seems easier.
+	 * that the pq_sendXXX routines won't touch it.  We could
+	 * alternatively make it the first byte of the buffer contents, but
+	 * this seems easier.
 	 */
 	buf->cursor = msgtype;
 }
@@ -122,7 +124,7 @@ pq_sendbytes(StringInfo buf, const char *data, int datalen)
  *		pq_sendcountedtext - append a counted text string (with character set conversion)
  *
  * The data sent to the frontend by this routine is a 4-byte count field
- * followed by the string.  The count includes itself or not, as per the
+ * followed by the string.	The count includes itself or not, as per the
  * countincludesself flag (pre-3.0 protocol requires it to include itself).
  * The passed text string need not be null-terminated, and the data sent
  * to the frontend isn't either.
@@ -173,9 +175,7 @@ pq_sendtext(StringInfo buf, const char *str, int slen)
 		pfree(p);
 	}
 	else
-	{
 		appendBinaryStringInfo(buf, str, slen);
-	}
 }
 
 /* --------------------------------
@@ -200,9 +200,7 @@ pq_sendstring(StringInfo buf, const char *str)
 		pfree(p);
 	}
 	else
-	{
 		appendBinaryStringInfo(buf, str, slen + 1);
-	}
 }
 
 /* --------------------------------
@@ -281,9 +279,9 @@ pq_sendfloat4(StringInfo buf, float4 f)
 {
 	union
 	{
-		float4	f;
-		uint32	i;
-	} swap;
+		float4		f;
+		uint32		i;
+	}			swap;
 
 	swap.f = f;
 	swap.i = htonl(swap.i);
@@ -308,9 +306,9 @@ pq_sendfloat8(StringInfo buf, float8 f)
 #ifdef INT64_IS_BUSTED
 	union
 	{
-		float8	f;
-		uint32	h[2];
-	} swap;
+		float8		f;
+		uint32		h[2];
+	}			swap;
 
 	swap.f = f;
 	swap.h[0] = htonl(swap.h[0]);
@@ -332,9 +330,9 @@ pq_sendfloat8(StringInfo buf, float8 f)
 #else
 	union
 	{
-		float8	f;
-		int64	i;
-	} swap;
+		float8		f;
+		int64		i;
+	}			swap;
 
 	swap.f = f;
 	pq_sendint64(buf, swap.i);
@@ -515,7 +513,7 @@ pq_getmsgint64(StringInfo msg)
 }
 
 /* --------------------------------
- *		pq_getmsgfloat4	- get a float4 from a message buffer
+ *		pq_getmsgfloat4 - get a float4 from a message buffer
  *
  * See notes for pq_sendfloat4.
  * --------------------------------
@@ -525,16 +523,16 @@ pq_getmsgfloat4(StringInfo msg)
 {
 	union
 	{
-		float4	f;
-		uint32	i;
-	} swap;
+		float4		f;
+		uint32		i;
+	}			swap;
 
 	swap.i = pq_getmsgint(msg, 4);
 	return swap.f;
 }
 
 /* --------------------------------
- *		pq_getmsgfloat8	- get a float8 from a message buffer
+ *		pq_getmsgfloat8 - get a float8 from a message buffer
  *
  * See notes for pq_sendfloat8.
  * --------------------------------
@@ -545,9 +543,9 @@ pq_getmsgfloat8(StringInfo msg)
 #ifdef INT64_IS_BUSTED
 	union
 	{
-		float8	f;
-		uint32	h[2];
-	} swap;
+		float8		f;
+		uint32		h[2];
+	}			swap;
 
 	/* Have to figure out endianness by testing... */
 	if (((uint32) 1) == htonl((uint32) 1))
@@ -566,9 +564,9 @@ pq_getmsgfloat8(StringInfo msg)
 #else
 	union
 	{
-		float8	f;
-		int64	i;
-	} swap;
+		float8		f;
+		int64		i;
+	}			swap;
 
 	swap.i = pq_getmsgint64(msg);
 	return swap.f;
@@ -597,7 +595,7 @@ pq_getmsgbytes(StringInfo msg, int datalen)
 }
 
 /* --------------------------------
- *		pq_copymsgbytes	- copy raw data from a message buffer
+ *		pq_copymsgbytes - copy raw data from a message buffer
  *
  *		Same as above, except data is copied to caller's buffer.
  * --------------------------------
@@ -623,8 +621,8 @@ pq_copymsgbytes(StringInfo msg, char *buf, int datalen)
 char *
 pq_getmsgtext(StringInfo msg, int rawbytes, int *nbytes)
 {
-	char   *str;
-	char   *p;
+	char	   *str;
+	char	   *p;
 
 	if (rawbytes < 0 || rawbytes > (msg->len - msg->cursor))
 		ereport(ERROR,
@@ -635,9 +633,7 @@ pq_getmsgtext(StringInfo msg, int rawbytes, int *nbytes)
 
 	p = (char *) pg_client_to_server((unsigned char *) str, rawbytes);
 	if (p != str)				/* actual conversion has been done? */
-	{
 		*nbytes = strlen(p);
-	}
 	else
 	{
 		p = (char *) palloc(rawbytes + 1);
@@ -649,7 +645,7 @@ pq_getmsgtext(StringInfo msg, int rawbytes, int *nbytes)
 }
 
 /* --------------------------------
- *		pq_getmsgstring	- get a null-terminated text string (with conversion)
+ *		pq_getmsgstring - get a null-terminated text string (with conversion)
  *
  *		May return a pointer directly into the message buffer, or a pointer
  *		to a palloc'd conversion result.
@@ -658,14 +654,15 @@ pq_getmsgtext(StringInfo msg, int rawbytes, int *nbytes)
 const char *
 pq_getmsgstring(StringInfo msg)
 {
-	char   *str;
-	int		slen;
+	char	   *str;
+	int			slen;
 
 	str = &msg->data[msg->cursor];
+
 	/*
 	 * It's safe to use strlen() here because a StringInfo is guaranteed
-	 * to have a trailing null byte.  But check we found a null inside
-	 * the message.
+	 * to have a trailing null byte.  But check we found a null inside the
+	 * message.
 	 */
 	slen = strlen(str);
 	if (msg->cursor + slen >= msg->len)

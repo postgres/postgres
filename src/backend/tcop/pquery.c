@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.68 2003/08/01 17:57:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.69 2003/08/04 00:43:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,18 +24,18 @@
 
 
 static uint32 RunFromStore(Portal portal, ScanDirection direction, long count,
-						   DestReceiver *dest);
+			 DestReceiver *dest);
 static long PortalRunSelect(Portal portal, bool forward, long count,
-							DestReceiver *dest);
+				DestReceiver *dest);
 static void PortalRunUtility(Portal portal, Query *query,
-							 DestReceiver *dest, char *completionTag);
+				 DestReceiver *dest, char *completionTag);
 static void PortalRunMulti(Portal portal,
-						   DestReceiver *dest, DestReceiver *altdest,
-						   char *completionTag);
+			   DestReceiver *dest, DestReceiver *altdest,
+			   char *completionTag);
 static long DoPortalRunFetch(Portal portal,
-							 FetchDirection fdirection,
-							 long count,
-							 DestReceiver *dest);
+				 FetchDirection fdirection,
+				 long count,
+				 DestReceiver *dest);
 static void DoPortalRewind(Portal portal);
 
 
@@ -56,7 +56,7 @@ CreateQueryDesc(Query *parsetree,
 	qd->plantree = plantree;	/* plan */
 	qd->dest = dest;			/* output dest */
 	qd->params = params;		/* parameter values passed into query */
-	qd->doInstrument = doInstrument; /* instrumentation wanted? */
+	qd->doInstrument = doInstrument;	/* instrumentation wanted? */
 
 	/* null these fields until set by ExecutorStart */
 	qd->tupDesc = NULL;
@@ -156,7 +156,7 @@ ProcessQuery(Query *parsetree,
 				else
 					lastOid = InvalidOid;
 				snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
-						 "INSERT %u %u", lastOid, queryDesc->estate->es_processed);
+				"INSERT %u %u", lastOid, queryDesc->estate->es_processed);
 				break;
 			case CMD_UPDATE:
 				snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
@@ -195,14 +195,12 @@ ChoosePortalStrategy(List *parseTrees)
 
 	if (length(parseTrees) == 1)
 	{
-		Query	*query = (Query *) lfirst(parseTrees);
+		Query	   *query = (Query *) lfirst(parseTrees);
 
 		if (query->commandType == CMD_SELECT &&
 			query->canSetTag &&
 			query->into == NULL)
-		{
 			strategy = PORTAL_ONE_SELECT;
-		}
 		else if (query->commandType == CMD_UTILITY &&
 				 query->canSetTag &&
 				 query->utilityStmt != NULL)
@@ -233,8 +231,8 @@ PortalStart(Portal portal, ParamListInfo params)
 	QueryDesc  *queryDesc;
 
 	AssertArg(PortalIsValid(portal));
-	AssertState(portal->queryContext != NULL); /* query defined? */
-	AssertState(!portal->portalReady); /* else extra PortalStart */
+	AssertState(portal->queryContext != NULL);	/* query defined? */
+	AssertState(!portal->portalReady);	/* else extra PortalStart */
 
 	oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
@@ -252,31 +250,37 @@ PortalStart(Portal portal, ParamListInfo params)
 	switch (portal->strategy)
 	{
 		case PORTAL_ONE_SELECT:
+
 			/*
 			 * Must set query snapshot before starting executor.
 			 */
 			SetQuerySnapshot();
+
 			/*
 			 * Create QueryDesc in portal's context; for the moment, set
 			 * the destination to None.
 			 */
 			queryDesc = CreateQueryDesc((Query *) lfirst(portal->parseTrees),
-										(Plan *) lfirst(portal->planTrees),
+									  (Plan *) lfirst(portal->planTrees),
 										None_Receiver,
 										params,
 										false);
+
 			/*
 			 * Call ExecStart to prepare the plan for execution
 			 */
 			ExecutorStart(queryDesc, false);
+
 			/*
 			 * This tells PortalCleanup to shut down the executor
 			 */
 			portal->queryDesc = queryDesc;
+
 			/*
 			 * Remember tuple descriptor (computed by ExecutorStart)
 			 */
 			portal->tupDesc = queryDesc->tupDesc;
+
 			/*
 			 * Reset cursor position data to "start of query"
 			 */
@@ -287,12 +291,14 @@ PortalStart(Portal portal, ParamListInfo params)
 			break;
 
 		case PORTAL_UTIL_SELECT:
+
 			/*
 			 * We don't set query snapshot here, because PortalRunUtility
 			 * will take care of it.
 			 */
 			portal->tupDesc =
 				UtilityTupleDescriptor(((Query *) lfirst(portal->parseTrees))->utilityStmt);
+
 			/*
 			 * Reset cursor position data to "start of query"
 			 */
@@ -346,7 +352,8 @@ PortalSetResultFormat(Portal portal, int nFormats, int16 *formats)
 					 errmsg("bind message has %d result formats but query has %d columns",
 							nFormats, natts)));
 		memcpy(portal->formats, formats, natts * sizeof(int16));
-	} else if (nFormats > 0)
+	}
+	else if (nFormats > 0)
 	{
 		/* single format specified, use for all columns */
 		int16		format1 = formats[0];
@@ -393,7 +400,7 @@ PortalRun(Portal portal, long count,
 	MemoryContext oldContext;
 
 	AssertArg(PortalIsValid(portal));
-	AssertState(portal->portalReady); /* else no PortalStart */
+	AssertState(portal->portalReady);	/* else no PortalStart */
 
 	/* Initialize completion tag to empty string */
 	if (completionTag)
@@ -405,7 +412,7 @@ PortalRun(Portal portal, long count,
 	if (portal->portalDone)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("portal \"%s\" cannot be run anymore", portal->name)));
+		   errmsg("portal \"%s\" cannot be run anymore", portal->name)));
 	if (portal->portalActive)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
@@ -429,6 +436,7 @@ PortalRun(Portal portal, long count,
 			/* we know the query is supposed to set the tag */
 			if (completionTag && portal->commandTag)
 				strcpy(completionTag, portal->commandTag);
+
 			/*
 			 * Since it's a forward fetch, say DONE iff atEnd is now true.
 			 */
@@ -436,6 +444,7 @@ PortalRun(Portal portal, long count,
 			break;
 
 		case PORTAL_UTIL_SELECT:
+
 			/*
 			 * If we have not yet run the utility statement, do so,
 			 * storing its results in the portal's tuplestore.
@@ -451,16 +460,19 @@ PortalRun(Portal portal, long count,
 				(*treceiver->destroy) (treceiver);
 				portal->portalUtilReady = true;
 			}
+
 			/*
 			 * Now fetch desired portion of results.
 			 */
 			(void) PortalRunSelect(portal, true, count, dest);
+
 			/*
 			 * We know the query is supposed to set the tag; we assume
 			 * only the default tag is needed.
 			 */
 			if (completionTag && portal->commandTag)
 				strcpy(completionTag, portal->commandTag);
+
 			/*
 			 * Since it's a forward fetch, say DONE iff atEnd is now true.
 			 */
@@ -518,8 +530,8 @@ PortalRunSelect(Portal portal,
 	uint32		nprocessed;
 
 	/*
-	 * NB: queryDesc will be NULL if we are fetching from a held cursor
-	 * or a completed utility query; can't use it in that path.
+	 * NB: queryDesc will be NULL if we are fetching from a held cursor or
+	 * a completed utility query; can't use it in that path.
 	 */
 	queryDesc = PortalGetQueryDesc(portal);
 
@@ -527,7 +539,7 @@ PortalRunSelect(Portal portal,
 	Assert(queryDesc || portal->holdStore);
 
 	/*
-	 * Force the queryDesc destination to the right thing.  This supports
+	 * Force the queryDesc destination to the right thing.	This supports
 	 * MOVE, for example, which will pass in dest = None.  This is okay to
 	 * change as long as we do it on every fetch.  (The Executor must not
 	 * assume that dest never changes.)
@@ -567,13 +579,13 @@ PortalRunSelect(Portal portal,
 
 		if (direction != NoMovementScanDirection)
 		{
-			long	oldPos;
+			long		oldPos;
 
 			if (nprocessed > 0)
-				portal->atStart = false;	/* OK to go backward now */
+				portal->atStart = false;		/* OK to go backward now */
 			if (count == 0 ||
 				(unsigned long) nprocessed < (unsigned long) count)
-				portal->atEnd = true;		/* we retrieved 'em all */
+				portal->atEnd = true;	/* we retrieved 'em all */
 			oldPos = portal->portalPos;
 			portal->portalPos += nprocessed;
 			/* portalPos doesn't advance when we fall off the end */
@@ -610,19 +622,19 @@ PortalRunSelect(Portal portal,
 		{
 			if (nprocessed > 0 && portal->atEnd)
 			{
-				portal->atEnd = false;		/* OK to go forward now */
-				portal->portalPos++;		/* adjust for endpoint case */
+				portal->atEnd = false;	/* OK to go forward now */
+				portal->portalPos++;	/* adjust for endpoint case */
 			}
 			if (count == 0 ||
 				(unsigned long) nprocessed < (unsigned long) count)
 			{
-				portal->atStart = true;		/* we retrieved 'em all */
+				portal->atStart = true; /* we retrieved 'em all */
 				portal->portalPos = 0;
 				portal->posOverflow = false;
 			}
 			else
 			{
-				long	oldPos;
+				long		oldPos;
 
 				oldPos = portal->portalPos;
 				portal->portalPos -= nprocessed;
@@ -662,13 +674,13 @@ RunFromStore(Portal portal, ScanDirection direction, long count,
 	}
 	else
 	{
-		bool	forward = (direction == ForwardScanDirection);
+		bool		forward = (direction == ForwardScanDirection);
 
 		for (;;)
 		{
 			MemoryContext oldcontext;
-			HeapTuple tup;
-			bool should_free;
+			HeapTuple	tup;
+			bool		should_free;
 
 			oldcontext = MemoryContextSwitchTo(portal->holdContext);
 
@@ -686,9 +698,9 @@ RunFromStore(Portal portal, ScanDirection direction, long count,
 				pfree(tup);
 
 			/*
-			 * check our tuple count.. if we've processed the proper number
-			 * then quit, else loop again and process more tuples.  Zero
-			 * count means no limit.
+			 * check our tuple count.. if we've processed the proper
+			 * number then quit, else loop again and process more tuples.
+			 * Zero count means no limit.
 			 */
 			current_tuple_count++;
 			if (count && count == current_tuple_count)
@@ -709,35 +721,34 @@ static void
 PortalRunUtility(Portal portal, Query *query,
 				 DestReceiver *dest, char *completionTag)
 {
-	Node   *utilityStmt = query->utilityStmt;
+	Node	   *utilityStmt = query->utilityStmt;
 
 	elog(DEBUG3, "ProcessUtility");
 
 	/*
-	 * Set snapshot if utility stmt needs one.  Most reliable
-	 * way to do this seems to be to enumerate those that do not
-	 * need one; this is a short list.  Transaction control,
-	 * LOCK, and SET must *not* set a snapshot since they need
-	 * to be executable at the start of a serializable transaction
-	 * without freezing a snapshot.  By extension we allow SHOW
-	 * not to set a snapshot.  The other stmts listed are just
-	 * efficiency hacks.  Beware of listing anything that can
-	 * modify the database --- if, say, it has to update an
-	 * index with expressions that invoke user-defined functions,
-	 * then it had better have a snapshot.
+	 * Set snapshot if utility stmt needs one.	Most reliable way to do
+	 * this seems to be to enumerate those that do not need one; this is a
+	 * short list.	Transaction control, LOCK, and SET must *not* set a
+	 * snapshot since they need to be executable at the start of a
+	 * serializable transaction without freezing a snapshot.  By extension
+	 * we allow SHOW not to set a snapshot.  The other stmts listed are
+	 * just efficiency hacks.  Beware of listing anything that can modify
+	 * the database --- if, say, it has to update an index with
+	 * expressions that invoke user-defined functions, then it had better
+	 * have a snapshot.
 	 */
-	if (! (IsA(utilityStmt, TransactionStmt) ||
-		   IsA(utilityStmt, LockStmt) ||
-		   IsA(utilityStmt, VariableSetStmt) ||
-		   IsA(utilityStmt, VariableShowStmt) ||
-		   IsA(utilityStmt, VariableResetStmt) ||
-		   IsA(utilityStmt, ConstraintsSetStmt) ||
-		   /* efficiency hacks from here down */
-		   IsA(utilityStmt, FetchStmt) ||
-		   IsA(utilityStmt, ListenStmt) ||
-		   IsA(utilityStmt, NotifyStmt) ||
-		   IsA(utilityStmt, UnlistenStmt) ||
-		   IsA(utilityStmt, CheckPointStmt)))
+	if (!(IsA(utilityStmt, TransactionStmt) ||
+		  IsA(utilityStmt, LockStmt) ||
+		  IsA(utilityStmt, VariableSetStmt) ||
+		  IsA(utilityStmt, VariableShowStmt) ||
+		  IsA(utilityStmt, VariableResetStmt) ||
+		  IsA(utilityStmt, ConstraintsSetStmt) ||
+	/* efficiency hacks from here down */
+		  IsA(utilityStmt, FetchStmt) ||
+		  IsA(utilityStmt, ListenStmt) ||
+		  IsA(utilityStmt, NotifyStmt) ||
+		  IsA(utilityStmt, UnlistenStmt) ||
+		  IsA(utilityStmt, CheckPointStmt)))
 		SetQuerySnapshot();
 
 	if (query->canSetTag)
@@ -745,7 +756,7 @@ PortalRunUtility(Portal portal, Query *query,
 		/* utility statement can override default tag string */
 		ProcessUtility(utilityStmt, dest, completionTag);
 		if (completionTag && completionTag[0] == '\0' && portal->commandTag)
-			strcpy(completionTag, portal->commandTag); /* use the default */
+			strcpy(completionTag, portal->commandTag);	/* use the default */
 	}
 	else
 	{
@@ -770,14 +781,14 @@ PortalRunMulti(Portal portal,
 	List	   *querylist_item;
 
 	/*
-	 * If the destination is RemoteExecute, change to None.  The reason
-	 * is that the client won't be expecting any tuples, and indeed has no
+	 * If the destination is RemoteExecute, change to None.  The reason is
+	 * that the client won't be expecting any tuples, and indeed has no
 	 * way to know what they are, since there is no provision for Describe
-	 * to send a RowDescription message when this portal execution strategy
-	 * is in effect.  This presently will only affect SELECT commands added
-	 * to non-SELECT queries by rewrite rules: such commands will be executed,
-	 * but the results will be discarded unless you use "simple Query"
-	 * protocol.
+	 * to send a RowDescription message when this portal execution
+	 * strategy is in effect.  This presently will only affect SELECT
+	 * commands added to non-SELECT queries by rewrite rules: such
+	 * commands will be executed, but the results will be discarded unless
+	 * you use "simple Query" protocol.
 	 */
 	if (dest->mydest == RemoteExecute)
 		dest = None_Receiver;
@@ -785,8 +796,8 @@ PortalRunMulti(Portal portal,
 		altdest = None_Receiver;
 
 	/*
-	 * Loop to handle the individual queries generated from a
-	 * single parsetree by analysis and rewrite.
+	 * Loop to handle the individual queries generated from a single
+	 * parsetree by analysis and rewrite.
 	 */
 	foreach(querylist_item, portal->parseTrees)
 	{
@@ -862,12 +873,12 @@ PortalRunMulti(Portal portal,
 	}
 
 	/*
-	 * If a command completion tag was supplied, use it.  Otherwise
-	 * use the portal's commandTag as the default completion tag.
+	 * If a command completion tag was supplied, use it.  Otherwise use
+	 * the portal's commandTag as the default completion tag.
 	 *
-	 * Exception: clients will expect INSERT/UPDATE/DELETE tags to
-	 * have counts, so fake something up if necessary.  (This could
-	 * happen if the original query was replaced by a DO INSTEAD rule.)
+	 * Exception: clients will expect INSERT/UPDATE/DELETE tags to have
+	 * counts, so fake something up if necessary.  (This could happen if
+	 * the original query was replaced by a DO INSTEAD rule.)
 	 */
 	if (completionTag && completionTag[0] == '\0')
 	{
@@ -903,7 +914,7 @@ PortalRunFetch(Portal portal,
 	MemoryContext oldContext;
 
 	AssertArg(PortalIsValid(portal));
-	AssertState(portal->portalReady); /* else no PortalStart */
+	AssertState(portal->portalReady);	/* else no PortalStart */
 
 	/*
 	 * Check for improper portal use, and mark portal active.
@@ -911,7 +922,7 @@ PortalRunFetch(Portal portal,
 	if (portal->portalDone)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("portal \"%s\" cannot be run anymore", portal->name)));
+		   errmsg("portal \"%s\" cannot be run anymore", portal->name)));
 	if (portal->portalActive)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
@@ -989,18 +1000,18 @@ DoPortalRunFetch(Portal portal,
 			if (count > 0)
 			{
 				/*
-				 * Definition: Rewind to start, advance count-1 rows, return
-				 * next row (if any).  In practice, if the goal is less than
-				 * halfway back to the start, it's better to scan from where
-				 * we are.  In any case, we arrange to fetch the target row
-				 * going forwards.
+				 * Definition: Rewind to start, advance count-1 rows,
+				 * return next row (if any).  In practice, if the goal is
+				 * less than halfway back to the start, it's better to
+				 * scan from where we are.	In any case, we arrange to
+				 * fetch the target row going forwards.
 				 */
 				if (portal->posOverflow || portal->portalPos == LONG_MAX ||
-					count-1 <= portal->portalPos / 2)
+					count - 1 <= portal->portalPos / 2)
 				{
 					DoPortalRewind(portal);
 					if (count > 1)
-						PortalRunSelect(portal, true, count-1,
+						PortalRunSelect(portal, true, count - 1,
 										None_Receiver);
 				}
 				else
@@ -1010,10 +1021,10 @@ DoPortalRunFetch(Portal portal,
 					if (portal->atEnd)
 						pos++;	/* need one extra fetch if off end */
 					if (count <= pos)
-						PortalRunSelect(portal, false, pos-count+1,
+						PortalRunSelect(portal, false, pos - count + 1,
 										None_Receiver);
-					else if (count > pos+1)
-						PortalRunSelect(portal, true, count-pos-1,
+					else if (count > pos + 1)
+						PortalRunSelect(portal, true, count - pos - 1,
 										None_Receiver);
 				}
 				return PortalRunSelect(portal, true, 1L, dest);
@@ -1022,17 +1033,19 @@ DoPortalRunFetch(Portal portal,
 			{
 				/*
 				 * Definition: Advance to end, back up abs(count)-1 rows,
-				 * return prior row (if any).  We could optimize this if we
-				 * knew in advance where the end was, but typically we won't.
-				 * (Is it worth considering case where count > half of size
-				 * of query?  We could rewind once we know the size ...)
+				 * return prior row (if any).  We could optimize this if
+				 * we knew in advance where the end was, but typically we
+				 * won't. (Is it worth considering case where count > half
+				 * of size of query?  We could rewind once we know the
+				 * size ...)
 				 */
 				PortalRunSelect(portal, true, FETCH_ALL, None_Receiver);
 				if (count < -1)
-					PortalRunSelect(portal, false, -count-1, None_Receiver);
+					PortalRunSelect(portal, false, -count - 1, None_Receiver);
 				return PortalRunSelect(portal, false, 1L, dest);
 			}
-			else /* count == 0 */
+			else
+/* count == 0 */
 			{
 				/* Rewind to start, return zero rows */
 				DoPortalRewind(portal);
@@ -1043,10 +1056,11 @@ DoPortalRunFetch(Portal portal,
 			if (count > 0)
 			{
 				/*
-				 * Definition: advance count-1 rows, return next row (if any).
+				 * Definition: advance count-1 rows, return next row (if
+				 * any).
 				 */
 				if (count > 1)
-					PortalRunSelect(portal, true, count-1, None_Receiver);
+					PortalRunSelect(portal, true, count - 1, None_Receiver);
 				return PortalRunSelect(portal, true, 1L, dest);
 			}
 			else if (count < 0)
@@ -1056,10 +1070,11 @@ DoPortalRunFetch(Portal portal,
 				 * (if any).
 				 */
 				if (count < -1)
-					PortalRunSelect(portal, false, -count-1, None_Receiver);
+					PortalRunSelect(portal, false, -count - 1, None_Receiver);
 				return PortalRunSelect(portal, false, 1L, dest);
 			}
-			else /* count == 0 */
+			else
+/* count == 0 */
 			{
 				/* Same as FETCH FORWARD 0, so fall out of switch */
 				fdirection = FETCH_FORWARD;
@@ -1071,8 +1086,8 @@ DoPortalRunFetch(Portal portal,
 	}
 
 	/*
-	 * Get here with fdirection == FETCH_FORWARD or FETCH_BACKWARD,
-	 * and count >= 0.
+	 * Get here with fdirection == FETCH_FORWARD or FETCH_BACKWARD, and
+	 * count >= 0.
 	 */
 	forward = (fdirection == FETCH_FORWARD);
 
@@ -1081,7 +1096,7 @@ DoPortalRunFetch(Portal portal,
 	 */
 	if (count == 0)
 	{
-		bool	on_row;
+		bool		on_row;
 
 		/* Are we sitting on a row? */
 		on_row = (!portal->atStart && !portal->atEnd);
@@ -1094,11 +1109,11 @@ DoPortalRunFetch(Portal portal,
 		else
 		{
 			/*
-			 * If we are sitting on a row, back up one so we can re-fetch it.
-			 * If we are not sitting on a row, we still have to start up and
-			 * shut down the executor so that the destination is initialized
-			 * and shut down correctly; so keep going.  To PortalRunSelect,
-			 * count == 0 means we will retrieve no row.
+			 * If we are sitting on a row, back up one so we can re-fetch
+			 * it. If we are not sitting on a row, we still have to start
+			 * up and shut down the executor so that the destination is
+			 * initialized and shut down correctly; so keep going.	To
+			 * PortalRunSelect, count == 0 means we will retrieve no row.
 			 */
 			if (on_row)
 			{
@@ -1115,7 +1130,7 @@ DoPortalRunFetch(Portal portal,
 	 */
 	if (!forward && count == FETCH_ALL && dest->mydest == None)
 	{
-		long	result = portal->portalPos;
+		long		result = portal->portalPos;
 
 		if (result > 0 && !portal->atEnd)
 			result--;
@@ -1142,9 +1157,7 @@ DoPortalRewind(Portal portal)
 		MemoryContextSwitchTo(oldcontext);
 	}
 	if (PortalGetQueryDesc(portal))
-	{
 		ExecutorRewind(PortalGetQueryDesc(portal));
-	}
 
 	portal->atStart = true;
 	portal->atEnd = false;

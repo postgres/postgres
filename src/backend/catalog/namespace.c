@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.55 2003/08/01 00:15:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.56 2003/08/04 00:43:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,7 +164,7 @@ RangeVarGetRelid(const RangeVar *relation, bool failOK)
 		if (strcmp(relation->catalogname, get_database_name(MyDatabaseId)) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cross-database references are not implemented")));
+			   errmsg("cross-database references are not implemented")));
 	}
 
 	if (relation->schemaname)
@@ -217,7 +217,7 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 		if (strcmp(newRelation->catalogname, get_database_name(MyDatabaseId)) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cross-database references are not implemented")));
+			   errmsg("cross-database references are not implemented")));
 	}
 
 	if (newRelation->istemp)
@@ -226,7 +226,7 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 		if (newRelation->schemaname)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("TEMP tables may not specify a schema name")));
+				   errmsg("TEMP tables may not specify a schema name")));
 		/* Initialize temp namespace if first time through */
 		if (!OidIsValid(myTempNamespace))
 			InitTempTableNamespace();
@@ -1057,7 +1057,7 @@ OpclassIsVisible(Oid opcid)
 Oid
 ConversionGetConid(const char *conname)
 {
-	Oid		conid;
+	Oid			conid;
 	List	   *lptr;
 
 	recomputeNamespacePath();
@@ -1115,11 +1115,11 @@ ConversionIsVisible(Oid conid)
 		/*
 		 * If it is in the path, it might still not be visible; it could
 		 * be hidden by another conversion of the same name earlier in the
-		 * path. So we must do a slow check to see if this conversion would
-		 * be found by ConversionGetConid.
+		 * path. So we must do a slow check to see if this conversion
+		 * would be found by ConversionGetConid.
 		 */
 		char	   *conname = NameStr(conform->conname);
-		
+
 		visible = (ConversionGetConid(conname) == conid);
 	}
 
@@ -1164,13 +1164,13 @@ DeconstructQualifiedName(List *names,
 			if (strcmp(catalogname, get_database_name(MyDatabaseId)) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cross-database references are not implemented")));
+				errmsg("cross-database references are not implemented")));
 			break;
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("improper qualified name (too many dotted names): %s",
-							NameListToString(names))));
+			errmsg("improper qualified name (too many dotted names): %s",
+				   NameListToString(names))));
 			break;
 	}
 
@@ -1281,8 +1281,8 @@ makeRangeVarFromNameList(List *names)
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("improper relation name (too many dotted names): %s",
-							NameListToString(names))));
+			 errmsg("improper relation name (too many dotted names): %s",
+					NameListToString(names))));
 			break;
 	}
 
@@ -1720,8 +1720,8 @@ RemoveTempRelations(Oid tempNamespaceId)
 
 	/*
 	 * We want to get rid of everything in the target namespace, but not
-	 * the namespace itself (deleting it only to recreate it later would be
-	 * a waste of cycles).  We do this by finding everything that has a
+	 * the namespace itself (deleting it only to recreate it later would
+	 * be a waste of cycles).  We do this by finding everything that has a
 	 * dependency on the namespace.
 	 */
 	object.classId = get_system_catalog_relid(NamespaceRelationName);
@@ -1797,7 +1797,7 @@ assign_search_path(const char *newval, bool doit, bool interactive)
 									  0, 0, 0))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_SCHEMA),
-						 errmsg("schema \"%s\" does not exist", curname)));
+					   errmsg("schema \"%s\" does not exist", curname)));
 		}
 	}
 

@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgstattuple/pgstattuple.c,v 1.11 2003/08/01 02:21:17 tgl Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgstattuple/pgstattuple.c,v 1.12 2003/08/04 00:43:11 momjian Exp $
  *
  * Copyright (c) 2001,2002	Tatsuo Ishii
  *
@@ -221,5 +221,5 @@ pgstattuple_real(Relation rel)
 		pfree(values[i]);
 	pfree(values);
 
-	return(result);
+	return (result);
 }

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.203 2003/08/01 00:15:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.204 2003/08/04 00:43:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,32 +70,32 @@ struct msgstrings
 };
 
 static const struct msgstrings msgstringarray[] = {
-	{ RELKIND_RELATION,
-	  ERRCODE_UNDEFINED_TABLE,
-	  gettext_noop("table \"%s\" does not exist"),
-	  gettext_noop("\"%s\" is not a table"),
-	  gettext_noop("Use DROP TABLE to remove a table.") },
-	{ RELKIND_SEQUENCE,
-	  ERRCODE_UNDEFINED_TABLE,
-	  gettext_noop("sequence \"%s\" does not exist"),
-	  gettext_noop("\"%s\" is not a sequence"),
-	  gettext_noop("Use DROP SEQUENCE to remove a sequence.") },
-	{ RELKIND_VIEW,
-	  ERRCODE_UNDEFINED_TABLE,
-	  gettext_noop("view \"%s\" does not exist"),
-	  gettext_noop("\"%s\" is not a view"),
-	  gettext_noop("Use DROP VIEW to remove a view.") },
-	{ RELKIND_INDEX,
-	  ERRCODE_UNDEFINED_OBJECT,
-	  gettext_noop("index \"%s\" does not exist"),
-	  gettext_noop("\"%s\" is not an index"),
-	  gettext_noop("Use DROP INDEX to remove an index.") },
-	{ RELKIND_COMPOSITE_TYPE,
-	  ERRCODE_UNDEFINED_OBJECT,
-	  gettext_noop("type \"%s\" does not exist"),
-	  gettext_noop("\"%s\" is not a type"),
-	  gettext_noop("Use DROP TYPE to remove a type.") },
-	{ '\0', 0, NULL, NULL, NULL }
+	{RELKIND_RELATION,
+		ERRCODE_UNDEFINED_TABLE,
+		gettext_noop("table \"%s\" does not exist"),
+		gettext_noop("\"%s\" is not a table"),
+	gettext_noop("Use DROP TABLE to remove a table.")},
+	{RELKIND_SEQUENCE,
+		ERRCODE_UNDEFINED_TABLE,
+		gettext_noop("sequence \"%s\" does not exist"),
+		gettext_noop("\"%s\" is not a sequence"),
+	gettext_noop("Use DROP SEQUENCE to remove a sequence.")},
+	{RELKIND_VIEW,
+		ERRCODE_UNDEFINED_TABLE,
+		gettext_noop("view \"%s\" does not exist"),
+		gettext_noop("\"%s\" is not a view"),
+	gettext_noop("Use DROP VIEW to remove a view.")},
+	{RELKIND_INDEX,
+		ERRCODE_UNDEFINED_OBJECT,
+		gettext_noop("index \"%s\" does not exist"),
+		gettext_noop("\"%s\" is not an index"),
+	gettext_noop("Use DROP INDEX to remove an index.")},
+	{RELKIND_COMPOSITE_TYPE,
+		ERRCODE_UNDEFINED_OBJECT,
+		gettext_noop("type \"%s\" does not exist"),
+		gettext_noop("\"%s\" is not a type"),
+	gettext_noop("Use DROP TYPE to remove a type.")},
+	{'\0', 0, NULL, NULL, NULL}
 };
 
 
@@ -181,7 +181,7 @@ CheckRelationOwnership(RangeVar *rel, bool noCatalogs)
 	tuple = SearchSysCache(RELOID,
 						   ObjectIdGetDatum(relOid),
 						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple)) /* should not happen */
+	if (!HeapTupleIsValid(tuple))		/* should not happen */
 		elog(ERROR, "cache lookup failed for relation %u", relOid);
 
 	if (!pg_class_ownercheck(relOid, GetUserId()))
@@ -194,8 +194,8 @@ CheckRelationOwnership(RangeVar *rel, bool noCatalogs)
 			IsSystemClass((Form_pg_class) GETSTRUCT(tuple)))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("permission denied: \"%s\" is a system catalog",
-							rel->relname)));
+				  errmsg("permission denied: \"%s\" is a system catalog",
+						 rel->relname)));
 	}
 
 	ReleaseSysCache(tuple);
@@ -316,18 +316,18 @@ ProcessUtility(Node *parsetree,
 
 							if (stmt->options)
 							{
-								List *head;
+								List	   *head;
 
 								foreach(head, stmt->options)
 								{
-									DefElem *item = (DefElem *) lfirst(head);
+									DefElem    *item = (DefElem *) lfirst(head);
 
-									if (strcmp(item->defname, "transaction_isolation")==0)
+									if (strcmp(item->defname, "transaction_isolation") == 0)
 										SetPGVariable("transaction_isolation",
-													  makeList1(item->arg), false);
-									else if (strcmp(item->defname, "transaction_read_only")==0)
+											makeList1(item->arg), false);
+									else if (strcmp(item->defname, "transaction_read_only") == 0)
 										SetPGVariable("transaction_read_only",
-													  makeList1(item->arg), false);
+											makeList1(item->arg), false);
 								}
 							}
 						}
@@ -429,7 +429,11 @@ ProcessUtility(Node *parsetree,
 							break;
 
 						case OBJECT_DOMAIN:
-							/* RemoveDomain does its own permissions checks */
+
+							/*
+							 * RemoveDomain does its own permissions
+							 * checks
+							 */
 							RemoveDomain(names, stmt->behavior);
 							break;
 
@@ -438,7 +442,11 @@ ProcessUtility(Node *parsetree,
 							break;
 
 						case OBJECT_SCHEMA:
-							/* RemoveSchema does its own permissions checks */
+
+							/*
+							 * RemoveSchema does its own permissions
+							 * checks
+							 */
 							RemoveSchema(names, stmt->behavior);
 							break;
 
@@ -590,8 +598,8 @@ ProcessUtility(Node *parsetree,
 						/* check that we are the superuser */
 						if (!superuser())
 							ereport(ERROR,
-									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-									 errmsg("must be superuser to alter owner")));
+								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+							errmsg("must be superuser to alter owner")));
 						/* get_usesysid raises an error if no such user */
 						AlterTableOwner(relid,
 										get_usesysid(stmt->name));
@@ -599,9 +607,9 @@ ProcessUtility(Node *parsetree,
 					case 'L':	/* CLUSTER ON */
 						AlterTableClusterOn(relid, stmt->name);
 						break;
-					case 'o': /* ADD OIDS */
+					case 'o':	/* ADD OIDS */
 						AlterTableAlterOids(relid,
-						 interpretInhOption(stmt->relation->inhOpt),
+							  interpretInhOption(stmt->relation->inhOpt),
 											false);
 						break;
 					default:	/* oops */
@@ -652,8 +660,8 @@ ProcessUtility(Node *parsetree,
 						/* check that we are the superuser */
 						if (!superuser())
 							ereport(ERROR,
-									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-									 errmsg("must be superuser to alter owner")));
+								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+							errmsg("must be superuser to alter owner")));
 						/* get_usesysid raises an error if no such user */
 						AlterTypeOwner(stmt->typename,
 									   get_usesysid(stmt->name));
@@ -828,40 +836,39 @@ ProcessUtility(Node *parsetree,
 				VariableSetStmt *n = (VariableSetStmt *) parsetree;
 
 				/*
-				 * Special cases for special SQL syntax that
-				 * effectively sets more than one variable per
-				 * statement.
+				 * Special cases for special SQL syntax that effectively
+				 * sets more than one variable per statement.
 				 */
-				if (strcmp(n->name, "TRANSACTION")==0)
+				if (strcmp(n->name, "TRANSACTION") == 0)
 				{
-					List *head;
+					List	   *head;
 
 					foreach(head, n->args)
 					{
-						DefElem *item = (DefElem *) lfirst(head);
+						DefElem    *item = (DefElem *) lfirst(head);
 
-						if (strcmp(item->defname, "transaction_isolation")==0)
+						if (strcmp(item->defname, "transaction_isolation") == 0)
 							SetPGVariable("transaction_isolation",
-										  makeList1(item->arg), n->is_local);
-						else if (strcmp(item->defname, "transaction_read_only")==0)
+									  makeList1(item->arg), n->is_local);
+						else if (strcmp(item->defname, "transaction_read_only") == 0)
 							SetPGVariable("transaction_read_only",
-										  makeList1(item->arg), n->is_local);
+									  makeList1(item->arg), n->is_local);
 					}
 				}
-				else if (strcmp(n->name, "SESSION CHARACTERISTICS")==0)
+				else if (strcmp(n->name, "SESSION CHARACTERISTICS") == 0)
 				{
-					List *head;
+					List	   *head;
 
 					foreach(head, n->args)
 					{
-						DefElem *item = (DefElem *) lfirst(head);
+						DefElem    *item = (DefElem *) lfirst(head);
 
-						if (strcmp(item->defname, "transaction_isolation")==0)
+						if (strcmp(item->defname, "transaction_isolation") == 0)
 							SetPGVariable("default_transaction_isolation",
-										  makeList1(item->arg), n->is_local);
-						else if (strcmp(item->defname, "transaction_read_only")==0)
+									  makeList1(item->arg), n->is_local);
+						else if (strcmp(item->defname, "transaction_read_only") == 0)
 							SetPGVariable("default_transaction_read_only",
-										  makeList1(item->arg), n->is_local);
+									  makeList1(item->arg), n->is_local);
 					}
 				}
 				else
@@ -1046,14 +1053,14 @@ UtilityReturnsTuples(Node *parsetree)
 	{
 		case T_FetchStmt:
 			{
-				FetchStmt *stmt = (FetchStmt *) parsetree;
-				Portal	portal;
+				FetchStmt  *stmt = (FetchStmt *) parsetree;
+				Portal		portal;
 
 				if (stmt->ismove)
 					return false;
 				portal = GetPortalByName(stmt->portalname);
 				if (!PortalIsValid(portal))
-					return false; /* not our business to raise error */
+					return false;		/* not our business to raise error */
 				return portal->tupDesc ? true : false;
 			}
 
@@ -1066,7 +1073,7 @@ UtilityReturnsTuples(Node *parsetree)
 					return false;
 				entry = FetchPreparedStatement(stmt->name, false);
 				if (!entry)
-					return false; /* not our business to raise error */
+					return false;		/* not our business to raise error */
 				switch (ChoosePortalStrategy(entry->query_list))
 				{
 					case PORTAL_ONE_SELECT:
@@ -1106,14 +1113,14 @@ UtilityTupleDescriptor(Node *parsetree)
 	{
 		case T_FetchStmt:
 			{
-				FetchStmt *stmt = (FetchStmt *) parsetree;
-				Portal	portal;
+				FetchStmt  *stmt = (FetchStmt *) parsetree;
+				Portal		portal;
 
 				if (stmt->ismove)
 					return NULL;
 				portal = GetPortalByName(stmt->portalname);
 				if (!PortalIsValid(portal))
-					return NULL; /* not our business to raise error */
+					return NULL;	/* not our business to raise error */
 				return CreateTupleDescCopy(portal->tupDesc);
 			}
 
@@ -1126,7 +1133,7 @@ UtilityTupleDescriptor(Node *parsetree)
 					return NULL;
 				entry = FetchPreparedStatement(stmt->name, false);
 				if (!entry)
-					return NULL; /* not our business to raise error */
+					return NULL;	/* not our business to raise error */
 				return FetchPreparedStatementResultDesc(entry);
 			}
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lsyscache.h,v 1.76 2003/07/01 19:10:53 tgl Exp $
+ * $Id: lsyscache.h,v 1.77 2003/08/04 00:43:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@ typedef enum IOFuncSelector
 	IOFunc_output,
 	IOFunc_receive,
 	IOFunc_send
-} IOFuncSelector;
+}	IOFuncSelector;
 
 extern bool op_in_opclass(Oid opno, Oid opclass);
 extern bool op_requires_recheck(Oid opno, Oid opclass);
@@ -67,13 +67,13 @@ extern void get_typlenbyval(Oid typid, int16 *typlen, bool *typbyval);
 extern void get_typlenbyvalalign(Oid typid, int16 *typlen, bool *typbyval,
 					 char *typalign);
 extern void get_type_io_data(Oid typid,
-							 IOFuncSelector which_func,
-							 int16 *typlen,
-							 bool *typbyval,
-							 char *typalign,
-							 char *typdelim,
-							 Oid *typelem,
-							 Oid *func);
+				 IOFuncSelector which_func,
+				 int16 *typlen,
+				 bool *typbyval,
+				 char *typalign,
+				 char *typdelim,
+				 Oid *typelem,
+				 Oid *func);
 extern char get_typstorage(Oid typid);
 extern int32 get_typtypmod(Oid typid);
 extern Node *get_typdefault(Oid typid);
@@ -87,7 +87,7 @@ extern void getTypeOutputInfo(Oid type, Oid *typOutput, Oid *typElem,
 				  bool *typIsVarlena);
 extern void getTypeBinaryInputInfo(Oid type, Oid *typReceive, Oid *typElem);
 extern void getTypeBinaryOutputInfo(Oid type, Oid *typSend, Oid *typElem,
-									bool *typIsVarlena);
+						bool *typIsVarlena);
 extern Oid	getBaseType(Oid typid);
 extern int32 get_typavgwidth(Oid typid, int32 typmod);
 extern int32 get_attavgwidth(Oid relid, AttrNumber attnum);

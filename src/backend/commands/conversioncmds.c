@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/conversioncmds.c,v 1.9 2003/08/01 00:15:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/conversioncmds.c,v 1.10 2003/08/04 00:43:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,11 +148,11 @@ RenameConversion(List *name, const char *newname)
 							 0, 0))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("conversion \"%s\" already exists in schema \"%s\"",
-						newname, get_namespace_name(namespaceOid))));
+			  errmsg("conversion \"%s\" already exists in schema \"%s\"",
+					 newname, get_namespace_name(namespaceOid))));
 
 	/* must be owner */
-    if (!superuser() &&
+	if (!superuser() &&
 		((Form_pg_conversion) GETSTRUCT(tup))->conowner != GetUserId())
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CONVERSION,
 					   NameListToString(name));

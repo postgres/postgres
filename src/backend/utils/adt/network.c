@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for the INET and CIDR types.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.44 2003/08/01 23:22:52 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.45 2003/08/04 00:43:25 momjian Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -21,9 +21,9 @@
 
 static Datum text_network(text *src, int type);
 static int32 network_cmp_internal(inet *a1, inet *a2);
-static int bitncmp(void *l, void *r, int n);
+static int	bitncmp(void *l, void *r, int n);
 static bool addressOK(unsigned char *a, int bits, int family);
-static int ip_addrsize(inet *inetptr);
+static int	ip_addrsize(inet *inetptr);
 
 /*
  *	Access macros.
@@ -50,13 +50,14 @@ static int ip_addrsize(inet *inetptr);
 static int
 ip_addrsize(inet *inetptr)
 {
-	switch (ip_family(inetptr)) {
-	case PGSQL_AF_INET:
-		return 4;
-	case PGSQL_AF_INET6:
-		return 16;
-	default:
-		return -1;
+	switch (ip_family(inetptr))
+	{
+		case PGSQL_AF_INET:
+			return 4;
+		case PGSQL_AF_INET6:
+			return 16;
+		default:
+			return -1;
 	}
 }
 
@@ -64,34 +65,34 @@ ip_addrsize(inet *inetptr)
 static inet *
 network_in(char *src, int type)
 {
-	int	    bits;
+	int			bits;
 	inet	   *dst;
 
 	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
 
 	/*
-	 * First, check to see if this is an IPv6 or IPv4 address.  IPv6
-	 * addresses will have a : somewhere in them (several, in fact) so
-	 * if there is one present, assume it's V6, otherwise assume it's V4.
+	 * First, check to see if this is an IPv6 or IPv4 address.	IPv6
+	 * addresses will have a : somewhere in them (several, in fact) so if
+	 * there is one present, assume it's V6, otherwise assume it's V4.
 	 */
 
 	if (strchr(src, ':') != NULL)
 		ip_family(dst) = PGSQL_AF_INET6;
 	else
 		ip_family(dst) = PGSQL_AF_INET;
-  
+
 	bits = inet_net_pton(ip_family(dst), src, ip_addr(dst),
-			     type ? ip_addrsize(dst) : -1);
+						 type ? ip_addrsize(dst) : -1);
 	if ((bits < 0) || (bits > ip_maxbits(dst)))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 /* translator: first %s is inet or cidr */
+		/* translator: first %s is inet or cidr */
 				 errmsg("invalid input syntax for %s: \"%s\"",
-						 type ? "cidr" : "inet", src)));
+						type ? "cidr" : "inet", src)));
 
 	/*
-	 * Error check: CIDR values must not have any bits set beyond
-	 * the masklen.
+	 * Error check: CIDR values must not have any bits set beyond the
+	 * masklen.
 	 */
 	if (type)
 	{
@@ -141,7 +142,7 @@ inet_out(PG_FUNCTION_ARGS)
 	int			len;
 
 	dst = inet_net_ntop(ip_family(src), ip_addr(src), ip_bits(src),
-			    tmp, sizeof(tmp));
+						tmp, sizeof(tmp));
 	if (dst == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
@@ -208,10 +209,10 @@ inet_recv(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 				 errmsg("invalid length in external inet")));
 	VARATT_SIZEP(addr) = VARHDRSZ
-		+ ((char *)ip_addr(addr) - (char *) VARDATA(addr))
+		+ ((char *) ip_addr(addr) - (char *) VARDATA(addr))
 		+ ip_addrsize(addr);
 
-	addrptr = (char *)ip_addr(addr);
+	addrptr = (char *) ip_addr(addr);
 	for (i = 0; i < nb; i++)
 		addrptr[i] = pq_getmsgbyte(buf);
 
@@ -258,7 +259,7 @@ inet_send(PG_FUNCTION_ARGS)
 	if (nb < 0)
 		nb = 0;
 	pq_sendbyte(&buf, nb);
-	addrptr = (char *)ip_addr(addr);
+	addrptr = (char *) ip_addr(addr);
 	for (i = 0; i < nb; i++)
 		pq_sendbyte(&buf, addrptr[i]);
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
@@ -305,8 +306,8 @@ inet_set_masklen(PG_FUNCTION_ARGS)
 	int			bits = PG_GETARG_INT32(1);
 	inet	   *dst;
 
-        if ( bits == -1 )
-            bits = ip_maxbits(src);
+	if (bits == -1)
+		bits = ip_maxbits(src);
 
 	if ((bits < 0) || (bits > ip_maxbits(src)))
 		ereport(ERROR,
@@ -341,7 +342,7 @@ network_cmp_internal(inet *a1, inet *a2)
 		int			order;
 
 		order = bitncmp(ip_addr(a1), ip_addr(a2),
-				Min(ip_bits(a1), ip_bits(a2)));
+						Min(ip_bits(a1), ip_bits(a2)));
 		if (order != 0)
 			return order;
 		order = ((int) ip_bits(a1)) - ((int) ip_bits(a2));
@@ -431,7 +432,7 @@ network_sub(PG_FUNCTION_ARGS)
 	if (ip_family(a1) == ip_family(a2))
 	{
 		PG_RETURN_BOOL(ip_bits(a1) > ip_bits(a2)
-		   && bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a2)) == 0);
+				 && bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a2)) == 0);
 	}
 
 	PG_RETURN_BOOL(false);
@@ -446,7 +447,7 @@ network_subeq(PG_FUNCTION_ARGS)
 	if (ip_family(a1) == ip_family(a2))
 	{
 		PG_RETURN_BOOL(ip_bits(a1) >= ip_bits(a2)
-		   && bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a2)) == 0);
+				 && bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a2)) == 0);
 	}
 
 	PG_RETURN_BOOL(false);
@@ -461,7 +462,7 @@ network_sup(PG_FUNCTION_ARGS)
 	if (ip_family(a1) == ip_family(a2))
 	{
 		PG_RETURN_BOOL(ip_bits(a1) < ip_bits(a2)
-		   && bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a1)) == 0);
+				 && bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a1)) == 0);
 	}
 
 	PG_RETURN_BOOL(false);
@@ -476,7 +477,7 @@ network_supeq(PG_FUNCTION_ARGS)
 	if (ip_family(a1) == ip_family(a2))
 	{
 		PG_RETURN_BOOL(ip_bits(a1) <= ip_bits(a2)
-		   && bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a1)) == 0);
+				 && bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a1)) == 0);
 	}
 
 	PG_RETURN_BOOL(false);
@@ -496,7 +497,7 @@ network_host(PG_FUNCTION_ARGS)
 
 	/* force display of max bits, regardless of masklen... */
 	if (inet_net_ntop(ip_family(ip), ip_addr(ip), ip_maxbits(ip),
-			  tmp, sizeof(tmp)) == NULL)
+					  tmp, sizeof(tmp)) == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 				 errmsg("could not format inet value: %m")));
@@ -522,7 +523,7 @@ network_show(PG_FUNCTION_ARGS)
 	char		tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
 
 	if (inet_net_ntop(ip_family(ip), ip_addr(ip), ip_maxbits(ip),
-			  tmp, sizeof(tmp)) == NULL)
+					  tmp, sizeof(tmp)) == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 				 errmsg("could not format inet value: %m")));
@@ -553,10 +554,10 @@ network_abbrev(PG_FUNCTION_ARGS)
 
 	if (ip_type(ip))
 		dst = inet_cidr_ntop(ip_family(ip), ip_addr(ip),
-				     ip_bits(ip), tmp, sizeof(tmp));
+							 ip_bits(ip), tmp, sizeof(tmp));
 	else
 		dst = inet_net_ntop(ip_family(ip), ip_addr(ip),
-				    ip_bits(ip), tmp, sizeof(tmp));
+							ip_bits(ip), tmp, sizeof(tmp));
 
 	if (dst == NULL)
 		ereport(ERROR,
@@ -582,18 +583,19 @@ network_masklen(PG_FUNCTION_ARGS)
 Datum
 network_family(PG_FUNCTION_ARGS)
 {
-	inet       *ip = PG_GETARG_INET_P(0);
+	inet	   *ip = PG_GETARG_INET_P(0);
 
-	switch (ip_family(ip)) {
-	case PGSQL_AF_INET:
-		PG_RETURN_INT32(4);
-		break;
-	case PGSQL_AF_INET6:
-		PG_RETURN_INT32(6);
-		break;
-	default:
-		PG_RETURN_INT32(0);
-		break;
+	switch (ip_family(ip))
+	{
+		case PGSQL_AF_INET:
+			PG_RETURN_INT32(4);
+			break;
+		case PGSQL_AF_INET6:
+			PG_RETURN_INT32(6);
+			break;
+		default:
+			PG_RETURN_INT32(0);
+			break;
 	}
 }
 
@@ -602,38 +604,42 @@ network_broadcast(PG_FUNCTION_ARGS)
 {
 	inet	   *ip = PG_GETARG_INET_P(0);
 	inet	   *dst;
-	int byte;
-	int bits;
-	int maxbytes;
+	int			byte;
+	int			bits;
+	int			maxbytes;
 	unsigned char mask;
-	unsigned char *a, *b;
+	unsigned char *a,
+			   *b;
 
 	/* make sure any unused bits are zeroed */
 	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
 
-	if (ip_family(ip) == PGSQL_AF_INET) {
+	if (ip_family(ip) == PGSQL_AF_INET)
 		maxbytes = 4;
-	} else {
+	else
 		maxbytes = 16;
-	}
 
 	bits = ip_bits(ip);
 	a = ip_addr(ip);
 	b = ip_addr(dst);
 
-	for (byte = 0 ; byte < maxbytes ; byte++) {
-		if (bits >= 8) {
+	for (byte = 0; byte < maxbytes; byte++)
+	{
+		if (bits >= 8)
+		{
 			mask = 0x00;
 			bits -= 8;
-		} else if (bits == 0) {
+		}
+		else if (bits == 0)
 			mask = 0xff;
-		} else {
+		else
+		{
 			mask = 0xff >> bits;
 			bits = 0;
 		}
 
 		b[byte] = a[byte] | mask;
-        }
+	}
 
 	ip_family(dst) = ip_family(ip);
 	ip_bits(dst) = ip_bits(ip);
@@ -650,38 +656,42 @@ network_network(PG_FUNCTION_ARGS)
 {
 	inet	   *ip = PG_GETARG_INET_P(0);
 	inet	   *dst;
-	int byte;
-	int bits;
-	int maxbytes;
+	int			byte;
+	int			bits;
+	int			maxbytes;
 	unsigned char mask;
-	unsigned char *a, *b;
+	unsigned char *a,
+			   *b;
 
 	/* make sure any unused bits are zeroed */
 	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
 
-	if (ip_family(ip) == PGSQL_AF_INET) {
+	if (ip_family(ip) == PGSQL_AF_INET)
 		maxbytes = 4;
-	} else {
+	else
 		maxbytes = 16;
-	}
 
 	bits = ip_bits(ip);
 	a = ip_addr(ip);
 	b = ip_addr(dst);
 
 	byte = 0;
-	while (bits) {
-		if (bits >= 8) {
+	while (bits)
+	{
+		if (bits >= 8)
+		{
 			mask = 0xff;
 			bits -= 8;
-		} else {
+		}
+		else
+		{
 			mask = 0xff << (8 - bits);
 			bits = 0;
 		}
 
 		b[byte] = a[byte] & mask;
 		byte++;
-        }
+	}
 
 	ip_family(dst) = ip_family(ip);
 	ip_bits(dst) = ip_bits(ip);
@@ -698,43 +708,46 @@ network_netmask(PG_FUNCTION_ARGS)
 {
 	inet	   *ip = PG_GETARG_INET_P(0);
 	inet	   *dst;
-	int byte;
-	int bits;
-	int maxbytes;
+	int			byte;
+	int			bits;
+	int			maxbytes;
 	unsigned char mask;
 	unsigned char *b;
 
 	/* make sure any unused bits are zeroed */
 	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
 
-	if (ip_family(ip) == PGSQL_AF_INET) {
+	if (ip_family(ip) == PGSQL_AF_INET)
 		maxbytes = 4;
-	} else {
+	else
 		maxbytes = 16;
-	}
 
 	bits = ip_bits(ip);
 	b = ip_addr(dst);
 
 	byte = 0;
-	while (bits) {
-		if (bits >= 8) {
+	while (bits)
+	{
+		if (bits >= 8)
+		{
 			mask = 0xff;
 			bits -= 8;
-		} else {
+		}
+		else
+		{
 			mask = 0xff << (8 - bits);
 			bits = 0;
 		}
 
 		b[byte] = mask;
 		byte++;
-        }
+	}
 
 	ip_family(dst) = ip_family(ip);
 	ip_bits(dst) = ip_bits(ip);
 	ip_type(dst) = 0;
 	VARATT_SIZEP(dst) = VARHDRSZ
-		+ ((char *)ip_addr(dst) - (char *) VARDATA(dst))
+		+ ((char *) ip_addr(dst) - (char *) VARDATA(dst))
 		+ ip_addrsize(dst);
 
 	PG_RETURN_INET_P(dst);
@@ -745,43 +758,46 @@ network_hostmask(PG_FUNCTION_ARGS)
 {
 	inet	   *ip = PG_GETARG_INET_P(0);
 	inet	   *dst;
-	int byte;
-	int bits;
-	int maxbytes;
+	int			byte;
+	int			bits;
+	int			maxbytes;
 	unsigned char mask;
 	unsigned char *b;
 
 	/* make sure any unused bits are zeroed */
 	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
 
-	if (ip_family(ip) == PGSQL_AF_INET) {
+	if (ip_family(ip) == PGSQL_AF_INET)
 		maxbytes = 4;
-	} else {
+	else
 		maxbytes = 16;
-	}
 
 	bits = ip_maxbits(ip) - ip_bits(ip);
 	b = ip_addr(dst);
 
 	byte = maxbytes - 1;
-	while (bits) {
-		if (bits >= 8) {
+	while (bits)
+	{
+		if (bits >= 8)
+		{
 			mask = 0xff;
 			bits -= 8;
-		} else {
+		}
+		else
+		{
 			mask = 0xff >> (8 - bits);
 			bits = 0;
 		}
 
 		b[byte] = mask;
 		byte--;
-        }
+	}
 
 	ip_family(dst) = ip_family(ip);
 	ip_bits(dst) = ip_bits(ip);
 	ip_type(dst) = 0;
 	VARATT_SIZEP(dst) = VARHDRSZ
-		+ ((char *)ip_addr(dst) - (char *) VARDATA(dst))
+		+ ((char *) ip_addr(dst) - (char *) VARDATA(dst))
 		+ ip_addrsize(dst);
 
 	PG_RETURN_INET_P(dst);
@@ -806,13 +822,12 @@ convert_network_to_scalar(Datum value, Oid typid)
 		case CIDROID:
 			{
 				inet	   *ip = DatumGetInetP(value);
-				int len;
-				double res;
-				int i;
+				int			len;
+				double		res;
+				int			i;
 
 				/*
-				 * Note that we don't use the full address
-				 * here.
+				 * Note that we don't use the full address here.
 				 */
 				if (ip_family(ip) == PGSQL_AF_INET)
 					len = 4;
@@ -820,7 +835,8 @@ convert_network_to_scalar(Datum value, Oid typid)
 					len = 5;
 
 				res = ip_family(ip);
-				for (i = 0 ; i < len ; i++) {
+				for (i = 0; i < len; i++)
+				{
 					res *= 256;
 					res += ip_addr(ip)[i];
 				}
@@ -851,30 +867,34 @@ convert_network_to_scalar(Datum value, Oid typid)
 /*
  * int
  * bitncmp(l, r, n)
- *      compare bit masks l and r, for n bits.
+ *		compare bit masks l and r, for n bits.
  * return:
- *      -1, 1, or 0 in the libc tradition.
+ *		-1, 1, or 0 in the libc tradition.
  * note:
- *      network byte order assumed.  this means 192.5.5.240/28 has
- *      0x11110000 in its fourth octet.
+ *		network byte order assumed.  this means 192.5.5.240/28 has
+ *		0x11110000 in its fourth octet.
  * author:
- *      Paul Vixie (ISC), June 1996
+ *		Paul Vixie (ISC), June 1996
  */
 static int
 bitncmp(void *l, void *r, int n)
 {
-	u_int lb, rb;
-	int x, b;
+	u_int		lb,
+				rb;
+	int			x,
+				b;
 
 	b = n / 8;
 	x = memcmp(l, r, b);
 	if (x)
 		return (x);
 
-	lb = ((const u_char *)l)[b];
-	rb = ((const u_char *)r)[b];
-	for (b = n % 8; b > 0; b--) {
-		if ((lb & 0x80) != (rb & 0x80)) {
+	lb = ((const u_char *) l)[b];
+	rb = ((const u_char *) r)[b];
+	for (b = n % 8; b > 0; b--)
+	{
+		if ((lb & 0x80) != (rb & 0x80))
+		{
 			if (lb & 0x80)
 				return (1);
 			return (-1);
@@ -888,16 +908,19 @@ bitncmp(void *l, void *r, int n)
 static bool
 addressOK(unsigned char *a, int bits, int family)
 {
-	int byte;
-	int nbits;
-	int maxbits;
-	int maxbytes;
+	int			byte;
+	int			nbits;
+	int			maxbits;
+	int			maxbytes;
 	unsigned char mask;
 
-	if (family == PGSQL_AF_INET) {
+	if (family == PGSQL_AF_INET)
+	{
 		maxbits = 32;
 		maxbytes = 4;
-	} else {
+	}
+	else
+	{
 		maxbits = 128;
 		maxbytes = 16;
 	}
@@ -912,7 +935,8 @@ addressOK(unsigned char *a, int bits, int family)
 	if (bits != 0)
 		mask >>= nbits;
 
-	while (byte < maxbytes) {
+	while (byte < maxbytes)
+	{
 		if ((a[byte] & mask) != 0)
 			return false;
 		mask = 0xff;
@@ -948,5 +972,5 @@ network_scan_last(Datum in)
 {
 	return DirectFunctionCall2(inet_set_masklen,
 							   DirectFunctionCall1(network_broadcast, in),
-			   Int32GetDatum(-1));
+							   Int32GetDatum(-1));
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.102 2003/08/01 00:15:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.103 2003/08/04 00:43:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,7 +94,7 @@ ProcedureCreate(const char *procedureName,
 	 */
 	if (returnType == ANYARRAYOID || returnType == ANYELEMENTOID)
 	{
-		bool	genericParam = false;
+		bool		genericParam = false;
 
 		for (i = 0; i < parameterCount; i++)
 		{
@@ -231,7 +231,7 @@ ProcedureCreate(const char *procedureName,
 			returnsSet != oldproc->proretset)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("cannot change return type of existing function"),
+				errmsg("cannot change return type of existing function"),
 					 errhint("Use DROP FUNCTION first.")));
 
 		/* Can't change aggregate status, either */
@@ -339,8 +339,8 @@ ProcedureCreate(const char *procedureName,
  *
  * This is normally applied during function definition, but in the case
  * of a function with polymorphic arguments, we instead apply it during
- * function execution startup.  The rettype is then the actual resolved
- * output type of the function, rather than the declared type.  (Therefore,
+ * function execution startup.	The rettype is then the actual resolved
+ * output type of the function, rather than the declared type.	(Therefore,
  * we should never see ANYARRAY or ANYELEMENT as rettype.)
  */
 void
@@ -366,7 +366,7 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 					 errmsg("return type mismatch in function declared to return %s",
 							format_type_be(rettype)),
-					 errdetail("Function's final statement must be a SELECT.")));
+			 errdetail("Function's final statement must be a SELECT.")));
 		return;
 	}
 
@@ -395,9 +395,9 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
 	if (cmd != CMD_SELECT)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				 errmsg("return type mismatch in function declared to return %s",
-						format_type_be(rettype)),
-				 errdetail("Function's final statement must be a SELECT.")));
+		 errmsg("return type mismatch in function declared to return %s",
+				format_type_be(rettype)),
+			 errdetail("Function's final statement must be a SELECT.")));
 
 	/*
 	 * Count the non-junk entries in the result targetlist.
@@ -421,7 +421,7 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 					 errmsg("return type mismatch in function declared to return %s",
 							format_type_be(rettype)),
-					 errdetail("Final SELECT must return exactly one column.")));
+			 errdetail("Final SELECT must return exactly one column.")));
 
 		restype = ((TargetEntry *) lfirst(tlist))->resdom->restype;
 		if (!IsBinaryCoercible(restype, rettype))
@@ -481,7 +481,7 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
 							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 							 errmsg("return type mismatch in function declared to return %s",
 									format_type_be(rettype)),
-							 errdetail("Final SELECT returns too many columns.")));
+					errdetail("Final SELECT returns too many columns.")));
 				attr = reln->rd_att->attrs[colindex - 1];
 			} while (attr->attisdropped);
 			rellogcols++;
@@ -538,8 +538,8 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				 errmsg("return type %s is not supported for SQL functions",
-						format_type_be(rettype))));
+			  errmsg("return type %s is not supported for SQL functions",
+					 format_type_be(rettype))));
 }
 
 
@@ -684,8 +684,8 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-						 errmsg("SQL functions cannot have arguments of type %s",
-								format_type_be(proc->proargtypes[i]))));
+				 errmsg("SQL functions cannot have arguments of type %s",
+						format_type_be(proc->proargtypes[i]))));
 		}
 	}
 
@@ -696,13 +696,13 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 	prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
 
 	/*
-	 * We can't do full prechecking of the function definition if there are
-	 * any polymorphic input types, because actual datatypes of expression
-	 * results will be unresolvable.  The check will be done at runtime
-	 * instead.
+	 * We can't do full prechecking of the function definition if there
+	 * are any polymorphic input types, because actual datatypes of
+	 * expression results will be unresolvable.  The check will be done at
+	 * runtime instead.
 	 *
-	 * We can run the text through the raw parser though; this will at
-	 * least catch silly syntactic errors.
+	 * We can run the text through the raw parser though; this will at least
+	 * catch silly syntactic errors.
 	 */
 	if (!haspolyarg)
 	{
@@ -712,9 +712,7 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 		check_sql_fn_retval(proc->prorettype, functyptype, querytree_list);
 	}
 	else
-	{
 		querytree_list = pg_parse_query(prosrc);
-	}
 
 	ReleaseSysCache(tuple);
 

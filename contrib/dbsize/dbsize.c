@@ -54,7 +54,7 @@ database_size(PG_FUNCTION_ARGS)
 	if (!OidIsValid(dbid))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
-				 errmsg("database \"%s\" does not exist", NameStr(*dbname))));
+			errmsg("database \"%s\" does not exist", NameStr(*dbname))));
 
 	dbpath = GetDatabasePath(dbid);
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.51 2003/07/22 23:30:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.52 2003/08/04 00:43:19 momjian Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -202,7 +202,7 @@ nconc(List *l1, List *l2)
  * since we avoid having to chase down the list again each time.
  */
 void
-FastAppend(FastList *fl, void *datum)
+FastAppend(FastList * fl, void *datum)
 {
 	List	   *cell = makeList1(datum);
 
@@ -223,7 +223,7 @@ FastAppend(FastList *fl, void *datum)
  * FastAppendi - same for integers
  */
 void
-FastAppendi(FastList *fl, int datum)
+FastAppendi(FastList * fl, int datum)
 {
 	List	   *cell = makeListi1(datum);
 
@@ -244,7 +244,7 @@ FastAppendi(FastList *fl, int datum)
  * FastAppendo - same for Oids
  */
 void
-FastAppendo(FastList *fl, Oid datum)
+FastAppendo(FastList * fl, Oid datum)
 {
 	List	   *cell = makeListo1(datum);
 
@@ -267,14 +267,12 @@ FastAppendo(FastList *fl, Oid datum)
  * Note that the cells of the second argument are absorbed into the FastList.
  */
 void
-FastConc(FastList *fl, List *cells)
+FastConc(FastList * fl, List *cells)
 {
 	if (cells == NIL)
 		return;					/* nothing to do */
 	if (fl->tail)
-	{
 		lnext(fl->tail) = cells;
-	}
 	else
 	{
 		/* First cell of list */
@@ -292,14 +290,12 @@ FastConc(FastList *fl, List *cells)
  * Note that the cells of the second argument are absorbed into the first.
  */
 void
-FastConcFast(FastList *fl, FastList *fl2)
+FastConcFast(FastList * fl, FastList * fl2)
 {
 	if (fl2->head == NIL)
 		return;					/* nothing to do */
 	if (fl->tail)
-	{
 		lnext(fl->tail) = fl2->head;
-	}
 	else
 	{
 		/* First cell of list */
@@ -319,9 +315,7 @@ nth(int n, List *l)
 {
 	/* XXX assume list is long enough */
 	while (n-- > 0)
-	{
 		l = lnext(l);
-	}
 	return lfirst(l);
 }
 
@@ -781,4 +775,5 @@ lreverse(List *l)
 		result = lcons(lfirst(i), result);
 	return result;
 }
+
 #endif

@@ -1,7 +1,7 @@
 /* -------------------------------------------------------------------------
  * pg_dumplo
  *
- * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/main.c,v 1.16 2003/05/14 03:25:56 tgl Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/main.c,v 1.17 2003/08/04 00:43:11 momjian Exp $
  *
  *					Karel Zak 1999-2000
  * -------------------------------------------------------------------------
@@ -26,7 +26,7 @@
 
 #ifndef HAVE_GETOPT_LONG
 #include "getopt_long.h"
-int optreset;
+int			optreset;
 #endif
 
 char	   *progname = NULL;

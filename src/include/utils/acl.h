@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.58 2003/08/01 00:15:25 tgl Exp $
+ * $Id: acl.h,v 1.59 2003/08/04 00:43:32 momjian Exp $
  *
  * NOTES
  *	  For backward-compatibility purposes we have to allow there
@@ -61,7 +61,7 @@ typedef struct AclItem
  * and the lower 15 bits are the actual privileges.
  */
 #define ACLITEM_GET_PRIVS(item)    ((item).ai_privs & 0x7FFF)
-#define ACLITEM_GET_GOPTIONS(item) (((item).ai_privs >> 15)  & 0x7FFF) 
+#define ACLITEM_GET_GOPTIONS(item) (((item).ai_privs >> 15)  & 0x7FFF)
 #define ACLITEM_GET_IDTYPE(item)   ((item).ai_privs >> 30)
 
 #define ACL_GRANT_OPTION_FOR(privs) (((privs) & 0x7FFF) << 15)
@@ -190,14 +190,14 @@ typedef enum AclObjectKind
 	ACL_KIND_OPCLASS,			/* pg_opclass */
 	ACL_KIND_CONVERSION,		/* pg_conversion */
 	MAX_ACL_KIND				/* MUST BE LAST */
-} AclObjectKind;
+}	AclObjectKind;
 
 /*
  * routines used internally
  */
 extern Acl *acldefault(GrantObjectType objtype, AclId ownerid);
 extern Acl *aclinsert3(const Acl *old_acl, const AclItem *mod_aip,
-					   unsigned modechg, DropBehavior behavior);
+		   unsigned modechg, DropBehavior behavior);
 
 /*
  * SQL functions (from acl.c)
@@ -224,7 +224,7 @@ extern AclResult pg_language_aclcheck(Oid lang_oid, AclId userid, AclMode mode);
 extern AclResult pg_namespace_aclcheck(Oid nsp_oid, AclId userid, AclMode mode);
 
 extern void aclcheck_error(AclResult aclerr, AclObjectKind objectkind,
-						   const char *objectname);
+			   const char *objectname);
 
 /* ownercheck routines just return true (owner) or false (not) */
 extern bool pg_class_ownercheck(Oid class_oid, AclId userid);

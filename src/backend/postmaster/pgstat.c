@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.41 2003/07/28 00:09:15 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.42 2003/08/04 00:43:21 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -85,6 +85,7 @@ static bool pgStatRunningInCollector = FALSE;
 static int	pgStatTabstatAlloc = 0;
 static int	pgStatTabstatUsed = 0;
 static PgStat_MsgTabstat **pgStatTabstatMessages = NULL;
+
 #define TABSTAT_QUANTUM		4	/* we alloc this many at a time */
 
 static int	pgStatXactCommit = 0;
@@ -146,8 +147,10 @@ static void pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len);
 void
 pgstat_init(void)
 {
-	ACCEPT_TYPE_ARG3	alen;
-	struct	addrinfo	*addrs = NULL, *addr, hints;
+	ACCEPT_TYPE_ARG3 alen;
+	struct addrinfo *addrs = NULL,
+			   *addr,
+				hints;
 	int			ret;
 
 	/*
@@ -197,7 +200,7 @@ pgstat_init(void)
 						gai_strerror(ret))));
 		goto startup_failed;
 	}
-	
+
 	for (addr = addrs; addr; addr = addr->ai_next)
 	{
 #ifdef HAVE_UNIX_SOCKETS
@@ -233,11 +236,11 @@ pgstat_init(void)
 	addrs = NULL;
 
 	alen = sizeof(pgStatAddr);
-	if (getsockname(pgStatSock, (struct sockaddr *)&pgStatAddr, &alen) < 0)
+	if (getsockname(pgStatSock, (struct sockaddr *) & pgStatAddr, &alen) < 0)
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-				 errmsg("could not get address of socket for statistics: %m")));
+		  errmsg("could not get address of socket for statistics: %m")));
 		goto startup_failed;
 	}
 
@@ -265,7 +268,7 @@ pgstat_init(void)
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-				 errmsg("could not set statistics socket to nonblock mode: %m")));
+		errmsg("could not set statistics socket to nonblock mode: %m")));
 		goto startup_failed;
 	}
 
@@ -276,7 +279,7 @@ pgstat_init(void)
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-				 errmsg("could not create pipe for statistics collector: %m")));
+		  errmsg("could not create pipe for statistics collector: %m")));
 		goto startup_failed;
 	}
 
@@ -320,10 +323,10 @@ pgstat_start(void)
 
 	/*
 	 * Do nothing if too soon since last collector start.  This is a
-	 * safety valve to protect against continuous respawn attempts if
-	 * the collector is dying immediately at launch.  Note that since
-	 * we will be re-called from the postmaster main loop, we will get
-	 * another chance later.
+	 * safety valve to protect against continuous respawn attempts if the
+	 * collector is dying immediately at launch.  Note that since we will
+	 * be re-called from the postmaster main loop, we will get another
+	 * chance later.
 	 */
 	curtime = time(NULL);
 	if ((unsigned int) (curtime - last_pgstat_start_time) <
@@ -338,6 +341,7 @@ pgstat_start(void)
 	{
 		ereport(LOG,
 				(errmsg("statistics collector startup skipped")));
+
 		/*
 		 * We can only get here if someone tries to manually turn
 		 * pgstat_collect_startcollector on after it had been off.
@@ -347,7 +351,8 @@ pgstat_start(void)
 	}
 
 	/*
-	 * Okay, fork off the collector.  Remember its PID for pgstat_ispgstat.
+	 * Okay, fork off the collector.  Remember its PID for
+	 * pgstat_ispgstat.
 	 */
 
 	fflush(stdout);
@@ -772,7 +777,7 @@ pgstat_reset_counters(void)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to reset statistics counters")));
+			  errmsg("must be superuser to reset statistics counters")));
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_RESETCOUNTER);
 	pgstat_send(&msg, sizeof(msg));
@@ -897,7 +902,7 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 	 */
 	if (pgStatTabstatUsed >= pgStatTabstatAlloc)
 	{
-		int		newAlloc = pgStatTabstatAlloc + TABSTAT_QUANTUM;
+		int			newAlloc = pgStatTabstatAlloc + TABSTAT_QUANTUM;
 		PgStat_MsgTabstat *newMessages;
 		PgStat_MsgTabstat **msgArray;
 
@@ -1251,7 +1256,7 @@ pgstat_main(void)
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-				 errmsg("could not create pipe for statistics buffer: %m")));
+			 errmsg("could not create pipe for statistics buffer: %m")));
 		exit(1);
 	}
 
@@ -1316,7 +1321,7 @@ pgstat_main(void)
 		/* assume the problem is out-of-memory */
 		ereport(LOG,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory in statistics collector --- abort")));
+			 errmsg("out of memory in statistics collector --- abort")));
 		exit(1);
 	}
 
@@ -1394,7 +1399,7 @@ pgstat_main(void)
 				continue;
 			ereport(LOG,
 					(errcode_for_socket_access(),
-					 errmsg("select failed in statistics collector: %m")));
+				   errmsg("select failed in statistics collector: %m")));
 			exit(1);
 		}
 
@@ -1436,7 +1441,7 @@ pgstat_main(void)
 						continue;
 					ereport(LOG,
 							(errcode_for_socket_access(),
-							 errmsg("could not read from statistics pipe: %m")));
+					 errmsg("could not read from statistics pipe: %m")));
 					exit(1);
 				}
 				if (len == 0)	/* EOF on the pipe! */
@@ -1455,7 +1460,7 @@ pgstat_main(void)
 						 * that we can restart both processes.
 						 */
 						ereport(LOG,
-								(errmsg("invalid statistics message length")));
+						  (errmsg("invalid statistics message length")));
 						exit(1);
 					}
 				}
@@ -1579,7 +1584,7 @@ pgstat_recvbuffer(void)
 	int			msg_send = 0;	/* next send index in buffer */
 	int			msg_recv = 0;	/* next receive index */
 	int			msg_have = 0;	/* number of bytes stored */
-	struct sockaddr_storage	fromaddr;
+	struct sockaddr_storage fromaddr;
 	int			fromlen;
 	bool		overflow = false;
 
@@ -1607,7 +1612,7 @@ pgstat_recvbuffer(void)
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-				 errmsg("could not set statistics pipe to nonblock mode: %m")));
+		  errmsg("could not set statistics pipe to nonblock mode: %m")));
 		exit(1);
 	}
 
@@ -1619,7 +1624,7 @@ pgstat_recvbuffer(void)
 	{
 		ereport(LOG,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory in statistics collector --- abort")));
+			 errmsg("out of memory in statistics collector --- abort")));
 		exit(1);
 	}
 
@@ -1692,13 +1697,13 @@ pgstat_recvbuffer(void)
 		{
 			fromlen = sizeof(fromaddr);
 			len = recvfrom(pgStatSock, (char *) &input_buffer,
-				sizeof(PgStat_Msg), 0,
-				(struct sockaddr *) &fromaddr, &fromlen);
+						   sizeof(PgStat_Msg), 0,
+						   (struct sockaddr *) &fromaddr, &fromlen);
 			if (len < 0)
 			{
 				ereport(LOG,
 						(errcode_for_socket_access(),
-						 errmsg("failed to read statistics message: %m")));
+					   errmsg("failed to read statistics message: %m")));
 				exit(1);
 			}
 
@@ -1887,7 +1892,7 @@ pgstat_add_backend(PgStat_MsgHdr *msg)
 	{
 		ereport(LOG,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory in statistics collector --- abort")));
+			 errmsg("out of memory in statistics collector --- abort")));
 		exit(1);
 	}
 
@@ -1919,7 +1924,7 @@ pgstat_add_backend(PgStat_MsgHdr *msg)
 			/* assume the problem is out-of-memory */
 			ereport(LOG,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory in statistics collector --- abort")));
+			 errmsg("out of memory in statistics collector --- abort")));
 			exit(1);
 		}
 	}
@@ -2234,7 +2239,7 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 		{
 			ereport(LOG,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory in statistics collector --- abort")));
+			 errmsg("out of memory in statistics collector --- abort")));
 			exit(1);
 		}
 		/* in backend, can do normal error */
@@ -2621,7 +2626,7 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 		{
 			ereport(LOG,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory in statistics collector --- abort")));
+			 errmsg("out of memory in statistics collector --- abort")));
 			exit(1);
 		}
 
@@ -2803,7 +2808,7 @@ pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len)
 		/* assume the problem is out-of-memory */
 		ereport(LOG,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory in statistics collector --- abort")));
+			 errmsg("out of memory in statistics collector --- abort")));
 		exit(1);
 	}
 }

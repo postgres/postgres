@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: openssl.c,v 1.11 2002/11/15 02:54:44 momjian Exp $
+ * $Id: openssl.c,v 1.12 2003/08/04 00:43:11 momjian Exp $
  */
 
 #include <postgres.h>
@@ -130,18 +130,19 @@ px_find_digest(const char *name, PX_MD ** res)
  * of functions does not allow enough flexibility
  * and forces some of the parameters (keylen,
  * padding) to SSL defaults.
- * 
+ *
  * So need to manage ciphers ourselves.
  */
 
-struct ossl_cipher {
-	int         (*init) (PX_Cipher * c, const uint8 *key, unsigned klen, const uint8 *iv);
-	int         (*encrypt) (PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res);
-	int         (*decrypt) (PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res);
+struct ossl_cipher
+{
+	int			(*init) (PX_Cipher * c, const uint8 *key, unsigned klen, const uint8 *iv);
+	int			(*encrypt) (PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res);
+	int			(*decrypt) (PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res);
 
-	int block_size;
-	int max_key_size;
-	int stream_cipher;
+	int			block_size;
+	int			max_key_size;
+	int			stream_cipher;
 };
 
 typedef struct
@@ -224,7 +225,7 @@ static int
 bf_ecb_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
 {
 	unsigned	bs = gen_ossl_block_size(c);
-	unsigned    i;
+	unsigned	i;
 	ossldata   *od = c->ptr;
 
 	for (i = 0; i < dlen / bs; i++)
@@ -288,13 +289,13 @@ static int
 ossl_des_init(PX_Cipher * c, const uint8 *key, unsigned klen, const uint8 *iv)
 {
 	ossldata   *od = c->ptr;
-	des_cblock xkey;
+	des_cblock	xkey;
 
 	memset(&xkey, 0, sizeof(xkey));
 	memcpy(&xkey, key, klen > 8 ? 8 : klen);
 	des_set_key(&xkey, od->u.des.key_schedule);
 	memset(&xkey, 0, sizeof(xkey));
-	
+
 	if (iv)
 		memcpy(od->iv, iv, 8);
 	else
@@ -304,53 +305,53 @@ ossl_des_init(PX_Cipher * c, const uint8 *key, unsigned klen, const uint8 *iv)
 
 static int
 ossl_des_ecb_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
-		uint8 *res)
+					 uint8 *res)
 {
 	unsigned	bs = gen_ossl_block_size(c);
-	unsigned    i;
+	unsigned	i;
 	ossldata   *od = c->ptr;
 
 	for (i = 0; i < dlen / bs; i++)
-		des_ecb_encrypt((des_cblock*)(data + i * bs),
-				(des_cblock*)(res + i * bs),
-				od->u.des.key_schedule, 1);
+		des_ecb_encrypt((des_cblock *) (data + i * bs),
+						(des_cblock *) (res + i * bs),
+						od->u.des.key_schedule, 1);
 	return 0;
 }
 
 static int
 ossl_des_ecb_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
-		uint8 *res)
+					 uint8 *res)
 {
 	unsigned	bs = gen_ossl_block_size(c);
-	unsigned    i;
+	unsigned	i;
 	ossldata   *od = c->ptr;
 
 	for (i = 0; i < dlen / bs; i++)
-		des_ecb_encrypt((des_cblock*)(data + i * bs),
-				(des_cblock*)(res + i * bs),
-				od->u.des.key_schedule, 0);
+		des_ecb_encrypt((des_cblock *) (data + i * bs),
+						(des_cblock *) (res + i * bs),
+						od->u.des.key_schedule, 0);
 	return 0;
 }
 
 static int
 ossl_des_cbc_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
-		uint8 *res)
+					 uint8 *res)
 {
 	ossldata   *od = c->ptr;
 
 	des_ncbc_encrypt(data, res, dlen, od->u.des.key_schedule,
-			(des_cblock*)od->iv, 1);
+					 (des_cblock *) od->iv, 1);
 	return 0;
 }
 
 static int
 ossl_des_cbc_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
-		uint8 *res)
+					 uint8 *res)
 {
 	ossldata   *od = c->ptr;
 
 	des_ncbc_encrypt(data, res, dlen, od->u.des.key_schedule,
-			(des_cblock*)od->iv, 0);
+					 (des_cblock *) od->iv, 0);
 	return 0;
 }
 
@@ -375,7 +376,7 @@ ossl_cast_ecb_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *re
 {
 	unsigned	bs = gen_ossl_block_size(c);
 	ossldata   *od = c->ptr;
-	const uint8	   *end = data + dlen - bs;
+	const uint8 *end = data + dlen - bs;
 
 	for (; data <= end; data += bs, res += bs)
 		CAST_ecb_encrypt(data, res, &od->u.cast_key, CAST_ENCRYPT);
@@ -387,7 +388,7 @@ ossl_cast_ecb_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *re
 {
 	unsigned	bs = gen_ossl_block_size(c);
 	ossldata   *od = c->ptr;
-	const uint8	   *end = data + dlen - bs;
+	const uint8 *end = data + dlen - bs;
 
 	for (; data <= end; data += bs, res += bs)
 		CAST_ecb_encrypt(data, res, &od->u.cast_key, CAST_DECRYPT);
@@ -429,37 +430,37 @@ static PX_Alias ossl_aliases[] = {
 
 static const struct ossl_cipher ossl_bf_cbc = {
 	bf_init, bf_cbc_encrypt, bf_cbc_decrypt,
-	64/8, 448/8, 0
+	64 / 8, 448 / 8, 0
 };
 
 static const struct ossl_cipher ossl_bf_ecb = {
 	bf_init, bf_ecb_encrypt, bf_ecb_decrypt,
-	64/8, 448/8, 0
+	64 / 8, 448 / 8, 0
 };
 
 static const struct ossl_cipher ossl_bf_cfb = {
 	bf_init, bf_cfb64_encrypt, bf_cfb64_decrypt,
-	64/8, 448/8, 1
+	64 / 8, 448 / 8, 1
 };
 
 static const struct ossl_cipher ossl_des_ecb = {
 	ossl_des_init, ossl_des_ecb_encrypt, ossl_des_ecb_decrypt,
-	64/8, 64/8, 0
+	64 / 8, 64 / 8, 0
 };
 
 static const struct ossl_cipher ossl_des_cbc = {
 	ossl_des_init, ossl_des_cbc_encrypt, ossl_des_cbc_decrypt,
-	64/8, 64/8, 0
+	64 / 8, 64 / 8, 0
 };
 
 static const struct ossl_cipher ossl_cast_ecb = {
 	ossl_cast_init, ossl_cast_ecb_encrypt, ossl_cast_ecb_decrypt,
-	64/8, 128/8, 0
+	64 / 8, 128 / 8, 0
 };
 
 static const struct ossl_cipher ossl_cast_cbc = {
 	ossl_cast_init, ossl_cast_cbc_encrypt, ossl_cast_cbc_decrypt,
-	64/8, 128/8, 0
+	64 / 8, 128 / 8, 0
 };
 
 /*
@@ -467,7 +468,7 @@ static const struct ossl_cipher ossl_cast_cbc = {
  */
 static const struct
 {
-	const char	   *name;
+	const char *name;
 	const struct ossl_cipher *ciph;
 }	ossl_cipher_types[] =
 
@@ -510,8 +511,10 @@ px_find_cipher(const char *name, PX_Cipher ** res)
 	const struct ossl_cipher *ossl_ciph = NULL;
 
 	name = px_resolve_alias(ossl_aliases, name);
-	for (i = 0; ossl_cipher_types[i].name; i++) {
-		if (!strcmp(ossl_cipher_types[i].name, name)) {
+	for (i = 0; ossl_cipher_types[i].name; i++)
+	{
+		if (!strcmp(ossl_cipher_types[i].name, name))
+		{
 			ossl_ciph = ossl_cipher_types[i].ciph;
 			break;
 		}

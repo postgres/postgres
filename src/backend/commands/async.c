@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.96 2003/07/20 21:56:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.97 2003/08/04 00:43:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -603,10 +603,10 @@ Async_NotifyHandler(SIGNAL_ARGS)
 		bool		save_ImmediateInterruptOK = ImmediateInterruptOK;
 
 		/*
-		 * We may be called while ImmediateInterruptOK is true; turn it off
-		 * while messing with the NOTIFY state.  (We would have to save
-		 * and restore it anyway, because PGSemaphore operations inside
-		 * ProcessIncomingNotify() might reset it.)
+		 * We may be called while ImmediateInterruptOK is true; turn it
+		 * off while messing with the NOTIFY state.  (We would have to
+		 * save and restore it anyway, because PGSemaphore operations
+		 * inside ProcessIncomingNotify() might reset it.)
 		 */
 		ImmediateInterruptOK = false;
 
@@ -639,7 +639,8 @@ Async_NotifyHandler(SIGNAL_ARGS)
 		}
 
 		/*
-		 * Restore ImmediateInterruptOK, and check for interrupts if needed.
+		 * Restore ImmediateInterruptOK, and check for interrupts if
+		 * needed.
 		 */
 		ImmediateInterruptOK = save_ImmediateInterruptOK;
 		if (save_ImmediateInterruptOK)

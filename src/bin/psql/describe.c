@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.81 2003/07/27 03:32:26 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.82 2003/08/04 00:43:29 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -139,10 +139,10 @@ describeFunctions(const char *pattern, bool verbose)
 	initPQExpBuffer(&buf);
 
 	printfPQExpBuffer(&buf,
-		 "SELECT CASE WHEN p.proretset THEN 'setof ' ELSE '' END ||\n"
-				  "  pg_catalog.format_type(p.prorettype, NULL) as \"%s\",\n"
-				  "  n.nspname as \"%s\",\n"
-				  "  p.proname as \"%s\",\n"
+			"SELECT CASE WHEN p.proretset THEN 'setof ' ELSE '' END ||\n"
+			  "  pg_catalog.format_type(p.prorettype, NULL) as \"%s\",\n"
+					  "  n.nspname as \"%s\",\n"
+					  "  p.proname as \"%s\",\n"
 				  "  pg_catalog.oidvectortypes(p.proargtypes) as \"%s\"",
 					  _("Result data type"), _("Schema"), _("Name"),
 					  _("Argument data types"));
@@ -723,7 +723,7 @@ describeOneTableDetails(const char *schemaname,
 	/* Get column info (index requires additional checks) */
 	printfPQExpBuffer(&buf, "SELECT a.attname,");
 	appendPQExpBuffer(&buf, "\n  pg_catalog.format_type(a.atttypid, a.atttypmod),"
-					  "\n  (SELECT substring(d.adsrc for 128) FROM pg_catalog.pg_attrdef d"
+	"\n  (SELECT substring(d.adsrc for 128) FROM pg_catalog.pg_attrdef d"
 					  "\n   WHERE d.adrelid = a.attrelid AND d.adnum = a.attnum AND a.atthasdef),"
 					  "\n  a.attnotnull, a.attnum");
 	if (verbose)
@@ -765,7 +765,7 @@ describeOneTableDetails(const char *schemaname,
 	{
 		/* Name */
 #ifdef WIN32
-		cells[i * cols + 0] = mbvalidate(PQgetvalue(res, i, 0)); 
+		cells[i * cols + 0] = mbvalidate(PQgetvalue(res, i, 0));
 #else
 		cells[i * cols + 0] = PQgetvalue(res, i, 0);	/* don't free this
 														 * afterwards */
@@ -962,7 +962,7 @@ describeOneTableDetails(const char *schemaname,
 					foreignkey_count = 0,
 					rule_count = 0,
 					trigger_count = 0,
-				    inherits_count = 0;
+					inherits_count = 0;
 		int			count_footers = 0;
 
 		/* count indexes */
@@ -1023,7 +1023,7 @@ describeOneTableDetails(const char *schemaname,
 		if (tableinfo.triggers)
 		{
 			printfPQExpBuffer(&buf,
-							  "SELECT t.tgname, pg_catalog.pg_get_triggerdef(t.oid)\n"
+				 "SELECT t.tgname, pg_catalog.pg_get_triggerdef(t.oid)\n"
 							  "FROM pg_catalog.pg_trigger t\n"
 							  "WHERE t.tgrelid = '%s' "
 							  "and (not tgisconstraint "
@@ -1079,7 +1079,8 @@ describeOneTableDetails(const char *schemaname,
 							  * sizeof(*footers));
 
 		/* print indexes */
-		if (index_count > 0) {
+		if (index_count > 0)
+		{
 			printfPQExpBuffer(&buf, _("Indexes:"));
 			footers[count_footers++] = xstrdup(buf.data);
 			for (i = 0; i < index_count; i++)
@@ -1093,11 +1094,11 @@ describeOneTableDetails(const char *schemaname,
 
 				/* Label as primary key or unique (but not both) */
 				appendPQExpBuffer(&buf,
-								  strcmp(PQgetvalue(result1, i, 1), "t") == 0
+							  strcmp(PQgetvalue(result1, i, 1), "t") == 0
 								  ? _(" primary key,") :
-								  (strcmp(PQgetvalue(result1, i, 2), "t") == 0
-								   ? _(" unique,")
-								   : ""));
+							 (strcmp(PQgetvalue(result1, i, 2), "t") == 0
+							  ? _(" unique,")
+							  : ""));
 
 				/* Everything after "USING" is echoed verbatim */
 				indexdef = PQgetvalue(result1, i, 3);
@@ -1112,7 +1113,8 @@ describeOneTableDetails(const char *schemaname,
 		}
 
 		/* print check constraints */
-		if (check_count > 0) {
+		if (check_count > 0)
+		{
 			printfPQExpBuffer(&buf, _("Check constraints:"));
 			footers[count_footers++] = xstrdup(buf.data);
 			for (i = 0; i < check_count; i++)
@@ -1126,7 +1128,8 @@ describeOneTableDetails(const char *schemaname,
 		}
 
 		/* print foreign key constraints */
-		if (foreignkey_count > 0) {
+		if (foreignkey_count > 0)
+		{
 			printfPQExpBuffer(&buf, _("Foreign-key constraints:"));
 			footers[count_footers++] = xstrdup(buf.data);
 			for (i = 0; i < foreignkey_count; i++)
@@ -1140,7 +1143,8 @@ describeOneTableDetails(const char *schemaname,
 		}
 
 		/* print rules */
-		if (rule_count > 0) {
+		if (rule_count > 0)
+		{
 			printfPQExpBuffer(&buf, _("Rules:"));
 			footers[count_footers++] = xstrdup(buf.data);
 			for (i = 0; i < rule_count; i++)
@@ -1158,7 +1162,8 @@ describeOneTableDetails(const char *schemaname,
 		}
 
 		/* print triggers */
-		if (trigger_count > 0) {
+		if (trigger_count > 0)
+		{
 			printfPQExpBuffer(&buf, _("Triggers:"));
 			footers[count_footers++] = xstrdup(buf.data);
 			for (i = 0; i < trigger_count; i++)
@@ -1368,9 +1373,9 @@ listTables(const char *tabtypes, const char *pattern, bool verbose)
 
 	/*
 	 * If showSystem is specified, show only system objects (those in
-	 * pg_catalog).  Otherwise, suppress system objects, including
-	 * those in pg_catalog and pg_toast.  (We don't want to hide temp
-	 * tables though.)
+	 * pg_catalog).  Otherwise, suppress system objects, including those
+	 * in pg_catalog and pg_toast.	(We don't want to hide temp tables
+	 * though.)
 	 */
 	if (showSystem)
 		appendPQExpBuffer(&buf, "      AND n.nspname = 'pg_catalog'\n");
@@ -1476,11 +1481,11 @@ listConversions(const char *pattern)
 	printfPQExpBuffer(&buf,
 					  "SELECT n.nspname AS \"%s\",\n"
 					  "       c.conname AS \"%s\",\n"
-					  "       pg_catalog.pg_encoding_to_char(c.conforencoding) AS \"%s\",\n"
-					  "       pg_catalog.pg_encoding_to_char(c.contoencoding) AS \"%s\",\n"
+	"       pg_catalog.pg_encoding_to_char(c.conforencoding) AS \"%s\",\n"
+	"       pg_catalog.pg_encoding_to_char(c.contoencoding) AS \"%s\",\n"
 					  "       CASE WHEN c.condefault THEN '%s'\n"
 					  "       ELSE '%s' END AS \"%s\"\n"
-					  "FROM pg_catalog.pg_conversion c, pg_catalog.pg_namespace n\n"
+		   "FROM pg_catalog.pg_conversion c, pg_catalog.pg_namespace n\n"
 					  "WHERE n.oid = c.connamespace\n",
 					  _("Schema"),
 					  _("Name"),
@@ -1525,8 +1530,8 @@ listCasts(const char *pattern)
 	initPQExpBuffer(&buf);
 /* NEED LEFT JOIN FOR BINARY CASTS */
 	printfPQExpBuffer(&buf,
-					  "SELECT pg_catalog.format_type(castsource, NULL) AS \"%s\",\n"
-					  "       pg_catalog.format_type(casttarget, NULL) AS \"%s\",\n"
+		   "SELECT pg_catalog.format_type(castsource, NULL) AS \"%s\",\n"
+		   "       pg_catalog.format_type(casttarget, NULL) AS \"%s\",\n"
 					  "       CASE WHEN castfunc = 0 THEN '%s'\n"
 					  "            ELSE p.proname\n"
 					  "       END as \"%s\",\n"
@@ -1534,7 +1539,7 @@ listCasts(const char *pattern)
 					  "            WHEN c.castcontext = 'a' THEN '%s'\n"
 					  "            ELSE '%s'\n"
 					  "       END as \"%s\"\n"
-					  "FROM pg_catalog.pg_cast c LEFT JOIN pg_catalog.pg_proc p\n"
+			 "FROM pg_catalog.pg_cast c LEFT JOIN pg_catalog.pg_proc p\n"
 					  "     ON c.castfunc = p.oid\n"
 					  "ORDER BY 1, 2",
 					  _("Source type"),
@@ -1576,7 +1581,7 @@ listSchemas(const char *pattern)
 	printfPQExpBuffer(&buf,
 					  "SELECT n.nspname AS \"%s\",\n"
 					  "       u.usename AS \"%s\"\n"
-					  "FROM pg_catalog.pg_namespace n LEFT JOIN pg_catalog.pg_user u\n"
+		"FROM pg_catalog.pg_namespace n LEFT JOIN pg_catalog.pg_user u\n"
 					  "       ON n.nspowner=u.usesysid\n",
 					  _("Name"),
 					  _("Owner"));

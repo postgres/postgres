@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.145 2003/05/13 18:03:08 tgl Exp $
+ * $Id: pg_type.h,v 1.146 2003/08/04 00:43:30 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -164,9 +164,9 @@ CATALOG(pg_type) BOOTSTRAP
 	int4		typtypmod;
 
 	/*
-	 * typndims is the declared number of dimensions for an array domain type
-	 * (i.e., typbasetype is an array type; the domain's typelem will match
-	 * the base type's typelem).  Otherwise zero.
+	 * typndims is the declared number of dimensions for an array domain
+	 * type (i.e., typbasetype is an array type; the domain's typelem will
+	 * match the base type's typelem).  Otherwise zero.
 	 */
 	int4		typndims;
 
@@ -545,7 +545,7 @@ DATA(insert OID = 2283 ( anyelement		PGNSP PGUID  4 t p t \054 0 0 anyelement_in
  */
 extern Oid	TypeShellMake(const char *typeName, Oid typeNamespace);
 
-extern Oid	TypeCreate(const char *typeName,
+extern Oid TypeCreate(const char *typeName,
 		   Oid typeNamespace,
 		   Oid assignedTypeOid,
 		   Oid relationOid,
@@ -569,17 +569,17 @@ extern Oid	TypeCreate(const char *typeName,
 		   bool typeNotNull);
 
 extern void GenerateTypeDependencies(Oid typeNamespace,
-									 Oid typeObjectId,
-									 Oid relationOid,
-									 char relationKind,
-									 Oid inputProcedure,
-									 Oid outputProcedure,
-									 Oid receiveProcedure,
-									 Oid sendProcedure,
-									 Oid elementType,
-									 Oid baseType,
-									 Node *defaultExpr,
-									 bool rebuild);
+						 Oid typeObjectId,
+						 Oid relationOid,
+						 char relationKind,
+						 Oid inputProcedure,
+						 Oid outputProcedure,
+						 Oid receiveProcedure,
+						 Oid sendProcedure,
+						 Oid elementType,
+						 Oid baseType,
+						 Node *defaultExpr,
+						 bool rebuild);
 
 extern void TypeRename(const char *oldTypeName, Oid typeNamespace,
 		   const char *newTypeName);

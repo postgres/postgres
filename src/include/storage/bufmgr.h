@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.67 2003/03/28 20:17:13 tgl Exp $
+ * $Id: bufmgr.h,v 1.68 2003/08/04 00:43:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 typedef void *Block;
 
 /* in globals.c ... this duplicates miscadmin.h */
-extern DLLIMPORT int	NBuffers;
+extern DLLIMPORT int NBuffers;
 
 /* in bufmgr.c */
 extern bool zero_damaged_pages;
@@ -33,7 +33,7 @@ extern DLLIMPORT Block *BufferBlockPointers;
 extern long *PrivateRefCount;
 
 /* in localbuf.c */
-extern DLLIMPORT int	NLocBuffer;
+extern DLLIMPORT int NLocBuffer;
 extern DLLIMPORT Block *LocalBufferBlockPointers;
 extern long *LocalRefCount;
 

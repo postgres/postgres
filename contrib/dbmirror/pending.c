@@ -1,6 +1,6 @@
 /****************************************************************************
  * pending.c
- * $Id: pending.c,v 1.12 2003/07/24 17:52:20 tgl Exp $
+ * $Id: pending.c,v 1.13 2003/08/04 00:43:10 momjian Exp $
  *
  * This file contains a trigger for Postgresql-7.x to record changes to tables
  * to a pending table for mirroring.
@@ -8,7 +8,7 @@
  *
  *	 Written by Steven Singer (ssinger@navtechinc.com)
  *	 (c) 2001-2002 Navtech Systems Support Inc.
- *       ALL RIGHTS RESERVED
+ *		 ALL RIGHTS RESERVED
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose, without fee, and without a written agreement
@@ -79,8 +79,9 @@ recordchange(PG_FUNCTION_ARGS)
 	HeapTuple	retTuple = NULL;
 	char	   *tblname;
 	char		op = 0;
-	char 	   *schemaname;
+	char	   *schemaname;
 	char	   *fullyqualtblname;
+
 	if (fcinfo->context != NULL)
 	{
 
@@ -94,13 +95,13 @@ recordchange(PG_FUNCTION_ARGS)
 		tblname = SPI_getrelname(trigdata->tg_relation);
 #ifndef NOSCHEMAS
 		schemaname = get_namespace_name(RelationGetNamespace(trigdata->tg_relation));
-		fullyqualtblname = SPI_palloc(strlen(tblname) + 
-					      strlen(schemaname) + 6);
- 		sprintf(fullyqualtblname,"\"%s\".\"%s\"",
-			schemaname,tblname);
+		fullyqualtblname = SPI_palloc(strlen(tblname) +
+									  strlen(schemaname) + 6);
+		sprintf(fullyqualtblname, "\"%s\".\"%s\"",
+				schemaname, tblname);
 #else
 		fullyqualtblname = SPI_palloc(strlen(tblname) + 3);
-		sprintf(fullyqualtblname,"\"%s\"",tblname);
+		sprintf(fullyqualtblname, "\"%s\"", tblname);
 #endif
 		tupdesc = trigdata->tg_relation->rd_att;
 		if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
@@ -166,8 +167,8 @@ storePending(char *cpTableName, HeapTuple tBeforeTuple,
 	int			iResult = 0;
 	HeapTuple	tCurTuple;
 
-	//Points the current tuple(before or after)
-		Datum		saPlanData[4];
+	/* Points the current tuple(before or after) */
+	Datum		saPlanData[4];
 	Oid			taPlanArgTypes[3] = {NAMEOID, CHAROID, INT4OID};
 	void	   *vpPlan;
 
@@ -253,7 +254,7 @@ storeKeyInfo(char *cpTableName, HeapTuple tTupleData,
 	if (cpKeyData == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 /* cpTableName already contains quotes... */
+		/* cpTableName already contains quotes... */
 				 errmsg("there is no PRIMARY KEY for table %s",
 						cpTableName)));
 
@@ -460,7 +461,7 @@ packageData(HeapTuple tTupleData, TupleDesc tTupleDesc,
 		}
 		else
 		{
-			sprintf(cpFormatedPtr," ");
+			sprintf(cpFormatedPtr, " ");
 			iUsedDataBlock++;
 			cpFormatedPtr++;
 			continue;
@@ -508,8 +509,8 @@ packageData(HeapTuple tTupleData, TupleDesc tTupleDesc,
 	if (tpPKeys != NULL)
 		SPI_pfree(tpPKeys);
 #if defined DEBUG_OUTPUT
-	elog(NOTICE, "returning DataBlockSize:%d iUsedDataBlock:%d",iDataBlockSize,
-			iUsedDataBlock);
+	elog(NOTICE, "returning DataBlockSize:%d iUsedDataBlock:%d", iDataBlockSize,
+		 iUsedDataBlock);
 #endif
 	memset(cpDataBlock + iUsedDataBlock, 0, iDataBlockSize - iUsedDataBlock);
 

@@ -25,9 +25,9 @@ main(int argc, char **argv)
 				j;
 
 	/*
-	 * If the user supplies a parameter on the command line, use it as
-	 * the conninfo string; otherwise default to setting dbname=template1
-	 * and using environment variables or defaults for all other connection
+	 * If the user supplies a parameter on the command line, use it as the
+	 * conninfo string; otherwise default to setting dbname=template1 and
+	 * using environment variables or defaults for all other connection
 	 * parameters.
 	 */
 	if (argc > 1)
@@ -48,7 +48,7 @@ main(int argc, char **argv)
 
 	/*
 	 * Our test case here involves using a cursor, for which we must be
-	 * inside a transaction block.  We could do the whole thing with a
+	 * inside a transaction block.	We could do the whole thing with a
 	 * single PQexec() of "select * from pg_database", but that's too
 	 * trivial to make a good example.
 	 */

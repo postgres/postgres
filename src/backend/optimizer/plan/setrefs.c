@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.94 2003/07/25 00:01:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.95 2003/08/04 00:43:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,11 +46,11 @@ static void set_join_references(Join *join, List *rtable);
 static void set_uppernode_references(Plan *plan, Index subvarno);
 static bool targetlist_has_non_vars(List *tlist);
 static List *join_references(List *clauses,
-							 List *rtable,
-							 List *outer_tlist,
-							 List *inner_tlist,
-							 Index acceptable_rel,
-							 bool tlists_have_non_vars);
+				List *rtable,
+				List *outer_tlist,
+				List *inner_tlist,
+				Index acceptable_rel,
+				bool tlists_have_non_vars);
 static Node *join_references_mutator(Node *node,
 						join_references_context *context);
 static Node *replace_vars_with_subplan_refs(Node *node,
@@ -60,7 +60,7 @@ static Node *replace_vars_with_subplan_refs(Node *node,
 static Node *replace_vars_with_subplan_refs_mutator(Node *node,
 						replace_vars_with_subplan_refs_context *context);
 static bool fix_opfuncids_walker(Node *node, void *context);
-static void set_sa_opfuncid(ScalarArrayOpExpr *opexpr);
+static void set_sa_opfuncid(ScalarArrayOpExpr * opexpr);
 
 
 /*****************************************************************************
@@ -167,12 +167,13 @@ set_plan_references(Plan *plan, List *rtable)
 							  (Node *) ((HashJoin *) plan)->hashclauses);
 			break;
 		case T_Hash:
+
 			/*
 			 * Hash does not evaluate its targetlist or quals, so don't
-			 * touch those (see comments below).  But we do need to fix its
-			 * hashkeys.  The hashkeys are a little bizarre because they
-			 * need to match the hashclauses of the parent HashJoin node,
-			 * so we use join_references to fix them.
+			 * touch those (see comments below).  But we do need to fix
+			 * its hashkeys.  The hashkeys are a little bizarre because
+			 * they need to match the hashclauses of the parent HashJoin
+			 * node, so we use join_references to fix them.
 			 */
 			((Hash *) plan)->hashkeys =
 				join_references(((Hash *) plan)->hashkeys,
@@ -180,7 +181,7 @@ set_plan_references(Plan *plan, List *rtable)
 								NIL,
 								plan->lefttree->targetlist,
 								(Index) 0,
-								targetlist_has_non_vars(plan->lefttree->targetlist));
+					targetlist_has_non_vars(plan->lefttree->targetlist));
 			fix_expr_references(plan,
 								(Node *) ((Hash *) plan)->hashkeys);
 			break;
@@ -196,9 +197,9 @@ set_plan_references(Plan *plan, List *rtable)
 			 * unmodified input tuples).  The optimizer is lazy about
 			 * creating really valid targetlists for them.	Best to just
 			 * leave the targetlist alone.	In particular, we do not want
-			 * to process subplans for them, since we will likely end
-			 * up reprocessing subplans that also appear in lower levels
-			 * of the plan tree!
+			 * to process subplans for them, since we will likely end up
+			 * reprocessing subplans that also appear in lower levels of
+			 * the plan tree!
 			 */
 			break;
 		case T_Agg:
@@ -253,7 +254,7 @@ set_plan_references(Plan *plan, List *rtable)
 
 	foreach(pl, plan->initPlan)
 	{
-		SubPlan *sp = (SubPlan *) lfirst(pl);
+		SubPlan    *sp = (SubPlan *) lfirst(pl);
 
 		Assert(IsA(sp, SubPlan));
 		set_plan_references(sp->plan, sp->rtable);
@@ -284,14 +285,14 @@ fix_expr_references_walker(Node *node, void *context)
 	if (IsA(node, OpExpr))
 		set_opfuncid((OpExpr *) node);
 	else if (IsA(node, DistinctExpr))
-		set_opfuncid((OpExpr *) node); /* rely on struct equivalence */
+		set_opfuncid((OpExpr *) node);	/* rely on struct equivalence */
 	else if (IsA(node, ScalarArrayOpExpr))
 		set_sa_opfuncid((ScalarArrayOpExpr *) node);
 	else if (IsA(node, NullIfExpr))
-		set_opfuncid((OpExpr *) node); /* rely on struct equivalence */
+		set_opfuncid((OpExpr *) node);	/* rely on struct equivalence */
 	else if (IsA(node, SubPlan))
 	{
-		SubPlan *sp = (SubPlan *) node;
+		SubPlan    *sp = (SubPlan *) node;
 
 		set_plan_references(sp->plan, sp->rtable);
 	}
@@ -350,10 +351,10 @@ set_join_references(Join *join, List *rtable)
 		if (IsA(inner_plan, IndexScan))
 		{
 			/*
-			 * An index is being used to reduce the number of tuples scanned
-			 * in the inner relation.  If there are join clauses being used
-			 * with the index, we must update their outer-rel var nodes to
-			 * refer to the outer side of the join.
+			 * An index is being used to reduce the number of tuples
+			 * scanned in the inner relation.  If there are join clauses
+			 * being used with the index, we must update their outer-rel
+			 * var nodes to refer to the outer side of the join.
 			 */
 			IndexScan  *innerscan = (IndexScan *) inner_plan;
 			List	   *indxqualorig = innerscan->indxqualorig;
@@ -369,17 +370,18 @@ set_join_references(Join *join, List *rtable)
 														  outer_tlist,
 														  NIL,
 														  innerrel,
-														  tlists_have_non_vars);
+												   tlists_have_non_vars);
 				innerscan->indxqual = join_references(innerscan->indxqual,
 													  rtable,
 													  outer_tlist,
 													  NIL,
 													  innerrel,
-													  tlists_have_non_vars);
+												   tlists_have_non_vars);
+
 				/*
-				 * We must fix the inner qpqual too, if it has join clauses
-				 * (this could happen if the index is lossy: some indxquals
-				 * may get rechecked as qpquals).
+				 * We must fix the inner qpqual too, if it has join
+				 * clauses (this could happen if the index is lossy: some
+				 * indxquals may get rechecked as qpquals).
 				 */
 				if (NumRelids((Node *) inner_plan->qual) > 1)
 					inner_plan->qual = join_references(inner_plan->qual,
@@ -387,7 +389,7 @@ set_join_references(Join *join, List *rtable)
 													   outer_tlist,
 													   NIL,
 													   innerrel,
-													   tlists_have_non_vars);
+												   tlists_have_non_vars);
 			}
 		}
 		else if (IsA(inner_plan, TidScan))
@@ -470,8 +472,8 @@ set_uppernode_references(Plan *plan, Index subvarno)
 												 subplan_targetlist,
 												 tlist_has_non_vars);
 		output_targetlist = lappend(output_targetlist,
-								  makeTargetEntry(tle->resdom,
-												  (Expr *) newexpr));
+									makeTargetEntry(tle->resdom,
+													(Expr *) newexpr));
 	}
 	plan->targetlist = output_targetlist;
 
@@ -491,7 +493,7 @@ set_uppernode_references(Plan *plan, Index subvarno)
 static bool
 targetlist_has_non_vars(List *tlist)
 {
-	List   *l;
+	List	   *l;
 
 	foreach(l, tlist)
 	{
@@ -740,11 +742,11 @@ fix_opfuncids_walker(Node *node, void *context)
 	if (IsA(node, OpExpr))
 		set_opfuncid((OpExpr *) node);
 	else if (IsA(node, DistinctExpr))
-		set_opfuncid((OpExpr *) node); /* rely on struct equivalence */
+		set_opfuncid((OpExpr *) node);	/* rely on struct equivalence */
 	else if (IsA(node, ScalarArrayOpExpr))
 		set_sa_opfuncid((ScalarArrayOpExpr *) node);
 	else if (IsA(node, NullIfExpr))
-		set_opfuncid((OpExpr *) node); /* rely on struct equivalence */
+		set_opfuncid((OpExpr *) node);	/* rely on struct equivalence */
 	return expression_tree_walker(node, fix_opfuncids_walker, context);
 }
 
@@ -757,7 +759,7 @@ fix_opfuncids_walker(Node *node, void *context)
  * DistinctExpr and NullIfExpr nodes.
  */
 void
-set_opfuncid(OpExpr *opexpr)
+set_opfuncid(OpExpr * opexpr)
 {
 	if (opexpr->opfuncid == InvalidOid)
 		opexpr->opfuncid = get_opcode(opexpr->opno);
@@ -768,7 +770,7 @@ set_opfuncid(OpExpr *opexpr)
  *		As above, for ScalarArrayOpExpr nodes.
  */
 static void
-set_sa_opfuncid(ScalarArrayOpExpr *opexpr)
+set_sa_opfuncid(ScalarArrayOpExpr * opexpr)
 {
 	if (opexpr->opfuncid == InvalidOid)
 		opexpr->opfuncid = get_opcode(opexpr->opno);

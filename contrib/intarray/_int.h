@@ -91,19 +91,19 @@ typedef char *BITVECP;
  */
 typedef struct
 {
-        int4            len;
-        int4            flag;
-        char            data[1];
-}       GISTTYPE;
+	int4		len;
+	int4		flag;
+	char		data[1];
+}	GISTTYPE;
 
-#define ALLISTRUE       0x04
+#define ALLISTRUE		0x04
 
-#define ISALLTRUE(x)    ( ((GISTTYPE*)x)->flag & ALLISTRUE )
+#define ISALLTRUE(x)	( ((GISTTYPE*)x)->flag & ALLISTRUE )
 
-#define GTHDRSIZE       ( sizeof(int4)*2  )
+#define GTHDRSIZE		( sizeof(int4)*2  )
 #define CALCGTSIZE(flag) ( GTHDRSIZE+(((flag) & ALLISTRUE) ? 0 : SIGLEN) )
 
-#define GETSIGN(x)      ( (BITVECP)( (char*)x+GTHDRSIZE ) )
+#define GETSIGN(x)		( (BITVECP)( (char*)x+GTHDRSIZE ) )
 
 /*
 ** types for functions
@@ -114,22 +114,22 @@ typedef void (*formfloat) (ArrayType *, float *);
 /*
 ** useful function
 */
-bool isort(int4 *a, const int len);
-ArrayType *new_intArrayType(int num);
-ArrayType *copy_intArrayType(ArrayType *a);
-ArrayType *resize_intArrayType(ArrayType *a, int num);
-int	internal_size(int *a, int len);
-ArrayType *_int_unique(ArrayType *a);
-int32 intarray_match_first(ArrayType *a, int32 elem);
-ArrayType *intarray_add_elem(ArrayType *a, int32 elem);
-ArrayType *intarray_concat_arrays(ArrayType *a, ArrayType *b);
-ArrayType *int_to_intset(int32 elem);
-bool inner_int_overlap(ArrayType *a, ArrayType *b);
-bool inner_int_contains(ArrayType *a, ArrayType *b);
-ArrayType * inner_int_union(ArrayType *a, ArrayType *b);
-ArrayType * inner_int_inter(ArrayType *a, ArrayType *b);
-void rt__int_size(ArrayType *a, float *size);
-void gensign(BITVEC sign, int *a, int len);
+bool		isort(int4 *a, const int len);
+ArrayType  *new_intArrayType(int num);
+ArrayType  *copy_intArrayType(ArrayType *a);
+ArrayType  *resize_intArrayType(ArrayType *a, int num);
+int			internal_size(int *a, int len);
+ArrayType  *_int_unique(ArrayType *a);
+int32		intarray_match_first(ArrayType *a, int32 elem);
+ArrayType  *intarray_add_elem(ArrayType *a, int32 elem);
+ArrayType  *intarray_concat_arrays(ArrayType *a, ArrayType *b);
+ArrayType  *int_to_intset(int32 elem);
+bool		inner_int_overlap(ArrayType *a, ArrayType *b);
+bool		inner_int_contains(ArrayType *a, ArrayType *b);
+ArrayType  *inner_int_union(ArrayType *a, ArrayType *b);
+ArrayType  *inner_int_inter(ArrayType *a, ArrayType *b);
+void		rt__int_size(ArrayType *a, float *size);
+void		gensign(BITVEC sign, int *a, int len);
 
 
 /*****************************************************************************
@@ -160,18 +160,16 @@ typedef struct
 #define COMPUTESIZE(size)	( HDRSIZEQT + size * sizeof(ITEM) )
 #define GETQUERY(x)  (ITEM*)( (char*)(x)+HDRSIZEQT )
 
-bool signconsistent(QUERYTYPE * query, BITVEC sign, bool calcnot);
-bool execconsistent(QUERYTYPE * query, ArrayType *array, bool calcnot);
+bool		signconsistent(QUERYTYPE * query, BITVEC sign, bool calcnot);
+bool		execconsistent(QUERYTYPE * query, ArrayType *array, bool calcnot);
 
 
 
-int compASC(const void *a, const void *b);
+int			compASC(const void *a, const void *b);
 
-int compDESC(const void *a, const void *b);
+int			compDESC(const void *a, const void *b);
 
-#define QSORT(a, direction)                                     \
-if (ARRNELEMS(a) > 1)                                           \
-        qsort((void*)ARRPTR(a), ARRNELEMS(a),sizeof(int4),      \
-                (direction) ? compASC : compDESC )
-
-
+#define QSORT(a, direction)										\
+if (ARRNELEMS(a) > 1)											\
+		qsort((void*)ARRPTR(a), ARRNELEMS(a),sizeof(int4),		\
+				(direction) ? compASC : compDESC )

@@ -31,4 +31,5 @@ typedef unsigned int slock_t;
 
 #else
 #error unrecognized CPU type for HP-UX
+
 #endif

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.102 2003/05/08 22:19:56 tgl Exp $
+ * $Id: pg_attribute.h,v 1.103 2003/08/04 00:43:30 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -238,7 +238,7 @@ typedef FormData_pg_attribute *Form_pg_attribute;
 { 1247, {"typelem"},	   26, 0,	4, 10, 0, -1, -1, true, 'p', false, 'i', true, false, false, true, 0 }, \
 { 1247, {"typinput"},	   24, 0,	4, 11, 0, -1, -1, true, 'p', false, 'i', true, false, false, true, 0 }, \
 { 1247, {"typoutput"},	   24, 0,	4, 12, 0, -1, -1, true, 'p', false, 'i', true, false, false, true, 0 }, \
-{ 1247, {"typreceive"},	   24, 0,	4, 13, 0, -1, -1, true, 'p', false, 'i', true, false, false, true, 0 }, \
+{ 1247, {"typreceive"},    24, 0,	4, 13, 0, -1, -1, true, 'p', false, 'i', true, false, false, true, 0 }, \
 { 1247, {"typsend"},	   24, 0,	4, 14, 0, -1, -1, true, 'p', false, 'i', true, false, false, true, 0 }, \
 { 1247, {"typalign"},	   18, 0,	1, 15, 0, -1, -1, true, 'p', false, 'c', true, false, false, true, 0 }, \
 { 1247, {"typstorage"},    18, 0,	1, 16, 0, -1, -1, true, 'p', false, 'c', true, false, false, true, 0 }, \
@@ -404,8 +404,8 @@ DATA(insert ( 1261 tableoid			26 0  4  -7 0 -1 -1 t p f i t f f t 0));
 { 1249, {"attnotnull"},   16, 0, 1, 14, 0, -1, -1, true, 'p', false, 'c', true, false, false, true, 0 }, \
 { 1249, {"atthasdef"},	  16, 0, 1, 15, 0, -1, -1, true, 'p', false, 'c', true, false, false, true, 0 }, \
 { 1249, {"attisdropped"}, 16, 0, 1, 16, 0, -1, -1, true, 'p', false, 'c', true, false, false, true, 0 }, \
-{ 1249, {"attislocal"},	  16, 0, 1, 17, 0, -1, -1, true, 'p', false, 'c', true, false, false, true, 0 }, \
-{ 1249, {"attinhcount"},  23, 0, 4,	18, 0, -1, -1, true, 'p', false, 'i', true, false, false, true, 0 }
+{ 1249, {"attislocal"},   16, 0, 1, 17, 0, -1, -1, true, 'p', false, 'c', true, false, false, true, 0 }, \
+{ 1249, {"attinhcount"},  23, 0, 4, 18, 0, -1, -1, true, 'p', false, 'i', true, false, false, true, 0 }
 
 DATA(insert ( 1249 attrelid			26 -1  4   1 0 -1 -1 t p f i t f f t 0));
 DATA(insert ( 1249 attname			19 -1 NAMEDATALEN  2 0 -1 -1 f p f i t f f t 0));

@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.48 2003/07/23 08:47:30 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.49 2003/08/04 00:43:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@
 
 #ifndef HAVE_GETOPT_LONG
 #include "getopt_long.h"
-int optreset;
+int			optreset;
 #endif
 
 #ifdef ENABLE_NLS
@@ -401,7 +401,7 @@ usage(const char *progname)
 	printf(_("  -x, --no-privileges      skip restoration of access privileges (grant/revoke)\n"));
 	printf(_("  -X use-set-session-authorization, --use-set-session-authorization\n"
 			 "                           use SET SESSION AUTHORIZATION commands instead\n"
-			 "                           of reconnecting, if possible\n"));
+		   "                           of reconnecting, if possible\n"));
 	printf(_("  -X disable-triggers, --disable-triggers\n"
 			 "                           disable triggers during data-only restore\n"));
 

@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.25 2003/08/01 02:21:17 tgl Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.26 2003/08/04 00:43:11 momjian Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -122,7 +122,7 @@ doConnect()
 {
 	PGconn	   *con;
 	PGresult   *res;
- 
+
 	con = PQsetdbLogin(pghost, pgport, pgoptions, pgtty, dbName,
 					   login, pwd);
 	if (con == NULL)

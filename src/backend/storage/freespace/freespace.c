@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.18 2003/07/24 22:04:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.19 2003/08/04 00:43:24 momjian Exp $
  *
  *
  * NOTES:
@@ -39,7 +39,7 @@
  * Actually, our space allocation is done in "chunks" of CHUNKPAGES pages,
  * with each relation guaranteed at least one chunk.  This reduces thrashing
  * of the storage allocations when there are small changes in the RRFS page
- * counts from one VACUUM to the next.  (XXX it might also be worthwhile to
+ * counts from one VACUUM to the next.	(XXX it might also be worthwhile to
  * impose some kind of moving-average smoothing on the RRFS page counts?)
  *
  * So the actual arithmetic is: for each relation compute myRequest as the
@@ -72,10 +72,10 @@
 
 
 /* Initial value for average-request moving average */
-#define INITIAL_AVERAGE	((Size) (BLCKSZ / 32))
+#define INITIAL_AVERAGE ((Size) (BLCKSZ / 32))
 
 /*
- * Number of pages and bytes per allocation chunk.  Indexes can squeeze 50%
+ * Number of pages and bytes per allocation chunk.	Indexes can squeeze 50%
  * more pages into the same space because they don't need to remember how much
  * free space on each page.  The nominal number of pages, CHUNKPAGES, is for
  * regular rels, and INDEXCHUNKPAGES is for indexes.  CHUNKPAGES should be
@@ -83,7 +83,7 @@
  */
 #define CHUNKPAGES	16
 #define CHUNKBYTES	(CHUNKPAGES * sizeof(FSMPageData))
-#define INDEXCHUNKPAGES	((int) (CHUNKBYTES / sizeof(IndexFSMPageData)))
+#define INDEXCHUNKPAGES ((int) (CHUNKBYTES / sizeof(IndexFSMPageData)))
 
 
 /*
@@ -104,9 +104,9 @@ typedef BlockIdData IndexFSMPageData;
 	BlockIdSet(&(ptr)->ip_blkid, pg)
 #define FSMPageSetSpace(ptr, sz)	\
 	((ptr)->ip_posid = (OffsetNumber) (sz))
-#define IndexFSMPageGetPageNum(ptr)	\
+#define IndexFSMPageGetPageNum(ptr) \
 	BlockIdGetBlockNumber(ptr)
-#define IndexFSMPageSetPageNum(ptr, pg)	\
+#define IndexFSMPageSetPageNum(ptr, pg) \
 	BlockIdSet(ptr, pg)
 
 /*----------
@@ -144,7 +144,7 @@ typedef struct FsmCacheFileHeader
 	uint32		endian;
 	uint32		version;
 	int32		numRels;
-} FsmCacheFileHeader;
+}	FsmCacheFileHeader;
 
 /* Per-relation header */
 typedef struct FsmCacheRelHeader
@@ -154,7 +154,7 @@ typedef struct FsmCacheRelHeader
 	uint32		avgRequest;		/* moving average of space requests */
 	int32		lastPageCount;	/* pages passed to RecordRelationFreeSpace */
 	int32		storedPages;	/* # of pages stored in arena */
-} FsmCacheRelHeader;
+}	FsmCacheRelHeader;
 
 
 /*
@@ -167,7 +167,7 @@ typedef struct FsmCacheRelHeader
  *
  * Each relation owns one or more chunks of per-page storage in the "arena".
  * The chunks for each relation are always consecutive, so that it can treat
- * its page storage as a simple array.  We further insist that its page data
+ * its page storage as a simple array.	We further insist that its page data
  * be ordered by block number, so that binary search is possible.
  *
  * Note: we handle pointers to these items as pointers, not as SHMEM_OFFSETs.
@@ -182,7 +182,7 @@ struct FSMHeader
 {
 	HTAB	   *relHash;		/* hashtable of FSMRelation entries */
 	FSMRelation *usageList;		/* FSMRelations in usage-recency order */
-	FSMRelation *usageListTail;	/* tail of usage-recency list */
+	FSMRelation *usageListTail; /* tail of usage-recency list */
 	FSMRelation *firstRel;		/* FSMRelations in arena storage order */
 	FSMRelation *lastRel;		/* tail of storage-order list */
 	int			numRels;		/* number of FSMRelations now in use */
@@ -204,7 +204,7 @@ struct FSMRelation
 	FSMRelation *nextUsage;		/* next rel in usage-recency order */
 	FSMRelation *priorUsage;	/* prior rel in usage-recency order */
 	FSMRelation *nextPhysical;	/* next rel in arena-storage order */
-	FSMRelation *priorPhysical;	/* prior rel in arena-storage order */
+	FSMRelation *priorPhysical; /* prior rel in arena-storage order */
 	bool		isIndex;		/* if true, we store only page numbers */
 	Size		avgRequest;		/* moving average of space requests */
 	int			lastPageCount;	/* pages passed to RecordRelationFreeSpace */
@@ -233,13 +233,13 @@ static BlockNumber find_index_free_space(FSMRelation *fsmrel);
 static void fsm_record_free_space(FSMRelation *fsmrel, BlockNumber page,
 					  Size spaceAvail);
 static bool lookup_fsm_page_entry(FSMRelation *fsmrel, BlockNumber page,
-								  int *outPageIndex);
+					  int *outPageIndex);
 static void compact_fsm_storage(void);
 static void push_fsm_rels_after(FSMRelation *afterRel);
-static void pack_incoming_pages(FSMPageData *newLocation, int newPages,
-								PageFreeSpaceInfo *pageSpaces, int nPages);
-static void pack_existing_pages(FSMPageData *newLocation, int newPages,
-								FSMPageData *oldLocation, int oldPages);
+static void pack_incoming_pages(FSMPageData * newLocation, int newPages,
+					PageFreeSpaceInfo * pageSpaces, int nPages);
+static void pack_existing_pages(FSMPageData * newLocation, int newPages,
+					FSMPageData * oldLocation, int oldPages);
 static int	fsm_calc_request(FSMRelation *fsmrel);
 static int	fsm_calc_target_allocation(int myRequest);
 static int	fsm_current_chunks(FSMRelation *fsmrel);
@@ -271,7 +271,7 @@ InitFreeSpaceMap(void)
 	if (FreeSpaceMap == NULL)
 		ereport(FATAL,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("insufficient shared memory for free space map")));
+			   errmsg("insufficient shared memory for free space map")));
 	MemSet(FreeSpaceMap, 0, sizeof(FSMHeader));
 
 	/* Create hashtable for FSMRelations */
@@ -288,7 +288,7 @@ InitFreeSpaceMap(void)
 	if (!FreeSpaceMap->relHash)
 		ereport(FATAL,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("insufficient shared memory for free space map")));
+			   errmsg("insufficient shared memory for free space map")));
 
 	/* Allocate page-storage arena */
 	nchunks = (MaxFSMPages - 1) / CHUNKPAGES + 1;
@@ -296,14 +296,14 @@ InitFreeSpaceMap(void)
 	if (nchunks <= MaxFSMRelations)
 		ereport(FATAL,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("max_fsm_pages must exceed max_fsm_relations * %d",
-						CHUNKPAGES)));
+			   errmsg("max_fsm_pages must exceed max_fsm_relations * %d",
+					  CHUNKPAGES)));
 
 	FreeSpaceMap->arena = (char *) ShmemAlloc(nchunks * CHUNKBYTES);
 	if (FreeSpaceMap->arena == NULL)
 		ereport(FATAL,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("insufficient shared memory for free space map")));
+			   errmsg("insufficient shared memory for free space map")));
 
 	FreeSpaceMap->totalChunks = nchunks;
 	FreeSpaceMap->usedChunks = 0;
@@ -348,7 +348,7 @@ FreeSpaceShmemSize(void)
  * will turn out to have too little space available by the time the caller
  * gets a lock on it.  In that case, the caller should report the actual
  * amount of free space available on that page and then try again (see
- * RecordAndGetPageWithFreeSpace).  If InvalidBlockNumber is returned,
+ * RecordAndGetPageWithFreeSpace).	If InvalidBlockNumber is returned,
  * extend the relation.
  */
 BlockNumber
@@ -365,10 +365,10 @@ GetPageWithFreeSpace(RelFileNode *rel, Size spaceNeeded)
 	fsmrel = create_fsm_rel(rel);
 
 	/*
-	 * Update the moving average of space requests.  This code implements an
-	 * exponential moving average with an equivalent period of about 63
-	 * requests.  Ignore silly requests, however, to ensure that the average
-	 * stays sane.
+	 * Update the moving average of space requests.  This code implements
+	 * an exponential moving average with an equivalent period of about 63
+	 * requests.  Ignore silly requests, however, to ensure that the
+	 * average stays sane.
 	 */
 	if (spaceNeeded > 0 && spaceNeeded < BLCKSZ)
 	{
@@ -409,6 +409,7 @@ RecordAndGetPageWithFreeSpace(RelFileNode *rel,
 
 	/* Do the Record */
 	fsm_record_free_space(fsmrel, oldPage, oldSpaceAvail);
+
 	/*
 	 * Update the moving average of space requests, same as in
 	 * GetPageWithFreeSpace.
@@ -458,7 +459,7 @@ GetAvgFSMRequestSize(RelFileNode *rel)
 void
 RecordRelationFreeSpace(RelFileNode *rel,
 						int nPages,
-						PageFreeSpaceInfo *pageSpaces)
+						PageFreeSpaceInfo * pageSpaces)
 {
 	FSMRelation *fsmrel;
 
@@ -469,11 +470,12 @@ RecordRelationFreeSpace(RelFileNode *rel,
 		nPages = MaxFSMPages;
 
 	LWLockAcquire(FreeSpaceLock, LW_EXCLUSIVE);
+
 	/*
 	 * Note we don't record info about a relation unless there's already
 	 * an FSM entry for it, implying someone has done GetPageWithFreeSpace
-	 * for it.  Inactive rels thus will not clutter the map simply by being
-	 * vacuumed.
+	 * for it.	Inactive rels thus will not clutter the map simply by
+	 * being vacuumed.
 	 */
 	fsmrel = lookup_fsm_rel(rel);
 	if (fsmrel)
@@ -484,6 +486,7 @@ RecordRelationFreeSpace(RelFileNode *rel,
 
 		curAlloc = realloc_fsm_rel(fsmrel, nPages, false);
 		curAllocPages = curAlloc * CHUNKPAGES;
+
 		/*
 		 * If the data fits in our current allocation, just copy it;
 		 * otherwise must compress.
@@ -500,7 +503,7 @@ RecordRelationFreeSpace(RelFileNode *rel,
 				Size		avail = pageSpaces[i].avail;
 
 				/* Check caller provides sorted data */
-				if (i > 0 && page <= pageSpaces[i-1].blkno)
+				if (i > 0 && page <= pageSpaces[i - 1].blkno)
 					elog(ERROR, "free-space data is not in page order");
 				FSMPageSetPageNum(newLocation, page);
 				FSMPageSetSpace(newLocation, avail);
@@ -556,10 +559,11 @@ RecordIndexFreeSpace(RelFileNode *rel,
 		nPages = MaxFSMPages;
 
 	LWLockAcquire(FreeSpaceLock, LW_EXCLUSIVE);
+
 	/*
 	 * Note we don't record info about a relation unless there's already
-	 * an FSM entry for it, implying someone has done GetFreeIndexPage
-	 * for it.  Inactive rels thus will not clutter the map simply by being
+	 * an FSM entry for it, implying someone has done GetFreeIndexPage for
+	 * it.	Inactive rels thus will not clutter the map simply by being
 	 * vacuumed.
 	 */
 	fsmrel = lookup_fsm_rel(rel);
@@ -572,6 +576,7 @@ RecordIndexFreeSpace(RelFileNode *rel,
 
 		curAlloc = realloc_fsm_rel(fsmrel, nPages, true);
 		curAllocPages = curAlloc * INDEXCHUNKPAGES;
+
 		/*
 		 * If the data fits in our current allocation, just copy it;
 		 * otherwise must compress.  But compression is easy: we merely
@@ -587,7 +592,7 @@ RecordIndexFreeSpace(RelFileNode *rel,
 			BlockNumber page = pages[i];
 
 			/* Check caller provides sorted data */
-			if (i > 0 && page <= pages[i-1])
+			if (i > 0 && page <= pages[i - 1])
 				elog(ERROR, "free-space data is not in page order");
 			IndexFSMPageSetPageNum(newLocation, page);
 			newLocation++;
@@ -660,7 +665,7 @@ FreeSpaceMapForgetDatabase(Oid dbid)
 	LWLockAcquire(FreeSpaceLock, LW_EXCLUSIVE);
 	for (fsmrel = FreeSpaceMap->usageList; fsmrel; fsmrel = nextrel)
 	{
-		nextrel = fsmrel->nextUsage; /* in case we delete it */
+		nextrel = fsmrel->nextUsage;	/* in case we delete it */
 		if (fsmrel->key.tblNode == dbid)
 			delete_fsm_rel(fsmrel);
 	}
@@ -670,7 +675,7 @@ FreeSpaceMapForgetDatabase(Oid dbid)
 /*
  * PrintFreeSpaceMapStatistics - print statistics about FSM contents
  *
- * The info is sent to ereport() with the specified message level.  This is
+ * The info is sent to ereport() with the specified message level.	This is
  * intended for use during VACUUM.
  */
 void
@@ -687,9 +692,7 @@ PrintFreeSpaceMapStatistics(int elevel)
 	for (fsmrel = FreeSpaceMap->firstRel;
 		 fsmrel != NULL;
 		 fsmrel = fsmrel->nextPhysical)
-	{
 		storedPages += fsmrel->storedPages;
-	}
 	/* Copy other stats before dropping lock */
 	numRels = FreeSpaceMap->numRels;
 	sumRequests = FreeSpaceMap->sumRequests;
@@ -808,7 +811,7 @@ write_failed:
  * forma --- if anyone else is accessing FSM yet, there's a problem.
  *
  * Notes: no complaint is issued if no cache file is found.  If the file is
- * found, it is deleted after reading.  Thus, if we crash without a clean
+ * found, it is deleted after reading.	Thus, if we crash without a clean
  * shutdown, the next cycle of life starts with no FSM data.  To do otherwise,
  * we'd need to do significantly more validation in this routine, because of
  * the likelihood that what is in the dump file would be out-of-date, eg
@@ -879,7 +882,7 @@ LoadFreeSpaceMap(void)
 			len = nPages * sizeof(IndexFSMPageData);
 		else
 			len = nPages * sizeof(FSMPageData);
-		data = (char *) palloc(len + 1); /* +1 to avoid palloc(0) */
+		data = (char *) palloc(len + 1);		/* +1 to avoid palloc(0) */
 		if (fread(data, 1, len, fp) != len)
 		{
 			elog(LOG, "premature EOF in \"%s\"", cachefilename);
@@ -888,7 +891,7 @@ LoadFreeSpaceMap(void)
 		}
 
 		/*
-		 * Okay, create the FSM entry and insert data into it.  Since the
+		 * Okay, create the FSM entry and insert data into it.	Since the
 		 * rels were stored in reverse usage order, at the end of the loop
 		 * they will be correctly usage-ordered in memory; and if
 		 * MaxFSMRelations is less than it used to be, we will correctly
@@ -904,10 +907,11 @@ LoadFreeSpaceMap(void)
 			IndexFSMPageData *newLocation;
 
 			curAllocPages = curAlloc * INDEXCHUNKPAGES;
+
 			/*
 			 * If the data fits in our current allocation, just copy it;
-			 * otherwise must compress.  But compression is easy: we merely
-			 * forget extra pages.
+			 * otherwise must compress.  But compression is easy: we
+			 * merely forget extra pages.
 			 */
 			newLocation = (IndexFSMPageData *)
 				(FreeSpaceMap->arena + fsmrel->firstChunk * CHUNKBYTES);
@@ -921,6 +925,7 @@ LoadFreeSpaceMap(void)
 			FSMPageData *newLocation;
 
 			curAllocPages = curAlloc * CHUNKPAGES;
+
 			/*
 			 * If the data fits in our current allocation, just copy it;
 			 * otherwise must compress.
@@ -1005,7 +1010,7 @@ create_fsm_rel(RelFileNode *rel)
 		fsmrel->isIndex = false;	/* until we learn different */
 		fsmrel->avgRequest = INITIAL_AVERAGE;
 		fsmrel->lastPageCount = 0;
-		fsmrel->firstChunk = -1; /* no space allocated */
+		fsmrel->firstChunk = -1;	/* no space allocated */
 		fsmrel->storedPages = 0;
 		fsmrel->nextPage = 0;
 
@@ -1015,7 +1020,7 @@ create_fsm_rel(RelFileNode *rel)
 
 		/* Add new entry at front of LRU list */
 		link_fsm_rel_usage(fsmrel);
-		fsmrel->nextPhysical = NULL; /* not in physical-storage list */
+		fsmrel->nextPhysical = NULL;	/* not in physical-storage list */
 		fsmrel->priorPhysical = NULL;
 		FreeSpaceMap->numRels++;
 		/* sumRequests is unchanged because request must be zero */
@@ -1076,14 +1081,15 @@ realloc_fsm_rel(FSMRelation *fsmrel, int nPages, bool isIndex)
 	myRequest = fsm_calc_request(fsmrel);
 	FreeSpaceMap->sumRequests += myRequest;
 	myAlloc = fsm_calc_target_allocation(myRequest);
+
 	/*
-	 * Need to reallocate space if (a) my target allocation is more
-	 * than my current allocation, AND (b) my actual immediate need
-	 * (myRequest+1 chunks) is more than my current allocation.
-	 * Otherwise just store the new data in-place.
+	 * Need to reallocate space if (a) my target allocation is more than
+	 * my current allocation, AND (b) my actual immediate need
+	 * (myRequest+1 chunks) is more than my current allocation. Otherwise
+	 * just store the new data in-place.
 	 */
 	curAlloc = fsm_current_allocation(fsmrel);
-	if (myAlloc > curAlloc && (myRequest+1) > curAlloc && nPages > 0)
+	if (myAlloc > curAlloc && (myRequest + 1) > curAlloc && nPages > 0)
 	{
 		/* Remove entry from storage list, and compact */
 		unlink_fsm_rel_storage(fsmrel);
@@ -1133,6 +1139,7 @@ unlink_fsm_rel_usage(FSMRelation *fsmrel)
 		fsmrel->nextUsage->priorUsage = fsmrel->priorUsage;
 	else
 		FreeSpaceMap->usageListTail = fsmrel->priorUsage;
+
 	/*
 	 * We don't bother resetting fsmrel's links, since it's about to be
 	 * deleted or relinked at the head.
@@ -1212,7 +1219,8 @@ find_free_space(FSMRelation *fsmrel, Size spaceNeeded)
 		if (spaceAvail >= spaceNeeded)
 		{
 			/*
-			 * Found what we want --- adjust the entry, and update nextPage.
+			 * Found what we want --- adjust the entry, and update
+			 * nextPage.
 			 */
 			FSMPageSetSpace(page, spaceAvail - spaceNeeded);
 			fsmrel->nextPage = pageIndex + 1;
@@ -1233,12 +1241,12 @@ static BlockNumber
 find_index_free_space(FSMRelation *fsmrel)
 {
 	IndexFSMPageData *info;
-	BlockNumber	result;
+	BlockNumber result;
 
 	/*
 	 * If isIndex isn't set, it could be that RecordIndexFreeSpace() has
-	 * never yet been called on this relation, and we're still looking
-	 * at the default setting from create_fsm_rel().  If so, just act as
+	 * never yet been called on this relation, and we're still looking at
+	 * the default setting from create_fsm_rel().  If so, just act as
 	 * though there's no space.
 	 */
 	if (!fsmrel->isIndex)
@@ -1247,14 +1255,15 @@ find_index_free_space(FSMRelation *fsmrel)
 			return InvalidBlockNumber;
 		elog(ERROR, "find_index_free_space called for a non-index relation");
 	}
+
 	/*
-	 * For indexes, there's no need for the nextPage state variable; we just
-	 * remove and return the first available page.  (We could save cycles here
-	 * by returning the last page, but it seems better to encourage re-use
-	 * of lower-numbered pages.)
+	 * For indexes, there's no need for the nextPage state variable; we
+	 * just remove and return the first available page.  (We could save
+	 * cycles here by returning the last page, but it seems better to
+	 * encourage re-use of lower-numbered pages.)
 	 */
 	if (fsmrel->storedPages <= 0)
-		return InvalidBlockNumber; /* no pages available */
+		return InvalidBlockNumber;		/* no pages available */
 	info = (IndexFSMPageData *)
 		(FreeSpaceMap->arena + fsmrel->firstChunk * CHUNKBYTES);
 	result = IndexFSMPageGetPageNum(info);
@@ -1287,8 +1296,8 @@ fsm_record_free_space(FSMRelation *fsmrel, BlockNumber page, Size spaceAvail)
 	else
 	{
 		/*
-		 * No existing entry; ignore the call.  We used to add the page
-		 * to the FSM --- but in practice, if the page hasn't got enough
+		 * No existing entry; ignore the call.	We used to add the page to
+		 * the FSM --- but in practice, if the page hasn't got enough
 		 * space to satisfy the caller who's kicking it back to us, then
 		 * it's probably uninteresting to everyone else as well.
 		 */
@@ -1327,7 +1336,7 @@ lookup_fsm_page_entry(FSMRelation *fsmrel, BlockNumber page,
 		while (low <= high)
 		{
 			int			middle;
-			BlockNumber	probe;
+			BlockNumber probe;
 
 			middle = low + (high - low) / 2;
 			probe = IndexFSMPageGetPageNum(info + middle);
@@ -1357,7 +1366,7 @@ lookup_fsm_page_entry(FSMRelation *fsmrel, BlockNumber page,
 		while (low <= high)
 		{
 			int			middle;
-			BlockNumber	probe;
+			BlockNumber probe;
 
 			middle = low + (high - low) / 2;
 			probe = FSMPageGetPageNum(info + middle);
@@ -1391,13 +1400,13 @@ compact_fsm_storage(void)
 		 fsmrel != NULL;
 		 fsmrel = fsmrel->nextPhysical)
 	{
-		int		newAlloc;
-		int		newAllocPages;
-		int		newChunkIndex;
-		int		oldChunkIndex;
-		int		curChunks;
-		char   *newLocation;
-		char   *oldLocation;
+		int			newAlloc;
+		int			newAllocPages;
+		int			newChunkIndex;
+		int			oldChunkIndex;
+		int			curChunks;
+		char	   *newLocation;
+		char	   *oldLocation;
 
 		/*
 		 * Calculate target allocation, make sure we don't overrun due to
@@ -1412,6 +1421,7 @@ compact_fsm_storage(void)
 			newAllocPages = newAlloc * CHUNKPAGES;
 		newChunkIndex = nextChunkIndex;
 		nextChunkIndex += newAlloc;
+
 		/*
 		 * Determine current size, current and new locations
 		 */
@@ -1419,18 +1429,19 @@ compact_fsm_storage(void)
 		oldChunkIndex = fsmrel->firstChunk;
 		newLocation = FreeSpaceMap->arena + newChunkIndex * CHUNKBYTES;
 		oldLocation = FreeSpaceMap->arena + oldChunkIndex * CHUNKBYTES;
+
 		/*
 		 * It's possible that we have to move data down, not up, if the
 		 * allocations of previous rels expanded.  This should mean that
 		 * our allocation expanded too (or at least got no worse), and
 		 * ditto for later rels.  So there should be room --- but we might
 		 * have to push down following rels to make it.  We don't want to
-		 * do the push more than once, so pack everything against the
-		 * end of the arena if so.
+		 * do the push more than once, so pack everything against the end
+		 * of the arena if so.
 		 */
 		if (newChunkIndex > oldChunkIndex)
 		{
-			int		limitChunkIndex;
+			int			limitChunkIndex;
 
 			if (newAllocPages < fsmrel->storedPages)
 				elog(PANIC, "can't juggle and compress too");
@@ -1455,9 +1466,9 @@ compact_fsm_storage(void)
 		else if (newAllocPages < fsmrel->storedPages)
 		{
 			/*
-			 * Need to compress the page data.  For an index, "compression"
-			 * just means dropping excess pages; otherwise we try to keep
-			 * the ones with the most space.
+			 * Need to compress the page data.	For an index,
+			 * "compression" just means dropping excess pages; otherwise
+			 * we try to keep the ones with the most space.
 			 */
 			if (fsmrel->isIndex)
 			{
@@ -1508,11 +1519,11 @@ push_fsm_rels_after(FSMRelation *afterRel)
 		 fsmrel != NULL;
 		 fsmrel = fsmrel->priorPhysical)
 	{
-		int		chunkCount;
-		int		newChunkIndex;
-		int		oldChunkIndex;
-		char   *newLocation;
-		char   *oldLocation;
+		int			chunkCount;
+		int			newChunkIndex;
+		int			oldChunkIndex;
+		char	   *newLocation;
+		char	   *oldLocation;
 
 		if (fsmrel == afterRel)
 			break;
@@ -1549,8 +1560,8 @@ push_fsm_rels_after(FSMRelation *afterRel)
 #define HISTOGRAM_BINS	64
 
 static void
-pack_incoming_pages(FSMPageData *newLocation, int newPages,
-					PageFreeSpaceInfo *pageSpaces, int nPages)
+pack_incoming_pages(FSMPageData * newLocation, int newPages,
+					PageFreeSpaceInfo * pageSpaces, int nPages)
 {
 	int			histogram[HISTOGRAM_BINS];
 	int			above,
@@ -1564,35 +1575,35 @@ pack_incoming_pages(FSMPageData *newLocation, int newPages,
 	MemSet(histogram, 0, sizeof(histogram));
 	for (i = 0; i < nPages; i++)
 	{
-		Size	avail = pageSpaces[i].avail;
+		Size		avail = pageSpaces[i].avail;
 
 		if (avail >= BLCKSZ)
 			elog(ERROR, "bogus freespace amount");
-		avail /= (BLCKSZ/HISTOGRAM_BINS);
+		avail /= (BLCKSZ / HISTOGRAM_BINS);
 		histogram[avail]++;
 	}
 	/* Find the breakpoint bin */
 	above = 0;
-	for (i = HISTOGRAM_BINS-1; i >= 0; i--)
+	for (i = HISTOGRAM_BINS - 1; i >= 0; i--)
 	{
-		int		sum = above + histogram[i];
+		int			sum = above + histogram[i];
 
 		if (sum > newPages)
 			break;
 		above = sum;
 	}
 	Assert(i >= 0);
-	thresholdL = i * BLCKSZ/HISTOGRAM_BINS;	/* low bound of bp bin */
-	thresholdU = (i+1) * BLCKSZ/HISTOGRAM_BINS;	/* hi bound */
+	thresholdL = i * BLCKSZ / HISTOGRAM_BINS;	/* low bound of bp bin */
+	thresholdU = (i + 1) * BLCKSZ / HISTOGRAM_BINS;		/* hi bound */
 	binct = newPages - above;	/* number to take from bp bin */
 	/* And copy the appropriate data */
 	for (i = 0; i < nPages; i++)
 	{
 		BlockNumber page = pageSpaces[i].blkno;
-		Size	avail = pageSpaces[i].avail;
+		Size		avail = pageSpaces[i].avail;
 
 		/* Check caller provides sorted data */
-		if (i > 0 && page <= pageSpaces[i-1].blkno)
+		if (i > 0 && page <= pageSpaces[i - 1].blkno)
 			elog(ERROR, "free-space data is not in page order");
 		/* Save this page? */
 		if (avail >= thresholdU ||
@@ -1619,8 +1630,8 @@ pack_incoming_pages(FSMPageData *newLocation, int newPages,
  * so that we can copy data moving forward in the arrays without problem.
  */
 static void
-pack_existing_pages(FSMPageData *newLocation, int newPages,
-					FSMPageData *oldLocation, int oldPages)
+pack_existing_pages(FSMPageData * newLocation, int newPages,
+					FSMPageData * oldLocation, int oldPages)
 {
 	int			histogram[HISTOGRAM_BINS];
 	int			above,
@@ -1634,33 +1645,33 @@ pack_existing_pages(FSMPageData *newLocation, int newPages,
 	MemSet(histogram, 0, sizeof(histogram));
 	for (i = 0; i < oldPages; i++)
 	{
-		Size	avail = FSMPageGetSpace(oldLocation + i);
+		Size		avail = FSMPageGetSpace(oldLocation + i);
 
 		/* Shouldn't happen, but test to protect against stack clobber */
 		if (avail >= BLCKSZ)
 			elog(ERROR, "bogus freespace amount");
-		avail /= (BLCKSZ/HISTOGRAM_BINS);
+		avail /= (BLCKSZ / HISTOGRAM_BINS);
 		histogram[avail]++;
 	}
 	/* Find the breakpoint bin */
 	above = 0;
-	for (i = HISTOGRAM_BINS-1; i >= 0; i--)
+	for (i = HISTOGRAM_BINS - 1; i >= 0; i--)
 	{
-		int		sum = above + histogram[i];
+		int			sum = above + histogram[i];
 
 		if (sum > newPages)
 			break;
 		above = sum;
 	}
 	Assert(i >= 0);
-	thresholdL = i * BLCKSZ/HISTOGRAM_BINS;	/* low bound of bp bin */
-	thresholdU = (i+1) * BLCKSZ/HISTOGRAM_BINS;	/* hi bound */
+	thresholdL = i * BLCKSZ / HISTOGRAM_BINS;	/* low bound of bp bin */
+	thresholdU = (i + 1) * BLCKSZ / HISTOGRAM_BINS;		/* hi bound */
 	binct = newPages - above;	/* number to take from bp bin */
 	/* And copy the appropriate data */
 	for (i = 0; i < oldPages; i++)
 	{
 		BlockNumber page = FSMPageGetPageNum(oldLocation + i);
-		Size	avail = FSMPageGetSpace(oldLocation + i);
+		Size		avail = FSMPageGetSpace(oldLocation + i);
 
 		/* Save this page? */
 		if (avail >= thresholdU ||
@@ -1755,13 +1766,9 @@ static int
 fsm_current_allocation(FSMRelation *fsmrel)
 {
 	if (fsmrel->nextPhysical != NULL)
-	{
 		return fsmrel->nextPhysical->firstChunk - fsmrel->firstChunk;
-	}
 	else if (fsmrel == FreeSpaceMap->lastRel)
-	{
 		return FreeSpaceMap->usedChunks - fsmrel->firstChunk;
-	}
 	else
 	{
 		/* it's not in the storage-order list */

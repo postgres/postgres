@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.71 2003/07/28 00:09:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.72 2003/08/04 00:43:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,13 +31,13 @@
 static Oid binary_oper_exact(Oid arg1, Oid arg2,
 				  FuncCandidateList candidates);
 static FuncDetailCode oper_select_candidate(int nargs,
-											Oid *input_typeids,
-											FuncCandidateList candidates,
-											Oid *operOid);
+					  Oid *input_typeids,
+					  FuncCandidateList candidates,
+					  Oid *operOid);
 static const char *op_signature_string(List *op, char oprkind,
-									   Oid arg1, Oid arg2);
+					Oid arg1, Oid arg2);
 static void op_error(List *op, char oprkind, Oid arg1, Oid arg2,
-					 FuncDetailCode fdresult);
+		 FuncDetailCode fdresult);
 
 
 /*
@@ -140,9 +140,9 @@ equality_oper(Oid argtype, bool noError)
 
 	/*
 	 * If the datatype is an array, then we can use array_eq ... but only
-	 * if there is a suitable equality operator for the element type.
-	 * (We must run this test first, since compatible_oper will find
-	 * array_eq, but would not notice the lack of an element operator.)
+	 * if there is a suitable equality operator for the element type. (We
+	 * must run this test first, since compatible_oper will find array_eq,
+	 * but would not notice the lack of an element operator.)
 	 */
 	elem_type = get_element_type(argtype);
 	if (OidIsValid(elem_type))
@@ -184,8 +184,8 @@ equality_oper(Oid argtype, bool noError)
 	if (!noError)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("could not identify an equality operator for type %s",
-						format_type_be(argtype))));
+			errmsg("could not identify an equality operator for type %s",
+				   format_type_be(argtype))));
 	return NULL;
 }
 
@@ -202,10 +202,10 @@ ordering_oper(Oid argtype, bool noError)
 
 	/*
 	 * If the datatype is an array, then we can use array_lt ... but only
-	 * if there is a suitable ordering operator for the element type.
-	 * (We must run this test first, since the code below would find
-	 * array_lt if there's an element = operator, but would not notice the
-	 * lack of an element < operator.)
+	 * if there is a suitable ordering operator for the element type. (We
+	 * must run this test first, since the code below would find array_lt
+	 * if there's an element = operator, but would not notice the lack of
+	 * an element < operator.)
 	 */
 	elem_type = get_element_type(argtype);
 	if (OidIsValid(elem_type))
@@ -222,15 +222,15 @@ ordering_oper(Oid argtype, bool noError)
 	else
 	{
 		/*
-		 * Find the type's equality operator, and use its lsortop (it *must*
-		 * be mergejoinable).  We use this definition because for sorting and
-		 * grouping purposes, it's important that the equality and ordering
-		 * operators are consistent.
+		 * Find the type's equality operator, and use its lsortop (it
+		 * *must* be mergejoinable).  We use this definition because for
+		 * sorting and grouping purposes, it's important that the equality
+		 * and ordering operators are consistent.
 		 */
 		optup = equality_oper(argtype, noError);
 		if (optup != NULL)
 		{
-			Oid		lsortop;
+			Oid			lsortop;
 
 			lsortop = ((Form_pg_operator) GETSTRUCT(optup))->oprlsortop;
 			ReleaseSysCache(optup);
@@ -247,8 +247,8 @@ ordering_oper(Oid argtype, bool noError)
 	if (!noError)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("could not identify an ordering operator for type %s",
-						format_type_be(argtype)),
+			errmsg("could not identify an ordering operator for type %s",
+				   format_type_be(argtype)),
 				 errhint("Use an explicit ordering operator or modify the query.")));
 	return NULL;
 }
@@ -361,13 +361,13 @@ static FuncDetailCode
 oper_select_candidate(int nargs,
 					  Oid *input_typeids,
 					  FuncCandidateList candidates,
-					  Oid *operOid)	/* output argument */
+					  Oid *operOid)		/* output argument */
 {
 	int			ncandidates;
 
 	/*
-	 * Delete any candidates that cannot actually accept the given
-	 * input types, whether directly or by coercion.
+	 * Delete any candidates that cannot actually accept the given input
+	 * types, whether directly or by coercion.
 	 */
 	ncandidates = func_match_argtypes(nargs, input_typeids,
 									  candidates, &candidates);
@@ -385,8 +385,8 @@ oper_select_candidate(int nargs,
 	}
 
 	/*
-	 * Use the same heuristics as for ambiguous functions to resolve
-	 * the conflict.
+	 * Use the same heuristics as for ambiguous functions to resolve the
+	 * conflict.
 	 */
 	candidates = func_select_candidate(nargs, input_typeids, candidates);
 
@@ -397,7 +397,7 @@ oper_select_candidate(int nargs,
 	}
 
 	*operOid = InvalidOid;
-	return FUNCDETAIL_MULTIPLE;	/* failed to select a best candidate */
+	return FUNCDETAIL_MULTIPLE; /* failed to select a best candidate */
 }
 
 
@@ -772,6 +772,7 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 
 	ltypeId = exprType(ltree);
 	atypeId = exprType(rtree);
+
 	/*
 	 * The right-hand input of the operator will be the element type of
 	 * the array.  However, if we currently have just an untyped literal
@@ -785,7 +786,7 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 		if (!OidIsValid(rtypeId))
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("op ANY/ALL (array) requires array on right side")));
+			 errmsg("op ANY/ALL (array) requires array on right side")));
 	}
 
 	/* Now resolve the operator */
@@ -814,15 +815,15 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	if (rettype != BOOLOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("op ANY/ALL (array) requires operator to yield boolean")));
+		errmsg("op ANY/ALL (array) requires operator to yield boolean")));
 	if (get_func_retset(opform->oprcode))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("op ANY/ALL (array) requires operator not to return a set")));
 
 	/*
-	 * Now switch back to the array type on the right, arranging for
-	 * any needed cast to be applied.
+	 * Now switch back to the array type on the right, arranging for any
+	 * needed cast to be applied.
 	 */
 	res_atypeId = get_array_type(declared_arg_types[1]);
 	if (!OidIsValid(res_atypeId))

@@ -21,7 +21,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: palloc.h,v 1.24 2002/12/16 16:22:46 tgl Exp $
+ * $Id: palloc.h,v 1.25 2003/08/04 00:43:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ extern void *MemoryContextAllocZeroAligned(MemoryContext context, Size size);
 
 #define palloc(sz)	MemoryContextAlloc(CurrentMemoryContext, (sz))
 
-#define palloc0(sz)	MemoryContextAllocZero(CurrentMemoryContext, (sz))
+#define palloc0(sz) MemoryContextAllocZero(CurrentMemoryContext, (sz))
 
 /*
  * The result of palloc() is always word-aligned, so we can skip testing
@@ -61,7 +61,7 @@ extern void *MemoryContextAllocZeroAligned(MemoryContext context, Size size);
  * issue that it evaluates the argument multiple times isn't a problem in
  * practice.
  */
-#define palloc0fast(sz)	\
+#define palloc0fast(sz) \
 	( MemSetTest(0, sz) ? \
 		MemoryContextAllocZeroAligned(CurrentMemoryContext, sz) : \
 		MemoryContextAllocZero(CurrentMemoryContext, sz) )

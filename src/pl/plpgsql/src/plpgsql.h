@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.38 2003/07/31 18:36:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.39 2003/08/04 00:43:33 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -311,7 +311,7 @@ typedef struct
 	int			cmd_type;
 	int			lineno;
 	PLpgSQL_expr *expr;
-}   PLpgSQL_stmt_perform;
+}	PLpgSQL_stmt_perform;
 
 typedef struct
 {								/* Get Diagnostics item		*/
@@ -489,14 +489,15 @@ typedef struct
 
 typedef struct PLpgSQL_func_hashkey
 {								/* Hash lookup key for functions */
-	Oid		funcOid;
+	Oid			funcOid;
+
 	/*
 	 * We include actual argument types in the hash key to support
-	 * polymorphic PLpgSQL functions.  Be careful that extra positions
-	 * are zeroed!
+	 * polymorphic PLpgSQL functions.  Be careful that extra positions are
+	 * zeroed!
 	 */
-	Oid		argtypes[FUNC_MAX_ARGS];
-} PLpgSQL_func_hashkey;
+	Oid			argtypes[FUNC_MAX_ARGS];
+}	PLpgSQL_func_hashkey;
 
 
 typedef struct PLpgSQL_function
@@ -506,7 +507,7 @@ typedef struct PLpgSQL_function
 	TransactionId fn_xmin;
 	CommandId	fn_cmin;
 	int			fn_functype;
-	PLpgSQL_func_hashkey *fn_hashkey; /* back-link to hashtable key */
+	PLpgSQL_func_hashkey *fn_hashkey;	/* back-link to hashtable key */
 
 	Oid			fn_rettype;
 	int			fn_rettyplen;
@@ -566,9 +567,9 @@ typedef struct
 	ExprContext *eval_econtext;
 
 	/* status information for error context reporting */
-	PLpgSQL_function   *err_func;		/* current func */
-	PLpgSQL_stmt	   *err_stmt;		/* current stmt */
-	const char		   *err_text;		/* additional state info */
+	PLpgSQL_function *err_func; /* current func */
+	PLpgSQL_stmt *err_stmt;		/* current stmt */
+	const char *err_text;		/* additional state info */
 }	PLpgSQL_execstate;
 
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.65 2003/05/06 00:20:33 tgl Exp $
+ * $Id: plannodes.h,v 1.66 2003/08/04 00:43:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,8 +68,8 @@ typedef struct Plan
 	 * Information for management of parameter-change-driven rescanning
 	 *
 	 * extParam includes the paramIDs of all external PARAM_EXEC params
-	 * affecting this plan node or its children.  setParam params from
-	 * the node's initPlans are not included, but their extParams are.
+	 * affecting this plan node or its children.  setParam params from the
+	 * node's initPlans are not included, but their extParams are.
 	 *
 	 * allParam includes all the extParam paramIDs, plus the IDs of local
 	 * params that affect the node (i.e., the setParams of its initplans).
@@ -315,12 +315,12 @@ typedef enum AggStrategy
 	AGG_PLAIN,					/* simple agg across all input rows */
 	AGG_SORTED,					/* grouped agg, input must be sorted */
 	AGG_HASHED					/* grouped agg, use internal hashtable */
-} AggStrategy;
+}	AggStrategy;
 
 typedef struct Agg
 {
 	Plan		plan;
-	AggStrategy	aggstrategy;
+	AggStrategy aggstrategy;
 	int			numCols;		/* number of grouping columns */
 	AttrNumber *grpColIdx;		/* their indexes in the target list */
 	long		numGroups;		/* estimated number of groups in input */

@@ -11,14 +11,14 @@
  * be handled easily in a simple depth-first traversal.
  *
  * Currently, in fact, equal() doesn't know how to compare Plan trees
- * either.  This might need to be fixed someday.
+ * either.	This might need to be fixed someday.
  *
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.204 2003/07/28 00:09:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.205 2003/08/04 00:43:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,8 +32,8 @@
 
 
 /*
- * Macros to simplify comparison of different kinds of fields.  Use these
- * wherever possible to reduce the chance for silly typos.  Note that these
+ * Macros to simplify comparison of different kinds of fields.	Use these
+ * wherever possible to reduce the chance for silly typos.	Note that these
  * hard-wire the convention that the local variables in an Equal routine are
  * named 'a' and 'b'.
  */
@@ -135,7 +135,7 @@ _equalRangeVar(RangeVar *a, RangeVar *b)
 
 /*
  * We don't need an _equalExpr because Expr is an abstract supertype which
- * should never actually get instantiated.  Also, since it has no common
+ * should never actually get instantiated.	Also, since it has no common
  * fields except NodeTag, there's no need for a helper routine to factor
  * out comparing the common fields...
  */
@@ -224,11 +224,12 @@ _equalArrayRef(ArrayRef *a, ArrayRef *b)
 }
 
 static bool
-_equalFuncExpr(FuncExpr *a, FuncExpr *b)
+_equalFuncExpr(FuncExpr * a, FuncExpr * b)
 {
 	COMPARE_SCALAR_FIELD(funcid);
 	COMPARE_SCALAR_FIELD(funcresulttype);
 	COMPARE_SCALAR_FIELD(funcretset);
+
 	/*
 	 * Special-case COERCE_DONTCARE, so that pathkeys can build coercion
 	 * nodes that are equal() to both explicit and implicit coercions.
@@ -244,14 +245,15 @@ _equalFuncExpr(FuncExpr *a, FuncExpr *b)
 }
 
 static bool
-_equalOpExpr(OpExpr *a, OpExpr *b)
+_equalOpExpr(OpExpr * a, OpExpr * b)
 {
 	COMPARE_SCALAR_FIELD(opno);
+
 	/*
-	 * Special-case opfuncid: it is allowable for it to differ if one
-	 * node contains zero and the other doesn't.  This just means that the
-	 * one node isn't as far along in the parse/plan pipeline and hasn't
-	 * had the opfuncid cache filled yet.
+	 * Special-case opfuncid: it is allowable for it to differ if one node
+	 * contains zero and the other doesn't.  This just means that the one
+	 * node isn't as far along in the parse/plan pipeline and hasn't had
+	 * the opfuncid cache filled yet.
 	 */
 	if (a->opfuncid != b->opfuncid &&
 		a->opfuncid != 0 &&
@@ -266,14 +268,15 @@ _equalOpExpr(OpExpr *a, OpExpr *b)
 }
 
 static bool
-_equalDistinctExpr(DistinctExpr *a, DistinctExpr *b)
+_equalDistinctExpr(DistinctExpr * a, DistinctExpr * b)
 {
 	COMPARE_SCALAR_FIELD(opno);
+
 	/*
-	 * Special-case opfuncid: it is allowable for it to differ if one
-	 * node contains zero and the other doesn't.  This just means that the
-	 * one node isn't as far along in the parse/plan pipeline and hasn't
-	 * had the opfuncid cache filled yet.
+	 * Special-case opfuncid: it is allowable for it to differ if one node
+	 * contains zero and the other doesn't.  This just means that the one
+	 * node isn't as far along in the parse/plan pipeline and hasn't had
+	 * the opfuncid cache filled yet.
 	 */
 	if (a->opfuncid != b->opfuncid &&
 		a->opfuncid != 0 &&
@@ -288,14 +291,15 @@ _equalDistinctExpr(DistinctExpr *a, DistinctExpr *b)
 }
 
 static bool
-_equalScalarArrayOpExpr(ScalarArrayOpExpr *a, ScalarArrayOpExpr *b)
+_equalScalarArrayOpExpr(ScalarArrayOpExpr * a, ScalarArrayOpExpr * b)
 {
 	COMPARE_SCALAR_FIELD(opno);
+
 	/*
-	 * Special-case opfuncid: it is allowable for it to differ if one
-	 * node contains zero and the other doesn't.  This just means that the
-	 * one node isn't as far along in the parse/plan pipeline and hasn't
-	 * had the opfuncid cache filled yet.
+	 * Special-case opfuncid: it is allowable for it to differ if one node
+	 * contains zero and the other doesn't.  This just means that the one
+	 * node isn't as far along in the parse/plan pipeline and hasn't had
+	 * the opfuncid cache filled yet.
 	 */
 	if (a->opfuncid != b->opfuncid &&
 		a->opfuncid != 0 &&
@@ -309,7 +313,7 @@ _equalScalarArrayOpExpr(ScalarArrayOpExpr *a, ScalarArrayOpExpr *b)
 }
 
 static bool
-_equalBoolExpr(BoolExpr *a, BoolExpr *b)
+_equalBoolExpr(BoolExpr * a, BoolExpr * b)
 {
 	COMPARE_SCALAR_FIELD(boolop);
 	COMPARE_NODE_FIELD(args);
@@ -366,6 +370,7 @@ _equalRelabelType(RelabelType *a, RelabelType *b)
 	COMPARE_NODE_FIELD(arg);
 	COMPARE_SCALAR_FIELD(resulttype);
 	COMPARE_SCALAR_FIELD(resulttypmod);
+
 	/*
 	 * Special-case COERCE_DONTCARE, so that pathkeys can build coercion
 	 * nodes that are equal() to both explicit and implicit coercions.
@@ -399,7 +404,7 @@ _equalCaseWhen(CaseWhen *a, CaseWhen *b)
 }
 
 static bool
-_equalArrayExpr(ArrayExpr *a, ArrayExpr *b)
+_equalArrayExpr(ArrayExpr * a, ArrayExpr * b)
 {
 	COMPARE_SCALAR_FIELD(array_typeid);
 	COMPARE_SCALAR_FIELD(element_typeid);
@@ -410,7 +415,7 @@ _equalArrayExpr(ArrayExpr *a, ArrayExpr *b)
 }
 
 static bool
-_equalCoalesceExpr(CoalesceExpr *a, CoalesceExpr *b)
+_equalCoalesceExpr(CoalesceExpr * a, CoalesceExpr * b)
 {
 	COMPARE_SCALAR_FIELD(coalescetype);
 	COMPARE_NODE_FIELD(args);
@@ -419,14 +424,15 @@ _equalCoalesceExpr(CoalesceExpr *a, CoalesceExpr *b)
 }
 
 static bool
-_equalNullIfExpr(NullIfExpr *a, NullIfExpr *b)
+_equalNullIfExpr(NullIfExpr * a, NullIfExpr * b)
 {
 	COMPARE_SCALAR_FIELD(opno);
+
 	/*
-	 * Special-case opfuncid: it is allowable for it to differ if one
-	 * node contains zero and the other doesn't.  This just means that the
-	 * one node isn't as far along in the parse/plan pipeline and hasn't
-	 * had the opfuncid cache filled yet.
+	 * Special-case opfuncid: it is allowable for it to differ if one node
+	 * contains zero and the other doesn't.  This just means that the one
+	 * node isn't as far along in the parse/plan pipeline and hasn't had
+	 * the opfuncid cache filled yet.
 	 */
 	if (a->opfuncid != b->opfuncid &&
 		a->opfuncid != 0 &&
@@ -459,11 +465,12 @@ _equalBooleanTest(BooleanTest *a, BooleanTest *b)
 }
 
 static bool
-_equalCoerceToDomain(CoerceToDomain *a, CoerceToDomain *b)
+_equalCoerceToDomain(CoerceToDomain * a, CoerceToDomain * b)
 {
 	COMPARE_NODE_FIELD(arg);
 	COMPARE_SCALAR_FIELD(resulttype);
 	COMPARE_SCALAR_FIELD(resulttypmod);
+
 	/*
 	 * Special-case COERCE_DONTCARE, so that pathkeys can build coercion
 	 * nodes that are equal() to both explicit and implicit coercions.
@@ -477,7 +484,7 @@ _equalCoerceToDomain(CoerceToDomain *a, CoerceToDomain *b)
 }
 
 static bool
-_equalCoerceToDomainValue(CoerceToDomainValue *a, CoerceToDomainValue *b)
+_equalCoerceToDomainValue(CoerceToDomainValue * a, CoerceToDomainValue * b)
 {
 	COMPARE_SCALAR_FIELD(typeId);
 	COMPARE_SCALAR_FIELD(typeMod);
@@ -486,7 +493,7 @@ _equalCoerceToDomainValue(CoerceToDomainValue *a, CoerceToDomainValue *b)
 }
 
 static bool
-_equalSetToDefault(SetToDefault *a, SetToDefault *b)
+_equalSetToDefault(SetToDefault * a, SetToDefault * b)
 {
 	COMPARE_SCALAR_FIELD(typeId);
 	COMPARE_SCALAR_FIELD(typeMod);
@@ -554,11 +561,13 @@ _equalRestrictInfo(RestrictInfo *a, RestrictInfo *b)
 {
 	COMPARE_NODE_FIELD(clause);
 	COMPARE_SCALAR_FIELD(ispusheddown);
+
 	/*
-	 * We ignore subclauseindices, eval_cost, this_selec, left/right_relids,
-	 * left/right_pathkey, and left/right_bucketsize, since they may not be
-	 * set yet, and should be derivable from the clause anyway.  Probably it's
-	 * not really necessary to compare any of these remaining fields ...
+	 * We ignore subclauseindices, eval_cost, this_selec,
+	 * left/right_relids, left/right_pathkey, and left/right_bucketsize,
+	 * since they may not be set yet, and should be derivable from the
+	 * clause anyway.  Probably it's not really necessary to compare any
+	 * of these remaining fields ...
 	 */
 	COMPARE_SCALAR_FIELD(mergejoinoperator);
 	COMPARE_SCALAR_FIELD(left_sortop);
@@ -578,7 +587,7 @@ _equalJoinInfo(JoinInfo *a, JoinInfo *b)
 }
 
 static bool
-_equalInClauseInfo(InClauseInfo *a, InClauseInfo *b)
+_equalInClauseInfo(InClauseInfo * a, InClauseInfo * b)
 {
 	COMPARE_BITMAPSET_FIELD(lefthand);
 	COMPARE_BITMAPSET_FIELD(righthand);
@@ -620,9 +629,9 @@ _equalQuery(Query *a, Query *b)
 
 	/*
 	 * We do not check the other planner internal fields: base_rel_list,
-	 * other_rel_list, join_rel_list, equi_key_list, query_pathkeys.
-	 * They might not be set yet, and in any case they should be derivable
-	 * from the other fields.
+	 * other_rel_list, join_rel_list, equi_key_list, query_pathkeys. They
+	 * might not be set yet, and in any case they should be derivable from
+	 * the other fields.
 	 */
 	return true;
 }
@@ -706,7 +715,7 @@ _equalAlterTableStmt(AlterTableStmt *a, AlterTableStmt *b)
 }
 
 static bool
-_equalAlterDomainStmt(AlterDomainStmt *a, AlterDomainStmt *b)
+_equalAlterDomainStmt(AlterDomainStmt * a, AlterDomainStmt * b)
 {
 	COMPARE_SCALAR_FIELD(subtype);
 	COMPARE_NODE_FIELD(typename);
@@ -750,7 +759,7 @@ _equalFuncWithArgs(FuncWithArgs *a, FuncWithArgs *b)
 }
 
 static bool
-_equalDeclareCursorStmt(DeclareCursorStmt *a, DeclareCursorStmt *b)
+_equalDeclareCursorStmt(DeclareCursorStmt * a, DeclareCursorStmt * b)
 {
 	COMPARE_STRING_FIELD(portalname);
 	COMPARE_SCALAR_FIELD(options);
@@ -802,7 +811,7 @@ _equalCreateStmt(CreateStmt *a, CreateStmt *b)
 }
 
 static bool
-_equalInhRelation(InhRelation *a, InhRelation *b)
+_equalInhRelation(InhRelation * a, InhRelation * b)
 {
 	COMPARE_NODE_FIELD(relation);
 	COMPARE_SCALAR_FIELD(including_defaults);
@@ -1113,7 +1122,7 @@ _equalCreateSeqStmt(CreateSeqStmt *a, CreateSeqStmt *b)
 }
 
 static bool
-_equalAlterSeqStmt(AlterSeqStmt *a, AlterSeqStmt *b)
+_equalAlterSeqStmt(AlterSeqStmt * a, AlterSeqStmt * b)
 {
 	COMPARE_NODE_FIELD(sequence);
 	COMPARE_NODE_FIELD(options);
@@ -1156,7 +1165,7 @@ _equalCreateTrigStmt(CreateTrigStmt *a, CreateTrigStmt *b)
 	COMPARE_NODE_FIELD(args);
 	COMPARE_SCALAR_FIELD(before);
 	COMPARE_SCALAR_FIELD(row);
-	if (strcmp(a->actions, b->actions) != 0) /* in-line string field */
+	if (strcmp(a->actions, b->actions) != 0)	/* in-line string field */
 		return false;
 	COMPARE_SCALAR_FIELD(isconstraint);
 	COMPARE_SCALAR_FIELD(deferrable);
@@ -1400,7 +1409,7 @@ _equalParamRef(ParamRef *a, ParamRef *b)
 static bool
 _equalAConst(A_Const *a, A_Const *b)
 {
-	if (!equal(&a->val, &b->val)) /* hack for in-line Value field */
+	if (!equal(&a->val, &b->val))		/* hack for in-line Value field */
 		return false;
 	COMPARE_NODE_FIELD(typename);
 
@@ -1649,9 +1658,9 @@ equal(void *a, void *b)
 
 	switch (nodeTag(a))
 	{
-		/*
-		 * PRIMITIVE NODES
-		 */
+			/*
+			 * PRIMITIVE NODES
+			 */
 		case T_Resdom:
 			retval = _equalResdom(a, b);
 			break;
@@ -1841,7 +1850,7 @@ equal(void *a, void *b)
 			retval = _equalCreateStmt(a, b);
 			break;
 		case T_InhRelation:
-			retval = _equalInhRelation(a,b);
+			retval = _equalInhRelation(a, b);
 			break;
 		case T_DefineStmt:
 			retval = _equalDefineStmt(a, b);

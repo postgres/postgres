@@ -56,7 +56,7 @@ struct sqlca_t
 struct sqlca_t *ECPGget_sqlca(void);
 
 #ifndef POSTGRES_ECPG_INTERNAL
-# define sqlca (*ECPGget_sqlca())
+#define sqlca (*ECPGget_sqlca())
 #endif
 
 #ifdef __cplusplus

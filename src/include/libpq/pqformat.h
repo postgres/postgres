@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqformat.h,v 1.18 2003/05/09 21:19:50 tgl Exp $
+ * $Id: pqformat.h,v 1.19 2003/08/04 00:43:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@ extern void pq_beginmessage(StringInfo buf, char msgtype);
 extern void pq_sendbyte(StringInfo buf, int byt);
 extern void pq_sendbytes(StringInfo buf, const char *data, int datalen);
 extern void pq_sendcountedtext(StringInfo buf, const char *str, int slen,
-							   bool countincludesself);
+				   bool countincludesself);
 extern void pq_sendtext(StringInfo buf, const char *str, int slen);
 extern void pq_sendstring(StringInfo buf, const char *str);
 extern void pq_sendint(StringInfo buf, int i, int b);

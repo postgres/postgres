@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.103 2003/07/21 20:29:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.104 2003/08/04 00:43:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -580,19 +580,20 @@ btbulkdelete(PG_FUNCTION_ARGS)
 
 	/*
 	 * The outer loop iterates over index leaf pages, the inner over items
-	 * on a leaf page.  We issue just one _bt_delitems() call per page,
-	 * so as to minimize WAL traffic.
+	 * on a leaf page.	We issue just one _bt_delitems() call per page, so
+	 * as to minimize WAL traffic.
 	 *
-	 * Note that we exclusive-lock every leaf page containing data items,
-	 * in sequence left to right.  It sounds attractive to only exclusive-lock
-	 * those containing items we need to delete, but unfortunately that
-	 * is not safe: we could then pass a stopped indexscan, which could
-	 * in rare cases lead to deleting the item it needs to find when it
-	 * resumes.  (See _bt_restscan --- this could only happen if an indexscan
-	 * stops on a deletable item and then a page split moves that item
-	 * into a page further to its right, which the indexscan will have no
-	 * pin on.)  We can skip obtaining exclusive lock on empty pages
-	 * though, since no indexscan could be stopped on those.
+	 * Note that we exclusive-lock every leaf page containing data items, in
+	 * sequence left to right.	It sounds attractive to only
+	 * exclusive-lock those containing items we need to delete, but
+	 * unfortunately that is not safe: we could then pass a stopped
+	 * indexscan, which could in rare cases lead to deleting the item it
+	 * needs to find when it resumes.  (See _bt_restscan --- this could
+	 * only happen if an indexscan stops on a deletable item and then a
+	 * page split moves that item into a page further to its right, which
+	 * the indexscan will have no pin on.)	We can skip obtaining
+	 * exclusive lock on empty pages though, since no indexscan could be
+	 * stopped on those.
 	 */
 	buf = _bt_get_endpoint(rel, 0, false);
 	if (BufferIsValid(buf))		/* check for empty index */
@@ -604,7 +605,7 @@ btbulkdelete(PG_FUNCTION_ARGS)
 			OffsetNumber offnum,
 						minoff,
 						maxoff;
-			BlockNumber	nextpage;
+			BlockNumber nextpage;
 
 			CHECK_FOR_INTERRUPTS();
 
@@ -622,12 +623,14 @@ btbulkdelete(PG_FUNCTION_ARGS)
 				 */
 				LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 				LockBufferForCleanup(buf);
+
 				/*
-				 * Recompute minoff/maxoff, both of which could have changed
-				 * while we weren't holding the lock.
+				 * Recompute minoff/maxoff, both of which could have
+				 * changed while we weren't holding the lock.
 				 */
 				minoff = P_FIRSTDATAKEY(opaque);
 				maxoff = PageGetMaxOffsetNumber(page);
+
 				/*
 				 * Scan over all items to see which ones need deleted
 				 * according to the callback function.
@@ -640,7 +643,7 @@ btbulkdelete(PG_FUNCTION_ARGS)
 					ItemPointer htup;
 
 					btitem = (BTItem) PageGetItem(page,
-												  PageGetItemId(page, offnum));
+											PageGetItemId(page, offnum));
 					htup = &(btitem->bti_itup.t_tid);
 					if (callback(htup, callback_state))
 					{
@@ -651,6 +654,7 @@ btbulkdelete(PG_FUNCTION_ARGS)
 						num_index_tuples += 1;
 				}
 			}
+
 			/*
 			 * If we need to delete anything, do it and write the buffer;
 			 * else just release the buffer.
@@ -662,9 +666,7 @@ btbulkdelete(PG_FUNCTION_ARGS)
 				_bt_wrtbuf(rel, buf);
 			}
 			else
-			{
 				_bt_relbuf(rel, buf);
-			}
 			/* And advance to next page, if any */
 			if (nextpage == P_NONE)
 				break;
@@ -712,7 +714,7 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 	/* No point in remembering more than MaxFSMPages pages */
 	maxFreePages = MaxFSMPages;
 	if ((BlockNumber) maxFreePages > num_pages)
-		maxFreePages = (int) num_pages + 1;	/* +1 to avoid palloc(0) */
+		maxFreePages = (int) num_pages + 1;		/* +1 to avoid palloc(0) */
 	freePages = (BlockNumber *) palloc(maxFreePages * sizeof(BlockNumber));
 	nFreePages = 0;
 
@@ -728,10 +730,10 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 	 * after we start the scan will not be examined; this should be fine,
 	 * since they can't possibly be empty.)
 	 */
-	for (blkno = BTREE_METAPAGE+1; blkno < num_pages; blkno++)
+	for (blkno = BTREE_METAPAGE + 1; blkno < num_pages; blkno++)
 	{
-		Buffer	buf;
-		Page	page;
+		Buffer		buf;
+		Page		page;
 		BTPageOpaque opaque;
 
 		buf = _bt_getbuf(rel, blkno, BT_READ);
@@ -753,7 +755,7 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 				 P_FIRSTDATAKEY(opaque) > PageGetMaxOffsetNumber(page))
 		{
 			/* Empty, try to delete */
-			int		ndel;
+			int			ndel;
 
 			/* Run pagedel in a temp context to avoid memory leakage */
 			MemoryContextReset(mycontext);
@@ -768,7 +770,7 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 			/*
 			 * During VACUUM FULL it's okay to recycle deleted pages
 			 * immediately, since there can be no other transactions
-			 * scanning the index.  Note that we will only recycle the
+			 * scanning the index.	Note that we will only recycle the
 			 * current page and not any parent pages that _bt_pagedel
 			 * might have recursed to; this seems reasonable in the name
 			 * of simplicity.  (Trying to do otherwise would mean we'd
@@ -787,16 +789,16 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * During VACUUM FULL, we truncate off any recyclable pages at the
-	 * end of the index.  In a normal vacuum it'd be unsafe to do this
-	 * except by acquiring exclusive lock on the index and then rechecking
-	 * all the pages; doesn't seem worth it.
+	 * During VACUUM FULL, we truncate off any recyclable pages at the end
+	 * of the index.  In a normal vacuum it'd be unsafe to do this except
+	 * by acquiring exclusive lock on the index and then rechecking all
+	 * the pages; doesn't seem worth it.
 	 */
 	if (info->vacuum_full && nFreePages > 0)
 	{
-		BlockNumber	new_pages = num_pages;
+		BlockNumber new_pages = num_pages;
 
-		while (nFreePages > 0 && freePages[nFreePages-1] == new_pages-1)
+		while (nFreePages > 0 && freePages[nFreePages - 1] == new_pages - 1)
 		{
 			new_pages--;
 			pages_deleted--;
@@ -810,9 +812,10 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 			 * Okay to truncate.
 			 *
 			 * First, flush any shared buffers for the blocks we intend to
-			 * delete.  FlushRelationBuffers is a bit more than we need for
-			 * this, since it will also write out dirty buffers for blocks we
-			 * aren't deleting, but it's the closest thing in bufmgr's API.
+			 * delete.	FlushRelationBuffers is a bit more than we need
+			 * for this, since it will also write out dirty buffers for
+			 * blocks we aren't deleting, but it's the closest thing in
+			 * bufmgr's API.
 			 */
 			i = FlushRelationBuffers(rel, new_pages);
 			if (i < 0)
@@ -822,7 +825,8 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 			 * Do the physical truncation.
 			 */
 			new_pages = smgrtruncate(DEFAULT_SMGR, rel, new_pages);
-			rel->rd_nblocks = new_pages; /* update relcache immediately */
+			rel->rd_nblocks = new_pages;		/* update relcache
+												 * immediately */
 			rel->rd_targblock = InvalidBlockNumber;
 			num_pages = new_pages;
 		}
@@ -856,7 +860,7 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
  * and so no deletion can have occurred on that page.
  *
  * On entry, we have a pin but no read lock on the buffer that contained
- * the index tuple we stopped the scan on.  On exit, we have pin and read
+ * the index tuple we stopped the scan on.	On exit, we have pin and read
  * lock on the buffer that now contains that index tuple, and the scandesc's
  * current position is updated to point at it.
  */
@@ -877,8 +881,8 @@ _bt_restscan(IndexScanDesc scan)
 	BlockNumber blkno;
 
 	/*
-	 * Reacquire read lock on the buffer.  (We should still have
-	 * a reference-count pin on it, so need not get that.)
+	 * Reacquire read lock on the buffer.  (We should still have a
+	 * reference-count pin on it, so need not get that.)
 	 */
 	LockBuffer(buf, BT_READ);
 
@@ -921,11 +925,11 @@ _bt_restscan(IndexScanDesc scan)
 
 		/*
 		 * The item we're looking for moved right at least one page, so
-		 * move right.  We are careful here to pin and read-lock the next
-		 * non-dead page before releasing the current one.  This ensures that
-		 * a concurrent btbulkdelete scan cannot pass our position --- if it
-		 * did, it might be able to reach and delete our target item before
-		 * we can find it again.
+		 * move right.	We are careful here to pin and read-lock the next
+		 * non-dead page before releasing the current one.	This ensures
+		 * that a concurrent btbulkdelete scan cannot pass our position
+		 * --- if it did, it might be able to reach and delete our target
+		 * item before we can find it again.
 		 */
 		if (P_RIGHTMOST(opaque))
 			elog(ERROR, "failed to re-find previous key in \"%s\"",

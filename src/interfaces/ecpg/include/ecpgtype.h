@@ -44,20 +44,22 @@ enum ECPGttype
 	ECPGt_bool,
 	ECPGt_float, ECPGt_double,
 	ECPGt_varchar, ECPGt_varchar2,
-	ECPGt_numeric,			/* this is a decimal that stores its digits in a malloced array */
-	ECPGt_decimal,			/* this is a decimal that stores its digits in a fixed array */
+	ECPGt_numeric,				/* this is a decimal that stores its
+								 * digits in a malloced array */
+	ECPGt_decimal,				/* this is a decimal that stores its
+								 * digits in a fixed array */
 	ECPGt_date,
 	ECPGt_timestamp,
 	ECPGt_interval,
 	ECPGt_array,
 	ECPGt_struct,
 	ECPGt_union,
-	ECPGt_descriptor,		/* sql descriptor, no C variable */
+	ECPGt_descriptor,			/* sql descriptor, no C variable */
 	ECPGt_char_variable,
-	ECPGt_const,			/* a constant is needed sometimes */
-	ECPGt_EOIT,			/* End of insert types. */
-	ECPGt_EORT,			/* End of result types. */
-	ECPGt_NO_INDICATOR		/* no indicator */
+	ECPGt_const,				/* a constant is needed sometimes */
+	ECPGt_EOIT,					/* End of insert types. */
+	ECPGt_EORT,					/* End of result types. */
+	ECPGt_NO_INDICATOR			/* no indicator */
 };
 
  /* descriptor items */
@@ -88,4 +90,4 @@ enum ECPGdtype
 }
 #endif
 
-#endif /* _ECPGTYPE_H */
+#endif   /* _ECPGTYPE_H */

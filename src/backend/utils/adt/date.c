@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.87 2003/07/27 04:53:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.88 2003/08/04 00:43:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,7 +97,7 @@ date_in(PG_FUNCTION_ARGS)
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-					 errmsg("invalid input syntax for date: \"%s\"", str)));
+				  errmsg("invalid input syntax for date: \"%s\"", str)));
 	}
 
 	date = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
@@ -465,7 +465,7 @@ abstime_date(PG_FUNCTION_ARGS)
 		case NOEND_ABSTIME:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot convert reserved abstime value to date")));
+			   errmsg("cannot convert reserved abstime value to date")));
 
 			/*
 			 * pretend to drop through to make compiler think that result
@@ -527,7 +527,7 @@ text_date(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 				 errmsg("invalid input syntax for date: \"%s\"",
-						 VARDATA(str))));
+						VARDATA(str))));
 
 	sp = VARDATA(str);
 	dp = dstr;
@@ -570,7 +570,7 @@ time_in(PG_FUNCTION_ARGS)
 				 errmsg("invalid input syntax for time: \"%s\"", str)));
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
-	 || (DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
+	  || (DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 				 errmsg("invalid input syntax for time: \"%s\"", str)));
@@ -749,9 +749,9 @@ AdjustTimeForTypmod(TimeADT *time, int32 typmod)
 		/*
 		 * Note: this round-to-nearest code is not completely consistent
 		 * about rounding values that are exactly halfway between integral
-		 * values.  On most platforms, rint() will implement round-to-nearest-even,
-		 * but the integer code always rounds up (away from zero).  Is it
-		 * worth trying to be consistent?
+		 * values.	On most platforms, rint() will implement
+		 * round-to-nearest-even, but the integer code always rounds up
+		 * (away from zero).  Is it worth trying to be consistent?
 		 */
 #ifdef HAVE_INT64_TIMESTAMP
 		if (*time >= INT64CONST(0))
@@ -761,8 +761,8 @@ AdjustTimeForTypmod(TimeADT *time, int32 typmod)
 		}
 		else
 		{
-			*time = - ((((- *time) + TimeOffsets[typmod]) / TimeScales[typmod])
-					   * TimeScales[typmod]);
+			*time = -((((-*time) + TimeOffsets[typmod]) / TimeScales[typmod])
+					  * TimeScales[typmod]);
 		}
 #else
 		*time = (rint(((double) *time) * TimeScales[typmod])
@@ -1093,7 +1093,7 @@ time_interval(PG_FUNCTION_ARGS)
  * Convert interval to time data type.
  *
  * This is defined as producing the fractional-day portion of the interval.
- * Therefore, we can just ignore the months field.  It is not real clear
+ * Therefore, we can just ignore the months field.	It is not real clear
  * what to do with negative intervals, but we choose to subtract the floor,
  * so that, say, '-2 hours' becomes '22:00:00'.
  */
@@ -1114,7 +1114,7 @@ interval_time(PG_FUNCTION_ARGS)
 	}
 	else if (result < 0)
 	{
-		days = (-result + INT64CONST(86400000000-1)) / INT64CONST(86400000000);
+		days = (-result + INT64CONST(86400000000 - 1)) / INT64CONST(86400000000);
 		result += days * INT64CONST(86400000000);
 	}
 #else
@@ -1256,7 +1256,7 @@ text_time(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 				 errmsg("invalid input syntax for time: \"%s\"",
-						 VARDATA(str))));
+						VARDATA(str))));
 
 	sp = VARDATA(str);
 	dp = dstr;
@@ -1290,8 +1290,8 @@ time_part(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("TIME units \"%s\" not recognized",
-						 DatumGetCString(DirectFunctionCall1(textout,
-										 PointerGetDatum(units))))));
+						DatumGetCString(DirectFunctionCall1(textout,
+											 PointerGetDatum(units))))));
 
 	up = VARDATA(units);
 	lp = lowunits;
@@ -1360,8 +1360,8 @@ time_part(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("TIME units \"%s\" not recognized",
-								 DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(units))))));
+							 DatumGetCString(DirectFunctionCall1(textout,
+											 PointerGetDatum(units))))));
 
 				result = 0;
 		}
@@ -1379,8 +1379,8 @@ time_part(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("TIME units \"%s\" not recognized",
-						 DatumGetCString(DirectFunctionCall1(textout,
-										 PointerGetDatum(units))))));
+						DatumGetCString(DirectFunctionCall1(textout,
+											 PointerGetDatum(units))))));
 		result = 0;
 	}
 
@@ -1432,15 +1432,15 @@ timetz_in(PG_FUNCTION_ARGS)
 	if (strlen(str) >= sizeof(lowstr))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for time with time zone: \"%s\"",
-						str)));
+		   errmsg("invalid input syntax for time with time zone: \"%s\"",
+				  str)));
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	  || (DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for time with time zone: \"%s\"",
-						str)));
+		   errmsg("invalid input syntax for time with time zone: \"%s\"",
+				  str)));
 
 	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
 	tm2timetz(tm, fsec, tz, result);
@@ -2019,8 +2019,8 @@ text_timetz(PG_FUNCTION_ARGS)
 	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for time with time zone: \"%s\"",
-						VARDATA(str))));
+		   errmsg("invalid input syntax for time with time zone: \"%s\"",
+				  VARDATA(str))));
 
 	sp = VARDATA(str);
 	dp = dstr;
@@ -2054,8 +2054,8 @@ timetz_part(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("TIMETZ units \"%s\" not recognized",
-						 DatumGetCString(DirectFunctionCall1(textout,
-											   PointerGetDatum(units))))));
+						DatumGetCString(DirectFunctionCall1(textout,
+											 PointerGetDatum(units))))));
 
 	up = VARDATA(units);
 	lp = lowunits;
@@ -2138,8 +2138,8 @@ timetz_part(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("TIMETZ units \"%s\" not recognized",
-								 DatumGetCString(DirectFunctionCall1(textout,
-													   PointerGetDatum(units))))));
+							 DatumGetCString(DirectFunctionCall1(textout,
+											 PointerGetDatum(units))))));
 
 				result = 0;
 		}
@@ -2157,8 +2157,8 @@ timetz_part(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("TIMETZ units \"%s\" not recognized",
-						 DatumGetCString(DirectFunctionCall1(textout,
-											   PointerGetDatum(units))))));
+						DatumGetCString(DirectFunctionCall1(textout,
+											 PointerGetDatum(units))))));
 
 		result = 0;
 	}
@@ -2187,8 +2187,8 @@ timetz_zone(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("time zone \"%s\" not recognized",
-						 DatumGetCString(DirectFunctionCall1(textout,
-											   PointerGetDatum(zone))))));
+						DatumGetCString(DirectFunctionCall1(textout,
+											  PointerGetDatum(zone))))));
 
 	up = VARDATA(zone);
 	lp = lowzone;
@@ -2246,8 +2246,8 @@ timetz_izone(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("INTERVAL time zone \"%s\" not legal",
-						 DatumGetCString(DirectFunctionCall1(interval_out,
-												 PointerGetDatum(zone))))));
+						DatumGetCString(DirectFunctionCall1(interval_out,
+											  PointerGetDatum(zone))))));
 
 #ifdef HAVE_INT64_TIMESTAMP
 	tz = -(zone->time / INT64CONST(1000000));

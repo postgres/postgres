@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.36 2003/06/22 22:04:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.37 2003/08/04 00:43:12 momjian Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -60,9 +60,9 @@ hashfloat4(PG_FUNCTION_ARGS)
 	float4		key = PG_GETARG_FLOAT4(0);
 
 	/*
-	 * On IEEE-float machines, minus zero and zero have different bit patterns
-	 * but should compare as equal.  We must ensure that they have the same
-	 * hash value, which is most easily done this way:
+	 * On IEEE-float machines, minus zero and zero have different bit
+	 * patterns but should compare as equal.  We must ensure that they
+	 * have the same hash value, which is most easily done this way:
 	 */
 	if (key == (float4) 0)
 		PG_RETURN_UINT32(0);
@@ -76,9 +76,9 @@ hashfloat8(PG_FUNCTION_ARGS)
 	float8		key = PG_GETARG_FLOAT8(0);
 
 	/*
-	 * On IEEE-float machines, minus zero and zero have different bit patterns
-	 * but should compare as equal.  We must ensure that they have the same
-	 * hash value, which is most easily done this way:
+	 * On IEEE-float machines, minus zero and zero have different bit
+	 * patterns but should compare as equal.  We must ensure that they
+	 * have the same hash value, which is most easily done this way:
 	 */
 	if (key == (float8) 0)
 		PG_RETURN_UINT32(0);
@@ -121,9 +121,9 @@ hashtext(PG_FUNCTION_ARGS)
 	Datum		result;
 
 	/*
-	 * Note: this is currently identical in behavior to hashvarlena,
-	 * but it seems likely that we may need to do something different
-	 * in non-C locales.  (See also hashbpchar, if so.)
+	 * Note: this is currently identical in behavior to hashvarlena, but
+	 * it seems likely that we may need to do something different in non-C
+	 * locales.  (See also hashbpchar, if so.)
 	 */
 	result = hash_any((unsigned char *) VARDATA(key),
 					  VARSIZE(key) - VARHDRSZ);

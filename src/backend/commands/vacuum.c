@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.257 2003/07/20 21:56:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.258 2003/08/04 00:43:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -287,24 +287,25 @@ vacuum(VacuumStmt *vacstmt)
 
 		if (vacstmt->vacuum)
 		{
-			if (! vacuum_rel(relid, vacstmt, RELKIND_RELATION))
-				all_rels = false; /* forget about updating dbstats */
+			if (!vacuum_rel(relid, vacstmt, RELKIND_RELATION))
+				all_rels = false;		/* forget about updating dbstats */
 		}
 		if (vacstmt->analyze)
 		{
 			MemoryContext old_context = NULL;
 
 			/*
-			 * If we vacuumed, use new transaction for analyze.
-			 * Otherwise, we can use the outer transaction, but we still
-			 * need to call analyze_rel in a memory context that will be
-			 * cleaned up on return (else we leak memory while processing
-			 * multiple tables).
+			 * If we vacuumed, use new transaction for analyze. Otherwise,
+			 * we can use the outer transaction, but we still need to call
+			 * analyze_rel in a memory context that will be cleaned up on
+			 * return (else we leak memory while processing multiple
+			 * tables).
 			 */
 			if (vacstmt->vacuum)
 			{
 				StartTransactionCommand();
-				SetQuerySnapshot();	/* might be needed for functions in indexes */
+				SetQuerySnapshot();		/* might be needed for functions
+										 * in indexes */
 			}
 			else
 				old_context = MemoryContextSwitchTo(anl_context);
@@ -734,7 +735,8 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 
 	/* Begin a transaction for vacuuming this relation */
 	StartTransactionCommand();
-	SetQuerySnapshot();			/* might be needed for functions in indexes */
+	SetQuerySnapshot();			/* might be needed for functions in
+								 * indexes */
 
 	/*
 	 * Check for user-requested abort.	Note we want this to be inside a
@@ -812,7 +814,8 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	{
 		relation_close(onerel, lmode);
 		CommitTransactionCommand();
-		return true;			/* assume no long-lived data in temp tables */
+		return true;			/* assume no long-lived data in temp
+								 * tables */
 	}
 
 	/*
@@ -860,7 +863,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	 */
 	if (toast_relid != InvalidOid)
 	{
-		if (! vacuum_rel(toast_relid, vacstmt, RELKIND_TOASTVALUE))
+		if (!vacuum_rel(toast_relid, vacstmt, RELKIND_TOASTVALUE))
 			result = false;		/* failed to vacuum the TOAST table? */
 	}
 
@@ -1087,8 +1090,8 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		if (PageIsNew(page))
 		{
 			ereport(WARNING,
-					(errmsg("relation \"%s\" page %u is uninitialized --- fixing",
-							relname, blkno)));
+			(errmsg("relation \"%s\" page %u is uninitialized --- fixing",
+					relname, blkno)));
 			PageInit(page, BufferGetPageSize(buf), 0);
 			vacpage->free = ((PageHeader) page)->pd_upper - ((PageHeader) page)->pd_lower;
 			free_space += vacpage->free;
@@ -1314,7 +1317,8 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 
 		/*
 		 * Include the page in empty_end_pages if it will be empty after
-		 * vacuuming; this is to keep us from using it as a move destination.
+		 * vacuuming; this is to keep us from using it as a move
+		 * destination.
 		 */
 		if (notup)
 		{
@@ -1382,9 +1386,9 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 					RelationGetRelationName(onerel),
 					tups_vacuumed, num_tuples, nblocks),
 			 errdetail("%.0f dead tuples cannot be removed yet.\n"
-					   "Nonremovable tuples range from %lu to %lu bytes long.\n"
+				"Nonremovable tuples range from %lu to %lu bytes long.\n"
 					   "There were %.0f unused item pointers.\n"
-					   "Total free space (including removable tuples) is %.0f bytes.\n"
+		 "Total free space (including removable tuples) is %.0f bytes.\n"
 					   "%u pages are or will become empty, including %u at the end of the table.\n"
 					   "%u pages containing %.0f free bytes are potential move destinations.\n"
 					   "%s",
@@ -2380,8 +2384,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 	/*
 	 * It'd be cleaner to make this report at the bottom of this routine,
 	 * but then the rusage would double-count the second pass of index
-	 * vacuuming.  So do it here and ignore the relatively small amount
-	 * of processing that occurs below.
+	 * vacuuming.  So do it here and ignore the relatively small amount of
+	 * processing that occurs below.
 	 */
 	ereport(elevel,
 			(errmsg("\"%s\": moved %u tuples, truncated %u to %u pages",
@@ -2735,7 +2739,7 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 					stats->num_index_tuples,
 					stats->num_pages),
 			 errdetail("%.0f index tuples were removed.\n"
-					   "%u index pages have been deleted, %u are currently reusable.\n"
+		 "%u index pages have been deleted, %u are currently reusable.\n"
 					   "%s",
 					   stats->tuples_removed,
 					   stats->pages_deleted, stats->pages_free,
@@ -2752,7 +2756,7 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 			ereport(WARNING,
 					(errmsg("index \"%s\" contains %.0f tuples, but table contains %.0f tuples",
 							RelationGetRelationName(indrel),
-							stats->num_index_tuples, num_tuples + keep_tuples),
+					  stats->num_index_tuples, num_tuples + keep_tuples),
 					 errhint("Rebuild the index with REINDEX.")));
 	}
 
@@ -2837,13 +2841,14 @@ vac_update_fsm(Relation onerel, VacPageList fraged_pages,
 
 	/*
 	 * We only report pages with free space at least equal to the average
-	 * request size --- this avoids cluttering FSM with uselessly-small bits
-	 * of space.  Although FSM would discard pages with little free space
-	 * anyway, it's important to do this prefiltering because (a) it reduces
-	 * the time spent holding the FSM lock in RecordRelationFreeSpace, and
-	 * (b) FSM uses the number of pages reported as a statistic for guiding
-	 * space management.  If we didn't threshold our reports the same way
-	 * vacuumlazy.c does, we'd be skewing that statistic.
+	 * request size --- this avoids cluttering FSM with uselessly-small
+	 * bits of space.  Although FSM would discard pages with little free
+	 * space anyway, it's important to do this prefiltering because (a) it
+	 * reduces the time spent holding the FSM lock in
+	 * RecordRelationFreeSpace, and (b) FSM uses the number of pages
+	 * reported as a statistic for guiding space management.  If we didn't
+	 * threshold our reports the same way vacuumlazy.c does, we'd be
+	 * skewing that statistic.
 	 */
 	threshold = GetAvgFSMRequestSize(&onerel->rd_node);
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.3 2003/02/23 22:43:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.4 2003/08/04 00:43:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,10 +29,10 @@
 typedef struct bt_incomplete_split
 {
 	RelFileNode node;			/* the index */
-	BlockNumber	leftblk;		/* left half of split */
-	BlockNumber	rightblk;		/* right half of split */
+	BlockNumber leftblk;		/* left half of split */
+	BlockNumber rightblk;		/* right half of split */
 	bool		is_root;		/* we split the root */
-} bt_incomplete_split;
+}	bt_incomplete_split;
 
 static List *incomplete_splits;
 
@@ -107,7 +107,7 @@ _bt_restore_page(Page page, char *from, int len)
 }
 
 static void
-_bt_restore_meta(Relation reln, XLogRecPtr lsn, 
+_bt_restore_meta(Relation reln, XLogRecPtr lsn,
 				 BlockNumber root, uint32 level,
 				 BlockNumber fastroot, uint32 fastlevel)
 {
@@ -172,7 +172,7 @@ btree_xlog_insert(bool redo, bool isleaf, bool ismeta,
 	if (!redo || !(record->xl_info & XLR_BKP_BLOCK_1))
 	{
 		buffer = XLogReadBuffer(false, reln,
-								ItemPointerGetBlockNumber(&(xlrec->target.tid)));
+						ItemPointerGetBlockNumber(&(xlrec->target.tid)));
 		if (!BufferIsValid(buffer))
 			elog(PANIC, "btree_insert_%sdo: block unfound", (redo) ? "re" : "un");
 		page = (Page) BufferGetPage(buffer);
@@ -183,13 +183,11 @@ btree_xlog_insert(bool redo, bool isleaf, bool ismeta,
 		if (redo)
 		{
 			if (XLByteLE(lsn, PageGetLSN(page)))
-			{
 				UnlockAndReleaseBuffer(buffer);
-			}
 			else
 			{
 				if (PageAddItem(page, (Item) datapos, datalen,
-								ItemPointerGetOffsetNumber(&(xlrec->target.tid)),
+						ItemPointerGetOffsetNumber(&(xlrec->target.tid)),
 								LP_USED) == InvalidOffsetNumber)
 					elog(PANIC, "btree_insert_redo: failed to add item");
 
@@ -204,13 +202,9 @@ btree_xlog_insert(bool redo, bool isleaf, bool ismeta,
 				elog(PANIC, "btree_insert_undo: bad page LSN");
 
 			if (!P_ISLEAF(pageop))
-			{
 				UnlockAndReleaseBuffer(buffer);
-			}
 			else
-			{
 				elog(PANIC, "btree_insert_undo: unimplemented");
-			}
 		}
 	}
 
@@ -226,8 +220,8 @@ btree_xlog_insert(bool redo, bool isleaf, bool ismeta,
 	if (redo && !isleaf && incomplete_splits != NIL)
 	{
 		forget_matching_split(reln, xlrec->target.node,
-							  ItemPointerGetBlockNumber(&(xlrec->target.tid)),
-							  ItemPointerGetOffsetNumber(&(xlrec->target.tid)),
+						 ItemPointerGetBlockNumber(&(xlrec->target.tid)),
+						ItemPointerGetOffsetNumber(&(xlrec->target.tid)),
 							  false);
 	}
 }
@@ -238,9 +232,9 @@ btree_xlog_split(bool redo, bool onleft, bool isroot,
 {
 	xl_btree_split *xlrec = (xl_btree_split *) XLogRecGetData(record);
 	Relation	reln;
-	BlockNumber	targetblk;
-	BlockNumber	leftsib;
-	BlockNumber	rightsib;
+	BlockNumber targetblk;
+	BlockNumber leftsib;
+	BlockNumber rightsib;
 	Buffer		buffer;
 	Page		page;
 	BTPageOpaque pageop;
@@ -338,9 +332,7 @@ btree_xlog_split(bool redo, bool onleft, bool isroot,
 				elog(PANIC, "btree_split_redo: uninitialized next right page");
 
 			if (XLByteLE(lsn, PageGetLSN(page)))
-			{
 				UnlockAndReleaseBuffer(buffer);
-			}
 			else
 			{
 				pageop = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -357,8 +349,8 @@ btree_xlog_split(bool redo, bool onleft, bool isroot,
 	if (redo && xlrec->level > 0 && incomplete_splits != NIL)
 	{
 		forget_matching_split(reln, xlrec->target.node,
-							  ItemPointerGetBlockNumber(&(xlrec->target.tid)),
-							  ItemPointerGetOffsetNumber(&(xlrec->target.tid)),
+						 ItemPointerGetBlockNumber(&(xlrec->target.tid)),
+						ItemPointerGetOffsetNumber(&(xlrec->target.tid)),
 							  false);
 	}
 
@@ -422,10 +414,10 @@ btree_xlog_delete_page(bool redo, bool ismeta,
 {
 	xl_btree_delete_page *xlrec = (xl_btree_delete_page *) XLogRecGetData(record);
 	Relation	reln;
-	BlockNumber	parent;
-	BlockNumber	target;
-	BlockNumber	leftsib;
-	BlockNumber	rightsib;
+	BlockNumber parent;
+	BlockNumber target;
+	BlockNumber leftsib;
+	BlockNumber rightsib;
 	Buffer		buffer;
 	Page		page;
 	BTPageOpaque pageop;
@@ -451,9 +443,7 @@ btree_xlog_delete_page(bool redo, bool ismeta,
 		if (PageIsNew((PageHeader) page))
 			elog(PANIC, "btree_delete_page_redo: uninitialized parent page");
 		if (XLByteLE(lsn, PageGetLSN(page)))
-		{
 			UnlockAndReleaseBuffer(buffer);
-		}
 		else
 		{
 			OffsetNumber poffset;
@@ -469,7 +459,7 @@ btree_xlog_delete_page(bool redo, bool ismeta,
 			{
 				ItemId		itemid;
 				BTItem		btitem;
-				OffsetNumber	nextoffset;
+				OffsetNumber nextoffset;
 
 				itemid = PageGetItemId(page, poffset);
 				btitem = (BTItem) PageGetItem(page, itemid);
@@ -494,9 +484,7 @@ btree_xlog_delete_page(bool redo, bool ismeta,
 		if (PageIsNew((PageHeader) page))
 			elog(PANIC, "btree_delete_page_redo: uninitialized right sibling");
 		if (XLByteLE(lsn, PageGetLSN(page)))
-		{
 			UnlockAndReleaseBuffer(buffer);
-		}
 		else
 		{
 			pageop = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -520,9 +508,7 @@ btree_xlog_delete_page(bool redo, bool ismeta,
 			if (PageIsNew((PageHeader) page))
 				elog(PANIC, "btree_delete_page_redo: uninitialized left sibling");
 			if (XLByteLE(lsn, PageGetLSN(page)))
-			{
 				UnlockAndReleaseBuffer(buffer);
-			}
 			else
 			{
 				pageop = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -799,116 +785,116 @@ btree_desc(char *buf, uint8 xl_info, char *rec)
 	switch (info)
 	{
 		case XLOG_BTREE_INSERT_LEAF:
-		{
-			xl_btree_insert *xlrec = (xl_btree_insert *) rec;
+			{
+				xl_btree_insert *xlrec = (xl_btree_insert *) rec;
 
-			strcat(buf, "insert: ");
-			out_target(buf, &(xlrec->target));
-			break;
-		}
+				strcat(buf, "insert: ");
+				out_target(buf, &(xlrec->target));
+				break;
+			}
 		case XLOG_BTREE_INSERT_UPPER:
-		{
-			xl_btree_insert *xlrec = (xl_btree_insert *) rec;
+			{
+				xl_btree_insert *xlrec = (xl_btree_insert *) rec;
 
-			strcat(buf, "insert_upper: ");
-			out_target(buf, &(xlrec->target));
-			break;
-		}
+				strcat(buf, "insert_upper: ");
+				out_target(buf, &(xlrec->target));
+				break;
+			}
 		case XLOG_BTREE_INSERT_META:
-		{
-			xl_btree_insert *xlrec = (xl_btree_insert *) rec;
+			{
+				xl_btree_insert *xlrec = (xl_btree_insert *) rec;
 
-			strcat(buf, "insert_meta: ");
-			out_target(buf, &(xlrec->target));
-			break;
-		}
+				strcat(buf, "insert_meta: ");
+				out_target(buf, &(xlrec->target));
+				break;
+			}
 		case XLOG_BTREE_SPLIT_L:
-		{
-			xl_btree_split *xlrec = (xl_btree_split *) rec;
+			{
+				xl_btree_split *xlrec = (xl_btree_split *) rec;
 
-			strcat(buf, "split_l: ");
-			out_target(buf, &(xlrec->target));
-			sprintf(buf + strlen(buf), "; oth %u; rgh %u",
-					xlrec->otherblk, xlrec->rightblk);
-			break;
-		}
+				strcat(buf, "split_l: ");
+				out_target(buf, &(xlrec->target));
+				sprintf(buf + strlen(buf), "; oth %u; rgh %u",
+						xlrec->otherblk, xlrec->rightblk);
+				break;
+			}
 		case XLOG_BTREE_SPLIT_R:
-		{
-			xl_btree_split *xlrec = (xl_btree_split *) rec;
+			{
+				xl_btree_split *xlrec = (xl_btree_split *) rec;
 
-			strcat(buf, "split_r: ");
-			out_target(buf, &(xlrec->target));
-			sprintf(buf + strlen(buf), "; oth %u; rgh %u",
-					xlrec->otherblk, xlrec->rightblk);
-			break;
-		}
+				strcat(buf, "split_r: ");
+				out_target(buf, &(xlrec->target));
+				sprintf(buf + strlen(buf), "; oth %u; rgh %u",
+						xlrec->otherblk, xlrec->rightblk);
+				break;
+			}
 		case XLOG_BTREE_SPLIT_L_ROOT:
-		{
-			xl_btree_split *xlrec = (xl_btree_split *) rec;
+			{
+				xl_btree_split *xlrec = (xl_btree_split *) rec;
 
-			strcat(buf, "split_l_root: ");
-			out_target(buf, &(xlrec->target));
-			sprintf(buf + strlen(buf), "; oth %u; rgh %u",
-					xlrec->otherblk, xlrec->rightblk);
-			break;
-		}
+				strcat(buf, "split_l_root: ");
+				out_target(buf, &(xlrec->target));
+				sprintf(buf + strlen(buf), "; oth %u; rgh %u",
+						xlrec->otherblk, xlrec->rightblk);
+				break;
+			}
 		case XLOG_BTREE_SPLIT_R_ROOT:
-		{
-			xl_btree_split *xlrec = (xl_btree_split *) rec;
+			{
+				xl_btree_split *xlrec = (xl_btree_split *) rec;
 
-			strcat(buf, "split_r_root: ");
-			out_target(buf, &(xlrec->target));
-			sprintf(buf + strlen(buf), "; oth %u; rgh %u",
-					xlrec->otherblk, xlrec->rightblk);
-			break;
-		}
+				strcat(buf, "split_r_root: ");
+				out_target(buf, &(xlrec->target));
+				sprintf(buf + strlen(buf), "; oth %u; rgh %u",
+						xlrec->otherblk, xlrec->rightblk);
+				break;
+			}
 		case XLOG_BTREE_DELETE:
-		{
-			xl_btree_delete *xlrec = (xl_btree_delete *) rec;
+			{
+				xl_btree_delete *xlrec = (xl_btree_delete *) rec;
 
-			sprintf(buf + strlen(buf), "delete: node %u/%u; blk %u",
-					xlrec->node.tblNode, xlrec->node.relNode, xlrec->block);
-			break;
-		}
+				sprintf(buf + strlen(buf), "delete: node %u/%u; blk %u",
+				 xlrec->node.tblNode, xlrec->node.relNode, xlrec->block);
+				break;
+			}
 		case XLOG_BTREE_DELETE_PAGE:
 		case XLOG_BTREE_DELETE_PAGE_META:
-		{
-			xl_btree_delete_page *xlrec = (xl_btree_delete_page *) rec;
+			{
+				xl_btree_delete_page *xlrec = (xl_btree_delete_page *) rec;
 
-			strcat(buf, "delete_page: ");
-			out_target(buf, &(xlrec->target));
-			sprintf(buf + strlen(buf), "; dead %u; left %u; right %u",
-					xlrec->deadblk, xlrec->leftblk, xlrec->rightblk);
-			break;
-		}
+				strcat(buf, "delete_page: ");
+				out_target(buf, &(xlrec->target));
+				sprintf(buf + strlen(buf), "; dead %u; left %u; right %u",
+						xlrec->deadblk, xlrec->leftblk, xlrec->rightblk);
+				break;
+			}
 		case XLOG_BTREE_NEWROOT:
-		{
-			xl_btree_newroot *xlrec = (xl_btree_newroot *) rec;
+			{
+				xl_btree_newroot *xlrec = (xl_btree_newroot *) rec;
 
-			sprintf(buf + strlen(buf), "newroot: node %u/%u; root %u lev %u",
-					xlrec->node.tblNode, xlrec->node.relNode,
-					xlrec->rootblk, xlrec->level);
-			break;
-		}
+				sprintf(buf + strlen(buf), "newroot: node %u/%u; root %u lev %u",
+						xlrec->node.tblNode, xlrec->node.relNode,
+						xlrec->rootblk, xlrec->level);
+				break;
+			}
 		case XLOG_BTREE_NEWMETA:
-		{
-			xl_btree_newmeta *xlrec = (xl_btree_newmeta *) rec;
+			{
+				xl_btree_newmeta *xlrec = (xl_btree_newmeta *) rec;
 
-			sprintf(buf + strlen(buf), "newmeta: node %u/%u; root %u lev %u fast %u lev %u",
-					xlrec->node.tblNode, xlrec->node.relNode,
-					xlrec->meta.root, xlrec->meta.level,
-					xlrec->meta.fastroot, xlrec->meta.fastlevel);
-			break;
-		}
+				sprintf(buf + strlen(buf), "newmeta: node %u/%u; root %u lev %u fast %u lev %u",
+						xlrec->node.tblNode, xlrec->node.relNode,
+						xlrec->meta.root, xlrec->meta.level,
+						xlrec->meta.fastroot, xlrec->meta.fastlevel);
+				break;
+			}
 		case XLOG_BTREE_NEWPAGE:
-		{
-			xl_btree_newpage *xlrec = (xl_btree_newpage *) rec;
+			{
+				xl_btree_newpage *xlrec = (xl_btree_newpage *) rec;
 
-			sprintf(buf + strlen(buf), "newpage: node %u/%u; page %u",
-					xlrec->node.tblNode, xlrec->node.relNode,
-					xlrec->blkno);
-			break;
-		}
+				sprintf(buf + strlen(buf), "newpage: node %u/%u; page %u",
+						xlrec->node.tblNode, xlrec->node.relNode,
+						xlrec->blkno);
+				break;
+			}
 		default:
 			strcat(buf, "UNKNOWN");
 			break;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.67 2003/07/21 20:29:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.68 2003/08/04 00:43:15 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -300,7 +300,7 @@ index_beginscan(Relation heapRelation,
  *		index_rescan  - (re)start a scan of an index
  *
  * The caller may specify a new set of scankeys (but the number of keys
- * cannot change).  To restart the scan without changing keys, pass NULL
+ * cannot change).	To restart the scan without changing keys, pass NULL
  * for the key array.
  *
  * Note that this is also called when first starting an indexscan;
@@ -394,8 +394,8 @@ index_restrpos(IndexScanDesc scan)
 
 	/*
 	 * We do not reset got_tuple; so if the scan is actually being
-	 * short-circuited by index_getnext, the effective position restoration
-	 * is done by restoring unique_tuple_pos.
+	 * short-circuited by index_getnext, the effective position
+	 * restoration is done by restoring unique_tuple_pos.
 	 */
 	scan->unique_tuple_pos = scan->unique_tuple_mark;
 
@@ -427,24 +427,24 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 	}
 
 	/*
-	 * If we already got a tuple and it must be unique, there's no need
-	 * to make the index AM look through any additional tuples.  (This can
+	 * If we already got a tuple and it must be unique, there's no need to
+	 * make the index AM look through any additional tuples.  (This can
 	 * save a useful amount of work in scenarios where there are many dead
 	 * tuples due to heavy update activity.)
 	 *
 	 * To do this we must keep track of the logical scan position
 	 * (before/on/after tuple).  Also, we have to be sure to release scan
-	 * resources before returning NULL; if we fail to do so then a multi-index
-	 * scan can easily run the system out of free buffers.  We can release
-	 * index-level resources fairly cheaply by calling index_rescan.  This
-	 * means there are two persistent states as far as the index AM is
-	 * concerned: on-tuple and rescanned.  If we are actually asked to
-	 * re-fetch the single tuple, we have to go through a fresh indexscan
-	 * startup, which penalizes that (infrequent) case.
+	 * resources before returning NULL; if we fail to do so then a
+	 * multi-index scan can easily run the system out of free buffers.	We
+	 * can release index-level resources fairly cheaply by calling
+	 * index_rescan.  This means there are two persistent states as far as
+	 * the index AM is concerned: on-tuple and rescanned.  If we are
+	 * actually asked to re-fetch the single tuple, we have to go through
+	 * a fresh indexscan startup, which penalizes that (infrequent) case.
 	 */
 	if (scan->keys_are_unique && scan->got_tuple)
 	{
-		int		new_tuple_pos = scan->unique_tuple_pos;
+		int			new_tuple_pos = scan->unique_tuple_pos;
 
 		if (ScanDirectionIsForward(direction))
 		{
@@ -459,22 +459,23 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 		if (new_tuple_pos == 0)
 		{
 			/*
-			 * We are moving onto the unique tuple from having been off it.
-			 * We just fall through and let the index AM do the work.  Note
-			 * we should get the right answer regardless of scan direction.
+			 * We are moving onto the unique tuple from having been off
+			 * it. We just fall through and let the index AM do the work.
+			 * Note we should get the right answer regardless of scan
+			 * direction.
 			 */
-			scan->unique_tuple_pos = 0;	/* need to update position */
+			scan->unique_tuple_pos = 0; /* need to update position */
 		}
 		else
 		{
 			/*
-			 * Moving off the tuple; must do amrescan to release index-level
-			 * pins before we return NULL.  Since index_rescan will reset
-			 * my state, must save and restore...
+			 * Moving off the tuple; must do amrescan to release
+			 * index-level pins before we return NULL.	Since index_rescan
+			 * will reset my state, must save and restore...
 			 */
-			int		unique_tuple_mark = scan->unique_tuple_mark;
+			int			unique_tuple_mark = scan->unique_tuple_mark;
 
-			index_rescan(scan, NULL /* no change to key */);
+			index_rescan(scan, NULL /* no change to key */ );
 
 			scan->keys_are_unique = true;
 			scan->got_tuple = true;
@@ -631,7 +632,7 @@ index_bulk_delete(Relation indexRelation,
  */
 IndexBulkDeleteResult *
 index_vacuum_cleanup(Relation indexRelation,
-					 IndexVacuumCleanupInfo *info,
+					 IndexVacuumCleanupInfo * info,
 					 IndexBulkDeleteResult *stats)
 {
 	RegProcedure procedure;
@@ -649,7 +650,7 @@ index_vacuum_cleanup(Relation indexRelation,
 		DatumGetPointer(OidFunctionCall3(procedure,
 										 PointerGetDatum(indexRelation),
 										 PointerGetDatum((Pointer) info),
-										 PointerGetDatum((Pointer) stats)));
+									  PointerGetDatum((Pointer) stats)));
 
 	return result;
 }

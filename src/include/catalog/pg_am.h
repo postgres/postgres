@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_am.h,v 1.26 2003/06/22 22:04:55 tgl Exp $
+ * $Id: pg_am.h,v 1.27 2003/08/04 00:43:30 momjian Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -58,7 +58,7 @@ CATALOG(pg_am)
 	regproc		amrestrpos;		/* "restore marked scan position" function */
 	regproc		ambuild;		/* "build new index" function */
 	regproc		ambulkdelete;	/* bulk-delete function */
-	regproc		amvacuumcleanup; /* post-VACUUM cleanup function */
+	regproc		amvacuumcleanup;	/* post-VACUUM cleanup function */
 	regproc		amcostestimate; /* estimate cost of an indexscan */
 } FormData_pg_am;
 

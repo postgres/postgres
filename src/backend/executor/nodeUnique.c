@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.38 2003/02/02 19:08:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.39 2003/08/04 00:43:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,9 +57,9 @@ ExecUnique(UniqueState *node)
 	 * now loop, returning only non-duplicate tuples. We assume that the
 	 * tuples arrive in sorted order so we can detect duplicates easily.
 	 *
-	 * We return the first tuple from each group of duplicates (or the
-	 * last tuple of each group, when moving backwards).  At either end
-	 * of the subplan, clear priorTuple so that we correctly return the
+	 * We return the first tuple from each group of duplicates (or the last
+	 * tuple of each group, when moving backwards).  At either end of the
+	 * subplan, clear priorTuple so that we correctly return the
 	 * first/last tuple when reversing direction.
 	 */
 	for (;;)

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dumputils.h,v 1.5 2003/05/30 22:55:15 tgl Exp $
+ * $Id: dumputils.h,v 1.6 2003/08/04 00:43:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,11 +22,11 @@ extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
 
 extern const char *fmtId(const char *identifier);
 extern void appendStringLiteral(PQExpBuffer buf, const char *str,
-								bool escapeAll);
-extern int parse_version(const char *versionString);
+					bool escapeAll);
+extern int	parse_version(const char *versionString);
 extern bool buildACLCommands(const char *name, const char *type,
-							 const char *acls, const char *owner,
-							 int remoteVersion,
-							 PQExpBuffer sql);
+				 const char *acls, const char *owner,
+				 int remoteVersion,
+				 PQExpBuffer sql);
 
 #endif   /* DUMPUTILS_H */

@@ -8,14 +8,16 @@
 #include "utils/builtins.h"
 #include "storage/bufpage.h"
 
-typedef struct {
-	uint32	len;
-	uint32	pos;
-	uint32	ndoc;	
-	uint32	nentry;	
+typedef struct
+{
+	uint32		len;
+	uint32		pos;
+	uint32		ndoc;
+	uint32		nentry;
 }	StatEntry;
 
-typedef struct {
+typedef struct
+{
 	int4		len;
 	int4		size;
 	char		data[1];

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
- * $Id: pg_cast.h,v 1.7 2003/05/26 00:11:27 tgl Exp $
+ * $Id: pg_cast.h,v 1.8 2003/08/04 00:43:30 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -39,8 +39,10 @@ typedef FormData_pg_cast *Form_pg_cast;
 
 typedef enum CoercionCodes
 {
-	COERCION_CODE_IMPLICIT = 'i',	/* coercion in context of expression */
-	COERCION_CODE_ASSIGNMENT = 'a',	/* coercion in context of assignment */
+	COERCION_CODE_IMPLICIT = 'i',		/* coercion in context of
+										 * expression */
+	COERCION_CODE_ASSIGNMENT = 'a',		/* coercion in context of
+										 * assignment */
 	COERCION_CODE_EXPLICIT = 'e'	/* explicit cast operation */
 } CoercionCodes;
 
@@ -67,7 +69,7 @@ typedef enum CoercionCodes
  */
 DATA(insert (	20	 21  714 a ));
 DATA(insert (	20	 23  480 a ));
-DATA(insert (	20  700  652 i ));
+DATA(insert (	20	700  652 i ));
 DATA(insert (	20	701  482 i ));
 DATA(insert (	20 1700 1781 i ));
 DATA(insert (	21	 20  754 i ));
@@ -235,10 +237,10 @@ DATA(insert (  869	650    0 i ));
 DATA(insert ( 1560 1562    0 i ));
 DATA(insert ( 1562 1560    0 i ));
 /* Cross-category casts between bit and int4, int8 */
-DATA(insert (   20 1560 2075 e ));
-DATA(insert (   23 1560 1683 e ));
-DATA(insert ( 1560   20 2076 e ));
-DATA(insert ( 1560   23 1684 e ));
+DATA(insert (	20 1560 2075 e ));
+DATA(insert (	23 1560 1683 e ));
+DATA(insert ( 1560	 20 2076 e ));
+DATA(insert ( 1560	 23 1684 e ));
 
 /*
  * Cross-category casts to and from TEXT

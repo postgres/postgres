@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.4 2003/06/23 19:20:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.5 2003/08/04 00:43:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,7 +125,7 @@ pqSetenvPoll(PGconn *conn)
 										conn->next_eo->pgName, val);
 #ifdef CONNECTDEBUG
 							fprintf(stderr,
-									"Use environment variable %s to send %s\n",
+							  "Use environment variable %s to send %s\n",
 									conn->next_eo->envName, setQuery);
 #endif
 							if (!PQsendQuery(conn, setQuery))
@@ -173,12 +173,12 @@ pqSetenvPoll(PGconn *conn)
 			case SETENV_STATE_QUERY1_SEND:
 				{
 					/*
-					 * Issue query to get information we need.  Here we must
-					 * use begin/commit in case autocommit is off by default
-					 * in a 7.3 server.
+					 * Issue query to get information we need.	Here we
+					 * must use begin/commit in case autocommit is off by
+					 * default in a 7.3 server.
 					 *
-					 * Note: version() and getdatabaseencoding() exist in
-					 * all protocol-2.0-supporting backends.
+					 * Note: version() and getdatabaseencoding() exist in all
+					 * protocol-2.0-supporting backends.
 					 */
 					if (!PQsendQuery(conn, "begin; select version(), getdatabaseencoding(); end"))
 						goto error_return;
@@ -219,13 +219,14 @@ pqSetenvPoll(PGconn *conn)
 						val = PQgetvalue(res, 0, 0);
 						if (val && strncmp(val, "PostgreSQL ", 11) == 0)
 						{
-							char   *ptr;
+							char	   *ptr;
 
 							/* strip off PostgreSQL part */
 							val += 11;
+
 							/*
-							 * strip off platform part (scribbles on result,
-							 * naughty naughty)
+							 * strip off platform part (scribbles on
+							 * result, naughty naughty)
 							 */
 							ptr = strchr(val, ' ');
 							if (ptr)
@@ -236,7 +237,8 @@ pqSetenvPoll(PGconn *conn)
 						}
 
 						val = PQgetvalue(res, 0, 1);
-						if (val && *val) /* null should not happen, but */
+						if (val && *val)		/* null should not happen,
+												 * but */
 							pqSaveParameterStatus(conn, "server_encoding",
 												  val);
 
@@ -256,11 +258,11 @@ pqSetenvPoll(PGconn *conn)
 					const char *query;
 
 					/*
-					 * pg_client_encoding does not exist in pre-7.2 servers.
-					 * So we need to be prepared for an error here.  Do *not*
-					 * start a transaction block, except in 7.3 servers where
-					 * we need to prevent autocommit-off from starting a
-					 * transaction anyway.
+					 * pg_client_encoding does not exist in pre-7.2
+					 * servers. So we need to be prepared for an error
+					 * here.  Do *not* start a transaction block, except
+					 * in 7.3 servers where we need to prevent
+					 * autocommit-off from starting a transaction anyway.
 					 */
 					if (strncmp(conn->sversion, "7.3", 3) == 0)
 						query = "begin; select pg_client_encoding(); end";
@@ -296,16 +298,17 @@ pqSetenvPoll(PGconn *conn)
 						{
 							/* Extract client encoding and save it */
 							val = PQgetvalue(res, 0, 0);
-							if (val && *val) /* null should not happen, but */
+							if (val && *val)	/* null should not happen,
+												 * but */
 								pqSaveParameterStatus(conn, "client_encoding",
 													  val);
 						}
 						else
 						{
 							/*
-							 * Error: presumably function not available, so
-							 * use PGCLIENTENCODING or database encoding as
-							 * the fallback.
+							 * Error: presumably function not available,
+							 * so use PGCLIENTENCODING or database
+							 * encoding as the fallback.
 							 */
 							val = getenv("PGCLIENTENCODING");
 							if (val && *val)
@@ -382,8 +385,8 @@ pqParseInput2(PGconn *conn)
 			return;
 
 		/*
-		 * NOTIFY and NOTICE messages can happen in any state besides
-		 * COPY OUT; always process them right away.
+		 * NOTIFY and NOTICE messages can happen in any state besides COPY
+		 * OUT; always process them right away.
 		 *
 		 * Most other messages should only be processed while in BUSY state.
 		 * (In particular, in READY state we hold off further parsing
@@ -418,13 +421,13 @@ pqParseInput2(PGconn *conn)
 			 */
 			if (id == 'E')
 			{
-				if (pqGetErrorNotice2(conn, false /* treat as notice */))
+				if (pqGetErrorNotice2(conn, false /* treat as notice */ ))
 					return;
 			}
 			else
 			{
 				pqInternalNotice(&conn->noticeHooks,
-								 "message type 0x%02x arrived from server while idle",
+					"message type 0x%02x arrived from server while idle",
 								 id);
 				/* Discard the unexpected message; good idea?? */
 				conn->inStart = conn->inEnd;
@@ -672,6 +675,7 @@ getAnotherTuple(PGconn *conn, bool binary)
 		if (conn->curTuple == NULL)
 			goto outOfMemory;
 		MemSet((char *) conn->curTuple, 0, nfields * sizeof(PGresAttValue));
+
 		/*
 		 * If it's binary, fix the column format indicators.  We assume
 		 * the backend will consistently send either B or D, not a mix.
@@ -801,9 +805,9 @@ pqGetErrorNotice2(PGconn *conn, bool isError)
 	}
 
 	/*
-	 * Make a PGresult to hold the message.  We temporarily
-	 * lie about the result status, so that PQmakeEmptyPGresult doesn't
-	 * uselessly copy conn->errorMessage.
+	 * Make a PGresult to hold the message.  We temporarily lie about the
+	 * result status, so that PQmakeEmptyPGresult doesn't uselessly copy
+	 * conn->errorMessage.
 	 */
 	res = PQmakeEmptyPGresult(conn, PGRES_EMPTY_QUERY);
 	res->resultStatus = isError ? PGRES_FATAL_ERROR : PGRES_NONFATAL_ERROR;
@@ -811,13 +815,13 @@ pqGetErrorNotice2(PGconn *conn, bool isError)
 
 	/*
 	 * Break the message into fields.  We can't do very much here, but we
-	 * can split the severity code off, and remove trailing newlines.  Also,
-	 * we use the heuristic that the primary message extends only to the
-	 * first newline --- anything after that is detail message.  (In some
-	 * cases it'd be better classed as hint, but we can hardly be expected
-	 * to guess that here.)
+	 * can split the severity code off, and remove trailing newlines.
+	 * Also, we use the heuristic that the primary message extends only to
+	 * the first newline --- anything after that is detail message.  (In
+	 * some cases it'd be better classed as hint, but we can hardly be
+	 * expected to guess that here.)
 	 */
-	while (workBuf.len > 0 && workBuf.data[workBuf.len-1] == '\n')
+	while (workBuf.len > 0 && workBuf.data[workBuf.len - 1] == '\n')
 		workBuf.data[--workBuf.len] = '\0';
 	splitp = strstr(workBuf.data, ":  ");
 	if (splitp)
@@ -877,10 +881,10 @@ pqGetErrorNotice2(PGconn *conn, bool isError)
 /*
  * checkXactStatus - attempt to track transaction-block status of server
  *
- * This is called each time we receive a command-complete message.  By
+ * This is called each time we receive a command-complete message.	By
  * watching for messages from BEGIN/COMMIT/ROLLBACK commands, we can do
  * a passable job of tracking the server's xact status.  BUT: this does
- * not work at all on 7.3 servers with AUTOCOMMIT OFF.  (Man, was that
+ * not work at all on 7.3 servers with AUTOCOMMIT OFF.	(Man, was that
  * feature ever a mistake.)  Caveat user.
  *
  * The tags known here are all those used as far back as 7.0; is it worth
@@ -895,14 +899,15 @@ checkXactStatus(PGconn *conn, const char *cmdTag)
 		conn->xactStatus = PQTRANS_IDLE;
 	else if (strcmp(cmdTag, "ROLLBACK") == 0)
 		conn->xactStatus = PQTRANS_IDLE;
-	else if (strcmp(cmdTag, "START TRANSACTION") == 0) /* 7.3 only */
+	else if (strcmp(cmdTag, "START TRANSACTION") == 0)	/* 7.3 only */
 		conn->xactStatus = PQTRANS_INTRANS;
+
 	/*
 	 * Normally we get into INERROR state by detecting an Error message.
 	 * However, if we see one of these tags then we know for sure the
 	 * server is in abort state ...
 	 */
-	else if (strcmp(cmdTag, "*ABORT STATE*") == 0) /* pre-7.3 only */
+	else if (strcmp(cmdTag, "*ABORT STATE*") == 0)		/* pre-7.3 only */
 		conn->xactStatus = PQTRANS_INERROR;
 }
 
@@ -1005,14 +1010,14 @@ pqGetCopyData2(PGconn *conn, char **buffer, int async)
 			return -2;
 		}
 		memcpy(*buffer, &conn->inBuffer[conn->inStart], msgLength);
-		(*buffer)[msgLength] = '\0'; /* Add terminating null */
+		(*buffer)[msgLength] = '\0';	/* Add terminating null */
 
 		/* Mark message consumed */
 		conn->inStart = conn->inCursor;
 
 		return msgLength;
 
-	nodata:
+nodata:
 		/* Don't block if async read requested */
 		if (async)
 			return 0;
@@ -1186,23 +1191,23 @@ pqEndcopy2(PGconn *conn)
 	if (conn->errorMessage.len > 0)
 	{
 		/* We have to strip the trailing newline ... pain in neck... */
-		char	svLast = conn->errorMessage.data[conn->errorMessage.len-1];
+		char		svLast = conn->errorMessage.data[conn->errorMessage.len - 1];
 
 		if (svLast == '\n')
-			conn->errorMessage.data[conn->errorMessage.len-1] = '\0';
+			conn->errorMessage.data[conn->errorMessage.len - 1] = '\0';
 		pqInternalNotice(&conn->noticeHooks, "%s", conn->errorMessage.data);
-		conn->errorMessage.data[conn->errorMessage.len-1] = svLast;
+		conn->errorMessage.data[conn->errorMessage.len - 1] = svLast;
 	}
 
 	PQclear(result);
 
 	/*
-	 * The worst case is that we've lost sync with the backend
-	 * entirely due to application screwup of the copy in/out protocol. To
-	 * recover, reset the connection (talk about using a sledgehammer...)
+	 * The worst case is that we've lost sync with the backend entirely
+	 * due to application screwup of the copy in/out protocol. To recover,
+	 * reset the connection (talk about using a sledgehammer...)
 	 */
 	pqInternalNotice(&conn->noticeHooks,
-					 "lost synchronization with server, resetting connection");
+			   "lost synchronization with server, resetting connection");
 
 	/*
 	 * Users doing non-blocking connections need to handle the reset
@@ -1236,8 +1241,8 @@ pqFunctionCall2(PGconn *conn, Oid fnid,
 
 	/* PQfn already validated connection state */
 
-	if (pqPutMsgStart('F', false, conn) < 0 || /* function call msg */
-		pqPuts(" ", conn) < 0 ||		/* dummy string */
+	if (pqPutMsgStart('F', false, conn) < 0 ||	/* function call msg */
+		pqPuts(" ", conn) < 0 ||	/* dummy string */
 		pqPutInt(fnid, 4, conn) != 0 || /* function id */
 		pqPutInt(nargs, 4, conn) != 0)	/* # of args */
 	{
@@ -1397,7 +1402,7 @@ pqFunctionCall2(PGconn *conn, Oid fnid,
  */
 char *
 pqBuildStartupPacket2(PGconn *conn, int *packetlen,
-					  const PQEnvironmentOption *options)
+					  const PQEnvironmentOption * options)
 {
 	StartupPacket *startpacket;
 

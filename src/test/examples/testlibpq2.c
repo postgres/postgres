@@ -3,23 +3,23 @@
  *		Test of the asynchronous notification interface
  *
  * Start this program, then from psql in another window do
- *   NOTIFY TBL2;
+ *	 NOTIFY TBL2;
  * Repeat four times to get this program to exit.
  *
  * Or, if you want to get fancy, try this:
  * populate a database with the following commands
  * (provided in src/test/examples/testlibpq2.sql):
  *
- *   CREATE TABLE TBL1 (i int4);
+ *	 CREATE TABLE TBL1 (i int4);
  *
- *   CREATE TABLE TBL2 (i int4);
+ *	 CREATE TABLE TBL2 (i int4);
  *
- *   CREATE RULE r1 AS ON INSERT TO TBL1 DO
- *     (INSERT INTO TBL2 VALUES (new.i); NOTIFY TBL2);
+ *	 CREATE RULE r1 AS ON INSERT TO TBL1 DO
+ *	   (INSERT INTO TBL2 VALUES (new.i); NOTIFY TBL2);
  *
  * and do this four times:
  *
- *   INSERT INTO TBL1 VALUES (10);
+ *	 INSERT INTO TBL1 VALUES (10);
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,9 +45,9 @@ main(int argc, char **argv)
 	int			nnotifies;
 
 	/*
-	 * If the user supplies a parameter on the command line, use it as
-	 * the conninfo string; otherwise default to setting dbname=template1
-	 * and using environment variables or defaults for all other connection
+	 * If the user supplies a parameter on the command line, use it as the
+	 * conninfo string; otherwise default to setting dbname=template1 and
+	 * using environment variables or defaults for all other connection
 	 * parameters.
 	 */
 	if (argc > 1)
@@ -67,7 +67,8 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * Issue LISTEN command to enable notifications from the rule's NOTIFY.
+	 * Issue LISTEN command to enable notifications from the rule's
+	 * NOTIFY.
 	 */
 	res = PQexec(conn, "LISTEN TBL2");
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
@@ -88,9 +89,9 @@ main(int argc, char **argv)
 	while (nnotifies < 4)
 	{
 		/*
-		 * Sleep until something happens on the connection.  We use select(2)
-		 * to wait for input, but you could also use poll() or similar
-		 * facilities.
+		 * Sleep until something happens on the connection.  We use
+		 * select(2) to wait for input, but you could also use poll() or
+		 * similar facilities.
 		 */
 		int			sock;
 		fd_set		input_mask;

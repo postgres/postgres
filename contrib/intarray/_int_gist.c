@@ -85,27 +85,31 @@ g_int_consistent(PG_FUNCTION_ARGS)
 }
 
 Datum
-g_int_union(PG_FUNCTION_ARGS) {
-	bytea      *entryvec = (bytea *) PG_GETARG_POINTER(0);
-	int                *size = (int *) PG_GETARG_POINTER(1);
-	int4            i,len = (VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY);
-	ArrayType	*res;
-	int totlen=0,*ptr;
+g_int_union(PG_FUNCTION_ARGS)
+{
+	bytea	   *entryvec = (bytea *) PG_GETARG_POINTER(0);
+	int		   *size = (int *) PG_GETARG_POINTER(1);
+	int4		i,
+				len = (VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY);
+	ArrayType  *res;
+	int			totlen = 0,
+			   *ptr;
 
 	for (i = 0; i < len; i++)
-		totlen+=ARRNELEMS( GETENTRY(entryvec,i) );
+		totlen += ARRNELEMS(GETENTRY(entryvec, i));
 
-	res=new_intArrayType(totlen);
-	ptr=ARRPTR(res);
+	res = new_intArrayType(totlen);
+	ptr = ARRPTR(res);
 
-	for (i = 0; i < len; i++) {
-		memcpy(ptr, ARRPTR( GETENTRY(entryvec,i) ), ARRNELEMS( GETENTRY(entryvec,i) )*sizeof(int4) );
-		ptr+=ARRNELEMS( GETENTRY(entryvec,i) );
+	for (i = 0; i < len; i++)
+	{
+		memcpy(ptr, ARRPTR(GETENTRY(entryvec, i)), ARRNELEMS(GETENTRY(entryvec, i)) * sizeof(int4));
+		ptr += ARRNELEMS(GETENTRY(entryvec, i));
 	}
 
-	QSORT(res,1);
-	res=_int_unique(res);
-	*size = VARSIZE(res);	
+	QSORT(res, 1);
+	res = _int_unique(res);
+	*size = VARSIZE(res);
 	PG_RETURN_POINTER(res);
 }
 
@@ -239,22 +243,23 @@ g_int_decompress(PG_FUNCTION_ARGS)
 ** The GiST Penalty method for _intments
 */
 Datum
-g_int_penalty(PG_FUNCTION_ARGS) {
-	GISTENTRY *origentry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	GISTENTRY *newentry  = (GISTENTRY *) PG_GETARG_POINTER(1);
-	float *result = (float *) PG_GETARG_POINTER(2);
+g_int_penalty(PG_FUNCTION_ARGS)
+{
+	GISTENTRY  *origentry = (GISTENTRY *) PG_GETARG_POINTER(0);
+	GISTENTRY  *newentry = (GISTENTRY *) PG_GETARG_POINTER(1);
+	float	   *result = (float *) PG_GETARG_POINTER(2);
 	ArrayType  *ud;
 	float		tmp1,
 				tmp2;
 
 	ud = inner_int_union((ArrayType *) DatumGetPointer(origentry->key),
-					(ArrayType *) DatumGetPointer(newentry->key));
+						 (ArrayType *) DatumGetPointer(newentry->key));
 	rt__int_size(ud, &tmp1);
 	rt__int_size((ArrayType *) DatumGetPointer(origentry->key), &tmp2);
 	*result = tmp1 - tmp2;
 	pfree(ud);
 
-	PG_RETURN_POINTER (result);
+	PG_RETURN_POINTER(result);
 }
 
 
@@ -311,8 +316,9 @@ comparecost(const void *a, const void *b)
 ** We use Guttman's poly time split algorithm
 */
 Datum
-g_int_picksplit(PG_FUNCTION_ARGS) {
-	bytea *entryvec = (bytea *) PG_GETARG_POINTER(0);
+g_int_picksplit(PG_FUNCTION_ARGS)
+{
+	bytea	   *entryvec = (bytea *) PG_GETARG_POINTER(0);
 	GIST_SPLITVEC *v = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
 	OffsetNumber i,
 				j;
@@ -501,4 +507,3 @@ g_int_picksplit(PG_FUNCTION_ARGS) {
 
 	PG_RETURN_POINTER(v);
 }
-

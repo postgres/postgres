@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  *
- *	  $Id: guc_tables.h,v 1.4 2003/07/28 19:31:32 tgl Exp $
+ *	  $Id: guc_tables.h,v 1.5 2003/08/04 00:43:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,17 +68,17 @@ enum config_type
  * Generic fields applicable to all types of variables
  *
  * The short description should be less than 80 chars in length. Some
- * applications may use the long description as well, and will append 
- * it to the short description. (separated by a newline or '. ') 
+ * applications may use the long description as well, and will append
+ * it to the short description. (separated by a newline or '. ')
  */
 struct config_generic
 {
 	/* constant fields, must be set correctly in initial value: */
 	const char *name;			/* name of variable - MUST BE FIRST */
 	GucContext	context;		/* context required to set the variable */
-	enum config_group group;    /* to help organize variables by function */
-	const char *short_desc;     /* short desc. of this variable's purpose */
-	const char *long_desc;      /* long desc. of this variable's purpose */
+	enum config_group group;	/* to help organize variables by function */
+	const char *short_desc;		/* short desc. of this variable's purpose */
+	const char *long_desc;		/* long desc. of this variable's purpose */
 	int			flags;			/* flag bits, see below */
 	/* variable fields, initialized at runtime: */
 	enum config_type vartype;	/* type of variable (set only at startup) */
@@ -95,8 +95,8 @@ struct config_generic
 #define GUC_NO_SHOW_ALL			0x0004	/* exclude from SHOW ALL */
 #define GUC_NO_RESET_ALL		0x0008	/* exclude from RESET ALL */
 #define GUC_REPORT				0x0010	/* auto-report changes to client */
-#define GUC_NOT_IN_SAMPLE 		0x0020	/* not in postgresql.conf.sample */
-#define GUC_DISALLOW_IN_FILE	0x0040	/* can't set in postgresql.conf */ 
+#define GUC_NOT_IN_SAMPLE		0x0020	/* not in postgresql.conf.sample */
+#define GUC_DISALLOW_IN_FILE	0x0040	/* can't set in postgresql.conf */
 
 /* bit values in status field */
 #define GUC_HAVE_TENTATIVE	0x0001		/* tentative value is defined */
@@ -167,10 +167,10 @@ struct config_string
 };
 
 /* constant tables corresponding to enums above and in guc.h */
-extern const char * const config_group_names[];
-extern const char * const config_type_names[];
-extern const char * const GucContext_Names[];
-extern const char * const GucSource_Names[];
+extern const char *const config_group_names[];
+extern const char *const config_type_names[];
+extern const char *const GucContext_Names[];
+extern const char *const GucSource_Names[];
 
 /* the current set of variables */
 extern struct config_generic **guc_variables;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.125 2003/07/29 17:21:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.126 2003/08/04 00:43:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,10 +34,11 @@
 
 
 /* We use a list of these to detect recursion in RewriteQuery */
-typedef struct rewrite_event {
+typedef struct rewrite_event
+{
 	Oid			relation;		/* OID of relation having rules */
 	CmdType		event;			/* type of rule being fired */
-} rewrite_event;
+}	rewrite_event;
 
 static Query *rewriteRuleAction(Query *parsetree,
 				  Query *rule_action,
@@ -107,20 +108,21 @@ rewriteRuleAction(Query *parsetree,
 	 * Generate expanded rtable consisting of main parsetree's rtable plus
 	 * rule action's rtable; this becomes the complete rtable for the rule
 	 * action.	Some of the entries may be unused after we finish
-	 * rewriting, but if we tried to remove them we'd have a much
-	 * harder job to adjust RT indexes in the query's Vars.  It's OK to
-	 * have unused RT entries, since planner will ignore them.
+	 * rewriting, but if we tried to remove them we'd have a much harder
+	 * job to adjust RT indexes in the query's Vars.  It's OK to have
+	 * unused RT entries, since planner will ignore them.
 	 *
 	 * NOTE: because planner will destructively alter rtable, we must ensure
 	 * that rule action's rtable is separate and shares no substructure
 	 * with the main rtable.  Hence do a deep copy here.
 	 *
 	 * Also, we must disable write-access checking in all the RT entries
-	 * copied from the main query.  This is safe since in fact the rule action
-	 * won't write on them, and it's necessary because the rule action may
-	 * have a different commandType than the main query, causing
-	 * ExecCheckRTEPerms() to make an inappropriate check.  The read-access
-	 * checks can be left enabled, although they're probably redundant.
+	 * copied from the main query.	This is safe since in fact the rule
+	 * action won't write on them, and it's necessary because the rule
+	 * action may have a different commandType than the main query,
+	 * causing ExecCheckRTEPerms() to make an inappropriate check.	The
+	 * read-access checks can be left enabled, although they're probably
+	 * redundant.
 	 */
 	main_rtable = (List *) copyObject(parsetree->rtable);
 
@@ -330,12 +332,12 @@ rewriteTargetList(Query *parsetree, Relation target_relation)
 		}
 
 		/*
-		 * Handle the two cases where we need to insert a default expression:
-		 * it's an INSERT and there's no tlist entry for the column, or the
-		 * tlist entry is a DEFAULT placeholder node.
+		 * Handle the two cases where we need to insert a default
+		 * expression: it's an INSERT and there's no tlist entry for the
+		 * column, or the tlist entry is a DEFAULT placeholder node.
 		 */
 		if ((new_tle == NULL && commandType == CMD_INSERT) ||
-			(new_tle && new_tle->expr && IsA(new_tle->expr, SetToDefault)))
+		  (new_tle && new_tle->expr && IsA(new_tle->expr, SetToDefault)))
 		{
 			Node	   *new_expr;
 
@@ -345,8 +347,9 @@ rewriteTargetList(Query *parsetree, Relation target_relation)
 			 * If there is no default (ie, default is effectively NULL),
 			 * we can omit the tlist entry in the INSERT case, since the
 			 * planner can insert a NULL for itself, and there's no point
-			 * in spending any more rewriter cycles on the entry.  But in the
-			 * UPDATE case we've got to explicitly set the column to NULL.
+			 * in spending any more rewriter cycles on the entry.  But in
+			 * the UPDATE case we've got to explicitly set the column to
+			 * NULL.
 			 */
 			if (!new_expr)
 			{
@@ -540,13 +543,13 @@ build_column_default(Relation rel, int attrno)
 	/*
 	 * Make sure the value is coerced to the target column type; this will
 	 * generally be true already, but there seem to be some corner cases
-	 * involving domain defaults where it might not be true.
-	 * This should match the parser's processing of non-defaulted expressions
-	 * --- see updateTargetListEntry().
+	 * involving domain defaults where it might not be true. This should
+	 * match the parser's processing of non-defaulted expressions --- see
+	 * updateTargetListEntry().
 	 */
 	exprtype = exprType(expr);
 
-	expr = coerce_to_target_type(NULL, /* no UNKNOWN params here */
+	expr = coerce_to_target_type(NULL,	/* no UNKNOWN params here */
 								 expr, exprtype,
 								 atttype, atttypmod,
 								 COERCION_ASSIGNMENT,
@@ -559,7 +562,7 @@ build_column_default(Relation rel, int attrno)
 						NameStr(att_tup->attname),
 						format_type_be(atttype),
 						format_type_be(exprtype)),
-				 errhint("You will need to rewrite or cast the expression.")));
+		   errhint("You will need to rewrite or cast the expression.")));
 
 	return expr;
 }
@@ -990,7 +993,7 @@ CopyAndAddInvertedQual(Query *parsetree,
  * rows that the qualified action doesn't act on.  (If there are multiple
  * qualified INSTEAD rules, we AND all the negated quals onto a single
  * modified original query.)  We won't execute the original, unmodified
- * query if we find either qualified or unqualified INSTEAD rules.  If
+ * query if we find either qualified or unqualified INSTEAD rules.	If
  * we find both, the modified original query is discarded too.
  */
 static List *
@@ -1009,7 +1012,7 @@ fireRules(Query *parsetree,
 		RewriteRule *rule_lock = (RewriteRule *) lfirst(i);
 		Node	   *event_qual = rule_lock->qual;
 		List	   *actions = rule_lock->actions;
-		QuerySource	qsrc;
+		QuerySource qsrc;
 		List	   *r;
 
 		/* Determine correct QuerySource value for actions */
@@ -1020,7 +1023,7 @@ fireRules(Query *parsetree,
 			else
 			{
 				qsrc = QSRC_INSTEAD_RULE;
-				*instead_flag = true; /* report unqualified INSTEAD */
+				*instead_flag = true;	/* report unqualified INSTEAD */
 			}
 		}
 		else
@@ -1034,14 +1037,13 @@ fireRules(Query *parsetree,
 			 * qualifications of the INSTEAD rules are added so it does
 			 * its actions only in cases where the rule quals of all
 			 * INSTEAD rules are false. Think of it as the default action
-			 * in a case. We save this in *qual_product so
-			 * RewriteQuery() can add it to the query list after we
-			 * mangled it up enough.
+			 * in a case. We save this in *qual_product so RewriteQuery()
+			 * can add it to the query list after we mangled it up enough.
 			 *
-			 * If we have already found an unqualified INSTEAD rule,
-			 * then *qual_product won't be used, so don't bother building it.
+			 * If we have already found an unqualified INSTEAD rule, then
+			 * *qual_product won't be used, so don't bother building it.
 			 */
-			if (! *instead_flag)
+			if (!*instead_flag)
 			{
 				if (*qual_product == NULL)
 					*qual_product = parsetree;
@@ -1093,8 +1095,8 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 	 * If the statement is an update, insert or delete - fire rules on it.
 	 *
 	 * SELECT rules are handled later when we have all the queries that
-	 * should get executed.  Also, utilities aren't rewritten at all
-	 * (do we still need that check?)
+	 * should get executed.  Also, utilities aren't rewritten at all (do
+	 * we still need that check?)
 	 */
 	if (event != CMD_SELECT && event != CMD_UTILITY)
 	{
@@ -1109,19 +1111,21 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 		Assert(rt_entry->rtekind == RTE_RELATION);
 
 		/*
-		 * This may well be the first access to the result relation during the
-		 * current statement (it will be, if this Query was extracted from a
-		 * rule or somehow got here other than via the parser). Therefore,
-		 * grab the appropriate lock type for a result relation, and do not
-		 * release it until end of transaction.  This protects the rewriter
-		 * and planner against schema changes mid-query.
+		 * This may well be the first access to the result relation during
+		 * the current statement (it will be, if this Query was extracted
+		 * from a rule or somehow got here other than via the parser).
+		 * Therefore, grab the appropriate lock type for a result
+		 * relation, and do not release it until end of transaction.  This
+		 * protects the rewriter and planner against schema changes
+		 * mid-query.
 		 */
 		rt_entry_relation = heap_open(rt_entry->relid, RowExclusiveLock);
 
 		/*
-		 * If it's an INSERT or UPDATE, rewrite the targetlist into standard
-		 * form.  This will be needed by the planner anyway, and doing it now
-		 * ensures that any references to NEW.field will behave sanely.
+		 * If it's an INSERT or UPDATE, rewrite the targetlist into
+		 * standard form.  This will be needed by the planner anyway, and
+		 * doing it now ensures that any references to NEW.field will
+		 * behave sanely.
 		 */
 		if (event == CMD_INSERT || event == CMD_UPDATE)
 			rewriteTargetList(parsetree, rt_entry_relation);
@@ -1144,8 +1148,8 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 										&qual_product);
 
 			/*
-			 * If we got any product queries, recursively rewrite them
-			 * --- but first check for recursion!
+			 * If we got any product queries, recursively rewrite them ---
+			 * but first check for recursion!
 			 */
 			if (product_queries != NIL)
 			{
@@ -1158,9 +1162,9 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 					if (rev->relation == RelationGetRelid(rt_entry_relation) &&
 						rev->event == event)
 						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-								 errmsg("infinite recursion detected in rules for relation \"%s\"",
-										RelationGetRelationName(rt_entry_relation))));
+							 (errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							  errmsg("infinite recursion detected in rules for relation \"%s\"",
+						   RelationGetRelationName(rt_entry_relation))));
 				}
 
 				rev = (rewrite_event *) palloc(sizeof(rewrite_event));
@@ -1179,7 +1183,7 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 			}
 		}
 
-		heap_close(rt_entry_relation, NoLock);		/* keep lock! */
+		heap_close(rt_entry_relation, NoLock);	/* keep lock! */
 	}
 
 	/*
@@ -1191,9 +1195,9 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 	 * disappear so the scans for them in the rule actions cannot find
 	 * them.
 	 *
-	 * If we found any unqualified INSTEAD, the original query is not
-	 * done at all, in any form.  Otherwise, we add the modified form
-	 * if qualified INSTEADs were found, else the unmodified form.
+	 * If we found any unqualified INSTEAD, the original query is not done at
+	 * all, in any form.  Otherwise, we add the modified form if qualified
+	 * INSTEADs were found, else the unmodified form.
 	 */
 	if (!instead)
 	{
@@ -1299,7 +1303,8 @@ QueryRewrite(Query *parsetree)
 	 * Step 3
 	 *
 	 * Determine which, if any, of the resulting queries is supposed to set
-	 * the command-result tag; and update the canSetTag fields accordingly.
+	 * the command-result tag; and update the canSetTag fields
+	 * accordingly.
 	 *
 	 * If the original query is still in the list, it sets the command tag.
 	 * Otherwise, the last INSTEAD query of the same kind as the original
@@ -1308,8 +1313,8 @@ QueryRewrite(Query *parsetree)
 	 * setting up a default tag based on the original un-rewritten query.)
 	 *
 	 * The Asserts verify that at most one query in the result list is marked
-	 * canSetTag.  If we aren't checking asserts, we can fall out of the loop
-	 * as soon as we find the original query.
+	 * canSetTag.  If we aren't checking asserts, we can fall out of the
+	 * loop as soon as we find the original query.
 	 */
 	origCmdType = parsetree->commandType;
 	foundOriginalQuery = false;

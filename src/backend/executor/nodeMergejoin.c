@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.58 2003/07/21 17:05:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.59 2003/08/04 00:43:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,7 +102,7 @@ static bool MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
  */
 static void
 MJFormSkipQuals(List *qualList, List **ltQuals, List **gtQuals,
-				PlanState *parent)
+				PlanState * parent)
 {
 	List	   *ltexprs,
 			   *gtexprs,
@@ -358,9 +358,9 @@ ExecMergeJoin(MergeJoinState *node)
 	List	   *otherqual;
 	bool		qualResult;
 	bool		compareResult;
-	PlanState   *innerPlan;
+	PlanState  *innerPlan;
 	TupleTableSlot *innerTupleSlot;
-	PlanState   *outerPlan;
+	PlanState  *outerPlan;
 	TupleTableSlot *outerTupleSlot;
 	ExprContext *econtext;
 	bool		doFillOuter;
@@ -644,7 +644,7 @@ ExecMergeJoin(MergeJoinState *node)
 					 * tuple, and return it if it passes the non-join
 					 * quals.
 					 */
-					node->mj_MatchedInner = true; /* do it only once */
+					node->mj_MatchedInner = true;		/* do it only once */
 
 					ResetExprContext(econtext);
 
@@ -720,7 +720,7 @@ ExecMergeJoin(MergeJoinState *node)
 					 * tuple, and return it if it passes the non-join
 					 * quals.
 					 */
-					node->mj_MatchedOuter = true; /* do it only once */
+					node->mj_MatchedOuter = true;		/* do it only once */
 
 					ResetExprContext(econtext);
 
@@ -1004,7 +1004,7 @@ ExecMergeJoin(MergeJoinState *node)
 					 * tuple, and return it if it passes the non-join
 					 * quals.
 					 */
-					node->mj_MatchedOuter = true; /* do it only once */
+					node->mj_MatchedOuter = true;		/* do it only once */
 
 					ResetExprContext(econtext);
 
@@ -1181,7 +1181,7 @@ ExecMergeJoin(MergeJoinState *node)
 					 * tuple, and return it if it passes the non-join
 					 * quals.
 					 */
-					node->mj_MatchedInner = true; /* do it only once */
+					node->mj_MatchedInner = true;		/* do it only once */
 
 					ResetExprContext(econtext);
 
@@ -1266,7 +1266,7 @@ ExecMergeJoin(MergeJoinState *node)
 					 * tuple, and return it if it passes the non-join
 					 * quals.
 					 */
-					node->mj_MatchedInner = true; /* do it only once */
+					node->mj_MatchedInner = true;		/* do it only once */
 
 					ResetExprContext(econtext);
 
@@ -1333,7 +1333,7 @@ ExecMergeJoin(MergeJoinState *node)
 					 * tuple, and return it if it passes the non-join
 					 * quals.
 					 */
-					node->mj_MatchedOuter = true; /* do it only once */
+					node->mj_MatchedOuter = true;		/* do it only once */
 
 					ResetExprContext(econtext);
 
@@ -1462,12 +1462,12 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate)
 		case JOIN_LEFT:
 			mergestate->mj_NullInnerTupleSlot =
 				ExecInitNullTupleSlot(estate,
-							   ExecGetResultType(innerPlanState(mergestate)));
+						  ExecGetResultType(innerPlanState(mergestate)));
 			break;
 		case JOIN_RIGHT:
 			mergestate->mj_NullOuterTupleSlot =
 				ExecInitNullTupleSlot(estate,
-							   ExecGetResultType(outerPlanState(mergestate)));
+						  ExecGetResultType(outerPlanState(mergestate)));
 
 			/*
 			 * Can't handle right or full join with non-nil extra
@@ -1481,10 +1481,10 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate)
 		case JOIN_FULL:
 			mergestate->mj_NullOuterTupleSlot =
 				ExecInitNullTupleSlot(estate,
-							   ExecGetResultType(outerPlanState(mergestate)));
+						  ExecGetResultType(outerPlanState(mergestate)));
 			mergestate->mj_NullInnerTupleSlot =
 				ExecInitNullTupleSlot(estate,
-							   ExecGetResultType(innerPlanState(mergestate)));
+						  ExecGetResultType(innerPlanState(mergestate)));
 
 			/*
 			 * Can't handle right or full join with non-nil extra

@@ -41,7 +41,7 @@ extern		"C"
 
 struct sqlca_t;
 
-void		ECPGinit_sqlca(struct sqlca_t *sqlca);
+void		ECPGinit_sqlca(struct sqlca_t * sqlca);
 void		ECPGdebug(int, FILE *);
 bool		ECPGstatus(int, const char *);
 bool		ECPGsetcommit(int, const char *, const char *);
@@ -57,7 +57,7 @@ bool		ECPGdeallocate_all(int);
 char	   *ECPGprepared_statement(char *);
 
 void		ECPGlog(const char *format,...);
-char       *ECPGerrmsg(void);
+char	   *ECPGerrmsg(void);
 
  /* print an error message */
 void		sqlprint(void);
@@ -79,14 +79,13 @@ bool		ECPGget_desc(int, char *, int,...);
 
 void		ECPGset_informix_null(enum ECPGttype, void *);
 bool		ECPGis_informix_null(enum ECPGttype, void *);
-bool		ECPGdescribe(int, bool, const char *, ...);
+bool		ECPGdescribe(int, bool, const char *,...);
 
 /* dynamic result allocation */
 void		ECPGfree_auto_mem(void);
 
 #ifdef __cplusplus
 }
-
 #endif
 
-#endif /* _ECPGLIB_H */
+#endif   /* _ECPGLIB_H */

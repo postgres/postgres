@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: array.h,v 1.42 2003/07/14 20:34:18 tgl Exp $
+ * $Id: array.h,v 1.43 2003/08/04 00:43:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@ typedef struct ArrayBuildState
 {
 	MemoryContext mcontext;		/* where all the temp stuff is kept */
 	Datum	   *dvalues;		/* array of accumulated Datums */
+
 	/*
 	 * The allocated size of dvalues[] is always a multiple of
 	 * ARRAY_ELEMS_CHUNKSIZE
@@ -46,22 +47,22 @@ typedef struct ArrayBuildState
 	int16		typlen;			/* needed info about datatype */
 	bool		typbyval;
 	char		typalign;
-} ArrayBuildState;
+}	ArrayBuildState;
 
 /*
  * structure to cache type metadata needed for array manipulation
  */
 typedef struct ArrayMetaState
 {
-	Oid				element_type;
-	int16			typlen;
-	bool			typbyval;
-	char			typalign;
-	char			typdelim;
-	Oid				typelem;
-	Oid				typiofunc;
-	FmgrInfo		proc;
-} ArrayMetaState;
+	Oid			element_type;
+	int16		typlen;
+	bool		typbyval;
+	char		typalign;
+	char		typdelim;
+	Oid			typelem;
+	Oid			typiofunc;
+	FmgrInfo	proc;
+}	ArrayMetaState;
 
 /*
  * fmgr macros for array objects
@@ -151,22 +152,22 @@ extern ArrayType *construct_array(Datum *elems, int nelems,
 				Oid elmtype,
 				int elmlen, bool elmbyval, char elmalign);
 extern ArrayType *construct_md_array(Datum *elems,
-				  int ndims,
-				  int *dims,
-				  int *lbs,
-				  Oid elmtype, int elmlen, bool elmbyval, char elmalign);
+				   int ndims,
+				   int *dims,
+				   int *lbs,
+				   Oid elmtype, int elmlen, bool elmbyval, char elmalign);
 extern void deconstruct_array(ArrayType *array,
 				  Oid elmtype,
 				  int elmlen, bool elmbyval, char elmalign,
 				  Datum **elemsp, int *nelemsp);
-extern ArrayBuildState *accumArrayResult(ArrayBuildState *astate,
-										 Datum dvalue, bool disnull,
-										 Oid element_type,
-										 MemoryContext rcontext);
-extern Datum makeArrayResult(ArrayBuildState *astate,
-							 MemoryContext rcontext);
-extern Datum makeMdArrayResult(ArrayBuildState *astate, int ndims,
-							   int *dims, int *lbs, MemoryContext rcontext);
+extern ArrayBuildState *accumArrayResult(ArrayBuildState * astate,
+				 Datum dvalue, bool disnull,
+				 Oid element_type,
+				 MemoryContext rcontext);
+extern Datum makeArrayResult(ArrayBuildState * astate,
+				MemoryContext rcontext);
+extern Datum makeMdArrayResult(ArrayBuildState * astate, int ndims,
+				  int *dims, int *lbs, MemoryContext rcontext);
 
 /*
  * prototypes for functions defined in arrayutils.c
@@ -187,8 +188,8 @@ extern Datum array_push(PG_FUNCTION_ARGS);
 extern Datum array_cat(PG_FUNCTION_ARGS);
 
 extern ArrayType *create_singleton_array(FunctionCallInfo fcinfo,
-										 Oid element_type,
-										 Datum element,
-										 int ndims);
+					   Oid element_type,
+					   Datum element,
+					   int ndims);
 
 #endif   /* ARRAY_H */

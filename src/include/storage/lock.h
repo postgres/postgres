@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.71 2003/02/19 23:41:15 momjian Exp $
+ * $Id: lock.h,v 1.72 2003/08/04 00:43:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,7 +160,7 @@ typedef struct LOCK
  * information for each such holder (or would-be holder).
  *
  * PROCLOCKTAG is the key information needed to look up a PROCLOCK item in the
- * proclock hashtable.  A PROCLOCKTAG value uniquely identifies a lock
+ * proclock hashtable.	A PROCLOCKTAG value uniquely identifies a lock
  * holder/waiter.
  *
  * There are two possible kinds of proclock tags: a transaction (identified
@@ -199,7 +199,8 @@ typedef struct PROCLOCK
 	int			holding[MAX_LOCKMODES]; /* count of locks currently held */
 	int			nHolding;		/* total of holding[] array */
 	SHM_QUEUE	lockLink;		/* list link for lock's list of proclocks */
-	SHM_QUEUE	procLink;		/* list link for process's list of proclocks */
+	SHM_QUEUE	procLink;		/* list link for process's list of
+								 * proclocks */
 } PROCLOCK;
 
 #define PROCLOCK_LOCKMETHOD(proclock) \
@@ -246,9 +247,9 @@ extern int	LockShmemSize(int maxBackends);
 extern bool DeadLockCheck(PGPROC *proc);
 extern void DeadLockReport(void);
 extern void RememberSimpleDeadLock(PGPROC *proc1,
-								   LOCKMODE lockmode,
-								   LOCK *lock,
-								   PGPROC *proc2);
+					   LOCKMODE lockmode,
+					   LOCK *lock,
+					   PGPROC *proc2);
 extern void InitDeadLockChecking(void);
 extern LockData *GetLockStatusData(void);
 extern const char *GetLockmodeName(LOCKMODE mode);

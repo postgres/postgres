@@ -8,7 +8,7 @@
  * a dumbed-down version of tuplesort.c; it does no sorting of tuples
  * but can only store and regurgitate a sequence of tuples.  However,
  * because no sort is required, it is allowed to start reading the sequence
- * before it has all been written.  This is particularly useful for cursors,
+ * before it has all been written.	This is particularly useful for cursors,
  * because it allows random access within the already-scanned portion of
  * a query without having to process the underlying scan to completion.
  * A temporary file is used to handle the data if it exceeds the
@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tuplestore.h,v 1.11 2003/04/29 03:21:30 tgl Exp $
+ * $Id: tuplestore.h,v 1.12 2003/08/04 00:43:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,8 +37,8 @@ typedef struct Tuplestorestate Tuplestorestate;
  */
 
 extern Tuplestorestate *tuplestore_begin_heap(bool randomAccess,
-											  bool interXact,
-											  int maxKBytes);
+					  bool interXact,
+					  int maxKBytes);
 
 extern void tuplestore_puttuple(Tuplestorestate *state, void *tuple);
 

@@ -52,8 +52,8 @@
 
 /* for compatibility we define some different error codes for the same error
  * if adding a new one make sure to not double define it */
-#define ECPG_INFORMIX_DUPLICATE_KEY	-239
-#define ECPG_INFORMIX_SUBSELECT_NOT_ONE	-284
+#define ECPG_INFORMIX_DUPLICATE_KEY -239
+#define ECPG_INFORMIX_SUBSELECT_NOT_ONE -284
 
 /* backend WARNINGs, starting at 600 */
 #define ECPG_WARNING_UNRECOGNIZED	   -600

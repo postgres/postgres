@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $Id: threads.c,v 1.1 2003/06/14 14:35:42 momjian Exp $
+ * $Id: threads.c,v 1.2 2003/08/04 00:43:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,7 @@ pqGetpwuid(uid_t uid, struct passwd * resultbuf, char *buffer,
 		   size_t buflen, struct passwd ** result)
 {
 #if defined(USE_THREADS) && defined(HAVE_GETPWUID_R)
+
 	/*
 	 * broken (well early POSIX draft) getpwuid_r() which returns 'struct
 	 * passwd *'
@@ -65,6 +66,7 @@ pqGethostbyname(const char *name,
 				int *herrno)
 {
 #if defined(USE_THREADS) && defined(HAVE_GETHOSTBYNAME_R)
+
 	/*
 	 * broken (well early POSIX draft) gethostbyname_r() which returns
 	 * 'struct hostent *'

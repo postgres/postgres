@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2003 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.75 2003/07/25 21:48:45 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.76 2003/08/04 00:43:29 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -173,7 +173,7 @@ slashUsage(unsigned short int pager)
 	 */
 	fprintf(output, _("General\n"));
 	fprintf(output, _("  \\c[onnect] [DBNAME|- [USER]]\n"
-					  "                 connect to new database (currently \"%s\")\n"),
+		"                 connect to new database (currently \"%s\")\n"),
 			PQdb(pset.db));
 	fprintf(output, _("  \\cd [DIR]      change the current working directory\n"));
 	fprintf(output, _("  \\copyright     show PostgreSQL usage and distribution terms\n"));
@@ -203,7 +203,7 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\i FILE        execute commands from file\n"));
 	fprintf(output, _("  \\o [FILE]      send all query results to file or |pipe\n"));
 	fprintf(output, _("  \\qecho [STRING]\n"
-					  "                 write string to query output stream (see \\o)\n"));
+	"                 write string to query output stream (see \\o)\n"));
 	fprintf(output, "\n");
 
 	fprintf(output, _("Informational\n"));
@@ -235,7 +235,7 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\pset NAME [VALUE]\n"
 					  "                 set table output option\n"
 					  "                 (NAME := {format|border|expanded|fieldsep|null|recordsep|\n"
-					  "                 tuples_only|title|tableattr|pager})\n"));
+			  "                 tuples_only|title|tableattr|pager})\n"));
 	fprintf(output, _("  \\t             show only rows (currently %s)\n"),
 			ON(pset.popt.topt.tuples_only));
 	fprintf(output, _("  \\T [STRING]    set HTML <table> tag attributes, or unset if none\n"));
@@ -274,7 +274,7 @@ helpSQL(const char *topic, unsigned short int pager)
 	{
 		int			i;
 		int			items_per_column = (QL_HELP_COUNT + 2) / 3;
-		FILE		*output;
+		FILE	   *output;
 
 		output = PageOutput(items_per_column + 1, pager);
 
@@ -283,8 +283,8 @@ helpSQL(const char *topic, unsigned short int pager)
 		for (i = 0; i < items_per_column; i++)
 		{
 			fprintf(output, "  %-26s%-26s",
-				   VALUE_OR_NULL(QL_HELP[i].cmd),
-				   VALUE_OR_NULL(QL_HELP[i + items_per_column].cmd));
+					VALUE_OR_NULL(QL_HELP[i].cmd),
+					VALUE_OR_NULL(QL_HELP[i + items_per_column].cmd));
 			if (i + 2 * items_per_column < QL_HELP_COUNT)
 				fprintf(output, "%-26s",
 				   VALUE_OR_NULL(QL_HELP[i + 2 * items_per_column].cmd));

@@ -1,6 +1,6 @@
 /* dynamic SQL support routines
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.5 2003/08/01 13:53:36 petere Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.6 2003/08/04 00:43:32 momjian Exp $
  */
 
 #define POSTGRES_ECPG_INTERNAL
@@ -454,7 +454,7 @@ ECPGdescriptor_lvalue(int line, const char *descriptor)
 }
 
 bool
-ECPGdescribe(int line, bool input, const char *statement, ...)
+ECPGdescribe(int line, bool input, const char *statement,...)
 {
 	ECPGlog("ECPGdescribe called on line %d for %s in %s\n", line, (input) ? "input" : "output", statement);
 	return false;

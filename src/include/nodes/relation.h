@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.82 2003/06/29 23:05:05 tgl Exp $
+ * $Id: relation.h,v 1.83 2003/08/04 00:43:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@ typedef struct QualCost
 {
 	Cost		startup;		/* one-time cost */
 	Cost		per_tuple;		/* per-evaluation cost */
-} QualCost;
+}	QualCost;
 
 /*----------
  * RelOptInfo
@@ -218,12 +218,13 @@ typedef struct RelOptInfo
 	Relids		index_outer_relids;		/* other relids in indexable join
 										 * clauses */
 	List	   *index_inner_paths;		/* InnerIndexscanInfo nodes */
+
 	/*
-	 * Inner indexscans are not in the main pathlist because they are
-	 * not usable except in specific join contexts.  We use the
+	 * Inner indexscans are not in the main pathlist because they are not
+	 * usable except in specific join contexts.  We use the
 	 * index_inner_paths list just to avoid recomputing the best inner
-	 * indexscan repeatedly for similar outer relations.  See comments
-	 * for InnerIndexscanInfo.
+	 * indexscan repeatedly for similar outer relations.  See comments for
+	 * InnerIndexscanInfo.
 	 */
 } RelOptInfo;
 
@@ -266,7 +267,8 @@ typedef struct IndexOptInfo
 
 	RegProcedure amcostestimate;	/* OID of the access method's cost fcn */
 
-	List	   *indexprs;		/* expressions for non-simple index columns */
+	List	   *indexprs;		/* expressions for non-simple index
+								 * columns */
 	List	   *indpred;		/* predicate if a partial index, else NIL */
 	bool		unique;			/* true if a unique index */
 
@@ -413,7 +415,7 @@ typedef struct ResultPath
 	Path		path;
 	Path	   *subpath;
 	List	   *constantqual;
-} ResultPath;
+}	ResultPath;
 
 /*
  * MaterialPath represents use of a Material plan node, i.e., caching of
@@ -425,7 +427,7 @@ typedef struct MaterialPath
 {
 	Path		path;
 	Path	   *subpath;
-} MaterialPath;
+}	MaterialPath;
 
 /*
  * UniquePath represents elimination of distinct rows from the output of
@@ -442,7 +444,7 @@ typedef struct UniquePath
 	Path	   *subpath;
 	bool		use_hash;
 	double		rows;			/* estimated number of result tuples */
-} UniquePath;
+}	UniquePath;
 
 /*
  * All join-type paths share these fields.
@@ -661,7 +663,7 @@ typedef struct JoinInfo
  * relation includes all other relids appearing in those joinclauses.
  * The set of usable joinclauses, and thus the best inner indexscan,
  * thus varies depending on which outer relation we consider; so we have
- * to recompute the best such path for every join.  To avoid lots of
+ * to recompute the best such path for every join.	To avoid lots of
  * redundant computation, we cache the results of such searches.  For
  * each index we compute the set of possible otherrelids (all relids
  * appearing in joinquals that could become indexquals for this index).
@@ -687,8 +689,8 @@ typedef struct InnerIndexscanInfo
 	Relids		other_relids;	/* a set of relevant other relids */
 	bool		isouterjoin;	/* true if join is outer */
 	/* Best path for this lookup key: */
-	Path	   *best_innerpath;	/* best inner indexscan, or NULL if none */
-} InnerIndexscanInfo;
+	Path	   *best_innerpath; /* best inner indexscan, or NULL if none */
+}	InnerIndexscanInfo;
 
 /*
  * IN clause info.
@@ -704,11 +706,12 @@ typedef struct InClauseInfo
 	NodeTag		type;
 	Relids		lefthand;		/* base relids in lefthand expressions */
 	Relids		righthand;		/* base relids coming from the subselect */
-	List	   *sub_targetlist;	/* targetlist of original RHS subquery */
+	List	   *sub_targetlist; /* targetlist of original RHS subquery */
+
 	/*
-	 * Note: sub_targetlist is just a list of Vars or expressions;
-	 * it does not contain TargetEntry nodes.
+	 * Note: sub_targetlist is just a list of Vars or expressions; it does
+	 * not contain TargetEntry nodes.
 	 */
-} InClauseInfo;
+}	InClauseInfo;
 
 #endif   /* RELATION_H */

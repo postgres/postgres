@@ -3,7 +3,7 @@
  *
  * Copyright 2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/contrib/findoidjoins/Attic/findoidjoins.c,v 1.20 2003/05/14 03:25:56 tgl Exp $
+ * $Header: /cvsroot/pgsql/contrib/findoidjoins/Attic/findoidjoins.c,v 1.21 2003/08/04 00:43:10 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -14,23 +14,24 @@
 int
 main(int argc, char **argv)
 {
-	PGconn			   *conn;
-	PQExpBufferData		sql;
-	PGresult		   *res;
-	PGresult		   *pkrel_res;
-	PGresult		   *fkrel_res;
-	char			   *fk_relname;
-	char			   *fk_nspname;
-	char			   *fk_attname;
-	char			   *pk_relname;
-	char			   *pk_nspname;
-	int					fk, pk;		/* loop counters */
+	PGconn	   *conn;
+	PQExpBufferData sql;
+	PGresult   *res;
+	PGresult   *pkrel_res;
+	PGresult   *fkrel_res;
+	char	   *fk_relname;
+	char	   *fk_nspname;
+	char	   *fk_attname;
+	char	   *pk_relname;
+	char	   *pk_nspname;
+	int			fk,
+				pk;				/* loop counters */
 
 	if (argc != 2)
 	{
 		fprintf(stderr, "Usage:  %s database\n", argv[0]);
 		exit(EXIT_FAILURE);
-	}		
+	}
 
 	initPQExpBuffer(&sql);
 
@@ -48,13 +49,13 @@ main(int argc, char **argv)
 	resetPQExpBuffer(&sql);
 
 	appendPQExpBuffer(&sql, "%s",
-		"SET search_path = public;"
-		"SELECT c.relname, (SELECT nspname FROM "
-		"pg_catalog.pg_namespace n WHERE n.oid = c.relnamespace) AS nspname "
-		"FROM pg_catalog.pg_class c "
-		"WHERE c.relkind = 'r' "
-		"AND c.relhasoids "
-		"ORDER BY nspname, c.relname"
+					  "SET search_path = public;"
+					  "SELECT c.relname, (SELECT nspname FROM "
+	"pg_catalog.pg_namespace n WHERE n.oid = c.relnamespace) AS nspname "
+					  "FROM pg_catalog.pg_class c "
+					  "WHERE c.relkind = 'r' "
+					  "AND c.relhasoids "
+					  "ORDER BY nspname, c.relname"
 		);
 
 	res = PQexec(conn, sql.data);
@@ -70,20 +71,20 @@ main(int argc, char **argv)
 	resetPQExpBuffer(&sql);
 
 	appendPQExpBuffer(&sql, "%s",
-		"SELECT c.relname, "
-		"(SELECT nspname FROM pg_catalog.pg_namespace n WHERE n.oid = c.relnamespace) AS nspname, "
-		"a.attname "
-		"FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a "
-		"WHERE a.attnum > 0 AND c.relkind = 'r' "
-		"AND a.attrelid = c.oid "
-		"AND a.atttypid IN ('pg_catalog.oid'::regtype, "
-		" 'pg_catalog.regclass'::regtype, "
-		" 'pg_catalog.regoper'::regtype, "
-		" 'pg_catalog.regoperator'::regtype, "
-		" 'pg_catalog.regproc'::regtype, "
-		" 'pg_catalog.regprocedure'::regtype, "
-		" 'pg_catalog.regtype'::regtype) "
-		"ORDER BY nspname, c.relname, a.attnum"
+					  "SELECT c.relname, "
+					  "(SELECT nspname FROM pg_catalog.pg_namespace n WHERE n.oid = c.relnamespace) AS nspname, "
+					  "a.attname "
+				 "FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a "
+					  "WHERE a.attnum > 0 AND c.relkind = 'r' "
+					  "AND a.attrelid = c.oid "
+					  "AND a.atttypid IN ('pg_catalog.oid'::regtype, "
+					  " 'pg_catalog.regclass'::regtype, "
+					  " 'pg_catalog.regoper'::regtype, "
+					  " 'pg_catalog.regoperator'::regtype, "
+					  " 'pg_catalog.regproc'::regtype, "
+					  " 'pg_catalog.regprocedure'::regtype, "
+					  " 'pg_catalog.regtype'::regtype) "
+					  "ORDER BY nspname, c.relname, a.attnum"
 		);
 
 	res = PQexec(conn, sql.data);
@@ -95,8 +96,8 @@ main(int argc, char **argv)
 	fkrel_res = res;
 
 	/*
-	 * For each column and each relation-having-OIDs, look to see if
-	 * the column contains any values matching entries in the relation.
+	 * For each column and each relation-having-OIDs, look to see if the
+	 * column contains any values matching entries in the relation.
 	 */
 
 	for (fk = 0; fk < PQntuples(fkrel_res); fk++)
@@ -113,12 +114,12 @@ main(int argc, char **argv)
 			resetPQExpBuffer(&sql);
 
 			appendPQExpBuffer(&sql,
-				"SELECT	1 "
-				"FROM \"%s\".\"%s\" t1, "
-				"\"%s\".\"%s\" t2 "
-				"WHERE t1.\"%s\"::pg_catalog.oid = t2.oid "
-				"LIMIT 1",
-				fk_nspname, fk_relname, pk_nspname, pk_relname, fk_attname);
+							  "SELECT	1 "
+							  "FROM \"%s\".\"%s\" t1, "
+							  "\"%s\".\"%s\" t2 "
+							  "WHERE t1.\"%s\"::pg_catalog.oid = t2.oid "
+							  "LIMIT 1",
+			 fk_nspname, fk_relname, pk_nspname, pk_relname, fk_attname);
 
 			res = PQexec(conn, sql.data);
 			if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)

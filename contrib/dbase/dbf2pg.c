@@ -443,17 +443,15 @@ do_inserts(PGconn *conn, char *table, dbhead * dbh)
 		if (result == DBF_VALID)
 		{
 			query[0] = '\0';
-			j = 0; /* counter for fields in the output */
+			j = 0;				/* counter for fields in the output */
 			for (h = 0; h < dbh->db_nfields; h++)
 			{
-				if (!strlen(fields[h].db_name)) /* When the new fieldname is empty, the field is skipped */
-				{
+				if (!strlen(fields[h].db_name)) /* When the new fieldname
+												 * is empty, the field is
+												 * skipped */
 					continue;
-				}
 				else
-				{
 					j++;
-				}
 
 				if (j > 1)		/* not for the first field! */
 					strcat(query, "\t");		/* COPY statement field

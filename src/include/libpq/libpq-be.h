@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-be.h,v 1.35 2003/04/17 22:26:01 tgl Exp $
+ * $Id: libpq-be.h,v 1.36 2003/08/04 00:43:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,8 +30,8 @@
 /*
  * This is used by the postmaster in its communication with frontends.	It
  * contains all state information needed during this communication before the
- * backend is run.  The Port structure is kept in malloc'd memory and is
- * still available when a backend is running (see MyProcPort).  The data
+ * backend is run.	The Port structure is kept in malloc'd memory and is
+ * still available when a backend is running (see MyProcPort).	The data
  * it points to must also be malloc'd, or else palloc'd in TopMemoryContext,
  * so that it survives into PostgresMain execution!
  */
@@ -44,9 +44,10 @@ typedef struct Port
 	SockAddr	raddr;			/* remote addr (client) */
 
 	/*
-	 * Information that needs to be saved from the startup packet and passed
-	 * into backend execution.  "char *" fields are NULL if not set.
-	 * guc_options points to a List of alternating option names and values.
+	 * Information that needs to be saved from the startup packet and
+	 * passed into backend execution.  "char *" fields are NULL if not
+	 * set. guc_options points to a List of alternating option names and
+	 * values.
 	 */
 	char	   *database_name;
 	char	   *user_name;

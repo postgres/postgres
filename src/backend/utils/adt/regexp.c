@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.46 2003/07/27 04:53:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.47 2003/08/04 00:43:25 momjian Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -73,10 +73,10 @@ typedef struct cached_re_str
 	text	   *cre_pat;		/* original RE (untoasted TEXT form) */
 	int			cre_flags;		/* compile flags: extended,icase etc */
 	regex_t		cre_re;			/* the compiled regular expression */
-} cached_re_str;
+}	cached_re_str;
 
 static int	num_res = 0;		/* # of cached re's */
-static cached_re_str re_array[MAX_CACHED_RES]; /* cached re's */
+static cached_re_str re_array[MAX_CACHED_RES];	/* cached re's */
 
 
 /*
@@ -88,7 +88,7 @@ static cached_re_str re_array[MAX_CACHED_RES]; /* cached re's */
  *	dat --- the data to match against (need not be null-terminated)
  *	dat_len --- the length of the data string
  *	cflags --- compile options for the pattern
- *	nmatch, pmatch  --- optional return area for match details
+ *	nmatch, pmatch	--- optional return area for match details
  *
  * Both pattern and data are given in the database encoding.  We internally
  * convert to array of pg_wchar which is what Spencer's regex package wants.
@@ -105,14 +105,14 @@ RE_compile_and_execute(text *text_re, unsigned char *dat, int dat_len,
 	int			i;
 	int			regcomp_result;
 	int			regexec_result;
-	cached_re_str	re_temp;
+	cached_re_str re_temp;
 
 	/* Convert data string to wide characters */
 	data = (pg_wchar *) palloc((dat_len + 1) * sizeof(pg_wchar));
 	data_len = pg_mb2wchar_with_len(dat, data, dat_len);
 
 	/*
-	 * Look for a match among previously compiled REs.  Since the data
+	 * Look for a match among previously compiled REs.	Since the data
 	 * structure is self-organizing with most-used entries at the front,
 	 * our search strategy can just be to scan from the front.
 	 */
@@ -135,7 +135,7 @@ RE_compile_and_execute(text *text_re, unsigned char *dat, int dat_len,
 			regexec_result = pg_regexec(&re_array[0].cre_re,
 										data,
 										data_len,
-										NULL, /* no details */
+										NULL,	/* no details */
 										nmatch,
 										pmatch,
 										0);
@@ -213,7 +213,7 @@ RE_compile_and_execute(text *text_re, unsigned char *dat, int dat_len,
 	regexec_result = pg_regexec(&re_array[0].cre_re,
 								data,
 								data_len,
-								NULL, /* no details */
+								NULL,	/* no details */
 								nmatch,
 								pmatch,
 								0);
@@ -383,8 +383,8 @@ textregexsubstr(PG_FUNCTION_ARGS)
 	/*
 	 * We pass two regmatch_t structs to get info about the overall match
 	 * and the match for the first parenthesized subexpression (if any).
-	 * If there is a parenthesized subexpression, we return what it matched;
-	 * else return what the whole regexp matched.
+	 * If there is a parenthesized subexpression, we return what it
+	 * matched; else return what the whole regexp matched.
 	 */
 	match = RE_compile_and_execute(p,
 								   (unsigned char *) VARDATA(s),
@@ -395,8 +395,8 @@ textregexsubstr(PG_FUNCTION_ARGS)
 	/* match? then return the substring matching the pattern */
 	if (match)
 	{
-		int		so,
-				eo;
+		int			so,
+					eo;
 
 		so = pmatch[1].rm_so;
 		eo = pmatch[1].rm_eo;
@@ -457,7 +457,7 @@ similar_escape(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
 					 errmsg("invalid escape string"),
-					 errhint("Escape string must be empty or one character.")));
+			  errhint("Escape string must be empty or one character.")));
 	}
 
 	/* We need room for ^, $, and up to 2 output bytes per input byte */
@@ -492,9 +492,7 @@ similar_escape(PG_FUNCTION_ARGS)
 			*r++ = '*';
 		}
 		else if (pchar == '_')
-		{
 			*r++ = '.';
-		}
 		else if (pchar == '\\' || pchar == '.' || pchar == '?' ||
 				 pchar == '{')
 		{
@@ -502,14 +500,12 @@ similar_escape(PG_FUNCTION_ARGS)
 			*r++ = pchar;
 		}
 		else
-		{
 			*r++ = pchar;
-		}
 		p++, plen--;
 	}
 
 	*r++ = '$';
-	
+
 	VARATT_SIZEP(result) = r - ((unsigned char *) result);
 
 	PG_RETURN_TEXT_P(result);

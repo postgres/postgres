@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.40 2003/08/01 00:15:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.41 2003/08/04 00:43:17 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -66,11 +66,11 @@
 /* result structure for get_rels_with_domain() */
 typedef struct
 {
-	Relation rel;				/* opened and locked relation */
-	int		natts;				/* number of attributes of interest */
-	int		*atts;				/* attribute numbers */
+	Relation	rel;			/* opened and locked relation */
+	int			natts;			/* number of attributes of interest */
+	int		   *atts;			/* attribute numbers */
 	/* atts[] is of allocated length RelationGetNumberOfAttributes(rel) */
-} RelToCheck;
+}	RelToCheck;
 
 
 static Oid	findTypeInputFunction(List *procname, Oid typeOid);
@@ -80,9 +80,9 @@ static Oid	findTypeSendFunction(List *procname, Oid typeOid);
 static List *get_rels_with_domain(Oid domainOid, LOCKMODE lockmode);
 static void domainOwnerCheck(HeapTuple tup, TypeName *typename);
 static char *domainAddConstraint(Oid domainOid, Oid domainNamespace,
-								 Oid baseTypeOid,
-								 int typMod, Constraint *constr,
-								 int *counter, char *domainName);
+					Oid baseTypeOid,
+					int typMod, Constraint *constr,
+					int *counter, char *domainName);
 
 
 /*
@@ -105,7 +105,7 @@ DefineType(List *names, List *parameters)
 	bool		byValue = false;
 	char		delimiter = DEFAULT_TYPDELIM;
 	char		alignment = 'i';	/* default alignment */
-	char		storage = 'p';		/* default TOAST storage method */
+	char		storage = 'p';	/* default TOAST storage method */
 	Oid			inputOid;
 	Oid			outputOid;
 	Oid			receiveOid = InvalidOid;
@@ -237,8 +237,8 @@ DefineType(List *names, List *parameters)
 
 	/*
 	 * Look to see if type already exists (presumably as a shell; if not,
-	 * TypeCreate will complain).  If it doesn't, create it as a shell,
-	 * so that the OID is known for use in the I/O function definitions.
+	 * TypeCreate will complain).  If it doesn't, create it as a shell, so
+	 * that the OID is known for use in the I/O function definitions.
 	 */
 	typoid = GetSysCacheOid(TYPENAMENSP,
 							CStringGetDatum(typeName),
@@ -492,7 +492,7 @@ DefineDomain(CreateDomainStmt *stmt)
 	List	   *listptr;
 	Oid			basetypeoid;
 	Oid			domainoid;
-	Form_pg_type	baseType;
+	Form_pg_type baseType;
 	int			counter = 0;
 
 	/* Convert list of names to a name and namespace */
@@ -508,10 +508,11 @@ DefineDomain(CreateDomainStmt *stmt)
 
 	/*
 	 * Domainnames, unlike typenames don't need to account for the '_'
-	 * prefix.	So they can be one character longer.  (This test is presently
-	 * useless since the parser will have truncated the name to fit.  But
-	 * leave it here since we may someday support arrays of domains, in
-	 * which case we'll be back to needing to enforce NAMEDATALEN-2.)
+	 * prefix.	So they can be one character longer.  (This test is
+	 * presently useless since the parser will have truncated the name to
+	 * fit.  But leave it here since we may someday support arrays of
+	 * domains, in which case we'll be back to needing to enforce
+	 * NAMEDATALEN-2.)
 	 */
 	if (strlen(domainName) > (NAMEDATALEN - 1))
 		ereport(ERROR,
@@ -581,8 +582,8 @@ DefineDomain(CreateDomainStmt *stmt)
 	basetypelem = baseType->typelem;
 
 	/*
-	 * Run through constraints manually to avoid the additional
-	 * processing conducted by DefineRelation() and friends.
+	 * Run through constraints manually to avoid the additional processing
+	 * conducted by DefineRelation() and friends.
 	 */
 	foreach(listptr, schema)
 	{
@@ -594,7 +595,7 @@ DefineDomain(CreateDomainStmt *stmt)
 		if (IsA(newConstraint, FkConstraint))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("FOREIGN KEY constraints not supported for domains")));
+			errmsg("FOREIGN KEY constraints not supported for domains")));
 
 		/* otherwise it should be a plain Constraint */
 		if (!IsA(newConstraint, Constraint))
@@ -606,6 +607,7 @@ DefineDomain(CreateDomainStmt *stmt)
 		switch (constr->contype)
 		{
 			case CONSTR_DEFAULT:
+
 				/*
 				 * The inherited default value may be overridden by the
 				 * user with the DEFAULT <expr> statement.
@@ -643,7 +645,7 @@ DefineDomain(CreateDomainStmt *stmt)
 				if (nullDefined && !typNotNull)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("conflicting NULL/NOT NULL constraints")));
+					   errmsg("conflicting NULL/NOT NULL constraints")));
 				typNotNull = true;
 				nullDefined = true;
 				break;
@@ -652,41 +654,42 @@ DefineDomain(CreateDomainStmt *stmt)
 				if (nullDefined && typNotNull)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("conflicting NULL/NOT NULL constraints")));
+					   errmsg("conflicting NULL/NOT NULL constraints")));
 				typNotNull = false;
 				nullDefined = true;
-		  		break;
+				break;
 
-		  	case CONSTR_CHECK:
+			case CONSTR_CHECK:
+
 				/*
-				 * Check constraints are handled after domain creation, as they
-				 * require the Oid of the domain
+				 * Check constraints are handled after domain creation, as
+				 * they require the Oid of the domain
 				 */
-		  		break;
+				break;
 
 				/*
 				 * All else are error cases
 				 */
-		  	case CONSTR_UNIQUE:
-		  		ereport(ERROR,
+			case CONSTR_UNIQUE:
+				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("UNIQUE constraints not supported for domains")));
-		  		break;
+				errmsg("UNIQUE constraints not supported for domains")));
+				break;
 
-		  	case CONSTR_PRIMARY:
-		  		ereport(ERROR,
+			case CONSTR_PRIMARY:
+				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("PRIMARY KEY constraints not supported for domains")));
-		  		break;
+				break;
 
-		  	case CONSTR_ATTR_DEFERRABLE:
-		  	case CONSTR_ATTR_NOT_DEFERRABLE:
-		  	case CONSTR_ATTR_DEFERRED:
-		  	case CONSTR_ATTR_IMMEDIATE:
-		  		ereport(ERROR,
+			case CONSTR_ATTR_DEFERRABLE:
+			case CONSTR_ATTR_NOT_DEFERRABLE:
+			case CONSTR_ATTR_DEFERRED:
+			case CONSTR_ATTR_IMMEDIATE:
+				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("deferrability constraints not supported for domains")));
-		  		break;
+				break;
 
 			default:
 				elog(ERROR, "unrecognized constraint subtype: %d",
@@ -715,15 +718,16 @@ DefineDomain(CreateDomainStmt *stmt)
 				   basetypeoid, /* base type ID */
 				   defaultValue,	/* default type value (text) */
 				   defaultValueBin,		/* default type value (binary) */
-				   byValue,				/* passed by value */
-				   alignment,			/* required alignment */
-				   storage,				/* TOAST strategy */
-				   stmt->typename->typmod, /* typeMod value */
-				   typNDims,			/* Array dimensions for base type */
-				   typNotNull);			/* Type NOT NULL */
+				   byValue,		/* passed by value */
+				   alignment,	/* required alignment */
+				   storage,		/* TOAST strategy */
+				   stmt->typename->typmod,		/* typeMod value */
+				   typNDims,	/* Array dimensions for base type */
+				   typNotNull); /* Type NOT NULL */
 
 	/*
-	 * Process constraints which refer to the domain ID returned by TypeCreate
+	 * Process constraints which refer to the domain ID returned by
+	 * TypeCreate
 	 */
 	foreach(listptr, schema)
 	{
@@ -733,16 +737,16 @@ DefineDomain(CreateDomainStmt *stmt)
 
 		switch (constr->contype)
 		{
-		  	case CONSTR_CHECK:
+			case CONSTR_CHECK:
 				domainAddConstraint(domainoid, domainNamespace,
 									basetypeoid, stmt->typename->typmod,
 									constr, &counter, domainName);
-		  		break;
+				break;
 
-			/* Other constraint types were fully processed above */
+				/* Other constraint types were fully processed above */
 
 			default:
-		  		break;
+				break;
 		}
 	}
 
@@ -834,8 +838,8 @@ findTypeInputFunction(List *procname, Oid typeOid)
 	 * Input functions can take a single argument of type CSTRING, or
 	 * three arguments (string, element OID, typmod).
 	 *
-	 * For backwards compatibility we allow OPAQUE in place of CSTRING;
-	 * if we see this, we issue a NOTICE and fix up the pg_proc entry.
+	 * For backwards compatibility we allow OPAQUE in place of CSTRING; if we
+	 * see this, we issue a NOTICE and fix up the pg_proc entry.
 	 */
 	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
 
@@ -874,9 +878,10 @@ findTypeInputFunction(List *procname, Oid typeOid)
 				(errmsg("changing argument type of function %s from OPAQUE to CSTRING",
 						NameListToString(procname))));
 		SetFunctionArgType(procOid, 0, CSTRINGOID);
+
 		/*
-		 * Need CommandCounterIncrement since DefineType will likely
-		 * try to alter the pg_proc tuple again.
+		 * Need CommandCounterIncrement since DefineType will likely try
+		 * to alter the pg_proc tuple again.
 		 */
 		CommandCounterIncrement();
 
@@ -905,8 +910,8 @@ findTypeOutputFunction(List *procname, Oid typeOid)
 	 * arguments (data value, element OID).
 	 *
 	 * For backwards compatibility we allow OPAQUE in place of the actual
-	 * type name; if we see this, we issue a NOTICE and fix up the
-	 * pg_proc entry.
+	 * type name; if we see this, we issue a NOTICE and fix up the pg_proc
+	 * entry.
 	 */
 	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
 
@@ -940,12 +945,13 @@ findTypeOutputFunction(List *procname, Oid typeOid)
 	{
 		/* Found, but must complain and fix the pg_proc entry */
 		ereport(NOTICE,
-				(errmsg("changing argument type of function %s from OPAQUE to %s",
-						NameListToString(procname), format_type_be(typeOid))));
+		(errmsg("changing argument type of function %s from OPAQUE to %s",
+				NameListToString(procname), format_type_be(typeOid))));
 		SetFunctionArgType(procOid, 0, typeOid);
+
 		/*
-		 * Need CommandCounterIncrement since DefineType will likely
-		 * try to alter the pg_proc tuple again.
+		 * Need CommandCounterIncrement since DefineType will likely try
+		 * to alter the pg_proc tuple again.
 		 */
 		CommandCounterIncrement();
 
@@ -1050,7 +1056,7 @@ DefineCompositeType(const RangeVar *typevar, List *coldeflist)
 	if (coldeflist == NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("composite type must have at least one attribute")));
+			 errmsg("composite type must have at least one attribute")));
 
 	/*
 	 * now create the parameters for keys/inheritance etc. All of them are
@@ -1072,7 +1078,7 @@ DefineCompositeType(const RangeVar *typevar, List *coldeflist)
 /*
  * AlterDomainDefault
  *
- * Routine implementing ALTER DOMAIN SET/DROP DEFAULT statements. 
+ * Routine implementing ALTER DOMAIN SET/DROP DEFAULT statements.
  */
 void
 AlterDomainDefault(List *names, Node *defaultRaw)
@@ -1083,12 +1089,12 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 	ParseState *pstate;
 	Relation	rel;
 	char	   *defaultValue;
-	Node	   *defaultExpr = NULL; /* NULL if no default specified */
+	Node	   *defaultExpr = NULL;		/* NULL if no default specified */
 	Datum		new_record[Natts_pg_type];
 	char		new_record_nulls[Natts_pg_type];
 	char		new_record_repl[Natts_pg_type];
 	HeapTuple	newtuple;
-	Form_pg_type	typTup;
+	Form_pg_type typTup;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
 	typename = makeNode(TypeName);
@@ -1113,7 +1119,7 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for type %u", domainoid);
 
-	/* Doesn't return if user isn't allowed to alter the domain */ 
+	/* Doesn't return if user isn't allowed to alter the domain */
 	domainOwnerCheck(tup, typename);
 
 	/* Setup new tuple */
@@ -1129,9 +1135,10 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 	{
 		/* Create a dummy ParseState for transformExpr */
 		pstate = make_parsestate(NULL);
+
 		/*
-		 * Cook the colDef->raw_expr into an expression. Note:
-		 * Name is strictly for error message
+		 * Cook the colDef->raw_expr into an expression. Note: Name is
+		 * strictly for error message
 		 */
 		defaultExpr = cookDefault(pstate, defaultRaw,
 								  typTup->typbasetype,
@@ -1139,27 +1146,29 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 								  NameStr(typTup->typname));
 
 		/*
-		 * Expression must be stored as a nodeToString result, but
-		 * we also require a valid textual representation (mainly
-		 * to make life easier for pg_dump).
+		 * Expression must be stored as a nodeToString result, but we also
+		 * require a valid textual representation (mainly to make life
+		 * easier for pg_dump).
 		 */
 		defaultValue = deparse_expression(defaultExpr,
-								  deparse_context_for(NameStr(typTup->typname),
-													  InvalidOid),
+							deparse_context_for(NameStr(typTup->typname),
+												InvalidOid),
 										  false, false);
+
 		/*
 		 * Form an updated tuple with the new default and write it back.
 		 */
 		new_record[Anum_pg_type_typdefaultbin - 1] = DirectFunctionCall1(textin,
-														CStringGetDatum(
-															nodeToString(defaultExpr)));
+														 CStringGetDatum(
+											 nodeToString(defaultExpr)));
 
 		new_record_repl[Anum_pg_type_typdefaultbin - 1] = 'r';
 		new_record[Anum_pg_type_typdefault - 1] = DirectFunctionCall1(textin,
-								   					CStringGetDatum(defaultValue));
+										  CStringGetDatum(defaultValue));
 		new_record_repl[Anum_pg_type_typdefault - 1] = 'r';
 	}
-	else /* Default is NULL, drop it */
+	else
+/* Default is NULL, drop it */
 	{
 		new_record_nulls[Anum_pg_type_typdefaultbin - 1] = 'n';
 		new_record_repl[Anum_pg_type_typdefaultbin - 1] = 'r';
@@ -1168,7 +1177,7 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 	}
 
 	newtuple = heap_modifytuple(tup, rel,
-								new_record, new_record_nulls, new_record_repl);
+						  new_record, new_record_nulls, new_record_repl);
 
 	simple_heap_update(rel, &tup->t_self, newtuple);
 
@@ -1178,7 +1187,7 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 	GenerateTypeDependencies(typTup->typnamespace,
 							 domainoid,
 							 typTup->typrelid,
-							 0,	/* relation kind is n/a */
+							 0, /* relation kind is n/a */
 							 typTup->typinput,
 							 typTup->typoutput,
 							 typTup->typreceive,
@@ -1186,7 +1195,7 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 							 typTup->typelem,
 							 typTup->typbasetype,
 							 defaultExpr,
-							 true); /* Rebuild is true */
+							 true);		/* Rebuild is true */
 
 	/* Clean up */
 	heap_close(rel, NoLock);
@@ -1196,7 +1205,7 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 /*
  * AlterDomainNotNull
  *
- * Routine implementing ALTER DOMAIN SET/DROP NOT NULL statements. 
+ * Routine implementing ALTER DOMAIN SET/DROP NOT NULL statements.
  */
 void
 AlterDomainNotNull(List *names, bool notNull)
@@ -1205,7 +1214,7 @@ AlterDomainNotNull(List *names, bool notNull)
 	Oid			domainoid;
 	Relation	typrel;
 	HeapTuple	tup;
-	Form_pg_type	typTup;
+	Form_pg_type typTup;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
 	typename = makeNode(TypeName);
@@ -1231,7 +1240,7 @@ AlterDomainNotNull(List *names, bool notNull)
 		elog(ERROR, "cache lookup failed for type %u", domainoid);
 	typTup = (Form_pg_type) GETSTRUCT(tup);
 
-	/* Doesn't return if user isn't allowed to alter the domain */ 
+	/* Doesn't return if user isn't allowed to alter the domain */
 	domainOwnerCheck(tup, typename);
 
 	/* Is the domain already set to the desired constraint? */
@@ -1248,15 +1257,15 @@ AlterDomainNotNull(List *names, bool notNull)
 	/* Adding a NOT NULL constraint requires checking existing columns */
 	if (notNull)
 	{
-		List   *rels;
-		List   *rt;
+		List	   *rels;
+		List	   *rt;
 
 		/* Fetch relation list with attributes based on this domain */
 		/* ShareLock is sufficient to prevent concurrent data changes */
 
 		rels = get_rels_with_domain(domainoid, ShareLock);
 
-		foreach (rt, rels)
+		foreach(rt, rels)
 		{
 			RelToCheck *rtc = (RelToCheck *) lfirst(rt);
 			Relation	testrel = rtc->rel;
@@ -1268,14 +1277,14 @@ AlterDomainNotNull(List *names, bool notNull)
 			scan = heap_beginscan(testrel, SnapshotNow, 0, NULL);
 			while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 			{
-				int		i;
+				int			i;
 
 				/* Test attributes that are of the domain */
 				for (i = 0; i < rtc->natts; i++)
 				{
-					int		attnum = rtc->atts[i];
-					Datum	d;
-					bool	isNull;
+					int			attnum = rtc->atts[i];
+					Datum		d;
+					bool		isNull;
 
 					d = heap_getattr(tuple, attnum, tupdesc, &isNull);
 
@@ -1284,7 +1293,7 @@ AlterDomainNotNull(List *names, bool notNull)
 								(errcode(ERRCODE_NOT_NULL_VIOLATION),
 								 errmsg("relation \"%s\" attribute \"%s\" contains NULL values",
 										RelationGetRelationName(testrel),
-										NameStr(tupdesc->attrs[attnum - 1]->attname))));
+						 NameStr(tupdesc->attrs[attnum - 1]->attname))));
 				}
 			}
 			heap_endscan(scan);
@@ -1295,7 +1304,7 @@ AlterDomainNotNull(List *names, bool notNull)
 	}
 
 	/*
-	 * Okay to update pg_type row.  We can scribble on typTup because it's
+	 * Okay to update pg_type row.	We can scribble on typTup because it's
 	 * a copy.
 	 */
 	typTup->typnotnull = notNull;
@@ -1321,7 +1330,7 @@ AlterDomainDropConstraint(List *names, const char *constrName, DropBehavior beha
 	Oid			domainoid;
 	HeapTuple	tup;
 	Relation	rel;
-	Form_pg_type	typTup;
+	Form_pg_type typTup;
 	Relation	conrel;
 	SysScanDesc conscan;
 	ScanKeyData key[1];
@@ -1350,7 +1359,7 @@ AlterDomainDropConstraint(List *names, const char *constrName, DropBehavior beha
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for type %u", domainoid);
 
-	/* Doesn't return if user isn't allowed to alter the domain */ 
+	/* Doesn't return if user isn't allowed to alter the domain */
 	domainOwnerCheck(tup, typename);
 
 	/* Grab an appropriate lock on the pg_constraint relation */
@@ -1403,15 +1412,15 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 	Oid			domainoid;
 	Relation	typrel;
 	HeapTuple	tup;
-	Form_pg_type	typTup;
-	List   *rels;
-	List   *rt;
-	EState *estate;
+	Form_pg_type typTup;
+	List	   *rels;
+	List	   *rt;
+	EState	   *estate;
 	ExprContext *econtext;
-	char   *ccbin;
-	Expr   *expr;
-	ExprState *exprstate;
-	int		counter = 0;
+	char	   *ccbin;
+	Expr	   *expr;
+	ExprState  *exprstate;
+	int			counter = 0;
 	Constraint *constr;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
@@ -1438,14 +1447,14 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 		elog(ERROR, "cache lookup failed for type %u", domainoid);
 	typTup = (Form_pg_type) GETSTRUCT(tup);
 
-	/* Doesn't return if user isn't allowed to alter the domain */ 
+	/* Doesn't return if user isn't allowed to alter the domain */
 	domainOwnerCheck(tup, typename);
 
 	/* Check for unsupported constraint types */
 	if (IsA(newConstraint, FkConstraint))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("FOREIGN KEY constraints not supported for domains")));
+		   errmsg("FOREIGN KEY constraints not supported for domains")));
 
 	/* otherwise it should be a plain Constraint */
 	if (!IsA(newConstraint, Constraint))
@@ -1469,20 +1478,20 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 					 errmsg("use ALTER DOMAIN .. [ SET | DROP ] NOT NULL instead")));
 			break;
 
-	  	case CONSTR_CHECK:
+		case CONSTR_CHECK:
 			/* processed below */
-	  		break;
+			break;
 
 		case CONSTR_UNIQUE:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("UNIQUE constraints not supported for domains")));
+				errmsg("UNIQUE constraints not supported for domains")));
 			break;
 
 		case CONSTR_PRIMARY:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("PRIMARY KEY constraints not supported for domains")));
+			errmsg("PRIMARY KEY constraints not supported for domains")));
 			break;
 
 		case CONSTR_ATTR_DEFERRABLE:
@@ -1501,18 +1510,18 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 	}
 
 	/*
-	 * Since all other constraint types throw errors, this must be
-	 * a check constraint.  First, process the constraint expression
-	 * and add an entry to pg_constraint.
+	 * Since all other constraint types throw errors, this must be a check
+	 * constraint.	First, process the constraint expression and add an
+	 * entry to pg_constraint.
 	 */
 
 	ccbin = domainAddConstraint(HeapTupleGetOid(tup), typTup->typnamespace,
 								typTup->typbasetype, typTup->typtypmod,
-								constr, &counter, NameStr(typTup->typname));
+							 constr, &counter, NameStr(typTup->typname));
 
 	/*
-	 * Test all values stored in the attributes based on the domain
-	 * the constraint is being added to.
+	 * Test all values stored in the attributes based on the domain the
+	 * constraint is being added to.
 	 */
 	expr = (Expr *) stringToNode(ccbin);
 
@@ -1528,7 +1537,7 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 
 	rels = get_rels_with_domain(domainoid, ShareLock);
 
-	foreach (rt, rels)
+	foreach(rt, rels)
 	{
 		RelToCheck *rtc = (RelToCheck *) lfirst(rt);
 		Relation	testrel = rtc->rel;
@@ -1540,15 +1549,15 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 		scan = heap_beginscan(testrel, SnapshotNow, 0, NULL);
 		while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 		{
-			int		i;
+			int			i;
 
 			/* Test attributes that are of the domain */
 			for (i = 0; i < rtc->natts; i++)
 			{
-				int		attnum = rtc->atts[i];
-				Datum	d;
-				bool	isNull;
-				Datum   conResult;
+				int			attnum = rtc->atts[i];
+				Datum		d;
+				bool		isNull;
+				Datum		conResult;
 
 				d = heap_getattr(tuple, attnum, tupdesc, &isNull);
 
@@ -1564,7 +1573,7 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 							(errcode(ERRCODE_CHECK_VIOLATION),
 							 errmsg("relation \"%s\" attribute \"%s\" contains values that violate the new constraint",
 									RelationGetRelationName(testrel),
-									NameStr(tupdesc->attrs[attnum - 1]->attname))));
+						 NameStr(tupdesc->attrs[attnum - 1]->attname))));
 			}
 
 			ResetExprContext(econtext);
@@ -1610,7 +1619,7 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 static List *
 get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 {
-	List *result = NIL;
+	List	   *result = NIL;
 	Relation	depRel;
 	ScanKeyData key[2];
 	SysScanDesc depScan;
@@ -1634,10 +1643,10 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 
 	while (HeapTupleIsValid(depTup = systable_getnext(depScan)))
 	{
-		Form_pg_depend		pg_depend = (Form_pg_depend) GETSTRUCT(depTup);
+		Form_pg_depend pg_depend = (Form_pg_depend) GETSTRUCT(depTup);
 		RelToCheck *rtc = NULL;
 		List	   *rellist;
-		Form_pg_attribute	pg_att;
+		Form_pg_attribute pg_att;
 		int			ptr;
 
 		/* Ignore dependees that aren't user columns of tables */
@@ -1675,10 +1684,10 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 		}
 
 		/*
-		 * Confirm column has not been dropped, and is of the expected type.
-		 * This defends against an ALTER DROP COLUMN occuring just before
-		 * we acquired lock ... but if the whole table were dropped, we'd
-		 * still have a problem.
+		 * Confirm column has not been dropped, and is of the expected
+		 * type. This defends against an ALTER DROP COLUMN occuring just
+		 * before we acquired lock ... but if the whole table were
+		 * dropped, we'd still have a problem.
 		 */
 		if (pg_depend->objsubid > RelationGetNumberOfAttributes(rtc->rel))
 			continue;
@@ -1687,16 +1696,16 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 			continue;
 
 		/*
-		 * Okay, add column to result.  We store the columns in column-number
-		 * order; this is just a hack to improve predictability of regression
-		 * test output ...
+		 * Okay, add column to result.	We store the columns in
+		 * column-number order; this is just a hack to improve
+		 * predictability of regression test output ...
 		 */
 		Assert(rtc->natts < RelationGetNumberOfAttributes(rtc->rel));
 
 		ptr = rtc->natts++;
-		while (ptr > 0 && rtc->atts[ptr-1] > pg_depend->objsubid)
+		while (ptr > 0 && rtc->atts[ptr - 1] > pg_depend->objsubid)
 		{
-			rtc->atts[ptr] = rtc->atts[ptr-1];
+			rtc->atts[ptr] = rtc->atts[ptr - 1];
 			ptr--;
 		}
 		rtc->atts[ptr] = pg_depend->objsubid;
@@ -1719,7 +1728,7 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 static void
 domainOwnerCheck(HeapTuple tup, TypeName *typename)
 {
-	Form_pg_type	typTup = (Form_pg_type) GETSTRUCT(tup);
+	Form_pg_type typTup = (Form_pg_type) GETSTRUCT(tup);
 
 	/* Check that this is actually a domain */
 	if (typTup->typtype != 'd')
@@ -1746,7 +1755,7 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	char	   *ccsrc;
 	char	   *ccbin;
 	ParseState *pstate;
-	CoerceToDomainValue  *domVal;
+	CoerceToDomainValue *domVal;
 
 	/*
 	 * Assign or validate constraint name
@@ -1759,8 +1768,8 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 								 constr->name))
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
-					 errmsg("constraint \"%s\" for domain \"%s\" already exists",
-							constr->name, domainName)));
+			 errmsg("constraint \"%s\" for domain \"%s\" already exists",
+					constr->name, domainName)));
 	}
 	else
 		constr->name = GenerateConstraintName(CONSTRAINT_DOMAIN,
@@ -1775,10 +1784,10 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 
 	/*
 	 * Set up a CoerceToDomainValue to represent the occurrence of VALUE
-	 * in the expression.  Note that it will appear to have the type of the
-	 * base type, not the domain.  This seems correct since within the
-	 * check expression, we should not assume the input value can be considered
-	 * a member of the domain.
+	 * in the expression.  Note that it will appear to have the type of
+	 * the base type, not the domain.  This seems correct since within the
+	 * check expression, we should not assume the input value can be
+	 * considered a member of the domain.
 	 */
 	domVal = makeNode(CoerceToDomainValue);
 	domVal->typeId = baseTypeOid;
@@ -1841,13 +1850,13 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	/*
 	 * Store the constraint in pg_constraint
 	 */
-	CreateConstraintEntry(constr->name,		/* Constraint Name */
-						  domainNamespace,	/* namespace */
+	CreateConstraintEntry(constr->name, /* Constraint Name */
+						  domainNamespace,		/* namespace */
 						  CONSTRAINT_CHECK,		/* Constraint Type */
 						  false,	/* Is Deferrable */
 						  false,	/* Is Deferred */
-						  InvalidOid,		/* not a relation constraint */
-						  NULL,	
+						  InvalidOid,	/* not a relation constraint */
+						  NULL,
 						  0,
 						  domainOid,	/* domain constraint */
 						  InvalidOid,	/* Foreign key fields */
@@ -1857,13 +1866,13 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 						  ' ',
 						  ' ',
 						  InvalidOid,
-						  expr, 	/* Tree form check constraint */
+						  expr, /* Tree form check constraint */
 						  ccbin,	/* Binary form check constraint */
-						  ccsrc);	/* Source form check constraint */
+						  ccsrc);		/* Source form check constraint */
 
 	/*
-	 * Return the compiled constraint expression so the calling routine can
-	 * perform any additional required tests.
+	 * Return the compiled constraint expression so the calling routine
+	 * can perform any additional required tests.
 	 */
 	return ccbin;
 }
@@ -1893,7 +1902,7 @@ GetDomainConstraints(Oid typeOid)
 		Form_pg_type typTup;
 		ScanKeyData key[1];
 		SysScanDesc scan;
-		
+
 		tup = SearchSysCache(TYPEOID,
 							 ObjectIdGetDatum(typeOid),
 							 0, 0, 0);
@@ -1915,17 +1924,20 @@ GetDomainConstraints(Oid typeOid)
 
 		while (HeapTupleIsValid(conTup = systable_getnext(scan)))
 		{
-			Form_pg_constraint	c = (Form_pg_constraint) GETSTRUCT(conTup);
-			Datum	val;
-			bool	isNull;
-			Expr   *check_expr;
+			Form_pg_constraint c = (Form_pg_constraint) GETSTRUCT(conTup);
+			Datum		val;
+			bool		isNull;
+			Expr	   *check_expr;
 			DomainConstraintState *r;
 
 			/* Ignore non-CHECK constraints (presently, shouldn't be any) */
 			if (c->contype != CONSTRAINT_CHECK)
 				continue;
 
-			/* Not expecting conbin to be NULL, but we'll test for it anyway */
+			/*
+			 * Not expecting conbin to be NULL, but we'll test for it
+			 * anyway
+			 */
 			val = fastgetattr(conTup, Anum_pg_constraint_conbin,
 							  conRel->rd_att, &isNull);
 			if (isNull)
@@ -1945,8 +1957,8 @@ GetDomainConstraints(Oid typeOid)
 			r->check_expr = ExecInitExpr(check_expr, NULL);
 
 			/*
-			 * use lcons() here because constraints of lower domains should
-			 * be applied earlier.
+			 * use lcons() here because constraints of lower domains
+			 * should be applied earlier.
 			 */
 			result = lcons(r, result);
 		}
@@ -2003,7 +2015,7 @@ AlterTypeOwner(List *names, AclId newOwnerSysId)
 	Oid			typeOid;
 	Relation	rel;
 	HeapTuple	tup;
-	Form_pg_type	typTup;
+	Form_pg_type typTup;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
 	typename = makeNode(TypeName);

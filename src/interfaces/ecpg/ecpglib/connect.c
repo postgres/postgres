@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.14 2003/08/01 13:53:36 petere Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.15 2003/08/04 00:43:32 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -15,49 +15,48 @@
 #ifdef USE_THREADS
 static pthread_mutex_t connections_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
-static struct connection *all_connections   = NULL;
+static struct connection *all_connections = NULL;
 static struct connection *actual_connection = NULL;
 
 static struct connection *
 ecpg_get_connection_nr(const char *connection_name)
 {
-  struct connection *ret = NULL;
+	struct connection *ret = NULL;
 
-  if( (connection_name == NULL) || (strcmp(connection_name, "CURRENT") == 0) )
-    {
-      ret = actual_connection;
-    }
-  else
-    {
-      struct connection *con;
-      
-      for( con = all_connections; con != NULL; con = con->next)
+	if ((connection_name == NULL) || (strcmp(connection_name, "CURRENT") == 0))
+		ret = actual_connection;
+	else
 	{
-	  if( strcmp(connection_name, con->name) == 0 )
-	    break;
-	}
-      ret = con;
-    }
+		struct connection *con;
 
-  return( ret );
+		for (con = all_connections; con != NULL; con = con->next)
+		{
+			if (strcmp(connection_name, con->name) == 0)
+				break;
+		}
+		ret = con;
+	}
+
+	return (ret);
 }
 
 struct connection *
 ECPGget_connection(const char *connection_name)
 {
-  struct connection *ret = NULL;
-#ifdef USE_THREADS
-  pthread_mutex_lock(&connections_mutex);
-#endif
-  
-  ret = ecpg_get_connection_nr(connection_name);
+	struct connection *ret = NULL;
 
 #ifdef USE_THREADS
-  pthread_mutex_unlock(&connections_mutex);
+	pthread_mutex_lock(&connections_mutex);
 #endif
 
-  return (ret);
-	
+	ret = ecpg_get_connection_nr(connection_name);
+
+#ifdef USE_THREADS
+	pthread_mutex_unlock(&connections_mutex);
+#endif
+
+	return (ret);
+
 }
 
 static void
@@ -70,9 +69,10 @@ ecpg_finish(struct connection * act)
 
 		PQfinish(act->connection);
 
-		/* no need to lock connections_mutex - we're always called
-		   by ECPGdisconnect or ECPGconnect, which are holding
-		   the lock */
+		/*
+		 * no need to lock connections_mutex - we're always called by
+		 * ECPGdisconnect or ECPGconnect, which are holding the lock
+		 */
 
 		/* remove act from the list */
 		if (act == all_connections)
@@ -158,26 +158,26 @@ ECPGsetconn(int lineno, const char *connection_name)
 static void
 ECPGnoticeReceiver(void *arg, const PGresult *result)
 {
-	char *sqlstate = PQresultErrorField(result, 'C');
-	char *message = PQresultErrorField(result, 'M');
+	char	   *sqlstate = PQresultErrorField(result, 'C');
+	char	   *message = PQresultErrorField(result, 'M');
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 
-	int sqlcode;
+	int			sqlcode;
 
 	/* these are not warnings */
-	if (strncmp(sqlstate, "00", 2)==0)
+	if (strncmp(sqlstate, "00", 2) == 0)
 		return;
 
 	ECPGlog("%s", message);
 
 	/* map to SQLCODE for backward compatibility */
-	if (strcmp(sqlstate, ECPG_SQLSTATE_INVALID_CURSOR_NAME)==0)
+	if (strcmp(sqlstate, ECPG_SQLSTATE_INVALID_CURSOR_NAME) == 0)
 		sqlcode = ECPG_WARNING_UNKNOWN_PORTAL;
-	else if (strcmp(sqlstate, ECPG_SQLSTATE_ACTIVE_SQL_TRANSACTION)==0)
+	else if (strcmp(sqlstate, ECPG_SQLSTATE_ACTIVE_SQL_TRANSACTION) == 0)
 		sqlcode = ECPG_WARNING_IN_TRANSACTION;
-	else if (strcmp(sqlstate, ECPG_SQLSTATE_NO_ACTIVE_SQL_TRANSACTION)==0)
+	else if (strcmp(sqlstate, ECPG_SQLSTATE_NO_ACTIVE_SQL_TRANSACTION) == 0)
 		sqlcode = ECPG_WARNING_NO_TRANSACTION;
-	else if (strcmp(sqlstate, ECPG_SQLSTATE_DUPLICATE_CURSOR)==0)
+	else if (strcmp(sqlstate, ECPG_SQLSTATE_DUPLICATE_CURSOR) == 0)
 		sqlcode = ECPG_WARNING_PORTAL_EXISTS;
 	else
 		sqlcode = 0;
@@ -210,21 +210,23 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 			   *options = NULL;
 
 	ECPGinit_sqlca(sqlca);
-	
+
 	if (INFORMIX_MODE(compat))
 	{
-		char *envname;
-		
-		/* Informix uses an environment variable DBPATH that overrides
-		 * the connection parameters given here.
-		 * We do the same with PG_DBPATH as the syntax is different. */
+		char	   *envname;
+
+		/*
+		 * Informix uses an environment variable DBPATH that overrides the
+		 * connection parameters given here. We do the same with PG_DBPATH
+		 * as the syntax is different.
+		 */
 		envname = getenv("PG_DBPATH");
 		if (envname)
 		{
 			ECPGfree(dbname);
 			dbname = strdup(envname);
 		}
-					
+
 	}
 
 	if ((this = (struct connection *) ECPGalloc(sizeof(struct connection), lineno)) == NULL)
@@ -378,21 +380,21 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 
 	if (PQstatus(this->connection) == CONNECTION_BAD)
 	{
-         	const char *errmsg = PQerrorMessage(this->connection);
-	        char *db = realname ? realname : "<DEFAULT>";
+		const char *errmsg = PQerrorMessage(this->connection);
+		char	   *db = realname ? realname : "<DEFAULT>";
 
 		ecpg_finish(this);
 #ifdef USE_THREADS
 		pthread_mutex_unlock(&connections_mutex);
 #endif
 		ECPGlog("connect: could not open database %s on %s port %s %s%s%s%s in line %d\n\t%s\n",
-                db,
+				db,
 				host ? host : "<DEFAULT>",
 				port ? port : "<DEFAULT>",
 				options ? "with options " : "", options ? options : "",
 				user ? "for user " : "", user ? user : "",
 				lineno, errmsg);
-        
+
 		ECPGraise(lineno, ECPG_CONNECT, ECPG_SQLSTATE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION, db);
 		if (host)
 			ECPGfree(host);
@@ -455,14 +457,14 @@ ECPGdisconnect(int lineno, const char *connection_name)
 		con = ecpg_get_connection_nr(connection_name);
 
 		if (!ECPGinit(con, connection_name, lineno))
-		  {
+		{
 #ifdef USE_THREADS
-		    pthread_mutex_unlock(&connections_mutex);
+			pthread_mutex_unlock(&connections_mutex);
 #endif
-		    return (false);
-		  }
+			return (false);
+		}
 		else
-		  ecpg_finish(con);
+			ecpg_finish(con);
 	}
 
 #ifdef USE_THREADS

@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.81 2003/06/25 01:19:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.82 2003/08/04 00:43:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -388,7 +388,7 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname)
 	flags = fcntl(sock, F_GETFL);
 	if (flags < 0 || fcntl(sock, F_SETFL, (long) (flags & ~O_NONBLOCK)))
 	{
-		char sebuf[256];
+		char		sebuf[256];
 
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 libpq_gettext("could not set socket to blocking mode: %s\n"), pqStrerror(errno, sebuf, sizeof(sebuf)));
@@ -435,7 +435,7 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname)
 
 	if (fcntl(sock, F_SETFL, (long) flags))
 	{
-		char sebuf[256];
+		char		sebuf[256];
 
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 libpq_gettext("could not restore non-blocking mode on socket: %s\n"),
@@ -496,11 +496,11 @@ pg_local_sendauth(char *PQerrormsg, PGconn *conn)
 
 	if (sendmsg(conn->sock, &msg, 0) == -1)
 	{
-		char sebuf[256];
+		char		sebuf[256];
 
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			 "pg_local_sendauth: sendmsg: %s\n",
-			 pqStrerror(errno, sebuf, sizeof(sebuf)));
+				 "pg_local_sendauth: sendmsg: %s\n",
+				 pqStrerror(errno, sebuf, sizeof(sebuf)));
 		return STATUS_ERROR;
 	}
 	return STATUS_OK;
@@ -592,9 +592,9 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 		case AUTH_REQ_KRB4:
 #ifdef KRB4
 			if (pg_krb4_sendauth(PQerrormsg, conn->sock,
-				(struct sockaddr_in *)&conn->laddr.addr,
-				(struct sockaddr_in *)&conn->raddr.addr,
-				hostname) != STATUS_OK)
+							   (struct sockaddr_in *) & conn->laddr.addr,
+							   (struct sockaddr_in *) & conn->raddr.addr,
+								 hostname) != STATUS_OK)
 			{
 				snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 					libpq_gettext("Kerberos 4 authentication failed\n"));
@@ -610,7 +610,7 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 		case AUTH_REQ_KRB5:
 #ifdef KRB5
 			if (pg_krb5_sendauth(PQerrormsg, conn->sock,
-				hostname) != STATUS_OK)
+								 hostname) != STATUS_OK)
 			{
 				snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 					libpq_gettext("Kerberos 5 authentication failed\n"));
@@ -743,13 +743,13 @@ fe_getauthname(char *PQerrormsg)
 		if (GetUserName(username, &namesize))
 			name = username;
 #else
-		char pwdbuf[BUFSIZ];
+		char		pwdbuf[BUFSIZ];
 		struct passwd pwdstr;
 		struct passwd *pw = NULL;
 
-		if( pqGetpwuid(geteuid(), &pwdstr,
-			       pwdbuf, sizeof(pwdbuf), &pw) == 0 )
-		  name = pw->pw_name;
+		if (pqGetpwuid(geteuid(), &pwdstr,
+					   pwdbuf, sizeof(pwdbuf), &pw) == 0)
+			name = pw->pw_name;
 #endif
 	}
 

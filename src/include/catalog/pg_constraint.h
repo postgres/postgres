@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_constraint.h,v 1.6 2003/03/10 22:28:19 tgl Exp $
+ * $Id: pg_constraint.h,v 1.7 2003/08/04 00:43:30 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -141,14 +141,15 @@ typedef FormData_pg_constraint *Form_pg_constraint;
  */
 
 /*
- * Used for constraint support functions where the 
+ * Used for constraint support functions where the
  * and conrelid, contypid columns being looked up
  */
-typedef enum CONSTRAINTCATEGORY {
+typedef enum CONSTRAINTCATEGORY
+{
 	CONSTRAINT_RELATION,
 	CONSTRAINT_DOMAIN,
 	CONSTRAINT_ASSERTION
-} CONSTRAINTCATEGORY;
+}	CONSTRAINTCATEGORY;
 
 /*
  * prototypes for functions in pg_constraint.c
@@ -176,9 +177,9 @@ extern Oid CreateConstraintEntry(const char *constraintName,
 extern void RemoveConstraintById(Oid conId);
 
 extern bool ConstraintNameIsUsed(CONSTRAINTCATEGORY conCat, Oid objId, Oid objNamespace,
-								 const char *cname);
+					 const char *cname);
 extern char *GenerateConstraintName(CONSTRAINTCATEGORY conCat, Oid objId, Oid objNamespace,
-									int *counter);
+					   int *counter);
 extern bool ConstraintNameIsGenerated(const char *cname);
 
 #endif   /* PG_CONSTRAINT_H */

@@ -40,7 +40,7 @@ complex_in(char *str)
 	if (sscanf(str, " ( %lf , %lf )", &x, &y) != 2)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for complex: \"%s\"", str)));
+			   errmsg("invalid input syntax for complex: \"%s\"", str)));
 
 	result = (Complex *) palloc(sizeof(Complex));
 	result->x = x;

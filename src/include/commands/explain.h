@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Id: explain.h,v 1.19 2003/05/06 20:26:27 tgl Exp $
+ * $Id: explain.h,v 1.20 2003/08/04 00:43:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,6 @@ extern void ExplainQuery(ExplainStmt *stmt, DestReceiver *dest);
 extern TupleDesc ExplainResultDesc(ExplainStmt *stmt);
 
 extern void ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
-						   TupOutputState *tstate);
+			   TupOutputState *tstate);
 
 #endif   /* EXPLAIN_H */

@@ -45,7 +45,7 @@ getlexem(char *start, char *end, int *len)
 }
 
 bool
-compare_subnode(ltree_level * t, char *qn, int len, int (*cmpptr) (const char *, const char *, size_t), bool anyend)
+			compare_subnode(ltree_level * t, char *qn, int len, int (*cmpptr) (const char *, const char *, size_t), bool anyend)
 {
 	char	   *endt = t->name + t->len;
 	char	   *endq = qn + len;
@@ -123,10 +123,15 @@ printFieldNot(FieldNot *fn ) {
 }
 */
 
-static struct {
-	bool muse;
-	uint32	high_pos;
-} SomeStack = {false,0,};
+static struct
+{
+	bool		muse;
+	uint32		high_pos;
+}	SomeStack =
+
+{
+	false, 0,
+};
 
 static bool
 checkCond(lquery_level * curq, int query_numlevel, ltree_level * curt, int tree_numlevel, FieldNot * ptr)
@@ -140,7 +145,8 @@ checkCond(lquery_level * curq, int query_numlevel, ltree_level * curt, int tree_
 	lquery_level *prevq = NULL;
 	ltree_level *prevt = NULL;
 
-	if ( SomeStack.muse ) {
+	if (SomeStack.muse)
+	{
 		high_pos = SomeStack.high_pos;
 		qlen--;
 		prevq = curq;
@@ -200,13 +206,15 @@ checkCond(lquery_level * curq, int query_numlevel, ltree_level * curt, int tree_
 					curt = LEVEL_NEXT(curt);
 					tlen--;
 					cur_tpos++;
-					if ( isok && prevq && prevq->numvar==0 && tlen>0 && cur_tpos <= high_pos ) {
-						FieldNot tmpptr;
-						if ( ptr )
-							memcpy(&tmpptr,ptr,sizeof(FieldNot));
-						SomeStack.high_pos = high_pos-cur_tpos;
+					if (isok && prevq && prevq->numvar == 0 && tlen > 0 && cur_tpos <= high_pos)
+					{
+						FieldNot	tmpptr;
+
+						if (ptr)
+							memcpy(&tmpptr, ptr, sizeof(FieldNot));
+						SomeStack.high_pos = high_pos - cur_tpos;
 						SomeStack.muse = true;
-						if ( checkCond(prevq, qlen+1, curt, tlen, (ptr) ? &tmpptr : NULL) )
+						if (checkCond(prevq, qlen + 1, curt, tlen, (ptr) ? &tmpptr : NULL))
 							return true;
 					}
 					if (!isok && ptr)
@@ -311,19 +319,21 @@ Datum
 lt_q_regex(PG_FUNCTION_ARGS)
 {
 	ltree	   *tree = PG_GETARG_LTREE(0);
-	ArrayType   *_query =  PG_GETARG_ARRAYTYPE_P(1);
-	lquery	*query = (lquery *) ARR_DATA_PTR(_query);	
-	bool	res = false;
-        int     num = ArrayGetNItems(ARR_NDIM(_query), ARR_DIMS(_query));
+	ArrayType  *_query = PG_GETARG_ARRAYTYPE_P(1);
+	lquery	   *query = (lquery *) ARR_DATA_PTR(_query);
+	bool		res = false;
+	int			num = ArrayGetNItems(ARR_NDIM(_query), ARR_DIMS(_query));
 
-        if (ARR_NDIM(_query) != 1)
-			ereport(ERROR,
+	if (ARR_NDIM(_query) != 1)
+		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("array must be one-dimensional")));
 
-	while (num > 0) {
+	while (num > 0)
+	{
 		if (DatumGetBool(DirectFunctionCall2(ltq_regex,
-				PointerGetDatum(tree), PointerGetDatum(query)))) {
+						 PointerGetDatum(tree), PointerGetDatum(query))))
+		{
 
 			res = true;
 			break;
@@ -345,5 +355,3 @@ lt_q_rregex(PG_FUNCTION_ARGS)
 										PG_GETARG_DATUM(0)
 										));
 }
-
-

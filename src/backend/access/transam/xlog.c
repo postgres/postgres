@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.120 2003/07/28 00:09:14 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.121 2003/08/04 00:43:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1046,8 +1046,8 @@ XLogWrite(XLogwrtRqst WriteRqst)
 				if (close(openLogFile) != 0)
 					ereport(PANIC,
 							(errcode_for_file_access(),
-							 errmsg("close of log file %u, segment %u failed: %m",
-									openLogId, openLogSeg)));
+					errmsg("close of log file %u, segment %u failed: %m",
+						   openLogId, openLogSeg)));
 				openLogFile = -1;
 			}
 			XLByteToPrevSeg(LogwrtResult.Write, openLogId, openLogSeg);
@@ -1162,8 +1162,8 @@ XLogWrite(XLogwrtRqst WriteRqst)
 				if (close(openLogFile) != 0)
 					ereport(PANIC,
 							(errcode_for_file_access(),
-							 errmsg("close of log file %u, segment %u failed: %m",
-									openLogId, openLogSeg)));
+					errmsg("close of log file %u, segment %u failed: %m",
+						   openLogId, openLogSeg)));
 				openLogFile = -1;
 			}
 			if (openLogFile < 0)
@@ -1266,7 +1266,7 @@ XLogFlush(XLogRecPtr record)
 				XLogCtlInsert *Insert = &XLogCtl->Insert;
 				uint32		freespace = INSERT_FREESPACE(Insert);
 
-				if (freespace < SizeOfXLogRecord)	/* buffer is full */
+				if (freespace < SizeOfXLogRecord)		/* buffer is full */
 					WriteRqstPtr = XLogCtl->xlblocks[Insert->curridx];
 				else
 				{
@@ -1449,8 +1449,8 @@ XLogFileInit(uint32 log, uint32 seg,
 	if (fd < 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("open of \"%s\" (log file %u, segment %u) failed: %m",
-						path, log, seg)));
+			errmsg("open of \"%s\" (log file %u, segment %u) failed: %m",
+				   path, log, seg)));
 
 	return (fd);
 }
@@ -1563,14 +1563,14 @@ XLogFileOpen(uint32 log, uint32 seg, bool econt)
 		{
 			ereport(LOG,
 					(errcode_for_file_access(),
-					 errmsg("open of \"%s\" (log file %u, segment %u) failed: %m",
-							path, log, seg)));
+			errmsg("open of \"%s\" (log file %u, segment %u) failed: %m",
+				   path, log, seg)));
 			return (fd);
 		}
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("open of \"%s\" (log file %u, segment %u) failed: %m",
-						path, log, seg)));
+			errmsg("open of \"%s\" (log file %u, segment %u) failed: %m",
+				   path, log, seg)));
 	}
 
 	return (fd);
@@ -1621,8 +1621,8 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr)
 	if (xldir == NULL)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("could not open transaction log directory \"%s\": %m",
-						XLogDir)));
+			errmsg("could not open transaction log directory \"%s\": %m",
+				   XLogDir)));
 
 	sprintf(lastoff, "%08X%08X", log, seg);
 
@@ -1654,15 +1654,15 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr)
 										   true))
 				{
 					ereport(LOG,
-							(errmsg("recycled transaction log file \"%s\"",
-									xlde->d_name)));
+						  (errmsg("recycled transaction log file \"%s\"",
+								  xlde->d_name)));
 				}
 				else
 				{
 					/* No need for any more future segments... */
 					ereport(LOG,
-							(errmsg("removing transaction log file \"%s\"",
-									xlde->d_name)));
+						  (errmsg("removing transaction log file \"%s\"",
+								  xlde->d_name)));
 					unlink(path);
 				}
 			}
@@ -1672,8 +1672,8 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr)
 	if (errno)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("could not read transaction log directory \"%s\": %m",
-						XLogDir)));
+			errmsg("could not read transaction log directory \"%s\": %m",
+				   XLogDir)));
 	closedir(xldir);
 }
 
@@ -1746,8 +1746,8 @@ RecordIsValid(XLogRecord *record, XLogRecPtr recptr, int emode)
 	if (!EQ_CRC64(record->xl_crc, crc))
 	{
 		ereport(emode,
-				(errmsg("bad resource manager data checksum in record at %X/%X",
-						recptr.xlogid, recptr.xrecoff)));
+		 (errmsg("bad resource manager data checksum in record at %X/%X",
+				 recptr.xlogid, recptr.xrecoff)));
 		return (false);
 	}
 
@@ -1769,8 +1769,8 @@ RecordIsValid(XLogRecord *record, XLogRecPtr recptr, int emode)
 		if (!EQ_CRC64(cbuf, crc))
 		{
 			ereport(emode,
-					(errmsg("bad checksum of backup block %d in record at %X/%X",
-							i + 1, recptr.xlogid, recptr.xrecoff)));
+			(errmsg("bad checksum of backup block %d in record at %X/%X",
+					i + 1, recptr.xlogid, recptr.xrecoff)));
 			return (false);
 		}
 		blk += sizeof(BkpBlock) + BLCKSZ;
@@ -1931,7 +1931,7 @@ got_record:;
 	{
 		ereport(emode,
 				(errmsg("invalid resource manager id %u at %X/%X",
-						record->xl_rmid, RecPtr->xlogid, RecPtr->xrecoff)));
+					 record->xl_rmid, RecPtr->xlogid, RecPtr->xrecoff)));
 		goto next_record_is_invalid;
 	}
 	nextRecord = NULL;
@@ -2063,7 +2063,7 @@ ValidXLOGHeader(XLogPageHeader hdr, int emode, bool checkSUI)
 	{
 		ereport(emode,
 				(errmsg("unexpected pageaddr %X/%X in log file %u, segment %u, offset %u",
-						hdr->xlp_pageaddr.xlogid, hdr->xlp_pageaddr.xrecoff,
+					 hdr->xlp_pageaddr.xlogid, hdr->xlp_pageaddr.xrecoff,
 						readId, readSeg, readOff)));
 		return false;
 	}
@@ -2084,7 +2084,7 @@ ValidXLOGHeader(XLogPageHeader hdr, int emode, bool checkSUI)
 			hdr->xlp_sui > lastReadSUI + 512)
 		{
 			ereport(emode,
-					/* translator: SUI = startup id */
+			/* translator: SUI = startup id */
 					(errmsg("out-of-sequence SUI %u (after %u) in log file %u, segment %u, offset %u",
 							hdr->xlp_sui, lastReadSUI,
 							readId, readSeg, readOff)));
@@ -2235,8 +2235,8 @@ ReadControlFile(void)
 		ereport(FATAL,
 				(errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized with PG_CONTROL_VERSION %d,"
-						   " but the server was compiled with PG_CONTROL_VERSION %d.",
-						   ControlFile->pg_control_version, PG_CONTROL_VERSION),
+			  " but the server was compiled with PG_CONTROL_VERSION %d.",
+					ControlFile->pg_control_version, PG_CONTROL_VERSION),
 				 errhint("It looks like you need to initdb.")));
 	/* Now check the CRC. */
 	INIT_CRC64(crc);
@@ -2265,75 +2265,75 @@ ReadControlFile(void)
 		ereport(FATAL,
 				(errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized with CATALOG_VERSION_NO %d,"
-						   " but the server was compiled with CATALOG_VERSION_NO %d.",
-						   ControlFile->catalog_version_no, CATALOG_VERSION_NO),
+			  " but the server was compiled with CATALOG_VERSION_NO %d.",
+					ControlFile->catalog_version_no, CATALOG_VERSION_NO),
 				 errhint("It looks like you need to initdb.")));
 	if (ControlFile->blcksz != BLCKSZ)
 		ereport(FATAL,
 				(errmsg("database files are incompatible with server"),
-				 errdetail("The database cluster was initialized with BLCKSZ %d,"
-						   " but the server was compiled with BLCKSZ %d.",
-						   ControlFile->blcksz, BLCKSZ),
-				 errhint("It looks like you need to recompile or initdb.")));
+		 errdetail("The database cluster was initialized with BLCKSZ %d,"
+				   " but the server was compiled with BLCKSZ %d.",
+				   ControlFile->blcksz, BLCKSZ),
+			 errhint("It looks like you need to recompile or initdb.")));
 	if (ControlFile->relseg_size != RELSEG_SIZE)
 		ereport(FATAL,
 				(errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized with RELSEG_SIZE %d,"
-						   " but the server was compiled with RELSEG_SIZE %d.",
+					 " but the server was compiled with RELSEG_SIZE %d.",
 						   ControlFile->relseg_size, RELSEG_SIZE),
-				 errhint("It looks like you need to recompile or initdb.")));
+			 errhint("It looks like you need to recompile or initdb.")));
 	if (ControlFile->nameDataLen != NAMEDATALEN)
 		ereport(FATAL,
 				(errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized with NAMEDATALEN %d,"
-						   " but the server was compiled with NAMEDATALEN %d.",
+					 " but the server was compiled with NAMEDATALEN %d.",
 						   ControlFile->nameDataLen, NAMEDATALEN),
-				 errhint("It looks like you need to recompile or initdb.")));
+			 errhint("It looks like you need to recompile or initdb.")));
 	if (ControlFile->funcMaxArgs != FUNC_MAX_ARGS)
 		ereport(FATAL,
 				(errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized with FUNC_MAX_ARGS %d,"
-						   " but the server was compiled with FUNC_MAX_ARGS %d.",
+				   " but the server was compiled with FUNC_MAX_ARGS %d.",
 						   ControlFile->funcMaxArgs, FUNC_MAX_ARGS),
-				 errhint("It looks like you need to recompile or initdb.")));
+			 errhint("It looks like you need to recompile or initdb.")));
 
 #ifdef HAVE_INT64_TIMESTAMP
 	if (ControlFile->enableIntTimes != TRUE)
 		ereport(FATAL,
 				(errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized without HAVE_INT64_TIMESTAMP"
-						   " but the server was compiled with HAVE_INT64_TIMESTAMP."),
-				 errhint("It looks like you need to recompile or initdb.")));
+			  " but the server was compiled with HAVE_INT64_TIMESTAMP."),
+			 errhint("It looks like you need to recompile or initdb.")));
 #else
 	if (ControlFile->enableIntTimes != FALSE)
 		ereport(FATAL,
 				(errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized with HAVE_INT64_TIMESTAMP"
-						   " but the server was compiled without HAVE_INT64_TIMESTAMP."),
-				 errhint("It looks like you need to recompile or initdb.")));
+		   " but the server was compiled without HAVE_INT64_TIMESTAMP."),
+			 errhint("It looks like you need to recompile or initdb.")));
 #endif
 
 	if (ControlFile->localeBuflen != LOCALE_NAME_BUFLEN)
 		ereport(FATAL,
 				(errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized with LOCALE_NAME_BUFLEN %d,"
-						   " but the server was compiled with LOCALE_NAME_BUFLEN %d.",
+			  " but the server was compiled with LOCALE_NAME_BUFLEN %d.",
 						   ControlFile->localeBuflen, LOCALE_NAME_BUFLEN),
-				 errhint("It looks like you need to recompile or initdb.")));
+			 errhint("It looks like you need to recompile or initdb.")));
 	if (setlocale(LC_COLLATE, ControlFile->lc_collate) == NULL)
 		ereport(FATAL,
-				(errmsg("database files are incompatible with operating system"),
-				 errdetail("The database cluster was initialized with LC_COLLATE \"%s\","
-						   " which is not recognized by setlocale().",
-						   ControlFile->lc_collate),
-				 errhint("It looks like you need to initdb or install locale support.")));
+		(errmsg("database files are incompatible with operating system"),
+		 errdetail("The database cluster was initialized with LC_COLLATE \"%s\","
+				   " which is not recognized by setlocale().",
+				   ControlFile->lc_collate),
+		 errhint("It looks like you need to initdb or install locale support.")));
 	if (setlocale(LC_CTYPE, ControlFile->lc_ctype) == NULL)
 		ereport(FATAL,
-				(errmsg("database files are incompatible with operating system"),
-				 errdetail("The database cluster was initialized with LC_CTYPE \"%s\","
-						   " which is not recognized by setlocale().",
-						   ControlFile->lc_ctype),
-				 errhint("It looks like you need to initdb or install locale support.")));
+		(errmsg("database files are incompatible with operating system"),
+		 errdetail("The database cluster was initialized with LC_CTYPE \"%s\","
+				   " which is not recognized by setlocale().",
+				   ControlFile->lc_ctype),
+		 errhint("It looks like you need to initdb or install locale support.")));
 
 	/* Make the fixed locale settings visible as GUC variables, too */
 	SetConfigOption("lc_collate", ControlFile->lc_collate,
@@ -2602,10 +2602,10 @@ StartupXLOG(void)
 						str_time(ControlFile->time))));
 	else if (ControlFile->state == DB_IN_RECOVERY)
 		ereport(LOG,
-				(errmsg("database system was interrupted while in recovery at %s",
-						str_time(ControlFile->time)),
-				 errhint("This probably means that some data is corrupted and"
-						 " you will have to use the last backup for recovery.")));
+		(errmsg("database system was interrupted while in recovery at %s",
+				str_time(ControlFile->time)),
+		 errhint("This probably means that some data is corrupted and"
+				 " you will have to use the last backup for recovery.")));
 	else if (ControlFile->state == DB_IN_PRODUCTION)
 		ereport(LOG,
 				(errmsg("database system was interrupted at %s",
@@ -2637,12 +2637,12 @@ StartupXLOG(void)
 			checkPointLoc = ControlFile->prevCheckPoint;
 			ereport(LOG,
 					(errmsg("using previous checkpoint record at %X/%X",
-							checkPointLoc.xlogid, checkPointLoc.xrecoff)));
+						  checkPointLoc.xlogid, checkPointLoc.xrecoff)));
 			InRecovery = true;	/* force recovery even if SHUTDOWNED */
 		}
 		else
 			ereport(PANIC,
-					(errmsg("could not locate a valid checkpoint record")));
+				 (errmsg("could not locate a valid checkpoint record")));
 	}
 	LastRec = RecPtr = checkPointLoc;
 	memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
@@ -2665,11 +2665,12 @@ StartupXLOG(void)
 	ShmemVariableCache->oidCount = 0;
 
 	/*
-	 * If it was a shutdown checkpoint, then any following WAL entries were
-	 * created under the next StartUpID; if it was a regular checkpoint then
-	 * any following WAL entries were created under the same StartUpID.
-	 * We must replay WAL entries using the same StartUpID they were created
-	 * under, so temporarily adopt that SUI (see also xlog_redo()).
+	 * If it was a shutdown checkpoint, then any following WAL entries
+	 * were created under the next StartUpID; if it was a regular
+	 * checkpoint then any following WAL entries were created under the
+	 * same StartUpID. We must replay WAL entries using the same StartUpID
+	 * they were created under, so temporarily adopt that SUI (see also
+	 * xlog_redo()).
 	 */
 	if (wasShutdown)
 		ThisStartUpID = checkPoint.ThisStartUpID + 1;
@@ -2690,7 +2691,7 @@ StartupXLOG(void)
 	{
 		if (wasShutdown)
 			ereport(PANIC,
-					(errmsg("invalid redo/undo record in shutdown checkpoint")));
+			(errmsg("invalid redo/undo record in shutdown checkpoint")));
 		InRecovery = true;
 	}
 	else if (ControlFile->state != DB_SHUTDOWNED)
@@ -2699,7 +2700,7 @@ StartupXLOG(void)
 	/* REDO */
 	if (InRecovery)
 	{
-		int		rmid;
+		int			rmid;
 
 		ereport(LOG,
 				(errmsg("database system was not properly shut down; "
@@ -2791,8 +2792,8 @@ StartupXLOG(void)
 
 	/*
 	 * Tricky point here: readBuf contains the *last* block that the
-	 * LastRec record spans, not the one it starts in.	The last block
-	 * is indeed the one we want to use.
+	 * LastRec record spans, not the one it starts in.	The last block is
+	 * indeed the one we want to use.
 	 */
 	Assert(readOff == (XLogCtl->xlblocks[0].xrecoff - BLCKSZ) % XLogSegSize);
 	memcpy((char *) Insert->currpage, readBuf, BLCKSZ);
@@ -2818,11 +2819,12 @@ StartupXLOG(void)
 	else
 	{
 		/*
-		 * Whenever Write.LogwrtResult points to exactly the end of a page,
-		 * Write.curridx must point to the *next* page (see XLogWrite()).
+		 * Whenever Write.LogwrtResult points to exactly the end of a
+		 * page, Write.curridx must point to the *next* page (see
+		 * XLogWrite()).
 		 *
-		 * Note: it might seem we should do AdvanceXLInsertBuffer() here,
-		 * but we can't since we haven't yet determined the correct StartUpID
+		 * Note: it might seem we should do AdvanceXLInsertBuffer() here, but
+		 * we can't since we haven't yet determined the correct StartUpID
 		 * to put into the new page's header.  The first actual attempt to
 		 * insert a log record will advance the insert state.
 		 */
@@ -2859,7 +2861,7 @@ StartupXLOG(void)
 
 	if (InRecovery)
 	{
-		int		rmid;
+		int			rmid;
 
 		/*
 		 * Allow resource managers to do any required cleanup.
@@ -2885,14 +2887,15 @@ StartupXLOG(void)
 			ThisStartUpID = ControlFile->checkPointCopy.ThisStartUpID;
 
 		/*
-		 * Perform a new checkpoint to update our recovery activity to disk.
+		 * Perform a new checkpoint to update our recovery activity to
+		 * disk.
 		 *
 		 * Note that we write a shutdown checkpoint.  This is correct since
-		 * the records following it will use SUI one more than what is shown
-		 * in the checkpoint's ThisStartUpID.
+		 * the records following it will use SUI one more than what is
+		 * shown in the checkpoint's ThisStartUpID.
 		 *
-		 * In case we had to use the secondary checkpoint, make sure that
-		 * it will still be shown as the secondary checkpoint after this
+		 * In case we had to use the secondary checkpoint, make sure that it
+		 * will still be shown as the secondary checkpoint after this
 		 * CreateCheckPoint operation; we don't want the broken primary
 		 * checkpoint to become prevCheckPoint...
 		 */
@@ -2907,10 +2910,10 @@ StartupXLOG(void)
 	else
 	{
 		/*
-		 * If we are not doing recovery, then we saw a checkpoint with nothing
-		 * after it, and we can safely use StartUpID equal to one more than
-		 * the checkpoint's SUI.  But just for paranoia's sake, check against
-		 * pg_control too.
+		 * If we are not doing recovery, then we saw a checkpoint with
+		 * nothing after it, and we can safely use StartUpID equal to one
+		 * more than the checkpoint's SUI.  But just for paranoia's sake,
+		 * check against pg_control too.
 		 */
 		ThisStartUpID = checkPoint.ThisStartUpID;
 		if (ThisStartUpID < ControlFile->checkPointCopy.ThisStartUpID)
@@ -2923,7 +2926,8 @@ StartupXLOG(void)
 	PreallocXlogFiles(EndOfLog);
 
 	/*
-	 * Advance StartUpID to one more than the highest value used previously.
+	 * Advance StartUpID to one more than the highest value used
+	 * previously.
 	 */
 	ThisStartUpID++;
 	XLogCtl->ThisStartUpID = ThisStartUpID;
@@ -2973,9 +2977,9 @@ ReadCheckpointRecord(XLogRecPtr RecPtr,
 	if (!XRecOffIsValid(RecPtr.xrecoff))
 	{
 		ereport(LOG,
-				/* translator: %s is "primary" or "secondary" */
+		/* translator: %s is "primary" or "secondary" */
 				(errmsg("invalid %s checkpoint link in control file",
-						(whichChkpt == 1) ? gettext("primary") : gettext("secondary"))));
+		(whichChkpt == 1) ? gettext("primary") : gettext("secondary"))));
 		return NULL;
 	}
 
@@ -2984,34 +2988,34 @@ ReadCheckpointRecord(XLogRecPtr RecPtr,
 	if (record == NULL)
 	{
 		ereport(LOG,
-				/* translator: %s is "primary" or "secondary" */
+		/* translator: %s is "primary" or "secondary" */
 				(errmsg("invalid %s checkpoint record",
-						(whichChkpt == 1) ? gettext("primary") : gettext("secondary"))));
+		(whichChkpt == 1) ? gettext("primary") : gettext("secondary"))));
 		return NULL;
 	}
 	if (record->xl_rmid != RM_XLOG_ID)
 	{
 		ereport(LOG,
-				/* translator: %s is "primary" or "secondary" */
-				(errmsg("invalid resource manager id in %s checkpoint record",
-						(whichChkpt == 1) ? gettext("primary") : gettext("secondary"))));
+		/* translator: %s is "primary" or "secondary" */
+		   (errmsg("invalid resource manager id in %s checkpoint record",
+		(whichChkpt == 1) ? gettext("primary") : gettext("secondary"))));
 		return NULL;
 	}
 	if (record->xl_info != XLOG_CHECKPOINT_SHUTDOWN &&
 		record->xl_info != XLOG_CHECKPOINT_ONLINE)
 	{
 		ereport(LOG,
-				/* translator: %s is "primary" or "secondary" */
+		/* translator: %s is "primary" or "secondary" */
 				(errmsg("invalid xl_info in %s checkpoint record",
-						(whichChkpt == 1) ? gettext("primary") : gettext("secondary"))));
+		(whichChkpt == 1) ? gettext("primary") : gettext("secondary"))));
 		return NULL;
 	}
 	if (record->xl_len != sizeof(CheckPoint))
 	{
 		ereport(LOG,
-				/* translator: %s is "primary" or "secondary" */
+		/* translator: %s is "primary" or "secondary" */
 				(errmsg("invalid length of %s checkpoint record",
-						(whichChkpt == 1) ? gettext("primary") : gettext("secondary"))));
+		(whichChkpt == 1) ? gettext("primary") : gettext("secondary"))));
 		return NULL;
 	}
 	return record;
@@ -3112,10 +3116,11 @@ CreateCheckPoint(bool shutdown, bool force)
 	if (MyXactMadeXLogEntry)
 		ereport(ERROR,
 				(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
-				 errmsg("checkpoint cannot be made inside transaction block")));
+		  errmsg("checkpoint cannot be made inside transaction block")));
 
 	/*
-	 * Acquire CheckpointLock to ensure only one checkpoint happens at a time.
+	 * Acquire CheckpointLock to ensure only one checkpoint happens at a
+	 * time.
 	 *
 	 * The CheckpointLock can be held for quite a while, which is not good
 	 * because we won't respond to a cancel/die request while waiting for
@@ -3149,14 +3154,15 @@ CreateCheckPoint(bool shutdown, bool force)
 	LWLockAcquire(WALInsertLock, LW_EXCLUSIVE);
 
 	/*
-	 * If this isn't a shutdown or forced checkpoint, and we have not inserted
-	 * any XLOG records since the start of the last checkpoint, skip the
-	 * checkpoint.  The idea here is to avoid inserting duplicate checkpoints
-	 * when the system is idle. That wastes log space, and more importantly it
-	 * exposes us to possible loss of both current and previous checkpoint
-	 * records if the machine crashes just as we're writing the update.
-	 * (Perhaps it'd make even more sense to checkpoint only when the previous
-	 * checkpoint record is in a different xlog page?)
+	 * If this isn't a shutdown or forced checkpoint, and we have not
+	 * inserted any XLOG records since the start of the last checkpoint,
+	 * skip the checkpoint.  The idea here is to avoid inserting duplicate
+	 * checkpoints when the system is idle. That wastes log space, and
+	 * more importantly it exposes us to possible loss of both current and
+	 * previous checkpoint records if the machine crashes just as we're
+	 * writing the update. (Perhaps it'd make even more sense to
+	 * checkpoint only when the previous checkpoint record is in a
+	 * different xlog page?)
 	 *
 	 * We have to make two tests to determine that nothing has happened since
 	 * the start of the last checkpoint: current insertion point must
@@ -3204,12 +3210,13 @@ CreateCheckPoint(bool shutdown, bool force)
 	 * Here we update the shared RedoRecPtr for future XLogInsert calls;
 	 * this must be done while holding the insert lock AND the info_lck.
 	 *
-	 * Note: if we fail to complete the checkpoint, RedoRecPtr will be
-	 * left pointing past where it really needs to point.  This is okay;
-	 * the only consequence is that XLogInsert might back up whole buffers
-	 * that it didn't really need to.  We can't postpone advancing RedoRecPtr
-	 * because XLogInserts that happen while we are dumping buffers must
-	 * assume that their buffer changes are not included in the checkpoint.
+	 * Note: if we fail to complete the checkpoint, RedoRecPtr will be left
+	 * pointing past where it really needs to point.  This is okay; the
+	 * only consequence is that XLogInsert might back up whole buffers
+	 * that it didn't really need to.  We can't postpone advancing
+	 * RedoRecPtr because XLogInserts that happen while we are dumping
+	 * buffers must assume that their buffer changes are not included in
+	 * the checkpoint.
 	 */
 	{
 		/* use volatile pointer to prevent code rearrangement */
@@ -3538,15 +3545,15 @@ assign_xlog_sync_method(const char *method, bool doit, bool interactive)
 			if (pg_fsync(openLogFile) != 0)
 				ereport(PANIC,
 						(errcode_for_file_access(),
-						 errmsg("fsync of log file %u, segment %u failed: %m",
-								openLogId, openLogSeg)));
+					errmsg("fsync of log file %u, segment %u failed: %m",
+						   openLogId, openLogSeg)));
 			if (open_sync_bit != new_sync_bit)
 			{
 				if (close(openLogFile) != 0)
 					ereport(PANIC,
 							(errcode_for_file_access(),
-							 errmsg("close of log file %u, segment %u failed: %m",
-									openLogId, openLogSeg)));
+					errmsg("close of log file %u, segment %u failed: %m",
+						   openLogId, openLogSeg)));
 				openLogFile = -1;
 			}
 		}
@@ -3570,16 +3577,16 @@ issue_xlog_fsync(void)
 			if (pg_fsync(openLogFile) != 0)
 				ereport(PANIC,
 						(errcode_for_file_access(),
-						 errmsg("fsync of log file %u, segment %u failed: %m",
-								openLogId, openLogSeg)));
+					errmsg("fsync of log file %u, segment %u failed: %m",
+						   openLogId, openLogSeg)));
 			break;
 #ifdef HAVE_FDATASYNC
 		case SYNC_METHOD_FDATASYNC:
 			if (pg_fdatasync(openLogFile) != 0)
 				ereport(PANIC,
 						(errcode_for_file_access(),
-						 errmsg("fdatasync of log file %u, segment %u failed: %m",
-								openLogId, openLogSeg)));
+				errmsg("fdatasync of log file %u, segment %u failed: %m",
+					   openLogId, openLogSeg)));
 			break;
 #endif
 		case SYNC_METHOD_OPEN:

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.99 2003/07/21 17:05:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.100 2003/08/04 00:43:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,8 +95,8 @@ SPI_connect(void)
 	/*
 	 * Create memory contexts for this procedure
 	 *
-	 * XXX it would be better to use PortalContext as the parent context,
-	 * but we may not be inside a portal (consider deferred-trigger
+	 * XXX it would be better to use PortalContext as the parent context, but
+	 * we may not be inside a portal (consider deferred-trigger
 	 * execution).
 	 */
 	_SPI_current->procCxt = AllocSetContextCreate(TopTransactionContext,
@@ -799,7 +799,7 @@ SPI_cursor_open(const char *name, void *plan, Datum *Values, const char *Nulls)
 	 */
 	PortalDefineQuery(portal,
 					  NULL,		/* unfortunately don't have sourceText */
-					  "SELECT",	/* cursor's query is always a SELECT */
+					  "SELECT", /* cursor's query is always a SELECT */
 					  makeList1(queryTree),
 					  makeList1(planTree),
 					  PortalGetHeapMemory(portal));
@@ -1007,9 +1007,9 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 	/*
 	 * Do parse analysis and rule rewrite for each raw parsetree.
 	 *
-	 * We save the querytrees from each raw parsetree as a separate
-	 * sublist.  This allows _SPI_execute_plan() to know where the
-	 * boundaries between original queries fall.
+	 * We save the querytrees from each raw parsetree as a separate sublist.
+	 * This allows _SPI_execute_plan() to know where the boundaries
+	 * between original queries fall.
 	 */
 	query_list_list = NIL;
 	plan_list = NIL;
@@ -1136,8 +1136,8 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 
 	foreach(query_list_list_item, query_list_list)
 	{
-		List   *query_list = lfirst(query_list_list_item);
-		List   *query_list_item;
+		List	   *query_list = lfirst(query_list_list_item);
+		List	   *query_list_item;
 
 		/* Reset state for each original parsetree */
 		/* (at most one of its querytrees will be marked canSetTag) */
@@ -1148,7 +1148,7 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 
 		foreach(query_list_item, query_list)
 		{
-			Query  *queryTree = (Query *) lfirst(query_list_item);
+			Query	   *queryTree = (Query *) lfirst(query_list_item);
 			Plan	   *planTree;
 			QueryDesc  *qdesc;
 			DestReceiver *dest;
@@ -1190,10 +1190,10 @@ _SPI_pquery(QueryDesc *queryDesc, bool runit, int tcount)
 	{
 		case CMD_SELECT:
 			res = SPI_OK_SELECT;
-			if (queryDesc->parsetree->into != NULL)	/* select into table */
+			if (queryDesc->parsetree->into != NULL)		/* select into table */
 			{
 				res = SPI_OK_SELINTO;
-				queryDesc->dest = None_Receiver; /* don't output results */
+				queryDesc->dest = None_Receiver;		/* don't output results */
 			}
 			break;
 		case CMD_INSERT:
@@ -1351,7 +1351,7 @@ _SPI_checktuples(void)
 	SPITupleTable *tuptable = _SPI_current->tuptable;
 	bool		failed = false;
 
-	if (tuptable == NULL)	/* spi_dest_startup was not called */
+	if (tuptable == NULL)		/* spi_dest_startup was not called */
 		failed = true;
 	else if (processed != (tuptable->alloced - tuptable->free))
 		failed = true;
@@ -1372,7 +1372,8 @@ _SPI_copy_plan(_SPI_plan *plan, int location)
 		parentcxt = _SPI_current->procCxt;
 	else if (location == _SPI_CPLAN_TOPCXT)
 		parentcxt = TopMemoryContext;
-	else						/* (this case not currently used) */
+	else
+/* (this case not currently used) */
 		parentcxt = CurrentMemoryContext;
 
 	/*

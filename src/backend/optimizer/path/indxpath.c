@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.145 2003/07/25 00:01:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.146 2003/08/04 00:43:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,9 +64,9 @@ static List *group_clauses_by_indexkey_for_join(Query *root,
 								   Relids outer_relids,
 								   JoinType jointype, bool isouterjoin);
 static bool match_clause_to_indexcol(RelOptInfo *rel, IndexOptInfo *index,
-									 int indexcol, Oid opclass, Expr *clause);
-static bool match_join_clause_to_indexcol(RelOptInfo *rel, IndexOptInfo *index,
 						 int indexcol, Oid opclass, Expr *clause);
+static bool match_join_clause_to_indexcol(RelOptInfo *rel, IndexOptInfo *index,
+							  int indexcol, Oid opclass, Expr *clause);
 static Oid indexable_operator(Expr *clause, Oid opclass,
 				   bool indexkey_on_left);
 static bool pred_test(List *predicate_list, List *restrictinfo_list,
@@ -77,8 +77,8 @@ static bool pred_test_recurse_pred(Expr *predicate, Node *clause);
 static bool pred_test_simple_clause(Expr *predicate, Node *clause);
 static Relids indexable_outerrelids(RelOptInfo *rel, IndexOptInfo *index);
 static Path *make_innerjoin_index_path(Query *root,
-									   RelOptInfo *rel, IndexOptInfo *index,
-									   List *clausegroups);
+						  RelOptInfo *rel, IndexOptInfo *index,
+						  List *clausegroups);
 static bool match_index_to_operand(Node *operand, int indexcol,
 					   RelOptInfo *rel, IndexOptInfo *index);
 static bool match_special_index_operator(Expr *clause, Oid opclass,
@@ -87,7 +87,7 @@ static List *expand_indexqual_condition(Expr *clause, Oid opclass);
 static List *prefix_quals(Node *leftop, Oid opclass,
 			 Const *prefix, Pattern_Prefix_Status pstatus);
 static List *network_prefix_quals(Node *leftop, Oid expr_op, Oid opclass,
-								  Datum rightop);
+					 Datum rightop);
 static Datum string_to_datum(const char *str, Oid datatype);
 static Const *string_to_const(const char *str, Oid datatype);
 
@@ -114,7 +114,7 @@ static Const *string_to_const(const char *str, Oid datatype);
  * scan this routine deems potentially interesting for the current query.
  *
  * We also determine the set of other relids that participate in join
- * clauses that could be used with each index.  The actually best innerjoin
+ * clauses that could be used with each index.	The actually best innerjoin
  * path will be generated for each outer relation later on, but knowing the
  * set of potential otherrels allows us to identify equivalent outer relations
  * and avoid repeated computation.
@@ -219,10 +219,11 @@ create_index_paths(Query *root, RelOptInfo *rel)
 
 		/*
 		 * 6. Examine join clauses to see which ones are potentially
-		 * usable with this index, and generate the set of all other relids
-		 * that participate in such join clauses.  We'll use this set later
-		 * to recognize outer rels that are equivalent for joining purposes.
-		 * We compute both per-index and overall-for-relation sets.
+		 * usable with this index, and generate the set of all other
+		 * relids that participate in such join clauses.  We'll use this
+		 * set later to recognize outer rels that are equivalent for
+		 * joining purposes. We compute both per-index and
+		 * overall-for-relation sets.
 		 */
 		join_outerrelids = indexable_outerrelids(rel, index);
 		index->outer_relids = join_outerrelids;
@@ -274,7 +275,7 @@ match_index_orclauses(RelOptInfo *rel,
 			 */
 			restrictinfo->subclauseindices =
 				match_index_orclause(rel, index,
-									 ((BoolExpr *) restrictinfo->clause)->args,
+							   ((BoolExpr *) restrictinfo->clause)->args,
 									 restrictinfo->subclauseindices);
 		}
 	}
@@ -422,6 +423,7 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
 	Oid		   *classes = index->classlist;
 
 	FastListInit(&quals);
+
 	/*
 	 * Extract relevant indexclauses in indexkey order.  This is
 	 * essentially just like group_clauses_by_indexkey() except that the
@@ -576,7 +578,7 @@ group_clauses_by_indexkey(RelOptInfo *rel, IndexOptInfo *index)
  *
  * This is much like group_clauses_by_indexkey(), but we consider both
  * join and restriction clauses.  Any joinclause that uses only otherrels
- * in the specified outer_relids is fair game.  But there must be at least
+ * in the specified outer_relids is fair game.	But there must be at least
  * one such joinclause in the final list, otherwise we return NIL indicating
  * that this index isn't interesting as an inner indexscan.  (A scan using
  * only restriction clauses shouldn't be created here, because a regular Path
@@ -641,10 +643,10 @@ group_clauses_by_indexkey_for_join(Query *root,
 		 */
 		if (FastListValue(&clausegroup) != NIL)
 		{
-			List *nl;
+			List	   *nl;
 
 			nl = remove_redundant_join_clauses(root,
-											   FastListValue(&clausegroup),
+											 FastListValue(&clausegroup),
 											   jointype);
 			FastListFromList(&clausegroup, nl);
 		}
@@ -736,9 +738,9 @@ match_clause_to_indexcol(RelOptInfo *rel,
 		return false;
 
 	/*
-	 * Check for clauses of the form:
-	 *		(indexkey operator constant) or (constant operator indexkey).
-	 * Anything that is a "pseudo constant" expression will do.
+	 * Check for clauses of the form: (indexkey operator constant) or
+	 * (constant operator indexkey). Anything that is a "pseudo constant"
+	 * expression will do.
 	 */
 	if (match_index_to_operand(leftop, indexcol, rel, index) &&
 		is_pseudo_constant_clause(rightop))
@@ -747,8 +749,8 @@ match_clause_to_indexcol(RelOptInfo *rel,
 			return true;
 
 		/*
-		 * If we didn't find a member of the index's opclass, see
-		 * whether it is a "special" indexable operator.
+		 * If we didn't find a member of the index's opclass, see whether
+		 * it is a "special" indexable operator.
 		 */
 		if (match_special_index_operator(clause, opclass, true))
 			return true;
@@ -762,8 +764,8 @@ match_clause_to_indexcol(RelOptInfo *rel,
 			return true;
 
 		/*
-		 * If we didn't find a member of the index's opclass, see
-		 * whether it is a "special" indexable operator.
+		 * If we didn't find a member of the index's opclass, see whether
+		 * it is a "special" indexable operator.
 		 */
 		if (match_special_index_operator(clause, opclass, false))
 			return true;
@@ -824,10 +826,10 @@ match_join_clause_to_indexcol(RelOptInfo *rel,
 		return false;
 
 	/*
-	 * Check for an indexqual that could be handled by a nestloop
-	 * join. We need the index key to be compared against an
-	 * expression that uses none of the indexed relation's vars and
-	 * contains no volatile functions.
+	 * Check for an indexqual that could be handled by a nestloop join. We
+	 * need the index key to be compared against an expression that uses
+	 * none of the indexed relation's vars and contains no volatile
+	 * functions.
 	 */
 	if (match_index_to_operand(leftop, indexcol, rel, index))
 	{
@@ -1174,10 +1176,11 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	 * 1. Find "btree" strategy numbers for the pred_op and clause_op.
 	 *
 	 * We must find a btree opclass that contains both operators, else the
-	 * implication can't be determined.  If there are multiple such opclasses,
-	 * assume we can use any one to determine the logical relationship of the
-	 * two operators and the correct corresponding test operator.  This should
-	 * work for any logically consistent opclasses.
+	 * implication can't be determined.  If there are multiple such
+	 * opclasses, assume we can use any one to determine the logical
+	 * relationship of the two operators and the correct corresponding
+	 * test operator.  This should work for any logically consistent
+	 * opclasses.
 	 */
 	catlist = SearchSysCacheList(AMOPOPID, 1,
 								 ObjectIdGetDatum(pred_op),
@@ -1269,7 +1272,7 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 
 	/* And execute it. */
 	test_result = ExecEvalExprSwitchContext(test_exprstate,
-											GetPerTupleExprContext(estate),
+										  GetPerTupleExprContext(estate),
 											&isNull, NULL);
 
 	/* Get back to outer memory context */
@@ -1295,7 +1298,7 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 /*
  * indexable_outerrelids
  *	  Finds all other relids that participate in any indexable join clause
- *	  for the specified index.  Returns a set of relids.
+ *	  for the specified index.	Returns a set of relids.
  *
  * 'rel' is the relation for which 'index' is defined
  */
@@ -1314,16 +1317,16 @@ indexable_outerrelids(RelOptInfo *rel, IndexOptInfo *index)
 		/*
 		 * Examine each joinclause in the JoinInfo node's list to see if
 		 * it matches any key of the index.  If so, add the JoinInfo's
-		 * otherrels to the result.  We can skip examining other joinclauses
-		 * in the same list as soon as we find a match (since by definition
-		 * they all have the same otherrels).
+		 * otherrels to the result.  We can skip examining other
+		 * joinclauses in the same list as soon as we find a match (since
+		 * by definition they all have the same otherrels).
 		 */
 		foreach(j, joininfo->jinfo_restrictinfo)
 		{
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(j);
-			Expr   *clause = rinfo->clause;
-			int		indexcol = 0;
-			Oid	   *classes = index->classlist;
+			Expr	   *clause = rinfo->clause;
+			int			indexcol = 0;
+			Oid		   *classes = index->classlist;
 
 			do
 			{
@@ -1398,11 +1401,13 @@ best_inner_indexscan(Query *root, RelOptInfo *rel,
 		default:
 			return NULL;
 	}
+
 	/*
 	 * If there are no indexable joinclauses for this rel, exit quickly.
 	 */
 	if (bms_is_empty(rel->index_outer_relids))
 		return NULL;
+
 	/*
 	 * Otherwise, we have to do path selection in the memory context of
 	 * the given rel, so that any created path can be safely attached to
@@ -1410,10 +1415,11 @@ best_inner_indexscan(Query *root, RelOptInfo *rel,
 	 * issue for normal planning, but it is an issue for GEQO planning.)
 	 */
 	oldcontext = MemoryContextSwitchTo(GetMemoryChunkContext(rel));
+
 	/*
-	 * Intersect the given outer_relids with index_outer_relids
-	 * to find the set of outer relids actually relevant for this index.
-	 * If there are none, again we can fail immediately.
+	 * Intersect the given outer_relids with index_outer_relids to find
+	 * the set of outer relids actually relevant for this index. If there
+	 * are none, again we can fail immediately.
 	 */
 	outer_relids = bms_intersect(rel->index_outer_relids, outer_relids);
 	if (bms_is_empty(outer_relids))
@@ -1422,11 +1428,13 @@ best_inner_indexscan(Query *root, RelOptInfo *rel,
 		MemoryContextSwitchTo(oldcontext);
 		return NULL;
 	}
+
 	/*
 	 * Look to see if we already computed the result for this set of
-	 * relevant outerrels.  (We include the isouterjoin status in the
+	 * relevant outerrels.	(We include the isouterjoin status in the
 	 * cache lookup key for safety.  In practice I suspect this is not
-	 * necessary because it should always be the same for a given innerrel.)
+	 * necessary because it should always be the same for a given
+	 * innerrel.)
 	 */
 	foreach(jlist, rel->index_inner_paths)
 	{
@@ -1441,15 +1449,15 @@ best_inner_indexscan(Query *root, RelOptInfo *rel,
 	}
 
 	/*
-	 * For each index of the rel, find the best path; then choose the
-	 * best overall.  We cache the per-index results as well as the overall
-	 * result.  (This is useful because different indexes may have different
-	 * relevant outerrel sets, so different overall outerrel sets might still
-	 * map to the same computation for a given index.)
+	 * For each index of the rel, find the best path; then choose the best
+	 * overall.  We cache the per-index results as well as the overall
+	 * result.	(This is useful because different indexes may have
+	 * different relevant outerrel sets, so different overall outerrel
+	 * sets might still map to the same computation for a given index.)
 	 */
 	foreach(ilist, rel->indexlist)
 	{
-		IndexOptInfo  *index = (IndexOptInfo *) lfirst(ilist);
+		IndexOptInfo *index = (IndexOptInfo *) lfirst(ilist);
 		Relids		index_outer_relids;
 		Path	   *path = NULL;
 
@@ -1461,6 +1469,7 @@ best_inner_indexscan(Query *root, RelOptInfo *rel,
 			bms_free(index_outer_relids);
 			continue;
 		}
+
 		/*
 		 * Look to see if we already computed the result for this index.
 		 */
@@ -1471,7 +1480,7 @@ best_inner_indexscan(Query *root, RelOptInfo *rel,
 				info->isouterjoin == isouterjoin)
 			{
 				path = info->best_innerpath;
-				bms_free(index_outer_relids); /* not needed anymore */
+				bms_free(index_outer_relids);	/* not needed anymore */
 				break;
 			}
 		}
@@ -1484,9 +1493,9 @@ best_inner_indexscan(Query *root, RelOptInfo *rel,
 			clausegroups = group_clauses_by_indexkey_for_join(root,
 															  rel,
 															  index,
-															  index_outer_relids,
+													  index_outer_relids,
 															  jointype,
-															  isouterjoin);
+															isouterjoin);
 			if (clausegroups)
 			{
 				/* make the path */
@@ -1548,9 +1557,9 @@ make_innerjoin_index_path(Query *root,
 	pathnode->path.parent = rel;
 
 	/*
-	 * There's no point in marking the path with any pathkeys, since
-	 * it will only ever be used as the inner path of a nestloop, and
-	 * so its ordering does not matter.
+	 * There's no point in marking the path with any pathkeys, since it
+	 * will only ever be used as the inner path of a nestloop, and so its
+	 * ordering does not matter.
 	 */
 	pathnode->path.pathkeys = NIL;
 
@@ -1582,19 +1591,19 @@ make_innerjoin_index_path(Query *root,
 
 	/*
 	 * We must compute the estimated number of output rows for the
-	 * indexscan.  This is less than rel->rows because of the
-	 * additional selectivity of the join clauses.	Since clausegroups
-	 * may contain both restriction and join clauses, we have to do a
-	 * set union to get the full set of clauses that must be
-	 * considered to compute the correct selectivity.  (Without the union
-	 * operation, we might have some restriction clauses appearing twice,
-	 * which'd mislead restrictlist_selectivity into double-counting their
-	 * selectivity.  However, since RestrictInfo nodes aren't copied when
-	 * linking them into different lists, it should be sufficient to use
-	 * pointer comparison to remove duplicates.)
+	 * indexscan.  This is less than rel->rows because of the additional
+	 * selectivity of the join clauses.  Since clausegroups may contain
+	 * both restriction and join clauses, we have to do a set union to get
+	 * the full set of clauses that must be considered to compute the
+	 * correct selectivity.  (Without the union operation, we might have
+	 * some restriction clauses appearing twice, which'd mislead
+	 * restrictlist_selectivity into double-counting their selectivity.
+	 * However, since RestrictInfo nodes aren't copied when linking them
+	 * into different lists, it should be sufficient to use pointer
+	 * comparison to remove duplicates.)
 	 *
-	 * Always assume the join type is JOIN_INNER; even if some of the
-	 * join clauses come from other contexts, that's not our problem.
+	 * Always assume the join type is JOIN_INNER; even if some of the join
+	 * clauses come from other contexts, that's not our problem.
 	 */
 	allclauses = set_ptrUnion(rel->baserestrictinfo, allclauses);
 	pathnode->rows = rel->tuples *
@@ -1656,9 +1665,9 @@ match_index_to_operand(Node *operand,
 	else
 	{
 		/*
-		 * Index expression; find the correct expression.  (This search could
-		 * be avoided, at the cost of complicating all the callers of this
-		 * routine; doesn't seem worth it.)
+		 * Index expression; find the correct expression.  (This search
+		 * could be avoided, at the cost of complicating all the callers
+		 * of this routine; doesn't seem worth it.)
 		 */
 		List	   *indexprs;
 		int			i;
@@ -1677,6 +1686,7 @@ match_index_to_operand(Node *operand,
 		if (indexprs == NIL)
 			elog(ERROR, "wrong number of index expressions");
 		indexkey = (Node *) lfirst(indexprs);
+
 		/*
 		 * Does it match the operand?  Again, strip any relabeling.
 		 */
@@ -1776,12 +1786,12 @@ match_special_index_operator(Expr *clause, Oid opclass,
 		case OID_NAME_LIKE_OP:
 			/* the right-hand const is type text for all of these */
 			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like,
-											   &prefix, &rest) != Pattern_Prefix_None;
+								  &prefix, &rest) != Pattern_Prefix_None;
 			break;
 
 		case OID_BYTEA_LIKE_OP:
 			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like,
-											   &prefix, &rest) != Pattern_Prefix_None;
+								  &prefix, &rest) != Pattern_Prefix_None;
 			break;
 
 		case OID_TEXT_ICLIKE_OP:
@@ -1789,7 +1799,7 @@ match_special_index_operator(Expr *clause, Oid opclass,
 		case OID_NAME_ICLIKE_OP:
 			/* the right-hand const is type text for all of these */
 			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like_IC,
-											   &prefix, &rest) != Pattern_Prefix_None;
+								  &prefix, &rest) != Pattern_Prefix_None;
 			break;
 
 		case OID_TEXT_REGEXEQ_OP:
@@ -1797,7 +1807,7 @@ match_special_index_operator(Expr *clause, Oid opclass,
 		case OID_NAME_REGEXEQ_OP:
 			/* the right-hand const is type text for all of these */
 			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Regex,
-											   &prefix, &rest) != Pattern_Prefix_None;
+								  &prefix, &rest) != Pattern_Prefix_None;
 			break;
 
 		case OID_TEXT_ICREGEXEQ_OP:
@@ -1805,7 +1815,7 @@ match_special_index_operator(Expr *clause, Oid opclass,
 		case OID_NAME_ICREGEXEQ_OP:
 			/* the right-hand const is type text for all of these */
 			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
-											   &prefix, &rest) != Pattern_Prefix_None;
+								  &prefix, &rest) != Pattern_Prefix_None;
 			break;
 
 		case OID_INET_SUB_OP:
@@ -1831,9 +1841,9 @@ match_special_index_operator(Expr *clause, Oid opclass,
 	 * want to apply.  (A hash index, for example, will not support ">=".)
 	 * Currently, only btree supports the operators we need.
 	 *
-	 * We insist on the opclass being the specific one we expect,
-	 * else we'd do the wrong thing if someone were to make a reverse-sort
-	 * opclass with the same operators.
+	 * We insist on the opclass being the specific one we expect, else we'd
+	 * do the wrong thing if someone were to make a reverse-sort opclass
+	 * with the same operators.
 	 */
 	switch (expr_op)
 	{
@@ -1896,7 +1906,7 @@ match_special_index_operator(Expr *clause, Oid opclass,
  * The input list is ordered by index key, and so the output list is too.
  * (The latter is not depended on by any part of the planner, so far as I can
  * tell; but some parts of the executor do assume that the indxqual list
- * ultimately delivered to the executor is so ordered.  One such place is
+ * ultimately delivered to the executor is so ordered.	One such place is
  * _bt_orderkeys() in the btree support.  Perhaps that ought to be fixed
  * someday --- tgl 7/00)
  */
@@ -1930,7 +1940,7 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 
 	} while (clausegroups != NIL && !DoneMatchingIndexKeys(classes));
 
-	Assert(clausegroups == NIL); /* else more groups than indexkeys... */
+	Assert(clausegroups == NIL);	/* else more groups than indexkeys... */
 
 	return FastListValue(&resultquals);
 }
@@ -1953,11 +1963,12 @@ expand_indexqual_condition(Expr *clause, Oid opclass)
 
 	switch (expr_op)
 	{
-		/*
-		 * LIKE and regex operators are not members of any index
-		 * opclass, so if we find one in an indexqual list we can
-		 * assume that it was accepted by match_special_index_operator().
-		 */
+			/*
+			 * LIKE and regex operators are not members of any index
+			 * opclass, so if we find one in an indexqual list we can
+			 * assume that it was accepted by
+			 * match_special_index_operator().
+			 */
 		case OID_TEXT_LIKE_OP:
 		case OID_BPCHAR_LIKE_OP:
 		case OID_NAME_LIKE_OP:
@@ -2061,22 +2072,22 @@ prefix_quals(Node *leftop, Oid opclass,
 	}
 
 	/*
-	 * If necessary, coerce the prefix constant to the right type.
-	 * The given prefix constant is either text or bytea type.
+	 * If necessary, coerce the prefix constant to the right type. The
+	 * given prefix constant is either text or bytea type.
 	 */
 	if (prefix_const->consttype != datatype)
 	{
-		char   *prefix;
+		char	   *prefix;
 
 		switch (prefix_const->consttype)
 		{
 			case TEXTOID:
 				prefix = DatumGetCString(DirectFunctionCall1(textout,
-															 prefix_const->constvalue));
+											  prefix_const->constvalue));
 				break;
 			case BYTEAOID:
 				prefix = DatumGetCString(DirectFunctionCall1(byteaout,
-															 prefix_const->constvalue));
+											  prefix_const->constvalue));
 				break;
 			default:
 				elog(ERROR, "unexpected const type: %u",

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.63 2003/07/25 00:01:06 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.64 2003/08/04 00:43:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,9 +48,9 @@ geqo_eval(Query *root, List *initial_rels, Gene *tour, int num_gene)
 	/*
 	 * Because gimme_tree considers both left- and right-sided trees,
 	 * there is no difference between a tour (a,b,c,d,...) and a tour
-	 * (b,a,c,d,...) --- the same join orders will be considered.
-	 * To avoid redundant cost calculations, we simply reject tours where
-	 * tour[0] > tour[1], assigning them an artificially bad fitness.
+	 * (b,a,c,d,...) --- the same join orders will be considered. To avoid
+	 * redundant cost calculations, we simply reject tours where tour[0] >
+	 * tour[1], assigning them an artificially bad fitness.
 	 *
 	 * (It would be better to tweak the GEQO logic to not generate such tours
 	 * in the first place, but I'm not sure of all the implications in the
@@ -65,8 +65,8 @@ geqo_eval(Query *root, List *initial_rels, Gene *tour, int num_gene)
 	 *
 	 * Since geqo_eval() will be called many times, we can't afford to let
 	 * all that memory go unreclaimed until end of statement.  Note we
-	 * make the temp context a child of the planner's normal context, so that
-	 * it will be freed even if we abort via ereport(ERROR).
+	 * make the temp context a child of the planner's normal context, so
+	 * that it will be freed even if we abort via ereport(ERROR).
 	 */
 	mycontext = AllocSetContextCreate(CurrentMemoryContext,
 									  "GEQO",
@@ -76,9 +76,9 @@ geqo_eval(Query *root, List *initial_rels, Gene *tour, int num_gene)
 	oldcxt = MemoryContextSwitchTo(mycontext);
 
 	/*
-	 * preserve root->join_rel_list, which gimme_tree changes; without this,
-	 * it'll be pointing at recycled storage after the MemoryContextDelete
-	 * below.
+	 * preserve root->join_rel_list, which gimme_tree changes; without
+	 * this, it'll be pointing at recycled storage after the
+	 * MemoryContextDelete below.
 	 */
 	savelist = root->join_rel_list;
 
@@ -151,9 +151,10 @@ gimme_tree(Query *root, List *initial_rels,
 
 		/*
 		 * Construct a RelOptInfo representing the previous joinrel joined
-		 * to inner_rel.  These are always inner joins.  Note that we expect
-		 * the joinrel not to exist in root->join_rel_list yet, and so the
-		 * paths constructed for it will only include the ones we want.
+		 * to inner_rel.  These are always inner joins.  Note that we
+		 * expect the joinrel not to exist in root->join_rel_list yet, and
+		 * so the paths constructed for it will only include the ones we
+		 * want.
 		 */
 		new_rel = make_join_rel(root, joinrel, inner_rel, JOIN_INNER);
 

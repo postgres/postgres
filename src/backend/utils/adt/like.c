@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.54 2003/07/27 04:53:06 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.55 2003/08/04 00:43:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -451,7 +451,7 @@ like_escape_bytea(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
 					 errmsg("invalid escape string"),
-					 errhint("Escape string must be empty or one character.")));
+			  errhint("Escape string must be empty or one character.")));
 
 		e = VARDATA(esc);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.108 2003/07/29 00:03:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.109 2003/08/04 00:43:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -575,9 +575,9 @@ static datetkn deltatktbl[] = {
 
 static unsigned int szdeltatktbl = sizeof deltatktbl / sizeof deltatktbl[0];
 
-static datetkn    *datecache[MAXDATEFIELDS] = {NULL};
+static datetkn *datecache[MAXDATEFIELDS] = {NULL};
 
-static datetkn    *deltacache[MAXDATEFIELDS] = {NULL};
+static datetkn *deltacache[MAXDATEFIELDS] = {NULL};
 
 
 /*
@@ -593,7 +593,7 @@ static datetkn    *deltacache[MAXDATEFIELDS] = {NULL};
  *
  * Rewritten to eliminate overflow problems. This now allows the
  * routines to work correctly for all Julian day counts from
- * 0 to 2147483647  (Nov 24, -4713 to Jun 3, 5874898) assuming
+ * 0 to 2147483647	(Nov 24, -4713 to Jun 3, 5874898) assuming
  * a 32-bit integer. Longer types should also work to the limits
  * of their precision.
  */
@@ -604,18 +604,21 @@ date2j(int y, int m, int d)
 	int			julian;
 	int			century;
 
-	if (m > 2) {
+	if (m > 2)
+	{
 		m += 1;
 		y += 4800;
-	} else {
+	}
+	else
+	{
 		m += 13;
 		y += 4799;
 	}
 
-	century = y/100;
-	julian  = y*365 - 32167;
-	julian += y/4 - century + century/4;
-	julian += 7834*m/256 + d;
+	century = y / 100;
+	julian = y * 365 - 32167;
+	julian += y / 4 - century + century / 4;
+	julian += 7834 * m / 256 + d;
 
 	return julian;
 }	/* date2j() */
@@ -623,25 +626,25 @@ date2j(int y, int m, int d)
 void
 j2date(int jd, int *year, int *month, int *day)
 {
-	unsigned int		julian;
-	unsigned int		quad;
-	unsigned int		extra;
+	unsigned int julian;
+	unsigned int quad;
+	unsigned int extra;
 	int			y;
 
 	julian = jd;
 	julian += 32044;
-	quad = julian/146097;
-	extra = (julian - quad*146097)*4 + 3;
-	julian += 60 + quad*3 + extra/146097;
-	quad = julian/1461;
-	julian -= quad*1461;
+	quad = julian / 146097;
+	extra = (julian - quad * 146097) * 4 + 3;
+	julian += 60 + quad * 3 + extra / 146097;
+	quad = julian / 1461;
+	julian -= quad * 1461;
 	y = julian * 4 / 1461;
 	julian = ((y != 0) ? ((julian + 305) % 365) : ((julian + 306) % 366))
 		+ 123;
-	y += quad*4;
+	y += quad * 4;
 	*year = y - 4800;
 	quad = julian * 2141 / 65536;
-	*day = julian - 7834*quad/256;
+	*day = julian - 7834 * quad / 256;
 	*month = (quad + 10) % 12 + 1;
 
 	return;
@@ -652,7 +655,7 @@ j2date(int jd, int *year, int *month, int *day)
  * j2day - convert Julian date to day-of-week (0..6 == Sun..Sat)
  *
  * Note: various places use the locution j2day(date - 1) to produce a
- * result according to the convention 0..6 = Mon..Sun.  This is a bit of
+ * result according to the convention 0..6 = Mon..Sun.	This is a bit of
  * a crock, but will work as long as the computation here is just a modulo.
  */
 int
@@ -1252,8 +1255,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						{
 							case DTK_CURRENT:
 								ereport(ERROR,
-										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-										 errmsg("\"current\" is no longer supported")));
+								 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								  errmsg("\"current\" is no longer supported")));
 
 								return -1;
 								break;
@@ -1269,7 +1272,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 								*dtype = DTK_DATE;
 								GetCurrentDateTime(tm);
 								j2date((date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - 1),
-									   &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+								&tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 								tm->tm_hour = 0;
 								tm->tm_min = 0;
 								tm->tm_sec = 0;
@@ -1289,7 +1292,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 								*dtype = DTK_DATE;
 								GetCurrentDateTime(tm);
 								j2date((date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + 1),
-									   &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+								&tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 								tm->tm_hour = 0;
 								tm->tm_min = 0;
 								tm->tm_sec = 0;
@@ -1435,8 +1438,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-						 errmsg("inconsistent use of year %04d and \"BC\"",
-								tm->tm_year)));
+					   errmsg("inconsistent use of year %04d and \"BC\"",
+							  tm->tm_year)));
 		}
 		else if (is2digits)
 		{
@@ -1994,8 +1997,8 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						{
 							case DTK_CURRENT:
 								ereport(ERROR,
-										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-										 errmsg("\"current\" is no longer supported")));
+								 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								  errmsg("\"current\" is no longer supported")));
 								return -1;
 								break;
 
@@ -2423,6 +2426,7 @@ DecodeNumber(int flen, char *str, int fmask,
 	switch (fmask & DTK_DATE_M)
 	{
 		case 0:
+
 			/*
 			 * Nothing so far; make a decision about what we think the
 			 * input is.  There used to be lots of heuristics here, but
@@ -2487,9 +2491,7 @@ DecodeNumber(int flen, char *str, int fmask,
 	 * exactly two digits.
 	 */
 	if (*tmask == DTK_M(YEAR))
-	{
 		*is2digits = (flen == 2);
-	}
 
 	return 0;
 }
@@ -3300,8 +3302,8 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 					tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min);
 
 			/*
-			 * Print fractional seconds if any.  The field widths here should
-			 * be at least equal to MAX_TIMESTAMP_PRECISION.
+			 * Print fractional seconds if any.  The field widths here
+			 * should be at least equal to MAX_TIMESTAMP_PRECISION.
 			 *
 			 * In float mode, don't print fractional seconds before 1 AD,
 			 * since it's unlikely there's any precision left ...
@@ -3350,8 +3352,8 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 					tm->tm_hour, tm->tm_min);
 
 			/*
-			 * Print fractional seconds if any.  The field widths here should
-			 * be at least equal to MAX_TIMESTAMP_PRECISION.
+			 * Print fractional seconds if any.  The field widths here
+			 * should be at least equal to MAX_TIMESTAMP_PRECISION.
 			 *
 			 * In float mode, don't print fractional seconds before 1 AD,
 			 * since it's unlikely there's any precision left ...
@@ -3396,8 +3398,8 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 					tm->tm_hour, tm->tm_min);
 
 			/*
-			 * Print fractional seconds if any.  The field widths here should
-			 * be at least equal to MAX_TIMESTAMP_PRECISION.
+			 * Print fractional seconds if any.  The field widths here
+			 * should be at least equal to MAX_TIMESTAMP_PRECISION.
 			 *
 			 * In float mode, don't print fractional seconds before 1 AD,
 			 * since it's unlikely there's any precision left ...
@@ -3450,8 +3452,8 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 			sprintf((str + 10), " %02d:%02d", tm->tm_hour, tm->tm_min);
 
 			/*
-			 * Print fractional seconds if any.  The field widths here should
-			 * be at least equal to MAX_TIMESTAMP_PRECISION.
+			 * Print fractional seconds if any.  The field widths here
+			 * should be at least equal to MAX_TIMESTAMP_PRECISION.
 			 *
 			 * In float mode, don't print fractional seconds before 1 AD,
 			 * since it's unlikely there's any precision left ...
@@ -3746,7 +3748,7 @@ ClearDateCache(bool newval, bool doit, bool interactive)
 
 /*
  * We've been burnt by stupid errors in the ordering of the datetkn tables
- * once too often.  Arrange to check them during postmaster start.
+ * once too often.	Arrange to check them during postmaster start.
  */
 static bool
 CheckDateTokenTable(const char *tablename, datetkn *base, unsigned int nel)
@@ -3756,11 +3758,11 @@ CheckDateTokenTable(const char *tablename, datetkn *base, unsigned int nel)
 
 	for (i = 1; i < nel; i++)
 	{
-		if (strncmp(base[i-1].token, base[i].token, TOKMAXLEN) >= 0)
+		if (strncmp(base[i - 1].token, base[i].token, TOKMAXLEN) >= 0)
 		{
 			elog(LOG, "ordering error in %s table: \"%.*s\" >= \"%.*s\"",
 				 tablename,
-				 TOKMAXLEN, base[i-1].token,
+				 TOKMAXLEN, base[i - 1].token,
 				 TOKMAXLEN, base[i].token);
 			ok = false;
 		}

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.283 2003/08/01 00:15:22 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.284 2003/08/04 00:43:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,7 +89,7 @@ typedef struct
 {
 	Oid		   *paramTypes;
 	int			numParams;
-} check_parameter_resolution_context;
+}	check_parameter_resolution_context;
 
 
 static List *do_parse_analyze(Node *parseTree, ParseState *pstate);
@@ -106,7 +106,7 @@ static Query *transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt);
 static Node *transformSetOperationTree(ParseState *pstate, SelectStmt *stmt);
 static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
 static Query *transformDeclareCursorStmt(ParseState *pstate,
-										 DeclareCursorStmt *stmt);
+						   DeclareCursorStmt * stmt);
 static Query *transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt);
 static Query *transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt);
 static Query *transformCreateStmt(ParseState *pstate, CreateStmt *stmt,
@@ -114,18 +114,18 @@ static Query *transformCreateStmt(ParseState *pstate, CreateStmt *stmt,
 static Query *transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 						List **extras_before, List **extras_after);
 static void transformColumnDefinition(ParseState *pstate,
-									  CreateStmtContext *cxt,
-									  ColumnDef *column);
+						  CreateStmtContext *cxt,
+						  ColumnDef *column);
 static void transformTableConstraint(ParseState *pstate,
-									 CreateStmtContext *cxt,
-									 Constraint *constraint);
+						 CreateStmtContext *cxt,
+						 Constraint *constraint);
 static void transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
-								 InhRelation *inhrelation);
+					 InhRelation * inhrelation);
 static void transformIndexConstraints(ParseState *pstate,
-									  CreateStmtContext *cxt);
+						  CreateStmtContext *cxt);
 static void transformFKConstraints(ParseState *pstate,
-								   CreateStmtContext *cxt,
-								   bool isAddConstraint);
+					   CreateStmtContext *cxt,
+					   bool isAddConstraint);
 static void applyColumnNames(List *dst, List *src);
 static List *getSetColTypes(ParseState *pstate, Node *node);
 static void transformForUpdate(Query *qry, List *forUpdate);
@@ -135,7 +135,7 @@ static bool relationHasPrimaryKey(Oid relationOid);
 static void release_pstate_resources(ParseState *pstate);
 static FromExpr *makeFromExpr(List *fromlist, Node *quals);
 static bool check_parameter_resolution_walker(Node *node,
-					   check_parameter_resolution_context *context);
+						   check_parameter_resolution_context * context);
 
 
 /*
@@ -229,6 +229,7 @@ static List *
 do_parse_analyze(Node *parseTree, ParseState *pstate)
 {
 	List	   *result = NIL;
+
 	/* Lists to return extra commands from transformation */
 	List	   *extras_before = NIL;
 	List	   *extras_after = NIL;
@@ -258,9 +259,10 @@ do_parse_analyze(Node *parseTree, ParseState *pstate)
 
 	/*
 	 * Make sure that only the original query is marked original. We have
-	 * to do this explicitly since recursive calls of do_parse_analyze will
-	 * have marked some of the added-on queries as "original".  Also mark
-	 * only the original query as allowed to set the command-result tag.
+	 * to do this explicitly since recursive calls of do_parse_analyze
+	 * will have marked some of the added-on queries as "original".  Also
+	 * mark only the original query as allowed to set the command-result
+	 * tag.
 	 */
 	foreach(listscan, result)
 	{
@@ -419,7 +421,7 @@ transformStmt(ParseState *pstate, Node *parseTree,
 
 		case T_DeclareCursorStmt:
 			result = transformDeclareCursorStmt(pstate,
-												(DeclareCursorStmt *) parseTree);
+										(DeclareCursorStmt *) parseTree);
 			break;
 
 		default:
@@ -593,10 +595,10 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 		 *
 		 * HACK: unknown-type constants and params in the INSERT's targetlist
 		 * are copied up as-is rather than being referenced as subquery
-		 * outputs.  This is to ensure that when we try to coerce them
-		 * to the target column's datatype, the right things happen (see
-		 * special cases in coerce_type).  Otherwise, this fails:
-		 *		INSERT INTO foo SELECT 'bar', ... FROM baz
+		 * outputs.  This is to ensure that when we try to coerce them to
+		 * the target column's datatype, the right things happen (see
+		 * special cases in coerce_type).  Otherwise, this fails: INSERT
+		 * INTO foo SELECT 'bar', ... FROM baz
 		 */
 		qry->targetList = NIL;
 		foreach(tl, selectQuery->targetList)
@@ -608,7 +610,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 			if (resnode->resjunk)
 				continue;
 			if (tle->expr &&
-				(IsA(tle->expr, Const) || IsA(tle->expr, Param)) &&
+				(IsA(tle->expr, Const) ||IsA(tle->expr, Param)) &&
 				exprType((Node *) tle->expr) == UNKNOWNOID)
 				expr = tle->expr;
 			else
@@ -661,7 +663,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 		if (icolumns == NIL || attnos == NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("INSERT has more expressions than target columns")));
+			 errmsg("INSERT has more expressions than target columns")));
 
 		col = (ResTarget *) lfirst(icolumns);
 		Assert(IsA(col, ResTarget));
@@ -675,15 +677,14 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 	}
 
 	/*
-	 * Ensure that the targetlist has the same number of entries that
-	 * were present in the columns list.  Don't do the check unless
-	 * an explicit columns list was given, though.
-	 * statements.
+	 * Ensure that the targetlist has the same number of entries that were
+	 * present in the columns list.  Don't do the check unless an explicit
+	 * columns list was given, though. statements.
 	 */
 	if (stmt->cols != NIL && (icolumns != NIL || attnos != NIL))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("INSERT has more target columns than expressions")));
+			 errmsg("INSERT has more target columns than expressions")));
 
 	/* done building the range table and jointree */
 	qry->rtable = pstate->p_rtable;
@@ -1054,7 +1055,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("conflicting NULL/NOT NULL declarations for \"%s.%s\"",
-									cxt->relation->relname, column->colname)));
+							  cxt->relation->relname, column->colname)));
 				column->is_not_null = FALSE;
 				saw_nullable = true;
 				break;
@@ -1064,7 +1065,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("conflicting NULL/NOT NULL declarations for \"%s.%s\"",
-									cxt->relation->relname, column->colname)));
+							  cxt->relation->relname, column->colname)));
 				column->is_not_null = TRUE;
 				saw_nullable = true;
 				break;
@@ -1074,7 +1075,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("multiple DEFAULT values specified for \"%s.%s\"",
-									cxt->relation->relname, column->colname)));
+							  cxt->relation->relname, column->colname)));
 				column->raw_default = constraint->raw_expr;
 				Assert(constraint->cooked_expr == NULL);
 				break;
@@ -1170,7 +1171,7 @@ transformTableConstraint(ParseState *pstate, CreateStmtContext *cxt,
  */
 static void
 transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
-					 InhRelation *inhRelation)
+					 InhRelation * inhRelation)
 {
 	AttrNumber	parent_attno;
 
@@ -1188,7 +1189,7 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 						inhRelation->relation->relname)));
 
 	/*
-	 * Check for SELECT privilages 
+	 * Check for SELECT privilages
 	 */
 	aclresult = pg_class_aclcheck(RelationGetRelid(relation), GetUserId(),
 								  ACL_SELECT);
@@ -1200,8 +1201,8 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 	constr = tupleDesc->constr;
 
 	/*
-	 * Insert the inherited attributes into the cxt for the
-	 * new table definition.
+	 * Insert the inherited attributes into the cxt for the new table
+	 * definition.
 	 */
 	for (parent_attno = 1; parent_attno <= tupleDesc->natts;
 		 parent_attno++)
@@ -1220,8 +1221,8 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 		/*
 		 * Create a new inherited column.
 		 *
-		 * For constraints, ONLY the NOT NULL constraint is inherited
-		 * by the new column definition per SQL99.
+		 * For constraints, ONLY the NOT NULL constraint is inherited by the
+		 * new column definition per SQL99.
 		 */
 		def = makeNode(ColumnDef);
 		def->colname = pstrdup(attributeName);
@@ -1265,9 +1266,8 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 			Assert(this_default != NULL);
 
 			/*
-			 * If default expr could contain any vars, we'd need to
-			 * fix 'em, but it can't; so default is ready to apply to
-			 * child.
+			 * If default expr could contain any vars, we'd need to fix
+			 * 'em, but it can't; so default is ready to apply to child.
 			 */
 
 			def->cooked_default = pstrdup(this_default);
@@ -1275,9 +1275,9 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 	}
 
 	/*
-	 * Close the parent rel, but keep our AccessShareLock on it until
-	 * xact commit.  That will prevent someone else from deleting or
-	 * ALTERing the parent before the child is committed.
+	 * Close the parent rel, but keep our AccessShareLock on it until xact
+	 * commit.	That will prevent someone else from deleting or ALTERing
+	 * the parent before the child is committed.
 	 */
 	heap_close(relation, NoLock);
 }
@@ -1340,8 +1340,8 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		/*
 		 * Make sure referenced keys exist.  If we are making a PRIMARY
 		 * KEY index, also make sure they are NOT NULL, if possible.
-		 * (Although we could leave it to DefineIndex to mark the columns NOT
-		 * NULL, it's more efficient to get it right the first time.)
+		 * (Although we could leave it to DefineIndex to mark the columns
+		 * NOT NULL, it's more efficient to get it right the first time.)
 		 */
 		foreach(keys, constraint->keys)
 		{
@@ -1390,8 +1390,8 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 					if (rel->rd_rel->relkind != RELKIND_RELATION)
 						ereport(ERROR,
 								(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-								 errmsg("inherited table \"%s\" is not a relation",
-										inh->relname)));
+						errmsg("inherited table \"%s\" is not a relation",
+							   inh->relname)));
 					for (count = 0; count < rel->rd_att->natts; count++)
 					{
 						Form_pg_attribute inhattr = rel->rd_att->attrs[count];
@@ -1402,11 +1402,13 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 						if (strcmp(key, inhname) == 0)
 						{
 							found = true;
+
 							/*
 							 * We currently have no easy way to force an
-							 * inherited column to be NOT NULL at creation, if
-							 * its parent wasn't so already.  We leave it to
-							 * DefineIndex to fix things up in this case.
+							 * inherited column to be NOT NULL at
+							 * creation, if its parent wasn't so already.
+							 * We leave it to DefineIndex to fix things up
+							 * in this case.
 							 */
 							break;
 						}
@@ -1425,9 +1427,10 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 				if (HeapTupleIsValid(atttuple))
 				{
 					found = true;
+
 					/*
-					 * If it's not already NOT NULL, leave it to DefineIndex
-					 * to fix later.
+					 * If it's not already NOT NULL, leave it to
+					 * DefineIndex to fix later.
 					 */
 					ReleaseSysCache(atttuple);
 				}
@@ -1436,8 +1439,8 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 			if (!found)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
-						 errmsg("column \"%s\" named in key does not exist",
-								key)));
+					  errmsg("column \"%s\" named in key does not exist",
+							 key)));
 
 			/* Check for PRIMARY KEY(foo, foo) */
 			foreach(columns, index->indexParams)
@@ -1446,10 +1449,10 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 				if (iparam->name && strcmp(key, iparam->name) == 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_DUPLICATE_COLUMN),
-							 /* translator: second %s is PRIMARY KEY or UNIQUE */
-							 errmsg("column \"%s\" appears twice in %s constraint",
-									key,
-									index->primary ? "PRIMARY KEY" : "UNIQUE")));
+					/* translator: second %s is PRIMARY KEY or UNIQUE */
+					errmsg("column \"%s\" appears twice in %s constraint",
+						   key,
+						   index->primary ? "PRIMARY KEY" : "UNIQUE")));
 			}
 
 			/* OK, add it to the index definition */
@@ -1543,7 +1546,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		ereport(NOTICE,
 				(errmsg("%s / %s%s will create implicit index \"%s\" for table \"%s\"",
 						cxt->stmtType,
-						(strcmp(cxt->stmtType, "ALTER TABLE") == 0) ? "ADD " : "",
+			   (strcmp(cxt->stmtType, "ALTER TABLE") == 0) ? "ADD " : "",
 						(index->primary ? "PRIMARY KEY" : "UNIQUE"),
 						index->idxname, cxt->relation->relname)));
 	}
@@ -1557,13 +1560,13 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt,
 		return;
 
 	ereport(NOTICE,
-			(errmsg("%s will create implicit trigger(s) for FOREIGN KEY check(s)",
-					cxt->stmtType)));
+	(errmsg("%s will create implicit trigger(s) for FOREIGN KEY check(s)",
+			cxt->stmtType)));
 
 	/*
 	 * For ALTER TABLE ADD CONSTRAINT, nothing to do.  For CREATE TABLE or
-	 * ALTER TABLE ADD COLUMN, gin up an ALTER TABLE ADD CONSTRAINT command
-	 * to execute after the basic command is complete.
+	 * ALTER TABLE ADD COLUMN, gin up an ALTER TABLE ADD CONSTRAINT
+	 * command to execute after the basic command is complete.
 	 *
 	 * Note: the ADD CONSTRAINT command must also execute after any index
 	 * creation commands.  Thus, this should run after
@@ -1575,7 +1578,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt,
 		AlterTableStmt *alterstmt = makeNode(AlterTableStmt);
 		List	   *fkclist;
 
-		alterstmt->subtype = 'c'; /* preprocessed add constraint */
+		alterstmt->subtype = 'c';		/* preprocessed add constraint */
 		alterstmt->relation = cxt->relation;
 		alterstmt->name = NULL;
 		alterstmt->def = (Node *) cxt->fkconstraints;
@@ -1628,7 +1631,7 @@ transformIndexStmt(ParseState *pstate, IndexStmt *stmt)
 	/* take care of any index expressions */
 	foreach(l, stmt->indexParams)
 	{
-		IndexElem	*ielem = (IndexElem *) lfirst(l);
+		IndexElem  *ielem = (IndexElem *) lfirst(l);
 
 		if (ielem->expr)
 		{
@@ -1641,6 +1644,7 @@ transformIndexStmt(ParseState *pstate, IndexStmt *stmt)
 				addRTEtoQuery(pstate, rte, false, true);
 			}
 			ielem->expr = transformExpr(pstate, ielem->expr);
+
 			/*
 			 * We check only that the result type is legitimate; this is
 			 * for consistency with what transformWhereClause() checks for
@@ -1649,7 +1653,7 @@ transformIndexStmt(ParseState *pstate, IndexStmt *stmt)
 			if (expression_returns_set(ielem->expr))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("index expression may not return a set")));
+					   errmsg("index expression may not return a set")));
 		}
 	}
 
@@ -1829,10 +1833,10 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 			sub_qry = getInsertSelectQuery(top_subqry, NULL);
 
 			/*
-			 * If the sub_qry is a setop, we cannot attach any qualifications
-			 * to it, because the planner won't notice them.  This could
-			 * perhaps be relaxed someday, but for now, we may as well reject
-			 * such a rule immediately.
+			 * If the sub_qry is a setop, we cannot attach any
+			 * qualifications to it, because the planner won't notice
+			 * them.  This could perhaps be relaxed someday, but for now,
+			 * we may as well reject such a rule immediately.
 			 */
 			if (sub_qry->setOperations != NULL && stmt->whereClause != NULL)
 				ereport(ERROR,
@@ -1854,12 +1858,12 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 				case CMD_SELECT:
 					if (has_old)
 						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-								 errmsg("ON SELECT rule may not use OLD")));
+							 (errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							  errmsg("ON SELECT rule may not use OLD")));
 					if (has_new)
 						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-								 errmsg("ON SELECT rule may not use NEW")));
+							 (errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							  errmsg("ON SELECT rule may not use NEW")));
 					break;
 				case CMD_UPDATE:
 					/* both are OK */
@@ -1867,14 +1871,14 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 				case CMD_INSERT:
 					if (has_old)
 						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-								 errmsg("ON INSERT rule may not use OLD")));
+							 (errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							  errmsg("ON INSERT rule may not use OLD")));
 					break;
 				case CMD_DELETE:
 					if (has_new)
 						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-								 errmsg("ON DELETE rule may not use NEW")));
+							 (errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							  errmsg("ON DELETE rule may not use NEW")));
 					break;
 				default:
 					elog(ERROR, "unrecognized event type: %d",
@@ -1902,9 +1906,10 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 			if (has_old || (has_new && stmt->event == CMD_UPDATE))
 			{
 				/*
-				 * If sub_qry is a setop, manipulating its jointree will do
-				 * no good at all, because the jointree is dummy.  (This
-				 * should be a can't-happen case because of prior tests.)
+				 * If sub_qry is a setop, manipulating its jointree will
+				 * do no good at all, because the jointree is dummy.
+				 * (This should be a can't-happen case because of prior
+				 * tests.)
 				 */
 				if (sub_qry->setOperations != NULL)
 					ereport(ERROR,
@@ -1978,7 +1983,7 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->sortClause = transformSortClause(pstate,
 										  stmt->sortClause,
 										  qry->targetList,
-										  true /* fix unknowns */);
+										  true /* fix unknowns */ );
 
 	qry->groupClause = transformGroupClause(pstate,
 											stmt->groupClause,
@@ -2107,10 +2112,10 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	 * make lists of the dummy vars and their names for use in parsing
 	 * ORDER BY.
 	 *
-	 * Note: we use leftmostRTI as the varno of the dummy variables.
-	 * It shouldn't matter too much which RT index they have, as long
-	 * as they have one that corresponds to a real RT entry; else funny
-	 * things may happen when the tree is mashed by rule rewriting.
+	 * Note: we use leftmostRTI as the varno of the dummy variables. It
+	 * shouldn't matter too much which RT index they have, as long as they
+	 * have one that corresponds to a real RT entry; else funny things may
+	 * happen when the tree is mashed by rule rewriting.
 	 */
 	qry->targetList = NIL;
 	targetvars = NIL;
@@ -2144,8 +2149,8 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	/*
 	 * Handle SELECT INTO/CREATE TABLE AS.
 	 *
-	 * Any column names from CREATE TABLE AS need to be attached to both
-	 * the top level and the leftmost subquery.  We do not do this earlier
+	 * Any column names from CREATE TABLE AS need to be attached to both the
+	 * top level and the leftmost subquery.  We do not do this earlier
 	 * because we do *not* want the targetnames list to be affected.
 	 */
 	qry->into = into;
@@ -2192,7 +2197,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->sortClause = transformSortClause(pstate,
 										  sortClause,
 										  qry->targetList,
-										  false /* no unknowns expected */);
+									  false /* no unknowns expected */ );
 
 	pstate->p_namespace = sv_namespace;
 	pstate->p_rtable = sv_rtable;
@@ -2290,9 +2295,9 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 
 		/*
 		 * Check for bogus references to Vars on the current query level
-		 * (but upper-level references are okay).
-		 * Normally this can't happen because the namespace will be empty,
-		 * but it could happen if we are inside a rule.
+		 * (but upper-level references are okay). Normally this can't
+		 * happen because the namespace will be empty, but it could happen
+		 * if we are inside a rule.
 		 */
 		if (pstate->p_namespace)
 		{
@@ -2352,8 +2357,8 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 		if (length(lcoltypes) != length(rcoltypes))
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("each %s query must have the same number of columns",
-							context)));
+			 errmsg("each %s query must have the same number of columns",
+					context)));
 		op->colTypes = NIL;
 		while (lcoltypes != NIL)
 		{
@@ -2422,7 +2427,7 @@ applyColumnNames(List *dst, List *src)
 	if (length(src) > length(dst))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("CREATE TABLE AS specifies too many column names")));
+			 errmsg("CREATE TABLE AS specifies too many column names")));
 
 	while (src != NIL && dst != NIL)
 	{
@@ -2538,8 +2543,8 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 	 * handling are 'A'dd column and Add 'C'onstraint.	These largely
 	 * re-use code from CREATE TABLE.
 	 *
-	 * If we need to do any parse transformation, get exclusive lock on
-	 * the relation to make sure it won't change before we execute the
+	 * If we need to do any parse transformation, get exclusive lock on the
+	 * relation to make sure it won't change before we execute the
 	 * command.
 	 */
 	switch (stmt->subtype)
@@ -2574,7 +2579,7 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 			*extras_before = nconc(*extras_before, cxt.blist);
 			*extras_after = nconc(cxt.alist, *extras_after);
 
-			heap_close(rel, NoLock); /* close rel, keep lock */
+			heap_close(rel, NoLock);	/* close rel, keep lock */
 			break;
 
 		case 'C':
@@ -2614,7 +2619,7 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 			*extras_before = nconc(*extras_before, cxt.blist);
 			*extras_after = nconc(cxt.alist, *extras_after);
 
-			heap_close(rel, NoLock); /* close rel, keep lock */
+			heap_close(rel, NoLock);	/* close rel, keep lock */
 			break;
 
 		case 'c':
@@ -2638,7 +2643,7 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 }
 
 static Query *
-transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt *stmt)
+transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt * stmt)
 {
 	Query	   *result = makeNode(Query);
 	List	   *extras_before = NIL,
@@ -2672,7 +2677,7 @@ transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt)
 {
 	Query	   *result = makeNode(Query);
 	List	   *argtype_oids = NIL;		/* argtype OIDs in a list */
-	Oid		   *argtoids = NULL;		/* and as an array */
+	Oid		   *argtoids = NULL;	/* and as an array */
 	int			nargs;
 	List	   *queries;
 
@@ -2757,11 +2762,11 @@ transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
 			if (pstate->p_hasSubLinks)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot use sub-select in EXECUTE parameter")));
+				  errmsg("cannot use sub-select in EXECUTE parameter")));
 			if (pstate->p_hasAggs)
 				ereport(ERROR,
 						(errcode(ERRCODE_GROUPING_ERROR),
-						 errmsg("cannot use aggregate in EXECUTE parameter")));
+				   errmsg("cannot use aggregate in EXECUTE parameter")));
 
 			given_type_id = exprType(expr);
 			expected_type_id = lfirsto(paramtypes);
@@ -2801,15 +2806,15 @@ CheckSelectForUpdate(Query *qry)
 	if (qry->distinctClause != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("SELECT FOR UPDATE is not allowed with DISTINCT clause")));
+		errmsg("SELECT FOR UPDATE is not allowed with DISTINCT clause")));
 	if (qry->groupClause != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("SELECT FOR UPDATE is not allowed with GROUP BY clause")));
+		errmsg("SELECT FOR UPDATE is not allowed with GROUP BY clause")));
 	if (qry->hasAggs)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("SELECT FOR UPDATE is not allowed with AGGREGATE")));
+			 errmsg("SELECT FOR UPDATE is not allowed with AGGREGATE")));
 }
 
 static void
@@ -2915,7 +2920,7 @@ relationHasPrimaryKey(Oid relationOid)
 		indexTuple = SearchSysCache(INDEXRELID,
 									ObjectIdGetDatum(indexoid),
 									0, 0, 0);
-		if (!HeapTupleIsValid(indexTuple)) /* should not happen */
+		if (!HeapTupleIsValid(indexTuple))		/* should not happen */
 			elog(ERROR, "cache lookup failed for index %u", indexoid);
 		result = ((Form_pg_index) GETSTRUCT(indexTuple))->indisprimary;
 		ReleaseSysCache(indexTuple);
@@ -2981,7 +2986,7 @@ transformConstraintAttrs(List *constraintList)
 						!IsA(lastprimarynode, FkConstraint))
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("misplaced NOT DEFERRABLE clause")));
+							 errmsg("misplaced NOT DEFERRABLE clause")));
 					if (saw_deferrability)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
@@ -2999,7 +3004,7 @@ transformConstraintAttrs(List *constraintList)
 						!IsA(lastprimarynode, FkConstraint))
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("misplaced INITIALLY DEFERRED clause")));
+						 errmsg("misplaced INITIALLY DEFERRED clause")));
 					if (saw_initially)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
@@ -3023,7 +3028,7 @@ transformConstraintAttrs(List *constraintList)
 						!IsA(lastprimarynode, FkConstraint))
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("misplaced INITIALLY IMMEDIATE clause")));
+						errmsg("misplaced INITIALLY IMMEDIATE clause")));
 					if (saw_initially)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
@@ -3135,10 +3140,10 @@ analyzeCreateSchemaStmt(CreateSchemaStmt *stmt)
 						elp->relation->schemaname = cxt.schemaname;
 					else if (strcmp(cxt.schemaname, elp->relation->schemaname) != 0)
 						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_SCHEMA_DEFINITION),
-								 errmsg("CREATE specifies a schema (%s)"
-							 " different from the one being created (%s)",
-							 elp->relation->schemaname, cxt.schemaname)));
+							 (errcode(ERRCODE_INVALID_SCHEMA_DEFINITION),
+							  errmsg("CREATE specifies a schema (%s)"
+							" different from the one being created (%s)",
+							elp->relation->schemaname, cxt.schemaname)));
 
 					/*
 					 * XXX todo: deal with constraints
@@ -3156,10 +3161,10 @@ analyzeCreateSchemaStmt(CreateSchemaStmt *stmt)
 						elp->view->schemaname = cxt.schemaname;
 					else if (strcmp(cxt.schemaname, elp->view->schemaname) != 0)
 						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_SCHEMA_DEFINITION),
-								 errmsg("CREATE specifies a schema (%s)"
-							 " different from the one being created (%s)",
-							 elp->view->schemaname, cxt.schemaname)));
+							 (errcode(ERRCODE_INVALID_SCHEMA_DEFINITION),
+							  errmsg("CREATE specifies a schema (%s)"
+							" different from the one being created (%s)",
+								elp->view->schemaname, cxt.schemaname)));
 
 					/*
 					 * XXX todo: deal with references between views
@@ -3195,7 +3200,7 @@ analyzeCreateSchemaStmt(CreateSchemaStmt *stmt)
  */
 static bool
 check_parameter_resolution_walker(Node *node,
-								  check_parameter_resolution_context *context)
+							check_parameter_resolution_context * context)
 {
 	if (node == NULL)
 		return false;
@@ -3207,17 +3212,17 @@ check_parameter_resolution_walker(Node *node,
 		{
 			int			paramno = param->paramid;
 
-			if (paramno <= 0 ||		/* shouldn't happen, but... */
+			if (paramno <= 0 || /* shouldn't happen, but... */
 				paramno > context->numParams)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_PARAMETER),
 						 errmsg("there is no parameter $%d", paramno)));
 
-			if (param->paramtype != context->paramTypes[paramno-1])
+			if (param->paramtype != context->paramTypes[paramno - 1])
 				ereport(ERROR,
 						(errcode(ERRCODE_AMBIGUOUS_PARAMETER),
-						 errmsg("could not determine datatype of parameter $%d",
-								paramno)));
+				  errmsg("could not determine datatype of parameter $%d",
+						 paramno)));
 		}
 		return false;
 	}

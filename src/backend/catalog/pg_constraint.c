@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_constraint.c,v 1.14 2003/07/21 01:59:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_constraint.c,v 1.15 2003/08/04 00:43:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -195,7 +195,7 @@ CreateConstraintEntry(const char *constraintName,
 		/*
 		 * Register auto dependency from constraint to owning domain
 		 */
-		ObjectAddress	domobject;
+		ObjectAddress domobject;
 
 		domobject.classId = RelOid_pg_type;
 		domobject.objectId = domainId;
@@ -234,8 +234,8 @@ CreateConstraintEntry(const char *constraintName,
 	if (OidIsValid(indexRelId))
 	{
 		/*
-		 * Register normal dependency on the unique index that supports
-		 * a foreign-key constraint.
+		 * Register normal dependency on the unique index that supports a
+		 * foreign-key constraint.
 		 */
 		ObjectAddress relobject;
 
@@ -438,8 +438,8 @@ RemoveConstraintById(Oid conId)
 		Relation	rel;
 
 		/*
-		 * If the constraint is for a relation, open and exclusive-lock the
-		 * relation it's for.
+		 * If the constraint is for a relation, open and exclusive-lock
+		 * the relation it's for.
 		 */
 		rel = heap_open(con->conrelid, AccessExclusiveLock);
 
@@ -463,7 +463,7 @@ RemoveConstraintById(Oid conId)
 					 con->conrelid);
 			classForm = (Form_pg_class) GETSTRUCT(relTup);
 
-			if (classForm->relchecks == 0)	/* should not happen */
+			if (classForm->relchecks == 0)		/* should not happen */
 				elog(ERROR, "relation \"%s\" has relchecks = 0",
 					 RelationGetRelationName(rel));
 			classForm->relchecks--;
@@ -483,16 +483,15 @@ RemoveConstraintById(Oid conId)
 	else if (OidIsValid(con->contypid))
 	{
 		/*
-		 * XXX for now, do nothing special when dropping a domain constraint
+		 * XXX for now, do nothing special when dropping a domain
+		 * constraint
 		 *
 		 * Probably there should be some form of locking on the domain type,
 		 * but we have no such concept at the moment.
 		 */
 	}
 	else
-	{
 		elog(ERROR, "constraint %u is not of a known type", conId);
-	}
 
 	/* Fry the constraint itself */
 	simple_heap_delete(conDesc, &tup->t_self);

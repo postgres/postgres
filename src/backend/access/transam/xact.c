@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.149 2003/07/21 20:29:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.150 2003/08/04 00:43:15 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -92,7 +92,7 @@
  *				AbortTransactionBlock
  *
  *		These are invoked only in response to a user "BEGIN WORK", "COMMIT",
- *		or "ROLLBACK" command.  The tricky part about these functions
+ *		or "ROLLBACK" command.	The tricky part about these functions
  *		is that they are called within the postgres main loop, in between
  *		the StartTransactionCommand() and CommitTransactionCommand().
  *
@@ -197,8 +197,8 @@ static TransactionStateData CurrentTransactionStateData = {
 	0,							/* scan command id */
 	0x0,						/* start time */
 	TRANS_DEFAULT,				/* transaction state */
-	TBLOCK_DEFAULT				/* transaction block state from
-								   the client perspective */
+	TBLOCK_DEFAULT				/* transaction block state from the client
+								 * perspective */
 };
 
 TransactionState CurrentTransactionState = &CurrentTransactionStateData;
@@ -359,7 +359,7 @@ GetCurrentTransactionStartTimeUsec(int *msec)
  *	TransactionIdIsCurrentTransactionId
  *
  *	During bootstrap, we cheat and say "it's not my transaction ID" even though
- *	it is.  Along with transam.c's cheat to say that the bootstrap XID is
+ *	it is.	Along with transam.c's cheat to say that the bootstrap XID is
  *	already committed, this causes the tqual.c routines to see previously
  *	inserted tuples as committed, which is what we need during bootstrap.
  */
@@ -561,13 +561,13 @@ RecordTransactionCommit(void)
 
 		/*
 		 * We must mark the transaction committed in clog if its XID
-		 * appears either in permanent rels or in local temporary rels.
-		 * We test this by seeing if we made transaction-controlled
-		 * entries *OR* local-rel tuple updates.  Note that if we made
-		 * only the latter, we have not emitted an XLOG record for our
-		 * commit, and so in the event of a crash the clog update might be
-		 * lost.  This is okay because no one else will ever care whether
-		 * we committed.
+		 * appears either in permanent rels or in local temporary rels. We
+		 * test this by seeing if we made transaction-controlled entries
+		 * *OR* local-rel tuple updates.  Note that if we made only the
+		 * latter, we have not emitted an XLOG record for our commit, and
+		 * so in the event of a crash the clog update might be lost.  This
+		 * is okay because no one else will ever care whether we
+		 * committed.
 		 */
 		if (MyLastRecPtr.xrecoff != 0 || MyXactMadeTempRelUpdate)
 			TransactionIdCommit(xid);
@@ -755,9 +755,9 @@ AtAbort_Memory(void)
 {
 	/*
 	 * Make sure we are in a valid context (not a child of
-	 * TopTransactionContext...).  Note that it is possible for this
-	 * code to be called when we aren't in a transaction at all; go
-	 * directly to TopMemoryContext in that case.
+	 * TopTransactionContext...).  Note that it is possible for this code
+	 * to be called when we aren't in a transaction at all; go directly to
+	 * TopMemoryContext in that case.
 	 */
 	if (TopTransactionContext != NULL)
 	{
@@ -891,8 +891,8 @@ CommitTransaction(void)
 	DeferredTriggerEndXact();
 
 	/*
-	 * Similarly, let ON COMMIT management do its thing before we start
-	 * to commit.
+	 * Similarly, let ON COMMIT management do its thing before we start to
+	 * commit.
 	 */
 	PreCommit_on_commit_actions();
 
@@ -953,10 +953,10 @@ CommitTransaction(void)
 	 * noncritical resource releasing.
 	 *
 	 * The ordering of operations is not entirely random.  The idea is:
-	 * release resources visible to other backends (eg, files, buffer pins);
-	 * then release locks; then release backend-local resources.  We want
-	 * to release locks at the point where any backend waiting for us will
-	 * see our transaction as being fully cleaned up.
+	 * release resources visible to other backends (eg, files, buffer
+	 * pins); then release locks; then release backend-local resources.
+	 * We want to release locks at the point where any backend waiting for
+	 * us will see our transaction as being fully cleaned up.
 	 */
 
 	smgrDoPendingDeletes(true);
@@ -1064,7 +1064,7 @@ AbortTransaction(void)
 	}
 
 	/*
-	 * Post-abort cleanup.  See notes in CommitTransaction() concerning
+	 * Post-abort cleanup.	See notes in CommitTransaction() concerning
 	 * ordering.
 	 */
 
@@ -1194,8 +1194,8 @@ StartTransactionCommand(void)
 	}
 
 	/*
-	 * We must switch to TopTransactionContext before returning. This
-	 * is already done if we called StartTransaction, otherwise not.
+	 * We must switch to TopTransactionContext before returning. This is
+	 * already done if we called StartTransaction, otherwise not.
 	 */
 	Assert(TopTransactionContext != NULL);
 	MemoryContextSwitchTo(TopTransactionContext);
@@ -1370,9 +1370,10 @@ PreventTransactionChain(void *stmtNode, const char *stmtType)
 	if (IsTransactionBlock())
 		ereport(ERROR,
 				(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
-				 /* translator: %s represents an SQL statement name */
+		/* translator: %s represents an SQL statement name */
 				 errmsg("%s cannot run inside a transaction block",
 						stmtType)));
+
 	/*
 	 * Are we inside a function call?  If the statement's parameter block
 	 * was allocated in QueryContext, assume it is an interactive command.
@@ -1381,8 +1382,8 @@ PreventTransactionChain(void *stmtNode, const char *stmtType)
 	if (!MemoryContextContains(QueryContext, stmtNode))
 		ereport(ERROR,
 				(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
-				 /* translator: %s represents an SQL statement name */
-				 errmsg("%s cannot be executed from a function", stmtType)));
+		/* translator: %s represents an SQL statement name */
+			 errmsg("%s cannot be executed from a function", stmtType)));
 	/* If we got past IsTransactionBlock test, should be in default state */
 	if (CurrentTransactionState->blockState != TBLOCK_DEFAULT)
 		elog(ERROR, "cannot prevent transaction chain");
@@ -1414,6 +1415,7 @@ RequireTransactionChain(void *stmtNode, const char *stmtType)
 	 */
 	if (IsTransactionBlock())
 		return;
+
 	/*
 	 * Are we inside a function call?  If the statement's parameter block
 	 * was allocated in QueryContext, assume it is an interactive command.
@@ -1423,7 +1425,7 @@ RequireTransactionChain(void *stmtNode, const char *stmtType)
 		return;
 	ereport(ERROR,
 			(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
-			 /* translator: %s represents an SQL statement name */
+	/* translator: %s represents an SQL statement name */
 			 errmsg("%s may only be used in BEGIN/END transaction blocks",
 					stmtType)));
 }

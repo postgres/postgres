@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.340 2003/07/28 00:09:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.341 2003/08/04 00:43:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@
 
 #ifndef HAVE_GETOPT_LONG
 #include "getopt_long.h"
-int optreset;
+int			optreset;
 #endif
 
 #include "access/attnum.h"
@@ -519,12 +519,12 @@ main(int argc, char **argv)
 					  PQerrorMessage(g_conn));
 	PQclear(res);
 
-    /* Set the datestyle to ISO to ensure the dump's portability */
-    res = PQexec(g_conn, "SET DATESTYLE = ISO");
-    if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
-            exit_horribly(g_fout, NULL, "could not set datestyle to ISO: %s",
-                                      PQerrorMessage(g_conn));
-    PQclear(res);
+	/* Set the datestyle to ISO to ensure the dump's portability */
+	res = PQexec(g_conn, "SET DATESTYLE = ISO");
+	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
+		exit_horribly(g_fout, NULL, "could not set datestyle to ISO: %s",
+					  PQerrorMessage(g_conn));
+	PQclear(res);
 
 	/*
 	 * If supported, set extra_float_digits so that we can dump float data
@@ -577,10 +577,10 @@ main(int argc, char **argv)
 	/* Now sort the output nicely */
 	SortTocByOID(g_fout);
 
-		/*
-		 * Procedural languages have to be declared just after
-		 * database and schema creation, before they are used.
-		 */
+	/*
+	 * Procedural languages have to be declared just after database and
+	 * schema creation, before they are used.
+	 */
 	MoveToStart(g_fout, "ACL LANGUAGE");
 	MoveToStart(g_fout, "PROCEDURAL LANGUAGE");
 	MoveToStart(g_fout, "FUNC PROCEDURAL LANGUAGE");
@@ -702,8 +702,8 @@ selectDumpableNamespace(NamespaceInfo *nsinfo)
 {
 	/*
 	 * If a specific table is being dumped, do not dump any complete
-	 * namespaces.  If a specific namespace is being dumped, dump just
-	 * that namespace. Otherwise, dump all non-system namespaces. 
+	 * namespaces.	If a specific namespace is being dumped, dump just
+	 * that namespace. Otherwise, dump all non-system namespaces.
 	 */
 	if (selectTableName != NULL)
 		nsinfo->dump = false;
@@ -1449,8 +1449,8 @@ getNamespaces(int *numNamespaces)
 	}
 
 	/*
-	 * If the user attempted to dump a specific namespace, check to
-	 * ensure that the specified namespace actually exists.
+	 * If the user attempted to dump a specific namespace, check to ensure
+	 * that the specified namespace actually exists.
 	 */
 	if (selectSchemaName)
 	{
@@ -2269,9 +2269,9 @@ getTables(int *numTables)
 	}
 
 	/*
-	 * If the user is attempting to dump a specific table, check to
-	 * ensure that the specified table actually exists (and is a table
-	 * or a view, not a sequence).
+	 * If the user is attempting to dump a specific table, check to ensure
+	 * that the specified table actually exists (and is a table or a view,
+	 * not a sequence).
 	 */
 	if (selectTableName)
 	{
@@ -2424,8 +2424,8 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		{
 			/* need left join here to not fail on dropped columns ... */
 			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, a.atttypmod, a.attstattarget, a.attstorage, t.typstorage, "
-							  "a.attnotnull, a.atthasdef, a.attisdropped, a.attislocal, "
-							  "pg_catalog.format_type(t.oid,a.atttypmod) as atttypname "
+			  "a.attnotnull, a.atthasdef, a.attisdropped, a.attislocal, "
+			   "pg_catalog.format_type(t.oid,a.atttypmod) as atttypname "
 							  "from pg_catalog.pg_attribute a left join pg_catalog.pg_type t "
 							  "on a.atttypid = t.oid "
 							  "where a.attrelid = '%s'::pg_catalog.oid "
@@ -2442,7 +2442,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			 */
 			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, a.atttypmod, -1 as attstattarget, a.attstorage, t.typstorage, "
 							  "a.attnotnull, a.atthasdef, false as attisdropped, null as attislocal, "
-							  "format_type(t.oid,a.atttypmod) as atttypname "
+						  "format_type(t.oid,a.atttypmod) as atttypname "
 							  "from pg_attribute a left join pg_type t "
 							  "on a.atttypid = t.oid "
 							  "where a.attrelid = '%s'::oid "
@@ -2454,7 +2454,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		{
 			/* format_type not available before 7.1 */
 			appendPQExpBuffer(q, "SELECT attnum, attname, atttypmod, -1 as attstattarget, attstorage, attstorage as typstorage, "
-						 "attnotnull, atthasdef, false as attisdropped, null as attislocal, "
+							  "attnotnull, atthasdef, false as attisdropped, null as attislocal, "
 							  "(select typname from pg_type where oid = atttypid) as atttypname "
 							  "from pg_attribute a "
 							  "where attrelid = '%s'::oid "
@@ -2504,11 +2504,11 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 
 		for (j = 0; j < ntups; j++)
 		{
-			if (j+1 != atoi(PQgetvalue(res, j, i_attnum)))
+			if (j + 1 != atoi(PQgetvalue(res, j, i_attnum)))
 			{
 				write_msg(NULL, "invalid attribute numbering in table \"%s\"\n",
 						  tbinfo->relname);
-					exit_nicely();
+				exit_nicely();
 			}
 			tbinfo->attnames[j] = strdup(PQgetvalue(res, j, i_attname));
 			tbinfo->atttypnames[j] = strdup(PQgetvalue(res, j, i_atttypname));
@@ -3314,7 +3314,7 @@ dumpOneDomain(Archive *fout, TypeInfo *tinfo)
 	 */
 	if (g_fout->remoteVersion >= 70400)
 		appendPQExpBuffer(chkquery, "SELECT conname, "
-						  "pg_catalog.pg_get_constraintdef(oid) AS consrc "
+						"pg_catalog.pg_get_constraintdef(oid) AS consrc "
 						  "FROM pg_catalog.pg_constraint "
 						  "WHERE contypid = '%s'::pg_catalog.oid",
 						  tinfo->oid);
@@ -3345,7 +3345,7 @@ dumpOneDomain(Archive *fout, TypeInfo *tinfo)
 		appendPQExpBuffer(q, "\n\tCONSTRAINT %s %s",
 						  fmtId(conname), consrc);
 	}
-	
+
 	appendPQExpBuffer(q, ";\n");
 
 	(*deps)[depIdx++] = NULL;	/* End of List */
@@ -3437,7 +3437,7 @@ dumpOneCompositeType(Archive *fout, TypeInfo *tinfo)
 			appendPQExpBuffer(q, ",");
 	}
 	appendPQExpBuffer(q, "\n);\n");
-	
+
 	/*
 	 * DROP must be fully qualified in case same name appears in
 	 * pg_catalog
@@ -3755,7 +3755,8 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 	char	   *prosecdef;
 	char	   *lanname;
 	char	   *rettypename;
-	char       *funcproclang;	/* Boolean : is this function a PLang handler ? */
+	char	   *funcproclang;	/* Boolean : is this function a PLang
+								 * handler ? */
 
 	if (finfo->dumped)
 		goto done;
@@ -3900,7 +3901,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 
 	ArchiveEntry(fout, finfo->oid, funcsig_tag,
 				 finfo->pronamespace->nspname,
-				 finfo->usename, strcmp(funcproclang,"t")?"FUNCTION":"FUNC PROCEDURAL LANGUAGE", NULL,
+				 finfo->usename, strcmp(funcproclang, "t") ? "FUNCTION" : "FUNC PROCEDURAL LANGUAGE", NULL,
 				 q->data, delqry->data,
 				 NULL, NULL, NULL);
 
@@ -4911,7 +4912,7 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
  * Write out grant/revoke information
  *
  * 'type' must be TABLE, FUNCTION, LANGUAGE, or SCHEMA.
- * 'name' is the formatted name of the object.  Must be quoted etc. already.
+ * 'name' is the formatted name of the object.	Must be quoted etc. already.
  * 'tag' is the tag for the archive entry (typ. unquoted name of object).
  * 'nspname' is the namespace the object is in (NULL if none).
  * 'owner' is the owner, NULL if there is no owner (for languages).
@@ -4927,12 +4928,15 @@ dumpACL(Archive *fout, const char *type, const char *name,
 {
 	PQExpBuffer sql;
 
-		/* acl_lang is a flag only true if we are dumping language's ACL,
-		 * so we can set 'type' to a value that is suitable to build
-		 * SQL requests as for other types.
-		 */
-	bool       acl_lang = false;
-	if(!strcmp(type,"ACL LANGUAGE")){
+	/*
+	 * acl_lang is a flag only true if we are dumping language's ACL, so
+	 * we can set 'type' to a value that is suitable to build SQL requests
+	 * as for other types.
+	 */
+	bool		acl_lang = false;
+
+	if (!strcmp(type, "ACL LANGUAGE"))
+	{
 		type = "LANGUAGE";
 		acl_lang = true;
 	}
@@ -5275,9 +5279,9 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 			resetPQExpBuffer(query);
 			if (g_fout->remoteVersion >= 70400)
 				appendPQExpBuffer(query, "SELECT conname, "
-								  " pg_catalog.pg_get_constraintdef(c1.oid) AS consrc "
+					" pg_catalog.pg_get_constraintdef(c1.oid) AS consrc "
 								  " from pg_catalog.pg_constraint c1 "
-								  " where conrelid = '%s'::pg_catalog.oid "
+								" where conrelid = '%s'::pg_catalog.oid "
 								  "   and contype = 'c' "
 								  "   and not exists "
 								  "  (select 1 from "
@@ -5288,7 +5292,7 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 								  "          or (c2.conname[0] = '$' "
 								  "              and c1.conname[0] = '$')"
 								  "          )"
-								  "      and pg_catalog.pg_get_constraintdef(c2.oid) "
+					 "      and pg_catalog.pg_get_constraintdef(c2.oid) "
 								  "		     = pg_catalog.pg_get_constraintdef(c1.oid) "
 								  "      and c2.conrelid = i.inhparent) "
 								  " order by conname ",
@@ -5357,7 +5361,7 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 					appendPQExpBuffer(q, ",\n    ");
 
 				appendPQExpBuffer(q, "CONSTRAINT %s ",
-									  fmtId(name));
+								  fmtId(name));
 				appendPQExpBuffer(q, "%s", expr);
 			}
 			PQclear(res2);
@@ -5402,9 +5406,9 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 		for (j = 0; j < tbinfo->numatts; j++)
 		{
 			/*
-			 * Dump per-column statistics information. We only issue an ALTER
-			 * TABLE statement if the attstattarget entry for this column is
-			 * non-negative (i.e. it's not the default value)
+			 * Dump per-column statistics information. We only issue an
+			 * ALTER TABLE statement if the attstattarget entry for this
+			 * column is non-negative (i.e. it's not the default value)
 			 */
 			if (tbinfo->attstattarget[j] >= 0 &&
 				!tbinfo->attisdropped[j])
@@ -5418,12 +5422,14 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 			}
 
 			/*
-			 * Dump per-column storage information.  The statement is only dumped if
-			 * the storage has been changed from the type's default.
+			 * Dump per-column storage information.  The statement is only
+			 * dumped if the storage has been changed from the type's
+			 * default.
 			 */
-			if(!tbinfo->attisdropped[j] && tbinfo->attstorage[j] != tbinfo->typstorage[j])
+			if (!tbinfo->attisdropped[j] && tbinfo->attstorage[j] != tbinfo->typstorage[j])
 			{
-				switch (tbinfo->attstorage[j]) {
+				switch (tbinfo->attstorage[j])
+				{
 					case 'p':
 						storage = "PLAIN";
 						break;
@@ -5439,8 +5445,13 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 					default:
 						storage = NULL;
 				}
-				/* Only dump the statement if it's a storage type we recognize */
-				if (storage != NULL) {
+
+				/*
+				 * Only dump the statement if it's a storage type we
+				 * recognize
+				 */
+				if (storage != NULL)
+				{
 					appendPQExpBuffer(q, "ALTER TABLE ONLY %s ",
 									  fmtId(tbinfo->relname));
 					appendPQExpBuffer(q, "ALTER COLUMN %s ",
@@ -5605,7 +5616,7 @@ dumpIndexes(Archive *fout, TableInfo *tblinfo, int numTables)
 			const char *indexrelname = PQgetvalue(res, j, i_indexrelname);
 			const char *indexdef = PQgetvalue(res, j, i_indexdef);
 			char		contype = *(PQgetvalue(res, j, i_contype));
-			bool	indisclustered = (PQgetvalue(res, j, i_indisclustered)[0] == 't');
+			bool		indisclustered = (PQgetvalue(res, j, i_indisclustered)[0] == 't');
 
 			resetPQExpBuffer(q);
 			resetPQExpBuffer(delq);
@@ -5659,11 +5670,12 @@ dumpIndexes(Archive *fout, TableInfo *tblinfo, int numTables)
 				appendPQExpBuffer(delq, "DROP CONSTRAINT %s;\n",
 								  fmtId(indexrelname));
 				/* If the index is clustered, we need to record that. */
-				if (indisclustered) {
-					appendPQExpBuffer(q, "\nALTER TABLE %s CLUSTER", 
-								 fmtId(tbinfo->relname));
-					appendPQExpBuffer(q, " ON %s;\n", 
-								 fmtId(indexrelname));
+				if (indisclustered)
+				{
+					appendPQExpBuffer(q, "\nALTER TABLE %s CLUSTER",
+									  fmtId(tbinfo->relname));
+					appendPQExpBuffer(q, " ON %s;\n",
+									  fmtId(indexrelname));
 				}
 
 				ArchiveEntry(fout, indexreloid,
@@ -5684,11 +5696,12 @@ dumpIndexes(Archive *fout, TableInfo *tblinfo, int numTables)
 				appendPQExpBuffer(q, "%s;\n", indexdef);
 
 				/* If the index is clustered, we need to record that. */
-				if (indisclustered) {
-					appendPQExpBuffer(q, "\nALTER TABLE %s CLUSTER", 
-								 fmtId(tbinfo->relname));
-					appendPQExpBuffer(q, " ON %s;\n", 
-								 fmtId(indexrelname));
+				if (indisclustered)
+				{
+					appendPQExpBuffer(q, "\nALTER TABLE %s CLUSTER",
+									  fmtId(tbinfo->relname));
+					appendPQExpBuffer(q, " ON %s;\n",
+									  fmtId(indexrelname));
 				}
 
 				/*
@@ -5889,16 +5902,16 @@ dumpOneSequence(Archive *fout, TableInfo *tbinfo,
 	snprintf(bufx, sizeof(bufx), INT64_FORMAT, SEQ_MAXVALUE);
 
 	appendPQExpBuffer(query,
-			"SELECT sequence_name, last_value, increment_by, "
-					"CASE WHEN increment_by > 0 AND max_value = %s THEN NULL "
-					"     WHEN increment_by < 0 AND max_value = -1 THEN NULL "
-					"     ELSE max_value "
-					"END AS max_value, "
-					"CASE WHEN increment_by > 0 AND min_value = 1 THEN NULL "
-					"     WHEN increment_by < 0 AND min_value = %s THEN NULL "
-					"     ELSE min_value "
-					"END AS min_value, "
-					"cache_value, is_cycled, is_called from %s",
+					  "SELECT sequence_name, last_value, increment_by, "
+			   "CASE WHEN increment_by > 0 AND max_value = %s THEN NULL "
+			   "     WHEN increment_by < 0 AND max_value = -1 THEN NULL "
+					  "     ELSE max_value "
+					  "END AS max_value, "
+				"CASE WHEN increment_by > 0 AND min_value = 1 THEN NULL "
+			   "     WHEN increment_by < 0 AND min_value = %s THEN NULL "
+					  "     ELSE min_value "
+					  "END AS min_value, "
+					  "cache_value, is_cycled, is_called from %s",
 					  bufx, bufm,
 					  fmtId(tbinfo->relname));
 
@@ -5962,7 +5975,7 @@ dumpOneSequence(Archive *fout, TableInfo *tbinfo,
 
 		resetPQExpBuffer(query);
 		appendPQExpBuffer(query,
-				   "CREATE SEQUENCE %s\n",
+						  "CREATE SEQUENCE %s\n",
 						  fmtId(tbinfo->relname));
 
 		if (!called)
@@ -5981,7 +5994,7 @@ dumpOneSequence(Archive *fout, TableInfo *tbinfo,
 			appendPQExpBuffer(query, "    NO MINVALUE\n");
 
 		appendPQExpBuffer(query,
-				   "    CACHE %s%s;\n",
+						  "    CACHE %s%s;\n",
 						  cache, (cycled ? "\n    CYCLE" : ""));
 
 		ArchiveEntry(fout, tbinfo->oid, tbinfo->relname,
@@ -6072,7 +6085,7 @@ dumpConstraints(Archive *fout, TableInfo *tblinfo, int numTables)
 		resetPQExpBuffer(query);
 		appendPQExpBuffer(query,
 						  "SELECT oid, conname, "
-						  "pg_catalog.pg_get_constraintdef(oid) as condef "
+						"pg_catalog.pg_get_constraintdef(oid) as condef "
 						  "FROM pg_catalog.pg_constraint "
 						  "WHERE conrelid = '%s'::pg_catalog.oid "
 						  "AND contype = 'f'",

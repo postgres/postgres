@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.32 2003/07/27 04:53:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.33 2003/08/04 00:43:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,8 +106,8 @@ bit_in(PG_FUNCTION_ARGS)
 	else if (bitlen != atttypmod)
 		ereport(ERROR,
 				(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
-				 errmsg("bit string length %d does not match type bit(%d)",
-						 bitlen, atttypmod)));
+			   errmsg("bit string length %d does not match type bit(%d)",
+					  bitlen, atttypmod)));
 
 	len = VARBITTOTALLEN(atttypmod);
 	/* set to 0 so that *r is always initialised and string is zero-padded */
@@ -260,8 +260,8 @@ bit(PG_FUNCTION_ARGS)
 	if (!isExplicit)
 		ereport(ERROR,
 				(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
-				 errmsg("bit string length %d does not match type bit(%d)",
-						 VARBITLEN(arg), len)));
+			   errmsg("bit string length %d does not match type bit(%d)",
+					  VARBITLEN(arg), len)));
 
 	rlen = VARBITTOTALLEN(len);
 	/* set to 0 so that string is zero-padded */
@@ -346,7 +346,7 @@ varbit_in(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
 				 errmsg("bit string too long for type bit varying(%d)",
-						 atttypmod)));
+						atttypmod)));
 
 	len = VARBITTOTALLEN(bitlen);
 	/* set to 0 so that *r is always initialised and string is zero-padded */
@@ -530,7 +530,7 @@ varbit(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
 				 errmsg("bit string too long for type bit varying(%d)",
-						 len)));
+						len)));
 
 	rlen = VARBITTOTALLEN(len);
 	result = (VarBit *) palloc(rlen);

@@ -16,7 +16,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$Id: inet_net_pton.c,v 1.15 2003/06/24 22:21:22 momjian Exp $";
+static const char rcsid[] = "$Id: inet_net_pton.c,v 1.16 2003/08/04 00:43:25 momjian Exp $";
 #endif
 
 #include "postgres.h"
@@ -35,8 +35,8 @@ static const char rcsid[] = "$Id: inet_net_pton.c,v 1.15 2003/06/24 22:21:22 mom
 
 static int	inet_net_pton_ipv4(const char *src, u_char *dst);
 static int	inet_cidr_pton_ipv4(const char *src, u_char *dst, size_t size);
-static int      inet_net_pton_ipv6(const char *src, u_char *dst);
-static int      inet_cidr_pton_ipv6(const char *src, u_char *dst, size_t size);
+static int	inet_net_pton_ipv6(const char *src, u_char *dst);
+static int	inet_cidr_pton_ipv6(const char *src, u_char *dst, size_t size);
 
 /*
  * static int
@@ -339,24 +339,27 @@ emsgsize:
 }
 
 static int
-getbits(const char *src, int *bitsp) {
+getbits(const char *src, int *bitsp)
+{
 	static const char digits[] = "0123456789";
-	int n;
-	int val;
-	char ch;
+	int			n;
+	int			val;
+	char		ch;
 
 	val = 0;
 	n = 0;
-	while ((ch = *src++) != '\0') {
+	while ((ch = *src++) != '\0')
+	{
 		const char *pch;
 
 		pch = strchr(digits, ch);
-		if (pch != NULL) {
+		if (pch != NULL)
+		{
 			if (n++ != 0 && val == 0)	/* no leading zeros */
 				return (0);
 			val *= 10;
 			val += (pch - digits);
-			if (val > 128)			/* range */
+			if (val > 128)		/* range */
 				return (0);
 			continue;
 		}
@@ -369,30 +372,34 @@ getbits(const char *src, int *bitsp) {
 }
 
 static int
-getv4(const char *src, u_char *dst, int *bitsp) {
+getv4(const char *src, u_char *dst, int *bitsp)
+{
 	static const char digits[] = "0123456789";
-	u_char *odst = dst;
-	int n;
-	u_int val;
-	char ch;
+	u_char	   *odst = dst;
+	int			n;
+	u_int		val;
+	char		ch;
 
 	val = 0;
 	n = 0;
-	while ((ch = *src++) != '\0') {
+	while ((ch = *src++) != '\0')
+	{
 		const char *pch;
 
 		pch = strchr(digits, ch);
-		if (pch != NULL) {
+		if (pch != NULL)
+		{
 			if (n++ != 0 && val == 0)	/* no leading zeros */
 				return (0);
 			val *= 10;
 			val += (pch - digits);
-			if (val > 255)			/* range */
+			if (val > 255)		/* range */
 				return (0);
 			continue;
 		}
-		if (ch == '.' || ch == '/') {
-			if (dst - odst > 3)		/* too many octets? */
+		if (ch == '.' || ch == '/')
+		{
+			if (dst - odst > 3) /* too many octets? */
 				return (0);
 			*dst++ = val;
 			if (ch == '/')
@@ -405,7 +412,7 @@ getv4(const char *src, u_char *dst, int *bitsp) {
 	}
 	if (n == 0)
 		return (0);
-	if (dst - odst > 3)		/* too many octets? */
+	if (dst - odst > 3)			/* too many octets? */
 		return (0);
 	*dst++ = val;
 	return (1);
@@ -422,15 +429,21 @@ inet_net_pton_ipv6(const char *src, u_char *dst)
 #define NS_INADDRSZ 4
 
 static int
-inet_cidr_pton_ipv6(const char *src, u_char *dst, size_t size) {
+inet_cidr_pton_ipv6(const char *src, u_char *dst, size_t size)
+{
 	static const char xdigits_l[] = "0123456789abcdef",
-			  xdigits_u[] = "0123456789ABCDEF";
-	u_char tmp[NS_IN6ADDRSZ], *tp, *endp, *colonp;
-	const char *xdigits, *curtok;
-	int ch, saw_xdigit;
-	u_int val;
-	int digits;
-	int bits;
+				xdigits_u[] = "0123456789ABCDEF";
+	u_char		tmp[NS_IN6ADDRSZ],
+			   *tp,
+			   *endp,
+			   *colonp;
+	const char *xdigits,
+			   *curtok;
+	int			ch,
+				saw_xdigit;
+	u_int		val;
+	int			digits;
+	int			bits;
 
 	if (size < NS_IN6ADDRSZ)
 		goto emsgsize;
@@ -447,12 +460,14 @@ inet_cidr_pton_ipv6(const char *src, u_char *dst, size_t size) {
 	val = 0;
 	digits = 0;
 	bits = -1;
-	while ((ch = *src++) != '\0') {
+	while ((ch = *src++) != '\0')
+	{
 		const char *pch;
 
 		if ((pch = strchr((xdigits = xdigits_l), ch)) == NULL)
 			pch = strchr((xdigits = xdigits_u), ch);
-		if (pch != NULL) {
+		if (pch != NULL)
+		{
 			val <<= 4;
 			val |= (pch - xdigits);
 			if (++digits > 4)
@@ -460,14 +475,17 @@ inet_cidr_pton_ipv6(const char *src, u_char *dst, size_t size) {
 			saw_xdigit = 1;
 			continue;
 		}
-		if (ch == ':') {
+		if (ch == ':')
+		{
 			curtok = src;
-			if (!saw_xdigit) {
+			if (!saw_xdigit)
+			{
 				if (colonp)
 					goto enoent;
 				colonp = tp;
 				continue;
-			} else if (*src == '\0')
+			}
+			else if (*src == '\0')
 				goto enoent;
 			if (tp + NS_INT16SZ > endp)
 				return (0);
@@ -479,16 +497,18 @@ inet_cidr_pton_ipv6(const char *src, u_char *dst, size_t size) {
 			continue;
 		}
 		if (ch == '.' && ((tp + NS_INADDRSZ) <= endp) &&
-		     getv4(curtok, tp, &bits) > 0) {
+			getv4(curtok, tp, &bits) > 0)
+		{
 			tp += NS_INADDRSZ;
 			saw_xdigit = 0;
-			break;	/* '\0' was seen by inet_pton4(). */
+			break;				/* '\0' was seen by inet_pton4(). */
 		}
 		if (ch == '/' && getbits(src, &bits) > 0)
 			break;
 		goto enoent;
 	}
-	if (saw_xdigit) {
+	if (saw_xdigit)
+	{
 		if (tp + NS_INT16SZ > endp)
 			goto enoent;
 		*tp++ = (u_char) (val >> 8) & 0xff;
@@ -497,20 +517,22 @@ inet_cidr_pton_ipv6(const char *src, u_char *dst, size_t size) {
 	if (bits == -1)
 		bits = 128;
 
-	endp =  tmp + 16;
+	endp = tmp + 16;
 
-	if (colonp != NULL) {
+	if (colonp != NULL)
+	{
 		/*
-		 * Since some memmove()'s erroneously fail to handle
-		 * overlapping regions, we'll do the shift by hand.
+		 * Since some memmove()'s erroneously fail to handle overlapping
+		 * regions, we'll do the shift by hand.
 		 */
-		const int n = tp - colonp;
-		int i;
+		const int	n = tp - colonp;
+		int			i;
 
 		if (tp == endp)
 			goto enoent;
-		for (i = 1; i <= n; i++) {
-			endp[- i] = colonp[n - i];
+		for (i = 1; i <= n; i++)
+		{
+			endp[-i] = colonp[n - i];
 			colonp[n - i] = 0;
 		}
 		tp = endp;
@@ -525,11 +547,11 @@ inet_cidr_pton_ipv6(const char *src, u_char *dst, size_t size) {
 
 	return (bits);
 
- enoent:
+enoent:
 	errno = ENOENT;
 	return (-1);
 
- emsgsize:
+emsgsize:
 	errno = EMSGSIZE;
 	return (-1);
 }

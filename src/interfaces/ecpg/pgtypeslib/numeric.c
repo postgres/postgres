@@ -5,17 +5,17 @@
 #include "extern.h"
 #include "pgtypes_error.h"
 
-#define Max(x, y)               ((x) > (y) ? (x) : (y))
-#define Min(x, y)               ((x) < (y) ? (x) : (y))
+#define Max(x, y)				((x) > (y) ? (x) : (y))
+#define Min(x, y)				((x) < (y) ? (x) : (y))
 
-#define init_var(v)             memset(v,0,sizeof(Numeric))
+#define init_var(v)				memset(v,0,sizeof(Numeric))
 
 #define digitbuf_alloc(size) ((NumericDigit *) pgtypes_alloc(size))
-#define digitbuf_free(buf)      \
-       do { \
-                 if ((buf) != NULL) \
-                          free(buf); \
-          } while (0)
+#define digitbuf_free(buf)		\
+	   do { \
+				 if ((buf) != NULL) \
+						  free(buf); \
+		  } while (0)
 
 #include "pgtypes_numeric.h"
 
@@ -27,7 +27,7 @@
  *	typmod field.
  * ----------
  */
-static int 
+static int
 apply_typmod(Numeric *var, long typmod)
 {
 	int			precision;
@@ -37,7 +37,7 @@ apply_typmod(Numeric *var, long typmod)
 
 	/* Do nothing if we have a default typmod (-1) */
 	if (typmod < (long) (VARHDRSZ))
-		return(0);
+		return (0);
 
 	typmod -= VARHDRSZ;
 	precision = (typmod >> 16) & 0xffff;
@@ -102,9 +102,9 @@ apply_typmod(Numeric *var, long typmod)
 #endif
 
 /* ----------
- *  alloc_var() -
- *  
- *   Allocate a digit buffer of ndigits digits (plus a spare digit for rounding)
+ *	alloc_var() -
+ *
+ *	 Allocate a digit buffer of ndigits digits (plus a spare digit for rounding)
  * ----------
  */
 static int
@@ -120,17 +120,16 @@ alloc_var(Numeric *var, int ndigits)
 	return 0;
 }
 
-Numeric * 
+Numeric *
 PGTYPESnumeric_new(void)
 {
-	Numeric *var;
-		
-	if ((var = (Numeric *)pgtypes_alloc(sizeof(Numeric))) == NULL)
+	Numeric    *var;
+
+	if ((var = (Numeric *) pgtypes_alloc(sizeof(Numeric))) == NULL)
 		return NULL;
 
-	if (alloc_var(var, 0) < 0) {
+	if (alloc_var(var, 0) < 0)
 		return NULL;
-	}
 
 	return var;
 }
@@ -141,11 +140,11 @@ PGTYPESnumeric_new(void)
  *	Parse a string and put the number into a variable
  * ----------
  */
-static int 
+static int
 set_var_from_str(char *str, char **ptr, Numeric *dest)
 {
-	bool	have_dp = FALSE;
-	int	i = 0;
+	bool		have_dp = FALSE;
+	int			i = 0;
 
 	*ptr = str;
 	while (*(*ptr))
@@ -182,7 +181,7 @@ set_var_from_str(char *str, char **ptr, Numeric *dest)
 
 	if (!isdigit((unsigned char) *(*ptr)))
 	{
-		errno=PGTYPES_NUM_BAD_NUMERIC;
+		errno = PGTYPES_NUM_BAD_NUMERIC;
 		return -1;
 	}
 
@@ -259,7 +258,7 @@ set_var_from_str(char *str, char **ptr, Numeric *dest)
 		dest->weight = 0;
 
 	dest->rscale = dest->dscale;
-	return(0);
+	return (0);
 }
 
 
@@ -308,7 +307,7 @@ get_str_from_var(Numeric *var, int dscale)
 	/*
 	 * Allocate space for the result
 	 */
-	if ((str = (char *)pgtypes_alloc(Max(0, dscale) + Max(0, var->weight) + 4)) == NULL)
+	if ((str = (char *) pgtypes_alloc(Max(0, dscale) + Max(0, var->weight) + 4)) == NULL)
 		return NULL;
 	cp = str;
 
@@ -360,17 +359,18 @@ get_str_from_var(Numeric *var, int dscale)
 Numeric *
 PGTYPESnumeric_from_asc(char *str, char **endptr)
 {
-	Numeric *value = (Numeric *)pgtypes_alloc(sizeof(Numeric));
-	int ret;
+	Numeric    *value = (Numeric *) pgtypes_alloc(sizeof(Numeric));
+	int			ret;
+
 #if 0
-	long typmod = -1;
+	long		typmod = -1;
 #endif
-	char *realptr;
-	char **ptr = (endptr != NULL) ? endptr : &realptr;
-	
+	char	   *realptr;
+	char	  **ptr = (endptr != NULL) ? endptr : &realptr;
+
 	if (!value)
 		return (NULL);
-	
+
 	ret = set_var_from_str(str, ptr, value);
 	if (ret)
 		return (NULL);
@@ -379,8 +379,8 @@ PGTYPESnumeric_from_asc(char *str, char **endptr)
 	ret = apply_typmod(value, typmod);
 	if (ret)
 		return (NULL);
-#endif	
-	return(value);
+#endif
+	return (value);
 }
 
 char *
@@ -389,7 +389,7 @@ PGTYPESnumeric_to_asc(Numeric *num, int dscale)
 	if (dscale <= 0)
 		dscale = num->dscale;
 
-	return(get_str_from_var(num, dscale));
+	return (get_str_from_var(num, dscale));
 }
 
 /* ----------
@@ -410,7 +410,7 @@ zero_var(Numeric *var)
 	var->sign = NUMERIC_POS;	/* anything but NAN... */
 }
 
-void  
+void
 PGTYPESnumeric_free(Numeric *var)
 {
 	digitbuf_free(var->buf);
@@ -913,7 +913,7 @@ PGTYPESnumeric_sub(Numeric *var1, Numeric *var2, Numeric *result)
  * mul_var() -
  *
  *	Multiplication on variable level. Product of var1 * var2 is stored
- *	in result.  Accuracy of result is determined by global_rscale.
+ *	in result.	Accuracy of result is determined by global_rscale.
  * ----------
  */
 int
@@ -929,7 +929,7 @@ PGTYPESnumeric_mul(Numeric *var1, Numeric *var2, Numeric *result)
 				i1,
 				i2;
 	long		sum = 0;
-	int global_rscale = var1->rscale + var2->rscale;
+	int			global_rscale = var1->rscale + var2->rscale;
 
 	res_weight = var1->weight + var2->weight + 2;
 	res_ndigits = var1->ndigits + var2->ndigits + 1;
@@ -939,7 +939,7 @@ PGTYPESnumeric_mul(Numeric *var1, Numeric *var2, Numeric *result)
 		res_sign = NUMERIC_NEG;
 
 	if ((res_buf = digitbuf_alloc(res_ndigits)) == NULL)
-			return -1;
+		return -1;
 	res_digits = res_buf;
 	memset(res_digits, 0, res_ndigits);
 
@@ -1054,8 +1054,8 @@ select_div_scale(Numeric *var1, Numeric *var2, int *rscale)
 	}
 
 	/*
-	 * Estimate weight of quotient.  If the two first digits are equal,
-	 * we can't be sure, but assume that var1 is less than var2.
+	 * Estimate weight of quotient.  If the two first digits are equal, we
+	 * can't be sure, but assume that var1 is less than var2.
 	 */
 	qweight = weight1 - weight2;
 	if (firstdigit1 <= firstdigit2)
@@ -1081,8 +1081,8 @@ PGTYPESnumeric_div(Numeric *var1, Numeric *var2, Numeric *result)
 	int			res_ndigits;
 	int			res_sign;
 	int			res_weight;
-	Numeric	dividend;
-	Numeric	divisor[10];
+	Numeric		dividend;
+	Numeric		divisor[10];
 	int			ndigits_tmp;
 	int			weight_tmp;
 	int			rscale_tmp;
@@ -1093,16 +1093,16 @@ PGTYPESnumeric_div(Numeric *var1, Numeric *var2, Numeric *result)
 	long		first_div;
 	int			first_nextdigit;
 	int			stat = 0;
-	int rscale;
-	int res_dscale = select_div_scale(var1, var2, &rscale);
-	
+	int			rscale;
+	int			res_dscale = select_div_scale(var1, var2, &rscale);
+
 	/*
 	 * First of all division by zero check
 	 */
 	ndigits_tmp = var2->ndigits + 1;
 	if (ndigits_tmp == 1)
 	{
-		errno= PGTYPES_NUM_DIVIDE_ZERO;
+		errno = PGTYPES_NUM_DIVIDE_ZERO;
 		return -1;
 	}
 
@@ -1281,29 +1281,30 @@ PGTYPESnumeric_div(Numeric *var1, Numeric *var2, Numeric *result)
 
 
 int
-PGTYPESnumeric_cmp(Numeric *var1, Numeric *var2) {
+PGTYPESnumeric_cmp(Numeric *var1, Numeric *var2)
+{
 
 	/* use cmp_abs function to calculate the result */
 
 	/* both are positive: normal comparation with cmp_abs */
-	if (var1->sign == NUMERIC_POS && var2->sign == NUMERIC_POS) {
+	if (var1->sign == NUMERIC_POS && var2->sign == NUMERIC_POS)
 		return cmp_abs(var1, var2);
-	}
 
 	/* both are negative: return the inverse of the normal comparation */
-	if (var1->sign == NUMERIC_NEG && var2->sign == NUMERIC_NEG) {
-		/* instead of inverting the result, we invert the paramter
-		 * ordering */
+	if (var1->sign == NUMERIC_NEG && var2->sign == NUMERIC_NEG)
+	{
+		/*
+		 * instead of inverting the result, we invert the paramter
+		 * ordering
+		 */
 		return cmp_abs(var2, var1);
 	}
 
 	/* one is positive, one is negative: trivial */
-	if (var1->sign == NUMERIC_POS && var2->sign == NUMERIC_NEG) {
+	if (var1->sign == NUMERIC_POS && var2->sign == NUMERIC_NEG)
 		return 1;
-	}
-	if (var1->sign == NUMERIC_NEG && var2->sign == NUMERIC_POS) {
+	if (var1->sign == NUMERIC_NEG && var2->sign == NUMERIC_POS)
 		return -1;
-	}
 
 	errno = PGTYPES_NUM_BAD_NUMERIC;
 	return INT_MAX;
@@ -1311,67 +1312,79 @@ PGTYPESnumeric_cmp(Numeric *var1, Numeric *var2) {
 }
 
 int
-PGTYPESnumeric_from_int(signed int int_val, Numeric *var) {
+PGTYPESnumeric_from_int(signed int int_val, Numeric *var)
+{
 	/* implicit conversion */
 	signed long int long_int = int_val;
+
 	return PGTYPESnumeric_from_long(long_int, var);
 }
 
 int
-PGTYPESnumeric_from_long(signed long int long_val, Numeric *var) {
+PGTYPESnumeric_from_long(signed long int long_val, Numeric *var)
+{
 	/* calculate the size of the long int number */
 	/* a number n needs log_10 n digits */
-	/* however we multiply by 10 each time and compare instead of
-	 * calculating the logarithm */
 
-	int size = 0;
-	int i;
+	/*
+	 * however we multiply by 10 each time and compare instead of
+	 * calculating the logarithm
+	 */
+
+	int			size = 0;
+	int			i;
 	signed long int abs_long_val = long_val;
 	signed long int extract;
 	signed long int reach_limit;
-	
-	if (abs_long_val < 0) {
+
+	if (abs_long_val < 0)
+	{
 		abs_long_val *= -1;
 		var->sign = NUMERIC_NEG;
-	} else {
-		var->sign = NUMERIC_POS;
 	}
+	else
+		var->sign = NUMERIC_POS;
 
 	reach_limit = 1;
-	do {
+	do
+	{
 		size++;
 		reach_limit *= 10;
-	} while ((reach_limit-1) < abs_long_val);
+	} while ((reach_limit - 1) < abs_long_val);
 
 	/* always add a .0 */
 	size++;
 
-	if (alloc_var(var, size) < 0) {
+	if (alloc_var(var, size) < 0)
 		return -1;
-	}
 
 	var->rscale = 1;
 	var->dscale = 1;
 	var->weight = size - 2;
 
 	i = 0;
-	do {
+	do
+	{
 		reach_limit /= 10;
 		extract = abs_long_val - (abs_long_val % reach_limit);
 		var->digits[i] = extract / reach_limit;
 		abs_long_val -= extract;
 		i++;
-		/* we can abandon if abs_long_val reaches 0, because the
-		 * memory is initialized properly and filled with '0', so
-		 * converting 10000 in only one step is no problem */
+
+		/*
+		 * we can abandon if abs_long_val reaches 0, because the memory is
+		 * initialized properly and filled with '0', so converting 10000
+		 * in only one step is no problem
+		 */
 	} while (abs_long_val > 0);
 
 	return 0;
 }
 
 int
-PGTYPESnumeric_copy(Numeric *src, Numeric *dst) {
-	int i;
+PGTYPESnumeric_copy(Numeric *src, Numeric *dst)
+{
+	int			i;
 
 	zero_var(dst);
 
@@ -1383,9 +1396,8 @@ PGTYPESnumeric_copy(Numeric *src, Numeric *dst) {
 	if (alloc_var(dst, src->ndigits) != 0)
 		return -1;
 
-	for (i = 0; i < src->ndigits; i++) {
+	for (i = 0; i < src->ndigits; i++)
 		dst->digits[i] = src->digits[i];
-	}
 
 	return 0;
 }
@@ -1393,12 +1405,12 @@ PGTYPESnumeric_copy(Numeric *src, Numeric *dst) {
 int
 PGTYPESnumeric_from_double(double d, Numeric *dst)
 {
-	char buffer[100];
-	Numeric *tmp;
-	
+	char		buffer[100];
+	Numeric    *tmp;
+
 	if (sprintf(buffer, "%f", d) == 0)
 		return -1;
-	
+
 	if ((tmp = PGTYPESnumeric_from_asc(buffer, NULL)) == NULL)
 		return -1;
 	if (PGTYPESnumeric_copy(tmp, dst) != 0)
@@ -1425,17 +1437,18 @@ numericvar_to_double_no_overflow(Numeric *var, double *dp)
 		free(tmp);
 		errno = PGTYPES_NUM_BAD_NUMERIC;
 		return -1;
-	} 
+	}
 	*dp = val;
 	free(tmp);
 	return 0;
 }
 
 int
-PGTYPESnumeric_to_double(Numeric* nv, double* dp) {
-	double tmp;
-	int i;
-	
+PGTYPESnumeric_to_double(Numeric *nv, double *dp)
+{
+	double		tmp;
+	int			i;
+
 	if ((i = numericvar_to_double_no_overflow(nv, &tmp)) != 0)
 		return -1;
 	*dp = tmp;
@@ -1443,72 +1456,79 @@ PGTYPESnumeric_to_double(Numeric* nv, double* dp) {
 }
 
 int
-PGTYPESnumeric_to_int(Numeric* nv, int* ip) {
-	long l;
-	int i;
-	
+PGTYPESnumeric_to_int(Numeric *nv, int *ip)
+{
+	long		l;
+	int			i;
+
 	if ((i = PGTYPESnumeric_to_long(nv, &l)) != 0)
 		return i;
 
-	if (l < -INT_MAX || l > INT_MAX) {
+	if (l < -INT_MAX || l > INT_MAX)
+	{
 		errno = PGTYPES_NUM_OVERFLOW;
 		return -1;
-	} 
+	}
 
 	*ip = (int) l;
 	return 0;
 }
 
 int
-PGTYPESnumeric_to_long(Numeric* nv, long* lp) {
-	int i;
-	long l = 0;
+PGTYPESnumeric_to_long(Numeric *nv, long *lp)
+{
+	int			i;
+	long		l = 0;
 
-	for (i = 1; i < nv->weight + 2; i++) {
+	for (i = 1; i < nv->weight + 2; i++)
+	{
 		l *= 10;
 		l += nv->buf[i];
 	}
-	if (nv->buf[i] >= 5) {
+	if (nv->buf[i] >= 5)
+	{
 		/* round up */
 		l++;
 	}
-	if (l > LONG_MAX || l < 0) {
+	if (l > LONG_MAX || l < 0)
+	{
 		errno = PGTYPES_NUM_OVERFLOW;
 		return -1;
 	}
-	
-	if (nv->sign == NUMERIC_NEG) {
+
+	if (nv->sign == NUMERIC_NEG)
 		l *= -1;
-	}
 	*lp = l;
 	return 0;
 }
 
 int
-PGTYPESnumeric_to_decimal(Numeric *src, Decimal *dst) {
-	int i;
+PGTYPESnumeric_to_decimal(Numeric *src, Decimal * dst)
+{
+	int			i;
 
-	if (src->ndigits > DECSIZE) {
+	if (src->ndigits > DECSIZE)
+	{
 		errno = PGTYPES_NUM_OVERFLOW;
 		return -1;
 	}
-	
+
 	dst->weight = src->weight;
 	dst->rscale = src->rscale;
 	dst->dscale = src->dscale;
 	dst->sign = src->sign;
 	dst->ndigits = src->ndigits;
 
-	for (i = 0; i < src->ndigits; i++) {
+	for (i = 0; i < src->ndigits; i++)
 		dst->digits[i] = src->digits[i];
-	}
 
 	return 0;
 }
 
 int
-PGTYPESnumeric_from_decimal(Decimal *src, Numeric *dst) {
-	int i;
+PGTYPESnumeric_from_decimal(Decimal * src, Numeric *dst)
+{
+	int			i;
 
 	zero_var(dst);
 
@@ -1520,9 +1540,8 @@ PGTYPESnumeric_from_decimal(Decimal *src, Numeric *dst) {
 	if (alloc_var(dst, src->ndigits) != 0)
 		return -1;
 
-	for (i = 0; i < src->ndigits; i++) {
+	for (i = 0; i < src->ndigits; i++)
 		dst->digits[i] = src->digits[i];
-	}
 
 	return 0;
 }

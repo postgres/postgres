@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.35 2003/07/21 20:29:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.36 2003/08/04 00:43:12 momjian Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -205,8 +205,8 @@ _hash_getovfladdr(Relation rel, Buffer *metabufp)
 			if (++splitnum >= NCACHED)
 				ereport(ERROR,
 						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-						 errmsg("out of overflow pages in hash index \"%s\"",
-								RelationGetRelationName(rel))));
+					 errmsg("out of overflow pages in hash index \"%s\"",
+							RelationGetRelationName(rel))));
 			metap->hashm_ovflpoint = splitnum;
 			metap->hashm_spares[splitnum] = metap->hashm_spares[splitnum - 1];
 			metap->hashm_spares[splitnum - 1]--;

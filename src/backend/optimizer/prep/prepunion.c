@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.101 2003/07/28 00:09:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.102 2003/08/04 00:43:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -427,7 +427,7 @@ generate_setop_tlist(List *colTypes, int flag,
 		}
 		else
 		{
-			expr = coerce_to_common_type(NULL, /* no UNKNOWNs here */
+			expr = coerce_to_common_type(NULL,	/* no UNKNOWNs here */
 										 expr,
 										 colType,
 										 "UNION/INTERSECT/EXCEPT");
@@ -849,11 +849,11 @@ adjust_inherited_attrs_mutator(Node *node,
 	if (IsA(node, InClauseInfo))
 	{
 		/* Copy the InClauseInfo node with correct mutation of subnodes */
-		InClauseInfo   *ininfo;
+		InClauseInfo *ininfo;
 
 		ininfo = (InClauseInfo *) expression_tree_mutator(node,
 										  adjust_inherited_attrs_mutator,
-														  (void *) context);
+													   (void *) context);
 		/* now fix InClauseInfo's relid sets */
 		ininfo->lefthand = adjust_relid_set(ininfo->lefthand,
 											context->old_rt_index,
@@ -880,9 +880,9 @@ adjust_inherited_attrs_mutator(Node *node,
 			adjust_inherited_attrs_mutator((Node *) oldinfo->clause, context);
 
 		/*
-		 * We do NOT want to copy the original subclauseindices list, since
-		 * the new rel will have different indices.  The list will be rebuilt
-		 * when needed during later planning.
+		 * We do NOT want to copy the original subclauseindices list,
+		 * since the new rel will have different indices.  The list will
+		 * be rebuilt when needed during later planning.
 		 */
 		newinfo->subclauseindices = NIL;
 
@@ -896,7 +896,7 @@ adjust_inherited_attrs_mutator(Node *node,
 												 context->old_rt_index,
 												 context->new_rt_index);
 
-		newinfo->eval_cost.startup = -1; /* reset these too */
+		newinfo->eval_cost.startup = -1;		/* reset these too */
 		newinfo->this_selec = -1;
 		newinfo->left_pathkey = NIL;	/* and these */
 		newinfo->right_pathkey = NIL;
@@ -925,7 +925,7 @@ adjust_inherited_attrs_mutator(Node *node,
 	 */
 	if (is_subplan(node))
 	{
-		SubPlan *subplan;
+		SubPlan    *subplan;
 
 		/* Copy the node and process subplan args */
 		node = expression_tree_mutator(node, adjust_inherited_attrs_mutator,
@@ -963,7 +963,7 @@ adjust_relid_set(Relids relids, Index oldrelid, Index newrelid)
  *
  * The expressions have already been fixed, but we have to make sure that
  * the target resnos match the child table (they may not, in the case of
- * a column that was added after-the-fact by ALTER TABLE).  In some cases
+ * a column that was added after-the-fact by ALTER TABLE).	In some cases
  * this can force us to re-order the tlist to preserve resno ordering.
  * (We do all this work in special cases so that preptlist.c is fast for
  * the typical case.)

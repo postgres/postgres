@@ -304,7 +304,7 @@ fti(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
 						 errmsg("column \"%s\" of \"%s\" does not exist",
-						 args[i + 1], indexname)));
+								args[i + 1], indexname)));
 
 			/* Get the char* representation of the column */
 			column = SPI_getvalue(rettuple, tupdesc, colnum);
@@ -339,8 +339,8 @@ fti(PG_FUNCTION_ARGS)
 					ret = SPI_execp(*(plan->splan), values, NULL, 0);
 					if (ret != SPI_OK_INSERT)
 						ereport(ERROR,
-								(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
-								 errmsg("error executing insert")));
+							(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
+							 errmsg("error executing insert")));
 				}
 				pfree(buff);
 				pfree(data);

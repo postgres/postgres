@@ -87,7 +87,7 @@ levenshtein(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("argument exceeds max length: %d",
-						 MAX_LEVENSHTEIN_STRLEN)));
+						MAX_LEVENSHTEIN_STRLEN)));
 
 	/*
 	 * If either rows or cols is 0, the answer is the other value. This
@@ -220,7 +220,7 @@ metaphone(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("argument exceeds max length: %d",
-						 MAX_METAPHONE_STRLEN)));
+						MAX_METAPHONE_STRLEN)));
 
 	if (!(str_i_len > 0))
 		ereport(ERROR,
@@ -232,7 +232,7 @@ metaphone(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("output length exceeds max length: %d",
-						 MAX_METAPHONE_STRLEN)));
+						MAX_METAPHONE_STRLEN)));
 
 	if (!(reqlen > 0))
 		ereport(ERROR,

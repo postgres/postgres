@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.186 2003/07/25 20:17:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.187 2003/08/04 00:43:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -962,7 +962,8 @@ RelationInitIndexAccessInfo(Relation relation)
 	/*
 	 * Make a copy of the pg_index entry for the index.  Since pg_index
 	 * contains variable-length and possibly-null fields, we have to do
-	 * this honestly rather than just treating it as a Form_pg_index struct.
+	 * this honestly rather than just treating it as a Form_pg_index
+	 * struct.
 	 */
 	tuple = SearchSysCache(INDEXRELID,
 						   ObjectIdGetDatum(RelationGetRelid(relation)),
@@ -1368,8 +1369,7 @@ formrdesc(const char *relationName,
 	bool		has_not_null;
 
 	/*
-	 * allocate new relation desc
-	 * clear all fields of reldesc
+	 * allocate new relation desc clear all fields of reldesc
 	 */
 	relation = (Relation) palloc0(sizeof(RelationData));
 	relation->rd_targblock = InvalidBlockNumber;
@@ -1710,8 +1710,8 @@ RelationClearRelation(Relation relation, bool rebuild)
 
 	/*
 	 * Never, never ever blow away a nailed-in system relation, because
-	 * we'd be unable to recover.  However, we must update rd_nblocks
-	 * and reset rd_targblock, in case we got called because of a relation
+	 * we'd be unable to recover.  However, we must update rd_nblocks and
+	 * reset rd_targblock, in case we got called because of a relation
 	 * cache flush that was triggered by VACUUM.
 	 */
 	if (relation->rd_isnailed)
@@ -1742,8 +1742,8 @@ RelationClearRelation(Relation relation, bool rebuild)
 	 * Free all the subsidiary data structures of the relcache entry. We
 	 * cannot free rd_att if we are trying to rebuild the entry, however,
 	 * because pointers to it may be cached in various places. The rule
-	 * manager might also have pointers into the rewrite rules. So to begin
-	 * with, we can only get rid of these fields:
+	 * manager might also have pointers into the rewrite rules. So to
+	 * begin with, we can only get rid of these fields:
 	 */
 	FreeTriggerDesc(relation->trigdesc);
 	if (relation->rd_indextuple)
@@ -2705,15 +2705,15 @@ RelationGetIndexExpressions(Relation relation)
 
 	/*
 	 * We build the tree we intend to return in the caller's context.
-	 * After successfully completing the work, we copy it into the relcache
-	 * entry.  This avoids problems if we get some sort of
-	 * error partway through.
+	 * After successfully completing the work, we copy it into the
+	 * relcache entry.	This avoids problems if we get some sort of error
+	 * partway through.
 	 *
-	 * We make use of the syscache's copy of pg_index's tupledesc
-	 * to access the non-fixed fields of the tuple.  We assume that
-	 * the syscache will be initialized before any access of a
-	 * partial index could occur.  (This would probably fail if we
-	 * were to allow partial indexes on system catalogs.)
+	 * We make use of the syscache's copy of pg_index's tupledesc to access
+	 * the non-fixed fields of the tuple.  We assume that the syscache
+	 * will be initialized before any access of a partial index could
+	 * occur.  (This would probably fail if we were to allow partial
+	 * indexes on system catalogs.)
 	 */
 	exprsDatum = SysCacheGetAttr(INDEXRELID, relation->rd_indextuple,
 								 Anum_pg_index_indexprs, &isnull);
@@ -2723,8 +2723,8 @@ RelationGetIndexExpressions(Relation relation)
 	pfree(exprsString);
 
 	/*
-	 * Run the expressions through eval_const_expressions.  This is not just
-	 * an optimization, but is necessary, because the planner will be
+	 * Run the expressions through eval_const_expressions.	This is not
+	 * just an optimization, but is necessary, because the planner will be
 	 * comparing them to const-folded qual clauses, and may fail to detect
 	 * valid matches without this.
 	 */
@@ -2770,15 +2770,15 @@ RelationGetIndexPredicate(Relation relation)
 
 	/*
 	 * We build the tree we intend to return in the caller's context.
-	 * After successfully completing the work, we copy it into the relcache
-	 * entry.  This avoids problems if we get some sort of
-	 * error partway through.
+	 * After successfully completing the work, we copy it into the
+	 * relcache entry.	This avoids problems if we get some sort of error
+	 * partway through.
 	 *
-	 * We make use of the syscache's copy of pg_index's tupledesc
-	 * to access the non-fixed fields of the tuple.  We assume that
-	 * the syscache will be initialized before any access of a
-	 * partial index could occur.  (This would probably fail if we
-	 * were to allow partial indexes on system catalogs.)
+	 * We make use of the syscache's copy of pg_index's tupledesc to access
+	 * the non-fixed fields of the tuple.  We assume that the syscache
+	 * will be initialized before any access of a partial index could
+	 * occur.  (This would probably fail if we were to allow partial
+	 * indexes on system catalogs.)
 	 */
 	predDatum = SysCacheGetAttr(INDEXRELID, relation->rd_indextuple,
 								Anum_pg_index_indpred, &isnull);
@@ -2788,8 +2788,8 @@ RelationGetIndexPredicate(Relation relation)
 	pfree(predString);
 
 	/*
-	 * Run the expression through eval_const_expressions.  This is not just
-	 * an optimization, but is necessary, because the planner will be
+	 * Run the expression through eval_const_expressions.  This is not
+	 * just an optimization, but is necessary, because the planner will be
 	 * comparing it to const-folded qual clauses, and may fail to detect
 	 * valid matches without this.
 	 */
@@ -3183,7 +3183,7 @@ write_relcache_init_file(void)
 				(errcode_for_file_access(),
 				 errmsg("could not create init file \"%s\": %m",
 						tempfilename),
-				 errdetail("Continuing anyway, but there's something wrong.")));
+		  errdetail("Continuing anyway, but there's something wrong.")));
 		return;
 	}
 
@@ -3322,8 +3322,8 @@ write_relcache_init_file(void)
 		{
 			ereport(WARNING,
 					(errcode_for_file_access(),
-					 errmsg("could not rename init file \"%s\" to \"%s\": %m",
-							tempfilename, finalfilename),
+				errmsg("could not rename init file \"%s\" to \"%s\": %m",
+					   tempfilename, finalfilename),
 					 errdetail("Continuing anyway, but there's something wrong.")));
 
 			/*

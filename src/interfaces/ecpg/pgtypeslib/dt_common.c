@@ -8,18 +8,18 @@
 #include "dt.h"
 #include "pgtypes_timestamp.h"
 
-static int day_tab[2][13] = {
-	        {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0},
-		{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0}};
+static int	day_tab[2][13] = {
+	{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0},
+{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0}};
 
 typedef long AbsoluteTime;
-	
-#define ABS_SIGNBIT             ((char) 0200)
-#define POS(n)                  (n)
-#define NEG(n)                  ((n)|ABS_SIGNBIT)
-#define FROMVAL(tp)             (-SIGNEDCHAR((tp)->value) * 15) /* uncompress */
-#define VALMASK                 ((char) 0177)
-#define SIGNEDCHAR(c)   ((c)&ABS_SIGNBIT? -((c)&VALMASK): (c))
+
+#define ABS_SIGNBIT				((char) 0200)
+#define POS(n)					(n)
+#define NEG(n)					((n)|ABS_SIGNBIT)
+#define FROMVAL(tp)				(-SIGNEDCHAR((tp)->value) * 15) /* uncompress */
+#define VALMASK					((char) 0177)
+#define SIGNEDCHAR(c)	((c)&ABS_SIGNBIT? -((c)&VALMASK): (c))
 
 static datetkn datetktbl[] = {
 /*	text, token, lexval */
@@ -497,41 +497,41 @@ static datetkn deltatktbl[] = {
 static unsigned int szdatetktbl = sizeof datetktbl / sizeof datetktbl[0];
 static unsigned int szdeltatktbl = sizeof deltatktbl / sizeof deltatktbl[0];
 
-static datetkn    *datecache[MAXDATEFIELDS] = {NULL};
+static datetkn *datecache[MAXDATEFIELDS] = {NULL};
 
-static datetkn    *deltacache[MAXDATEFIELDS] = {NULL};
+static datetkn *deltacache[MAXDATEFIELDS] = {NULL};
 
-char       *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", NULL};
+char	   *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", NULL};
 
-char       *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", NULL};
+char	   *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", NULL};
 
-char* pgtypes_date_weekdays_short[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", NULL};
+char	   *pgtypes_date_weekdays_short[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", NULL};
 
-char* pgtypes_date_months[] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", NULL};
+char	   *pgtypes_date_months[] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", NULL};
 
 static datetkn *
 datebsearch(char *key, datetkn *base, unsigned int nel)
 {
-        datetkn    *last = base + nel - 1,
-                   *position;
-        int                     result;
+	datetkn    *last = base + nel - 1,
+			   *position;
+	int			result;
 
 	while (last >= base)
-        {
-                   position = base + ((last - base) >> 1);
-                   result = key[0] - position->token[0];
-                   if (result == 0)
-                   {
-                           result = strncmp(key, position->token, TOKMAXLEN);
-                           if (result == 0)
-                           return position;
-                   }
-                   if (result < 0)
-     	              last = position - 1;
-                   else
-            	       base = position + 1;
-           }
-           return NULL;
+	{
+		position = base + ((last - base) >> 1);
+		result = key[0] - position->token[0];
+		if (result == 0)
+		{
+			result = strncmp(key, position->token, TOKMAXLEN);
+			if (result == 0)
+				return position;
+		}
+		if (result < 0)
+			last = position - 1;
+		else
+			base = position + 1;
+	}
+	return NULL;
 }
 
 /* DecodeUnits()
@@ -580,7 +580,7 @@ DecodeUnits(int field, char *lowtoken, int *val)
  *
  * Rewritten to eliminate overflow problems. This now allows the
  * routines to work correctly for all Julian day counts from
- * 0 to 2147483647  (Nov 24, -4713 to Jun 3, 5874898) assuming
+ * 0 to 2147483647	(Nov 24, -4713 to Jun 3, 5874898) assuming
  * a 32-bit integer. Longer types should also work to the limits
  * of their precision.
  */
@@ -591,18 +591,21 @@ date2j(int y, int m, int d)
 	int			julian;
 	int			century;
 
-	if (m > 2) {
+	if (m > 2)
+	{
 		m += 1;
 		y += 4800;
-	} else {
+	}
+	else
+	{
 		m += 13;
 		y += 4799;
 	}
 
-	century = y/100;
-	julian  = y*365 - 32167;
-	julian += y/4 - century + century/4;
-	julian += 7834*m/256 + d;
+	century = y / 100;
+	julian = y * 365 - 32167;
+	julian += y / 4 - century + century / 4;
+	julian += 7834 * m / 256 + d;
 
 	return julian;
 }	/* date2j() */
@@ -610,25 +613,25 @@ date2j(int y, int m, int d)
 void
 j2date(int jd, int *year, int *month, int *day)
 {
-	unsigned int		julian;
-	unsigned int		quad;
-	unsigned int		extra;
+	unsigned int julian;
+	unsigned int quad;
+	unsigned int extra;
 	int			y;
 
 	julian = jd;
 	julian += 32044;
-	quad = julian/146097;
-	extra = (julian - quad*146097)*4 + 3;
-	julian += 60 + quad*3 + extra/146097;
-	quad = julian/1461;
-	julian -= quad*1461;
+	quad = julian / 146097;
+	extra = (julian - quad * 146097) * 4 + 3;
+	julian += 60 + quad * 3 + extra / 146097;
+	quad = julian / 1461;
+	julian -= quad * 1461;
 	y = julian * 4 / 1461;
 	julian = ((y != 0) ? ((julian + 305) % 365) : ((julian + 306) % 366))
 		+ 123;
-	y += quad*4;
+	y += quad * 4;
 	*year = y - 4800;
 	quad = julian * 2141 / 65536;
-	*day = julian - 7834*quad/256;
+	*day = julian - 7834 * quad / 256;
 	*month = (quad + 10) % 12 + 1;
 
 	return;
@@ -637,13 +640,13 @@ j2date(int jd, int *year, int *month, int *day)
 int
 j2day(int date)
 {
-        unsigned int day;
+	unsigned int day;
 
-        day = date;
-        day += 1;
-        day %= 7;
-        return (int) day;
-}       /*j2day() */
+	day = date;
+	day += 1;
+	day %= 7;
+	return (int) day;
+}	/* j2day() */
 
 /* DecodeSpecial()
  * Decode text string using lookup table.
@@ -753,14 +756,14 @@ EncodeDateOnly(struct tm * tm, int style, char *str, bool EuroDates)
 static void
 TrimTrailingZeros(char *str)
 {
-    int                     len = strlen(str);
-		
-    /* chop off trailing zeros... but leave at least 2 fractional digits */
-    while ((*(str + len - 1) == '0') && (*(str + len - 3) != '.'))
-    {
-          len--;
-          *(str + len) = '\0';
-    }
+	int			len = strlen(str);
+
+	/* chop off trailing zeros... but leave at least 2 fractional digits */
+	while ((*(str + len - 1) == '0') && (*(str + len - 3) != '.'))
+	{
+		len--;
+		*(str + len) = '\0';
+	}
 }
 
 /* EncodeDateTime()
@@ -791,8 +794,8 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 					tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min);
 
 			/*
-			 * Print fractional seconds if any.  The field widths here should
-			 * be at least equal to MAX_TIMESTAMP_PRECISION.
+			 * Print fractional seconds if any.  The field widths here
+			 * should be at least equal to MAX_TIMESTAMP_PRECISION.
 			 *
 			 * In float mode, don't print fractional seconds before 1 AD,
 			 * since it's unlikely there's any precision left ...
@@ -841,8 +844,8 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 					tm->tm_hour, tm->tm_min);
 
 			/*
-			 * Print fractional seconds if any.  The field widths here should
-			 * be at least equal to MAX_TIMESTAMP_PRECISION.
+			 * Print fractional seconds if any.  The field widths here
+			 * should be at least equal to MAX_TIMESTAMP_PRECISION.
 			 *
 			 * In float mode, don't print fractional seconds before 1 AD,
 			 * since it's unlikely there's any precision left ...
@@ -887,8 +890,8 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 					tm->tm_hour, tm->tm_min);
 
 			/*
-			 * Print fractional seconds if any.  The field widths here should
-			 * be at least equal to MAX_TIMESTAMP_PRECISION.
+			 * Print fractional seconds if any.  The field widths here
+			 * should be at least equal to MAX_TIMESTAMP_PRECISION.
 			 *
 			 * In float mode, don't print fractional seconds before 1 AD,
 			 * since it's unlikely there's any precision left ...
@@ -941,8 +944,8 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 			sprintf((str + 10), " %02d:%02d", tm->tm_hour, tm->tm_min);
 
 			/*
-			 * Print fractional seconds if any.  The field widths here should
-			 * be at least equal to MAX_TIMESTAMP_PRECISION.
+			 * Print fractional seconds if any.  The field widths here
+			 * should be at least equal to MAX_TIMESTAMP_PRECISION.
 			 *
 			 * In float mode, don't print fractional seconds before 1 AD,
 			 * since it's unlikely there's any precision left ...
@@ -1041,21 +1044,22 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 		 * We have a brute force time zone per SQL99? Then use it without
 		 * change since we have already rotated to the time zone.
 		 */
-		*tzp = -tm->tm_gmtoff;		/* tm_gmtoff is Sun/DEC-ism */
+		*tzp = -tm->tm_gmtoff;	/* tm_gmtoff is Sun/DEC-ism */
+
 		/*
 		 * XXX FreeBSD man pages indicate that this should work - tgl
 		 * 97/04/23
 		 */
 		if (tzn != NULL)
 		{
-				/*
-				 * Copy no more than MAXTZLEN bytes of timezone to tzn, in
-				 * case it contains an error message, which doesn't fit in
-				 * the buffer
-				 */
-				StrNCpy(*tzn, tm->tm_zone, MAXTZLEN + 1);
-				if (strlen(tm->tm_zone) > MAXTZLEN)
-					tm->tm_isdst = -1;
+			/*
+			 * Copy no more than MAXTZLEN bytes of timezone to tzn, in
+			 * case it contains an error message, which doesn't fit in the
+			 * buffer
+			 */
+			StrNCpy(*tzn, tm->tm_zone, MAXTZLEN + 1);
+			if (strlen(tm->tm_zone) > MAXTZLEN)
+				tm->tm_isdst = -1;
 		}
 	}
 	else
@@ -1063,19 +1067,19 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 #elif defined(HAVE_INT_TIMEZONE)
 	if (tzp != NULL)
 	{
-			*tzp = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
+		*tzp = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
 
-			if (tzn != NULL)
-			{
-				/*
-				 * Copy no more than MAXTZLEN bytes of timezone to tzn, in
-				 * case it contains an error message, which doesn't fit in
-				 * the buffer
-				 */
-				StrNCpy(*tzn, tzname[tm->tm_isdst], MAXTZLEN + 1);
-				if (strlen(tzname[tm->tm_isdst]) > MAXTZLEN)
-					tm->tm_isdst = -1;
-			}
+		if (tzn != NULL)
+		{
+			/*
+			 * Copy no more than MAXTZLEN bytes of timezone to tzn, in
+			 * case it contains an error message, which doesn't fit in the
+			 * buffer
+			 */
+			StrNCpy(*tzn, tzname[tm->tm_isdst], MAXTZLEN + 1);
+			if (strlen(tzname[tm->tm_isdst]) > MAXTZLEN)
+				tm->tm_isdst = -1;
+		}
 	}
 	else
 		tm->tm_isdst = -1;
@@ -1245,33 +1249,33 @@ static void
 dt2time(double jd, int *hour, int *min, int *sec, fsec_t *fsec)
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	int64           time;
+	int64		time;
 
 #else
-	double          time;
+	double		time;
 #endif
 
 	time = jd;
 #ifdef HAVE_INT64_TIMESTAMP
-        *hour = (time / INT64CONST(3600000000));
-        time -= ((*hour) * INT64CONST(3600000000));
-        *min = (time / INT64CONST(60000000));
-        time -= ((*min) * INT64CONST(60000000));
-        *sec = (time / INT64CONST(1000000));
-        *fsec = (time - (*sec * INT64CONST(1000000)));
+	*hour = (time / INT64CONST(3600000000));
+	time -= ((*hour) * INT64CONST(3600000000));
+	*min = (time / INT64CONST(60000000));
+	time -= ((*min) * INT64CONST(60000000));
+	*sec = (time / INT64CONST(1000000));
+	*fsec = (time - (*sec * INT64CONST(1000000)));
 #else
-        *hour = (time / 3600);
-        time -= ((*hour) * 3600);
+	*hour = (time / 3600);
+	time -= ((*hour) * 3600);
 	*min = (time / 60);
-        time -= ((*min) * 60);
-        *sec = time;
-        *fsec = JROUND(time - *sec);
+	time -= ((*min) * 60);
+	*sec = time;
+	*fsec = JROUND(time - *sec);
 #endif
-        return;
-}       /* dt2time() */
+	return;
+}	/* dt2time() */
 
-									
-				
+
+
 /* DecodeNumberField()
  * Interpret numeric string as a concatenated date or time field.
  * Use the context of previously decoded fields to help with
@@ -1279,7 +1283,7 @@ dt2time(double jd, int *hour, int *min, int *sec, fsec_t *fsec)
  */
 static int
 DecodeNumberField(int len, char *str, int fmask,
-				int *tmask, struct tm * tm, fsec_t *fsec, int *is2digits, bool EuroDates)
+int *tmask, struct tm * tm, fsec_t *fsec, int *is2digits, bool EuroDates)
 {
 	char	   *cp;
 
@@ -1386,7 +1390,7 @@ DecodeNumberField(int len, char *str, int fmask,
  */
 static int
 DecodeNumber(int flen, char *str, int fmask,
-			 int *tmask, struct tm * tm, fsec_t *fsec, int *is2digits, bool EuroDates)
+int *tmask, struct tm * tm, fsec_t *fsec, int *is2digits, bool EuroDates)
 {
 	int			val;
 	char	   *cp;
@@ -1405,7 +1409,7 @@ DecodeNumber(int flen, char *str, int fmask,
 		 */
 		if ((cp - str) > 2)
 			return DecodeNumberField(flen, str, (fmask | DTK_DATE_M),
-									 tmask, tm, fsec, is2digits, EuroDates);
+								  tmask, tm, fsec, is2digits, EuroDates);
 
 		*fsec = strtod(cp, &cp);
 		if (*cp != '\0')
@@ -1797,7 +1801,7 @@ DecodePosixTimezone(char *str, int *tzp)
  */
 int
 ParseDateTime(char *timestr, char *lowstr,
-			  char **field, int *ftype, int maxfields, int *numfields, char **endstr)
+  char **field, int *ftype, int maxfields, int *numfields, char **endstr)
 {
 	int			nf = 0;
 	char	   *lp = lowstr;
@@ -1980,7 +1984,7 @@ ParseDateTime(char *timestr, char *lowstr,
  */
 int
 DecodeDateTime(char **field, int *ftype, int nf,
-			   int *dtype, struct tm * tm, fsec_t *fsec, int *tzp, bool EuroDates)
+	  int *dtype, struct tm * tm, fsec_t *fsec, int *tzp, bool EuroDates)
 {
 	int			fmask = 0,
 				tmask,
@@ -2085,7 +2089,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						 * concatenated time
 						 */
 						if ((ftype[i] = DecodeNumberField(strlen(field[i]), field[i], fmask,
-									  &tmask, tm, fsec, &is2digits, EuroDates)) < 0)
+						   &tmask, tm, fsec, &is2digits, EuroDates)) < 0)
 							return -1;
 
 						/*
@@ -2272,7 +2276,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						case DTK_TIME:
 							/* previous field was "t" for ISO time */
 							if ((ftype[i] = DecodeNumberField(strlen(field[i]), field[i], (fmask | DTK_DATE_M),
-									  &tmask, tm, fsec, &is2digits, EuroDates)) < 0)
+							&tmask, tm, fsec, &is2digits, EuroDates)) < 0)
 								return -1;
 
 							if (tmask != DTK_TIME_M)
@@ -2310,18 +2314,18 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						 * later. Example: 20011223 or 040506
 						 */
 						if ((ftype[i] = DecodeNumberField(flen, field[i], fmask,
-									  &tmask, tm, fsec, &is2digits, EuroDates)) < 0)
+						   &tmask, tm, fsec, &is2digits, EuroDates)) < 0)
 							return -1;
 					}
 					else if (flen > 4)
 					{
 						if ((ftype[i] = DecodeNumberField(flen, field[i], fmask,
-									  &tmask, tm, fsec, &is2digits, EuroDates)) < 0)
+						   &tmask, tm, fsec, &is2digits, EuroDates)) < 0)
 							return -1;
 					}
 					/* otherwise it is a single date/time field... */
 					else if (DecodeNumber(flen, field[i], fmask,
-									  &tmask, tm, fsec, &is2digits, EuroDates) != 0)
+						   &tmask, tm, fsec, &is2digits, EuroDates) != 0)
 						return -1;
 				}
 				break;
@@ -2565,110 +2569,130 @@ DecodeDateTime(char **field, int *ftype, int nf,
  *
  * */
 
-static char* find_end_token(char* str, char* fmt) {
-	/* str: here is28the day12the hour
-	 * fmt: here is%dthe day%hthe hour
+static char *
+find_end_token(char *str, char *fmt)
+{
+	/*
+	 * str: here is28the day12the hour fmt: here is%dthe day%hthe hour
 	 *
-	 * we extract the 28, we read the percent sign and the type "d"
-	 * then this functions gets called as
-	 * find_end_token("28the day12the hour", "the day%hthehour")
+	 * we extract the 28, we read the percent sign and the type "d" then this
+	 * functions gets called as find_end_token("28the day12the hour", "the
+	 * day%hthehour")
 	 *
-	 * fmt points to "the day%hthehour", next_percent points to
-	 * %hthehour and we have to find a match for everything between
-	 * these positions ("the day"). We look for "the day" in str and
-	 * know that the pattern we are about to scan ends where this string
-	 * starts (right after the "28")
+	 * fmt points to "the day%hthehour", next_percent points to %hthehour and
+	 * we have to find a match for everything between these positions
+	 * ("the day"). We look for "the day" in str and know that the pattern
+	 * we are about to scan ends where this string starts (right after the
+	 * "28")
 	 *
 	 * At the end, *fmt is '\0' and *str isn't. end_position then is
 	 * unchanged.
 	 */
-	char* end_position = NULL;
-	char* next_percent, *subst_location = NULL;
-	int scan_offset = 0;
-	char last_char;
+	char	   *end_position = NULL;
+	char	   *next_percent,
+			   *subst_location = NULL;
+	int			scan_offset = 0;
+	char		last_char;
 
 	/* are we at the end? */
-	if (!*fmt) {
+	if (!*fmt)
+	{
 		end_position = fmt;
 		return end_position;
 	}
 
 	/* not at the end */
-	while (fmt[scan_offset] == '%' && fmt[scan_offset+1]) {
-		/* there is no delimiter, skip to the next delimiter
-		 * if we're reading a number and then something that is not
-		 * a number "9:15pm", we might be able to recover with the
-		 * strtol end pointer. Go for the next percent sign */
+	while (fmt[scan_offset] == '%' && fmt[scan_offset + 1])
+	{
+		/*
+		 * there is no delimiter, skip to the next delimiter if we're
+		 * reading a number and then something that is not a number
+		 * "9:15pm", we might be able to recover with the strtol end
+		 * pointer. Go for the next percent sign
+		 */
 		scan_offset += 2;
 	}
-	next_percent = strchr(fmt+scan_offset, '%');
-	if (next_percent) {
-		/* we don't want to allocate extra memory, so we temporarily
-		 * set the '%' sign to '\0' and call strstr
-		 * However since we allow whitespace to float around
-		 * everything, we have to shorten the pattern until we reach
-		 * a non-whitespace character */
-		
+	next_percent = strchr(fmt + scan_offset, '%');
+	if (next_percent)
+	{
+		/*
+		 * we don't want to allocate extra memory, so we temporarily set
+		 * the '%' sign to '\0' and call strstr However since we allow
+		 * whitespace to float around everything, we have to shorten the
+		 * pattern until we reach a non-whitespace character
+		 */
+
 		subst_location = next_percent;
-		while(*(subst_location-1) == ' ' && subst_location-1 > fmt+scan_offset) {
+		while (*(subst_location - 1) == ' ' && subst_location - 1 > fmt + scan_offset)
 			subst_location--;
-		}
 		last_char = *subst_location;
 		*subst_location = '\0';
 
-		/* the haystack is the str and the needle is the original
-		 * fmt but it ends at the position where the next percent
-		 * sign would be */
-		/* There is one special case. Imagine:
-		 * str = " 2", fmt = "%d %...",
-		 * since we want to allow blanks as "dynamic" padding we
-		 * have to accept this. Now, we are called with a fmt of
-		 * " %..." and look for " " in str. We find it at the first
-		 * position and never read the 2... */
-		while (*str == ' ') { str++; }
-		end_position = strstr(str, fmt+scan_offset);
+		/*
+		 * the haystack is the str and the needle is the original fmt but
+		 * it ends at the position where the next percent sign would be
+		 */
+
+		/*
+		 * There is one special case. Imagine: str = " 2", fmt = "%d
+		 * %...", since we want to allow blanks as "dynamic" padding we
+		 * have to accept this. Now, we are called with a fmt of " %..."
+		 * and look for " " in str. We find it at the first position and
+		 * never read the 2...
+		 */
+		while (*str == ' ')
+			str++;
+		end_position = strstr(str, fmt + scan_offset);
 		*subst_location = last_char;
-	} else {
-		/* there is no other percent sign. So everything up to
-		 * the end has to match. */
+	}
+	else
+	{
+		/*
+		 * there is no other percent sign. So everything up to the end has
+		 * to match.
+		 */
 		end_position = str + strlen(str);
 	}
-	if (!end_position) {
-		/* maybe we have the following case:
+	if (!end_position)
+	{
+		/*
+		 * maybe we have the following case:
 		 *
-		 * str = "4:15am"
-		 * fmt = "%M:%S %p"
+		 * str = "4:15am" fmt = "%M:%S %p"
 		 *
 		 * at this place we could have
 		 *
-		 * str = "15am"
-		 * fmt = " %p"
+		 * str = "15am" fmt = " %p"
 		 *
-		 * and have set fmt to " " because overwrote the % sign with
-		 * a NULL
+		 * and have set fmt to " " because overwrote the % sign with a NULL
 		 *
-		 * In this case where we would have to match a space but
-		 * can't find it, set end_position to the end of the string */
-		if ((fmt+scan_offset)[0] == ' ' && fmt+scan_offset+1 == subst_location) {
+		 * In this case where we would have to match a space but can't find
+		 * it, set end_position to the end of the string
+		 */
+		if ((fmt + scan_offset)[0] == ' ' && fmt + scan_offset + 1 == subst_location)
 			end_position = str + strlen(str);
-		}
 	}
 	return end_position;
 }
 
-static int pgtypes_defmt_scan(union un_fmt_comb* scan_val, int scan_type, char** pstr, char* pfmt) {
-	/* scan everything between pstr and pstr_end.
-	 * This is not including the last character so we might set it to
-	 * '\0' for the parsing */
+static int
+pgtypes_defmt_scan(union un_fmt_comb * scan_val, int scan_type, char **pstr, char *pfmt)
+{
+	/*
+	 * scan everything between pstr and pstr_end. This is not including
+	 * the last character so we might set it to '\0' for the parsing
+	 */
 
-	char last_char;
-	int err = 0;
-	char* pstr_end;
-	char* strtol_end = NULL;
-	
-	while (**pstr == ' ') { pstr++; }
+	char		last_char;
+	int			err = 0;
+	char	   *pstr_end;
+	char	   *strtol_end = NULL;
+
+	while (**pstr == ' ')
+		pstr++;
 	pstr_end = find_end_token(*pstr, pfmt);
-	if (!pstr_end) {
+	if (!pstr_end)
+	{
 		/* there was an error, no match */
 		err = 1;
 		return err;
@@ -2676,63 +2700,80 @@ static int pgtypes_defmt_scan(union un_fmt_comb* scan_val, int scan_type, char**
 	last_char = *pstr_end;
 	*pstr_end = '\0';
 
-	switch(scan_type) {
+	switch (scan_type)
+	{
 		case PGTYPES_TYPE_UINT:
-			/* numbers may be blank-padded, this is the only
-			 * deviation from the fmt-string we accept */
-			while (**pstr == ' ') { (*pstr)++; }
+
+			/*
+			 * numbers may be blank-padded, this is the only deviation
+			 * from the fmt-string we accept
+			 */
+			while (**pstr == ' ')
+				(*pstr)++;
 			errno = 0;
 			scan_val->uint_val = (unsigned int) strtol(*pstr, &strtol_end, 10);
-			if (errno) { err = 1; }
+			if (errno)
+				err = 1;
 			break;
 		case PGTYPES_TYPE_UINT_LONG:
-			while (**pstr == ' ') { (*pstr)++; }
+			while (**pstr == ' ')
+				(*pstr)++;
 			errno = 0;
 			scan_val->uint_val = (unsigned long int) strtol(*pstr, &strtol_end, 10);
-			if (errno) { err = 1; }
+			if (errno)
+				err = 1;
 			break;
 		case PGTYPES_TYPE_STRING_MALLOCED:
-			if (pstr) {
+			if (pstr)
 				scan_val->str_val = pgtypes_strdup(*pstr);
-			}
 	}
-	if (strtol_end && *strtol_end) {
+	if (strtol_end && *strtol_end)
 		*pstr = strtol_end;
-	} else {
+	else
 		*pstr = pstr_end;
-	}
 	*pstr_end = last_char;
 	return err;
 }
 
 /* XXX range checking */
-int PGTYPEStimestamp_defmt_scan(char**, char*, Timestamp *, int*, int*, int*,
-		                                int*, int*, int*, int*);
+int PGTYPEStimestamp_defmt_scan(char **, char *, Timestamp *, int *, int *, int *,
+							int *, int *, int *, int *);
 
-int PGTYPEStimestamp_defmt_scan(char** str, char* fmt, Timestamp *d,
-			int* year, int* month, int* day,
-			int* hour, int* minute, int* second,
-			int* tz) {
+int
+PGTYPEStimestamp_defmt_scan(char **str, char *fmt, Timestamp *d,
+							int *year, int *month, int *day,
+							int *hour, int *minute, int *second,
+							int *tz)
+{
 	union un_fmt_comb scan_val;
-	int scan_type;
+	int			scan_type;
 
-	char *pstr, *pfmt, *tmp;
-	int err = 1;
-	int j;
-	struct tm tm;
+	char	   *pstr,
+			   *pfmt,
+			   *tmp;
+	int			err = 1;
+	int			j;
+	struct tm	tm;
 
 	pfmt = fmt;
 	pstr = *str;
-	
-	while (*pfmt) {
+
+	while (*pfmt)
+	{
 		err = 0;
-		while (*pfmt == ' ') { pfmt++; }
-		while (*pstr == ' ') { pstr++; }
-		if (*pfmt != '%') {
-			if (*pfmt == *pstr) {
+		while (*pfmt == ' ')
+			pfmt++;
+		while (*pstr == ' ')
+			pstr++;
+		if (*pfmt != '%')
+		{
+			if (*pfmt == *pstr)
+			{
 				pfmt++;
 				pstr++;
-			} else {
+			}
+			else
+			{
 				/* XXX Error: no match */
 				err = 1;
 				return err;
@@ -2741,17 +2782,22 @@ int PGTYPEStimestamp_defmt_scan(char** str, char* fmt, Timestamp *d,
 		}
 		/* here *pfmt equals '%' */
 		pfmt++;
-		switch(*pfmt) {
+		switch (*pfmt)
+		{
 			case 'a':
 				pfmt++;
-				/* we parse the day and see if it is a week
-				 * day but we do not check if the week day
-				 * really matches the date
-				 * */
-				err = 1; j = 0;
-				while(pgtypes_date_weekdays_short[j]) {
+
+				/*
+				 * we parse the day and see if it is a week day but we do
+				 * not check if the week day really matches the date
+				 */
+				err = 1;
+				j = 0;
+				while (pgtypes_date_weekdays_short[j])
+				{
 					if (strncmp(pgtypes_date_weekdays_short[j], pstr,
-							strlen(pgtypes_date_weekdays_short[j])) == 0) {
+							strlen(pgtypes_date_weekdays_short[j])) == 0)
+					{
 						/* found it */
 						err = 0;
 						pstr += strlen(pgtypes_date_weekdays_short[j]);
@@ -2763,9 +2809,12 @@ int PGTYPEStimestamp_defmt_scan(char** str, char* fmt, Timestamp *d,
 			case 'A':
 				/* see note above */
 				pfmt++;
-				err = 1; j = 0;
-				while(days[j]) {
-					if (strncmp(days[j], pstr, strlen(days[j])) == 0) {
+				err = 1;
+				j = 0;
+				while (days[j])
+				{
+					if (strncmp(days[j], pstr, strlen(days[j])) == 0)
+					{
 						/* found it */
 						err = 0;
 						pstr += strlen(days[j]);
@@ -2777,13 +2826,16 @@ int PGTYPEStimestamp_defmt_scan(char** str, char* fmt, Timestamp *d,
 			case 'b':
 			case 'h':
 				pfmt++;
-				err = 1; j = 0;
-				while(months[j]) {
-					if (strncmp(months[j], pstr, strlen(months[j])) == 0) {
+				err = 1;
+				j = 0;
+				while (months[j])
+				{
+					if (strncmp(months[j], pstr, strlen(months[j])) == 0)
+					{
 						/* found it */
 						err = 0;
 						pstr += strlen(months[j]);
-						*month = j+1;
+						*month = j + 1;
 						break;
 					}
 					j++;
@@ -2792,13 +2844,16 @@ int PGTYPEStimestamp_defmt_scan(char** str, char* fmt, Timestamp *d,
 			case 'B':
 				/* see note above */
 				pfmt++;
-				err = 1; j = 0;
-				while(pgtypes_date_months[j]) {
-					if (strncmp(pgtypes_date_months[j], pstr, strlen(pgtypes_date_months[j])) == 0) {
+				err = 1;
+				j = 0;
+				while (pgtypes_date_months[j])
+				{
+					if (strncmp(pgtypes_date_months[j], pstr, strlen(pgtypes_date_months[j])) == 0)
+					{
 						/* found it */
 						err = 0;
 						pstr += strlen(pgtypes_date_months[j]);
-						*month = j+1;
+						*month = j + 1;
 						break;
 					}
 					j++;
@@ -2821,9 +2876,11 @@ int PGTYPEStimestamp_defmt_scan(char** str, char* fmt, Timestamp *d,
 				*day = scan_val.uint_val;
 				break;
 			case 'D':
-				/* we have to concatenate the strings in
-				 * order to be able to find the end of the
-				 * substitution */
+
+				/*
+				 * we have to concatenate the strings in order to be able
+				 * to find the end of the substitution
+				 */
 				pfmt++;
 				tmp = pgtypes_alloc(strlen("%m/%d/%y") + strlen(pstr) + 1);
 				strcpy(tmp, "%m/%d/%y");
@@ -2838,17 +2895,19 @@ int PGTYPEStimestamp_defmt_scan(char** str, char* fmt, Timestamp *d,
 				*month = scan_val.uint_val;
 				break;
 			case 'y':
-			case 'g': /* XXX difference to y (ISO) */
+			case 'g':			/* XXX difference to y (ISO) */
 				pfmt++;
 				scan_type = PGTYPES_TYPE_UINT;
 				err = pgtypes_defmt_scan(&scan_val, scan_type, &pstr, pfmt);
-				if (*year < 0) {
+				if (*year < 0)
+				{
 					/* not yet set */
 					*year = scan_val.uint_val;
-				} else {
-					*year += scan_val.uint_val;
 				}
-				if (*year < 100) { *year += 1900; }
+				else
+					*year += scan_val.uint_val;
+				if (*year < 100)
+					*year += 1900;
 				break;
 			case 'G':
 				/* XXX difference to %V (ISO) */
@@ -2870,10 +2929,12 @@ int PGTYPEStimestamp_defmt_scan(char** str, char* fmt, Timestamp *d,
 				pfmt++;
 				scan_type = PGTYPES_TYPE_UINT;
 				err = pgtypes_defmt_scan(&scan_val, scan_type, &pstr, pfmt);
-				/* XXX what should we do with that? 
-				 * We could say that it's sufficient if we
-				 * have the year and the day within the year
-				 * to get at least a specific day. */
+
+				/*
+				 * XXX what should we do with that? We could say that it's
+				 * sufficient if we have the year and the day within the
+				 * year to get at least a specific day.
+				 */
 				break;
 			case 'M':
 				pfmt++;
@@ -2883,23 +2944,66 @@ int PGTYPEStimestamp_defmt_scan(char** str, char* fmt, Timestamp *d,
 				break;
 			case 'n':
 				pfmt++;
-				if (*pstr == '\n') { pstr++; } else { err = 1; }
+				if (*pstr == '\n')
+					pstr++;
+				else
+					err = 1;
 				break;
 			case 'p':
 				err = 1;
 				pfmt++;
-				if (strncmp(pstr, "am", 2)   == 0) { *hour += 0; err = 0; pstr += 2; }
-				if (strncmp(pstr, "a.m.", 4) == 0) { *hour += 0; err = 0; pstr += 4; }
-				if (strncmp(pstr, "pm", 2)   == 0) { *hour += 12; err = 0; pstr += 2; }
-				if (strncmp(pstr, "p.m.", 4) == 0) { *hour += 12; err = 0; pstr += 4; }
-				break;	  
+				if (strncmp(pstr, "am", 2) == 0)
+				{
+					*hour += 0;
+					err = 0;
+					pstr += 2;
+				}
+				if (strncmp(pstr, "a.m.", 4) == 0)
+				{
+					*hour += 0;
+					err = 0;
+					pstr += 4;
+				}
+				if (strncmp(pstr, "pm", 2) == 0)
+				{
+					*hour += 12;
+					err = 0;
+					pstr += 2;
+				}
+				if (strncmp(pstr, "p.m.", 4) == 0)
+				{
+					*hour += 12;
+					err = 0;
+					pstr += 4;
+				}
+				break;
 			case 'P':
 				err = 1;
 				pfmt++;
-				if (strncmp(pstr, "AM", 2)   == 0) { *hour += 0;  err = 0; pstr += 2; }
-				if (strncmp(pstr, "A.M.", 4) == 0) { *hour += 0;  err = 0; pstr += 4; }
-				if (strncmp(pstr, "PM", 2)   == 0) { *hour += 12; err = 0; pstr += 2; }
-				if (strncmp(pstr, "P.M.", 4) == 0) { *hour += 12; err = 0; pstr += 4; }
+				if (strncmp(pstr, "AM", 2) == 0)
+				{
+					*hour += 0;
+					err = 0;
+					pstr += 2;
+				}
+				if (strncmp(pstr, "A.M.", 4) == 0)
+				{
+					*hour += 0;
+					err = 0;
+					pstr += 4;
+				}
+				if (strncmp(pstr, "PM", 2) == 0)
+				{
+					*hour += 12;
+					err = 0;
+					pstr += 2;
+				}
+				if (strncmp(pstr, "P.M.", 4) == 0)
+				{
+					*hour += 12;
+					err = 0;
+					pstr += 4;
+				}
 				break;
 			case 'r':
 				pfmt++;
@@ -2923,8 +3027,9 @@ int PGTYPEStimestamp_defmt_scan(char** str, char* fmt, Timestamp *d,
 				err = pgtypes_defmt_scan(&scan_val, scan_type, &pstr, pfmt);
 				/* number of seconds in scan_val.luint_val */
 				{
-					struct tm *tms;
-					time_t et = (time_t) scan_val.luint_val;
+					struct tm  *tms;
+					time_t		et = (time_t) scan_val.luint_val;
+
 					tms = gmtime(&et);
 					*year = tms->tm_year;
 					*month = tms->tm_mon;
@@ -2942,7 +3047,10 @@ int PGTYPEStimestamp_defmt_scan(char** str, char* fmt, Timestamp *d,
 				break;
 			case 't':
 				pfmt++;
-				if (*pstr == '\t') { pstr++; } else { err = 1; }
+				if (*pstr == '\t')
+					pstr++;
+				else
+					err = 1;
 				break;
 			case 'T':
 				pfmt++;
@@ -2956,31 +3064,36 @@ int PGTYPEStimestamp_defmt_scan(char** str, char* fmt, Timestamp *d,
 				pfmt++;
 				scan_type = PGTYPES_TYPE_UINT;
 				err = pgtypes_defmt_scan(&scan_val, scan_type, &pstr, pfmt);
-				if (scan_val.uint_val < 1 || scan_val.uint_val > 7) { err = 1; }
+				if (scan_val.uint_val < 1 || scan_val.uint_val > 7)
+					err = 1;
 				break;
 			case 'U':
 				pfmt++;
 				scan_type = PGTYPES_TYPE_UINT;
 				err = pgtypes_defmt_scan(&scan_val, scan_type, &pstr, pfmt);
-				if (scan_val.uint_val < 0 || scan_val.uint_val > 53) { err = 1; }
+				if (scan_val.uint_val < 0 || scan_val.uint_val > 53)
+					err = 1;
 				break;
 			case 'V':
 				pfmt++;
 				scan_type = PGTYPES_TYPE_UINT;
 				err = pgtypes_defmt_scan(&scan_val, scan_type, &pstr, pfmt);
-				if (scan_val.uint_val < 1 || scan_val.uint_val > 53) { err = 1; }
+				if (scan_val.uint_val < 1 || scan_val.uint_val > 53)
+					err = 1;
 				break;
 			case 'w':
 				pfmt++;
 				scan_type = PGTYPES_TYPE_UINT;
 				err = pgtypes_defmt_scan(&scan_val, scan_type, &pstr, pfmt);
-				if (scan_val.uint_val < 0 || scan_val.uint_val > 6) { err = 1; }
+				if (scan_val.uint_val < 0 || scan_val.uint_val > 6)
+					err = 1;
 				break;
 			case 'W':
 				pfmt++;
 				scan_type = PGTYPES_TYPE_UINT;
 				err = pgtypes_defmt_scan(&scan_val, scan_type, &pstr, pfmt);
-				if (scan_val.uint_val < 0 || scan_val.uint_val > 53) { err = 1; }
+				if (scan_val.uint_val < 0 || scan_val.uint_val > 53)
+					err = 1;
 				break;
 			case 'x':
 			case 'X':
@@ -2996,7 +3109,8 @@ int PGTYPEStimestamp_defmt_scan(char** str, char* fmt, Timestamp *d,
 				pfmt++;
 				scan_type = PGTYPES_TYPE_STRING_MALLOCED;
 				err = pgtypes_defmt_scan(&scan_val, scan_type, &pstr, pfmt);
-				if (!err) {
+				if (!err)
+				{
 					err = DecodeTimezone(scan_val.str_val, tz);
 					free(scan_val.str_val);
 				}
@@ -3005,16 +3119,20 @@ int PGTYPEStimestamp_defmt_scan(char** str, char* fmt, Timestamp *d,
 				pfmt++;
 				scan_type = PGTYPES_TYPE_STRING_MALLOCED;
 				err = pgtypes_defmt_scan(&scan_val, scan_type, &pstr, pfmt);
-				/* XXX use DecodeSpecial instead ? - it's
-				 * declared static but the arrays as well.
-				 * :-( */
-				for (j = 0; !err && j < szdatetktbl; j++) {
-					if (strcasecmp(datetktbl[j].token, scan_val.str_val) == 0) {
-						/* tz calculates the offset
-						 * for the seconds, the
-						 * timezone value of the
-						 * datetktbl table is in
-						 * quarter hours */
+
+				/*
+				 * XXX use DecodeSpecial instead ? - it's declared static
+				 * but the arrays as well. :-(
+				 */
+				for (j = 0; !err && j < szdatetktbl; j++)
+				{
+					if (strcasecmp(datetktbl[j].token, scan_val.str_val) == 0)
+					{
+						/*
+						 * tz calculates the offset for the seconds, the
+						 * timezone value of the datetktbl table is in
+						 * quarter hours
+						 */
 						*tz = -15 * 60 * datetktbl[j].value;
 						break;
 					}
@@ -3026,26 +3144,62 @@ int PGTYPEStimestamp_defmt_scan(char** str, char* fmt, Timestamp *d,
 				break;
 			case '%':
 				pfmt++;
-				if (*pstr == '%') { pstr++; } else { err = 1; }
+				if (*pstr == '%')
+					pstr++;
+				else
+					err = 1;
 				break;
 			default:
 				err = 1;
 		}
 	}
-	if (!err) {
-		if (*second < 0) { *second = 0; }
-		if (*minute < 0) { *minute = 0; }
-		if (*hour < 0) { *hour = 0; }
-		if (*day < 0) { err = 1;   *day = 1; }
-		if (*month < 0) { err = 1; *month = 1; }
-		if (*year < 0) { err = 1;  *year = 1970; }
+	if (!err)
+	{
+		if (*second < 0)
+			*second = 0;
+		if (*minute < 0)
+			*minute = 0;
+		if (*hour < 0)
+			*hour = 0;
+		if (*day < 0)
+		{
+			err = 1;
+			*day = 1;
+		}
+		if (*month < 0)
+		{
+			err = 1;
+			*month = 1;
+		}
+		if (*year < 0)
+		{
+			err = 1;
+			*year = 1970;
+		}
 
-		if (*second > 59) { err = 1; *second = 0; }
-		if (*minute > 59) { err = 1; *minute = 0; }
-		if (*hour   > 23) { err = 1; *hour = 0; }
-		if (*month  > 12) { err = 1; *month = 1; }
-		if (*day > day_tab[isleap(*year)][*month-1]) {
-			*day = day_tab[isleap(*year)][*month-1];
+		if (*second > 59)
+		{
+			err = 1;
+			*second = 0;
+		}
+		if (*minute > 59)
+		{
+			err = 1;
+			*minute = 0;
+		}
+		if (*hour > 23)
+		{
+			err = 1;
+			*hour = 0;
+		}
+		if (*month > 12)
+		{
+			err = 1;
+			*month = 1;
+		}
+		if (*day > day_tab[isleap(*year)][*month - 1])
+		{
+			*day = day_tab[isleap(*year)][*month - 1];
 			err = 1;
 		}
 

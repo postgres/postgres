@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.36 2003/07/31 18:36:39 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.37 2003/08/04 00:43:33 momjian Exp $
  *
  *********************************************************************
  */
@@ -352,9 +352,7 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 		else
 			PLy_restart_in_progress += 1;
 		if (proc)
-		{
 			Py_DECREF(proc->me);
-		}
 		RERAISE_EXC();
 	}
 
@@ -573,7 +571,7 @@ PLy_modify_tuple(PLyProcedure * proc, PyObject * pltd, TriggerData *tdata,
 			modvalues[j] = FunctionCall3(&proc->result.out.r.atts[atti].typfunc,
 										 CStringGetDatum(src),
 				 ObjectIdGetDatum(proc->result.out.r.atts[atti].typelem),
-							Int32GetDatum(tupdesc->attrs[atti]->atttypmod));
+						 Int32GetDatum(tupdesc->attrs[atti]->atttypmod));
 			modnulls[j] = ' ';
 
 			Py_DECREF(plstr);
@@ -587,8 +585,8 @@ PLy_modify_tuple(PLyProcedure * proc, PyObject * pltd, TriggerData *tdata,
 						   modvalues, modnulls);
 
 	/*
-	 * FIXME -- these leak if not explicitly pfree'd by other elog
-	 * calls, no?
+	 * FIXME -- these leak if not explicitly pfree'd by other elog calls,
+	 * no?
 	 */
 	pfree(modattrs);
 	pfree(modvalues);
@@ -847,7 +845,7 @@ PLy_procedure_call(PLyProcedure * proc, char *kargs, PyObject * vargs)
 	current = PLy_last_procedure;
 	PLy_last_procedure = proc;
 	PyDict_SetItemString(proc->globals, kargs, vargs);
-	rv = PyEval_EvalCode( (PyCodeObject*)proc->code, proc->globals, proc->globals);
+	rv = PyEval_EvalCode((PyCodeObject *) proc->code, proc->globals, proc->globals);
 	PLy_last_procedure = current;
 
 	if ((rv == NULL) || (PyErr_Occurred()))
@@ -994,7 +992,7 @@ static PLyProcedure *
 PLy_procedure_create(FunctionCallInfo fcinfo, bool is_trigger,
 					 HeapTuple procTup, char *key)
 {
-	char		procName[NAMEDATALEN+256];
+	char		procName[NAMEDATALEN + 256];
 
 	DECLARE_EXC();
 	Form_pg_proc procStruct;
@@ -1050,7 +1048,7 @@ PLy_procedure_create(FunctionCallInfo fcinfo, bool is_trigger,
 		Form_pg_type rvTypeStruct;
 
 		rvTypeTup = SearchSysCache(TYPEOID,
-								   ObjectIdGetDatum(procStruct->prorettype),
+								ObjectIdGetDatum(procStruct->prorettype),
 								   0, 0, 0);
 		if (!HeapTupleIsValid(rvTypeTup))
 			elog(ERROR, "cache lookup failed for type %u",
@@ -1089,7 +1087,7 @@ PLy_procedure_create(FunctionCallInfo fcinfo, bool is_trigger,
 		Form_pg_type argTypeStruct;
 
 		argTypeTup = SearchSysCache(TYPEOID,
-									ObjectIdGetDatum(procStruct->proargtypes[i]),
+							ObjectIdGetDatum(procStruct->proargtypes[i]),
 									0, 0, 0);
 		if (!HeapTupleIsValid(argTypeTup))
 			elog(ERROR, "cache lookup failed for type %u",
@@ -1158,7 +1156,7 @@ PLy_procedure_compile(PLyProcedure * proc, const char *src)
 	if ((crv != NULL) && (!PyErr_Occurred()))
 	{
 		int			clen;
-		char		call[NAMEDATALEN+256];
+		char		call[NAMEDATALEN + 256];
 
 		Py_DECREF(crv);
 
@@ -1271,7 +1269,7 @@ PLy_input_tuple_funcs(PLyTypeInfo * arg, TupleDesc desc)
 		Form_pg_type typeStruct;
 
 		typeTup = SearchSysCache(TYPEOID,
-								 ObjectIdGetDatum(desc->attrs[i]->atttypid),
+							  ObjectIdGetDatum(desc->attrs[i]->atttypid),
 								 0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
 			elog(ERROR, "cache lookup failed for type %u",
@@ -1306,7 +1304,7 @@ PLy_output_tuple_funcs(PLyTypeInfo * arg, TupleDesc desc)
 		Form_pg_type typeStruct;
 
 		typeTup = SearchSysCache(TYPEOID,
-								 ObjectIdGetDatum(desc->attrs[i]->atttypid),
+							  ObjectIdGetDatum(desc->attrs[i]->atttypid),
 								 0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
 			elog(ERROR, "cache lookup failed for type %u",
@@ -2045,7 +2043,7 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, int limit)
 	int			i,
 				rv;
 	PLyPlanObject *plan;
-	char *nulls;
+	char	   *nulls;
 
 	enter();
 
@@ -2118,21 +2116,21 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, int limit)
 			elem = PySequence_GetItem(list, i);
 			if (elem != Py_None)
 			{
-					so = PyObject_Str(elem);
-					sv = PyString_AsString(so);
+				so = PyObject_Str(elem);
+				sv = PyString_AsString(so);
 
-					/*
-					 * FIXME -- if this can elog, we have leak
-					 */
-					plan->values[i] = FunctionCall3(&(plan->args[i].out.d.typfunc),
-													CStringGetDatum(sv),
-													ObjectIdGetDatum(plan->args[i].out.d.typelem),
-													Int32GetDatum(-1));
-					
-					Py_DECREF(so);
-					Py_DECREF(elem);
+				/*
+				 * FIXME -- if this can elog, we have leak
+				 */
+				plan->values[i] = FunctionCall3(&(plan->args[i].out.d.typfunc),
+												CStringGetDatum(sv),
+						   ObjectIdGetDatum(plan->args[i].out.d.typelem),
+												Int32GetDatum(-1));
 
-					nulls[i] = ' ';
+				Py_DECREF(so);
+				Py_DECREF(elem);
+
+				nulls[i] = ' ';
 			}
 			else
 			{
@@ -2144,9 +2142,7 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, int limit)
 		nulls[i] = '\0';
 	}
 	else
-	{
 		nulls = NULL;
-	}
 
 	rv = SPI_execp(plan->plan, plan->values, nulls, limit);
 	RESTORE_EXC();
@@ -2347,8 +2343,8 @@ PLy_init_all(void)
 		plpython_init();
 
 	/*
-	 * Any other initialization that must be done each time a new
-	 * backend starts -- currently none
+	 * Any other initialization that must be done each time a new backend
+	 * starts -- currently none
 	 */
 
 }

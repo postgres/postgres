@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.111 2003/07/28 00:09:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.112 2003/08/04 00:43:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,7 @@ static int istinterval(char *i_string,
 			AbsoluteTime *i_end);
 
 
-/* 
+/*
  * GetCurrentAbsoluteTime()
  *
  * Get the current system time (relative to Unix epoch).
@@ -152,7 +152,7 @@ GetCurrentDateTime(struct tm * tm)
 	abstime2tm(GetCurrentTransactionStartTime(), &tz, tm, NULL);
 }
 
-/* 
+/*
  * GetCurrentTimeUsec()
  *
  * Get the transaction start time ("now()") broken down as a struct tm,
@@ -373,13 +373,13 @@ abstimein(PG_FUNCTION_ARGS)
 	if (strlen(str) >= sizeof(lowstr))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for abstime: \"%s\"", str)));
+			   errmsg("invalid input syntax for abstime: \"%s\"", str)));
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	  || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for abstime: \"%s\"", str)));
+			   errmsg("invalid input syntax for abstime: \"%s\"", str)));
 
 	switch (dtype)
 	{
@@ -654,7 +654,7 @@ abstime_timestamp(PG_FUNCTION_ARGS)
 		case INVALID_ABSTIME:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot convert \"invalid\" abstime to timestamp")));
+			 errmsg("cannot convert \"invalid\" abstime to timestamp")));
 			TIMESTAMP_NOBEGIN(result);
 			break;
 
@@ -727,7 +727,7 @@ abstime_timestamptz(PG_FUNCTION_ARGS)
 		case INVALID_ABSTIME:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot convert \"invalid\" abstime to timestamp")));
+			 errmsg("cannot convert \"invalid\" abstime to timestamp")));
 			TIMESTAMP_NOBEGIN(result);
 			break;
 
@@ -776,13 +776,13 @@ reltimein(PG_FUNCTION_ARGS)
 	if (strlen(str) >= sizeof(lowstr))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for reltime: \"%s\"", str)));
+			   errmsg("invalid input syntax for reltime: \"%s\"", str)));
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 		|| (DecodeInterval(field, ftype, nf, &dtype, tm, &fsec) != 0))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for reltime: \"%s\"", str)));
+			   errmsg("invalid input syntax for reltime: \"%s\"", str)));
 
 	switch (dtype)
 	{
@@ -849,7 +849,7 @@ reltimesend(PG_FUNCTION_ARGS)
 static void
 reltime2tm(RelativeTime time, struct tm * tm)
 {
-	double	dtime = time;
+	double		dtime = time;
 
 	FMODULO(dtime, tm->tm_year, 31557600);
 	FMODULO(dtime, tm->tm_mon, 2592000);
@@ -1032,7 +1032,7 @@ reltime_interval(PG_FUNCTION_ARGS)
 		case INVALID_RELTIME:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot convert \"invalid\" reltime to interval")));
+			  errmsg("cannot convert \"invalid\" reltime to interval")));
 			result->time = 0;
 			result->month = 0;
 			break;

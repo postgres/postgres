@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.118 2003/06/27 00:33:25 tgl Exp $
+ * $Id: pg_operator.h,v 1.119 2003/08/04 00:43:30 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -116,9 +116,9 @@ DATA(insert OID =  96 ( "="		   PGNSP PGUID b t	23	23	16	96 518	97	97	97 521 int
 DATA(insert OID =  97 ( "<"		   PGNSP PGUID b f	23	23	16 521 525	 0	 0	 0	 0 int4lt scalarltsel scalarltjoinsel ));
 DATA(insert OID =  98 ( "="		   PGNSP PGUID b t	25	25	16	98 531 664 664 664 666 texteq eqsel eqjoinsel ));
 
-DATA(insert OID = 349 (  "||"	   PGNSP PGUID b f 2277 2283 2277   0 0 0 0	0 0 array_append   -       -     ));
-DATA(insert OID = 374 (  "||"	   PGNSP PGUID b f 2283 2277 2277   0 0 0 0	0 0 array_prepend  -       -     ));
-DATA(insert OID = 375 (  "||"	   PGNSP PGUID b f 2277 2277 2277   0 0 0 0	0 0 array_cat      -       -     ));
+DATA(insert OID = 349 (  "||"	   PGNSP PGUID b f 2277 2283 2277	0 0 0 0 0 0 array_append   -	   -	 ));
+DATA(insert OID = 374 (  "||"	   PGNSP PGUID b f 2283 2277 2277	0 0 0 0 0 0 array_prepend  -	   -	 ));
+DATA(insert OID = 375 (  "||"	   PGNSP PGUID b f 2277 2277 2277	0 0 0 0 0 0 array_cat	   -	   -	 ));
 
 DATA(insert OID = 352 (  "="	   PGNSP PGUID b t	28	28	16 352	 0	 0	 0	 0	 0 xideq eqsel eqjoinsel ));
 DATA(insert OID = 353 (  "="	   PGNSP PGUID b f	28	23	16	 0	 0	 0	 0	 0	 0 xideqint4 eqsel eqjoinsel ));
@@ -351,7 +351,7 @@ DATA(insert OID = 708 (  "<->"	   PGNSP PGUID b f 628 628 701 708	 0	0  0   0   
 DATA(insert OID = 709 (  "<->"	   PGNSP PGUID b f 601 601 701 709	 0	0  0   0   0 lseg_distance - - ));
 DATA(insert OID = 712 (  "<->"	   PGNSP PGUID b f 604 604 701 712	 0	0  0   0   0 poly_distance - - ));
 
-DATA(insert OID = 713 (  "<>"	   PGNSP PGUID b f 600 600	16 713 510  0  0   0   0 point_ne neqsel neqjoinsel ));
+DATA(insert OID = 713 (  "<>"	   PGNSP PGUID b f 600 600	16 713 510	0  0   0   0 point_ne neqsel neqjoinsel ));
 
 /* add translation/rotation/scaling operators for geometric types. - thomas 97/05/10 */
 DATA(insert OID = 731 (  "+"	   PGNSP PGUID b f	600  600	600  731  0 0 0 0 0 point_add - - ));
@@ -443,10 +443,10 @@ DATA(insert OID = 1061 ( ">="	   PGNSP PGUID b f 1042 1042	 16 1059 1058  0 0 0 
 
 /* generic array comparison operators */
 DATA(insert OID = 1070 (  "="	   PGNSP PGUID b f 2277 2277 16 1070 1071  1072 1072 1072 1073 array_eq eqsel eqjoinsel ));
-#define ARRAY_EQ_OP	1070
+#define ARRAY_EQ_OP 1070
 DATA(insert OID = 1071 (  "<>"	   PGNSP PGUID b f 2277 2277 16 1071 1070  0 0 0 0 array_ne neqsel neqjoinsel ));
 DATA(insert OID = 1072 (  "<"	   PGNSP PGUID b f 2277 2277 16 1073 1075  0 0 0 0 array_lt scalarltsel scalarltjoinsel ));
-#define ARRAY_LT_OP	1072
+#define ARRAY_LT_OP 1072
 DATA(insert OID = 1073 (  ">"	   PGNSP PGUID b f 2277 2277 16 1072 1074  0 0 0 0 array_gt scalargtsel scalargtjoinsel ));
 DATA(insert OID = 1074 (  "<="	   PGNSP PGUID b f 2277 2277 16 1075 1073  0 0 0 0 array_le scalarltsel scalarltjoinsel ));
 DATA(insert OID = 1075 (  ">="	   PGNSP PGUID b f 2277 2277 16 1074 1072  0 0 0 0 array_ge scalargtsel scalargtjoinsel ));
@@ -801,25 +801,25 @@ DATA(insert OID = 2068 (  "-"	   PGNSP PGUID b f 1114 1186 1114	 0	0 0 0 0 0 tim
 /* character-by-character (not collation order) comparison operators for character types */
 
 DATA(insert OID = 2314 ( "~<~"	PGNSP PGUID b f 25 25 16 2318 2317 0 0 0 0 text_pattern_lt scalarltsel scalarltjoinsel ));
-DATA(insert OID = 2315 ( "~<=~"	PGNSP PGUID b f 25 25 16 2317 2318 0 0 0 0 text_pattern_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 2315 ( "~<=~" PGNSP PGUID b f 25 25 16 2317 2318 0 0 0 0 text_pattern_le scalarltsel scalarltjoinsel ));
 DATA(insert OID = 2316 ( "~=~"	PGNSP PGUID b t 25 25 16 2316 2319 2314 2314 2314 2318 text_pattern_eq eqsel eqjoinsel ));
-DATA(insert OID = 2317 ( "~>=~"	PGNSP PGUID b f 25 25 16 2315 2314 0 0 0 0 text_pattern_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 2317 ( "~>=~" PGNSP PGUID b f 25 25 16 2315 2314 0 0 0 0 text_pattern_ge scalargtsel scalargtjoinsel ));
 DATA(insert OID = 2318 ( "~>~"	PGNSP PGUID b f 25 25 16 2314 2315 0 0 0 0 text_pattern_gt scalargtsel scalargtjoinsel ));
-DATA(insert OID = 2319 ( "~<>~"	PGNSP PGUID b f 25 25 16 2319 2316 0 0 0 0 text_pattern_ne neqsel neqjoinsel ));
+DATA(insert OID = 2319 ( "~<>~" PGNSP PGUID b f 25 25 16 2319 2316 0 0 0 0 text_pattern_ne neqsel neqjoinsel ));
 
 DATA(insert OID = 2326 ( "~<~"	PGNSP PGUID b f 1042 1042 16 2330 2329 0 0 0 0 bpchar_pattern_lt scalarltsel scalarltjoinsel ));
-DATA(insert OID = 2327 ( "~<=~"	PGNSP PGUID b f 1042 1042 16 2329 2330 0 0 0 0 bpchar_pattern_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 2327 ( "~<=~" PGNSP PGUID b f 1042 1042 16 2329 2330 0 0 0 0 bpchar_pattern_le scalarltsel scalarltjoinsel ));
 DATA(insert OID = 2328 ( "~=~"	PGNSP PGUID b t 1042 1042 16 2328 2331 2326 2326 2326 2330 bpchar_pattern_eq eqsel eqjoinsel ));
-DATA(insert OID = 2329 ( "~>=~"	PGNSP PGUID b f 1042 1042 16 2327 2326 0 0 0 0 bpchar_pattern_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 2329 ( "~>=~" PGNSP PGUID b f 1042 1042 16 2327 2326 0 0 0 0 bpchar_pattern_ge scalargtsel scalargtjoinsel ));
 DATA(insert OID = 2330 ( "~>~"	PGNSP PGUID b f 1042 1042 16 2326 2327 0 0 0 0 bpchar_pattern_gt scalargtsel scalargtjoinsel ));
-DATA(insert OID = 2331 ( "~<>~"	PGNSP PGUID b f 1042 1042 16 2331 2328 0 0 0 0 bpchar_pattern_ne neqsel neqjoinsel ));
+DATA(insert OID = 2331 ( "~<>~" PGNSP PGUID b f 1042 1042 16 2331 2328 0 0 0 0 bpchar_pattern_ne neqsel neqjoinsel ));
 
 DATA(insert OID = 2332 ( "~<~"	PGNSP PGUID b f 19 19 16 2336 2335 0 0 0 0 name_pattern_lt scalarltsel scalarltjoinsel ));
-DATA(insert OID = 2333 ( "~<=~"	PGNSP PGUID b f 19 19 16 2335 2336 0 0 0 0 name_pattern_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 2333 ( "~<=~" PGNSP PGUID b f 19 19 16 2335 2336 0 0 0 0 name_pattern_le scalarltsel scalarltjoinsel ));
 DATA(insert OID = 2334 ( "~=~"	PGNSP PGUID b t 19 19 16 2334 2337 2332 2332 2332 2336 name_pattern_eq eqsel eqjoinsel ));
-DATA(insert OID = 2335 ( "~>=~"	PGNSP PGUID b f 19 19 16 2333 2332 0 0 0 0 name_pattern_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 2335 ( "~>=~" PGNSP PGUID b f 19 19 16 2333 2332 0 0 0 0 name_pattern_ge scalargtsel scalargtjoinsel ));
 DATA(insert OID = 2336 ( "~>~"	PGNSP PGUID b f 19 19 16 2332 2333 0 0 0 0 name_pattern_gt scalargtsel scalargtjoinsel ));
-DATA(insert OID = 2337 ( "~<>~"	PGNSP PGUID b f 19 19 16 2337 2334 0 0 0 0 name_pattern_ne neqsel neqjoinsel ));
+DATA(insert OID = 2337 ( "~<>~" PGNSP PGUID b f 19 19 16 2337 2334 0 0 0 0 name_pattern_ne neqsel neqjoinsel ));
 
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.99 2003/07/27 04:53:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.100 2003/08/04 00:43:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,7 +103,7 @@ bpcharin(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
 					 errmsg("value too long for type character(%d)",
-							 (int) maxlen)));
+							(int) maxlen)));
 
 		/*
 		 * XXX: at this point, maxlen is the necessary byte length, not
@@ -190,7 +190,7 @@ bpcharsend(PG_FUNCTION_ARGS)
  *
  * Truncation rules: for an explicit cast, silently truncate to the given
  * length; for an implicit cast, raise error unless extra characters are
- * all spaces.  (This is sort-of per SQL: the spec would actually have us
+ * all spaces.	(This is sort-of per SQL: the spec would actually have us
  * raise a "completion condition" for the explicit cast case, but Postgres
  * hasn't got such a concept.)
  */
@@ -230,8 +230,8 @@ bpchar(PG_FUNCTION_ARGS)
 				if (*(VARDATA(source) + i) != ' ')
 					ereport(ERROR,
 							(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
-							 errmsg("value too long for type character(%d)",
-									 maxlen - VARHDRSZ)));
+						  errmsg("value too long for type character(%d)",
+								 maxlen - VARHDRSZ)));
 		}
 
 		len = maxmblen;
@@ -388,8 +388,8 @@ varcharin(PG_FUNCTION_ARGS)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
-					 errmsg("value too long for type character varying(%d)",
-							 (int) maxlen)));
+				  errmsg("value too long for type character varying(%d)",
+						 (int) maxlen)));
 	}
 
 	result = palloc(len + VARHDRSZ);
@@ -456,7 +456,7 @@ varcharsend(PG_FUNCTION_ARGS)
  *
  * Truncation rules: for an explicit cast, silently truncate to the given
  * length; for an implicit cast, raise error unless extra characters are
- * all spaces.  (This is sort-of per SQL: the spec would actually have us
+ * all spaces.	(This is sort-of per SQL: the spec would actually have us
  * raise a "completion condition" for the explicit cast case, but Postgres
  * hasn't got such a concept.)
  */
@@ -488,8 +488,8 @@ varchar(PG_FUNCTION_ARGS)
 			if (*(VARDATA(source) + i) != ' ')
 				ereport(ERROR,
 						(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
-						 errmsg("value too long for type character varying(%d)",
-								 maxlen - VARHDRSZ)));
+				  errmsg("value too long for type character varying(%d)",
+						 maxlen - VARHDRSZ)));
 	}
 
 	len = maxmblen + VARHDRSZ;

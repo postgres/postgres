@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2002, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_locale.c,v 1.21 2003/07/27 04:53:07 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_locale.c,v 1.22 2003/08/04 00:43:25 momjian Exp $
  *
  *-----------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@
  * Instead, we only set the locales briefly when needed, cache the
  * required information obtained from localeconv(), and set them back.
  * The cached information is only used by the formatting functions
- * (to_char, etc.) and the money type.  For the user, this should all be
+ * (to_char, etc.) and the money type.	For the user, this should all be
  * transparent.  (Actually, LC_TIME doesn't do anything at all right
  * now.)
  *
@@ -40,7 +40,7 @@
  *				fail = true;
  *			setlocale(category, save);
  * DOES NOT WORK RELIABLY: on some platforms the second setlocale() call
- * will change the memory save is pointing at.  To do this sort of thing
+ * will change the memory save is pointing at.	To do this sort of thing
  * safely, you *must* pstrdup what setlocale returns the first time.
  *----------
  */
@@ -134,9 +134,7 @@ locale_messages_assign(const char *value, bool doit, bool interactive)
 			return NULL;
 	}
 	else
-	{
 		value = locale_xxx_assign(LC_MESSAGES, value, false, interactive);
-	}
 #endif
 	return value;
 }

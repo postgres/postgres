@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.66 2003/07/21 20:29:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.67 2003/08/04 00:43:15 momjian Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -181,8 +181,8 @@ _bt_getroot(Relation rel, int access)
 			/*
 			 * Metadata initialized by someone else.  In order to
 			 * guarantee no deadlocks, we have to release the metadata
-			 * page and start all over again.  (Is that really true?
-			 * But it's hardly worth trying to optimize this case.)
+			 * page and start all over again.  (Is that really true? But
+			 * it's hardly worth trying to optimize this case.)
 			 */
 			_bt_relbuf(rel, metabuf);
 			return _bt_getroot(rel, access);
@@ -190,8 +190,8 @@ _bt_getroot(Relation rel, int access)
 
 		/*
 		 * Get, initialize, write, and leave a lock of the appropriate
-		 * type on the new root page.  Since this is the first page in
-		 * the tree, it's a leaf as well as the root.
+		 * type on the new root page.  Since this is the first page in the
+		 * tree, it's a leaf as well as the root.
 		 */
 		rootbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
 		rootblkno = BufferGetBlockNumber(rootbuf);
@@ -240,7 +240,7 @@ _bt_getroot(Relation rel, int access)
 		_bt_wrtnorelbuf(rel, rootbuf);
 
 		/*
-		 * swap root write lock for read lock.  There is no danger of
+		 * swap root write lock for read lock.	There is no danger of
 		 * anyone else accessing the new root page while it's unlocked,
 		 * since no one else knows where it is yet.
 		 */
@@ -284,8 +284,8 @@ _bt_getroot(Relation rel, int access)
 	}
 
 	/*
-	 * By here, we have a pin and read lock on the root page, and no
-	 * lock set on the metadata page.  Return the root page's buffer.
+	 * By here, we have a pin and read lock on the root page, and no lock
+	 * set on the metadata page.  Return the root page's buffer.
 	 */
 	return rootbuf;
 }
@@ -299,7 +299,7 @@ _bt_getroot(Relation rel, int access)
  * By the time we acquire lock on the root page, it might have been split and
  * not be the true root anymore.  This is okay for the present uses of this
  * routine; we only really need to be able to move up at least one tree level
- * from whatever non-root page we were at.  If we ever do need to lock the
+ * from whatever non-root page we were at.	If we ever do need to lock the
  * one true root page, we could loop here, re-reading the metapage on each
  * failure.  (Note that it wouldn't do to hold the lock on the metapage while
  * moving to the root --- that'd deadlock against any concurrent root split.)
@@ -406,9 +406,9 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 		 * First see if the FSM knows of any free pages.
 		 *
 		 * We can't trust the FSM's report unreservedly; we have to check
-		 * that the page is still free.  (For example, an already-free page
-		 * could have been re-used between the time the last VACUUM scanned
-		 * it and the time the VACUUM made its FSM updates.)
+		 * that the page is still free.  (For example, an already-free
+		 * page could have been re-used between the time the last VACUUM
+		 * scanned it and the time the VACUUM made its FSM updates.)
 		 */
 		for (;;)
 		{
@@ -431,10 +431,10 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 		/*
 		 * Extend the relation by one page.
 		 *
-		 * We have to use a lock to ensure no one else is extending the rel at
-		 * the same time, else we will both try to initialize the same new
-		 * page.  We can skip locking for new or temp relations, however,
-		 * since no one else could be accessing them.
+		 * We have to use a lock to ensure no one else is extending the rel
+		 * at the same time, else we will both try to initialize the same
+		 * new page.  We can skip locking for new or temp relations,
+		 * however, since no one else could be accessing them.
 		 */
 		needLock = !(rel->rd_isnew || rel->rd_istemp);
 
@@ -444,8 +444,8 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 		buf = ReadBuffer(rel, P_NEW);
 
 		/*
-		 * Release the file-extension lock; it's now OK for someone else to
-		 * extend the relation some more.
+		 * Release the file-extension lock; it's now OK for someone else
+		 * to extend the relation some more.
 		 */
 		if (needLock)
 			UnlockPage(rel, 0, ExclusiveLock);
@@ -484,7 +484,7 @@ _bt_relbuf(Relation rel, Buffer buf)
  *		and a pin on the buffer.
  *
  * NOTE: actually, the buffer manager just marks the shared buffer page
- * dirty here; the real I/O happens later.  This is okay since we are not
+ * dirty here; the real I/O happens later.	This is okay since we are not
  * relying on write ordering anyway.  The WAL mechanism is responsible for
  * guaranteeing correctness after a crash.
  */
@@ -534,13 +534,14 @@ _bt_page_recyclable(Page page)
 	BTPageOpaque opaque;
 
 	/*
-	 * It's possible to find an all-zeroes page in an index --- for example,
-	 * a backend might successfully extend the relation one page and then
-	 * crash before it is able to make a WAL entry for adding the page.
-	 * If we find a zeroed page then reclaim it.
+	 * It's possible to find an all-zeroes page in an index --- for
+	 * example, a backend might successfully extend the relation one page
+	 * and then crash before it is able to make a WAL entry for adding the
+	 * page. If we find a zeroed page then reclaim it.
 	 */
 	if (PageIsNew(page))
 		return true;
+
 	/*
 	 * Otherwise, recycle if deleted and too old to have any processes
 	 * interested in it.
@@ -565,7 +566,7 @@ _bt_page_recyclable(Page page)
  *		mistake.  On exit, metapage data is correct and we no longer have
  *		a pin or lock on the metapage.
  *
- * Actually this is not used for splitting on-the-fly anymore.  It's only used
+ * Actually this is not used for splitting on-the-fly anymore.	It's only used
  * in nbtsort.c at the completion of btree building, where we know we have
  * sole access to the index anyway.
  */
@@ -623,7 +624,7 @@ _bt_metaproot(Relation rel, BlockNumber rootbknum, uint32 level)
 /*
  * Delete item(s) from a btree page.
  *
- * This must only be used for deleting leaf items.  Deleting an item on a
+ * This must only be used for deleting leaf items.	Deleting an item on a
  * non-leaf page has to be done as part of an atomic action that includes
  * deleting the page it points to.
  *
@@ -646,9 +647,7 @@ _bt_delitems(Relation rel, Buffer buf,
 	 * adjusting item numbers for previous deletions.
 	 */
 	for (i = nitems - 1; i >= 0; i--)
-	{
 		PageIndexTupleDelete(page, itemnos[i]);
-	}
 
 	/* XLOG stuff */
 	if (!rel->rd_istemp)
@@ -666,8 +665,8 @@ _bt_delitems(Relation rel, Buffer buf,
 		rdata[0].next = &(rdata[1]);
 
 		/*
-		 * The target-offsets array is not in the buffer, but pretend
-		 * that it is.  When XLogInsert stores the whole buffer, the offsets
+		 * The target-offsets array is not in the buffer, but pretend that
+		 * it is.  When XLogInsert stores the whole buffer, the offsets
 		 * array need not be stored too.
 		 */
 		rdata[1].buffer = buf;
@@ -701,7 +700,7 @@ _bt_delitems(Relation rel, Buffer buf,
  * may currently be trying to follow links leading to the page; they have to
  * be allowed to use its right-link to recover.  See nbtree/README.
  *
- * On entry, the target buffer must be pinned and read-locked.  This lock and
+ * On entry, the target buffer must be pinned and read-locked.	This lock and
  * pin will be dropped before exiting.
  *
  * Returns the number of pages successfully deleted (zero on failure; could
@@ -714,7 +713,7 @@ _bt_delitems(Relation rel, Buffer buf,
 int
 _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 {
-	BlockNumber	target,
+	BlockNumber target,
 				leftsib,
 				rightsib,
 				parent;
@@ -740,17 +739,18 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 	BTPageOpaque opaque;
 
 	/*
-	 * We can never delete rightmost pages nor root pages.  While at it,
+	 * We can never delete rightmost pages nor root pages.	While at it,
 	 * check that page is not already deleted and is empty.
 	 */
 	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	if (P_RIGHTMOST(opaque) || P_ISROOT(opaque) || P_ISDELETED(opaque) ||
-		 P_FIRSTDATAKEY(opaque)	<= PageGetMaxOffsetNumber(page))
+		P_FIRSTDATAKEY(opaque) <= PageGetMaxOffsetNumber(page))
 	{
 		_bt_relbuf(rel, buf);
 		return 0;
 	}
+
 	/*
 	 * Save info about page, including a copy of its high key (it must
 	 * have one, being non-rightmost).
@@ -760,12 +760,13 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 	leftsib = opaque->btpo_prev;
 	itemid = PageGetItemId(page, P_HIKEY);
 	targetkey = CopyBTItem((BTItem) PageGetItem(page, itemid));
+
 	/*
 	 * We need to get an approximate pointer to the page's parent page.
-	 * Use the standard search mechanism to search for the page's high key;
-	 * this will give us a link to either the current parent or someplace
-	 * to its left (if there are multiple equal high keys).  To avoid
-	 * deadlocks, we'd better drop the target page lock first.
+	 * Use the standard search mechanism to search for the page's high
+	 * key; this will give us a link to either the current parent or
+	 * someplace to its left (if there are multiple equal high keys).  To
+	 * avoid deadlocks, we'd better drop the target page lock first.
 	 */
 	_bt_relbuf(rel, buf);
 	/* we need a scan key to do our search, so build one */
@@ -775,9 +776,11 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 					   &lbuf, BT_READ);
 	/* don't need a pin on that either */
 	_bt_relbuf(rel, lbuf);
+
 	/*
 	 * If we are trying to delete an interior page, _bt_search did more
-	 * than we needed.  Locate the stack item pointing to our parent level.
+	 * than we needed.	Locate the stack item pointing to our parent
+	 * level.
 	 */
 	ilevel = 0;
 	for (;;)
@@ -789,10 +792,12 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 		stack = stack->bts_parent;
 		ilevel++;
 	}
+
 	/*
 	 * We have to lock the pages we need to modify in the standard order:
-	 * moving right, then up.  Else we will deadlock against other writers.
-	 * 
+	 * moving right, then up.  Else we will deadlock against other
+	 * writers.
+	 *
 	 * So, we need to find and write-lock the current left sibling of the
 	 * target page.  The sibling that was current a moment ago could have
 	 * split, so we may have to move right.  This search could fail if
@@ -823,21 +828,24 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 	}
 	else
 		lbuf = InvalidBuffer;
+
 	/*
-	 * Next write-lock the target page itself.  It should be okay to take just
-	 * a write lock not a superexclusive lock, since no scans would stop on an
-	 * empty page.
+	 * Next write-lock the target page itself.	It should be okay to take
+	 * just a write lock not a superexclusive lock, since no scans would
+	 * stop on an empty page.
 	 */
 	buf = _bt_getbuf(rel, target, BT_WRITE);
 	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+
 	/*
-	 * Check page is still empty etc, else abandon deletion.  The empty check
-	 * is necessary since someone else might have inserted into it while
-	 * we didn't have it locked; the others are just for paranoia's sake.
+	 * Check page is still empty etc, else abandon deletion.  The empty
+	 * check is necessary since someone else might have inserted into it
+	 * while we didn't have it locked; the others are just for paranoia's
+	 * sake.
 	 */
 	if (P_RIGHTMOST(opaque) || P_ISROOT(opaque) || P_ISDELETED(opaque) ||
-		 P_FIRSTDATAKEY(opaque)	<= PageGetMaxOffsetNumber(page))
+		P_FIRSTDATAKEY(opaque) <= PageGetMaxOffsetNumber(page))
 	{
 		_bt_relbuf(rel, buf);
 		if (BufferIsValid(lbuf))
@@ -846,14 +854,17 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 	}
 	if (opaque->btpo_prev != leftsib)
 		elog(ERROR, "left link changed unexpectedly");
+
 	/*
 	 * And next write-lock the (current) right sibling.
 	 */
 	rightsib = opaque->btpo_next;
 	rbuf = _bt_getbuf(rel, rightsib, BT_WRITE);
+
 	/*
 	 * Next find and write-lock the current parent of the target page.
-	 * This is essentially the same as the corresponding step of splitting.
+	 * This is essentially the same as the corresponding step of
+	 * splitting.
 	 */
 	ItemPointerSet(&(stack->bts_btitem.bti_itup.t_tid),
 				   target, P_HIKEY);
@@ -863,10 +874,11 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 			 RelationGetRelationName(rel));
 	parent = stack->bts_blkno;
 	poffset = stack->bts_offset;
+
 	/*
 	 * If the target is the rightmost child of its parent, then we can't
-	 * delete, unless it's also the only child --- in which case the parent
-	 * changes to half-dead status.
+	 * delete, unless it's also the only child --- in which case the
+	 * parent changes to half-dead status.
 	 */
 	page = BufferGetPage(pbuf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -893,12 +905,13 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 		if (OffsetNumberNext(P_FIRSTDATAKEY(opaque)) == maxoff)
 			parent_one_child = true;
 	}
+
 	/*
 	 * If we are deleting the next-to-last page on the target's level,
-	 * then the rightsib is a candidate to become the new fast root.
-	 * (In theory, it might be possible to push the fast root even further
-	 * down, but the odds of doing so are slim, and the locking considerations
-	 * daunting.)
+	 * then the rightsib is a candidate to become the new fast root. (In
+	 * theory, it might be possible to push the fast root even further
+	 * down, but the odds of doing so are slim, and the locking
+	 * considerations daunting.)
 	 *
 	 * We can safely acquire a lock on the metapage here --- see comments for
 	 * _bt_newroot().
@@ -914,12 +927,13 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 			metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_WRITE);
 			metapg = BufferGetPage(metabuf);
 			metad = BTPageGetMeta(metapg);
+
 			/*
 			 * The expected case here is btm_fastlevel == targetlevel+1;
-			 * if the fastlevel is <= targetlevel, something is wrong, and we
-			 * choose to overwrite it to fix it.
+			 * if the fastlevel is <= targetlevel, something is wrong, and
+			 * we choose to overwrite it to fix it.
 			 */
-			if (metad->btm_fastlevel > targetlevel+1)
+			if (metad->btm_fastlevel > targetlevel + 1)
 			{
 				/* no update wanted */
 				_bt_relbuf(rel, metabuf);
@@ -937,9 +951,9 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 
 	/*
 	 * Update parent.  The normal case is a tad tricky because we want to
-	 * delete the target's downlink and the *following* key.  Easiest way is
-	 * to copy the right sibling's downlink over the target downlink, and then
-	 * delete the following item.
+	 * delete the target's downlink and the *following* key.  Easiest way
+	 * is to copy the right sibling's downlink over the target downlink,
+	 * and then delete the following item.
 	 */
 	page = BufferGetPage(pbuf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -950,7 +964,7 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 	}
 	else
 	{
-		OffsetNumber	nextoffset;
+		OffsetNumber nextoffset;
 
 		itemid = PageGetItemId(page, poffset);
 		btitem = (BTItem) PageGetItem(page, itemid);
@@ -968,8 +982,8 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 	}
 
 	/*
-	 * Update siblings' side-links.  Note the target page's side-links will
-	 * continue to point to the siblings.
+	 * Update siblings' side-links.  Note the target page's side-links
+	 * will continue to point to the siblings.
 	 */
 	if (BufferIsValid(lbuf))
 	{
@@ -1096,10 +1110,11 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 		_bt_wrtbuf(rel, lbuf);
 
 	/*
-	 * If parent became half dead, recurse to try to delete it.  Otherwise,
-	 * if right sibling is empty and is now the last child of the parent,
-	 * recurse to try to delete it.  (These cases cannot apply at the same
-	 * time, though the second case might itself recurse to the first.)
+	 * If parent became half dead, recurse to try to delete it.
+	 * Otherwise, if right sibling is empty and is now the last child of
+	 * the parent, recurse to try to delete it.  (These cases cannot apply
+	 * at the same time, though the second case might itself recurse to
+	 * the first.)
 	 */
 	if (parent_half_dead)
 	{

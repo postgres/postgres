@@ -1,6 +1,6 @@
-/* 
+/*
  * example of Snowball dictionary
- * http://snowball.tartarus.org/ 
+ * http://snowball.tartarus.org/
  * Teodor Sigaev <teodor@sigaev.ru>
  */
 #include <stdlib.h>
@@ -14,103 +14,118 @@
 #include "snowball/english_stem.h"
 #include "snowball/russian_stem.h"
 
-typedef struct {
+typedef struct
+{
 	struct SN_env *z;
 	StopList	stoplist;
-	int	(*stem)(struct SN_env * z);
-} DictSnowball;
+	int			(*stem) (struct SN_env * z);
+}	DictSnowball;
 
 
 PG_FUNCTION_INFO_V1(snb_en_init);
-Datum snb_en_init(PG_FUNCTION_ARGS);
+Datum		snb_en_init(PG_FUNCTION_ARGS);
+
 PG_FUNCTION_INFO_V1(snb_ru_init);
-Datum snb_ru_init(PG_FUNCTION_ARGS);
+Datum		snb_ru_init(PG_FUNCTION_ARGS);
+
 PG_FUNCTION_INFO_V1(snb_lexize);
-Datum snb_lexize(PG_FUNCTION_ARGS);
+Datum		snb_lexize(PG_FUNCTION_ARGS);
 
-Datum 
-snb_en_init(PG_FUNCTION_ARGS) {
-	DictSnowball	*d = (DictSnowball*)malloc( sizeof(DictSnowball) );
+Datum
+snb_en_init(PG_FUNCTION_ARGS)
+{
+	DictSnowball *d = (DictSnowball *) malloc(sizeof(DictSnowball));
 
-	if ( !d )
+	if (!d)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
-	memset(d,0,sizeof(DictSnowball));
-	d->stoplist.wordop=lowerstr;
-		
-	if ( !PG_ARGISNULL(0) && PG_GETARG_POINTER(0)!=NULL ) {
-		text       *in = PG_GETARG_TEXT_P(0);
+	memset(d, 0, sizeof(DictSnowball));
+	d->stoplist.wordop = lowerstr;
+
+	if (!PG_ARGISNULL(0) && PG_GETARG_POINTER(0) != NULL)
+	{
+		text	   *in = PG_GETARG_TEXT_P(0);
+
 		readstoplist(in, &(d->stoplist));
 		sortstoplist(&(d->stoplist));
 		PG_FREE_IF_COPY(in, 0);
 	}
 
 	d->z = english_create_env();
-	if (!d->z) {
+	if (!d->z)
+	{
 		freestoplist(&(d->stoplist));
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
 	}
-	d->stem=english_stem;
+	d->stem = english_stem;
 
 	PG_RETURN_POINTER(d);
 }
 
-Datum 
-snb_ru_init(PG_FUNCTION_ARGS) {
-	DictSnowball	*d = (DictSnowball*)malloc( sizeof(DictSnowball) );
+Datum
+snb_ru_init(PG_FUNCTION_ARGS)
+{
+	DictSnowball *d = (DictSnowball *) malloc(sizeof(DictSnowball));
 
-	if ( !d )
+	if (!d)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
-	memset(d,0,sizeof(DictSnowball));
-	d->stoplist.wordop=lowerstr;
-		
-	if ( !PG_ARGISNULL(0) && PG_GETARG_POINTER(0)!=NULL ) {
-		text       *in = PG_GETARG_TEXT_P(0);
+	memset(d, 0, sizeof(DictSnowball));
+	d->stoplist.wordop = lowerstr;
+
+	if (!PG_ARGISNULL(0) && PG_GETARG_POINTER(0) != NULL)
+	{
+		text	   *in = PG_GETARG_TEXT_P(0);
+
 		readstoplist(in, &(d->stoplist));
 		sortstoplist(&(d->stoplist));
 		PG_FREE_IF_COPY(in, 0);
 	}
 
 	d->z = russian_create_env();
-	if (!d->z) {
+	if (!d->z)
+	{
 		freestoplist(&(d->stoplist));
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
 	}
-	d->stem=russian_stem;
+	d->stem = russian_stem;
 
 	PG_RETURN_POINTER(d);
 }
 
 Datum
-snb_lexize(PG_FUNCTION_ARGS) {
-	DictSnowball *d = (DictSnowball*)PG_GETARG_POINTER(0);
-	char       *in = (char*)PG_GETARG_POINTER(1);
-	char *txt = pnstrdup(in, PG_GETARG_INT32(2));
-	char	**res=palloc(sizeof(char*)*2);
+snb_lexize(PG_FUNCTION_ARGS)
+{
+	DictSnowball *d = (DictSnowball *) PG_GETARG_POINTER(0);
+	char	   *in = (char *) PG_GETARG_POINTER(1);
+	char	   *txt = pnstrdup(in, PG_GETARG_INT32(2));
+	char	  **res = palloc(sizeof(char *) * 2);
 
-	if ( *txt=='\0' || searchstoplist(&(d->stoplist),txt) ) {
+	if (*txt == '\0' || searchstoplist(&(d->stoplist), txt))
+	{
 		pfree(txt);
-		res[0]=NULL;
-	} else {
-		SN_set_current(d->z, strlen(txt), txt);
-		(d->stem)(d->z);
-		if ( d->z->p && d->z->l ) {
-			txt=repalloc(txt, d->z->l+1);
-			memcpy( txt, d->z->p, d->z->l);
-			txt[d->z->l]='\0';
-		}	
-		res[0]=txt;
+		res[0] = NULL;
 	}
-	res[1]=NULL;
+	else
+	{
+		SN_set_current(d->z, strlen(txt), txt);
+		(d->stem) (d->z);
+		if (d->z->p && d->z->l)
+		{
+			txt = repalloc(txt, d->z->l + 1);
+			memcpy(txt, d->z->p, d->z->l);
+			txt[d->z->l] = '\0';
+		}
+		res[0] = txt;
+	}
+	res[1] = NULL;
 
 
 	PG_RETURN_POINTER(res);
 }
-

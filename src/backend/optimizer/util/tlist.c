@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.58 2003/07/25 00:01:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.59 2003/08/04 00:43:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -211,8 +211,8 @@ get_sortgroupclause_expr(SortClause *sortClause, List *targetList)
 List *
 get_sortgrouplist_exprs(List *sortClauses, List *targetList)
 {
-	List   *result = NIL;
-	List   *l;
+	List	   *result = NIL;
+	List	   *l;
 
 	foreach(l, sortClauses)
 	{

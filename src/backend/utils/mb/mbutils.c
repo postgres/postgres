@@ -4,7 +4,7 @@
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/mb/mbutils.c,v 1.42 2003/07/25 20:17:55 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/mb/mbutils.c,v 1.43 2003/08/04 00:43:27 momjian Exp $
  */
 #include "postgres.h"
 
@@ -45,7 +45,7 @@ static int	pending_client_encoding = PG_SQL_ASCII;
 /* Internal functions */
 static unsigned char *perform_default_encoding_conversion(unsigned char *src,
 									int len, bool is_client_to_server);
-static int cliplen(const unsigned char *str, int len, int limit);
+static int	cliplen(const unsigned char *str, int len, int limit);
 
 
 /*
@@ -108,10 +108,10 @@ SetClientEncoding(int encoding, bool doit)
 
 	/*
 	 * If we're not inside a transaction then we can't do catalog lookups,
-	 * so fail.  After backend startup, this could only happen if we
-	 * are re-reading postgresql.conf due to SIGHUP --- so basically this
-	 * just constrains the ability to change client_encoding on the fly
-	 * from postgresql.conf.  Which would probably be a stupid thing to do
+	 * so fail.  After backend startup, this could only happen if we are
+	 * re-reading postgresql.conf due to SIGHUP --- so basically this just
+	 * constrains the ability to change client_encoding on the fly from
+	 * postgresql.conf.  Which would probably be a stupid thing to do
 	 * anyway.
 	 */
 	if (!IsTransactionState())
@@ -180,8 +180,8 @@ InitializeClientEncoding(void)
 	if (SetClientEncoding(pending_client_encoding, true) < 0)
 	{
 		/*
-		 * Oops, the requested conversion is not available.
-		 * We couldn't fail before, but we can now.
+		 * Oops, the requested conversion is not available. We couldn't
+		 * fail before, but we can now.
 		 */
 		ereport(FATAL,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -249,15 +249,15 @@ pg_do_encoding_conversion(unsigned char *src, int len,
 	{
 		ereport(LOG,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("default conversion proc for %s to %s does not exist",
-						pg_encoding_to_char(src_encoding),
-						pg_encoding_to_char(dest_encoding))));
+			errmsg("default conversion proc for %s to %s does not exist",
+				   pg_encoding_to_char(src_encoding),
+				   pg_encoding_to_char(dest_encoding))));
 		return src;
 	}
 
 	/*
-	 * XXX we should avoid throwing errors in OidFunctionCall. Otherwise we
-	 * are going into infinite loop!  So we have to make sure that the
+	 * XXX we should avoid throwing errors in OidFunctionCall. Otherwise
+	 * we are going into infinite loop!  So we have to make sure that the
 	 * function exists before calling OidFunctionCall.
 	 */
 	if (!SearchSysCacheExists(PROCOID,

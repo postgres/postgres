@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: params.h,v 1.21 2002/12/14 00:17:59 tgl Exp $
+ * $Id: params.h,v 1.22 2003/08/04 00:43:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@
  *	  ParamListInfo
  *
  *	  ParamListInfo entries are used to pass parameters into the executor
- *	  for parameterized plans.  Each entry in the array defines the value
+ *	  for parameterized plans.	Each entry in the array defines the value
  *	  to be substituted for a PARAM_NAMED or PARAM_NUM parameter.
  *
  *		kind   : the kind of parameter (PARAM_NAMED or PARAM_NUM)
@@ -89,9 +89,9 @@ typedef ParamListInfoData *ParamListInfo;
  *	  es_param_exec_vals or ecxt_param_exec_vals.
  *
  *	  If execPlan is not NULL, it points to a SubPlanState node that needs
- *	  to be executed to produce the value.  (This is done so that we can have
+ *	  to be executed to produce the value.	(This is done so that we can have
  *	  lazy evaluation of InitPlans: they aren't executed until/unless a
- *	  result value is needed.)  Otherwise the value is assumed to be valid
+ *	  result value is needed.)	Otherwise the value is assumed to be valid
  *	  when needed.
  * ----------------
  */

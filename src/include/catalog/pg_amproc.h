@@ -14,7 +14,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amproc.h,v 1.41 2003/06/27 00:33:25 tgl Exp $
+ * $Id: pg_amproc.h,v 1.42 2003/08/04 00:43:30 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -78,7 +78,7 @@ DATA(insert (	1993 3	199 ));
 
 
 /* btree */
-DATA(insert (	 397 1  382 ));
+DATA(insert (	 397 1	382 ));
 DATA(insert (	 421 1	357 ));
 DATA(insert (	 423 1 1596 ));
 DATA(insert (	 424 1 1693 ));
@@ -104,7 +104,7 @@ DATA(insert (	1996 1 1107 ));
 DATA(insert (	1998 1 1314 ));
 DATA(insert (	2000 1 1358 ));
 DATA(insert (	2002 1 1672 ));
-DATA(insert (	2003 1  360 ));
+DATA(insert (	2003 1	360 ));
 DATA(insert (	2039 1 2045 ));
 DATA(insert (	2095 1 2166 ));
 DATA(insert (	2096 1 2166 ));
@@ -134,16 +134,16 @@ DATA(insert (	1999 1	452 ));
 DATA(insert (	2001 1 1696 ));
 DATA(insert (	2004 1	400 ));
 DATA(insert (	2040 1	452 ));
-DATA(insert (	2222 1  454 ));
-DATA(insert (	2223 1  456 ));
-DATA(insert (	2224 1  398 ));
-DATA(insert (	2225 1  450 ));
-DATA(insert (	2226 1  450 ));
-DATA(insert (	2227 1  450 ));
-DATA(insert (	2228 1  450 ));
-DATA(insert (	2229 1  456 ));
-DATA(insert (	2230 1  456 ));
-DATA(insert (	2231 1  456 ));
-DATA(insert (	2232 1  455 ));
+DATA(insert (	2222 1	454 ));
+DATA(insert (	2223 1	456 ));
+DATA(insert (	2224 1	398 ));
+DATA(insert (	2225 1	450 ));
+DATA(insert (	2226 1	450 ));
+DATA(insert (	2227 1	450 ));
+DATA(insert (	2228 1	450 ));
+DATA(insert (	2229 1	456 ));
+DATA(insert (	2230 1	456 ));
+DATA(insert (	2231 1	456 ));
+DATA(insert (	2232 1	455 ));
 
 #endif   /* PG_AMPROC_H */

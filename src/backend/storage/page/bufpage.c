@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.53 2003/07/24 22:04:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.54 2003/08/04 00:43:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@ PageInit(Page page, Size pageSize, Size specialSize)
  * PageHeaderIsValid
  *		Check that the header fields of a page appear valid.
  *
- * This is called when a page has just been read in from disk.  The idea is
+ * This is called when a page has just been read in from disk.	The idea is
  * to cheaply detect trashed pages before we go nuts following bogus item
  * pointers, testing invalid transaction identifiers, etc.
  *
@@ -135,7 +135,7 @@ PageAddItem(Page page,
 		ereport(PANIC,
 				(errcode(ERRCODE_DATA_CORRUPTED),
 				 errmsg("corrupted page pointers: lower = %u, upper = %u, special = %u",
-						phdr->pd_lower, phdr->pd_upper, phdr->pd_special)));
+					 phdr->pd_lower, phdr->pd_upper, phdr->pd_special)));
 
 	/*
 	 * Select offsetNumber to place the new item at
@@ -391,8 +391,8 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 		if (totallen > (Size) (pd_special - pd_lower))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
-					 errmsg("corrupted item lengths: total %u, available space %u",
-							(unsigned int) totallen, pd_special - pd_lower)));
+			errmsg("corrupted item lengths: total %u, available space %u",
+				   (unsigned int) totallen, pd_special - pd_lower)));
 
 		/* sort itemIdSortData array into decreasing itemoff order */
 		qsort((char *) itemidbase, nused, sizeof(struct itemIdSortData),
@@ -472,7 +472,7 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
 				 errmsg("corrupted page pointers: lower = %u, upper = %u, special = %u",
-						phdr->pd_lower, phdr->pd_upper, phdr->pd_special)));
+					 phdr->pd_lower, phdr->pd_upper, phdr->pd_special)));
 
 	nline = PageGetMaxOffsetNumber(page);
 	if ((int) offnum <= 0 || (int) offnum > nline)
@@ -533,7 +533,8 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
 	 */
 	if (!PageIsEmpty(page))
 	{
-		int i;
+		int			i;
+
 		nline--;				/* there's one less than when we started */
 		for (i = 1; i <= nline; i++)
 		{

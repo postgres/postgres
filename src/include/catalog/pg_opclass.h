@@ -26,7 +26,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_opclass.h,v 1.54 2003/06/27 00:33:25 tgl Exp $
+ * $Id: pg_opclass.h,v 1.55 2003/08/04 00:43:30 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -151,7 +151,7 @@ DATA(insert OID = 2039 (	403		timestamp_ops	PGNSP PGUID 1114 t 0 ));
 DATA(insert OID = 2040 (	405		timestamp_ops	PGNSP PGUID 1114 t 0 ));
 DATA(insert OID = 2095 (	403		text_pattern_ops	PGNSP PGUID   25 f 0 ));
 #define TEXT_PATTERN_BTREE_OPS_OID 2095
-DATA(insert OID = 2096 (	403		varchar_pattern_ops	PGNSP PGUID 1043 f 0 ));
+DATA(insert OID = 2096 (	403		varchar_pattern_ops PGNSP PGUID 1043 f 0 ));
 #define VARCHAR_PATTERN_BTREE_OPS_OID 2096
 DATA(insert OID = 2097 (	403		bpchar_pattern_ops	PGNSP PGUID 1042 f 0 ));
 #define BPCHAR_PATTERN_BTREE_OPS_OID 2097
@@ -165,7 +165,7 @@ DATA(insert OID = 2226 (	405		cid_ops			PGNSP PGUID   29 t 0 ));
 DATA(insert OID = 2227 (	405		abstime_ops		PGNSP PGUID  702 t 0 ));
 DATA(insert OID = 2228 (	405		reltime_ops		PGNSP PGUID  703 t 0 ));
 DATA(insert OID = 2229 (	405		text_pattern_ops	PGNSP PGUID   25 f 0 ));
-DATA(insert OID = 2230 (	405		varchar_pattern_ops	PGNSP PGUID 1043 f 0 ));
+DATA(insert OID = 2230 (	405		varchar_pattern_ops PGNSP PGUID 1043 f 0 ));
 DATA(insert OID = 2231 (	405		bpchar_pattern_ops	PGNSP PGUID 1042 f 0 ));
 DATA(insert OID = 2232 (	405		name_pattern_ops	PGNSP PGUID   19 f 0 ));
 

@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.50 2003/02/01 19:29:16 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.51 2003/08/04 00:43:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,8 @@ typedef z_stream *z_streamp;
 #define K_VERS_1_4 (( (1 * 256 + 4) * 256 + 0) * 256 + 0)		/* Date & name in header */
 #define K_VERS_1_5 (( (1 * 256 + 5) * 256 + 0) * 256 + 0)		/* Handle dependencies */
 #define K_VERS_1_6 (( (1 * 256 + 6) * 256 + 0) * 256 + 0)		/* Schema field in TOCs */
-#define K_VERS_1_7 (( (1 * 256 + 7) * 256 + 0) * 256 + 0)		/* File Offset size in header */
+#define K_VERS_1_7 (( (1 * 256 + 7) * 256 + 0) * 256 + 0)		/* File Offset size in
+																 * header */
 #define K_VERS_MAX (( (1 * 256 + 7) * 256 + 255) * 256 + 0)
 
 /* No of BLOBs to restore in 1 TX */
@@ -155,7 +156,8 @@ typedef struct _archiveHandle
 	int			debugLevel;		/* Used for logging (currently only by
 								 * --verbose) */
 	size_t		intSize;		/* Size of an integer in the archive */
-	size_t		offSize;		/* Size of a file offset in the archive - Added V1.7 */
+	size_t		offSize;		/* Size of a file offset in the archive -
+								 * Added V1.7 */
 	ArchiveFormat format;		/* Archive format */
 
 	sqlparseInfo sqlparse;
@@ -296,8 +298,8 @@ extern int	ReadInt(ArchiveHandle *AH);
 extern char *ReadStr(ArchiveHandle *AH);
 extern size_t WriteStr(ArchiveHandle *AH, const char *s);
 
-int ReadOffset(ArchiveHandle*, off_t*);
-size_t WriteOffset(ArchiveHandle*, off_t, int);
+int			ReadOffset(ArchiveHandle *, off_t *);
+size_t		WriteOffset(ArchiveHandle *, off_t, int);
 
 extern void StartRestoreBlobs(ArchiveHandle *AH);
 extern void StartRestoreBlob(ArchiveHandle *AH, Oid oid);

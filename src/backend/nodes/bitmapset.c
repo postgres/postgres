@@ -14,7 +14,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/bitmapset.c,v 1.3 2003/07/22 23:30:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/bitmapset.c,v 1.4 2003/08/04 00:43:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@
  * where x's are unspecified bits.  The two's complement negative is formed
  * by inverting all the bits and adding one.  Inversion gives
  *				yyyyyy01111
- * where each y is the inverse of the corresponding x.  Incrementing gives
+ * where each y is the inverse of the corresponding x.	Incrementing gives
  *				yyyyyy10000
  * and then ANDing with the original value gives
  *				00000010000
@@ -65,41 +65,41 @@
  */
 
 static const uint8 rightmost_one_pos[256] = {
-	0,  0,  1,  0,  2,  0,  1,  0,  3,  0,  1,  0,  2,  0,  1,  0,
-	4,  0,  1,  0,  2,  0,  1,  0,  3,  0,  1,  0,  2,  0,  1,  0,
-	5,  0,  1,  0,  2,  0,  1,  0,  3,  0,  1,  0,  2,  0,  1,  0,
-	4,  0,  1,  0,  2,  0,  1,  0,  3,  0,  1,  0,  2,  0,  1,  0,
-	6,  0,  1,  0,  2,  0,  1,  0,  3,  0,  1,  0,  2,  0,  1,  0,
-	4,  0,  1,  0,  2,  0,  1,  0,  3,  0,  1,  0,  2,  0,  1,  0,
-	5,  0,  1,  0,  2,  0,  1,  0,  3,  0,  1,  0,  2,  0,  1,  0,
-	4,  0,  1,  0,  2,  0,  1,  0,  3,  0,  1,  0,  2,  0,  1,  0,
-	7,  0,  1,  0,  2,  0,  1,  0,  3,  0,  1,  0,  2,  0,  1,  0,
-	4,  0,  1,  0,  2,  0,  1,  0,  3,  0,  1,  0,  2,  0,  1,  0,
-	5,  0,  1,  0,  2,  0,  1,  0,  3,  0,  1,  0,  2,  0,  1,  0,
-	4,  0,  1,  0,  2,  0,  1,  0,  3,  0,  1,  0,  2,  0,  1,  0,
-	6,  0,  1,  0,  2,  0,  1,  0,  3,  0,  1,  0,  2,  0,  1,  0,
-	4,  0,  1,  0,  2,  0,  1,  0,  3,  0,  1,  0,  2,  0,  1,  0,
-	5,  0,  1,  0,  2,  0,  1,  0,  3,  0,  1,  0,  2,  0,  1,  0,
-	4,  0,  1,  0,  2,  0,  1,  0,  3,  0,  1,  0,  2,  0,  1,  0
+	0, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	6, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	7, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	6, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0
 };
 
 static const uint8 number_of_ones[256] = {
-	0,  1,  1,  2,  1,  2,  2,  3,  1,  2,  2,  3,  2,  3,  3,  4,
-	1,  2,  2,  3,  2,  3,  3,  4,  2,  3,  3,  4,  3,  4,  4,  5,
-	1,  2,  2,  3,  2,  3,  3,  4,  2,  3,  3,  4,  3,  4,  4,  5,
-	2,  3,  3,  4,  3,  4,  4,  5,  3,  4,  4,  5,  4,  5,  5,  6,
-	1,  2,  2,  3,  2,  3,  3,  4,  2,  3,  3,  4,  3,  4,  4,  5,
-	2,  3,  3,  4,  3,  4,  4,  5,  3,  4,  4,  5,  4,  5,  5,  6,
-	2,  3,  3,  4,  3,  4,  4,  5,  3,  4,  4,  5,  4,  5,  5,  6,
-	3,  4,  4,  5,  4,  5,  5,  6,  4,  5,  5,  6,  5,  6,  6,  7,
-	1,  2,  2,  3,  2,  3,  3,  4,  2,  3,  3,  4,  3,  4,  4,  5,
-	2,  3,  3,  4,  3,  4,  4,  5,  3,  4,  4,  5,  4,  5,  5,  6,
-	2,  3,  3,  4,  3,  4,  4,  5,  3,  4,  4,  5,  4,  5,  5,  6,
-	3,  4,  4,  5,  4,  5,  5,  6,  4,  5,  5,  6,  5,  6,  6,  7,
-	2,  3,  3,  4,  3,  4,  4,  5,  3,  4,  4,  5,  4,  5,  5,  6,
-	3,  4,  4,  5,  4,  5,  5,  6,  4,  5,  5,  6,  5,  6,  6,  7,
-	3,  4,  4,  5,  4,  5,  5,  6,  4,  5,  5,  6,  5,  6,  6,  7,
-	4,  5,  5,  6,  5,  6,  6,  7,  5,  6,  6,  7,  6,  7,  7,  8
+	0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,
+	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+	4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
 };
 
 
@@ -107,7 +107,7 @@ static const uint8 number_of_ones[256] = {
  * bms_copy - make a palloc'd copy of a bitmapset
  */
 Bitmapset *
-bms_copy(const Bitmapset *a)
+bms_copy(const Bitmapset * a)
 {
 	Bitmapset  *result;
 	size_t		size;
@@ -127,7 +127,7 @@ bms_copy(const Bitmapset *a)
  * be reported as equal to a palloc'd value containing no members.
  */
 bool
-bms_equal(const Bitmapset *a, const Bitmapset *b)
+bms_equal(const Bitmapset * a, const Bitmapset * b)
 {
 	const Bitmapset *shorter;
 	const Bitmapset *longer;
@@ -143,9 +143,7 @@ bms_equal(const Bitmapset *a, const Bitmapset *b)
 		return bms_is_empty(b);
 	}
 	else if (b == NULL)
-	{
 		return bms_is_empty(a);
-	}
 	/* Identify shorter and longer input */
 	if (a->nwords <= b->nwords)
 	{
@@ -199,7 +197,7 @@ bms_make_singleton(int x)
  * Same as pfree except for allowing NULL input
  */
 void
-bms_free(Bitmapset *a)
+bms_free(Bitmapset * a)
 {
 	if (a)
 		pfree(a);
@@ -216,7 +214,7 @@ bms_free(Bitmapset *a)
  * bms_union - set union
  */
 Bitmapset *
-bms_union(const Bitmapset *a, const Bitmapset *b)
+bms_union(const Bitmapset * a, const Bitmapset * b)
 {
 	Bitmapset  *result;
 	const Bitmapset *other;
@@ -242,9 +240,7 @@ bms_union(const Bitmapset *a, const Bitmapset *b)
 	/* And union the shorter input into the result */
 	otherlen = other->nwords;
 	for (i = 0; i < otherlen; i++)
-	{
 		result->words[i] |= other->words[i];
-	}
 	return result;
 }
 
@@ -252,7 +248,7 @@ bms_union(const Bitmapset *a, const Bitmapset *b)
  * bms_intersect - set intersection
  */
 Bitmapset *
-bms_intersect(const Bitmapset *a, const Bitmapset *b)
+bms_intersect(const Bitmapset * a, const Bitmapset * b)
 {
 	Bitmapset  *result;
 	const Bitmapset *other;
@@ -276,9 +272,7 @@ bms_intersect(const Bitmapset *a, const Bitmapset *b)
 	/* And intersect the longer input with the result */
 	resultlen = result->nwords;
 	for (i = 0; i < resultlen; i++)
-	{
 		result->words[i] &= other->words[i];
-	}
 	return result;
 }
 
@@ -286,7 +280,7 @@ bms_intersect(const Bitmapset *a, const Bitmapset *b)
  * bms_difference - set difference (ie, A without members of B)
  */
 Bitmapset *
-bms_difference(const Bitmapset *a, const Bitmapset *b)
+bms_difference(const Bitmapset * a, const Bitmapset * b)
 {
 	Bitmapset  *result;
 	int			shortlen;
@@ -302,9 +296,7 @@ bms_difference(const Bitmapset *a, const Bitmapset *b)
 	/* And remove b's bits from result */
 	shortlen = Min(a->nwords, b->nwords);
 	for (i = 0; i < shortlen; i++)
-	{
-		result->words[i] &= ~ b->words[i];
-	}
+		result->words[i] &= ~b->words[i];
 	return result;
 }
 
@@ -312,7 +304,7 @@ bms_difference(const Bitmapset *a, const Bitmapset *b)
  * bms_is_subset - is A a subset of B?
  */
 bool
-bms_is_subset(const Bitmapset *a, const Bitmapset *b)
+bms_is_subset(const Bitmapset * a, const Bitmapset * b)
 {
 	int			shortlen;
 	int			longlen;
@@ -327,7 +319,7 @@ bms_is_subset(const Bitmapset *a, const Bitmapset *b)
 	shortlen = Min(a->nwords, b->nwords);
 	for (i = 0; i < shortlen; i++)
 	{
-		if ((a->words[i] & ~ b->words[i]) != 0)
+		if ((a->words[i] & ~b->words[i]) != 0)
 			return false;
 	}
 	/* Check extra words */
@@ -347,7 +339,7 @@ bms_is_subset(const Bitmapset *a, const Bitmapset *b)
  * bms_is_member - is X a member of A?
  */
 bool
-bms_is_member(int x, const Bitmapset *a)
+bms_is_member(int x, const Bitmapset * a)
 {
 	int			wordnum,
 				bitnum;
@@ -370,7 +362,7 @@ bms_is_member(int x, const Bitmapset *a)
  * bms_overlap - do sets overlap (ie, have a nonempty intersection)?
  */
 bool
-bms_overlap(const Bitmapset *a, const Bitmapset *b)
+bms_overlap(const Bitmapset * a, const Bitmapset * b)
 {
 	int			shortlen;
 	int			i;
@@ -392,7 +384,7 @@ bms_overlap(const Bitmapset *a, const Bitmapset *b)
  * bms_nonempty_difference - do sets have a nonempty difference?
  */
 bool
-bms_nonempty_difference(const Bitmapset *a, const Bitmapset *b)
+bms_nonempty_difference(const Bitmapset * a, const Bitmapset * b)
 {
 	int			shortlen;
 	int			i;
@@ -406,7 +398,7 @@ bms_nonempty_difference(const Bitmapset *a, const Bitmapset *b)
 	shortlen = Min(a->nwords, b->nwords);
 	for (i = 0; i < shortlen; i++)
 	{
-		if ((a->words[i] & ~ b->words[i]) != 0)
+		if ((a->words[i] & ~b->words[i]) != 0)
 			return true;
 	}
 	/* Check extra words in a */
@@ -424,11 +416,11 @@ bms_nonempty_difference(const Bitmapset *a, const Bitmapset *b)
  * Raises error if |a| is not 1.
  */
 int
-bms_singleton_member(const Bitmapset *a)
+bms_singleton_member(const Bitmapset * a)
 {
-	int		result = -1;
-	int		nwords;
-	int		wordnum;
+	int			result = -1;
+	int			nwords;
+	int			wordnum;
 
 	if (a == NULL)
 		elog(ERROR, "bitmapset is empty");
@@ -459,11 +451,11 @@ bms_singleton_member(const Bitmapset *a)
  * bms_num_members - count members of set
  */
 int
-bms_num_members(const Bitmapset *a)
+bms_num_members(const Bitmapset * a)
 {
-	int		result = 0;
-	int		nwords;
-	int		wordnum;
+	int			result = 0;
+	int			nwords;
+	int			wordnum;
 
 	if (a == NULL)
 		return 0;
@@ -488,11 +480,11 @@ bms_num_members(const Bitmapset *a)
  * This is faster than making an exact count with bms_num_members().
  */
 BMS_Membership
-bms_membership(const Bitmapset *a)
+bms_membership(const Bitmapset * a)
 {
 	BMS_Membership result = BMS_EMPTY_SET;
-	int		nwords;
-	int		wordnum;
+	int			nwords;
+	int			wordnum;
 
 	if (a == NULL)
 		return BMS_EMPTY_SET;
@@ -517,10 +509,10 @@ bms_membership(const Bitmapset *a)
  * This is even faster than bms_membership().
  */
 bool
-bms_is_empty(const Bitmapset *a)
+bms_is_empty(const Bitmapset * a)
 {
-	int		nwords;
-	int		wordnum;
+	int			nwords;
+	int			wordnum;
 
 	if (a == NULL)
 		return true;
@@ -552,7 +544,7 @@ bms_is_empty(const Bitmapset *a)
  * Input set is modified or recycled!
  */
 Bitmapset *
-bms_add_member(Bitmapset *a, int x)
+bms_add_member(Bitmapset * a, int x)
 {
 	int			wordnum,
 				bitnum;
@@ -573,9 +565,7 @@ bms_add_member(Bitmapset *a, int x)
 		result = bms_make_singleton(x);
 		nwords = a->nwords;
 		for (i = 0; i < nwords; i++)
-		{
 			result->words[i] |= a->words[i];
-		}
 		pfree(a);
 		return result;
 	}
@@ -592,7 +582,7 @@ bms_add_member(Bitmapset *a, int x)
  * Input set is modified in-place!
  */
 Bitmapset *
-bms_del_member(Bitmapset *a, int x)
+bms_del_member(Bitmapset * a, int x)
 {
 	int			wordnum,
 				bitnum;
@@ -604,9 +594,7 @@ bms_del_member(Bitmapset *a, int x)
 	wordnum = WORDNUM(x);
 	bitnum = BITNUM(x);
 	if (wordnum < a->nwords)
-	{
-		a->words[wordnum] &= ~ ((bitmapword) 1 << bitnum);
-	}
+		a->words[wordnum] &= ~((bitmapword) 1 << bitnum);
 	return a;
 }
 
@@ -614,7 +602,7 @@ bms_del_member(Bitmapset *a, int x)
  * bms_add_members - like bms_union, but left input is recycled
  */
 Bitmapset *
-bms_add_members(Bitmapset *a, const Bitmapset *b)
+bms_add_members(Bitmapset * a, const Bitmapset * b)
 {
 	Bitmapset  *result;
 	const Bitmapset *other;
@@ -640,9 +628,7 @@ bms_add_members(Bitmapset *a, const Bitmapset *b)
 	/* And union the shorter input into the result */
 	otherlen = other->nwords;
 	for (i = 0; i < otherlen; i++)
-	{
 		result->words[i] |= other->words[i];
-	}
 	if (result != a)
 		pfree(a);
 	return result;
@@ -652,7 +638,7 @@ bms_add_members(Bitmapset *a, const Bitmapset *b)
  * bms_int_members - like bms_intersect, but left input is recycled
  */
 Bitmapset *
-bms_int_members(Bitmapset *a, const Bitmapset *b)
+bms_int_members(Bitmapset * a, const Bitmapset * b)
 {
 	int			shortlen;
 	int			i;
@@ -668,13 +654,9 @@ bms_int_members(Bitmapset *a, const Bitmapset *b)
 	/* Intersect b into a; we need never copy */
 	shortlen = Min(a->nwords, b->nwords);
 	for (i = 0; i < shortlen; i++)
-	{
 		a->words[i] &= b->words[i];
-	}
 	for (; i < a->nwords; i++)
-	{
 		a->words[i] = 0;
-	}
 	return a;
 }
 
@@ -682,7 +664,7 @@ bms_int_members(Bitmapset *a, const Bitmapset *b)
  * bms_del_members - like bms_difference, but left input is recycled
  */
 Bitmapset *
-bms_del_members(Bitmapset *a, const Bitmapset *b)
+bms_del_members(Bitmapset * a, const Bitmapset * b)
 {
 	int			shortlen;
 	int			i;
@@ -695,9 +677,7 @@ bms_del_members(Bitmapset *a, const Bitmapset *b)
 	/* Remove b's bits from a; we need never copy */
 	shortlen = Min(a->nwords, b->nwords);
 	for (i = 0; i < shortlen; i++)
-	{
-		a->words[i] &= ~ b->words[i];
-	}
+		a->words[i] &= ~b->words[i];
 	return a;
 }
 
@@ -705,7 +685,7 @@ bms_del_members(Bitmapset *a, const Bitmapset *b)
  * bms_join - like bms_union, but *both* inputs are recycled
  */
 Bitmapset *
-bms_join(Bitmapset *a, Bitmapset *b)
+bms_join(Bitmapset * a, Bitmapset * b)
 {
 	Bitmapset  *result;
 	Bitmapset  *other;
@@ -731,9 +711,7 @@ bms_join(Bitmapset *a, Bitmapset *b)
 	/* And union the shorter input into the result */
 	otherlen = other->nwords;
 	for (i = 0; i < otherlen; i++)
-	{
 		result->words[i] |= other->words[i];
-	}
 	if (other != result)		/* pure paranoia */
 		pfree(other);
 	return result;
@@ -742,24 +720,22 @@ bms_join(Bitmapset *a, Bitmapset *b)
 /*----------
  * bms_first_member - find and remove first member of a set
  *
- * Returns -1 if set is empty.  NB: set is destructively modified!
+ * Returns -1 if set is empty.	NB: set is destructively modified!
  *
  * This is intended as support for iterating through the members of a set.
  * The typical pattern is
  *
  *			tmpset = bms_copy(inputset);
  *			while ((x = bms_first_member(tmpset)) >= 0)
- *			{
  *				process member x;
- *			}
  *			bms_free(tmpset);
  *----------
  */
 int
-bms_first_member(Bitmapset *a)
+bms_first_member(Bitmapset * a)
 {
-	int		nwords;
-	int		wordnum;
+	int			nwords;
+	int			wordnum;
 
 	if (a == NULL)
 		return -1;
@@ -770,10 +746,10 @@ bms_first_member(Bitmapset *a)
 
 		if (w != 0)
 		{
-			int		result;
+			int			result;
 
 			w = RIGHTMOST_ONE(w);
-			a->words[wordnum] &= ~ w;
+			a->words[wordnum] &= ~w;
 
 			result = wordnum * BITS_PER_BITMAPWORD;
 			while ((w & 255) == 0)

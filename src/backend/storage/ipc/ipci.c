@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.54 2003/07/24 22:04:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.55 2003/08/04 00:43:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,4 +146,3 @@ AttachSharedMemoryAndSemaphores(void)
 {
 	CLOGShmemInit();
 }
-

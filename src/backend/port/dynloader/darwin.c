@@ -3,7 +3,7 @@
  * available with a PostgreSQL-compatible license.	Kudos Wilfredo
  * Sánchez <wsanchez@apple.com>.
  *
- * $Header: /cvsroot/pgsql/src/backend/port/dynloader/darwin.c,v 1.7 2003/04/13 01:19:06 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/port/dynloader/darwin.c,v 1.8 2003/08/04 00:43:21 momjian Exp $
  */
 #include "postgres.h"
 
@@ -58,7 +58,7 @@ char *
 pg_dlerror(void)
 {
 	NSLinkEditErrors c;
-	int errorNumber;
+	int			errorNumber;
 	const char *fileName;
 	const char *errorString = NULL;
 

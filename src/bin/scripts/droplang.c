@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/bin/scripts/droplang.c,v 1.4 2003/07/23 08:47:41 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/scripts/droplang.c,v 1.5 2003/08/04 00:43:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,9 +104,9 @@ main(int argc, char *argv[])
 
 	if (argc - optind > 0)
 	{
-		fprintf(stderr,	_("%s: too many command-line arguments (first is \"%s\")\n"),
+		fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
 				progname, argv[optind]);
-	    fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(1);
 	}
 
@@ -148,7 +148,7 @@ main(int argc, char *argv[])
 	if (langname == NULL)
 	{
 		fprintf(stderr, _("%s: missing required argument language name\n"), progname);
-	    fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(1);
 	}
 
@@ -159,7 +159,8 @@ main(int argc, char *argv[])
 	conn = connectDatabase(dbname, host, port, username, password, progname);
 
 	/*
-	 * Make sure the language is installed and find the OID of the handler function
+	 * Make sure the language is installed and find the OID of the handler
+	 * function
 	 */
 	printfPQExpBuffer(&sql, "SELECT lanplcallfoid FROM pg_language WHERE lanname = '%s' AND lanispl;", langname);
 	result = executeQuery(conn, sql.data, progname, echo);
@@ -178,7 +179,7 @@ main(int argc, char *argv[])
 	 */
 	printfPQExpBuffer(&sql, "SELECT count(proname) FROM pg_proc P, pg_language L WHERE P.prolang = L.oid AND L.lanname = '%s';", langname);
 	result = executeQuery(conn, sql.data, progname, echo);
-	if (strcmp(PQgetvalue(result, 0, 0), "0")!=0)
+	if (strcmp(PQgetvalue(result, 0, 0), "0") != 0)
 	{
 		PQfinish(conn);
 		fprintf(stderr,
@@ -193,7 +194,7 @@ main(int argc, char *argv[])
 	 */
 	printfPQExpBuffer(&sql, "SELECT count(*) FROM pg_language WHERE lanplcallfoid = %s AND lanname <> '%s';", lanplcallfoid, langname);
 	result = executeQuery(conn, sql.data, progname, echo);
-	if (strcmp(PQgetvalue(result, 0, 0), "0")==0)
+	if (strcmp(PQgetvalue(result, 0, 0), "0") == 0)
 		keephandler = false;
 	else
 		keephandler = true;

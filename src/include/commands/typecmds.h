@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: typecmds.h,v 1.5 2003/02/03 21:15:44 tgl Exp $
+ * $Id: typecmds.h,v 1.6 2003/08/04 00:43:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@ extern void AlterDomainDefault(List *names, Node *defaultRaw);
 extern void AlterDomainNotNull(List *names, bool notNull);
 extern void AlterDomainAddConstraint(List *names, Node *constr);
 extern void AlterDomainDropConstraint(List *names, const char *constrName,
-									  DropBehavior behavior);
+						  DropBehavior behavior);
 
 extern List *GetDomainConstraints(Oid typeOid);
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: inet.h,v 1.14 2003/06/24 22:21:23 momjian Exp $
+ * $Id: inet.h,v 1.15 2003/08/04 00:43:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@ typedef struct
 	unsigned char family;
 	unsigned char bits;
 	unsigned char type;
-	unsigned char ip_addr[16]; /* 128 bits of address */
+	unsigned char ip_addr[16];	/* 128 bits of address */
 } inet_struct;
 
 /*

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistscan.c,v 1.45 2003/07/28 00:09:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistscan.c,v 1.46 2003/08/04 00:43:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,11 +104,12 @@ gistrescan(PG_FUNCTION_ARGS)
 		memmove(s->keyData,
 				key,
 				s->numberOfKeys * sizeof(ScanKeyData));
+
 		/*
 		 * Play games here with the scan key to use the Consistent
-		 * function for all comparisons: 1) the sk_procedure field
-		 * will now be used to hold the strategy number 2) the
-		 * sk_func field will point to the Consistent function
+		 * function for all comparisons: 1) the sk_procedure field will
+		 * now be used to hold the strategy number 2) the sk_func field
+		 * will point to the Consistent function
 		 */
 		for (i = 0; i < s->numberOfKeys; i++)
 		{

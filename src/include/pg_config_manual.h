@@ -3,10 +3,10 @@
  *
  * This file contains various configuration symbols and limits.  In
  * all cases, changing them is only useful in very rare situations or
- * for developers.  If you edit any of these, be sure to do a *full*
+ * for developers.	If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * $Id: pg_config_manual.h,v 1.4 2003/06/12 07:36:51 momjian Exp $
+ * $Id: pg_config_manual.h,v 1.5 2003/08/04 00:43:29 momjian Exp $
  *------------------------------------------------------------------------
  */
 
@@ -41,7 +41,7 @@
  *
  * Changing RELSEG_SIZE requires an initdb.
  */
-#define RELSEG_SIZE	(0x40000000 / BLCKSZ)
+#define RELSEG_SIZE (0x40000000 / BLCKSZ)
 
 /*
  * Maximum number of columns in an index and maximum number of
@@ -59,7 +59,7 @@
 /*
  * Define this to make libpgtcl's "pg_result -assign" command process
  * C-style backslash sequences in returned tuple data and convert
- * PostgreSQL array values into Tcl lists.  CAUTION: This conversion
+ * PostgreSQL array values into Tcl lists.	CAUTION: This conversion
  * is *wrong* unless you install the routines in
  * contrib/string/string_io to make the server produce C-style
  * backslash sequences in the first place.
@@ -69,7 +69,7 @@
 /*
  * User locks are handled totally on the application side as long term
  * cooperative locks which extend beyond the normal transaction
- * boundaries.  Their purpose is to indicate to an application that
+ * boundaries.	Their purpose is to indicate to an application that
  * someone is `working' on an item.  Define this flag to enable user
  * locks.  You will need the loadable module user-locks.c to use this
  * feature.
@@ -84,8 +84,8 @@
 
 /*
  * Define this if you want to allow the lo_import and lo_export SQL
- * functions to be executed by ordinary users.  By default these
- * functions are only available to the Postgres superuser.  CAUTION:
+ * functions to be executed by ordinary users.	By default these
+ * functions are only available to the Postgres superuser.	CAUTION:
  * These functions are SECURITY HOLES since they can read and write
  * any file that the PostgreSQL server has permission to access.  If
  * you turn this on, don't say we didn't warn you.
@@ -130,7 +130,7 @@
  * Disable UNIX sockets for those operating system.
  */
 #if defined(__QNX__) || defined(__BEOS__) || defined(WIN32)
-# undef HAVE_UNIX_SOCKETS
+#undef HAVE_UNIX_SOCKETS
 #endif
 
 /*
@@ -138,20 +138,20 @@
  */
 #if !defined(__QNX__) && !defined(__BEOS__) && \
 	!defined(__CYGWIN__) && !defined(WIN32)
-# define HAVE_WORKING_LINK 1
+#define HAVE_WORKING_LINK 1
 #endif
-  
+
 /*
  * Define this if your operating system has _timezone rather than timezone
  */
 #if defined(__CYGWIN__) || defined(WIN32)
-# define HAVE_INT_TIMEZONE		/* has int _timezone */
-# define HAVE_UNDERSCORE_TIMEZONE 1
+#define HAVE_INT_TIMEZONE		/* has int _timezone */
+#define HAVE_UNDERSCORE_TIMEZONE 1
 #endif
-  
+
 /*
  * This is the default directory in which AF_UNIX socket files are
- * placed.  Caution: changing this risks breaking your existing client
+ * placed.	Caution: changing this risks breaking your existing client
  * applications, which are likely to continue to look in the old
  * directory.  But if you just hate the idea of sockets in /tmp,
  * here's where to twiddle it.  You can also override this at runtime
@@ -170,7 +170,7 @@
  * MAX_RANDOM_VALUE.  Currently, all known implementations yield
  * 0..2^31-1, so we just hardwire this constant.  We could do a
  * configure test if it proves to be necessary.  CAUTION: Think not to
- * replace this with RAND_MAX.  RAND_MAX defines the maximum value of
+ * replace this with RAND_MAX.	RAND_MAX defines the maximum value of
  * the older rand() function, which is often different from --- and
  * considerably inferior to --- random().
  */
@@ -187,7 +187,7 @@
 /*
  * Define this to cause pfree()'d memory to be cleared immediately, to
  * facilitate catching bugs that refer to already-freed values.  XXX
- * Right now, this gets defined automatically if --enable-cassert.  In
+ * Right now, this gets defined automatically if --enable-cassert.	In
  * the long term it probably doesn't need to be on by default.
  */
 #ifdef USE_ASSERT_CHECKING
@@ -196,11 +196,11 @@
 
 /*
  * Define this to check memory allocation errors (scribbling on more
- * bytes than were allocated).  Right now, this gets defined
+ * bytes than were allocated).	Right now, this gets defined
  * automatically if --enable-cassert.  In the long term it probably
  * doesn't need to be on by default.
  */
-#ifdef USE_ASSERT_CHECKING 
+#ifdef USE_ASSERT_CHECKING
 #define MEMORY_CONTEXT_CHECKING
 #endif
 
@@ -221,7 +221,7 @@
  */
 /* #define IPORTAL_DEBUG  */
 /* #define HEAPDEBUGALL  */
-/* #define ISTRATDEBUG  */
+/* #define ISTRATDEBUG	*/
 /* #define ACLDEBUG */
 /* #define RTDEBUG */
 /* #define GISTDEBUG */

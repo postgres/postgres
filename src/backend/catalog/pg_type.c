@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.88 2003/07/21 01:59:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.89 2003/08/04 00:43:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -359,7 +359,8 @@ TypeCreate(const char *typeName,
 void
 GenerateTypeDependencies(Oid typeNamespace,
 						 Oid typeObjectId,
-						 Oid relationOid,		/* only for 'c'atalog types */
+						 Oid relationOid,		/* only for 'c'atalog
+												 * types */
 						 char relationKind,		/* ditto */
 						 Oid inputProcedure,
 						 Oid outputProcedure,
@@ -426,13 +427,13 @@ GenerateTypeDependencies(Oid typeNamespace,
 
 	/*
 	 * If the type is a rowtype for a relation, mark it as internally
-	 * dependent on the relation, *unless* it is a stand-alone
-	 * composite type relation. For the latter case, we have to
-	 * reverse the dependency.
+	 * dependent on the relation, *unless* it is a stand-alone composite
+	 * type relation. For the latter case, we have to reverse the
+	 * dependency.
 	 *
-	 * In the former case, this allows the type to be auto-dropped when
-	 * the relation is, and not otherwise. And in the latter, of
-	 * course we get the opposite effect.
+	 * In the former case, this allows the type to be auto-dropped when the
+	 * relation is, and not otherwise. And in the latter, of course we get
+	 * the opposite effect.
 	 */
 	if (OidIsValid(relationOid))
 	{
@@ -447,11 +448,11 @@ GenerateTypeDependencies(Oid typeNamespace,
 	}
 
 	/*
-	 * If the type is an array type, mark it auto-dependent on the
-	 * base type.  (This is a compromise between the typical case
-	 * where the array type is automatically generated and the case
-	 * where it is manually created: we'd prefer INTERNAL for the
-	 * former case and NORMAL for the latter.)
+	 * If the type is an array type, mark it auto-dependent on the base
+	 * type.  (This is a compromise between the typical case where the
+	 * array type is automatically generated and the case where it is
+	 * manually created: we'd prefer INTERNAL for the former case and
+	 * NORMAL for the latter.)
 	 */
 	if (OidIsValid(elementType))
 	{

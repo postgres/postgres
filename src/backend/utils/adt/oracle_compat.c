@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.46 2003/07/27 04:53:07 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.47 2003/08/04 00:43:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,8 +22,8 @@
 
 
 static text *dotrim(const char *string, int stringlen,
-					const char *set, int setlen,
-					bool doltrim, bool dortrim);
+	   const char *set, int setlen,
+	   bool doltrim, bool dortrim);
 
 
 /********************************************************************
@@ -403,8 +403,8 @@ dotrim(const char *string, int stringlen,
 		{
 			/*
 			 * In the multibyte-encoding case, build arrays of pointers to
-			 * character starts, so that we can avoid inefficient checks in
-			 * the inner loops.
+			 * character starts, so that we can avoid inefficient checks
+			 * in the inner loops.
 			 */
 			const char **stringchars;
 			const char **setchars;
@@ -499,13 +499,14 @@ dotrim(const char *string, int stringlen,
 		else
 		{
 			/*
-			 * In the single-byte-encoding case, we don't need such overhead.
+			 * In the single-byte-encoding case, we don't need such
+			 * overhead.
 			 */
 			if (doltrim)
 			{
 				while (stringlen > 0)
 				{
-					char	str_ch = *string;
+					char		str_ch = *string;
 
 					for (i = 0; i < setlen; i++)
 					{
@@ -523,7 +524,7 @@ dotrim(const char *string, int stringlen,
 			{
 				while (stringlen > 0)
 				{
-					char	str_ch = string[stringlen - 1];
+					char		str_ch = string[stringlen - 1];
 
 					for (i = 0; i < setlen; i++)
 					{

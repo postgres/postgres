@@ -13,9 +13,9 @@
  * The expected output is:
  *
  * tuple 0: got
- *  i = (4 bytes) 1
- *  t = (11 bytes) 'joe's place'
- *  b = (5 bytes) \000\001\002\003\004
+ *	i = (4 bytes) 1
+ *	t = (11 bytes) 'joe's place'
+ *	b = (5 bytes) \000\001\002\003\004
  *
  */
 #include <stdio.h>
@@ -50,9 +50,9 @@ main(int argc, char **argv)
 				b_fnum;
 
 	/*
-	 * If the user supplies a parameter on the command line, use it as
-	 * the conninfo string; otherwise default to setting dbname=template1
-	 * and using environment variables or defaults for all other connection
+	 * If the user supplies a parameter on the command line, use it as the
+	 * conninfo string; otherwise default to setting dbname=template1 and
+	 * using environment variables or defaults for all other connection
 	 * parameters.
 	 */
 	if (argc > 1)

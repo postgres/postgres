@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.42 2003/06/14 17:49:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.43 2003/08/04 00:43:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -396,10 +396,11 @@ lo_import(PGconn *conn, const char *filename)
 	fd = open(filename, O_RDONLY | PG_BINARY, 0666);
 	if (fd < 0)
 	{							/* error */
-		char sebuf[256];
+		char		sebuf[256];
+
 		printfPQExpBuffer(&conn->errorMessage,
 					   libpq_gettext("could not open file \"%s\": %s\n"),
-						  filename, pqStrerror(errno, sebuf, sizeof(sebuf)));
+					  filename, pqStrerror(errno, sebuf, sizeof(sebuf)));
 		return InvalidOid;
 	}
 
@@ -480,10 +481,11 @@ lo_export(PGconn *conn, Oid lobjId, const char *filename)
 	fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC | PG_BINARY, 0666);
 	if (fd < 0)
 	{							/* error */
-		char sebuf[256];
+		char		sebuf[256];
+
 		printfPQExpBuffer(&conn->errorMessage,
 					   libpq_gettext("could not open file \"%s\": %s\n"),
-						  filename, pqStrerror(errno, sebuf, sizeof(sebuf)));
+					  filename, pqStrerror(errno, sebuf, sizeof(sebuf)));
 		(void) lo_close(conn, lobj);
 		return -1;
 	}

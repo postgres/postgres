@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.102 2003/07/28 00:09:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.103 2003/08/04 00:43:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -432,9 +432,9 @@ _bt_insertonpg(Relation rel,
 			 *
 			 * must write-lock that page before releasing write lock on
 			 * current page; else someone else's _bt_check_unique scan
-			 * could fail to see our insertion.  write locks on intermediate
-			 * dead pages won't do because we don't know when they will get
-			 * de-linked from the tree.
+			 * could fail to see our insertion.  write locks on
+			 * intermediate dead pages won't do because we don't know when
+			 * they will get de-linked from the tree.
 			 */
 			Buffer		rbuf = InvalidBuffer;
 
@@ -523,9 +523,10 @@ _bt_insertonpg(Relation rel,
 		/*
 		 * If we are doing this insert because we split a page that was
 		 * the only one on its tree level, but was not the root, it may
-		 * have been the "fast root".  We need to ensure that the fast root
-		 * link points at or above the current page.  We can safely acquire
-		 * a lock on the metapage here --- see comments for _bt_newroot().
+		 * have been the "fast root".  We need to ensure that the fast
+		 * root link points at or above the current page.  We can safely
+		 * acquire a lock on the metapage here --- see comments for
+		 * _bt_newroot().
 		 */
 		if (split_only_page)
 		{
@@ -1135,7 +1136,7 @@ _bt_checksplitloc(FindSplitData *state, OffsetNumber firstright,
  *
  * On entry, buf and rbuf are the left and right split pages, which we
  * still hold write locks on per the L&Y algorithm.  We release the
- * write locks once we have write lock on the parent page.  (Any sooner,
+ * write locks once we have write lock on the parent page.	(Any sooner,
  * and it'd be possible for some other process to try to split or delete
  * one of these pages, and get confused because it cannot find the downlink.)
  *
@@ -1155,19 +1156,19 @@ _bt_insert_parent(Relation rel,
 				  bool is_only)
 {
 	/*
-	 * Here we have to do something Lehman and Yao don't talk about:
-	 * deal with a root split and construction of a new root.  If our
-	 * stack is empty then we have just split a node on what had been
-	 * the root level when we descended the tree.  If it was still the
-	 * root then we perform a new-root construction.  If it *wasn't*
-	 * the root anymore, search to find the next higher level that
-	 * someone constructed meanwhile, and find the right place to insert
-	 * as for the normal case.
+	 * Here we have to do something Lehman and Yao don't talk about: deal
+	 * with a root split and construction of a new root.  If our stack is
+	 * empty then we have just split a node on what had been the root
+	 * level when we descended the tree.  If it was still the root then we
+	 * perform a new-root construction.  If it *wasn't* the root anymore,
+	 * search to find the next higher level that someone constructed
+	 * meanwhile, and find the right place to insert as for the normal
+	 * case.
 	 *
-	 * If we have to search for the parent level, we do so by
-	 * re-descending from the root.  This is not super-efficient,
-	 * but it's rare enough not to matter.  (This path is also taken
-	 * when called from WAL recovery --- we have no stack in that case.)
+	 * If we have to search for the parent level, we do so by re-descending
+	 * from the root.  This is not super-efficient, but it's rare enough
+	 * not to matter.  (This path is also taken when called from WAL
+	 * recovery --- we have no stack in that case.)
 	 */
 	if (is_root)
 	{
@@ -1222,9 +1223,9 @@ _bt_insert_parent(Relation rel,
 		/*
 		 * Find the parent buffer and get the parent page.
 		 *
-		 * Oops - if we were moved right then we need to change stack
-		 * item! We want to find parent pointing to where we are,
-		 * right ?	  - vadim 05/27/97
+		 * Oops - if we were moved right then we need to change stack item!
+		 * We want to find parent pointing to where we are, right ?    -
+		 * vadim 05/27/97
 		 */
 		ItemPointerSet(&(stack->bts_btitem.bti_itup.t_tid),
 					   bknum, P_HIKEY);
@@ -1296,16 +1297,16 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
 
 			/*
 			 * start = InvalidOffsetNumber means "search the whole page".
-			 * We need this test anyway due to possibility that
-			 * page has a high key now when it didn't before.
+			 * We need this test anyway due to possibility that page has a
+			 * high key now when it didn't before.
 			 */
 			if (start < minoff)
 				start = minoff;
 
 			/*
 			 * These loops will check every item on the page --- but in an
-			 * order that's attuned to the probability of where it actually
-			 * is.  Scan to the right first, then to the left.
+			 * order that's attuned to the probability of where it
+			 * actually is.  Scan to the right first, then to the left.
 			 */
 			for (offnum = start;
 				 offnum <= maxoff;

@@ -17,9 +17,9 @@ typedef struct
 {
 	int			m_numSems;
 	off_t		m_semaphoreHandles;
-			  //offset from beginning of header
+	/* offset from beginning of header */
 	off_t		m_semaphoreCounts;
-			  //offset from beginning of header
+	/* offset from beginning of header */
 }	win32_sem_set_hdr;
 
 /* Control of a semaphore pool. The pool is an area in which we stored all
@@ -131,7 +131,7 @@ semget(int semKey, int semNum, int flags)
 	HANDLE	   *sem_handles = NULL;
 	int		   *sem_counts = NULL;
 	int			i;
-	
+
 	sec_attrs.nLength = sizeof(sec_attrs);
 	sec_attrs.lpSecurityDescriptor = NULL;
 	sec_attrs.bInheritHandle = TRUE;
@@ -152,8 +152,8 @@ semget(int semKey, int semNum, int flags)
 
 	new_set->m_numSems = semNum;
 	new_set->m_semaphoreHandles = sizeof(win32_sem_set_hdr);
-	//array starts after header
-		new_set->m_semaphoreCounts = new_set->m_semaphoreHandles + (sizeof(HANDLE) * semNum);
+	/* array starts after header */
+	new_set->m_semaphoreCounts = new_set->m_semaphoreHandles + (sizeof(HANDLE) * semNum);
 
 	sem_handles = (HANDLE *) ((off_t) new_set + new_set->m_semaphoreHandles);
 	sem_counts = (int *) ((off_t) new_set + new_set->m_semaphoreCounts);
@@ -186,7 +186,8 @@ semget(int semKey, int semNum, int flags)
 		return MAKE_OFFSET(new_set);
 	else
 	{
-		int i;
+		int			i;
+
 		/* Blow away what we've got right now... */
 		for (i = 0; i < semNum; ++i)
 		{

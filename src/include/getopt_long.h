@@ -5,29 +5,29 @@
  * Portions Copyright (c) 2003
  * PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/include/getopt_long.h,v 1.1 2003/01/06 18:53:25 petere Exp $
+ * $Header: /cvsroot/pgsql/src/include/getopt_long.h,v 1.2 2003/08/04 00:43:29 momjian Exp $
  */
 
 /* These are picked up from the system's getopt() facility. */
-extern int opterr;
-extern int optind;
-extern int optopt;
+extern int	opterr;
+extern int	optind;
+extern int	optopt;
 extern char *optarg;
 
 /* Some systems have this, otherwise you need to define it somewhere. */
-extern int optreset;
+extern int	optreset;
 
-struct option {
+struct option
+{
 	const char *name;
-	int has_arg;
-	int *flag;
-	int val;
+	int			has_arg;
+	int		   *flag;
+	int			val;
 };
 
 #define no_argument 0
 #define required_argument 1
 
-int
-getopt_long(int argc, char * const argv[],
+int getopt_long(int argc, char *const argv[],
 			const char *optstring,
-			const struct option *longopts, int *longindex);
+			const struct option * longopts, int *longindex);

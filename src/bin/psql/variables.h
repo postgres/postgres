@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/variables.h,v 1.12 2003/06/28 00:12:40 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/variables.h,v 1.13 2003/08/04 00:43:29 momjian Exp $
  */
 
 /*
@@ -30,33 +30,36 @@ typedef struct _variable *VariableSpace;
 
 VariableSpace CreateVariableSpace(void);
 const char *GetVariable(VariableSpace space, const char *name);
-bool	GetVariableBool(VariableSpace space, const char *name);
-bool	VariableEquals(VariableSpace space, const char name[], const char *opt);
+bool		GetVariableBool(VariableSpace space, const char *name);
+bool		VariableEquals(VariableSpace space, const char name[], const char *opt);
 
 /* Read numeric variable, or defaultval if it is not set, or faultval if its
- * value is not a valid numeric string.  If allowtrail is false, this will 
+ * value is not a valid numeric string.  If allowtrail is false, this will
  * include the case where there are trailing characters after the number.
  */
-int GetVariableNum(VariableSpace space, 
-	 					const char name[], 
-						int defaultval, 
-						int faultval,
-						bool allowtrail);
+int GetVariableNum(VariableSpace space,
+			   const char name[],
+			   int defaultval,
+			   int faultval,
+			   bool allowtrail);
 
 
-/* Find value of variable <name> among NULL-terminated list of alternative 
+/* Find value of variable <name> among NULL-terminated list of alternative
  * options.  Returns VAR_NOTSET if the variable was not set, VAR_NOTFOUND
  * if its value did not occur in the list of options, or the number of the
  * matching option.  The first option is 1, the second is 2 and so on.
  */
-enum { VAR_NOTSET = 0, VAR_NOTFOUND = -1 };
-int 	SwitchVariable(VariableSpace space, const char name[],
-					   const char *opt, ...);
+enum
+{
+VAR_NOTSET = 0, VAR_NOTFOUND = -1};
+int
+SwitchVariable(VariableSpace space, const char name[],
+			   const char *opt,...);
 
-void 	PrintVariables(VariableSpace space);
+void		PrintVariables(VariableSpace space);
 
-bool	SetVariable(VariableSpace space, const char *name, const char *value);
-bool	SetVariableBool(VariableSpace space, const char *name);
-bool	DeleteVariable(VariableSpace space, const char *name);
+bool		SetVariable(VariableSpace space, const char *name, const char *value);
+bool		SetVariableBool(VariableSpace space, const char *name);
+bool		DeleteVariable(VariableSpace space, const char *name);
 
 #endif   /* VARIABLES_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.73 2003/07/25 20:17:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.74 2003/08/04 00:43:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,8 +220,8 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 			if (fbp == NULL)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_FUNCTION),
-						 errmsg("internal function \"%s\" is not in table",
-								prosrc)));
+					   errmsg("internal function \"%s\" is not in table",
+							  prosrc)));
 			pfree(prosrc);
 			/* Should we check that nargs, strict, retset match the table? */
 			finfo->fn_addr = fbp->func;
@@ -619,8 +619,8 @@ fmgr_oldstyle(PG_FUNCTION_ARGS)
 			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-					 errmsg("function %u has too many arguments (%d > %d)",
-							fcinfo->flinfo->fn_oid, n_arguments, 16)));
+				   errmsg("function %u has too many arguments (%d > %d)",
+						  fcinfo->flinfo->fn_oid, n_arguments, 16)));
 			returnValue = NULL; /* keep compiler quiet */
 			break;
 	}
@@ -698,7 +698,7 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
  * NOTE: the simplest way to reliably initialize a FunctionCallInfoData
  * is to MemSet it to zeroes and then fill in the fields that should be
  * nonzero.  However, in a few of the most heavily used paths, we instead
- * just zero the fields that must be zero.  This saves a fair number of
+ * just zero the fields that must be zero.	This saves a fair number of
  * cycles so it's worth the extra maintenance effort.  Also see inlined
  * version of FunctionCall2 in utils/sort/tuplesort.c if you need to change
  * these routines!
@@ -1483,8 +1483,8 @@ fmgr(Oid procedureId,...)
 		if (n_arguments > FUNC_MAX_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-					 errmsg("function %u has too many arguments (%d > %d)",
-							flinfo.fn_oid, n_arguments, FUNC_MAX_ARGS)));
+				   errmsg("function %u has too many arguments (%d > %d)",
+						  flinfo.fn_oid, n_arguments, FUNC_MAX_ARGS)));
 		va_start(pvar, procedureId);
 		for (i = 0; i < n_arguments; i++)
 			fcinfo.arg[i] = (Datum) va_arg(pvar, char *);
@@ -1607,11 +1607,11 @@ pg_detoast_datum_slice(struct varlena * datum, int32 first, int32 count)
 Oid
 get_fn_expr_rettype(FmgrInfo *flinfo)
 {
-	Node   *expr;
+	Node	   *expr;
 
 	/*
-	 * can't return anything useful if we have no FmgrInfo or if
-	 * its fn_expr node has not been initialized
+	 * can't return anything useful if we have no FmgrInfo or if its
+	 * fn_expr node has not been initialized
 	 */
 	if (!flinfo || !flinfo->fn_expr)
 		return InvalidOid;
@@ -1629,13 +1629,13 @@ get_fn_expr_rettype(FmgrInfo *flinfo)
 Oid
 get_fn_expr_argtype(FmgrInfo *flinfo, int argnum)
 {
-	Node   *expr;
-	List   *args;
-	Oid		argtype;
+	Node	   *expr;
+	List	   *args;
+	Oid			argtype;
 
 	/*
-	 * can't return anything useful if we have no FmgrInfo or if
-	 * its fn_expr node has not been initialized
+	 * can't return anything useful if we have no FmgrInfo or if its
+	 * fn_expr node has not been initialized
 	 */
 	if (!flinfo || !flinfo->fn_expr)
 		return InvalidOid;

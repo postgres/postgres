@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.99 2003/07/24 22:04:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.100 2003/08/04 00:43:23 momjian Exp $
  *
  * NOTES:
  *
@@ -113,8 +113,8 @@ int			max_files_per_process = 1000;
 #define FileUnknownPos (-1L)
 
 /* these are the assigned bits in fdstate below: */
-#define FD_TEMPORARY		(1 << 0)		/* T = delete when closed */
-#define FD_XACT_TEMPORARY	(1 << 1)		/* T = delete at eoXact */
+#define FD_TEMPORARY		(1 << 0)	/* T = delete when closed */
+#define FD_XACT_TEMPORARY	(1 << 1)	/* T = delete at eoXact */
 
 typedef struct vfd
 {
@@ -247,7 +247,7 @@ pg_fdatasync(int fd)
  * This is exported for use by places that really want a plain kernel FD,
  * but need to be proof against running out of FDs.  Once an FD has been
  * successfully returned, it is the caller's responsibility to ensure that
- * it will not be leaked on ereport()!  Most users should *not* call this
+ * it will not be leaked on ereport()!	Most users should *not* call this
  * routine directly, but instead use the VFD abstraction level, which
  * provides protection against descriptor leaks as well as management of
  * files that need to be open for more than a short period of time.
@@ -274,7 +274,7 @@ tryAgain:
 
 		ereport(LOG,
 				(errcode(ERRCODE_INSUFFICIENT_RESOURCES),
-				 errmsg("out of file descriptors: %m; release and retry")));
+			  errmsg("out of file descriptors: %m; release and retry")));
 		errno = 0;
 		if (ReleaseLruFile())
 			goto tryAgain;
@@ -1064,7 +1064,7 @@ TryAgain:
 
 		ereport(LOG,
 				(errcode(ERRCODE_INSUFFICIENT_RESOURCES),
-				 errmsg("out of file descriptors: %m; release and retry")));
+			  errmsg("out of file descriptors: %m; release and retry")));
 		errno = 0;
 		if (ReleaseLruFile())
 			goto TryAgain;
@@ -1158,7 +1158,7 @@ AtProcExit_Files(void)
 static void
 CleanupTempFiles(bool isProcExit)
 {
-	Index i;
+	Index		i;
 
 	if (SizeVfdCache > 0)
 	{

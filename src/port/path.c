@@ -1,4 +1,4 @@
-/* $Id: path.c,v 1.1 2003/04/04 20:42:13 momjian Exp $ */
+/* $Id: path.c,v 1.2 2003/08/04 00:43:33 momjian Exp $ */
 
 #include "c.h"
 #include <ctype.h>
@@ -6,28 +6,32 @@
 /*
  *	is_absolute_path
  */
-bool is_absolute_path(const char *filename)
+bool
+is_absolute_path(const char *filename)
 {
 	return filename[0] == '/'
-#ifdef WIN32	/* WIN32 paths can either have forward or backward slashes */
+#ifdef WIN32					/* WIN32 paths can either have forward or
+								 * backward slashes */
 		|| filename[0] == '\\'
 		|| (isalpha(filename[0]) && filename[1] == ':'
-		    && (filename[2] == '\\' || filename[2] == '/'))
+			&& (filename[2] == '\\' || filename[2] == '/'))
 #endif
 		;
 }
 
 
-	
+
 /*
  *	first_path_separator
  */
-char *first_path_separator(const char *filename)
+char *
+first_path_separator(const char *filename)
 {
 #ifndef WIN32
 	return strchr(filename, '/');
 #else
-	char *slash, *bslash;
+	char	   *slash,
+			   *bslash;
 
 	/* How should we handle "C:file.c"? */
 	slash = strchr(filename, '/');
@@ -45,12 +49,14 @@ char *first_path_separator(const char *filename)
 /*
  *	last_path_separator
  */
-char *last_path_separator(const char *filename)
+char *
+last_path_separator(const char *filename)
 {
 #ifndef WIN32
 	return strrchr(filename, '/');
 #else
-	char *slash, *bslash;
+	char	   *slash,
+			   *bslash;
 
 	/* How should we handle "C:file.c"? */
 	slash = strrchr(filename, '/');

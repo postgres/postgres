@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.8 2003/07/25 00:01:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.9 2003/08/04 00:43:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,28 +32,28 @@
 
 
 /* These parameters are set by GUC */
-int		from_collapse_limit;
-int		join_collapse_limit;
+int			from_collapse_limit;
+int			join_collapse_limit;
 
 
 typedef struct reduce_outer_joins_state
 {
 	Relids		relids;			/* base relids within this subtree */
-	bool		contains_outer;	/* does subtree contain outer join(s)? */
+	bool		contains_outer; /* does subtree contain outer join(s)? */
 	List	   *sub_states;		/* List of states for subtree components */
-} reduce_outer_joins_state;
+}	reduce_outer_joins_state;
 
 static bool is_simple_subquery(Query *subquery);
 static bool has_nullable_targetlist(Query *subquery);
 static void resolvenew_in_jointree(Node *jtnode, int varno, List *subtlist);
 static reduce_outer_joins_state *reduce_outer_joins_pass1(Node *jtnode);
 static void reduce_outer_joins_pass2(Node *jtnode,
-									 reduce_outer_joins_state *state,
-									 Query *parse,
-									 Relids nonnullable_rels);
+						 reduce_outer_joins_state * state,
+						 Query *parse,
+						 Relids nonnullable_rels);
 static Relids find_nonnullable_rels(Node *node, bool top_level);
 static void fix_in_clause_relids(List *in_info_list, int varno,
-								 Relids subrelids);
+					 Relids subrelids);
 static Node *find_jointree_node_for_rel(Node *jtnode, int relid);
 
 
@@ -84,7 +84,7 @@ pull_up_IN_clauses(Query *parse, Node *node)
 		return NULL;
 	if (IsA(node, SubLink))
 	{
-		SubLink	   *sublink = (SubLink *) node;
+		SubLink    *sublink = (SubLink *) node;
 		Node	   *subst;
 
 		/* Is it a convertible IN clause?  If not, return it as-is */
@@ -95,12 +95,12 @@ pull_up_IN_clauses(Query *parse, Node *node)
 	}
 	if (and_clause(node))
 	{
-		List   *newclauses = NIL;
-		List   *oldclauses;
+		List	   *newclauses = NIL;
+		List	   *oldclauses;
 
 		foreach(oldclauses, ((BoolExpr *) node)->args)
 		{
-			Node   *oldclause = lfirst(oldclauses);
+			Node	   *oldclause = lfirst(oldclauses);
 
 			newclauses = lappend(newclauses,
 								 pull_up_IN_clauses(parse,
@@ -172,22 +172,22 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 			 */
 			if (subquery->hasSubLinks)
 				subquery->jointree->quals = pull_up_IN_clauses(subquery,
-															   subquery->jointree->quals);
+											  subquery->jointree->quals);
 
 			/*
-			 * Now, recursively pull up the subquery's subqueries, so
-			 * that this routine's processing is complete for its jointree
-			 * and rangetable.	NB: if the same subquery is referenced
-			 * from multiple jointree items (which can't happen normally,
-			 * but might after rule rewriting), then we will invoke this
+			 * Now, recursively pull up the subquery's subqueries, so that
+			 * this routine's processing is complete for its jointree and
+			 * rangetable.	NB: if the same subquery is referenced from
+			 * multiple jointree items (which can't happen normally, but
+			 * might after rule rewriting), then we will invoke this
 			 * processing multiple times on that subquery.	OK because
 			 * nothing will happen after the first time.  We do have to be
 			 * careful to copy everything we pull up, however, or risk
 			 * having chunks of structure multiply linked.
 			 *
 			 * Note: 'false' is correct here even if we are within an outer
-			 * join in the upper query; the lower query starts with a clean
-			 * slate for outer-join semantics.
+			 * join in the upper query; the lower query starts with a
+			 * clean slate for outer-join semantics.
 			 */
 			subquery->jointree = (FromExpr *)
 				pull_up_subqueries(subquery, (Node *) subquery->jointree,
@@ -207,8 +207,8 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 			OffsetVarNodes((Node *) subquery, rtoffset, 0);
 
 			/*
-			 * Upper-level vars in subquery are now one level closer to their
-			 * parent than before.
+			 * Upper-level vars in subquery are now one level closer to
+			 * their parent than before.
 			 */
 			IncrementVarSublevelsUp((Node *) subquery, -1, 1);
 
@@ -257,13 +257,14 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 			parse->rowMarks = nconc(parse->rowMarks, subquery->rowMarks);
 
 			/*
-			 * We also have to fix the relid sets of any parent InClauseInfo
-			 * nodes.  (This could perhaps be done by ResolveNew, but it
-			 * would clutter that routine's API unreasonably.)
+			 * We also have to fix the relid sets of any parent
+			 * InClauseInfo nodes.	(This could perhaps be done by
+			 * ResolveNew, but it would clutter that routine's API
+			 * unreasonably.)
 			 */
 			if (parse->in_info_list)
 			{
-				Relids	subrelids;
+				Relids		subrelids;
 
 				subrelids = get_relids_in_jointree((Node *) subquery->jointree);
 				fix_in_clause_relids(parse->in_info_list, varno, subrelids);
@@ -513,14 +514,14 @@ reduce_outer_joins(Query *parse)
 	reduce_outer_joins_state *state;
 
 	/*
-	 * To avoid doing strictness checks on more quals than necessary,
-	 * we want to stop descending the jointree as soon as there are no
-	 * outer joins below our current point.  This consideration forces
-	 * a two-pass process.  The first pass gathers information about which
+	 * To avoid doing strictness checks on more quals than necessary, we
+	 * want to stop descending the jointree as soon as there are no outer
+	 * joins below our current point.  This consideration forces a
+	 * two-pass process.  The first pass gathers information about which
 	 * base rels appear below each side of each join clause, and about
-	 * whether there are outer join(s) below each side of each join clause.
-	 * The second pass examines qual clauses and changes join types as
-	 * it descends the tree.
+	 * whether there are outer join(s) below each side of each join
+	 * clause. The second pass examines qual clauses and changes join
+	 * types as it descends the tree.
 	 */
 	state = reduce_outer_joins_pass1((Node *) parse->jointree);
 
@@ -608,7 +609,7 @@ reduce_outer_joins_pass1(Node *jtnode)
  */
 static void
 reduce_outer_joins_pass2(Node *jtnode,
-						 reduce_outer_joins_state *state,
+						 reduce_outer_joins_state * state,
 						 Query *parse,
 						 Relids nonnullable_rels)
 {
@@ -619,9 +620,7 @@ reduce_outer_joins_pass2(Node *jtnode,
 	if (jtnode == NULL)
 		elog(ERROR, "reached empty jointree");
 	if (IsA(jtnode, RangeTblRef))
-	{
 		elog(ERROR, "reached base rel");
-	}
 	else if (IsA(jtnode, FromExpr))
 	{
 		FromExpr   *f = (FromExpr *) jtnode;
@@ -701,10 +700,11 @@ reduce_outer_joins_pass2(Node *jtnode,
 			/*
 			 * If this join is (now) inner, we can add any nonnullability
 			 * constraints its quals provide to those we got from above.
-			 * But if it is outer, we can only pass down the local constraints
-			 * into the nullable side, because an outer join never eliminates
-			 * any rows from its non-nullable side.  If it's a FULL join then
-			 * it doesn't eliminate anything from either side.
+			 * But if it is outer, we can only pass down the local
+			 * constraints into the nullable side, because an outer join
+			 * never eliminates any rows from its non-nullable side.  If
+			 * it's a FULL join then it doesn't eliminate anything from
+			 * either side.
 			 */
 			if (jointype != JOIN_FULL)
 			{
@@ -713,7 +713,8 @@ reduce_outer_joins_pass2(Node *jtnode,
 													nonnullable_rels);
 			}
 			else
-				local_nonnullable = NULL; /* no use in calculating it */
+				local_nonnullable = NULL;		/* no use in calculating
+												 * it */
 
 			if (left_state->contains_outer)
 			{
@@ -747,7 +748,7 @@ reduce_outer_joins_pass2(Node *jtnode,
  *
  * We don't use expression_tree_walker here because we don't want to
  * descend through very many kinds of nodes; only the ones we can be sure
- * are strict.  We can descend through the top level of implicit AND'ing,
+ * are strict.	We can descend through the top level of implicit AND'ing,
  * but not through any explicit ANDs (or ORs) below that, since those are not
  * strict constructs.  The List case handles the top-level implicit AND list
  * as well as lists of arguments to strict operators/functions.
@@ -785,7 +786,7 @@ find_nonnullable_rels(Node *node, bool top_level)
 	}
 	else if (IsA(node, OpExpr))
 	{
-		OpExpr   *expr = (OpExpr *) node;
+		OpExpr	   *expr = (OpExpr *) node;
 
 		if (op_strict(expr->opno))
 			result = find_nonnullable_rels((Node *) expr->args, false);
@@ -800,7 +801,7 @@ find_nonnullable_rels(Node *node, bool top_level)
 	}
 	else if (IsA(node, RelabelType))
 	{
-		RelabelType   *expr = (RelabelType *) node;
+		RelabelType *expr = (RelabelType *) node;
 
 		result = find_nonnullable_rels((Node *) expr->arg, top_level);
 	}
@@ -817,7 +818,7 @@ find_nonnullable_rels(Node *node, bool top_level)
 	}
 	else if (IsA(node, BooleanTest))
 	{
-		BooleanTest   *expr = (BooleanTest *) node;
+		BooleanTest *expr = (BooleanTest *) node;
 
 		/*
 		 * Appropriate boolean tests are strict at top level.
@@ -894,10 +895,11 @@ simplify_jointree(Query *parse, Node *jtnode)
 					(childlen + myothers) <= from_collapse_limit)
 				{
 					newlist = nconc(newlist, subf->fromlist);
+
 					/*
-					 * By now, the quals have been converted to implicit-AND
-					 * lists, so we just need to join the lists.  NOTE: we
-					 * put the pulled-up quals first.
+					 * By now, the quals have been converted to
+					 * implicit-AND lists, so we just need to join the
+					 * lists.  NOTE: we put the pulled-up quals first.
 					 */
 					f->quals = (Node *) nconc((List *) subf->quals,
 											  (List *) f->quals);
@@ -917,16 +919,17 @@ simplify_jointree(Query *parse, Node *jtnode)
 		/* Recursively simplify the children... */
 		j->larg = simplify_jointree(parse, j->larg);
 		j->rarg = simplify_jointree(parse, j->rarg);
+
 		/*
-		 * If it is an outer join, we must not flatten it.  An inner join
+		 * If it is an outer join, we must not flatten it.	An inner join
 		 * is semantically equivalent to a FromExpr; we convert it to one,
 		 * allowing it to be flattened into its parent, if the resulting
 		 * FromExpr would have no more than join_collapse_limit members.
 		 */
 		if (j->jointype == JOIN_INNER && join_collapse_limit > 1)
 		{
-			int		leftlen,
-					rightlen;
+			int			leftlen,
+						rightlen;
 
 			if (j->larg && IsA(j->larg, FromExpr))
 				leftlen = length(((FromExpr *) j->larg)->fromlist);

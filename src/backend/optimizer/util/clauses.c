@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.149 2003/08/03 23:46:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.150 2003/08/04 00:43:20 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -50,7 +50,7 @@ typedef struct
 	int			nargs;
 	List	   *args;
 	int		   *usecounts;
-} substitute_actual_parameters_context;
+}	substitute_actual_parameters_context;
 
 static bool contain_agg_clause_walker(Node *node, void *context);
 static bool contain_distinct_agg_clause_walker(Node *node, void *context);
@@ -62,15 +62,15 @@ static bool contain_volatile_functions_walker(Node *node, void *context);
 static bool contain_nonstrict_functions_walker(Node *node, void *context);
 static Node *eval_const_expressions_mutator(Node *node, List *active_fns);
 static Expr *simplify_function(Oid funcid, Oid result_type, List *args,
-							   bool allow_inline, List *active_fns);
+				  bool allow_inline, List *active_fns);
 static Expr *evaluate_function(Oid funcid, Oid result_type, List *args,
-							   HeapTuple func_tuple);
+				  HeapTuple func_tuple);
 static Expr *inline_function(Oid funcid, Oid result_type, List *args,
-							 HeapTuple func_tuple, List *active_fns);
+				HeapTuple func_tuple, List *active_fns);
 static Node *substitute_actual_parameters(Node *expr, int nargs, List *args,
-										  int *usecounts);
+							 int *usecounts);
 static Node *substitute_actual_parameters_mutator(Node *node,
-					 substitute_actual_parameters_context *context);
+						 substitute_actual_parameters_context * context);
 static void sql_inline_error_callback(void *arg);
 static Expr *evaluate_expr(Expr *expr, Oid result_type);
 
@@ -110,7 +110,7 @@ make_opclause(Oid opno, Oid opresulttype, bool opretset,
 Node *
 get_leftop(Expr *clause)
 {
-	OpExpr *expr = (OpExpr *) clause;
+	OpExpr	   *expr = (OpExpr *) clause;
 
 	if (expr->args != NIL)
 		return lfirst(expr->args);
@@ -127,7 +127,7 @@ get_leftop(Expr *clause)
 Node *
 get_rightop(Expr *clause)
 {
-	OpExpr *expr = (OpExpr *) clause;
+	OpExpr	   *expr = (OpExpr *) clause;
 
 	if (expr->args != NIL && lnext(expr->args) != NIL)
 		return lfirst(lnext(expr->args));
@@ -408,7 +408,7 @@ count_agg_clause_walker(Node *node, int *count)
 		if (contain_agg_clause((Node *) ((Aggref *) node)->target))
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
-					 errmsg("aggregate function calls may not be nested")));
+				  errmsg("aggregate function calls may not be nested")));
 
 		/*
 		 * Having checked that, we need not recurse into the argument.
@@ -454,7 +454,7 @@ expression_returns_set_walker(Node *node, void *context)
 	}
 	if (IsA(node, OpExpr))
 	{
-		OpExpr   *expr = (OpExpr *) node;
+		OpExpr	   *expr = (OpExpr *) node;
 
 		if (expr->opretset)
 			return true;
@@ -556,7 +556,7 @@ contain_mutable_functions_walker(Node *node, void *context)
 	}
 	if (IsA(node, OpExpr))
 	{
-		OpExpr   *expr = (OpExpr *) node;
+		OpExpr	   *expr = (OpExpr *) node;
 
 		if (op_volatile(expr->opno) != PROVOLATILE_IMMUTABLE)
 			return true;
@@ -564,7 +564,7 @@ contain_mutable_functions_walker(Node *node, void *context)
 	}
 	if (IsA(node, DistinctExpr))
 	{
-		DistinctExpr   *expr = (DistinctExpr *) node;
+		DistinctExpr *expr = (DistinctExpr *) node;
 
 		if (op_volatile(expr->opno) != PROVOLATILE_IMMUTABLE)
 			return true;
@@ -572,7 +572,7 @@ contain_mutable_functions_walker(Node *node, void *context)
 	}
 	if (IsA(node, ScalarArrayOpExpr))
 	{
-		ScalarArrayOpExpr   *expr = (ScalarArrayOpExpr *) node;
+		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
 
 		if (op_volatile(expr->opno) != PROVOLATILE_IMMUTABLE)
 			return true;
@@ -580,7 +580,7 @@ contain_mutable_functions_walker(Node *node, void *context)
 	}
 	if (IsA(node, NullIfExpr))
 	{
-		NullIfExpr   *expr = (NullIfExpr *) node;
+		NullIfExpr *expr = (NullIfExpr *) node;
 
 		if (op_volatile(expr->opno) != PROVOLATILE_IMMUTABLE)
 			return true;
@@ -588,7 +588,7 @@ contain_mutable_functions_walker(Node *node, void *context)
 	}
 	if (IsA(node, SubLink))
 	{
-		SubLink	   *sublink = (SubLink *) node;
+		SubLink    *sublink = (SubLink *) node;
 		List	   *opid;
 
 		foreach(opid, sublink->operOids)
@@ -639,7 +639,7 @@ contain_volatile_functions_walker(Node *node, void *context)
 	}
 	if (IsA(node, OpExpr))
 	{
-		OpExpr   *expr = (OpExpr *) node;
+		OpExpr	   *expr = (OpExpr *) node;
 
 		if (op_volatile(expr->opno) == PROVOLATILE_VOLATILE)
 			return true;
@@ -647,7 +647,7 @@ contain_volatile_functions_walker(Node *node, void *context)
 	}
 	if (IsA(node, DistinctExpr))
 	{
-		DistinctExpr   *expr = (DistinctExpr *) node;
+		DistinctExpr *expr = (DistinctExpr *) node;
 
 		if (op_volatile(expr->opno) == PROVOLATILE_VOLATILE)
 			return true;
@@ -655,7 +655,7 @@ contain_volatile_functions_walker(Node *node, void *context)
 	}
 	if (IsA(node, ScalarArrayOpExpr))
 	{
-		ScalarArrayOpExpr   *expr = (ScalarArrayOpExpr *) node;
+		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
 
 		if (op_volatile(expr->opno) == PROVOLATILE_VOLATILE)
 			return true;
@@ -663,7 +663,7 @@ contain_volatile_functions_walker(Node *node, void *context)
 	}
 	if (IsA(node, NullIfExpr))
 	{
-		NullIfExpr   *expr = (NullIfExpr *) node;
+		NullIfExpr *expr = (NullIfExpr *) node;
 
 		if (op_volatile(expr->opno) == PROVOLATILE_VOLATILE)
 			return true;
@@ -671,7 +671,7 @@ contain_volatile_functions_walker(Node *node, void *context)
 	}
 	if (IsA(node, SubLink))
 	{
-		SubLink	   *sublink = (SubLink *) node;
+		SubLink    *sublink = (SubLink *) node;
 		List	   *opid;
 
 		foreach(opid, sublink->operOids)
@@ -698,7 +698,7 @@ contain_volatile_functions_walker(Node *node, void *context)
  * could produce non-NULL output with a NULL input.
  *
  * XXX we do not examine sub-selects to see if they contain uses of
- * nonstrict functions.	It's not real clear if that is correct or not...
+ * nonstrict functions. It's not real clear if that is correct or not...
  * for the current usage it does not matter, since inline_function()
  * rejects cases with sublinks.
  */
@@ -723,7 +723,7 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 	}
 	if (IsA(node, OpExpr))
 	{
-		OpExpr   *expr = (OpExpr *) node;
+		OpExpr	   *expr = (OpExpr *) node;
 
 		if (!op_strict(expr->opno))
 			return true;
@@ -766,7 +766,7 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 		return true;
 	if (IsA(node, SubLink))
 	{
-		SubLink	   *sublink = (SubLink *) node;
+		SubLink    *sublink = (SubLink *) node;
 		List	   *opid;
 
 		foreach(opid, sublink->operOids)
@@ -981,7 +981,7 @@ NumRelids(Node *clause)
  * XXX the clause is destructively modified!
  */
 void
-CommuteClause(OpExpr *clause)
+CommuteClause(OpExpr * clause)
 {
 	Oid			opoid;
 	Node	   *temp;
@@ -1062,18 +1062,20 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		args = (List *) expression_tree_mutator((Node *) expr->args,
 										  eval_const_expressions_mutator,
 												(void *) active_fns);
+
 		/*
-		 * Code for op/func reduction is pretty bulky, so split it out
-		 * as a separate function.
+		 * Code for op/func reduction is pretty bulky, so split it out as
+		 * a separate function.
 		 */
 		simple = simplify_function(expr->funcid, expr->funcresulttype, args,
 								   true, active_fns);
 		if (simple)				/* successfully simplified it */
 			return (Node *) simple;
+
 		/*
 		 * The expression cannot be simplified any further, so build and
-		 * return a replacement FuncExpr node using the possibly-simplified
-		 * arguments.
+		 * return a replacement FuncExpr node using the
+		 * possibly-simplified arguments.
 		 */
 		newexpr = makeNode(FuncExpr);
 		newexpr->funcid = expr->funcid;
@@ -1098,19 +1100,22 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		args = (List *) expression_tree_mutator((Node *) expr->args,
 										  eval_const_expressions_mutator,
 												(void *) active_fns);
+
 		/*
-		 * Need to get OID of underlying function.  Okay to scribble on
+		 * Need to get OID of underlying function.	Okay to scribble on
 		 * input to this extent.
 		 */
 		set_opfuncid(expr);
+
 		/*
-		 * Code for op/func reduction is pretty bulky, so split it out
-		 * as a separate function.
+		 * Code for op/func reduction is pretty bulky, so split it out as
+		 * a separate function.
 		 */
 		simple = simplify_function(expr->opfuncid, expr->opresulttype, args,
 								   true, active_fns);
 		if (simple)				/* successfully simplified it */
 			return (Node *) simple;
+
 		/*
 		 * The expression cannot be simplified any further, so build and
 		 * return a replacement OpExpr node using the possibly-simplified
@@ -1136,8 +1141,8 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		DistinctExpr *newexpr;
 
 		/*
-		 * Reduce constants in the DistinctExpr's arguments.  We know args is
-		 * either NIL or a List node, so we can call
+		 * Reduce constants in the DistinctExpr's arguments.  We know args
+		 * is either NIL or a List node, so we can call
 		 * expression_tree_mutator directly rather than recursing to self.
 		 */
 		args = (List *) expression_tree_mutator((Node *) expr->args,
@@ -1145,9 +1150,9 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 												(void *) active_fns);
 
 		/*
-		 * We must do our own check for NULLs because
-		 * DistinctExpr has different results for NULL input
-		 * than the underlying operator does.
+		 * We must do our own check for NULLs because DistinctExpr has
+		 * different results for NULL input than the underlying operator
+		 * does.
 		 */
 		foreach(arg, args)
 		{
@@ -1175,10 +1180,12 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 			/* (NOT okay to try to inline it, though!) */
 
 			/*
-			 * Need to get OID of underlying function.  Okay to scribble on
-			 * input to this extent.
+			 * Need to get OID of underlying function.	Okay to scribble
+			 * on input to this extent.
 			 */
-			set_opfuncid((OpExpr *) expr); /* rely on struct equivalence */
+			set_opfuncid((OpExpr *) expr);		/* rely on struct
+												 * equivalence */
+
 			/*
 			 * Code for op/func reduction is pretty bulky, so split it out
 			 * as a separate function.
@@ -1191,7 +1198,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 				 * Since the underlying operator is "=", must negate its
 				 * result
 				 */
-				Const  *csimple = (Const *) simple;
+				Const	   *csimple = (Const *) simple;
 
 				Assert(IsA(csimple, Const));
 				csimple->constvalue =
@@ -1359,8 +1366,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 	if (IsA(node, SubPlan))
 	{
 		/*
-		 * Return a SubPlan unchanged --- too late to do anything
-		 * with it.
+		 * Return a SubPlan unchanged --- too late to do anything with it.
 		 *
 		 * XXX should we ereport() here instead?  Probably this routine
 		 * should never be invoked after SubPlan creation.
@@ -1487,16 +1493,16 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 	}
 	if (IsA(node, ArrayExpr))
 	{
-		ArrayExpr *arrayexpr = (ArrayExpr *) node;
-		ArrayExpr *newarray;
-		bool all_const = true;
+		ArrayExpr  *arrayexpr = (ArrayExpr *) node;
+		ArrayExpr  *newarray;
+		bool		all_const = true;
 		FastList	newelems;
-		List *element;
+		List	   *element;
 
 		FastListInit(&newelems);
 		foreach(element, arrayexpr->elements)
 		{
-			Node *e;
+			Node	   *e;
 
 			e = eval_const_expressions_mutator((Node *) lfirst(element),
 											   active_fns);
@@ -1522,19 +1528,20 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		CoalesceExpr *coalesceexpr = (CoalesceExpr *) node;
 		CoalesceExpr *newcoalesce;
 		FastList	newargs;
-		List *arg;
+		List	   *arg;
 
 		FastListInit(&newargs);
 		foreach(arg, coalesceexpr->args)
 		{
-			Node *e;
+			Node	   *e;
 
 			e = eval_const_expressions_mutator((Node *) lfirst(arg),
 											   active_fns);
-			/* 
-			 * We can remove null constants from the list.
-			 * For a non-null constant, if it has not been preceded by any
-			 * other non-null-constant expressions then that is the result.
+
+			/*
+			 * We can remove null constants from the list. For a non-null
+			 * constant, if it has not been preceded by any other
+			 * non-null-constant expressions then that is the result.
 			 */
 			if (IsA(e, Const))
 			{
@@ -1555,10 +1562,11 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 	{
 		/*
 		 * We can optimize field selection from a whole-row Var into a
-		 * simple Var.  (This case won't be generated directly by the
-		 * parser, because ParseComplexProjection short-circuits it.
-		 * But it can arise while simplifying functions.)  If the argument
-		 * isn't a whole-row Var, just fall through to do generic processing.
+		 * simple Var.	(This case won't be generated directly by the
+		 * parser, because ParseComplexProjection short-circuits it. But
+		 * it can arise while simplifying functions.)  If the argument
+		 * isn't a whole-row Var, just fall through to do generic
+		 * processing.
 		 */
 		FieldSelect *fselect = (FieldSelect *) node;
 		Var		   *argvar = (Var *) fselect->arg;
@@ -1604,12 +1612,12 @@ simplify_function(Oid funcid, Oid result_type, List *args,
 	Expr	   *newexpr;
 
 	/*
-	 * We have two strategies for simplification: either execute the function
-	 * to deliver a constant result, or expand in-line the body of the
-	 * function definition (which only works for simple SQL-language
-	 * functions, but that is a common case).  In either case we need access
-	 * to the function's pg_proc tuple, so fetch it just once to use in both
-	 * attempts.
+	 * We have two strategies for simplification: either execute the
+	 * function to deliver a constant result, or expand in-line the body
+	 * of the function definition (which only works for simple
+	 * SQL-language functions, but that is a common case).	In either case
+	 * we need access to the function's pg_proc tuple, so fetch it just
+	 * once to use in both attempts.
 	 */
 	func_tuple = SearchSysCache(PROCOID,
 								ObjectIdGetDatum(funcid),
@@ -1668,15 +1676,15 @@ evaluate_function(Oid funcid, Oid result_type, List *args,
 	/*
 	 * If the function is strict and has a constant-NULL input, it will
 	 * never be called at all, so we can replace the call by a NULL
-	 * constant, even if there are other inputs that aren't constant,
-	 * and even if the function is not otherwise immutable.
+	 * constant, even if there are other inputs that aren't constant, and
+	 * even if the function is not otherwise immutable.
 	 */
 	if (funcform->proisstrict && has_null_input)
 		return (Expr *) makeNullConst(result_type);
 
 	/*
-	 * Otherwise, can simplify only if the function is immutable and
-	 * all inputs are constants. (For a non-strict function, constant NULL
+	 * Otherwise, can simplify only if the function is immutable and all
+	 * inputs are constants. (For a non-strict function, constant NULL
 	 * inputs are treated the same as constant non-NULL inputs.)
 	 */
 	if (funcform->provolatile != PROVOLATILE_IMMUTABLE ||
@@ -1692,7 +1700,7 @@ evaluate_function(Oid funcid, Oid result_type, List *args,
 	newexpr->funcid = funcid;
 	newexpr->funcresulttype = result_type;
 	newexpr->funcretset = false;
-	newexpr->funcformat = COERCE_EXPLICIT_CALL;	/* doesn't matter */
+	newexpr->funcformat = COERCE_EXPLICIT_CALL; /* doesn't matter */
 	newexpr->args = args;
 
 	return evaluate_expr((Expr *) newexpr, result_type);
@@ -1712,7 +1720,7 @@ evaluate_function(Oid funcid, Oid result_type, List *args,
  * do not re-expand them.  Also, if a parameter is used more than once
  * in the SQL-function body, we require it not to contain any volatile
  * functions (volatiles might deliver inconsistent answers) nor to be
- * unreasonably expensive to evaluate.  The expensiveness check not only
+ * unreasonably expensive to evaluate.	The expensiveness check not only
  * prevents us from doing multiple evaluations of an expensive parameter
  * at runtime, but is a safety value to limit growth of an expression due
  * to repeated inlining.
@@ -1747,7 +1755,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 
 	/*
 	 * Forget it if the function is not SQL-language or has other
-	 * showstopper properties.  (The nargs check is just paranoia.)
+	 * showstopper properties.	(The nargs check is just paranoia.)
 	 */
 	if (funcform->prolang != SQLlanguageId ||
 		funcform->prosecdef ||
@@ -1755,7 +1763,10 @@ inline_function(Oid funcid, Oid result_type, List *args,
 		funcform->pronargs != length(args))
 		return NULL;
 
-	/* Forget it if declared return type is not base, domain, or polymorphic */
+	/*
+	 * Forget it if declared return type is not base, domain, or
+	 * polymorphic
+	 */
 	result_typtype = get_typtype(funcform->prorettype);
 	if (result_typtype != 'b' &&
 		result_typtype != 'd')
@@ -1788,8 +1799,8 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	}
 
 	/*
-	 * Setup error traceback support for ereport().  This is so that we can
-	 * finger the function that bad information came from.
+	 * Setup error traceback support for ereport().  This is so that we
+	 * can finger the function that bad information came from.
 	 */
 	sqlerrcontext.callback = sql_inline_error_callback;
 	sqlerrcontext.arg = funcform;
@@ -1818,9 +1829,9 @@ inline_function(Oid funcid, Oid result_type, List *args,
 
 	/*
 	 * We just do parsing and parse analysis, not rewriting, because
-	 * rewriting will not affect table-free-SELECT-only queries, which is all
-	 * that we care about.  Also, we can punt as soon as we detect more than
-	 * one command in the function body.
+	 * rewriting will not affect table-free-SELECT-only queries, which is
+	 * all that we care about.	Also, we can punt as soon as we detect
+	 * more than one command in the function body.
 	 */
 	raw_parsetree_list = pg_parse_query(src);
 	if (length(raw_parsetree_list) != 1)
@@ -1863,8 +1874,8 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	 * then it wasn't type-checked at definition time; must do so now.
 	 * (This will raise an error if wrong, but that's okay since the
 	 * function would fail at runtime anyway.  Note we do not try this
-	 * until we have verified that no rewriting was needed; that's probably
-	 * not important, but let's be careful.)
+	 * until we have verified that no rewriting was needed; that's
+	 * probably not important, but let's be careful.)
 	 */
 	if (polymorphic)
 		check_sql_fn_retval(result_type, get_typtype(result_type),
@@ -1875,9 +1886,9 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	 * set, and it mustn't be more volatile than the surrounding function
 	 * (this is to avoid breaking hacks that involve pretending a function
 	 * is immutable when it really ain't).  If the surrounding function is
-	 * declared strict, then the expression must contain only strict constructs
-	 * and must use all of the function parameters (this is overkill, but
-	 * an exact analysis is hard).
+	 * declared strict, then the expression must contain only strict
+	 * constructs and must use all of the function parameters (this is
+	 * overkill, but an exact analysis is hard).
 	 */
 	if (expression_returns_set(newexpr))
 		goto fail;
@@ -1886,7 +1897,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 		contain_mutable_functions(newexpr))
 		goto fail;
 	else if (funcform->provolatile == PROVOLATILE_STABLE &&
-		contain_volatile_functions(newexpr))
+			 contain_volatile_functions(newexpr))
 		goto fail;
 
 	if (funcform->proisstrict &&
@@ -1907,7 +1918,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	i = 0;
 	foreach(arg, args)
 	{
-		Node   *param = lfirst(arg);
+		Node	   *param = lfirst(arg);
 
 		if (usecounts[i] == 0)
 		{
@@ -1932,6 +1943,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 			if (eval_cost.startup + eval_cost.per_tuple >
 				10 * cpu_operator_cost)
 				goto fail;
+
 			/*
 			 * Check volatility last since this is more expensive than the
 			 * above tests
@@ -1943,8 +1955,8 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	}
 
 	/*
-	 * Whew --- we can make the substitution.  Copy the modified expression
-	 * out of the temporary memory context, and clean up.
+	 * Whew --- we can make the substitution.  Copy the modified
+	 * expression out of the temporary memory context, and clean up.
 	 */
 	MemoryContextSwitchTo(oldcxt);
 
@@ -1981,7 +1993,7 @@ substitute_actual_parameters(Node *expr, int nargs, List *args,
 {
 	substitute_actual_parameters_context context;
 
- 	context.nargs = nargs;
+	context.nargs = nargs;
 	context.args = args;
 	context.usecounts = usecounts;
 
@@ -1990,7 +2002,7 @@ substitute_actual_parameters(Node *expr, int nargs, List *args,
 
 static Node *
 substitute_actual_parameters_mutator(Node *node,
-									 substitute_actual_parameters_context *context)
+						  substitute_actual_parameters_context * context)
 {
 	if (node == NULL)
 		return NULL;
@@ -2059,10 +2071,10 @@ evaluate_expr(Expr *expr, Oid result_type)
 	/*
 	 * And evaluate it.
 	 *
-	 * It is OK to use a default econtext because none of the
-	 * ExecEvalExpr() code used in this situation will use econtext.  That
-	 * might seem fortuitous, but it's not so unreasonable --- a constant
-	 * expression does not depend on context, by definition, n'est ce pas?
+	 * It is OK to use a default econtext because none of the ExecEvalExpr()
+	 * code used in this situation will use econtext.  That might seem
+	 * fortuitous, but it's not so unreasonable --- a constant expression
+	 * does not depend on context, by definition, n'est ce pas?
 	 */
 	const_val = ExecEvalExprSwitchContext(exprstate,
 										  GetPerTupleExprContext(estate),
@@ -2177,7 +2189,7 @@ evaluate_expr(Expr *expr, Oid result_type)
  *
  * expression_tree_walker will handle SubPlan nodes by recursing normally
  * into the "exprs" and "args" lists (which are expressions belonging to
- * the outer plan).  It will not touch the completed subplan, however.  Since
+ * the outer plan).  It will not touch the completed subplan, however.	Since
  * there is no link to the original Query, it is not possible to recurse into
  * subselects of an already-planned expression tree.  This is OK for current
  * uses, but may need to be revisited in future.
@@ -2283,6 +2295,7 @@ expression_tree_walker(Node *node,
 				if (expression_tree_walker((Node *) sublink->lefthand,
 										   walker, context))
 					return true;
+
 				/*
 				 * Also invoke the walker on the sublink's Query node, so
 				 * it can recurse into the sub-query if it wants to.
@@ -2292,7 +2305,7 @@ expression_tree_walker(Node *node,
 			break;
 		case T_SubPlan:
 			{
-				SubPlan *subplan = (SubPlan *) node;
+				SubPlan    *subplan = (SubPlan *) node;
 
 				/* recurse into the exprs list, but not into the Plan */
 				if (expression_tree_walker((Node *) subplan->exprs,
@@ -2457,12 +2470,12 @@ query_tree_walker(Query *query,
 				/* nothing to do */
 				break;
 			case RTE_SUBQUERY:
-				if (! (flags & QTW_IGNORE_RT_SUBQUERIES))
+				if (!(flags & QTW_IGNORE_RT_SUBQUERIES))
 					if (walker(rte->subquery, context))
 						return true;
 				break;
 			case RTE_JOIN:
-				if (! (flags & QTW_IGNORE_JOINALIASES))
+				if (!(flags & QTW_IGNORE_JOINALIASES))
 					if (walker(rte->joinaliasvars, context))
 						return true;
 				break;
@@ -2622,8 +2635,8 @@ expression_tree_mutator(Node *node,
 			break;
 		case T_DistinctExpr:
 			{
-				DistinctExpr   *expr = (DistinctExpr *) node;
-				DistinctExpr   *newnode;
+				DistinctExpr *expr = (DistinctExpr *) node;
+				DistinctExpr *newnode;
 
 				FLATCOPY(newnode, expr, DistinctExpr);
 				MUTATE(newnode->args, expr->args, List *);
@@ -2632,8 +2645,8 @@ expression_tree_mutator(Node *node,
 			break;
 		case T_ScalarArrayOpExpr:
 			{
-				ScalarArrayOpExpr   *expr = (ScalarArrayOpExpr *) node;
-				ScalarArrayOpExpr   *newnode;
+				ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
+				ScalarArrayOpExpr *newnode;
 
 				FLATCOPY(newnode, expr, ScalarArrayOpExpr);
 				MUTATE(newnode->args, expr->args, List *);
@@ -2657,6 +2670,7 @@ expression_tree_mutator(Node *node,
 
 				FLATCOPY(newnode, sublink, SubLink);
 				MUTATE(newnode->lefthand, sublink->lefthand, List *);
+
 				/*
 				 * Also invoke the mutator on the sublink's Query node, so
 				 * it can recurse into the sub-query if it wants to.
@@ -2667,8 +2681,8 @@ expression_tree_mutator(Node *node,
 			break;
 		case T_SubPlan:
 			{
-				SubPlan	   *subplan = (SubPlan *) node;
-				SubPlan	   *newnode;
+				SubPlan    *subplan = (SubPlan *) node;
+				SubPlan    *newnode;
 
 				FLATCOPY(newnode, subplan, SubPlan);
 				/* transform exprs list */
@@ -2725,8 +2739,8 @@ expression_tree_mutator(Node *node,
 			break;
 		case T_ArrayExpr:
 			{
-				ArrayExpr *arrayexpr = (ArrayExpr *) node;
-				ArrayExpr *newnode;
+				ArrayExpr  *arrayexpr = (ArrayExpr *) node;
+				ArrayExpr  *newnode;
 
 				FLATCOPY(newnode, arrayexpr, ArrayExpr);
 				MUTATE(newnode->elements, arrayexpr->elements, List *);
@@ -2745,8 +2759,8 @@ expression_tree_mutator(Node *node,
 			break;
 		case T_NullIfExpr:
 			{
-				NullIfExpr   *expr = (NullIfExpr *) node;
-				NullIfExpr   *newnode;
+				NullIfExpr *expr = (NullIfExpr *) node;
+				NullIfExpr *newnode;
 
 				FLATCOPY(newnode, expr, NullIfExpr);
 				MUTATE(newnode->args, expr->args, List *);
@@ -2891,7 +2905,7 @@ expression_tree_mutator(Node *node,
  * indicated items.  (More flag bits may be added as needed.)
  *
  * Normally the Query node itself is copied, but some callers want it to be
- * modified in-place; they must pass QTW_DONT_COPY_QUERY in flags.  All
+ * modified in-place; they must pass QTW_DONT_COPY_QUERY in flags.	All
  * modified substructure is safely copied in any case.
  */
 Query *
@@ -2905,9 +2919,9 @@ query_tree_mutator(Query *query,
 
 	Assert(query != NULL && IsA(query, Query));
 
-	if (! (flags & QTW_DONT_COPY_QUERY))
+	if (!(flags & QTW_DONT_COPY_QUERY))
 	{
-		Query  *newquery;
+		Query	   *newquery;
 
 		FLATCOPY(newquery, query, Query);
 		query = newquery;
@@ -2933,7 +2947,7 @@ query_tree_mutator(Query *query,
 				/* nothing to do, don't bother to make a copy */
 				break;
 			case RTE_SUBQUERY:
-				if (! (flags & QTW_IGNORE_RT_SUBQUERIES))
+				if (!(flags & QTW_IGNORE_RT_SUBQUERIES))
 				{
 					FLATCOPY(newrte, rte, RangeTblEntry);
 					CHECKFLATCOPY(newrte->subquery, rte->subquery, Query);
@@ -2942,7 +2956,7 @@ query_tree_mutator(Query *query,
 				}
 				break;
 			case RTE_JOIN:
-				if (! (flags & QTW_IGNORE_JOINALIASES))
+				if (!(flags & QTW_IGNORE_JOINALIASES))
 				{
 					FLATCOPY(newrte, rte, RangeTblEntry);
 					MUTATE(newrte->joinaliasvars, rte->joinaliasvars, List *);

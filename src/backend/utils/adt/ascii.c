@@ -5,7 +5,7 @@
  *	 Portions Copyright (c) 1999-2002, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ascii.c,v 1.16 2003/07/27 04:53:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ascii.c,v 1.17 2003/08/04 00:43:25 momjian Exp $
  *
  *-----------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 #include "utils/ascii.h"
 
 static void pg_to_ascii(unsigned char *src, unsigned char *src_end,
-						unsigned char *dest, int enc);
+			unsigned char *dest, int enc);
 static text *encode_to_ascii(text *data, int enc);
 
 
@@ -65,8 +65,8 @@ pg_to_ascii(unsigned char *src, unsigned char *src_end, unsigned char *dest, int
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("unsupported encoding conversion from %s to ASCII",
-						pg_encoding_to_char(enc))));
+			   errmsg("unsupported encoding conversion from %s to ASCII",
+					  pg_encoding_to_char(enc))));
 		return;					/* keep compiler quiet */
 	}
 
@@ -95,7 +95,7 @@ static text *
 encode_to_ascii(text *data, int enc)
 {
 	pg_to_ascii((unsigned char *) VARDATA(data),		/* src */
-				(unsigned char *) (data) + VARSIZE(data),	/* src end */
+				(unsigned char *) (data) + VARSIZE(data),		/* src end */
 				(unsigned char *) VARDATA(data),		/* dest */
 				enc);			/* encoding */
 
@@ -109,8 +109,8 @@ encode_to_ascii(text *data, int enc)
 Datum
 to_ascii_encname(PG_FUNCTION_ARGS)
 {
-	text   *data = PG_GETARG_TEXT_P_COPY(0);
-	int		enc = pg_char_to_encoding(NameStr(*PG_GETARG_NAME(1)));
+	text	   *data = PG_GETARG_TEXT_P_COPY(0);
+	int			enc = pg_char_to_encoding(NameStr(*PG_GETARG_NAME(1)));
 
 	PG_RETURN_TEXT_P(encode_to_ascii(data, enc));
 }
@@ -122,8 +122,8 @@ to_ascii_encname(PG_FUNCTION_ARGS)
 Datum
 to_ascii_enc(PG_FUNCTION_ARGS)
 {
-	text   *data = PG_GETARG_TEXT_P_COPY(0);
-	int		enc = PG_GETARG_INT32(1);
+	text	   *data = PG_GETARG_TEXT_P_COPY(0);
+	int			enc = PG_GETARG_INT32(1);
 
 	PG_RETURN_TEXT_P(encode_to_ascii(data, enc));
 }
@@ -135,8 +135,8 @@ to_ascii_enc(PG_FUNCTION_ARGS)
 Datum
 to_ascii_default(PG_FUNCTION_ARGS)
 {
-	text   *data = PG_GETARG_TEXT_P_COPY(0);
-	int		enc = GetDatabaseEncoding();
+	text	   *data = PG_GETARG_TEXT_P_COPY(0);
+	int			enc = GetDatabaseEncoding();
 
 	PG_RETURN_TEXT_P(encode_to_ascii(data, enc));
 }

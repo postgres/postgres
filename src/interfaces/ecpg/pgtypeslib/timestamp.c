@@ -13,8 +13,8 @@
 #include "pgtypes_date.h"
 #include "datetime.h"
 
-int PGTYPEStimestamp_defmt_scan(char**, char*, Timestamp *, int*, int*, int*,
-		                int*, int*, int*, int*);
+int PGTYPEStimestamp_defmt_scan(char **, char *, Timestamp *, int *, int *, int *,
+							int *, int *, int *, int *);
 
 #ifdef HAVE_INT64_TIMESTAMP
 static int64
@@ -89,7 +89,8 @@ static Timestamp
 SetEpochTimestamp(void)
 {
 	Timestamp	dt;
-	struct tm	tt, *tm = &tt;
+	struct tm	tt,
+			   *tm = &tt;
 
 	GetEpochTime(tm);
 	tm2timestamp(tm, 0, NULL, &dt);
@@ -101,6 +102,7 @@ dt2time(Timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		time;
+
 #else
 	double		time;
 #endif
@@ -142,8 +144,8 @@ static int
 timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	int		date,
-			date0;
+	int			date,
+				date0;
 	int64		time;
 
 #else
@@ -255,8 +257,8 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
 }	/* timestamp2tm() */
 
 /* EncodeSpecialTimestamp()
- *  * Convert reserved timestamp data type to string.
- *   */
+ *	* Convert reserved timestamp data type to string.
+ *	 */
 static int
 EncodeSpecialTimestamp(Timestamp dt, char *str)
 {
@@ -274,21 +276,24 @@ Timestamp
 PGTYPEStimestamp_from_asc(char *str, char **endptr)
 {
 	Timestamp	result;
+
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		noresult = 0;
+
 #else
 	double		noresult = 0.0;
 #endif
 	fsec_t		fsec;
-	struct tm	tt, *tm = &tt;
-	int		tz;
-	int		dtype;
-	int		nf;
-	char		*field[MAXDATEFIELDS];
-	int		ftype[MAXDATEFIELDS];
+	struct tm	tt,
+			   *tm = &tt;
+	int			tz;
+	int			dtype;
+	int			nf;
+	char	   *field[MAXDATEFIELDS];
+	int			ftype[MAXDATEFIELDS];
 	char		lowstr[MAXDATELEN + MAXDATEFIELDS];
-        char		*realptr;
-	char		**ptr = (endptr != NULL) ? endptr : &realptr;
+	char	   *realptr;
+	char	  **ptr = (endptr != NULL) ? endptr : &realptr;
 
 	errno = 0;
 	if (strlen(str) >= sizeof(lowstr))
@@ -298,12 +303,12 @@ PGTYPEStimestamp_from_asc(char *str, char **endptr)
 	}
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf, ptr) != 0)
-	  || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz, 0) != 0))
+	|| (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz, 0) != 0))
 	{
-                errno = PGTYPES_TS_BAD_TIMESTAMP;
-                return (noresult);
-        }
-	
+		errno = PGTYPES_TS_BAD_TIMESTAMP;
+		return (noresult);
+	}
+
 	switch (dtype)
 	{
 		case DTK_DATE:
@@ -343,11 +348,13 @@ PGTYPEStimestamp_from_asc(char *str, char **endptr)
 char *
 PGTYPEStimestamp_to_asc(Timestamp tstamp)
 {
-	struct tm	tt, *tm = &tt;
+	struct tm	tt,
+			   *tm = &tt;
 	char		buf[MAXDATELEN + 1];
-	char		*tzn = NULL;
+	char	   *tzn = NULL;
 	fsec_t		fsec;
-	int		DateStyle = 1;	/* this defaults to ISO_DATES, shall we make it an option? */
+	int			DateStyle = 1;	/* this defaults to ISO_DATES, shall we
+								 * make it an option? */
 
 	if (TIMESTAMP_NOT_FINITE(tstamp))
 		EncodeSpecialTimestamp(tstamp, buf);
@@ -362,31 +369,34 @@ PGTYPEStimestamp_to_asc(Timestamp tstamp)
 }
 
 void
-PGTYPEStimestamp_current (Timestamp *ts)
+PGTYPEStimestamp_current(Timestamp *ts)
 {
 	struct tm	tm;
-	
+
 	GetCurrentDateTime(&tm);
 	tm2timestamp(&tm, 0, NULL, ts);
 	return;
 }
 
 static int
-dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
-					char* output, int *pstr_len, char *fmtstr)
+dttofmtasc_replace(Timestamp *ts, Date dDate, int dow, struct tm * tm,
+				   char *output, int *pstr_len, char *fmtstr)
 {
 	union un_fmt_comb replace_val;
-	int replace_type;
-	int i;
-	char* p = fmtstr;
-	char* q = output;
+	int			replace_type;
+	int			i;
+	char	   *p = fmtstr;
+	char	   *q = output;
 
-	while (*p) {
-		if (*p == '%') {
+	while (*p)
+	{
+		if (*p == '%')
+		{
 			p++;
 			/* fix compiler warning */
 			replace_type = PGTYPES_TYPE_NOTHING;
-			switch (*p) {
+			switch (*p)
+			{
 				case 'a':
 					replace_val.str_val = pgtypes_date_weekdays_short[dow];
 					replace_type = PGTYPES_TYPE_STRING_CONSTANT;
@@ -416,19 +426,21 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 					replace_type = PGTYPES_TYPE_UINT_2_LZ;
 					break;
 				case 'D':
-					/* ts, dDate, dow, tm is
-					 * information about the timestamp
+
+					/*
+					 * ts, dDate, dow, tm is information about the
+					 * timestamp
 					 *
-					 * q is the start of the current
-					 * output buffer
+					 * q is the start of the current output buffer
 					 *
-					 * pstr_len is a pointer to the
-					 * remaining size of output, i.e.
-					 * the size of q */
+					 * pstr_len is a pointer to the remaining size of output,
+					 * i.e. the size of q
+					 */
 					i = dttofmtasc_replace(ts, dDate, dow, tm,
-								q, pstr_len,
-								"%m/%d/%y");
-					if (i) { return i; }
+										   q, pstr_len,
+										   "%m/%d/%y");
+					if (i)
+						return i;
 					break;
 				case 'e':
 					replace_val.uint_val = tm->tm_mday;
@@ -436,19 +448,23 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 					break;
 				case 'E':
 					{
-						char tmp[4] = "%Ex";
+						char		tmp[4] = "%Ex";
+
 						p++;
-						if (*p == '\0') {
+						if (*p == '\0')
 							return -1;
-						}
 						tmp[2] = *p;
 						/* XXX: fall back to strftime */
-						/* strftime's month is 0
-						 * based, ours is 1 based */
+
+						/*
+						 * strftime's month is 0 based, ours is 1 based
+						 */
 						tm->tm_mon -= 1;
 						i = strftime(q, *pstr_len, tmp, tm);
-						if (i == 0) { return -1; }
-						while (*q) {
+						if (i == 0)
+							return -1;
+						while (*q)
+						{
 							q++;
 							(*pstr_len)--;
 						}
@@ -460,8 +476,10 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 					/* XXX: fall back to strftime */
 					tm->tm_mon -= 1;
 					i = strftime(q, *pstr_len, "%G", tm);
-					if (i == 0) { return -1; }
-					while (*q) {
+					if (i == 0)
+						return -1;
+					while (*q)
+					{
 						q++;
 						(*pstr_len)--;
 					}
@@ -471,12 +489,15 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 				case 'g':
 					/* XXX: fall back to strftime */
 					{
-						char *fmt = "%g"; /* Keep compiler quiet about 2-digit year */
-	
+						char	   *fmt = "%g"; /* Keep compiler quiet
+												 * about 2-digit year */
+
 						tm->tm_mon -= 1;
 						i = strftime(q, *pstr_len, fmt, tm);
-						if (i == 0) { return -1; }
-						while (*q) {
+						if (i == 0)
+							return -1;
+						while (*q)
+						{
 							q++;
 							(*pstr_len)--;
 						}
@@ -517,32 +538,32 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 					replace_type = PGTYPES_TYPE_CHAR;
 					break;
 				case 'p':
-					if (tm->tm_hour < 12) {
+					if (tm->tm_hour < 12)
 						replace_val.str_val = "AM";
-					} else {
+					else
 						replace_val.str_val = "PM";
-					}
 					replace_type = PGTYPES_TYPE_STRING_CONSTANT;
 					break;
 				case 'P':
-					if (tm->tm_hour < 12) {
+					if (tm->tm_hour < 12)
 						replace_val.str_val = "am";
-					} else {
+					else
 						replace_val.str_val = "pm";
-					}
 					replace_type = PGTYPES_TYPE_STRING_CONSTANT;
 					break;
 				case 'r':
 					i = dttofmtasc_replace(ts, dDate, dow, tm,
-								q, pstr_len,
-								"%I:%M:%S %p");
-					if (i) { return i; }
+										   q, pstr_len,
+										   "%I:%M:%S %p");
+					if (i)
+						return i;
 					break;
 				case 'R':
 					i = dttofmtasc_replace(ts, dDate, dow, tm,
-								q, pstr_len,
-								"%H:%M");
-					if (i) { return i; }
+										   q, pstr_len,
+										   "%H:%M");
+					if (i)
+						return i;
 					break;
 				case 's':
 #ifdef HAVE_INT64_TIMESTAMP
@@ -563,12 +584,14 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 					break;
 				case 'T':
 					i = dttofmtasc_replace(ts, dDate, dow, tm,
-								q, pstr_len,
-								"%H:%M:%S");
-					if (i) { return i; }
+										   q, pstr_len,
+										   "%H:%M:%S");
+					if (i)
+						return i;
 					break;
 				case 'u':
-					if (dow == 0) { dow = 7; }
+					if (dow == 0)
+						dow = 7;
 					replace_val.uint_val = dow;
 					replace_type = PGTYPES_TYPE_UINT;
 					break;
@@ -576,8 +599,10 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 					/* XXX: fall back to strftime */
 					tm->tm_mon -= 1;
 					i = strftime(q, *pstr_len, "%U", tm);
-					if (i == 0) { return -1; }
-					while (*q) {
+					if (i == 0)
+						return -1;
+					while (*q)
+					{
 						q++;
 						(*pstr_len)--;
 					}
@@ -587,8 +612,10 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 				case 'V':
 					/* XXX: fall back to strftime */
 					i = strftime(q, *pstr_len, "%V", tm);
-					if (i == 0) { return -1; }
-					while (*q) {
+					if (i == 0)
+						return -1;
+					while (*q)
+					{
 						q++;
 						(*pstr_len)--;
 					}
@@ -602,8 +629,10 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 					/* XXX: fall back to strftime */
 					tm->tm_mon -= 1;
 					i = strftime(q, *pstr_len, "%U", tm);
-					if (i == 0) { return -1; }
-					while (*q) {
+					if (i == 0)
+						return -1;
+					while (*q)
+					{
 						q++;
 						(*pstr_len)--;
 					}
@@ -613,12 +642,15 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 				case 'x':
 					/* XXX: fall back to strftime */
 					{
-						char *fmt = "%x"; /* Keep compiler quiet about 2-digit year */
+						char	   *fmt = "%x"; /* Keep compiler quiet
+												 * about 2-digit year */
 
 						tm->tm_mon -= 1;
 						i = strftime(q, *pstr_len, fmt, tm);
-						if (i == 0) { return -1; }
-						while (*q) {
+						if (i == 0)
+							return -1;
+						while (*q)
+						{
 							q++;
 							(*pstr_len)--;
 						}
@@ -630,8 +662,10 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 					/* XXX: fall back to strftime */
 					tm->tm_mon -= 1;
 					i = strftime(q, *pstr_len, "%X", tm);
-					if (i == 0) { return -1; }
-					while (*q) {
+					if (i == 0)
+						return -1;
+					while (*q)
+					{
 						q++;
 						(*pstr_len)--;
 					}
@@ -650,8 +684,10 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 					/* XXX: fall back to strftime */
 					tm->tm_mon -= 1;
 					i = strftime(q, *pstr_len, "%z", tm);
-					if (i == 0) { return -1; }
-					while (*q) {
+					if (i == 0)
+						return -1;
+					while (*q)
+					{
 						q++;
 						(*pstr_len)--;
 					}
@@ -662,8 +698,10 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 					/* XXX: fall back to strftime */
 					tm->tm_mon -= 1;
 					i = strftime(q, *pstr_len, "%Z", tm);
-					if (i == 0) { return -1; }
-					while (*q) {
+					if (i == 0)
+						return -1;
+					while (*q)
+					{
 						q++;
 						(*pstr_len)--;
 					}
@@ -676,41 +714,53 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 					break;
 				case '\0':
 					/* fmtstr: blabla%' */
-					/* this is not compliant to the
-					 * specification */
+
+					/*
+					 * this is not compliant to the specification
+					 */
 					return -1;
 				default:
-					/* if we don't know the pattern, we
-					 * just copy it */
-					if (*pstr_len > 1) {
+
+					/*
+					 * if we don't know the pattern, we just copy it
+					 */
+					if (*pstr_len > 1)
+					{
 						*q = '%';
-						q++; (*pstr_len)--;
-						if (*pstr_len > 1) {
+						q++;
+						(*pstr_len)--;
+						if (*pstr_len > 1)
+						{
 							*q = *p;
-							q++; (*pstr_len)--;
-						} else {
+							q++;
+							(*pstr_len)--;
+						}
+						else
+						{
 							*q = '\0';
 							return -1;
 						}
 						*q = '\0';
-					} else {
-						return -1;
 					}
+					else
+						return -1;
 					break;
 			}
 			i = pgtypes_fmt_replace(replace_val, replace_type, &q, pstr_len);
-			if (i) {
+			if (i)
 				return i;
-			}
-		} else {
-			if (*pstr_len > 1) {
+		}
+		else
+		{
+			if (*pstr_len > 1)
+			{
 				*q = *p;
 				(*pstr_len)--;
 				q++;
 				*q = '\0';
-			} else {
-				return -1;
 			}
+			else
+				return -1;
 		}
 		p++;
 	}
@@ -719,12 +769,12 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 
 
 int
-PGTYPEStimestamp_fmt_asc (Timestamp *ts, char *output, int str_len, char *fmtstr)
+PGTYPEStimestamp_fmt_asc(Timestamp *ts, char *output, int str_len, char *fmtstr)
 {
-	struct tm tm;
-	fsec_t fsec;
-	Date dDate;
-	int dow;
+	struct tm	tm;
+	fsec_t		fsec;
+	Date		dDate;
+	int			dow;
 
 	dDate = PGTYPESdate_from_timestamp(*ts);
 	dow = PGTYPESdate_dayofweek(dDate);
@@ -734,12 +784,10 @@ PGTYPEStimestamp_fmt_asc (Timestamp *ts, char *output, int str_len, char *fmtstr
 }
 
 int
-PGTYPEStimestamp_sub (Timestamp *ts1, Timestamp *ts2, Interval *iv)
+PGTYPEStimestamp_sub(Timestamp *ts1, Timestamp *ts2, Interval *iv)
 {
 	if (TIMESTAMP_NOT_FINITE(*ts1) || TIMESTAMP_NOT_FINITE(*ts2))
-	{
 		return PGTYPES_TS_ERR_EINFTIME;
-	}
 	else
 #ifdef HAVE_INT64_TIMESTAMP
 		iv->time = (ts1 - ts2);
@@ -752,28 +800,40 @@ PGTYPEStimestamp_sub (Timestamp *ts1, Timestamp *ts2, Interval *iv)
 	return 0;
 }
 
-int PGTYPEStimestamp_defmt_asc(char* str, char *fmt, Timestamp *d) {
-	int year, month, day;
-	int hour, minute, second;
-	int tz;
+int
+PGTYPEStimestamp_defmt_asc(char *str, char *fmt, Timestamp *d)
+{
+	int			year,
+				month,
+				day;
+	int			hour,
+				minute,
+				second;
+	int			tz;
 
-	int i;
-	char* mstr;
-	char* mfmt;
+	int			i;
+	char	   *mstr;
+	char	   *mfmt;
 
-	if (!fmt) {
+	if (!fmt)
 		fmt = "%Y-%m-%d %H:%M:%S";
-	}
-	if (!fmt[0]) {
+	if (!fmt[0])
 		return 1;
-	}
 
 	mstr = pgtypes_strdup(str);
 	mfmt = pgtypes_strdup(fmt);
-	/* initialize with impossible values so that we can see if the
-	 * fields where specified at all */
+
+	/*
+	 * initialize with impossible values so that we can see if the fields
+	 * where specified at all
+	 */
 	/* XXX ambiguity with 1 BC for year? */
-	year = -1; month = -1; day = -1; hour = 0; minute = -1; second = -1;
+	year = -1;
+	month = -1;
+	day = -1;
+	hour = 0;
+	minute = -1;
+	second = -1;
 	tz = 0;
 
 	i = PGTYPEStimestamp_defmt_scan(&mstr, mfmt, d, &year, &month, &day, &hour, &minute, &second, &tz);
@@ -781,4 +841,3 @@ int PGTYPEStimestamp_defmt_asc(char* str, char *fmt, Timestamp *d) {
 	free(mfmt);
 	return i;
 }
-

@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$Id: pgstat.h,v 1.15 2003/04/27 20:09:44 tgl Exp $
+ *	$Id: pgstat.h,v 1.16 2003/08/04 00:43:29 momjian Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -38,7 +38,7 @@
 
 #define PGSTAT_DESTROY_COUNT	(PGSTAT_DESTROY_DELAY / PGSTAT_STAT_INTERVAL)
 
-#define PGSTAT_RESTART_INTERVAL	60		/* How often to attempt to restart */
+#define PGSTAT_RESTART_INTERVAL 60		/* How often to attempt to restart */
  /* a failed statistics collector; in seconds. */
 
 /* ----------

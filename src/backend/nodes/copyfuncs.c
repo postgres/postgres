@@ -4,7 +4,7 @@
  *	  Copy functions for Postgres tree nodes.
  *
  * NOTE: we currently support copying all node types found in parse and
- * plan trees.  We do not support copying executor state trees; there
+ * plan trees.	We do not support copying executor state trees; there
  * is no need for that, and no point in maintaining all the code that
  * would be needed.  We also do not support copying Path trees, mainly
  * because the circular linkages between RelOptInfo and Path nodes can't
@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.260 2003/07/22 23:30:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.261 2003/08/04 00:43:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
 
 /*
  * Macros to simplify copying of different kinds of fields.  Use these
- * wherever possible to reduce the chance for silly typos.  Note that these
+ * wherever possible to reduce the chance for silly typos.	Note that these
  * hard-wire the convention that the local variables in a Copy routine are
  * named 'newnode' and 'from'.
  */
@@ -639,7 +639,7 @@ _copyRangeVar(RangeVar *from)
 
 /*
  * We don't need a _copyExpr because Expr is an abstract supertype which
- * should never actually get instantiated.  Also, since it has no common
+ * should never actually get instantiated.	Also, since it has no common
  * fields except NodeTag, there's no need for a helper routine to factor
  * out copying the common fields...
  */
@@ -755,9 +755,9 @@ _copyArrayRef(ArrayRef *from)
  * _copyFuncExpr
  */
 static FuncExpr *
-_copyFuncExpr(FuncExpr *from)
+_copyFuncExpr(FuncExpr * from)
 {
-	FuncExpr	   *newnode = makeNode(FuncExpr);
+	FuncExpr   *newnode = makeNode(FuncExpr);
 
 	COPY_SCALAR_FIELD(funcid);
 	COPY_SCALAR_FIELD(funcresulttype);
@@ -772,7 +772,7 @@ _copyFuncExpr(FuncExpr *from)
  * _copyOpExpr
  */
 static OpExpr *
-_copyOpExpr(OpExpr *from)
+_copyOpExpr(OpExpr * from)
 {
 	OpExpr	   *newnode = makeNode(OpExpr);
 
@@ -789,9 +789,9 @@ _copyOpExpr(OpExpr *from)
  * _copyDistinctExpr (same as OpExpr)
  */
 static DistinctExpr *
-_copyDistinctExpr(DistinctExpr *from)
+_copyDistinctExpr(DistinctExpr * from)
 {
-	DistinctExpr	   *newnode = makeNode(DistinctExpr);
+	DistinctExpr *newnode = makeNode(DistinctExpr);
 
 	COPY_SCALAR_FIELD(opno);
 	COPY_SCALAR_FIELD(opfuncid);
@@ -806,9 +806,9 @@ _copyDistinctExpr(DistinctExpr *from)
  * _copyScalarArrayOpExpr
  */
 static ScalarArrayOpExpr *
-_copyScalarArrayOpExpr(ScalarArrayOpExpr *from)
+_copyScalarArrayOpExpr(ScalarArrayOpExpr * from)
 {
-	ScalarArrayOpExpr	   *newnode = makeNode(ScalarArrayOpExpr);
+	ScalarArrayOpExpr *newnode = makeNode(ScalarArrayOpExpr);
 
 	COPY_SCALAR_FIELD(opno);
 	COPY_SCALAR_FIELD(opfuncid);
@@ -822,9 +822,9 @@ _copyScalarArrayOpExpr(ScalarArrayOpExpr *from)
  * _copyBoolExpr
  */
 static BoolExpr *
-_copyBoolExpr(BoolExpr *from)
+_copyBoolExpr(BoolExpr * from)
 {
-	BoolExpr	   *newnode = makeNode(BoolExpr);
+	BoolExpr   *newnode = makeNode(BoolExpr);
 
 	COPY_SCALAR_FIELD(boolop);
 	COPY_NODE_FIELD(args);
@@ -940,9 +940,9 @@ _copyCaseWhen(CaseWhen *from)
  * _copyArrayExpr
  */
 static ArrayExpr *
-_copyArrayExpr(ArrayExpr *from)
+_copyArrayExpr(ArrayExpr * from)
 {
-	ArrayExpr *newnode = makeNode(ArrayExpr);
+	ArrayExpr  *newnode = makeNode(ArrayExpr);
 
 	COPY_SCALAR_FIELD(array_typeid);
 	COPY_SCALAR_FIELD(element_typeid);
@@ -956,7 +956,7 @@ _copyArrayExpr(ArrayExpr *from)
  * _copyCoalesceExpr
  */
 static CoalesceExpr *
-_copyCoalesceExpr(CoalesceExpr *from)
+_copyCoalesceExpr(CoalesceExpr * from)
 {
 	CoalesceExpr *newnode = makeNode(CoalesceExpr);
 
@@ -970,9 +970,9 @@ _copyCoalesceExpr(CoalesceExpr *from)
  * _copyNullIfExpr (same as OpExpr)
  */
 static NullIfExpr *
-_copyNullIfExpr(NullIfExpr *from)
+_copyNullIfExpr(NullIfExpr * from)
 {
-	NullIfExpr	   *newnode = makeNode(NullIfExpr);
+	NullIfExpr *newnode = makeNode(NullIfExpr);
 
 	COPY_SCALAR_FIELD(opno);
 	COPY_SCALAR_FIELD(opfuncid);
@@ -1015,7 +1015,7 @@ _copyBooleanTest(BooleanTest *from)
  * _copyCoerceToDomain
  */
 static CoerceToDomain *
-_copyCoerceToDomain(CoerceToDomain *from)
+_copyCoerceToDomain(CoerceToDomain * from)
 {
 	CoerceToDomain *newnode = makeNode(CoerceToDomain);
 
@@ -1031,7 +1031,7 @@ _copyCoerceToDomain(CoerceToDomain *from)
  * _copyCoerceToDomainValue
  */
 static CoerceToDomainValue *
-_copyCoerceToDomainValue(CoerceToDomainValue *from)
+_copyCoerceToDomainValue(CoerceToDomainValue * from)
 {
 	CoerceToDomainValue *newnode = makeNode(CoerceToDomainValue);
 
@@ -1045,7 +1045,7 @@ _copyCoerceToDomainValue(CoerceToDomainValue *from)
  * _copySetToDefault
  */
 static SetToDefault *
-_copySetToDefault(SetToDefault *from)
+_copySetToDefault(SetToDefault * from)
 {
 	SetToDefault *newnode = makeNode(SetToDefault);
 
@@ -1148,7 +1148,7 @@ _copyRestrictInfo(RestrictInfo *from)
 
 	COPY_NODE_FIELD(clause);
 	COPY_SCALAR_FIELD(ispusheddown);
-	COPY_NODE_FIELD(subclauseindices); /* XXX probably bad */
+	COPY_NODE_FIELD(subclauseindices);	/* XXX probably bad */
 	COPY_SCALAR_FIELD(eval_cost);
 	COPY_SCALAR_FIELD(this_selec);
 	COPY_BITMAPSET_FIELD(left_relids);
@@ -1191,7 +1191,7 @@ _copyJoinInfo(JoinInfo *from)
  * _copyInClauseInfo
  */
 static InClauseInfo *
-_copyInClauseInfo(InClauseInfo *from)
+_copyInClauseInfo(InClauseInfo * from)
 {
 	InClauseInfo *newnode = makeNode(InClauseInfo);
 
@@ -1532,9 +1532,9 @@ _copyQuery(Query *from)
 
 	/*
 	 * We do not copy the other planner internal fields: base_rel_list,
-	 * other_rel_list, join_rel_list, equi_key_list, query_pathkeys.
-	 * That would get us into copying RelOptInfo/Path trees, which we don't
-	 * want to do.  It is necessary to copy in_info_list and hasJoinRTEs
+	 * other_rel_list, join_rel_list, equi_key_list, query_pathkeys. That
+	 * would get us into copying RelOptInfo/Path trees, which we don't
+	 * want to do.	It is necessary to copy in_info_list and hasJoinRTEs
 	 * for the benefit of inheritance_planner(), which may try to copy a
 	 * Query in which these are already set.
 	 */
@@ -1633,7 +1633,7 @@ _copyAlterTableStmt(AlterTableStmt *from)
 }
 
 static AlterDomainStmt *
-_copyAlterDomainStmt(AlterDomainStmt *from)
+_copyAlterDomainStmt(AlterDomainStmt * from)
 {
 	AlterDomainStmt *newnode = makeNode(AlterDomainStmt);
 
@@ -1644,7 +1644,7 @@ _copyAlterDomainStmt(AlterDomainStmt *from)
 	COPY_SCALAR_FIELD(behavior);
 
 	return newnode;
-} 
+}
 
 static GrantStmt *
 _copyGrantStmt(GrantStmt *from)
@@ -1685,7 +1685,7 @@ _copyFuncWithArgs(FuncWithArgs *from)
 }
 
 static DeclareCursorStmt *
-_copyDeclareCursorStmt(DeclareCursorStmt *from)
+_copyDeclareCursorStmt(DeclareCursorStmt * from)
 {
 	DeclareCursorStmt *newnode = makeNode(DeclareCursorStmt);
 
@@ -1747,7 +1747,7 @@ _copyCreateStmt(CreateStmt *from)
 }
 
 static InhRelation *
-_copyInhRelation(InhRelation *from)
+_copyInhRelation(InhRelation * from)
 {
 	InhRelation *newnode = makeNode(InhRelation);
 
@@ -2118,7 +2118,7 @@ _copyCreateSeqStmt(CreateSeqStmt *from)
 }
 
 static AlterSeqStmt *
-_copyAlterSeqStmt(AlterSeqStmt *from)
+_copyAlterSeqStmt(AlterSeqStmt * from)
 {
 	AlterSeqStmt *newnode = makeNode(AlterSeqStmt);
 
@@ -2171,7 +2171,7 @@ _copyCreateTrigStmt(CreateTrigStmt *from)
 	COPY_NODE_FIELD(args);
 	COPY_SCALAR_FIELD(before);
 	COPY_SCALAR_FIELD(row);
-	strcpy(newnode->actions, from->actions); /* in-line string field */
+	strcpy(newnode->actions, from->actions);	/* in-line string field */
 	COPY_SCALAR_FIELD(isconstraint);
 	COPY_SCALAR_FIELD(deferrable);
 	COPY_SCALAR_FIELD(initdeferred);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.50 2003/07/25 00:01:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.51 2003/08/04 00:43:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -322,7 +322,8 @@ build_join_rel(Query *root,
 
 	/*
 	 * Create a new tlist containing just the vars that need to be output
-	 * from this join (ie, are needed for higher joinclauses or final output).
+	 * from this join (ie, are needed for higher joinclauses or final
+	 * output).
 	 */
 	build_joinrel_tlist(root, joinrel);
 
@@ -389,8 +390,8 @@ build_joinrel_tlist(Query *root, RelOptInfo *joinrel)
 
 		foreach(vars, FastListValue(&baserel->reltargetlist))
 		{
-			Var	   *var = (Var *) lfirst(vars);
-			int		ndx = var->varattno - baserel->min_attr;
+			Var		   *var = (Var *) lfirst(vars);
+			int			ndx = var->varattno - baserel->min_attr;
 
 			if (bms_nonempty_difference(baserel->attr_needed[ndx], relids))
 			{

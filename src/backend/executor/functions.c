@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.69 2003/07/28 18:33:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.70 2003/08/04 00:43:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,8 +29,8 @@
 
 
 /*
- * We have an execution_state record for each query in a function.  Each
- * record contains a querytree and plantree for its query.  If the query
+ * We have an execution_state record for each query in a function.	Each
+ * record contains a querytree and plantree for its query.	If the query
  * is currently in F_EXEC_RUN state then there's a QueryDesc too.
  */
 typedef enum
@@ -83,7 +83,7 @@ static void postquel_start(execution_state *es, SQLFunctionCachePtr fcache);
 static TupleTableSlot *postquel_getnext(execution_state *es);
 static void postquel_end(execution_state *es);
 static void postquel_sub_params(SQLFunctionCachePtr fcache,
-								FunctionCallInfo fcinfo);
+					FunctionCallInfo fcinfo);
 static Datum postquel_execute(execution_state *es,
 				 FunctionCallInfo fcinfo,
 				 SQLFunctionCachePtr fcache);
@@ -177,11 +177,11 @@ init_sql_fcache(FmgrInfo *finfo)
 	if (rettype == ANYARRAYOID || rettype == ANYELEMENTOID)
 	{
 		rettype = get_fn_expr_rettype(finfo);
-		if (rettype == InvalidOid) /* this probably should not happen */
+		if (rettype == InvalidOid)		/* this probably should not happen */
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("could not determine actual result type for function declared %s",
-							format_type_be(procedureStruct->prorettype))));
+						  format_type_be(procedureStruct->prorettype))));
 	}
 
 	/* Now look up the actual result type */
@@ -226,7 +226,7 @@ init_sql_fcache(FmgrInfo *finfo)
 		fcache->funcSlot = NULL;
 
 	/*
-	 * Parse and plan the queries.  We need the argument type info to pass
+	 * Parse and plan the queries.	We need the argument type info to pass
 	 * to the parser.
 	 */
 	nargs = procedureStruct->pronargs;
@@ -234,7 +234,7 @@ init_sql_fcache(FmgrInfo *finfo)
 
 	if (nargs > 0)
 	{
-		int		argnum;
+		int			argnum;
 
 		argOidVect = (Oid *) palloc(nargs * sizeof(Oid));
 		memcpy(argOidVect,
@@ -243,7 +243,7 @@ init_sql_fcache(FmgrInfo *finfo)
 		/* Resolve any polymorphic argument types */
 		for (argnum = 0; argnum < nargs; argnum++)
 		{
-			Oid		argtype = argOidVect[argnum];
+			Oid			argtype = argOidVect[argnum];
 
 			if (argtype == ANYARRAYOID || argtype == ANYELEMENTOID)
 			{
@@ -309,7 +309,7 @@ postquel_getnext(execution_state *es)
 
 	/*
 	 * If it's the function's last command, and it's a SELECT, fetch one
-	 * row at a time so we can return the results.  Otherwise just run it
+	 * row at a time so we can return the results.	Otherwise just run it
 	 * to completion.
 	 */
 	if (LAST_POSTQUEL_COMMAND(es) && es->qd->operation == CMD_SELECT)
@@ -655,14 +655,14 @@ sql_exec_error_callback(void *arg)
 	/*
 	 * Try to determine where in the function we failed.  If there is a
 	 * query with non-null QueryDesc, finger it.  (We check this rather
-	 * than looking for F_EXEC_RUN state, so that errors during ExecutorStart
-	 * or ExecutorEnd are blamed on the appropriate query; see postquel_start
-	 * and postquel_end.)
+	 * than looking for F_EXEC_RUN state, so that errors during
+	 * ExecutorStart or ExecutorEnd are blamed on the appropriate query;
+	 * see postquel_start and postquel_end.)
 	 */
 	if (fcache)
 	{
 		execution_state *es;
-		int		query_num;
+		int			query_num;
 
 		es = fcache->func_state;
 		query_num = 1;

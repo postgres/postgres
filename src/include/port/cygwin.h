@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/include/port/cygwin.h,v 1.3 2003/05/22 17:20:28 petere Exp $ */
+/* $Header: /cvsroot/pgsql/src/include/port/cygwin.h,v 1.4 2003/08/04 00:43:32 momjian Exp $ */
 
 #define HAS_TEST_AND_SET
 typedef unsigned char slock_t;
@@ -20,4 +20,5 @@ typedef unsigned char slock_t;
 #define DLLIMPORT __declspec (dllexport)
 #else
 #define DLLIMPORT __declspec (dllimport)
+
 #endif

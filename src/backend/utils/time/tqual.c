@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.65 2003/07/25 20:18:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.66 2003/08/04 00:43:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,6 +77,7 @@ HeapTupleSatisfiesItself(HeapTupleHeader tuple)
 		if (tuple->t_infomask & HEAP_MOVED_OFF)
 		{
 			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+
 			if (TransactionIdIsCurrentTransactionId(xvac))
 				return false;
 			if (!TransactionIdIsInProgress(xvac))
@@ -92,6 +93,7 @@ HeapTupleSatisfiesItself(HeapTupleHeader tuple)
 		else if (tuple->t_infomask & HEAP_MOVED_IN)
 		{
 			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+
 			if (!TransactionIdIsCurrentTransactionId(xvac))
 			{
 				if (TransactionIdIsInProgress(xvac))
@@ -218,6 +220,7 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple)
 		if (tuple->t_infomask & HEAP_MOVED_OFF)
 		{
 			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+
 			if (TransactionIdIsCurrentTransactionId(xvac))
 				return false;
 			if (!TransactionIdIsInProgress(xvac))
@@ -233,6 +236,7 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple)
 		else if (tuple->t_infomask & HEAP_MOVED_IN)
 		{
 			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+
 			if (!TransactionIdIsCurrentTransactionId(xvac))
 			{
 				if (TransactionIdIsInProgress(xvac))
@@ -340,6 +344,7 @@ HeapTupleSatisfiesToast(HeapTupleHeader tuple)
 		if (tuple->t_infomask & HEAP_MOVED_OFF)
 		{
 			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+
 			if (TransactionIdIsCurrentTransactionId(xvac))
 				return false;
 			if (!TransactionIdIsInProgress(xvac))
@@ -355,6 +360,7 @@ HeapTupleSatisfiesToast(HeapTupleHeader tuple)
 		else if (tuple->t_infomask & HEAP_MOVED_IN)
 		{
 			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+
 			if (!TransactionIdIsCurrentTransactionId(xvac))
 			{
 				if (TransactionIdIsInProgress(xvac))
@@ -395,6 +401,7 @@ HeapTupleSatisfiesUpdate(HeapTuple htuple, CommandId curcid)
 		if (tuple->t_infomask & HEAP_MOVED_OFF)
 		{
 			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+
 			if (TransactionIdIsCurrentTransactionId(xvac))
 				return HeapTupleInvisible;
 			if (!TransactionIdIsInProgress(xvac))
@@ -410,6 +417,7 @@ HeapTupleSatisfiesUpdate(HeapTuple htuple, CommandId curcid)
 		else if (tuple->t_infomask & HEAP_MOVED_IN)
 		{
 			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+
 			if (!TransactionIdIsCurrentTransactionId(xvac))
 			{
 				if (TransactionIdIsInProgress(xvac))
@@ -531,6 +539,7 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 		if (tuple->t_infomask & HEAP_MOVED_OFF)
 		{
 			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+
 			if (TransactionIdIsCurrentTransactionId(xvac))
 				return false;
 			if (!TransactionIdIsInProgress(xvac))
@@ -546,6 +555,7 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 		else if (tuple->t_infomask & HEAP_MOVED_IN)
 		{
 			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+
 			if (!TransactionIdIsCurrentTransactionId(xvac))
 			{
 				if (TransactionIdIsInProgress(xvac))
@@ -667,6 +677,7 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 		if (tuple->t_infomask & HEAP_MOVED_OFF)
 		{
 			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+
 			if (TransactionIdIsCurrentTransactionId(xvac))
 				return false;
 			if (!TransactionIdIsInProgress(xvac))
@@ -682,6 +693,7 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 		else if (tuple->t_infomask & HEAP_MOVED_IN)
 		{
 			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+
 			if (!TransactionIdIsCurrentTransactionId(xvac))
 			{
 				if (TransactionIdIsInProgress(xvac))
@@ -827,6 +839,7 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 		else if (tuple->t_infomask & HEAP_MOVED_OFF)
 		{
 			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+
 			if (TransactionIdIsCurrentTransactionId(xvac))
 				return HEAPTUPLE_DELETE_IN_PROGRESS;
 			if (TransactionIdIsInProgress(xvac))
@@ -841,6 +854,7 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 		else if (tuple->t_infomask & HEAP_MOVED_IN)
 		{
 			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+
 			if (TransactionIdIsCurrentTransactionId(xvac))
 				return HEAPTUPLE_INSERT_IN_PROGRESS;
 			if (TransactionIdIsInProgress(xvac))
@@ -860,7 +874,8 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 		else
 		{
 			/*
-			 * Not in Progress, Not Committed, so either Aborted or crashed
+			 * Not in Progress, Not Committed, so either Aborted or
+			 * crashed
 			 */
 			tuple->t_infomask |= HEAP_XMIN_INVALID;
 			return HEAPTUPLE_DEAD;
@@ -888,10 +903,11 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 		{
 			if (TransactionIdIsInProgress(HeapTupleHeaderGetXmax(tuple)))
 				return HEAPTUPLE_LIVE;
+
 			/*
-			 * We don't really care whether xmax did commit, abort or crash.
-			 * We know that xmax did mark the tuple for update, but it did not
-			 * and will never actually update it.
+			 * We don't really care whether xmax did commit, abort or
+			 * crash. We know that xmax did mark the tuple for update, but
+			 * it did not and will never actually update it.
 			 */
 			tuple->t_infomask |= HEAP_XMAX_INVALID;
 		}
@@ -907,7 +923,8 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 		else
 		{
 			/*
-			 * Not in Progress, Not Committed, so either Aborted or crashed
+			 * Not in Progress, Not Committed, so either Aborted or
+			 * crashed
 			 */
 			tuple->t_infomask |= HEAP_XMAX_INVALID;
 			return HEAPTUPLE_LIVE;
@@ -1014,9 +1031,8 @@ void
 FreeXactSnapshot(void)
 {
 	/*
-	 * We do not free(QuerySnapshot->xip);
-	 *        or free(SerializableSnapshot->xip);
-	 * they will be reused soon
+	 * We do not free(QuerySnapshot->xip); or
+	 * free(SerializableSnapshot->xip); they will be reused soon
 	 */
 	QuerySnapshot = NULL;
 	SerializableSnapshot = NULL;

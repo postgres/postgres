@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/bin/scripts/common.c,v 1.3 2003/05/27 19:36:54 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/scripts/common.c,v 1.4 2003/08/04 00:43:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@ handle_help_version_opts(int argc, char *argv[], const char *fixed_progname, hel
  */
 PGconn *
 connectDatabase(const char *dbname, const char *pghost, const char *pgport,
-				const char *pguser, bool require_password, const char *progname)
+		 const char *pguser, bool require_password, const char *progname)
 {
 	PGconn	   *conn;
 	char	   *password = NULL;
@@ -156,7 +156,7 @@ executeQuery(PGconn *conn, const char *query, const char *progname, bool echo)
 
 
 /*
- * Check yes/no answer in a localized way.  1=yes, 0=no, -1=neither.
+ * Check yes/no answer in a localized way.	1=yes, 0=no, -1=neither.
  */
 
 /* translator: Make sure the (y/n) prompts match the translation of this. */

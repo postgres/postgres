@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.67 2003/08/01 00:15:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.68 2003/08/04 00:43:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -383,8 +383,8 @@ CommentAttribute(List *qualname, char *comment)
 	if (attnum == InvalidAttrNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
-				 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
-						attrname, RelationGetRelationName(relation))));
+			 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+					attrname, RelationGetRelationName(relation))));
 
 	/* Create the comment using the relation's oid */
 
@@ -418,16 +418,17 @@ CommentDatabase(List *qualname, char *comment)
 	database = strVal(lfirst(qualname));
 
 	/*
-	 * We cannot currently support cross-database comments (since other DBs
-	 * cannot see pg_description of this database).  So, we reject attempts
-	 * to comment on a database other than the current one.  Someday this
-	 * might be improved, but it would take a redesigned infrastructure.
+	 * We cannot currently support cross-database comments (since other
+	 * DBs cannot see pg_description of this database).  So, we reject
+	 * attempts to comment on a database other than the current one.
+	 * Someday this might be improved, but it would take a redesigned
+	 * infrastructure.
 	 *
 	 * When loading a dump, we may see a COMMENT ON DATABASE for the old name
-	 * of the database.  Erroring out would prevent pg_restore from completing
-	 * (which is really pg_restore's fault, but for now we will work around
-	 * the problem here).  Consensus is that the best fix is to treat wrong
-	 * database name as a WARNING not an ERROR.
+	 * of the database.  Erroring out would prevent pg_restore from
+	 * completing (which is really pg_restore's fault, but for now we will
+	 * work around the problem here).  Consensus is that the best fix is
+	 * to treat wrong database name as a WARNING not an ERROR.
 	 */
 
 	/* First get the database OID */
@@ -569,7 +570,7 @@ CommentRule(List *qualname, char *comment)
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
 					 errmsg("there are multiple rules \"%s\"", rulename),
-					 errhint("Specify a relation name as well as a rule name.")));
+			errhint("Specify a relation name as well as a rule name.")));
 
 		heap_endscan(scanDesc);
 		heap_close(RewriteRelation, AccessShareLock);
@@ -811,8 +812,8 @@ CommentTrigger(List *qualname, char *comment)
 	if (!HeapTupleIsValid(triggertuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("trigger \"%s\" for relation \"%s\" does not exist",
-						trigname, RelationGetRelationName(relation))));
+			  errmsg("trigger \"%s\" for relation \"%s\" does not exist",
+					 trigname, RelationGetRelationName(relation))));
 
 	oid = HeapTupleGetOid(triggertuple);
 
@@ -891,7 +892,7 @@ CommentConstraint(List *qualname, char *comment)
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_OBJECT),
 						 errmsg("relation \"%s\" has multiple constraints named \"%s\"",
-								RelationGetRelationName(relation), conName)));
+						   RelationGetRelationName(relation), conName)));
 			conOid = HeapTupleGetOid(tuple);
 		}
 	}
@@ -902,8 +903,8 @@ CommentConstraint(List *qualname, char *comment)
 	if (!OidIsValid(conOid))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("constraint \"%s\" for relation \"%s\" does not exist",
-						conName, RelationGetRelationName(relation))));
+		   errmsg("constraint \"%s\" for relation \"%s\" does not exist",
+				  conName, RelationGetRelationName(relation))));
 
 	/* Create the comment with the pg_constraint oid */
 	CreateComments(conOid, RelationGetRelid(pg_constraint), 0, comment);

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/include/port/win32.h,v 1.11 2003/05/16 04:59:22 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/include/port/win32.h,v 1.12 2003/08/04 00:43:32 momjian Exp $ */
 
 /* undefine and redefine after #include */
 #undef mkdir
@@ -38,7 +38,6 @@
 #else							/* not CYGWIN, not MSVC */
 
 #define DLLIMPORT
-
 #endif
 
 /*
@@ -68,14 +67,14 @@
  */
 struct shmid_ds
 {
-	int		dummy;
-	int		shm_nattch;
+	int			dummy;
+	int			shm_nattch;
 };
 
-int   shmdt(const void *shmaddr);
-void* shmat(int memId, void* shmaddr, int flag);
-int   shmctl(int shmid, int flag, struct shmid_ds * dummy);
-int   shmget(int memKey, int size, int flag);
+int			shmdt(const void *shmaddr);
+void	   *shmat(int memId, void *shmaddr, int flag);
+int			shmctl(int shmid, int flag, struct shmid_ds * dummy);
+int			shmget(int memKey, int size, int flag);
 
 
 /*
@@ -83,45 +82,46 @@ int   shmget(int memKey, int size, int flag);
  */
 union semun
 {
-	int 		val;
+	int			val;
 	struct semid_ds *buf;
 	unsigned short *array;
 };
 
 struct sembuf
 {
-	int 		sem_flg;
-	int 		sem_op;
-	int 		sem_num;
+	int			sem_flg;
+	int			sem_op;
+	int			sem_num;
 };
 
-int	  semctl(int semId, int semNum, int flag, union semun);
-int	  semget(int semKey, int semNum, int flags);
-int	  semop(int semId, struct sembuf * sops, int flag);
+int			semctl(int semId, int semNum, int flag, union semun);
+int			semget(int semKey, int semNum, int flags);
+int			semop(int semId, struct sembuf * sops, int flag);
 
 #define sleep(sec)	(Sleep(sec * 1000), /* no return value */ 0)
 
 /* Some extra signals */
 #define SIGHUP				1
-#define SIGQUIT 			3
-#define SIGTRAP 			5
-#define SIGABRT 			22	  /* Set to match W32 value -- not UNIX value */
-#define SIGKILL 			9
-#define SIGPIPE 			13
-#define SIGALRM 			14
-#define SIGSTOP 			17
-#define SIGCONT 			19
-#define SIGCHLD 			20
-#define SIGTTIN 			21
-#define SIGTTOU 			22	  /* Same as SIGABRT -- no problem, I hope */
-#define SIGWINCH	  		28
-#define SIGUSR1 			30
-#define SIGUSR2 			31
+#define SIGQUIT				3
+#define SIGTRAP				5
+#define SIGABRT				22	/* Set to match W32 value -- not UNIX
+								 * value */
+#define SIGKILL				9
+#define SIGPIPE				13
+#define SIGALRM				14
+#define SIGSTOP				17
+#define SIGCONT				19
+#define SIGCHLD				20
+#define SIGTTIN				21
+#define SIGTTOU				22	/* Same as SIGABRT -- no problem, I hope */
+#define SIGWINCH			28
+#define SIGUSR1				30
+#define SIGUSR2				31
 
 struct timezone
 {
-    int tz_minuteswest;         /* Minutes west of GMT.  */
-    int tz_dsttime;             /* Nonzero if DST is ever in effect.  */
+	int			tz_minuteswest; /* Minutes west of GMT.  */
+	int			tz_dsttime;		/* Nonzero if DST is ever in effect.  */
 };
 
 /* FROM SRA */
@@ -163,4 +163,3 @@ struct timezone
 #define EWOULDBLOCK WSAEWOULDBLOCK
 #define ECONNRESET WSAECONNRESET
 #define EINPROGRESS WSAEINPROGRESS
-

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeLimit.c,v 1.15 2003/07/21 17:05:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeLimit.c,v 1.16 2003/08/04 00:43:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,17 +55,21 @@ ExecLimit(LimitState *node)
 	switch (node->lstate)
 	{
 		case LIMIT_INITIAL:
+
 			/*
 			 * If backwards scan, just return NULL without changing state.
 			 */
 			if (!ScanDirectionIsForward(direction))
 				return NULL;
+
 			/*
-			 * First call for this scan, so compute limit/offset. (We can't do
-			 * this any earlier, because parameters from upper nodes may not
-			 * be set until now.)  This also sets position = 0.
+			 * First call for this scan, so compute limit/offset. (We
+			 * can't do this any earlier, because parameters from upper
+			 * nodes may not be set until now.)  This also sets position =
+			 * 0.
 			 */
 			recompute_limits(node);
+
 			/*
 			 * Check for empty window; if so, treat like empty subplan.
 			 */
@@ -74,6 +78,7 @@ ExecLimit(LimitState *node)
 				node->lstate = LIMIT_EMPTY;
 				return NULL;
 			}
+
 			/*
 			 * Fetch rows from subplan until we reach position > offset.
 			 */
@@ -83,8 +88,8 @@ ExecLimit(LimitState *node)
 				if (TupIsNull(slot))
 				{
 					/*
-					 * The subplan returns too few tuples for us to produce
-					 * any output at all.
+					 * The subplan returns too few tuples for us to
+					 * produce any output at all.
 					 */
 					node->lstate = LIMIT_EMPTY;
 					return NULL;
@@ -93,6 +98,7 @@ ExecLimit(LimitState *node)
 				if (++node->position > node->offset)
 					break;
 			}
+
 			/*
 			 * Okay, we have the first tuple of the window.
 			 */
@@ -100,9 +106,10 @@ ExecLimit(LimitState *node)
 			break;
 
 		case LIMIT_EMPTY:
+
 			/*
 			 * The subplan is known to return no tuples (or not more than
-			 * OFFSET tuples, in general).  So we return no tuples.
+			 * OFFSET tuples, in general).	So we return no tuples.
 			 */
 			return NULL;
 
@@ -113,7 +120,8 @@ ExecLimit(LimitState *node)
 				 * Forwards scan, so check for stepping off end of window.
 				 * If we are at the end of the window, return NULL without
 				 * advancing the subplan or the position variable; but
-				 * change the state machine state to record having done so.
+				 * change the state machine state to record having done
+				 * so.
 				 */
 				if (!node->noCount &&
 					node->position >= node->offset + node->count)
@@ -121,6 +129,7 @@ ExecLimit(LimitState *node)
 					node->lstate = LIMIT_WINDOWEND;
 					return NULL;
 				}
+
 				/*
 				 * Get next tuple from subplan, if any.
 				 */
@@ -136,14 +145,16 @@ ExecLimit(LimitState *node)
 			else
 			{
 				/*
-				 * Backwards scan, so check for stepping off start of window.
-				 * As above, change only state-machine status if so.
+				 * Backwards scan, so check for stepping off start of
+				 * window. As above, change only state-machine status if
+				 * so.
 				 */
 				if (node->position <= node->offset + 1)
 				{
 					node->lstate = LIMIT_WINDOWSTART;
 					return NULL;
 				}
+
 				/*
 				 * Get previous tuple from subplan; there should be one!
 				 */
@@ -158,9 +169,11 @@ ExecLimit(LimitState *node)
 		case LIMIT_SUBPLANEOF:
 			if (ScanDirectionIsForward(direction))
 				return NULL;
+
 			/*
 			 * Backing up from subplan EOF, so re-fetch previous tuple;
-			 * there should be one!  Note previous tuple must be in window.
+			 * there should be one!  Note previous tuple must be in
+			 * window.
 			 */
 			slot = ExecProcNode(outerPlan);
 			if (TupIsNull(slot))
@@ -173,9 +186,10 @@ ExecLimit(LimitState *node)
 		case LIMIT_WINDOWEND:
 			if (ScanDirectionIsForward(direction))
 				return NULL;
+
 			/*
-			 * Backing up from window end: simply re-return the last
-			 * tuple fetched from the subplan.
+			 * Backing up from window end: simply re-return the last tuple
+			 * fetched from the subplan.
 			 */
 			slot = node->subSlot;
 			node->lstate = LIMIT_INWINDOW;
@@ -185,6 +199,7 @@ ExecLimit(LimitState *node)
 		case LIMIT_WINDOWSTART:
 			if (!ScanDirectionIsForward(direction))
 				return NULL;
+
 			/*
 			 * Advancing after having backed off window start: simply
 			 * re-return the last tuple fetched from the subplan.

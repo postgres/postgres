@@ -12,4 +12,5 @@
 /* Restore old ERROR value */
 #ifdef PGERROR
 #define ERROR PGERROR
+
 #endif

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.109 2003/08/01 23:24:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.110 2003/08/04 00:43:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -392,7 +392,7 @@ get_group_line(const char *group)
 /*
  * Lookup a user name in the pg_shadow file
  */
-List **
+List	  **
 get_user_line(const char *user)
 {
 	return (List **) bsearch((void *) user,
@@ -416,7 +416,7 @@ check_group(char *group, char *user)
 	{
 		foreach(l, lnext(lnext(*line)))
 			if (strcmp(lfirst(l), user) == 0)
-				return true;
+			return true;
 	}
 
 	return false;
@@ -547,13 +547,14 @@ static void
 parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 {
 	int			line_number;
-	char			*token;
-	char			*db;
-	char			*user;
-	struct addrinfo		*file_ip_addr = NULL, *file_ip_mask = NULL;
-	struct addrinfo		hints;
-	struct sockaddr_storage	*mask;
-	char 			*cidr_slash;
+	char	   *token;
+	char	   *db;
+	char	   *user;
+	struct addrinfo *file_ip_addr = NULL,
+			   *file_ip_mask = NULL;
+	struct addrinfo hints;
+	struct sockaddr_storage *mask;
+	char	   *cidr_slash;
 	int			ret;
 
 	Assert(line != NIL);
@@ -595,11 +596,11 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 			return;
 	}
 	else if (strcmp(token, "host") == 0
-			|| strcmp(token, "hostssl") == 0
-			|| strcmp(token, "hostnossl") == 0)
+			 || strcmp(token, "hostssl") == 0
+			 || strcmp(token, "hostnossl") == 0)
 	{
 
-		if (token[4] == 's')  /* "hostssl" */
+		if (token[4] == 's')	/* "hostssl" */
 		{
 #ifdef USE_SSL
 			/* Record does not match if we are not on an SSL connection */
@@ -616,7 +617,7 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 #endif
 		}
 #ifdef USE_SSL
-		else if (token[4] == 'n')  /* "hostnossl" */
+		else if (token[4] == 'n')		/* "hostnossl" */
 		{
 			/* Record does not match if we are on an SSL connection */
 			if (port->ssl)
@@ -643,7 +644,7 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 		token = lfirst(line);
 
 		/* Check if it has a CIDR suffix and if so isolate it */
-		cidr_slash = strchr(token,'/');
+		cidr_slash = strchr(token, '/');
 		if (cidr_slash)
 			*cidr_slash = '\0';
 
@@ -698,7 +699,7 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 			if (ret || !file_ip_mask)
 				goto hba_syntax;
 
-			mask = (struct sockaddr_storage *)file_ip_mask->ai_addr;
+			mask = (struct sockaddr_storage *) file_ip_mask->ai_addr;
 
 			if (file_ip_addr->ai_family != mask->ss_family)
 				goto hba_syntax;
@@ -714,7 +715,7 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 
 		/* Must meet network restrictions */
 		if (!rangeSockAddr(&port->raddr.addr,
-						   (struct sockaddr_storage *)file_ip_addr->ai_addr,
+					   (struct sockaddr_storage *) file_ip_addr->ai_addr,
 						   mask))
 			goto hba_freeaddr;
 
@@ -743,8 +744,8 @@ hba_syntax:
 	else
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 errmsg("missing field in pg_hba.conf file at end of line %d",
-						line_number)));
+			errmsg("missing field in pg_hba.conf file at end of line %d",
+				   line_number)));
 
 	*error_p = true;
 
@@ -1012,8 +1013,8 @@ ident_syntax:
 	else
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 errmsg("missing entry in pg_ident.conf file at end of line %d",
-						line_number)));
+		  errmsg("missing entry in pg_ident.conf file at end of line %d",
+				 line_number)));
 
 	*error_p = true;
 }
@@ -1044,7 +1045,7 @@ check_ident_usermap(const char *usermap_name,
 	{
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 errmsg("cannot use IDENT authentication without usermap field")));
+		errmsg("cannot use IDENT authentication without usermap field")));
 		found_entry = false;
 	}
 	else if (strcmp(usermap_name, "sameuser") == 0)
@@ -1215,11 +1216,13 @@ ident_inet(const SockAddr remote_addr,
 	char		ident_port[NI_MAXSERV];
 	char		ident_query[80];
 	char		ident_response[80 + IDENT_USERNAME_MAX];
-	struct addrinfo	*ident_serv = NULL, *la = NULL, hints;
+	struct addrinfo *ident_serv = NULL,
+			   *la = NULL,
+				hints;
 
 	/*
-	 * Might look a little weird to first convert it to text and
-	 * then back to sockaddr, but it's protocol independent.
+	 * Might look a little weird to first convert it to text and then back
+	 * to sockaddr, but it's protocol independent.
 	 */
 	getnameinfo_all(&remote_addr.addr, remote_addr.salen,
 					remote_addr_s, sizeof(remote_addr_s),
@@ -1254,22 +1257,23 @@ ident_inet(const SockAddr remote_addr,
 	rc = getaddrinfo_all(local_addr_s, NULL, &hints, &la);
 	if (rc || !la)
 		return false;			/* we don't expect this to happen */
-	
+
 	sock_fd = socket(ident_serv->ai_family, ident_serv->ai_socktype,
 					 ident_serv->ai_protocol);
 	if (sock_fd < 0)
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-				 errmsg("could not create socket for IDENT connection: %m")));
+			errmsg("could not create socket for IDENT connection: %m")));
 		ident_return = false;
 		goto ident_inet_done;
 	}
+
 	/*
 	 * Bind to the address which the client originally contacted,
 	 * otherwise the ident server won't be able to match up the right
-	 * connection. This is necessary if the PostgreSQL server is
-	 * running on an IP alias.
+	 * connection. This is necessary if the PostgreSQL server is running
+	 * on an IP alias.
 	 */
 	rc = bind(sock_fd, la->ai_addr, la->ai_addrlen);
 	if (rc != 0)
@@ -1282,7 +1286,7 @@ ident_inet(const SockAddr remote_addr,
 		goto ident_inet_done;
 	}
 
-	rc = connect(sock_fd, ident_serv->ai_addr, 
+	rc = connect(sock_fd, ident_serv->ai_addr,
 				 ident_serv->ai_addrlen);
 	if (rc != 0)
 	{
@@ -1354,12 +1358,12 @@ ident_unix(int sock, char *ident_user)
 {
 #if defined(HAVE_GETPEEREID)
 	/* OpenBSD style:  */
-	uid_t uid;
-	gid_t gid;
+	uid_t		uid;
+	gid_t		gid;
 	struct passwd *pass;
 
 	errno = 0;
-	if (getpeereid(sock,&uid,&gid) != 0)
+	if (getpeereid(sock, &uid, &gid) != 0)
 	{
 		/* We didn't get a valid credentials struct. */
 		ereport(LOG,
@@ -1491,8 +1495,7 @@ ident_unix(int sock, char *ident_user)
 	return false;
 #endif
 }
-
-#endif /* HAVE_UNIX_SOCKETS */
+#endif   /* HAVE_UNIX_SOCKETS */
 
 
 /*

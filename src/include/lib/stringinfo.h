@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: stringinfo.h,v 1.26 2003/04/24 21:16:44 tgl Exp $
+ * $Id: stringinfo.h,v 1.27 2003/08/04 00:43:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,14 +85,15 @@ extern void initStringInfo(StringInfo str);
  * to str if necessary.  This is sort of like a combination of sprintf and
  * strcat.
  */
-extern void appendStringInfo(StringInfo str, const char *fmt, ...)
+extern void
+appendStringInfo(StringInfo str, const char *fmt,...)
 /* This extension allows gcc to check the format string */
 __attribute__((format(printf, 2, 3)));
 
 /*------------------------
  * appendStringInfoVA
  * Attempt to format text data under the control of fmt (an sprintf-style
- * format string) and append it to whatever is already in str.  If successful
+ * format string) and append it to whatever is already in str.	If successful
  * return true; if not (because there's not enough space), return false
  * without modifying str.  Typically the caller would enlarge str and retry
  * on false return --- see appendStringInfo for standard usage pattern.

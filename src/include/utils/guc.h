@@ -7,7 +7,7 @@
  * Copyright 2000-2003 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $Id: guc.h,v 1.38 2003/07/28 19:31:32 tgl Exp $
+ * $Id: guc.h,v 1.39 2003/08/04 00:43:32 momjian Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -40,7 +40,7 @@
  * configuration file, or by client request in the connection startup
  * packet (e.g., from libpq's PGOPTIONS variable).  Furthermore, an
  * already-started backend will ignore changes to such an option in the
- * configuration file.  The idea is that these options are fixed for a
+ * configuration file.	The idea is that these options are fixed for a
  * given backend once it's started, but they can vary across backends.
  *
  * SUSET options can be set at postmaster startup, with the SIGHUP
@@ -146,8 +146,8 @@ extern ArrayType *GUCArrayAdd(ArrayType *array, const char *name, const char *va
 extern ArrayType *GUCArrayDelete(ArrayType *array, const char *name);
 
 #ifdef EXEC_BACKEND
-void write_nondefault_variables(GucContext context);
-void read_nondefault_variables(void);
+void		write_nondefault_variables(GucContext context);
+void		read_nondefault_variables(void);
 #endif
 
 #endif   /* GUC_H */

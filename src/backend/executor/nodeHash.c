@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.77 2003/07/21 17:05:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.78 2003/08/04 00:43:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -244,7 +244,7 @@ ExecHashTableCreate(Hash *node, List *hashOperators)
 	i = 0;
 	foreach(ho, hashOperators)
 	{
-		Oid		hashfn;
+		Oid			hashfn;
 
 		hashfn = get_op_hash_function(lfirsto(ho));
 		if (!OidIsValid(hashfn))

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.67 2003/07/31 04:23:40 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.68 2003/08/04 00:43:29 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -44,15 +44,16 @@
 #ifndef WIN32
 
 typedef struct timeval TimevalStruct;
+
 #define GETTIMEOFDAY(T) gettimeofday(T, NULL)
 #define DIFF_MSEC(T, U) ((((T)->tv_sec - (U)->tv_sec) * 1000000.0 + (T)->tv_usec - (U)->tv_usec) / 1000.0)
 
 #else
 
 typedef struct _timeb TimevalStruct;
+
 #define GETTIMEOFDAY(T) _ftime(T)
 #define DIFF_MSEC(T, U) ((((T)->time - (U)->time) * 1000.0 + (T)->millitm - (U)->millitm))
-
 #endif
 
 extern bool prompt_state;
@@ -187,7 +188,7 @@ NoticeProcessor(void *arg, const char *message)
  * so. We use write() to print to stdout because it's better to use simple
  * facilities in a signal handler.
  */
-static PGconn	   *volatile cancelConn = NULL;
+static PGconn *volatile cancelConn = NULL;
 
 volatile bool cancel_pressed = false;
 
@@ -227,7 +228,7 @@ handle_sigint(SIGNAL_ARGS)
  *
  * Returns whether our backend connection is still there.
  */
-static bool 
+static bool
 ConnectionUp()
 {
 	return PQstatus(pset.db) != CONNECTION_BAD;
@@ -241,15 +242,15 @@ ConnectionUp()
  * see if it can be restored.
  *
  * Returns true if either the connection was still there, or it could be
- * restored successfully; false otherwise.  If, however, there was no
+ * restored successfully; false otherwise.	If, however, there was no
  * connection and the session is non-interactive, this will exit the program
  * with a code of EXIT_BADCONN.
  */
 static bool
 CheckConnection()
 {
-	bool OK;
-	
+	bool		OK;
+
 	OK = ConnectionUp();
 	if (!OK)
 	{
@@ -284,21 +285,23 @@ CheckConnection()
  *
  * Set cancelConn to point to the current database connection.
  */
-static void SetCancelConn(void)
+static void
+SetCancelConn(void)
 {
-  cancelConn = pset.db;
+	cancelConn = pset.db;
 }
 
 
 /*
  * ResetCancelConn
  *
- * Set cancelConn to NULL.  I don't know what this means exactly, but it saves
+ * Set cancelConn to NULL.	I don't know what this means exactly, but it saves
  * having to export the variable.
  */
-void ResetCancelConn(void)
+void
+ResetCancelConn(void)
 {
-  cancelConn = NULL;
+	cancelConn = NULL;
 }
 
 
@@ -314,33 +317,32 @@ void ResetCancelConn(void)
 static bool
 AcceptResult(const PGresult *result)
 {
-	bool OK = true;
+	bool		OK = true;
 
 	ResetCancelConn();
 
 	if (!result)
-	{
-	  OK = false;
-	}
-	else switch (PQresultStatus(result))
-	{
-	  case PGRES_COMMAND_OK:
-	  case PGRES_TUPLES_OK:
-	  case PGRES_COPY_IN:
-		 /* Fine, do nothing */
-		 break;
+		OK = false;
+	else
+		switch (PQresultStatus(result))
+		{
+			case PGRES_COMMAND_OK:
+			case PGRES_TUPLES_OK:
+			case PGRES_COPY_IN:
+				/* Fine, do nothing */
+				break;
 
-	  case PGRES_COPY_OUT:
-		 /* keep cancel connection for copy out state */
-		 SetCancelConn();
-		 break;
+			case PGRES_COPY_OUT:
+				/* keep cancel connection for copy out state */
+				SetCancelConn();
+				break;
 
-	  default:
-		 OK = false;
-		 break;
-	}
+			default:
+				OK = false;
+				break;
+		}
 
-	if (!OK) 
+	if (!OK)
 	{
 		CheckConnection();
 		psql_error("%s", PQerrorMessage(pset.db));
@@ -365,7 +367,7 @@ PGresult *
 PSQLexec(const char *query, bool start_xact)
 {
 	PGresult   *res;
-	int	echo_hidden;
+	int			echo_hidden;
 
 	if (!pset.db)
 	{
@@ -438,41 +440,38 @@ PrintNotifications(void)
  *
  * Returns true if successful, false otherwise.
  */
-static bool 
+static bool
 PrintQueryTuples(const PGresult *results)
 {
-				/* write output to \g argument, if any */
-				if (pset.gfname)
-				{
-					FILE	   *queryFout_copy = pset.queryFout;
-					bool		queryFoutPipe_copy = pset.queryFoutPipe;
+	/* write output to \g argument, if any */
+	if (pset.gfname)
+	{
+		FILE	   *queryFout_copy = pset.queryFout;
+		bool		queryFoutPipe_copy = pset.queryFoutPipe;
 
-					pset.queryFout = stdout;	/* so it doesn't get
-												 * closed */
+		pset.queryFout = stdout;	/* so it doesn't get closed */
 
-					/* open file/pipe */
-					if (!setQFout(pset.gfname))
-					{
-						pset.queryFout = queryFout_copy;
-						pset.queryFoutPipe = queryFoutPipe_copy;
+		/* open file/pipe */
+		if (!setQFout(pset.gfname))
+		{
+			pset.queryFout = queryFout_copy;
+			pset.queryFoutPipe = queryFoutPipe_copy;
 			return false;
-					}
+		}
 
-					printQuery(results, &pset.popt, pset.queryFout);
+		printQuery(results, &pset.popt, pset.queryFout);
 
-					/* close file/pipe, restore old setting */
-					setQFout(NULL);
+		/* close file/pipe, restore old setting */
+		setQFout(NULL);
 
-					pset.queryFout = queryFout_copy;
-					pset.queryFoutPipe = queryFoutPipe_copy;
+		pset.queryFout = queryFout_copy;
+		pset.queryFoutPipe = queryFoutPipe_copy;
 
-					free(pset.gfname);
-					pset.gfname = NULL;
-				}
-				else
-				{
-					printQuery(results, &pset.popt, pset.queryFout);
-				}
+		free(pset.gfname);
+		pset.gfname = NULL;
+	}
+	else
+		printQuery(results, &pset.popt, pset.queryFout);
 
 	return true;
 }
@@ -487,65 +486,64 @@ PrintQueryTuples(const PGresult *results)
  * Returns true if the query executed successfully, false otherwise.
  */
 static bool
-PrintQueryResults(PGresult *results, 
-		const TimevalStruct *before, 
-		const TimevalStruct *after)
+PrintQueryResults(PGresult *results,
+				  const TimevalStruct * before,
+				  const TimevalStruct * after)
 {
-	bool	success = false;
+	bool		success = false;
 
-	if (!results) 
-	  return false;
+	if (!results)
+		return false;
 
 	switch (PQresultStatus(results))
 	{
 		case PGRES_TUPLES_OK:
 			success = PrintQueryTuples(results);
-				break;
-			case PGRES_EMPTY_QUERY:
+			break;
+		case PGRES_EMPTY_QUERY:
+			success = true;
+			break;
+		case PGRES_COMMAND_OK:
+			{
+				char		buf[10];
+
 				success = true;
-				break;
-			case PGRES_COMMAND_OK:
+				sprintf(buf, "%u", (unsigned int) PQoidValue(results));
+				if (!QUIET())
 				{
-					char		buf[10];
-
-					success = true;
-					sprintf(buf, "%u", (unsigned int) PQoidValue(results));
-					if (!QUIET())
-						{
-							if (pset.popt.topt.format == PRINT_HTML)
-							{
-								fputs("<p>", pset.queryFout);
-								html_escaped_print(PQcmdStatus(results), pset.queryFout);
-								fputs("</p>\n", pset.queryFout);
-							}
-							else
-							{
-								fprintf(pset.queryFout, "%s\n", PQcmdStatus(results));
-							}
-						}
-					SetVariable(pset.vars, "LASTOID", buf);
-					break;
+					if (pset.popt.topt.format == PRINT_HTML)
+					{
+						fputs("<p>", pset.queryFout);
+						html_escaped_print(PQcmdStatus(results), pset.queryFout);
+						fputs("</p>\n", pset.queryFout);
+					}
+					else
+						fprintf(pset.queryFout, "%s\n", PQcmdStatus(results));
 				}
-			case PGRES_COPY_OUT:
-				success = handleCopyOut(pset.db, pset.queryFout);
+				SetVariable(pset.vars, "LASTOID", buf);
 				break;
+			}
+		case PGRES_COPY_OUT:
+			success = handleCopyOut(pset.db, pset.queryFout);
+			break;
 
-			case PGRES_COPY_IN:
-				if (pset.cur_cmd_interactive && !QUIET())
-					puts(gettext("Enter data to be copied followed by a newline.\n"
-								 "End with a backslash and a period on a line by itself."));
+		case PGRES_COPY_IN:
+			if (pset.cur_cmd_interactive && !QUIET())
+				puts(gettext("Enter data to be copied followed by a newline.\n"
+							 "End with a backslash and a period on a line by itself."));
 
-				success = handleCopyIn(pset.db, pset.cur_cmd_source,
-									   pset.cur_cmd_interactive ? get_prompt(PROMPT_COPY) : NULL);
-				break;
+			success = handleCopyIn(pset.db, pset.cur_cmd_source,
+			  pset.cur_cmd_interactive ? get_prompt(PROMPT_COPY) : NULL);
+			break;
 
 		default:
-				break;
-		}
+			break;
+	}
 
-		fflush(pset.queryFout);
+	fflush(pset.queryFout);
 
-	if (!CheckConnection()) return false;
+	if (!CheckConnection())
+		return false;
 
 	/* Possible microtiming output */
 	if (pset.timing && success)
@@ -572,8 +570,9 @@ bool
 SendQuery(const char *query)
 {
 	PGresult   *results;
-	TimevalStruct before, after;
-	bool OK;
+	TimevalStruct before,
+				after;
+	bool		OK;
 
 	if (!pset.db)
 	{
@@ -599,7 +598,7 @@ SendQuery(const char *query)
 		puts(query);
 		fflush(stdout);
 	}
-	
+
 	SetCancelConn();
 
 	if (PQtransactionStatus(pset.db) == PQTRANS_IDLE &&
@@ -636,7 +635,7 @@ SendQuery(const char *query)
 static bool
 is_transact_command(const char *query)
 {
-	int		wordlen;
+	int			wordlen;
 
 	/*
 	 * First we must advance over any whitespace and comments.
@@ -693,13 +692,14 @@ is_transact_command(const char *query)
 }
 
 
-char parse_char(char **buf)
+char
+parse_char(char **buf)
 {
-  long l;
+	long		l;
 
-  l = strtol(*buf, buf, 0);
-  --*buf;
-  return (char)l;
+	l = strtol(*buf, buf, 0);
+	--*buf;
+	return (char) l;
 }
 
 

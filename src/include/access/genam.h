@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: genam.h,v 1.40 2003/07/27 17:10:06 tgl Exp $
+ * $Id: genam.h,v 1.41 2003/08/04 00:43:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,8 +34,8 @@ typedef struct IndexBulkDeleteResult
 	BlockNumber num_pages;		/* pages remaining in index */
 	double		num_index_tuples;		/* tuples remaining */
 	double		tuples_removed; /* # removed by bulk-delete operation */
-	BlockNumber	pages_deleted;	/* # unused pages in index */
-	BlockNumber	pages_free;		/* # pages available for reuse */
+	BlockNumber pages_deleted;	/* # unused pages in index */
+	BlockNumber pages_free;		/* # pages available for reuse */
 } IndexBulkDeleteResult;
 
 /* Typedef for callback function to determine if a tuple is bulk-deletable */
@@ -46,7 +46,7 @@ typedef struct IndexVacuumCleanupInfo
 {
 	bool		vacuum_full;	/* VACUUM FULL (we have exclusive lock) */
 	int			message_level;	/* ereport level for progress messages */
-} IndexVacuumCleanupInfo;
+}	IndexVacuumCleanupInfo;
 
 /* Struct for heap-or-index scans of system tables */
 typedef struct SysScanDescData
@@ -89,8 +89,8 @@ extern IndexBulkDeleteResult *index_bulk_delete(Relation indexRelation,
 				  IndexBulkDeleteCallback callback,
 				  void *callback_state);
 extern IndexBulkDeleteResult *index_vacuum_cleanup(Relation indexRelation,
-				  IndexVacuumCleanupInfo *info,
-				  IndexBulkDeleteResult *stats);
+					 IndexVacuumCleanupInfo * info,
+					 IndexBulkDeleteResult *stats);
 extern RegProcedure index_cost_estimator(Relation indexRelation);
 extern RegProcedure index_getprocid(Relation irel, AttrNumber attnum,
 				uint16 procnum);

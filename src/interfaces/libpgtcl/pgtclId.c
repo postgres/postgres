@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.41 2003/03/25 02:44:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.42 2003/08/04 00:43:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -296,14 +296,14 @@ PgDelConnectionId(DRIVER_DEL_PROTO)
 	 * the socket itself!
 	 *
 	 * XXX Unfortunately, while this works fine if we are closing due to
-	 * explicit pg_disconnect, all Tcl versions through 8.4.1 dump core
-	 * if we try to do it during interpreter shutdown.  Not clear why.
-	 * For now, we kill the channel during pg_disconnect, but during interp
-	 * shutdown we just accept leakage of the (fairly small) amount of memory
-	 * taken for the channel state representation.
-	 * (Note we are not leaking a socket, since libpq closed that already.)
-	 * We tell the difference between pg_disconnect and interpreter shutdown
-	 * by testing for interp != NULL, which is an undocumented but apparently
+	 * explicit pg_disconnect, all Tcl versions through 8.4.1 dump core if
+	 * we try to do it during interpreter shutdown.  Not clear why. For
+	 * now, we kill the channel during pg_disconnect, but during interp
+	 * shutdown we just accept leakage of the (fairly small) amount of
+	 * memory taken for the channel state representation. (Note we are not
+	 * leaking a socket, since libpq closed that already.) We tell the
+	 * difference between pg_disconnect and interpreter shutdown by
+	 * testing for interp != NULL, which is an undocumented but apparently
 	 * safe way to tell.
 	 */
 #if TCL_MAJOR_VERSION >= 8

@@ -51,7 +51,8 @@ DICT		dicts[] = {
 #undef DICT_TABLE
 
 /* array for storing dictionary's objects (if needed) */
-void	   *dictobjs[lengthof(dicts)];
+void	   *dictobjs[
+					 lengthof(dicts)];
 
 #define STOPLEXEM	-2
 #define BYLOCALE	-1
@@ -175,7 +176,7 @@ lemmatize(char *word, int *len, int type)
 		}
 		else if (nd == BYLOCALE)
 		{
-			continue; /* no dict for current locale */
+			continue;			/* no dict for current locale */
 		}
 		else
 		{

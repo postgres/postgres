@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.88 2003/07/27 04:53:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.89 2003/08/04 00:43:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -254,15 +254,15 @@ AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 		if ((typmod < 0) || (typmod > MAX_TIMESTAMP_PRECISION))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("timestamp(%d) precision must be between %d and %d",
-							 typmod, 0, MAX_TIMESTAMP_PRECISION)));
+			  errmsg("timestamp(%d) precision must be between %d and %d",
+					 typmod, 0, MAX_TIMESTAMP_PRECISION)));
 
 		/*
 		 * Note: this round-to-nearest code is not completely consistent
 		 * about rounding values that are exactly halfway between integral
-		 * values.  On most platforms, rint() will implement round-to-nearest-even,
-		 * but the integer code always rounds up (away from zero).  Is it
-		 * worth trying to be consistent?
+		 * values.	On most platforms, rint() will implement
+		 * round-to-nearest-even, but the integer code always rounds up
+		 * (away from zero).  Is it worth trying to be consistent?
 		 */
 #ifdef HAVE_INT64_TIMESTAMP
 		if (*time >= INT64CONST(0))
@@ -272,8 +272,8 @@ AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 		}
 		else
 		{
-			*time = - ((((- *time) + TimestampOffsets[typmod]) / TimestampScales[typmod])
-					   * TimestampScales[typmod]);
+			*time = -((((-*time) + TimestampOffsets[typmod]) / TimestampScales[typmod])
+					  * TimestampScales[typmod]);
 		}
 #else
 		*time = (rint(((double) *time) * TimestampScales[typmod])
@@ -411,7 +411,7 @@ timestamptz_recv(PG_FUNCTION_ARGS)
 Datum
 timestamptz_send(PG_FUNCTION_ARGS)
 {
-	TimestampTz	timestamp = PG_GETARG_TIMESTAMPTZ(0);
+	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(0);
 	StringInfoData buf;
 
 	pq_begintypsend(&buf);
@@ -829,15 +829,16 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			if ((precision < 0) || (precision > MAX_INTERVAL_PRECISION))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("interval(%d) precision must be between %d and %d",
-								 precision, 0, MAX_INTERVAL_PRECISION)));
+				errmsg("interval(%d) precision must be between %d and %d",
+					   precision, 0, MAX_INTERVAL_PRECISION)));
 
 			/*
-			 * Note: this round-to-nearest code is not completely consistent
-			 * about rounding values that are exactly halfway between integral
-			 * values.  On most platforms, rint() will implement round-to-nearest-even,
-			 * but the integer code always rounds up (away from zero).  Is it
-			 * worth trying to be consistent?
+			 * Note: this round-to-nearest code is not completely
+			 * consistent about rounding values that are exactly halfway
+			 * between integral values.  On most platforms, rint() will
+			 * implement round-to-nearest-even, but the integer code
+			 * always rounds up (away from zero).  Is it worth trying to
+			 * be consistent?
 			 */
 #ifdef HAVE_INT64_TIMESTAMP
 			if (interval->time >= INT64CONST(0))
@@ -847,8 +848,8 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			}
 			else
 			{
-				interval->time = - (((-interval->time + IntervalOffsets[precision]) / IntervalScales[precision])
-									* IntervalScales[precision]);
+				interval->time = -(((-interval->time + IntervalOffsets[precision]) / IntervalScales[precision])
+								   * IntervalScales[precision]);
 			}
 #else
 			interval->time = (rint(((double) interval->time) * IntervalScales[precision])
@@ -1024,7 +1025,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
 		{
 #ifdef HAVE_INT64_TIMESTAMP
 			utime = ((dt / INT64CONST(1000000))
-				   + ((date0 - UNIX_EPOCH_JDATE) * INT64CONST(86400)));
+					 + ((date0 - UNIX_EPOCH_JDATE) * INT64CONST(86400)));
 #else
 			utime = (dt + ((date0 - UNIX_EPOCH_JDATE) * 86400));
 #endif
@@ -2410,7 +2411,7 @@ text_timestamp(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 				 errmsg("invalid input syntax for timestamp: \"%s\"",
 						DatumGetCString(DirectFunctionCall1(textout,
-										 PointerGetDatum(str))))));
+											   PointerGetDatum(str))))));
 
 	sp = VARDATA(str);
 	dp = dstr;
@@ -2470,7 +2471,7 @@ text_timestamptz(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 				 errmsg("invalid input syntax for timestamp with time zone: \"%s\"",
 						DatumGetCString(DirectFunctionCall1(textout,
-										 PointerGetDatum(str))))));
+											   PointerGetDatum(str))))));
 
 	sp = VARDATA(str);
 	dp = dstr;
@@ -2531,7 +2532,7 @@ text_interval(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 				 errmsg("invalid input syntax for interval: \"%s\"",
 						DatumGetCString(DirectFunctionCall1(textout,
-										 PointerGetDatum(str))))));
+											   PointerGetDatum(str))))));
 
 	sp = VARDATA(str);
 	dp = dstr;
@@ -2568,8 +2569,8 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("timestamp units \"%s\" not recognized",
-						 DatumGetCString(DirectFunctionCall1(textout,
-										 PointerGetDatum(units))))));
+						DatumGetCString(DirectFunctionCall1(textout,
+											 PointerGetDatum(units))))));
 
 	up = VARDATA(units);
 	lp = lowunits;
@@ -2676,9 +2677,9 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("timestamp with time zone units \"%s\" not recognized",
-						 DatumGetCString(DirectFunctionCall1(textout,
-										 PointerGetDatum(units))))));
+		   errmsg("timestamp with time zone units \"%s\" not recognized",
+				  DatumGetCString(DirectFunctionCall1(textout,
+											 PointerGetDatum(units))))));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -2737,8 +2738,8 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 			default:
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("timestamp with time zone units \"%s\" not "
-								"supported", lowunits)));
+					  errmsg("timestamp with time zone units \"%s\" not "
+							 "supported", lowunits)));
 				result = 0;
 		}
 
@@ -2753,8 +2754,8 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("timestamp with time zone units \"%s\" not recognized",
-						 lowunits)));
+		   errmsg("timestamp with time zone units \"%s\" not recognized",
+				  lowunits)));
 		result = 0;
 	}
 
@@ -2786,8 +2787,8 @@ interval_trunc(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("interval units \"%s\" not recognized",
-						 DatumGetCString(DirectFunctionCall1(textout,
-										 PointerGetDatum(units))))));
+						DatumGetCString(DirectFunctionCall1(textout,
+											 PointerGetDatum(units))))));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -2841,7 +2842,7 @@ interval_trunc(PG_FUNCTION_ARGS)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("interval units \"%s\" not supported",
-									 lowunits)));
+									lowunits)));
 			}
 
 			if (tm2interval(tm, fsec, result) != 0)
@@ -2850,17 +2851,15 @@ interval_trunc(PG_FUNCTION_ARGS)
 						 errmsg("interval out of range")));
 		}
 		else
-		{
 			elog(ERROR, "could not convert interval to tm");
-		}
 	}
 	else
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("interval units \"%s\" not recognized",
-						 DatumGetCString(DirectFunctionCall1(textout,
-										 PointerGetDatum(units))))));
+						DatumGetCString(DirectFunctionCall1(textout,
+											 PointerGetDatum(units))))));
 		*result = *interval;
 	}
 
@@ -2882,7 +2881,7 @@ isoweek2date(int woy, int *year, int *mon, int *mday)
 	if (!*year)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot convert week number without year information")));
+		 errmsg("cannot convert week number without year information")));
 
 	/* fourth day of current year */
 	day4 = date2j(*year, 1, 4);
@@ -2972,8 +2971,8 @@ timestamp_part(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("timestamp units \"%s\" not recognized",
-						 DatumGetCString(DirectFunctionCall1(textout,
-										 PointerGetDatum(units))))));
+						DatumGetCString(DirectFunctionCall1(textout,
+											 PointerGetDatum(units))))));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -3081,7 +3080,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("timestamp units \"%s\" not supported",
-								 lowunits)));
+								lowunits)));
 				result = 0;
 		}
 	}
@@ -3090,30 +3089,33 @@ timestamp_part(PG_FUNCTION_ARGS)
 		switch (val)
 		{
 			case DTK_EPOCH:
-			{
-				int		tz;
-				TimestampTz timestamptz;
+				{
+					int			tz;
+					TimestampTz timestamptz;
 
-				/* convert to timestamptz to produce consistent results */
-				if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) != 0)
-					ereport(ERROR,
-							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-							 errmsg("timestamp out of range")));
+					/*
+					 * convert to timestamptz to produce consistent
+					 * results
+					 */
+					if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) != 0)
+						ereport(ERROR,
+						   (errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+							errmsg("timestamp out of range")));
 
-				tz = DetermineLocalTimeZone(tm);
+					tz = DetermineLocalTimeZone(tm);
 
-				if (tm2timestamp(tm, fsec, &tz, &timestamptz) != 0)
-					ereport(ERROR,
-							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-							 errmsg("timestamp out of range")));
+					if (tm2timestamp(tm, fsec, &tz, &timestamptz) != 0)
+						ereport(ERROR,
+						   (errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+							errmsg("timestamp out of range")));
 
 #ifdef HAVE_INT64_TIMESTAMP
-				result = ((timestamptz - SetEpochTimestamp()) / 1000000e0);
+					result = ((timestamptz - SetEpochTimestamp()) / 1000000e0);
 #else
-				result = timestamptz - SetEpochTimestamp();
+					result = timestamptz - SetEpochTimestamp();
 #endif
-				break;
-			}
+					break;
+				}
 			case DTK_DOW:
 				if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) != 0)
 					ereport(ERROR,
@@ -3135,7 +3137,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("timestamp units \"%s\" not supported",
-								 lowunits)));
+								lowunits)));
 				result = 0;
 		}
 
@@ -3144,7 +3146,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("timestamp units \"%s\" not recognized", lowunits)));
+			 errmsg("timestamp units \"%s\" not recognized", lowunits)));
 		result = 0;
 	}
 
@@ -3176,9 +3178,9 @@ timestamptz_part(PG_FUNCTION_ARGS)
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("timestamp with time zone units \"%s\" not recognized",
-						 DatumGetCString(DirectFunctionCall1(textout,
-										 PointerGetDatum(units))))));
+		   errmsg("timestamp with time zone units \"%s\" not recognized",
+				  DatumGetCString(DirectFunctionCall1(textout,
+											 PointerGetDatum(units))))));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -3298,7 +3300,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("timestamp with time zone units \"%s\" not supported",
-								 lowunits)));
+								lowunits)));
 				result = 0;
 		}
 
@@ -3336,7 +3338,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("timestamp with time zone units \"%s\" not supported",
-								 lowunits)));
+								lowunits)));
 				result = 0;
 		}
 	}
@@ -3344,8 +3346,8 @@ timestamptz_part(PG_FUNCTION_ARGS)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("timestamp with time zone units \"%s\" not recognized",
-						 lowunits)));
+		   errmsg("timestamp with time zone units \"%s\" not recognized",
+				  lowunits)));
 
 		result = 0;
 	}
@@ -3377,8 +3379,8 @@ interval_part(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("interval units \"%s\" not recognized",
-						 DatumGetCString(DirectFunctionCall1(textout,
-										 PointerGetDatum(units))))));
+						DatumGetCString(DirectFunctionCall1(textout,
+											 PointerGetDatum(units))))));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -3460,7 +3462,7 @@ interval_part(PG_FUNCTION_ARGS)
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("interval units \"%s\" not supported",
 							 DatumGetCString(DirectFunctionCall1(textout,
-											   PointerGetDatum(units))))));
+											 PointerGetDatum(units))))));
 					result = 0;
 			}
 
@@ -3489,8 +3491,8 @@ interval_part(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("interval units \"%s\" not recognized",
-						 DatumGetCString(DirectFunctionCall1(textout,
-										 PointerGetDatum(units))))));
+						DatumGetCString(DirectFunctionCall1(textout,
+											 PointerGetDatum(units))))));
 		result = 0;
 	}
 
@@ -3521,8 +3523,8 @@ timestamp_zone(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("time zone \"%s\" not recognized",
-						 DatumGetCString(DirectFunctionCall1(textout,
-										 PointerGetDatum(zone))))));
+						DatumGetCString(DirectFunctionCall1(textout,
+											  PointerGetDatum(zone))))));
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_TIMESTAMPTZ(timestamp);
@@ -3546,7 +3548,7 @@ timestamp_zone(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("time zone \"%s\" not recognized",
-						 lowzone)));
+						lowzone)));
 
 		PG_RETURN_NULL();
 	}
@@ -3571,9 +3573,9 @@ timestamp_izone(PG_FUNCTION_ARGS)
 	if (zone->month != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("interval time zone \"%s\" must not specify month",
-						DatumGetCString(DirectFunctionCall1(interval_out,
-										 PointerGetDatum(zone))))));
+			   errmsg("interval time zone \"%s\" must not specify month",
+					  DatumGetCString(DirectFunctionCall1(interval_out,
+											  PointerGetDatum(zone))))));
 
 #ifdef HAVE_INT64_TIMESTAMP
 	tz = (zone->time / INT64CONST(1000000));
@@ -3673,8 +3675,8 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("time zone \"%s\" not recognized",
-						 DatumGetCString(DirectFunctionCall1(textout,
-										 PointerGetDatum(zone))))));
+						DatumGetCString(DirectFunctionCall1(textout,
+											  PointerGetDatum(zone))))));
 	up = VARDATA(zone);
 	lp = lowzone;
 	for (i = 0; i < (VARSIZE(zone) - VARHDRSZ); i++)
@@ -3722,9 +3724,9 @@ timestamptz_izone(PG_FUNCTION_ARGS)
 	if (zone->month != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("interval time zone \"%s\" must not specify month",
-						 DatumGetCString(DirectFunctionCall1(interval_out,
-													 PointerGetDatum(zone))))));
+			   errmsg("interval time zone \"%s\" must not specify month",
+					  DatumGetCString(DirectFunctionCall1(interval_out,
+											  PointerGetDatum(zone))))));
 
 #ifdef HAVE_INT64_TIMESTAMP
 	tz = -(zone->time / INT64CONST(1000000));

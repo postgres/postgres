@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/xid.c,v 1.1 2003/05/12 23:08:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/xid.c,v 1.2 2003/08/04 00:43:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,7 +151,7 @@ cidrecv(PG_FUNCTION_ARGS)
 Datum
 cidsend(PG_FUNCTION_ARGS)
 {
-	CommandId arg1 = PG_GETARG_COMMANDID(0);
+	CommandId	arg1 = PG_GETARG_COMMANDID(0);
 	StringInfoData buf;
 
 	pq_begintypsend(&buf);

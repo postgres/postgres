@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.100 2003/05/28 16:03:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.101 2003/08/04 00:43:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,8 +166,8 @@ CreateExecutorState(void)
 									 ALLOCSET_DEFAULT_MAXSIZE);
 
 	/*
-	 * Make the EState node within the per-query context.  This way,
-	 * we don't need a separate pfree() operation for it at shutdown.
+	 * Make the EState node within the per-query context.  This way, we
+	 * don't need a separate pfree() operation for it at shutdown.
 	 */
 	oldcontext = MemoryContextSwitchTo(qcontext);
 
@@ -248,6 +248,7 @@ FreeExecutorState(EState *estate)
 		FreeExprContext((ExprContext *) lfirst(estate->es_exprcontexts));
 		/* FreeExprContext removed the list link for us */
 	}
+
 	/*
 	 * Free the per-query memory context, thereby releasing all working
 	 * memory, including the EState node itself.
@@ -310,10 +311,10 @@ CreateExprContext(EState *estate)
 	econtext->ecxt_callbacks = NULL;
 
 	/*
-	 * Link the ExprContext into the EState to ensure it is shut down
-	 * when the EState is freed.  Because we use lcons(), shutdowns will
-	 * occur in reverse order of creation, which may not be essential
-	 * but can't hurt.
+	 * Link the ExprContext into the EState to ensure it is shut down when
+	 * the EState is freed.  Because we use lcons(), shutdowns will occur
+	 * in reverse order of creation, which may not be essential but can't
+	 * hurt.
 	 */
 	estate->es_exprcontexts = lcons(econtext, estate->es_exprcontexts);
 
@@ -377,14 +378,14 @@ MakePerTupleExprContext(EState *estate)
 /* ----------------
  *		ExecAssignExprContext
  *
- *		This initializes the ps_ExprContext field.  It is only necessary
+ *		This initializes the ps_ExprContext field.	It is only necessary
  *		to do this for nodes which use ExecQual or ExecProject
- *		because those routines require an econtext.	Other nodes that
+ *		because those routines require an econtext. Other nodes that
  *		don't have to evaluate expressions don't need to do this.
  * ----------------
  */
 void
-ExecAssignExprContext(EState *estate, PlanState *planstate)
+ExecAssignExprContext(EState *estate, PlanState * planstate)
 {
 	planstate->ps_ExprContext = CreateExprContext(estate);
 }
@@ -394,7 +395,7 @@ ExecAssignExprContext(EState *estate, PlanState *planstate)
  * ----------------
  */
 void
-ExecAssignResultType(PlanState *planstate,
+ExecAssignResultType(PlanState * planstate,
 					 TupleDesc tupDesc, bool shouldFree)
 {
 	TupleTableSlot *slot = planstate->ps_ResultTupleSlot;
@@ -407,7 +408,7 @@ ExecAssignResultType(PlanState *planstate,
  * ----------------
  */
 void
-ExecAssignResultTypeFromOuterPlan(PlanState *planstate)
+ExecAssignResultTypeFromOuterPlan(PlanState * planstate)
 {
 	PlanState  *outerPlan;
 	TupleDesc	tupDesc;
@@ -423,7 +424,7 @@ ExecAssignResultTypeFromOuterPlan(PlanState *planstate)
  * ----------------
  */
 void
-ExecAssignResultTypeFromTL(PlanState *planstate)
+ExecAssignResultTypeFromTL(PlanState * planstate)
 {
 	bool		hasoid = false;
 	TupleDesc	tupDesc;
@@ -445,9 +446,9 @@ ExecAssignResultTypeFromTL(PlanState *planstate)
 	 * each of the child plans of the topmost Append plan.	So, this is
 	 * ugly but it works, for now ...
 	 *
-	 * SELECT INTO is also pretty grotty, because we don't yet have the
-	 * INTO relation's descriptor at this point; we have to look aside
-	 * at a flag set by InitPlan().
+	 * SELECT INTO is also pretty grotty, because we don't yet have the INTO
+	 * relation's descriptor at this point; we have to look aside at a
+	 * flag set by InitPlan().
 	 */
 	if (planstate->state->es_force_oids)
 		hasoid = true;
@@ -465,9 +466,9 @@ ExecAssignResultTypeFromTL(PlanState *planstate)
 	}
 
 	/*
-	 * ExecTypeFromTL needs the parse-time representation of the tlist, not
-	 * a list of ExprStates.  This is good because some plan nodes don't
-	 * bother to set up planstate->targetlist ...
+	 * ExecTypeFromTL needs the parse-time representation of the tlist,
+	 * not a list of ExprStates.  This is good because some plan nodes
+	 * don't bother to set up planstate->targetlist ...
 	 */
 	tupDesc = ExecTypeFromTL(planstate->plan->targetlist, hasoid);
 	ExecAssignResultType(planstate, tupDesc, true);
@@ -478,7 +479,7 @@ ExecAssignResultTypeFromTL(PlanState *planstate)
  * ----------------
  */
 TupleDesc
-ExecGetResultType(PlanState *planstate)
+ExecGetResultType(PlanState * planstate)
 {
 	TupleTableSlot *slot = planstate->ps_ResultTupleSlot;
 
@@ -524,7 +525,7 @@ ExecBuildProjectionInfo(List *targetList,
  * ----------------
  */
 void
-ExecAssignProjectionInfo(PlanState *planstate)
+ExecAssignProjectionInfo(PlanState * planstate)
 {
 	planstate->ps_ProjInfo =
 		ExecBuildProjectionInfo(planstate->targetlist,
@@ -543,7 +544,7 @@ ExecAssignProjectionInfo(PlanState *planstate)
  * ----------------
  */
 void
-ExecFreeExprContext(PlanState *planstate)
+ExecFreeExprContext(PlanState * planstate)
 {
 	ExprContext *econtext;
 
@@ -575,7 +576,7 @@ ExecFreeExprContext(PlanState *planstate)
  * ----------------
  */
 TupleDesc
-ExecGetScanType(ScanState *scanstate)
+ExecGetScanType(ScanState * scanstate)
 {
 	TupleTableSlot *slot = scanstate->ss_ScanTupleSlot;
 
@@ -587,7 +588,7 @@ ExecGetScanType(ScanState *scanstate)
  * ----------------
  */
 void
-ExecAssignScanType(ScanState *scanstate,
+ExecAssignScanType(ScanState * scanstate,
 				   TupleDesc tupDesc, bool shouldFree)
 {
 	TupleTableSlot *slot = scanstate->ss_ScanTupleSlot;
@@ -600,7 +601,7 @@ ExecAssignScanType(ScanState *scanstate,
  * ----------------
  */
 void
-ExecAssignScanTypeFromOuterPlan(ScanState *scanstate)
+ExecAssignScanTypeFromOuterPlan(ScanState * scanstate)
 {
 	PlanState  *outerPlan;
 	TupleDesc	tupDesc;
@@ -795,8 +796,8 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 
 	/*
 	 * We will use the EState's per-tuple context for evaluating
-	 * predicates and index expressions (creating it if it's not
-	 * already there).
+	 * predicates and index expressions (creating it if it's not already
+	 * there).
 	 */
 	econtext = GetPerTupleExprContext(estate);
 
@@ -841,8 +842,8 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 
 		/*
 		 * FormIndexDatum fills in its datum and null parameters with
-		 * attribute information taken from the given heap tuple.
-		 * It also computes any expressions needed.
+		 * attribute information taken from the given heap tuple. It also
+		 * computes any expressions needed.
 		 */
 		FormIndexDatum(indexInfo,
 					   heapTuple,
@@ -878,7 +879,7 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
  *		Add changed parameters to a plan node's chgParam set
  */
 void
-UpdateChangedParamSet(PlanState *node, Bitmapset *newchg)
+UpdateChangedParamSet(PlanState * node, Bitmapset * newchg)
 {
 	Bitmapset  *parmset;
 
@@ -887,6 +888,7 @@ UpdateChangedParamSet(PlanState *node, Bitmapset *newchg)
 	 * Don't include anything else into its chgParam set.
 	 */
 	parmset = bms_intersect(node->plan->allParam, newchg);
+
 	/*
 	 * Keep node->chgParam == NULL if there's not actually any members;
 	 * this allows the simplest possible tests in executor node files.

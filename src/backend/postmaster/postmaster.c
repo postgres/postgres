@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.338 2003/08/01 23:25:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.339 2003/08/04 00:43:21 momjian Exp $
  *
  * NOTES
  *
@@ -169,14 +169,15 @@ int			ReservedBackends;
 static char *progname = (char *) NULL;
 
 /* The socket(s) we're listening to. */
-#define	MAXLISTEN	10
+#define MAXLISTEN	10
 static int	ListenSocket[MAXLISTEN];
 
 /* Used to reduce macros tests */
 #ifdef EXEC_BACKEND
-const bool ExecBackend = true;
+const bool	ExecBackend = true;
+
 #else
-const bool ExecBackend = false;
+const bool	ExecBackend = false;
 #endif
 
 /*
@@ -210,15 +211,15 @@ bool		LogSourcePort;
 bool		Log_connections = false;
 bool		Db_user_namespace = false;
 
-char		*rendezvous_name;
+char	   *rendezvous_name;
 
 /* For FNCTL_NONBLOCK */
 #if defined(WIN32) || defined(__BEOS__)
-long ioctlsocket_ret;
+long		ioctlsocket_ret;
 #endif
 
 /* list of library:init-function to be preloaded */
-char       *preload_libraries_string = NULL;
+char	   *preload_libraries_string = NULL;
 
 /* Startup/shutdown state */
 static pid_t StartupPID = 0,
@@ -290,7 +291,8 @@ static void SignalChildren(int signal);
 static int	CountChildren(void);
 static bool CreateOptsFile(int argc, char *argv[]);
 static pid_t SSDataBase(int xlop);
-static void postmaster_error(const char *fmt,...)
+static void
+postmaster_error(const char *fmt,...)
 /* This lets gcc check the format string for consistency. */
 __attribute__((format(printf, 1, 2)));
 
@@ -327,8 +329,8 @@ checkDataDir(const char *checkdir)
 		else
 			ereport(FATAL,
 					(errcode_for_file_access(),
-					 errmsg("could not read permissions of directory \"%s\": %m",
-							checkdir)));
+			 errmsg("could not read permissions of directory \"%s\": %m",
+					checkdir)));
 	}
 
 	/*
@@ -357,7 +359,7 @@ checkDataDir(const char *checkdir)
 	{
 		fprintf(stderr,
 				gettext("%s could not find the database system.\n"
-						"Expected to find it in the PGDATA directory \"%s\",\n"
+				  "Expected to find it in the PGDATA directory \"%s\",\n"
 						"but failed to open file \"%s\": %s\n"),
 				progname, checkdir, path, strerror(errno));
 		ExitPostmaster(2);
@@ -374,17 +376,16 @@ reg_reply(DNSServiceRegistrationReplyErrorType errorCode, void *context)
 {
 
 }
-
 #endif
 
 int
 PostmasterMain(int argc, char *argv[])
 {
-	int		opt;
-	int		status;
+	int			opt;
+	int			status;
 	char		original_extraoptions[MAXPGPATH];
-	char		*potential_DataDir = NULL;
-	int		i;
+	char	   *potential_DataDir = NULL;
+	int			i;
 
 	*original_extraoptions = '\0';
 
@@ -581,7 +582,7 @@ PostmasterMain(int argc, char *argv[])
 
 			default:
 				fprintf(stderr,
-						gettext("Try '%s --help' for more information.\n"),
+					  gettext("Try '%s --help' for more information.\n"),
 						progname);
 				ExitPostmaster(1);
 		}
@@ -682,8 +683,8 @@ PostmasterMain(int argc, char *argv[])
 #endif
 
 	/*
-	 * process any libraries that should be preloaded and
-	 * optionally pre-initialized
+	 * process any libraries that should be preloaded and optionally
+	 * pre-initialized
 	 */
 	if (preload_libraries_string)
 		process_preload_libraries(preload_libraries_string);
@@ -725,13 +726,14 @@ PostmasterMain(int argc, char *argv[])
 	{
 		if (VirtualHost && VirtualHost[0])
 		{
-			char	*curhost, *endptr;
-			char	c = 0;
+			char	   *curhost,
+					   *endptr;
+			char		c = 0;
 
 			curhost = VirtualHost;
 			for (;;)
 			{
-				while (*curhost == ' ')	/* skip any extra spaces */
+				while (*curhost == ' ') /* skip any extra spaces */
 					curhost++;
 				if (*curhost == '\0')
 					break;
@@ -747,8 +749,8 @@ PostmasterMain(int argc, char *argv[])
 										  ListenSocket, MAXLISTEN);
 				if (status != STATUS_OK)
 					ereport(LOG,
-							(errmsg("could not create listen socket for \"%s\"",
-									curhost)));
+					 (errmsg("could not create listen socket for \"%s\"",
+							 curhost)));
 				if (endptr)
 				{
 					*endptr = c;
@@ -766,10 +768,10 @@ PostmasterMain(int argc, char *argv[])
 									  ListenSocket, MAXLISTEN);
 			if (status != STATUS_OK)
 				ereport(LOG,
-						(errmsg("could not create TCP/IP listen socket")));
+					  (errmsg("could not create TCP/IP listen socket")));
 		}
 
-#ifdef USE_RENDEZVOUS					 
+#ifdef USE_RENDEZVOUS
 		if (rendezvous_name != NULL)
 		{
 			DNSServiceRegistrationCreate(rendezvous_name,
@@ -777,7 +779,7 @@ PostmasterMain(int argc, char *argv[])
 										 "",
 										 htonl(PostPortNumber),
 										 "",
-										 (DNSServiceRegistrationReply)reg_reply,
+								 (DNSServiceRegistrationReply) reg_reply,
 										 NULL);
 		}
 #endif
@@ -842,8 +844,8 @@ PostmasterMain(int argc, char *argv[])
 
 	/*
 	 * Reset whereToSendOutput from Debug (its starting state) to None.
-	 * This prevents ereport from sending log messages to stderr unless the
-	 * syslog/stderr switch permits.  We don't do this until the
+	 * This prevents ereport from sending log messages to stderr unless
+	 * the syslog/stderr switch permits.  We don't do this until the
 	 * postmaster is fully launched, since startup failures may as well be
 	 * reported to stderr.
 	 */
@@ -989,10 +991,11 @@ usage(const char *progname)
 static int
 ServerLoop(void)
 {
-	fd_set			readmask;
+	fd_set		readmask;
 	int			nSockets;
-	struct timeval		now, later;
-	struct timezone		tz;
+	struct timeval now,
+				later;
+	struct timezone tz;
 	int			i;
 
 	gettimeofday(&now, &tz);
@@ -1090,8 +1093,8 @@ ServerLoop(void)
 		}
 
 		/*
-		 * New connection pending on any of our sockets? If so,
-		 * fork a child process to deal with it.
+		 * New connection pending on any of our sockets? If so, fork a
+		 * child process to deal with it.
 		 */
 		for (i = 0; i < MAXLISTEN; i++)
 		{
@@ -1105,8 +1108,8 @@ ServerLoop(void)
 					BackendStartup(port);
 
 					/*
-					 * We no longer need the open socket
-					 * or port structure in this process
+					 * We no longer need the open socket or port structure
+					 * in this process
 					 */
 					StreamClose(port->sock);
 					ConnFree(port);
@@ -1136,7 +1139,7 @@ initMasks(fd_set *rmask)
 
 	for (i = 0; i < MAXLISTEN; i++)
 	{
-		int	fd = ListenSocket[i];
+		int			fd = ListenSocket[i];
 
 		if (fd == -1)
 			break;
@@ -1173,7 +1176,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 	{
 		/*
 		 * EOF after SSLdone probably means the client didn't like our
-		 * response to NEGOTIATE_SSL_CODE.  That's not an error condition,
+		 * response to NEGOTIATE_SSL_CODE.	That's not an error condition,
 		 * so don't clutter the log with a complaint.
 		 */
 		if (!SSLdone)
@@ -1197,9 +1200,9 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 
 	/*
 	 * Allocate at least the size of an old-style startup packet, plus one
-	 * extra byte, and make sure all are zeroes.  This ensures we will have
-	 * null termination of all strings, in both fixed- and variable-length
-	 * packet layouts.
+	 * extra byte, and make sure all are zeroes.  This ensures we will
+	 * have null termination of all strings, in both fixed- and
+	 * variable-length packet layouts.
 	 */
 	if (len <= (int32) sizeof(StartupPacket))
 		buf = palloc0(sizeof(StartupPacket) + 1);
@@ -1243,7 +1246,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 		{
 			ereport(COMMERROR,
 					(errcode_for_socket_access(),
-					 errmsg("failed to send SSL negotiation response: %m")));
+				 errmsg("failed to send SSL negotiation response: %m")));
 			return STATUS_ERROR;	/* close the connection */
 		}
 
@@ -1259,41 +1262,41 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 	/* Could add additional special packet types here */
 
 	/*
-	 * Set FrontendProtocol now so that ereport() knows what format to send
-	 * if we fail during startup.
+	 * Set FrontendProtocol now so that ereport() knows what format to
+	 * send if we fail during startup.
 	 */
 	FrontendProtocol = proto;
 
 	/* Check we can handle the protocol the frontend is using. */
 
 	if (PG_PROTOCOL_MAJOR(proto) < PG_PROTOCOL_MAJOR(PG_PROTOCOL_EARLIEST) ||
-		PG_PROTOCOL_MAJOR(proto) > PG_PROTOCOL_MAJOR(PG_PROTOCOL_LATEST) ||
-		(PG_PROTOCOL_MAJOR(proto) == PG_PROTOCOL_MAJOR(PG_PROTOCOL_LATEST) &&
-		 PG_PROTOCOL_MINOR(proto) > PG_PROTOCOL_MINOR(PG_PROTOCOL_LATEST)))
+	  PG_PROTOCOL_MAJOR(proto) > PG_PROTOCOL_MAJOR(PG_PROTOCOL_LATEST) ||
+	(PG_PROTOCOL_MAJOR(proto) == PG_PROTOCOL_MAJOR(PG_PROTOCOL_LATEST) &&
+	 PG_PROTOCOL_MINOR(proto) > PG_PROTOCOL_MINOR(PG_PROTOCOL_LATEST)))
 		ereport(FATAL,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("unsupported frontend protocol %u.%u: server supports %u.0 to %u.%u",
-						PG_PROTOCOL_MAJOR(proto), PG_PROTOCOL_MINOR(proto),
+					  PG_PROTOCOL_MAJOR(proto), PG_PROTOCOL_MINOR(proto),
 						PG_PROTOCOL_MAJOR(PG_PROTOCOL_EARLIEST),
 						PG_PROTOCOL_MAJOR(PG_PROTOCOL_LATEST),
 						PG_PROTOCOL_MINOR(PG_PROTOCOL_LATEST))));
 
 	/*
 	 * Now fetch parameters out of startup packet and save them into the
-	 * Port structure.  All data structures attached to the Port struct
+	 * Port structure.	All data structures attached to the Port struct
 	 * must be allocated in TopMemoryContext so that they won't disappear
-	 * when we pass them to PostgresMain (see BackendFork).  We need not worry
-	 * about leaking this storage on failure, since we aren't in the postmaster
-	 * process anymore.
+	 * when we pass them to PostgresMain (see BackendFork).  We need not
+	 * worry about leaking this storage on failure, since we aren't in the
+	 * postmaster process anymore.
 	 */
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 
 	if (PG_PROTOCOL_MAJOR(proto) >= 3)
 	{
-		int32	offset = sizeof(ProtocolVersion);
+		int32		offset = sizeof(ProtocolVersion);
 
 		/*
-		 * Scan packet body for name/option pairs.  We can assume any
+		 * Scan packet body for name/option pairs.	We can assume any
 		 * string beginning within the packet body is null-terminated,
 		 * thanks to zeroing extra byte above.
 		 */
@@ -1301,9 +1304,9 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 
 		while (offset < len)
 		{
-			char   *nameptr = ((char *) buf) + offset;
-			int32	valoffset;
-			char   *valptr;
+			char	   *nameptr = ((char *) buf) + offset;
+			int32		valoffset;
+			char	   *valptr;
 
 			if (*nameptr == '\0')
 				break;			/* found packet terminator */
@@ -1328,11 +1331,12 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 			}
 			offset = valoffset + strlen(valptr) + 1;
 		}
+
 		/*
 		 * If we didn't find a packet terminator exactly at the end of the
 		 * given packet length, complain.
 		 */
-		if (offset != len-1)
+		if (offset != len - 1)
 			ereport(FATAL,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
 					 errmsg("invalid startup packet layout: expected terminator as last byte")));
@@ -1340,10 +1344,11 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 	else
 	{
 		/*
-		 * Get the parameters from the old-style, fixed-width-fields startup
-		 * packet as C strings.  The packet destination was cleared first so a
-		 * short packet has zeros silently added.  We have to be prepared to
-		 * truncate the pstrdup result for oversize fields, though.
+		 * Get the parameters from the old-style, fixed-width-fields
+		 * startup packet as C strings.  The packet destination was
+		 * cleared first so a short packet has zeros silently added.  We
+		 * have to be prepared to truncate the pstrdup result for oversize
+		 * fields, though.
 		 */
 		StartupPacket *packet = (StartupPacket *) buf;
 
@@ -1363,7 +1368,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 	if (port->user_name == NULL || port->user_name[0] == '\0')
 		ereport(FATAL,
 				(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-				 errmsg("no PostgreSQL user name specified in startup packet")));
+		 errmsg("no PostgreSQL user name specified in startup packet")));
 
 	/* The database defaults to the user name. */
 	if (port->database_name == NULL || port->database_name[0] == '\0')
@@ -1468,10 +1473,8 @@ processCancelRequest(Port *port, void *pkt)
 		return;
 	}
 	else if (ExecBackend)
-	{
 		AttachSharedMemoryAndSemaphores();
-	}
-	
+
 	/* See if we have a matching backend */
 
 	for (curr = DLGetHead(BackendList); curr; curr = DLGetSucc(curr))
@@ -1590,7 +1593,7 @@ ConnFree(Port *conn)
 void
 ClosePostmasterPorts(bool pgstat_too)
 {
-	int	i;
+	int			i;
 
 	/* Close the listen sockets */
 	for (i = 0; i < MAXLISTEN; i++)
@@ -1639,7 +1642,7 @@ SIGHUP_handler(SIGNAL_ARGS)
 	if (Shutdown <= SmartShutdown)
 	{
 		ereport(LOG,
-				(errmsg("received SIGHUP, reloading configuration files")));
+			 (errmsg("received SIGHUP, reloading configuration files")));
 		ProcessConfigFile(PGC_SIGHUP);
 #ifdef EXEC_BACKEND
 		write_nondefault_variables(PGC_SIGHUP);
@@ -1806,9 +1809,9 @@ reaper(SIGNAL_ARGS)
 #endif
 
 		/*
-		 * Check if this child was the statistics collector. If so,
-		 * try to start a new one.  (If fail, we'll try again in
-		 * future cycles of the main loop.)
+		 * Check if this child was the statistics collector. If so, try to
+		 * start a new one.  (If fail, we'll try again in future cycles of
+		 * the main loop.)
 		 */
 		if (pgstat_ispgstat(pid))
 		{
@@ -1883,7 +1886,7 @@ reaper(SIGNAL_ARGS)
 		 */
 		CleanupProc(pid, exitstatus);
 
-	} /* loop over pending child-death reports */
+	}							/* loop over pending child-death reports */
 #endif
 
 	if (FatalError)
@@ -1895,7 +1898,7 @@ reaper(SIGNAL_ARGS)
 		if (DLGetHead(BackendList) || StartupPID > 0 || ShutdownPID > 0)
 			goto reaper_done;
 		ereport(LOG,
-				(errmsg("all server processes terminated; reinitializing")));
+			(errmsg("all server processes terminated; reinitializing")));
 
 		shmem_exit(0);
 		reset_shared(PostPortNumber);
@@ -1979,11 +1982,11 @@ CleanupProc(int pid,
 	if (!FatalError)
 	{
 		LogChildExit(LOG,
-					 (pid == CheckPointPID) ? gettext("checkpoint process") :
+				 (pid == CheckPointPID) ? gettext("checkpoint process") :
 					 gettext("server process"),
 					 pid, exitstatus);
 		ereport(LOG,
-				(errmsg("terminating any other active server processes")));
+			  (errmsg("terminating any other active server processes")));
 	}
 
 	curr = DLGetHead(BackendList);
@@ -2045,26 +2048,29 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 {
 	if (WIFEXITED(exitstatus))
 		ereport(lev,
-				/*
-				 * translator: %s is a noun phrase describing a child process,
-				 * such as "server process"
-				 */
+
+		/*
+		 * translator: %s is a noun phrase describing a child process,
+		 * such as "server process"
+		 */
 				(errmsg("%s (pid %d) exited with exit code %d",
 						procname, pid, WEXITSTATUS(exitstatus))));
 	else if (WIFSIGNALED(exitstatus))
 		ereport(lev,
-				/*
-				 * translator: %s is a noun phrase describing a child process,
-				 * such as "server process"
-				 */
+
+		/*
+		 * translator: %s is a noun phrase describing a child process,
+		 * such as "server process"
+		 */
 				(errmsg("%s (pid %d) was terminated by signal %d",
 						procname, pid, WTERMSIG(exitstatus))));
 	else
 		ereport(lev,
-				/*
-				 * translator: %s is a noun phrase describing a child process,
-				 * such as "server process"
-				 */
+
+		/*
+		 * translator: %s is a noun phrase describing a child process,
+		 * such as "server process"
+		 */
 				(errmsg("%s (pid %d) exited with unexpected status %d",
 						procname, pid, exitstatus)));
 }
@@ -2195,7 +2201,7 @@ BackendStartup(Port *port)
 		free(bn);
 		errno = save_errno;
 		ereport(LOG,
-				(errmsg("could not fork new process for connection: %m")));
+			  (errmsg("could not fork new process for connection: %m")));
 		report_fork_failure_to_client(port, save_errno);
 		return STATUS_ERROR;
 	}
@@ -2284,18 +2290,19 @@ split_opts(char **argv, int *argcp, char *s)
 static int
 BackendFork(Port *port)
 {
-	char		**av;
-	int		maxac;
-	int		ac;
+	char	  **av;
+	int			maxac;
+	int			ac;
 	char		debugbuf[32];
 	char		protobuf[32];
+
 #ifdef EXEC_BACKEND
 	char		pbuf[NAMEDATALEN + 256];
 #endif
-	int		i;
-	int		status;
-	struct timeval	now;
-	struct timezone	tz;
+	int			i;
+	int			status;
+	struct timeval now;
+	struct timezone tz;
 	char		remote_host[NI_MAXHOST];
 	char		remote_port[NI_MAXSERV];
 
@@ -2324,8 +2331,8 @@ BackendFork(Port *port)
 	MyProcPid = getpid();
 
 	/*
-	 * Initialize libpq and enable reporting of ereport errors to the client.
-	 * Must do this now because authentication uses libpq to send
+	 * Initialize libpq and enable reporting of ereport errors to the
+	 * client. Must do this now because authentication uses libpq to send
 	 * messages.
 	 */
 	pq_init();					/* initialize libpq to talk to client */
@@ -2350,7 +2357,7 @@ BackendFork(Port *port)
 	if (getnameinfo_all(&port->raddr.addr, port->raddr.salen,
 						remote_host, sizeof(remote_host),
 						remote_port, sizeof(remote_port),
-						(log_hostname ? 0 : NI_NUMERICHOST) | NI_NUMERICSERV))
+				   (log_hostname ? 0 : NI_NUMERICHOST) | NI_NUMERICSERV))
 	{
 		getnameinfo_all(&port->raddr.addr, port->raddr.salen,
 						remote_host, sizeof(remote_host),
@@ -2366,7 +2373,7 @@ BackendFork(Port *port)
 	if (LogSourcePort)
 	{
 		/* modify remote_host for use in ps status */
-		char	tmphost[NI_MAXHOST];
+		char		tmphost[NI_MAXHOST];
 
 		snprintf(tmphost, sizeof(tmphost), "%s:%s", remote_host, remote_port);
 		StrNCpy(remote_host, tmphost, sizeof(remote_host));
@@ -2484,14 +2491,15 @@ BackendFork(Port *port)
 	 */
 	av[ac++] = "-p";
 #ifdef EXEC_BACKEND
- 	Assert(UsedShmemSegID != 0 && UsedShmemSegAddr != NULL);
+	Assert(UsedShmemSegID != 0 && UsedShmemSegAddr != NULL);
 	/* database name at the end because it might contain commas */
 	snprintf(pbuf, NAMEDATALEN + 256, "%d,%d,%d,%p,%s", port->sock, canAcceptConnections(),
-					UsedShmemSegID, UsedShmemSegAddr, port->database_name);
+			 UsedShmemSegID, UsedShmemSegAddr, port->database_name);
 	av[ac++] = pbuf;
 #else
 	av[ac++] = port->database_name;
 #endif
+
 	/*
 	 * Pass the (insecure) option switches from the connection request.
 	 * (It's OK to mangle port->cmdline_options now.)
@@ -2507,7 +2515,7 @@ BackendFork(Port *port)
 	 * Release postmaster's working memory context so that backend can
 	 * recycle the space.  Note this does not trash *MyProcPort, because
 	 * ConnCreate() allocated that space with malloc() ... else we'd need
-	 * to copy the Port data here.  Also, subsidiary data such as the
+	 * to copy the Port data here.	Also, subsidiary data such as the
 	 * username isn't lost either; see ProcessStartupPacket().
 	 */
 	MemoryContextSwitchTo(TopMemoryContext);
@@ -2565,21 +2573,21 @@ sigusr1_handler(SIGNAL_ARGS)
 		if (CheckPointWarning != 0)
 		{
 			/*
-			 *	This only times checkpoints forced by running out of
-			 *	segment files.  Other checkpoints could reduce
-			 *	the frequency of forced checkpoints.
+			 * This only times checkpoints forced by running out of
+			 * segment files.  Other checkpoints could reduce the
+			 * frequency of forced checkpoints.
 			 */
-			time_t	now = time(NULL);
+			time_t		now = time(NULL);
 
 			if (LastSignalledCheckpoint != 0)
 			{
-				int		elapsed_secs = now - LastSignalledCheckpoint;
+				int			elapsed_secs = now - LastSignalledCheckpoint;
 
 				if (elapsed_secs < CheckPointWarning)
 					ereport(LOG,
 							(errmsg("checkpoints are occurring too frequently (%d seconds apart)",
 									elapsed_secs),
-							 errhint("Consider increasing CHECKPOINT_SEGMENTS.")));
+					errhint("Consider increasing CHECKPOINT_SEGMENTS.")));
 			}
 			LastSignalledCheckpoint = now;
 		}
@@ -2763,6 +2771,7 @@ SSDataBase(int xlop)
 		int			ac = 0;
 		char		nbbuf[32];
 		char		xlbuf[32];
+
 #ifdef EXEC_BACKEND
 		char		pbuf[NAMEDATALEN + 256];
 #endif
@@ -2817,10 +2826,10 @@ SSDataBase(int xlop)
 
 		av[ac++] = "-p";
 #ifdef EXEC_BACKEND
-	 	Assert(UsedShmemSegID != 0 && UsedShmemSegAddr != NULL);
+		Assert(UsedShmemSegID != 0 && UsedShmemSegAddr != NULL);
 		/* database name at the end because it might contain commas */
 		snprintf(pbuf, NAMEDATALEN + 256, "%d,%p,%s", UsedShmemSegID,
-						UsedShmemSegAddr, "template1");
+				 UsedShmemSegAddr, "template1");
 		av[ac++] = pbuf;
 #else
 		av[ac++] = "template1";
@@ -2850,7 +2859,7 @@ SSDataBase(int xlop)
 				break;
 			case BS_XLOG_CHECKPOINT:
 				ereport(LOG,
-						(errmsg("could not fork checkpoint process: %m")));
+					  (errmsg("could not fork checkpoint process: %m")));
 				break;
 			case BS_XLOG_SHUTDOWN:
 				ereport(LOG,

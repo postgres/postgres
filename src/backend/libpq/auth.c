@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.108 2003/07/28 06:27:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.109 2003/08/04 00:43:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -221,8 +221,8 @@ pg_krb5_init(void)
 	if (retval)
 	{
 		ereport(LOG,
-				(errmsg("kerberos sname_to_principal(\"%s\") returned error %d",
-						PG_KRB_SRVNAM, retval)));
+		 (errmsg("kerberos sname_to_principal(\"%s\") returned error %d",
+				 PG_KRB_SRVNAM, retval)));
 		com_err("postgres", retval,
 				"while getting server principal for service \"%s\"",
 				PG_KRB_SRVNAM);
@@ -432,7 +432,7 @@ ClientAuthentication(Port *port)
 			 * out the less clueful good guys.
 			 */
 			{
-				char	hostinfo[NI_MAXHOST];
+				char		hostinfo[NI_MAXHOST];
 
 				getnameinfo_all(&port->raddr.addr, port->raddr.salen,
 								hostinfo, sizeof(hostinfo),
@@ -441,15 +441,15 @@ ClientAuthentication(Port *port)
 
 #ifdef USE_SSL
 				ereport(FATAL,
-						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-						 errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s",
-								hostinfo, port->user_name, port->database_name,
-								port->ssl ? gettext("SSL on") : gettext("SSL off"))));
+				   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+					errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s",
+						   hostinfo, port->user_name, port->database_name,
+				   port->ssl ? gettext("SSL on") : gettext("SSL off"))));
 #else
 				ereport(FATAL,
-						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-						 errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\"",
-								hostinfo, port->user_name, port->database_name)));
+				   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+					errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\"",
+					   hostinfo, port->user_name, port->database_name)));
 #endif
 				break;
 			}
@@ -460,7 +460,7 @@ ClientAuthentication(Port *port)
 				|| port->laddr.addr.ss_family != AF_INET)
 				ereport(FATAL,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("kerberos 4 only supports IPv4 connections")));
+				   errmsg("kerberos 4 only supports IPv4 connections")));
 			sendAuthRequest(port, AUTH_REQ_KRB4);
 			status = pg_krb4_recvauth(port);
 			break;
@@ -492,7 +492,7 @@ ClientAuthentication(Port *port)
 				if (setsockopt(port->sock, 0, LOCAL_CREDS, &on, sizeof(on)) < 0)
 					ereport(FATAL,
 							(errcode_for_socket_access(),
-							 errmsg("failed to enable credential receipt: %m")));
+					 errmsg("failed to enable credential receipt: %m")));
 			}
 #endif
 			if (port->raddr.addr.ss_family == AF_UNIX)
@@ -755,22 +755,22 @@ recv_password_packet(Port *port)
 	if (PG_PROTOCOL_MAJOR(port->proto) >= 3)
 	{
 		/* Expect 'p' message type */
-		int		mtype;
+		int			mtype;
 
 		mtype = pq_getbyte();
 		if (mtype != 'p')
 		{
 			/*
 			 * If the client just disconnects without offering a password,
-			 * don't make a log entry.  This is legal per protocol spec and
-			 * in fact commonly done by psql, so complaining just clutters
-			 * the log.
+			 * don't make a log entry.  This is legal per protocol spec
+			 * and in fact commonly done by psql, so complaining just
+			 * clutters the log.
 			 */
 			if (mtype != EOF)
 				ereport(COMMERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg("expected password response, got msg type %d",
-								mtype)));
+					errmsg("expected password response, got msg type %d",
+						   mtype)));
 			return NULL;		/* EOF or bad message type */
 		}
 	}
@@ -782,7 +782,7 @@ recv_password_packet(Port *port)
 	}
 
 	initStringInfo(&buf);
-	if (pq_getmessage(&buf, 1000)) /* receive password */
+	if (pq_getmessage(&buf, 1000))		/* receive password */
 	{
 		/* EOF - pq_getmessage already logged a suitable message */
 		pfree(buf.data);
@@ -804,7 +804,7 @@ recv_password_packet(Port *port)
 			(errmsg("received password packet")));
 
 	/*
-	 * Return the received string.  Note we do not attempt to do any
+	 * Return the received string.	Note we do not attempt to do any
 	 * character-set conversion on it; since we don't yet know the
 	 * client's encoding, there wouldn't be much point.
 	 */

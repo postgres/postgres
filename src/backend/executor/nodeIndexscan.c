@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.80 2003/07/21 17:05:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.81 2003/08/04 00:43:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -290,7 +290,8 @@ ExecIndexReScan(IndexScanState *node, ExprContext *exprCtxt)
 	int			j;
 
 	estate = node->ss.ps.state;
-	econtext = node->iss_RuntimeContext;	/* context for runtime keys */
+	econtext = node->iss_RuntimeContext;		/* context for runtime
+												 * keys */
 	numIndices = node->iss_NumIndices;
 	scanDescs = node->iss_ScanDescs;
 	scanKeys = node->iss_ScanKeys;
@@ -882,7 +883,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 						reloid)));
 
 	indexstate->ss.ss_currentRelation = currentRelation;
-	indexstate->ss.ss_currentScanDesc = NULL;		/* no heap scan here */
+	indexstate->ss.ss_currentScanDesc = NULL;	/* no heap scan here */
 
 	/*
 	 * get the scan type from the relation descriptor.

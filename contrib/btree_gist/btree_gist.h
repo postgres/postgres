@@ -23,4 +23,3 @@ typedef struct rix
 
 extern GIST_SPLITVEC *btree_picksplit(bytea *entryvec, GIST_SPLITVEC *v,
 				BINARY_UNION bu, CMPFUNC cmp);
-

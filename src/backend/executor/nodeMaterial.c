@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.42 2003/03/27 16:51:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.43 2003/08/04 00:43:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,15 +79,15 @@ ExecMaterial(MaterialState *node)
 		{
 			/*
 			 * When reversing direction at tuplestore EOF, the first
-			 * getheaptuple call will fetch the last-added tuple; but
-			 * we want to return the one before that, if possible.
-			 * So do an extra fetch.
+			 * getheaptuple call will fetch the last-added tuple; but we
+			 * want to return the one before that, if possible. So do an
+			 * extra fetch.
 			 */
 			heapTuple = tuplestore_getheaptuple(tuplestorestate,
 												forward,
 												&should_free);
 			if (heapTuple == NULL)
-				return NULL;		/* the tuplestore must be empty */
+				return NULL;	/* the tuplestore must be empty */
 			if (should_free)
 				heap_freetuple(heapTuple);
 		}
@@ -129,10 +129,11 @@ ExecMaterial(MaterialState *node)
 		}
 		heapTuple = outerslot->val;
 		should_free = false;
+
 		/*
 		 * Append returned tuple to tuplestore, too.  NOTE: because the
-		 * tuplestore is certainly in EOF state, its read position will move
-		 * forward over the added tuple.  This is what we want.
+		 * tuplestore is certainly in EOF state, its read position will
+		 * move forward over the added tuple.  This is what we want.
 		 */
 		tuplestore_puttuple(tuplestorestate, (void *) heapTuple);
 	}
@@ -293,8 +294,8 @@ ExecMaterialReScan(MaterialState *node, ExprContext *exprCtxt)
 	 * If subnode is to be rescanned then we forget previous stored
 	 * results; we have to re-read the subplan and re-store.
 	 *
-	 * Otherwise we can just rewind and rescan the stored output.
-	 * The state of the subnode does not change.
+	 * Otherwise we can just rewind and rescan the stored output. The state
+	 * of the subnode does not change.
 	 */
 	if (((PlanState *) node)->lefttree->chgParam != NULL)
 	{
@@ -303,7 +304,5 @@ ExecMaterialReScan(MaterialState *node, ExprContext *exprCtxt)
 		node->eof_underlying = false;
 	}
 	else
-	{
 		tuplestore_rescan((Tuplestorestate *) node->tuplestorestate);
-	}
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.66 2003/08/01 00:15:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.67 2003/08/04 00:43:25 momjian Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -53,10 +53,10 @@ struct fp_info
 };
 
 
-static int16 parse_fcall_arguments(StringInfo msgBuf, struct fp_info *fip,
-								   FunctionCallInfo fcinfo);
-static int16 parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info *fip,
-									  FunctionCallInfo fcinfo);
+static int16 parse_fcall_arguments(StringInfo msgBuf, struct fp_info * fip,
+					  FunctionCallInfo fcinfo);
+static int16 parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info * fip,
+						 FunctionCallInfo fcinfo);
 
 
 /* ----------------
@@ -103,8 +103,8 @@ GetOldFunctionMessage(StringInfo buf)
 			/* FATAL here since no hope of regaining message sync */
 			ereport(FATAL,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					 errmsg("invalid argument size %d in function call message",
-							argsize)));
+			  errmsg("invalid argument size %d in function call message",
+					 argsize)));
 		}
 		/* and arg contents */
 		if (argsize > 0)
@@ -158,8 +158,8 @@ SendFunctionResult(Datum retval, bool isnull, Oid rettype, int16 format)
 							  &typoutput, &typelem, &typisvarlena);
 			outputstr = DatumGetCString(OidFunctionCall3(typoutput,
 														 retval,
-												 ObjectIdGetDatum(typelem),
-												 Int32GetDatum(-1)));
+											   ObjectIdGetDatum(typelem),
+													 Int32GetDatum(-1)));
 			pq_sendcountedtext(&buf, outputstr, strlen(outputstr), false);
 			pfree(outputstr);
 		}
@@ -174,7 +174,7 @@ SendFunctionResult(Datum retval, bool isnull, Oid rettype, int16 format)
 									&typsend, &typelem, &typisvarlena);
 			outputbytes = DatumGetByteaP(OidFunctionCall2(typsend,
 														  retval,
-												  ObjectIdGetDatum(typelem)));
+											 ObjectIdGetDatum(typelem)));
 			/* We assume the result will not have been toasted */
 			pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
 			pq_sendbytes(&buf, VARDATA(outputbytes),
@@ -255,11 +255,11 @@ fetch_fp_info(Oid func_id, struct fp_info * fip)
  *		and will pass it in msgBuf.
  *		In old protocol, the passed msgBuf is empty and we must read the
  *		message here.
- * 
+ *
  * RETURNS:
  *		0 if successful completion, EOF if frontend connection lost.
  *
- * Note: All ordinary errors result in ereport(ERROR,...).  However,
+ * Note: All ordinary errors result in ereport(ERROR,...).	However,
  * if we lose the frontend connection there is no one to ereport to,
  * and no use in proceeding...
  *
@@ -303,15 +303,15 @@ HandleFunctionRequest(StringInfo msgBuf)
 		ereport(ERROR,
 				(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
 				 errmsg("current transaction is aborted, "
-						"queries ignored until end of transaction block")));
+					 "queries ignored until end of transaction block")));
 
 	/*
 	 * Begin parsing the buffer contents.
 	 */
 	if (PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
-		(void) pq_getmsgstring(msgBuf);	/* dummy string */
+		(void) pq_getmsgstring(msgBuf); /* dummy string */
 
-	fid = (Oid) pq_getmsgint(msgBuf, 4); /* function oid */
+	fid = (Oid) pq_getmsgint(msgBuf, 4);		/* function oid */
 
 	/*
 	 * There used to be a lame attempt at caching lookup info here. Now we
@@ -359,7 +359,7 @@ HandleFunctionRequest(StringInfo msgBuf)
 	callit = true;
 	if (fip->flinfo.fn_strict)
 	{
-		int		i;
+		int			i;
 
 		for (i = 0; i < fcinfo.nargs; i++)
 		{
@@ -394,7 +394,7 @@ HandleFunctionRequest(StringInfo msgBuf)
  * is returned.
  */
 static int16
-parse_fcall_arguments(StringInfo msgBuf, struct fp_info *fip,
+parse_fcall_arguments(StringInfo msgBuf, struct fp_info * fip,
 					  FunctionCallInfo fcinfo)
 {
 	int			nargs;
@@ -447,8 +447,8 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info *fip,
 		if (argsize < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					 errmsg("invalid argument size %d in function call message",
-							argsize)));
+			  errmsg("invalid argument size %d in function call message",
+					 argsize)));
 
 		/* Reset abuf to empty, and insert raw data into it */
 		abuf.len = 0;
@@ -473,11 +473,11 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info *fip,
 			char	   *pstring;
 
 			getTypeInputInfo(fip->argtypes[i], &typInput, &typElem);
+
 			/*
-			 * Since stringinfo.c keeps a trailing null in
-			 * place even for binary data, the contents of
-			 * abuf are a valid C string.  We have to do
-			 * encoding conversion before calling the typinput
+			 * Since stringinfo.c keeps a trailing null in place even for
+			 * binary data, the contents of abuf are a valid C string.	We
+			 * have to do encoding conversion before calling the typinput
 			 * routine, though.
 			 */
 			pstring = (char *)
@@ -528,7 +528,7 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info *fip,
  * is returned.
  */
 static int16
-parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info *fip,
+parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info * fip,
 						 FunctionCallInfo fcinfo)
 {
 	int			nargs;
@@ -570,8 +570,8 @@ parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info *fip,
 		if (argsize < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					 errmsg("invalid argument size %d in function call message",
-							argsize)));
+			  errmsg("invalid argument size %d in function call message",
+					 argsize)));
 
 		/* Reset abuf to empty, and insert raw data into it */
 		abuf.len = 0;
@@ -593,8 +593,8 @@ parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info *fip,
 		if (abuf.cursor != abuf.len)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-					 errmsg("incorrect binary data format in function argument %d",
-							i + 1)));
+			errmsg("incorrect binary data format in function argument %d",
+				   i + 1)));
 	}
 
 	/* Desired result format is always binary in protocol 2.0 */

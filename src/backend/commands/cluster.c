@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.112 2003/08/01 00:15:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.113 2003/08/04 00:43:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,12 +58,12 @@ typedef struct
  */
 typedef struct
 {
-	Oid		tableOid;
-	Oid		indexOid;
-} RelToCluster;
+	Oid			tableOid;
+	Oid			indexOid;
+}	RelToCluster;
 
 
-static void cluster_rel(RelToCluster *rv, bool recheck);
+static void cluster_rel(RelToCluster * rv, bool recheck);
 static Oid	make_new_heap(Oid OIDOldHeap, const char *NewName);
 static void copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
 static List *get_indexattr_list(Relation OldHeap, Oid OldIndex);
@@ -74,7 +74,7 @@ static List *get_tables_to_cluster(MemoryContext cluster_context);
 
 
 /*---------------------------------------------------------------------------
- * This cluster code allows for clustering multiple tables at once.	Because
+ * This cluster code allows for clustering multiple tables at once. Because
  * of this, we cannot just run everything on a single transaction, or we
  * would be forced to acquire exclusive locks on all the tables being
  * clustered, simultaneously --- very likely leading to deadlock.
@@ -82,17 +82,17 @@ static List *get_tables_to_cluster(MemoryContext cluster_context);
  * To solve this we follow a similar strategy to VACUUM code,
  * clustering each relation in a separate transaction. For this to work,
  * we need to:
- *  - provide a separate memory context so that we can pass information in
- *    a way that survives across transactions
- *  - start a new transaction every time a new relation is clustered
- *  - check for validity of the information on to-be-clustered relations,
- *    as someone might have deleted a relation behind our back, or
- *    clustered one on a different index
- *  - end the transaction
+ *	- provide a separate memory context so that we can pass information in
+ *	  a way that survives across transactions
+ *	- start a new transaction every time a new relation is clustered
+ *	- check for validity of the information on to-be-clustered relations,
+ *	  as someone might have deleted a relation behind our back, or
+ *	  clustered one on a different index
+ *	- end the transaction
  *
  * The single-relation case does not have any such overhead.
  *
- * We also allow a relation being specified without index.  In that case,
+ * We also allow a relation being specified without index.	In that case,
  * the indisclustered bit will be looked up, and an ERROR will be thrown
  * if there is no index with the bit set.
  *---------------------------------------------------------------------------
@@ -103,10 +103,10 @@ cluster(ClusterStmt *stmt)
 	if (stmt->relation != NULL)
 	{
 		/* This is the single-relation case. */
-		Oid				tableOid,
-						indexOid = InvalidOid;
-		Relation		rel;
-		RelToCluster	rvtc;
+		Oid			tableOid,
+					indexOid = InvalidOid;
+		Relation	rel;
+		RelToCluster rvtc;
 
 		/* Find and lock the table */
 		rel = heap_openrv(stmt->relation, AccessExclusiveLock);
@@ -123,10 +123,10 @@ cluster(ClusterStmt *stmt)
 			List	   *index;
 
 			/* We need to find the index that has indisclustered set. */
-			foreach (index, RelationGetIndexList(rel))
+			foreach(index, RelationGetIndexList(rel))
 			{
-				HeapTuple		idxtuple;
-				Form_pg_index	indexForm;
+				HeapTuple	idxtuple;
+				Form_pg_index indexForm;
 
 				indexOid = lfirsto(index);
 				idxtuple = SearchSysCache(INDEXRELID,
@@ -152,14 +152,17 @@ cluster(ClusterStmt *stmt)
 		}
 		else
 		{
-			/* The index is expected to be in the same namespace as the relation. */
+			/*
+			 * The index is expected to be in the same namespace as the
+			 * relation.
+			 */
 			indexOid = get_relname_relid(stmt->indexname,
 										 rel->rd_rel->relnamespace);
 			if (!OidIsValid(indexOid))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("index \"%s\" for table \"%s\" does not exist",
-								stmt->indexname, stmt->relation->relname)));
+				   errmsg("index \"%s\" for table \"%s\" does not exist",
+						  stmt->indexname, stmt->relation->relname)));
 		}
 
 		/* All other checks are done in cluster_rel() */
@@ -175,16 +178,16 @@ cluster(ClusterStmt *stmt)
 	else
 	{
 		/*
-		 * This is the "multi relation" case. We need to cluster all tables
-		 * that have some index with indisclustered set.
+		 * This is the "multi relation" case. We need to cluster all
+		 * tables that have some index with indisclustered set.
 		 */
-		MemoryContext	cluster_context;
-		List			*rv,
-						*rvs;
+		MemoryContext cluster_context;
+		List	   *rv,
+				   *rvs;
 
 		/*
-		 * We cannot run this form of CLUSTER inside a user transaction block;
-		 * we'd be holding locks way too long.
+		 * We cannot run this form of CLUSTER inside a user transaction
+		 * block; we'd be holding locks way too long.
 		 */
 		PreventTransactionChain((void *) stmt, "CLUSTER");
 
@@ -201,8 +204,8 @@ cluster(ClusterStmt *stmt)
 												ALLOCSET_DEFAULT_MAXSIZE);
 
 		/*
-		 * Build the list of relations to cluster.  Note that this lives in
-		 * cluster_context.
+		 * Build the list of relations to cluster.	Note that this lives
+		 * in cluster_context.
 		 */
 		rvs = get_tables_to_cluster(cluster_context);
 
@@ -210,13 +213,14 @@ cluster(ClusterStmt *stmt)
 		CommitTransactionCommand();
 
 		/* Ok, now that we've got them all, cluster them one by one */
-		foreach (rv, rvs)
+		foreach(rv, rvs)
 		{
-			RelToCluster	*rvtc = (RelToCluster *) lfirst(rv);
+			RelToCluster *rvtc = (RelToCluster *) lfirst(rv);
 
 			/* Start a new transaction for each relation. */
 			StartTransactionCommand();
-			SetQuerySnapshot();	/* might be needed for functions in indexes */
+			SetQuerySnapshot(); /* might be needed for functions in
+								 * indexes */
 			cluster_rel(rvtc, true);
 			CommitTransactionCommand();
 		}
@@ -244,7 +248,7 @@ cluster(ClusterStmt *stmt)
  * them incrementally while we load the table.
  */
 static void
-cluster_rel(RelToCluster *rvtc, bool recheck)
+cluster_rel(RelToCluster * rvtc, bool recheck)
 {
 	Relation	OldHeap,
 				OldIndex;
@@ -256,14 +260,14 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 	 * Since we may open a new transaction for each relation, we have to
 	 * check that the relation still is what we think it is.
 	 *
-	 * If this is a single-transaction CLUSTER, we can skip these tests.
-	 * We *must* skip the one on indisclustered since it would reject an
+	 * If this is a single-transaction CLUSTER, we can skip these tests. We
+	 * *must* skip the one on indisclustered since it would reject an
 	 * attempt to cluster a not-previously-clustered index.
 	 */
 	if (recheck)
 	{
-		HeapTuple		tuple;
-		Form_pg_index	indexForm;
+		HeapTuple	tuple;
+		Form_pg_index indexForm;
 
 		/*
 		 * Check if the relation and index still exist before opening them
@@ -319,10 +323,10 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 						RelationGetRelationName(OldHeap))));
 
 	/*
-	 * Disallow clustering on incomplete indexes (those that might not index
-	 * every row of the relation).  We could relax this by making a separate
-	 * seqscan pass over the table to copy the missing rows, but that seems
-	 * expensive and tedious.
+	 * Disallow clustering on incomplete indexes (those that might not
+	 * index every row of the relation).  We could relax this by making a
+	 * separate seqscan pass over the table to copy the missing rows, but
+	 * that seems expensive and tedious.
 	 */
 	if (!heap_attisnull(OldIndex->rd_indextuple, Anum_pg_index_indpred))
 		ereport(ERROR,
@@ -334,7 +338,7 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 
 		/*
 		 * If the AM doesn't index nulls, then it's a partial index unless
-		 * we can prove all the rows are non-null.  Note we only need look
+		 * we can prove all the rows are non-null.	Note we only need look
 		 * at the first column; multicolumn-capable AMs are *required* to
 		 * index nulls in columns after the first.
 		 */
@@ -347,7 +351,7 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("cannot cluster when index access method does not handle nulls"),
 						 errhint("You may be able to work around this by marking column \"%s\" NOT NULL.",
-								 NameStr(OldHeap->rd_att->attrs[colno - 1]->attname))));
+				  NameStr(OldHeap->rd_att->attrs[colno - 1]->attname))));
 		}
 		else if (colno < 0)
 		{
@@ -382,7 +386,7 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 	if (isOtherTempNamespace(RelationGetNamespace(OldHeap)))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot cluster temp tables of other processes")));
+			   errmsg("cannot cluster temp tables of other processes")));
 
 	/* Drop relcache refcnt on OldIndex, but keep lock */
 	index_close(OldIndex);
@@ -397,7 +401,7 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
  * rebuild_relation: rebuild an existing relation
  *
  * This is shared code between CLUSTER and TRUNCATE.  In the TRUNCATE
- * case, the new relation is built and left empty.  In the CLUSTER case,
+ * case, the new relation is built and left empty.	In the CLUSTER case,
  * it is filled with data read from the old relation in the order specified
  * by the index.
  *
@@ -432,6 +436,7 @@ rebuild_relation(Relation OldHeap, Oid indexOid)
 	snprintf(NewHeapName, sizeof(NewHeapName), "pg_temp_%u", tableOid);
 
 	OIDNewHeap = make_new_heap(tableOid, NewHeapName);
+
 	/*
 	 * We don't need CommandCounterIncrement() because make_new_heap did
 	 * it.
@@ -754,8 +759,8 @@ swap_relfilenodes(Oid r1, Oid r2)
 
 	/* swap size statistics too, since new rel has freshly-updated stats */
 	{
-		int4	swap_pages;
-		float4	swap_tuples;
+		int4		swap_pages;
+		float4		swap_tuples;
 
 		swap_pages = relform1->relpages;
 		relform1->relpages = relform2->relpages;
@@ -857,20 +862,20 @@ swap_relfilenodes(Oid r1, Oid r2)
 static List *
 get_tables_to_cluster(MemoryContext cluster_context)
 {
-	Relation		indRelation;
-	HeapScanDesc	scan;
-	ScanKeyData		entry;
-	HeapTuple		indexTuple;
-	Form_pg_index	index;
-	MemoryContext	old_context;
-	RelToCluster   *rvtc;
-	List		   *rvs = NIL;
+	Relation	indRelation;
+	HeapScanDesc scan;
+	ScanKeyData entry;
+	HeapTuple	indexTuple;
+	Form_pg_index index;
+	MemoryContext old_context;
+	RelToCluster *rvtc;
+	List	   *rvs = NIL;
 
 	/*
 	 * Get all indexes that have indisclustered set and are owned by
-	 * appropriate user. System relations or nailed-in relations cannot ever
-	 * have indisclustered set, because CLUSTER will refuse to set it when
-	 * called with one of them as argument.
+	 * appropriate user. System relations or nailed-in relations cannot
+	 * ever have indisclustered set, because CLUSTER will refuse to set it
+	 * when called with one of them as argument.
 	 */
 	indRelation = relation_openr(IndexRelationName, AccessShareLock);
 	ScanKeyEntryInitialize(&entry, 0,
@@ -886,8 +891,8 @@ get_tables_to_cluster(MemoryContext cluster_context)
 			continue;
 
 		/*
-		 * We have to build the list in a different memory context so
-		 * it will survive the cross-transaction processing
+		 * We have to build the list in a different memory context so it
+		 * will survive the cross-transaction processing
 		 */
 		old_context = MemoryContextSwitchTo(cluster_context);
 

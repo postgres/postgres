@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.212 2003/08/01 00:15:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.213 2003/08/04 00:43:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@ static void initResultRelInfo(ResultRelInfo *resultRelInfo,
 				  Index resultRelationIndex,
 				  List *rangeTable,
 				  CmdType operation);
-static TupleTableSlot *ExecutePlan(EState *estate, PlanState *planstate,
+static TupleTableSlot *ExecutePlan(EState *estate, PlanState * planstate,
 			CmdType operation,
 			long numberTuples,
 			ScanDirection direction,
@@ -87,7 +87,7 @@ static void EndEvalPlanQual(EState *estate);
 static void ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation);
 static void ExecCheckXactReadOnly(Query *parsetree, CmdType operation);
 static void EvalPlanQualStart(evalPlanQual *epq, EState *estate,
-							  evalPlanQual *priorepq);
+				  evalPlanQual *priorepq);
 static void EvalPlanQualStop(evalPlanQual *epq);
 
 /* end of local decls */
@@ -100,7 +100,7 @@ static void EvalPlanQualStop(evalPlanQual *epq);
  *		query plan
  *
  * Takes a QueryDesc previously created by CreateQueryDesc (it's not real
- * clear why we bother to separate the two functions, but...).  The tupDesc
+ * clear why we bother to separate the two functions, but...).	The tupDesc
  * field of the QueryDesc is filled in to describe the tuples that will be
  * returned, and the internal fields (estate and planstate) are set up.
  *
@@ -122,8 +122,8 @@ ExecutorStart(QueryDesc *queryDesc, bool explainOnly)
 	Assert(queryDesc->estate == NULL);
 
 	/*
-	 * If the transaction is read-only, we need to check if any writes
-	 * are planned to non-temporary tables.
+	 * If the transaction is read-only, we need to check if any writes are
+	 * planned to non-temporary tables.
 	 */
 	if (!explainOnly)
 		ExecCheckXactReadOnly(queryDesc->parsetree, queryDesc->operation);
@@ -362,8 +362,8 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
 
 	/*
 	 * Otherwise, only plain-relation RTEs need to be checked here.
-	 * Function RTEs are checked by init_fcache when the function is prepared
-	 * for execution. Join and special RTEs need no checks.
+	 * Function RTEs are checked by init_fcache when the function is
+	 * prepared for execution. Join and special RTEs need no checks.
 	 */
 	if (rte->rtekind != RTE_RELATION)
 		return;
@@ -435,7 +435,7 @@ ExecCheckXactReadOnly(Query *parsetree, CmdType operation)
 	if (operation == CMD_DELETE || operation == CMD_INSERT
 		|| operation == CMD_UPDATE)
 	{
-		List *lp;
+		List	   *lp;
 
 		foreach(lp, parsetree->rtable)
 		{
@@ -474,9 +474,9 @@ static void
 InitPlan(QueryDesc *queryDesc, bool explainOnly)
 {
 	CmdType		operation = queryDesc->operation;
-	Query *parseTree = queryDesc->parsetree;
-	Plan *plan = queryDesc->plantree;
-	EState *estate = queryDesc->estate;
+	Query	   *parseTree = queryDesc->parsetree;
+	Plan	   *plan = queryDesc->plantree;
+	EState	   *estate = queryDesc->estate;
 	PlanState  *planstate;
 	List	   *rangeTable;
 	Relation	intoRelationDesc;
@@ -484,8 +484,8 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 	TupleDesc	tupType;
 
 	/*
-	 * Do permissions checks.  It's sufficient to examine the query's
-	 * top rangetable here --- subplan RTEs will be checked during
+	 * Do permissions checks.  It's sufficient to examine the query's top
+	 * rangetable here --- subplan RTEs will be checked during
 	 * ExecInitSubPlan().
 	 */
 	ExecCheckRTPerms(parseTree->rtable, operation);
@@ -570,10 +570,11 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 	if (operation == CMD_SELECT && parseTree->into != NULL)
 	{
 		do_select_into = true;
+
 		/*
-		 * For now, always create OIDs in SELECT INTO; this is for backwards
-		 * compatibility with pre-7.3 behavior.  Eventually we might want
-		 * to allow the user to choose.
+		 * For now, always create OIDs in SELECT INTO; this is for
+		 * backwards compatibility with pre-7.3 behavior.  Eventually we
+		 * might want to allow the user to choose.
 		 */
 		estate->es_force_oids = true;
 	}
@@ -640,12 +641,12 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 	tupType = ExecGetResultType(planstate);
 
 	/*
-	 * Initialize the junk filter if needed.  SELECT and INSERT queries need a
-	 * filter if there are any junk attrs in the tlist.  INSERT and SELECT
-	 * INTO also need a filter if the top plan node is a scan node that's not
-	 * doing projection (else we'll be scribbling on the scan tuple!)  UPDATE
-	 * and DELETE always need a filter, since there's always a junk 'ctid'
-	 * attribute present --- no need to look first.
+	 * Initialize the junk filter if needed.  SELECT and INSERT queries
+	 * need a filter if there are any junk attrs in the tlist.	INSERT and
+	 * SELECT INTO also need a filter if the top plan node is a scan node
+	 * that's not doing projection (else we'll be scribbling on the scan
+	 * tuple!)	UPDATE and DELETE always need a filter, since there's
+	 * always a junk 'ctid' attribute present --- no need to look first.
 	 */
 	{
 		bool		junk_filter_needed = false;
@@ -752,8 +753,8 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 
 	/*
 	 * If doing SELECT INTO, initialize the "into" relation.  We must wait
-	 * till now so we have the "clean" result tuple type to create the
-	 * new table from.
+	 * till now so we have the "clean" result tuple type to create the new
+	 * table from.
 	 *
 	 * If EXPLAIN, skip creating the "into" relation.
 	 */
@@ -795,16 +796,16 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 		FreeTupleDesc(tupdesc);
 
 		/*
-		 * Advance command counter so that the newly-created
-		 * relation's catalog tuples will be visible to heap_open.
+		 * Advance command counter so that the newly-created relation's
+		 * catalog tuples will be visible to heap_open.
 		 */
 		CommandCounterIncrement();
 
 		/*
-		 * If necessary, create a TOAST table for the into
-		 * relation. Note that AlterTableCreateToastTable ends
-		 * with CommandCounterIncrement(), so that the TOAST table
-		 * will be visible for insertion.
+		 * If necessary, create a TOAST table for the into relation. Note
+		 * that AlterTableCreateToastTable ends with
+		 * CommandCounterIncrement(), so that the TOAST table will be
+		 * visible for insertion.
 		 */
 		AlterTableCreateToastTable(intoRelationId, true);
 
@@ -841,19 +842,19 @@ initResultRelInfo(ResultRelInfo *resultRelInfo,
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot change sequence relation \"%s\"",
-							RelationGetRelationName(resultRelationDesc))));
+						  RelationGetRelationName(resultRelationDesc))));
 			break;
 		case RELKIND_TOASTVALUE:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot change toast relation \"%s\"",
-							RelationGetRelationName(resultRelationDesc))));
+						  RelationGetRelationName(resultRelationDesc))));
 			break;
 		case RELKIND_VIEW:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot change view relation \"%s\"",
-							RelationGetRelationName(resultRelationDesc))));
+						  RelationGetRelationName(resultRelationDesc))));
 			break;
 	}
 
@@ -894,7 +895,7 @@ initResultRelInfo(ResultRelInfo *resultRelInfo,
  * ----------------------------------------------------------------
  */
 void
-ExecEndPlan(PlanState *planstate, EState *estate)
+ExecEndPlan(PlanState * planstate, EState *estate)
 {
 	ResultRelInfo *resultRelInfo;
 	int			i;
@@ -964,18 +965,18 @@ ExecEndPlan(PlanState *planstate, EState *estate)
  */
 static TupleTableSlot *
 ExecutePlan(EState *estate,
-			PlanState *planstate,
+			PlanState * planstate,
 			CmdType operation,
 			long numberTuples,
 			ScanDirection direction,
 			DestReceiver *dest)
 {
-	JunkFilter			*junkfilter;
-	TupleTableSlot		*slot;
-	ItemPointer			 tupleid = NULL;
-	ItemPointerData		 tuple_ctid;
-	long				 current_tuple_count;
-	TupleTableSlot		*result;
+	JunkFilter *junkfilter;
+	TupleTableSlot *slot;
+	ItemPointer tupleid = NULL;
+	ItemPointerData tuple_ctid;
+	long		current_tuple_count;
+	TupleTableSlot *result;
 
 	/*
 	 * initialize local variables
@@ -1199,7 +1200,7 @@ lnext:	;
 
 		/*
 		 * check our tuple count.. if we've processed the proper number
-		 * then quit, else loop again and process more tuples.  Zero
+		 * then quit, else loop again and process more tuples.	Zero
 		 * numberTuples means no limit.
 		 */
 		current_tuple_count++;
@@ -1309,7 +1310,7 @@ ExecInsert(TupleTableSlot *slot,
 
 	/* BEFORE ROW INSERT Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
-		resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_INSERT] > 0)
+	  resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_INSERT] > 0)
 	{
 		HeapTuple	newtuple;
 
@@ -1686,13 +1687,13 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 				ereport(ERROR,
 						(errcode(ERRCODE_NOT_NULL_VIOLATION),
 						 errmsg("null value for attribute \"%s\" violates NOT NULL constraint",
-								NameStr(rel->rd_att->attrs[attrChk - 1]->attname))));
+					NameStr(rel->rd_att->attrs[attrChk - 1]->attname))));
 		}
 	}
 
 	if (constr->num_check > 0)
 	{
-		const char	   *failed;
+		const char *failed;
 
 		if ((failed = ExecRelCheck(resultRelInfo, slot, estate)) != NULL)
 			ereport(ERROR,
@@ -1884,10 +1885,11 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 	 * integrated with the Param mechanism somehow, so that the upper plan
 	 * nodes know that their children's outputs have changed.
 	 *
-	 * Note that the stack of free evalPlanQual nodes is quite useless at
-	 * the moment, since it only saves us from pallocing/releasing the
+	 * Note that the stack of free evalPlanQual nodes is quite useless at the
+	 * moment, since it only saves us from pallocing/releasing the
 	 * evalPlanQual nodes themselves.  But it will be useful once we
-	 * implement ReScan instead of end/restart for re-using PlanQual nodes.
+	 * implement ReScan instead of end/restart for re-using PlanQual
+	 * nodes.
 	 */
 	if (endNode)
 	{
@@ -1898,10 +1900,11 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 	/*
 	 * Initialize new recheck query.
 	 *
-	 * Note: if we were re-using PlanQual plans via ExecReScan, we'd need
-	 * to instead copy down changeable state from the top plan (including
-	 * es_result_relation_info, es_junkFilter) and reset locally changeable
-	 * state in the epq (including es_param_exec_vals, es_evTupleNull).
+	 * Note: if we were re-using PlanQual plans via ExecReScan, we'd need to
+	 * instead copy down changeable state from the top plan (including
+	 * es_result_relation_info, es_junkFilter) and reset locally
+	 * changeable state in the epq (including es_param_exec_vals,
+	 * es_evTupleNull).
 	 */
 	EvalPlanQualStart(epq, estate, epq->next);
 
@@ -2016,9 +2019,9 @@ EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
 
 	/*
 	 * The epqstates share the top query's copy of unchanging state such
-	 * as the snapshot, rangetable, result-rel info, and external Param info.
-	 * They need their own copies of local state, including a tuple table,
-	 * es_param_exec_vals, etc.
+	 * as the snapshot, rangetable, result-rel info, and external Param
+	 * info. They need their own copies of local state, including a tuple
+	 * table, es_param_exec_vals, etc.
 	 */
 	epqstate->es_direction = ForwardScanDirection;
 	epqstate->es_snapshot = estate->es_snapshot;
@@ -2036,11 +2039,11 @@ EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
 	epqstate->es_instrument = estate->es_instrument;
 	epqstate->es_force_oids = estate->es_force_oids;
 	epqstate->es_topPlan = estate->es_topPlan;
+
 	/*
-	 * Each epqstate must have its own es_evTupleNull state, but
-	 * all the stack entries share es_evTuple state.  This allows
-	 * sub-rechecks to inherit the value being examined by an
-	 * outer recheck.
+	 * Each epqstate must have its own es_evTupleNull state, but all the
+	 * stack entries share es_evTuple state.  This allows sub-rechecks to
+	 * inherit the value being examined by an outer recheck.
 	 */
 	epqstate->es_evTupleNull = (bool *) palloc0(rtsize * sizeof(bool));
 	if (priorepq == NULL)

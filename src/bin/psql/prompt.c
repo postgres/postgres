@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.26 2003/06/28 00:12:40 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.27 2003/08/04 00:43:29 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "prompt.h"
@@ -86,14 +86,14 @@ get_prompt(promptStatus_t status)
 		case PROMPT_PAREN:
 			prompt_name = "PROMPT2";
 			break;
-		
+
 		case PROMPT_COPY:
 			prompt_name = "PROMPT3";
 			break;
 	}
 
 	if (prompt_name)
-	  prompt_string = GetVariable(pset.vars, prompt_name);
+		prompt_string = GetVariable(pset.vars, prompt_name);
 
 	destination[0] = '\0';
 
@@ -112,16 +112,17 @@ get_prompt(promptStatus_t status)
 						strncpy(buf, PQdb(pset.db), MAX_PROMPT_SIZE);
 					break;
 				case '~':
-						if (pset.db)
-						{
+					if (pset.db)
+					{
 						const char *var;
-							if (strcmp(PQdb(pset.db), PQuser(pset.db)) == 0 ||
-								((var = getenv("PGDATABASE")) && strcmp(var, PQdb(pset.db)) == 0))
-								strcpy(buf, "~");
-							else
-								strncpy(buf, PQdb(pset.db), MAX_PROMPT_SIZE);
-						}
-						break;
+
+						if (strcmp(PQdb(pset.db), PQuser(pset.db)) == 0 ||
+							((var = getenv("PGDATABASE")) && strcmp(var, PQdb(pset.db)) == 0))
+							strcpy(buf, "~");
+						else
+							strncpy(buf, PQdb(pset.db), MAX_PROMPT_SIZE);
+					}
+					break;
 
 					/* DB server hostname (long/short) */
 				case 'M':
@@ -172,7 +173,7 @@ get_prompt(promptStatus_t status)
 				case '7':
 				case '8':
 				case '9':
-					*buf = parse_char((char **)&p);
+					*buf = parse_char((char **) &p);
 					break;
 
 				case 'R':
@@ -210,22 +211,23 @@ get_prompt(promptStatus_t status)
 				case 'T':
 					if (!pset.db)
 						buf[0] = '?';
-					else switch (PQtransactionStatus(pset.db))
-					{
-						case PQTRANS_IDLE:
-							buf[0] = '\0';
-							break;
-						case PQTRANS_ACTIVE:
-						case PQTRANS_INTRANS:
-							buf[0] = '*';
-							break;
-						case PQTRANS_INERROR:
-							buf[0] = '!';
-							break;
-						default:
-							buf[0] = '?';
-							break;
-					}
+					else
+						switch (PQtransactionStatus(pset.db))
+						{
+							case PQTRANS_IDLE:
+								buf[0] = '\0';
+								break;
+							case PQTRANS_ACTIVE:
+							case PQTRANS_INTRANS:
+								buf[0] = '*';
+								break;
+							case PQTRANS_INERROR:
+								buf[0] = '!';
+								break;
+							default:
+								buf[0] = '?';
+								break;
+						}
 					break;
 
 				case '?':

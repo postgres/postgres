@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.92 2003/07/27 04:53:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.93 2003/08/04 00:43:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@ static Acl *allocacl(int n);
 static const char *aclparse(const char *s, AclItem *aip);
 static bool aclitem_match(const AclItem *a1, const AclItem *a2);
 static Acl *recursive_revoke(Acl *acl, AclId grantee,
-							 AclMode revoke_privs, DropBehavior behavior);
+				 AclMode revoke_privs, DropBehavior behavior);
 
 static AclMode convert_priv_string(text *priv_type_text);
 
@@ -77,24 +77,22 @@ getid(const char *s, char *n)
 	/* This test had better match what putid() does, below */
 	for (;
 		 *s != '\0' &&
-			 (isalnum((unsigned char) *s) ||
-			  *s == '_' ||
-			  *s == '"' ||
-			  in_quotes);
+		 (isalnum((unsigned char) *s) ||
+		  *s == '_' ||
+		  *s == '"' ||
+		  in_quotes);
 		 s++)
 	{
 		if (*s == '"')
-		{
 			in_quotes = !in_quotes;
-		}
 		else
 		{
-			if (len >= NAMEDATALEN-1)
+			if (len >= NAMEDATALEN - 1)
 				ereport(ERROR,
 						(errcode(ERRCODE_NAME_TOO_LONG),
 						 errmsg("identifier too long"),
-						 errdetail("Identifier must be less than %d characters.",
-									NAMEDATALEN)));
+				 errdetail("Identifier must be less than %d characters.",
+						   NAMEDATALEN)));
 
 			n[len++] = *s;
 		}
@@ -107,13 +105,13 @@ getid(const char *s, char *n)
 
 /*
  * Write a user or group Name at *p, surrounding it with double quotes if
- * needed.  There must be at least NAMEDATALEN+2 bytes available at *p.
+ * needed.	There must be at least NAMEDATALEN+2 bytes available at *p.
  */
 static void
 putid(char *p, const char *s)
 {
 	const char *src;
-	bool	safe = true;
+	bool		safe = true;
 
 	for (src = s; *src; src++)
 	{
@@ -153,7 +151,9 @@ putid(char *p, const char *s)
 static const char *
 aclparse(const char *s, AclItem *aip)
 {
-	AclMode		privs, goption, read;
+	AclMode		privs,
+				goption,
+				read;
 	uint32		idtype;
 	char		name[NAMEDATALEN];
 	char		name2[NAMEDATALEN];
@@ -174,13 +174,13 @@ aclparse(const char *s, AclItem *aip)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("unrecognized keyword: \"%s\"", name),
-					 errhint("ACL keyword must be \"group\" or \"user\".")));
+				 errhint("ACL keyword must be \"group\" or \"user\".")));
 		s = getid(s, name);		/* move s to the name beyond the keyword */
 		if (name[0] == '\0')
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("missing name"),
-					 errhint("A name must follow the [group|user] keyword.")));
+			   errhint("A name must follow the [group|user] keyword.")));
 	}
 	if (name[0] == '\0')
 		idtype = ACL_IDTYPE_WORLD;
@@ -192,7 +192,7 @@ aclparse(const char *s, AclItem *aip)
 
 	privs = goption = ACL_NO_RIGHTS;
 
-	for (++s, read=0; isalpha((unsigned char) *s) || *s == '*'; s++)
+	for (++s, read = 0; isalpha((unsigned char) *s) || *s == '*'; s++)
 	{
 		switch (*s)
 		{
@@ -235,8 +235,8 @@ aclparse(const char *s, AclItem *aip)
 			default:
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-						 errmsg("invalid mode character: must be one of \"%s\"",
-								ACL_ALL_RIGHTS_STR)));
+				  errmsg("invalid mode character: must be one of \"%s\"",
+						 ACL_ALL_RIGHTS_STR)));
 		}
 
 		privs |= read;
@@ -255,8 +255,10 @@ aclparse(const char *s, AclItem *aip)
 			break;
 	}
 
-	/* XXX Allow a degree of backward compatibility by defaulting the
-	 * grantor to the superuser. */
+	/*
+	 * XXX Allow a degree of backward compatibility by defaulting the
+	 * grantor to the superuser.
+	 */
 	if (*s == '/')
 	{
 		s = getid(s + 1, name2);
@@ -331,7 +333,7 @@ aclitemin(PG_FUNCTION_ARGS)
 	if (*s)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("extra garbage at the end of the ACL specification")));
+		   errmsg("extra garbage at the end of the ACL specification")));
 
 	PG_RETURN_ACLITEM_P(aip);
 }
@@ -356,7 +358,7 @@ aclitemout(PG_FUNCTION_ARGS)
 
 	out = palloc(strlen("group =/") +
 				 2 * N_ACL_RIGHTS +
-				 2 * (NAMEDATALEN+2) +
+				 2 * (NAMEDATALEN + 2) +
 				 1);
 
 	p = out;
@@ -454,8 +456,8 @@ aclitem_match(const AclItem *a1, const AclItem *a2)
 Datum
 aclitem_eq(PG_FUNCTION_ARGS)
 {
-	AclItem	   *a1 = PG_GETARG_ACLITEM_P(0);
-	AclItem	   *a2 = PG_GETARG_ACLITEM_P(1);
+	AclItem    *a1 = PG_GETARG_ACLITEM_P(0);
+	AclItem    *a2 = PG_GETARG_ACLITEM_P(1);
 	bool		result;
 
 	result = a1->ai_privs == a2->ai_privs &&
@@ -510,7 +512,7 @@ acldefault(GrantObjectType objtype, AclId ownerid)
 	}
 
 	acl = allocacl((world_default != ACL_NO_RIGHTS ? 1 : 0)
-				  + (ownerid ? 1 : 0));
+				   + (ownerid ? 1 : 0));
 	aip = ACL_DAT(acl);
 
 	if (world_default != ACL_NO_RIGHTS)
@@ -522,7 +524,7 @@ acldefault(GrantObjectType objtype, AclId ownerid)
 
 	if (ownerid)
 	{
-		int index = (world_default != ACL_NO_RIGHTS ? 1: 0);
+		int			index = (world_default != ACL_NO_RIGHTS ? 1 : 0);
 
 		aip[index].ai_grantee = ownerid;
 		aip[index].ai_grantor = ownerid;
@@ -563,10 +565,10 @@ aclinsert3(const Acl *old_acl, const AclItem *mod_aip, unsigned modechg, DropBeh
 	old_aip = ACL_DAT(old_acl);
 
 	/*
-	 * Search the ACL for an existing entry for this grantee and
-	 * grantor.  If one exists, just modify the entry in-place (well,
-	 * in the same position, since we actually return a copy);
-	 * otherwise, insert the new entry at the end.
+	 * Search the ACL for an existing entry for this grantee and grantor.
+	 * If one exists, just modify the entry in-place (well, in the same
+	 * position, since we actually return a copy); otherwise, insert the
+	 * new entry at the end.
 	 */
 
 	for (dst = 0; dst < num; ++dst)
@@ -652,17 +654,17 @@ recursive_revoke(Acl *acl,
 				 AclMode revoke_privs,
 				 DropBehavior behavior)
 {
-	int i;
+	int			i;
 
 restart:
 	for (i = 0; i < ACL_NUM(acl); i++)
 	{
-		AclItem *aip = ACL_DAT(acl);
+		AclItem    *aip = ACL_DAT(acl);
 
 		if (aip[i].ai_grantor == grantee
 			&& (ACLITEM_GET_PRIVS(aip[i]) & revoke_privs) != 0)
 		{
-			AclItem mod_acl;
+			AclItem		mod_acl;
 
 			if (behavior == DROP_RESTRICT)
 				ereport(ERROR,
@@ -727,7 +729,7 @@ aclremove(PG_FUNCTION_ARGS)
 	for (dst = 0;
 		 dst < old_num && !aclitem_match(mod_aip, old_aip + dst);
 		 ++dst)
-		/* continue */ ;
+		 /* continue */ ;
 
 	if (dst >= old_num)
 	{
@@ -797,15 +799,17 @@ makeaclitem(PG_FUNCTION_ARGS)
 	int32		grantor = PG_GETARG_INT32(2);
 	text	   *privtext = PG_GETARG_TEXT_P(3);
 	bool		goption = PG_GETARG_BOOL(4);
-	AclItem	   *aclitem;
+	AclItem    *aclitem;
 	AclMode		priv;
 
 	priv = convert_priv_string(privtext);
 
 	aclitem = (AclItem *) palloc(sizeof(*aclitem));
+
 	if (u_grantee == 0 && g_grantee == 0)
 	{
-		aclitem->ai_grantee = 0;
+		aclitem   ->ai_grantee = 0;
+
 		ACLITEM_SET_IDTYPE(*aclitem, ACL_IDTYPE_WORLD);
 	}
 	else if (u_grantee != 0 && g_grantee != 0)
@@ -816,16 +820,19 @@ makeaclitem(PG_FUNCTION_ARGS)
 	}
 	else if (u_grantee != 0)
 	{
-		aclitem->ai_grantee = u_grantee;
+		aclitem   ->ai_grantee = u_grantee;
+
 		ACLITEM_SET_IDTYPE(*aclitem, ACL_IDTYPE_UID);
 	}
 	else if (g_grantee != 0)
 	{
-		aclitem->ai_grantee = g_grantee;
+		aclitem   ->ai_grantee = g_grantee;
+
 		ACLITEM_SET_IDTYPE(*aclitem, ACL_IDTYPE_GID);
 	}
 
-	aclitem->ai_grantor = grantor;
+	aclitem   ->ai_grantor = grantor;
+
 	ACLITEM_SET_PRIVS(*aclitem, priv);
 	if (goption)
 		ACLITEM_SET_GOPTIONS(*aclitem, priv);
@@ -841,7 +848,7 @@ convert_priv_string(text *priv_type_text)
 	char	   *priv_type;
 
 	priv_type = DatumGetCString(DirectFunctionCall1(textout,
-													PointerGetDatum(priv_type_text)));
+									   PointerGetDatum(priv_type_text)));
 
 	if (strcasecmp(priv_type, "SELECT") == 0)
 		return ACL_SELECT;

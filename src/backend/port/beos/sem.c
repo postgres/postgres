@@ -291,8 +291,8 @@ semop(int semId, struct sembuf * sops, int nsops)
 		if (sops[i].sem_op < 0)
 		{
 			/*
-			 * Try acquiring the semaphore till we are not interrupted by a
-			 * signal
+			 * Try acquiring the semaphore till we are not interrupted by
+			 * a signal
 			 */
 			if (sops[i].sem_flg == IPC_NOWAIT)
 			{

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodes.c,v 1.19 2002/12/16 16:22:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodes.c,v 1.20 2003/08/04 00:43:19 momjian Exp $
  *
  * HISTORY
  *	  Andrew Yu			Oct 20, 1994	file creation
@@ -24,4 +24,4 @@
  * Support for newNode() macro
  */
 
-Node *newNodeMacroHolder;
+Node	   *newNodeMacroHolder;

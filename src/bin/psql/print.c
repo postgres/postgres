@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2003 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.40 2003/07/25 21:48:45 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.41 2003/08/04 00:43:29 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -306,7 +306,7 @@ print_aligned_text(const char *title, const char *const * headers,
 
 		for (i = 0; i < col_count; i++)
 		{
-			unsigned int		nbspace;
+			unsigned int nbspace;
 
 			nbspace = widths[i] - head_w[i];
 
@@ -396,7 +396,7 @@ print_aligned_text(const char *title, const char *const * headers,
 
 static void
 print_aligned_vertical(const char *title, const char *const * headers,
-					   const char *const * cells, const char *const * footers,
+				  const char *const * cells, const char *const * footers,
 					   bool opt_barebones, unsigned short int opt_border,
 					   int encoding, FILE *fout)
 {
@@ -660,7 +660,8 @@ const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 			fputs("  <tr valign=\"top\">\n", fout);
 
 		fprintf(fout, "    <td align=\"%s\">", opt_align[(i) % col_count] == 'r' ? "right" : "left");
-		if ((*ptr)[strspn(*ptr, " \t")] == '\0')  /* is string only whitespace? */
+		if ((*ptr)[strspn(*ptr, " \t")] == '\0')		/* is string only
+														 * whitespace? */
 			fputs("&nbsp; ", fout);
 		else
 			html_escaped_print(*ptr, fout);
@@ -734,7 +735,8 @@ const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 		fputs("</th>\n", fout);
 
 		fprintf(fout, "    <td align=\"%s\">", opt_align[i % col_count] == 'r' ? "right" : "left");
-		if ((*ptr)[strspn(*ptr, " \t")] == '\0') /* is string only whitespace? */
+		if ((*ptr)[strspn(*ptr, " \t")] == '\0')		/* is string only
+														 * whitespace? */
 			fputs("&nbsp; ", fout);
 		else
 			html_escaped_print(*ptr, fout);
@@ -1036,7 +1038,7 @@ printTable(const char *title,
 {
 	const char *default_footer[] = {NULL};
 	unsigned short int border = opt->border;
-	FILE		*output;
+	FILE	   *output;
 
 	if (opt->format == PRINT_NOTHING)
 		return;
@@ -1049,9 +1051,9 @@ printTable(const char *title,
 
 	if (fout == stdout)
 	{
-		int col_count = 0,
-			row_count = 0,
-			lines;
+		int			col_count = 0,
+					row_count = 0,
+					lines;
 		const char *const * ptr;
 
 		/* rough estimate of columns and rows */

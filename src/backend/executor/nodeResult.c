@@ -34,7 +34,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.24 2002/12/15 16:17:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.25 2003/08/04 00:43:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ ExecResult(ResultState *node)
 {
 	TupleTableSlot *outerTupleSlot;
 	TupleTableSlot *resultSlot;
-	PlanState   *outerPlan;
+	PlanState  *outerPlan;
 	ExprContext *econtext;
 	ExprDoneCond isDone;
 

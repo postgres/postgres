@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.102 2003/07/27 04:53:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.103 2003/08/04 00:43:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@ typedef struct varlena unknown;
 #define DatumGetUnknownP(X)			((unknown *) PG_DETOAST_DATUM(X))
 #define DatumGetUnknownPCopy(X)		((unknown *) PG_DETOAST_DATUM_COPY(X))
 #define PG_GETARG_UNKNOWN_P(n)		DatumGetUnknownP(PG_GETARG_DATUM(n))
-#define PG_GETARG_UNKNOWN_P_COPY(n)	DatumGetUnknownPCopy(PG_GETARG_DATUM(n))
+#define PG_GETARG_UNKNOWN_P_COPY(n) DatumGetUnknownPCopy(PG_GETARG_DATUM(n))
 #define PG_RETURN_UNKNOWN_P(x)		PG_RETURN_POINTER(x)
 
 #define PG_TEXTARG_GET_STR(arg_) \
@@ -120,7 +120,7 @@ byteain(PG_FUNCTION_ARGS)
 
 	byte += VARHDRSZ;
 	result = (bytea *) palloc(byte);
-	VARATT_SIZEP(result) = byte;		/* set varlena length */
+	VARATT_SIZEP(result) = byte;	/* set varlena length */
 
 	tp = inputText;
 	rp = VARDATA(result);
@@ -376,7 +376,7 @@ Datum
 unknownrecv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	unknown	   *result;
+	unknown    *result;
 	int			nbytes;
 
 	nbytes = buf->len - buf->cursor;
@@ -395,7 +395,7 @@ unknownrecv(PG_FUNCTION_ARGS)
 Datum
 unknownsend(PG_FUNCTION_ARGS)
 {
-	unknown	   *vlena = PG_GETARG_UNKNOWN_P_COPY(0);
+	unknown    *vlena = PG_GETARG_UNKNOWN_P_COPY(0);
 
 	PG_RETURN_UNKNOWN_P(vlena);
 }
@@ -584,7 +584,7 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 			if (E < S)
 				ereport(ERROR,
 						(errcode(ERRCODE_SUBSTRING_ERROR),
-						 errmsg("negative substring length not allowed")));
+					   errmsg("negative substring length not allowed")));
 
 			/*
 			 * A zero or negative value for the end position can happen if
@@ -648,7 +648,7 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 			if (E < S)
 				ereport(ERROR,
 						(errcode(ERRCODE_SUBSTRING_ERROR),
-						 errmsg("negative substring length not allowed")));
+					   errmsg("negative substring length not allowed")));
 
 			/*
 			 * A zero or negative value for the end position can happen if
@@ -851,10 +851,10 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 
 	if (!lc_collate_is_c())
 	{
-		char	a1buf[STACKBUFLEN];
-		char	a2buf[STACKBUFLEN];
-		char   *a1p,
-			   *a2p;
+		char		a1buf[STACKBUFLEN];
+		char		a2buf[STACKBUFLEN];
+		char	   *a1p,
+				   *a2p;
 
 		if (len1 >= STACKBUFLEN)
 			a1p = (char *) palloc(len1 + 1);
@@ -1065,7 +1065,7 @@ text_smaller(PG_FUNCTION_ARGS)
 static int
 internal_text_pattern_compare(text *arg1, text *arg2)
 {
-	int result;
+	int			result;
 
 	result = memcmp(VARDATA(arg1), VARDATA(arg2),
 					Min(VARSIZE(arg1), VARSIZE(arg2)) - VARHDRSZ);
@@ -2004,7 +2004,8 @@ split_text(PG_FUNCTION_ARGS)
 		if (fldnum == 1)		/* first field - just return the input
 								 * string */
 			PG_RETURN_TEXT_P(inputstring);
-		else					/* otherwise return an empty string */
+		else
+/* otherwise return an empty string */
 			PG_RETURN_TEXT_P(PG_STR_GET_TEXT(""));
 	}
 
@@ -2026,7 +2027,8 @@ split_text(PG_FUNCTION_ARGS)
 		if (fldnum == 1)		/* first field - just return the input
 								 * string */
 			PG_RETURN_TEXT_P(inputstring);
-		else					/* otherwise return an empty string */
+		else
+/* otherwise return an empty string */
 			PG_RETURN_TEXT_P(PG_STR_GET_TEXT(""));
 	}
 	else if ((start_posn != 0) && (end_posn == 0))
@@ -2073,32 +2075,36 @@ text_to_array(PG_FUNCTION_ARGS)
 	if (inputstring_len < 1)
 		PG_RETURN_NULL();
 
-	/* empty field separator
-	 * return one element, 1D, array using the input string */
+	/*
+	 * empty field separator return one element, 1D, array using the input
+	 * string
+	 */
 	if (fldsep_len < 1)
 		PG_RETURN_ARRAYTYPE_P(create_singleton_array(fcinfo, TEXTOID,
-							  CStringGetDatum(inputstring), 1));
+									   CStringGetDatum(inputstring), 1));
 
 	/* start with end position holding the initial start position */
 	end_posn = 0;
-	for (fldnum=1;;fldnum++)	/* field number is 1 based */
+	for (fldnum = 1;; fldnum++) /* field number is 1 based */
 	{
-		Datum	dvalue;
-		bool	disnull = false;
+		Datum		dvalue;
+		bool		disnull = false;
 
 		start_posn = end_posn;
 		end_posn = text_position(PointerGetDatum(inputstring),
 								 PointerGetDatum(fldsep),
 								 fldnum);
 
-		if ((start_posn == 0) && (end_posn == 0))	/* fldsep not found */
+		if ((start_posn == 0) && (end_posn == 0))		/* fldsep not found */
 		{
 			if (fldnum == 1)
 			{
-				/* first element
-				 * return one element, 1D, array using the input string */
+				/*
+				 * first element return one element, 1D, array using the
+				 * input string
+				 */
 				PG_RETURN_ARRAYTYPE_P(create_singleton_array(fcinfo, TEXTOID,
-									  CStringGetDatum(inputstring), 1));
+									   CStringGetDatum(inputstring), 1));
 			}
 			else
 			{
@@ -2143,7 +2149,9 @@ array_to_text(PG_FUNCTION_ARGS)
 {
 	ArrayType  *v = PG_GETARG_ARRAYTYPE_P(0);
 	char	   *fldsep = PG_TEXTARG_GET_STR(1);
-	int			nitems, *dims, ndims;
+	int			nitems,
+			   *dims,
+				ndims;
 	char	   *p;
 	Oid			element_type;
 	int			typlen;
@@ -2167,21 +2175,24 @@ array_to_text(PG_FUNCTION_ARGS)
 
 	/*
 	 * We arrange to look up info about element type, including its output
-	 * conversion proc, only once per series of calls, assuming the element
-	 * type doesn't change underneath us.
+	 * conversion proc, only once per series of calls, assuming the
+	 * element type doesn't change underneath us.
 	 */
 	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL)
 	{
 		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-													 sizeof(ArrayMetaState));
+												 sizeof(ArrayMetaState));
 		my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 		my_extra->element_type = InvalidOid;
 	}
 
 	if (my_extra->element_type != element_type)
 	{
-		/* Get info about element type, including its output conversion proc */
+		/*
+		 * Get info about element type, including its output conversion
+		 * proc
+		 */
 		get_type_io_data(element_type, IOFunc_output,
 						 &my_extra->typlen, &my_extra->typbyval,
 						 &my_extra->typalign, &my_extra->typdelim,

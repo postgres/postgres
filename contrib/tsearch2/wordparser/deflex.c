@@ -1,6 +1,6 @@
 #include "deflex.h"
 
-const char *lex_descr[]={
+const char *lex_descr[] = {
 	"",
 	"Latin word",
 	"Non-latin word",
@@ -27,7 +27,7 @@ const char *lex_descr[]={
 	"HTML Entity"
 };
 
-const char *tok_alias[]={
+const char *tok_alias[] = {
 	"",
 	"lword",
 	"nlword",
@@ -53,4 +53,3 @@ const char *tok_alias[]={
 	"uint",
 	"entity"
 };
-

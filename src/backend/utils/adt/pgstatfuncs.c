@@ -308,11 +308,11 @@ pg_stat_get_backend_activity(PG_FUNCTION_ARGS)
 Datum
 pg_stat_get_backend_activity_start(PG_FUNCTION_ARGS)
 {
-	PgStat_StatBeEntry	*beentry;
-	int32				 beid;
-	AbsoluteTime		 sec;
-	int					 usec;
-	TimestampTz			 result;
+	PgStat_StatBeEntry *beentry;
+	int32		beid;
+	AbsoluteTime sec;
+	int			usec;
+	TimestampTz result;
 
 	beid = PG_GETARG_INT32(0);
 
@@ -326,8 +326,8 @@ pg_stat_get_backend_activity_start(PG_FUNCTION_ARGS)
 	usec = beentry->activity_start_usec;
 
 	/*
-	 * No time recorded for start of current query -- this is the case
-	 * if the user hasn't enabled query-level stats collection.
+	 * No time recorded for start of current query -- this is the case if
+	 * the user hasn't enabled query-level stats collection.
 	 */
 	if (sec == 0 && usec == 0)
 		PG_RETURN_NULL();

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.146 2003/08/01 01:23:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.147 2003/08/04 00:43:27 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -200,34 +200,34 @@ static char *XactIsoLevel_string;
  *
  * Note: these strings are deliberately not localized.
  */
-const char * const GucContext_Names[] = 
+const char *const GucContext_Names[] =
 {
-	/* PGC_INTERNAL */			"internal",
-	/* PGC_POSTMASTER */		"postmaster",
-	/* PGC_SIGHUP */			"sighup",
-	/* PGC_BACKEND */			"backend",
-	/* PGC_SUSET */				"superuser",
-	/* PGC_USERLIMIT */			"userlimit",
-	/* PGC_USERSET */			"user"
+	 /* PGC_INTERNAL */ "internal",
+	 /* PGC_POSTMASTER */ "postmaster",
+	 /* PGC_SIGHUP */ "sighup",
+	 /* PGC_BACKEND */ "backend",
+	 /* PGC_SUSET */ "superuser",
+	 /* PGC_USERLIMIT */ "userlimit",
+	 /* PGC_USERSET */ "user"
 };
 
 /*
  * Displayable names for source types (enum GucSource)
  *
  * Note: these strings are deliberately not localized.
- */	
-const char * const GucSource_Names[] = 
+ */
+const char *const GucSource_Names[] =
 {
-	/* PGC_S_DEFAULT */			"default",
-	/* PGC_S_ENV_VAR */			"environment variable",
-	/* PGC_S_FILE */			"configuration file",
-	/* PGC_S_ARGV */			"command line",
-	/* PGC_S_UNPRIVILEGED */	"unprivileged",
-	/* PGC_S_DATABASE */		"database",
-	/* PGC_S_USER */			"user",
-	/* PGC_S_CLIENT */			"client",
-	/* PGC_S_OVERRIDE */		"override",
-	/* PGC_S_SESSION */			"session"
+	 /* PGC_S_DEFAULT */ "default",
+	 /* PGC_S_ENV_VAR */ "environment variable",
+	 /* PGC_S_FILE */ "configuration file",
+	 /* PGC_S_ARGV */ "command line",
+	 /* PGC_S_UNPRIVILEGED */ "unprivileged",
+	 /* PGC_S_DATABASE */ "database",
+	 /* PGC_S_USER */ "user",
+	 /* PGC_S_CLIENT */ "client",
+	 /* PGC_S_OVERRIDE */ "override",
+	 /* PGC_S_SESSION */ "session"
 };
 
 /*
@@ -308,12 +308,12 @@ const char *const config_group_names[] =
  *
  * Note: these strings are deliberately not localized.
  */
-const char * const config_type_names[] = 
+const char *const config_type_names[] =
 {
-	/* PGC_BOOL */		"bool",
-	/* PGC_INT */		"integer",
-	/* PGC_REAL */		"real",
-	/* PGC_STRING */	"string"
+	 /* PGC_BOOL */ "bool",
+	 /* PGC_INT */ "integer",
+	 /* PGC_REAL */ "real",
+	 /* PGC_STRING */ "string"
 };
 
 
@@ -1351,7 +1351,7 @@ static struct config_string ConfigureNamesString[] =
 		{"default_transaction_isolation", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("The default isolation level of each new transaction"),
 			gettext_noop("Each SQL transaction has an isolation level, which "
-					 "can be either \"read committed\" or \"serializable\".")
+				 "can be either \"read committed\" or \"serializable\".")
 		},
 		&default_iso_level_string,
 		"read committed", assign_defaultxactisolevel, NULL
@@ -1800,7 +1800,11 @@ InitializeGUCOptions(void)
 
 					Assert(conf->reset_val >= conf->min);
 					Assert(conf->reset_val <= conf->max);
-					/* Check to make sure we only have valid PGC_USERLIMITs */
+
+					/*
+					 * Check to make sure we only have valid
+					 * PGC_USERLIMITs
+					 */
 					Assert(conf->gen.context != PGC_USERLIMIT ||
 						   strcmp(conf->gen.name, "log_min_duration_statement") == 0);
 					if (conf->assign_hook)
@@ -1831,11 +1835,14 @@ InitializeGUCOptions(void)
 					struct config_string *conf = (struct config_string *) gconf;
 					char	   *str;
 
-					/* Check to make sure we only have valid PGC_USERLIMITs */
+					/*
+					 * Check to make sure we only have valid
+					 * PGC_USERLIMITs
+					 */
 					Assert(conf->gen.context != PGC_USERLIMIT ||
 						   conf->assign_hook == assign_log_min_messages ||
-						   conf->assign_hook == assign_client_min_messages ||
-						   conf->assign_hook == assign_min_error_statement);
+					   conf->assign_hook == assign_client_min_messages ||
+						conf->assign_hook == assign_min_error_statement);
 					*conf->variable = NULL;
 					conf->reset_val = NULL;
 					conf->session_val = NULL;
@@ -2434,8 +2441,8 @@ set_config_option(const char *name, const char *value,
 			{
 				ereport(elevel,
 						(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
-						 errmsg("\"%s\" cannot be changed after server start",
-								name)));
+					errmsg("\"%s\" cannot be changed after server start",
+						   name)));
 				return false;
 			}
 			break;
@@ -2474,8 +2481,8 @@ set_config_option(const char *name, const char *value,
 			{
 				ereport(elevel,
 						(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
-						 errmsg("\"%s\" cannot be set after connection start",
-								name)));
+					errmsg("\"%s\" cannot be set after connection start",
+						   name)));
 				return false;
 			}
 			break;
@@ -2514,7 +2521,7 @@ set_config_option(const char *name, const char *value,
 	 * to set the reset/session values even if we can't set the variable
 	 * itself.
 	 */
-	DoIt_orig = DoIt;	/* we might have to reverse this later */
+	DoIt_orig = DoIt;			/* we might have to reverse this later */
 	if (record->source > source)
 	{
 		if (DoIt && !makeDefault)
@@ -2554,8 +2561,8 @@ set_config_option(const char *name, const char *value,
 					{
 						ereport(elevel,
 								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-								 errmsg("permission denied to set option \"%s\"",
-										name),
+						 errmsg("permission denied to set option \"%s\"",
+								name),
 								 errhint("Must be superuser to change this value to false.")));
 						return false;
 					}
@@ -2565,7 +2572,7 @@ set_config_option(const char *name, const char *value,
 						record->session_source > PGC_S_UNPRIVILEGED &&
 						newval > conf->session_val &&
 						!superuser())
-							DoIt = DoIt_orig;
+						DoIt = DoIt_orig;
 				}
 				else
 				{
@@ -2630,8 +2637,8 @@ set_config_option(const char *name, const char *value,
 					{
 						ereport(elevel,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("\"%s\" requires an integer value",
-										name)));
+							   errmsg("\"%s\" requires an integer value",
+									  name)));
 						return false;
 					}
 					if (newval < conf->min || newval > conf->max)
@@ -2639,7 +2646,7 @@ set_config_option(const char *name, const char *value,
 						ereport(elevel,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 								 errmsg("%d is outside the valid range for \"%s\" (%d .. %d)",
-										newval, name, conf->min, conf->max)));
+								   newval, name, conf->min, conf->max)));
 						return false;
 					}
 					/* Limit non-superuser changes */
@@ -2651,8 +2658,8 @@ set_config_option(const char *name, const char *value,
 					{
 						ereport(elevel,
 								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-								 errmsg("permission denied to set option \"%s\"",
-										name),
+						 errmsg("permission denied to set option \"%s\"",
+								name),
 								 errhint("Must be superuser to increase this value or set it to zero.")));
 						return false;
 					}
@@ -2662,7 +2669,7 @@ set_config_option(const char *name, const char *value,
 						record->session_source > PGC_S_UNPRIVILEGED &&
 						newval < conf->session_val &&
 						!superuser())
-							DoIt = DoIt_orig;
+						DoIt = DoIt_orig;
 				}
 				else
 				{
@@ -2736,7 +2743,7 @@ set_config_option(const char *name, const char *value,
 						ereport(elevel,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 								 errmsg("%g is outside the valid range for \"%s\" (%g .. %g)",
-										newval, name, conf->min, conf->max)));
+								   newval, name, conf->min, conf->max)));
 						return false;
 					}
 					/* Limit non-superuser changes */
@@ -2747,8 +2754,8 @@ set_config_option(const char *name, const char *value,
 					{
 						ereport(elevel,
 								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-								 errmsg("permission denied to set option \"%s\"",
-										name),
+						 errmsg("permission denied to set option \"%s\"",
+								name),
 								 errhint("Must be superuser to increase this value.")));
 						return false;
 					}
@@ -2758,7 +2765,7 @@ set_config_option(const char *name, const char *value,
 						record->session_source > PGC_S_UNPRIVILEGED &&
 						newval < conf->session_val &&
 						!superuser())
-							DoIt = DoIt_orig;
+						DoIt = DoIt_orig;
 				}
 				else
 				{
@@ -2831,7 +2838,8 @@ set_config_option(const char *name, const char *value,
 					if (record->context == PGC_USERLIMIT &&
 						*conf->variable)
 					{
-						int old_int_value, new_int_value;
+						int			old_int_value,
+									new_int_value;
 
 						/* all USERLIMIT strings are message levels */
 						assign_msglvl(&old_int_value, conf->reset_val,
@@ -2844,10 +2852,10 @@ set_config_option(const char *name, const char *value,
 							!superuser())
 						{
 							ereport(elevel,
-									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-									 errmsg("permission denied to set option \"%s\"",
-											name),
-									 errhint("Must be superuser to increase this value.")));
+								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+								 errmsg("permission denied to set option \"%s\"",
+										name),
+								 errhint("Must be superuser to increase this value.")));
 							return false;
 						}
 						/* Allow admin to override non-superuser setting */
@@ -2855,7 +2863,7 @@ set_config_option(const char *name, const char *value,
 							record->session_source > PGC_S_UNPRIVILEGED &&
 							newval < conf->session_val &&
 							!superuser())
-								DoIt = DoIt_orig;
+							DoIt = DoIt_orig;
 					}
 				}
 				else if (conf->reset_val)
@@ -2901,8 +2909,8 @@ set_config_option(const char *name, const char *value,
 						free(newval);
 						ereport(elevel,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("invalid value for \"%s\": \"%s\"",
-										name, value ? value : "")));
+							   errmsg("invalid value for \"%s\": \"%s\"",
+									  name, value ? value : "")));
 						return false;
 					}
 					else if (hookresult != newval)
@@ -3408,8 +3416,8 @@ GetConfigOptionByName(const char *name, const char **varname)
 void
 GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 {
-	char					buffer[256];
-	struct config_generic  *conf;
+	char		buffer[256];
+	struct config_generic *conf;
 
 	/* check requested variable number valid */
 	Assert((varnum >= 0) && (varnum < num_guc_variables));
@@ -3490,7 +3498,8 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 		default:
 			{
 				/*
-				 * should never get here, but in case we do, set 'em to NULL
+				 * should never get here, but in case we do, set 'em to
+				 * NULL
 				 */
 
 				/* min_val */
@@ -3566,8 +3575,8 @@ show_all_settings(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/*
-		 * need a tuple descriptor representing NUM_PG_SETTINGS_ATTS columns
-		 * of the appropriate types
+		 * need a tuple descriptor representing NUM_PG_SETTINGS_ATTS
+		 * columns of the appropriate types
 		 */
 		tupdesc = CreateTemplateTupleDesc(NUM_PG_SETTINGS_ATTS, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
@@ -4371,7 +4380,7 @@ assign_phony_autocommit(bool newval, bool doit, bool interactive)
 		if (doit && interactive)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("SET AUTOCOMMIT TO OFF is no longer supported")));
+				errmsg("SET AUTOCOMMIT TO OFF is no longer supported")));
 		return false;
 	}
 	return true;

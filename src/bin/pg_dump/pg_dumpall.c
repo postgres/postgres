@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.24 2003/07/29 14:17:37 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.25 2003/08/04 00:43:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
 
 #ifndef HAVE_GETOPT_LONG
 #include "getopt_long.h"
-int optreset;
+int			optreset;
 #endif
 
 #include "dumputils.h"
@@ -278,13 +278,13 @@ dumpUsers(PGconn *conn)
 
 	if (server_version >= 70100)
 		res = executeQuery(conn,
-						   "SELECT usename, usesysid, passwd, usecreatedb, "
+						"SELECT usename, usesysid, passwd, usecreatedb, "
 						   "usesuper, valuntil "
 						   "FROM pg_shadow "
 						   "WHERE usesysid <> (SELECT datdba FROM pg_database WHERE datname = 'template0')");
 	else
 		res = executeQuery(conn,
-						   "SELECT usename, usesysid, passwd, usecreatedb, "
+						"SELECT usename, usesysid, passwd, usecreatedb, "
 						   "usesuper, valuntil "
 						   "FROM pg_shadow "
 						   "WHERE usesysid <> (SELECT datdba FROM pg_database WHERE datname = 'template1')");
@@ -417,13 +417,13 @@ dumpCreateDB(PGconn *conn)
 						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
 						   "datistemplate, datpath, datacl "
-						   "FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
+		"FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
 						   "WHERE datallowconn ORDER BY 1");
 	else if (server_version >= 70100)
 		res = executeQuery(conn,
 						   "SELECT datname, "
 						   "coalesce("
-						   "(select usename from pg_shadow where usesysid=datdba), "
+				"(select usename from pg_shadow where usesysid=datdba), "
 						   "(select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
 						   "datistemplate, datpath, '' as datacl "
@@ -437,7 +437,7 @@ dumpCreateDB(PGconn *conn)
 		 */
 		res = executeQuery(conn,
 						   "SELECT datname, "
-						   "(select usename from pg_shadow where usesysid=datdba), "
+				"(select usename from pg_shadow where usesysid=datdba), "
 						   "pg_encoding_to_char(d.encoding), "
 						   "'f' as datistemplate, datpath, '' as datacl "
 						   "FROM pg_database d "

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.142 2003/07/27 04:53:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.143 2003/08/04 00:43:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,7 +180,7 @@ static bool get_restriction_var(List *args, int varRelid,
 					bool *varonleft);
 static void get_join_vars(List *args, Var **var1, Var **var2);
 static Selectivity prefix_selectivity(Query *root, Var *var,
-									  Oid opclass, Const *prefix);
+				   Oid opclass, Const *prefix);
 static Selectivity pattern_selectivity(Const *patt, Pattern_Type ptype);
 static Datum string_to_datum(const char *str, Oid datatype);
 static Const *string_to_const(const char *str, Oid datatype);
@@ -871,8 +871,8 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 	/*
 	 * The right-hand const is type text or bytea for all supported
 	 * operators.  We do not expect to see binary-compatible types here,
-	 * since const-folding should have relabeled the const to exactly match
-	 * the operator's declared type.
+	 * since const-folding should have relabeled the const to exactly
+	 * match the operator's declared type.
 	 */
 	if (consttype != TEXTOID && consttype != BYTEAOID)
 		return DEFAULT_MATCH_SEL;
@@ -890,10 +890,10 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 	 * We should now be able to recognize the var's datatype.  Choose the
 	 * index opclass from which we must draw the comparison operators.
 	 *
-	 * NOTE: It would be more correct to use the PATTERN opclasses than
-	 * the simple ones, but at the moment ANALYZE will not generate statistics
-	 * for the PATTERN operators.  But our results are so approximate anyway
-	 * that it probably hardly matters.
+	 * NOTE: It would be more correct to use the PATTERN opclasses than the
+	 * simple ones, but at the moment ANALYZE will not generate statistics
+	 * for the PATTERN operators.  But our results are so approximate
+	 * anyway that it probably hardly matters.
 	 */
 	switch (vartype)
 	{
@@ -921,22 +921,22 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 	pstatus = pattern_fixed_prefix(patt, ptype, &prefix, &rest);
 
 	/*
-	 * If necessary, coerce the prefix constant to the right type.
-	 * (The "rest" constant need not be changed.)
+	 * If necessary, coerce the prefix constant to the right type. (The
+	 * "rest" constant need not be changed.)
 	 */
 	if (prefix && prefix->consttype != vartype)
 	{
-		char   *prefixstr;
+		char	   *prefixstr;
 
 		switch (prefix->consttype)
 		{
 			case TEXTOID:
 				prefixstr = DatumGetCString(DirectFunctionCall1(textout,
-															 prefix->constvalue));
+													prefix->constvalue));
 				break;
 			case BYTEAOID:
 				prefixstr = DatumGetCString(DirectFunctionCall1(byteaout,
-															 prefix->constvalue));
+													prefix->constvalue));
 				break;
 			default:
 				elog(ERROR, "unrecognized consttype: %u",
@@ -1133,7 +1133,7 @@ booltestsel(Query *root, BoolTestType booltesttype, Node *arg,
 			case IS_FALSE:
 			case IS_NOT_TRUE:
 				selec = 1.0 - (double) clause_selectivity(root, arg,
-														  varRelid, jointype);
+													 varRelid, jointype);
 				break;
 			default:
 				elog(ERROR, "unrecognized booltesttype: %d",
@@ -1523,27 +1523,29 @@ eqjoinsel(PG_FUNCTION_ARGS)
 			hasmatch2 = (bool *) palloc0(nvalues2 * sizeof(bool));
 
 			/*
-			 * If we are doing any variant of JOIN_IN, pretend all the values
-			 * of the righthand relation are unique (ie, act as if it's been
-			 * DISTINCT'd).
+			 * If we are doing any variant of JOIN_IN, pretend all the
+			 * values of the righthand relation are unique (ie, act as if
+			 * it's been DISTINCT'd).
 			 *
 			 * NOTE: it might seem that we should unique-ify the lefthand
-			 * input when considering JOIN_REVERSE_IN.  But this is not so,
-			 * because the join clause we've been handed has not been
-			 * commuted from the way the parser originally wrote it.  We know
-			 * that the unique side of the IN clause is *always* on the right.
+			 * input when considering JOIN_REVERSE_IN.	But this is not
+			 * so, because the join clause we've been handed has not been
+			 * commuted from the way the parser originally wrote it.  We
+			 * know that the unique side of the IN clause is *always* on
+			 * the right.
 			 *
 			 * NOTE: it would be dangerous to try to be smart about JOIN_LEFT
-			 * or JOIN_RIGHT here, because we do not have enough information
-			 * to determine which var is really on which side of the join.
-			 * Perhaps someday we should pass in more information.
+			 * or JOIN_RIGHT here, because we do not have enough
+			 * information to determine which var is really on which side
+			 * of the join. Perhaps someday we should pass in more
+			 * information.
 			 */
 			if (jointype == JOIN_IN ||
 				jointype == JOIN_REVERSE_IN ||
 				jointype == JOIN_UNIQUE_INNER ||
 				jointype == JOIN_UNIQUE_OUTER)
 			{
-				float4	oneovern = 1.0 / nd2;
+				float4		oneovern = 1.0 / nd2;
 
 				for (i = 0; i < nvalues2; i++)
 					numbers2[i] = oneovern;
@@ -1647,20 +1649,22 @@ eqjoinsel(PG_FUNCTION_ARGS)
 		{
 			/*
 			 * We do not have MCV lists for both sides.  Estimate the join
-			 * selectivity as MIN(1/nd1,1/nd2)*(1-nullfrac1)*(1-nullfrac2).
-			 * This is plausible if we assume that the join operator is
-			 * strict and the non-null values are about equally distributed:
-			 * a given non-null tuple of rel1 will join to either zero or
-			 * N2*(1-nullfrac2)/nd2 rows of rel2, so total join rows are at
-			 * most N1*(1-nullfrac1)*N2*(1-nullfrac2)/nd2 giving a join
-			 * selectivity of not more than (1-nullfrac1)*(1-nullfrac2)/nd2.
-			 * By the same logic it is not more than
-			 * (1-nullfrac1)*(1-nullfrac2)/nd1, so the expression with MIN()
-			 * is an upper bound.  Using the MIN() means we estimate from the
-			 * point of view of the relation with smaller nd (since the larger
-			 * nd is determining the MIN).  It is reasonable to assume that
-			 * most tuples in this rel will have join partners, so the bound
-			 * is probably reasonably tight and should be taken as-is.
+			 * selectivity as
+			 * MIN(1/nd1,1/nd2)*(1-nullfrac1)*(1-nullfrac2). This is
+			 * plausible if we assume that the join operator is strict and
+			 * the non-null values are about equally distributed: a given
+			 * non-null tuple of rel1 will join to either zero or
+			 * N2*(1-nullfrac2)/nd2 rows of rel2, so total join rows are
+			 * at most N1*(1-nullfrac1)*N2*(1-nullfrac2)/nd2 giving a join
+			 * selectivity of not more than
+			 * (1-nullfrac1)*(1-nullfrac2)/nd2. By the same logic it is
+			 * not more than (1-nullfrac1)*(1-nullfrac2)/nd1, so the
+			 * expression with MIN() is an upper bound.  Using the MIN()
+			 * means we estimate from the point of view of the relation
+			 * with smaller nd (since the larger nd is determining the
+			 * MIN).  It is reasonable to assume that most tuples in this
+			 * rel will have join partners, so the bound is probably
+			 * reasonably tight and should be taken as-is.
 			 *
 			 * XXX Can we be smarter if we have an MCV list for just one
 			 * side? It seems that if we assume equal distribution for the
@@ -1715,9 +1719,9 @@ neqjoinsel(PG_FUNCTION_ARGS)
 	{
 		result = DatumGetFloat8(DirectFunctionCall4(eqjoinsel,
 													PointerGetDatum(root),
-													ObjectIdGetDatum(eqop),
+												  ObjectIdGetDatum(eqop),
 													PointerGetDatum(args),
-													Int16GetDatum(jointype)));
+											   Int16GetDatum(jointype)));
 	}
 	else
 	{
@@ -1886,8 +1890,9 @@ mergejoinscansel(Query *root, Node *clause,
 	righttype = exprType((Node *) right);
 
 	/*
-	 * Now skip any binary-compatible relabeling; there can only be one level
-	 * since constant-expression folder eliminates adjacent RelabelTypes.
+	 * Now skip any binary-compatible relabeling; there can only be one
+	 * level since constant-expression folder eliminates adjacent
+	 * RelabelTypes.
 	 */
 	if (IsA(left, RelabelType))
 		left = (Var *) ((RelabelType *) left)->arg;
@@ -2002,7 +2007,7 @@ mergejoinscansel(Query *root, Node *clause,
  *		of values, clamp to the number of rows in the rel, and then multiply
  *		by the selectivity of the restriction clauses for that rel.  The
  *		initial product is probably too high (it's the worst case) but since
- *		we can clamp to the rel's rows it won't be hugely bad.  Multiplying
+ *		we can clamp to the rel's rows it won't be hugely bad.	Multiplying
  *		by the restriction selectivity is effectively assuming that the
  *		restriction clauses are independent of the grouping, which is a crummy
  *		assumption, but it's hard to do better.
@@ -2021,10 +2026,11 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 	List	   *varinfos = NIL;
 	double		numdistinct;
 	List	   *l;
-	typedef struct {			/* varinfos is a List of these */
-		Var	   *var;
-		double	ndistinct;
-	} MyVarInfo;
+	typedef struct
+	{							/* varinfos is a List of these */
+		Var		   *var;
+		double		ndistinct;
+	}			MyVarInfo;
 
 	/* We should not be called unless query has GROUP BY (or DISTINCT) */
 	Assert(groupExprs != NIL);
@@ -2036,9 +2042,10 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 		List	   *varshere;
 
 		varshere = pull_var_clause(groupexpr, false);
+
 		/*
-		 * If we find any variable-free GROUP BY item, then either it is
-		 * a constant (and we can ignore it) or it contains a volatile
+		 * If we find any variable-free GROUP BY item, then either it is a
+		 * constant (and we can ignore it) or it contains a volatile
 		 * function; in the latter case we punt and assume that each input
 		 * row will yield a distinct group.
 		 */
@@ -2065,13 +2072,13 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 	 */
 	foreach(l, allvars)
 	{
-		Var	   *var = (Var *) lfirst(l);
-		Oid		relid = getrelid(var->varno, root->rtable);
+		Var		   *var = (Var *) lfirst(l);
+		Oid			relid = getrelid(var->varno, root->rtable);
 		HeapTuple	statsTuple = NULL;
 		Form_pg_statistic stats = NULL;
-		double ndistinct;
-		bool	keep = true;
-		List   *l2;
+		double		ndistinct;
+		bool		keep = true;
+		List	   *l2;
 
 		if (OidIsValid(relid))
 		{
@@ -2096,7 +2103,7 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 			l2 = lnext(l2);
 
 			if (var->varno != varinfo->var->varno &&
-				exprs_known_equal(root, (Node *) var, (Node *) varinfo->var))
+			exprs_known_equal(root, (Node *) var, (Node *) varinfo->var))
 			{
 				/* Found a match */
 				if (varinfo->ndistinct <= ndistinct)
@@ -2126,10 +2133,10 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 	/*
 	 * Steps 3/4: group Vars by relation and estimate total numdistinct.
 	 *
-	 * For each iteration of the outer loop, we process the frontmost
-	 * Var in varinfos, plus all other Vars in the same relation.  We
-	 * remove these Vars from the newvarinfos list for the next iteration.
-	 * This is the easiest way to group Vars of same rel together.
+	 * For each iteration of the outer loop, we process the frontmost Var in
+	 * varinfos, plus all other Vars in the same relation.	We remove
+	 * these Vars from the newvarinfos list for the next iteration. This
+	 * is the easiest way to group Vars of same rel together.
 	 */
 	Assert(varinfos != NIL);
 	numdistinct = 1.0;
@@ -2138,8 +2145,8 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 	{
 		MyVarInfo  *varinfo1 = (MyVarInfo *) lfirst(varinfos);
 		RelOptInfo *rel = find_base_rel(root, varinfo1->var->varno);
-		double	reldistinct = varinfo1->ndistinct;
-		List   *newvarinfos = NIL;
+		double		reldistinct = varinfo1->ndistinct;
+		List	   *newvarinfos = NIL;
 
 		/*
 		 * Get the largest numdistinct estimate of the Vars for this rel.
@@ -2150,9 +2157,7 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 			MyVarInfo  *varinfo2 = (MyVarInfo *) lfirst(l);
 
 			if (varinfo2->var->varno == varinfo1->var->varno)
-			{
 				reldistinct *= varinfo2->ndistinct;
-			}
 			else
 			{
 				/* not time to process varinfo2 yet */
@@ -2364,9 +2369,10 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 	 * constant-folding will ensure that any Const passed to the operator
 	 * has been reduced to the correct type).  However, the boundstypid is
 	 * the type of some variable that might be only binary-compatible with
-	 * the declared type; in particular it might be a domain type.  Must
+	 * the declared type; in particular it might be a domain type.	Must
 	 * fold the variable type down to base type so we can recognize it.
-	 * (But we can skip that lookup if the variable type matches the const.)
+	 * (But we can skip that lookup if the variable type matches the
+	 * const.)
 	 */
 	if (boundstypid != valuetypid)
 		boundstypid = getBaseType(boundstypid);
@@ -2696,15 +2702,15 @@ convert_string_datum(Datum value, Oid typid)
 
 		/*
 		 * Note: originally we guessed at a suitable output buffer size,
-		 * and only needed to call strxfrm twice if our guess was too small.
-		 * However, it seems that some versions of Solaris have buggy
-		 * strxfrm that can write past the specified buffer length in that
-		 * scenario.  So, do it the dumb way for portability.
+		 * and only needed to call strxfrm twice if our guess was too
+		 * small. However, it seems that some versions of Solaris have
+		 * buggy strxfrm that can write past the specified buffer length
+		 * in that scenario.  So, do it the dumb way for portability.
 		 *
 		 * Yet other systems (e.g., glibc) sometimes return a smaller value
 		 * from the second call than the first; thus the Assert must be <=
-		 * not == as you'd expect.  Can't any of these people program their
-		 * way out of a paper bag?
+		 * not == as you'd expect.  Can't any of these people program
+		 * their way out of a paper bag?
 		 */
 		xfrmlen = strxfrm(NULL, val, 0);
 		xfrmstr = (char *) palloc(xfrmlen + 1);
@@ -3113,7 +3119,7 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive,
 	if (typeid == BYTEAOID && case_insensitive)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("case insensitive matching not supported on type bytea")));
+		errmsg("case insensitive matching not supported on type bytea")));
 
 	if (typeid != BYTEAOID)
 	{
@@ -3355,7 +3361,7 @@ pattern_fixed_prefix(Const *patt, Pattern_Type ptype,
  * "var >= 'foo' AND var < 'fop'" (see also indxqual.c).
  *
  * We use the >= and < operators from the specified btree opclass to do the
- * estimation.  The given Var and Const must be of the associated datatype.
+ * estimation.	The given Var and Const must be of the associated datatype.
  *
  * XXX Note: we make use of the upper bound to estimate operator selectivity
  * even if the locale is such that we cannot rely on the upper-bound string.
@@ -3476,7 +3482,7 @@ like_selectivity(Const *patt_const, bool case_insensitive)
 	if (typeid == BYTEAOID && case_insensitive)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("case insensitive matching not supported on type bytea")));
+		errmsg("case insensitive matching not supported on type bytea")));
 
 	if (typeid != BYTEAOID)
 	{
@@ -3917,8 +3923,8 @@ btcostestimate(PG_FUNCTION_ARGS)
 						indexSelectivity, indexCorrelation);
 
 	/*
-	 * If the first column is a simple variable, and we can get an estimate
-	 * for its ordering correlation C from pg_statistic, estimate
+	 * If the first column is a simple variable, and we can get an
+	 * estimate for its ordering correlation C from pg_statistic, estimate
 	 * the index correlation as C / number-of-columns. (The idea here is
 	 * that multiple columns dilute the importance of the first column's
 	 * ordering, but don't negate it entirely.)

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.119 2003/08/01 00:15:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.120 2003/08/04 00:43:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,7 +200,7 @@ createdb(const CreatedbStmt *stmt)
 	if (dbpath != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot use an alternate location on this platform")));
+		   errmsg("cannot use an alternate location on this platform")));
 #endif
 
 	/*
@@ -260,8 +260,8 @@ createdb(const CreatedbStmt *stmt)
 	if (DatabaseHasActiveBackends(src_dboid, true))
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_IN_USE),
-				 errmsg("source database \"%s\" is being accessed by other users",
-						dbtemplate)));
+		errmsg("source database \"%s\" is being accessed by other users",
+			   dbtemplate)));
 
 	/* If encoding is defaulted, use source's encoding */
 	if (encoding < 0)
@@ -345,7 +345,7 @@ createdb(const CreatedbStmt *stmt)
 	/* Make the symlink, if needed */
 	if (alt_loc)
 	{
-#ifdef HAVE_SYMLINK	/* already throws error above */
+#ifdef HAVE_SYMLINK				/* already throws error above */
 		if (symlink(alt_loc, nominal_loc) != 0)
 #endif
 			ereport(ERROR,
@@ -450,7 +450,7 @@ dropdb(const char *dbname)
 	char	   *nominal_loc;
 	char		dbpath[MAXPGPATH];
 	Relation	pgdbrel;
-	SysScanDesc	pgdbscan;
+	SysScanDesc pgdbscan;
 	ScanKeyData key;
 	HeapTuple	tup;
 
@@ -503,8 +503,8 @@ dropdb(const char *dbname)
 	if (DatabaseHasActiveBackends(db_id, false))
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_IN_USE),
-				 errmsg("database \"%s\" is being accessed by other users",
-						dbname)));
+			   errmsg("database \"%s\" is being accessed by other users",
+					  dbname)));
 
 	/*
 	 * Find the database's tuple by OID (should be unique).
@@ -577,10 +577,13 @@ dropdb(const char *dbname)
 void
 RenameDatabase(const char *oldname, const char *newname)
 {
-	HeapTuple	tup, newtup;
+	HeapTuple	tup,
+				newtup;
 	Relation	rel;
-	SysScanDesc	scan, scan2;
-	ScanKeyData	key, key2;
+	SysScanDesc scan,
+				scan2;
+	ScanKeyData key,
+				key2;
 
 	/*
 	 * Obtain AccessExclusiveLock so that no new session gets started
@@ -610,15 +613,14 @@ RenameDatabase(const char *oldname, const char *newname)
 				 errmsg("current database may not be renamed")));
 
 	/*
-	 * Make sure the database does not have active sessions.  Might
-	 * not be necessary, but it's consistent with other database
-	 * operations.
+	 * Make sure the database does not have active sessions.  Might not be
+	 * necessary, but it's consistent with other database operations.
 	 */
 	if (DatabaseHasActiveBackends(HeapTupleGetOid(tup), false))
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_IN_USE),
-				 errmsg("database \"%s\" is being accessed by other users",
-						oldname)));
+			   errmsg("database \"%s\" is being accessed by other users",
+					  oldname)));
 
 	/* make sure the new name doesn't exist */
 	ScanKeyEntryInitialize(&key2, 0, Anum_pg_database_datname,
@@ -651,10 +653,10 @@ RenameDatabase(const char *oldname, const char *newname)
 	heap_close(rel, NoLock);
 
 	/*
-	 * Force dirty buffers out to disk, so that newly-connecting
-	 * backends will see the renamed database in pg_database right
-	 * away.  (They'll see an uncommitted tuple, but they don't care;
-	 * see GetRawDatabaseInfo.)
+	 * Force dirty buffers out to disk, so that newly-connecting backends
+	 * will see the renamed database in pg_database right away.  (They'll
+	 * see an uncommitted tuple, but they don't care; see
+	 * GetRawDatabaseInfo.)
 	 */
 	BufferSync();
 }
@@ -671,7 +673,7 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 				newtuple;
 	Relation	rel;
 	ScanKeyData scankey;
-	SysScanDesc	scan;
+	SysScanDesc scan;
 	Datum		repl_val[Natts_pg_database];
 	char		repl_null[Natts_pg_database];
 	char		repl_repl[Natts_pg_database];
@@ -689,9 +691,9 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 				 errmsg("database \"%s\" does not exist", stmt->dbname)));
 
 	if (!(superuser()
-		  || ((Form_pg_database) GETSTRUCT(tuple))->datdba == GetUserId()))
+		|| ((Form_pg_database) GETSTRUCT(tuple))->datdba == GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
-					  stmt->dbname);
+					   stmt->dbname);
 
 	MemSet(repl_repl, ' ', sizeof(repl_repl));
 	repl_repl[Anum_pg_database_datconfig - 1] = 'r';
@@ -750,7 +752,7 @@ get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
 {
 	Relation	relation;
 	ScanKeyData scanKey;
-	SysScanDesc	scan;
+	SysScanDesc scan;
 	HeapTuple	tuple;
 	bool		gottuple;
 
@@ -862,7 +864,7 @@ resolve_alt_dbpath(const char *dbpath, Oid dboid)
 #ifndef ALLOW_ABSOLUTE_DBPATHS
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("absolute paths are not allowed as database locations")));
+		errmsg("absolute paths are not allowed as database locations")));
 #endif
 		prefix = dbpath;
 	}
@@ -874,8 +876,8 @@ resolve_alt_dbpath(const char *dbpath, Oid dboid)
 		if (!var)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("postmaster environment variable \"%s\" not found",
-							dbpath)));
+			   errmsg("postmaster environment variable \"%s\" not found",
+					  dbpath)));
 		if (!is_absolute_path(var))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_NAME),
@@ -955,7 +957,7 @@ get_database_oid(const char *dbname)
 {
 	Relation	pg_database;
 	ScanKeyData entry[1];
-	SysScanDesc	scan;
+	SysScanDesc scan;
 	HeapTuple	dbtuple;
 	Oid			oid;
 
@@ -993,7 +995,7 @@ get_database_name(Oid dbid)
 {
 	Relation	pg_database;
 	ScanKeyData entry[1];
-	SysScanDesc	scan;
+	SysScanDesc scan;
 	HeapTuple	dbtuple;
 	char	   *result;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.88 2003/07/28 00:09:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.89 2003/08/04 00:43:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,12 +36,12 @@
 static void mark_baserels_for_outer_join(Query *root, Relids rels,
 							 Relids outerrels);
 static void distribute_qual_to_rels(Query *root, Node *clause,
-									bool ispusheddown,
-									bool isdeduced,
-									Relids outerjoin_nonnullable,
-									Relids qualscope);
+						bool ispusheddown,
+						bool isdeduced,
+						Relids outerjoin_nonnullable,
+						Relids qualscope);
 static void add_vars_to_targetlist(Query *root, List *vars,
-								   Relids where_needed);
+					   Relids where_needed);
 static bool qual_is_redundant(Query *root, RestrictInfo *restrictinfo,
 				  List *restrictlist);
 static void check_mergejoinable(RestrictInfo *restrictinfo);
@@ -83,9 +83,7 @@ add_base_rels_to_query(Query *root, Node *jtnode)
 		List	   *l;
 
 		foreach(l, f->fromlist)
-		{
 			add_base_rels_to_query(root, lfirst(l));
-		}
 	}
 	else if (IsA(jtnode, JoinExpr))
 	{
@@ -93,13 +91,14 @@ add_base_rels_to_query(Query *root, Node *jtnode)
 
 		add_base_rels_to_query(root, j->larg);
 		add_base_rels_to_query(root, j->rarg);
+
 		/*
 		 * Safety check: join RTEs should not be SELECT FOR UPDATE targets
 		 */
 		if (intMember(j->rtindex, root->rowMarks))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("SELECT FOR UPDATE cannot be applied to a join")));
+			   errmsg("SELECT FOR UPDATE cannot be applied to a join")));
 	}
 	else
 		elog(ERROR, "unrecognized node type: %d",
@@ -247,14 +246,14 @@ distribute_quals_to_rels(Query *root, Node *jtnode)
 		 * Order of operations here is subtle and critical.  First we
 		 * recurse to handle sub-JOINs.  Their join quals will be placed
 		 * without regard for whether this level is an outer join, which
-		 * is correct.  Then we place our own join quals, which are restricted
-		 * by lower outer joins in any case, and are forced to this level if
-		 * this is an outer join and they mention the outer side.  Finally, if
-		 * this is an outer join, we mark baserels contained within the inner
-		 * side(s) with our own rel set; this will prevent quals above us in
-		 * the join tree that use those rels from being pushed down below this
-		 * level.  (It's okay for upper quals to be pushed down to the outer
-		 * side, however.)
+		 * is correct.	Then we place our own join quals, which are
+		 * restricted by lower outer joins in any case, and are forced to
+		 * this level if this is an outer join and they mention the outer
+		 * side.  Finally, if this is an outer join, we mark baserels
+		 * contained within the inner side(s) with our own rel set; this
+		 * will prevent quals above us in the join tree that use those
+		 * rels from being pushed down below this level.  (It's okay for
+		 * upper quals to be pushed down to the outer side, however.)
 		 */
 		leftids = distribute_quals_to_rels(root, j->larg);
 		rightids = distribute_quals_to_rels(root, j->rarg);
@@ -390,9 +389,10 @@ distribute_qual_to_rels(Query *root, Node *clause,
 
 	restrictinfo->clause = (Expr *) clause;
 	restrictinfo->subclauseindices = NIL;
-	restrictinfo->eval_cost.startup = -1; /* not computed until needed */
+	restrictinfo->eval_cost.startup = -1;		/* not computed until
+												 * needed */
 	restrictinfo->this_selec = -1;		/* not computed until needed */
-	restrictinfo->left_relids = NULL; /* set below, if join clause */
+	restrictinfo->left_relids = NULL;	/* set below, if join clause */
 	restrictinfo->right_relids = NULL;
 	restrictinfo->mergejoinoperator = InvalidOid;
 	restrictinfo->left_sortop = InvalidOid;
@@ -435,10 +435,10 @@ distribute_qual_to_rels(Query *root, Node *clause,
 	if (isdeduced)
 	{
 		/*
-		 * If the qual came from implied-equality deduction, we can evaluate
-		 * the qual at its natural semantic level.  It is not affected by
-		 * any outer-join rules (else we'd not have decided the vars were
-		 * equal).
+		 * If the qual came from implied-equality deduction, we can
+		 * evaluate the qual at its natural semantic level.  It is not
+		 * affected by any outer-join rules (else we'd not have decided
+		 * the vars were equal).
 		 */
 		Assert(bms_equal(relids, qualscope));
 		can_be_equijoin = true;
@@ -446,12 +446,13 @@ distribute_qual_to_rels(Query *root, Node *clause,
 	else if (bms_overlap(relids, outerjoin_nonnullable))
 	{
 		/*
-		 * The qual is attached to an outer join and mentions (some of the)
-		 * rels on the nonnullable side.  Force the qual to be evaluated
-		 * exactly at the level of joining corresponding to the outer join.
-		 * We cannot let it get pushed down into the nonnullable side, since
-		 * then we'd produce no output rows, rather than the intended single
-		 * null-extended row, for any nonnullable-side rows failing the qual.
+		 * The qual is attached to an outer join and mentions (some of
+		 * the) rels on the nonnullable side.  Force the qual to be
+		 * evaluated exactly at the level of joining corresponding to the
+		 * outer join. We cannot let it get pushed down into the
+		 * nonnullable side, since then we'd produce no output rows,
+		 * rather than the intended single null-extended row, for any
+		 * nonnullable-side rows failing the qual.
 		 *
 		 * Note: an outer-join qual that mentions only nullable-side rels can
 		 * be pushed down into the nullable side without changing the join
@@ -464,13 +465,14 @@ distribute_qual_to_rels(Query *root, Node *clause,
 	{
 		/*
 		 * For a non-outer-join qual, we can evaluate the qual as soon as
-		 * (1) we have all the rels it mentions, and (2) we are at or above
-		 * any outer joins that can null any of these rels and are below the
-		 * syntactic location of the given qual. To enforce the latter, scan
-		 * the base rels listed in relids, and merge their outer-join sets
-		 * into the clause's own reference list.  At the time we are called,
-		 * the outerjoinset of each baserel will show exactly those outer
-		 * joins that are below the qual in the join tree.
+		 * (1) we have all the rels it mentions, and (2) we are at or
+		 * above any outer joins that can null any of these rels and are
+		 * below the syntactic location of the given qual. To enforce the
+		 * latter, scan the base rels listed in relids, and merge their
+		 * outer-join sets into the clause's own reference list.  At the
+		 * time we are called, the outerjoinset of each baserel will show
+		 * exactly those outer joins that are below the qual in the join
+		 * tree.
 		 */
 		Relids		addrelids = NULL;
 		Relids		tmprelids;
@@ -496,9 +498,10 @@ distribute_qual_to_rels(Query *root, Node *clause,
 			relids = bms_union(relids, addrelids);
 			/* Should still be a subset of current scope ... */
 			Assert(bms_is_subset(relids, qualscope));
+
 			/*
-			 * Because application of the qual will be delayed by outer join,
-			 * we mustn't assume its vars are equal everywhere.
+			 * Because application of the qual will be delayed by outer
+			 * join, we mustn't assume its vars are equal everywhere.
 			 */
 			can_be_equijoin = false;
 		}
@@ -518,6 +521,7 @@ distribute_qual_to_rels(Query *root, Node *clause,
 	switch (bms_membership(relids))
 	{
 		case BMS_SINGLETON:
+
 			/*
 			 * There is only one relation participating in 'clause', so
 			 * 'clause' is a restriction clause for that relation.
@@ -525,28 +529,29 @@ distribute_qual_to_rels(Query *root, Node *clause,
 			rel = find_base_rel(root, bms_singleton_member(relids));
 
 			/*
-			 * Check for a "mergejoinable" clause even though it's not a join
-			 * clause.	This is so that we can recognize that "a.x = a.y"
-			 * makes x and y eligible to be considered equal, even when they
-			 * belong to the same rel.	Without this, we would not recognize
-			 * that "a.x = a.y AND a.x = b.z AND a.y = c.q" allows us to
-			 * consider z and q equal after their rels are joined.
+			 * Check for a "mergejoinable" clause even though it's not a
+			 * join clause.  This is so that we can recognize that "a.x =
+			 * a.y" makes x and y eligible to be considered equal, even
+			 * when they belong to the same rel.  Without this, we would
+			 * not recognize that "a.x = a.y AND a.x = b.z AND a.y = c.q"
+			 * allows us to consider z and q equal after their rels are
+			 * joined.
 			 */
 			if (can_be_equijoin)
 				check_mergejoinable(restrictinfo);
 
 			/*
-			 * If the clause was deduced from implied equality, check to see
-			 * whether it is redundant with restriction clauses we already
-			 * have for this rel.  Note we cannot apply this check to
-			 * user-written clauses, since we haven't found the canonical
-			 * pathkey sets yet while processing user clauses.	(NB: no
-			 * comparable check is done in the join-clause case; redundancy
-			 * will be detected when the join clause is moved into a join
-			 * rel's restriction list.)
+			 * If the clause was deduced from implied equality, check to
+			 * see whether it is redundant with restriction clauses we
+			 * already have for this rel.  Note we cannot apply this check
+			 * to user-written clauses, since we haven't found the
+			 * canonical pathkey sets yet while processing user clauses.
+			 * (NB: no comparable check is done in the join-clause case;
+			 * redundancy will be detected when the join clause is moved
+			 * into a join rel's restriction list.)
 			 */
 			if (!isdeduced ||
-				!qual_is_redundant(root, restrictinfo, rel->baserestrictinfo))
+			!qual_is_redundant(root, restrictinfo, rel->baserestrictinfo))
 			{
 				/* Add clause to rel's restriction list */
 				rel->baserestrictinfo = lappend(rel->baserestrictinfo,
@@ -554,13 +559,14 @@ distribute_qual_to_rels(Query *root, Node *clause,
 			}
 			break;
 		case BMS_MULTIPLE:
+
 			/*
-			 * 'clause' is a join clause, since there is more than one rel in
-			 * the relid set.	Set additional RestrictInfo fields for
-			 * joining.  First, does it look like a normal join clause, i.e.,
-			 * a binary operator relating expressions that come from distinct
-			 * relations?  If so we might be able to use it in a join
-			 * algorithm.
+			 * 'clause' is a join clause, since there is more than one rel
+			 * in the relid set.   Set additional RestrictInfo fields for
+			 * joining.  First, does it look like a normal join clause,
+			 * i.e., a binary operator relating expressions that come from
+			 * distinct relations?	If so we might be able to use it in a
+			 * join algorithm.
 			 */
 			if (is_opclause(clause) && length(((OpExpr *) clause)->args) == 2)
 			{
@@ -582,9 +588,9 @@ distribute_qual_to_rels(Query *root, Node *clause,
 			 * Now check for hash or mergejoinable operators.
 			 *
 			 * We don't bother setting the hashjoin info if we're not going
-			 * to need it.	We do want to know about mergejoinable ops in all
-			 * cases, however, because we use mergejoinable ops for other
-			 * purposes such as detecting redundant clauses.
+			 * to need it.	We do want to know about mergejoinable ops in
+			 * all cases, however, because we use mergejoinable ops for
+			 * other purposes such as detecting redundant clauses.
 			 */
 			check_mergejoinable(restrictinfo);
 			if (enable_hashjoin)
@@ -597,16 +603,18 @@ distribute_qual_to_rels(Query *root, Node *clause,
 
 			/*
 			 * Add vars used in the join clause to targetlists of their
-			 * relations, so that they will be emitted by the plan nodes that
-			 * scan those relations (else they won't be available at the join
-			 * node!).
+			 * relations, so that they will be emitted by the plan nodes
+			 * that scan those relations (else they won't be available at
+			 * the join node!).
 			 */
 			add_vars_to_targetlist(root, vars, relids);
 			break;
 		default:
+
 			/*
-			 * 'clause' references no rels, and therefore we have no place to
-			 * attach it.  Shouldn't get here if callers are working properly.
+			 * 'clause' references no rels, and therefore we have no place
+			 * to attach it.  Shouldn't get here if callers are working
+			 * properly.
 			 */
 			elog(ERROR, "cannot cope with variable-free clause");
 			break;
@@ -634,7 +642,7 @@ distribute_qual_to_rels(Query *root, Node *clause,
  *
  * This processing is a consequence of transitivity of mergejoin equality:
  * if we have mergejoinable clauses A = B and B = C, we can deduce A = C
- * (where = is an appropriate mergejoinable operator).  See path/pathkeys.c
+ * (where = is an appropriate mergejoinable operator).	See path/pathkeys.c
  * for more details.
  */
 void
@@ -695,8 +703,8 @@ process_implied_equality(Query *root,
 	}
 
 	/*
-	 * Scan to see if equality is already known.  If so, we're done in
-	 * the add case, and done after removing it in the delete case.
+	 * Scan to see if equality is already known.  If so, we're done in the
+	 * add case, and done after removing it in the delete case.
 	 */
 	foreach(itm, restrictlist)
 	{
@@ -719,7 +727,7 @@ process_implied_equality(Query *root,
 				{
 					/* delete it from local restrictinfo list */
 					rel1->baserestrictinfo = lremove(restrictinfo,
-													 rel1->baserestrictinfo);
+												 rel1->baserestrictinfo);
 				}
 				else
 				{
@@ -768,9 +776,9 @@ process_implied_equality(Query *root,
 				 errmsg("equality operator for types %s and %s should be mergejoinable, but isn't",
 						format_type_be(ltype), format_type_be(rtype))));
 
-	clause = make_opclause(oprid(eq_operator), /* opno */
-						   BOOLOID,	/* opresulttype */
-						   false, /* opretset */
+	clause = make_opclause(oprid(eq_operator),	/* opno */
+						   BOOLOID,		/* opresulttype */
+						   false,		/* opretset */
 						   (Expr *) item1,
 						   (Expr *) item2);
 
@@ -797,9 +805,9 @@ process_implied_equality(Query *root,
  *	  too-small selectivity, not to mention wasting time at execution.
  *
  * Note: quals of the form "var = const" are never considered redundant,
- * only those of the form "var = var".  This is needed because when we
+ * only those of the form "var = var".	This is needed because when we
  * have constants in an implied-equality set, we use a different strategy
- * that suppresses all "var = var" deductions.  We must therefore keep
+ * that suppresses all "var = var" deductions.	We must therefore keep
  * all the "var = const" quals.
  */
 static bool
@@ -858,7 +866,8 @@ qual_is_redundant(Query *root,
 	 * left side of the new qual.  We traverse the old-quals list
 	 * repeatedly to transitively expand the exprs list.  If at any point
 	 * we find we can reach the right-side expr of the new qual, we are
-	 * done.  We give up when we can't expand the equalexprs list any more.
+	 * done.  We give up when we can't expand the equalexprs list any
+	 * more.
 	 */
 	equalexprs = makeList1(newleft);
 	do
@@ -945,7 +954,7 @@ check_mergejoinable(RestrictInfo *restrictinfo)
  *	  info fields in the restrictinfo.
  *
  *	  Currently, we support hashjoin for binary opclauses where
- *	  the operator is a hashjoinable operator.  The arguments can be
+ *	  the operator is a hashjoinable operator.	The arguments can be
  *	  anything --- as long as there are no volatile functions in them.
  */
 static void

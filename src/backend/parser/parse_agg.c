@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.55 2003/07/19 20:20:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.56 2003/08/04 00:43:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ static bool check_ungrouped_columns_walker(Node *node,
  *		Finish initial transformation of an aggregate call
  *
  * parse_func.c has recognized the function as an aggregate, and has set
- * up all the fields of the Aggref except agglevelsup.  Here we must
+ * up all the fields of the Aggref except agglevelsup.	Here we must
  * determine which query level the aggregate actually belongs to, set
  * agglevelsup accordingly, and mark p_hasAggs true in the corresponding
  * pstate level.
@@ -56,22 +56,22 @@ transformAggregateCall(ParseState *pstate, Aggref *agg)
 
 	/*
 	 * The aggregate's level is the same as the level of the lowest-level
-	 * variable or aggregate in its argument; or if it contains no variables
-	 * at all, we presume it to be local.
+	 * variable or aggregate in its argument; or if it contains no
+	 * variables at all, we presume it to be local.
 	 */
 	min_varlevel = find_minimum_var_level((Node *) agg->target);
 
 	/*
 	 * An aggregate can't directly contain another aggregate call of the
-	 * same level (though outer aggs are okay).  We can skip this check
-	 * if we didn't find any local vars or aggs.
+	 * same level (though outer aggs are okay).  We can skip this check if
+	 * we didn't find any local vars or aggs.
 	 */
 	if (min_varlevel == 0)
 	{
 		if (checkExprHasAggs((Node *) agg->target))
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
-					 errmsg("aggregate function calls may not be nested")));
+				  errmsg("aggregate function calls may not be nested")));
 	}
 
 	if (min_varlevel < 0)
@@ -142,17 +142,17 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 		if (checkExprHasAggs(expr))
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
-					 errmsg("aggregates not allowed in GROUP BY clause")));
+				   errmsg("aggregates not allowed in GROUP BY clause")));
 		groupClauses = lcons(expr, groupClauses);
 		if (!IsA(expr, Var))
 			have_non_var_grouping = true;
 	}
 
 	/*
-	 * If there are join alias vars involved, we have to flatten them
-	 * to the underlying vars, so that aliased and unaliased vars will be
-	 * correctly taken as equal.  We can skip the expense of doing this
-	 * if no rangetable entries are RTE_JOIN kind.
+	 * If there are join alias vars involved, we have to flatten them to
+	 * the underlying vars, so that aliased and unaliased vars will be
+	 * correctly taken as equal.  We can skip the expense of doing this if
+	 * no rangetable entries are RTE_JOIN kind.
 	 */
 	hasJoinRTEs = false;
 	foreach(lst, pstate->p_rtable)
@@ -168,7 +168,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 
 	if (hasJoinRTEs)
 		groupClauses = (List *) flatten_join_alias_vars(qry,
-														(Node *) groupClauses);
+												  (Node *) groupClauses);
 
 	/*
 	 * Check the targetlist and HAVING clause for ungrouped variables.
@@ -235,22 +235,22 @@ check_ungrouped_columns_walker(Node *node,
 
 	/*
 	 * If we find an aggregate call of the original level, do not recurse
-	 * into its arguments; ungrouped vars in the arguments are not an error.
-	 * We can also skip looking at the arguments of aggregates of higher
-	 * levels, since they could not possibly contain Vars that are of concern
-	 * to us (see transformAggregateCall).  We do need to look into the
-	 * arguments of aggregates of lower levels, however.
+	 * into its arguments; ungrouped vars in the arguments are not an
+	 * error. We can also skip looking at the arguments of aggregates of
+	 * higher levels, since they could not possibly contain Vars that are
+	 * of concern to us (see transformAggregateCall).  We do need to look
+	 * into the arguments of aggregates of lower levels, however.
 	 */
 	if (IsA(node, Aggref) &&
 		(int) ((Aggref *) node)->agglevelsup >= context->sublevels_up)
 		return false;
 
 	/*
-	 * If we have any GROUP BY items that are not simple Vars,
-	 * check to see if subexpression as a whole matches any GROUP BY item.
-	 * We need to do this at every recursion level so that we recognize
-	 * GROUPed-BY expressions before reaching variables within them.
-	 * But this only works at the outer query level, as noted above.
+	 * If we have any GROUP BY items that are not simple Vars, check to
+	 * see if subexpression as a whole matches any GROUP BY item. We need
+	 * to do this at every recursion level so that we recognize GROUPed-BY
+	 * expressions before reaching variables within them. But this only
+	 * works at the outer query level, as noted above.
 	 */
 	if (context->have_non_var_grouping && context->sublevels_up == 0)
 	{
@@ -264,7 +264,7 @@ check_ungrouped_columns_walker(Node *node,
 	/*
 	 * If we have an ungrouped Var of the original query level, we have a
 	 * failure.  Vars below the original query level are not a problem,
-	 * and neither are Vars from above it.  (If such Vars are ungrouped as
+	 * and neither are Vars from above it.	(If such Vars are ungrouped as
 	 * far as their own query level is concerned, that's someone else's
 	 * problem...)
 	 */
@@ -276,6 +276,7 @@ check_ungrouped_columns_walker(Node *node,
 
 		if (var->varlevelsup != context->sublevels_up)
 			return false;		/* it's not local to my query, ignore */
+
 		/*
 		 * Check for a match, if we didn't do it above.
 		 */
@@ -283,13 +284,13 @@ check_ungrouped_columns_walker(Node *node,
 		{
 			foreach(gl, context->groupClauses)
 			{
-				Var	   *gvar = (Var *) lfirst(gl);
+				Var		   *gvar = (Var *) lfirst(gl);
 
 				if (IsA(gvar, Var) &&
 					gvar->varno == var->varno &&
 					gvar->varattno == var->varattno &&
 					gvar->varlevelsup == 0)
-					return false; /* acceptable, we're okay */
+					return false;		/* acceptable, we're okay */
 			}
 		}
 
@@ -365,10 +366,10 @@ build_aggregate_fnexprs(Oid agg_input_type,
 	(void) get_func_signature(transfn_oid, transfn_arg_types, &transfn_nargs);
 
 	/*
-	 * Build arg list to use in the transfn FuncExpr node. We really
-	 * only care that transfn can discover the actual argument types
-	 * at runtime using get_fn_expr_argtype(), so it's okay to use
-	 * Param nodes that don't correspond to any real Param.
+	 * Build arg list to use in the transfn FuncExpr node. We really only
+	 * care that transfn can discover the actual argument types at runtime
+	 * using get_fn_expr_argtype(), so it's okay to use Param nodes that
+	 * don't correspond to any real Param.
 	 */
 	arg0 = makeNode(Param);
 	arg0->paramkind = PARAM_EXEC;
@@ -385,33 +386,31 @@ build_aggregate_fnexprs(Oid agg_input_type,
 		args = makeList2(arg0, arg1);
 	}
 	else
-	{
 		args = makeList1(arg0);
+
+	*transfnexpr = (Expr *) makeFuncExpr(transfn_oid,
+										 agg_state_type,
+										 args,
+										 COERCE_DONTCARE);
+
+	/* see if we have a final function */
+	if (!OidIsValid(finalfn_oid))
+	{
+		*finalfnexpr = NULL;
+		return;
 	}
 
-   *transfnexpr = (Expr *) makeFuncExpr(transfn_oid,
-										agg_state_type,
-										args,
-										COERCE_DONTCARE);
-
-   /* see if we have a final function */
-   if (!OidIsValid(finalfn_oid))
-   {
-	   *finalfnexpr = NULL;
-	   return;
-   }
-
-   /*
-	* Build expr tree for final function
-	*/
+	/*
+	 * Build expr tree for final function
+	 */
 	arg0 = makeNode(Param);
 	arg0->paramkind = PARAM_EXEC;
 	arg0->paramid = -1;
 	arg0->paramtype = agg_state_type;
 	args = makeList1(arg0);
 
-   *finalfnexpr = (Expr *) makeFuncExpr(finalfn_oid,
-										agg_result_type,
-										args,
-										COERCE_DONTCARE);
+	*finalfnexpr = (Expr *) makeFuncExpr(finalfn_oid,
+										 agg_result_type,
+										 args,
+										 COERCE_DONTCARE);
 }

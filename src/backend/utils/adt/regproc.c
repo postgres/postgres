@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.79 2003/07/28 00:09:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.80 2003/08/04 00:43:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,13 +114,13 @@ regprocin(PG_FUNCTION_ARGS)
 		if (matches == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-					 errmsg("no procedure with name %s", pro_name_or_oid)));
+				  errmsg("no procedure with name %s", pro_name_or_oid)));
 
 		else if (matches > 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
 					 errmsg("more than one procedure named %s",
-							 pro_name_or_oid)));
+							pro_name_or_oid)));
 
 		PG_RETURN_OID(result);
 	}
@@ -140,7 +140,7 @@ regprocin(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
 				 errmsg("more than one procedure named %s",
-						 pro_name_or_oid)));
+						pro_name_or_oid)));
 
 	result = clist->oid;
 
@@ -464,12 +464,12 @@ regoperin(PG_FUNCTION_ARGS)
 		if (matches == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-					 errmsg("no operator with name %s", opr_name_or_oid)));
+				   errmsg("no operator with name %s", opr_name_or_oid)));
 		else if (matches > 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
 					 errmsg("more than one operator named %s",
-							 opr_name_or_oid)));
+							opr_name_or_oid)));
 
 		PG_RETURN_OID(result);
 	}
@@ -489,7 +489,7 @@ regoperin(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
 				 errmsg("more than one operator named %s",
-						 opr_name_or_oid)));
+						opr_name_or_oid)));
 
 	result = clist->oid;
 

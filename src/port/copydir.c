@@ -6,13 +6,14 @@
 
 #include "postgres.h"
 
-#undef mkdir	/* no reason to use that macro because we ignore the 2nd arg */
+#undef mkdir					/* no reason to use that macro because we
+								 * ignore the 2nd arg */
 
 #include <dirent.h>
 
 
 int
-copydir(char *fromdir,char *todir)
+copydir(char *fromdir, char *todir)
 {
 	DIR		   *xldir;
 	struct dirent *xlde;
@@ -37,19 +38,19 @@ copydir(char *fromdir,char *todir)
 
 	while ((xlde = readdir(xldir)) != NULL)
 	{
-			snprintf(fromfl, MAXPGPATH, "%s/%s", fromdir, xlde->d_name);
-			snprintf(tofl, MAXPGPATH, "%s/%s", todir, xlde->d_name);
-			if (CopyFile(fromfl,tofl,TRUE) < 0)
-			{
-				int		save_errno = errno;
+		snprintf(fromfl, MAXPGPATH, "%s/%s", fromdir, xlde->d_name);
+		snprintf(tofl, MAXPGPATH, "%s/%s", todir, xlde->d_name);
+		if (CopyFile(fromfl, tofl, TRUE) < 0)
+		{
+			int			save_errno = errno;
 
-				closedir(xldir);
-				errno = save_errno;
-				ereport(ERROR,
-						(errcode_for_file_access(),
-						 errmsg("could not copy file \"%s\": %m", fromfl)));
-				return 1;
-			}
+			closedir(xldir);
+			errno = save_errno;
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not copy file \"%s\": %m", fromfl)));
+			return 1;
+		}
 	}
 
 	closedir(xldir);

@@ -45,7 +45,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.112 2003/08/01 00:15:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.113 2003/08/04 00:43:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,12 +173,12 @@ typedef struct AggStatePerGroupData
 	 * later input value. Only the first non-NULL input will be
 	 * auto-substituted.
 	 */
-} AggStatePerGroupData;
+}	AggStatePerGroupData;
 
 /*
  * To implement hashed aggregation, we need a hashtable that stores a
  * representative tuple and an array of AggStatePerGroup structs for each
- * distinct set of GROUP BY column values.  We compute the hash key from
+ * distinct set of GROUP BY column values.	We compute the hash key from
  * the GROUP BY columns.
  */
 typedef struct AggHashEntryData *AggHashEntry;
@@ -188,27 +188,27 @@ typedef struct AggHashEntryData
 	TupleHashEntryData shared;	/* common header for hash table entries */
 	/* per-aggregate transition status array - must be last! */
 	AggStatePerGroupData pergroup[1];	/* VARIABLE LENGTH ARRAY */
-} AggHashEntryData;				/* VARIABLE LENGTH STRUCT */
+}	AggHashEntryData;	/* VARIABLE LENGTH STRUCT */
 
 
 static void initialize_aggregates(AggState *aggstate,
-								  AggStatePerAgg peragg,
-								  AggStatePerGroup pergroup);
+					  AggStatePerAgg peragg,
+					  AggStatePerGroup pergroup);
 static void advance_transition_function(AggState *aggstate,
-										AggStatePerAgg peraggstate,
-										AggStatePerGroup pergroupstate,
-										Datum newVal, bool isNull);
+							AggStatePerAgg peraggstate,
+							AggStatePerGroup pergroupstate,
+							Datum newVal, bool isNull);
 static void advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup);
 static void process_sorted_aggregate(AggState *aggstate,
-									 AggStatePerAgg peraggstate,
-									 AggStatePerGroup pergroupstate);
+						 AggStatePerAgg peraggstate,
+						 AggStatePerGroup pergroupstate);
 static void finalize_aggregate(AggState *aggstate,
-							   AggStatePerAgg peraggstate,
-							   AggStatePerGroup pergroupstate,
-							   Datum *resultVal, bool *resultIsNull);
+				   AggStatePerAgg peraggstate,
+				   AggStatePerGroup pergroupstate,
+				   Datum *resultVal, bool *resultIsNull);
 static void build_hash_table(AggState *aggstate);
 static AggHashEntry lookup_hash_entry(AggState *aggstate,
-									  TupleTableSlot *slot);
+				  TupleTableSlot *slot);
 static TupleTableSlot *agg_retrieve_direct(AggState *aggstate);
 static void agg_fill_hash_table(AggState *aggstate);
 static TupleTableSlot *agg_retrieve_hash_table(AggState *aggstate);
@@ -231,7 +231,7 @@ initialize_aggregates(AggState *aggstate,
 	{
 		AggStatePerAgg peraggstate = &peragg[aggno];
 		AggStatePerGroup pergroupstate = &pergroup[aggno];
-		Aggref *aggref = peraggstate->aggref;
+		Aggref	   *aggref = peraggstate->aggref;
 
 		/*
 		 * Start a fresh sort operation for each DISTINCT aggregate.
@@ -265,18 +265,18 @@ initialize_aggregates(AggState *aggstate,
 
 			oldContext = MemoryContextSwitchTo(aggstate->aggcontext);
 			pergroupstate->transValue = datumCopy(peraggstate->initValue,
-												  peraggstate->transtypeByVal,
-												  peraggstate->transtypeLen);
+											 peraggstate->transtypeByVal,
+											  peraggstate->transtypeLen);
 			MemoryContextSwitchTo(oldContext);
 		}
 		pergroupstate->transValueIsNull = peraggstate->initValueIsNull;
 
 		/*
-		 * If the initial value for the transition state doesn't exist in the
-		 * pg_aggregate table then we will let the first non-NULL value
-		 * returned from the outer procNode become the initial value. (This is
-		 * useful for aggregates like max() and min().)  The noTransValue flag
-		 * signals that we still need to do this.
+		 * If the initial value for the transition state doesn't exist in
+		 * the pg_aggregate table then we will let the first non-NULL
+		 * value returned from the outer procNode become the initial
+		 * value. (This is useful for aggregates like max() and min().)
+		 * The noTransValue flag signals that we still need to do this.
 		 */
 		pergroupstate->noTransValue = peraggstate->initValueIsNull;
 	}
@@ -299,8 +299,8 @@ advance_transition_function(AggState *aggstate,
 	if (peraggstate->transfn.fn_strict)
 	{
 		/*
-		 * For a strict transfn, nothing happens at a NULL input
-		 * tuple; we just keep the prior transValue.
+		 * For a strict transfn, nothing happens at a NULL input tuple; we
+		 * just keep the prior transValue.
 		 */
 		if (isNull)
 			return;
@@ -314,12 +314,13 @@ advance_transition_function(AggState *aggstate,
 			 * here is OK.)
 			 *
 			 * We must copy the datum into aggcontext if it is pass-by-ref.
-			 * We do not need to pfree the old transValue, since it's NULL.
+			 * We do not need to pfree the old transValue, since it's
+			 * NULL.
 			 */
 			oldContext = MemoryContextSwitchTo(aggstate->aggcontext);
 			pergroupstate->transValue = datumCopy(newVal,
-												  peraggstate->transtypeByVal,
-												  peraggstate->transtypeLen);
+											 peraggstate->transtypeByVal,
+											  peraggstate->transtypeLen);
 			pergroupstate->transValueIsNull = false;
 			pergroupstate->noTransValue = false;
 			MemoryContextSwitchTo(oldContext);
@@ -363,12 +364,12 @@ advance_transition_function(AggState *aggstate,
 	newVal = FunctionCallInvoke(&fcinfo);
 
 	/*
-	 * If pass-by-ref datatype, must copy the new value into aggcontext and
-	 * pfree the prior transValue.  But if transfn returned a pointer to its
-	 * first input, we don't need to do anything.
+	 * If pass-by-ref datatype, must copy the new value into aggcontext
+	 * and pfree the prior transValue.	But if transfn returned a pointer
+	 * to its first input, we don't need to do anything.
 	 */
 	if (!peraggstate->transtypeByVal &&
-		DatumGetPointer(newVal) != DatumGetPointer(pergroupstate->transValue))
+	DatumGetPointer(newVal) != DatumGetPointer(pergroupstate->transValue))
 	{
 		if (!fcinfo.isnull)
 		{
@@ -388,7 +389,7 @@ advance_transition_function(AggState *aggstate,
 }
 
 /*
- * Advance all the aggregates for one input tuple.  The input tuple
+ * Advance all the aggregates for one input tuple.	The input tuple
  * has been stored in tmpcontext->ecxt_scantuple, so that it is accessible
  * to ExecEvalExpr.  pergroup is the array of per-group structs to use
  * (this might be in a hashtable entry).
@@ -467,8 +468,8 @@ process_sorted_aggregate(AggState *aggstate,
 			continue;
 
 		/*
-		 * Clear and select the working context for evaluation of
-		 * the equality function and transition function.
+		 * Clear and select the working context for evaluation of the
+		 * equality function and transition function.
 		 */
 		MemoryContextReset(workcontext);
 		oldContext = MemoryContextSwitchTo(workcontext);
@@ -570,9 +571,9 @@ finalize_aggregate(AggState *aggstate,
 static void
 build_hash_table(AggState *aggstate)
 {
-	Agg			   *node = (Agg *) aggstate->ss.ps.plan;
-	MemoryContext	tmpmem = aggstate->tmpcontext->ecxt_per_tuple_memory;
-	Size			entrysize;
+	Agg		   *node = (Agg *) aggstate->ss.ps.plan;
+	MemoryContext tmpmem = aggstate->tmpcontext->ecxt_per_tuple_memory;
+	Size		entrysize;
 
 	Assert(node->aggstrategy == AGG_HASHED);
 	Assert(node->numGroups > 0);
@@ -622,9 +623,9 @@ lookup_hash_entry(AggState *aggstate, TupleTableSlot *slot)
  *	  the appropriate attribute for each aggregate function use (Aggref
  *	  node) appearing in the targetlist or qual of the node.  The number
  *	  of tuples to aggregate over depends on whether grouped or plain
- *	  aggregation is selected.  In grouped aggregation, we produce a result
+ *	  aggregation is selected.	In grouped aggregation, we produce a result
  *	  row for each group; in plain aggregation there's a single result row
- *	  for the whole query.  In either case, the value of each aggregate is
+ *	  for the whole query.	In either case, the value of each aggregate is
  *	  stored in the expression context to be used when ExecProject evaluates
  *	  the result tuple.
  */
@@ -641,9 +642,7 @@ ExecAgg(AggState *node)
 		return agg_retrieve_hash_table(node);
 	}
 	else
-	{
 		return agg_retrieve_direct(node);
-	}
 }
 
 /*
@@ -736,7 +735,7 @@ agg_retrieve_direct(AggState *aggstate)
 						   firstSlot,
 						   InvalidBuffer,
 						   true);
-			aggstate->grp_firstTuple = NULL; /* don't keep two pointers */
+			aggstate->grp_firstTuple = NULL;	/* don't keep two pointers */
 
 			/* set up for first advance_aggregates call */
 			tmpcontext->ecxt_scantuple = firstSlot;
@@ -773,7 +772,7 @@ agg_retrieve_direct(AggState *aggstate)
 										 firstSlot->ttc_tupleDescriptor,
 										 node->numCols, node->grpColIdx,
 										 aggstate->eqfunctions,
-										 tmpcontext->ecxt_per_tuple_memory))
+									  tmpcontext->ecxt_per_tuple_memory))
 					{
 						/*
 						 * Save the first input tuple of the next group.
@@ -806,15 +805,15 @@ agg_retrieve_direct(AggState *aggstate)
 		 * anything), create a dummy all-nulls input tuple for use by
 		 * ExecProject. 99.44% of the time this is a waste of cycles,
 		 * because ordinarily the projected output tuple's targetlist
-		 * cannot contain any direct (non-aggregated) references to
-		 * input columns, so the dummy tuple will not be referenced.
-		 * However there are special cases where this isn't so --- in
-		 * particular an UPDATE involving an aggregate will have a
-		 * targetlist reference to ctid.  We need to return a null for
-		 * ctid in that situation, not coredump.
+		 * cannot contain any direct (non-aggregated) references to input
+		 * columns, so the dummy tuple will not be referenced. However
+		 * there are special cases where this isn't so --- in particular
+		 * an UPDATE involving an aggregate will have a targetlist
+		 * reference to ctid.  We need to return a null for ctid in that
+		 * situation, not coredump.
 		 *
-		 * The values returned for the aggregates will be the initial
-		 * values of the transition functions.
+		 * The values returned for the aggregates will be the initial values
+		 * of the transition functions.
 		 */
 		if (TupIsNull(firstSlot))
 		{
@@ -872,7 +871,7 @@ agg_fill_hash_table(AggState *aggstate)
 {
 	PlanState  *outerPlan;
 	ExprContext *tmpcontext;
-	AggHashEntry	entry;
+	AggHashEntry entry;
 	TupleTableSlot *outerslot;
 
 	/*
@@ -883,8 +882,8 @@ agg_fill_hash_table(AggState *aggstate)
 	tmpcontext = aggstate->tmpcontext;
 
 	/*
-	 * Process each outer-plan tuple, and then fetch the next one,
-	 * until we exhaust the outer plan.
+	 * Process each outer-plan tuple, and then fetch the next one, until
+	 * we exhaust the outer plan.
 	 */
 	for (;;)
 	{
@@ -921,8 +920,8 @@ agg_retrieve_hash_table(AggState *aggstate)
 	bool	   *aggnulls;
 	AggStatePerAgg peragg;
 	AggStatePerGroup pergroup;
-	TupleHashTable	hashtable;
-	AggHashEntry	entry;
+	TupleHashTable hashtable;
+	AggHashEntry entry;
 	TupleTableSlot *firstSlot;
 	TupleTableSlot *resultSlot;
 	int			aggno;
@@ -1045,20 +1044,20 @@ ExecInitAgg(Agg *node, EState *estate)
 	aggstate->hashtable = NULL;
 
 	/*
-	 * Create expression contexts.  We need two, one for per-input-tuple
-	 * processing and one for per-output-tuple processing.  We cheat a little
-	 * by using ExecAssignExprContext() to build both.
+	 * Create expression contexts.	We need two, one for per-input-tuple
+	 * processing and one for per-output-tuple processing.	We cheat a
+	 * little by using ExecAssignExprContext() to build both.
 	 */
 	ExecAssignExprContext(estate, &aggstate->ss.ps);
 	aggstate->tmpcontext = aggstate->ss.ps.ps_ExprContext;
 	ExecAssignExprContext(estate, &aggstate->ss.ps);
 
 	/*
-	 * We also need a long-lived memory context for holding hashtable
-	 * data structures and transition values.  NOTE: the details of what
-	 * is stored in aggcontext and what is stored in the regular per-query
-	 * memory context are driven by a simple decision: we want to reset the
-	 * aggcontext in ExecReScanAgg to recover no-longer-wanted space.
+	 * We also need a long-lived memory context for holding hashtable data
+	 * structures and transition values.  NOTE: the details of what is
+	 * stored in aggcontext and what is stored in the regular per-query
+	 * memory context are driven by a simple decision: we want to reset
+	 * the aggcontext in ExecReScanAgg to recover no-longer-wanted space.
 	 */
 	aggstate->aggcontext =
 		AllocSetContextCreate(CurrentMemoryContext,
@@ -1079,10 +1078,10 @@ ExecInitAgg(Agg *node, EState *estate)
 	 * initialize child expressions
 	 *
 	 * Note: ExecInitExpr finds Aggrefs for us, and also checks that no aggs
-	 * contain other agg calls in their arguments.  This would make no sense
-	 * under SQL semantics anyway (and it's forbidden by the spec).  Because
-	 * that is true, we don't need to worry about evaluating the aggs in any
-	 * particular order.
+	 * contain other agg calls in their arguments.	This would make no
+	 * sense under SQL semantics anyway (and it's forbidden by the spec).
+	 * Because that is true, we don't need to worry about evaluating the
+	 * aggs in any particular order.
 	 */
 	aggstate->ss.ps.targetlist = (List *)
 		ExecInitExpr((Expr *) node->plan.targetlist,
@@ -1116,19 +1115,20 @@ ExecInitAgg(Agg *node, EState *estate)
 	if (numaggs <= 0)
 	{
 		/*
-		 * This is not an error condition: we might be using the Agg node just
-		 * to do hash-based grouping.  Even in the regular case,
-		 * constant-expression simplification could optimize away all of the
-		 * Aggrefs in the targetlist and qual.  So keep going, but force local
-		 * copy of numaggs positive so that palloc()s below don't choke.
+		 * This is not an error condition: we might be using the Agg node
+		 * just to do hash-based grouping.	Even in the regular case,
+		 * constant-expression simplification could optimize away all of
+		 * the Aggrefs in the targetlist and qual.	So keep going, but
+		 * force local copy of numaggs positive so that palloc()s below
+		 * don't choke.
 		 */
 		numaggs = 1;
 	}
 
 	/*
-	 * If we are grouping, precompute fmgr lookup data for inner loop.
-	 * We need both equality and hashing functions to do it by hashing,
-	 * but only equality if not hashing.
+	 * If we are grouping, precompute fmgr lookup data for inner loop. We
+	 * need both equality and hashing functions to do it by hashing, but
+	 * only equality if not hashing.
 	 */
 	if (node->numCols > 0)
 	{
@@ -1146,8 +1146,8 @@ ExecInitAgg(Agg *node, EState *estate)
 	}
 
 	/*
-	 * Set up aggregate-result storage in the output expr context, and also
-	 * allocate my private per-agg working storage
+	 * Set up aggregate-result storage in the output expr context, and
+	 * also allocate my private per-agg working storage
 	 */
 	econtext = aggstate->ss.ps.ps_ExprContext;
 	econtext->ecxt_aggvalues = (Datum *) palloc0(sizeof(Datum) * numaggs);
@@ -1174,8 +1174,8 @@ ExecInitAgg(Agg *node, EState *estate)
 	 * unchanging fields of the per-agg data.  We also detect duplicate
 	 * aggregates (for example, "SELECT sum(x) ... HAVING sum(x) > 0").
 	 * When duplicates are detected, we only make an AggStatePerAgg struct
-	 * for the first one.  The clones are simply pointed at the same result
-	 * entry by giving them duplicate aggno values.
+	 * for the first one.  The clones are simply pointed at the same
+	 * result entry by giving them duplicate aggno values.
 	 */
 	aggno = -1;
 	foreach(alist, aggstate->aggs)
@@ -1425,9 +1425,9 @@ ExecReScanAgg(AggState *node, ExprContext *exprCtxt)
 	if (((Agg *) node->ss.ps.plan)->aggstrategy == AGG_HASHED)
 	{
 		/*
-		 * In the hashed case, if we haven't yet built the hash table
-		 * then we can just return; nothing done yet, so nothing to undo.
-		 * If subnode's chgParam is not NULL then it will be re-scanned by
+		 * In the hashed case, if we haven't yet built the hash table then
+		 * we can just return; nothing done yet, so nothing to undo. If
+		 * subnode's chgParam is not NULL then it will be re-scanned by
 		 * ExecProcNode, else no reason to re-scan it at all.
 		 */
 		if (!node->table_filled)

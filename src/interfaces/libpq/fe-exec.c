@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.141 2003/06/28 00:06:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.142 2003/08/04 00:43:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -449,7 +449,7 @@ pqPrepareAsyncResult(PGconn *conn)
  * a trailing newline, and should not be more than one line).
  */
 void
-pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt, ...)
+pqInternalNotice(const PGNoticeHooks * hooks, const char *fmt,...)
 {
 	char		msgBuf[1024];
 	va_list		args;
@@ -462,22 +462,25 @@ pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt, ...)
 	va_start(args, fmt);
 	vsnprintf(msgBuf, sizeof(msgBuf), libpq_gettext(fmt), args);
 	va_end(args);
-	msgBuf[sizeof(msgBuf)-1] = '\0'; /* make real sure it's terminated */
+	msgBuf[sizeof(msgBuf) - 1] = '\0';	/* make real sure it's terminated */
 
 	/* Make a PGresult to pass to the notice receiver */
 	res = PQmakeEmptyPGresult(NULL, PGRES_NONFATAL_ERROR);
 	res->noticeHooks = *hooks;
+
 	/*
 	 * Set up fields of notice.
 	 */
 	pqSaveMessageField(res, 'M', msgBuf);
 	pqSaveMessageField(res, 'S', libpq_gettext("NOTICE"));
 	/* XXX should provide a SQLSTATE too? */
+
 	/*
 	 * Result text is always just the primary message + newline.
 	 */
 	res->errMsg = (char *) pqResultAlloc(res, strlen(msgBuf) + 2, FALSE);
 	sprintf(res->errMsg, "%s\n", msgBuf);
+
 	/*
 	 * Pass to receiver, then free it.
 	 */
@@ -491,7 +494,7 @@ pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt, ...)
  *	  Returns TRUE if OK, FALSE if not enough memory to add the row
  */
 int
-pqAddTuple(PGresult *res, PGresAttValue *tup)
+pqAddTuple(PGresult *res, PGresAttValue * tup)
 {
 	if (res->ntups >= res->tupArrSize)
 	{
@@ -575,11 +578,12 @@ pqSaveParameterStatus(PGconn *conn, const char *name, const char *value)
 			break;
 		}
 	}
+
 	/*
 	 * Store new info as a single malloc block
 	 */
 	pstatus = (pgParameterStatus *) malloc(sizeof(pgParameterStatus) +
-										   strlen(name) + strlen(value) + 2);
+									   strlen(name) + strlen(value) + 2);
 	if (pstatus)
 	{
 		char	   *ptr;
@@ -593,6 +597,7 @@ pqSaveParameterStatus(PGconn *conn, const char *name, const char *value)
 		pstatus->next = conn->pstatus;
 		conn->pstatus = pstatus;
 	}
+
 	/*
 	 * Special hacks: remember client_encoding as a numeric value, and
 	 * remember at least the first few bytes of server version.
@@ -635,8 +640,8 @@ PQsendQuery(PGconn *conn, const char *query)
 
 	/*
 	 * Give the data a push.  In nonblock mode, don't complain if we're
-	 * unable to send it all; PQgetResult() will do any additional flushing
-	 * needed.
+	 * unable to send it all; PQgetResult() will do any additional
+	 * flushing needed.
 	 */
 	if (pqFlush(conn) < 0)
 	{
@@ -658,7 +663,7 @@ PQsendQueryParams(PGconn *conn,
 				  const char *command,
 				  int nParams,
 				  const Oid *paramTypes,
-				  const char * const *paramValues,
+				  const char *const * paramValues,
 				  const int *paramLengths,
 				  const int *paramFormats,
 				  int resultFormat)
@@ -672,7 +677,7 @@ PQsendQueryParams(PGconn *conn,
 	if (PG_PROTOCOL_MAJOR(conn->pversion) < 3)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-				libpq_gettext("function requires at least 3.0 protocol\n"));
+			 libpq_gettext("function requires at least 3.0 protocol\n"));
 		return 0;
 	}
 
@@ -737,7 +742,7 @@ PQsendQueryParams(PGconn *conn,
 	{
 		if (paramValues && paramValues[i])
 		{
-			int		nbytes;
+			int			nbytes;
 
 			if (paramFormats && paramFormats[i] != 0)
 			{
@@ -787,8 +792,8 @@ PQsendQueryParams(PGconn *conn,
 
 	/*
 	 * Give the data a push.  In nonblock mode, don't complain if we're
-	 * unable to send it all; PQgetResult() will do any additional flushing
-	 * needed.
+	 * unable to send it all; PQgetResult() will do any additional
+	 * flushing needed.
 	 */
 	if (pqFlush(conn) < 0)
 		goto sendFailed;
@@ -875,9 +880,9 @@ PQconsumeInput(PGconn *conn)
 		return 0;
 
 	/*
-	 * for non-blocking connections try to flush the send-queue,
-	 * otherwise we may never get a response for something that may
-	 * not have already been sent because it's in our write buffer!
+	 * for non-blocking connections try to flush the send-queue, otherwise
+	 * we may never get a response for something that may not have already
+	 * been sent because it's in our write buffer!
 	 */
 	if (pqIsnonblocking(conn))
 	{
@@ -952,11 +957,11 @@ PQgetResult(PGconn *conn)
 	/* If not ready to return something, block until we are. */
 	while (conn->asyncStatus == PGASYNC_BUSY)
 	{
-		int		flushResult;
+		int			flushResult;
 
 		/*
-		 * If data remains unsent, send it.  Else we might be waiting
-		 * for the result of a command the backend hasn't even got yet.
+		 * If data remains unsent, send it.  Else we might be waiting for
+		 * the result of a command the backend hasn't even got yet.
 		 */
 		while ((flushResult = pqFlush(conn)) > 0)
 		{
@@ -1051,7 +1056,7 @@ PQexecParams(PGconn *conn,
 			 const char *command,
 			 int nParams,
 			 const Oid *paramTypes,
-			 const char * const *paramValues,
+			 const char *const * paramValues,
 			 const int *paramLengths,
 			 const int *paramFormats,
 			 int resultFormat)
@@ -1089,7 +1094,7 @@ PQexecStart(PGconn *conn)
 			{
 				/* In protocol 3, we can get out of a COPY IN state */
 				if (PQputCopyEnd(conn,
-					libpq_gettext("COPY terminated by new PQexec")) < 0)
+					 libpq_gettext("COPY terminated by new PQexec")) < 0)
 				{
 					PQclear(result);
 					return false;
@@ -1101,7 +1106,7 @@ PQexecStart(PGconn *conn)
 				/* In older protocols we have to punt */
 				PQclear(result);
 				printfPQExpBuffer(&conn->errorMessage,
-					libpq_gettext("COPY IN state must be terminated first\n"));
+								  libpq_gettext("COPY IN state must be terminated first\n"));
 				return false;
 			}
 		}
@@ -1122,7 +1127,7 @@ PQexecStart(PGconn *conn)
 				/* In older protocols we have to punt */
 				PQclear(result);
 				printfPQExpBuffer(&conn->errorMessage,
-					libpq_gettext("COPY OUT state must be terminated first\n"));
+								  libpq_gettext("COPY OUT state must be terminated first\n"));
 				return false;
 			}
 		}
@@ -1161,7 +1166,11 @@ PQexecFinish(PGconn *conn)
 				pqCatenateResultError(lastResult, result->errMsg);
 				PQclear(result);
 				result = lastResult;
-				/* Make sure PQerrorMessage agrees with concatenated result */
+
+				/*
+				 * Make sure PQerrorMessage agrees with concatenated
+				 * result
+				 */
 				resetPQExpBuffer(&conn->errorMessage);
 				appendPQExpBufferStr(&conn->errorMessage, result->errMsg);
 			}
@@ -1229,8 +1238,8 @@ PQputCopyData(PGconn *conn, const char *buffer, int nbytes)
 	{
 		/*
 		 * Try to flush any previously sent data in preference to growing
-		 * the output buffer.  If we can't enlarge the buffer enough to hold
-		 * the data, return 0 in the nonblock case, else hard error.
+		 * the output buffer.  If we can't enlarge the buffer enough to
+		 * hold the data, return 0 in the nonblock case, else hard error.
 		 * (For simplicity, always assume 5 bytes of overhead even in
 		 * protocol 2.0 case.)
 		 */
@@ -1279,6 +1288,7 @@ PQputCopyEnd(PGconn *conn, const char *errormsg)
 						  libpq_gettext("no COPY in progress\n"));
 		return -1;
 	}
+
 	/*
 	 * Send the COPY END indicator.  This is simple enough that we don't
 	 * bother delegating it to the fe-protocol files.
@@ -1307,7 +1317,7 @@ PQputCopyEnd(PGconn *conn, const char *errormsg)
 		{
 			/* Ooops, no way to do this in 2.0 */
 			printfPQExpBuffer(&conn->errorMessage,
-				libpq_gettext("function requires at least 3.0 protocol\n"));
+			 libpq_gettext("function requires at least 3.0 protocol\n"));
 			return -1;
 		}
 		else
@@ -1476,7 +1486,7 @@ PQputnbytes(PGconn *conn, const char *buffer, int nbytes)
  *		the application must call this routine to finish the command protocol.
  *
  * When using 3.0 protocol this is deprecated; it's cleaner to use PQgetResult
- * to get the transfer status.  Note however that when using 2.0 protocol,
+ * to get the transfer status.	Note however that when using 2.0 protocol,
  * recovering from a copy failure often requires a PQreset.  PQendcopy will
  * take care of that, PQgetResult won't.
  *
@@ -1861,7 +1871,7 @@ PQoidValue(const PGresult *res)
 char *
 PQcmdTuples(PGresult *res)
 {
-	char		*p;
+	char	   *p;
 
 	if (!res)
 		return "";
@@ -1994,7 +2004,8 @@ PQflush(PGconn *conn)
  * Needed mostly by Win32, unless multithreaded DLL (/MD in VC6)
  * Used for freeing memory from PQescapeByte()a/PQunescapeBytea()
  */
-void PQfreemem(void *ptr)
+void
+PQfreemem(void *ptr)
 {
 	free(ptr);
 }
@@ -2004,11 +2015,11 @@ void PQfreemem(void *ptr)
  *
  * This function is here only for binary backward compatibility.
  * New code should use PQfreemem().  A macro will automatically map
- * calls to PQfreemem.  It should be removed in the future.  bjm 2003-03-24
+ * calls to PQfreemem.	It should be removed in the future.  bjm 2003-03-24
  */
 
 #undef PQfreeNotify
-void PQfreeNotify(PGnotify *notify);
+void		PQfreeNotify(PGnotify *notify);
 
 void
 PQfreeNotify(PGnotify *notify)
@@ -2151,26 +2162,30 @@ PQescapeBytea(const unsigned char *bintext, size_t binlen, size_t *bytealen)
  *		argument to the function free(3). It is the reverse of PQescapeBytea.
  *
  *		The following transformations are made:
- *		\'   == ASCII 39 == '
- *		\\   == ASCII 92 == \
+ *		\'	 == ASCII 39 == '
+ *		\\	 == ASCII 92 == \
  *		\ooo == a byte whose value = ooo (ooo is an octal number)
- *		\x   == x (x is any character not matched by the above transformations)
+ *		\x	 == x (x is any character not matched by the above transformations)
  *
  */
 unsigned char *
 PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 {
-	size_t strtextlen, buflen;
-	unsigned char *buffer, *tmpbuf;
-	int i, j, byte;
+	size_t		strtextlen,
+				buflen;
+	unsigned char *buffer,
+			   *tmpbuf;
+	int			i,
+				j,
+				byte;
 
-	if (strtext == NULL) {
+	if (strtext == NULL)
 		return NULL;
-	}
 
-	strtextlen = strlen(strtext);	/* will shrink, also we discover if
-									 * strtext isn't NULL terminated */
-	buffer = (unsigned char *)malloc(strtextlen);
+	strtextlen = strlen(strtext);		/* will shrink, also we discover
+										 * if strtext isn't NULL
+										 * terminated */
+	buffer = (unsigned char *) malloc(strtextlen);
 	if (buffer == NULL)
 		return NULL;
 
@@ -2184,9 +2199,9 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 					buffer[j++] = strtext[i++];
 				else
 				{
-					if ((isdigit(strtext[i]))   &&
-						(isdigit(strtext[i+1])) &&
-						(isdigit(strtext[i+2])))
+					if ((isdigit(strtext[i])) &&
+						(isdigit(strtext[i + 1])) &&
+						(isdigit(strtext[i + 2])))
 					{
 						byte = VAL(strtext[i++]);
 						byte = (byte << 3) + VAL(strtext[i++]);
@@ -2199,7 +2214,8 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 				buffer[j++] = strtext[i++];
 		}
 	}
-	buflen = j; /* buflen is the length of the unquoted data */
+	buflen = j;					/* buflen is the length of the unquoted
+								 * data */
 	tmpbuf = realloc(buffer, buflen);
 
 	if (!tmpbuf)

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_list.h,v 1.37 2003/06/15 22:51:45 tgl Exp $
+ * $Id: pg_list.h,v 1.38 2003/08/04 00:43:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,7 +137,7 @@ typedef struct FastList
 {
 	List	   *head;
 	List	   *tail;
-} FastList;
+}	FastList;
 
 #define FastListInit(fl)	( (fl)->head = (fl)->tail = NIL )
 #define FastListFromList(fl, l)  \
@@ -160,11 +160,11 @@ extern List *lappend(List *list, void *datum);
 extern List *lappendi(List *list, int datum);
 extern List *lappendo(List *list, Oid datum);
 extern List *nconc(List *list1, List *list2);
-extern void FastAppend(FastList *fl, void *datum);
-extern void FastAppendi(FastList *fl, int datum);
-extern void FastAppendo(FastList *fl, Oid datum);
-extern void FastConc(FastList *fl, List *cells);
-extern void FastConcFast(FastList *fl, FastList *fl2);
+extern void FastAppend(FastList * fl, void *datum);
+extern void FastAppendi(FastList * fl, int datum);
+extern void FastAppendo(FastList * fl, Oid datum);
+extern void FastConc(FastList * fl, List *cells);
+extern void FastConcFast(FastList * fl, FastList * fl2);
 extern void *nth(int n, List *l);
 extern int	length(List *list);
 extern void *llast(List *list);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/dumputils.c,v 1.6 2003/07/31 17:21:57 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/dumputils.c,v 1.7 2003/08/04 00:43:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,9 +23,9 @@
 
 static bool parseAclArray(const char *acls, char ***itemarray, int *nitems);
 static bool parseAclItem(const char *item, const char *type, const char *name,
-						 int remoteVersion,
-						 PQExpBuffer grantee, PQExpBuffer grantor,
-						 PQExpBuffer privs, PQExpBuffer privswgo);
+			 int remoteVersion,
+			 PQExpBuffer grantee, PQExpBuffer grantor,
+			 PQExpBuffer privs, PQExpBuffer privswgo);
 static char *copyAclUserName(PQExpBuffer output, char *input);
 static void AddAcl(PQExpBuffer aclbuf, const char *keyword);
 
@@ -191,8 +191,12 @@ buildACLCommands(const char *name, const char *type,
 	char	  **aclitems;
 	int			naclitems;
 	int			i;
-	PQExpBuffer grantee, grantor, privs, privswgo;
-	PQExpBuffer	firstsql, secondsql;
+	PQExpBuffer grantee,
+				grantor,
+				privs,
+				privswgo;
+	PQExpBuffer firstsql,
+				secondsql;
 	bool		found_owner_privs = false;
 
 	if (strlen(acls) == 0)
@@ -209,13 +213,14 @@ buildACLCommands(const char *name, const char *type,
 	grantor = createPQExpBuffer();
 	privs = createPQExpBuffer();
 	privswgo = createPQExpBuffer();
+
 	/*
-	 * At the end, these two will be pasted together to form the
-	 * result.  But the owner privileges need to go before the other
-	 * ones to keep the dependencies valid.  In recent versions this
-	 * is normally the case, but in old versions they come after the
-	 * PUBLIC privileges and that results in problems if we need to
-	 * run REVOKE on the owner privileges.
+	 * At the end, these two will be pasted together to form the result.
+	 * But the owner privileges need to go before the other ones to keep
+	 * the dependencies valid.	In recent versions this is normally the
+	 * case, but in old versions they come after the PUBLIC privileges and
+	 * that results in problems if we need to run REVOKE on the owner
+	 * privileges.
 	 */
 	firstsql = createPQExpBuffer();
 	secondsql = createPQExpBuffer();
@@ -245,9 +250,10 @@ buildACLCommands(const char *name, const char *type,
 				&& strcmp(grantor->data, owner) == 0)
 			{
 				found_owner_privs = true;
+
 				/*
-				 * For the owner, the default privilege level is ALL
-				 * WITH GRANT OPTION (only ALL prior to 7.4).
+				 * For the owner, the default privilege level is ALL WITH
+				 * GRANT OPTION (only ALL prior to 7.4).
 				 */
 				if (supports_grant_options(remoteVersion)
 					? strcmp(privswgo->data, "ALL") != 0
@@ -285,7 +291,7 @@ buildACLCommands(const char *name, const char *type,
 					else if (strncmp(grantee->data, "group ",
 									 strlen("group ")) == 0)
 						appendPQExpBuffer(secondsql, "GROUP %s;\n",
-										  fmtId(grantee->data + strlen("group ")));
+								fmtId(grantee->data + strlen("group ")));
 					else
 						appendPQExpBuffer(secondsql, "%s;\n", fmtId(grantee->data));
 				}
@@ -298,7 +304,7 @@ buildACLCommands(const char *name, const char *type,
 					else if (strncmp(grantee->data, "group ",
 									 strlen("group ")) == 0)
 						appendPQExpBuffer(secondsql, "GROUP %s",
-										  fmtId(grantee->data + strlen("group ")));
+								fmtId(grantee->data + strlen("group ")));
 					else
 						appendPQExpBuffer(secondsql, "%s", fmtId(grantee->data));
 					appendPQExpBuffer(secondsql, " WITH GRANT OPTION;\n");
@@ -340,7 +346,7 @@ buildACLCommands(const char *name, const char *type,
  * into individual items.
  *
  * On success, returns true and sets *itemarray and *nitems to describe
- * an array of individual strings.  On parse failure, returns false;
+ * an array of individual strings.	On parse failure, returns false;
  * *itemarray may exist or be NULL.
  *
  * NOTE: free'ing itemarray is sufficient to deallocate the working storage.
@@ -354,19 +360,21 @@ parseAclArray(const char *acls, char ***itemarray, int *nitems)
 	int			curitem;
 
 	/*
-	 * We expect input in the form of "{item,item,item}" where any item
-	 * is either raw data, or surrounded by double quotes (in which case
-	 * embedded characters including backslashes and quotes are backslashed).
+	 * We expect input in the form of "{item,item,item}" where any item is
+	 * either raw data, or surrounded by double quotes (in which case
+	 * embedded characters including backslashes and quotes are
+	 * backslashed).
 	 *
 	 * We build the result as an array of pointers followed by the actual
-	 * string data, all in one malloc block for convenience of deallocation.
-	 * The worst-case storage need is not more than one pointer and one
-	 * character for each input character (consider "{,,,,,,,,,,}").
+	 * string data, all in one malloc block for convenience of
+	 * deallocation. The worst-case storage need is not more than one
+	 * pointer and one character for each input character (consider
+	 * "{,,,,,,,,,,}").
 	 */
 	*itemarray = NULL;
 	*nitems = 0;
 	inputlen = strlen(acls);
-	if (inputlen < 2 || acls[0] != '{' || acls[inputlen-1] != '}')
+	if (inputlen < 2 || acls[0] != '{' || acls[inputlen - 1] != '}')
 		return false;			/* bad input */
 	items = (char **) malloc(inputlen * (sizeof(char *) + sizeof(char)));
 	if (items == NULL)
@@ -384,9 +392,9 @@ parseAclArray(const char *acls, char ***itemarray, int *nitems)
 		while (*acls != '}' && *acls != ',')
 		{
 			if (*acls == '\0')
-				return false;		/* premature end of string */
+				return false;	/* premature end of string */
 			if (*acls != '"')
-				*strings++ = *acls++; /* copy unquoted data */
+				*strings++ = *acls++;	/* copy unquoted data */
 			else
 			{
 				/* process quoted substring */
@@ -394,14 +402,14 @@ parseAclArray(const char *acls, char ***itemarray, int *nitems)
 				while (*acls != '"')
 				{
 					if (*acls == '\0')
-						return false;		/* premature end of string */
+						return false;	/* premature end of string */
 					if (*acls == '\\')
 					{
 						acls++;
 						if (*acls == '\0')
-							return false; /* premature end of string */
+							return false;		/* premature end of string */
 					}
-					*strings++ = *acls++; /* copy quoted data */
+					*strings++ = *acls++;		/* copy quoted data */
 				}
 				acls++;
 			}
@@ -426,7 +434,7 @@ parseAclArray(const char *acls, char ***itemarray, int *nitems)
  *
  * The returned grantee string will be the dequoted username or groupname
  * (preceded with "group " in the latter case).  The returned grantor is
- * the dequoted grantor name or empty.  Privilege characters are decoded
+ * the dequoted grantor name or empty.	Privilege characters are decoded
  * and split between privileges with grant option (privswgo) and without
  * (privs).
  *
@@ -559,11 +567,12 @@ copyAclUserName(PQExpBuffer output, char *input)
 			while (*input != '"')
 			{
 				if (*input == '\0')
-					return input; /* really a syntax error... */
+					return input;		/* really a syntax error... */
+
 				/*
 				 * There is no quoting convention here, thus we can't cope
-				 * with usernames containing double quotes.  Keep this code
-				 * in sync with putid() in backend's acl.c.
+				 * with usernames containing double quotes.  Keep this
+				 * code in sync with putid() in backend's acl.c.
 				 */
 				appendPQExpBufferChar(output, *input++);
 			}

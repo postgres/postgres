@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.51 2003/07/25 00:01:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.52 2003/08/04 00:43:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,8 +198,8 @@ generate_implied_equalities(Query *root)
 		/*
 		 * Collect info about relids mentioned in each item.  For this
 		 * routine we only really care whether there are any at all in
-		 * each item, but process_implied_equality() needs the exact
-		 * sets, so we may as well pull them here.
+		 * each item, but process_implied_equality() needs the exact sets,
+		 * so we may as well pull them here.
 		 */
 		relids = (Relids *) palloc(nitems * sizeof(Relids));
 		have_consts = false;
@@ -233,8 +233,8 @@ generate_implied_equalities(Query *root)
 
 				/*
 				 * If it's "const = const" then just ignore it altogether.
-				 * There is no place in the restrictinfo structure to store
-				 * it.  (If the two consts are in fact unequal, then
+				 * There is no place in the restrictinfo structure to
+				 * store it.  (If the two consts are in fact unequal, then
 				 * propagating the comparison to Vars will cause us to
 				 * produce zero rows out, as expected.)
 				 */
@@ -242,12 +242,12 @@ generate_implied_equalities(Query *root)
 				{
 					/*
 					 * Tell process_implied_equality to delete the clause,
-					 * not add it, if it's "var = var" and we have constants
-					 * present in the list.
+					 * not add it, if it's "var = var" and we have
+					 * constants present in the list.
 					 */
-					bool	delete_it = (have_consts &&
-										 i1_is_variable &&
-										 i2_is_variable);
+					bool		delete_it = (have_consts &&
+											 i1_is_variable &&
+											 i2_is_variable);
 
 					process_implied_equality(root,
 											 item1->key, item2->key,
@@ -751,20 +751,21 @@ build_subquery_pathkeys(Query *root, RelOptInfo *rel, Query *subquery)
 		 * element might match none, one, or more of the output columns
 		 * that are visible to the outer query.  This means we may have
 		 * multiple possible representations of the sub_pathkey in the
-		 * context of the outer query.  Ideally we would generate them all
-		 * and put them all into a pathkey list of the outer query, thereby
-		 * propagating equality knowledge up to the outer query.  Right now
-		 * we cannot do so, because the outer query's canonical pathkey
-		 * sets are already frozen when this is called.  Instead we prefer
-		 * the one that has the highest "score" (number of canonical pathkey
-		 * peers, plus one if it matches the outer query_pathkeys).
-		 * This is the most likely to be useful in the outer query.
+		 * context of the outer query.	Ideally we would generate them all
+		 * and put them all into a pathkey list of the outer query,
+		 * thereby propagating equality knowledge up to the outer query.
+		 * Right now we cannot do so, because the outer query's canonical
+		 * pathkey sets are already frozen when this is called.  Instead
+		 * we prefer the one that has the highest "score" (number of
+		 * canonical pathkey peers, plus one if it matches the outer
+		 * query_pathkeys). This is the most likely to be useful in the
+		 * outer query.
 		 */
 		foreach(j, sub_pathkey)
 		{
 			PathKeyItem *sub_item = (PathKeyItem *) lfirst(j);
-			Node   *sub_key = sub_item->key;
-			List   *k;
+			Node	   *sub_key = sub_item->key;
+			List	   *k;
 
 			foreach(k, subquery->targetList)
 			{
@@ -774,9 +775,9 @@ build_subquery_pathkeys(Query *root, RelOptInfo *rel, Query *subquery)
 					equal(tle->expr, sub_key))
 				{
 					/* Found a representation for this sub_key */
-					Var	   *outer_var;
+					Var		   *outer_var;
 					PathKeyItem *outer_item;
-					int		score;
+					int			score;
 
 					outer_var = makeVar(rel->relid,
 										tle->resdom->resno,
@@ -802,8 +803,8 @@ build_subquery_pathkeys(Query *root, RelOptInfo *rel, Query *subquery)
 		}
 
 		/*
-		 * If we couldn't find a representation of this sub_pathkey,
-		 * we're done (we can't use the ones to its right, either).
+		 * If we couldn't find a representation of this sub_pathkey, we're
+		 * done (we can't use the ones to its right, either).
 		 */
 		if (!best_item)
 			break;
@@ -812,8 +813,8 @@ build_subquery_pathkeys(Query *root, RelOptInfo *rel, Query *subquery)
 		cpathkey = make_canonical_pathkey(root, best_item);
 
 		/*
-		 * Eliminate redundant ordering info; could happen if outer
-		 * query equijoins subquery keys...
+		 * Eliminate redundant ordering info; could happen if outer query
+		 * equijoins subquery keys...
 		 */
 		if (!ptrMember(cpathkey, retval))
 		{
@@ -920,7 +921,7 @@ make_pathkeys_for_sortclauses(List *sortclauses,
  * many times when dealing with a many-relation query.
  *
  * We have to be careful that the cached values are palloc'd in the same
- * context the RestrictInfo node itself is in.  This is not currently a
+ * context the RestrictInfo node itself is in.	This is not currently a
  * problem for normal planning, but it is an issue for GEQO planning.
  */
 void
@@ -1090,7 +1091,7 @@ make_pathkeys_for_mergeclauses(Query *root,
 		else
 		{
 			elog(ERROR, "could not identify which side of mergeclause to use");
-			pathkey = NIL;	/* keep compiler quiet */
+			pathkey = NIL;		/* keep compiler quiet */
 		}
 
 		/*

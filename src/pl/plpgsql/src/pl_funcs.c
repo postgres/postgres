@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.28 2003/07/28 00:09:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.29 2003/08/04 00:43:33 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -410,8 +410,8 @@ plpgsql_convert_ident(const char *s, char **output, int numidents)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("qualified identifier cannot be used here: %s",
-							sstart)));
+				   errmsg("qualified identifier cannot be used here: %s",
+						  sstart)));
 
 		/* If not done, skip whitespace, dot, whitespace */
 		if (*s)
@@ -1046,7 +1046,7 @@ plpgsql_dumptree(PLpgSQL_function * func)
 					   ((PLpgSQL_recfield *) d)->recparentno);
 				break;
 			case PLPGSQL_DTYPE_ARRAYELEM:
-				printf("ARRAYELEM of VAR %d subscript ", 
+				printf("ARRAYELEM of VAR %d subscript ",
 					   ((PLpgSQL_arrayelem *) d)->arrayparentno);
 				dump_expr(((PLpgSQL_arrayelem *) d)->subscript);
 				printf("\n");

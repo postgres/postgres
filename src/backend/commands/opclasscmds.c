@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.15 2003/08/01 00:15:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.16 2003/08/04 00:43:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,13 +103,13 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	 * Currently, we require superuser privileges to create an opclass.
 	 * This seems necessary because we have no way to validate that the
 	 * offered set of operators and functions are consistent with the AM's
-	 * expectations.  It would be nice to provide such a check someday,
-	 * if it can be done without solving the halting problem :-(
+	 * expectations.  It would be nice to provide such a check someday, if
+	 * it can be done without solving the halting problem :-(
 	 */
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to create an operator class")));
+			   errmsg("must be superuser to create an operator class")));
 
 	/* Look up the datatype */
 	typeoid = typenameTypeId(stmt->datatype);
@@ -157,8 +157,8 @@ DefineOpClass(CreateOpClassStmt *stmt)
 				if (operators[item->number - 1] != InvalidOid)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-							 errmsg("operator number %d appears more than once",
-									item->number)));
+					  errmsg("operator number %d appears more than once",
+							 item->number)));
 				if (item->args != NIL)
 				{
 					TypeName   *typeName1 = (TypeName *) lfirst(item->args);
@@ -211,7 +211,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 				if (OidIsValid(storageoid))
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-							 errmsg("storage type specified more than once")));
+					   errmsg("storage type specified more than once")));
 				storageoid = typenameTypeId(item->storedtype);
 				break;
 			default:
@@ -532,7 +532,7 @@ RemoveOpClass(RemoveOpClassStmt *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
-						NameListToString(stmt->opclassname), stmt->amname)));
+					NameListToString(stmt->opclassname), stmt->amname)));
 
 	opcID = HeapTupleGetOid(tuple);
 
@@ -681,7 +681,7 @@ RenameOpClass(List *name, const char *access_method, const char *newname)
 		tup = SearchSysCacheCopy(CLAOID,
 								 ObjectIdGetDatum(opcOid),
 								 0, 0, 0);
-		if (!HeapTupleIsValid(tup)) /* should not happen */
+		if (!HeapTupleIsValid(tup))		/* should not happen */
 			elog(ERROR, "cache lookup failed for opclass %u", opcOid);
 
 		namespaceOid = ((Form_pg_opclass) GETSTRUCT(tup))->opcnamespace;

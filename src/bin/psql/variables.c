@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/variables.c,v 1.11 2003/06/28 00:12:40 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/variables.c,v 1.12 2003/08/04 00:43:29 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "variables.h"
@@ -67,7 +67,11 @@ GetVariableBool(VariableSpace space, const char *name)
 		return false;			/* not set -> assume "off" */
 	if (strcmp(val, "off") == 0)
 		return false;
-	/* for backwards compatibility, anything except "off" is taken as "true" */
+
+	/*
+	 * for backwards compatibility, anything except "off" is taken as
+	 * "true"
+	 */
 	return true;
 }
 
@@ -75,65 +79,69 @@ bool
 VariableEquals(VariableSpace space, const char name[], const char value[])
 {
 	const char *var;
+
 	var = GetVariable(space, name);
 	return var && (strcmp(var, value) == 0);
 }
 
-int 
-GetVariableNum(VariableSpace space, 
-	 				const char name[], 
-					int defaultval,
-					int faultval,
-					bool allowtrail)
+int
+GetVariableNum(VariableSpace space,
+			   const char name[],
+			   int defaultval,
+			   int faultval,
+			   bool allowtrail)
 {
 	const char *var;
-	int result;
+	int			result;
 
 	var = GetVariable(space, name);
 	if (!var)
-	  result = defaultval;
+		result = defaultval;
 	else if (!var[0])
-	  result = faultval;
+		result = faultval;
 	else
 	{
-		char *end;
+		char	   *end;
+
 		result = strtol(var, &end, 0);
 		if (!allowtrail && *end)
-		  result = faultval;
+			result = faultval;
 	}
 
 	return result;
 }
 
 int
-SwitchVariable(VariableSpace space, const char name[], const char *opt, ...)
+SwitchVariable(VariableSpace space, const char name[], const char *opt,...)
 {
-	int result;
+	int			result;
 	const char *var;
 
 	var = GetVariable(space, name);
-	if (var) 
+	if (var)
 	{
-		va_list args;
+		va_list		args;
+
 		va_start(args, opt);
-		for (result=1; opt && (strcmp(var, opt) != 0); result++)
-			opt = va_arg(args,const char *);
+		for (result = 1; opt && (strcmp(var, opt) != 0); result++)
+			opt = va_arg(args, const char *);
 		if (!opt)
 			result = VAR_NOTFOUND;
 		va_end(args);
 	}
 	else
-	  result = VAR_NOTSET;
+		result = VAR_NOTSET;
 
 	return result;
 }
 
-void 
+void
 PrintVariables(VariableSpace space)
 {
-  struct _variable *ptr;
-  for (ptr = space->next; ptr; ptr = ptr->next)
-	 printf("%s = '%s'\n", ptr->name, ptr->value);
+	struct _variable *ptr;
+
+	for (ptr = space->next; ptr; ptr = ptr->next)
+		printf("%s = '%s'\n", ptr->name, ptr->value);
 }
 
 bool

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.55 2003/03/21 03:28:29 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.56 2003/08/04 00:43:29 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -43,8 +43,8 @@ MainLoop(FILE *source)
 	volatile backslashResult slashCmdStatus = CMD_UNKNOWN;
 
 	bool		success;
-	volatile char in_quote = 0;		/* == 0 for no in_quote */
-	volatile int in_xcomment = 0;	/* in extended comment */
+	volatile char in_quote = 0; /* == 0 for no in_quote */
+	volatile int in_xcomment = 0;		/* in extended comment */
 	volatile int paren_level = 0;
 	unsigned int query_start;
 	volatile int count_eof = 0;
@@ -152,33 +152,34 @@ MainLoop(FILE *source)
 			paren_level = 0;
 			slashCmdStatus = CMD_UNKNOWN;
 		}
-			/*
-			 * otherwise, set interactive prompt if necessary and get
-			 * another line
-			 */
+
+		/*
+		 * otherwise, set interactive prompt if necessary and get another
+		 * line
+		 */
 		else if (pset.cur_cmd_interactive)
-			{
-				int			prompt_status;
+		{
+			int			prompt_status;
 
 			fflush(stdout);
 
-				if (in_quote && in_quote == '\'')
-					prompt_status = PROMPT_SINGLEQUOTE;
-				else if (in_quote && in_quote == '"')
-					prompt_status = PROMPT_DOUBLEQUOTE;
-				else if (in_xcomment)
-					prompt_status = PROMPT_COMMENT;
-				else if (paren_level)
-					prompt_status = PROMPT_PAREN;
-				else if (query_buf->len > 0)
-					prompt_status = PROMPT_CONTINUE;
-				else
-					prompt_status = PROMPT_READY;
-
-				line = gets_interactive(get_prompt(prompt_status));
-			}
+			if (in_quote && in_quote == '\'')
+				prompt_status = PROMPT_SINGLEQUOTE;
+			else if (in_quote && in_quote == '"')
+				prompt_status = PROMPT_DOUBLEQUOTE;
+			else if (in_xcomment)
+				prompt_status = PROMPT_COMMENT;
+			else if (paren_level)
+				prompt_status = PROMPT_PAREN;
+			else if (query_buf->len > 0)
+				prompt_status = PROMPT_CONTINUE;
 			else
-				line = gets_fromFile(source);
+				prompt_status = PROMPT_READY;
+
+			line = gets_interactive(get_prompt(prompt_status));
+		}
+		else
+			line = gets_fromFile(source);
 
 
 		/* Setting this will not have effect until next line. */
@@ -199,7 +200,7 @@ MainLoop(FILE *source)
 				/* This tries to mimic bash's IGNOREEOF feature. */
 				count_eof++;
 
-				if (count_eof < GetVariableNum(pset.vars,"IGNOREEOF",0,10,false))
+				if (count_eof < GetVariableNum(pset.vars, "IGNOREEOF", 0, 10, false))
 				{
 					if (!QUIET())
 						printf(gettext("Use \"\\q\" to leave %s.\n"), pset.progname);
@@ -208,10 +209,10 @@ MainLoop(FILE *source)
 
 				puts(QUIET() ? "" : "\\q");
 			}
-				break;
+			break;
 		}
 
-			count_eof = 0;
+		count_eof = 0;
 
 		pset.lineno++;
 
@@ -274,7 +275,7 @@ MainLoop(FILE *source)
 			else if (line[i] == '/' && line[i + thislen] == '*')
 			{
 				in_xcomment++;
-				if (in_xcomment == 1) 
+				if (in_xcomment == 1)
 					ADVANCE_1;
 			}
 
@@ -283,7 +284,7 @@ MainLoop(FILE *source)
 			{
 				if (line[i] == '*' && line[i + thislen] == '/' &&
 					!--in_xcomment)
-						ADVANCE_1;
+					ADVANCE_1;
 			}
 
 			/* start of quote? */
@@ -489,10 +490,10 @@ MainLoop(FILE *source)
 		if (!pset.cur_cmd_interactive)
 		{
 			if (!success && die_on_error)
-			successResult = EXIT_USER;
-		/* Have we lost the db connection? */
+				successResult = EXIT_USER;
+			/* Have we lost the db connection? */
 			else if (!pset.db)
-			successResult = EXIT_BADCONN;
+				successResult = EXIT_BADCONN;
 		}
 	}							/* while !endoffile/session */
 

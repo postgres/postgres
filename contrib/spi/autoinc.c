@@ -73,8 +73,8 @@ autoinc(PG_FUNCTION_ARGS)
 		if (SPI_gettypeid(tupdesc, attnum) != INT4OID)
 			ereport(ERROR,
 					(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
-					 errmsg("attribute \"%s\" of \"%s\" must be type INT4",
-							 args[i], relname)));
+				   errmsg("attribute \"%s\" of \"%s\" must be type INT4",
+						  args[i], relname)));
 
 		val = DatumGetInt32(SPI_getbinval(rettuple, tupdesc, attnum, &isnull));
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.76 2003/08/01 00:15:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.77 2003/08/04 00:43:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,18 +57,19 @@
  */
 typedef struct OnCommitItem
 {
-	Oid				relid;			/* relid of relation */
-	OnCommitAction	oncommit;		/* what to do at end of xact */
+	Oid			relid;			/* relid of relation */
+	OnCommitAction oncommit;	/* what to do at end of xact */
 
 	/*
 	 * If this entry was created during this xact, it should be deleted at
 	 * xact abort.	Conversely, if this entry was deleted during this
 	 * xact, it should be removed at xact commit.  We leave deleted
-	 * entries in the list until commit so that we can roll back if needed.
+	 * entries in the list until commit so that we can roll back if
+	 * needed.
 	 */
 	bool		created_in_cur_xact;
 	bool		deleted_in_cur_xact;
-} OnCommitItem;
+}	OnCommitItem;
 
 static List *on_commits = NIL;
 
@@ -82,14 +83,14 @@ static void setRelhassubclassInRelation(Oid relationId, bool relhassubclass);
 static bool needs_toast_table(Relation rel);
 static void AlterTableAddCheckConstraint(Relation rel, Constraint *constr);
 static void AlterTableAddForeignKeyConstraint(Relation rel,
-											  FkConstraint *fkconstraint);
+								  FkConstraint *fkconstraint);
 static int transformColumnNameList(Oid relId, List *colList,
-								   int16 *attnums, Oid *atttypids);
+						int16 *attnums, Oid *atttypids);
 static int transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
-									  List **attnamelist,
-									  int16 *attnums, Oid *atttypids);
-static Oid	transformFkeyCheckAttrs(Relation pkrel,
-									int numattrs, int16 *attnums);
+						   List **attnamelist,
+						   int16 *attnums, Oid *atttypids);
+static Oid transformFkeyCheckAttrs(Relation pkrel,
+						int numattrs, int16 *attnums);
 static void validateForeignKeyConstraint(FkConstraint *fkconstraint,
 							 Relation rel, Relation pkrel);
 static void createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
@@ -206,8 +207,8 @@ DefineRelation(CreateStmt *stmt, char relkind)
 					if (strcmp(check[i].ccname, cdef->name) == 0)
 						ereport(ERROR,
 								(errcode(ERRCODE_DUPLICATE_OBJECT),
-								 errmsg("duplicate CHECK constraint name \"%s\"",
-										cdef->name)));
+						 errmsg("duplicate CHECK constraint name \"%s\"",
+								cdef->name)));
 				}
 				check[ncheck].ccname = cdef->name;
 			}
@@ -399,7 +400,7 @@ TruncateRelation(const RangeVar *relation)
 	if (isOtherTempNamespace(RelationGetNamespace(rel)))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot truncate temp tables of other processes")));
+			  errmsg("cannot truncate temp tables of other processes")));
 
 	/*
 	 * Don't allow truncate on tables which are referenced by foreign keys
@@ -435,8 +436,8 @@ TruncateRelation(const RangeVar *relation)
 	heap_close(fkeyRel, AccessShareLock);
 
 	/*
-	 * Do the real work using the same technique as cluster, but
-	 * without the data-copying portion
+	 * Do the real work using the same technique as cluster, but without
+	 * the data-copying portion
 	 */
 	rebuild_relation(rel, InvalidOid);
 
@@ -570,8 +571,8 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 		if (!istemp && isTempNamespace(RelationGetNamespace(relation)))
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("cannot inherit from temporary relation \"%s\"",
-							parent->relname)));
+				  errmsg("cannot inherit from temporary relation \"%s\"",
+						 parent->relname)));
 
 		/*
 		 * We should have an UNDER permission flag for this, but for now,
@@ -652,7 +653,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 									attributeName),
 							 errdetail("%s versus %s",
 									   TypeNameToString(def->typename),
-									   format_type_be(attribute->atttypid))));
+								  format_type_be(attribute->atttypid))));
 				def->inhcount++;
 				/* Merge of NOT NULL constraints = OR 'em together */
 				def->is_not_null |= attribute->attnotnull;
@@ -803,11 +804,11 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 					def->typename->typmod != newdef->typename->typmod)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("attribute \"%s\" has a type conflict",
-									attributeName),
+						   errmsg("attribute \"%s\" has a type conflict",
+								  attributeName),
 							 errdetail("%s versus %s",
 									   TypeNameToString(def->typename),
-									   TypeNameToString(newdef->typename))));
+								   TypeNameToString(newdef->typename))));
 				/* Mark the column as locally defined */
 				def->is_local = true;
 				/* Merge of NOT NULL constraints = OR 'em together */
@@ -1230,8 +1231,8 @@ renameatt(Oid myrelid,
 							 0, 0))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_COLUMN),
-				 errmsg("attribute \"%s\" of relation \"%s\" already exists",
-						newattname, RelationGetRelationName(targetrelation))));
+			 errmsg("attribute \"%s\" of relation \"%s\" already exists",
+				  newattname, RelationGetRelationName(targetrelation))));
 
 	namestrcpy(&(attform->attname), newattname);
 
@@ -1257,7 +1258,7 @@ renameatt(Oid myrelid,
 
 		/*
 		 * Scan through index columns to see if there's any simple index
-		 * entries for this attribute.  We ignore expressional entries.
+		 * entries for this attribute.	We ignore expressional entries.
 		 */
 		indextup = SearchSysCache(INDEXRELID,
 								  ObjectIdGetDatum(indexoid),
@@ -1270,6 +1271,7 @@ renameatt(Oid myrelid,
 		{
 			if (attnum != indexform->indkey[i])
 				continue;
+
 			/*
 			 * Found one, rename it.
 			 */
@@ -1279,6 +1281,7 @@ renameatt(Oid myrelid,
 										0, 0);
 			if (!HeapTupleIsValid(atttup))
 				continue;		/* should we raise an error? */
+
 			/*
 			 * Update the (copied) attribute tuple.
 			 */
@@ -1366,7 +1369,7 @@ renamerel(Oid myrelid, const char *newrelname)
 	reltup = SearchSysCacheCopy(RELOID,
 								PointerGetDatum(myrelid),
 								0, 0, 0);
-	if (!HeapTupleIsValid(reltup)) /* shouldn't happen */
+	if (!HeapTupleIsValid(reltup))		/* shouldn't happen */
 		elog(ERROR, "cache lookup failed for relation %u", myrelid);
 
 	if (get_relname_relid(newrelname, namespaceId) != InvalidOid)
@@ -1743,7 +1746,7 @@ AlterTableAddColumn(Oid myrelid,
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("child table \"%s\" has different type for column \"%s\"",
-								get_rel_name(childrelid), colDef->colname)));
+							get_rel_name(childrelid), colDef->colname)));
 
 			/*
 			 * XXX if we supported NOT NULL or defaults, would need to do
@@ -1782,7 +1785,7 @@ AlterTableAddColumn(Oid myrelid,
 		if (find_inheritance_children(myrelid) != NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("attribute must be added to child tables too")));
+				 errmsg("attribute must be added to child tables too")));
 	}
 
 	/*
@@ -1801,14 +1804,14 @@ AlterTableAddColumn(Oid myrelid,
 	if (colDef->raw_default || colDef->cooked_default)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("adding columns with defaults is not implemented"),
-				 errhint("Add the column, then use ALTER TABLE SET DEFAULT.")));
+			   errmsg("adding columns with defaults is not implemented"),
+		  errhint("Add the column, then use ALTER TABLE SET DEFAULT.")));
 
 	if (colDef->is_not_null)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("adding NOT NULL columns is not implemented"),
-				 errhint("Add the column, then use ALTER TABLE SET NOT NULL.")));
+		 errhint("Add the column, then use ALTER TABLE SET NOT NULL.")));
 
 	pgclass = heap_openr(RelationRelationName, RowExclusiveLock);
 
@@ -1829,8 +1832,8 @@ AlterTableAddColumn(Oid myrelid,
 							 0, 0))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_COLUMN),
-				 errmsg("attribute \"%s\" of relation \"%s\" already exists",
-						colDef->colname, RelationGetRelationName(rel))));
+			 errmsg("attribute \"%s\" of relation \"%s\" already exists",
+					colDef->colname, RelationGetRelationName(rel))));
 
 	minattnum = ((Form_pg_class) GETSTRUCT(reltup))->relnatts;
 	maxatts = minattnum + 1;
@@ -2014,8 +2017,8 @@ AlterTableAlterColumnDropNotNull(Oid myrelid, bool recurse,
 	if (attnum == InvalidAttrNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
-				 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
-						colName, RelationGetRelationName(rel))));
+			 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+					colName, RelationGetRelationName(rel))));
 
 	/* Prevent them from altering a system attribute */
 	if (attnum < 0)
@@ -2057,8 +2060,8 @@ AlterTableAlterColumnDropNotNull(Oid myrelid, bool recurse,
 				if (indexStruct->indkey[i] == attnum)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-							 errmsg("attribute \"%s\" is in a primary key",
-									colName)));
+						   errmsg("attribute \"%s\" is in a primary key",
+								  colName)));
 			}
 		}
 
@@ -2158,8 +2161,8 @@ AlterTableAlterColumnSetNotNull(Oid myrelid, bool recurse,
 	if (attnum == InvalidAttrNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
-				 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
-						colName, RelationGetRelationName(rel))));
+			 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+					colName, RelationGetRelationName(rel))));
 
 	/* Prevent them from altering a system attribute */
 	if (attnum < 0)
@@ -2286,8 +2289,8 @@ AlterTableAlterColumnDefault(Oid myrelid, bool recurse,
 	if (attnum == InvalidAttrNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
-				 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
-						colName, RelationGetRelationName(rel))));
+			 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+					colName, RelationGetRelationName(rel))));
 
 	/* Prevent them from altering a system attribute */
 	if (attnum < 0)
@@ -2450,8 +2453,8 @@ AlterTableAlterColumnFlags(Oid myrelid, bool recurse,
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
-				 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
-						colName, RelationGetRelationName(rel))));
+			 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+					colName, RelationGetRelationName(rel))));
 	attrtuple = (Form_pg_attribute) GETSTRUCT(tuple);
 
 	if (attrtuple->attnum < 0)
@@ -2476,8 +2479,8 @@ AlterTableAlterColumnFlags(Oid myrelid, bool recurse,
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("column datatype %s can only have storage \"plain\"",
-							format_type_be(attrtuple->atttypid))));
+			 errmsg("column datatype %s can only have storage \"plain\"",
+					format_type_be(attrtuple->atttypid))));
 	}
 
 	simple_heap_update(attrelation, &tuple->t_self, tuple);
@@ -2573,7 +2576,7 @@ AlterTableAlterOids(Oid myrelid, bool recurse, bool setOid)
 					(errmsg("table \"%s\" is already WITHOUT OIDS",
 							RelationGetRelationName(rel))));
 		heap_close(class_rel, RowExclusiveLock);
-		heap_close(rel, NoLock); /* close rel, but keep lock! */
+		heap_close(rel, NoLock);	/* close rel, but keep lock! */
 		return;
 	}
 
@@ -2601,8 +2604,8 @@ AlterTableAlterOids(Oid myrelid, bool recurse, bool setOid)
 		attrel = heap_open(RelOid_pg_attribute, RowExclusiveLock);
 
 		/*
-		 * Oids are being removed from the relation, so we need
-		 * to remove the oid pg_attribute record relating.
+		 * Oids are being removed from the relation, so we need to remove
+		 * the oid pg_attribute record relating.
 		 */
 		atttup = SearchSysCache(ATTNUM,
 								ObjectIdGetDatum(myrelid),
@@ -2621,7 +2624,7 @@ AlterTableAlterOids(Oid myrelid, bool recurse, bool setOid)
 
 	heap_close(class_rel, RowExclusiveLock);
 
-	heap_close(rel, NoLock);		/* close rel, but keep lock! */
+	heap_close(rel, NoLock);	/* close rel, but keep lock! */
 }
 
 /*
@@ -2663,8 +2666,8 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 	if (attnum == InvalidAttrNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
-				 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
-						colName, RelationGetRelationName(rel))));
+			 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+					colName, RelationGetRelationName(rel))));
 
 	/* Can't drop a system attribute */
 	/* XXX perhaps someday allow dropping OID? */
@@ -2712,7 +2715,7 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 					 colName, childrelid);
 			childatt = (Form_pg_attribute) GETSTRUCT(tuple);
 
-			if (childatt->attinhcount <= 0)	/* shouldn't happen */
+			if (childatt->attinhcount <= 0)		/* shouldn't happen */
 				elog(ERROR, "relation %u has non-inherited attribute \"%s\"",
 					 childrelid, colName);
 			childatt->attinhcount--;
@@ -2731,9 +2734,9 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 	}
 
 	/*
-	 * Propagate to children if desired.  Unlike most other ALTER routines,
-	 * we have to do this one level of recursion at a time; we can't use
-	 * find_all_inheritors to do it in one pass.
+	 * Propagate to children if desired.  Unlike most other ALTER
+	 * routines, we have to do this one level of recursion at a time; we
+	 * can't use find_all_inheritors to do it in one pass.
 	 */
 	if (recurse)
 	{
@@ -2763,7 +2766,7 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 					 colName, childrelid);
 			childatt = (Form_pg_attribute) GETSTRUCT(tuple);
 
-			if (childatt->attinhcount <= 0)	/* shouldn't happen */
+			if (childatt->attinhcount <= 0)		/* shouldn't happen */
 				elog(ERROR, "relation %u has non-inherited attribute \"%s\"",
 					 childrelid, colName);
 
@@ -2882,18 +2885,18 @@ AlterTableAddConstraint(Oid myrelid, bool recurse,
 					{
 						if (ConstraintNameIsUsed(CONSTRAINT_RELATION,
 												 RelationGetRelid(rel),
-												 RelationGetNamespace(rel),
+											   RelationGetNamespace(rel),
 												 constr->name))
 							ereport(ERROR,
 									(errcode(ERRCODE_DUPLICATE_OBJECT),
 									 errmsg("constraint \"%s\" for relation \"%s\" already exists",
 											constr->name,
-											RelationGetRelationName(rel))));
+										 RelationGetRelationName(rel))));
 					}
 					else
 						constr->name = GenerateConstraintName(CONSTRAINT_RELATION,
-															  RelationGetRelid(rel),
-															  RelationGetNamespace(rel),
+												   RelationGetRelid(rel),
+											   RelationGetNamespace(rel),
 															  &counter);
 
 					/*
@@ -2923,14 +2926,14 @@ AlterTableAddConstraint(Oid myrelid, bool recurse,
 					if (fkconstraint->constr_name)
 					{
 						if (ConstraintNameIsUsed(CONSTRAINT_RELATION,
-												   RelationGetRelid(rel),
+												 RelationGetRelid(rel),
 											   RelationGetNamespace(rel),
 											  fkconstraint->constr_name))
 							ereport(ERROR,
 									(errcode(ERRCODE_DUPLICATE_OBJECT),
 									 errmsg("constraint \"%s\" for relation \"%s\" already exists",
 											fkconstraint->constr_name,
-											RelationGetRelationName(rel))));
+										 RelationGetRelationName(rel))));
 					}
 					else
 						fkconstraint->constr_name = GenerateConstraintName(CONSTRAINT_RELATION,
@@ -2959,7 +2962,7 @@ AlterTableAddConstraint(Oid myrelid, bool recurse,
 /*
  * Add a check constraint to a single table
  *
- * Subroutine for AlterTableAddConstraint.  Must already hold exclusive
+ * Subroutine for AlterTableAddConstraint.	Must already hold exclusive
  * lock on the rel, and have done appropriate validity/permissions checks
  * for it.
  */
@@ -2979,13 +2982,13 @@ AlterTableAddCheckConstraint(Relation rel, Constraint *constr)
 	Node	   *expr;
 
 	/*
-	 * We need to make a parse state and range
-	 * table to allow us to do transformExpr()
+	 * We need to make a parse state and range table to allow us to do
+	 * transformExpr()
 	 */
 	pstate = make_parsestate(NULL);
 	rte = addRangeTableEntryForRelation(pstate,
 										RelationGetRelid(rel),
-										makeAlias(RelationGetRelationName(rel), NIL),
+							makeAlias(RelationGetRelationName(rel), NIL),
 										false,
 										true);
 	addRTEtoQuery(pstate, rte, true, true);
@@ -3006,8 +3009,8 @@ AlterTableAddCheckConstraint(Relation rel, Constraint *constr)
 	if (length(pstate->p_rtable) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-				 errmsg("CHECK constraint may only reference relation \"%s\"",
-						RelationGetRelationName(rel))));
+			errmsg("CHECK constraint may only reference relation \"%s\"",
+				   RelationGetRelationName(rel))));
 
 	/*
 	 * No subplans or aggregates, either...
@@ -3070,15 +3073,13 @@ AlterTableAddCheckConstraint(Relation rel, Constraint *constr)
 	if (!successful)
 		ereport(ERROR,
 				(errcode(ERRCODE_CHECK_VIOLATION),
-				 errmsg("CHECK constraint \"%s\" is violated at some row(s)",
-						constr->name)));
+			 errmsg("CHECK constraint \"%s\" is violated at some row(s)",
+					constr->name)));
 
 	/*
-	 * Call AddRelationRawConstraints to do
-	 * the real adding -- It duplicates some
-	 * of the above, but does not check the
-	 * validity of the constraint against
-	 * tuples already in the table.
+	 * Call AddRelationRawConstraints to do the real adding -- It
+	 * duplicates some of the above, but does not check the validity of
+	 * the constraint against tuples already in the table.
 	 */
 	AddRelationRawConstraints(rel, NIL, makeList1(constr));
 }
@@ -3086,7 +3087,7 @@ AlterTableAddCheckConstraint(Relation rel, Constraint *constr)
 /*
  * Add a foreign-key constraint to a single table
  *
- * Subroutine for AlterTableAddConstraint.  Must already hold exclusive
+ * Subroutine for AlterTableAddConstraint.	Must already hold exclusive
  * lock on the rel, and have done appropriate validity/permissions checks
  * for it.
  */
@@ -3106,12 +3107,11 @@ AlterTableAddForeignKeyConstraint(Relation rel, FkConstraint *fkconstraint)
 	Oid			constrOid;
 
 	/*
-	 * Grab an exclusive lock on the pk table, so that
-	 * someone doesn't delete rows out from under us.
-	 * (Although a lesser lock would do for that purpose,
-	 * we'll need exclusive lock anyway to add triggers to
-	 * the pk table; trying to start with a lesser lock
-	 * will just create a risk of deadlock.)
+	 * Grab an exclusive lock on the pk table, so that someone doesn't
+	 * delete rows out from under us. (Although a lesser lock would do for
+	 * that purpose, we'll need exclusive lock anyway to add triggers to
+	 * the pk table; trying to start with a lesser lock will just create a
+	 * risk of deadlock.)
 	 */
 	pkrel = heap_openrv(fkconstraint->pktable, AccessExclusiveLock);
 
@@ -3152,8 +3152,8 @@ AlterTableAddForeignKeyConstraint(Relation rel, FkConstraint *fkconstraint)
 				 errmsg("cannot reference temporary table from permanent table constraint")));
 
 	/*
-	 * Look up the referencing attributes to make sure they
-	 * exist, and record their attnums and type OIDs.
+	 * Look up the referencing attributes to make sure they exist, and
+	 * record their attnums and type OIDs.
 	 */
 	for (i = 0; i < INDEX_MAX_KEYS; i++)
 	{
@@ -3166,10 +3166,10 @@ AlterTableAddForeignKeyConstraint(Relation rel, FkConstraint *fkconstraint)
 									 fkattnum, fktypoid);
 
 	/*
-	 * If the attribute list for the referenced table was omitted,
-	 * lookup the definition of the primary key and use it.  Otherwise,
-	 * validate the supplied attribute list.  In either case, discover
-	 * the index OID and the attnums and type OIDs of the attributes.
+	 * If the attribute list for the referenced table was omitted, lookup
+	 * the definition of the primary key and use it.  Otherwise, validate
+	 * the supplied attribute list.  In either case, discover the index
+	 * OID and the attnums and type OIDs of the attributes.
 	 */
 	if (fkconstraint->pk_attrs == NIL)
 	{
@@ -3208,8 +3208,8 @@ AlterTableAddForeignKeyConstraint(Relation rel, FkConstraint *fkconstraint)
 	}
 
 	/*
-	 * Check that the constraint is satisfied by existing
-	 * rows (we can skip this during table creation).
+	 * Check that the constraint is satisfied by existing rows (we can
+	 * skip this during table creation).
 	 */
 	if (!fkconstraint->skip_validation)
 		validateForeignKeyConstraint(fkconstraint, rel, pkrel);
@@ -3225,7 +3225,8 @@ AlterTableAddForeignKeyConstraint(Relation rel, FkConstraint *fkconstraint)
 									  RelationGetRelid(rel),
 									  fkattnum,
 									  numfks,
-									  InvalidOid, /* not a domain constraint */
+									  InvalidOid,		/* not a domain
+														 * constraint */
 									  RelationGetRelid(pkrel),
 									  pkattnum,
 									  numpks,
@@ -3233,7 +3234,7 @@ AlterTableAddForeignKeyConstraint(Relation rel, FkConstraint *fkconstraint)
 									  fkconstraint->fk_del_action,
 									  fkconstraint->fk_matchtype,
 									  indexOid,
-									  NULL,	/* no check constraint */
+									  NULL,		/* no check constraint */
 									  NULL,
 									  NULL);
 
@@ -3276,8 +3277,8 @@ transformColumnNameList(Oid relId, List *colList,
 		if (attnum >= INDEX_MAX_KEYS)
 			ereport(ERROR,
 					(errcode(ERRCODE_TOO_MANY_COLUMNS),
-					 errmsg("cannot have more than %d keys in a foreign key",
-							INDEX_MAX_KEYS)));
+				 errmsg("cannot have more than %d keys in a foreign key",
+						INDEX_MAX_KEYS)));
 		attnums[attnum] = ((Form_pg_attribute) GETSTRUCT(atttuple))->attnum;
 		atttypids[attnum] = ((Form_pg_attribute) GETSTRUCT(atttuple))->atttypid;
 		ReleaseSysCache(atttuple);
@@ -3291,7 +3292,7 @@ transformColumnNameList(Oid relId, List *colList,
  * transformFkeyGetPrimaryKey -
  *
  *	Look up the names, attnums, and types of the primary key attributes
- *	for the pkrel.  Used when the column list in the REFERENCES specification
+ *	for the pkrel.	Used when the column list in the REFERENCES specification
  *	is omitted.
  */
 static int
@@ -3339,12 +3340,12 @@ transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
 	if (indexStruct == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("there is no PRIMARY KEY for referenced table \"%s\"",
-						RelationGetRelationName(pkrel))));
+			errmsg("there is no PRIMARY KEY for referenced table \"%s\"",
+				   RelationGetRelationName(pkrel))));
 
 	/*
-	 * Now build the list of PK attributes from the indkey definition
-	 * (we assume a primary key cannot have expressional elements)
+	 * Now build the list of PK attributes from the indkey definition (we
+	 * assume a primary key cannot have expressional elements)
 	 */
 	*attnamelist = NIL;
 	for (i = 0; i < indexStruct->indnatts; i++)
@@ -3389,7 +3390,8 @@ transformFkeyCheckAttrs(Relation pkrel,
 	{
 		HeapTuple	indexTuple;
 		Form_pg_index indexStruct;
-		int			i, j;
+		int			i,
+					j;
 
 		indexoid = lfirsto(indexoidscan);
 		indexTuple = SearchSysCache(INDEXRELID,
@@ -3453,7 +3455,7 @@ transformFkeyCheckAttrs(Relation pkrel,
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FOREIGN_KEY),
 				 errmsg("there is no UNIQUE constraint matching given keys for referenced table \"%s\"",
-			 RelationGetRelationName(pkrel))));
+						RelationGetRelationName(pkrel))));
 
 	freeList(indexoidlist);
 
@@ -3969,17 +3971,17 @@ AlterTableOwner(Oid relationOid, int32 newOwnerSysId)
 void
 AlterTableClusterOn(Oid relOid, const char *indexName)
 {
-	Relation 		rel,
-					pg_index;
-	List		   *index;
-	Oid		 		indexOid;
-	HeapTuple		indexTuple;
-	Form_pg_index	indexForm;
-	
+	Relation	rel,
+				pg_index;
+	List	   *index;
+	Oid			indexOid;
+	HeapTuple	indexTuple;
+	Form_pg_index indexForm;
+
 	rel = heap_open(relOid, AccessExclusiveLock);
 
 	indexOid = get_relname_relid(indexName, rel->rd_rel->relnamespace);
-	
+
 	if (!OidIsValid(indexOid))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -3994,36 +3996,37 @@ AlterTableClusterOn(Oid relOid, const char *indexName)
 	indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
 
 	/*
-	 * If this is the same index the relation was previously
-	 * clustered on, no need to do anything.
+	 * If this is the same index the relation was previously clustered on,
+	 * no need to do anything.
 	 */
 	if (indexForm->indisclustered)
 	{
 		ereport(NOTICE,
-				(errmsg("table \"%s\" is already being clustered on index \"%s\"",
-						NameStr(rel->rd_rel->relname), indexName)));
+		(errmsg("table \"%s\" is already being clustered on index \"%s\"",
+				NameStr(rel->rd_rel->relname), indexName)));
 		ReleaseSysCache(indexTuple);
 		heap_close(rel, NoLock);
 		return;
 	}
 
 	pg_index = heap_openr(IndexRelationName, RowExclusiveLock);
-	
+
 	/*
 	 * Now check each index in the relation and set the bit where needed.
 	 */
-	foreach (index, RelationGetIndexList(rel))
+	foreach(index, RelationGetIndexList(rel))
 	{
-		HeapTuple       idxtuple;
-		Form_pg_index   idxForm;
-		
+		HeapTuple	idxtuple;
+		Form_pg_index idxForm;
+
 		indexOid = lfirsto(index);
 		idxtuple = SearchSysCacheCopy(INDEXRELID,
-		  							  ObjectIdGetDatum(indexOid),
+									  ObjectIdGetDatum(indexOid),
 									  0, 0, 0);
 		if (!HeapTupleIsValid(idxtuple))
 			elog(ERROR, "cache lookup failed for index %u", indexOid);
 		idxForm = (Form_pg_index) GETSTRUCT(idxtuple);
+
 		/*
 		 * Unset the bit if set.  We know it's wrong because we checked
 		 * this earlier.
@@ -4100,7 +4103,7 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	if (shared_relation && IsUnderPostmaster)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("shared relations cannot be toasted after initdb")));
+			 errmsg("shared relations cannot be toasted after initdb")));
 
 	/*
 	 * Is it already toasted?
@@ -4331,12 +4334,12 @@ needs_toast_table(Relation rel)
 void
 register_on_commit_action(Oid relid, OnCommitAction action)
 {
-	OnCommitItem	*oc;
+	OnCommitItem *oc;
 	MemoryContext oldcxt;
 
 	/*
-	 * We needn't bother registering the relation unless there is an ON COMMIT
-	 * action we need to take.
+	 * We needn't bother registering the relation unless there is an ON
+	 * COMMIT action we need to take.
 	 */
 	if (action == ONCOMMIT_NOOP || action == ONCOMMIT_PRESERVE_ROWS)
 		return;
@@ -4366,7 +4369,7 @@ remove_on_commit_action(Oid relid)
 
 	foreach(l, on_commits)
 	{
-		OnCommitItem  *oc = (OnCommitItem *) lfirst(l);
+		OnCommitItem *oc = (OnCommitItem *) lfirst(l);
 
 		if (oc->relid == relid)
 		{
@@ -4389,7 +4392,7 @@ PreCommit_on_commit_actions(void)
 
 	foreach(l, on_commits)
 	{
-		OnCommitItem  *oc = (OnCommitItem *) lfirst(l);
+		OnCommitItem *oc = (OnCommitItem *) lfirst(l);
 
 		/* Ignore entry if already dropped in this xact */
 		if (oc->deleted_in_cur_xact)
@@ -4403,23 +4406,25 @@ PreCommit_on_commit_actions(void)
 				break;
 			case ONCOMMIT_DELETE_ROWS:
 				heap_truncate(oc->relid);
-				CommandCounterIncrement(); /* XXX needed? */
+				CommandCounterIncrement();		/* XXX needed? */
 				break;
 			case ONCOMMIT_DROP:
-			{
-				ObjectAddress object;
+				{
+					ObjectAddress object;
 
-				object.classId = RelOid_pg_class;
-				object.objectId = oc->relid;
-				object.objectSubId = 0;
-				performDeletion(&object, DROP_CASCADE);
-				/*
-				 * Note that table deletion will call remove_on_commit_action,
-				 * so the entry should get marked as deleted.
-				 */
-				Assert(oc->deleted_in_cur_xact);
-				break;
-			}
+					object.classId = RelOid_pg_class;
+					object.objectId = oc->relid;
+					object.objectSubId = 0;
+					performDeletion(&object, DROP_CASCADE);
+
+					/*
+					 * Note that table deletion will call
+					 * remove_on_commit_action, so the entry should get
+					 * marked as deleted.
+					 */
+					Assert(oc->deleted_in_cur_xact);
+					break;
+				}
 		}
 	}
 }
@@ -4442,7 +4447,7 @@ AtEOXact_on_commit_actions(bool isCommit)
 	l = on_commits;
 	while (l != NIL)
 	{
-		OnCommitItem  *oc = (OnCommitItem *) lfirst(l);
+		OnCommitItem *oc = (OnCommitItem *) lfirst(l);
 
 		if (isCommit ? oc->deleted_in_cur_xact :
 			oc->created_in_cur_xact)

@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.98 2003/06/23 19:20:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.99 2003/08/04 00:43:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,8 +64,8 @@
 
 static int	pqPutMsgBytes(const void *buf, size_t len, PGconn *conn);
 static int	pqSendSome(PGconn *conn, int len);
-static int	pqSocketCheck(PGconn *conn, int forRead, int forWrite,
-						  time_t end_time);
+static int pqSocketCheck(PGconn *conn, int forRead, int forWrite,
+			  time_t end_time);
 static int	pqSocketPoll(int sock, int forRead, int forWrite, time_t end_time);
 
 
@@ -225,7 +225,7 @@ pqGetInt(int *result, size_t bytes, PGconn *conn)
 			break;
 		default:
 			pqInternalNotice(&conn->noticeHooks,
-							 "integer of size %lu not supported by pqGetInt",
+						 "integer of size %lu not supported by pqGetInt",
 							 (unsigned long) bytes);
 			return EOF;
 	}
@@ -261,7 +261,7 @@ pqPutInt(int value, size_t bytes, PGconn *conn)
 			break;
 		default:
 			pqInternalNotice(&conn->noticeHooks,
-							 "integer of size %lu not supported by pqPutInt",
+						 "integer of size %lu not supported by pqPutInt",
 							 (unsigned long) bytes);
 			return EOF;
 	}
@@ -286,14 +286,16 @@ pqCheckOutBufferSpace(int bytes_needed, PGconn *conn)
 
 	if (bytes_needed <= newsize)
 		return 0;
+
 	/*
-	 * If we need to enlarge the buffer, we first try to double it in size;
-	 * if that doesn't work, enlarge in multiples of 8K.  This avoids
-	 * thrashing the malloc pool by repeated small enlargements.
+	 * If we need to enlarge the buffer, we first try to double it in
+	 * size; if that doesn't work, enlarge in multiples of 8K.  This
+	 * avoids thrashing the malloc pool by repeated small enlargements.
 	 *
 	 * Note: tests for newsize > 0 are to catch integer overflow.
 	 */
-	do {
+	do
+	{
 		newsize *= 2;
 	} while (bytes_needed > newsize && newsize > 0);
 
@@ -310,7 +312,8 @@ pqCheckOutBufferSpace(int bytes_needed, PGconn *conn)
 	}
 
 	newsize = conn->outBufSize;
-	do {
+	do
+	{
 		newsize += 8192;
 	} while (bytes_needed > newsize && newsize > 0);
 
@@ -346,14 +349,16 @@ pqCheckInBufferSpace(int bytes_needed, PGconn *conn)
 
 	if (bytes_needed <= newsize)
 		return 0;
+
 	/*
-	 * If we need to enlarge the buffer, we first try to double it in size;
-	 * if that doesn't work, enlarge in multiples of 8K.  This avoids
-	 * thrashing the malloc pool by repeated small enlargements.
+	 * If we need to enlarge the buffer, we first try to double it in
+	 * size; if that doesn't work, enlarge in multiples of 8K.  This
+	 * avoids thrashing the malloc pool by repeated small enlargements.
 	 *
 	 * Note: tests for newsize > 0 are to catch integer overflow.
 	 */
-	do {
+	do
+	{
 		newsize *= 2;
 	} while (bytes_needed > newsize && newsize > 0);
 
@@ -370,7 +375,8 @@ pqCheckInBufferSpace(int bytes_needed, PGconn *conn)
 	}
 
 	newsize = conn->inBufSize;
-	do {
+	do
+	{
 		newsize += 8192;
 	} while (bytes_needed > newsize && newsize > 0);
 
@@ -435,9 +441,7 @@ pqPutMsgStart(char msg_type, bool force_len, PGconn *conn)
 		endPos += 4;
 	}
 	else
-	{
 		lenPos = -1;
-	}
 
 	/* make sure there is room for message header */
 	if (pqCheckOutBufferSpace(endPos, conn))
@@ -506,7 +510,7 @@ pqPutMsgEnd(PGconn *conn)
 
 	if (conn->outCount >= 8192)
 	{
-		int		toSend = conn->outCount - (conn->outCount % 8192);
+		int			toSend = conn->outCount - (conn->outCount % 8192);
 
 		if (pqSendSome(conn, toSend) < 0)
 			return EOF;
@@ -532,7 +536,7 @@ pqReadData(PGconn *conn)
 {
 	int			someread = 0;
 	int			nread;
-	char sebuf[256];
+	char		sebuf[256];
 
 	if (conn->sock < 0)
 	{
@@ -572,7 +576,8 @@ pqReadData(PGconn *conn)
 		if (pqCheckInBufferSpace(conn->inEnd + 8192, conn))
 		{
 			/*
-			 * We don't insist that the enlarge worked, but we need some room
+			 * We don't insist that the enlarge worked, but we need some
+			 * room
 			 */
 			if (conn->inBufSize - conn->inEnd < 100)
 				return -1;		/* errorMessage already set */
@@ -603,7 +608,7 @@ retry3:
 #endif
 		printfPQExpBuffer(&conn->errorMessage,
 			   libpq_gettext("could not receive data from server: %s\n"),
-						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+						SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 		return -1;
 	}
 	if (nread > 0)
@@ -683,7 +688,7 @@ retry4:
 #endif
 		printfPQExpBuffer(&conn->errorMessage,
 			   libpq_gettext("could not receive data from server: %s\n"),
-						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+						SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 		return -1;
 	}
 	if (nread > 0)
@@ -737,15 +742,15 @@ pqSendSome(PGconn *conn, int len)
 	while (len > 0)
 	{
 		int			sent;
-		char sebuf[256];
+		char		sebuf[256];
 
 		sent = pqsecure_write(conn, ptr, len);
 
 		if (sent < 0)
 		{
 			/*
-			 * Anything except EAGAIN/EWOULDBLOCK/EINTR is trouble. If it's
-			 * EPIPE or ECONNRESET, assume we've lost the backend
+			 * Anything except EAGAIN/EWOULDBLOCK/EINTR is trouble. If
+			 * it's EPIPE or ECONNRESET, assume we've lost the backend
 			 * connection permanently.
 			 */
 			switch (SOCK_ERRNO)
@@ -785,7 +790,7 @@ pqSendSome(PGconn *conn, int len)
 				default:
 					printfPQExpBuffer(&conn->errorMessage,
 					libpq_gettext("could not send data to server: %s\n"),
-									  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+						SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 					/* We don't assume it's a fatal error... */
 					conn->outCount = 0;
 					return -1;
@@ -803,8 +808,8 @@ pqSendSome(PGconn *conn, int len)
 			/*
 			 * We didn't send it all, wait till we can send more.
 			 *
-			 * If the connection is in non-blocking mode we don't wait,
-			 * but return 1 to indicate that data is still pending.
+			 * If the connection is in non-blocking mode we don't wait, but
+			 * return 1 to indicate that data is still pending.
 			 */
 			if (pqIsnonblocking(conn))
 			{
@@ -876,7 +881,7 @@ pqWait(int forRead, int forWrite, PGconn *conn)
 int
 pqWaitTimed(int forRead, int forWrite, PGconn *conn, time_t finish_time)
 {
-	int result;
+	int			result;
 
 	result = pqSocketCheck(conn, forRead, forWrite, finish_time);
 
@@ -924,14 +929,14 @@ pqWriteReady(PGconn *conn)
 static int
 pqSocketCheck(PGconn *conn, int forRead, int forWrite, time_t end_time)
 {
-	int result;
+	int			result;
 
 	if (!conn)
 		return -1;
 	if (conn->sock < 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-		                  libpq_gettext("socket not open\n"));
+						  libpq_gettext("socket not open\n"));
 		return -1;
 	}
 
@@ -946,18 +951,16 @@ pqSocketCheck(PGconn *conn, int forRead, int forWrite, time_t end_time)
 
 	/* We will retry as long as we get EINTR */
 	do
-	{
 		result = pqSocketPoll(conn->sock, forRead, forWrite, end_time);
-	}
 	while (result < 0 && SOCK_ERRNO == EINTR);
 
 	if (result < 0)
 	{
-		char sebuf[256];
+		char		sebuf[256];
 
 		printfPQExpBuffer(&conn->errorMessage,
-		                  libpq_gettext("select() failed: %s\n"),
-		                  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+						  libpq_gettext("select() failed: %s\n"),
+						SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 	}
 
 	return result;
@@ -979,13 +982,13 @@ pqSocketPoll(int sock, int forRead, int forWrite, time_t end_time)
 	/* We use poll(2) if available, otherwise select(2) */
 #ifdef HAVE_POLL
 	struct pollfd input_fd;
-	int           timeout_ms;
+	int			timeout_ms;
 
 	if (!forRead && !forWrite)
 		return 0;
 
-	input_fd.fd      = sock;
-	input_fd.events  = POLLERR;
+	input_fd.fd = sock;
+	input_fd.events = POLLERR;
 	input_fd.revents = 0;
 
 	if (forRead)
@@ -995,12 +998,10 @@ pqSocketPoll(int sock, int forRead, int forWrite, time_t end_time)
 
 	/* Compute appropriate timeout interval */
 	if (end_time == ((time_t) -1))
-	{
 		timeout_ms = -1;
-	}
 	else
 	{
-		time_t now = time(NULL);
+		time_t		now = time(NULL);
 
 		if (end_time > now)
 			timeout_ms = (end_time - now) * 1000;
@@ -1010,12 +1011,12 @@ pqSocketPoll(int sock, int forRead, int forWrite, time_t end_time)
 
 	return poll(&input_fd, 1, timeout_ms);
 
-#else /* !HAVE_POLL */
+#else							/* !HAVE_POLL */
 
-	fd_set          input_mask;
-	fd_set          output_mask;
-	fd_set          except_mask;
-	struct timeval  timeout;
+	fd_set		input_mask;
+	fd_set		output_mask;
+	fd_set		except_mask;
+	struct timeval timeout;
 	struct timeval *ptr_timeout;
 
 	if (!forRead && !forWrite)
@@ -1032,12 +1033,10 @@ pqSocketPoll(int sock, int forRead, int forWrite, time_t end_time)
 
 	/* Compute appropriate timeout interval */
 	if (end_time == ((time_t) -1))
-	{
 		ptr_timeout = NULL;
-	}
 	else
 	{
-		time_t	now = time(NULL);
+		time_t		now = time(NULL);
 
 		if (end_time > now)
 			timeout.tv_sec = end_time - now;
@@ -1049,7 +1048,7 @@ pqSocketPoll(int sock, int forRead, int forWrite, time_t end_time)
 
 	return select(sock + 1, &input_mask, &output_mask,
 				  &except_mask, ptr_timeout);
-#endif /* HAVE_POLL */
+#endif   /* HAVE_POLL */
 }
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.43 2003/02/03 15:07:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.44 2003/08/04 00:43:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,8 +29,8 @@
 #include "executor/nodeSeqscan.h"
 #include "parser/parsetree.h"
 
-static void InitScanRelation(SeqScanState *node, EState *estate);
-static TupleTableSlot *SeqNext(SeqScanState *node);
+static void InitScanRelation(SeqScanState * node, EState *estate);
+static TupleTableSlot *SeqNext(SeqScanState * node);
 
 /* ----------------------------------------------------------------
  *						Scan Support
@@ -43,7 +43,7 @@ static TupleTableSlot *SeqNext(SeqScanState *node);
  * ----------------------------------------------------------------
  */
 static TupleTableSlot *
-SeqNext(SeqScanState *node)
+SeqNext(SeqScanState * node)
 {
 	HeapTuple	tuple;
 	HeapScanDesc scandesc;
@@ -123,7 +123,7 @@ SeqNext(SeqScanState *node)
  */
 
 TupleTableSlot *
-ExecSeqScan(SeqScanState *node)
+ExecSeqScan(SeqScanState * node)
 {
 	/*
 	 * use SeqNext as access method
@@ -139,7 +139,7 @@ ExecSeqScan(SeqScanState *node)
  * ----------------------------------------------------------------
  */
 static void
-InitScanRelation(SeqScanState *node, EState *estate)
+InitScanRelation(SeqScanState * node, EState *estate)
 {
 	Index		relid;
 	List	   *rangeTable;
@@ -252,7 +252,7 @@ ExecCountSlotsSeqScan(SeqScan *node)
  * ----------------------------------------------------------------
  */
 void
-ExecEndSeqScan(SeqScanState *node)
+ExecEndSeqScan(SeqScanState * node)
 {
 	Relation	relation;
 	HeapScanDesc scanDesc;
@@ -302,7 +302,7 @@ ExecEndSeqScan(SeqScanState *node)
  * ----------------------------------------------------------------
  */
 void
-ExecSeqReScan(SeqScanState *node, ExprContext *exprCtxt)
+ExecSeqReScan(SeqScanState * node, ExprContext *exprCtxt)
 {
 	EState	   *estate;
 	Index		scanrelid;
@@ -332,7 +332,7 @@ ExecSeqReScan(SeqScanState *node, ExprContext *exprCtxt)
  * ----------------------------------------------------------------
  */
 void
-ExecSeqMarkPos(SeqScanState *node)
+ExecSeqMarkPos(SeqScanState * node)
 {
 	HeapScanDesc scan;
 
@@ -347,7 +347,7 @@ ExecSeqMarkPos(SeqScanState *node)
  * ----------------------------------------------------------------
  */
 void
-ExecSeqRestrPos(SeqScanState *node)
+ExecSeqRestrPos(SeqScanState * node)
 {
 	HeapScanDesc scan;
 

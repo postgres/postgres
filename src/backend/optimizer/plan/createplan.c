@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.149 2003/07/25 00:01:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.150 2003/08/04 00:43:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,9 +40,9 @@ static bool use_physical_tlist(RelOptInfo *rel);
 static void disuse_physical_tlist(Plan *plan, Path *path);
 static Join *create_join_plan(Query *root, JoinPath *best_path);
 static Append *create_append_plan(Query *root, AppendPath *best_path);
-static Result *create_result_plan(Query *root, ResultPath *best_path);
-static Material *create_material_plan(Query *root, MaterialPath *best_path);
-static Plan *create_unique_plan(Query *root, UniquePath *best_path);
+static Result *create_result_plan(Query *root, ResultPath * best_path);
+static Material *create_material_plan(Query *root, MaterialPath * best_path);
+static Plan *create_unique_plan(Query *root, UniquePath * best_path);
 static SeqScan *create_seqscan_plan(Path *best_path, List *tlist,
 					List *scan_clauses);
 static IndexScan *create_indexscan_plan(Query *root, IndexPath *best_path,
@@ -63,9 +63,9 @@ static void fix_indxqual_references(List *indexquals, IndexPath *index_path,
 						List **fixed_indexquals,
 						List **recheck_indexquals);
 static void fix_indxqual_sublist(List *indexqual,
-								 Relids baserelids, int baserelid,
-								 IndexOptInfo *index,
-								 List **fixed_quals, List **recheck_quals);
+					 Relids baserelids, int baserelid,
+					 IndexOptInfo *index,
+					 List **fixed_quals, List **recheck_quals);
 static Node *fix_indxqual_operand(Node *node, int baserelid,
 					 IndexOptInfo *index,
 					 Oid *opclass);
@@ -98,9 +98,9 @@ static MergeJoin *make_mergejoin(List *tlist,
 			   Plan *lefttree, Plan *righttree,
 			   JoinType jointype);
 static Sort *make_sort(Query *root, List *tlist, Plan *lefttree, int numCols,
-					   AttrNumber *sortColIdx, Oid *sortOperators);
+		  AttrNumber *sortColIdx, Oid *sortOperators);
 static Sort *make_sort_from_pathkeys(Query *root, Plan *lefttree,
-									 Relids relids, List *pathkeys);
+						Relids relids, List *pathkeys);
 
 
 /*
@@ -148,7 +148,7 @@ create_plan(Query *root, Path *best_path)
 			break;
 		case T_Material:
 			plan = (Plan *) create_material_plan(root,
-												 (MaterialPath *) best_path);
+											 (MaterialPath *) best_path);
 			break;
 		case T_Unique:
 			plan = (Plan *) create_unique_plan(root,
@@ -192,12 +192,12 @@ create_scan_plan(Query *root, Path *best_path)
 	Scan	   *plan;
 
 	/*
-	 * For table scans, rather than using the relation targetlist (which is
-	 * only those Vars actually needed by the query), we prefer to generate a
-	 * tlist containing all Vars in order.  This will allow the executor to
-	 * optimize away projection of the table tuples, if possible.  (Note that
-	 * planner.c may replace the tlist we generate here, forcing projection to
-	 * occur.)
+	 * For table scans, rather than using the relation targetlist (which
+	 * is only those Vars actually needed by the query), we prefer to
+	 * generate a tlist containing all Vars in order.  This will allow the
+	 * executor to optimize away projection of the table tuples, if
+	 * possible.  (Note that planner.c may replace the tlist we generate
+	 * here, forcing projection to occur.)
 	 */
 	if (use_physical_tlist(rel))
 	{
@@ -274,8 +274,8 @@ build_relation_tlist(RelOptInfo *rel)
 	FastListInit(&tlist);
 	foreach(v, FastListValue(&rel->reltargetlist))
 	{
-		/* Do we really need to copy here?  Not sure */
-		Var	   *var = (Var *) copyObject(lfirst(v));
+		/* Do we really need to copy here?	Not sure */
+		Var		   *var = (Var *) copyObject(lfirst(v));
 
 		FastAppend(&tlist, create_tl_element(var, resdomno));
 		resdomno++;
@@ -294,22 +294,24 @@ use_physical_tlist(RelOptInfo *rel)
 	int			i;
 
 	/*
-	 * Currently, can't do this for subquery or function scans.  (This
-	 * is mainly because we don't have an equivalent of build_physical_tlist
+	 * Currently, can't do this for subquery or function scans.  (This is
+	 * mainly because we don't have an equivalent of build_physical_tlist
 	 * for them; worth adding?)
 	 */
 	if (rel->rtekind != RTE_RELATION)
 		return false;
+
 	/*
 	 * Can't do it with inheritance cases either (mainly because Append
 	 * doesn't project).
 	 */
 	if (rel->reloptkind != RELOPT_BASEREL)
 		return false;
+
 	/*
-	 * Can't do it if any system columns are requested, either.  (This could
-	 * possibly be fixed but would take some fragile assumptions in setrefs.c,
-	 * I think.)
+	 * Can't do it if any system columns are requested, either.  (This
+	 * could possibly be fixed but would take some fragile assumptions in
+	 * setrefs.c, I think.)
 	 */
 	for (i = rel->min_attr; i <= 0; i++)
 	{
@@ -325,7 +327,7 @@ use_physical_tlist(RelOptInfo *rel)
  *
  * If the plan node immediately above a scan would prefer to get only
  * needed Vars and not a physical tlist, it must call this routine to
- * undo the decision made by use_physical_tlist().  Currently, Hash, Sort,
+ * undo the decision made by use_physical_tlist().	Currently, Hash, Sort,
  * and Material nodes want this, so they don't have to store useless columns.
  */
 static void
@@ -441,7 +443,7 @@ create_append_plan(Query *root, AppendPath *best_path)
  *	  Returns a Plan node.
  */
 static Result *
-create_result_plan(Query *root, ResultPath *best_path)
+create_result_plan(Query *root, ResultPath * best_path)
 {
 	Result	   *plan;
 	List	   *tlist;
@@ -473,7 +475,7 @@ create_result_plan(Query *root, ResultPath *best_path)
  *	  Returns a Plan node.
  */
 static Material *
-create_material_plan(Query *root, MaterialPath *best_path)
+create_material_plan(Query *root, MaterialPath * best_path)
 {
 	Material   *plan;
 	Plan	   *subplan;
@@ -498,7 +500,7 @@ create_material_plan(Query *root, MaterialPath *best_path)
  *	  Returns a Plan node.
  */
 static Plan *
-create_unique_plan(Query *root, UniquePath *best_path)
+create_unique_plan(Query *root, UniquePath * best_path)
 {
 	Plan	   *plan;
 	Plan	   *subplan;
@@ -509,9 +511,9 @@ create_unique_plan(Query *root, UniquePath *best_path)
 	subplan = create_plan(root, best_path->subpath);
 
 	/*
-	 * If the subplan came from an IN subselect (currently always the case),
-	 * we need to instantiate the correct output targetlist for the subselect,
-	 * rather than using the flattened tlist.
+	 * If the subplan came from an IN subselect (currently always the
+	 * case), we need to instantiate the correct output targetlist for the
+	 * subselect, rather than using the flattened tlist.
 	 */
 	sub_targetlist = NIL;
 	foreach(l, root->in_info_list)
@@ -530,8 +532,8 @@ create_unique_plan(Query *root, UniquePath *best_path)
 		/*
 		 * Transform list of plain Vars into targetlist
 		 */
-		List   *newtlist = NIL;
-		int		resno = 1;
+		List	   *newtlist = NIL;
+		int			resno = 1;
 
 		foreach(l, sub_targetlist)
 		{
@@ -547,12 +549,13 @@ create_unique_plan(Query *root, UniquePath *best_path)
 			newtlist = lappend(newtlist, tle);
 			resno++;
 		}
+
 		/*
 		 * If the top plan node can't do projections, we need to add a
 		 * Result node to help it along.
 		 *
-		 * Currently, the only non-projection-capable plan type
-		 * we can see here is Append.
+		 * Currently, the only non-projection-capable plan type we can see
+		 * here is Append.
 		 */
 		if (IsA(subplan, Append))
 			subplan = (Plan *) make_result(newtlist, NULL, subplan);
@@ -564,16 +567,16 @@ create_unique_plan(Query *root, UniquePath *best_path)
 
 	if (best_path->use_hash)
 	{
-		int		numGroupCols = length(my_tlist);
-		long	numGroups;
+		int			numGroupCols = length(my_tlist);
+		long		numGroups;
 		AttrNumber *groupColIdx;
-		int		i;
+		int			i;
 
 		numGroups = (long) Min(best_path->rows, (double) LONG_MAX);
 
 		groupColIdx = (AttrNumber *) palloc(numGroupCols * sizeof(AttrNumber));
 		for (i = 0; i < numGroupCols; i++)
-			groupColIdx[i] = i+1;
+			groupColIdx[i] = i + 1;
 
 		plan = (Plan *) make_agg(root,
 								 my_tlist,
@@ -700,9 +703,7 @@ create_indexscan_plan(Query *root,
 
 		FastListInit(&orclauses);
 		foreach(orclause, indxqual)
-		{
 			FastAppend(&orclauses, make_ands_explicit(lfirst(orclause)));
-		}
 		indxqual_or_expr = make_orclause(FastListValue(&orclauses));
 
 		qpqual = set_difference(scan_clauses, makeList1(indxqual_or_expr));
@@ -861,9 +862,9 @@ create_nestloop_plan(Query *root,
 		/*
 		 * An index is being used to reduce the number of tuples scanned
 		 * in the inner relation.  If there are join clauses being used
-		 * with the index, we may remove those join clauses from the list of
-		 * clauses that have to be checked as qpquals at the join node ---
-		 * but only if there's just one indexscan in the inner path
+		 * with the index, we may remove those join clauses from the list
+		 * of clauses that have to be checked as qpquals at the join node
+		 * --- but only if there's just one indexscan in the inner path
 		 * (otherwise, several different sets of clauses are being ORed
 		 * together).
 		 *
@@ -873,13 +874,14 @@ create_nestloop_plan(Query *root,
 		 * been put in the same joininfo list.
 		 *
 		 * This would be a waste of time if the indexpath was an ordinary
-		 * indexpath and not a special innerjoin path.  We will skip it in
-		 * that case since indexjoinclauses is NIL in an ordinary indexpath.
+		 * indexpath and not a special innerjoin path.	We will skip it in
+		 * that case since indexjoinclauses is NIL in an ordinary
+		 * indexpath.
 		 */
 		IndexPath  *innerpath = (IndexPath *) best_path->innerjoinpath;
 		List	   *indexjoinclauses = innerpath->indexjoinclauses;
 
-		if (length(indexjoinclauses) == 1) /* single indexscan? */
+		if (length(indexjoinclauses) == 1)		/* single indexscan? */
 		{
 			joinrestrictclauses =
 				select_nonredundant_join_clauses(root,
@@ -947,11 +949,11 @@ create_mergejoin_plan(Query *root,
 	joinclauses = set_difference(joinclauses, mergeclauses);
 
 	/*
-	 * Rearrange mergeclauses, if needed, so that the outer variable
-	 * is always on the left.
+	 * Rearrange mergeclauses, if needed, so that the outer variable is
+	 * always on the left.
 	 */
 	mergeclauses = get_switched_clauses(best_path->path_mergeclauses,
-										best_path->jpath.outerjoinpath->parent->relids);
+						 best_path->jpath.outerjoinpath->parent->relids);
 
 	/*
 	 * Create explicit sort nodes for the outer and inner join paths if
@@ -964,7 +966,7 @@ create_mergejoin_plan(Query *root,
 		outer_plan = (Plan *)
 			make_sort_from_pathkeys(root,
 									outer_plan,
-									best_path->jpath.outerjoinpath->parent->relids,
+						  best_path->jpath.outerjoinpath->parent->relids,
 									best_path->outersortkeys);
 	}
 
@@ -974,7 +976,7 @@ create_mergejoin_plan(Query *root,
 		inner_plan = (Plan *)
 			make_sort_from_pathkeys(root,
 									inner_plan,
-									best_path->jpath.innerjoinpath->parent->relids,
+						  best_path->jpath.innerjoinpath->parent->relids,
 									best_path->innersortkeys);
 	}
 
@@ -1030,21 +1032,19 @@ create_hashjoin_plan(Query *root,
 	joinclauses = set_difference(joinclauses, hashclauses);
 
 	/*
-	 * Rearrange hashclauses, if needed, so that the outer variable
-	 * is always on the left.
+	 * Rearrange hashclauses, if needed, so that the outer variable is
+	 * always on the left.
 	 */
 	hashclauses = get_switched_clauses(best_path->path_hashclauses,
-									   best_path->jpath.outerjoinpath->parent->relids);
+						 best_path->jpath.outerjoinpath->parent->relids);
 
 	/*
-	 * Extract the inner hash keys (right-hand operands of the hashclauses)
-	 * to put in the Hash node.
+	 * Extract the inner hash keys (right-hand operands of the
+	 * hashclauses) to put in the Hash node.
 	 */
 	innerhashkeys = NIL;
 	foreach(hcl, hashclauses)
-	{
 		innerhashkeys = lappend(innerhashkeys, get_rightop(lfirst(hcl)));
-	}
 
 	/* We don't want any excess columns in the hashed tuples */
 	disuse_physical_tlist(inner_plan, best_path->jpath.innerjoinpath);
@@ -1362,7 +1362,7 @@ order_qual_clauses(Query *root, List *clauses)
 	FastListInit(&withsubplans);
 	foreach(l, clauses)
 	{
-		Node   *clause = lfirst(l);
+		Node	   *clause = lfirst(l);
 
 		if (contain_subplans(clause))
 			FastAppend(&withsubplans, clause);
@@ -1507,8 +1507,8 @@ make_subqueryscan(List *qptlist,
 
 	/*
 	 * Cost is figured here for the convenience of prepunion.c.  Note this
-	 * is only correct for the case where qpqual is empty; otherwise caller
-	 * should overwrite cost with a better estimate.
+	 * is only correct for the case where qpqual is empty; otherwise
+	 * caller should overwrite cost with a better estimate.
 	 */
 	copy_plan_costsize(plan, subplan);
 	plan->total_cost += cpu_tuple_cost * subplan->plan_rows;
@@ -1709,7 +1709,7 @@ make_sort(Query *root, List *tlist, Plan *lefttree, int numCols,
  * once as a sort key column; if so, the extra mentions are redundant.
  *
  * Caller is assumed to have allocated the arrays large enough for the
- * max possible number of columns.  Return value is the new column count.
+ * max possible number of columns.	Return value is the new column count.
  */
 static int
 add_sort_column(AttrNumber colIdx, Oid sortOp,
@@ -1777,8 +1777,8 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree,
 		/*
 		 * We can sort by any one of the sort key items listed in this
 		 * sublist.  For now, we take the first one that corresponds to an
-		 * available Var in the tlist.  If there isn't any, use the
-		 * first one that is an expression in the input's vars.
+		 * available Var in the tlist.	If there isn't any, use the first
+		 * one that is an expression in the input's vars.
 		 *
 		 * XXX if we have a choice, is there any way of figuring out which
 		 * might be cheapest to execute?  (For example, int4lt is likely
@@ -1805,17 +1805,19 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree,
 			}
 			if (!j)
 				elog(ERROR, "could not find pathkey item to sort");
+
 			/*
 			 * Do we need to insert a Result node?
 			 *
-			 * Currently, the only non-projection-capable plan type
-			 * we can see here is Append.
+			 * Currently, the only non-projection-capable plan type we can
+			 * see here is Append.
 			 */
 			if (IsA(lefttree, Append))
 			{
 				tlist = copyObject(tlist);
 				lefttree = (Plan *) make_result(tlist, NULL, lefttree);
 			}
+
 			/*
 			 * Add resjunk entry to input's tlist
 			 */
@@ -1827,8 +1829,9 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree,
 			tlist = lappend(tlist,
 							makeTargetEntry(resdom,
 											(Expr *) pathkey->key));
-			lefttree->targetlist = tlist; /* just in case NIL before */
+			lefttree->targetlist = tlist;		/* just in case NIL before */
 		}
+
 		/*
 		 * The column might already be selected as a sort key, if the
 		 * pathkeys contain duplicate entries.	(This can happen in
@@ -1836,7 +1839,7 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree,
 		 * var, for example.)  So enter it only once in the sort arrays.
 		 */
 		numsortkeys = add_sort_column(resdom->resno, pathkey->sortop,
-									  numsortkeys, sortColIdx, sortOperators);
+								 numsortkeys, sortColIdx, sortOperators);
 	}
 
 	Assert(numsortkeys > 0);
@@ -1881,10 +1884,11 @@ make_sort_from_sortclauses(Query *root, List *tlist,
 
 		/*
 		 * Check for the possibility of duplicate order-by clauses --- the
-		 * parser should have removed 'em, but no point in sorting redundantly.
+		 * parser should have removed 'em, but no point in sorting
+		 * redundantly.
 		 */
 		numsortkeys = add_sort_column(resdom->resno, sortcl->sortop,
-									  numsortkeys, sortColIdx, sortOperators);
+								 numsortkeys, sortColIdx, sortOperators);
 	}
 
 	Assert(numsortkeys > 0);
@@ -1938,10 +1942,11 @@ make_sort_from_groupcols(Query *root,
 
 		/*
 		 * Check for the possibility of duplicate group-by clauses --- the
-		 * parser should have removed 'em, but no point in sorting redundantly.
+		 * parser should have removed 'em, but no point in sorting
+		 * redundantly.
 		 */
 		numsortkeys = add_sort_column(resdom->resno, grpcl->sortop,
-									  numsortkeys, sortColIdx, sortOperators);
+								 numsortkeys, sortColIdx, sortOperators);
 		grpno++;
 	}
 
@@ -1973,7 +1978,7 @@ make_material(List *tlist, Plan *lefttree)
  * materialize_finished_plan: stick a Material node atop a completed plan
  *
  * There are a couple of places where we want to attach a Material node
- * after completion of subquery_planner().  This currently requires hackery.
+ * after completion of subquery_planner().	This currently requires hackery.
  * Since subquery_planner has already run SS_finalize_plan on the subplan
  * tree, we have to kluge up parameter lists for the Material node.
  * Possibly this could be fixed by postponing SS_finalize_plan processing
@@ -2032,8 +2037,8 @@ make_agg(Query *root, List *tlist, List *qual,
 	plan->total_cost = agg_path.total_cost;
 
 	/*
-	 * We will produce a single output tuple if not grouping,
-	 * and a tuple per group otherwise.
+	 * We will produce a single output tuple if not grouping, and a tuple
+	 * per group otherwise.
 	 */
 	if (aggstrategy == AGG_PLAIN)
 		plan->plan_rows = 1;
@@ -2041,10 +2046,10 @@ make_agg(Query *root, List *tlist, List *qual,
 		plan->plan_rows = numGroups;
 
 	/*
-	 * We also need to account for the cost of evaluation of the qual
-	 * (ie, the HAVING clause) and the tlist.  Note that cost_qual_eval
-	 * doesn't charge anything for Aggref nodes; this is okay since
-	 * they are really comparable to Vars.
+	 * We also need to account for the cost of evaluation of the qual (ie,
+	 * the HAVING clause) and the tlist.  Note that cost_qual_eval doesn't
+	 * charge anything for Aggref nodes; this is okay since they are
+	 * really comparable to Vars.
 	 *
 	 * See notes in grouping_planner about why this routine and make_group
 	 * are the only ones in this file that worry about tlist eval cost.
@@ -2100,13 +2105,13 @@ make_group(Query *root,
 	/*
 	 * We also need to account for the cost of evaluation of the tlist.
 	 *
-	 * XXX this double-counts the cost of evaluation of any expressions
-	 * used for grouping, since in reality those will have been evaluated
-	 * at a lower plan level and will only be copied by the Group node.
-	 * Worth fixing?
+	 * XXX this double-counts the cost of evaluation of any expressions used
+	 * for grouping, since in reality those will have been evaluated at a
+	 * lower plan level and will only be copied by the Group node. Worth
+	 * fixing?
 	 *
-	 * See notes in grouping_planner about why this routine and make_agg
-	 * are the only ones in this file that worry about tlist eval cost.
+	 * See notes in grouping_planner about why this routine and make_agg are
+	 * the only ones in this file that worry about tlist eval cost.
 	 */
 	cost_qual_eval(&qual_cost, tlist);
 	plan->startup_cost += qual_cost.startup;
@@ -2139,15 +2144,15 @@ make_unique(List *tlist, Plan *lefttree, List *distinctList)
 
 	/*
 	 * Charge one cpu_operator_cost per comparison per input tuple. We
-	 * assume all columns get compared at most of the tuples.  (XXX probably
-	 * this is an overestimate.)
+	 * assume all columns get compared at most of the tuples.  (XXX
+	 * probably this is an overestimate.)
 	 */
 	plan->total_cost += cpu_operator_cost * plan->plan_rows * numCols;
 
 	/*
 	 * plan->plan_rows is left as a copy of the input subplan's plan_rows;
-	 * ie, we assume the filter removes nothing.  The caller must alter this
-	 * if he has a better idea.
+	 * ie, we assume the filter removes nothing.  The caller must alter
+	 * this if he has a better idea.
 	 */
 
 	plan->targetlist = tlist;

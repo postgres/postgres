@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.153 2003/08/01 00:15:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.154 2003/08/04 00:43:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,17 +41,17 @@
 
 static void InsertTrigger(TriggerDesc *trigdesc, Trigger *trigger, int indx);
 static HeapTuple GetTupleForTrigger(EState *estate,
-									ResultRelInfo *relinfo,
-									ItemPointer tid,
-									CommandId cid,
-									TupleTableSlot **newSlot);
+				   ResultRelInfo *relinfo,
+				   ItemPointer tid,
+				   CommandId cid,
+				   TupleTableSlot **newSlot);
 static HeapTuple ExecCallTriggerFunc(TriggerData *trigdata,
 					FmgrInfo *finfo,
 					MemoryContext per_tuple_context);
 static void DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event,
-						 bool row_trigger, HeapTuple oldtup, HeapTuple newtup);
+				   bool row_trigger, HeapTuple oldtup, HeapTuple newtup);
 static void DeferredTriggerExecute(DeferredTriggerEvent event, int itemno,
-					   Relation rel, TriggerDesc *trigdesc, FmgrInfo *finfo,
+					Relation rel, TriggerDesc *trigdesc, FmgrInfo *finfo,
 					   MemoryContext per_tuple_context);
 
 
@@ -97,18 +97,19 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	else if (stmt->isconstraint)
 	{
 		/*
-		 * If this trigger is a constraint (and a foreign key one)
-		 * then we really need a constrrelid.  Since we don't have one,
-		 * we'll try to generate one from the argument information.
+		 * If this trigger is a constraint (and a foreign key one) then we
+		 * really need a constrrelid.  Since we don't have one, we'll try
+		 * to generate one from the argument information.
 		 *
-		 * This is really just a workaround for a long-ago pg_dump bug
-		 * that omitted the FROM clause in dumped CREATE CONSTRAINT TRIGGER
-		 * commands.  We don't want to bomb out completely here if we can't
-		 * determine the correct relation, because that would prevent loading
-		 * the dump file.  Instead, NOTICE here and ERROR in the trigger.
+		 * This is really just a workaround for a long-ago pg_dump bug that
+		 * omitted the FROM clause in dumped CREATE CONSTRAINT TRIGGER
+		 * commands.  We don't want to bomb out completely here if we
+		 * can't determine the correct relation, because that would
+		 * prevent loading the dump file.  Instead, NOTICE here and ERROR
+		 * in the trigger.
 		 */
-		bool	needconstrrelid = false;
-		void   *elem = NULL;
+		bool		needconstrrelid = false;
+		void	   *elem = NULL;
 
 		if (strncmp(strVal(llast(stmt->funcname)), "RI_FKey_check_", 14) == 0)
 		{
@@ -265,8 +266,8 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 		if (namestrcmp(&(pg_trigger->tgname), trigname) == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
-					 errmsg("trigger \"%s\" for relation \"%s\" already exists",
-							trigname, stmt->relation->relname)));
+			  errmsg("trigger \"%s\" for relation \"%s\" already exists",
+					 trigname, stmt->relation->relname)));
 		found++;
 	}
 	systable_endscan(tgscan);
@@ -280,7 +281,7 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	if (funcrettype != TRIGGEROID)
 	{
 		/*
-		 * We allow OPAQUE just so we can load old dump files.  When we
+		 * We allow OPAQUE just so we can load old dump files.	When we
 		 * see a trigger function declared OPAQUE, change it to TRIGGER.
 		 */
 		if (funcrettype == OPAQUEOID)
@@ -480,8 +481,8 @@ DropTrigger(Oid relid, const char *trigname, DropBehavior behavior)
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("trigger \"%s\" for relation \"%s\" does not exist",
-						trigname, get_rel_name(relid))));
+			  errmsg("trigger \"%s\" for relation \"%s\" does not exist",
+					 trigname, get_rel_name(relid))));
 
 	if (!pg_class_ownercheck(relid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
@@ -576,7 +577,7 @@ RemoveTriggerById(Oid trigOid)
 		elog(ERROR, "cache lookup failed for relation %u", relid);
 	classForm = (Form_pg_class) GETSTRUCT(tuple);
 
-	if (classForm->reltriggers == 0) /* should not happen */
+	if (classForm->reltriggers == 0)	/* should not happen */
 		elog(ERROR, "relation \"%s\" has reltriggers = 0",
 			 RelationGetRelationName(rel));
 	classForm->reltriggers--;
@@ -650,8 +651,8 @@ renametrig(Oid relid,
 	if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("trigger \"%s\" for relation \"%s\" already exists",
-						newname, RelationGetRelationName(targetrel))));
+			  errmsg("trigger \"%s\" for relation \"%s\" already exists",
+					 newname, RelationGetRelationName(targetrel))));
 	systable_endscan(tgscan);
 
 	/*
@@ -693,8 +694,8 @@ renametrig(Oid relid,
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("trigger \"%s\" for relation \"%s\" does not exist",
-						oldname, RelationGetRelationName(targetrel))));
+			  errmsg("trigger \"%s\" for relation \"%s\" does not exist",
+					 oldname, RelationGetRelationName(targetrel))));
 	}
 
 	systable_endscan(tgscan);
@@ -762,7 +763,7 @@ RelationBuildTriggers(Relation relation)
 
 		build->tgoid = HeapTupleGetOid(htup);
 		build->tgname = DatumGetCString(DirectFunctionCall1(nameout,
-									NameGetDatum(&pg_trigger->tgname)));
+									 NameGetDatum(&pg_trigger->tgname)));
 		build->tgfoid = pg_trigger->tgfoid;
 		build->tgtype = pg_trigger->tgtype;
 		build->tgenabled = pg_trigger->tgenabled;
@@ -927,8 +928,8 @@ CopyTriggerDesc(TriggerDesc *trigdesc)
 		trigger->tgname = pstrdup(trigger->tgname);
 		if (trigger->tgnargs > 0)
 		{
-			char  **newargs;
-			int16	j;
+			char	  **newargs;
+			int16		j;
 
 			newargs = (char **) palloc(trigger->tgnargs * sizeof(char *));
 			for (j = 0; j < trigger->tgnargs; j++)
@@ -1101,7 +1102,7 @@ equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2)
 		return false;
 	return true;
 }
-#endif /* NOT_USED */
+#endif   /* NOT_USED */
 
 /*
  * Call a trigger function.
@@ -1166,10 +1167,10 @@ ExecCallTriggerFunc(TriggerData *trigdata,
 void
 ExecBSInsertTriggers(EState *estate, ResultRelInfo *relinfo)
 {
-	TriggerDesc	*trigdesc;
-	int			 ntrigs;
-	int			*tgindx;
-	int			 i;
+	TriggerDesc *trigdesc;
+	int			ntrigs;
+	int		   *tgindx;
+	int			i;
 	TriggerData LocTriggerData;
 
 	trigdesc = relinfo->ri_TrigDesc;
@@ -1190,10 +1191,10 @@ ExecBSInsertTriggers(EState *estate, ResultRelInfo *relinfo)
 
 	LocTriggerData.type = T_TriggerData;
 	LocTriggerData.tg_event = TRIGGER_EVENT_INSERT |
-							  TRIGGER_EVENT_BEFORE;
-	LocTriggerData.tg_relation	= relinfo->ri_RelationDesc;
-	LocTriggerData.tg_newtuple	= NULL;
-	LocTriggerData.tg_trigtuple	= NULL;
+		TRIGGER_EVENT_BEFORE;
+	LocTriggerData.tg_relation = relinfo->ri_RelationDesc;
+	LocTriggerData.tg_newtuple = NULL;
+	LocTriggerData.tg_trigtuple = NULL;
 	for (i = 0; i < ntrigs; i++)
 	{
 		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
@@ -1209,7 +1210,7 @@ ExecBSInsertTriggers(EState *estate, ResultRelInfo *relinfo)
 		if (newtuple)
 			ereport(ERROR,
 					(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-					 errmsg("BEFORE STATEMENT trigger cannot return a value")));
+			  errmsg("BEFORE STATEMENT trigger cannot return a value")));
 	}
 }
 
@@ -1242,8 +1243,8 @@ ExecBRInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 
 	LocTriggerData.type = T_TriggerData;
 	LocTriggerData.tg_event = TRIGGER_EVENT_INSERT |
-							  TRIGGER_EVENT_ROW |
-							  TRIGGER_EVENT_BEFORE;
+		TRIGGER_EVENT_ROW |
+		TRIGGER_EVENT_BEFORE;
 	LocTriggerData.tg_relation = relinfo->ri_RelationDesc;
 	LocTriggerData.tg_newtuple = NULL;
 	for (i = 0; i < ntrigs; i++)
@@ -1279,10 +1280,10 @@ ExecARInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 void
 ExecBSDeleteTriggers(EState *estate, ResultRelInfo *relinfo)
 {
-	TriggerDesc	*trigdesc;
-	int			 ntrigs;
-	int			*tgindx;
-	int			 i;
+	TriggerDesc *trigdesc;
+	int			ntrigs;
+	int		   *tgindx;
+	int			i;
 	TriggerData LocTriggerData;
 
 	trigdesc = relinfo->ri_TrigDesc;
@@ -1303,10 +1304,10 @@ ExecBSDeleteTriggers(EState *estate, ResultRelInfo *relinfo)
 
 	LocTriggerData.type = T_TriggerData;
 	LocTriggerData.tg_event = TRIGGER_EVENT_DELETE |
-							  TRIGGER_EVENT_BEFORE;
-	LocTriggerData.tg_relation	= relinfo->ri_RelationDesc;
-	LocTriggerData.tg_newtuple	= NULL;
-	LocTriggerData.tg_trigtuple	= NULL;
+		TRIGGER_EVENT_BEFORE;
+	LocTriggerData.tg_relation = relinfo->ri_RelationDesc;
+	LocTriggerData.tg_newtuple = NULL;
+	LocTriggerData.tg_trigtuple = NULL;
 	for (i = 0; i < ntrigs; i++)
 	{
 		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
@@ -1322,7 +1323,7 @@ ExecBSDeleteTriggers(EState *estate, ResultRelInfo *relinfo)
 		if (newtuple)
 			ereport(ERROR,
 					(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-					 errmsg("BEFORE STATEMENT trigger cannot return a value")));
+			  errmsg("BEFORE STATEMENT trigger cannot return a value")));
 	}
 }
 
@@ -1361,8 +1362,8 @@ ExecBRDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 
 	LocTriggerData.type = T_TriggerData;
 	LocTriggerData.tg_event = TRIGGER_EVENT_DELETE |
-							  TRIGGER_EVENT_ROW |
-							  TRIGGER_EVENT_BEFORE;
+		TRIGGER_EVENT_ROW |
+		TRIGGER_EVENT_BEFORE;
 	LocTriggerData.tg_relation = relinfo->ri_RelationDesc;
 	LocTriggerData.tg_newtuple = NULL;
 	for (i = 0; i < ntrigs; i++)
@@ -1408,10 +1409,10 @@ ExecARDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 void
 ExecBSUpdateTriggers(EState *estate, ResultRelInfo *relinfo)
 {
-	TriggerDesc	*trigdesc;
-	int			 ntrigs;
-	int			*tgindx;
-	int			 i;
+	TriggerDesc *trigdesc;
+	int			ntrigs;
+	int		   *tgindx;
+	int			i;
 	TriggerData LocTriggerData;
 
 	trigdesc = relinfo->ri_TrigDesc;
@@ -1432,10 +1433,10 @@ ExecBSUpdateTriggers(EState *estate, ResultRelInfo *relinfo)
 
 	LocTriggerData.type = T_TriggerData;
 	LocTriggerData.tg_event = TRIGGER_EVENT_UPDATE |
-							  TRIGGER_EVENT_BEFORE;
-	LocTriggerData.tg_relation	= relinfo->ri_RelationDesc;
-	LocTriggerData.tg_newtuple	= NULL;
-	LocTriggerData.tg_trigtuple	= NULL;
+		TRIGGER_EVENT_BEFORE;
+	LocTriggerData.tg_relation = relinfo->ri_RelationDesc;
+	LocTriggerData.tg_newtuple = NULL;
+	LocTriggerData.tg_trigtuple = NULL;
 	for (i = 0; i < ntrigs; i++)
 	{
 		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
@@ -1451,7 +1452,7 @@ ExecBSUpdateTriggers(EState *estate, ResultRelInfo *relinfo)
 		if (newtuple)
 			ereport(ERROR,
 					(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-					 errmsg("BEFORE STATEMENT trigger cannot return a value")));
+			  errmsg("BEFORE STATEMENT trigger cannot return a value")));
 	}
 }
 
@@ -1498,8 +1499,8 @@ ExecBRUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 
 	LocTriggerData.type = T_TriggerData;
 	LocTriggerData.tg_event = TRIGGER_EVENT_UPDATE |
-							  TRIGGER_EVENT_ROW |
-							  TRIGGER_EVENT_BEFORE;
+		TRIGGER_EVENT_ROW |
+		TRIGGER_EVENT_BEFORE;
 	LocTriggerData.tg_relation = relinfo->ri_RelationDesc;
 	for (i = 0; i < ntrigs; i++)
 	{
@@ -1639,19 +1640,20 @@ ltrmark:;
  * ----------
  */
 
-typedef struct DeferredTriggersData {
-		/* Internal data is held in a per-transaction memory context */
-	MemoryContext			deftrig_cxt;
-		/* ALL DEFERRED or ALL IMMEDIATE */
-	bool					deftrig_all_isset;
-	bool					deftrig_all_isdeferred;
-		/* Per trigger state */
-	List		  		   *deftrig_trigstates;
-		/* List of pending deferred triggers. Previous comment below */
-	DeferredTriggerEvent	deftrig_events;
-	DeferredTriggerEvent	deftrig_events_imm;
-	DeferredTriggerEvent	deftrig_event_tail;
-} DeferredTriggersData;
+typedef struct DeferredTriggersData
+{
+	/* Internal data is held in a per-transaction memory context */
+	MemoryContext deftrig_cxt;
+	/* ALL DEFERRED or ALL IMMEDIATE */
+	bool		deftrig_all_isset;
+	bool		deftrig_all_isdeferred;
+	/* Per trigger state */
+	List	   *deftrig_trigstates;
+	/* List of pending deferred triggers. Previous comment below */
+	DeferredTriggerEvent deftrig_events;
+	DeferredTriggerEvent deftrig_events_imm;
+	DeferredTriggerEvent deftrig_event_tail;
+}	DeferredTriggersData;
 
 /* ----------
  * deftrig_events, deftrig_event_tail:
@@ -1661,8 +1663,8 @@ typedef struct DeferredTriggersData {
  * Because this can grow pretty large, we don't use separate List nodes,
  * but instead thread the list through the dte_next fields of the member
  * nodes.  Saves just a few bytes per entry, but that adds up.
- * 
- * deftrig_events_imm holds the tail pointer as of the last 
+ *
+ * deftrig_events_imm holds the tail pointer as of the last
  * deferredTriggerInvokeEvents call; we can use this to avoid rescanning
  * entries unnecessarily.  It is NULL if deferredTriggerInvokeEvents
  * hasn't run since the last state change.
@@ -1674,7 +1676,7 @@ typedef struct DeferredTriggersData {
 
 typedef DeferredTriggersData *DeferredTriggers;
 
-static DeferredTriggers	deferredTriggers;
+static DeferredTriggers deferredTriggers;
 
 /* ----------
  * deferredTriggerCheckState()
@@ -1783,7 +1785,7 @@ deferredTriggerAddEvent(DeferredTriggerEvent event)
  */
 static void
 DeferredTriggerExecute(DeferredTriggerEvent event, int itemno,
-					   Relation rel, TriggerDesc *trigdesc, FmgrInfo *finfo,
+					Relation rel, TriggerDesc *trigdesc, FmgrInfo *finfo,
 					   MemoryContext per_tuple_context)
 {
 	Oid			tgoid = event->dte_item[itemno].dti_tgoid;
@@ -1817,7 +1819,7 @@ DeferredTriggerExecute(DeferredTriggerEvent event, int itemno,
 	 */
 	LocTriggerData.type = T_TriggerData;
 	LocTriggerData.tg_event = (event->dte_event & TRIGGER_EVENT_OPMASK) |
-							  (event->dte_event & TRIGGER_EVENT_ROW);
+		(event->dte_event & TRIGGER_EVENT_ROW);
 	LocTriggerData.tg_relation = rel;
 
 	LocTriggerData.tg_trigger = NULL;
@@ -1899,12 +1901,12 @@ deferredTriggerInvokeEvents(bool immediate_only)
 	 * are going to discard the whole event queue on return anyway, so no
 	 * need to bother with "retail" pfree's.
 	 *
-	 * If immediate_only is true, we need only scan from where the end of
-	 * the queue was at the previous deferredTriggerInvokeEvents call;
-	 * any non-deferred events before that point are already fired.
-	 * (But if the deferral state changes, we must reset the saved position
-	 * to the beginning of the queue, so as to process all events once with
-	 * the new states.  See DeferredTriggerSetState.)
+	 * If immediate_only is true, we need only scan from where the end of the
+	 * queue was at the previous deferredTriggerInvokeEvents call; any
+	 * non-deferred events before that point are already fired. (But if
+	 * the deferral state changes, we must reset the saved position to the
+	 * beginning of the queue, so as to process all events once with the
+	 * new states.	See DeferredTriggerSetState.)
 	 */
 
 	/* Make a per-tuple memory context for trigger function calls */
@@ -1916,9 +1918,9 @@ deferredTriggerInvokeEvents(bool immediate_only)
 							  ALLOCSET_DEFAULT_MAXSIZE);
 
 	/*
-	 * If immediate_only is true, then the only events that could need firing
-	 * are those since deftrig_events_imm.  (But if deftrig_events_imm is
-	 * NULL, we must scan the entire list.)
+	 * If immediate_only is true, then the only events that could need
+	 * firing are those since deftrig_events_imm.  (But if
+	 * deftrig_events_imm is NULL, we must scan the entire list.)
 	 */
 	if (immediate_only && deferredTriggers->deftrig_events_imm != NULL)
 	{
@@ -1984,17 +1986,18 @@ deferredTriggerInvokeEvents(bool immediate_only)
 					rel = heap_open(event->dte_relid, NoLock);
 
 					/*
-					 * Copy relation's trigger info so that we have a stable
-					 * copy no matter what the called triggers do.
+					 * Copy relation's trigger info so that we have a
+					 * stable copy no matter what the called triggers do.
 					 */
 					trigdesc = CopyTriggerDesc(rel->trigdesc);
 
-					if (trigdesc == NULL) /* should not happen */
+					if (trigdesc == NULL)		/* should not happen */
 						elog(ERROR, "relation %u has no triggers",
 							 event->dte_relid);
 
 					/*
-					 * Allocate space to cache fmgr lookup info for triggers.
+					 * Allocate space to cache fmgr lookup info for
+					 * triggers.
 					 */
 					finfo = (FmgrInfo *)
 						palloc0(trigdesc->numtriggers * sizeof(FmgrInfo));
@@ -2089,21 +2092,23 @@ void
 DeferredTriggerBeginXact(void)
 {
 	/*
-	 * This will be changed to a special context when
-	 * the nested transactions project moves forward.
+	 * This will be changed to a special context when the nested
+	 * transactions project moves forward.
 	 */
 	MemoryContext cxt = TopTransactionContext;
+
 	deferredTriggers = (DeferredTriggers) MemoryContextAlloc(TopTransactionContext,
-			sizeof(DeferredTriggersData));
+										   sizeof(DeferredTriggersData));
 
 	/*
 	 * Create the per transaction memory context
 	 */
 	deferredTriggers->deftrig_cxt = AllocSetContextCreate(cxt,
-										"DeferredTriggerXact",
-										ALLOCSET_DEFAULT_MINSIZE,
-										ALLOCSET_DEFAULT_INITSIZE,
-										ALLOCSET_DEFAULT_MAXSIZE);
+												   "DeferredTriggerXact",
+												ALLOCSET_DEFAULT_MINSIZE,
+											   ALLOCSET_DEFAULT_INITSIZE,
+											   ALLOCSET_DEFAULT_MAXSIZE);
+
 	/*
 	 * If unspecified, constraints default to IMMEDIATE, per SQL
 	 */
@@ -2174,7 +2179,7 @@ DeferredTriggerAbortXact(void)
 	 * Ignore call if we aren't in a transaction.
 	 */
 	if (deferredTriggers == NULL)
-			return;
+		return;
 
 	/*
 	 * Forget everything we know about deferred triggers.
@@ -2255,7 +2260,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			if (strlen(cname) == 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_NAME),
-						 errmsg("unnamed constraints cannot be set explicitly")));
+				errmsg("unnamed constraints cannot be set explicitly")));
 
 			/*
 			 * Setup to scan pg_trigger by tgconstrname ...
@@ -2304,7 +2309,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			if (!found)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("constraint \"%s\" does not exist", cname)));
+					 errmsg("constraint \"%s\" does not exist", cname)));
 		}
 		heap_close(tgrel, AccessShareLock);
 
@@ -2349,9 +2354,10 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 	 * CONSTRAINTS command applies retroactively. This happens "for free"
 	 * since we have already made the necessary modifications to the
 	 * constraints, and deferredTriggerEndQuery() is called by
-	 * finish_xact_command().  But we must reset deferredTriggerInvokeEvents'
-	 * tail pointer to make it rescan the entire list, in case some deferred
-	 * events are now immediately invokable.
+	 * finish_xact_command().  But we must reset
+	 * deferredTriggerInvokeEvents' tail pointer to make it rescan the
+	 * entire list, in case some deferred events are now immediately
+	 * invokable.
 	 */
 	deferredTriggers->deftrig_events_imm = NULL;
 }
@@ -2416,7 +2422,7 @@ DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event, bool row_trigger,
 	 */
 	for (i = 0; i < ntriggers; i++)
 	{
-		Trigger *trigger = &trigdesc->triggers[tgindx[i]];
+		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
 
 		if (trigger->tgenabled)
 			n_enabled_triggers++;
@@ -2455,7 +2461,7 @@ DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event, bool row_trigger,
 
 		ev_item = &(new_event->dte_item[i]);
 		ev_item->dti_tgoid = trigger->tgoid;
-		ev_item->dti_state = 
+		ev_item->dti_state =
 			((trigger->tgdeferrable) ?
 			 TRIGGER_DEFERRED_DEFERRABLE : 0) |
 			((trigger->tginitdeferred) ?
@@ -2464,9 +2470,7 @@ DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event, bool row_trigger,
 		if (row_trigger && (trigdesc->n_before_row[event] > 0))
 			ev_item->dti_state |= TRIGGER_DEFERRED_HAS_BEFORE;
 		else if (!row_trigger && (trigdesc->n_before_statement[event] > 0))
-		{
 			ev_item->dti_state |= TRIGGER_DEFERRED_HAS_BEFORE;
-		}
 	}
 
 	MemoryContextSwitchTo(oldcxt);

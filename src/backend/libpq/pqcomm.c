@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.161 2003/07/27 21:49:53 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.162 2003/08/04 00:43:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,6 +151,7 @@ pq_close(void)
 	{
 		/* Cleanly shut down SSL layer */
 		secure_close(MyProcPort);
+
 		/*
 		 * Formerly we did an explicit close() here, but it seems better
 		 * to leave the socket open until the process dies.  This allows
@@ -208,10 +209,11 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 	int			maxconn;
 	int			one = 1;
 	int			ret;
-	char			portNumberStr[64];
-	char			*service;
-	struct addrinfo		*addrs = NULL, *addr;
-	struct addrinfo		hint;
+	char		portNumberStr[64];
+	char	   *service;
+	struct addrinfo *addrs = NULL,
+			   *addr;
+	struct addrinfo hint;
 	int			listen_index = 0;
 	int			added = 0;
 
@@ -245,8 +247,8 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 							hostName, service, gai_strerror(ret))));
 		else
 			ereport(LOG,
-					(errmsg("could not translate service \"%s\" to address: %s",
-							service, gai_strerror(ret))));
+			 (errmsg("could not translate service \"%s\" to address: %s",
+					 service, gai_strerror(ret))));
 		freeaddrinfo_all(hint.ai_family, addrs);
 		return STATUS_ERROR;
 	}
@@ -255,9 +257,9 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 	{
 		if (!IS_AF_UNIX(family) && IS_AF_UNIX(addr->ai_family))
 		{
-			/* Only set up a unix domain socket when
-			 * they really asked for it.  The service/port
-			 * is different in that case.
+			/*
+			 * Only set up a unix domain socket when they really asked for
+			 * it.	The service/port is different in that case.
 			 */
 			continue;
 		}
@@ -285,7 +287,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		if (!IS_AF_UNIX(addr->ai_family))
 		{
 			if ((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
-				(char *) &one, sizeof(one))) == -1)
+							(char *) &one, sizeof(one))) == -1)
 			{
 				ereport(LOG,
 						(errcode_for_socket_access(),
@@ -299,7 +301,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		if (addr->ai_family == AF_INET6)
 		{
 			if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY,
-				(char *)&one, sizeof(one)) == -1)
+						   (char *) &one, sizeof(one)) == -1)
 			{
 				ereport(LOG,
 						(errcode_for_socket_access(),
@@ -311,10 +313,10 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 #endif
 
 		/*
-		 * Note: This might fail on some OS's, like Linux
-		 * older than 2.4.21-pre3, that don't have the IPV6_V6ONLY
-		 * socket option, and map ipv4 addresses to ipv6.  It will
-		 * show ::ffff:ipv4 for all ipv4 connections.
+		 * Note: This might fail on some OS's, like Linux older than
+		 * 2.4.21-pre3, that don't have the IPV6_V6ONLY socket option, and
+		 * map ipv4 addresses to ipv6.	It will show ::ffff:ipv4 for all
+		 * ipv4 connections.
 		 */
 		err = bind(fd, addr->ai_addr, addr->ai_addrlen);
 		if (err < 0)
@@ -323,12 +325,12 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 					(errcode_for_socket_access(),
 					 errmsg("failed to bind server socket: %m"),
 					 (IS_AF_UNIX(addr->ai_family)) ?
-					 errhint("Is another postmaster already running on port %d?"
-							 " If not, remove socket node \"%s\" and retry.",
-							 (int) portNumber, sock_path) :
-					 errhint("Is another postmaster already running on port %d?"
-							 " If not, wait a few seconds and retry.",
-							 (int) portNumber)));
+			  errhint("Is another postmaster already running on port %d?"
+					  " If not, remove socket node \"%s\" and retry.",
+					  (int) portNumber, sock_path) :
+			  errhint("Is another postmaster already running on port %d?"
+					  " If not, wait a few seconds and retry.",
+					  (int) portNumber)));
 			closesocket(fd);
 			continue;
 		}
@@ -345,10 +347,10 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 #endif
 
 		/*
-		 * Select appropriate accept-queue length limit.  PG_SOMAXCONN
-		 * is only intended to provide a clamp on the request on
-		 * platforms where an overly large request provokes a kernel
-		 * error (are there any?).
+		 * Select appropriate accept-queue length limit.  PG_SOMAXCONN is
+		 * only intended to provide a clamp on the request on platforms
+		 * where an overly large request provokes a kernel error (are
+		 * there any?).
 		 */
 		maxconn = MaxBackends * 2;
 		if (maxconn > PG_SOMAXCONN)
@@ -465,7 +467,6 @@ Setup_AF_UNIX(void)
 	}
 	return STATUS_OK;
 }
-
 #endif   /* HAVE_UNIX_SOCKETS */
 
 
@@ -485,8 +486,8 @@ StreamConnection(int server_fd, Port *port)
 	/* accept connection and fill in the client (remote) address */
 	port->raddr.salen = sizeof(port->raddr.addr);
 	if ((port->sock = accept(server_fd,
-			 (struct sockaddr *) &port->raddr.addr,
-			 &port->raddr.salen)) < 0)
+							 (struct sockaddr *) & port->raddr.addr,
+							 &port->raddr.salen)) < 0)
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
@@ -495,6 +496,7 @@ StreamConnection(int server_fd, Port *port)
 	}
 
 #ifdef SCO_ACCEPT_BUG
+
 	/*
 	 * UnixWare 7+ and OpenServer 5.0.4 are known to have this bug, but it
 	 * shouldn't hurt to catch it for all versions of those platforms.
@@ -571,19 +573,19 @@ TouchSocketFile(void)
 	if (sock_path[0] != '\0')
 	{
 		/*
-		 * utime() is POSIX standard, utimes() is a common alternative.
-		 * If we have neither, there's no way to affect the mod or access
+		 * utime() is POSIX standard, utimes() is a common alternative. If
+		 * we have neither, there's no way to affect the mod or access
 		 * time of the socket :-(
 		 *
 		 * In either path, we ignore errors; there's no point in complaining.
 		 */
 #ifdef HAVE_UTIME
 		utime(sock_path, NULL);
-#else /* !HAVE_UTIME */
+#else							/* !HAVE_UTIME */
 #ifdef HAVE_UTIMES
 		utimes(sock_path, NULL);
-#endif /* HAVE_UTIMES */
-#endif /* HAVE_UTIME */
+#endif   /* HAVE_UTIMES */
+#endif   /* HAVE_UTIME */
 	}
 }
 
@@ -634,9 +636,10 @@ pq_recvbuf(void)
 				continue;		/* Ok if interrupted */
 
 			/*
-			 * Careful: an ereport() that tries to write to the client would
-			 * cause recursion to here, leading to stack overflow and core
-			 * dump!  This message must go *only* to the postmaster log.
+			 * Careful: an ereport() that tries to write to the client
+			 * would cause recursion to here, leading to stack overflow
+			 * and core dump!  This message must go *only* to the
+			 * postmaster log.
 			 */
 			ereport(COMMERROR,
 					(errcode_for_socket_access(),
@@ -646,8 +649,8 @@ pq_recvbuf(void)
 		if (r == 0)
 		{
 			/*
-			 * EOF detected.  We used to write a log message here, but it's
-			 * better to expect the ultimate caller to do that.
+			 * EOF detected.  We used to write a log message here, but
+			 * it's better to expect the ultimate caller to do that.
 			 */
 			return EOF;
 		}
@@ -894,9 +897,10 @@ pq_flush(void)
 				continue;		/* Ok if we were interrupted */
 
 			/*
-			 * Careful: an ereport() that tries to write to the client would
-			 * cause recursion to here, leading to stack overflow and core
-			 * dump!  This message must go *only* to the postmaster log.
+			 * Careful: an ereport() that tries to write to the client
+			 * would cause recursion to here, leading to stack overflow
+			 * and core dump!  This message must go *only* to the
+			 * postmaster log.
 			 *
 			 * If a client disconnects while we're in the midst of output, we
 			 * might write quite a bit of data before we get to a safe

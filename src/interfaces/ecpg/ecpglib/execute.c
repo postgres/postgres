@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.22 2003/08/01 13:53:36 petere Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.23 2003/08/04 00:43:32 momjian Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -65,7 +65,7 @@ quote_postgres(char *arg, int lineno)
 
 	res[ri++] = '\'';
 	res[ri] = '\0';
-	
+
 	return res;
 }
 
@@ -138,13 +138,16 @@ create_statement(int lineno, int compat, int force_indicator, struct connection 
 			else
 				var->value = var->pointer;
 
-			/* negative values are used to indicate an array without given bounds */
+			/*
+			 * negative values are used to indicate an array without given
+			 * bounds
+			 */
 			/* reset to zero for us */
 			if (var->arrsize < 0)
 				var->arrsize = 0;
 			if (var->varcharsize < 0)
 				var->varcharsize = 0;
-		
+
 			var->ind_type = va_arg(ap, enum ECPGttype);
 			var->ind_pointer = va_arg(ap, char *);
 			var->ind_varcharsize = va_arg(ap, long);
@@ -157,8 +160,11 @@ create_statement(int lineno, int compat, int force_indicator, struct connection 
 				var->ind_value = *((char **) (var->ind_pointer));
 			else
 				var->ind_value = var->ind_pointer;
-			
-			/* negative values are used to indicate an array without given bounds */
+
+			/*
+			 * negative values are used to indicate an array without given
+			 * bounds
+			 */
 			/* reset to zero for us */
 			if (var->ind_arrsize < 0)
 				var->ind_arrsize = 0;
@@ -482,11 +488,11 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 	 * we do not know if the attribute is an array here
 	 */
 #if 0
-	 if (var->arrsize > 1 && ...)
-	 {
+	if (var->arrsize > 1 &&...)
+	{
 		ECPGraise(stmt->lineno, ECPG_ARRAY_INSERT, ECPG_SQLSTATE_DATATYPE_MISMATCH, NULL);
 		return false;
-	 }
+	}
 #endif
 
 	/*
@@ -739,7 +745,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 
 			case ECPGt_bool:
-				if (!(mallocedval = ECPGalloc(var->arrsize +sizeof ("array []"), stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize + sizeof("array []"), stmt->lineno)))
 					return false;
 
 				if (var->arrsize > 1)
@@ -838,30 +844,30 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 			case ECPGt_decimal:
 			case ECPGt_numeric:
 				{
-					char *str = NULL;
-					int slen;
-					Numeric *nval = PGTYPESnumeric_new();
-					
+					char	   *str = NULL;
+					int			slen;
+					Numeric    *nval = PGTYPESnumeric_new();
+
 					if (var->arrsize > 1)
 					{
 						for (element = 0; element < var->arrsize; element++)
 						{
 							if (var->type == ECPGt_numeric)
-								PGTYPESnumeric_copy((Numeric *)((var + var->offset * element)->value), nval);
+								PGTYPESnumeric_copy((Numeric *) ((var + var->offset * element)->value), nval);
 							else
-								PGTYPESnumeric_from_decimal((Decimal *)((var + var->offset * element)->value), nval);
-							
+								PGTYPESnumeric_from_decimal((Decimal *) ((var + var->offset * element)->value), nval);
+
 							str = PGTYPESnumeric_to_asc(nval, 0);
 							PGTYPESnumeric_free(nval);
-							slen = strlen (str);
-							
+							slen = strlen(str);
+
 							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + sizeof("array [] "), stmt->lineno)))
 								return false;
-							
+
 							if (!element)
 								strcpy(mallocedval, "array [");
-							
-							strncpy(mallocedval + strlen(mallocedval), str , slen + 1);
+
+							strncpy(mallocedval + strlen(mallocedval), str, slen + 1);
 							strcpy(mallocedval + strlen(mallocedval), ",");
 						}
 						strcpy(mallocedval + strlen(mallocedval) - 1, "]");
@@ -869,22 +875,22 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					else
 					{
 						if (var->type == ECPGt_numeric)
-							PGTYPESnumeric_copy((Numeric *)(var->value), nval);
+							PGTYPESnumeric_copy((Numeric *) (var->value), nval);
 						else
-							PGTYPESnumeric_from_decimal((Decimal *)(var->value), nval);
-						
+							PGTYPESnumeric_from_decimal((Decimal *) (var->value), nval);
+
 						str = PGTYPESnumeric_to_asc(nval, 0);
 
 						PGTYPESnumeric_free(nval);
-						slen = strlen (str);
-					
+						slen = strlen(str);
+
 						if (!(mallocedval = ECPGalloc(slen + 1, stmt->lineno)))
 							return false;
 
-						strncpy(mallocedval, str , slen);
+						strncpy(mallocedval, str, slen);
 						mallocedval[slen] = '\0';
 					}
-					
+
 					*tobeinserted_p = mallocedval;
 					*malloced_p = true;
 					free(str);
@@ -893,41 +899,41 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 
 			case ECPGt_interval:
 				{
-					char *str = NULL;
-					int slen;
-					
+					char	   *str = NULL;
+					int			slen;
+
 					if (var->arrsize > 1)
 					{
 						for (element = 0; element < var->arrsize; element++)
 						{
-							str = quote_postgres(PGTYPESinterval_to_asc((Interval *)((var + var->offset * element)->value)), stmt->lineno);
-							slen = strlen (str);
-							
+							str = quote_postgres(PGTYPESinterval_to_asc((Interval *) ((var + var->offset * element)->value)), stmt->lineno);
+							slen = strlen(str);
+
 							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + sizeof("array [],interval "), stmt->lineno)))
 								return false;
-							
+
 							if (!element)
 								strcpy(mallocedval, "array [");
-						
+
 							strcpy(mallocedval + strlen(mallocedval), "interval ");
-							strncpy(mallocedval + strlen(mallocedval), str , slen + 1);
+							strncpy(mallocedval + strlen(mallocedval), str, slen + 1);
 							strcpy(mallocedval + strlen(mallocedval), ",");
 						}
 						strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 					}
 					else
 					{
-						str = quote_postgres(PGTYPESinterval_to_asc((Interval *)(var->value)), stmt->lineno);
-						slen = strlen (str);
-					
+						str = quote_postgres(PGTYPESinterval_to_asc((Interval *) (var->value)), stmt->lineno);
+						slen = strlen(str);
+
 						if (!(mallocedval = ECPGalloc(slen + sizeof("interval ") + 1, stmt->lineno)))
 							return false;
 
 						strcpy(mallocedval, "interval ");
 						/* also copy trailing '\0' */
-						strncpy(mallocedval + strlen(mallocedval), str , slen + 1);
+						strncpy(mallocedval + strlen(mallocedval), str, slen + 1);
 					}
-					
+
 					*tobeinserted_p = mallocedval;
 					*malloced_p = true;
 					free(str);
@@ -936,90 +942,90 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 
 			case ECPGt_date:
 				{
-					char *str = NULL;
-					int slen;
-					
+					char	   *str = NULL;
+					int			slen;
+
 					if (var->arrsize > 1)
 					{
 						for (element = 0; element < var->arrsize; element++)
 						{
-							str = quote_postgres(PGTYPESdate_to_asc(*(Date *)((var + var->offset * element)->value)), stmt->lineno);
-							slen = strlen (str);
-							
+							str = quote_postgres(PGTYPESdate_to_asc(*(Date *) ((var + var->offset * element)->value)), stmt->lineno);
+							slen = strlen(str);
+
 							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + sizeof("array [],date "), stmt->lineno)))
 								return false;
-							
+
 							if (!element)
 								strcpy(mallocedval, "array [");
-							
+
 							strcpy(mallocedval + strlen(mallocedval), "date ");
-							strncpy(mallocedval + strlen(mallocedval), str , slen + 1);
+							strncpy(mallocedval + strlen(mallocedval), str, slen + 1);
 							strcpy(mallocedval + strlen(mallocedval), ",");
 						}
 						strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 					}
 					else
 					{
-						str = quote_postgres(PGTYPESdate_to_asc(*(Date *)(var->value)), stmt->lineno);
-						slen = strlen (str);
-					
+						str = quote_postgres(PGTYPESdate_to_asc(*(Date *) (var->value)), stmt->lineno);
+						slen = strlen(str);
+
 						if (!(mallocedval = ECPGalloc(slen + sizeof("date ") + 1, stmt->lineno)))
 							return false;
 
 						strcpy(mallocedval, "date ");
 						/* also copy trailing '\0' */
-						strncpy(mallocedval + strlen(mallocedval), str , slen + 1);
+						strncpy(mallocedval + strlen(mallocedval), str, slen + 1);
 					}
-					
+
 					*tobeinserted_p = mallocedval;
 					*malloced_p = true;
 					free(str);
 				}
 				break;
-				
+
 			case ECPGt_timestamp:
 				{
-					char *str = NULL;
-					int slen;
-					
+					char	   *str = NULL;
+					int			slen;
+
 					if (var->arrsize > 1)
 					{
 						for (element = 0; element < var->arrsize; element++)
 						{
-							str = quote_postgres(PGTYPEStimestamp_to_asc(*(Timestamp *)((var + var->offset * element)->value)), stmt->lineno);
-							slen = strlen (str);
-							
+							str = quote_postgres(PGTYPEStimestamp_to_asc(*(Timestamp *) ((var + var->offset * element)->value)), stmt->lineno);
+							slen = strlen(str);
+
 							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + sizeof("array [], timestamp "), stmt->lineno)))
 								return false;
-							
+
 							if (!element)
 								strcpy(mallocedval, "array [");
-							
+
 							strcpy(mallocedval + strlen(mallocedval), "timestamp ");
-							strncpy(mallocedval + strlen(mallocedval), str , slen + 1);
+							strncpy(mallocedval + strlen(mallocedval), str, slen + 1);
 							strcpy(mallocedval + strlen(mallocedval), ",");
 						}
 						strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 					}
 					else
 					{
-						str = quote_postgres(PGTYPEStimestamp_to_asc(*(Timestamp *)(var->value)), stmt->lineno);
-						slen = strlen (str);
-					
+						str = quote_postgres(PGTYPEStimestamp_to_asc(*(Timestamp *) (var->value)), stmt->lineno);
+						slen = strlen(str);
+
 						if (!(mallocedval = ECPGalloc(slen + sizeof("timestamp") + 1, stmt->lineno)))
 							return false;
 
 						strcpy(mallocedval, "timestamp ");
 						/* also copy trailing '\0' */
-						strncpy(mallocedval + strlen(mallocedval), str , slen + 1);
+						strncpy(mallocedval + strlen(mallocedval), str, slen + 1);
 					}
-					
+
 					*tobeinserted_p = mallocedval;
 					*malloced_p = true;
 					free(str);
 				}
 				break;
-				
+
 			default:
 				/* Not implemented yet */
 				ECPGraise(stmt->lineno, ECPG_UNSUPPORTED, ECPG_SQLSTATE_ECPG_INTERNAL_ERROR, (char *) ECPGtype_name(var->type));
@@ -1219,10 +1225,10 @@ ECPGexecute(struct statement * stmt)
 				sqlca->sqlerrd[2] = atol(PQcmdTuples(results));
 				ECPGlog("ECPGexecute line %d Ok: %s\n", stmt->lineno, cmdstat);
 				if (stmt->compat != ECPG_COMPAT_INFORMIX_SE &&
-						!sqlca->sqlerrd[2] &&
-							( !strncmp(cmdstat, "UPDATE", 6)
-							  || !strncmp(cmdstat, "INSERT", 6)
-							  || !strncmp(cmdstat, "DELETE", 6)))
+					!sqlca->sqlerrd[2] &&
+					(!strncmp(cmdstat, "UPDATE", 6)
+					 || !strncmp(cmdstat, "INSERT", 6)
+					 || !strncmp(cmdstat, "DELETE", 6)))
 					ECPGraise(stmt->lineno, ECPG_NOT_FOUND, ECPG_SQLSTATE_NO_DATA, NULL);
 				break;
 			case PGRES_NONFATAL_ERROR:
@@ -1326,4 +1332,3 @@ ECPGdo_descriptor(int line, const char *connection,
 				  ECPGt_descriptor, descriptor, 0L, 0L, 0L,
 				  ECPGt_NO_INDICATOR, NULL, 0L, 0L, 0L, ECPGt_EORT);
 }
-

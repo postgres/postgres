@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.32 2003/03/10 22:28:19 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.33 2003/08/04 00:43:29 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -28,11 +28,11 @@ static void strip_quotes(char *source, char quote, char escape, int encoding);
  * frammishes.
  *
  * s -			string to parse, if NULL continue parsing the last string
- * whitespace -	set of whitespace characters that separate tokens
+ * whitespace - set of whitespace characters that separate tokens
  * delim -		set of non-whitespace separator characters (or NULL)
  * quote -		set of characters that can quote a token (NULL if none)
  * escape -		character that can quote quotes (0 if none)
- * del_quotes -	if TRUE, strip quotes from the returned token, else return
+ * del_quotes - if TRUE, strip quotes from the returned token, else return
  *				it exactly as found in the string
  * encoding -	the active character-set encoding
  *
@@ -71,9 +71,10 @@ strtokx(const char *s,
 	if (s)
 	{
 		free(storage);
+
 		/*
 		 * We may need extra space to insert delimiter nulls for adjacent
-		 * tokens.  2X the space is a gross overestimate, but it's
+		 * tokens.	2X the space is a gross overestimate, but it's
 		 * unlikely that this code will be used on huge strings anyway.
 		 */
 		storage = (char *) malloc(2 * strlen(s) + 1);
@@ -105,10 +106,10 @@ strtokx(const char *s,
 	{
 		/*
 		 * If not at end of string, we need to insert a null to terminate
-		 * the returned token.  We can just overwrite the next character
-		 * if it happens to be in the whitespace set ... otherwise move over
-		 * the rest of the string to make room.  (This is why we allocated
-		 * extra space above).
+		 * the returned token.	We can just overwrite the next character
+		 * if it happens to be in the whitespace set ... otherwise move
+		 * over the rest of the string to make room.  (This is why we
+		 * allocated extra space above).
 		 */
 		p = start + 1;
 		if (*p != '\0')
@@ -148,7 +149,7 @@ strtokx(const char *s,
 
 		/*
 		 * If not at end of string, we need to insert a null to terminate
-		 * the returned token.  See notes above.
+		 * the returned token.	See notes above.
 		 */
 		if (*p != '\0')
 		{
@@ -171,10 +172,10 @@ strtokx(const char *s,
 	}
 
 	/*
-	 * Otherwise no quoting character.  Scan till next whitespace,
-	 * delimiter or quote.  NB: at this point, *start is known not to be
-	 * '\0', whitespace, delim, or quote, so we will consume at least
-	 * one character.
+	 * Otherwise no quoting character.	Scan till next whitespace,
+	 * delimiter or quote.	NB: at this point, *start is known not to be
+	 * '\0', whitespace, delim, or quote, so we will consume at least one
+	 * character.
 	 */
 	offset = strcspn(start, whitespace);
 
@@ -197,8 +198,8 @@ strtokx(const char *s,
 	p = start + offset;
 
 	/*
-	 * If not at end of string, we need to insert a null to terminate
-	 * the returned token.  See notes above.
+	 * If not at end of string, we need to insert a null to terminate the
+	 * returned token.	See notes above.
 	 */
 	if (*p != '\0')
 	{

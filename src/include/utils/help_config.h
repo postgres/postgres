@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
  * help_config.h
- *		Interface to the --help-config option of main.c 
- * 
+ *		Interface to the --help-config option of main.c
+ *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  *
- *	  $Id: help_config.h,v 1.1 2003/07/04 16:41:22 tgl Exp $
+ *	  $Id: help_config.h,v 1.2 2003/08/04 00:43:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

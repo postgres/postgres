@@ -94,7 +94,7 @@ const char *ostr;
 			++optind;
 		if (opterr && *ostr != ':')
 			(void) fprintf(stderr,
-					   "illegal option -- %c\n", optopt);
+						   "illegal option -- %c\n", optopt);
 		return BADCH;
 	}
 	if (*++oli != ':')

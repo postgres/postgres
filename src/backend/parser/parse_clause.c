@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.118 2003/07/19 20:20:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.119 2003/08/04 00:43:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,8 +60,8 @@ static Node *buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 static TargetEntry *findTargetlistEntry(ParseState *pstate, Node *node,
 					List *tlist, int clause);
 static List *addTargetToSortList(ParseState *pstate, TargetEntry *tle,
-								 List *sortlist, List *targetlist,
-								 List *opname, bool resolveUnknown);
+					List *sortlist, List *targetlist,
+					List *opname, bool resolveUnknown);
 
 
 /*
@@ -337,7 +337,7 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 					 errmsg("JOIN/ON clause refers to \"%s\", which is not part of JOIN",
-							rt_fetch(varno, pstate->p_rtable)->eref->aliasname)));
+				   rt_fetch(varno, pstate->p_rtable)->eref->aliasname)));
 		}
 	}
 	bms_free(clause_varnos);
@@ -422,17 +422,19 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 				 errmsg("sub-select in FROM may not have SELECT INTO")));
 
 	/*
-	 * The subquery cannot make use of any variables from FROM items created
-	 * earlier in the current query.  Per SQL92, the scope of a FROM item
-	 * does not include other FROM items.  Formerly we hacked the namespace
-	 * so that the other variables weren't even visible, but it seems more
-	 * useful to leave them visible and give a specific error message.
+	 * The subquery cannot make use of any variables from FROM items
+	 * created earlier in the current query.  Per SQL92, the scope of a
+	 * FROM item does not include other FROM items.  Formerly we hacked
+	 * the namespace so that the other variables weren't even visible, but
+	 * it seems more useful to leave them visible and give a specific
+	 * error message.
 	 *
 	 * XXX this will need further work to support SQL99's LATERAL() feature,
 	 * wherein such references would indeed be legal.
 	 *
 	 * We can skip groveling through the subquery if there's not anything
-	 * visible in the current query.  Also note that outer references are OK.
+	 * visible in the current query.  Also note that outer references are
+	 * OK.
 	 */
 	if (pstate->p_namespace)
 	{
@@ -482,9 +484,9 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 
 	/*
 	 * The function parameters cannot make use of any variables from other
-	 * FROM items.  (Compare to transformRangeSubselect(); the coding is
-	 * different though because we didn't parse as a sub-select with its own
-	 * level of namespace.)
+	 * FROM items.	(Compare to transformRangeSubselect(); the coding is
+	 * different though because we didn't parse as a sub-select with its
+	 * own level of namespace.)
 	 *
 	 * XXX this will need further work to support SQL99's LATERAL() feature,
 	 * wherein such references would indeed be legal.
@@ -1017,7 +1019,7 @@ transformLimitClause(ParseState *pstate, Node *clause,
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-				 /* translator: %s is name of a SQL construct, eg LIMIT */
+		/* translator: %s is name of a SQL construct, eg LIMIT */
 				 errmsg("argument of %s must not contain variables",
 						constructName)));
 	}
@@ -1025,7 +1027,7 @@ transformLimitClause(ParseState *pstate, Node *clause,
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_GROUPING_ERROR),
-				 /* translator: %s is name of a SQL construct, eg LIMIT */
+		/* translator: %s is name of a SQL construct, eg LIMIT */
 				 errmsg("argument of %s must not contain aggregates",
 						constructName)));
 	}
@@ -1033,7 +1035,7 @@ transformLimitClause(ParseState *pstate, Node *clause,
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 /* translator: %s is name of a SQL construct, eg LIMIT */
+		/* translator: %s is name of a SQL construct, eg LIMIT */
 				 errmsg("argument of %s must not contain sub-selects",
 						constructName)));
 	}
@@ -1135,7 +1137,11 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 						if (!equal(target_result->expr, tle->expr))
 							ereport(ERROR,
 									(errcode(ERRCODE_AMBIGUOUS_COLUMN),
-									 /* translator: first %s is name of a SQL construct, eg ORDER BY */
+
+							/*
+							 * translator: first %s is name of a SQL
+							 * construct, eg ORDER BY
+							 */
 									 errmsg("%s \"%s\" is ambiguous",
 											clauseText[clause], name)));
 					}
@@ -1157,7 +1163,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 		if (!IsA(val, Integer))
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 /* translator: %s is name of a SQL construct, eg ORDER BY */
+			/* translator: %s is name of a SQL construct, eg ORDER BY */
 					 errmsg("non-integer constant in %s",
 							clauseText[clause])));
 		target_pos = intVal(val);
@@ -1174,7 +1180,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 		}
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-				 /* translator: %s is name of a SQL construct, eg ORDER BY */
+		/* translator: %s is name of a SQL construct, eg ORDER BY */
 				 errmsg("%s position %d is not in target list",
 						clauseText[clause], target_pos)));
 	}
@@ -1250,10 +1256,10 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 		/*
 		 * If the GROUP BY clause matches the ORDER BY clause, we want to
 		 * adopt the ordering operators from the latter rather than using
-		 * the default ops.  This allows "GROUP BY foo ORDER BY foo DESC" to
-		 * be done with only one sort step.  Note we are assuming that any
-		 * user-supplied ordering operator will bring equal values together,
-		 * which is all that GROUP BY needs.
+		 * the default ops.  This allows "GROUP BY foo ORDER BY foo DESC"
+		 * to be done with only one sort step.	Note we are assuming that
+		 * any user-supplied ordering operator will bring equal values
+		 * together, which is all that GROUP BY needs.
 		 */
 		if (sortClause &&
 			((SortClause *) lfirst(sortClause))->tleSortGroupRef ==
@@ -1422,7 +1428,7 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 						break;
 					}
 				}
-				if (slitem == NIL) /* should not happen */
+				if (slitem == NIL)		/* should not happen */
 					elog(ERROR, "failed to add DISTINCT ON clause to target list");
 			}
 		}

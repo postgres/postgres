@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.17 2003/06/15 22:51:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.18 2003/08/04 00:43:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,9 +21,9 @@
 
 
 static bool join_clause_is_redundant(Query *root,
-									 RestrictInfo *rinfo,
-									 List *reference_list,
-									 JoinType jointype);
+						 RestrictInfo *rinfo,
+						 List *reference_list,
+						 JoinType jointype);
 
 
 /*
@@ -174,7 +174,7 @@ select_nonredundant_join_clauses(Query *root,
  * left and right pathkeys, which uniquely identify the sets of equijoined
  * variables in question.  All the members of a pathkey set that are in the
  * left relation have already been forced to be equal; likewise for those in
- * the right relation.  So, we need to have only one clause that checks
+ * the right relation.	So, we need to have only one clause that checks
  * equality between any set member on the left and any member on the right;
  * by transitivity, all the rest are then equal.
  *
@@ -228,10 +228,9 @@ join_clause_is_redundant(Query *root,
 		if (redundant)
 		{
 			/*
-			 * It looks redundant, now check for "var = const" case.
-			 * If left_relids/right_relids are set, then there are
-			 * definitely vars on both sides; else we must check the
-			 * hard way.
+			 * It looks redundant, now check for "var = const" case. If
+			 * left_relids/right_relids are set, then there are definitely
+			 * vars on both sides; else we must check the hard way.
 			 */
 			if (rinfo->left_relids)
 				return true;	/* var = var, so redundant */

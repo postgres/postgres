@@ -1,8 +1,8 @@
 /*
  *	These are replacement versions of unlink and rename that work on
- *	Win32 (NT, Win2k, XP).  replace() doesn't work on Win95/98/Me.
+ *	Win32 (NT, Win2k, XP).	replace() doesn't work on Win95/98/Me.
  */
- 
+
 #ifndef TEST_VERSION
 
 #include "postgres.h"
@@ -13,14 +13,14 @@
 int
 pgrename(const char *from, const char *to)
 {
-	int loops = 0;
+	int			loops = 0;
 
 	while (!MoveFileEx(from, to, MOVEFILE_REPLACE_EXISTING))
 	{
 		if (GetLastError() != ERROR_ACCESS_DENIED)
 			/* set errno? */
 			return -1;
-		Sleep(100);	/* ms */
+		Sleep(100);				/* ms */
 		if (loops == 10)
 #ifndef FRONTEND
 			elog(LOG, "could not rename \"%s\" to \"%s\", continuing to try",
@@ -45,14 +45,14 @@ pgrename(const char *from, const char *to)
 int
 pgunlink(const char *path)
 {
-	int loops = 0;
+	int			loops = 0;
 
 	while (unlink(path))
 	{
 		if (errno != EACCES)
 			/* set errno? */
 			return -1;
-		Sleep(100);	/* ms */
+		Sleep(100);				/* ms */
 		if (loops == 10)
 #ifndef FRONTEND
 			elog(LOG, "could not unlink \"%s\", continuing to try",
@@ -78,13 +78,13 @@ pgunlink(const char *path)
 
 
 /*
- *  Illustrates problem with Win32 rename() and unlink()
+ *	Illustrates problem with Win32 rename() and unlink()
  *	under concurrent access.
  *
  *	Run with arg '1', then less than 5 seconds later, run with
  *	 arg '2' (rename) or '3'(unlink) to see the problem.
  */
- 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -97,9 +97,9 @@ do { \
 } while (0)
 
 int
-main(int argc, char* argv[])
+main(int argc, char *argv[])
 {
-	FILE *fd;
+	FILE	   *fd;
 
 	if (argc != 2)
 		halt("Arg must be '1' (test), '2' (rename), or '3' (unlink)\n"
@@ -143,7 +143,7 @@ main(int argc, char* argv[])
 		}
 		halt("unlink successful\n");
 	}
-	else	
+	else
 		halt("invalid arg\n");
 
 	return 0;

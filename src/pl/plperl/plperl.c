@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.38 2003/07/31 18:36:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.39 2003/08/04 00:43:33 momjian Exp $
  *
  **********************************************************************/
 
@@ -284,7 +284,7 @@ plperl_call_handler(PG_FUNCTION_ARGS)
  *		create the anonymous subroutine whose text is in the SV.
  *		Returns the SV containing the RV to the closure.
  **********************************************************************/
-static SV *
+static SV  *
 plperl_create_sub(char *s, bool trusted)
 {
 	dSP;
@@ -296,10 +296,11 @@ plperl_create_sub(char *s, bool trusted)
 	PUSHMARK(SP);
 	XPUSHs(sv_2mortal(newSVpv(s, 0)));
 	PUTBACK;
+
 	/*
 	 * G_KEEPERR seems to be needed here, else we don't recognize compile
-	 * errors properly.  Perhaps it's because there's another level of eval
-	 * inside mksafefunc?
+	 * errors properly.  Perhaps it's because there's another level of
+	 * eval inside mksafefunc?
 	 */
 	count = perl_call_pv((trusted ? "mksafefunc" : "mkunsafefunc"),
 						 G_SCALAR | G_EVAL | G_KEEPERR);
@@ -373,7 +374,7 @@ plperl_init_shared_libs(pTHX)
  * plperl_call_perl_func()		- calls a perl function through the RV
  *			stored in the prodesc structure. massages the input parms properly
  **********************************************************************/
-static SV *
+static SV  *
 plperl_call_perl_func(plperl_proc_desc * desc, FunctionCallInfo fcinfo)
 {
 	dSP;
@@ -637,8 +638,8 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 					free(prodesc);
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("plperl functions cannot return type %s",
-									format_type_be(procStruct->prorettype))));
+						 errmsg("plperl functions cannot return type %s",
+								format_type_be(procStruct->prorettype))));
 				}
 			}
 
@@ -648,7 +649,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 				free(prodesc);
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("plperl functions cannot return tuples yet")));
+				   errmsg("plperl functions cannot return tuples yet")));
 			}
 
 			perm_fmgr_info(typeStruct->typinput, &(prodesc->result_in_func));
@@ -685,8 +686,8 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 					free(prodesc);
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("plperl functions cannot take type %s",
-									format_type_be(procStruct->proargtypes[i]))));
+						   errmsg("plperl functions cannot take type %s",
+						   format_type_be(procStruct->proargtypes[i]))));
 				}
 
 				if (typeStruct->typrelid != InvalidOid)
@@ -739,7 +740,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
  * plperl_build_tuple_argument() - Build a string for a ref to a hash
  *				  from all attributes of a given tuple
  **********************************************************************/
-static SV *
+static SV  *
 plperl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc)
 {
 	int			i;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.124 2003/07/28 00:09:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.125 2003/08/04 00:43:24 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -127,9 +127,9 @@ inline static void
 PROCLOCK_PRINT(const char *where, const PROCLOCK *proclockP)
 {
 	if (
-	(((PROCLOCK_LOCKMETHOD(*proclockP) == DEFAULT_LOCKMETHOD && Trace_locks)
-	  || (PROCLOCK_LOCKMETHOD(*proclockP) == USER_LOCKMETHOD && Trace_userlocks))
-	 && (((LOCK *) MAKE_PTR(proclockP->tag.lock))->tag.relId >= (Oid) Trace_lock_oidmin))
+		(((PROCLOCK_LOCKMETHOD(*proclockP) == DEFAULT_LOCKMETHOD && Trace_locks)
+		  || (PROCLOCK_LOCKMETHOD(*proclockP) == USER_LOCKMETHOD && Trace_userlocks))
+		 && (((LOCK *) MAKE_PTR(proclockP->tag.lock))->tag.relId >= (Oid) Trace_lock_oidmin))
 		|| (Trace_lock_table && (((LOCK *) MAKE_PTR(proclockP->tag.lock))->tag.relId == Trace_lock_table))
 		)
 		elog(LOG,
@@ -137,8 +137,8 @@ PROCLOCK_PRINT(const char *where, const PROCLOCK *proclockP)
 			 where, MAKE_OFFSET(proclockP), proclockP->tag.lock,
 			 PROCLOCK_LOCKMETHOD(*(proclockP)),
 			 proclockP->tag.proc, proclockP->tag.xid,
-		   proclockP->holding[1], proclockP->holding[2], proclockP->holding[3],
-		   proclockP->holding[4], proclockP->holding[5], proclockP->holding[6],
+			 proclockP->holding[1], proclockP->holding[2], proclockP->holding[3],
+			 proclockP->holding[4], proclockP->holding[5], proclockP->holding[6],
 			 proclockP->holding[7], proclockP->nHolding);
 }
 
@@ -321,10 +321,10 @@ LockMethodTableInit(char *tabName,
 
 	sprintf(shmemName, "%s (proclock hash)", tabName);
 	lockMethodTable->proclockHash = ShmemInitHash(shmemName,
-												init_table_size,
-												max_table_size,
-												&info,
-												hash_flags);
+												  init_table_size,
+												  max_table_size,
+												  &info,
+												  hash_flags);
 
 	if (!lockMethodTable->proclockHash)
 		elog(FATAL, "could not initialize lock table \"%s\"", tabName);
@@ -509,8 +509,8 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	/*
 	 * Create the hash key for the proclock table.
 	 */
-	MemSet(&proclocktag, 0, sizeof(PROCLOCKTAG)); /* must clear padding,
-												 * needed */
+	MemSet(&proclocktag, 0, sizeof(PROCLOCKTAG));		/* must clear padding,
+														 * needed */
 	proclocktag.lock = MAKE_OFFSET(lock);
 	proclocktag.proc = MAKE_OFFSET(MyProc);
 	TransactionIdStore(xid, &proclocktag.xid);
@@ -520,8 +520,8 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	 */
 	proclockTable = lockMethodTable->proclockHash;
 	proclock = (PROCLOCK *) hash_search(proclockTable,
-									  (void *) &proclocktag,
-									  HASH_ENTER, &found);
+										(void *) &proclocktag,
+										HASH_ENTER, &found);
 	if (!proclock)
 	{
 		LWLockRelease(masterLock);
@@ -604,8 +604,8 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	}
 
 	/*
-	 * If this process (under any XID) is a proclock of the lock, also grant
-	 * myself another one without blocking.
+	 * If this process (under any XID) is a proclock of the lock, also
+	 * grant myself another one without blocking.
 	 */
 	LockCountMyLocks(proclock->tag.lock, MyProc, myHolding);
 	if (myHolding[lockmode] > 0)
@@ -649,8 +649,8 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 				SHMQueueDelete(&proclock->lockLink);
 				SHMQueueDelete(&proclock->procLink);
 				proclock = (PROCLOCK *) hash_search(proclockTable,
-												  (void *) proclock,
-												  HASH_REMOVE, NULL);
+													(void *) proclock,
+													HASH_REMOVE, NULL);
 				if (!proclock)
 					elog(WARNING, "proclock table corrupted");
 			}
@@ -818,7 +818,7 @@ LockCountMyLocks(SHMEM_OFFSET lockOffset, PGPROC *proc, int *myHolding)
 	MemSet(myHolding, 0, MAX_LOCKMODES * sizeof(int));
 
 	proclock = (PROCLOCK *) SHMQueueNext(procHolders, procHolders,
-									   offsetof(PROCLOCK, procLink));
+										 offsetof(PROCLOCK, procLink));
 
 	while (proclock)
 	{
@@ -908,9 +908,10 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
 		 */
 		LOCK_PRINT("WaitOnLock: aborting on lock", lock, lockmode);
 		LWLockRelease(lockMethodTable->masterLock);
+
 		/*
-		 * Now that we aren't holding the LockMgrLock, we can give an error
-		 * report including details about the detected deadlock.
+		 * Now that we aren't holding the LockMgrLock, we can give an
+		 * error report including details about the detected deadlock.
 		 */
 		DeadLockReport();
 		/* not reached */
@@ -1033,16 +1034,16 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	/*
 	 * Find the proclock entry for this proclock.
 	 */
-	MemSet(&proclocktag, 0, sizeof(PROCLOCKTAG)); /* must clear padding,
-												 * needed */
+	MemSet(&proclocktag, 0, sizeof(PROCLOCKTAG));		/* must clear padding,
+														 * needed */
 	proclocktag.lock = MAKE_OFFSET(lock);
 	proclocktag.proc = MAKE_OFFSET(MyProc);
 	TransactionIdStore(xid, &proclocktag.xid);
 
 	proclockTable = lockMethodTable->proclockHash;
 	proclock = (PROCLOCK *) hash_search(proclockTable,
-									  (void *) &proclocktag,
-									  HASH_FIND_SAVE, NULL);
+										(void *) &proclocktag,
+										HASH_FIND_SAVE, NULL);
 	if (!proclock)
 	{
 		LWLockRelease(masterLock);
@@ -1143,8 +1144,8 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		SHMQueueDelete(&proclock->lockLink);
 		SHMQueueDelete(&proclock->procLink);
 		proclock = (PROCLOCK *) hash_search(proclockTable,
-										  (void *) &proclock,
-										  HASH_REMOVE_SAVED, NULL);
+											(void *) &proclock,
+											HASH_REMOVE_SAVED, NULL);
 		if (!proclock)
 		{
 			LWLockRelease(masterLock);
@@ -1207,7 +1208,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, PGPROC *proc,
 	LWLockAcquire(masterLock, LW_EXCLUSIVE);
 
 	proclock = (PROCLOCK *) SHMQueueNext(procHolders, procHolders,
-									   offsetof(PROCLOCK, procLink));
+										 offsetof(PROCLOCK, procLink));
 
 	while (proclock)
 	{
@@ -1295,9 +1296,9 @@ LockReleaseAll(LOCKMETHOD lockmethod, PGPROC *proc,
 		 * remove the proclock entry from the hashtable
 		 */
 		proclock = (PROCLOCK *) hash_search(lockMethodTable->proclockHash,
-										  (void *) proclock,
-										  HASH_REMOVE,
-										  NULL);
+											(void *) proclock,
+											HASH_REMOVE,
+											NULL);
 		if (!proclock)
 		{
 			LWLockRelease(masterLock);
@@ -1466,7 +1467,7 @@ DumpLocks(void)
 		LOCK_PRINT("DumpLocks: waiting on", proc->waitLock, 0);
 
 	proclock = (PROCLOCK *) SHMQueueNext(procHolders, procHolders,
-									   offsetof(PROCLOCK, procLink));
+										 offsetof(PROCLOCK, procLink));
 
 	while (proclock)
 	{

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.56 2003/07/27 04:53:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.57 2003/08/04 00:43:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,14 +154,15 @@ seteval(PG_FUNCTION_ARGS)
 	fcache = (FuncExprState *) fcinfo->flinfo->fn_extra;
 	if (fcache == NULL)
 	{
-		MemoryContext	oldcontext;
+		MemoryContext oldcontext;
 		FuncExpr   *func;
 
 		oldcontext = MemoryContextSwitchTo(fcinfo->flinfo->fn_mcxt);
 
 		func = makeNode(FuncExpr);
 		func->funcid = funcoid;
-		func->funcresulttype = InvalidOid; /* nothing will look at this */
+		func->funcresulttype = InvalidOid;		/* nothing will look at
+												 * this */
 		func->funcretset = true;
 		func->funcformat = COERCE_EXPLICIT_CALL;
 		func->args = NIL;		/* there are no arguments */

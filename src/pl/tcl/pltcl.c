@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.73 2003/07/31 18:36:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.74 2003/08/04 00:43:33 momjian Exp $
  *
  **********************************************************************/
 
@@ -128,8 +128,8 @@ typedef struct pltcl_query_desc
 /**********************************************************************
  * Global data
  **********************************************************************/
-static bool	pltcl_pm_init_done = false;
-static bool	pltcl_be_init_done = false;
+static bool pltcl_pm_init_done = false;
+static bool pltcl_be_init_done = false;
 static int	pltcl_call_level = 0;
 static int	pltcl_restart_in_progress = 0;
 static Tcl_Interp *pltcl_hold_interp = NULL;
@@ -1095,8 +1095,8 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 					free(prodesc);
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("pltcl functions cannot return type %s",
-									format_type_be(procStruct->prorettype))));
+						  errmsg("pltcl functions cannot return type %s",
+							   format_type_be(procStruct->prorettype))));
 				}
 			}
 
@@ -1106,7 +1106,7 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 				free(prodesc);
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("pltcl functions cannot return tuples yet")));
+					errmsg("pltcl functions cannot return tuples yet")));
 			}
 
 			perm_fmgr_info(typeStruct->typinput, &(prodesc->result_in_func));
@@ -1145,7 +1145,7 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("pltcl functions cannot take type %s",
-									format_type_be(procStruct->proargtypes[i]))));
+						   format_type_be(procStruct->proargtypes[i]))));
 				}
 
 				if (typeStruct->typrelid != InvalidOid)
@@ -2280,7 +2280,7 @@ pltcl_set_tuple_values(Tcl_Interp *interp, CONST84 char *arrayname,
 
 	CONST84 char **arrptr;
 	CONST84 char **nameptr;
-	CONST84 char  *nullname = NULL;
+	CONST84 char *nullname = NULL;
 
 	/************************************************************
 	 * Prepare pointers for Tcl_SetVar2() below and in array

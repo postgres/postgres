@@ -36,7 +36,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.73 2003/07/21 20:29:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.74 2003/08/04 00:43:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,7 @@ typedef struct BTPageState
 
 
 static void _bt_blnewpage(Relation index, Buffer *buf, Page *page,
-						  uint32 level);
+			  uint32 level);
 static BTPageState *_bt_pagestate(Relation index, uint32 level);
 static void _bt_slideleft(Relation index, Buffer buf, Page page);
 static void _bt_sortaddtup(Page page, Size itemsize,
@@ -469,7 +469,7 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti)
 
 			oopaque->btpo_next = BufferGetBlockNumber(nbuf);
 			nopaque->btpo_prev = BufferGetBlockNumber(obuf);
-			nopaque->btpo_next = P_NONE; /* redundant */
+			nopaque->btpo_next = P_NONE;		/* redundant */
 		}
 
 		/*

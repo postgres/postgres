@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xlog.h,v 1.42 2003/02/22 00:45:05 tgl Exp $
+ * $Id: xlog.h,v 1.43 2003/08/04 00:43:30 momjian Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -58,7 +58,7 @@ typedef struct XLogRecord
 /*
  * If we backed up any disk blocks with the XLOG record, we use flag bits in
  * xl_info to signal it.  We support backup of up to 3 disk blocks per XLOG
- * record.  (Could support 4 if we cared to dedicate all the xl_info bits for
+ * record.	(Could support 4 if we cared to dedicate all the xl_info bits for
  * this purpose; currently bit 0 of xl_info is unused and available.)
  */
 #define XLR_BKP_BLOCK_MASK		0x0E	/* all info bits used for bkp

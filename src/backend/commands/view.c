@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.75 2003/08/01 00:15:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.76 2003/08/04 00:43:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,8 +190,8 @@ checkViewTupleDesc(TupleDesc newdesc, TupleDesc olddesc)
 			newattr->atttypmod != oldattr->atttypmod)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("cannot change datatype of view column \"%s\"",
-							NameStr(oldattr->attname))));
+				   errmsg("cannot change datatype of view column \"%s\"",
+						  NameStr(oldattr->attname))));
 		/* We can ignore the remaining attributes of an attribute... */
 	}
 

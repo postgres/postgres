@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.122 2003/08/01 00:15:19 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.123 2003/08/04 00:43:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,12 +146,12 @@ write_group_file(Relation grel)
 	if (fp == NULL)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not write temp file \"%s\": %m", tempname)));
+			  errmsg("could not write temp file \"%s\": %m", tempname)));
 
 	/*
-	 * Read pg_group and write the file.  Note we use SnapshotSelf to ensure
-	 * we see all effects of current transaction.  (Perhaps could do a
-	 * CommandCounterIncrement beforehand, instead?)
+	 * Read pg_group and write the file.  Note we use SnapshotSelf to
+	 * ensure we see all effects of current transaction.  (Perhaps could
+	 * do a CommandCounterIncrement beforehand, instead?)
 	 */
 	scan = heap_beginscan(grel, SnapshotSelf, 0, NULL);
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
@@ -212,7 +212,7 @@ write_group_file(Relation grel)
 				if (usename[j] != '\0')
 				{
 					ereport(LOG,
-							(errmsg("invalid user name \"%s\"", usename)));
+						  (errmsg("invalid user name \"%s\"", usename)));
 					continue;
 				}
 
@@ -245,7 +245,7 @@ write_group_file(Relation grel)
 	if (ferror(fp))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not write temp file \"%s\": %m", tempname)));
+			  errmsg("could not write temp file \"%s\": %m", tempname)));
 	FreeFile(fp);
 
 	/*
@@ -294,12 +294,12 @@ write_user_file(Relation urel)
 	if (fp == NULL)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not write temp file \"%s\": %m", tempname)));
+			  errmsg("could not write temp file \"%s\": %m", tempname)));
 
 	/*
-	 * Read pg_shadow and write the file.  Note we use SnapshotSelf to ensure
-	 * we see all effects of current transaction.  (Perhaps could do a
-	 * CommandCounterIncrement beforehand, instead?)
+	 * Read pg_shadow and write the file.  Note we use SnapshotSelf to
+	 * ensure we see all effects of current transaction.  (Perhaps could
+	 * do a CommandCounterIncrement beforehand, instead?)
 	 */
 	scan = heap_beginscan(urel, SnapshotSelf, 0, NULL);
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
@@ -376,7 +376,7 @@ write_user_file(Relation urel)
 	if (ferror(fp))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not write temp file \"%s\": %m", tempname)));
+			  errmsg("could not write temp file \"%s\": %m", tempname)));
 	FreeFile(fp);
 
 	/*
@@ -430,10 +430,10 @@ AtEOXact_UpdatePasswordFile(bool isCommit)
 	Relation	urel = NULL;
 	Relation	grel = NULL;
 
-	if (! (user_file_update_needed || group_file_update_needed))
+	if (!(user_file_update_needed || group_file_update_needed))
 		return;
 
-	if (! isCommit)
+	if (!isCommit)
 	{
 		user_file_update_needed = false;
 		group_file_update_needed = false;
@@ -441,12 +441,12 @@ AtEOXact_UpdatePasswordFile(bool isCommit)
 	}
 
 	/*
-	 * We use ExclusiveLock to ensure that only one backend writes the flat
-	 * file(s) at a time.  That's sufficient because it's okay to allow plain
-	 * reads of the tables in parallel.  There is some chance of a deadlock
-	 * here (if we were triggered by a user update of pg_shadow or pg_group,
-	 * which likely won't have gotten a strong enough lock), so get the locks
-	 * we need before writing anything.
+	 * We use ExclusiveLock to ensure that only one backend writes the
+	 * flat file(s) at a time.	That's sufficient because it's okay to
+	 * allow plain reads of the tables in parallel.  There is some chance
+	 * of a deadlock here (if we were triggered by a user update of
+	 * pg_shadow or pg_group, which likely won't have gotten a strong
+	 * enough lock), so get the locks we need before writing anything.
 	 */
 	if (user_file_update_needed)
 		urel = heap_openr(ShadowRelationName, ExclusiveLock);
@@ -1088,7 +1088,7 @@ DropUser(DropUserStmt *stmt)
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_IN_USE),
 					 errmsg("user \"%s\" cannot be dropped", user),
-					 errdetail("The user owns database \"%s\".", dbname)));
+				   errdetail("The user owns database \"%s\".", dbname)));
 		}
 
 		heap_endscan(scan);
@@ -1172,10 +1172,10 @@ RenameUser(const char *oldname, const char *newname)
 				 errmsg("user \"%s\" does not exist", oldname)));
 
 	/*
-	 * XXX Client applications probably store the session user
-	 * somewhere, so renaming it could cause confusion.  On the other
-	 * hand, there may not be an actual problem besides a little
-	 * confusion, so think about this and decide.
+	 * XXX Client applications probably store the session user somewhere,
+	 * so renaming it could cause confusion.  On the other hand, there may
+	 * not be an actual problem besides a little confusion, so think about
+	 * this and decide.
 	 */
 	if (((Form_pg_shadow) GETSTRUCT(tup))->usesysid == GetSessionUserId())
 		ereport(ERROR,
@@ -1221,14 +1221,14 @@ CheckPgUserAclNotNull(void)
 	htup = SearchSysCache(RELOID,
 						  ObjectIdGetDatum(RelOid_pg_shadow),
 						  0, 0, 0);
-	if (!HeapTupleIsValid(htup)) /* should not happen, we hope */
+	if (!HeapTupleIsValid(htup))	/* should not happen, we hope */
 		elog(ERROR, "cache lookup failed for relation %u", RelOid_pg_shadow);
 
 	if (heap_attisnull(htup, Anum_pg_class_relacl))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("before using passwords you must revoke permissions on %s",
-						ShadowRelationName),
+		errmsg("before using passwords you must revoke permissions on %s",
+			   ShadowRelationName),
 				 errdetail("This restriction is to prevent unprivileged users from reading the passwords."),
 				 errhint("Try 'REVOKE ALL ON \"%s\" FROM PUBLIC'.",
 						 ShadowRelationName)));

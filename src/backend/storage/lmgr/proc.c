@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.131 2003/07/24 22:04:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.132 2003/08/04 00:43:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,6 +78,7 @@ static bool waitingForSignal = false;
 /* Mark these volatile because they can be changed by signal handler */
 static volatile bool statement_timeout_active = false;
 static volatile bool deadlock_timeout_active = false;
+
 /* statement_fin_time is valid only if statement_timeout_active is true */
 static struct timeval statement_fin_time;
 
@@ -571,7 +572,8 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 					 * up correctly is to call RemoveFromWaitQueue(), but
 					 * we can't do that until we are *on* the wait queue.
 					 * So, set a flag to check below, and break out of
-					 * loop.  Also, record deadlock info for later message.
+					 * loop.  Also, record deadlock info for later
+					 * message.
 					 */
 					RememberSimpleDeadLock(MyProc, lockmode, lock, proc);
 					early_deadlock = true;
@@ -950,11 +952,13 @@ bool
 enable_sig_alarm(int delayms, bool is_statement_timeout)
 {
 #ifdef WIN32
-# warning add Win32 timer
+#warning add Win32 timer
 #else
 	struct timeval fin_time;
+
 #ifndef __BEOS__
 	struct itimerval timeval;
+
 #else
 	bigtime_t	time_interval;
 #endif
@@ -984,16 +988,16 @@ enable_sig_alarm(int delayms, bool is_statement_timeout)
 		/*
 		 * Begin deadlock timeout with statement-level timeout active
 		 *
-		 * Here, we want to interrupt at the closer of the two timeout
-		 * times.  If fin_time >= statement_fin_time then we need not
-		 * touch the existing timer setting; else set up to interrupt
-		 * at the deadlock timeout time.
+		 * Here, we want to interrupt at the closer of the two timeout times.
+		 * If fin_time >= statement_fin_time then we need not touch the
+		 * existing timer setting; else set up to interrupt at the
+		 * deadlock timeout time.
 		 *
 		 * NOTE: in this case it is possible that this routine will be
 		 * interrupted by the previously-set timer alarm.  This is okay
-		 * because the signal handler will do only what it should do according
-		 * to the state variables.  The deadlock checker may get run earlier
-		 * than normal, but that does no harm.
+		 * because the signal handler will do only what it should do
+		 * according to the state variables.  The deadlock checker may get
+		 * run earlier than normal, but that does no harm.
 		 */
 		deadlock_timeout_active = true;
 		if (fin_time.tv_sec > statement_fin_time.tv_sec ||
@@ -1037,6 +1041,7 @@ disable_sig_alarm(bool is_statement_timeout)
 #ifdef WIN32
 #warning add Win32 timer
 #else
+
 	/*
 	 * Always disable the interrupt if it is active; this avoids being
 	 * interrupted by the signal handler and thereby possibly getting

@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/bin/scripts/dropdb.c,v 1.5 2003/07/23 08:47:41 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/scripts/dropdb.c,v 1.6 2003/08/04 00:43:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,7 @@ main(int argc, char *argv[])
 	switch (argc - optind)
 	{
 		case 0:
-			fprintf(stderr,	_("%s: missing required argument database name\n"), progname);
+			fprintf(stderr, _("%s: missing required argument database name\n"), progname);
 			fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 			exit(1);
 		case 1:

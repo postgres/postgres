@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.56 2003/07/20 21:56:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.57 2003/08/04 00:43:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,9 +220,9 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 
 	/*
 	 * Silently ignore tables that are temp tables of other backends ---
-	 * trying to analyze these is rather pointless, since their
-	 * contents are probably not up-to-date on disk.  (We don't throw a
-	 * warning here; it would just lead to chatter during a database-wide
+	 * trying to analyze these is rather pointless, since their contents
+	 * are probably not up-to-date on disk.  (We don't throw a warning
+	 * here; it would just lead to chatter during a database-wide
 	 * ANALYZE.)
 	 */
 	if (isOtherTempNamespace(RelationGetNamespace(onerel)))

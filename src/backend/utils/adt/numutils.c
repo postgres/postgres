@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.55 2003/07/27 04:53:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.56 2003/08/04 00:43:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,7 +96,7 @@ pg_atoi(char *s, int size, int c)
 		case sizeof(int32):
 			if (errno == ERANGE
 #if defined(HAVE_LONG_INT_64)
-				/* won't get ERANGE on these with 64-bit longs... */
+			/* won't get ERANGE on these with 64-bit longs... */
 				|| l < INT_MIN || l > INT_MAX
 #endif
 				)

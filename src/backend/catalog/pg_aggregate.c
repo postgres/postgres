@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.61 2003/07/21 01:59:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.62 2003/08/04 00:43:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,8 +29,8 @@
 #include "utils/syscache.h"
 
 
-static Oid	lookup_agg_function(List *fnName, int nargs, Oid *input_types,
-								Oid *rettype);
+static Oid lookup_agg_function(List *fnName, int nargs, Oid *input_types,
+					Oid *rettype);
 
 
 /*
@@ -79,7 +79,7 @@ AggregateCreate(const char *aggName,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				 errmsg("cannot determine transition datatype"),
 				 errdetail("An aggregate using ANYARRAY or ANYELEMENT as "
-						   "trans type must have one of them as its base type.")));
+				 "trans type must have one of them as its base type.")));
 
 	/* handle transfn */
 	MemSet(fnArgs, 0, FUNC_MAX_ARGS * sizeof(Oid));
@@ -99,8 +99,8 @@ AggregateCreate(const char *aggName,
 	 * enforce_generic_type_consistency, if transtype isn't polymorphic)
 	 * must exactly match declared transtype.
 	 *
-	 * In the non-polymorphic-transtype case, it might be okay to allow
-	 * a rettype that's binary-coercible to transtype, but I'm not quite
+	 * In the non-polymorphic-transtype case, it might be okay to allow a
+	 * rettype that's binary-coercible to transtype, but I'm not quite
 	 * convinced that it's either safe or useful.  When transtype is
 	 * polymorphic we *must* demand exact equality.
 	 */
@@ -151,9 +151,9 @@ AggregateCreate(const char *aggName,
 	Assert(OidIsValid(finaltype));
 
 	/*
-	 * If finaltype (i.e. aggregate return type) is polymorphic,
-	 * basetype must be polymorphic also, else parser will fail to deduce
-	 * result type.  (Note: given the previous test on transtype and basetype,
+	 * If finaltype (i.e. aggregate return type) is polymorphic, basetype
+	 * must be polymorphic also, else parser will fail to deduce result
+	 * type.  (Note: given the previous test on transtype and basetype,
 	 * this cannot happen, unless someone has snuck a finalfn definition
 	 * into the catalogs that itself violates the rule against polymorphic
 	 * result with no polymorphic input.)
@@ -163,8 +163,8 @@ AggregateCreate(const char *aggName,
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("cannot determine result datatype"),
-				 errdetail("An aggregate returning ANYARRAY or ANYELEMENT "
-						   "must have one of them as its base type.")));
+			   errdetail("An aggregate returning ANYARRAY or ANYELEMENT "
+						 "must have one of them as its base type.")));
 
 	/*
 	 * Everything looks okay.  Try to create the pg_proc entry for the
@@ -278,21 +278,21 @@ lookup_agg_function(List *fnName,
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("function %s does not exist",
-						func_signature_string(fnName, nargs, input_types))));
+					func_signature_string(fnName, nargs, input_types))));
 	if (retset)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("function %s returns a set",
-						func_signature_string(fnName, nargs, input_types))));
+					func_signature_string(fnName, nargs, input_types))));
 
 	/*
-	 * If the given type(s) are all polymorphic, there's nothing we
-	 * can check.  Otherwise, enforce consistency, and possibly refine
-	 * the result type.
+	 * If the given type(s) are all polymorphic, there's nothing we can
+	 * check.  Otherwise, enforce consistency, and possibly refine the
+	 * result type.
 	 */
 	if ((input_types[0] == ANYARRAYOID || input_types[0] == ANYELEMENTOID) &&
 		(nargs == 1 ||
-		 (input_types[1] == ANYARRAYOID || input_types[1] == ANYELEMENTOID)))
+	 (input_types[1] == ANYARRAYOID || input_types[1] == ANYELEMENTOID)))
 	{
 		/* nothing to check here */
 	}
@@ -305,8 +305,8 @@ lookup_agg_function(List *fnName,
 	}
 
 	/*
-	 * func_get_detail will find functions requiring run-time argument type
-	 * coercion, but nodeAgg.c isn't prepared to deal with that
+	 * func_get_detail will find functions requiring run-time argument
+	 * type coercion, but nodeAgg.c isn't prepared to deal with that
 	 */
 	if (true_oid_array[0] != ANYARRAYOID &&
 		true_oid_array[0] != ANYELEMENTOID &&
@@ -314,7 +314,7 @@ lookup_agg_function(List *fnName,
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("function %s requires run-time type coercion",
-						func_signature_string(fnName, nargs, true_oid_array))));
+				 func_signature_string(fnName, nargs, true_oid_array))));
 
 	if (nargs == 2 &&
 		true_oid_array[1] != ANYARRAYOID &&
@@ -323,7 +323,7 @@ lookup_agg_function(List *fnName,
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("function %s requires run-time type coercion",
-						func_signature_string(fnName, nargs, true_oid_array))));
+				 func_signature_string(fnName, nargs, true_oid_array))));
 
 	return fnOid;
 }

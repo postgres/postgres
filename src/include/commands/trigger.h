@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: trigger.h,v 1.41 2003/03/27 14:33:11 tgl Exp $
+ * $Id: trigger.h,v 1.42 2003/08/04 00:43:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,9 +117,9 @@ extern TriggerDesc *CopyTriggerDesc(TriggerDesc *trigdesc);
 extern void FreeTriggerDesc(TriggerDesc *trigdesc);
 
 extern void ExecBSInsertTriggers(EState *estate,
-								 ResultRelInfo *relinfo);
+					 ResultRelInfo *relinfo);
 extern void ExecASInsertTriggers(EState *estate,
-								 ResultRelInfo *relinfo);
+					 ResultRelInfo *relinfo);
 extern HeapTuple ExecBRInsertTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
 					 HeapTuple trigtuple);
@@ -127,25 +127,25 @@ extern void ExecARInsertTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
 					 HeapTuple trigtuple);
 extern void ExecBSDeleteTriggers(EState *estate,
-								 ResultRelInfo *relinfo);
+					 ResultRelInfo *relinfo);
 extern void ExecASDeleteTriggers(EState *estate,
-								 ResultRelInfo *relinfo);
+					 ResultRelInfo *relinfo);
 extern bool ExecBRDeleteTriggers(EState *estate,
-								 ResultRelInfo *relinfo,
-								 ItemPointer tupleid,
-								 CommandId cid);
+					 ResultRelInfo *relinfo,
+					 ItemPointer tupleid,
+					 CommandId cid);
 extern void ExecARDeleteTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
 					 ItemPointer tupleid);
 extern void ExecBSUpdateTriggers(EState *estate,
-								 ResultRelInfo *relinfo);
+					 ResultRelInfo *relinfo);
 extern void ExecASUpdateTriggers(EState *estate,
-								 ResultRelInfo *relinfo);
+					 ResultRelInfo *relinfo);
 extern HeapTuple ExecBRUpdateTriggers(EState *estate,
-									  ResultRelInfo *relinfo,
-									  ItemPointer tupleid,
-									  HeapTuple newtuple,
-									  CommandId cid);
+					 ResultRelInfo *relinfo,
+					 ItemPointer tupleid,
+					 HeapTuple newtuple,
+					 CommandId cid);
 extern void ExecARUpdateTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
 					 ItemPointer tupleid,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.53 2003/07/21 17:05:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.54 2003/08/04 00:43:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,8 +22,8 @@
 #include "utils/memutils.h"
 
 
-static TupleTableSlot *ExecHashJoinOuterGetTuple(PlanState *node,
-												 HashJoinState *hjstate);
+static TupleTableSlot *ExecHashJoinOuterGetTuple(PlanState * node,
+						  HashJoinState *hjstate);
 static TupleTableSlot *ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 						  BufFile *file,
 						  TupleTableSlot *tupleSlot);
@@ -94,10 +94,10 @@ ExecHashJoin(HashJoinState *node)
 
 	/*
 	 * If we're doing an IN join, we want to return at most one row per
-	 * outer tuple; so we can stop scanning the inner scan if we matched on
-	 * the previous try.
+	 * outer tuple; so we can stop scanning the inner scan if we matched
+	 * on the previous try.
 	 */
-	if (node->js.jointype == JOIN_IN && 
+	if (node->js.jointype == JOIN_IN &&
 		node->hj_MatchedOuter)
 		node->hj_NeedNewOuter = true;
 
@@ -244,7 +244,10 @@ ExecHashJoin(HashJoinState *node)
 					}
 				}
 
-				/* If we didn't return a tuple, may need to set NeedNewOuter */
+				/*
+				 * If we didn't return a tuple, may need to set
+				 * NeedNewOuter
+				 */
 				if (node->js.jointype == JOIN_IN)
 				{
 					node->hj_NeedNewOuter = true;
@@ -365,7 +368,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate)
 		case JOIN_LEFT:
 			hjstate->hj_NullInnerTupleSlot =
 				ExecInitNullTupleSlot(estate,
-									  ExecGetResultType(innerPlanState(hjstate)));
+							 ExecGetResultType(innerPlanState(hjstate)));
 			break;
 		default:
 			elog(ERROR, "unrecognized join type: %d",
@@ -407,10 +410,10 @@ ExecInitHashJoin(HashJoin *node, EState *estate)
 	hjstate->hj_CurTuple = (HashJoinTuple) NULL;
 
 	/*
-	 * The planner already made a list of the inner hashkeys for us,
-	 * but we also need a list of the outer hashkeys, as well as a list
-	 * of the hash operator OIDs.  Both lists of exprs must then be prepared
-	 * for execution.
+	 * The planner already made a list of the inner hashkeys for us, but
+	 * we also need a list of the outer hashkeys, as well as a list of the
+	 * hash operator OIDs.	Both lists of exprs must then be prepared for
+	 * execution.
 	 */
 	hjstate->hj_InnerHashKeys = (List *)
 		ExecInitExpr((Expr *) hashNode->hashkeys,
@@ -496,7 +499,7 @@ ExecEndHashJoin(HashJoinState *node)
  */
 
 static TupleTableSlot *
-ExecHashJoinOuterGetTuple(PlanState *node, HashJoinState *hjstate)
+ExecHashJoinOuterGetTuple(PlanState * node, HashJoinState *hjstate)
 {
 	HashJoinTable hashtable = hjstate->hj_HashTable;
 	int			curbatch = hashtable->curbatch;
@@ -701,11 +704,11 @@ ExecReScanHashJoin(HashJoinState *node, ExprContext *exprCtxt)
 	Assert(node->hj_HashTable != NULL);
 
 	/*
-	 * In a multi-batch join, we currently have to do rescans the hard way,
-	 * primarily because batch temp files may have already been released.
-	 * But if it's a single-batch join, and there is no parameter change
-	 * for the inner subnode, then we can just re-use the existing hash
-	 * table without rebuilding it.
+	 * In a multi-batch join, we currently have to do rescans the hard
+	 * way, primarily because batch temp files may have already been
+	 * released. But if it's a single-batch join, and there is no
+	 * parameter change for the inner subnode, then we can just re-use the
+	 * existing hash table without rebuilding it.
 	 */
 	if (node->hj_HashTable->nbatch == 0 &&
 		((PlanState *) node)->righttree->chgParam == NULL)
@@ -718,6 +721,7 @@ ExecReScanHashJoin(HashJoinState *node, ExprContext *exprCtxt)
 		node->hj_hashdone = false;
 		ExecHashTableDestroy(node->hj_HashTable);
 		node->hj_HashTable = NULL;
+
 		/*
 		 * if chgParam of subnode is not null then plan will be re-scanned
 		 * by first ExecProcNode.
@@ -736,8 +740,8 @@ ExecReScanHashJoin(HashJoinState *node, ExprContext *exprCtxt)
 	node->hj_MatchedOuter = false;
 
 	/*
-	 * if chgParam of subnode is not null then plan will be re-scanned
-	 * by first ExecProcNode.
+	 * if chgParam of subnode is not null then plan will be re-scanned by
+	 * first ExecProcNode.
 	 */
 	if (((PlanState *) node)->lefttree->chgParam == NULL)
 		ExecReScan(((PlanState *) node)->lefttree, exprCtxt);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.51 2003/06/06 15:04:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.52 2003/08/04 00:43:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ typedef struct
 {
 	int			min_varlevel;
 	int			sublevels_up;
-} find_minimum_var_level_context;
+}	find_minimum_var_level_context;
 
 typedef struct
 {
@@ -61,7 +61,7 @@ static bool contain_var_clause_walker(Node *node, void *context);
 static bool contain_vars_of_level_walker(Node *node, int *sublevels_up);
 static bool contain_vars_above_level_walker(Node *node, int *sublevels_up);
 static bool find_minimum_var_level_walker(Node *node,
-					   find_minimum_var_level_context *context);
+							  find_minimum_var_level_context * context);
 static bool pull_var_clause_walker(Node *node,
 					   pull_var_clause_context *context);
 static Node *flatten_join_alias_vars_mutator(Node *node,
@@ -242,12 +242,12 @@ contain_var_clause_walker(Node *node, void *context)
  *
  *	  Returns true if any such Var found.
  *
- * Will recurse into sublinks.  Also, may be invoked directly on a Query.
+ * Will recurse into sublinks.	Also, may be invoked directly on a Query.
  */
 bool
 contain_vars_of_level(Node *node, int levelsup)
 {
-	int		sublevels_up = levelsup;
+	int			sublevels_up = levelsup;
 
 	return query_or_expression_tree_walker(node,
 										   contain_vars_of_level_walker,
@@ -286,20 +286,20 @@ contain_vars_of_level_walker(Node *node, int *sublevels_up)
 /*
  * contain_vars_above_level
  *	  Recursively scan a clause to discover whether it contains any Var nodes
- *	  above the specified query level.  (For example, pass zero to detect
+ *	  above the specified query level.	(For example, pass zero to detect
  *	  all nonlocal Vars.)
  *
  *	  Returns true if any such Var found.
  *
- * Will recurse into sublinks.  Also, may be invoked directly on a Query.
+ * Will recurse into sublinks.	Also, may be invoked directly on a Query.
  */
 bool
 contain_vars_above_level(Node *node, int levelsup)
 {
-	int		sublevels_up = levelsup;
+	int			sublevels_up = levelsup;
 
 	return query_or_expression_tree_walker(node,
-										   contain_vars_above_level_walker,
+										 contain_vars_above_level_walker,
 										   (void *) &sublevels_up,
 										   0);
 }
@@ -344,7 +344,7 @@ contain_vars_above_level_walker(Node *node, int *sublevels_up)
  *
  *	  -1 is returned if the clause has no variables at all.
  *
- * Will recurse into sublinks.  Also, may be invoked directly on a Query.
+ * Will recurse into sublinks.	Also, may be invoked directly on a Query.
  */
 int
 find_minimum_var_level(Node *node)
@@ -364,13 +364,13 @@ find_minimum_var_level(Node *node)
 
 static bool
 find_minimum_var_level_walker(Node *node,
-							  find_minimum_var_level_context *context)
+							  find_minimum_var_level_context * context)
 {
 	if (node == NULL)
 		return false;
 	if (IsA(node, Var))
 	{
-		int		varlevelsup = ((Var *) node)->varlevelsup;
+		int			varlevelsup = ((Var *) node)->varlevelsup;
 
 		/* convert levelsup to frame of reference of original query */
 		varlevelsup -= context->sublevels_up;
@@ -381,6 +381,7 @@ find_minimum_var_level_walker(Node *node,
 				context->min_varlevel > varlevelsup)
 			{
 				context->min_varlevel = varlevelsup;
+
 				/*
 				 * As soon as we find a local variable, we can abort the
 				 * tree traversal, since min_varlevel is then certainly 0.
@@ -390,14 +391,16 @@ find_minimum_var_level_walker(Node *node,
 			}
 		}
 	}
+
 	/*
-	 * An Aggref must be treated like a Var of its level.  Normally we'd get
-	 * the same result from looking at the Vars in the aggregate's argument,
-	 * but this fails in the case of a Var-less aggregate call (COUNT(*)).
+	 * An Aggref must be treated like a Var of its level.  Normally we'd
+	 * get the same result from looking at the Vars in the aggregate's
+	 * argument, but this fails in the case of a Var-less aggregate call
+	 * (COUNT(*)).
 	 */
 	if (IsA(node, Aggref))
 	{
-		int		agglevelsup = ((Aggref *) node)->agglevelsup;
+		int			agglevelsup = ((Aggref *) node)->agglevelsup;
 
 		/* convert levelsup to frame of reference of original query */
 		agglevelsup -= context->sublevels_up;
@@ -408,6 +411,7 @@ find_minimum_var_level_walker(Node *node,
 				context->min_varlevel > agglevelsup)
 			{
 				context->min_varlevel = agglevelsup;
+
 				/*
 				 * As soon as we find a local aggregate, we can abort the
 				 * tree traversal, since min_varlevel is then certainly 0.
@@ -519,6 +523,7 @@ flatten_join_alias_vars_mutator(Node *node,
 		Assert(var->varattno > 0);
 		/* Okay, must expand it */
 		newvar = (Node *) nth(var->varattno - 1, rte->joinaliasvars);
+
 		/*
 		 * If we are expanding an alias carried down from an upper query,
 		 * must adjust its varlevelsup fields.
@@ -534,11 +539,11 @@ flatten_join_alias_vars_mutator(Node *node,
 	if (IsA(node, InClauseInfo))
 	{
 		/* Copy the InClauseInfo node with correct mutation of subnodes */
-		InClauseInfo   *ininfo;
+		InClauseInfo *ininfo;
 
 		ininfo = (InClauseInfo *) expression_tree_mutator(node,
-														  flatten_join_alias_vars_mutator,
-														  (void *) context);
+										 flatten_join_alias_vars_mutator,
+													   (void *) context);
 		/* now fix InClauseInfo's relid sets */
 		if (context->sublevels_up == 0)
 		{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.85 2003/08/01 00:15:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.86 2003/08/04 00:43:16 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -97,37 +97,40 @@ merge_acl_with_grant(Acl *old_acl, bool is_grant,
 
 		if (grantee->username)
 		{
-			aclitem.ai_grantee = get_usesysid(grantee->username);
+			aclitem.	ai_grantee = get_usesysid(grantee->username);
+
 			idtype = ACL_IDTYPE_UID;
 		}
 		else if (grantee->groupname)
 		{
-			aclitem.ai_grantee = get_grosysid(grantee->groupname);
+			aclitem.	ai_grantee = get_grosysid(grantee->groupname);
+
 			idtype = ACL_IDTYPE_GID;
 		}
 		else
 		{
-			aclitem.ai_grantee = ACL_ID_WORLD;
+			aclitem.	ai_grantee = ACL_ID_WORLD;
+
 			idtype = ACL_IDTYPE_WORLD;
 		}
 
 		/*
 		 * Grant options can only be granted to individual users, not
-		 * groups or public.  The reason is that if a user would
-		 * re-grant a privilege that he held through a group having a
-		 * grant option, and later the user is removed from the group,
-		 * the situation is impossible to clean up.
+		 * groups or public.  The reason is that if a user would re-grant
+		 * a privilege that he held through a group having a grant option,
+		 * and later the user is removed from the group, the situation is
+		 * impossible to clean up.
 		 */
 		if (is_grant && idtype != ACL_IDTYPE_UID && grant_option)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_GRANT_OPERATION),
 					 errmsg("grant options can only be granted to individual users")));
 
-		aclitem.ai_grantor = GetUserId();
+		aclitem.	ai_grantor = GetUserId();
 
 		ACLITEM_SET_PRIVS_IDTYPE(aclitem,
-								 (is_grant || !grant_option) ? privileges : ACL_NO_RIGHTS,
-								 (grant_option || !is_grant) ? privileges : ACL_NO_RIGHTS,
+				(is_grant || !grant_option) ? privileges : ACL_NO_RIGHTS,
+				(grant_option || !is_grant) ? privileges : ACL_NO_RIGHTS,
 								 idtype);
 
 		new_acl = aclinsert3(new_acl, &aclitem, modechg, behavior);
@@ -247,7 +250,7 @@ ExecuteGrantStmt_Relation(GrantStmt *stmt)
 
 		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
 									   stmt->grantees, privileges,
-									   stmt->grant_option, stmt->behavior);
+									 stmt->grant_option, stmt->behavior);
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
@@ -346,7 +349,7 @@ ExecuteGrantStmt_Database(GrantStmt *stmt)
 
 		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
 									   stmt->grantees, privileges,
-									   stmt->grant_option, stmt->behavior);
+									 stmt->grant_option, stmt->behavior);
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
@@ -443,7 +446,7 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 
 		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
 									   stmt->grantees, privileges,
-									   stmt->grant_option, stmt->behavior);
+									 stmt->grant_option, stmt->behavior);
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
@@ -543,7 +546,7 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 
 		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
 									   stmt->grantees, privileges,
-									   stmt->grant_option, stmt->behavior);
+									 stmt->grant_option, stmt->behavior);
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
@@ -619,7 +622,7 @@ ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 		pg_namespace_tuple = (Form_pg_namespace) GETSTRUCT(tuple);
 
 		if (stmt->is_grant
-			&& !pg_namespace_ownercheck(HeapTupleGetOid(tuple), GetUserId())
+		 && !pg_namespace_ownercheck(HeapTupleGetOid(tuple), GetUserId())
 			&& pg_namespace_aclcheck(HeapTupleGetOid(tuple), GetUserId(), ACL_GRANT_OPTION_FOR(privileges)) != ACLCHECK_OK)
 			aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_NAMESPACE,
 						   nspname);
@@ -640,7 +643,7 @@ ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 
 		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
 									   stmt->grantees, privileges,
-									   stmt->grant_option, stmt->behavior);
+									 stmt->grant_option, stmt->behavior);
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
@@ -805,7 +808,7 @@ in_group(AclId uid, AclId gid)
 static AclResult
 aclcheck(Acl *acl, AclId userid, AclMode mode)
 {
-	AclItem	   *aidat;
+	AclItem    *aidat;
 	int			i,
 				num;
 
@@ -833,10 +836,10 @@ aclcheck(Acl *acl, AclId userid, AclMode mode)
 			if (aidat[i].ai_privs & mode)
 				return ACLCHECK_OK;
 		}
-	
+
 	/*
-	 * See if he has the permission via any group (do this in a
-	 * separate pass to avoid expensive(?) lookups in pg_group)
+	 * See if he has the permission via any group (do this in a separate
+	 * pass to avoid expensive(?) lookups in pg_group)
 	 */
 	for (i = 0; i < num; i++)
 		if (ACLITEM_GET_IDTYPE(aidat[i]) == ACL_IDTYPE_GID
@@ -856,7 +859,7 @@ aclcheck(Acl *acl, AclId userid, AclMode mode)
  * supply strings that might be already quoted.
  */
 
-static const char * const no_priv_msg[MAX_ACL_KIND] =
+static const char *const no_priv_msg[MAX_ACL_KIND] =
 {
 	/* ACL_KIND_CLASS */
 	gettext_noop("permission denied for relation %s"),
@@ -878,7 +881,7 @@ static const char * const no_priv_msg[MAX_ACL_KIND] =
 	gettext_noop("permission denied for conversion %s")
 };
 
-static const char * const not_owner_msg[MAX_ACL_KIND] =
+static const char *const not_owner_msg[MAX_ACL_KIND] =
 {
 	/* ACL_KIND_CLASS */
 	gettext_noop("must be owner of relation %s"),
@@ -972,7 +975,7 @@ pg_class_aclcheck(Oid table_oid, AclId userid, AclMode mode)
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_TABLE),
-				 errmsg("relation with OID %u does not exist", table_oid)));
+			  errmsg("relation with OID %u does not exist", table_oid)));
 
 	/*
 	 * Deny anyone permission to update a system catalog unless
@@ -1124,7 +1127,7 @@ pg_proc_aclcheck(Oid proc_oid, AclId userid, AclMode mode)
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("function with OID %u does not exist", proc_oid)));
+			   errmsg("function with OID %u does not exist", proc_oid)));
 
 	aclDatum = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_proacl,
 							   &isNull);
@@ -1179,7 +1182,7 @@ pg_language_aclcheck(Oid lang_oid, AclId userid, AclMode mode)
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("language with OID %u does not exist", lang_oid)));
+			   errmsg("language with OID %u does not exist", lang_oid)));
 
 	aclDatum = SysCacheGetAttr(LANGOID, tuple, Anum_pg_language_lanacl,
 							   &isNull);
@@ -1288,7 +1291,7 @@ pg_class_ownercheck(Oid class_oid, AclId userid)
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_TABLE),
-				 errmsg("relation with OID %u does not exist", class_oid)));
+			  errmsg("relation with OID %u does not exist", class_oid)));
 
 	owner_id = ((Form_pg_class) GETSTRUCT(tuple))->relowner;
 
@@ -1344,7 +1347,7 @@ pg_oper_ownercheck(Oid oper_oid, AclId userid)
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("operator with OID %u does not exist", oper_oid)));
+			   errmsg("operator with OID %u does not exist", oper_oid)));
 
 	owner_id = ((Form_pg_operator) GETSTRUCT(tuple))->oprowner;
 
@@ -1372,7 +1375,7 @@ pg_proc_ownercheck(Oid proc_oid, AclId userid)
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("function with OID %u does not exist", proc_oid)));
+			   errmsg("function with OID %u does not exist", proc_oid)));
 
 	owner_id = ((Form_pg_proc) GETSTRUCT(tuple))->proowner;
 

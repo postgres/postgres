@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.94 2003/07/27 04:53:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.95 2003/08/04 00:43:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,9 +79,9 @@ static Datum *ReadArrayStr(char *arrayStr, int nitems, int ndim, int *dim,
 			 int typlen, bool typbyval, char typalign,
 			 int *nbytes);
 static Datum *ReadArrayBinary(StringInfo buf, int nitems,
-							  FmgrInfo *receiveproc, Oid typelem,
-							  int typlen, bool typbyval, char typalign,
-							  int *nbytes);
+				FmgrInfo *receiveproc, Oid typelem,
+				int typlen, bool typbyval, char typalign,
+				int *nbytes);
 static void CopyArrayEls(char *p, Datum *values, int nitems,
 			 int typlen, bool typbyval, char typalign,
 			 bool freedata);
@@ -107,7 +107,7 @@ static void array_insert_slice(int ndim, int *dim, int *lb,
 				   char *destPtr,
 				   int *st, int *endp, char *srcPtr,
 				   int typlen, bool typbyval, char typalign);
-static int array_cmp(FunctionCallInfo fcinfo);
+static int	array_cmp(FunctionCallInfo fcinfo);
 
 /*---------------------------------------------------------------------
  * array_in :
@@ -144,21 +144,24 @@ array_in(PG_FUNCTION_ARGS)
 
 	/*
 	 * We arrange to look up info about element type, including its input
-	 * conversion proc, only once per series of calls, assuming the element
-	 * type doesn't change underneath us.
+	 * conversion proc, only once per series of calls, assuming the
+	 * element type doesn't change underneath us.
 	 */
 	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL)
 	{
 		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-													 sizeof(ArrayMetaState));
+												 sizeof(ArrayMetaState));
 		my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 		my_extra->element_type = InvalidOid;
 	}
 
 	if (my_extra->element_type != element_type)
 	{
-		/* Get info about element type, including its input conversion proc */
+		/*
+		 * Get info about element type, including its input conversion
+		 * proc
+		 */
 		get_type_io_data(element_type, IOFunc_input,
 						 &my_extra->typlen, &my_extra->typbyval,
 						 &my_extra->typalign, &my_extra->typdelim,
@@ -242,7 +245,7 @@ array_in(PG_FUNCTION_ARGS)
 		if (ub < lBound[ndim])
 			ereport(ERROR,
 					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-					 errmsg("upper bound cannot be less than lower bound")));
+				 errmsg("upper bound cannot be less than lower bound")));
 
 		dim[ndim] = ub - lBound[ndim] + 1;
 		ndim++;
@@ -351,7 +354,7 @@ ArrayCount(char *str, int *dim, char typdelim)
 					/* Signal a premature end of the string */
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-							 errmsg("malformed array literal: \"%s\"", str)));
+						errmsg("malformed array literal: \"%s\"", str)));
 					break;
 				case '\\':
 					/* skip the escaped character */
@@ -359,8 +362,8 @@ ArrayCount(char *str, int *dim, char typdelim)
 						ptr++;
 					else
 						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-								 errmsg("malformed array literal: \"%s\"", str)));
+						   (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						errmsg("malformed array literal: \"%s\"", str)));
 					break;
 				case '\"':
 					scanning_string = !scanning_string;
@@ -370,9 +373,9 @@ ArrayCount(char *str, int *dim, char typdelim)
 					{
 						if (nest_level >= MAXDIM)
 							ereport(ERROR,
-									(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-									 errmsg("number of array dimensions exceeds the maximum allowed, %d",
-											MAXDIM)));
+								(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+								 errmsg("number of array dimensions exceeds the maximum allowed, %d",
+										MAXDIM)));
 						temp[nest_level] = 0;
 						nest_level++;
 						if (ndim < nest_level)
@@ -384,8 +387,8 @@ ArrayCount(char *str, int *dim, char typdelim)
 					{
 						if (nest_level == 0)
 							ereport(ERROR,
-									(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-									 errmsg("malformed array literal: \"%s\"", str)));
+							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+							 errmsg("malformed array literal: \"%s\"", str)));
 						nest_level--;
 						if (nest_level == 0)
 							eoArray = itemdone = true;
@@ -479,7 +482,7 @@ ReadArrayStr(char *arrayStr,
 					/* Signal a premature end of the string */
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-							 errmsg("malformed array literal: \"%s\"", arrayStr)));
+					errmsg("malformed array literal: \"%s\"", arrayStr)));
 					break;
 				case '\\':
 					{
@@ -490,8 +493,8 @@ ReadArrayStr(char *arrayStr,
 							*cptr = *(cptr + 1);
 						if (*ptr == '\0')
 							ereport(ERROR,
-									(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-									 errmsg("malformed array literal: \"%s\"", arrayStr)));
+							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+							 errmsg("malformed array literal: \"%s\"", arrayStr)));
 						break;
 					}
 				case '\"':
@@ -511,8 +514,8 @@ ReadArrayStr(char *arrayStr,
 					{
 						if (nest_level >= ndim)
 							ereport(ERROR,
-									(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-									 errmsg("malformed array literal: \"%s\"", arrayStr)));
+							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+							 errmsg("malformed array literal: \"%s\"", arrayStr)));
 						nest_level++;
 						indx[nest_level - 1] = 0;
 						/* skip leading whitespace */
@@ -526,8 +529,8 @@ ReadArrayStr(char *arrayStr,
 					{
 						if (nest_level == 0)
 							ereport(ERROR,
-									(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-									 errmsg("malformed array literal: \"%s\"", arrayStr)));
+							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+							 errmsg("malformed array literal: \"%s\"", arrayStr)));
 						if (i == -1)
 							i = ArrayGetOffset0(ndim, indx, prod);
 						indx[nest_level - 1] = 0;
@@ -565,7 +568,7 @@ ReadArrayStr(char *arrayStr,
 		if (i < 0 || i >= nitems)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("malformed array literal: \"%s\"", arrayStr)));
+				   errmsg("malformed array literal: \"%s\"", arrayStr)));
 
 		values[i] = FunctionCall3(inputproc,
 								  CStringGetDatum(itemstart),
@@ -693,21 +696,24 @@ array_out(PG_FUNCTION_ARGS)
 
 	/*
 	 * We arrange to look up info about element type, including its output
-	 * conversion proc, only once per series of calls, assuming the element
-	 * type doesn't change underneath us.
+	 * conversion proc, only once per series of calls, assuming the
+	 * element type doesn't change underneath us.
 	 */
 	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL)
 	{
 		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-													 sizeof(ArrayMetaState));
+												 sizeof(ArrayMetaState));
 		my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 		my_extra->element_type = InvalidOid;
 	}
 
 	if (my_extra->element_type != element_type)
 	{
-		/* Get info about element type, including its output conversion proc */
+		/*
+		 * Get info about element type, including its output conversion
+		 * proc
+		 */
 		get_type_io_data(element_type, IOFunc_output,
 						 &my_extra->typlen, &my_extra->typbyval,
 						 &my_extra->typalign, &my_extra->typdelim,
@@ -922,15 +928,15 @@ array_recv(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * We arrange to look up info about element type, including its receive
-	 * conversion proc, only once per series of calls, assuming the element
-	 * type doesn't change underneath us.
+	 * We arrange to look up info about element type, including its
+	 * receive conversion proc, only once per series of calls, assuming
+	 * the element type doesn't change underneath us.
 	 */
 	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL)
 	{
 		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-													 sizeof(ArrayMetaState));
+												 sizeof(ArrayMetaState));
 		my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 		my_extra->element_type = InvalidOid;
 	}
@@ -945,8 +951,8 @@ array_recv(PG_FUNCTION_ARGS)
 		if (!OidIsValid(my_extra->typiofunc))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-					 errmsg("no binary input function available for type %s",
-							format_type_be(element_type))));
+				 errmsg("no binary input function available for type %s",
+						format_type_be(element_type))));
 		fmgr_info_cxt(my_extra->typiofunc, &my_extra->proc,
 					  fcinfo->flinfo->fn_mcxt);
 		my_extra->element_type = element_type;
@@ -1004,9 +1010,9 @@ ReadArrayBinary(StringInfo buf,
 
 	for (i = 0; i < nitems; i++)
 	{
-		int		itemlen;
+		int			itemlen;
 		StringInfoData elem_buf;
-		char	csave;
+		char		csave;
 
 		/* Get and check the item length */
 		itemlen = pq_getmsgint(buf, 4);
@@ -1017,10 +1023,9 @@ ReadArrayBinary(StringInfo buf,
 
 		/*
 		 * Rather than copying data around, we just set up a phony
-		 * StringInfo pointing to the correct portion of the input
-		 * buffer.  We assume we can scribble on the input buffer
-		 * so as to maintain the convention that StringInfos have
-		 * a trailing null.
+		 * StringInfo pointing to the correct portion of the input buffer.
+		 * We assume we can scribble on the input buffer so as to maintain
+		 * the convention that StringInfos have a trailing null.
 		 */
 		elem_buf.data = &buf->data[buf->cursor];
 		elem_buf.maxlen = itemlen + 1;
@@ -1042,7 +1047,7 @@ ReadArrayBinary(StringInfo buf,
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 					 errmsg("improper binary format in array element %d",
-				 			i + 1)));
+							i + 1)));
 
 		buf->data[buf->cursor] = csave;
 	}
@@ -1051,9 +1056,7 @@ ReadArrayBinary(StringInfo buf,
 	 * Compute total data space needed
 	 */
 	if (typlen > 0)
-	{
 		*nbytes = nitems * att_align(typlen, typalign);
-	}
 	else
 	{
 		Assert(!typbyval);
@@ -1100,14 +1103,14 @@ array_send(PG_FUNCTION_ARGS)
 
 	/*
 	 * We arrange to look up info about element type, including its send
-	 * conversion proc, only once per series of calls, assuming the element
-	 * type doesn't change underneath us.
+	 * conversion proc, only once per series of calls, assuming the
+	 * element type doesn't change underneath us.
 	 */
 	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL)
 	{
 		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-													 sizeof(ArrayMetaState));
+												 sizeof(ArrayMetaState));
 		my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 		my_extra->element_type = InvalidOid;
 	}
@@ -1122,8 +1125,8 @@ array_send(PG_FUNCTION_ARGS)
 		if (!OidIsValid(my_extra->typiofunc))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-					 errmsg("no binary output function available for type %s",
-							format_type_be(element_type))));
+				errmsg("no binary output function available for type %s",
+					   format_type_be(element_type))));
 		fmgr_info_cxt(my_extra->typiofunc, &my_extra->proc,
 					  fcinfo->flinfo->fn_mcxt);
 		my_extra->element_type = element_type;
@@ -1160,7 +1163,7 @@ array_send(PG_FUNCTION_ARGS)
 
 		outputbytes = DatumGetByteaP(FunctionCall2(&my_extra->proc,
 												   itemvalue,
-												   ObjectIdGetDatum(typelem)));
+											 ObjectIdGetDatum(typelem)));
 		/* We assume the result will not have been toasted */
 		pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
 		pq_sendbytes(&buf, VARDATA(outputbytes),
@@ -1187,10 +1190,11 @@ array_length_coerce(PG_FUNCTION_ARGS)
 	int32		len = PG_GETARG_INT32(1);
 	bool		isExplicit = PG_GETARG_BOOL(2);
 	FmgrInfo   *fmgr_info = fcinfo->flinfo;
-	typedef struct {
+	typedef struct
+	{
 		Oid			elemtype;
 		FmgrInfo	coerce_finfo;
-	} alc_extra;
+	}			alc_extra;
 	alc_extra  *my_extra;
 	FunctionCallInfoData locfcinfo;
 
@@ -1471,7 +1475,7 @@ array_get_slice(ArrayType *array,
 		 */
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("slices of fixed-length arrays not implemented")));
+			   errmsg("slices of fixed-length arrays not implemented")));
 
 		/*
 		 * fixed-length arrays -- these are assumed to be 1-d, 0-based XXX
@@ -1634,12 +1638,12 @@ array_set(ArrayType *array,
 
 	/*
 	 * if number of dims is zero, i.e. an empty array, create an array
-	 * with nSubscripts dimensions, and set the lower bounds to the supplied
-	 * subscripts
+	 * with nSubscripts dimensions, and set the lower bounds to the
+	 * supplied subscripts
 	 */
 	if (ndim == 0)
 	{
-		Oid		elmtype = ARR_ELEMTYPE(array);
+		Oid			elmtype = ARR_ELEMTYPE(array);
 
 		for (i = 0; i < nSubscripts; i++)
 		{
@@ -1648,7 +1652,7 @@ array_set(ArrayType *array,
 		}
 
 		return construct_md_array(&dataValue, nSubscripts, dim, lb, elmtype,
-												elmlen, elmbyval, elmalign);
+								  elmlen, elmbyval, elmalign);
 	}
 
 	if (ndim != nSubscripts || ndim <= 0 || ndim > MAXDIM)
@@ -1818,17 +1822,17 @@ array_set_slice(ArrayType *array,
 
 	/*
 	 * if number of dims is zero, i.e. an empty array, create an array
-	 * with nSubscripts dimensions, and set the upper and lower bounds
-	 * to the supplied subscripts
+	 * with nSubscripts dimensions, and set the upper and lower bounds to
+	 * the supplied subscripts
 	 */
 	if (ndim == 0)
 	{
-		Datum  *dvalues;
-		int		nelems;
-		Oid		elmtype = ARR_ELEMTYPE(array);
+		Datum	   *dvalues;
+		int			nelems;
+		Oid			elmtype = ARR_ELEMTYPE(array);
 
 		deconstruct_array(srcArray, elmtype, elmlen, elmbyval, elmalign,
-														&dvalues, &nelems);
+						  &dvalues, &nelems);
 
 		for (i = 0; i < nSubscripts; i++)
 		{
@@ -1837,7 +1841,7 @@ array_set_slice(ArrayType *array,
 		}
 
 		return construct_md_array(dvalues, nSubscripts, dim, lb, elmtype,
-												 elmlen, elmbyval, elmalign);
+								  elmlen, elmbyval, elmalign);
 	}
 
 	if (ndim < nSubscripts || ndim <= 0 || ndim > MAXDIM)
@@ -2028,11 +2032,12 @@ array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType)
 	bool		typbyval;
 	char		typalign;
 	char	   *s;
-	typedef struct {
+	typedef struct
+	{
 		ArrayMetaState inp_extra;
 		ArrayMetaState ret_extra;
-	} am_extra;
-	am_extra  *my_extra;
+	}			am_extra;
+	am_extra   *my_extra;
 	ArrayMetaState *inp_extra;
 	ArrayMetaState *ret_extra;
 
@@ -2054,9 +2059,9 @@ array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType)
 		PG_RETURN_ARRAYTYPE_P(v);
 
 	/*
-	 * We arrange to look up info about input and return element types only
-	 * once per series of calls, assuming the element type doesn't change
-	 * underneath us.
+	 * We arrange to look up info about input and return element types
+	 * only once per series of calls, assuming the element type doesn't
+	 * change underneath us.
 	 */
 	my_extra = (am_extra *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL)
@@ -2179,8 +2184,8 @@ construct_array(Datum *elems, int nelems,
 				Oid elmtype,
 				int elmlen, bool elmbyval, char elmalign)
 {
-	int		dims[1];
-	int		lbs[1];
+	int			dims[1];
+	int			lbs[1];
 
 	dims[0] = nelems;
 	lbs[0] = 1;
@@ -2364,7 +2369,7 @@ array_eq(PG_FUNCTION_ARGS)
 	if (element_type != ARR_ELEMTYPE(array2))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("cannot compare arrays of different element types")));
+			errmsg("cannot compare arrays of different element types")));
 
 	/* fast path if the arrays do not have the same number of elements */
 	if (nitems1 != nitems2)
@@ -2372,21 +2377,22 @@ array_eq(PG_FUNCTION_ARGS)
 	else
 	{
 		/*
-		 * We arrange to look up the equality function only once per series of
-		 * calls, assuming the element type doesn't change underneath us.
+		 * We arrange to look up the equality function only once per
+		 * series of calls, assuming the element type doesn't change
+		 * underneath us.
 		 */
 		my_extra = (ArrayMetaState *) ae_fmgr_info->fn_extra;
 		if (my_extra == NULL)
 		{
 			ae_fmgr_info->fn_extra = MemoryContextAlloc(ae_fmgr_info->fn_mcxt,
-													 sizeof(ArrayMetaState));
+												 sizeof(ArrayMetaState));
 			my_extra = (ArrayMetaState *) ae_fmgr_info->fn_extra;
 			my_extra->element_type = InvalidOid;
 		}
 
 		if (my_extra->element_type != element_type)
 		{
-			Oid		opfuncid = equality_oper_funcid(element_type);
+			Oid			opfuncid = equality_oper_funcid(element_type);
 
 			get_typlenbyvalalign(element_type,
 								 &my_extra->typlen,
@@ -2410,9 +2416,9 @@ array_eq(PG_FUNCTION_ARGS)
 		/* Loop over source data */
 		for (i = 0; i < nitems1; i++)
 		{
-			Datum	elt1;
-			Datum	elt2;
-			bool	oprresult;
+			Datum		elt1;
+			Datum		elt2;
+			bool		oprresult;
 
 			/* Get element pair */
 			elt1 = fetch_att(p1, typbyval, typlen);
@@ -2519,20 +2525,20 @@ array_cmp(FunctionCallInfo fcinfo)
 	int			i;
 	typedef struct
 	{
-		Oid				element_type;
-		int16			typlen;
-		bool			typbyval;
-		char			typalign;
-		FmgrInfo		eqproc;
-		FmgrInfo		ordproc;
-	} ac_extra;
-	ac_extra *my_extra;
+		Oid			element_type;
+		int16		typlen;
+		bool		typbyval;
+		char		typalign;
+		FmgrInfo	eqproc;
+		FmgrInfo	ordproc;
+	}			ac_extra;
+	ac_extra   *my_extra;
 
 	element_type = ARR_ELEMTYPE(array1);
 	if (element_type != ARR_ELEMTYPE(array2))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("cannot compare arrays of different element types")));
+			errmsg("cannot compare arrays of different element types")));
 
 	/*
 	 * We arrange to look up the element type info and related functions
@@ -2550,8 +2556,8 @@ array_cmp(FunctionCallInfo fcinfo)
 
 	if (my_extra->element_type != element_type)
 	{
-		Oid		eqfuncid = equality_oper_funcid(element_type);
-		Oid		ordfuncid = ordering_oper_funcid(element_type);
+		Oid			eqfuncid = equality_oper_funcid(element_type);
+		Oid			ordfuncid = ordering_oper_funcid(element_type);
 
 		get_typlenbyvalalign(element_type,
 							 &my_extra->typlen,
@@ -2569,10 +2575,10 @@ array_cmp(FunctionCallInfo fcinfo)
 
 	/* extract a C array of arg array datums */
 	deconstruct_array(array1, element_type, typlen, typbyval, typalign,
-													&dvalues1, &nelems1);
+					  &dvalues1, &nelems1);
 
 	deconstruct_array(array2, element_type, typlen, typbyval, typalign,
-													&dvalues2, &nelems2);
+					  &dvalues2, &nelems2);
 
 	min_nelems = Min(nelems1, nelems2);
 	for (i = 0; i < min_nelems; i++)
@@ -2875,7 +2881,7 @@ array_insert_slice(int ndim,
 /*
  * array_type_coerce -- allow explicit or assignment coercion from
  * one array type to another.
- * 
+ *
  * Caller should have already verified that the source element type can be
  * coerced into the target element type.
  */
@@ -2885,11 +2891,12 @@ array_type_coerce(PG_FUNCTION_ARGS)
 	ArrayType  *src = PG_GETARG_ARRAYTYPE_P(0);
 	Oid			src_elem_type = ARR_ELEMTYPE(src);
 	FmgrInfo   *fmgr_info = fcinfo->flinfo;
-	typedef struct {
+	typedef struct
+	{
 		Oid			srctype;
 		Oid			desttype;
 		FmgrInfo	coerce_finfo;
-	} atc_extra;
+	}			atc_extra;
 	atc_extra  *my_extra;
 	FunctionCallInfoData locfcinfo;
 
@@ -2925,12 +2932,11 @@ array_type_coerce(PG_FUNCTION_ARGS)
 					 errmsg("target type is not an array")));
 
 		/*
-		 * We don't deal with domain constraints yet, so bail out.
-		 * This isn't currently a problem, because we also don't
-		 * support arrays of domain type elements either. But in the
-		 * future we might. At that point consideration should be given
-		 * to removing the check below and adding a domain constraints
-		 * check to the coercion.
+		 * We don't deal with domain constraints yet, so bail out. This
+		 * isn't currently a problem, because we also don't support arrays
+		 * of domain type elements either. But in the future we might. At
+		 * that point consideration should be given to removing the check
+		 * below and adding a domain constraints check to the coercion.
 		 */
 		if (getBaseType(tgt_elem_type) != tgt_elem_type)
 			ereport(ERROR,
@@ -2943,7 +2949,7 @@ array_type_coerce(PG_FUNCTION_ARGS)
 		{
 			/* should never happen, but check anyway */
 			elog(ERROR, "no conversion function from %s to %s",
-				 format_type_be(src_elem_type), format_type_be(tgt_elem_type));
+			format_type_be(src_elem_type), format_type_be(tgt_elem_type));
 		}
 		if (OidIsValid(funcId))
 			fmgr_info_cxt(funcId, &my_extra->coerce_finfo, fmgr_info->fn_mcxt);
@@ -2954,13 +2960,13 @@ array_type_coerce(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * If it's binary-compatible, modify the element type in the array header,
-	 * but otherwise leave the array as we received it.
+	 * If it's binary-compatible, modify the element type in the array
+	 * header, but otherwise leave the array as we received it.
 	 */
 	if (my_extra->coerce_finfo.fn_oid == InvalidOid)
 	{
 		ArrayType  *result = DatumGetArrayTypePCopy(PG_GETARG_DATUM(0));
-		
+
 		ARR_ELEMTYPE(result) = my_extra->desttype;
 		PG_RETURN_ARRAYTYPE_P(result);
 	}
@@ -2983,13 +2989,13 @@ array_type_coerce(PG_FUNCTION_ARGS)
  *	rcontext is where to keep working state
  */
 ArrayBuildState *
-accumArrayResult(ArrayBuildState *astate,
+accumArrayResult(ArrayBuildState * astate,
 				 Datum dvalue, bool disnull,
 				 Oid element_type,
 				 MemoryContext rcontext)
 {
 	MemoryContext arr_context,
-				  oldcontext;
+				oldcontext;
 
 	if (astate == NULL)
 	{
@@ -3021,7 +3027,7 @@ accumArrayResult(ArrayBuildState *astate,
 		if ((astate->nelems % ARRAY_ELEMS_CHUNKSIZE) == 0)
 			astate->dvalues = (Datum *)
 				repalloc(astate->dvalues,
-						 (astate->nelems + ARRAY_ELEMS_CHUNKSIZE) * sizeof(Datum));
+			   (astate->nelems + ARRAY_ELEMS_CHUNKSIZE) * sizeof(Datum));
 	}
 
 	if (disnull)
@@ -3045,7 +3051,7 @@ accumArrayResult(ArrayBuildState *astate,
  *	rcontext is where to construct result
  */
 Datum
-makeArrayResult(ArrayBuildState *astate,
+makeArrayResult(ArrayBuildState * astate,
 				MemoryContext rcontext)
 {
 	int			dims[1];
@@ -3067,7 +3073,7 @@ makeArrayResult(ArrayBuildState *astate,
  *	rcontext is where to construct result
  */
 Datum
-makeMdArrayResult(ArrayBuildState *astate,
+makeMdArrayResult(ArrayBuildState * astate,
 				  int ndims,
 				  int *dims,
 				  int *lbs,

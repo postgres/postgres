@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.61 2003/07/25 00:01:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.62 2003/08/04 00:43:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,11 +19,11 @@
 
 
 static List *make_rels_by_clause_joins(Query *root,
-									   RelOptInfo *old_rel,
-									   List *other_rels);
+						  RelOptInfo *old_rel,
+						  List *other_rels);
 static List *make_rels_by_clauseless_joins(Query *root,
-										   RelOptInfo *old_rel,
-										   List *other_rels);
+							  RelOptInfo *old_rel,
+							  List *other_rels);
 
 
 /*
@@ -417,8 +417,8 @@ make_join_rel(Query *root, RelOptInfo *rel1, RelOptInfo *rel2,
 
 	/*
 	 * If we are implementing IN clauses as joins, there are some joins
-	 * that are illegal.  Check to see if the proposed join is trouble.
-	 * We can skip the work if looking at an outer join, however, because
+	 * that are illegal.  Check to see if the proposed join is trouble. We
+	 * can skip the work if looking at an outer join, however, because
 	 * only top-level joins might be affected.
 	 */
 	if (jointype == JOIN_INNER)
@@ -430,8 +430,8 @@ make_join_rel(Query *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			InClauseInfo *ininfo = (InClauseInfo *) lfirst(l);
 
 			/*
-			 * Cannot join if proposed join contains part, but only
-			 * part, of the RHS, *and* it contains rels not in the RHS.
+			 * Cannot join if proposed join contains part, but only part,
+			 * of the RHS, *and* it contains rels not in the RHS.
 			 */
 			if (bms_overlap(ininfo->righthand, joinrelids) &&
 				!bms_is_subset(ininfo->righthand, joinrelids) &&
@@ -442,16 +442,17 @@ make_join_rel(Query *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			}
 
 			/*
-			 * No issue unless we are looking at a join of the IN's RHS
-			 * to other stuff.
+			 * No issue unless we are looking at a join of the IN's RHS to
+			 * other stuff.
 			 */
-			if (! (bms_is_subset(ininfo->righthand, joinrelids) &&
-				   !bms_equal(ininfo->righthand, joinrelids)))
+			if (!(bms_is_subset(ininfo->righthand, joinrelids) &&
+				  !bms_equal(ininfo->righthand, joinrelids)))
 				continue;
+
 			/*
-			 * If we already joined IN's RHS to any part of its LHS in either
-			 * input path, then this join is not constrained (the necessary
-			 * work was done at a lower level).
+			 * If we already joined IN's RHS to any part of its LHS in
+			 * either input path, then this join is not constrained (the
+			 * necessary work was done at a lower level).
 			 */
 			if (bms_overlap(ininfo->lefthand, rel1->relids) &&
 				bms_is_subset(ininfo->righthand, rel1->relids))
@@ -459,6 +460,7 @@ make_join_rel(Query *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			if (bms_overlap(ininfo->lefthand, rel2->relids) &&
 				bms_is_subset(ininfo->righthand, rel2->relids))
 				continue;
+
 			/*
 			 * JOIN_IN technique will work if outerrel includes LHS and
 			 * innerrel is exactly RHS; conversely JOIN_REVERSE_IN handles
@@ -478,22 +480,14 @@ make_join_rel(Query *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			}
 			if (bms_is_subset(ininfo->lefthand, rel1->relids) &&
 				bms_equal(ininfo->righthand, rel2->relids))
-			{
 				jointype = JOIN_IN;
-			}
 			else if (bms_is_subset(ininfo->lefthand, rel2->relids) &&
 					 bms_equal(ininfo->righthand, rel1->relids))
-			{
 				jointype = JOIN_REVERSE_IN;
-			}
 			else if (bms_equal(ininfo->righthand, rel1->relids))
-			{
 				jointype = JOIN_UNIQUE_OUTER;
-			}
 			else if (bms_equal(ininfo->righthand, rel2->relids))
-			{
 				jointype = JOIN_UNIQUE_INNER;
-			}
 			else
 			{
 				/* invalid join path */

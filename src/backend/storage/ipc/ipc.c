@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.83 2003/07/24 22:04:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.84 2003/08/04 00:43:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,8 +74,8 @@ void
 proc_exit(int code)
 {
 	/*
-	 * Once we set this flag, we are committed to exit.  Any ereport() will
-	 * NOT send control back to the main loop, but right back here.
+	 * Once we set this flag, we are committed to exit.  Any ereport()
+	 * will NOT send control back to the main loop, but right back here.
 	 */
 	proc_exit_inprogress = true;
 

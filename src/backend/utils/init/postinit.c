@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.124 2003/07/25 20:17:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.125 2003/08/04 00:43:26 momjian Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -124,8 +124,8 @@ ReverifyMyDatabase(const char *name)
 	if (!dbform->datallowconn)
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("database \"%s\" is not currently accepting connections",
-						name)));
+		 errmsg("database \"%s\" is not currently accepting connections",
+				name)));
 
 	/*
 	 * OK, we're golden.  Only other to-do item is to save the encoding
@@ -179,8 +179,8 @@ InitCommunication(void)
 	if (!IsUnderPostmaster)		/* postmaster already did this */
 	{
 		/*
-		 * We're running a postgres bootstrap process or a standalone backend.
-		 * Create private "shmem" and semaphores.
+		 * We're running a postgres bootstrap process or a standalone
+		 * backend. Create private "shmem" and semaphores.
 		 */
 		CreateSharedMemoryAndSemaphores(true, MaxBackends, 0);
 	}
@@ -272,8 +272,8 @@ InitPostgres(const char *dbname, const char *username)
 						(errcode(ERRCODE_UNDEFINED_DATABASE),
 						 errmsg("database \"%s\" does not exist",
 								dbname),
-						 errdetail("The database subdirectory \"%s\" is missing.",
-								   fullpath)));
+				errdetail("The database subdirectory \"%s\" is missing.",
+						  fullpath)));
 			else
 				ereport(FATAL,
 						(errcode_for_file_access(),
@@ -368,7 +368,7 @@ InitPostgres(const char *dbname, const char *username)
 		if (!ThereIsAtLeastOneUser())
 			ereport(WARNING,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("no users are defined in this database system"),
+				  errmsg("no users are defined in this database system"),
 					 errhint("You should immediately run 'CREATE USER \"%s\" WITH SYSID %d CREATEUSER;'.",
 							 username, BOOTSTRAP_USESYSID)));
 	}
@@ -395,10 +395,10 @@ InitPostgres(const char *dbname, const char *username)
 
 	/*
 	 * Check a normal user hasn't connected to a superuser reserved slot.
-	 * We can't do this till after we've read the user information, and
-	 * we must do it inside a transaction since checking superuserness
-	 * may require database access.  The superuser check is probably the
-	 * most expensive part; don't do it until necessary.
+	 * We can't do this till after we've read the user information, and we
+	 * must do it inside a transaction since checking superuserness may
+	 * require database access.  The superuser check is probably the most
+	 * expensive part; don't do it until necessary.
 	 */
 	if (ReservedBackends > 0 &&
 		CountEmptyBackendSlots() < ReservedBackends &&
@@ -419,8 +419,8 @@ InitPostgres(const char *dbname, const char *username)
 	InitializeClientEncoding();
 
 	/*
-	 * Now all default states are fully set up.  Report them to client
-	 * if appropriate.
+	 * Now all default states are fully set up.  Report them to client if
+	 * appropriate.
 	 */
 	BeginReportingGUCOptions();
 

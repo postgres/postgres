@@ -28,11 +28,11 @@ extern int	cube_yyparse();
 NDBOX	   *cube_in(char *str);
 NDBOX	   *cube(text *str);
 char	   *cube_out(NDBOX * cube);
-NDBOX      *cube_f8(double *);
-NDBOX      *cube_f8_f8(double *, double *);
-NDBOX      *cube_c_f8(NDBOX *, double *);
-NDBOX      *cube_c_f8_f8(NDBOX *, double *, double *);
-int4			cube_dim(NDBOX * a);
+NDBOX	   *cube_f8(double *);
+NDBOX	   *cube_f8_f8(double *, double *);
+NDBOX	   *cube_c_f8(NDBOX *, double *);
+NDBOX	   *cube_c_f8_f8(NDBOX *, double *, double *);
+int4		cube_dim(NDBOX * a);
 double	   *cube_ll_coord(NDBOX * a, int4 n);
 double	   *cube_ur_coord(NDBOX * a, int4 n);
 
@@ -123,7 +123,7 @@ cube_out(NDBOX * cube)
 	bool		equal = true;
 	int			dim = cube->dim;
 	int			i;
-	int		ndig;
+	int			ndig;
 
 	initStringInfo(&buf);
 
@@ -131,7 +131,8 @@ cube_out(NDBOX * cube)
 	 * Get the number of digits to display.
 	 */
 	ndig = DBL_DIG + extra_float_digits;
-	if (ndig < 1) ndig = 1;
+	if (ndig < 1)
+		ndig = 1;
 
 	/*
 	 * while printing the first (LL) corner, check if it is equal to the
@@ -1192,7 +1193,8 @@ cube_enlarge(NDBOX * a, double *r, int4 n)
 				j,
 				k;
 
-	if (n > CUBE_MAX_DIM) n = CUBE_MAX_DIM;
+	if (n > CUBE_MAX_DIM)
+		n = CUBE_MAX_DIM;
 	if (*r > 0 && n > 0)
 		dim = n;
 	if (a->dim > dim)
@@ -1234,14 +1236,15 @@ NDBOX *
 cube_f8(double *x1)
 {
 	NDBOX	   *result;
-        int        size;
+	int			size;
+
 	size = offsetof(NDBOX, x[0]) + sizeof(double) * 2;
 	result = (NDBOX *) palloc(size);
 	memset(result, 0, size);
 	result->size = size;
 	result->dim = 1;
-        result->x[0] = *x1;
-        result->x[1] = *x1;
+	result->x[0] = *x1;
+	result->x[1] = *x1;
 	return result;
 }
 
@@ -1250,56 +1253,61 @@ NDBOX *
 cube_f8_f8(double *x1, double *x2)
 {
 	NDBOX	   *result;
-        int        size;
+	int			size;
+
 	size = offsetof(NDBOX, x[0]) + sizeof(double) * 2;
 	result = (NDBOX *) palloc(size);
 	memset(result, 0, size);
 	result->size = size;
 	result->dim = 1;
-        result->x[0] = *x1;
-        result->x[1] = *x2;
+	result->x[0] = *x1;
+	result->x[1] = *x2;
 	return result;
 }
 
 /* Add a dimension to an existing cube with the same values for the new
    coordinate */
 NDBOX *
-cube_c_f8(NDBOX *c, double *x1)
+cube_c_f8(NDBOX * c, double *x1)
 {
 	NDBOX	   *result;
-        int        size;
-        int        i;
-	size = offsetof(NDBOX, x[0]) + sizeof(double) * (c->dim + 1) * 2;
+	int			size;
+	int			i;
+
+	size = offsetof(NDBOX, x[0]) + sizeof(double) * (c->dim + 1) *2;
 	result = (NDBOX *) palloc(size);
 	memset(result, 0, size);
 	result->size = size;
 	result->dim = c->dim + 1;
-        for (i = 0; i < c->dim; i++) {
-            result->x[i] = c->x[i];
-            result->x[result->dim + i] = c->x[c->dim + i];
-        }
-        result->x[result->dim - 1] = *x1;
-        result->x[2 * result->dim - 1] = *x1;
+	for (i = 0; i < c->dim; i++)
+	{
+		result->x[i] = c->x[i];
+		result->x[result->dim + i] = c->x[c->dim + i];
+	}
+	result->x[result->dim - 1] = *x1;
+	result->x[2 * result->dim - 1] = *x1;
 	return result;
 }
 
 /* Add a dimension to an existing cube */
 NDBOX *
-cube_c_f8_f8(NDBOX *c, double *x1, double *x2)
+cube_c_f8_f8(NDBOX * c, double *x1, double *x2)
 {
 	NDBOX	   *result;
-        int        size;
-        int        i;
-	size = offsetof(NDBOX, x[0]) + sizeof(double) * (c->dim + 1) * 2;
+	int			size;
+	int			i;
+
+	size = offsetof(NDBOX, x[0]) + sizeof(double) * (c->dim + 1) *2;
 	result = (NDBOX *) palloc(size);
 	memset(result, 0, size);
 	result->size = size;
 	result->dim = c->dim + 1;
-        for (i = 0; i < c->dim; i++) {
-            result->x[i] = c->x[i];
-            result->x[result->dim + i] = c->x[c->dim + i];
-        }
-        result->x[result->dim - 1] = *x1;
-        result->x[2 * result->dim - 1] = *x2;
+	for (i = 0; i < c->dim; i++)
+	{
+		result->x[i] = c->x[i];
+		result->x[result->dim + i] = c->x[c->dim + i];
+	}
+	result->x[result->dim - 1] = *x1;
+	result->x[2 * result->dim - 1] = *x2;
 	return result;
 }

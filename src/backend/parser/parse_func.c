@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.157 2003/07/28 00:09:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.158 2003/08/04 00:43:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,8 +86,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	if (nargs > FUNC_MAX_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-				 errmsg("cannot pass more than %d arguments to a function",
-						FUNC_MAX_ARGS)));
+			   errmsg("cannot pass more than %d arguments to a function",
+					  FUNC_MAX_ARGS)));
 
 	if (fargs)
 	{
@@ -262,9 +262,9 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		if (agg_star)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("%s(*) specified, but %s is not an aggregate function",
-							NameListToString(funcname),
-							NameListToString(funcname))));
+			errmsg("%s(*) specified, but %s is not an aggregate function",
+				   NameListToString(funcname),
+				   NameListToString(funcname))));
 		if (agg_distinct)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -298,8 +298,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
-						 errmsg("attribute \"%s\" not found in datatype %s",
-								colname, format_type_be(relTypeId))));
+					  errmsg("attribute \"%s\" not found in datatype %s",
+							 colname, format_type_be(relTypeId))));
 		}
 
 		/*
@@ -311,8 +311,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 errmsg("function %s is not unique",
 							func_signature_string(funcname, nargs,
 												  actual_arg_types)),
-					 errhint("Could not choose a best candidate function. "
-							 "You may need to add explicit typecasts.")));
+				   errhint("Could not choose a best candidate function. "
+						   "You may need to add explicit typecasts.")));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
@@ -392,7 +392,7 @@ int
 func_match_argtypes(int nargs,
 					Oid *input_typeids,
 					FuncCandidateList raw_candidates,
-					FuncCandidateList *candidates)	/* return value */
+					FuncCandidateList *candidates)		/* return value */
 {
 	FuncCandidateList current_candidate;
 	FuncCandidateList next_candidate;
@@ -495,12 +495,13 @@ func_select_candidate(int nargs,
 	/*
 	 * If any input types are domains, reduce them to their base types.
 	 * This ensures that we will consider functions on the base type to be
-	 * "exact matches" in the exact-match heuristic; it also makes it possible
-	 * to do something useful with the type-category heuristics.  Note that
-	 * this makes it difficult, but not impossible, to use functions declared
-	 * to take a domain as an input datatype.  Such a function will be
-	 * selected over the base-type function only if it is an exact match at
-	 * all argument positions, and so was already chosen by our caller.
+	 * "exact matches" in the exact-match heuristic; it also makes it
+	 * possible to do something useful with the type-category heuristics.
+	 * Note that this makes it difficult, but not impossible, to use
+	 * functions declared to take a domain as an input datatype.  Such a
+	 * function will be selected over the base-type function only if it is
+	 * an exact match at all argument positions, and so was already chosen
+	 * by our caller.
 	 */
 	for (i = 0; i < nargs; i++)
 		input_base_typeids[i] = getBaseType(input_typeids[i]);
@@ -550,13 +551,14 @@ func_select_candidate(int nargs,
 		return candidates;
 
 	/*
-	 * Still too many candidates? Now look for candidates which have either
-	 * exact matches or preferred types at the args that will require coercion.
-	 * (Restriction added in 7.4: preferred type must be of same category as
-	 * input type; give no preference to cross-category conversions to
-	 * preferred types.)  Keep all candidates if none match.
+	 * Still too many candidates? Now look for candidates which have
+	 * either exact matches or preferred types at the args that will
+	 * require coercion. (Restriction added in 7.4: preferred type must be
+	 * of same category as input type; give no preference to
+	 * cross-category conversions to preferred types.)	Keep all
+	 * candidates if none match.
 	 */
-	for (i = 0; i < nargs; i++)			/* avoid multiple lookups */
+	for (i = 0; i < nargs; i++) /* avoid multiple lookups */
 		slot_category[i] = TypeCategory(input_base_typeids[i]);
 	ncandidates = 0;
 	nbestMatch = 0;
@@ -602,10 +604,11 @@ func_select_candidate(int nargs,
 	 * Still too many candidates? Try assigning types for the unknown
 	 * columns.
 	 *
-	 * NOTE: for a binary operator with one unknown and one non-unknown input,
-	 * we already tried the heuristic of looking for a candidate with the
-	 * known input type on both sides (see binary_oper_exact()).  That's
-	 * essentially a special case of the general algorithm we try next.
+	 * NOTE: for a binary operator with one unknown and one non-unknown
+	 * input, we already tried the heuristic of looking for a candidate
+	 * with the known input type on both sides (see binary_oper_exact()).
+	 * That's essentially a special case of the general algorithm we try
+	 * next.
 	 *
 	 * We do this by examining each unknown argument position to see if we
 	 * can determine a "type category" for it.	If any candidate has an
@@ -815,9 +818,10 @@ func_get_detail(List *funcname,
 		 * constant to a specific type.
 		 *
 		 * The reason we can restrict our check to binary-compatible
-		 * coercions here is that we expect non-binary-compatible coercions
-		 * to have an implementation function named after the target type.
-		 * That function will be found by normal lookup if appropriate.
+		 * coercions here is that we expect non-binary-compatible
+		 * coercions to have an implementation function named after the
+		 * target type. That function will be found by normal lookup if
+		 * appropriate.
 		 *
 		 * NB: it's important that this code stays in sync with what
 		 * coerce_type can do, because the caller will try to apply
@@ -895,7 +899,7 @@ func_get_detail(List *funcname,
 				{
 					best_candidate = func_select_candidate(nargs,
 												   current_input_typeids,
-											   current_candidates);
+													 current_candidates);
 
 					/*
 					 * If we were able to choose a best candidate, we're
@@ -960,7 +964,7 @@ func_get_detail(List *funcname,
  *		finding all superclasses of that type. A vector of new Oid type
  *		arrays is returned to the caller, listing possible alternative
  *		interpretations of the input typeids as members of their superclasses
- *		rather than the actually given argument types.  The vector is
+ *		rather than the actually given argument types.	The vector is
  *		terminated by a NULL pointer.
  *
  *		The order of this vector is as follows:  all superclasses of the
@@ -1123,14 +1127,14 @@ gen_cross_product(InhPaths *arginh, int nargs)
 	/*
 	 * We also need an extra slot for the terminating NULL in the result
 	 * array, but that cancels out with the fact that we don't want to
-	 * generate the zero-changes case.  So we need exactly nanswers slots.
+	 * generate the zero-changes case.	So we need exactly nanswers slots.
 	 */
 	result = (Oid **) palloc(sizeof(Oid *) * nanswers);
 	j = 0;
 
 	/*
 	 * Compute the cross product from right to left.  When cur[i] == 0,
-	 * generate the original input type at position i.  When cur[i] == k
+	 * generate the original input type at position i.	When cur[i] == k
 	 * for k > 0, generate its k'th supertype.
 	 */
 	MemSet(cur, 0, sizeof(cur));
@@ -1138,7 +1142,7 @@ gen_cross_product(InhPaths *arginh, int nargs)
 	for (;;)
 	{
 		/*
-		 * Find a column we can increment.  All the columns after it get
+		 * Find a column we can increment.	All the columns after it get
 		 * reset to zero.  (Essentially, we're adding one to the multi-
 		 * digit number represented by cur[].)
 		 */
@@ -1263,8 +1267,8 @@ setup_field_select(Node *input, char *attname, Oid relid)
 	if (attno == InvalidAttrNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
-				 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
-						attname, get_rel_name(relid))));
+			 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+					attname, get_rel_name(relid))));
 
 	fselect->arg = (Expr *) input;
 	fselect->fieldnum = attno;
@@ -1448,7 +1452,7 @@ find_aggregate_func(List *aggname, Oid basetype, bool noError)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("function %s(%s) is not an aggregate",
-						NameListToString(aggname), format_type_be(basetype))));
+				  NameListToString(aggname), format_type_be(basetype))));
 	}
 
 	ReleaseSysCache(ftup);
@@ -1485,7 +1489,7 @@ LookupFuncName(List *funcname, int nargs, const Oid *argtypes, bool noError)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("function %s does not exist",
-						func_signature_string(funcname, nargs, argtypes))));
+					 func_signature_string(funcname, nargs, argtypes))));
 
 	return InvalidOid;
 }

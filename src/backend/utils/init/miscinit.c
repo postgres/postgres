@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.110 2003/08/01 00:15:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.111 2003/08/04 00:43:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -482,9 +482,9 @@ GetCharSetByHost(char *TableName, int host, const char *DataDir)
  * restore the current user id if you need to change it.
  * ----------------------------------------------------------------
  */
-static AclId	AuthenticatedUserId = 0;
-static AclId	SessionUserId = 0;
-static AclId	CurrentUserId = 0;
+static AclId AuthenticatedUserId = 0;
+static AclId SessionUserId = 0;
+static AclId CurrentUserId = 0;
 
 static bool AuthenticatedUserIsSuperuser = false;
 
@@ -620,7 +620,7 @@ SetSessionAuthorization(AclId userid, bool is_superuser)
 		!AuthenticatedUserIsSuperuser)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied to set session authorization")));
+			  errmsg("permission denied to set session authorization")));
 
 	SetSessionUserId(userid);
 	SetUserId(userid);
@@ -685,15 +685,16 @@ GetUserNameFromId(AclId userid)
 static void
 UnlinkLockFile(int status, Datum filename)
 {
-  char *fname = (char *)DatumGetPointer(filename);
-  if( fname != NULL )
-    {
-      if( unlink(fname) != 0 )
+	char	   *fname = (char *) DatumGetPointer(filename);
+
+	if (fname != NULL)
 	{
-	  /* Should we complain if the unlink fails? */
+		if (unlink(fname) != 0)
+		{
+			/* Should we complain if the unlink fails? */
+		}
+		free(fname);
 	}
-      free(fname);
-    }
 }
 
 /*
@@ -789,11 +790,11 @@ CreateLockFile(const char *filename, bool amPostmaster,
 						 errmsg("lock file \"%s\" already exists",
 								filename),
 						 isDDLock ?
-						 errhint("Is another %s (pid %d) running in \"%s\"?",
-								 (encoded_pid < 0 ? "postgres" : "postmaster"),
-								 (int) other_pid, refName) :
+					 errhint("Is another %s (pid %d) running in \"%s\"?",
+						   (encoded_pid < 0 ? "postgres" : "postmaster"),
+							 (int) other_pid, refName) :
 						 errhint("Is another %s (pid %d) using \"%s\"?",
-								 (encoded_pid < 0 ? "postgres" : "postmaster"),
+						   (encoded_pid < 0 ? "postgres" : "postmaster"),
 								 (int) other_pid, refName)));
 			}
 		}
@@ -821,14 +822,14 @@ CreateLockFile(const char *filename, bool amPostmaster,
 					if (PGSharedMemoryIsInUse(id1, id2))
 						ereport(FATAL,
 								(errcode(ERRCODE_LOCK_FILE_EXISTS),
-								 errmsg("pre-existing shared memory block "
-										"(key %lu, id %lu) is still in use",
-										id1, id2),
-								 errhint("If you're sure there are no old "
-										 "backends still running, remove "
-										 "the shared memory block with "
-										 "ipcrm(1), or just delete \"%s\".",
-										 filename)));
+							   errmsg("pre-existing shared memory block "
+									  "(key %lu, id %lu) is still in use",
+									  id1, id2),
+							   errhint("If you're sure there are no old "
+									   "backends still running, remove "
+									   "the shared memory block with "
+									   "ipcrm(1), or just delete \"%s\".",
+									   filename)));
 				}
 			}
 		}
@@ -844,7 +845,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 					 errmsg("could not remove old lock file \"%s\": %m",
 							filename),
 					 errhint("The file seems accidentally left over, but "
-							 "I couldn't remove it. Please remove the file "
+						  "I couldn't remove it. Please remove the file "
 							 "by hand and try again.")));
 	}
 
@@ -865,7 +866,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		errno = save_errno ? save_errno : ENOSPC;
 		ereport(FATAL,
 				(errcode_for_file_access(),
-				 errmsg("could not write lock file \"%s\": %m", filename)));
+			  errmsg("could not write lock file \"%s\": %m", filename)));
 	}
 	close(fd);
 
@@ -912,17 +913,17 @@ TouchSocketLockFile(void)
 	if (socketLockFile[0] != '\0')
 	{
 		/*
-		 * utime() is POSIX standard, utimes() is a common alternative;
-		 * if we have neither, fall back to actually reading the file
-		 * (which only sets the access time not mod time, but that should
-		 * be enough in most cases).  In all paths, we ignore errors.
+		 * utime() is POSIX standard, utimes() is a common alternative; if
+		 * we have neither, fall back to actually reading the file (which
+		 * only sets the access time not mod time, but that should be
+		 * enough in most cases).  In all paths, we ignore errors.
 		 */
 #ifdef HAVE_UTIME
 		utime(socketLockFile, NULL);
-#else /* !HAVE_UTIME */
+#else							/* !HAVE_UTIME */
 #ifdef HAVE_UTIMES
 		utimes(socketLockFile, NULL);
-#else /* !HAVE_UTIMES */
+#else							/* !HAVE_UTIMES */
 		int			fd;
 		char		buffer[1];
 
@@ -932,8 +933,8 @@ TouchSocketLockFile(void)
 			read(fd, buffer, sizeof(buffer));
 			close(fd);
 		}
-#endif /* HAVE_UTIMES */
-#endif /* HAVE_UTIME */
+#endif   /* HAVE_UTIMES */
+#endif   /* HAVE_UTIME */
 	}
 }
 
@@ -1072,13 +1073,13 @@ ValidatePgVersion(const char *path)
 
 	ret = fscanf(file, "%ld.%ld", &file_major, &file_minor);
 	if (ret != 2)
-			ereport(FATAL,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("\"%s\" is not a valid data directory",
-							path),
-					 errdetail("File \"%s\" does not contain valid data.",
-							   full_path),
-					 errhint("You may need to initdb.")));
+		ereport(FATAL,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("\"%s\" is not a valid data directory",
+						path),
+				 errdetail("File \"%s\" does not contain valid data.",
+						   full_path),
+				 errhint("You may need to initdb.")));
 
 	FreeFile(file);
 
@@ -1087,7 +1088,7 @@ ValidatePgVersion(const char *path)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("database files are incompatible with server"),
 				 errdetail("The data directory was initialized by PostgreSQL version %ld.%ld, "
-						   "which is not compatible with this version %s.",
+						 "which is not compatible with this version %s.",
 						   file_major, file_minor, version_string)));
 }
 
@@ -1098,6 +1099,7 @@ ValidatePgVersion(const char *path)
 
 #if defined(__mc68000__) && defined(__ELF__)
 typedef int32 ((*func_ptr) ());
+
 #else
 typedef char *((*func_ptr) ());
 #endif
@@ -1142,8 +1144,9 @@ process_preload_libraries(char *preload_libraries_string)
 		if (sep)
 		{
 			/*
-			 * a colon separator implies there is an initialization function
-			 * that we need to run in addition to loading the library
+			 * a colon separator implies there is an initialization
+			 * function that we need to run in addition to loading the
+			 * library
 			 */
 			size_t		filename_len = sep - tok;
 			size_t		funcname_len = strlen(tok) - filename_len - 1;
@@ -1167,7 +1170,7 @@ process_preload_libraries(char *preload_libraries_string)
 		initfunc = (func_ptr) load_external_function(filename, funcname,
 													 true, NULL);
 		if (initfunc)
-			(*initfunc)();
+			(*initfunc) ();
 
 		if (funcname)
 			ereport(LOG,
@@ -1186,4 +1189,3 @@ process_preload_libraries(char *preload_libraries_string)
 	pfree(rawstring);
 	freeList(elemlist);
 }
-

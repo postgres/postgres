@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.62 2003/07/19 20:20:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.63 2003/08/04 00:43:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,7 +96,7 @@ load_external_function(char *filename, char *funcname,
 		if (stat(fullname, &stat_buf) == -1)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not access file \"%s\": %m", fullname)));
+				  errmsg("could not access file \"%s\": %m", fullname)));
 
 		for (file_scanner = file_list;
 			 file_scanner != (DynamicFileList *) NULL &&
@@ -404,7 +404,7 @@ find_in_dynamic_libpath(const char *basename)
 		if (len == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_NAME),
-					 errmsg("zero-length component in DYNAMIC_LIBRARY_PATH")));
+			   errmsg("zero-length component in DYNAMIC_LIBRARY_PATH")));
 
 		piece = palloc(len + 1);
 		strncpy(piece, p, len);
@@ -417,7 +417,7 @@ find_in_dynamic_libpath(const char *basename)
 		if (!is_absolute_path(mangled))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_NAME),
-					 errmsg("DYNAMIC_LIBRARY_PATH component is not absolute")));
+			  errmsg("DYNAMIC_LIBRARY_PATH component is not absolute")));
 
 		full = palloc(strlen(mangled) + 1 + baselen + 1);
 		sprintf(full, "%s/%s", mangled, basename);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relscan.h,v 1.30 2003/01/08 19:41:40 tgl Exp $
+ * $Id: relscan.h,v 1.31 2003/08/04 00:43:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,8 +76,8 @@ typedef struct IndexScanDescData
 	 * the logical scan position for itself.  It does that using
 	 * unique_tuple_pos: -1 = before row, 0 = on row, +1 = after row.
 	 */
-	int			unique_tuple_pos; /* logical position */
-	int			unique_tuple_mark; /* logical marked position */
+	int			unique_tuple_pos;		/* logical position */
+	int			unique_tuple_mark;		/* logical marked position */
 
 	PgStat_Info xs_pgstat_info; /* statistics collector hook */
 } IndexScanDescData;

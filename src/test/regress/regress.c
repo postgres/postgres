@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.57 2003/07/27 21:49:55 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.58 2003/08/04 00:43:34 momjian Exp $
  */
 
 #include "postgres.h"
@@ -218,7 +218,7 @@ typedef struct
 }	WIDGET;
 
 WIDGET	   *widget_in(char *str);
-char	   *widget_out(WIDGET *widget);
+char	   *widget_out(WIDGET * widget);
 extern Datum pt_in_widget(PG_FUNCTION_ARGS);
 
 #define NARGS	3
@@ -250,7 +250,7 @@ widget_in(char *str)
 }
 
 char *
-widget_out(WIDGET *widget)
+widget_out(WIDGET * widget)
 {
 	char	   *result;
 

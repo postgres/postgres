@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.78 2003/08/01 21:27:27 tgl Exp $
+ * $Id: libpq-int.h,v 1.79 2003/08/04 00:43:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,16 +120,16 @@ typedef struct pgMessageField
 	struct pgMessageField *next;	/* list link */
 	char		code;			/* field code */
 	char		contents[1];	/* field value (VARIABLE LENGTH) */
-} PGMessageField;
+}	PGMessageField;
 
 /* Fields needed for notice handling */
 typedef struct
 {
-	PQnoticeReceiver noticeRec;		/* notice message receiver */
+	PQnoticeReceiver noticeRec; /* notice message receiver */
 	void	   *noticeRecArg;
-	PQnoticeProcessor noticeProc;	/* notice message processor */
+	PQnoticeProcessor noticeProc;		/* notice message processor */
 	void	   *noticeProcArg;
-} PGNoticeHooks;
+}	PGNoticeHooks;
 
 struct pg_result
 {
@@ -201,16 +201,16 @@ typedef struct PQEnvironmentOption
 {
 	const char *envName,		/* name of an environment variable */
 			   *pgName;			/* name of corresponding SET variable */
-} PQEnvironmentOption;
+}	PQEnvironmentOption;
 
 /* Typedef for parameter-status list entries */
 typedef struct pgParameterStatus
 {
-	struct pgParameterStatus *next;	/* list link */
+	struct pgParameterStatus *next;		/* list link */
 	char	   *name;			/* parameter name */
 	char	   *value;			/* parameter value */
 	/* Note: name and value are stored in same malloc block as struct is */
-} pgParameterStatus;
+}	pgParameterStatus;
 
 /* large-object-access data ... allocated only if large-object code is used. */
 typedef struct pgLobjfuncs
@@ -244,7 +244,7 @@ struct pg_conn
 								 * default constructed from pgport */
 	char	   *pgtty;			/* tty on which the backend messages is
 								 * displayed (OBSOLETE, NOT USED) */
-	char	   *connect_timeout; /* connection timeout (numeric string) */
+	char	   *connect_timeout;	/* connection timeout (numeric string) */
 	char	   *pgoptions;		/* options to start the backend with */
 	char	   *dbName;			/* database name */
 	char	   *pguser;			/* Postgres username and password, if any */
@@ -264,8 +264,9 @@ struct pg_conn
 	/* note: xactStatus never changes to ACTIVE */
 	int			nonblocking;	/* whether this connection is using a
 								 * blocking socket to the backend or not */
-	char		copy_is_binary;	/* 1 = copy binary, 0 = copy text */
-	int			copy_already_done; /* # bytes already returned in COPY OUT */
+	char		copy_is_binary; /* 1 = copy binary, 0 = copy text */
+	int			copy_already_done;		/* # bytes already returned in
+										 * COPY OUT */
 	Dllist	   *notifyList;		/* Notify msgs not yet handed to
 								 * application */
 
@@ -279,8 +280,8 @@ struct pg_conn
 	/* Transient state needed while establishing connection */
 	struct addrinfo *addrlist;	/* list of possible backend addresses */
 	struct addrinfo *addr_cur;	/* the one currently being tried */
-	int			addrlist_family; /* needed to know how to free addrlist */
-	PGSetenvStatusType setenv_state; /* for 2.0 protocol only */
+	int			addrlist_family;	/* needed to know how to free addrlist */
+	PGSetenvStatusType setenv_state;	/* for 2.0 protocol only */
 	const PQEnvironmentOption *next_eo;
 
 	/* Miscellaneous stuff */
@@ -288,9 +289,9 @@ struct pg_conn
 	int			be_key;			/* key of backend --- needed for cancels */
 	char		md5Salt[4];		/* password salt received from backend */
 	char		cryptSalt[2];	/* password salt received from backend */
-	pgParameterStatus *pstatus;	/* ParameterStatus data */
-	int			client_encoding; /* encoding id */
-	PGVerbosity	verbosity;		/* error/notice message verbosity */
+	pgParameterStatus *pstatus; /* ParameterStatus data */
+	int			client_encoding;	/* encoding id */
+	PGVerbosity verbosity;		/* error/notice message verbosity */
 	PGlobjfuncs *lobjfuncs;		/* private state for large-object access
 								 * fns */
 
@@ -309,8 +310,8 @@ struct pg_conn
 	int			outCount;		/* number of chars waiting in buffer */
 
 	/* State for constructing messages in outBuffer */
-	int			outMsgStart;	/* offset to msg start (length word);
-								 * if -1, msg has no length word */
+	int			outMsgStart;	/* offset to msg start (length word); if
+								 * -1, msg has no length word */
 	int			outMsgEnd;		/* offset to msg end (so far) */
 
 	/* Status for asynchronous result construction */
@@ -350,8 +351,8 @@ extern char *const pgresStatus[];
 
 /* === in fe-connect.c === */
 
-extern int	pqPacketSend(PGconn *conn, char pack_type,
-						 const void *buf, size_t buf_len);
+extern int pqPacketSend(PGconn *conn, char pack_type,
+			 const void *buf, size_t buf_len);
 
 /* === in fe-exec.c === */
 
@@ -362,14 +363,15 @@ extern char *pqResultStrdup(PGresult *res, const char *str);
 extern void pqClearAsyncResult(PGconn *conn);
 extern void pqSaveErrorResult(PGconn *conn);
 extern PGresult *pqPrepareAsyncResult(PGconn *conn);
-extern void pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt, ...)
+extern void
+pqInternalNotice(const PGNoticeHooks * hooks, const char *fmt,...)
 /* This lets gcc check the format string for consistency. */
 __attribute__((format(printf, 2, 3)));
-extern int	pqAddTuple(PGresult *res, PGresAttValue *tup);
+extern int	pqAddTuple(PGresult *res, PGresAttValue * tup);
 extern void pqSaveMessageField(PGresult *res, char code,
-							   const char *value);
+				   const char *value);
 extern void pqSaveParameterStatus(PGconn *conn, const char *name,
-								  const char *value);
+					  const char *value);
 extern void pqHandleSendFailure(PGconn *conn);
 
 /* === in fe-protocol2.c === */
@@ -377,21 +379,21 @@ extern void pqHandleSendFailure(PGconn *conn);
 extern PostgresPollingStatusType pqSetenvPoll(PGconn *conn);
 
 extern char *pqBuildStartupPacket2(PGconn *conn, int *packetlen,
-								   const PQEnvironmentOption *options);
+					  const PQEnvironmentOption * options);
 extern void pqParseInput2(PGconn *conn);
 extern int	pqGetCopyData2(PGconn *conn, char **buffer, int async);
 extern int	pqGetline2(PGconn *conn, char *s, int maxlen);
 extern int	pqGetlineAsync2(PGconn *conn, char *buffer, int bufsize);
 extern int	pqEndcopy2(PGconn *conn);
 extern PGresult *pqFunctionCall2(PGconn *conn, Oid fnid,
-								 int *result_buf, int *actual_result_len,
-								 int result_is_int,
-								 const PQArgBlock *args, int nargs);
+				int *result_buf, int *actual_result_len,
+				int result_is_int,
+				const PQArgBlock *args, int nargs);
 
 /* === in fe-protocol3.c === */
 
 extern char *pqBuildStartupPacket3(PGconn *conn, int *packetlen,
-								   const PQEnvironmentOption *options);
+					  const PQEnvironmentOption * options);
 extern void pqParseInput3(PGconn *conn);
 extern int	pqGetErrorNotice3(PGconn *conn, bool isError);
 extern int	pqGetCopyData3(PGconn *conn, char **buffer, int async);
@@ -399,9 +401,9 @@ extern int	pqGetline3(PGconn *conn, char *s, int maxlen);
 extern int	pqGetlineAsync3(PGconn *conn, char *buffer, int bufsize);
 extern int	pqEndcopy3(PGconn *conn);
 extern PGresult *pqFunctionCall3(PGconn *conn, Oid fnid,
-								 int *result_buf, int *actual_result_len,
-								 int result_is_int,
-								 const PQArgBlock *args, int nargs);
+				int *result_buf, int *actual_result_len,
+				int result_is_int,
+				const PQArgBlock *args, int nargs);
 
 /* === in fe-misc.c === */
 
@@ -425,8 +427,8 @@ extern int	pqPutMsgEnd(PGconn *conn);
 extern int	pqReadData(PGconn *conn);
 extern int	pqFlush(PGconn *conn);
 extern int	pqWait(int forRead, int forWrite, PGconn *conn);
-extern int	pqWaitTimed(int forRead, int forWrite, PGconn *conn, 
-						time_t finish_time);
+extern int pqWaitTimed(int forRead, int forWrite, PGconn *conn,
+			time_t finish_time);
 extern int	pqReadReady(PGconn *conn);
 extern int	pqWriteReady(PGconn *conn);
 

@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.27 2003/06/28 00:12:40 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.28 2003/08/04 00:43:29 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "large_obj.h"
@@ -20,7 +20,7 @@
 
 
 /*
- * Prepare to do a large-object operation.  We *must* be inside a transaction
+ * Prepare to do a large-object operation.	We *must* be inside a transaction
  * block for all these operations, so start one if needed.
  *
  * Returns TRUE if okay, FALSE if failed.  *own_transaction is set to indicate
@@ -241,7 +241,7 @@ do_lo_unlink(const char *loid_arg)
 	if (is_superuser())
 	{
 		snprintf(buf, sizeof(buf),
-				 "DELETE FROM pg_catalog.pg_description WHERE objoid = '%u' "
+			 "DELETE FROM pg_catalog.pg_description WHERE objoid = '%u' "
 				 "AND classoid = 'pg_catalog.pg_largeobject'::regclass",
 				 loid);
 		if (!(res = PSQLexec(buf, false)))

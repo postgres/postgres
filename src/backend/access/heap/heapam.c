@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.152 2003/07/21 20:29:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.153 2003/08/04 00:43:14 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1132,6 +1132,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 		xlhdr.t_natts = tup->t_data->t_natts;
 		xlhdr.t_infomask = tup->t_data->t_infomask;
 		xlhdr.t_hoff = tup->t_data->t_hoff;
+
 		/*
 		 * note we mark rdata[1] as belonging to buffer; if XLogInsert
 		 * decides to write the whole page to the xlog, we don't need to
@@ -1149,9 +1150,9 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 		rdata[2].next = NULL;
 
 		/*
-		 * If this is the single and first tuple on page, we can reinit the
-		 * page instead of restoring the whole thing.  Set flag, and hide
-		 * buffer references from XLogInsert.
+		 * If this is the single and first tuple on page, we can reinit
+		 * the page instead of restoring the whole thing.  Set flag, and
+		 * hide buffer references from XLogInsert.
 		 */
 		if (ItemPointerGetOffsetNumber(&(tup->t_self)) == FirstOffsetNumber &&
 			PageGetMaxOffsetNumber(page) == FirstOffsetNumber)
@@ -1912,7 +1913,7 @@ log_heap_clean(Relation reln, Buffer buffer, OffsetNumber *unused, int uncnt)
 
 	/*
 	 * The unused-offsets array is not actually in the buffer, but pretend
-	 * that it is.  When XLogInsert stores the whole buffer, the offsets
+	 * that it is.	When XLogInsert stores the whole buffer, the offsets
 	 * array need not be stored too.
 	 */
 	rdata[1].buffer = buffer;
@@ -1991,9 +1992,10 @@ log_heap_update(Relation reln, Buffer oldbuf, ItemPointerData from,
 			   2 * sizeof(TransactionId));
 		hsize += 2 * sizeof(TransactionId);
 	}
+
 	/*
-	 * As with insert records, we need not store the rdata[2] segment
-	 * if we decide to store the whole buffer instead.
+	 * As with insert records, we need not store the rdata[2] segment if
+	 * we decide to store the whole buffer instead.
 	 */
 	rdata[2].buffer = newbuf;
 	rdata[2].data = (char *) &xlhdr;

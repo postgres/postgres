@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/geqo_misc.c,v 1.37 2003/07/25 00:01:06 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/geqo_misc.c,v 1.38 2003/08/04 00:43:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ avg_pool(Pool *pool)
 
 	/*
 	 * Since the pool may contain multiple occurrences of DBL_MAX, divide
-	 * by pool->size before summing, not after, to avoid overflow.  This
+	 * by pool->size before summing, not after, to avoid overflow.	This
 	 * loses a little in speed and accuracy, but this routine is only used
 	 * for debug printouts, so we don't care that much.
 	 */

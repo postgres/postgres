@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.74 2003/07/25 00:01:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.75 2003/08/04 00:43:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,10 +25,10 @@
 typedef struct
 {
 	int			sublevels_up;
-} checkExprHasAggs_context;
+}	checkExprHasAggs_context;
 
 static bool checkExprHasAggs_walker(Node *node,
-									checkExprHasAggs_context *context);
+						checkExprHasAggs_context * context);
 static bool checkExprHasSubLink_walker(Node *node, void *context);
 static Relids offset_relid_set(Relids relids, int offset);
 static Relids adjust_relid_set(Relids relids, int oldrelid, int newrelid);
@@ -51,6 +51,7 @@ checkExprHasAggs(Node *node)
 	checkExprHasAggs_context context;
 
 	context.sublevels_up = 0;
+
 	/*
 	 * Must be prepared to start with a Query or a bare expression tree;
 	 * if it's a Query, we don't want to increment sublevels_up.
@@ -62,7 +63,7 @@ checkExprHasAggs(Node *node)
 }
 
 static bool
-checkExprHasAggs_walker(Node *node, checkExprHasAggs_context *context)
+checkExprHasAggs_walker(Node *node, checkExprHasAggs_context * context)
 {
 	if (node == NULL)
 		return false;
@@ -173,7 +174,7 @@ OffsetVarNodes_walker(Node *node, OffsetVarNodes_context *context)
 	}
 	if (IsA(node, InClauseInfo))
 	{
-		InClauseInfo   *ininfo = (InClauseInfo *) node;
+		InClauseInfo *ininfo = (InClauseInfo *) node;
 
 		if (context->sublevels_up == 0)
 		{
@@ -247,9 +248,7 @@ offset_relid_set(Relids relids, int offset)
 
 	tmprelids = bms_copy(relids);
 	while ((rtindex = bms_first_member(tmprelids)) >= 0)
-	{
 		result = bms_add_member(result, rtindex + offset);
-	}
 	bms_free(tmprelids);
 	return result;
 }
@@ -312,7 +311,7 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 	}
 	if (IsA(node, InClauseInfo))
 	{
-		InClauseInfo   *ininfo = (InClauseInfo *) node;
+		InClauseInfo *ininfo = (InClauseInfo *) node;
 
 		if (context->sublevels_up == 0)
 		{
@@ -530,7 +529,7 @@ rangeTableEntry_used_walker(Node *node,
 	}
 	if (IsA(node, InClauseInfo))
 	{
-		InClauseInfo   *ininfo = (InClauseInfo *) node;
+		InClauseInfo *ininfo = (InClauseInfo *) node;
 
 		if (context->sublevels_up == 0 &&
 			(bms_is_member(context->rt_index, ininfo->lefthand) ||

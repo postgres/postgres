@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.28 2003/07/28 00:09:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.29 2003/08/04 00:43:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,8 +93,8 @@ static Oid	object_classes[MAX_OCLASS];
 
 
 static void findAutoDeletableObjects(const ObjectAddress *object,
-									 ObjectAddresses *oktodelete,
-									 Relation depRel);
+						 ObjectAddresses *oktodelete,
+						 Relation depRel);
 static bool recursiveDeletion(const ObjectAddress *object,
 				  DropBehavior behavior,
 				  int msglevel,
@@ -102,11 +102,11 @@ static bool recursiveDeletion(const ObjectAddress *object,
 				  ObjectAddresses *oktodelete,
 				  Relation depRel);
 static bool deleteDependentObjects(const ObjectAddress *object,
-								   const char *objDescription,
-								   DropBehavior behavior,
-								   int msglevel,
-								   ObjectAddresses *oktodelete,
-								   Relation depRel);
+					   const char *objDescription,
+					   DropBehavior behavior,
+					   int msglevel,
+					   ObjectAddresses *oktodelete,
+					   Relation depRel);
 static void doDeletion(const ObjectAddress *object);
 static bool find_expr_references_walker(Node *node,
 							find_expr_references_context *context);
@@ -118,7 +118,7 @@ static void add_object_address(ObjectClasses oclass, Oid objectId, int32 subId,
 static void add_exact_object_address(const ObjectAddress *object,
 						 ObjectAddresses *addrs);
 static bool object_address_present(const ObjectAddress *object,
-				   ObjectAddresses *addrs);
+					   ObjectAddresses *addrs);
 static void term_object_addresses(ObjectAddresses *addrs);
 static void init_object_classes(void);
 static ObjectClasses getObjectClass(const ObjectAddress *object);
@@ -158,9 +158,9 @@ performDeletion(const ObjectAddress *object,
 
 	/*
 	 * Construct a list of objects that are reachable by AUTO or INTERNAL
-	 * dependencies from the target object.  These should be deleted silently,
-	 * even if the actual deletion pass first reaches one of them via a
-	 * non-auto dependency.
+	 * dependencies from the target object.  These should be deleted
+	 * silently, even if the actual deletion pass first reaches one of
+	 * them via a non-auto dependency.
 	 */
 	init_object_addresses(&oktodelete);
 
@@ -170,8 +170,8 @@ performDeletion(const ObjectAddress *object,
 						   NULL, &oktodelete, depRel))
 		ereport(ERROR,
 				(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
-				 errmsg("cannot drop %s because other objects depend on it",
-						objDescription),
+			  errmsg("cannot drop %s because other objects depend on it",
+					 objDescription),
 				 errhint("Use DROP ... CASCADE to drop the dependent objects too.")));
 
 	term_object_addresses(&oktodelete);
@@ -184,7 +184,7 @@ performDeletion(const ObjectAddress *object,
 
 /*
  * deleteWhatDependsOn: attempt to drop everything that depends on the
- * specified object, though not the object itself.  Behavior is always
+ * specified object, though not the object itself.	Behavior is always
  * CASCADE.
  *
  * This is currently used only to clean out the contents of a schema
@@ -212,9 +212,9 @@ deleteWhatDependsOn(const ObjectAddress *object,
 
 	/*
 	 * Construct a list of objects that are reachable by AUTO or INTERNAL
-	 * dependencies from the target object.  These should be deleted silently,
-	 * even if the actual deletion pass first reaches one of them via a
-	 * non-auto dependency.
+	 * dependencies from the target object.  These should be deleted
+	 * silently, even if the actual deletion pass first reaches one of
+	 * them via a non-auto dependency.
 	 */
 	init_object_addresses(&oktodelete);
 
@@ -266,9 +266,9 @@ findAutoDeletableObjects(const ObjectAddress *object,
 	ObjectAddress otherObject;
 
 	/*
-	 * If this object is already in oktodelete, then we already visited it;
-	 * don't do so again (this prevents infinite recursion if there's a loop
-	 * in pg_depend).  Otherwise, add it.
+	 * If this object is already in oktodelete, then we already visited
+	 * it; don't do so again (this prevents infinite recursion if there's
+	 * a loop in pg_depend).  Otherwise, add it.
 	 */
 	if (object_address_present(object, oktodelete))
 		return;
@@ -276,8 +276,8 @@ findAutoDeletableObjects(const ObjectAddress *object,
 
 	/*
 	 * Scan pg_depend records that link to this object, showing the things
-	 * that depend on it.  For each one that is AUTO or INTERNAL, visit the
-	 * referencing object.
+	 * that depend on it.  For each one that is AUTO or INTERNAL, visit
+	 * the referencing object.
 	 *
 	 * When dropping a whole object (subId = 0), find pg_depend records for
 	 * its sub-objects too.
@@ -319,6 +319,7 @@ findAutoDeletableObjects(const ObjectAddress *object,
 				findAutoDeletableObjects(&otherObject, oktodelete, depRel);
 				break;
 			case DEPENDENCY_PIN:
+
 				/*
 				 * For a PIN dependency we just ereport immediately; there
 				 * won't be any others to examine, and we aren't ever
@@ -461,11 +462,11 @@ recursiveDeletion(const ObjectAddress *object,
 					char	   *otherObjDesc = getObjectDescription(&otherObject);
 
 					ereport(ERROR,
-							(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
-							 errmsg("cannot drop %s because %s requires it",
-									objDescription, otherObjDesc),
-							 errhint("You may drop %s instead.",
-									 otherObjDesc)));
+						 (errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+						  errmsg("cannot drop %s because %s requires it",
+								 objDescription, otherObjDesc),
+						  errhint("You may drop %s instead.",
+								  otherObjDesc)));
 				}
 
 				/*
@@ -559,10 +560,9 @@ recursiveDeletion(const ObjectAddress *object,
 	/*
 	 * Step 2: scan pg_depend records that link to this object, showing
 	 * the things that depend on it.  Recursively delete those things.
-	 * Note it's important to delete the dependent objects
-	 * before the referenced one, since the deletion routines might do
-	 * things like try to update the pg_class record when deleting a check
-	 * constraint.
+	 * Note it's important to delete the dependent objects before the
+	 * referenced one, since the deletion routines might do things like
+	 * try to update the pg_class record when deleting a check constraint.
 	 */
 	if (!deleteDependentObjects(object, objDescription,
 								behavior, msglevel,
@@ -674,11 +674,12 @@ deleteDependentObjects(const ObjectAddress *object,
 		switch (foundDep->deptype)
 		{
 			case DEPENDENCY_NORMAL:
+
 				/*
 				 * Perhaps there was another dependency path that would
-				 * have allowed silent deletion of the otherObject, had
-				 * we only taken that path first.
-				 * In that case, act like this link is AUTO, too.
+				 * have allowed silent deletion of the otherObject, had we
+				 * only taken that path first. In that case, act like this
+				 * link is AUTO, too.
 				 */
 				if (object_address_present(&otherObject, oktodelete))
 					ereport(DEBUG2,
@@ -872,7 +873,7 @@ recordDependencyOnExpr(const ObjectAddress *depender,
  * recordDependencyOnSingleRelExpr - find expression dependencies
  *
  * As above, but only one relation is expected to be referenced (with
- * varno = 1 and varlevelsup = 0).  Pass the relation OID instead of a
+ * varno = 1 and varlevelsup = 0).	Pass the relation OID instead of a
  * range table.  An additional frammish is that dependencies on that
  * relation (or its component columns) will be marked with 'self_behavior',
  * whereas 'behavior' is used for everything else.
@@ -1001,7 +1002,7 @@ find_expr_references_walker(Node *node,
 		else if (rte->rtekind == RTE_JOIN)
 		{
 			/* Scan join output column to add references to join inputs */
-			List   *save_rtables;
+			List	   *save_rtables;
 
 			/* We must make the context appropriate for join's level */
 			save_rtables = context->rtables;
@@ -1026,7 +1027,7 @@ find_expr_references_walker(Node *node,
 	}
 	if (IsA(node, OpExpr))
 	{
-		OpExpr   *opexpr = (OpExpr *) node;
+		OpExpr	   *opexpr = (OpExpr *) node;
 
 		add_object_address(OCLASS_OPERATOR, opexpr->opno, 0,
 						   &context->addrs);
@@ -1034,7 +1035,7 @@ find_expr_references_walker(Node *node,
 	}
 	if (IsA(node, DistinctExpr))
 	{
-		DistinctExpr   *distinctexpr = (DistinctExpr *) node;
+		DistinctExpr *distinctexpr = (DistinctExpr *) node;
 
 		add_object_address(OCLASS_OPERATOR, distinctexpr->opno, 0,
 						   &context->addrs);
@@ -1042,7 +1043,7 @@ find_expr_references_walker(Node *node,
 	}
 	if (IsA(node, ScalarArrayOpExpr))
 	{
-		ScalarArrayOpExpr   *opexpr = (ScalarArrayOpExpr *) node;
+		ScalarArrayOpExpr *opexpr = (ScalarArrayOpExpr *) node;
 
 		add_object_address(OCLASS_OPERATOR, opexpr->opno, 0,
 						   &context->addrs);
@@ -1066,7 +1067,7 @@ find_expr_references_walker(Node *node,
 	}
 	if (IsA(node, SubLink))
 	{
-		SubLink	   *sublink = (SubLink *) node;
+		SubLink    *sublink = (SubLink *) node;
 		List	   *opid;
 
 		foreach(opid, sublink->operOids)
@@ -1092,7 +1093,8 @@ find_expr_references_walker(Node *node,
 		 * Add whole-relation refs for each plain relation mentioned in
 		 * the subquery's rtable.  (Note: query_tree_walker takes care of
 		 * recursing into RTE_FUNCTION and RTE_SUBQUERY RTEs, so no need
-		 * to do that here.  But keep it from looking at join alias lists.)
+		 * to do that here.  But keep it from looking at join alias
+		 * lists.)
 		 */
 		foreach(rtable, query->rtable)
 		{

@@ -9,19 +9,19 @@
  * if we run out of memory, it's important to be able to report that fact.
  * There are a number of considerations that go into this.
  *
- * First, distinguish between re-entrant use and actual recursion.  It
+ * First, distinguish between re-entrant use and actual recursion.	It
  * is possible for an error or warning message to be emitted while the
- * parameters for an error message are being computed.  In this case
+ * parameters for an error message are being computed.	In this case
  * errstart has been called for the outer message, and some field values
- * may have already been saved, but we are not actually recursing.  We handle
- * this by providing a (small) stack of ErrorData records.  The inner message
+ * may have already been saved, but we are not actually recursing.	We handle
+ * this by providing a (small) stack of ErrorData records.	The inner message
  * can be computed and sent without disturbing the state of the outer message.
  * (If the inner message is actually an error, this isn't very interesting
  * because control won't come back to the outer message generator ... but
  * if the inner message is only debug or log data, this is critical.)
  *
  * Second, actual recursion will occur if an error is reported by one of
- * the elog.c routines or something they call.  By far the most probable
+ * the elog.c routines or something they call.	By far the most probable
  * scenario of this sort is "out of memory"; and it's also the nastiest
  * to handle because we'd likely also run out of memory while trying to
  * report this error!  Our escape hatch for this condition is to force any
@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.116 2003/08/03 23:44:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.117 2003/08/04 00:43:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,8 +69,9 @@ ErrorContextCallback *error_context_stack = NULL;
 
 /* GUC parameters */
 PGErrorVerbosity Log_error_verbosity = PGERROR_VERBOSE;
-bool		Log_timestamp = false;	/* show timestamps in stderr output */
-bool		Log_pid = false;		/* show PIDs in stderr output */
+bool		Log_timestamp = false;		/* show timestamps in stderr
+										 * output */
+bool		Log_pid = false;	/* show PIDs in stderr output */
 
 #ifdef HAVE_SYSLOG
 /*
@@ -88,8 +89,7 @@ static void write_syslog(int level, const char *line);
 #else
 
 #define Use_syslog 0
-
-#endif /* HAVE_SYSLOG */
+#endif   /* HAVE_SYSLOG */
 
 
 /*
@@ -102,8 +102,8 @@ static void write_syslog(int level, const char *line);
 typedef struct ErrorData
 {
 	int			elevel;			/* error level */
-	bool		output_to_server; /* will report to server log? */
-	bool		output_to_client; /* will report to client? */
+	bool		output_to_server;		/* will report to server log? */
+	bool		output_to_client;		/* will report to client? */
 	bool		show_funcname;	/* true to force funcname inclusion */
 	const char *filename;		/* __FILE__ of ereport() call */
 	int			lineno;			/* __LINE__ of ereport() call */
@@ -115,7 +115,7 @@ typedef struct ErrorData
 	char	   *context;		/* context message */
 	int			cursorpos;		/* cursor index into query string */
 	int			saved_errno;	/* errno at entry */
-} ErrorData;
+}	ErrorData;
 
 /* We provide a small stack of ErrorData records for re-entrant cases */
 #define ERRORDATA_STACK_SIZE  5
@@ -124,7 +124,7 @@ static ErrorData errordata[ERRORDATA_STACK_SIZE];
 
 static int	errordata_stack_depth = -1; /* index of topmost active frame */
 
-static int	recursion_depth = 0;		/* to detect actual recursion */
+static int	recursion_depth = 0;	/* to detect actual recursion */
 
 
 /* Macro for checking errordata_stack_depth is reasonable */
@@ -138,9 +138,9 @@ static int	recursion_depth = 0;		/* to detect actual recursion */
 	} while (0)
 
 
-static void send_message_to_server_log(ErrorData *edata);
-static void send_message_to_frontend(ErrorData *edata);
-static char *expand_fmt_string(const char *fmt, ErrorData *edata);
+static void send_message_to_server_log(ErrorData * edata);
+static void send_message_to_frontend(ErrorData * edata);
+static char *expand_fmt_string(const char *fmt, ErrorData * edata);
 static const char *useful_strerror(int errnum);
 static const char *error_severity(int elevel);
 static const char *print_timestamp(void);
@@ -167,9 +167,9 @@ errstart(int elevel, const char *filename, int lineno,
 	bool		output_to_client = false;
 
 	/*
-	 * First decide whether we need to process this report at all;
-	 * if it's warning or less and not enabled for logging, just
-	 * return FALSE without starting up any error logging machinery.
+	 * First decide whether we need to process this report at all; if it's
+	 * warning or less and not enabled for logging, just return FALSE
+	 * without starting up any error logging machinery.
 	 */
 
 	/*
@@ -246,15 +246,16 @@ errstart(int elevel, const char *filename, int lineno,
 	if (recursion_depth++ > 0)
 	{
 		/*
-		 * Ooops, error during error processing.  Clear ErrorContext and force
-		 * level up to ERROR or greater, as discussed at top of file.  Adjust
-		 * output decisions too.
+		 * Ooops, error during error processing.  Clear ErrorContext and
+		 * force level up to ERROR or greater, as discussed at top of
+		 * file.  Adjust output decisions too.
 		 */
 		MemoryContextReset(ErrorContext);
 		output_to_server = true;
 		if (whereToSendOutput == Remote && elevel != COMMERROR)
 			output_to_client = true;
 		elevel = Max(elevel, ERROR);
+
 		/*
 		 * If we recurse more than once, the problem might be something
 		 * broken in a context traceback routine.  Abandon them too.
@@ -265,9 +266,10 @@ errstart(int elevel, const char *filename, int lineno,
 	if (++errordata_stack_depth >= ERRORDATA_STACK_SIZE)
 	{
 		/* Wups, stack not big enough */
-		int		i;
+		int			i;
 
 		elevel = Max(elevel, ERROR);
+
 		/*
 		 * Don't forget any FATAL/PANIC status on the stack (see comments
 		 * in errfinish)
@@ -311,7 +313,7 @@ errstart(int elevel, const char *filename, int lineno,
  * See elog.h for the error level definitions.
  */
 void
-errfinish(int dummy, ...)
+errfinish(int dummy,...)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
 	int			elevel = edata->elevel;
@@ -322,8 +324,8 @@ errfinish(int dummy, ...)
 	CHECK_STACK_DEPTH();
 
 	/*
-	 * Do processing in ErrorContext, which we hope has enough reserved space
-	 * to report an error.
+	 * Do processing in ErrorContext, which we hope has enough reserved
+	 * space to report an error.
 	 */
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
@@ -335,9 +337,7 @@ errfinish(int dummy, ...)
 	for (econtext = error_context_stack;
 		 econtext != NULL;
 		 econtext = econtext->previous)
-	{
 		(*econtext->callback) (econtext->arg);
-	}
 
 	/* Send to server log, if enabled */
 	if (edata->output_to_server)
@@ -374,15 +374,15 @@ errfinish(int dummy, ...)
 
 	/*
 	 * If the error level is ERROR or more, we are not going to return to
-	 * caller; therefore, if there is any stacked error already in progress
-	 * it will be lost.  This is more or less okay, except we do not want
-	 * to have a FATAL or PANIC error downgraded because the reporting process
-	 * was interrupted by a lower-grade error.  So check the stack and make
-	 * sure we panic if panic is warranted.
+	 * caller; therefore, if there is any stacked error already in
+	 * progress it will be lost.  This is more or less okay, except we do
+	 * not want to have a FATAL or PANIC error downgraded because the
+	 * reporting process was interrupted by a lower-grade error.  So check
+	 * the stack and make sure we panic if panic is warranted.
 	 */
 	if (elevel >= ERROR)
 	{
-		int		i;
+		int			i;
 
 		for (i = 0; i <= errordata_stack_depth; i++)
 			elevel = Max(elevel, errordata[i].elevel);
@@ -415,23 +415,24 @@ errfinish(int dummy, ...)
 		/*
 		 * For a FATAL error, we let proc_exit clean up and exit.
 		 *
-		 * There are several other cases in which we treat ERROR as FATAL
-		 * and go directly to proc_exit:
+		 * There are several other cases in which we treat ERROR as FATAL and
+		 * go directly to proc_exit:
 		 *
 		 * 1. ExitOnAnyError mode switch is set (initdb uses this).
-		 * 
-		 * 2. we have not yet entered the main backend loop (ie, we are in
-		 * the postmaster or in backend startup); we have noplace to recover.
 		 *
-		 * 3. the error occurred after proc_exit has begun to run.  (It's
+		 * 2. we have not yet entered the main backend loop (ie, we are in
+		 * the postmaster or in backend startup); we have noplace to
+		 * recover.
+		 *
+		 * 3. the error occurred after proc_exit has begun to run.	(It's
 		 * proc_exit's responsibility to see that this doesn't turn into
 		 * infinite recursion!)
 		 *
 		 * In the last case, we exit with nonzero exit code to indicate that
-		 * something's pretty wrong.  We also want to exit with nonzero exit
-		 * code if not running under the postmaster (for example, if we are
-		 * being run from the initdb script, we'd better return an error
-		 * status).
+		 * something's pretty wrong.  We also want to exit with nonzero
+		 * exit code if not running under the postmaster (for example, if
+		 * we are being run from the initdb script, we'd better return an
+		 * error status).
 		 */
 		if (elevel == FATAL ||
 			ExitOnAnyError ||
@@ -469,8 +470,8 @@ errfinish(int dummy, ...)
 		 * Serious crash time. Postmaster will observe nonzero process
 		 * exit status and kill the other backends too.
 		 *
-		 * XXX: what if we are *in* the postmaster?  abort() won't kill
-		 * our children...
+		 * XXX: what if we are *in* the postmaster?  abort() won't kill our
+		 * children...
 		 */
 		ImmediateInterruptOK = false;
 		fflush(stdout);
@@ -504,7 +505,7 @@ errcode(int sqlerrcode)
 /*
  * errcode_for_file_access --- add SQLSTATE error code to the current error
  *
- * The SQLSTATE code is chosen based on the saved errno value.  We assume
+ * The SQLSTATE code is chosen based on the saved errno value.	We assume
  * that the failing operation was some type of disk file access.
  *
  * NOTE: the primary error message string should generally include %m
@@ -520,7 +521,7 @@ errcode_for_file_access(void)
 
 	switch (edata->saved_errno)
 	{
-		/* Permission-denied failures */
+			/* Permission-denied failures */
 		case EPERM:				/* Not super-user */
 		case EACCES:			/* Permission denied */
 #ifdef EROFS
@@ -529,24 +530,24 @@ errcode_for_file_access(void)
 			edata->sqlerrcode = ERRCODE_INSUFFICIENT_PRIVILEGE;
 			break;
 
-		/* Object not found */
+			/* Object not found */
 		case ENOENT:			/* No such file or directory */
 			edata->sqlerrcode = ERRCODE_UNDEFINED_OBJECT;
 			break;
 
-		/* Duplicate object */
+			/* Duplicate object */
 		case EEXIST:			/* File exists */
 			edata->sqlerrcode = ERRCODE_DUPLICATE_OBJECT;
 			break;
 
-		/* Wrong object type or state */
+			/* Wrong object type or state */
 		case ENOTDIR:			/* Not a directory */
 		case EISDIR:			/* Is a directory */
-		case ENOTEMPTY:			/* Directory not empty */
+		case ENOTEMPTY: /* Directory not empty */
 			edata->sqlerrcode = ERRCODE_WRONG_OBJECT_TYPE;
 			break;
 
-		/* Insufficient resources */
+			/* Insufficient resources */
 		case ENOSPC:			/* No space left on device */
 			edata->sqlerrcode = ERRCODE_DISK_FULL;
 			break;
@@ -556,12 +557,12 @@ errcode_for_file_access(void)
 			edata->sqlerrcode = ERRCODE_INSUFFICIENT_RESOURCES;
 			break;
 
-		/* Hardware failure */
+			/* Hardware failure */
 		case EIO:				/* I/O error */
 			edata->sqlerrcode = ERRCODE_IO_ERROR;
 			break;
 
-		/* All else is classified as internal errors */
+			/* All else is classified as internal errors */
 		default:
 			edata->sqlerrcode = ERRCODE_INTERNAL_ERROR;
 			break;
@@ -573,7 +574,7 @@ errcode_for_file_access(void)
 /*
  * errcode_for_socket_access --- add SQLSTATE error code to the current error
  *
- * The SQLSTATE code is chosen based on the saved errno value.  We assume
+ * The SQLSTATE code is chosen based on the saved errno value.	We assume
  * that the failing operation was some type of socket access.
  *
  * NOTE: the primary error message string should generally include %m
@@ -589,7 +590,7 @@ errcode_for_socket_access(void)
 
 	switch (edata->saved_errno)
 	{
-		/* Loss of connection */
+			/* Loss of connection */
 		case EPIPE:
 #ifdef ECONNRESET
 		case ECONNRESET:
@@ -597,7 +598,7 @@ errcode_for_socket_access(void)
 			edata->sqlerrcode = ERRCODE_CONNECTION_FAILURE;
 			break;
 
-		/* All else is classified as internal errors */
+			/* All else is classified as internal errors */
 		default:
 			edata->sqlerrcode = ERRCODE_INTERNAL_ERROR;
 			break;
@@ -611,7 +612,7 @@ errcode_for_socket_access(void)
  * This macro handles expansion of a format string and associated parameters;
  * it's common code for errmsg(), errdetail(), etc.  Must be called inside
  * a routine that is declared like "const char *fmt, ..." and has an edata
- * pointer set up.  The message is assigned to edata->targetfield, or
+ * pointer set up.	The message is assigned to edata->targetfield, or
  * appended to it if appendval is true.
  *
  * Note: we pstrdup the buffer rather than just transferring its storage
@@ -661,7 +662,7 @@ errcode_for_socket_access(void)
  * ereport will provide one for the output methods that need it.
  */
 int
-errmsg(const char *fmt, ...)
+errmsg(const char *fmt,...)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
 	MemoryContext oldcontext;
@@ -687,7 +688,7 @@ errmsg(const char *fmt, ...)
  * spending translation effort on.
  */
 int
-errmsg_internal(const char *fmt, ...)
+errmsg_internal(const char *fmt,...)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
 	MemoryContext oldcontext;
@@ -708,7 +709,7 @@ errmsg_internal(const char *fmt, ...)
  * errdetail --- add a detail error message text to the current error
  */
 int
-errdetail(const char *fmt, ...)
+errdetail(const char *fmt,...)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
 	MemoryContext oldcontext;
@@ -729,7 +730,7 @@ errdetail(const char *fmt, ...)
  * errhint --- add a hint error message text to the current error
  */
 int
-errhint(const char *fmt, ...)
+errhint(const char *fmt,...)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
 	MemoryContext oldcontext;
@@ -754,7 +755,7 @@ errhint(const char *fmt, ...)
  * states.
  */
 int
-errcontext(const char *fmt, ...)
+errcontext(const char *fmt,...)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
 	MemoryContext oldcontext;
@@ -816,7 +817,7 @@ errposition(int cursorpos)
  * the true elevel.
  */
 void
-elog_finish(int elevel, const char *fmt, ...)
+elog_finish(int elevel, const char *fmt,...)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
 	MemoryContext oldcontext;
@@ -870,7 +871,7 @@ DebugFileOpen(void)
 					   0666)) < 0)
 			ereport(FATAL,
 					(errcode_for_file_access(),
-					 errmsg("failed to open \"%s\": %m", OutputFileName)));
+				   errmsg("failed to open \"%s\": %m", OutputFileName)));
 		istty = isatty(fd);
 		close(fd);
 
@@ -1016,7 +1017,6 @@ write_syslog(int level, const char *line)
 		syslog(level, "[%lu] %s", seq, line);
 	}
 }
-
 #endif   /* HAVE_SYSLOG */
 
 
@@ -1024,9 +1024,9 @@ write_syslog(int level, const char *line)
  * Write error report to server's log
  */
 static void
-send_message_to_server_log(ErrorData *edata)
+send_message_to_server_log(ErrorData * edata)
 {
-	StringInfoData	buf;
+	StringInfoData buf;
 
 	initStringInfo(&buf);
 
@@ -1035,9 +1035,9 @@ send_message_to_server_log(ErrorData *edata)
 	if (Log_error_verbosity >= PGERROR_VERBOSE)
 	{
 		/* unpack MAKE_SQLSTATE code */
-		char	tbuf[12];
-		int		ssval;
-		int		i;
+		char		tbuf[12];
+		int			ssval;
+		int			i;
 
 		ssval = edata->sqlerrcode;
 		for (i = 0; i < 5; i++)
@@ -1080,9 +1080,10 @@ send_message_to_server_log(ErrorData *edata)
 	}
 
 	/*
-	 * If the user wants the query that generated this error logged, do so.
-	 * We use debug_query_string to get at the query, which is kinda useless
-	 * for queries triggered by extended query protocol; how to improve?
+	 * If the user wants the query that generated this error logged, do
+	 * so. We use debug_query_string to get at the query, which is kinda
+	 * useless for queries triggered by extended query protocol; how to
+	 * improve?
 	 */
 	if (edata->elevel >= log_min_error_statement && debug_query_string != NULL)
 		appendStringInfo(&buf, gettext("STATEMENT:  %s\n"),
@@ -1150,7 +1151,7 @@ send_message_to_server_log(ErrorData *edata)
  * Write error report to client
  */
 static void
-send_message_to_frontend(ErrorData *edata)
+send_message_to_frontend(ErrorData * edata)
 {
 	StringInfoData msgbuf;
 
@@ -1160,9 +1161,9 @@ send_message_to_frontend(ErrorData *edata)
 	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
 	{
 		/* New style with separate fields */
-		char	tbuf[12];
-		int		ssval;
-		int		i;
+		char		tbuf[12];
+		int			ssval;
+		int			i;
 
 		pq_sendbyte(&msgbuf, 'S');
 		pq_sendstring(&msgbuf, error_severity(edata->elevel));
@@ -1230,7 +1231,7 @@ send_message_to_frontend(ErrorData *edata)
 			pq_sendstring(&msgbuf, edata->funcname);
 		}
 
-		pq_sendbyte(&msgbuf, '\0');	/* terminator */
+		pq_sendbyte(&msgbuf, '\0');		/* terminator */
 	}
 	else
 	{
@@ -1288,9 +1289,9 @@ send_message_to_frontend(ErrorData *edata)
  * The result is a palloc'd string.
  */
 static char *
-expand_fmt_string(const char *fmt, ErrorData *edata)
+expand_fmt_string(const char *fmt, ErrorData * edata)
 {
-	StringInfoData	buf;
+	StringInfoData buf;
 	const char *cp;
 
 	initStringInfo(&buf);
@@ -1303,9 +1304,9 @@ expand_fmt_string(const char *fmt, ErrorData *edata)
 			if (*cp == 'm')
 			{
 				/*
-				 * Replace %m by system error string.  If there are any %'s
-				 * in the string, we'd better double them so that vsnprintf
-				 * won't misinterpret.
+				 * Replace %m by system error string.  If there are any
+				 * %'s in the string, we'd better double them so that
+				 * vsnprintf won't misinterpret.
 				 */
 				const char *cp2;
 
@@ -1340,7 +1341,7 @@ useful_strerror(int errnum)
 {
 	/* this buffer is only used if errno has a bogus value */
 	static char errorstr_buf[48];
-	const char   *str;
+	const char *str;
 
 	str = strerror(errnum);
 

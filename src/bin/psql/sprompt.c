@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/Attic/sprompt.c,v 1.5 2003/07/27 03:32:26 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/Attic/sprompt.c,v 1.6 2003/08/04 00:43:29 momjian Exp $
  */
 
 
@@ -46,10 +46,11 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 #ifdef HAVE_TERMIOS_H
 	struct termios t_orig,
 				t;
+
 #else
 #ifdef WIN32
-	HANDLE t;
-	LPDWORD t_orig;
+	HANDLE		t;
+	LPDWORD		t_orig;
 #endif
 #endif
 
@@ -88,14 +89,14 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 	if (!echo)
 	{
 		/* get a new handle to turn echo off */
-		t_orig=(LPDWORD)malloc(sizeof(DWORD));
-		t=GetStdHandle(STD_INPUT_HANDLE);
+		t_orig = (LPDWORD) malloc(sizeof(DWORD));
+		t = GetStdHandle(STD_INPUT_HANDLE);
 
 		/* save the old configuration first */
 		GetConsoleMode(t, t_orig);
 
 		/* set to the new mode */
-		SetConsoleMode(t, ENABLE_LINE_INPUT|ENABLE_PROCESSED_INPUT);
+		SetConsoleMode(t, ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT);
 	}
 #endif
 #endif

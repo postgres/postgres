@@ -134,8 +134,8 @@ check_primary_key(PG_FUNCTION_ARGS)
 		if (fnumber < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
-					 errmsg("there is no attribute \"%s\" in relation \"%s\"",
-							args[i], SPI_getrelname(rel))));
+				errmsg("there is no attribute \"%s\" in relation \"%s\"",
+					   args[i], SPI_getrelname(rel))));
 
 		/* Well, get binary (in internal format) value of column */
 		kvals[i] = SPI_getbinval(tuple, tupdesc, fnumber, &isnull);
@@ -365,8 +365,8 @@ check_foreign_key(PG_FUNCTION_ARGS)
 		if (fnumber < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
-					 errmsg("there is no attribute \"%s\" in relation \"%s\"",
-							args[i], SPI_getrelname(rel))));
+				errmsg("there is no attribute \"%s\" in relation \"%s\"",
+					   args[i], SPI_getrelname(rel))));
 
 		/* Well, get binary (in internal format) value of column */
 		kvals[i] = SPI_getbinval(trigtuple, tupdesc, fnumber, &isnull);
@@ -591,7 +591,7 @@ check_foreign_key(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
 						 errmsg("\"%s\": tuple is referenced in \"%s\"",
-						 trigger->tgname, relname)));
+								trigger->tgname, relname)));
 		}
 		else
 		{

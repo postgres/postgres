@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.59 2003/07/27 21:49:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.60 2003/08/04 00:43:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,6 +163,7 @@ main(int argc, char *argv[])
 	{
 #ifndef WIN32
 #ifndef __BEOS__
+
 		/*
 		 * Make sure we are not running as root.
 		 *
@@ -175,8 +176,8 @@ main(int argc, char *argv[])
 					gettext("\"root\" execution of the PostgreSQL server is not permitted.\n"
 							"The server must be started under an unprivileged user id to prevent\n"
 							"possible system security compromise.  See the documentation for\n"
-							"more information on how to properly start the server.\n"
-						));
+				"more information on how to properly start the server.\n"
+							));
 			exit(1);
 		}
 #endif   /* !__BEOS__ */
@@ -193,16 +194,16 @@ main(int argc, char *argv[])
 		if (getuid() != geteuid())
 		{
 			fprintf(stderr,
-					gettext("%s: real and effective user ids must match\n"),
+				 gettext("%s: real and effective user ids must match\n"),
 					argv[0]);
 			exit(1);
 		}
-#endif	/* !WIN32 */
+#endif   /* !WIN32 */
 	}
 
 	/*
-	 * Now dispatch to one of PostmasterMain, PostgresMain, GucInfoMain, or
-	 * BootstrapMain depending on the program name (and possibly first
+	 * Now dispatch to one of PostmasterMain, PostgresMain, GucInfoMain,
+	 * or BootstrapMain depending on the program name (and possibly first
 	 * argument) we were called with.  The lack of consistency here is
 	 * historical.
 	 */
@@ -223,8 +224,8 @@ main(int argc, char *argv[])
 
 	/*
 	 * If the first argument is "--help-config", then invoke runtime
-	 * configuration option display mode.
-	 * We remove "--help-config" from the arguments passed on to GucInfoMain.
+	 * configuration option display mode. We remove "--help-config" from
+	 * the arguments passed on to GucInfoMain.
 	 */
 	if (argc > 1 && strcmp(new_argv[1], "--help-config") == 0)
 		exit(GucInfoMain(argc - 1, new_argv + 1));
@@ -246,7 +247,7 @@ main(int argc, char *argv[])
 	pw_name_persist = strdup(pw->pw_name);
 #else
 	{
-		long namesize = 256 /* UNLEN */ + 1;	
+		long		namesize = 256 /* UNLEN */ + 1;
 
 		pw_name_persist = malloc(namesize);
 		if (!GetUserName(pw_name_persist, &namesize))

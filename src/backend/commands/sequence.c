@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.99 2003/08/01 00:15:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.100 2003/08/04 00:43:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@ static SeqTable seqtab = NULL;	/* Head of list of SeqTable items */
 
 
 static void init_sequence(RangeVar *relation,
-						  SeqTable *p_elm, Relation *p_rel);
+			  SeqTable *p_elm, Relation *p_rel);
 static Form_pg_sequence read_info(SeqTable elm, Relation rel, Buffer *buf);
 static void init_params(List *options, Form_pg_sequence new);
 static void do_setval(RangeVar *sequence, int64 next, bool iscalled);
@@ -97,10 +97,10 @@ DefineSequence(CreateSeqStmt *seq)
 	/* Values are NULL (or false) by default */
 	new.last_value = 0;
 	new.increment_by = 0;
-	new.max_value = 0; 
+	new.max_value = 0;
 	new.min_value = 0;
 	new.cache_value = 0;
-	new.is_cycled = false; 
+	new.is_cycled = false;
 
 	/* Check and set values */
 	init_params(seq->options, &new);
@@ -299,10 +299,10 @@ DefineSequence(CreateSeqStmt *seq)
 /*
  * AlterSequence
  *
- * Modify the defition of a sequence relation 
+ * Modify the defition of a sequence relation
  */
 void
-AlterSequence(AlterSeqStmt *stmt)
+AlterSequence(AlterSeqStmt * stmt)
 {
 	SeqTable	elm;
 	Relation	seqrel;
@@ -324,7 +324,7 @@ AlterSequence(AlterSeqStmt *stmt)
 	page = BufferGetPage(buf);
 
 	new.increment_by = seq->increment_by;
-	new.max_value = seq->max_value; 
+	new.max_value = seq->max_value;
 	new.min_value = seq->min_value;
 	new.cache_value = seq->cache_value;
 	new.is_cycled = seq->is_cycled;
@@ -346,9 +346,9 @@ AlterSequence(AlterSeqStmt *stmt)
 	}
 
 	/* save info in local cache */
-	elm->last = new.last_value;		/* last returned number */
-	elm->cached = new.last_value;	/* last cached number (forget cached
-									 * values) */
+	elm->last = new.last_value; /* last returned number */
+	elm->cached = new.last_value;		/* last cached number (forget
+										 * cached values) */
 
 	START_CRIT_SECTION();
 
@@ -494,9 +494,9 @@ nextval(PG_FUNCTION_ARGS)
 
 					snprintf(buf, sizeof(buf), INT64_FORMAT, maxv);
 					ereport(ERROR,
-							(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-							 errmsg("%s.nextval: reached MAXVALUE (%s)",
-									sequence->relname, buf)));
+					  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					   errmsg("%s.nextval: reached MAXVALUE (%s)",
+							  sequence->relname, buf)));
 				}
 				next = minv;
 			}
@@ -517,9 +517,9 @@ nextval(PG_FUNCTION_ARGS)
 
 					snprintf(buf, sizeof(buf), INT64_FORMAT, minv);
 					ereport(ERROR,
-							(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-							 errmsg("%s.nextval: reached MINVALUE (%s)",
-									sequence->relname, buf)));
+					  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					   errmsg("%s.nextval: reached MINVALUE (%s)",
+							  sequence->relname, buf)));
 				}
 				next = maxv;
 			}
@@ -895,9 +895,9 @@ init_params(List *options, Form_pg_sequence new)
 						 errmsg("conflicting or redundant options")));
 			increment_by = defel;
 		}
+
 		/*
-		 * start is for a new sequence
-		 * restart is for alter
+		 * start is for a new sequence restart is for alter
 		 */
 		else if (strcmp(defel->defname, "start") == 0 ||
 				 strcmp(defel->defname, "restart") == 0)
@@ -963,9 +963,9 @@ init_params(List *options, Form_pg_sequence new)
 		|| (max_value != (DefElem *) NULL && !max_value->arg))
 	{
 		if (new->increment_by > 0)
-			new->max_value = SEQ_MAXVALUE;	/* ascending seq */
+			new->max_value = SEQ_MAXVALUE;		/* ascending seq */
 		else
-			new->max_value = -1;			/* descending seq */
+			new->max_value = -1;	/* descending seq */
 	}
 	else if (max_value != (DefElem *) NULL)
 		new->max_value = defGetInt64(max_value);
@@ -975,9 +975,9 @@ init_params(List *options, Form_pg_sequence new)
 		|| (min_value != (DefElem *) NULL && !min_value->arg))
 	{
 		if (new->increment_by > 0)
-			new->min_value = 1;				/* ascending seq */
+			new->min_value = 1; /* ascending seq */
 		else
-			new->min_value = SEQ_MINVALUE;	/* descending seq */
+			new->min_value = SEQ_MINVALUE;		/* descending seq */
 	}
 	else if (min_value != (DefElem *) NULL)
 		new->min_value = defGetInt64(min_value);
@@ -996,7 +996,7 @@ init_params(List *options, Form_pg_sequence new)
 	}
 
 	/* START WITH */
-	if (new->last_value == 0 && last_value == (DefElem *) NULL) 
+	if (new->last_value == 0 && last_value == (DefElem *) NULL)
 	{
 		if (new->increment_by > 0)
 			new->last_value = new->min_value;	/* ascending seq */
@@ -1015,8 +1015,8 @@ init_params(List *options, Form_pg_sequence new)
 		snprintf(bufm, sizeof(bufm), INT64_FORMAT, new->min_value);
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("START value (%s) can't be less than MINVALUE (%s)",
-						bufs, bufm)));
+			  errmsg("START value (%s) can't be less than MINVALUE (%s)",
+					 bufs, bufm)));
 	}
 	if (new->last_value > new->max_value)
 	{
@@ -1027,8 +1027,8 @@ init_params(List *options, Form_pg_sequence new)
 		snprintf(bufm, sizeof(bufm), INT64_FORMAT, new->max_value);
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("START value (%s) can't be greater than MAXVALUE (%s)",
-						bufs, bufm)));
+		   errmsg("START value (%s) can't be greater than MAXVALUE (%s)",
+				  bufs, bufm)));
 	}
 
 	/* CACHE */

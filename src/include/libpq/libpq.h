@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.58 2003/06/12 07:36:51 momjian Exp $
+ * $Id: libpq.h,v 1.59 2003/08/04 00:43:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,8 +46,8 @@ typedef struct
  * prototypes for functions in pqcomm.c
  */
 extern int StreamServerPort(int family, char *hostName,
-	unsigned short portNumber, char *unixSocketName, int ListenSocket[],
-	int MaxListen);
+	 unsigned short portNumber, char *unixSocketName, int ListenSocket[],
+				 int MaxListen);
 extern int	StreamConnection(int server_fd, Port *port);
 extern void StreamClose(int sock);
 extern void TouchSocketFile(void);
@@ -66,11 +66,11 @@ extern void pq_endcopyout(bool errorAbort);
 /*
  * prototypes for functions in be-secure.c
  */
-extern int		secure_initialize(void);
-extern void		secure_destroy(void);
-extern int		secure_open_server(Port *port);
-extern void		secure_close(Port *port);
-extern ssize_t	secure_read(Port *port, void *ptr, size_t len);
-extern ssize_t	secure_write(Port *port, void *ptr, size_t len);
+extern int	secure_initialize(void);
+extern void secure_destroy(void);
+extern int	secure_open_server(Port *port);
+extern void secure_close(Port *port);
+extern ssize_t secure_read(Port *port, void *ptr, size_t len);
+extern ssize_t secure_write(Port *port, void *ptr, size_t len);
 
 #endif   /* LIBPQ_H */

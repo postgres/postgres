@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.60 2003/07/27 18:37:52 tgl Exp $
+ * $Id: elog.h,v 1.61 2003/08/04 00:43:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,12 +45,12 @@
 #define FATAL		21			/* fatal error - abort process */
 #define PANIC		22			/* take down the other backends with me */
 
- /*#define DEBUG DEBUG1*/	/* Backward compatibility with pre-7.3 */
+ /* #define DEBUG DEBUG1 */	/* Backward compatibility with pre-7.3 */
 
 
 /* macros for representing SQLSTATE strings compactly */
 #define PGSIXBIT(ch)	(((ch) - '0') & 0x3F)
-#define PGUNSIXBIT(val)	(((val) & 0x3F) + '0')
+#define PGUNSIXBIT(val) (((val) & 0x3F) + '0')
 
 #define MAKE_SQLSTATE(ch1,ch2,ch3,ch4,ch5)	\
 	(PGSIXBIT(ch1) + (PGSIXBIT(ch2) << 6) + (PGSIXBIT(ch3) << 12) + \
@@ -80,7 +80,7 @@
  *				 ... other errxxx() fields as needed ...));
  *
  * The error level is required, and so is a primary error message (errmsg
- * or errmsg_internal).  All else is optional.  errcode() defaults to
+ * or errmsg_internal).  All else is optional.	errcode() defaults to
  * ERRCODE_INTERNAL_ERROR if elevel is ERROR or more, ERRCODE_WARNING
  * if elevel is WARNING, or ERRCODE_SUCCESSFUL_COMPLETION if elevel is
  * NOTICE or below.
@@ -91,41 +91,46 @@
 	 (errfinish rest) : (void) 0)
 
 extern bool errstart(int elevel, const char *filename, int lineno,
-					 const char *funcname);
-extern void errfinish(int dummy, ...);
+		 const char *funcname);
+extern void errfinish(int dummy,...);
 
-extern int errcode(int sqlerrcode);
+extern int	errcode(int sqlerrcode);
 
-extern int errcode_for_file_access(void);
-extern int errcode_for_socket_access(void);
+extern int	errcode_for_file_access(void);
+extern int	errcode_for_socket_access(void);
 
-extern int errmsg(const char *fmt, ...)
+extern int
+errmsg(const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
 __attribute__((format(printf, 1, 2)));
 
-extern int errmsg_internal(const char *fmt, ...)
+extern int
+errmsg_internal(const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
 __attribute__((format(printf, 1, 2)));
 
-extern int errdetail(const char *fmt, ...)
+extern int
+errdetail(const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
 __attribute__((format(printf, 1, 2)));
 
-extern int errhint(const char *fmt, ...)
+extern int
+errhint(const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
 __attribute__((format(printf, 1, 2)));
 
-extern int errcontext(const char *fmt, ...)
+extern int
+errcontext(const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
 __attribute__((format(printf, 1, 2)));
 
-extern int errfunction(const char *funcname);
-extern int errposition(int cursorpos);
+extern int	errfunction(const char *funcname);
+extern int	errposition(int cursorpos);
 
 
 /*----------
@@ -133,10 +138,10 @@ extern int errposition(int cursorpos);
  *		elog(ERROR, "portal \"%s\" not found", stmt->portalname);
  *----------
  */
-#define elog    errstart(ERROR, __FILE__, __LINE__, PG_FUNCNAME_MACRO), elog_finish
+#define elog	errstart(ERROR, __FILE__, __LINE__, PG_FUNCNAME_MACRO), elog_finish
 
 extern void
-elog_finish(int elevel, const char *fmt, ...)
+elog_finish(int elevel, const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
 __attribute__((format(printf, 2, 3)));
@@ -147,9 +152,9 @@ __attribute__((format(printf, 2, 3)));
 typedef struct ErrorContextCallback
 {
 	struct ErrorContextCallback *previous;
-	void (*callback) (void *arg);
-	void *arg;
-} ErrorContextCallback;
+	void		(*callback) (void *arg);
+	void	   *arg;
+}	ErrorContextCallback;
 
 extern DLLIMPORT ErrorContextCallback *error_context_stack;
 
@@ -161,11 +166,12 @@ typedef enum
 	PGERROR_TERSE,				/* single-line error messages */
 	PGERROR_DEFAULT,			/* recommended style */
 	PGERROR_VERBOSE				/* all the facts, ma'am */
-} PGErrorVerbosity;
+}	PGErrorVerbosity;
 
 extern PGErrorVerbosity Log_error_verbosity;
 extern bool Log_timestamp;
 extern bool Log_pid;
+
 #ifdef HAVE_SYSLOG
 extern int	Use_syslog;
 #endif

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
- * $Id: prepare.h,v 1.6 2003/05/06 21:51:42 tgl Exp $
+ * $Id: prepare.h,v 1.7 2003/08/04 00:43:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@ typedef struct
 	List	   *plan_list;		/* list of plans */
 	List	   *argtype_list;	/* list of parameter type OIDs */
 	MemoryContext context;		/* context containing this query */
-} PreparedStatement;
+}	PreparedStatement;
 
 
 /* Utility statements PREPARE, EXECUTE, DEALLOCATE, EXPLAIN EXECUTE */
@@ -48,15 +48,15 @@ extern void ExplainExecuteQuery(ExplainStmt *stmt, TupOutputState *tstate);
 
 /* Low-level access to stored prepared statements */
 extern void StorePreparedStatement(const char *stmt_name,
-								   const char *query_string,
-								   const char *commandTag,
-								   List *query_list,
-								   List *plan_list,
-								   List *argtype_list);
+					   const char *query_string,
+					   const char *commandTag,
+					   List *query_list,
+					   List *plan_list,
+					   List *argtype_list);
 extern PreparedStatement *FetchPreparedStatement(const char *stmt_name,
-												 bool throwError);
+					   bool throwError);
 extern void DropPreparedStatement(const char *stmt_name, bool showError);
 extern List *FetchPreparedStatementParams(const char *stmt_name);
-extern TupleDesc FetchPreparedStatementResultDesc(PreparedStatement *stmt);
+extern TupleDesc FetchPreparedStatementResultDesc(PreparedStatement * stmt);
 
 #endif   /* PREPARE_H */

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.91 2003/07/27 17:10:07 tgl Exp $
+ * $Id: pqcomm.h,v 1.92 2003/08/04 00:43:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,11 +35,11 @@
 #ifdef HAVE_STRUCT_SOCKADDR_STORAGE
 
 #ifndef HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY
-# ifdef HAVE_STRUCT_SOCKADDR_STORAGE___SS_FAMILY
-#  define ss_family __ss_family
-# else
-#  error struct sockaddr_storage does not provide an ss_family member
-# endif
+#ifdef HAVE_STRUCT_SOCKADDR_STORAGE___SS_FAMILY
+#define ss_family __ss_family
+#else
+#error struct sockaddr_storage does not provide an ss_family member
+#endif
 #endif
 
 #ifdef HAVE_STRUCT_SOCKADDR_STORAGE___SS_LEN
@@ -47,16 +47,18 @@
 #define HAVE_STRUCT_SOCKADDR_STORAGE_SS_LEN 1
 #endif
 
-#else /* !HAVE_STRUCT_SOCKADDR_STORAGE */
+#else							/* !HAVE_STRUCT_SOCKADDR_STORAGE */
 
 /* Define a struct sockaddr_storage if we don't have one. */
 
-struct sockaddr_storage {
-	union {
+struct sockaddr_storage
+{
+	union
+	{
 		struct sockaddr sa;		/* get the system-dependent fields */
-		int64	ss_align;		/* ensures struct is properly aligned */
-		char	ss_pad[128];	/* ensures struct has desired size */
-	} ss_stuff;
+		int64		ss_align;	/* ensures struct is properly aligned */
+		char		ss_pad[128];	/* ensures struct has desired size */
+	}			ss_stuff;
 };
 
 #define ss_family	ss_stuff.sa.sa_family
@@ -65,12 +67,12 @@ struct sockaddr_storage {
 #define ss_len		ss_stuff.sa.sa_len
 #define HAVE_STRUCT_SOCKADDR_STORAGE_SS_LEN 1
 #endif
+#endif   /* HAVE_STRUCT_SOCKADDR_STORAGE */
 
-#endif /* HAVE_STRUCT_SOCKADDR_STORAGE */
-
-typedef struct {
-	struct sockaddr_storage	addr;
-	ACCEPT_TYPE_ARG3	salen;
+typedef struct
+{
+	struct sockaddr_storage addr;
+	ACCEPT_TYPE_ARG3 salen;
 } SockAddr;
 
 /* Configure the UNIX socket location for the well known port. */
@@ -148,7 +150,7 @@ extern bool Db_user_namespace;
 
 /*
  * In protocol 3.0 and later, the startup packet length is not fixed, but
- * we set an arbitrary limit on it anyway.  This is just to prevent simple
+ * we set an arbitrary limit on it anyway.	This is just to prevent simple
  * denial-of-service attacks via sending enough data to run the server
  * out of memory.
  */

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.87 2003/07/03 16:34:26 tgl Exp $
+ * $Id: primnodes.h,v 1.88 2003/08/04 00:43:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@
  * associated SortClause or GroupClause lists determine the semantics.
  *
  * resorigtbl/resorigcol identify the source of the column, if it is a
- * simple reference to a column of a base table (or view).  If it is not
+ * simple reference to a column of a base table (or view).	If it is not
  * a simple reference, these fields are zeroes.
  *
  * If resjunk is true then the column is a working column (such as a sort key)
@@ -63,8 +63,8 @@ typedef struct Resdom
 	Oid			restype;		/* type of the value */
 	int32		restypmod;		/* type-specific modifier of the value */
 	char	   *resname;		/* name of the column (could be NULL) */
-	Index		ressortgroupref;	/* nonzero if referenced by a
-									 * sort/group clause */
+	Index		ressortgroupref;/* nonzero if referenced by a sort/group
+								 * clause */
 	Oid			resorigtbl;		/* OID of column's source table */
 	AttrNumber	resorigcol;		/* column's number in source table */
 	bool		resjunk;		/* set to true to eliminate the attribute
@@ -181,10 +181,10 @@ typedef struct Const
 	Datum		constvalue;		/* the constant's value */
 	bool		constisnull;	/* whether the constant is null (if true,
 								 * constvalue is undefined) */
-	bool		constbyval;		/* whether this datatype is passed by value.
-								 * If true, then all the information is
-								 * stored in the Datum.
-								 * If false, then the Datum contains a
+	bool		constbyval;		/* whether this datatype is passed by
+								 * value. If true, then all the
+								 * information is stored in the Datum. If
+								 * false, then the Datum contains a
 								 * pointer to the information. */
 } Const;
 
@@ -201,7 +201,7 @@ typedef struct Const
  *				i.e. something like `$1', `$2' etc.
  *				The number is contained in the `paramid' field.
  *
- *		PARAM_EXEC:	 The parameter is an internal executor parameter.
+ *		PARAM_EXEC:  The parameter is an internal executor parameter.
  *				It has a number contained in the `paramid' field.
  * ----------------
  */
@@ -277,7 +277,7 @@ typedef enum CoercionContext
 	COERCION_IMPLICIT,			/* coercion in context of expression */
 	COERCION_ASSIGNMENT,		/* coercion in context of assignment */
 	COERCION_EXPLICIT			/* explicit cast operation */
-} CoercionContext;
+}	CoercionContext;
 
 /*
  * CoercionForm - information showing how to display a function-call node
@@ -288,7 +288,7 @@ typedef enum CoercionForm
 	COERCE_EXPLICIT_CAST,		/* display as an explicit cast */
 	COERCE_IMPLICIT_CAST,		/* implicit cast, so hide it */
 	COERCE_DONTCARE				/* special case for pathkeys */
-} CoercionForm;
+}	CoercionForm;
 
 /*
  * FuncExpr - expression node for a function call
@@ -301,7 +301,7 @@ typedef struct FuncExpr
 	bool		funcretset;		/* true if function returns set */
 	CoercionForm funcformat;	/* how to display this function call */
 	List	   *args;			/* arguments to the function */
-} FuncExpr;
+}	FuncExpr;
 
 /*
  * OpExpr - expression node for an operator invocation
@@ -320,7 +320,7 @@ typedef struct OpExpr
 	Oid			opresulttype;	/* PG_TYPE OID of result value */
 	bool		opretset;		/* true if operator returns set */
 	List	   *args;			/* arguments to the operator (1 or 2) */
-} OpExpr;
+}	OpExpr;
 
 /*
  * DistinctExpr - expression node for "x IS DISTINCT FROM y"
@@ -351,28 +351,28 @@ typedef struct ScalarArrayOpExpr
 	Oid			opfuncid;		/* PG_PROC OID of underlying function */
 	bool		useOr;			/* true for ANY, false for ALL */
 	List	   *args;			/* the scalar and array operands */
-} ScalarArrayOpExpr;
+}	ScalarArrayOpExpr;
 
 /*
  * BoolExpr - expression node for the basic Boolean operators AND, OR, NOT
  *
  * Notice the arguments are given as a List.  For NOT, of course the list
  * must always have exactly one element.  For AND and OR, the executor can
- * handle any number of arguments.  The parser treats AND and OR as binary
+ * handle any number of arguments.	The parser treats AND and OR as binary
  * and so it only produces two-element lists, but the optimizer will flatten
  * trees of AND and OR nodes to produce longer lists when possible.
  */
 typedef enum BoolExprType
 {
 	AND_EXPR, OR_EXPR, NOT_EXPR
-} BoolExprType;
+}	BoolExprType;
 
 typedef struct BoolExpr
 {
 	Expr		xpr;
 	BoolExprType boolop;
 	List	   *args;			/* arguments to this expression */
-} BoolExpr;
+}	BoolExpr;
 
 /* ----------------
  * SubLink
@@ -405,7 +405,7 @@ typedef struct BoolExpr
  *
  * NOTE: in the raw output of gram.y, lefthand contains a list of raw
  * expressions; useOr and operOids are not filled in yet.  Also, subselect
- * is a raw parsetree.  During parse analysis, the parser transforms the
+ * is a raw parsetree.	During parse analysis, the parser transforms the
  * lefthand expression list using normal expression transformation rules.
  * It fills operOids with the OIDs representing the specific operator(s)
  * to apply to each pair of lefthand and targetlist expressions.
@@ -452,13 +452,13 @@ typedef struct SubLink
  * (OpExpr trees) for the combining operators; their left-hand arguments are
  * the original lefthand expressions, and their right-hand arguments are
  * PARAM_EXEC Param nodes representing the outputs of the sub-select.
- * (NOTE: runtime coercion functions may be inserted as well.)  But if the
+ * (NOTE: runtime coercion functions may be inserted as well.)	But if the
  * sub-select becomes an initplan rather than a subplan, these executable
  * expressions are part of the outer plan's expression tree (and the SubPlan
  * node itself is not).  In this case "exprs" is NIL to avoid duplication.
  *
  * The planner also derives lists of the values that need to be passed into
- * and out of the subplan.  Input values are represented as a list "args" of
+ * and out of the subplan.	Input values are represented as a list "args" of
  * expressions to be evaluated in the outer-query context (currently these
  * args are always just Vars, but in principle they could be any expression).
  * The values are assigned to the global PARAM_EXEC params indexed by parParam
@@ -487,16 +487,17 @@ typedef struct SubPlan
 								 * (TopPlan node ?)... */
 	List	   *rtable;			/* range table for subselect */
 	/* Information about execution strategy: */
-	bool		useHashTable;	/* TRUE to store subselect output in a hash
-								 * table (implies we are doing "IN") */
-	bool		unknownEqFalse;	/* TRUE if it's okay to return FALSE when
+	bool		useHashTable;	/* TRUE to store subselect output in a
+								 * hash table (implies we are doing "IN") */
+	bool		unknownEqFalse; /* TRUE if it's okay to return FALSE when
 								 * the spec result is UNKNOWN; this allows
 								 * much simpler handling of null values */
 	/* Information for passing params into and out of the subselect: */
 	/* setParam and parParam are lists of integers (param IDs) */
 	List	   *setParam;		/* initplan subqueries have to set these
 								 * Params for parent plan */
-	List	   *parParam;		/* indices of input Params from parent plan */
+	List	   *parParam;		/* indices of input Params from parent
+								 * plan */
 	List	   *args;			/* exprs to pass as parParam values */
 } SubPlan;
 
@@ -539,7 +540,7 @@ typedef struct RelabelType
 	Expr	   *arg;			/* input expression */
 	Oid			resulttype;		/* output type of coercion expression */
 	int32		resulttypmod;	/* output typmod (usually -1) */
-	CoercionForm relabelformat;	/* how to display this node */
+	CoercionForm relabelformat; /* how to display this node */
 } RelabelType;
 
 /*
@@ -574,20 +575,20 @@ typedef struct ArrayExpr
 {
 	Expr		xpr;
 	Oid			array_typeid;	/* type of expression result */
-	Oid			element_typeid;	/* common type of expression elements */
+	Oid			element_typeid; /* common type of expression elements */
 	List	   *elements;		/* the array elements */
 	int			ndims;			/* number of array dimensions */
-} ArrayExpr;
+}	ArrayExpr;
 
 /*
  * CoalesceExpr - a COALESCE expression
  */
 typedef struct CoalesceExpr
 {
-	Expr	xpr;
-	Oid		coalescetype;		/* type of expression result */
-	List   *args;				/* the arguments */
-} CoalesceExpr;
+	Expr		xpr;
+	Oid			coalescetype;	/* type of expression result */
+	List	   *args;			/* the arguments */
+}	CoalesceExpr;
 
 /*
  * NullIfExpr - a NULLIF expression
@@ -645,8 +646,8 @@ typedef struct BooleanTest
  *
  * CoerceToDomain represents the operation of coercing a value to a domain
  * type.  At runtime (and not before) the precise set of constraints to be
- * checked will be determined.  If the value passes, it is returned as the
- * result; if not, an error is raised.  Note that this is equivalent to
+ * checked will be determined.	If the value passes, it is returned as the
+ * result; if not, an error is raised.	Note that this is equivalent to
  * RelabelType in the scenario where no constraints are applied.
  */
 typedef struct CoerceToDomain
@@ -655,12 +656,12 @@ typedef struct CoerceToDomain
 	Expr	   *arg;			/* input expression */
 	Oid			resulttype;		/* domain type ID (result type) */
 	int32		resulttypmod;	/* output typmod (currently always -1) */
-	CoercionForm coercionformat; /* how to display this node */
-} CoerceToDomain;
+	CoercionForm coercionformat;	/* how to display this node */
+}	CoerceToDomain;
 
 /*
  * Placeholder node for the value to be processed by a domain's check
- * constraint.  This is effectively like a Param, but can be implemented more
+ * constraint.	This is effectively like a Param, but can be implemented more
  * simply since we need only one replacement value at a time.
  *
  * Note: the typeId/typeMod will be set from the domain's base type, not
@@ -672,13 +673,13 @@ typedef struct CoerceToDomainValue
 	Expr		xpr;
 	Oid			typeId;			/* type for substituted value */
 	int32		typeMod;		/* typemod for substituted value */
-} CoerceToDomainValue;
+}	CoerceToDomainValue;
 
 /*
  * Placeholder node for a DEFAULT marker in an INSERT or UPDATE command.
  *
  * This is not an executable expression: it must be replaced by the actual
- * column default expression during rewriting.  But it is convenient to
+ * column default expression during rewriting.	But it is convenient to
  * treat it as an expression node during parsing and rewriting.
  */
 typedef struct SetToDefault
@@ -686,7 +687,7 @@ typedef struct SetToDefault
 	Expr		xpr;
 	Oid			typeId;			/* type for substituted value */
 	int32		typeMod;		/* typemod for substituted value */
-} SetToDefault;
+}	SetToDefault;
 
 /*
  * TargetEntry -

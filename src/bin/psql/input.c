@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.26 2003/07/27 03:32:26 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.27 2003/08/04 00:43:29 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "input.h"
@@ -27,12 +27,11 @@ static bool useHistory;
 
 enum histcontrol
 {
-  hctl_none = 0,
-  hctl_ignorespace = 1,
-  hctl_ignoredups = 2,
-  hctl_ignoreboth = hctl_ignorespace | hctl_ignoredups
+	hctl_none = 0,
+	hctl_ignorespace = 1,
+	hctl_ignoredups = 2,
+	hctl_ignoreboth = hctl_ignorespace | hctl_ignoredups
 };
-
 #endif
 
 #ifdef HAVE_ATEXIT
@@ -43,16 +42,17 @@ static void finishInput(void);
 static void finishInput(int, void *);
 #endif
 
-#define PSQLHISTORY	".psql_history"
+#define PSQLHISTORY ".psql_history"
 
 
 #ifdef WIN32
-	/*
-	 * translate DOS console character set into ANSI, needed e.g. for
-	 * German umlauts
-	 */
-	if (GetVariableBool(pset.vars, "WIN32_CONSOLE"))
-		OemToChar(s, s);
+
+ /*
+  * translate DOS console character set into ANSI, needed e.g. for German
+  * umlauts
+  */
+if (GetVariableBool(pset.vars, "WIN32_CONSOLE"))
+	OemToChar(s, s);
 #endif
 
 #ifdef USE_READLINE
@@ -64,11 +64,16 @@ GetHistControlConfig(void)
 
 	var = GetVariable(pset.vars, "HISTCONTROL");
 
-	if (!var) 												HC = hctl_none;
-	else if 	(strcmp(var, "ignorespace") == 0)	HC = hctl_ignorespace;
-	else if 	(strcmp(var, "ignoredups") == 0)		HC = hctl_ignoredups;
-	else if	(strcmp(var, "ignoreboth") == 0)		HC = hctl_ignoreboth;
-	else														HC = hctl_none;
+	if (!var)
+		HC = hctl_none;
+	else if (strcmp(var, "ignorespace") == 0)
+		HC = hctl_ignorespace;
+	else if (strcmp(var, "ignoredups") == 0)
+		HC = hctl_ignoredups;
+	else if (strcmp(var, "ignoreboth") == 0)
+		HC = hctl_ignoreboth;
+	else
+		HC = hctl_none;
 
 	return HC;
 }
@@ -111,9 +116,9 @@ gets_interactive(const char *prompt)
 		HC = GetHistControlConfig();
 
 		if (((HC & hctl_ignorespace) && s[0] == ' ') ||
-		    ((HC & hctl_ignoredups) && prev_hist && strcmp(s, prev_hist) == 0))
-	{
-		  /* Ignore this line as far as history is concerned */
+			((HC & hctl_ignoredups) && prev_hist && strcmp(s, prev_hist) == 0))
+		{
+			/* Ignore this line as far as history is concerned */
 		}
 		else
 		{
@@ -216,7 +221,7 @@ saveHistory(char *fname)
 	if (useHistory && fname)
 	{
 		if (write_history(fname) == 0)
-		return true;
+			return true;
 
 		psql_error("could not save history to file \"%s\": %s\n", fname, strerror(errno));
 	}
@@ -244,11 +249,12 @@ finishInput(int exitstatus, void *arg)
 		if (home)
 		{
 			psql_history = (char *) malloc(strlen(home) + 1 +
-									strlen(PSQLHISTORY) + 1);
+										   strlen(PSQLHISTORY) + 1);
 			if (psql_history)
 			{
-				int hist_size;
-				hist_size = GetVariableNum(pset.vars,"HISTSIZE",-1,-1,true);
+				int			hist_size;
+
+				hist_size = GetVariableNum(pset.vars, "HISTSIZE", -1, -1, true);
 
 				if (hist_size >= 0)
 					stifle_history(hist_size);

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.85 2003/07/29 00:03:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.86 2003/08/04 00:43:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
  * to duplicate the test in AC_STRUCT_TIMEZONE.
  */
 #ifdef HAVE_TZNAME
-#ifndef tzname /* For SGI.  */
+#ifndef tzname					/* For SGI.  */
 extern char *tzname[];
 #endif
 #endif
@@ -273,12 +273,11 @@ static void
 clear_tz(void)
 {
 	/*
-	 * unsetenv() works fine, but is BSD, not POSIX, and is not
-	 * available under Solaris, among others. Apparently putenv()
-	 * called as below clears the process-specific environment
-	 * variables.  Other reasonable arguments to putenv() (e.g.
-	 * "TZ=", "TZ", "") result in a core dump (under Linux
-	 * anyway). - thomas 1998-01-26
+	 * unsetenv() works fine, but is BSD, not POSIX, and is not available
+	 * under Solaris, among others. Apparently putenv() called as below
+	 * clears the process-specific environment variables.  Other
+	 * reasonable arguments to putenv() (e.g. "TZ=", "TZ", "") result in a
+	 * core dump (under Linux anyway). - thomas 1998-01-26
 	 */
 	if (tzbuf[0] == 'T')
 	{
@@ -298,14 +297,14 @@ clear_tz(void)
  *
  * If tzname[1] is a nonempty string, *or* the global timezone variable is
  * not zero, then tzset must have recognized the TZ value as something
- * different from UTC.  Return true.
+ * different from UTC.	Return true.
  *
  * Otherwise, check to see if the TZ name is a known spelling of "UTC"
  * (ie, appears in our internal tables as a timezone equivalent to UTC).
  * If so, accept it.
  *
  * This will reject nonstandard spellings of UTC unless tzset() chose to
- * set tzname[1] as well as tzname[0].  The glibc version of tzset() will
+ * set tzname[1] as well as tzname[0].	The glibc version of tzset() will
  * do so, but on other systems we may be tightening the spec a little.
  *
  * Another problem is that on some platforms (eg HPUX), if tzset thinks the
@@ -337,8 +336,8 @@ tzset_succeeded(const char *tz)
 		return true;
 
 	/*
-	 * Check for known spellings of "UTC".  Note we must downcase the input
-	 * before passing it to DecodePosixTimezone().
+	 * Check for known spellings of "UTC".	Note we must downcase the
+	 * input before passing it to DecodePosixTimezone().
 	 */
 	StrNCpy(tztmp, tz, sizeof(tztmp));
 	for (cp = tztmp; *cp; cp++)
@@ -368,7 +367,7 @@ tz_acceptable(void)
 
 	/*
 	 * To detect leap-second timekeeping, compute the time_t value for
-	 * local midnight, 2000-01-01.  Insist that this be a multiple of 60;
+	 * local midnight, 2000-01-01.	Insist that this be a multiple of 60;
 	 * any partial-minute offset has to be due to leap seconds.
 	 */
 	MemSet(&tt, 0, sizeof(tt));
@@ -399,7 +398,7 @@ assign_timezone(const char *value, bool doit, bool interactive)
 	 */
 	if (!have_saved_tz)
 	{
-		char   *orig_tz = getenv("TZ");
+		char	   *orig_tz = getenv("TZ");
 
 		if (orig_tz)
 			StrNCpy(orig_tzbuf, orig_tz, sizeof(orig_tzbuf));
@@ -434,9 +433,9 @@ assign_timezone(const char *value, bool doit, bool interactive)
 
 		/*
 		 * Try to parse it.  XXX an invalid interval format will result in
-		 * ereport, which is not desirable for GUC.  We did what we could to
-		 * guard against this in flatten_set_variable_args, but a string
-		 * coming in from postgresql.conf might contain anything.
+		 * ereport, which is not desirable for GUC.  We did what we could
+		 * to guard against this in flatten_set_variable_args, but a
+		 * string coming in from postgresql.conf might contain anything.
 		 */
 		interval = DatumGetIntervalP(DirectFunctionCall3(interval_in,
 													CStringGetDatum(val),
@@ -455,7 +454,7 @@ assign_timezone(const char *value, bool doit, bool interactive)
 		if (doit)
 		{
 			/* Here we change from SQL to Unix sign convention */
-			CTimeZone = - interval->time;
+			CTimeZone = -interval->time;
 			HasCTZSet = true;
 		}
 		pfree(interval);
@@ -471,22 +470,22 @@ assign_timezone(const char *value, bool doit, bool interactive)
 			if (doit)
 			{
 				/* Here we change from SQL to Unix sign convention */
-				CTimeZone = - hours * 3600;
+				CTimeZone = -hours * 3600;
 				HasCTZSet = true;
 			}
 		}
 		else if (strcasecmp(value, "UNKNOWN") == 0)
 		{
 			/*
-			 * UNKNOWN is the value shown as the "default" for TimeZone
-			 * in guc.c.  We interpret it as meaning the original TZ
-			 * inherited from the environment.  Note that if there is an
-			 * original TZ setting, we will return that rather than UNKNOWN
-			 * as the canonical spelling.
+			 * UNKNOWN is the value shown as the "default" for TimeZone in
+			 * guc.c.  We interpret it as meaning the original TZ
+			 * inherited from the environment.	Note that if there is an
+			 * original TZ setting, we will return that rather than
+			 * UNKNOWN as the canonical spelling.
 			 */
 			if (doit)
 			{
-				bool	ok;
+				bool		ok;
 
 				/* Revert to original setting of TZ, whatever it was */
 				if (orig_tzbuf[0])
@@ -516,14 +515,14 @@ assign_timezone(const char *value, bool doit, bool interactive)
 			 * Otherwise assume it is a timezone name.
 			 *
 			 * We have to actually apply the change before we can have any
-			 * hope of checking it.  So, save the old value in case we have
-			 * to back out.  Note that it's possible the old setting is in
-			 * tzbuf, so we'd better copy it.
+			 * hope of checking it.  So, save the old value in case we
+			 * have to back out.  Note that it's possible the old setting
+			 * is in tzbuf, so we'd better copy it.
 			 */
-			char	save_tzbuf[TZBUF_LEN];
-			char   *save_tz;
-			bool	known,
-					acceptable;
+			char		save_tzbuf[TZBUF_LEN];
+			char	   *save_tz;
+			bool		known,
+						acceptable;
 
 			save_tz = getenv("TZ");
 			if (save_tz)
@@ -563,8 +562,8 @@ assign_timezone(const char *value, bool doit, bool interactive)
 				{
 					ereport(interactive ? ERROR : LOG,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("timezone \"%s\" appears to use leap seconds",
-									value),
+					errmsg("timezone \"%s\" appears to use leap seconds",
+						   value),
 							 errdetail("PostgreSQL does not support leap seconds")));
 					return NULL;
 				}
@@ -609,7 +608,7 @@ show_timezone(void)
 		Interval	interval;
 
 		interval.month = 0;
-		interval.time = - CTimeZone;
+		interval.time = -CTimeZone;
 
 		tzn = DatumGetCString(DirectFunctionCall1(interval_out,
 										  IntervalPGetDatum(&interval)));
@@ -703,16 +702,16 @@ assign_client_encoding(const char *value, bool doit, bool interactive)
 	/*
 	 * Note: if we are in startup phase then SetClientEncoding may not be
 	 * able to really set the encoding.  In this case we will assume that
-	 * the encoding is okay, and InitializeClientEncoding() will fix things
-	 * once initialization is complete.
+	 * the encoding is okay, and InitializeClientEncoding() will fix
+	 * things once initialization is complete.
 	 */
 	if (SetClientEncoding(encoding, doit) < 0)
 	{
 		if (interactive)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("conversion between %s and %s is not supported",
-							value, GetDatabaseEncodingName())));
+				  errmsg("conversion between %s and %s is not supported",
+						 value, GetDatabaseEncodingName())));
 		return NULL;
 	}
 	return value;
@@ -758,12 +757,12 @@ assign_session_authorization(const char *value, bool doit, bool interactive)
 		/* not a saved ID, so look it up */
 		HeapTuple	userTup;
 
-		if (! IsTransactionState())
+		if (!IsTransactionState())
 		{
 			/*
 			 * Can't do catalog lookups, so fail.  The upshot of this is
-			 * that session_authorization cannot be set in postgresql.conf,
-			 * which seems like a good thing anyway.
+			 * that session_authorization cannot be set in
+			 * postgresql.conf, which seems like a good thing anyway.
 			 */
 			return NULL;
 		}
@@ -782,7 +781,7 @@ assign_session_authorization(const char *value, bool doit, bool interactive)
 
 		usesysid = ((Form_pg_shadow) GETSTRUCT(userTup))->usesysid;
 		is_superuser = ((Form_pg_shadow) GETSTRUCT(userTup))->usesuper;
-		
+
 		ReleaseSysCache(userTup);
 	}
 

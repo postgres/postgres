@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.36 2003/07/27 04:53:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.37 2003/08/04 00:43:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ charout(PG_FUNCTION_ARGS)
  *		charrecv			- converts external binary format to char
  *
  * The external representation is one byte, with no character set
- * conversion.  This is somewhat dubious, perhaps, but in many
+ * conversion.	This is somewhat dubious, perhaps, but in many
  * cases people use char for a 1-byte binary type.
  */
 Datum

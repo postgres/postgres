@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.72 2003/07/21 17:05:00 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.73 2003/08/04 00:43:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@
  * ----------------------------------------------------------------
  */
 void
-ExecReScan(PlanState *node, ExprContext *exprCtxt)
+ExecReScan(PlanState * node, ExprContext *exprCtxt)
 {
 	/* If collecting timing stats, update them */
 	if (node->instrument)
@@ -61,7 +61,7 @@ ExecReScan(PlanState *node, ExprContext *exprCtxt)
 
 		foreach(lst, node->initPlan)
 		{
-			SubPlanState  *sstate = (SubPlanState *) lfirst(lst);
+			SubPlanState *sstate = (SubPlanState *) lfirst(lst);
 			PlanState  *splan = sstate->planstate;
 
 			if (splan->plan->extParam != NULL)	/* don't care about child
@@ -72,7 +72,7 @@ ExecReScan(PlanState *node, ExprContext *exprCtxt)
 		}
 		foreach(lst, node->subPlan)
 		{
-			SubPlanState  *sstate = (SubPlanState *) lfirst(lst);
+			SubPlanState *sstate = (SubPlanState *) lfirst(lst);
 			PlanState  *splan = sstate->planstate;
 
 			if (splan->plan->extParam != NULL)
@@ -177,7 +177,7 @@ ExecReScan(PlanState *node, ExprContext *exprCtxt)
  * Marks the current scan position.
  */
 void
-ExecMarkPos(PlanState *node)
+ExecMarkPos(PlanState * node)
 {
 	switch (nodeTag(node))
 	{
@@ -218,7 +218,7 @@ ExecMarkPos(PlanState *node)
  * restores the scan position previously saved with ExecMarkPos()
  */
 void
-ExecRestrPos(PlanState *node)
+ExecRestrPos(PlanState * node)
 {
 	switch (nodeTag(node))
 	{
@@ -302,16 +302,16 @@ ExecSupportsBackwardScan(Plan *node)
 				return false;
 
 		case T_Append:
-		{
-			List   *l;
-
-			foreach(l, ((Append *) node)->appendplans)
 			{
-				if (!ExecSupportsBackwardScan((Plan *) lfirst(l)))
-					return false;
+				List	   *l;
+
+				foreach(l, ((Append *) node)->appendplans)
+				{
+					if (!ExecSupportsBackwardScan((Plan *) lfirst(l)))
+						return false;
+				}
+				return true;
 			}
-			return true;
-		}
 
 		case T_SeqScan:
 		case T_IndexScan:

@@ -25,7 +25,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/help_config.c,v 1.3 2003/07/28 19:31:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/help_config.c,v 1.4 2003/08/04 00:43:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,35 +58,35 @@ enum outputFormat
 	MACHINE_OUTPUT
 };
 
-static const char * const GENERIC_FORMAT[] = {
+static const char *const GENERIC_FORMAT[] = {
 	gettext_noop("Name       : %-20s \nContext    : %-20s \nGroup      : %-20s\n"),
 	gettext_noop("%s\t%s\t%s\t")
 };
-static const char * const GENERIC_DESC[] = {
+static const char *const GENERIC_DESC[] = {
 	gettext_noop("Description: %s\n%s\n"),
 	gettext_noop("%s	%s\n")
 };
-static const char * const BOOL_FORMAT[] = {
+static const char *const BOOL_FORMAT[] = {
 	gettext_noop("Type       : BOOL\nReset Value: %-s \n"),
 	gettext_noop("BOOL\t%s\t\t\t")
 };
-static const char * const INT_FORMAT[] = {
+static const char *const INT_FORMAT[] = {
 	gettext_noop("Type       : INT\nReset Value: %-20d \nMin Value  : %-20d \nMax Value  : %-20d \n"),
 	gettext_noop("INT\t%d\t%d\t%d\t")
 };
-static const char * const REAL_FORMAT[] = {
+static const char *const REAL_FORMAT[] = {
 	gettext_noop("Type       : REAL\nReset Value: %-20g \nMin Value  : %-20g \nMax Value  : %-20g \n"),
 	gettext_noop("REAL\t%g\t%g\t%g\t")
 };
-static const char * const STRING_FORMAT[] = {
+static const char *const STRING_FORMAT[] = {
 	gettext_noop("Type       : STRING\nReset Value: %-s \n"),
 	gettext_noop("STRING\t%s\t\t\t")
 };
-static const char * const COLUMN_HEADER[] = {
+static const char *const COLUMN_HEADER[] = {
 	"",
 	gettext_noop("NAME\tCONTEXT\tGROUP\tTYPE\tRESET_VALUE\tMIN\tMAX\tSHORT_DESCRIPTION\tLONG_DESCRIPTION\n")
 };
-static const char * const ROW_SEPARATOR[] = {
+static const char *const ROW_SEPARATOR[] = {
 	"------------------------------------------------------------\n",
 	""
 };
@@ -101,8 +101,8 @@ static char *groupString = NULL;	/* The var group pattern to match */
 static bool groupRegexBool = false;		/* Match the group pattern as a
 										 * regex */
 static enum outputFormat outFormat = HUMAN_OUTPUT;
-static bool suppressAllHeaders = false; /* MACHINE_OUTPUT output, no column
-										 * headers */
+static bool suppressAllHeaders = false; /* MACHINE_OUTPUT output, no
+										 * column headers */
 static bool groupResults = true;	/* sort result list by groups */
 
 
@@ -444,5 +444,5 @@ helpMessage(void)
 			"  -m      	Machine friendly format: tab separated fields\n"
 				   "  -M      	Same as m, except header with column names is suppressed\n"),
 		   usageErrMsg()
-	);
+		);
 }

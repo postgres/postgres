@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/pgsql/src/port/getopt_long.c,v 1.1 2003/01/06 18:53:25 petere Exp $
+ * $Header: /cvsroot/pgsql/src/port/getopt_long.c,v 1.2 2003/08/04 00:43:33 momjian Exp $
  */
 
 #include <stdio.h>
@@ -49,9 +49,9 @@
 #define EMSG	""
 
 int
-getopt_long(int argc, char * const argv[],
+getopt_long(int argc, char *const argv[],
 			const char *optstring,
-			const struct option *longopts, int *longindex)
+			const struct option * longopts, int *longindex)
 {
 	static char *place = EMSG;	/* option letter processing */
 	char	   *oli;			/* option letter list index */
@@ -86,8 +86,8 @@ getopt_long(int argc, char * const argv[],
 		if (place[0] && place[0] == '-' && place[1])
 		{
 			/* long option */
-			size_t namelen;
-			int i;
+			size_t		namelen;
+			int			i;
 
 			place++;
 
@@ -101,7 +101,7 @@ getopt_long(int argc, char * const argv[],
 					{
 						if (place[namelen] == '=')
 							optarg = place + namelen + 1;
-						else if (optind < argc-1)
+						else if (optind < argc - 1)
 						{
 							optind++;
 							optarg = argv[optind];
@@ -112,7 +112,7 @@ getopt_long(int argc, char * const argv[],
 								return BADARG;
 							if (opterr)
 								fprintf(stderr,
-										"%s: option requires an argument -- %s\n",
+								"%s: option requires an argument -- %s\n",
 										argv[0], place);
 							place = EMSG;
 							optind++;

@@ -29,7 +29,7 @@
  *
  * CreateDestReceiver returns a receiver object appropriate to the specified
  * destination.  The executor, as well as utility statements that can return
- * tuples, are passed the resulting DestReceiver* pointer.  Each executor run
+ * tuples, are passed the resulting DestReceiver* pointer.	Each executor run
  * or utility execution calls the receiver's startup method, then the
  * receiveTuple method (zero or more times), then the shutdown method.
  * The same receiver object may be re-used multiple times; eventually it is
@@ -41,8 +41,8 @@
  * object that has DestReceiver as its first field and contains additional
  * fields (see printtup.c for an example).	These additional fields are then
  * accessible to the DestReceiver functions by casting the DestReceiver*
- * pointer passed to them.  The palloc'd object is pfree'd by the destroy
- * method.  Note that the caller of CreateDestReceiver should take care to
+ * pointer passed to them.	The palloc'd object is pfree'd by the destroy
+ * method.	Note that the caller of CreateDestReceiver should take care to
  * do so in a memory context that is long-lived enough for the receiver
  * object not to disappear while still needed.
  *
@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.38 2003/05/08 18:16:37 tgl Exp $
+ * $Id: dest.h,v 1.39 2003/08/04 00:43:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,7 @@
  *		destination.  Someday this will probably need to be improved.
  *
  * Note: only the values None, Debug, Remote are legal for the global
- * variable whereToSendOutput.  The other values may be used
+ * variable whereToSendOutput.	The other values may be used
  * as the destination for individual commands.
  * ----------------
  */
@@ -104,21 +104,21 @@ struct _DestReceiver
 {
 	/* Called for each tuple to be output: */
 	void		(*receiveTuple) (HeapTuple tuple,
-								 TupleDesc typeinfo,
-								 DestReceiver *self);
+											 TupleDesc typeinfo,
+											 DestReceiver *self);
 	/* Per-executor-run initialization and shutdown: */
 	void		(*startup) (DestReceiver *self,
-							int operation,
-							TupleDesc typeinfo);
+										int operation,
+										TupleDesc typeinfo);
 	void		(*shutdown) (DestReceiver *self);
 	/* Destroy the receiver object itself (if dynamically allocated) */
 	void		(*destroy) (DestReceiver *self);
 	/* CommandDest code for this receiver */
-	CommandDest	mydest;
+	CommandDest mydest;
 	/* Private fields might appear beyond this point... */
 };
 
-extern DestReceiver *None_Receiver;	/* permanent receiver for None */
+extern DestReceiver *None_Receiver;		/* permanent receiver for None */
 
 /* This is a forward reference to utils/portal.h */
 

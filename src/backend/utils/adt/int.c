@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.55 2003/07/27 04:53:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.56 2003/08/04 00:43:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,9 +173,7 @@ int2vectorrecv(PG_FUNCTION_ARGS)
 	int			slot;
 
 	for (slot = 0; slot < INDEX_MAX_KEYS; slot++)
-	{
 		result[slot] = (int16) pq_getmsgint(buf, sizeof(int16));
-	}
 	PG_RETURN_POINTER(result);
 }
 
@@ -191,9 +189,7 @@ int2vectorsend(PG_FUNCTION_ARGS)
 
 	pq_begintypsend(&buf);
 	for (slot = 0; slot < INDEX_MAX_KEYS; slot++)
-	{
 		pq_sendint(&buf, int2Array[slot], sizeof(int16));
-	}
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 

@@ -8,7 +8,7 @@
  * a dumbed-down version of tuplesort.c; it does no sorting of tuples
  * but can only store and regurgitate a sequence of tuples.  However,
  * because no sort is required, it is allowed to start reading the sequence
- * before it has all been written.  This is particularly useful for cursors,
+ * before it has all been written.	This is particularly useful for cursors,
  * because it allows random access within the already-scanned portion of
  * a query without having to process the underlying scan to completion.
  * A temporary file is used to handle the data if it exceeds the
@@ -27,7 +27,7 @@
  *
  * Because we allow reading before writing is complete, there are two
  * interesting positions in the temp file: the current read position and
- * the current write position.  At any given instant, the temp file's seek
+ * the current write position.	At any given instant, the temp file's seek
  * position corresponds to one of these, and the other one is remembered in
  * the Tuplestore's state.
  *
@@ -36,7 +36,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplestore.c,v 1.14 2003/07/25 20:18:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplestore.c,v 1.15 2003/08/04 00:43:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,11 +114,11 @@ struct Tuplestorestate
 	 * These variables are used to keep track of the current position.
 	 *
 	 * In state WRITEFILE, the current file seek position is the write point,
-	 * and the read position is remembered in readpos_xxx; in state READFILE,
-	 * the current file seek position is the read point, and the write position
-	 * is remembered in writepos_xxx.  (The write position is the same as EOF,
-	 * but since BufFileSeek doesn't currently implement SEEK_END, we have
-	 * to remember it explicitly.)
+	 * and the read position is remembered in readpos_xxx; in state
+	 * READFILE, the current file seek position is the read point, and the
+	 * write position is remembered in writepos_xxx.  (The write position
+	 * is the same as EOF, but since BufFileSeek doesn't currently
+	 * implement SEEK_END, we have to remember it explicitly.)
 	 *
 	 * Special case: if we are in WRITEFILE state and eof_reached is true,
 	 * then the read position is implicitly equal to the write position
@@ -130,10 +130,10 @@ struct Tuplestorestate
 	int			readpos_file;	/* file# (valid if WRITEFILE and not eof) */
 	long		readpos_offset; /* offset (valid if WRITEFILE and not eof) */
 	int			writepos_file;	/* file# (valid if READFILE) */
-	long		writepos_offset; /* offset (valid if READFILE) */
+	long		writepos_offset;	/* offset (valid if READFILE) */
 
 	/* markpos_xxx holds marked position for mark and restore */
-	int			markpos_current; /* saved "current" */
+	int			markpos_current;	/* saved "current" */
 	int			markpos_file;	/* saved "readpos_file" */
 	long		markpos_offset; /* saved "readpos_offset" */
 };
@@ -191,8 +191,8 @@ struct Tuplestorestate
 
 
 static Tuplestorestate *tuplestore_begin_common(bool randomAccess,
-												bool interXact,
-												int maxKBytes);
+						bool interXact,
+						int maxKBytes);
 static void dumptuples(Tuplestorestate *state);
 static unsigned int getlen(Tuplestorestate *state, bool eofOK);
 static void *copytup_heap(Tuplestorestate *state, void *tup);
@@ -244,7 +244,7 @@ tuplestore_begin_common(bool randomAccess, bool interXact, int maxKBytes)
  * tuple store are allowed.
  *
  * interXact: if true, the files used for on-disk storage persist beyond the
- * end of the current transaction.  NOTE: It's the caller's responsibility to
+ * end of the current transaction.	NOTE: It's the caller's responsibility to
  * create such a tuplestore in a memory context that will also survive
  * transaction boundaries, and to ensure the tuplestore is closed when it's
  * no longer wanted.
@@ -352,6 +352,7 @@ tuplestore_puttuple(Tuplestorestate *state, void *tuple)
 			WRITETUP(state, tuple);
 			break;
 		case TSS_READFILE:
+
 			/*
 			 * Switch from reading to writing.
 			 */
@@ -421,6 +422,7 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 			/* Skip state change if we'll just return NULL */
 			if (state->eof_reached && forward)
 				return NULL;
+
 			/*
 			 * Switch from writing to reading.
 			 */
@@ -428,7 +430,7 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 						&state->writepos_file, &state->writepos_offset);
 			if (!state->eof_reached)
 				if (BufFileSeek(state->myfile,
-								state->readpos_file, state->readpos_offset,
+							  state->readpos_file, state->readpos_offset,
 								SEEK_SET) != 0)
 					elog(ERROR, "seek failed");
 			state->status = TSS_READFILE;
@@ -456,9 +458,8 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 			 * if all tuples are fetched already then we return last tuple,
 			 * else - tuple before last returned.
 			 *
-			 * Back up to fetch previously-returned tuple's ending
-			 * length word.  If seek fails, assume we are at start of
-			 * file.
+			 * Back up to fetch previously-returned tuple's ending length
+			 * word.  If seek fails, assume we are at start of file.
 			 */
 			if (BufFileSeek(state->myfile, 0, -(long) sizeof(unsigned int),
 							SEEK_CUR) != 0)
@@ -524,7 +525,7 @@ dumptuples(Tuplestorestate *state)
 {
 	int			i;
 
-	for (i = 0; ; i++)
+	for (i = 0;; i++)
 	{
 		if (i == state->current)
 			BufFileTell(state->myfile,

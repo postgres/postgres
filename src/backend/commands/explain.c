@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.111 2003/07/20 21:56:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.112 2003/08/04 00:43:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,11 +45,11 @@ typedef struct ExplainState
 
 static void ExplainOneQuery(Query *query, ExplainStmt *stmt,
 				TupOutputState *tstate);
-static double elapsed_time(struct timeval *starttime);
+static double elapsed_time(struct timeval * starttime);
 static void explain_outNode(StringInfo str,
-							Plan *plan, PlanState *planstate,
-							Plan *outer_plan,
-							int indent, ExplainState *es);
+				Plan *plan, PlanState * planstate,
+				Plan *outer_plan,
+				int indent, ExplainState *es);
 static void show_scan_qual(List *qual, bool is_or_qual, const char *qlabel,
 			   int scanrelid, Plan *outer_plan,
 			   StringInfo str, int indent, ExplainState *es);
@@ -58,8 +58,8 @@ static void show_upper_qual(List *qual, const char *qlabel,
 				const char *inner_name, int inner_varno, Plan *inner_plan,
 				StringInfo str, int indent, ExplainState *es);
 static void show_sort_keys(List *tlist, int nkeys, AttrNumber *keycols,
-						   const char *qlabel,
-						   StringInfo str, int indent, ExplainState *es);
+			   const char *qlabel,
+			   StringInfo str, int indent, ExplainState *es);
 static Node *make_ors_ands_explicit(List *orclauses);
 
 /*
@@ -255,8 +255,8 @@ ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
 	}
 
 	/*
-	 * Close down the query and free resources.  Include time for this
-	 * in the total runtime.
+	 * Close down the query and free resources.  Include time for this in
+	 * the total runtime.
 	 */
 	gettimeofday(&starttime, NULL);
 
@@ -282,7 +282,7 @@ ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
 
 /* Compute elapsed time in seconds since given gettimeofday() timestamp */
 static double
-elapsed_time(struct timeval *starttime)
+elapsed_time(struct timeval * starttime)
 {
 	struct timeval endtime;
 
@@ -313,7 +313,7 @@ elapsed_time(struct timeval *starttime)
  */
 static void
 explain_outNode(StringInfo str,
-				Plan *plan, PlanState *planstate,
+				Plan *plan, PlanState * planstate,
 				Plan *outer_plan,
 				int indent, ExplainState *es)
 {
@@ -542,8 +542,8 @@ explain_outNode(StringInfo str,
 				/*
 				 * If the expression is still a function call, we can get
 				 * the real name of the function.  Otherwise, punt (this
-				 * can happen if the optimizer simplified away the function
-				 * call, for example).
+				 * can happen if the optimizer simplified away the
+				 * function call, for example).
 				 */
 				if (rte->funcexpr && IsA(rte->funcexpr, FuncExpr))
 				{
@@ -583,15 +583,13 @@ explain_outNode(StringInfo str,
 			double		nloops = planstate->instrument->nloops;
 
 			appendStringInfo(str, " (actual time=%.2f..%.2f rows=%.0f loops=%.0f)",
-							 1000.0 * planstate->instrument->startup / nloops,
-							 1000.0 * planstate->instrument->total / nloops,
+						1000.0 * planstate->instrument->startup / nloops,
+						  1000.0 * planstate->instrument->total / nloops,
 							 planstate->instrument->ntuples / nloops,
 							 planstate->instrument->nloops);
 		}
 		else if (es->printAnalyze)
-		{
 			appendStringInfo(str, " (never executed)");
-		}
 	}
 	appendStringInfoChar(str, '\n');
 
@@ -709,7 +707,7 @@ explain_outNode(StringInfo str,
 		foreach(lst, planstate->initPlan)
 		{
 			SubPlanState *sps = (SubPlanState *) lfirst(lst);
-			SubPlan *sp = (SubPlan *) sps->xprstate.expr;
+			SubPlan    *sp = (SubPlan *) sps->xprstate.expr;
 
 			es->rtable = sp->rtable;
 			for (i = 0; i < indent; i++)
@@ -807,7 +805,7 @@ explain_outNode(StringInfo str,
 		foreach(lst, planstate->subPlan)
 		{
 			SubPlanState *sps = (SubPlanState *) lfirst(lst);
-			SubPlan *sp = (SubPlan *) sps->xprstate.expr;
+			SubPlan    *sp = (SubPlan *) sps->xprstate.expr;
 
 			es->rtable = sp->rtable;
 			for (i = 0; i < indent; i++)
@@ -865,7 +863,7 @@ show_scan_qual(List *qual, bool is_or_qual, const char *qlabel,
 	 */
 	if (outer_plan)
 	{
-		Relids	varnos = pull_varnos(node);
+		Relids		varnos = pull_varnos(node);
 
 		if (bms_is_member(OUTER, varnos))
 			outercontext = deparse_context_for_subplan("outer",
@@ -1037,9 +1035,7 @@ make_ors_ands_explicit(List *orclauses)
 
 		FastListInit(&args);
 		foreach(orptr, orclauses)
-		{
 			FastAppend(&args, make_ands_explicit(lfirst(orptr)));
-		}
 
 		return (Node *) make_orclause(FastListValue(&args));
 	}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.158 2003/07/28 00:09:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.159 2003/08/04 00:43:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ static int	expr_depth_counter = 0;
 bool		Transform_null_equals = false;
 
 static Node *typecast_expression(ParseState *pstate, Node *expr,
-								 TypeName *typename);
+					TypeName *typename);
 static Node *transformColumnRef(ParseState *pstate, ColumnRef *cref);
 static Node *transformIndirection(ParseState *pstate, Node *basenode,
 					 List *indirection);
@@ -130,10 +130,10 @@ transformExpr(ParseState *pstate, Node *expr)
 					toppstate = toppstate->parentParseState;
 
 				/* Check parameter number is in range */
-				if (paramno <= 0) /* probably can't happen? */
+				if (paramno <= 0)		/* probably can't happen? */
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_PARAMETER),
-							 errmsg("there is no parameter $%d", paramno)));
+						  errmsg("there is no parameter $%d", paramno)));
 				if (paramno > toppstate->p_numparams)
 				{
 					if (!toppstate->p_variableparams)
@@ -152,20 +152,20 @@ transformExpr(ParseState *pstate, Node *expr)
 					/* Zero out the previously-unreferenced slots */
 					MemSet(toppstate->p_paramtypes + toppstate->p_numparams,
 						   0,
-						   (paramno - toppstate->p_numparams) * sizeof(Oid));
+					   (paramno - toppstate->p_numparams) * sizeof(Oid));
 					toppstate->p_numparams = paramno;
 				}
 				if (toppstate->p_variableparams)
 				{
 					/* If not seen before, initialize to UNKNOWN type */
-					if (toppstate->p_paramtypes[paramno-1] == InvalidOid)
-						toppstate->p_paramtypes[paramno-1] = UNKNOWNOID;
+					if (toppstate->p_paramtypes[paramno - 1] == InvalidOid)
+						toppstate->p_paramtypes[paramno - 1] = UNKNOWNOID;
 				}
 
 				param = makeNode(Param);
 				param->paramkind = PARAM_NUM;
 				param->paramid = (AttrNumber) paramno;
-				param->paramtype = toppstate->p_paramtypes[paramno-1];
+				param->paramtype = toppstate->p_paramtypes[paramno - 1];
 				result = (Node *) param;
 
 				/* handle qualification, if any */
@@ -254,9 +254,9 @@ transformExpr(ParseState *pstate, Node *expr)
 							else
 							{
 								Node	   *lexpr = transformExpr(pstate,
-																  a->lexpr);
+															   a->lexpr);
 								Node	   *rexpr = transformExpr(pstate,
-																  a->rexpr);
+															   a->rexpr);
 
 								result = (Node *) make_op(pstate,
 														  a->name,
@@ -276,8 +276,8 @@ transformExpr(ParseState *pstate, Node *expr)
 							rexpr = coerce_to_boolean(pstate, rexpr, "AND");
 
 							result = (Node *) makeBoolExpr(AND_EXPR,
-														   makeList2(lexpr,
-																	 rexpr));
+														 makeList2(lexpr,
+																 rexpr));
 						}
 						break;
 					case AEXPR_OR:
@@ -291,8 +291,8 @@ transformExpr(ParseState *pstate, Node *expr)
 							rexpr = coerce_to_boolean(pstate, rexpr, "OR");
 
 							result = (Node *) makeBoolExpr(OR_EXPR,
-														   makeList2(lexpr,
-																	 rexpr));
+														 makeList2(lexpr,
+																 rexpr));
 						}
 						break;
 					case AEXPR_NOT:
@@ -303,7 +303,7 @@ transformExpr(ParseState *pstate, Node *expr)
 							rexpr = coerce_to_boolean(pstate, rexpr, "NOT");
 
 							result = (Node *) makeBoolExpr(NOT_EXPR,
-														   makeList1(rexpr));
+													   makeList1(rexpr));
 						}
 						break;
 					case AEXPR_OP_ANY:
@@ -314,7 +314,7 @@ transformExpr(ParseState *pstate, Node *expr)
 															  a->rexpr);
 
 							result = (Node *) make_scalar_array_op(pstate,
-																   a->name,
+																 a->name,
 																   true,
 																   lexpr,
 																   rexpr);
@@ -328,7 +328,7 @@ transformExpr(ParseState *pstate, Node *expr)
 															  a->rexpr);
 
 							result = (Node *) make_scalar_array_op(pstate,
-																   a->name,
+																 a->name,
 																   false,
 																   lexpr,
 																   rexpr);
@@ -347,10 +347,12 @@ transformExpr(ParseState *pstate, Node *expr)
 													  rexpr);
 							if (((OpExpr *) result)->opresulttype != BOOLOID)
 								ereport(ERROR,
-										(errcode(ERRCODE_DATATYPE_MISMATCH),
-										 errmsg("IS DISTINCT FROM requires = operator to yield boolean")));
+									 (errcode(ERRCODE_DATATYPE_MISMATCH),
+									  errmsg("IS DISTINCT FROM requires = operator to yield boolean")));
+
 							/*
-							 * We rely on DistinctExpr and OpExpr being same struct
+							 * We rely on DistinctExpr and OpExpr being
+							 * same struct
 							 */
 							NodeSetTag(result, T_DistinctExpr);
 						}
@@ -368,10 +370,12 @@ transformExpr(ParseState *pstate, Node *expr)
 													  rexpr);
 							if (((OpExpr *) result)->opresulttype != BOOLOID)
 								ereport(ERROR,
-										(errcode(ERRCODE_DATATYPE_MISMATCH),
-										 errmsg("NULLIF requires = operator to yield boolean")));
+									 (errcode(ERRCODE_DATATYPE_MISMATCH),
+									  errmsg("NULLIF requires = operator to yield boolean")));
+
 							/*
-							 * We rely on NullIfExpr and OpExpr being same struct
+							 * We rely on NullIfExpr and OpExpr being same
+							 * struct
 							 */
 							NodeSetTag(result, T_NullIfExpr);
 						}
@@ -425,8 +429,8 @@ transformExpr(ParseState *pstate, Node *expr)
 				List	   *args;
 
 				/*
-				 * Transform the list of arguments.  We use a shallow
-				 * list copy and then transform-in-place to avoid O(N^2)
+				 * Transform the list of arguments.  We use a shallow list
+				 * copy and then transform-in-place to avoid O(N^2)
 				 * behavior from repeated lappend's.
 				 */
 				targs = listCopy(fn->args);
@@ -489,7 +493,7 @@ transformExpr(ParseState *pstate, Node *expr)
 						((TargetEntry *) lfirst(tlist))->resdom->resjunk)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("sub-select must return a column")));
+							 errmsg("sub-select must return a column")));
 					while ((tlist = lnext(tlist)) != NIL)
 					{
 						if (!((TargetEntry *) lfirst(tlist))->resdom->resjunk)
@@ -499,8 +503,9 @@ transformExpr(ParseState *pstate, Node *expr)
 					}
 
 					/*
-					 * EXPR and ARRAY need no lefthand or combining operator.
-					 * These fields should be NIL already, but make sure.
+					 * EXPR and ARRAY need no lefthand or combining
+					 * operator. These fields should be NIL already, but
+					 * make sure.
 					 */
 					sublink->lefthand = NIL;
 					sublink->operName = NIL;
@@ -523,9 +528,10 @@ transformExpr(ParseState *pstate, Node *expr)
 						lfirst(elist) = transformExpr(pstate, lfirst(elist));
 
 					/*
-					 * If the expression is "<> ALL" (with unqualified opname)
-					 * then convert it to "NOT IN".  This is a hack to improve
-					 * efficiency of expressions output by pre-7.4 Postgres.
+					 * If the expression is "<> ALL" (with unqualified
+					 * opname) then convert it to "NOT IN".  This is a
+					 * hack to improve efficiency of expressions output by
+					 * pre-7.4 Postgres.
 					 */
 					if (sublink->subLinkType == ALL_SUBLINK &&
 						length(op) == 1 && strcmp(opname, "<>") == 0)
@@ -549,14 +555,14 @@ transformExpr(ParseState *pstate, Node *expr)
 						strcmp(opname, "<>") != 0)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("row comparison cannot use operator %s",
-										opname)));
+						  errmsg("row comparison cannot use operator %s",
+								 opname)));
 
 					/*
-					 * To build the list of combining operator OIDs, we must
-					 * scan subquery's targetlist to find values that will
-					 * be matched against lefthand values.	We need to
-					 * ignore resjunk targets, so doing the outer
+					 * To build the list of combining operator OIDs, we
+					 * must scan subquery's targetlist to find values that
+					 * will be matched against lefthand values.  We need
+					 * to ignore resjunk targets, so doing the outer
 					 * iteration over right_list is easier than doing it
 					 * over left_list.
 					 */
@@ -576,7 +582,7 @@ transformExpr(ParseState *pstate, Node *expr)
 						if (left_list == NIL)
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("sub-select has too many columns")));
+							 errmsg("sub-select has too many columns")));
 						lexpr = lfirst(left_list);
 						left_list = lnext(left_list);
 
@@ -596,14 +602,14 @@ transformExpr(ParseState *pstate, Node *expr)
 									(errcode(ERRCODE_DATATYPE_MISMATCH),
 									 errmsg("operator %s must return boolean, not type %s",
 											opname,
-											format_type_be(opform->oprresult)),
+									  format_type_be(opform->oprresult)),
 									 errhint("The operator of a quantified predicate subquery must return boolean.")));
 
 						if (get_func_retset(opform->oprcode))
 							ereport(ERROR,
 									(errcode(ERRCODE_DATATYPE_MISMATCH),
-									 errmsg("operator %s must not return a set",
-											opname),
+							  errmsg("operator %s must not return a set",
+									 opname),
 									 errhint("The operator of a quantified predicate subquery must return boolean.")));
 
 						sublink->operOids = lappendo(sublink->operOids,
@@ -614,7 +620,7 @@ transformExpr(ParseState *pstate, Node *expr)
 					if (left_list != NIL)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("sub-select has too few columns")));
+							  errmsg("sub-select has too few columns")));
 
 					if (needNot)
 					{
@@ -657,7 +663,7 @@ transformExpr(ParseState *pstate, Node *expr)
 					neww->expr = (Expr *) transformExpr(pstate, warg);
 
 					neww->expr = (Expr *) coerce_to_boolean(pstate,
-															(Node *) neww->expr,
+													 (Node *) neww->expr,
 															"CASE/WHEN");
 
 					/*
@@ -747,8 +753,8 @@ transformExpr(ParseState *pstate, Node *expr)
 				/* Transform the element expressions */
 				foreach(element, a->elements)
 				{
-					Node *e = (Node *) lfirst(element);
-					Node *newe;
+					Node	   *e = (Node *) lfirst(element);
+					Node	   *newe;
 
 					newe = transformExpr(pstate, e);
 					newelems = lappend(newelems, newe);
@@ -761,8 +767,8 @@ transformExpr(ParseState *pstate, Node *expr)
 				/* Coerce arguments to common type if necessary */
 				foreach(element, newelems)
 				{
-					Node *e = (Node *) lfirst(element);
-					Node *newe;
+					Node	   *e = (Node *) lfirst(element);
+					Node	   *newe;
 
 					newe = coerce_to_common_type(pstate, e,
 												 element_type,
@@ -837,15 +843,15 @@ transformExpr(ParseState *pstate, Node *expr)
 			{
 				CoalesceExpr *c = (CoalesceExpr *) expr;
 				CoalesceExpr *newc = makeNode(CoalesceExpr);
-				List *newargs = NIL;
-				List *newcoercedargs = NIL;
-				List *typeids = NIL;
-				List *args;
+				List	   *newargs = NIL;
+				List	   *newcoercedargs = NIL;
+				List	   *typeids = NIL;
+				List	   *args;
 
 				foreach(args, c->args)
 				{
-					Node *e = (Node *) lfirst(args);
-					Node *newe;
+					Node	   *e = (Node *) lfirst(args);
+					Node	   *newe;
 
 					newe = transformExpr(pstate, e);
 					newargs = lappend(newargs, newe);
@@ -857,8 +863,8 @@ transformExpr(ParseState *pstate, Node *expr)
 				/* Convert arguments if necessary */
 				foreach(args, newargs)
 				{
-					Node *e = (Node *) lfirst(args);
-					Node *newe;
+					Node	   *e = (Node *) lfirst(args);
+					Node	   *newe;
 
 					newe = coerce_to_common_type(pstate, e,
 												 newc->coalescetype,
@@ -1026,9 +1032,9 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					 * Not known as a column of any range-table entry.
 					 *
 					 * Consider the possibility that it's VALUE in a domain
-					 * check expression.  (We handle VALUE as a name, not a
-					 * keyword, to avoid breaking a lot of applications that
-					 * have used VALUE as a column name in the past.)
+					 * check expression.  (We handle VALUE as a name, not
+					 * a keyword, to avoid breaking a lot of applications
+					 * that have used VALUE as a column name in the past.)
 					 */
 					if (pstate->p_value_substitute != NULL &&
 						strcmp(name, "value") == 0)
@@ -1059,7 +1065,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_COLUMN),
-								 errmsg("attribute \"%s\" not found", name)));
+							errmsg("attribute \"%s\" not found", name)));
 				}
 				break;
 			}
@@ -1175,8 +1181,8 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("improper qualified name (too many dotted names): %s",
-							NameListToString(cref->fields))));
+			errmsg("improper qualified name (too many dotted names): %s",
+				   NameListToString(cref->fields))));
 			node = NULL;		/* keep compiler quiet */
 			break;
 	}
@@ -1246,14 +1252,15 @@ exprType(Node *expr)
 					Assert(!tent->resdom->resjunk);
 					if (sublink->subLinkType == EXPR_SUBLINK)
 						type = tent->resdom->restype;
-					else /* ARRAY_SUBLINK */
+					else
+/* ARRAY_SUBLINK */
 					{
 						type = get_array_type(tent->resdom->restype);
 						if (!OidIsValid(type))
 							ereport(ERROR,
 									(errcode(ERRCODE_UNDEFINED_OBJECT),
 									 errmsg("could not find array type for datatype %s",
-											format_type_be(tent->resdom->restype))));
+								format_type_be(tent->resdom->restype))));
 					}
 				}
 				else
@@ -1266,9 +1273,10 @@ exprType(Node *expr)
 		case T_SubPlan:
 			{
 				/*
-				 * Although the parser does not ever deal with already-planned
-				 * expression trees, we support SubPlan nodes in this routine
-				 * for the convenience of ruleutils.c.
+				 * Although the parser does not ever deal with
+				 * already-planned expression trees, we support SubPlan
+				 * nodes in this routine for the convenience of
+				 * ruleutils.c.
 				 */
 				SubPlan    *subplan = (SubPlan *) expr;
 
@@ -1283,14 +1291,15 @@ exprType(Node *expr)
 					Assert(!tent->resdom->resjunk);
 					if (subplan->subLinkType == EXPR_SUBLINK)
 						type = tent->resdom->restype;
-					else /* ARRAY_SUBLINK */
+					else
+/* ARRAY_SUBLINK */
 					{
 						type = get_array_type(tent->resdom->restype);
 						if (!OidIsValid(type))
 							ereport(ERROR,
 									(errcode(ERRCODE_UNDEFINED_OBJECT),
 									 errmsg("could not find array type for datatype %s",
-											format_type_be(tent->resdom->restype))));
+								format_type_be(tent->resdom->restype))));
 					}
 				}
 				else
@@ -1337,9 +1346,10 @@ exprType(Node *expr)
 			type = ((SetToDefault *) expr)->typeId;
 			break;
 		case T_RangeVar:
+
 			/*
-			 * If someone uses a bare relation name in an expression,
-			 * we will likely first notice a problem here (see comments in
+			 * If someone uses a bare relation name in an expression, we
+			 * will likely first notice a problem here (see comments in
 			 * transformColumnRef()).  Issue an appropriate error message.
 			 */
 			ereport(ERROR,
@@ -1438,14 +1448,14 @@ exprTypmod(Node *expr)
 				 * that typmod, else use -1
 				 */
 				CoalesceExpr *cexpr = (CoalesceExpr *) expr;
-				Oid coalescetype = cexpr->coalescetype;
-				int32 typmod;
-				List *arg;
+				Oid			coalescetype = cexpr->coalescetype;
+				int32		typmod;
+				List	   *arg;
 
 				typmod = exprTypmod((Node *) lfirst(cexpr->args));
 				foreach(arg, cexpr->args)
 				{
-					Node *e = (Node *) lfirst(arg);
+					Node	   *e = (Node *) lfirst(arg);
 
 					if (exprType(e) != coalescetype)
 						return -1;
@@ -1505,9 +1515,9 @@ exprIsLengthCoercion(Node *expr, int32 *coercedTypmod)
 		return false;
 
 	/*
-	 * If it's not a two-argument or three-argument function with the second
-	 * argument being an int4 constant, it can't have been created from a
-	 * length coercion (it must be a type coercion, instead).
+	 * If it's not a two-argument or three-argument function with the
+	 * second argument being an int4 constant, it can't have been created
+	 * from a length coercion (it must be a type coercion, instead).
 	 */
 	nargs = length(func->args);
 	if (nargs < 2 || nargs > 3)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.104 2003/07/25 00:01:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.105 2003/08/04 00:43:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,13 +50,13 @@ static void set_function_pathlist(Query *root, RelOptInfo *rel,
 static RelOptInfo *make_one_rel_by_joins(Query *root, int levels_needed,
 					  List *initial_rels);
 static bool subquery_is_pushdown_safe(Query *subquery, Query *topquery,
-									  bool *differentTypes);
+						  bool *differentTypes);
 static bool recurse_pushdown_safe(Node *setOp, Query *topquery,
-								  bool *differentTypes);
+					  bool *differentTypes);
 static void compare_tlist_datatypes(List *tlist, List *colTypes,
-									bool *differentTypes);
+						bool *differentTypes);
 static bool qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
-								  bool *differentTypes);
+					  bool *differentTypes);
 static void subquery_push_qual(Query *subquery, Index rti, Node *qual);
 static void recurse_push_qual(Node *setOp, Query *topquery,
 				  Index rti, Node *qual);
@@ -290,14 +290,14 @@ set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
 		rel->rows += childrel->rows;
 		if (childrel->width > rel->width)
 			rel->width = childrel->width;
-		
+
 		childvars = FastListValue(&childrel->reltargetlist);
 		foreach(parentvars, FastListValue(&rel->reltargetlist))
 		{
-			Var	   *parentvar = (Var *) lfirst(parentvars);
-			Var	   *childvar = (Var *) lfirst(childvars);
-			int		parentndx = parentvar->varattno - rel->min_attr;
-			int		childndx = childvar->varattno - childrel->min_attr;
+			Var		   *parentvar = (Var *) lfirst(parentvars);
+			Var		   *childvar = (Var *) lfirst(childvars);
+			int			parentndx = parentvar->varattno - rel->min_attr;
+			int			childndx = childvar->varattno - childrel->min_attr;
 
 			if (childrel->attr_widths[childndx] > rel->attr_widths[parentndx])
 				rel->attr_widths[parentndx] = childrel->attr_widths[childndx];
@@ -343,8 +343,8 @@ set_subquery_pathlist(Query *root, RelOptInfo *rel,
 	 *
 	 * There are several cases where we cannot push down clauses.
 	 * Restrictions involving the subquery are checked by
-	 * subquery_is_pushdown_safe().  Restrictions on individual clauses are
-	 * checked by qual_is_pushdown_safe().
+	 * subquery_is_pushdown_safe().  Restrictions on individual clauses
+	 * are checked by qual_is_pushdown_safe().
 	 *
 	 * Non-pushed-down clauses will get evaluated as qpquals of the
 	 * SubqueryScan node.
@@ -725,15 +725,16 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 	vars = pull_var_clause(qual, false);
 	foreach(vl, vars)
 	{
-		Var	   *var = (Var *) lfirst(vl);
+		Var		   *var = (Var *) lfirst(vl);
 		List	   *tl;
 		TargetEntry *tle = NULL;
 
 		Assert(var->varno == rti);
+
 		/*
 		 * We use a bitmapset to avoid testing the same attno more than
-		 * once.  (NB: this only works because subquery outputs can't
-		 * have negative attnos.)
+		 * once.  (NB: this only works because subquery outputs can't have
+		 * negative attnos.)
 		 */
 		if (bms_is_member(var->varattno, tested))
 			continue;

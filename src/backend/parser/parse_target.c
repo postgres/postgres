@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.108 2003/07/28 00:09:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.109 2003/08/04 00:43:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,7 @@ transformTargetEntry(ParseState *pstate,
 				 errmsg("relation reference \"%s\" cannot be used as a targetlist entry",
 						((RangeVar *) expr)->relname),
 				 errhint("Write \"%s\".* to denote all the columns of the relation.",
-						((RangeVar *) expr)->relname)));
+						 ((RangeVar *) expr)->relname)));
 
 	type_id = exprType(expr);
 	type_mod = exprTypmod(expr);
@@ -152,8 +152,8 @@ transformTargetList(ParseState *pstate, List *targetlist)
 							 */
 							if (strcmp(name1, get_database_name(MyDatabaseId)) != 0)
 								ereport(ERROR,
-										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-										 errmsg("cross-database references are not implemented")));
+								 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								  errmsg("cross-database references are not implemented")));
 							schemaname = strVal(lsecond(fields));
 							relname = strVal(lthird(fields));
 							break;
@@ -286,7 +286,7 @@ markTargetListOrigin(ParseState *pstate, Resdom *res, Var *var)
 		case RTE_JOIN:
 			{
 				/* Join RTE --- recursively inspect the alias variable */
-				Var	   *aliasvar;
+				Var		   *aliasvar;
 
 				Assert(attnum > 0 && attnum <= length(rte->joinaliasvars));
 				aliasvar = (Var *) nth(attnum - 1, rte->joinaliasvars);
@@ -322,7 +322,7 @@ updateTargetListEntry(ParseState *pstate,
 					  int attrno,
 					  List *indirection)
 {
-	Oid			type_id; 		/* type of value provided */
+	Oid			type_id;		/* type of value provided */
 	Oid			attrtype;		/* type of target column */
 	int32		attrtypmod;
 	Resdom	   *resnode = tle->resdom;
@@ -341,13 +341,13 @@ updateTargetListEntry(ParseState *pstate,
 	 * If the expression is a DEFAULT placeholder, insert the attribute's
 	 * type/typmod into it so that exprType will report the right things.
 	 * (We expect that the eventually substituted default expression will
-	 * in fact have this type and typmod.)  Also, reject trying to update
+	 * in fact have this type and typmod.)	Also, reject trying to update
 	 * an array element with DEFAULT, since there can't be any default for
 	 * individual elements of a column.
 	 */
 	if (tle->expr && IsA(tle->expr, SetToDefault))
 	{
-		SetToDefault   *def = (SetToDefault *) tle->expr;
+		SetToDefault *def = (SetToDefault *) tle->expr;
 
 		def->typeId = attrtype;
 		def->typeMod = attrtypmod;
@@ -496,8 +496,8 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 			if (intMember(attrno, *attrnos))
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_COLUMN),
-						 errmsg("attribute \"%s\" specified more than once",
-								name)));
+					  errmsg("attribute \"%s\" specified more than once",
+							 name)));
 			*attrnos = lappendi(*attrnos, attrno);
 		}
 	}
@@ -551,7 +551,7 @@ ExpandAllTables(ParseState *pstate)
 	if (!found_table)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("SELECT * with no tables specified is not valid")));
+			  errmsg("SELECT * with no tables specified is not valid")));
 
 	return target;
 }

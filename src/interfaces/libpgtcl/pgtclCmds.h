@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pgtclCmds.h,v 1.29 2002/12/30 22:10:54 tgl Exp $
+ * $Id: pgtclCmds.h,v 1.30 2003/08/04 00:43:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,23 +93,23 @@ typedef struct Pg_ConnectionId_s
 /* registered Tcl functions */
 /* **************************/
 extern int Pg_conndefaults(ClientData cData, Tcl_Interp *interp,
-						   int argc, CONST84 char *argv[]);
+				int argc, CONST84 char *argv[]);
 extern int Pg_connect(ClientData cData, Tcl_Interp *interp,
-					  int argc, CONST84 char *argv[]);
+		   int argc, CONST84 char *argv[]);
 extern int Pg_disconnect(ClientData cData, Tcl_Interp *interp,
-						 int argc, CONST84 char *argv[]);
+			  int argc, CONST84 char *argv[]);
 extern int Pg_exec(ClientData cData, Tcl_Interp *interp,
-				   int argc, CONST84 char *argv[]);
+		int argc, CONST84 char *argv[]);
 extern int Pg_execute(ClientData cData, Tcl_Interp *interp,
-					  int argc, CONST84 char *argv[]);
+		   int argc, CONST84 char *argv[]);
 extern int Pg_select(ClientData cData, Tcl_Interp *interp,
-					 int argc, CONST84 char *argv[]);
+		  int argc, CONST84 char *argv[]);
 extern int Pg_result(ClientData cData, Tcl_Interp *interp,
-					 int argc, CONST84 char *argv[]);
+		  int argc, CONST84 char *argv[]);
 extern int Pg_lo_open(ClientData cData, Tcl_Interp *interp,
-					  int argc, CONST84 char *argv[]);
+		   int argc, CONST84 char *argv[]);
 extern int Pg_lo_close(ClientData cData, Tcl_Interp *interp,
-					   int argc, CONST84 char *argv[]);
+			int argc, CONST84 char *argv[]);
 
 #ifdef PGTCL_USE_TCLOBJ
 extern int Pg_lo_read(ClientData cData, Tcl_Interp *interp, int objc,
@@ -119,25 +119,25 @@ extern int Pg_lo_write(ClientData cData, Tcl_Interp *interp, int objc,
 
 #else
 extern int Pg_lo_read(ClientData cData, Tcl_Interp *interp,
-					  int argc, CONST84 char *argv[]);
+		   int argc, CONST84 char *argv[]);
 extern int Pg_lo_write(ClientData cData, Tcl_Interp *interp,
-					   int argc, CONST84 char *argv[]);
+			int argc, CONST84 char *argv[]);
 #endif
 extern int Pg_lo_lseek(ClientData cData, Tcl_Interp *interp,
-					   int argc, CONST84 char *argv[]);
+			int argc, CONST84 char *argv[]);
 extern int Pg_lo_creat(ClientData cData, Tcl_Interp *interp,
-					   int argc, CONST84 char *argv[]);
+			int argc, CONST84 char *argv[]);
 extern int Pg_lo_tell(ClientData cData, Tcl_Interp *interp,
-					  int argc, CONST84 char *argv[]);
+		   int argc, CONST84 char *argv[]);
 extern int Pg_lo_unlink(ClientData cData, Tcl_Interp *interp,
-						int argc, CONST84 char *argv[]);
+			 int argc, CONST84 char *argv[]);
 extern int Pg_lo_import(ClientData cData, Tcl_Interp *interp,
-						int argc, CONST84 char *argv[]);
+			 int argc, CONST84 char *argv[]);
 extern int Pg_lo_export(ClientData cData, Tcl_Interp *interp,
-						int argc, CONST84 char *argv[]);
+			 int argc, CONST84 char *argv[]);
 extern int Pg_listen(ClientData cData, Tcl_Interp *interp,
-					 int argc, CONST84 char *argv[]);
+		  int argc, CONST84 char *argv[]);
 extern int Pg_on_connection_loss(ClientData cData, Tcl_Interp *interp,
-								 int argc, CONST84 char *argv[]);
+					  int argc, CONST84 char *argv[]);
 
 #endif   /* PGTCLCMDS_H */

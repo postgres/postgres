@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.37 2003/07/27 21:49:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.38 2003/08/04 00:43:18 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -187,7 +187,6 @@ OvOzKGtwcTqO/1wV5gKkzu1ZVswVUQd5Gg8lJicwqRWyyNRczDDoG9jVDxmogKTH\n\
 AaqLulO7R8Ifa1SwF2DteSGVtgWEN8gDpN3RBmmPTDngyF2DHb5qmpnznwtFKdTL\n\
 KWbuHn491xNO25CQWMtem80uKw+pTnisBRF/454n1Jnhub144YRBoN8CAQI=\n\
 -----END DH PARAMETERS-----\n";
-
 #endif
 
 /* ------------------------------------------------------------ */
@@ -258,7 +257,7 @@ secure_read(Port *port, void *ptr, size_t len)
 #ifdef USE_SSL
 	if (port->ssl)
 	{
-	rloop:
+rloop:
 		n = SSL_read(port->ssl, ptr, len);
 		switch (SSL_get_error(port->ssl, n))
 		{
@@ -328,7 +327,7 @@ secure_write(Port *port, void *ptr, size_t len)
 			if (port->ssl->state != SSL_ST_OK)
 				ereport(COMMERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg("SSL failed to send renegotiation request")));
+					errmsg("SSL failed to send renegotiation request")));
 			port->ssl->state |= SSL_ST_ACCEPT;
 			SSL_do_handshake(port->ssl);
 			if (port->ssl->state != SSL_ST_OK)
@@ -338,7 +337,7 @@ secure_write(Port *port, void *ptr, size_t len)
 			port->count = 0;
 		}
 
-	wloop:
+wloop:
 		n = SSL_write(port->ssl, ptr, len);
 		switch (SSL_get_error(port->ssl, n))
 		{
@@ -436,7 +435,7 @@ load_dh_file(int keylength)
 			(codes & DH_CHECK_P_NOT_SAFE_PRIME))
 		{
 			elog(LOG,
-				 "DH error (%s): neither suitable generator or safe prime",
+			   "DH error (%s): neither suitable generator or safe prime",
 				 fnbuf);
 			return NULL;
 		}
@@ -620,21 +619,21 @@ initialize_SSL(void)
 		if (!SSL_CTX_use_certificate_file(SSL_context, fnbuf, SSL_FILETYPE_PEM))
 			ereport(FATAL,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("could not load server certificate file \"%s\": %s",
-							fnbuf, SSLerrmessage())));
+			  errmsg("could not load server certificate file \"%s\": %s",
+					 fnbuf, SSLerrmessage())));
 
 		snprintf(fnbuf, sizeof(fnbuf), "%s/server.key", DataDir);
 		if (stat(fnbuf, &buf) == -1)
 			ereport(FATAL,
 					(errcode_for_file_access(),
-					 errmsg("could not access private key file \"%s\": %m",
-							fnbuf)));
+				   errmsg("could not access private key file \"%s\": %m",
+						  fnbuf)));
 		if (!S_ISREG(buf.st_mode) || (buf.st_mode & (S_IRWXG | S_IRWXO)) ||
 			buf.st_uid != getuid())
 			ereport(FATAL,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("unsafe permissions on private key file \"%s\"",
-							fnbuf),
+				  errmsg("unsafe permissions on private key file \"%s\"",
+						 fnbuf),
 					 errdetail("File must be owned by the database user and must have no permissions for \"group\" or \"other\".")));
 
 		if (!SSL_CTX_use_PrivateKey_file(SSL_context, fnbuf, SSL_FILETYPE_PEM))

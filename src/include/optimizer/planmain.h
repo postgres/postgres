@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.72 2003/06/29 23:05:05 tgl Exp $
+ * $Id: planmain.h,v 1.73 2003/08/04 00:43:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
  * prototypes for plan/planmain.c
  */
 extern void query_planner(Query *root, List *tlist, double tuple_fraction,
-						  Path **cheapest_path, Path **sorted_path);
+			  Path **cheapest_path, Path **sorted_path);
 
 /*
  * prototypes for plan/createplan.c
@@ -31,18 +31,18 @@ extern SubqueryScan *make_subqueryscan(List *qptlist, List *qpqual,
 				  Index scanrelid, Plan *subplan);
 extern Append *make_append(List *appendplans, bool isTarget, List *tlist);
 extern Sort *make_sort_from_sortclauses(Query *root, List *tlist,
-										Plan *lefttree, List *sortcls);
+						   Plan *lefttree, List *sortcls);
 extern Sort *make_sort_from_groupcols(Query *root, List *groupcls,
-									  AttrNumber *grpColIdx, Plan *lefttree);
+						 AttrNumber *grpColIdx, Plan *lefttree);
 extern Agg *make_agg(Query *root, List *tlist, List *qual,
-					 AggStrategy aggstrategy,
-					 int numGroupCols, AttrNumber *grpColIdx,
-					 long numGroups, int numAggs,
-					 Plan *lefttree);
+		 AggStrategy aggstrategy,
+		 int numGroupCols, AttrNumber *grpColIdx,
+		 long numGroups, int numAggs,
+		 Plan *lefttree);
 extern Group *make_group(Query *root, List *tlist,
-						 int numGroupCols, AttrNumber *grpColIdx,
-						 double numGroups,
-						 Plan *lefttree);
+		   int numGroupCols, AttrNumber *grpColIdx,
+		   double numGroups,
+		   Plan *lefttree);
 extern Material *make_material(List *tlist, Plan *lefttree);
 extern Plan *materialize_finished_plan(Plan *subplan);
 extern Unique *make_unique(List *tlist, Plan *lefttree, List *distinctList);
@@ -59,16 +59,16 @@ extern void add_base_rels_to_query(Query *root, Node *jtnode);
 extern void build_base_rel_tlists(Query *root, List *final_tlist);
 extern Relids distribute_quals_to_rels(Query *root, Node *jtnode);
 extern void process_implied_equality(Query *root,
-									 Node *item1, Node *item2,
-									 Oid sortop1, Oid sortop2,
-									 Relids item1_relids, Relids item2_relids,
-									 bool delete_it);
+						 Node *item1, Node *item2,
+						 Oid sortop1, Oid sortop2,
+						 Relids item1_relids, Relids item2_relids,
+						 bool delete_it);
 
 /*
  * prototypes for plan/setrefs.c
  */
 extern void set_plan_references(Plan *plan, List *rtable);
 extern void fix_opfuncids(Node *node);
-extern void set_opfuncid(OpExpr *opexpr);
+extern void set_opfuncid(OpExpr * opexpr);
 
 #endif   /* PLANMAIN_H */

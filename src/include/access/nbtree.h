@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.67 2003/02/23 22:43:09 tgl Exp $
+ * $Id: nbtree.h,v 1.68 2003/08/04 00:43:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@
  *	a search has navigated to the wrong page due to concurrent page splits
  *	or deletions; see src/backend/access/nbtree/README for more info.
  *
- *  In addition, we store the page's btree level (counting upwards from
+ *	In addition, we store the page's btree level (counting upwards from
  *	zero at a leaf page) as well as some flag bits indicating the page type
  *	and status.  If the page is deleted, we replace the level with the
  *	next-transaction-ID value indicating when it is safe to reclaim the page.
@@ -41,9 +41,9 @@ typedef struct BTPageOpaqueData
 	BlockNumber btpo_next;		/* right sibling, or P_NONE if rightmost */
 	union
 	{
-		uint32	level;			/* tree level --- zero for leaf pages */
+		uint32		level;		/* tree level --- zero for leaf pages */
 		TransactionId xact;		/* next transaction ID, if deleted */
-	} btpo;
+	}			btpo;
 	uint16		btpo_flags;		/* flag bits, see below */
 } BTPageOpaqueData;
 
@@ -185,15 +185,16 @@ typedef BTItemData *BTItem;
  * record xl_info field
  */
 #define XLOG_BTREE_INSERT_LEAF	0x00	/* add btitem without split */
-#define XLOG_BTREE_INSERT_UPPER	0x10	/* same, on a non-leaf page */
+#define XLOG_BTREE_INSERT_UPPER 0x10	/* same, on a non-leaf page */
 #define XLOG_BTREE_INSERT_META	0x20	/* same, plus update metapage */
 #define XLOG_BTREE_SPLIT_L		0x30	/* add btitem with split */
 #define XLOG_BTREE_SPLIT_R		0x40	/* as above, new item on right */
-#define XLOG_BTREE_SPLIT_L_ROOT	0x50	/* add btitem with split of root */
-#define XLOG_BTREE_SPLIT_R_ROOT	0x60	/* as above, new item on right */
+#define XLOG_BTREE_SPLIT_L_ROOT 0x50	/* add btitem with split of root */
+#define XLOG_BTREE_SPLIT_R_ROOT 0x60	/* as above, new item on right */
 #define XLOG_BTREE_DELETE		0x70	/* delete leaf btitem */
 #define XLOG_BTREE_DELETE_PAGE	0x80	/* delete an entire page */
-#define XLOG_BTREE_DELETE_PAGE_META	0x90 /* same, plus update metapage */
+#define XLOG_BTREE_DELETE_PAGE_META 0x90		/* same, plus update
+												 * metapage */
 #define XLOG_BTREE_NEWROOT		0xA0	/* new root page */
 #define XLOG_BTREE_NEWMETA		0xB0	/* update metadata page */
 #define XLOG_BTREE_NEWPAGE		0xC0	/* new index page during build */
@@ -216,7 +217,7 @@ typedef struct xl_btree_metadata
 	uint32		level;
 	BlockNumber fastroot;
 	uint32		fastlevel;
-} xl_btree_metadata;
+}	xl_btree_metadata;
 
 /*
  * This is what we need to know about simple (without split) insert.
@@ -245,7 +246,7 @@ typedef struct xl_btree_insert
  * left or right split page (and thus, whether otherblk is the right or left
  * page of the split pair).  The _ROOT variants indicate that we are splitting
  * the root page, and thus that a newroot record rather than an insert or
- * split record should follow.  Note that a split record never carries a
+ * split record should follow.	Note that a split record never carries a
  * metapage update --- we'll do that in the parent-level update.
  */
 typedef struct xl_btree_split
@@ -279,7 +280,7 @@ typedef struct xl_btree_delete
 /*
  * This is what we need to know about deletion of a btree page.  The target
  * identifies the tuple removed from the parent page (note that we remove
- * this tuple's downlink and the *following* tuple's key).  Note we do not
+ * this tuple's downlink and the *following* tuple's key).	Note we do not
  * store any content for the deleted page --- it is just rewritten as empty
  * during recovery.
  */
@@ -290,7 +291,7 @@ typedef struct xl_btree_delete_page
 	BlockNumber leftblk;		/* child block's left sibling, if any */
 	BlockNumber rightblk;		/* child block's right sibling */
 	/* xl_btree_metadata FOLLOWS IF XLOG_BTREE_DELETE_PAGE_META */
-} xl_btree_delete_page;
+}	xl_btree_delete_page;
 
 #define SizeOfBtreeDeletePage	(offsetof(xl_btree_delete_page, rightblk) + sizeof(BlockNumber))
 
@@ -320,7 +321,7 @@ typedef struct xl_btree_newmeta
 {
 	RelFileNode node;
 	xl_btree_metadata meta;
-} xl_btree_newmeta;
+}	xl_btree_newmeta;
 
 #define SizeOfBtreeNewmeta	(sizeof(xl_btree_newmeta))
 
@@ -332,7 +333,7 @@ typedef struct xl_btree_newpage
 	RelFileNode node;
 	BlockNumber blkno;			/* location of new page */
 	/* entire page contents follow at end of record */
-} xl_btree_newpage;
+}	xl_btree_newpage;
 
 #define SizeOfBtreeNewpage	(offsetof(xl_btree_newpage, blkno) + sizeof(BlockNumber))
 
@@ -442,7 +443,7 @@ extern InsertIndexResult _bt_doinsert(Relation rel, BTItem btitem,
 			 bool index_is_unique, Relation heapRel);
 extern Buffer _bt_getstackbuf(Relation rel, BTStack stack, int access);
 extern void _bt_insert_parent(Relation rel, Buffer buf, Buffer rbuf,
-							  BTStack stack, bool is_root, bool is_only);
+				  BTStack stack, bool is_root, bool is_only);
 
 /*
  * prototypes for functions in nbtpage.c
@@ -458,7 +459,7 @@ extern void _bt_pageinit(Page page, Size size);
 extern bool _bt_page_recyclable(Page page);
 extern void _bt_metaproot(Relation rel, BlockNumber rootbknum, uint32 level);
 extern void _bt_delitems(Relation rel, Buffer buf,
-						 OffsetNumber *itemnos, int nitems);
+			 OffsetNumber *itemnos, int nitems);
 extern int	_bt_pagedel(Relation rel, Buffer buf, bool vacuum_full);
 
 /*

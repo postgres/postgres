@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.59 2003/07/22 19:00:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.60 2003/08/04 00:43:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,7 @@ BeginCommand(const char *commandTag, CommandDest dest)
  *		CreateDestReceiver - return appropriate receiver function set for dest
  *
  * Note: a Portal must be specified for destinations Remote, RemoteExecute,
- * and Tuplestore.  It can be NULL for the others.
+ * and Tuplestore.	It can be NULL for the others.
  * ----------------
  */
 DestReceiver *
@@ -173,8 +173,9 @@ NullCommand(CommandDest dest)
 		case RemoteExecute:
 
 			/*
-			 * tell the fe that we saw an empty query string.  In protocols
-			 * before 3.0 this has a useless empty-string message body.
+			 * tell the fe that we saw an empty query string.  In
+			 * protocols before 3.0 this has a useless empty-string
+			 * message body.
 			 */
 			if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
 				pq_putemptymessage('I');

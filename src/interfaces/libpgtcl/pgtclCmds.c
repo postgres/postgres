@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.71 2002/12/30 22:10:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.72 2003/08/04 00:43:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -289,11 +289,11 @@ Pg_conndefaults(ClientData cData, Tcl_Interp *interp, int argc, CONST84 char *ar
 int
 Pg_connect(ClientData cData, Tcl_Interp *interp, int argc, CONST84 char *argv[])
 {
-	const char	   *pghost = NULL;
-	const char	   *pgtty = NULL;
-	const char	   *pgport = NULL;
-	const char	   *pgoptions = NULL;
-	const char	   *dbName;
+	const char *pghost = NULL;
+	const char *pgtty = NULL;
+	const char *pgport = NULL;
+	const char *pgoptions = NULL;
+	const char *dbName;
 	int			i;
 	PGconn	   *conn;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/alter.c,v 1.4 2003/08/01 00:15:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/alter.c,v 1.5 2003/08/04 00:43:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,52 +79,52 @@ ExecRenameStmt(RenameStmt *stmt)
 		case OBJECT_TABLE:
 		case OBJECT_COLUMN:
 		case OBJECT_TRIGGER:
-		{
-			Oid			relid;
-
-			CheckRelationOwnership(stmt->relation, true);
-
-			relid = RangeVarGetRelid(stmt->relation, false);
-
-			switch (stmt->renameType)
 			{
-				case OBJECT_TABLE:
+				Oid			relid;
+
+				CheckRelationOwnership(stmt->relation, true);
+
+				relid = RangeVarGetRelid(stmt->relation, false);
+
+				switch (stmt->renameType)
 				{
-					/*
-					 * RENAME TABLE requires that we (still) hold
-					 * CREATE rights on the containing namespace, as
-					 * well as ownership of the table.
-					 */
-					Oid			namespaceId = get_rel_namespace(relid);
-					AclResult	aclresult;
+					case OBJECT_TABLE:
+						{
+							/*
+							 * RENAME TABLE requires that we (still) hold
+							 * CREATE rights on the containing namespace,
+							 * as well as ownership of the table.
+							 */
+							Oid			namespaceId = get_rel_namespace(relid);
+							AclResult	aclresult;
 
-					aclresult = pg_namespace_aclcheck(namespaceId,
-													  GetUserId(),
-													  ACL_CREATE);
-					if (aclresult != ACLCHECK_OK)
-						aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
-									   get_namespace_name(namespaceId));
+							aclresult = pg_namespace_aclcheck(namespaceId,
+															  GetUserId(),
+															  ACL_CREATE);
+							if (aclresult != ACLCHECK_OK)
+								aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+										get_namespace_name(namespaceId));
 
-					renamerel(relid, stmt->newname);
-					break;
-				}
-				case OBJECT_COLUMN:
-					renameatt(relid,
-							  stmt->subname,		/* old att name */
-							  stmt->newname,		/* new att name */
+							renamerel(relid, stmt->newname);
+							break;
+						}
+					case OBJECT_COLUMN:
+						renameatt(relid,
+								  stmt->subname,		/* old att name */
+								  stmt->newname,		/* new att name */
 							  interpretInhOption(stmt->relation->inhOpt),		/* recursive? */
-							  false);		/* recursing already? */
-					break;
-				case OBJECT_TRIGGER:
-					renametrig(relid,
-							   stmt->subname,		/* old att name */
-							   stmt->newname);		/* new att name */
-					break;
-				default:
-					/*can't happen*/;
+								  false);		/* recursing already? */
+						break;
+					case OBJECT_TRIGGER:
+						renametrig(relid,
+								   stmt->subname,		/* old att name */
+								   stmt->newname);		/* new att name */
+						break;
+					default:
+						 /* can't happen */ ;
+				}
+				break;
 			}
-			break;
-		}
 
 		default:
 			elog(ERROR, "unrecognized rename stmt type: %d",

@@ -1,7 +1,7 @@
 #include "btree_gist.h"
 
 PG_FUNCTION_INFO_V1(btree_decompress);
-Datum   btree_decompress(PG_FUNCTION_ARGS);
+Datum		btree_decompress(PG_FUNCTION_ARGS);
 
 /*
 ** GiST DeCompress methods

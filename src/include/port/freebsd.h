@@ -44,4 +44,5 @@ typedef unsigned long slock_t;
 #if defined(__powerpc__)
 #define HAS_TEST_AND_SET
 typedef unsigned int slock_t;
+
 #endif

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.47 2003/07/27 04:53:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.48 2003/08/04 00:43:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,7 +89,7 @@ namerecv(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NAME_TOO_LONG),
 				 errmsg("identifier too long"),
 				 errdetail("Identifier must be less than %d characters.",
-							NAMEDATALEN)));
+						   NAMEDATALEN)));
 	result = (NameData *) palloc0(NAMEDATALEN);
 	memcpy(result, str, nbytes);
 	pfree(str);

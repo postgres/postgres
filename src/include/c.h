@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.150 2003/06/12 08:15:29 momjian Exp $
+ * $Id: c.h,v 1.151 2003/08/04 00:43:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@
 #include <sys/types.h>
 
 #include <errno.h>
-#include <fcntl.h>			/* ensure O_BINARY is available */
+#include <fcntl.h>				/* ensure O_BINARY is available */
 #ifdef HAVE_SUPPORTDEFS_H
 #include <SupportDefs.h>
 #endif
@@ -591,7 +591,7 @@ typedef NameData *Name;
  *	Exactly the same as standard library function memset(), but considerably
  *	faster for zeroing small word-aligned structures (such as parsetree nodes).
  *	This has to be a macro because the main point is to avoid function-call
- *	overhead.   However, we have also found that the loop is faster than
+ *	overhead.	However, we have also found that the loop is faster than
  *	native libc memset() on some platforms, even those with assembler
  *	memset() functions.  More research needs to be done, perhaps with
  *	platform-specific MEMSET_LOOP_LIMIT values or tests in configure.
@@ -707,6 +707,7 @@ typedef NameData *Name;
 #define FCNTL_NONBLOCK(sock)	fcntl(sock, F_SETFL, O_NONBLOCK)
 #else
 extern long ioctlsocket_ret;
+
 /* Returns non-0 on failure, while fcntl() returns -1 on failure */
 #ifdef WIN32
 #define FCNTL_NONBLOCK(sock)	((ioctlsocket(sock, FIONBIO, &ioctlsocket_ret) == 0) ? 0 : -1)
@@ -754,7 +755,7 @@ extern int	vsnprintf(char *str, size_t count, const char *fmt, va_list args);
  * because it is used in both the prototypes as well as the definitions.
  * Note also the long name.  We expect that this won't collide with
  * other names causing compiler warnings.
- */ 
+ */
 
 #ifndef SIGNAL_ARGS
 #define SIGNAL_ARGS  int postgres_signal_arg
@@ -766,25 +767,25 @@ extern int	vsnprintf(char *str, size_t count, const char *fmt, va_list args);
  * that case.
  */
 #ifndef HAVE_SIGSETJMP
-# define sigjmp_buf jmp_buf
-# define sigsetjmp(x,y)	setjmp(x)
-# define siglongjmp longjmp
+#define sigjmp_buf jmp_buf
+#define sigsetjmp(x,y) setjmp(x)
+#define siglongjmp longjmp
 #endif
 
 #if defined(HAVE_FDATASYNC) && !HAVE_DECL_FDATASYNC
-extern int fdatasync(int fildes);
+extern int	fdatasync(int fildes);
 #endif
 
 /* If strtoq() exists, rename it to the more standard strtoll() */
 #if defined(HAVE_LONG_LONG_INT_64) && !defined(HAVE_STRTOLL) && defined(HAVE_STRTOQ)
-# define strtoll strtoq
-# define HAVE_STRTOLL 1
+#define strtoll strtoq
+#define HAVE_STRTOLL 1
 #endif
 
 /* If strtouq() exists, rename it to the more standard strtoull() */
 #if defined(HAVE_LONG_LONG_INT_64) && !defined(HAVE_STRTOULL) && defined(HAVE_STRTOUQ)
-# define strtoull strtouq
-# define HAVE_STRTOULL 1
+#define strtoull strtouq
+#define HAVE_STRTOULL 1
 #endif
 
 /* /port compatibility functions */

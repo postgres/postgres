@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.94 2003/06/21 21:51:34 tgl Exp $
+ * $Id: libpq-fe.h,v 1.95 2003/08/04 00:43:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,8 +39,8 @@ typedef enum
 {
 	/*
 	 * Although it is okay to add to this list, values which become unused
-	 * should never be removed, nor should constants be redefined - that would
-	 * break compatibility with existing code.
+	 * should never be removed, nor should constants be redefined - that
+	 * would break compatibility with existing code.
 	 */
 	CONNECTION_OK,
 	CONNECTION_BAD,
@@ -67,8 +67,8 @@ typedef enum
 	PGRES_POLLING_READING,		/* These two indicate that one may	  */
 	PGRES_POLLING_WRITING,		/* use select before polling again.   */
 	PGRES_POLLING_OK,
-	PGRES_POLLING_ACTIVE		/*  unused; keep for awhile for
-                                 *  backwards compatibility */
+	PGRES_POLLING_ACTIVE		/* unused; keep for awhile for backwards
+								 * compatibility */
 } PostgresPollingStatusType;
 
 typedef enum
@@ -95,14 +95,14 @@ typedef enum
 	PQTRANS_INTRANS,			/* idle, within transaction block */
 	PQTRANS_INERROR,			/* idle, within failed transaction */
 	PQTRANS_UNKNOWN				/* cannot determine status */
-} PGTransactionStatusType;
+}	PGTransactionStatusType;
 
 typedef enum
 {
 	PQERRORS_TERSE,				/* single-line error messages */
 	PQERRORS_DEFAULT,			/* recommended style */
 	PQERRORS_VERBOSE			/* all the facts, ma'am */
-} PGVerbosity;
+}	PGVerbosity;
 
 /* PGconn encapsulates a connection to the backend.
  * The contents of this struct are not supposed to be known to applications.
@@ -246,7 +246,7 @@ extern char *PQoptions(const PGconn *conn);
 extern ConnStatusType PQstatus(const PGconn *conn);
 extern PGTransactionStatusType PQtransactionStatus(const PGconn *conn);
 extern const char *PQparameterStatus(const PGconn *conn,
-									 const char *paramName);
+				  const char *paramName);
 extern int	PQprotocolVersion(const PGconn *conn);
 extern char *PQerrorMessage(const PGconn *conn);
 extern int	PQsocket(const PGconn *conn);
@@ -268,8 +268,8 @@ extern void PQuntrace(PGconn *conn);
 
 /* Override default notice handling routines */
 extern PQnoticeReceiver PQsetNoticeReceiver(PGconn *conn,
-											PQnoticeReceiver proc,
-											void *arg);
+					PQnoticeReceiver proc,
+					void *arg);
 extern PQnoticeProcessor PQsetNoticeProcessor(PGconn *conn,
 					 PQnoticeProcessor proc,
 					 void *arg);
@@ -279,24 +279,24 @@ extern PQnoticeProcessor PQsetNoticeProcessor(PGconn *conn,
 /* Simple synchronous query */
 extern PGresult *PQexec(PGconn *conn, const char *query);
 extern PGresult *PQexecParams(PGconn *conn,
-							  const char *command,
-							  int nParams,
-							  const Oid *paramTypes,
-							  const char * const *paramValues,
-							  const int *paramLengths,
-							  const int *paramFormats,
-							  int resultFormat);
+			 const char *command,
+			 int nParams,
+			 const Oid *paramTypes,
+			 const char *const * paramValues,
+			 const int *paramLengths,
+			 const int *paramFormats,
+			 int resultFormat);
 
 /* Interface for multiple-result or asynchronous queries */
 extern int	PQsendQuery(PGconn *conn, const char *query);
-extern int	PQsendQueryParams(PGconn *conn,
-							  const char *command,
-							  int nParams,
-							  const Oid *paramTypes,
-							  const char * const *paramValues,
-							  const int *paramLengths,
-							  const int *paramFormats,
-							  int resultFormat);
+extern int PQsendQueryParams(PGconn *conn,
+				  const char *command,
+				  int nParams,
+				  const Oid *paramTypes,
+				  const char *const * paramValues,
+				  const int *paramLengths,
+				  const int *paramFormats,
+				  int resultFormat);
 extern PGresult *PQgetResult(PGconn *conn);
 
 /* Routines for managing an asynchronous query */
@@ -310,6 +310,7 @@ extern PGnotify *PQnotifies(PGconn *conn);
 extern int	PQputCopyData(PGconn *conn, const char *buffer, int nbytes);
 extern int	PQputCopyEnd(PGconn *conn, const char *errormsg);
 extern int	PQgetCopyData(PGconn *conn, char **buffer, int async);
+
 /* Deprecated routines for copy in/out */
 extern int	PQgetline(PGconn *conn, char *string, int length);
 extern int	PQputline(PGconn *conn, const char *string);
@@ -388,21 +389,24 @@ extern unsigned char *PQunescapeBytea(const unsigned char *strtext,
 
 /* === in fe-print.c === */
 
-extern void PQprint(FILE *fout,				/* output stream */
-					const PGresult *res,
-					const PQprintOpt *ps);	/* option structure */
+extern void
+PQprint(FILE *fout,				/* output stream */
+		const PGresult *res,
+		const PQprintOpt *ps);	/* option structure */
 
 /*
  * really old printing routines
  */
-extern void PQdisplayTuples(const PGresult *res,
+extern void
+PQdisplayTuples(const PGresult *res,
 				FILE *fp,		/* where to send the output */
 				int fillAlign,	/* pad the fields with spaces */
 				const char *fieldSep,	/* field separator */
 				int printHeader,	/* display headers? */
 				int quiet);
 
-extern void PQprintTuples(const PGresult *res,
+extern void
+PQprintTuples(const PGresult *res,
 			  FILE *fout,		/* output stream */
 			  int printAttName, /* print attribute names */
 			  int terseOutput,	/* delimiter bars */

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.51 2003/05/02 20:54:36 tgl Exp $
+ * $Id: memutils.h,v 1.52 2003/08/04 00:43:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,6 +70,7 @@ extern DLLIMPORT MemoryContext PostmasterContext;
 extern DLLIMPORT MemoryContext CacheMemoryContext;
 extern DLLIMPORT MemoryContext MessageContext;
 extern DLLIMPORT MemoryContext TopTransactionContext;
+
 /* These two are transient links to contexts owned by other objects: */
 extern DLLIMPORT MemoryContext QueryContext;
 extern DLLIMPORT MemoryContext PortalContext;
@@ -127,8 +128,8 @@ extern MemoryContext AllocSetContextCreate(MemoryContext parent,
  * Recommended alloc parameters for "small" contexts that are not expected
  * to contain much data (for example, a context to contain a query plan).
  */
-#define ALLOCSET_SMALL_MINSIZE   0
+#define ALLOCSET_SMALL_MINSIZE	 0
 #define ALLOCSET_SMALL_INITSIZE  (1 * 1024)
-#define ALLOCSET_SMALL_MAXSIZE   (8 * 1024)
+#define ALLOCSET_SMALL_MAXSIZE	 (8 * 1024)
 
 #endif   /* MEMUTILS_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.34 2003/02/08 20:20:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.35 2003/08/04 00:43:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,7 @@ make_joininfo_node(RelOptInfo *this_rel, Relids join_relids)
  *	  appropriate rel node if necessary).
  *
  * Note that the same copy of the restrictinfo node is linked to by all the
- * lists it is in.  This allows us to exploit caching of information about
+ * lists it is in.	This allows us to exploit caching of information about
  * the restriction clause (but we must be careful that the information does
  * not depend on context).
  *
@@ -109,9 +109,10 @@ add_join_clause_to_rels(Query *root,
 									  unjoined_relids);
 		joininfo->jinfo_restrictinfo = lappend(joininfo->jinfo_restrictinfo,
 											   restrictinfo);
+
 		/*
 		 * Can't bms_free(unjoined_relids) because new joininfo node may
-		 * link to it.  We could avoid leaking memory by doing bms_copy()
+		 * link to it.	We could avoid leaking memory by doing bms_copy()
 		 * in make_joininfo_node, but for now speed seems better.
 		 */
 	}
@@ -156,13 +157,14 @@ remove_join_clause_from_rels(Query *root,
 		joininfo = find_joininfo_node(find_base_rel(root, cur_relid),
 									  unjoined_relids);
 		Assert(joininfo);
+
 		/*
-		 * Remove the restrictinfo from the list.  Pointer comparison
-		 * is sufficient.
+		 * Remove the restrictinfo from the list.  Pointer comparison is
+		 * sufficient.
 		 */
 		Assert(ptrMember(restrictinfo, joininfo->jinfo_restrictinfo));
 		joininfo->jinfo_restrictinfo = lremove(restrictinfo,
-											   joininfo->jinfo_restrictinfo);
+										   joininfo->jinfo_restrictinfo);
 		bms_free(unjoined_relids);
 	}
 	bms_free(tmprelids);

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.12 2003/08/01 13:53:36 petere Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.13 2003/08/04 00:43:32 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -23,7 +23,7 @@
 #define LONG_LONG_MIN LLONG_MIN
 #endif
 #endif
-                                                 
+
 static struct sqlca_t sqlca_init =
 {
 	{
@@ -52,8 +52,9 @@ static struct sqlca_t sqlca_init =
 };
 
 #ifdef USE_THREADS
-static pthread_key_t   sqlca_key;
-static pthread_once_t  sqlca_key_once = PTHREAD_ONCE_INIT;
+static pthread_key_t sqlca_key;
+static pthread_once_t sqlca_key_once = PTHREAD_ONCE_INIT;
+
 #else
 static struct sqlca_t sqlca =
 {
@@ -84,22 +85,23 @@ static struct sqlca_t sqlca =
 #endif
 
 #ifdef USE_THREADS
-static pthread_mutex_t debug_mutex    = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t debug_init_mutex    = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t debug_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t debug_init_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
-static int simple_debug = 0;
+static int	simple_debug = 0;
 static FILE *debugstream = NULL;
 
 void
-ECPGinit_sqlca(struct sqlca_t *sqlca)
+ECPGinit_sqlca(struct sqlca_t * sqlca)
 {
-	memcpy((char *)sqlca, (char *)&sqlca_init, sizeof(struct sqlca_t));
+	memcpy((char *) sqlca, (char *) &sqlca_init, sizeof(struct sqlca_t));
 }
 
 bool
 ECPGinit(const struct connection * con, const char *connection_name, const int lineno)
 {
 	struct sqlca_t *sqlca = ECPGget_sqlca();
+
 	ECPGinit_sqlca(sqlca);
 	if (con == NULL)
 	{
@@ -115,7 +117,7 @@ ECPGinit(const struct connection * con, const char *connection_name, const int l
 static void
 ecpg_sqlca_key_init(void)
 {
-  pthread_key_create(&sqlca_key, NULL);
+	pthread_key_create(&sqlca_key, NULL);
 }
 #endif
 
@@ -123,20 +125,20 @@ struct sqlca_t *
 ECPGget_sqlca(void)
 {
 #ifdef USE_THREADS
-  struct sqlca_t *sqlca;
+	struct sqlca_t *sqlca;
 
-  pthread_once(&sqlca_key_once, ecpg_sqlca_key_init);
+	pthread_once(&sqlca_key_once, ecpg_sqlca_key_init);
 
-  sqlca = pthread_getspecific(sqlca_key);
-  if( sqlca == NULL )
-    {
-      sqlca = malloc(sizeof(struct sqlca_t));
-      ECPGinit_sqlca(sqlca);
-      pthread_setspecific(sqlca_key, sqlca);
-    }
-  return( sqlca );
+	sqlca = pthread_getspecific(sqlca_key);
+	if (sqlca == NULL)
+	{
+		sqlca = malloc(sizeof(struct sqlca_t));
+		ECPGinit_sqlca(sqlca);
+		pthread_setspecific(sqlca_key, sqlca);
+	}
+	return (sqlca);
 #else
-  return( &sqlca );
+	return (&sqlca);
 #endif
 }
 
@@ -227,16 +229,17 @@ ECPGlog(const char *format,...)
 	pthread_mutex_lock(&debug_mutex);
 #endif
 
-	if( simple_debug )
+	if (simple_debug)
 	{
-		char *f = (char *)malloc(strlen(format) + 100);
-		if( f == NULL )
-		  {
+		char	   *f = (char *) malloc(strlen(format) + 100);
+
+		if (f == NULL)
+		{
 #ifdef USE_THREADS
 			pthread_mutex_unlock(&debug_mutex);
 #endif
 			return;
-		  }
+		}
 
 		sprintf(f, "[%d]: %s", (int) getpid(), format);
 
@@ -258,7 +261,7 @@ ECPGset_informix_null(enum ECPGttype type, void *ptr)
 {
 	switch (type)
 	{
-		case ECPGt_char: 
+		case ECPGt_char:
 		case ECPGt_unsigned_char:
 			*((char *) ptr) = 0x00;
 			break;
@@ -307,10 +310,12 @@ ECPGset_informix_null(enum ECPGttype type, void *ptr)
 	}
 }
 
-static bool _check(unsigned char *ptr, int length)
+static bool
+_check(unsigned char *ptr, int length)
 {
-	for (;ptr[--length] == 0xff && length >= 0; length --);
-	if (length < 0) return true;
+	for (; ptr[--length] == 0xff && length >= 0; length--);
+	if (length < 0)
+		return true;
 	return false;
 }
 
@@ -319,49 +324,57 @@ ECPGis_informix_null(enum ECPGttype type, void *ptr)
 {
 	switch (type)
 	{
-		case ECPGt_char: 
+		case ECPGt_char:
 		case ECPGt_unsigned_char:
-			if (*((char *)ptr) == 0x00) return true;
+			if (*((char *) ptr) == 0x00)
+				return true;
 			break;
 		case ECPGt_short:
 		case ECPGt_unsigned_short:
-			if (*((short int *) ptr) == SHRT_MIN) return true;
+			if (*((short int *) ptr) == SHRT_MIN)
+				return true;
 			break;
 		case ECPGt_int:
 		case ECPGt_unsigned_int:
-			if (*((int *) ptr) == INT_MIN) return true;
+			if (*((int *) ptr) == INT_MIN)
+				return true;
 			break;
 		case ECPGt_long:
 		case ECPGt_unsigned_long:
 		case ECPGt_date:
-			if (*((long *) ptr) == LONG_MIN) return true;
+			if (*((long *) ptr) == LONG_MIN)
+				return true;
 			break;
 #ifdef HAVE_LONG_LONG_INT_64
 		case ECPGt_long_long:
 		case ECPGt_unsigned_long_long:
-			if (*((long long *) ptr) == LONG_LONG_MIN) return true;
+			if (*((long long *) ptr) == LONG_LONG_MIN)
+				return true;
 			break;
 #endif   /* HAVE_LONG_LONG_INT_64 */
 		case ECPGt_float:
-			return(_check(ptr, sizeof(float)));
+			return (_check(ptr, sizeof(float)));
 			break;
 		case ECPGt_double:
-			return(_check(ptr, sizeof(double)));
+			return (_check(ptr, sizeof(double)));
 			break;
 		case ECPGt_varchar:
-			if (*(((struct ECPGgeneric_varchar *) ptr)->arr) == 0x00) return true;
+			if (*(((struct ECPGgeneric_varchar *) ptr)->arr) == 0x00)
+				return true;
 			break;
 		case ECPGt_decimal:
-			if (((Decimal *) ptr)->sign == NUMERIC_NAN) return true;
+			if (((Decimal *) ptr)->sign == NUMERIC_NAN)
+				return true;
 			break;
 		case ECPGt_numeric:
-			if (((Numeric *) ptr)->sign == NUMERIC_NAN) return true;
+			if (((Numeric *) ptr)->sign == NUMERIC_NAN)
+				return true;
 			break;
 		case ECPGt_interval:
-			return(_check(ptr, sizeof(Interval)));
+			return (_check(ptr, sizeof(Interval)));
 			break;
 		case ECPGt_timestamp:
-			return(_check(ptr, sizeof(Timestamp)));
+			return (_check(ptr, sizeof(Timestamp)));
 			break;
 		default:
 			break;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.79 2003/07/25 00:01:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.80 2003/08/04 00:43:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -300,7 +300,7 @@ sort_inner_and_outer(Query *root,
  * We always generate a nestloop path for each available outer path.
  * In fact we may generate as many as four: one on the cheapest-total-cost
  * inner path, one on the same with materialization, one on the
- * cheapest-startup-cost inner path (if different), 
+ * cheapest-startup-cost inner path (if different),
  * and one on the best inner-indexscan path (if any).
  *
  * We also consider mergejoins if mergejoin clauses are available.	We have
@@ -342,10 +342,10 @@ match_unsorted_outer(Query *root,
 
 	/*
 	 * Nestloop only supports inner, left, and IN joins.  Also, if we are
-	 * doing a right or full join, we must use *all* the mergeclauses as join
-	 * clauses, else we will not have a valid plan.  (Although these two
-	 * flags are currently inverses, keep them separate for clarity and
-	 * possible future changes.)
+	 * doing a right or full join, we must use *all* the mergeclauses as
+	 * join clauses, else we will not have a valid plan.  (Although these
+	 * two flags are currently inverses, keep them separate for clarity
+	 * and possible future changes.)
 	 */
 	switch (jointype)
 	{
@@ -371,8 +371,8 @@ match_unsorted_outer(Query *root,
 	}
 
 	/*
-	 * If we need to unique-ify the inner path, we will consider only
-	 * the cheapest inner.
+	 * If we need to unique-ify the inner path, we will consider only the
+	 * cheapest inner.
 	 */
 	if (jointype == JOIN_UNIQUE_INNER)
 	{
@@ -384,9 +384,10 @@ match_unsorted_outer(Query *root,
 	else if (nestjoinOK)
 	{
 		/*
-		 * If the cheapest inner path is a join or seqscan, we should consider
-		 * materializing it.  (This is a heuristic: we could consider it
-		 * always, but for inner indexscans it's probably a waste of time.)
+		 * If the cheapest inner path is a join or seqscan, we should
+		 * consider materializing it.  (This is a heuristic: we could
+		 * consider it always, but for inner indexscans it's probably a
+		 * waste of time.)
 		 */
 		if (!(IsA(inner_cheapest_total, IndexPath) ||
 			  IsA(inner_cheapest_total, TidPath)))
@@ -394,8 +395,8 @@ match_unsorted_outer(Query *root,
 				create_material_path(innerrel, inner_cheapest_total);
 
 		/*
-		 * Get the best innerjoin indexpath (if any) for this outer rel. It's
-		 * the same for all outer paths.
+		 * Get the best innerjoin indexpath (if any) for this outer rel.
+		 * It's the same for all outer paths.
 		 */
 		bestinnerjoin = best_inner_indexscan(root, innerrel,
 											 outerrel->relids, jointype);
@@ -414,8 +415,8 @@ match_unsorted_outer(Query *root,
 		int			sortkeycnt;
 
 		/*
-		 * If we need to unique-ify the outer path, it's pointless to consider
-		 * any but the cheapest outer.
+		 * If we need to unique-ify the outer path, it's pointless to
+		 * consider any but the cheapest outer.
 		 */
 		if (save_jointype == JOIN_UNIQUE_OUTER)
 		{
@@ -709,7 +710,7 @@ hash_inner_and_outer(Query *root,
 			/* righthand side is inner */
 		}
 		else if (bms_is_subset(restrictinfo->left_relids, innerrel->relids) &&
-				 bms_is_subset(restrictinfo->right_relids, outerrel->relids))
+			 bms_is_subset(restrictinfo->right_relids, outerrel->relids))
 		{
 			/* lefthand side is inner */
 		}
@@ -727,9 +728,9 @@ hash_inner_and_outer(Query *root,
 		 * cheapest-startup-cost outer paths.  There's no need to consider
 		 * any but the cheapest-total-cost inner path, however.
 		 */
-		Path *cheapest_startup_outer = outerrel->cheapest_startup_path;
-		Path *cheapest_total_outer = outerrel->cheapest_total_path;
-		Path *cheapest_total_inner = innerrel->cheapest_total_path;
+		Path	   *cheapest_startup_outer = outerrel->cheapest_startup_path;
+		Path	   *cheapest_total_outer = outerrel->cheapest_total_path;
+		Path	   *cheapest_total_inner = innerrel->cheapest_total_path;
 
 		/* Unique-ify if need be */
 		if (jointype == JOIN_UNIQUE_OUTER)
@@ -840,7 +841,7 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 			/* righthand side is inner */
 		}
 		else if (bms_is_subset(restrictinfo->left_relids, innerrel->relids) &&
-				 bms_is_subset(restrictinfo->right_relids, outerrel->relids))
+			 bms_is_subset(restrictinfo->right_relids, outerrel->relids))
 		{
 			/* lefthand side is inner */
 		}

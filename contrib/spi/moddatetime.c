@@ -100,8 +100,8 @@ moddatetime(PG_FUNCTION_ARGS)
 	if (SPI_gettypeid(tupdesc, attnum) != TIMESTAMPOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
-				 errmsg("attribute \"%s\" of \"%s\" must be type TIMESTAMP",
-						 args[0], relname)));
+			  errmsg("attribute \"%s\" of \"%s\" must be type TIMESTAMP",
+					 args[0], relname)));
 
 /* 1 is the number of items in the arrays attnum and newdt.
 	attnum is the positional number of the field to be updated.

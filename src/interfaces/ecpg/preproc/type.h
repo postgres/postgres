@@ -14,16 +14,17 @@ struct ECPGstruct_member
 struct ECPGtype
 {
 	enum ECPGttype type;
-	char *size;		/* For array it is the number of elements.
-				 * For varchar it is the maxsize of the
-				 * area. */
-	char *struct_sizeof;	/* For a struct this is the sizeof() type
-				 * as string */
+	char	   *size;			/* For array it is the number of elements.
+								 * For varchar it is the maxsize of the
+								 * area. */
+	char	   *struct_sizeof;	/* For a struct this is the sizeof() type
+								 * as string */
 	union
 	{
 		struct ECPGtype *element;		/* For an array this is the type
-						 	* of the element */
-		struct ECPGstruct_member *members;	/* A pointer to a list of members. */
+										 * of the element */
+		struct ECPGstruct_member *members;		/* A pointer to a list of
+												 * members. */
 	}			u;
 };
 
@@ -49,9 +50,9 @@ void		ECPGfree_type(struct ECPGtype *);
    size is the maxsize in case it is a varchar. Otherwise it is the size of
 	   the variable (required to do array fetches of structs).
  */
-void ECPGdump_a_type(FILE *, const char *, struct ECPGtype *, 
-		const char *, struct ECPGtype *, const char *,
-		const char *, char *, const char *, const char *);
+void ECPGdump_a_type(FILE *, const char *, struct ECPGtype *,
+				const char *, struct ECPGtype *, const char *,
+				const char *, char *, const char *, const char *);
 
 /* A simple struct to keep a variable and its type. */
 struct ECPGtemp_type
@@ -83,24 +84,24 @@ struct when
 
 struct index
 {
-	char 	*index1;
-	char 	*index2;
-	char	*str;
+	char	   *index1;
+	char	   *index2;
+	char	   *str;
 };
 
 struct su_symbol
 {
-	char	*su;
-	char 	*symbol;
+	char	   *su;
+	char	   *symbol;
 };
 
 struct this_type
 {
 	enum ECPGttype type_enum;
-	char	*type_str;
-	char 	*type_dimension;
-	char	*type_index;
-	char	*type_sizeof;
+	char	   *type_str;
+	char	   *type_dimension;
+	char	   *type_index;
+	char	   *type_sizeof;
 };
 
 struct _include_path
@@ -182,4 +183,4 @@ typedef struct ScanKeyword
 	int			value;
 } ScanKeyword;
 
-#endif /* _ECPG_PREPROC_TYPE_H */
+#endif   /* _ECPG_PREPROC_TYPE_H */

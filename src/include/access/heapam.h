@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.81 2003/02/23 20:32:12 tgl Exp $
+ * $Id: heapam.h,v 1.82 2003/08/04 00:43:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,7 +173,7 @@ extern void heap_redo(XLogRecPtr lsn, XLogRecord *rptr);
 extern void heap_undo(XLogRecPtr lsn, XLogRecord *rptr);
 extern void heap_desc(char *buf, uint8 xl_info, char *rec);
 extern XLogRecPtr log_heap_clean(Relation reln, Buffer buffer,
-								 OffsetNumber *unused, int uncnt);
+			   OffsetNumber *unused, int uncnt);
 extern XLogRecPtr log_heap_move(Relation reln, Buffer oldbuf,
 			  ItemPointerData from,
 			  Buffer newbuf, HeapTuple newtup);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execGrouping.c,v 1.4 2003/07/21 17:05:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execGrouping.c,v 1.5 2003/08/04 00:43:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -249,7 +249,7 @@ execTuplesHashPrepare(TupleDesc tupdesc,
 		eq_function = oprfuncid(optup);
 		ReleaseSysCache(optup);
 		hash_function = get_op_hash_function(eq_opr);
-		if (!OidIsValid(hash_function))	/* should not happen */
+		if (!OidIsValid(hash_function)) /* should not happen */
 			elog(ERROR, "could not find hash function for hash operator %u",
 				 eq_opr);
 		fmgr_info(eq_function, &(*eqfunctions)[i]);
@@ -289,8 +289,8 @@ BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 					int nbuckets, Size entrysize,
 					MemoryContext tablecxt, MemoryContext tempcxt)
 {
-	TupleHashTable	hashtable;
-	Size			tabsize;
+	TupleHashTable hashtable;
+	Size		tabsize;
 
 	Assert(nbuckets > 0);
 	Assert(entrysize >= sizeof(TupleHashEntryData));
@@ -411,9 +411,9 @@ LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
  * Iterator state must be initialized with ResetTupleHashIterator() macro.
  */
 TupleHashEntry
-ScanTupleHashTable(TupleHashTable hashtable, TupleHashIterator *state)
+ScanTupleHashTable(TupleHashTable hashtable, TupleHashIterator * state)
 {
-	TupleHashEntry	entry;
+	TupleHashEntry entry;
 
 	entry = state->next_entry;
 	while (entry == NULL)

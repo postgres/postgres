@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.85 2003/07/20 21:56:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.86 2003/08/04 00:43:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@
 #include "utils/syscache.h"
 
 /* GUC parameter */
-bool add_missing_from;
+bool		add_missing_from;
 
 static Node *scanNameSpaceForRefname(ParseState *pstate, Node *nsnode,
 						const char *refname);
@@ -365,8 +365,8 @@ scanNameSpaceForConflict(ParseState *pstate, Node *nsnode,
 			if (strcmp(j->alias->aliasname, aliasname1) == 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_ALIAS),
-						 errmsg("table name \"%s\" specified more than once",
-								aliasname1)));
+					 errmsg("table name \"%s\" specified more than once",
+							aliasname1)));
 
 			/*
 			 * Tables within an aliased join are invisible from outside
@@ -570,8 +570,8 @@ colnameToVar(ParseState *pstate, char *colname)
 				if (result)
 					ereport(ERROR,
 							(errcode(ERRCODE_AMBIGUOUS_COLUMN),
-							 errmsg("column reference \"%s\" is ambiguous",
-									colname)));
+						   errmsg("column reference \"%s\" is ambiguous",
+								  colname)));
 				result = newresult;
 			}
 		}
@@ -666,7 +666,7 @@ addRangeTableEntry(ParseState *pstate,
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 				 errmsg("table \"%s\" has %d columns available but %d columns specified",
-						RelationGetRelationName(rel), maxattrs, numaliases)));
+				   RelationGetRelationName(rel), maxattrs, numaliases)));
 
 	/* fill in any unspecified alias columns using actual column names */
 	for (varattno = numaliases; varattno < maxattrs; varattno++)
@@ -761,7 +761,7 @@ addRangeTableEntryForRelation(ParseState *pstate,
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 				 errmsg("table \"%s\" has %d columns available but %d columns specified",
-						RelationGetRelationName(rel), maxattrs, numaliases)));
+				   RelationGetRelationName(rel), maxattrs, numaliases)));
 
 	/* fill in any unspecified alias columns using actual column names */
 	for (varattno = numaliases; varattno < maxattrs; varattno++)
@@ -957,7 +957,8 @@ addRangeTableEntryForFunction(ParseState *pstate,
 		Relation	rel;
 		int			maxattrs;
 
-		if (!OidIsValid(funcrelid))	/* shouldn't happen if typtype is 'c' */
+		if (!OidIsValid(funcrelid))		/* shouldn't happen if typtype is
+										 * 'c' */
 			elog(ERROR, "invalid typrelid for complex type %u", funcrettype);
 
 		/*
@@ -1003,8 +1004,8 @@ addRangeTableEntryForFunction(ParseState *pstate,
 		if (numaliases > 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					 errmsg("too many column aliases specified for function %s",
-							funcname)));
+			  errmsg("too many column aliases specified for function %s",
+					 funcname)));
 		if (numaliases == 0)
 			eref->colnames = makeList1(makeString(eref->aliasname));
 	}
@@ -1026,8 +1027,8 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("function \"%s\" in FROM has unsupported return type",
-						funcname)));
+			errmsg("function \"%s\" in FROM has unsupported return type",
+				   funcname)));
 
 	/*----------
 	 * Flags:
@@ -1318,7 +1319,7 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 					int			maxattrs;
 					int			numaliases;
 
-					if (!OidIsValid(funcrelid))	/* shouldn't happen */
+					if (!OidIsValid(funcrelid)) /* shouldn't happen */
 						elog(ERROR, "invalid typrelid for complex type %u",
 							 funcrettype);
 
@@ -1575,7 +1576,7 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 									ObjectIdGetDatum(rte->relid),
 									Int16GetDatum(attnum),
 									0, 0);
-				if (!HeapTupleIsValid(tp)) /* shouldn't happen */
+				if (!HeapTupleIsValid(tp))		/* shouldn't happen */
 					elog(ERROR, "cache lookup failed for attribute %d of relation %u",
 						 attnum, rte->relid);
 				att_tup = (Form_pg_attribute) GETSTRUCT(tp);
@@ -1632,7 +1633,7 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 					HeapTuple	tp;
 					Form_pg_attribute att_tup;
 
-					if (!OidIsValid(funcrelid))	/* shouldn't happen */
+					if (!OidIsValid(funcrelid)) /* shouldn't happen */
 						elog(ERROR, "invalid typrelid for complex type %u",
 							 funcrettype);
 
@@ -1640,7 +1641,7 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 										ObjectIdGetDatum(funcrelid),
 										Int16GetDatum(attnum),
 										0, 0);
-					if (!HeapTupleIsValid(tp)) /* shouldn't happen */
+					if (!HeapTupleIsValid(tp))	/* shouldn't happen */
 						elog(ERROR, "cache lookup failed for attribute %d of relation %u",
 							 attnum, funcrelid);
 					att_tup = (Form_pg_attribute) GETSTRUCT(tp);
@@ -1720,7 +1721,7 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 									ObjectIdGetDatum(rte->relid),
 									Int16GetDatum(attnum),
 									0, 0);
-				if (!HeapTupleIsValid(tp)) /* shouldn't happen */
+				if (!HeapTupleIsValid(tp))		/* shouldn't happen */
 					elog(ERROR, "cache lookup failed for attribute %d of relation %u",
 						 attnum, rte->relid);
 				att_tup = (Form_pg_attribute) GETSTRUCT(tp);
@@ -1752,7 +1753,7 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 										ObjectIdGetDatum(funcrelid),
 										Int16GetDatum(attnum),
 										0, 0);
-					if (!HeapTupleIsValid(tp)) /* shouldn't happen */
+					if (!HeapTupleIsValid(tp))	/* shouldn't happen */
 						elog(ERROR, "cache lookup failed for attribute %d of relation %u",
 							 attnum, funcrelid);
 					att_tup = (Form_pg_attribute) GETSTRUCT(tp);
@@ -1927,7 +1928,7 @@ warnAutoRange(ParseState *pstate, RangeVar *relation)
 		else
 			ereport(NOTICE,
 					(errcode(ERRCODE_UNDEFINED_TABLE),
-					 errmsg("adding missing FROM-clause entry for table \"%s\"",
-							relation->relname)));
+			  errmsg("adding missing FROM-clause entry for table \"%s\"",
+					 relation->relname)));
 	}
 }

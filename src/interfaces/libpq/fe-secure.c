@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.26 2003/08/04 00:26:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.27 2003/08/04 00:43:33 momjian Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -123,6 +123,7 @@
 
 #ifdef USE_SSL
 static int	verify_cb(int ok, X509_STORE_CTX *ctx);
+
 #ifdef NOT_USED
 static int	verify_peer(PGconn *);
 #endif
@@ -195,7 +196,6 @@ OvOzKGtwcTqO/1wV5gKkzu1ZVswVUQd5Gg8lJicwqRWyyNRczDDoG9jVDxmogKTH\n\
 AaqLulO7R8Ifa1SwF2DteSGVtgWEN8gDpN3RBmmPTDngyF2DHb5qmpnznwtFKdTL\n\
 KWbuHn491xNO25CQWMtem80uKw+pTnisBRF/454n1Jnhub144YRBoN8CAQI=\n\
 -----END DH PARAMETERS-----\n";
-
 #endif
 
 /* ------------------------------------------------------------ */
@@ -280,7 +280,7 @@ pqsecure_read(PGconn *conn, void *ptr, size_t len)
 #ifdef USE_SSL
 	if (conn->ssl)
 	{
-	rloop:
+rloop:
 		n = SSL_read(conn->ssl, ptr, len);
 		switch (SSL_get_error(conn->ssl, n))
 		{
@@ -290,27 +290,29 @@ pqsecure_read(PGconn *conn, void *ptr, size_t len)
 				n = 0;
 				break;
 			case SSL_ERROR_WANT_WRITE:
+
 				/*
-				 * Returning 0 here would cause caller to wait for read-ready,
-				 * which is not correct since what SSL wants is wait for
-				 * write-ready.  The former could get us stuck in an infinite
-				 * wait, so don't risk it; busy-loop instead.
+				 * Returning 0 here would cause caller to wait for
+				 * read-ready, which is not correct since what SSL wants
+				 * is wait for write-ready.  The former could get us stuck
+				 * in an infinite wait, so don't risk it; busy-loop
+				 * instead.
 				 */
 				goto rloop;
 			case SSL_ERROR_SYSCALL:
-			{
-			    char sebuf[256];
-				
-				if (n == -1)
-					printfPQExpBuffer(&conn->errorMessage,
-								libpq_gettext("SSL SYSCALL error: %s\n"),
-								  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
-				else
-					printfPQExpBuffer(&conn->errorMessage,
-								libpq_gettext("SSL SYSCALL error: EOF detected\n"));
+				{
+					char		sebuf[256];
 
-				break;
-			}
+					if (n == -1)
+						printfPQExpBuffer(&conn->errorMessage,
+								libpq_gettext("SSL SYSCALL error: %s\n"),
+						SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+					else
+						printfPQExpBuffer(&conn->errorMessage,
+										  libpq_gettext("SSL SYSCALL error: EOF detected\n"));
+
+					break;
+				}
 			case SSL_ERROR_SSL:
 				printfPQExpBuffer(&conn->errorMessage,
 					  libpq_gettext("SSL error: %s\n"), SSLerrmessage());
@@ -322,7 +324,7 @@ pqsecure_read(PGconn *conn, void *ptr, size_t len)
 				break;
 			default:
 				printfPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("Unknown SSL error code\n"));
+							  libpq_gettext("Unknown SSL error code\n"));
 				break;
 		}
 	}
@@ -354,6 +356,7 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 			case SSL_ERROR_NONE:
 				break;
 			case SSL_ERROR_WANT_READ:
+
 				/*
 				 * Returning 0 here causes caller to wait for write-ready,
 				 * which is not really the right thing, but it's the best
@@ -365,18 +368,18 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 				n = 0;
 				break;
 			case SSL_ERROR_SYSCALL:
-			{
-			    char sebuf[256];
+				{
+					char		sebuf[256];
 
-				if (n == -1)
-					printfPQExpBuffer(&conn->errorMessage,
+					if (n == -1)
+						printfPQExpBuffer(&conn->errorMessage,
 								libpq_gettext("SSL SYSCALL error: %s\n"),
-								  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
-				else
-					printfPQExpBuffer(&conn->errorMessage,
-								libpq_gettext("SSL SYSCALL error: EOF detected\n"));
-				break;
-			}
+						SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+					else
+						printfPQExpBuffer(&conn->errorMessage,
+										  libpq_gettext("SSL SYSCALL error: EOF detected\n"));
+					break;
+				}
 			case SSL_ERROR_SSL:
 				printfPQExpBuffer(&conn->errorMessage,
 					  libpq_gettext("SSL error: %s\n"), SSLerrmessage());
@@ -388,7 +391,7 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 				break;
 			default:
 				printfPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("Unknown SSL error code\n"));
+							  libpq_gettext("Unknown SSL error code\n"));
 				break;
 		}
 	}
@@ -442,10 +445,11 @@ verify_peer(PGconn *conn)
 	len = sizeof(addr);
 	if (getpeername(conn->sock, &addr, &len) == -1)
 	{
-		char sebuf[256];
+		char		sebuf[256];
+
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("error querying socket: %s\n"),
-						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+						SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 		return -1;
 	}
 
@@ -455,13 +459,13 @@ verify_peer(PGconn *conn)
 
 	{
 		struct hostent hpstr;
-		char buf[BUFSIZ];
-		int herrno = 0;
+		char		buf[BUFSIZ];
+		int			herrno = 0;
 
 		pqGethostbyname(conn->peer_cn, &hpstr, buf, sizeof(buf),
-		                &h, &herrno);
+						&h, &herrno);
 	}
-	
+
 	/* what do we know about the peer's common name? */
 	if (h == NULL)
 	{
@@ -485,7 +489,7 @@ verify_peer(PGconn *conn)
 
 		default:
 			printfPQExpBuffer(&conn->errorMessage,
-			  libpq_gettext("unsupported protocol\n"));
+							  libpq_gettext("unsupported protocol\n"));
 			return -1;
 	}
 
@@ -514,7 +518,7 @@ verify_peer(PGconn *conn)
 		default:
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext(
-			"server common name \"%s\" does not resolve to peer address\n"),
+											"server common name \"%s\" does not resolve to peer address\n"),
 							  conn->peer_cn);
 	}
 
@@ -532,7 +536,7 @@ verify_peer(PGconn *conn)
 static DH  *
 load_dh_file(int keylength)
 {
-	char pwdbuf[BUFSIZ];
+	char		pwdbuf[BUFSIZ];
 	struct passwd pwdstr;
 	struct passwd *pwd = NULL;
 	FILE	   *fp;
@@ -540,8 +544,8 @@ load_dh_file(int keylength)
 	DH		   *dh = NULL;
 	int			codes;
 
-	if( pqGetpwuid(getuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) == 0 )
-	  return NULL;
+	if (pqGetpwuid(getuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) == 0)
+		return NULL;
 
 	/* attempt to open file.  It's not an error if it doesn't exist. */
 	snprintf(fnbuf, sizeof fnbuf, "%s/.postgresql/dh%d.pem",
@@ -674,7 +678,7 @@ tmp_dh_cb(SSL *s, int is_export, int keylength)
 static int
 client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 {
-	char pwdbuf[BUFSIZ];
+	char		pwdbuf[BUFSIZ];
 	struct passwd pwdstr;
 	struct passwd *pwd = NULL;
 	struct stat buf,
@@ -683,10 +687,10 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	FILE	   *fp;
 	PGconn	   *conn = (PGconn *) SSL_get_app_data(ssl);
 	int			(*cb) () = NULL;	/* how to read user password */
-	char sebuf[256];
+	char		sebuf[256];
 
 
-	if( pqGetpwuid(getuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) == 0 )
+	if (pqGetpwuid(getuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) == 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 					  libpq_gettext("could not get user information\n"));
@@ -730,7 +734,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 		buf.st_uid != getuid())
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("private key (%s) has wrong permissions\n"), fnbuf);
+		libpq_gettext("private key (%s) has wrong permissions\n"), fnbuf);
 		X509_free(*x509);
 		return -1;
 	}
@@ -746,7 +750,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 		buf.st_dev != buf2.st_dev || buf.st_ino != buf2.st_ino)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-			libpq_gettext("private key (%s) changed during execution\n"), fnbuf);
+						  libpq_gettext("private key (%s) changed during execution\n"), fnbuf);
 		X509_free(*x509);
 		return -1;
 	}
@@ -782,7 +786,7 @@ static int
 initialize_SSL(PGconn *conn)
 {
 	struct stat buf;
-	char pwdbuf[BUFSIZ];
+	char		pwdbuf[BUFSIZ];
 	struct passwd pwdstr;
 	struct passwd *pwd = NULL;
 	char		fnbuf[2048];
@@ -801,7 +805,7 @@ initialize_SSL(PGconn *conn)
 		}
 	}
 
-	if( pqGetpwuid(getuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) == 0 )
+	if (pqGetpwuid(getuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) == 0)
 	{
 		snprintf(fnbuf, sizeof fnbuf, "%s/.postgresql/root.crt",
 				 pwd->pw_dir);
@@ -809,18 +813,19 @@ initialize_SSL(PGconn *conn)
 		{
 			return 0;
 #ifdef NOT_USED
-			char sebuf[256];
+			char		sebuf[256];
+
 			/* CLIENT CERTIFICATES NOT REQUIRED  bjm 2002-09-26 */
 			printfPQExpBuffer(&conn->errorMessage,
-				 libpq_gettext("could not read root certificate list (%s): %s\n"),
-							  fnbuf, pqStrerror(errno, sebuf, sizeof(sebuf)));
+							  libpq_gettext("could not read root certificate list (%s): %s\n"),
+						 fnbuf, pqStrerror(errno, sebuf, sizeof(sebuf)));
 			return -1;
 #endif
 		}
 		if (!SSL_CTX_load_verify_locations(SSL_context, fnbuf, 0))
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-				 libpq_gettext("could not read root certificate list (%s): %s\n"),
+							  libpq_gettext("could not read root certificate list (%s): %s\n"),
 							  fnbuf, SSLerrmessage());
 			return -1;
 		}
@@ -868,24 +873,24 @@ open_client_SSL(PGconn *conn)
 		{
 			case SSL_ERROR_WANT_READ:
 				return PGRES_POLLING_READING;
-				
+
 			case SSL_ERROR_WANT_WRITE:
 				return PGRES_POLLING_WRITING;
 
 			case SSL_ERROR_SYSCALL:
-			{
-				char sebuf[256];
-				
-				if (r == -1)
-					printfPQExpBuffer(&conn->errorMessage,
+				{
+					char		sebuf[256];
+
+					if (r == -1)
+						printfPQExpBuffer(&conn->errorMessage,
 								libpq_gettext("SSL SYSCALL error: %s\n"),
-								  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
-				else
-					printfPQExpBuffer(&conn->errorMessage,
-								libpq_gettext("SSL SYSCALL error: EOF detected\n"));
-				close_SSL(conn);
-				return PGRES_POLLING_FAILED;
-			}
+						SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+					else
+						printfPQExpBuffer(&conn->errorMessage,
+										  libpq_gettext("SSL SYSCALL error: EOF detected\n"));
+					close_SSL(conn);
+					return PGRES_POLLING_FAILED;
+				}
 			case SSL_ERROR_SSL:
 				printfPQExpBuffer(&conn->errorMessage,
 					  libpq_gettext("SSL error: %s\n"), SSLerrmessage());
@@ -894,7 +899,7 @@ open_client_SSL(PGconn *conn)
 
 			default:
 				printfPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("Unknown SSL error code\n"));
+							  libpq_gettext("Unknown SSL error code\n"));
 				close_SSL(conn);
 				return PGRES_POLLING_FAILED;
 		}
@@ -904,6 +909,7 @@ open_client_SSL(PGconn *conn)
 
 #ifdef NOT_USED
 	/* CLIENT CERTIFICATES NOT REQUIRED  bjm 2002-09-26 */
+
 	/*
 	 * this eliminates simple man-in-the-middle attacks and simple
 	 * impersonations
@@ -942,6 +948,7 @@ open_client_SSL(PGconn *conn)
 
 #ifdef NOT_USED
 	/* CLIENT CERTIFICATES NOT REQUIRED  bjm 2002-09-26 */
+
 	/*
 	 * this is necessary to eliminate man-in-the-middle attacks and
 	 * impersonations where the attacker somehow learned the server's

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.212 2003/07/21 01:59:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.213 2003/08/04 00:43:16 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -65,8 +65,8 @@
 
 /* non-export function prototypes */
 static TupleDesc ConstructTupleDescriptor(Relation heapRelation,
-										  IndexInfo *indexInfo,
-										  Oid *classObjectId);
+						 IndexInfo *indexInfo,
+						 Oid *classObjectId);
 static void UpdateRelationRelation(Relation indexRelation);
 static void InitializeAttributeOids(Relation indexRelation,
 						int numatts, Oid indexoid);
@@ -124,7 +124,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 
 	/*
 	 * For simple index columns, we copy the pg_attribute row from the
-	 * parent relation and modify it as necessary.  For expressions we
+	 * parent relation and modify it as necessary.	For expressions we
 	 * have to cons up a pg_attribute row the hard way.
 	 */
 	for (i = 0; i < numatts; i++)
@@ -149,7 +149,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 				 * here we are indexing on a system attribute (-1...-n)
 				 */
 				from = SystemAttributeDefinition(atnum,
-												 heapRelation->rd_rel->relhasoids);
+									   heapRelation->rd_rel->relhasoids);
 			}
 			else
 			{
@@ -162,8 +162,8 @@ ConstructTupleDescriptor(Relation heapRelation,
 			}
 
 			/*
-			 * now that we've determined the "from", let's copy the tuple desc
-			 * data...
+			 * now that we've determined the "from", let's copy the tuple
+			 * desc data...
 			 */
 			memcpy(to, from, ATTRIBUTE_TUPLE_SIZE);
 
@@ -185,7 +185,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 			/* Expressional index */
 			Node	   *indexkey;
 
-			if (indexprs == NIL)		/* shouldn't happen */
+			if (indexprs == NIL)	/* shouldn't happen */
 				elog(ERROR, "too few entries in indexprs list");
 			indexkey = (Node *) lfirst(indexprs);
 			indexprs = lnext(indexprs);
@@ -197,7 +197,8 @@ ConstructTupleDescriptor(Relation heapRelation,
 			sprintf(NameStr(to->attname), "pg_expression_%d", i + 1);
 
 			/*
-			 * Lookup the expression type in pg_type for the type length etc.
+			 * Lookup the expression type in pg_type for the type length
+			 * etc.
 			 */
 			keyType = exprType(indexkey);
 			tuple = SearchSysCache(TYPEOID,
@@ -534,7 +535,7 @@ index_create(Oid heapRelationId,
 	if (shared_relation && IsUnderPostmaster)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("shared indexes cannot be created after initdb")));
+			   errmsg("shared indexes cannot be created after initdb")));
 
 	if (get_relname_relid(indexRelationName, namespaceId))
 		ereport(ERROR,
@@ -668,7 +669,7 @@ index_create(Oid heapRelationId,
 										   ' ',
 										   ' ',
 										   ' ',
-										   InvalidOid, /* no associated index */
+										   InvalidOid,	/* no associated index */
 										   NULL,		/* no check constraint */
 										   NULL,
 										   NULL);
@@ -709,7 +710,7 @@ index_create(Oid heapRelationId,
 		if (indexInfo->ii_Expressions)
 		{
 			recordDependencyOnSingleRelExpr(&myself,
-											(Node *) indexInfo->ii_Expressions,
+									  (Node *) indexInfo->ii_Expressions,
 											heapRelationId,
 											DEPENDENCY_NORMAL,
 											DEPENDENCY_AUTO);
@@ -719,7 +720,7 @@ index_create(Oid heapRelationId,
 		if (indexInfo->ii_Predicate)
 		{
 			recordDependencyOnSingleRelExpr(&myself,
-											(Node *) indexInfo->ii_Predicate,
+										(Node *) indexInfo->ii_Predicate,
 											heapRelationId,
 											DEPENDENCY_NORMAL,
 											DEPENDENCY_AUTO);
@@ -831,8 +832,8 @@ index_drop(Oid indexId)
 
 	/*
 	 * We are presently too lazy to attempt to compute the new correct
-	 * value of relhasindex (the next VACUUM will fix it if necessary).
-	 * So there is no need to update the pg_class tuple for the owning
+	 * value of relhasindex (the next VACUUM will fix it if necessary). So
+	 * there is no need to update the pg_class tuple for the owning
 	 * relation. But we must send out a shared-cache-inval notice on the
 	 * owning relation to ensure other backends update their relcache
 	 * lists of indexes.
@@ -958,7 +959,7 @@ FormIndexDatum(IndexInfo *indexInfo,
 			if (indexprs == NIL)
 				elog(ERROR, "wrong number of index expressions");
 			iDatum = ExecEvalExprSwitchContext((ExprState *) lfirst(indexprs),
-											   GetPerTupleExprContext(estate),
+										  GetPerTupleExprContext(estate),
 											   &isNull,
 											   NULL);
 			indexprs = lnext(indexprs);
@@ -1160,7 +1161,7 @@ setNewRelfilenode(Relation relation)
 	if (!in_place_upd)
 	{
 		tuple = SearchSysCacheCopy(RELOID,
-								   ObjectIdGetDatum(RelationGetRelid(relation)),
+							ObjectIdGetDatum(RelationGetRelid(relation)),
 								   0, 0, 0);
 	}
 	else
@@ -1170,7 +1171,7 @@ setNewRelfilenode(Relation relation)
 		ScanKeyEntryInitialize(&key[0], 0,
 							   ObjectIdAttributeNumber,
 							   F_OIDEQ,
-							   ObjectIdGetDatum(RelationGetRelid(relation)));
+						   ObjectIdGetDatum(RelationGetRelid(relation)));
 
 		pg_class_scan = heap_beginscan(pg_class, SnapshotNow, 1, key);
 		tuple = heap_getnext(pg_class_scan, ForwardScanDirection);
@@ -1325,9 +1326,9 @@ UpdateStats(Oid relid, double reltuples)
 	}
 
 	/*
-	 * Update statistics in pg_class, if they changed.  (Avoiding an
-	 * unnecessary update is not just a tiny performance improvement;
-	 * it also reduces the window wherein concurrent CREATE INDEX commands
+	 * Update statistics in pg_class, if they changed.	(Avoiding an
+	 * unnecessary update is not just a tiny performance improvement; it
+	 * also reduces the window wherein concurrent CREATE INDEX commands
 	 * may conflict.)
 	 */
 	rd_rel = (Form_pg_class) GETSTRUCT(tuple);
@@ -1338,8 +1339,9 @@ UpdateStats(Oid relid, double reltuples)
 		if (in_place_upd)
 		{
 			/*
-			 * At bootstrap time, we don't need to worry about concurrency or
-			 * visibility of changes, so we cheat.	Also cheat if REINDEX.
+			 * At bootstrap time, we don't need to worry about concurrency
+			 * or visibility of changes, so we cheat.  Also cheat if
+			 * REINDEX.
 			 */
 			LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_EXCLUSIVE);
 			rd_rel->relpages = (int32) relpages;
@@ -1367,7 +1369,7 @@ UpdateStats(Oid relid, double reltuples)
 	/*
 	 * We shouldn't have to do this, but we do...  Modify the reldesc in
 	 * place with the new values so that the cache contains the latest
-	 * copy.  (XXX is this really still necessary?  The relcache will get
+	 * copy.  (XXX is this really still necessary?	The relcache will get
 	 * fixed at next CommandCounterIncrement, so why bother here?)
 	 */
 	whichRel->rd_rel->relpages = (int32) relpages;
@@ -1454,8 +1456,8 @@ IndexBuildHeapScan(Relation heapRelation,
 	heapDescriptor = RelationGetDescr(heapRelation);
 
 	/*
-	 * Need an EState for evaluation of index expressions
-	 * and partial-index predicates.
+	 * Need an EState for evaluation of index expressions and
+	 * partial-index predicates.
 	 */
 	estate = CreateExecutorState();
 	econtext = GetPerTupleExprContext(estate);
@@ -1463,7 +1465,8 @@ IndexBuildHeapScan(Relation heapRelation,
 	/*
 	 * If this is a predicate (partial) index, we will need to evaluate
 	 * the predicate using ExecQual, which requires the current tuple to
-	 * be in a slot of a TupleTable.  Likewise if there are any expressions.
+	 * be in a slot of a TupleTable.  Likewise if there are any
+	 * expressions.
 	 */
 	if (indexInfo->ii_Predicate != NIL || indexInfo->ii_Expressions != NIL)
 	{
@@ -1741,15 +1744,15 @@ reindex_index(Oid indexId, bool force, bool inplace)
 	 * it's a nailed-in-cache index, we must do inplace processing because
 	 * the relcache can't cope with changing its relfilenode.
 	 *
-	 * In either of these cases, we are definitely processing a system
-	 * index, so we'd better be ignoring system indexes.
+	 * In either of these cases, we are definitely processing a system index,
+	 * so we'd better be ignoring system indexes.
 	 */
 	if (iRel->rd_rel->relisshared)
 	{
 		if (!IsIgnoringSystemIndexes())
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("the target relation %u is shared", indexId)));
+				   errmsg("the target relation %u is shared", indexId)));
 		inplace = true;
 	}
 	if (iRel->rd_isnailed)
@@ -1757,7 +1760,7 @@ reindex_index(Oid indexId, bool force, bool inplace)
 		if (!IsIgnoringSystemIndexes())
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("the target relation %u is nailed", indexId)));
+				   errmsg("the target relation %u is nailed", indexId)));
 		inplace = true;
 	}
 

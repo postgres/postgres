@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_node.h,v 1.35 2003/04/29 22:13:11 tgl Exp $
+ * $Id: parse_node.h,v 1.36 2003/08/04 00:43:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,8 @@ typedef struct ParseState
 	int			p_numparams;	/* allocated size of p_paramtypes[] */
 	int			p_next_resno;	/* next targetlist resno to assign */
 	List	   *p_forUpdate;	/* FOR UPDATE clause, if any (see gram.y) */
-	Node	   *p_value_substitute;	/* what to replace VALUE with, if any */
+	Node	   *p_value_substitute;		/* what to replace VALUE with, if
+										 * any */
 	bool		p_variableparams;
 	bool		p_hasAggs;
 	bool		p_hasSubLinks;

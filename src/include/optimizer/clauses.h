@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.65 2003/06/25 21:30:33 momjian Exp $
+ * $Id: clauses.h,v 1.66 2003/08/04 00:43:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
 
 
 extern Expr *make_opclause(Oid opno, Oid opresulttype, bool opretset,
-						   Expr *leftop, Expr *rightop);
+			  Expr *leftop, Expr *rightop);
 extern Node *get_leftop(Expr *clause);
 extern Node *get_rightop(Expr *clause);
 
@@ -60,7 +60,7 @@ extern bool has_distinct_on_clause(Query *query);
 
 extern void clause_get_relids_vars(Node *clause, Relids *relids, List **vars);
 extern int	NumRelids(Node *clause);
-extern void CommuteClause(OpExpr *clause);
+extern void CommuteClause(OpExpr * clause);
 
 extern Node *eval_const_expressions(Node *node);
 
@@ -70,18 +70,18 @@ extern Node *expression_tree_mutator(Node *node, Node *(*mutator) (),
 												 void *context);
 
 /* flags bits for query_tree_walker and query_tree_mutator */
-#define QTW_IGNORE_RT_SUBQUERIES	0x01	/* subqueries in rtable */
-#define QTW_IGNORE_JOINALIASES		0x02	/* JOIN alias var lists */
-#define QTW_DONT_COPY_QUERY			0x04	/* do not copy top Query */
+#define QTW_IGNORE_RT_SUBQUERIES	0x01		/* subqueries in rtable */
+#define QTW_IGNORE_JOINALIASES		0x02		/* JOIN alias var lists */
+#define QTW_DONT_COPY_QUERY			0x04		/* do not copy top Query */
 
 extern bool query_tree_walker(Query *query, bool (*walker) (),
-							  void *context, int flags);
+										  void *context, int flags);
 extern Query *query_tree_mutator(Query *query, Node *(*mutator) (),
-								 void *context, int flags);
+											 void *context, int flags);
 
 extern bool query_or_expression_tree_walker(Node *node, bool (*walker) (),
-											void *context, int flags);
+											   void *context, int flags);
 extern Node *query_or_expression_tree_mutator(Node *node, Node *(*mutator) (),
-											  void *context, int flags);
+											   void *context, int flags);
 
 #endif   /* CLAUSES_H */

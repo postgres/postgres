@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.75 2003/07/21 20:29:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.76 2003/08/04 00:43:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,13 +24,13 @@
 
 
 static void printtup_startup(DestReceiver *self, int operation,
-							 TupleDesc typeinfo);
+				 TupleDesc typeinfo);
 static void printtup(HeapTuple tuple, TupleDesc typeinfo,
-					 DestReceiver *self);
+		 DestReceiver *self);
 static void printtup_20(HeapTuple tuple, TupleDesc typeinfo,
-						DestReceiver *self);
+			DestReceiver *self);
 static void printtup_internal_20(HeapTuple tuple, TupleDesc typeinfo,
-								 DestReceiver *self);
+					 DestReceiver *self);
 static void printtup_shutdown(DestReceiver *self);
 static void printtup_destroy(DestReceiver *self);
 
@@ -81,8 +81,8 @@ printtup_create_DR(CommandDest dest, Portal portal)
 	else
 	{
 		/*
-		 * In protocol 2.0 the Bind message does not exist, so there is
-		 * no way for the columns to have different print formats; it's
+		 * In protocol 2.0 the Bind message does not exist, so there is no
+		 * way for the columns to have different print formats; it's
 		 * sufficient to look at the first one.
 		 */
 		if (portal->formats && portal->formats[0] != 0)
@@ -111,12 +111,13 @@ static void
 printtup_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 {
 	DR_printtup *myState = (DR_printtup *) self;
-	Portal	portal = myState->portal;
+	Portal		portal = myState->portal;
 
 	if (PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
 	{
 		/*
-		 * Send portal name to frontend (obsolete cruft, gone in proto 3.0)
+		 * Send portal name to frontend (obsolete cruft, gone in proto
+		 * 3.0)
 		 *
 		 * If portal name not specified, use "blank" portal.
 		 */
@@ -129,8 +130,8 @@ printtup_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	}
 
 	/*
-	 * If this is a retrieve, and we are supposed to emit row descriptions,
-	 * then we send back the tuple descriptor of the tuples.  
+	 * If this is a retrieve, and we are supposed to emit row
+	 * descriptions, then we send back the tuple descriptor of the tuples.
 	 */
 	if (operation == CMD_SELECT && myState->sendDescrip)
 	{
@@ -163,7 +164,7 @@ printtup_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
  * or some similar function; it does not contain a full set of fields.
  * The targetlist will be NIL when executing a utility function that does
  * not have a plan.  If the targetlist isn't NIL then it is a Query node's
- * targetlist; it is up to us to ignore resjunk columns in it.  The formats[]
+ * targetlist; it is up to us to ignore resjunk columns in it.	The formats[]
  * array pointer might be NULL (if we are doing Describe on a prepared stmt);
  * send zeroes for the format codes in that case.
  */
@@ -176,14 +177,14 @@ SendRowDescriptionMessage(TupleDesc typeinfo, List *targetlist, int16 *formats)
 	int			i;
 	StringInfoData buf;
 
-	pq_beginmessage(&buf, 'T');		/* tuple descriptor message type */
-	pq_sendint(&buf, natts, 2);		/* # of attrs in tuples */
+	pq_beginmessage(&buf, 'T'); /* tuple descriptor message type */
+	pq_sendint(&buf, natts, 2); /* # of attrs in tuples */
 
 	for (i = 0; i < natts; ++i)
 	{
-		Oid		atttypid = attrs[i]->atttypid;
-		int32	atttypmod = attrs[i]->atttypmod;
-		Oid		basetype;
+		Oid			atttypid = attrs[i]->atttypid;
+		int32		atttypmod = attrs[i]->atttypmod;
+		Oid			basetype;
 
 		pq_sendstring(&buf, NameStr(attrs[i]->attname));
 		/* column ID info appears in protocol 3.0 and up */
@@ -320,8 +321,8 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 		}
 
 		/*
-		 * If we have a toasted datum, forcibly detoast it here to
-		 * avoid memory leakage inside the type's output routine.
+		 * If we have a toasted datum, forcibly detoast it here to avoid
+		 * memory leakage inside the type's output routine.
 		 */
 		if (thisState->typisvarlena)
 			attr = PointerGetDatum(PG_DETOAST_DATUM(origattr));
@@ -347,7 +348,7 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 
 			outputbytes = DatumGetByteaP(FunctionCall2(&thisState->finfo,
 													   attr,
-									ObjectIdGetDatum(thisState->typelem)));
+								  ObjectIdGetDatum(thisState->typelem)));
 			/* We assume the result will not have been toasted */
 			pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
 			pq_sendbytes(&buf, VARDATA(outputbytes),
@@ -424,8 +425,8 @@ printtup_20(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 		Assert(thisState->format == 0);
 
 		/*
-		 * If we have a toasted datum, forcibly detoast it here to
-		 * avoid memory leakage inside the type's output routine.
+		 * If we have a toasted datum, forcibly detoast it here to avoid
+		 * memory leakage inside the type's output routine.
 		 */
 		if (thisState->typisvarlena)
 			attr = PointerGetDatum(PG_DETOAST_DATUM(origattr));
@@ -536,9 +537,10 @@ debugtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 			continue;
 		getTypeOutputInfo(typeinfo->attrs[i]->atttypid,
 						  &typoutput, &typelem, &typisvarlena);
+
 		/*
-		 * If we have a toasted datum, forcibly detoast it here to
-		 * avoid memory leakage inside the type's output routine.
+		 * If we have a toasted datum, forcibly detoast it here to avoid
+		 * memory leakage inside the type's output routine.
 		 */
 		if (typisvarlena)
 			attr = PointerGetDatum(PG_DETOAST_DATUM(origattr));
@@ -547,7 +549,7 @@ debugtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 
 		value = DatumGetCString(OidFunctionCall3(typoutput,
 												 attr,
-												 ObjectIdGetDatum(typelem),
+											   ObjectIdGetDatum(typelem),
 						  Int32GetDatum(typeinfo->attrs[i]->atttypmod)));
 
 		printatt((unsigned) i + 1, typeinfo->attrs[i], value);
@@ -627,8 +629,8 @@ printtup_internal_20(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 		Assert(thisState->format == 1);
 
 		/*
-		 * If we have a toasted datum, forcibly detoast it here to
-		 * avoid memory leakage inside the type's output routine.
+		 * If we have a toasted datum, forcibly detoast it here to avoid
+		 * memory leakage inside the type's output routine.
 		 */
 		if (thisState->typisvarlena)
 			attr = PointerGetDatum(PG_DETOAST_DATUM(origattr));
@@ -637,7 +639,7 @@ printtup_internal_20(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 
 		outputbytes = DatumGetByteaP(FunctionCall2(&thisState->finfo,
 												   attr,
-									ObjectIdGetDatum(thisState->typelem)));
+								  ObjectIdGetDatum(thisState->typelem)));
 		/* We assume the result will not have been toasted */
 		pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
 		pq_sendbytes(&buf, VARDATA(outputbytes),

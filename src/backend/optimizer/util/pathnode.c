@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.93 2003/07/25 00:01:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.94 2003/08/04 00:43:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,7 +159,7 @@ set_cheapest(RelOptInfo *parent_rel)
 
 	parent_rel->cheapest_startup_path = cheapest_startup_path;
 	parent_rel->cheapest_total_path = cheapest_total_path;
-	parent_rel->cheapest_unique_path = NULL; /* computed only if needed */
+	parent_rel->cheapest_unique_path = NULL;	/* computed only if needed */
 }
 
 /*
@@ -452,7 +452,7 @@ create_result_path(RelOptInfo *rel, Path *subpath, List *constantqual)
 	ResultPath *pathnode = makeNode(ResultPath);
 
 	pathnode->path.pathtype = T_Result;
-	pathnode->path.parent = rel; /* may be NULL */
+	pathnode->path.parent = rel;	/* may be NULL */
 
 	if (subpath)
 		pathnode->path.pathkeys = subpath->pathkeys;
@@ -545,8 +545,8 @@ create_unique_path(Query *root, RelOptInfo *rel, Path *subpath)
 	pathnode->path.parent = rel;
 
 	/*
-	 * Treat the output as always unsorted, since we don't necessarily have
-	 * pathkeys to represent it.
+	 * Treat the output as always unsorted, since we don't necessarily
+	 * have pathkeys to represent it.
 	 */
 	pathnode->path.pathkeys = NIL;
 
@@ -591,26 +591,28 @@ create_unique_path(Query *root, RelOptInfo *rel, Path *subpath)
 			  subpath->total_cost,
 			  rel->rows,
 			  rel->width);
+
 	/*
 	 * Charge one cpu_operator_cost per comparison per input tuple. We
-	 * assume all columns get compared at most of the tuples.  (XXX probably
-	 * this is an overestimate.)  This should agree with make_unique.
+	 * assume all columns get compared at most of the tuples.  (XXX
+	 * probably this is an overestimate.)  This should agree with
+	 * make_unique.
 	 */
 	sort_path.total_cost += cpu_operator_cost * rel->rows * numCols;
 
 	/*
 	 * Is it safe to use a hashed implementation?  If so, estimate and
-	 * compare costs.  We only try this if we know the targetlist for
-	 * sure (else we can't be sure about the datatypes involved).
+	 * compare costs.  We only try this if we know the targetlist for sure
+	 * (else we can't be sure about the datatypes involved).
 	 */
 	pathnode->use_hash = false;
 	if (enable_hashagg && sub_targetlist && hash_safe_tlist(sub_targetlist))
 	{
 		/*
-		 * Estimate the overhead per hashtable entry at 64 bytes (same
-		 * as in planner.c).
+		 * Estimate the overhead per hashtable entry at 64 bytes (same as
+		 * in planner.c).
 		 */
-		int		hashentrysize = rel->width + 64;
+		int			hashentrysize = rel->width + 64;
 
 		if (hashentrysize * pathnode->rows <= SortMem * 1024L)
 		{
@@ -647,7 +649,7 @@ create_unique_path(Query *root, RelOptInfo *rel, Path *subpath)
  * We assume hashed aggregation will work if the datatype's equality operator
  * is marked hashjoinable.
  *
- * XXX this probably should be somewhere else.  See also hash_safe_grouping
+ * XXX this probably should be somewhere else.	See also hash_safe_grouping
  * in plan/planner.c.
  */
 static bool
@@ -788,6 +790,7 @@ create_mergejoin_path(Query *root,
 	if (innersortkeys &&
 		pathkeys_contained_in(innersortkeys, inner_path->pathkeys))
 		innersortkeys = NIL;
+
 	/*
 	 * If we are not sorting the inner path, we may need a materialize
 	 * node to ensure it can be marked/restored.  (Sort does support

@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.6 2003/07/27 04:53:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.7 2003/08/04 00:43:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,8 @@ array_push(PG_FUNCTION_ARGS)
 		if (arg0_elemid != InvalidOid)
 		{
 			/* append newelem */
-			int	ub = dimv[0] + lb[0] - 1;
+			int			ub = dimv[0] + lb[0] - 1;
+
 			indx = ub + 1;
 		}
 		else
@@ -105,7 +106,7 @@ array_push(PG_FUNCTION_ARGS)
 	if (my_extra == NULL)
 	{
 		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-													 sizeof(ArrayMetaState));
+												 sizeof(ArrayMetaState));
 		my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 		my_extra->element_type = InvalidOid;
 	}
@@ -138,11 +139,23 @@ array_push(PG_FUNCTION_ARGS)
 Datum
 array_cat(PG_FUNCTION_ARGS)
 {
-	ArrayType  *v1, *v2;
-	int		   *dims, *lbs, ndims, ndatabytes, nbytes;
-	int		   *dims1, *lbs1, ndims1, ndatabytes1;
-	int		   *dims2, *lbs2, ndims2, ndatabytes2;
-	char	   *dat1, *dat2;
+	ArrayType  *v1,
+			   *v2;
+	int		   *dims,
+			   *lbs,
+				ndims,
+				ndatabytes,
+				nbytes;
+	int		   *dims1,
+			   *lbs1,
+				ndims1,
+				ndatabytes1;
+	int		   *dims2,
+			   *lbs2,
+				ndims2,
+				ndatabytes2;
+	char	   *dat1,
+			   *dat2;
 	Oid			element_type;
 	Oid			element_type1;
 	Oid			element_type2;
@@ -152,12 +165,10 @@ array_cat(PG_FUNCTION_ARGS)
 	v2 = PG_GETARG_ARRAYTYPE_P(1);
 
 	/*
-	 * We must have one of the following combinations of inputs:
-	 * 1) one empty array, and one non-empty array
-	 * 2) both arrays empty
-	 * 3) two arrays with ndims1 == ndims2
-	 * 4) ndims1 == ndims2 - 1
-	 * 5) ndims1 == ndims2 + 1
+	 * We must have one of the following combinations of inputs: 1) one
+	 * empty array, and one non-empty array 2) both arrays empty 3) two
+	 * arrays with ndims1 == ndims2 4) ndims1 == ndims2 - 1 5) ndims1 ==
+	 * ndims2 + 1
 	 */
 	ndims1 = ARR_NDIM(v1);
 	ndims2 = ARR_NDIM(v2);
@@ -180,8 +191,8 @@ array_cat(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("cannot concatenate incompatible arrays"),
 				 errdetail("Arrays of %d and %d dimensions are not "
-							"compatible for concatenation.",
-							ndims1, ndims2)));
+						   "compatible for concatenation.",
+						   ndims1, ndims2)));
 
 	element_type1 = ARR_ELEMTYPE(v1);
 	element_type2 = ARR_ELEMTYPE(v2);
@@ -192,7 +203,7 @@ array_cat(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("cannot concatenate incompatible arrays"),
 				 errdetail("Arrays with element types %s and %s are not "
-							"compatible for concatenation.",
+						   "compatible for concatenation.",
 						   format_type_be(element_type1),
 						   format_type_be(element_type2))));
 
@@ -215,14 +226,14 @@ array_cat(PG_FUNCTION_ARGS)
 		 * resulting array has two element outer array made up of input
 		 * argument arrays
 		 */
-		int		i;
+		int			i;
 
 		ndims = ndims1 + 1;
 		dims = (int *) palloc(ndims * sizeof(int));
 		lbs = (int *) palloc(ndims * sizeof(int));
 
-		dims[0] = 2;	/* outer array made up of two input arrays */
-		lbs[0] = 1;		/* start lower bound at 1 */
+		dims[0] = 2;			/* outer array made up of two input arrays */
+		lbs[0] = 1;				/* start lower bound at 1 */
 
 		for (i = 0; i < ndims1; i++)
 		{
@@ -230,8 +241,8 @@ array_cat(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 						 errmsg("cannot concatenate incompatible arrays"),
-						 errdetail("Arrays with differing dimensions are not "
-									"compatible for concatenation.")));
+					errdetail("Arrays with differing dimensions are not "
+							  "compatible for concatenation.")));
 
 			dims[i + 1] = dims1[i];
 			lbs[i + 1] = lbs1[i];
@@ -244,7 +255,7 @@ array_cat(PG_FUNCTION_ARGS)
 		 * with the first argument appended to the front of the outer
 		 * dimension
 		 */
-		int		i;
+		int			i;
 
 		ndims = ndims2;
 		dims = dims2;
@@ -260,18 +271,18 @@ array_cat(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 						 errmsg("cannot concatenate incompatible arrays"),
-						 errdetail("Arrays with differing dimensions are not "
-									"compatible for concatenation.")));
+					errdetail("Arrays with differing dimensions are not "
+							  "compatible for concatenation.")));
 		}
 	}
-	else /* (ndims1 == ndims2 + 1) */
+	else
+/* (ndims1 == ndims2 + 1) */
 	{
 		/*
-		 * resulting array has the first argument as the outer array,
-		 * with the second argument appended to the end of the outer
-		 * dimension
+		 * resulting array has the first argument as the outer array, with
+		 * the second argument appended to the end of the outer dimension
 		 */
-		int		i;
+		int			i;
 
 		ndims = ndims1;
 		dims = dims1;
@@ -287,8 +298,8 @@ array_cat(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 						 errmsg("cannot concatenate incompatible arrays"),
-						 errdetail("Arrays with differing dimensions are not "
-									"compatible for concatenation.")));
+					errdetail("Arrays with differing dimensions are not "
+							  "compatible for concatenation.")));
 		}
 	}
 
@@ -320,13 +331,13 @@ create_singleton_array(FunctionCallInfo fcinfo,
 					   Datum element,
 					   int ndims)
 {
-	Datum	dvalues[1];
-	int16	typlen;
-	bool	typbyval;
-	char	typalign;
-	int		dims[MAXDIM];
-	int		lbs[MAXDIM];
-	int		i;
+	Datum		dvalues[1];
+	int16		typlen;
+	bool		typbyval;
+	char		typalign;
+	int			dims[MAXDIM];
+	int			lbs[MAXDIM];
+	int			i;
 	ArrayMetaState *my_extra;
 
 	if (element_type == 0)
@@ -359,7 +370,7 @@ create_singleton_array(FunctionCallInfo fcinfo,
 	if (my_extra == NULL)
 	{
 		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-													 sizeof(ArrayMetaState));
+												 sizeof(ArrayMetaState));
 		my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 		my_extra->element_type = InvalidOid;
 	}

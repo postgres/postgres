@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.144 2003/07/03 16:34:25 tgl Exp $
+ * $Id: nodes.h,v 1.145 2003/08/04 00:43:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,8 +129,8 @@ typedef enum NodeTag
 	/*
 	 * TAGS FOR EXPRESSION STATE NODES (execnodes.h)
 	 *
-	 * These correspond (not always one-for-one) to primitive nodes
-	 * derived from Expr.
+	 * These correspond (not always one-for-one) to primitive nodes derived
+	 * from Expr.
 	 */
 	T_ExprState = 400,
 	T_GenericExprState,

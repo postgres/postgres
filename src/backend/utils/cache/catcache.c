@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.106 2003/07/28 00:09:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.107 2003/08/04 00:43:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -956,8 +956,8 @@ CatalogCacheInitializeCache(CatCache *cache)
 		cache->cc_isname[i] = (keytype == NAMEOID);
 
 		/*
-		 * Do equality-function lookup (we assume this won't need a catalog
-		 * lookup for any supported type)
+		 * Do equality-function lookup (we assume this won't need a
+		 * catalog lookup for any supported type)
 		 */
 		fmgr_info_cxt(cache->cc_skey[i].sk_procedure,
 					  &cache->cc_skey[i].sk_func,

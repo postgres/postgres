@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for MAC addresses.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/mac.c,v 1.29 2003/07/27 04:53:06 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/mac.c,v 1.30 2003/08/04 00:43:25 momjian Exp $
  */
 
 #include "postgres.h"
@@ -62,7 +62,7 @@ macaddr_in(PG_FUNCTION_ARGS)
 	if (count != 6)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for macaddr: \"%s\"", str)));
+			   errmsg("invalid input syntax for macaddr: \"%s\"", str)));
 
 	if ((a < 0) || (a > 255) || (b < 0) || (b > 255) ||
 		(c < 0) || (c > 255) || (d < 0) || (d > 255) ||
@@ -110,7 +110,7 @@ Datum
 macaddr_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	macaddr	   *addr;
+	macaddr    *addr;
 
 	addr = (macaddr *) palloc(sizeof(macaddr));
 
@@ -130,7 +130,7 @@ macaddr_recv(PG_FUNCTION_ARGS)
 Datum
 macaddr_send(PG_FUNCTION_ARGS)
 {
-	macaddr	   *addr = PG_GETARG_MACADDR_P(0);
+	macaddr    *addr = PG_GETARG_MACADDR_P(0);
 	StringInfoData buf;
 
 	pq_begintypsend(&buf);

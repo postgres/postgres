@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/tstoreReceiver.c,v 1.6 2003/05/08 18:16:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/tstoreReceiver.c,v 1.7 2003/08/04 00:43:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,10 +21,10 @@
 
 typedef struct
 {
-	DestReceiver		pub;
-	Tuplestorestate    *tstore;
-	MemoryContext		cxt;
-} TStoreState;
+	DestReceiver pub;
+	Tuplestorestate *tstore;
+	MemoryContext cxt;
+}	TStoreState;
 
 
 /*

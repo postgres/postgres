@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.82 2003/07/20 21:56:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.83 2003/08/04 00:43:16 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -51,7 +51,8 @@ case_translate_language_name(const char *input, char *output)
 {
 	int			i;
 
-	MemSet(output, 0, NAMEDATALEN);	/* ensure result Name is zero-filled */
+	MemSet(output, 0, NAMEDATALEN);		/* ensure result Name is
+										 * zero-filled */
 
 	for (i = 0; i < NAMEDATALEN - 1 && input[i]; ++i)
 		output[i] = tolower((unsigned char) input[i]);

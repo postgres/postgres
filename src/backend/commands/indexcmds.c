@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.103 2003/08/01 00:15:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.104 2003/08/04 00:43:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,11 +44,11 @@
 /* non-export function prototypes */
 static void CheckPredicate(List *predList);
 static void ComputeIndexAttrs(IndexInfo *indexInfo, Oid *classOidP,
-			   List *attList,
-			   Oid relId,
-			   char *accessMethodName, Oid accessMethodId);
+				  List *attList,
+				  Oid relId,
+				  char *accessMethodName, Oid accessMethodId);
 static Oid GetIndexOpClass(List *opclass, Oid attrType,
-			   char *accessMethodName, Oid accessMethodId);
+				char *accessMethodName, Oid accessMethodId);
 static Oid	GetDefaultOpClass(Oid attrType, Oid accessMethodId);
 
 /*
@@ -157,8 +157,8 @@ DefineIndex(RangeVar *heapRelation,
 	if (unique && !accessMethodForm->amcanunique)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("access method \"%s\" does not support UNIQUE indexes",
-						accessMethodName)));
+		   errmsg("access method \"%s\" does not support UNIQUE indexes",
+				  accessMethodName)));
 	if (numberOfAttributes > 1 && !accessMethodForm->amcanmulticol)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -192,16 +192,16 @@ DefineIndex(RangeVar *heapRelation,
 	}
 
 	/*
-	 * Check that all of the attributes in a primary key are marked
-	 * as not null, otherwise attempt to ALTER TABLE .. SET NOT NULL
+	 * Check that all of the attributes in a primary key are marked as not
+	 * null, otherwise attempt to ALTER TABLE .. SET NOT NULL
 	 */
 	if (primary)
 	{
-		List   *keys;
+		List	   *keys;
 
 		foreach(keys, attributeList)
 		{
-			IndexElem   *key = (IndexElem *) lfirst(keys);
+			IndexElem  *key = (IndexElem *) lfirst(keys);
 			HeapTuple	atttuple;
 
 			if (!key->name)
@@ -216,15 +216,16 @@ DefineIndex(RangeVar *heapRelation,
 			atttuple = SearchSysCacheAttName(relationId, key->name);
 			if (HeapTupleIsValid(atttuple))
 			{
-				if (! ((Form_pg_attribute) GETSTRUCT(atttuple))->attnotnull)
+				if (!((Form_pg_attribute) GETSTRUCT(atttuple))->attnotnull)
 				{
 					/*
 					 * Try to make it NOT NULL.
 					 *
 					 * XXX: Shouldn't the ALTER TABLE .. SET NOT NULL cascade
 					 * to child tables?  Currently, since the PRIMARY KEY
-					 * itself doesn't cascade, we don't cascade the notnull
-					 * constraint either; but this is pretty debatable.
+					 * itself doesn't cascade, we don't cascade the
+					 * notnull constraint either; but this is pretty
+					 * debatable.
 					 */
 					AlterTableAlterColumnSetNotNull(relationId, false,
 													key->name);
@@ -236,8 +237,8 @@ DefineIndex(RangeVar *heapRelation,
 				/* This shouldn't happen if parser did its job ... */
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
-						 errmsg("column \"%s\" named in key does not exist",
-								key->name)));
+					  errmsg("column \"%s\" named in key does not exist",
+							 key->name)));
 			}
 		}
 	}
@@ -248,7 +249,7 @@ DefineIndex(RangeVar *heapRelation,
 	 */
 	indexInfo = makeNode(IndexInfo);
 	indexInfo->ii_NumIndexAttrs = numberOfAttributes;
-	indexInfo->ii_Expressions = NIL; /* for now */
+	indexInfo->ii_Expressions = NIL;	/* for now */
 	indexInfo->ii_ExpressionsState = NIL;
 	indexInfo->ii_Predicate = cnfPred;
 	indexInfo->ii_PredicateState = NIL;
@@ -308,7 +309,7 @@ CheckPredicate(List *predList)
 	if (contain_mutable_functions((Node *) predList))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("functions in index predicate must be marked IMMUTABLE")));
+		errmsg("functions in index predicate must be marked IMMUTABLE")));
 }
 
 static void
@@ -351,7 +352,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 		else if (attribute->expr && IsA(attribute->expr, Var))
 		{
 			/* Tricky tricky, he wrote (column) ... treat as simple attr */
-			Var	   *var = (Var *) attribute->expr;
+			Var		   *var = (Var *) attribute->expr;
 
 			indexInfo->ii_KeyAttrNumbers[attn] = var->varattno;
 			atttype = get_atttype(relId, var->varattno);
@@ -360,30 +361,30 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 		{
 			/* Index expression */
 			Assert(attribute->expr != NULL);
-			indexInfo->ii_KeyAttrNumbers[attn] = 0;	/* marks expression */
+			indexInfo->ii_KeyAttrNumbers[attn] = 0;		/* marks expression */
 			indexInfo->ii_Expressions = lappend(indexInfo->ii_Expressions,
 												attribute->expr);
 			atttype = exprType(attribute->expr);
 
 			/*
-			 * We don't currently support generation of an actual query plan
-			 * for an index expression, only simple scalar expressions;
-			 * hence these restrictions.
+			 * We don't currently support generation of an actual query
+			 * plan for an index expression, only simple scalar
+			 * expressions; hence these restrictions.
 			 */
 			if (contain_subplans(attribute->expr))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot use sub-select in index expression")));
+				   errmsg("cannot use sub-select in index expression")));
 			if (contain_agg_clause(attribute->expr))
 				ereport(ERROR,
 						(errcode(ERRCODE_GROUPING_ERROR),
-						 errmsg("cannot use aggregate in index expression")));
+					errmsg("cannot use aggregate in index expression")));
 
 			/*
 			 * A expression using mutable functions is probably wrong,
-			 * since if you aren't going to get the same result for the same
-			 * data every time, it's not clear what the index entries mean at
-			 * all.
+			 * since if you aren't going to get the same result for the
+			 * same data every time, it's not clear what the index entries
+			 * mean at all.
 			 */
 			if (contain_mutable_functions(attribute->expr))
 				ereport(ERROR,
@@ -413,21 +414,20 @@ GetIndexOpClass(List *opclass, Oid attrType,
 				opInputType;
 
 	/*
-	 * Release 7.0 removed network_ops, timespan_ops, and
-	 * datetime_ops, so we ignore those opclass names
-	 * so the default *_ops is used.  This can be
-	 * removed in some later release.  bjm 2000/02/07
+	 * Release 7.0 removed network_ops, timespan_ops, and datetime_ops, so
+	 * we ignore those opclass names so the default *_ops is used.	This
+	 * can be removed in some later release.  bjm 2000/02/07
 	 *
-	 * Release 7.1 removes lztext_ops, so suppress that too
-	 * for a while.  tgl 2000/07/30
+	 * Release 7.1 removes lztext_ops, so suppress that too for a while.  tgl
+	 * 2000/07/30
 	 *
-	 * Release 7.2 renames timestamp_ops to timestamptz_ops,
-	 * so suppress that too for awhile.  I'm starting to
-	 * think we need a better approach.  tgl 2000/10/01
+	 * Release 7.2 renames timestamp_ops to timestamptz_ops, so suppress that
+	 * too for awhile.	I'm starting to think we need a better approach.
+	 * tgl 2000/10/01
 	 */
 	if (length(opclass) == 1)
 	{
-		char   *claname = strVal(lfirst(opclass));
+		char	   *claname = strVal(lfirst(opclass));
 
 		if (strcmp(claname, "network_ops") == 0 ||
 			strcmp(claname, "timespan_ops") == 0 ||
@@ -499,8 +499,8 @@ GetIndexOpClass(List *opclass, Oid attrType,
 	if (!IsBinaryCoercible(attrType, opInputType))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("operator class \"%s\" does not accept data type %s",
-						NameListToString(opclass), format_type_be(attrType))));
+			 errmsg("operator class \"%s\" does not accept data type %s",
+				  NameListToString(opclass), format_type_be(attrType))));
 
 	ReleaseSysCache(tuple);
 
@@ -607,7 +607,7 @@ ReindexIndex(RangeVar *indexRelation, bool force /* currently unused */ )
 	tuple = SearchSysCache(RELOID,
 						   ObjectIdGetDatum(indOid),
 						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple)) /* shouldn't happen */
+	if (!HeapTupleIsValid(tuple))		/* shouldn't happen */
 		elog(ERROR, "cache lookup failed for relation %u", indOid);
 
 	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_INDEX)
@@ -785,7 +785,8 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 	for (i = 0; i < relcnt; i++)
 	{
 		StartTransactionCommand();
-		SetQuerySnapshot();		/* might be needed for functions in indexes */
+		SetQuerySnapshot();		/* might be needed for functions in
+								 * indexes */
 		if (reindex_relation(relids[i], force))
 			ereport(NOTICE,
 					(errmsg("relation %u was reindexed", relids[i])));

@@ -743,7 +743,7 @@ tm2interval(struct tm * tm, fsec_t fsec, Interval *span)
 Interval *
 PGTYPESinterval_from_asc(char *str, char **endptr)
 {
-	Interval	*result = NULL;
+	Interval   *result = NULL;
 	fsec_t		fsec;
 	struct tm	tt,
 			   *tm = &tt;
@@ -752,8 +752,8 @@ PGTYPESinterval_from_asc(char *str, char **endptr)
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
 	char		lowstr[MAXDATELEN + MAXDATEFIELDS];
-	char            *realptr;
-	char **ptr = (endptr != NULL) ? endptr : &realptr;
+	char	   *realptr;
+	char	  **ptr = (endptr != NULL) ? endptr : &realptr;
 
 	tm->tm_year = 0;
 	tm->tm_mon = 0;
@@ -791,7 +791,7 @@ PGTYPESinterval_from_asc(char *str, char **endptr)
 		errno = PGTYPES_INTVL_BAD_INTERVAL;
 		return NULL;
 	}
-	
+
 	return result;
 }
 
@@ -802,7 +802,7 @@ PGTYPESinterval_to_asc(Interval *span)
 			   *tm = &tt;
 	fsec_t		fsec;
 	char		buf[MAXDATELEN + 1];
-	int DateStyle=0;
+	int			DateStyle = 0;
 
 	if (interval2tm(*span, tm, &fsec) != 0)
 	{
@@ -815,11 +815,11 @@ PGTYPESinterval_to_asc(Interval *span)
 		errno = PGTYPES_INTVL_BAD_INTERVAL;
 		return NULL;
 	}
-	
-        return pgtypes_strdup(buf);
+
+	return pgtypes_strdup(buf);
 }
 
-int 
+int
 PGTYPESinterval_copy(Interval *intvlsrc, Interval *intrcldest)
 {
 	intrcldest->time = intvlsrc->time;
@@ -827,4 +827,3 @@ PGTYPESinterval_copy(Interval *intvlsrc, Interval *intrcldest)
 
 	return 0;
 }
-

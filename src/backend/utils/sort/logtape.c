@@ -64,7 +64,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/logtape.c,v 1.10 2003/07/25 20:17:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/logtape.c,v 1.11 2003/08/04 00:43:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -197,7 +197,7 @@ ltsWriteBlock(LogicalTapeSet *lts, long blocknum, void *buffer)
 	if (BufFileSeekBlock(lts->pfile, blocknum) != 0 ||
 		BufFileWrite(lts->pfile, buffer, BLCKSZ) != BLCKSZ)
 		ereport(ERROR,
-				/* XXX is it okay to assume errno is correct? */
+		/* XXX is it okay to assume errno is correct? */
 				(errcode_for_file_access(),
 				 errmsg("could not write block %ld of temporary file: %m",
 						blocknum),
@@ -216,7 +216,7 @@ ltsReadBlock(LogicalTapeSet *lts, long blocknum, void *buffer)
 	if (BufFileSeekBlock(lts->pfile, blocknum) != 0 ||
 		BufFileRead(lts->pfile, buffer, BLCKSZ) != BLCKSZ)
 		ereport(ERROR,
-				/* XXX is it okay to assume errno is correct? */
+		/* XXX is it okay to assume errno is correct? */
 				(errcode_for_file_access(),
 				 errmsg("could not read block %ld of temporary file: %m",
 						blocknum)));

@@ -16,10 +16,10 @@ typedef struct ITEM
 	int2		left;
 	int4		val;
 	/* user-friendly value, must correlate with WordEntry */
-	uint32	
-		unused:1,
-		length:11,
-		distance:20;
+	uint32
+				unused:1,
+				length:11,
+				distance:20;
 }	ITEM;
 
 /*
@@ -50,6 +50,6 @@ typedef struct
 #define VALFALSE		7
 
 bool TS_execute(ITEM * curitem, void *checkval,
-		bool calcnot, bool (*chkcond) (void *checkval, ITEM * val));
+		   bool calcnot, bool (*chkcond) (void *checkval, ITEM * val));
 
 #endif

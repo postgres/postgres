@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/libpq/crypt.c,v 1.54 2003/07/22 19:00:10 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/libpq/crypt.c,v 1.55 2003/08/04 00:43:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,7 +119,10 @@ md5_crypt_verify(const Port *port, const char *user, char *client_pass)
 		default:
 			if (isMD5(shadow_pass))
 			{
-				/* Encrypt user-supplied password to match MD5 in pg_shadow */
+				/*
+				 * Encrypt user-supplied password to match MD5 in
+				 * pg_shadow
+				 */
 				crypt_client_pass = palloc(MD5_PASSWD_LEN + 1);
 				if (!EncryptMD5(client_pass,
 								port->user_name,

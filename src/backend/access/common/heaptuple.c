@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.84 2003/07/21 20:29:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.85 2003/08/04 00:43:11 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -617,7 +617,7 @@ heap_formtuple(TupleDesc tupleDescriptor,
 	td->t_natts = numberOfAttributes;
 	td->t_hoff = hoff;
 
-	if (tupleDescriptor->tdhasoid) /* else leave infomask = 0 */
+	if (tupleDescriptor->tdhasoid)		/* else leave infomask = 0 */
 		td->t_infomask = HEAP_HASOID;
 
 	DataFill((char *) td + hoff,

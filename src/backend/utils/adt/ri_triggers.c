@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.52 2003/07/22 22:14:57 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.53 2003/08/04 00:43:25 momjian Exp $
  *
  * ----------
  */
@@ -150,29 +150,29 @@ static bool ri_OneKeyEqual(Relation rel, int column, HeapTuple oldtup,
 			   HeapTuple newtup, RI_QueryKey *key, int pairidx);
 static bool ri_AttributesEqual(Oid typeid, Datum oldvalue, Datum newvalue);
 static bool ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
-							  HeapTuple old_row,
-							  Oid tgoid, int match_type,
-							  int tgnargs, char **tgargs);
+				  HeapTuple old_row,
+				  Oid tgoid, int match_type,
+				  int tgnargs, char **tgargs);
 
 static void ri_InitHashTables(void);
 static void *ri_FetchPreparedPlan(RI_QueryKey *key);
 static void ri_HashPreparedPlan(RI_QueryKey *key, void *plan);
 
 static void ri_CheckTrigger(FunctionCallInfo fcinfo, const char *funcname,
-							int tgkind);
+				int tgkind);
 static void *ri_PlanCheck(const char *querystr, int nargs, Oid *argtypes,
-						  RI_QueryKey *qkey, Relation fk_rel, Relation pk_rel,
-						  bool cache_plan);
+			 RI_QueryKey *qkey, Relation fk_rel, Relation pk_rel,
+			 bool cache_plan);
 static bool ri_PerformCheck(RI_QueryKey *qkey, void *qplan,
-							Relation fk_rel, Relation pk_rel,
-							HeapTuple old_tuple, HeapTuple new_tuple,
-							int expect_OK, const char *constrname);
+				Relation fk_rel, Relation pk_rel,
+				HeapTuple old_tuple, HeapTuple new_tuple,
+				int expect_OK, const char *constrname);
 static void ri_ExtractValues(RI_QueryKey *qkey, int key_idx,
-							 Relation rel, HeapTuple tuple,
-							 Datum *vals, char *nulls);
+				 Relation rel, HeapTuple tuple,
+				 Datum *vals, char *nulls);
 static void ri_ReportViolation(RI_QueryKey *qkey, const char *constrname,
-							   Relation pk_rel, Relation fk_rel,
-							   HeapTuple violator, bool spi_err);
+				   Relation pk_rel, Relation fk_rel,
+				   HeapTuple violator, bool spi_err);
 
 
 /* ----------
@@ -341,7 +341,7 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 					ereport(ERROR,
 							(errcode(ERRCODE_FOREIGN_KEY_VIOLATION),
 							 errmsg("insert or update on \"%s\" violates foreign key constraint \"%s\"",
-									RelationGetRelationName(trigdata->tg_relation),
+						  RelationGetRelationName(trigdata->tg_relation),
 									tgargs[RI_CONSTRAINT_NAME_ARGNO]),
 							 errdetail("MATCH FULL does not allow mixing of NULL and non-NULL key values.")));
 					heap_close(pk_rel, RowShareLock);
@@ -366,7 +366,7 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 					 */
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("MATCH PARTIAL not yet implemented")));
+						   errmsg("MATCH PARTIAL not yet implemented")));
 					heap_close(pk_rel, RowShareLock);
 					return PointerGetDatum(NULL);
 			}
@@ -381,8 +381,8 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * No need to check anything if old and new references are the
-	 * same on UPDATE.
+	 * No need to check anything if old and new references are the same on
+	 * UPDATE.
 	 */
 	if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 	{
@@ -542,7 +542,7 @@ ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 					 */
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("MATCH PARTIAL not yet implemented")));
+						   errmsg("MATCH PARTIAL not yet implemented")));
 					break;
 			}
 
@@ -759,7 +759,8 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * We have a plan now. Run it to check for existing references.
+			 * We have a plan now. Run it to check for existing
+			 * references.
 			 */
 			ri_PerformCheck(&qkey, qplan,
 							fk_rel, pk_rel,
@@ -897,8 +898,8 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 								  match_type, tgnargs, tgargs))
 			{
 				/*
-				 * There's either another row, or no row could match this one.  In
-				 * either case, we don't need to do the check.
+				 * There's either another row, or no row could match this
+				 * one.  In either case, we don't need to do the check.
 				 */
 				heap_close(fk_rel, RowShareLock);
 				return PointerGetDatum(NULL);
@@ -950,7 +951,8 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * We have a plan now. Run it to check for existing references.
+			 * We have a plan now. Run it to check for existing
+			 * references.
 			 */
 			ri_PerformCheck(&qkey, qplan,
 							fk_rel, pk_rel,
@@ -1110,9 +1112,9 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * We have a plan now. Build up the arguments
-			 * from the key values in the deleted PK tuple and delete the
-			 * referencing rows
+			 * We have a plan now. Build up the arguments from the key
+			 * values in the deleted PK tuple and delete the referencing
+			 * rows
 			 */
 			ri_PerformCheck(&qkey, qplan,
 							fk_rel, pk_rel,
@@ -1296,7 +1298,8 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * We have a plan now. Run it to update the existing references.
+			 * We have a plan now. Run it to update the existing
+			 * references.
 			 */
 			ri_PerformCheck(&qkey, qplan,
 							fk_rel, pk_rel,
@@ -1465,7 +1468,8 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * We have a plan now. Run it to check for existing references.
+			 * We have a plan now. Run it to check for existing
+			 * references.
 			 */
 			ri_PerformCheck(&qkey, qplan,
 							fk_rel, pk_rel,
@@ -1646,7 +1650,8 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * We have a plan now. Run it to check for existing references.
+			 * We have a plan now. Run it to check for existing
+			 * references.
 			 */
 			ri_PerformCheck(&qkey, qplan,
 							fk_rel, pk_rel,
@@ -1816,7 +1821,8 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * We have a plan now. Run it to check for existing references.
+			 * We have a plan now. Run it to check for existing
+			 * references.
 			 */
 			ri_PerformCheck(&qkey, qplan,
 							fk_rel, pk_rel,
@@ -2034,7 +2040,8 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * We have a plan now. Run it to update the existing references.
+			 * We have a plan now. Run it to update the existing
+			 * references.
 			 */
 			ri_PerformCheck(&qkey, qplan,
 							fk_rel, pk_rel,
@@ -2209,14 +2216,14 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 				 * appropriate column defaults, if any (if not, they stay
 				 * NULL).
 				 *
-				 * XXX  This is really ugly; it'd be better to use "UPDATE
+				 * XXX	This is really ugly; it'd be better to use "UPDATE
 				 * SET foo = DEFAULT", if we had it.
 				 */
 				spi_plan = (Plan *) lfirst(((_SPI_plan *) qplan)->ptlist);
 				foreach(l, spi_plan->targetlist)
 				{
 					TargetEntry *tle = (TargetEntry *) lfirst(l);
-					Node *dfl;
+					Node	   *dfl;
 
 					/* Ignore any junk columns or Var=Var columns */
 					if (tle->resdom->resjunk)
@@ -2234,7 +2241,8 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * We have a plan now. Run it to update the existing references.
+			 * We have a plan now. Run it to update the existing
+			 * references.
 			 */
 			ri_PerformCheck(&qkey, qplan,
 							fk_rel, pk_rel,
@@ -2444,14 +2452,14 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 				 * appropriate column defaults, if any (if not, they stay
 				 * NULL).
 				 *
-				 * XXX  This is really ugly; it'd be better to use "UPDATE
+				 * XXX	This is really ugly; it'd be better to use "UPDATE
 				 * SET foo = DEFAULT", if we had it.
 				 */
 				spi_plan = (Plan *) lfirst(((_SPI_plan *) qplan)->ptlist);
 				foreach(l, spi_plan->targetlist)
 				{
 					TargetEntry *tle = (TargetEntry *) lfirst(l);
-					Node *dfl;
+					Node	   *dfl;
 
 					/* Ignore any junk columns or Var=Var columns */
 					if (tle->resdom->resjunk)
@@ -2469,7 +2477,8 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * We have a plan now. Run it to update the existing references.
+			 * We have a plan now. Run it to update the existing
+			 * references.
 			 */
 			ri_PerformCheck(&qkey, qplan,
 							fk_rel, pk_rel,
@@ -2542,8 +2551,8 @@ RI_FKey_keyequal_upd(TriggerData *trigdata)
 		(tgnargs % 2) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-				 errmsg("%s() called with wrong number of trigger arguments",
-						"RI_FKey_keyequal_upd")));
+			 errmsg("%s() called with wrong number of trigger arguments",
+					"RI_FKey_keyequal_upd")));
 
 	/*
 	 * Nothing to do if no column names to compare given
@@ -2560,9 +2569,9 @@ RI_FKey_keyequal_upd(TriggerData *trigdata)
 	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("no target table given for trigger \"%s\" on \"%s\"",
-						trigdata->tg_trigger->tgname,
-						RelationGetRelationName(trigdata->tg_relation)),
+			 errmsg("no target table given for trigger \"%s\" on \"%s\"",
+					trigdata->tg_trigger->tgname,
+					RelationGetRelationName(trigdata->tg_relation)),
 				 errhint("Remove this RI trigger and its mates, then do ALTER TABLE ADD CONSTRAINT.")));
 
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, AccessShareLock);
@@ -2750,7 +2759,7 @@ ri_CheckTrigger(FunctionCallInfo fcinfo, const char *funcname, int tgkind)
 	if (!CALLED_AS_TRIGGER(fcinfo))
 		ereport(ERROR,
 				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-				 errmsg("%s() was not fired by trigger manager", funcname)));
+			 errmsg("%s() was not fired by trigger manager", funcname)));
 
 	/*
 	 * Check proper event
@@ -2766,28 +2775,28 @@ ri_CheckTrigger(FunctionCallInfo fcinfo, const char *funcname, int tgkind)
 		case RI_TRIGTYPE_INSERT:
 			if (!TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
 				ereport(ERROR,
-						(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-						 errmsg("%s() must be fired for INSERT", funcname)));
+					 (errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
+					  errmsg("%s() must be fired for INSERT", funcname)));
 			break;
 		case RI_TRIGTYPE_UPDATE:
 			if (!TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 				ereport(ERROR,
-						(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-						 errmsg("%s() must be fired for UPDATE", funcname)));
+					 (errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
+					  errmsg("%s() must be fired for UPDATE", funcname)));
 			break;
 		case RI_TRIGTYPE_INUP:
 			if (!TRIGGER_FIRED_BY_INSERT(trigdata->tg_event) &&
 				!TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 				ereport(ERROR,
-						(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-						 errmsg("%s() must be fired for INSERT or UPDATE",
-					 funcname)));
+					 (errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
+					  errmsg("%s() must be fired for INSERT or UPDATE",
+							 funcname)));
 			break;
 		case RI_TRIGTYPE_DELETE:
 			if (!TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
 				ereport(ERROR,
-						(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-						 errmsg("%s() must be fired for DELETE", funcname)));
+					 (errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
+					  errmsg("%s() must be fired for DELETE", funcname)));
 			break;
 	}
 
@@ -2800,19 +2809,19 @@ ri_CheckTrigger(FunctionCallInfo fcinfo, const char *funcname, int tgkind)
 		(tgnargs % 2) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-				 errmsg("%s() called with wrong number of trigger arguments",
-						funcname)));
+			 errmsg("%s() called with wrong number of trigger arguments",
+					funcname)));
 
 	/*
-	 * Check that tgconstrrelid is known.  We need to check here because of
-	 * ancient pg_dump bug; see notes in CreateTrigger().
+	 * Check that tgconstrrelid is known.  We need to check here because
+	 * of ancient pg_dump bug; see notes in CreateTrigger().
 	 */
 	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("no target table given for trigger \"%s\" on \"%s\"",
-						trigdata->tg_trigger->tgname,
-						RelationGetRelationName(trigdata->tg_relation)),
+			 errmsg("no target table given for trigger \"%s\" on \"%s\"",
+					trigdata->tg_trigger->tgname,
+					RelationGetRelationName(trigdata->tg_relation)),
 				 errhint("Remove this RI trigger and its mates, then do ALTER TABLE ADD CONSTRAINT.")));
 }
 
@@ -2833,9 +2842,9 @@ ri_PlanCheck(const char *querystr, int nargs, Oid *argtypes,
 	AclId		save_uid;
 
 	/*
-	 * The query is always run against the FK table except
-	 * when this is an update/insert trigger on the FK table itself -
-	 * either RI_PLAN_CHECK_LOOKUPPK or RI_PLAN_CHECK_LOOKUPPK_NOCOLS
+	 * The query is always run against the FK table except when this is an
+	 * update/insert trigger on the FK table itself - either
+	 * RI_PLAN_CHECK_LOOKUPPK or RI_PLAN_CHECK_LOOKUPPK_NOCOLS
 	 */
 	if (qkey->constr_queryno == RI_PLAN_CHECK_LOOKUPPK ||
 		qkey->constr_queryno == RI_PLAN_CHECK_LOOKUPPK_NOCOLS)
@@ -2882,9 +2891,9 @@ ri_PerformCheck(RI_QueryKey *qkey, void *qplan,
 	char		nulls[RI_MAX_NUMKEYS * 2];
 
 	/*
-	 * The query is always run against the FK table except
-	 * when this is an update/insert trigger on the FK table itself -
-	 * either RI_PLAN_CHECK_LOOKUPPK or RI_PLAN_CHECK_LOOKUPPK_NOCOLS
+	 * The query is always run against the FK table except when this is an
+	 * update/insert trigger on the FK table itself - either
+	 * RI_PLAN_CHECK_LOOKUPPK or RI_PLAN_CHECK_LOOKUPPK_NOCOLS
 	 */
 	if (qkey->constr_queryno == RI_PLAN_CHECK_LOOKUPPK ||
 		qkey->constr_queryno == RI_PLAN_CHECK_LOOKUPPK_NOCOLS)
@@ -2893,10 +2902,10 @@ ri_PerformCheck(RI_QueryKey *qkey, void *qplan,
 		query_rel = fk_rel;
 
 	/*
-	 * The values for the query are taken from the table on which the trigger
-	 * is called - it is normally the other one with respect to query_rel.
-	 * An exception is ri_Check_Pk_Match(), which uses the PK table for both
-	 * (the case when constrname == NULL)
+	 * The values for the query are taken from the table on which the
+	 * trigger is called - it is normally the other one with respect to
+	 * query_rel. An exception is ri_Check_Pk_Match(), which uses the PK
+	 * table for both (the case when constrname == NULL)
 	 */
 	if (qkey->constr_queryno == RI_PLAN_CHECK_LOOKUPPK && constrname != NULL)
 	{
@@ -2916,7 +2925,7 @@ ri_PerformCheck(RI_QueryKey *qkey, void *qplan,
 						 vals, nulls);
 		if (old_tuple)
 			ri_ExtractValues(qkey, key_idx, source_rel, old_tuple,
-							 vals + qkey->nkeypairs, nulls + qkey->nkeypairs);
+						vals + qkey->nkeypairs, nulls + qkey->nkeypairs);
 	}
 	else
 	{
@@ -2930,9 +2939,9 @@ ri_PerformCheck(RI_QueryKey *qkey, void *qplan,
 
 	/*
 	 * If this is a select query (e.g., for a 'no action' or 'restrict'
-	 * trigger), we only need to see if there is a single row in the table,
-	 * matching the key.  Otherwise, limit = 0 - because we want the query to
-	 * affect ALL the matching rows.
+	 * trigger), we only need to see if there is a single row in the
+	 * table, matching the key.  Otherwise, limit = 0 - because we want
+	 * the query to affect ALL the matching rows.
 	 */
 	limit = (expect_OK == SPI_OK_SELECT) ? 1 : 0;
 
@@ -2954,7 +2963,7 @@ ri_PerformCheck(RI_QueryKey *qkey, void *qplan,
 
 	/* XXX wouldn't it be clearer to do this part at the caller? */
 	if (constrname && expect_OK == SPI_OK_SELECT &&
-		(SPI_processed==0) == (qkey->constr_queryno==RI_PLAN_CHECK_LOOKUPPK))
+		(SPI_processed == 0) == (qkey->constr_queryno == RI_PLAN_CHECK_LOOKUPPK))
 		ri_ReportViolation(qkey, constrname,
 						   pk_rel, fk_rel,
 						   new_tuple ? new_tuple : old_tuple,
@@ -3049,9 +3058,9 @@ ri_ReportViolation(RI_QueryKey *qkey, const char *constrname,
 	/* Get printable versions of the keys involved */
 	for (idx = 0; idx < qkey->nkeypairs; idx++)
 	{
-		int		fnum = qkey->keypair[idx][key_idx];
-		char   *name,
-			   *val;
+		int			fnum = qkey->keypair[idx][key_idx];
+		char	   *name,
+				   *val;
 
 		name = SPI_fname(rel->rd_att, fnum);
 		val = SPI_getvalue(violator, rel->rd_att, fnum);
@@ -3075,22 +3084,22 @@ ri_ReportViolation(RI_QueryKey *qkey, const char *constrname,
 	}
 
 	if (onfk)
-	  ereport(ERROR,
-			  (errcode(ERRCODE_FOREIGN_KEY_VIOLATION),
-			   errmsg("insert or update on \"%s\" violates foreign key constraint \"%s\"",
-					  RelationGetRelationName(fk_rel), constrname),
-			   errdetail("Key (%s)=(%s) is not present in \"%s\".",
-						 key_names, key_values,
-						 RelationGetRelationName(pk_rel))));
+		ereport(ERROR,
+				(errcode(ERRCODE_FOREIGN_KEY_VIOLATION),
+				 errmsg("insert or update on \"%s\" violates foreign key constraint \"%s\"",
+						RelationGetRelationName(fk_rel), constrname),
+				 errdetail("Key (%s)=(%s) is not present in \"%s\".",
+						   key_names, key_values,
+						   RelationGetRelationName(pk_rel))));
 	else
-	  ereport(ERROR,
-			  (errcode(ERRCODE_FOREIGN_KEY_VIOLATION),
-			   errmsg("update or delete on \"%s\" violates foreign key constraint \"%s\" on \"%s\"",
-					  RelationGetRelationName(pk_rel),
-					  constrname, RelationGetRelationName(fk_rel)),
-			   errdetail("Key (%s)=(%s) is still referenced from \"%s\".",
-						 key_names, key_values,
-						 RelationGetRelationName(fk_rel))));
+		ereport(ERROR,
+				(errcode(ERRCODE_FOREIGN_KEY_VIOLATION),
+				 errmsg("update or delete on \"%s\" violates foreign key constraint \"%s\" on \"%s\"",
+						RelationGetRelationName(pk_rel),
+						constrname, RelationGetRelationName(fk_rel)),
+			  errdetail("Key (%s)=(%s) is still referenced from \"%s\".",
+						key_names, key_values,
+						RelationGetRelationName(fk_rel))));
 }
 
 /* ----------

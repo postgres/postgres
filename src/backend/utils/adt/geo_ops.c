@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.78 2003/07/27 04:53:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.79 2003/08/04 00:43:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,7 +140,7 @@ single_decode(char *str, float8 *x, char **s)
 static int
 single_encode(float8 x, char *str)
 {
-	int	ndig = DBL_DIG + extra_float_digits;
+	int			ndig = DBL_DIG + extra_float_digits;
 
 	if (ndig < 1)
 		ndig = 1;
@@ -196,7 +196,7 @@ pair_decode(char *str, float8 *x, float8 *y, char **s)
 static int
 pair_encode(float8 x, float8 y, char *str)
 {
-	int	ndig = DBL_DIG + extra_float_digits;
+	int			ndig = DBL_DIG + extra_float_digits;
 
 	if (ndig < 1)
 		ndig = 1;
@@ -3363,7 +3363,7 @@ poly_in(PG_FUNCTION_ARGS)
 	if ((npts = pair_count(str, ',')) <= 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for polygon: \"%s\"", str)));
+			   errmsg("invalid input syntax for polygon: \"%s\"", str)));
 
 	size = offsetof(POLYGON, p[0]) +sizeof(poly->p[0]) * npts;
 	poly = (POLYGON *) palloc0(size);	/* zero any holes */
@@ -3375,7 +3375,7 @@ poly_in(PG_FUNCTION_ARGS)
 		|| (*s != '\0'))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for polygon: \"%s\"", str)));
+			   errmsg("invalid input syntax for polygon: \"%s\"", str)));
 
 	make_bound_box(poly);
 
@@ -3406,7 +3406,7 @@ Datum
 poly_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	POLYGON	   *poly;
+	POLYGON    *poly;
 	int32		npts;
 	int32		i;
 	int			size;
@@ -3440,7 +3440,7 @@ poly_recv(PG_FUNCTION_ARGS)
 Datum
 poly_send(PG_FUNCTION_ARGS)
 {
-	POLYGON	   *poly = PG_GETARG_POLYGON_P(0);
+	POLYGON    *poly = PG_GETARG_POLYGON_P(0);
 	StringInfoData buf;
 	int32		i;
 
@@ -4246,7 +4246,7 @@ circle_in(PG_FUNCTION_ARGS)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for circle: \"%s\"", str)));
+				errmsg("invalid input syntax for circle: \"%s\"", str)));
 	}
 
 	if (*s != '\0')

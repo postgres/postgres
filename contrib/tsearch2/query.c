@@ -99,28 +99,40 @@ typedef struct
 	TI_IN_STATE valstate;
 
 	/* tscfg */
-	int cfg_id;
+	int			cfg_id;
 }	QPRS_STATE;
 
-static char*
-get_weight(char *buf, int2 *weight) {
+static char *
+get_weight(char *buf, int2 *weight)
+{
 	*weight = 0;
 
-	if ( *buf != ':' )
+	if (*buf != ':')
 		return buf;
 
 	buf++;
-	while( *buf ) {
-		switch(tolower(*buf)) {
-			case 'a': *weight |= 1<<3; break; 
-			case 'b': *weight |= 1<<2; break; 
-			case 'c': *weight |= 1<<1; break; 
-			case 'd': *weight |= 1;    break;
-			default: return buf; 
+	while (*buf)
+	{
+		switch (tolower(*buf))
+		{
+			case 'a':
+				*weight |= 1 << 3;
+				break;
+			case 'b':
+				*weight |= 1 << 2;
+				break;
+			case 'c':
+				*weight |= 1 << 1;
+				break;
+			case 'd':
+				*weight |= 1;
+				break;
+			default:
+				return buf;
 		}
 		buf++;
 	}
-	
+
 	return buf;
 }
 
@@ -146,11 +158,15 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, int2 
 					state->count++;
 					(state->buf)++;
 					return OPEN;
-				} else if ( *(state->buf) == ':' ) {
+				}
+				else if (*(state->buf) == ':')
+				{
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("error at start of operand")));
-				} else if (*(state->buf) != ' ') {
+				}
+				else if (*(state->buf) != ' ')
+				{
 					state->valstate.prsbuf = state->buf;
 					state->state = WAITOPERATOR;
 					if (gettoken_tsvector(&(state->valstate)))
@@ -257,7 +273,7 @@ static void
 pushval_morph(QPRS_STATE * state, int typeval, char *strval, int lenval, int2 weight)
 {
 	int4		count = 0;
-	PRSTEXT         prs;
+	PRSTEXT		prs;
 
 	prs.lenwords = 32;
 	prs.curwords = 0;
@@ -266,16 +282,17 @@ pushval_morph(QPRS_STATE * state, int typeval, char *strval, int lenval, int2 we
 
 	parsetext_v2(findcfg(state->cfg_id), &prs, strval, lenval);
 
-	for(count=0;count<prs.curwords;count++) {
+	for (count = 0; count < prs.curwords; count++)
+	{
 		pushval_asis(state, VAL, prs.words[count].word, prs.words[count].len, weight);
-		pfree( prs.words[count].word );
+		pfree(prs.words[count].word);
 		if (count)
-			pushquery(state, OPR, (int4) '&', 0, 0, 0 );
-	}	
+			pushquery(state, OPR, (int4) '&', 0, 0, 0);
+	}
 	pfree(prs.words);
 
 	/* XXX */
-	if ( prs.curwords==0 ) 
+	if (prs.curwords == 0)
 		pushval_asis(state, VALTRUE, 0, 0, 0);
 }
 
@@ -381,15 +398,18 @@ ValCompare(CHKVAL * chkval, WordEntry * ptr, ITEM * item)
  * check weight info
  */
 static bool
-checkclass_str(CHKVAL * chkval, WordEntry * val, ITEM * item) {
-	WordEntryPos *ptr = (WordEntryPos*) (chkval->values+val->pos+SHORTALIGN(val->len)+sizeof(uint16));
-	uint16	len = *( (uint16*) (chkval->values+val->pos+SHORTALIGN(val->len)) );
-	while (len--) {
-		if ( item->weight & ( 1<<ptr->weight ) )
+checkclass_str(CHKVAL * chkval, WordEntry * val, ITEM * item)
+{
+	WordEntryPos *ptr = (WordEntryPos *) (chkval->values + val->pos + SHORTALIGN(val->len) + sizeof(uint16));
+	uint16		len = *((uint16 *) (chkval->values + val->pos + SHORTALIGN(val->len)));
+
+	while (len--)
+	{
+		if (item->weight & (1 << ptr->weight))
 			return true;
 		ptr++;
 	}
-	return false; 
+	return false;
 }
 
 /*
@@ -410,8 +430,8 @@ checkcondition_str(void *checkval, ITEM * val)
 		StopMiddle = StopLow + (StopHigh - StopLow) / 2;
 		difference = ValCompare((CHKVAL *) checkval, StopMiddle, val);
 		if (difference == 0)
-			return ( val->weight && StopMiddle->haspos ) ? 
-				checkclass_str((CHKVAL *) checkval,StopMiddle, val) : true;
+			return (val->weight && StopMiddle->haspos) ?
+				checkclass_str((CHKVAL *) checkval, StopMiddle, val) : true;
 		else if (difference < 0)
 			StopLow = StopMiddle + 1;
 		else
@@ -468,7 +488,7 @@ rexectsq(PG_FUNCTION_ARGS)
 Datum
 exectsq(PG_FUNCTION_ARGS)
 {
-	tsvector	   *val = (tsvector *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
+	tsvector   *val = (tsvector *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
 	QUERYTYPE  *query = (QUERYTYPE *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(1)));
 	CHKVAL		chkval;
 	bool		result;
@@ -485,10 +505,10 @@ exectsq(PG_FUNCTION_ARGS)
 	chkval.values = STRPTR(val);
 	chkval.operand = GETOPERAND(query);
 	result = TS_execute(
-					 GETQUERY(query),
-					 &chkval,
-					 true,
-					 checkcondition_str
+						GETQUERY(query),
+						&chkval,
+						true,
+						checkcondition_str
 		);
 
 	PG_FREE_IF_COPY(val, 0);
@@ -534,7 +554,7 @@ findoprnd(ITEM * ptr, int4 *pos)
  * input
  */
 static QUERYTYPE *
-queryin(char *buf, void (*pushval) (QPRS_STATE *, int, char *, int, int2), int cfg_id)
+			queryin(char *buf, void (*pushval) (QPRS_STATE *, int, char *, int, int2), int cfg_id)
 {
 	QPRS_STATE	state;
 	int4		i;
@@ -555,7 +575,7 @@ queryin(char *buf, void (*pushval) (QPRS_STATE *, int, char *, int, int2), int c
 	state.count = 0;
 	state.num = 0;
 	state.str = NULL;
-	state.cfg_id=cfg_id;
+	state.cfg_id = cfg_id;
 
 	/* init value parser's state */
 	state.valstate.oprisdelim = true;
@@ -678,12 +698,30 @@ infix(INFIX * in, bool first)
 		}
 		*(in->cur) = '\'';
 		in->cur++;
-		if ( in->curpol->weight ) {
-			*(in->cur) = ':'; in->cur++;
-			if ( in->curpol->weight & (1<<3) ) { *(in->cur) = 'A'; in->cur++; }
-			if ( in->curpol->weight & (1<<2) ) { *(in->cur) = 'B'; in->cur++; }
-			if ( in->curpol->weight & (1<<1) ) { *(in->cur) = 'C'; in->cur++; }
-			if ( in->curpol->weight & 1 )      { *(in->cur) = 'D'; in->cur++; }
+		if (in->curpol->weight)
+		{
+			*(in->cur) = ':';
+			in->cur++;
+			if (in->curpol->weight & (1 << 3))
+			{
+				*(in->cur) = 'A';
+				in->cur++;
+			}
+			if (in->curpol->weight & (1 << 2))
+			{
+				*(in->cur) = 'B';
+				in->cur++;
+			}
+			if (in->curpol->weight & (1 << 1))
+			{
+				*(in->cur) = 'C';
+				in->cur++;
+			}
+			if (in->curpol->weight & 1)
+			{
+				*(in->cur) = 'D';
+				in->cur++;
+			}
 		}
 		*(in->cur) = '\0';
 		in->curpol++;
@@ -827,15 +865,16 @@ tsquerytree(PG_FUNCTION_ARGS)
 }
 
 Datum
-to_tsquery(PG_FUNCTION_ARGS) {
-	text    *in = PG_GETARG_TEXT_P(1);
-	char *str;
+to_tsquery(PG_FUNCTION_ARGS)
+{
+	text	   *in = PG_GETARG_TEXT_P(1);
+	char	   *str;
 	QUERYTYPE  *query;
 	ITEM	   *res;
 	int4		len;
 
-	str=text2char(in);
-	PG_FREE_IF_COPY(in,1);
+	str = text2char(in);
+	PG_FREE_IF_COPY(in, 1);
 
 	query = queryin(str, pushval_morph, PG_GETARG_INT32(0));
 	res = clean_fakeval_v2(GETQUERY(query), &len);
@@ -851,25 +890,25 @@ to_tsquery(PG_FUNCTION_ARGS) {
 }
 
 Datum
-to_tsquery_name(PG_FUNCTION_ARGS) {
-	text *name=PG_GETARG_TEXT_P(0);
-	Datum res= DirectFunctionCall2(
-		to_tsquery,
-		Int32GetDatum( name2id_cfg(name) ),
-		PG_GETARG_DATUM(1)
+to_tsquery_name(PG_FUNCTION_ARGS)
+{
+	text	   *name = PG_GETARG_TEXT_P(0);
+	Datum		res = DirectFunctionCall2(
+										  to_tsquery,
+										Int32GetDatum(name2id_cfg(name)),
+										  PG_GETARG_DATUM(1)
 	);
-	
-	PG_FREE_IF_COPY(name,1);
+
+	PG_FREE_IF_COPY(name, 1);
 	PG_RETURN_DATUM(res);
 }
 
 Datum
-to_tsquery_current(PG_FUNCTION_ARGS) {
-	PG_RETURN_DATUM( DirectFunctionCall2(
-		to_tsquery,
-		Int32GetDatum( get_currcfg() ),
-		PG_GETARG_DATUM(0)
-	));
+to_tsquery_current(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_DATUM(DirectFunctionCall2(
+										to_tsquery,
+										Int32GetDatum(get_currcfg()),
+										PG_GETARG_DATUM(0)
+										));
 }
-
-

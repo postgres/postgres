@@ -270,7 +270,7 @@ _int_unique(ArrayType *r)
 			   *data;
 	int			num = ARRNELEMS(r);
 
-	if ( num<2 )
+	if (num < 2)
 		return r;
 
 	data = tmp = dr = ARRPTR(r);
@@ -367,4 +367,3 @@ compDESC(const void *a, const void *b)
 		return 0;
 	return (*(int4 *) a < *(int4 *) b) ? 1 : -1;
 }
-

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/geqo_main.c,v 1.36 2003/07/25 00:01:06 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/geqo_main.c,v 1.37 2003/08/04 00:43:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -229,8 +229,8 @@ geqo(Query *root, int number_of_rels, List *initial_rels)
 
 
 	/*
-	 * got the cheapest query tree processed by geqo;
-	 * first element of the population indicates the best query tree
+	 * got the cheapest query tree processed by geqo; first element of the
+	 * population indicates the best query tree
 	 */
 	best_tour = (Gene *) pool->data[0].string;
 

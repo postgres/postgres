@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datetime.h,v 1.41 2003/07/17 22:28:42 tgl Exp $
+ * $Id: datetime.h,v 1.42 2003/08/04 00:43:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -268,8 +268,8 @@ extern int	day_tab[2][13];
   || (((m) == UTIME_MAXMONTH) && ((d) <= UTIME_MAXDAY))))))
 
 /* Julian-date equivalents of Day 0 in Unix and Postgres reckoning */
-#define UNIX_EPOCH_JDATE		2440588		/* == date2j(1970, 1, 1) */
-#define POSTGRES_EPOCH_JDATE	2451545		/* == date2j(2000, 1, 1) */
+#define UNIX_EPOCH_JDATE		2440588 /* == date2j(1970, 1, 1) */
+#define POSTGRES_EPOCH_JDATE	2451545 /* == date2j(2000, 1, 1) */
 
 
 extern void GetCurrentDateTime(struct tm * tm);

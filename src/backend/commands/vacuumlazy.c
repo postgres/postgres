@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.29 2003/07/20 21:56:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.30 2003/08/04 00:43:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,7 @@ typedef struct LVRelStats
 	bool		fs_is_heap;		/* are we using heap organization? */
 	int			num_free_pages; /* current # of entries */
 	int			max_free_pages; /* # slots allocated in array */
-	PageFreeSpaceInfo *free_pages;	/* array or heap of blkno/avail */
+	PageFreeSpaceInfo *free_pages;		/* array or heap of blkno/avail */
 } LVRelStats;
 
 
@@ -162,7 +162,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	 */
 	possibly_freeable = vacrelstats->rel_pages - vacrelstats->nonempty_pages;
 	if (possibly_freeable >= REL_TRUNCATE_MINIMUM ||
-		possibly_freeable >= vacrelstats->rel_pages / REL_TRUNCATE_FRACTION)
+	 possibly_freeable >= vacrelstats->rel_pages / REL_TRUNCATE_FRACTION)
 		lazy_truncate_heap(onerel, vacrelstats);
 
 	/* Update shared free space map with final free space info */
@@ -659,7 +659,7 @@ lazy_vacuum_index(Relation indrel, LVRelStats *vacrelstats)
 					stats->num_index_tuples,
 					stats->num_pages),
 			 errdetail("%.0f index tuples were removed.\n"
-					   "%u index pages have been deleted, %u are currently reusable.\n"
+		 "%u index pages have been deleted, %u are currently reusable.\n"
 					   "%s",
 					   stats->tuples_removed,
 					   stats->pages_deleted, stats->pages_free,
@@ -966,16 +966,18 @@ lazy_record_free_space(LVRelStats *vacrelstats,
 	/*
 	 * A page with less than stats->threshold free space will be forgotten
 	 * immediately, and never passed to the free space map.  Removing the
-	 * uselessly small entries early saves cycles, and in particular reduces
-	 * the amount of time we spend holding the FSM lock when we finally call
-	 * RecordRelationFreeSpace.  Since the FSM will probably drop pages with
-	 * little free space anyway, there's no point in making this really small.
+	 * uselessly small entries early saves cycles, and in particular
+	 * reduces the amount of time we spend holding the FSM lock when we
+	 * finally call RecordRelationFreeSpace.  Since the FSM will probably
+	 * drop pages with little free space anyway, there's no point in
+	 * making this really small.
 	 *
-	 * XXX Is it worth trying to measure average tuple size, and using that to
-	 * adjust the threshold?  Would be worthwhile if FSM has no stats yet
-	 * for this relation.  But changing the threshold as we scan the rel
-	 * might lead to bizarre behavior, too.  Also, it's probably better if
-	 * vacuum.c has the same thresholding behavior as we do here.
+	 * XXX Is it worth trying to measure average tuple size, and using that
+	 * to adjust the threshold?  Would be worthwhile if FSM has no stats
+	 * yet for this relation.  But changing the threshold as we scan the
+	 * rel might lead to bizarre behavior, too.  Also, it's probably
+	 * better if vacuum.c has the same thresholding behavior as we do
+	 * here.
 	 */
 	if (avail < vacrelstats->threshold)
 		return;
@@ -996,7 +998,7 @@ lazy_record_free_space(LVRelStats *vacrelstats,
 	/*----------
 	 * The rest of this routine works with "heap" organization of the
 	 * free space arrays, wherein we maintain the heap property
-	 *			avail[(j-1) div 2] <= avail[j]  for 0 < j < n.
+	 *			avail[(j-1) div 2] <= avail[j]	for 0 < j < n.
 	 * In particular, the zero'th element always has the smallest available
 	 * space and can be discarded to make room for a new page with more space.
 	 * See Knuth's discussion of heap-based priority queues, sec 5.2.3;

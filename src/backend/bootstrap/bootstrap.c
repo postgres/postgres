@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.163 2003/07/27 21:49:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.164 2003/08/04 00:43:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -238,7 +238,7 @@ BootstrapMain(int argc, char *argv[])
 	 *
 	 * If we are running under the postmaster, this is done already.
 	 */
-	if (!IsUnderPostmaster /* when exec || ExecBackend */)
+	if (!IsUnderPostmaster /* when exec || ExecBackend */ )
 		MemoryContextInit();
 
 	/*
@@ -247,7 +247,7 @@ BootstrapMain(int argc, char *argv[])
 
 	/* Set defaults, to be overriden by explicit options below */
 	dbname = NULL;
-	if (!IsUnderPostmaster /* when exec || ExecBackend*/)
+	if (!IsUnderPostmaster /* when exec || ExecBackend */ )
 	{
 		InitializeGUCOptions();
 		potential_DataDir = getenv("PGDATA");	/* Null if no PGDATA
@@ -285,22 +285,22 @@ BootstrapMain(int argc, char *argv[])
 				xlogop = atoi(optarg);
 				break;
 			case 'p':
-			{
-				/* indicates fork from postmaster */
+				{
+					/* indicates fork from postmaster */
 #ifdef EXEC_BACKEND
-				char *p;
+					char	   *p;
 
-				sscanf(optarg, "%d,%p,", &UsedShmemSegID, &UsedShmemSegAddr);
-				p = strchr(optarg, ',');
-				if (p)
-					p = strchr(p+1, ',');
-				if (p)
-					dbname = strdup(p+1);
+					sscanf(optarg, "%d,%p,", &UsedShmemSegID, &UsedShmemSegAddr);
+					p = strchr(optarg, ',');
+					if (p)
+						p = strchr(p + 1, ',');
+					if (p)
+						dbname = strdup(p + 1);
 #else
-				dbname = strdup(optarg);
+					dbname = strdup(optarg);
 #endif
-				break;
-			}
+					break;
+				}
 			case 'B':
 				SetConfigOption("shared_buffers", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
@@ -346,12 +346,10 @@ BootstrapMain(int argc, char *argv[])
 		usage();
 
 
-	if (IsUnderPostmaster && ExecBackend && MyProc /* ordinary backend */)
-	{
+	if (IsUnderPostmaster && ExecBackend && MyProc /* ordinary backend */ )
 		AttachSharedMemoryAndSemaphores();
-	}
-	
-	if (!IsUnderPostmaster /* when exec || ExecBackend*/)
+
+	if (!IsUnderPostmaster /* when exec || ExecBackend */ )
 	{
 		if (!potential_DataDir)
 		{
@@ -473,8 +471,8 @@ BootstrapMain(int argc, char *argv[])
 
 	/*
 	 * In NOP mode, all we really want to do is create shared memory and
-	 * semaphores (just to prove we can do it with the current GUC settings).
-	 * So, quit now.
+	 * semaphores (just to prove we can do it with the current GUC
+	 * settings). So, quit now.
 	 */
 	if (xlogop == BS_XLOG_NOP)
 		proc_exit(0);

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.59 2003/07/25 20:17:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.60 2003/08/04 00:43:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,7 +228,7 @@ CreateNewPortal(void)
  *		A simple subroutine to establish a portal's query.
  *
  * Notes: commandTag shall be NULL if and only if the original query string
- * (before rewriting) was an empty string.  Also, the passed commandTag must
+ * (before rewriting) was an empty string.	Also, the passed commandTag must
  * be a pointer to a constant string, since it is not copied.  The caller is
  * responsible for ensuring that the passed sourceText (if any), parse and
  * plan trees have adequate lifetime.  Also, queryContext must accurately
@@ -243,7 +243,7 @@ PortalDefineQuery(Portal portal,
 				  MemoryContext queryContext)
 {
 	AssertArg(PortalIsValid(portal));
-	AssertState(portal->queryContext == NULL); /* else defined already */
+	AssertState(portal->queryContext == NULL);	/* else defined already */
 
 	Assert(length(parseTrees) == length(planTrees));
 
@@ -269,8 +269,8 @@ PortalCreateHoldStore(Portal portal)
 	Assert(portal->holdStore == NULL);
 
 	/*
-	 * Create the memory context that is used for storage of the tuple set.
-	 * Note this is NOT a child of the portal's heap memory.
+	 * Create the memory context that is used for storage of the tuple
+	 * set. Note this is NOT a child of the portal's heap memory.
 	 */
 	portal->holdContext =
 		AllocSetContextCreate(PortalMemory,
@@ -306,9 +306,9 @@ PortalDrop(Portal portal, bool isError)
 
 	/*
 	 * Remove portal from hash table.  Because we do this first, we will
-	 * not come back to try to remove the portal again if there's any error
-	 * in the subsequent steps.  Better to leak a little memory than to get
-	 * into an infinite error-recovery loop.
+	 * not come back to try to remove the portal again if there's any
+	 * error in the subsequent steps.  Better to leak a little memory than
+	 * to get into an infinite error-recovery loop.
 	 */
 	PortalHashTableDelete(portal);
 
@@ -358,7 +358,7 @@ DropDependentPortals(MemoryContext queryContext)
 
 	while ((hentry = (PortalHashEnt *) hash_seq_search(&status)) != NULL)
 	{
-		Portal portal = hentry->portal;
+		Portal		portal = hentry->portal;
 
 		if (portal->queryContext == queryContext)
 			PortalDrop(portal, false);
@@ -391,11 +391,11 @@ AtCommit_Portals(void)
 
 	while ((hentry = (PortalHashEnt *) hash_seq_search(&status)) != NULL)
 	{
-		Portal portal = hentry->portal;
+		Portal		portal = hentry->portal;
 
 		/*
-		 * Do not touch active portals --- this can only happen in the case of
-		 * a multi-transaction utility command, such as VACUUM.
+		 * Do not touch active portals --- this can only happen in the
+		 * case of a multi-transaction utility command, such as VACUUM.
 		 */
 		if (portal->portalActive)
 			continue;
@@ -403,18 +403,19 @@ AtCommit_Portals(void)
 		if (portal->cursorOptions & CURSOR_OPT_HOLD)
 		{
 			/*
-			 * Do nothing to cursors held over from a previous transaction.
+			 * Do nothing to cursors held over from a previous
+			 * transaction.
 			 */
 			if (portal->createXact != xact)
 				continue;
 
 			/*
 			 * We are exiting the transaction that created a holdable
-			 * cursor.  Instead of dropping the portal, prepare it for
+			 * cursor.	Instead of dropping the portal, prepare it for
 			 * access by later transactions.
 			 *
-			 * Note that PersistHoldablePortal() must release all
-			 * resources used by the portal that are local to the creating
+			 * Note that PersistHoldablePortal() must release all resources
+			 * used by the portal that are local to the creating
 			 * transaction.
 			 */
 			PortalCreateHoldStore(portal);
@@ -450,15 +451,15 @@ AtAbort_Portals(void)
 
 	while ((hentry = (PortalHashEnt *) hash_seq_search(&status)) != NULL)
 	{
-		Portal portal = hentry->portal;
+		Portal		portal = hentry->portal;
 
 		portal->portalActive = false;
 
 		/*
-		 * Do nothing else to cursors held over from a previous transaction.
-		 * (This test must include checking CURSOR_OPT_HOLD, else we will
-		 * fail to clean up a VACUUM portal if it fails after its first
-		 * sub-transaction.)
+		 * Do nothing else to cursors held over from a previous
+		 * transaction. (This test must include checking CURSOR_OPT_HOLD,
+		 * else we will fail to clean up a VACUUM portal if it fails after
+		 * its first sub-transaction.)
 		 */
 		if (portal->createXact != xact &&
 			(portal->cursorOptions & CURSOR_OPT_HOLD))
@@ -489,7 +490,7 @@ AtCleanup_Portals(void)
 
 	while ((hentry = (PortalHashEnt *) hash_seq_search(&status)) != NULL)
 	{
-		Portal portal = hentry->portal;
+		Portal		portal = hentry->portal;
 
 		/*
 		 * Let's just make sure no one's active...
@@ -497,10 +498,10 @@ AtCleanup_Portals(void)
 		portal->portalActive = false;
 
 		/*
-		 * Do nothing else to cursors held over from a previous transaction.
-		 * (This test must include checking CURSOR_OPT_HOLD, else we will
-		 * fail to clean up a VACUUM portal if it fails after its first
-		 * sub-transaction.)
+		 * Do nothing else to cursors held over from a previous
+		 * transaction. (This test must include checking CURSOR_OPT_HOLD,
+		 * else we will fail to clean up a VACUUM portal if it fails after
+		 * its first sub-transaction.)
 		 */
 		if (portal->createXact != xact &&
 			(portal->cursorOptions & CURSOR_OPT_HOLD))

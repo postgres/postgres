@@ -23,7 +23,8 @@ static struct variable *
 find_struct_member(char *name, char *str, struct ECPGstruct_member * members, int brace_level)
 {
 	char	   *next = strpbrk(++str, ".-["),
-				*end, c = '\0';
+			   *end,
+				c = '\0';
 
 	if (next != NULL)
 	{
@@ -54,54 +55,64 @@ find_struct_member(char *name, char *str, struct ECPGstruct_member * members, in
 				*next = c;
 				if (c == '[')
 				{
-					int count;
+					int			count;
 
-					/* We don't care about what's inside the array braces
-					 * so just eat up the character */
-					for (count=1, end=next+1; count; end++)
+					/*
+					 * We don't care about what's inside the array braces
+					 * so just eat up the character
+					 */
+					for (count = 1, end = next + 1; count; end++)
 					{
-						  switch (*end)
-						  {
-							  case '[': count++;
-								    break;
-							  case ']': count--;
-								    break;
-							  default : break;
-						  }
+						switch (*end)
+						{
+							case '[':
+								count++;
+								break;
+							case ']':
+								count--;
+								break;
+							default:
+								break;
+						}
 					}
 				}
-				else end = next;
-			
+				else
+					end = next;
+
 				switch (*end)
 				{
-					case '\0':	/* found the end, but this time it has to be an array element */
-							if (members->type->type != ECPGt_array)
-							{
-								snprintf(errortext, sizeof(errortext), "incorrectly formed variable %s", name);
-								mmerror(PARSE_ERROR, ET_FATAL, errortext);
-							}
-							
-							switch (members->type->u.element->type)
-							{
-								case ECPGt_array:
-									return (new_variable(name, ECPGmake_array_type(members->type->u.element->u.element, members->type->u.element->size), brace_level));
-								case ECPGt_struct:
-								case ECPGt_union:
-									return (new_variable(name, ECPGmake_struct_type(members->type->u.element->u.members, members->type->u.element->type, members->type->u.element->struct_sizeof), brace_level));
-								default:
-									return (new_variable(name, ECPGmake_simple_type(members->type->u.element->type, members->type->u.element->size), brace_level));
-							}
-							break;
-					case '-':	return (find_struct_member(name, end, members->type->u.element->u.members, brace_level));
-							break;
-					case '.':	if (members->type->type != ECPGt_array)
-								return (find_struct_member(name, end, members->type->u.element->u.members, brace_level));
-							else
-								return (find_struct_member(name, next, members->type->u.members, brace_level));
-							break;
-					default :	snprintf(errortext, sizeof(errortext), "incorrectly formed variable %s", name);
+					case '\0':	/* found the end, but this time it has to
+								 * be an array element */
+						if (members->type->type != ECPGt_array)
+						{
+							snprintf(errortext, sizeof(errortext), "incorrectly formed variable %s", name);
 							mmerror(PARSE_ERROR, ET_FATAL, errortext);
-							break;
+						}
+
+						switch (members->type->u.element->type)
+						{
+							case ECPGt_array:
+								return (new_variable(name, ECPGmake_array_type(members->type->u.element->u.element, members->type->u.element->size), brace_level));
+							case ECPGt_struct:
+							case ECPGt_union:
+								return (new_variable(name, ECPGmake_struct_type(members->type->u.element->u.members, members->type->u.element->type, members->type->u.element->struct_sizeof), brace_level));
+							default:
+								return (new_variable(name, ECPGmake_simple_type(members->type->u.element->type, members->type->u.element->size), brace_level));
+						}
+						break;
+					case '-':
+						return (find_struct_member(name, end, members->type->u.element->u.members, brace_level));
+						break;
+					case '.':
+						if (members->type->type != ECPGt_array)
+							return (find_struct_member(name, end, members->type->u.element->u.members, brace_level));
+						else
+							return (find_struct_member(name, next, members->type->u.members, brace_level));
+						break;
+					default:
+						snprintf(errortext, sizeof(errortext), "incorrectly formed variable %s", name);
+						mmerror(PARSE_ERROR, ET_FATAL, errortext);
+						break;
 				}
 			}
 		}
@@ -195,33 +206,40 @@ find_simple(char *name)
 struct variable *
 find_variable(char *name)
 {
-	char	   *next, *end;
+	char	   *next,
+			   *end;
 	struct variable *p;
-	int count;
+	int			count;
 
 	next = strpbrk(name, ".[-");
 	if (next)
 	{
 		if (*next == '[')
 		{
-			/* We don't care about what's inside the array braces
-			 * so just eat up the character */
-			for (count=1, end=next+1; count; end++)
+			/*
+			 * We don't care about what's inside the array braces so just
+			 * eat up the character
+			 */
+			for (count = 1, end = next + 1; count; end++)
 			{
-				  switch (*end)
-				  {
-					  case '[': count++;
-						    break;
-					  case ']': count--;
-						    break;
-					  default : break;
-				  }
+				switch (*end)
+				{
+					case '[':
+						count++;
+						break;
+					case ']':
+						count--;
+						break;
+					default:
+						break;
+				}
 			}
-			if (*end == '.') p = find_struct(name, next, end);
+			if (*end == '.')
+				p = find_struct(name, next, end);
 			else
 			{
-				char c = *next;
-				 
+				char		c = *next;
+
 				*next = '\0';
 				p = find_simple(name);
 				*next = c;
@@ -237,9 +255,11 @@ find_variable(char *name)
 				}
 			}
 		}
-		else p = find_struct(name, next, next);
+		else
+			p = find_struct(name, next, next);
 	}
-	else p = find_simple(name);
+	else
+		p = find_simple(name);
 
 	if (p == NULL)
 	{
@@ -263,9 +283,10 @@ remove_variables(int brace_level)
 			/* is it still referenced by a cursor? */
 			struct cursor *ptr;
 
-                        for (ptr = cur; ptr != NULL; ptr = ptr->next)
+			for (ptr = cur; ptr != NULL; ptr = ptr->next)
 			{
-				struct arguments *varptr, *prevvar;
+				struct arguments *varptr,
+						   *prevvar;
 
 				for (varptr = prevvar = ptr->argsinsert; varptr != NULL; varptr = varptr->next)
 				{
@@ -290,7 +311,7 @@ remove_variables(int brace_level)
 					}
 				}
 			}
-							
+
 			/* remove it */
 			if (p == allvariables)
 				prev = allvariables = p->next;
@@ -373,7 +394,7 @@ dump_variables(struct arguments * list, int mode)
 	dump_variables(list->next, mode);
 
 	/* Then the current element and its indicator */
-	ECPGdump_a_type(yyout, list->variable->name, list->variable->type, 
+	ECPGdump_a_type(yyout, list->variable->name, list->variable->type,
 					list->indicator->name, list->indicator->type,
 					NULL, NULL, 0, NULL, NULL);
 
@@ -512,14 +533,17 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 			/* one index is the string length */
 			if (atoi(*length) < 0)
 			{
-				/* make sure we return length = -1 for arrays without given bounds */
+				/*
+				 * make sure we return length = -1 for arrays without
+				 * given bounds
+				 */
 				if (atoi(*dimension) < 0)
 					*length = make_str("1");
 				else if (atoi(*dimension) == 0)
 					*length = make_str("-1");
-				else 
+				else
 					*length = *dimension;
-				
+
 				*dimension = make_str("-1");
 			}
 			break;

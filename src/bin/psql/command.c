@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.99 2003/07/28 00:14:42 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.100 2003/08/04 00:43:29 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1291,8 +1291,8 @@ unescape(const unsigned char *source, size_t len)
 				case '7':
 				case '8':
 				case '9':
-					c = parse_char((char **)&p);
-						break;
+					c = parse_char((char **) &p);
+					break;
 
 				default:
 					c = *p;
@@ -1496,13 +1496,13 @@ SyncVerbosityVariable(void)
 	switch (SwitchVariable(pset.vars, "VERBOSITY",
 						   "default", "terse", "verbose", NULL))
 	{
-		case 1:					/* default */
+		case 1:			/* default */
 			PQsetErrorVerbosity(pset.db, PQERRORS_DEFAULT);
 			break;
-		case 2:					/* terse */
+		case 2:			/* terse */
 			PQsetErrorVerbosity(pset.db, PQERRORS_TERSE);
 			break;
-		case 3:					/* verbose */
+		case 3:			/* verbose */
 			PQsetErrorVerbosity(pset.db, PQERRORS_VERBOSE);
 			break;
 		default:				/* not set or unrecognized value */
@@ -1545,11 +1545,11 @@ editFile(const char *fname)
 	sys = malloc(strlen(editorName) + strlen(fname) + 10 + 1);
 	if (!sys)
 		return false;
-	sprintf(sys, 
+	sprintf(sys,
 #ifndef WIN32
-		"exec "
+			"exec "
 #endif
-		"%s '%s'", editorName, fname);
+			"%s '%s'", editorName, fname);
 	result = system(sys);
 	if (result == -1)
 		psql_error("could not start editor \"%s\"\n", editorName);
@@ -1673,7 +1673,7 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 #ifdef USE_READLINE
 #ifdef HAVE_REPLACE_HISTORY_ENTRY
 
-			replace_history_entry(where_history(),query_buf->data,NULL);
+			replace_history_entry(where_history(), query_buf->data, NULL);
 #else
 			add_history(query_buf->data);
 #endif
@@ -1913,11 +1913,11 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 	else if (strcmp(param, "pager") == 0)
 	{
 		if (value && strcasecmp(value, "always") == 0)
-				popt->topt.pager = 2;
+			popt->topt.pager = 2;
 		else if (popt->topt.pager == 1)
-				popt->topt.pager = 0;
+			popt->topt.pager = 0;
 		else
-				popt->topt.pager = 1;
+			popt->topt.pager = 1;
 		if (!quiet)
 		{
 			if (popt->topt.pager == 1)
@@ -1978,11 +1978,11 @@ do_shell(const char *command)
 			else
 				exit(EXIT_FAILURE);
 		}
-		sprintf(sys, 
+		sprintf(sys,
 #ifndef WIN32
-			"exec "
+				"exec "
 #endif
-			"%s", shellName);
+				"%s", shellName);
 		result = system(sys);
 		free(sys);
 	}

@@ -31,8 +31,10 @@ Datum		tsvector_out(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(to_tsvector);
 Datum		to_tsvector(PG_FUNCTION_ARGS);
+
 PG_FUNCTION_INFO_V1(to_tsvector_current);
 Datum		to_tsvector_current(PG_FUNCTION_ARGS);
+
 PG_FUNCTION_INFO_V1(to_tsvector_name);
 Datum		to_tsvector_name(PG_FUNCTION_ARGS);
 
@@ -45,32 +47,38 @@ Datum		tsvector_length(PG_FUNCTION_ARGS);
 /*
  * in/out text index type
  */
-static int 
-comparePos(const void *a, const void *b) {
-	if ( ((WordEntryPos *) a)->pos == ((WordEntryPos *) b)->pos )
+static int
+comparePos(const void *a, const void *b)
+{
+	if (((WordEntryPos *) a)->pos == ((WordEntryPos *) b)->pos)
 		return 1;
-	return ( ((WordEntryPos *) a)->pos > ((WordEntryPos *) b)->pos ) ? 1 : -1;
+	return (((WordEntryPos *) a)->pos > ((WordEntryPos *) b)->pos) ? 1 : -1;
 }
 
 static int
-uniquePos(WordEntryPos *a, int4 l) {
-	WordEntryPos *ptr, *res;
+uniquePos(WordEntryPos * a, int4 l)
+{
+	WordEntryPos *ptr,
+			   *res;
 
-	res=a;
-	if (l==1)
+	res = a;
+	if (l == 1)
 		return l;
 
 	qsort((void *) a, l, sizeof(WordEntryPos), comparePos);
 
 	ptr = a + 1;
-	while (ptr - a < l) {
-		if ( ptr->pos != res->pos ) {
+	while (ptr - a < l)
+	{
+		if (ptr->pos != res->pos)
+		{
 			res++;
 			res->pos = ptr->pos;
 			res->weight = ptr->weight;
-			if ( res-a >= MAXNUMPOS-1 || res->pos == MAXENTRYPOS-1 )
+			if (res - a >= MAXNUMPOS - 1 || res->pos == MAXENTRYPOS - 1)
 				break;
-		} else if ( ptr->weight > res->weight )
+		}
+		else if (ptr->weight > res->weight)
 			res->weight = ptr->weight;
 		ptr++;
 	}
@@ -81,27 +89,29 @@ static char *BufferStr;
 static int
 compareentry(const void *a, const void *b)
 {
-	if ( ((WordEntryIN *) a)->entry.len == ((WordEntryIN *) b)->entry.len)
+	if (((WordEntryIN *) a)->entry.len == ((WordEntryIN *) b)->entry.len)
 	{
 		return strncmp(
 					   &BufferStr[((WordEntryIN *) a)->entry.pos],
 					   &BufferStr[((WordEntryIN *) b)->entry.pos],
 					   ((WordEntryIN *) a)->entry.len);
 	}
-	return ( ((WordEntryIN *) a)->entry.len > ((WordEntryIN *) b)->entry.len ) ? 1 : -1;
+	return (((WordEntryIN *) a)->entry.len > ((WordEntryIN *) b)->entry.len) ? 1 : -1;
 }
 
 static int
 uniqueentry(WordEntryIN * a, int4 l, char *buf, int4 *outbuflen)
 {
-	WordEntryIN  *ptr,
+	WordEntryIN *ptr,
 			   *res;
 
 	res = a;
-	if (l == 1) {
-		if ( a->entry.haspos ) {
-			*(uint16*)(a->pos) = uniquePos( &(a->pos[1]), *(uint16*)(a->pos));
-			*outbuflen = SHORTALIGN(res->entry.len) + (*(uint16*)(a->pos) +1 )*sizeof(WordEntryPos);
+	if (l == 1)
+	{
+		if (a->entry.haspos)
+		{
+			*(uint16 *) (a->pos) = uniquePos(&(a->pos[1]), *(uint16 *) (a->pos));
+			*outbuflen = SHORTALIGN(res->entry.len) + (*(uint16 *) (a->pos) + 1) * sizeof(WordEntryPos);
 		}
 		return l;
 	}
@@ -115,31 +125,39 @@ uniqueentry(WordEntryIN * a, int4 l, char *buf, int4 *outbuflen)
 		if (!(ptr->entry.len == res->entry.len &&
 			  strncmp(&buf[ptr->entry.pos], &buf[res->entry.pos], res->entry.len) == 0))
 		{
-			if ( res->entry.haspos ) {
-				*(uint16*)(res->pos) = uniquePos( &(res->pos[1]), *(uint16*)(res->pos));
-				*outbuflen += *(uint16*)(res->pos) * sizeof(WordEntryPos);
+			if (res->entry.haspos)
+			{
+				*(uint16 *) (res->pos) = uniquePos(&(res->pos[1]), *(uint16 *) (res->pos));
+				*outbuflen += *(uint16 *) (res->pos) * sizeof(WordEntryPos);
 			}
 			*outbuflen += SHORTALIGN(res->entry.len);
 			res++;
-			memcpy(res,ptr,sizeof(WordEntryIN));
-		} else if ( ptr->entry.haspos ){
-			if ( res->entry.haspos ) {
-				int4 len=*(uint16*)(ptr->pos) + 1 + *(uint16*)(res->pos);
-				res->pos=(WordEntryPos*)repalloc( res->pos, len*sizeof(WordEntryPos));
-				memcpy( &(res->pos[ *(uint16*)(res->pos) + 1 ]), 
-					&(ptr->pos[1]), *(uint16*)(ptr->pos) * sizeof(WordEntryPos));
-				*(uint16*)(res->pos) += *(uint16*)(ptr->pos);
-				pfree( ptr->pos );
-			} else {
-				res->entry.haspos=1;
+			memcpy(res, ptr, sizeof(WordEntryIN));
+		}
+		else if (ptr->entry.haspos)
+		{
+			if (res->entry.haspos)
+			{
+				int4		len = *(uint16 *) (ptr->pos) + 1 + *(uint16 *) (res->pos);
+
+				res->pos = (WordEntryPos *) repalloc(res->pos, len * sizeof(WordEntryPos));
+				memcpy(&(res->pos[*(uint16 *) (res->pos) + 1]),
+					   &(ptr->pos[1]), *(uint16 *) (ptr->pos) * sizeof(WordEntryPos));
+				*(uint16 *) (res->pos) += *(uint16 *) (ptr->pos);
+				pfree(ptr->pos);
+			}
+			else
+			{
+				res->entry.haspos = 1;
 				res->pos = ptr->pos;
 			}
 		}
 		ptr++;
 	}
-	if ( res->entry.haspos ) {
-		*(uint16*)(res->pos) = uniquePos( &(res->pos[1]), *(uint16*)(res->pos));
-		*outbuflen += *(uint16*)(res->pos) * sizeof(WordEntryPos);
+	if (res->entry.haspos)
+	{
+		*(uint16 *) (res->pos) = uniquePos(&(res->pos[1]), *(uint16 *) (res->pos));
+		*outbuflen += *(uint16 *) (res->pos) * sizeof(WordEntryPos);
 	}
 	*outbuflen += SHORTALIGN(res->entry.len);
 
@@ -150,7 +168,7 @@ uniqueentry(WordEntryIN * a, int4 l, char *buf, int4 *outbuflen)
 #define WAITENDWORD 2
 #define WAITNEXTCHAR	3
 #define WAITENDCMPLX	4
-#define WAITPOSINFO	5
+#define WAITPOSINFO 5
 #define INPOSINFO	6
 #define WAITPOSDELIM	7
 
@@ -172,7 +190,7 @@ gettoken_tsvector(TI_IN_STATE * state)
 
 	state->curpos = state->word;
 	state->state = WAITWORD;
-	state->alen=0;
+	state->alen = 0;
 
 	while (1)
 	{
@@ -228,14 +246,16 @@ gettoken_tsvector(TI_IN_STATE * state)
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("syntax error")));
 				*(state->curpos) = '\0';
-				return 1; 
-			} else if ( *(state->prsbuf) == ':' ) {
+				return 1;
+			}
+			else if (*(state->prsbuf) == ':')
+			{
 				if (state->curpos == state->word)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("syntax error")));
 				*(state->curpos) = '\0';
-				if ( state->oprisdelim )
+				if (state->oprisdelim)
 					return 1;
 				else
 					state->state = INPOSINFO;
@@ -257,10 +277,12 @@ gettoken_tsvector(TI_IN_STATE * state)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("syntax error")));
-				if ( state->oprisdelim ) {
+				if (state->oprisdelim)
+				{
 					state->prsbuf++;
 					return 1;
-				} else
+				}
+				else
 					state->state = WAITPOSINFO;
 			}
 			else if (*(state->prsbuf) == '\\')
@@ -278,67 +300,87 @@ gettoken_tsvector(TI_IN_STATE * state)
 				*(state->curpos) = *(state->prsbuf);
 				state->curpos++;
 			}
-		} else if (state->state == WAITPOSINFO) {
-			if ( *(state->prsbuf) == ':' )
-				state->state=INPOSINFO;
+		}
+		else if (state->state == WAITPOSINFO)
+		{
+			if (*(state->prsbuf) == ':')
+				state->state = INPOSINFO;
 			else
 				return 1;
-		} else if (state->state == INPOSINFO) {
-			if ( isdigit(*(state->prsbuf)) ) {
-				if ( state->alen==0 ) {
-					state->alen=4;
-					state->pos = (WordEntryPos*)palloc( sizeof(WordEntryPos)*state->alen );
-					*(uint16*)(state->pos)=0;
-				} else if ( *(uint16*)(state->pos) +1 >= state->alen ) {
-					state->alen *= 2; 
-					state->pos = (WordEntryPos*)repalloc( state->pos, sizeof(WordEntryPos)*state->alen );
+		}
+		else if (state->state == INPOSINFO)
+		{
+			if (isdigit(*(state->prsbuf)))
+			{
+				if (state->alen == 0)
+				{
+					state->alen = 4;
+					state->pos = (WordEntryPos *) palloc(sizeof(WordEntryPos) * state->alen);
+					*(uint16 *) (state->pos) = 0;
 				}
-				(  *(uint16*)(state->pos) )++;
-				state->pos[ *(uint16*)(state->pos) ].pos = LIMITPOS(atoi(state->prsbuf));
-				if ( state->pos[ *(uint16*)(state->pos) ].pos == 0 )
+				else if (*(uint16 *) (state->pos) + 1 >= state->alen)
+				{
+					state->alen *= 2;
+					state->pos = (WordEntryPos *) repalloc(state->pos, sizeof(WordEntryPos) * state->alen);
+				}
+				(*(uint16 *) (state->pos))++;
+				state->pos[*(uint16 *) (state->pos)].pos = LIMITPOS(atoi(state->prsbuf));
+				if (state->pos[*(uint16 *) (state->pos)].pos == 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("wrong position info")));
-				state->pos[ *(uint16*)(state->pos) ].weight = 0;
+				state->pos[*(uint16 *) (state->pos)].weight = 0;
 				state->state = WAITPOSDELIM;
-			} else
+			}
+			else
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("syntax error")));
-		} else if (state->state == WAITPOSDELIM) {
-			if ( *(state->prsbuf) == ',' ) {
+		}
+		else if (state->state == WAITPOSDELIM)
+		{
+			if (*(state->prsbuf) == ',')
 				state->state = INPOSINFO;
-			} else if ( tolower(*(state->prsbuf)) == 'a' || *(state->prsbuf)=='*' ) {
-				if ( state->pos[ *(uint16*)(state->pos) ].weight )
+			else if (tolower(*(state->prsbuf)) == 'a' || *(state->prsbuf) == '*')
+			{
+				if (state->pos[*(uint16 *) (state->pos)].weight)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("syntax error")));
-				state->pos[ *(uint16*)(state->pos) ].weight = 3;
-			} else if ( tolower(*(state->prsbuf)) == 'b' ) {
-				if ( state->pos[ *(uint16*)(state->pos) ].weight )
+				state->pos[*(uint16 *) (state->pos)].weight = 3;
+			}
+			else if (tolower(*(state->prsbuf)) == 'b')
+			{
+				if (state->pos[*(uint16 *) (state->pos)].weight)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("syntax error")));
-				state->pos[ *(uint16*)(state->pos) ].weight = 2;
-			} else if ( tolower(*(state->prsbuf)) == 'c' ) {
-				if ( state->pos[ *(uint16*)(state->pos) ].weight )
+				state->pos[*(uint16 *) (state->pos)].weight = 2;
+			}
+			else if (tolower(*(state->prsbuf)) == 'c')
+			{
+				if (state->pos[*(uint16 *) (state->pos)].weight)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("syntax error")));
-				state->pos[ *(uint16*)(state->pos) ].weight = 1;
-			} else if ( tolower(*(state->prsbuf)) == 'd' ) {
-				if ( state->pos[ *(uint16*)(state->pos) ].weight )
+				state->pos[*(uint16 *) (state->pos)].weight = 1;
+			}
+			else if (tolower(*(state->prsbuf)) == 'd')
+			{
+				if (state->pos[*(uint16 *) (state->pos)].weight)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("syntax error")));
-				state->pos[ *(uint16*)(state->pos) ].weight = 0;
-			} else if ( isspace(*(state->prsbuf)) || *(state->prsbuf) == '\0' ) {
+				state->pos[*(uint16 *) (state->pos)].weight = 0;
+			}
+			else if (isspace(*(state->prsbuf)) || *(state->prsbuf) == '\0')
 				return 1;
-			} else if ( !isdigit(*(state->prsbuf)) )
+			else if (!isdigit(*(state->prsbuf)))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("syntax error")));
-		} else
+		}
+		else
 			/* internal error */
 			elog(ERROR, "internal error");
 		state->prsbuf++;
@@ -352,11 +394,11 @@ tsvector_in(PG_FUNCTION_ARGS)
 {
 	char	   *buf = PG_GETARG_CSTRING(0);
 	TI_IN_STATE state;
-	WordEntryIN  *arr;
+	WordEntryIN *arr;
 	WordEntry  *inarr;
 	int4		len = 0,
 				totallen = 64;
-	tsvector	   *in;
+	tsvector   *in;
 	char	   *tmpbuf,
 			   *cur;
 	int4		i,
@@ -388,28 +430,30 @@ tsvector_in(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("word is too long")));
-		arr[len].entry.len= state.curpos - state.word;
+		arr[len].entry.len = state.curpos - state.word;
 		if (cur - tmpbuf > MAXSTRPOS)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("too long value")));
-		arr[len].entry.pos=cur - tmpbuf;
+		arr[len].entry.pos = cur - tmpbuf;
 		memcpy((void *) cur, (void *) state.word, arr[len].entry.len);
 		cur += arr[len].entry.len;
-		if ( state.alen ) {
-			arr[len].entry.haspos=1;
+		if (state.alen)
+		{
+			arr[len].entry.haspos = 1;
 			arr[len].pos = state.pos;
-		} else
-			arr[len].entry.haspos=0;
+		}
+		else
+			arr[len].entry.haspos = 0;
 		len++;
 	}
 	pfree(state.word);
 
-	if ( len > 0 )
+	if (len > 0)
 		len = uniqueentry(arr, len, tmpbuf, &buflen);
 	totallen = CALCDATASIZE(len, buflen);
 	in = (tsvector *) palloc(totallen);
-	memset(in,0,totallen);
+	memset(in, 0, totallen);
 	in->len = totallen;
 	in->size = len;
 	cur = STRPTR(in);
@@ -417,14 +461,15 @@ tsvector_in(PG_FUNCTION_ARGS)
 	for (i = 0; i < len; i++)
 	{
 		memcpy((void *) cur, (void *) &tmpbuf[arr[i].entry.pos], arr[i].entry.len);
-		arr[i].entry.pos=cur - STRPTR(in);
+		arr[i].entry.pos = cur - STRPTR(in);
 		cur += SHORTALIGN(arr[i].entry.len);
-		if ( arr[i].entry.haspos ) {
-			memcpy( cur, arr[i].pos, (*(uint16*)arr[i].pos + 1) * sizeof(WordEntryPos));
-			cur +=  (*(uint16*)arr[i].pos + 1) * sizeof(WordEntryPos);
-			pfree( arr[i].pos ); 
+		if (arr[i].entry.haspos)
+		{
+			memcpy(cur, arr[i].pos, (*(uint16 *) arr[i].pos + 1) * sizeof(WordEntryPos));
+			cur += (*(uint16 *) arr[i].pos + 1) * sizeof(WordEntryPos);
+			pfree(arr[i].pos);
 		}
-		memcpy( &(inarr[i]), &(arr[i].entry), sizeof(WordEntry) );
+		memcpy(&(inarr[i]), &(arr[i].entry), sizeof(WordEntry));
 	}
 	pfree(tmpbuf);
 	pfree(arr);
@@ -434,7 +479,7 @@ tsvector_in(PG_FUNCTION_ARGS)
 Datum
 tsvector_length(PG_FUNCTION_ARGS)
 {
-	tsvector	   *in = (tsvector *) PG_DETOAST_DATUM(PG_GETARG_DATUM(0));
+	tsvector   *in = (tsvector *) PG_DETOAST_DATUM(PG_GETARG_DATUM(0));
 	int4		ret = in->size;
 
 	PG_FREE_IF_COPY(in, 0);
@@ -444,26 +489,28 @@ tsvector_length(PG_FUNCTION_ARGS)
 Datum
 tsvector_out(PG_FUNCTION_ARGS)
 {
-	tsvector	   *out = (tsvector *) PG_DETOAST_DATUM(PG_GETARG_DATUM(0));
+	tsvector   *out = (tsvector *) PG_DETOAST_DATUM(PG_GETARG_DATUM(0));
 	char	   *outbuf;
 	int4		i,
 				j,
-				lenbuf = 0, pp;
+				lenbuf = 0,
+				pp;
 	WordEntry  *ptr = ARRPTR(out);
 	char	   *curin,
 			   *curout;
 
-       lenbuf=out->size * 2 /* '' */ + out->size - 1 /* space */ + 2 /*\0*/;
-       for (i = 0; i < out->size; i++) {
-               lenbuf += ptr[i].len*2 /*for escape */;
-               if ( ptr[i].haspos )
-                       lenbuf += 7*POSDATALEN(out, &(ptr[i]));
-       }
+	lenbuf = out->size * 2 /* '' */ + out->size - 1 /* space */ + 2 /* \0 */ ;
+	for (i = 0; i < out->size; i++)
+	{
+		lenbuf += ptr[i].len * 2 /* for escape */ ;
+		if (ptr[i].haspos)
+			lenbuf += 7 * POSDATALEN(out, &(ptr[i]));
+	}
 
 	curout = outbuf = (char *) palloc(lenbuf);
 	for (i = 0; i < out->size; i++)
 	{
-		curin = STRPTR(out)+ptr->pos;
+		curin = STRPTR(out) + ptr->pos;
 		if (i != 0)
 			*curout++ = ' ';
 		*curout++ = '\'';
@@ -481,27 +528,40 @@ tsvector_out(PG_FUNCTION_ARGS)
 			*curout++ = *curin++;
 		}
 		*curout++ = '\'';
-		if ( (pp=POSDATALEN(out,ptr)) != 0 ) {
+		if ((pp = POSDATALEN(out, ptr)) != 0)
+		{
 			WordEntryPos *wptr;
+
 			*curout++ = ':';
-			wptr=POSDATAPTR(out,ptr);
-			while(pp) {
-				sprintf(curout,"%d",wptr->pos);
-				curout=strchr(curout,'\0');
-				switch( wptr->weight ) {
-					case 3:	  *curout++ = 'A'; break;
-					case 2:	  *curout++ = 'B'; break;
-					case 1:	  *curout++ = 'C'; break;
-					case 0:	
-					default: break;
+			wptr = POSDATAPTR(out, ptr);
+			while (pp)
+			{
+				sprintf(curout, "%d", wptr->pos);
+				curout = strchr(curout, '\0');
+				switch (wptr->weight)
+				{
+					case 3:
+						*curout++ = 'A';
+						break;
+					case 2:
+						*curout++ = 'B';
+						break;
+					case 1:
+						*curout++ = 'C';
+						break;
+					case 0:
+					default:
+						break;
 				}
-				if ( pp>1 ) 	*curout++ = ',';
-				pp--; wptr++;
+				if (pp > 1)
+					*curout++ = ',';
+				pp--;
+				wptr++;
 			}
 		}
 		ptr++;
 	}
-	*curout='\0';
+	*curout = '\0';
 	outbuf[lenbuf - 1] = '\0';
 	PG_FREE_IF_COPY(out, 0);
 	PG_RETURN_POINTER(outbuf);
@@ -510,13 +570,15 @@ tsvector_out(PG_FUNCTION_ARGS)
 static int
 compareWORD(const void *a, const void *b)
 {
-	if (((WORD *) a)->len == ((WORD *) b)->len) {
-		int res = strncmp(
-					   ((WORD *) a)->word,
-					   ((WORD *) b)->word,
-					   ((WORD *) b)->len);
-		if ( res==0 ) 
-			return ( ((WORD *) a)->pos.pos > ((WORD *) b)->pos.pos ) ? 1 : -1;
+	if (((WORD *) a)->len == ((WORD *) b)->len)
+	{
+		int			res = strncmp(
+								  ((WORD *) a)->word,
+								  ((WORD *) b)->word,
+								  ((WORD *) b)->len);
+
+		if (res == 0)
+			return (((WORD *) a)->pos.pos > ((WORD *) b)->pos.pos) ? 1 : -1;
 		return res;
 	}
 	return (((WORD *) a)->len > ((WORD *) b)->len) ? 1 : -1;
@@ -527,14 +589,15 @@ uniqueWORD(WORD * a, int4 l)
 {
 	WORD	   *ptr,
 			   *res;
-	int tmppos;
+	int			tmppos;
 
-	if (l == 1) {
-		tmppos=LIMITPOS(a->pos.pos);
-		a->alen=2;
-		a->pos.apos=(uint16*)palloc( sizeof(uint16)*a->alen );
-		a->pos.apos[0]=1;
-		a->pos.apos[1]=tmppos;
+	if (l == 1)
+	{
+		tmppos = LIMITPOS(a->pos.pos);
+		a->alen = 2;
+		a->pos.apos = (uint16 *) palloc(sizeof(uint16) * a->alen);
+		a->pos.apos[0] = 1;
+		a->pos.apos[1] = tmppos;
 		return l;
 	}
 
@@ -542,11 +605,11 @@ uniqueWORD(WORD * a, int4 l)
 	ptr = a + 1;
 
 	qsort((void *) a, l, sizeof(WORD), compareWORD);
-	tmppos=LIMITPOS(a->pos.pos);
-	a->alen=2;
-	a->pos.apos=(uint16*)palloc( sizeof(uint16)*a->alen );
-	a->pos.apos[0]=1;
-	a->pos.apos[1]=tmppos;
+	tmppos = LIMITPOS(a->pos.pos);
+	a->alen = 2;
+	a->pos.apos = (uint16 *) palloc(sizeof(uint16) * a->alen);
+	a->pos.apos[0] = 1;
+	a->pos.apos[1] = tmppos;
 
 	while (ptr - a < l)
 	{
@@ -556,20 +619,24 @@ uniqueWORD(WORD * a, int4 l)
 			res++;
 			res->len = ptr->len;
 			res->word = ptr->word;
-			tmppos=LIMITPOS(ptr->pos.pos);
-			res->alen=2;
-			res->pos.apos=(uint16*)palloc( sizeof(uint16)*res->alen );
-			res->pos.apos[0]=1;
-			res->pos.apos[1]=tmppos;
-		} else {
+			tmppos = LIMITPOS(ptr->pos.pos);
+			res->alen = 2;
+			res->pos.apos = (uint16 *) palloc(sizeof(uint16) * res->alen);
+			res->pos.apos[0] = 1;
+			res->pos.apos[1] = tmppos;
+		}
+		else
+		{
 			pfree(ptr->word);
-			if ( res->pos.apos[0] < MAXNUMPOS-1 && res->pos.apos[ res->pos.apos[0] ] != MAXENTRYPOS-1 ) {
-				if ( res->pos.apos[0]+1 >= res->alen ) {
-					res->alen*=2;
-					res->pos.apos=(uint16*)repalloc( res->pos.apos, sizeof(uint16)*res->alen );
+			if (res->pos.apos[0] < MAXNUMPOS - 1 && res->pos.apos[res->pos.apos[0]] != MAXENTRYPOS - 1)
+			{
+				if (res->pos.apos[0] + 1 >= res->alen)
+				{
+					res->alen *= 2;
+					res->pos.apos = (uint16 *) repalloc(res->pos.apos, sizeof(uint16) * res->alen);
 				}
-				res->pos.apos[ res->pos.apos[0]+1 ] = LIMITPOS(ptr->pos.pos);
-				res->pos.apos[0]++; 
+				res->pos.apos[res->pos.apos[0] + 1] = LIMITPOS(ptr->pos.pos);
+				res->pos.apos[0]++;
 			}
 		}
 		ptr++;
@@ -584,25 +651,27 @@ uniqueWORD(WORD * a, int4 l)
 static tsvector *
 makevalue(PRSTEXT * prs)
 {
-	int4		i,j,
+	int4		i,
+				j,
 				lenstr = 0,
 				totallen;
-	tsvector	   *in;
+	tsvector   *in;
 	WordEntry  *ptr;
 	char	   *str,
 			   *cur;
 
 	prs->curwords = uniqueWORD(prs->words, prs->curwords);
-	for (i = 0; i < prs->curwords; i++) {
+	for (i = 0; i < prs->curwords; i++)
+	{
 		lenstr += SHORTALIGN(prs->words[i].len);
 
-		if ( prs->words[i].alen )
+		if (prs->words[i].alen)
 			lenstr += sizeof(uint16) + prs->words[i].pos.apos[0] * sizeof(WordEntryPos);
 	}
 
 	totallen = CALCDATASIZE(prs->curwords, lenstr);
 	in = (tsvector *) palloc(totallen);
-	memset(in,0,totallen);	
+	memset(in, 0, totallen);
 	in->len = totallen;
 	in->size = prs->curwords;
 
@@ -615,24 +684,27 @@ makevalue(PRSTEXT * prs)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("value is too big")));
-		ptr->pos= cur - str;
+		ptr->pos = cur - str;
 		memcpy((void *) cur, (void *) prs->words[i].word, prs->words[i].len);
 		pfree(prs->words[i].word);
 		cur += SHORTALIGN(prs->words[i].len);
-		if ( prs->words[i].alen ) {
+		if (prs->words[i].alen)
+		{
 			WordEntryPos *wptr;
-			
-			ptr->haspos=1;
-			*(uint16*)cur = prs->words[i].pos.apos[0];
-			wptr=POSDATAPTR(in,ptr);
-			for(j=0;j<*(uint16*)cur;j++) {
-				wptr[j].weight=0;
-				wptr[j].pos=prs->words[i].pos.apos[j+1];
+
+			ptr->haspos = 1;
+			*(uint16 *) cur = prs->words[i].pos.apos[0];
+			wptr = POSDATAPTR(in, ptr);
+			for (j = 0; j < *(uint16 *) cur; j++)
+			{
+				wptr[j].weight = 0;
+				wptr[j].pos = prs->words[i].pos.apos[j + 1];
 			}
 			cur += sizeof(uint16) + prs->words[i].pos.apos[0] * sizeof(WordEntryPos);
 			pfree(prs->words[i].pos.apos);
-		} else
-			ptr->haspos=0;
+		}
+		else
+			ptr->haspos = 0;
 		ptr++;
 	}
 	pfree(prs->words);
@@ -645,70 +717,78 @@ to_tsvector(PG_FUNCTION_ARGS)
 {
 	text	   *in = PG_GETARG_TEXT_P(1);
 	PRSTEXT		prs;
-	tsvector	   *out = NULL;
-	TSCfgInfo *cfg=findcfg(PG_GETARG_INT32(0)); 
+	tsvector   *out = NULL;
+	TSCfgInfo  *cfg = findcfg(PG_GETARG_INT32(0));
 
 	prs.lenwords = 32;
 	prs.curwords = 0;
 	prs.pos = 0;
 	prs.words = (WORD *) palloc(sizeof(WORD) * prs.lenwords);
-	
+
 	parsetext_v2(cfg, &prs, VARDATA(in), VARSIZE(in) - VARHDRSZ);
 	PG_FREE_IF_COPY(in, 1);
 
 	if (prs.curwords)
 		out = makevalue(&prs);
-	else {
+	else
+	{
 		pfree(prs.words);
-		out = palloc(CALCDATASIZE(0,0));
-		out->len = CALCDATASIZE(0,0);
+		out = palloc(CALCDATASIZE(0, 0));
+		out->len = CALCDATASIZE(0, 0);
 		out->size = 0;
-	} 
+	}
 	PG_RETURN_POINTER(out);
 }
 
 Datum
-to_tsvector_name(PG_FUNCTION_ARGS) {
-	text       *cfg=PG_GETARG_TEXT_P(0);
-	Datum res = DirectFunctionCall3(
-		to_tsvector,
-		Int32GetDatum( name2id_cfg( cfg ) ),
-		PG_GETARG_DATUM(1),
-		(Datum)0
+to_tsvector_name(PG_FUNCTION_ARGS)
+{
+	text	   *cfg = PG_GETARG_TEXT_P(0);
+	Datum		res = DirectFunctionCall3(
+										  to_tsvector,
+										  Int32GetDatum(name2id_cfg(cfg)),
+										  PG_GETARG_DATUM(1),
+										  (Datum) 0
 	);
-	PG_FREE_IF_COPY(cfg,0);
-	PG_RETURN_DATUM(res);	
+
+	PG_FREE_IF_COPY(cfg, 0);
+	PG_RETURN_DATUM(res);
 }
 
 Datum
-to_tsvector_current(PG_FUNCTION_ARGS) {
-	Datum res = DirectFunctionCall3(
-		to_tsvector,
-		Int32GetDatum( get_currcfg() ),
-		PG_GETARG_DATUM(0),
-		(Datum)0
+to_tsvector_current(PG_FUNCTION_ARGS)
+{
+	Datum		res = DirectFunctionCall3(
+										  to_tsvector,
+										  Int32GetDatum(get_currcfg()),
+										  PG_GETARG_DATUM(0),
+										  (Datum) 0
 	);
-	PG_RETURN_DATUM(res);	
+
+	PG_RETURN_DATUM(res);
 }
 
 static Oid
-findFunc(char *fname) {
-	FuncCandidateList clist,ptr;
-	Oid funcid = InvalidOid;
-	List *names=makeList1(makeString(fname));
+findFunc(char *fname)
+{
+	FuncCandidateList clist,
+				ptr;
+	Oid			funcid = InvalidOid;
+	List	   *names = makeList1(makeString(fname));
 
 	ptr = clist = FuncnameGetCandidates(names, 1);
 	freeList(names);
 
-	if ( !ptr )
+	if (!ptr)
 		return funcid;
 
-	while(ptr) {
-		if ( ptr->args[0] == TEXTOID && funcid == InvalidOid )
-			funcid=ptr->oid;
-		clist=ptr->next;
+	while (ptr)
+	{
+		if (ptr->args[0] == TEXTOID && funcid == InvalidOid)
+			funcid = ptr->oid;
+		clist = ptr->next;
 		pfree(ptr);
-		ptr=clist;
+		ptr = clist;
 	}
 
 	return funcid;
@@ -724,12 +804,12 @@ tsearch2(PG_FUNCTION_ARGS)
 	Trigger    *trigger;
 	Relation	rel;
 	HeapTuple	rettuple = NULL;
-	TSCfgInfo *cfg=findcfg(get_currcfg()); 
+	TSCfgInfo  *cfg = findcfg(get_currcfg());
 	int			numidxattr,
 				i;
 	PRSTEXT		prs;
 	Datum		datum = (Datum) 0;
-	Oid		funcoid = InvalidOid;
+	Oid			funcoid = InvalidOid;
 
 	if (!CALLED_AS_TRIGGER(fcinfo))
 		/* internal error */
@@ -782,8 +862,8 @@ tsearch2(PG_FUNCTION_ARGS)
 		numattr = SPI_fnumber(rel->rd_att, trigger->tgargs[i]);
 		if (numattr == SPI_ERROR_NOATTRIBUTE)
 		{
-			funcoid=findFunc(trigger->tgargs[i]);
-			if ( funcoid==InvalidOid )
+			funcoid = findFunc(trigger->tgargs[i]);
+			if (funcoid == InvalidOid)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
 						 errmsg("could not find function or field \"%s\"",
@@ -805,19 +885,22 @@ tsearch2(PG_FUNCTION_ARGS)
 		if (isnull)
 			continue;
 
-		if ( funcoid!=InvalidOid ) {
-			text *txttmp = (text *) DatumGetPointer( OidFunctionCall1(
-				funcoid,
-				PointerGetDatum(txt_toasted)
-			));
+		if (funcoid != InvalidOid)
+		{
+			text	   *txttmp = (text *) DatumGetPointer(OidFunctionCall1(
+																 funcoid,
+											 PointerGetDatum(txt_toasted)
+																	  ));
+
 			txt = (text *) DatumGetPointer(PG_DETOAST_DATUM(PointerGetDatum(txttmp)));
-			if ( txt == txttmp )
+			if (txt == txttmp)
 				txt_toasted = PointerGetDatum(txt);
-		} else
-			 txt = (text *) DatumGetPointer(PG_DETOAST_DATUM(PointerGetDatum(txt_toasted)));
+		}
+		else
+			txt = (text *) DatumGetPointer(PG_DETOAST_DATUM(PointerGetDatum(txt_toasted)));
 
 		parsetext_v2(cfg, &prs, VARDATA(txt), VARSIZE(txt) - VARHDRSZ);
-		if (txt != (text*)DatumGetPointer(txt_toasted) )
+		if (txt != (text *) DatumGetPointer(txt_toasted))
 			pfree(txt);
 	}
 
@@ -831,8 +914,9 @@ tsearch2(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		tsvector *out = palloc(CALCDATASIZE(0,0));
-		out->len = CALCDATASIZE(0,0);
+		tsvector   *out = palloc(CALCDATASIZE(0, 0));
+
+		out->len = CALCDATASIZE(0, 0);
 		out->size = 0;
 		datum = PointerGetDatum(out);
 		pfree(prs.words);

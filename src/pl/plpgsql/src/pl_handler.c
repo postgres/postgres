@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.16 2003/07/31 18:36:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.17 2003/08/04 00:43:33 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -46,7 +46,7 @@
 
 static int	plpgsql_firstcall = 1;
 
-void plpgsql_init(void);
+void		plpgsql_init(void);
 static void plpgsql_init_all(void);
 
 
@@ -78,8 +78,8 @@ plpgsql_init_all(void)
 		plpgsql_init();
 
 	/*
-	 * Any other initialization that must be done each time a new
-	 * backend starts -- currently none
+	 * Any other initialization that must be done each time a new backend
+	 * starts -- currently none
 	 */
 
 }

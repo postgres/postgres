@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.111 2003/07/25 00:01:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.112 2003/08/04 00:43:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,10 +102,10 @@ bool		enable_hashjoin = true;
 
 
 static Selectivity estimate_hash_bucketsize(Query *root, Var *var,
-											int nbuckets);
-static bool cost_qual_eval_walker(Node *node, QualCost *total);
+						 int nbuckets);
+static bool cost_qual_eval_walker(Node *node, QualCost * total);
 static Selectivity approx_selectivity(Query *root, List *quals,
-									  JoinType jointype);
+				   JoinType jointype);
 static void set_rel_width(Query *root, RelOptInfo *rel);
 static double relation_byte_size(double tuples, int width);
 static double page_size(double tuples, int width);
@@ -358,13 +358,13 @@ cost_index(Path *path, Query *root,
 	 * Normally the indexquals will be removed from the list of restriction
 	 * clauses that we have to evaluate as qpquals, so we should subtract
 	 * their costs from baserestrictcost.  But if we are doing a join then
-	 * some of the indexquals are join clauses and shouldn't be subtracted.
-	 * Rather than work out exactly how much to subtract, we don't subtract
-	 * anything.
+	 * some of the indexquals are join clauses and shouldn't be
+	 * subtracted. Rather than work out exactly how much to subtract, we
+	 * don't subtract anything.
 	 *
 	 * XXX For a lossy index, not all the quals will be removed and so we
-	 * really shouldn't subtract their costs; but detecting that seems more
-	 * expensive than it's worth.
+	 * really shouldn't subtract their costs; but detecting that seems
+	 * more expensive than it's worth.
 	 */
 	startup_cost += baserel->baserestrictcost.startup;
 	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost.per_tuple;
@@ -433,8 +433,8 @@ cost_subqueryscan(Path *path, RelOptInfo *baserel)
 	/*
 	 * Cost of path is cost of evaluating the subplan, plus cost of
 	 * evaluating any restriction clauses that will be attached to the
-	 * SubqueryScan node, plus cpu_tuple_cost to account for selection
-	 * and projection overhead.
+	 * SubqueryScan node, plus cpu_tuple_cost to account for selection and
+	 * projection overhead.
 	 */
 	path->startup_cost = baserel->subplan->startup_cost;
 	path->total_cost = baserel->subplan->total_cost;
@@ -597,8 +597,9 @@ cost_material(Path *path,
 	}
 
 	/*
-	 * Also charge a small amount per extracted tuple.  We use cpu_tuple_cost
-	 * so that it doesn't appear worthwhile to materialize a bare seqscan.
+	 * Also charge a small amount per extracted tuple.	We use
+	 * cpu_tuple_cost so that it doesn't appear worthwhile to materialize
+	 * a bare seqscan.
 	 */
 	run_cost += cpu_tuple_cost * tuples;
 
@@ -631,17 +632,17 @@ cost_agg(Path *path, Query *root,
 	 * additional cpu_operator_cost per grouping column per input tuple
 	 * for grouping comparisons.
 	 *
-	 * We will produce a single output tuple if not grouping,
-	 * and a tuple per group otherwise.
+	 * We will produce a single output tuple if not grouping, and a tuple per
+	 * group otherwise.
 	 *
 	 * Note: in this cost model, AGG_SORTED and AGG_HASHED have exactly the
-	 * same total CPU cost, but AGG_SORTED has lower startup cost.  If the
+	 * same total CPU cost, but AGG_SORTED has lower startup cost.	If the
 	 * input path is already sorted appropriately, AGG_SORTED should be
-	 * preferred (since it has no risk of memory overflow).  This will happen
-	 * as long as the computed total costs are indeed exactly equal --- but
-	 * if there's roundoff error we might do the wrong thing.  So be sure
-	 * that the computations below form the same intermediate values in the
-	 * same order.
+	 * preferred (since it has no risk of memory overflow).  This will
+	 * happen as long as the computed total costs are indeed exactly equal
+	 * --- but if there's roundoff error we might do the wrong thing.  So
+	 * be sure that the computations below form the same intermediate
+	 * values in the same order.
 	 */
 	if (aggstrategy == AGG_PLAIN)
 	{
@@ -724,26 +725,26 @@ cost_nestloop(NestPath *path, Query *root)
 	double		outer_path_rows = PATH_ROWS(outer_path);
 	double		inner_path_rows = PATH_ROWS(inner_path);
 	double		ntuples;
-	Selectivity	joininfactor;
+	Selectivity joininfactor;
 
 	if (!enable_nestloop)
 		startup_cost += disable_cost;
 
 	/*
-	 * If we're doing JOIN_IN then we will stop scanning inner tuples for an
-	 * outer tuple as soon as we have one match.  Account for the effects of
-	 * this by scaling down the cost estimates in proportion to the expected
-	 * output size.  (This assumes that all the quals attached to the join are
-	 * IN quals, which should be true.)
+	 * If we're doing JOIN_IN then we will stop scanning inner tuples for
+	 * an outer tuple as soon as we have one match.  Account for the
+	 * effects of this by scaling down the cost estimates in proportion to
+	 * the expected output size.  (This assumes that all the quals
+	 * attached to the join are IN quals, which should be true.)
 	 *
 	 * Note: it's probably bogus to use the normal selectivity calculation
 	 * here when either the outer or inner path is a UniquePath.
 	 */
 	if (path->jointype == JOIN_IN)
 	{
-		Selectivity	qual_selec = approx_selectivity(root, restrictlist,
+		Selectivity qual_selec = approx_selectivity(root, restrictlist,
 													path->jointype);
-		double	qptuples;
+		double		qptuples;
 
 		qptuples = ceil(qual_selec * outer_path_rows * inner_path_rows);
 		if (qptuples > path->path.parent->rows)
@@ -761,8 +762,8 @@ cost_nestloop(NestPath *path, Query *root)
 	 * before we can start returning tuples, so the join's startup cost is
 	 * their sum.  What's not so clear is whether the inner path's
 	 * startup_cost must be paid again on each rescan of the inner path.
-	 * This is not true if the inner path is materialized or is a hashjoin,
-	 * but probably is true otherwise.
+	 * This is not true if the inner path is materialized or is a
+	 * hashjoin, but probably is true otherwise.
 	 */
 	startup_cost += outer_path->startup_cost + inner_path->startup_cost;
 	run_cost += outer_path->total_cost - outer_path->startup_cost;
@@ -783,14 +784,15 @@ cost_nestloop(NestPath *path, Query *root)
 		(inner_path->total_cost - inner_path->startup_cost) * joininfactor;
 
 	/*
-	 * Compute number of tuples processed (not number emitted!).
-	 * If inner path is an indexscan, be sure to use its estimated output row
-	 * count, which may be lower than the restriction-clause-only row count of
-	 * its parent.  (We don't include this case in the PATH_ROWS macro because
-	 * it applies *only* to a nestloop's inner relation.)  Note: it is correct
-	 * to use the unadjusted inner_path_rows in the above calculation for
-	 * joininfactor, since otherwise we'd be double-counting the selectivity
-	 * of the join clause being used for the index.
+	 * Compute number of tuples processed (not number emitted!). If inner
+	 * path is an indexscan, be sure to use its estimated output row
+	 * count, which may be lower than the restriction-clause-only row
+	 * count of its parent.  (We don't include this case in the PATH_ROWS
+	 * macro because it applies *only* to a nestloop's inner relation.)
+	 * Note: it is correct to use the unadjusted inner_path_rows in the
+	 * above calculation for joininfactor, since otherwise we'd be
+	 * double-counting the selectivity of the join clause being used for
+	 * the index.
 	 */
 	if (IsA(inner_path, IndexPath))
 		inner_path_rows = ((IndexPath *) inner_path)->rows;
@@ -831,8 +833,8 @@ cost_mergejoin(MergePath *path, Query *root)
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
 	Cost		cpu_per_tuple;
-	Selectivity	merge_selec;
-	Selectivity	qp_selec;
+	Selectivity merge_selec;
+	Selectivity qp_selec;
 	QualCost	merge_qual_cost;
 	QualCost	qp_qual_cost;
 	RestrictInfo *firstclause;
@@ -847,7 +849,7 @@ cost_mergejoin(MergePath *path, Query *root)
 	double		rescanratio;
 	Selectivity outerscansel,
 				innerscansel;
-	Selectivity	joininfactor;
+	Selectivity joininfactor;
 	Path		sort_path;		/* dummy for result of cost_sort */
 
 	if (!enable_mergejoin)
@@ -856,7 +858,8 @@ cost_mergejoin(MergePath *path, Query *root)
 	/*
 	 * Compute cost and selectivity of the mergequals and qpquals (other
 	 * restriction clauses) separately.  We use approx_selectivity here
-	 * for speed --- in most cases, any errors won't affect the result much.
+	 * for speed --- in most cases, any errors won't affect the result
+	 * much.
 	 *
 	 * Note: it's probably bogus to use the normal selectivity calculation
 	 * here when either the outer or inner path is a UniquePath.
@@ -876,29 +879,30 @@ cost_mergejoin(MergePath *path, Query *root)
 	qptuples = ceil(mergejointuples * qp_selec);
 
 	/*
-	 * When there are equal merge keys in the outer relation, the mergejoin
-	 * must rescan any matching tuples in the inner relation.  This means
-	 * re-fetching inner tuples.  Our cost model for this is that a re-fetch
-	 * costs the same as an original fetch, which is probably an overestimate;
-	 * but on the other hand we ignore the bookkeeping costs of mark/restore.
-	 * Not clear if it's worth developing a more refined model.
+	 * When there are equal merge keys in the outer relation, the
+	 * mergejoin must rescan any matching tuples in the inner relation.
+	 * This means re-fetching inner tuples.  Our cost model for this is
+	 * that a re-fetch costs the same as an original fetch, which is
+	 * probably an overestimate; but on the other hand we ignore the
+	 * bookkeeping costs of mark/restore. Not clear if it's worth
+	 * developing a more refined model.
 	 *
 	 * The number of re-fetches can be estimated approximately as size of
-	 * merge join output minus size of inner relation.  Assume that the
-	 * distinct key values are 1, 2, ..., and denote the number of values of
-	 * each key in the outer relation as m1, m2, ...; in the inner relation,
-	 * n1, n2, ...  Then we have
+	 * merge join output minus size of inner relation.	Assume that the
+	 * distinct key values are 1, 2, ..., and denote the number of values
+	 * of each key in the outer relation as m1, m2, ...; in the inner
+	 * relation, n1, n2, ...  Then we have
 	 *
-	 *	size of join = m1 * n1 + m2 * n2 + ...
+	 * size of join = m1 * n1 + m2 * n2 + ...
 	 *
-	 *	number of rescanned tuples = (m1 - 1) * n1 + (m2 - 1) * n2 + ...
-	 *		= m1 * n1 + m2 * n2 + ... - (n1 + n2 + ...)
-	 *		= size of join - size of inner relation
+	 * number of rescanned tuples = (m1 - 1) * n1 + (m2 - 1) * n2 + ... = m1 *
+	 * n1 + m2 * n2 + ... - (n1 + n2 + ...) = size of join - size of inner
+	 * relation
 	 *
 	 * This equation works correctly for outer tuples having no inner match
 	 * (nk = 0), but not for inner tuples having no outer match (mk = 0);
 	 * we are effectively subtracting those from the number of rescanned
-	 * tuples, when we should not.  Can we do better without expensive
+	 * tuples, when we should not.	Can we do better without expensive
 	 * selectivity computations?
 	 */
 	if (IsA(outer_path, UniquePath))
@@ -953,8 +957,9 @@ cost_mergejoin(MergePath *path, Query *root)
 
 	/*
 	 * Readjust scan selectivities to account for above rounding.  This is
-	 * normally an insignificant effect, but when there are only a few rows
-	 * in the inputs, failing to do this makes for a large percentage error.
+	 * normally an insignificant effect, but when there are only a few
+	 * rows in the inputs, failing to do this makes for a large percentage
+	 * error.
 	 */
 	outerscansel = outer_rows / outer_path_rows;
 	innerscansel = inner_rows / inner_path_rows;
@@ -1002,11 +1007,11 @@ cost_mergejoin(MergePath *path, Query *root)
 	/* CPU costs */
 
 	/*
-	 * If we're doing JOIN_IN then we will stop outputting inner
-	 * tuples for an outer tuple as soon as we have one match.  Account for
-	 * the effects of this by scaling down the cost estimates in proportion
-	 * to the expected output size.  (This assumes that all the quals attached
-	 * to the join are IN quals, which should be true.)
+	 * If we're doing JOIN_IN then we will stop outputting inner tuples
+	 * for an outer tuple as soon as we have one match.  Account for the
+	 * effects of this by scaling down the cost estimates in proportion to
+	 * the expected output size.  (This assumes that all the quals
+	 * attached to the join are IN quals, which should be true.)
 	 */
 	if (path->jpath.jointype == JOIN_IN &&
 		qptuples > path->jpath.path.parent->rows)
@@ -1017,9 +1022,9 @@ cost_mergejoin(MergePath *path, Query *root)
 	/*
 	 * The number of tuple comparisons needed is approximately number of
 	 * outer rows plus number of inner rows plus number of rescanned
-	 * tuples (can we refine this?).  At each one, we need to evaluate
-	 * the mergejoin quals.  NOTE: JOIN_IN mode does not save any work
-	 * here, so do NOT include joininfactor.
+	 * tuples (can we refine this?).  At each one, we need to evaluate the
+	 * mergejoin quals.  NOTE: JOIN_IN mode does not save any work here,
+	 * so do NOT include joininfactor.
 	 */
 	startup_cost += merge_qual_cost.startup;
 	run_cost += merge_qual_cost.per_tuple *
@@ -1028,7 +1033,7 @@ cost_mergejoin(MergePath *path, Query *root)
 	/*
 	 * For each tuple that gets through the mergejoin proper, we charge
 	 * cpu_tuple_cost plus the cost of evaluating additional restriction
-	 * clauses that are to be applied at the join.  (This is pessimistic
+	 * clauses that are to be applied at the join.	(This is pessimistic
 	 * since not all of the quals may get evaluated at each tuple.)  This
 	 * work is skipped in JOIN_IN mode, so apply the factor.
 	 */
@@ -1059,8 +1064,8 @@ cost_hashjoin(HashPath *path, Query *root)
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
 	Cost		cpu_per_tuple;
-	Selectivity	hash_selec;
-	Selectivity	qp_selec;
+	Selectivity hash_selec;
+	Selectivity qp_selec;
 	QualCost	hash_qual_cost;
 	QualCost	qp_qual_cost;
 	double		hashjointuples;
@@ -1076,7 +1081,7 @@ cost_hashjoin(HashPath *path, Query *root)
 	int			physicalbuckets;
 	int			numbatches;
 	Selectivity innerbucketsize;
-	Selectivity	joininfactor;
+	Selectivity joininfactor;
 	List	   *hcl;
 	List	   *qpquals;
 
@@ -1086,7 +1091,8 @@ cost_hashjoin(HashPath *path, Query *root)
 	/*
 	 * Compute cost and selectivity of the hashquals and qpquals (other
 	 * restriction clauses) separately.  We use approx_selectivity here
-	 * for speed --- in most cases, any errors won't affect the result much.
+	 * for speed --- in most cases, any errors won't affect the result
+	 * much.
 	 *
 	 * Note: it's probably bogus to use the normal selectivity calculation
 	 * here when either the outer or inner path is a UniquePath.
@@ -1114,9 +1120,9 @@ cost_hashjoin(HashPath *path, Query *root)
 	 * Cost of computing hash function: must do it once per input tuple.
 	 * We charge one cpu_operator_cost for each column's hash function.
 	 *
-	 * XXX when a hashclause is more complex than a single operator,
-	 * we really should charge the extra eval costs of the left or right
-	 * side, as appropriate, here.  This seems more work than it's worth
+	 * XXX when a hashclause is more complex than a single operator, we
+	 * really should charge the extra eval costs of the left or right
+	 * side, as appropriate, here.	This seems more work than it's worth
 	 * at the moment.
 	 */
 	startup_cost += cpu_operator_cost * num_hashclauses * inner_path_rows;
@@ -1131,13 +1137,13 @@ cost_hashjoin(HashPath *path, Query *root)
 
 	/*
 	 * Determine bucketsize fraction for inner relation.  We use the
-	 * smallest bucketsize estimated for any individual hashclause;
-	 * this is undoubtedly conservative.
+	 * smallest bucketsize estimated for any individual hashclause; this
+	 * is undoubtedly conservative.
 	 *
-	 * BUT: if inner relation has been unique-ified, we can assume it's
-	 * good for hashing.  This is important both because it's the right
-	 * answer, and because we avoid contaminating the cache with a value
-	 * that's wrong for non-unique-ified paths.
+	 * BUT: if inner relation has been unique-ified, we can assume it's good
+	 * for hashing.  This is important both because it's the right answer,
+	 * and because we avoid contaminating the cache with a value that's
+	 * wrong for non-unique-ified paths.
 	 */
 	if (IsA(inner_path, UniquePath))
 		innerbucketsize = 1.0 / virtualbuckets;
@@ -1152,12 +1158,13 @@ cost_hashjoin(HashPath *path, Query *root)
 			Assert(IsA(restrictinfo, RestrictInfo));
 
 			/*
-			 * First we have to figure out which side of the hashjoin clause
-			 * is the inner side.
+			 * First we have to figure out which side of the hashjoin
+			 * clause is the inner side.
 			 *
 			 * Since we tend to visit the same clauses over and over when
-			 * planning a large query, we cache the bucketsize estimate in the
-			 * RestrictInfo node to avoid repeated lookups of statistics.
+			 * planning a large query, we cache the bucketsize estimate in
+			 * the RestrictInfo node to avoid repeated lookups of
+			 * statistics.
 			 */
 			if (bms_is_subset(restrictinfo->right_relids,
 							  inner_path->parent->relids))
@@ -1169,7 +1176,7 @@ cost_hashjoin(HashPath *path, Query *root)
 					/* not cached yet */
 					thisbucketsize =
 						estimate_hash_bucketsize(root,
-									(Var *) get_rightop(restrictinfo->clause),
+							   (Var *) get_rightop(restrictinfo->clause),
 												 virtualbuckets);
 					restrictinfo->right_bucketsize = thisbucketsize;
 				}
@@ -1185,7 +1192,7 @@ cost_hashjoin(HashPath *path, Query *root)
 					/* not cached yet */
 					thisbucketsize =
 						estimate_hash_bucketsize(root,
-									(Var *) get_leftop(restrictinfo->clause),
+								(Var *) get_leftop(restrictinfo->clause),
 												 virtualbuckets);
 					restrictinfo->left_bucketsize = thisbucketsize;
 				}
@@ -1217,11 +1224,11 @@ cost_hashjoin(HashPath *path, Query *root)
 	/* CPU costs */
 
 	/*
-	 * If we're doing JOIN_IN then we will stop comparing inner
-	 * tuples to an outer tuple as soon as we have one match.  Account for
-	 * the effects of this by scaling down the cost estimates in proportion
-	 * to the expected output size.  (This assumes that all the quals attached
-	 * to the join are IN quals, which should be true.)
+	 * If we're doing JOIN_IN then we will stop comparing inner tuples to
+	 * an outer tuple as soon as we have one match.  Account for the
+	 * effects of this by scaling down the cost estimates in proportion to
+	 * the expected output size.  (This assumes that all the quals
+	 * attached to the join are IN quals, which should be true.)
 	 */
 	if (path->jpath.jointype == JOIN_IN &&
 		qptuples > path->jpath.path.parent->rows)
@@ -1243,7 +1250,7 @@ cost_hashjoin(HashPath *path, Query *root)
 	/*
 	 * For each tuple that gets through the hashjoin proper, we charge
 	 * cpu_tuple_cost plus the cost of evaluating additional restriction
-	 * clauses that are to be applied at the join.  (This is pessimistic
+	 * clauses that are to be applied at the join.	(This is pessimistic
 	 * since not all of the quals may get evaluated at each tuple.)
 	 */
 	startup_cost += qp_qual_cost.startup;
@@ -1254,14 +1261,14 @@ cost_hashjoin(HashPath *path, Query *root)
 	 * Bias against putting larger relation on inside.	We don't want an
 	 * absolute prohibition, though, since larger relation might have
 	 * better bucketsize --- and we can't trust the size estimates
-	 * unreservedly, anyway.  Instead, inflate the run cost by the
-	 * square root of the size ratio.  (Why square root?  No real good
-	 * reason, but it seems reasonable...)
+	 * unreservedly, anyway.  Instead, inflate the run cost by the square
+	 * root of the size ratio.	(Why square root?  No real good reason,
+	 * but it seems reasonable...)
 	 *
-	 * Note: before 7.4 we implemented this by inflating startup cost;
-	 * but if there's a disable_cost component in the input paths'
-	 * startup cost, that unfairly penalizes the hash.  Probably it'd
-	 * be better to keep track of disable penalty separately from cost.
+	 * Note: before 7.4 we implemented this by inflating startup cost; but if
+	 * there's a disable_cost component in the input paths' startup cost,
+	 * that unfairly penalizes the hash.  Probably it'd be better to keep
+	 * track of disable penalty separately from cost.
 	 */
 	if (innerbytes > outerbytes && outerbytes > 0)
 		run_cost *= sqrt(innerbytes / outerbytes);
@@ -1442,7 +1449,7 @@ estimate_hash_bucketsize(Query *root, Var *var, int nbuckets)
  *		and a per-evaluation component.
  */
 void
-cost_qual_eval(QualCost *cost, List *quals)
+cost_qual_eval(QualCost * cost, List *quals)
 {
 	List	   *l;
 
@@ -1484,7 +1491,7 @@ cost_qual_eval(QualCost *cost, List *quals)
 }
 
 static bool
-cost_qual_eval_walker(Node *node, QualCost *total)
+cost_qual_eval_walker(Node *node, QualCost * total)
 {
 	if (node == NULL)
 		return false;
@@ -1502,9 +1509,7 @@ cost_qual_eval_walker(Node *node, QualCost *total)
 		IsA(node, OpExpr) ||
 		IsA(node, DistinctExpr) ||
 		IsA(node, NullIfExpr))
-	{
 		total->per_tuple += cpu_operator_cost;
-	}
 	else if (IsA(node, ScalarArrayOpExpr))
 	{
 		/* should charge more than 1 op cost, but how many? */
@@ -1519,47 +1524,48 @@ cost_qual_eval_walker(Node *node, QualCost *total)
 	{
 		/*
 		 * A subplan node in an expression typically indicates that the
-		 * subplan will be executed on each evaluation, so charge accordingly.
-		 * (Sub-selects that can be executed as InitPlans have already been
-		 * removed from the expression.)
+		 * subplan will be executed on each evaluation, so charge
+		 * accordingly. (Sub-selects that can be executed as InitPlans
+		 * have already been removed from the expression.)
 		 *
 		 * An exception occurs when we have decided we can implement the
 		 * subplan by hashing.
 		 *
 		 */
-		SubPlan	   *subplan = (SubPlan *) node;
+		SubPlan    *subplan = (SubPlan *) node;
 		Plan	   *plan = subplan->plan;
 
 		if (subplan->useHashTable)
 		{
 			/*
 			 * If we are using a hash table for the subquery outputs, then
-			 * the cost of evaluating the query is a one-time cost.
-			 * We charge one cpu_operator_cost per tuple for the work of
+			 * the cost of evaluating the query is a one-time cost. We
+			 * charge one cpu_operator_cost per tuple for the work of
 			 * loading the hashtable, too.
 			 */
 			total->startup += plan->total_cost +
 				cpu_operator_cost * plan->plan_rows;
+
 			/*
 			 * The per-tuple costs include the cost of evaluating the
-			 * lefthand expressions, plus the cost of probing the hashtable.
-			 * Recursion into the exprs list will handle the lefthand
-			 * expressions properly, and will count one cpu_operator_cost
-			 * for each comparison operator.  That is probably too low for
-			 * the probing cost, but it's hard to make a better estimate,
-			 * so live with it for now.
+			 * lefthand expressions, plus the cost of probing the
+			 * hashtable. Recursion into the exprs list will handle the
+			 * lefthand expressions properly, and will count one
+			 * cpu_operator_cost for each comparison operator.	That is
+			 * probably too low for the probing cost, but it's hard to
+			 * make a better estimate, so live with it for now.
 			 */
 		}
 		else
 		{
 			/*
 			 * Otherwise we will be rescanning the subplan output on each
-			 * evaluation.  We need to estimate how much of the output
-			 * we will actually need to scan.  NOTE: this logic should
-			 * agree with the estimates used by make_subplan() in
+			 * evaluation.	We need to estimate how much of the output we
+			 * will actually need to scan.	NOTE: this logic should agree
+			 * with the estimates used by make_subplan() in
 			 * plan/subselect.c.
 			 */
-			Cost	plan_run_cost = plan->total_cost - plan->startup_cost;
+			Cost		plan_run_cost = plan->total_cost - plan->startup_cost;
 
 			if (subplan->subLinkType == EXISTS_SUBLINK)
 			{
@@ -1579,23 +1585,20 @@ cost_qual_eval_walker(Node *node, QualCost *total)
 				/* assume we need all tuples */
 				total->per_tuple += plan_run_cost;
 			}
+
 			/*
-			 * Also account for subplan's startup cost.
-			 * If the subplan is uncorrelated or undirect correlated,
-			 * AND its topmost node is a Sort or Material node, assume
-			 * that we'll only need to pay its startup cost once;
-			 * otherwise assume we pay the startup cost every time.
+			 * Also account for subplan's startup cost. If the subplan is
+			 * uncorrelated or undirect correlated, AND its topmost node
+			 * is a Sort or Material node, assume that we'll only need to
+			 * pay its startup cost once; otherwise assume we pay the
+			 * startup cost every time.
 			 */
 			if (subplan->parParam == NIL &&
 				(IsA(plan, Sort) ||
 				 IsA(plan, Material)))
-			{
 				total->startup += plan->startup_cost;
-			}
 			else
-			{
 				total->per_tuple += plan->startup_cost;
-			}
 		}
 	}
 
@@ -1745,7 +1748,7 @@ set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
 	UniquePath *upath;
 
 	/*
-	 * Compute joinclause selectivity.  Note that we are only considering
+	 * Compute joinclause selectivity.	Note that we are only considering
 	 * clauses that become restriction clauses at this join level; we are
 	 * not double-counting them because they were not considered in
 	 * estimating the sizes of the component rels.
@@ -1758,8 +1761,8 @@ set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
 	/*
 	 * Basically, we multiply size of Cartesian product by selectivity.
 	 *
-	 * If we are doing an outer join, take that into account: the output
-	 * must be at least as large as the non-nullable input.  (Is there any
+	 * If we are doing an outer join, take that into account: the output must
+	 * be at least as large as the non-nullable input.	(Is there any
 	 * chance of being even smarter?)
 	 *
 	 * For JOIN_IN and variants, the Cartesian product is figured with
@@ -1823,8 +1826,8 @@ set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
 	rel->rows = temp;
 
 	/*
-	 * We need not compute the output width here, because build_joinrel_tlist
-	 * already did.
+	 * We need not compute the output width here, because
+	 * build_joinrel_tlist already did.
 	 */
 }
 
@@ -1911,11 +1914,14 @@ set_rel_width(Query *root, RelOptInfo *rel)
 
 		Assert(IsA(var, Var));
 
-		/* The width probably hasn't been cached yet, but may as well check */
+		/*
+		 * The width probably hasn't been cached yet, but may as well
+		 * check
+		 */
 		if (rel->attr_widths[ndx] > 0)
 		{
-				tuple_width += rel->attr_widths[ndx];
-				continue;
+			tuple_width += rel->attr_widths[ndx];
+			continue;
 		}
 
 		relid = getrelid(var->varno, root->rtable);
@@ -1931,8 +1937,8 @@ set_rel_width(Query *root, RelOptInfo *rel)
 		}
 
 		/*
-		 * Not a plain relation, or can't find statistics for it.
-		 * Estimate using just the type info.
+		 * Not a plain relation, or can't find statistics for it. Estimate
+		 * using just the type info.
 		 */
 		item_width = get_typavgwidth(var->vartype, var->vartypmod);
 		Assert(item_width > 0);

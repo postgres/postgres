@@ -87,10 +87,10 @@ pgxml_parse(PG_FUNCTION_ARGS)
 	doctree = xmlParseMemory((char *) VARDATA(t), docsize);
 	if (doctree == NULL)
 	{
-		 xmlCleanupParser();
+		xmlCleanupParser();
 		PG_RETURN_BOOL(false);	/* i.e. not well-formed */
 	}
-	xmlCleanupParser(); 
+	xmlCleanupParser();
 	xmlFreeDoc(doctree);
 	PG_RETURN_BOOL(true);
 }
@@ -202,8 +202,8 @@ pgxml_xpath(PG_FUNCTION_ARGS)
 
 	doctree = xmlParseMemory((char *) VARDATA(t), docsize);
 	if (doctree == NULL)
-	{	       /* not well-formed */
-	  xmlCleanupParser();
+	{							/* not well-formed */
+		xmlCleanupParser();
 		PG_RETURN_NULL();
 	}
 

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.15 2003/08/01 13:53:36 petere Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.16 2003/08/04 00:43:32 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -24,7 +24,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 {
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 	char	   *pval = (char *) PQgetvalue(results, act_tuple, act_field);
-	int	    value_for_indicator = 0;
+	int			value_for_indicator = 0;
 
 	ECPGlog("ECPGget_data line %d: RESULT: %s offset: %ld\n", lineno, pval ? pval : "", offset);
 
@@ -54,11 +54,12 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 	/* We will have to decode the value */
 
 	/*
-	 * check for null value and set indicator accordingly, i.e. -1 if NULL and 0 if not
+	 * check for null value and set indicator accordingly, i.e. -1 if NULL
+	 * and 0 if not
 	 */
 	if (PQgetisnull(results, act_tuple, act_field))
 		value_for_indicator = -1;
-	
+
 	switch (ind_type)
 	{
 		case ECPGt_short:
@@ -81,11 +82,13 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 #endif   /* HAVE_LONG_LONG_INT_64 */
 		case ECPGt_NO_INDICATOR:
 			if (value_for_indicator == -1)
-			{				
+			{
 				if (force_indicator == false)
 				{
-					/* Informix has an additional way to specify NULLs
-					 * note that this uses special values to denote NULL */
+					/*
+					 * Informix has an additional way to specify NULLs
+					 * note that this uses special values to denote NULL
+					 */
 					ECPGset_informix_null(type, var + offset * act_tuple);
 				}
 				else
@@ -109,13 +112,13 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 		switch (type)
 		{
 				long		res;
-				unsigned long 	ures;
+				unsigned long ures;
 				double		dres;
-				char	   	*scan_length;
-				Numeric 	*nres;
+				char	   *scan_length;
+				Numeric    *nres;
 				Date		ddres;
 				Timestamp	tres;
-				Interval	*ires;
+				Interval   *ires;
 
 			case ECPGt_short:
 			case ECPGt_int:
@@ -294,9 +297,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 			case ECPGt_unsigned_char:
 				{
 					if (varcharsize == 0)
-					{
-						strncpy((char *) ((long) var + offset * act_tuple), pval, strlen(pval)+1);
-					}
+						strncpy((char *) ((long) var + offset * act_tuple), pval, strlen(pval) + 1);
 					else
 					{
 						strncpy((char *) ((long) var + offset * act_tuple), pval, varcharsize);
@@ -340,9 +341,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 
 					variable->len = strlen(pval);
 					if (varcharsize == 0)
-					{
 						strncpy(variable->arr, pval, variable->len);
-					}
 					else
 					{
 						strncpy(variable->arr, pval, varcharsize);
@@ -403,12 +402,12 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				else
 					nres = PGTYPESnumeric_from_asc("0.0", &scan_length);
 
-			 	if (type == ECPGt_numeric)
-					PGTYPESnumeric_copy(nres, (Numeric *)(var + offset * act_tuple));
+				if (type == ECPGt_numeric)
+					PGTYPESnumeric_copy(nres, (Numeric *) (var + offset * act_tuple));
 				else
-					PGTYPESnumeric_to_decimal(nres, (Decimal *)(var + offset * act_tuple));
+					PGTYPESnumeric_to_decimal(nres, (Decimal *) (var + offset * act_tuple));
 				break;
-				
+
 			case ECPGt_interval:
 				if (pval)
 				{
@@ -430,7 +429,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				else
 					ires = PGTYPESinterval_from_asc("0 seconds", NULL);
 
-				PGTYPESinterval_copy(ires, (Interval *)(var + offset * act_tuple));
+				PGTYPESinterval_copy(ires, (Interval *) (var + offset * act_tuple));
 				break;
 			case ECPGt_date:
 				if (pval)
@@ -450,7 +449,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						return (false);
 					}
 
-					*((Date *)(var + offset * act_tuple)) = ddres;
+					*((Date *) (var + offset * act_tuple)) = ddres;
 				}
 				break;
 
@@ -472,10 +471,10 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						return (false);
 					}
 
-					*((Timestamp *)(var + offset * act_tuple)) = tres;
+					*((Timestamp *) (var + offset * act_tuple)) = tres;
 				}
 				break;
-				
+
 			default:
 				ECPGraise(lineno, ECPG_UNSUPPORTED, ECPG_SQLSTATE_ECPG_INTERNAL_ERROR, ECPGtype_name(type));
 				return (false);

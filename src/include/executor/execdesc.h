@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execdesc.h,v 1.24 2003/05/08 18:16:37 tgl Exp $
+ * $Id: execdesc.h,v 1.25 2003/08/04 00:43:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,9 +45,9 @@ typedef struct QueryDesc
 
 /* in pquery.c */
 extern QueryDesc *CreateQueryDesc(Query *parsetree, Plan *plantree,
-								  DestReceiver *dest,
-								  ParamListInfo params,
-								  bool doInstrument);
+				DestReceiver *dest,
+				ParamListInfo params,
+				bool doInstrument);
 
 extern void FreeQueryDesc(QueryDesc *qdesc);
 

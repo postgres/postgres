@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/pg_encoding.c,v 1.11 2002/10/20 11:33:48 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/pg_encoding.c,v 1.12 2003/08/04 00:43:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,11 @@ main(int argc, char **argv)
 		{
 			if (be_only && pg_valid_server_encoding(name) < 0)
 				exit(1);
-			/* pg_encoding_to_char() returns "" if invalid encoding number is given */
+
+			/*
+			 * pg_encoding_to_char() returns "" if invalid encoding number
+			 * is given
+			 */
 			else if (strcmp("", name))
 				printf("%s\n", name);
 			else
@@ -77,7 +81,7 @@ main(int argc, char **argv)
 				exit(1);
 			printf("%d\n", enc);
 		}
-		else 
+		else
 			exit(1);
 
 		exit(0);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.33 2003/07/21 17:05:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.34 2003/08/04 00:43:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,8 +103,8 @@ ExecNestLoop(NestLoopState *node)
 
 	/*
 	 * If we're doing an IN join, we want to return at most one row per
-	 * outer tuple; so we can stop scanning the inner scan if we matched on
-	 * the previous try.
+	 * outer tuple; so we can stop scanning the inner scan if we matched
+	 * on the previous try.
 	 */
 	if (node->js.jointype == JOIN_IN &&
 		node->nl_MatchedOuter)
@@ -330,7 +330,7 @@ ExecInitNestLoop(NestLoop *node, EState *estate)
 		case JOIN_LEFT:
 			nlstate->nl_NullInnerTupleSlot =
 				ExecInitNullTupleSlot(estate,
-							   ExecGetResultType(innerPlanState(nlstate)));
+							 ExecGetResultType(innerPlanState(nlstate)));
 			break;
 		default:
 			elog(ERROR, "unrecognized join type: %d",
@@ -404,7 +404,7 @@ ExecEndNestLoop(NestLoopState *node)
 void
 ExecReScanNestLoop(NestLoopState *node, ExprContext *exprCtxt)
 {
-	PlanState   *outerPlan = outerPlanState(node);
+	PlanState  *outerPlan = outerPlanState(node);
 
 	/*
 	 * If outerPlan->chgParam is not null then plan will be automatically

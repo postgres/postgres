@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.52 2003/02/09 00:30:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.53 2003/08/04 00:43:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -355,7 +355,7 @@ ExecReScanAppend(AppendState *node, ExprContext *exprCtxt)
 
 	for (i = node->as_firstplan; i <= node->as_lastplan; i++)
 	{
-		PlanState *subnode = node->appendplans[i];
+		PlanState  *subnode = node->appendplans[i];
 
 		/*
 		 * ExecReScan doesn't know about my subplans, so I have to do

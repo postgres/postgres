@@ -299,7 +299,7 @@ signconsistent(QUERYTYPE * query, BITVEC sign, bool calcnot)
 				   GETQUERY(query) + query->size - 1,
 				   (void *) sign, calcnot,
 				   checkcondition_bit
-	);
+		);
 }
 
 bool
@@ -326,7 +326,7 @@ rboolop(PG_FUNCTION_ARGS)
 							   boolop,
 							   PG_GETARG_DATUM(1),
 							   PG_GETARG_DATUM(0)
-	);
+		);
 }
 
 Datum
@@ -743,4 +743,3 @@ querytree(PG_FUNCTION_ARGS)
 
 	PG_RETURN_POINTER(res);
 }
-

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.249 2003/07/29 17:21:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.250 2003/08/04 00:43:16 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -418,8 +418,8 @@ CheckAttributeType(const char *attname, Oid atttypid)
 	 * Warn user, but don't fail, if column to be created has UNKNOWN type
 	 * (usually as a result of a 'retrieve into' - jolly)
 	 *
-	 * Refuse any attempt to create a pseudo-type column or one that uses
-	 * a standalone composite type.  (Eventually we should probably refuse
+	 * Refuse any attempt to create a pseudo-type column or one that uses a
+	 * standalone composite type.  (Eventually we should probably refuse
 	 * all references to complex types, but for now there's still some
 	 * Berkeley-derived code that thinks it can do this...)
 	 */
@@ -439,7 +439,7 @@ CheckAttributeType(const char *attname, Oid atttypid)
 	}
 	else if (att_typtype == 'c')
 	{
-		Oid		typrelid = get_typ_typrelid(atttypid);
+		Oid			typrelid = get_typ_typrelid(atttypid);
 
 		if (get_rel_relkind(typrelid) == RELKIND_COMPOSITE_TYPE)
 			ereport(ERROR,
@@ -975,12 +975,13 @@ RemoveAttributeById(Oid relid, AttrNumber attnum)
 	attStruct->attisdropped = true;
 
 	/*
-	 * Set the type OID to invalid.  A dropped attribute's type link cannot
-	 * be relied on (once the attribute is dropped, the type might be too).
-	 * Fortunately we do not need the type row --- the only really essential
-	 * information is the type's typlen and typalign, which are preserved in
-	 * the attribute's attlen and attalign.  We set atttypid to zero here
-	 * as a means of catching code that incorrectly expects it to be valid.
+	 * Set the type OID to invalid.  A dropped attribute's type link
+	 * cannot be relied on (once the attribute is dropped, the type might
+	 * be too). Fortunately we do not need the type row --- the only
+	 * really essential information is the type's typlen and typalign,
+	 * which are preserved in the attribute's attlen and attalign.  We set
+	 * atttypid to zero here as a means of catching code that incorrectly
+	 * expects it to be valid.
 	 */
 	attStruct->atttypid = InvalidOid;
 
@@ -1401,7 +1402,7 @@ StoreRelCheck(Relation rel, char *ccname, char *ccbin)
 						  ' ',
 						  ' ',
 						  ' ',
-						  InvalidOid, /* no associated index */
+						  InvalidOid,	/* no associated index */
 						  expr, /* Tree form check constraint */
 						  ccbin,	/* Binary form check constraint */
 						  ccsrc);		/* Source form check constraint */
@@ -1568,8 +1569,8 @@ AddRelationRawConstraints(Relation rel,
 				if (strcmp(cdef2->name, ccname) == 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_DUPLICATE_OBJECT),
-							 errmsg("CHECK constraint \"%s\" already exists",
-									ccname)));
+						 errmsg("CHECK constraint \"%s\" already exists",
+								ccname)));
 			}
 		}
 		else
@@ -1639,7 +1640,7 @@ AddRelationRawConstraints(Relation rel,
 		if (pstate->p_hasSubLinks)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot use sub-select in CHECK constraint")));
+				   errmsg("cannot use sub-select in CHECK constraint")));
 		if (pstate->p_hasAggs)
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
@@ -1750,7 +1751,7 @@ cookDefault(ParseState *pstate,
 	if (contain_var_clause(expr))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-				 errmsg("cannot use column references in DEFAULT clause")));
+			  errmsg("cannot use column references in DEFAULT clause")));
 
 	/*
 	 * It can't return a set either.
@@ -1773,9 +1774,9 @@ cookDefault(ParseState *pstate,
 				 errmsg("cannot use aggregate in DEFAULT clause")));
 
 	/*
-	 * Coerce the expression to the correct type and typmod, if given.  This
-	 * should match the parser's processing of non-defaulted expressions ---
-	 * see updateTargetListEntry().
+	 * Coerce the expression to the correct type and typmod, if given.
+	 * This should match the parser's processing of non-defaulted
+	 * expressions --- see updateTargetListEntry().
 	 */
 	if (OidIsValid(atttypid))
 	{
@@ -1793,7 +1794,7 @@ cookDefault(ParseState *pstate,
 							attname,
 							format_type_be(atttypid),
 							format_type_be(type_id)),
-					 errhint("You will need to rewrite or cast the expression.")));
+			errhint("You will need to rewrite or cast the expression.")));
 	}
 
 	return expr;
@@ -1952,7 +1953,7 @@ RelationTruncateIndexes(Oid heapId)
 
 		/*
 		 * index_build will close both the heap and index relations (but
-		 * not give up the locks we hold on them).  We're done with this
+		 * not give up the locks we hold on them).	We're done with this
 		 * index, but we must re-open the heap rel.
 		 */
 		heapRelation = heap_open(heapId, NoLock);

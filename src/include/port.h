@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port.h,v 1.8 2003/06/24 00:44:29 momjian Exp $
+ * $Id: port.h,v 1.9 2003/08/04 00:43:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,14 +18,14 @@
 #endif
 
 /* Portable path handling for Unix/Win32 */
-bool is_absolute_path(const char *filename);
-char *first_path_separator(const char *filename);
-char *last_path_separator(const char *filename);
-char *get_progname(char *argv0);
+bool		is_absolute_path(const char *filename);
+char	   *first_path_separator(const char *filename);
+char	   *last_path_separator(const char *filename);
+char	   *get_progname(char *argv0);
 
 #if defined(bsdi) || defined(netbsd)
-int fseeko(FILE *stream, off_t offset, int whence);
-off_t ftello(FILE *stream);
+int			fseeko(FILE *stream, off_t offset, int whence);
+off_t		ftello(FILE *stream);
 #endif
 
 #ifdef WIN32
@@ -33,15 +33,17 @@ off_t ftello(FILE *stream);
  * Win32 doesn't have reliable rename/unlink during concurrent access
  */
 #ifndef FRONTEND
-int pgrename(const char *from, const char *to);
-int pgunlink(const char *path);      
+int			pgrename(const char *from, const char *to);
+int			pgunlink(const char *path);
+
 #define rename(from, to)	pgrename(from, to)
 #define unlink(path)		pgunlink(path)
 #endif
 
-extern int copydir(char *fromdir,char *todir);
+extern int	copydir(char *fromdir, char *todir);
+
 /* Last parameter not used */
-extern int gettimeofday(struct timeval *tp, struct timezone *tzp);
+extern int	gettimeofday(struct timeval * tp, struct timezone * tzp);
 
 #else
 
@@ -49,9 +51,9 @@ extern int gettimeofday(struct timeval *tp, struct timezone *tzp);
  *	Win32 requires a special close for sockets and pipes, while on Unix
  *	close() does them all.
  */
-#define	closesocket close
+#define closesocket close
 #endif
-  
+
 /*
  * Default "extern" declarations or macro substitutes for library routines.
  * When necessary, these routines are provided by files in src/port/.
@@ -66,15 +68,15 @@ extern char *crypt(const char *key, const char *setting);
 #endif
 
 #ifndef HAVE_GETOPT
-extern int getopt(int nargc, char *const *nargv, const char *ostr);
+extern int	getopt(int nargc, char *const * nargv, const char *ostr);
 #endif
 
 #ifndef HAVE_ISINF
-extern int isinf(double x);
+extern int	isinf(double x);
 #endif
 
 #if !defined(HAVE_GETHOSTNAME) && defined(KRB4)
-extern int gethostname(char *name, int namelen);
+extern int	gethostname(char *name, int namelen);
 #endif
 
 #ifndef HAVE_RINT
@@ -83,14 +85,14 @@ extern double rint(double x);
 
 #ifndef HAVE_INET_ATON
 #if !defined(_MSC_VER) && !defined(__BORLANDC__)
-# include <netinet/in.h>
-# include <arpa/inet.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #endif
-extern int inet_aton(const char *cp, struct in_addr * addr);
+extern int	inet_aton(const char *cp, struct in_addr * addr);
 #endif
 
 #ifndef HAVE_STRCASECMP
-extern int strcasecmp(char *s1, char *s2);
+extern int	strcasecmp(char *s1, char *s2);
 #endif
 
 #ifndef HAVE_STRDUP
@@ -108,11 +110,11 @@ extern void srandom(unsigned int seed);
 /* thread.h */
 extern char *pqStrerror(int errnum, char *strerrbuf, size_t buflen);
 
-extern int pqGetpwuid(uid_t uid, struct passwd *resultbuf, char *buffer,
-		      size_t buflen, struct passwd **result);
+extern int pqGetpwuid(uid_t uid, struct passwd * resultbuf, char *buffer,
+		   size_t buflen, struct passwd ** result);
 
 extern int pqGethostbyname(const char *name,
-			   struct hostent *resbuf,
-			   char *buf, size_t buflen,
-			   struct hostent **result,
-			   int *herrno);
+				struct hostent * resbuf,
+				char *buf, size_t buflen,
+				struct hostent ** result,
+				int *herrno);

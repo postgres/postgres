@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.23 2003/02/03 15:07:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.24 2003/08/04 00:43:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ static bool tlist_matches_tupdesc(List *tlist, Index varno, TupleDesc tupdesc);
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecScan(ScanState *node,
+ExecScan(ScanState * node,
 		 ExecScanAccessMtd accessMtd)	/* function returning a tuple */
 {
 	EState	   *estate;
@@ -134,9 +134,10 @@ ExecScan(ScanState *node,
 			if (projInfo)
 			{
 				/*
-				 * Form a projection tuple, store it in the result tuple slot
-				 * and return it --- unless we find we can project no tuples
-				 * from this scan tuple, in which case continue scan.
+				 * Form a projection tuple, store it in the result tuple
+				 * slot and return it --- unless we find we can project no
+				 * tuples from this scan tuple, in which case continue
+				 * scan.
 				 */
 				resultSlot = ExecProject(projInfo, &isDone);
 				if (isDone != ExprEndResult)
@@ -175,13 +176,13 @@ ExecScan(ScanState *node,
  * ExecAssignScanType must have been called already.
  */
 void
-ExecAssignScanProjectionInfo(ScanState *node)
+ExecAssignScanProjectionInfo(ScanState * node)
 {
-	Scan   *scan = (Scan *) node->ps.plan;
+	Scan	   *scan = (Scan *) node->ps.plan;
 
 	if (tlist_matches_tupdesc(scan->plan.targetlist,
 							  scan->scanrelid,
-							  node->ss_ScanTupleSlot->ttc_tupleDescriptor))
+							node->ss_ScanTupleSlot->ttc_tupleDescriptor))
 		node->ps.ps_ProjInfo = NULL;
 	else
 		ExecAssignProjectionInfo(&node->ps);
@@ -190,13 +191,13 @@ ExecAssignScanProjectionInfo(ScanState *node)
 static bool
 tlist_matches_tupdesc(List *tlist, Index varno, TupleDesc tupdesc)
 {
-	int		numattrs = tupdesc->natts;
-	int		attrno;
+	int			numattrs = tupdesc->natts;
+	int			attrno;
 
 	for (attrno = 1; attrno <= numattrs; attrno++)
 	{
 		Form_pg_attribute att_tup = tupdesc->attrs[attrno - 1];
-		Var	   *var;
+		Var		   *var;
 
 		if (tlist == NIL)
 			return false;		/* tlist too short */

@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.82 2003/07/29 00:03:18 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.83 2003/08/04 00:43:29 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -80,7 +80,7 @@ static char *create_command_generator(const char *text, int state);
 static char *complete_from_query(const char *text, int state);
 static char *complete_from_schema_query(const char *text, int state);
 static char *_complete_from_query(int is_schema_query,
-								  const char *text, int state);
+					 const char *text, int state);
 static char *complete_from_const(const char *text, int state);
 static char *complete_from_list(const char *text, int state);
 
@@ -411,33 +411,34 @@ initialize_readline(void)
 typedef struct
 {
 	char	   *name;
-	int        with_schema;
+	int			with_schema;
 	char	   *query;
 } pgsql_thing_t;
 
 pgsql_thing_t words_after_create[] = {
 	{"AGGREGATE", WITH_SCHEMA, Query_for_list_of_aggregates},
-	{"CAST", NO_SCHEMA, NULL},				/* Casts have complex structures for namees, so skip it */
+	{"CAST", NO_SCHEMA, NULL},	/* Casts have complex structures for
+								 * namees, so skip it */
 	{"CONVERSION", NO_SCHEMA, "SELECT conname FROM pg_catalog.pg_conversion WHERE substr(conname,1,%d)='%s'"},
 	{"DATABASE", NO_SCHEMA, Query_for_list_of_databases},
 	{"DOMAIN", WITH_SCHEMA, Query_for_list_of_domains},
 	{"FUNCTION", WITH_SCHEMA, Query_for_list_of_functions},
 	{"GROUP", NO_SCHEMA, "SELECT groname FROM pg_catalog.pg_group WHERE substr(groname,1,%d)='%s'"},
 	{"LANGUAGE", NO_SCHEMA, Query_for_list_of_languages},
-	{"INDEX", WITH_SCHEMA,  Query_for_list_of_indexes},
-	{"OPERATOR", NO_SCHEMA, NULL},			/* Querying for this is probably not such
-								 * a good idea. */
+	{"INDEX", WITH_SCHEMA, Query_for_list_of_indexes},
+	{"OPERATOR", NO_SCHEMA, NULL},		/* Querying for this is probably
+										 * not such a good idea. */
 	{"RULE", NO_SCHEMA, "SELECT rulename FROM pg_catalog.pg_rules WHERE substr(rulename,1,%d)='%s'"},
 	{"SCHEMA", NO_SCHEMA, Query_for_list_of_schemas},
 	{"SEQUENCE", WITH_SCHEMA, Query_for_list_of_sequences},
 	{"TABLE", WITH_SCHEMA, Query_for_list_of_tables},
-	{"TEMP", NO_SCHEMA, NULL},				/* for CREATE TEMP TABLE ... */
+	{"TEMP", NO_SCHEMA, NULL},	/* for CREATE TEMP TABLE ... */
 	{"TRIGGER", NO_SCHEMA, "SELECT tgname FROM pg_catalog.pg_trigger WHERE substr(tgname,1,%d)='%s'"},
-	{"TYPE", WITH_SCHEMA, Query_for_list_of_datatypes },
-	{"UNIQUE", NO_SCHEMA, NULL},			/* for CREATE UNIQUE INDEX ... */
-	{"USER", NO_SCHEMA,  Query_for_list_of_users},
+	{"TYPE", WITH_SCHEMA, Query_for_list_of_datatypes},
+	{"UNIQUE", NO_SCHEMA, NULL},	/* for CREATE UNIQUE INDEX ... */
+	{"USER", NO_SCHEMA, Query_for_list_of_users},
 	{"VIEW", WITH_SCHEMA, Query_for_list_of_views},
-	{NULL, NO_SCHEMA, NULL}				/* end of list */
+	{NULL, NO_SCHEMA, NULL}		/* end of list */
 };
 
 
@@ -594,9 +595,9 @@ psql_completion(char *text, int start, int end)
 	};
 
 	static char *backslash_commands[] = {
-		"\\a", "\\connect", "\\C", "\\cd", "\\copy", "\\copyright", 
-		"\\d",  "\\da", "\\dc", "\\dC", "\\dd", "\\dD", "\\df", "\\di",
-		"\\dl", "\\dn", "\\do", "\\dp", "\\ds", "\\dS", "\\dt", "\\dT", 
+		"\\a", "\\connect", "\\C", "\\cd", "\\copy", "\\copyright",
+		"\\d", "\\da", "\\dc", "\\dC", "\\dd", "\\dD", "\\df", "\\di",
+		"\\dl", "\\dn", "\\do", "\\dp", "\\ds", "\\dS", "\\dt", "\\dT",
 		"\\dv", "\\du",
 		"\\e", "\\echo", "\\encoding",
 		"\\f", "\\g", "\\h", "\\help", "\\H", "\\i", "\\l",
@@ -637,19 +638,22 @@ psql_completion(char *text, int start, int end)
 
 /* CREATE or DROP but not ALTER TABLE sth DROP */
 	/* complete with something you can create or drop */
-	else if (strcasecmp(prev_wd, "CREATE") == 0 || 
+	else if (strcasecmp(prev_wd, "CREATE") == 0 ||
 			 (strcasecmp(prev_wd, "DROP") == 0 &&
-			  strcasecmp(prev3_wd,"TABLE") != 0 ))
-        matches = completion_matches(text, create_command_generator);
+			  strcasecmp(prev3_wd, "TABLE") != 0))
+		matches = completion_matches(text, create_command_generator);
 
 /* ALTER */
-    /* complete with what you can alter (TABLE, GROUP, USER, ...) 
-     * unless we're in ALTER TABLE sth ALTER*/
-    else if (strcasecmp(prev_wd, "ALTER") == 0  &&
-			 strcasecmp(prev3_wd, "TABLE") != 0 )
+
+	/*
+	 * complete with what you can alter (TABLE, GROUP, USER, ...) unless
+	 * we're in ALTER TABLE sth ALTER
+	 */
+	else if (strcasecmp(prev_wd, "ALTER") == 0 &&
+			 strcasecmp(prev3_wd, "TABLE") != 0)
 	{
 		char	   *list_ALTER[] = {"DATABASE", "GROUP", "SCHEMA", "TABLE",
-									"TRIGGER", "USER", NULL};
+		"TRIGGER", "USER", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTER);
 	}
@@ -683,7 +687,7 @@ psql_completion(char *text, int start, int end)
 			 strcasecmp(prev2_wd, "TABLE") == 0)
 	{
 		char	   *list_ALTER2[] = {"ADD", "ALTER", "DROP", "RENAME",
-									 "OWNER TO", NULL};
+		"OWNER TO", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTER2);
 	}
@@ -695,14 +699,15 @@ psql_completion(char *text, int start, int end)
 
 	/* If we have TABLE <sth> DROP, provide COLUMN or CONSTRAINT */
 	else if (strcasecmp(prev3_wd, "TABLE") == 0 &&
-			 strcasecmp(prev_wd, "DROP")  == 0)
+			 strcasecmp(prev_wd, "DROP") == 0)
 	{
 		char	   *list_TABLEDROP[] = {"COLUMN", "CONSTRAINT", NULL};
+
 		COMPLETE_WITH_LIST(list_TABLEDROP);
 	}
 	/* If we have TABLE <sth> DROP COLUMN, provide list of columns */
 	else if (strcasecmp(prev4_wd, "TABLE") == 0 &&
-			 strcasecmp(prev2_wd, "DROP") == 0 && 
+			 strcasecmp(prev2_wd, "DROP") == 0 &&
 			 strcasecmp(prev_wd, "COLUMN") == 0)
 		COMPLETE_WITH_ATTR(prev3_wd);
 
@@ -769,8 +774,8 @@ psql_completion(char *text, int start, int end)
 	{
 		char	   *list_COMMENT[] =
 		{"DATABASE", "INDEX", "RULE", "SCHEMA", "SEQUENCE", "TABLE",
-		 "TYPE", "VIEW", "COLUMN", "AGGREGATE", "FUNCTION", "OPERATOR",
-		 "TRIGGER", "CONSTRAINT", "DOMAIN", NULL};
+			"TYPE", "VIEW", "COLUMN", "AGGREGATE", "FUNCTION", "OPERATOR",
+		"TRIGGER", "CONSTRAINT", "DOMAIN", NULL};
 
 		COMPLETE_WITH_LIST(list_COMMENT);
 	}
@@ -849,7 +854,7 @@ psql_completion(char *text, int start, int end)
 			 strcasecmp(prev_wd, "ON") == 0)
 	{
 		char	   *rule_events[] = {"SELECT", "UPDATE", "INSERT",
-									 "DELETE", NULL};
+		"DELETE", NULL};
 
 		COMPLETE_WITH_LIST(rule_events);
 	}
@@ -966,10 +971,11 @@ psql_completion(char *text, int start, int end)
 	 * sequences, and indexes
 	 *
 	 * keywords DATABASE, FUNCTION, LANGUAGE, SCHEMA added to query result
-     * via UNION; seems to work intuitively
-     *
-     * Note: GRANT/REVOKE can get quite complex; tab-completion as implemented
-     * here will only work if the privilege list contains exactly one privilege
+	 * via UNION; seems to work intuitively
+	 *
+	 * Note: GRANT/REVOKE can get quite complex; tab-completion as
+	 * implemented here will only work if the privilege list contains
+	 * exactly one privilege
 	 */
 	else if ((strcasecmp(prev3_wd, "GRANT") == 0 ||
 			  strcasecmp(prev3_wd, "REVOKE") == 0) &&
@@ -977,30 +983,30 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_QUERY("SELECT relname FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "
 							" WHERE relkind in ('r','S','v')  "
 							"   AND substr(relname,1,%d)='%s' "
-                            "   AND pg_catalog.pg_table_is_visible(c.oid) "
+						  "   AND pg_catalog.pg_table_is_visible(c.oid) "
 							"   AND relnamespace = n.oid "
-							"   AND n.nspname NOT IN ('pg_catalog', 'pg_toast') "
-                            " UNION "
-                            "SELECT 'DATABASE' AS relname "
-                            " UNION "
-                            "SELECT 'FUNCTION' AS relname "
-                            " UNION "
-                            "SELECT 'LANGUAGE' AS relname "
-                            " UNION "
-                            "SELECT 'SCHEMA' AS relname ");
+					"   AND n.nspname NOT IN ('pg_catalog', 'pg_toast') "
+							" UNION "
+							"SELECT 'DATABASE' AS relname "
+							" UNION "
+							"SELECT 'FUNCTION' AS relname "
+							" UNION "
+							"SELECT 'LANGUAGE' AS relname "
+							" UNION "
+							"SELECT 'SCHEMA' AS relname ");
 
 	/* Complete "GRANT/REVOKE * ON * " with "TO" */
-	else if ((strcasecmp(prev4_wd, "GRANT") == 0 || 
+	else if ((strcasecmp(prev4_wd, "GRANT") == 0 ||
 			  strcasecmp(prev4_wd, "REVOKE") == 0) &&
 			 strcasecmp(prev2_wd, "ON") == 0)
 	{
-		if(strcasecmp(prev_wd, "DATABASE") == 0)
+		if (strcasecmp(prev_wd, "DATABASE") == 0)
 			COMPLETE_WITH_QUERY(Query_for_list_of_databases);
-		else if(strcasecmp(prev_wd, "FUNCTION") == 0)
+		else if (strcasecmp(prev_wd, "FUNCTION") == 0)
 			COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_functions);
-		else if(strcasecmp(prev_wd, "LANGUAGE") == 0)
+		else if (strcasecmp(prev_wd, "LANGUAGE") == 0)
 			COMPLETE_WITH_QUERY(Query_for_list_of_languages);
-		else if(strcasecmp(prev_wd, "SCHEMA") == 0)
+		else if (strcasecmp(prev_wd, "SCHEMA") == 0)
 			COMPLETE_WITH_QUERY(Query_for_list_of_schemas);
 		else
 			COMPLETE_WITH_CONST("TO");
@@ -1008,8 +1014,8 @@ psql_completion(char *text, int start, int end)
 
 	/*
 	 * TODO: to complete with user name we need prev5_wd -- wait for a
-	 * more general solution there
-     * same for GRANT <sth> ON { DATABASE | FUNCTION | LANGUAGE | SCHEMA } xxx TO
+	 * more general solution there same for GRANT <sth> ON { DATABASE |
+	 * FUNCTION | LANGUAGE | SCHEMA } xxx TO
 	 */
 
 /* INSERT */
@@ -1055,7 +1061,7 @@ psql_completion(char *text, int start, int end)
 /* LOCK */
 	/* Complete LOCK [TABLE] with a list of tables */
 	else if (strcasecmp(prev_wd, "LOCK") == 0 ||
-	 		 (strcasecmp(prev_wd, "TABLE") == 0 &&
+			 (strcasecmp(prev_wd, "TABLE") == 0 &&
 			  strcasecmp(prev2_wd, "LOCK") == 0))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables);
 
@@ -1078,7 +1084,7 @@ psql_completion(char *text, int start, int end)
 			"ROW SHARE MODE", "ROW EXCLUSIVE MODE",
 			"SHARE UPDATE EXCLUSIVE MODE", "SHARE MODE",
 			"SHARE ROW EXCLUSIVE MODE",
-			"EXCLUSIVE MODE", "ACCESS EXCLUSIVE MODE", NULL};
+		"EXCLUSIVE MODE", "ACCESS EXCLUSIVE MODE", NULL};
 
 		COMPLETE_WITH_LIST(lock_modes);
 	}
@@ -1188,9 +1194,9 @@ psql_completion(char *text, int start, int end)
 		if (strcasecmp(prev2_wd, "DateStyle") == 0)
 		{
 			char	   *my_list[] = {"ISO", "SQL", "Postgres", "German",
-									 "YMD", "DMY", "MDY",
-									 "US", "European", "NonEuropean",
-									 "DEFAULT", NULL};
+				"YMD", "DMY", "MDY",
+				"US", "European", "NonEuropean",
+			"DEFAULT", NULL};
 
 			COMPLETE_WITH_LIST(my_list);
 		}
@@ -1289,7 +1295,7 @@ psql_completion(char *text, int start, int end)
 	{
 		char	   *my_list[] = {"format", "border", "expanded",
 			"null", "fieldsep", "tuples_only", "title", "tableattr", "pager",
-			"recordsep", NULL};
+		"recordsep", NULL};
 
 		COMPLETE_WITH_LIST(my_list);
 	}
@@ -1316,7 +1322,7 @@ psql_completion(char *text, int start, int end)
 		for (i = 0; words_after_create[i].name; i++)
 			if (strcasecmp(prev_wd, words_after_create[i].name) == 0)
 			{
-				if(words_after_create[i].with_schema == WITH_SCHEMA)
+				if (words_after_create[i].with_schema == WITH_SCHEMA)
 					COMPLETE_WITH_SCHEMA_QUERY(words_after_create[i].query);
 				else
 					COMPLETE_WITH_QUERY(words_after_create[i].query);
@@ -1397,27 +1403,27 @@ create_command_generator(const char *text, int state)
 static char *
 complete_from_query(const char *text, int state)
 {
-  return _complete_from_query(0, text, state);
+	return _complete_from_query(0, text, state);
 }
 
 static char *
 complete_from_schema_query(const char *text, int state)
 {
-  return _complete_from_query(1, text, state);
+	return _complete_from_query(1, text, state);
 }
 
 
 /* This creates a list of matching things, according to a query pointed to
    by completion_charp.
    The query can be one of two kinds:
-   - A simple query which must contain a %d and a %s, which will be replaced 
+   - A simple query which must contain a %d and a %s, which will be replaced
    by the string length of the text and the text itself. The query may also
-   have another %s in it, which will be replaced by the value of 
+   have another %s in it, which will be replaced by the value of
    completion_info_charp.
-     or:
+	 or:
    - A schema query used for completion of both schema and relation names;
    these are more complex and must contain in the following order:
-     %d %s %d %s %d %s %s %d %s
+	 %d %s %d %s %d %s %s %d %s
    where %d is the string length of the text and %s the text itself.
 
    See top of file for examples of both kinds of query.
@@ -1445,20 +1451,21 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 		if (completion_charp == NULL)
 			return NULL;
 
-		if(is_schema_query)
+		if (is_schema_query)
 		{
-		  if (snprintf(query_buffer, BUF_SIZE, completion_charp, string_length, text, string_length, text, string_length, text, text,  string_length, text,string_length,text) == -1)
-		  {
-		      ERROR_QUERY_TOO_LONG;
-		      return NULL;
-		  }
+			if (snprintf(query_buffer, BUF_SIZE, completion_charp, string_length, text, string_length, text, string_length, text, text, string_length, text, string_length, text) == -1)
+			{
+				ERROR_QUERY_TOO_LONG;
+				return NULL;
+			}
 		}
-		else {
-		  if (snprintf(query_buffer, BUF_SIZE, completion_charp, string_length, text, completion_info_charp) == -1)
-		    {
-		      ERROR_QUERY_TOO_LONG;
-		      return NULL;
-		    }
+		else
+		{
+			if (snprintf(query_buffer, BUF_SIZE, completion_charp, string_length, text, completion_info_charp) == -1)
+			{
+				ERROR_QUERY_TOO_LONG;
+				return NULL;
+			}
 		}
 
 		result = exec_query(query_buffer);
@@ -1488,7 +1495,7 @@ complete_from_list(const char *text, int state)
 	static int	string_length,
 				list_index,
 				matches;
-	static bool	casesensitive;
+	static bool casesensitive;
 	char	   *item;
 
 	/* need to have a list */
@@ -1520,8 +1527,8 @@ complete_from_list(const char *text, int state)
 	}
 
 	/*
-	 * No matches found. If we're not case insensitive already, lets switch
-	 * to being case insensitive and try again
+	 * No matches found. If we're not case insensitive already, lets
+	 * switch to being case insensitive and try again
 	 */
 	if (casesensitive && matches == 0)
 	{

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.18 2003/02/09 00:30:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.19 2003/08/04 00:43:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,10 +160,11 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate)
 	Assert(rte->rtekind == RTE_SUBQUERY);
 
 	/*
-	 * The subquery needs its own EState because it has its own rangetable.
-	 * It shares our Param ID space, however.  XXX if rangetable access were
-	 * done differently, the subquery could share our EState, which would
-	 * eliminate some thrashing about in this module...
+	 * The subquery needs its own EState because it has its own
+	 * rangetable. It shares our Param ID space, however.  XXX if
+	 * rangetable access were done differently, the subquery could share
+	 * our EState, which would eliminate some thrashing about in this
+	 * module...
 	 */
 	sp_estate = CreateExecutorState();
 	subquerystate->sss_SubEState = sp_estate;
@@ -259,9 +260,9 @@ ExecSubqueryReScan(SubqueryScanState *node, ExprContext *exprCtxt)
 
 	/*
 	 * ExecReScan doesn't know about my subplan, so I have to do
-	 * changed-parameter signaling myself.  This is just as well,
-	 * because the subplan has its own memory context in which its
-	 * chgParam state lives.
+	 * changed-parameter signaling myself.	This is just as well, because
+	 * the subplan has its own memory context in which its chgParam state
+	 * lives.
 	 */
 	if (node->ss.ps.chgParam != NULL)
 		UpdateChangedParamSet(node->subplan, node->ss.ps.chgParam);

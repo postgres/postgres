@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.84 2003/08/01 00:15:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.85 2003/08/04 00:43:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,8 +100,8 @@ InsertRule(char *rulname,
 		if (!replace)
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
-					 errmsg("rule \"%s\" for relation \"%s\" already exists",
-							rulname, get_rel_name(eventrel_oid))));
+				 errmsg("rule \"%s\" for relation \"%s\" already exists",
+						rulname, get_rel_name(eventrel_oid))));
 
 		/*
 		 * When replacing, we don't need to replace every attribute
@@ -253,7 +253,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 		if (length(action) == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("INSTEAD NOTHING rules on select are not implemented"),
+			errmsg("INSTEAD NOTHING rules on select are not implemented"),
 					 errhint("Use views instead.")));
 
 		/*
@@ -344,7 +344,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 		if (i != event_relation->rd_att->natts)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("select rule's target list has too few entries")));
+			   errmsg("select rule's target list has too few entries")));
 
 		/*
 		 * ... there must not be another ON SELECT rule already ...
@@ -358,9 +358,9 @@ DefineQueryRewrite(RuleStmt *stmt)
 				rule = event_relation->rd_rules->rules[i];
 				if (rule->event == CMD_SELECT)
 					ereport(ERROR,
-							(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-							 errmsg("\"%s\" is already a view",
-									RelationGetRelationName(event_relation))));
+					  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					   errmsg("\"%s\" is already a view",
+							  RelationGetRelationName(event_relation))));
 			}
 		}
 
@@ -383,8 +383,8 @@ DefineQueryRewrite(RuleStmt *stmt)
 						NAMEDATALEN - 4 - 4) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("view rule for \"%s\" must be named \"%s\"",
-								event_obj->relname, ViewSelectRuleName)));
+					  errmsg("view rule for \"%s\" must be named \"%s\"",
+							 event_obj->relname, ViewSelectRuleName)));
 			stmt->rulename = pstrdup(ViewSelectRuleName);
 		}
 
@@ -401,9 +401,9 @@ DefineQueryRewrite(RuleStmt *stmt)
 			scanDesc = heap_beginscan(event_relation, SnapshotNow, 0, NULL);
 			if (heap_getnext(scanDesc, ForwardScanDirection) != NULL)
 				ereport(ERROR,
-						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-						 errmsg("cannot convert non-empty table \"%s\" to a view",
-								event_obj->relname)));
+					  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				errmsg("cannot convert non-empty table \"%s\" to a view",
+					   event_obj->relname)));
 			heap_endscan(scanDesc);
 
 			RelisBecomingView = true;

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.h,v 1.22 2002/11/06 00:00:45 tgl Exp $
+ * $Id: geqo_misc.h,v 1.23 2003/08/04 00:43:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,6 @@
 extern void print_pool(FILE *fp, Pool *pool, int start, int stop);
 extern void print_gen(FILE *fp, Pool *pool, int generation);
 extern void print_edge_table(FILE *fp, Edge *edge_table, int num_gene);
-
 #endif   /* GEQO_DEBUG */
 
 #endif   /* GEQO_MISC_H */

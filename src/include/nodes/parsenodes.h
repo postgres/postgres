@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.243 2003/07/03 16:34:25 tgl Exp $
+ * $Id: parsenodes.h,v 1.244 2003/08/04 00:43:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@ typedef enum QuerySource
 	QSRC_INSTEAD_RULE,			/* added by unconditional INSTEAD rule */
 	QSRC_QUAL_INSTEAD_RULE,		/* added by conditional INSTEAD rule */
 	QSRC_NON_INSTEAD_RULE		/* added by non-INSTEAD rule */
-} QuerySource;
+}	QuerySource;
 
 
 /*****************************************************************************
@@ -45,7 +45,7 @@ typedef struct Query
 
 	CmdType		commandType;	/* select|insert|update|delete|utility */
 
-	QuerySource	querySource;	/* where did I come from? */
+	QuerySource querySource;	/* where did I come from? */
 
 	bool		canSetTag;		/* do I set the command result tag? */
 
@@ -175,12 +175,12 @@ typedef enum A_Expr_Kind
 	AEXPR_DISTINCT,				/* IS DISTINCT FROM - name must be "=" */
 	AEXPR_NULLIF,				/* NULLIF - name must be "=" */
 	AEXPR_OF					/* IS (not) OF - name must be "=" or "!=" */
-} A_Expr_Kind;
+}	A_Expr_Kind;
 
 typedef struct A_Expr
 {
 	NodeTag		type;
-	A_Expr_Kind	kind;			/* see above */
+	A_Expr_Kind kind;			/* see above */
 	List	   *name;			/* possibly-qualified name of operator */
 	Node	   *lexpr;			/* left argument, or NULL if none */
 	Node	   *rexpr;			/* right argument, or NULL if none */
@@ -352,7 +352,7 @@ typedef struct InhRelation
 	NodeTag		type;
 	RangeVar   *relation;
 	bool		including_defaults;
-} InhRelation;
+}	InhRelation;
 
 /*
  * IndexElem - index parameters (used in CREATE INDEX)
@@ -668,7 +668,8 @@ typedef struct SetOperationStmt
  * object type.
  */
 
-typedef enum ObjectType {
+typedef enum ObjectType
+{
 	OBJECT_AGGREGATE,
 	OBJECT_CAST,
 	OBJECT_COLUMN,
@@ -690,7 +691,7 @@ typedef enum ObjectType {
 	OBJECT_TYPE,
 	OBJECT_USER,
 	OBJECT_VIEW
-} ObjectType;
+}	ObjectType;
 
 /* ----------------------
  *		Create Schema Statement
@@ -739,7 +740,7 @@ typedef struct AlterTableStmt
 								 *	E = create toast table
 								 *	U = change owner
 								 *	L = CLUSTER ON
-								 *  o = DROP OIDS
+								 *	o = DROP OIDS
 								 *------------
 								 */
 	RangeVar   *relation;		/* table to work on */
@@ -773,7 +774,7 @@ typedef struct AlterDomainStmt
 								 * new owner */
 	Node	   *def;			/* definition of default or constraint */
 	DropBehavior behavior;		/* RESTRICT or CASCADE for DROP cases */
-} AlterDomainStmt;
+}	AlterDomainStmt;
 
 
 /* ----------------------
@@ -878,14 +879,15 @@ typedef enum OnCommitAction
 	ONCOMMIT_PRESERVE_ROWS,		/* ON COMMIT PRESERVE ROWS (do nothing) */
 	ONCOMMIT_DELETE_ROWS,		/* ON COMMIT DELETE ROWS */
 	ONCOMMIT_DROP				/* ON COMMIT DROP */
-} OnCommitAction;
+}	OnCommitAction;
 
 typedef struct CreateStmt
 {
 	NodeTag		type;
 	RangeVar   *relation;		/* relation to create */
 	List	   *tableElts;		/* column definitions (list of ColumnDef) */
-	List	   *inhRelations;	/* relations to inherit from (list of inhRelation) */
+	List	   *inhRelations;	/* relations to inherit from (list of
+								 * inhRelation) */
 	List	   *constraints;	/* constraints (list of Constraint nodes) */
 	bool		hasoids;		/* should it have OIDs? */
 	OnCommitAction oncommit;	/* what do we do at COMMIT? */
@@ -1094,7 +1096,7 @@ typedef struct AlterSeqStmt
 	NodeTag		type;
 	RangeVar   *sequence;		/* the sequence to alter */
 	List	   *options;
-} AlterSeqStmt;
+}	AlterSeqStmt;
 
 /* ----------------------
  *		Create {Aggregate|Operator|Type} Statement
@@ -1220,7 +1222,7 @@ typedef struct DeclareCursorStmt
 	char	   *portalname;		/* name of the portal (cursor) */
 	int			options;		/* bitmask of options (see above) */
 	Node	   *query;			/* the SELECT query */
-} DeclareCursorStmt;
+}	DeclareCursorStmt;
 
 /* ----------------------
  *		Close Portal Statement
@@ -1244,7 +1246,7 @@ typedef enum FetchDirection
 	/* for these, howMany indicates a position; only one row is fetched */
 	FETCH_ABSOLUTE,
 	FETCH_RELATIVE
-} FetchDirection;
+}	FetchDirection;
 
 #define FETCH_ALL	LONG_MAX
 
@@ -1269,8 +1271,9 @@ typedef struct IndexStmt
 	char	   *accessMethod;	/* name of access method (eg. btree) */
 	List	   *indexParams;	/* a list of IndexElem */
 	Node	   *whereClause;	/* qualification (partial-index predicate) */
-	List	   *rangetable;		/* range table for qual and/or expressions,
-								 * filled in by transformStmt() */
+	List	   *rangetable;		/* range table for qual and/or
+								 * expressions, filled in by
+								 * transformStmt() */
 	bool		unique;			/* is index unique? */
 	bool		primary;		/* is index on primary key? */
 	bool		isconstraint;	/* is it from a CONSTRAINT clause? */
@@ -1349,7 +1352,8 @@ typedef struct RenameStmt
 	RangeVar   *relation;		/* in case it's a table */
 	List	   *object;			/* in case it's some other object */
 	List	   *objarg;			/* argument types, if applicable */
-	char	   *subname;		/* name of contained object (column, rule, trigger, etc) */
+	char	   *subname;		/* name of contained object (column, rule,
+								 * trigger, etc) */
 	char	   *newname;		/* the new name */
 	ObjectType	renameType;		/* OBJECT_TABLE, OBJECT_COLUMN, etc */
 } RenameStmt;
@@ -1410,7 +1414,7 @@ typedef enum TransactionStmtKind
 	TRANS_STMT_START,			/* semantically identical to BEGIN */
 	TRANS_STMT_COMMIT,
 	TRANS_STMT_ROLLBACK
-} TransactionStmtKind;
+}	TransactionStmtKind;
 
 typedef struct TransactionStmt
 {
@@ -1602,7 +1606,8 @@ typedef struct ConstraintsSetStmt
 typedef struct ReindexStmt
 {
 	NodeTag		type;
-	ObjectType	kind;			/* OBJECT_INDEX, OBJECT_TABLE, OBJECT_DATABASE */
+	ObjectType	kind;			/* OBJECT_INDEX, OBJECT_TABLE,
+								 * OBJECT_DATABASE */
 	RangeVar   *relation;		/* Table or index to reindex */
 	const char *name;			/* name of database to reindex */
 	bool		force;
