@@ -1,17 +1,17 @@
 /*-------------------------------------------------------------------------
  *
- * parse_query.h
- *	  prototypes for parse_query.c.
+ * parse_relation.h
+ *	  prototypes for parse_relation.c.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_relation.h,v 1.11 1999/07/15 23:04:03 momjian Exp $
+ * $Id: parse_relation.h,v 1.12 1999/07/19 00:26:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-#ifndef PARSE_QUERY_H
-#define PARSE_RANGE_H
+#ifndef PARSE_RELATION_H
+#define PARSE_RELATION_H
 
 #include "parser/parse_node.h"
 
@@ -30,7 +30,5 @@ extern int	attnameAttNum(Relation rd, char *a);
 extern bool attnameIsSet(Relation rd, char *name);
 extern int	attnumAttNelems(Relation rd, int attid);
 extern Oid	attnumTypeId(Relation rd, int attid);
-extern void handleTargetColname(ParseState *pstate, char **resname,
-					char *refname, char *colname);
 
-#endif	 /* PARSE_RANGE_H */
+#endif	 /* PARSE_RELATION_H */

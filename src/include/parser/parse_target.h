@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_target.h,v 1.14 1999/07/15 23:04:03 momjian Exp $
+ * $Id: parse_target.h,v 1.15 1999/07/19 00:26:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,23 +15,14 @@
 
 #include "parser/parse_node.h"
 
-#define EXPR_COLUMN_FIRST	1
-#define EXPR_RELATION_FIRST 2
-
 extern List *transformTargetList(ParseState *pstate, List *targetlist);
-extern List *makeTargetNames(ParseState *pstate, List *cols);
-extern TargetEntry *MakeTargetEntryIdent(ParseState *pstate,
-					 Node *node,
-					 char **resname,
-					 char *refname,
-					 char *colname,
-					 bool resjunk);
+extern TargetEntry *transformTargetEntry(ParseState *pstate,
+										 Node *node, Node *expr,
+										 char *colname, bool resjunk);
+extern void updateTargetListEntry(ParseState *pstate, TargetEntry *tle,
+								  char *colname, List *indirection);
 extern Node *CoerceTargetExpr(ParseState *pstate, Node *expr,
-				 Oid type_id, Oid attrtype);
-TargetEntry *MakeTargetEntryExpr(ParseState *pstate,
-					char *colname,
-					Node *expr,
-					List *arrayRef,
-					bool resjunk);
+							  Oid type_id, Oid attrtype);
+extern List *makeTargetNames(ParseState *pstate, List *cols);
 
 #endif	 /* PARSE_TARGET_H */

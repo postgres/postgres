@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.57 1999/07/17 20:16:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.58 1999/07/19 00:26:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,31 +86,44 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 				 bool *isNull,
 				 bool *isDone)
 {
-	bool		dummy;
+	ArrayType  *array_scanner;
+	List	   *elt;
 	int			i = 0,
 				j = 0;
-	ArrayType  *array_scanner;
-	List	   *upperIndexpr,
-			   *lowerIndexpr;
-	Node	   *assgnexpr;
-	List	   *elt;
 	IntArray	upper,
 				lower;
 	int		   *lIndex;
-	char	   *dataPtr;
+	bool		dummy;
 
 	*isNull = false;
-	array_scanner = (ArrayType *) ExecEvalExpr(arrayRef->refexpr,
-											   econtext,
-											   isNull,
-											   isDone);
-	if (*isNull)
-		return (Datum) NULL;
 
-	upperIndexpr = arrayRef->refupperindexpr;
-
-	foreach(elt, upperIndexpr)
+	if (arrayRef->refexpr != NULL)
 	{
+		array_scanner = (ArrayType *) ExecEvalExpr(arrayRef->refexpr,
+												   econtext,
+												   isNull,
+												   isDone);
+		if (*isNull)
+			return (Datum) NULL;
+	}
+	else
+	{
+		/* Null refexpr indicates we are doing an INSERT into an array column.
+		 * For now, we just take the refassgnexpr (which the parser will have
+		 * ensured is an array value) and return it as-is, ignoring any
+		 * subscripts that may have been supplied in the INSERT column list.
+		 * This is a kluge, but it's not real clear what the semantics ought
+		 * to be...
+		 */
+		array_scanner = NULL;
+	}
+
+	foreach(elt, arrayRef->refupperindexpr)
+	{
+		if (i >= MAXDIM)
+			elog(ERROR, "ExecEvalArrayRef: can only handle %d dimensions",
+				 MAXDIM);
+
 		upper.indx[i++] = (int32) ExecEvalExpr((Node *) lfirst(elt),
 											   econtext,
 											   isNull,
@@ -119,12 +132,14 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 			return (Datum) NULL;
 	}
 
-	lowerIndexpr = arrayRef->reflowerindexpr;
-	lIndex = NULL;
-	if (lowerIndexpr != NIL)
+	if (arrayRef->reflowerindexpr != NIL)
 	{
-		foreach(elt, lowerIndexpr)
+		foreach(elt, arrayRef->reflowerindexpr)
 		{
+			if (j >= MAXDIM)
+				elog(ERROR, "ExecEvalArrayRef: can only handle %d dimensions",
+					 MAXDIM);
+
 			lower.indx[j++] = (int32) ExecEvalExpr((Node *) lfirst(elt),
 												   econtext,
 												   isNull,
@@ -137,30 +152,42 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 				 "ExecEvalArrayRef: upper and lower indices mismatch");
 		lIndex = lower.indx;
 	}
-
-	assgnexpr = arrayRef->refassgnexpr;
-	if (assgnexpr != NULL)
+	else
 	{
-		dataPtr = (char *) ExecEvalExpr((Node *)
-										assgnexpr, econtext,
-										isNull, &dummy);
+		lIndex = NULL;
+	}
+
+	if (arrayRef->refassgnexpr != NULL)
+	{
+		Datum sourceData = ExecEvalExpr(arrayRef->refassgnexpr,
+										econtext,
+										isNull,
+										&dummy);
 		if (*isNull)
 			return (Datum) NULL;
+
 		execConstByVal = arrayRef->refelembyval;
 		execConstLen = arrayRef->refelemlength;
+
+		if (array_scanner == NULL)
+			return sourceData;	/* XXX do something else? */
+
 		if (lIndex == NULL)
-			return (Datum) array_set(array_scanner, i, upper.indx, dataPtr,
+			return (Datum) array_set(array_scanner, i, upper.indx,
+									 (char *) sourceData,
 									 arrayRef->refelembyval,
 									 arrayRef->refelemlength,
 									 arrayRef->refattrlength, isNull);
 		return (Datum) array_assgn(array_scanner, i, upper.indx,
 								   lower.indx,
-								   (ArrayType *) dataPtr,
+								   (ArrayType *) sourceData,
 								   arrayRef->refelembyval,
 								   arrayRef->refelemlength, isNull);
 	}
+
 	execConstByVal = arrayRef->refelembyval;
 	execConstLen = arrayRef->refelemlength;
+
 	if (lIndex == NULL)
 		return (Datum) array_ref(array_scanner, i, upper.indx,
 								 arrayRef->refelembyval,

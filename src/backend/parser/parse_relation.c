@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.25 1999/07/17 20:17:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.26 1999/07/19 00:26:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,10 +25,8 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 
-static void checkTargetTypes(ParseState *pstate, char *target_colname,
-				 char *refname, char *colname);
 
-struct
+static struct
 {
 	char	   *field;
 	int			code;
@@ -96,7 +94,6 @@ refnameRangeTablePosn(ParseState *pstate, char *refname, int *sublevels_up)
 {
 	int			index;
 	List	   *temp;
-
 
 	if (sublevels_up)
 		*sublevels_up = 0;
@@ -175,7 +172,7 @@ colnameRangeTableEntry(ParseState *pstate, char *colname)
 /*
  * put new entry in pstate p_rtable structure, or return pointer
  * if pstate null
-*/
+ */
 RangeTblEntry *
 addRangeTableEntry(ParseState *pstate,
 				   char *relname,
@@ -239,38 +236,31 @@ addRangeTableEntry(ParseState *pstate,
 List *
 expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
 {
+	List	   *te_list = NIL;
+	RangeTblEntry *rte;
 	Relation	rel;
-	List	   *te_tail = NIL,
-			   *te_head = NIL;
-	Var		   *varnode;
 	int			varattno,
 				maxattrs;
-	RangeTblEntry *rte;
 
 	rte = refnameRangeTableEntry(pstate, refname);
 	if (rte == NULL)
 		rte = addRangeTableEntry(pstate, relname, refname, FALSE, FALSE);
 
 	rel = heap_open(rte->relid);
-
 	if (rel == NULL)
 		elog(ERROR, "Unable to expand all -- heap_open failed on %s",
 			 rte->refname);
 
 	maxattrs = RelationGetNumberOfAttributes(rel);
 
-	for (varattno = 0; varattno <= maxattrs - 1; varattno++)
+	for (varattno = 0; varattno < maxattrs; varattno++)
 	{
 		char	   *attrname;
-		char	   *resname = NULL;
+		Var		   *varnode;
 		TargetEntry *te = makeNode(TargetEntry);
 
-		attrname = pstrdup((rel->rd_att->attrs[varattno]->attname).data);
-		varnode = (Var *) make_var(pstate, rte->relid, refname, attrname);
-
-		handleTargetColname(pstate, &resname, refname, attrname);
-		if (resname != NULL)
-			attrname = resname;
+		attrname = pstrdup(rel->rd_att->attrs[varattno]->attname.data);
+		varnode = make_var(pstate, rte->relid, refname, attrname);
 
 		/*
 		 * Even if the elements making up a set are complex, the set
@@ -285,15 +275,12 @@ expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
 								(Oid) 0,
 								false);
 		te->expr = (Node *) varnode;
-		if (te_head == NIL)
-			te_head = te_tail = lcons(te, NIL);
-		else
-			te_tail = lappend(te_tail, te);
+		te_list = lappend(te_list, te);
 	}
 
 	heap_close(rel);
 
-	return te_head;
+	return te_list;
 }
 
 /*
@@ -377,103 +364,4 @@ attnumTypeId(Relation rd, int attid)
 	 * index
 	 */
 	return rd->rd_att->attrs[attid - 1]->atttypid;
-}
-
-/* handleTargetColname()
- * Use column names from insert.
- */
-void
-handleTargetColname(ParseState *pstate, char **resname,
-					char *refname, char *colname)
-{
-	if (pstate->p_is_insert)
-	{
-		if (pstate->p_insert_columns != NIL)
-		{
-			Ident	   *id = lfirst(pstate->p_insert_columns);
-
-			*resname = id->name;
-			pstate->p_insert_columns = lnext(pstate->p_insert_columns);
-		}
-		else
-			elog(ERROR, "INSERT has more expressions than target columns");
-	}
-	if (pstate->p_is_insert || pstate->p_is_update)
-		checkTargetTypes(pstate, *resname, refname, colname);
-}
-
-/* checkTargetTypes()
- * Checks value and target column types.
- */
-static void
-checkTargetTypes(ParseState *pstate, char *target_colname,
-				 char *refname, char *colname)
-{
-	Oid			attrtype_id,
-				attrtype_target;
-	int			resdomno_id,
-				resdomno_target;
-	RangeTblEntry *rte;
-
-	if (target_colname == NULL || colname == NULL)
-		return;
-
-	if (refname != NULL)
-		rte = refnameRangeTableEntry(pstate, refname);
-	else
-	{
-		rte = colnameRangeTableEntry(pstate, colname);
-		if (rte == (RangeTblEntry *) NULL)
-			elog(ERROR, "Attribute %s not found", colname);
-		refname = rte->refname;
-	}
-
-/*
-	if (pstate->p_is_insert && rte == pstate->p_target_rangetblentry)
-		elog(ERROR, "'%s' not available in this context", colname);
-*/
-	resdomno_id = get_attnum(rte->relid, colname);
-	attrtype_id = get_atttype(rte->relid, resdomno_id);
-
-	resdomno_target = attnameAttNum(pstate->p_target_relation, target_colname);
-	attrtype_target = attnumTypeId(pstate->p_target_relation, resdomno_target);
-
-#ifdef NOT_USED
-	if ((attrtype_id != attrtype_target)
-		|| (get_atttypmod(rte->relid, resdomno_id) !=
-	   get_atttypmod(pstate->p_target_relation->rd_id, resdomno_target)))
-	{
-		if (can_coerce_type(1, &attrtype_id, &attrtype_target))
-		{
-			Node	   *expr = coerce_type(pstate, expr, attrtype_id,
-										   attrtype_target,
-										   get_atttypmod(pstate->p_target_relation->rd_id, resdomno_target));
-
-			elog(ERROR, "Type %s(%d) can be coerced to match target column %s(%d)",
-				 colname, get_atttypmod(rte->relid, resdomno_id),
-				 target_colname, get_atttypmod(pstate->p_target_relation->rd_id, resdomno_target));
-		}
-		else
-		{
-			elog(ERROR, "Type or size of %s(%d) does not match target column %s(%d)",
-				 colname, get_atttypmod(rte->relid, resdomno_id),
-				 target_colname, get_atttypmod(pstate->p_target_relation->rd_id, resdomno_target));
-		}
-	}
-#else
-	if (attrtype_id != attrtype_target)
-		elog(ERROR, "Type of '%s' does not match target column '%s'",
-			 colname, target_colname);
-
-	if (attrtype_id == BPCHAROID &&
-		get_atttypmod(rte->relid, resdomno_id) !=
-		get_atttypmod(pstate->p_target_relation->rd_id, resdomno_target))
-		elog(ERROR, "Length of '%s' is not equal to the length of target column '%s'",
-			 colname, target_colname);
-	if (attrtype_id == VARCHAROID &&
-		get_atttypmod(rte->relid, resdomno_id) >
-		get_atttypmod(pstate->p_target_relation->rd_id, resdomno_target))
-		elog(ERROR, "Length of '%s' is longer than length of target column '%s'",
-			 colname, target_colname);
-#endif
 }

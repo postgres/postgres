@@ -7,12 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.41 1999/07/17 20:17:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.42 1999/07/19 00:26:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
+
 #include "access/heapam.h"
 #include "nodes/relation.h"
 #include "parse.h"
@@ -29,34 +30,39 @@
 
 static char *clauseText[] = {"ORDER", "GROUP"};
 
-static TargetEntry *
-			findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause);
-
+static TargetEntry *findTargetlistEntry(ParseState *pstate, Node *node,
+										List *tlist, int clause);
 static void parseFromClause(ParseState *pstate, List *frmList, Node **qual);
+static char	*transformTableEntry(ParseState *pstate, RangeVar *r);
 
 #ifdef ENABLE_OUTER_JOINS
-Node	   *transformUsingClause(ParseState *pstate, List *onList, char *lname, char *rname);
-
+static Node *transformUsingClause(ParseState *pstate, List *onList,
+								  char *lname, char *rname);
 #endif
 
-static char	*transformTableEntry(ParseState *pstate, RangeVar *r);
 
 
 /*
  * makeRangeTable -
- *	  make a range table with the specified relation (optional) and the
- *	  from_clause.
+ *	  Build the initial range table from the FROM clause.
  */
 void
-makeRangeTable(ParseState *pstate, char *relname, List *frmList, Node **qual)
+makeRangeTable(ParseState *pstate, List *frmList, Node **qual)
+{
+	/* Currently, nothing to do except this: */
+	parseFromClause(pstate, frmList, qual);
+}
+
+/*
+ * setTargetTable
+ *	  Add the target relation of INSERT or UPDATE to the range table,
+ *	  and make the special links to it in the ParseState.
+ */
+void
+setTargetTable(ParseState *pstate, char *relname)
 {
 	RangeTblEntry *rte;
 	int			sublevels_up;
-
-	parseFromClause(pstate, frmList, qual);
-
-	if (relname == NULL)
-		return;
 
 	if ((refnameRangeTablePosn(pstate, relname, &sublevels_up) == 0)
 		|| (sublevels_up != 0))
@@ -136,7 +142,7 @@ makeAttr(char *relname, char *attname)
 /* transformUsingClause()
  * Take an ON or USING clause from a join expression and expand if necessary.
  */
-Node *
+static Node *
 transformUsingClause(ParseState *pstate, List *onList, char *lname, char *rname)
 {
 	A_Expr	   *expr = NULL;
@@ -295,7 +301,8 @@ parseFromClause(ParseState *pstate, List *frmList, Node **qual)
 				if (IsA(j->quals, List))
 					j->quals = lcons(transformUsingClause(pstate, (List *) j->quals, lname, rname), NIL);
 
-				Assert(qual != NULL);
+				if (qual == NULL)
+					elog(ERROR, "JOIN/ON not supported in this context");
 
 				if (*qual == NULL)
 					*qual = lfirst(j->quals);
@@ -329,145 +336,111 @@ parseFromClause(ParseState *pstate, List *frmList, Node **qual)
 	}
 }
 
+
 /*
  *	findTargetlistEntry -
- *	  returns the Resdom in the target list matching the specified varname
- *	  and range. If none exist one is created.
+ *	  Returns the targetlist entry matching the given (untransformed) node.
+ *	  If no matching entry exists, one is created and appended to the target
+ *	  list as a "resjunk" node.
  *
- *	  Rewritten for ver 6.4 to handle expressions in the GROUP/ORDER BY clauses.
- *	   - daveh@insightdist.com	1998-07-31
- *
+ * node		the ORDER BY or GROUP BY expression to be matched
+ * tlist	the existing target list (NB: this cannot be NIL, which is a
+ *			good thing since we'd be unable to append to it...)
+ * clause	identifies clause type for error messages.
  */
 static TargetEntry *
 findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 {
-	List	   *l;
-	int			rtable_pos = 0,
-				target_pos = 0,
-				targetlist_pos = 0;
 	TargetEntry *target_result = NULL;
-	Value	   *val = NULL;
-	char	   *relname = NULL;
-	char	   *name = NULL;
-	Node	   *expr = NULL;
-	int			relCnt = 0;
+	List	   *tl;
+	Node	   *expr;
 
-	/* Pull out some values before looping thru target list  */
-	switch (nodeTag(node))
+	/*----------
+	 * Handle two special cases as mandated by the SQL92 spec:
+	 *
+	 * 1. ORDER/GROUP BY ColumnName
+	 *    For a bare identifier, we search for a matching column name
+	 *	  in the existing target list.  Multiple matches are an error
+	 *	  unless they refer to identical values; for example,
+	 *	  we allow  SELECT a, a FROM table ORDER BY a
+	 *	  but not   SELECT a AS b, b FROM table ORDER BY b
+	 *	  If no match is found, we fall through and treat the identifier
+	 *	  as an expression.
+	 *
+	 * 2. ORDER/GROUP BY IntegerConstant
+	 *	  This means to use the n'th item in the existing target list.
+	 *	  Note that it would make no sense to order/group by an actual
+	 *	  constant, so this does not create a conflict with our extension
+	 *	  to order/group by an expression.
+	 *
+	 * Note that pre-existing resjunk targets must not be used in either case.
+	 *----------
+	 */
+	if (IsA(node, Ident) && ((Ident *) node)->indirection == NIL)
 	{
-		case T_Attr:
-			relname = ((Attr *) node)->relname;
-			val = (Value *) lfirst(((Attr *) node)->attrs);
-			name = strVal(val);
-			rtable_pos = refnameRangeTablePosn(pstate, relname, NULL);
-			relCnt = length(pstate->p_rtable);
-			break;
+		char	   *name = ((Ident *) node)->name;
+		foreach(tl, tlist)
+		{
+			TargetEntry *tle = (TargetEntry *) lfirst(tl);
+			Resdom	   *resnode = tle->resdom;
 
-		case T_Ident:
-			name = ((Ident *) node)->name;
-			relCnt = length(pstate->p_rtable);
-			break;
+			if (!resnode->resjunk &&
+				strcmp(resnode->resname, name) == 0)
+			{
+				if (target_result != NULL)
+				{
+					if (! equal(target_result->expr, tle->expr))
+						elog(ERROR, "%s BY '%s' is ambiguous",
+							 clauseText[clause], name);
+				}
+				else
+					target_result = tle;
+				/* Stay in loop to check for ambiguity */
+			}
+		}
+		if (target_result != NULL)
+			return target_result; /* return the first match */
+	}
+	if (IsA(node, A_Const))
+	{
+		Value	   *val = &((A_Const *) node)->val;
+		int			targetlist_pos = 0;
+		int			target_pos;
 
-		case T_A_Const:
-			val = &((A_Const *) node)->val;
+		if (nodeTag(val) != T_Integer)
+			elog(ERROR, "Non-integer constant in %s BY", clauseText[clause]);
+		target_pos = intVal(val);
+		foreach(tl, tlist)
+		{
+			TargetEntry *tle = (TargetEntry *) lfirst(tl);
+			Resdom	   *resnode = tle->resdom;
 
-			if (nodeTag(val) != T_Integer)
-				elog(ERROR, "Illegal Constant in %s BY", clauseText[clause]);
-			target_pos = intVal(val);
-			break;
-
-		case T_FuncCall:
-		case T_A_Expr:
-			expr = transformExpr(pstate, node, EXPR_COLUMN_FIRST);
-			break;
-
-		default:
-			elog(ERROR, "Illegal %s BY node = %d", clauseText[clause], nodeTag(node));
+			if (!resnode->resjunk)
+			{
+				if (++targetlist_pos == target_pos)
+					return tle;	/* return the unique match */
+			}
+		}
+		elog(ERROR, "%s BY position %d is not in target list",
+			 clauseText[clause], target_pos);
 	}
 
 	/*
-	 * Loop through target entries and try to match to node
+	 * Otherwise, we have an expression (this is a Postgres extension
+	 * not found in SQL92).  Convert the untransformed node to a
+	 * transformed expression, and search for a match in the tlist.
+	 * NOTE: it doesn't really matter whether there is more than one
+	 * match.  Also, we are willing to match a resjunk target here,
+	 * though the above cases must ignore resjunk targets.
 	 */
-	foreach(l, tlist)
+	expr = transformExpr(pstate, node, EXPR_COLUMN_FIRST);
+
+	foreach(tl, tlist)
 	{
-		TargetEntry *target = (TargetEntry *) lfirst(l);
-		Resdom	   *resnode = target->resdom;
-		Var		   *var = (Var *) target->expr;
-		char	   *resname = resnode->resname;
-		int			test_rtable_pos = var->varno;
+		TargetEntry *tle = (TargetEntry *) lfirst(tl);
 
-		++targetlist_pos;
-
-		switch (nodeTag(node))
-		{
-			case T_Attr:
-				if (strcmp(resname, name) == 0 && rtable_pos == test_rtable_pos)
-				{
-
-					/*
-					 * Check for only 1 table & ORDER BY -ambiguity does
-					 * not matter here
-					 */
-					if (clause == ORDER_CLAUSE && relCnt == 1)
-						return target;
-
-					if (target_result != NULL)
-						elog(ERROR, "%s BY '%s' is ambiguous", clauseText[clause], name);
-					else
-						target_result = target;
-					/* Stay in loop to check for ambiguity */
-				}
-				break;
-
-			case T_Ident:
-				if (strcmp(resname, name) == 0)
-				{
-
-					/*
-					 * Check for only 1 table & ORDER BY  -ambiguity does
-					 * not matter here
-					 */
-					if (clause == ORDER_CLAUSE && relCnt == 1)
-						return target;
-
-					if (target_result != NULL)
-						elog(ERROR, "%s BY '%s' is ambiguous", clauseText[clause], name);
-					else
-						target_result = target;
-					/* Stay in loop to check for ambiguity	*/
-				}
-				break;
-
-			case T_A_Const:
-				if (target_pos == targetlist_pos)
-				{
-					/* Can't be ambigious and we got what we came for  */
-					return target;
-				}
-				break;
-
-			case T_FuncCall:
-			case T_A_Expr:
-				if (equal(expr, target->expr))
-				{
-
-					/*
-					 * Check for only 1 table & ORDER BY  -ambiguity does
-					 * not matter here
-					 */
-					if (clause == ORDER_CLAUSE)
-						return target;
-
-					if (target_result != NULL)
-						elog(ERROR, "GROUP BY has ambiguous expression");
-					else
-						target_result = target;
-				}
-				break;
-
-			default:
-				elog(ERROR, "Illegal %s BY node = %d", clauseText[clause], nodeTag(node));
-		}
+		if (equal(expr, tle->expr))
+			return tle;
 	}
 
 	/*
@@ -475,49 +448,11 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 	 * the end of the target list.	 This target is set to be  resjunk =
 	 * TRUE so that it will not be projected into the final tuple.
 	 */
-	if (target_result == NULL)
-	{
-		switch (nodeTag(node))
-		{
-			case T_Attr:
-				target_result = MakeTargetEntryIdent(pstate, node,
-										 &((Attr *) node)->relname, NULL,
-										 ((Attr *) node)->relname, true);
-				lappend(tlist, target_result);
-				break;
-
-			case T_Ident:
-				target_result = MakeTargetEntryIdent(pstate, node,
-										   &((Ident *) node)->name, NULL,
-										   ((Ident *) node)->name, true);
-				lappend(tlist, target_result);
-				break;
-
-			case T_A_Const:
-
-				/*
-				 * If we got this far, then must have been an out-of-range
-				 * column number
-				 */
-				elog(ERROR, "%s BY position %d is not in target list", clauseText[clause], target_pos);
-				break;
-
-			case T_FuncCall:
-			case T_A_Expr:
-				target_result = MakeTargetEntryExpr(pstate, "resjunk", expr, false, true);
-				lappend(tlist, target_result);
-				break;
-
-			default:
-				elog(ERROR, "Illegal %s BY node = %d", clauseText[clause], nodeTag(node));
-				break;
-		}
-	}
+	target_result = transformTargetEntry(pstate, node, expr, NULL, true);
+	lappend(tlist, target_result);
 
 	return target_result;
 }
-
-
 
 
 /*
@@ -529,55 +464,42 @@ List *
 transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
 {
 	List	   *glist = NIL,
-			   *gl = NIL;
+			   *gl,
+			   *othergl;
+	int			nextgroupref = 1;
 
-	while (grouplist != NIL)
+	foreach(gl, grouplist)
 	{
-		GroupClause *grpcl = makeNode(GroupClause);
 		TargetEntry *restarget;
 		Resdom	   *resdom;
 
-		restarget = findTargetlistEntry(pstate, lfirst(grouplist), targetlist, GROUP_CLAUSE);
-
+		restarget = findTargetlistEntry(pstate, lfirst(gl),
+										targetlist, GROUP_CLAUSE);
 		resdom = restarget->resdom;
-		grpcl->grpOpoid = oprid(oper("<",
-									 resdom->restype,
-									 resdom->restype, false));
-		if (glist == NIL)
+
+		/* avoid making duplicate grouplist entries */
+		foreach(othergl, glist)
 		{
-			int			groupref = length(glist) + 1;
+			GroupClause *gcl = (GroupClause *) lfirst(othergl);
 
-			restarget->resdom->resgroupref = groupref;
-			grpcl->tleGroupref = groupref;
-
-			gl = glist = lcons(grpcl, NIL);
+			if (equal(get_groupclause_expr(gcl, targetlist),
+					  restarget->expr))
+				break;
 		}
-		else
+
+		if (othergl == NIL)		/* not in grouplist already */
 		{
-			List	   *i;
+			GroupClause *grpcl = makeNode(GroupClause);
 
-			foreach(i, glist)
-			{
-				GroupClause *gcl = (GroupClause *) lfirst(i);
+			grpcl->tleGroupref = nextgroupref++;
+			resdom->resgroupref = grpcl->tleGroupref;
 
-				if (equal(get_groupclause_expr(gcl, targetlist),
-						  restarget->expr))
-					break;
-			}
-			if (i == NIL)		/* not in grouplist already */
-			{
-				int			groupref = length(glist) + 1;
+			grpcl->grpOpoid = oprid(oper("<",
+										 resdom->restype,
+										 resdom->restype, false));
 
-				restarget->resdom->resgroupref = groupref;
-				grpcl->tleGroupref = groupref;
-
-				lnext(gl) = lcons(grpcl, NIL);
-				gl = lnext(gl);
-			}
-			else
-				pfree(grpcl);	/* get rid of this */
+			glist = lappend(glist, grpcl);
 		}
-		grouplist = lnext(grouplist);
 	}
 
 	return glist;
@@ -604,7 +526,8 @@ transformSortClause(ParseState *pstate,
 		TargetEntry *restarget;
 		Resdom	   *resdom;
 
-		restarget = findTargetlistEntry(pstate, sortby->node, targetlist, ORDER_CLAUSE);
+		restarget = findTargetlistEntry(pstate, sortby->node,
+										targetlist, ORDER_CLAUSE);
 
 		sortcl->resdom = resdom = restarget->resdom;
 

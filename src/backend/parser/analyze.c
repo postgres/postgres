@@ -5,11 +5,10 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.115 1999/07/17 20:17:19 momjian Exp $
+ *	$Id: analyze.c,v 1.116 1999/07/19 00:26:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-
 
 #include "postgres.h"
 
@@ -38,8 +37,10 @@ static Query *transformCreateStmt(ParseState *pstate, CreateStmt *stmt);
 static void transformForUpdate(Query *qry, List *forUpdate);
 void		CheckSelectForUpdate(Query *qry);
 
-List	   *extras_before = NIL;
-List	   *extras_after = NIL;
+/* kluge to return extra info from transformCreateStmt() */
+static List	   *extras_before;
+static List	   *extras_after;
+
 
 /*
  * parse_analyze -
@@ -58,17 +59,23 @@ parse_analyze(List *pl, ParseState *parentParseState)
 
 	while (pl != NIL)
 	{
+		extras_before = extras_after = NIL;
 		pstate = make_parsestate(parentParseState);
+
 		parsetree = transformStmt(pstate, lfirst(pl));
 		if (pstate->p_target_relation != NULL)
 			heap_close(pstate->p_target_relation);
+		pstate->p_target_relation = NULL;
+		pstate->p_target_rangetblentry = NULL;
 
 		while (extras_before != NIL)
 		{
 			result = lappend(result,
-						   transformStmt(pstate, lfirst(extras_before)));
+							 transformStmt(pstate, lfirst(extras_before)));
 			if (pstate->p_target_relation != NULL)
 				heap_close(pstate->p_target_relation);
+			pstate->p_target_relation = NULL;
+			pstate->p_target_rangetblentry = NULL;
 			extras_before = lnext(extras_before);
 		}
 
@@ -80,11 +87,13 @@ parse_analyze(List *pl, ParseState *parentParseState)
 							 transformStmt(pstate, lfirst(extras_after)));
 			if (pstate->p_target_relation != NULL)
 				heap_close(pstate->p_target_relation);
+			pstate->p_target_relation = NULL;
+			pstate->p_target_rangetblentry = NULL;
 			extras_after = lnext(extras_after);
 		}
 
-		pl = lnext(pl);
 		pfree(pstate);
+		pl = lnext(pl);
 	}
 
 	return result;
@@ -148,9 +157,9 @@ transformStmt(ParseState *pstate, Node *parseTree)
 				result->commandType = CMD_UTILITY;
 				result->utilityStmt = (Node *) parseTree;
 				MemoryContextSwitchTo(oldcontext);
-				break;
-
 			}
+			break;
+
 		case T_ExplainStmt:
 			{
 				ExplainStmt *n = (ExplainStmt *) parseTree;
@@ -215,7 +224,8 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	qry->commandType = CMD_DELETE;
 
 	/* set up a range table */
-	makeRangeTable(pstate, stmt->relname, NULL, NULL);
+	makeRangeTable(pstate, NULL, NULL);
+	setTargetTable(pstate, stmt->relname);
 
 	qry->uniqueFlag = NULL;
 
@@ -240,135 +250,70 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 static Query *
 transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 {
-	Query	   *qry = makeNode(Query);	/* make a new query tree */
+	Query	   *qry = makeNode(Query);
+	Node	   *fromQual;
 	List	   *icolumns;
+	List	   *tl;
+	TupleDesc	rd_att;
 
 	qry->commandType = CMD_INSERT;
 	pstate->p_is_insert = true;
 
-	/* set up a range table */
-	makeRangeTable(pstate, stmt->relname, stmt->fromClause, NULL);
+	/*----------
+	 * Initial processing steps are just like SELECT, which should not
+	 * be surprising, since we may be handling an INSERT ... SELECT.
+	 * It is important that we finish processing all the SELECT subclauses
+	 * before we start doing any INSERT-specific processing; otherwise
+	 * the behavior of SELECT within INSERT might be different from a
+	 * stand-alone SELECT.  (Indeed, Postgres up through 6.5 had bugs of
+	 * just that nature...)
+	 *----------
+	 */
+
+	/* set up a range table --- note INSERT target is not in it yet */
+	makeRangeTable(pstate, stmt->fromClause, &fromQual);
 
 	qry->uniqueFlag = stmt->unique;
 
-	/* fix the target list */
-	icolumns = pstate->p_insert_columns = makeTargetNames(pstate, stmt->cols);
-
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
 
-	/* DEFAULT handling */
-	if (length(qry->targetList) < pstate->p_target_relation->rd_att->natts &&
-		pstate->p_target_relation->rd_att->constr &&
-		pstate->p_target_relation->rd_att->constr->num_defval > 0)
-	{
-		Form_pg_attribute *att = pstate->p_target_relation->rd_att->attrs;
-		AttrDefault *defval = pstate->p_target_relation->rd_att->constr->defval;
-		int			ndef = pstate->p_target_relation->rd_att->constr->num_defval;
+	qry->qual = transformWhereClause(pstate, stmt->whereClause, fromQual);
 
-		/*
-		 * if stmt->cols == NIL then makeTargetNames returns list of all
-		 * attrs. May have to shorten icolumns list...
-		 */
-		if (stmt->cols == NIL)
-		{
-			List	   *extrl;
-			int			i = length(qry->targetList);
-
-			foreach(extrl, icolumns)
-			{
-
-				/*
-				 * decrements first, so if we started with zero items it
-				 * will now be negative
-				 */
-				if (--i <= 0)
-					break;
-			}
-
-			/*
-			 * this an index into the targetList, so make sure we had one
-			 * to start...
-			 */
-			if (i >= 0)
-			{
-				freeList(lnext(extrl));
-				lnext(extrl) = NIL;
-			}
-			else
-				icolumns = NIL;
-		}
-
-		while (ndef-- > 0)
-		{
-			List	   *tl;
-			Ident	   *id;
-			TargetEntry *te;
-
-			foreach(tl, icolumns)
-			{
-				id = (Ident *) lfirst(tl);
-				if (namestrcmp(&(att[defval[ndef].adnum - 1]->attname), id->name) == 0)
-					break;
-			}
-			if (tl != NIL)		/* something given for this attr */
-				continue;
-
-			/*
-			 * Nothing given for this attr with DEFAULT expr, so add new
-			 * TargetEntry to qry->targetList. Note, that we set resno to
-			 * defval[ndef].adnum: it's what
-			 * transformTargetList()->make_targetlist_expr() does for
-			 * INSERT ... SELECT. But for INSERT ... VALUES
-			 * pstate->p_last_resno is used. It doesn't matter for
-			 * "normal" using (planner creates proper target list in
-			 * preptlist.c), but may break RULEs in some way. It seems
-			 * better to create proper target list here...
-			 */
-			te = makeTargetEntry(makeResdom(defval[ndef].adnum,
-								   att[defval[ndef].adnum - 1]->atttypid,
-								  att[defval[ndef].adnum - 1]->atttypmod,
-			   pstrdup(nameout(&(att[defval[ndef].adnum - 1]->attname))),
-											0, 0, false),
-							  (Node *) stringToNode(defval[ndef].adbin));
-			qry->targetList = lappend(qry->targetList, te);
-		}
-	}
-
-	/* fix where clause */
-	qry->qual = transformWhereClause(pstate, stmt->whereClause, NULL);
-
-	/*
-	 * The havingQual has a similar meaning as "qual" in the where
-	 * statement. So we can easily use the code from the "where clause"
-	 * with some additional traversals done in
-	 * .../optimizer/plan/planner.c
+	/* Initial processing of HAVING clause is just like WHERE clause.
+	 * Additional work will be done in optimizer/plan/planner.c.
 	 */
 	qry->havingQual = transformWhereClause(pstate, stmt->havingClause, NULL);
-
-	qry->hasSubLinks = pstate->p_hasSubLinks;
-
-	/* now the range table will not change */
-	qry->rtable = pstate->p_rtable;
-	qry->resultRelation = refnameRangeTablePosn(pstate, stmt->relname, NULL);
 
 	qry->groupClause = transformGroupClause(pstate,
 											stmt->groupClause,
 											qry->targetList);
 
-	/* fix order clause */
+	/* An InsertStmt has no sortClause, but we still call
+	 * transformSortClause because it also handles uniqueFlag.
+	 */
 	qry->sortClause = transformSortClause(pstate,
 										  NIL,
 										  NIL,
 										  qry->targetList,
 										  qry->uniqueFlag);
 
+	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasAggs = pstate->p_hasAggs;
 	if (pstate->p_hasAggs || qry->groupClause)
 		parseCheckAggregates(pstate, qry);
 
 	/*
+	 * If there is a havingQual but there are no aggregates, then there is
+	 * something wrong with the query because HAVING must contain
+	 * aggregates in its expressions! Otherwise the query could have been
+	 * formulated using the WHERE clause.
+	 */
+	if (qry->havingQual && ! qry->hasAggs)
+		elog(ERROR, "SELECT/HAVING requires aggregates to be valid");
+
+	/*
 	 * The INSERT INTO ... SELECT ... could have a UNION in child, so
-	 * unionClause may be false ,
+	 * unionClause may be false
 	 */
 	qry->unionall = stmt->unionall;
 
@@ -380,15 +325,98 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	qry->intersectClause = stmt->intersectClause;
 
 	/*
-	 * If there is a havingQual but there are no aggregates, then there is
-	 * something wrong with the query because having must contain
-	 * aggregates in its expressions! Otherwise the query could have been
-	 * formulated using the where clause.
+	 * Now we are done with SELECT-like processing, and can get on with
+	 * transforming the target list to match the INSERT target columns.
+	 *
+	 * In particular, it's time to add the INSERT target to the rangetable.
+	 * (We didn't want it there until now since it shouldn't be visible in
+	 * the SELECT part.)
 	 */
-	if ((qry->hasAggs == false) && (qry->havingQual != NULL))
+	setTargetTable(pstate, stmt->relname);
+
+	/* now the range table will not change */
+	qry->rtable = pstate->p_rtable;
+	qry->resultRelation = refnameRangeTablePosn(pstate, stmt->relname, NULL);
+
+	/* Prepare to assign non-conflicting resnos to resjunk attributes */
+	if (pstate->p_last_resno <= pstate->p_target_relation->rd_rel->relnatts)
+		pstate->p_last_resno = pstate->p_target_relation->rd_rel->relnatts + 1;
+
+	/* Validate stmt->cols list, or build default list if no list given */
+	icolumns = makeTargetNames(pstate, stmt->cols);
+
+	/* Prepare non-junk columns for assignment to target table */
+	foreach(tl, qry->targetList)
 	{
-		elog(ERROR, "SELECT/HAVING requires aggregates to be valid");
-		return (Query *) NIL;
+		TargetEntry *tle = (TargetEntry *) lfirst(tl);
+		Resdom	   *resnode = tle->resdom;
+		Ident	   *id;
+
+		if (resnode->resjunk)
+		{
+			/* Resjunk nodes need no additional processing, but be sure they
+			 * have names and resnos that do not match any target columns;
+			 * else rewriter or planner might get confused.
+			 */
+			resnode->resname = "?resjunk?";
+			resnode->resno = (AttrNumber) pstate->p_last_resno++;
+			continue;
+		}
+		if (icolumns == NIL)
+			elog(ERROR, "INSERT has more expressions than target columns");
+		id = (Ident *) lfirst(icolumns);
+		updateTargetListEntry(pstate, tle, id->name, id->indirection);
+		icolumns = lnext(icolumns);
+	}
+
+	/*
+	 * Add targetlist items to assign DEFAULT values to any columns that
+	 * have defaults and were not assigned to by the user.
+	 * XXX wouldn't it make more sense to do this further downstream,
+	 * after the rule rewriter?
+	 */
+	rd_att = pstate->p_target_relation->rd_att;
+	if (rd_att->constr && rd_att->constr->num_defval > 0)
+	{
+		Form_pg_attribute *att = rd_att->attrs;
+		AttrDefault *defval = rd_att->constr->defval;
+		int			ndef = rd_att->constr->num_defval;
+
+		while (ndef-- > 0)
+		{
+			Form_pg_attribute thisatt = att[defval[ndef].adnum - 1];
+			TargetEntry *te;
+
+			foreach(tl, qry->targetList)
+			{
+				TargetEntry *tle = (TargetEntry *) lfirst(tl);
+				Resdom	   *resnode = tle->resdom;
+
+				if (resnode->resjunk)
+					continue;	/* ignore resjunk nodes */
+				if (namestrcmp(&(thisatt->attname), resnode->resname) == 0)
+					break;
+			}
+			if (tl != NIL)		/* something given for this attr */
+				continue;
+			/*
+			 * No user-supplied value, so add a targetentry with DEFAULT expr
+			 * and correct data for the target column.
+			 */
+			te = makeTargetEntry(
+				makeResdom(defval[ndef].adnum,
+						   thisatt->atttypid,
+						   thisatt->atttypmod,
+						   pstrdup(nameout(&(thisatt->attname))),
+						   0, 0, false),
+				stringToNode(defval[ndef].adbin));
+			qry->targetList = lappend(qry->targetList, te);
+			/*
+			 * Make sure the value is coerced to the target column type
+			 * (might not be right type if it's not a constant!)
+			 */
+			updateTargetListEntry(pstate, te, te->resdom->resname, NIL);
+		}
 	}
 
 	if (stmt->forUpdate != NULL)
@@ -963,12 +991,12 @@ static Query *
 transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
-	Node	   *qual;
+	Node	   *fromQual;
 
 	qry->commandType = CMD_SELECT;
 
 	/* set up a range table */
-	makeRangeTable(pstate, NULL, stmt->fromClause, &qual);
+	makeRangeTable(pstate, stmt->fromClause, &fromQual);
 
 	qry->uniqueFlag = stmt->unique;
 
@@ -978,16 +1006,16 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
 
-	qry->qual = transformWhereClause(pstate, stmt->whereClause, qual);
+	qry->qual = transformWhereClause(pstate, stmt->whereClause, fromQual);
 
-	/*
-	 * The havingQual has a similar meaning as "qual" in the where
-	 * statement. So we can easily use the code from the "where clause"
-	 * with some additional traversals done in optimizer/plan/planner.c
+	/* Initial processing of HAVING clause is just like WHERE clause.
+	 * Additional work will be done in optimizer/plan/planner.c.
 	 */
 	qry->havingQual = transformWhereClause(pstate, stmt->havingClause, NULL);
 
-	qry->hasSubLinks = pstate->p_hasSubLinks;
+	qry->groupClause = transformGroupClause(pstate,
+											stmt->groupClause,
+											qry->targetList);
 
 	qry->sortClause = transformSortClause(pstate,
 										  stmt->sortClause,
@@ -995,14 +1023,19 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 										  qry->targetList,
 										  qry->uniqueFlag);
 
-	qry->groupClause = transformGroupClause(pstate,
-											stmt->groupClause,
-											qry->targetList);
-	qry->rtable = pstate->p_rtable;
-
+	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasAggs = pstate->p_hasAggs;
 	if (pstate->p_hasAggs || qry->groupClause)
 		parseCheckAggregates(pstate, qry);
+
+	/*
+	 * If there is a havingQual but there are no aggregates, then there is
+	 * something wrong with the query because HAVING must contain
+	 * aggregates in its expressions! Otherwise the query could have been
+	 * formulated using the WHERE clause.
+	 */
+	if (qry->havingQual && ! qry->hasAggs)
+		elog(ERROR, "SELECT/HAVING requires aggregates to be valid");
 
 	/*
 	 * The INSERT INTO ... SELECT ... could have a UNION in child, so
@@ -1017,17 +1050,7 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->unionClause = stmt->unionClause;
 	qry->intersectClause = stmt->intersectClause;
 
-	/*
-	 * If there is a havingQual but there are no aggregates, then there is
-	 * something wrong with the query because having must contain
-	 * aggregates in its expressions! Otherwise the query could have been
-	 * formulated using the where clause.
-	 */
-	if ((qry->hasAggs == false) && (qry->havingQual != NULL))
-	{
-		elog(ERROR, "SELECT/HAVING requires aggregates to be valid");
-		return (Query *) NIL;
-	}
+	qry->rtable = pstate->p_rtable;
 
 	if (stmt->forUpdate != NULL)
 		transformForUpdate(qry, stmt->forUpdate);
@@ -1044,6 +1067,8 @@ static Query *
 transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
+	List	   *origTargetList;
+	List	   *tl;
 
 	qry->commandType = CMD_UPDATE;
 	pstate->p_is_update = true;
@@ -1052,20 +1077,58 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	 * the FROM clause is non-standard SQL syntax. We used to be able to
 	 * do this with REPLACE in POSTQUEL so we keep the feature.
 	 */
-	makeRangeTable(pstate, stmt->relname, stmt->fromClause, NULL);
+	makeRangeTable(pstate, stmt->fromClause, NULL);
+	setTargetTable(pstate, stmt->relname);
 
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
 
 	qry->qual = transformWhereClause(pstate, stmt->whereClause, NULL);
+
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 
 	qry->rtable = pstate->p_rtable;
-
 	qry->resultRelation = refnameRangeTablePosn(pstate, stmt->relname, NULL);
 
 	qry->hasAggs = pstate->p_hasAggs;
 	if (pstate->p_hasAggs)
 		parseCheckAggregates(pstate, qry);
+
+	/*
+	 * Now we are done with SELECT-like processing, and can get on with
+	 * transforming the target list to match the UPDATE target columns.
+	 */
+
+	/* Prepare to assign non-conflicting resnos to resjunk attributes */
+	if (pstate->p_last_resno <= pstate->p_target_relation->rd_rel->relnatts)
+		pstate->p_last_resno = pstate->p_target_relation->rd_rel->relnatts + 1;
+
+	/* Prepare non-junk columns for assignment to target table */
+	origTargetList = stmt->targetList;
+	foreach(tl, qry->targetList)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(tl);
+		Resdom	   *resnode = tle->resdom;
+		ResTarget  *origTarget;
+
+		if (resnode->resjunk)
+		{
+			/* Resjunk nodes need no additional processing, but be sure they
+			 * have names and resnos that do not match any target columns;
+			 * else rewriter or planner might get confused.
+			 */
+			resnode->resname = "?resjunk?";
+			resnode->resno = (AttrNumber) pstate->p_last_resno++;
+			continue;
+		}
+		if (origTargetList == NIL)
+			elog(ERROR, "UPDATE target count mismatch --- internal error");
+		origTarget = (ResTarget *) lfirst(origTargetList);
+		updateTargetListEntry(pstate, tle,
+							  origTarget->name, origTarget->indirection);
+		origTargetList = lnext(origTargetList);
+	}
+	if (origTargetList != NIL)
+		elog(ERROR, "UPDATE target count mismatch --- internal error");
 
 	return (Query *) qry;
 }

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_node.h,v 1.14 1999/07/15 23:04:02 momjian Exp $
+ * $Id: parse_node.h,v 1.15 1999/07/19 00:26:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@ typedef struct ParseState
 {
 	int			p_last_resno;
 	List	   *p_rtable;
-	List	   *p_insert_columns;
 	struct ParseState *parentParseState;
 	bool		p_hasAggs;
 	bool		p_hasSubLinks;
@@ -36,12 +35,11 @@ extern ParseState *make_parsestate(ParseState *parentParseState);
 extern Expr *make_op(char *opname, Node *ltree, Node *rtree);
 extern Var *make_var(ParseState *pstate, Oid relid, char *refname,
 		 char *attrname);
-extern ArrayRef *make_array_ref(Node *expr,
-			   List *indirection);
-extern ArrayRef *make_array_set(Expr *target_expr,
-			   List *upperIndexpr,
-			   List *lowerIndexpr,
-			   Expr *expr);
+extern ArrayRef *transformArraySubscripts(ParseState *pstate,
+										  Node *arrayBase,
+										  List *indirection,
+										  bool forceSlice,
+										  Node *assignFrom);
 extern Const *make_const(Value *value);
 
 #endif	 /* PARSE_NODE_H */

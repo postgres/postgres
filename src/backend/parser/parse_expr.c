@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.54 1999/07/17 20:17:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.55 1999/07/19 00:26:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@ static Node *parser_typecast(Value *expr, TypeName *typename, int32 atttypmod);
 static Node *transformAttr(ParseState *pstate, Attr *att, int precedence);
 static Node *transformIdent(ParseState *pstate, Ident *ident, int precedence);
 static Node *transformIndirection(ParseState *pstate, Node *basenode,
-								  List *indirection, int precedence);
+								  List *indirection);
 
 /*
  * transformExpr -
@@ -81,7 +81,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				param->paramtype = (Oid) toid;
 				param->param_tlist = (List *) NULL;
 				result = transformIndirection(pstate, (Node *) param,
-											  pno->indirection, precedence);
+											  pno->indirection);
 				break;
 			}
 		case T_A_Expr:
@@ -467,37 +467,12 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 }
 
 static Node *
-transformIndirection(ParseState *pstate, Node *basenode,
-					 List *indirection, int precedence)
+transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 {
-	List	   *idx;
-
 	if (indirection == NIL)
 		return basenode;
-	foreach (idx, indirection)
-	{
-		A_Indices  *ai = (A_Indices *) lfirst(idx);
-		Node	   *lexpr = NULL,
-				   *uexpr;
-
-		/* uidx is always present, but lidx might be null */
-		if (ai->lidx != NULL)
-		{
-			lexpr = transformExpr(pstate, ai->lidx, precedence);
-			if (exprType(lexpr) != INT4OID)
-				elog(ERROR, "array index expressions must be int4's");
-		}
-		uexpr = transformExpr(pstate, ai->uidx, precedence);
-		if (exprType(uexpr) != INT4OID)
-			elog(ERROR, "array index expressions must be int4's");
-		ai->lidx = lexpr;
-		ai->uidx = uexpr;
-		/*
-		 * note we reuse the list of A_Indices nodes, make sure
-		 * we don't free them! Otherwise, make a new list here
-		 */
-	}
-	return (Node *) make_array_ref(basenode, indirection);
+	return (Node *) transformArraySubscripts(pstate, basenode,
+											 indirection, false, NULL);
 }
 
 static Node *
@@ -505,11 +480,9 @@ transformAttr(ParseState *pstate, Attr *att, int precedence)
 {
 	Node	   *basenode;
 
-	/* what if att->attrs == "*"? */
 	basenode = ParseNestedFuncOrColumn(pstate, att, &pstate->p_last_resno,
 									   precedence);
-	return transformIndirection(pstate, basenode,
-								att->indirection, precedence);
+	return transformIndirection(pstate, basenode, att->indirection);
 }
 
 static Node *
@@ -555,7 +528,7 @@ transformIdent(ParseState *pstate, Ident *ident, int precedence)
 Oid
 exprType(Node *expr)
 {
-	Oid			type = (Oid) 0;
+	Oid			type = (Oid) InvalidOid;
 
 	if (!expr)
 		return type;
@@ -620,6 +593,42 @@ exprType(Node *expr)
 			break;
 	}
 	return type;
+}
+
+/*
+ *	exprTypmod -
+ *	  returns the type-specific attrmod of the expression, if it can be
+ *	  determined.  In most cases, it can't and we return -1.
+ */
+int32
+exprTypmod(Node *expr)
+{
+	if (!expr)
+		return -1;
+
+	switch (nodeTag(expr))
+	{
+		case T_Var:
+			return ((Var *) expr)->vartypmod;
+		case T_Const:
+			{
+				/* Be smart about string constants... */
+				Const  *con = (Const *) expr;
+				switch (con->consttype)
+				{
+					case BPCHAROID:
+						if (! con->constisnull)
+							return VARSIZE(DatumGetPointer(con->constvalue));
+						break;
+					default:
+						break;
+				}
+			}
+			break;
+		default:
+			break;
+	}
+	return -1;
 }
 
 static Node *
