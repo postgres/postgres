@@ -7,25 +7,23 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.6 1996/11/06 09:29:04 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.7 1997/01/06 00:08:31 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <math.h>
 #ifdef WIN32
-#include <float.h>
-#include <limits.h>
-#define MAXINT        INT_MAX
+# include <float.h>
+# include <limits.h>
+# define MAXINT        INT_MAX
 #else
-# if defined(BSD44_derived) || \
-     defined(bsdi) || \
-     defined(bsdi_2_1)
-# include <machine/limits.h>
-# define MAXINT	INT_MAX
+# if defined(USE_LIMITS_H)
+#  include <machine/limits.h>
+#  define MAXINT	INT_MAX
 # else
-# include <values.h>
-# endif /* !BSD44_derived */
-#endif /* WIN32 */
+#  include <values.h>
+# endif 
+#endif 
 
 #include "postgres.h"
 
