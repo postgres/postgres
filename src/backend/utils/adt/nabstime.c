@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.100.2.1 2002/11/12 00:39:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.100.2.2 2002/12/12 19:17:04 tgl Exp $
  *
  * NOTES
  *
@@ -130,14 +130,14 @@ GetCurrentAbsoluteTime(void)
 		 * XXX FreeBSD man pages indicate that this should work - thomas
 		 * 1998-12-12
 		 */
-		strcpy(CTZName, tm->tm_zone);
+		StrNCpy(CTZName, tm->tm_zone, MAXTZLEN+1);
 
 #elif defined(HAVE_INT_TIMEZONE)
 		tm = localtime(&now);
 
 		CDayLight = tm->tm_isdst;
 		CTimeZone = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
-		strcpy(CTZName, tzname[tm->tm_isdst]);
+		StrNCpy(CTZName, tzname[tm->tm_isdst], MAXTZLEN+1);
 #else							/* neither HAVE_TM_ZONE nor
 								 * HAVE_INT_TIMEZONE */
 		CTimeZone = tb.timezone * 60;
@@ -212,14 +212,14 @@ GetCurrentAbsoluteTimeUsec(int *usec)
 		 * XXX FreeBSD man pages indicate that this should work - thomas
 		 * 1998-12-12
 		 */
-		strcpy(CTZName, tm->tm_zone);
+		StrNCpy(CTZName, tm->tm_zone, MAXTZLEN+1);
 
 #elif defined(HAVE_INT_TIMEZONE)
 		tm = localtime(&now);
 
 		CDayLight = tm->tm_isdst;
 		CTimeZone = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
-		strcpy(CTZName, tzname[tm->tm_isdst]);
+		StrNCpy(CTZName, tzname[tm->tm_isdst], MAXTZLEN+1);
 #else							/* neither HAVE_TM_ZONE nor
 								 * HAVE_INT_TIMEZONE */
 		CTimeZone = tb.timezone * 60;
