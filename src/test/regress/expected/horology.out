@@ -715,7 +715,7 @@ SELECT '' AS four, f1 AS abstime,
 SELECT '' AS "15", f1 AS timestamp, date( f1) AS date
   FROM TEMP_TIMESTAMP
   WHERE f1 <> timestamp 'current'
-  ORDER BY date;
+  ORDER BY date, timestamp;
  15 |          timestamp           |    date    
 ----+------------------------------+------------
     | epoch                        | 01-01-1970
@@ -726,11 +726,11 @@ SELECT '' AS "15", f1 AS timestamp, date( f1) AS date
     | Tue Dec 31 17:32:01 1996 PST | 12-31-1996
     | Fri Dec 31 17:32:01 1999 PST | 12-31-1999
     | Sat Jan 01 17:32:01 2000 PST | 01-01-2000
-    | Wed Mar 15 08:14:01 2000 PST | 03-15-2000
-    | Wed Mar 15 04:14:02 2000 PST | 03-15-2000
+    | Wed Mar 15 01:14:05 2000 PST | 03-15-2000
     | Wed Mar 15 02:14:03 2000 PST | 03-15-2000
     | Wed Mar 15 03:14:04 2000 PST | 03-15-2000
-    | Wed Mar 15 01:14:05 2000 PST | 03-15-2000
+    | Wed Mar 15 04:14:02 2000 PST | 03-15-2000
+    | Wed Mar 15 08:14:01 2000 PST | 03-15-2000
     | Sun Dec 31 17:32:01 2000 PST | 12-31-2000
     | Mon Jan 01 17:32:01 2001 PST | 01-01-2001
 (15 rows)
@@ -760,7 +760,7 @@ SELECT '' AS "15", f1 AS timestamp, abstime( f1) AS abstime
 SELECT '' AS four, f1 AS abstime, date( f1) AS date
   FROM ABSTIME_TBL
   WHERE isfinite(f1) AND f1 <> abstime 'current'
-  ORDER BY date;
+  ORDER BY date, abstime;
  four |           abstime            |    date    
 ------+------------------------------+------------
       | Sat May 10 23:59:12 1947 PST | 05-10-1947
