@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.40 2001/06/08 23:53:48 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.41 2001/06/11 18:23:33 petere Exp $
  */
 #include "postgres_fe.h"
 #include "help.h"
@@ -82,7 +82,7 @@ usage(void)
 	puts(_("Options:"));
 	puts(_("  -a              Echo all input from script"));
 	puts(_("  -A              Unaligned table output mode (-P format=unaligned)"));
-	puts(_("  -c COMMAND      Run only single command (SQL or interal) and exit"));
+	puts(_("  -c COMMAND      Run only single command (SQL or internal) and exit"));
 
 	/* Display default database */
 	env = getenv("PGDATABASE");
@@ -200,7 +200,7 @@ slashUsage(void)
 	fprintf(fout, _(" \\copy ...      perform SQL COPY with data stream to the client host\n"));
 	fprintf(fout, _(" \\copyright     show PostgreSQL usage and distribution terms\n"));
 	fprintf(fout, _(" \\d TABLE       describe table (or view, index, sequence)\n"));
-	fprintf(fout, _(" \\d{t|i|s|v}... list tables/indices/sequences/views\n"));
+	fprintf(fout, _(" \\d{t|i|s|v}... list tables/indexes/sequences/views\n"));
 	fprintf(fout, _(" \\d{p|S|l}      list access privileges, system tables, or large objects\n"));
 	fprintf(fout, _(" \\da            list aggregate functions\n"));
 	fprintf(fout, _(" \\dd NAME       show comment for table, type, function, or operator\n"));
