@@ -58,3 +58,24 @@ SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0, '~') A
 -- without branch
 SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0) AS t(keyid int, parent_keyid int, level int);
 
+-- recursion detection
+INSERT INTO connectby_int VALUES(10,9);
+INSERT INTO connectby_int VALUES(11,10);
+INSERT INTO connectby_int VALUES(9,11);
+
+-- should fail due to infinite recursion
+SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0, '~') AS t(keyid int, parent_keyid int, level int, branch text);
+
+-- infinite recursion failure avoided by depth limit
+SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 4, '~') AS t(keyid int, parent_keyid int, level int, branch text);
+
+-- test for falsely detected recursion
+DROP TABLE connectby_int;
+CREATE TABLE connectby_int(keyid int, parent_keyid int);
+INSERT INTO connectby_int VALUES(11,NULL);
+INSERT INTO connectby_int VALUES(10,11);
+INSERT INTO connectby_int VALUES(111,11);
+INSERT INTO connectby_int VALUES(1,111);
+-- this should not fail due to recursion detection
+SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '11', 0, '-') AS t(keyid int, parent_keyid int, level int, branch text);
+

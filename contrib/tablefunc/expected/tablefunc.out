@@ -177,3 +177,41 @@ SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0) AS t(k
      9 |            5 |     2
 (6 rows)
 
+-- recursion detection
+INSERT INTO connectby_int VALUES(10,9);
+INSERT INTO connectby_int VALUES(11,10);
+INSERT INTO connectby_int VALUES(9,11);
+-- should fail due to infinite recursion
+SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0, '~') AS t(keyid int, parent_keyid int, level int, branch text);
+ERROR:  infinite recursion detected
+-- infinite recursion failure avoided by depth limit
+SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 4, '~') AS t(keyid int, parent_keyid int, level int, branch text);
+ keyid | parent_keyid | level |   branch    
+-------+--------------+-------+-------------
+     2 |              |     0 | 2
+     4 |            2 |     1 | 2~4
+     6 |            4 |     2 | 2~4~6
+     8 |            6 |     3 | 2~4~6~8
+     5 |            2 |     1 | 2~5
+     9 |            5 |     2 | 2~5~9
+    10 |            9 |     3 | 2~5~9~10
+    11 |           10 |     4 | 2~5~9~10~11
+(8 rows)
+
+-- test for falsely detected recursion
+DROP TABLE connectby_int;
+CREATE TABLE connectby_int(keyid int, parent_keyid int);
+INSERT INTO connectby_int VALUES(11,NULL);
+INSERT INTO connectby_int VALUES(10,11);
+INSERT INTO connectby_int VALUES(111,11);
+INSERT INTO connectby_int VALUES(1,111);
+-- this should not fail due to recursion detection
+SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '11', 0, '-') AS t(keyid int, parent_keyid int, level int, branch text);
+ keyid | parent_keyid | level |  branch  
+-------+--------------+-------+----------
+    11 |              |     0 | 11
+    10 |           11 |     1 | 11-10
+   111 |           11 |     1 | 11-111
+     1 |          111 |     2 | 11-111-1
+(4 rows)
+
