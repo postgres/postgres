@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Jun 11 21:11:41 EDT 2000
+Last updated:		Tue Jun 13 04:04:27 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -97,6 +97,7 @@ TYPES
 * SELECT col FROM tab WHERE numeric_col = 10.1 fails
 * Allow arrays to hold NULL elements
 * Get BIT type working
+* Allow better handling of numeric constants
 
 VIEWS
 
