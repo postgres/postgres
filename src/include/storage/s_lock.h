@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.93 2001/05/24 15:53:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.94 2001/09/24 20:10:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,7 +162,7 @@ tas(volatile slock_t *lock)
 
 #endif	 /* __arm__ */
 
-#if defined(__s390__)
+#if defined(__s390__) || defined(__s390x__)
 /*
  * S/390 Linux
  */
