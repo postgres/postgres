@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.75 2001/11/20 00:27:13 tgl Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.76 2002/02/18 06:03:22 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,10 +15,6 @@ include $(top_builddir)/src/Makefile.global
 DIRS := access bootstrap catalog parser commands executor lib libpq \
 	main nodes optimizer port postmaster regex rewrite \
 	storage tcop utils
-
-ifdef TIOGA
-DIRS += tioga
-endif
 
 OBJS := $(DIRS:%=%/SUBSYS.o)
 
