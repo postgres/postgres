@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/spi/Makefile,v 1.24 2004/08/20 20:13:08 momjian Exp $
+# $PostgreSQL: pgsql/contrib/spi/Makefile,v 1.25 2004/11/17 17:45:59 tgl Exp $
 
 MODULES = autoinc insert_username moddatetime refint timetravel
 DATA_built = $(addsuffix .sql, $(MODULES))
@@ -17,3 +17,5 @@ top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
+
+SHLIB_LINK += -L$(top_builddir)/src/port -lpgport

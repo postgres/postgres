@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.46 2004/11/17 16:34:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.47 2004/11/17 17:46:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "getopt_long.h"
 
 #if defined(__CYGWIN__)
+#include <sys/cygwin.h>
 #include <windows.h>
 /* Cygwin defines WIN32 in windows.h, but we don't want it. */
 #undef WIN32
@@ -820,6 +821,9 @@ pgwin32_CommandLine(bool registration)
 {
 	static char cmdLine[MAXPGPATH];
 	int			ret;
+#ifdef __CYGWIN__
+	char		buf[MAXPGPATH];
+#endif
 
 	if (registration)
 	{
@@ -839,6 +843,12 @@ pgwin32_CommandLine(bool registration)
 			exit(1);
 		}
 	}
+
+#ifdef __CYGWIN__
+	/* need to convert to windows path */
+	cygwin_conv_to_full_win32_path(cmdLine, buf);
+	strcpy(cmdLine, buf);
+#endif
 
 	if (registration)
 	{

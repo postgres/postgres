@@ -2,5 +2,6 @@ SRCH_LIB="/usr/local/lib"
 
 # This is required to link pg_dump because it finds pg_toupper() in
 # libpq and pgport
-LDFLAGS="-Wl,--allow-multiple-definition"
-
+LDFLAGS="-Wl,--allow-multiple-definition -Wl,--enable-auto-import"
+# --enable-auto-import gets rid of a diagnostics linker message
+LDFLAGS_SL="-Wl,--enable-auto-import"

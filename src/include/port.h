@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.66 2004/11/08 16:34:23 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.67 2004/11/17 17:46:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,9 +73,13 @@ extern int find_other_exec(const char *argv0, const char *target,
 
 #if defined(WIN32) || defined(__CYGWIN__)
 #define EXE ".exe"
-#define DEVNULL "nul"
 #else
 #define EXE ""
+#endif
+
+#if defined(WIN32) && !defined(__CYGWIN__)
+#define DEVNULL "nul"
+#else
 #define DEVNULL "/dev/null"
 #endif
 
@@ -88,13 +92,13 @@ extern int find_other_exec(const char *argv0, const char *target,
  *	See the "Notes" section about quotes at:
  *		http://home.earthlink.net/~rlively/MANUALS/COMMANDS/C/CMD.HTM
  */
-#ifdef WIN32
+#if defined(WIN32) && !defined(__CYGWIN__)
 #define SYSTEMQUOTE "\""
 #else
 #define SYSTEMQUOTE ""
 #endif
 
-#ifdef WIN32
+#if defined(WIN32) && !defined(__CYGWIN__)
 #define HOMEDIR "USERPROFILE"
 #else
 #define HOMEDIR "HOME"
@@ -163,8 +167,9 @@ extern int	pgunlink(const char *path);
  *	Cygwin has its own symlinks which work on Win95/98/ME where
  *	junction points don't, so use it instead.  We have no way of
  *	knowing what type of system Cygwin binaries will be run on.
+ *      Note: Some CYGWIN includes might #define WIN32.
  */
-#ifdef WIN32	
+#if defined(WIN32) && !defined(__CYGWIN__)
 extern int	pgsymlink(const char *oldpath, const char *newpath);
 #define symlink(oldpath, newpath)	pgsymlink(oldpath, newpath)
 #endif
@@ -173,7 +178,7 @@ extern int	pgsymlink(const char *oldpath, const char *newpath);
 
 extern bool rmtree(char *path, bool rmtopdir);
 
-#ifdef WIN32
+#if defined(WIN32) && !defined(__CYGWIN__)
 
 /* open() replacement to allow delete of held files */
 #ifndef WIN32_CLIENT_ONLY
@@ -266,7 +271,7 @@ extern void srandom(unsigned int seed);
 /* thread.h */
 extern char *pqStrerror(int errnum, char *strerrbuf, size_t buflen);
 
-#ifndef WIN32
+#if !defined(WIN32) || defined(__CYGWIN__)
 extern int pqGetpwuid(uid_t uid, struct passwd * resultbuf, char *buffer,
 		   size_t buflen, struct passwd ** result);
 #endif
