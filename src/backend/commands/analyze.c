@@ -8,18 +8,17 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.9 2000/11/16 22:30:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.10 2000/12/02 19:38:34 tgl Exp $
  *
-
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-
-#include "postgres.h"
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
@@ -159,7 +158,8 @@ analyze_rel(Oid relid, List *anal_cols2, int MESSAGE_LEVEL)
 
 		stats = &vacattrstats[i];
 		stats->attr = palloc(ATTRIBUTE_TUPLE_SIZE);
-		memmove(stats->attr, attr[((attnums) ? attnums[i] : i)], ATTRIBUTE_TUPLE_SIZE);
+		memcpy(stats->attr, attr[((attnums) ? attnums[i] : i)],
+			   ATTRIBUTE_TUPLE_SIZE);
 		stats->best = stats->guess1 = stats->guess2 = 0;
 		stats->max = stats->min = 0;
 		stats->best_len = stats->guess1_len = stats->guess2_len = 0;
@@ -220,6 +220,7 @@ analyze_rel(Oid relid, List *anal_cols2, int MESSAGE_LEVEL)
 	/* delete existing pg_statistic rows for relation */
 	del_stats(relid, ((attnums) ? attr_cnt : 0), attnums);
 
+	/* scan relation to gather statistics */
 	scan = heap_beginscan(onerel, false, SnapshotNow, 0, NULL);
 
 	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
@@ -237,7 +238,7 @@ analyze_rel(Oid relid, List *anal_cols2, int MESSAGE_LEVEL)
 }
 
 /*
- *	attr_stats() -- compute column statistics used by the optimzer
+ *	attr_stats() -- compute column statistics used by the planner
  *
  *	We compute the column min, max, null and non-null counts.
  *	Plus we attempt to find the count of the value that occurs most
@@ -266,6 +267,7 @@ attr_stats(Relation onerel, int attr_cnt, VacAttrStats *vacattrstats, HeapTuple 
 	for (i = 0; i < attr_cnt; i++)
 	{
 		VacAttrStats *stats = &vacattrstats[i];
+		Datum		origvalue;
 		Datum		value;
 		bool		isnull;
 		bool		value_hit;
@@ -278,16 +280,25 @@ attr_stats(Relation onerel, int attr_cnt, VacAttrStats *vacattrstats, HeapTuple 
 			continue;
 #endif	 /* _DROP_COLUMN_HACK__ */
 
-		value = heap_getattr(tuple,
-							 stats->attr->attnum, tupDesc, &isnull);
+		origvalue = heap_getattr(tuple, stats->attr->attnum,
+								 tupDesc, &isnull);
 
 		if (isnull)
 		{
 			stats->null_cnt++;
 			continue;
 		}
-
 		stats->nonnull_cnt++;
+
+		/*
+		 * If the value is toasted, detoast it to avoid repeated detoastings
+		 * and resultant memory leakage inside the comparison routines.
+		 */
+		if (!stats->attr->attbyval && stats->attr->attlen == -1)
+			value = PointerGetDatum(PG_DETOAST_DATUM(origvalue));
+		else
+			value = origvalue;
+
 		if (! stats->initialized)
 		{
 			bucketcpy(stats->attr, value, &stats->best, &stats->best_len);
@@ -365,22 +376,26 @@ attr_stats(Relation onerel, int attr_cnt, VacAttrStats *vacattrstats, HeapTuple 
 			stats->guess1_hits = 1;
 			stats->guess2_hits = 1;
 		}
+
+		/* Clean up detoasted copy, if any */
+		if (value != origvalue)
+			pfree(DatumGetPointer(value));
 	}
 }
 
 /*
  *	bucketcpy() -- copy a new value into one of the statistics buckets
- *
  */
 static void
 bucketcpy(Form_pg_attribute attr, Datum value, Datum *bucket, int *bucket_len)
 {
-	if (attr->attbyval && attr->attlen != -1)
+	if (attr->attbyval)
 		*bucket = value;
 	else
 	{
 		int			len = (attr->attlen != -1 ? attr->attlen : VARSIZE(value));
 
+		/* Avoid unnecessary palloc() traffic... */
 		if (len > *bucket_len)
 		{
 			if (*bucket_len != 0)
@@ -396,8 +411,27 @@ bucketcpy(Form_pg_attribute attr, Datum value, Datum *bucket, int *bucket_len)
 /*
  *	update_attstats() -- update attribute statistics for one relation
  *
- *		Updates of pg_attribute statistics are handled by over-write,
- *		for reasons described above.  pg_statistic rows are added normally.
+ *		Statistics are stored in several places: the pg_class row for the
+ *		relation has stats about the whole relation, the pg_attribute rows
+ *		for each attribute store "dispersion", and there is a pg_statistic
+ *		row for each (non-system) attribute.  (Dispersion probably ought to
+ *		be moved to pg_statistic, but it's not worth doing unless there's
+ *		another reason to have to change pg_attribute.)  The pg_class values
+ *		are updated by VACUUM, not here.
+ *
+ *		We violate no-overwrite semantics here by storing new values for
+ *		the dispersion column directly into the pg_attribute tuple that's
+ *		already on the page.  The reason for this is that if we updated
+ *		these tuples in the usual way, vacuuming pg_attribute itself
+ *		wouldn't work very well --- by the time we got done with a vacuum
+ *		cycle, most of the tuples in pg_attribute would've been obsoleted.
+ *		Updating pg_attribute's own statistics would be especially tricky.
+ *		Of course, this only works for fixed-size never-null columns, but
+ *		dispersion is.
+ *
+ *		pg_statistic rows are just added normally.  This means that
+ *		pg_statistic will probably contain some deleted rows at the
+ *		completion of a vacuum cycle, unless it happens to get vacuumed last.
  *
  *		To keep things simple, we punt for pg_statistic, and don't try
  *		to compute or store rows for pg_statistic itself in pg_statistic.

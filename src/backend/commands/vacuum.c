@@ -8,21 +8,28 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.174 2000/11/30 08:46:22 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.175 2000/12/02 19:38:34 tgl Exp $
  *
-
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "postgres.h"
+#ifndef HAVE_GETRUSAGE
+#include "rusagestub.h"
+#else
+#include <sys/time.h>
+#include <sys/resource.h>
+#endif
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/xlog.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/index.h"
@@ -40,14 +47,6 @@
 #include "utils/syscache.h"
 #include "utils/temprel.h"
 
-#ifndef HAVE_GETRUSAGE
-#include "rusagestub.h"
-#else
-#include <sys/time.h>
-#include <sys/resource.h>
-#endif
-
-#include "access/xlog.h"
 extern XLogRecPtr	log_heap_move(Relation reln, 
 						ItemPointerData from, HeapTuple newtup);
 
@@ -62,7 +61,7 @@ static void vacuum_init(void);
 static void vacuum_shutdown(void);
 static void vac_vacuum(NameData *VacRelP, bool analyze, List *anal_cols2);
 static VRelList getrels(NameData *VacRelP);
-static void vacuum_rel(Oid relid, bool analyze, bool is_toastrel);
+static void vacuum_rel(Oid relid, bool is_toastrel);
 static void scan_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages, VacPageList fraged_pages);
 static void repair_frag(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages, VacPageList fraged_pages, int nindices, Relation *Irel);
 static void vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacpagelist);
@@ -240,7 +239,7 @@ vac_vacuum(NameData *VacRelP, bool analyze, List *anal_cols2)
 	/* vacuum each heap relation */
 	for (cur = vrl; cur != (VRelList) NULL; cur = cur->vrl_next)
 	{
-		vacuum_rel(cur->vrl_relid, analyze, false);
+		vacuum_rel(cur->vrl_relid, false);
 		/* analyze separately so locking is minimized */
 		if (analyze)
 			analyze_rel(cur->vrl_relid, anal_cols2, MESSAGE_LEVEL);
@@ -352,7 +351,7 @@ getrels(NameData *VacRelP)
  *		us to lock the entire database during one pass of the vacuum cleaner.
  */
 static void
-vacuum_rel(Oid relid, bool analyze, bool is_toastrel)
+vacuum_rel(Oid relid, bool is_toastrel)
 {
 	Relation	onerel;
 	VacPageListData vacuum_pages; /* List of pages to vacuum and/or clean
@@ -532,7 +531,7 @@ vacuum_rel(Oid relid, bool analyze, bool is_toastrel)
 	 * totally unimportant for toast relations
 	 */
 	if (toast_relid != InvalidOid)
-		vacuum_rel(toast_relid, false, true);
+		vacuum_rel(toast_relid, true);
 
 	/* next command frees attribute stats */
 	if (!is_toastrel)
@@ -2187,14 +2186,9 @@ tid_reaped(ItemPointer itemptr, VacPageList vacpagelist)
 /*
  *	update_relstats() -- update statistics for one relation
  *
- *		Statistics are stored in several places: the pg_class row for the
- *		relation has stats about the whole relation, the pg_attribute rows
- *		for each attribute store "dispersion", and there is a pg_statistic
- *		row for each (non-system) attribute.  (Dispersion probably ought to
- *		be moved to pg_statistic, but it's not worth doing unless there's
- *		another reason to have to change pg_attribute.)  Dispersion and
- *		pg_statistic values are only updated by VACUUM ANALYZE, but we
- *		always update the stats in pg_class.
+ *		Update the whole-relation statistics that are kept in its pg_class
+ *		row.  There are additional stats that will be updated if we are
+ *		doing VACUUM ANALYZE, but we always update these stats.
  *
  *		This routine works for both index and heap relation entries in
  *		pg_class.  We violate no-overwrite semantics here by storing new
