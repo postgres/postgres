@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.22 1997/11/23 21:39:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.23 1997/12/06 22:57:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,7 +132,7 @@ byteaout(struct varlena * vlena)
 		else if (isascii(*vp) && isprint(*vp))
 			len++;
 		else
-			len += 4;
+			len += VARHDRSZ;
 	rp = result = (char *) palloc(len);
 	vp = vlena->vl_dat;
 	for (i = vlena->vl_len - sizeof(int32); i != 0; i--)		/* varlena? */

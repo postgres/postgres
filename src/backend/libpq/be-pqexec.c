@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.9 1997/11/10 05:15:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.10 1997/12/06 22:56:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ PQfn(int fnid,
 		{
 			arg[i] = (char *) args[i].u.ptr;
 		}
-		else if (args[i].len > 4)
+		else if (args[i].len > sizeof(int4))
 		{
 			elog(WARN, "arg_length of argument %d too long", i);
 		}
@@ -357,7 +357,7 @@ pqtest_PQfn(char *q)
 		v = atoi(fields[j]);
 		if (v != 0 || (v == 0 && fields[j][0] == '0'))
 		{
-			pqargs[k].len = 4;
+			pqargs[k].len = sizeof(int4);
 			pqargs[k].u.integer = v;
 			printf("pqtest_PQfn: arg %d is int %d\n", k, v);	/* debug */
 		}
@@ -373,7 +373,7 @@ pqtest_PQfn(char *q)
 	 *	call PQfn
 	 * ----------------
 	 */
-	pqres = PQfn(f, &res, 4, 1, pqargs, i - 1);
+	pqres = PQfn(f, &res, sizeof(int4), 1, pqargs, i - 1);
 	printf("pqtest_PQfn: pqres is %s\n", pqres);		/* debug */
 
 	/* ----------------

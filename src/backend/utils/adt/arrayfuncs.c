@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.20 1997/09/18 20:22:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.21 1997/12/06 22:57:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -649,7 +649,7 @@ array_out(ArrayType *v, Oid element_type)
 
 		/* get a wide string to print to */
 		p = array_dims(v, &dummy_bool);
-		nbytes = strlen(ARR_DATA_PTR(v)) + 4 + *(int *) p;
+		nbytes = strlen(ARR_DATA_PTR(v)) + VARHDRSZ + *(int *) p;
 
 		save_p = (char *) palloc(nbytes);
 
@@ -787,18 +787,18 @@ array_dims(ArrayType *v, bool *isNull)
 	/*
 	 * 33 since we assume 15 digits per number + ':' +'[]'
 	 */
-	save_p = p = (char *) palloc(nbytes + 4);
-	MemSet(save_p, 0, nbytes + 4);
+	save_p = p = (char *) palloc(nbytes + VARHDRSZ);
+	MemSet(save_p, 0, nbytes + VARHDRSZ);
 	dimv = ARR_DIMS(v);
 	lb = ARR_LBOUND(v);
-	p += 4;
+	p += VARHDRSZ;
 	for (i = 0; i < ARR_NDIM(v); i++)
 	{
 		sprintf(p, "[%d:%d]", lb[i], dimv[i] + lb[i] - 1);
 		p += strlen(p);
 	}
-	nbytes = strlen(save_p + 4) + 4;
-	memmove(save_p, &nbytes, 4);
+	nbytes = strlen(save_p + VARHDRSZ) + VARHDRSZ;
+	memmove(save_p, &nbytes, VARHDRSZ);
 	return (save_p);
 }
 
@@ -874,7 +874,7 @@ array_ref(ArrayType *array,
 		}
 		if (*isNull)
 			RETURN_NULL;
-		if (VARSIZE(v) - 4 < elmlen)
+		if (VARSIZE(v) - VARHDRSZ < elmlen)
 			RETURN_NULL;
 		lo_close(fd);
 		retval = (char *) _ArrayCast((char *) VARDATA(v), reftype, elmlen);
@@ -1000,22 +1000,22 @@ array_clip(ArrayType *array,
 		{
 			char	   *buff;
 
-			rsize += 4;
+			rsize += VARHDRSZ;
 			buff = palloc(rsize);
 			if (buff)
 				isDestLO = false;
 			if (ARR_IS_CHUNKED(array))
 			{
-				_ReadChunkArray(lowerIndx, upperIndx, len, fd, &(buff[4]),
+				_ReadChunkArray(lowerIndx, upperIndx, len, fd, &(buff[VARHDRSZ]),
 								array, 0, isNull);
 			}
 			else
 			{
-				_ReadArray(lowerIndx, upperIndx, len, fd, (int) &(buff[4]),
+				_ReadArray(lowerIndx, upperIndx, len, fd, (int) &(buff[VARHDRSZ]),
 						   array,
 						   0, isNull);
 			}
-			memmove(buff, &rsize, 4);
+			memmove(buff, &rsize, VARHDRSZ);
 #ifdef LOARRAY
 			if (!*isNull)
 				bytes = LOwrite(newfd, (struct varlena *) buff);
@@ -1131,15 +1131,15 @@ array_set(ArrayType *array,
 #endif
 		if (lo_lseek(fd, offset, SEEK_SET) < 0)
 			return ((char *) array);
-		v = (struct varlena *) palloc(elmlen + 4);
-		VARSIZE(v) = elmlen + 4;
+		v = (struct varlena *) palloc(elmlen + VARHDRSZ);
+		VARSIZE(v) = elmlen + VARHDRSZ;
 		ArrayCastAndSet(dataPtr, (bool) reftype, elmlen, VARDATA(v));
 #ifdef LOARRAY
 		n = LOwrite(fd, v);
 #endif
 
 		/*
-		 * if (n < VARSIZE(v) - 4) RETURN_NULL;
+		 * if (n < VARSIZE(v) - VARHDRSZ) RETURN_NULL;
 		 */
 		pfree(v);
 		lo_close(fd);
@@ -1692,7 +1692,7 @@ _LOtransfer(char **destfd,
 		{
 #ifdef LOARRAY
 			v = (struct varlena *) LOread((int) *srcfd, inc);
-			if (VARSIZE(v) - 4 < inc)
+			if (VARSIZE(v) - VARHDRSZ < inc)
 			{
 				pfree(v);
 				return (-1);

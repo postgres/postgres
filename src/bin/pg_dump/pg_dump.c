@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.57 1997/12/05 01:04:25 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.58 1997/12/06 22:57:28 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1671,7 +1671,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			tblinfo[i].typnames[j] = strdup(PQgetvalue(res, j, i_typname));
 			tblinfo[i].attlen[j] = atoi(PQgetvalue(res, j, i_attlen));
 			if (tblinfo[i].attlen[j] > 0)
-				tblinfo[i].attlen[j] = tblinfo[i].attlen[j] - 4;
+				tblinfo[i].attlen[j] = tblinfo[i].attlen[j] - VARHDRSZ;
 			tblinfo[i].inhAttrs[j] = 0; /* this flag is set in
 										 * flagInhAttrs() */
 			tblinfo[i].notnull[j] = (PQgetvalue(res, j, i_attnotnull)[0] == 't') ? true : false;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.24 1997/11/20 23:20:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.25 1997/12/06 22:56:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -619,7 +619,7 @@ Async_NotifyFrontEnd()
 		if (whereToSendOutput == Remote)
 		{
 			pq_putnchar("A", 1);
-			pq_putint(ourpid, 4);
+			pq_putint(ourpid, sizeof(ourpid));
 			pq_putstr(DatumGetName(d)->data);
 			pq_flush();
 		}

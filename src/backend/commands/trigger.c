@@ -176,7 +176,7 @@ CreateTrigger(CreateTrigStmt * stmt)
 		{
 			char	   *ar = (char *) lfirst(le);
 
-			len += strlen(ar) + 4;
+			len += strlen(ar) + VARHDRSZ;
 			for (; *ar; ar++)
 			{
 				if (*ar == '\\')

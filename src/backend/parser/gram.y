@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.77 1997/12/04 23:07:23 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.78 1997/12/06 22:56:42 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2660,7 +2660,7 @@ Character:  character '(' Iconst ')'
 					 * between this and "text" is that we blank-pad and
 					 * truncate where necessary
 					 */
-					$$->typlen = 4 + $3;
+					$$->typlen = VARHDRSZ + $3;
 				}
 		| character
 				{

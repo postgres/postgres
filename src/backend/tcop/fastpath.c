@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.7 1997/09/18 20:21:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.8 1997/12/06 22:57:03 momjian Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -101,7 +101,7 @@ SendFunctionResult(Oid fid,		/* function id */
 		{						/* by-reference ... */
 			if (retlen < 0)
 			{					/* ... varlena */
-				pq_putint(VARSIZE(retval) - VARHDRSZ, 4);
+				pq_putint(VARSIZE(retval) - VARHDRSZ, VARHDRSZ);
 				pq_putnchar(VARDATA(retval), VARSIZE(retval) - VARHDRSZ);
 			}
 			else

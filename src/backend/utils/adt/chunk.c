@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.10 1997/09/08 21:48:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.11 1997/12/06 22:57:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -271,7 +271,7 @@ get_next(int d[], int k, int C, int dmax[])
 }
 
 #ifdef LOARRAY
-static char a_chunk[BLCKSZ + 4];/* 4 since a_chunk is in varlena format */
+static char a_chunk[BLCKSZ + VARHDRSZ];/* VARHDRSZ since a_chunk is in varlena format */
 
 #endif
 
@@ -318,8 +318,8 @@ _ConvertToChunkFile(int n,
 		csize *= C[i];
 	}
 	csize *= baseSize;
-	temp = csize + 4;
-	memmove(a_chunk, &temp, 4);
+	temp = csize + VARHDRSZ;
+	memmove(a_chunk, &temp, VARHDRSZ);
 
 	mda_get_prod(n, dim, PX);
 	mda_get_offset_values(n, dist, PX, C);
@@ -327,7 +327,7 @@ _ConvertToChunkFile(int n,
 		;
 	do
 	{
-		read_chunk(chunk_no, C, &(a_chunk[4]), srcfd, n, baseSize, PX, dist);
+		read_chunk(chunk_no, C, &(a_chunk[VARHDRSZ]), srcfd, n, baseSize, PX, dist);
 		write_chunk((struct varlena *) a_chunk, destfd);
 	} while (next_tuple(n, chunk_no, max_chunks) != -1);
 }
@@ -417,7 +417,7 @@ seek_and_read(int pos, int size, char buff[], int fp, int from)
 #ifdef LOARRAY
 	v = (struct varlena *) LOread(fp, size);
 #endif
-	if (VARSIZE(v) - 4 < size)
+	if (VARSIZE(v) - VARHDRSZ < size)
 		elog(WARN, "File read error");
 	memmove(buff, VARDATA(v), size);
 	pfree(v);
