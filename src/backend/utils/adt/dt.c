@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.25 1997/06/20 17:12:54 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.26 1997/06/23 14:50:56 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -693,7 +693,7 @@ printf( "datetime_add_span- add %f to %d %f\n", *datetime, span->month, span->ti
 #ifdef ROUND_ALL
 	dt = JROUND(dt + span->time);
 #else
-	dt = span->time;
+	dt += span->time;
 #endif
 
 	if (span->month != 0) {
@@ -702,12 +702,13 @@ printf( "datetime_add_span- add %f to %d %f\n", *datetime, span->month, span->ti
 
 	    if (datetime2tm( dt, &tz, tm, &fsec, &tzn) == 0) {
 #ifdef DATEDEBUG
-printf( "datetime_add_span- date was %d.%02d.%02d\n", tm->tm_year, tm->tm_mon, tm->tm_mday);
+printf( "datetime_add_span- date was %04d-%02d-%02d %02d:%02d:%02d\n",
+ tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
 #endif
 		tm->tm_mon += span->month;
 		if (tm->tm_mon > 12) {
-		    tm->tm_year += (tm->tm_mon / 12);
-		    tm->tm_mon = (tm->tm_mon % 12);
+		    tm->tm_year += ((tm->tm_mon-1) / 12);
+		    tm->tm_mon = (((tm->tm_mon-1) % 12) + 1);
 		} else if (tm->tm_mon < 1) {
 		    tm->tm_year += ((tm->tm_mon / 12) - 1);
 		    tm->tm_mon = ((tm->tm_mon % 12) + 12);
@@ -721,15 +722,15 @@ printf( "datetime_add_span- date was %d.%02d.%02d\n", tm->tm_year, tm->tm_mon, t
 			tm->tm_mday = mdays[ tm->tm_mon-1];
 		    };
 		};
-
 #ifdef DATEDEBUG
-printf( "datetime_add_span- date becomes %d.%02d.%02d\n", tm->tm_year, tm->tm_mon, tm->tm_mday);
+printf( "datetime_add_span- date becomes %04d-%02d-%02d %02d:%02d:%02d\n",
+ tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
 #endif
 		if (tm2datetime( tm, fsec, &tz, &dt) != 0)
 		    elog(WARN,"Unable to add datetime and timespan",NULL);
 
 	    } else {
-		DATETIME_INVALID(*result);
+		DATETIME_INVALID(dt);
 	    };
 	};
 
@@ -1312,7 +1313,11 @@ static datetkn datetktbl[] = {
 {	"eet",		TZ,	12},		/* East. Europe, USSR Zone 1 */
 {	"eetdst",	DTZ,	18},		/* Eastern Europe */
 {	EPOCH,		RESERV,	DTK_EPOCH},	/* "epoch" reserved for system epoch time */
+#if USE_AUSTRALIAN_RULES
+{	"est",		TZ,	60},		/* Australia Eastern Std Time */
+#else
 {	"est",		TZ,	NEG(30)},	/* Eastern Standard Time */
+#endif
 {	"feb",		MONTH,	2},
 {	"february",	MONTH,	2},
 {	"fri",		DOW,	5},
@@ -1410,6 +1415,7 @@ static datetkn datetktbl[] = {
 {	"zp4",		TZ,	NEG(24)},	/* GMT +4  hours. */
 {	"zp5",		TZ,	NEG(30)},	/* GMT +5  hours. */
 {	"zp6",		TZ,	NEG(36)},	/* GMT +6  hours. */
+{	"z",		RESERV,	DTK_ZULU},	/* 00:00:00 */
 {	ZULU,		RESERV,	DTK_ZULU},	/* 00:00:00 */
 };
 
@@ -1585,7 +1591,6 @@ datetime2tm( DateTime dt, int *tzp, struct tm *tm, double *fsec, char **tzn)
     struct tm *tx;
 #endif
 
-
     date0 = date2j(2000,1,1);
 
     time = dt;
@@ -1625,6 +1630,9 @@ printf( "datetime2tm- time is %02d:%02d:%02d %.7f\n", tm->tm_hour, tm->tm_min, t
     if (tzp != NULL) {
 	if (IS_VALID_UTIME( tm->tm_year, tm->tm_mon, tm->tm_mday)) {
 	    utime = (dt + (date0-date2j(1970,1,1))*86400);
+#if FALSE
+	    if (utime < -1) utime++;
+#endif
 
 #ifdef USE_POSIX_TIME
 	    tx = localtime(&utime);
@@ -1645,7 +1653,16 @@ printf( "datetime2tm- (localtime) %d.%02d.%02d %02d:%02d:%02.0f %s dst=%d\n",
 	    tm->tm_mday = tx->tm_mday;
 	    tm->tm_hour = tx->tm_hour;
 	    tm->tm_min = tx->tm_min;
+#if FALSE
+/* XXX HACK
+ * Argh! My Linux box puts in a 1 second offset for dates less than 1970
+ *  but only if the seconds field was non-zero. So, don't copy the seconds
+ *  field and instead carry forward from the original - tgl 97/06/18
+ * Note that GNU/Linux uses the standard freeware zic package as do
+ *  many other platforms so this may not be GNU/Linux/ix86-specific.
+ */
 	    tm->tm_sec = tx->tm_sec;
+#endif
 	    tm->tm_isdst = tx->tm_isdst;
 
 #ifdef HAVE_INT_TIMEZONE
@@ -3071,12 +3088,19 @@ printf( "EncodeDateTime- day is %d\n", day);
 	    sprintf( (str+4), "%3s %02d", mabbrev, tm->tm_mday);
 	};
 	if (tm->tm_year > 0) {
-	    sprintf( (str+10), " %02d:%02d:%05.2f %04d",
-	      tm->tm_hour, tm->tm_min, sec, tm->tm_year);
-
-	    if ((*tzn != NULL) && (tm->tm_isdst >= 0)) {
-		strcpy( (str+27), " ");
-		strcpy( (str+28), *tzn);
+	    sprintf( (str+10), " %02d:%02d", tm->tm_hour, tm->tm_min);
+	    if (fsec != 0) {
+		sprintf( (str+16), ":%05.2f %04d", sec, tm->tm_year);
+		if ((*tzn != NULL) && (tm->tm_isdst >= 0)) {
+		    strcpy( (str+27), " ");
+		    strcpy( (str+28), *tzn);
+		};
+	    } else {
+		sprintf( (str+16), ":%02.0f %04d", sec, tm->tm_year);
+		if ((*tzn != NULL) && (tm->tm_isdst >= 0)) {
+		    strcpy( (str+24), " ");
+		    strcpy( (str+25), *tzn);
+		};
 	    };
 
 	} else {
@@ -3107,43 +3131,59 @@ int EncodeTimeSpan(struct tm *tm, double fsec, int style, char *str)
 
     strcpy( str, "@");
     cp = str+strlen(str);
+
     if (tm->tm_year != 0) {
 	is_nonzero = TRUE;
 	is_before |= (tm->tm_year < 0);
 	sprintf( cp, " %d year%s", abs(tm->tm_year), ((abs(tm->tm_year) != 1)? "s": ""));
 	cp += strlen(cp);
     };
+
     if (tm->tm_mon != 0) {
 	is_nonzero = TRUE;
 	is_before |= (tm->tm_mon < 0);
 	sprintf( cp, " %d mon%s", abs(tm->tm_mon), ((abs(tm->tm_mon) != 1)? "s": ""));
 	cp += strlen(cp);
     };
+
     if (tm->tm_mday != 0) {
 	is_nonzero = TRUE;
 	is_before |= (tm->tm_mday < 0);
 	sprintf( cp, " %d day%s", abs(tm->tm_mday), ((abs(tm->tm_mday) != 1)? "s": ""));
 	cp += strlen(cp);
     };
+
     if (tm->tm_hour != 0) {
 	is_nonzero = TRUE;
 	is_before |= (tm->tm_hour < 0);
 	sprintf( cp, " %d hour%s", abs(tm->tm_hour), ((abs(tm->tm_hour) != 1)? "s": ""));
 	cp += strlen(cp);
     };
+
     if (tm->tm_min != 0) {
 	is_nonzero = TRUE;
 	is_before |= (tm->tm_min < 0);
 	sprintf( cp, " %d min%s", abs(tm->tm_min), ((abs(tm->tm_min) != 1)? "s": ""));
 	cp += strlen(cp);
     };
-    if (tm->tm_sec != 0) {
+
+    /* fractional seconds? */
+    if (fsec != 0) {
+	is_nonzero = TRUE;
+	fsec += tm->tm_sec;
+	is_before |= (fsec < 0);
+	sprintf( cp, " %.2f secs", fabs(fsec));
+	cp += strlen(cp);
+
+    /* otherwise, integer seconds only? */
+    } else if (tm->tm_sec != 0) {
 	is_nonzero = TRUE;
 	is_before |= (tm->tm_sec < 0);
 	sprintf( cp, " %d sec%s", abs(tm->tm_sec), ((abs(tm->tm_sec) != 1)? "s": ""));
 	cp += strlen(cp);
     };
 
+    /* identically zero? then put in a unitless zero... */
     if (! is_nonzero) {
 	strcat( cp, " 0");
 	cp += strlen(cp);
