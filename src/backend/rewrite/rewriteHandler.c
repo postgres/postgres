@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.46 1999/05/26 12:55:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.47 1999/06/21 01:26:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "parser/parse_target.h"
 
 #include "parser/analyze.h"
+#include "optimizer/clauses.h"
 #include "optimizer/prep.h"
 
 #include "rewrite/rewriteSupport.h"
@@ -60,6 +61,9 @@ static void modifyAggrefDropQual(Node **nodePtr, Node *orignode, Expr *expr);
 static SubLink *modifyAggrefMakeSublink(Expr *origexp, Query *parsetree);
 static void modifyAggrefQual(Node **nodePtr, Query *parsetree);
 static bool checkQueryHasAggs(Node *node);
+static bool checkQueryHasAggs_walker(Node *node, void *context);
+static bool checkQueryHasSubLink(Node *node);
+static bool checkQueryHasSubLink_walker(Node *node, void *context);
 static Query *fireRIRrules(Query *parsetree);
 static Query *Except_Intersect_Rewrite(Query *parsetree);
 static void check_targetlists_are_compatible(List *prev_target,
@@ -1302,242 +1306,41 @@ modifyAggrefQual(Node **nodePtr, Query *parsetree)
 static bool
 checkQueryHasAggs(Node *node)
 {
-	if (node == NULL)
-		return FALSE;
-
-	switch (nodeTag(node))
-	{
-		case T_TargetEntry:
-			{
-				TargetEntry *tle = (TargetEntry *) node;
-
-				return checkQueryHasAggs((Node *) (tle->expr));
-			}
-			break;
-
-		case T_Aggref:
-			return TRUE;
-
-		case T_Expr:
-			{
-				Expr	   *exp = (Expr *) node;
-
-				return checkQueryHasAggs((Node *) (exp->args));
-			}
-			break;
-
-		case T_Iter:
-			{
-				Iter	   *iter = (Iter *) node;
-
-				return checkQueryHasAggs((Node *) (iter->iterexpr));
-			}
-			break;
-
-		case T_ArrayRef:
-			{
-				ArrayRef   *ref = (ArrayRef *) node;
-
-				if (checkQueryHasAggs((Node *) (ref->refupperindexpr)))
-					return TRUE;
-
-				if (checkQueryHasAggs((Node *) (ref->reflowerindexpr)))
-					return TRUE;
-
-				if (checkQueryHasAggs((Node *) (ref->refexpr)))
-					return TRUE;
-
-				if (checkQueryHasAggs((Node *) (ref->refassgnexpr)))
-					return TRUE;
-
-				return FALSE;
-			}
-			break;
-
-		case T_Var:
-			return FALSE;
-
-		case T_Param:
-			return FALSE;
-
-		case T_Const:
-			return FALSE;
-
-		case T_List:
-			{
-				List	   *l;
-
-				foreach(l, (List *) node)
-				{
-					if (checkQueryHasAggs((Node *) lfirst(l)))
-						return TRUE;
-				}
-				return FALSE;
-			}
-			break;
-
-		case T_CaseExpr:
-			{
-				CaseExpr   *exp = (CaseExpr *) node;
-
-				if (checkQueryHasAggs((Node *) (exp->args)))
-					return TRUE;
-
-				if (checkQueryHasAggs((Node *) (exp->defresult)))
-					return TRUE;
-
-				return FALSE;
-			}
-			break;
-
-		case T_CaseWhen:
-			{
-				CaseWhen   *when = (CaseWhen *) node;
-
-				if (checkQueryHasAggs((Node *) (when->expr)))
-					return TRUE;
-
-				if (checkQueryHasAggs((Node *) (when->result)))
-					return TRUE;
-
-				return FALSE;
-			}
-			break;
-
-		default:
-			elog(NOTICE, "unknown node tag %d in checkQueryHasAggs()", nodeTag(node));
-			elog(NOTICE, "Node is: %s", nodeToString(node));
-			break;
-
-
-	}
-
-	return FALSE;
+	return checkQueryHasAggs_walker(node, NULL);
 }
 
+static bool
+checkQueryHasAggs_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Aggref))
+		return true;			/* abort the tree traversal and return true */
+	return expression_tree_walker(node, checkQueryHasAggs_walker, context);
+}
 
 /*
  * checkQueryHasSubLink -
- *	Queries marked hasAggs might not have them any longer after
+ *	Queries marked hasSubLinks might not have them any longer after
  *	rewriting. Check it.
  */
 static bool
 checkQueryHasSubLink(Node *node)
 {
+	return checkQueryHasSubLink_walker(node, NULL);
+}
+
+static bool
+checkQueryHasSubLink_walker(Node *node, void *context)
+{
 	if (node == NULL)
-		return FALSE;
-
-	switch (nodeTag(node))
-	{
-		case T_TargetEntry:
-			{
-				TargetEntry *tle = (TargetEntry *) node;
-
-				return checkQueryHasSubLink((Node *) (tle->expr));
-			}
-			break;
-
-		case T_Aggref:
-			return TRUE;
-
-		case T_Expr:
-			{
-				Expr	   *exp = (Expr *) node;
-
-				return checkQueryHasSubLink((Node *) (exp->args));
-			}
-			break;
-
-		case T_Iter:
-			{
-				Iter	   *iter = (Iter *) node;
-
-				return checkQueryHasSubLink((Node *) (iter->iterexpr));
-			}
-			break;
-
-		case T_ArrayRef:
-			{
-				ArrayRef   *ref = (ArrayRef *) node;
-
-				if (checkQueryHasSubLink((Node *) (ref->refupperindexpr)))
-					return TRUE;
-
-				if (checkQueryHasSubLink((Node *) (ref->reflowerindexpr)))
-					return TRUE;
-
-				if (checkQueryHasSubLink((Node *) (ref->refexpr)))
-					return TRUE;
-
-				if (checkQueryHasSubLink((Node *) (ref->refassgnexpr)))
-					return TRUE;
-
-				return FALSE;
-			}
-			break;
-
-		case T_Var:
-			return FALSE;
-
-		case T_Param:
-			return FALSE;
-
-		case T_Const:
-			return FALSE;
-
-		case T_List:
-			{
-				List	   *l;
-
-				foreach(l, (List *) node)
-				{
-					if (checkQueryHasSubLink((Node *) lfirst(l)))
-						return TRUE;
-				}
-				return FALSE;
-			}
-			break;
-
-		case T_CaseExpr:
-			{
-				CaseExpr   *exp = (CaseExpr *) node;
-
-				if (checkQueryHasSubLink((Node *) (exp->args)))
-					return TRUE;
-
-				if (checkQueryHasSubLink((Node *) (exp->defresult)))
-					return TRUE;
-
-				return FALSE;
-			}
-			break;
-
-		case T_CaseWhen:
-			{
-				CaseWhen   *when = (CaseWhen *) node;
-
-				if (checkQueryHasSubLink((Node *) (when->expr)))
-					return TRUE;
-
-				if (checkQueryHasSubLink((Node *) (when->result)))
-					return TRUE;
-
-				return FALSE;
-			}
-			break;
-
-		case T_SubLink:
-			return TRUE;
-
-		default:
-			elog(NOTICE, "unknown node tag %d in checkQueryHasSubLink()", nodeTag(node));
-			elog(NOTICE, "Node is: %s", nodeToString(node));
-			break;
-
-
-	}
-
-	return FALSE;
+		return false;
+	if (IsA(node, SubLink))
+		return true;			/* abort the tree traversal and return true */
+	/* Note: we assume the tree has not yet been rewritten by subselect.c,
+	 * therefore we will find bare SubLink nodes and not SUBPLAN nodes.
+	 */
+	return expression_tree_walker(node, checkQueryHasSubLink_walker, context);
 }
 
 
