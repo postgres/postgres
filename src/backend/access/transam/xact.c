@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.87 2000/12/03 10:27:26 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.88 2000/12/07 10:03:46 inoue Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -783,7 +783,7 @@ RecordTransactionAbort(void)
 {
 	TransactionId xid = GetCurrentTransactionId();
 
-	if (MyLastRecPtr.xrecoff != 0)
+	if (MyLastRecPtr.xrecoff != 0 && !TransactionIdDidCommit(xid))
 	{
 		xl_xact_abort	xlrec;
 		XLogRecPtr		recptr;
