@@ -7,19 +7,20 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.37 1998/10/12 01:23:25 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.38 1998/10/14 16:13:03 thomas Exp $
 #
 #-------------------------------------------------------------------------
 
-SO_MAJOR_VERSION=2
-SO_MINOR_VERSION=0
+NAME= pq
+SO_MAJOR_VERSION= 2
+SO_MINOR_VERSION= 0
 
-SRCDIR= ../..
+SRCDIR= @top_srcdir@
 include $(SRCDIR)/Makefile.global
 
-PORTNAME=@PORTNAME@
+PORTNAME= @PORTNAME@
 
-CFLAGS+=-DFRONTEND
+CFLAGS+= -DFRONTEND
 
 ifdef KRBVERS
 CFLAGS+= $(KRBFLAGS)
@@ -42,17 +43,17 @@ install-shlib-dep :=
 
 ifeq ($(PORTNAME), linux)
   install-shlib-dep	:= install-shlib
-  shlib			:= libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL		:= -shared -soname libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  CFLAGS		+= $(CFLAGS_SL)
+  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  LDFLAGS_SL		:= -shared -soname lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  CFLAGS			+= $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), bsd)
   ifdef BSD_SHLIB
     install-shlib-dep	:= install-shlib
-    shlib		:= libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-    LDFLAGS_SL		:= -x -Bshareable -Bforcearchive
-    CFLAGS		+= $(CFLAGS_SL)
+    shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+    LDFLAGS_SL			:= -x -Bshareable -Bforcearchive
+    CFLAGS				+= $(CFLAGS_SL)
   endif
 endif
 
@@ -60,60 +61,60 @@ ifeq ($(PORTNAME), bsdi)
   ifdef BSD_SHLIB
     ifeq ($(DLSUFFIX), .so)
       install-shlib-dep := install-shlib
-      shlib		:= libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-      LDFLAGS_SL	+= -shared
-      CFLAGS		+= $(CFLAGS_SL)
+      shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+      LDFLAGS_SL		+= -shared
+      CFLAGS			+= $(CFLAGS_SL)
     endif
     ifeq ($(DLSUFFIX), .o)
       install-shlib-dep	:= install-shlib
-      shlib		:= libpq.o.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-      LD		:= shlicc
-      LDFLAGS_SL 	+= -O -r
-      CFLAGS		+= $(CFLAGS_SL)
+      shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+      LD				:= shlicc
+      LDFLAGS_SL	 	+= -O -r
+      CFLAGS			+= $(CFLAGS_SL)
     endif
   endif
 endif
 
 ifeq ($(PORTNAME), solaris_sparc)
   install-shlib-dep	:= install-shlib
-  shlib			:= libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL		:= -G
-  CFLAGS		+= $(CFLAGS_SL)
+  CFLAGS			+= $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), solaris_i386)
   install-shlib-dep	:= install-shlib
-  shlib			:= libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL		:= -G
-  CFLAGS		+= $(CFLAGS_SL)
+  CFLAGS			+= $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), svr4)
   install-shlib-dep	:= install-shlib
-  shlib			:= libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL		:= -G
-  CFLAGS		+= $(CFLAGS_SL)
+  CFLAGS			+= $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), unixware)
   install-shlib-dep	:= install-shlib
-  shlib			:= libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL		:= -G -z text
-  CFLAGS		+= $(CFLAGS_SL)
+  CFLAGS			+= $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), univel)
   install-shlib-dep	:= install-shlib
-  shlib			:= libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL		:= -G -z text
-  CFLAGS		+= $(CFLAGS_SL)
+  CFLAGS			+= $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), hpux)
   install-shlib-dep	:= install-shlib
-  shlib			:= libpq.sl
+  shlib				:= lib$(NAME).sl
   LDFLAGS_SL		:= -b
-  CFLAGS		+= $(CFLAGS_SL)
+  CFLAGS			+= $(CFLAGS_SL)
 endif
 
 all: libpq.a $(shlib)
@@ -154,7 +155,6 @@ $(SRCDIR)/backend/fmgr.h:
 
 $(shlib): $(OBJS)
 	$(LD) $(LDFLAGS_SL) -o $@ $(OBJS) 
-	$(LN_S) -f $@ libpq.so
 
 
 .PHONY: beforeinstall-headers install-headers
@@ -228,15 +228,18 @@ install-libpq: libpq.a
 
 install-shlib: $(shlib)
 	$(INSTALL) $(INSTL_SHLIB_OPTS) $(shlib) $(LIBDIR)/$(shlib)
-	rm -f $(LIBDIR)/libpq.so
-	$(LN_S) $(shlib) $(LIBDIR)/libpq.so
+	rm -f $(LIBDIR)/lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+	rm -f $(LIBDIR)/lib$(NAME)$(DLSUFFIX)
+	cd $(LIBDIR) && $(LN_S) -f $(shlib) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+	cd $(LIBDIR) && $(LN_S) -f $(shlib) lib$(NAME)$(DLSUFFIX)
+
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend
 
 .PHONY: clean
 clean:
-	rm -f libpq.a $(shlib) libpq.so $(OBJS)
+	rm -f libpq.a $(shlib) $(OBJS)
 	rm -f dllist.c common.c wchar.c conv.c
 
 ifeq (depend,$(wildcard depend))

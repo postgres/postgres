@@ -7,14 +7,15 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.30 1998/10/12 02:40:59 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.31 1998/10/14 16:12:54 thomas Exp $
 #
 #-------------------------------------------------------------------------
 
-SO_MAJOR_VERSION=2
-SO_MINOR_VERSION=0
+NAME= pgtcl
+SO_MAJOR_VERSION= 2
+SO_MINOR_VERSION= 0
 
-SRCDIR= ../..
+SRCDIR= @top_srcdir@
 include $(SRCDIR)/Makefile.global
 
 INCLUDE_OPT= \
@@ -34,21 +35,21 @@ endif
 install-shlib-dep :=
 shlib             := 
 
-LIBPQ			= -L$(SRCDIR)/interfaces/libpq -lpq
+LIBPQ= -L$(SRCDIR)/interfaces/libpq -lpq
 
 ifeq ($(PORTNAME), linux)
   install-shlib-dep	:= install-shlib
-  shlib			:= libpgtcl.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  CFLAGS		+= $(CFLAGS_SL)
+  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  CFLAGS			+= $(CFLAGS_SL)
   LDFLAGS_SL		= -shared
 endif
 
 ifeq ($(PORTNAME), bsd)
   ifdef BSD_SHLIB
     install-shlib-dep	:= install-shlib
-    shlib		:= libpgtcl.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-    LDFLAGS_SL		= -x -Bshareable -Bforcearchive
-    CFLAGS		+= $(CFLAGS_SL)
+    shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+    LDFLAGS_SL			= -x -Bshareable -Bforcearchive
+    CFLAGS				+= $(CFLAGS_SL)
   endif
 endif
 
@@ -56,78 +57,77 @@ ifeq ($(PORTNAME), bsdi)
   ifdef BSD_SHLIB
     ifeq ($(DLSUFFIX), .so)
       install-shlib-dep	:= install-shlib
-      shlib		:= libpgtcl.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-      LDFLAGS_SL	+= -shared
-      CFLAGS		+= $(CFLAGS_SL)
+      shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+      LDFLAGS_SL		+= -shared
+      CFLAGS			+= $(CFLAGS_SL)
     endif
     ifeq ($(DLSUFFIX), .o)
       install-shlib-dep	:= install-shlib
-      shlib		:= libpgtcl.o.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-      LD		:= shlicc
-      LDFLAGS_SL	+= -O -r
-      CFLAGS		+= $(CFLAGS_SL)
+      shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+      LD				:= shlicc
+      LDFLAGS_SL		+= -O -r
+      CFLAGS			+= $(CFLAGS_SL)
     endif
   endif
 endif
 
 ifeq ($(PORTNAME), solaris_sparc)
   install-shlib-dep	:= install-shlib
-  shlib			:= libpgtcl.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL		:= -G
-  CFLAGS		+= $(CFLAGS_SL)
+  CFLAGS			+= $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), solaris_i386)
   install-shlib-dep	:= install-shlib
-  shlib			:= libpgtcl.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL		:= -G
-  CFLAGS		+= $(CFLAGS_SL)
+  CFLAGS			+= $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), svr4)
   install-shlib-dep	:= install-shlib
-  shlib			:= libpgtcl.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL		:= -G
-  CFLAGS		+= $(CFLAGS_SL)
+  CFLAGS			+= $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), unixware)
   install-shlib-dep	:= install-shlib
-  shlib			:= libpgtcl.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL		:= -G -z text
-  CFLAGS		+= $(CFLAGS_SL)
+  CFLAGS			+= $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), univel)
   install-shlib-dep	:= install-shlib
-  shlib			:= libpgtcl.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL		:= -G -z text
-  CFLAGS		+= $(CFLAGS_SL)
+  CFLAGS			+= $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), hpux)
   install-shlib-dep	:= install-shlib
-  shlib			:= libpgtcl.sl
+  shlib				:= lib$(NAME)$(DLSUFFIX)
   LDFLAGS_SL		:= -b
-  CFLAGS		+= $(CFLAGS_SL)
+  CFLAGS			+= $(CFLAGS_SL)
 endif
 
 OBJS= pgtcl.o pgtclCmds.o pgtclId.o
 
 
-all: libpgtcl.a $(shlib)
+all: lib$(NAME).a $(shlib)
 
-libpgtcl.a: $(OBJS)
+lib$(NAME).a: $(OBJS)
 ifdef MK_NO_LORDER
-	$(AR) $(AROPT) libpgtcl.a $(OBJS)
+	$(AR) $(AROPT) lib$(NAME).a $(OBJS)
 else
-	$(AR) $(AROPT) libpgtcl.a `lorder $(OBJS) | tsort`
+	$(AR) $(AROPT) lib$(NAME).a `lorder $(OBJS) | tsort`
 endif
-	$(RANLIB) libpgtcl.a
+	$(RANLIB) lib$(NAME).a
 
 $(shlib): $(OBJS)
 	$(LD) $(LDFLAGS_SL) -o $@ $(OBJS) $(LIBPQ)
-	$(LN_S) -f $@ libpgtcl.so
 
 .PHONY: beforeinstall-headers install-headers
 .PHONY: install install-libpgtcl
@@ -140,17 +140,18 @@ install-headers: beforeinstall-headers libpgtcl.h
 beforeinstall-headers:
 	@if [ ! -d $(HEADERDIR) ]; then mkdir $(HEADERDIR); fi
 
-install-libpgtcl: libpgtcl.a
-	$(INSTALL) $(INSTL_LIB_OPTS) libpgtcl.a $(LIBDIR)/libpgtcl.a
+install-libpgtcl: lib$(NAME).a
+	$(INSTALL) $(INSTL_LIB_OPTS) lib$(NAME).a $(LIBDIR)/lib$(NAME).a
 
 install-shlib: $(shlib)
 	$(INSTALL) $(INSTL_SHLIB_OPTS) $(shlib) \
 		$(LIBDIR)/$(shlib)
-	rm -f $(LIBDIR)/libpgtcl.so
-	$(LN_S) -f $(shlib) $(LIBDIR)/libpgtcl.so
+	rm -f $(LIBDIR)/lib$(NAME)$(DLSUFFIX)
+	cd $(LIBDIR) && $(LN_S) -f $(shlib) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+	cd $(LIBDIR) && $(LN_S) -f $(shlib) lib$(NAME)$(DLSUFFIX)
 
 .PHONY: clean
 clean: 
-	rm -f $(OBJS) $(shlib) libpgtcl.a libpgtcl.so
+	rm -f $(OBJS) $(shlib) lib$(NAME).a lib$(NAME)$(DLSUFFIX)
 
 dep depend:
