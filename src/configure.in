@@ -80,6 +80,13 @@ AC_ARG_WITH(template,
     [  TEMPLATE=template/$withval ],
     [  TEMPLATE=template/`uname -s | tr A-Z a-z` ])
 AC_MSG_RESULT($TEMPLATE)
+
+if test "$TEMPLATE" = "linux-elf"; then
+	LINUX_ELF=yes
+else
+	LINUX_ELF=no
+fi
+AC_SUBST(LINUX_ELF)
         
 export TEMPLATE
 if test ! -f "$TEMPLATE"; then

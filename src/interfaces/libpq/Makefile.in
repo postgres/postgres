@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.14 1998/04/06 16:52:28 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.15 1998/04/21 12:38:46 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -32,6 +32,7 @@ OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-lobj.o \
 shlib := 
 install-shlib-dep :=
 ifeq ($(PORTNAME), linux)
+  LINUX_ELF=@LINUX_ELF@
   ifdef LINUX_ELF
     install-shlib-dep := install-shlib
     shlib := libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
