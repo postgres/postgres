@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.14 1997/03/27 04:13:44 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.15 1997/04/05 03:36:21 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -369,9 +369,13 @@ ConstructTupleDescriptor(Oid heapoid,
 	if (atnum > natts)
 	    elog(WARN, "Cannot create index: attribute %d does not exist",
 		 atnum);
-	IndexKey = (IndexElem*) lfirst(attributeList);
-	attributeList = lnext(attributeList);
-	IndexKeyType = IndexKey->tname;
+	if (attributeList) {
+	  IndexKey = (IndexElem*) lfirst(attributeList);
+	  attributeList = lnext(attributeList);
+	  IndexKeyType = IndexKey->tname;
+	} else {
+	  IndexKeyType = NULL;
+	}
 	
 	indexTupDesc->attrs[i] = (AttributeTupleForm) palloc(ATTRIBUTE_TUPLE_SIZE);
 	
