@@ -25,12 +25,8 @@ log_entry(const char *logentry, int level)
 {
 	/*
 	 * Note: Under Windows we dump the log entries to the normal
-	 * stderr/logfile
-	 */
-
-	/*
-	 * as well, otherwise it can be a pain to debug service install
-	 * failures etc.
+	 * stderr/logfile as well, otherwise it can be a pain to debug 
+	 * service install failures etc.
 	 */
 
 	time_t		curtime;
@@ -117,7 +113,7 @@ log_entry(const char *logentry, int level)
 		}
 	}
 
-	ReportEvent(evtHandle, elevel, 0, 1, NULL, 1, 0, &logentry, NULL);
+	ReportEvent(evtHandle, elevel, 0, 0, NULL, 1, 0, &logentry, NULL);
 #endif
 }
 
@@ -1219,7 +1215,7 @@ InstallService()
 	if (args->user)
 		sprintf(szCommand, "%s -U %s", szCommand, args->user);
 	if (args->password)
-		sprintf(szCommand, "%s -p %s", szCommand, args->password);
+		sprintf(szCommand, "%s -P %s", szCommand, args->password);
 	if (args->logfile)
 		sprintf(szCommand, "%s -L %s", szCommand, args->logfile);
 	if (args->sleep_base_value != (int) SLEEPBASEVALUE)
@@ -1249,20 +1245,11 @@ InstallService()
 	if (RegCreateKeyEx(HKEY_LOCAL_MACHINE, szKey, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hk, NULL))
 		return -5;
 
-	/* TODO Create an actual message file! */
-	/* Message count */
-	sprintf(szMsgDLL, "pgmessages.dll");
+	/* TODO Try to find pgevent.dll, rather than hope it's in the path. ! */
+	/* Message DLL */
+	sprintf(szMsgDLL, "pgevent.dll");
 	if (RegSetValueEx(hk, "EventMessageFile", 0, REG_EXPAND_SZ, (LPBYTE) szMsgDLL, (DWORD) strlen(szMsgDLL) + 1))
 		return -6;
-
-	/* Category message file */
-	if (RegSetValueEx(hk, "CategoryMessageFile", 0, REG_EXPAND_SZ, (LPBYTE) szMsgDLL, (DWORD) strlen(szMsgDLL) + 1))
-		return -7;
-
-	/* Category message count */
-	dwData = 0;
-	if (RegSetValueEx(hk, "CategoryCount", 0, REG_DWORD, (LPBYTE) & dwData, sizeof(DWORD)))
-		return -8;
 
 	/* Set the event types supported */
 	dwData = EVENTLOG_ERROR_TYPE | EVENTLOG_WARNING_TYPE | EVENTLOG_INFORMATION_TYPE | EVENTLOG_SUCCESS;

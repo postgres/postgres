@@ -55,6 +55,15 @@ postmasters on a particular host, you will need multiple pg_autovacuum
 instances, and they have no way, at present, to coordinate between one
 another to ensure that they do not concurrently vacuum big tables.
 
+When installed as a service under Windows, there is currently no way to
+know the name of the PostgreSQL server service (if there even is one)
+so it is not possible to specify a startup dependency. It is therefore
+possible for pg_autovacuum to start before the server.
+
+When installed as a service under Windows, if the -P option is used to
+specify the connection password, this option (and the password) is 
+stored in plain text in the registry.
+
 TODO:
 -----
 
@@ -117,7 +126,9 @@ pg_autovacuum has the following optional arguments:
 -L log file: Name of file to which output is submitted, otherwise STDERR
 -U username: Username pg_autovacuum will use to connect with, if not
    specified the current username is used.
--P password: Password pg_autovacuum will use to connect with.
+-P password: Password pg_autovacuum will use to connect with. *WARNING*
+   When installed as a Windows Service, this option will be stored in plain
+   text in the registry.
 -H host: host name or IP to connect to.
 -p port: port used for connection.
 -h help: list of command line options.
@@ -133,6 +144,19 @@ the time of writing they are:
 -s 300 (5 minutes)
 -S 2
 
+The following arguments are used on Windows only:
+
+-I Install the executable as a Windows service. Other appropriate command
+   line options will be stored in the registry and passed to the service 
+   at startup. *WARNING* This includes the connection password which will 
+   be stored in plain text.
+	     
+-N service user: Name of the Windows user account under which the service
+   will run.
+   
+-W service password: The password for the service account.
+
+-R Uninstall pg_autovacuum as a service.
 
 Vacuum and Analyze:
 -------------------
