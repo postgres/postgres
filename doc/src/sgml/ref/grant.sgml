@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.7 2000/04/09 12:08:33 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.8 2000/04/09 12:14:25 momjian Exp $
 Postgres documentation
 -->
 
@@ -151,7 +151,6 @@ GRANT <replaceable class="PARAMETER">privilege</replaceable> [, ...] ON <replace
       <listitem>
        <para>
 	A <replaceable class="PARAMETER">group</replaceable> to whom to grant privileges.
-	In the current release, the group must be created explicitly as described below.
        </para>
       </listitem>
      </varlistentry>	
@@ -271,17 +270,6 @@ ERROR:  ChangeAcl: class "<replaceable class="PARAMETER">object</replaceable>" n
                arwR -- ALL
     </programlisting>
 
-    <tip>
-     <para>
-      Currently, to create a GROUP you have to insert 
-      data manually into table pg_group as:
-
-      <programlisting>
-INSERT INTO pg_group VALUES ('todos');
-CREATE USER miriam IN GROUP todos;
-      </programlisting>
-     </para>
-    </tip>
    </para>
 
    <para>
