@@ -1460,13 +1460,17 @@ deprecated as a waste of processing power.
 <para>
 A better way to check for NOTIFY
 messages when you have no useful queries to make is to call
-<function>PQconsumeInput()</function>, then check <function>PQnotifies()</function>.
+<function>PQconsumeInput()</function>, then check
+<function>PQnotifies()</function>.
 You can use <function>select</function>(2) to wait for backend data to
 arrive, thereby using no <acronym>CPU</acronym> power unless there is something
-to do.  Note that this will work OK whether you use <function>PQsendQuery</function>/
-<function>PQgetResult</function> or simply <function>PQexec</function> for
-queries.  You should, however, remember to check <function>PQnotifies()</function>
-after each <function>PQgetResult</function> or <function>PQexec</function> to see
+to do.  (See <function>PQsocket()</function> to obtain the file descriptor
+number to use with <function>select</function>.)
+Note that this will work OK whether you submit queries with
+<function>PQsendQuery</function>/<function>PQgetResult</function> or simply
+use <function>PQexec</function>.  You should, however, remember to
+check <function>PQnotifies()</function> after each
+<function>PQgetResult</function> or <function>PQexec</function>, to see
 if any notifications came in during the processing of the query.
 </para>
 
