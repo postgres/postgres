@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.95 1999/11/16 04:13:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.96 1999/11/21 20:01:10 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -72,6 +72,7 @@ static void DefaultBuild(Relation heapRelation, Relation indexRelation,
 		int numberOfAttributes, AttrNumber *attributeNumber,
 		IndexStrategy indexStrategy, uint16 parameterCount,
 		Datum *parameter, FuncIndexInfoPtr funcInfo, PredInfo *predInfo);
+static Oid IndexGetRelation(Oid indexId);
 
 /* ----------------------------------------------------------------
  *	  sysatts is a structure containing attribute tuple forms
@@ -1109,7 +1110,8 @@ index_create(char *heapRelationName,
 void
 index_destroy(Oid indexId)
 {
-	Relation	userindexRelation;
+	Relation	userHeapRelation;
+	Relation	userIndexRelation;
 	Relation	indexRelation;
 	Relation	relationRelation;
 	Relation	attributeRelation;
@@ -1118,12 +1120,21 @@ index_destroy(Oid indexId)
 
 	Assert(OidIsValid(indexId));
 
-	userindexRelation = index_open(indexId);
-
-	/*
-	 * Get exclusive lock to ensure no one else is scanning this index.
+	/* ----------------
+	 *	To drop an index safely, we must grab exclusive lock on its parent
+	 *	table; otherwise there could be other backends using the index!
+	 *	Exclusive lock on the index alone is insufficient because the index
+	 *	access routines are a little slipshod about obtaining adequate locking
+	 *	(see ExecOpenIndices()).  We do grab exclusive lock on the index too,
+	 *	just to be safe.  Both locks must be held till end of transaction,
+	 *	else other backends will still see this index in pg_index.
+	 * ----------------
 	 */
-	LockRelation(userindexRelation, AccessExclusiveLock);
+	userHeapRelation = heap_open(IndexGetRelation(indexId),
+								 AccessExclusiveLock);
+
+	userIndexRelation = index_open(indexId);
+	LockRelation(userIndexRelation, AccessExclusiveLock);
 
 	/* ----------------
 	 *	DROP INDEX within a transaction block is dangerous, because
@@ -1137,14 +1148,13 @@ index_destroy(Oid indexId)
 	 *	they don't exist anyway.  So, no warning in that case.
 	 * ----------------
 	 */
-	if (IsTransactionBlock() && ! userindexRelation->rd_myxactonly)
+	if (IsTransactionBlock() && ! userIndexRelation->rd_myxactonly)
 		elog(NOTICE, "Caution: DROP INDEX cannot be rolled back, so don't abort now");
 
 	/* ----------------
 	 * fix DESCRIPTION relation
 	 * ----------------
 	 */
-
 	DeleteComments(indexId);
 	
 	/* ----------------
@@ -1198,14 +1208,18 @@ index_destroy(Oid indexId)
 	heap_close(indexRelation, RowExclusiveLock);
 
 	/*
-	 * flush cache and physically remove the file
+	 * flush buffer cache and physically remove the file
 	 */
-	ReleaseRelationBuffers(userindexRelation);
+	ReleaseRelationBuffers(userIndexRelation);
 
-	if (smgrunlink(DEFAULT_SMGR, userindexRelation) != SM_SUCCESS)
+	if (smgrunlink(DEFAULT_SMGR, userIndexRelation) != SM_SUCCESS)
 		elog(ERROR, "index_destroy: unlink: %m");
 
-	index_close(userindexRelation);
+	/*
+	 * Close rels, but keep locks
+	 */
+	index_close(userIndexRelation);
+	heap_close(userHeapRelation, NoLock);
 
 	RelationForgetRelation(indexId);
 
@@ -1718,6 +1732,30 @@ index_build(Relation heapRelation,
 					 parameter,
 					 funcInfo,
 					 predInfo);
+}
+
+/*
+ * IndexGetRelation: given an index's relation OID, get the OID of the
+ * relation it is an index on.  Uses the system cache.
+ */
+static Oid
+IndexGetRelation(Oid indexId)
+{
+	HeapTuple	tuple;
+	Form_pg_index index;
+
+	tuple = SearchSysCacheTuple(INDEXRELID,
+								ObjectIdGetDatum(indexId),
+								0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+	{
+		elog(ERROR, "IndexGetRelation: can't find index id %u",
+			 indexId);
+	}
+	index = (Form_pg_index) GETSTRUCT(tuple);
+	Assert(index->indexrelid == indexId);
+
+	return index->indrelid;
 }
 
 /*
