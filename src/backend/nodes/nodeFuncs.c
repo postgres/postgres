@@ -8,14 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.21 2002/12/13 19:45:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.22 2003/06/29 00:33:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "nodes/nodeFuncs.h"
-#include "utils/lsyscache.h"
+
 
 static bool var_is_inner(Var *var);
 
@@ -71,21 +71,4 @@ var_is_rel(Var *var)
 {
 	return (bool)
 		!(var_is_inner(var) || var_is_outer(var));
-}
-
-/*****************************************************************************
- *		OPER nodes
- *****************************************************************************/
-
-/*
- * set_opfuncid -
- *
- *		Set the opfuncid (procedure OID) in an OpExpr node,
- *		if it hasn't been set already.
- */
-void
-set_opfuncid(OpExpr *opexpr)
-{
-	if (opexpr->opfuncid == InvalidOid)
-		opexpr->opfuncid = get_opcode(opexpr->opno);
 }

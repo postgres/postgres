@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.99 2003/06/22 22:04:55 tgl Exp $
+ * $Id: execnodes.h,v 1.100 2003/06/29 00:33:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -487,6 +487,22 @@ typedef struct FuncExprState
 	 */
 	FunctionCallInfoData setArgs;
 } FuncExprState;
+
+/* ----------------
+ *		ScalarArrayOpExprState node
+ *
+ * This is a FuncExprState plus some additional data.
+ * ----------------
+ */
+typedef struct ScalarArrayOpExprState
+{
+	FuncExprState	fxprstate;
+	/* Cached info about array element type */
+	Oid				element_type;
+	int16			typlen;
+	bool			typbyval;
+	char			typalign;
+} ScalarArrayOpExprState;
 
 /* ----------------
  *		BoolExprState node

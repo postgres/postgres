@@ -154,6 +154,22 @@ SELECT ARRAY[['a','bc'],['def','hijk']]::text[]::varchar[] AS "{{a,bc},{def,hijk
 SELECT ARRAY[['a','bc'],['def','hijk']]::text[]::varchar[] is of (varchar[]) as "TRUE";
 SELECT CAST(ARRAY[[[[[['a','bb','ccc']]]]]] as text[]) as "{{{{{{a,bb,ccc}}}}}}";
 
+-- scalar op any/all (array)
+select 33 = any ('{1,2,3}');
+select 33 = any ('{1,2,33}');
+select 33 = all ('{1,2,33}');
+select 33 >= all ('{1,2,33}');
+-- boundary cases
+select null::int >= all ('{1,2,33}');
+select null::int >= all ('{}');
+select null::int >= any ('{}');
+-- cross-datatype
+select 33.4 = any (array[1,2,3]);
+select 33.4 > all (array[1,2,3]);
+-- errors
+select 33 * any ('{1,2,3}');
+select 33 * any (44);
+
 -- test indexes on arrays
 create temp table arr_tbl (f1 int[] unique);
 insert into arr_tbl values ('{1,2,3}');

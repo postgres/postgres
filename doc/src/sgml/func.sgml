@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.157 2003/06/27 00:33:25 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.158 2003/06/29 00:33:42 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -7457,52 +7457,14 @@ SELECT col1 FROM tab1
   </sect2>
 
   <sect2>
-   <title><literal>IN</literal> (scalar form)</title>
-
-<synopsis>
-<replaceable>expression</replaceable> IN (<replaceable>value</replaceable><optional>, ...</optional>)
-</synopsis>
-
-  <para>
-   The right-hand side of this form of <token>IN</token> is a parenthesized list
-   of scalar expressions.  The result is <quote>true</> if the left-hand expression's
-   result is equal to any of the right-hand expressions.  This is a shorthand
-   notation for
-
-<synopsis>
-<replaceable>expression</replaceable> = <replaceable>value1</replaceable>
-OR
-<replaceable>expression</replaceable> = <replaceable>value2</replaceable>
-OR
-...
-</synopsis>
-  </para>
-
-  <para>
-   Note that if the left-hand expression yields null, or if there are
-   no equal right-hand values and at least one right-hand expression yields
-   null, the result of the <token>IN</token> construct will be null, not false.
-   This is in accordance with SQL's normal rules for Boolean combinations
-   of null values.
-  </para>
-
-  <note>
-  <para>
-   This form of <token>IN</token> is not truly a subquery expression, but it
-   seems best to document it in the same place as subquery <token>IN</token>.
-  </para>
-  </note>
-  </sect2>
-
-  <sect2>
-   <title><literal>IN</literal> (subquery form)</title>
+   <title><literal>IN</literal></title>
 
 <synopsis>
 <replaceable>expression</replaceable> IN (<replaceable>subquery</replaceable>)
 </synopsis>
 
   <para>
-   The right-hand side of this form of <token>IN</token> is a parenthesized
+   The right-hand side is a parenthesized
    subquery, which must return exactly one column.  The left-hand expression
    is evaluated and compared to each row of the subquery result.
    The result of <token>IN</token> is <quote>true</> if any equal subquery row is found.
@@ -7538,7 +7500,7 @@ OR
   </para>
 
   <para>
-   As usual, null values in the expressions or subquery rows are combined per
+   As usual, null values in the rows are combined per
    the normal rules of SQL Boolean expressions.  Two rows are considered
    equal if all their corresponding members are non-null and equal; the rows
    are unequal if any corresponding members are non-null and unequal;
@@ -7549,55 +7511,14 @@ OR
   </sect2>
 
   <sect2>
-   <title><literal>NOT IN</literal> (scalar form)</title>
-
-<synopsis>
-<replaceable>expression</replaceable> NOT IN (<replaceable>value</replaceable><optional>, ...</optional>)
-</synopsis>
-
-  <para>
-   The right-hand side of this form of <token>NOT IN</token> is a parenthesized list
-   of scalar expressions.  The result is <quote>true</quote> if the left-hand expression's
-   result is unequal to all of the right-hand expressions.  This is a shorthand
-   notation for
-
-<synopsis>
-<replaceable>expression</replaceable> &lt;&gt; <replaceable>value1</replaceable>
-AND
-<replaceable>expression</replaceable> &lt;&gt; <replaceable>value2</replaceable>
-AND
-...
-</synopsis>
-  </para>
-
-  <para>
-   Note that if the left-hand expression yields null, or if there are
-   no equal right-hand values and at least one right-hand expression yields
-   null, the result of the <token>NOT IN</token> construct will be null, not true
-   as one might naively expect.
-   This is in accordance with SQL's normal rules for Boolean combinations
-   of null values.
-  </para>
-
-  <tip>
-  <para>
-   <literal>x NOT IN y</literal> is equivalent to <literal>NOT (x IN y)</literal> in all
-   cases.  However, null values are much more likely to trip up the novice when
-   working with <token>NOT IN</token> than when working with <token>IN</token>.
-   It's best to express your condition positively if possible.
-  </para>
-  </tip>
-  </sect2>
-
-  <sect2>
-   <title><literal>NOT IN </literal>(subquery form)</title>
+   <title><literal>NOT IN </literal></title>
 
 <synopsis>
 <replaceable>expression</replaceable> NOT IN (<replaceable>subquery</replaceable>)
 </synopsis>
 
   <para>
-   The right-hand side of this form of <token>NOT IN</token> is a parenthesized
+   The right-hand side is a parenthesized
    subquery, which must return exactly one column.  The left-hand expression
    is evaluated and compared to each row of the subquery result.
    The result of <token>NOT IN</token> is <quote>true</> if only unequal subquery rows
@@ -7633,7 +7554,7 @@ AND
   </para>
 
   <para>
-   As usual, null values in the expressions or subquery rows are combined per
+   As usual, null values in the rows are combined per
    the normal rules of SQL Boolean expressions.  Two rows are considered
    equal if all their corresponding members are non-null and equal; the rows
    are unequal if any corresponding members are non-null and unequal;
@@ -7652,7 +7573,7 @@ AND
 </synopsis>
 
   <para>
-   The right-hand side of this form of <token>ANY</token> is a parenthesized
+   The right-hand side is a parenthesized
    subquery, which must return exactly one column.  The left-hand expression
    is evaluated and compared to each row of the subquery result using the
    given <replaceable>operator</replaceable>, which must yield a Boolean
@@ -7700,7 +7621,7 @@ AND
   </para>
 
   <para>
-   As usual, null values in the expressions or subquery rows are combined per
+   As usual, null values in the rows are combined per
    the normal rules of SQL Boolean expressions.  Two rows are considered
    equal if all their corresponding members are non-null and equal; the rows
    are unequal if any corresponding members are non-null and unequal;
@@ -7718,7 +7639,7 @@ AND
 </synopsis>
 
   <para>
-   The right-hand side of this form of <token>ALL</token> is a parenthesized
+   The right-hand side is a parenthesized
    subquery, which must return exactly one column.  The left-hand expression
    is evaluated and compared to each row of the subquery result using the
    given <replaceable>operator</replaceable>, which must yield a Boolean
@@ -7765,7 +7686,7 @@ AND
   </para>
 
   <para>
-   As usual, null values in the expressions or subquery rows are combined per
+   As usual, null values in the rows are combined per
    the normal rules of SQL Boolean expressions.  Two rows are considered
    equal if all their corresponding members are non-null and equal; the rows
    are unequal if any corresponding members are non-null and unequal;
@@ -7780,24 +7701,201 @@ AND
 
 <synopsis>
 (<replaceable>expression</replaceable> <optional>, <replaceable>expression</replaceable> ...</optional>) <replaceable>operator</replaceable> (<replaceable>subquery</replaceable>)
-(<replaceable>expression</replaceable> <optional>, <replaceable>expression</replaceable> ...</optional>) <replaceable>operator</replaceable> (<replaceable>expression</replaceable> <optional>, <replaceable>expression</replaceable> ...</optional>)
 </synopsis>
 
   <para>
-   The left-hand side is a list of scalar expressions.  The right-hand side
-   can be either a list of scalar expressions of the same length, or a
-   parenthesized subquery, which must return exactly as many columns as there
+   The left-hand side is a list of scalar expressions.  The right-hand side is
+   a parenthesized subquery, which must return exactly as many columns as there
    are expressions on the left-hand side.  Furthermore, the subquery cannot
    return more than one row.  (If it returns zero rows, the result is taken to
    be null.)  The left-hand side is evaluated and compared row-wise to the
-   single subquery result row, or to the right-hand expression list.
+   single subquery result row.
    Presently, only <literal>=</literal> and <literal>&lt;&gt;</literal> operators are allowed
    in row-wise comparisons.
    The result is <quote>true</> if the two rows are equal or unequal, respectively.
   </para>
 
   <para>
-   As usual, null values in the expressions or subquery rows are combined per
+   As usual, null values in the rows are combined per
+   the normal rules of SQL Boolean expressions.  Two rows are considered
+   equal if all their corresponding members are non-null and equal; the rows
+   are unequal if any corresponding members are non-null and unequal;
+   otherwise the result of the row comparison is unknown (null).
+  </para>
+  </sect2>
+ </sect1>
+
+
+ <sect1 id="functions-comparisons">
+  <title>Row and Array Comparisons</title>
+
+  <indexterm>
+   <primary>in</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>not in</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>any</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>all</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>some</primary>
+  </indexterm>
+
+  <para>
+   This section describes several specialized constructs for making
+   multiple comparisons between groups of values.  These forms are
+   syntactically related to the subquery forms of the previous section,
+   but do not involve subqueries.
+   The forms involving array subexpressions are
+   <productname>PostgreSQL</productname> extensions; the rest are
+   <acronym>SQL</acronym>-compliant.
+   All of the expression forms documented in this section return
+   Boolean (true/false) results.
+  </para>
+
+  <sect2>
+   <title><literal>IN</literal></title>
+
+<synopsis>
+<replaceable>expression</replaceable> IN (<replaceable>value</replaceable><optional>, ...</optional>)
+</synopsis>
+
+  <para>
+   The right-hand side is a parenthesized list
+   of scalar expressions.  The result is <quote>true</> if the left-hand expression's
+   result is equal to any of the right-hand expressions.  This is a shorthand
+   notation for
+
+<synopsis>
+<replaceable>expression</replaceable> = <replaceable>value1</replaceable>
+OR
+<replaceable>expression</replaceable> = <replaceable>value2</replaceable>
+OR
+...
+</synopsis>
+  </para>
+
+  <para>
+   Note that if the left-hand expression yields null, or if there are
+   no equal right-hand values and at least one right-hand expression yields
+   null, the result of the <token>IN</token> construct will be null, not false.
+   This is in accordance with SQL's normal rules for Boolean combinations
+   of null values.
+  </para>
+  </sect2>
+
+  <sect2>
+   <title><literal>NOT IN</literal></title>
+
+<synopsis>
+<replaceable>expression</replaceable> NOT IN (<replaceable>value</replaceable><optional>, ...</optional>)
+</synopsis>
+
+  <para>
+   The right-hand side is a parenthesized list
+   of scalar expressions.  The result is <quote>true</quote> if the left-hand expression's
+   result is unequal to all of the right-hand expressions.  This is a shorthand
+   notation for
+
+<synopsis>
+<replaceable>expression</replaceable> &lt;&gt; <replaceable>value1</replaceable>
+AND
+<replaceable>expression</replaceable> &lt;&gt; <replaceable>value2</replaceable>
+AND
+...
+</synopsis>
+  </para>
+
+  <para>
+   Note that if the left-hand expression yields null, or if there are
+   no equal right-hand values and at least one right-hand expression yields
+   null, the result of the <token>NOT IN</token> construct will be null, not true
+   as one might naively expect.
+   This is in accordance with SQL's normal rules for Boolean combinations
+   of null values.
+  </para>
+
+  <tip>
+  <para>
+   <literal>x NOT IN y</literal> is equivalent to <literal>NOT (x IN y)</literal> in all
+   cases.  However, null values are much more likely to trip up the novice when
+   working with <token>NOT IN</token> than when working with <token>IN</token>.
+   It's best to express your condition positively if possible.
+  </para>
+  </tip>
+  </sect2>
+
+  <sect2>
+   <title><literal>ANY</literal>/<literal>SOME</literal> (array)</title>
+
+<synopsis>
+<replaceable>expression</replaceable> <replaceable>operator</replaceable> ANY (<replaceable>array expression</replaceable>)
+<replaceable>expression</replaceable> <replaceable>operator</replaceable> SOME (<replaceable>array expression</replaceable>)
+</synopsis>
+
+  <para>
+   The right-hand side is a parenthesized expression, which must yield an
+   array value.
+   The left-hand expression
+   is evaluated and compared to each element of the array using the
+   given <replaceable>operator</replaceable>, which must yield a Boolean
+   result.
+   The result of <token>ANY</token> is <quote>true</> if any true result is obtained.
+   The result is <quote>false</> if no true result is found (including the special
+   case where the array has zero elements).
+  </para>
+
+  <para>
+   <token>SOME</token> is a synonym for <token>ANY</token>.
+  </para>
+  </sect2>
+
+  <sect2>
+   <title><literal>ALL</literal> (array)</title>
+
+<synopsis>
+<replaceable>expression</replaceable> <replaceable>operator</replaceable> ALL (<replaceable>array expression</replaceable>)
+</synopsis>
+
+  <para>
+   The right-hand side is a parenthesized expression, which must yield an
+   array value.
+   The left-hand expression
+   is evaluated and compared to each element of the array using the
+   given <replaceable>operator</replaceable>, which must yield a Boolean
+   result.
+   The result of <token>ALL</token> is <quote>true</> if all comparisons yield true
+   (including the special case where the array has zero elements).
+   The result is <quote>false</> if any false result is found.
+  </para>
+  </sect2>
+
+  <sect2>
+   <title>Row-wise Comparison</title>
+
+<synopsis>
+(<replaceable>expression</replaceable> <optional>, <replaceable>expression</replaceable> ...</optional>) <replaceable>operator</replaceable> (<replaceable>expression</replaceable> <optional>, <replaceable>expression</replaceable> ...</optional>)
+</synopsis>
+
+  <para>
+   Each side is a list of scalar expressions; the two lists must be
+   of the same length.  Each side is evaluated and they are compared
+   row-wise.
+   Presently, only <literal>=</literal> and <literal>&lt;&gt;</literal> operators are allowed
+   in row-wise comparisons.
+   The result is <quote>true</> if the two rows are equal or unequal, respectively.
+  </para>
+
+  <para>
+   As usual, null values in the rows are combined per
    the normal rules of SQL Boolean expressions.  Two rows are considered
    equal if all their corresponding members are non-null and equal; the rows
    are unequal if any corresponding members are non-null and unequal;

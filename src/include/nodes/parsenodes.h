@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.241 2003/06/27 14:45:31 petere Exp $
+ * $Id: parsenodes.h,v 1.242 2003/06/29 00:33:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,6 +170,8 @@ typedef enum A_Expr_Kind
 	AEXPR_AND,					/* booleans - name field is unused */
 	AEXPR_OR,
 	AEXPR_NOT,
+	AEXPR_OP_ANY,				/* scalar op ANY (array) */
+	AEXPR_OP_ALL,				/* scalar op ALL (array) */
 	AEXPR_DISTINCT,				/* IS DISTINCT FROM - name must be "=" */
 	AEXPR_NULLIF,				/* NULLIF - name must be "=" */
 	AEXPR_OF					/* IS (not) OF - name must be "=" or "!=" */

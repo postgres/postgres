@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.153 2003/06/27 17:04:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.154 2003/06/29 00:33:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -298,6 +298,34 @@ transformExpr(ParseState *pstate, Node *expr)
 
 							result = (Node *) makeBoolExpr(NOT_EXPR,
 														   makeList1(rexpr));
+						}
+						break;
+					case AEXPR_OP_ANY:
+						{
+							Node	   *lexpr = transformExpr(pstate,
+															  a->lexpr);
+							Node	   *rexpr = transformExpr(pstate,
+															  a->rexpr);
+
+							result = (Node *) make_scalar_array_op(pstate,
+																   a->name,
+																   true,
+																   lexpr,
+																   rexpr);
+						}
+						break;
+					case AEXPR_OP_ALL:
+						{
+							Node	   *lexpr = transformExpr(pstate,
+															  a->lexpr);
+							Node	   *rexpr = transformExpr(pstate,
+															  a->rexpr);
+
+							result = (Node *) make_scalar_array_op(pstate,
+																   a->name,
+																   false,
+																   lexpr,
+																   rexpr);
 						}
 						break;
 					case AEXPR_DISTINCT:
@@ -879,6 +907,7 @@ transformExpr(ParseState *pstate, Node *expr)
 		case T_FuncExpr:
 		case T_OpExpr:
 		case T_DistinctExpr:
+		case T_ScalarArrayOpExpr:
 		case T_NullIfExpr:
 		case T_BoolExpr:
 		case T_FieldSelect:
@@ -1154,6 +1183,9 @@ exprType(Node *expr)
 			break;
 		case T_DistinctExpr:
 			type = ((DistinctExpr *) expr)->opresulttype;
+			break;
+		case T_ScalarArrayOpExpr:
+			type = BOOLOID;
 			break;
 		case T_BoolExpr:
 			type = BOOLOID;

@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.142 2003/06/25 03:56:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.143 2003/06/29 00:33:44 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2292,19 +2292,33 @@ get_rule_expr(Node *node, deparse_context *context,
 			{
 				DistinctExpr *expr = (DistinctExpr *) node;
 				List	   *args = expr->args;
+				Node	   *arg1 = (Node *) lfirst(args);
+				Node	   *arg2 = (Node *) lsecond(args);
 
-				Assert(length(args) == 2);
-				{
-					/* binary operator */
-					Node	   *arg1 = (Node *) lfirst(args);
-					Node	   *arg2 = (Node *) lsecond(args);
+				appendStringInfoChar(buf, '(');
+				get_rule_expr(arg1, context, true);
+				appendStringInfo(buf, " IS DISTINCT FROM ");
+				get_rule_expr(arg2, context, true);
+				appendStringInfoChar(buf, ')');
+			}
+			break;
 
-					appendStringInfoChar(buf, '(');
-					get_rule_expr(arg1, context, true);
-					appendStringInfo(buf, " IS DISTINCT FROM ");
-					get_rule_expr(arg2, context, true);
-					appendStringInfoChar(buf, ')');
-				}
+		case T_ScalarArrayOpExpr:
+			{
+				ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
+				List	   *args = expr->args;
+				Node	   *arg1 = (Node *) lfirst(args);
+				Node	   *arg2 = (Node *) lsecond(args);
+
+				appendStringInfoChar(buf, '(');
+				get_rule_expr(arg1, context, true);
+				appendStringInfo(buf, " %s %s (",
+								 generate_operator_name(expr->opno,
+														exprType(arg1),
+										get_element_type(exprType(arg2))),
+								 expr->useOr ? "ANY" : "ALL");
+				get_rule_expr(arg2, context, true);
+				appendStringInfo(buf, "))");
 			}
 			break;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.210 2003/06/25 21:30:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.211 2003/06/29 00:33:43 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -665,6 +665,17 @@ _outDistinctExpr(StringInfo str, DistinctExpr *node)
 	WRITE_OID_FIELD(opfuncid);
 	WRITE_OID_FIELD(opresulttype);
 	WRITE_BOOL_FIELD(opretset);
+	WRITE_NODE_FIELD(args);
+}
+
+static void
+_outScalarArrayOpExpr(StringInfo str, ScalarArrayOpExpr *node)
+{
+	WRITE_NODE_TYPE("SCALARARRAYOPEXPR");
+
+	WRITE_OID_FIELD(opno);
+	WRITE_OID_FIELD(opfuncid);
+	WRITE_BOOL_FIELD(useOr);
 	WRITE_NODE_FIELD(args);
 }
 
@@ -1333,6 +1344,16 @@ _outAExpr(StringInfo str, A_Expr *node)
 		case AEXPR_NOT:
 			appendStringInfo(str, " NOT");
 			break;
+		case AEXPR_OP_ANY:
+			appendStringInfo(str, " ");
+			WRITE_NODE_FIELD(name);
+			appendStringInfo(str, " ANY ");
+			break;
+		case AEXPR_OP_ALL:
+			appendStringInfo(str, " ");
+			WRITE_NODE_FIELD(name);
+			appendStringInfo(str, " ALL ");
+			break;
 		case AEXPR_DISTINCT:
 			appendStringInfo(str, " DISTINCT ");
 			WRITE_NODE_FIELD(name);
@@ -1618,6 +1639,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_DistinctExpr:
 				_outDistinctExpr(str, obj);
+				break;
+			case T_ScalarArrayOpExpr:
+				_outScalarArrayOpExpr(str, obj);
 				break;
 			case T_BoolExpr:
 				_outBoolExpr(str, obj);

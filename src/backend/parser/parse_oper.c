@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.67 2003/06/27 00:33:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.68 2003/06/29 00:33:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -737,6 +737,96 @@ make_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree)
 	return result;
 }
 
+/*
+ * make_scalar_array_op()
+ *		Build expression tree for "scalar op ANY/ALL (array)" construct.
+ */
+Expr *
+make_scalar_array_op(ParseState *pstate, List *opname,
+					 bool useOr,
+					 Node *ltree, Node *rtree)
+{
+	Oid			ltypeId,
+				rtypeId,
+				atypeId,
+				res_atypeId;
+	Operator	tup;
+	Form_pg_operator opform;
+	Oid			actual_arg_types[2];
+	Oid			declared_arg_types[2];
+	List	   *args;
+	Oid			rettype;
+	ScalarArrayOpExpr *result;
+
+	ltypeId = exprType(ltree);
+	atypeId = exprType(rtree);
+	/*
+	 * The right-hand input of the operator will be the element type of
+	 * the array.  However, if we currently have just an untyped literal
+	 * on the right, stay with that and hope we can resolve the operator.
+	 */
+	if (atypeId == UNKNOWNOID)
+		rtypeId = UNKNOWNOID;
+	else
+	{
+		rtypeId = get_element_type(atypeId);
+		if (!OidIsValid(rtypeId))
+			elog(ERROR, "op ANY/ALL (array) requires array on right side");
+	}
+
+	/* Now resolve the operator */
+	tup = oper(opname, ltypeId, rtypeId, false);
+	opform = (Form_pg_operator) GETSTRUCT(tup);
+
+	args = makeList2(ltree, rtree);
+	actual_arg_types[0] = ltypeId;
+	actual_arg_types[1] = rtypeId;
+	declared_arg_types[0] = opform->oprleft;
+	declared_arg_types[1] = opform->oprright;
+
+	/*
+	 * enforce consistency with ANYARRAY and ANYELEMENT argument and
+	 * return types, possibly adjusting return type or declared_arg_types
+	 * (which will be used as the cast destination by make_fn_arguments)
+	 */
+	rettype = enforce_generic_type_consistency(actual_arg_types,
+											   declared_arg_types,
+											   2,
+											   opform->oprresult);
+
+	/*
+	 * Check that operator result is boolean
+	 */
+	if (rettype != BOOLOID)
+		elog(ERROR, "op ANY/ALL (array) requires operator to yield boolean");
+	if (get_func_retset(opform->oprcode))
+		elog(ERROR, "op ANY/ALL (array) requires operator not to return a set");
+
+	/*
+	 * Now switch back to the array type on the right, arranging for
+	 * any needed cast to be applied.
+	 */
+	res_atypeId = get_array_type(declared_arg_types[1]);
+	if (!OidIsValid(res_atypeId))
+		elog(ERROR, "unable to find datatype for array of %s",
+			 format_type_be(declared_arg_types[1]));
+	actual_arg_types[1] = atypeId;
+	declared_arg_types[1] = res_atypeId;
+
+	/* perform the necessary typecasting of arguments */
+	make_fn_arguments(pstate, args, actual_arg_types, declared_arg_types);
+
+	/* and build the expression node */
+	result = makeNode(ScalarArrayOpExpr);
+	result->opno = oprid(tup);
+	result->opfuncid = InvalidOid;
+	result->useOr = useOr;
+	result->args = args;
+
+	ReleaseSysCache(tup);
+
+	return (Expr *) result;
+}
 
 /*
  * make_op_expr()

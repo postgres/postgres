@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.141 2003/06/25 21:30:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.142 2003/06/29 00:33:43 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -25,8 +25,8 @@
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
-#include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
+#include "optimizer/planmain.h"
 #include "optimizer/var.h"
 #include "parser/analyze.h"
 #include "parser/parse_clause.h"
@@ -461,6 +461,8 @@ expression_returns_set_walker(Node *node, void *context)
 		return false;
 	if (IsA(node, DistinctExpr))
 		return false;
+	if (IsA(node, ScalarArrayOpExpr))
+		return false;
 	if (IsA(node, BoolExpr))
 		return false;
 	if (IsA(node, SubLink))
@@ -563,6 +565,14 @@ contain_mutable_functions_walker(Node *node, void *context)
 			return true;
 		/* else fall through to check args */
 	}
+	if (IsA(node, ScalarArrayOpExpr))
+	{
+		ScalarArrayOpExpr   *expr = (ScalarArrayOpExpr *) node;
+
+		if (op_volatile(expr->opno) != PROVOLATILE_IMMUTABLE)
+			return true;
+		/* else fall through to check args */
+	}
 	if (IsA(node, NullIfExpr))
 	{
 		NullIfExpr   *expr = (NullIfExpr *) node;
@@ -633,6 +643,14 @@ contain_volatile_functions_walker(Node *node, void *context)
 	if (IsA(node, DistinctExpr))
 	{
 		DistinctExpr   *expr = (DistinctExpr *) node;
+
+		if (op_volatile(expr->opno) == PROVOLATILE_VOLATILE)
+			return true;
+		/* else fall through to check args */
+	}
+	if (IsA(node, ScalarArrayOpExpr))
+	{
+		ScalarArrayOpExpr   *expr = (ScalarArrayOpExpr *) node;
 
 		if (op_volatile(expr->opno) == PROVOLATILE_VOLATILE)
 			return true;
@@ -709,6 +727,11 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 	if (IsA(node, DistinctExpr))
 	{
 		/* IS DISTINCT FROM is inherently non-strict */
+		return true;
+	}
+	if (IsA(node, ScalarArrayOpExpr))
+	{
+		/* inherently non-strict, consider null scalar and empty array */
 		return true;
 	}
 	if (IsA(node, BoolExpr))
@@ -2152,6 +2175,15 @@ expression_tree_walker(Node *node,
 					return true;
 			}
 			break;
+		case T_ScalarArrayOpExpr:
+			{
+				ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
+
+				if (expression_tree_walker((Node *) expr->args,
+										   walker, context))
+					return true;
+			}
+			break;
 		case T_BoolExpr:
 			{
 				BoolExpr   *expr = (BoolExpr *) node;
@@ -2506,6 +2538,16 @@ expression_tree_mutator(Node *node,
 				DistinctExpr   *newnode;
 
 				FLATCOPY(newnode, expr, DistinctExpr);
+				MUTATE(newnode->args, expr->args, List *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_ScalarArrayOpExpr:
+			{
+				ScalarArrayOpExpr   *expr = (ScalarArrayOpExpr *) node;
+				ScalarArrayOpExpr   *newnode;
+
+				FLATCOPY(newnode, expr, ScalarArrayOpExpr);
 				MUTATE(newnode->args, expr->args, List *);
 				return (Node *) newnode;
 			}

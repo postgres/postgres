@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.25 2003/05/28 16:03:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.26 2003/06/29 00:33:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1022,6 +1022,14 @@ find_expr_references_walker(Node *node,
 		DistinctExpr   *distinctexpr = (DistinctExpr *) node;
 
 		add_object_address(OCLASS_OPERATOR, distinctexpr->opno, 0,
+						   &context->addrs);
+		/* fall through to examine arguments */
+	}
+	if (IsA(node, ScalarArrayOpExpr))
+	{
+		ScalarArrayOpExpr   *opexpr = (ScalarArrayOpExpr *) node;
+
+		add_object_address(OCLASS_OPERATOR, opexpr->opno, 0,
 						   &context->addrs);
 		/* fall through to examine arguments */
 	}

@@ -294,6 +294,68 @@ SELECT CAST(ARRAY[[[[[['a','bb','ccc']]]]]] as text[]) as "{{{{{{a,bb,ccc}}}}}}"
  {{{{{{a,bb,ccc}}}}}}
 (1 row)
 
+-- scalar op any/all (array)
+select 33 = any ('{1,2,3}');
+ ?column? 
+----------
+ f
+(1 row)
+
+select 33 = any ('{1,2,33}');
+ ?column? 
+----------
+ t
+(1 row)
+
+select 33 = all ('{1,2,33}');
+ ?column? 
+----------
+ f
+(1 row)
+
+select 33 >= all ('{1,2,33}');
+ ?column? 
+----------
+ t
+(1 row)
+
+-- boundary cases
+select null::int >= all ('{1,2,33}');
+ ?column? 
+----------
+ 
+(1 row)
+
+select null::int >= all ('{}');
+ ?column? 
+----------
+ t
+(1 row)
+
+select null::int >= any ('{}');
+ ?column? 
+----------
+ f
+(1 row)
+
+-- cross-datatype
+select 33.4 = any (array[1,2,3]);
+ ?column? 
+----------
+ f
+(1 row)
+
+select 33.4 > all (array[1,2,3]);
+ ?column? 
+----------
+ t
+(1 row)
+
+-- errors
+select 33 * any ('{1,2,3}');
+ERROR:  op ANY/ALL (array) requires operator to yield boolean
+select 33 * any (44);
+ERROR:  op ANY/ALL (array) requires array on right side
 -- test indexes on arrays
 create temp table arr_tbl (f1 int[] unique);
 NOTICE:  CREATE TABLE / UNIQUE will create implicit index 'arr_tbl_f1_key' for table 'arr_tbl'

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_oper.h,v 1.28 2003/06/27 00:33:26 tgl Exp $
+ * $Id: parse_oper.h,v 1.29 2003/06/29 00:33:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,6 +54,9 @@ extern Oid	oprfuncid(Operator op);
 /* Build expression tree for an operator invocation */
 extern Expr *make_op(ParseState *pstate, List *opname,
 					 Node *ltree, Node *rtree);
+extern Expr *make_scalar_array_op(ParseState *pstate, List *opname,
+								  bool useOr,
+								  Node *ltree, Node *rtree);
 extern Expr *make_op_expr(ParseState *pstate, Operator op,
 						  Node *ltree, Node *rtree,
 						  Oid ltypeId, Oid rtypeId);

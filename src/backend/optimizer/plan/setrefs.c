@@ -9,20 +9,19 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.92 2003/02/16 02:30:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.93 2003/06/29 00:33:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-
 #include "nodes/makefuncs.h"
-#include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
+#include "utils/lsyscache.h"
 
 
 typedef struct
@@ -61,6 +60,8 @@ static Node *replace_vars_with_subplan_refs(Node *node,
 static Node *replace_vars_with_subplan_refs_mutator(Node *node,
 						replace_vars_with_subplan_refs_context *context);
 static bool fix_opfuncids_walker(Node *node, void *context);
+static void set_sa_opfuncid(ScalarArrayOpExpr *opexpr);
+
 
 /*****************************************************************************
  *
@@ -284,6 +285,8 @@ fix_expr_references_walker(Node *node, void *context)
 		set_opfuncid((OpExpr *) node);
 	else if (IsA(node, DistinctExpr))
 		set_opfuncid((OpExpr *) node); /* rely on struct equivalence */
+	else if (IsA(node, ScalarArrayOpExpr))
+		set_sa_opfuncid((ScalarArrayOpExpr *) node);
 	else if (IsA(node, NullIfExpr))
 		set_opfuncid((OpExpr *) node); /* rely on struct equivalence */
 	else if (IsA(node, SubPlan))
@@ -738,7 +741,35 @@ fix_opfuncids_walker(Node *node, void *context)
 		set_opfuncid((OpExpr *) node);
 	else if (IsA(node, DistinctExpr))
 		set_opfuncid((OpExpr *) node); /* rely on struct equivalence */
+	else if (IsA(node, ScalarArrayOpExpr))
+		set_sa_opfuncid((ScalarArrayOpExpr *) node);
 	else if (IsA(node, NullIfExpr))
 		set_opfuncid((OpExpr *) node); /* rely on struct equivalence */
 	return expression_tree_walker(node, fix_opfuncids_walker, context);
+}
+
+/*
+ * set_opfuncid
+ *		Set the opfuncid (procedure OID) in an OpExpr node,
+ *		if it hasn't been set already.
+ *
+ * Because of struct equivalence, this can also be used for
+ * DistinctExpr and NullIfExpr nodes.
+ */
+void
+set_opfuncid(OpExpr *opexpr)
+{
+	if (opexpr->opfuncid == InvalidOid)
+		opexpr->opfuncid = get_opcode(opexpr->opno);
+}
+
+/*
+ * set_sa_opfuncid
+ *		As above, for ScalarArrayOpExpr nodes.
+ */
+static void
+set_sa_opfuncid(ScalarArrayOpExpr *opexpr)
+{
+	if (opexpr->opfuncid == InvalidOid)
+		opexpr->opfuncid = get_opcode(opexpr->opno);
 }

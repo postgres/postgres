@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.107 2003/02/16 02:30:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.108 2003/06/29 00:33:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1472,6 +1472,11 @@ cost_qual_eval_walker(Node *node, QualCost *total)
 		IsA(node, NullIfExpr))
 	{
 		total->per_tuple += cpu_operator_cost;
+	}
+	else if (IsA(node, ScalarArrayOpExpr))
+	{
+		/* should charge more than 1 op cost, but how many? */
+		total->per_tuple += cpu_operator_cost * 10;
 	}
 	else if (IsA(node, SubLink))
 	{

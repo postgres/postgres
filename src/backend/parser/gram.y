@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.422 2003/06/27 14:45:28 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.423 2003/06/29 00:33:43 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -6050,6 +6050,13 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->operName = $2;
 					n->subselect = $4;
 					$$ = (Node *)n;
+				}
+			| a_expr qual_all_Op sub_type '(' a_expr ')' %prec Op
+				{
+					if ($3 == ANY_SUBLINK)
+						$$ = (Node *) makeA_Expr(AEXPR_OP_ANY, $2, $1, $5);
+					else
+						$$ = (Node *) makeA_Expr(AEXPR_OP_ALL, $2, $1, $5);
 				}
 			| UNIQUE select_with_parens %prec Op
 				{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.58 2003/05/27 17:49:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.59 2003/06/29 00:33:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -513,6 +513,12 @@ clause_selectivity(Query *root,
 		/*
 		 * Just for the moment! FIX ME! - vadim 02/04/98
 		 */
+		s1 = (Selectivity) 0.5;
+	}
+	else if (IsA(clause, DistinctExpr) ||
+			 IsA(clause, ScalarArrayOpExpr))
+	{
+		/* can we do better? */
 		s1 = (Selectivity) 0.5;
 	}
 	else if (IsA(clause, NullTest))

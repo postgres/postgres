@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.133 2003/06/27 00:33:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.134 2003/06/29 00:33:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,6 +65,8 @@ static Datum ExecEvalOper(FuncExprState *fcache, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalDistinct(FuncExprState *fcache, ExprContext *econtext,
 				 bool *isNull);
+static Datum ExecEvalScalarArrayOp(ScalarArrayOpExprState *sstate,
+								   ExprContext *econtext, bool *isNull);
 static ExprDoneCond ExecEvalFuncArgs(FunctionCallInfo fcinfo,
 				 List *argList, ExprContext *econtext);
 static Datum ExecEvalNot(BoolExprState *notclause, ExprContext *econtext,
@@ -1121,7 +1123,6 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 /* ----------------------------------------------------------------
  *		ExecEvalFunc
  *		ExecEvalOper
- *		ExecEvalDistinct
  *
  *		Evaluate the functional result of a list of arguments by calling the
  *		function manager.
@@ -1238,6 +1239,149 @@ ExecEvalDistinct(FuncExprState *fcache,
 		result = BoolGetDatum(!DatumGetBool(result));
 	}
 
+	return result;
+}
+
+/*
+ * ExecEvalScalarArrayOp
+ *
+ * Evaluate "scalar op ANY/ALL (array)".  The operator always yields boolean,
+ * and we combine the results across all array elements using OR and AND
+ * (for ANY and ALL respectively).  Of course we short-circuit as soon as
+ * the result is known.
+ */
+static Datum
+ExecEvalScalarArrayOp(ScalarArrayOpExprState *sstate,
+					  ExprContext *econtext, bool *isNull)
+{
+	ScalarArrayOpExpr *opexpr = (ScalarArrayOpExpr *) sstate->fxprstate.xprstate.expr;
+	bool		useOr = opexpr->useOr;
+	ArrayType  *arr;
+	int			nitems;
+	Datum		result;
+	bool		resultnull;
+	FunctionCallInfoData fcinfo;
+	ExprDoneCond argDone;
+	int			i;
+	int16		typlen;
+	bool		typbyval;
+	char		typalign;
+	char	   *s;
+
+	/*
+	 * Initialize function cache if first time through
+	 */
+	if (sstate->fxprstate.func.fn_oid == InvalidOid)
+	{
+		init_fcache(opexpr->opfuncid, &sstate->fxprstate,
+					econtext->ecxt_per_query_memory);
+		Assert(!sstate->fxprstate.func.fn_retset);
+	}
+
+	/* Need to prep callinfo structure */
+	MemSet(&fcinfo, 0, sizeof(fcinfo));
+	fcinfo.flinfo = &(sstate->fxprstate.func);
+	argDone = ExecEvalFuncArgs(&fcinfo, sstate->fxprstate.args, econtext);
+	if (argDone != ExprSingleResult)
+		elog(ERROR, "op ANY/ALL (array) does not support set arguments");
+	Assert(fcinfo.nargs == 2);
+
+	/*
+	 * If the array is NULL then we return NULL --- it's not very meaningful
+	 * to do anything else, even if the operator isn't strict.
+	 */
+	if (fcinfo.argnull[1])
+	{
+		*isNull = true;
+		return (Datum) 0;
+	}
+	/* Else okay to fetch and detoast the array */
+	arr = DatumGetArrayTypeP(fcinfo.arg[1]);
+
+	/*
+	 * If the array is empty, we return either FALSE or TRUE per the useOr
+	 * flag.  This is correct even if the scalar is NULL; since we would
+	 * evaluate the operator zero times, it matters not whether it would
+	 * want to return NULL.
+	 */
+	nitems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
+	if (nitems <= 0)
+		return BoolGetDatum(!useOr);
+	/*
+	 * If the scalar is NULL, and the function is strict, return NULL.
+	 * This is just to avoid having to test for strictness inside the
+	 * loop.  (XXX but if arrays could have null elements, we'd need a
+	 * test anyway.)
+	 */
+	if (fcinfo.argnull[0] && sstate->fxprstate.func.fn_strict)
+	{
+		*isNull = true;
+		return (Datum) 0;
+	}
+
+	/*
+	 * We arrange to look up info about the element type only
+	 * once per series of calls, assuming the element type doesn't change
+	 * underneath us.
+	 */
+	if (sstate->element_type != ARR_ELEMTYPE(arr))
+	{
+		get_typlenbyvalalign(ARR_ELEMTYPE(arr),
+							 &sstate->typlen,
+							 &sstate->typbyval,
+							 &sstate->typalign);
+		sstate->element_type = ARR_ELEMTYPE(arr);
+	}
+	typlen = sstate->typlen;
+	typbyval = sstate->typbyval;
+	typalign = sstate->typalign;
+
+	result = BoolGetDatum(!useOr);
+	resultnull = false;
+
+	/* Loop over the array elements */
+	s = (char *) ARR_DATA_PTR(arr);
+	for (i = 0; i < nitems; i++)
+	{
+		Datum	elt;
+		Datum	thisresult;
+
+		/* Get array element */
+		elt = fetch_att(s, typbyval, typlen);
+
+		s = att_addlength(s, typlen, PointerGetDatum(s));
+		s = (char *) att_align(s, typalign);
+
+		/* Call comparison function */
+		fcinfo.arg[1] = elt;
+		fcinfo.argnull[1] = false;
+		fcinfo.isnull = false;
+		thisresult = FunctionCallInvoke(&fcinfo);
+
+		/* Combine results per OR or AND semantics */
+		if (fcinfo.isnull)
+			resultnull = true;
+		else if (useOr)
+		{
+			if (DatumGetBool(thisresult))
+			{
+				result = BoolGetDatum(true);
+				resultnull = false;
+				break;		/* needn't look at any more elements */
+			}
+		}
+		else
+		{
+			if (!DatumGetBool(thisresult))
+			{
+				result = BoolGetDatum(false);
+				resultnull = false;
+				break;		/* needn't look at any more elements */
+			}
+		}
+	}
+
+	*isNull = resultnull;
 	return result;
 }
 
@@ -2018,6 +2162,10 @@ ExecEvalExpr(ExprState *expression,
 			retDatum = ExecEvalDistinct((FuncExprState *) expression, econtext,
 										isNull);
 			break;
+		case T_ScalarArrayOpExpr:
+			retDatum = ExecEvalScalarArrayOp((ScalarArrayOpExprState *) expression,
+											 econtext, isNull);
+			break;
 		case T_BoolExpr:
 			{
 				BoolExprState *state = (BoolExprState *) expression;
@@ -2261,6 +2409,18 @@ ExecInitExpr(Expr *node, PlanState *parent)
 					ExecInitExpr((Expr *) distinctexpr->args, parent);
 				fstate->func.fn_oid = InvalidOid; /* not initialized */
 				state = (ExprState *) fstate;
+			}
+			break;
+		case T_ScalarArrayOpExpr:
+			{
+				ScalarArrayOpExpr   *opexpr = (ScalarArrayOpExpr *) node;
+				ScalarArrayOpExprState *sstate = makeNode(ScalarArrayOpExprState);
+
+				sstate->fxprstate.args = (List *)
+					ExecInitExpr((Expr *) opexpr->args, parent);
+				sstate->fxprstate.func.fn_oid = InvalidOid; /* not initialized */
+				sstate->element_type = InvalidOid; /* ditto */
+				state = (ExprState *) sstate;
 			}
 			break;
 		case T_BoolExpr:

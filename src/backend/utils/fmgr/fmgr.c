@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.70 2003/06/25 21:30:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.71 2003/06/29 00:33:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1651,6 +1651,7 @@ get_fn_expr_argtype(FunctionCallInfo fcinfo, int argnum)
 {
 	Node   *expr;
 	List   *args;
+	Oid		argtype;
 
 	/*
 	 * can't return anything useful if we have no FmgrInfo or if
@@ -1665,11 +1666,27 @@ get_fn_expr_argtype(FunctionCallInfo fcinfo, int argnum)
 		args = ((FuncExpr *) expr)->args;
 	else if (IsA(expr, OpExpr))
 		args = ((OpExpr *) expr)->args;
+	else if (IsA(expr, DistinctExpr))
+		args = ((DistinctExpr *) expr)->args;
+	else if (IsA(expr, ScalarArrayOpExpr))
+		args = ((ScalarArrayOpExpr *) expr)->args;
+	else if (IsA(expr, NullIfExpr))
+		args = ((NullIfExpr *) expr)->args;
 	else
 		return InvalidOid;
 
 	if (argnum < 0 || argnum >= length(args))
 		return InvalidOid;
 
-	return exprType((Node *) nth(argnum, args));
+	argtype = exprType((Node *) nth(argnum, args));
+
+	/*
+	 * special hack for ScalarArrayOpExpr: what the underlying function
+	 * will actually get passed is the element type of the array.
+	 */
+	if (IsA(expr, ScalarArrayOpExpr) &&
+		argnum == 1)
+		argtype = get_element_type(argtype);
+
+	return argtype;
 }
