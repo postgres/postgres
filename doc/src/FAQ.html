@@ -674,10 +674,8 @@ your kernel's limit on shared memory space.
 Each buffer is 8K and the default is 64 buffers.<P>
 
 You can also use the backend -S option to increase the maximum amount
-of memory used by each backend process for temporary sorts.  The -S value
-is measured in kilobytes, and the default is 512 (ie, 512K).  It is unwise
-to make this value too large, or you may run out of memory when a query
-invokes several concurrent sorts.<P>
+of memory used by the backend process for temporary sorts.  The -S value
+is measured in kilobytes, and the default is 512 (ie, 512K).<P>
 
 You can also use the <SMALL>CLUSTER</SMALL> command to group data in base tables to
 match an index.  See the cluster(l) manual page for more details.<P>
