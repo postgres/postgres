@@ -4,7 +4,7 @@
 #    Makefile for Java JDBC interface
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.1 1997/09/26 08:22:21 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.2 1997/09/29 20:11:42 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -56,7 +56,7 @@ postgresql.jar: $(OBJS)
 clean:
 	$(FIND) . -name "*~" -exec $(RM) {} \;
 	$(FIND) . -name "*.class" -exec $(RM) {} \;
-	$(RM) postgres.jar
+	$(RM) postgresql.jar
 
 #######################################################################
 # This helps make workout what classes are from what source files

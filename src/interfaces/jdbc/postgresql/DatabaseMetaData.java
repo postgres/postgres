@@ -249,7 +249,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public boolean supportsMixedCaseIdentifiers() throws SQLException
   {
-    return true;
+    return false;
   }
   
   /**
@@ -271,7 +271,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public boolean storesLowerCaseIdentifiers() throws SQLException
   {
-    return false;
+    return true;
   }
   
   /**
@@ -348,7 +348,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public String getIdentifierQuoteString() throws SQLException
   {
-    return new String(" ");
+    return null;
   }
   
   /**
@@ -605,15 +605,17 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   
   /**
    * Can columns be defined as non-nullable.  A JDBC Compliant driver
-   * always returns true.  We dont support NOT NULL, so we are not
-   * JDBC compliant.
+   * always returns true.
+   *
+   * This changed from false to true in v6.2 of the driver, as this
+   * support was added to the backend.
    *
    * @return true if so
    * @exception SQLException if a database access error occurs
    */
   public boolean supportsNonNullableColumns() throws SQLException
   {
-    return false;
+    return true;
   }
   
   /**
@@ -801,7 +803,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public String getCatalogSeparator() throws SQLException
   {
-    return new String(".");
+    // PM Sep 29 97 - changed from "." as we don't support catalogs.
+    return new String("");
   }
   
   /**
@@ -1417,7 +1420,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public boolean dataDefinitionIgnoredInTransactions() throws SQLException
   {
-    return false;
+    return true;
   }
   
   /**

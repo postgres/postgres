@@ -29,6 +29,16 @@ PS: When you run make, don't worry if you see just one or two calls to javac.
     it will compile it automatically. This reduces the numer of calls to javac
     that make has to do.
 
+Possible problems
+
+You may see a message similar to:
+
+postgresql/Driver.java:87: interface java.sql.Connection is an interface. It can't be instantiated.
+    return new Connection (host(), port(), props, database(), url, this);
+
+This is caused by not having the current directory in your CLASSPATH. Under
+Linux/Solaris, unset the CLASSPATH environment variable, and rerun make.
+
 ---------------------------------------------------------------------------
 
 INSTALLING THE DRIVER
@@ -127,20 +137,6 @@ methods to retrive these types.
 
 Also, when using these classes, their toString() methods return the correct
 syntax for writing these to the database.
-
-TODO
-----
-
-Currently only host authentication is supported. Password authentication
-will be in there in a few days.
-
-Incorporating more features from the other driver (esp. in the MetaData's)
-
-Large Object support will also go in there, although it may not be done as
-pure JDBC, but as an extra API.
-
-Producing some documentation with javadoc - not all of the sources have them
-yet.
 
 ---------------------------------------------------------------------------
 
