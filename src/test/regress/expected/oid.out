@@ -61,3 +61,4 @@ one|  f1
    |1235
 (1 row)
 
+QUERY: DROP TABLE  OID_TBL;

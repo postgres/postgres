@@ -103,3 +103,4 @@ three|f1
      |12345678
 (3 rows)
 
+QUERY: DROP TABLE  CHAR8_TBL;

@@ -94,3 +94,4 @@ three|f1
      |1234
 (3 rows)
 
+QUERY: DROP TABLE  CHAR4_TBL;

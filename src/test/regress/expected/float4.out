@@ -146,3 +146,4 @@ five|f1
     |-1.23457e-20
 (5 rows)
 
+QUERY: DROP TABLE  FLOAT4_TBL;

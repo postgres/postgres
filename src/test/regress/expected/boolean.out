@@ -177,3 +177,5 @@ tf_12_ff_4|f1|f1
           |f |f 
 (16 rows)
 
+QUERY: DROP TABLE  BOOLTBL1;
+QUERY: DROP TABLE  BOOLTBL2;

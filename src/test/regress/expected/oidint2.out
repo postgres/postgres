@@ -4,7 +4,7 @@ QUERY: INSERT INTO OIDINT2_TBL(f1) VALUES ('1235/9873');
 QUERY: INSERT INTO OIDINT2_TBL(f1) VALUES ('987/-1234');
 QUERY: INSERT INTO OIDINT2_TBL(f1) VALUES ('123456');
 QUERY: INSERT INTO OIDINT2_TBL(f1) VALUES ('123456/123456');
-WARN:pg_atoi: error reading "123456": Math result not representable
+WARN:pg_atoi: error reading "123456": Result too large
 QUERY: INSERT INTO OIDINT2_TBL(f1) VALUES ('');
 QUERY: INSERT INTO OIDINT2_TBL(f1) VALUES ('asdfasd');
 WARN:pg_atoi: error in "asdfasd": can't parse "asdfasd"
@@ -63,3 +63,4 @@ one|f1
    |123456/0
 (1 row)
 
+QUERY: DROP TABLE  OIDINT2_TBL;

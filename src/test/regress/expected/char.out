@@ -81,3 +81,4 @@ two|f1
    |c 
 (2 rows)
 
+QUERY: DROP TABLE CHAR_TBL;

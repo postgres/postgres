@@ -60,3 +60,4 @@ two|f1
    |123456,abcdefghijklmnopqrsutvwyz
 (2 rows)
 
+QUERY: DROP TABLE  OIDNAME_TBL;

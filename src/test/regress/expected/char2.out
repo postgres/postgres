@@ -98,3 +98,4 @@ one|f1
    |34
 (1 row)
 
+QUERY: DROP TABLE CHAR2_TBL;

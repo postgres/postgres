@@ -1,4 +1,7 @@
 QUERY: COPY onek FROM '_CWD_/data/onek.data';
+QUERY: COPY onek TO '_CWD_/results/onek.data';
+QUERY: DELETE FROM onek;
+QUERY: COPY onek FROM '_CWD_/results/onek.data';
 QUERY: COPY tenk1 FROM '_CWD_/data/tenk.data';
 QUERY: COPY slow_emp4000 FROM '_CWD_/data/rect.data';
 QUERY: COPY person FROM '_CWD_/data/person.data';

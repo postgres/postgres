@@ -207,3 +207,4 @@ three|f1        |f1
      |(5.1,34.5)|(10,10) 
 (3 rows)
 
+QUERY: DROP TABLE  POINT_TBL;

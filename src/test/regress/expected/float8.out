@@ -223,3 +223,4 @@ five|f1
     |-1.2345678901234e-200
 (5 rows)
 
+QUERY: DROP TABLE  FLOAT8_TBL;
