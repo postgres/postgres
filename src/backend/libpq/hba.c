@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.78 2001/11/12 04:29:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.79 2002/01/09 19:13:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,7 +111,7 @@ next_token(FILE *fp, char *buf, const int bufsz)
 
 
 static void
-read_to_eol(FILE *file)
+read_through_eol(FILE *file)
 {
 	int			c;
 
@@ -162,7 +162,7 @@ tokenize_file(FILE *file)
 		if (comment_ptr != NULL)
 		{
 			/* Found a comment, so skip the rest of the line */
-			read_to_eol(file);
+			read_through_eol(file);
 			next_line = NIL;
 		}
 
@@ -1159,14 +1159,12 @@ GetCharSetByHost(char *TableName, int host, const char *DataDir)
 				OrigCharset[MAX_TOKEN],
 				DestCharset[MAX_TOKEN],
 				HostCharset[MAX_TOKEN],
-				c,
-				eof = false,
 			   *map_file;
-	int			key = 0,
+	int			key,
 				ChIndex = 0,
+				c,
 				i,
 				bufsize;
-
 	struct CharsetItem *ChArray[MAX_CHARSETS];
 
 	*TableName = '\0';
@@ -1174,95 +1172,90 @@ GetCharSetByHost(char *TableName, int host, const char *DataDir)
 	map_file = (char *) palloc(bufsize);
 	snprintf(map_file, bufsize, "%s/%s", DataDir, CHARSET_FILE);
 	file = AllocateFile(map_file, PG_BINARY_R);
+	pfree(map_file);
 	if (file == NULL)
 	{
 		/* XXX should we log a complaint? */
 		return;
 	}
-	while (!eof)
+	while ((c = getc(file)) != EOF)
 	{
-		c = getc(file);
-		ungetc(c, file);
-		if (c == EOF)
-			eof = true;
+		if (c == '#')
+			read_through_eol(file);
 		else
 		{
-			if (c == '#')
-				read_to_eol(file);
-			else
+			/* Read the key */
+			ungetc(c, file);
+			next_token(file, buf, sizeof(buf));
+			if (buf[0] != '\0')
 			{
-				/* Read the key */
-				next_token(file, buf, sizeof(buf));
-				if (buf[0] != '\0')
+				key = 0;
+				if (strcasecmp(buf, "HostCharset") == 0)
+					key = KEY_HOST;
+				if (strcasecmp(buf, "BaseCharset") == 0)
+					key = KEY_BASE;
+				if (strcasecmp(buf, "RecodeTable") == 0)
+					key = KEY_TABLE;
+				switch (key)
 				{
-					if (strcasecmp(buf, "HostCharset") == 0)
-						key = KEY_HOST;
-					if (strcasecmp(buf, "BaseCharset") == 0)
-						key = KEY_BASE;
-					if (strcasecmp(buf, "RecodeTable") == 0)
-						key = KEY_TABLE;
-					switch (key)
-					{
-						case KEY_HOST:
-							/* Read the host */
-							next_token(file, buf, sizeof(buf));
-							if (buf[0] != '\0')
+					case KEY_HOST:
+						/* Read the host */
+						next_token(file, buf, sizeof(buf));
+						if (buf[0] != '\0')
+						{
+							if (CharSetInRange(buf, host))
 							{
-								if (CharSetInRange(buf, host))
-								{
-									/* Read the charset */
-									next_token(file, buf, sizeof(buf));
-									if (buf[0] != '\0')
-										strcpy(HostCharset, buf);
-								}
+								/* Read the charset */
+								next_token(file, buf, sizeof(buf));
+								if (buf[0] != '\0')
+									strcpy(HostCharset, buf);
 							}
-							break;
-						case KEY_BASE:
-							/* Read the base charset */
-							next_token(file, buf, sizeof(buf));
-							if (buf[0] != '\0')
-								strcpy(BaseCharset, buf);
-							break;
-						case KEY_TABLE:
-							/* Read the original charset */
+						}
+						break;
+					case KEY_BASE:
+						/* Read the base charset */
+						next_token(file, buf, sizeof(buf));
+						if (buf[0] != '\0')
+							strcpy(BaseCharset, buf);
+						break;
+					case KEY_TABLE:
+						/* Read the original charset */
+						next_token(file, buf, sizeof(buf));
+						if (buf[0] != '\0')
+						{
+							strcpy(OrigCharset, buf);
+							/* Read the destination charset */
 							next_token(file, buf, sizeof(buf));
 							if (buf[0] != '\0')
 							{
-								strcpy(OrigCharset, buf);
-								/* Read the destination charset */
+								strcpy(DestCharset, buf);
+								/* Read the table filename */
 								next_token(file, buf, sizeof(buf));
 								if (buf[0] != '\0')
 								{
-									strcpy(DestCharset, buf);
-									/* Read the table filename */
-									next_token(file, buf, sizeof(buf));
-									if (buf[0] != '\0')
-									{
-										ChArray[ChIndex] =
-											(struct CharsetItem *) palloc(sizeof(struct CharsetItem));
-										strcpy(ChArray[ChIndex]->Orig, OrigCharset);
-										strcpy(ChArray[ChIndex]->Dest, DestCharset);
-										strcpy(ChArray[ChIndex]->Table, buf);
-										ChIndex++;
-									}
+									ChArray[ChIndex] =
+										(struct CharsetItem *) palloc(sizeof(struct CharsetItem));
+									strcpy(ChArray[ChIndex]->Orig, OrigCharset);
+									strcpy(ChArray[ChIndex]->Dest, DestCharset);
+									strcpy(ChArray[ChIndex]->Table, buf);
+									ChIndex++;
 								}
 							}
-							break;
-					}
-					read_to_eol(file);
+						}
+						break;
 				}
+				read_through_eol(file);
 			}
 		}
 	}
 	FreeFile(file);
-	pfree(map_file);
 
 	for (i = 0; i < ChIndex; i++)
 	{
-		if (!strcasecmp(BaseCharset, ChArray[i]->Orig) &&
-			!strcasecmp(HostCharset, ChArray[i]->Dest))
+		if (strcasecmp(BaseCharset, ChArray[i]->Orig) == 0 &&
+			strcasecmp(HostCharset, ChArray[i]->Dest) == 0)
 			strncpy(TableName, ChArray[i]->Table, 79);
-		pfree((struct CharsetItem *) ChArray[i]);
+		pfree(ChArray[i]);
 	}
 }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.81 2001/10/25 05:49:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.82 2002/01/09 19:13:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,75 +227,80 @@ pg_convert2(PG_FUNCTION_ARGS)
 
 #define MAX_TOKEN	80
 
-/* Some standard C libraries, including GNU, have an isblank() function.
-   Others, including Solaris, do not.  So we have our own.
-*/
+/*
+ * Some standard C libraries, including GNU, have an isblank() function.
+ * Others, including Solaris, do not.  So we have our own.
+ */
 static bool
 isblank(const char c)
 {
-	return c == ' ' || c == 9 /* tab */ ;
+	return c == ' ' || c == '\t';
 }
 
+
+/*
+ *	Grab one token out of fp.  Tokens are strings of non-blank
+ *	characters bounded by blank characters, beginning of line, and end
+ *	of line.	Blank means space or tab.  Return the token as *buf.
+ *	Leave file positioned to character immediately after the token or
+ *	EOF, whichever comes first.  If no more tokens on line, return null
+ *	string as *buf and position file to beginning of next line or EOF,
+ *	whichever comes first.
+ */
 static void
 next_token(FILE *fp, char *buf, const int bufsz)
 {
-/*--------------------------------------------------------------------------
-  Grab one token out of fp.  Tokens are strings of non-blank
-  characters bounded by blank characters, beginning of line, and end
-  of line.	Blank means space or tab.  Return the token as *buf.
-  Leave file positioned to character immediately after the token or
-  EOF, whichever comes first.  If no more tokens on line, return null
-  string as *buf and position file to beginning of next line or EOF,
-  whichever comes first.
---------------------------------------------------------------------------*/
 	int			c;
 	char	   *eb = buf + (bufsz - 1);
 
-	/* Move over inital token-delimiting blanks */
-	while (isblank(c = getc(fp)));
+	/* Move over initial token-delimiting blanks */
+	while ((c = getc(fp)) != EOF && isblank(c))
+		;
 
-	if (c != '\n')
+	if (c != EOF && c != '\n')
 	{
 		/*
 		 * build a token in buf of next characters up to EOF, eol, or
-		 * blank.
+		 * blank.  If the token gets too long, we still parse it
+		 * correctly, but the excess characters are not stored into *buf.
 		 */
 		while (c != EOF && c != '\n' && !isblank(c))
 		{
 			if (buf < eb)
 				*buf++ = c;
 			c = getc(fp);
-
-			/*
-			 * Put back the char right after the token (putting back EOF
-			 * is ok)
-			 */
 		}
-		ungetc(c, fp);
+
+		/*
+		 * Put back the char right after the token (critical in case it is
+		 * eol, since we need to detect end-of-line at next call).
+		 */
+		if (c != EOF)
+			ungetc(c, fp);
 	}
 	*buf = '\0';
 }
+
 
 static void
 read_through_eol(FILE *file)
 {
 	int			c;
 
-	do
-		c = getc(file);
-	while (c != '\n' && c != EOF);
+	while ((c = getc(file)) != EOF && c != '\n')
+		;
 }
 
+
 void
-SetCharSet()
+SetCharSet(void)
 {
 	FILE	   *file;
-	char	   *p,
-				c,
-				eof = false;
+	char	   *p;
 	char	   *map_file;
 	char		buf[MAX_TOKEN];
-	int			i;
+	int			i,
+				c;
 	unsigned char FromChar,
 				ToChar;
 	char		ChTable[80];
@@ -316,49 +321,37 @@ SetCharSet()
 
 	if (p && *p != '\0')
 	{
-		map_file = malloc(strlen(DataDir) + strlen(p) + 2);
-		if (!map_file)
-			elog(FATAL, "out of memory");
+		map_file = palloc(strlen(DataDir) + strlen(p) + 2);
 		sprintf(map_file, "%s/%s", DataDir, p);
 		file = AllocateFile(map_file, PG_BINARY_R);
+		pfree(map_file);
 		if (file == NULL)
-		{
-			free(map_file);
 			return;
-		}
-		eof = false;
-		while (!eof)
+		while ((c = getc(file)) != EOF)
 		{
-			c = getc(file);
-			ungetc(c, file);
-			if (c == EOF)
-				eof = true;
+			if (c == '#')
+				read_through_eol(file);
 			else
 			{
-				if (c == '#')
-					read_through_eol(file);
-				else
+				/* Read the FromChar */
+				ungetc(c, file);
+				next_token(file, buf, sizeof(buf));
+				if (buf[0] != '\0')
 				{
-					/* Read the FromChar */
+					FromChar = strtoul(buf, 0, 0);
+					/* Read the ToChar */
 					next_token(file, buf, sizeof(buf));
 					if (buf[0] != '\0')
 					{
-						FromChar = strtoul(buf, 0, 0);
-						/* Read the ToChar */
-						next_token(file, buf, sizeof(buf));
-						if (buf[0] != '\0')
-						{
-							ToChar = strtoul(buf, 0, 0);
-							RecodeForwTable[FromChar - 128] = ToChar;
-							RecodeBackTable[ToChar - 128] = FromChar;
-						}
+						ToChar = strtoul(buf, 0, 0);
+						RecodeForwTable[FromChar - 128] = ToChar;
+						RecodeBackTable[ToChar - 128] = FromChar;
 						read_through_eol(file);
 					}
 				}
 			}
 		}
 		FreeFile(file);
-		free(map_file);
 	}
 }
 
