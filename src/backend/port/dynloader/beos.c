@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/Attic/beos.c,v 1.1 2000/10/02 17:15:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/Attic/beos.c,v 1.2 2000/10/03 03:11:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

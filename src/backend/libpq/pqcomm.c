@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.103 2000/10/02 21:45:31 petere Exp $
+ *	$Id: pqcomm.c,v 1.104 2000/10/03 03:11:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -208,11 +208,16 @@ StreamServerPort(int family, unsigned short portName, int *fdP)
 
 	MemSet((char *) &saddr, 0, sizeof(saddr));
 	saddr.sa.sa_family = family;
+
+/* I know this isn't a good way of testing, but until we have a 
+ * define for this it'll do!
+ * we have Unix sockets... 
+ */
+#ifdef HAVE_SYS_UN_H 
 	if (family == AF_UNIX)
 	{
 		len = UNIXSOCK_PATH(saddr.un, portName);
 		strcpy(sock_path, saddr.un.sun_path);
-
 		/*
 		 * If the socket exists but nobody has an advisory lock on it we
 		 * can safely delete the file.
@@ -231,13 +236,16 @@ StreamServerPort(int family, unsigned short portName, int *fdP)
 		}
 #endif	 /* HAVE_FCNTL_SETLK */
 	}
-	else
-	{
+#endif /* HAVE_SYS_UN_H */
+
+    if (family == AF_INET) 
+    {
 		saddr.in.sin_addr.s_addr = htonl(INADDR_ANY);
 		saddr.in.sin_port = htons(portName);
 		len = sizeof(struct sockaddr_in);
 	}
-	err = bind(fd, &saddr.sa, len);
+
+	err = bind(fd, (struct sockaddr *)&saddr.sa, len);
 	if (err < 0)
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
@@ -258,6 +266,7 @@ StreamServerPort(int family, unsigned short portName, int *fdP)
 		return STATUS_ERROR;
 	}
 
+#ifdef HAVE_SYS_UN_H /* yeah I know... */
 	if (family == AF_UNIX)
 	{
 		on_proc_exit(StreamDoUnlink, 0);
@@ -279,6 +288,7 @@ StreamServerPort(int family, unsigned short portName, int *fdP)
 		}
 #endif	 /* HAVE_FCNTL_SETLK */
 	}
+#endif /* HAVE_SYS_UN_H */
 
 	listen(fd, SOMAXCONN);
 

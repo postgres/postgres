@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.167 2000/10/02 19:42:46 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.168 2000/10/03 03:11:16 momjian Exp $
  *
  * NOTES
  *
@@ -818,13 +818,12 @@ ServerLoop(void)
 		if (select(nSockets, &rmask, &wmask, (fd_set *) NULL,
 				   (struct timeval *) NULL) < 0)
 		{
-			if (errno == EINTR)
+			if (errno == EINTR || errno == EWOULDBLOCK)
 				continue;
 			fprintf(stderr, "%s: ServerLoop: select failed: %s\n",
 					progname, strerror(errno));
 			return STATUS_ERROR;
 		}
-
 		/*
 		 * Select a random seed at the time of first receiving a request.
 		 */
@@ -1021,7 +1020,6 @@ initMasks(fd_set *rmask, fd_set *wmask)
 	if (ServerSock_INET != INVALID_SOCK)
 	{
 		FD_SET(ServerSock_INET, rmask);
-
 		if (ServerSock_INET > nsocks)
 			nsocks = ServerSock_INET;
 	}

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.83 2000/10/02 17:15:55 momjian Exp $
+ * $Id: c.h,v 1.84 2000/10/03 03:11:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@
 #include <errno.h>
 #include <sys/fcntl.h>		/* ensure O_BINARY is available */
 #endif
-#ifdef __BEOS__
+#ifdef HAVE_SUPPORTDEFS_H
 #include <SupportDefs.h>
 #endif
 
@@ -69,7 +69,11 @@
  *		Boolean value, either true or false.
  *
  */
-#ifndef __BEOS__
+
+/* BeOS defines bool already, but the compiler chokes on the
+ * #ifndef unless we wrap it in this check.
+ */
+#ifndef __BEOS__ 
 #ifndef __cplusplus
 #ifndef bool
 typedef char bool;
@@ -170,24 +174,22 @@ typedef char *Pointer;
  *		used for numerical computations and the
  *		frontend/backend protocol.
  */
-#ifndef __BEOS__
+#ifndef __BEOS__ /* this shouldn't be required, but is is! */
 typedef signed char int8;		/* == 8 bits */
 typedef signed short int16;		/* == 16 bits */
 typedef signed int int32;		/* == 32 bits */
 #endif /* __BEOS__ */
-
 /*
  * uintN
  *		Unsigned integer, EXACTLY N BITS IN SIZE,
  *		used for numerical computations and the
  *		frontend/backend protocol.
  */
-#ifndef __BEOS__
+#ifndef __BEOS__ /* this shouldn't be required, but is is! */
 typedef unsigned char uint8;	/* == 8 bits */
 typedef unsigned short uint16;	/* == 16 bits */
 typedef unsigned int uint32;	/* == 32 bits */
 #endif /* __BEOS__ */
-
 /*
  * floatN
  *		Floating point number, AT LEAST N BITS IN SIZE,
@@ -268,8 +270,7 @@ typedef int32 int4;
 typedef float float4;
 typedef double float8;
 
-/* BeOS already has int64 defined, so skip these... */
-#ifndef BEOS
+#ifndef __BEOS__ /* this is already defined on BeOS */
 #ifdef HAVE_LONG_INT_64
 /* Plain "long int" fits, use it */
 typedef long int int64;
@@ -283,9 +284,7 @@ typedef long int int64;
 #define INT64_IS_BUSTED
 #endif
 #endif
-#else /* Add BeOS support */
-#include <SupportDefs.h>
-#endif /* BEOS */
+#endif /* __BEOS__ */
 
 /* ----------------------------------------------------------------
  *				Section 4:	datum type + support macros

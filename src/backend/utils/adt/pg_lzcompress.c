@@ -1,7 +1,7 @@
 /* ----------
  * pg_lzcompress.c -
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.8 2000/07/20 14:23:28 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.9 2000/10/03 03:11:20 momjian Exp $
  *
  *		This is an implementation of LZ compression for PostgreSQL.
  *		It uses a simple history table and generates 2-3 byte tags
@@ -474,7 +474,7 @@ pglz_find_match(PGLZ_HistEntry **hstart, char *input, char *end,
  * ----------
  */
 int
-pglz_compress(char *source, int slen, PGLZ_Header *dest, PGLZ_Strategy *strategy)
+pglz_compress(char *source, int32 slen, PGLZ_Header *dest, PGLZ_Strategy *strategy)
 {
 	int            hist_next = 0;
 

@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.138 2000/10/02 17:15:55 momjian Exp $
+ * $Id: config.h.in,v 1.139 2000/10/03 03:11:23 momjian Exp $
  */
 
 #ifndef CONFIG_H
@@ -342,14 +342,29 @@
 /* Set to 1 if you have <readline/readline.h> */
 #undef HAVE_READLINE_READLINE_H
 
-/* Define if you have <sys/ipc.h> */
+/* Set to 1 if you have <sys/ipc.h> */
 #undef HAVE_SYS_IPC_H
 
 /* Set to 1 if  you have <sys/select.h> */
 #undef HAVE_SYS_SELECT_H
 
-/* Set to 1 if  you have <sys/un.h> */
+/* Set to 1 if you have <sys/un.h> */
 #undef HAVE_SYS_UN_H
+
+/* Set to 1 if you have <sys/sem.h> */
+#undef HAVE_SYS_SEM_H
+
+/* Set to 1 if you have <sys/shm.h> */
+#undef HAVE_SYS_SHM_H
+
+/* Set to 1 if you have <kernel/OS.h> */
+#undef HAVE_KERNEL_OS_H
+
+/* Set to 1 if you have <SupportDefs.h> */
+#undef HAVE_SUPPORTDEFS_H
+
+/* Set to 1 if you have <kernel/image.h> */
+#undef HAVE_KERNEL_IMAGE_H
 
 /* Set to 1 if you have <termios.h> */
 #undef HAVE_TERMIOS_H

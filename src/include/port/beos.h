@@ -4,7 +4,6 @@
 
 typedef unsigned char slock_t;
 
-#define AF_UNIX     1
-#define IPPROTO_IP  0
+#define AF_UNIX     1 /* no domain sockets on BeOS */
 
 

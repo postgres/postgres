@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.134 2000/09/27 15:17:56 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.135 2000/10/03 03:11:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -619,8 +619,11 @@ update_db_info(PGconn *conn)
 static int
 connectMakeNonblocking(PGconn *conn)
 {
-#ifndef WIN32
+#ifdef WIN32
 	if (fcntl(conn->sock, F_SETFL, O_NONBLOCK) < 0)
+#elif defined(__BEOS__)
+	int			on = 1;
+    if (ioctl(conn->sock, FIONBIO, &on) != 0)
 #else
 	int			on = 1;
 
@@ -959,7 +962,6 @@ static int
 connectDBComplete(PGconn *conn)
 {
 	PostgresPollingStatusType flag = PGRES_POLLING_WRITING;
-
 	if (conn == NULL || conn->status == CONNECTION_BAD)
 		return 0;
 
@@ -1039,7 +1041,6 @@ PostgresPollingStatusType
 PQconnectPoll(PGconn *conn)
 {
 	PGresult   *res;
-
 	if (conn == NULL)
 		return PGRES_POLLING_FAILED;
 

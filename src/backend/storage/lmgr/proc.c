@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.81 2000/10/02 21:45:32 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.82 2000/10/03 03:11:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.81 2000/10/02 21:45:32 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.82 2000/10/03 03:11:18 momjian Exp $
  */
 #include "postgres.h"
 
@@ -65,7 +65,9 @@
 
 
 /* In Ultrix and QNX, sem.h must be included after ipc.h */
+#ifdef HAVE_SYS_SEM_H
 #include <sys/sem.h>
+#endif
 
 #include "storage/proc.h"
 
@@ -264,8 +266,10 @@ InitProcess(IPCKey key)
 		 * we might be reusing a semaphore that belongs to a dead backend.
 		 * So be careful and reinitialize its value here.
 		 */
+#ifndef __BEOS__
 		semun.val = IpcSemaphoreDefaultStartValue;
 		semctl(semId, semNum, SETVAL, semun);
+#endif
 
 		IpcSemaphoreLock(semId, semNum, IpcExclusiveLock);
 		MyProc->sem.semId = semId;
@@ -515,7 +519,9 @@ SetWaitingForLock(bool waiting)
 void
 LockWaitCancel(void)
 {
-	struct itimerval timeval,
+/* BeOS doesn't have setitimer, but has set_alarm */
+#ifndef __BEOS__ 	
+struct itimerval timeval,
 				dummy;
 
 	if (!lockWaiting)
@@ -524,6 +530,14 @@ LockWaitCancel(void)
 	/* Deadlock timer off */
 	MemSet(&timeval, 0, sizeof(struct itimerval));
 	setitimer(ITIMER_REAL, &timeval, &dummy);
+#else
+	if (!lockWaiting)
+		return;
+	lockWaiting = false;
+	/* Deadlock timer off */
+    set_alarm(B_INFINITE_TIMEOUT, B_PERIODIC_ALARM);
+#endif /* __BEOS__ */
+        
 	if (GetOffWaitqueue(MyProc))
 		elog(ERROR, "Query cancel requested while waiting lock");
 }
@@ -555,8 +569,12 @@ ProcSleep(PROC_QUEUE *waitQueue,/* lock->waitProcs */
 	bool		selfConflict = (lockctl->conflictTab[token] & myMask),
 				prevSame = false;
 	bool		deadlock_checked = false;
+#ifndef __BEOS__
 	struct itimerval timeval,
 				dummy;
+#else
+    bigtime_t time_interval;
+#endif
 
 	MyProc->token = token;
 	MyProc->waitLock = lock;
@@ -635,9 +653,14 @@ ins:;
 	 * to 0.
 	 * --------------
 	 */
+#ifndef __BEOS__
 	MemSet(&timeval, 0, sizeof(struct itimerval));
 	timeval.it_value.tv_sec = DeadlockTimeout / 1000;
 	timeval.it_value.tv_usec = (DeadlockTimeout % 1000) * 1000;
+#else
+    /* usecs */
+    time_interval = DeadlockTimeout * 1000000;
+#endif
 
 	SetWaitingForLock(true);
 	do
@@ -645,7 +668,11 @@ ins:;
 		MyProc->errType = NO_ERROR;		/* reset flag after deadlock check */
 
 		if (!deadlock_checked)
+#ifndef __BEOS__
 			if (setitimer(ITIMER_REAL, &timeval, &dummy))
+#else
+            if (set_alarm(time_interval, B_ONE_SHOT_RELATIVE_ALARM) < 0)
+#endif
 				elog(FATAL, "ProcSleep: Unable to set timer for process wakeup");
 		deadlock_checked = true;
 
@@ -665,9 +692,13 @@ ins:;
 	 * We were awoken before a timeout - now disable the timer
 	 * ---------------
 	 */
+#ifndef __BEOS__
 	timeval.it_value.tv_sec = 0;
 	timeval.it_value.tv_usec = 0;
 	if (setitimer(ITIMER_REAL, &timeval, &dummy))
+#else
+    if (set_alarm(B_INFINITE_TIMEOUT, B_PERIODIC_ALARM) < 0)
+#endif
 		elog(FATAL, "ProcSleep: Unable to diable timer for process wakeup");
 
 	/* ----------------

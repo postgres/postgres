@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.30 2000/09/29 13:35:26 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.31 2000/10/03 03:11:22 momjian Exp $
  *
  * NOTE
  *	  XXX this code needs improvement--check for state violations and
@@ -131,7 +131,11 @@ ExcPrint(Exception *excP,
 
 	fprintf(stderr, " (%ld)", detail);
 
+#ifndef __BEOS__
 	if (errno > 0 && errno < sys_nerr)
+#else
+    if (errno > 0)
+#endif
 		fprintf(stderr, " [%s]", strerror(errno));
 	else if (errno != 0)
 		fprintf(stderr, " [Error %d]", errno);
