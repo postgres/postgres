@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.242 2003/11/15 20:01:11 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.243 2003/11/16 03:23:48 tgl Exp $
 -->
 
 <appendix id="release">
@@ -1059,9 +1059,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.242 2003/11/15 20:01:11 tg
      <para>Allow cursors outside transactions using <literal>WITH HOLD</literal> (Neil)</para>
      <para>
       In previous releases, cursors were removed at the end of the
-      transaction. Using <literal>WITH HOLD</literal>, the current
-      release allows cursors to remain readable after the creating
-      transaction.
+      transaction that created them. Cursors can now be created with
+      the <literal>WITH HOLD</literal> option, which allows them to
+      continue to be accessed after the creating transaction has
+      committed.
      </para>
     </listitem>
 
@@ -1091,16 +1092,18 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.242 2003/11/15 20:01:11 tg
      <para>Properly handle <literal>SCROLL</literal> with cursors, or
      report an error (Neil)</para>
      <para>
-      Certain cursors can not be fetched backwards optimally. By
-      specifying <literal>SCROLL</literal>, extra work will be
-      performed to guarantee that the cursor can be fetched in reverse
-      or random order.
+      Allowing random access (both forward and backward scrolling) to
+      some kinds of queries cannot be done without some additional
+      work. If <literal>SCROLL</literal> is specified when the cursor
+      is created, this additional work will be performed. Furthermore,
+      if the cursor has been created with <literal>NO SCROLL</literal>,
+      no random access is allowed.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Implement SQL-compatible option <literal>FIRST</>,
+      Implement SQL-compatible options <literal>FIRST</>,
       <literal>LAST</>, <literal>ABSOLUTE <replaceable>n</></>,
       <literal>RELATIVE <replaceable>n</></> for
       <command>FETCH</command> and <command>MOVE</command> (Tom)
@@ -1151,7 +1154,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.242 2003/11/15 20:01:11 tg
      <para>Make <command>TRUNCATE</command> transaction-safe (Rod)</para>
      <para>
       <command>TRUNCATE</command> can now be used inside a
-      transaction, and rolled back if the transaction aborts.
+      transaction. If the transaction aborts, the changes made by the
+      <command>TRUNCATE</command> are automatically rolled back.
      </para>
     </listitem>
 
