@@ -452,6 +452,7 @@ proc __PLTcl_loadmod_load_modules {conn} {
 	    	pg_exec $conn "insert into pltcl_modules values (	\
 			'$xname', $i, '$xpart')"			\
 	    ] -clear
+	    incr i
 	}
 
         pg_result [pg_exec $conn "commit;"] -clear
