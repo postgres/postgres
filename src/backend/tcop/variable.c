@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO', 'SHOW var' and 'RESET var'
  * statements.
  *
- * $Id: variable.c,v 1.6 1997/04/24 15:41:37 vadim Exp $
+ * $Id: variable.c,v 1.7 1997/04/29 04:38:58 vadim Exp $
  *
  */
 
@@ -16,6 +16,7 @@
 
 extern Cost _cpu_page_wight_;
 extern Cost _cpu_index_page_wight_;
+extern bool _use_geqo_;
 
 /*-----------------------------------------------------------------------*/
 #if USE_EURODATES
@@ -68,6 +69,40 @@ static bool reset_null(const char *value)
 	{
 	return TRUE;
 	}
+	
+static bool parse_geqo (const char *value)
+{
+
+    if ( strcasecmp (value, "on") == 0 )
+    	_use_geqo_ = true;
+    else if ( strcasecmp (value, "off") == 0 )
+    	_use_geqo_ = false;
+    else
+	elog(WARN, "Bad value for GEQO (%s)", value);
+    
+    return TRUE;
+}
+
+static bool show_geqo ()
+{
+
+    if ( _use_geqo_ )
+    	elog (NOTICE, "GEQO is ON");
+    else
+    	elog (NOTICE, "GEQO is OFF");
+    return TRUE;
+}
+
+static bool reset_geqo ()
+{
+
+#ifdef GEQO
+    _use_geqo_ = true;
+#else
+    _use_geqo_ = false;
+#endif
+    return TRUE;
+}
 	
 static bool parse_cost_heap (const char *value)
 {
@@ -202,6 +237,7 @@ struct VariableParsers
 				show_cost_heap,	reset_cost_heap },
 		{ "cost_index",	parse_cost_index,
 				show_cost_index,	reset_cost_index },
+		{ "geqo",	parse_geqo,	show_geqo,	reset_geqo },
 		{ NULL, NULL, NULL }
 	};
 
