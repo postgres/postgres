@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.111 2002/11/30 21:25:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.112 2002/12/01 20:27:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,7 @@
 #include "executor/functions.h"
 #include "executor/nodeSubplan.h"
 #include "miscadmin.h"
+#include "parser/parse_expr.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fcache.h"
@@ -820,80 +821,109 @@ ExecMakeFunctionResult(FunctionCachePtr fcache,
  * object.	(If function returns an empty set, we just return NULL instead.)
  */
 Tuplestorestate *
-ExecMakeTableFunctionResult(Expr *funcexpr,
+ExecMakeTableFunctionResult(Node *funcexpr,
 							ExprContext *econtext,
 							TupleDesc expectedDesc,
 							TupleDesc *returnDesc)
 {
 	Tuplestorestate *tupstore = NULL;
 	TupleDesc	tupdesc = NULL;
-	Func	   *func;
-	List	   *argList;
-	FunctionCachePtr fcache;
+	Oid			funcrettype;
 	FunctionCallInfoData fcinfo;
 	ReturnSetInfo rsinfo;
-	ExprDoneCond argDone;
 	MemoryContext callerContext;
 	MemoryContext oldcontext;
 	TupleTableSlot *slot;
+	bool		direct_function_call;
 	bool		first_time = true;
 	bool		returnsTuple = false;
 
-	/* Extract data from function-call expression node */
-	if (!funcexpr || !IsA(funcexpr, Expr) ||funcexpr->opType != FUNC_EXPR)
-		elog(ERROR, "ExecMakeTableFunctionResult: expression is not a function call");
-	func = (Func *) funcexpr->oper;
-	argList = funcexpr->args;
-
 	/*
-	 * get the fcache from the Func node. If it is NULL, then initialize
-	 * it
+	 * Normally the passed expression tree will be a FUNC_EXPR, since the
+	 * grammar only allows a function call at the top level of a table
+	 * function reference.  However, if the function doesn't return set then
+	 * the planner might have replaced the function call via constant-folding
+	 * or inlining.  So if we see any other kind of expression node, execute
+	 * it via the general ExecEvalExpr() code; the only difference is that
+	 * we don't get a chance to pass a special ReturnSetInfo to any functions
+	 * buried in the expression.
 	 */
-	fcache = func->func_fcache;
-	if (fcache == NULL)
+	if (funcexpr &&
+		IsA(funcexpr, Expr) &&
+		((Expr *) funcexpr)->opType == FUNC_EXPR)
 	{
-		fcache = init_fcache(func->funcid, length(argList),
-							 econtext->ecxt_per_query_memory);
-		func->func_fcache = fcache;
-	}
+		Func	   *func;
+		List	   *argList;
+		FunctionCachePtr fcache;
+		ExprDoneCond argDone;
 
-	/*
-	 * Evaluate the function's argument list.
-	 *
-	 * Note: ideally, we'd do this in the per-tuple context, but then the
-	 * argument values would disappear when we reset the context in the
-	 * inner loop.	So do it in caller context.  Perhaps we should make a
-	 * separate context just to hold the evaluated arguments?
-	 */
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.flinfo = &(fcache->func);
-	argDone = ExecEvalFuncArgs(&fcinfo, argList, econtext);
-	/* We don't allow sets in the arguments of the table function */
-	if (argDone != ExprSingleResult)
-		elog(ERROR, "Set-valued function called in context that cannot accept a set");
+		/*
+		 * This path is similar to ExecMakeFunctionResult.
+		 */
+		direct_function_call = true;
 
-	/*
-	 * If function is strict, and there are any NULL arguments, skip
-	 * calling the function and return NULL (actually an empty set).
-	 */
-	if (fcache->func.fn_strict)
-	{
-		int			i;
+		funcrettype = ((Expr *) funcexpr)->typeOid;
+		func = (Func *) ((Expr *) funcexpr)->oper;
+		argList = ((Expr *) funcexpr)->args;
 
-		for (i = 0; i < fcinfo.nargs; i++)
+		/*
+		 * get the fcache from the Func node. If it is NULL, then initialize
+		 * it
+		 */
+		fcache = func->func_fcache;
+		if (fcache == NULL)
 		{
-			if (fcinfo.argnull[i])
+			fcache = init_fcache(func->funcid, length(argList),
+								 econtext->ecxt_per_query_memory);
+			func->func_fcache = fcache;
+		}
+
+		/*
+		 * Evaluate the function's argument list.
+		 *
+		 * Note: ideally, we'd do this in the per-tuple context, but then the
+		 * argument values would disappear when we reset the context in the
+		 * inner loop.	So do it in caller context.  Perhaps we should make a
+		 * separate context just to hold the evaluated arguments?
+		 */
+		MemSet(&fcinfo, 0, sizeof(fcinfo));
+		fcinfo.flinfo = &(fcache->func);
+		argDone = ExecEvalFuncArgs(&fcinfo, argList, econtext);
+		/* We don't allow sets in the arguments of the table function */
+		if (argDone != ExprSingleResult)
+			elog(ERROR, "Set-valued function called in context that cannot accept a set");
+
+		/*
+		 * If function is strict, and there are any NULL arguments, skip
+		 * calling the function and return NULL (actually an empty set).
+		 */
+		if (fcache->func.fn_strict)
+		{
+			int			i;
+
+			for (i = 0; i < fcinfo.nargs; i++)
 			{
-				*returnDesc = NULL;
-				return NULL;
+				if (fcinfo.argnull[i])
+				{
+					*returnDesc = NULL;
+					return NULL;
+				}
 			}
 		}
+	}
+	else
+	{
+		/* Treat funcexpr as a generic expression */
+		direct_function_call = false;
+		funcrettype = exprType(funcexpr);
 	}
 
 	/*
 	 * Prepare a resultinfo node for communication.  We always do this
 	 * even if not expecting a set result, so that we can pass
-	 * expectedDesc.
+	 * expectedDesc.  In the generic-expression case, the expression
+	 * doesn't actually get to see the resultinfo, but set it up anyway
+	 * because we use some of the fields as our own state variables.
 	 */
 	fcinfo.resultinfo = (Node *) &rsinfo;
 	rsinfo.type = T_ReturnSetInfo;
@@ -906,12 +936,13 @@ ExecMakeTableFunctionResult(Expr *funcexpr,
 	rsinfo.setDesc = NULL;
 
 	/*
-	 * Switch to short-lived context for calling the function.
+	 * Switch to short-lived context for calling the function or expression.
 	 */
 	callerContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
 	/*
-	 * Loop to handle the ValuePerCall protocol.
+	 * Loop to handle the ValuePerCall protocol (which is also the same
+	 * behavior needed in the generic ExecEvalExpr path).
 	 */
 	for (;;)
 	{
@@ -920,15 +951,23 @@ ExecMakeTableFunctionResult(Expr *funcexpr,
 
 		/*
 		 * reset per-tuple memory context before each call of the
-		 * function. This cleans up any local memory the function may leak
-		 * when called.
+		 * function or expression. This cleans up any local memory the
+		 * function may leak when called.
 		 */
 		ResetExprContext(econtext);
 
-		/* Call the function one time */
-		fcinfo.isnull = false;
-		rsinfo.isDone = ExprSingleResult;
-		result = FunctionCallInvoke(&fcinfo);
+		/* Call the function or expression one time */
+		if (direct_function_call)
+		{
+			fcinfo.isnull = false;
+			rsinfo.isDone = ExprSingleResult;
+			result = FunctionCallInvoke(&fcinfo);
+		}
+		else
+		{
+			result = ExecEvalExpr(funcexpr, econtext,
+								  &fcinfo.isnull, &rsinfo.isDone);
+		}
 
 		/* Which protocol does function want to use? */
 		if (rsinfo.returnMode == SFRM_ValuePerCall)
@@ -949,8 +988,6 @@ ExecMakeTableFunctionResult(Expr *funcexpr,
 			 */
 			if (first_time)
 			{
-				Oid			funcrettype = funcexpr->typeOid;
-
 				oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
 				if (funcrettype == RECORDOID ||
 					get_typtype(funcrettype) == 'c')
@@ -960,7 +997,9 @@ ExecMakeTableFunctionResult(Expr *funcexpr,
 					 * TupleTableSlot; use its descriptor
 					 */
 					slot = (TupleTableSlot *) DatumGetPointer(result);
-					if (fcinfo.isnull || !slot || !IsA(slot, TupleTableSlot) ||
+					if (fcinfo.isnull ||
+						!slot ||
+						!IsA(slot, TupleTableSlot) ||
 						!slot->ttc_tupleDescriptor)
 						elog(ERROR, "ExecMakeTableFunctionResult: Invalid result from function returning tuple");
 					tupdesc = CreateTupleDescCopy(slot->ttc_tupleDescriptor);
@@ -993,7 +1032,9 @@ ExecMakeTableFunctionResult(Expr *funcexpr,
 			if (returnsTuple)
 			{
 				slot = (TupleTableSlot *) DatumGetPointer(result);
-				if (fcinfo.isnull || !slot || !IsA(slot, TupleTableSlot) ||
+				if (fcinfo.isnull ||
+					!slot ||
+					!IsA(slot, TupleTableSlot) ||
 					TupIsNull(slot))
 					elog(ERROR, "ExecMakeTableFunctionResult: Invalid result from function returning tuple");
 				tuple = slot->val;
