@@ -1,79 +1,79 @@
-/*****************************************************************************/
-/* soundex.c */
-/*****************************************************************************/
-
+/* $Header: /cvsroot/pgsql/contrib/soundex/Attic/soundex.c,v 1.7 2000/10/04 19:25:34 petere Exp $ */
+#include "postgres.h"
+#include "fmgr.h"
+#include "utils/builtins.h"
 #include <ctype.h>
 #include <string.h>
 #include <stdio.h>
 
-#include "postgres.h"			/* for char16, etc. */
 
-#include "utils/palloc.h"		/* for palloc */
+Datum
+text_soundex(PG_FUNCTION_ARGS);
 
-/* prototypes for soundex functions */
-text	   *text_soundex(text *t);
-char	   *soundex(char *instr, char *outstr);
+static void
+soundex(const char *instr, char *outstr);
 
-text *
-text_soundex(text *t)
+#define SOUNDEX_LEN 4
+
+
+#define _textin(str) DirectFunctionCall1(textin, CStringGetDatum(str))
+#define _textout(str) DatumGetPointer(DirectFunctionCall1(textout, PointerGetDatum(str)))
+
+
+#ifndef SOUNDEX_TEST
+/*
+ * SQL function: text_soundex(text) returns text
+ */
+Datum
+text_soundex(PG_FUNCTION_ARGS)
 {
-	text	   *new_t;
+	char		outstr[SOUNDEX_LEN + 1];
+	char	   *arg;
 
-	char		outstr[6 + 1];	/* max length of soundex is 6 */
-	char	   *instr;
+	arg = _textout(PG_GETARG_TEXT_P(0));
 
-	/* make a null-terminated string */
-	instr = palloc(VARSIZE(t) + 1);
-	memcpy(instr, VARDATA(t), VARSIZE(t) - VARHDRSZ);
-	instr[VARSIZE(t) - VARHDRSZ] = (char) 0;
+	soundex(arg, outstr);
 
-	/* load soundex into outstr */
-	soundex(instr, outstr);
-
-	/* Now the outstr contains the soundex of instr */
-	/* copy outstr to new_t */
-	new_t = (text *) palloc(strlen(outstr) + VARHDRSZ);
-	memset(new_t, 0, strlen(outstr) + 1);
-	VARSIZE(new_t) = strlen(outstr) + VARHDRSZ;
-	memcpy((void *) VARDATA(new_t),
-		   (void *) outstr,
-		   strlen(outstr));
-
-	/* free instr */
-	pfree(instr);
-
-	return (new_t);
+	PG_RETURN_TEXT_P(_textin(outstr));
 }
+#endif /* not SOUNDEX_TEST */
 
-char *
-soundex(char *instr, char *outstr)
+
+/*                                  ABCDEFGHIJKLMNOPQRSTUVWXYZ */
+static const char *soundex_table = "01230120022455012623010202";
+#define soundex_code(letter) soundex_table[toupper(letter) - 'A']
+
+
+static void
+soundex(const char *instr, char *outstr)
 {
-	/* ABCDEFGHIJKLMNOPQRSTUVWXYZ */
-	char	   *table = "01230120022455012623010202";
-	int			count = 0;
+	int			count;
 
+	AssertArg(instr);
+	AssertArg(outstr);
+
+	outstr[SOUNDEX_LEN] = '\0';
+
+	/* Skip leading non-alphabetic characters */
 	while (!isalpha(instr[0]) && instr[0])
 		++instr;
 
+	/* No string left */
 	if (!instr[0])
-	{							/* Hey!  Where'd the string go? */
-		outstr[0] = (char) 0;
-		return outstr;
-	}
-
-	if (toupper(instr[0]) == 'P' && toupper(instr[1]) == 'H')
 	{
-		instr[0] = 'F';
-		instr[1] = 'A';
+		outstr[0] = (char) 0;
+		return;
 	}
 
+	/* Take the first letter as is */
 	*outstr++ = (char) toupper(*instr++);
 
-	while (*instr && count < 5)
+	count = 1;
+	while (*instr && count < SOUNDEX_LEN)
 	{
-		if (isalpha(*instr) && *instr != *(instr - 1))
+		if (isalpha(*instr) && soundex_code(*instr) != soundex_code(*(instr - 1)))
 		{
-			*outstr = table[toupper(instr[0]) - 'A'];
+			*outstr = soundex_code(instr[0]);
 			if (*outstr != '0')
 			{
 				++outstr;
@@ -83,6 +83,33 @@ soundex(char *instr, char *outstr)
 		++instr;
 	}
 
-	*outstr = '\0';
-	return (outstr);
+	/* Fill with 0's */
+	while (count < SOUNDEX_LEN)
+	{
+		*outstr = '0';
+		++outstr;
+		++count;
+	}
 }
+
+
+
+#ifdef SOUNDEX_TEST
+int
+main (int argc, char *argv[])
+{
+	if (argc < 2)
+	{
+		fprintf(stderr, "usage: %s string\n", argv[0]);
+		return 1;
+	}
+	else
+	{
+		char output[SOUNDEX_LEN + 1];
+
+		soundex(argv[1], output);
+		printf("soundex(%s) = %s\n", argv[1], output);
+		return 0;
+	}
+}
+#endif /* SOUNDEX_TEST */

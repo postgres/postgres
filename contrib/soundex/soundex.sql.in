@@ -1,4 +1,5 @@
-
 CREATE FUNCTION text_soundex(text) RETURNS text
-   AS 'MODULE_PATHNAME' LANGUAGE 'c';
+  AS '@MODULE_FILENAME@', 'text_soundex' LANGUAGE 'newC';
 
+CREATE FUNCTION soundex(text) RETURNS text
+  AS '@MODULE_FILENAME@', 'text_soundex' LANGUAGE 'newC';

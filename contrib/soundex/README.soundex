@@ -1,3 +1,17 @@
+This directory contains a module that implements the "Soundex" code as
+a PostgreSQL user-defined function.  The Soundex system is a method of
+matching similar sounding names (or any words) to the same code.  It
+was initially used by the United States Census in 1880, 1900, and
+1910, but it has little use beyond English names (or the English
+pronunciation of names), and it is not a linguistic tool.
+
+To install it, first configure the main source tree, then run make;
+make install in this directory.  Finally, load the function definition
+with psql:
+
+    psql -f PREFIX/share/contrib/soundex.sql
+
+The following are some usage examples:
 
 SELECT text_soundex('hello world!');
 
@@ -50,4 +64,3 @@ WHERE text_sx_eq(nm,'john')\g
 SELECT *
 from s
 where s.nm #= 'john';
-
