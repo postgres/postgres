@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.281 2004/08/13 03:00:07 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.282 2004/08/13 18:22:12 tgl Exp $
 -->
 
 <appendix id="release">
@@ -1895,6 +1895,55 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.281 2004/08/13 03:00:07 momjian
   </sect2>
  </sect1>
 
+  <sect1 id="release-7-4-4">
+   <title>Release 7.4.4</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2004-08-16</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.4.3.
+   </para>
+
+
+   <sect2>
+    <title>Migration to version 7.4.4</title>
+
+    <para>
+     A dump/restore is not required for those running 7.4.X.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Prevent possible loss of committed transactions during crash</para>
+<para>
+Due to insufficient interlocking between transaction commit and checkpointing,
+it was possible for transactions committed just before the most recent
+checkpoint to be lost, in whole or in part, following a database crash and
+restart.  This is a serious bug that has existed
+since <productname>PostgreSQL</productname> 7.1.
+</para></listitem>
+<listitem><para>Avoid crash when session's current userID is deleted</para></listitem>
+<listitem><para>Fix hashed crosstab for zero-rows case (Joe)</para></listitem>
+<listitem><para>pg_dump handled ACLs with grant options incorrectly</para></listitem>
+<listitem><para>Force cache update after renaming a column in a foreign key</para></listitem>
+<listitem><para>Check HAVING restriction before evaluating result list of an
+aggregate plan</para></listitem>
+<listitem><para>Fix thread support for OS X and Solaris</para></listitem>
+<listitem><para>Pretty-print UNION queries correctly</para></listitem>
+<listitem><para>Updated JDBC driver (build 215) with various fixes</para></listitem>
+<listitem><para>ECPG fixes</para></listitem>
+<listitem><para>Translation updates (various contributors)</para></listitem>
+</itemizedlist>
+
+  </sect2>
+ </sect1>
+
   <sect1 id="release-7-4-3">
    <title>Release 7.4.3</title>
 
@@ -1919,8 +1968,6 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.281 2004/08/13 03:00:07 momjian
    <sect2>
     <title>Changes</title>
 
-<para>
-</para>
 <itemizedlist>
 <listitem><para>Fix temporary memory leak when using non-hashed aggregates (Tom)</para></listitem>
 <listitem><para>ECPG fixes, including some for Informix compatibility (Michael)</para></listitem>
@@ -4064,6 +4111,46 @@ DROP SCHEMA information_schema CASCADE;
   </sect2>
  </sect1>
 
+  <sect1 id="release-7-3-7">
+   <title>Release 7.3.7</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2004-08-16</simpara>
+   </note>
+
+   <para>
+    This release contains one critical fix over 7.3.6, and some minor items.
+   </para>
+
+
+   <sect2>
+    <title>Migration to version 7.3.7</title>
+
+    <para>
+     A dump/restore is not required for those running 7.3.X.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Prevent possible loss of committed transactions during crash</para>
+<para>
+Due to insufficient interlocking between transaction commit and checkpointing,
+it was possible for transactions committed just before the most recent
+checkpoint to be lost, in whole or in part, following a database crash and
+restart.  This is a serious bug that has existed
+since <productname>PostgreSQL</productname> 7.1.
+</para></listitem>
+<listitem><para>Remove asymmetrical word processing in tsearch (Teodor)</para></listitem>
+<listitem><para>Properly schema-qualify function names when pg_dump'ing a CAST</para></listitem>
+</itemizedlist>
+
+  </sect2>
+ </sect1>
+
   <sect1 id="release-7-3-6">
    <title>Release 7.3.6</title>
 
@@ -5079,6 +5166,49 @@ operations on bytea columns (Joe)</para></listitem>
   </sect2>
  </sect1>
 
+
+  <sect1 id="release-7-2-5">
+   <title>Release 7.2.5</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2004-08-16</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.2.4.
+   </para>
+
+
+   <sect2>
+    <title>Migration to version 7.2.5</title>
+
+    <para>
+     A dump/restore is not required for those running 7.2.X.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Prevent possible loss of committed transactions during crash</para>
+<para>
+Due to insufficient interlocking between transaction commit and checkpointing,
+it was possible for transactions committed just before the most recent
+checkpoint to be lost, in whole or in part, following a database crash and
+restart.  This is a serious bug that has existed
+since <productname>PostgreSQL</productname> 7.1.
+</para></listitem>
+<listitem><para>Fix corner case for btree search in parallel with first root page split</para></listitem>
+<listitem><para>Repair memory leaks in pg_dump</para></listitem>
+<listitem><para>Avoid conflict with system definition of <function>isblank()</function> function or macro</para></listitem>
+<listitem><para>Fix buffer overrun in <function>to_ascii</function> (Guido Notari)</para></listitem>
+<listitem><para>Fix core dump in deadlock detection on machines where char is unsigned</para></listitem>
+<listitem><para>Fix failure to respond to <command>pg_ctl stop -m fast</command> after Async_NotifyHandler runs</para></listitem>
+</itemizedlist>
+  </sect2>
+ </sect1>
 
  <sect1 id="release-7-2-4">
   <title>Release 7.2.4</title>
