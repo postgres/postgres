@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.27 2002/03/22 19:20:07 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.28 2002/08/04 06:15:45 thomas Exp $
 Date/time details
 -->
 
@@ -367,11 +367,6 @@ Date/time details
 	<entry>+07:00</entry>
 	<entry>Christmas (Island) Time</entry>
        </row>
-       <row>
-	<entry>ALMT</entry>
-	<entry>+06:00</entry>
-	<entry>Almaty Time</entry>
-       </row>
 <!--
        Conflicts with China Coastal Time
        <row>
@@ -380,6 +375,16 @@ Date/time details
 	<entry>Cocos Island Time</entry>
        </row>
 -->
+       <row>
+	<entry>MMT</entry>
+	<entry>+06:30</entry>
+	<entry>Myannar Time</entry>
+       </row>
+       <row>
+	<entry>ALMT</entry>
+	<entry>+06:00</entry>
+	<entry>Almaty Time</entry>
+       </row>
        <row>
 	<entry>MAWT</entry>
 	<entry>+06:00</entry>
@@ -426,7 +431,7 @@ Date/time details
 	<entry>Mahe Island Time</entry>
        </row>
        <row>
-	<entry>IT</entry>
+	<entry>IRT, IT</entry>
 	<entry>+03:30</entry>
 	<entry>Iran Time</entry>
        </row>
@@ -710,6 +715,11 @@ Date/time details
 	<entry>YST</entry>
 	<entry>-09:00</entry>
 	<entry>Yukon Standard Time</entry>
+       </row>
+       <row>
+	<entry>MART</entry>
+	<entry>-09:30</entry>
+	<entry>Marquesas Time</entry>
        </row>
        <row>
 	<entry>AHST</entry>
