@@ -4,14 +4,14 @@
 #    Makefile for parser
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.16 1998/05/09 23:24:27 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.17 1998/05/13 04:54:16 thomas Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ../..
 include ../../Makefile.global
 
-CFLAGS += -I.. -DPARSEDEBUG
+CFLAGS += -I..
 
 ifeq ($(CC), gcc)
 CFLAGS+= -Wno-error
