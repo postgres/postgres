@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.63 2004/10/17 21:04:41 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.64 2004/10/22 22:30:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1990,7 +1990,7 @@ setlocales(void)
 	if (strlen(lc_monetary) == 0 || !chklocale(lc_monetary))
 		lc_monetary = xstrdup(setlocale(LC_MONETARY, NULL));
 	if (strlen(lc_messages) == 0 || !chklocale(lc_messages))
-#ifdef LC_MESSAGES
+#if defined(LC_MESSAGES) && !defined(WIN32)
 	{
 		/* when available get the current locale setting */
 		lc_messages = xstrdup(setlocale(LC_MESSAGES, NULL));
