@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.11 1998/08/17 03:50:19 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.12 1998/08/17 03:53:37 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,7 +21,7 @@ ifeq ($(USE_PERL), true)
 endif
 
 
-.DEFAULT all: $(perl-makefile-dep)
+.DEFAULT all install clean dep depend distclean: $(perl-makefile-dep)
 	$(MAKE) -C libpq $@
 #	$(MAKE) -C ecpg $@
 ifeq ($(HAVE_Cplusplus), true)
