@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.48 2004/10/24 22:09:33 tgl Exp $
+# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.49 2004/10/31 19:14:16 tgl Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -414,7 +414,7 @@ then
     # wait forever, however.
     i=0
     max=60
-    until "$bindir/psql" $psql_options template1 </dev/null 2>/dev/null
+    until "$bindir/psql" -X $psql_options template1 </dev/null 2>/dev/null
     do
         i=`expr $i + 1`
         if [ $i -ge $max ]
@@ -470,14 +470,14 @@ else # not temp-install
     if [ -n "$PGHOST" ]; then
         echo "(using postmaster on $PGHOST, $port_info)"
     else
-		case $host_platform in
-			*-*-mingw32*)
-				echo "(using postmaster on localhost socket, $port_info)"
-				;;
-			*)
-				echo "(using postmaster on Unix socket, $port_info)"
-				;;
-		esac
+        case $host_platform in
+            *-*-mingw32*)
+                echo "(using postmaster on localhost socket, $port_info)"
+                ;;
+            *)
+                echo "(using postmaster on Unix socket, $port_info)"
+                ;;
+        esac
     fi
     message "dropping database \"$dbname\""
     "$bindir/dropdb" $psql_options "$dbname"
@@ -529,12 +529,12 @@ if [ $? -ne 0 ]; then
     (exit 2); exit
 fi
 
-"$bindir/psql" $psql_options -c "\
+"$bindir/psql" -q -X $psql_options -c "\
 checkpoint;
 alter database \"$dbname\" set lc_messages to 'C';
 alter database \"$dbname\" set lc_monetary to 'C';
 alter database \"$dbname\" set lc_numeric to 'C';
-alter database \"$dbname\" set lc_time to 'C';" "$dbname" 2>/dev/null
+alter database \"$dbname\" set lc_time to 'C';" "$dbname"
 if [ $? -ne 0 ]; then
     echo "$me: could not set database default locales"
     (exit 2); exit
@@ -546,7 +546,7 @@ fi
 # ----------
 
 message "dropping regression test user accounts"
-"$bindir/psql" $psql_options -c 'DROP GROUP regressgroup1; DROP GROUP regressgroup2; DROP USER regressuser1, regressuser2, regressuser3, regressuser4;' $dbname 2>/dev/null
+"$bindir/psql" -q -X $psql_options -c 'DROP GROUP regressgroup1; DROP GROUP regressgroup2; DROP USER regressuser1, regressuser2, regressuser3, regressuser4;' $dbname 2>/dev/null
 if [ $? -eq 2 ]; then
     echo "$me: could not drop user accounts"
     (exit 2); exit
