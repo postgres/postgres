@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.181 2004/09/13 20:07:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.182 2004/10/07 20:36:52 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2351,15 +2351,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 	{
 		appendContextKeyword(context, "VALUES (",
 							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 2);
-		sep = "";
-		foreach(l, strippedexprs)
-		{
-			Node	   *expr = lfirst(l);
-
-			appendStringInfo(buf, sep);
-			sep = ", ";
-			get_rule_expr(expr, context, false);
-		}
+		get_rule_expr((Node *) strippedexprs, context, false);
 		appendStringInfoChar(buf, ')');
 	}
 	else
@@ -2938,7 +2930,9 @@ get_rule_expr(Node *node, deparse_context *context,
 	/*
 	 * Each level of get_rule_expr must emit an indivisible term
 	 * (parenthesized if necessary) to ensure result is reparsed into the
-	 * same expression tree.
+	 * same expression tree.  The only exception is that when the input
+	 * is a List, we emit the component items comma-separated with no
+	 * surrounding decoration; this is convenient for most callers.
 	 *
 	 * There might be some work left here to support additional node types.
 	 */
@@ -3269,20 +3263,10 @@ get_rule_expr(Node *node, deparse_context *context,
 		case T_ArrayExpr:
 			{
 				ArrayExpr  *arrayexpr = (ArrayExpr *) node;
-				ListCell   *element;
-				char	   *sep;
 
 				appendStringInfo(buf, "ARRAY[");
-				sep = "";
-				foreach(element, arrayexpr->elements)
-				{
-					Node	   *e = (Node *) lfirst(element);
-
-					appendStringInfo(buf, sep);
-					get_rule_expr(e, context, true);
-					sep = ", ";
-				}
-				appendStringInfo(buf, "]");
+				get_rule_expr((Node *) arrayexpr->elements, context, true);
+				appendStringInfoChar(buf, ']');
 			}
 			break;
 
@@ -3348,40 +3332,20 @@ get_rule_expr(Node *node, deparse_context *context,
 		case T_CoalesceExpr:
 			{
 				CoalesceExpr *coalesceexpr = (CoalesceExpr *) node;
-				ListCell   *arg;
-				char	   *sep;
 
 				appendStringInfo(buf, "COALESCE(");
-				sep = "";
-				foreach(arg, coalesceexpr->args)
-				{
-					Node	   *e = (Node *) lfirst(arg);
-
-					appendStringInfo(buf, sep);
-					get_rule_expr(e, context, true);
-					sep = ", ";
-				}
-				appendStringInfo(buf, ")");
+				get_rule_expr((Node *) coalesceexpr->args, context, true);
+				appendStringInfoChar(buf, ')');
 			}
 			break;
 
 		case T_NullIfExpr:
 			{
 				NullIfExpr *nullifexpr = (NullIfExpr *) node;
-				ListCell   *arg;
-				char	   *sep;
 
 				appendStringInfo(buf, "NULLIF(");
-				sep = "";
-				foreach(arg, nullifexpr->args)
-				{
-					Node	   *e = (Node *) lfirst(arg);
-
-					appendStringInfo(buf, sep);
-					get_rule_expr(e, context, true);
-					sep = ", ";
-				}
-				appendStringInfo(buf, ")");
+				get_rule_expr((Node *) nullifexpr->args, context, true);
+				appendStringInfoChar(buf, ')');
 			}
 			break;
 
@@ -3478,6 +3442,21 @@ get_rule_expr(Node *node, deparse_context *context,
 			appendStringInfo(buf, "DEFAULT");
 			break;
 
+		case T_List:
+			{
+				char	   *sep;
+				ListCell   *l;
+
+				sep = "";
+				foreach(l, (List *) node)
+				{
+					appendStringInfo(buf, sep);
+					get_rule_expr((Node *) lfirst(l), context, showimplicit);
+					sep = ", ";
+				}
+			}
+			break;
+
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));
 			break;
@@ -3560,7 +3539,6 @@ get_func_expr(FuncExpr *expr, deparse_context *context,
 	Oid			argtypes[FUNC_MAX_ARGS];
 	int			nargs;
 	ListCell   *l;
-	char	   *sep;
 
 	/*
 	 * If the function call came from an implicit coercion, then just show
@@ -3613,14 +3591,7 @@ get_func_expr(FuncExpr *expr, deparse_context *context,
 
 	appendStringInfo(buf, "%s(",
 					 generate_function_name(funcoid, nargs, argtypes));
-
-	sep = "";
-	foreach(l, expr->args)
-	{
-		appendStringInfo(buf, sep);
-		sep = ", ";
-		get_rule_expr((Node *) lfirst(l), context, true);
-	}
+	get_rule_expr((Node *) expr->args, context, true);
 	appendStringInfoChar(buf, ')');
 }
 
@@ -3787,8 +3758,6 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
 	Query	   *query = (Query *) (sublink->subselect);
-	ListCell   *l;
-	char	   *sep;
 	bool		need_paren;
 
 	if (sublink->subLinkType == ARRAY_SUBLINK)
@@ -3801,19 +3770,10 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 		need_paren = (list_length(sublink->lefthand) > 1);
 		if (need_paren)
 			appendStringInfoChar(buf, '(');
-
-		sep = "";
-		foreach(l, sublink->lefthand)
-		{
-			appendStringInfo(buf, sep);
-			sep = ", ";
-			get_rule_expr((Node *) lfirst(l), context, true);
-		}
-
+		get_rule_expr((Node *) sublink->lefthand, context, true);
 		if (need_paren)
-			appendStringInfo(buf, ") ");
-		else
-			appendStringInfoChar(buf, ' ');
+			appendStringInfoChar(buf, ')');
+		appendStringInfoChar(buf, ' ');
 	}
 
 	need_paren = true;
