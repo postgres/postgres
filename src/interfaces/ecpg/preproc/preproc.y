@@ -654,12 +654,12 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 }
 
 /* special embedded SQL token */
-%token		SQL_AT SQL_BOOL SQL_BREAK 
+%token		SQL_AT SQL_AUTOCOMMIT SQL_BOOL SQL_BREAK 
 %token		SQL_CALL SQL_CONNECT SQL_CONNECTION SQL_CONTINUE
 %token		SQL_DEALLOCATE SQL_DISCONNECT SQL_ENUM 
 %token		SQL_FOUND SQL_FREE SQL_GO SQL_GOTO
 %token		SQL_IDENTIFIED SQL_IMMEDIATE SQL_INDICATOR SQL_INT SQL_LONG
-%token		SQL_OPEN SQL_PREPARE SQL_RELEASE SQL_REFERENCE
+%token		SQL_OFF SQL_OPEN SQL_PREPARE SQL_RELEASE SQL_REFERENCE
 %token		SQL_SECTION SQL_SHORT SQL_SIGNED SQL_SQLERROR SQL_SQLPRINT
 %token		SQL_SQLWARNING SQL_START SQL_STOP SQL_STRUCT SQL_UNSIGNED
 %token		SQL_VAR SQL_WHENEVER
@@ -831,7 +831,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>	ECPGFree ECPGDeclare ECPGVar sql_variable_declarations
 %type  <str>	sql_declaration sql_variable_list sql_variable opt_at
 %type  <str>    struct_type s_struct declaration variable_declarations
-%type  <str>    s_struct s_union union_type
+%type  <str>    s_struct s_union union_type ECPGSetAutocommit on_off
 
 %type  <type_enum> simple_type varchar_type
 
@@ -842,6 +842,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <index>	opt_array_bounds nest_array_bounds opt_type_array_bounds
 %type  <index>  nest_type_array_bounds
 
+%type  <ival>	Iresult
 %%
 prog: statements;
 
@@ -913,7 +914,7 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 						if (connection)
 							yyerror("no at option for connect statement.\n");
 
-						fprintf(yyout, "ECPGconnect(__LINE__, %s, %d);", $1, no_auto_trans);
+						fprintf(yyout, "ECPGconnect(__LINE__, %s, %d);", $1, autocommit);
 						whenever_action(0);
 						free($1);
 					} 
@@ -981,6 +982,11 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 						free($1);
 					}
 		| ECPGRelease		{ /* output already done */ }
+		| ECPGSetAutocommit     {
+						fprintf(yyout, "ECPGsetcommit(__LINE__, \"%s\", %s);", $1, connection ? connection : "NULL");
+						whenever_action(0);
+                                       		free($1);
+					}
 		| ECPGSetConnection     {
 						if (connection)
 							yyerror("no at option for set connection statement.\n");
@@ -3170,11 +3176,14 @@ opt_array_bounds:  '[' ']' nest_array_bounds
                             $$.index2 = $3.index1;
                             $$.str = cat2_str(make1_str("[]"), $3.str);
                         }
-		| '[' Iconst ']' nest_array_bounds
+		| '[' Iresult ']' nest_array_bounds
 			{
-                            $$.index1 = atol($2);
+			    char *txt = mm_alloc(20L);
+
+			    sprintf (txt, "%d", $2);
+                            $$.index1 = $2;
                             $$.index2 = $4.index1;
-                            $$.str = cat4_str(make1_str("["), $2, make1_str("]"), $4.str);
+                            $$.str = cat4_str(make1_str("["), txt, make1_str("]"), $4.str);
                         }
 		| /* EMPTY */
 			{
@@ -3190,11 +3199,14 @@ nest_array_bounds:	'[' ']' nest_array_bounds
                             $$.index2 = $3.index1;
                             $$.str = cat2_str(make1_str("[]"), $3.str);
                         }
-		| '[' Iconst ']' nest_array_bounds
+		| '[' Iresult ']' nest_array_bounds
 			{
-                            $$.index1 = atol($2);
+			    char *txt = mm_alloc(20L);
+
+			    sprintf (txt, "%d", $2);
+                            $$.index1 = $2;
                             $$.index2 = $4.index1;
-                            $$.str = cat4_str(make1_str("["), $2, make1_str("]"), $4.str);
+                            $$.str = cat4_str(make1_str("["), txt, make1_str("]"), $4.str);
                         }
 		| /* EMPTY */
 			{
@@ -3203,6 +3215,16 @@ nest_array_bounds:	'[' ']' nest_array_bounds
                             $$.str= make1_str("");
                         }
                 ;
+
+Iresult:	Iconst			{ $$ = atol($1); }
+	|	'(' Iresult ')'		{ $$ = $2; }
+	|	Iresult '+' Iresult	{ $$ = $1 + $3};
+	|	Iresult '-' Iresult	{ $$ = $1 - $3};
+	|	Iresult '*' Iresult	{ $$ = $1 * $3};
+	|	Iresult '/' Iresult	{ $$ = $1 / $3};
+	|	Iresult '%' Iresult	{ $$ = $1 % $3};
+
+
 
 /*****************************************************************************
  *
@@ -3239,6 +3261,7 @@ Generic:  generic
 generic:  ident					{ $$ = $1; }
 		| TYPE_P			{ $$ = make1_str("type"); }
 		| SQL_AT			{ $$ = make1_str("at"); }
+		| SQL_AUTOCOMMIT		{ $$ = make1_str("autocommit"); }
 		| SQL_BOOL			{ $$ = make1_str("bool"); }
 		| SQL_BREAK			{ $$ = make1_str("break"); }
 		| SQL_CALL			{ $$ = make1_str("call"); }
@@ -3255,6 +3278,7 @@ generic:  ident					{ $$ = $1; }
 		| SQL_INDICATOR			{ $$ = make1_str("indicator"); }
 		| SQL_INT			{ $$ = make1_str("int"); }
 		| SQL_LONG			{ $$ = make1_str("long"); }
+		| SQL_OFF			{ $$ = make1_str("off"); }
 		| SQL_OPEN			{ $$ = make1_str("open"); }
 		| SQL_PREPARE			{ $$ = make1_str("prepare"); }
 		| SQL_RELEASE			{ $$ = make1_str("release"); }
@@ -4475,7 +4499,6 @@ ColId:  ident					{ $$ = $1; }
 		| SQL_BREAK			{ $$ = make1_str("break"); }
 		| SQL_CALL			{ $$ = make1_str("call"); }
 		| SQL_CONNECT			{ $$ = make1_str("connect"); }
-		| SQL_CONNECTION		{ $$ = make1_str("connection"); }
 		| SQL_CONTINUE			{ $$ = make1_str("continue"); }
 		| SQL_DEALLOCATE		{ $$ = make1_str("deallocate"); }
 		| SQL_DISCONNECT		{ $$ = make1_str("disconnect"); }
@@ -4487,6 +4510,7 @@ ColId:  ident					{ $$ = $1; }
 		| SQL_INDICATOR			{ $$ = make1_str("indicator"); }
 		| SQL_INT			{ $$ = make1_str("int"); }
 		| SQL_LONG			{ $$ = make1_str("long"); }
+		| SQL_OFF			{ $$ = make1_str("off"); }
 		| SQL_OPEN			{ $$ = make1_str("open"); }
 		| SQL_PREPARE			{ $$ = make1_str("prepare"); }
 		| SQL_RELEASE			{ $$ = make1_str("release"); }
@@ -5139,12 +5163,26 @@ ECPGRelease: TransactionStmt SQL_RELEASE
 	}
 
 /* 
+ * set/reset the automatic transaction mode, this needs a differnet handling
+ * as the other set commands
+ */
+ECPGSetAutocommit:  SET SQL_AUTOCOMMIT to_equal on_off
+           		{
+				$$ = $4;
+                        }
+
+on_off:	ON		{ $$ = make1_str("on"); }
+	| SQL_OFF	{ $$ = make1_str("off"); }
+
+to_equal:	TO | "=";
+
+/* 
  * set the actual connection, this needs a differnet handling as the other
  * set commands
  */
-ECPGSetConnection:  SET SQL_CONNECTION connection_object
+ECPGSetConnection:  SET SQL_CONNECTION to_equal connection_object
            		{
-				$$ = $3;
+				$$ = $4;
                         }
 
 /*
@@ -5204,17 +5242,23 @@ opt_type_array_bounds:  '[' ']' nest_type_array_bounds
                             $$.index2 = $3.index1;
                             $$.str = cat2_str(make1_str("[]"), $3.str);
                         }
-		| '[' Iconst ']' nest_type_array_bounds
+		| '[' Iresult ']' nest_type_array_bounds
 			{
-                            $$.index1 = atol($2);
+			    char *txt = mm_alloc(20L);
+
+			    sprintf (txt, "%d", $2);
+                            $$.index1 = $2;
                             $$.index2 = $4.index1;
-                            $$.str = cat4_str(make1_str("["), $2, make1_str("]"), $4.str);
+                            $$.str = cat4_str(make1_str("["), txt, make1_str("]"), $4.str);
                         }
-		| '(' Iconst ')' nest_type_array_bounds
+		| '(' Iresult ')' nest_type_array_bounds
 			{
-                            $$.index1 = atol($2);
+			    char *txt = mm_alloc(20L);
+
+			    sprintf (txt, "%d", $2);
+                            $$.index1 = $2;
                             $$.index2 = $4.index1;
-                            $$.str = cat4_str(make1_str("["), $2, make1_str("]"), $4.str);
+                            $$.str = cat4_str(make1_str("["), txt, make1_str("]"), $4.str);
                         }
 		| /* EMPTY */
 			{
@@ -5236,17 +5280,23 @@ nest_type_array_bounds:	'[' ']' nest_type_array_bounds
                             $$.index2 = $3.index1;
                             $$.str = cat2_str(make1_str("[]"), $3.str);
                         }
-		| '[' Iconst ']' nest_type_array_bounds
+		| '[' Iresult ']' nest_type_array_bounds
 			{
-                            $$.index1 = atol($2);
+			    char *txt = mm_alloc(20L);
+
+			    sprintf (txt, "%d", $2);
+                            $$.index1 = $2;
                             $$.index2 = $4.index1;
-                            $$.str = cat4_str(make1_str("["), $2, make1_str("]"), $4.str);
+                            $$.str = cat4_str(make1_str("["), txt, make1_str("]"), $4.str);
                         }
-		| '(' Iconst ')' nest_type_array_bounds
+		| '(' Iresult ')' nest_type_array_bounds
 			{
-                            $$.index1 = atol($2);
+			    char *txt = mm_alloc(20L);
+
+			    sprintf (txt, "%d", $2);
+                            $$.index1 = $2;
                             $$.index2 = $4.index1;
-                            $$.str = cat4_str(make1_str("["), $2, make1_str("]"), $4.str);
+                            $$.str = cat4_str(make1_str("["), txt, make1_str("]"), $4.str);
                         }
 		| /* EMPTY */
 			{
@@ -5954,6 +6004,10 @@ c_anything:  IDENT 	{ $$ = $1; }
 	| Iconst	{ $$ = $1; }
 	| Fconst	{ $$ = $1; }
 	| '*'		{ $$ = make1_str("*"); }
+	| '+'		{ $$ = make1_str("+"); }
+	| '-'		{ $$ = make1_str("-"); }
+	| '/'		{ $$ = make1_str("/"); }
+	| '%'		{ $$ = make1_str("%"); }
 	| S_AUTO	{ $$ = make1_str("auto"); }
 	| S_BOOL	{ $$ = make1_str("bool"); }
 	| S_CHAR	{ $$ = make1_str("char"); }

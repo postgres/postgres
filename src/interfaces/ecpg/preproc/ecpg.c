@@ -23,7 +23,7 @@ extern char *optarg;
 #include "extern.h"
 
 struct _include_path *include_paths;
-int			no_auto_trans = 0;
+int			autocommit = 0;
 struct cursor *cur = NULL;
 struct typedefs *types = NULL;
 
@@ -76,7 +76,7 @@ main(int argc, char *const argv[])
 				add_include_path(optarg);
 				break;
 			case 't':
-				no_auto_trans = 1;
+				autocommit = 1;
 				break;
 			case 'v':
 				fprintf(stderr, "ecpg - the postgresql preprocessor, version: %d.%d.%d\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);

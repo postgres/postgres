@@ -21,6 +21,7 @@
 static ScanKeyword ScanKeywords[] = {
 	/* name					value			*/
 	{"at", SQL_AT},
+	{"autocommit", SQL_AUTOCOMMIT},
 	{"bool", SQL_BOOL},
 	{"break", SQL_BREAK},
 	{"call", SQL_CALL},
@@ -39,6 +40,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"indicator", SQL_INDICATOR},
 	{"int", SQL_INT},
 	{"long", SQL_LONG},
+	{"off", SQL_OFF},
 	{"open", SQL_OPEN},
 	{"prepare", SQL_PREPARE},
 	{"reference", SQL_REFERENCE},

@@ -55,7 +55,7 @@ static struct connection
 	char	*name;
 	PGconn	*connection;
 	bool	committed;
-	int	no_auto_trans;
+	int	autocommit;
 	struct connection *next;
 }		*all_connections = NULL, *actual_connection = NULL;
 
@@ -660,7 +660,7 @@ ECPGexecute(struct statement * stmt)
 
 	/* Now the request is built. */
 
-	if (stmt->connection->committed && !stmt->connection->no_auto_trans)
+	if (stmt->connection->committed && !stmt->connection->autocommit)
 	{
 		if ((results = PQexec(stmt->connection->connection, "begin transaction")) == NULL)
 		{
@@ -1164,7 +1164,7 @@ ECPGsetcommit(int lineno, const char *mode, const char *connection_name)
 
 	if (con)
 	{
-		if (con->no_auto_trans == true && strncmp(mode, "ON", strlen("ON")) == 0)
+		if (con->autocommit == true && strncmp(mode, "OFF", strlen("OFF")) == 0)
 		{
 			if (con->committed)
 			{
@@ -1176,9 +1176,9 @@ ECPGsetcommit(int lineno, const char *mode, const char *connection_name)
 				PQclear(results);
 				con->committed = false;
 			}
-			con->no_auto_trans = false;
+			con->autocommit = false;
 		}
-		else if (con->no_auto_trans == false && strncmp(mode, "OFF", strlen("OFF")) == 0)
+		else if (con->autocommit == false && strncmp(mode, "ON", strlen("ON")) == 0)
 		{
 			if (!con->committed)
 			{
@@ -1190,7 +1190,7 @@ ECPGsetcommit(int lineno, const char *mode, const char *connection_name)
 				PQclear(results);
 				con->committed = true;
 			}
-			con->no_auto_trans = true;
+			con->autocommit = true;
 		}
 	}
 	else
@@ -1220,7 +1220,7 @@ ECPGsetconn(int lineno, const char *connection_name)
 }
 
 bool
-ECPGconnect(int lineno, const char *dbname, const char *user, const char *passwd, const char *connection_name, int no_auto_trans)
+ECPGconnect(int lineno, const char *dbname, const char *user, const char *passwd, const char *connection_name, int autocommit)
 {
 	struct connection *this = (struct connection *) ecpg_alloc(sizeof(struct connection), lineno);
 
@@ -1258,7 +1258,7 @@ ECPGconnect(int lineno, const char *dbname, const char *user, const char *passwd
 	}
 	
 	this->committed = true;
-	this->no_auto_trans = no_auto_trans;
+	this->autocommit = autocommit;
 
 	return true;
 }

@@ -555,6 +555,10 @@ Mon Apr 12 17:56:14 CEST 1999
 	- Fixed ECPG variable handling.
 	- Make no_auto_trans be accessible via SET command.
 	- Do not eat comments so line numbering should be correct.
+	
+Wed Apr 14 17:59:06 CEST 1999
+
+	- Added simple calculations for array bounds.
 	- Set library version to 3.0.0
 	- Set ecpg version to 2.6.0
 
