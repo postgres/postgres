@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.176 2000/12/03 10:27:27 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.177 2000/12/08 06:43:44 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1848,6 +1848,11 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 		 RelationGetRelationName(onerel),
 		 nblocks, blkno, num_moved,
 		 show_rusage(&ru0));
+
+	/* 
+	 * Reflect the motion of system tuples to catalog cache here.
+	 */
+        CommandCounterIncrement();
 
 	if (Nvacpagelist.num_pages > 0)
 	{
