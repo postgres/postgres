@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.229 2003/10/31 04:44:25 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.230 2003/10/31 19:24:17 momjian Exp $
 -->
 
 <appendix id="release">
@@ -18,19 +18,19 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.229 2003/10/31 04:44:25 mo
    In previous releases, IN/NOT IN subqueries were joined to the
    upper query by sequentially scanning the subquery looking for
    a join.  The 7.4 code uses the same sophisticated techniques
-   used by ordinary joins and so is much faster, and is now faster
-   than EXISTS subqueries.
+   used by ordinary joins and so is much faster.  An IN
+   will now usually as fast as or faster than an equivalent EXISTS
+   subquery; this reverses the conventional wisdom that applied to 
+   previous releases.
   </para>
 </listitem>
 
 <listitem><para> Improved GROUP BY processing by using hash buckets</para>
   <para>
-   In previous releases, GROUP BY totals were accumulated by
-   sequentially scanning the list of groups looking for a match;
-   the 7.4 code places GROUP BY values in hash buckets so the
-   proper match can be found much quicker.  This is particularly
-   significant in speeding up queries that have a large
-   number of distinct GROUP BY values.
+   In previous releases, GROUP BY values were accumulated and sorted
+   to obtain group-by counts;  the 7.4 code places GROUP BY values in 
+   hash buckets so sorting is not required, or reverts to the old
+   behavior if the group-by buckets will not fit in memory.
   </para>
 </listitem>
 
@@ -47,6 +47,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.229 2003/10/31 04:44:25 mo
     specified by the query;  7.4 allows full optimization of
     queries using ANSI join syntax, meaning the optimizer considers
     all possible join orderings and chooses the most efficient.
+    Outer joins, however, must still follow the declared ordering.
    </para>
 </listitem>
 
@@ -72,7 +73,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.229 2003/10/31 04:44:25 mo
 <listitem><para> Full support for IPv6 connections and IPv6 address
 data types</para>
    <para>
-    Prior releases allowed only IPv6 connections and IP data types only
+    Prior releases allowed only IPv4 connections and IP data types only
     supported IPv4 addresses. This release adds full IPv6 support in
     both of these areas.
    </para>
@@ -107,9 +108,13 @@ pages, and other free space management improvements.</para>
 </para>
 </listitem>
 
-<listitem><para> New protocol improves connection speed/reliability,
-and adds error codes, status information, a binary protocol, error
-reporting verbosity, and cleaner startup packets.</para>
+<listitem><para> New client-to-server protocol adds error codes, more status
+information, better support for binary data transmission, parameter
+values separated from SQL commands, prepared statements available at the
+protocol level, clean recovery from COPY failures, and cleaner startup
+packets.  The older protocol is still supported by both servers and
+clients.
+</para>
 </listitem>
           
 <listitem><para> Allow cursors to exist outside transactions, 
@@ -230,6 +235,7 @@ required for those wishing to migrate data from any previous release.</para>
 	 systems.
         </para>
      </listitem>
+     <listitem><para>Syntax errors now reported as 'syntax error' rather than 'parse error' (Tom)</para></listitem>
 </itemizedlist></para></sect2>
 
 <sect2><title> Server Operation Changes</title>
@@ -358,7 +364,7 @@ required for those wishing to migrate data from any previous release.</para>
    </listitem>
 <listitem><para>Align shared buffers on 32-byte boundary for copy speed improvement (Manfred Spraul)</para>
    <para>
-    Certain CPU's perform faster data copies when addresses are 32-bit
+    Certain CPU's perform faster data copies when addresses are 32-byte
     aligned.
    </para>
    </listitem>
@@ -475,17 +481,21 @@ required for those wishing to migrate data from any previous release.</para>
     strings.
    </para>
    </listitem>
-<listitem><para>Fix subquery aggregates of upper query columns to match SQL spec. (Tom)</para>
+<listitem><para>Fix aggregates in subqueries to match SQL spec (Tom)</para>
    <para>
-    bjm
+    The SQL spec says that an aggregate function appearing within a nested
+    subquery belongs to the outer query if its argument contains only
+    outer-query variables.  Prior PG releases did not handle this fine point
+    correctly.
    </para>
    </listitem>
 <listitem><para>Add option to prevent auto-addition of tables referenced in query (Nigel J.
   Andrews)  </para>
      <para>
       By default, tables mentioned in the query are automatically added
-      to the FROM clause if they are not already there. This option
-      disabled that behavior.
+      to the FROM clause if they are not already there.  This is compatible with
+      historic Postgres behavior but is contrary to the SQL spec.
+      This option allows selecting spec-compatible behavior.
      </para>
    </listitem>
 <listitem><para>Allow UPDATE ... SET col = DEFAULT (Rod)</para>
@@ -634,7 +644,7 @@ required for those wishing to migrate data from any previous release.</para>
     the transaction aborts.
    </para>
    </listitem>
-<listitem><para>Multiple pggla_dump fixes, including tar format and large objects</para></listitem>
+<listitem><para>Multiple pg_dump fixes, including tar format and large objects</para></listitem>
 <listitem><para>Allow pg_dump to dump specific schemas (Neil)</para></listitem>
 <listitem><para>Allow pg_dump to preserve column storage characteristics (Christopher)</para>
    <para>
