@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.137 2002/09/18 20:09:32 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.138 2002/09/21 18:32:53 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -528,7 +528,7 @@ postmaster -c log_connections=yes -c syslog=2
 <programlisting>
 env PGOPTIONS='-c geqo=off' psql
 </programlisting>
-    (This works for any libpq-based client application, not just
+    (This works for any <application>libpq</>-based client application, not just
     <application>psql</application>.) Note that this won't work for
     options that are fixed when the server is started, such as the port
     number.
@@ -1002,7 +1002,7 @@ env PGOPTIONS='-c geqo=off' psql
       <listitem>
        <para>
         Determines whether <command>EXPLAIN VERBOSE</> uses the indented
-	or non-indented format for displaying detailed querytree dumps.
+	or non-indented format for displaying detailed query-tree dumps.
        </para>
       </listitem>
      </varlistentry>
@@ -1058,10 +1058,10 @@ env PGOPTIONS='-c geqo=off' psql
       <term><varname>LOG_PID</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        Prefixes each server message in the logfile with the process ID of
+        Prefixes each server message in the log file with the process ID of
         the backend process. This is useful to sort out which messages
         pertain to which connection. The default is off.  This parameter
-        does not affect messages logged via syslog(), which always contain
+        does not affect messages logged via <application>syslog</>, which always contain
         the process ID.
        </para>
       </listitem>
@@ -1669,7 +1669,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       <listitem>
        <para>
         This variable specifies the order in which namespaces are searched
-	when an object (table, datatype, function, etc) is referenced by a
+	when an object (table, data type, function, etc) is referenced by a
 	simple name with no schema component.  When there are objects of
 	identical names in different namespaces, the one found first
 	in the search path is used.  An object that is not in any of the
@@ -1865,7 +1865,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
         However, filtered forms in <productname>Microsoft
         Access</productname> generate queries that appear to use
         <literal><replaceable>expr</> = NULL</literal> to test for
-        NULLs, so if you use that interface to access the database you
+        null values, so if you use that interface to access the database you
         might want to turn this option on.  Since expressions of the
         form <literal><replaceable>expr</> = NULL</literal> always
         return NULL (using the correct interpretation) they are not

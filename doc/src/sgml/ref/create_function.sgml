@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.42 2002/08/22 00:01:40 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.43 2002/09/21 18:32:54 petere Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -77,7 +77,7 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
 	Depending on the implementation language it may also be allowed
 	to specify <quote>pseudo-types</> such as <type>cstring</>.
 	Pseudo-types indicate that the actual argument type is either
-	incompletely specified, or outside the set of ordinary SQL datatypes.
+	incompletely specified, or outside the set of ordinary SQL data types.
       </para>
      </listitem>
     </varlistentry>
@@ -171,7 +171,7 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
        <literal>CALLED ON NULL INPUT</literal> (the default) indicates
        that the function will be called normally when some of its
        arguments are null.  It is then the function author's
-       responsibility to check for NULLs if necessary and respond
+       responsibility to check for null values if necessary and respond
        appropriately.
       </para>
 
@@ -247,7 +247,7 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
 
       <variablelist>
        <varlistentry>
-        <term>isStrict</term>
+        <term><literal>isStrict</></term>
         <listitem>
          <para>
           Equivalent to <literal>STRICT</literal> or <literal>RETURNS NULL ON NULL INPUT</literal>
@@ -256,7 +256,7 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
        </varlistentry>
 
        <varlistentry>
-        <term>isCachable</term>
+        <term><literal>isCachable</></term>
         <listitem>
          <para>
           <literal>isCachable</literal> is an obsolete equivalent of

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.38 2002/09/18 20:09:31 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.39 2002/09/21 18:32:52 petere Exp $
 -->
 
 <chapter id="client-authentication">
@@ -261,7 +261,7 @@ hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <
         <term><literal>password</></term>
         <listitem>
          <para>
-          Same as "md5", but the password is sent in cleartext over the
+          Same as "md5", but the password is sent in clear text over the
           network. This should not be used on untrusted networks.
           See <xref linkend="auth-password"> for details.
          </para>
@@ -314,8 +314,10 @@ hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <
 
          <para>
           For local connections, this only works on machines that
-          support Unix-domain socket credentials (currently Linux,
-          FreeBSD, NetBSD, and BSD/OS).
+          support Unix-domain socket credentials (currently
+          <systemitem class=osname>Linux</>, <systemitem
+          class=osname>FreeBSD</>, <systemitem class=osname>NetBSD</>,
+          and <systemitem class=osname>BSD/OS</>).
          </para>
 
          <para>
@@ -504,7 +506,7 @@ local   db1,db2,@demodbs  all                                       md5
     if you trust every user on every machine that is allowed to connect
     to the postmaster by the <filename>pg_hba.conf</> lines that specify
     <literal>trust</>.  It is seldom reasonable to use <literal>trust</>
-    for any TCP connections other than those from localhost (127.0.0.1).
+    for any TCP connections other than those from <systemitem>localhost</> (127.0.0.1).
    </para>
 
   </sect2>

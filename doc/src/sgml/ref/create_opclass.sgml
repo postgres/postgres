@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.2 2002/08/22 00:01:40 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.3 2002/09/21 18:32:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -52,8 +52,8 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
       <listitem>
        <para>
         If present, the operator class will become the default index
-	operator class for its datatype.  At most one operator class
-	can be the default for a specific datatype and access method.
+	operator class for its data type.  At most one operator class
+	can be the default for a specific data type and access method.
        </para>
       </listitem>
      </varlistentry>
@@ -61,7 +61,7 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
       <term><replaceable class="parameter">data_type</replaceable></term>
       <listitem>
        <para>
-        The column datatype that this operator class is for.
+        The column data type that this operator class is for.
        </para>
       </listitem>
      </varlistentry>
@@ -95,10 +95,10 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
       <term><replaceable class="parameter">type</replaceable></term>
       <listitem>
        <para>
-        The input datatype(s) of an operator, or <literal>NONE</> to
-	signify a left-unary or right-unary operator.  The input datatypes
+        The input data type(s) of an operator, or <literal>NONE</> to
+	signify a left-unary or right-unary operator.  The input data types
 	may be omitted in the normal case where they are the same as the
-	operator class's datatype.
+	operator class's data type.
        </para>
       </listitem>
      </varlistentry>
@@ -135,7 +135,7 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
       <term><replaceable class="parameter">parameter_types</replaceable></term>
       <listitem>
        <para>
-        The parameter datatype(s) of the function.
+        The parameter data type(s) of the function.
        </para>
       </listitem>
      </varlistentry>
@@ -143,8 +143,8 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
       <term><replaceable class="parameter">storage_type</replaceable></term>
       <listitem>
        <para>
-        The datatype actually stored in the index.  Normally this is the
-	same as the column datatype, but some index access methods (only
+        The data type actually stored in the index.  Normally this is the
+	same as the column data type, but some index access methods (only
 	GIST at this writing) allow it to be different.  The
 	<literal>STORAGE</> clause must be omitted unless the index access
 	method allows a different type to be used.
@@ -191,9 +191,9 @@ CREATE OPERATOR CLASS
    <replaceable class="parameter">name</replaceable>.
   </para>
   <para>
-   An operator class defines how a particular datatype can be used with
+   An operator class defines how a particular data type can be used with
    an index.  The operator class specifies that certain operators will fill
-   particular roles or <quote>strategies</> for this datatype and this
+   particular roles or <quote>strategies</> for this data type and this
    access method.  The operator class also specifies the support procedures to
    be used by 
    the index access method when the operator class is selected for an
@@ -210,7 +210,7 @@ CREATE OPERATOR CLASS
   </para>
   <para>
    The user who defines an operator class becomes its owner.  The user
-   must own the datatype for which the operator class is being defined,
+   must own the data type for which the operator class is being defined,
    and must have execute permission for all referenced operators and functions.
   </para>
 
@@ -248,7 +248,7 @@ CREATE OPERATOR CLASS
   </title>
   <para>
    The following example command defines a GiST index operator class
-   for datatype <literal>_int4</> (array of int4).  See
+   for data type <literal>_int4</> (array of int4).  See
    <filename>contrib/intarray/</> for the complete example.
   </para>
 

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_conversion.sgml,v 1.2 2002/07/22 13:00:00 ishii Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_conversion.sgml,v 1.3 2002/09/21 18:32:54 petere Exp $ -->
 
 <refentry id="SQL-DROPCONVERSION">
  <refmeta>
@@ -76,7 +76,7 @@ DROP CONVERSION <replaceable>conversion_name</replaceable>
   <title>Examples</title>
 
   <para>
-   To drop the conversion named myname:
+   To drop the conversion named <literal>myname</>:
 <programlisting>
 DROP CONVERSION myname;
 </programlisting>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.20 2002/05/18 15:44:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.21 2002/09/21 18:32:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -233,7 +233,7 @@ CREATE AGGREGATE
    If the state transition function is not strict, then it will be called
    unconditionally at each input value, and must deal with NULL inputs
    and NULL transition values for itself.  This allows the aggregate
-   author to have full control over the aggregate's handling of NULLs.
+   author to have full control over the aggregate's handling of null values.
   </para>
   
   <para>

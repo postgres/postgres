@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.19 2002/05/11 02:09:41 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.20 2002/09/21 18:32:54 petere Exp $
 -->
 
  <Chapter Id="xoper">
@@ -200,9 +200,9 @@ SELECT (a + b) AS c FROM test_complex;
 
    <para>
     Providing a negator is very helpful to the query optimizer since
-    it allows expressions like NOT (x = y) to be simplified into
+    it allows expressions like <literal>NOT (x = y)</> to be simplified into
     x &lt;&gt; y.  This comes up more often than you might think, because
-    NOTs can be inserted as a consequence of other rearrangements.
+    <literal>NOT</> operations can be inserted as a consequence of other rearrangements.
    </para>
 
    <para>
@@ -378,14 +378,14 @@ table1.column1 OP table2.column2
    </sect2>
 
    <sect2>
-    <title>MERGES (SORT1, SORT2, LTCMP, GTCMP)</title>
+    <title><literal>MERGES</> (<literal>SORT1</>, <literal>SORT2</>, <literal>LTCMP</>, <literal>GTCMP</>)</title>
 
     <para>
      The <literal>MERGES</literal> clause, if present, tells the system that
      it is permissible to use the merge join method for a join based on this
      operator.  <literal>MERGES</> only makes sense for binary operators that
      return <literal>boolean</>, and in practice the operator must represent
-     equality for some datatype or pair of datatypes.
+     equality for some data type or pair of data types.
     </para>
 
     <para>
@@ -400,19 +400,19 @@ table1.column1 OP table2.column2
      it is possible to merge-join two
      distinct data types so long as they are logically compatible.  For
      example, the <type>int2</type>-versus-<type>int4</type> equality operator
-     is mergejoinable.
+     is merge-joinable.
      We only need sorting operators that will bring both data types into a
      logically compatible sequence.
     </para>
 
     <para>
      Execution of a merge join requires that the system be able to identify
-     four operators related to the mergejoin equality operator: less-than
-     comparison for the left input datatype, less-than comparison for the
-     right input datatype, less-than comparison between the two datatypes, and
-     greater-than comparison between the two datatypes.  (These are actually
-     four distinct operators if the mergejoinable operator has two different
-     input datatypes; but when the input types are the same the three
+     four operators related to the merge-join equality operator: less-than
+     comparison for the left input data type, less-than comparison for the
+     right input data type, less-than comparison between the two data types, and
+     greater-than comparison between the two data types.  (These are actually
+     four distinct operators if the merge-joinable operator has two different
+     input data types; but when the input types are the same the three
      less-than operators are all the same operator.)
      It is possible to
      specify these operators individually by name, as the <literal>SORT1</>,
@@ -426,8 +426,8 @@ table1.column1 OP table2.column2
     </para>
 
     <para>
-     The input datatypes of the four comparison operators can be deduced
-     from the input types of the mergejoinable operator, so just as with
+     The input data types of the four comparison operators can be deduced
+     from the input types of the merge-joinable operator, so just as with
      <literal>COMMUTATOR</>, only the operator names need be given in these
      clauses.  Unless you are using peculiar choices of operator names,
      it's sufficient to write <literal>MERGES</> and let the system fill in
@@ -440,14 +440,14 @@ table1.column1 OP table2.column2
 
     <para>
      There are additional restrictions on operators that you mark
-     mergejoinable.  These restrictions are not currently checked by
+     merge-joinable.  These restrictions are not currently checked by
      <command>CREATE OPERATOR</command>, but errors may occur when
      the operator is used if any are not true:
 
      <itemizedlist>
       <listitem>
        <para>
-	A mergejoinable equality operator must have a mergejoinable
+	A merge-joinable equality operator must have a merge-joinable
         commutator (itself if the two data types are the same, or a related
         equality operator if they are different).
        </para>
@@ -455,10 +455,10 @@ table1.column1 OP table2.column2
 
       <listitem>
        <para>
-        If there is a mergejoinable operator relating any two data types
-	A and B, and another mergejoinable operator relating B to any
-	third data type C, then A and C must also have a mergejoinable
-	operator; in other words, having a mergejoinable operator must
+        If there is a merge-joinable operator relating any two data types
+	A and B, and another merge-joinable operator relating B to any
+	third data type C, then A and C must also have a merge-joinable
+	operator; in other words, having a merge-joinable operator must
 	be transitive.
        </para>
       </listitem>
@@ -476,7 +476,7 @@ table1.column1 OP table2.column2
     <para>
      In <ProductName>PostgreSQL</ProductName> versions before 7.3,
      the <literal>MERGES</> shorthand was not available: to make a
-     mergejoinable operator one had to write both <literal>SORT1</> and
+     merge-joinable operator one had to write both <literal>SORT1</> and
      <literal>SORT2</> explicitly.  Also, the <literal>LTCMP</> and
      <literal>GTCMP</>
      options did not exist; the names of those operators were hardwired as

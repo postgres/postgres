@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/droplang.sgml,v 1.20 2002/08/10 16:57:31 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/droplang.sgml,v 1.21 2002/09/21 18:32:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -69,7 +69,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>[-d, --dbname] <replaceable class="parameter">dbname</replaceable></term>
+      <term><option><optional>-d</> <replaceable class="parameter">dbname</replaceable></></term>
+      <term><option><optional>--dbname</> <replaceable class="parameter">dbname</replaceable></></term>
       <listitem>
        <para>
 	Specifies from which database the language should be removed.
@@ -80,7 +81,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-e, --echo</term>
+      <term><option>-e</></term>
+      <term><option>--echo</></term>
       <listitem>
        <para>
         Displays SQL commands as they are executed.
@@ -89,7 +91,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-l, --list</term>
+      <term><option>-l</></term>
+      <term><option>--list</></term>
       <listitem>
        <para>
         Shows a list of already installed languages in the target database
@@ -107,7 +110,8 @@ PostgreSQL documentation
     
     <variablelist>
      <varlistentry>
-      <term>-h, --host <replaceable class="parameter">host</replaceable></term>
+      <term><option>-h <replaceable class="parameter">host</replaceable></></term>
+      <term><option>--host <replaceable class="parameter">host</replaceable></></term>
       <listitem>
        <para>
 	Specifies the host name of the machine on which the 
@@ -119,7 +123,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-p, --port <replaceable class="parameter">port</replaceable></term>
+      <term><option>-p <replaceable class="parameter">port</replaceable></></term>
+      <term><option>--port <replaceable class="parameter">port</replaceable></></term>
       <listitem>
        <para>
 	Specifies the Internet TCP/IP port or local Unix domain socket file 
@@ -130,7 +135,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-U, --username <replaceable class="parameter">username</replaceable></term>
+      <term><option>-U <replaceable class="parameter">username</replaceable></></term>
+      <term><option>--username <replaceable class="parameter">username</replaceable></></term>
       <listitem>
        <para>
         User name to connect as
@@ -139,7 +145,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-W, --password</term>
+      <term><option>-W</></term>
+      <term><option>--password</></term>
       <listitem>
        <para>
         Force password prompt.

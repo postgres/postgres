@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.103 2002/09/18 21:35:20 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.104 2002/09/21 18:32:52 petere Exp $
 -->
 
  <chapter id="datatype">
@@ -703,7 +703,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
      implied <literal>UNIQUE</literal>.  This is no longer automatic.  If
      you wish a serial column to be <literal>UNIQUE</literal> or a 
      <literal>PRIMARY KEY</literal> it must now be specified, same as with
-     any other datatype.
+     any other data type.
     </para></note>
    </sect2>
   </sect1>
@@ -2028,7 +2028,7 @@ January 8 04:05:06 1999 PST
       <listitem>
        <para>
 	The default time zone is specified as a constant integer offset 
-	from GMT/UTC. It is not possible to adapt to daylight-saving
+	from <acronym>GMT</>/<acronym>UTC</>. It is not possible to adapt to daylight-saving
 	time when doing date/time arithmetic across
 	<acronym>DST</acronym> boundaries.
        </para>
@@ -3025,14 +3025,14 @@ SELECT * FROM test;
 
        <row>
 	<entry><type>regproc</></entry>
-	<entry>pg_proc</entry>
+	<entry><structname>pg_proc</></entry>
 	<entry>Function name</entry>
 	<entry>sum</entry>
        </row>
 
        <row>
 	<entry><type>regprocedure</></entry>
-	<entry>pg_proc</entry>
+	<entry><structname>pg_proc</></entry>
 	<entry>Function with argument types</entry>
 	<entry>sum(int4)</entry>
        </row>
@@ -3098,7 +3098,7 @@ SELECT * FROM test;
 
    <para>
     Another identifier type used by the system is <type>xid</>, or transaction
-    (abbreviated xact) identifier.  This is the datatype of the system columns
+    (abbreviated <abbrev>xact</>) identifier.  This is the data type of the system columns
     <structfield>xmin</> and <structfield>xmax</>.
     Transaction identifiers are 32-bit quantities.  In a long-lived
     database it is possible for transaction IDs to wrap around.  This
@@ -3110,7 +3110,7 @@ SELECT * FROM test;
 
    <para>
     A third identifier type used by the system is <type>cid</>, or command
-    identifier.  This is the datatype of the system columns
+    identifier.  This is the data type of the system columns
     <structfield>cmin</> and <structfield>cmax</>.
     Command identifiers are also 32-bit quantities.  This creates a hard
     limit of 2<superscript>32</> (4 billion) SQL commands within a single
@@ -3121,7 +3121,7 @@ SELECT * FROM test;
 
    <para>
     A final identifier type used by the system is <type>tid</>, or tuple
-    identifier.  This is the datatype of the system column
+    identifier.  This is the data type of the system column
     <structfield>ctid</>.  A tuple ID is a pair
     (block number, tuple index within block) that identifies the
     physical location of the tuple within its table.
@@ -3172,10 +3172,10 @@ SELECT * FROM test;
     The <productname>PostgreSQL</productname> type system contains a number
     of special-purpose entries that are collectively called
     <firstterm>pseudo-types</>.  A pseudo-type cannot be used as a column
-    datatype, but it can be used to declare a function's argument or result
+    data type, but it can be used to declare a function's argument or result
     type.  Each of the available pseudo-types is useful in situations where
     a function's behavior does not correspond to simply taking or returning
-    a value of a specific SQL datatype.
+    a value of a specific SQL data type.
    </para>
 
    <para>
@@ -3198,12 +3198,12 @@ SELECT * FROM test;
 
        <row>
 	<entry><type>any</></entry>
-	<entry>Indicates that a function accepts any input datatype whatever</entry>
+	<entry>Indicates that a function accepts any input data type whatever</entry>
        </row>
 
        <row>
 	<entry><type>anyarray</></entry>
-	<entry>Indicates that a function accepts any array datatype</entry>
+	<entry>Indicates that a function accepts any array data type</entry>
        </row>
 
        <row>
@@ -3243,7 +3243,7 @@ SELECT * FROM test;
 
    <para>
     Functions coded in C (whether built-in or dynamically loaded) may be
-    declared to accept or return any of these pseudo datatypes.  It is up to
+    declared to accept or return any of these pseudo data types.  It is up to
     the function author to ensure that the function will behave safely
     when a pseudo-type is used as an argument type.
    </para>

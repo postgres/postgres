@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.36 2002/01/20 22:19:55 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.37 2002/09/21 18:32:52 petere Exp $
 -->
 
  <chapter id="ecpg">
@@ -158,8 +158,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.36 2002/01/20 22:19:55 petere
 <programlisting>
 exec sql include sqlca; 
 </programlisting>
-     in the include section of your file. This will define a struct and
-     a variable with the name <parameter>sqlca</parameter> as follows:
+     in the include section of your file. This will define a <type>struct</> and
+     a variable with the name <varname>sqlca</varname> as follows:
 <programlisting>
 struct sqlca
 {
@@ -198,7 +198,7 @@ struct sqlca
 
     <para>
      If an no error occurred in the last <acronym>SQL</acronym> statement.
-     <parameter>sqlca.sqlcode</parameter> will be 0 (ECPG_NO_ERROR). If
+     <parameter>sqlca.sqlcode</parameter> will be 0 (<symbol>ECPG_NO_ERROR</>). If
      <parameter>sqlca.sqlcode</parameter> is less that zero, this is a
      serious error, like the database definition does not match the
      query. If it is greater than zero, it is a normal error like the
@@ -620,8 +620,9 @@ exec sql end declare section;
         </para>
 
         <para>
-         The special types <type>VARCHAR</type> and <type>VARCHAR2</type> are converted into a named struct
-         for every variable. A declaration like:
+         The special types <type>VARCHAR</type> and
+         <type>VARCHAR2</type> are converted into a named <type>struct</> for
+         every variable. A declaration like:
 <programlisting>
 VARCHAR var[180];
 </programlisting>
@@ -1023,10 +1024,10 @@ ECPGdo(__LINE__, NULL, "select  res  from mytable where index = ?     ",
       </varlistentry>
 
       <varlistentry>
-       <term><literal>ECPGt_EOIT</literal></term>
+       <term><parameter>ECPGt_EOIT</></term>
        <listitem>
         <para>
-         An enum telling that there are no more input variables.
+         An <type>enum</> telling that there are no more input variables.
         </para>
        </listitem>
       </varlistentry>
@@ -1042,10 +1043,10 @@ ECPGdo(__LINE__, NULL, "select  res  from mytable where index = ?     ",
       </varlistentry>
 
       <varlistentry>
-       <term>ECPGt_EORT</term>
+       <term><parameter>ECPGt_EORT</></term>
        <listitem>
         <para>
-         An enum telling that there are no more variables.
+         An <type>enum</> telling that there are no more variables.
         </para>
        </listitem>
       </varlistentry>

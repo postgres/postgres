@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.31 2002/07/28 15:22:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.32 2002/09/21 18:32:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -146,7 +146,7 @@ PostgreSQL documentation
         Disables <function>fsync</function> calls for performance
         improvement, at the risk of data corruption in event of a
         system crash.  This parameter corresponds to setting
-        fsync=false in postgresql.conf. Read the detailed
+        <literal>fsync=false</> in <filename>postgresql.conf</>. Read the detailed
         documentation before using this!
        </para>
        <para>
@@ -176,7 +176,7 @@ PostgreSQL documentation
         Allows clients to connect via TCP/IP (Internet domain)
 	connections.  Without this option, only local Unix domain
         socket connections are accepted. This option corresponds
-        to setting tcpip_socket=true in postgresql.conf.
+        to setting <literal>tcpip_socket=true</> in <filename>postgresql.conf</>.
        </para>
        <para>
         <option>--tcpip_socket=false</option> has the opposite
@@ -350,7 +350,7 @@ PostgreSQL documentation
     <listitem>
      <para>
       Default character encoding used by clients.  (The clients may
-      override this invidiually.)  This value can also be set in the
+      override this individually.)  This value can also be set in the
       configuration file.
      </para>
     </listitem>
@@ -382,7 +382,7 @@ PostgreSQL documentation
 
     <listitem>
      <para>
-      Default port (preferrably set in the configuration file)
+      Default port (preferably set in the configuration file)
      </para>
     </listitem>
    </varlistentry>
@@ -520,10 +520,11 @@ StreamServerPort: cannot bind to port
   </para>
 
   <para>
-   The <option>--</> options will not work on FreeBSD or OpenBSD.
+   The <option>--</> options will not work on <systemitem
+   class="osname">FreeBSD</> or <systemitem class="osname">OpenBSD</>.
    Use <option>-c</> instead. This is a bug in the affected operating
-   systems; a future release of <productname>PostgreSQL</productname> will
-   provide a workaround if this is not fixed.
+   systems; a future release of <productname>PostgreSQL</productname>
+   will provide a workaround if this is not fixed.
   </para>
 
  </refsect1>
@@ -547,7 +548,7 @@ StreamServerPort: cannot bind to port
 </screen>
    This command will start up <application>postmaster</application>
    communicating through the port 1234. In order to connect to this
-   <application>postmaster</application> using psql, you would need to
+   <application>postmaster</application> using <application>psql</>, you would need to
    run it as
 <screen>
 <prompt>$</prompt> <userinput>psql -p 1234</userinput>

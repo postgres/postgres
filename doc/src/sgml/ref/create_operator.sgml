@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.31 2002/08/23 02:54:18 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.32 2002/09/21 18:32:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -268,10 +268,10 @@ CREATE OPERATOR
    are always equivalent.
   </para>
   <para>
-   At least one of LEFTARG and RIGHTARG must be defined.  For
+   At least one of <literal>LEFTARG</> and <literal>RIGHTARG</> must be defined.  For
    binary operators, both should be defined. For right  unary
-   operators,  only  LEFTARG  should  be defined, while for left
-   unary operators only RIGHTARG should be defined.
+   operators,  only  <literal>LEFTARG</>  should  be defined, while for left
+   unary operators only <literal>RIGHTARG</> should be defined.
   </para>
   <para>
    The
@@ -335,39 +335,43 @@ MYBOXES.description !== box '((0,0), (1,1))'
    it also works to just have both operators refer to each other.)
   </para>
   <para>
-   The HASHES, MERGES, SORT1, SORT2, LTCMP, and GTCMP options are present to
-   support the query optimizer in performing joins.
-   <productname>PostgreSQL</productname> can always evaluate a join (i.e.,
-   processing a clause with two tuple variables separated by an operator that
-   returns a <type>boolean</type>) by iterative substitution [WONG76].  In
-   addition, <productname>PostgreSQL</productname> can use a hash-join
-   algorithm along the lines of [SHAP86]; however, it must know whether this
-   strategy is applicable.  The current hash-join algorithm is only correct
-   for operators that represent equality tests; furthermore, equality of the
-   data type must mean bitwise equality of the representation of the type.
-   (For example, a data type that contains unused bits that don't matter for
-   equality tests could not be hash-joined.)  The HASHES flag indicates to the
-   query optimizer that a hash join may safely be used with this
-   operator.
+   The <literal>HASHES</>, <literal>MERGES</>, <literal>SORT1</>,
+   <literal>SORT2</>, <literal>LTCMP</>, and <literal>GTCMP</> options
+   are present to support the query optimizer in performing joins.
+   <productname>PostgreSQL</productname> can always evaluate a join
+   (i.e., processing a clause with two tuple variables separated by an
+   operator that returns a <type>boolean</type>) by iterative
+   substitution <!--[WONG76]-->.  In addition,
+   <productname>PostgreSQL</productname> can use a hash-join algorithm
+   <!--along the lines of [SHAP86]-->; however, it must know whether this
+   strategy is applicable.  The current hash-join algorithm is only
+   correct for operators that represent equality tests; furthermore,
+   equality of the data type must mean bitwise equality of the
+   representation of the type.  (For example, a data type that
+   contains unused bits that don't matter for equality tests could not
+   be hash-joined.)  The <literal>HASHES</> flag indicates to the query optimizer
+   that a hash join may safely be used with this operator.
   </para>
   <para>
-   Similarly, the MERGES flag indicates whether merge-sort is a usable join
-   strategy for this operator.  A merge join requires that the two input
-   datatypes have consistent orderings, and that the mergejoin operator
-   behave like equality with respect to that ordering.  For example, it is
-   possible to merge-join equality between an integer and a float variable by
-   sorting both inputs in ordinary 
-   numeric order.  Execution of a merge join requires that the system be
-   able to identify four operators related to the mergejoin equality operator:
-   less-than comparison for the left input datatype,
-   less-than comparison for the right input datatype,
-   less-than comparison between the two datatypes, and
-   greater-than comparison between the two datatypes.  It is possible to
-   specify these by name, as the SORT1, SORT2, LTCMP, and GTCMP options
-   respectively.  The system will fill in the default names <literal>&lt;</>,
-   <literal>&lt;</>, <literal>&lt;</>, <literal>&gt;</> respectively if
-   any of these are omitted when MERGES is specified.  Also, MERGES will
-   be assumed to be implied if any of these four operator options appear.
+   Similarly, the <literal>MERGES</> flag indicates whether merge-sort
+   is a usable join strategy for this operator.  A merge join requires
+   that the two input data types have consistent orderings, and that
+   the merge-join operator behave like equality with respect to that
+   ordering.  For example, it is possible to merge-join equality
+   between an integer and a float variable by sorting both inputs in
+   ordinary numeric order.  Execution of a merge join requires that
+   the system be able to identify four operators related to the
+   merge-join equality operator: less-than comparison for the left
+   input data type, less-than comparison for the right input data
+   type, less-than comparison between the two data types, and
+   greater-than comparison between the two data types.  It is possible
+   to specify these by name, as the <literal>SORT1</>,
+   <literal>SORT2</>, <literal>LTCMP</>, and <literal>GTCMP</> options
+   respectively.  The system will fill in the default names
+   <literal>&lt;</>, <literal>&lt;</>, <literal>&lt;</>,
+   <literal>&gt;</> respectively if any of these are omitted when
+   <literal>MERGES</> is specified.  Also, <literal>MERGES</> will be
+   assumed to be implied if any of these four operator options appear.
   </para>
   <para>
    If  other join strategies are found to be practical,
@@ -380,14 +384,15 @@ MYBOXES.description !== box '((0,0), (1,1))'
    be worth the complexity involved.
   </para>
   <para>
-   The RESTRICT and JOIN options assist the query optimizer in estimating
-   result sizes.  If a clause of the form:
-   <programlisting>
-MYBOXES.description &lt;&lt;&lt; box '((0,0), (1,1))'
-   </programlisting>
+   The <literal>RESTRICT</> and <literal>JOIN</> options assist the
+   query optimizer in estimating result sizes.  If a clause of the
+   form:
+<programlisting>
+myboxes.description &lt;&lt;&lt; box '((0,0), (1,1))'
+</programlisting>
    is present in the qualification,
    then <productname>PostgreSQL</productname> may have to
-   estimate the fraction of the  instances  in  MYBOXES  that
+   estimate the fraction of the  instances  in <literal>myboxes</> that
    satisfy  the clause.  The function
    <replaceable class="parameter">res_proc</replaceable>
    must be a registered function (meaning  it  is  already  defined  using
@@ -400,7 +405,7 @@ MYBOXES.description &lt;&lt;&lt; box '((0,0), (1,1))'
   <para>
    Similarly, when the operands of the operator both  contain
    instance  variables, the query optimizer must estimate the
-   size of the resulting join.  The function  join_proc  will
+   size of the resulting join.  The function <function>join_proc</> will
    return  another floating-point number which will be multiplied
    by the cardinalities of the two tables involved  to
    compute the expected result size.

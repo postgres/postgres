@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.28 2002/07/30 17:34:37 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.29 2002/09/21 18:32:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -16,7 +16,7 @@ PostgreSQL documentation
    over a new type, nor associate operators of a new type with secondary
    indexes.
    To do these things, we must define an <firstterm>operator class</>
-   for the new datatype.  We will describe operator classes in the
+   for the new data type.  We will describe operator classes in the
    context of a running example:  a  new  operator
    class for the B-tree access method that stores and
    sorts complex numbers in ascending absolute value order.
@@ -25,7 +25,7 @@ PostgreSQL documentation
   <note>
    <para>
     Prior to <productname>PostgreSQL</productname> release 7.3, it was
-    necesssary to make manual additions to
+    necessary to make manual additions to
     <classname>pg_amop</>, <classname>pg_amproc</>, and
     <classname>pg_opclass</> in order to create a user-defined
     operator class.  That approach is now deprecated in favor of
@@ -55,7 +55,7 @@ PostgreSQL documentation
    access method needs to be able to use to work with a particular data type.
    Operator classes are so called because one thing they specify is the set
    of WHERE-clause operators that can be used with an index (ie, can be
-   converted into an indexscan qualification).  An operator class may also
+   converted into an index scan qualification).  An operator class may also
    specify some <firstterm>support procedures</> that are needed by the
    internal operations of the index access method, but do not directly
    correspond to any WHERE-clause operator that can be used with the index.
@@ -63,16 +63,16 @@ PostgreSQL documentation
 
   <para>
    It is possible to define multiple operator classes for the same
-   input datatype and index access method.  By doing this, multiple
-   sets of indexing semantics can be defined for a single datatype.
+   input data type and index access method.  By doing this, multiple
+   sets of indexing semantics can be defined for a single data type.
    For example, a B-tree index requires a sort ordering to be defined
-   for each datatype it works on.
-   It might be useful for a complex-number datatype
+   for each data type it works on.
+   It might be useful for a complex-number data type
    to have one B-tree operator class that sorts the data by complex
    absolute value, another that sorts by real part, and so on.
    Typically one of the operator classes will be deemed most commonly
    useful and will be marked as the default operator class for that
-   datatype and index access method.
+   data type and index access method.
   </para>
 
   <para>
@@ -101,7 +101,7 @@ PostgreSQL documentation
    comparison it is.  Instead, the index access method defines a set of
    <quote>strategies</>, which can be thought of as generalized operators.
    Each operator class shows which actual operator corresponds to each
-   strategy for a particular datatype and interpretation of the index
+   strategy for a particular data type and interpretation of the index
    semantics.
   </para>
 
@@ -240,7 +240,7 @@ PostgreSQL documentation
 
   <para>
    In short, an operator class must specify a set of operators that express
-   each of these semantic ideas for the operator class's datatype.
+   each of these semantic ideas for the operator class's data type.
   </para>
  </sect1>
 
@@ -262,7 +262,7 @@ PostgreSQL documentation
 
   <para>
    Just as with operators, the operator class identifies which specific
-   functions should play each of these roles for a given datatype and
+   functions should play each of these roles for a given data type and
    semantic interpretation.  The index access method specifies the set
    of functions it needs, and the operator class identifies the correct
    functions to use by assigning <quote>support function numbers</> to them.
@@ -572,7 +572,7 @@ CREATE OPERATOR CLASS complex_abs_ops
 <programlisting>
         OPERATOR        1       &lt; (complex, complex) ,
 </programlisting>
-   but there is no need to do so when the operators take the same datatype
+   but there is no need to do so when the operators take the same data type
    we are defining the operator class for.
   </para>
 
@@ -631,9 +631,9 @@ CREATE OPERATOR CLASS polygon_ops
 </programlisting>
 
    At present, only the GiST access method supports a
-   <literal>STORAGE</> type that's different from the column datatype.
+   <literal>STORAGE</> type that's different from the column data type.
    The GiST <literal>compress</> and <literal>decompress</> support
-   routines must deal with datatype conversion when <literal>STORAGE</>
+   routines must deal with data-type conversion when <literal>STORAGE</>
    is used.
   </para>
  </sect1>

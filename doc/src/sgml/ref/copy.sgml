@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.39 2002/08/30 16:00:41 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.40 2002/09/21 18:32:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -477,7 +477,7 @@ order is detected here.
       <listitem>
        <para>
 int32 bit mask to denote important aspects of the file format. Bits are
-numbered from 0 (LSB) to 31 (MSB) --- note that this field is stored
+numbered from 0 (<acronym>LSB</>) to 31 (<acronym>MSB</>) --- note that this field is stored
 with source's endianness, as are all subsequent integer fields. Bits
 16-31 are reserved to denote critical file format issues; a reader
 should abort if it finds an unexpected bit set in this range. Bits 0-15
@@ -539,8 +539,8 @@ is left for a later release.
 Each tuple begins with an int16 count of the number of fields in the
 tuple.  (Presently, all tuples in a table will have the same count, but
 that might not always be true.)  Then, repeated for each field in the
-tuple, there is an int16 typlen word possibly followed by field data.
-The typlen field is interpreted thus:
+tuple, there is an int16 <structfield>typlen</> word possibly followed by field data.
+The <structfield>typlen</> field is interpreted thus:
 
     <variablelist>
      <varlistentry>
@@ -557,7 +557,7 @@ The typlen field is interpreted thus:
       <listitem>
        <para>
         Field is a fixed-length data type.  Exactly N
-	bytes of data follow the typlen word.
+	bytes of data follow the <structfield>typlen</> word.
        </para>
       </listitem>
      </varlistentry>
@@ -566,8 +566,8 @@ The typlen field is interpreted thus:
       <term>-1</term>
       <listitem>
        <para>
-	Field is a varlena data type.  The next four
-	bytes are the varlena header, which contains
+	Field is a <literal>varlena</> data type.  The next four
+	bytes are the <literal>varlena</> header, which contains
 	the total value length including itself.
        </para>
       </listitem>
@@ -585,8 +585,8 @@ The typlen field is interpreted thus:
     </para>
 
     <para>
-For non-NULL fields, the reader can check that the typlen matches the
-expected typlen for the destination column.  This provides a simple
+For non-NULL fields, the reader can check that the <structfield>typlen</> matches the
+expected <structfield>typlen</> for the destination column.  This provides a simple
 but very useful check that the data is as expected.
     </para>
 
@@ -602,7 +602,7 @@ you from moving a binary file across machines).
     <para>
 If OIDs are included in the dump, the OID field immediately follows the
 field-count word.  It is a normal field except that it's not included
-in the field-count.  In particular it has a typlen --- this will allow
+in the field-count.  In particular it has a <structfield>typlen</> --- this will allow
 handling of 4-byte vs 8-byte OIDs without too much pain, and will allow
 OIDs to be shown as NULL if that ever proves desirable.
     </para>

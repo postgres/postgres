@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.159 2002/09/18 21:35:20 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.160 2002/09/21 18:32:53 petere Exp $
 -->
 
 <appendix id="release">
@@ -598,7 +598,7 @@ Reject invalid multibyte character sequences (Tatsuo)
    </sect3>
 
    <sect3>
-    <title>PL/pgSQL</title>
+    <title><application>PL/pgSQL</></title>
 <literallayout>
 Now uses portals for SELECT loops, allowing huge result sets (Jan)
 CURSOR and REFCURSOR support (Jan)
@@ -638,7 +638,7 @@ Add spi_lastoid function (bob@redivi.com)
    </sect3>
 
    <sect3>
-    <title>Psql</title>
+    <title><application>Psql</></title>
 <literallayout>
 \d displays indexes in unique, primary groupings (Christopher Kings-Lynne)
 Allow trailing semicolons in backslash commands (Greg Sabino Mullane)
@@ -649,7 +649,7 @@ Format the correct number of columns for Unicode (Patrice)
    </sect3>
 
    <sect3>
-    <title>Libpq</title>
+    <title><application>Libpq</></title>
 <literallayout>
 New function PQescapeString() to escape quotes in command strings (Florian Weimer)
 New function PQescapeBytea() escapes binary strings for use as SQL string literals
@@ -711,7 +711,7 @@ Add more compatibility functions to odbc.sql (Peter E)
    </sect3>
 
    <sect3>
-    <title>ECPG</title>
+    <title><application>ECPG</></title>
 <literallayout>
 EXECUTE ... INTO implemented (Christof Petig)
 Multiple row descriptor support (e.g. CARDINALITY) (Christof Petig)
@@ -981,7 +981,7 @@ outer join syntax.
       <listitem>
        <para>
 The previous C function manager did not
-handle NULLs properly, nor did it support 64-bit <acronym>CPU</acronym>'s (Alpha).  The new
+handle null values properly, nor did it support 64-bit <acronym>CPU</acronym>'s (Alpha).  The new
 function manager does.  You can continue using your old custom
 functions, but you may want to rewrite them in the future to use the new
 function manager call interface.
@@ -1438,9 +1438,11 @@ ecpg changes (Michael)
       </term>
       <listitem>
        <para>
-	SQL92 join syntax is now supported, though only as INNER JOINs 
-	for this release. JOIN, NATURAL JOIN, JOIN/USING, JOIN/ON are
-	available, as are column correlation names.
+	SQL92 join syntax is now supported, though only as
+	<literal>INNER JOIN</> for this release. <literal>JOIN</>,
+	<literal>NATURAL JOIN</>, <literal>JOIN</>/<literal>USING</>,
+	and <literal>JOIN</>/<literal>ON</> are available, as are
+	column correlation names.
        </para>
       </listitem>
      </varlistentry>
@@ -2530,7 +2532,7 @@ original <application>PL/pgTCL</application> procedural language he contributed 
 
 <listitem>
 <para>
-We have optional multiple-byte character set support from Tatsuo Iishi
+We have optional multiple-byte character set support from Tatsuo Ishii
 to complement our existing locale support.
 </para>
 </listitem>
@@ -3592,10 +3594,11 @@ optimizer which uses <firstterm>genetic</firstterm>
 </para>
 
 <para>
-  The "random" results in the random test should cause the "random" test
-  to be "failed", since the regression tests are evaluated using a simple
-  diff. However, "random" does not seem to produce random results on my 
-  test machine (Linux/gcc/i686).
+  The <quote>random</> results in the random test should cause the
+  <quote>random</quote> test to be <quote>failed</quote>, since the
+  regression tests are evaluated using a simple diff. However,
+  <quote>random</> does not seem to produce random results on my test
+  machine (Linux/<application>gcc</>/i686).
 </para>
 
 <sect2>
@@ -3946,7 +3949,7 @@ than NULL. See the copy manual page for full details.
 </programlisting>
 </para>
 <para>
-If you are loading an older binary copy or non-stdout copy, there is no
+If you are loading an older binary copy or non-<systemitem>stdout</> copy, there is no
 end-of-data character, and hence no conversion necessary.
 
 <programlisting>

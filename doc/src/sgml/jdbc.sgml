@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.37 2002/09/18 20:09:31 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.38 2002/09/21 18:32:53 petere Exp $
 -->
 
  <chapter id="jdbc">
@@ -57,9 +57,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.37 2002/09/18 20:09:31 
     instructions.  After installation, the driver should be found in
     <filename><replaceable>PREFIX</>/share/java/postgresql.jar</filename>.
     The resulting driver will be built for the version of Java you are
-    running.  If you build with a 1.1 JDK you will build a version
+    running.  If you build with a 1.1 <acronym>JDK</> you will build a version
     that supports the JDBC 1 specification, if you build with a Java 2
-    JDK (e.g., JDK 1.2 or JDK 1.3) you will build a version that
+    <acronym>JDK</> (e.g., <acronym>JDK</> 1.2 or <acronym>JDK</> 1.3) you will build a version that
     supports the JDBC 2 specification.
    </para>
   </sect2>
@@ -545,7 +545,7 @@ st.close();
     need to understand the limitations of each method.  The 
     <type>bytea</type> data type is not well suited for storing very 
     large amounts of binary data.  While a column of type 
-    <type>bytea</type> can hold upto 1Gig of binary data, it would 
+    <type>bytea</type> can hold up to 1 GB of binary data, it would 
     require a huge amount of memory (<acronym>RAM</acronym>) to 
     process such a large value.  The Large Object method for 
     storing binary data is better suited to storing very large values, 
@@ -838,7 +838,7 @@ Fastpath fp = ((org.postgresql.Connection)myconn).getFastpathAPI();
        <formalpara>
         <title>Throws:</title>
         <para>
-         SQLException by Fastpath when initializing for first time
+         <classname>SQLException</> by Fastpath when initializing for first time
         </para>
        </formalpara>
       </listitem>
@@ -1106,7 +1106,7 @@ public void addFunction(String name,
        <para>
         This adds a function to our look-up table.  User code should
         use the <function>addFunctions</function> method, which is based upon a query,
-        rather than hard coding the oid. The oid for a function is not
+        rather than hard coding the OID. The OID for a function is not
         guaranteed to remain static, even on different servers of the
         same version.
        </para>
@@ -1118,7 +1118,7 @@ public void addFunctions(ResultSet rs) throws SQLException
 </synopsis>
        <para>
         This takes a <classname>ResultSet</classname> containing two columns. Column 1
-        contains the function name, Column 2 the oid.  It reads the
+        contains the function name, Column 2 the OID.  It reads the
         entire <classname>ResultSet</classname>, loading the values into the function table.
        </para>
 
@@ -2154,21 +2154,21 @@ public int read(byte buf[],
         <para>
          <variablelist>
           <varlistentry>
-           <term>buf</term>
+           <term><parameter>buf</></term>
            <listitem>
             <simpara>destination array</simpara>
            </listitem>
           </varlistentry>
 
           <varlistentry>
-           <term>off</term>
+           <term><parameter>off</></term>
            <listitem>
             <simpara>offset within array</simpara>
            </listitem>
           </varlistentry>
 
           <varlistentry>
-           <term>len</term>
+           <term><parameter>len</></term>
            <listitem>
             <simpara>number of bytes to read</simpara>
            </listitem>
@@ -2202,21 +2202,21 @@ public void write(byte buf[],
         <para>
          <variablelist>
           <varlistentry>
-           <term>buf</term>
+           <term><parameter>buf</></term>
            <listitem>
             <simpara>destination array</simpara>
            </listitem>
           </varlistentry>
 
           <varlistentry>
-           <term>off</term>
+           <term><parameter>off</></term>
            <listitem>
             <simpara>offset within array</simpara>
            </listitem>
           </varlistentry>
 
           <varlistentry>
-           <term>len</term>
+           <term><parameter>len</></term>
            <listitem>
             <simpara>number of bytes to write</simpara>
            </listitem>
@@ -2350,21 +2350,21 @@ lobj = ((org.postgresql.Connection)myconn).getLargeObjectAPI();
 
      <variablelist>
       <varlistentry>
-       <term>public static final int WRITE</term>
+       <term><literal>public static final int WRITE</></term>
        <listitem>
         <simpara>This mode indicates we want to write to an object.</simpara>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term>public static final int READ</term>
+       <term><literal>public static final int READ</></term>
        <listitem>
         <simpara>This mode indicates we want to read an object.</simpara>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term>public static final int READWRITE</term>
+       <term><literal>public static final int READWRITE</></term>
        <listitem>
         <simpara>This mode is the default. It indicates we want read and write access to a large object.</simpara>
        </listitem>
@@ -2382,8 +2382,8 @@ public LargeObject open(int oid) throws SQLException
 </synopsis>
        <para>
         This opens an existing large object, based on its OID. This
-        method assumes that READ and WRITE access is required (the
-        default).
+        method assumes that <symbol>READ</> and
+        <symbol>WRITE</> access is required (the default).
        </para>
       </listitem>
 
@@ -2404,7 +2404,7 @@ public int create() throws SQLException
 </synopsis>
        <para>
         This creates a large object, returning its OID.
-        It defaults to READWRITE for the new object's attributes.
+        It defaults to <symbol>READWRITE</> for the new object's attributes.
        </para>
       </listitem>
 

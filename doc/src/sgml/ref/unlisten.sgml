@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.19 2002/08/13 20:40:44 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.20 2002/09/21 18:32:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -90,7 +90,7 @@ UNLISTEN { <replaceable class="PARAMETER">notifyname</replaceable> | * }
   <para>
    <command>UNLISTEN</command>
    is used to remove an existing <command>NOTIFY</command> registration.
-   UNLISTEN cancels any existing registration of the current
+   <command>UNLISTEN</command> cancels any existing registration of the current
    <productname>PostgreSQL</productname> session as a listener on the notify
    condition <replaceable class="PARAMETER">notifyname</replaceable>.
    The special condition wildcard <literal>*</literal> cancels all listener registrations
@@ -117,7 +117,7 @@ UNLISTEN { <replaceable class="PARAMETER">notifyname</replaceable> | * }
     as a name up to 64 characters long.
    </para>
    <para>
-    The backend does not complain if you UNLISTEN something you were not
+    The backend does not complain if you unlisten something you were not
     listening for.
     Each backend will automatically execute <command>UNLISTEN *</command> when
     exiting.
@@ -143,7 +143,7 @@ Asynchronous NOTIFY 'virtual' from backend with pid '8448' received
   </para>
 
   <para>
-   Once UNLISTEN has been executed, further NOTIFY commands will be
+   Once <command>UNLISTEN</> has been executed, further <command>NOTIFY</> commands will be
    ignored:
 
 <programlisting>

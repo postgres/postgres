@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.3 2002/09/05 22:05:50 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.4 2002/09/21 18:32:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -71,8 +71,8 @@ PostgreSQL documentation
     
     <variablelist>
      <varlistentry>
-      <term>-d <replaceable class="parameter">dbname</replaceable></term>
-      <term>--dbname <replaceable class="parameter">dbname</replaceable></term>
+      <term><option>-d <replaceable class="parameter">dbname</replaceable></></term>
+      <term><option>--dbname <replaceable class="parameter">dbname</replaceable></></term>
       <listitem>
        <para>
 	Specifies the name of the database to be clustered.
@@ -86,8 +86,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-a</term>
-      <term>--all</term>
+      <term><option>-a</></term>
+      <term><option>--all</></term>
       <listitem>
        <para>
 	Cluster all databases.
@@ -96,8 +96,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-t <replaceable class="parameter">table</replaceable></term>
-      <term>--table <replaceable class="parameter">table</replaceable></term>
+      <term><option>-t <replaceable class="parameter">table</replaceable></></term>
+      <term><option>--table <replaceable class="parameter">table</replaceable></></term>
       <listitem>
        <para>
 	Clusters <replaceable class="parameter">table</replaceable> only.
@@ -114,8 +114,8 @@ PostgreSQL documentation
     
     <variablelist>
      <varlistentry>
-      <term>-h <replaceable class="parameter">host</replaceable></term>
-      <term>--host <replaceable class="parameter">host</replaceable></term>
+      <term><option>-h <replaceable class="parameter">host</replaceable></></term>
+      <term><option>--host <replaceable class="parameter">host</replaceable></></term>
       <listitem>
        <para>
 	Specifies the host name of the machine on which the 
@@ -127,8 +127,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-p <replaceable class="parameter">port</replaceable></term>
-      <term>--port <replaceable class="parameter">port</replaceable></term>
+      <term><option>-p <replaceable class="parameter">port</replaceable></></term>
+      <term><option>--port <replaceable class="parameter">port</replaceable></></term>
       <listitem>
        <para>
 	Specifies the Internet TCP/IP port or local Unix domain socket file 
@@ -139,8 +139,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-U <replaceable class="parameter">username</replaceable></term>
-      <term>--username <replaceable class="parameter">username</replaceable></term>
+      <term><option>-U <replaceable class="parameter">username</replaceable></></term>
+      <term><option>--username <replaceable class="parameter">username</replaceable></></term>
       <listitem>
        <para>
         User name to connect as
@@ -149,8 +149,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-W</term>
-      <term>--password</term>
+      <term><option>-W</></term>
+      <term><option>--password</></term>
       <listitem>
        <para>
         Force password prompt.
@@ -159,8 +159,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-e</term>
-      <term>--echo</term>
+      <term><option>-e</></term>
+      <term><option>--echo</></term>
       <listitem>
        <para>
         Echo the commands that <application>clusterdb</application> generates
@@ -170,8 +170,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-q</term>
-      <term>--quiet</term>
+      <term><option>-q</></term>
+      <term><option>--quiet</></term>
       <listitem>
        <para>
         Do not display a response.

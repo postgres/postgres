@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.64 2002/08/04 05:09:36 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.65 2002/09/21 18:32:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -113,7 +113,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
 
    <variablelist>
     <varlistentry>
-     <term>DATESTYLE</term>
+     <term><varname>DATESTYLE</></term>
      <listitem>
       <para>
        Choose the date/time representation style. Two separate
@@ -126,7 +126,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
 
        <variablelist>
         <varlistentry>
-         <term>ISO</term>
+         <term><literal>ISO</></term>
          <listitem>
           <para>
            Use ISO 8601-style dates and times (<literal>YYYY-MM-DD
@@ -136,7 +136,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
         </varlistentry>
 
         <varlistentry>
-         <term>SQL</term>
+         <term><literal>SQL</></term>
          <listitem>
           <para>
            Use Oracle/Ingres-style dates and times. Note that this
@@ -147,7 +147,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
         </varlistentry>
 
         <varlistentry>
-         <term>PostgreSQL</term>
+         <term><literal>PostgreSQL</></term>
          <listitem>
           <para>
            Use traditional <productname>PostgreSQL</productname> format.
@@ -156,7 +156,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
         </varlistentry>
 
         <varlistentry>
-         <term>German</term>
+         <term><literal>German</></term>
          <listitem>
           <para>
            Use <literal>dd.mm.yyyy</literal> for numeric date representations.
@@ -173,7 +173,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
 
        <variablelist>
         <varlistentry>
-         <term>European</term>
+         <term><literal>European</></term>
          <listitem>
           <para>
            Use <literal>dd/mm/yyyy</literal> for numeric date representations.
@@ -182,8 +182,8 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
         </varlistentry>
 
         <varlistentry>
-         <term>NonEuropean</term>
-         <term>US</term>
+         <term><literal>NonEuropean</></term>
+         <term><literal>US</></term>
          <listitem>
           <para>
            Use <literal>mm/dd/yyyy</literal> for numeric date representations.
@@ -209,7 +209,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
       </para>
 
       <para>
-       There are several now-deprecated means for setting the datestyle
+       There are several now-deprecated means for setting the date style
        in addition to the normal methods of setting it via <command>SET</> or
        a configuration-file entry:
        <simplelist>
@@ -225,9 +225,9 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
         </member>
         <member>
          Setting the client's <envar>PGDATESTYLE</envar> environment variable.
-         If PGDATESTYLE is set in the frontend environment of a client
-         based on libpq, libpq will automatically set DATESTYLE to the
-         value of PGDATESTYLE during connection start-up.  This is
+         If <envar>PGDATESTYLE</envar> is set in the frontend environment of a client
+         based on <application>libpq</>, <application>libpq</> will automatically set <varname>DATESTYLE</> to the
+         value of <envar>PGDATESTYLE</envar> during connection start-up.  This is
          equivalent to a manually issued <command>SET DATESTYLE</>.
         </member>
        </simplelist>
@@ -283,7 +283,7 @@ SELECT setseed(<replaceable>value</replaceable>);
       <para>
        Shows the server-side multibyte encoding.  (At present, this
        parameter can be shown but not set, because the encoding is
-       determined at initdb time.)
+       determined at <application>initdb</> time.)
       </para>
      </listitem>
     </varlistentry>
@@ -373,7 +373,7 @@ SELECT setseed(<replaceable>value</replaceable>);
 
       <para>
        If the <envar>PGTZ</envar> environment variable is set in the frontend
-       environment of a client based on libpq, libpq will automatically
+       environment of a client based on <application>libpq</>, <application>libpq</> will automatically
        <command>SET TIMEZONE</command> to the value of
        <envar>PGTZ</envar> during connection start-up. 
       </para>

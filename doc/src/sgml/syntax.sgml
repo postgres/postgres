@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.69 2002/09/12 22:05:36 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.70 2002/09/21 18:32:54 petere Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -715,19 +715,19 @@ SELECT (5 !) - 6;
       <row>
        <entry><token>IS</token></entry>
        <entry></entry>
-       <entry>test for TRUE, FALSE, UNKNOWN, NULL</entry>
+       <entry><literal>IS TRUE</>, <literal>IS FALSE</>, <literal>IS UNKNOWN</>, <literal>IS NULL</></entry>
       </row>
 
       <row>
        <entry><token>ISNULL</token></entry>
        <entry></entry>
-       <entry>test for NULL</entry>
+       <entry>test for null</entry>
       </row>
 
       <row>
        <entry><token>NOTNULL</token></entry>
        <entry></entry>
-       <entry>test for NOT NULL</entry>
+       <entry>test for not null</entry>
       </row>
 
       <row>
@@ -1042,13 +1042,13 @@ sqrt(2)
    <para>
     The first form of aggregate expression invokes the aggregate
     across all input rows for which the given expression yields a
-    non-NULL value.  (Actually, it is up to the aggregate function
-    whether to ignore NULLs or not --- but all the standard ones do.)
+    non-null value.  (Actually, it is up to the aggregate function
+    whether to ignore null values or not --- but all the standard ones do.)
     The second form is the same as the first, since
     <literal>ALL</literal> is the default.  The third form invokes the
-    aggregate for all distinct non-NULL values of the expression found
+    aggregate for all distinct non-null values of the expression found
     in the input rows.  The last form invokes the aggregate once for
-    each input row regardless of NULL or non-NULL values; since no
+    each input row regardless of null or non-null values; since no
     particular input value is specified, it is generally only useful
     for the <function>count()</function> aggregate function.
    </para>
@@ -1056,9 +1056,9 @@ sqrt(2)
    <para>
     For example, <literal>count(*)</literal> yields the total number
     of input rows; <literal>count(f1)</literal> yields the number of
-    input rows in which <literal>f1</literal> is non-NULL;
+    input rows in which <literal>f1</literal> is non-null;
     <literal>count(distinct f1)</literal> yields the number of
-    distinct non-NULL values of <literal>f1</literal>.
+    distinct non-null values of <literal>f1</literal>.
    </para>
 
    <para>
@@ -1106,7 +1106,7 @@ CAST ( <replaceable>expression</replaceable> AS <replaceable>type</replaceable> 
     to the type that a value expression must produce (for example, when it is
     assigned to a table column); the system will automatically apply a
     type cast in such cases.  However, automatic casting is only done for
-    cast functions that are marked <quote>okay to apply implicitly</>
+    cast functions that are marked <quote>OK to apply implicitly</>
     in the system catalogs.  Other cast functions must be invoked with
     explicit casting syntax.  This restriction is intended to prevent
     surprising conversions from being applied silently.
@@ -1140,7 +1140,7 @@ CAST ( <replaceable>expression</replaceable> AS <replaceable>type</replaceable> 
     It is an error to use a query that
     returns more than one row or more than one column as a scalar subquery.
     (But if, during a particular execution, the subquery returns no rows,
-    there is no error; the scalar result is taken to be NULL.)
+    there is no error; the scalar result is taken to be null.)
     The subquery can refer to variables from the surrounding query,
     which will act as constants during any one evaluation of the subquery.
     See also <xref linkend="functions-subquery">.

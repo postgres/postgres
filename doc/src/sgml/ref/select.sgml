@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.60 2002/08/30 16:00:41 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.61 2002/09/21 18:32:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -451,8 +451,8 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
     (i.e., all combined rows that pass its ON condition), plus one copy of each
     row in the left-hand table for which there was no right-hand row that
     passed the ON condition.  This left-hand row is extended to the full
-    width of the joined table by inserting NULLs for the right-hand columns.
-    Note that only the JOIN's own ON or USING condition is considered while
+    width of the joined table by inserting null values for the right-hand columns.
+    Note that only the <literal>JOIN</>'s own ON or USING condition is considered while
     deciding which rows have matches.  Outer ON or WHERE conditions are
     applied afterwards.
    </para>
@@ -647,11 +647,13 @@ SELECT name FROM distributors ORDER BY code;
    </para>
     
    <para>
-    Optionally one may add the keyword DESC (descending)
-    or ASC (ascending) after each column name in the ORDER BY clause.
-    If not specified, ASC is assumed by default.  Alternatively, a
-    specific ordering operator name may be specified.  ASC is equivalent
-    to USING &lt; and DESC is equivalent to USING &gt;.
+    Optionally one may add the key word <literal>DESC</> (descending)
+    or <literal>ASC</> (ascending) after each column name in the
+    <literal>ORDER BY</> clause.  If not specified, <literal>ASC</> is
+    assumed by default.  Alternatively, a specific ordering operator
+    name may be specified.  <literal>ASC</> is equivalent to
+    <literal>USING &lt;</> and <literal>DESC</> is equivalent to
+    <literal>USING &gt;</>.
    </para>
 
    <para>
@@ -689,7 +691,7 @@ SELECT name FROM distributors ORDER BY code;
    <para>
     The UNION operator computes the collection (set union) of the rows
     returned by the queries involved.
-    The two SELECTs that represent the direct operands of the UNION must
+    The two SELECT statements that represent the direct operands of the UNION must
     produce the same number of columns, and corresponding columns must be
     of compatible data types.
    </para>
@@ -1064,7 +1066,7 @@ SELECT * FROM distributors_2(111) AS (f1 int, f2 text);
    <para>
 <productname>PostgreSQL</productname> allows one to omit 
 the <command>FROM</command> clause from a query. This feature
-was retained from the original PostQuel query language.  It has
+was retained from the original PostQUEL query language.  It has
 a straightforward use to compute the results of simple expressions:
 
   <programlisting>
@@ -1075,7 +1077,7 @@ SELECT 2+2;
         4
   </programlisting>
 
-Some other DBMSes cannot do this except by introducing a dummy one-row
+Some other SQL databases cannot do this except by introducing a dummy one-row
 table to do the select from.  A less obvious use is to abbreviate a
 normal select from one or more tables:
 

@@ -1038,7 +1038,7 @@ pg_execute <OPTIONAL>-array <REPLACEABLE CLASS="PARAMETER">arrayVar</REPLACEABLE
 <LISTITEM>
 <PARA>Specifies the name of an array variable where result tuples are stored,
 indexed by the field names.
-This is ignored if queryString is not a SELECT statement. For SELECT
+This is ignored if <replaceable class=parameter>queryString</> is not a SELECT statement. For SELECT
 statements, if this option is not used, result tuples values are stored
 in individual variables named according to the field names in the result.
 </PARA>
@@ -1118,7 +1118,7 @@ The number of tuples affected or returned by the query.
 If the query is not a SELECT statement, the query is executed and the
 number of tuples affected by the query is returned.  If the query is an
 INSERT and a single tuple is inserted, the OID of the inserted tuple is
-stored in the oidVar variable if the optional <PARAMETER>-oid</PARAMETER>
+stored in the <replaceable>oidVar</> variable if the optional <PARAMETER>-oid</PARAMETER>
 argument is supplied.
 </PARA>
 <PARA>
@@ -1166,7 +1166,7 @@ In the following examples, error checking with <LITERAL>catch</LITERAL>
 has been omitted for clarity.
 </PARA>
 <PARA>
-Insert a row and save the OID in result_oid:
+Insert a row and save the OID in <varname>result_oid</>:
 <ProgramListing>
     pg_execute -oid result_oid $pgconn "insert into mytable values (1)"
 </ProgramListing>

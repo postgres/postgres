@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/notify.sgml,v 1.18 2002/08/13 20:40:44 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/notify.sgml,v 1.19 2002/09/21 18:32:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -95,7 +95,7 @@ NOTIFY
   </para>
   <para>
    The information passed to the frontend for a notify event includes the notify
-   condition name and the notifying backend process's PID.  It is up to the
+   condition name and the notifying backend process's <acronym>PID</>.  It is up to the
    database designer to define the condition names that will be used in a given
    database and what each one means.
   </para>
@@ -109,7 +109,7 @@ NOTIFY
   </para>
   <para>
    <command>NOTIFY</command> provides a simple form of signal or
-   IPC (interprocess communication) mechanism for a collection of processes
+   <acronym>IPC</> (interprocess communication) mechanism for a collection of processes
    accessing the same <productname>PostgreSQL</productname> database.
    Higher-level mechanisms can be built by using tables in the database to
    pass additional data (beyond a mere condition name) from notifier to
@@ -158,8 +158,8 @@ NOTIFY
    re-reading a database table to find the same updates that that frontend just
    wrote out.  In <productname>PostgreSQL</productname> 6.4 and later, it is
    possible to avoid such extra work by noticing whether the notifying backend
-   process's PID (supplied in the notify event message) is the same as one's own
-   backend's PID (available from libpq).  When they are the same, the notify
+   process's <acronym>PID</> (supplied in the notify event message) is the same as one's own
+   backend's <acronym>PID</> (available from <application>libpq</>).  When they are the same, the notify
    event is one's own work bouncing back, and can be ignored.  (Despite what was
    said in the preceding paragraph, this is a safe technique.
    <productname>PostgreSQL</productname> keeps self-notifies separate from notifies
@@ -191,7 +191,7 @@ NOTIFY
    </para>
    <para>
     In <productname>PostgreSQL</productname> releases prior to 6.4, the backend
-    PID delivered in a notify message was always the PID of the frontend's own
+    <acronym>PID</> delivered in a notify message was always the <acronym>PID</> of the frontend's own
     backend.  So it was not possible to distinguish one's own notifies from other
     clients' notifies in those earlier releases.
    </para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.28 2002/06/17 05:40:32 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.29 2002/09/21 18:32:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -114,7 +114,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
       <term><computeroutput>ERROR:  user '<replaceable class="parameter">username</replaceable>' is not allowed to create/drop databases</computeroutput></term>
       <listitem>
        <para>
-        You must have the special CREATEDB privilege to create databases.
+        You must have the special <literal>CREATEDB</> privilege to create databases.
         See <xref linkend="SQL-CREATEUSER" endterm="SQL-CREATEUSER-title">.
        </para>
       </listitem>
@@ -186,7 +186,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
    Normally, the creator becomes the owner of the new database.
    Superusers can create databases owned by other users using the
    <option>OWNER</> clause. They can even create databases owned by
-   users with no special privileges. Non-superusers with CREATEDB
+   users with no special privileges. Non-superusers with <literal>CREATEDB</>
    privilege can only create databases owned by themselves.
   </para>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.28 2002/08/10 16:57:31 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.29 2002/09/21 18:32:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -61,7 +61,8 @@ PostgreSQL documentation
 
     <variablelist>
      <varlistentry>
-      <term>-h, --host <replaceable class="parameter">host</replaceable></term>
+      <term><option>-h <replaceable class="parameter">host</replaceable></></term>
+      <term><option>--host <replaceable class="parameter">host</replaceable></></term>
       <listitem>
        <para>
 	Specifies the host name of the machine on which the 
@@ -72,7 +73,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-p, --port <replaceable class="parameter">port</replaceable></term>
+      <term><option>-p <replaceable class="parameter">port</replaceable></></term>
+      <term><option>--port <replaceable class="parameter">port</replaceable></></term>
       <listitem>
        <para>
 	Specifies the Internet TCP/IP port or the local Unix domain socket file 
@@ -82,7 +84,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-U, --username <replaceable class="parameter">username</replaceable></term>
+      <term><option>-U <replaceable class="parameter">username</replaceable></></term>
+      <term><option>--username <replaceable class="parameter">username</replaceable></></term>
       <listitem>
        <para>
         User name to connect as
@@ -91,7 +94,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-W, --password</term>
+      <term><option>-W</></term>
+      <term><option>--password</></term>
       <listitem>
        <para>
         Force password prompt.
@@ -100,7 +104,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-e, --echo</term>
+      <term><option>-e</></term>
+      <term><option>--echo</></term>
       <listitem>
        <para>
         Echo the queries that <application>createdb</application> generates
@@ -110,7 +115,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-q, --quiet</term>
+      <term><option>-q</></term>
+      <term><option>--quiet</></term>
       <listitem>
        <para>
         Do not display a response.
@@ -119,7 +125,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-O, --owner <replaceable class="parameter">owner</replaceable></term>
+      <term><option>-O <replaceable class="parameter">owner</replaceable></></term>
+      <term><option>--owner <replaceable class="parameter">owner</replaceable></></term>
       <listitem>
        <para>
 	Specifies the database user who will own the new database.
@@ -128,7 +135,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-D, --location <replaceable class="parameter">datadir</replaceable></term>
+      <term><option>-D <replaceable class="parameter">datadir</replaceable></></term>
+      <term><option>--location <replaceable class="parameter">datadir</replaceable></></term>
       <listitem>
        <para>
 	Specifies the alternative location for the database.  See also <xref
@@ -138,7 +146,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-T, --template <replaceable class="parameter">template</replaceable></term>
+      <term><option>-T <replaceable class="parameter">template</replaceable></></term>
+      <term><option>--template <replaceable class="parameter">template</replaceable></></term>
       <listitem>
        <para>
         Specifies the template database from which to build this database.
@@ -147,7 +156,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-E, --encoding <replaceable class="parameter">encoding</replaceable></term>
+      <term><option>-E <replaceable class="parameter">encoding</replaceable></></term>
+      <term><option>--encoding <replaceable class="parameter">encoding</replaceable></></term>
       <listitem>
        <para>
         Specifies the character encoding scheme to be used in this database.

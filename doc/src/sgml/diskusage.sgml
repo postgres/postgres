@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/diskusage.sgml,v 1.4 2002/07/05 00:14:16 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/diskusage.sgml,v 1.5 2002/09/21 18:32:52 petere Exp $
 -->
 
 <chapter id="diskusage">
@@ -16,7 +16,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/diskusage.sgml,v 1.4 2002/07/05 00:14:16 mo
    Each table has a primary heap disk file where most of the data is
    stored. To store long column values, there is also a
    <acronym>TOAST</> file associated with the table, named based on the
-   table's oid (actually pg_class.relfilenode), and an index on the
+   table's OID (actually <literal>pg_class.relfilenode</>), and an index on the
    <acronym>TOAST</> table. There also may be indexes associated with
    the base table.
   </para>

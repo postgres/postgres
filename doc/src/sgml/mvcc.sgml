@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.27 2002/08/17 13:04:14 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.28 2002/09/21 18:32:53 petere Exp $
 -->
 
  <chapter id="mvcc">
@@ -498,7 +498,7 @@ ERROR:  Can't serialize access due to concurrent update
 	 EXCLUSIVE</literal>, <literal>EXCLUSIVE</literal>, and
 	 <literal>ACCESS EXCLUSIVE</literal> lock modes.
 	 This mode protects a table against
-	 concurrent schema changes and VACUUMs.
+	 concurrent schema changes and <command>VACUUM</> runs.
 	</para>
 
 	<para>

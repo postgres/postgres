@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.16 2002/07/30 17:34:37 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.17 2002/09/21 18:32:53 petere Exp $
 -->
 
  <chapter id="extend">
@@ -135,51 +135,51 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.16 2002/07/30 17:34:37 tgl 
       </thead>
       <tbody>
        <row>
-	<entry>pg_database</entry>
+	<entry><structname>pg_database</></entry>
 	<entry> databases</entry>
        </row>
        <row>
-	<entry>pg_class</entry>
+	<entry><structname>pg_class</></entry>
 	<entry> tables</entry>
        </row>
        <row>
-	<entry>pg_attribute</entry>
+	<entry><structname>pg_attribute</></entry>
 	<entry> table columns</entry>
        </row>
        <row>
-	<entry>pg_index</entry>
+	<entry><structname>pg_index</></entry>
 	<entry> indexes</entry>
        </row>
        <row>
-	<entry>pg_proc</entry>
+	<entry><structname>pg_proc</></entry>
 	<entry> procedures/functions </entry>
        </row>
        <row>
-	<entry>pg_type</entry>
+	<entry><structname>pg_type</></entry>
 	<entry> data types (both base and complex)</entry>
        </row>
        <row>
-	<entry>pg_operator</entry>
+	<entry><structname>pg_operator</></entry>
 	<entry> operators</entry>
        </row>
        <row>
-	<entry>pg_aggregate</entry>
+	<entry><structname>pg_aggregate</></entry>
 	<entry> aggregate functions</entry>
        </row>
        <row>
-	<entry>pg_am</entry>
+	<entry><structname>pg_am</></entry>
 	<entry> access methods</entry>
        </row>
        <row>
-	<entry>pg_amop</entry>
+	<entry><structname>pg_amop</></entry>
 	<entry> access method operators</entry>
        </row>
        <row>
-	<entry>pg_amproc</entry>
+	<entry><structname>pg_amproc</></entry>
 	<entry> access method support functions</entry>
        </row>
        <row>
-	<entry>pg_opclass</entry>
+	<entry><structname>pg_opclass</></entry>
 	<entry> access method operator classes</entry>
        </row>
       </tbody>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.21 2002/08/05 19:43:30 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.22 2002/09/21 18:32:52 petere Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -251,8 +251,8 @@ SELECT * FROM sal_emp WHERE pay_by_quarter **= 10000;
  <note>
   <para>
    A limitation of the present array implementation is that individual
-   elements of an array cannot be SQL NULLs.  The entire array can be set
-   to NULL, but you can't have an array with some elements NULL and some
+   elements of an array cannot be SQL null values.  The entire array can be set
+   to null, but you can't have an array with some elements null and some
    not.  Fixing this is on the to-do list.
   </para>
  </note>
@@ -267,7 +267,7 @@ SELECT * FROM sal_emp WHERE pay_by_quarter **= 10000;
    around the array value plus delimiter characters between adjacent items.
    The delimiter character is usually a comma (<literal>,</>) but can be
    something else: it is determined by the <literal>typdelim</> setting
-   for the array's element type.  (Among the standard datatypes provided
+   for the array's element type.  (Among the standard data types provided
    in the <productname>PostgreSQL</productname> distribution, type
    <literal>box</> uses a semicolon (<literal>;</>) but all the others
    use comma.)  In a multidimensional array, each dimension (row, plane,
@@ -300,8 +300,8 @@ SELECT * FROM sal_emp WHERE pay_by_quarter **= 10000;
    if they are empty strings or contain curly braces, delimiter characters,
    double quotes, backslashes, or white space.  Double quotes and backslashes
    embedded in element values will be backslash-escaped.  For numeric
-   datatypes it is safe to assume that double quotes will never appear, but
-   for textual datatypes one should be prepared to cope with either presence
+   data types it is safe to assume that double quotes will never appear, but
+   for textual data types one should be prepared to cope with either presence
    or absence of quotes.  (This is a change in behavior from pre-7.2
    <productname>PostgreSQL</productname> releases.)
   </para>

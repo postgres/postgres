@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.15 2002/07/28 15:22:20 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.16 2002/09/21 18:32:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -148,7 +148,7 @@ PostgreSQL documentation
        <para>
         Append the server log output to
         <replaceable>filename</replaceable>.  If the file does not
-        exist, it is created.  The umask is set to 077, so access to
+        exist, it is created.  The <systemitem>umask</> is set to 077, so access to
         the log file from other users is disallowed by default.
        </para>
       </listitem>

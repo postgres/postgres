@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.27 2002/05/14 13:05:42 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.28 2002/09/21 18:32:53 petere Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -87,8 +87,8 @@
    <para>
     The parallel regression test starts quite a few processes under your
     user ID.  Presently, the maximum concurrency is twenty parallel test
-    scripts, which means sixty processes --- there's a backend, a psql,
-    and usually a shell parent process for the psql for each test script.
+    scripts, which means sixty processes --- there's a backend, a <application>psql</>,
+    and usually a shell parent process for the <application>psql</> for each test script.
     So if your system enforces a per-user limit on the number of processes,
     make sure this limit is at least seventy-five or so, else you may get
     random-seeming failures in the parallel test.  If you are not in
@@ -184,7 +184,7 @@
      problem by providing alternative result files that together are
      known to handle a large number of locales.  For example, for the
      <quote>char</quote> test, the expected file
-     <filename>char.out</filename> handles the C and POSIX locales,
+     <filename>char.out</filename> handles the <literal>C</> and <literal>POSIX</> locales,
      and the file <filename>char_1.out</filename> handles many other
      locales.  The regression test driver will automatically pick the
      best file to match against when checking for success and for

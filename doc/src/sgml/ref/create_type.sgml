@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.34 2002/08/29 00:17:01 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.35 2002/09/21 18:32:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -208,7 +208,7 @@ CREATE TYPE
    specified schema.  Otherwise it is created in the current schema (the one
    at the front of the search path; see <literal>CURRENT_SCHEMA()</>).
    The type name must be distinct from the name of any existing type or
-   domain in the same schema.  (Because tables have associated datatypes,
+   domain in the same schema.  (Because tables have associated data types,
    type names also must not conflict with table names in the same schema.)
   </para>
 
@@ -231,10 +231,10 @@ CREATE TYPE
    <type>cstring</type>, <type>OID</type>, <type>int4</type>.
    (The first argument is the input text as a C string, the second
    argument is the element type in case this is an array type,
-   and the third is the typmod of the destination column, if known.)
-   It should return a value of the datatype itself.
+   and the third is the <literal>typmod</> of the destination column, if known.)
+   It should return a value of the data type itself.
    The output function may be
-   declared as taking one argument of the new datatype,  or as taking
+   declared as taking one argument of the new data type,  or as taking
    two arguments of which the second is type <type>OID</type>.
    (The second argument is again the array element type for array types.)
    The output function should return type <type>cstring</type>.
@@ -245,9 +245,9 @@ CREATE TYPE
    can be declared to have results or inputs of the new type, when they have
    to be created before the new type can be created.  The answer is that the
    input function must be created first, then the output function, then the
-   datatype.
+   data type.
    <productname>PostgreSQL</productname> will first see the name of the new
-   datatype as the return type of the input function.  It will create a
+   data type as the return type of the input function.  It will create a
    <quote>shell</> type, which is simply a placeholder entry in
    <literal>pg_type</>, and link the input function definition to the shell
    type.  Similarly the output function will be linked to the (now already
@@ -273,7 +273,7 @@ CREATE TYPE
    positive integer, or variable  length, indicated by setting
    <replaceable class="parameter">internallength</replaceable>
    to <option>VARIABLE</option>.  (Internally, this is represented
-   by setting typlen to -1.)  The internal representation of all
+   by setting <literal>typlen</> to -1.)  The internal representation of all
    variable-length types must start with an integer giving the total
    length of this value of the type.
   </para>
@@ -346,7 +346,7 @@ CREATE TYPE
   <para>
    The second form of <command>CREATE TYPE</command>
    creates a composite type.
-   The composite type is specified by a list of column names and datatypes.
+   The composite type is specified by a list of column names and data types.
    This is essentially the same as the row type
    of a table, but using <command>CREATE TYPE</command> avoids the need to
    create an actual table when all that is wanted is to define a type.

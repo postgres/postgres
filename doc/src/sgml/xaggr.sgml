@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.16 2002/01/07 02:29:14 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.17 2002/09/21 18:32:54 petere Exp $
 -->
 
  <chapter id="xaggr">
@@ -86,7 +86,7 @@ SELECT complex_sum(a) FROM test_complex;
   <para>
    Another bit of default behavior for a <quote>strict</> transition function
    is that the previous state value is retained unchanged whenever a
-   NULL input value is encountered.  Thus, NULLs are ignored.  If you
+   NULL input value is encountered.  Thus, null values are ignored.  If you
    need some other behavior for NULL inputs, just define your transition
    function as non-strict, and code it to test for NULL inputs and do
    whatever is needed.

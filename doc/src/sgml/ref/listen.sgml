@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/listen.sgml,v 1.14 2002/08/13 20:40:43 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/listen.sgml,v 1.15 2002/09/21 18:32:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -115,12 +115,12 @@ WARNING:  Async_Listen: We are already listening on <replaceable class="PARAMETE
   <para>
    The method a frontend application must use to detect notify events depends on
    which <productname>PostgreSQL</productname> application programming interface it
-   uses.  With the basic libpq library, the application issues
+   uses.  With the <application>libpq</> library, the application issues
    <command>LISTEN</command> as an ordinary SQL command, and then must
    periodically call the routine <function>PQnotifies</function> to find out
    whether any notify events have been received.  Other interfaces such as
-   libpgtcl provide higher-level methods for handling notify events; indeed,
-   with libpgtcl the application programmer should not even issue
+   <application>libpgtcl</> provide higher-level methods for handling notify events; indeed,
+   with <application>libpgtcl</> the application programmer should not even issue
    <command>LISTEN</command> or <command>UNLISTEN</command> directly.  See the
    documentation for the library you are using for more details.
   </para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.18 2002/09/18 20:09:32 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.19 2002/09/21 18:32:53 petere Exp $
 -->
 
 <chapter id="maintenance">
@@ -380,14 +380,14 @@ VACUUM
   </indexterm>
 
   <para>
-   <productname>PostgreSQL</productname> is unable to reuse btree index
+   <productname>PostgreSQL</productname> is unable to reuse B-tree index
    pages in certain cases. The problem is that if indexed rows are
    deleted, those index pages can only be reused by rows with similar
    values. For example, if indexed rows are deleted and newly
    inserted/updated rows have much higher values, the new rows can't use
    the index space made available by the deleted rows. Instead, such
    new rows must be placed on new index pages. In such cases, disk
-   space used by the index will grow indefinately, even if
+   space used by the index will grow indefinitely, even if
    <command>VACUUM</> is run frequently.
   </para>
   <para>
@@ -426,7 +426,7 @@ VACUUM
    The simplest production-grade approach to managing log output is to
    send it all to <application>syslog</> and let
    <application>syslog</> deal with file rotation. To do this, set
-   <literal>syslog</> to 2 (log to syslog only) in
+   <literal>syslog</> to 2 (log to <application>syslog</> only) in
    <filename>postgresql.conf</>. Then you can send a
    <literal>SIGHUP</literal> signal to the <application>syslog</>
    daemon whenever you want to force it to start writing a new log
@@ -434,7 +434,7 @@ VACUUM
   </para>
 
   <para>
-   On many systems, however, syslog is not very reliable, particularly
+   On many systems, however, <application>syslog</> is not very reliable, particularly
    with large log messages; it may truncate or drop messages just when
    you need them the most. You may find it more useful to pipe the
    <application>postmaster</>'s <systemitem>stderr</> to some type of

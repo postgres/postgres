@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.33 2002/05/30 20:45:18 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.34 2002/09/21 18:32:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -118,7 +118,7 @@ where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
 	Conflicts with SHARE UPDATE EXCLUSIVE, SHARE, SHARE ROW EXCLUSIVE,
 	EXCLUSIVE and
 	ACCESS EXCLUSIVE modes. This mode protects a table against
-	concurrent schema changes and VACUUMs.
+	concurrent schema changes and <command>VACUUM</> runs.
        </para>
 
        <note>
@@ -289,8 +289,8 @@ ERROR <replaceable class="PARAMETER">name</replaceable>: Table does not exist.
      To achieve a similar effect when running a transaction
      at the SERIALIZABLE isolation level, you have to execute the
      <command>LOCK TABLE</>
-     statement before executing any DML statement.  A serializable
-     transaction's view of data will be frozen when its first DML statement
+     statement before executing any <acronym>DML</> statement.  A serializable
+     transaction's view of data will be frozen when its first <acronym>DML</> statement
      begins.  A later <command>LOCK</> will still prevent concurrent writes
      --- but it
      won't ensure that what the transaction reads corresponds to the latest

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.123 2002/09/20 03:44:06 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.124 2002/09/21 18:32:53 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -74,7 +74,7 @@ PostgreSQL documentation
      <member>NOT</member>
     </simplelist>
 
-    <acronym>SQL</acronym> uses a three-valued Boolean logic where NULL represents
+    <acronym>SQL</acronym> uses a three-valued Boolean logic where the null value represents
     <quote>unknown</quote>.  Observe the following truth tables:
 
     <informaltable>
@@ -261,7 +261,7 @@ PostgreSQL documentation
    </para>
 
    <para>
-    To check whether a value is or is not NULL, use the constructs
+    To check whether a value is or is not null, use the constructs
     <synopsis>
 <replaceable>expression</replaceable> IS NULL
 <replaceable>expression</replaceable> IS NOT NULL
@@ -276,16 +276,16 @@ PostgreSQL documentation
    <para>
     Do <emphasis>not</emphasis> write
     <literal><replaceable>expression</replaceable> = NULL</literal>
-    because NULL is not <quote>equal to</quote> NULL.  (NULL represents
-    an unknown value, and it is not known whether two unknown values are
-    equal.)
+    because <literal>NULL</> is not <quote>equal to</quote>
+    <literal>NULL</>.  (The null value represents an unknown value,
+    and it is not known whether two unknown values are equal.)
    </para>
 
    <para>
     Some applications may (incorrectly) require that
     <literal><replaceable>expression</replaceable> = NULL</literal>
     returns true if <replaceable>expression</replaceable> evaluates to
-    the NULL value.  To support these applications, the run-time option
+    the null value.  To support these applications, the run-time option
     <varname>transform_null_equals</varname> can be turned on (e.g.,
     <literal>SET transform_null_equals TO ON;</literal>).
     <productname>PostgreSQL</productname> will then convert
@@ -305,8 +305,8 @@ PostgreSQL documentation
 <replaceable>expression</replaceable> IS NOT UNKNOWN
     </synopsis>
     These are similar to <literal>IS NULL</literal> in that they will
-    always return TRUE or FALSE, never NULL, even when the operand is NULL.
-    A NULL input is treated as the logical value UNKNOWN.
+    always return true or false, never a null value, even when the operand is null.
+    A null input is treated as the logical value <quote>unknown</>.
    </para>
   </sect1>
 
@@ -973,687 +973,687 @@ PostgreSQL documentation
 
      <tbody>
       <row>
-       <entry>ascii_to_mic</entry>
-       <entry>SQL_ASCII</entry>
-       <entry>MULE_INTERNAL</entry>
+       <entry><literal>ascii_to_mic</literal></entry>
+       <entry><literal>SQL_ASCII</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
       </row>
 
       <row>
-       <entry>ascii_to_utf_8</entry>
-       <entry>SQL_ASCII</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>ascii_to_utf_8</literal></entry>
+       <entry><literal>SQL_ASCII</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>big5_to_euc_tw</entry>
-       <entry>BIG5</entry>
-       <entry>EUC_TW</entry>
+       <entry><literal>big5_to_euc_tw</literal></entry>
+       <entry><literal>BIG5</literal></entry>
+       <entry><literal>EUC_TW</literal></entry>
       </row>
 
       <row>
-       <entry>big5_to_mic</entry>
-       <entry>BIG5</entry>
-       <entry>MULE_INTERNAL</entry>
+       <entry><literal>big5_to_mic</literal></entry>
+       <entry><literal>BIG5</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
       </row>
 
       <row>
-       <entry>big5_to_utf_8</entry>
-       <entry>BIG5</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>big5_to_utf_8</literal></entry>
+       <entry><literal>BIG5</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>euc_cn_to_mic</entry>
-       <entry>EUC_CN</entry>
-       <entry>MULE_INTERNAL</entry>
+       <entry><literal>euc_cn_to_mic</literal></entry>
+       <entry><literal>EUC_CN</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
       </row>
 
       <row>
-       <entry>euc_cn_to_utf_8</entry>
-       <entry>EUC_CN</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>euc_cn_to_utf_8</literal></entry>
+       <entry><literal>EUC_CN</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>euc_jp_to_mic</entry>
-       <entry>EUC_JP</entry>
-       <entry>MULE_INTERNAL</entry>
+       <entry><literal>euc_jp_to_mic</literal></entry>
+       <entry><literal>EUC_JP</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
       </row>
 
       <row>
-       <entry>euc_jp_to_sjis</entry>
-       <entry>EUC_JP</entry>
-       <entry>SJIS</entry>
+       <entry><literal>euc_jp_to_sjis</literal></entry>
+       <entry><literal>EUC_JP</literal></entry>
+       <entry><literal>SJIS</literal></entry>
       </row>
 
       <row>
-       <entry>euc_jp_to_utf_8</entry>
-       <entry>EUC_JP</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>euc_jp_to_utf_8</literal></entry>
+       <entry><literal>EUC_JP</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>euc_kr_to_mic</entry>
-       <entry>EUC_KR</entry>
-       <entry>MULE_INTERNAL</entry>
+       <entry><literal>euc_kr_to_mic</literal></entry>
+       <entry><literal>EUC_KR</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
       </row>
 
       <row>
-       <entry>euc_kr_to_utf_8</entry>
-       <entry>EUC_KR</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>euc_kr_to_utf_8</literal></entry>
+       <entry><literal>EUC_KR</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>euc_tw_to_big5</entry>
-       <entry>EUC_TW</entry>
-       <entry>BIG5</entry>
+       <entry><literal>euc_tw_to_big5</literal></entry>
+       <entry><literal>EUC_TW</literal></entry>
+       <entry><literal>BIG5</literal></entry>
       </row>
 
       <row>
-       <entry>euc_tw_to_mic</entry>
-       <entry>EUC_TW</entry>
-       <entry>MULE_INTERNAL</entry>
+       <entry><literal>euc_tw_to_mic</literal></entry>
+       <entry><literal>EUC_TW</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
       </row>
 
       <row>
-       <entry>euc_tw_to_utf_8</entry>
-       <entry>EUC_TW</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>euc_tw_to_utf_8</literal></entry>
+       <entry><literal>EUC_TW</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>gb18030_to_utf_8</entry>
-       <entry>GB18030</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>gb18030_to_utf_8</literal></entry>
+       <entry><literal>GB18030</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>gbk_to_utf_8</entry>
-       <entry>GBK</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>gbk_to_utf_8</literal></entry>
+       <entry><literal>GBK</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>iso_8859_10_to_utf_8</entry>
-       <entry>LATIN6</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>iso_8859_10_to_utf_8</literal></entry>
+       <entry><literal>LATIN6</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>iso_8859_13_to_utf_8</entry>
-       <entry>LATIN7</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>iso_8859_13_to_utf_8</literal></entry>
+       <entry><literal>LATIN7</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>iso_8859_14_to_utf_8</entry>
-       <entry>LATIN8</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>iso_8859_14_to_utf_8</literal></entry>
+       <entry><literal>LATIN8</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>iso_8859_15_to_utf_8</entry>
-       <entry>LATIN9</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>iso_8859_15_to_utf_8</literal></entry>
+       <entry><literal>LATIN9</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>iso_8859_16_to_utf_8</entry>
-       <entry>LATIN10</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>iso_8859_16_to_utf_8</literal></entry>
+       <entry><literal>LATIN10</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>iso_8859_1_to_mic</entry>
-       <entry>LATIN1</entry>
-       <entry>MULE_INTERNAL</entry>
+       <entry><literal>iso_8859_1_to_mic</literal></entry>
+       <entry><literal>LATIN1</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
       </row>
 
       <row>
-       <entry>iso_8859_1_to_utf_8</entry>
-       <entry>LATIN1</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>iso_8859_1_to_utf_8</literal></entry>
+       <entry><literal>LATIN1</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>iso_8859_2_to_mic</entry>
-       <entry>LATIN2</entry>
-       <entry>MULE_INTERNAL</entry>
+       <entry><literal>iso_8859_2_to_mic</literal></entry>
+       <entry><literal>LATIN2</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
       </row>
 
       <row>
-       <entry>iso_8859_2_to_utf_8</entry>
-       <entry>LATIN2</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>iso_8859_2_to_utf_8</literal></entry>
+       <entry><literal>LATIN2</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>iso_8859_2_to_win1250</entry>
-       <entry>LATIN2</entry>
-       <entry>WIN1250</entry>
+       <entry><literal>iso_8859_2_to_win1250</literal></entry>
+       <entry><literal>LATIN2</literal></entry>
+       <entry><literal>WIN1250</literal></entry>
       </row>
 
       <row>
-       <entry>iso_8859_3_to_mic</entry>
-       <entry>LATIN3</entry>
-       <entry>MULE_INTERNAL</entry>
+       <entry><literal>iso_8859_3_to_mic</literal></entry>
+       <entry><literal>LATIN3</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
       </row>
 
       <row>
-       <entry>iso_8859_3_to_utf_8</entry>
-       <entry>LATIN3</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>iso_8859_3_to_utf_8</literal></entry>
+       <entry><literal>LATIN3</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>iso_8859_4_to_mic</entry>
-       <entry>LATIN4</entry>
-       <entry>MULE_INTERNAL</entry>
+       <entry><literal>iso_8859_4_to_mic</literal></entry>
+       <entry><literal>LATIN4</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
       </row>
 
       <row>
-       <entry>iso_8859_4_to_utf_8</entry>
-       <entry>LATIN4</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>iso_8859_4_to_utf_8</literal></entry>
+       <entry><literal>LATIN4</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>iso_8859_5_to_koi8r</entry>
-       <entry>ISO_8859_5</entry>
-       <entry>KOI8</entry>
+       <entry><literal>iso_8859_5_to_koi8r</literal></entry>
+       <entry><literal>ISO_8859_5</literal></entry>
+       <entry><literal>KOI8</literal></entry>
       </row>
 
       <row>
-       <entry>iso_8859_5_to_mic</entry>
-       <entry>ISO_8859_5</entry>
-       <entry>MULE_INTERNAL</entry>
+       <entry><literal>iso_8859_5_to_mic</literal></entry>
+       <entry><literal>ISO_8859_5</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
       </row>
 
       <row>
-       <entry>iso_8859_5_to_utf_8</entry>
-       <entry>ISO_8859_5</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>iso_8859_5_to_utf_8</literal></entry>
+       <entry><literal>ISO_8859_5</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>iso_8859_5_to_win1251</entry>
-       <entry>ISO_8859_5</entry>
-       <entry>WIN</entry>
+       <entry><literal>iso_8859_5_to_win1251</literal></entry>
+       <entry><literal>ISO_8859_5</literal></entry>
+       <entry><literal>WIN</literal></entry>
       </row>
 
       <row>
-       <entry>iso_8859_5_to_win866</entry>
-       <entry>ISO_8859_5</entry>
-       <entry>ALT</entry>
+       <entry><literal>iso_8859_5_to_win866</literal></entry>
+       <entry><literal>ISO_8859_5</literal></entry>
+       <entry><literal>ALT</literal></entry>
       </row>
 
       <row>
-       <entry>iso_8859_6_to_utf_8</entry>
-       <entry>ISO_8859_6</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>iso_8859_6_to_utf_8</literal></entry>
+       <entry><literal>ISO_8859_6</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>iso_8859_7_to_utf_8</entry>
-       <entry>ISO_8859_7</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>iso_8859_7_to_utf_8</literal></entry>
+       <entry><literal>ISO_8859_7</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>iso_8859_8_to_utf_8</entry>
-       <entry>ISO_8859_8</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>iso_8859_8_to_utf_8</literal></entry>
+       <entry><literal>ISO_8859_8</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>iso_8859_9_to_utf_8</entry>
-       <entry>LATIN5</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>iso_8859_9_to_utf_8</literal></entry>
+       <entry><literal>LATIN5</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>johab_to_utf_8</entry>
-       <entry>JOHAB</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>johab_to_utf_8</literal></entry>
+       <entry><literal>JOHAB</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>koi8r_to_iso_8859_5</entry>
-       <entry>KOI8</entry>
-       <entry>ISO_8859_5</entry>
+       <entry><literal>koi8r_to_iso_8859_5</literal></entry>
+       <entry><literal>KOI8</literal></entry>
+       <entry><literal>ISO_8859_5</literal></entry>
       </row>
 
       <row>
-       <entry>koi8r_to_mic</entry>
-       <entry>KOI8</entry>
-       <entry>MULE_INTERNAL</entry>
+       <entry><literal>koi8r_to_mic</literal></entry>
+       <entry><literal>KOI8</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
       </row>
 
       <row>
-       <entry>koi8r_to_utf_8</entry>
-       <entry>KOI8</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>koi8r_to_utf_8</literal></entry>
+       <entry><literal>KOI8</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>koi8r_to_win1251</entry>
-       <entry>KOI8</entry>
-       <entry>WIN</entry>
+       <entry><literal>koi8r_to_win1251</literal></entry>
+       <entry><literal>KOI8</literal></entry>
+       <entry><literal>WIN</literal></entry>
       </row>
 
       <row>
-       <entry>koi8r_to_win866</entry>
-       <entry>KOI8</entry>
-       <entry>ALT</entry>
+       <entry><literal>koi8r_to_win866</literal></entry>
+       <entry><literal>KOI8</literal></entry>
+       <entry><literal>ALT</literal></entry>
       </row>
 
       <row>
-       <entry>mic_to_ascii</entry>
-       <entry>MULE_INTERNAL</entry>
-       <entry>SQL_ASCII</entry>
+       <entry><literal>mic_to_ascii</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
+       <entry><literal>SQL_ASCII</literal></entry>
       </row>
 
       <row>
-       <entry>mic_to_big5</entry>
-       <entry>MULE_INTERNAL</entry>
-       <entry>BIG5</entry>
+       <entry><literal>mic_to_big5</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
+       <entry><literal>BIG5</literal></entry>
       </row>
 
       <row>
-       <entry>mic_to_euc_cn</entry>
-       <entry>MULE_INTERNAL</entry>
-       <entry>EUC_CN</entry>
+       <entry><literal>mic_to_euc_cn</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
+       <entry><literal>EUC_CN</literal></entry>
       </row>
 
       <row>
-       <entry>mic_to_euc_jp</entry>
-       <entry>MULE_INTERNAL</entry>
-       <entry>EUC_JP</entry>
+       <entry><literal>mic_to_euc_jp</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
+       <entry><literal>EUC_JP</literal></entry>
       </row>
 
       <row>
-       <entry>mic_to_euc_kr</entry>
-       <entry>MULE_INTERNAL</entry>
-       <entry>EUC_KR</entry>
+       <entry><literal>mic_to_euc_kr</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
+       <entry><literal>EUC_KR</literal></entry>
       </row>
 
       <row>
-       <entry>mic_to_euc_tw</entry>
-       <entry>MULE_INTERNAL</entry>
-       <entry>EUC_TW</entry>
+       <entry><literal>mic_to_euc_tw</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
+       <entry><literal>EUC_TW</literal></entry>
       </row>
 
       <row>
-       <entry>mic_to_iso_8859_1</entry>
-       <entry>MULE_INTERNAL</entry>
-       <entry>LATIN1</entry>
+       <entry><literal>mic_to_iso_8859_1</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
+       <entry><literal>LATIN1</literal></entry>
       </row>
 
       <row>
-       <entry>mic_to_iso_8859_2</entry>
-       <entry>MULE_INTERNAL</entry>
-       <entry>LATIN2</entry>
+       <entry><literal>mic_to_iso_8859_2</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
+       <entry><literal>LATIN2</literal></entry>
       </row>
 
       <row>
-       <entry>mic_to_iso_8859_3</entry>
-       <entry>MULE_INTERNAL</entry>
-       <entry>LATIN3</entry>
+       <entry><literal>mic_to_iso_8859_3</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
+       <entry><literal>LATIN3</literal></entry>
       </row>
 
       <row>
-       <entry>mic_to_iso_8859_4</entry>
-       <entry>MULE_INTERNAL</entry>
-       <entry>LATIN4</entry>
+       <entry><literal>mic_to_iso_8859_4</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
+       <entry><literal>LATIN4</literal></entry>
       </row>
 
       <row>
-       <entry>mic_to_iso_8859_5</entry>
-       <entry>MULE_INTERNAL</entry>
-       <entry>ISO_8859_5</entry>
+       <entry><literal>mic_to_iso_8859_5</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
+       <entry><literal>ISO_8859_5</literal></entry>
       </row>
 
       <row>
-       <entry>mic_to_koi8r</entry>
-       <entry>MULE_INTERNAL</entry>
-       <entry>KOI8</entry>
+       <entry><literal>mic_to_koi8r</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
+       <entry><literal>KOI8</literal></entry>
       </row>
 
       <row>
-       <entry>mic_to_sjis</entry>
-       <entry>MULE_INTERNAL</entry>
-       <entry>SJIS</entry>
+       <entry><literal>mic_to_sjis</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
+       <entry><literal>SJIS</literal></entry>
       </row>
 
       <row>
-       <entry>mic_to_win1250</entry>
-       <entry>MULE_INTERNAL</entry>
-       <entry>WIN1250</entry>
+       <entry><literal>mic_to_win1250</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
+       <entry><literal>WIN1250</literal></entry>
       </row>
 
       <row>
-       <entry>mic_to_win1251</entry>
-       <entry>MULE_INTERNAL</entry>
-       <entry>WIN</entry>
+       <entry><literal>mic_to_win1251</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
+       <entry><literal>WIN</literal></entry>
       </row>
 
       <row>
-       <entry>mic_to_win866</entry>
-       <entry>MULE_INTERNAL</entry>
-       <entry>ALT</entry>
+       <entry><literal>mic_to_win866</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
+       <entry><literal>ALT</literal></entry>
       </row>
 
       <row>
-       <entry>sjis_to_euc_jp</entry>
-       <entry>SJIS</entry>
-       <entry>EUC_JP</entry>
+       <entry><literal>sjis_to_euc_jp</literal></entry>
+       <entry><literal>SJIS</literal></entry>
+       <entry><literal>EUC_JP</literal></entry>
       </row>
 
       <row>
-       <entry>sjis_to_mic</entry>
-       <entry>SJIS</entry>
-       <entry>MULE_INTERNAL</entry>
+       <entry><literal>sjis_to_mic</literal></entry>
+       <entry><literal>SJIS</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
       </row>
 
       <row>
-       <entry>sjis_to_utf_8</entry>
-       <entry>SJIS</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>sjis_to_utf_8</literal></entry>
+       <entry><literal>SJIS</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>tcvn_to_utf_8</entry>
-       <entry>TCVN</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>tcvn_to_utf_8</literal></entry>
+       <entry><literal>TCVN</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>uhc_to_utf_8</entry>
-       <entry>UHC</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>uhc_to_utf_8</literal></entry>
+       <entry><literal>UHC</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_ascii</entry>
-       <entry>UNICODE</entry>
-       <entry>SQL_ASCII</entry>
+       <entry><literal>utf_8_to_ascii</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>SQL_ASCII</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_big5</entry>
-       <entry>UNICODE</entry>
-       <entry>BIG5</entry>
+       <entry><literal>utf_8_to_big5</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>BIG5</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_euc_cn</entry>
-       <entry>UNICODE</entry>
-       <entry>EUC_CN</entry>
+       <entry><literal>utf_8_to_euc_cn</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>EUC_CN</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_euc_jp</entry>
-       <entry>UNICODE</entry>
-       <entry>EUC_JP</entry>
+       <entry><literal>utf_8_to_euc_jp</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>EUC_JP</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_euc_kr</entry>
-       <entry>UNICODE</entry>
-       <entry>EUC_KR</entry>
+       <entry><literal>utf_8_to_euc_kr</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>EUC_KR</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_euc_tw</entry>
-       <entry>UNICODE</entry>
-       <entry>EUC_TW</entry>
+       <entry><literal>utf_8_to_euc_tw</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>EUC_TW</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_gb18030</entry>
-       <entry>UNICODE</entry>
-       <entry>GB18030</entry>
+       <entry><literal>utf_8_to_gb18030</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>GB18030</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_gbk</entry>
-       <entry>UNICODE</entry>
-       <entry>GBK</entry>
+       <entry><literal>utf_8_to_gbk</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>GBK</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_iso_8859_1</entry>
-       <entry>UNICODE</entry>
-       <entry>LATIN1</entry>
+       <entry><literal>utf_8_to_iso_8859_1</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>LATIN1</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_iso_8859_10</entry>
-       <entry>UNICODE</entry>
-       <entry>LATIN6</entry>
+       <entry><literal>utf_8_to_iso_8859_10</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>LATIN6</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_iso_8859_13</entry>
-       <entry>UNICODE</entry>
-       <entry>LATIN7</entry>
+       <entry><literal>utf_8_to_iso_8859_13</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>LATIN7</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_iso_8859_14</entry>
-       <entry>UNICODE</entry>
-       <entry>LATIN8</entry>
+       <entry><literal>utf_8_to_iso_8859_14</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>LATIN8</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_iso_8859_15</entry>
-       <entry>UNICODE</entry>
-       <entry>LATIN9</entry>
+       <entry><literal>utf_8_to_iso_8859_15</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>LATIN9</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_iso_8859_16</entry>
-       <entry>UNICODE</entry>
-       <entry>LATIN10</entry>
+       <entry><literal>utf_8_to_iso_8859_16</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>LATIN10</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_iso_8859_2</entry>
-       <entry>UNICODE</entry>
-       <entry>LATIN2</entry>
+       <entry><literal>utf_8_to_iso_8859_2</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>LATIN2</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_iso_8859_3</entry>
-       <entry>UNICODE</entry>
-       <entry>LATIN3</entry>
+       <entry><literal>utf_8_to_iso_8859_3</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>LATIN3</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_iso_8859_4</entry>
-       <entry>UNICODE</entry>
-       <entry>LATIN4</entry>
+       <entry><literal>utf_8_to_iso_8859_4</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>LATIN4</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_iso_8859_5</entry>
-       <entry>UNICODE</entry>
-       <entry>ISO_8859_5</entry>
+       <entry><literal>utf_8_to_iso_8859_5</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>ISO_8859_5</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_iso_8859_6</entry>
-       <entry>UNICODE</entry>
-       <entry>ISO_8859_6</entry>
+       <entry><literal>utf_8_to_iso_8859_6</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>ISO_8859_6</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_iso_8859_7</entry>
-       <entry>UNICODE</entry>
-       <entry>ISO_8859_7</entry>
+       <entry><literal>utf_8_to_iso_8859_7</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>ISO_8859_7</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_iso_8859_8</entry>
-       <entry>UNICODE</entry>
-       <entry>ISO_8859_8</entry>
+       <entry><literal>utf_8_to_iso_8859_8</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>ISO_8859_8</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_iso_8859_9</entry>
-       <entry>UNICODE</entry>
-       <entry>LATIN5</entry>
+       <entry><literal>utf_8_to_iso_8859_9</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>LATIN5</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_johab</entry>
-       <entry>UNICODE</entry>
-       <entry>JOHAB</entry>
+       <entry><literal>utf_8_to_johab</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>JOHAB</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_koi8r</entry>
-       <entry>UNICODE</entry>
-       <entry>KOI8</entry>
+       <entry><literal>utf_8_to_koi8r</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>KOI8</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_sjis</entry>
-       <entry>UNICODE</entry>
-       <entry>SJIS</entry>
+       <entry><literal>utf_8_to_sjis</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>SJIS</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_tcvn</entry>
-       <entry>UNICODE</entry>
-       <entry>TCVN</entry>
+       <entry><literal>utf_8_to_tcvn</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>TCVN</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_uhc</entry>
-       <entry>UNICODE</entry>
-       <entry>UHC</entry>
+       <entry><literal>utf_8_to_uhc</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UHC</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_win1250</entry>
-       <entry>UNICODE</entry>
-       <entry>WIN1250</entry>
+       <entry><literal>utf_8_to_win1250</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>WIN1250</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_win1251</entry>
-       <entry>UNICODE</entry>
-       <entry>WIN</entry>
+       <entry><literal>utf_8_to_win1251</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>WIN</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_win1256</entry>
-       <entry>UNICODE</entry>
-       <entry>WIN1256</entry>
+       <entry><literal>utf_8_to_win1256</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>WIN1256</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_win866</entry>
-       <entry>UNICODE</entry>
-       <entry>ALT</entry>
+       <entry><literal>utf_8_to_win866</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>ALT</literal></entry>
       </row>
 
       <row>
-       <entry>utf_8_to_win874</entry>
-       <entry>UNICODE</entry>
-       <entry>WIN874</entry>
+       <entry><literal>utf_8_to_win874</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>WIN874</literal></entry>
       </row>
 
       <row>
-       <entry>win1250_to_iso_8859_2</entry>
-       <entry>WIN1250</entry>
-       <entry>LATIN2</entry>
+       <entry><literal>win1250_to_iso_8859_2</literal></entry>
+       <entry><literal>WIN1250</literal></entry>
+       <entry><literal>LATIN2</literal></entry>
       </row>
 
       <row>
-       <entry>win1250_to_mic</entry>
-       <entry>WIN1250</entry>
-       <entry>MULE_INTERNAL</entry>
+       <entry><literal>win1250_to_mic</literal></entry>
+       <entry><literal>WIN1250</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
       </row>
 
       <row>
-       <entry>win1250_to_utf_8</entry>
-       <entry>WIN1250</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>win1250_to_utf_8</literal></entry>
+       <entry><literal>WIN1250</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>win1251_to_iso_8859_5</entry>
-       <entry>WIN</entry>
-       <entry>ISO_8859_5</entry>
+       <entry><literal>win1251_to_iso_8859_5</literal></entry>
+       <entry><literal>WIN</literal></entry>
+       <entry><literal>ISO_8859_5</literal></entry>
       </row>
 
       <row>
-       <entry>win1251_to_koi8r</entry>
-       <entry>WIN</entry>
-       <entry>KOI8</entry>
+       <entry><literal>win1251_to_koi8r</literal></entry>
+       <entry><literal>WIN</literal></entry>
+       <entry><literal>KOI8</literal></entry>
       </row>
 
       <row>
-       <entry>win1251_to_mic</entry>
-       <entry>WIN</entry>
-       <entry>MULE_INTERNAL</entry>
+       <entry><literal>win1251_to_mic</literal></entry>
+       <entry><literal>WIN</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
       </row>
 
       <row>
-       <entry>win1251_to_utf_8</entry>
-       <entry>WIN</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>win1251_to_utf_8</literal></entry>
+       <entry><literal>WIN</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>win1251_to_win866</entry>
-       <entry>WIN</entry>
-       <entry>ALT</entry>
+       <entry><literal>win1251_to_win866</literal></entry>
+       <entry><literal>WIN</literal></entry>
+       <entry><literal>ALT</literal></entry>
       </row>
 
       <row>
-       <entry>win1256_to_utf_8</entry>
-       <entry>WIN1256</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>win1256_to_utf_8</literal></entry>
+       <entry><literal>WIN1256</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>win866_to_iso_8859_5</entry>
-       <entry>ALT</entry>
-       <entry>ISO_8859_5</entry>
+       <entry><literal>win866_to_iso_8859_5</literal></entry>
+       <entry><literal>ALT</literal></entry>
+       <entry><literal>ISO_8859_5</literal></entry>
       </row>
 
       <row>
-       <entry>win866_to_koi8r</entry>
-       <entry>ALT</entry>
-       <entry>KOI8</entry>
+       <entry><literal>win866_to_koi8r</literal></entry>
+       <entry><literal>ALT</literal></entry>
+       <entry><literal>KOI8</literal></entry>
       </row>
 
       <row>
-       <entry>win866_to_mic</entry>
-       <entry>ALT</entry>
-       <entry>MULE_INTERNAL</entry>
+       <entry><literal>win866_to_mic</literal></entry>
+       <entry><literal>ALT</literal></entry>
+       <entry><literal>MULE_INTERNAL</literal></entry>
       </row>
 
       <row>
-       <entry>win866_to_utf_8</entry>
-       <entry>ALT</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>win866_to_utf_8</literal></entry>
+       <entry><literal>ALT</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry>win866_to_win1251</entry>
-       <entry>ALT</entry>
-       <entry>WIN</entry>
+       <entry><literal>win866_to_win1251</literal></entry>
+       <entry><literal>ALT</literal></entry>
+       <entry><literal>WIN</literal></entry>
       </row>
 
       <row>
-       <entry>win874_to_utf_8</entry>
-       <entry>WIN874</entry>
-       <entry>UNICODE</entry>
+       <entry><literal>win874_to_utf_8</literal></entry>
+       <entry><literal>WIN874</literal></entry>
+       <entry><literal>UNICODE</literal></entry>
       </row>
 
      </tbody>
@@ -2389,12 +2389,12 @@ PostgreSQL documentation
 
 <!-- derived from the re_format.7 man page -->
    <para>
-    Regular expressions (<quote>RE</quote>s), as defined in
+    Regular expressions (<acronym>RE</acronym>s), as defined in
      <acronym>POSIX</acronym> 
-    1003.2, come in two forms: modern REs (roughly those of
+    1003.2, come in two forms: modern <acronym>RE</acronym>s (roughly those of
     <command>egrep</command>; 1003.2 calls these
-    <quote>extended</quote> REs) and obsolete REs (roughly those of
-    <command>ed</command>; 1003.2 <quote>basic</quote> REs).
+    <quote>extended</quote> <acronym>RE</acronym>s) and obsolete <acronym>RE</acronym>s (roughly those of
+    <command>ed</command>; 1003.2 <quote>basic</quote> <acronym>RE</acronym>s).
     <productname>PostgreSQL</productname> implements the modern form.
    </para>
 
@@ -2606,7 +2606,7 @@ PostgreSQL documentation
    </para>
 
    <para>
-    There is no particular limit on the length of REs, except insofar
+    There is no particular limit on the length of <acronym>RE</acronym>s, except insofar
     as memory is limited.  Memory usage is approximately linear in RE
     size, and largely insensitive to RE complexity, except for bounded
     repetitions.  Bounded repetitions are implemented by macro
@@ -4923,7 +4923,7 @@ SELECT setval('foo', 42, false);    <lineannotation>Next nextval() will return 4
    </para>
   </tip>
 
-  <bridgehead renderas="sect2">CASE</bridgehead>
+  <bridgehead renderas="sect2"><literal>CASE</></bridgehead>
 
 <synopsis>
 CASE WHEN <replaceable>condition</replaceable> THEN <replaceable>result</replaceable>
@@ -4945,7 +4945,7 @@ END
    <replaceable>condition</replaceable> is true then the value of the
    case expression is the <replaceable>result</replaceable> in the
    <token>ELSE</token> clause.  If the <token>ELSE</token> clause is
-   omitted and no condition matches, the result is NULL.
+   omitted and no condition matches, the result is null.
   </para>
 
   <informalexample>
@@ -4999,7 +4999,7 @@ END
    all the <replaceable>value</replaceable>s in the
    <token>WHEN</token> clauses until one is found that is equal.  If
    no match is found, the <replaceable>result</replaceable> in the
-   <token>ELSE</token> clause (or NULL) is returned.  This is similar
+   <token>ELSE</token> clause (or a null value) is returned.  This is similar
    to the <function>switch</function> statement in C.
   </para>
 
@@ -5025,7 +5025,7 @@ END
     </para>
    </informalexample>
 
-   <bridgehead renderas="sect2">COALESCE</bridgehead>
+   <bridgehead renderas="sect2"><literal>COALESCE</></bridgehead>
 
 <synopsis>
 <function>COALESCE</function>(<replaceable>value</replaceable>
@@ -5034,15 +5034,15 @@ END
 
   <para>
    The <function>COALESCE</function> function returns the first of its
-   arguments that is not NULL.  This is often useful to substitute a
-   default value for NULL values when data is retrieved for display,
+   arguments that is not null.  This is often useful to substitute a
+   default value for null values when data is retrieved for display,
    for example:
 <programlisting>
 SELECT COALESCE(description, short_description, '(none)') ...
 </programlisting>
   </para>
 
- <bridgehead renderas="sect2">NULLIF</bridgehead>
+ <bridgehead renderas="sect2"><literal>NULLIF</></bridgehead>
 
   <indexterm>
    <primary>nullif</primary>
@@ -5054,7 +5054,7 @@ SELECT COALESCE(description, short_description, '(none)') ...
 </synopsis>
 
   <para>
-   The <function>NULLIF</function> function returns NULL if and only
+   The <function>NULLIF</function> function returns a null value if and only
    if <replaceable>value1</replaceable> and
    <replaceable>value2</replaceable> are equal.  Otherwise it returns
    <replaceable>value1</replaceable>.  This can be used to perform the
@@ -5169,7 +5169,7 @@ SELECT NULLIF(value, '(none)') ...
 
    <para>
     <function>current_schema</function> returns the name of the schema that is
-    at the front of the search path (or NULL if the search path is
+    at the front of the search path (or a null value if the search path is
     empty).  This is the schema that will be used for any tables or
     other named objects that are created without specifying a target schema.
     <function>current_schemas(boolean)</function> returns an array of the names of all
@@ -5183,7 +5183,7 @@ SELECT NULLIF(value, '(none)') ...
      <primary>search path</primary>
      <secondary>changing at runtime</secondary>
     </indexterm>
-    The search path may be altered by a runtime-alterable GUC setting.  The
+    The search path may be altered by a run-time setting.  The
     command to use is <command>
      SET SEARCH_PATH '<varname>schema</varname>'[,'<varname>schema</varname>']...
     </command>
@@ -5425,7 +5425,7 @@ SELECT has_table_privilege('myschema.mytable', 'select');
     can access a function in a particular way.  The possibilities for its
     arguments are analogous to <function>has_table_privilege</function>.
     When specifying a function by a text string rather than by OID,
-    the allowed input is the same as for the <type>regprocedure</> datatype.
+    the allowed input is the same as for the <type>regprocedure</> data type.
     The desired access type must currently evaluate to
     <literal>EXECUTE</literal>.
    </para>
@@ -5527,7 +5527,7 @@ SELECT relname FROM pg_class WHERE pg_table_is_visible(oid);
     visibility check for types, functions, operators, and operator classes,
     respectively.  For functions and operators, an object in the search path
     is visible if there is no object of the same name <emphasis>and argument
-    datatype(s)</> earlier in the path.  For operator classes,
+    data type(s)</> earlier in the path.  For operator classes,
     both name and associated index access method are considered.
    </para>
 
@@ -5657,7 +5657,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
 
    <para>
     These functions extract comments previously stored with the
-    <command>COMMENT</command> command.  <literal>NULL</literal> is returned if
+    <command>COMMENT</command> command.  A null value is returned if
     no comment can be found matching the specified parameters.
    </para>
 
@@ -5742,7 +5742,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
       <entry><function>count</function>(<replaceable class="parameter">expression</replaceable>)</entry>
       <entry>
        Counts the input values for which the value of <replaceable
-                                                                   class="parameter">expression</replaceable> is not NULL.
+                                                                   class="parameter">expression</replaceable> is not null.
       </entry>
       <entry>The return value is of type <type>bigint</type>.</entry>
      </row>
@@ -5818,10 +5818,10 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
 
   <para>
    It should be noted that except for <function>COUNT</function>,
-   these functions return NULL when no rows are selected.  In
-   particular, <function>SUM</function> of no rows returns NULL, not
+   these functions return a null value when no rows are selected.  In
+   particular, <function>SUM</function> of no rows returns null, not
    zero as one might expect.  <function>COALESCE</function> may be
-   used to substitute zero for NULL when necessary.
+   used to substitute zero for null when necessary.
   </para>
 
  </sect1>
@@ -5992,7 +5992,7 @@ OR
   </para>
 
   <para>
-   As usual, NULLs in the expressions or subquery rows are combined per
+   As usual, null values in the expressions or subquery rows are combined per
    the normal rules of SQL Boolean expressions.  Two rows are considered
    equal if all their corresponding members are non-null and equal; the rows
    are unequal if any corresponding members are non-null and unequal;
@@ -6033,7 +6033,7 @@ AND
   <tip>
   <para>
    <literal>x NOT IN y</literal> is equivalent to <literal>NOT (x IN y)</literal> in all
-   cases.  However, NULLs are much more likely to trip up the novice when
+   cases.  However, null values are much more likely to trip up the novice when
    working with <token>NOT IN</token> than when working with <token>IN</token>.
    It's best to express your condition positively if possible.
   </para>
@@ -6084,7 +6084,7 @@ AND
   </para>
 
   <para>
-   As usual, NULLs in the expressions or subquery rows are combined per
+   As usual, null values in the expressions or subquery rows are combined per
    the normal rules of SQL Boolean expressions.  Two rows are considered
    equal if all their corresponding members are non-null and equal; the rows
    are unequal if any corresponding members are non-null and unequal;
@@ -6153,7 +6153,7 @@ AND
   </para>
 
   <para>
-   As usual, NULLs in the expressions or subquery rows are combined per
+   As usual, null values in the expressions or subquery rows are combined per
    the normal rules of SQL Boolean expressions.  Two rows are considered
    equal if all their corresponding members are non-null and equal; the rows
    are unequal if any corresponding members are non-null and unequal;
@@ -6217,7 +6217,7 @@ AND
   </para>
 
   <para>
-   As usual, NULLs in the expressions or subquery rows are combined per
+   As usual, null values in the expressions or subquery rows are combined per
    the normal rules of SQL Boolean expressions.  Two rows are considered
    equal if all their corresponding members are non-null and equal; the rows
    are unequal if any corresponding members are non-null and unequal;
@@ -6247,7 +6247,7 @@ AND
   </para>
 
   <para>
-   As usual, NULLs in the expressions or subquery rows are combined per
+   As usual, null values in the expressions or subquery rows are combined per
    the normal rules of SQL Boolean expressions.  Two rows are considered
    equal if all their corresponding members are non-null and equal; the rows
    are unequal if any corresponding members are non-null and unequal;

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.60 2002/09/01 16:28:05 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.61 2002/09/21 18:32:54 petere Exp $
 -->
 
  <chapter id="xfunc">
@@ -1183,7 +1183,7 @@ CREATE FUNCTION concat_text(text, text) RETURNS text
      meaning that
      the system should automatically assume a NULL result if any input
      value is NULL.  By doing this, we avoid having to check for NULL inputs
-     in the function code.  Without this, we'd have to check for NULLs
+     in the function code.  Without this, we'd have to check for null values
      explicitly, for example by checking for a null pointer for each
      pass-by-reference argument.  (For pass-by-value arguments, we don't
      even have a way to check!)
@@ -1497,7 +1497,7 @@ LANGUAGE C;
      either base (scalar) data types, or composite (multi-column) data types.
      The API is split into two main components: support for returning
      composite data types, and support for returning multiple rows
-     (set returning functions or SRFs).
+     (set returning functions or <acronym>SRF</>s).
     </para>
 
     <para>
@@ -1511,17 +1511,19 @@ LANGUAGE C;
     </para>
 
    <sect3>
-    <title>Returning Tuples (Composite Types)</title>
+    <title>Returning Rows (Composite Types)</title>
 
     <para>
      The Table Function API support for returning composite data types
-     (or tuples) starts with the AttInMetadata struct. This struct holds
-     arrays of individual attribute information needed to create a tuple from
-     raw C strings. It also saves a pointer to the TupleDesc. The information
-     carried here is derived from the TupleDesc, but it is stored here to
-     avoid redundant CPU cycles on each call to a Table Function.  In the
-     case of a function returning a set, the AttInMetadata struct should be
-     computed once during the first call and saved for re-use in later calls.
+     (or rows) starts with the <structname>AttInMetadata</>
+     structure. This structure holds arrays of individual attribute
+     information needed to create a row from raw C strings. It also
+     saves a pointer to the <structname>TupleDesc</>. The information
+     carried here is derived from the <structname>TupleDesc</>, but it
+     is stored here to avoid redundant CPU cycles on each call to a
+     table function.  In the case of a function returning a set, the
+     <structname>AttInMetadata</> structure should be computed
+     once during the first call and saved for re-use in later calls.
 <programlisting>
 typedef struct AttInMetadata
 {
@@ -1538,70 +1540,80 @@ typedef struct AttInMetadata
     int32    	   *atttypmods;
 }	AttInMetadata;
 </programlisting>
-     To assist you in populating this struct, several functions and a macro
+    </para>
+
+    <para>
+     To assist you in populating this structure, several functions and a macro
      are available. Use
 <programlisting>
 TupleDesc RelationNameGetTupleDesc(const char *relname)
 </programlisting>
-     to get a TupleDesc based on a specified relation, or
+     to get a <structname>TupleDesc</> based on a specified relation, or
 <programlisting>
 TupleDesc TypeGetTupleDesc(Oid typeoid, List *colaliases)
 </programlisting>
-     to get a TupleDesc based on a type OID. This can be used to
-     get a TupleDesc for a base (scalar) or composite (relation) type. Then
+     to get a <structname>TupleDesc</> based on a type OID. This can
+     be used to get a <structname>TupleDesc</> for a base (scalar) or
+     composite (relation) type. Then
 <programlisting>
 AttInMetadata *TupleDescGetAttInMetadata(TupleDesc tupdesc)
 </programlisting>
-     will return a pointer to an AttInMetadata struct, initialized based on
-     the given TupleDesc. AttInMetadata can be used in conjunction with
-     C strings to produce a properly formed tuple. The metadata is stored here
-     to avoid redundant work across multiple calls.
+     will return a pointer to an <structname>AttInMetadata</>,
+     initialized based on the given
+     <structname>TupleDesc</>. <structname>AttInMetadata</> can be
+     used in conjunction with C strings to produce a properly formed
+     tuple. The metadata is stored here to avoid redundant work across
+     multiple calls.
     </para>
 
     <para>
      To return a tuple you must create a tuple slot based on the
-     TupleDesc. You can use
+     <structname>TupleDesc</>. You can use
 <programlisting>
 TupleTableSlot *TupleDescGetSlot(TupleDesc tupdesc)
 </programlisting>
      to initialize this tuple slot, or obtain one through other (user provided)
-     means. The tuple slot is needed to create a Datum for return by the
+     means. The tuple slot is needed to create a <type>Datum</> for return by the
      function.  The same slot can (and should) be re-used on each call.
     </para>
 
     <para>
-     After constructing an AttInMetadata structure,
+     After constructing an <structname>AttInMetadata</> structure,
 <programlisting>
 HeapTuple BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 </programlisting>
-     can be used to build a HeapTuple given user data in C string form.
-     "values" is an array of C strings, one for each attribute of the return
-     tuple. Each C string should be in the form expected by the input function
-     of the attribute data type. In order to return a NULL value for
-     one of the attributes, the corresponding pointer in the "values" array
-     should be set to NULL.  This function will need to be called again
-     for each tuple you return.
+     can be used to build a <structname>HeapTuple</> given user data
+     in C string form.  "values" is an array of C strings, one for
+     each attribute of the return tuple. Each C string should be in
+     the form expected by the input function of the attribute data
+     type. In order to return a null value for one of the attributes,
+     the corresponding pointer in the <parameter>values</> array
+     should be set to <symbol>NULL</>.  This function will need to
+     be called again for each tuple you return.
     </para>
 
     <para>
-     Building a tuple via TupleDescGetAttInMetadata and BuildTupleFromCStrings
-     is only convenient if your function naturally computes the values to
-     be returned as text strings.  If your code naturally computes the
-     values as a set of Datums, you should instead use the underlying
-     heap_formtuple routine to convert the Datums directly into a tuple.
-     You will still need the TupleDesc and a TupleTableSlot, but not
-     AttInMetadata.
+     Building a tuple via <function>TupleDescGetAttInMetadata</> and
+     <function>BuildTupleFromCStrings</> is only convenient if your
+     function naturally computes the values to be returned as text
+     strings.  If your code naturally computes the values as a set of
+     Datums, you should instead use the underlying
+     <function>heap_formtuple</> routine to convert the
+     <type>Datum</type>s directly into a tuple.  You will still need
+     the <structname>TupleDesc</> and a <structname>TupleTableSlot</>,
+     but not <structname>AttInMetadata</>.
     </para>
 
     <para>
      Once you have built a tuple to return from your function, the tuple must
-     be converted into a Datum. Use
+     be converted into a <type>Datum</>. Use
 <programlisting>
 TupleGetDatum(TupleTableSlot *slot, HeapTuple tuple)
 </programlisting>
-     to get a Datum given a tuple and a slot.  This Datum can be returned
-     directly if you intend to return just a single row, or it can be used
-     as the current return value in a set-returning function.
+     to get a <type>Datum</> given a tuple and a slot.  This
+     <type>Datum</> can be returned directly if you intend to return
+     just a single row, or it can be used as the current return value
+     in a set-returning function.
     </para>
 
     <para>
@@ -1614,74 +1626,75 @@ TupleGetDatum(TupleTableSlot *slot, HeapTuple tuple)
     <title>Returning Sets</title>
 
     <para>
-     A set-returning function (SRF) is normally called once for each item it
-     returns.  The SRF must therefore save enough state to remember what it
-     was doing and return the next item on each call.  The Table Function API
-     provides the FuncCallContext struct to help control this process.
-     <literal>fcinfo-&gt;flinfo-&gt;fn_extra</> is used to
-     hold a pointer to FuncCallContext across calls.
+     A set-returning function (<acronym>SRF</>) is normally called
+     once for each item it returns.  The <acronym>SRF</> must
+     therefore save enough state to remember what it was doing and
+     return the next item on each call.  The Table Function API
+     provides the <structname>FuncCallContext</> structure to help
+     control this process.  <literal>fcinfo-&gt;flinfo-&gt;fn_extra</>
+     is used to hold a pointer to <structname>FuncCallContext</>
+     across calls.
 <programlisting>
 typedef struct
 {
-	/*
-	 * Number of times we've been called before.
-	 * 
-	 * call_cntr is initialized to 0 for you by SRF_FIRSTCALL_INIT(), and
-	 * incremented for you every time SRF_RETURN_NEXT() is called.
-	 */
-	uint32			call_cntr;
+    /*
+     * Number of times we've been called before.
+     * 
+     * call_cntr is initialized to 0 for you by SRF_FIRSTCALL_INIT(), and
+     * incremented for you every time SRF_RETURN_NEXT() is called.
+     */
+    uint32 call_cntr;
 
-	/*
-	 * OPTIONAL maximum number of calls
-	 *
-	 * max_calls is here for convenience ONLY and setting it is OPTIONAL.
-	 * If not set, you must provide alternative means to know when the
-	 * function is done.
-	 */
-	uint32			max_calls;
+    /*
+     * OPTIONAL maximum number of calls
+     *
+     * max_calls is here for convenience ONLY and setting it is OPTIONAL.
+     * If not set, you must provide alternative means to know when the
+     * function is done.
+     */
+    uint32 max_calls;
 
-	/*
-	 * OPTIONAL pointer to result slot
-	 * 
-	 * slot is for use when returning tuples (i.e. composite data types)
-	 * and is not needed when returning base (i.e. scalar) data types.
-	 */
-	TupleTableSlot *slot;
+    /*
+     * OPTIONAL pointer to result slot
+     * 
+     * slot is for use when returning tuples (i.e. composite data types)
+     * and is not needed when returning base (i.e. scalar) data types.
+     */
+    TupleTableSlot *slot;
 
-	/*
-	 * OPTIONAL pointer to misc user provided context info
-	 * 
-	 * user_fctx is for use as a pointer to your own struct to retain
-	 * arbitrary context information between calls for your function.
-	 */
-	void		   *user_fctx;
+    /*
+     * OPTIONAL pointer to misc user provided context info
+     * 
+     * user_fctx is for use as a pointer to your own struct to retain
+     * arbitrary context information between calls for your function.
+     */
+    void *user_fctx;
 
-	/*
-	 * OPTIONAL pointer to struct containing arrays of attribute type input
-	 * metainfo
-	 * 
-	 * attinmeta is for use when returning tuples (i.e. composite data types)
-	 * and is not needed when returning base (i.e. scalar) data types. It
-	 * is ONLY needed if you intend to use BuildTupleFromCStrings() to create
-	 * the return tuple.
-	 */
-	AttInMetadata	   *attinmeta;
+    /*
+     * OPTIONAL pointer to struct containing arrays of attribute type input
+     * metainfo
+     * 
+     * attinmeta is for use when returning tuples (i.e. composite data types)
+     * and is not needed when returning base (i.e. scalar) data types. It
+     * is ONLY needed if you intend to use BuildTupleFromCStrings() to create
+     * the return tuple.
+     */
+    AttInMetadata *attinmeta;
 
-	/*
-	 * memory context used for structures which must live for multiple calls
-	 *
-	 * multi_call_memory_ctx is set by SRF_FIRSTCALL_INIT() for you, and used
-	 * by SRF_RETURN_DONE() for cleanup. It is the most appropriate memory
-	 * context for any memory that is to be re-used across multiple calls
-	 * of the SRF.
-	 */
-	MemoryContext	multi_call_memory_ctx;
-
-}	FuncCallContext;
+    /*
+     * memory context used for structures which must live for multiple calls
+     *
+     * multi_call_memory_ctx is set by SRF_FIRSTCALL_INIT() for you, and used
+     * by SRF_RETURN_DONE() for cleanup. It is the most appropriate memory
+     * context for any memory that is to be re-used across multiple calls
+     * of the SRF.
+     */
+    MemoryContext multi_call_memory_ctx;
+} FuncCallContext;
 </programlisting>
-     An SRF uses several functions and macros that automatically manipulate
-     the FuncCallContext struct (and expect to find it via
-     <literal>fn_extra</>).  Use
+     An <acronym>SRF</> uses several functions and macros that
+     automatically manipulate the <structname>FuncCallContext</>
+     structure (and expect to find it via <literal>fn_extra</>).  Use
 <programlisting>
 SRF_IS_FIRSTCALL()
 </programlisting>
@@ -1690,13 +1703,14 @@ SRF_IS_FIRSTCALL()
 <programlisting>
 SRF_FIRSTCALL_INIT()
 </programlisting>
-     to initialize the FuncCallContext struct. On every function call,
+     to initialize the <structname>FuncCallContext</>. On every function call,
      including the first, use
 <programlisting>
 SRF_PERCALL_SETUP()
 </programlisting>
-     to properly set up for using the FuncCallContext struct and clearing
-     any previously returned data left over from the previous pass.
+     to properly set up for using the <structname>FuncCallContext</>
+     and clearing any previously returned data left over from the
+     previous pass.
     </para>
 
     <para>
@@ -1704,24 +1718,25 @@ SRF_PERCALL_SETUP()
 <programlisting>
 SRF_RETURN_NEXT(funcctx, result)
 </programlisting>
-     to return it to the caller.  (The <literal>result</>
-     must be a Datum, either a single value or a tuple prepared as described
-     earlier.)  Finally, when your function is finished returning data, use
+     to return it to the caller.  (The <literal>result</> must be a
+     <type>Datum</>, either a single value or a tuple prepared as
+     described earlier.)  Finally, when your function is finished
+     returning data, use
 <programlisting>
 SRF_RETURN_DONE(funcctx)
 </programlisting>
-     to clean up and end the SRF.
+     to clean up and end the <acronym>SRF</>.
     </para>
 
     <para>
-     The palloc memory context that is current when the SRF is called is
+     The memory context that is current when the <acronym>SRF</> is called is
      a transient context that will be cleared between calls.  This means
-     that you do not need to be careful about pfree'ing everything
-     you palloc; it will go away anyway.  However, if you want to allocate
+     that you do not need to <function>pfree</> everything
+     you <function>palloc</>; it will go away anyway.  However, if you want to allocate
      any data structures to live across calls, you need to put them somewhere
      else.  The memory context referenced by
      <structfield>multi_call_memory_ctx</> is a suitable location for any
-     data that needs to survive until the SRF is finished running.  In most
+     data that needs to survive until the <acronym>SRF</> is finished running.  In most
      cases, this means that you should switch into
      <structfield>multi_call_memory_ctx</> while doing the first-call setup.
     </para>
@@ -1776,7 +1791,7 @@ my_Set_Returning_Function(PG_FUNCTION_ARGS)
     </para>
 
     <para>
-     A complete example of a simple SRF returning a composite type looks like:
+     A complete example of a simple <acronym>SRF</> returning a composite type looks like:
 <programlisting>
 PG_FUNCTION_INFO_V1(testpassbyval);
 Datum
@@ -1882,7 +1897,7 @@ CREATE OR REPLACE FUNCTION testpassbyval(int4, int4) RETURNS setof __testpassbyv
     </para>
 
     <para>
-     See contrib/tablefunc for more examples of Table Functions.
+     See <filename>contrib/tablefunc</> for more examples of table functions.
     </para>
 
    </sect3>
@@ -1897,7 +1912,7 @@ CREATE OR REPLACE FUNCTION testpassbyval(int4, int4) RETURNS setof __testpassbyv
      programming  language  functions.  Be warned: this section
      of the manual will not make you a programmer.  You must
      have  a  good  understanding of <acronym>C</acronym>
-     (including the use of pointers and the malloc memory manager)  
+     (including the use of pointers)  
      before  trying to write <acronym>C</acronym> functions for 
      use with <productname>PostgreSQL</productname>. While  it may 
      be possible to load functions written in languages other 
@@ -2183,15 +2198,15 @@ WHERE proname LIKE 'bytea%';
    <para>
     The call handler is called in the same way as any other function:
     It receives a pointer to a
-    <structname>FunctionCallInfoData</structname> struct containing
+    <structname>FunctionCallInfoData</structname> <type>struct</> containing
     argument values and information about the called function, and it
     is expected to return a <type>Datum</type> result (and possibly
     set the <structfield>isnull</structfield> field of the
-    <structname>FunctionCallInfoData</structname> struct, if it wishes
+    <structname>FunctionCallInfoData</structname> structure, if it wishes
     to return an SQL NULL result).  The difference between a call
     handler and an ordinary callee function is that the
     <structfield>flinfo-&gt;fn_oid</structfield> field of the
-    <structname>FunctionCallInfoData</structname> struct will contain
+    <structname>FunctionCallInfoData</structname> structure will contain
     the OID of the actual function to be called, not of the call
     handler itself.  The call handler must use this field to determine
     which function to execute.  Also, the passed argument list has

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.19 2002/08/11 02:43:57 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.20 2002/09/21 18:32:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -169,7 +169,7 @@ SELECT <replaceable class="parameter">columnlist</replaceable> INTO TABLE <repla
 
     which uses the <productname>PostgreSQL</productname> sorting code in 
     the ORDER BY clause to create the desired order; this is usually much
-    faster than an indexscan for
+    faster than an index scan for
     unordered data. You then drop the old table, use
     <command>ALTER TABLE...RENAME</command>
     to rename <replaceable class="parameter">newtable</replaceable> to the old name, and

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.21 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.22 2002/09/21 18:32:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -114,8 +114,8 @@ PostgreSQL documentation
    <para>
     <variablelist>
      <varlistentry>
-      <term>--pgdata=<replaceable class="parameter">directory</replaceable></term>
-      <term>-D <replaceable class="parameter">directory</replaceable></term>
+      <term><option>--pgdata=<replaceable class="parameter">directory</replaceable></option></term>
+      <term><option>-D <replaceable class="parameter">directory</replaceable></option></term>
       <listitem>
        <para>
         This option specifies the directory where the database system
@@ -130,23 +130,23 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>--username=<replaceable class="parameter">username</replaceable></term>
-      <term>-U <replaceable class="parameter">username</replaceable></term>
+      <term><option>--username=<replaceable class="parameter">username</replaceable></option></term>
+      <term><option>-U <replaceable class="parameter">username</replaceable></option></term>
       <listitem>
        <para>
         Selects the user name of the database superuser. This defaults
         to the name of the effective user running
         <command>initdb</command>. It is really not important what the
         superuser's name is, but one might choose to keep the
-        customary name <quote>postgres</quote>, even if the operating
+        customary name <systemitem>postgres</systemitem>, even if the operating
         system user's name is different.
        </para>
       </listitem>
      </varlistentry>
  
      <varlistentry>
-      <term>--pwprompt</term>
-      <term>-W</term>
+      <term><option>--pwprompt</option></term>
+      <term><option>-W</option></term>
       <listitem>
        <para>
         Makes <command>initdb</command> prompt for a password
@@ -159,8 +159,8 @@ PostgreSQL documentation
      </varlistentry>
  
      <varlistentry>
-      <term>--encoding=<replaceable class="parameter">encoding</replaceable></term>
-      <term>-E <replaceable class="parameter">encoding</replaceable></term>
+      <term><option>--encoding=<replaceable class="parameter">encoding</replaceable></option></term>
+      <term><option>-E <replaceable class="parameter">encoding</replaceable></option></term>
       <listitem>
        <para>
         Selects the encoding of the template database. This will also
@@ -173,7 +173,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>--locale=<replaceable>locale</replaceable></term>
+      <term><option>--locale=<replaceable>locale</replaceable></option></term>
       <listitem>
        <para>
         Sets the default locale for the database cluster.  If this
@@ -184,12 +184,12 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>--lc-collate=<replaceable>locale</replaceable></term>
-      <term>--lc-ctype=<replaceable>locale</replaceable></term>
-      <term>--lc-messages=<replaceable>locale</replaceable></term>
-      <term>--lc-monetary=<replaceable>locale</replaceable></term>
-      <term>--lc-numeric=<replaceable>locale</replaceable></term>
-      <term>--lc-time=<replaceable>locale</replaceable></term>
+      <term><option>--lc-collate=<replaceable>locale</replaceable></option></term>
+      <term><option>--lc-ctype=<replaceable>locale</replaceable></option></term>
+      <term><option>--lc-messages=<replaceable>locale</replaceable></option></term>
+      <term><option>--lc-monetary=<replaceable>locale</replaceable></option></term>
+      <term><option>--lc-numeric=<replaceable>locale</replaceable></option></term>
+      <term><option>--lc-time=<replaceable>locale</replaceable></option></term>
 
       <listitem>
        <para>
@@ -206,7 +206,7 @@ PostgreSQL documentation
 
     <variablelist>
      <varlistentry>
-      <term>-L <replaceable class="parameter">directory</replaceable></term>
+      <term><option>-L <replaceable class="parameter">directory</replaceable></option></term>
       <listitem>
        <para>
         Specifies where <command>initdb</command> should find
@@ -218,8 +218,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>--noclean</term>
-      <term>-n</term>
+      <term><option>-n</option></term>
+      <term><option>--noclean</option></term>
       <listitem>
        <para>
 	By default, when <command>initdb</command>
@@ -232,8 +232,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>--debug</term>
-      <term>-d</term>
+      <term><option>-d</option></term>
+      <term><option>--debug</option></term>
       <listitem>
        <para>
 	Print debugging output from the bootstrap backend and a few other

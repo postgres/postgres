@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.81 2002/09/18 20:09:31 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.82 2002/09/21 18:32:53 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -146,7 +146,7 @@ su - postgres
 *** You might have to rebuild your Perl installation.  Refer to
 *** the documentation for details.
 </screen>
-      (If you don't follow the onscreen output you will merely notice
+      (If you don't follow the on-screen output you will merely notice
       the the PL/Perl library object will not be installed.)  If you
       see this, you will have to re-build and install
       <productname>Perl</productname> manually to be able to build
@@ -239,7 +239,7 @@ JAVACMD=$JAVA_HOME/bin/java
      <para>
       To enable Native Language Support (<acronym>NLS</acronym>), that
       is, the ability to display a program's messages in a language
-      other than English, you need an implementation of the Gettext
+      other than English, you need an implementation of the <application>Gettext</>
       <acronym>API</acronym>.  Some operating systems have this
       built-in (e.g., <systemitem class="osname">Linux</>, <systemitem
       class="osname">NetBSD</>, <systemitem
@@ -256,7 +256,8 @@ JAVACMD=$JAVA_HOME/bin/java
 
     <listitem>
      <para>
-      Kerberos, OpenSSL, or PAM, if you want to support
+      <application>Kerberos</>, <application>OpenSSL</>, or <application>PAM</>,
+      if you want to support
       authentication using these services.
      </para>
     </listitem>
@@ -885,7 +886,7 @@ JAVACMD=$JAVA_HOME/bin/java
        <term><option>--without-readline</option></term>
        <listitem>
         <para>
-         Prevents the use of the Readline library.  This disables
+         Prevents the use of the <application>Readline</> library.  This disables
          command-line editing and history in
          <application>psql</application>, so it is not recommended.
         </para>
@@ -896,7 +897,7 @@ JAVACMD=$JAVA_HOME/bin/java
        <term><option>--without-zlib</option></term>
        <listitem>
         <para>
-         Prevents the use of the Zlib library.  This disables
+         Prevents the use of the <application>Zlib</> library.  This disables
          compression support in <application>pg_dump</application>.
          This option is only intended for those rare systems where this
          library is not available.

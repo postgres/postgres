@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.21 2002/08/22 00:01:40 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.22 2002/09/21 18:32:53 petere Exp $
 -->
 
  <chapter id="pltcl">
@@ -50,22 +50,22 @@ $Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.21 2002/08/22 00:01:40 tgl E
    <para>
     Sometimes it is desirable to write Tcl functions that are not restricted
     to safe Tcl --- for example, one might want a Tcl function that sends
-    mail.  To handle these cases, there is a variant of PL/Tcl called PL/TclU
+    mail.  To handle these cases, there is a variant of <application>PL/Tcl</> called <literal>PL/TclU</>
     (for untrusted Tcl).  This is the exact same language except that a full
-    Tcl interpreter is used.  <emphasis>If PL/TclU is used, it must be
+    Tcl interpreter is used.  <emphasis>If <application>PL/TclU</> is used, it must be
     installed as an untrusted procedural language</emphasis> so that only
-    database superusers can create functions in it.  The writer of a PL/TclU
+    database superusers can create functions in it.  The writer of a <application>PL/TclU</>
     function must take care that the function cannot be used to do anything
     unwanted, since it will be able to do anything that could be done by
     a user logged in as the database administrator.
    </para>
    <para>
-    The shared object for the PL/Tcl and PL/TclU call handlers is
+    The shared object for the <application>PL/Tcl</> and <application>PL/TclU</> call handlers is
     automatically built and installed in the
     <productname>PostgreSQL</productname> 
     library directory if Tcl/Tk support is specified
     in the configuration step of the installation procedure.  To install
-    PL/Tcl and/or PL/TclU in a particular database, use the
+    <application>PL/Tcl</> and/or <application>PL/TclU</> in a particular database, use the
     <filename>createlang</filename> script, for example
     <literal>createlang pltcl <replaceable>dbname</></literal> or
     <literal>createlang pltclu <replaceable>dbname</></literal>.
@@ -81,7 +81,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.21 2002/08/22 00:01:40 tgl E
     <title>PL/Tcl Functions and Arguments</title>
 
     <para>
-     To create a function in the PL/Tcl language, use the standard syntax
+     To create a function in the <application>PL/Tcl</> language, use the standard syntax
 
      <programlisting>
 CREATE FUNCTION <replaceable>funcname</replaceable> (<replaceable>argument-types</replaceable>) RETURNS <replaceable>return-type</replaceable> AS '
@@ -89,8 +89,8 @@ CREATE FUNCTION <replaceable>funcname</replaceable> (<replaceable>argument-types
 ' LANGUAGE 'pltcl';
      </programlisting>
 
-     PL/TclU is the same, except that the language should be specified as
-     <literal>'pltclu'</>.
+     <application>PL/TclU</> is the same, except that the language should be specified as
+     <literal>pltclu</>.
     </para>
 
     <para>
@@ -197,7 +197,7 @@ CREATE FUNCTION overpaid_2 (EMP) RETURNS bool AS '
      all PL/Tcl procedures executed in one backend share the same
      safe Tcl interpreter.  So, any global Tcl variable is accessible to
      all PL/Tcl procedure calls, and will persist for the duration of the
-     SQL client connection.  (Note that PL/TclU functions likewise share
+     SQL client connection.  (Note that <application>PL/TclU</> functions likewise share
      global data, but they are in a different Tcl interpreter and cannot
      communicate with PL/Tcl functions.)
     </para>
@@ -248,7 +248,7 @@ CREATE FUNCTION overpaid_2 (EMP) RETURNS bool AS '
 	setting up the query as a cursor and then saying <literal>FETCH n</>.
        </para>
        <para>
-	If the query is a SELECT statement, the values of the SELECT's
+	If the query is a <literal>SELECT</> statement, the values of the statement's
 	result columns are placed into Tcl variables named after the columns.
         If the <literal>-array</> option is given, the column values are
 	instead stored into the named associative array, with the SELECT
@@ -267,7 +267,7 @@ spi_exec "SELECT count(*) AS cnt FROM pg_proc"
 	</programlisting>
 
 	will set the Tcl variable <literal>$cnt</> to the number of rows in
-	the pg_proc system catalog.
+	the <structname>pg_proc</> system catalog.
        </para>
        <para>
         If the optional <replaceable>loop-body</> argument is given, it is
@@ -337,7 +337,7 @@ spi_exec -array C "SELECT * FROM pg_class" {
        <para>
 	The optional value for <literal>-nulls</> is a string of spaces and
 	<literal>'n'</> characters telling <function>spi_execp</function>
-	which of the arguments are NULLs. If given, it must have exactly the
+	which of the arguments are null values. If given, it must have exactly the
 	same length as the <replaceable>value-list</replaceable>.  If it
 	is not given, all the argument values are non-NULL.
        </para>
@@ -504,7 +504,7 @@ SELECT 'doesn''t' AS ret
        <listitem>
 	<para>
 	 A Tcl list of the table field names, prefixed with an empty list
-         element. So looking up an element name in the list with Tcl's
+         element. So looking up an element name in the list with <application>Tcl</>'s
          <function>lsearch</> command returns the element's number starting
 	 with 1 for the first column, the same way the fields are customarily
 	 numbered in <productname>PostgreSQL</productname>.
@@ -639,7 +639,7 @@ CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
         While the <literal>unknown</> module could actually contain any
 	initialization script you need, it normally defines a Tcl
 	<quote>unknown</> procedure that is invoked whenever Tcl does
-	not recognize an invoked procedure name.  PL/Tcl's standard version
+	not recognize an invoked procedure name.  <application>PL/Tcl</>'s standard version
 	of this procedure tries to find a module in <literal>pltcl_modules</>
 	that will define the required procedure.  If one is found, it is
 	loaded into the interpreter, and then execution is allowed to
@@ -674,7 +674,7 @@ CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
      differ. Tcl, however, requires all procedure names to be distinct.
      PL/Tcl deals with this by making the internal Tcl procedure names contain
      the object 
-     ID of the procedure's pg_proc row as part of their name. Thus,
+     ID of the procedure's <structname>pg_proc</> row as part of their name. Thus,
      <productname>PostgreSQL</productname> functions with the same name
      and different argument types will be different Tcl procedures too.  This
      is not normally a concern for a PL/Tcl programmer, but it might be visible

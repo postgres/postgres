@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.96 2002/09/05 22:09:42 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.97 2002/09/21 18:32:53 petere Exp $
 -->
 
  <chapter id="libpq">
@@ -214,7 +214,7 @@ PGconn *PQconnectdb(const char *conninfo)
    environment variable (see <xref linkend="libpq-envars">)
    is checked. If the  environment  variable is not set either,
    then hardwired defaults are used.
-   The return value is a pointer to an abstract struct
+   The return value is a pointer to an abstract <type>struct</type>
    representing the connection to the backend.
    </para>
   </listitem>
@@ -457,7 +457,7 @@ struct PQconninfoOption
    Returns a connection options array.  This may
    be used to determine all possible <function>PQconnectdb</function> options and their
    current default values.  The return value points to an array of
-   <structname>PQconninfoOption</structname> structs, which ends with an entry having a NULL
+   <structname>PQconninfoOption</structname> <type>struct</>s, which ends with an entry having a NULL
    keyword pointer.  Note that the default values (<structfield>val</structfield> fields)
    will depend on environment variables and other context.
    Callers must treat the connection options data as read-only.
@@ -542,7 +542,7 @@ maintain the <structname>PGconn</structname> abstraction.  Use the accessor func
 at the contents of <structname>PGconn</structname>.  Avoid directly referencing the fields of the
 <structname>PGconn</> structure because they are subject to change in the future.
 (Beginning in <productname>PostgreSQL</productname> release 6.4, the
-definition of struct <structname>PGconn</structname> is not even provided in <filename>libpq-fe.h</filename>.
+definition of <type>struct PGconn</> is not even provided in <filename>libpq-fe.h</filename>.
 If you have old code that accesses <structname>PGconn</structname> fields directly, you can keep using it
 by including <filename>libpq-int.h</filename> too, but you are encouraged to fix the code
 soon.)
@@ -757,7 +757,7 @@ maintain the <structname>PGresult</structname> abstraction.  Use the accessor fu
 at the contents of <structname>PGresult</structname>.  Avoid directly referencing the fields of the
 <structname>PGresult</structname> structure because they are subject to change in the future.
 (Beginning in <productname>PostgreSQL</productname> 6.4, the
-definition of struct <structname>PGresult</structname> is not even provided in <filename>libpq-fe.h</>.  If you
+definition of <type>struct PGresult</> is not even provided in <filename>libpq-fe.h</>.  If you
 have old code that accesses <structname>PGresult</structname> fields directly, you can keep using it
 by including <filename>libpq-int.h</filename> too, but you are encouraged to fix the code
 soon.)
@@ -813,7 +813,7 @@ exposes a bug in the client software.
 <listitem>
 <para>
 <function>PQresStatus</function>
-	Converts the enumerated type returned by PQresultStatus into
+	Converts the enumerated type returned by <function>PQresultStatus</> into
 	a string constant describing the status code.
 <synopsis>
 char *PQresStatus(ExecStatusType status);
@@ -868,7 +868,7 @@ This is <application>libpq</>'s internal routine to allocate and initialize an e
 <structname>PGresult</structname> object.  It is exported because some applications find it
 useful to generate result objects (particularly objects with error
 status) themselves.  If <parameter>conn</parameter> is not NULL and status indicates an error,
-the connection's current errorMessage is copied into the <structname>PGresult.</structname>
+the connection's current error message is copied into the <structname>PGresult.</structname>
 Note that <function>PQclear</function> should eventually be called on the object, just
 as with a <structname>PGresult</structname> returned by <application>libpq</application> itself.
 </para>
@@ -976,7 +976,7 @@ strings overlap.
    The <parameter>from</parameter> parameter points to an escaped string
    such as might be returned by <function>PQgetvalue</function> of a
    <type>BYTEA</type> column. <function>PQunescapeBytea</function> converts
-   this NUL terminated string representation into binary, filling a buffer.
+   this string representation into its binary representation, filling the supplied buffer.
    It returns a pointer to the buffer which is NULL on error, and the size
    of the buffer in <parameter>to_length</parameter>. The pointer may
    subsequently be used as an argument to the function
@@ -1092,7 +1092,7 @@ int PQfsize(const PGresult *res,
 <listitem>
 <para>
 <function>PQbinaryTuples</function>
-          Returns 1 if the PGresult contains binary tuple data,
+          Returns 1 if the <structname>PGresult</> contains binary tuple data,
 	  0 if it contains ASCII data.
 <synopsis>
 int PQbinaryTuples(const PGresult *res);
@@ -1392,7 +1392,7 @@ PGresult *PQgetResult(PGconn *conn);
 	  indicating that the command is done.  (If called when no command is
 	  active, <function>PQgetResult</function> will just return NULL at once.)
 	  Each non-NULL result from <function>PQgetResult</function> should be processed using
-	  the same PGresult accessor functions previously described.
+	  the same <structname>PGresult</> accessor functions previously described.
 	  Don't forget to free each result object with <function>PQclear</function> when done with it.
 	  Note that <function>PQgetResult</function> will block only if a query is active and the
 	  necessary response data has not yet been read by <function>PQconsumeInput</function>.
@@ -1606,7 +1606,7 @@ typedef struct {
     } u;
 } PQArgBlock;
 </synopsis>
-     <function>PQfn</function> always returns a valid <structname>PGresult*</structname>. The resultStatus
+     <function>PQfn</function> always returns a valid <structname>PGresult*</structname>. The result status
      should be checked before the result is used.   The
      caller is responsible for  freeing  the  <structname>PGresult</structname>  with
      <function>PQclear</function> when it is no longer needed.
@@ -1647,7 +1647,7 @@ messages can be detected by calling <function>PQnotifies</function>.
           Returns  the next notification from a list of unhandled
           notification messages received from the backend.  Returns NULL if
           there are no pending notifications.  Once a notification is
-	  returned from PQnotifies, it is considered handled and will be
+	  returned from <function>PQnotifies</>, it is considered handled and will be
 	  removed from the list of notifications.
 <synopsis>
 PGnotify* PQnotifies(PGconn *conn);
@@ -1932,7 +1932,7 @@ void PQuntrace(PGconn *conn)
 <para>
 <function>PQsetNoticeProcessor</function>
 <indexterm><primary>notice processor</></>
-Control reporting of notice and warning messages generated by libpq.
+Control reporting of notice and warning messages generated by <application>libpq</>.
 <synopsis>
 typedef void (*PQnoticeProcessor) (void *arg, const char *message);
 

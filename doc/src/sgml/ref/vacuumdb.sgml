@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.25 2002/09/05 22:05:50 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.26 2002/09/21 18:32:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -79,8 +79,8 @@ PostgreSQL documentation
     
     <variablelist>
      <varlistentry>
-      <term>-d <replaceable class="parameter">dbname</replaceable></term>
-      <term>--dbname <replaceable class="parameter">dbname</replaceable></term>
+      <term><option>-d <replaceable class="parameter">dbname</replaceable></option></term>
+      <term><option>--dbname <replaceable class="parameter">dbname</replaceable></option></term>
       <listitem>
        <para>
 	Specifies the name of the database to be cleaned or analyzed.
@@ -94,8 +94,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-a</term>
-      <term>--all</term>
+      <term><option>-a</option></term>
+      <term><option>--all</option></term>
       <listitem>
        <para>
 	Vacuum all databases.
@@ -104,8 +104,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-f</term>
-      <term>--full</term>
+      <term><option>-f</option></term>
+      <term><option>--full</option></term>
       <listitem>
        <para>
         Perform <quote>full</quote> vacuuming.
@@ -114,8 +114,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-v</term>
-      <term>--verbose</term>
+      <term><option>-v</option></term>
+      <term><option>--verbose</option></term>
       <listitem>
        <para>
 	Print detailed information during processing.
@@ -124,8 +124,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-z</term>
-      <term>--analyze</term>
+      <term><option>-z</option></term>
+      <term><option>--analyze</option></term>
       <listitem>
        <para>
 	Calculate statistics for use by the optimizer.
@@ -134,8 +134,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-t <replaceable class="parameter">table</replaceable> [ (<replaceable class="parameter">column</replaceable> [,...]) ]</term>
-      <term>--table <replaceable class="parameter">table</replaceable> [ (<replaceable class="parameter">column</replaceable> [,...]) ]</term>
+      <term><option>-t <replaceable class="parameter">table</replaceable> [ (<replaceable class="parameter">column</replaceable> [,...]) ]</option></term>
+      <term><option>--table <replaceable class="parameter">table</replaceable> [ (<replaceable class="parameter">column</replaceable> [,...]) ]</option></term>
       <listitem>
        <para>
 	Clean or analyze <replaceable class="parameter">table</replaceable> only.
@@ -160,8 +160,8 @@ PostgreSQL documentation
     
     <variablelist>
      <varlistentry>
-      <term>-h <replaceable class="parameter">host</replaceable></term>
-      <term>--host <replaceable class="parameter">host</replaceable></term>
+      <term><option>-h <replaceable class="parameter">host</replaceable></></term>
+      <term><option>--host <replaceable class="parameter">host</replaceable></></term>
       <listitem>
        <para>
 	Specifies the host name of the machine on which the 
@@ -173,8 +173,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-p <replaceable class="parameter">port</replaceable></term>
-      <term>--port <replaceable class="parameter">port</replaceable></term>
+      <term><option>-p <replaceable class="parameter">port</replaceable></></term>
+      <term><option>--port <replaceable class="parameter">port</replaceable></></term>
       <listitem>
        <para>
 	Specifies the Internet TCP/IP port or local Unix domain socket file 
@@ -185,8 +185,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-U <replaceable class="parameter">username</replaceable></term>
-      <term>--username <replaceable class="parameter">username</replaceable></term>
+      <term><option>-U <replaceable class="parameter">username</replaceable></></term>
+      <term><option>--username <replaceable class="parameter">username</replaceable></></term>
       <listitem>
        <para>
         User name to connect as
@@ -195,8 +195,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-W</term>
-      <term>--password</term>
+      <term><option>-W</></term>
+      <term><option>--password</></term>
       <listitem>
        <para>
         Force password prompt.
@@ -205,8 +205,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-e</term>
-      <term>--echo</term>
+      <term><option>-e</></term>
+      <term><option>--echo</></term>
       <listitem>
        <para>
         Echo the commands that <application>vacuumdb</application> generates
@@ -216,8 +216,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-q</term>
-      <term>--quiet</term>
+      <term><option>-q</></term>
+      <term><option>--quiet</></term>
       <listitem>
        <para>
         Do not display a response.

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.22 2002/05/17 01:19:16 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.23 2002/09/21 18:32:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -226,7 +226,7 @@ ALTER USER manuel VALID UNTIL 'Jan 31 2030';
   <para>
    Change a user's valid until date, specifying that his
    authorization should expire at midday on 4th May 1998 using
-   the time zone which is one hour ahead of UTC:
+   the time zone which is one hour ahead of <acronym>UTC</>:
 <programlisting>
 ALTER USER chris VALID UNTIL 'May 4 12:00:00 1998 +1';
 </programlisting>

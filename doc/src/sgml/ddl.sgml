@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.4 2002/09/12 22:05:35 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.5 2002/09/21 18:32:52 petere Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -765,7 +765,7 @@ CREATE TABLE order_items (
     Note that these do not excuse you from observing any constraints.
     For example, if an action specifies <literal>SET DEFAULT</literal>
     but the default value would not satisfy the foreign key, the
-    deletion of the primary key wil fail.
+    deletion of the primary key will fail.
    </para>
 
    <para>
@@ -1425,7 +1425,7 @@ SHOW search_path;
    </para>
 
    <para>
-    The first schema in the seach path that exists is the default
+    The first schema in the search path that exists is the default
     location for creating new objects.  That is the reason that by
     default objects are created in the public schema.  When objects
     are referenced in any other context without schema qualification
@@ -1466,8 +1466,8 @@ SET search_path TO myschema;
    </para>
 
    <para>
-    The search path works in the same way for datatype names, function names,
-    and operator names as it does for table names.  Datatype and function
+    The search path works in the same way for data type names, function names,
+    and operator names as it does for table names.  Data type and function
     names can be qualified in exactly the same way as table names.  If you
     need to write a qualified operator name in an expression, there is a
     special provision: you must write
@@ -1519,7 +1519,7 @@ REVOKE CREATE ON public FROM PUBLIC;
    <para>
     In addition to <literal>public</> and user-created schemas, each
     database contains a <literal>pg_catalog</> schema, which contains
-    the system tables and all the built-in datatypes, functions, and
+    the system tables and all the built-in data types, functions, and
     operators.  <literal>pg_catalog</> is always effectively part of
     the search path.  If it is not named explicitly in the path then
     it is implicitly searched <emphasis>before</> searching the path's

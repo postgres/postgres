@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.20 2002/03/24 17:11:37 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.21 2002/09/21 18:32:53 petere Exp $
 -->
 
  <chapter id="performance-tips">
@@ -527,11 +527,11 @@ regression=#
  </sect1>
 
  <sect1 id="explicit-joins">
-  <title>Controlling the Planner with Explicit JOINs</title>
+  <title>Controlling the Planner with Explicit <literal>JOIN</> Clauses</title>
 
   <para>
    Beginning with <productname>PostgreSQL</productname> 7.1 it is possible
-   to control the query planner to some extent by using explicit JOIN
+   to control the query planner to some extent by using explicit <literal>JOIN</>
    syntax.  To see why this matters, we first need some background.
   </para>
 

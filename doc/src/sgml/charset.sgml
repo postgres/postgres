@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.28 2002/09/18 20:09:31 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.29 2002/09/21 18:32:52 petere Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -405,27 +405,27 @@ perl: warning: Falling back to the standard locale ("C").
 	</row>
 	<row>
 	 <entry><literal>LATIN1</literal></entry>
-	 <entry>ISO 8859-1 ECMA-94 Latin Alphabet No.1</entry>
+	 <entry>ISO 8859-1 <acronym>ECMA</>-94 Latin Alphabet No.1</entry>
 	</row>
 	<row>
 	 <entry><literal>LATIN2</literal></entry>
-	 <entry>ISO 8859-2 ECMA-94 Latin Alphabet No.2</entry>
+	 <entry>ISO 8859-2 <acronym>ECMA</>-94 Latin Alphabet No.2</entry>
 	</row>
 	<row>
 	 <entry><literal>LATIN3</literal></entry>
-	 <entry>ISO 8859-3 ECMA-94 Latin Alphabet No.3</entry>
+	 <entry>ISO 8859-3 <acronym>ECMA</>-94 Latin Alphabet No.3</entry>
 	</row>
 	<row>
 	 <entry><literal>LATIN4</literal></entry>
-	 <entry>ISO 8859-4 ECMA-94 Latin Alphabet No.4</entry>
+	 <entry>ISO 8859-4 <acronym>ECMA</>-94 Latin Alphabet No.4</entry>
 	</row>
 	<row>
 	 <entry><literal>LATIN5</literal></entry>
-	 <entry>ISO 8859-9 ECMA-128 Latin Alphabet No.5</entry>
+	 <entry>ISO 8859-9 <acronym>ECMA</>-128 Latin Alphabet No.5</entry>
 	</row>
 	<row>
 	 <entry><literal>LATIN6</literal></entry>
-	 <entry>ISO 8859-10 ECMA-144 Latin Alphabet No.6</entry>
+	 <entry>ISO 8859-10 <acronym>ECMA</>-144 Latin Alphabet No.6</entry>
 	</row>
 	<row>
 	 <entry><literal>LATIN7</literal></entry>
@@ -441,23 +441,23 @@ perl: warning: Falling back to the standard locale ("C").
 	</row>
 	<row>
 	 <entry><literal>LATIN10</literal></entry>
-	 <entry>ISO 8859-16 ASRO SR 14111 Latin Alphabet No.10</entry>
+	 <entry>ISO 8859-16 <acronym>ASRO</> SR 14111 Latin Alphabet No.10</entry>
 	</row>
 	<row>
 	 <entry><literal>ISO-8859-5</literal></entry>
-	 <entry>ECMA-113 Latin/Cyrillic</entry>
+	 <entry><acronym>ECMA</>-113 Latin/Cyrillic</entry>
 	</row>
 	<row>
 	 <entry><literal>ISO-8859-6</literal></entry>
-	 <entry>ECMA-114 Latin/Arabic</entry>
+	 <entry><acronym>ECMA</>-114 Latin/Arabic</entry>
 	</row>
 	<row>
 	 <entry><literal>ISO-8859-7</literal></entry>
-	 <entry>ECMA-118 Latin/Greek</entry>
+	 <entry><acronym>ECMA</>-118 Latin/Greek</entry>
 	</row>
 	<row>
 	 <entry><literal>ISO-8859-8</literal></entry>
-	 <entry>ECMA-121 Latin/Hebrew</entry>
+	 <entry><acronym>ECMA</>-121 Latin/Hebrew</entry>
 	</row>
 	<row>
 	 <entry><literal>KOI8</literal></entry>
@@ -477,7 +477,7 @@ perl: warning: Falling back to the standard locale ("C").
 	</row>
 	<row>
 	 <entry><literal>TCVN</literal></entry>
-	 <entry>Vietnamese TCVN-5712(Windows CP1258)</entry>
+	 <entry>Vietnamese <acronym>TCVN</>-5712 (Windows CP1258)</entry>
 	</row>
 	<row>
 	 <entry><literal>WIN874</literal></entry>
@@ -500,7 +500,7 @@ perl: warning: Falling back to the standard locale ("C").
 
     <important>
      <para>
-      Not all APIs supports all the encodings listed above. For example, the
+      Not all <acronym>API</>s supports all the encodings listed above. For example, the
       <productname>PostgreSQL</>
       JDBC driver does not support <literal>MULE_INTERNAL</>, <literal>LATIN6</>,
       <literal>LATIN8</>, and <literal>LATIN10</>.
@@ -572,7 +572,7 @@ $ <userinput>psql -l</userinput>
     <para>
      <productname>PostgreSQL</productname> supports an automatic
      encoding conversion between server and client for some
-     encodings. The conversion info is stored in pg_converson system
+     encodings. The conversion info is stored in <literal>pg_conversion</> system
      catalog. You can create a new conversion by using <command>CREATE
      CONVERSION</command>. PostgreSQL comes with some predefined
      conversions. They are listed in <xref
@@ -878,7 +878,7 @@ RESET CLIENT_ENCODING;
       <para>
       Using client_encoding variable.
 
-      If client_encoding variable in postgresql.conf is set, that
+      If the <varname>client_encoding</> variable in <filename>postgresql.conf</> is set, that
       client encoding is automatically selected when a connection to the
       server is made.  (This can subsequently be overridden using any of the
       other methods mentioned above.)

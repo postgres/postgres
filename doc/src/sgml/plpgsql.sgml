@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.7 2002/09/14 20:11:16 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.8 2002/09/21 18:32:53 petere Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -126,7 +126,7 @@ END;
 	 The <application>PL/pgSQL</application> EXECUTE statement is not
 	 related to the EXECUTE statement supported by the
 	 <productname>PostgreSQL</productname> backend. The backend
-	 EXECUTE statement cannot be used within PL/PgSQL functions (and
+	 EXECUTE statement cannot be used within <application>PL/pgSQL</> functions (and
 	 is not needed).
 	</para>
    </note>
@@ -849,7 +849,7 @@ SELECT INTO <replaceable>target</replaceable> <replaceable>expressions</replacea
     </para>
 
     <para>
-     If the SELECT query returns zero rows, NULLs are assigned to the
+     If the SELECT query returns zero rows, null values are assigned to the
      target(s).  If the SELECT query returns multiple rows, the first
      row is assigned to the target(s) and the rest are discarded.
      (Note that <quote>the first row</> is not well-defined unless you've
@@ -877,8 +877,8 @@ IF NOT FOUND THEN
 END IF;
 </programlisting>
 
-     Alternatively, you can use the IS NULL (or ISNULL) conditional to
-     test for NULLity of a RECORD/ROW result.  Note that there is no
+     Alternatively, you can use the <literal>IS NULL</literal> (or <literal>ISNULL</>) conditional to
+     test for whether a RECORD/ROW result is null.  Note that there is no
      way to tell whether any additional rows might have been discarded.
     </para>
 
@@ -1205,7 +1205,7 @@ RETURN NEXT <replaceable>expression</replaceable>;
 
      RETURN NEXT does not actually return from the function; it simply
      saves away the value of the expression (or record or row variable,
-     as appropriate for the datatype being returned).
+     as appropriate for the data type being returned).
      Execution then continues with the next statement in the
      <application>PL/pgSQL</> function.  As successive RETURN NEXT
      commands are executed, the result set is built up.  A final
@@ -1213,37 +1213,50 @@ RETURN NEXT <replaceable>expression</replaceable>;
      the function.
     </para>
 
-	<note>
-	 <para>
-	  The current implementation of RETURN NEXT for PL/PgSQL stores
-	  the entire result set before returning from the function, as
-	  discussed above.  That means that if a PL/PgSQL function
-	  produces a very large result set, performance may be poor: data
-	  will be written to disk to avoid memory exhaustion, but the
-	  function itself will not return until the entire
-	  result set has been generated.  A future version of PL/PgSQL may
-	  allow users to allow users to define set-returning functions
-	  that do not have this limitation.  Currently, the point at which
-	  data begins being written to disk is controlled by the
-	  <option>SORT_MEM</> configuration variable.  Administrators who
-	  have sufficient memory to store larger result sets in memory
-	  should consider increasing this parameter.
-	  </para>
-	</note>
-   </sect2>
+   <note>
+    <para>
+     The current implementation of RETURN NEXT for
+     <application>PL/pgSQL</> stores the entire result set before
+     returning from the function, as discussed above.  That means that
+     if a <application>PL/pgSQL</> function produces a very large result set,
+     performance may be poor: data will be written to disk to avoid
+     memory exhaustion, but the function itself will not return until
+     the entire result set has been generated.  A future version of
+     <application>PL/pgSQL</> may allow users to allow users to define set-returning
+     functions that do not have this limitation.  Currently, the point
+     at which data begins being written to disk is controlled by the
+     <varname>SORT_MEM</> configuration variable.  Administrators who
+     have sufficient memory to store larger result sets in memory
+     should consider increasing this parameter.
+    </para>
+   </note>
+  </sect2>
     
    <sect2 id="plpgsql-conditionals">
     <title>Conditionals</title>
 
     <para>
-     <function>IF</function> statements let you execute commands based on
-      certain conditions.
-      <application>PL/pgSQL</> has four forms of IF: IF-THEN, IF-THEN-ELSE,
-      IF-THEN-ELSE IF, and IF-THEN-ELSIF-THEN-ELSE.
+     <literal>IF</> statements let you execute commands based on
+     certain conditions.  <application>PL/pgSQL</> has four forms of
+     <literal>IF</>:
+    <itemizedlist>
+     <listitem>
+      <para><literal>IF ... THEN</></>
+     </listitem>
+     <listitem>
+      <para><literal>IF ... THEN ... ELSE</></>
+     </listitem>
+     <listitem>
+      <para><literal>IF ... THEN ... ELSE IF</> and</>
+     </listitem>
+     <listitem>
+      <para><literal>IF ... THEN ... ELSIF ... THEN ... ELSE</></>
+     </listitem>
+    </itemizedlist>
     </para>
 
     <sect3>
-     <title>IF-THEN</title>
+     <title><literal>IF-THEN</></title>
 
        <para>
 <synopsis>
@@ -1265,7 +1278,7 @@ END IF;
      </sect3>
 
      <sect3>
-      <title>IF-THEN-ELSE</title>
+      <title><literal>IF-THEN-ELSE</></title>
 
        <para>
 <synopsis>
@@ -1300,7 +1313,7 @@ END IF;
      </sect3>
 
      <sect3>
-      <title>IF-THEN-ELSE IF</title>
+      <title><literal>IF-THEN-ELSE IF</></title>
 
        <para>
         IF statements can be nested, as in the following example:
@@ -1326,7 +1339,7 @@ END IF;
      </sect3>
 
      <sect3>
-      <title>IF-THEN-ELSIF-ELSE</title>
+      <title><literal>IF-THEN-ELSIF-ELSE</></title>
 
        <para>
 <synopsis>
@@ -1344,10 +1357,11 @@ IF <replaceable>boolean-expression</replaceable> THEN
 END IF;
 </synopsis>
 
-        IF-THEN-ELSIF-ELSE provides a more convenient method of checking
-	many alternatives in one statement.  Formally it is equivalent
-	to nested IF-THEN-ELSE-IF-THEN commands, but only one END IF
-	is needed.
+        <literal>IF-THEN-ELSIF-ELSE</> provides a more convenient
+        method of checking many alternatives in one statement.
+        Formally it is equivalent to nested
+        <literal>IF-THEN-ELSE-IF-THEN</> commands, but only one
+        <literal>END IF</> is needed.
        </para>
 
        <para>
@@ -1673,7 +1687,7 @@ OPEN <replaceable>unbound-cursor</replaceable> FOR SELECT ...;
 	to execute.  The cursor cannot be open already, and it must
 	have been declared as an unbound cursor (that is, as a simple
 	<type>refcursor</> variable).  The SELECT query is treated
-	in the same way as other SELECTs in <application>PL/pgSQL</>:
+	in the same way as other SELECT statements in <application>PL/pgSQL</>:
 	<application>PL/pgSQL</> variable names are substituted,
 	and the query plan is cached for possible re-use.
 
@@ -1706,7 +1720,7 @@ OPEN curs1 FOR EXECUTE ''SELECT * FROM '' || quote_ident($1);
      </sect3>
 
     <sect3>
-     <title>OPENing a bound cursor</title>
+     <title>Opening a bound cursor</title>
 
        <para>
 <synopsis>
@@ -1802,7 +1816,7 @@ CLOSE curs1;
         caller. This is used to return multiple rows or columns from the
         function. The function opens the cursor and returns the cursor
         name to the caller. The caller can then FETCH rows from the
-        cursor. The cursor can be CLOSEd by the caller, or it will be
+        cursor. The cursor can be closed by the caller, or it will be
         closed automatically when the transaction closes.
 
        </para>
@@ -2067,7 +2081,7 @@ RAISE EXCEPTION ''Inexistent ID --> %'',user_id;
        Data type array of <type>text</type>; the arguments from
               the <command>CREATE TRIGGER</command> statement.
        The index counts from 0 and can be given as an expression. Invalid
-       indices (&lt; 0 or &gt;= tg_nargs) result in a NULL value.
+       indices (&lt; 0 or &gt;= <varname>tg_nargs</>) result in a null value.
       </para>
      </listitem>
     </varlistentry>
@@ -2387,7 +2401,7 @@ LANGUAGE 'plpgsql';
 
        <row>
         <entry>2</entry>
-        <entry>In assignments, SELECTs, to delimit strings, etc.</entry>
+        <entry>In assignments, SELECT statements, to delimit strings, etc.</entry>
         <entry><programlisting>
 a_output := ''Blah'';
 SELECT * FROM users WHERE f_name=''foobar'';

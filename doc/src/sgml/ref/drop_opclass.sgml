@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_opclass.sgml,v 1.1 2002/07/29 22:14:10 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_opclass.sgml,v 1.2 2002/09/21 18:32:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -134,7 +134,7 @@ DROP OPERATOR CLASS
    Usage
   </title>
   <para>
-   Remove btree operator class <literal>widget_ops</literal>:
+   Remove B-tree operator class <literal>widget_ops</literal>:
 
    <programlisting>
 DROP OPERATOR CLASS widget_ops USING btree;

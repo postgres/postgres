@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.21 2002/08/26 23:22:47 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.22 2002/09/21 18:32:52 petere Exp $
 -->
 
 <sect2 id="dfunc">
@@ -58,7 +58,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.21 2002/08/26 23:22:47 momji
 
   <variablelist>
    <varlistentry>
-    <term><productname>BSD/OS</productname></term>
+    <term><systemitem class="osname">BSD/OS</></term>
     <indexterm><primary>BSD/OS</></>
     <listitem>
      <para>
@@ -70,13 +70,13 @@ gcc -fpic -c foo.c
 ld -shared -o foo.so foo.o
 </programlisting>
       This is applicable as of version 4.0 of
-      <productname>BSD/OS</productname>.
+      <systemitem class="osname">BSD/OS</>.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><productname>FreeBSD</productname></term>
+    <term><systemitem class="osname">FreeBSD</></term>
     <indexterm><primary>FreeBSD</></>
     <listitem>
      <para>
@@ -88,19 +88,19 @@ gcc -fpic -c foo.c
 gcc -shared -o foo.so foo.o
 </programlisting>
       This is applicable as of version 3.0 of
-      <productname>FreeBSD</productname>.
+      <systemitem class="osname">FreeBSD</>.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><productname>HP-UX</productname></term>
+    <term><systemitem class="osname">HP-UX</></term>
     <indexterm><primary>HP-UX</></>
     <listitem>
      <para>
       The compiler flag of the system compiler to create
       <acronym>PIC</acronym> is <option>+z</option>.  When using
-      <productname>GCC</productname> it's <option>-fpic</option>. The
+      <application>GCC</application> it's <option>-fpic</option>. The
       linker flag for shared libraries is <option>-b</option>.  So
 <programlisting>
 cc +z -c foo.c
@@ -113,7 +113,7 @@ gcc -fpic -c foo.c
 <programlisting>
 ld -b -o foo.sl foo.o
 </programlisting>
-      <productname>HP-UX</productname> uses the extension
+      <systemitem class="osname">HP-UX</> uses the extension
       <filename>.sl</filename> for shared libraries, unlike most other
       systems.
      </para>
@@ -121,7 +121,7 @@ ld -b -o foo.sl foo.o
    </varlistentry>
 
    <varlistentry>
-    <term><productname>IRIX</productname></term>
+    <term><systemitem class="osname">IRIX</></term>
     <indexterm><primary>IRIX</></>
     <listitem>
      <para>
@@ -137,7 +137,7 @@ ld -shared -o foo.so foo.o
    </varlistentry>
 
    <varlistentry>
-    <term><productname>Linux</productname></term>
+    <term><systemitem class="osname">Linux</></term>
     <indexterm><primary>Linux</></>
     <listitem>
      <para>
@@ -156,7 +156,21 @@ cc -shared -o foo.so foo.o
    </varlistentry>
 
    <varlistentry>
-    <term><productname>NetBSD</productname></term>
+    <term><systemitem class="osname">MacOS X</></term>
+    <indexterm><primary>MacOS X</></>
+    <listitem>
+     <para>
+      Here is a sample.  It assumes the developer tools are installed.
+<programlisting>
+cc -c foo.c 
+cc -bundle -flat_namespace -undefined suppress -o foo.so foo.o
+</programlisting>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><systemitem class="osname">NetBSD</></term>
     <indexterm><primary>NetBSD</></>
     <listitem>
      <para>
@@ -174,7 +188,7 @@ gcc -shared -o foo.so foo.o
    </varlistentry>
 
    <varlistentry>
-    <term><productname>OpenBSD</productname></term>
+    <term><systemitem class="osname">OpenBSD</></term>
     <indexterm><primary>OpenBSD</></>
     <listitem>
      <para>
@@ -190,30 +204,16 @@ ld -Bshareable -o foo.so foo.o
    </varlistentry>
 
    <varlistentry>
-    <term><productname>OS X</productname></term>
-    <indexterm><primary>OS X</></>
-    <listitem>
-     <para>
-      Here is a sample.  It assumes the developer tools are installed.
-<programlisting>
-cc -c foo.c 
-cc -bundle -flat_namespace -undefined suppress -o foo.so foo.o
-</programlisting>
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><productname>Solaris</productname></term>
+    <term><systemitem class="osname">Solaris</></term>
     <indexterm><primary>Solaris</></>
     <listitem>
      <para>
       The compiler flag to create <acronym>PIC</acronym> is
       <option>-KPIC</option> with the Sun compiler and
-      <option>-fpic</option> with <productname>GCC</productname>.  To
+      <option>-fpic</option> with <application>GCC</>.  To
       link shared libraries, the compiler option is
       <option>-G</option> with either compiler or alternatively
-      <option>-shared</option> with <productname>GCC</productname>.
+      <option>-shared</option> with <application>GCC</>.
 <programlisting>
 cc -KPIC -c foo.c
 cc -G -o foo.so foo.o
@@ -228,7 +228,7 @@ gcc -G -o foo.so foo.o
    </varlistentry>
 
    <varlistentry>
-    <term>Tru64 UNIX</term>   
+    <term><systemitem class="osname">Tru64 UNIX</></term>   
     <indexterm><primary>Tru64 UNIX</></>
     <indexterm><primary>Digital UNIX</><see>Tru64 UNIX</></>
     <listitem>
@@ -247,7 +247,7 @@ ld -shared -expect_unresolved '*' -o foo.so foo.o
    </varlistentry>
 
    <varlistentry>
-    <term><productname>UnixWare</productname></term>
+    <term><systemitem class="osname">UnixWare</></term>
     <indexterm><primary>UnixWare</></>
     <listitem>
      <para>

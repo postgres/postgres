@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.23 2002/04/19 23:13:53 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.24 2002/09/21 18:32:53 petere Exp $ -->
 
 <Chapter Id="rules">
 <Title>The Rule System</Title>
@@ -179,7 +179,7 @@
 
     <Para>
         DELETE queries don't need a target list because they don't
-	produce any result. In fact the planner will add a special CTID
+	produce any result. In fact the planner will add a special <acronym>CTID</>
 	entry to the empty target list. But this is after the rule
 	system and will be discussed later. For the rule system the
 	target list is empty.
@@ -199,7 +199,7 @@
 	expressions from the SET attribute = expression part of the query.
 	The planner will add missing columns by inserting expressions that
 	copy the values from the old row into the new one. And it will add
-	the special CTID entry just as for DELETE too.
+	the special <acronym>CTID</> entry just as for DELETE too.
     </Para>
 
     <Para>
@@ -781,24 +781,25 @@ SELECT t1.a, t2.b FROM t1, t2 WHERE t1.a = t2.a;
 
 <Para>
     To resolve this problem, another entry is added to the target list
-    in UPDATE (and also in DELETE) statements: the current tuple ID (CTID).
+    in UPDATE (and also in DELETE) statements: the current tuple ID (<acronym>CTID</>).
     This is a system attribute containing the file
     block number and position in the block for the row. Knowing the table,
-    the CTID can be used to retrieve the original t1 row to be updated.
-    After adding the CTID to the target list, the query actually looks like
+    the <acronym>CTID</> can be used to retrieve the original t1 row to be updated.
+    After adding the <acronym>CTID</> to the target list, the query actually looks like
 
 <ProgramListing>
 SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
 </ProgramListing>
     
-    Now another detail of <ProductName>PostgreSQL</ProductName> enters the
-    stage. At this moment, table rows aren't overwritten and this is why
-    ABORT TRANSACTION is fast. In an UPDATE, the new result row is inserted
-    into the table (after stripping CTID) and in the tuple header of the row 
-    that CTID pointed to the cmax and xmax entries are set to the current
-    command counter and current transaction ID. Thus the old row is hidden
-    and after the transaction committed the vacuum cleaner can really move
-    it out.
+    Now another detail of <ProductName>PostgreSQL</ProductName> enters
+    the stage. At this moment, table rows aren't overwritten and this
+    is why ABORT TRANSACTION is fast. In an UPDATE, the new result row
+    is inserted into the table (after stripping <acronym>CTID</>) and
+    in the tuple header of the row that <acronym>CTID</> pointed to
+    the <literal>cmax</> and <literal>xmax</> entries are set to the
+    current command counter and current transaction ID. Thus the old
+    row is hidden and after the transaction committed the vacuum
+    cleaner can really move it out.
 </Para>
 
 <Para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.18 2002/04/24 02:31:30 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.19 2002/09/21 18:32:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -55,8 +55,8 @@ INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable 
       <term>DEFAULT VALUES</term>
       <listitem>
        <para>
-	All columns will be filled by NULLs or by values specified
-	when the table was created using DEFAULT clauses.
+	All columns will be filled by null values or by values specified
+	when the table was created using <literal>DEFAULT</> clauses.
        </para>
       </listitem>
      </varlistentry>

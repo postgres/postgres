@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.41 2002/09/18 20:07:15 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.42 2002/09/21 18:32:53 petere Exp $
 
 PostgreSQL Programmer's Guide.
 -->
@@ -60,7 +60,6 @@ PostgreSQL Programmer's Guide.
   &rules;
   &xindex;
   &indexcost;
-  &gist;
   &trigger;
   &spi;
  </part>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.27 2002/08/10 16:57:31 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.28 2002/09/21 18:32:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -39,7 +39,7 @@ PostgreSQL documentation
 
   <para>
    Being a superuser also implies the ability to bypass access permission
-   checks within the database, so superuser-dom should not be granted lightly.
+   checks within the database, so superuserdom should not be granted lightly.
   </para>
 
   <para>
@@ -64,7 +64,8 @@ PostgreSQL documentation
 
     <variablelist>
      <varlistentry>
-      <term>-h, --host <replaceable class="parameter">host</replaceable></term>
+      <term><option>-h <replaceable class="parameter">host</replaceable></></term>
+      <term><option>--host <replaceable class="parameter">host</replaceable></></term>
       <listitem>
        <para>
 	Specifies the host name of the machine on which the 
@@ -76,7 +77,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-p, --port <replaceable class="parameter">port</replaceable></term>
+      <term><option>-p <replaceable class="parameter">port</replaceable></></term>
+      <term><option>--port <replaceable class="parameter">port</replaceable></></term>
       <listitem>
        <para>
 	Specifies the Internet TCP/IP port or local Unix domain socket file 
@@ -87,7 +89,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-e, --echo</term>
+      <term><option>-e</></term>
+      <term><option>--echo</></term>
       <listitem>
        <para>
         Echo the queries that <application>createuser</application> generates
@@ -97,7 +100,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-q, --quiet</term>
+      <term><option>-q</></term>
+      <term><option>--quiet</></term>
       <listitem>
        <para>
         Do not display a response.
@@ -106,7 +110,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-d, --createdb</term>
+      <term><option>-d</></term>
+      <term><option>--createdb</></term>
       <listitem>
        <para>
 	The new user is allowed to create databases.
@@ -115,7 +120,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-D, --no-createdb</term>
+      <term><option>-D</></term>
+      <term><option>--no-createdb</></term>
       <listitem>
        <para>
 	The new user is not allowed to create databases.
@@ -124,7 +130,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-a, --adduser</term>
+      <term><option>-a</></term>
+      <term><option>--adduser</></term>
       <listitem>
        <para>
 	The new user is allowed to create other users.
@@ -135,7 +142,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-A, --no-adduser</term>
+      <term><option>-A</></term>
+      <term><option>--no-adduser</></term>
       <listitem>
        <para>
 	The new user is not allowed to create other users (i.e.,
@@ -145,7 +153,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-P, --pwprompt</term>
+      <term><option>-P</></term>
+      <term><option>--pwprompt</></term>
       <listitem>
        <para>
        If given, <application>createuser</application> will issue a prompt for
@@ -156,7 +165,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-i, --sysid <replaceable class="parameter">uid</replaceable></term>
+      <term><option>-i <replaceable class="parameter">uid</replaceable></></term>
+      <term><option>--sysid <replaceable class="parameter">uid</replaceable></></term>
       <listitem>
        <para>
        Allows you to pick a non-default user id for the new user. This is not
@@ -166,7 +176,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-E, --encrypted</term>
+      <term><option>-E</></term>
+      <term><option>--encrypted</></term>
       <listitem>
        <para>
 	Encrypts the user's password stored in the database. If not
@@ -176,7 +187,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-N, --unencrypted</term>
+      <term><option>-N</></term>
+      <term><option>--unencrypted</></term>
       <listitem>
        <para>
 	Does not encrypt the user's password stored in the database. If

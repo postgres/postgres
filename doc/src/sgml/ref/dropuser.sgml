@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.20 2002/08/10 16:57:31 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.21 2002/09/21 18:32:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -56,7 +56,8 @@ PostgreSQL documentation
 
     <variablelist>
      <varlistentry>
-      <term>-h, --host <replaceable class="parameter">host</replaceable></term>
+      <term><option>-h <replaceable class="parameter">host</replaceable></></term>
+      <term><option>--host <replaceable class="parameter">host</replaceable></></term>
       <listitem>
        <para>
 	Specifies the host name of the machine on which the 
@@ -68,7 +69,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-p, --port <replaceable class="parameter">port</replaceable></term>
+      <term><option>-p <replaceable class="parameter">port</replaceable></></term>
+      <term><option>--port <replaceable class="parameter">port</replaceable></></term>
       <listitem>
        <para>
 	Specifies the Internet TCP/IP port or local Unix domain socket file 
@@ -79,7 +81,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-e, --echo</term>
+      <term><option>-e</></term>
+      <term><option>--echo</></term>
       <listitem>
        <para>
         Echo the queries that <application>dropuser</application> generates
@@ -89,7 +92,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-q, --quiet</term>
+      <term><option>-q</></term>
+      <term><option>--quiet</></term>
       <listitem>
        <para>
         Do not display a response.
@@ -98,7 +102,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-i, --interactive</term>
+      <term><option>-i</></term>
+      <term><option>--interactive</></term>
       <listitem>
        <para>
         Prompt for confirmation before actually removing the user.

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_session_auth.sgml,v 1.6 2002/05/17 01:19:16 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_session_auth.sgml,v 1.7 2002/09/21 18:32:54 petere Exp $ -->
 <refentry id="SQL-SET-SESSION-AUTHORIZATION">
  <docinfo>
   <date>2001-04-21</date>
@@ -48,7 +48,7 @@ RESET SESSION AUTHORIZATION
    The session user identifier may be changed only if the initial session
    user (the <firstterm>authenticated user</firstterm>) had the
    superuser privilege.  Otherwise, the command is accepted only if it
-   specifies the authenticated username.
+   specifies the authenticated user name.
   </para>
 
   <para>

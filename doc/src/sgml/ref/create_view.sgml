@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.19 2002/09/02 20:04:39 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.20 2002/09/21 18:32:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -235,7 +235,7 @@ CREATE VIEW <replaceable class="parameter">view</replaceable> [ <replaceable cla
       <listitem>
        <para>
 	This option is to do with updatable views.
-	All INSERTs and UPDATEs on the view will be
+	All <command>INSERT</> and <command>UPDATE</> commands on the view will be
 	checked to ensure data satisfy the view-defining
 	condition. If they do not, the update will be rejected.
        </para>
