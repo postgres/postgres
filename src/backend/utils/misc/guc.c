@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.2 2000/06/04 15:06:30 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.3 2000/06/15 04:10:30 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -20,7 +20,6 @@
 
 #include "utils/guc.h"
 
-#include "access/transam.h"
 #include "commands/async.h"
 #include "miscadmin.h"
 #include "optimizer/cost.h"
@@ -28,13 +27,8 @@
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
 #include "parser/parse_expr.h"
-#include "storage/fd.h"
-#include "storage/lock.h"
 #include "storage/proc.h"
-#include "storage/spin.h"
 #include "tcop/tcopprot.h"
-#include "utils/builtins.h"
-#include "utils/elog.h"
 
 
 /* XXX should be in a header file */

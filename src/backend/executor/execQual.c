@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.71 2000/06/13 07:34:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.72 2000/06/15 04:09:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,6 @@
 #include "catalog/pg_language.h"
 #include "executor/execFlatten.h"
 #include "executor/execdebug.h"
-#include "executor/executor.h"
 #include "executor/functions.h"
 #include "executor/nodeSubplan.h"
 #include "utils/builtins.h"

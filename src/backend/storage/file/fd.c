@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.60 2000/06/14 03:19:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.61 2000/06/15 04:10:00 momjian Exp $
  *
  * NOTES:
  *
@@ -49,7 +49,6 @@
 #include "postgres.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
-#include "storage/ipc.h"
 
 /*
  * Problem: Postgres does a system(ld...) to do dynamic loading.

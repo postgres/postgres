@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.22 2000/06/15 03:32:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.23 2000/06/15 04:09:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 #include "access/iqual.h"
 #include "access/relscan.h"
 #include "access/rtree.h"
-#include "storage/off.h"
 
 static OffsetNumber findnext(IndexScanDesc s, Page p, OffsetNumber n,
 		 ScanDirection dir);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.46 2000/05/31 00:28:17 petere Exp $
+ *	$Id: nodeHash.c,v 1.47 2000/06/15 04:09:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@
 
 #include "postgres.h"
 #include "executor/execdebug.h"
-#include "executor/executor.h"
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
 #include "miscadmin.h"

@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.116 2000/06/10 05:16:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.117 2000/06/15 04:09:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,6 @@
 #include "commands/trigger.h"
 #include "executor/execdebug.h"
 #include "executor/execdefs.h"
-#include "executor/executor.h"
 #include "miscadmin.h"
 #include "optimizer/var.h"
 #include "parser/parsetree.h"

@@ -28,7 +28,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.53 2000/05/31 00:28:14 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.54 2000/06/15 04:09:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,8 +36,6 @@
 #include "postgres.h"
 
 #include "access/nbtree.h"
-#include "tcop/tcopprot.h"
-#include "utils/guc.h"
 #include "utils/tuplesort.h"
 
 

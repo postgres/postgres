@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: execAmi.c,v 1.46 2000/04/12 17:15:07 momjian Exp $
+ *	$Id: execAmi.c,v 1.47 2000/06/15 04:09:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,6 @@
 #include "access/heapam.h"
 #include "catalog/heap.h"
 #include "executor/execdebug.h"
-#include "executor/executor.h"
 #include "executor/nodeAgg.h"
 #include "executor/nodeAppend.h"
 #include "executor/nodeGroup.h"

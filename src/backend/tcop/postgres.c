@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.159 2000/06/08 22:37:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.160 2000/06/15 04:10:19 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -48,7 +48,6 @@
 #include "nodes/print.h"
 #include "optimizer/cost.h"
 #include "optimizer/planner.h"
-#include "parser/parse.h"
 #include "parser/parser.h"
 #include "rewrite/rewriteHandler.h"
 #include "tcop/fastpath.h"
@@ -1383,7 +1382,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.159 $ $Date: 2000/06/08 22:37:26 $\n");
+		puts("$Revision: 1.160 $ $Date: 2000/06/15 04:10:19 $\n");
 	}
 
 	/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.74 2000/05/31 00:28:30 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.75 2000/06/15 04:10:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.74 2000/05/31 00:28:30 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.75 2000/06/15 04:10:07 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -66,7 +66,6 @@
 /* In Ultrix and QNX, sem.h must be included after ipc.h */
 #include <sys/sem.h>
 
-#include "storage/lock.h"
 #include "storage/proc.h"
 
 void		HandleDeadLock(SIGNAL_ARGS);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.50 2000/05/23 16:56:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.51 2000/06/15 04:09:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,6 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "executor/execdebug.h"
-#include "executor/executor.h"
 #include "executor/nodeIndexscan.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"

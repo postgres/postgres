@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.41 2000/05/30 00:49:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.42 2000/06/15 04:10:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,8 +19,8 @@
 
 #include "catalog/pg_proc.h"
 #include "dynloader.h"
-#include "utils/builtins.h"
 #include "utils/dynamic_loader.h"
+#include "utils/builtins.h"
 #include "utils/syscache.h"
 
 

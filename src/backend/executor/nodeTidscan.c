@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.8 2000/06/08 22:37:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.9 2000/06/15 04:09:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@
  */
 #include "postgres.h"
 
-#include "executor/executor.h"
 #include "executor/execdebug.h"
 #include "executor/nodeTidscan.h"
 #include "access/heapam.h"
