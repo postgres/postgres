@@ -639,7 +639,7 @@
     
    These are the limits:
 Maximum size for a database?             unlimited (60GB databases exist)
-Maximum size for a table?                64 TB on all operating systems
+Maximum size for a table?                16 TB
 Maximum size for a row?                  unlimited in 7.1 and later
 Maximum size for a field?                1GB in 7.1 and later
 Maximum number of rows in a table?       unlimited
@@ -649,6 +649,13 @@ Maximum number of indexes on a table?    unlimited
    Of course, these are not actually unlimited, but limited to available
    disk space and memory/swap space. Performance may suffer when these
    values get unusually large.
+   
+   The maximum table size of 16TB does not require large file support
+   from the operating system. Large tables are stored as multiple 1GB
+   files.
+   
+   The maximum table size and maximum number of columns can be increased
+   by four if the default block size is increased to 32k.
    
     4.7) How much database disk space is required to store data from a typical
     text file?
