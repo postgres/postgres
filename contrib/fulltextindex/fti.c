@@ -25,7 +25,7 @@
  *	  '/usr/local/pgsql/lib/contrib/fti.so' language 'C';
  *
  *	-- Create the FTI table
- *	create table product_fti (string varchar(255), id oid);
+ *	create table product_fti (string varchar(255), id oid) without oids;
  *
  *	-- Create an index to assist string matches
  *	create index product_fti_string_idx on product_fti (string);

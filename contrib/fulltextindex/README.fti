@@ -50,7 +50,7 @@ string), btree indices can be used by PostgreSQL.
 Now, how do we create the trigger that maintains the fti-table? First: the
 fti-table should have the following schema:
 
-	create cds-fti ( string varchar(N), id oid );
+	create cds-fti ( string varchar(N), id oid ) without oids;
 
 Don't change the *names* of the columns, the varchar() can in fact also
 be of text-type. If you do use varchar, make sure the largest possible

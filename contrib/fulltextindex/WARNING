@@ -1,0 +1,25 @@
+WARNING
+-------
+
+This implementation of full text indexing is very slow and inefficient.  It is
+STRONGLY recommended that you switch to using contrib/tsearch which offers these
+features:
+
+Advantages
+----------
+* Actively developed and improved
+* Tight integration with OpenFTS (openfts.sourceforge.net)
+* Orders of magnitude faster (eg. 300 times faster for two keyword search)
+* No extra tables or multi-way joins required
+* Select syntax allows easy 'and'ing, 'or'ing and 'not'ing of keywords
+* Built-in stemmer with customisable dictionaries (ie. searching for 'jellies' will find 'jelly')
+* Stop words automatically ignored
+* Supports non-C locales
+
+Disadvantages
+-------------
+* Only indexes full words - substring searches on words won't work.
+	eg. Searching for 'burg' won't find 'burger'
+
+Due to the deficiencies in this module, it is quite likely that it will be removed from the standard PostgreSQL distribution in the future.
+
