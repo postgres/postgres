@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.104 1997/11/14 05:57:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.105 1997/11/14 21:37:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,14 +135,6 @@ HandleSlashCmds(PsqlSettings *pset,
 				char *line,
 				char *query);
 static int	MainLoop(PsqlSettings *pset, char *query, FILE *source);
-
-/* probably should move this into libpq */
-void
-PQprint(FILE *fp,
-		PGresult *res,
-		PQprintOpt *po
-);
-
 static FILE *setFout(PsqlSettings *pset, char *fname);
 
 /*
@@ -224,11 +216,14 @@ slashUsage(PsqlSettings *pset)
 	fprintf(fout, " \\C [<captn>] -- set html3 caption (currently '%s')\n", pset->opt.caption ? pset->opt.caption : "");
 	fprintf(fout, " \\connect <dbname|-> <user> -- connect to new database (currently '%s')\n", PQdb(pset->db));
 	fprintf(fout, " \\copy table {from | to} <fname>\n");
-	fprintf(fout, " \\d [<table>] -- list tables and indices in database or columns in <table>, * for all\n");
+	fprintf(fout, " \\d [<table>] -- list tables and indices, columns in <table>, or * for all\n");
+	fprintf(fout, " \\da          -- list aggregates\n");
 	fprintf(fout, " \\dd [<object>]- list comment for table, field, type, function, or operator.\n");
-	fprintf(fout, " \\di          -- list only indices in database\n");
-	fprintf(fout, " \\ds          -- list only sequences in database\n");
-	fprintf(fout, " \\dt          -- list only tables in database\n");
+	fprintf(fout, " \\di          -- list only indices\n");
+	fprintf(fout, " \\do          -- list operators\n");
+	fprintf(fout, " \\ds          -- list only sequences\n");
+	fprintf(fout, " \\dt          -- list only tables\n");
+	fprintf(fout, " \\dT          -- list types\n");
 	fprintf(fout, " \\e [<fname>] -- edit the current query buffer or <fname>\n");
 	fprintf(fout, " \\E [<fname>] -- edit the current query buffer or <fname>, and execute\n");
 	fprintf(fout, " \\f [<sep>]   -- change field separater (currently '%s')\n", pset->opt.fieldSep);
@@ -751,20 +746,19 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 			strcat(descbuf, "FROM pg_type, pg_description ");
 			strcat(descbuf, "WHERE pg_type.typname = '");
 			strcat(descbuf, object);
-			strcat(descbuf, "'" );
-			strcat(descbuf, " and pg_type.oid = pg_description.objoid " );
+			strcat(descbuf, "' and ");
+			strcat(descbuf, " pg_type.oid = pg_description.objoid " );
 			if (!(res = PSQLexec(pset, descbuf)))
 				return -1;
-			else if (PQntuples(res) <= 0)
 			{
 				PQclear(res);
 				descbuf[0] = '\0';
 				strcat(descbuf, "SELECT DISTINCT description ");
-				strcat(descbuf, "FROM pg_type, pg_description ");
-				strcat(descbuf, "WHERE pg_type.typname = '");
+				strcat(descbuf, "FROM pg_proc, pg_description ");
+				strcat(descbuf, "WHERE pg_proc.proname = '");
 				strcat(descbuf, object);
 				strcat(descbuf, "'" );
-				strcat(descbuf, " and pg_type.oid = pg_description.objoid " );
+				strcat(descbuf, " and pg_proc.oid = pg_description.objoid " );
 				if (!(res = PSQLexec(pset, descbuf)))
 					return -1;
 				else if (PQntuples(res) <= 0)
@@ -772,11 +766,11 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 					PQclear(res);
 					descbuf[0] = '\0';
 					strcat(descbuf, "SELECT DISTINCT description ");
-					strcat(descbuf, "FROM pg_proc, pg_description ");
-					strcat(descbuf, "WHERE pg_proc.proname = '");
+					strcat(descbuf, "FROM pg_operator, pg_description ");
+					strcat(descbuf, "WHERE pg_operator.oprname = '");
 					strcat(descbuf, object);
 					strcat(descbuf, "'" );
-					strcat(descbuf, " and pg_proc.oid = pg_description.objoid " );
+					strcat(descbuf, " and pg_operator.oid = pg_description.objoid " );
 					if (!(res = PSQLexec(pset, descbuf)))
 						return -1;
 					else if (PQntuples(res) <= 0)
@@ -784,26 +778,13 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 						PQclear(res);
 						descbuf[0] = '\0';
 						strcat(descbuf, "SELECT DISTINCT description ");
-						strcat(descbuf, "FROM pg_operator, pg_description ");
-						strcat(descbuf, "WHERE pg_operator.oprname = '");
+						strcat(descbuf, "FROM pg_aggregate, pg_description ");
+						strcat(descbuf, "WHERE pg_aggregate.aggname = '");
 						strcat(descbuf, object);
 						strcat(descbuf, "'" );
-						strcat(descbuf, " and pg_operator.oid = pg_description.objoid " );
+						strcat(descbuf, " and pg_aggregate.oid = pg_description.objoid " );
 						if (!(res = PSQLexec(pset, descbuf)))
 							return -1;
-						else if (PQntuples(res) <= 0)
-						{
-							PQclear(res);
-							descbuf[0] = '\0';
-							strcat(descbuf, "SELECT DISTINCT description ");
-							strcat(descbuf, "FROM pg_aggregate, pg_description ");
-							strcat(descbuf, "WHERE pg_aggregate.aggname = '");
-							strcat(descbuf, object);
-							strcat(descbuf, "'" );
-							strcat(descbuf, " and pg_aggregate.oid = pg_description.objoid " );
-							if (!(res = PSQLexec(pset, descbuf)))
-								return -1;
-						}
 					}
 				}
 			}
@@ -1584,7 +1565,7 @@ HandleSlashCmds(PsqlSettings *pset,
 {
 	int			status = CMD_SKIP_LINE;
 	char	   *optarg;
-
+	bool		success;
 	/*
 	 * Pointer inside the <cmd> string to the argument of the slash
 	 * command, assuming it is a one-character slash command.  If it's not
@@ -1696,20 +1677,82 @@ HandleSlashCmds(PsqlSettings *pset,
 				}
 			}
 			break;
-		case 'd':				/* \d describe tables or columns in a
-								 * table */
-			if (strncmp(cmd, "dd", 2) == 0)
+		case 'd':	/* \d describe database information */
+			if (strncmp(cmd, "da", 2) == 0)
+								/* aggregates */
+				SendQuery(&success, pset,"\
+					SELECT	a.aggname AS aggname, \
+							t.typname AS typname, \
+							obj_description(a.oid) as description \
+					FROM	pg_aggregate a, pg_type t \
+					WHERE	a.aggbasetype = t.oid \
+					ORDER BY aggname, typname;",
+						false, false, 0);
+			else if (strncmp(cmd, "dd", 2) == 0)
 								/* descriptions */
 				objectDescription(pset, optarg+1, NULL);
 			else if (strncmp(cmd, "di", 2) == 0)
 								/* only indices */
 				tableList(pset, false, 'i');
+			else if (strncmp(cmd, "do", 2) == 0)
+			{
+								/* operators */
+				SendQuery(&success, pset,"\
+					SELECT	t0.typname AS result, \
+							t1.typname AS left_type, \
+							t2.typname AS right_type, \
+							o.oprname AS operatr, \
+							p.proname AS func_name, \
+							obj_description(o.oid) as description \
+					FROM	pg_proc p, pg_type t0, \
+							pg_type t1, pg_type t2, \
+							pg_operator o \
+					WHERE	p.prorettype = t0.oid AND \
+							RegprocToOid(o.oprcode) = p.oid AND \
+							p.pronargs = 2 AND \
+							o.oprleft = t1.oid AND \
+							o.oprright = t2.oid \
+					ORDER BY result, left_type, right_type, operatr;",
+						false, false, 0);
+				SendQuery(&success, pset,"\
+					SELECT	o.oprname AS left_unary, \
+							t.typname AS operand, \
+							r.typname AS return_type, \
+							obj_description(o.oid) as description \
+					FROM	pg_operator o, pg_type t, pg_type r \
+					WHERE	o.oprkind = 'l' AND \
+							o.oprright = t.oid AND \
+							o.oprresult = r.oid \
+					ORDER BY operand;",
+						false, false, 0);
+				SendQuery(&success, pset,"\
+					SELECT	o.oprname AS right_unary, \
+							t.typname AS operand, \
+							r.typname AS return_type, \
+							obj_description(o.oid) as description \
+					FROM	pg_operator o, pg_type t, pg_type r \
+					WHERE	o.oprkind = 'r' AND \
+							o.oprleft = t.oid AND \
+							o.oprresult = r.oid \
+					ORDER BY operand;",
+						false, false, 0);
+			}
 			else if (strncmp(cmd, "ds", 2) == 0)
 								/* only sequences */
 				tableList(pset, false, 'S');
 			else if (strncmp(cmd, "dt", 2) == 0)
 								/* only tables */
 				tableList(pset, false, 't');
+			else if (strncmp(cmd, "dT", 2) == 0)
+								/* types */
+				SendQuery(&success, pset,"\
+					SELECT	typname AS type, \
+							obj_description(oid) as description \
+					FROM	pg_type \
+					WHERE	typrelid = 0 AND \
+							typname !~ '^_.*' \
+					ORDER BY type;",
+					false, false, 0);
 			else if (!optarg)
 								/* show tables, sequences and indices */
 				tableList(pset, false, 'b');
@@ -1718,9 +1761,12 @@ HandleSlashCmds(PsqlSettings *pset,
 				if (tableList(pset, false, 'b') == 0)
 					tableList(pset, true, 'b');
 			}
-			else
+			else if (strncmp(cmd, "d ", 2) == 0)
 								/* describe the specified table */
 				tableDesc(pset, optarg, NULL);
+			else
+				slashUsage(pset);
+			
 			break;
 		case 'e':				/* edit */
 			{
