@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.11 2000/04/07 17:23:11 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.12 2000/04/07 17:35:08 momjian Exp $
 Postgres documentation
 -->
 
@@ -171,12 +171,14 @@ CREATE
     two rules have the same semantics:
     <programlisting>
 ON UPDATE TO emp.salary WHERE emp.name = "Joe"
-    DO UPDATE emp ( ... ) WHERE ...
+    DO 
+	UPDATE emp ( ... ) WHERE ...
     </programlisting>
 
     <programlisting>
 ON UPDATE TO emp-1.salary WHERE emp-2.name = "Joe"
-    DO UPDATE emp-3 ( ... ) WHERE ...
+    DO 
+	UPDATE emp-3 ( ... ) WHERE ...
     </programlisting>
 
     Each rule can have the optional tag INSTEAD.
@@ -203,13 +205,15 @@ ON UPDATE TO emp-1.salary WHERE emp-2.name = "Joe"
      <programlisting>
 CREATE RULE bad_rule_combination_1 AS
     ON SELECT TO emp
-    DO INSTEAD SELECT TO toyemp;
+    DO INSTEAD 
+	SELECT TO toyemp;
      </programlisting>
 
      <programlisting>
 CREATE RULE bad_rule_combination_2 AS
     ON SELECT TO toyemp
-    DO INSTEAD SELECT TO emp;
+    DO INSTEAD 
+	SELECT TO emp;
      </programlisting>
      <para>
       This attempt to retrieve from EMP will cause
@@ -257,8 +261,10 @@ SELECT * FROM emp;
    <programlisting>
 CREATE RULE example_1 AS
     ON UPDATE emp.salary WHERE current.name = "Joe"
-    DO UPDATE emp (salary = new.salary)
-    WHERE emp.name = "Sam";
+    DO 
+	UPDATE emp 
+	SET salary = new.salary
+	WHERE emp.name = "Sam";
    </programlisting>
 
    At the time Joe receives a salary adjustment, the event
@@ -275,8 +281,9 @@ CREATE RULE example_2 AS
     ON SELECT TO EMP.salary
     WHERE current.name = "Bill"
     DO INSTEAD
-    SELECT (emp.salary) from emp
-        WHERE emp.name = "Joe";
+	SELECT emp.salary
+	FROM emp
+	WHERE emp.name = "Joe";
    </programlisting>
   </para>
   <para>
@@ -285,8 +292,9 @@ CREATE RULE example_2 AS
    the current user):
    <programlisting>  
 CREATE RULE example_3 AS
-    ON SELECT TO emp.salary
-    WHERE current.dept = "shoe" AND current_user = "Joe"
+    ON 
+	SELECT TO emp.salary
+   	WHERE current.dept = "shoe" AND current_user = "Joe"
     DO INSTEAD NOTHING;
    </programlisting>
   </para>
@@ -298,7 +306,8 @@ CREATE toyemp(name = char16, salary = int4);
 CREATE RULE example_4 AS
     ON SELECT TO toyemp
     DO INSTEAD
-    SELECT (emp.name, emp.salary) FROM emp
+    	SELECT (emp.name, emp.salary) 
+	FROM emp
         WHERE emp.dept = "toy";
    </programlisting>
   </para>
@@ -307,7 +316,8 @@ CREATE RULE example_4 AS
    <programlisting>
 CREATE RULE example_5 AS
     ON INERT TO emp WHERE new.salary > 5000
-    DO UPDATE NEWSET salary = 5000;
+    DO 
+	UPDATE NEWSET salary = 5000;
    </programlisting>
   </para>
  </refsect1>
