@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.28 1997/01/24 17:47:33 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.29 1997/05/20 03:39:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1471,7 +1471,7 @@ PQfnumber(PGresult *res, const char* field_name)
     return  -1;
 
   for (i=0;i<res->numAttributes;i++) {
-    if ( strcmp(field_name, res->attDescs[i].name) == 0 )
+    if ( strcasecmp(field_name, res->attDescs[i].name) == 0 )
       return i;
   }
   return -1;
@@ -1629,4 +1629,4 @@ PQgetisnull(PGresult *res, int tup_num, int field_num)
         return 1;
     else
         return 0;
-  }
+}

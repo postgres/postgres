@@ -12,12 +12,11 @@ then
 else
 	BS='\\'			# System V
 fi
-psql -l -A -q -t|cut -d"|" -f1-2 | tr '|' ' ' | grep -v '^template1 ' | \
-while read DATABASE USER
+psql -l -A -q -t| tr '|' ' ' | grep -v '^template1 ' | \
+while read DATABASE USERID USER
 do
 	echo "${BS}connect template1"
 	echo "create database $DATABASE;"
-	echo "update pg_database set datdba = $USER where datname = '$DATABASE';"
 	echo "${BS}connect $DATABASE"
 	pg_dump "$@" $DATABASE
 done
