@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.24 2002/11/11 20:14:02 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.25 2003/03/18 00:02:11 momjian Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -123,6 +123,13 @@ psql <replaceable class="parameter">dbname</replaceable> &lt; <replaceable class
     furthermore that you must be allowed to connect as each of them.
     It might therefore be necessary to temporarily relax the client
     authentication settings.
+   </para>
+
+   <para>
+    Once restored, it is wise to run <command>ANALYZE</> on each
+    database so the optimizer has useful statistics. You
+    can also run <command>vacuumdb -a -z</> to <command>ANALYZE</> all
+    databases.
    </para>
 
    <para>

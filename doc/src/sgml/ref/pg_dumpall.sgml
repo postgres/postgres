@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.36 2003/01/06 18:53:24 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.37 2003/03/18 00:02:11 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -258,10 +258,17 @@ PostgreSQL documentation
    <application>pg_dumpall</application> will need to connect several
    times to the <productname>PostgreSQL</productname> server.  If password
    authentication is configured, it will ask for a password each time. In
-   that case it would be convenient to set up a password file.
+   that case it would be convenient to set up a <filename>.pgpass</> 
+   password file.
   </para>
 
-  <comment>But where is that password file documented?</comment>
+  <para>
+   Once restored, it is wise to run <command>ANALYZE</> on each
+   database so the optimizer has useful statistics. You
+   can also run <command>vacuumdb -a -z</> to <command>ANALYZE</> all
+   databases.
+  </para>
+
  </refsect1>
 
 

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.35 2003/01/19 00:13:31 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.36 2003/03/18 00:02:11 momjian Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <docinfo>
@@ -589,6 +589,12 @@ CREATE DATABASE foo WITH TEMPLATE = template0;
    See also the <xref linkend="app-pgdump"> documentation for details on
    limitations of <application>pg_dump</application>.
   </para>
+
+  <para>
+   Once restored, it is wise to run <command>ANALYZE</> on each
+   restored object so the optimizer has useful statistics.
+  </para>
+
  </refsect1>
 
 
