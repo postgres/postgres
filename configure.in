@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.267 2003/06/23 23:51:59 momjian Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.268 2003/07/22 16:39:55 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -965,7 +965,6 @@ AC_FUNC_FSEEKO
 # For each platform, we need to know about any special compile and link
 # libraries, and whether the normal C function names are thread-safe.
 #
-NEED_REENTRANT_FUNC_NAMES=no
 if test "$with_threads" = yes; then
 AC_CHECK_HEADER(pthread.h, [], [AC_MSG_ERROR([pthread.h not found, required for --with-threads])])
 
@@ -973,7 +972,7 @@ if test "$SUPPORTS_THREADS" != yes; then
 AC_MSG_ERROR([
 Cannot enable threads on your platform.
 Please report your platform threading info to the PostgreSQL mailing lists
-so it can be added to the next release.  Report any compile flags, link flags,
+so it can be added to the next release.  Report all compile flags, link flags,
 functions, or libraries required for threading support.
 ])
 fi
@@ -989,10 +988,10 @@ AC_SUBST(THREAD_LIBS)
 # threading on this platform.  Some platforms have *_r functions but
 # their natively named funcs are threadsafe, and should be used instead.
 #
-# One trick here is that if the don't call AC_CHECK_FUNCS, the
+# One trick here is that if we don't call AC_CHECK_FUNCS, the
 # functions are marked "not found", which is perfect.
 #
-if test "$NEED_REENTRANT_FUNC_NAMES" = yes ; then
+if test "$with_threads" = yes -a "$NEED_REENTRANT_FUNC_NAMES" = yes ; then
 _CFLAGS="$CFLAGS"
 _LIB="$LIBS"
 CFLAGS="$CFLAGS $TREAD_CFLAGS"

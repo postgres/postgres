@@ -12807,7 +12807,6 @@ fi
 # For each platform, we need to know about any special compile and link
 # libraries, and whether the normal C function names are thread-safe.
 #
-NEED_REENTRANT_FUNC_NAMES=no
 if test "$with_threads" = yes; then
 if test "${ac_cv_header_pthread_h+set}" = set; then
   echo "$as_me:$LINENO: checking for pthread.h" >&5
@@ -12924,13 +12923,13 @@ if test "$SUPPORTS_THREADS" != yes; then
 { { echo "$as_me:$LINENO: error:
 Cannot enable threads on your platform.
 Please report your platform threading info to the PostgreSQL mailing lists
-so it can be added to the next release.  Report any compile flags, link flags,
+so it can be added to the next release.  Report all compile flags, link flags,
 functions, or libraries required for threading support.
 " >&5
 echo "$as_me: error:
 Cannot enable threads on your platform.
 Please report your platform threading info to the PostgreSQL mailing lists
-so it can be added to the next release.  Report any compile flags, link flags,
+so it can be added to the next release.  Report all compile flags, link flags,
 functions, or libraries required for threading support.
 " >&2;}
    { (exit 1); exit 1; }; }
@@ -12947,10 +12946,10 @@ fi
 # threading on this platform.  Some platforms have *_r functions but
 # their natively named funcs are threadsafe, and should be used instead.
 #
-# One trick here is that if the don't call AC_CHECK_FUNCS, the
+# One trick here is that if we don't call AC_CHECK_FUNCS, the
 # functions are marked "not found", which is perfect.
 #
-if test "$NEED_REENTRANT_FUNC_NAMES" = yes ; then
+if test "$with_threads" = yes -a "$NEED_REENTRANT_FUNC_NAMES" = yes ; then
 _CFLAGS="$CFLAGS"
 _LIB="$LIBS"
 CFLAGS="$CFLAGS $TREAD_CFLAGS"
