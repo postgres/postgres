@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.63 2002/12/13 19:45:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.64 2003/05/06 00:20:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -723,7 +723,7 @@ begin_tup_output_tupdesc(CommandDest dest, TupleDesc tupdesc)
 	tstate->destfunc = DestToFunction(dest);
 
 	(*tstate->destfunc->setup) (tstate->destfunc, (int) CMD_SELECT,
-								NULL, tupdesc);
+								NULL, tupdesc, NIL);
 
 	return tstate;
 }

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/tstoreReceiver.c,v 1.3 2003/05/02 20:54:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/tstoreReceiver.c,v 1.4 2003/05/06 00:20:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,8 @@ typedef struct
  */
 static void
 tstoreSetupReceiver(DestReceiver *self, int operation,
-					const char *portalname, TupleDesc typeinfo)
+					const char *portalname,
+					TupleDesc typeinfo, List *targetlist)
 {
 	TStoreState *myState = (TStoreState *) self;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.332 2003/05/05 00:44:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.333 2003/05/06 00:20:33 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1460,7 +1460,15 @@ exec_describe_portal_message(const char *portal_name)
 		return;					/* can't actually do anything... */
 
 	if (portal->tupDesc)
-		SendRowDescriptionMessage(portal->tupDesc);
+	{
+		List   *targetlist;
+
+		if (portal->strategy == PORTAL_ONE_SELECT)
+			targetlist = ((Plan *) lfirst(portal->planTrees))->targetlist;
+		else
+			targetlist = NIL;
+		SendRowDescriptionMessage(portal->tupDesc, targetlist);
+	}
 	else
 		pq_putemptymessage('n');	/* NoData */
 }
@@ -2335,7 +2343,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.332 $ $Date: 2003/05/05 00:44:56 $\n");
+		puts("$Revision: 1.333 $ $Date: 2003/05/06 00:20:33 $\n");
 	}
 
 	/*

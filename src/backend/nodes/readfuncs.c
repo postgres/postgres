@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.152 2003/05/02 20:54:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.153 2003/05/06 00:20:32 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -310,8 +310,8 @@ _readResdom(void)
 	READ_INT_FIELD(restypmod);
 	READ_STRING_FIELD(resname);
 	READ_UINT_FIELD(ressortgroupref);
-	READ_UINT_FIELD(reskey);
-	READ_OID_FIELD(reskeyop);
+	READ_OID_FIELD(resorigtbl);
+	READ_INT_FIELD(resorigcol);
 	READ_BOOL_FIELD(resjunk);
 
 	READ_DONE();

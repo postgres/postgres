@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tlist.h,v 1.34 2003/02/15 20:12:41 tgl Exp $
+ * $Id: tlist.h,v 1.35 2003/05/06 00:20:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,6 @@ extern Resdom *tlist_member(Node *node, List *targetlist);
 extern void add_var_to_tlist(RelOptInfo *rel, Var *var);
 extern TargetEntry *create_tl_element(Var *var, int resdomno);
 
-extern List *new_unsorted_tlist(List *targetlist);
 extern List *flatten_tlist(List *tlist);
 extern List *add_to_flat_tlist(List *tlist, List *vars);
 

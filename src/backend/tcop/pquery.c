@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.60 2003/05/02 20:54:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.61 2003/05/06 00:20:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,7 +136,7 @@ ProcessQuery(Query *parsetree,
 	/*
 	 * Call ExecStart to prepare the plan for execution
 	 */
-	ExecutorStart(queryDesc);
+	ExecutorStart(queryDesc, false);
 
 	/*
 	 * Run the plan to completion.
@@ -256,7 +256,7 @@ PortalStart(Portal portal, ParamListInfo params)
 			/*
 			 * Call ExecStart to prepare the plan for execution
 			 */
-			ExecutorStart(queryDesc);
+			ExecutorStart(queryDesc, false);
 			/*
 			 * This tells PortalCleanup to shut down the executor
 			 */
@@ -571,10 +571,18 @@ RunFromStore(Portal portal, ScanDirection direction, long count,
 			 CommandDest dest)
 {
 	DestReceiver *destfunc;
+	List	   *targetlist;
 	long		current_tuple_count = 0;
 
 	destfunc = DestToFunction(dest);
-	(*destfunc->setup) (destfunc, CMD_SELECT, portal->name, portal->tupDesc);
+
+	if (portal->strategy == PORTAL_ONE_SELECT)
+		targetlist = ((Plan *) lfirst(portal->planTrees))->targetlist;
+	else
+		targetlist = NIL;
+
+	(*destfunc->setup) (destfunc, CMD_SELECT, portal->name, portal->tupDesc,
+						targetlist);
 
 	if (direction == NoMovementScanDirection)
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.55 2003/02/15 20:12:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.56 2003/05/06 00:20:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,32 +116,6 @@ create_tl_element(Var *var, int resdomno)
 /*****************************************************************************
  *		---------- GENERAL target list routines ----------
  *****************************************************************************/
-
-/*
- * new_unsorted_tlist
- *	  Creates a copy of a target list by creating new resdom nodes
- *	  without sort information.
- *
- * 'targetlist' is the target list to be copied.
- *
- * Returns the resulting target list.
- *
- */
-List *
-new_unsorted_tlist(List *targetlist)
-{
-	List	   *new_targetlist = (List *) copyObject((Node *) targetlist);
-	List	   *x;
-
-	foreach(x, new_targetlist)
-	{
-		TargetEntry *tle = (TargetEntry *) lfirst(x);
-
-		tle->resdom->reskey = 0;
-		tle->resdom->reskeyop = (Oid) 0;
-	}
-	return new_targetlist;
-}
 
 /*
  * flatten_tlist

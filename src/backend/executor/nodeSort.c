@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.43 2003/05/05 17:57:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.44 2003/05/06 00:20:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,59 +19,6 @@
 #include "executor/nodeSort.h"
 #include "utils/tuplesort.h"
 
-/* ----------------------------------------------------------------
- *		ExtractSortKeys
- *
- *		Extract the sorting key information from the plan node.
- *
- *		Returns two palloc'd arrays, one of sort operator OIDs and
- *		one of attribute numbers.
- * ----------------------------------------------------------------
- */
-static void
-ExtractSortKeys(Sort *sortnode,
-				Oid **sortOperators,
-				AttrNumber **attNums)
-{
-	List	   *targetList;
-	int			keycount;
-	Oid		   *sortOps;
-	AttrNumber *attNos;
-	List	   *tl;
-
-	/*
-	 * get information from the node
-	 */
-	targetList = sortnode->plan.targetlist;
-	keycount = sortnode->keycount;
-
-	/*
-	 * first allocate space for results
-	 */
-	if (keycount <= 0)
-		elog(ERROR, "ExtractSortKeys: keycount <= 0");
-	sortOps = (Oid *) palloc0(keycount * sizeof(Oid));
-	*sortOperators = sortOps;
-	attNos = (AttrNumber *) palloc0(keycount * sizeof(AttrNumber));
-	*attNums = attNos;
-
-	/*
-	 * extract info from the resdom nodes in the target list
-	 */
-	foreach(tl, targetList)
-	{
-		TargetEntry *target = (TargetEntry *) lfirst(tl);
-		Resdom	   *resdom = target->resdom;
-		Index		reskey = resdom->reskey;
-
-		if (reskey > 0)			/* ignore TLEs that are not sort keys */
-		{
-			Assert(reskey <= keycount);
-			sortOps[reskey - 1] = resdom->reskeyop;
-			attNos[reskey - 1] = resdom->resno;
-		}
-	}
-}
 
 /* ----------------------------------------------------------------
  *		ExecSort
@@ -118,8 +65,6 @@ ExecSort(SortState *node)
 		Sort	   *plannode = (Sort *) node->ss.ps.plan;
 		PlanState  *outerNode;
 		TupleDesc	tupDesc;
-		Oid		   *sortOperators;
-		AttrNumber *attNums;
 
 		SO1_printf("ExecSort: %s\n",
 				   "sorting subplan");
@@ -139,15 +84,12 @@ ExecSort(SortState *node)
 		outerNode = outerPlanState(node);
 		tupDesc = ExecGetResultType(outerNode);
 
-		ExtractSortKeys(plannode, &sortOperators, &attNums);
-
-		tuplesortstate = tuplesort_begin_heap(tupDesc, plannode->keycount,
-											  sortOperators, attNums,
+		tuplesortstate = tuplesort_begin_heap(tupDesc,
+											  plannode->numCols,
+											  plannode->sortOperators,
+											  plannode->sortColIdx,
 											  true /* randomAccess */ );
 		node->tuplesortstate = (void *) tuplesortstate;
-
-		pfree(sortOperators);
-		pfree(attNums);
 
 		/*
 		 * Scan the subplan and feed all the tuples to tuplesort.

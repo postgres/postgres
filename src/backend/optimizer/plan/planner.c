@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.152 2003/03/13 16:58:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.153 2003/05/06 00:20:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,10 +61,6 @@ static void locate_grouping_columns(Query *parse,
 									List *tlist,
 									List *sub_tlist,
 									AttrNumber *groupColIdx);
-static Plan *make_groupsortplan(Query *parse,
-								List *groupClause,
-								AttrNumber *grpColIdx,
-								Plan *subplan);
 static List *postprocess_setop_tlist(List *new_tlist, List *orig_tlist);
 
 
@@ -1145,10 +1141,11 @@ grouping_planner(Query *parse, double tuple_fraction)
 			{
 				if (!pathkeys_contained_in(group_pathkeys, current_pathkeys))
 				{
-					result_plan = make_groupsortplan(parse,
-													 parse->groupClause,
-													 groupColIdx,
-													 result_plan);
+					result_plan = (Plan *)
+						make_sort_from_groupcols(parse,
+												 parse->groupClause,
+												 groupColIdx,
+												 result_plan);
 					current_pathkeys = group_pathkeys;
 				}
 				aggstrategy = AGG_SORTED;
@@ -1193,10 +1190,11 @@ grouping_planner(Query *parse, double tuple_fraction)
 				 */
 				if (!pathkeys_contained_in(group_pathkeys, current_pathkeys))
 				{
-					result_plan = make_groupsortplan(parse,
-													 parse->groupClause,
-													 groupColIdx,
-													 result_plan);
+					result_plan = (Plan *)
+						make_sort_from_groupcols(parse,
+												 parse->groupClause,
+												 groupColIdx,
+												 result_plan);
 					current_pathkeys = group_pathkeys;
 				}
 
@@ -1219,10 +1217,11 @@ grouping_planner(Query *parse, double tuple_fraction)
 	{
 		if (!pathkeys_contained_in(sort_pathkeys, current_pathkeys))
 		{
-			result_plan = (Plan *) make_sort_from_sortclauses(parse,
-															  tlist,
-															  result_plan,
-															  parse->sortClause);
+			result_plan = (Plan *)
+				make_sort_from_sortclauses(parse,
+										   tlist,
+										   result_plan,
+										   parse->sortClause);
 			current_pathkeys = sort_pathkeys;
 		}
 	}
@@ -1469,53 +1468,6 @@ locate_grouping_columns(Query *parse,
 
 		groupColIdx[keyno++] = te->resdom->resno;
 	}
-}
-
-/*
- * make_groupsortplan
- *		Add a Sort node to explicitly sort according to the GROUP BY clause.
- *
- * Note: the Sort node always just takes a copy of the subplan's tlist
- * plus ordering information.  (This might seem inefficient if the
- * subplan contains complex GROUP BY expressions, but in fact Sort
- * does not evaluate its targetlist --- it only outputs the same
- * tuples in a new order.  So the expressions we might be copying
- * are just dummies with no extra execution cost.)
- */
-static Plan *
-make_groupsortplan(Query *parse,
-				   List *groupClause,
-				   AttrNumber *grpColIdx,
-				   Plan *subplan)
-{
-	List	   *sort_tlist = new_unsorted_tlist(subplan->targetlist);
-	int			grpno = 0;
-	int			keyno = 0;
-	List	   *gl;
-
-	foreach(gl, groupClause)
-	{
-		GroupClause *grpcl = (GroupClause *) lfirst(gl);
-		TargetEntry *te = nth(grpColIdx[grpno] - 1, sort_tlist);
-		Resdom	   *resdom = te->resdom;
-
-		/*
-		 * Check for the possibility of duplicate group-by clauses ---
-		 * the parser should have removed 'em, but the Sort executor
-		 * will get terribly confused if any get through!
-		 */
-		if (resdom->reskey == 0)
-		{
-			/* OK, insert the ordering info needed by the executor. */
-			resdom->reskey = ++keyno;
-			resdom->reskeyop = grpcl->sortop;
-		}
-		grpno++;
-	}
-
-	Assert(keyno > 0);
-
-	return (Plan *) make_sort(parse, sort_tlist, subplan, keyno);
 }
 
 /*

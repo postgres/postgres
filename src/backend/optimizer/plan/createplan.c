@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.138 2003/03/10 03:53:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.139 2003/05/06 00:20:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,6 +101,8 @@ static MergeJoin *make_mergejoin(List *tlist,
 			   List *mergeclauses,
 			   Plan *lefttree, Plan *righttree,
 			   JoinType jointype);
+static Sort *make_sort(Query *root, List *tlist, Plan *lefttree, int numCols,
+					   AttrNumber *sortColIdx, Oid *sortOperators);
 static Sort *make_sort_from_pathkeys(Query *root, Plan *lefttree,
 									 Relids relids, List *pathkeys);
 
@@ -576,7 +578,7 @@ create_unique_plan(Query *root, UniquePath *best_path)
 			subplan->targetlist = newtlist;
 	}
 
-	my_tlist = new_unsorted_tlist(subplan->targetlist);
+	my_tlist = copyObject(subplan->targetlist);
 
 	if (best_path->use_hash)
 	{
@@ -1614,13 +1616,13 @@ make_mergejoin(List *tlist,
 }
 
 /*
- * To use make_sort directly, you must already have marked the tlist
- * with reskey and reskeyop information.  The keys had better be
- * non-redundant, too (ie, there had better be tlist items marked with
- * each key number from 1 to keycount), or the executor will get confused!
+ * make_sort --- basic routine to build a Sort plan node
+ *
+ * Caller must have built the sortColIdx and sortOperators arrays already.
  */
-Sort *
-make_sort(Query *root, List *tlist, Plan *lefttree, int keycount)
+static Sort *
+make_sort(Query *root, List *tlist, Plan *lefttree, int numCols,
+		  AttrNumber *sortColIdx, Oid *sortOperators)
 {
 	Sort	   *node = makeNode(Sort);
 	Plan	   *plan = &node->plan;
@@ -1637,9 +1639,41 @@ make_sort(Query *root, List *tlist, Plan *lefttree, int keycount)
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
-	node->keycount = keycount;
+	node->numCols = numCols;
+	node->sortColIdx = sortColIdx;
+	node->sortOperators = sortOperators;
 
 	return node;
+}
+
+/*
+ * add_sort_column --- utility subroutine for building sort info arrays
+ *
+ * We need this routine because the same column might be selected more than
+ * once as a sort key column; if so, the extra mentions are redundant.
+ *
+ * Caller is assumed to have allocated the arrays large enough for the
+ * max possible number of columns.  Return value is the new column count.
+ */
+static int
+add_sort_column(AttrNumber colIdx, Oid sortOp,
+				int numCols, AttrNumber *sortColIdx, Oid *sortOperators)
+{
+	int			i;
+
+	for (i = 0; i < numCols; i++)
+	{
+		if (sortColIdx[i] == colIdx)
+		{
+			/* Already sorting by this col, so extra sort key is useless */
+			return numCols;
+		}
+	}
+
+	/* Add the column */
+	sortColIdx[numCols] = colIdx;
+	sortOperators[numCols] = sortOp;
+	return numCols + 1;
 }
 
 /*
@@ -1650,8 +1684,8 @@ make_sort(Query *root, List *tlist, Plan *lefttree, int keycount)
  *	  'relids' is the set of relids represented by the input node
  *	  'pathkeys' is the list of pathkeys by which the result is to be sorted
  *
- * We must convert the pathkey information into reskey and reskeyop fields
- * of resdom nodes in the sort plan's target list.
+ * We must convert the pathkey information into arrays of sort key column
+ * numbers and sort operator OIDs.
  *
  * If the pathkeys include expressions that aren't simple Vars, we will
  * usually need to add resjunk items to the input plan's targetlist to
@@ -1666,10 +1700,16 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree,
 	List	   *tlist = lefttree->targetlist;
 	List	   *sort_tlist;
 	List	   *i;
-	int			numsortkeys = 0;
+	int			numsortkeys;
+	AttrNumber *sortColIdx;
+	Oid		   *sortOperators;
 
-	/* Create a new target list for the sort, with sort keys set. */
-	sort_tlist = new_unsorted_tlist(tlist);
+	/* We will need at most length(pathkeys) sort columns; possibly less */
+	numsortkeys = length(pathkeys);
+	sortColIdx = (AttrNumber *) palloc(numsortkeys * sizeof(AttrNumber));
+	sortOperators = (Oid *) palloc(numsortkeys * sizeof(Oid));
+
+	numsortkeys = 0;
 
 	foreach(i, pathkeys)
 	{
@@ -1681,7 +1721,7 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree,
 		/*
 		 * We can sort by any one of the sort key items listed in this
 		 * sublist.  For now, we take the first one that corresponds to an
-		 * available Var in the sort_tlist.  If there isn't any, use the
+		 * available Var in the tlist.  If there isn't any, use the
 		 * first one that is an expression in the input's vars.
 		 *
 		 * XXX if we have a choice, is there any way of figuring out which
@@ -1694,7 +1734,7 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree,
 		{
 			pathkey = lfirst(j);
 			Assert(IsA(pathkey, PathKeyItem));
-			resdom = tlist_member(pathkey->key, sort_tlist);
+			resdom = tlist_member(pathkey->key, tlist);
 			if (resdom)
 				break;
 		}
@@ -1717,7 +1757,7 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree,
 			 */
 			if (IsA(lefttree, Append))
 			{
-				tlist = new_unsorted_tlist(tlist);
+				tlist = copyObject(tlist);
 				lefttree = (Plan *) make_result(tlist, NULL, lefttree);
 			}
 			/*
@@ -1732,38 +1772,24 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree,
 							makeTargetEntry(resdom,
 											(Expr *) pathkey->key));
 			lefttree->targetlist = tlist; /* just in case NIL before */
-			/*
-			 * Add one to sort node's tlist too.  This will be identical
-			 * except we are going to set the sort key info in it.
-			 */
-			resdom = makeResdom(length(sort_tlist) + 1,
-								exprType(pathkey->key),
-								exprTypmod(pathkey->key),
-								NULL,
-								true);
-			sort_tlist = lappend(sort_tlist,
-								 makeTargetEntry(resdom,
-												 (Expr *) pathkey->key));
 		}
 		/*
-		 * The resdom might be already marked as a sort key, if the
+		 * The column might already be selected as a sort key, if the
 		 * pathkeys contain duplicate entries.	(This can happen in
 		 * scenarios where multiple mergejoinable clauses mention the same
-		 * var, for example.) In that case the current pathkey is
-		 * essentially a no-op, because only one value can be seen within
-		 * any subgroup where it would be consulted.  We can ignore it.
+		 * var, for example.)  So enter it only once in the sort arrays.
 		 */
-		if (resdom->reskey == 0)
-		{
-			/* OK, mark it as a sort key and set the sort operator */
-			resdom->reskey = ++numsortkeys;
-			resdom->reskeyop = pathkey->sortop;
-		}
+		numsortkeys = add_sort_column(resdom->resno, pathkey->sortop,
+									  numsortkeys, sortColIdx, sortOperators);
 	}
 
 	Assert(numsortkeys > 0);
 
-	return make_sort(root, sort_tlist, lefttree, numsortkeys);
+	/* Give Sort node its own copy of the tlist (still necessary?) */
+	sort_tlist = copyObject(tlist);
+
+	return make_sort(root, sort_tlist, lefttree, numsortkeys,
+					 sortColIdx, sortOperators);
 }
 
 /*
@@ -1780,36 +1806,96 @@ make_sort_from_sortclauses(Query *root, List *tlist,
 {
 	List	   *sort_tlist;
 	List	   *i;
-	int			keyno = 0;
+	int			numsortkeys;
+	AttrNumber *sortColIdx;
+	Oid		   *sortOperators;
 
-	/*
-	 * First make a copy of the tlist so that we don't corrupt the
-	 * original.
-	 */
-	sort_tlist = new_unsorted_tlist(tlist);
+	/* We will need at most length(sortcls) sort columns; possibly less */
+	numsortkeys = length(sortcls);
+	sortColIdx = (AttrNumber *) palloc(numsortkeys * sizeof(AttrNumber));
+	sortOperators = (Oid *) palloc(numsortkeys * sizeof(Oid));
+
+	numsortkeys = 0;
 
 	foreach(i, sortcls)
 	{
 		SortClause *sortcl = (SortClause *) lfirst(i);
-		TargetEntry *tle = get_sortgroupclause_tle(sortcl, sort_tlist);
+		TargetEntry *tle = get_sortgroupclause_tle(sortcl, tlist);
 		Resdom	   *resdom = tle->resdom;
 
 		/*
 		 * Check for the possibility of duplicate order-by clauses --- the
-		 * parser should have removed 'em, but the executor will get
-		 * terribly confused if any get through!
+		 * parser should have removed 'em, but no point in sorting redundantly.
 		 */
-		if (resdom->reskey == 0)
-		{
-			/* OK, insert the ordering info needed by the executor. */
-			resdom->reskey = ++keyno;
-			resdom->reskeyop = sortcl->sortop;
-		}
+		numsortkeys = add_sort_column(resdom->resno, sortcl->sortop,
+									  numsortkeys, sortColIdx, sortOperators);
 	}
 
-	Assert(keyno > 0);
+	Assert(numsortkeys > 0);
 
-	return make_sort(root, sort_tlist, lefttree, keyno);
+	/* Give Sort node its own copy of the tlist (still necessary?) */
+	sort_tlist = copyObject(tlist);
+
+	return make_sort(root, sort_tlist, lefttree, numsortkeys,
+					 sortColIdx, sortOperators);
+}
+
+/*
+ * make_sort_from_groupcols
+ *	  Create sort plan to sort based on grouping columns
+ *
+ * 'groupcls' is the list of GroupClauses
+ * 'grpColIdx' gives the column numbers to use
+ *
+ * This might look like it could be merged with make_sort_from_sortclauses,
+ * but presently we *must* use the grpColIdx[] array to locate sort columns,
+ * because the child plan's tlist is not marked with ressortgroupref info
+ * appropriate to the grouping node.  So, only the sortop is used from the
+ * GroupClause entries.
+ */
+Sort *
+make_sort_from_groupcols(Query *root,
+						 List *groupcls,
+						 AttrNumber *grpColIdx,
+						 Plan *lefttree)
+{
+	List	   *sub_tlist = lefttree->targetlist;
+	List	   *sort_tlist;
+	int			grpno = 0;
+	List	   *i;
+	int			numsortkeys;
+	AttrNumber *sortColIdx;
+	Oid		   *sortOperators;
+
+	/* We will need at most length(groupcls) sort columns; possibly less */
+	numsortkeys = length(groupcls);
+	sortColIdx = (AttrNumber *) palloc(numsortkeys * sizeof(AttrNumber));
+	sortOperators = (Oid *) palloc(numsortkeys * sizeof(Oid));
+
+	numsortkeys = 0;
+
+	foreach(i, groupcls)
+	{
+		GroupClause *grpcl = (GroupClause *) lfirst(i);
+		TargetEntry *tle = nth(grpColIdx[grpno] - 1, sub_tlist);
+		Resdom	   *resdom = tle->resdom;
+
+		/*
+		 * Check for the possibility of duplicate group-by clauses --- the
+		 * parser should have removed 'em, but no point in sorting redundantly.
+		 */
+		numsortkeys = add_sort_column(resdom->resno, grpcl->sortop,
+									  numsortkeys, sortColIdx, sortOperators);
+		grpno++;
+	}
+
+	Assert(numsortkeys > 0);
+
+	/* Give Sort node its own copy of the tlist (still necessary?) */
+	sort_tlist = copyObject(sub_tlist);
+
+	return make_sort(root, sort_tlist, lefttree, numsortkeys,
+					 sortColIdx, sortOperators);
 }
 
 Material *

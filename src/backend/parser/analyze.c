@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.270 2003/05/05 00:44:55 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.271 2003/05/06 00:20:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1746,6 +1746,9 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->into = stmt->into;
 	if (stmt->intoColNames)
 		applyColumnNames(qry->targetList, stmt->intoColNames);
+
+	/* mark column origins */
+	markTargetListOrigins(pstate, qry->targetList);
 
 	/* transform WHERE */
 	qual = transformWhereClause(pstate, stmt->whereClause);

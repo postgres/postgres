@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.60 2003/01/22 19:26:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.61 2003/05/06 00:20:32 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -447,8 +447,8 @@ print_tl(List *tlist, List *rtable)
 		TargetEntry *tle = lfirst(tl);
 
 		printf("\t%d %s\t", tle->resdom->resno, tle->resdom->resname);
-		if (tle->resdom->reskey != 0)
-			printf("(%d):\t", tle->resdom->reskey);
+		if (tle->resdom->ressortgroupref != 0)
+			printf("(%u):\t", tle->resdom->ressortgroupref);
 		else
 			printf("    :\t");
 		print_expr((Node *) tle->expr, rtable);

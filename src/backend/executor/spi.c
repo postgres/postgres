@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.94 2003/05/02 20:54:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.95 2003/05/06 00:20:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -880,7 +880,7 @@ SPI_cursor_close(Portal portal)
  */
 void
 spi_dest_setup(DestReceiver *self, int operation,
-			   const char *portalName, TupleDesc typeinfo)
+			   const char *portalName, TupleDesc typeinfo, List *targetlist)
 {
 	SPITupleTable *tuptable;
 	MemoryContext oldcxt;
@@ -1209,7 +1209,7 @@ _SPI_pquery(QueryDesc *queryDesc, bool runit, int tcount)
 		ResetUsage();
 #endif
 
-	ExecutorStart(queryDesc);
+	ExecutorStart(queryDesc, false);
 
 	ExecutorRun(queryDesc, ForwardScanDirection, (long) tcount);
 

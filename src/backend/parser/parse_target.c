@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.100 2003/04/29 22:13:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.101 2003/05/06 00:20:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "utils/builtins.h"
 
 
+static void markTargetListOrigin(ParseState *pstate, Resdom *res, Var *var);
 static List *ExpandAllTables(ParseState *pstate);
 static char *FigureColname(Node *node);
 static int	FigureColnameInternal(Node *node, char **name);
@@ -201,6 +202,94 @@ transformTargetList(ParseState *pstate, List *targetlist)
 	}
 
 	return p_target;
+}
+
+
+/*
+ * markTargetListOrigins()
+ *		Mark targetlist columns that are simple Vars with the source
+ *		table's OID and column number.
+ *
+ * Currently, this is done only for SELECT targetlists, since we only
+ * need the info if we are going to send it to the frontend.
+ */
+void
+markTargetListOrigins(ParseState *pstate, List *targetlist)
+{
+	List	   *l;
+
+	foreach(l, targetlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(l);
+
+		markTargetListOrigin(pstate, tle->resdom, (Var *) tle->expr);
+	}
+}
+
+/*
+ * markTargetListOrigin()
+ *		If 'var' is a Var of a plain relation, mark 'res' with its origin
+ *
+ * This is split out so it can recurse for join references.  Note that we
+ * do not drill down into views, but report the view as the column owner.
+ */
+static void
+markTargetListOrigin(ParseState *pstate, Resdom *res, Var *var)
+{
+	RangeTblEntry *rte;
+	AttrNumber	attnum;
+
+	if (var == NULL || !IsA(var, Var))
+		return;
+	Assert(var->varno > 0 &&
+		   (int) var->varno <= length(pstate->p_rtable));
+	rte = rt_fetch(var->varno, pstate->p_rtable);
+	attnum = var->varattno;
+
+	switch (rte->rtekind)
+	{
+		case RTE_RELATION:
+			/* It's a table or view, report it */
+			res->resorigtbl = rte->relid;
+			res->resorigcol = attnum;
+			break;
+		case RTE_SUBQUERY:
+			{
+				/* Subselect-in-FROM: copy up from the subselect */
+				List	   *subtl;
+
+				foreach(subtl, rte->subquery->targetList)
+				{
+					TargetEntry *subte = (TargetEntry *) lfirst(subtl);
+
+					if (subte->resdom->resjunk ||
+						subte->resdom->resno != attnum)
+						continue;
+					res->resorigtbl = subte->resdom->resorigtbl;
+					res->resorigcol = subte->resdom->resorigcol;
+					break;
+				}
+				/* falling off end of list shouldn't happen... */
+				if (subtl == NIL)
+					elog(ERROR, "Subquery %s does not have attribute %d",
+						 rte->eref->aliasname, attnum);
+			}
+			break;
+		case RTE_JOIN:
+			{
+				/* Join RTE --- recursively inspect the alias variable */
+				Var	   *aliasvar;
+
+				Assert(attnum > 0 && attnum <= length(rte->joinaliasvars));
+				aliasvar = (Var *) nth(attnum - 1, rte->joinaliasvars);
+				markTargetListOrigin(pstate, res, aliasvar);
+			}
+			break;
+		case RTE_SPECIAL:
+		case RTE_FUNCTION:
+			/* not a simple relation, leave it unmarked */
+			break;
+	}
 }
 
 

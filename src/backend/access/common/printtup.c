@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.68 2003/05/05 00:44:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.69 2003/05/06 00:20:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 
 
 static void printtup_setup(DestReceiver *self, int operation,
-			   const char *portalName, TupleDesc typeinfo);
+			   const char *portalName, TupleDesc typeinfo, List *targetlist);
 static void printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self);
 static void printtup_internal(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self);
 static void printtup_cleanup(DestReceiver *self);
@@ -78,7 +78,7 @@ printtup_create_DR(bool isBinary, bool sendDescrip)
 
 static void
 printtup_setup(DestReceiver *self, int operation,
-			   const char *portalName, TupleDesc typeinfo)
+			   const char *portalName, TupleDesc typeinfo, List *targetlist)
 {
 	DR_printtup *myState = (DR_printtup *) self;
 
@@ -100,7 +100,7 @@ printtup_setup(DestReceiver *self, int operation,
 	 * then we send back the tuple descriptor of the tuples.  
 	 */
 	if (operation == CMD_SELECT && myState->sendDescrip)
-		SendRowDescriptionMessage(typeinfo);
+		SendRowDescriptionMessage(typeinfo, targetlist);
 
 	/* ----------------
 	 * We could set up the derived attr info at this time, but we postpone it
@@ -116,9 +116,15 @@ printtup_setup(DestReceiver *self, int operation,
 
 /*
  * SendRowDescriptionMessage --- send a RowDescription message to the frontend
+ *
+ * Notes: the TupleDesc has typically been manufactured by ExecTypeFromTL()
+ * or some similar function; it does not contain a full set of fields.
+ * The targetlist will be NIL when executing a utility function that does
+ * not have a plan.  If the targetlist isn't NIL then it is a Plan node's
+ * targetlist; it is up to us to ignore resjunk columns in it.
  */
 void
-SendRowDescriptionMessage(TupleDesc typeinfo)
+SendRowDescriptionMessage(TupleDesc typeinfo, List *targetlist)
 {
 	Form_pg_attribute *attrs = typeinfo->attrs;
 	int			natts = typeinfo->natts;
@@ -135,9 +141,24 @@ SendRowDescriptionMessage(TupleDesc typeinfo)
 		/* column ID info appears in protocol 3.0 and up */
 		if (proto >= 3)
 		{
-			/* XXX not yet implemented, send zeroes */
-			pq_sendint(&buf, 0, 4);
-			pq_sendint(&buf, 0, 2);
+			/* Do we have a non-resjunk tlist item? */
+			while (targetlist &&
+				   ((TargetEntry *) lfirst(targetlist))->resdom->resjunk)
+				targetlist = lnext(targetlist);
+			if (targetlist)
+			{
+				Resdom	   *res = ((TargetEntry *) lfirst(targetlist))->resdom;
+
+				pq_sendint(&buf, res->resorigtbl, 4);
+				pq_sendint(&buf, res->resorigcol, 2);
+				targetlist = lnext(targetlist);
+			}
+			else
+			{
+				/* No info available, so send zeroes */
+				pq_sendint(&buf, 0, 4);
+				pq_sendint(&buf, 0, 2);
+			}
 		}
 		pq_sendint(&buf, (int) attrs[i]->atttypid,
 				   sizeof(attrs[i]->atttypid));
@@ -324,7 +345,7 @@ showatts(const char *name, TupleDesc tupleDesc)
  */
 void
 debugSetup(DestReceiver *self, int operation,
-		   const char *portalName, TupleDesc typeinfo)
+		   const char *portalName, TupleDesc typeinfo, List *targetlist)
 {
 	/*
 	 * show the return type of the tuples

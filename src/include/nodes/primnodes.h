@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.81 2003/04/08 23:20:04 tgl Exp $
+ * $Id: primnodes.h,v 1.82 2003/05/06 00:20:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,16 @@
  * Resdom (Result Domain)
  *
  * Notes:
- * ressortgroupref is the parse/plan-time representation of ORDER BY and
+ *
+ * resno will normally be equal to the item's position in a targetlist,
+ * but the code generally tries to avoid relying on that (eg, we avoid
+ * using "nth()" rather than a search to find an item by resno).
+ *
+ * resname will be null if no name can easily be assigned to the column.
+ * But it should never be null for user-visible columns (i.e., non-junk
+ * columns in a toplevel targetlist).
+ *
+ * ressortgroupref is used in the representation of ORDER BY and
  * GROUP BY items.	Targetlist entries with ressortgroupref=0 are not
  * sort/group items.  If ressortgroupref>0, then this item is an ORDER BY or
  * GROUP BY value.	No two entries in a targetlist may have the same nonzero
@@ -39,27 +48,25 @@
  * ressortgroupref means a more significant sort key.)	The order of the
  * associated SortClause or GroupClause lists determine the semantics.
  *
- * reskey and reskeyop are the execution-time representation of sorting.
- * reskey must be zero in any non-sort-key item.  The reskey of sort key
- * targetlist items for a sort plan node is 1,2,...,n for the n sort keys.
- * The reskeyop of each such targetlist item is the sort operator's OID.
- * reskeyop will be zero in non-sort-key items.
+ * resorigtbl/resorigcol identify the source of the column, if it is a
+ * simple reference to a column of a base table (or view).  If it is not
+ * a simple reference, these fields are zeroes.
  *
- * Both reskey and reskeyop are typically zero during parse/plan stages.
- * The executor does not pay any attention to ressortgroupref.
+ * If resjunk is true then the column is a working column (such as a sort key)
+ * that should be removed from the final output of the query.
  *--------------------
  */
 typedef struct Resdom
 {
 	NodeTag		type;
-	AttrNumber	resno;			/* attribute number */
+	AttrNumber	resno;			/* attribute number (1..N) */
 	Oid			restype;		/* type of the value */
 	int32		restypmod;		/* type-specific modifier of the value */
-	char	   *resname;		/* name of the resdom (could be NULL) */
-	Index		ressortgroupref;
-	/* nonzero if referenced by a sort/group clause */
-	Index		reskey;			/* order of key in a sort (for those > 0) */
-	Oid			reskeyop;		/* sort operator's Oid */
+	char	   *resname;		/* name of the column (could be NULL) */
+	Index		ressortgroupref;	/* nonzero if referenced by a
+									 * sort/group clause */
+	Oid			resorigtbl;		/* OID of column's source table */
+	AttrNumber	resorigcol;		/* column's number in source table */
 	bool		resjunk;		/* set to true to eliminate the attribute
 								 * from final target list */
 } Resdom;

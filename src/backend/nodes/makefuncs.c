@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.38 2003/02/10 04:44:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.39 2003/05/06 00:20:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,16 +117,16 @@ makeResdom(AttrNumber resno,
 	resdom->resname = resname;
 
 	/*
-	 * We always set the sorting/grouping fields to 0.	If the caller
-	 * wants to change them he must do so explicitly.  Few if any callers
-	 * should be doing that, so omitting these arguments reduces the
-	 * chance of error.
+	 * We always set these fields to 0. If the caller wants to change them
+	 * he must do so explicitly.  Few callers do that, so omitting these
+	 * arguments reduces the chance of error.
 	 */
 	resdom->ressortgroupref = 0;
-	resdom->reskey = 0;
-	resdom->reskeyop = InvalidOid;
+	resdom->resorigtbl = InvalidOid;
+	resdom->resorigcol = 0;
 
 	resdom->resjunk = resjunk;
+
 	return resdom;
 }
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.55 2003/05/05 00:44:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.56 2003/05/06 00:20:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ donothingReceive(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 
 static void
 donothingSetup(DestReceiver *self, int operation,
-			   const char *portalName, TupleDesc typeinfo)
+			   const char *portalName, TupleDesc typeinfo, List *targetlist)
 {
 }
 

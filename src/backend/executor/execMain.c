@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.206 2003/05/05 17:57:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.207 2003/05/06 00:20:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@ typedef struct evalPlanQual
 } evalPlanQual;
 
 /* decls for local routines only used within this module */
-static void InitPlan(QueryDesc *queryDesc);
+static void InitPlan(QueryDesc *queryDesc, bool explainOnly);
 static void initResultRelInfo(ResultRelInfo *resultRelInfo,
 				  Index resultRelationIndex,
 				  List *rangeTable,
@@ -104,12 +104,15 @@ static void EvalPlanQualStop(evalPlanQual *epq);
  * field of the QueryDesc is filled in to describe the tuples that will be
  * returned, and the internal fields (estate and planstate) are set up.
  *
+ * If explainOnly is true, we are not actually intending to run the plan,
+ * only to set up for EXPLAIN; so skip unwanted side-effects.
+ *
  * NB: the CurrentMemoryContext when this is called will become the parent
  * of the per-query context used for this Executor invocation.
  * ----------------------------------------------------------------
  */
 void
-ExecutorStart(QueryDesc *queryDesc)
+ExecutorStart(QueryDesc *queryDesc, bool explainOnly)
 {
 	EState	   *estate;
 	MemoryContext oldcontext;
@@ -117,6 +120,13 @@ ExecutorStart(QueryDesc *queryDesc)
 	/* sanity checks: queryDesc must not be started already */
 	Assert(queryDesc != NULL);
 	Assert(queryDesc->estate == NULL);
+
+	/*
+	 * If the transaction is read-only, we need to check if any writes
+	 * are planned to non-temporary tables.
+	 */
+	if (!explainOnly)
+		ExecCheckXactReadOnly(queryDesc->parsetree, queryDesc->operation);
 
 	/*
 	 * Build EState, switch into per-query memory context for startup.
@@ -149,7 +159,7 @@ ExecutorStart(QueryDesc *queryDesc)
 	/*
 	 * Initialize the plan state tree
 	 */
-	InitPlan(queryDesc);
+	InitPlan(queryDesc, explainOnly);
 
 	MemoryContextSwitchTo(oldcontext);
 }
@@ -203,22 +213,16 @@ ExecutorRun(QueryDesc *queryDesc,
 	dest = queryDesc->dest;
 
 	/*
-	 * If the transaction is read-only, we need to check if any writes
-	 * are planned to non-temporary tables.  This is done here at this
-	 * rather late stage so that we can handle EXPLAIN vs. EXPLAIN
-	 * ANALYZE easily.
-	 */
-	ExecCheckXactReadOnly(queryDesc->parsetree, operation);
-
-	/*
 	 * startup tuple receiver
 	 */
 	estate->es_processed = 0;
 	estate->es_lastoid = InvalidOid;
 
 	destfunc = DestToFunction(dest);
-	(*destfunc->setup) (destfunc, operation, queryDesc->portalName,
-						queryDesc->tupDesc);
+	(*destfunc->setup) (destfunc, operation,
+						queryDesc->portalName,
+						queryDesc->tupDesc,
+						queryDesc->planstate->plan->targetlist);
 
 	/*
 	 * run plan
@@ -468,7 +472,7 @@ fail:
  * ----------------------------------------------------------------
  */
 static void
-InitPlan(QueryDesc *queryDesc)
+InitPlan(QueryDesc *queryDesc, bool explainOnly)
 {
 	CmdType		operation = queryDesc->operation;
 	Query *parseTree = queryDesc->parsetree;
@@ -751,10 +755,12 @@ InitPlan(QueryDesc *queryDesc)
 	 * If doing SELECT INTO, initialize the "into" relation.  We must wait
 	 * till now so we have the "clean" result tuple type to create the
 	 * new table from.
+	 *
+	 * If EXPLAIN, skip creating the "into" relation.
 	 */
 	intoRelationDesc = (Relation) NULL;
 
-	if (do_select_into)
+	if (do_select_into && !explainOnly)
 	{
 		char	   *intoName;
 		Oid			namespaceId;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.204 2003/05/02 20:54:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.205 2003/05/06 00:20:32 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -420,11 +420,17 @@ _outAgg(StringInfo str, Agg *node)
 static void
 _outGroup(StringInfo str, Group *node)
 {
-	WRITE_NODE_TYPE("GRP");
+	int			i;
+
+	WRITE_NODE_TYPE("GROUP");
 
 	_outPlanInfo(str, (Plan *) node);
 
 	WRITE_INT_FIELD(numCols);
+
+	appendStringInfo(str, " :grpColIdx");
+	for (i = 0; i < node->numCols; i++)
+		appendStringInfo(str, " %d", node->grpColIdx[i]);
 }
 
 static void
@@ -438,11 +444,21 @@ _outMaterial(StringInfo str, Material *node)
 static void
 _outSort(StringInfo str, Sort *node)
 {
+	int			i;
+
 	WRITE_NODE_TYPE("SORT");
 
 	_outPlanInfo(str, (Plan *) node);
 
-	WRITE_INT_FIELD(keycount);
+	WRITE_INT_FIELD(numCols);
+
+	appendStringInfo(str, " :sortColIdx");
+	for (i = 0; i < node->numCols; i++)
+		appendStringInfo(str, " %d", node->sortColIdx[i]);
+
+	appendStringInfo(str, " :sortOperators");
+	for (i = 0; i < node->numCols; i++)
+		appendStringInfo(str, " %u", node->sortOperators[i]);
 }
 
 static void
@@ -517,8 +533,8 @@ _outResdom(StringInfo str, Resdom *node)
 	WRITE_INT_FIELD(restypmod);
 	WRITE_STRING_FIELD(resname);
 	WRITE_UINT_FIELD(ressortgroupref);
-	WRITE_UINT_FIELD(reskey);
-	WRITE_OID_FIELD(reskeyop);
+	WRITE_OID_FIELD(resorigtbl);
+	WRITE_INT_FIELD(resorigcol);
 	WRITE_BOOL_FIELD(resjunk);
 }
 

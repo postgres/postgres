@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.64 2003/02/09 00:30:40 tgl Exp $
+ * $Id: plannodes.h,v 1.65 2003/05/06 00:20:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -278,7 +278,9 @@ typedef struct Material
 typedef struct Sort
 {
 	Plan		plan;
-	int			keycount;
+	int			numCols;		/* number of sort-key columns */
+	AttrNumber *sortColIdx;		/* their indexes in the target list */
+	Oid		   *sortOperators;	/* OIDs of operators to sort them by */
 } Sort;
 
 /* ---------------

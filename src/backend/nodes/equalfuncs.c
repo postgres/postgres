@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.192 2003/05/02 20:54:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.193 2003/05/06 00:20:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,8 +104,8 @@ _equalResdom(Resdom *a, Resdom *b)
 	COMPARE_SCALAR_FIELD(restypmod);
 	COMPARE_STRING_FIELD(resname);
 	COMPARE_SCALAR_FIELD(ressortgroupref);
-	COMPARE_SCALAR_FIELD(reskey);
-	COMPARE_SCALAR_FIELD(reskeyop);
+	COMPARE_SCALAR_FIELD(resorigtbl);
+	COMPARE_SCALAR_FIELD(resorigcol);
 	COMPARE_SCALAR_FIELD(resjunk);
 
 	return true;

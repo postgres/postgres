@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.106 2003/04/24 21:16:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.107 2003/05/06 00:20:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,8 +57,9 @@ static void show_upper_qual(List *qual, const char *qlabel,
 				const char *outer_name, int outer_varno, Plan *outer_plan,
 				const char *inner_name, int inner_varno, Plan *inner_plan,
 				StringInfo str, int indent, ExplainState *es);
-static void show_sort_keys(List *tlist, int nkeys, const char *qlabel,
-			   StringInfo str, int indent, ExplainState *es);
+static void show_sort_keys(List *tlist, int nkeys, AttrNumber *keycols,
+						   const char *qlabel,
+						   StringInfo str, int indent, ExplainState *es);
 static Node *make_ors_ands_explicit(List *orclauses);
 
 /*
@@ -193,18 +194,10 @@ ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
 	ExplainState *es;
 	StringInfo	str;
 
-	/*
-	 * If we are not going to execute, suppress any SELECT INTO marker.
-	 * Without this, ExecutorStart will create the INTO target table,
-	 * which we don't want.
-	 */
-	if (!stmt->analyze)
-		queryDesc->parsetree->into = NULL;
-
 	gettimeofday(&starttime, NULL);
 
 	/* call ExecutorStart to prepare the plan for execution */
-	ExecutorStart(queryDesc);
+	ExecutorStart(queryDesc, !stmt->analyze);
 
 	/* Execute the plan for statistics if asked for */
 	if (stmt->analyze)
@@ -672,7 +665,9 @@ explain_outNode(StringInfo str,
 							str, indent, es);
 			break;
 		case T_Sort:
-			show_sort_keys(plan->targetlist, ((Sort *) plan)->keycount,
+			show_sort_keys(plan->targetlist,
+						   ((Sort *) plan)->numCols,
+						   ((Sort *) plan)->sortColIdx,
 						   "Sort Key",
 						   str, indent, es);
 			break;
@@ -937,7 +932,8 @@ show_upper_qual(List *qual, const char *qlabel,
  * Show the sort keys for a Sort node.
  */
 static void
-show_sort_keys(List *tlist, int nkeys, const char *qlabel,
+show_sort_keys(List *tlist, int nkeys, AttrNumber *keycols,
+			   const char *qlabel,
 			   StringInfo str, int indent, ExplainState *es)
 {
 	List	   *context;
@@ -985,27 +981,30 @@ show_sort_keys(List *tlist, int nkeys, const char *qlabel,
 	}
 	bms_free(varnos);
 
-	for (keyno = 1; keyno <= nkeys; keyno++)
+	for (keyno = 0; keyno < nkeys; keyno++)
 	{
 		/* find key expression in tlist */
+		AttrNumber	keyresno = keycols[keyno];
+
 		foreach(tl, tlist)
 		{
 			TargetEntry *target = (TargetEntry *) lfirst(tl);
 
-			if (target->resdom->reskey == keyno)
+			if (target->resdom->resno == keyresno)
 			{
 				/* Deparse the expression, showing any top-level cast */
 				exprstr = deparse_expression((Node *) target->expr, context,
 											 useprefix, true);
 				/* And add to str */
-				if (keyno > 1)
+				if (keyno > 0)
 					appendStringInfo(str, ", ");
 				appendStringInfo(str, "%s", exprstr);
 				break;
 			}
 		}
 		if (tl == NIL)
-			elog(ERROR, "show_sort_keys: no tlist entry for key %d", keyno);
+			elog(ERROR, "show_sort_keys: no tlist entry for key %d",
+				 keyresno);
 	}
 
 	appendStringInfo(str, "\n");

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.249 2003/05/02 20:54:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.250 2003/05/06 00:20:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -448,7 +448,9 @@ _copySort(Sort *from)
 	 */
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 
-	COPY_SCALAR_FIELD(keycount);
+	COPY_SCALAR_FIELD(numCols);
+	COPY_POINTER_FIELD(sortColIdx, from->numCols * sizeof(AttrNumber));
+	COPY_POINTER_FIELD(sortOperators, from->numCols * sizeof(Oid));
 
 	return newnode;
 }
@@ -596,8 +598,8 @@ _copyResdom(Resdom *from)
 	COPY_SCALAR_FIELD(restypmod);
 	COPY_STRING_FIELD(resname);
 	COPY_SCALAR_FIELD(ressortgroupref);
-	COPY_SCALAR_FIELD(reskey);
-	COPY_SCALAR_FIELD(reskeyop);
+	COPY_SCALAR_FIELD(resorigtbl);
+	COPY_SCALAR_FIELD(resorigcol);
 	COPY_SCALAR_FIELD(resjunk);
 
 	return newnode;
