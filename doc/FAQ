@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Oct 24 00:12:23 EDT 1998
+   Last updated: Fri Jun 4 23:30:19 EDT 1999
    
    Current maintainer: Bruce Momjian (maillist@candle.pha.pa.us)
    
@@ -9,13 +9,10 @@
    postgreSQL Web site, http://postgreSQL.org.
    
    Linux-specific questions are answered in
-   http://postgreSQL.org/docs/faq-linux.shtml.
+   http://postgreSQL.org/docs/faq-linux.html.
    
    Irix-specific questions are answered in
-   http://postgreSQL.org/docs/faq-irix.shtml.
-   
-   HPUX-specific questions are answered in
-   http://postgreSQL.org/docs/faq-hpux.shtml.
+   http://postgreSQL.org/docs/faq-irix.html.
      _________________________________________________________________
    
                              General questions
@@ -59,8 +56,10 @@
    2.10) All my servers crash under concurrent table access. Why?
    2.11) How do I tune the database engine for better performance?
    2.12) What debugging features are available in PostgreSQL?
-   2.13) How do I enable more than 64 concurrent backends?
-   2.14) What non-unix ports are available?
+   2.13) When I try to start the postmaster, I get IpcSemaphoreCreate
+   errors. Why?
+   2.14) I get 'Sorry, too many clients' when trying to connect. Why?
+   2.15) What non-unix ports are available?
    
                            Operational questions
                                       
@@ -70,9 +69,8 @@
    3.4) What is the exact difference between binary cursors and normal
    cursors?
    3.5) What is an R-tree index and what is it used for?
-   3.6) What is the maximum size for a tuple?
-   3.7) I defined indices but my queries don't seem to make use of them.
-   Why?
+   3.6) What is the maximum size for a row, table, database?
+   3.7) My queries are slow or don't make use of the indexes. Why?
    3.8) How do I do regular expression searches? case-insensitive regexp
    searching?
    3.9) I experienced a server crash during a vacuum. How do I remove the
@@ -240,11 +238,11 @@ Section 1: General Questions
      http://postgreSQL.org
      
    There also an IRC channel on EFNet, channel #PostgreSQL. I use the
-   unix command irc -c '#PostgreSQL' "$USER" irc.ais.net
+   unix command irc -c '#PostgreSQL' "$USER" irc.phoenix.net
    
   1.6) Latest release of PostgreSQL
   
-   The latest release of PostgreSQL is version 6.4.
+   The latest release of PostgreSQL is version 6.5.
    
    We plan to have major releases every four months.
    
@@ -274,13 +272,12 @@ Section 1: General Questions
   1.10) Does PostgreSQL work with databases from earlier versions of
   PostgreSQL?
   
-   Upgrading to 6.4 from release 6.3.* can be accomplished using the new
-   pg_upgrade utility. Those upgrading from earlier releases require a
-   dump and restore.
+   Upgrading to 6.5 can not use the pg_upgrade utility. Those upgrading
+   from earlier releases require a dump and restore.
    
-   Those ugrading from versions earlier than 1.09 must upgrade to 1.09
+   Those upgrading from versions earlier than 1.09 must upgrade to 1.09
    first without a dump/reload, then dump the data from 1.09, and then
-   load it into 6.4.
+   load it into 6.5.
    
   1.11) Are there ODBC drivers for PostgreSQL?
   
@@ -309,14 +306,14 @@ Section 1: General Questions
    PHP is great for simple stuff, but for more complex stuff, some still
    use the perl interface and CGI.pm.
    
-   An WWW gatway based on WDB using perl can be downloaded from
+   An WWW gateway based on WDB using perl can be downloaded from
    http://www.eol.ists.ca/~dunlop/wdb-p95
    
   1.13) Does PostgreSQL have a graphical user interface? A report generator? A
   embedded query language interface?
   
    We have a nice graphical user interface called pgaccess, which is
-   shipped as part of the distribtion. Pgaccess also has a report
+   shipped as part of the distribution. Pgaccess also has a report
    generator.
    
    The web page is http://www.flex.ro/pgaccess We also include ecpg,
@@ -365,8 +362,9 @@ Section 2: Installation Questions
   formats.
   
    Check your locale configuration. PostgreSQL uses the locale settings
-   of the user that ran the postmaster process. Set those accordingly for
-   your operating environment.
+   of the user that ran the postmaster process. There are postgres and
+   psql SET commands to control the date format. Set those accordingly
+   for your operating environment.
    
   2.4) How do I install PostgreSQL somewhere other than /usr/local/pgsql?
   
@@ -384,8 +382,9 @@ Section 2: Installation Questions
    You either do not have shared memory configured properly in kernel or
    you need to enlarge the shared memory available in the kernel. The
    exact amount you need depends on your architecture and how many
-   buffers you configure postmaster to run with. For most systems, with
-   default buffer sizes, you need a minimum of ~760K.
+   buffers and backend processes you configure postmaster to run with.
+   For most systems, with default numbers of buffers and processes, you
+   need a minimum of ~1MB.
    
   2.7) I have changed a source file, but a recompile does not see the change?
   
@@ -420,7 +419,7 @@ Section 2: Installation Questions
    If you are doing a lot of inserts, consider doing them in a large
    batch using the copy command. This is much faster than single
    individual inserts. Second, statements not in a begin work/commit
-   transaction block are considered to be their in their own transaction.
+   transaction block are considered to be in their own transaction.
    Consider performing several statements in a single transaction block.
    This reduces the transaction overhead. Also consider dropping and
    recreating indices when making large data changes.
@@ -436,7 +435,7 @@ Section 2: Installation Questions
    
    You can also use the postgres -S option to increase the maximum amount
    of memory used by each backend process for temporary sorts. Each
-   buffer is 1K and the defualt is 512 buffers.
+   buffer is 1K and the default is 512 buffers.
    
    You can also use the cluster command to group data in base tables to
    match an index. See the cluster(l) manual page for more details.
@@ -474,7 +473,7 @@ Section 2: Installation Questions
    operating system can attach to a running backend directly to diagnose
    problems.
    
-   The postgres program has a -s, -A, -t options that can be very usefull
+   The postgres program has a -s, -A, -t options that can be very useful
    for debugging and performance measurements.
    
    You can also compile with profiling to see what functions are taking
@@ -482,25 +481,64 @@ Section 2: Installation Questions
    pgsql/data/base/dbname directory. The client profile file will be put
    in the current directory.
    
-  2.13) How do I enable more than 64 concurrent backends?
+  2.13) When I try to start the postmaster, I get IpcSemaphoreCreate errors.
+  Why?
   
-   Edit include/storage/sinvaladt.h, and change the value of
-   MaxBackendId. In the future, we plan to make this a configurable
-   prameter.
+   If the error message is IpcSemaphoreCreate: semget failed (No space
+   left on device) then your kernel is not configured with enough
+   semaphores. Postgres needs one semaphore per potential backend
+   process. A temporary solution is to start the postmaster with a
+   smaller limit on the number of backend processes. Use -N with a
+   parameter less than the default of 32. A more permanent solution is to
+   increase your kernel's SEMMNS and SEMMNI parameters.
    
-  2.14) What non-unix ports are available?
+   If the error message is something else, you might not have semaphore
+   support configured in your kernel at all.
+   
+  2.14) I get 'Sorry, too many clients' when trying to connect. Why?
+  
+   You need to increase the postmaster's limit on how many concurrent
+   backend processes it can start.
+   
+   In Postgres 6.5, the default limit is 32 processes. You can increase
+   it by restarting the postmaster with a suitable -N value. With the
+   default configuration you can set -N as large as 1024; if you need
+   more, increase MAXBACKENDS in include/config.h and rebuild. You can
+   set the default value of -N at configuration time, if you like, using
+   configure's --with-maxbackends switch.
+   
+   Note that if you make -N larger than 32, you should consider
+   increasing -B beyond its default of 64. For large numbers of backend
+   processes, you are also likely to find that you need to increase
+   various Unix kernel configuration parameters. Things to check include
+   the maximum size of shared memory blocks, SHMMAX, the maximum number
+   of semaphores, SEMMNS and SEMMNI, the maximum number of processes,
+   NPROC, the maximum number of processes per user, MAXUPRC, and the
+   maximum number of open files, NFILE and NINODE. The reason that
+   Postgres has a limit on the number of allowed backend processes is so
+   that you can ensure that your system won't run out of resources.
+   
+   In Postgres versions prior to 6.5, the maximum number of backends was
+   64, and changing it required a rebuild after altering the MaxBackendId
+   constant in include/storage/sinvaladt.h.
+   
+  2.15) What non-unix ports are available?
   
    It is possible to compile the libpq C library, psql, and other
    interfaces and binaries to run on MS Windows platforms. In this case,
    the client is running on MS Windows, and communicates via TCP/IP to a
    server running on one of our supported Unix platforms.
    
-   A file win32.mak is included in the distributiion for making a Win32
+   A file win32.mak is included in the distribution for making a Win32
    libpq library and psql.
    
-   Someone is attempting to port our PostgreSQL database server to
-   Windows NT using the Cygnus Unix/NT porting library. He has gotten it
-   compiled, but initdb is currently failing.
+   The database server is now working on Windows NT using the Cygnus
+   Unix/NT porting library. The only feature missing is dynamic loading
+   of user-defined functions/types. See
+   http://www.askesis.nl/AskesisPostgresIndex.html for more information.
+   
+   There is another port using U/Win at
+   http://surya.wipro.com/uwin/ported.html.
      _________________________________________________________________
    
 Section 3: PostgreSQL Features
@@ -562,32 +600,42 @@ Section 3: PostgreSQL Features
    extending R-trees require a bit of work and we don't currently have
    any documentation on how to do it.
    
-  3.6) What is the maximum size for a tuple?
+  3.6) What is the maximum size for a row, table, database?
   
-   Tuples are limited to 8K bytes. Taking into account system attributes
+   Rows are limited to 8K bytes. Taking into account system attributes
    and other overhead, one should stay well shy of 8,000 bytes to be on
    the safe side. To use attributes larger than 8K, try using the large
    objects interface.
    
-   Tuples do not cross 8k boundaries so a 5k tuple will require 8k of
+   Rows do not cross 8k boundaries so a 5k row will require 8k of
    storage.
    
-  3.7) I defined indices but my queries don't seem to make use of them. Why?
+   Table and database sizes are unlimited. There are many databases that
+   are tens of gigabytes, and probably some that are hundreds of
+   gigabytes.
+   
+  3.7) My queries are slow or don't make use of the indexes. Why?
   
    PostgreSQL does not automatically maintain statistics. One has to make
    an explicit vacuum call to update the statistics. After statistics are
    updated, the optimizer knows how many rows in the table, and can
    better decide if it should use indices. Note that the optimizer does
-   not use indices in cases when the table is small because a sequentail
-   scan would be faster. For column-specific optimization statistics, use
-   vacuum analyze.
+   not use indices in cases when the table is small because a sequential
+   scan would be faster.
+   
+   For column-specific optimization statistics, use vacuum analyze.
+   Vacuum analyze is important for complex multi-join queries, so the
+   optimizer can estimate the number of rows returned from each table,
+   and choose the proper join order. The backend does not keep track of
+   column statistics on its own, and vacuum analyze must be run to
+   collect them periodically.
    
    Indexes are not used for order by operations.
    
-   When using wildcard operators like LIKE or ~, indices can only be used
-   if the beginning of the search is anchored to the start of the string.
-   So, to use indices, LIKE searches can should not begin with %, and
-   ~(regular expression searches) should start with ^.
+   When using wild-card operators like LIKE or ~, indices can only be
+   used if the beginning of the search is anchored to the start of the
+   string. So, to use indices, LIKE searches can should not begin with %,
+   and ~(regular expression searches) should start with ^.
    
   3.8) How do I do regular expression searches? case-insensitive regexp
   searching?
@@ -606,7 +654,7 @@ Type            Internal Name   Notes
 CHAR            char            1 character
 CHAR(#)         bpchar          blank padded to the specified fixed length
 VARCHAR(#)      varchar         size specifies maximum length, no padding
-TEXT            text            length limited only by maximum tuple length
+TEXT            text            length limited only by maximum row length
 BYTEA           bytea           variable-length array of bytes
 
    You need to use the internal name when doing internal operations.
@@ -681,12 +729,15 @@ BYTEA           bytea           variable-length array of bytes
    all databases. If you want to change the oid to something else, or if
    you want to make a copy of the table, with the original oid's, there
    is no reason you can't do it:
-        CREATE TABLE new_table (mycol int);
-        INSERT INTO new_table SELECT oid, mycol FROM old_table;
+        CREATE TABLE new_table(old_oid oid, mycol int);
+        SELECT INTO new SELECT old_oid, mycol FROM old;
+        COPY new TO '/tmp/pgtable';
+        DELETE FROM new;
+        COPY new WITH OIDS FROM '/tmp/pgtable';
 
-   Tids are used to indentify specific physical rows with block and
-   offset values. Tids change after rows are modified or reloaded. They
-   are used by index entries to point to physical rows.
+   Tids are used to identify specific physical rows with block and offset
+   values. Tids change after rows are modified or reloaded. They are used
+   by index entries to point to physical rows.
    
   3.18) What is the meaning of some of the terms used in PostgreSQL?
   
@@ -797,10 +848,8 @@ Section 4: Extending PostgreSQL
   4.2) I get messages of the type NOTICE:PortalHeapMemoryFree: 0x402251d0 not
   in alloc set!
   
-   You are pfree'ing something that was not palloc'ed. When writing
-   user-defined functions, do not include the file "libpq-fe.h". Doing so
-   will cause your palloc to be a malloc instead of a free. Then, when
-   the backend pfrees the storage, you get the notice message.
+   You are pfree'ing something that was not palloc'ed. Beware of mixing
+   malloc/free and palloc/pfree.
    
   4.3) I've written some nifty new types and functions for PostgreSQL.
   

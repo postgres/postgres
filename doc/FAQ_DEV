@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Oct 2 15:21:32 EDT 1998
+   Last updated: Mon Feb 22 17:15:06 EST 1999
    
    Current maintainer: Bruce Momjian (maillist@candle.pha.pa.us)
    
@@ -67,7 +67,7 @@ s
    
    Third, you need to get mkid from ftp.postgresql.org. By running
    tools/make_mkid, an archive of source symbols can be created that can
-   be rapidly queried like grep or edited.
+   be rapidly queried like grep or edited. Others prefer glimpse.
    
    make_diff has tools to create patch diff files that can be applied to
    the distribution.
@@ -105,22 +105,72 @@ s
   
    We do this because this allows a consistent way to pass data inside
    the backend in a flexible way. Every node has a NodeTag which
-   specifies what type of data is inside the Node. Lists are lists of
-   Nodes. lfirst(), lnext(), and foreach() are used to get, skip, and
-   traverse through Lists.
+   specifies what type of data is inside the Node. Lists are groups of
+   Nodes chained together as a forward-linked list.
    
+   Here are some of the List manipulation commands:
+   
+   lfirst(i)
+          return the data at list element i.
+          
+   lnext(i)
+          return the next list element after i.
+          
+   foreach(i, list)
+          loop through list, assigning each list element to i. It is
+          important to note that i is a List *, not the data in the List
+          element. You need to use lfirst(i) to get at the data. Here is
+          a typical code snipped that loops through a List containing Var
+          *'s and processes each one:
+          
+
+    List *i, *list;
+
+    foreach(i, list)
+    {
+        Var *var = lfirst(i);
+
+        /* process var here */
+    }
+
+   lcons(node, list)
+          add node to the front of list, or create a new list with node
+          if list is NIL.
+          
+   lappend(list, node)
+          add node to the end of list. This is more expensive that lcons.
+          
+   nconc(list1, list2)
+          Concat list2 on to the end of list1.
+          
+   length(list)
+          return the length of the list.
+          
+   nth(i, list)
+          return the i'th element in list.
+          
+   lconsi, ...
+          There are integer versions of these: lconsi, lappendi, nthi.
+          List's containing integers instead of Node pointers are used to
+          hold list of relation object id's and other integer quantities.
+          
    You can print nodes easily inside gdb. First, to disable output
-   truncation:
+   truncation when you use the gdb print command:
 
         (gdb) set print elements 0
 
-   You may then use either of the next two commands to print out List,
-   Node, and structure contents. The first prints in a short format, and
-   the second in a long format:
+   Instead of printing values in gdb format, you can use the next two
+   commands to print out List, Node, and structure contents in a verbose
+   format that is easier to understand. List's are unrolled into nodes,
+   and nodes are printed in detail. The first prints in a short format,
+   and the second in a long format:
 
         (gdb) call print(any_pointer)
         (gdb) call pprint(any_pointer)
 
+   The output appears in the postmaster log file, or on your screen if
+   you are running a backend directly without a postmaster.
+   
   5) How do I add a feature or fix a bug?
   
    The source code is over 250,000 lines. Many problems/features are
@@ -197,7 +247,7 @@ s
         } NameData;
         typedef NameData *Name;
 
-   Table, column, type, function, and view names that come in to the
+   Table, column, type, function, and view names that come into the
    backend via user queries are stored as variable-length,
    null-terminated character strings.
    
@@ -244,12 +294,12 @@ s
    While scans automatically lock/unlock rows from the buffer cache, with
    heap_fetch(), you must pass a Buffer pointer, and ReleaseBuffer() it
    when completed. Once you have the row, you can get data that is common
-   to all tuples, like t_ctid and t_oid, by mererly accessing the
+   to all tuples, like t_self and t_oid, by mererly accessing the
    HeapTuple structure entries. If you need a table-specific column, you
    should take the HeapTuple pointer, and use the GETSTRUCT() macro to
    access the table-specific start of the tuple. You then cast the
    pointer as a Form_pg_proc pointer if you are accessing the pg_proc
-   table, or TypeTupleForm if you are accessing pg_type. You can then
+   table, or Form_pg_type if you are accessing pg_type. You can then
    access the columns by using a structure pointer:
 
         ((Form_pg_class) GETSTRUCT(tuple))->relnatts
@@ -258,7 +308,7 @@ s
    is to use heap_tuplemodify() and pass it your palloc'ed tuple, and the
    values you want changed. It returns another palloc'ed tuple, which you
    pass to heap_replace(). You can delete tuples by passing the tuple's
-   t_ctid to heap_destroy(). Remember, tuples can be either system cache
+   t_self to heap_destroy(). Remember, tuples can be either system cache
    versions, which may go away soon after you get them, buffer cache
    version, which will go away when you heap_getnext(), heap_endscan, or
    ReleaseBuffer(), in the heap_fetch() case. Or it may be a palloc'ed

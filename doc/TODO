@@ -1,13 +1,11 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Nov  6 22:17:33 EST 1998
+Last updated:		Fri Jun  4 23:16:01 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
 The most recent version of this document can be viewed at
 the PostgreSQL WWW site, http://www.postgreSQL.org.
-
-THE CHANGES FOR 6.4 APPEAR AT THE END OF THIS DOCUMENT
 
 A dash(-) marks changes to be in the next release.
 
@@ -18,180 +16,131 @@ Developers who have claimed items are:
 	* Bruce is Bruce Momjian<maillist@candle.pha.pa.us>
 	* Bryan is Bryan Henderson<bryanh@giraffe.netgate.net>
 	* D'Arcy is D'Arcy J.M. Cain <darcy@druid.net>
-	* Dan is Dan McGuirk <mcguirk@indirect.com>
-	* Darren is Darren King <darrenk@insightdist.com>
 	* David is David Hartwig <daveh@insightdist.com>
 	* Edmund is Edmund Mergl <E.Mergl@bawue.de>
-	* Goran is Goran Thyni <goran@bildbasen.se>
-	* Henry is Henry B. Hotz <hotz@jpl.nasa.gov>
+	* Goran is Goran Thyni <goran@kyla.kiruna.se>
 	* Jan is Jan Wieck <wieck@sapserv.debis.de>
-	* Jun is Jun Kuwamura <juk@rccm.co.jp>
-	* Maarten is Maarten Boekhold <maartenb@dutepp0.et.tudelft.nl>
  	* Marc is Marc Fournier <scrappy@hub.org>
- 	* Martin is Martin S. Utesch <utesch@aut.tu-freiberg.de>
 	* Massimo Dal Zotto <dz@cs.unitn.it>
 	* Michael is Michael Meskes <meskes@debian.org>
 	* Oleg is Oleg Bartunov <oleg@sai.msu.su>
-	* Paul is Paul M. Aoki <aoki@CS.Berkeley.EDU>
 	* Peter is Peter T Mount <peter@retep.org.uk>
-	* Phil is Phil Thompson <phil@river-bank.demon.co.uk>
-	* Ryan is Ryan Kirkpatrick <rkirkpat@nag.cs.colorado.edu>
-	* Soo-Ho Ok <shok@detc.dongeui-tc.ac.kr>
 	* Stefan Simkovics <ssimkovi@rainbow.studorg.tuwien.ac.at>
-	* Sven is Sven Verdoolaege <skimo@breughel.ufsia.ac.be>
 	* Tatsuo is Tatsuo Ishii <t-ishii@sra.co.jp>
 	* Tom is Tom Lane <tgl@sss.pgh.pa.us>
-	* Thomas is Thomas Lockhart <tgl@mythos.jpl.nasa.gov>
+	* Thomas is Thomas Lockhart <lockhart@alumni.caltech.edu>
 	* TomH is Tom I Helbekkmo <tih@Hamartun.Priv.NO>
-	* Vadim is "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
 
-Additional 6.4 developers include:
----------------------------------
-	* Jun Kuwamura <juk@rccm.co.jp>
-	* Zeugswetter Andreas SARZ <Andreas.Zeugswetter@telecom.at>
-	* Soonmyung. Hong <hong@lunaris.hanmesoft.co.kr>
-	* Anders Hammarquist <iko@netg.se>
-	* Jeroen van Vianen <jeroenv@design.nl>
-	* Aldrin L. <aldrin@americasnet.com>
-	* Pascal ANDRE <andre@via.ecp.fr>
-	* Magnus Hagander <mha@edu.sollentuna.se>
-	* Robert Bruccoleri <bruc@pluto.njcc.com>
-	* Paul A Vixie <paul@vix.com>
-	* Jacek Lasecki <jacek@sound.eti.pg.gda.pl>
+	* Vadim is "Vadim B. Mikheev" <vadim@krs.ru>
 
 RELIABILITY
 -----------
 * Overhaul mdmgr/smgr to fix double unlinking and double opens, cleanup
 * Overhaul bufmgr/lockmgr/transaction manager
 * Remove EXTEND?
-* Can lo_export()/lo_import() read/write anywhere, causing a security problem?
 * Tables that start with xinv confused to be large objects
-* Two and three dimmensional arrays display improperly, missing {}
-* GROUP BY in INSERT INTO table SELECT * FROM table2 fails
-* Prevent auto-table reference, like SELECT table.col WHERE col = 3 (?)
-* SELECT * FROM table WHERE int4_column = '1' fails
+* Two and three dimensional arrays display improperly, missing {}
 * SELECT a[1] FROM test fails, it needs test.a[1]
 * UPDATE table SET table.value = 3 fails
 * User who can create databases can modify pg_database table
-* optimizer memory exhaustion with many OR's
 * elog() does not free all its memory(Jan)
 * views on subselects fail
 * disallow inherited columns with the same name as new columns
 * recover or force failure when disk space is exhausted
-* default char() value not to full length crashes server on some OS's
-* allow UPDATE using aggregate to affect all rows, not just one
-* computations in views fail:
-	create view test as select usesysid * usesysid from pg_shadow;
 * views containing aggregates sometimes fail(Jan)
+* ALTER TABLE ADD COLUMN does not honor DEFAULT, add CONSTRAINT
+* array index references without table name cause problems
+* views with spaces in view name fail when referenced
+* plpgsql does not handle quoted mixed-case identifiers
+* do not allow bpchar column creation without length
+* INSERT INTO ... SELECT with AS columns matching result columns problem
+
 
 ENHANCEMENTS
 ------------
-* Replace table-level locking with row or page-level locking(Vadim)
-* Add SERIAL type
 * Transaction log, so re-do log can be on a separate disk
 * Allow transaction commits with rollback with no-fsync performance
 * More access control over who can create tables and access the database
 * Add full ANSI SQL capabilities
-	* add OUTER joins, left and right (Thomas)
-	* add INTERSECTS, SUBTRACTS(Stephan)
-	* add temporary tables
+	* add OUTER joins, left and right(Thomas)
 	* add sql3 recursive unions
 	* add the concept of dataspaces
-	* add DECIMAL, NUMERIC, DOUBLE PRECISION, BIT, BIT VARYING
+	* add BIT, BIT VARYING
  	* NCHAR (as distinguished from ordinary varchar),
 	* DOMAIN capability
 * Allow compression of large fields or a compressed field type
-* Fix the rules system(Jan,Soo-Ho)
-	* add CONSTRAINT
-* Full set of text operations and functions
-	* word searches, concat,max() on text, char
 * Large objects
-	* Fix large object mapping scheme, own reltype(Peter)
+	* Fix large object mapping scheme, own typeid or reltype(Peter)
 	* Allow large text type to use large objects(Peter)
 	* not to stuff everything as files in a single directory
-	* Fix large object memory leaks
-	* delete orphaned large objects
 * Better interface for adding to pg_group
-* Make MONEY/DECIMAL have a defined precision
-* Fix tables >2G, or report error when 2G size reached
-	(fix lseek()/off_t, mdextend()/RELSEG_SIZE)
-* Add REGEX internationalization
 * allow row re-use without vacuum, maybe?(Vadim)
-* Add word index for text fields, maybe with trigrams, i.e.:
-    * ' (cat | dog) & ! fox ' meaning text has cat aor dog, but not fox
 * Populate backend status area and write program to dump status data
-* Add ALTER TABLE DROP COLUMN feature
-* Allow INSERT INTO ... SELECT to convert column types
-* Add syslog functionality(Marc)
+* Add ALTER TABLE DROP/ALTER COLUMN feature
+* Add syslog functionality
 * Add STDDEV/VARIANCE() function for standard deviation computation/variance
 * add UNIQUE capability to non-btree indexes
-* make number of backends a config parameter, storage/sinvaladt.h:MaxBackendId
 * certain indexes will not shrink, i.e. oid indexes with many inserts
 * make NULL's come out at the beginning or end depending on the ORDER BY direction
-* change the library/backend interface to use network byte order
 * Restore unused oid's on backend exit if no one else has gotten oids
-* remove non-standard types from the system, and make them loadable
 * have UPDATE/DELETE clean out indexes
 * allow WHERE restriction on ctid
 * allow pg_descriptions when creating types, tables, columns, and functions
-* Fix compile and security of Kerberos/GSSAPI code
 * Allow psql to print nulls as distinct from ""(?)
-* Allow variable casts with BETWEEN 'today'::asbtime AND 'today'::abstime
-* Allow INSERT INTO ... SELECT ... FROM view to work
-* Make VACUUM on database not lock pg_class
-* Make VACUUM ANALYZE only use a readlock
 * Allow cursors to be DECLAREd/OPENed/CLOSEed outside transactions
-* Allow installation data block size and max tuple size configuration(Darren)
-* Allow views on a UNION
-* Allow DISTINCT on view
+* Allow DISTINCT on views
 * Allow views of aggregate columns
-* Allow variable block sizes(Darren)
-* System tables are now more update-able from SQL(Jan)
-* New pg_shadow file, pg_user is now a view of pg_shadow(Jan)
 * Allow flag to control COPY input/output of NULLs
 * Allow CLUSTER on all tables at once, and improve CLUSTER
-* Change all references of Postgres to PostgreSQL, including binary names
-* Add ELOG_TIMESTAMPS to elog()(?)
-* Change LOCK tablename to LOCK TABLE tablename(?)
-* Allow max tuple length to be changed(Darren)
-* Have psql with no database name not connect to username as default(?)
+* Allow elog() to return error codes, not just messages
+* allow international error message support and add error codes
 * Allow subqueries in target list
-* Granting permissions to another user looses permissions for the owner
 * Allow queries across multiple databases
 * Add replication of distributed databases
-* Allow table destruction/alter to be rolled back
-* Add pg_attribute.atttypmod/Resdom->restypmod to PGresult structure
 * Generate error on CREATE OPERATOR of ~~, ~ and and ~*
-* Allow constraint NULL just as we honor NOT NULL
-* Add version number in startup banners for psql and postmaster
-* Restructure storing of GRANT permission information to allow +-=
 * allow psql \copy to allow delimiters
-* allow international error message support and add error codes
-* allow ORDER BY a function(David)
-* allow usernames with dashes(GRANT fails)
 * add a function to return the last inserted oid, for use in psql scripts
 * allow creation of functional indexes to use default types
 * put sort files, large objects in their on directory
-* CREATE VIEW myview (name) AS SELECT lname FROM wages fails
 * do autocommit so always in a transaction block
 * add SIMILAR TO to allow character classes, 'pg_[a-c]%'
-* allow function isnull(val,'string') to return string if value is null
-* multi-verion concurrency control(Vadim)
 * improve reporting of syntax errors by showing location of error in query
-* allow chaining of pages to allow >8k tuples
-* no min/max for oid type
-* remove un-needed conversion functions
+* allow chaining of pages to allow >8k tuples, auto-large object use
 * redesign the function call interface to handle NULLs better(Jan)
+* permissions on indexes - prevent them?
+* document/trigger/rule so changes to pg_shadow create pg_pwd
+* generate postmaster pid file and remove flock/fcntl lock code
+* add ability to specifiy location of lock/socket files
+* auto-destroy sequence on DROP of table with SERIAL
+* make a separate serial type?
+* allow user to define char1 column
+* allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison
+* allow INSERT/UPDATE of system-generated oid value for a row
+* missing optimizer selectivities for date, etc.
+* Add support for & operator
+* store binary-compatible type information in the system
+* Allow ESCAPE '\' at the end of LIKE for ANSI compliance
+* rewrite the LIKE handling by rewriting the user string with the 
+	supplied ESCAPE
+* Fix memory leak for expressions?, aggregates?
+* Allow Subplans to use efficient joins(hash, merge) with upper variable
+* Update reltuples from COPY command
+* Allow CREATE INDEX zman_index ON test (date_trunc( 'day', zman ) datetime_ops)
+	fails index can't store constant parameters
+* allow SQL function indexes
+* ALTER TABLE ADD COLUMN to inherited table put column in wrong place
+* Add IPv6 capability to INET/CIDR types
+* Allow PQrequestCancel() to terminate when in waiting-for-lock state
+* Increase identifier length(NAMEDATALEN) if small performance hit
+* Fix for long table/column name auto-sequence serial name
+
 
 PERFORMANCE
 -----------
 * Use indexes in ORDER BY for restrictive data sets, min(), max()
-* Allow LIMIT ability on single-table queries that have no ORDER BY or 
+* Allow LIMIT ability on single-table queries that have no ORDER BY to use
 	a matching index
 * Pull requested data directly from indexes, bypassing heap data
-* Prevent psort() usage when query already using index matching ORDER BY
-* Optimizing disjunctive queries
-* Fix bushy-plans
 * Prevent fsync in SELECT-only queries
 * Cache most recent query plan(s?)
 * Shared catalog cache, reduce lseek()'s by caching table size in shared area
@@ -199,223 +148,24 @@ PERFORMANCE
 * Add FILLFACTOR to index creation
 * update pg_statistic table to remove operator column
 * make index creation use psort code, because it is now faster(Vadim)
-* remove fork()/exec() of backend and make it just fork()
-* Add base table name to \d index
 * Allow char() not to use variable-sized header to reduce disk size
 * Do async I/O to do better read-ahead of data
-* Fix optmizer problem with self-table joins
 * Fix memory exhaustion when using many OR's
-* Use spin locks only on multi-CPU systems, yield CPU instead
 * Get faster regex() code from Henry Spencer <henry@zoo.utoronto.ca>
 	when it is available
 * use mmap() rather than SYSV shared memory(?)
 * use index to restrict rows returned by multi-key index when used with
 	non-consecutive keys or OR clauses, so fewer heap accesses
 * use index with constants on functions
+* process const = const parts of OR clause in separate pass
+* make oid use oidin/oidout not int4in/int4out in pg_type.h
+* make oid use unsigned int more reliably, pg_atoi()
+* create more system table indexes for faster cache lookups
+* Move LIKE index optimization handling to the optimizer
+* Improve LIMIT processing by using index to limit rows processed
+* Improve Subplan list handling
+
 
 DOCUMENTATION
 -------------
-* Update usermanual source(many)
-* added features used in grammer but not in docs, like :: and CAST
-* Add keyword list to documentation, already in /tools
-* Add 'man pgsql' to show all manual page names
 * Add use of 'const' for varibles in source tree
-
-
-=============================================================================
-
-CHANGES IN THE 6.4 RELEASE
---------------------------
-
-Bug Fixes
----------
-Fix for a tiny memory leak in PQsetdb/PQfinish(Bryan)
-Remove char2-16 data types, use char/varchar(Darren)
-Pqfn not handles a NOTICE message(Anders)
-Reduced busywaiting overhead for spinlocks with many backends (dg)
-Stuck spinlock detection (dg)
-Fix up "ISO-style" timespan decoding and encoding(Thomas)
-Fix problem with table drop after rollback of transaction(Vadim)
-Change error message and remove non-functional update message(Vadim)
-Fix for COPY array checking
-Fix for SELECT 1 UNION SELECT NULL
-Fix for buffer leaks in large object calls(Pascal)
-Change owner from oid to int4 type(Bruce)
-Fix a bug in the oracle compatibility functions btrim() ltrim() and rtrim()
-Fix for shared invalidation cache overflow(Massimo)
-Prevent file descriptor leaks in failed COPY's(Bruce)
-Fix memory leak in libpgtcl's pg_select(Constantin)
-Fix problems with username/passwords over 8 characters(Tom)
-Fix problems with handling of asynchronous NOTIFY in backend(Tom)
-Fix of many bad system table entries(Tom)
-
-Enhancements
-------------
-Upgrade ecpg and ecpglib,see src/interfaces/ecpc/ChangeLog(Michael)
-Show the index used in an EXPLAIN(Zeugswetter)
-EXPLAIN  invokes  rule system and shows plan(s) for rewritten queries(Jan)
-Multi-byte awareness of many data types and functions, via configure(Tatsuo)
-New configure --with-mb option(Tatsuo)
-New initdb --pgencoding option(Tatsuo)
-New createdb -E multibyte option(Tatsuo)
-Select version(); now returns PostgreSQL version(Jeroen)
-Libpq now allows asynchronous clients(Tom)
-Allow cancel from client of backend query(Tom)
-Psql now cancels query with Control-C(Tom)
-Libpq users need not issue dummy queries to get NOTIFY messages(Tom)
-NOTIFY now sends sender's PID, so you can tell whether it was your own(Tom)
-PGresult struct now includes associated error message, if any(Tom)
-Define "tz_hour" and "tz_minute" arguments to date_part()(Thomas)
-Add routines to convert between varchar and bpchar(Thomas)
-Add routines to allow sizing of varchar and bpchar into target columns(Thomas)
-Add bit flags to support timezonehour and minute in data retrieval(Thomas)
-Allow more variations on valid floating point numbers (e.g. ".1", "1e6")(Thomas)
-Fixes for unary minus parsing with leading spaces(Thomas)
-Implement TIMEZONE_HOUR, TIMEZONE_MINUTE per SQL92 specs(Thomas)
-Check for and properly ignore FOREIGN KEY column constraints(Thomas)
-Define USER as synonym for CURRENT_USER per SQL92 specs(Thomas)
-Enable HAVING clause but no fixes elsewhere yet.
-Make "char" type a synonym for "char(1)" (actually implemented as bpchar)(Thomas)
-Save string type if specified for DEFAULT clause handling(Thomas)
-Coerce operations involving different data types(Thomas)
-Allow some index use for columns of different types(Thomas)
-Add capabilities for automatic type conversion(Thomas)
-Cleanups for large objects, so file is truncated on open(Peter)
-Readline cleanups(Tom)
-Allow psql  \f \ to make spaces as delimiter(Bruce)
-Pass pg_attribute.atttypmod to the frontend for column field lengths(Tom,Bruce)
-Msql compatibility library in /contrib(Aldrin)
-Remove the requirement that ORDER/GROUP BY clause identifiers be 
-included in the target list(David)
-Convert columns to match columns in UNION clauses(Thomas)
-Remove fork()/exec() and only do fork()(Bruce)
-Jdbc cleanups(Peter)
-Show backend status on ps command line(only works on some platforms)(Bruce)
-Pg_hba.conf now has a sameuser option in the database field
-Make lo_unlink take oid param, not int4
-New DISABLE_COMPLEX_MACRO for compilers that can't handle our macros(Bruce)
-Libpgtcl now handles NOTIFY as a Tcl event, need not send dummy queries(Tom)
-libpgtcl cleanups(Tom)
-Add -error option to libpgtcl's pg_result command(Tom)
-New locale patch, see docs/README/locale(Oleg)
-Fix for pg_dump so CONSTRAINT and CHECK syntax is correct(ccb)
-New contrib/lo code for large object orphan removal(Peter)
-New psql command "SET CLIENT_ENCODING TO 'encoding'" for multi-bytes
-feature, see /doc/README.mb(Tatsuo)
-/contrib/noupdate code to revoke update permission on a column
-Libpq can now be compiled on win32(Magnus)
-Add PQsetdbLogin() in libpq
-New 8-byte integer type, checked by configure for OS support(Thomas)
-Better support for quoted table/column names(Thomas)
-Surround table and column names with double-quotes in pg_dump(Thomas)
-PQreset() now works with passwords(Tom)
-Handle case of GROUP BY target list column number out of range(David)
-Allow UNION in subselects
-Add auto-size to screen to \d? commands(Bruce)
-Use UNION to show all \d? results in one query(Bruce)
-Add \d? field search feature(Bruce)
-Pg_dump issues fewer \connect requests(Tom)
-Make pg_dump -z flag work better, document it in manual page(Tom)
-Add HAVING clause with full support for subselects and unions(Stephan)
-Full text indexing routines in contrib/fulltextindex(Maarten)
-Transaction ids now stored in shared memory(Vadim)
-New PGCLIENTENCODING when issuing COPY command(Tatsuo)
-Support for SQL92 syntax "SET NAMES"(Tatsuo)
-Support for LATIN2-5(Tatsuo)
-Add UNICODE regression test case(Tatsuo)
-Lock manager cleanup, new locking modes for LLL(Vadim)
-Allow index use with OR clauses(Bruce)
-Allows "SELECT NULL ORDER BY 1;"
-Explain VERBOSE prints the plan, and now pretty-prints the plan to
-the postmaster log file(Bruce)
-Add Indices display to \d command(Bruce)
-Allow GROUP BY on functions(David)
-New pg_class.relkind for large objects(Bruce)
-New way to send libpq NOTICE messages to a different location(Tom)
-New \w write command to psql(Bruce)
-New /contrib/findoidjoins scans oid columns to find join relationships(Bruce)
-Allow binary-compatible indices to be considered when checking for valid
-indices for restriction clauses containing a constant(Thomas)
-New ISBN/ISSN code in /contrib/isbn_issn
-Allow NOT LIKE, IN, NOT IN, BETWEEN, and NOT BETWEEN constraint(Thomas)
-New rewrite system fixes many problems with rules and views(Jan)
-	* Rules on relations work
-	* Event qualifications on insert/update/delete work
-	* New OLD variable to reference CURRENT, CURRENT will be remove in future
-	* Update rules can reference NEW and OLD in rule qualifications/actions
-	* Insert/update/delete rules on views work
-	* Multiple rule actions are now supported, surrounded by parentheses
-	* Regular users can create views/rules on tables they have RULE permits
-	* Rules and views inherit the permissions on the creator
-	* No rules at the column level
-	* No UPDATE NEW/OLD rules
-	* New pg_tables, pg_indexes, pg_rules and pg_views system views
-	* Only a single action on SELECT rules
-	* Total rewrite overhaul, perhaps for 6.5
-	* handle subselects
-	* handle aggregates on views
-	* handle insert into select from view works
-System indexes are now multi-key(Bruce)
-Oidint2, oidint4, and oidname types are removed(Bruce)
-Use system cache for more system table lookups(Bruce)
-New backend programming language PL/pgSQL in backend/pl(Jan)
-New SERIAL data type, auto-creates sequence/index(Thomas)
-Enable assert checking without a recompile(Massimo)
-User lock enhancements(Massimo)
-New setval() command to set sequence value(Massimo)
-Auto-remove unix socket file on startup if no postmaster running(Massimo)
-Conditional trace package(Massimo)
-New UNLISTEN command(Massimo)
-Psql and libpq now compile under win32 using win32.mak(Magnus)
-Lo_read no longer stores trailing NULL(Bruce)
-Identifiers are now truncated to 31 characters internally(Bruce)
-Createuser options now availble on the command line
-Code for 64-bit integer supported added, configure tested, int8 type(Thomas)
-Prevent file descriptor leaf from failed COPY(Bruce)
-New pg_upgrade command(Bruce)
-Updated /contrib directories(Massimo)
-New CREATE TABLE DEFAULT VALUES statement available(Thomas)
-New INSERT INTO TABLE DEFAULT VALUES statement available(Thomas)
-New DECLARE and FETCH feature(Thomas)
-libpq's internal structures now not exported(Tom)
-Allow up to 8 key indexes(Bruce)
-Remove ARCHIVE keyword, that is no longer used(Thomas)
-pg_dump -n flag to supress quotes around indentifiers
-disable system columns for views(Jan)
-new INET and CIDR types for network addresses(TomH, Paul)
-no more double quotes in psql output
-pg_dump now dumps views(Terry)
-new SET QUERY_LIMIT(Tatsuo,Jan)
-
-Source Tree Changes
--------------------
-/contrib cleanup(Jun)
-Inline some small functions called for every row(Bruce)
-Alpha/linux fixes
-Hp/UX cleanups(Tom)
-Multi-byte regression tests(Soonmyung.)
-Remove --disabled options from configure
-Define PGDOC to use POSTGRESDIR by default
-Make regression optional
-Remove extra braces code to pgindent(Bruce)
-Add bsdi shared library support(Bruce)
-New --without-CXX support configure option(Brook)
-New FAQ_CVS
-Update backend flowchart in tools/backend(Bruce)
-Change atttypmod from int16 to int32(Bruce, Tom)
-Getrusage() fix for platforms that do not have it(Tom)
-Add PQconnectdb, PGUSER, PGPASSWORD to libpq man page
-NS32K platform fixes(Phil Nelson, John Buller)
-Sco 7/UnixWare 2.x fixes(Billy,others)
-Sparc/Solaris 2.5 fixes(Ryan)
-Pgbuiltin.3 is obsolete, move to doc files(Thomas)
-Even more documention(Thomas)
-Nextstep support(Jacek)
-Aix support(David)
-pginterface manual page(Bruce)
-shared libraries all have version numbers
-merged all OS-specific shared library defines into one file
-smarter TCL/TK configuration checking(Billy)
-smarter perl configuration(Brook)
-configure uses supplied install-sh if no install script found(Tom)
-new Makefile.shlib for shared library configuration(Tom)
