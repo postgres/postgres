@@ -1053,3 +1053,190 @@ ncm@zembu.com
 > 
 > 			regards, tom lane
 
+From pgsql-hackers-owner+M11649@postgresql.org Wed Aug  1 15:22:46 2001
+Return-path: <pgsql-hackers-owner+M11649@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f71JMjN09768
+	for <pgman@candle.pha.pa.us>; Wed, 1 Aug 2001 15:22:45 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f71JMUf62338;
+	Wed, 1 Aug 2001 15:22:30 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M11649@postgresql.org)
+Received: from sectorbase2.sectorbase.com (sectorbase2.sectorbase.com [63.88.121.62] (may be forged))
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f71J4df57086
+	for <pgsql-hackers@postgresql.org>; Wed, 1 Aug 2001 15:04:40 -0400 (EDT)
+	(envelope-from vmikheev@SECTORBASE.COM)
+Received: by sectorbase2.sectorbase.com with Internet Mail Service (5.5.2653.19)
+	id <PG1LSSPZ>; Wed, 1 Aug 2001 12:04:31 -0700
+Message-ID: <3705826352029646A3E91C53F7189E32016705@sectorbase2.sectorbase.com>
+From: "Mikheev, Vadim" <vmikheev@SECTORBASE.COM>
+To: "'pgsql-hackers@postgresql.org'" <pgsql-hackers@postgresql.org>
+Subject: [HACKERS] Using POSIX mutex-es
+Date: Wed, 1 Aug 2001 12:04:24 -0700 
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2653.19)
+Content-Type: text/plain;
+	charset="koi8-r"
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+1. Just changed
+	TAS(lock) to pthread_mutex_trylock(lock)
+	S_LOCK(lock) to pthread_mutex_lock(lock)
+	S_UNLOCK(lock) to pthread_mutex_unlock(lock)
+(and S_INIT_LOCK to share mutex-es between processes).
+
+2. pgbench was initialized with scale 10.
+   SUN WS 10 (512Mb), Solaris 2.6 (I'm unable to test on E4500 -:()
+   -B 16384, wal_files 8, wal_buffers 256,
+   checkpoint_segments 64, checkpoint_timeout 3600
+   50 clients x 100 transactions
+   (after initialization DB dir was saved and before each test
+    copyed back and vacuum-ed).
+
+3. No difference.
+   Mutex version maybe 0.5-1 % faster (eg: 37.264238 tps vs 37.083339 tps).
+
+So - no gain, but no performance loss "from using pthread library"
+(I've also run tests with 1 client), at least on Solaris.
+
+And so - looks like we can use POSIX mutex-es and conditional variables
+(not semaphores; man pthread_cond_wait) and should implement light lmgr,
+probably with priority locking.
+
+Vadim
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M11790@postgresql.org Sun Aug  5 14:41:34 2001
+Return-path: <pgsql-hackers-owner+M11790@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f75IfXh25356
+	for <pgman@candle.pha.pa.us>; Sun, 5 Aug 2001 14:41:33 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.4) with SMTP id f75IfY644815;
+	Sun, 5 Aug 2001 14:41:34 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M11790@postgresql.org)
+Received: from candle.pha.pa.us (candle.navpoint.com [162.33.245.46])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id f75IUs641174
+	for <pgsql-hackers@postgresql.org>; Sun, 5 Aug 2001 14:30:54 -0400 (EDT)
+	(envelope-from pgman@candle.pha.pa.us)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.10.1/8.10.1) id f75IUhM25071;
+	Sun, 5 Aug 2001 14:30:43 -0400 (EDT)
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-ID: <200108051830.f75IUhM25071@candle.pha.pa.us>
+Subject: Re: [HACKERS] Idea for nested transactions / savepoints
+In-Reply-To: <8173.997022088@sss.pgh.pa.us> "from Tom Lane at Aug 5, 2001 10:34:48
+	am"
+To: Tom Lane <tgl@sss.pgh.pa.us>
+Date: Sun, 5 Aug 2001 14:30:43 -0400 (EDT)
+cc: PostgreSQL-development <pgsql-hackers@postgresql.org>
+X-Mailer: ELM [version 2.4ME+ PL90 (25)]
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+> Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> > My idea is that we not put UNDO information into WAL but keep a List of
+> > rel ids / tuple ids in the memory of each backend and do the undo inside
+> > the backend.
+> 
+> The complaints about WAL size amount to "we don't have the disk space
+> to keep track of this, for long-running transactions".  If it doesn't
+> fit on disk, how likely is it that it will fit in memory?
+
+Sure, we can put on the disk if that is better.  I thought the problem
+with WAL undo is that you have to keep UNDO info around for all
+transactions that are older than the earliest transaction.  So, if I
+start a nested transaction, and then sit at a prompt for 8 hours, all
+WAL logs are kept for 8 hours.
+
+We can create a WAL file for every backend, and record just the nested
+transaction information.  In fact, once a nested transaction finishes,
+we don't need the info anymore.  Certainly we don't need to flush these
+to disk.
+
+-- 
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgman Sun Aug  5 21:16:32 2001
+Return-path: <pgman>
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.10.1/8.10.1) id f761GWH11356;
+	Sun, 5 Aug 2001 21:16:32 -0400 (EDT)
+From: Bruce Momjian <pgman>
+Message-ID: <200108060116.f761GWH11356@candle.pha.pa.us>
+Subject: Re: [HACKERS] Idea for nested transactions / savepoints
+In-Reply-To: <200108051938.f75Jchi27522@candle.pha.pa.us> "from Bruce Momjian
+	at Aug 5, 2001 03:38:43 pm"
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+Date: Sun, 5 Aug 2001 21:16:32 -0400 (EDT)
+cc: Tom Lane <tgl@sss.pgh.pa.us>,
+   PostgreSQL-development <pgsql-hackers@postgresql.org>
+X-Mailer: ELM [version 2.4ME+ PL90 (25)]
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+Status: OR
+
+> > Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> > >> The complaints about WAL size amount to "we don't have the disk space
+> > >> to keep track of this, for long-running transactions".  If it doesn't
+> > >> fit on disk, how likely is it that it will fit in memory?
+> > 
+> > > Sure, we can put on the disk if that is better.
+> > 
+> > I think you missed my point.  Unless something can be done to make the
+> > log info a lot smaller than it is now, keeping it all around until
+> > transaction end is just not pleasant.  Waving your hands and saying
+> > that we'll keep it in a different place doesn't affect the fundamental
+> > problem: if the transaction runs a long time, the log is too darn big.
+> 
+> When you said long running, I thought you were concerned about long
+> running in duration, not large transaction.  Long duration in one-WAL
+> setup would cause all transaction logs to be kept.  Large transactions
+> are another issue.
+> 
+> One solution may be to store just the relid if many tuples are modified
+> in the same table.  If you stored the command counter for start/end of
+> the nested transaction, it would be possible to sequential scan the
+> table and undo all the affected tuples.  Does that help?  Again, I am
+> just throwing out ideas here, hoping something will catch.
+
+Actually, we need to keep around nested transaction UNDO information
+only until the nested transaction exits to the main transaction:
+
+	BEGIN WORK;
+		BEGIN WORK;
+		COMMIT;
+		-- we can throw away the UNDO here
+		BEGIN WORK;
+			BEGIN WORK;
+			...
+			COMMIT
+		COMMIT;
+		-- we can throw away the UNDO here
+	COMMIT;
+
+We are using the outside transaction for our ACID capabilities, and just
+using UNDO for nested transaction capability.
+
+-- 
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
