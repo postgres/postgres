@@ -14,7 +14,7 @@
  *	Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/md5.c,v 1.15 2001/11/13 22:08:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/md5.c,v 1.16 2001/11/18 23:02:19 momjian Exp $
  */
 
 
@@ -22,7 +22,8 @@
  *	NOTE:
  *
  *	There are two copies of this file, one in backend/libpq and another
- *	in interfaces/odbc.  They should be identical.
+ *	in interfaces/odbc.  They should be identical.  This is done so ODBC
+ *	can be compiled stand-alone.
  */
  
 #ifndef MD5_ODBC
