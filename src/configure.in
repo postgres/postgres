@@ -23,7 +23,10 @@ case "$host_os" in
 nextstep*) os=nextstep;;
   ultrix*) os=ultrix4;;
     irix*) os=irix5;;
-    hpux*) os=hpux;;
+    hpux*) os=hpux
+           AC_LINK_FILES(backend/port/tas/hpux.s, backend/port/tas.s)
+           TAS=tas.o
+           AC_SUBST(TAS) ;;
      osf*) os=alpha;;
      sco*) os=sco;;
  machten*) os=machten;;
