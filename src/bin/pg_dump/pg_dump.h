@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.3.2.2 1996/08/26 05:45:36 scrappy Exp $
+ * $Id: pg_dump.h,v 1.3.2.3 1996/10/24 06:51:19 scrappy Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -193,6 +193,7 @@ extern void dumpIndices(FILE* fout, IndInfo* indinfo, int numIndices,
 extern void dumpClasses(TableInfo *tbinfo, int numTables, FILE *fout, 
                         char *tablename, int oids);
 extern void dumpTuples(PGresult *res, FILE *fout, int *attrmap);
+extern void setMaxOid(FILE *fout);
 extern char* checkForQuote(char* s);
 extern int findLastBuiltinOid();
 
