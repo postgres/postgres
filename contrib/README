@@ -140,10 +140,6 @@ pg_dumplo -
 	Dump large objects
 	by Karel Zak <zakkr@zf.jcu.cz>
 
-pg_logger -
-	Stdin-to-syslog gateway for PostgreSQL
-	by Nathan Myers <ncm@nospam.cantrip.org>
-
 pg_trgm -
 	Functions for determining the similarity of text based on trigram
 	matching.
