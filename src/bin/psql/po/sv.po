@@ -2,15 +2,16 @@
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 # Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004.
 #
-# $Header: /cvsroot/pgsql/src/bin/psql/po/sv.po,v 1.10.2.3 2004/01/08 08:51:31 dennis Exp $
+# $Header: /cvsroot/pgsql/src/bin/psql/po/sv.po,v 1.10.2.4 2004/01/11 19:30:42 dennis Exp $
 #
 # Use these quotes: "%s"
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
-"POT-Creation-Date: 2003-11-15 21:21+0100\n"
-"PO-Revision-Date: 2004-01-08 09:29+0100\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2004-01-11 20:24+0100\n"
+"PO-Revision-Date: 2004-01-11 20:25+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -70,7 +71,7 @@ msgid "Wrote history to file \"%s\".\n"
 msgstr "Kommandohistorien har skrivits till \"%s\".\n"
 
 #: command.c:692 command.c:1149 command.c:1246 command.c:1964 common.c:86
-#: copy.c:88 copy.c:116 describe.c:51 mainloop.c:78 mainloop.c:341
+#: copy.c:88 copy.c:116 mainloop.c:78 mainloop.c:341 describe.c:51
 msgid "out of memory\n"
 msgstr "minnet slut\n"
 
@@ -859,8 +860,8 @@ msgstr "%s: aktuell transaktion är avbruten\n"
 msgid "%s: unknown transaction status\n"
 msgstr "%s: okänd transaktionsstatus\n"
 
-#: describe.c:106 describe.c:157 describe.c:230 describe.c:292 describe.c:339
-#: describe.c:438 describe.c:718 describe.c:1345 large_obj.c:278
+#: large_obj.c:278 describe.c:106 describe.c:157 describe.c:230 describe.c:292
+#: describe.c:339 describe.c:438 describe.c:718 describe.c:1345
 msgid "Description"
 msgstr "Beskrivning"
 
@@ -1177,6 +1178,11 @@ msgstr "unik, "
 #, c-format
 msgid "for table \"%s.%s\""
 msgstr "för tabell \"%s.%s\""
+
+#: describe.c:895
+#, c-format
+msgid ", predicate %s"
+msgstr ", predikat %s"
 
 #: describe.c:929
 #, c-format
@@ -1916,7 +1922,8 @@ msgid ""
 "  } [, ... ]"
 msgstr ""
 "CREATE OPERATOR CLASS namn [ DEFAULT ] FOR TYPE datatyp USING indexmetod AS\n"
-"  {  OPERATOR strateginummer operatornamn [ ( op_typ, op_typ ) ] [ RECHECK ]\n"
+"  {  OPERATOR strateginummer operatornamn [ ( op_typ, op_typ ) ] "
+"[ RECHECK ]\n"
 "   | FUNCTION supportnummer funknamn ( argumenttyp [, ...] )\n"
 "   | STORAGE lagringstyp\n"
 "  } [, ... ]"
@@ -1971,7 +1978,8 @@ msgid ""
 "[ ... ] ]\n"
 "CREATE SCHEMA AUTHORIZATION username [ schema_element [ ... ] ]"
 msgstr ""
-"CREATE SCHEMA schema-namn [ AUTHORIZATION användarnamn ] [ schema-element [ ... ] ]\n"
+"CREATE SCHEMA schema-namn [ AUTHORIZATION användarnamn ] [ schema-element "
+"[ ... ] ]\n"
 "CREATE SCHEMA AUTHORIZATION användarnamn [ schema-element [ ... ] ]"
 
 #: sql_help.h:169
@@ -2028,9 +2036,11 @@ msgid ""
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
 msgstr ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE tabellnamn (\n"
-"    { kolumnname datatyp [ DEFAULT default_uttryck ] [ kolumnvillkor [, ... ] ]\n"
+"    { kolumnname datatyp [ DEFAULT default_uttryck ] [ kolumnvillkor "
+"[, ... ] ]\n"
 "    | tabellvillkor\n"
-"    | LIKE föräldratabell [ { INCLUDING | EXCLUDING } DEFAULTS ] }  [, ... ]\n"
+"    | LIKE föräldratabell [ { INCLUDING | EXCLUDING } DEFAULTS ] }  "
+"[, ... ]\n"
 ")\n"
 "[ INHERITS ( föräldratabell [, ... ] ) ]\n"
 "[ WITH OIDS | WITHOUT OIDS ]\n"
@@ -2041,9 +2051,11 @@ msgstr ""
 "[ CONSTRAINT villkorsnamn ]\n"
 "{ NOT NULL | NULL | UNIQUE | PRIMARY KEY |\n"
 "  CHECK (uttryck) |\n"
-"  REFERENCES reftabell [ ( refkolumn ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]\n"
+"  REFERENCES reftabell [ ( refkolumn ) ] [ MATCH FULL | MATCH PARTIAL | "
+"MATCH SIMPLE ]\n"
 "    [ ON DELETE action ] [ ON UPDATE action ] }\n"
-"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]\n"
+"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
+"IMMEDIATE ]\n"
 "\n"
 "och tabellvillkor är:\n"
 "\n"
@@ -2051,8 +2063,10 @@ msgstr ""
 "{ UNIQUE ( kolumnnamn [, ... ] ) |\n"
 "  PRIMARY KEY ( kolumnnamn [, ... ] ) |\n"
 "  CHECK ( uttryck ) |\n"
-"  FOREIGN KEY ( kolumnnamn [, ... ] ) REFERENCES reftabell [ ( refkolumn [, ... ] ) ]\n"
-"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE action ] [ ON UPDATE action ] }\n"
+"  FOREIGN KEY ( kolumnnamn [, ... ] ) REFERENCES reftabell [ ( refkolumn "
+"[, ... ] ) ]\n"
+"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE action ] [ ON "
+"UPDATE action ] }\n"
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
 
 #: sql_help.h:177 sql_help.h:353
@@ -2065,7 +2079,8 @@ msgid ""
 "[ (column_name [, ...] ) ]\n"
 "    AS query"
 msgstr ""
-"CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE tabellnamn [ (kolumnnamn [, ...] ) ]\n"
+"CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE tabellnamn "
+"[ (kolumnnamn [, ...] ) ]\n"
 "    AS fråga"
 
 #: sql_help.h:181
@@ -2442,23 +2457,28 @@ msgstr ""
 "GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }\n"
 "    [,...] | ALL [ PRIVILEGES ] }\n"
 "    ON [ TABLE ] tabellnamn [, ...]\n"
-"    TO { användarnamn | GROUP gruppnamn | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"    TO { användarnamn | GROUP gruppnamn | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]\n"
 "\n"
 "GRANT { { CREATE | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }\n"
 "    ON DATABASE dbnamn [, ...]\n"
-"    TO { användarnamn | GROUP gruppnamn | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"    TO { användarnamn | GROUP gruppnamn | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]\n"
 "\n"
 "GRANT { EXECUTE | ALL [ PRIVILEGES ] }\n"
 "    ON FUNCTION funkname ([type, ...]) [, ...]\n"
-"    TO { användarnamn | GROUP gruppnamn | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"    TO { användarnamn | GROUP gruppnamn | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]\n"
 "\n"
 "GRANT { USAGE | ALL [ PRIVILEGES ] }\n"
 "    ON LANGUAGE språknamn [, ...]\n"
-"    TO { användarnamn | GROUP gruppnamn | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"    TO { användarnamn | GROUP gruppnamn | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]\n"
 "\n"
 "GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }\n"
 "    ON SCHEMA schemanamn [, ...]\n"
-"    TO { användarnamn | GROUP gruppnamn | PUBLIC } [, ...] [ WITH GRANT OPTION ]"
+"    TO { användarnamn | GROUP gruppnamn | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]"
 
 #: sql_help.h:305
 msgid "create new rows in a table"
@@ -2668,9 +2688,11 @@ msgstr ""
 "\n"
 "    [ ONLY ] tabellnamn [ * ] [ [ AS ] alias [ ( kolumnalias [, ...] ) ] ]\n"
 "    ( select ) [ AS ] alias [ ( kolumnalias [, ...] ) ]\n"
-"    funktionsnamn ( [ argument [, ...] ] ) [ AS ] alias [ ( kolumnalias [, ...] | kolumndefinition [, ...] ) ]\n"
+"    funktionsnamn ( [ argument [, ...] ] ) [ AS ] alias [ ( kolumnalias "
+"[, ...] | kolumndefinition [, ...] ) ]\n"
 "    funktionsnamn ( [ argument [, ...] ] ) AS ( kolumndefinition [, ...] )\n"
-"    frånval [ NATURAL ] join-typ frånval [ ON join-villkor | USING ( join-kolumn [, ...] ) ]"
+"    frånval [ NATURAL ] join-typ frånval [ ON join-villkor | USING ( join-"
+"kolumn [, ...] ) ]"
 
 #: sql_help.h:354
 msgid ""
@@ -2724,7 +2746,9 @@ msgstr "SET CONSTRAINTS { ALL | namn [, ...] } { DEFERRED | IMMEDIATE }"
 msgid ""
 "set the session user identifier and the current user identifier of the "
 "current session"
-msgstr "sätt sessionsanvändaridentifierare och nuvarande användaridentifierare för den aktiva sessionen"
+msgstr ""
+"sätt sessionsanvändaridentifierare och nuvarande användaridentifierare för "
+"den aktiva sessionen"
 
 #: sql_help.h:366
 msgid ""
