@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.5 2000/03/27 17:14:42 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.6 2000/05/15 16:12:38 momjian Exp $
 Postgres documentation
 -->
 
@@ -24,7 +24,7 @@ Postgres documentation
   </refsynopsisdivinfo>
   <synopsis>
 createlang [ <replaceable class="parameter">connection options</replaceable> ] [ <replaceable class="parameter">langname</replaceable> [ <replaceable class="parameter">dbname</replaceable> ] ]
-createlang [ <replaceable class="parameter">connection options</replaceable> ] --list|-l
+createlang [ <replaceable class="parameter">connection options</replaceable> ] --list|-l [ <replaceable class="parameter">dbname</replaceable> ]
   </synopsis>
 
   <refsect2 id="R2-APP-CREATELANG-1">

@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.8 2000/03/25 19:10:27 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.9 2000/05/15 16:12:39 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -103,10 +103,14 @@ do
 		exit 1
 		;;
 	 *)
- 		langname="$1"
-                if [ "$2" ]; then
-                        shift
-			dbname="$1"
+ 		if [ "$list" = 't' ]
+		then	dbname="$1"
+		else	langname="$1"
+                	if [ "$2" ]
+			then
+	                        shift
+				dbname="$1"
+			fi
 		fi
                 ;;
     esac
