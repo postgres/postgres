@@ -199,7 +199,7 @@ For a fresh install or upgrading from previous releases of PostgreSQL:
 
           works.
 
-     If you used pg_dumpall, move the old directories out of the
+     If you used pg_dumpall, move the old directory out of the
      way.  Type the following:
 
      > mv /usr/local/pgsql /usr/local/pgsql.old
@@ -250,7 +250,8 @@ For a fresh install or upgrading from previous releases of PostgreSQL:
 
      then the above was necessary. Simply do this step then.
 
-  9. Create the database installation (the working data files). To do this
+  9. If you moved the old directory out of the way, 
+     create the database installation (the working data files). To do this
      you must log in to your PostgreSQL superuser account. It will not work
      as root.
 
