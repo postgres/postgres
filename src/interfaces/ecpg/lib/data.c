@@ -16,13 +16,13 @@ get_data(PGresult *results, int act_tuple, int act_field, int lineno,
 
 	ECPGlog("get_data line %d: RESULT: %s\n", lineno, pval ? pval : "");
 
-	/* Now the pval is a pointer to the value. */
-	/* let's check is it really is an array if it should be */
+	/* pval is a pointer to the value */
+	/* let's check is it really is an array if it should be one */
 	if (isarray)
 	{
 		if (*pval != '{')
 		{
-			ECPGlog("get_data data entry does not look like an array in line %d\n", lineno);
+			ECPGlog("get_data: data entry does not look like an array in line %d\n", lineno);
 			ECPGraise(lineno, ECPG_DATA_NOT_ARRAY, NULL);
 			return (false);
 		}

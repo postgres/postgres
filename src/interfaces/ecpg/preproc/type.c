@@ -198,6 +198,12 @@ static void ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, l
 void
 ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * typ, const char *ind_name, struct ECPGtype * ind_typ, const char *prefix, const char *ind_prefix)
 {
+	if (ind_typ == NULL)
+	{
+	        ind_typ = &ecpg_no_indicator;
+	        ind_name = "no_indicator";
+	}
+	
 	switch (typ->typ)
 	{
 			case ECPGt_array:

@@ -913,3 +913,10 @@ Sat Apr  8 13:10:12 CEST 2000
 	- Synced keyword.c.
 	- Set library version to 3.1.0.
 	- Set ecpg version to 2.7.0.
+
+Mon May 15 10:51:31 CEST 2000
+
+	- Added patch by SAKAIDA Masaaki <sakaida@psn.co.jp> to fix segfault.
+	- Set ecpg version to 2.7.1.
+
+
