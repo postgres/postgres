@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.36 2002/02/16 23:45:48 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.37 2002/02/17 11:50:09 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -291,6 +291,15 @@ ALTER TABLE distributors ADD CONSTRAINT distfk FOREIGN KEY (address) REFERENCES 
    To add a (multicolumn) unique constraint to a table:
    <programlisting>
 ALTER TABLE distributors ADD CONSTRAINT dist_id_zipcode_key UNIQUE (dist_id, zipcode);
+   </programlisting>
+  </para>
+ </refsect1>
+
+  <para> 
+   To add an automatically named primary key constraint to a table, noting
+   that a table can only ever have one primary key:
+   <programlisting>
+ALTER TABLE distributors ADD PRIMARY KEY (dist_id);
    </programlisting>
   </para>
  </refsect1>
