@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.132 2005/02/06 20:19:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.133 2005/03/20 22:00:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -709,8 +709,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 void
 swap_relation_files(Oid r1, Oid r2)
 {
-	Relation	relRelation,
-				rel;
+	Relation	relRelation;
 	HeapTuple	reltup1,
 				reltup2;
 	Form_pg_class relform1,
@@ -734,20 +733,6 @@ swap_relation_files(Oid r1, Oid r2)
 	if (!HeapTupleIsValid(reltup2))
 		elog(ERROR, "cache lookup failed for relation %u", r2);
 	relform2 = (Form_pg_class) GETSTRUCT(reltup2);
-
-	/*
-	 * The buffer manager gets confused if we swap relfilenodes for
-	 * relations that are not both local or non-local to this transaction.
-	 * Flush the buffers on both relations so the buffer manager can
-	 * forget about'em.  (XXX this might not be necessary anymore?)
-	 */
-	rel = relation_open(r1, NoLock);
-	FlushRelationBuffers(rel, 0);
-	relation_close(rel, NoLock);
-
-	rel = relation_open(r2, NoLock);
-	FlushRelationBuffers(rel, 0);
-	relation_close(rel, NoLock);
 
 	/*
 	 * Actually swap the fields in the two tuples

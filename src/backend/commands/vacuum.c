@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.304 2005/03/16 21:38:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.305 2005/03/20 22:00:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1137,16 +1137,6 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 		{
 			/* Clean pages from vacuum_pages list */
 			vacuum_heap(vacrelstats, onerel, &vacuum_pages);
-		}
-		else
-		{
-			/*
-			 * Flush dirty pages out to disk.  We must do this even if we
-			 * didn't do anything else, because we want to ensure that all
-			 * tuples have correct on-row commit status on disk (see
-			 * bufmgr.c's comments for FlushRelationBuffers()).
-			 */
-			FlushRelationBuffers(onerel, vacrelstats->rel_pages);
 		}
 	}
 
@@ -2420,15 +2410,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 		pfree(Nvacpagelist.pagedesc);
 	}
 
-	/*
-	 * Flush dirty pages out to disk.  We do this unconditionally, even if
-	 * we don't need to truncate, because we want to ensure that all
-	 * tuples have correct on-row commit status on disk (see bufmgr.c's
-	 * comments for FlushRelationBuffers()).
-	 */
-	FlushRelationBuffers(onerel, blkno);
-
-	/* truncate relation, if needed */
+	/* Truncate relation, if needed */
 	if (blkno < nblocks)
 	{
 		RelationTruncate(onerel, blkno);
@@ -2818,27 +2800,17 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 		}
 	}
 
-	/*
-	 * Flush dirty pages out to disk.  We do this unconditionally, even if
-	 * we don't need to truncate, because we want to ensure that all
-	 * tuples have correct on-row commit status on disk (see bufmgr.c's
-	 * comments for FlushRelationBuffers()).
-	 */
+	/* Truncate relation if there are some empty end-pages */
 	Assert(vacrelstats->rel_pages >= vacuum_pages->empty_end_pages);
-	relblocks = vacrelstats->rel_pages - vacuum_pages->empty_end_pages;
-
-	FlushRelationBuffers(onerel, relblocks);
-
-	/* truncate relation if there are some empty end-pages */
 	if (vacuum_pages->empty_end_pages > 0)
 	{
+		relblocks = vacrelstats->rel_pages - vacuum_pages->empty_end_pages;
 		ereport(elevel,
 				(errmsg("\"%s\": truncated %u to %u pages",
 						RelationGetRelationName(onerel),
 						vacrelstats->rel_pages, relblocks)));
 		RelationTruncate(onerel, relblocks);
-		vacrelstats->rel_pages = relblocks;		/* set new number of
-												 * blocks */
+		vacrelstats->rel_pages = relblocks;		/* set new number of blocks */
 	}
 }
 

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.85 2005/01/10 20:02:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.86 2005/03/20 22:00:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -461,8 +461,8 @@ static void
 smgr_internal_unlink(RelFileNode rnode, int which, bool isTemp, bool isRedo)
 {
 	/*
-	 * Get rid of any leftover buffers for the rel (shouldn't be any in
-	 * the commit case, but there can be in the abort case).
+	 * Get rid of any remaining buffers for the relation.  bufmgr will just
+	 * drop them without bothering to write the contents.
 	 */
 	DropRelFileNodeBuffers(rnode, isTemp, 0);
 
@@ -598,6 +598,12 @@ BlockNumber
 smgrtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp)
 {
 	BlockNumber newblks;
+
+	/*
+	 * Get rid of any buffers for the about-to-be-deleted blocks.
+	 * bufmgr will just drop them without bothering to write the contents.
+	 */
+	DropRelFileNodeBuffers(reln->smgr_rnode, isTemp, nblocks);
 
 	/*
 	 * Tell the free space map to forget anything it may have stored for
@@ -873,14 +879,14 @@ smgr_redo(XLogRecPtr lsn, XLogRecord *record)
 
 		reln = smgropen(xlrec->rnode);
 
+		/* Can't use smgrtruncate because it would try to xlog */
+
 		/*
 		 * First, force bufmgr to drop any buffers it has for the to-be-
 		 * truncated blocks.  We must do this, else subsequent
 		 * XLogReadBuffer operations will not re-extend the file properly.
 		 */
 		DropRelFileNodeBuffers(xlrec->rnode, false, xlrec->blkno);
-
-		/* Can't use smgrtruncate because it would try to xlog */
 
 		/*
 		 * Tell the free space map to forget anything it may have stored

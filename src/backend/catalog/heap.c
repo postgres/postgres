@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.280 2005/01/27 03:17:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.281 2005/03/20 22:00:51 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1175,12 +1175,6 @@ heap_drop_with_catalog(Oid relid)
 	rel = relation_open(relid, AccessExclusiveLock);
 
 	/*
-	 * Release all buffers that belong to this relation, after writing any
-	 * that are dirty
-	 */
-	FlushRelationBuffers(rel, (BlockNumber) 0);
-
-	/*
 	 * Schedule unlinking of the relation's physical file at commit.
 	 */
 	if (rel->rd_rel->relkind != RELKIND_VIEW &&
@@ -1958,13 +1952,7 @@ RelationTruncateIndexes(Oid heapId)
 		/* Fetch info needed for index_build */
 		indexInfo = BuildIndexInfo(currentIndex);
 
-		/*
-		 * Drop any buffers associated with this index. If they're dirty,
-		 * they're just dropped without bothering to flush to disk.
-		 */
-		DropRelationBuffers(currentIndex);
-
-		/* Now truncate the actual data */
+		/* Now truncate the actual file (and discard buffers) */
 		RelationTruncate(currentIndex, 0);
 
 		/* Initialize the index and rebuild */
@@ -2024,13 +2012,7 @@ heap_truncate(List *relids)
 	{
 		Relation	rel = lfirst(cell);
 
-		/*
-		 * Release any buffers associated with this relation.  If they're
-		 * dirty, they're just dropped without bothering to flush to disk.
-		 */
-		DropRelationBuffers(rel);
-
-		/* Now truncate the actual data */
+		/* Truncate the actual file (and discard buffers) */
 		RelationTruncate(rel, 0);
 
 		/* If this relation has indexes, truncate the indexes too */

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.124 2004/12/31 21:59:22 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.125 2005/03/20 22:00:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -772,17 +772,6 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 		{
 			/*
 			 * Okay to truncate.
-			 *
-			 * First, flush any shared buffers for the blocks we intend to
-			 * delete.	FlushRelationBuffers is a bit more than we need
-			 * for this, since it will also write out dirty buffers for
-			 * blocks we aren't deleting, but it's the closest thing in
-			 * bufmgr's API.
-			 */
-			FlushRelationBuffers(rel, new_pages);
-
-			/*
-			 * Do the physical truncation.
 			 */
 			RelationTruncate(rel, new_pages);
 
