@@ -1,6 +1,53 @@
 
                                Release Notes
 
+                               Release 7.3.2
+
+     Release date: 2003-02-04
+
+   This has a variety of fixes from 7.3.1.
+     _________________________________________________________________
+
+                         Migration to version 7.3.2
+
+   A dump/restore is *not* required for those running 7.3.*.
+     _________________________________________________________________
+
+                                  Changes
+
+   Restore creation of OID column in CREATE TABLE AS / SELECT INTO
+   Fix pg_dump core dump when dumping views having comments
+   Dump DEFERRABLE/INITIALLY DEFERRED constraints properly
+   Fix UPDATE when child table's column numbering differs from parent
+   Increase default value of max_fsm_relations
+   Fix problem when fetching backwards in a cursor for a single-row query
+   Make backward fetch work properly with cursor on SELECT DISTINCT query
+   Fix problems with loading pg_dump files containing contrib/lo usage
+   Fix problem with all-numeric user names
+   Fix possible memory leak and core dump during disconnect in libpgtcl
+   Make plpython's spi_execute command handle nulls properly (Andrew Bosma)
+   Adjust plpython error reporting so that its regression test passes again
+   Work with bison 1.875
+   Handle mixed-case names properly in plpgsql's %type (Neil)
+   Fix core dump in pltcl when executing a query rewritten by a rule
+   Repair array subscript overruns (per report from Yichen Xie)
+   Reduce MAX_TIME_PRECISION from 13 to 10 in floating-point case
+   Correctly case-fold variable names in per-database and per-user settings
+   Fix coredump in plpgsql's RETURN NEXT when SELECT into record returns
+	no rows
+   Fix outdated use of pg_type.typprtlen in python client interface
+   Correctly handle fractional seconds in timestamps in JDBC driver
+   Improve performance of getImportedKeys() in JDBC
+   Make shared-library symlinks work standardly on HPUX (Giles)
+   Repair inconsistent rounding behavior for timestamp, time, interval
+   SSL negotiation fixes (Nathan Mueller)
+   Make libpq's ~/.pgpass feature work when connecting with PQconnectDB
+   Update my2pg, ora2pg
+   Translation updates
+   Add casts between types lo and oid in contrib/lo
+   fastpath code now checks for privilege to call function
+     _________________________________________________________________
+   
                                Release 7.3.1
 
      Release date: 2002-12-18
