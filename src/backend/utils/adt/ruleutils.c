@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.65 2000/10/05 19:11:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.66 2000/10/05 21:52:08 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2104,7 +2104,7 @@ tleIsArrayAssign(TargetEntry *tle)
 	 * So aref->refexpr ought to match the tle's target.
 	 */
 	if (aref->refexpr == NULL || !IsA(aref->refexpr, Var) ||
-		((Var *) aref->refexpr)->varno != tle->resdom->resno)
+		((Var *) aref->refexpr)->varattno != tle->resdom->resno)
 		elog(NOTICE, "tleIsArrayAssign: I'm confused ...");
 	return true;
 }
