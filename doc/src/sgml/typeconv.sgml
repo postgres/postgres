@@ -23,7 +23,7 @@ using <emphasis>explicit</emphasis> type coercion.
 <para>
 This chapter introduces the <productname>PostgreSQL</productname>
 type conversion mechanisms and conventions.
-Refer to the relevant sections in the <xref linkend="datatype"> and <xref linkend="functions">
+Refer to the relevant sections in <xref linkend="datatype"> and <xref linkend="functions">
 for more information on specific data types and allowed functions and
 operators.
 </para>
@@ -43,8 +43,8 @@ has an associated data type which determines its behavior and allowed usage.
 <productname>PostgreSQL</productname> has an extensible type system that is
 much more general and flexible than other <acronym>RDBMS</acronym> implementations.
 Hence, most type conversion behavior in <productname>PostgreSQL</productname>
-should be governed by general rules rather than by ad-hoc heuristics to allow
-mixed-type expressions to be meaningful, even with user-defined types.
+should be governed by general rules rather than by ad-hoc heuristics, to allow
+mixed-type expressions to be meaningful even with user-defined types.
 </para>
 
 <para>
@@ -64,8 +64,8 @@ tgl=> SELECT text 'Origin' AS "Label", point '(0,0)' AS "Value";
 (1 row)
 </screen>
 
-has two strings, of type <type>text</type> and <type>point</type>.
-If a type is not specified for a string, then the placeholder type
+has two literal constants, of type <type>text</type> and <type>point</type>.
+If a type is not specified for a string literal, then the placeholder type
 <firstterm>unknown</firstterm> is assigned initially, to be resolved in later
 stages as described below.
 </para>
@@ -218,7 +218,7 @@ should use this new function and will no longer do the implicit conversion using
 
   <para>
    The operand types of an operator invocation are resolved following
-   to the procedure below.  Note that this procedure is indirectly affected
+   the procedure below.  Note that this procedure is indirectly affected
    by the precedence of the involved operators.  See <xref
    linkend="sql-precedence"> for more information.
   </para>
@@ -283,7 +283,7 @@ If only one candidate remains, use it; else continue to the next step.
 <para>
 If any input arguments are <quote>unknown</quote>, check the type
 categories accepted at those argument positions by the remaining
-candidates.  At each position, try the "string" category if any
+candidates.  At each position, select the "string" category if any
 candidate accepts that category (this bias towards string is appropriate
 since an unknown-type literal does look like a string). Otherwise, if
 all the remaining candidates accept the same type category, select that
@@ -366,7 +366,7 @@ Strings with unspecified type are matched with likely operator candidates.
 </para>
 
 <para>
-One unspecified argument:
+An example with one unspecified argument:
 <screen>
 tgl=> SELECT text 'abc' || 'def' AS "Text and Unknown";
  Text and Unknown
@@ -405,34 +405,50 @@ type to resolve the unknown literals to.
 </example>
 
 <example>
-<title>Factorial Operator Type Resolution</title>
+<title>Absolute-Value and Factorial Operator Type Resolution</title>
 
 <para>
-This example illustrates an interesting result. Traditionally, the
-factorial operator is defined for integers only. The <productname>PostgreSQL</productname>
-operator catalog has only one entry for factorial, taking an integer operand.
-If given a non-integer numeric argument, <productname>PostgreSQL</productname>
-will try to convert that argument to an integer for evaluation of the
-factorial.
-
+The <productname>PostgreSQL</productname> operator catalog has several
+entries for the prefix operator <literal>@</>, all of which implement
+absolute-value operations for various numeric datatypes.  One of these
+entries is for type <type>float8</type>, which is the preferred type in
+the numeric category.  Therefore, <productname>PostgreSQL</productname>
+will use that entry when faced with a non-numeric input:
 <screen>
-tgl=> SELECT (4.3 !);
- ?column?
-----------
-       24
+tgl=> select @ text '-4.5' as "abs";
+ abs
+-----
+ 4.5
 (1 row)
 </screen>
-
-<note>
-<para>
-Of course, this leads to a mathematically suspect result,
-since in principle the factorial of a non-integer is not defined.
-However, the role of a database is not to teach mathematics, but
-to be a tool for data manipulation. If a user chooses to take the
-factorial of a floating point number, <productname>PostgreSQL</productname>
-will try to oblige.
+Here the system has performed an implicit text-to-float8 conversion
+before applying the chosen operator.  We can verify that float8 and
+not some other type was used:
+<screen>
+tgl=> select @ text '-4.5e500' as "abs";
+ERROR:  Input '-4.5e500' is out of range for float8
+</screen>
 </para>
-</note>
+
+<para>
+On the other hand, the postfix operator <literal>!</> (factorial)
+is defined only for integer datatypes, not for float8.  So, if we
+try a similar case with <literal>!</>, we get:
+<screen>
+tgl=> select text '44' ! as "factorial";
+ERROR:  Unable to identify a postfix operator '!' for type 'text'
+        You may need to add parentheses or an explicit cast
+</screen>
+This happens because the system can't decide which of the several
+possible <literal>!</> operators should be preferred.  We can help
+it out with an explicit cast:
+<screen>
+tgl=> select cast(text '44' as int8) ! as "factorial";
+      factorial
+---------------------
+ 2673996885588443136
+(1 row)
+</screen>
 </para>
 </example>
 
@@ -507,13 +523,14 @@ If only one candidate remains, use it; else continue to the next step.
 <para>
 If any input arguments are <type>unknown</type>, check the type categories accepted
 at those argument positions by the remaining candidates.  At each position,
-try the <type>string</type> category if any candidate accepts that category (this bias towards string
+select the <type>string</type> category if any candidate accepts that category
+(this bias towards string
 is appropriate since an unknown-type literal does look like a string).
 Otherwise, if all the remaining candidates accept the same type category,
 select that category; otherwise fail because
 the correct choice cannot be deduced without more clues.  Also note whether
 any of the candidates accept a preferred data type within the selected category.
-Now discard operator candidates that do not accept the selected type category;
+Now discard candidates that do not accept the selected type category;
 furthermore, if any candidate accepts a preferred type at a given argument
 position, discard candidates that accept non-preferred types for that
 argument.
@@ -536,7 +553,8 @@ then fail.
 <title>Factorial Function Argument Type Resolution</title>
 
 <para>
-There is only one factorial function defined in the <classname>pg_proc</classname> catalog.
+There is only one <function>int4fac</function> function defined in the
+<classname>pg_proc</classname> catalog.
 So the following query automatically converts the <type>int2</type> argument
 to <type>int4</type>:
 
@@ -619,7 +637,7 @@ tgl=> SELECT substr(1234, 3);
      34
 (1 row)
 </screen>
-actually executes as
+which actually executes as
 <screen>
 tgl=> SELECT substr(text(1234), 3);
  substr
@@ -636,6 +654,12 @@ system catalog.
 
 <sect1 id="typeconv-query">
 <title>Query Targets</title>
+
+  <para>
+   Values to be inserted into a table are coerced to the destination
+   column's datatype according to the
+   following steps.
+  </para>
 
 <procedure>
 <title>Query Target Type Resolution</title>
@@ -666,33 +690,36 @@ passing the column's declared length as the second parameter.
 </procedure>
 
 <example>
-<title><type>varchar</type> Storage Type Conversion</title>
+<title><type>character</type> Storage Type Conversion</title>
 
 <para>
-For a target column declared as <type>varchar(4)</type> the following query
+For a target column declared as <type>character(20)</type> the following query
 ensures that the target is sized correctly:
 
 <screen>
-tgl=> CREATE TABLE vv (v varchar(4));
+tgl=> CREATE TABLE vv (v character(20));
 CREATE
 tgl=> INSERT INTO vv SELECT 'abc' || 'def';
 INSERT 392905 1
-tgl=> SELECT * FROM vv;
-  v
-------
- abcd
+tgl=> SELECT v, length(v) FROM vv;
+          v           | length
+----------------------+--------
+ abcdef               |     20
 (1 row)
 </screen>
 
 What has really happened here is that the two unknown literals are resolved
-to <type>text</type> by default, allowing the <literal>||</literal> operator to be
-resolved as <type>text</type> concatenation.  Then the <type>text</type> result of the operator
-is coerced to <type>varchar</type> to match the target column type.  (But, since the
-parser knows that <type>text</type> and <type>varchar</type> are binary-compatible, this coercion
-is implicit and does not insert any real function call.)  Finally, the
-sizing function <literal>varchar(varchar, integer)</literal> is found in the system
-catalogs and applied to the operator's result and the stored column length.
-This type-specific function performs the desired truncation.
+to <type>text</type> by default, allowing the <literal>||</literal> operator
+to be resolved as <type>text</type> concatenation.  Then the <type>text</type>
+result of the operator is coerced to <type>bpchar</type> (<quote>blank-padded
+char</>, the internal name of the character datatype) to match the target
+column type.  (Since the parser knows that <type>text</type> and
+<type>bpchar</type> are binary-compatible, this coercion is implicit and does
+not insert any real function call.)  Finally, the sizing function
+<literal>bpchar(bpchar, integer)</literal> is found in the system catalogs
+and applied to the operator's result and the stored column length.  This
+type-specific function performs the required length check and addition of
+padding spaces.
 </para>
 </example>
 </sect1>
@@ -701,10 +728,13 @@ This type-specific function performs the desired truncation.
 <title><literal>UNION</> and <literal>CASE</> Constructs</title>
 
 <para>
-The <literal>UNION</> and <literal>CASE</> constructs must match up possibly dissimilar types to
-become a single result set.  The resolution algorithm is applied separately to
-each output column of a union.  <literal>CASE</> uses the identical algorithm to match
-up its result expressions.
+SQL <literal>UNION</> constructs must match up possibly dissimilar types to
+become a single result set.  The resolution algorithm is applied separately
+to each output column of a union query.  The <literal>INTERSECT</> and
+<literal>EXCEPT</> constructs resolve dissimilar types in the same way as
+<literal>UNION</>.
+A <literal>CASE</> construct also uses the identical algorithm to match up its
+component expressions and select a result datatype.
 </para>
 <procedure>
 <title><literal>UNION</> and <literal>CASE</> Type Resolution</title>
@@ -768,6 +798,8 @@ tgl=> SELECT 1.2 AS "Double" UNION SELECT 1;
     1.2
 (2 rows)
 </screen>
+The literal <literal>1.2</> is of type <type>double precision</>,
+the preferred type in the numeric category, so that type is used.
 </para>
 </example>
 
@@ -776,7 +808,7 @@ tgl=> SELECT 1.2 AS "Double" UNION SELECT 1;
 
 <para>
 Here the output type of the union is forced to match the type of
-the first/top clause in the union:
+the first clause in the union:
 
 <screen>
 tgl=> SELECT 1 AS "All integers"
