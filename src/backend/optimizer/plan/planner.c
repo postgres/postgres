@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.119 2002/05/18 18:49:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.120 2002/06/13 15:10:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -656,7 +656,7 @@ preprocess_jointree(Query *parse, Node *jtnode)
 				if (childlen <= 1 || (childlen + myothers) <= geqo_rels / 2)
 				{
 					newlist = nconc(newlist, subf->fromlist);
-					f->quals = make_and_qual(f->quals, subf->quals);
+					f->quals = make_and_qual(subf->quals, f->quals);
 				}
 				else
 					newlist = lappend(newlist, child);
