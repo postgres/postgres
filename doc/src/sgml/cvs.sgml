@@ -1,0 +1,1135 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.1 1998/12/18 16:08:19 thomas Exp $
+CVS code repository
+Thomas Lockhart
+
+$Log: cvs.sgml,v $
+Revision 1.1  1998/12/18 16:08:19  thomas
+Information on the CVS tree and remote access.
+Not yet complete, integrated, or marked up.
+Not yet included in a document (should go in the developer's doc?).
+
+-->
+
+<appendix label="A" id="cvs">
+<docinfo>
+<authorgroup>
+<author>
+<firstname>Marc</firstname>
+<surname>Fournier</surname>
+</author>
+</authorgroup>
+<date>1998-12-01</date>
+</docinfo>
+
+<title>The <productname>Postgres</productname> <productname>CVS</productname> Repository</title>
+
+<para>
+The <productname>Postgres</productname> source code is stored and managed using the
+<productname>CVS</productname> code management system.
+
+At least two options,
+anonymous CVS and <productname>CVSup</productname>, 
+are available to pull the <productname>CVS</productname> code tree from the 
+<productname>Postgres</productname> server to your local machine.
+</para>
+
+<sect1>
+<title><productname>CVS</productname> Tree Organization</title>
+
+<para>
+<note>
+<title>Author</title>
+<para>
+Written by <ulink url="mailto:scrappy@hub.org">Marc G. Fournier</ulink> on 1998-11-05.
+</note>
+</para>
+
+<para>
+   The command <command>cvs checkout</command> has a flag, <option>-r</option>,
+ that lets you check out a
+certain revision of a module.  This flag makes it easy to, for example,
+retrieve the
+sources that make up release 1.0 of the module `tc' at any time in the
+future:
+
+<programlisting>
+$ cvs checkout -r REL6_4 tc
+</programlisting>
+
+This is useful, for instance, if someone claims that there is a bug in
+that release, but you cannot find the bug in the current working copy.
+
+<tip>
+<para>
+   You can also check out a module as it was at any given date using the
+<option>-D</option> option.
+</tip>
+</para>
+
+<para>
+   When you tag more than one file with the same tag you can think
+about the tag as "a curve drawn through a matrix of filename vs.
+revision number".  Say we have 5 files with the following revisions:
+
+<programlisting>
+             file1   file2   file3   file4   file5
+     
+             1.1     1.1     1.1     1.1  /--1.1*      <-*-  TAG
+             1.2*-   1.2     1.2    -1.2*-
+             1.3  \- 1.3*-   1.3   / 1.3
+             1.4          \  1.4  /  1.4
+                           \-1.5*-   1.5
+                             1.6
+</programlisting>
+
+then the tag <quote><literal>TAG</literal></quote> will reference
+file1-1.2, file2-1.3, etc.
+
+<note>
+<para>
+For creating a release branch, other then a
+-b option added to the command, it's the same thing.
+</note>
+</para>
+
+<para>
+So, to create the v6.4 release
+I will be doing the following:
+
+<programlisting>
+$ cd pgsql
+$ cvs tag -b REL6_4
+</programlisting>
+
+which will create the tag and the branch for the RELEASE tree.
+</para>
+
+<para>
+Now, for those with <productname>CVS</productname> access, it's too simple.
+First, create two subdirectories, RELEASE and CURRENT, so that you don't
+mix up the two.  Then do:
+
+<programlisting>
+cd RELEASE
+cvs checkout -P -r REL6_4 pgsql
+cd ../CURRENT
+cvs checkout -P pgsql
+</programlisting>
+
+which results in two directory trees, <filename>RELEASE/pgsql</filename> and
+<filename>CURRENT/pgsql</filename>. From that point on, <productname>CVS</productname>
+will keep track of which repository branch is in which directory tree, and will
+allow independent updates of either tree.
+</para>
+
+<para>
+If you are <emphasis>only</emphasis> working on the <literal>CURRENT</literal>
+ source tree, you just do
+everything as before we started tagging release branches.
+
+<para>
+After you've done the initial checkout on a branch
+
+<programlisting>
+$ cvs checkout -r REL6_4
+</programlisting>
+
+anything you do within that directory structure is restricted to that
+branch.  If you apply a patch to that directory structure and do a
+
+<programlisting>
+cvs commit
+</programlisting>
+ while inside of it, the patch is applied to the branch and
+<emphasis>only</emphasis> the branch.
+</para>
+</sect1>
+
+<sect1>
+<title>Getting The Source Via Anonymous <productname>CVS</productname></title>
+
+<para>
+If you would like to keep up with the current sources on a regular
+basis, you can fetch them from our <productname>CVS</productname> server 
+and then use <productname>CVS</productname> to
+retrieve updates from time to time.
+</para>
+
+<procedure>
+<title>Anonymous CVS</title>
+
+<step>
+<para>
+You will need a local copy of <productname>CVS</productname> (Concurrent Version Control
+System), which you can get from
+<ulink url="http://www.cyclic.com/">http://www.cyclic.com/</ulink> or
+any GNU software archive site.  
+We currently recommend version 1.10 (the most recent at the time of writing).
+</para>
+</step>
+
+<step>
+<para>
+Do an initial login to the <productname>CVS</productname> server:
+<programlisting>
+cvs -d :pserver:anoncvs@postgresql.org:/usr/local/cvsroot login
+</programlisting>
+You will be prompted for a password; enter '<literal>postgresql</literal>'.
+You should only need to do this once, since the password will be
+saved in <literal>.cvspass</literal> in your home directory.
+</para>
+</step>
+
+<step>
+<para>
+Fetch the <productname>Postgres</productname> sources:
+<programlisting>
+cvs -z3 -d :pserver:anoncvs@postgresql.org:/usr/local/cvsroot co -P pgsql
+</programlisting>
+which installs the <productname>Postgres</productname> sources into a 
+subdirectory <filename>pgsql</filename>
+of the directory you are currently in.
+
+<note>
+<para>
+If you have a fast link to the Internet, you may not need <option>-z3</option>,
+which instructs <productname>CVS</productname> to use gzip compression for transferred data.  But
+on a modem-speed link, it's a very substantial win.
+</para>
+</note>
+
+<para>
+This initial checkout is a little slower than simply downloading
+a <filename>tar.gz</filename> file; expect it to take 40 minutes or so if you
+have a 28.8K modem.  The advantage of <productname>CVS</productname> doesn't show up until you
+want to update the file set later on.
+</step>
+
+<step>
+<para>
+Whenever you want to update to the latest <productname>CVS</productname> sources,
+<command>cd</command> into
+the <filename>pgsql</filename> subdirectory, and issue
+<programlisting>
+cvs -z3 update -d -P
+</programlisting>
+This will fetch only the changes since the last time you updated.
+You can update in just a couple of minutes, typically, even over
+a modem-speed line.
+</step>
+
+<step>
+<para>
+You can save yourself some typing by making a file <filename>.cvsrc</filename>
+in your home directory that contains
+
+<programlisting>
+cvs -z3
+update -d -P
+</programlisting>
+
+This supplies the <option>-z3</option> option to all cvs commands, and the
+<option>-d</option> and <option>-P</option> options to cvs update.  Then you just have
+to say
+<programlisting>
+cvs update
+</programlisting>
+to update your files.
+</step>
+</procedure>
+
+<para>
+<caution>
+Some older versions of <productname>CVS</productname> have a bug that
+causes all checked-out files to be stored world-writable in your
+directory.  If you see that this has happened, you can do something like
+<programlisting>
+chmod -R go-w pgsql
+</programlisting>
+to set the permissions properly.
+This bug is fixed as of <productname>CVS</productname> version 1.9.28.
+</caution>
+
+<para>
+<productname>CVS</productname> can do a lot of other things, such as fetching prior revisions
+of the <productname>Postgres</productname> sources rather than the latest development version.
+For more info consult the manual that comes with <productname>CVS</productname>, or see the online
+documentation at <ulink url="http://www.cyclic.com/">http://www.cyclic.com/</ulink>.
+
+
+<sect1>
+<title>Getting The Source Via <productname>CVSup</productname></title>
+
+<para>
+An alternative to using anonymous CVS for retrieving the <productname>Postgres</productname> source tree
+is <productname>CVSup</productname>. The major advantage to using
+<productname>CVSup</productname> is that it can replicate the <emphasis>entire</emphasis>
+CVS repository on your local system,
+allowing fast local access to cvs operations such as <option>log</option>
+and <option>diff</option>. Other advantages include fast synchronization to
+the <productname>Postgres</productname> server due to an efficient
+streaming transfer protocol which only sends the changes since the last update.
+
+<sect2>
+<title>Background</title>
+
+<para>
+<note>
+<title>Author</title>
+<para>
+Written by <ulink url="mailto:jdp@polstra.com">John Polstra</ulink>, the
+<productname>CVSup</productname> author.
+</note>
+
+Before you dismiss CVSup because of the language it's written in,
+I hope you'll take a look at the long list of platforms supported
+by the free DEC SRC Modula-3 compiler, at:
+
+    http://www.research.digital.com/SRC/modula-3/html/platforms.html
+
+I developed CVSup using that compiler, under FreeBSD.  I also have
+reports from people who are using CVSup under Linux, Solaris, and
+ALPHA/OSF.  It should be easily portable to any of the POSIX systems
+supported by the compiler.
+
+I understand your reluctance to "change a winning team," but once
+you've seen the speed increase of CVSup relative to sup, you'll no
+longer view sup as "winning."  Sup was the inspiration for me to
+develop CVSup, precisely because it performs so badly in certain
+situations.
+
+Sup's synchronous request-ack communication pattern is death on a
+high-latency network link.  CVSup uses a streaming protocol that is
+immune to latency problems.  Its multi-threaded implementation
+utilizes the network link in both directions simultaneously, at or
+near its capacity.
+
+If you are mirroring a CVS repository and add a tag to each file
+(say, to make an official release), sup will send a fresh copy of
+every file in the repository.  CVSup sends only the tags, and edits
+them into the files on the client host.  It was just such a tagging
+operation, and the attendent utter saturation of their server's
+network link, that led the FreeBSD project to abandon sup in favor
+of CVSup.  If you ask on <FreeBSD-hackers@FreeBSD.ORG>, I'm sure
+you'll get some opinions on whether CVSup is worth its Modula-3
+hassle factor.
+
+It's freeware.  I don't get anything besides warm fuzzy feelings
+when people use it.  But I'd hate to see you rule it out simply
+because of the language it's written in.
+
+If I can answer any questions about CVSup or Modula-3, feel free
+to contact me.
+
+Best regards,
+John Polstra
+--
+   John Polstra                                       jdp@polstra.com
+   John D. Polstra & Co., Inc.                Seattle, Washington USA
+   "Self-knowledge is always bad news."                 -- John Barth
+
+
+
+<sect2>
+<title>Installing <productname>CVSup</productname></title>
+
+<para>
+Binary files of <productname>CVSup</productname> client executables compiled
+for several platforms are posted on
+<ulink url="ftp://postgresql.org/pub/CVSup">the PostgreSQL ftp site</ulink>.
+In many cases, these binary files will be sufficient to get started with
+<productname>CVSup</productname>.
+</para>
+
+<para>
+Alternatively, you can install <productname>CVSup</productname> from
+a FreeBSD package or from source. A clean installation from source code
+requires installation of a <productname>Modula-3</productname> compiler,
+which is also available as Linux <productname>RPM</productname>,
+ FreeBSD package, or source code.
+
+<note>
+<para>
+A clean-source installation of Modula-3 takes roughly 200MB of disk space,
+which shrinks to roughly 50MB of space when the sources are removed.
+</note>
+</para>
+
+<sect3>
+<title>Linux installation</title>
+
+<para>
+For a <productname>CVSup</productname> client, pick up the appropriate tarball
+from <ulink url="ftp://postgresql.org/pub/CVSup">the PostgreSQL ftp site</ulink>.
+Unpack the tarball into <filename>/usr/local/bin</filename>, then move the man page
+file <filename>cvsup.1</filename> to <filename>/usr/local/man/man1</filename>.
+</para>
+
+<para>
+To build <productname>CVSup</productname> from local sources,
+ pick up the <productname>Modula-3</productname>
+distribution from
+<ulink url="http://m3.polymtl.ca/m3">Polytechnique Montréal</ulink>,
+ who are actively maintaining the code base originally developed by 
+<ulink url="http://www.research.digital.com/SRC/modula-3/html/home.html">the DEC Systems Research Center</ulink>.
+The <quote>PM3</quote> <productname>RPM</productname> distribution is roughly
+30MB compressed.
+</para>
+
+From - Tue Dec  1 14:01:42 1998
+Return-Path: <Thomas.G.Lockhart@jpl.nasa.gov>
+Received: from eis-msg-012.jpl.nasa.gov ([137.78.68.42])
+          by eis-msg-002.jpl.nasa.gov (Netscape Mail Server v2.02)
+          with ESMTP id ADD868 for <tlockhar@mail1.jpl.nasa.gov>;
+          Mon, 21 Jul 1997 11:44:48 -0700
+Return-Path: <tgl@mythos>
+Received: from mythos.jpl.nasa.gov by eis-msg-012.jpl.nasa.gov; Mon, 21 Jul 1997 11:44:50 -0700
+Received: by mythos.jpl.nasa.gov (5.65v3.2/1.1.10.5/11Jan97-0348AM)
+	id AA24680; Mon, 21 Jul 1997 18:45:05 GMT
+Received: from pyros.jpl.nasa.gov by mythos.jpl.nasa.gov (5.65v3.2/1.1.10.5/11Jan97-0348AM)
+	id AA26520; Mon, 21 Jul 1997 18:44:59 GMT
+Received: from eis-msg-012.jpl.nasa.gov by pyros.jpl.nasa.gov (5.65v3.2/1.1.8.2/15Aug95-1038PM)
+	id AA26023; Mon, 21 Jul 1997 18:44:59 GMT
+Received: from austin.polstra.com by eis-msg-012.jpl.nasa.gov with ESMTP; Mon, 21 Jul 1997 11:44:40 -0700
+Received: from austin.polstra.com (jdp@localhost)
+	by austin.polstra.com (8.8.6/8.8.5) with ESMTP id LAA00444
+	for <Thomas.Lockhart@jpl.nasa.gov>; Mon, 21 Jul 1997 11:44:47 -0700 (PDT)
+Message-Id: <199707211844.LAA00444@austin.polstra.com>
+To: "Thomas G. Lockhart" <Thomas.G.Lockhart@jpl.nasa.gov>
+Subject: Re: [HACKERS] Re: CVSup is in Modula-3 
+In-Reply-To: Your message of "Mon, 21 Jul 1997 16:31:17 -0000."
+             <33D38ED5.132C8923@jpl.nasa.gov> 
+References: <199705210339.UAA13067@austin.polstra.com> 
+	<33D38ED5.132C8923@jpl.nasa.gov> 
+Date: Mon, 21 Jul 1997 11:44:47 -0700
+From: John Polstra <jdp@polstra.com>
+X-Mozilla-Status: 0011
+Content-Length: 1113
+
+Tom,
+
+> We are starting to try to set up CVSup to support the PostgreSQL
+> project.
+
+Great!  If I can help, just let me know.
+
+> After being delayed while buying more disk to install Modula-3,
+
+:-}
+
+> I started back up on trying the installation. I have gotten the
+> CVSup source distribution cvsup-15.1.tar.gz from www.cdrom.com and
+> have m3 on my system, which already had zlib.
+> 
+> There appears to be more needed on my RedHat Linux box; make fails
+> with a syntax error on the last line of the Makefile which is
+> 
+> .include <bsd.subdir.mk>
+> 
+> I assume this is a FreeBSDism
+
+Yes, sorry, the Makefiles aren't portable yet.  It's easy to build
+it by hand though.  Chdir into each of the following directories in
+the given order, and in each one type "m3build":
+
+    suptcp
+    suplib
+    server
+    client
+
+If all goes well, the executables will get created in the
+subdirectories "server/LINUXELF" and "client/LINUXELF".
+
+If you run into any portability problems, please let me know and
+I'll try to send you patches right away.  It's the only way I know
+of to improve the portability of the package.
+
+John
+
+From - Tue Dec  1 14:02:37 1998
+Return-Path: <Thomas.G.Lockhart@jpl.nasa.gov>
+Received: from eis-msg-012.jpl.nasa.gov ([137.78.68.42])
+          by eis-msg-002.jpl.nasa.gov (Netscape Mail Server v2.02)
+          with ESMTP id ADT23584 for <tlockhar@mail1.jpl.nasa.gov>;
+          Mon, 21 Jul 1997 22:23:30 -0700
+Return-Path: <tgl@mythos>
+Received: from mythos.jpl.nasa.gov by eis-msg-012.jpl.nasa.gov; Mon, 21 Jul 1997 22:23:30 -0700
+Received: by mythos.jpl.nasa.gov (5.65v3.2/1.1.10.5/11Jan97-0348AM)
+	id AA27710; Tue, 22 Jul 1997 05:23:46 GMT
+Received: from pyros.jpl.nasa.gov by mythos.jpl.nasa.gov (5.65v3.2/1.1.10.5/11Jan97-0348AM)
+	id AA27627; Tue, 22 Jul 1997 05:23:45 GMT
+Received: from eis-msg-012.jpl.nasa.gov by pyros.jpl.nasa.gov (5.65v3.2/1.1.8.2/15Aug95-1038PM)
+	id AA16826; Tue, 22 Jul 1997 05:23:44 GMT
+Received: from austin.polstra.com by eis-msg-012.jpl.nasa.gov with ESMTP; Mon, 21 Jul 1997 22:22:24 -0700
+Received: from austin.polstra.com (jdp@localhost)
+	by austin.polstra.com (8.8.6/8.8.5) with ESMTP id WAA04594
+	for <Thomas.Lockhart@jpl.nasa.gov>; Mon, 21 Jul 1997 22:22:40 -0700 (PDT)
+Message-Id: <199707220522.WAA04594@austin.polstra.com>
+To: "Thomas G. Lockhart" <Thomas.G.Lockhart@jpl.nasa.gov>
+Subject: Re: [HACKERS] Re: CVSup is in Modula-3 
+In-Reply-To: Your message of "Tue, 22 Jul 1997 04:55:24 -0000."
+             <33D43D3C.65F75F5@jpl.nasa.gov> 
+References: <199705210339.UAA13067@austin.polstra.com> <33D38ED5.132C8923@jpl.nasa.gov> <199707211844.LAA00444@austin.polstra.com> <33D409F9.5FEF02C7@jpl.nasa.gov> <199707220156.SAA03432@austin.polstra.com> 
+	<33D43D3C.65F75F5@jpl.nasa.gov> 
+Date: Mon, 21 Jul 1997 22:22:40 -0700
+From: John Polstra <jdp@polstra.com>
+X-Mozilla-Status: 0011
+Content-Length: 2890
+
+> It became clear that I had a problem with my m3 installation; some
+> X11 libraries were not being found correctly.
+
+By the way, you can build the client without the GUI by doing this
+in the "client" subdirectory:
+
+    m3build -DNOGUI
+
+If you build it that way, then it doesn't need the X11 libraries and
+it's quite a bit smaller.  The GUI is fun to watch, but it's not
+very useful.  I originally implemented it because it made debugging
+the multi-threaded client program much easier.
+
+To build a statically-linked client, edit <filename>client/src/m3makefile</filename>
+to add <literal>build_standalone()</literal>
+ just before the <literal>program()</literal> entry near
+the end of the file:
+
+<programlisting>
+build_standalone()
+program(cvsup)
+</programlisting>
+
+Then, if cvsup has already been built, remove the machine-specific build directory
+(e.g. <filename>LINUXELF/</filename>) and rebuild:
+
+<programlisting>
+rm -rf LINUXELF
+m3build -DNOGUI -v
+cp -p LINUXELF/cvsup /usr/local/bin
+</programlisting>
+
+> Anyway, with the reinstall and the two-line patch above (and that
+> one include-file _POSIX_SOURCE workaround from the previous try),
+> things built cleanly.
+
+Good!
+
+> Now I just need a server somewhere to test.
+
+If you want to try it out, there are public servers for the FreeBSD
+source repository at cvsup.freebsd.org and cvsup2.freebsd.org.
+Here's a suggested supfile:
+
+*default host=cvsup.freebsd.org compress
+*default release=cvs
+*default base=/home/jdp/cvsup-test	# FIX THIS
+*default delete use-rel-suffix
+# *default tag=.
+src-bin
+
+This will fetch you the source repository for the programs that get
+installed into "/bin".  I chose it because it's one of the smaller
+pieces of the system.  Make an empty directory someplace for
+testing, and change the "FIX THIS" line to specify that directory
+after the "base=".
+
+If you are on a T1 or better, you should probably delete the
+"compress" keyword in the first line.
+
+As shown, it will get the repository (RCS) files.  If you uncomment
+the line containing "tag=." then it will instead check out the
+latest version of each file.  There's a bunch more information about
+what you can do at <http://www.freebsd.org/handbook/cvsup.html>.
+
+There is one other thing I want to send you, but not tonight.  I
+discovered the hard way that you need a malloc package that is
+thread-safe with respect to the Modula-3 threads package.  The
+Modula-3 runtime takes care to do the proper mutual exclusion around
+all calls it makes to malloc.  But if you call certain functions in
+the native C library which in turn call malloc, then the mutual
+exclusion gets bypassed.  This can lead to rare but baffling core
+dumps.
+
+For FreeBSD, I solved this by adding a thread-safe malloc package
+into the Modula-3 runtime.  The package is quite portable, and I'm
+sure it will work well for Linux with very few changes (probably
+none at all).  I want to send it to you along with instructions
+for making it a part of the "libm3core" library.  It's very simple,
+but I've run out of steam for tonight. :-)  Once you have this
+malloc in place, the CVSup system should be rock solid.  We have
+servers that have been up for weeks and have served many thousands
+of clients without any observed problems.
+
+> We hope to have the Postgres tree using CVSup within a month or
+> so, and hope to retire sup in September...
+
+Great!  I'll do my best to help make sure you don't regret it.
+
+John
+
+
+
+
+From - Tue Dec  1 14:03:48 1998
+Return-Path: <Thomas.G.Lockhart@jpl.nasa.gov>
+Received: from eis-msg-012.jpl.nasa.gov ([137.78.68.42])
+          by eis-msg-002.jpl.nasa.gov (Netscape Mail Server v2.02)
+          with ESMTP id AAK25400 for <tlockhar@mail1.jpl.nasa.gov>;
+          Mon, 28 Jul 1997 11:08:12 -0700
+Return-Path: <tgl@mythos>
+Received: from mythos.jpl.nasa.gov by eis-msg-012.jpl.nasa.gov; Mon, 28 Jul 1997 11:08:07 -0700
+Received: by mythos.jpl.nasa.gov (5.65v3.2/1.1.10.5/11Jan97-0348AM)
+	id AA09109; Mon, 28 Jul 1997 18:08:30 GMT
+Date: Mon, 28 Jul 1997 18:08:30 GMT
+From: Thomas Lockhart <Thomas.G.Lockhart@jpl.nasa.gov>
+Message-Id: <9707281808.AA09109@mythos.jpl.nasa.gov>
+Subject: Thread safe malloc for Modula-3
+To: tlockhar@mail1.jpl.nasa.gov
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Content-Md5: kDq1byZn+NpMUrFlhA9EhA==
+X-Mozilla-Status: 0001
+Content-Length: 27233
+
+------------- Begin Forwarded Message -------------
+
+>From jdp@austin.polstra.com  Sat Jul 26 03:42:04 1997
+To: "Thomas G. Lockhart" <Thomas.G.Lockhart@jpl.nasa.gov>
+Subject: Thread safe malloc for Modula-3
+Date: Fri, 25 Jul 1997 20:41:41 -0700
+From: John Polstra <jdp@polstra.com>
+Content-Length: 26878
+
+Tom,
+
+I'm appending the sources for the thread safe version of malloc that
+I told you about.  I believe that it will simply compile and work
+under Linux, but I've never had an opportunity to test it there.
+I urge you to put it into your Modula-3 system -- otherwise, you
+are guaranteed to get occasional mysterious core dumps from cvsupd.
+
+As a first step, I'd suggest simply trying to compile it under
+Linux, like this:
+
+    cc -O -c malloc.c
+
+You shouldn't get any errors or warnings.  If you do, contact me
+before you waste any more time on it.
+
+Assuming it compiles OK, copy malloc.c into this directory of your
+Modula-3 source tree:
+
+    m3/m3core/src/runtime/LINUXELF
+
+In that same directory, edit "m3makefile" and add this line to the
+end of the file:
+
+    c_source       ("malloc")
+
+Then chdir up into "m3/m3core" of the Modula-3 tree and type
+"m3build".  (I'm assuming you already have a working Modula-3
+installation.)  After that finishes, become root and type "m3ship"
+to install it.
+
+That's all there is to it.  If you built cvsup and cvsupd to use
+shared libraries, you don't even need to re-link them.  They'll pick
+up the change automatically from the updated shared library.
+
+Let me know if you run into any problems with it.
+
+By the way, this is a very good malloc in its own right.  It's worth
+using even aside from the thread safety of it.
+
+Regards,
+John
+
+
+
+From - Tue Dec  1 14:04:30 1998
+Received: from eis-msg-012.jpl.nasa.gov (eis-msg-012.jpl.nasa.gov [137.78.68.42]) by alumnae.caltech.edu (8.8.3/8.7.3) with ESMTP id WAA24486 for <lockhart@alumni.caltech.edu>; Tue, 29 Jul 1997 22:54:06 -0700 (PDT)
+Received: from mythos.jpl.nasa.gov by eis-msg-012.jpl.nasa.gov; Tue, 29 Jul 1997 22:53:32 -0700
+Received: by mythos.jpl.nasa.gov (5.65v3.2/1.1.10.5/11Jan97-0348AM)
+	id AA13731; Wed, 30 Jul 1997 05:54:08 GMT
+Received: from hub.org by mythos.jpl.nasa.gov (5.65v3.2/1.1.10.5/11Jan97-0348AM)
+	id AA13687; Wed, 30 Jul 1997 05:54:07 GMT
+Received: from localhost (majordom@localhost) by hub.org (8.8.5/8.7.5) with SMTP id BAA07442; Wed, 30 Jul 1997 01:52:26 -0400 (EDT)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Wed, 30 Jul 1997 01:48:16 -0400 (EDT)
+Received: (from majordom@localhost) by hub.org (8.8.5/8.7.5) id BAA07304 for pgsql-hackers-outgoing; Wed, 30 Jul 1997 01:48:03 -0400 (EDT)
+Received: from golem.jpl.nasa.gov (root@gnet04.jpl.nasa.gov [128.149.70.168]) by hub.org (8.8.5/8.7.5) with ESMTP id BAA07297 for <hackers@postgresql.org>; Wed, 30 Jul 1997 01:47:55 -0400 (EDT)
+Received: from golem (localhost [127.0.0.1])
+	by golem.jpl.nasa.gov (8.8.5/8.8.5) with SMTP id FAA23412;
+	Wed, 30 Jul 1997 05:46:58 GMT
+Message-Id: <33DED551.7F31C751@alumni.caltech.edu>
+Date: Wed, 30 Jul 1997 05:46:58 +0000
+From: "Thomas G. Lockhart" <lockhart@alumni.caltech.edu>
+Organization: Caltech/JPL
+X-Mailer: Mozilla 3.01 (X11; I; Linux 2.0.30 i686)
+Mime-Version: 1.0
+To: The Hermit Hacker <scrappy@hub.org>
+Cc: hackers@postgresql.org, John Polstra <jdp@polstra.com>
+Subject: [HACKERS] cvsup
+Content-Transfer-Encoding: 7bit
+Sender: owner-hackers@hub.org
+Precedence: bulk
+Content-Type: text/plain; charset=us-ascii
+X-Mozilla-Status: 0001
+Content-Length: 1069
+
+I've deposited a statically built cvsup client executable (and man pages
+and test configuration) in 
+
+  /pub/incoming/cvsup-15.1-client-linux.tar.gz
+
+This was built and linked on Linux/v2.0.30, RH/v4.2, gnulib/v5.3.12 and
+includes the thread-safe malloc provided by John Polstra. I'll forward
+to you the malloc code and an additional installation e-mail from John.
+
+The Modula-3 installation takes a good bit of room (~50MB?) and the
+build environment is unique to Modula-3, but suprisingly enough it
+pretty much works.
+
+The cvsup Makefiles do not work on my machine (they are not portable
+yet) but each major package (there are 4) can be built without needing
+the makefiles with two commands each. Not difficult at all. John gives
+some hints in his e-mail on how to build a static executable, and on how
+to shrink the size of the executable by leaving out the GUI support.
+Again, easy to do. 
+
+My client test case, picking up a sub-tree of the FreeBSD distribution,
+worked flawlessly. I haven't tried running a server.
+
+Thanks to John for getting me going.
+
+			- Tom
+
+
+From - Tue Dec  1 14:07:28 1998
+Received: from eis-msg-012.jpl.nasa.gov (eis-msg-012.jpl.nasa.gov [137.78.68.42]) by alumnae.caltech.edu (8.8.3/8.7.3) with ESMTP id XAA25148 for <lockhart@alumni.caltech.edu>; Tue, 29 Jul 1997 23:17:22 -0700 (PDT)
+Received: from mythos.jpl.nasa.gov by eis-msg-012.jpl.nasa.gov; Tue, 29 Jul 1997 23:16:48 -0700
+Received: by mythos.jpl.nasa.gov (5.65v3.2/1.1.10.5/11Jan97-0348AM)
+	id AA09663; Wed, 30 Jul 1997 06:17:25 GMT
+Received: from hub.org by mythos.jpl.nasa.gov (5.65v3.2/1.1.10.5/11Jan97-0348AM)
+	id AA13538; Wed, 30 Jul 1997 06:17:24 GMT
+Received: from localhost (majordom@localhost) by hub.org (8.8.5/8.7.5) with SMTP id CAA08702; Wed, 30 Jul 1997 02:14:29 -0400 (EDT)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Wed, 30 Jul 1997 02:03:54 -0400 (EDT)
+Received: (from majordom@localhost) by hub.org (8.8.5/8.7.5) id CAA08094 for pgsql-hackers-outgoing; Wed, 30 Jul 1997 02:03:41 -0400 (EDT)
+Received: from golem.jpl.nasa.gov (root@gnet04.jpl.nasa.gov [128.149.70.168]) by hub.org (8.8.5/8.7.5) with ESMTP id CAA08086 for <hackers@postgreSQL.org>; Wed, 30 Jul 1997 02:03:10 -0400 (EDT)
+Received: from golem (localhost [127.0.0.1])
+	by golem.jpl.nasa.gov (8.8.5/8.8.5) with SMTP id GAA23505;
+	Wed, 30 Jul 1997 06:02:40 GMT
+Message-Id: <33DED900.4EEA0E9F@alumni.caltech.edu>
+Date: Wed, 30 Jul 1997 06:02:40 +0000
+From: "Thomas G. Lockhart" <lockhart@alumni.caltech.edu>
+Organization: Caltech/JPL
+X-Mailer: Mozilla 3.01 (X11; I; Linux 2.0.30 i686)
+Mime-Version: 1.0
+To: The Hermit Hacker <scrappy@hub.org>
+Cc: hackers@postgresql.org
+Subject: [Fwd: Re: [HACKERS] Re: CVSup is in Modula-3]
+Sender: owner-hackers@hub.org
+Precedence: bulk
+Content-Type: multipart/mixed; boundary="------------524572433268691C62FDF4"
+X-Mozilla-Status: 0001
+Content-Length: 38655
+
+This is a multi-part message in MIME format.
+
+--------------524572433268691C62FDF4
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+For the thread-safe malloc, do the following:
+1) install Modula-3
+2) add the enclosed file "malloc.c" to m3/m3core/src/runtime/LINUXELF
+3) edit the last line of m3makefile in the same directory to add
+     c_source       ("malloc")
+4) do an "m3build" and an m3ship from the appropriate directory.
+
+>From what John said, the malloc problem can be noticable for the
+server-side running cvsupd. Clients may not need it.
+
+Unfortunately I seem to have lost John's original good instructions for
+this, so am doing this from memory. May need to ask John to give
+instructions again...
+
+			- Tom
+
+--------------524572433268691C62FDF4
+Content-Type: message/rfc822
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+Return-Path: <Thomas.G.Lockhart@jpl.nasa.gov>
+Received: from eis-msg-012.jpl.nasa.gov ([137.78.68.42])
+          by eis-msg-002.jpl.nasa.gov (Netscape Mail Server v2.02)
+          with ESMTP id ADD868 for <tlockhar@mail1.jpl.nasa.gov>;
+          Mon, 21 Jul 1997 11:44:48 -0700
+Return-Path: <tgl@mythos>
+Received: from mythos.jpl.nasa.gov by eis-msg-012.jpl.nasa.gov; Mon, 21 Jul 1997 11:44:50 -0700
+Received: by mythos.jpl.nasa.gov (5.65v3.2/1.1.10.5/11Jan97-0348AM)
+	id AA24680; Mon, 21 Jul 1997 18:45:05 GMT
+Received: from pyros.jpl.nasa.gov by mythos.jpl.nasa.gov (5.65v3.2/1.1.10.5/11Jan97-0348AM)
+	id AA26520; Mon, 21 Jul 1997 18:44:59 GMT
+Received: from eis-msg-012.jpl.nasa.gov by pyros.jpl.nasa.gov (5.65v3.2/1.1.8.2/15Aug95-1038PM)
+	id AA26023; Mon, 21 Jul 1997 18:44:59 GMT
+Received: from austin.polstra.com by eis-msg-012.jpl.nasa.gov with ESMTP; Mon, 21 Jul 1997 11:44:40 -0700
+Received: from austin.polstra.com (jdp@localhost)
+	by austin.polstra.com (8.8.6/8.8.5) with ESMTP id LAA00444
+	for <Thomas.Lockhart@jpl.nasa.gov>; Mon, 21 Jul 1997 11:44:47 -0700 (PDT)
+Message-Id: <199707211844.LAA00444@austin.polstra.com>
+To: "Thomas G. Lockhart" <Thomas.G.Lockhart@jpl.nasa.gov>
+Subject: Re: [HACKERS] Re: CVSup is in Modula-3 
+In-Reply-To: Your message of "Mon, 21 Jul 1997 16:31:17 -0000."
+             <33D38ED5.132C8923@jpl.nasa.gov> 
+References: <199705210339.UAA13067@austin.polstra.com> 
+	<33D38ED5.132C8923@jpl.nasa.gov> 
+Date: Mon, 21 Jul 1997 11:44:47 -0700
+From: John Polstra <jdp@polstra.com>
+
+Tom,
+
+> We are starting to try to set up CVSup to support the PostgreSQL
+> project.
+
+Great!  If I can help, just let me know.
+
+> After being delayed while buying more disk to install Modula-3,
+
+:-}
+
+> I started back up on trying the installation. I have gotten the
+> CVSup source distribution cvsup-15.1.tar.gz from www.cdrom.com and
+> have m3 on my system, which already had zlib.
+> 
+> There appears to be more needed on my RedHat Linux box; make fails
+> with a syntax error on the last line of the Makefile which is
+> 
+> .include <bsd.subdir.mk>
+> 
+> I assume this is a FreeBSDism
+
+Yes, sorry, the Makefiles aren't portable yet.  It's easy to build
+it by hand though.  Chdir into each of the following directories in
+the given order, and in each one type "m3build":
+
+    suptcp
+    suplib
+    server
+    client
+
+If all goes well, the executables will get created in the
+subdirectories "server/LINUXELF" and "client/LINUXELF".
+
+If you run into any portability problems, please let me know and
+I'll try to send you patches right away.  It's the only way I know
+of to improve the portability of the package.
+
+John
+
+
+
+
+--------------524572433268691C62FDF4
+Content-Type: message/rfc822
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+Return-Path: <Thomas.G.Lockhart@jpl.nasa.gov>
+Received: from eis-msg-012.jpl.nasa.gov ([137.78.68.42])
+          by eis-msg-002.jpl.nasa.gov (Netscape Mail Server v2.02)
+          with ESMTP id ABJ29576 for <tlockhar@mail1.jpl.nasa.gov>;
+          Mon, 21 Jul 1997 18:31:59 -0700
+Return-Path: <tgl@mythos>
+Received: from mythos.jpl.nasa.gov by eis-msg-012.jpl.nasa.gov; Mon, 21 Jul 1997 18:32:01 -0700
+Received: by mythos.jpl.nasa.gov (5.65v3.2/1.1.10.5/11Jan97-0348AM)
+	id AA27435; Tue, 22 Jul 1997 01:32:15 GMT
+Received: from pyros.jpl.nasa.gov by mythos.jpl.nasa.gov (5.65v3.2/1.1.10.5/11Jan97-0348AM)
+	id AA27371; Tue, 22 Jul 1997 01:31:15 GMT
+Received: from eis-msg-012.jpl.nasa.gov by pyros.jpl.nasa.gov (5.65v3.2/1.1.8.2/15Aug95-1038PM)
+	id AA07056; Tue, 22 Jul 1997 01:31:14 GMT
+Received: from austin.polstra.com by eis-msg-012.jpl.nasa.gov with ESMTP; Mon, 21 Jul 1997 18:30:52 -0700
+Received: from austin.polstra.com (jdp@localhost)
+	by austin.polstra.com (8.8.6/8.8.5) with ESMTP id SAA03293
+	for <Thomas.Lockhart@jpl.nasa.gov>; Mon, 21 Jul 1997 18:31:05 -0700 (PDT)
+Message-Id: <199707220131.SAA03293@austin.polstra.com>
+To: "Thomas G. Lockhart" <Thomas.G.Lockhart@jpl.nasa.gov>
+Subject: Re: [HACKERS] Re: CVSup is in Modula-3 
+In-Reply-To: Your message of "Tue, 22 Jul 1997 01:16:41 -0000."
+             <33D409F9.5FEF02C7@jpl.nasa.gov> 
+References: <199705210339.UAA13067@austin.polstra.com> <33D38ED5.132C8923@jpl.nasa.gov> <199707211844.LAA00444@austin.polstra.com> 
+	<33D409F9.5FEF02C7@jpl.nasa.gov> 
+Date: Mon, 21 Jul 1997 18:31:05 -0700
+From: John Polstra <jdp@polstra.com>
+
+> >     suplib
+> 
+> Changed fnmatch.h to subvert the #ifndef _POSIX_SOURCE, since
+> FNM_LEADING_DIR and the others are not apparently defined on my RedHat
+> Linux/v4.2 system.
+
+OK, I'll check that and try to make it more portable.
+
+> new source -> compiling ../src/FileAttr.m3
+> "../src/FileAttr.m3", line 609: LOOPHOLE: expression's size differs from
+> type's
+> "../src/FileAttr.m3", line 610: LOOPHOLE: expression's size differs from
+> type's
+
+I'll have to think about the best way to make that portable.  For
+now, edit "suplib/src/FileAttr.m3".  In each of lines 609 and 610,
+change the "-1" to "65535".  That should allow you to proceed.
+
+I'm 99% sure that all the subsequent error messages were caused by
+the failure of this file to compile.  It just might work after this
+... :-)
+
+BTW, it has been used by several people under Linux.  But
+FileAttr.m3 is a new file for this release, so it hasn't had the
+portability bugs ironed out yet.
+
+Regards,
+John
+
+
+--------------524572433268691C62FDF4
+Content-Type: message/rfc822
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+Return-Path: <Thomas.G.Lockhart@jpl.nasa.gov>
+Received: from eis-msg-012.jpl.nasa.gov ([137.78.68.42])
+          by eis-msg-002.jpl.nasa.gov (Netscape Mail Server v2.02)
+          with ESMTP id ABJ530 for <tlockhar@mail1.jpl.nasa.gov>;
+          Mon, 21 Jul 1997 18:56:46 -0700
+Return-Path: <tgl@mythos>
+Received: from mythos.jpl.nasa.gov by eis-msg-012.jpl.nasa.gov; Mon, 21 Jul 1997 18:56:47 -0700
+Received: by mythos.jpl.nasa.gov (5.65v3.2/1.1.10.5/11Jan97-0348AM)
+	id AA27403; Tue, 22 Jul 1997 01:57:02 GMT
+Received: from pyros.jpl.nasa.gov by mythos.jpl.nasa.gov (5.65v3.2/1.1.10.5/11Jan97-0348AM)
+	id AA27419; Tue, 22 Jul 1997 01:57:01 GMT
+Received: from eis-msg-012.jpl.nasa.gov by pyros.jpl.nasa.gov (5.65v3.2/1.1.8.2/15Aug95-1038PM)
+	id AA22933; Tue, 22 Jul 1997 01:57:00 GMT
+Received: from austin.polstra.com by eis-msg-012.jpl.nasa.gov with ESMTP; Mon, 21 Jul 1997 18:56:43 -0700
+Received: from austin.polstra.com (jdp@localhost)
+	by austin.polstra.com (8.8.6/8.8.5) with ESMTP id SAA03432
+	for <Thomas.Lockhart@jpl.nasa.gov>; Mon, 21 Jul 1997 18:56:57 -0700 (PDT)
+Message-Id: <199707220156.SAA03432@austin.polstra.com>
+To: "Thomas G. Lockhart" <Thomas.G.Lockhart@jpl.nasa.gov>
+Subject: Re: [HACKERS] Re: CVSup is in Modula-3 
+In-Reply-To: Your message of "Tue, 22 Jul 1997 01:16:41 -0000."
+             <33D409F9.5FEF02C7@jpl.nasa.gov> 
+References: <199705210339.UAA13067@austin.polstra.com> <33D38ED5.132C8923@jpl.nasa.gov> <199707211844.LAA00444@austin.polstra.com> 
+	<33D409F9.5FEF02C7@jpl.nasa.gov> 
+Date: Mon, 21 Jul 1997 18:56:57 -0700
+From: John Polstra <jdp@polstra.com>
+
+Erk.  I just realized during dinner that the fix I sent you for
+FileAttr.m3 probably won't work either.  You'll probably get exactly
+the same error messages as before.
+
+Instead of what I told you before, just change those two lines to
+this:
+
+        owner := 65535;
+        group := 65535;
+
+I hope I caught you before you wasted too much time on it.
+
+John
+
+
+--------------524572433268691C62FDF4
+Content-Type: message/rfc822
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+Return-Path: <Thomas.G.Lockhart@jpl.nasa.gov>
+Received: from eis-msg-012.jpl.nasa.gov ([137.78.68.42])
+          by eis-msg-002.jpl.nasa.gov (Netscape Mail Server v2.02)
+          with ESMTP id ADT23584 for <tlockhar@mail1.jpl.nasa.gov>;
+          Mon, 21 Jul 1997 22:23:30 -0700
+Return-Path: <tgl@mythos>
+Received: from mythos.jpl.nasa.gov by eis-msg-012.jpl.nasa.gov; Mon, 21 Jul 1997 22:23:30 -0700
+Received: by mythos.jpl.nasa.gov (5.65v3.2/1.1.10.5/11Jan97-0348AM)
+	id AA27710; Tue, 22 Jul 1997 05:23:46 GMT
+Received: from pyros.jpl.nasa.gov by mythos.jpl.nasa.gov (5.65v3.2/1.1.10.5/11Jan97-0348AM)
+	id AA27627; Tue, 22 Jul 1997 05:23:45 GMT
+Received: from eis-msg-012.jpl.nasa.gov by pyros.jpl.nasa.gov (5.65v3.2/1.1.8.2/15Aug95-1038PM)
+	id AA16826; Tue, 22 Jul 1997 05:23:44 GMT
+Received: from austin.polstra.com by eis-msg-012.jpl.nasa.gov with ESMTP; Mon, 21 Jul 1997 22:22:24 -0700
+Received: from austin.polstra.com (jdp@localhost)
+	by austin.polstra.com (8.8.6/8.8.5) with ESMTP id WAA04594
+	for <Thomas.Lockhart@jpl.nasa.gov>; Mon, 21 Jul 1997 22:22:40 -0700 (PDT)
+Message-Id: <199707220522.WAA04594@austin.polstra.com>
+To: "Thomas G. Lockhart" <Thomas.G.Lockhart@jpl.nasa.gov>
+Subject: Re: [HACKERS] Re: CVSup is in Modula-3 
+In-Reply-To: Your message of "Tue, 22 Jul 1997 04:55:24 -0000."
+             <33D43D3C.65F75F5@jpl.nasa.gov> 
+References: <199705210339.UAA13067@austin.polstra.com> <33D38ED5.132C8923@jpl.nasa.gov> <199707211844.LAA00444@austin.polstra.com> <33D409F9.5FEF02C7@jpl.nasa.gov> <199707220156.SAA03432@austin.polstra.com> 
+	<33D43D3C.65F75F5@jpl.nasa.gov> 
+Date: Mon, 21 Jul 1997 22:22:40 -0700
+From: John Polstra <jdp@polstra.com>
+
+> It became clear that I had a problem with my m3 installation; some
+> X11 libraries were not being found correctly.
+
+By the way, you can build the client without the GUI by doing this
+in the "client" subdirectory:
+
+    m3build -DNOGUI
+
+If you build it that way, then it doesn't need the X11 libraries and
+it's quite a bit smaller.  The GUI is fun to watch, but it's not
+very useful.  I originally implemented it because it made debugging
+the multi-threaded client program much easier.
+
+> Anyway, with the reinstall and the two-line patch above (and that
+> one include-file _POSIX_SOURCE workaround from the previous try),
+> things built cleanly.
+
+Good!
+
+> Now I just need a server somewhere to test.
+
+If you want to try it out, there are public servers for the FreeBSD
+source repository at cvsup.freebsd.org and cvsup2.freebsd.org.
+Here's a suggested supfile:
+
+*default host=cvsup.freebsd.org compress
+*default release=cvs
+*default base=/home/jdp/cvsup-test	# FIX THIS
+*default delete use-rel-suffix
+# *default tag=.
+src-bin
+
+This will fetch you the source repository for the programs that get
+installed into "/bin".  I chose it because it's one of the smaller
+pieces of the system.  Make an empty directory someplace for
+testing, and change the "FIX THIS" line to specify that directory
+after the "base=".
+
+If you are on a T1 or better, you should probably delete the
+"compress" keyword in the first line.
+
+As shown, it will get the repository (RCS) files.  If you uncomment
+the line containing "tag=." then it will instead check out the
+latest version of each file.  There's a bunch more information about
+what you can do at <http://www.freebsd.org/handbook/cvsup.html>.
+
+There is one other thing I want to send you, but not tonight.  I
+discovered the hard way that you need a malloc package that is
+thread-safe with respect to the Modula-3 threads package.  The
+Modula-3 runtime takes care to do the proper mutual exclusion around
+all calls it makes to malloc.  But if you call certain functions in
+the native C library which in turn call malloc, then the mutual
+exclusion gets bypassed.  This can lead to rare but baffling core
+dumps.
+
+For FreeBSD, I solved this by adding a thread-safe malloc package
+into the Modula-3 runtime.  The package is quite portable, and I'm
+sure it will work well for Linux with very few changes (probably
+none at all).  I want to send it to you along with instructions
+for making it a part of the "libm3core" library.  It's very simple,
+but I've run out of steam for tonight. :-)  Once you have this
+malloc in place, the CVSup system should be rock solid.  We have
+servers that have been up for weeks and have served many thousands
+of clients without any observed problems.
+
+> We hope to have the Postgres tree using CVSup within a month or
+> so, and hope to retire sup in September...
+
+Great!  I'll do my best to help make sure you don't regret it.
+
+John
+
+
+
+
+
+From - Tue Dec  1 14:09:25 1998
+Received: from eis-msg-012.jpl.nasa.gov (eis-msg-012.jpl.nasa.gov [137.78.68.42]) by alumnae.caltech.edu (8.8.3/8.7.3) with ESMTP id SAA17924 for <lockhart@alumni.caltech.edu>; Sat, 9 Aug 1997 18:34:20 -0700 (PDT)
+Received: from mythos.jpl.nasa.gov by eis-msg-012.jpl.nasa.gov; Sat, 9 Aug 1997 18:33:19 -0700
+Received: by mythos.jpl.nasa.gov (5.65v3.2/1.1.10.5/11Jan97-0348AM)
+	id AA29836; Sun, 10 Aug 1997 01:34:22 GMT
+Received: from hub.org by mythos.jpl.nasa.gov (5.65v3.2/1.1.10.5/11Jan97-0348AM)
+	id AA28782; Sun, 10 Aug 1997 01:34:21 GMT
+Received: from hub.org (hub.org [207.107.138.200]) by hub.org (8.8.5/8.7.5) with ESMTP id VAA13030; Sat, 9 Aug 1997 21:27:21 -0400 (EDT)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Sat, 09 Aug 1997 21:23:11 -0400 (EDT)
+Received: (from majordom@localhost) by hub.org (8.8.5/8.7.5) id VAA12661 for pgsql-hackers-outgoing; Sat, 9 Aug 1997 21:23:04 -0400 (EDT)
+Received: from thelab.hub.org (root@ppp-164.halifax-01.ican.net [206.231.248.164]) by hub.org (8.8.5/8.7.5) with ESMTP id VAA12657 for <pgsql-hackers@postgresql.org>; Sat, 9 Aug 1997 21:22:54 -0400 (EDT)
+Received: from thelab.hub.org (scrappy@localhost [127.0.0.1]) by thelab.hub.org (8.8.6/8.8.2) with SMTP id WAA05735 for <pgsql-hackers@postgresql.org>; Sat, 9 Aug 1997 22:22:27 -0300 (ADT)
+Date: Sat, 9 Aug 1997 22:22:27 -0300 (ADT)
+From: The Hermit Hacker <scrappy@hub.org>
+To: pgsql-hackers@postgresql.org
+Subject: [HACKERS] CVSup ready for prime time...
+Message-Id: <Pine.NEB.3.96.970809221034.4468L-100000@thelab.hub.org>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Sender: owner-hackers@hub.org
+Precedence: bulk
+X-Mozilla-Status: 0001
+Content-Length: 1173
+
+
+Wow...after several hours of playing with this, I believe I've finally
+got the last kink worked out (thanks to John)...
+
+The following is the CVSup config file that I'm using to grab the current
+distribution...if anyone can find anything wrong with it, please let me
+know:
+
+===================
+# This file represents the standard CVSup distribution file
+# for the PostgreSQL ORDBMS project
+#
+# Defaults that apply to all the collections
+*default host=postgresql.org
+*default compress
+*default release=cvs
+*default delete use-rel-suffix
+*default tag=.
+
+# base directory points to where CVSup will store its 'bookmarks' file(s)
+*default base=/usr/local/pgsql
+
+# prefix directory points to where CVSup will store the actual distribution(s)
+*default prefix=/usr/local/pgsql
+
+# complete distribution, including all below
+pgsql
+
+# individual distributions vs 'the whole thing'
+# pgsql-doc  
+# pgsql-perl5
+# pgsql-src
+===================
+
+This file is also available at:
+
+	ftp.postgresql.org/pub/CVSup/README.cvsup
+
+Marc G. Fournier                                
+Systems Administrator @ hub.org 
+primary: scrappy@hub.org           secondary: scrappy@{freebsd|postgresql}.org 
+
+
+
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->
