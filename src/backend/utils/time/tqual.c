@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.68 2003/09/22 00:47:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.69 2003/09/25 18:58:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,8 +38,6 @@ Snapshot	SerializableSnapshot = NULL;
 /* These are updated by GetSnapshotData: */
 TransactionId RecentXmin = InvalidTransactionId;
 TransactionId RecentGlobalXmin = InvalidTransactionId;
-
-bool		ReferentialIntegritySnapshotOverride = false;
 
 
 /*
@@ -665,10 +663,6 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 bool
 HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 {
-	/* XXX this is horribly ugly: */
-	if (ReferentialIntegritySnapshotOverride)
-		return HeapTupleSatisfiesNow(tuple);
-
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
 	{
 		if (tuple->t_infomask & HEAP_XMIN_INVALID)
@@ -978,9 +972,6 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 void
 SetQuerySnapshot(void)
 {
-	/* Initialize snapshot overriding to false */
-	ReferentialIntegritySnapshotOverride = false;
-
 	/* 1st call in xaction? */
 	if (SerializableSnapshot == NULL)
 	{

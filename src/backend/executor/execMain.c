@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.218 2003/09/25 06:57:59 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.219 2003/09/25 18:58:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,6 +104,9 @@ static void EvalPlanQualStop(evalPlanQual *epq);
  * field of the QueryDesc is filled in to describe the tuples that will be
  * returned, and the internal fields (estate and planstate) are set up.
  *
+ * If useSnapshotNow is true, run the query with SnapshotNow time qual rules
+ * instead of the normal use of QuerySnapshot.
+ *
  * If explainOnly is true, we are not actually intending to run the plan,
  * only to set up for EXPLAIN; so skip unwanted side-effects.
  *
@@ -112,7 +115,7 @@ static void EvalPlanQualStop(evalPlanQual *epq);
  * ----------------------------------------------------------------
  */
 void
-ExecutorStart(QueryDesc *queryDesc, bool explainOnly)
+ExecutorStart(QueryDesc *queryDesc, bool useSnapshotNow, bool explainOnly)
 {
 	EState	   *estate;
 	MemoryContext oldcontext;
@@ -154,7 +157,16 @@ ExecutorStart(QueryDesc *queryDesc, bool explainOnly)
 	 * the life of this query, even if it outlives the current command and
 	 * current snapshot.
 	 */
-	estate->es_snapshot = CopyQuerySnapshot();
+	if (useSnapshotNow)
+	{
+		estate->es_snapshot = SnapshotNow;
+		estate->es_snapshot_cid = GetCurrentCommandId();
+	}
+	else
+	{
+		estate->es_snapshot = CopyQuerySnapshot();
+		estate->es_snapshot_cid = estate->es_snapshot->curcid;
+	}
 
 	/*
 	 * Initialize the plan state tree
@@ -1106,7 +1118,7 @@ lnext:	;
 
 					tuple.t_self = *((ItemPointer) DatumGetPointer(datum));
 					test = heap_mark4update(erm->relation, &tuple, &buffer,
-											estate->es_snapshot->curcid);
+											estate->es_snapshot_cid);
 					ReleaseBuffer(buffer);
 					switch (test)
 					{
@@ -1266,7 +1278,7 @@ ExecSelect(TupleTableSlot *slot,
 	if (estate->es_into_relation_descriptor != NULL)
 	{
 		heap_insert(estate->es_into_relation_descriptor, tuple,
-					estate->es_snapshot->curcid);
+					estate->es_snapshot_cid);
 		IncrAppended();
 	}
 
@@ -1342,7 +1354,7 @@ ExecInsert(TupleTableSlot *slot,
 	 * insert the tuple
 	 */
 	newId = heap_insert(resultRelationDesc, tuple,
-						estate->es_snapshot->curcid);
+						estate->es_snapshot_cid);
 
 	IncrAppended();
 	(estate->es_processed)++;
@@ -1394,7 +1406,7 @@ ExecDelete(TupleTableSlot *slot,
 		bool		dodelete;
 
 		dodelete = ExecBRDeleteTriggers(estate, resultRelInfo, tupleid,
-										estate->es_snapshot->curcid);
+										estate->es_snapshot_cid);
 
 		if (!dodelete)			/* "do nothing" */
 			return;
@@ -1406,7 +1418,7 @@ ExecDelete(TupleTableSlot *slot,
 ldelete:;
 	result = heap_delete(resultRelationDesc, tupleid,
 						 &ctid,
-						 estate->es_snapshot->curcid,
+						 estate->es_snapshot_cid,
 						 true /* wait for commit */);
 	switch (result)
 	{
@@ -1505,7 +1517,7 @@ ExecUpdate(TupleTableSlot *slot,
 
 		newtuple = ExecBRUpdateTriggers(estate, resultRelInfo,
 										tupleid, tuple,
-										estate->es_snapshot->curcid);
+										estate->es_snapshot_cid);
 
 		if (newtuple == NULL)	/* "do nothing" */
 			return;
@@ -1541,7 +1553,7 @@ lreplace:;
 	 */
 	result = heap_update(resultRelationDesc, tupleid, tuple,
 						 &ctid,
-						 estate->es_snapshot->curcid,
+						 estate->es_snapshot_cid,
 						 true /* wait for commit */);
 	switch (result)
 	{
@@ -2027,6 +2039,7 @@ EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
 	 */
 	epqstate->es_direction = ForwardScanDirection;
 	epqstate->es_snapshot = estate->es_snapshot;
+	epqstate->es_snapshot_cid = estate->es_snapshot_cid;
 	epqstate->es_range_table = estate->es_range_table;
 	epqstate->es_result_relations = estate->es_result_relations;
 	epqstate->es_num_result_relations = estate->es_num_result_relations;

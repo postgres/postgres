@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.105 2003/08/22 20:26:43 tgl Exp $
+ * $Id: execnodes.h,v 1.106 2003/09/25 18:58:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -286,6 +286,7 @@ typedef struct EState
 	/* Basic state for all query types: */
 	ScanDirection es_direction; /* current scan direction */
 	Snapshot	es_snapshot;	/* time qual to use */
+	CommandId	es_snapshot_cid;	/* CommandId component of time qual */
 	List	   *es_range_table; /* List of RangeTableEntrys */
 
 	/* Info about target table for insert/update/delete queries: */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.72 2003/08/12 18:23:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.73 2003/09/25 18:58:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,7 +131,7 @@ ProcessQuery(Query *parsetree,
 	/*
 	 * Call ExecStart to prepare the plan for execution
 	 */
-	ExecutorStart(queryDesc, false);
+	ExecutorStart(queryDesc, false, false);
 
 	/*
 	 * Run the plan to completion.
@@ -269,7 +269,7 @@ PortalStart(Portal portal, ParamListInfo params)
 			/*
 			 * Call ExecStart to prepare the plan for execution
 			 */
-			ExecutorStart(queryDesc, false);
+			ExecutorStart(queryDesc, false, false);
 
 			/*
 			 * This tells PortalCleanup to shut down the executor

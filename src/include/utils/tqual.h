@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.46 2003/08/04 02:40:15 momjian Exp $
+ * $Id: tqual.h,v 1.47 2003/09/25 18:58:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,14 +44,6 @@ extern DLLIMPORT Snapshot SerializableSnapshot;
 extern TransactionId RecentXmin;
 extern TransactionId RecentGlobalXmin;
 
-extern bool ReferentialIntegritySnapshotOverride;
-
-#define IsSnapshotNow(snapshot)		((Snapshot) (snapshot) == SnapshotNow)
-#define IsSnapshotSelf(snapshot)	((Snapshot) (snapshot) == SnapshotSelf)
-#define IsSnapshotAny(snapshot)		((Snapshot) (snapshot) == SnapshotAny)
-#define IsSnapshotToast(snapshot)	((Snapshot) (snapshot) == SnapshotToast)
-#define IsSnapshotDirty(snapshot)	((Snapshot) (snapshot) == SnapshotDirty)
-
 
 /*
  * HeapTupleSatisfiesVisibility
@@ -62,19 +54,19 @@ extern bool ReferentialIntegritySnapshotOverride;
  *		Beware of multiple evaluations of snapshot argument.
  */
 #define HeapTupleSatisfiesVisibility(tuple, snapshot) \
-(IsSnapshotNow(snapshot) ? \
+((snapshot) == SnapshotNow ? \
 	HeapTupleSatisfiesNow((tuple)->t_data) \
 : \
-	(IsSnapshotSelf(snapshot) ? \
+	((snapshot) == SnapshotSelf ? \
 		HeapTupleSatisfiesItself((tuple)->t_data) \
 	: \
-		(IsSnapshotAny(snapshot) ? \
+		((snapshot) == SnapshotAny ? \
 			true \
 		: \
-			(IsSnapshotToast(snapshot) ? \
+			((snapshot) == SnapshotToast ? \
 				HeapTupleSatisfiesToast((tuple)->t_data) \
 			: \
-				(IsSnapshotDirty(snapshot) ? \
+				((snapshot) == SnapshotDirty ? \
 					HeapTupleSatisfiesDirty((tuple)->t_data) \
 				: \
 					HeapTupleSatisfiesSnapshot((tuple)->t_data, snapshot) \

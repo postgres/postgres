@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.74 2003/09/25 06:57:59 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.75 2003/09/25 18:58:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -291,7 +291,7 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 
 	/* Utility commands don't need Executor. */
 	if (es->qd->operation != CMD_UTILITY)
-		ExecutorStart(es->qd, false);
+		ExecutorStart(es->qd, false, false);
 
 	es->status = F_EXEC_RUN;
 }

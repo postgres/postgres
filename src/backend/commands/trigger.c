@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.157 2003/09/25 06:57:58 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.158 2003/09/25 18:58:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1861,12 +1861,6 @@ DeferredTriggerExecute(DeferredTriggerEvent event, int itemno,
 								   per_tuple_context);
 	if (rettuple != NULL && rettuple != &oldtuple && rettuple != &newtuple)
 		heap_freetuple(rettuple);
-
-	/*
-	 * Might have been a referential integrity constraint trigger. Reset
-	 * the snapshot overriding flag.
-	 */
-	ReferentialIntegritySnapshotOverride = false;
 
 	/*
 	 * Release buffers

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.20 2003/08/04 02:39:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.21 2003/09/25 18:58:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,6 +177,7 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate)
 	sp_estate->es_tupleTable =
 		ExecCreateTupleTable(ExecCountSlotsNode(node->subplan) + 10);
 	sp_estate->es_snapshot = estate->es_snapshot;
+	sp_estate->es_snapshot_cid = estate->es_snapshot_cid;
 	sp_estate->es_instrument = estate->es_instrument;
 
 	/*

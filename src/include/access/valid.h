@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: valid.h,v 1.30 2003/08/04 02:40:10 momjian Exp $
+ * $Id: valid.h,v 1.31 2003/09/25 18:58:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,7 @@ do \
 						   relation, \
 						   buffer, \
 						   disk_page, \
-						   seeself, \
+						   snapshot, \
 						   nKeys, \
 						   key, \
 						   res) \
@@ -112,7 +112,7 @@ do \
 		{ \
 			uint16	_infomask = (tuple)->t_data->t_infomask; \
 			\
-			(res) = HeapTupleSatisfiesVisibility((tuple), (seeself)); \
+			(res) = HeapTupleSatisfiesVisibility((tuple), (snapshot)); \
 			if ((tuple)->t_data->t_infomask != _infomask) \
 				SetBufferCommitInfoNeedsSave(buffer); \
 		} \

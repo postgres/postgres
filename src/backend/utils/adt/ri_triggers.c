@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.57 2003/09/25 06:58:04 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.58 2003/09/25 18:58:35 tgl Exp $
  *
  * ----------
  */
@@ -186,8 +186,6 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	void	   *qplan;
 	int			i;
 	int			match_type;
-
-	ReferentialIntegritySnapshotOverride = true;
 
 	/*
 	 * Check that this is a valid trigger call on the right time and
@@ -627,8 +625,6 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 	int			i;
 	int			match_type;
 
-	ReferentialIntegritySnapshotOverride = true;
-
 	/*
 	 * Check that this is a valid trigger call on the right time and
 	 * event.
@@ -806,8 +802,6 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 	void	   *qplan;
 	int			i;
 	int			match_type;
-
-	ReferentialIntegritySnapshotOverride = true;
 
 	/*
 	 * Check that this is a valid trigger call on the right time and
@@ -995,8 +989,6 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 	void	   *qplan;
 	int			i;
 
-	ReferentialIntegritySnapshotOverride = true;
-
 	/*
 	 * Check that this is a valid trigger call on the right time and
 	 * event.
@@ -1158,8 +1150,6 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 	void	   *qplan;
 	int			i;
 	int			j;
-
-	ReferentialIntegritySnapshotOverride = true;
 
 	/*
 	 * Check that this is a valid trigger call on the right time and
@@ -1349,8 +1339,6 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 	void	   *qplan;
 	int			i;
 
-	ReferentialIntegritySnapshotOverride = true;
-
 	/*
 	 * Check that this is a valid trigger call on the right time and
 	 * event.
@@ -1519,8 +1507,6 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 	RI_QueryKey qkey;
 	void	   *qplan;
 	int			i;
-
-	ReferentialIntegritySnapshotOverride = true;
 
 	/*
 	 * Check that this is a valid trigger call on the right time and
@@ -1694,8 +1680,6 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 	void	   *qplan;
 	int			i;
 
-	ReferentialIntegritySnapshotOverride = true;
-
 	/*
 	 * Check that this is a valid trigger call on the right time and
 	 * event.
@@ -1867,8 +1851,6 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 	int			i;
 	int			match_type;
 	bool		use_cached_query;
-
-	ReferentialIntegritySnapshotOverride = true;
 
 	/*
 	 * Check that this is a valid trigger call on the right time and
@@ -2083,8 +2065,6 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 	RI_QueryKey qkey;
 	void	   *qplan;
 
-	ReferentialIntegritySnapshotOverride = true;
-
 	/*
 	 * Check that this is a valid trigger call on the right time and
 	 * event.
@@ -2295,8 +2275,6 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 	RI_QueryKey qkey;
 	void	   *qplan;
 	int			match_type;
-
-	ReferentialIntegritySnapshotOverride = true;
 
 	/*
 	 * Check that this is a valid trigger call on the right time and
@@ -2936,15 +2914,19 @@ ri_PerformCheck(RI_QueryKey *qkey, void *qplan,
 	 */
 	limit = (expect_OK == SPI_OK_SELECT) ? 1 : 0;
 
-	/* Run the plan */
-	spi_result = SPI_execp(qplan, vals, nulls, limit);
+	/*
+	 * Run the plan, using SnapshotNow time qual rules so that we can see
+	 * all committed tuples, even those committed after our own transaction
+	 * or query started.
+	 */
+	spi_result = SPI_execp_now(qplan, vals, nulls, limit);
 
 	/* Restore UID */
 	SetUserId(save_uid);
 
 	/* Check result */
 	if (spi_result < 0)
-		elog(ERROR, "SPI_execp failed");
+		elog(ERROR, "SPI_execp_now returned %d", spi_result);
 
 	if (expect_OK >= 0 && spi_result != expect_OK)
 		ri_ReportViolation(qkey, constrname ? constrname : "",

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.115 2003/08/11 20:46:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.116 2003/09/25 18:58:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -207,7 +207,7 @@ ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
 	gettimeofday(&starttime, NULL);
 
 	/* call ExecutorStart to prepare the plan for execution */
-	ExecutorStart(queryDesc, !stmt->analyze);
+	ExecutorStart(queryDesc, false, !stmt->analyze);
 
 	/* Execute the plan for statistics if asked for */
 	if (stmt->analyze)
