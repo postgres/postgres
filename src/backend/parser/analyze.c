@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.86 1998/09/03 14:21:06 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.87 1998/09/16 14:25:37 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -530,10 +530,25 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					constraint->def = cstring;
 					constraint->keys = NULL;
 
+					/* The parser only allows PRIMARY KEY as a constraint for the SERIAL type.
+					 * So, if there is a constraint of any kind, assume it is that.
+					 * If PRIMARY KEY is specified, then don't need to gin up a UNIQUE constraint
+					 * since that will be covered already.
+					 * - thomas 1998-09-15
+					 */
 					if (column->constraints != NIL)
+					{
 						column->constraints = lappend(column->constraints, constraint);
+					}
 					else
+					{
 						column->constraints = lcons(constraint, NIL);
+
+						constraint = makeNode(Constraint);
+						constraint->contype = CONSTR_UNIQUE;
+						constraint->name = makeTableName(stmt->relname, column->colname, "key", NULL);
+						column->constraints = lappend(column->constraints, constraint);
+					}
 
 					sequence = makeNode(CreateSeqStmt);
 					sequence->seqname = pstrdup(constraint->name);
@@ -543,12 +558,6 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					  sequence->seqname, stmt->relname, column->colname);
 
 					ilist = lcons(sequence, NIL);
-
-					constraint = makeNode(Constraint);
-					constraint->contype = CONSTR_UNIQUE;
-					constraint->name = makeTableName(stmt->relname, column->colname, "key", NULL);
-
-					column->constraints = lappend(column->constraints, constraint);
 				}
 
 				if (column->constraints != NIL)
