@@ -112,7 +112,8 @@
      <A href="#4.11">4.11</A>) What is an R-tree index?<BR>
      <A href="#4.12">4.12</A>) What is the Genetic Query Optimizer?<BR>
      <A href="#4.13">4.13</A>) How do I perform regular expression
-    searches and case-insensitive regular expression searches?<BR>
+    searches and case-insensitive regular expression searches? How do I
+    use an index for case-insensitive searches?<BR>
      <A href="#4.14">4.14</A>) In a query, how do I detect if a field
     is <SMALL>NULL</SMALL>?<BR>
      <A href="#4.15">4.15</A>) What is the difference between the
@@ -957,12 +958,28 @@ Maximum number of indexes on a table?    unlimited
     search.</P>
 
     <H4><A name="4.13">4.13</A>) How do I perform regular expression
-    searches and case-insensitive regular expression searches?</H4>
+    searches and case-insensitive regular expression searches?  How do I
+    use an index for case-insensitive searches?</H4>
 
     <P>The <I>~</I> operator does regular expression matching, and
     <I>~*</I> does case-insensitive regular expression matching. The
     case-insensitive variant of <SMALL>LIKE</SMALL> is called
     <SMALL>ILIKE</SMALL> in PostgreSQL 7.1 and later.</P>
+
+    <P>Case-insensitive equality comparisons are normally expressed as:
+    
+    <PRE>
+    SELECT *
+    FROM tab
+    WHERE lower(col) = 'abc'
+    </PRE>
+
+    This will not use an standard index. However, if you create a
+    functional index, it will be used:
+
+    <PRE>
+    CREATE INDEX tabindex on tab (lower(col));
+    </PRE>
 
     <H4><A name="4.14">4.14</A>) In a query, how do I detect if a field
     is <SMALL>NULL</SMALL>?</H4>
