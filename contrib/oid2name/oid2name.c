@@ -5,11 +5,12 @@
   b. palmer, bpalmer@crimelabs.net 1-17-2001
 
  */
+#include "postgres_fe.h"
 
-#include <stdlib.h>
 #include <unistd.h>
-#include <string.h>
+#ifdef HAVE_GETOPT_H
 #include <getopt.h>
+#endif
 
 #include "libpq-fe.h"
 
