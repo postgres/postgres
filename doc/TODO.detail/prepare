@@ -96,3 +96,78 @@ Jan
 
 
 
+From pgsql-hackers-owner+M67@postgresql.org Tue Oct 31 19:18:16 2000
+Received: from mail.postgresql.org ([216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA08916
+	for <pgman@candle.pha.pa.us>; Tue, 31 Oct 2000 19:18:15 -0500 (EST)
+Received: from mail.postgresql.org ([216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id eA10IOl60635;
+	Tue, 31 Oct 2000 19:18:24 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M67@postgresql.org)
+Received: from ara.zf.jcu.cz (ara.zf.jcu.cz [160.217.161.4])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id eA10H8l60400
+	for <pgsql-hackers@postgresql.org>; Tue, 31 Oct 2000 19:17:08 -0500 (EST)
+	(envelope-from zakkr@zf.jcu.cz)
+Received: from localhost (zakkr@localhost)
+	by ara.zf.jcu.cz (8.9.3/8.9.3/Debian 8.9.3-21) with SMTP id BAA32036;
+	Wed, 1 Nov 2000 01:16:42 +0100
+Date: Wed, 1 Nov 2000 01:16:42 +0100 (CET)
+From: Karel Zak <zakkr@zf.jcu.cz>
+To: Alfred Perlstein <bright@wintelcom.net>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Query cache import?
+In-Reply-To: <20001031151144.F22110@fw.wintelcom.net>
+Message-ID: <Pine.LNX.3.96.1001101005110.31713B-100000@ara.zf.jcu.cz>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+
+On Tue, 31 Oct 2000, Alfred Perlstein wrote:
+
+> I never saw much traffic regarding Karel's work on making stored
+> proceedures:
+>
+> http://people.freebsd.org/~alfred/karel-pgsql.txt
+> 
+> What happened with this?  It looked pretty interesting. :(
+
+ It's probably a little about me :-) ... well,
+
+  My query cache is in usable state and it's efficient for all 
+things those motivate me to work on this.
+
+ some basic features:
+
+	- share parsed plans between backends in shared memory
+	- store plans to private backend hash table
+	- use parameters for stored queries
+	- better design for SPI 
+			- memory usage for saved plans
+			- save plans "by key"
+
+ 
+ The current query cache code depend on 7.1 memory management. After
+official 7.1 release I prepare patch with query cache+SPI (if not
+hit me over head, please ..)
+
+ All what will doing next time not depend on me, *it's on code developers*.
+
+ For example Jan has interesting idea about caching all plans which
+processing backend. But it's far future and IMHO we must go by small
+steps to Oracle's funeral :-) 
+
+ If I need the query cache in the my work (typical for some web+pgsql) or 
+will some public interest I will continue on this, if not I freeze it. 
+(Exists more interesting work like http://mape.jcu.cz ... sorry of 
+advertising :-)
+
+					Karel
+
+
+
+
+
+
