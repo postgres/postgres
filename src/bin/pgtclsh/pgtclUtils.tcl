@@ -10,6 +10,7 @@ proc getDBs { {host "localhost"} {port "5432"} } {
     for {set i 0} {$i < $ntups} {incr i} {
 	lappend datnames [pg_result $res -getTuple $i]
     }
+    pg_result $res -clear
     pg_disconnect $conn
     return $datnames
 }
