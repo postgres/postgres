@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.82 2002/10/19 02:08:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.83 2002/11/08 17:37:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,9 +94,6 @@ extern double rint(double x);
 #endif   /* NeXT check */
 
 
-static void CheckFloat4Val(double val);
-static void CheckFloat8Val(double val);
-
 #ifndef M_PI
 /* from my RH5.2 gcc math.h file - thomas 2000-04-03 */
 #define M_PI 3.14159265358979323846
@@ -113,8 +110,6 @@ static void CheckFloat8Val(double val);
 #define SHRT_MIN (-32768)
 #endif
 
-#define FORMAT			'g'		/* use "g" output format as standard
-								 * format */
 /* not sure what the following should be, but better to make it over-sufficient */
 #define MAXFLOATWIDTH	64
 #define MAXDOUBLEWIDTH	128
@@ -126,6 +121,14 @@ static void CheckFloat8Val(double val);
 #define FLOAT4_MIN		 FLT_MIN
 #define FLOAT8_MAX		 DBL_MAX
 #define FLOAT8_MIN		 DBL_MIN
+
+
+/* Configurable GUC parameter */
+int		extra_float_digits = 0;	/* Added to DBL_DIG or FLT_DIG */
+
+
+static void CheckFloat4Val(double val);
+static void CheckFloat8Val(double val);
 
 
 /*
@@ -228,6 +231,7 @@ float4out(PG_FUNCTION_ARGS)
 	float4		num = PG_GETARG_FLOAT4(0);
 	char	   *ascii = (char *) palloc(MAXFLOATWIDTH + 1);
 	int			infflag;
+	int			ndig;
 
 	if (isnan(num))
 		PG_RETURN_CSTRING(strcpy(ascii, "NaN"));
@@ -237,7 +241,12 @@ float4out(PG_FUNCTION_ARGS)
 	if (infflag < 0)
 		PG_RETURN_CSTRING(strcpy(ascii, "-Infinity"));
 
-	sprintf(ascii, "%.*g", FLT_DIG, num);
+	ndig = FLT_DIG + extra_float_digits;
+	if (ndig < 1)
+		ndig = 1;
+
+	sprintf(ascii, "%.*g", ndig, num);
+
 	PG_RETURN_CSTRING(ascii);
 }
 
@@ -290,6 +299,7 @@ float8out(PG_FUNCTION_ARGS)
 	float8		num = PG_GETARG_FLOAT8(0);
 	char	   *ascii = (char *) palloc(MAXDOUBLEWIDTH + 1);
 	int			infflag;
+	int			ndig;
 
 	if (isnan(num))
 		PG_RETURN_CSTRING(strcpy(ascii, "NaN"));
@@ -299,7 +309,12 @@ float8out(PG_FUNCTION_ARGS)
 	if (infflag < 0)
 		PG_RETURN_CSTRING(strcpy(ascii, "-Infinity"));
 
-	sprintf(ascii, "%.*g", DBL_DIG, num);
+	ndig = DBL_DIG + extra_float_digits;
+	if (ndig < 1)
+		ndig = 1;
+
+	sprintf(ascii, "%.*g", ndig, num);
+
 	PG_RETURN_CSTRING(ascii);
 }
 

@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.64 2002/09/04 20:31:36 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.65 2002/11/08 17:37:52 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -261,6 +261,7 @@ psql_completion(char *text, int start, int end)
 		"max_expr_depth",
 		"commit_delay",
 		"commit_siblings",
+		"extra_float_digits",
 
 		"effective_cache_size",
 		"random_page_cost",

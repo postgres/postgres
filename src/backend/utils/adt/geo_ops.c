@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.66 2002/09/05 00:43:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.67 2002/11/08 17:37:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include <float.h>
 #include <ctype.h>
 
+#include "utils/builtins.h"
 #include "utils/geo_decls.h"
 
 #ifndef PI
@@ -79,11 +80,9 @@ static Point *line_interpt_internal(LINE *l1, LINE *l2);
 #define LDELIM_C		'<'
 #define RDELIM_C		'>'
 
-/* Maximum number of output digits printed */
-#define P_MAXDIG DBL_DIG
-#define P_MAXLEN (2*(P_MAXDIG+7)+1)
-
-static int	digits8 = P_MAXDIG;
+/* Maximum number of characters printed by pair_encode() */
+/* ...+2+7 : 2 accounts for extra_float_digits max value */
+#define P_MAXLEN (2*(DBL_DIG+2+7)+1)
 
 
 /*
@@ -139,7 +138,12 @@ single_decode(char *str, float8 *x, char **s)
 static int
 single_encode(float8 x, char *str)
 {
-	sprintf(str, "%.*g", digits8, x);
+	int	ndig = DBL_DIG + extra_float_digits;
+
+	if (ndig < 1)
+		ndig = 1;
+
+	sprintf(str, "%.*g", ndig, x);
 	return TRUE;
 }	/* single_encode() */
 
@@ -190,7 +194,12 @@ pair_decode(char *str, float8 *x, float8 *y, char **s)
 static int
 pair_encode(float8 x, float8 y, char *str)
 {
-	sprintf(str, "%.*g,%.*g", digits8, x, digits8, y);
+	int	ndig = DBL_DIG + extra_float_digits;
+
+	if (ndig < 1)
+		ndig = 1;
+
+	sprintf(str, "%.*g,%.*g", ndig, x, ndig, y);
 	return TRUE;
 }
 
@@ -976,7 +985,7 @@ line_construct_pts(LINE *line, Point *pt1, Point *pt2)
 #endif
 #ifdef GEODEBUG
 		printf("line_construct_pts- line is neither vertical nor horizontal (diffs x=%.*g, y=%.*g\n",
-			   digits8, (pt2->x - pt1->x), digits8, (pt2->y - pt1->y));
+			   DBL_DIG, (pt2->x - pt1->x), DBL_DIG, (pt2->y - pt1->y));
 #endif
 	}
 }
@@ -1181,8 +1190,8 @@ line_interpt_internal(LINE *l1, LINE *l2)
 
 #ifdef GEODEBUG
 	printf("line_interpt- lines are A=%.*g, B=%.*g, C=%.*g, A=%.*g, B=%.*g, C=%.*g\n",
-		   digits8, l1->A, digits8, l1->B, digits8, l1->C, digits8, l2->A, digits8, l2->B, digits8, l2->C);
-	printf("line_interpt- lines intersect at (%.*g,%.*g)\n", digits8, x, digits8, y);
+		   DBL_DIG, l1->A, DBL_DIG, l1->B, DBL_DIG, l1->C, DBL_DIG, l2->A, DBL_DIG, l2->B, DBL_DIG, l2->C);
+	printf("line_interpt- lines intersect at (%.*g,%.*g)\n", DBL_DIG, x, DBL_DIG, y);
 #endif
 
 	return result;
@@ -2381,14 +2390,14 @@ interpt_sl(LSEG *lseg, LINE *line)
 	p = line_interpt_internal(&tmp, line);
 #ifdef GEODEBUG
 	printf("interpt_sl- segment is (%.*g %.*g) (%.*g %.*g)\n",
-		   digits8, lseg->p[0].x, digits8, lseg->p[0].y, digits8, lseg->p[1].x, digits8, lseg->p[1].y);
+		   DBL_DIG, lseg->p[0].x, DBL_DIG, lseg->p[0].y, DBL_DIG, lseg->p[1].x, DBL_DIG, lseg->p[1].y);
 	printf("interpt_sl- segment becomes line A=%.*g B=%.*g C=%.*g\n",
-		   digits8, tmp.A, digits8, tmp.B, digits8, tmp.C);
+		   DBL_DIG, tmp.A, DBL_DIG, tmp.B, DBL_DIG, tmp.C);
 #endif
 	if (PointerIsValid(p))
 	{
 #ifdef GEODEBUG
-		printf("interpt_sl- intersection point is (%.*g %.*g)\n", digits8, p->x, digits8, p->y);
+		printf("interpt_sl- intersection point is (%.*g %.*g)\n", DBL_DIG, p->x, DBL_DIG, p->y);
 #endif
 		if (on_ps_internal(p, lseg))
 		{
@@ -3940,7 +3949,7 @@ circle_out(PG_FUNCTION_ARGS)
 	char	   *result;
 	char	   *cp;
 
-	result = palloc(3 * (P_MAXLEN + 1) + 3);
+	result = palloc(2 * P_MAXLEN + 6);
 
 	cp = result;
 	*cp++ = LDELIM_C;

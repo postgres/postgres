@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.99 2002/11/01 22:52:33 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.100 2002/11/08 17:37:52 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -678,6 +678,11 @@ static struct config_int
 	{
 		{"commit_siblings", PGC_USERSET}, &CommitSiblings,
 		5, 1, 1000, NULL, NULL
+	},
+
+	{
+		{"extra_float_digits", PGC_USERSET}, &extra_float_digits,
+		0, -15, 2, NULL, NULL
 	},
 
 	{

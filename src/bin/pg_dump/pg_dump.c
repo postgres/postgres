@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.305 2002/10/22 19:15:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.306 2002/11/08 17:37:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,6 +171,7 @@ main(int argc, char **argv)
 	const char *pgport = NULL;
 	const char *username = NULL;
 	bool		oids = false;
+	PGresult   *res;
 	TableInfo  *tblinfo;
 	int			numTables;
 	bool		force_password = false;
@@ -549,22 +550,32 @@ main(int argc, char **argv)
 	/*
 	 * Start serializable transaction to dump consistent data.
 	 */
+	res = PQexec(g_conn, "BEGIN");
+	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
+		exit_horribly(g_fout, NULL, "BEGIN command failed: %s",
+					  PQerrorMessage(g_conn));
+	PQclear(res);
+
+	res = PQexec(g_conn, "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
+	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
+		exit_horribly(g_fout, NULL, "could not set transaction isolation level to serializable: %s",
+					  PQerrorMessage(g_conn));
+	PQclear(res);
+
+	/*
+	 * If supported, set extra_float_digits so that we can dump float data
+	 * exactly (given correctly implemented float I/O code, anyway)
+	 */
+	if (g_fout->remoteVersion >= 70400)
 	{
-		PGresult   *res;
-
-		res = PQexec(g_conn, "BEGIN");
+		res = PQexec(g_conn, "SET extra_float_digits TO 2");
 		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
-			exit_horribly(g_fout, NULL, "BEGIN command failed: %s",
-						  PQerrorMessage(g_conn));
-		PQclear(res);
-
-		res = PQexec(g_conn, "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
-		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
-			exit_horribly(g_fout, NULL, "could not set transaction isolation level to serializable: %s",
+			exit_horribly(g_fout, NULL, "could not set extra_float_digits: %s",
 						  PQerrorMessage(g_conn));
 		PQclear(res);
 	}
 
+	/* Find the last built-in OID, if needed */
 	if (g_fout->remoteVersion < 70300)
 	{
 		if (g_fout->remoteVersion >= 70100)
