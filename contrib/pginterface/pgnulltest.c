@@ -3,14 +3,14 @@
  *
 */
 
-/*#define TEST_NON_NULLS*/
+#define TEST_NON_NULLS
 
 #include <stdio.h>
 #include <signal.h>
 #include <time.h>
+#include <halt.h>
 #include <libpq-fe.h>
-#include "halt.h"
-#include "pginterface.h"
+#include <pginterface.h>
 
 int main(int argc, char **argv)
 {
@@ -84,16 +84,25 @@ int main(int argc, char **argv)
 
 	doquery("FETCH ALL IN c_testfetch");
 
-	if (fetch(
+	if (fetchwithnulls(
 		&aint,
+		&aint_null,
 		&afloat,
+		&afloat_null,
 		&adouble,
+		&adouble_null,
 		achar,
+		&achar_null,
 		achar16,
+		&achar16_null,
 		abpchar,
+		&abpchar_null,
 		avarchar,
+		&avarchar_null,
 		atext,
-		&aabstime) != END_OF_TUPLES)
+		&atext_null,
+		&aabstime,
+		&aabstime_null) != END_OF_TUPLES)
 			printf("int %d\nfloat %f\ndouble %f\nchar %s\nchar16 %s\n\
 bpchar %s\nvarchar %s\ntext %s\nabstime %s\n",
 			aint,
@@ -105,16 +114,6 @@ bpchar %s\nvarchar %s\ntext %s\nabstime %s\n",
 			avarchar,
 			atext,
 			ctime(&aabstime));
-	if (fetchisnull(
-		&aint_null,
-		&afloat_null,
-		&adouble_null,
-		&achar_null,
-		&achar16_null,
-		&abpchar_null,
-		&avarchar_null,
-		&atext_null,
-		&aabstime_null) != END_OF_TUPLES)
 			printf("NULL:\nint %d\nfloat %d\ndouble %d\nchar %d\nchar16 %d\n\
 bpchar %d\nvarchar %d\ntext %d\nabstime %d\n",
 			aint_null,
@@ -130,7 +129,7 @@ bpchar %d\nvarchar %d\ntext %d\nabstime %d\n",
 
 	doquery("CLOSE c_testfetch");
 	doquery("COMMIT WORK");
-	printf("--- 1 row inserted\n");
+	printf("--- %-d rows inserted so far\n",row);
 
 	row++;
 

@@ -99,15 +99,15 @@ PGresult *doquery(char *query)
 int fetch(void *param, ...)
 {
 	va_list ap;
-	int arg, num_args;
+	int arg, num_fields;
 
-	num_args = PQnfields(res);
+	num_fields = PQnfields(res);
 
 	if (tuple >= PQntuples(res))
 		return END_OF_TUPLES;
 
 	va_start(ap, param);
-	for (arg = 0; arg < num_args; arg++)
+	for (arg = 0; arg < num_fields; arg++)
 	{
 		if (param != NULL)
 		{
@@ -127,36 +127,43 @@ int fetch(void *param, ...)
 
 /*
 **
-**	fetchisnull - returns tuple number (starts at 0), or the value END_OF_TUPLES
-**				NULL pointers are skipped
+**	fetchwithnulls - returns tuple number (starts at 0),
+**											or the value END_OF_TUPLES
 **				Returns true or false into null indicator variables
+**				NULL pointers are skipped
 */
-int fetchisnull(void *param, ...)
+int fetchwithnulls(void *param, ...)
 {
 	va_list ap;
-	int arg, num_args;
+	int arg, num_fields;
 
-	if (tuple == 0)
-		halt("pginterface:fetchisnull():  You must call fetch() first.\n");
+	num_fields = PQnfields(res);
 
-	num_args = PQnfields(res);
-
-	if (tuple-1 >= PQntuples(res))
+	if (tuple >= PQntuples(res))
 		return END_OF_TUPLES;
+
 	va_start(ap, param);
-	for (arg = 0; arg < num_args; arg++)
+	for (arg = 0; arg < num_fields; arg++)
 	{
 		if (param != NULL)
 		{
-			if (PQgetisnull(res,tuple-1,arg) != 0)
-				*(int *)param = 1;
+			if (PQfsize(res, arg) == -1)
+			{
+				memcpy(param,PQgetvalue(res,tuple,arg),PQgetlength(res,tuple,arg));
+				((char *)param)[PQgetlength(res,tuple,arg)] = NUL;
+			}
 			else
-				*(int *)param = 0;
+				memcpy(param,PQgetvalue(res,tuple,arg),PQfsize(res,arg));
 		}
+		param = va_arg(ap, char *);
+		if (PQgetisnull(res,tuple,arg) != 0)
+			*(int *)param = 1;
+		else
+			*(int *)param = 0;
 		param = va_arg(ap, char *);
 	}
 	va_end(ap);
-	return tuple-1;
+	return tuple++;
 }
 
 /*
