@@ -34,4 +34,4 @@ CREATE TEMP TABLE temptest(col int);
 -- test temp table deletion
 \c regression
 SELECT * FROM temptest;
-ERROR:  Relation 'temptest' does not exist
+ERROR:  Relation "temptest" does not exist

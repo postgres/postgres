@@ -4,7 +4,7 @@
 #    Makefile for access/heap
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/heap/Makefile,v 1.11 2000/08/31 16:09:33 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/heap/Makefile,v 1.12 2001/11/02 16:30:29 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ subdir = src/backend/access/heap
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = heapam.o hio.o stats.o tuptoaster.o
+OBJS = heapam.o hio.o tuptoaster.o
 
 all: SUBSYS.o
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.96 2001/10/28 06:25:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.97 2001/11/02 16:30:29 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -291,12 +291,6 @@ InitPostgres(const char *dbname, const char *username)
 	 * reldescs are created here.
 	 */
 	RelationCacheInitialize();
-
-	/*
-	 * Initialize the access methods. Does not touch files (?) - thomas
-	 * 1997-11-01
-	 */
-	initam();
 
 	/*
 	 * Initialize all the system catalog caches.

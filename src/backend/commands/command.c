@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.148 2001/10/31 04:49:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.149 2001/11/02 16:30:29 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -55,7 +55,6 @@
 
 static void drop_default(Oid relid, int16 attnum);
 static bool needs_toast_table(Relation rel);
-static bool is_relation(char *name);
 
 
 /* --------------------------------
@@ -554,9 +553,11 @@ AlterTableAlterColumnDefault(const char *relationName,
 #endif
 
 	rel = heap_openr(relationName, AccessExclusiveLock);
+
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
 			 relationName);
+
 	myrelid = RelationGetRelid(rel);
 	heap_close(rel, NoLock);
 
@@ -721,9 +722,11 @@ AlterTableAlterColumnStatistics(const char *relationName,
 #endif
 
 	rel = heap_openr(relationName, AccessExclusiveLock);
+
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
 			 relationName);
+
 	myrelid = RelationGetRelid(rel);
 	heap_close(rel, NoLock);	/* close rel, but keep lock! */
 
@@ -1192,12 +1195,16 @@ AlterTableAddConstraint(char *relationName,
 		elog(ERROR, "ALTER TABLE: permission denied");
 #endif
 
-	/* Disallow ADD CONSTRAINT on views, indexes, sequences, etc */
-	if (!is_relation(relationName))
-		elog(ERROR, "ALTER TABLE ADD CONSTRAINT: %s is not a table",
+	/*
+	 * Grab an exclusive lock on the target table, which we will NOT
+	 * release until end of transaction.
+	 */
+	rel = heap_openr(relationName, AccessExclusiveLock);
+
+	if (rel->rd_rel->relkind != RELKIND_RELATION)
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
 			 relationName);
 
-	rel = heap_openr(relationName, AccessExclusiveLock);
 	myrelid = RelationGetRelid(rel);
 
 	if (inh)
@@ -1686,7 +1693,7 @@ AlterTableDropConstraint(const char *relationName,
 
 	/* Disallow DROP CONSTRAINT on views, indexes, sequences, etc */
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
-		elog(ERROR, "ALTER TABLE / DROP CONSTRAINT: %s is not a table",
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
 			 relationName);
 
 	/*
@@ -2053,7 +2060,6 @@ void
 LockTableCommand(LockStmt *lockstmt)
 {
 	List	   *p;
-	Relation	rel;
 
 	/*
 	 * Iterate over the list and open, lock, and close the relations one
@@ -2064,12 +2070,7 @@ LockTableCommand(LockStmt *lockstmt)
 	{
 		char	   *relname = strVal(lfirst(p));
 		int			aclresult;
-
-		rel = heap_openr(relname, NoLock);
-
-		if (rel->rd_rel->relkind != RELKIND_RELATION)
-			elog(ERROR, "LOCK TABLE: %s is not a table",
-				 relname);
+		Relation	rel;
 
 		if (lockstmt->mode == AccessShareLock)
 			aclresult = pg_aclcheck(relname, GetUserId(),
@@ -2081,21 +2082,13 @@ LockTableCommand(LockStmt *lockstmt)
 		if (aclresult != ACLCHECK_OK)
 			elog(ERROR, "LOCK TABLE: permission denied");
 
-		LockRelation(rel, lockstmt->mode);
+		rel = relation_openr(relname, lockstmt->mode);
 
-		heap_close(rel, NoLock);	/* close rel, keep lock */
+		/* Currently, we only allow plain tables to be locked */
+		if (rel->rd_rel->relkind != RELKIND_RELATION)
+			elog(ERROR, "LOCK TABLE: %s is not a table",
+				 relname);
+
+		relation_close(rel, NoLock);	/* close rel, keep lock */
 	}
-}
-
-
-static bool
-is_relation(char *name)
-{
-	Relation	rel = heap_openr(name, NoLock);
-
-	bool		retval = (rel->rd_rel->relkind == RELKIND_RELATION);
-
-	heap_close(rel, NoLock);
-
-	return retval;
 }

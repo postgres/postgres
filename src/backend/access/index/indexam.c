@@ -8,12 +8,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.54 2001/10/25 05:49:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.55 2001/11/02 16:30:29 tgl Exp $
  *
  * INTERFACE ROUTINES
- *		index_open		- open an index relation by relationId
- *		index_openr		- open a index relation by name
- *		index_close		- close a index relation
+ *		index_open		- open an index relation by relation OID
+ *		index_openr		- open an index relation by name
+ *		index_close		- close an index relation
  *		index_beginscan - start a scan of an index
  *		index_rescan	- restart a scan of an index
  *		index_endscan	- end a scan
@@ -106,15 +106,17 @@
  *				   index_ interface functions
  * ----------------------------------------------------------------
  */
+
 /* ----------------
- *		index_open - open an index relation by relationId
- *
- *		presently the relcache routines do all the work we need
- *		to open/close index relations.	However, callers of index_open
- *		expect it to succeed, so we need to check for a failure return.
+ *		index_open - open an index relation by relation OID
  *
  *		Note: we acquire no lock on the index.	An AccessShareLock is
  *		acquired by index_beginscan (and released by index_endscan).
+ *		Generally, the caller should already hold some type of lock on
+ *		the parent relation to ensure that the index doesn't disappear.
+ *
+ *		This is a convenience routine adapted for indexscan use.
+ *		Some callers may prefer to use relation_open directly.
  * ----------------
  */
 Relation
@@ -122,13 +124,11 @@ index_open(Oid relationId)
 {
 	Relation	r;
 
-	r = RelationIdGetRelation(relationId);
-
-	if (!RelationIsValid(r))
-		elog(ERROR, "Index %u does not exist", relationId);
+	r = relation_open(relationId, NoLock);
 
 	if (r->rd_rel->relkind != RELKIND_INDEX)
-		elog(ERROR, "%s is not an index relation", RelationGetRelationName(r));
+		elog(ERROR, "%s is not an index relation",
+			 RelationGetRelationName(r));
 
 	pgstat_initstats(&r->pgstat_info, r);
 
@@ -136,23 +136,21 @@ index_open(Oid relationId)
 }
 
 /* ----------------
- *		index_openr - open a index relation by name
+ *		index_openr - open an index relation by name
  *
  *		As above, but lookup by name instead of OID.
  * ----------------
  */
 Relation
-index_openr(char *relationName)
+index_openr(const char *relationName)
 {
 	Relation	r;
 
-	r = RelationNameGetRelation(relationName);
-
-	if (!RelationIsValid(r))
-		elog(ERROR, "Index '%s' does not exist", relationName);
+	r = relation_openr(relationName, NoLock);
 
 	if (r->rd_rel->relkind != RELKIND_INDEX)
-		elog(ERROR, "%s is not an index relation", RelationGetRelationName(r));
+		elog(ERROR, "%s is not an index relation",
+			 RelationGetRelationName(r));
 
 	pgstat_initstats(&r->pgstat_info, r);
 

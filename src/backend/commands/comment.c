@@ -7,7 +7,7 @@
  * Copyright (c) 1999-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.34 2001/10/25 05:49:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.35 2001/11/02 16:30:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -336,16 +336,8 @@ CommentRelation(int reltype, char *relname, char *comment)
 	 * ensures no one else drops the relation before we commit.  (If they
 	 * did, they'd fail to remove the entry we are about to make in
 	 * pg_description.)
-	 *
-	 * heap_openr will complain if it's an index, so we must do this:
 	 */
-	if (reltype != INDEX)
-		relation = heap_openr(relname, AccessShareLock);
-	else
-	{
-		relation = index_openr(relname);
-		LockRelation(relation, AccessShareLock);
-	}
+	relation = relation_openr(relname, AccessShareLock);
 
 	/* Next, verify that the relation type matches the intent */
 
@@ -374,11 +366,7 @@ CommentRelation(int reltype, char *relname, char *comment)
 	CreateComments(RelationGetRelid(relation), RelOid_pg_class, 0, comment);
 
 	/* Done, but hold lock until commit */
-
-	if (reltype != INDEX)
-		heap_close(relation, NoLock);
-	else
-		index_close(relation);
+	relation_close(relation, NoLock);
 }
 
 /*------------------------------------------------------------------

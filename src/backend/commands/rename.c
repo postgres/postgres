@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.59 2001/10/25 05:49:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.60 2001/11/02 16:30:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,19 +258,10 @@ renamerel(const char *oldrelname, const char *newrelname)
 		return;					/* all done... */
 
 	/*
-	 * Instead of using heap_openr(), do it the hard way, so that we can
-	 * rename indexes as well as regular relations.
-	 */
-	targetrelation = RelationNameGetRelation(oldrelname);
-
-	if (!RelationIsValid(targetrelation))
-		elog(ERROR, "Relation \"%s\" does not exist", oldrelname);
-
-	/*
-	 * Grab an exclusive lock on the target table, which we will NOT
+	 * Grab an exclusive lock on the target table or index, which we will NOT
 	 * release until end of transaction.
 	 */
-	LockRelation(targetrelation, AccessExclusiveLock);
+	targetrelation = relation_openr(oldrelname, AccessExclusiveLock);
 
 	reloid = RelationGetRelid(targetrelation);
 	relkind = targetrelation->rd_rel->relkind;
@@ -278,7 +269,7 @@ renamerel(const char *oldrelname, const char *newrelname)
 	/*
 	 * Close rel, but keep exclusive lock!
 	 */
-	heap_close(targetrelation, NoLock);
+	relation_close(targetrelation, NoLock);
 
 	/*
 	 * Flush the relcache entry (easier than trying to change it at

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: genam.h,v 1.29 2001/10/28 06:25:59 momjian Exp $
+ * $Id: genam.h,v 1.30 2001/11/02 16:30:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@ typedef bool (*IndexBulkDeleteCallback) (ItemPointer itemptr, void *state);
  * ----------------
  */
 extern Relation index_open(Oid relationId);
-extern Relation index_openr(char *relationName);
+extern Relation index_openr(const char *relationName);
 extern void index_close(Relation relation);
 extern InsertIndexResult index_insert(Relation relation,
 			 Datum *datum, char *nulls,

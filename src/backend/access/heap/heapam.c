@@ -8,14 +8,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.126 2001/10/25 05:49:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.127 2001/11/02 16:30:29 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
- *		heap_open		- open a heap relation by relationId
+ *		relation_open	- open any relation by relation OID
+ *		relation_openr	- open any relation by name
+ *		relation_close	- close any relation
+ *		heap_open		- open a heap relation by relation OID
  *		heap_openr		- open a heap relation by name
- *		heap_open[r]_nofail - same, but return NULL on failure instead of elog
- *		heap_close		- close a heap relation
+ *		heap_close		- (now just a macro for relation_close)
  *		heap_beginscan	- begin relation scan
  *		heap_rescan		- restart a relation scan
  *		heap_endscan	- end relation scan
@@ -440,15 +442,21 @@ fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
  */
 
 /* ----------------
- *		heap_open - open a heap relation by relationId
+ *		relation_open - open any relation by relation OID
  *
  *		If lockmode is not "NoLock", the specified kind of lock is
- *		obtained on the relation.
+ *		obtained on the relation.  (Generally, NoLock should only be
+ *		used if the caller knows it has some appropriate lock on the
+ *		relation already.)
+ *
  *		An error is raised if the relation does not exist.
+ *
+ *		NB: a "relation" is anything with a pg_class entry.  The caller is
+ *		expected to check whether the relkind is something it can handle.
  * ----------------
  */
 Relation
-heap_open(Oid relationId, LOCKMODE lockmode)
+relation_open(Oid relationId, LOCKMODE lockmode)
 {
 	Relation	r;
 
@@ -466,10 +474,6 @@ heap_open(Oid relationId, LOCKMODE lockmode)
 	if (!RelationIsValid(r))
 		elog(ERROR, "Relation %u does not exist", relationId);
 
-	/* Under no circumstances will we return an index as a relation. */
-	if (r->rd_rel->relkind == RELKIND_INDEX)
-		elog(ERROR, "%s is an index relation", RelationGetRelationName(r));
-
 	if (lockmode != NoLock)
 		LockRelation(r, lockmode);
 
@@ -477,15 +481,13 @@ heap_open(Oid relationId, LOCKMODE lockmode)
 }
 
 /* ----------------
- *		heap_openr - open a heap relation by name
+ *		relation_openr - open any relation by name
  *
- *		If lockmode is not "NoLock", the specified kind of lock is
- *		obtained on the relation.
- *		An error is raised if the relation does not exist.
+ *		As above, but lookup by name instead of OID.
  * ----------------
  */
 Relation
-heap_openr(const char *relationName, LOCKMODE lockmode)
+relation_openr(const char *relationName, LOCKMODE lockmode)
 {
 	Relation	r;
 
@@ -497,102 +499,44 @@ heap_openr(const char *relationName, LOCKMODE lockmode)
 	IncrHeapAccessStat(local_openr);
 	IncrHeapAccessStat(global_openr);
 
+	/*
+	 * Check for shared-cache-inval messages before trying to open the
+	 * relation.  This is needed to cover the case where the name identifies
+	 * a rel that has been dropped and recreated since the start of our
+	 * transaction: if we don't flush the old relcache entry then we'll
+	 * latch onto that entry and suffer an error when we do LockRelation.
+	 * Note that relation_open does not need to do this, since a relation's
+	 * OID never changes.
+	 *
+	 * We skip this if asked for NoLock, on the assumption that the caller
+	 * has already ensured some appropriate lock is held.
+	 */
+	if (lockmode != NoLock)
+		AcceptInvalidationMessages();
+
 	/* The relcache does all the real work... */
 	r = RelationNameGetRelation(relationName);
 
 	if (!RelationIsValid(r))
-		elog(ERROR, "Relation '%s' does not exist", relationName);
-
-	/* Under no circumstances will we return an index as a relation. */
-	if (r->rd_rel->relkind == RELKIND_INDEX)
-		elog(ERROR, "%s is an index relation", RelationGetRelationName(r));
+		elog(ERROR, "Relation \"%s\" does not exist", relationName);
 
 	if (lockmode != NoLock)
 		LockRelation(r, lockmode);
 
-	pgstat_initstats(&r->pgstat_info, r);
-
-	pgstat_initstats(&r->pgstat_info, r);
-
 	return r;
 }
 
 /* ----------------
- *		heap_open_nofail - open a heap relation by relationId,
- *				do not raise error on failure
- *
- *		The caller must check for a NULL return value indicating
- *		that no such relation exists.
- *		No lock is obtained on the relation, either.
- * ----------------
- */
-Relation
-heap_open_nofail(Oid relationId)
-{
-	Relation	r;
-
-	/*
-	 * increment access statistics
-	 */
-	IncrHeapAccessStat(local_open);
-	IncrHeapAccessStat(global_open);
-
-	/* The relcache does all the real work... */
-	r = RelationIdGetRelation(relationId);
-
-	/* Under no circumstances will we return an index as a relation. */
-	if (RelationIsValid(r) && r->rd_rel->relkind == RELKIND_INDEX)
-		elog(ERROR, "%s is an index relation", RelationGetRelationName(r));
-
-	return r;
-}
-
-/* ----------------
- *		heap_openr_nofail - open a heap relation by name,
- *				do not raise error on failure
- *
- *		The caller must check for a NULL return value indicating
- *		that no such relation exists.
- *		No lock is obtained on the relation, either.
- * ----------------
- */
-Relation
-heap_openr_nofail(const char *relationName)
-{
-	Relation	r;
-
-	/*
-	 * increment access statistics
-	 */
-	IncrHeapAccessStat(local_openr);
-	IncrHeapAccessStat(global_openr);
-
-	/* The relcache does all the real work... */
-	r = RelationNameGetRelation(relationName);
-
-	/* Under no circumstances will we return an index as a relation. */
-	if (RelationIsValid(r) && r->rd_rel->relkind == RELKIND_INDEX)
-		elog(ERROR, "%s is an index relation", RelationGetRelationName(r));
-
-	if (RelationIsValid(r))
-		pgstat_initstats(&r->pgstat_info, r);
-
-	if (RelationIsValid(r))
-		pgstat_initstats(&r->pgstat_info, r);
-
-	return r;
-}
-
-/* ----------------
- *		heap_close - close a heap relation
+ *		relation_close - close any relation
  *
  *		If lockmode is not "NoLock", we first release the specified lock.
- *		Note that it is often sensible to hold a lock beyond heap_close;
+ *
+ *		Note that it is often sensible to hold a lock beyond relation_close;
  *		in that case, the lock is released automatically at xact end.
  * ----------------
  */
 void
-heap_close(Relation relation, LOCKMODE lockmode)
+relation_close(Relation relation, LOCKMODE lockmode)
 {
 	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
 
@@ -607,6 +551,59 @@ heap_close(Relation relation, LOCKMODE lockmode)
 
 	/* The relcache does the real work... */
 	RelationClose(relation);
+}
+
+
+/* ----------------
+ *		heap_open - open a heap relation by relation OID
+ *
+ *		This is essentially relation_open plus check that the relation
+ *		is not an index or special relation.  (The caller should also check
+ *		that it's not a view before assuming it has storage.)
+ * ----------------
+ */
+Relation
+heap_open(Oid relationId, LOCKMODE lockmode)
+{
+	Relation	r;
+
+	r = relation_open(relationId, lockmode);
+
+	if (r->rd_rel->relkind == RELKIND_INDEX)
+		elog(ERROR, "%s is an index relation",
+			 RelationGetRelationName(r));
+	else if (r->rd_rel->relkind == RELKIND_SPECIAL)
+		elog(ERROR, "%s is a special relation",
+			 RelationGetRelationName(r));
+
+	pgstat_initstats(&r->pgstat_info, r);
+
+	return r;
+}
+
+/* ----------------
+ *		heap_openr - open a heap relation by name
+ *
+ *		As above, but lookup by name instead of OID.
+ * ----------------
+ */
+Relation
+heap_openr(const char *relationName, LOCKMODE lockmode)
+{
+	Relation	r;
+
+	r = relation_openr(relationName, lockmode);
+
+	if (r->rd_rel->relkind == RELKIND_INDEX)
+		elog(ERROR, "%s is an index relation",
+			 RelationGetRelationName(r));
+	else if (r->rd_rel->relkind == RELKIND_SPECIAL)
+		elog(ERROR, "%s is a special relation",
+			 RelationGetRelationName(r));
+
+	pgstat_initstats(&r->pgstat_info, r);
+
+	return r;
 }
 
 
@@ -2332,8 +2329,7 @@ newsame:;
 	}
 
 	/* undo */
-	if (XLByteLT(PageGetLSN(page), lsn))		/* changes are not applied
-												 * ?! */
+	if (XLByteLT(PageGetLSN(page), lsn))		/* changes not applied?! */
 		elog(STOP, "heap_update_undo: bad new tuple page LSN");
 
 	elog(STOP, "heap_update_undo: unimplemented");

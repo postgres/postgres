@@ -43,7 +43,7 @@ delete from;
 ERROR:  parser: parse error at or near ";"
 -- no such relation 
 delete from nonesuch;
-ERROR:  Relation 'nonesuch' does not exist
+ERROR:  Relation "nonesuch" does not exist
 --
 -- DESTROY
  
@@ -78,7 +78,7 @@ ERROR:  renamerel: relation "stud_emp" exists
 -- attribute renaming 
 -- no such relation 
 alter table nonesuchrel rename column nonesuchatt to newnonesuchatt;
-ERROR:  Relation 'nonesuchrel' does not exist
+ERROR:  Relation "nonesuchrel" does not exist
 -- no such attribute 
 alter table emp rename column nonesuchatt to newnonesuchatt;
 ERROR:  renameatt: attribute "nonesuchatt" does not exist

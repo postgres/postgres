@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.112 2001/10/25 05:49:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.113 2001/11/02 16:30:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,7 +131,6 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	List	   *i = NIL;
 	Node	   *first_arg = NULL;
 	char	   *refname;
-	Relation	rd;
 	int			nargs = length(fargs);
 	int			argn;
 	Func	   *funcnode;
@@ -200,13 +199,10 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			if (attisset)
 			{
 				toid = exprType(first_arg);
-				rd = heap_openr_nofail(typeidTypeName(toid));
-				if (RelationIsValid(rd))
-					heap_close(rd, NoLock);
-				else
+				argrelid = typeidTypeRelid(toid);
+				if (argrelid == InvalidOid)
 					elog(ERROR, "Type '%s' is not a relation type",
 						 typeidTypeName(toid));
-				argrelid = typeidTypeRelid(toid);
 
 				/*
 				 * A projection must match an attribute name of the rel.

@@ -7,14 +7,12 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.70 2001/10/28 06:25:59 momjian Exp $
+ * $Id: heapam.h,v 1.71 2001/11/02 16:30:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef HEAPAM_H
 #define HEAPAM_H
-
-#include <time.h>
 
 #include "access/htup.h"
 #include "access/relscan.h"
@@ -26,67 +24,11 @@
 #include "utils/tqual.h"
 
 /* ----------------------------------------------------------------
- *				heap access method statistics
+ *				leftover cruft from old statistics code
  * ----------------------------------------------------------------
  */
 
-typedef struct HeapAccessStatisticsData
-{
-	time_t		init_global_timestamp;	/* time global statistics started */
-	time_t		local_reset_timestamp;	/* last time local reset was done */
-	time_t		last_request_timestamp; /* last time stats were requested */
-
-	int			global_open;
-	int			global_openr;
-	int			global_close;
-	int			global_beginscan;
-	int			global_rescan;
-	int			global_endscan;
-	int			global_getnext;
-	int			global_fetch;
-	int			global_insert;
-	int			global_delete;
-	int			global_replace;
-	int			global_mark4update;
-	int			global_markpos;
-	int			global_restrpos;
-	int			global_BufferGetRelation;
-	int			global_RelationIdGetRelation;
-	int			global_RelationIdGetRelation_Buf;
-	int			global_RelationNameGetRelation;
-	int			global_getreldesc;
-	int			global_heapgettup;
-	int			global_RelationPutHeapTuple;
-	int			global_RelationPutLongHeapTuple;
-
-	int			local_open;
-	int			local_openr;
-	int			local_close;
-	int			local_beginscan;
-	int			local_rescan;
-	int			local_endscan;
-	int			local_getnext;
-	int			local_fetch;
-	int			local_insert;
-	int			local_delete;
-	int			local_replace;
-	int			local_mark4update;
-	int			local_markpos;
-	int			local_restrpos;
-	int			local_BufferGetRelation;
-	int			local_RelationIdGetRelation;
-	int			local_RelationIdGetRelation_Buf;
-	int			local_RelationNameGetRelation;
-	int			local_getreldesc;
-	int			local_heapgettup;
-	int			local_RelationPutHeapTuple;
-	int			local_RelationPutLongHeapTuple;
-} HeapAccessStatisticsData;
-
-typedef HeapAccessStatisticsData *HeapAccessStatistics;
-
-#define IncrHeapAccessStat(x) \
-	(heap_access_stats == NULL ? 0 : (heap_access_stats->x)++)
+#define IncrHeapAccessStat(x)	((void) 0)
 
 /* ----------------
  *		fastgetattr
@@ -180,7 +122,6 @@ extern Datum fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 
 extern Datum heap_getsysattr(HeapTuple tup, int attnum, bool *isnull);
 
-extern HeapAccessStatistics heap_access_stats;	/* in stats.c */
 
 /* ----------------
  *		function prototypes for heap access method
@@ -192,11 +133,14 @@ extern HeapAccessStatistics heap_access_stats;	/* in stats.c */
 
 /* heapam.c */
 
+extern Relation relation_open(Oid relationId, LOCKMODE lockmode);
+extern Relation relation_openr(const char *relationName, LOCKMODE lockmode);
+extern void relation_close(Relation relation, LOCKMODE lockmode);
+
 extern Relation heap_open(Oid relationId, LOCKMODE lockmode);
 extern Relation heap_openr(const char *relationName, LOCKMODE lockmode);
-extern Relation heap_open_nofail(Oid relationId);
-extern Relation heap_openr_nofail(const char *relationName);
-extern void heap_close(Relation relation, LOCKMODE lockmode);
+#define heap_close(r,l)  relation_close(r,l)
+
 extern HeapScanDesc heap_beginscan(Relation relation, int atend,
 			   Snapshot snapshot, unsigned nkeys, ScanKey key);
 extern void heap_rescan(HeapScanDesc scan, bool scanFromEnd, ScanKey key);
@@ -241,9 +185,5 @@ extern HeapTuple heap_modifytuple(HeapTuple tuple,
 		Relation relation, Datum *replValue, char *replNull, char *repl);
 extern void heap_freetuple(HeapTuple tuple);
 extern HeapTuple heap_addheader(int natts, Size structlen, void *structure);
-
-/* in common/heap/stats.c */
-extern void PrintHeapAccessStatistics(HeapAccessStatistics stats);
-extern void initam(void);
 
 #endif	 /* HEAPAM_H */
