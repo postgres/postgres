@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/mk/Attic/postgres.mk,v 1.1.1.1 1996/07/09 06:22:19 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/mk/Attic/postgres.mk,v 1.2 1996/07/27 02:04:12 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -104,7 +104,7 @@ VPATH:= $(CURDIR)/$(objdir)
 
 # clean up the objects and generated files
 clean:
-	cd $(objdir); rm -f $(CLEANFILES)
+	@if test -d $(objdir); then cd $(objdir); rm -f $(CLEANFILES) ;else true; fi;
 
 # just a matter of personal taste; make sure we do something and don't
 # get this message: "gmake[1]: Nothing to be done for 'all'."
