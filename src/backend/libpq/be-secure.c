@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.39 2003/08/04 02:39:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.40 2003/08/04 17:58:14 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -273,9 +273,13 @@ rloop:
 							(errcode_for_socket_access(),
 							 errmsg("SSL SYSCALL error: %m")));
 				else
+				{
 					ereport(COMMERROR,
 							(errcode(ERRCODE_PROTOCOL_VIOLATION),
 							 errmsg("SSL SYSCALL error: EOF detected")));
+					errno = ECONNRESET;
+					n = -1;
+				}
 				break;
 			case SSL_ERROR_SSL:
 				ereport(COMMERROR,
@@ -283,7 +287,6 @@ rloop:
 						 errmsg("SSL error: %s", SSLerrmessage())));
 				/* fall through */
 			case SSL_ERROR_ZERO_RETURN:
-				secure_close(port);
 				errno = ECONNRESET;
 				n = -1;
 				break;
@@ -291,6 +294,7 @@ rloop:
 				ereport(COMMERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("unrecognized SSL error code")));
+				n = -1;
 				break;
 		}
 	}
@@ -353,9 +357,13 @@ wloop:
 							(errcode_for_socket_access(),
 							 errmsg("SSL SYSCALL error: %m")));
 				else
+				{
 					ereport(COMMERROR,
 							(errcode(ERRCODE_PROTOCOL_VIOLATION),
 							 errmsg("SSL SYSCALL error: EOF detected")));
+					errno = ECONNRESET;
+					n = -1;
+				}
 				break;
 			case SSL_ERROR_SSL:
 				ereport(COMMERROR,
@@ -363,7 +371,6 @@ wloop:
 						 errmsg("SSL error: %s", SSLerrmessage())));
 				/* fall through */
 			case SSL_ERROR_ZERO_RETURN:
-				secure_close(port);
 				errno = ECONNRESET;
 				n = -1;
 				break;
@@ -371,6 +378,7 @@ wloop:
 				ereport(COMMERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("unrecognized SSL error code")));
+				n = -1;
 				break;
 		}
 	}
