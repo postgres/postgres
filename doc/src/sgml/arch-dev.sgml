@@ -4,7 +4,8 @@
   <note>
    <title>Author</title>
    <para>
-    This chapter originally appeared as a part of <xref linkend="SIM98" endterm="SIM98">, Stefan Simkovics'
+    This chapter originally appeared as a part of
+    <xref linkend="SIM98" endterm="SIM98">, Stefan Simkovics'
     Master's Thesis prepared at Vienna University of Technology under the direction
     of O.Univ.Prof.Dr. Georg Gottlob and Univ.Ass. Mag. Katrin Seyr.
    </para>
@@ -239,17 +240,18 @@
 
     <para>
      A detailed description of <application>yacc</application> or
-     the grammar rules given
-     in <filename>gram.y</filename> would be beyond the scope of this paper. There are
-     many books and documents dealing with <application>lex</application>
-     and <application>yacc</application>. You
-     should be familiar with <application>yacc</application> before you start to study the
-     grammar given in <filename>gram.y</filename> otherwise you won't understand what
-     happens there.
+     the grammar rules given in <filename>gram.y</filename> would be
+     beyond the scope of this paper. There are many books and
+     documents dealing with <application>lex</application> and
+     <application>yacc</application>. You should be familiar with
+     <application>yacc</application> before you start to study the
+     grammar given in <filename>gram.y</filename> otherwise you won't
+     understand what happens there.
     </para>
 
     <para>
-     For a better understanding of the data structures used in <productname>Postgres</productname>
+     For a better understanding of the data structures used in
+     <productname>Postgres</productname>
      for the processing of a query we use an example to illustrate the
      changes made to these data structures in every stage.
     </para>
@@ -271,10 +273,9 @@
       have already been defined.
 
       <programlisting>
-  select s.sname, se.pno
-  from supplier s, sells se
-  where s.sno > 2 and
-        s.sno = se.sno;
+select s.sname, se.pno
+    from supplier s, sells se
+    where s.sno > 2 and s.sno = se.sno;
       </programlisting>
      </para>
     </example>

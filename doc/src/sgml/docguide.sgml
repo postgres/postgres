@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.17 1999/06/23 06:19:36 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.18 1999/07/06 17:19:41 thomas Exp $
 Documentation Guide
 Thomas Lockhart
 
@@ -817,15 +817,15 @@ be included below.
 </thead>
 <tbody>
   <row>
-    <entry><sgmltag>Book</sgmltag></entry>
+    <entry><sgmltag>book</sgmltag></entry>
     <entry>Delimits a Book element</entry>
   </row>
   <row>
-    <entry><sgmltag>Chapter</sgmltag></entry>
+    <entry><sgmltag>chapter</sgmltag></entry>
     <entry>Delimits a Chapter element</entry>
   </row>
   <row>
-    <entry><sgmltag>Appendix</sgmltag></entry>
+    <entry><sgmltag>appendix</sgmltag></entry>
     <entry><sgmltag>Delimits a Appendix element</sgmltag></entry>
   </row>
 </tbody>
@@ -932,19 +932,20 @@ right, and I can verify the document with "nsgmls -s docguide.sgml".
 </sect2>
 </sect1>
 
-<sect1>
-<title>Building Documentation</title>
+ <sect1>
+  <title>Building Documentation</title>
 
-<para>
-GNU <application>make</application> is used to build documentation from the DocBook sources.
-There are a few environment definitions which may need to be set or modified for your installation.
-The <filename>Makefile</filename> looks for 
-<filename>doc/../src/Makefile</filename>
-and (implicitly) for
-<filename>doc/../src/Makefile.custom</filename>
-to obtain environment information. On my system, the <filename>src/Makefile.custom</filename> looks like
+  <para>
+   GNU <application>make</application> is used to build documentation
+   from the DocBook sources. There are a few environment definitions
+   which may need to be set or modified for your installation.
+   The <filename>Makefile</filename> looks for
+   <filename>doc/../src/Makefile</filename> and (implicitly) for
+   <filename>doc/../src/Makefile.custom</filename> to obtain
+   environment information. On my system, the
+   <filename>src/Makefile.custom</filename> looks like
 
-<programlisting>
+   <programlisting>
 # Makefile.custom
 # Thomas Lockhart 1998-03-01
 
@@ -956,23 +957,26 @@ YFLAGS+= -v
 
 HSTYLE= /home/tgl/SGML/db107.d/docbook/html
 PSTYLE= /home/tgl/SGML/db107.d/docbook/print
-</programlisting>
+   </programlisting>
 
-where HSTYLE and PSTYLE determine the path to <filename>docbook.dsl</filename> for <acronym>HTML</acronym>
-and hardcopy (print) stylesheets, respectively. These stylesheet file names are for Norm Walsh's
-Modular Style Sheets; if other stylesheets are used then one can define HDSL and PDSL as the full path
-and file name for the stylesheet, as is done above for HSTYLE and PSTYLE.
-On many systems, these stylesheets will be found in packages installed in 
-<filename>/usr/lib/sgml/</filename>,
-<filename>/usr/share/lib/sgml/</filename>,
-or
-<filename>/usr/local/lib/sgml/</filename>.
-</para>
+   where HSTYLE and PSTYLE determine the path to
+   <filename>docbook.dsl</filename> for <acronym>HTML</acronym>
+   and hardcopy (print) stylesheets, respectively. These stylesheet
+   file names are for Norm Walsh's
+   <productname>Modular Style Sheets</productname>; if other
+   stylesheets are used then one can define HDSL and PDSL as the full path
+   and file name for the stylesheet, as is done above for HSTYLE and PSTYLE.
+   On many systems, these stylesheets will be found in packages installed in 
+   <filename>/usr/lib/sgml/</filename>,
+   <filename>/usr/share/lib/sgml/</filename>,
+   or
+   <filename>/usr/local/lib/sgml/</filename>.
+  </para>
 
-<para>
-<acronym>HTML</acronym> documentation packages can be generated from the <acronym>SGML</acronym> source by
-typing
-<programlisting>
+  <para>
+   <acronym>HTML</acronym> documentation packages can be generated
+   from the <acronym>SGML</acronym> source by typing
+   <programlisting>
 % cd doc/src
 % make tutorial.tar.gz
 % make user.tar.gz
@@ -980,17 +984,73 @@ typing
 % make programmer.tar.gz
 % make postgres.tar.gz
 % make install
-</programlisting>
-</para>
+   </programlisting>
+  </para>
 
-<para>
-These packages can be installed from the main documentation directory
-by typing
-<programlisting>
+  <para>
+   These packages can be installed from the main documentation directory
+   by typing
+   <programlisting>
 % cd doc
 % make install
-</programlisting>
-</para></sect1>
+   </programlisting>
+  </para>
+ </sect1>
+
+ <sect1>
+  <title>Manpages</title>
+
+  <para>
+   We use the <application>docbook2man</application> utility to
+   convert <productname>DocBook</productname>
+   <sgmltag>REFENTRY</sgmltag> pages to *roff output suitable for man
+   pages. At the time of writing, the utility required patching to
+   successfully run on the <productname>Postgres</productname> markup, 
+   and we added a small amount of new functionality to allow setting
+   the man page section in the output file name.
+  </para>
+
+  <para>
+   <application>docbook2man</application> is written in perl, and
+   requires the CPAN package <literal>SGMLSpm</literal> to run. Also,
+   it requires <application>nsgmls</application> to be available,
+   which is included in the <application>jade</application>
+   distribution. After installing these packages, then simply run
+
+   <programlisting>
+$ cd doc/src
+$ make man
+   </programlisting>
+
+   which will result in a tar file being generated in the
+   <filename>doc/src</filename> directory.
+  </para>
+
+  <procedure>
+   <title>docbook2man Installation Procedure</title>
+
+   <step performance="required">
+    <para>
+     Install the <application>docbook2man</application> package,
+     available at
+     <ulink url="http://shell.ipoline.com/~elmert/comp/docbook2X/">http://shell.ipoline.com/~elmert/comp/docbook2X/</ulink>
+    </para>
+   </step>
+
+   <step performance="required">
+    <para>
+     Install the SGMLSpm perl module, available from CPAN mirrors.
+    </para>
+   </step>
+
+   <step performance="required">
+    <para>
+     Install <application>nsgmls</application> if not already
+     available from your <application>jade</application> installation.
+    </para>
+   </step>
+  </procedure>
+ </sect1>
 
  <sect1>
   <title>Hardcopy Generation for v6.5</title>
