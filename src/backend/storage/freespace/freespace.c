@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.10 2001/11/05 17:46:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.11 2002/01/24 15:31:43 tgl Exp $
  *
  *
  * NOTES:
@@ -841,64 +841,59 @@ static bool
 insert_fsm_page_entry(FSMRelation *fsmrel, BlockNumber page, Size spaceAvail,
 					  FSMChunk *chunk, int chunkRelIndex)
 {
-	FSMChunk   *newChunk;
-	int			newChunkRelIndex;
-
-	if (fsmrel->numPages >= fsmrel->numChunks * CHUNKPAGES)
+	/* Outer loop handles retry after compacting rel's page list */
+	for (;;)
 	{
-		/* No free space within chunk list, so need another chunk */
-		if ((newChunk = FreeSpaceMap->freeChunks) == NULL)
-			return false;		/* can't do it */
-		FreeSpaceMap->freeChunks = newChunk->next;
-		FreeSpaceMap->numFreeChunks--;
-		newChunk->next = NULL;
-		newChunk->numPages = 0;
-		if (fsmrel->relChunks == NULL)
-			fsmrel->relChunks = newChunk;
-		else
+		if (fsmrel->numPages >= fsmrel->numChunks * CHUNKPAGES)
 		{
-			FSMChunk   *priorChunk = fsmrel->relChunks;
+			/* No free space within chunk list, so need another chunk */
+			FSMChunk   *newChunk;
 
-			while (priorChunk->next != NULL)
-				priorChunk = priorChunk->next;
-			priorChunk->next = newChunk;
+			if ((newChunk = FreeSpaceMap->freeChunks) == NULL)
+				return false;		/* can't do it */
+			FreeSpaceMap->freeChunks = newChunk->next;
+			FreeSpaceMap->numFreeChunks--;
+			newChunk->next = NULL;
+			newChunk->numPages = 0;
+			if (fsmrel->relChunks == NULL)
+				fsmrel->relChunks = newChunk;
+			else
+			{
+				FSMChunk   *priorChunk = fsmrel->relChunks;
+
+				while (priorChunk->next != NULL)
+					priorChunk = priorChunk->next;
+				priorChunk->next = newChunk;
+			}
+			fsmrel->numChunks++;
+			if (chunk == NULL)
+			{
+				/* Original search found that new page belongs at end */
+				chunk = newChunk;
+				chunkRelIndex = 0;
+			}
 		}
-		fsmrel->numChunks++;
-		if (chunk == NULL)
+
+		/* Try to insert it the easy way, ie, just move down subsequent data */
+		if (chunk &&
+			push_fsm_page_entry(page, spaceAvail, chunk, chunkRelIndex))
 		{
-			/* Original search found that new page belongs at end */
-			chunk = newChunk;
-			chunkRelIndex = 0;
+			fsmrel->numPages++;
+			fsmrel->nextPage++;		/* don't return same page twice running */
+			return true;
 		}
-	}
 
-	/* Try to insert it the easy way, ie, just move down subsequent data */
-	if (chunk &&
-		push_fsm_page_entry(page, spaceAvail, chunk, chunkRelIndex))
-	{
-		fsmrel->numPages++;
-		fsmrel->nextPage++;		/* don't return same page twice running */
-		return true;
+		/*
+		 * There is space available, but evidently it's before the place where
+		 * the page entry needs to go.	Compact the list and try again. This
+		 * will require us to redo the search for the appropriate place.
+		 * Furthermore, compact_fsm_page_list deletes empty end chunks, so
+		 * we may need to repeat the action of grabbing a new end chunk.
+		 */
+		compact_fsm_page_list(fsmrel);
+		if (lookup_fsm_page_entry(fsmrel, page, &chunk, &chunkRelIndex))
+			elog(ERROR, "insert_fsm_page_entry: entry already exists!");
 	}
-
-	/*
-	 * There is space available, but evidently it's before the place where
-	 * the page entry needs to go.	Compact the list and try again. This
-	 * will require us to redo the search for the appropriate place.
-	 */
-	compact_fsm_page_list(fsmrel);
-	if (lookup_fsm_page_entry(fsmrel, page, &newChunk, &newChunkRelIndex))
-		elog(ERROR, "insert_fsm_page_entry: entry already exists!");
-	if (newChunk &&
-		push_fsm_page_entry(page, spaceAvail, newChunk, newChunkRelIndex))
-	{
-		fsmrel->numPages++;
-		fsmrel->nextPage++;		/* don't return same page twice running */
-		return true;
-	}
-	/* Shouldn't get here given the initial if-test for space available */
-	elog(ERROR, "insert_fsm_page_entry: failed to insert entry!");
-	return false;				/* keep compiler quiet */
 }
 
 /*
