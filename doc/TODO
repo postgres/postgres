@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jan 18 21:05:41 EST 2001
+Last updated:		Thu Jan 18 21:53:43 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -100,6 +100,7 @@ TYPES
 * Store binary-compatible type information in the system
 * -Add support for & operator (Peter E)
 * Allow LOCALE on a per-column basis, default to ASCII
+* Add SHOW command to see locale
 * Allow nulls in arrays
 * Allow arrays to be ORDER'ed
 * Support construction of array result values in expressions
