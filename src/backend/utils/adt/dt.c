@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.8 1997/03/25 08:09:32 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.9 1997/03/25 20:00:52 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,9 @@
 
 #include "postgres.h"
 #include <miscadmin.h>
+#ifdef HAVE_FLOAT_H
+# include <float.h>
+#endif
 #ifndef USE_POSIX_TIME
 #include <sys/timeb.h>
 #endif
