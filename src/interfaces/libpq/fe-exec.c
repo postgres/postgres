@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.69 1998/10/01 01:40:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.70 1998/11/18 00:47:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,10 +28,6 @@
 #include <ctype.h>
 
 
-/* the rows array in a PGresGroup  has to grow to accommodate the rows */
-/* returned.  Each time, we grow by this much: */
-#define TUPARR_GROW_BY 100
-
 /* keep this in same order as ExecStatusType in libpq-fe.h */
 const char *const pgresStatus[] = {
 	"PGRES_EMPTY_QUERY",
@@ -49,13 +45,69 @@ const char *const pgresStatus[] = {
 	((*(conn)->noticeHook) ((conn)->noticeArg, (message)))
 
 
-static void freeTuple(PGresAttValue *tuple, int numAttributes);
 static int	addTuple(PGresult *res, PGresAttValue *tup);
 static void parseInput(PGconn *conn);
 static int	getRowDescriptions(PGconn *conn);
 static int	getAnotherTuple(PGconn *conn, int binary);
 static int	getNotify(PGconn *conn);
 static int	getNotice(PGconn *conn);
+
+
+/* ----------------
+ * Space management for PGresult.
+ *
+ * Formerly, libpq did a separate malloc() for each field of each tuple
+ * returned by a query.  This was remarkably expensive --- malloc/free
+ * consumed a sizable part of the application's runtime.  And there is
+ * no real need to keep track of the fields separately, since they will
+ * all be freed together when the PGresult is released.  So now, we grab
+ * large blocks of storage from malloc and allocate space for query data
+ * within these blocks, using a trivially simple allocator.  This reduces
+ * the number of malloc/free calls dramatically, and it also avoids
+ * fragmentation of the malloc storage arena.
+ * The PGresult structure itself is still malloc'd separately.  We could
+ * combine it with the first allocation block, but that would waste space
+ * for the common case that no extra storage is actually needed (that is,
+ * the SQL command did not return tuples).
+ * We also malloc the top-level array of tuple pointers separately, because
+ * we need to be able to enlarge it via realloc, and our trivial space
+ * allocator doesn't handle that effectively.  (Too bad the FE/BE protocol
+ * doesn't tell us up front how many tuples will be returned.)
+ * All other subsidiary storage for a PGresult is kept in PGresult_data blocks
+ * of size PGRESULT_DATA_BLOCKSIZE.  The overhead at the start of each block
+ * is just a link to the next one, if any.  Free-space management info is
+ * kept in the owning PGresult.
+ * A query returning a small amount of data will thus require three malloc
+ * calls: one for the PGresult, one for the tuples pointer array, and one
+ * PGresult_data block.
+ * Only the most recently allocated PGresult_data block is a candidate to
+ * have more stuff added to it --- any extra space left over in older blocks
+ * is wasted.  We could be smarter and search the whole chain, but the point
+ * here is to be simple and fast.  Typical applications do not keep a PGresult
+ * around very long anyway, so some wasted space within one is not a problem.
+ *
+ * Tuning constants for the space allocator are:
+ * PGRESULT_DATA_BLOCKSIZE: size of a standard allocation block, in bytes
+ * PGRESULT_ALIGN_BOUNDARY: assumed alignment requirement for binary data
+ * PGRESULT_SEP_ALLOC_THRESHOLD: objects bigger than this are given separate
+ *   blocks, instead of being crammed into a regular allocation block.
+ * Requirements for correct function are:
+ * PGRESULT_ALIGN_BOUNDARY >= sizeof(pointer)
+ *		to ensure the initial pointer in a block is not overwritten.
+ * PGRESULT_ALIGN_BOUNDARY must be a multiple of the alignment requirements
+ *		of all machine data types.
+ * PGRESULT_SEP_ALLOC_THRESHOLD + PGRESULT_ALIGN_BOUNDARY <=
+ *			PGRESULT_DATA_BLOCKSIZE
+ *		pqResultAlloc assumes an object smaller than the threshold will fit
+ *		in a new block.
+ * The amount of space wasted at the end of a block could be as much as
+ * PGRESULT_SEP_ALLOC_THRESHOLD, so it doesn't pay to make that too large.
+ * ----------------
+ */
+
+#define PGRESULT_DATA_BLOCKSIZE		2048
+#define PGRESULT_ALIGN_BOUNDARY		16	 /* 8 is probably enough, really */
+#define PGRESULT_SEP_ALLOC_THRESHOLD	(PGRESULT_DATA_BLOCKSIZE / 2)
 
 
 /*
@@ -76,7 +128,7 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 
 	result = (PGresult *) malloc(sizeof(PGresult));
 
-	result->conn = conn;		/* should go away eventually */
+	result->conn = conn;		/* might be NULL */
 	result->ntups = 0;
 	result->numAttributes = 0;
 	result->attDescs = NULL;
@@ -86,6 +138,11 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 	result->cmdStatus[0] = '\0';
 	result->binary = 0;
 	result->errMsg = NULL;
+	result->null_field[0] = '\0';
+	result->curBlock = NULL;
+	result->curOffset = 0;
+	result->spaceLeft = 0;
+
 	if (conn)					/* consider copying conn's errorMessage */
 	{
 		switch (status)
@@ -106,6 +163,117 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 }
 
 /*
+ * pqResultAlloc -
+ *		Allocate subsidiary storage for a PGresult.
+ *
+ * nBytes is the amount of space needed for the object.
+ * If isBinary is true, we assume that we need to align the object on
+ * a machine allocation boundary.
+ * If isBinary is false, we assume the object is a char string and can
+ * be allocated on any byte boundary.
+ */
+void *
+pqResultAlloc(PGresult *res, int nBytes, int isBinary)
+{
+	char		   *space;
+	PGresult_data  *block;
+
+	if (! res)
+		return NULL;
+
+	if (nBytes <= 0)
+		return res->null_field;
+
+	/* If alignment is needed, round up the current position to an
+	 * alignment boundary.
+	 */
+	if (isBinary)
+	{
+		int offset = res->curOffset % PGRESULT_ALIGN_BOUNDARY;
+		if (offset)
+		{
+			res->curOffset += PGRESULT_ALIGN_BOUNDARY - offset;
+			res->spaceLeft -= PGRESULT_ALIGN_BOUNDARY - offset;
+		}
+	}
+
+	/* If there's enough space in the current block, no problem. */
+	if (nBytes <= res->spaceLeft)
+	{
+		space = res->curBlock->space + res->curOffset;
+		res->curOffset += nBytes;
+		res->spaceLeft -= nBytes;
+		return space;
+	}
+
+	/* If the requested object is very large, give it its own block; this
+	 * avoids wasting what might be most of the current block to start a new
+	 * block.  (We'd have to special-case requests bigger than the block size
+	 * anyway.)  The object is always given binary alignment in this case.
+	 */
+	if (nBytes >= PGRESULT_SEP_ALLOC_THRESHOLD)
+	{
+		block = (PGresult_data *) malloc(nBytes + PGRESULT_ALIGN_BOUNDARY);
+		if (! block)
+			return NULL;
+		space = block->space + PGRESULT_ALIGN_BOUNDARY;
+		if (res->curBlock)
+		{
+			/* Tuck special block below the active block, so that we don't
+			 * have to waste the free space in the active block.
+			 */
+			block->next = res->curBlock->next;
+			res->curBlock->next = block;
+		}
+		else
+		{
+			/* Must set up the new block as the first active block. */
+			block->next = NULL;
+			res->curBlock = block;
+			res->spaceLeft = 0;	/* be sure it's marked full */
+		}
+		return space;
+	}
+
+	/* Otherwise, start a new block. */
+	block = (PGresult_data *) malloc(PGRESULT_DATA_BLOCKSIZE);
+	if (! block)
+		return NULL;
+	block->next = res->curBlock;
+	res->curBlock = block;
+	if (isBinary)
+	{
+		/* object needs full alignment */
+		res->curOffset = PGRESULT_ALIGN_BOUNDARY;
+		res->spaceLeft = PGRESULT_DATA_BLOCKSIZE - PGRESULT_ALIGN_BOUNDARY;
+	}
+	else
+	{
+		/* we can cram it right after the overhead pointer */
+		res->curOffset = sizeof(PGresult_data);
+		res->spaceLeft = PGRESULT_DATA_BLOCKSIZE - sizeof(PGresult_data);
+	}
+
+	space = block->space + res->curOffset;
+	res->curOffset += nBytes;
+	res->spaceLeft -= nBytes;
+	return space;
+}
+
+/*
+ * pqResultStrdup -
+ *		Like strdup, but the space is subsidiary PGresult space.
+ */
+char *
+pqResultStrdup(PGresult *res, const char *str)
+{
+	char	*space = (char*) pqResultAlloc(res, strlen(str)+1, FALSE);
+	if (space)
+		strcpy(space, str);
+	return space;
+}
+
+/*
  * pqSetResultError -
  *		assign a new error message to a PGresult
  */
@@ -114,11 +282,10 @@ pqSetResultError(PGresult *res, const char *msg)
 {
 	if (!res)
 		return;
-	if (res->errMsg)
-		free(res->errMsg);
-	res->errMsg = NULL;
 	if (msg && *msg)
-		res->errMsg = strdup(msg);
+		res->errMsg = pqResultStrdup(res, msg);
+	else
+		res->errMsg = NULL;
 }
 
 /*
@@ -128,56 +295,23 @@ pqSetResultError(PGresult *res, const char *msg)
 void
 PQclear(PGresult *res)
 {
-	int			i;
+	PGresult_data  *block;
 
 	if (!res)
 		return;
 
-	/* free all the rows */
+	/* Free all the subsidiary blocks */
+	while ((block = res->curBlock) != NULL) {
+		res->curBlock = block->next;
+		free(block);
+	}
+
+	/* Free the top-level tuple pointer array */
 	if (res->tuples)
-	{
-		for (i = 0; i < res->ntups; i++)
-			freeTuple(res->tuples[i], res->numAttributes);
 		free(res->tuples);
-	}
 
-	/* free all the attributes */
-	if (res->attDescs)
-	{
-		for (i = 0; i < res->numAttributes; i++)
-		{
-			if (res->attDescs[i].name)
-				free(res->attDescs[i].name);
-		}
-		free(res->attDescs);
-	}
-
-	/* free the error text */
-	if (res->errMsg)
-		free(res->errMsg);
-
-	/* free the structure itself */
+	/* Free the PGresult structure itself */
 	free(res);
-}
-
-/*
- * Free a single tuple structure.
- */
-
-static void
-freeTuple(PGresAttValue *tuple, int numAttributes)
-{
-	int			i;
-
-	if (tuple)
-	{
-		for (i = 0; i < numAttributes; i++)
-		{
-			if (tuple[i].value)
-				free(tuple[i].value);
-		}
-		free(tuple);
-	}
 }
 
 /*
@@ -187,13 +321,8 @@ freeTuple(PGresAttValue *tuple, int numAttributes)
 void
 pqClearAsyncResult(PGconn *conn)
 {
-	/* Get rid of incomplete result and any not-yet-added tuple */
 	if (conn->result)
-	{
-		if (conn->curTuple)
-			freeTuple(conn->curTuple, conn->result->numAttributes);
 		PQclear(conn->result);
-	}
 	conn->result = NULL;
 	conn->curTuple = NULL;
 }
@@ -201,7 +330,7 @@ pqClearAsyncResult(PGconn *conn)
 
 /*
  * addTuple
- *	  add a row to the PGresult structure, growing it if necessary
+ *	  add a row pointer to the PGresult structure, growing it if necessary
  *	  Returns TRUE if OK, FALSE if not enough memory to add the row
  */
 static int
@@ -220,7 +349,7 @@ addTuple(PGresult *res, PGresAttValue *tup)
 		 * Note that the positions beyond res->ntups are garbage, not
 		 * necessarily NULL.
 		 */
-		int newSize = res->tupArrSize + TUPARR_GROW_BY;
+		int newSize = (res->tupArrSize > 0) ? res->tupArrSize * 2 : 128;
 		PGresAttValue ** newTuples = (PGresAttValue **)
 			realloc(res->tuples, newSize * sizeof(PGresAttValue *));
 		if (! newTuples)
@@ -564,7 +693,7 @@ getRowDescriptions(PGconn *conn)
 	if (nfields > 0)
 	{
 		result->attDescs = (PGresAttDesc *)
-			malloc(nfields * sizeof(PGresAttDesc));
+			pqResultAlloc(result, nfields * sizeof(PGresAttDesc), TRUE);
 		MemSet((char *) result->attDescs, 0, nfields * sizeof(PGresAttDesc));
 	}
 
@@ -574,7 +703,7 @@ getRowDescriptions(PGconn *conn)
 		char		typName[MAX_MESSAGE_LEN];
 		int			typid;
 		int			typlen;
-		int			atttypmod = -1;
+		int			atttypmod;
 
 		if (pqGets(typName, MAX_MESSAGE_LEN, conn) ||
 			pqGetInt(&typid, 4, conn) ||
@@ -594,7 +723,7 @@ getRowDescriptions(PGconn *conn)
 		 */
 		if (typlen == 0xFFFF)
 			typlen = -1;
-		result->attDescs[i].name = strdup(typName);
+		result->attDescs[i].name = pqResultStrdup(result, typName);
 		result->attDescs[i].typid = typid;
 		result->attDescs[i].typlen = typlen;
 		result->attDescs[i].atttypmod = atttypmod;
@@ -618,7 +747,8 @@ getRowDescriptions(PGconn *conn)
 static int
 getAnotherTuple(PGconn *conn, int binary)
 {
-	int			nfields = conn->result->numAttributes;
+	PGresult   *result = conn->result;
+	int			nfields = result->numAttributes;
 	PGresAttValue *tup;
 	char		bitmap[MAX_FIELDS];		/* the backend sends us a bitmap
 										 * of which attributes are null */
@@ -629,13 +759,13 @@ getAnotherTuple(PGconn *conn, int binary)
 	int			bitcnt;			/* number of bits examined in current byte */
 	int			vlen;			/* length of the current field value */
 
-	conn->result->binary = binary;
+	result->binary = binary;
 
 	/* Allocate tuple space if first time for this data message */
 	if (conn->curTuple == NULL)
 	{
 		conn->curTuple = (PGresAttValue *)
-			malloc(nfields * sizeof(PGresAttValue));
+			pqResultAlloc(result, nfields * sizeof(PGresAttValue), TRUE);
 		if (conn->curTuple == NULL)
 			goto outOfMemory;
 		MemSet((char *) conn->curTuple, 0, nfields * sizeof(PGresAttValue));
@@ -670,12 +800,7 @@ getAnotherTuple(PGconn *conn, int binary)
 		if (!(bmap & 0200))
 		{
 			/* if the field value is absent, make it a null string */
-			if (tup[i].value == NULL)
-			{
-				tup[i].value = strdup("");
-				if (tup[i].value == NULL)
-					goto outOfMemory;
-			}
+			tup[i].value = result->null_field;
 			tup[i].len = NULL_LEN;
 		}
 		else
@@ -689,7 +814,7 @@ getAnotherTuple(PGconn *conn, int binary)
 				vlen = 0;
 			if (tup[i].value == NULL)
 			{
-				tup[i].value = (char *) malloc(vlen + 1);
+				tup[i].value = (char *) pqResultAlloc(result, vlen+1, binary);
 				if (tup[i].value == NULL)
 					goto outOfMemory;
 			}
@@ -714,14 +839,8 @@ getAnotherTuple(PGconn *conn, int binary)
 	}
 
 	/* Success!  Store the completed tuple in the result */
-	if (! addTuple(conn->result, tup))
-	{
-		/* Oops, not enough memory to add the tuple to conn->result,
-		 * so must free it ourselves...
-		 */
-		freeTuple(tup, nfields);
+	if (! addTuple(result, tup))
 		goto outOfMemory;
-	}
 	/* and reset for a new message */
 	conn->curTuple = NULL;
 	return 0;
@@ -1437,10 +1556,13 @@ check_field_number(const char *routineName, PGresult *res, int field_num)
 		return FALSE;			/* no way to display error message... */
 	if (field_num < 0 || field_num >= res->numAttributes)
 	{
-		sprintf(res->conn->errorMessage,
-				"%s: ERROR! field number %d is out of range 0..%d\n",
-				routineName, field_num, res->numAttributes - 1);
-		DONOTICE(res->conn, res->conn->errorMessage);
+		if (res->conn)
+		{
+			sprintf(res->conn->errorMessage,
+					"%s: ERROR! field number %d is out of range 0..%d\n",
+					routineName, field_num, res->numAttributes - 1);
+			DONOTICE(res->conn, res->conn->errorMessage);
+		}
 		return FALSE;
 	}
 	return TRUE;
@@ -1454,18 +1576,24 @@ check_tuple_field_number(const char *routineName, PGresult *res,
 		return FALSE;			/* no way to display error message... */
 	if (tup_num < 0 || tup_num >= res->ntups)
 	{
-		sprintf(res->conn->errorMessage,
-				"%s: ERROR! tuple number %d is out of range 0..%d\n",
-				routineName, tup_num, res->ntups - 1);
-		DONOTICE(res->conn, res->conn->errorMessage);
+		if (res->conn)
+		{
+			sprintf(res->conn->errorMessage,
+					"%s: ERROR! tuple number %d is out of range 0..%d\n",
+					routineName, tup_num, res->ntups - 1);
+			DONOTICE(res->conn, res->conn->errorMessage);
+		}
 		return FALSE;
 	}
 	if (field_num < 0 || field_num >= res->numAttributes)
 	{
-		sprintf(res->conn->errorMessage,
-				"%s: ERROR! field number %d is out of range 0..%d\n",
-				routineName, field_num, res->numAttributes - 1);
-		DONOTICE(res->conn, res->conn->errorMessage);
+		if (res->conn)
+		{
+			sprintf(res->conn->errorMessage,
+					"%s: ERROR! field number %d is out of range 0..%d\n",
+					routineName, field_num, res->numAttributes - 1);
+			DONOTICE(res->conn, res->conn->errorMessage);
+		}
 		return FALSE;
 	}
 	return TRUE;
@@ -1635,10 +1763,13 @@ PQcmdTuples(PGresult *res)
 
 		if (*p == 0)
 		{
-			sprintf(res->conn->errorMessage,
-					"PQcmdTuples (%s) -- bad input from server\n",
-					res->cmdStatus);
-			DONOTICE(res->conn, res->conn->errorMessage);
+			if (res->conn)
+			{
+				sprintf(res->conn->errorMessage,
+						"PQcmdTuples (%s) -- bad input from server\n",
+						res->cmdStatus);
+				DONOTICE(res->conn, res->conn->errorMessage);
+			}
 			return "";
 		}
 		p++;
@@ -1648,9 +1779,12 @@ PQcmdTuples(PGresult *res)
 			p++;				/* INSERT: skip oid */
 		if (*p == 0)
 		{
-			sprintf(res->conn->errorMessage,
-					"PQcmdTuples (INSERT) -- there's no # of tuples\n");
-			DONOTICE(res->conn, res->conn->errorMessage);
+			if (res->conn)
+			{
+				sprintf(res->conn->errorMessage,
+						"PQcmdTuples (INSERT) -- there's no # of tuples\n");
+				DONOTICE(res->conn, res->conn->errorMessage);
+			}
 			return "";
 		}
 		p++;
@@ -1680,7 +1814,8 @@ PQgetvalue(PGresult *res, int tup_num, int field_num)
 /* PQgetlength:
 	 returns the length of a field value in bytes.	If res is binary,
 	 i.e. a result of a binary portal, then the length returned does
-	 NOT include the size field of the varlena.
+	 NOT include the size field of the varlena.  (The data returned
+	 by PQgetvalue doesn't either.)
 */
 int
 PQgetlength(PGresult *res, int tup_num, int field_num)

@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.4 1998/10/01 01:40:25 tgl Exp $
+ * $Id: libpq-int.h,v 1.5 1998/11/18 00:47:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,12 +49,29 @@
 #define ERROR_MSG_LENGTH 4096
 #define CMDSTATUS_LEN 40
 
-/* PGresult and the subsidiary types PGresAttDesc, PGresAttValue
+/*
+ * PGresult and the subsidiary types PGresAttDesc, PGresAttValue
  * represent the result of a query (or more precisely, of a single SQL
  * command --- a query string given to PQexec can contain multiple commands).
  * Note we assume that a single command can return at most one tuple group,
  * hence there is no need for multiple descriptor sets.
  */
+
+/* Subsidiary-storage management structure for PGresult.
+ * See space management routines in fe-exec.c for details.
+ * Note that space[k] refers to the k'th byte starting from the physical
+ * head of the block.
+ */
+	typedef union pgresult_data PGresult_data;
+
+	union pgresult_data
+	{
+		PGresult_data  *next;	/* link to next block, or NULL */
+		char			space[1]; /* dummy for accessing block as bytes */
+	};
+
+/* Data about a single attribute (column) of a query result */
+
 	typedef struct pgresAttDesc
 	{
 		char	   *name;		/* type name */
@@ -63,11 +80,20 @@
 		int			atttypmod;	/* type-specific modifier info */
 	} PGresAttDesc;
 
-/* use char* for Attribute values,
-   ASCII tuples are guaranteed to be null-terminated
-   For binary tuples, the first four bytes of the value is the size,
-   and the bytes afterwards are the value.	The binary value is
-   not guaranteed to be null-terminated.  In fact, it can have embedded nulls
+/* Data for a single attribute of a single tuple */
+
+/* We use char* for Attribute values.
+   The value pointer always points to a null-terminated area; we add a
+   null (zero) byte after whatever the backend sends us.  This is only
+   particularly useful for ASCII tuples ... with a binary value, the
+   value might have embedded nulls, so the application can't use C string
+   operators on it.  But we add a null anyway for consistency.
+   Note that the value itself does not contain a length word.
+
+   A NULL attribute is a special case in two ways: its len field is NULL_LEN
+   and its value field points to null_field in the owning PGresult.  All the
+   NULL attributes in a query result point to the same place (there's no need
+   to store a null string separately for each one).
  */
 
 #define NULL_LEN		(-1)	/* pg_result len for NULL value */
@@ -75,7 +101,7 @@
 	typedef struct pgresAttValue
 	{
 		int			len;		/* length in bytes of the value */
-		char	   *value;		/* actual value */
+		char	   *value;		/* actual value, plus terminating zero byte */
 	} PGresAttValue;
 
 	struct pg_result
@@ -91,15 +117,19 @@
 												 * last insert query */
 		int			binary;		/* binary tuple values if binary == 1,
 								 * otherwise ASCII */
-		/* NOTE: conn is kept here only for the temporary convenience of
-		 * applications that rely on it being here.  It will go away in a
-		 * future release, because relying on it is a bad idea --- what if
-		 * the PGresult has outlived the PGconn?  About the only thing it was
-		 * really good for was fetching the errorMessage, and we stash that
-		 * here now anyway.
-		 */
-		PGconn		*conn;		/* connection we did the query on */
+		PGconn		*conn;		/* connection we did the query on, if any */
 		char		*errMsg;	/* error message, or NULL if no error */
+
+		/* All NULL attributes in the query result point to this null string */
+		char		null_field[1];
+
+		/* Space management information.  Note that attDescs and errMsg,
+		 * if not null, point into allocated blocks.  But tuples points
+		 * to a separately malloc'd block, so that we can realloc it.
+		 */
+		PGresult_data *curBlock; /* most recently allocated block */
+		int			curOffset;	/* start offset of free space in block */
+		int			spaceLeft;	/* number of free bytes remaining in block */
 	};
 
 /* PGAsyncStatusType defines the state of the query-execution state machine */
@@ -202,6 +232,8 @@ extern int	pqPacketSend(PGconn *conn, const char *buf, size_t len);
 /* === in fe-exec.c === */
 
 extern void pqSetResultError(PGresult *res, const char *msg);
+extern void * pqResultAlloc(PGresult *res, int nBytes, int isBinary);
+extern char * pqResultStrdup(PGresult *res, const char *str);
 extern void pqClearAsyncResult(PGconn *conn);
 
 /* === in fe-misc.c === */
