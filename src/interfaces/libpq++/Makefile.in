@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.16 1999/07/08 03:30:16 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.17 1999/09/07 18:10:49 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -46,6 +46,15 @@ ifeq ($(PORTNAME), win)
 SHLIB_LINK+= --driver-name g++ -L../libpq -lpq
 else
 SHLIB_LINK= -L../libpq -lpq
+endif
+
+# For CC on IRIX, must use CC as linker/archiver of C++ libraries
+ifeq ($(PORTNAME), irix5)
+  ifeq ($(CXX), CC)
+    AR = CC
+    AROPT = -ar -o
+    LD = CC
+  endif
 endif
 
 # Shared library stuff, also default 'all' target
