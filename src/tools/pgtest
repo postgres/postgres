@@ -21,7 +21,7 @@ TMP="/tmp/$$"
 cat $TMP/0 |
 # The following grep's have to be adjusted for your setup because 
 # certain warnings are acceptable.
-grep warning | 
+grep -i warning | 
 grep -v setproctitle | 
 grep -v find_rule | 
 grep -v yy_flex_realloc |
