@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.89 1998/10/23 01:02:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.90 1998/10/23 16:49:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1792,8 +1792,16 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 			/* overwrite the existing statistics in the tuple */
 			if (VacAttrStatsEqValid(stats))
 			{
+				Buffer		abuffer;
 
+				/*
+				 * We manipulate the heap tuple in the
+				 * buffer, so we fetch it to get the
+				 * buffer number
+				 */
+				atup = heap_fetch(ad, SnapshotNow, &atup->t_ctid, &abuffer);
 				vc_setpagelock(ad, ItemPointerGetBlockNumber(&atup->t_ctid));
+				attp = (Form_pg_attribute) GETSTRUCT(atup);
 
 				if (stats->nonnull_cnt + stats->null_cnt == 0 ||
 					(stats->null_cnt <= 1 && stats->best_cnt == 1))
@@ -1822,7 +1830,14 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 				if (selratio > 1.0)
 					selratio = 1.0;
 				attp->attdisbursion = selratio;
-				WriteNoReleaseBuffer(ItemPointerGetBlockNumber(&atup->t_ctid));
+
+				/*
+				 * Invalidate the cache for the tuple
+				 * and write the buffer
+				 */
+				RelationInvalidateHeapTuple(ad, atup);
+				WriteNoReleaseBuffer(abuffer);
+				ReleaseBuffer(abuffer);
 
 				/* DO PG_STATISTIC INSERTS */
 
@@ -1875,10 +1890,15 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 		heap_close(sd);
 	}
 
+	/*
+	 * Invalidate the cached pg_class tuple and
+	 * write the buffer
+	 */
 	RelationInvalidateHeapTuple(rd, rtup);
 
-	/* XXX -- after write, should invalidate relcache in other backends */
-	WriteBuffer(ItemPointerGetBlockNumber(&rtup->t_ctid));
+	WriteNoReleaseBuffer(buffer);
+
+	ReleaseBuffer(buffer);
 
 	heap_close(rd);
 }
