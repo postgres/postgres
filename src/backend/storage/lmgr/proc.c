@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.43 1998/09/01 04:32:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.44 1998/12/18 19:45:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.43 1998/09/01 04:32:02 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.44 1998/12/18 19:45:37 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -77,7 +77,7 @@
 #include "storage/proc.h"
 #include "utils/trace.h"
 
-static void HandleDeadLock(int sig);
+static void HandleDeadLock(void);
 static PROC *ProcWakeup(PROC *proc, int errType);
 
 #define DeadlockCheckTimer pg_options[OPT_DEADLOCKTIMEOUT]
@@ -154,8 +154,6 @@ InitProcess(IPCKey key)
 	 * Routine called if deadlock timer goes off. See ProcSleep()
 	 * ------------------
 	 */
-	pqsignal(SIGALRM, HandleDeadLock);
-
 	SpinAcquire(ProcStructLock);
 
 	/* attach to the free list */
@@ -449,9 +447,9 @@ ProcSleep(PROC_QUEUE *waitQueue,/* lock->waitProcs */
 		  TransactionId xid)	/* needed by user locks, see below */
 {
 	int			i;
+	bool		deadlock_checked = false;
 	PROC	   *proc;
-	struct itimerval timeval,
-				dummy;
+	struct timeval timeval;
 
 	/*
 	 * If the first entries in the waitQueue have a greater priority than
@@ -523,17 +521,26 @@ ProcSleep(PROC_QUEUE *waitQueue,/* lock->waitProcs */
 	 * to 0.
 	 * --------------
 	 */
-	MemSet(&timeval, 0, sizeof(struct itimerval));
-	timeval.it_value.tv_sec = \
+	MemSet(&timeval, 0, sizeof(struct timeval));
+	timeval.tv_sec = \
 		(DeadlockCheckTimer ? DeadlockCheckTimer : DEADLOCK_CHECK_TIMER);
 
 	do
 	{
+		int expire;
+		
 		MyProc->errType = NO_ERROR;		/* reset flag after deadlock check */
 
-		if (setitimer(ITIMER_REAL, &timeval, &dummy))
+		if ((expire = select(0, NULL, NULL, NULL,
+			(deadlock_checked == false) ? &timeval : NULL)) == -1)
 			elog(FATAL, "ProcSleep: Unable to set timer for process wakeup");
 
+		if (expire == 0 /* timeout reached */ && deadlock_checked == false)
+		{
+			HandleDeadLock();
+			deadlock_checked = true;
+		}
+		
 		/* --------------
 		 * if someone wakes us between SpinRelease and IpcSemaphoreLock,
 		 * IpcSemaphoreLock will not block.  The wakeup is "saved" by
@@ -544,14 +551,6 @@ ProcSleep(PROC_QUEUE *waitQueue,/* lock->waitProcs */
 						 IpcExclusiveLock);
 	} while (MyProc->errType == STATUS_NOT_FOUND);		/* sleep after deadlock
 														 * check */
-
-	/* ---------------
-	 * We were awoken before a timeout - now disable the timer
-	 * ---------------
-	 */
-	timeval.it_value.tv_sec = 0;
-	if (setitimer(ITIMER_REAL, &timeval, &dummy))
-		elog(FATAL, "ProcSleep: Unable to diable timer for process wakeup");
 
 	/* ----------------
 	 * We were assumed to be in a critical section when we went
@@ -695,7 +694,7 @@ ProcAddLock(SHM_QUEUE *elem)
  * --------------------
  */
 static void
-HandleDeadLock(int sig)
+HandleDeadLock()
 {
 	LOCK	   *mywaitlock;
 
