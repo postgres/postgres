@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.49 2001/10/25 05:49:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.50 2002/05/05 17:50:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -222,8 +222,10 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 				/* Found it; extract the OID and the database path. */
 				*db_id = tup.t_data->t_oid;
 				pathlen = VARSIZE(&(tup_db->datpath)) - VARHDRSZ;
+				if (pathlen < 0)
+					pathlen = 0;				/* pure paranoia */
 				if (pathlen >= MAXPGPATH)
-					pathlen = MAXPGPATH - 1;	/* pure paranoia */
+					pathlen = MAXPGPATH - 1;	/* more paranoia */
 				strncpy(path, VARDATA(&(tup_db->datpath)), pathlen);
 				path[pathlen] = '\0';
 				goto done;
