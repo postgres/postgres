@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/fetch.sgml,v 1.35 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/fetch.sgml,v 1.36 2004/03/23 22:57:09 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -376,7 +376,7 @@ COMMIT WORK;
 
   <para>
    The SQL standard defines <command>FETCH</command> for use in
-   embedded SQL only.  This variant of <command>FETCH</command>
+   embedded SQL only.  The variant of <command>FETCH</command>
    described here returns the data as if it were a
    <command>SELECT</command> result rather than placing it in host
    variables.  Other than this point, <command>FETCH</command> is
