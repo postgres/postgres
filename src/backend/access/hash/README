@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/backend/access/hash/README,v 1.1 2003/09/01 20:24:49 tgl Exp $
+$Header: /cvsroot/pgsql/src/backend/access/hash/README,v 1.2 2003/09/02 03:29:01 tgl Exp $
 
 This directory contains an implementation of hash indexing for Postgres.
 
@@ -189,7 +189,7 @@ The insertion algorithm is rather similar:
 	read/sharelock meta page
 	compute bucket number for target hash key
 	release meta page
-	share-lock bucket page (to prevent split/compact this bucket)
+	share-lock bucket page (to prevent split/compact of this bucket)
 	release page 0 share-lock
 -- (so far same as reader)
 	read/exclusive-lock current page of bucket
@@ -334,7 +334,7 @@ Obtaining an overflow page:
 	release bitmap page
 	loop back to try next bitmap page, if any
 -- here when we have checked all bitmap pages; we hold meta excl. lock
-	extend index to add another bitmap page; update meta information
+	extend index to add another overflow page; update meta information
 	write/release meta page
 	return page number
 
@@ -343,6 +343,12 @@ multiple times, but it seems best to do it that way to minimize loss of
 concurrency against processes just entering the index.  We don't want
 to hold the metapage exclusive lock while reading in a bitmap page.
 (We can at least avoid repeated buffer pin/unpin here.)
+
+The normal path for extending the index does not require doing I/O while
+holding the metapage lock.  We do have to do I/O when the extension
+requires adding a new bitmap page as well as the required overflow page
+... but that is an infrequent case, so the loss of concurrency seems
+acceptable.
 
 The portion of tuple insertion that calls the above subroutine looks
 like this:
@@ -392,7 +398,12 @@ algorithm is:
 	release meta page
 
 We have to do it this way because we must clear the bitmap bit before
-changing the first-free-bit field.
+changing the first-free-bit field (hashm_firstfree).  It is possible that
+we set first-free-bit too small (because someone has already reused the
+page we just freed), but that is okay; the only cost is the next overflow
+page acquirer will scan more bitmap bits than he needs to.  What must be
+avoided is having first-free-bit greater than the actual first free bit,
+because then that free page would never be found by searchers.
 
 All the freespace operations should be called while holding no buffer
 locks.  Since they need no lmgr locks, deadlock is not possible.
