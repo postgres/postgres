@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.130 2000/04/07 13:39:49 thomas Exp $
+ * $Id: pg_proc.h,v 1.131 2000/04/08 02:13:00 thomas Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1979,8 +1979,11 @@ DATA(insert OID = 1545 (  npoints			PGUID 11 f t t 1 f	23 "602" 100 0 0 100  pat
 DESCR("# points in path");
 DATA(insert OID = 1556 (  npoints			PGUID 11 f t t 1 f	23 "604" 100 0 0 100  poly_npoints - ));
 DESCR("number of points in polygon");
-DATA(insert OID = 1573 (  int8				PGUID 14 f t t 1 f	20 "20" 100 0 0 100  "select $1" - ));
-DESCR("convert int8 to int8 (no-op)");
+
+DATA(insert OID = 1564 (  zpbit_in			PGUID 11 f t t 1 f 1560 "0" 100 0 0 100  zpbit_in - ));
+DESCR("(internal)");
+DATA(insert OID = 1565 (  zpbit_out			PGUID 11 f t t 1 f   23 "0" 100 0 0 100  zpbit_out - ));
+DESCR("(internal)");
 
 DATA(insert OID = 1569 (  like				PGUID 11 f t t 2 f 16 "25 25" 100 0 1 0  textlike - ));
 DESCR("matches LIKE expression");
@@ -1990,6 +1993,9 @@ DATA(insert OID = 1571 (  like				PGUID 11 f t t 2 f 16 "19 25" 100 0 0 100  nam
 DESCR("matches LIKE expression");
 DATA(insert OID = 1572 (  notlike			PGUID 11 f t t 2 f 16 "19 25" 100 0 0 100  namenlike - ));
 DESCR("does not match LIKE expression");
+DATA(insert OID = 1573 (  int8				PGUID 14 f t t 1 f	20 "20" 100 0 0 100  "select $1" - ));
+DESCR("convert int8 to int8 (no-op)");
+
 
 /* SEQUENCEs nextval & currval functions */
 DATA(insert OID = 1574 (  nextval			PGUID 11 f t f 1 f 23 "25" 100 0 0 100  nextval - ));
@@ -1998,6 +2004,26 @@ DATA(insert OID = 1575 (  currval			PGUID 11 f t f 1 f 23 "25" 100 0 0 100  curr
 DESCR("sequence current value");
 DATA(insert OID = 1576 (  setval			PGUID 11 f t f 2 f 23 "25 23" 100 0 0 100  setval - ));
 DESCR("sequence set value");
+
+DATA(insert OID = 1579 (  varbit_in			PGUID 11 f t t 1 f 1562 "0" 100 0 0 100  varbit_in - ));
+DESCR("(internal)");
+DATA(insert OID = 1580 (  varbit_out		PGUID 11 f t t 1 f   23 "0" 100 0 0 100  varbit_out - ));
+DESCR("(internal)");
+
+DATA(insert OID = 1581 (  biteq				PGUID 11 f t t 2 f 16 "1560 1560" 100 0 1 0  biteq - ));
+DESCR("equal");
+DATA(insert OID = 1582 (  bitne				PGUID 11 f t t 2 f 16 "1560 1560" 100 0 1 0  bitne - ));
+DESCR("not equal");
+DATA(insert OID = 1592 (  bitge				PGUID 11 f t t 2 f 16 "1560 1560" 100 0 1 0  bitge - ));
+DESCR("greater than or equal");
+DATA(insert OID = 1593 (  bitgt				PGUID 11 f t t 2 f 16 "1560 1560" 100 0 1 0  bitgt - ));
+DESCR("greater than");
+DATA(insert OID = 1594 (  bitle				PGUID 11 f t t 2 f 16 "1560 1560" 100 0 1 0  bitle - ));
+DESCR("less than or equal");
+DATA(insert OID = 1595 (  bitlt				PGUID 11 f t t 2 f 16 "1560 1560" 100 0 1 0  bitlt - ));
+DESCR("less than");
+DATA(insert OID = 1596 (  bitcmp			PGUID 11 f t t 2 f 23 "1560 1560" 100 0 1 0  bitcmp - ));
+DESCR("compare");
 
 DATA(insert OID = 1598 (  random			PGUID 11 f t f 0 f 701 "0" 100 0 0 100  drandom - ));
 DESCR("radians to degrees");
@@ -2158,6 +2184,55 @@ DATA(insert OID = 1654 (  RI_FKey_noaction_del PGUID 11 f t f 0 f 0 "" 100 0 0 1
 DESCR("referential integrity ON DELETE NO ACTION");
 DATA(insert OID = 1655 (  RI_FKey_noaction_upd PGUID 11 f t f 0 f 0 "" 100 0 0 100  RI_FKey_noaction_upd - ));
 DESCR("referential integrity ON UPDATE NO ACTION");
+
+DATA(insert OID = 1666 (  varbiteq			PGUID 11 f t t 2 f 16 "1562 1562" 100 0 1 0  varbiteq - ));
+DESCR("equal");
+DATA(insert OID = 1667 (  varbitne			PGUID 11 f t t 2 f 16 "1562 1562" 100 0 1 0  varbitne - ));
+DESCR("not equal");
+DATA(insert OID = 1668 (  varbitge			PGUID 11 f t t 2 f 16 "1562 1562" 100 0 1 0  varbitge - ));
+DESCR("greater than or equal");
+DATA(insert OID = 1669 (  varbitgt			PGUID 11 f t t 2 f 16 "1562 1562" 100 0 1 0  varbitgt - ));
+DESCR("greater than");
+DATA(insert OID = 1670 (  varbitle			PGUID 11 f t t 2 f 16 "1562 1562" 100 0 1 0  varbitle - ));
+DESCR("less than or equal");
+DATA(insert OID = 1671 (  varbitlt			PGUID 11 f t t 2 f 16 "1562 1562" 100 0 1 0  varbitlt - ));
+DESCR("less than");
+DATA(insert OID = 1672 (  varbitcmp			PGUID 11 f t t 2 f 23 "1562 1562" 100 0 1 0  varbitcmp - ));
+DESCR("compare");
+
+DATA(insert OID = 1673 (  bitand			PGUID 11 f t t 2 f 1560 "1560 1560" 100 0 1 0  bitand - ));
+DESCR("bitwise and");
+DATA(insert OID = 1674 (  bitor				PGUID 11 f t t 2 f 1560 "1560 1560" 100 0 1 0  bitor - ));
+DESCR("bitwise or");
+DATA(insert OID = 1675 (  bitxor			PGUID 11 f t t 2 f 1560 "1560 1560" 100 0 1 0  bitxor - ));
+DESCR("bitwise exclusive or");
+DATA(insert OID = 1676 (  bitnot			PGUID 11 f t t 2 f 1560 "1560 1560" 100 0 1 0  bitnot - ));
+DESCR("bitwise negation");
+DATA(insert OID = 1677 (  bitshiftright		PGUID 11 f t t 2 f 1560 "1560 1560" 100 0 1 0  bitshiftright - ));
+DESCR("bitwise right shift");
+DATA(insert OID = 1678 (  bitshiftleft		PGUID 11 f t t 2 f 1560 "1560 1560" 100 0 1 0  bitshiftleft - ));
+DESCR("bitwise left shift");
+DATA(insert OID = 1679 (  bitcat			PGUID 11 f t t 2 f 1560 "1560 1560" 100 0 1 0  bitcat - ));
+DESCR("bitwise concatenation");
+DATA(insert OID = 1680 (  bitsubstr			PGUID 11 f t t 2 f 1560 "1560 1560" 100 0 1 0  bitsubstr - ));
+DESCR("bitwise field");
+
+DATA(insert OID = 1681 (  varbitand			PGUID 11 f t t 2 f 1562 "1562 1562" 100 0 1 0  varbitand - ));
+DESCR("bitwise and");
+DATA(insert OID = 1682 (  varbitor			PGUID 11 f t t 2 f 1562 "1562 1562" 100 0 1 0  varbitor - ));
+DESCR("bitwise or");
+DATA(insert OID = 1683 (  varbitxor			PGUID 11 f t t 2 f 1562 "1562 1562" 100 0 1 0  varbitxor - ));
+DESCR("bitwise exclusive or");
+DATA(insert OID = 1684 (  varbitnot			PGUID 11 f t t 2 f 1562 "1562 1562" 100 0 1 0  varbitnot - ));
+DESCR("bitwise negation");
+DATA(insert OID = 1685 (  varbitshiftright	PGUID 11 f t t 2 f 1562 "1562 1562" 100 0 1 0  varbitshiftright - ));
+DESCR("bitwise right shift");
+DATA(insert OID = 1686 (  varbitshiftleft	PGUID 11 f t t 2 f 1562 "1562 1562" 100 0 1 0  varbitshiftleft - ));
+DESCR("bitwise left shift");
+DATA(insert OID = 1687 (  varbitcat			PGUID 11 f t t 2 f 1562 "1562 1562" 100 0 1 0  varbitcat - ));
+DESCR("bitwise concatenation");
+DATA(insert OID = 1688 (  varbitsubstr		PGUID 11 f t t 2 f 1562 "1562 1562" 100 0 1 0  varbitsubstr - ));
+DESCR("bitwise field");
 
 /* for mac type support */
 DATA(insert OID = 436 (  macaddr_in			PGUID 11 f t t 1 f 829 "0" 100 0 0 100	macaddr_in - ));

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.73 2000/04/07 13:39:49 thomas Exp $
+ * $Id: pg_operator.h,v 1.74 2000/04/08 02:13:00 thomas Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -716,6 +716,35 @@ DATA(insert OID = 1660 (  "<="       PGUID 0 b t f 1625 1625   16 1662 1661 0 0 
 DATA(insert OID = 1661 (  ">"    PGUID 0 b t f 1625 1625   16 1659 1660 0 0 lztext_gt intgtsel intgtjoinsel ));
 DATA(insert OID = 1662 (  ">="       PGUID 0 b t f 1625 1625   16 1660 1659 0 0 lztext_ge intgtsel intgtjoinsel ));
 
+DATA(insert OID = 1784 (  "="	  PGUID 0 b t f 1560 1560	16 1784 1785 1786 1786 biteq eqsel eqjoinsel ));
+DATA(insert OID = 1785 (  "<>"	  PGUID 0 b t f 1560 1560	16 1785 1784	0	 0 bitne neqsel neqjoinsel ));
+DATA(insert OID = 1786 (  "<"	  PGUID 0 b t f 1560 1560	16 1787 1789	0	 0 bitlt intltsel intltjoinsel ));
+DATA(insert OID = 1787 (  ">"	  PGUID 0 b t f 1560 1560	16 1786 1788	0	 0 bitgt intgtsel intgtjoinsel ));
+DATA(insert OID = 1788 (  "<="	  PGUID 0 b t f 1560 1560	16 1789 1787	0	 0 bitle intltsel intltjoinsel ));
+DATA(insert OID = 1789 (  ">="	  PGUID 0 b t f 1560 1560	16 1788 1786	0	 0 bitge intgtsel intgtjoinsel ));
+DATA(insert OID = 1790 (  "<=>"	  PGUID 0 b t f 1560 1560	23	  0    0	0	 0 bitcmp - - ));
+DATA(insert OID = 1791 (  "&"	  PGUID 0 b t f 1560 1560 1560	  0    0	0	 0 bitand - - ));
+DATA(insert OID = 1792 (  "|"	  PGUID 0 b t f 1560 1560 1560	  0    0	0	 0 bitor - - ));
+DATA(insert OID = 1793 (  "^"	  PGUID 0 b t f 1560 1560 1560	  0    0	0	 0 bitxor - - ));
+DATA(insert OID = 1794 (  "~"	  PGUID 0 b t f 1560 1560 1560	  0    0	0	 0 bitnot - - ));
+DATA(insert OID = 1795 (  "<<"	  PGUID 0 b t f 1560 1560 1560	  0    0	0	 0 bitshiftleft - - ));
+DATA(insert OID = 1796 (  ">>"	  PGUID 0 b t f 1560 1560 1560	  0    0	0	 0 bitshiftright - - ));
+DATA(insert OID = 1797 (  "||"	  PGUID 0 b t f 1560 1560 1560	  0    0	0	 0 bitcat - - ));
+
+DATA(insert OID = 1804 (  "="	  PGUID 0 b t f 1562 1562	16 1804 1805 1806 1806 varbiteq eqsel eqjoinsel ));
+DATA(insert OID = 1805 (  "<>"	  PGUID 0 b t f 1562 1562	16 1805 1804	0	 0 varbitne neqsel neqjoinsel ));
+DATA(insert OID = 1806 (  "<"	  PGUID 0 b t f 1562 1562	16 1807 1809	0	 0 varbitlt intltsel intltjoinsel ));
+DATA(insert OID = 1807 (  ">"	  PGUID 0 b t f 1562 1562	16 1806 1808	0	 0 varbitgt intgtsel intgtjoinsel ));
+DATA(insert OID = 1808 (  "<="	  PGUID 0 b t f 1562 1562	16 1809 1807	0	 0 varbitle intltsel intltjoinsel ));
+DATA(insert OID = 1809 (  ">="	  PGUID 0 b t f 1562 1562	16 1808 1806	0	 0 varbitge intgtsel intgtjoinsel ));
+DATA(insert OID = 1810 (  "<=>"	  PGUID 0 b t f 1562 1562	23	  0    0	0	 0 varbitcmp - - ));
+DATA(insert OID = 1811 (  "&"	  PGUID 0 b t f 1562 1562 1562	  0    0	0	 0 varbitand - - ));
+DATA(insert OID = 1812 (  "|"	  PGUID 0 b t f 1562 1562 1562	  0    0	0	 0 varbitor - - ));
+DATA(insert OID = 1813 (  "^"	  PGUID 0 b t f 1562 1562 1562	  0    0	0	 0 varbitxor - - ));
+DATA(insert OID = 1814 (  "~"	  PGUID 0 b t f 1562 1562 1562	  0    0	0	 0 varbitnot - - ));
+DATA(insert OID = 1815 (  "<<"	  PGUID 0 b t f 1562 1562 1562	  0    0	0	 0 varbitshiftleft - - ));
+DATA(insert OID = 1816 (  ">>"	  PGUID 0 b t f 1562 1562 1562	  0    0	0	 0 varbitshiftright - - ));
+DATA(insert OID = 1817 (  "||"	  PGUID 0 b t f 1562 1562 1562	  0    0	0	 0 varbitcat - - ));
 
 /*
  * function prototypes

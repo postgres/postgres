@@ -4,7 +4,7 @@
 #    Makefile for utils/adt
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.35 2000/02/27 12:02:32 wieck Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.36 2000/04/08 02:12:54 thomas Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ OBJS = acl.o arrayfuncs.o arrayutils.o bool.o cash.o char.o chunk.o \
 	misc.o nabstime.o name.o not_in.o numeric.o numutils.o \
 	oid.o oracle_compat.o \
 	regexp.o regproc.o ruleutils.o selfuncs.o sets.o \
-	tid.o timestamp.o varchar.o varlena.o version.o \
+	tid.o timestamp.o varbit.o varchar.o varlena.o version.o \
 	network.o mac.o inet_net_ntop.o inet_net_pton.o \
 	ri_triggers.o pg_lzcompress.o pg_locale.o formatting.o
 
@@ -47,3 +47,6 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
+
+
+

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.108 2000/04/07 13:40:12 thomas Exp $
+ * $Id: builtins.h,v 1.109 2000/04/08 02:13:10 thomas Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -36,6 +36,7 @@
 #include "utils/nabstime.h"
 #include "utils/date.h"
 #include "utils/lztext.h"
+#include "utils/varbit.h"
 
 /*
  *		Defined in adt/

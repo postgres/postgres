@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.86 2000/03/18 20:50:10 momjian Exp $
+ * $Id: pg_type.h,v 1.87 2000/04/08 02:13:01 thomas Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -382,15 +382,25 @@ DESCR("hh:mm:ss, ANSI SQL time");
 #define TIMETZOID		1266
 DATA(insert OID = 1270 ( _timetz	 PGUID	-1 -1 f b t \054 0	1266 array_in array_out array_in array_out d _null_ ));
 
+/* OIDS 1500 - 1599 */
+DATA(insert OID = 1560 ( bit         PGUID -1  -1 f b t \054 0  0 zpbit_in zpbit_out zpbit_in zpbit_out i _null_ ));
+DESCR("fixed-length bit string");
+#define ZPBITOID     1560
+DATA(insert OID = 1561 ( _bit        PGUID	-1 -1 f b t \054 0	1560 array_in array_out array_in array_out i _null_ ));
+DATA(insert OID = 1562 ( varbit      PGUID -1  -1 f b t \054 0  0 varbit_in varbit_out varbit_in varbit_out i _null_ ));
+DESCR("fixed-length bit string");
+#define VARBITOID     1562
+DATA(insert OID = 1563 ( _varbit     PGUID	-1 -1 f b t \054 0	1562 array_in array_out array_in array_out i _null_ ));
+
+/* OIDS 1600 - 1699 */
+DATA(insert OID = 1625 ( lztext      PGUID -1  -1 f b t \054 0  0 lztextin lztextout lztextin lztextout i _null_ ));
+DESCR("variable-length string, stored compressed");
+#define LZTEXTOID     1625
+
 /* OIDS 1700 - 1799 */
 DATA(insert OID = 1700 ( numeric	   PGUID -1  -1 f b t \054 0  0 numeric_in numeric_out numeric_in numeric_out i _null_ ));
 DESCR("numeric(precision, decimal), arbitrary precision number");
 #define NUMERICOID		1700
-
-/* OIDS 1625 - 1639 */
-DATA(insert OID = 1625 ( lztext      PGUID -1  -1 f b t \054 0  0 lztextin lztextout lztextin lztextout i _null_ ));
-DESCR("variable-length string, stored compressed");
-#define LZTEXTOID     1625
 
 #define VARLENA_FIXED_SIZE(attr)	((attr)->atttypid == BPCHAROID && (attr)->atttypmod > 0)
 
