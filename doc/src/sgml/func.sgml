@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.129.2.2 2002/11/21 23:31:37 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.129.2.3 2003/01/23 01:23:14 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -473,7 +473,8 @@ PostgreSQL documentation
     shown in <xref linkend="functions-math-bit-table">.
     Bit string arguments to <literal>&</literal>, <literal>|</literal>,
     and <literal>#</literal> must be of equal length.  When bit
-    shifting, the original length of the string is preserved, as shown in the table.
+    shifting, the original length of the string is preserved, as shown
+    in the table.
    </para>
 
     <table id="functions-math-bit-table">
@@ -519,17 +520,13 @@ PostgreSQL documentation
   <para>
    <xref linkend="functions-math-func-table"> shows the available
    mathematical functions.  In the table, <literal>dp</literal>
-   indicates <type>double precision</type>.  The functions
-   <function>exp</function>, <function>ln</function>,
-   <function>log</function>, <function>pow</function>,
-   <function>round</function> (1 argument), <function>sqrt</function>,
-   and <function>trunc</function> (1 argument) are also available for
-   the type <type>numeric</type> in place of <type>double
-   precision</type>.  Functions returning a <type>numeric</type>
-   result take <type>numeric</type> input arguments, unless otherwise
-   specified.  Many of these functions are implemented on top of the
-   host system's C library; accuracy and behavior in boundary cases
-   could therefore vary depending on the host system.
+   indicates <type>double precision</type>.  Many of these functions
+   are provided in multiple forms with different argument types.
+   Except where noted, any given form of a function returns the same
+   datatype as its argument.
+   The functions working with <type>double precision</type> data are mostly
+   implemented on top of the host system's C library; accuracy and behavior in
+   boundary cases may therefore vary depending on the host system.
   </para>
 
    <table id="functions-math-func-table">
@@ -563,8 +560,8 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><function>ceil</function>(<type>numeric</type>)</entry>
-       <entry><type>numeric</type></entry>
+       <entry><function>ceil</function>(<type>dp</type> or <type>numeric</type>)</entry>
+       <entry>(same as input)</entry>
        <entry>smallest integer not less than argument</entry>
        <entry><literal>ceil(-42.8)</literal></entry>
        <entry>-42</entry>
@@ -579,32 +576,32 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><function>exp</function>(<type>dp</type>)</entry>
-       <entry><type>dp</type></entry>
+       <entry><function>exp</function>(<type>dp</type> or <type>numeric</type>)</entry>
+       <entry>(same as input)</entry>
        <entry>exponential</entry>
        <entry><literal>exp(1.0)</literal></entry>
        <entry>2.71828182845905</entry>
       </row>
 
       <row>
-       <entry><function>floor</function>(<type>numeric</type>)</entry>
-       <entry><type>numeric</type></entry>
+       <entry><function>floor</function>(<type>dp</type> or <type>numeric</type>)</entry>
+       <entry>(same as input)</entry>
        <entry>largest integer not greater than argument</entry>
        <entry><literal>floor(-42.8)</literal></entry>
        <entry>-43</entry>
       </row>
 
       <row>
-       <entry><function>ln</function>(<type>dp</type>)</entry>
-       <entry><type>dp</type></entry>
+       <entry><function>ln</function>(<type>dp</type> or <type>numeric</type>)</entry>
+       <entry>(same as input)</entry>
        <entry>natural logarithm</entry>
        <entry><literal>ln(2.0)</literal></entry>
        <entry>0.693147180559945</entry>
       </row>
 
       <row>
-       <entry><function>log</function>(<type>dp</type>)</entry>
-       <entry><type>dp</type></entry>
+       <entry><function>log</function>(<type>dp</type> or <type>numeric</type>)</entry>
+       <entry>(same as input)</entry>
        <entry>base 10 logarithm</entry>
        <entry><literal>log(100.0)</literal></entry>
        <entry>2</entry>
@@ -637,9 +634,18 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><function>pow</function>(<parameter>e</parameter> <type>dp</type>,
-        <parameter>n</parameter> <type>dp</type>)</entry>
+       <entry><function>pow</function>(<parameter>x</parameter> <type>dp</type>,
+        <parameter>e</parameter> <type>dp</type>)</entry>
        <entry><type>dp</type></entry>
+       <entry>raise a number to exponent <parameter>e</parameter></entry>
+       <entry><literal>pow(9.0, 3.0)</literal></entry>
+       <entry>729</entry>
+      </row>
+
+      <row>
+       <entry><function>pow</function>(<parameter>x</parameter> <type>numeric</type>,
+        <parameter>e</parameter> <type>numeric</type>)</entry>
+       <entry><type>numeric</type></entry>
        <entry>raise a number to exponent <parameter>e</parameter></entry>
        <entry><literal>pow(9.0, 3.0)</literal></entry>
        <entry>729</entry>
@@ -656,14 +662,14 @@ PostgreSQL documentation
       <row>
        <entry><function>random</function>()</entry>
        <entry><type>dp</type></entry>
-       <entry>value between 0.0 to 1.0</entry>
+       <entry>random value between 0.0 and 1.0</entry>
        <entry><literal>random()</literal></entry>
        <entry></entry>
       </row>
 
       <row>
-       <entry><function>round</function>(<type>dp</type>)</entry>
-       <entry><type>dp</type></entry>
+       <entry><function>round</function>(<type>dp</type> or <type>numeric</type>)</entry>
+       <entry>(same as input)</entry>
        <entry>round to nearest integer</entry>
        <entry><literal>round(42.4)</literal></entry>
        <entry>42</entry>
@@ -685,32 +691,31 @@ PostgreSQL documentation
      </row>
 -->
       <row>
-       <entry><function>sign</function>(<type>numeric</type>)</entry>
-       <entry><type>numeric</type></entry>
+       <entry><function>sign</function>(<type>dp</type> or <type>numeric</type>)</entry>
+       <entry>(same as input)</entry>
        <entry>sign of the argument (-1, 0, +1)</entry>
        <entry><literal>sign(-8.4)</literal></entry>
        <entry>-1</entry>
       </row>
 
       <row>
-       <entry><function>sqrt</function>(<type>dp</type>)</entry>
-       <entry><type>dp</type></entry>
+       <entry><function>sqrt</function>(<type>dp</type> or <type>numeric</type>)</entry>
+       <entry>(same as input)</entry>
        <entry>square root</entry>
        <entry><literal>sqrt(2.0)</literal></entry>
        <entry>1.4142135623731</entry>
       </row>
 
       <row>
-       <entry><function>trunc</function>(<type>dp</type>)</entry>
-       <entry><type>dp</type></entry>
+       <entry><function>trunc</function>(<type>dp</type> or <type>numeric</type>)</entry>
+       <entry>(same as input)</entry>
        <entry>truncate toward zero</entry>
        <entry><literal>trunc(42.8)</literal></entry>
        <entry>42</entry>
       </row>
 
       <row>
-       <entry><function>trunc</function>(<type>numeric</type>,
-        <parameter>r</parameter> <type>integer</type>)</entry>
+       <entry><function>trunc</function>(<parameter>v</parameter> <type>numeric</type>, <parameter>s</parameter> <type>integer</type>)</entry>
        <entry><type>numeric</type></entry>
        <entry>truncate to <parameter>s</parameter> decimal places</entry>
        <entry><literal>trunc(42.4382, 2)</literal></entry>
@@ -724,7 +729,7 @@ PostgreSQL documentation
   <para>
    Finally, <xref linkend="functions-math-trig-table"> shows the
    available trigonometric functions.  All trigonometric functions
-   have arguments and return values of type <type>double
+   take arguments and return values of type <type>double
    precision</type>.
   </para>
 
@@ -2032,7 +2037,7 @@ PostgreSQL documentation
 
    <para>
     This section describes functions and operators for examining and
-    manipulating binary string values.  Strings in this context include
+    manipulating binary string values.  Strings in this context mean
     values of the type <type>BYTEA</type>.
    </para>
 
@@ -2119,6 +2124,60 @@ PostgreSQL documentation
        </entry>
        <entry><literal>trim('\\000'::bytea from '\\000Tom\\000'::bytea)</literal></entry>
        <entry><literal>Tom</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>get_byte</function>(<parameter>string</parameter>, <parameter>offset</parameter>)</entry>
+       <entry><type>integer</type></entry>
+       <entry>
+        Extract byte from string.
+        <indexterm>
+         <primary>get_byte</primary>
+        </indexterm>
+       </entry>
+       <entry><literal>get_byte('Th\\000omas'::bytea, 4)</literal></entry>
+       <entry><literal>109</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>set_byte</function>(<parameter>string</parameter>,
+       <parameter>offset</parameter>, <parameter>newvalue</>)</entry>
+       <entry><type>bytea</type></entry>
+       <entry>
+        Set byte in string.
+        <indexterm>
+         <primary>set_byte</primary>
+        </indexterm>
+       </entry>
+       <entry><literal>set_byte('Th\\000omas'::bytea, 4, 64)</literal></entry>
+       <entry><literal>Th\000o@as</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>get_bit</function>(<parameter>string</parameter>, <parameter>offset</parameter>)</entry>
+       <entry><type>integer</type></entry>
+       <entry>
+        Extract bit from string.
+        <indexterm>
+         <primary>get_bit</primary>
+        </indexterm>
+       </entry>
+       <entry><literal>get_bit('Th\\000omas'::bytea, 45)</literal></entry>
+       <entry><literal>1</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>set_bit</function>(<parameter>string</parameter>,
+       <parameter>offset</parameter>, <parameter>newvalue</>)</entry>
+       <entry><type>bytea</type></entry>
+       <entry>
+        Set bit in string.
+        <indexterm>
+         <primary>set_bit</primary>
+        </indexterm>
+       </entry>
+       <entry><literal>set_bit('Th\\000omas'::bytea, 45, 0)</literal></entry>
+       <entry><literal>Th\000omAs</literal></entry>
       </row>
      </tbody>
     </tgroup>
@@ -5400,7 +5459,7 @@ SELECT NULLIF(value, '(none)') ...
       </row>
 
       <row>
-       <entry><function>version</function></entry>
+       <entry><function>version()</function></entry>
        <entry><type>text</type></entry>
        <entry>PostgreSQL version information</entry>
       </row>
@@ -5469,8 +5528,8 @@ SELECT NULLIF(value, '(none)') ...
    </indexterm>
 
    <para>
-    <function>version()</function> returns a string describing the PostgreSQL
-    server's version.
+    <function>version()</function> returns a string describing the
+    <productname>PostgreSQL</productname> server's version.
    </para>
 
   <para>
