@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.76 2003/09/23 22:48:53 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.77 2003/09/23 23:31:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2211,8 +2211,21 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 		(*AH->PrintExtraTocPtr) (AH, te);
 	ahprintf(AH, "--\n\n");
 
-	if (strlen(te->defn) > 0)
-		ahprintf(AH, "%s\n\n", te->defn);
+	/*
+	 * Really crude hack for suppressing AUTHORIZATION clause of CREATE SCHEMA
+	 * when --no-owner mode is selected.  This is ugly, but I see no other
+	 * good way ...
+	 */
+	if (AH->ropt && AH->ropt->noOwner && strcmp(te->desc, "SCHEMA") == 0)
+	{
+		ahprintf(AH, "CREATE SCHEMA %s;\n\n\n", te->tag);
+	}
+	else
+	{
+		/* normal case */
+		if (strlen(te->defn) > 0)
+			ahprintf(AH, "%s\n\n", te->defn);
+	}
 
 	return 1;
 }

@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.349 2003/09/23 22:48:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.350 2003/09/23 23:31:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2879,42 +2879,41 @@ dumpNamespaces(Archive *fout, NamespaceInfo *nsinfo, int numNamespaces)
 		/*
 		 * If it's the PUBLIC namespace, don't emit a CREATE SCHEMA record
 		 * for it, since we expect PUBLIC to exist already in the
-		 * destination database.  And emit ACL info only if the ACL isn't
-		 * the standard value for PUBLIC.
+		 * destination database.  But do emit ACL in case it's not standard,
+		 * likewise comment.
+		 *
+		 * Note that ownership is shown in the AUTHORIZATION clause,
+		 * while the archive entry is listed with empty owner (causing
+		 * it to be emitted with SET SESSION AUTHORIZATION DEFAULT).
+		 * This seems the best way of dealing with schemas owned by
+		 * users without CREATE SCHEMA privilege.  Further hacking has
+		 * to be applied for --no-owner mode, though!
 		 */
-		if (strcmp(nspinfo->nspname, "public") == 0)
-		{
-			if (!aclsSkip && strcmp(nspinfo->nspacl, "{=UC}") != 0)
-				dumpACL(fout, "SCHEMA", qnspname, nspinfo->nspname, NULL,
-						nspinfo->usename, nspinfo->nspacl,
-						nspinfo->oid);
-		}
-		else
+		if (strcmp(nspinfo->nspname, "public") != 0)
 		{
 			resetPQExpBuffer(q);
 			resetPQExpBuffer(delq);
 
 			appendPQExpBuffer(delq, "DROP SCHEMA %s;\n", qnspname);
 
-			appendPQExpBuffer(q, "CREATE SCHEMA %s;\n", qnspname);
+			appendPQExpBuffer(q, "CREATE SCHEMA %s AUTHORIZATION %s;\n",
+							  qnspname, fmtId(nspinfo->usename));
 
 			ArchiveEntry(fout, nspinfo->oid, nspinfo->nspname,
-						 NULL,
-						 nspinfo->usename, "SCHEMA", NULL,
+						 NULL, "", "SCHEMA", NULL,
 						 q->data, delq->data, NULL, NULL, NULL);
-
-			/* Dump Schema Comments */
-			resetPQExpBuffer(q);
-			appendPQExpBuffer(q, "SCHEMA %s", qnspname);
-			dumpComment(fout, q->data,
-						NULL, nspinfo->usename,
-						nspinfo->oid, "pg_namespace", 0, NULL);
-
-			if (!aclsSkip)
-				dumpACL(fout, "SCHEMA", qnspname, nspinfo->nspname, NULL,
-						nspinfo->usename, nspinfo->nspacl,
-						nspinfo->oid);
 		}
+
+		/* Dump Schema Comments */
+		resetPQExpBuffer(q);
+		appendPQExpBuffer(q, "SCHEMA %s", qnspname);
+		dumpComment(fout, q->data,
+					NULL, nspinfo->usename,
+					nspinfo->oid, "pg_namespace", 0, NULL);
+
+		dumpACL(fout, "SCHEMA", qnspname, nspinfo->nspname, NULL,
+				nspinfo->usename, nspinfo->nspacl,
+				nspinfo->oid);
 
 		free(qnspname);
 	}
