@@ -107,8 +107,9 @@ RETCODE result;
         break;
 
     case SQL_BOOKMARK_PERSISTENCE: /* ODBC 2.0 */
-        len = 4;
-        value = 0;
+		/* very simple bookmark support */        
+		len = 4;
+        value = globals.use_declarefetch ? 0 : (SQL_BP_SCROLL);		
         break;
 
     case SQL_COLUMN_ALIAS: /* ODBC 2.0 */
@@ -221,7 +222,8 @@ RETCODE result;
                                    SQL_FD_FETCH_LAST |
                                    SQL_FD_FETCH_PRIOR |
                                    SQL_FD_FETCH_ABSOLUTE |
-								   SQL_FD_FETCH_RELATIVE);
+								   SQL_FD_FETCH_RELATIVE | 
+								   SQL_FD_FETCH_BOOKMARK);
         break;
 
     case SQL_FILE_USAGE: /* ODBC 2.0 */

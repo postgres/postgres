@@ -190,6 +190,11 @@ int status;
 				case STMT_VALUE_OUT_OF_RANGE:
 					strcpy(szSqlState, "22003");
 					break;
+
+				case STMT_OPERATION_INVALID:
+					strcpy(szSqlState, "S1011");
+					break;
+
 				default:
                     strcpy(szSqlState, "S1000");
                     // also a general error

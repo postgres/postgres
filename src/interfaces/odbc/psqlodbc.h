@@ -39,8 +39,8 @@ typedef UInt4 Oid;
 
 #define DRIVERNAME             "PostgreSQL ODBC"
 #define DBMS_NAME              "PostgreSQL"
-#define DBMS_VERSION           "06.40.0003 PostgreSQL 6.4"
-#define POSTGRESDRIVERVERSION  "06.40.0003"
+#define DBMS_VERSION           "06.40.0004 PostgreSQL 6.4"
+#define POSTGRESDRIVERVERSION  "06.40.0004"
 
 #ifdef WIN32
 #define DRIVER_FILE_NAME		"PSQLODBC.DLL"
@@ -137,6 +137,7 @@ typedef struct StatementOptions_ {
 	int scroll_concurrency;
 	int retrieve_data;
 	int bind_size;		        /* size of each structure if using Row Binding */
+	int use_bookmarks;
 } StatementOptions;
 
 /*	Used to pass extra query info to send_query */

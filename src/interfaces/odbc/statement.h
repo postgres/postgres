@@ -15,6 +15,7 @@
 #endif
 
 #include "psqlodbc.h"
+#include "bind.h"
 
 #ifndef WIN32
 #include "iodbc.h"
@@ -71,6 +72,8 @@ typedef enum {
 #define STMT_OPERATION_CANCELLED 22
 #define STMT_INVALID_CURSOR_POSITION 23
 #define STMT_VALUE_OUT_OF_RANGE 24
+#define STMT_OPERATION_INVALID 25
+#define STMT_PROGRAM_TYPE_OUT_OF_RANGE 26
 
 /* statement types */
 enum {
@@ -142,6 +145,7 @@ struct StatementClass_ {
 
     /* information on bindings */
     BindInfoClass *bindings;	/* array to store the binding information */
+	BindInfoClass bookmark;
     int bindings_allocated;
 
     /* information on statement parameters */
@@ -207,6 +211,7 @@ RETCODE SC_execute(StatementClass *self);
 RETCODE SC_fetch(StatementClass *self);
 void SC_free_params(StatementClass *self, char option);
 void SC_log_error(char *func, char *desc, StatementClass *self);
+unsigned long SC_get_bookmark(StatementClass *self);
 
 
 #endif

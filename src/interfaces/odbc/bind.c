@@ -162,13 +162,6 @@ mylog("**** SQLBindCol: stmt = %u, icol = %d\n", stmt, icol);
 		return SQL_INVALID_HANDLE;
 	}
 
-	if (icol < 1) {
-		/* currently we do not support bookmarks */
-		stmt->errormsg = "Bookmarks are not currently supported.";
-		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
-		SC_log_error(func, "", stmt);
-		return SQL_ERROR;
-	}
 
 	SC_clear_error(stmt);
     
@@ -177,6 +170,28 @@ mylog("**** SQLBindCol: stmt = %u, icol = %d\n", stmt, icol);
 		stmt->errornumber = STMT_SEQUENCE_ERROR;
 		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
+	}
+
+	/*	If the bookmark column is being bound, then just save it */
+	if (icol == 0) {
+
+		if (rgbValue == NULL) {
+			stmt->bookmark.buffer = NULL;
+			stmt->bookmark.used = NULL;
+		}
+		else {
+			/*	Make sure it is the bookmark data type */
+			if ( fCType != SQL_C_BOOKMARK) {
+				stmt->errormsg = "Column 0 is not of type SQL_C_BOOKMARK";
+				stmt->errornumber = STMT_PROGRAM_TYPE_OUT_OF_RANGE;
+				SC_log_error(func, "", stmt);
+				return SQL_ERROR;
+			}
+
+			stmt->bookmark.buffer = rgbValue;
+			stmt->bookmark.used = pcbValue;
+		}
+		return SQL_SUCCESS;
 	}
 
 	//	allocate enough bindings if not already done

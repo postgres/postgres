@@ -610,7 +610,7 @@ int num_cols, num_rows;
 Int4 field_type;
 void *value;
 int result;
-
+char get_bookmark = FALSE;
 
 mylog("SQLGetData: enter, stmt=%u\n", stmt);
 
@@ -635,23 +635,40 @@ mylog("SQLGetData: enter, stmt=%u\n", stmt);
     }
 
     if (icol == 0) {
-        stmt->errormsg = "Bookmarks are not currently supported.";
-        stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
-		SC_log_error(func, "", stmt);
-        return SQL_ERROR;
+
+		if (stmt->options.use_bookmarks == SQL_UB_OFF) {
+			stmt->errornumber = STMT_COLNUM_ERROR;
+			stmt->errormsg = "Attempt to retrieve bookmark with bookmark usage disabled";
+			SC_log_error(func, "", stmt);
+			return SQL_ERROR;
+		}
+
+		/*	Make sure it is the bookmark data type */
+		if (fCType != SQL_C_BOOKMARK) {
+			stmt->errormsg = "Column 0 is not of type SQL_C_BOOKMARK";
+			stmt->errornumber = STMT_PROGRAM_TYPE_OUT_OF_RANGE;
+			SC_log_error(func, "", stmt);
+			return SQL_ERROR;
+		}
+		
+		get_bookmark = TRUE;
+
     }
 
-    // use zero-based column numbers
-    icol--;
+	else {
 
-    // make sure the column number is valid
-    num_cols = QR_NumResultCols(res);
-    if (icol >= num_cols) {
-        stmt->errormsg = "Invalid column number.";
-        stmt->errornumber = STMT_INVALID_COLUMN_NUMBER_ERROR;
-		SC_log_error(func, "", stmt);
-        return SQL_ERROR;
-    }
+		// use zero-based column numbers
+		icol--;
+
+		// make sure the column number is valid
+		num_cols = QR_NumResultCols(res);
+		if (icol >= num_cols) {
+			stmt->errormsg = "Invalid column number.";
+			stmt->errornumber = STMT_INVALID_COLUMN_NUMBER_ERROR;
+			SC_log_error(func, "", stmt);
+			return SQL_ERROR;
+		}
+	}
 
 	if ( stmt->manual_result || ! globals.use_declarefetch) {
 		// make sure we're positioned on a valid row
@@ -664,13 +681,16 @@ mylog("SQLGetData: enter, stmt=%u\n", stmt);
 			return SQL_ERROR;
 		}
 		mylog("     num_rows = %d\n", num_rows);
-		if ( stmt->manual_result) {
-			value = QR_get_value_manual(res, stmt->currTuple, icol);
+
+		if ( ! get_bookmark) {
+			if ( stmt->manual_result) {
+				value = QR_get_value_manual(res, stmt->currTuple, icol);
+			}
+			else {
+				value = QR_get_value_backend_row(res, stmt->currTuple, icol);
+			}
+			mylog("     value = '%s'\n", value);
 		}
-		else {
-			value = QR_get_value_backend_row(res, stmt->currTuple, icol);
-		}
-		mylog("     value = '%s'\n", value);
 	}
 	else { /* its a SOCKET result (backend data) */
 		if (stmt->currTuple == -1 || ! res || ! res->tupleField) {
@@ -680,9 +700,19 @@ mylog("SQLGetData: enter, stmt=%u\n", stmt);
 			return SQL_ERROR;
 		}
 
-		value = QR_get_value_backend(res, icol);
+		if ( ! get_bookmark)
+			value = QR_get_value_backend(res, icol);
 
 		mylog("  socket: value = '%s'\n", value);
+	}
+
+	if ( get_bookmark) {
+		*((UDWORD *) rgbValue) = SC_get_bookmark(stmt);
+
+		if (pcbValue)
+			*pcbValue = 4;
+
+		return SQL_SUCCESS;
 	}
 
 	field_type = QR_get_field_type(res, icol);
@@ -761,6 +791,14 @@ mylog("SQLFetch: stmt = %u, stmt->result= %u\n", stmt, stmt->result);
 		return SQL_ERROR;
 	}
 
+	/*	Not allowed to bind a bookmark column when using SQLFetch. */
+	if ( stmt->bookmark.buffer) {
+		stmt->errornumber = STMT_COLNUM_ERROR;
+		stmt->errormsg = "Not allowed to bind a bookmark column when using SQLFetch";
+		SC_log_error(func, "", stmt);
+		return SQL_ERROR;
+	}
+
 	if (stmt->status == STMT_EXECUTING) {
 		stmt->errormsg = "Can't fetch while statement is still executing.";
 		stmt->errornumber = STMT_SEQUENCE_ERROR;
@@ -827,6 +865,14 @@ mylog("SQLExtendedFetch: stmt=%u\n", stmt);
 	if ( ! (res = stmt->result)) {
 		stmt->errormsg = "Null statement result in SQLExtendedFetch.";
 		stmt->errornumber = STMT_SEQUENCE_ERROR;
+		SC_log_error(func, "", stmt);
+		return SQL_ERROR;
+	}
+
+	/*	If a bookmark colunmn is bound but bookmark usage is off, then error */
+	if (stmt->bookmark.buffer && stmt->options.use_bookmarks == SQL_UB_OFF) {
+		stmt->errornumber = STMT_COLNUM_ERROR;
+		stmt->errormsg = "Attempt to retrieve bookmark with bookmark usage disabled";
 		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
@@ -948,6 +994,11 @@ mylog("SQLExtendedFetch: stmt=%u\n", stmt);
 		stmt->rowset_start += irow;
 
 		
+		break;
+
+	case SQL_FETCH_BOOKMARK:
+
+		stmt->rowset_start = irow - 1;
 		break;
 
 	default:

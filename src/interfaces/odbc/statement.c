@@ -185,6 +185,7 @@ InitializeStatementOptions(StatementOptions *opt)
 	opt->cursor_type = SQL_CURSOR_FORWARD_ONLY;
 	opt->bind_size = 0;			/* default is to bind by column */
 	opt->retrieve_data = SQL_RD_ON;
+	opt->use_bookmarks = SQL_UB_OFF;
 }
 
 StatementClass *
@@ -212,6 +213,9 @@ StatementClass *rv;
 
 		rv->bindings = NULL;
 		rv->bindings_allocated = 0;
+
+		rv->bookmark.buffer = NULL;
+		rv->bookmark.used = NULL;
 
 		rv->parameters_allocated = 0;
 		rv->parameters = 0;
@@ -496,6 +500,9 @@ Int2 lf;
 		self->bindings[lf].returntype = SQL_C_CHAR;
 	}
 
+	self->bookmark.buffer = NULL;
+	self->bookmark.used = NULL;
+
     return 1;
 }
 
@@ -566,6 +573,15 @@ char rv;
 	return rv;
 }
 
+/*	Currently, the driver offers very simple bookmark support -- it is
+	just the current row number.  But it could be more sophisticated 
+	someday, such as mapping a key to a 32 bit value
+*/
+unsigned long
+SC_get_bookmark(StatementClass *self)
+{
+	return (self->currTuple + 1);	
+}
 
 RETCODE
 SC_fetch(StatementClass *self)
@@ -623,6 +639,19 @@ ColumnInfoClass *ci;
 
 	result = SQL_SUCCESS;
 	self->last_fetch_count = 1;
+
+	/*	If the bookmark column was bound then return a bookmark.
+		Since this is used with SQLExtendedFetch, and the rowset size 
+		may be greater than 1, and an application can use row or column wise
+		binding, use the code in copy_and_convert_field() to handle that.
+	*/
+	if (self->bookmark.buffer) {
+		char buf[32];
+
+		sprintf(buf, "%ld", SC_get_bookmark(self));
+		result = copy_and_convert_field(self, 0, buf, 
+								SQL_C_ULONG, self->bookmark.buffer, 0, self->bookmark.used);
+	}
 
 	for (lf=0; lf < num_cols; lf++) {
 

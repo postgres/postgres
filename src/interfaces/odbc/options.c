@@ -32,6 +32,7 @@
 #include "environ.h"
 #include "connection.h"
 #include "statement.h"
+#include "qresult.h"
 
 
 extern GLOBAL_VALUES globals;
@@ -189,7 +190,6 @@ char changed = FALSE;
 		if (conn) conn->stmtOptions.rowset_size = vParam;
 		if (stmt) stmt->options.rowset_size = vParam;
 
-
 		break;
 
 	case SQL_SIMULATE_CURSOR: /* NOT SUPPORTED */
@@ -205,18 +205,11 @@ char changed = FALSE;
 		}
 		return SQL_ERROR;
 
-	case SQL_USE_BOOKMARKS: /* NOT SUPPORTED */
-		if (stmt) {
-			stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
-			stmt->errormsg = "Driver does not support (SET) using bookmarks.";
-			SC_log_error(func, "", stmt);
-		}
-		if (conn) {
-			conn->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
-			conn->errormsg = "Driver does not support (SET) using bookmarks.";
-			CC_log_error(func, "", conn);
-		}
-		return SQL_ERROR;
+	case SQL_USE_BOOKMARKS:
+
+		if (stmt) stmt->options.use_bookmarks = vParam;
+		if (conn) conn->stmtOptions.use_bookmarks = vParam;
+		break;
 
     default:
 		{
@@ -507,6 +500,7 @@ RETCODE SQL_API SQLGetStmtOption(
 {
 static char *func="SQLGetStmtOption";
 StatementClass *stmt = (StatementClass *) hstmt;
+QResultClass *res;
 
 	mylog("%s: entering...\n", func);
 
@@ -520,15 +514,39 @@ StatementClass *stmt = (StatementClass *) hstmt;
 	}
 
 	switch(fOption) {
-	case SQL_GET_BOOKMARK:/* NOT SUPPORTED */
-		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
-		stmt->errormsg = "Driver does not support getting bookmarks.";
-		SC_log_error(func, "", stmt);
-		return SQL_ERROR;
-		break;
-
+	case SQL_GET_BOOKMARK:
 	case SQL_ROW_NUMBER:
-		*((SDWORD *) pvParam) = stmt->currTuple + 1;
+
+		res = stmt->result;
+
+		if ( stmt->manual_result || ! globals.use_declarefetch) {
+			// make sure we're positioned on a valid row
+			if((stmt->currTuple < 0) ||
+			   (stmt->currTuple >= QR_get_num_tuples(res))) {
+				stmt->errormsg = "Not positioned on a valid row.";
+				stmt->errornumber = STMT_INVALID_CURSOR_STATE_ERROR;
+				SC_log_error(func, "", stmt);
+				return SQL_ERROR;
+			}
+		}
+		else {
+			if (stmt->currTuple == -1 || ! res || ! res->tupleField) {
+				stmt->errormsg = "Not positioned on a valid row.";
+				stmt->errornumber = STMT_INVALID_CURSOR_STATE_ERROR;
+				SC_log_error(func, "", stmt);
+				return SQL_ERROR;
+			}
+		}
+
+		if (fOption == SQL_GET_BOOKMARK && stmt->options.use_bookmarks == SQL_UB_OFF) {
+			stmt->errormsg = "Operation invalid because use bookmarks not enabled.";
+			stmt->errornumber = STMT_OPERATION_INVALID;
+			SC_log_error(func, "", stmt);
+			return SQL_ERROR;
+		}
+
+		*((UDWORD *) pvParam) = SC_get_bookmark(stmt);
+		
 		break;
 
 	case SQL_ASYNC_ENABLE:	/* NOT SUPPORTED */
@@ -583,8 +601,8 @@ StatementClass *stmt = (StatementClass *) hstmt;
 		*((SDWORD *) pvParam) = SQL_SC_NON_UNIQUE;
 		break;
 
-	case SQL_USE_BOOKMARKS:/* NOT SUPPORTED */
-		*((SDWORD *) pvParam) = SQL_UB_OFF;
+	case SQL_USE_BOOKMARKS:
+		*((SDWORD *) pvParam) = stmt->options.use_bookmarks;
 		break;
 
 	default:
