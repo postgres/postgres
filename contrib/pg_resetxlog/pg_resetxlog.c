@@ -12,8 +12,10 @@
  *		 by scanning the old xlog if necessary.
  *	  3. Modify pg_control to reflect a "shutdown" state with a checkpoint
  *	     record at the start of xlog.
- *	  4. Flush the existing xlog files and write a new segment 0 with
- *	     just a checkpoint record in it.
+ *	  4. Flush the existing xlog files and write a new segment with
+ *	     just a checkpoint record in it.  The new segment is positioned
+ *		 just past the end of the old xlog, so that existing LSNs in
+ *		 data pages will appear to be "in the past".
  * This is all pretty straightforward except for the intuition part of
  * step 2 ...
  *
@@ -21,7 +23,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/contrib/pg_resetxlog/Attic/pg_resetxlog.c,v 1.1 2001/03/14 00:57:43 tgl Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_resetxlog/Attic/pg_resetxlog.c,v 1.2 2001/03/16 05:08:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,6 +110,7 @@ static char XLogDir[MAXPGPATH];
 static char ControlFilePath[MAXPGPATH];
 
 static ControlFileData ControlFile;	/* pg_control values */
+static uint32 newXlogId, newXlogSeg; /* ID/Segment of new XLOG segment */
 static bool guessed = false;	/* T if we had to guess at any values */
 
 
@@ -390,6 +393,8 @@ CheckControlVersion0(char *buffer, int len)
 	ControlFile.catalog_version_no = oldfile->catalog_version_no;
 
 	ControlFile.state = oldfile->state;
+	ControlFile.logId = oldfile->logId;
+	ControlFile.logSeg = oldfile->logSeg;
 
 	ControlFile.blcksz = oldfile->blcksz;
 	ControlFile.relseg_size = oldfile->relseg_size;
@@ -671,6 +676,8 @@ PrintControlValues(void)
 	printf("Guessed-at pg_control values:\n\n"
 		   "pg_control version number:            %u\n"
 		   "Catalog version number:               %u\n"
+		   "Current log file id:                  %u\n"
+	       "Next log file segment:                %u\n"
 		   "Latest checkpoint's StartUpID:        %u\n"
 		   "Latest checkpoint's NextXID:          %u\n"
 		   "Latest checkpoint's NextOID:          %u\n"
@@ -681,6 +688,8 @@ PrintControlValues(void)
 
 		   ControlFile.pg_control_version,
 		   ControlFile.catalog_version_no,
+		   ControlFile.logId,
+		   ControlFile.logSeg,
 		   ControlFile.checkPointCopy.ThisStartUpID,
 		   ControlFile.checkPointCopy.nextXid,
 		   ControlFile.checkPointCopy.nextOid,
@@ -701,17 +710,24 @@ RewriteControlFile(void)
 	char		buffer[BLCKSZ];	/* need not be aligned */
 
 	/*
-	 * Adjust fields as needed to force an empty XLOG.
+	 * Adjust fields as needed to force an empty XLOG starting at the
+	 * next available segment.
 	 */
-	ControlFile.checkPointCopy.redo.xlogid = 0;
-	ControlFile.checkPointCopy.redo.xrecoff = SizeOfXLogPHD;
+	newXlogId = ControlFile.logId;
+	newXlogSeg = ControlFile.logSeg;
+	/* be sure we wrap around correctly at end of a logfile */
+	NextLogSeg(newXlogId, newXlogSeg);
+
+	ControlFile.checkPointCopy.redo.xlogid = newXlogId;
+	ControlFile.checkPointCopy.redo.xrecoff =
+		newXlogSeg * XLogSegSize + SizeOfXLogPHD;
 	ControlFile.checkPointCopy.undo = ControlFile.checkPointCopy.redo;
 	ControlFile.checkPointCopy.time = time(NULL);
 
 	ControlFile.state = DB_SHUTDOWNED;
 	ControlFile.time = time(NULL);
-	ControlFile.logId = 0;
-	ControlFile.logSeg = 1;
+	ControlFile.logId = newXlogId;
+	ControlFile.logSeg = newXlogSeg + 1;
 	ControlFile.checkPoint = ControlFile.checkPointCopy.redo;
 	ControlFile.prevCheckPoint.xlogid = 0;
 	ControlFile.prevCheckPoint.xrecoff = 0;
@@ -848,7 +864,7 @@ WriteEmptyXLOG(void)
 	record->xl_crc = crc;
 
 	/* Write the first page */
-	XLogFileName(path, 0, 0);
+	XLogFileName(path, newXlogId, newXlogSeg);
 
 	unlink(path);
 
