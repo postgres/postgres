@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.73 2003/11/29 19:51:48 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.74 2003/12/01 23:09:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,6 +112,8 @@
 #include "executor/executor.h"
 #include "utils/lsyscache.h"
 
+static TupleDesc ExecTypeFromTLInternal(List *targetList,
+										bool hasoid, bool skipjunk);
 
 /* ----------------------------------------------------------------
  *				  tuple table create/delete functions
@@ -469,13 +471,6 @@ ExecSetSlotDescriptorIsNew(TupleTableSlot *slot,		/* slot to change */
  *		is used for initializing special-purpose slots.
  * --------------------------------
  */
-#define INIT_SLOT_DEFS \
-	TupleTable	   tupleTable; \
-	TupleTableSlot*   slot
-
-#define INIT_SLOT_ALLOC \
-	tupleTable = (TupleTable) estate->es_tupleTable; \
-	slot =		 ExecAllocTableSlot(tupleTable);
 
 /* ----------------
  *		ExecInitResultTupleSlot
@@ -484,9 +479,7 @@ ExecSetSlotDescriptorIsNew(TupleTableSlot *slot,		/* slot to change */
 void
 ExecInitResultTupleSlot(EState *estate, PlanState *planstate)
 {
-	INIT_SLOT_DEFS;
-	INIT_SLOT_ALLOC;
-	planstate->ps_ResultTupleSlot = slot;
+	planstate->ps_ResultTupleSlot = ExecAllocTableSlot(estate->es_tupleTable);
 }
 
 /* ----------------
@@ -496,9 +489,7 @@ ExecInitResultTupleSlot(EState *estate, PlanState *planstate)
 void
 ExecInitScanTupleSlot(EState *estate, ScanState *scanstate)
 {
-	INIT_SLOT_DEFS;
-	INIT_SLOT_ALLOC;
-	scanstate->ss_ScanTupleSlot = slot;
+	scanstate->ss_ScanTupleSlot = ExecAllocTableSlot(estate->es_tupleTable);
 }
 
 /* ----------------
@@ -508,9 +499,7 @@ ExecInitScanTupleSlot(EState *estate, ScanState *scanstate)
 TupleTableSlot *
 ExecInitExtraTupleSlot(EState *estate)
 {
-	INIT_SLOT_DEFS;
-	INIT_SLOT_ALLOC;
-	return slot;
+	return ExecAllocTableSlot(estate->es_tupleTable);
 }
 
 /* ----------------
@@ -560,34 +549,7 @@ ExecInitNullTupleSlot(EState *estate, TupleDesc tupType)
 TupleDesc
 ExecTypeFromTL(List *targetList, bool hasoid)
 {
-	TupleDesc	typeInfo;
-	List	   *tlitem;
-	int			len;
-
-	/*
-	 * allocate a new typeInfo
-	 */
-	len = ExecTargetListLength(targetList);
-	typeInfo = CreateTemplateTupleDesc(len, hasoid);
-
-	/*
-	 * scan list, generate type info for each entry
-	 */
-	foreach(tlitem, targetList)
-	{
-		TargetEntry *tle = lfirst(tlitem);
-		Resdom	   *resdom = tle->resdom;
-
-		TupleDescInitEntry(typeInfo,
-						   resdom->resno,
-						   resdom->resname,
-						   resdom->restype,
-						   resdom->restypmod,
-						   0,
-						   false);
-	}
-
-	return typeInfo;
+	return ExecTypeFromTLInternal(targetList, hasoid, false);
 }
 
 /* ----------------------------------------------------------------
@@ -599,30 +561,32 @@ ExecTypeFromTL(List *targetList, bool hasoid)
 TupleDesc
 ExecCleanTypeFromTL(List *targetList, bool hasoid)
 {
-	TupleDesc	typeInfo;
-	List	   *tlitem;
-	int			len;
-	int			cleanresno;
+	return ExecTypeFromTLInternal(targetList, hasoid, true);
+}
 
-	/*
-	 * allocate a new typeInfo
-	 */
-	len = ExecCleanTargetListLength(targetList);
+static TupleDesc
+ExecTypeFromTLInternal(List *targetList, bool hasoid, bool skipjunk)
+{
+	TupleDesc	 typeInfo;
+	List		*l;
+	int			 len;
+	int			 cur_resno = 1;
+
+	if (skipjunk)
+		len = ExecCleanTargetListLength(targetList);
+	else
+		len = ExecTargetListLength(targetList);
 	typeInfo = CreateTemplateTupleDesc(len, hasoid);
 
-	/*
-	 * scan list, generate type info for each entry
-	 */
-	cleanresno = 1;
-	foreach(tlitem, targetList)
+	foreach(l, targetList)
 	{
-		TargetEntry *tle = lfirst(tlitem);
-		Resdom	   *resdom = tle->resdom;
+		TargetEntry	*tle = lfirst(l);
+		Resdom		*resdom = tle->resdom;
 
-		if (resdom->resjunk)
+		if (skipjunk && resdom->resjunk)
 			continue;
 		TupleDescInitEntry(typeInfo,
-						   cleanresno++,
+						   cur_resno++,
 						   resdom->resname,
 						   resdom->restype,
 						   resdom->restypmod,
