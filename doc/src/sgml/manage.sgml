@@ -1,174 +1,170 @@
-<Chapter Id="manage">
-<Title>Managing a Database</Title>
+ <Chapter Id="manage">
+  <Title>Managing a Database</Title>
 
-<Para>
-<Note>
-<Para>
-This section is currently a thinly disguised copy of the Tutorial. Needs to be augmented.
-- thomas 1998-01-12
-</Para>
-</Note>
-</Para>
+  <Note>
+   <Para>
+    This section is currently a thinly disguised copy of the
+    Tutorial. Needs to be augmented.
+    - thomas 1998-01-12
+   </Para>
+  </Note>
 
-<Para>
-Although the <FirstTerm>site administrator</FirstTerm> is responsible for overall management 
-of the <ProductName>Postgres</ProductName> installation, some databases within the
-installation may be managed by another person, 
-designated the <FirstTerm>database administrator</FirstTerm>.
-This assignment of responsibilities occurs when a database is created. 
-A user may be assigned explicit privileges to create databases and/or to create new users. 
-A user assigned both privileges can perform most administrative task 
-within <ProductName>Postgres</ProductName>, but will
-not by default have the same operating system privileges as the site administrator.
-</Para>
+  <Para>
+   Although the <FirstTerm>site administrator</FirstTerm> is responsible for overall management 
+   of the <ProductName>Postgres</ProductName> installation, some databases within the
+   installation may be managed by another person, 
+   designated the <FirstTerm>database administrator</FirstTerm>.
+   This assignment of responsibilities occurs when a database is created. 
+   A user may be assigned explicit privileges to create databases and/or to create new users. 
+   A user assigned both privileges can perform most administrative task 
+   within <ProductName>Postgres</ProductName>, but will
+   not by default have the same operating system privileges as the site administrator.
+  </Para>
 
-<Para>
-The Database Administrator's Guide covers these topics in more detail.
-</Para>
+  <Para>
+   The Database Administrator's Guide covers these topics in more detail.
+  </Para>
 
-<Sect1>
-<Title>Database Creation</Title>
+  <Sect1>
+   <Title>Database Creation</Title>
 
-<Para>
-Databases are created by the <Command>create database</Command> issued from
-within <ProductName>Postgres</ProductName>. <Application>createdb</Application> is a command-line
-utility provided to give the same functionality from outside <ProductName>Postgres</ProductName>.
-</Para>
+   <Para>
+    Databases are created by the <Command>create database</Command> issued from
+    within <ProductName>Postgres</ProductName>. <Application>createdb</Application> is a command-line
+    utility provided to give the same functionality from outside <ProductName>Postgres</ProductName>.
+   </Para>
 
-<Para>
-The <ProductName>Postgres</ProductName> backend must be running for either method
-to succeed, and the user issuing the command must be the <ProductName>Postgres</ProductName>
-<FirstTerm>superuser</FirstTerm> or have been assigned database creation privileges by the
-superuser.
-</Para>
+   <Para>
+    The <ProductName>Postgres</ProductName> backend must be running for either method
+    to succeed, and the user issuing the command must be the <ProductName>Postgres</ProductName>
+    <FirstTerm>superuser</FirstTerm> or have been assigned database creation privileges by the
+    superuser.
+   </Para>
 
-<Para>
-To create a new database named <Quote>mydb</Quote> from the command line, type
-<ProgramListing>
+   <Para>
+    To create a new database named <Quote>mydb</Quote> from the command line, type
+    <ProgramListing>
 % createdb mydb
-</ProgramListing>
+    </ProgramListing>
 
-and to do the same from within <Application>psql</Application> type
-<ProgramListing>
+    and to do the same from within <Application>psql</Application> type
+    <ProgramListing>
 * CREATE DATABASE mydb;
-</ProgramListing>
-</Para>
+    </ProgramListing>
+   </Para>
 
-<Para>
-If you do not have the privileges required to create a database, you will see
-the following:
-<ProgramListing>
+   <Para>
+    If you do not have the privileges required to create a database, you will see
+    the following:
+    <ProgramListing>
 % createdb mydb
 WARN:user "your username" is not allowed to create/destroy databases
 createdb: database creation failed on mydb.
-</ProgramListing>
-</Para>
+    </ProgramListing>
+   </Para>
 
-<Para>
-<ProductName>Postgres</ProductName>  allows  you to create any number of databases
-at a  given  site  and  you  automatically  become  the
-database  administrator  of  the database you just created.  
-Database names must  have  an  alphabetic  first
-character and are limited to 32 characters in length.
-</Para>
+   <Para>
+    <ProductName>Postgres</ProductName>  allows  you to create any number of databases
+    at a  given  site  and  you  automatically  become  the
+    database  administrator  of  the database you just created.  
+    Database names must  have  an  alphabetic  first
+    character and are limited to 32 characters in length.
+   </Para>
 
-</Sect1>
+  </Sect1>
 
-<Sect1>
-<Title>Alternate Database Locations</Title>
+  <Sect1>
+   <Title>Alternate Database Locations</Title>
 
-<Para>
-It is possible to create a database in a location other than the default
-location for the installation. Remember that all database access actually
-occurs through the database backend, so that any location specified must
-be accessible by the backend.
-</Para>
+   <Para>
+    It is possible to create a database in a location other than the default
+    location for the installation. Remember that all database access actually
+    occurs through the database backend, so that any location specified must
+    be accessible by the backend.
+   </Para>
 
-<Para>
- Alternate database locations are created and referenced by an environment variable 
-which gives the absolute path to the intended storage location.  
-This environment variable must have been defined before the backend was started 
-and the location it points to must be writable by the postgres administrator account.
-Consult with the site administrator
-regarding preconfigured alternate database locations.  
-Any valid environment variable name may be used to reference an alternate location, 
-although using variable names with a prefix of <quote>PGDATA</quote> is recommended 
-to avoid confusion 
-and conflict with other variables.
-</Para>
+   <Para>
+    Alternate database locations are created and referenced by an environment variable 
+    which gives the absolute path to the intended storage location.  
+    This environment variable must have been defined before the backend was started 
+    and the location it points to must be writable by the postgres administrator account.
+    Consult with the site administrator
+    regarding preconfigured alternate database locations.  
+    Any valid environment variable name may be used to reference an alternate location, 
+    although using variable names with a prefix of <quote>PGDATA</quote> is recommended 
+    to avoid confusion 
+    and conflict with other variables.
+   </Para>
 
-<Note>
-<Para>
- In previous versions of <ProductName>Postgres</ProductName>, 
-it was also permissable to use an absolute path name to specify 
-an alternate storage location.  
-Although the environment variable style of specification
-is to be preferred since it allows the site administrator more flexibility in
-managing disk storage, it is also possible to use an absolute path 
-to specify an alternate location.  
-The administrator's guide discusses how to enable this feature.
-</Para>
-</Note>
+   <Note>
+    <Para>
+     In previous versions of <ProductName>Postgres</ProductName>, 
+     it was also permissable to use an absolute path name to specify 
+     an alternate storage location.  
+     Although the environment variable style of specification
+     is to be preferred since it allows the site administrator more flexibility in
+     managing disk storage, it is also possible to use an absolute path 
+     to specify an alternate location.  
+     The administrator's guide discusses how to enable this feature.
+    </Para>
+   </Note>
 
-<Para>
-For security and integrity reasons,
-any path or environment variable specified has some
-additional path fields appended.
-</Para>
+   <Para>
+    For security and integrity reasons,
+    any path or environment variable specified has some
+    additional path fields appended.
+    Alternate database locations must be prepared by running 
+    <Application>initlocation</Application>.
+   </Para>
 
-<Para>
-Alternate database locations must be prepared by running 
-<Application>initlocation</Application>.
-</Para>
-
-<Para>
-To create a data storage area using the environment variable 
-<envar>PGDATA2</envar> (for this example set to <filename>/alt/postgres</filename>), 
-ensure that <FileName>/alt/postgres</FileName> already exists and is writable by 
-the Postgres administrator account.
-Then, from the command line, type
-<ProgramListing>
+   <Para>
+    To create a data storage area using the environment variable 
+    <envar>PGDATA2</envar> (for this example set to <filename>/alt/postgres</filename>), 
+    ensure that <FileName>/alt/postgres</FileName> already exists and is writable by 
+    the Postgres administrator account.
+    Then, from the command line, type
+    <ProgramListing>
 % initlocation $PGDATA2
 Creating Postgres database system directory /alt/postgres/data
 Creating Postgres database system directory /alt/postgres/data/base
-</ProgramListing>
-</Para>
+    </ProgramListing>
+   </Para>
 
-<Para>
-To create a database in the alternate storage area <envar>PGDATA2</envar>
-from the command line, use the following command: 
-<ProgramListing>
+   <Para>
+    To create a database in the alternate storage area <envar>PGDATA2</envar>
+    from the command line, use the following command: 
+    <ProgramListing>
 % createdb -D PGDATA2 mydb
-</ProgramListing>
+    </ProgramListing>
 
-To do the same from within <Application>psql</Application> type
-<ProgramListing>
+    and to do the same from within <Application>psql</Application> type
+    <ProgramListing>
 * CREATE DATABASE mydb WITH LOCATION = 'PGDATA2';
-</ProgramListing>
-</Para>
+    </ProgramListing>
+   </Para>
 
-<Para>
-If you do not have the privileges required to create a database, you will see
-the following:
-<ProgramListing>
+   <Para>
+    If you do not have the privileges required to create a database, you will see
+    the following:
+    <ProgramListing>
 % createdb mydb
 WARN:user "your username" is not allowed to create/destroy databases
 createdb: database creation failed on mydb.
-</ProgramListing>
-</Para>
+    </ProgramListing>
+   </Para>
 
-<Para>
-If the specified location does not exist or the database backend does not have
-permission to access it or to write to directories under it, you will see
-the following:
-<ProgramListing>
+   <Para>
+    If the specified location does not exist or the database backend does not have
+    permission to access it or to write to directories under it, you will see
+    the following:
+    <ProgramListing>
 % createdb -D /alt/postgres/data mydb
 ERROR:  Unable to create database directory /alt/postgres/data/base/mydb
 createdb: database creation failed on mydb.
-</ProgramListing>
-</Para>
+    </ProgramListing>
+   </Para>
 
-</Sect1>
+  </Sect1>
 
 <Sect1>
 <Title>Accessing a Database</Title>
@@ -296,3 +292,20 @@ TBD
 </Sect1>
 
 </Chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/CATALOG"
+sgml-local-ecat-files:nil
+End:
+-->
