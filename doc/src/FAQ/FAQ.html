@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Wed Aug 25 23:18:13 EDT 2004</P>
+    <P>Last updated: Tue Aug 31 23:28:02 EDT 2004</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -1000,6 +1000,10 @@
     <i>initdb</i>.</LI>
     </UL>
     <P>
+
+    <P>In pre-8.0 releases, indexes often can not be used unless the data
+    types exactly match the index's column types.  This is particularly
+    true of int2, int8, and numeric column indexes.</P>
 
     <H4><A name="4.9">4.9</A>) How do I see how the query optimizer is
     evaluating my query?</H4>

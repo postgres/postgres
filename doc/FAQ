@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Aug 25 23:18:13 EDT 2004
+   Last updated: Tue Aug 31 23:28:02 EDT 2004
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -797,6 +797,10 @@
        section 4.12.
      * The default C locale must be used during initdb.
        
+   In pre-8.0 releases, indexes often can not be used unless the data
+   types exactly match the index's column types. This is particularly
+   true of int2, int8, and numeric column indexes.
+   
     4.9) How do I see how the query optimizer is evaluating my query?
     
    See the EXPLAIN manual page.
