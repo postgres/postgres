@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.148 2000/02/21 18:47:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.149 2000/02/22 00:05:04 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5646,7 +5646,7 @@ doNegateFloat(Value *v)
 	if (*oldval == '+')
 		oldval++;
 	if (*oldval == '-')
-		v->val.str = oldval;	/* just strip the '-' */
+		v->val.str = oldval+1;	/* just strip the '-' */
 	else
 	{
 		char   *newval = (char *) palloc(strlen(oldval) + 2);
