@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.100 2003/03/22 01:49:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.101 2003/03/22 17:11:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -638,7 +638,7 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual)
 {
 	bool		safe = true;
 	List	   *vars;
-	List	   *l;
+	List	   *vl;
 	Bitmapset  *tested = NULL;
 
 	/* Refuse subselects (point 1) */
@@ -650,10 +650,11 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual)
 	 * all such Vars must refer to subselect output columns.
 	 */
 	vars = pull_var_clause(qual, false);
-	foreach(l, vars)
+	foreach(vl, vars)
 	{
-		Var	   *var = (Var *) lfirst(l);
-		TargetEntry *tle;
+		Var	   *var = (Var *) lfirst(vl);
+		List	   *tl;
+		TargetEntry *tle = NULL;
 
 		Assert(var->varno == rti);
 		/*
@@ -665,8 +666,13 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual)
 			continue;
 		tested = bms_add_member(tested, var->varattno);
 
-		tle = (TargetEntry *) nth(var->varattno-1, subquery->targetList);
-		Assert(tle->resdom->resno == var->varattno);
+		foreach(tl, subquery->targetList)
+		{
+			tle = (TargetEntry *) lfirst(tl);
+			if (tle->resdom->resno == var->varattno)
+				break;
+		}
+		Assert(tl != NIL);
 		Assert(!tle->resdom->resjunk);
 
 		/* If subquery uses DISTINCT or DISTINCT ON, check point 2 */
