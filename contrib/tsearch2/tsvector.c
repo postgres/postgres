@@ -573,24 +573,24 @@ tsvector_out(PG_FUNCTION_ARGS)
 static int
 compareWORD(const void *a, const void *b)
 {
-	if (((WORD *) a)->len == ((WORD *) b)->len)
+	if (((TSWORD *) a)->len == ((TSWORD *) b)->len)
 	{
 		int			res = strncmp(
-								  ((WORD *) a)->word,
-								  ((WORD *) b)->word,
-								  ((WORD *) b)->len);
+								  ((TSWORD *) a)->word,
+								  ((TSWORD *) b)->word,
+								  ((TSWORD *) b)->len);
 
 		if (res == 0)
-			return (((WORD *) a)->pos.pos > ((WORD *) b)->pos.pos) ? 1 : -1;
+			return (((TSWORD *) a)->pos.pos > ((TSWORD *) b)->pos.pos) ? 1 : -1;
 		return res;
 	}
-	return (((WORD *) a)->len > ((WORD *) b)->len) ? 1 : -1;
+	return (((TSWORD *) a)->len > ((TSWORD *) b)->len) ? 1 : -1;
 }
 
 static int
-uniqueWORD(WORD * a, int4 l)
+uniqueWORD(TSWORD * a, int4 l)
 {
-	WORD	   *ptr,
+	TSWORD	   *ptr,
 			   *res;
 	int			tmppos;
 
@@ -607,7 +607,7 @@ uniqueWORD(WORD * a, int4 l)
 	res = a;
 	ptr = a + 1;
 
-	qsort((void *) a, l, sizeof(WORD), compareWORD);
+	qsort((void *) a, l, sizeof(TSWORD), compareWORD);
 	tmppos = LIMITPOS(a->pos.pos);
 	a->alen = 2;
 	a->pos.apos = (uint16 *) palloc(sizeof(uint16) * a->alen);
@@ -728,7 +728,7 @@ to_tsvector(PG_FUNCTION_ARGS)
 	prs.lenwords = 32;
 	prs.curwords = 0;
 	prs.pos = 0;
-	prs.words = (WORD *) palloc(sizeof(WORD) * prs.lenwords);
+	prs.words = (TSWORD *) palloc(sizeof(TSWORD) * prs.lenwords);
 
 	parsetext_v2(cfg, &prs, VARDATA(in), VARSIZE(in) - VARHDRSZ);
 	PG_FREE_IF_COPY(in, 1);
@@ -853,7 +853,7 @@ tsearch2(PG_FUNCTION_ARGS)
 	prs.lenwords = 32;
 	prs.curwords = 0;
 	prs.pos = 0;
-	prs.words = (WORD *) palloc(sizeof(WORD) * prs.lenwords);
+	prs.words = (TSWORD *) palloc(sizeof(TSWORD) * prs.lenwords);
 
 	/* find all words in indexable column */
 	for (i = 1; i < trigger->tgnargs; i++)

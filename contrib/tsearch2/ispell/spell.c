@@ -619,6 +619,9 @@ static char *
 CheckAffix(const char *word, size_t len, AFFIX * Affix, char flagflags, char *newword) {
 	regmatch_t	subs[2];		/* workaround for apache&linux */
 	int			err;
+	pg_wchar   *data;
+	size_t		data_len;
+	int			dat_len;
 
 	if ( flagflags & FF_COMPOUNDONLYAFX ) {
 		if ( (Affix->flagflags & FF_COMPOUNDONLYAFX) == 0 )
@@ -638,17 +641,29 @@ CheckAffix(const char *word, size_t len, AFFIX * Affix, char flagflags, char *ne
 
 	if (Affix->compile)
 	{
-		err = regcomp(&(Affix->reg), Affix->mask, REG_EXTENDED | REG_ICASE | REG_NOSUB);
+		int wmasklen,masklen = strlen(Affix->mask);
+		pg_wchar *mask;
+		mask = (pg_wchar *) palloc((masklen + 1) * sizeof(pg_wchar));
+		wmasklen = pg_mb2wchar_with_len( Affix->mask, mask, masklen);
+		
+		err = pg_regcomp(&(Affix->reg), mask, wmasklen, REG_EXTENDED | REG_ICASE | REG_NOSUB);
 		if (err)
 		{
 			/* regerror(err, &(Affix->reg), regerrstr, ERRSTRSIZE); */
-			regfree(&(Affix->reg));
+			pg_regfree(&(Affix->reg));
 			return (NULL);
 		}
 		Affix->compile = 0;
 	}
-	if (!(err = regexec(&(Affix->reg), newword, 1, subs, 0))) 
+
+	/* Convert data string to wide characters */
+	dat_len = strlen(newword);
+	data = (pg_wchar *) palloc((dat_len + 1) * sizeof(pg_wchar));
+	data_len = pg_mb2wchar_with_len(newword, data, dat_len);
+
+	if (!(err = pg_regexec(&(Affix->reg), data,dat_len,NULL, 1, subs, 0))) 
 			return newword;
+
 	return NULL;
 }
 
@@ -995,7 +1010,7 @@ NIFree(IspellDict * Conf)
 	for (i = 0; i < Conf->naffixes; i++)
 	{
 		if (Affix[i].compile == 0)
-			regfree(&(Affix[i].reg));
+			pg_regfree(&(Affix[i].reg));
 	}
 	if (Conf->Spell) {
 		for (i = 0; i < Conf->nspell; i++)

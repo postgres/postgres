@@ -1,7 +1,9 @@
 #ifndef __TS_CFG_H__
 #define __TS_CFG_H__
+
 #include "postgres.h"
 #include "query.h"
+
 
 typedef struct
 {
@@ -32,11 +34,11 @@ typedef struct
 	}			pos;
 	char	   *word;
 	uint32		alen;
-}	WORD;
+}	TSWORD;
 
 typedef struct
 {
-	WORD	   *words;
+	TSWORD	   *words;
 	int4		lenwords;
 	int4		curwords;
 	int4		pos;

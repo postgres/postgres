@@ -269,7 +269,7 @@ pushval_morph(QPRS_STATE * state, int typeval, char *strval, int lenval, int2 we
 	prs.lenwords = 32;
 	prs.curwords = 0;
 	prs.pos = 0;
-	prs.words = (WORD *) palloc(sizeof(WORD) * prs.lenwords);
+	prs.words = (TSWORD *) palloc(sizeof(TSWORD) * prs.lenwords);
 
 	parsetext_v2(findcfg(state->cfg_id), &prs, strval, lenval);
 

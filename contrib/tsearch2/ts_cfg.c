@@ -338,7 +338,7 @@ parsetext_v2(TSCfgInfo * cfg, PRSTEXT * prs, char *buf, int4 buflen)
 				if (prs->curwords == prs->lenwords)
 				{
 					prs->lenwords *= 2;
-					prs->words = (WORD *) repalloc((void *) prs->words, prs->lenwords * sizeof(WORD));
+					prs->words = (TSWORD *) repalloc((void *) prs->words, prs->lenwords * sizeof(TSWORD));
 				}
 
 				prs->words[prs->curwords].len = strlen(*ptr);
