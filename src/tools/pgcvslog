@@ -14,7 +14,9 @@
 #
 # date range
 # cvs log -d'2000-05-08 00:00:00 GMT<2000-05-29 00:00:00 GMT' -b .
-
+#
+# Remove TODO and FAQ logs if desired
+#
 
 if [ "X$1" == "X-h" ]
 then	HTML="Y"
