@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.13 2001/09/03 12:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.14 2001/09/13 19:40:34 petere Exp $
 Postgres documentation
 -->
 
@@ -105,14 +105,10 @@ NOTICE RemoveFunction: Function "<replaceable class="parameter">name</replaceabl
    function must be specified, as only the function with the
    given name and argument types will be removed.
   </para>
+ </refsect1>
 
-  <refsect2 id="R2-SQL-DROPFUNCTION-3">
-   <refsect2info>
-    <date>1998-04-15</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
+ <refsect1 id="SQL-DROPFUNCTION-notes">
+  <title>Notes</title>
 
    <para>
     Refer to
@@ -124,58 +120,42 @@ NOTICE RemoveFunction: Function "<replaceable class="parameter">name</replaceabl
     No checks are made to ensure that types, operators or access
     methods that rely on the function have been removed first.
    </para>
-  </refsect2>
  </refsect1>
 
- <refsect1 id="R1-SQL-DROPFUNCTION-2">
-  <title>
-   Usage
-  </title>
+ <refsect1 id="SQL-DROPFUNCTION-examples">
+  <title>Examples</title>
 
   <para>
    This command removes the square root function:
 
-   <programlisting>
-DROP FUNCTION sqrt(int4);
-   </programlisting>
+<programlisting>
+DROP FUNCTION sqrt(integer);
+</programlisting>
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-DROPFUNCTION-4">
-  <title>
-   Compatibility
-  </title>
+ <refsect1 id="SQL-DROPFUNCTION-compatibility">
+  <title>Compatibility</title>
   
-  <refsect2 id="R2-SQL-DROPFUNCTION-4">
-   <refsect2info>
-    <date>1999-07-20</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
+  <para>
+   A <command>DROP FUNCTION</command> statement is defined in SQL99.  One of its syntax forms is:
 
-   <para>
-    <command>DROP FUNCTION</command>
-    is a <productname>Postgres</productname> language extension.
-   </para>
-  </refsect2>
+<synopsis>
+DROP FUNCTION <replaceable class="parameter">name</replaceable> (<replaceable>arg</>, ...) { RESTRICT | CASCADE }
+</synopsis>
 
-  <refsect2 id="R2-SQL-DROPFUNCTION-5">
-   <refsect2info>
-    <date>1998-04-15</date>
-   </refsect2info>
-   <title>
-    SQL/PSM
-   </title>
-   <para>
-    SQL/PSM is a standard to enable function extensibility.
-    The SQL/PSM DROP FUNCTION statement has the following syntax:
+   where <literal>CASCADE</> specifies dropping all objects that
+   depend on the function and <literal>RESTRICT</literal> refuses to
+   drop the function if dependent objects exist.
+  </para>
+ </refsect1>
 
-    <synopsis>
-DROP [ SPECIFIC ] FUNCTION <replaceable class="parameter">name</replaceable> { RESTRICT | CASCADE }
-    </synopsis>
-   </para>
-  </refsect2>
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createfunction"></member>
+  </simplelist>
  </refsect1>
 </refentry>
 
