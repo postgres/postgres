@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.37 2000/01/09 00:26:47 tgl Exp $
+ * $Id: paths.h,v 1.38 2000/01/22 23:50:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,9 +16,16 @@
 
 #include "nodes/relation.h"
 
+/* default GEQO threshold (default value for geqo_rels) */
+#define GEQO_RELS 11
+
+
 /*
  * allpaths.c
  */
+extern bool enable_geqo;
+extern int	geqo_rels;
+
 extern RelOptInfo *make_one_rel(Query *root, List *rels);
 
 /*

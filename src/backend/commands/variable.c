@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO',
  *	'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.27 2000/01/15 02:59:29 petere Exp $
+ * $Id: variable.c,v 1.28 2000/01/22 23:50:10 tgl Exp $
  *
  */
 
@@ -14,7 +14,8 @@
 #include "catalog/pg_shadow.h"
 #include "commands/variable.h"
 #include "miscadmin.h"
-#include "optimizer/internal.h"
+#include "optimizer/cost.h"
+#include "optimizer/paths.h"
 #include "utils/builtins.h"
 #include "utils/tqual.h"
 #include "utils/trace.h"
@@ -45,10 +46,6 @@ static bool show_XactIsoLevel(void);
 static bool reset_XactIsoLevel(void);
 static bool parse_XactIsoLevel(const char *);
 
-extern Cost _cpu_page_weight_;
-extern Cost _cpu_index_page_weight_;
-extern bool _use_geqo_;
-extern int32 _use_geqo_rels_;
 extern bool _use_keyset_query_optimizer;
 
 /*
@@ -183,23 +180,23 @@ parse_geqo(const char *value)
 
 	if (strcasecmp(tok, "on") == 0)
 	{
-		int32		geqo_rels = GEQO_RELS;
+		int		new_geqo_rels = GEQO_RELS;
 
 		if (val != NULL)
 		{
-			geqo_rels = pg_atoi(val, sizeof(int32), '\0');
-			if (geqo_rels <= 1)
+			new_geqo_rels = pg_atoi(val, sizeof(int), '\0');
+			if (new_geqo_rels <= 1)
 				elog(ERROR, "Bad value for # of relations (%s)", val);
 			pfree(val);
 		}
-		_use_geqo_ = true;
-		_use_geqo_rels_ = geqo_rels;
+		enable_geqo = true;
+		geqo_rels = new_geqo_rels;
 	}
 	else if (strcasecmp(tok, "off") == 0)
 	{
 		if ((val != NULL) && (*val != '\0'))
 			elog(ERROR, "%s does not allow a parameter", tok);
-		_use_geqo_ = false;
+		enable_geqo = false;
 	}
 	else
 		elog(ERROR, "Bad value for GEQO (%s)", value);
@@ -212,8 +209,8 @@ static bool
 show_geqo()
 {
 
-	if (_use_geqo_)
-		elog(NOTICE, "GEQO is ON beginning with %d relations", _use_geqo_rels_);
+	if (enable_geqo)
+		elog(NOTICE, "GEQO is ON beginning with %d relations", geqo_rels);
 	else
 		elog(NOTICE, "GEQO is OFF");
 	return TRUE;
@@ -224,11 +221,11 @@ reset_geqo(void)
 {
 
 #ifdef GEQO
-	_use_geqo_ = true;
+	enable_geqo = true;
 #else
-	_use_geqo_ = false;
+	enable_geqo = false;
 #endif
-	_use_geqo_rels_ = GEQO_RELS;
+	geqo_rels = GEQO_RELS;
 	return TRUE;
 }
 
@@ -240,7 +237,7 @@ reset_geqo(void)
 static bool
 parse_cost_heap(const char *value)
 {
-	float32		res;
+	float64		res;
 
 	if (value == NULL)
 	{
@@ -248,8 +245,8 @@ parse_cost_heap(const char *value)
 		return TRUE;
 	}
 
-	res = float4in((char *) value);
-	_cpu_page_weight_ = *res;
+	res = float8in((char *) value);
+	cpu_page_weight = *res;
 
 	return TRUE;
 }
@@ -258,14 +255,14 @@ static bool
 show_cost_heap()
 {
 
-	elog(NOTICE, "COST_HEAP is %f", _cpu_page_weight_);
+	elog(NOTICE, "COST_HEAP is %f", cpu_page_weight);
 	return TRUE;
 }
 
 static bool
 reset_cost_heap()
 {
-	_cpu_page_weight_ = _CPU_PAGE_WEIGHT_;
+	cpu_page_weight = CPU_PAGE_WEIGHT;
 	return TRUE;
 }
 
@@ -277,7 +274,7 @@ reset_cost_heap()
 static bool
 parse_cost_index(const char *value)
 {
-	float32		res;
+	float64		res;
 
 	if (value == NULL)
 	{
@@ -285,8 +282,8 @@ parse_cost_index(const char *value)
 		return TRUE;
 	}
 
-	res = float4in((char *) value);
-	_cpu_index_page_weight_ = *res;
+	res = float8in((char *) value);
+	cpu_index_page_weight = *res;
 
 	return TRUE;
 }
@@ -295,14 +292,14 @@ static bool
 show_cost_index()
 {
 
-	elog(NOTICE, "COST_INDEX is %f", _cpu_index_page_weight_);
+	elog(NOTICE, "COST_INDEX is %f", cpu_index_page_weight);
 	return TRUE;
 }
 
 static bool
 reset_cost_index()
 {
-	_cpu_index_page_weight_ = _CPU_INDEX_PAGE_WEIGHT_;
+	cpu_index_page_weight = CPU_INDEX_PAGE_WEIGHT;
 	return TRUE;
 }
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.100 2000/01/17 00:14:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.101 2000/01/22 23:50:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1031,6 +1031,7 @@ _copyIndexOptInfo(IndexOptInfo *from)
 	}
 
 	newnode->relam = from->relam;
+	newnode->amcostestimate = from->amcostestimate;
 	newnode->indproc = from->indproc;
 	Node_Copy(from, newnode, indpred);
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: cost.h,v 1.25 2000/01/09 00:26:46 tgl Exp $
+ * $Id: cost.h,v 1.26 2000/01/22 23:50:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,23 +20,31 @@
 #define PERBYTE_CPU 0
 #define PERCALL_CPU 0
 #define OUTIN_RATIO 100
+/* defaults for costsize.c's Cost parameters */
+/* NB: cost-estimation code should use the variables, not the constants! */
+#define CPU_PAGE_WEIGHT  0.033
+#define CPU_INDEX_PAGE_WEIGHT  0.017
+
 
 /*
  * prototypes for costsize.c
  *	  routines to compute costs and sizes
  */
-extern bool _enable_seqscan_;
-extern bool _enable_indexscan_;
-extern bool _enable_sort_;
-extern bool _enable_nestloop_;
-extern bool _enable_mergejoin_;
-extern bool _enable_hashjoin_;
-extern bool _enable_tidscan_;
+
+extern Cost cpu_page_weight;
+extern Cost cpu_index_page_weight;
+extern Cost disable_cost;
+extern bool enable_seqscan;
+extern bool enable_indexscan;
+extern bool enable_tidscan;
+extern bool enable_sort;
+extern bool enable_nestloop;
+extern bool enable_mergejoin;
+extern bool enable_hashjoin;
 
 extern Cost cost_seqscan(RelOptInfo *baserel);
-extern Cost cost_index(RelOptInfo *baserel, IndexOptInfo *index,
-					   long expected_indexpages, Selectivity selec,
-					   bool is_injoin);
+extern Cost cost_index(Query *root, RelOptInfo *baserel, IndexOptInfo *index,
+					   List *indexQuals, bool is_injoin);
 extern Cost cost_tidscan(RelOptInfo *baserel, List *tideval);
 extern Cost cost_sort(List *pathkeys, double tuples, int width);
 extern Cost cost_nestloop(Path *outer_path, Path *inner_path,

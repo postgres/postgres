@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.40 2000/01/09 00:26:44 tgl Exp $
+ * $Id: relation.h,v 1.41 2000/01/22 23:50:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,6 +109,7 @@ typedef struct RelOptInfo
  *		indexkeys - List of base-relation attribute numbers that are index keys
  *		ordering - List of PG_OPERATOR OIDs which order the indexscan result
  *		relam	  - the OID of the pg_am of the index
+ *		amcostestimate - OID of the relam's cost estimator
  *		indproc	  - OID of the function if a functional index, else 0
  *		indpred	  - index predicate if a partial index, else NULL
  *
@@ -131,6 +132,8 @@ typedef struct IndexOptInfo
 	int		   *indexkeys;		/* keys over which we're indexing */
 	Oid		   *ordering;		/* OIDs of sort operators for each key */
 	Oid			relam;			/* OID of the access method (in pg_am) */
+
+	RegProcedure amcostestimate; /* OID of the access method's cost fcn */
 
 	Oid			indproc;		/* if a functional index */
 	List	   *indpred;		/* if a partial index */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.41 2000/01/09 00:26:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.42 2000/01/22 23:50:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -257,9 +257,9 @@ add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
 static void
 set_restrictinfo_joininfo(RestrictInfo *restrictinfo)
 {
-	if (_enable_mergejoin_)
+	if (enable_mergejoin)
 		check_mergejoinable(restrictinfo);
-	if (_enable_hashjoin_)
+	if (enable_hashjoin)
 		check_hashjoinable(restrictinfo);
 }
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: internal.h,v 1.24 2000/01/11 03:59:31 tgl Exp $
+ * $Id: internal.h,v 1.25 2000/01/22 23:50:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,14 +24,6 @@
  *
  */
 
-
-/*
- *		System-dependent tuning constants
- *
- */
-#define _CPU_PAGE_WEIGHT_  0.033  /* CPU-heap-to-page cost weighting factor */
-#define _CPU_INDEX_PAGE_WEIGHT_ 0.017	/* CPU-index-to-page cost
-										 * weighting factor */
 
 /*
  *		Size estimates
@@ -59,8 +51,5 @@
 /*	   Identifier for (sort) temp relations   */
 /* used to be -1 */
 #define _NONAME_RELATION_ID_	 InvalidOid
-
-/* GEQO switch according to number of relations in a query */
-#define GEQO_RELS 11
 
 #endif	 /* INTERNAL_H */

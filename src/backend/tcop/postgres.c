@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.139 2000/01/09 12:17:33 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.140 2000/01/22 23:50:18 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1055,19 +1055,22 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				switch (optarg[0])
 				{
 					case 's':	/* seqscan */
-						_enable_seqscan_ = false;
+						enable_seqscan = false;
 						break;
 					case 'i':	/* indexscan */
-						_enable_indexscan_ = false;
+						enable_indexscan = false;
+						break;
+					case 't':	/* tidscan */
+						enable_tidscan = false;
 						break;
 					case 'n':	/* nestloop */
-						_enable_nestloop_ = false;
+						enable_nestloop = false;
 						break;
 					case 'm':	/* mergejoin */
-						_enable_mergejoin_ = false;
+						enable_mergejoin = false;
 						break;
 					case 'h':	/* hashjoin */
-						_enable_hashjoin_ = false;
+						enable_hashjoin = false;
 						break;
 					default:
 						errs++;
@@ -1512,7 +1515,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.139 $ $Date: 2000/01/09 12:17:33 $\n");
+		puts("$Revision: 1.140 $ $Date: 2000/01/22 23:50:18 $\n");
 	}
 
 	/*

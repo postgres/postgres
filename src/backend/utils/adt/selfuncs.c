@@ -1,16 +1,20 @@
 /*-------------------------------------------------------------------------
  *
  * selfuncs.c
- *	  Selectivity functions for system catalogs and builtin types
+ *	  Selectivity functions and index cost estimation functions for
+ *	  standard operators and index access methods.
  *
- *	  These routines are registered in the operator catalog in the
- *	  "oprrest" and "oprjoin" attributes.
+ *	  Selectivity routines are registered in the pg_operator catalog
+ *	  in the "oprrest" and "oprjoin" attributes.
+ *
+ *	  Index cost functions are registered in the pg_am catalog
+ *	  in the "amcostestimate" attribute.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.48 2000/01/15 22:43:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.49 2000/01/22 23:50:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +27,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
+#include "optimizer/cost.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "utils/builtins.h"
@@ -700,349 +705,74 @@ getattstatistics(Oid relid, AttrNumber attnum, Oid opid, Oid typid,
 	return true;
 }
 
-float64
-btreesel(Oid operatorObjectId,
-		 Oid indrelid,
-		 AttrNumber attributeNumber,
-		 char *constValue,
-		 int32 constFlag,
-		 int32 nIndexKeys,
-		 Oid indexrelid)
+/*-------------------------------------------------------------------------
+ *
+ * Index cost estimation functions
+ *
+ * genericcostestimate is a general-purpose estimator for use when we
+ * don't have any better idea about how to estimate.  Index-type-specific
+ * knowledge can be incorporated in the type-specific routines.
+ *
+ *-------------------------------------------------------------------------
+ */
+
+static void
+genericcostestimate(Query *root, RelOptInfo *rel,
+					IndexOptInfo *index, List *indexQuals,
+					Cost *indexAccessCost, Selectivity *indexSelectivity)
 {
-	float64		result;
+	double numIndexTuples;
+	double numIndexPages;
 
-	if (FunctionalSelectivity(nIndexKeys, attributeNumber))
-	{
+	/* Estimate the fraction of main-table tuples that will be visited */
+    *indexSelectivity = clauselist_selec(root, indexQuals);
 
-		/*
-		 * Need to call the functions selectivity function here.  For now
-		 * simply assume it's 1/3 since functions don't currently have
-		 * selectivity functions
-		 */
-		result = (float64) palloc(sizeof(float64data));
-		*result = 1.0 / 3.0;
-	}
-	else
-	{
-		RegProcedure oprrest = get_oprrest(operatorObjectId);
+	/* Estimate the number of index tuples that will be visited */
+	numIndexTuples = *indexSelectivity * index->tuples;
 
-		/*
-		 * Operators used for indexes should have selectivity estimators.
-		 * (An alternative is to default to 0.5, as the optimizer does in
-		 * dealing with operators occurring in WHERE clauses, but if you
-		 * are going to the trouble of making index support you probably
-		 * don't want to miss the benefits of a good selectivity estimate.)
-		 */
-		if (!oprrest)
-		{
-#if 1
-			/*
-			 * XXX temporary fix for 6.5: rtree operators are missing their
-			 * selectivity estimators, so return a default estimate instead.
-			 * Ugh.
-			 */
-			result = (float64) palloc(sizeof(float64data));
-			*result = 0.5;
-#else
-			elog(ERROR,
-				 "Operator %u must have a restriction selectivity estimator to be used in an index",
-				 operatorObjectId);
-#endif
-		}
-		else
-			result = (float64) fmgr(oprrest,
-									(char *) operatorObjectId,
-									(char *) indrelid,
-									(char *) (int) attributeNumber,
-									(char *) constValue,
-									(char *) constFlag,
-									NULL);
-	}
+	/* Estimate the number of index pages that will be retrieved */
+	numIndexPages = *indexSelectivity * index->pages;
 
-	if (!PointerIsValid(result))
-		elog(ERROR, "Btree Selectivity: bad pointer");
-	if (*result < 0.0 || *result > 1.0)
-		elog(ERROR, "Btree Selectivity: bad value %f", *result);
-
-	return result;
+	/* Compute the index access cost */
+    *indexAccessCost = numIndexPages + cpu_index_page_weight * numIndexTuples;
 }
 
-float64
-btreenpage(Oid operatorObjectId,
-		   Oid indrelid,
-		   AttrNumber attributeNumber,
-		   char *constValue,
-		   int32 constFlag,
-		   int32 nIndexKeys,
-		   Oid indexrelid)
+/*
+ * For first cut, just use generic function for all index types.
+ */
+
+void
+btcostestimate(Query *root, RelOptInfo *rel,
+			   IndexOptInfo *index, List *indexQuals,
+			   Cost *indexAccessCost, Selectivity *indexSelectivity)
 {
-	float64		temp,
-				result;
-	float64data tempData;
-	HeapTuple	atp;
-	int			npage;
-
-	if (FunctionalSelectivity(nIndexKeys, attributeNumber))
-	{
-
-		/*
-		 * Need to call the functions selectivity function here.  For now
-		 * simply assume it's 1/3 since functions don't currently have
-		 * selectivity functions
-		 */
-		tempData = 1.0 / 3.0;
-		temp = &tempData;
-	}
-	else
-	{
-		RegProcedure oprrest = get_oprrest(operatorObjectId);
-
-		/*
-		 * Operators used for indexes should have selectivity estimators.
-		 * (An alternative is to default to 0.5, as the optimizer does in
-		 * dealing with operators occurring in WHERE clauses, but if you
-		 * are going to the trouble of making index support you probably
-		 * don't want to miss the benefits of a good selectivity estimate.)
-		 */
-		if (!oprrest)
-		{
-#if 1
-			/*
-			 * XXX temporary fix for 6.5: rtree operators are missing their
-			 * selectivity estimators, so return a default estimate instead.
-			 * Ugh.
-			 */
-			tempData = 0.5;
-			temp = &tempData;
-#else
-			elog(ERROR,
-				 "Operator %u must have a restriction selectivity estimator to be used in an index",
-				 operatorObjectId);
-#endif
-		}
-		else
-			temp = (float64) fmgr(oprrest,
-								  (char *) operatorObjectId,
-								  (char *) indrelid,
-								  (char *) (int) attributeNumber,
-								  (char *) constValue,
-								  (char *) constFlag,
-								  NULL);
-	}
-
-	atp = SearchSysCacheTuple(RELOID,
-							  ObjectIdGetDatum(indexrelid),
-							  0, 0, 0);
-	if (!HeapTupleIsValid(atp))
-	{
-		elog(ERROR, "btreenpage: no index tuple %u", indexrelid);
-		return 0;
-	}
-
-	npage = ((Form_pg_class) GETSTRUCT(atp))->relpages;
-	result = (float64) palloc(sizeof(float64data));
-	*result = *temp * npage;
-	return result;
+	genericcostestimate(root, rel, index, indexQuals,
+						indexAccessCost, indexSelectivity);
 }
 
-float64
-hashsel(Oid operatorObjectId,
-		Oid indrelid,
-		AttrNumber attributeNumber,
-		char *constValue,
-		int32 constFlag,
-		int32 nIndexKeys,
-		Oid indexrelid)
+void
+rtcostestimate(Query *root, RelOptInfo *rel,
+			   IndexOptInfo *index, List *indexQuals,
+			   Cost *indexAccessCost, Selectivity *indexSelectivity)
 {
-
-	float64		result;
-	float64data resultData;
-	HeapTuple	atp;
-	int			ntuples;
-
-	if (FunctionalSelectivity(nIndexKeys, attributeNumber))
-	{
-
-		/*
-		 * Need to call the functions selectivity function here.  For now
-		 * simply use 1/Number of Tuples since functions don't currently
-		 * have selectivity functions
-		 */
-
-		atp = SearchSysCacheTuple(RELOID,
-								  ObjectIdGetDatum(indexrelid),
-								  0, 0, 0);
-		if (!HeapTupleIsValid(atp))
-		{
-			elog(ERROR, "hashsel: no index tuple %u", indexrelid);
-			return 0;
-		}
-		ntuples = ((Form_pg_class) GETSTRUCT(atp))->reltuples;
-		if (ntuples > 0)
-			resultData = 1.0 / (float64data) ntuples;
-		else
-			resultData = (float64data) (1.0 / 100.0);
-		result = &resultData;
-
-	}
-	else
-	{
-		RegProcedure oprrest = get_oprrest(operatorObjectId);
-
-		/*
-		 * Operators used for indexes should have selectivity estimators.
-		 * (An alternative is to default to 0.5, as the optimizer does in
-		 * dealing with operators occurring in WHERE clauses, but if you
-		 * are going to the trouble of making index support you probably
-		 * don't want to miss the benefits of a good selectivity estimate.)
-		 */
-		if (!oprrest)
-			elog(ERROR,
-				 "Operator %u must have a restriction selectivity estimator to be used in a hash index",
-				 operatorObjectId);
-
-		result = (float64) fmgr(oprrest,
-								(char *) operatorObjectId,
-								(char *) indrelid,
-								(char *) (int) attributeNumber,
-								(char *) constValue,
-								(char *) constFlag,
-								NULL);
-	}
-
-	if (!PointerIsValid(result))
-		elog(ERROR, "Hash Table Selectivity: bad pointer");
-	if (*result < 0.0 || *result > 1.0)
-		elog(ERROR, "Hash Table Selectivity: bad value %f", *result);
-
-	return result;
-
-
+	genericcostestimate(root, rel, index, indexQuals,
+						indexAccessCost, indexSelectivity);
 }
 
-float64
-hashnpage(Oid operatorObjectId,
-		  Oid indrelid,
-		  AttrNumber attributeNumber,
-		  char *constValue,
-		  int32 constFlag,
-		  int32 nIndexKeys,
-		  Oid indexrelid)
+void
+hashcostestimate(Query *root, RelOptInfo *rel,
+				 IndexOptInfo *index, List *indexQuals,
+				 Cost *indexAccessCost, Selectivity *indexSelectivity)
 {
-	float64		temp,
-				result;
-	float64data tempData;
-	HeapTuple	atp;
-	int			npage;
-	int			ntuples;
-
-	atp = SearchSysCacheTuple(RELOID,
-							  ObjectIdGetDatum(indexrelid),
-							  0, 0, 0);
-	if (!HeapTupleIsValid(atp))
-	{
-		elog(ERROR, "hashsel: no index tuple %u", indexrelid);
-		return 0;
-	}
-
-
-	if (FunctionalSelectivity(nIndexKeys, attributeNumber))
-	{
-
-		/*
-		 * Need to call the functions selectivity function here.  For now,
-		 * use 1/Number of Tuples since functions don't currently have
-		 * selectivity functions
-		 */
-
-		ntuples = ((Form_pg_class) GETSTRUCT(atp))->reltuples;
-		if (ntuples > 0)
-			tempData = 1.0 / (float64data) ntuples;
-		else
-			tempData = (float64data) (1.0 / 100.0);
-		temp = &tempData;
-
-	}
-	else
-	{
-		RegProcedure oprrest = get_oprrest(operatorObjectId);
-
-		/*
-		 * Operators used for indexes should have selectivity estimators.
-		 * (An alternative is to default to 0.5, as the optimizer does in
-		 * dealing with operators occurring in WHERE clauses, but if you
-		 * are going to the trouble of making index support you probably
-		 * don't want to miss the benefits of a good selectivity estimate.)
-		 */
-		if (!oprrest)
-			elog(ERROR,
-				 "Operator %u must have a restriction selectivity estimator to be used in a hash index",
-				 operatorObjectId);
-
-		temp = (float64) fmgr(oprrest,
-							  (char *) operatorObjectId,
-							  (char *) indrelid,
-							  (char *) (int) attributeNumber,
-							  (char *) constValue,
-							  (char *) constFlag,
-							  NULL);
-	}
-
-	npage = ((Form_pg_class) GETSTRUCT(atp))->relpages;
-	result = (float64) palloc(sizeof(float64data));
-	*result = *temp * npage;
-	return result;
+	genericcostestimate(root, rel, index, indexQuals,
+						indexAccessCost, indexSelectivity);
 }
 
-
-float64
-rtsel(Oid operatorObjectId,
-	  Oid indrelid,
-	  AttrNumber attributeNumber,
-	  char *constValue,
-	  int32 constFlag,
-	  int32 nIndexKeys,
-	  Oid indexrelid)
+void
+gistcostestimate(Query *root, RelOptInfo *rel,
+				 IndexOptInfo *index, List *indexQuals,
+				 Cost *indexAccessCost, Selectivity *indexSelectivity)
 {
-	return (btreesel(operatorObjectId, indrelid, attributeNumber,
-					 constValue, constFlag, nIndexKeys, indexrelid));
-}
-
-float64
-rtnpage(Oid operatorObjectId,
-		Oid indrelid,
-		AttrNumber attributeNumber,
-		char *constValue,
-		int32 constFlag,
-		int32 nIndexKeys,
-		Oid indexrelid)
-{
-	return (btreenpage(operatorObjectId, indrelid, attributeNumber,
-					   constValue, constFlag, nIndexKeys, indexrelid));
-}
-
-float64
-gistsel(Oid operatorObjectId,
-		Oid indrelid,
-		AttrNumber attributeNumber,
-		char *constValue,
-		int32 constFlag,
-		int32 nIndexKeys,
-		Oid indexrelid)
-{
-	return (btreesel(operatorObjectId, indrelid, attributeNumber,
-					 constValue, constFlag, nIndexKeys, indexrelid));
-}
-
-float64
-gistnpage(Oid operatorObjectId,
-		  Oid indrelid,
-		  AttrNumber attributeNumber,
-		  char *constValue,
-		  int32 constFlag,
-		  int32 nIndexKeys,
-		  Oid indexrelid)
-{
-	return (btreenpage(operatorObjectId, indrelid, attributeNumber,
-					   constValue, constFlag, nIndexKeys, indexrelid));
+	genericcostestimate(root, rel, index, indexQuals,
+						indexAccessCost, indexSelectivity);
 }

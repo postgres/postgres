@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.56 2000/01/09 00:26:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.57 2000/01/22 23:50:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -214,64 +214,26 @@ create_index_path(Query *root,
 				  List *restriction_clauses)
 {
 	IndexPath  *pathnode = makeNode(IndexPath);
+	List	   *indexquals;
 
 	pathnode->path.pathtype = T_IndexScan;
 	pathnode->path.parent = rel;
 	pathnode->path.pathkeys = build_index_pathkeys(root, rel, index);
 
+	indexquals = get_actual_clauses(restriction_clauses);
+	/* expand special operators to indexquals the executor can handle */
+	indexquals = expand_indexqual_conditions(indexquals);
+
 	/*
-	 * Note that we are making a pathnode for a single-scan indexscan;
-	 * therefore, both indexid and indexqual should be single-element
-	 * lists.  We initialize indexqual to contain one empty sublist,
-	 * representing a single index traversal with no index restriction
-	 * conditions.  If we do have restriction conditions to use, they
-	 * will get inserted below.
+	 * We are making a pathnode for a single-scan indexscan; therefore,
+	 * both indexid and indexqual should be single-element lists.
 	 */
 	pathnode->indexid = lconsi(index->indexoid, NIL);
-	pathnode->indexqual = lcons(NIL, NIL);
+	pathnode->indexqual = lcons(indexquals, NIL);
 	pathnode->joinrelids = NIL;	/* no join clauses here */
 
-	if (restriction_clauses == NIL)
-	{
-		/*
-		 * We have no restriction clauses, so compute scan cost using
-		 * selectivity of 1.0.
-		 */
-		pathnode->path.path_cost = cost_index(rel, index,
-											  index->pages,
-											  (Selectivity) 1.0,
-											  false);
-	}
-	else
-	{
-		/*
-		 * Compute scan cost for the case when 'index' is used with
-		 * restriction clause(s).  Also, place indexqual in path node.
-		 */
-		List	   *indexquals;
-		long		npages;
-		Selectivity	selec;
-
-		indexquals = get_actual_clauses(restriction_clauses);
-		/* expand special operators to indexquals the executor can handle */
-		indexquals = expand_indexqual_conditions(indexquals);
-
-		/* Insert qual list into 1st sublist of pathnode->indexqual;
-		 * we already made the cons cell above, no point in wasting it...
-		 */
-		lfirst(pathnode->indexqual) = indexquals;
-
-		index_selectivity(root,
-						  rel,
-						  index,
-						  indexquals,
-						  &npages,
-						  &selec);
-
-		pathnode->path.path_cost = cost_index(rel, index,
-											  npages, selec,
-											  false);
-	}
+	pathnode->path.path_cost = cost_index(root, rel, index, indexquals,
+										  false);
 
 	return pathnode;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.55 2000/01/09 00:26:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.56 2000/01/22 23:50:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,13 +21,12 @@
 #include "optimizer/paths.h"
 
 #ifdef GEQO
-bool		_use_geqo_ = true;
-
+bool		enable_geqo = true;
 #else
-bool		_use_geqo_ = false;
-
+bool		enable_geqo = false;
 #endif
-int32		_use_geqo_rels_ = GEQO_RELS;
+
+int			geqo_rels = GEQO_RELS;
 
 
 static void set_base_rel_pathlist(Query *root, List *rels);
@@ -165,11 +164,11 @@ make_one_rel_by_joins(Query *root, List *rels, int levels_needed)
 	 * genetic query optimizer entry point	   *
 	 *	  <utesch@aut.tu-freiberg.de>		   *
 	 *******************************************/
-	if ((_use_geqo_) && length(root->base_rel_list) >= _use_geqo_rels_)
+	if (enable_geqo && length(root->base_rel_list) >= geqo_rels)
 		return geqo(root);
 
 	/*******************************************
-	 * rest will be deprecated in case of GEQO *
+	 * rest will be skipped in case of GEQO    *
 	 *******************************************/
 
 	while (--levels_needed)

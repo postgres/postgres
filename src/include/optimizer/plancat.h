@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plancat.h,v 1.15 2000/01/09 00:26:47 tgl Exp $
+ * $Id: plancat.h,v 1.16 2000/01/22 23:50:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,10 +29,6 @@ extern Selectivity restriction_selectivity(Oid functionObjectId,
 						AttrNumber attributeNumber,
 						Datum constValue,
 						int constFlag);
-
-extern void index_selectivity(Query *root, RelOptInfo *rel,
-							  IndexOptInfo *index, List *indexquals,
-							  long *idxPages, Selectivity *idxSelec);
 
 extern Selectivity join_selectivity(Oid functionObjectId, Oid operatorObjectId,
 				 Oid relationObjectId1, AttrNumber attributeNumber1,

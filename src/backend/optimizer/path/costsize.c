@@ -5,20 +5,20 @@
  *
  * Path costs are measured in units of disk accesses: one page fetch
  * has cost 1.  The other primitive unit is the CPU time required to
- * process one tuple, which we set at "_cpu_page_weight_" of a page
+ * process one tuple, which we set at "cpu_page_weight" of a page
  * fetch.  Obviously, the CPU time per tuple depends on the query
  * involved, but the relative CPU and disk speeds of a given platform
  * are so variable that we are lucky if we can get useful numbers
- * at all.  _cpu_page_weight_ is user-settable, in case a particular
+ * at all.  cpu_page_weight is user-settable, in case a particular
  * user is clueful enough to have a better-than-default estimate
- * of the ratio for his platform.  There is also _cpu_index_page_weight_,
+ * of the ratio for his platform.  There is also cpu_index_page_weight,
  * the cost to process a tuple of an index during an index scan.
  *
  * 
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.47 2000/01/09 00:26:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.48 2000/01/22 23:50:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,25 +44,26 @@
 #include "utils/lsyscache.h"
 
 
+Cost		cpu_page_weight = CPU_PAGE_WEIGHT;
+Cost		cpu_index_page_weight = CPU_INDEX_PAGE_WEIGHT;
+
+Cost		disable_cost = 100000000.0;
+
+bool		enable_seqscan = true;
+bool		enable_indexscan = true;
+bool		enable_tidscan = true;
+bool		enable_sort = true;
+bool		enable_nestloop = true;
+bool		enable_mergejoin = true;
+bool		enable_hashjoin = true;
+
+
 static void set_rel_width(Query *root, RelOptInfo *rel);
 static int	compute_attribute_width(TargetEntry *tlistentry);
 static double relation_byte_size(double tuples, int width);
 static double page_size(double tuples, int width);
 static double base_log(double x, double b);
 
-
-Cost		_cpu_page_weight_ = _CPU_PAGE_WEIGHT_;
-Cost		_cpu_index_page_weight_ = _CPU_INDEX_PAGE_WEIGHT_;
-
-Cost		_disable_cost_ = 100000000.0;
-
-bool		_enable_seqscan_ = true;
-bool		_enable_indexscan_ = true;
-bool		_enable_sort_ = true;
-bool		_enable_nestloop_ = true;
-bool		_enable_mergejoin_ = true;
-bool		_enable_hashjoin_ = true;
-bool		_enable_tidscan_ = true;
 
 /*
  * cost_seqscan
@@ -84,8 +85,8 @@ cost_seqscan(RelOptInfo *baserel)
 	/* Should only be applied to base relations */
 	Assert(length(baserel->relids) == 1);
 
-	if (!_enable_seqscan_)
-		temp += _disable_cost_;
+	if (!enable_seqscan)
+		temp += disable_cost;
 
 	if (lfirsti(baserel->relids) < 0)
 	{
@@ -97,7 +98,7 @@ cost_seqscan(RelOptInfo *baserel)
 	else
 	{
 		temp += baserel->pages;
-		temp += _cpu_page_weight_ * baserel->tuples;
+		temp += cpu_page_weight * baserel->tuples;
 	}
 
 	Assert(temp >= 0);
@@ -109,58 +110,54 @@ cost_seqscan(RelOptInfo *baserel)
  * cost_index
  *	  Determines and returns the cost of scanning a relation using an index.
  *
- *		disk = expected-index-pages + expected-data-pages
- *		cpu = CPU-INDEX-PAGE-WEIGHT * expected-index-tuples +
- *		      CPU-PAGE-WEIGHT * expected-data-tuples
+ *	  NOTE: an indexscan plan node can actually represent several passes,
+ *	  but here we consider the cost of just one pass.
  *
+ * 'root' is the query root
  * 'baserel' is the base relation the index is for
  * 'index' is the index to be used
- * 'expected_indexpages' is the estimated number of index pages that will
- *		be touched in the scan (this is computed by index-type-specific code)
- * 'selec' is the selectivity of the index, ie, the fraction of base-relation
- *		tuples that we will have to fetch and examine
+ * 'indexQuals' is the list of applicable qual clauses (implicit AND semantics)
  * 'is_injoin' is T if we are considering using the index scan as the inside
  *		of a nestloop join.
  *
- * NOTE: 'selec' should be calculated on the basis of indexqual conditions
- * only.  Any additional quals evaluated as qpquals may reduce the number
- * of returned tuples, but they won't reduce the number of tuples we have
- * to fetch from the table, so they don't reduce the scan cost.
+ * NOTE: 'indexQuals' must contain only clauses usable as index restrictions.
+ * Any additional quals evaluated as qpquals may reduce the number of returned
+ * tuples, but they won't reduce the number of tuples we have to fetch from
+ * the table, so they don't reduce the scan cost.
  */
 Cost
-cost_index(RelOptInfo *baserel,
+cost_index(Query *root,
+		   RelOptInfo *baserel,
 		   IndexOptInfo *index,
-		   long expected_indexpages,
-		   Selectivity selec,
+		   List *indexQuals,
 		   bool is_injoin)
 {
 	Cost		temp = 0;
-	double		reltuples = selec * baserel->tuples;
-	double		indextuples = selec * index->tuples;
+	Cost		indexAccessCost;
+	Selectivity	indexSelectivity;
+	double		reltuples;
 	double		relpages;
 
 	/* Should only be applied to base relations */
 	Assert(IsA(baserel, RelOptInfo) && IsA(index, IndexOptInfo));
 	Assert(length(baserel->relids) == 1);
 
-	if (!_enable_indexscan_ && !is_injoin)
-		temp += _disable_cost_;
+	if (!enable_indexscan && !is_injoin)
+		temp += disable_cost;
 
 	/*
-	 * We want to be sure we estimate the cost of an index scan as more
-	 * than the cost of a sequential scan (when selec == 1.0), even if we
-	 * don't have good stats.  So, disbelieve zero index size.
+	 * Call index-access-method-specific code to estimate the processing
+	 * cost for scanning the index, as well as the selectivity of the index
+	 * (ie, the fraction of main-table tuples we will have to retrieve).
 	 */
-	if (expected_indexpages <= 0)
-		expected_indexpages = 1;
-	if (indextuples <= 0.0)
-		indextuples = 1.0;
+	fmgr(index->amcostestimate, root, baserel, index, indexQuals,
+		 &indexAccessCost, &indexSelectivity);
 
-	/* expected index relation pages */
-	temp += expected_indexpages;
+	/* all costs for touching index itself included here */
+	temp += indexAccessCost;
 
 	/*--------------------
-	 * expected base relation pages
+	 * Estimate number of main-table tuples and pages touched.
 	 *
 	 * Worst case is that each tuple the index tells us to fetch comes
 	 * from a different base-rel page, in which case the I/O cost would be
@@ -178,6 +175,8 @@ cost_index(RelOptInfo *baserel,
 	 * So, we guess-and-hope that these sources of error will more or less
 	 * balance out.
 	 *
+	 * XXX need to add a penalty for nonsequential page fetches.
+	 *
 	 * XXX if the relation has recently been "clustered" using this index,
 	 * then in fact the target tuples will be highly nonuniformly distributed,
 	 * and we will be seriously overestimating the scan cost!  Currently we
@@ -186,16 +185,18 @@ cost_index(RelOptInfo *baserel,
 	 * effect.  Would be nice to do better someday.
 	 *--------------------
 	 */
+
+	reltuples = indexSelectivity * baserel->tuples;
+
 	relpages = reltuples;
 	if (baserel->pages > 0 && baserel->pages < relpages)
 		relpages = baserel->pages;
+
+	/* disk costs for main table */
 	temp += relpages;
 
-	/* per index tuples */
-	temp += _cpu_index_page_weight_ * indextuples;
-
-	/* per heap tuples */
-	temp += _cpu_page_weight_ * reltuples;
+	/* CPU costs for heap tuples */
+	temp += cpu_page_weight * reltuples;
 
 	Assert(temp >= 0);
 	return temp;
@@ -213,10 +214,10 @@ cost_tidscan(RelOptInfo *baserel, List *tideval)
 {
 	Cost	temp = 0;
 
-	if (!_enable_tidscan_)
-		temp += _disable_cost_;
+	if (!enable_tidscan)
+		temp += disable_cost;
 
-	temp += (1.0 + _cpu_page_weight_) * length(tideval);
+	temp += (1.0 + cpu_page_weight) * length(tideval);
 
 	return temp;
 }
@@ -227,7 +228,7 @@ cost_tidscan(RelOptInfo *baserel, List *tideval)
  *
  * If the total volume of data to sort is less than SortMem, we will do
  * an in-memory sort, which requires no I/O and about t*log2(t) tuple
- * comparisons for t tuples.  We use _cpu_index_page_weight as the cost
+ * comparisons for t tuples.  We use cpu_index_page_weight as the cost
  * of a tuple comparison (is this reasonable, or do we need another
  * basic parameter?).
  *
@@ -257,8 +258,8 @@ cost_sort(List *pathkeys, double tuples, int width)
 	double		nbytes = relation_byte_size(tuples, width);
 	long		sortmembytes = SortMem * 1024L;
 
-	if (!_enable_sort_)
-		temp += _disable_cost_;
+	if (!enable_sort)
+		temp += disable_cost;
 
 	/*
 	 * We want to be sure the cost of a sort is never estimated as zero,
@@ -268,7 +269,7 @@ cost_sort(List *pathkeys, double tuples, int width)
 	if (tuples < 2.0)
 		tuples = 2.0;
 
-	temp += _cpu_index_page_weight_ * tuples * base_log(tuples, 2.0);
+	temp += cpu_index_page_weight * tuples * base_log(tuples, 2.0);
 
 	if (nbytes > sortmembytes)
 	{
@@ -298,7 +299,7 @@ cost_result(double tuples, int width)
 	Cost		temp = 0;
 
 	temp += page_size(tuples, width);
-	temp += _cpu_page_weight_ * tuples;
+	temp += cpu_page_weight * tuples;
 	Assert(temp >= 0);
 	return temp;
 }
@@ -321,8 +322,8 @@ cost_nestloop(Path *outer_path,
 {
 	Cost		temp = 0;
 
-	if (!_enable_nestloop_)
-		temp += _disable_cost_;
+	if (!enable_nestloop)
+		temp += disable_cost;
 
 	temp += outer_path->path_cost;
 	temp += outer_path->parent->rows * inner_path->path_cost;
@@ -350,8 +351,8 @@ cost_mergejoin(Path *outer_path,
 {
 	Cost		temp = 0;
 
-	if (!_enable_mergejoin_)
-		temp += _disable_cost_;
+	if (!enable_mergejoin)
+		temp += disable_cost;
 
 	/* cost of source data */
 	temp += outer_path->path_cost + inner_path->path_cost;
@@ -372,8 +373,8 @@ cost_mergejoin(Path *outer_path,
 	 * underestimate if there are many equal-keyed tuples in either relation,
 	 * but we have no good way of estimating that...
 	 */
-	temp += _cpu_page_weight_ * (outer_path->parent->rows +
-								 inner_path->parent->rows);
+	temp += cpu_page_weight * (outer_path->parent->rows +
+							   inner_path->parent->rows);
 
 	Assert(temp >= 0);
 	return temp;
@@ -401,23 +402,23 @@ cost_hashjoin(Path *outer_path,
 												inner_path->parent->width);
 	long		hashtablebytes = SortMem * 1024L;
 
-	if (!_enable_hashjoin_)
-		temp += _disable_cost_;
+	if (!enable_hashjoin)
+		temp += disable_cost;
 
 	/* cost of source data */
 	temp += outer_path->path_cost + inner_path->path_cost;
 
 	/* cost of computing hash function: must do it once per tuple */
-	temp += _cpu_page_weight_ * (outer_path->parent->rows +
-								 inner_path->parent->rows);
+	temp += cpu_page_weight * (outer_path->parent->rows +
+							   inner_path->parent->rows);
 
 	/* the number of tuple comparisons needed is the number of outer
 	 * tuples times the typical hash bucket size, which we estimate
 	 * conservatively as the inner disbursion times the inner tuple
-	 * count.  The cost per comparison is set at _cpu_index_page_weight_;
+	 * count.  The cost per comparison is set at cpu_index_page_weight;
 	 * is that reasonable, or do we need another basic parameter?
 	 */
-	temp += _cpu_index_page_weight_ * outer_path->parent->rows *
+	temp += cpu_index_page_weight * outer_path->parent->rows *
 		(inner_path->parent->rows * innerdisbursion);
 
 	/*

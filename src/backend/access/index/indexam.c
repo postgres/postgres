@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.38 1999/12/30 05:04:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.39 2000/01/22 23:50:09 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relationId
@@ -69,21 +69,6 @@
 #include "access/heapam.h"
 #include "utils/relcache.h"
 
-/* ----------------
- *	 undefine macros we aren't going to use that would otherwise
- *	 get in our way..  delete is defined in c.h and the am's are
- *	 defined in heapam.h
- * ----------------
- */
-#undef delete
-#undef aminsert
-#undef amdelete
-#undef ambeginscan
-#undef amrescan
-#undef amendscan
-#undef ammarkpos
-#undef amrestrpos
-#undef amgettuple
 
 /* ----------------------------------------------------------------
  *					macros used in index_ routines
@@ -356,6 +341,27 @@ index_getnext(IndexScanDesc scan,
 	result = (RetrieveIndexResult) fmgr(procedure, scan, direction);
 
 	return result;
+}
+
+/* ----------------
+ *		index_cost_estimator
+ *
+ *		Fetch the amcostestimate procedure OID for an index.
+ *
+ *		We could combine fetching and calling the procedure,
+ *		as index_insert does for example; but that would require
+ *		importing a bunch of planner/optimizer stuff into this file.
+ * ----------------
+ */
+RegProcedure
+index_cost_estimator(Relation relation)
+{
+	RegProcedure procedure;
+
+	RELATION_CHECKS;
+	GET_REL_PROCEDURE(cost_estimator, amcostestimate);
+
+	return procedure;
 }
 
 /* ----------------

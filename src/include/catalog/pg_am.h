@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_am.h,v 1.11 1999/02/13 23:21:04 momjian Exp $
+ * $Id: pg_am.h,v 1.12 2000/01/22 23:50:23 tgl Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -57,6 +57,7 @@ CATALOG(pg_am)
 	regproc		ambuild;
 	regproc		amcreate;
 	regproc		amdestroy;
+	regproc		amcostestimate;
 } FormData_pg_am;
 
 /* ----------------
@@ -70,7 +71,7 @@ typedef FormData_pg_am *Form_pg_am;
  *		compiler constants for pg_am
  * ----------------
  */
-#define Natts_pg_am						22
+#define Natts_pg_am						23
 #define Anum_pg_am_amname				1
 #define Anum_pg_am_amowner				2
 #define Anum_pg_am_amkind				3
@@ -93,21 +94,22 @@ typedef FormData_pg_am *Form_pg_am;
 #define Anum_pg_am_ambuild				20
 #define Anum_pg_am_amcreate				21
 #define Anum_pg_am_amdestroy			22
+#define Anum_pg_am_amcostestimate		23
 
 /* ----------------
  *		initial contents of pg_am
  * ----------------
  */
 
-DATA(insert OID = 402 (  rtree PGUID "o" 8 3 rtgettuple rtinsert rtdelete - - - - rtbeginscan rtrescan rtendscan rtmarkpos rtrestrpos - - rtbuild - - ));
+DATA(insert OID = 402 (  rtree PGUID "o" 8 3 rtgettuple rtinsert rtdelete - - - - rtbeginscan rtrescan rtendscan rtmarkpos rtrestrpos - - rtbuild - - rtcostestimate ));
 DESCR("");
-DATA(insert OID = 403 (  btree PGUID "o" 5 1 btgettuple btinsert btdelete - - - - btbeginscan btrescan btendscan btmarkpos btrestrpos - - btbuild - - ));
+DATA(insert OID = 403 (  btree PGUID "o" 5 1 btgettuple btinsert btdelete - - - - btbeginscan btrescan btendscan btmarkpos btrestrpos - - btbuild - - btcostestimate ));
 DESCR("");
 #define BTREE_AM_OID 403
-DATA(insert OID = 405 (  hash PGUID "o"  1 1 hashgettuple hashinsert hashdelete - - - - hashbeginscan hashrescan hashendscan hashmarkpos hashrestrpos - - hashbuild - - ));
+DATA(insert OID = 405 (  hash PGUID "o"  1 1 hashgettuple hashinsert hashdelete - - - - hashbeginscan hashrescan hashendscan hashmarkpos hashrestrpos - - hashbuild - - hashcostestimate ));
 DESCR("");
 #define HASH_AM_OID 405
-DATA(insert OID = 783 (  gist PGUID "o" 100 7 gistgettuple gistinsert gistdelete - - - - gistbeginscan gistrescan gistendscan gistmarkpos gistrestrpos - - gistbuild - - ));
+DATA(insert OID = 783 (  gist PGUID "o" 100 7 gistgettuple gistinsert gistdelete - - - - gistbeginscan gistrescan gistendscan gistmarkpos gistrestrpos - - gistbuild - - gistcostestimate ));
 DESCR("");
 
 #endif	 /* PG_AM_H */

@@ -7,7 +7,7 @@
 --
 -- Copyright (c) 1994, Regents of the University of California
 --
--- $Id: complex.source,v 1.4 1998/03/01 04:52:59 scrappy Exp $
+-- $Id: complex.source,v 1.5 2000/01/22 23:50:30 tgl Exp $
 --
 ---------------------------------------------------------------------------
 
@@ -184,42 +184,32 @@ WHERE o.oprleft = t.oid and o.oprright = t.oid
 -- make sure we have the right operators
 SELECT * from complex_ops_tmp;
 
-INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy, 
-                     amopselect, amopnpages)
-   SELECT am.oid, opcl.oid, c.opoid, 1,
-	'btreesel'::regproc, 'btreenpage'::regproc
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+   SELECT am.oid, opcl.oid, c.opoid, 1
    FROM pg_am am, pg_opclass opcl, complex_ops_tmp c
    WHERE amname = 'btree' and opcname = 'complex_abs_ops' 
       and c.oprname = '<';
 
-INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy, 
-                     amopselect, amopnpages)
-   SELECT am.oid, opcl.oid, c.opoid, 2,
-	'btreesel'::regproc, 'btreenpage'::regproc
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+   SELECT am.oid, opcl.oid, c.opoid, 2
    FROM pg_am am, pg_opclass opcl, complex_ops_tmp c
    WHERE amname = 'btree' and opcname = 'complex_abs_ops' 
       and c.oprname = '<=';
 
-INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy, 
-                     amopselect, amopnpages)
-   SELECT am.oid, opcl.oid, c.opoid, 3,
-	'btreesel'::regproc, 'btreenpage'::regproc
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+   SELECT am.oid, opcl.oid, c.opoid, 3
    FROM pg_am am, pg_opclass opcl, complex_ops_tmp c
    WHERE amname = 'btree' and opcname = 'complex_abs_ops' 
       and c.oprname = '=';
 
-INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy, 
-                     amopselect, amopnpages)
-   SELECT am.oid, opcl.oid, c.opoid, 4,
-	'btreesel'::regproc, 'btreenpage'::regproc
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+   SELECT am.oid, opcl.oid, c.opoid, 4
    FROM pg_am am, pg_opclass opcl, complex_ops_tmp c
    WHERE amname = 'btree' and opcname = 'complex_abs_ops' 
       and c.oprname = '>=';
 
-INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy, 
-                     amopselect, amopnpages)
-   SELECT am.oid, opcl.oid, c.opoid, 5,
-	'btreesel'::regproc, 'btreenpage'::regproc
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+   SELECT am.oid, opcl.oid, c.opoid, 5
    FROM pg_am am, pg_opclass opcl, complex_ops_tmp c
    WHERE amname = 'btree' and opcname = 'complex_abs_ops' 
       and c.oprname = '>';

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.5 1999/07/22 15:11:05 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.6 2000/01/22 23:50:08 tgl Exp $
 Postgres documentation
 -->
 
@@ -403,20 +403,9 @@ CREATE OPERATOR = (
        <entry>the <filename>oid</filename>s of the  operators  for the opclass
 	(which we'll get in just a minute)</entry>
       </row>
-      <row>
-       <entry>amopselect, amopnpages</entry>
-       <entry>cost functions</entry>
-      </row>
      </tbody>
     </tgroup>
    </table>
-
-   The cost functions are used by the query optimizer to decide whether or
-   not to use a given index in a scan.  Fortunately, these already exist.
-   The two functions we'll use are <filename>btreesel</filename>, which
-   estimates the selectivity of the <acronym>B-tree</acronym>, and
-   <filename>btreenpage</filename>, which estimates the number of pages a
-   search will touch in the tree.
   </para>
 
   <para>
@@ -460,10 +449,8 @@ CREATE OPERATOR = (
    equal, in <filename>pg_amop</filename>.  We add the instances we need:
 
    <programlisting>
-    INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy,
-                amopselect, amopnpages) 
-        SELECT am.oid, opcl.oid, c.opoid, 1,
-                'btreesel'::regproc, 'btreenpage'::regproc
+    INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+        SELECT am.oid, opcl.oid, c.opoid, 1
         FROM pg_am am, pg_opclass opcl, complex_abs_ops_tmp c
         WHERE amname = 'btree' AND
             opcname = 'complex_abs_ops' AND
@@ -519,13 +506,11 @@ CREATE OPERATOR = (
 
   <para>
    Now we need to add a hashing strategy to allow the type to be indexed.
-   We do this by using another type in pg_am but we reuse the sames ops.
+   We do this by using another type in pg_am but we reuse the same ops.
 
    <programlisting>
-    INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy,
-                amopselect, amopnpages)
-        SELECT am.oid, opcl.oid, c.opoid, 1,
-                'hashsel'::regproc, 'hashnpage'::regproc
+    INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+        SELECT am.oid, opcl.oid, c.opoid, 1
         FROM pg_am am, pg_opclass opcl, complex_abs_ops_tmp c
         WHERE amname = 'hash' AND
             opcname = 'complex_abs_ops' AND

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.78 2000/01/14 00:53:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.79 2000/01/22 23:50:12 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1331,34 +1331,6 @@ _readRelOptInfo()
 }
 
 /* ----------------
- *		_readIndexOptInfo
- * ----------------
- */
-static IndexOptInfo *
-_readIndexOptInfo()
-{
-	IndexOptInfo *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(IndexOptInfo);
-
-	token = lsptok(NULL, &length);		/* get :indexoid */
-	token = lsptok(NULL, &length);		/* now read it */
-	local_node->indexoid = (Oid) atoi(token);
-
-	token = lsptok(NULL, &length);		/* get :pages */
-	token = lsptok(NULL, &length);		/* now read it */
-	local_node->pages = atol(token);
-
-	token = lsptok(NULL, &length);		/* get :tuples */
-	token = lsptok(NULL, &length);		/* now read it */
-	local_node->tuples = atof(token);
-
-	return local_node;
-}
-
-/* ----------------
  *		_readTargetEntry
  * ----------------
  */
@@ -1900,8 +1872,6 @@ parsePlanString(void)
 		return_value = _readEState();
 	else if (length == 10 && strncmp(token, "RELOPTINFO", length) == 0)
 		return_value = _readRelOptInfo();
-	else if (length == 12 && strncmp(token, "INDEXOPTINFO", length) == 0)
-		return_value = _readIndexOptInfo();
 	else if (length == 11 && strncmp(token, "TARGETENTRY", length) == 0)
 		return_value = _readTargetEntry();
 	else if (length == 3 && strncmp(token, "RTE", length) == 0)

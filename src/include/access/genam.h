@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: genam.h,v 1.21 1999/12/30 05:05:13 tgl Exp $
+ * $Id: genam.h,v 1.22 2000/01/22 23:50:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@ extern void index_markpos(IndexScanDesc scan);
 extern void index_restrpos(IndexScanDesc scan);
 extern RetrieveIndexResult index_getnext(IndexScanDesc scan,
 			  ScanDirection direction);
+extern RegProcedure index_cost_estimator(Relation relation);
 extern RegProcedure index_getprocid(Relation irel, AttrNumber attnum,
 				uint16 procnum);
 extern Datum GetIndexValue(HeapTuple tuple, TupleDesc hTupDesc,

@@ -23,6 +23,8 @@
 -- **************** pg_proc ****************
 
 -- Look for illegal values in pg_proc fields.
+-- NOTE: currently there are a few pg_proc entries that have prorettype = 0.
+-- Someday that ought to be cleaned up.
 
 SELECT p1.oid, p1.proname
 FROM pg_proc as p1
@@ -30,6 +32,7 @@ WHERE (p1.prolang = 0 OR p1.prorettype = 0 OR
     p1.pronargs < 0 OR p1.pronargs > 9)
 	AND p1.proname !~ '^pl[^_]+_call_handler$'
 	AND p1.proname !~ '^RI_FKey_'
+	AND p1.proname !~ 'costestimate$'
 	AND p1.proname != 'update_pg_pwd';
 
 -- Look for conflicting proc definitions (same names and input datatypes).
@@ -416,7 +419,7 @@ WHERE p1.aggfinalfn = p2.oid AND
 SELECT p1.oid
 FROM pg_amop as p1
 WHERE p1.amopid = 0 OR p1.amopclaid = 0 OR p1.amopopr = 0 OR
-    p1.amopstrategy <= 0 OR p1.amopselect = 0 OR p1.amopnpages = 0;
+    p1.amopstrategy <= 0;
 
 -- Look for duplicate pg_amop entries
 
@@ -458,36 +461,6 @@ FROM pg_amop AS p1, pg_operator AS p2, pg_opclass AS p3
 WHERE p1.amopopr = p2.oid AND p1.amopclaid = p3.oid AND
     p3.opcdeftype != 0 AND
     (p3.opcdeftype != p2.oprleft OR p3.opcdeftype != p2.oprright);
-
--- Check that amopselect points to a proc with the right signature
--- to be an access-method selectivity estimator.
--- The proc signature we want is:
--- float8 proc(oid, oid, int2, <any>, int4, int4, oid)
-
-SELECT p1.oid, p2.oid, p2.proname
-FROM pg_amop AS p1, pg_proc AS p2
-WHERE p1.amopselect = p2.oid AND
-    (p2.prorettype != 701 OR p2.proretset OR
-     p2.pronargs != 7 OR
-     p2.proargtypes[0] != 26 OR p2.proargtypes[1] != 26 OR
-     p2.proargtypes[2] != 21 OR p2.proargtypes[3] != 0 OR
-     p2.proargtypes[4] != 23 OR p2.proargtypes[5] != 23 OR
-     p2.proargtypes[6] != 26);
-
--- Check that amopnpages points to a proc with the right signature
--- to be an access-method page-count estimator.
--- The proc signature we want is:
--- float8 proc(oid, oid, int2, <any>, int4, int4, oid)
-
-SELECT p1.oid, p2.oid, p2.proname
-FROM pg_amop AS p1, pg_proc AS p2
-WHERE p1.amopnpages = p2.oid AND
-    (p2.prorettype != 701 OR p2.proretset OR
-     p2.pronargs != 7 OR
-     p2.proargtypes[0] != 26 OR p2.proargtypes[1] != 26 OR
-     p2.proargtypes[2] != 21 OR p2.proargtypes[3] != 0 OR
-     p2.proargtypes[4] != 23 OR p2.proargtypes[5] != 23 OR
-     p2.proargtypes[6] != 26);
 
 -- **************** pg_amproc ****************
 

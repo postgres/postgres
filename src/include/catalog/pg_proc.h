@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.114 2000/01/18 05:08:29 ishii Exp $
+ * $Id: pg_proc.h,v 1.115 2000/01/22 23:50:23 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -211,17 +211,13 @@ DESCR("not equal");
 DATA(insert OID =  89 (  version		   PGUID 11 f t f 0 f 25 "" 100 0 0 100 version - ));
 DESCR("PostgreSQL version string");
 
-DATA(insert OID = 1265 (  rtsel			   PGUID 11 f t f 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  rtsel - ));
-DESCR("r-tree");
-DATA(insert OID = 1266 (  rtnpage		   PGUID 11 f t f 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  rtnpage - ));
-DESCR("r-tree");
-DATA(insert OID = 1268 (  btreesel		   PGUID 11 f t f 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  btreesel - ));
-DESCR("btree selectivity");
+DATA(insert OID = 1265 (  rtcostestimate   PGUID 11 f t f 6 f 0 "0 0 0 0 0 0" 100 0 0 100  rtcostestimate - ));
+DESCR("r-tree cost estimator");
+DATA(insert OID = 1268 (  btcostestimate   PGUID 11 f t f 6 f 0 "0 0 0 0 0 0" 100 0 0 100  btcostestimate - ));
+DESCR("btree cost estimator");
 
 /* OIDS 100 - 199 */
 
-DATA(insert OID = 1270 (  btreenpage	   PGUID 11 f t f 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  btreenpage - ));
-DESCR("btree");
 DATA(insert OID = 1272 (  eqsel			   PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  eqsel - ));
 DESCR("general selectivity");
 DATA(insert OID = 102 (  neqsel			   PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  neqsel - ));
@@ -799,10 +795,8 @@ DESCR("convert name to char()");
 DATA(insert OID =  409 (  bpchar_name	   PGUID 11 f t t 1 f	19 "1042" 100 0 0 100	bpchar_name - ));
 DESCR("convert char() to name");
 
-DATA(insert OID =  438 (  hashsel		   PGUID 11 f t f 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  hashsel - ));
-DESCR("selectivity");
-DATA(insert OID =  439 (  hashnpage		   PGUID 11 f t f 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  hashnpage - ));
-DESCR("hash");
+DATA(insert OID =  438 (  hashcostestimate PGUID 11 f t f 6 f 0 "0 0 0 0 0 0" 100 0 0 100  hashcostestimate - ));
+DESCR("hash index cost estimator");
 
 DATA(insert OID = 440 (  hashgettuple	   PGUID 11 f t f 2 f 23 "0" 100 0 0 100  hashgettuple - ));
 DESCR("hash(internal)");
@@ -1036,10 +1030,8 @@ DESCR("larger of two");
 DATA(insert OID = 771 (  int2smaller	   PGUID 11 f t t 2 f 21 "21 21" 100 0 0 100  int2smaller - ));
 DESCR("smaller of two");
 
-DATA(insert OID = 772 (  gistsel		   PGUID 11 f t f 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  gistsel - ));
-DESCR("gist selectivity");
-DATA(insert OID = 773 (  gistnpage		   PGUID 11 f t f 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  gistnpage - ));
-DESCR("gist");
+DATA(insert OID = 772 (  gistcostestimate  PGUID 11 f t f 6 f 0 "0 0 0 0 0 0" 100 0 0 100  gistcostestimate - ));
+DESCR("gist cost estimator");
 DATA(insert OID = 774 (  gistgettuple	   PGUID 11 f t f 2 f 23 "0" 100 0 0 100  gistgettuple - ));
 DESCR("gist(internal)");
 DATA(insert OID = 775 (  gistinsert		   PGUID 11 f t f 5 f 23 "0" 100 0 0 100  gistinsert - ));
