@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.3 2002/06/22 02:04:55 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.4 2002/07/04 15:10:43 thomas Exp $
 -->
 
  <appendix id="features">
@@ -888,6 +888,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.3 2002/06/22 02:04:55 tho
         <entry></entry>
        </row>
        <row>
+        <entry>F302-01</entry>
+        <entry>INTERSECT DISTINCT table operator</entry>
+        <entry></entry>
+       </row>
+       <row>
         <entry>F302-02</entry>
         <entry>INTERSECT ALL table operator</entry>
         <entry></entry>
@@ -1424,11 +1429,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.3 2002/06/22 02:04:55 tho
         <entry>F301</entry>
         <entry>CORRESPONDING in query expressions</entry>
         <entry></entry>
-       </row>
-       <row>
-        <entry>F302-01</entry>
-        <entry>INTERSECT DISTINCT table operator</entry>
-        <entry>Syntax accepted</entry>
        </row>
        <row>
         <entry>F381</entry>
