@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.181 2000/10/24 21:33:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.182 2000/10/26 17:31:35 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1593,8 +1593,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 #ifdef MULTIBYTE
 	/* set default client encoding */
 	if (DebugLvl > 1)
-		elog(DEBUG, "reset_client_encoding");
-	reset_client_encoding();
+		elog(DEBUG, "set_default_client_encoding");
+	set_default_client_encoding();
 #endif
 
 	on_shmem_exit(remove_all_temp_relations, 0);
@@ -1618,7 +1618,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.181 $ $Date: 2000/10/24 21:33:48 $\n");
+		puts("$Revision: 1.182 $ $Date: 2000/10/26 17:31:35 $\n");
 	}
 
 	/*

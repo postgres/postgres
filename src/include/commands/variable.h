@@ -2,7 +2,7 @@
  * Headers for handling of 'SET var TO', 'SHOW var' and 'RESET var'
  * statements
  *
- * $Id: variable.h,v 1.12 2000/06/22 22:31:23 petere Exp $
+ * $Id: variable.h,v 1.13 2000/10/26 17:31:33 tgl Exp $
  *
  */
 #ifndef VARIABLE_H
@@ -13,5 +13,6 @@ extern void GetPGVariable(const char *name);
 extern void ResetPGVariable(const char *name);
 
 extern void set_default_datestyle(void);
+extern void set_default_client_encoding(void);
 
 #endif	 /* VARIABLE_H */

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.42 2000/10/25 19:44:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.43 2000/10/26 17:31:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -664,6 +664,14 @@ reset_client_encoding(void)
 #endif
 	return TRUE;
 }
+
+/* Called during MULTIBYTE backend startup ... */
+void
+set_default_client_encoding(void)
+{
+	reset_client_encoding();
+}
+
 
 static bool
 parse_server_encoding(char *value)
