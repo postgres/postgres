@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.53 1997/12/05 01:13:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.54 1998/01/13 04:24:10 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,7 +150,7 @@ PQconnectdb(const char *conninfo)
 	PGconn	   *conn;
 	PQconninfoOption *option;
 	char		errorMessage[ERROR_MSG_LENGTH];
-
+	char* tmp;
 	/* ----------
 	 * Allocate memory for the conn structure
 	 * ----------
@@ -177,37 +177,6 @@ PQconnectdb(const char *conninfo)
 	}
 
 	/* ----------
-	 * Check that we have all connection parameters
-	 * ----------
-	 */
-	for (option = PQconninfoOptions; option->keyword != NULL; option++)
-	{
-		if (option->val != NULL)
-			continue;			/* Value was in conninfo */
-
-		/* ----------
-		 * No value was found for this option. Return an error.
-		 * ----------
-		 */
-		conn->status = CONNECTION_BAD;
-		sprintf(conn->errorMessage,
-				"ERROR: PQconnectdb(): Cannot determine a value for option '%s'.\n",
-				option->keyword);
-		strcat(conn->errorMessage,
-			   "Option not specified in conninfo string");
-		if (option->environ)
-		{
-			strcat(conn->errorMessage,
-				   ", environment variable ");
-			strcat(conn->errorMessage, option->environ);
-			strcat(conn->errorMessage, "\nnot set");
-		}
-		strcat(conn->errorMessage, " and no compiled in default value.\n");
-		conninfo_free();
-		return conn;
-	}
-
-	/* ----------
 	 * Setup the conn structure
 	 * ----------
 	 */
@@ -218,14 +187,22 @@ PQconnectdb(const char *conninfo)
 	conn->port = NULL;
 	conn->notifyList = DLNewList();
 
-	conn->pghost = strdup(conninfo_getval("host"));
-	conn->pgport = strdup(conninfo_getval("port"));
-	conn->pgtty = strdup(conninfo_getval("tty"));
-	conn->pgoptions = strdup(conninfo_getval("options"));
-	conn->pguser = strdup(conninfo_getval("user"));
-	conn->pgpass = strdup(conninfo_getval("password"));
-	conn->pgauth = strdup(conninfo_getval("authtype"));
-	conn->dbName = strdup(conninfo_getval("dbname"));
+	tmp = conninfo_getval("host");
+	conn->pghost = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval("port");
+	conn->pgport = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval("tty");
+	conn->pgtty  = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval("options");
+	conn->pgoptions = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval("user");
+	conn->pguser = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval("password");
+	conn->pgpass = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval("authtype");
+	conn->pgauth = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval("dbname");
+	conn->dbName = tmp ? strdup(tmp) : NULL;
 
 	/* ----------
 	 * Free the connection info - all is in conn now
