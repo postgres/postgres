@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.2 1998/02/13 08:10:30 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.3 1998/02/18 03:26:54 vadim Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3043,7 +3043,10 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
 					n->oper = lcons($4,NIL);
-					n->useor = false;
+					if (strcmp($4,"<>") == 0)
+						n->useor = true;
+					else
+						n->useor = false;
 					n->subLinkType = ANY_SUBLINK;
 					n->subselect = $7;
 					$$ = (Node *)n;
@@ -3123,7 +3126,10 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
 					n->oper = lcons($4,NIL);
-					n->useor = false;
+					if (strcmp($4,"<>") == 0)
+						n->useor = true;
+					else
+						n->useor = false;
 					n->subLinkType = ALL_SUBLINK;
 					n->subselect = $7;
 					$$ = (Node *)n;
