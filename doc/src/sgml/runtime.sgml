@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.15 2000/07/16 14:47:57 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.16 2000/07/17 22:32:44 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -374,8 +374,8 @@ Is the postmaster running at 'localhost' and accepting connections on Unix socke
    <para>
     One way to set these options is to create a file
     <filename>postgresql.conf</filename> in the data directory (e.g.,
-    <filename>/usr/local/pgsql/data</filename>). An example of how
-    this file could look like is this:
+    <filename>/usr/local/pgsql/data</filename>). An example of what
+    this file could look like is:
 <programlisting>
 # This is a comment
 log_connections = yes
@@ -829,15 +829,22 @@ env PGOPTIONS='--geqo=off' psql
       <term>DEADLOCK_TIMEOUT (<type>integer</type>)</term>
       <listitem>
        <para>
-        <productname>Postgres</productname> assumes that if
-        transactions are stuck for this many milliseconds then a
-        deadlock has occurred. Although it is technically possible to
-        detect deadlocks <quote>properly</quote>, the present
-        optimistic approach is much more efficient in practice. If you get
-        too many deadlock detected messages when you provably did not
-        have one, you might want to try raising this value. The
-        default is 1000 (i.e., one second). This option can only be
-        set at server start.
+        This is the amount of time, in milliseconds, to wait on a lock
+	before checking to see if there is a deadlock condition or not.
+	The check for deadlock is relatively slow, so we don't want to
+	run it every time we wait for a lock.  We (optimistically?)
+	assume that deadlocks are not common in production applications,
+	and just wait on the lock for awhile before starting to ask
+	questions about whether it can ever get unlocked.
+	Increasing this value reduces the amount of time wasted in
+	needless deadlock checks, but slows down reporting of real deadlock
+	errors.  The default is 1000 (i.e., one second), which is probably
+	about the smallest value you would want in practice.  On a heavily
+	loaded server you might want to raise it.  Ideally the setting
+	should exceed your typical transaction time, so as to improve the
+	odds that the lock will be released before the waiter decides to
+	check for deadlock. 
+	This option can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -889,7 +896,8 @@ env PGOPTIONS='--geqo=off' psql
        <para>
         Determines how many concurrent connections the database server
         will allow. The default is 32. There is also a compiled-in
-        hard upper limit on this option, which is currently 1024. This
+        hard upper limit on this value, which is typically 1024
+	(both numbers can be altered when compiling the server). This
         parameter can only be set at server start.
        </para>
       </listitem>
