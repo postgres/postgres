@@ -4,7 +4,28 @@
    eventual use of autoconf to build the server 
 */
 
-/* un-Define this if your system does not have <unistd.h> */
-#define HAVE_UNISTD_H
+#if defined(WIN32)
+#  define NO_UNISTD_H
+#  define USES_WINSOCK 
+#endif /* WIN32 */
 
+#if defined(__FreeBSD__) || defined(__NetBSD__)
+#  define USE_LIMITS_H
+#endif
+
+#if defined(bsdi)
+#  define USE_LIMITS_H
+#endif
+
+#if defined(bsdi_2_1)
+#  define USE_LIMITS_H
+#endif
+
+#if defined(aix)
+#  define NEED_SYS_SELECT_H
+#endif
+
+#if defined(irix5)
+#  define NO_VFORK
+#endif
 
