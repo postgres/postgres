@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/px.c,v 1.10 2005/03/21 05:19:55 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/px.c,v 1.11 2005/03/21 05:22:14 neilc Exp $
  */
 
 #include <postgres.h>
@@ -56,6 +56,7 @@ static const struct error_desc px_err_list[] = {
 	{PXE_UNKNOWN_SALT_ALGO, "Unknown salt algorithm"},
 	{PXE_BAD_SALT_ROUNDS, "Incorrect number of rounds"},
 	{PXE_MCRYPT_INTERNAL, "mcrypt internal error"},
+	{PXE_NO_RANDOM, "No strong random source"},
 	{0, NULL},
 };
 

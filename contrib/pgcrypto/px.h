@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/px.h,v 1.11 2005/03/21 05:19:55 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/px.h,v 1.12 2005/03/21 05:22:14 neilc Exp $
  */
 
 #ifndef __PX_H
@@ -83,6 +83,7 @@ void		px_free(void *p);
 #define PXE_UNKNOWN_SALT_ALGO		-14
 #define PXE_BAD_SALT_ROUNDS			-15
 #define PXE_MCRYPT_INTERNAL			-16
+#define PXE_NO_RANDOM				-17
 
 typedef struct px_digest PX_MD;
 typedef struct px_alias PX_Alias;
@@ -168,6 +169,7 @@ int			px_find_cipher(const char *name, PX_Cipher ** res);
 int			px_find_combo(const char *name, PX_Combo ** res);
 
 int			px_get_random_bytes(uint8 *dst, unsigned count);
+int			px_get_pseudo_random_bytes(uint8 *dst, unsigned count);
 
 const char *px_strerror(int err);
 

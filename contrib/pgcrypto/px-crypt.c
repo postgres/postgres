@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/px-crypt.c,v 1.10 2005/03/21 05:19:55 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/px-crypt.c,v 1.11 2005/03/21 05:22:14 neilc Exp $
  */
 
 #include <postgres.h>
@@ -171,7 +171,7 @@ px_gen_salt(const char *salt_type, char *buf, int rounds)
 			return PXE_BAD_SALT_ROUNDS;
 	}
 
-	res = px_get_random_bytes(rbuf, g->input_len);
+	res = px_get_pseudo_random_bytes(rbuf, g->input_len);
 	if (res < 0)
 		return res;
 
