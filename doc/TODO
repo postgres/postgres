@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Dec 16 19:04:22 EST 2004
+Last updated:		Sat Dec 18 23:36:06 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -523,6 +523,7 @@ Clients
   the database as psql.
 
 * Fix psql's display of schema information (Neil)
+* Allow psql \pset boolean variables to set to fixed values, rather than toggle
 * Consistently display privilege information for all objects in psql
 * pg_dump
 	o Have pg_dump use multi-statement transactions for INSERT dumps
