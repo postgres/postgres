@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.345 2003/08/28 18:59:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.346 2003/08/28 20:21:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -572,33 +572,9 @@ main(int argc, char **argv)
 		dumpRules(g_fout, tblinfo, numTables);
 	}
 
-	/* Now sort the output nicely */
+	/* Now sort the output nicely: by OID within object types */
 	SortTocByOID(g_fout);
-
-	/*
-	 * Procedural languages have to be declared just after database and
-	 * schema creation, before they are used.
-	 */
-	MoveToStart(g_fout, "ACL LANGUAGE");
-	MoveToStart(g_fout, "PROCEDURAL LANGUAGE");
-	MoveToStart(g_fout, "FUNC PROCEDURAL LANGUAGE");
-	MoveToStart(g_fout, "SCHEMA");
-	MoveToStart(g_fout, "DATABASE");
-	MoveToEnd(g_fout, "TABLE DATA");
-	MoveToEnd(g_fout, "BLOBS");
-	MoveToEnd(g_fout, "INDEX");
-	MoveToEnd(g_fout, "CONSTRAINT");
-	MoveToEnd(g_fout, "FK CONSTRAINT");
-	MoveToEnd(g_fout, "TRIGGER");
-	MoveToEnd(g_fout, "RULE");
-	MoveToEnd(g_fout, "SEQUENCE SET");
-
-	/*
-	 * Moving all comments to end is annoying, but must do it for comments
-	 * on stuff we just moved, and we don't seem to have quite enough
-	 * dependency structure to get it really right...
-	 */
-	MoveToEnd(g_fout, "COMMENT");
+	SortTocByObjectType(g_fout);
 
 	if (plainText)
 	{

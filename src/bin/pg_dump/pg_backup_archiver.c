@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.74 2003/08/04 00:43:27 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.75 2003/08/28 20:21:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -845,11 +845,12 @@ EndRestoreBlob(ArchiveHandle *AH, Oid oid)
 
 /*
  * Move TOC entries of the specified type to the START of the TOC.
+ *
+ * This is public, but if you use it anywhere but SortTocByObjectType,
+ * you are risking breaking things.
  */
-
-/* Public */
 void
-MoveToStart(Archive *AHX, char *oType)
+MoveToStart(Archive *AHX, const char *oType)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 	TocEntry   *te = AH->toc->next;
@@ -874,10 +875,12 @@ MoveToStart(Archive *AHX, char *oType)
 
 /*
  * Move TOC entries of the specified type to the end of the TOC.
+ *
+ * This is public, but if you use it anywhere but SortTocByObjectType,
+ * you are risking breaking things.
  */
-/* Public */
 void
-MoveToEnd(Archive *AHX, char *oType)
+MoveToEnd(Archive *AHX, const char *oType)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 	TocEntry   *te = AH->toc->next;
@@ -897,6 +900,44 @@ MoveToEnd(Archive *AHX, char *oType)
 			_moveBefore(AH, AH->toc, te);
 		te = newTe;
 	}
+}
+
+/*
+ * Sort TOC by object type (items of same type keep same relative order)
+ *
+ * This is factored out to ensure that pg_dump and pg_restore stay in sync
+ * about the standard ordering.
+ */
+void
+SortTocByObjectType(Archive *AH)
+{
+	/*
+	 * Procedural languages have to be declared just after database and
+	 * schema creation, before they are used.
+	 */
+	MoveToStart(AH, "ACL LANGUAGE");
+	MoveToStart(AH, "PROCEDURAL LANGUAGE");
+	MoveToStart(AH, "FUNC PROCEDURAL LANGUAGE");
+	MoveToStart(AH, "SCHEMA");
+	MoveToStart(AH, "<Init>");
+	/* Database entries *must* be at front (see also pg_restore.c) */
+	MoveToStart(AH, "DATABASE");
+
+	MoveToEnd(AH, "TABLE DATA");
+	MoveToEnd(AH, "BLOBS");
+	MoveToEnd(AH, "INDEX");
+	MoveToEnd(AH, "CONSTRAINT");
+	MoveToEnd(AH, "FK CONSTRAINT");
+	MoveToEnd(AH, "TRIGGER");
+	MoveToEnd(AH, "RULE");
+	MoveToEnd(AH, "SEQUENCE SET");
+
+	/*
+	 * Moving all comments to end is annoying, but must do it for comments
+	 * on stuff we just moved, and we don't seem to have quite enough
+	 * dependency structure to get it really right...
+	 */
+	MoveToEnd(AH, "COMMENT");
 }
 
 /*

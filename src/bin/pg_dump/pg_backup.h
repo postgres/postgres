@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup.h,v 1.24 2002/09/04 20:31:34 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup.h,v 1.25 2003/08/28 20:21:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,8 +166,9 @@ extern void PrintTOCSummary(Archive *AH, RestoreOptions *ropt);
 extern RestoreOptions *NewRestoreOptions(void);
 
 /* Rearrange TOC entries */
-extern void MoveToStart(Archive *AH, char *oType);
-extern void MoveToEnd(Archive *AH, char *oType);
+extern void MoveToStart(Archive *AH, const char *oType);
+extern void MoveToEnd(Archive *AH, const char *oType);
+extern void SortTocByObjectType(Archive *AH);
 extern void SortTocByOID(Archive *AH);
 extern void SortTocByID(Archive *AH);
 extern void SortTocFromFile(Archive *AH, RestoreOptions *ropt);
