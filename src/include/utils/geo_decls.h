@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geo_decls.h,v 1.7 1997/08/19 21:40:34 momjian Exp $
+ * $Id: geo_decls.h,v 1.8 1997/08/21 01:40:30 vadim Exp $
  *
  * NOTE
  *    These routines do *not* use the float types from adt/.
@@ -218,6 +218,7 @@ extern bool box_eq(BOX *box1, BOX *box2);
 extern bool box_le(BOX *box1, BOX *box2);
 extern bool box_ge(BOX *box1, BOX *box2);
 extern Point *box_center(BOX *box);
+extern double *box_area(BOX *box);
 extern double *box_width(BOX *box);
 extern double *box_height(BOX *box);
 extern double *box_distance(BOX *box1, BOX *box2);
