@@ -1,5 +1,5 @@
 AROPT:crs
-CFLAGS:-O2
+CFLAGS:-O2 -mieee
 SHARED_LIB:-fpic
 ALL:
 SRCH_INC:
