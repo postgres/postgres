@@ -57,7 +57,7 @@ SET geqo TO 'off';
 
 SELECT '' AS thirtysix, p1.f1 AS point1, p2.f1 AS point2, p1.f1 <-> p2.f1 AS dist
    FROM POINT_TBL p1, POINT_TBL p2
-   ORDER BY dist;
+   ORDER BY dist, point1 using <<, point2 using <<;
 
 SELECT '' AS thirty, p1.f1 AS point1, p2.f1 AS point2
    FROM POINT_TBL p1, POINT_TBL p2

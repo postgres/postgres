@@ -21,12 +21,12 @@ SELECT '' AS ten, f1 AS datetime
 
 SELECT '' AS hundred, d.f1 AS datetime, t.f1 AS timespan, d.f1 + t.f1 AS plus
   FROM TEMP_DATETIME d, TIMESPAN_TBL t
-  ORDER BY plus;
+  ORDER BY plus, datetime, timespan;
 
 SELECT '' AS hundred, d.f1 AS datetime, t.f1 AS timespan, d.f1 - t.f1 AS minus
   FROM TEMP_DATETIME d, TIMESPAN_TBL t
   WHERE isfinite(d.f1)
-  ORDER BY minus;
+  ORDER BY minus, datetime, timespan;
 
 SELECT '' AS ten, d.f1 AS datetime, '1980-01-06 00:00 GMT'::datetime AS gpstime_zero,
    d.f1 - '1980-01-06 00:00 GMT'::datetime AS difference
