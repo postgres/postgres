@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.33 2005/01/04 00:05:45 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.34 2005/02/22 02:54:19 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -43,34 +43,23 @@ PostgreSQL documentation
   </para>
 
   <para>
-   Creating a database cluster consists of creating the directories in which
-   the database data will live, generating the shared catalog tables 
-   (tables that belong to the whole cluster rather than to any particular
-   database), and creating the <literal>template1</literal>
-   database.  When you later create a new database, everything in the
-   <literal>template1</literal> database is copied.
-   It contains catalog tables filled in for things like the
-   built-in types.
+   Creating a database cluster consists of creating the directories in
+   which the database data will live, generating the shared catalog
+   tables (tables that belong to the whole cluster rather than to any
+   particular database), and creating the <literal>template1</literal>
+   database. When you later create a new database, everything in the
+   <literal>template1</literal> database is copied. It contains catalog
+   tables containing things like built-in data types.
   </para>
 
   <para>
-   <command>initdb</command> initializes the database cluster's default
-   locale and character set encoding. Some locale categories are fixed
-   for the lifetime of the cluster. There is also a performance impact
-   in using locales other than <literal>C</> or <literal>POSIX</>.
-   Therefore it is important to make the right choice when running
-   <command>initdb</command>. Other locale categories can be changed
-   later when the server is started. <command>initdb</command> will
-   write those locale settings into the
-   <filename>postgresql.conf</filename> configuration file so they are
-   the default, but they can be changed by editing that file. To set the
-   locale that <command>initdb</command> uses, see the description of
-   the <option>--locale</option> option. The character set encoding can
-   be set separately for each database as it is created.
-   <command>initdb</command> determines the encoding for the
-   <literal>template1</literal> database, which will serve as the
-   default for all other databases. To alter the default encoding use
-   the <option>--encoding</option> option.
+   Although <command>initdb</command> will attempt to create the
+   specified data directory, it might not have permission if the parent
+   directory of the desired data directory is root-owned. To initialize
+   in such a setup, create an empty data directory as root, then use
+   <command>chown</command> to assign ownership of that directory to the
+   database user account, then <command>su</command> to become the
+   database user to run <command>initdb</command>.
   </para>
 
   <para>
@@ -83,15 +72,28 @@ PostgreSQL documentation
   </para>
 
   <para>
-   Although <command>initdb</command> will attempt to create the
-   specified data directory, often it won't have permission to do so,
-   since the parent of the desired data directory is often a root-owned
-   directory.  To set up an arrangement like this, create an empty data
-   directory as root, then use <command>chown</command> to hand over
-   ownership of that directory to the database user account, then
-   <command>su</command> to become the database user, and
-   finally run <command>initdb</command> as the database user.
+   <command>initdb</command> initializes the database cluster's default
+   locale and character set encoding. The collation order
+   (<literal>LC_COLLATE</>) and character set classes
+   (<literal>LC_CTYPE</>, e.g. upper, lower, digit) are fixed for all
+   databases and can not be changed. Collation orders other than
+   <literal>C</> or <literal>POSIX</> also have a performance penalty.
+   For these reasons it is important to choose the right locale when
+   running <command>initdb</command>. The remaining locale categories
+   can be changed later when the server is started. All server locale
+   values (<literal>lc_*</>) can be displayed via <command>SHOW ALL</>.
+   More details can be found in <xref linkend="locale">.
   </para>
+
+  <para>
+   The character set encoding can be set separately for a database when
+   it is created. <command>initdb</command> determines the encoding for
+   the <literal>template1</literal> database, which will serve as the
+   default for all other databases. To alter the default encoding use
+   the <option>--encoding</option> option. More details can be found in
+   <xref linkend="multibyte">.
+  </para>
+
  </refsect1>
 
  <refsect1>
