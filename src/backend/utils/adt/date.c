@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.80 2003/04/04 04:50:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.81 2003/04/08 17:02:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -645,17 +645,17 @@ AdjustTimeForTypmod(TimeADT *time, int32 typmod)
 #else
 	/* note MAX_TIME_PRECISION differs in this case */
 	static const double TimeScales[MAX_TIME_PRECISION + 1] = {
-		1,
-		10,
-		100,
-		1000,
-		10000,
-		100000,
-		1000000,
-		10000000,
-		100000000,
-		1000000000,
-		10000000000
+		1.0,
+		10.0,
+		100.0,
+		1000.0,
+		10000.0,
+		100000.0,
+		1000000.0,
+		10000000.0,
+		100000000.0,
+		1000000000.0,
+		10000000000.0
 	};
 #endif
 
