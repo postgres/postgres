@@ -614,8 +614,6 @@ SELECT user_relns() AS user_relns
  int8_tbl
  interval_tbl
  iportaltest
- join3_tbl
- join4_tbl
  lseg_tbl
  num_data
  num_exp_add
@@ -655,7 +653,7 @@ SELECT user_relns() AS user_relns
  toyemp
  varchar_tbl
  xacttest
-(92 rows)
+(90 rows)
 
 --SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer'))) AS equip_name;
 --
