@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/seg/Makefile,v 1.5 2001/09/06 10:49:30 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/seg/Makefile,v 1.6 2001/11/16 16:32:33 petere Exp $
 
 subdir = contrib/seg
 top_builddir = ../..
@@ -11,7 +11,9 @@ DOCS = README.seg
 REGRESS = seg
 
 
-segparse.c segparse.h: segparse.y
+segparse.c: segparse.h ;
+
+segparse.h: segparse.y
 ifdef YACC
 	$(YACC) -d $(YFLAGS) -p seg_yy $<
 	mv -f y.tab.c segparse.c

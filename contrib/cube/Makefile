@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/cube/Makefile,v 1.5 2001/09/06 10:49:29 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/cube/Makefile,v 1.6 2001/11/16 16:32:33 petere Exp $
 
 subdir = contrib/cube
 top_builddir = ../..
@@ -12,7 +12,9 @@ DOCS = README.cube
 REGRESS = cube
 
 
-cubeparse.c cubeparse.h: cubeparse.y
+cubeparse.c: cubeparse.h ;
+
+cubeparse.h: cubeparse.y
 ifdef YACC
 	$(YACC) -d $(YFLAGS) -p cube_yy $<
 	mv -f y.tab.c cubeparse.c

@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.77 2001/09/19 14:09:32 meskes Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.78 2001/11/16 16:32:33 petere Exp $
 
 subdir = src/interfaces/ecpg/preproc
 top_builddir = ../../../..
@@ -35,11 +35,13 @@ endif
 ecpg: $(OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBS) -o $@
 
-$(srcdir)/preproc.c $(srcdir)/preproc.h: preproc.y
+$(srcdir)/preproc.c: $(srcdir)/preproc.h ;
+
+$(srcdir)/preproc.h: preproc.y
 ifdef YACC
 	$(YACC) -d $(YFLAGS) $<
-	mv y.tab.c $(srcdir)/preproc.c
-	mv y.tab.h $(srcdir)/preproc.h
+	mv -f y.tab.c $(srcdir)/preproc.c
+	mv -f y.tab.h $(srcdir)/preproc.h
 else
 	@$(missing) bison $< $@
 endif

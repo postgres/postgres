@@ -2,7 +2,7 @@
 #
 # Makefile for parser
 #
-# $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.34 2001/08/09 18:13:23 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.35 2001/11/16 16:32:33 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,14 +20,25 @@ all: SUBSYS.o
 SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) $@ $^
 
-$(srcdir)/gram.c $(srcdir)/parse.h: gram.y
+
+# There is no correct way to write a rule that generates two files.
+# Rules with two targets don't have that meaning, they are merely
+# shorthand for two otherwise separate rules.  To be safe for parallel
+# make, we must chain the dependencies like this.  The semicolon is
+# important, otherwise make will choose the built-in rule for
+# gram.y=>gram.c.
+
+$(srcdir)/gram.c: $(srcdir)/parse.h ;
+
+$(srcdir)/parse.h: gram.y
 ifdef YACC
 	$(YACC) -d $(YFLAGS) $<
-	mv y.tab.c $(srcdir)/gram.c
-	mv y.tab.h $(srcdir)/parse.h
+	mv -f y.tab.c $(srcdir)/gram.c
+	mv -f y.tab.h $(srcdir)/parse.h
 else
 	@$(missing) bison $< $@
 endif
+
 
 $(srcdir)/scan.c: scan.l
 ifdef FLEX

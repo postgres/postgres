@@ -2,7 +2,7 @@
 #
 # Makefile for the plpgsql shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Makefile,v 1.19 2001/10/09 04:15:38 tgl Exp $
+# $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Makefile,v 1.20 2001/11/16 16:32:33 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -64,7 +64,9 @@ pl_gram.o pl_scan.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o: plpgsql.h $(src
 # Note: Since the yacc and lex files are shipped in the distribution,
 # they must be generated in the srcdir (as opposed to builddir).
 
-$(srcdir)/pl_gram.c $(srcdir)/pl.tab.h: gram.y
+$(srcdir)/pl_gram.c: $(srcdir)/pl.tab.h ;
+
+$(srcdir)/pl.tab.h: gram.y
 ifdef YACC
 	$(YACC) -d $(YFLAGS) $<
 	sed -e 's/yy/plpgsql_yy/g' -e 's/YY/PLPGSQL_YY/g' < y.tab.c > $(srcdir)/pl_gram.c

@@ -2,7 +2,7 @@
 #
 # Makefile for the bootstrap module
 #
-# $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.28 2001/08/22 20:02:56 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.29 2001/11/16 16:32:33 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,7 +25,7 @@ SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) $@ $^
 
 
-bootstrap.o bootscanner.c: $(srcdir)/bootstrap_tokens.h
+bootstrap.o bootscanner.o: $(srcdir)/bootstrap_tokens.h
 
 
 # `sed' rules to remove conflicts between bootstrap scanner and parser
@@ -37,7 +37,9 @@ sed -e 's/^yy/Int_yy/g' \
 endef
 
 
-$(srcdir)/bootparse.c $(srcdir)/bootstrap_tokens.h: bootparse.y Makefile
+$(srcdir)/bootparse.c: $(srcdir)/bootstrap_tokens.h ;
+
+$(srcdir)/bootstrap_tokens.h: bootparse.y Makefile
 ifdef YACC
 	$(YACC) -d $(YFLAGS) $<
 	$(sed-magic) < y.tab.c > $(srcdir)/bootparse.c
