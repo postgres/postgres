@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.16 2002/01/20 22:19:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.17 2002/02/24 23:55:31 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -60,7 +60,7 @@ PostgreSQL documentation
       <term>-e, --echo</term>
       <listitem>
        <para>
-        Echo the queries that <application>createdb</application> generates
+        Echo the queries that <application>dropuser</application> generates
 	and sends to the server.
        </para>
       </listitem>
