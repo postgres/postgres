@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.57 2001/08/10 15:49:39 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.58 2001/08/23 00:49:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
+#include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_type.h"
 #include "tcop/tcopprot.h"
@@ -332,7 +333,7 @@ checkretval(Oid rettype, List *queryTreeList)
 	List	   *tlistitem;
 	int			tlistlen;
 	Oid			typerelid;
-	Resdom	   *resnode;
+	Oid			restype;
 	Relation	reln;
 	Oid			relid;
 	int			relnatts;
@@ -377,6 +378,7 @@ checkretval(Oid rettype, List *queryTreeList)
 	/*
 	 * For base-type returns, the target list should have exactly one
 	 * entry, and its type should agree with what the user declared.
+	 * (As of Postgres 7.2, we accept binary-compatible types too.)
 	 */
 	typerelid = typeidTypeRelid(rettype);
 	if (typerelid == InvalidOid)
@@ -385,25 +387,25 @@ checkretval(Oid rettype, List *queryTreeList)
 			elog(ERROR, "function declared to return %s returns multiple columns in final SELECT",
 				 format_type_be(rettype));
 
-		resnode = (Resdom *) ((TargetEntry *) lfirst(tlist))->resdom;
-		if (resnode->restype != rettype)
+		restype = ((TargetEntry *) lfirst(tlist))->resdom->restype;
+		if (restype != rettype && !IS_BINARY_COMPATIBLE(restype, rettype))
 			elog(ERROR, "return type mismatch in function: declared to return %s, returns %s",
-			  format_type_be(rettype), format_type_be(resnode->restype));
+				 format_type_be(rettype), format_type_be(restype));
 
 		return;
 	}
 
 	/*
 	 * If the target list is of length 1, and the type of the varnode in
-	 * the target list is the same as the declared return type, this is
-	 * okay.  This can happen, for example, where the body of the function
-	 * is 'SELECT (x = func2())', where func2 has the same return type as
+	 * the target list matches the declared return type, this is okay.
+	 * This can happen, for example, where the body of the function
+	 * is 'SELECT func2()', where func2 has the same return type as
 	 * the function that's calling it.
 	 */
 	if (tlistlen == 1)
 	{
-		resnode = (Resdom *) ((TargetEntry *) lfirst(tlist))->resdom;
-		if (resnode->restype == rettype)
+		restype = ((TargetEntry *) lfirst(tlist))->resdom->restype;
+		if (restype == rettype || IS_BINARY_COMPATIBLE(restype, rettype))
 			return;
 	}
 
@@ -427,15 +429,17 @@ checkretval(Oid rettype, List *queryTreeList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(tlistitem);
 		Oid			tletype;
+		Oid			atttype;
 
 		if (tle->resdom->resjunk)
 			continue;
 		tletype = exprType(tle->expr);
-		if (tletype != reln->rd_att->attrs[i]->atttypid)
+		atttype = reln->rd_att->attrs[i]->atttypid;
+		if (tletype != atttype && !IS_BINARY_COMPATIBLE(tletype, atttype))
 			elog(ERROR, "function declared to return %s returns %s instead of %s at column %d",
 				 format_type_be(rettype),
 				 format_type_be(tletype),
-				 format_type_be(reln->rd_att->attrs[i]->atttypid),
+				 format_type_be(atttype),
 				 i + 1);
 		i++;
 	}
