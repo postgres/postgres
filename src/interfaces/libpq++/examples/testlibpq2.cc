@@ -1,69 +1,56 @@
 /*
  * testlibpq2.cc
- * 	Test of the asynchronous notification interface
+ * 	Test the C++ version of LIBPQ, the POSTGRES frontend library.
  *
-   populate a database with the following:
-
-CREATE TABLE TBL1 (i int4);
-
-CREATE TABLE TBL2 (i int4);
-
-CREATE RULE r1 AS ON INSERT TO TBL1 DO [INSERT INTO TBL2 values (new.i); NOTIFY TBL2];
-
- * Then start up this program
- * After the program has begun, do
-
-INSERT INTO TBL1 values (10);
-
- *
+ *  queries the template1 database for a list of database names using transaction block
  *
  */
-#include <stdio.h>
-#include "libpq++.H"
 
-main()
+#include <iostream.h>
+#include <iomanip.h>
+#include <libpq++.h>
+
+int main()
 {
-  char* dbName;
+  // Begin, by establishing a connection to the backend.
+  // When no parameters are given then the system will
+  // try to use reasonable defaults by looking up environment variables 
+  // or, failing that, using hardwired constants
+  const char* dbName = "template1";
+  PgTransaction data(dbName);
 
-  /* begin, by creating the parameter environtment for a backend
-     connection. When no parameters are given then the system will
-     try to use reasonable defaults by looking up environment variables 
-     or, failing that, using hardwired constants */
-  PGenv env;
-  PGdatabase* data;
-  PGnotify* notify;
+  // check to see that the backend connection was successfully made
+  if ( data.ConnectionBad() ) {
+      cerr << "Connection to database '" << dbName << "' failed." << endl
+           << "Error returned: " << data.ErrorMessage() << endl;
+      exit(1);
+  }
 
-  dbName = getenv("USER"); /* change this to the name of your test database */
-
-  /* make a connection to the database */
-  data = new PGdatabase(&env, dbName);
-
-  /* check to see that the backend connection was successfully made */
-  if (data->status() == CONNECTION_BAD) {
-    fprintf(stderr,"Connection to database '%s' failed.\n", dbName);
-    fprintf(stderr,"%s",data->errormessage());
-    delete data;
+  // submit command to the backend
+  if ( !data.ExecCommandOk("DECLARE myportal CURSOR FOR select * from pg_database") ) {
+    cerr << "DECLARE CURSOR command failed" << endl;
     exit(1);
   }
 
-  if (data->exec("LISTEN TBL2") != PGRES_COMMAND_OK) {
-    fprintf(stderr,"LISTEN command failed\n");
-    delete data;
+  // fetch instances from the pg_database, the system catalog of databases
+  if ( !data.ExecTuplesOk("FETCH ALL in myportal") ) {
+    cerr << "FETCH ALL command didn't return tuples properly" << endl;
     exit(1);
   }
+ 
+  // first, print out the attribute names
+  int nFields = data.Fields();
+  for (int i=0; i < nFields; i++)
+      cout << setiosflags(ios::right) << setw(15) << data.FieldName(i);
+  cout << endl << endl;
 
-  while (1) {
-      /* check for asynchronous returns */
-      notify = data->notifies();
-      if (notify) {
-	  fprintf(stderr,
-		  "ASYNC NOTIFY of '%s' from backend pid '%d' received\n",
-		  notify->relname, notify->be_pid);
-	  free(notify);
-	  break;
-      }
+  // next, print out the instances
+  for (int i=0; i < data.Tuples(); i++) {
+       for (int j=0; j < nFields; j++)
+            cout << setiosflags(ios::right) << setw(15) << data.GetValue(i,j);
+       cout << endl;
   }
-      
-  /* close the connection to the database and cleanup */
-  delete data;
+
+  // close the portal
+  data.Exec("CLOSE myportal");
 }

@@ -1,84 +1,67 @@
 /*
- * testlibpq.cc
+ * testlibpq1.cc
  * 	Test the C++ version of LIBPQ, the POSTGRES frontend library.
  *
  *  queries the template1 database for a list of database names 
  *
  */
-#include <stdio.h>
-#include "libpq++.H"
 
-main()
+#include <iostream.h>
+#include <iomanip.h>
+#include <libpq++.h>
+
+int main()
 {
-  char* dbName;
-  int nFields;
-  int i,j;
+  // Begin, by establishing a connection to the backend.
+  // When no parameters are given then the system will
+  // try to use reasonable defaults by looking up environment variables 
+  // or, failing that, using hardwired constants
+  const char* dbName = "template1";
+  PgDatabase data(dbName);
 
-  /* begin, by creating the parameter environtment for a backend
-     connection. When no parameters are given then the system will
-     try to use reasonable defaults by looking up environment variables 
-     or, failing that, using hardwired constants */
-  PGenv env;
-  PGdatabase* data;
+  // check to see that the backend connection was successfully made
+  if ( data.ConnectionBad() ) {
+      cerr << "Connection to database '" << dbName << "' failed." << endl
+           << "Error returned: " << data.ErrorMessage() << endl;
+      exit(1);
+  }
 
-  /* Select a database */
-  dbName = "template1";
-
-  /* make a connection to the database */
-  data = new PGdatabase(&env, dbName);
-
-  /* check to see that the backend connection was successfully made */
-  if (data->status() == CONNECTION_BAD) {
-    fprintf(stderr,"Connection to database '%s' failed.\n", dbName);
-    fprintf(stderr,"%s",data->errormessage());
-    delete data;
+  // start a transaction block
+  if ( !data.ExecCommandOk("BEGIN") ) {
+    cerr << "BEGIN command failed" << endl;
     exit(1);
   }
 
-  /* start a transaction block */
-  if(data->exec("BEGIN") != PGRES_COMMAND_OK) {
-    fprintf(stderr,"BEGIN command failed\n");
-    delete data;
+  // submit command to the backend
+  if ( !data.ExecCommandOk("DECLARE myportal CURSOR FOR select * from pg_database") ) {
+    cerr << "DECLARE CURSOR command failed" << endl;
     exit(1);
   }
 
-  /* fetch instances from the pg_database, the system catalog of databases*/
-  if (data->exec("DECLARE myportal CURSOR FOR select * from pg_database")
-      != PGRES_COMMAND_OK) {
-    fprintf(stderr,"DECLARE CURSOR command failed\n");
-    delete data;
-    exit(1);
-  }
-
-  if(data->exec("FETCH ALL in myportal") != PGRES_TUPLES_OK) {
-    fprintf(stderr,"FETCH ALL command didn't return tuples properly\n");
-    delete data;
+  // fetch instances from the pg_database, the system catalog of databases
+  if ( !data.ExecTuplesOk("FETCH ALL in myportal") ) {
+    cerr << "FETCH ALL command didn't return tuples properly" << endl;
     exit(1);
   }
  
-  /* first, print out the attribute names */
-  nFields = data->nfields();
-  for (i=0; i < nFields; i++) {
-    printf("%-15s",data->fieldname(i));
-  }
-  printf("\n\n");
+  // first, print out the attribute names
+  int nFields = data.Fields();
+  for (int i=0; i < nFields; i++)
+      cout << setiosflags(ios::right) << setw(15) << data.FieldName(i);
+  cout << endl << endl;
 
-  /* next, print out the instances */
-  for (i=0; i < data->ntuples(); i++) {
-    for (j=0  ; j < nFields; j++) {
-      printf("%-15s", data->getvalue(i,j));
-    }
-    printf("\n");
+  // next, print out the instances
+  for (int i=0; i < data.Tuples(); i++) {
+       for (int j=0; j < nFields; j++)
+            cout << setiosflags(ios::right) << setw(15) << data.GetValue(i,j);
+       cout << endl;
   }
 
-  /* close the portal */
-  data->exec("CLOSE myportal");
+  // Close the portal
+  data.Exec("CLOSE myportal");
 
-  /* end the transaction */
-  data->exec("END");
-
-  /* close the connection to the database and cleanup */
-  delete data;
+  // End the transaction
+  data.Exec("END");
 }
   
 

@@ -7,12 +7,16 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.5 1996/11/18 01:43:54 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.6 1997/02/13 10:00:23 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ..
 include ../Makefile.global
+SRCHEADERDIR = ../include
+LIBPQHEADERDIR = $(SRCHEADERDIR)/libpq
+
+LIBNAME= libpq++
 
 # We have to override -Werror, which makes warnings, fatal, because we
 # inevitably get the warning, "abstract declarator used as declaration"
@@ -22,48 +26,72 @@ CXXFLAGS= $(CFLAGS) -Wno-error
 
 INCLUDE_OPT= \
              -I../backend \
-             -I../include \
-             -I$(LIBPQDIR) 
+             -I$(SRCHEADERDIR) \
+             -I$(LIBPQDIR)
 
 CXXFLAGS+= $(INCLUDE_OPT)
+#CXXFLAGS+= -DDEBUG
 
 ifdef KRBVERS
 CXXFLAGS+= $(KRBFLAGS)
 endif
 
-OBJS= pgenv.o pgconnection.o pglobject.o
 
-all: libpq++.a examples
+OBJS = pgenv.o pgconnection.o pgtransdb.o pgcursordb.o pglobject.o
 
-libpq++.a: $(OBJS)
+all: $(LIBNAME).a install examples
+
+$(LIBNAME).a: $(OBJS)
 ifdef MK_NO_LORDER
-	$(AR) $(AROPT) libpq++.a $(OBJS)
+	$(AR) $(AROPT) $(LIBNAME).a $(OBJS)
 else
-	$(AR) $(AROPT) libpq++.a `lorder $(OBJS) | tsort`
+	$(AR) $(AROPT) $(LIBNAME).a `lorder $(OBJS) | tsort`
 endif
-	$(RANLIB) libpq++.a
+	$(RANLIB) $(LIBNAME).a
 
 .PHONY: examples
 examples:
 	$(MAKE) -C examples all
 
 .PHONY: beforeinstall-headers install-headers 
-.PHONY: install install-libpq++ doc
+.PHONY: install install-$(LIBNAME) doc
 
-install: install-headers install-libpq++ doc
+install: install-headers install-$(LIBNAME) doc
 
-install-headers: beforeinstall-headers libpq++.H
-	$(INSTALL) $(INSTLOPTS) libpq++.H $(HEADERDIR)/libpq++.H
+LIBPGXXDIR = $(LIBNAME)
+LIBPGXXHEADERDIR = $(HEADERDIR)/$(LIBPGXXDIR)
+MAINHEADER = $(LIBNAME).h
+LIBPGXXHEADERS = pgenv.h \
+		 pgconnection.h \
+		 pgdatabase.h \
+		 pgtransdb.h \
+		 pgcursordb.h \
+		 pglobject.h
+
+install-headers: beforeinstall-headers $(MAINHEADER)
+	@$(INSTALL) $(INSTLOPTS) $(MAINHEADER) $(HEADERDIR)/$(MAINHEADER)
+	@for i in ${LIBPGXXHEADERS}; do \
+		echo "Installing $(LIBPGXXHEADERDIR)/$$i."; \
+		$(INSTALL) $(INSTLOPTS) $$i $(LIBPGXXHEADERDIR)/$$i; \
+	done
 
 beforeinstall-headers:
 	@if [ ! -d $(HEADERDIR) ]; then mkdir $(HEADERDIR); fi
+	@if [ ! -d $(LIBPGXXHEADERDIR) ]; then mkdir $(LIBPGXXHEADERDIR); fi
 
-install-libpq++: libpq++.a
-	$(INSTALL) $(INSTL_LIB_OPTS) libpq++.a $(DESTDIR)$(LIBDIR)/libpq++.a
+install-$(LIBNAME): $(LIBNAME).a
+	$(INSTALL) $(INSTL_LIB_OPTS) $(LIBNAME).a $(DESTDIR)$(LIBDIR)/$(LIBNAME).a
 
 doc:
 	$(MAKE) -C man install
 
 clean:
-	rm libpq++.a $(OBJS)
+	rm $(LIBNAME).a $(OBJS)
 	$(MAKE) -C examples clean
+
+
+###########################################################################
+# Dependencies for the library
+###########################################################################
+include ./dependencies
+

@@ -9,41 +9,44 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq++/examples/Attic/testlibpq0.cc,v 1.2 1996/11/18 01:44:23 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq++/examples/Attic/testlibpq0.cc,v 1.3 1997/02/13 10:00:42 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <stdio.h>
-#include "libpq++.H"
+#include <iostream.h>
+#include <libpq++.h>
 
-int 
-main()
+int main()
 {
-  ExecStatusType status;
-  PGenv env;
-  PGdatabase* data;
-
-  char buf[10000];
-  int done = 0;
- 
-  data = new PGdatabase(&env, "template1");
-
-  if (data->status() == CONNECTION_BAD)
-    printf("connection was unsuccessful\n%s\n", data->errormessage());
+  // Open the connection to the database and make sure it's OK
+  PgDatabase data("template1");
+  if ( data.ConnectionBad() ) {
+      cout << "Connection was unsuccessful..." << endl
+           << "Error message returned: " << data.ErrorMessage() << endl;
+      return 1;
+  }
   else
-    printf("connection successful\n");
-
+      cout << "Connection successful...  Enter queries below:" << endl;
+    
+  // Interactively obtain and execute queries
+  ExecStatusType status;
+  string buf;
+  int done = 0;
   while (!done)
     {
-      printf("> ");fflush(stdout);
-      if (gets(buf) && buf[0]!='\0')
-	if((status = data->exec(buf)) == PGRES_TUPLES_OK) 
-	     data->printtuples(stdout, 1, "|", 1, 0);
-	else
-	     printf("status = %d\nerrorMessage = %s\n", status,
-						   data->errormessage());
+      cout << "> ";
+      cout.flush();
+      getline(cin, buf);
+      if ( buf != "" )
+	       if ( (status = data.Exec( buf.c_str() )) == PGRES_TUPLES_OK ) 
+	          data.DisplayTuples();
+	       else
+	          cout << "No tuples returned..." << endl
+	               << "status = " << status << endl
+	               << "Error returned: " << data.ErrorMessage() << endl;
       else
-	done = 1;
-    }
-}
+	       done = 1;
+      }
+  return 0;
+} // End main()

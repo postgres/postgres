@@ -7,56 +7,43 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq++/examples/Attic/testlo.cc,v 1.2 1996/11/18 01:44:28 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq++/examples/Attic/testlo.cc,v 1.3 1997/02/13 10:01:05 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
-#include "libpq++.H"
-extern "C" {
-#include "libpq/libpq-fs.h"
-}
+#include <iostream.h>
+#include <libpq++.h>
+#include <stdlib.h>
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
-    char *in_filename, *out_filename;
-    char *database;
-    PGenv env;
-    PGlobj *object;
-
+    // Check if the program was invoked correctly; if not, signal error
     if (argc < 4 || argc > 5) {
-	fprintf(stderr, "Usage: %s database_name in_filename out_filename [oid]\n",
-		argv[0]);
+	cerr << "Usage: " << argv[0] << " database_name in_filename out_filename [oid]" << endl;
 	exit(1);
     }
 
-    database = argv[1];
-    in_filename = argv[2];
-    out_filename = argv[3];
+    // Get the arguments passed to the program
+    char* database = argv[1];
+    char* in_filename = argv[2];
+    char* out_filename = argv[3];
 
-    /*
-     * set up the connection and create a largeobject for us
-     */
-    if (argc == 4) {
-      object = new PGlobj(&env, database);
-    } else {
-      object = new PGlobj(&env, database, atoi(argv[4]));
+    // Set up the connection and create a large object
+    int lobjId = ( argc == 4 ? 0 : atoi(argv[4]) );
+    PgLargeObject object(lobjId, database);
+
+    // check to see that the backend connection was successfully made
+    if ( object.ConnectionBad() ) {
+         cerr << "Connection to database '" << database << "' failed." << endl
+              << object.ErrorMessage();
+	 exit(1);
     }
 
-    /* check to see that the backend connection was successfully made */
-    if (object->status() == CONNECTION_BAD) {
-	fprintf(stderr,"Connection to database '%s' failed.\n", database);
-	fprintf(stderr,"%s",object->errormessage());
-	delete object;
-	exit(1);
-    }
-	
-    object->exec("BEGIN");
-    printf("importing file \"%s\" ...\n", in_filename);
-    object->import(in_filename);
-    printf("exporting large object to file \"%s\" ...\n", out_filename);
-    object->export(out_filename);
-    object->exec("END"); // WHY DOES IT CORE DUMP HERE ???
-    delete object;
+    // Test the import and export features of the Large Object interface
+    object.Exec("BEGIN");
+    cout << "Importing file \"" << in_filename << "\"..." << endl;
+    object.Import(in_filename);
+    cout << "Exporting large object to file \"" << out_filename << "\"..." << endl;
+    object.Export(out_filename);
+    object.Exec("END"); // WHY DOES IT CORE DUMP HERE ???
 }
