@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.13 2001/08/12 19:02:39 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.14 2001/08/22 20:23:23 petere Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <docinfo>
@@ -44,6 +44,7 @@
    <arg> -T  <replaceable class="parameter">trigger</replaceable> </arg>
    <arg> -v </arg>
    <arg> -x </arg>
+   <arg> -X <replaceable>keyword</replaceable></arg>
    <arg> -h  <replaceable class="parameter">host</replaceable> </arg>
    <arg> -p  <replaceable class="parameter">port</replaceable> </arg>
    <arg> -U <replaceable>username</replaceable> </arg>
@@ -60,38 +61,54 @@
 
   <para>
    <command>pg_restore</command> is a utility for restoring a
-   <productname>Postgres</productname> database dumped by
-   <xref linkend="app-pgdump"> in one of the non-plain-text formats.
+   <productname>Postgres</productname> database from an archive
+   created by <xref linkend="app-pgdump"> in one of the non-plain-text
+   formats.
   </para>
 
   <para>
-   The archive files, new with the 7.1 release, contain enough information for
-   <command>pg_restore</command> to rebuild the database, but also allow
-   <command>pg_restore</command> to be selective about what is restored,
-   or even to reorder the items prior to being restored. The archive files are designed
-   to be portable across architectures. <command>pg_dump</command> will
-   produce the queries necessary to re-generate all user-defined types, functions,
-   tables, indexes, aggregates, and operators.  In addition, all the data is copied
-   out (in text format for scripts) so that it can be readily copied in again.
+   The archive files contain information for
+   <command>pg_restore</command> to rebuild the database, but also
+   allow <command>pg_restore</command> to be selective about what is
+   restored, or even to reorder the items prior to being restored. The
+   archive files are designed to be portable across architectures.  It
+   will issue the commands necessary to re-generate all user-defined
+   types, functions, tables, indexes, aggregates, and operators, as
+   well as the data in the tables.
   </para>
 
   <para>
-   <command>pg_restore</command> reads the archive file and outputs the appropriate
-   SQL in the required order based on the command parameters. Obviously, it can not restore
-   information that is not present in the dump file; so if the dump is made using the
-   <quote>dump data as <command>INSERT</command>s</quote> option, <command>pg_restore</command> will not be able to
-   load the data using <command>COPY</command> statements.
+   <command>pg_restore</command> can operate in two modes:  If a
+   database name is specified, the archive is restored directly into
+   the database.  Otherwise, a script containing the SQL commands
+   necessary to rebuild the database is created (and written to a file
+   or standard output), similar to the ones created by the
+   <command>pg_dump</command> plain text format.  Some of the options
+   controlling the script output are therefore analogous to
+   <command>pg_dump</command>.
   </para>
 
   <para>
-   The most flexible output file format is the <quote>custom</quote> format (<option>-Fc</option>). It allows for
-   selection and reordering of all archived items, and is compressed by default. The <filename>tar</filename>
-   format (<option>-Ft</option>) is not compressed and it is not possible to reorder
-   data when loading, but it is otherwise quite flexible.
+   Obviously, <command>pg_restore</command> cannot restore information
+   that is not present in the archive file; for instance, if the
+   archive was made using the <quote>dump data as
+   <command>INSERT</command>s</quote> option,
+   <command>pg_restore</command> will not be able to load the data
+   using <command>COPY</command> statements.
   </para>
 
   <para>
-   To reorder the items, it is first necessary to dump the contents of the archive:
+   The most flexible output file format is the <quote>custom</quote>
+   format (<option>-Fc</option>). It allows for selection and
+   reordering of all archived items, and is compressed by default. The
+   <filename>tar</filename> format (<option>-Ft</option>) is not
+   compressed and it is not possible to reorder data when loading, but
+   it is otherwise quite flexible.
+  </para>
+
+  <para>
+   To reorder the items, it is first necessary to dump the table of
+   contents of the archive:
 <screen>
 <prompt>$</prompt> <userinput>pg_restore archive.file -l &gt; archive.list</userinput>
 </screen>
@@ -346,8 +363,20 @@
       <term>--no-reconnect</term>
       <listitem>
        <para>
-	  Prohibit <COMMAND>pg_restore</COMMAND> from issuing any <PROGRAMLISTING>\connect</PROGRAMLISTING>
-        statements or reconnecting to the database if directly connected.
+        While restoring an archive, <command>pg_restore</command>
+        typically has to reconnect to the database several times with
+        different user names to set the correct ownership of the
+        created objects.  If this is undesriable (e.g., because manual
+        interaction (passwords) would be necessary for each
+        reconnection), this option prevents
+        <command>pg_restore</command> from issuing any reconnection
+        requests.  (A connection request while in plain text mode, not
+        connected to a database, is made by putting out a <xref
+        linkend="app-psql"> <command>\connect</command> command.)
+        However, this option is a rather blunt instrument because it
+        makes <command>pg_restore</command> lose all object ownership
+        information, <emphasis>unless</emphasis> you use the
+        <option>-X use-set-session-authorization</option> option.
        </para>
       </listitem>
      </varlistentry>
@@ -410,6 +439,25 @@
       <listitem>
        <para>
 	Prevent restoration of access privileges (grant/revoke commands).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-X use-set-session-authorization</term>
+      <term>--use-set-session-authorization</term>
+      <listitem>
+       <para>
+        Normally, if restoring an archive requires altering the
+        current database user (e.g., to set correct object
+        ownerships), a new connection to the database must be openend,
+        which might require manual interaction (e.g., passwords).  If
+        you use the <option>-X use-set-session-authorization</option>,
+        then <command>pg_restore</command> will instead use the <xref
+        linkend="sql-set-session-authorization"> command.  This has
+        the same effect, but it requires that the user restoring the
+        archive is a database superuser.  This option effectively
+        overrides the <option>-R</option> option.
        </para>
       </listitem>
      </varlistentry>
@@ -592,6 +640,14 @@ connectDBStart() -- connect() failed: No such file or directory
 
  </refsect1>
 
+ <refsect1>
+  <title>History</title>
+
+  <para>
+   The <command>pg_restore</command> utility first appeared in
+   PostgreSQL 7.1.
+  </para>
+ </refsect1>
 
  <refsect1>
   <title>See Also</title>

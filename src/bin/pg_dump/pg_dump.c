@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.223 2001/08/19 22:17:03 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.224 2001/08/22 20:23:23 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,6 +167,9 @@ help(const char *progname)
 		"  -v, --verbose            verbose mode\n"
 		"  -W, --password           force password prompt (should happen automatically)\n"
 		"  -x, --no-privileges      do not dump privileges (grant/revoke)\n"
+		"  -X use-set-session-authorization, --use-set-session-authorization\n"
+		"                           output SET SESSION AUTHORIZATION commands rather\n"
+		"                           than \\connect commands\n"
 		"  -Z, --compress {0-9}     compression level for compressed formats\n"
 		));
 #else
@@ -198,6 +201,9 @@ help(const char *progname)
 		"  -v                       verbose mode\n"
 		"  -W                       force password prompt (should happen automatically)\n"
 		"  -x                       do not dump privileges (grant/revoke)\n"
+		"  -X use-set-session-authorization\n"
+		"                           output SET SESSION AUTHORIZATION commands rather\n"
+		"                           than \\connect commands\n"
 		"  -Z {0-9}                 compression level for compressed formats\n"
 		));
 #endif
@@ -628,6 +634,7 @@ main(int argc, char **argv)
 	int			outputBlobs = 0;
 	int			outputNoOwner = 0;
 	int			outputNoReconnect = 0;
+	static int	use_setsessauth = 0;
 	char	   *outputSuperuser = NULL;
 
 	RestoreOptions *ropt;
@@ -661,7 +668,11 @@ main(int argc, char **argv)
 		{"no-acl", no_argument, NULL, 'x'},
 		{"compress", required_argument, NULL, 'Z'},
 		{"help", no_argument, NULL, '?'},
-		{"version", no_argument, NULL, 'V'}
+		{"version", no_argument, NULL, 'V'},
+
+		/* the following options don't have an equivalent short option
+           letter, but are available as '-X long-name' */
+		{"use-set-session-authorization", no_argument, &use_setsessauth, 1}
 	};
 	int			optindex;
 
@@ -709,9 +720,9 @@ main(int argc, char **argv)
 	}
 
 #ifdef HAVE_GETOPT_LONG
-	while ((c = getopt_long(argc, argv, "abcCdDf:F:h:inNoOp:RsS:t:uU:vWxzZ:V?", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "abcCdDf:F:h:inNoOp:RsS:t:uU:vWxX:zZ:V?", long_options, &optindex)) != -1)
 #else
-	while ((c = getopt(argc, argv, "abcCdDf:F:h:inNoOp:RsS:t:uU:vWxzZ:V?-")) != -1)
+	while ((c = getopt(argc, argv, "abcCdDf:F:h:inNoOp:RsS:t:uU:vWxX:zZ:V?-")) != -1)
 #endif
 
 	{
@@ -851,6 +862,26 @@ main(int argc, char **argv)
 				aclsSkip = true;
 				break;
 
+				/*
+				 * Option letters were getting scarce, so I invented
+				 * this new scheme: '-X feature' turns on some
+				 * feature.  Compare to the -f option in GCC.  You
+				 * should also add an equivalent GNU-style option
+				 * --feature.  Features that require arguments should
+				 * use '-X feature=foo'.
+				 */
+			case 'X':
+				if (strcmp(optarg, "use-set-session-authorization")==0)
+					use_setsessauth = 1;
+				else
+				{
+					fprintf(stderr,
+							gettext("%s: invalid -X option -- %s\n"),
+							progname, optarg);
+					fprintf(stderr, gettext("Try '%s --help' for more information.\n"), progname);
+					exit(1);
+				}
+				break;
 			case 'Z':			/* Compression Level */
 				compressLevel = atoi(optarg);
 				break;
@@ -862,6 +893,10 @@ main(int argc, char **argv)
 								"Use --help for help on invocation options.\n"),
 						progname);
 				exit(1);
+				break;
+#else
+				/* This covers the long options equivalent to -X xxx. */
+			case 0:
 				break;
 #endif
 			default:
@@ -1040,6 +1075,7 @@ main(int argc, char **argv)
 		ropt->create = outputCreate;
 		ropt->noOwner = outputNoOwner;
 		ropt->noReconnect = outputNoReconnect;
+		ropt->use_setsessauth = use_setsessauth;
 
 		if (outputSuperuser)
 			ropt->superuser = outputSuperuser;

@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.23 2001/08/12 19:02:39 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.24 2001/08/22 20:23:23 petere Exp $
  *
  * NOTES
  *
@@ -40,7 +40,7 @@
 static const char *modulename = gettext_noop("archiver (db)");
 
 static void _check_database_version(ArchiveHandle *AH, bool ignoreVersion);
-static PGconn *_connectDB(ArchiveHandle *AH, const char *newdbname, char *newUser);
+static PGconn *_connectDB(ArchiveHandle *AH, const char *newdbname, const char *newUser);
 static int	_executeSqlCommand(ArchiveHandle *AH, PGconn *conn, PQExpBuffer qry, char *desc);
 static void notice_processor(void *arg, const char *message);
 
@@ -226,29 +226,44 @@ ConnectedUser(ArchiveHandle *AH)
 }
 
 /*
- * Reconnect the DB associated with the archive handle
+ * Reconnect to the server.  If dbname is not NULL, use that database,
+ * else the one associated with the archive handle.  If username is
+ * not NULL, use that user name, else the one from the handle.  If
+ * both the database and the user and match the existing connection
+ * already, nothing will be done.
+ *
+ * Returns 1 in any case.
  */
 int
-ReconnectDatabase(ArchiveHandle *AH, const char *newdbname, char *newUser)
+ReconnectToServer(ArchiveHandle *AH, const char *dbname, const char *username)
 {
 	PGconn	   *newConn;
-	char	   *dbname;
+	const char *newdbname;
+	const char *newusername;
 
-	if (!newdbname || (strcmp(newdbname, "-") == 0))
-		dbname = PQdb(AH->connection);
+	if (!dbname)
+		newdbname = PQdb(AH->connection);
 	else
-		dbname = (char *) newdbname;
+		newdbname = dbname;
+
+	if (!username)
+		newusername = PQuser(AH->connection);
+	else
+		newusername = username;
 
 	/* Let's see if the request is already satisfied */
-	if (strcmp(PQuser(AH->connection), newUser) == 0 && strcmp(newdbname, PQdb(AH->connection)) == 0)
+	if (strcmp(newusername, PQuser(AH->connection)) == 0
+		&& strcmp(newdbname, PQdb(AH->connection)) == 0)
 		return 1;
 
-	newConn = _connectDB(AH, dbname, newUser);
+	newConn = _connectDB(AH, newdbname, newusername);
 
 	PQfinish(AH->connection);
 	AH->connection = newConn;
+
 	free(AH->username);
-	AH->username = strdup(newUser);
+	AH->username = strdup(newusername);
+	/* XXX Why don't we update AH->dbname? */
 
 	return 1;
 }
@@ -257,7 +272,7 @@ ReconnectDatabase(ArchiveHandle *AH, const char *newdbname, char *newUser)
  * Connect to the db again.
  */
 static PGconn *
-_connectDB(ArchiveHandle *AH, const char *reqdb, char *requser)
+_connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 {
 	int			need_pass;
 	PGconn	   *newConn;
@@ -267,7 +282,7 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, char *requser)
 	char	   *newdb;
 	char	   *newuser;
 
-	if (!reqdb || (strcmp(reqdb, "-") == 0))
+	if (!reqdb)
 		newdb = PQdb(AH->connection);
 	else
 		newdb = (char *) reqdb;

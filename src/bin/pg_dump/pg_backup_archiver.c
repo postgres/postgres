@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.31 2001/08/19 22:17:03 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.32 2001/08/22 20:23:23 petere Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -78,7 +78,7 @@ static ArchiveHandle *_allocAH(const char *FileSpec, const ArchiveFormat fmt,
 static int	_printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData);
 
 static void _reconnectAsOwner(ArchiveHandle *AH, const char *dbname, TocEntry *te);
-static void _reconnectAsUser(ArchiveHandle *AH, const char *dbname, char *user);
+static void _reconnectAsUser(ArchiveHandle *AH, const char *dbname, const char *user);
 
 static int	_tocEntryRequired(TocEntry *te, RestoreOptions *ropt);
 static void _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
@@ -251,7 +251,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 				/* We want the schema */
 				ahlog(AH, 1, "dropping %s %s\n", te->desc, te->name);
 				/* Reconnect if necessary */
-				_reconnectAsOwner(AH, "-", te);
+				_reconnectAsOwner(AH, NULL, te);
 				/* Drop it */
 				ahprintf(AH, "%s", te->dropStmt);
 			}
@@ -283,7 +283,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		if ((reqs & 1) != 0)	/* We want the schema */
 		{
 			/* Reconnect if necessary */
-			_reconnectAsOwner(AH, "-", te);
+			_reconnectAsOwner(AH, NULL, te);
 
 			ahlog(AH, 1, "creating %s %s\n", te->desc, te->name);
 			_printTocEntry(AH, te, ropt, false);
@@ -345,7 +345,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 						 * Reconnect if necessary (_disableTriggers may have
 						 * reconnected)
 						 */
-						_reconnectAsOwner(AH, "-", te);
+						_reconnectAsOwner(AH, NULL, te);
 
 						ahlog(AH, 1, "restoring data for table %s\n", te->name);
 
@@ -448,6 +448,10 @@ NewRestoreOptions(void)
 	return opts;
 }
 
+/*
+ * Returns true if we're restoring directly to the database (and
+ * aren't just making a psql script that can do the restoration).
+ */
 static int
 _restoringToDB(ArchiveHandle *AH)
 {
@@ -486,7 +490,7 @@ _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *rop
 			 */
 			if (ropt->noOwner)
 				oldUser = strdup(ConnectedUser(AH));
-			_reconnectAsUser(AH, "-", ropt->superuser);
+			_reconnectAsUser(AH, NULL, ropt->superuser);
 		}
 	}
 
@@ -514,7 +518,7 @@ _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *rop
 	 */
 	if (ropt->noOwner && oldUser)
 	{
-		_reconnectAsUser(AH, "-", oldUser);
+		_reconnectAsUser(AH, NULL, oldUser);
 		free(oldUser);
 	}
 }
@@ -546,7 +550,7 @@ _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt
 			if (ropt->noOwner)
 				oldUser = strdup(ConnectedUser(AH));
 
-			_reconnectAsUser(AH, "-", ropt->superuser);
+			_reconnectAsUser(AH, NULL, ropt->superuser);
 		}
 	}
 
@@ -577,7 +581,7 @@ _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt
 	 */
 	if (ropt->noOwner && oldUser)
 	{
-		_reconnectAsUser(AH, "-", oldUser);
+		_reconnectAsUser(AH, NULL, oldUser);
 		free(oldUser);
 	}
 }
@@ -1895,26 +1899,71 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt)
 	return res;
 }
 
-static void
-_reconnectAsUser(ArchiveHandle *AH, const char *dbname, char *user)
-{
-	if (AH->ropt && AH->ropt->noReconnect)
-		return;
 
-	if (user && strlen(user) != 0
-	&& ((strcmp(AH->currUser, user) != 0) || (strcmp(dbname, "-") != 0)))
+/*
+ * Issue the commands to connect to the database as the specified user
+ * to the specified database.  The database name may be NULL, then the
+ * current database is kept.  If reconnects were disallowed by the
+ * user, this won't do anything.
+ *
+ * If we're currently restoring right into a database, this will
+ * actuall establish a connection.  Otherwise it puts a \connect into
+ * the script output.
+ */
+static void
+_reconnectAsUser(ArchiveHandle *AH, const char *dbname, const char *user)
+{
+	if (!user || strlen(user) == 0
+		|| (strcmp(AH->currUser, user) == 0 && !dbname))
+		return;					/* no need to do anything */
+
+	/* Use SET SESSION AUTHORIZATION if allowed and no database change needed */
+	if (!dbname && AH->ropt->use_setsessauth)
 	{
 		if (RestoringToDB(AH))
-			ReconnectDatabase(AH, dbname, user);
-		else
-			ahprintf(AH, "\\connect %s %s\n", dbname, user);
-		if (AH->currUser)
-			free(AH->currUser);
+		{
+			PQExpBuffer qry = createPQExpBuffer();
+			PGresult   *res;
 
-		AH->currUser = strdup(user);
+			appendPQExpBuffer(qry, "SET SESSION AUTHORIZATION '%s';", user);
+			res = PQexec(AH->connection, qry->data);
+
+			if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
+				die_horribly(AH, modulename, "could not set session user to %s: %s",
+							 user, PQerrorMessage(AH->connection));
+
+			PQclear(res);
+			destroyPQExpBuffer(qry);
+		}
+		else
+			ahprintf(AH, "SET SESSION AUTHORIZATION '%s';\n\n", user);
 	}
+	/* When -R was given, don't do anything. */
+	else if (AH->ropt && AH->ropt->noReconnect)
+		return;
+
+	else if (RestoringToDB(AH))
+		ReconnectToServer(AH, dbname, user);
+	else
+		/* FIXME: does not handle mixed case user names */
+		ahprintf(AH, "\\connect %s %s\n\n",
+				 dbname ? dbname : "-",
+				 user ? user : "-");
+
+	/* NOTE: currUser keeps track of what the imaginary session user
+       in our script is */
+	if (AH->currUser)
+		free(AH->currUser);
+
+	AH->currUser = strdup(user);
 }
 
+
+/*
+ * Issues the commands to connect to the database (or the current one,
+ * if NULL) as the owner of the the given TOC entry object.  If
+ * changes in ownership are not allowed, this doesn't do anything.
+ */
 static void
 _reconnectAsOwner(ArchiveHandle *AH, const char *dbname, TocEntry *te)
 {
@@ -1923,6 +1972,7 @@ _reconnectAsOwner(ArchiveHandle *AH, const char *dbname, TocEntry *te)
 
 	_reconnectAsUser(AH, dbname, te->owner);
 }
+
 
 static int
 _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData)

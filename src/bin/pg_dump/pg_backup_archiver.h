@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.36 2001/07/03 20:21:48 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.37 2001/08/22 20:23:23 petere Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *	-	Initial version.
@@ -310,7 +310,7 @@ extern int	isValidTarHeader(char *header);
 extern OutputContext SetOutput(ArchiveHandle *AH, char *filename, int compression);
 extern void ResetOutput(ArchiveHandle *AH, OutputContext savedContext);
 extern int	RestoringToDB(ArchiveHandle *AH);
-extern int	ReconnectDatabase(ArchiveHandle *AH, const char *dbname, char *newUser);
+extern int	ReconnectToServer(ArchiveHandle *AH, const char *dbname, const char *newUser);
 extern int	UserIsSuperuser(ArchiveHandle *AH, char *user);
 extern char *ConnectedUser(ArchiveHandle *AH);
 extern int	ConnectedUserIsSuperuser(ArchiveHandle *AH);

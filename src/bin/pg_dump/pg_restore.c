@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.24 2001/08/19 22:17:03 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.25 2001/08/22 20:23:24 petere Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -81,39 +81,6 @@ static char *_cleanupName(char *name);
 
 typedef struct option optType;
 
-#ifdef HAVE_GETOPT_LONG
-struct option cmdopts[] = {
-	{"clean", 0, NULL, 'c'},
-	{"create", 0, NULL, 'C'},
-	{"data-only", 0, NULL, 'a'},
-	{"dbname", 1, NULL, 'd'},
-	{"file", 1, NULL, 'f'},
-	{"format", 1, NULL, 'F'},
-	{"function", 1, NULL, 'P'},
-	{"host", 1, NULL, 'h'},
-	{"ignore-version", 0, NULL, 'i'},
-	{"index", 1, NULL, 'I'},
-	{"list", 0, NULL, 'l'},
-	{"no-privileges", 0, NULL, 'x'},
-	{"no-acl", 0, NULL, 'x'},
-	{"no-owner", 0, NULL, 'O'},
-	{"no-reconnect", 0, NULL, 'R'},
-	{"port", 1, NULL, 'p'},
-	{"oid-order", 0, NULL, 'o'},
-	{"orig-order", 0, NULL, 'N'},
-	{"password", 0, NULL, 'W'},
-	{"rearrange", 0, NULL, 'r'},
-	{"schema-only", 0, NULL, 's'},
-	{"superuser", 1, NULL, 'S'},
-	{"table", 1, NULL, 't'},
-	{"trigger", 1, NULL, 'T'},
-	{"use-list", 1, NULL, 'L'},
-	{"username", 1, NULL, 'U'},
-	{"verbose", 0, NULL, 'v'},
-	{NULL, 0, NULL, 0}
-};
-
-#endif
 
 int
 main(int argc, char **argv)
@@ -124,6 +91,45 @@ main(int argc, char **argv)
 	char	   *fileSpec = NULL;
 	extern int	optind;
 	extern char *optarg;
+	static int	use_setsessauth = 0;
+
+#ifdef HAVE_GETOPT_LONG
+	struct option cmdopts[] = {
+		{"clean", 0, NULL, 'c'},
+		{"create", 0, NULL, 'C'},
+		{"data-only", 0, NULL, 'a'},
+		{"dbname", 1, NULL, 'd'},
+		{"file", 1, NULL, 'f'},
+		{"format", 1, NULL, 'F'},
+		{"function", 1, NULL, 'P'},
+		{"host", 1, NULL, 'h'},
+		{"ignore-version", 0, NULL, 'i'},
+		{"index", 1, NULL, 'I'},
+		{"list", 0, NULL, 'l'},
+		{"no-privileges", 0, NULL, 'x'},
+		{"no-acl", 0, NULL, 'x'},
+		{"no-owner", 0, NULL, 'O'},
+		{"no-reconnect", 0, NULL, 'R'},
+		{"port", 1, NULL, 'p'},
+		{"oid-order", 0, NULL, 'o'},
+		{"orig-order", 0, NULL, 'N'},
+		{"password", 0, NULL, 'W'},
+		{"rearrange", 0, NULL, 'r'},
+		{"schema-only", 0, NULL, 's'},
+		{"superuser", 1, NULL, 'S'},
+		{"table", 1, NULL, 't'},
+		{"trigger", 1, NULL, 'T'},
+		{"use-list", 1, NULL, 'L'},
+		{"username", 1, NULL, 'U'},
+		{"verbose", 0, NULL, 'v'},
+
+		/* the following options don't have an equivalent short option
+		   letter, but are available as '-X long-name' */
+		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
+		{NULL, 0, NULL, 0}
+	};
+#endif /* HAVE_GETOPT_LONG */
+
 
 #ifdef ENABLE_NLS
 	setlocale(LC_ALL, "");
@@ -153,9 +159,9 @@ main(int argc, char **argv)
 	}
 
 #ifdef HAVE_GETOPT_LONG
-	while ((c = getopt_long(argc, argv, "acCd:f:F:h:i:lL:NoOp:P:rRsS:t:T:uU:vWx", cmdopts, NULL)) != EOF)
+	while ((c = getopt_long(argc, argv, "acCd:f:F:h:i:lL:NoOp:P:rRsS:t:T:uU:vWxX:", cmdopts, NULL)) != EOF)
 #else
-	while ((c = getopt(argc, argv, "acCd:f:F:h:i:lL:NoOp:P:rRsS:t:T:uU:vWx")) != -1)
+	while ((c = getopt(argc, argv, "acCd:f:F:h:i:lL:NoOp:P:rRsS:t:T:uU:vWxX:")) != -1)
 #endif
 	{
 		switch (c)
@@ -267,6 +273,26 @@ main(int argc, char **argv)
 			case 'x':			/* skip ACL dump */
 				opts->aclsSkip = 1;
 				break;
+
+			case 'X':
+				if (strcmp(optarg, "use-set-session-authorization")==0)
+					use_setsessauth = 1;
+				else
+				{
+					fprintf(stderr,
+							gettext("%s: invalid -X option -- %s\n"),
+							progname, optarg);
+					fprintf(stderr, gettext("Try '%s --help' for more information.\n"), progname);
+					exit(1);
+				}
+				break;
+
+#ifdef HAVE_GETOPT_LONG
+				/* This covers the long options equivalent to -X xxx. */
+			case 0:
+				break;
+#endif
+
 			default:
 				fprintf(stderr, gettext("Try '%s --help' for more information.\n"), progname);
 				exit(1);
@@ -277,6 +303,8 @@ main(int argc, char **argv)
 		fileSpec = argv[optind];
 	else
 		fileSpec = NULL;
+
+	opts->use_setsessauth = use_setsessauth;
 
 	if (opts->formatName)
 	{
@@ -381,6 +409,9 @@ usage(const char *progname)
 		"  -v, --verbose            verbose mode\n"
 		"  -W, --password           force password prompt (should happen automatically)\n"
 		"  -x, --no-privileges      skip restoration of access privileges (grant/revoke)\n"
+		"  -X use-set-session-authorization, --use-set-session-authorization\n"
+		"                           use SET SESSION AUTHORIZATION commands instead\n"
+		"                           of reconnecting, if possible\n"
 		));
 
 #else /* not HAVE_GETOPT_LONG */
@@ -414,6 +445,9 @@ usage(const char *progname)
 		"  -v                       verbose mode\n"
 		"  -W                       force password prompt (should happen automatically)\n"
 		"  -x                       skip restoration of access privileges (grant/revoke)\n"
+		"  -X use-set-session-authorization\n"
+		"                           use SET SESSION AUTHORIZATION commands instead\n"
+		"                           of reconnecting, if possible\n"
 		));
 #endif
 	puts(gettext("If no input file name is supplied, then standard input is used.\n"));

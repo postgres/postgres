@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup.h,v 1.13 2001/06/27 21:21:37 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup.h,v 1.14 2001/08/22 20:23:23 petere Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -85,6 +85,7 @@ typedef struct _restoreOptions
 								 * original object owner */
 	int			noReconnect;	/* Don't reconnect to database under any
 								 * cirsumstances */
+	int			use_setsessauth; /* use SET SESSSION AUTHORIZATION instead of \connect */
 	char	   *superuser;		/* Username to use as superuser */
 	int			dataOnly;
 	int			dropSchema;
