@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.58 2003/08/27 22:58:54 petere Exp $
+# $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.59 2003/08/31 17:28:39 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -82,7 +82,7 @@ html: postgres.sgml $(ALLSGML) stylesheet.dsl
 	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -i output-html -t sgml $<
 
 
-COLLATEINDEX := $(PERL) $(COLLATEINDEX) -f -g
+COLLATEINDEX := LC_ALL=C $(PERL) $(COLLATEINDEX) -f -g
 
 ifeq (,$(wildcard HTML.index))
 bookindex.sgml:
