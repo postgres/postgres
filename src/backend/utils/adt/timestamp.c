@@ -4,8 +4,8 @@
 #include "postgres.h"
 #include "utils/builtins.h"
 
-int4
-timestamp_in(char *timestamp_str)
+time_t
+timestamp_in(const char *timestamp_str)
 {
     struct tm input_time;
     int4 result;
@@ -25,18 +25,17 @@ timestamp_in(char *timestamp_str)
 
     /* use mktime(), but make this GMT, not local time */
     result = mktime(&input_time);
-    result -= timezone;
 
     return result;
 }
 
 char *
-timestamp_out(int4 timestamp)
+timestamp_out(time_t timestamp)
 {
     char *result;
     struct tm *time;
 
-    time = gmtime((time_t *)&timestamp);
+    time = localtime((time_t *)&timestamp);
     result = palloc(20);
     sprintf(result, "%04d-%02d-%02d %02d:%02d:%02d",
 	    time->tm_year+1900, time->tm_mon+1, time->tm_mday,
@@ -45,54 +44,47 @@ timestamp_out(int4 timestamp)
     return result;
 }
 
-int4
+time_t
 now(void)
 {
-    struct tm ignore;
     time_t sec;
 
-    /* we want the local time here.  but 'timezone' doesn't get set */
-    /* until we do a mktime().  so do one.                          */
-    memset(&ignore, 0, sizeof(ignore));
-    mktime(&ignore);
-
     time(&sec);
-    sec -= timezone;
-    return((int4)sec);
+    return(sec);
 }
 
-int4
-timestampeq(int4 t1, int4 t2)
+bool
+timestampeq(time_t t1, time_t t2)
 {
-    return t1 == t2;
+    return difftime(t1, t2) == 0;
 }
 
-int4
-timestampne(int4 t1, int4 t2)
+bool
+timestampne(time_t t1, time_t t2)
 {
-    return t1 != t2;
+    return difftime(t1, t2) != 0;
 }
 
-int4
-timestamplt(int4 t1, int4 t2)
+bool
+timestamplt(time_t t1, time_t t2)
 {
-    return t1 < t2;
+    return difftime(t1, t2) > 0;
 }
 
-int4
-timestampgt(int4 t1, int4 t2)
+bool
+timestampgt(time_t t1, time_t t2)
 {
-    return t1 > t2;
+    return difftime(t1, t2) < 0;
 }
 
-int4
-timestample(int4 t1, int4 t2)
+bool
+timestample(time_t t1, time_t t2)
 {
-    return t1 <= t2;
+    return difftime(t1, t2) >= 0;
 }
 
-int4
-timestampge(int4 t1, int4 t2)
+bool
+timestampge(time_t t1, time_t t2)
 {
-    return t1 >= t2;
+    return difftime(t1, t2) <= 0;
 }
