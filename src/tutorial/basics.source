@@ -6,7 +6,7 @@
 --
 -- Copyright (c) 1994, Andrew Yu, University of California
 --
--- $Id: basics.source,v 1.2 1997/06/25 19:59:57 momjian Exp $
+-- $Id: basics.source,v 1.3 1999/07/08 15:27:01 momjian Exp $
 --
 ---------------------------------------------------------------------------
 
@@ -94,12 +94,12 @@ ORDER BY city;
 --	another class.
 -----------------------------
 
-SELECT * INTO TABLE temp 
+SELECT * INTO TABLE mytemp 
 FROM weather
 WHERE city = 'San Francisco' 
    and prcp > 0.0;
 
-SELECT * from temp;
+SELECT * from mytemp;
 
 -----------------------------
 -- Aggregates
@@ -185,4 +185,4 @@ SELECT * from weather;
 --      can no longer use those tables.
 -----------------------------
 
-DROP TABLE weather, cities, temp;
+DROP TABLE weather, cities, mytemp;
