@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.2 1996/11/03 06:54:35 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.3 1997/05/20 11:35:48 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@ extern	Relation	SortRdesc;		/* later static */
 #define	PUTTUP(TUP, FP)	fwrite((char *)TUP, (TUP)->t_len, 1, FP)
 #define	ENDRUN(FP)	fwrite((char *)&shortzero, sizeof (shortzero), 1, FP)
 #define	GETLEN(LEN, FP)	fread(&(LEN), sizeof (shortzero), 1, FP)
-#define	ALLOCTUP(LEN)	((HeapTuple)malloc((unsigned)LEN))
+#define	ALLOCTUP(LEN)	((HeapTuple)palloc((unsigned)LEN))
 #define	GETTUP(TUP, LEN, FP)\
 	fread((char *)(TUP) + sizeof (shortzero), 1, (LEN) - sizeof (shortzero), FP)
 #define	SETTUPLEN(TUP, LEN)	(TUP)->t_len = LEN
@@ -175,7 +175,7 @@ puttuple(struct leftist **treep, HeapTuple newtuple, int devnum)
     register struct	leftist	*new1;
     register struct	leftist	*tp;
     
-    new1 = (struct leftist *) malloc((unsigned) sizeof (struct leftist));
+    new1 = (struct leftist *) palloc((unsigned) sizeof (struct leftist));
     USEMEM(sizeof (struct leftist));
     new1->lt_dist = 1;
     new1->lt_devnum = devnum;

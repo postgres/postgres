@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.3 1996/11/06 10:32:10 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.4 1997/05/20 11:35:50 vadim Exp $
  *
  * NOTES
  *	Sorts the first relation into the second relation.  The sort may
@@ -175,7 +175,7 @@ resetpsort()
     fwrite((char *)TUP, (TUP)->t_len, 1, FP)
 #define	ENDRUN(FP)	fwrite((char *)&shortzero, sizeof (shortzero), 1, FP)
 #define	GETLEN(LEN, FP)	fread((char *)&(LEN), sizeof (shortzero), 1, FP)
-#define	ALLOCTUP(LEN)	((HeapTuple)malloc((unsigned)LEN))
+#define	ALLOCTUP(LEN)	((HeapTuple)palloc((unsigned)LEN))
 #define	GETTUP(TUP, LEN, FP)\
     IncrProcessed(); \
     BytesRead += (LEN) - sizeof (shortzero); \
@@ -349,7 +349,7 @@ tuplecopy(HeapTuple tup, Relation rdesc, Buffer b)
     if (!HeapTupleIsValid(tup)) {
 	return(NULL);		/* just in case */
     }
-    rettup = (HeapTuple)malloc(tup->t_len);
+    rettup = (HeapTuple)palloc(tup->t_len);
     memmove((char *)rettup, (char *)tup, tup->t_len);	/* XXX */
     return(rettup);
 }
@@ -527,13 +527,13 @@ gettape()
     static	int	tapeinit = 0;
     char		*mktemp();
     
-    tp = (struct tapelst *)malloc((unsigned)sizeof (struct tapelst));
+    tp = (struct tapelst *)palloc((unsigned)sizeof (struct tapelst));
     if (!tapeinit) {
 	Tempfile[sizeof (TEMPDIR) - 1] = '/';
 	memmove(Tempfile + sizeof(TEMPDIR), TAPEEXT, sizeof (TAPEEXT));
 	tapeinit = 1;
     }
-    tp->tl_name = malloc((unsigned)sizeof(Tempfile));
+    tp->tl_name = palloc((unsigned)sizeof(Tempfile));
     /*
      * now, copy template with final null into malloc'd space
      */
