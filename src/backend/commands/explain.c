@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.25 1998/10/21 16:21:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.26 1998/11/08 19:38:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@ typedef struct ExplainState
 } ExplainState;
 
 static char *Explain_PlanToString(Plan *plan, ExplainState *es);
+static void printLongNotice(const char * header, const char * message);
 static void ExplainOneQuery(Query *query, bool verbose, CommandDest dest);
 
 
@@ -87,11 +88,9 @@ ExplainQuery(Query *query, bool verbose, CommandDest dest)
 static void
 ExplainOneQuery(Query *query, bool verbose, CommandDest dest)
 {
-	char	   *s = NULL,
-			   *s2;
+	char	   *s;
 	Plan	   *plan;
 	ExplainState *es;
-	int			len;
 
 	/* plan the queries (XXX we've ignored rewrite!!) */
 	plan = planner(query);
@@ -111,30 +110,25 @@ ExplainOneQuery(Query *query, bool verbose, CommandDest dest)
 	es->rtable = query->rtable;
 
 	if (es->printNodes)
-		s = nodeToString(plan);
-
-	if (es->printCost)
 	{
-		s2 = Explain_PlanToString(plan, es);
-		if (s == NULL)
-			s = s2;
-		else
+		s = nodeToString(plan);
+		if (s)
 		{
-			strcat(s, "\n\n");
-			strcat(s, s2);
+			printLongNotice("QUERY DUMP:\n\n", s);
+			pfree(s);
 		}
 	}
 
-	/* output the plan */
-	len = strlen(s);
-	elog(NOTICE, "QUERY PLAN:\n\n%.*s", ELOG_MAXLEN - 64, s);
-	len -= ELOG_MAXLEN - 64;
-	while (len > 0)
+	if (es->printCost)
 	{
-		s += ELOG_MAXLEN - 64;
-		elog(NOTICE, "%.*s", ELOG_MAXLEN - 64, s);
-		len -= ELOG_MAXLEN - 64;
+		s = Explain_PlanToString(plan, es);
+		if (s)
+		{
+			printLongNotice("QUERY PLAN:\n\n", s);
+			pfree(s);
+		}
 	}
+
 	if (es->printNodes)
 		pprint(plan);			/* display in postmaster log file */
 
@@ -360,4 +354,23 @@ Explain_PlanToString(Plan *plan, ExplainState *es)
 	pfree(str);
 
 	return s;
+}
+
+/*
+ * Print a message that might exceed the size of the elog message buffer.
+ * This is a crock ... there shouldn't be an upper limit to what you can elog().
+ */
+static void
+printLongNotice(const char * header, const char * message)
+{
+	int		len = strlen(message);
+
+	elog(NOTICE, "%.20s%.*s", header, ELOG_MAXLEN - 64, message);
+	len -= ELOG_MAXLEN - 64;
+	while (len > 0)
+	{
+		message += ELOG_MAXLEN - 64;
+		elog(NOTICE, "%.*s", ELOG_MAXLEN - 64, message);
+		len -= ELOG_MAXLEN - 64;
+	}
 }
