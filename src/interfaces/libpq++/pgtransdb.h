@@ -13,7 +13,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: pgtransdb.h,v 1.2 1999/05/23 01:04:03 momjian Exp $
+ *  $Id: pgtransdb.h,v 1.3 1999/06/01 02:37:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@ class PgTransaction : public PgDatabase {
 public:
   PgTransaction(const char* conninfo);	// use reasonable & environment defaults
   // connect to the database with given environment and database name
-  PgTransaction(const PgConnection&);
+  // PgTransaction(const PgConnection&);
   ~PgTransaction();	// close connection and clean up
   
 protected:

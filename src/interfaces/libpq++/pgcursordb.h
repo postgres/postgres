@@ -13,7 +13,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: pgcursordb.h,v 1.2 1999/05/23 01:04:01 momjian Exp $
+ *  $Id: pgcursordb.h,v 1.3 1999/06/01 02:37:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@ class PgCursor : public PgTransaction {
 public:
   PgCursor(const char* conninfo, const char* cursor);	// use reasonable & environment defaults
   // connect to the database with given environment and database name
-  PgCursor(const PgConnection&, const char* cursor);
+  //  PgCursor(const PgConnection&, const char* cursor);
   ~PgCursor();	// close connection and clean up
   
   // Commands associated with cursor interface
