@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.245 2003/11/29 19:51:37 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.246 2003/12/02 16:14:12 tgl Exp $
 -->
 
 <appendix id="release">
@@ -1338,7 +1338,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.245 2003/11/29 19:51:37 pgsql E
 
     <listitem><para>Allow <type>cidr</type> data type to be cast to <type>text</type> (Tom)</para></listitem>
 
-    <listitem><para>Disallow invalid time zone names (Tom)</para></listitem>
+    <listitem><para>Disallow invalid time zone names in SET TIMEZONE</para></listitem>
 
     <listitem>
      <para>
@@ -1495,7 +1495,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.245 2003/11/29 19:51:37 pgsql E
     </listitem>
 
     <listitem>
-     <para>Allow polymorphic PL/pgSQL functions (Tom, Joe)</para>
+     <para>Allow polymorphic PL/pgSQL functions (Joe, Tom)</para>
     </listitem>
 
     <listitem>
@@ -1853,6 +1853,95 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.245 2003/11/29 19:51:37 pgsql E
     <listitem><para>Remove array module because features now included by default (Joe)</para></listitem>
    </itemizedlist>
   </sect3>
+  </sect2>
+ </sect1>
+
+  <sect1 id="release-7-3-5">
+   <title>Release 7.3.5</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2003-12-03</simpara>
+   </note>
+
+   <para>
+    This has a variety of fixes from 7.3.4.
+   </para>
+
+
+   <sect2>
+    <title>Migration to version 7.3.5</title>
+
+    <para>
+     A dump/restore is <emphasis>not</emphasis> required for those
+     running 7.3.*.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>
+Force zero_damaged_pages to be on during recovery from WAL
+</para></listitem>
+<listitem><para>
+Prevent some obscure cases of <quote>variable not in subplan target lists</>
+</para></listitem>
+<listitem><para>
+Force stats processes to detach from shared memory, ensuring cleaner shutdown
+</para></listitem>
+<listitem><para>
+Make PQescapeBytea and byteaout consistent with each other (Joe)
+</para></listitem>
+<listitem><para>
+Added missing SPI_finish() calls to get_tuple_of_interest() (Joe)
+</para></listitem>
+<listitem><para>
+Fix for possible foreign key violation when rule rewrites INSERT (Jan)
+</para></listitem>
+<listitem><para>
+Support qualified type names in PL/Tcl's spi_prepare command (Jan)
+</para></listitem>
+<listitem><para>
+Make pg_dump handle a procedural language handler located in pg_catalog
+</para></listitem>
+<listitem><para>
+Make pg_dump handle cases where a custom opclass is in another schema
+</para></listitem>
+<listitem><para>
+Make pg_dump dump binary-compatible casts correctly (Jan)
+</para></listitem>
+<listitem><para>
+Fix insertion of expressions containing subqueries into rule bodies
+</para></listitem>
+<listitem><para>
+Fix incorrect argument processing in clusterdb script (Anand Ranganathan)
+</para></listitem>
+<listitem><para>
+Fix problems with dropped columns in plpython triggers
+</para></listitem>
+<listitem><para>
+Repair problems with to_char() reading past end of its input string (Karel)
+</para></listitem>
+<listitem><para>
+Fix GB18030 mapping errors (Tatsuo)
+</para></listitem>
+<listitem><para>
+Fix several problems with SSL error handling and asynchronous SSL I/O
+</para></listitem>
+<listitem><para>
+Remove ability to bind a list of values to a single parameter in JDBC
+(prevents possible SQL-injection attacks)
+</para></listitem>
+<listitem><para>
+Fix some errors in HAVE_INT64_TIMESTAMP code paths
+</para></listitem>
+<listitem><para>
+Fix corner case for btree search in parallel with first root page split
+</para></listitem>
+</itemizedlist>
+
   </sect2>
  </sect1>
 
