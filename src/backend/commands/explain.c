@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.104 2003/03/10 03:53:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.105 2003/04/03 22:35:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,6 +192,14 @@ ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
 	double		totaltime = 0;
 	ExplainState *es;
 	StringInfo	str;
+
+	/*
+	 * If we are not going to execute, suppress any SELECT INTO marker.
+	 * Without this, ExecutorStart will create the INTO target table,
+	 * which we don't want.
+	 */
+	if (!stmt->analyze)
+		queryDesc->parsetree->into = NULL;
 
 	gettimeofday(&starttime, NULL);
 
