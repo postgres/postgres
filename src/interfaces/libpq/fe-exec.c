@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.99 2001/02/06 02:00:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.100 2001/02/06 02:02:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2049,7 +2049,7 @@ Oid
 PQoidValue(const PGresult *res)
 {
 	char	   *endptr = NULL;
-	long int	result;
+	unsigned long result;
 
 	if (!res || !res->cmdStatus || strncmp(res->cmdStatus, "INSERT ", 7) != 0)
 		return InvalidOid;
