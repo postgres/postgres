@@ -184,7 +184,7 @@ struct StatementClass_ {
 
 	char cursor_name[MAX_CURSOR_LEN+1];
 
-	char stmt_with_params[65536 /* MAX_STATEMENT_LEN */];		/* statement after parameter substitution */
+	char stmt_with_params[STD_STATEMENT_LEN];		/* statement after parameter substitution */
 
 };
 

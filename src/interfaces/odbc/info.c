@@ -350,7 +350,7 @@ RETCODE result;
     case SQL_MAX_STATEMENT_LEN: /* ODBC 2.0 */
         /* maybe this should be 0? */
 		len = 4;
-        value = MAX_QUERY_SIZE;
+        value = MAX_STATEMENT_LEN;
         break;
 
     case SQL_MAX_TABLE_NAME_LEN: /* ODBC 1.0 */
@@ -916,7 +916,7 @@ TupleNode *row;
 HSTMT htbl_stmt;
 RETCODE result;
 char *tableType;
-char tables_query[MAX_STATEMENT_LEN];
+char tables_query[STD_STATEMENT_LEN];
 char table_name[MAX_INFO_STRING], table_owner[MAX_INFO_STRING], relhasrules[MAX_INFO_STRING];
 ConnInfo *ci;
 char *prefix[32], prefixes[MEDIUM_REGISTRY_LEN];
@@ -1186,7 +1186,7 @@ StatementClass *stmt = (StatementClass *) hstmt;
 TupleNode *row;
 HSTMT hcol_stmt;
 StatementClass *col_stmt;
-char columns_query[MAX_STATEMENT_LEN];
+char columns_query[STD_STATEMENT_LEN];
 RETCODE result;
 char table_owner[MAX_INFO_STRING], table_name[MAX_INFO_STRING], field_name[MAX_INFO_STRING], field_type_name[MAX_INFO_STRING];
 Int2 field_number, result_cols, scale;
@@ -1583,7 +1583,7 @@ StatementClass *stmt = (StatementClass *) hstmt;
 ConnInfo *ci;
 HSTMT hcol_stmt;
 StatementClass *col_stmt;
-char columns_query[MAX_STATEMENT_LEN];
+char columns_query[STD_STATEMENT_LEN];
 RETCODE result;
 char relhasrules[MAX_INFO_STRING];
 
@@ -1719,7 +1719,7 @@ RETCODE SQL_API SQLStatistics(
 {
 static char *func="SQLStatistics";
 StatementClass *stmt = (StatementClass *) hstmt;
-char index_query[MAX_STATEMENT_LEN];
+char index_query[STD_STATEMENT_LEN];
 HSTMT hindx_stmt;
 RETCODE result;
 char *table_name;
@@ -2095,7 +2095,7 @@ RETCODE result;
 int seq = 0;
 HSTMT htbl_stmt;
 StatementClass *tbl_stmt;
-char tables_query[MAX_STATEMENT_LEN];
+char tables_query[STD_STATEMENT_LEN];
 char attname[MAX_INFO_STRING];
 SDWORD attname_len;
 char pktab[MAX_TABLE_LEN + 1];
@@ -2262,7 +2262,7 @@ TupleNode *row;
 HSTMT htbl_stmt, hpkey_stmt;
 StatementClass *tbl_stmt;
 RETCODE result, keyresult;
-char tables_query[MAX_STATEMENT_LEN];
+char tables_query[STD_STATEMENT_LEN];
 char trig_deferrable[2];
 char trig_initdeferred[2];
 char trig_args[1024];

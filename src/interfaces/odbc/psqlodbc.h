@@ -54,9 +54,8 @@ typedef UInt4 Oid;
 #define BLCKSZ                      4096
 #endif
 
-#define MAX_ROW_SIZE				0 /* Unlimited rowsize with the Tuple Toaster */
-#define MAX_QUERY_SIZE				0 /* Unlimited query length from v7.0(?) */
-#define MAX_MESSAGE_LEN				(2*BLCKSZ)
+#define MAX_MESSAGE_LEN				65536   /* This puts a limit on query size but I don't */
+											/* see an easy way round this - DJP 24-1-2001 */
 #define MAX_CONNECT_STRING			4096
 #define ERROR_MSG_LENGTH			4096
 #define FETCH_MAX					100		/* default number of rows to cache for declare/fetch */
@@ -85,8 +84,12 @@ typedef UInt4 Oid;
 #define MAX_INFO_STRING		128
 #define MAX_KEYPARTS		20
 #define MAX_KEYLEN			512			/*	max key of the form "date+outlet+invoice" */
-#define MAX_STATEMENT_LEN	MAX_MESSAGE_LEN
+#define MAX_ROW_SIZE		0 /* Unlimited rowsize with the Tuple Toaster */
+#define MAX_STATEMENT_LEN	0 /* Unlimited statement size with 7.0
 
+/* Previously, numerous query strings were defined of length MAX_STATEMENT_LEN */
+/* Now that's 0, lets use this instead. DJP 24-1-2001 */
+#define STD_STATEMENT_LEN	MAX_MESSAGE_LEN
 
 #define PG62	"6.2"		/* "Protocol" key setting to force Postgres 6.2 */
 #define PG63	"6.3"		/* "Protocol" key setting to force postgres 6.3 */
