@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.118 1999/08/09 03:16:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.119 1999/08/25 12:20:57 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2549,12 +2549,19 @@ vc_reappage(VPageList vpl, VPageDescr vpc)
 static void
 vc_vpinsert(VPageList vpl, VPageDescr vpnew)
 {
+#define PG_NPAGEDESC 1024
 
 	/* allocate a VPageDescr entry if needed */
 	if (vpl->vpl_num_pages == 0)
-		vpl->vpl_pagedesc = (VPageDescr *) palloc(100 * sizeof(VPageDescr));
-	else if (vpl->vpl_num_pages % 100 == 0)
-		vpl->vpl_pagedesc = (VPageDescr *) repalloc(vpl->vpl_pagedesc, (vpl->vpl_num_pages + 100) * sizeof(VPageDescr));
+	{
+		vpl->vpl_pagedesc = (VPageDescr *) palloc(PG_NPAGEDESC * sizeof(VPageDescr));
+		vpl->vpl_num_allocated_pages = PG_NPAGEDESC;
+	}
+	else if (vpl->vpl_num_pages >= vpl->vpl_num_allocated_pages)
+	{
+		vpl->vpl_num_allocated_pages *= 2;
+		vpl->vpl_pagedesc = (VPageDescr *) repalloc(vpl->vpl_pagedesc, vpl->vpl_num_allocated_pages * sizeof(VPageDescr));
+	}
 	vpl->vpl_pagedesc[vpl->vpl_num_pages] = vpnew;
 	(vpl->vpl_num_pages)++;
 
