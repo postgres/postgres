@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.5 1997/04/10 07:59:09 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.6 1997/09/04 13:24:01 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "nodes/parsenodes.h"
 #include "nodes/primnodes.h"
 #include "nodes/relation.h"
+#include "parser/parse_query.h"
 
 #include "utils/syscache.h"
 #include "utils/builtins.h"	/* for namecpy */
@@ -1403,8 +1404,27 @@ static RangeTblEntry *
 _copyRangeTblEntry(RangeTblEntry *from)
 {
     RangeTblEntry *newnode = makeNode(RangeTblEntry);
-
-    *newnode = *from;	/* ??? quick hack, be careful */
+    
+    memcpy (newnode, from, sizeof (RangeTblEntry));
+    if ( from->relname )
+    	newnode->relname = pstrdup (from->relname);
+    if ( from->refname )
+    	newnode->refname = pstrdup (from->refname);
+    if ( from->timeRange )
+    {
+    	newnode->timeRange = makeNode (TimeRange);
+    	if ( from->timeRange->startDate )
+    	    newnode->timeRange->startDate = pstrdup (from->timeRange->startDate);
+    	else
+    	    newnode->timeRange->startDate = NULL;
+    	if ( from->timeRange->endDate )
+    	    newnode->timeRange->endDate = pstrdup (from->timeRange->endDate);
+    	else
+    	    newnode->timeRange->endDate = NULL;
+    	newnode->timeQual = makeTimeRange (newnode->timeRange->startDate,
+    				newnode->timeRange->endDate,
+    				((newnode->timeRange->endDate == NULL) ? 0 : 1));
+    }
     
     return newnode;
 }
