@@ -1,8 +1,10 @@
 #-------------------------------------------------------------------------
 #
-# Makefile for NeXTStep 3.3 specific stuff
+# Makefile--
+#    Makefile for port/nextstep
 #
-# $Header: /cvsroot/pgsql/src/backend/port/nextstep/Makefile,v 1.6 2000/08/31 16:10:16 petere Exp $
+# IDENTIFICATION
+#    $Header: /cvsroot/pgsql/src/backend/port/nextstep/Makefile,v 1.7 2003/04/24 17:16:13 momjian Exp $
 #
 #-------------------------------------------------------------------------
 

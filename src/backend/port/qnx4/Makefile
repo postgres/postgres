@@ -1,10 +1,10 @@
 #-------------------------------------------------------------------------
 #
 # Makefile--
-#    Makefile for port/sparc
+#    Makefile for port/qnx4
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/Makefile,v 1.3 2000/08/31 16:10:19 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/Makefile,v 1.4 2003/04/24 17:16:13 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
