@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.171 2002/07/20 05:16:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.172 2002/08/04 05:04:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1582,8 +1582,8 @@ ExecConstraints(const char *caller, ResultRelInfo *resultRelInfo,
 		char	   *failed;
 
 		if ((failed = ExecRelCheck(resultRelInfo, slot, estate)) != NULL)
-			elog(ERROR, "%s: rejected due to CHECK constraint %s",
-				 caller, failed);
+			elog(ERROR, "%s: rejected due to CHECK constraint \"%s\" on \"%s\"",
+				 caller, failed, RelationGetRelationName(rel));
 	}
 }
 
