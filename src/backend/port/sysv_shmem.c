@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.24 2003/10/27 18:30:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.25 2003/11/07 21:55:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,7 +134,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size)
 
 	/* OK, should be able to attach to the segment */
 #ifdef SHM_SHARE_MMU
-	/* use intimate shared memory on SPARC Solaris */
+	/* use intimate shared memory on Solaris */
 	memAddress = shmat(shmid, 0, SHM_SHARE_MMU);
 #else
 	memAddress = shmat(shmid, 0, 0);
@@ -244,7 +244,7 @@ PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
 	/* Room for a header? */
 	Assert(size > MAXALIGN(sizeof(PGShmemHeader)));
 
-	/* Just attach and return the pointer */
+	/* If Exec case, just attach and return the pointer */
 	if (ExecBackend && UsedShmemSegAddr != NULL && !makePrivate)
 	{
 		if ((hdr = PGSharedMemoryAttach(UsedShmemSegID, &shmid)) == NULL)
@@ -252,6 +252,9 @@ PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
 				 (int) UsedShmemSegID, UsedShmemSegAddr);
 		return hdr;
 	}
+
+	/* Make sure PGSharedMemoryAttach doesn't fail without need */
+	UsedShmemSegAddr = NULL;
 
 	/* Loop till we find a free IPC key */
 	NextShmemSegID = port * 1000;
@@ -326,16 +329,32 @@ PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
 	hdr->totalsize = size;
 	hdr->freeoffset = MAXALIGN(sizeof(PGShmemHeader));
 
-
-	if (ExecBackend && UsedShmemSegAddr == NULL && !makePrivate)
-	{
-		UsedShmemSegAddr = memAddress;
-		UsedShmemSegID = NextShmemSegID;
-	}
+	/* Save info for possible future use */
+	UsedShmemSegAddr = memAddress;
+	UsedShmemSegID = NextShmemSegID;
 
 	return hdr;
 }
 
+/*
+ * PGSharedMemoryDetach
+ *
+ * Detach from the shared memory segment, if still attached.  This is not
+ * intended for use by the process that originally created the segment
+ * (it will have an on_shmem_exit callback registered to do that).  Rather,
+ * this is for subprocesses that have inherited an attachment and want to
+ * get rid of it.
+ */
+void
+PGSharedMemoryDetach(void)
+{
+	if (UsedShmemSegAddr != NULL)
+	{
+		if (shmdt(UsedShmemSegAddr) < 0)
+			elog(LOG, "shmdt(%p) failed: %m", UsedShmemSegAddr);
+		UsedShmemSegAddr = NULL;
+	}
+}
 
 /*
  * Attach to shared memory and make sure it has a Postgres header

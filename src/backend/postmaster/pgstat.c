@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.45 2003/09/25 06:58:01 petere Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.46 2003/11/07 21:55:50 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -44,6 +44,7 @@
 #include "utils/memutils.h"
 #include "storage/backendid.h"
 #include "storage/ipc.h"
+#include "storage/pg_shmem.h"
 #include "utils/rel.h"
 #include "utils/hsearch.h"
 #include "utils/ps_status.h"
@@ -399,6 +400,9 @@ pgstat_start(void)
 
 	/* Close the postmaster's sockets, except for pgstat link */
 	ClosePostmasterPorts(false);
+
+	/* Drop our connection to postmaster's shared memory, as well */
+	PGSharedMemoryDetach();
 
 	pgstat_main();
 
