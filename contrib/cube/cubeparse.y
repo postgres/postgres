@@ -13,8 +13,7 @@
 #undef yylex                 /* falure to redefine yylex will result in a call to  the */
 #define yylex cube_yylex     /* wrong scanner when running inside the postgres backend  */
 
-extern int yylex();           /* defined as cube_yylex in cubescan.c */
-extern int errno;
+extern int yylex(void);      /* defined as cube_yylex in cubescan.l */
 
 static char *scanbuf;
 static int	scanbuflen;
