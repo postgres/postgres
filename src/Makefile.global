@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.65 1996/11/13 10:35:00 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.66 1996/11/13 11:43:04 bryanh Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -260,7 +260,7 @@ BACKSLASH_C=
 # This includes your local customizations if Makefile.custom exists
 # in the source directory.  This file doesn't exist in the original
 # distribution so that it doesn't get overwritten when you upgrade.
-ifneq ($(wildcard $(SRCDIR/Makefile.custom), )
+ifneq ($(wildcard $(SRCDIR)/Makefile.custom), )
 include $(SRCDIR)/Makefile.custom
 endif
 
