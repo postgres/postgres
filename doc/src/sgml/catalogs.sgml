@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.23 2001/09/06 02:07:41 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.24 2001/09/10 05:46:41 ishii Exp $
  -->
 
 <chapter id="catalogs">
@@ -1514,14 +1514,14 @@
      </row>
 
      <row>
-      <entry>properbyte_pct</entry>
+      <entry>properbyte_cpu</entry>
       <entry><type>int4</type></entry>
       <entry></entry>
       <entry>dead code</entry>
      </row>
 
      <row>
-      <entry>propercall_pct</entry>
+      <entry>propercall_cpu</entry>
       <entry><type>int4</type></entry>
       <entry></entry>
       <entry>dead code</entry>
