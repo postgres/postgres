@@ -18,11 +18,11 @@ fi
 #
 # get the postgres user id
 #
-POSTGRES_SUPER_USER_ID="`psql -A -q -t template1 <<END
-select datdba
-from pg_database
-where datname = 'template1';
-END`"
+POSTGRES_SUPER_USER_ID="`echo \" \
+			select datdba \
+			from pg_database \
+			where datname = 'template1'; \" | \
+			psql -A -q -t template1`"
 echo "${BS}connect template1"
 #
 # delete all users in case they run this twice
