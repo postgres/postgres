@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.126 1999/11/25 00:15:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.127 1999/11/28 02:10:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/index.h"
@@ -33,6 +34,7 @@
 #include "parser/parse_oper.h"
 #include "storage/sinval.h"
 #include "storage/smgr.h"
+#include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/inval.h"
 #include "utils/portal.h"
@@ -46,7 +48,6 @@
 #include <sys/resource.h>
 #endif
 
- /* #include <port-protos.h> *//* Why? */
 
 bool		VacuumRunning = false;
 
@@ -80,11 +81,10 @@ static void vc_scanoneind(Relation indrel, int num_tuples);
 static void vc_attrstats(Relation onerel, VRelStats *vacrelstats, HeapTuple tuple);
 static void vc_bucketcpy(Form_pg_attribute attr, Datum value, Datum *bucket, int *bucket_len);
 static void vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *vacrelstats);
-static void vc_delhilowstats(Oid relid, int attcnt, int *attnums);
+static void vc_delstats(Oid relid, int attcnt, int *attnums);
 static VPageDescr vc_tidreapped(ItemPointer itemptr, VPageList vpl);
 static void vc_reappage(VPageList vpl, VPageDescr vpc);
 static void vc_vpinsert(VPageList vpl, VPageDescr vpnew);
-static void vc_free(VRelList vrl);
 static void vc_getindices(Oid relid, int *nindices, Relation **Irel);
 static void vc_clsindices(int nindices, Relation *Irel);
 static void vc_mkindesc(Relation onerel, int nindices, Relation *Irel, IndDesc **Idesc);
@@ -98,60 +98,54 @@ static bool vc_enough_space(VPageDescr vpd, Size len);
 void
 vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec)
 {
-	char	   *pname;
-	MemoryContext old;
-	PortalVariableMemory pmem;
 	NameData	VacRel;
+	PortalVariableMemory pmem;
+	MemoryContext old;
 	List	   *le;
 	List	   *va_cols = NIL;
 
+	if (va_spec != NIL && !analyze)
+		elog(ERROR, "Can't vacuum columns, only tables.  You can 'vacuum analyze' columns.");
+
 	/*
-	 * Create a portal for safe memory across transctions.	We need to
-	 * palloc the name space for it because our hash function expects the
-	 * name to be on a longword boundary.  CreatePortal copies the name to
-	 * safe storage for us.
+	 * We cannot run VACUUM inside a user transaction block; if we were
+	 * inside a transaction, then our commit- and start-transaction-command
+	 * calls would not have the intended effect!  Furthermore, the forced
+	 * commit that occurs before truncating the relation's file would have
+	 * the effect of committing the rest of the user's transaction too,
+	 * which would certainly not be the desired behavior.
 	 */
-	pname = (char *) palloc(strlen(VACPNAME) + 1);
-	strcpy(pname, VACPNAME);
-	vc_portal = CreatePortal(pname);
-	pfree(pname);
+	if (IsTransactionBlock())
+		elog(ERROR, "VACUUM cannot run inside a BEGIN/END block");
+
+	/* initialize vacuum cleaner, particularly vc_portal */
+	vc_init();
 
 	if (verbose)
 		MESSAGE_LEVEL = NOTICE;
 	else
 		MESSAGE_LEVEL = DEBUG;
 
-	/* vacrel gets de-allocated on transaction commit */
+	/* vacrel gets de-allocated on transaction commit, so copy it */
 	if (vacrel)
 		strcpy(NameStr(VacRel), vacrel);
 
+	/* must also copy the column list, if any, to safe storage */
 	pmem = PortalGetVariableMemory(vc_portal);
 	old = MemoryContextSwitchTo((MemoryContext) pmem);
-
-	if (va_spec != NIL && !analyze)
-		elog(ERROR, "Can't vacuum columns, only tables.  You can 'vacuum analyze' columns.");
-
 	foreach(le, va_spec)
 	{
 		char	   *col = (char *) lfirst(le);
-		char	   *dest;
 
-		dest = (char *) palloc(strlen(col) + 1);
-		strcpy(dest, col);
-		va_cols = lappend(va_cols, dest);
+		va_cols = lappend(va_cols, pstrdup(col));
 	}
 	MemoryContextSwitchTo(old);
-
-	/* initialize vacuum cleaner */
-	vc_init();
 
 	/* vacuum the database */
 	if (vacrel)
 		vc_vacuum(&VacRel, analyze, va_cols);
 	else
 		vc_vacuum(NULL, analyze, NIL);
-
-	PortalDestroy(&vc_portal);
 
 	/* clean up */
 	vc_shutdown();
@@ -160,14 +154,17 @@ vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec)
 /*
  *	vc_init(), vc_shutdown() -- start up and shut down the vacuum cleaner.
  *
- *		We run exactly one vacuum cleaner at a time.  We use the file system
- *		to guarantee an exclusive lock on vacuuming, since a single vacuum
- *		cleaner instantiation crosses transaction boundaries, and we'd lose
- *		postgres-style locks at the end of every transaction.
+ *		Formerly, there was code here to prevent more than one VACUUM from
+ *		executing concurrently in the same database.  However, there's no
+ *		good reason to prevent that, and manually removing lockfiles after
+ *		a vacuum crash was a pain for dbadmins.  So, forget about lockfiles,
+ *		and just rely on the exclusive lock we grab on each target table
+ *		to ensure that there aren't two VACUUMs running on the same table
+ *		at the same time.
  *
  *		The strangeness with committing and starting transactions in the
  *		init and shutdown routines is due to the fact that the vacuum cleaner
- *		is invoked via a sql command, and so is already executing inside
+ *		is invoked via an SQL command, and so is already executing inside
  *		a transaction.	We need to leave ourselves in a predictable state
  *		on entry and exit to the vacuum cleaner.  We commit the transaction
  *		started in PostgresMain() inside vc_init(), and start one in
@@ -177,27 +174,23 @@ vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec)
 static void
 vc_init()
 {
-	int			fd;
-
-#ifndef __CYGWIN32__
-	if ((fd = open("pg_vlock", O_CREAT | O_EXCL, 0600)) < 0)
-#else
-	if ((fd = open("pg_vlock", O_CREAT | O_EXCL | O_BINARY, 0600)) < 0)
-#endif
-	{
-		elog(ERROR, "Can't create lock file.  Is another vacuum cleaner running?\n\
-\tIf not, you may remove the pg_vlock file in the %s\n\
-\tdirectory", DatabasePath);
-	}
-	close(fd);
+	char	   *pname;
 
 	/*
-	 * By here, exclusive open on the lock file succeeded.	If we abort
-	 * for any reason during vacuuming, we need to remove the lock file.
+	 * Create a portal for safe memory across transactions. We need to
+	 * palloc the name space for it because our hash function expects the
+	 * name to be on a longword boundary.  CreatePortal copies the name to
+	 * safe storage for us.
+	 */
+	pname = pstrdup(VACPNAME);
+	vc_portal = CreatePortal(pname);
+	pfree(pname);
+
+	/*
+	 * Set flag to indicate that vc_portal must be removed after an error.
 	 * This global variable is checked in the transaction manager on xact
 	 * abort, and the routine vc_abort() is called if necessary.
 	 */
-
 	VacuumRunning = true;
 
 	/* matches the StartTransaction in PostgresMain() */
@@ -221,25 +214,28 @@ vc_shutdown()
 	 */
 	unlink(RELCACHE_INIT_FILENAME);
 
-	/* remove the vacuum cleaner lock file */
-	if (unlink("pg_vlock") < 0)
-		elog(ERROR, "vacuum: can't destroy lock file!");
+	/*
+	 * Release our portal for cross-transaction memory.
+	 */
+	PortalDestroy(&vc_portal);
 
 	/* okay, we're done */
 	VacuumRunning = false;
 
 	/* matches the CommitTransaction in PostgresMain() */
 	StartTransactionCommand();
-
 }
 
 void
 vc_abort()
 {
-	/* on abort, remove the vacuum cleaner lock file */
-	unlink("pg_vlock");
-
+	/* Clear flag first, to avoid recursion if PortalDestroy elog's */
 	VacuumRunning = false;
+
+	/*
+	 * Release our portal for cross-transaction memory.
+	 */
+	PortalDestroy(&vc_portal);
 }
 
 /*
@@ -259,14 +255,9 @@ vc_vacuum(NameData *VacRelP, bool analyze, List *va_cols)
 	/* get list of relations */
 	vrl = vc_getrels(VacRelP);
 
-	if (analyze && VacRelP == NULL && vrl != NULL)
-		vc_delhilowstats(InvalidOid, 0, NULL);
-
 	/* vacuum each heap relation */
 	for (cur = vrl; cur != (VRelList) NULL; cur = cur->vrl_next)
 		vc_vacone(cur->vrl_relid, analyze, va_cols);
-
-	vc_free(vrl);
 }
 
 static VRelList
@@ -380,6 +371,13 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 	VRelStats  *vacrelstats;
 
 	StartTransactionCommand();
+
+	/*
+	 * Check for user-requested abort.  Note we want this to be inside
+	 * a transaction, so xact.c doesn't issue useless NOTICE.
+	 */
+	if (QueryCancel)
+		CancelQuery();
 
 	/*
 	 * Race condition -- if the pg_class tuple has gone away since the
@@ -500,7 +498,8 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 				stats->outfunc = InvalidOid;
 		}
 		vacrelstats->va_natts = attr_cnt;
-		vc_delhilowstats(relid, ((attnums) ? attr_cnt : 0), attnums);
+		/* delete existing pg_statistics rows for relation */
+		vc_delstats(relid, ((attnums) ? attr_cnt : 0), attnums);
 		if (attnums)
 			pfree(attnums);
 	}
@@ -2453,7 +2452,7 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 						CatalogIndexInsert(irelations, Num_pg_statistic_indices, sd, stup);
 						CatalogCloseIndices(Num_pg_statistic_indices, irelations);
 					}
-					
+
 					/* release allocated space */
 					pfree(DatumGetPointer(values[Anum_pg_statistic_stacommonval-1]));
 					pfree(DatumGetPointer(values[Anum_pg_statistic_staloval-1]));
@@ -2478,11 +2477,12 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 }
 
 /*
- *	vc_delhilowstats() -- delete pg_statistics rows
+ *	vc_delstats() -- delete pg_statistics rows for a relation
  *
+ *	If a list of attribute numbers is given, only zap stats for those attrs.
  */
 static void
-vc_delhilowstats(Oid relid, int attcnt, int *attnums)
+vc_delstats(Oid relid, int attcnt, int *attnums)
 {
 	Relation	pgstatistic;
 	HeapScanDesc scan;
@@ -2491,15 +2491,9 @@ vc_delhilowstats(Oid relid, int attcnt, int *attnums)
 
 	pgstatistic = heap_openr(StatisticRelationName, RowExclusiveLock);
 
-	if (relid != InvalidOid)
-	{
-		ScanKeyEntryInitialize(&key, 0x0, Anum_pg_statistic_starelid,
-							   F_OIDEQ,
-							   ObjectIdGetDatum(relid));
-		scan = heap_beginscan(pgstatistic, false, SnapshotNow, 1, &key);
-	}
-	else
-		scan = heap_beginscan(pgstatistic, false, SnapshotNow, 0, NULL);
+	ScanKeyEntryInitialize(&key, 0x0, Anum_pg_statistic_starelid,
+						   F_OIDEQ, ObjectIdGetDatum(relid));
+	scan = heap_beginscan(pgstatistic, false, SnapshotNow, 1, &key);
 
 	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 	{
@@ -2570,28 +2564,6 @@ vc_vpinsert(VPageList vpl, VPageDescr vpnew)
 	vpl->vpl_pagedesc[vpl->vpl_num_pages] = vpnew;
 	(vpl->vpl_num_pages)++;
 
-}
-
-static void
-vc_free(VRelList vrl)
-{
-	VRelList	p_vrl;
-	MemoryContext old;
-	PortalVariableMemory pmem;
-
-	pmem = PortalGetVariableMemory(vc_portal);
-	old = MemoryContextSwitchTo((MemoryContext) pmem);
-
-	while (vrl != (VRelList) NULL)
-	{
-
-		/* free rel list entry */
-		p_vrl = vrl;
-		vrl = vrl->vrl_next;
-		pfree(p_vrl);
-	}
-
-	MemoryContextSwitchTo(old);
 }
 
 static void *
