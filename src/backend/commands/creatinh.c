@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.30 1998/06/15 19:28:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.31 1998/08/06 05:12:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ static void StoreCatalogInheritance(Oid relationId, List *supers);
  * ----------------------------------------------------------------
  */
 void
-DefineRelation(CreateStmt *stmt)
+DefineRelation(CreateStmt *stmt, char relkind)
 {
 	char	   *relname = palloc(NAMEDATALEN);
 	List	   *schema = stmt->tableElts;
@@ -137,7 +137,8 @@ DefineRelation(CreateStmt *stmt)
 		}
 	}
 
-	relationId = heap_create_with_catalog(relname, descriptor);
+	relationId = heap_create_with_catalog(relname,
+										  descriptor, relkind);
 
 	StoreCatalogInheritance(relationId, inheritList);
 }

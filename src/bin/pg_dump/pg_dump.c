@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.78 1998/07/19 05:24:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.79 1998/08/06 05:12:51 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1418,7 +1418,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			"from pg_class, pg_user "
 			"where relowner = usesysid and "
 			"(relkind = 'r' or relkind = 'S') and relname !~ '^pg_' "
-			"and relname !~ '^xin[xv][0-9]+' order by oid");
+			"order by oid");
 
 	res = PQexec(g_conn, query);
 	if (!res ||
@@ -1879,7 +1879,7 @@ getIndices(int *numIndices)
 			"from pg_index i, pg_class t1, pg_class t2, pg_am a "
 			"where t1.oid = i.indexrelid and t2.oid = i.indrelid "
 			"and t1.relam = a.oid and i.indexrelid > '%d'::oid "
-			"and t2.relname !~ '^pg_' and t1.relname !~ '^xinx'",
+			"and t2.relname !~ '^pg_' and t1.relkind != 'l'",
 			g_last_builtin_oid);
 
 	res = PQexec(g_conn, query);

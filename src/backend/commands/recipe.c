@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.21 1998/06/15 19:28:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.22 1998/08/06 05:12:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1032,7 +1032,8 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 				tupdesc = rel->rd_att;
 
 				relid = heap_create_with_catalog(
-							 child->nodeElem->outTypes->val[0], tupdesc);
+										child->nodeElem->outTypes->val[0],
+										tupdesc, RELKIND_RELATION);
 			}
 			else
 			{
@@ -1055,7 +1056,8 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 				else
 				{
 					relid = heap_create_with_catalog(
-							 child->nodeElem->outTypes->val[0], tupdesc);
+							 child->nodeElem->outTypes->val[0],
+							tupdesc, RELKIND_RELATION);
 				}
 			}
 		}

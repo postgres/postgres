@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: creatinh.h,v 1.6 1997/11/26 01:12:12 momjian Exp $
+ * $Id: creatinh.h,v 1.7 1998/08/06 05:13:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,7 @@
 
 #include "nodes/parsenodes.h"
 
-extern void DefineRelation(CreateStmt *stmt);
+extern void DefineRelation(CreateStmt *stmt, char relkind);
 extern void RemoveRelation(char *name);
 
 #endif							/* CREATINH_H */

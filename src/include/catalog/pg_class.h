@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.20 1998/02/26 04:40:52 momjian Exp $
+ * $Id: pg_class.h,v 1.21 1998/08/06 05:13:05 momjian Exp $
  *
  * NOTES
  *	  ``pg_relation'' is being replaced by ``pg_class''.  currently
@@ -157,6 +157,7 @@ DESCR("");
 #define RelOid_pg_trigger		1219
 
 #define		  RELKIND_INDEX			  'i'		/* secondary index */
+#define		  RELKIND_LOBJECT		  'l'		/* large objects */
 #define		  RELKIND_RELATION		  'r'		/* cataloged heap */
 #define		  RELKIND_SPECIAL		  's'		/* special (non-heap) */
 #define		  RELKIND_SEQUENCE		  'S'		/* SEQUENCE relation */

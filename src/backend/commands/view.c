@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.23 1998/07/19 05:49:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.24 1998/08/06 05:12:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,7 +105,7 @@ DefineVirtualRelation(char *relname, List *tlist)
 	/*
 	 * finally create the relation...
 	 */
-	DefineRelation(&createStmt);
+	DefineRelation(&createStmt, RELKIND_RELATION);
 }
 
 /*------------------------------------------------------------------

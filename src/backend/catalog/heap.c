@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.55 1998/07/27 19:37:46 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.56 1998/08/06 05:12:19 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		heap_create()			- Create an uncataloged heap relation
@@ -16,7 +16,7 @@
  *
  * NOTES
  *	  this code taken from access/heap/create.c, which contains
- *	  the old heap_create_with_catalogr, amcreate, and amdestroy.
+ *	  the old heap_create_with_catalog, amcreate, and amdestroy.
  *	  those routines will soon call these routines using the function
  *	  manager,
  *	  just like the poorly named "NewXXX" routines do.	The
@@ -65,7 +65,8 @@
 
 static void
 AddPgRelationTuple(Relation pg_class_desc,
-				 Relation new_rel_desc, Oid new_rel_oid, unsigned natts);
+				 Relation new_rel_desc, Oid new_rel_oid, unsigned natts,
+				 char relkind);
 static void AddToTempRelList(Relation r);
 static void DeletePgAttributeTuples(Relation rdesc);
 static void DeletePgRelationTuple(Relation rdesc);
@@ -345,7 +346,7 @@ heap_create(char *name,
  *		   preforms a scan to ensure that no relation with the
  *		   same name already exists.
  *
- *		3) heap_create_with_catalogr() is called to create the new relation
+ *		3) heap_create_with_catalog() is called to create the new relation
  *		   on disk.
  *
  *		4) TypeDefine() is called to define a new type corresponding
@@ -378,7 +379,7 @@ heap_create(char *name,
  *		create new relation
  *		insert new relation into attribute catalog
  *
- *		Should coordinate with heap_create_with_catalogr(). Either
+ *		Should coordinate with heap_create_with_catalog(). Either
  *		it should not be called or there should be a way to prevent
  *		the relation from being removed at the end of the
  *		transaction if it is successful ('u'/'r' may be enough).
@@ -633,14 +634,13 @@ static void
 AddPgRelationTuple(Relation pg_class_desc,
 				   Relation new_rel_desc,
 				   Oid new_rel_oid,
-				   unsigned natts)
+				   unsigned natts,
+				   char relkind)
 {
 	Form_pg_class new_rel_reltup;
 	HeapTuple	tup;
 	Relation	idescs[Num_pg_class_indices];
 	bool		isBootstrap;
-	extern bool ItsSequenceCreation;	/* It's hack, I know... - vadim
-										 * 03/28/97		*/
 
 	/* ----------------
 	 *	first we munge some of the information in our
@@ -653,10 +653,7 @@ AddPgRelationTuple(Relation pg_class_desc,
 	/* new_rel_reltup->reltuples = 1; *//* XXX */
 
 	new_rel_reltup->relowner = GetUserId();
-	if (ItsSequenceCreation)
-		new_rel_reltup->relkind = RELKIND_SEQUENCE;
-	else
-		new_rel_reltup->relkind = RELKIND_RELATION;
+	new_rel_reltup->relkind = relkind;
 	new_rel_reltup->relnatts = natts;
 
 	/* ----------------
@@ -747,8 +744,9 @@ addNewRelationType(char *typeName, Oid new_rel_oid)
  * --------------------------------
  */
 Oid
-heap_create_with_catalog(char relname[],
-						 TupleDesc tupdesc)
+heap_create_with_catalog(char *relname,
+						 TupleDesc tupdesc,
+						 char relkind)
 {
 	Relation	pg_class_desc;
 	Relation	new_rel_desc;
@@ -813,7 +811,8 @@ heap_create_with_catalog(char relname[],
 	AddPgRelationTuple(pg_class_desc,
 					   new_rel_desc,
 					   new_rel_oid,
-					   natts);
+					   natts,
+					   relkind);
 
 	StoreConstraints(new_rel_desc);
 

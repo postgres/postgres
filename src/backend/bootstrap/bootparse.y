@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.18 1998/07/26 04:30:18 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.19 1998/08/06 05:12:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,10 +177,10 @@ Boot_CreateStmt:
 					{
 						Oid id;
 						TupleDesc tupdesc;
-						/* extern Oid heap_create_with_catalog();*/
 
 						tupdesc = CreateTupleDesc(numattr,attrtypes);
-						id = heap_create_with_catalog(LexIDStr($3), tupdesc);
+						id = heap_create_with_catalog(LexIDStr($3),
+												tupdesc, RELKIND_RELATION);
 						if (!Quiet)
 							printf("CREATED relation %s with OID %d\n",
 								   LexIDStr($3), id);

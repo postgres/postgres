@@ -24,8 +24,6 @@
 #define SEQ_MAXVALUE	((int4)0x7FFFFFFF)
 #define SEQ_MINVALUE	-(SEQ_MAXVALUE)
 
-bool		ItsSequenceCreation = false;
-
 typedef struct FormData_pg_sequence
 {
 	NameData	sequence_name;
@@ -157,15 +155,7 @@ DefineSequence(CreateSeqStmt *seq)
 	stmt->inhRelnames = NIL;
 	stmt->constraints = NIL;
 
-	ItsSequenceCreation = true; /* hack */
-
-	DefineRelation(stmt);
-
-	/*
-	 * Xact abort calls CloseSequences, which turns ItsSequenceCreation
-	 * off
-	 */
-	ItsSequenceCreation = false;/* hack */
+	DefineRelation(stmt, RELKIND_SEQUENCE);
 
 	rel = heap_openr(seq->seqname);
 	Assert(RelationIsValid(rel));
@@ -437,8 +427,6 @@ CloseSequences(void)
 {
 	SeqTable	elm;
 	Relation	rel;
-
-	ItsSequenceCreation = false;
 
 	for (elm = seqtab; elm != (SeqTable) NULL;)
 	{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.151 1998/08/05 16:23:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.152 1998/08/06 05:12:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -408,7 +408,6 @@ tableList(PsqlSettings *pset, bool deep_tablelist, char info_type,
 		strcat(listbuf, "  and relname !~ '^pg_'");
 	else
 		strcat(listbuf, "  and relname ~ '^pg_'");
-	strcat(listbuf, " and relname !~ '^xin[vx][0-9]+'");
 	strcat(listbuf, " and usesysid = relowner");
 	strcat(listbuf, " ORDER BY relname ");
 	if (!(res = PSQLexec(pset, listbuf)))
@@ -544,7 +543,6 @@ rightsList(PsqlSettings *pset)
 	strcat(listbuf, "FROM pg_class, pg_user ");
 	strcat(listbuf, "WHERE ( relkind = 'r' OR relkind = 'i' OR relkind = 'S') ");
 	strcat(listbuf, "  and relname !~ '^pg_'");
-	strcat(listbuf, "  and relname !~ '^xin[vx][0-9]+'");
 	strcat(listbuf, "  and usesysid = relowner");
 	strcat(listbuf, "  ORDER BY relname ");
 	if (!(res = PSQLexec(pset, listbuf)))

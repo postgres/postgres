@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heap.h,v 1.12 1998/02/26 04:40:38 momjian Exp $
+ * $Id: heap.h,v 1.13 1998/08/06 05:13:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,8 @@
 
 extern Relation heap_create(char *relname, TupleDesc att);
 
-extern Oid	heap_create_with_catalog(char relname[], TupleDesc tupdesc);
+extern Oid	heap_create_with_catalog(char *relname,
+									 TupleDesc tupdesc, char relkind);
 
 extern void heap_destroy_with_catalog(char relname[]);
 extern void heap_destroy(Relation r);

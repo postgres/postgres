@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.44 1998/07/26 04:30:48 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.45 1998/08/06 05:12:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,7 +173,7 @@ ProcessUtility(Node *parsetree,
 			*ps_status = commandTag = "CREATE";
 			CHECK_IF_ABORTED();
 
-			DefineRelation((CreateStmt *) parsetree);
+			DefineRelation((CreateStmt *) parsetree, RELKIND_RELATION);
 			break;
 
 		case T_DestroyStmt:
