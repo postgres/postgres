@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.56 1999/02/21 03:49:00 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.57 1999/02/23 07:42:41 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -107,7 +107,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 	DefElem				*defelt;
 	ParamString			*param;
 	SortGroupBy			*sortgroupby;
-	JoinUsing			*joinusing;
+	JoinExpr			*joinexpr;
 	IndexElem			*ielem;
 	RangeVar			*range;
 	RelExpr				*relexp;
@@ -131,7 +131,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		RemoveFuncStmt, RemoveStmt,
 		RenameStmt, RevokeStmt, RuleStmt, TransactionStmt, ViewStmt, LoadStmt,
 		CreatedbStmt, DestroydbStmt, VacuumStmt, CursorStmt, SubSelect,
-		UpdateStmt, InsertStmt, select_w_o_sort, SelectStmt, NotifyStmt, DeleteStmt, 
+		UpdateStmt, InsertStmt, select_clause, SelectStmt, NotifyStmt, DeleteStmt, 
 		ClusterStmt, ExplainStmt, VariableSetStmt, VariableShowStmt, VariableResetStmt,
 		CreateUserStmt, AlterUserStmt, DropUserStmt, RuleActionStmt
 
@@ -144,7 +144,6 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <str>   user_valid_clause
 %type <list>  user_group_list, user_group_clause
 
-%type <str>		join_expr, join_outer, join_spec
 %type <boolean> TriggerActionTime, TriggerForSpec, PLangTrusted
 
 %type <str>		TriggerEvents, TriggerFuncArg
@@ -167,7 +166,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		oper_argtypes, RuleActionList, RuleActionBlock, RuleActionMulti,
 		opt_column_list, columnList, opt_va_list, va_list,
 		sort_clause, sortby_list, index_params, index_list, name_list,
-		from_clause, from_list, opt_array_bounds, nest_array_bounds,
+		from_clause, from_expr, table_list, opt_array_bounds, nest_array_bounds,
 		expr_list, attrs, res_target_list, res_target_list2,
 		def_list, opt_indirection, group_clause, TriggerFuncArgs,
 		opt_select_limit
@@ -177,13 +176,15 @@ Oid	param_type(int t); /* used in parse_expr.c */
 
 %type <boolean>	TriggerForOpt, TriggerForType, OptTemp
 
-%type <list>	for_update_clause
-%type <list>	join_list
-%type <joinusing>
-				join_using
+%type <list>	for_update_clause, update_list
 %type <boolean>	opt_union
 %type <boolean>	opt_table
 %type <boolean>	opt_trans
+
+%type <list>	join_clause_with_union, join_clause, join_list, join_qual, using_list
+%type <node>	join_expr, using_expr
+%type <str>		join_outer
+%type <ival>	join_type
 
 %type <node>	position_expr
 %type <list>	extract_list, position_list
@@ -226,7 +227,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <attr>	event_object, attr
 %type <sortgroupby>		sortby
 %type <ielem>	index_elem, func_index
-%type <range>	from_val
+%type <range>	table_expr
 %type <relexp>	relation_expr
 %type <target>	res_target_el, res_target_el2
 %type <paramno> ParamNo
@@ -858,20 +859,15 @@ ColConstraint:
 				{ $$ = $1; }
 		;
 
-/* The column constraint WITH NULL gives a shift/reduce error
- * because it requires yacc to look more than one token ahead to
- * resolve WITH TIME ZONE and WITH NULL.
- * So, leave it out of the syntax for now.
-			| WITH NULL_P
-				{
-					$$ = NULL;
-				}
- * - thomas 1998-09-12
- *
- * DEFAULT NULL is already the default for Postgres.
+/* DEFAULT NULL is already the default for Postgres.
  * Bue define it here and carry it forward into the system
  * to make it explicit.
  * - thomas 1998-09-13
+ * WITH NULL and NULL are not SQL92-standard syntax elements,
+ * so leave them out. Use DEFAULT NULL to explicitly indicate
+ * that a column may have that value. WITH NULL leads to
+ * shift/reduce conflicts with WITH TIME ZONE anyway.
+ * - thomas 1999-01-08
  */
 ColConstraintElem:  CHECK '(' constraint_expr ')'
 				{
@@ -2735,8 +2731,10 @@ opt_of:  OF columnList
  * accepts the use of '(' and ')' to select an order of set operations.
  * 
  * The rule returns a SelectStmt Node having the set operations attached to 
- * unionClause and intersectClause (NIL if no set operations were present) */ 
-SelectStmt:	  select_w_o_sort sort_clause for_update_clause opt_select_limit
+ * unionClause and intersectClause (NIL if no set operations were present)
+ */
+
+SelectStmt:	  select_clause sort_clause for_update_clause opt_select_limit
 			{
 				/* There were no set operations, so just attach the sortClause */
 				if IsA($1, SelectStmt)
@@ -2827,7 +2825,7 @@ SelectStmt:	  select_w_o_sort sort_clause for_update_clause opt_select_limit
  * the A_Expr Nodes.
  * If no set operations show up in the query the tree consists only of one
  * SelectStmt Node */
-select_w_o_sort: '(' select_w_o_sort ')'
+select_clause: '(' select_clause ')'
 			{
 				$$ = $2; 
 			}
@@ -2835,12 +2833,12 @@ select_w_o_sort: '(' select_w_o_sort ')'
 			{
 				$$ = $1; 
 			}
-		| select_w_o_sort EXCEPT select_w_o_sort
+		| select_clause EXCEPT select_clause
 			{
 				$$ = (Node *)makeA_Expr(AND,NULL,$1,
 							makeA_Expr(NOT,NULL,NULL,$3));
 			}
-		| select_w_o_sort UNION opt_union select_w_o_sort
+		| select_clause UNION opt_union select_clause
 			{	
 				if (IsA($4, SelectStmt))
 				  {
@@ -2849,7 +2847,7 @@ select_w_o_sort: '(' select_w_o_sort ')'
 				  }
 				$$ = (Node *)makeA_Expr(OR,NULL,$1,$4);
 			}
-		| select_w_o_sort INTERSECT select_w_o_sort
+		| select_clause INTERSECT select_clause
 			{
 				$$ = (Node *)makeA_Expr(AND,NULL,$1,$3);
 			}
@@ -3024,7 +3022,7 @@ name_list:  name
 				{	$$ = lappend($1,makeString($3)); }
 		;
 
-group_clause:  GROUP BY expr_list			{ $$ = $3; }
+group_clause:  GROUP BY expr_list				{ $$ = $3; }
 		| /*EMPTY*/								{ $$ = NIL; }
 		;
 
@@ -3035,19 +3033,12 @@ having_clause:  HAVING a_expr
 		| /*EMPTY*/								{ $$ = NULL; }
 		;
 
-for_update_clause:
-			FOR UPDATE
-			{
-				$$ = lcons(NULL, NULL);
-			}
-		|	FOR UPDATE OF va_list
-			{
-				$$ = $4;
-			}
-		| /* EMPTY */
-			{
-				$$ = NULL;
-			}
+for_update_clause:  FOR UPDATE update_list		{ $$ = $3; }
+		| /* EMPTY */							{ $$ = NULL; }
+		;
+
+update_list:  OF va_list						{ $$ = $2; }
+		| /* EMPTY */							{ $$ = lcons(NULL, NULL); }
 		;
 
 /*****************************************************************************
@@ -3058,24 +3049,25 @@ for_update_clause:
  *
  *****************************************************************************/
 
-from_clause:  FROM '(' relation_expr join_expr JOIN relation_expr join_spec ')'
-				{
-					$$ = NIL;
-					elog(ERROR,"JOIN not yet implemented");
-				}
-		| FROM from_list						{ $$ = $2; }
+from_clause:  FROM from_expr					{ $$ = $2; }
 		| /*EMPTY*/								{ $$ = NIL; }
 		;
 
-from_list:	from_list ',' from_val
+from_expr:  '(' join_clause_with_union ')'
+				{ $$ = $2; }
+		| join_clause
+				{ $$ = $1; }
+		| table_list
+				{ $$ = $1; }
+		;
+
+table_list:  table_list ',' table_expr
 				{ $$ = lappend($1, $3); }
-		| from_val CROSS JOIN from_val
-				{ elog(ERROR,"CROSS JOIN not yet implemented"); }
-		| from_val
+		| table_expr
 				{ $$ = lcons($1, NIL); }
 		;
 
-from_val:  relation_expr AS ColLabel
+table_expr:  relation_expr AS ColLabel
 				{
 					$$ = makeNode(RangeVar);
 					$$->relExpr = $1;
@@ -3095,64 +3087,130 @@ from_val:  relation_expr AS ColLabel
 				}
 		;
 
-join_expr:  NATURAL join_expr					{ $$ = NULL; }
-		| FULL join_outer
-				{ elog(ERROR,"FULL OUTER JOIN not yet implemented"); }
+/* A UNION JOIN is the same as a FULL OUTER JOIN which *omits*
+ * all result rows which would have matched on an INNER JOIN.
+ * Let's reject this for now. - thomas 1999-01-08
+ */
+join_clause_with_union:  join_clause
+				{	$$ = $1; }
+		| table_expr UNION JOIN table_expr
+				{	elog(ERROR,"UNION JOIN not yet implemented"); }
+		;
+
+join_clause:  table_expr join_list
+				{
+					Node *n = lfirst($2);
+
+					/* JoinExpr came back? then it is a join of some sort...
+					 */
+					if (IsA(n, JoinExpr))
+					{
+						JoinExpr *j = (JoinExpr *)n;
+						j->larg = $1;
+						$$ = $2;
+					}
+					/* otherwise, it was a cross join,
+					 * which we just represent as an inner join...
+					 */
+					else
+						$$ = lcons($1, $2);
+				}
+		;
+
+join_list:  join_list join_expr
+				{
+					$$ = lappend($1, $2);
+				}
+		| join_expr
+				{
+					$$ = lcons($1, NIL);
+				}
+		;
+
+/* This is everything but the left side of a join.
+ * Note that a CROSS JOIN is the same as an unqualified
+ * inner join, so just pass back the right-side table.
+ * A NATURAL JOIN implicitly matches column names between
+ * tables, so we'll collect those during the later transformation.
+ */
+join_expr:  join_type JOIN table_expr join_qual
+				{
+					JoinExpr *n = makeNode(JoinExpr);
+					n->jointype = $1;
+					n->rarg = (Node *)$3;
+					n->quals = $4;
+					$$ = (Node *)n;
+				}
+		| NATURAL join_type JOIN table_expr
+				{
+					JoinExpr *n = makeNode(JoinExpr);
+					n->jointype = $2;
+					n->rarg = (Node *)$4;
+					n->quals = NULL; /* figure out which columns later... */
+					$$ = (Node *)n;
+				}
+		| CROSS JOIN table_expr
+				{ $$ = (Node *)$3; }
+		;
+
+/* OUTER is just noise... */
+join_type:  FULL join_outer
+				{
+					$$ = FULL;
+					elog(NOTICE,"FULL OUTER JOIN not yet implemented");
+				}
 		| LEFT join_outer
-				{ elog(ERROR,"LEFT OUTER JOIN not yet implemented"); }
+				{
+					$$ = LEFT;
+					elog(NOTICE,"LEFT OUTER JOIN not yet implemented");
+				}
 		| RIGHT join_outer
-				{ elog(ERROR,"RIGHT OUTER JOIN not yet implemented"); }
+				{
+					$$ = RIGHT;
+					elog(NOTICE,"RIGHT OUTER JOIN not yet implemented");
+				}
 		| OUTER_P
-				{ elog(ERROR,"OUTER JOIN not yet implemented"); }
+				{
+					$$ = LEFT;
+					elog(NOTICE,"OUTER JOIN not yet implemented");
+				}
 		| INNER_P
-				{ elog(ERROR,"INNER JOIN not yet implemented"); }
-		| UNION
-				{ elog(ERROR,"UNION JOIN not yet implemented"); }
+				{
+					$$ = INNER_P;
+				}
 		| /*EMPTY*/
-				{ elog(ERROR,"INNER JOIN not yet implemented"); }
+				{
+					$$ = INNER_P;
+				}
 		;
 
 join_outer:  OUTER_P							{ $$ = NULL; }
 		| /*EMPTY*/								{ $$ = NULL;  /* no qualifiers */ }
 		;
 
-join_spec:	ON '(' a_expr ')'					{ $$ = NULL; }
-		| USING '(' join_list ')'				{ $$ = NULL; }
-		| /*EMPTY*/								{ $$ = NULL;  /* no qualifiers */ }
+/* JOIN qualification clauses
+ * Possibilities are:
+ *  USING ( column list ) allows only unqualified column names,
+ *                        which must match between tables.
+ *  ON expr allows more general qualifications.
+ * - thomas 1999-01-07
+ */
+
+join_qual:  USING '(' using_list ')'			{ $$ = $3; }
+		| ON a_expr								{ $$ = lcons($2, NIL); }
 		;
 
-join_list:  join_using							{ $$ = lcons($1, NIL); }
-		| join_list ',' join_using				{ $$ = lappend($1, $3); }
+using_list:  using_list ',' using_expr			{ $$ = lappend($1, $3); }
+		| using_expr							{ $$ = lcons($1, NIL); }
 		;
 
-join_using:  ColId
-				/*  Changed from SortGroupBy parse node to new JoinUsing node.
-			  	 *  SortGroupBy no longer needs these structure members.
-				 *
-			  	 *  Once, acknowledged, this comment can be removed by the
-				 *  developer(s) working on the JOIN clause.
-				 *
-			  	 *    - daveh@insightdist.com  1998-07-31
-				 */ 
+using_expr:  ColId
 				{
-					$$ = makeNode(JoinUsing);
-					$$->resno = 0;
-					$$->range = NULL;
-					$$->name = $1;
-				}
-		| ColId '.' ColId
-				{
-					$$ = makeNode(JoinUsing);
-					$$->resno = 0;
-					$$->range = $1;
-					$$->name = $3;
-				}
-		| Iconst
-				{
-					$$ = makeNode(JoinUsing);
-					$$->resno = $1;
-					$$->range = NULL;
-					$$->name = NULL;
+					/* could be a column name or a relation_name */
+					Ident *n = makeNode(Ident);
+					n->name = $1;
+					n->indirection = NULL;
+					$$ = (Node *)n;
 				}
 		;
 
@@ -4737,12 +4795,15 @@ case_expr:  CASE case_arg when_clause_list case_default END_TRANS
 				{
 					CaseExpr *c = makeNode(CaseExpr);
 					CaseWhen *w = makeNode(CaseWhen);
+/*
+					A_Const *n = makeNode(A_Const);
+					n->val.type = T_Null;
+					w->result = (Node *)n;
+*/
+					w->expr = makeA_Expr(OP, "=", $3, $5);
 					c->args = lcons(w, NIL);
 					c->defresult = $3;
-					w->expr = makeA_Expr(OP, "=", $3, $5);
 					$$ = (Node *)c;
-
-					elog(NOTICE,"NULLIF() not yet fully implemented");
 				}
 		| COALESCE '(' expr_list ')'
 				{
@@ -4757,8 +4818,6 @@ case_expr:  CASE case_arg when_clause_list case_default END_TRANS
 						c->args = lappend(c->args, w);
 					}
 					$$ = (Node *)c;
-
-					elog(NOTICE,"COALESCE() not yet fully implemented");
 				}
 		;
 
@@ -5147,7 +5206,6 @@ ColLabel:  ColId						{ $$ = $1; }
 		| COALESCE						{ $$ = "coalesce"; }
 		| CONSTRAINT					{ $$ = "constraint"; }
 		| COPY							{ $$ = "copy"; }
-		| CROSS							{ $$ = "cross"; }
 		| CURRENT						{ $$ = "current"; }
 		| DO							{ $$ = "do"; }
 		| ELSE							{ $$ = "else"; }
@@ -5210,7 +5268,8 @@ makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr)
 
 /* makeRowExpr()
  * Generate separate operator nodes for a single row descriptor expression.
- * Perhaps this should go deeper in the parser someday... - thomas 1997-12-22
+ * Perhaps this should go deeper in the parser someday...
+ * - thomas 1997-12-22
  */
 static Node *
 makeRowExpr(char *opr, List *largs, List *rargs)
@@ -5249,23 +5308,6 @@ makeRowExpr(char *opr, List *largs, List *rargs)
 	{
 		elog(ERROR,"Operator '%s' not implemented for row expressions",opr);
 	}
-
-#ifdef NOT_USED
-	while ((largs != NIL) && (rargs != NIL))
-	{
-		larg = lfirst(largs);
-		rarg = lfirst(rargs);
-
-		if (expr == NULL)
-			expr = makeA_Expr(OP, opr, larg, rarg);
-		else
-			expr = makeA_Expr(AND, NULL, expr, makeA_Expr(OP, opr, larg, rarg));
-
-		largs = lnext(largs);
-		rargs = lnext(rargs);
-	}
-	pprint(expr);
-#endif
 
 	return expr;
 }
