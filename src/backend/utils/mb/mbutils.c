@@ -3,7 +3,7 @@
  * client encoding and server internal encoding.
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.11 2000/08/27 10:40:48 ishii Exp $ */
+ * $Id: mbutils.c,v 1.12 2000/10/12 06:06:50 ishii Exp $ */
 
 
 #include "postgres.h"
@@ -21,8 +21,8 @@ static void (*server_from_mic) ();		/* MIC to something */
 /*
  * find encoding table entry by encoding
  */
-static pg_encoding_conv_tbl *
-get_enc_ent(int encoding)
+pg_encoding_conv_tbl *
+pg_get_enc_ent(int encoding)
 {
 	pg_encoding_conv_tbl *p = pg_conv_tbl;
 
@@ -35,8 +35,8 @@ get_enc_ent(int encoding)
 }
 
 /*
- * set the client encoding. if client/server encoding is
- * not supported, returns -1
+ * set the client encoding. if encoding conversion between
+ * client/server encoding is not supported, returns -1
  */
 int
 pg_set_client_encoding(int encoding)
@@ -52,8 +52,8 @@ pg_set_client_encoding(int encoding)
 	}
 	else if (current_server_encoding == MULE_INTERNAL)
 	{							/* server == MULE_INETRNAL? */
-		client_to_mic = get_enc_ent(encoding)->to_mic;
-		client_from_mic = get_enc_ent(encoding)->from_mic;
+		client_to_mic = pg_get_enc_ent(encoding)->to_mic;
+		client_from_mic = pg_get_enc_ent(encoding)->from_mic;
 		server_to_mic = server_from_mic = 0;
 		if (client_to_mic == 0 || client_from_mic == 0)
 			return (-1);
@@ -61,17 +61,33 @@ pg_set_client_encoding(int encoding)
 	else if (encoding == MULE_INTERNAL)
 	{							/* client == MULE_INETRNAL? */
 		client_to_mic = client_from_mic = 0;
-		server_to_mic = get_enc_ent(current_server_encoding)->to_mic;
-		server_from_mic = get_enc_ent(current_server_encoding)->from_mic;
+		server_to_mic = pg_get_enc_ent(current_server_encoding)->to_mic;
+		server_from_mic = pg_get_enc_ent(current_server_encoding)->from_mic;
+		if (server_to_mic == 0 || server_from_mic == 0)
+			return (-1);
+	}
+	else if (current_server_encoding == UNICODE)
+	{							/* server == UNICODE? */
+		client_to_mic = pg_get_enc_ent(encoding)->to_unicode;
+		client_from_mic = pg_get_enc_ent(encoding)->from_unicode;
+		server_to_mic = server_from_mic = 0;
+		if (client_to_mic == 0 || client_from_mic == 0)
+			return (-1);
+	}
+	else if (encoding == UNICODE)
+	{							/* client == UNICODE? */
+		client_to_mic = client_from_mic = 0;
+		server_to_mic = pg_get_enc_ent(current_server_encoding)->to_unicode;
+		server_from_mic = pg_get_enc_ent(current_server_encoding)->from_unicode;
 		if (server_to_mic == 0 || server_from_mic == 0)
 			return (-1);
 	}
 	else
 	{
-		client_to_mic = get_enc_ent(encoding)->to_mic;
-		client_from_mic = get_enc_ent(encoding)->from_mic;
-		server_to_mic = get_enc_ent(current_server_encoding)->to_mic;
-		server_from_mic = get_enc_ent(current_server_encoding)->from_mic;
+		client_to_mic = pg_get_enc_ent(encoding)->to_mic;
+		client_from_mic = pg_get_enc_ent(encoding)->from_mic;
+		server_to_mic = pg_get_enc_ent(current_server_encoding)->to_mic;
+		server_from_mic = pg_get_enc_ent(current_server_encoding)->from_mic;
 		if (client_to_mic == 0 || client_from_mic == 0)
 			return (-1);
 		if (server_to_mic == 0 || server_from_mic == 0)
@@ -191,6 +207,13 @@ int
 pg_mblen(const unsigned char *mbstr)
 {
 	return ((*pg_wchar_table[GetDatabaseEncoding()].mblen) (mbstr));
+}
+
+/* returns the byte length of a multi-byte word with specified enciding */
+int
+pg_mblen_with_encoding(const unsigned char *mbstr, int encoding)
+{
+	return ((*pg_wchar_table[encoding].mblen) (mbstr));
 }
 
 /* returns the length (counted as a wchar) of a multi-byte string */

@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multi-byte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.12 2000/08/27 10:40:48 ishii Exp $
+ * $Id: wchar.c,v 1.13 2000/10/12 06:06:50 ishii Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -246,7 +246,7 @@ pg_euctw_mblen(const unsigned char *s)
 }
 
 /*
- * convert UTF-8 to pg_wchar (UCS-2)
+ * convert UTF-8 string to pg_wchar (UCS-2)
  * caller should allocate enough space for "to"
  * len: length of from.
  * "from" not necessarily null terminated.
@@ -296,7 +296,10 @@ pg_utf2wchar_with_len(const unsigned char *from, pg_wchar * to, int len)
 	return(cnt);
 }
 
-static int
+/*
+ * returns the byte length of a UTF-8 word pointed to by s
+ */
+int
 pg_utf_mblen(const unsigned char *s)
 {
 	int			len = 1;

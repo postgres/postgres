@@ -4,7 +4,7 @@
 #    Makefile for utils/mb
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/mb/Makefile,v 1.10 2000/08/31 16:10:56 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/mb/Makefile,v 1.11 2000/10/12 06:06:49 ishii Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -29,6 +29,15 @@ sjistest.o: sjistest.c
 liketest.o: liketest.c
 	$(CC) -c $(CFLAGS) liketest.c
 
+uconv.o: uconv.c
+	$(CC) -c $(CFLAGS) uconv.c
+
+uconv2.o: uconv2.c
+	$(CC) -c $(CFLAGS) uconv2.c
+
+utftest.o: utftest.c conv.c wchar.c mbutils.c
+	$(CC) -c $(CFLAGS) utftest.c
+
 sjistest: $(OBJS) sjistest.o palloc.o
 	$(CC) -o sjistest sjistest.o palloc.o \
 	common.o mbutils.o wchar.o wstrcmp.o wstrncmp.o variable.o \
@@ -38,6 +47,21 @@ liketest: $(OBJS) liketest.o palloc.o
 	$(CC) -o liketest liketest.o palloc.o conv.o \
 	common.o mbutils.o wchar.o wstrcmp.o wstrncmp.o variable.o \
        big5.o $(LDFLAGS)
+
+utftest: $(OBJS) utftest.o palloc.o
+	$(CC) -o utftest utftest.o palloc.o \
+	common.o wstrcmp.o wstrncmp.o variable.o \
+       big5.o $(LDFLAGS)
+
+uconv: uconv.o palloc.o
+	$(CC) -o uconv uconv.o palloc.o \
+		common.o conv.o wchar.o \
+       big5.o mbutils.o $(LDFLAGS)
+
+uconv2: uconv2.o palloc.o
+	$(CC) -o uconv2 uconv2.o palloc.o \
+		common.o conv.o wchar.o \
+       big5.o mbutils.o $(LDFLAGS)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend
