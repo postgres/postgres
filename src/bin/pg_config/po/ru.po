@@ -4,9 +4,10 @@
 # Copyright (c) 2004 Serguei A. Mokhov, mokhov@cs.concordia.ca
 # Distributed under the same licensing terms as PostgreSQL itself.
 #
-# $PostgreSQL: pgsql/src/bin/pg_config/po/ru.po,v 1.3 2004/12/06 22:10:40 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_config/po/ru.po,v 1.4 2005/01/13 21:22:19 petere Exp $
 #
 # ChangeLog:
+#   - December, 2004: Corrections and improvements by Oleg Bartunov <oleg@sai.msu.su>
 #   - October 13 - November 24, 2004: Initial Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #
 msgid ""
@@ -30,7 +31,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"%s предоставляет информацию об инсталлированной версии PostgreSQL.\n"
+"%s предоставляет информацию об установленной версии PostgreSQL.\n"
 "\n"
 
 #: pg_config.c:37
@@ -52,39 +53,39 @@ msgstr "Опции:\n"
 
 #: pg_config.c:40
 msgid "  --bindir              show location of user executables\n"
-msgstr "  --bindir              показать расположение выполняемых вайлов\n"
+msgstr "  --bindir              показать расположение выполняемых файлов\n"
 
 #: pg_config.c:41
 msgid ""
 "  --includedir          show location of C header files of the client\n"
 "                        interfaces\n"
 msgstr ""
-"  --includedir          показать путь файлов-заголовков C (.h)\n"
+"  --includedir          показать расположение файлов-заголовков C (.h)\n"
 "                        клиентских интерфейсов\n"
 
 #: pg_config.c:43
 msgid "  --includedir-server   show location of C header files for the server\n"
-msgstr "  --includedir-server   показать путь файлов-заголовков C (.h) сервера\n"
+msgstr "  --includedir-server   показать расположение файлов-заголовков C (.h) сервера\n"
 
 #: pg_config.c:44
 msgid "  --libdir              show location of object code libraries\n"
-msgstr "  --libdir              показать путь библиотек объектного кода\n"
+msgstr "  --libdir              показать расположение библиотек объектного кода\n"
 
 #: pg_config.c:45
 msgid "  --pkglibdir           show location of dynamically loadable modules\n"
-msgstr "  --pkglibdir           показать путь динамически загружаемых модулей\n"
+msgstr "  --pkglibdir           показать расположение динамически загружаемых модулей\n"
 
 #: pg_config.c:46
 msgid "  --pgxs                show location of extension makefile\n"
-msgstr "  --pgxs                показать путь для makefile рассширений\n"
+msgstr "  --pgxs                показать расположение  makefile для  расширений\n"
 
 #: pg_config.c:47
 msgid ""
 "  --configure           show options given to \"configure\" script when\n"
 "                        PostgreSQL was built\n"
 msgstr ""
-"  --configure           показать опции указанные в скрипте \"configure\"\n"
-"                        во время инсталляции PostgreSQL\n"
+"  --configure           показать опции, использованные \"configure\"\n"
+"                        при компиляции PostgreSQL\n"
 
 #: pg_config.c:49
 msgid "  --version             show the PostgreSQL version, then exit\n"
@@ -142,20 +143,20 @@ msgstr "не удалось поменять директорию на \"%s\""
 #: ../../port/exec.c:338
 #, c-format
 msgid "could not read symbolic link \"%s\""
-msgstr "не получилось считать ссылку \"%s\""
+msgstr "не получилось считать символическую ссылку \"%s\""
 
 #: ../../port/exec.c:569
 #, c-format
 msgid "child process exited with exit code %d"
-msgstr "процесс-наследник завершился с кодом возрата %d"
+msgstr "дочерний процесс завершился с кодом возврата %d"
 
 #: ../../port/exec.c:572
 #, c-format
 msgid "child process was terminated by signal %d"
-msgstr "процесс-наследник завершён сигналом %d"
+msgstr "дочерний процесс завершён сигналом %d"
 
 #: ../../port/exec.c:575
 #, c-format
 msgid "child process exited with unrecognized status %d"
-msgstr "процесс-наследник завершился с нераспознанным статусом %d"
+msgstr "дочерний процесс завершился с нераспознанным статусом %d"
 

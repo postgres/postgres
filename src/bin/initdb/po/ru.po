@@ -4,9 +4,10 @@
 # Copyright (c) 2004 Serguei A. Mokhov, mokhov@cs.concordia.ca
 # Distributed under the same licensing terms as PostgreSQL itself.
 #
-# $PostgreSQL: pgsql/src/bin/initdb/po/ru.po,v 1.13 2004/12/11 20:09:58 petere Exp $
+# $PostgreSQL: pgsql/src/bin/initdb/po/ru.po,v 1.14 2005/01/13 21:22:05 petere Exp $
 #
 # ChangeLog:
+#   - December, 2004: New translation by Oleg Bartunov <oleg@sai.msu.su>
 #   - March 27 - December 10, 2004: Initial Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #
 msgid ""
@@ -26,7 +27,7 @@ msgstr ""
 #: initdb.c:264
 #, c-format
 msgid "%s: out of memory\n"
-msgstr "%s: нехватка памяти\n"
+msgstr "%s: не хватило памяти\n"
 
 #: initdb.c:374
 #: initdb.c:1403
@@ -88,7 +89,7 @@ msgid ""
 msgstr ""
 "%s: нельзя запускать под root'ом\n"
 "Пожалуйста, зайдите как (непривилегированный) пользователь (например,\n"
-"используя \"su\"), под которым будет выполняться процесс сервера.\n"
+"используя \"su\"), под которым будет выполняться серверный процесс.\n"
 
 #: initdb.c:689
 #, c-format
@@ -98,7 +99,7 @@ msgstr "%s: \"%s\" не является верной кодировкой сервера\n"
 #: initdb.c:844
 #, c-format
 msgid "%s: warning: encoding mismatch\n"
-msgstr "%s: внимание: не соответствие кодировки\n"
+msgstr "%s: внимание: несоответствие кодировки\n"
 
 #: initdb.c:846
 #, c-format
@@ -112,8 +113,8 @@ msgstr ""
 "Кодировка которую вы выбрали (%s) и кодировка выбранной\n"
 "локали (%s) не совпадают.  Это может привести к неожиданным\n"
 "результатам в различных функциях связанных с обработкой строк. \n"
-"Чтобы исправить ситуауию перезапустите %s и либо не указывайте\n"
-"кодировку или выбирете соответствующую комбинацию.\n"
+"Для исправления  перезапустите %s и, либо не указывайте\n"
+"кодировку, либо задайте правильную комбинацию кодировки и локали.\n"
 
 #: initdb.c:976
 #, c-format
@@ -128,20 +129,20 @@ msgid ""
 "the wrong directory with the invocation option -L.\n"
 msgstr ""
 "%s: файл \"%s\" не существует\n"
-"Это либо означает что у вас повреждённая инсталляция или указана\n"
+"Это означает, что у вас проблемы с установкой или указана\n"
 "неправильная директория в опции запуска -L.\n"
 
 #: initdb.c:1086
 msgid "selecting default max_connections ... "
-msgstr "производится выборка значения по умолчанию max_connections ... "
+msgstr "выбирается значение по-умолчанию для max_connections ... "
 
 #: initdb.c:1122
 msgid "selecting default shared_buffers ... "
-msgstr "производится выборка значения по умолчанию shared_buffers ... "
+msgstr "выбирается значение по-умолчанию для shared_buffers ... "
 
 #: initdb.c:1155
 msgid "creating configuration files ... "
-msgstr "создание файлов конфигурации ... "
+msgstr "создание конфигурационных файлов ... "
 
 #: initdb.c:1251
 #, c-format
@@ -155,7 +156,7 @@ msgid ""
 "Check your installation or specify the correct path using the option -L.\n"
 msgstr ""
 "%s: входной файл \"%s\" не принадлежит PostgreSQL %s\n"
-"Проверьте вашу инсталляцию или укажите правильный путь с помощью опции -L.\n"
+"Проверьте вашу установку или укажите правильный путь с помощью опции -L.\n"
 
 #: initdb.c:1342
 msgid "initializing pg_shadow ... "
@@ -185,11 +186,11 @@ msgstr "установка пароля ... "
 #: initdb.c:1443
 #, c-format
 msgid "%s: The password file was not generated. Please report this problem.\n"
-msgstr "%s: Не удалось сгенерировать пароль. Пожалуйста сообщите об этой проблеме.\n"
+msgstr "%s: Не удалось сгенерировать пароль. Пожалуйста, сообщите об этой проблеме.\n"
 
 #: initdb.c:1471
 msgid "enabling unlimited row size for system tables ... "
-msgstr "разграничение размера строки для системных таблиц ... "
+msgstr "разрешение неограниченного размера строки для системных таблиц ... "
 
 #: initdb.c:1544
 msgid "initializing pg_depend ... "
@@ -225,12 +226,12 @@ msgstr "копирование template1 в template0 ... "
 
 #: initdb.c:1927
 msgid "caught signal\n"
-msgstr "пойман сигнал\n"
+msgstr "перехвачен сигнал\n"
 
 #: initdb.c:1933
 #, c-format
 msgid "could not write to child process: %s\n"
-msgstr "не удалось записать в процесс-наследник: %s\n"
+msgstr "не удалось записать в дочерний процесс: %s\n"
 
 #: initdb.c:1941
 msgid "ok\n"
@@ -239,7 +240,7 @@ msgstr "ок\n"
 #: initdb.c:1989
 #, c-format
 msgid "%s: invalid locale name \"%s\"\n"
-msgstr "%s: неверное имя локали \"%s\"\n"
+msgstr "%s: ошибочное имя локали \"%s\"\n"
 
 #: initdb.c:2056
 #, c-format
@@ -257,7 +258,7 @@ msgstr "Использование:\n"
 #: initdb.c:2058
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
-msgstr "  %s [ОПЦИЯ]... [ДИРДАННЫХ]\n"
+msgstr "  %s [OPTION]... [DATADIR]\n"
 
 #: initdb.c:2059
 msgid ""
@@ -269,15 +270,15 @@ msgstr ""
 
 #: initdb.c:2060
 msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
-msgstr " [-D, --pgdata=]ДИРДАННЫХ   местонахождение для этого кластера баз данных\n"
+msgstr " [-D, --pgdata=]DATADIR   местонахождение для этого кластера баз данных\n"
 
 #: initdb.c:2061
 msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
-msgstr "  -E, --encoding=КОДИРОВКА  установить кодировку по умолчанию для новых баз\n"
+msgstr "  -E, --encoding=ENCODING  установить кодировку по-умолчанию для новых баз\n"
 
 #: initdb.c:2062
 msgid "  --locale=LOCALE           initialize database cluster with given locale\n"
-msgstr "  --locale=ЛОКАЛЬ           инициализировать кластер баз данных с указанной локалью\n"
+msgstr "  --locale=LOCALE           инициализировать кластер баз данных с указанной локалью\n"
 
 #: initdb.c:2063
 msgid ""
@@ -287,11 +288,11 @@ msgid ""
 "                            in the respective category (default taken from\n"
 "                            environment)\n"
 msgstr ""
-"  --lc-collate, --lc-ctype, --lc-messages=ЛОКАЛЬ\n"
-"  --lc-monetary, --lc-numeric, --lc-time=ЛОКАЛЬ\n"
+"  --lc-collate, --lc-ctype, --lc-messages=LOCALE\n"
+"  --lc-monetary, --lc-numeric, --lc-time=LOCALE\n"
 "                            инициализировать кластер баз данных с\n"
 "                            указанной локалью в соответствующей категории\n"
-"                            (значения по умолчанию берутся из окружения)\n"
+"                            (значения по-умолчанию берутся из окружения)\n"
 
 #: initdb.c:2068
 msgid "  --no-locale               equivalent to --locale=C\n"
@@ -299,7 +300,7 @@ msgstr "  --no-locale               эквивалентно --locale=C\n"
 
 #: initdb.c:2069
 msgid "  -A, --auth=METHOD         default authentication method for local connections\n"
-msgstr "  -A, --auth=МЕТОД          метод аутентификации по умолчанию для локальных подсоединений\n"
+msgstr "  -A, --auth=METHOD          метод аутентификации по-умолчанию для локальных соединений\n"
 
 #: initdb.c:2070
 msgid "  -U, --username=NAME       database superuser name\n"
@@ -311,7 +312,7 @@ msgstr "  -W, --pwprompt            запросить пароль для нового администратора\n
 
 #: initdb.c:2072
 msgid "  --pwfile=FILE             read password for the new superuser from file\n"
-msgstr "  --pwfile=ФАЙЛ             считать пароль для нового администратора из файла\n"
+msgstr "  --pwfile=FILE             считать пароль для нового администратора из файла\n"
 
 #: initdb.c:2073
 msgid "  -?, --help                show this help, then exit\n"
@@ -327,11 +328,11 @@ msgid ""
 "Less commonly used options:\n"
 msgstr ""
 "\n"
-"Реже используемые опции:\n"
+"Редко используемые опции:\n"
 
 #: initdb.c:2076
 msgid "  -d, --debug               generate lots of debugging output\n"
-msgstr "  -d, --debug               генерировать много отладочных сообщений\n"
+msgstr "  -d, --debug               выдавать много отладочных сообщений\n"
 
 #: initdb.c:2077
 msgid "  -s, --show                show internal settings\n"
@@ -343,7 +344,7 @@ msgstr "  -L DIRECTORY              где найти входные файлы\n"
 
 #: initdb.c:2079
 msgid "  -n, --noclean             do not clean up after errors\n"
-msgstr "  -n, --noclean             не подчищать после ошибок\n"
+msgstr "  -n, --noclean             не очищать после ошибок\n"
 
 #: initdb.c:2080
 msgid ""
@@ -396,7 +397,7 @@ msgid ""
 msgstr ""
 "\n"
 "ВНИМАНИЕ: используется аутентификация \"trust\" для локальных подсоединений.\n"
-"Вы можете её поменять отредактировав pg_hba.conf или используя опцию -A\n"
+"Вы можете её поменять, отредактировав pg_hba.conf или используя опцию -A,\n"
 "при следующем выполнении initdb.\n"
 
 #: initdb.c:2269
@@ -407,7 +408,7 @@ msgstr "%s: нераспознанный метод аутентификации \"%s\"\n"
 #: initdb.c:2279
 #, c-format
 msgid "%s: must specify a password for the superuser to enable %s authentication\n"
-msgstr "%s: необходимо указать пароль администратора чтобы включить аутентификацию %s\n"
+msgstr "%s: необходимо указать пароль администратора для включения аутентификации %s\n"
 
 #: initdb.c:2294
 #, c-format
@@ -429,9 +430,9 @@ msgid ""
 "same directory as \"%s\".\n"
 "Check your installation.\n"
 msgstr ""
-"Программа \"postgres\" нужна для %s но не найдена в \n"
-"той же директории что и \"%s\".\n"
-"Проверьте вашу инсталляцию.\n"
+"Программа \"postgres\" нужна для %s, но она не найдена в \n"
+"той же директории, что и \"%s\".\n"
+"Проверьте вашу установку.\n"
 
 #: initdb.c:2333
 #, c-format
@@ -442,7 +443,7 @@ msgid ""
 msgstr ""
 "Программа \"postgres\" найдена рядом с %s, но не\n"
 "с той же версией как %s.\n"
-"Проверьте вашу инсталляцию.\n"
+"Проверьте вашу установку.\n"
 
 #: initdb.c:2352
 #, c-format
@@ -461,7 +462,7 @@ msgid ""
 "This user must also own the server process.\n"
 "\n"
 msgstr ""
-"Файлы, сопутствующие этой системе баз данных будут\n"
+"Файлы, сопутствующие этой системе баз данных, будут\n"
 "принадлежать пользователю \"%s\". Этот пользователь\n"
 "также должен быть владельцем процесса сервера.\n"
 
@@ -558,7 +559,7 @@ msgstr ""
 "\n"
 "    %s%s%s%spostmaster -D %s%s%s\n"
 "или\n"
-"    %s%s%s%spg_ctl -D %s%s%s -l файлжурнала start\n"
+"    %s%s%s%spg_ctl -D %s%s%s -l logfile start\n"
 "\n"
 
 #: ../../port/dirmod.c:75
@@ -583,20 +584,20 @@ msgstr "не удалось поменять директорию на \"%s\""
 #: ../../port/exec.c:338
 #, c-format
 msgid "could not read symbolic link \"%s\""
-msgstr "не получилось считать ссылку \"%s\""
+msgstr "не удалось считать символическую ссылку \"%s\""
 
 #: ../../port/exec.c:569
 #, c-format
 msgid "child process exited with exit code %d"
-msgstr "процесс-наследник завершился с кодом возрата %d"
+msgstr "дочерний процесс завершился с кодом возврата %d"
 
 #: ../../port/exec.c:572
 #, c-format
 msgid "child process was terminated by signal %d"
-msgstr "процесс-наследник завершён сигналом %d"
+msgstr "дочерний процесс завершён сигналом %d"
 
 #: ../../port/exec.c:575
 #, c-format
 msgid "child process exited with unrecognized status %d"
-msgstr "процесс-наследник завершился с нераспознанным статусом %d"
+msgstr "дочерний процесс завершился с нераспознанным статусом %d"
 

@@ -4,13 +4,14 @@
 # Copyright (c) 2003-2004 Serguei A. Mokhov, mokhov@cs.concordia.ca
 # Distributed under the same licensing terms as PostgreSQL itself.
 #
-# $PostgreSQL: pgsql/src/bin/scripts/po/ru.po,v 1.11 2004/12/14 11:11:20 petere Exp $
+# $PostgreSQL: pgsql/src/bin/scripts/po/ru.po,v 1.12 2005/01/13 21:24:25 petere Exp $
 #
 # To the new translator:
 #   PG Russian Translation Discussion Group: <http://groups.yahoo.com/group/pgsql-rus/>
 #   PG Glossary: <http://www.sai.msu.su/~megera/oddmuse/index.cgi?Pgsql_Glossary>
 #
 # ChangeLog:
+#   - December, 2004: Corrections and improvements by Oleg Bartunov <oleg@sai.msu.su>
 #   - May 28 - November 14, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>
 #   - July 24 - August 25, 2003: Complete Initial Translation for 7.4.*; Serguei A. Mokhov, <mokhov@cs.concordia.ca>
 #
@@ -65,17 +66,17 @@ msgstr "%s: слишком много аргументов командной строки (первый: \"%s\")\n"
 #: createdb.c:129
 #, c-format
 msgid "%s: \"%s\" is not a valid encoding name\n"
-msgstr "%s: \"%s\" не является верным именем кодировки\n"
+msgstr "%s: \"%s\" не является допустимым названием кодировки\n"
 
 #: createdb.c:168
 #, c-format
 msgid "%s: database creation failed: %s"
-msgstr "%s: создание базы не удалось: %s"
+msgstr "%s: создание базы данных не удалось: %s"
 
 #: createdb.c:196
 #, c-format
 msgid "%s: comment creation failed (database was created): %s"
-msgstr "%s: создание комментария не удалось (база была создана): %s"
+msgstr "%s: создание комментария не удалось (база данных была создана): %s"
 
 #: createdb.c:217
 #, c-format
@@ -83,7 +84,7 @@ msgid ""
 "%s creates a PostgreSQL database.\n"
 "\n"
 msgstr ""
-"%s создаёт базу PostgreSQL.\n"
+"%s создаёт базу данных PostgreSQL.\n"
 "\n"
 
 #: clusterdb.c:234
@@ -100,7 +101,7 @@ msgstr "Использование:\n"
 #: createdb.c:219
 #, c-format
 msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
-msgstr "  %s [ОПЦИЯ]... [ИМЯБД] [ОПИСАНИЕ]\n"
+msgstr "  %s [ОПЦИЯ]... [DBNAME] [DESCRIPTION]\n"
 
 #: clusterdb.c:236
 #: createdb.c:220
@@ -119,19 +120,19 @@ msgstr ""
 
 #: createdb.c:221
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
-msgstr "  -D, --tablespace=TABLESPACE  tablespace по умолчанию для базы\n"
+msgstr "  -D, --tablespace=TABLESPACE  tablespace по-умолчанию для базы\n"
 
 #: createdb.c:222
 msgid "  -E, --encoding=ENCODING      encoding for the database\n"
-msgstr "  -E, --encoding=КОДИРОВКА     кодировка для базы\n"
+msgstr "  -E, --encoding=ENCODING     кодировка для базы данных\n"
 
 #: createdb.c:223
 msgid "  -O, --owner=OWNER            database user to own the new database\n"
-msgstr "  -O, --owner=ВЛАДЕЛЕЦ         пользователь-владелец новой базы\n"
+msgstr "  -O, --owner=OWNER        пользователь-владелец новой базы данных\n"
 
 #: createdb.c:224
 msgid "  -T, --template=TEMPLATE      template database to copy\n"
-msgstr "  -T, --template=ШАБЛОН        база-шаблон для копирования\n"
+msgstr "  -T, --template=TEMPLATE     имя базы данных, используемой как шаблон\n"
 
 #: createdb.c:225
 msgid "  -e, --echo                   show the commands being sent to the server\n"
@@ -158,19 +159,19 @@ msgid ""
 "Connection options:\n"
 msgstr ""
 "\n"
-"Опции подсоединения:\n"
+"Опции соединения:\n"
 
 #: createdb.c:230
 msgid "  -h, --host=HOSTNAME          database server host or socket directory\n"
-msgstr "  -h, --host=ХОСТ              сервер баз данных или директория сокетов\n"
+msgstr "  -h, --host=HOSTNAME         сервер баз данных или директория сокетов\n"
 
 #: createdb.c:231
 msgid "  -p, --port=PORT              database server port\n"
-msgstr "  -p, --port=ПОРТ              порт сервера баз данных\n"
+msgstr "  -p, --port=PORT              порт сервера баз данных\n"
 
 #: createdb.c:232
 msgid "  -U, --username=USERNAME      user name to connect as\n"
-msgstr "  -U, --username=ПОЛЬЗОВАТЕЛЬ  имя пользователя для подсоединения\n"
+msgstr "  -U, --username=USERNAME     имя пользователя для соединения\n"
 
 #: createdb.c:233
 msgid "  -W, --password               prompt for password\n"
@@ -182,7 +183,7 @@ msgid ""
 "By default, a database with the same name as the current user is created.\n"
 msgstr ""
 "\n"
-"По умолчанию имя создаваемой базы такоеже как текущее имя пользователя.\n"
+"По-умолчанию, база данных с названием, сопадающее с текущим именем пользователя.\n"
 
 #: clusterdb.c:250
 #: createdb.c:235
@@ -217,7 +218,7 @@ msgstr "нет"
 #: createlang.c:143
 #: droplang.c:140
 msgid "Trusted?"
-msgstr "Доверяемый?"
+msgstr "Доверенный?"
 
 #: createlang.c:150
 #: droplang.c:147
@@ -228,7 +229,7 @@ msgstr "Процедурные языки"
 #: droplang.c:156
 #, c-format
 msgid "%s: missing required argument language name\n"
-msgstr "%s: отсутствует необходимый аргумент -- имя языка\n"
+msgstr "%s: отсутствует необходимый аргумент -- название языка\n"
 
 #: createlang.c:210
 #, c-format
@@ -242,12 +243,12 @@ msgstr "Поддерживаемые языки: plpgsql, pltcl, pltclu, plperl, plperlu и plpython
 #: createlang.c:226
 #, c-format
 msgid "%s: language \"%s\" is already installed in database \"%s\"\n"
-msgstr "%s: язык \"%s\" уже установлен в базе \"%s\"\n"
+msgstr "%s: Поддержка языка \"%s\" уже имеется в базе \"%s\"\n"
 
 #: createlang.c:283
 #, c-format
 msgid "%s: language installation failed: %s"
-msgstr "%s: установка языка не удалась: %s"
+msgstr "%s: установка поддержки языка не удалась: %s"
 
 #: createlang.c:298
 #, c-format
@@ -255,18 +256,18 @@ msgid ""
 "%s installs a procedural language into a PostgreSQL database.\n"
 "\n"
 msgstr ""
-"%s устанавливает процедурный язык в базу PostgreSQL.\n"
+"%s устанавливает поддержку процедурного языка в базу PostgreSQL.\n"
 "\n"
 
 #: createlang.c:300
 #: droplang.c:281
 #, c-format
 msgid "  %s [OPTION]... LANGNAME [DBNAME]\n"
-msgstr "  %s [ОПЦИЯ]... ЯЗЫК [ИМЯБД]\n"
+msgstr "  %s [OPTION]... LANGNAME [DBNAME]\n"
 
 #: createlang.c:302
 msgid "  -d, --dbname=DBNAME       database to install language in\n"
-msgstr "  -d, --dbname=ИМЯБД        база в которой установить язык\n"
+msgstr "  -d, --dbname=DBNAME      название базы данных,  в которую устанавливается поддержка языка\n"
 
 #: clusterdb.c:240
 #: createlang.c:303
@@ -284,7 +285,7 @@ msgstr "  -l, --list                показать список установленных языков\n"
 
 #: createlang.c:305
 msgid "  -L, --pglib=DIRECTORY     find language interpreter file in DIRECTORY\n"
-msgstr "  -L, --pglib=ДИРЕКТОРИЯ    найти файл интерпретатора в ДИРЕКТОРИИ\n"
+msgstr "  -L, --pglib=DIRECTORY    искать файл интерпретатора языка в DIRECTORY\n"
 
 #: clusterdb.c:245
 #: createlang.c:306
@@ -294,7 +295,7 @@ msgstr "  -L, --pglib=ДИРЕКТОРИЯ    найти файл интерпретатора в ДИРЕКТОРИИ\n"
 #: dropuser.c:153
 #: vacuumdb.c:274
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
-msgstr "  -h, --host=ХОСТ           сервер баз данных или директория сокетов\n"
+msgstr "  -h, --host=HOSTNAME       сервер баз данных или директория сокетов\n"
 
 #: clusterdb.c:246
 #: createlang.c:307
@@ -304,7 +305,7 @@ msgstr "  -h, --host=ХОСТ           сервер баз данных или директория сокетов\n"
 #: dropuser.c:154
 #: vacuumdb.c:275
 msgid "  -p, --port=PORT           database server port\n"
-msgstr "  -p, --port=ПОРТ           порт сервера баз данных\n"
+msgstr "  -p, --port=PORT          порт сервера баз данных\n"
 
 #: clusterdb.c:247
 #: createlang.c:308
@@ -313,8 +314,8 @@ msgstr "  -p, --port=ПОРТ           порт сервера баз данных\n"
 #: vacuumdb.c:276
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr ""
-"  -U, --username=ПОЛЬЗОВАТЕЛЬ\n"
-"                            имя пользователя для подсоединения\n"
+"  -U, --username=USERNAME\n"
+"                            имя пользователя для соединения\n"
 
 #: clusterdb.c:248
 #: createlang.c:309
@@ -331,7 +332,7 @@ msgstr "  -W, --password            запросить пароль\n"
 #: droplang.c:290
 #: dropuser.c:157
 msgid "  --help                    show this help, then exit\n"
-msgstr "  --help                    показать эту спраку и выйти\n"
+msgstr "  --help                    показать эту справку и выйти\n"
 
 #: clusterdb.c:243
 #: createlang.c:311
@@ -349,7 +350,7 @@ msgstr "%s: ID пользователя должно быть положительным числом\n"
 
 #: createuser.c:148
 msgid "Enter name of user to add: "
-msgstr "Введите имя добавляемого пользователя: "
+msgstr "Введите имя нового пользователя: "
 
 #: createuser.c:155
 msgid "Enter password for new user: "
@@ -365,7 +366,7 @@ msgstr "Пароли не совпадают.\n"
 
 #: createuser.c:170
 msgid "Shall the new user be allowed to create databases? (y/n) "
-msgstr "Разрешить новому пользователю создавать базы? (y/n) "
+msgstr "Разрешить новому пользователю создавать базы данных? (y/n) "
 
 #: createuser.c:181
 msgid "Shall the new user be allowed to create more new users? (y/n) "
@@ -382,14 +383,14 @@ msgid ""
 "%s creates a new PostgreSQL user.\n"
 "\n"
 msgstr ""
-"%s создаёт нового пользователья PostgreSQL.\n"
+"%s создаёт нового пользователя PostgreSQL.\n"
 "\n"
 
 #: createuser.c:241
 #: dropuser.c:148
 #, c-format
 msgid "  %s [OPTION]... [USERNAME]\n"
-msgstr "  %s [ОПЦИЯ]... [ПОЛЬЗОВАТЕЛЬ]\n"
+msgstr "  %s [OPTION]... [USERNAME]\n"
 
 #: createuser.c:243
 msgid "  -a, --adduser             user can add new users\n"
@@ -397,49 +398,49 @@ msgstr "  -a, --adduser             пользователь может создавать других пользова
 
 #: createuser.c:244
 msgid "  -A, --no-adduser          user cannot add new users\n"
-msgstr "  -A, --no-adduser          пользователь не сможет создавать пользователей\n"
+msgstr "  -A, --no-adduser          пользователь не может создавать пользователей\n"
 
 #: createuser.c:245
 msgid "  -d, --createdb            user can create new databases\n"
-msgstr "  -d, --createdb            пользователь может создавать новые базы\n"
+msgstr "  -d, --createdb            пользователь может создавать новые базы данных\n"
 
 #: createuser.c:246
 msgid "  -D, --no-createdb         user cannot create databases\n"
-msgstr "  -D, --no-createdb         пользователь не может создавать базы\n"
+msgstr "  -D, --no-createdb         пользователь не может создавать базы данных\n"
 
 #: createuser.c:247
 msgid "  -P, --pwprompt            assign a password to new user\n"
-msgstr "  -P, --pwprompt            создать пароль новому пользователю\n"
+msgstr "  -P, --pwprompt            присвоить пароль новому пользователю\n"
 
 #: createuser.c:248
 msgid "  -E, --encrypted           encrypt stored password\n"
-msgstr "  -E, --encrypted           зашифровать сохранённый пароль\n"
+msgstr "  -E, --encrypted           зашифровать сохраненный пароль\n"
 
 #: createuser.c:249
 msgid "  -N, --unencrypted         do not encrypt stored password\n"
-msgstr "  -N, --unencrypted         не щифровать сохранённый пароль\n"
+msgstr "  -N, --unencrypted         не шифровать сохраненный пароль\n"
 
 #: createuser.c:250
 msgid "  -i, --sysid=SYSID         select sysid for new user\n"
-msgstr "  -i, --sysid=SYSID         выбрать sysid для нового пользователья\n"
+msgstr "  -i, --sysid=SYSID         выбрать sysid для нового пользователя\n"
 
 #: clusterdb.c:241
 #: createuser.c:252
 #: dropdb.c:152
 #: dropuser.c:152
 msgid "  -q, --quiet               don't write any messages\n"
-msgstr "  -q, --quiet               не показывать никакие сообщения\n"
+msgstr "  -q, --quiet               не выводить никакие сообщения\n"
 
 #: createuser.c:258
 msgid "  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
 msgstr ""
-"  -U, --username=ПОЛЬЗОВАТЕЛЬ\n"
-"                            имя пользователья для подсоединения (но не для создания)\n"
+"  -U, --username=USERNAME\n"
+"                            имя пользователя для соединения (но не для создания)\n"
 
 #: createuser.c:259
 #: dropuser.c:156
 msgid "  -W, --password            prompt for password to connect\n"
-msgstr "  -W, --password            запросить пароль для подсоединения\n"
+msgstr "  -W, --password            запросить пароль для соединения\n"
 
 #: createuser.c:260
 msgid ""
@@ -448,18 +449,18 @@ msgid ""
 "be prompted interactively.\n"
 msgstr ""
 "\n"
-"Если одно из: -a, -A, -d, -D и ПОЛЬЗОВАТЕЛЬ не указано, вы будете\n"
-"запрошены интерактивно.\n"
+"Если не задано ни одно из -a, -A, -d, -D и USERNAME, то вам будут\n"
+"заданы вопросы.\n"
 
 #: dropdb.c:92
 #, c-format
 msgid "%s: missing required argument database name\n"
-msgstr "%s: отсутствует необходимый аргумент: имя базы\n"
+msgstr "%s: отсутствует необходимый аргумент: имя базы данных\n"
 
 #: dropdb.c:109
 #, c-format
 msgid "Database \"%s\" will be permanently removed.\n"
-msgstr "База \"%s\" будет полностью удалена.\n"
+msgstr "База данных \"%s\" будет полностью удалена.\n"
 
 #: dropdb.c:110
 #: dropuser.c:111
@@ -469,7 +470,7 @@ msgstr "Вы уверены? (y/n) "
 #: dropdb.c:127
 #, c-format
 msgid "%s: database removal failed: %s"
-msgstr "%s: не удалось удалить базу: %s"
+msgstr "%s: не удалось удалить базу данных: %s"
 
 #: dropdb.c:146
 #, c-format
@@ -477,13 +478,13 @@ msgid ""
 "%s removes a PostgreSQL database.\n"
 "\n"
 msgstr ""
-"%s удаляет базу PostgreSQL.\n"
+"%s удаляет базу данных PostgreSQL.\n"
 "\n"
 
 #: dropdb.c:148
 #, c-format
 msgid "  %s [OPTION]... DBNAME\n"
-msgstr "  %s [ОПЦИЯ]... ИМЯБД\n"
+msgstr "  %s [OPTION]... DBNAME\n"
 
 #: dropdb.c:151
 #: dropuser.c:151
@@ -493,17 +494,17 @@ msgstr "  -i, --interactive         подтвердить перед удалением чего-либо\n"
 #: droplang.c:176
 #, c-format
 msgid "%s: language \"%s\" is not installed in database \"%s\"\n"
-msgstr "%s: язык \"%s\" не установлен в базе \"%s\"\n"
+msgstr "%s: поддержка языка \"%s\" не установлена в базе данных\"%s\"\n"
 
 #: droplang.c:193
 #, c-format
 msgid "%s: still %s functions declared in language \"%s\"; language not removed\n"
-msgstr "%s: существуют ещё фунции (%s) в языке \"%s\" ; язык не удалён\n"
+msgstr "%s: %s функций языка \"%s\" еще используются ; язык не удален\n"
 
 #: droplang.c:265
 #, c-format
 msgid "%s: language removal failed: %s"
-msgstr "%s: не удалось удалить язык: %s"
+msgstr "%s: не удалось удалить поддержку языка: %s"
 
 #: droplang.c:279
 #, c-format
@@ -511,12 +512,12 @@ msgid ""
 "%s removes a procedural language from a database.\n"
 "\n"
 msgstr ""
-"%s удаляет процедурный язык из базы.\n"
+"%s удаляет поддержку процедурного языка из базы данных.\n"
 "\n"
 
 #: droplang.c:283
 msgid "  -d, --dbname=DBNAME       database from which to remove the language\n"
-msgstr "  -d, --dbname=ИМЯБД        база из которой удалить язык\n"
+msgstr "  -d, --dbname=DBNAME        база данных,  из которой будет удалена поддержка языка\n"
 
 #: dropuser.c:104
 msgid "Enter name of user to drop: "
@@ -525,12 +526,12 @@ msgstr "Введите имя пользователя для удаления: "
 #: dropuser.c:110
 #, c-format
 msgid "User \"%s\" will be permanently removed.\n"
-msgstr "Пользователь \"%s\" будет полностью удалён.\n"
+msgstr "Пользователь \"%s\" будет  удален.\n"
 
 #: dropuser.c:127
 #, c-format
 msgid "%s: removal of user \"%s\" failed: %s"
-msgstr "%s: ошибка при удалении удаление пользователя \"%s\": %s"
+msgstr "%s: ошибка при удалении пользователя \"%s\": %s"
 
 #: dropuser.c:146
 #, c-format
@@ -544,33 +545,33 @@ msgstr ""
 #: dropuser.c:155
 msgid "  -U, --username=USERNAME   user name to connect as (not the one to drop)\n"
 msgstr ""
-"  -U, --username=ПОЛЬЗОВАТЕЛЬ\n"
-"                            имя пользователя для подсоединения (не для удаления)\n"
+"  -U, --username=USERNAME\n"
+"                            имя пользователя для соединения (не для удаления)\n"
 
 #: clusterdb.c:118
 #, c-format
 msgid "%s: cannot cluster all databases and a specific one at the same time\n"
-msgstr "%s: нельзя переупорядочить все базы и одну конкретную одновременно\n"
+msgstr "%s: нельзя кластеризовать все базы и одну конкретную одновременно\n"
 
 #: clusterdb.c:124
 #, c-format
 msgid "%s: cannot cluster a specific table in all databases\n"
-msgstr "%s: нельзя переупорядочить одну и ту же таблицу во всех базах\n"
+msgstr "%s: нельзя  кластеризовать одну и ту же таблицу во всех базах\n"
 
 #: clusterdb.c:180
 #, c-format
 msgid "%s: clustering of table \"%s\" in database \"%s\" failed: %s"
-msgstr "%s: ощибка при переупорядочивании таблицы \"%s\" в базе \"%s\": %s"
+msgstr "%s: ошибка при кластеризации таблицы \"%s\" в базе \"%s\": %s"
 
 #: clusterdb.c:183
 #, c-format
 msgid "%s: clustering of database \"%s\" failed: %s"
-msgstr "%s: ощибка при переупорядочивании базы \"%s\": %s"
+msgstr "%s: ошибка при кластеризации базы \"%s\": %s"
 
 #: clusterdb.c:219
 #, c-format
 msgid "%s: clustering database \"%s\"\n"
-msgstr "%s: переупорядочивание базы \"%s\"\n"
+msgstr "%s: кластеризация базы \"%s\"\n"
 
 #: clusterdb.c:233
 #, c-format
@@ -578,26 +579,26 @@ msgid ""
 "%s clusters all previously clustered tables in a database.\n"
 "\n"
 msgstr ""
-"%s переупорядочивает ранее перегруппированные таблицы в базе данных согласно индексу.\n"
+"%s кластеризует все ранее кластеризованные таблицы в базе данных.\n"
 "\n"
 
 #: clusterdb.c:235
 #: vacuumdb.c:261
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
-msgstr "  %s [ОПЦИЯ]... [ИМЯБД]\n"
+msgstr "  %s [OPTION]... [DBNAME]\n"
 
 #: clusterdb.c:237
 msgid "  -a, --all                 cluster all databases\n"
-msgstr "  -a, --all                 переупорядочить все базы\n"
+msgstr "  -a, --all                кластеризовать все базы\n"
 
 #: clusterdb.c:238
 msgid "  -d, --dbname=DBNAME       database to cluster\n"
-msgstr "  -d, --dbname=ИМЯБД        имя базы для переупорядочивания\n"
+msgstr "  -d, --dbname=DBNAME        имя базы для кластеризации\n"
 
 #: clusterdb.c:239
 msgid "  -t, --table=TABLE         cluster specific table only\n"
-msgstr "  -t, --table=ТАБЛИЦА        переупорядочить конкретную таблицу\n"
+msgstr "  -t, --table=TABLE      кластеризовать указанную таблицу\n"
 
 #: clusterdb.c:249
 msgid ""
@@ -625,12 +626,12 @@ msgstr "%s: ошибка при сборке мусора в таблице \"%s\" в базе \"%s\": %s"
 #: vacuumdb.c:208
 #, c-format
 msgid "%s: vacuuming of database \"%s\" failed: %s"
-msgstr "%s: ошибка при сборке базы \"%s\": %s"
+msgstr "%s: ошибка при сборке мусора базы \"%s\": %s"
 
 #: vacuumdb.c:245
 #, c-format
 msgid "%s: vacuuming database \"%s\"\n"
-msgstr "%s: ошибка при сборке мусора в базе \"%s\"\n"
+msgstr "%s: сборка мусора в базе \"%s\"\n"
 
 #: vacuumdb.c:259
 #, c-format
@@ -638,7 +639,7 @@ msgid ""
 "%s cleans and analyzes a PostgreSQL database.\n"
 "\n"
 msgstr ""
-"%s очищает и анализирует базу PostgreSQL.\n"
+"%s производит сборку мусора  и собирает статистику базы данных PostgreSQL.\n"
 "\n"
 
 #: vacuumdb.c:263
@@ -647,15 +648,15 @@ msgstr "  -a, --all                       произвести сборку мусора во всех базах
 
 #: vacuumdb.c:264
 msgid "  -d, --dbname=DBNAME             database to vacuum\n"
-msgstr "  -d, --dbname=ИМЯБД              произвести сборку мусора в указанной базе\n"
+msgstr "  -d, --dbname=DBNAME            произвести сборку мусора в указанной базе\n"
 
 #: vacuumdb.c:265
 msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table only\n"
-msgstr "  -t, --table='ТАБЛИЦА[(КОЛОНКИ)]' произвести сборку мусора в указанной таблице\n"
+msgstr "  -t, --table='TABLE[(COLUMNS)]' произвести сборку мусора в указанной таблице\n"
 
 #: vacuumdb.c:266
 msgid "  -f, --full                      do full vacuuming\n"
-msgstr "  -f, --full                      произвесим глобальную сборку мусора\n"
+msgstr "  -f, --full                      производим глобальную сборку мусора\n"
 
 #: vacuumdb.c:267
 msgid "  -z, --analyze                   update optimizer hints\n"
@@ -671,7 +672,7 @@ msgstr "  -q, --quiet                     не выводить сообщения\n"
 
 #: vacuumdb.c:270
 msgid "  -v, --verbose                   write a lot of output\n"
-msgstr "  -v, --verbose                   многсловный вывод\n"
+msgstr "  -v, --verbose                  подробный вывод\n"
 
 #: vacuumdb.c:271
 msgid "  --help                          show this help, then exit\n"
@@ -707,12 +708,12 @@ msgstr "Пароль: "
 #: common.c:102
 #, c-format
 msgid "%s: could not connect to database %s\n"
-msgstr "%s: не удалось подсоединиться к базе %s\n"
+msgstr "%s: не удалось соединиться к базе %s\n"
 
 #: common.c:125
 #, c-format
 msgid "%s: could not connect to database %s: %s"
-msgstr "%s: не удалось подсоединиться к базе %s: %s"
+msgstr "%s: не удалось соединиться к базе %s: %s"
 
 #: common.c:149
 #, c-format

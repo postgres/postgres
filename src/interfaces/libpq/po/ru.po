@@ -4,9 +4,10 @@
 # Copyright (c) 2001-2004 Serguei A. Mokhov, mokhov@cs.concordia.ca
 # Distributed under the same licensing terms as PostgreSQL itself.
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/po/ru.po,v 1.17 2004/11/02 09:20:22 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/po/ru.po,v 1.18 2005/01/13 21:24:40 petere Exp $
 #
 # ChangeLog:
+#   - January, 2005: Corrections and improvements by Oleg Bartunov <oleg@sai.msu.su>
 #   - March 27 - November 1, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>
 #   - July 24 - October 5, 2003: Updates for 7.4.*; <mokhov@cs.concordia.ca>
 #   - Januray 2, 2002: Completed SSL translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
@@ -35,7 +36,7 @@ msgstr "ошибка Kerberos 4: %s\n"
 #: fe-auth.c:394
 #, c-format
 msgid "could not set socket to blocking mode: %s\n"
-msgstr "не получилось установить сокет в блокирующий режим: %s\n"
+msgstr "не удалось установить сокет в блокирующий режим: %s\n"
 
 #: fe-auth.c:411
 #: fe-auth.c:415
@@ -46,7 +47,7 @@ msgstr "аутентификация Kerberos 5 отклонена: %*s\n"
 #: fe-auth.c:441
 #, c-format
 msgid "could not restore non-blocking mode on socket: %s\n"
-msgstr "не получилось восстановить не блокирующий режим для сокета: %s\n"
+msgstr "не удалось восстановить неблокирующий режим для сокета: %s\n"
 
 #: fe-auth.c:508
 msgid "SCM_CRED authentication method not supported\n"
@@ -76,12 +77,12 @@ msgstr "метод аутентификации %u не поддерживается\n"
 #: fe-auth.c:692
 #, c-format
 msgid "invalid authentication service name \"%s\", ignored\n"
-msgstr "неправильное имя сервиса аутентификации \"%s\", игнорируется\n"
+msgstr "неверное имя сервиса аутентификации \"%s\", игнорируется\n"
 
 #: fe-auth.c:764
 #, c-format
 msgid "fe_getauthname: invalid authentication system: %d\n"
-msgstr "fe_getauthname: неправильная система аутентификации: %d\n"
+msgstr "fe_getauthname: неверная система аутентификации: %d\n"
 
 #: fe-connect.c:457
 #, c-format
@@ -91,12 +92,12 @@ msgstr "неверное значение sslmode: \"%s\"\n"
 #: fe-connect.c:477
 #, c-format
 msgid "sslmode value \"%s\" invalid when SSL support is not compiled in\n"
-msgstr "значение sslmode \"%s\" неверно если поддержка SSL не скомпилирована\n"
+msgstr "значение sslmode \"%s\" неверно, если поддержка SSL не скомпилирована\n"
 
 #: fe-connect.c:793
 #, c-format
 msgid "could not set socket to TCP no delay mode: %s\n"
-msgstr "не получилось установить сокет в беспрерывный TCP режим: %s\n"
+msgstr "не удалось установить сокет в режим TCP передачи без задержки: %s\n"
 
 #: fe-connect.c:824
 #, c-format
@@ -105,9 +106,9 @@ msgid ""
 "\tIs the server running locally and accepting\n"
 "\tconnections on Unix domain socket \"%s\"?\n"
 msgstr ""
-"не получилось подсоединится к серверу: %s\n"
+"не удалось соединиться с сервером: %s\n"
 "\tРаботает ли сервер локально и принимает\n"
-"\tподсоединения по сокету Unix'овского домена \"%s\"?\n"
+"\tсоединения через сокет Unix-домена \"%s\"?\n"
 
 #: fe-connect.c:836
 #, c-format
@@ -116,53 +117,53 @@ msgid ""
 "\tIs the server running on host \"%s\" and accepting\n"
 "\tTCP/IP connections on port %s?\n"
 msgstr ""
-"не получилось подсоединиться к серверу: %s\n"
+"не удалось подсоединиться к серверу: %s\n"
 "\tРаботает ли сервер на хосте \"%s\" и принимает ли\n"
-"\tподсоединения через TCP/IP протокол на порт %s?\n"
+"\tTCP/IP соединения по порту %s?\n"
 
 #: fe-connect.c:929
 #, c-format
 msgid "could not translate host name \"%s\" to address: %s\n"
-msgstr "не получилось транслировать имя хоста \"%s\" в адрес: %s\n"
+msgstr "не удалось преобразовать имя хоста \"%s\" в адрес: %s\n"
 
 #: fe-connect.c:933
 #, c-format
 msgid "could not translate Unix-domain socket path \"%s\" to address: %s\n"
-msgstr "не получилось транслировать путь сокетов UNIX-домена \"%s\" в адрес: %s\n"
+msgstr "не удалось преобразовать название директории сокетов UNIX-домена \"%s\" в адрес: %s\n"
 
 #: fe-connect.c:1137
 msgid "invalid connection state, probably indicative of memory corruption\n"
-msgstr "неправильное состояние подсоединения, возможный указатель на нарушение целостности памяти\n"
+msgstr "неверное состояние соединения, возможный указатель на нарушение целостности памяти\n"
 
 #: fe-connect.c:1180
 #, c-format
 msgid "could not create socket: %s\n"
-msgstr "не получилось создать сокет: %s\n"
+msgstr "не удалось создать сокет: %s\n"
 
 #: fe-connect.c:1203
 #, c-format
 msgid "could not set socket to non-blocking mode: %s\n"
-msgstr "не получилось установить сокет в не блокирующий режим: %s\n"
+msgstr "не удалось установить сокет в неблокирующий режим: %s\n"
 
 #: fe-connect.c:1215
 #, c-format
 msgid "could not set socket to close-on-exec mode: %s\n"
-msgstr "не получилось установить сокет в режим закрытия-на-выполнение (close-on-exec): %s\n"
+msgstr "не удалось установить сокет в режим закрытия-на-выполнение (close-on-exec): %s\n"
 
 #: fe-connect.c:1307
 #, c-format
 msgid "could not get socket error status: %s\n"
-msgstr "невозможно было получить статус ошибки сокета: %s\n"
+msgstr "не удалось получить статус ошибки сокета: %s\n"
 
 #: fe-connect.c:1346
 #, c-format
 msgid "could not get client address from socket: %s\n"
-msgstr "невозможно было получить адрес клиента из сокета: %s\n"
+msgstr "не удалось получить адрес клиента из сокета: %s\n"
 
 #: fe-connect.c:1391
 #, c-format
 msgid "could not send SSL negotiation packet: %s\n"
-msgstr "не получилось отправить пакет согласования SSL: %s\n"
+msgstr "не удалось отправить пакет согласования SSL: %s\n"
 
 #: fe-connect.c:1413
 #: fe-connect.c:2628
@@ -177,7 +178,7 @@ msgstr "недостаточно памяти\n"
 #: fe-connect.c:1426
 #, c-format
 msgid "could not send startup packet: %s\n"
-msgstr "не получилось отправить начальный пакет: %s\n"
+msgstr "не удалось отправить начальный пакет: %s\n"
 
 #: fe-connect.c:1466
 #, c-format
@@ -192,7 +193,7 @@ msgstr "сервер не поддерживает SSL, но наличие SSL было необходимо\n"
 #: fe-connect.c:1518
 #, c-format
 msgid "received invalid response to SSL negotiation: %c\n"
-msgstr "получен неправильный ответ на начальное согласование по SSL: %c\n"
+msgstr "получен неверный ответ на согласование по SSL: %c\n"
 
 #: fe-connect.c:1575
 #: fe-connect.c:1607
@@ -207,30 +208,30 @@ msgstr "неожиданное сообщение от сервера при запуске\n"
 #: fe-connect.c:1913
 #, c-format
 msgid "invalid connection state %c, probably indicative of memory corruption\n"
-msgstr "неправильное состояние подсоединения %c, возможный указатель на нарушение целостности памяти\n"
+msgstr "неверное состояние соединения %c, возможный указатель на нарушение целостности памяти\n"
 
 #: fe-connect.c:2676
 #, c-format
 msgid "missing \"=\" after \"%s\" in connection info string\n"
-msgstr "отсутствует \"=\" после \"%s\" в строке подсоединения\n"
+msgstr "отсутствует \"=\" после \"%s\" в строке соединения\n"
 
 #: fe-connect.c:2725
 msgid "unterminated quoted string in connection info string\n"
-msgstr "неоконченная строка (не хватает кавычки) в строке подсоединения\n"
+msgstr "неоконченная строка (не хватает кавычки) в строке соединения\n"
 
 #: fe-connect.c:2759
 #, c-format
 msgid "invalid connection option \"%s\"\n"
-msgstr "неправильная опция подсоединения \"%s\"\n"
+msgstr "неверный параметр соединения \"%s\"\n"
 
 #: fe-connect.c:2981
 msgid "connection pointer is NULL\n"
-msgstr "указатель подсоединения является NULL'ом\n"
+msgstr "указатель соединения является NULL\n"
 
 #: fe-connect.c:3238
 #, c-format
 msgid "WARNING: Password file %s has world or group read access; permission should be u=rw (0600)\n"
-msgstr "ВНИМАНИЕ: Парольный файл %s записан с правами чтения для всех или группы; права должны быть u=rw (0600)\n"
+msgstr "ВНИМАНИЕ: Файл с паролями %s записан с правами чтения для всех или группы; права должны быть u=rw (0600)\n"
 
 #: fe-exec.c:479
 msgid "NOTICE"
@@ -255,11 +256,11 @@ msgstr "функция требует как минимум версию протокола 3.0\n"
 
 #: fe-exec.c:854
 msgid "no connection to the server\n"
-msgstr "нет подсоединения к серверу\n"
+msgstr "нет соединения с сервером\n"
 
 #: fe-exec.c:861
 msgid "another command is already in progress\n"
-msgstr "другая команда в процессе выполнения\n"
+msgstr "другая команда уже выполняется\n"
 
 #: fe-exec.c:1199
 #, c-format
@@ -272,11 +273,11 @@ msgstr "COPY прекращена новой PQexec"
 
 #: fe-exec.c:1334
 msgid "COPY IN state must be terminated first\n"
-msgstr "сначала состояние COPY IN должно быть завершено\n"
+msgstr "Сначала, состояние COPY IN должно завершиться\n"
 
 #: fe-exec.c:1354
 msgid "COPY OUT state must be terminated first\n"
-msgstr "сначала состояние COPY OUT должно быть завершено\n"
+msgstr "Сначала, состояние COPY OUT должно завершиться\n"
 
 #: fe-exec.c:1464
 #: fe-exec.c:1529
@@ -284,11 +285,11 @@ msgstr "сначала состояние COPY OUT должно быть завершено\n"
 #: fe-protocol2.c:1153
 #: fe-protocol3.c:1115
 msgid "no COPY in progress\n"
-msgstr "выполнения процесса COPY не наблюдается\n"
+msgstr "COPY не выполняется\n"
 
 #: fe-exec.c:1806
 msgid "connection in wrong state\n"
-msgstr "соединение в неверном состоянии\n"
+msgstr "соединение в неправильном состоянии\n"
 
 #: fe-exec.c:1837
 msgid "invalid ExecStatusType code"
@@ -298,12 +299,12 @@ msgstr "неверный код ExecStatusType"
 #: fe-exec.c:1924
 #, c-format
 msgid "column number %d is out of range 0..%d"
-msgstr "колонка N %d вне диапазона 0..%d"
+msgstr "номер колонки %d вне диапазона 0..%d"
 
 #: fe-exec.c:1917
 #, c-format
 msgid "row number %d is out of range 0..%d"
-msgstr "ряд N %d вне диапазона 0..%d"
+msgstr "номер записи %d вне диапазона 0..%d"
 
 #: fe-exec.c:2199
 #, c-format
@@ -340,7 +341,7 @@ msgstr "ошибка при записи в файл \"%s\"\n"
 
 #: fe-lobj.c:601
 msgid "query to initialize large object functions did not return data\n"
-msgstr "запрос об инициализации функций для больших объектов (LOs) не возвратил данных\n"
+msgstr "запрос об инициализации функций для больших объектов (LOs) не вернул данных\n"
 
 #: fe-lobj.c:639
 msgid "cannot determine OID of function lo_open\n"
@@ -377,12 +378,12 @@ msgstr "не в состоянии определить OID функции lowrite\n"
 #: fe-misc.c:228
 #, c-format
 msgid "integer of size %lu not supported by pqGetInt"
-msgstr "тип integer размером %lu байт не поддерживается функцией pqGetInt"
+msgstr "тип integer длиной %lu байт не поддерживается функцией pqGetInt"
 
 #: fe-misc.c:264
 #, c-format
 msgid "integer of size %lu not supported by pqPutInt"
-msgstr "тип integer размером %lu байт не поддерживается функцией pqPutInt"
+msgstr "тип integer длиной %lu байт не поддерживается функцией pqPutInt"
 
 #: fe-misc.c:544
 #: fe-misc.c:748
@@ -402,18 +403,18 @@ msgid ""
 "\tThis probably means the server terminated abnormally\n"
 "\tbefore or while processing the request.\n"
 msgstr ""
-"сервер неожиданно прервал соединение\n"
-"\tСкорее всего это означает что сервер завершил работу со сбоем\n"
-"\tдо или в течение обслуживания запроса.\n"
+"сервер неожиданно закрыл соединение\n"
+"\tСкорее всего это означает, что сервер завершил работу со сбоем\n"
+"\tдо или в процессе выполнения запроса.\n"
 
 #: fe-misc.c:803
 #, c-format
 msgid "could not send data to server: %s\n"
-msgstr "не получилось послать данные серверу: %s\n"
+msgstr "не удалось послать данные серверу: %s\n"
 
 #: fe-misc.c:923
 msgid "timeout expired\n"
-msgstr "таймаут интервал истёк\n"
+msgstr "интервал ожидания закончился\n"
 
 #: fe-misc.c:968
 msgid "socket not open\n"
@@ -438,20 +439,20 @@ msgstr "неверное состояние %c, возможный указатель на нарушение целостности памя
 #: fe-protocol3.c:183
 #, c-format
 msgid "message type 0x%02x arrived from server while idle"
-msgstr "прибыло сообщение типа 0x%02x во время простоя"
+msgstr "сообщение типа 0x%02x прибыло от сервера во время простоя"
 
 #: fe-protocol2.c:462
 #, c-format
 msgid "unexpected character %c following empty query response (\"I\" message)"
-msgstr "неожиданный символ %c следущий за пустым ответом на запрос (сообщение \"I\")"
+msgstr "неожиданный символ %c вслед за пустым ответом (сообщение \"I\")"
 
 #: fe-protocol2.c:517
 msgid "server sent data (\"D\" message) without prior row description (\"T\" message)"
-msgstr "сервер отправил данные (сообщение \"D\") без предварительного описания строки (сообщение \"T\")"
+msgstr "сервер отправил данные (сообщение \"D\") без предварительного строки описания (сообщение \"T\")"
 
 #: fe-protocol2.c:533
 msgid "server sent binary data (\"B\" message) without prior row description (\"T\" message)"
-msgstr "сервер отправил двоичные данные (сообщение \"B\") без предварительного описания строки (сообщение \"T\")"
+msgstr "сервер отправил двоичные данные (сообщение \"B\") без предварительного строки описания (сообщение \"T\")"
 
 #: fe-protocol2.c:548
 #: fe-protocol3.c:344
@@ -472,7 +473,7 @@ msgstr "%s"
 
 #: fe-protocol2.c:1208
 msgid "lost synchronization with server, resetting connection"
-msgstr "потеряна синхронизация с сервером; переподсоединение"
+msgstr "потеряна синхронизация с сервером; переустановка соединения"
 
 #: fe-protocol2.c:1343
 #: fe-protocol2.c:1375
@@ -483,12 +484,12 @@ msgstr "ошибка протокола: id=0x%x\n"
 
 #: fe-protocol3.c:306
 msgid "server sent data (\"D\" message) without prior row description (\"T\" message)\n"
-msgstr "сервер отправил данные (сообщение \"D\") без предварительного описания строки (сообщение \"T\")\n"
+msgstr "сервер отправил данные (сообщение \"D\") без предварительного строки описания (сообщение \"T\")\n"
 
 #: fe-protocol3.c:365
 #, c-format
 msgid "message contents do not agree with length in message type \"%c\"\n"
-msgstr "содержимое сообщения не соглашается с длиной в сообщении типа \"%c\"\n"
+msgstr "содержимое сообщения не согласуется с длиной в сообщении типа \"%c\"\n"
 
 #: fe-protocol3.c:386
 #, c-format
@@ -504,7 +505,7 @@ msgstr "неожиданное число полей в собщении \"D\"\n"
 #: fe-protocol3.c:659
 #, c-format
 msgid " at character %s"
-msgstr " на символе %s"
+msgstr " у символа %s"
 
 #: fe-protocol3.c:668
 #, c-format
@@ -547,7 +548,7 @@ msgstr "PQgetline: не производится текстовый COPY OUT\n"
 #: fe-secure.c:264
 #, c-format
 msgid "could not establish SSL connection: %s\n"
-msgstr "не получилось установить SSL-соединение: %s\n"
+msgstr "не удалось установить SSL-соединение: %s\n"
 
 #: fe-secure.c:330
 #: fe-secure.c:415
@@ -584,7 +585,7 @@ msgstr "ошибка при запросе сокета: %s\n"
 #: fe-secure.c:532
 #, c-format
 msgid "could not get information about host \"%s\": %s\n"
-msgstr "невозможно было получить информацию о хосте \"%s\": %s\n"
+msgstr "не удалось получить информацию о хосте \"%s\": %s\n"
 
 #: fe-secure.c:551
 msgid "unsupported protocol\n"
@@ -602,7 +603,7 @@ msgstr "обычное имя сервера \"%s\" не резолвится в адрес\n"
 
 #: fe-secure.c:763
 msgid "could not get user information\n"
-msgstr "невозможно было получить информацию о пользователе\n"
+msgstr "не удалось получить информацию о пользователе\n"
 
 #: fe-secure.c:775
 #, c-format
@@ -622,22 +623,22 @@ msgstr "сертификат присутствует, но нет файла с личным ключом \"%s\"\n"
 #: fe-secure.c:807
 #, c-format
 msgid "private key file \"%s\" has wrong permissions\n"
-msgstr "не верные права для файла личного ключа \"%s\"\n"
+msgstr "неправильные права доступа к  файла личного ключа \"%s\"\n"
 
 #: fe-secure.c:815
 #, c-format
 msgid "could not open private key file \"%s\": %s\n"
-msgstr "не получилось открыть файл личного ключа \"%s\": %s\n"
+msgstr "не удалось открыть файл личного ключа \"%s\": %s\n"
 
 #: fe-secure.c:824
 #, c-format
 msgid "private key file \"%s\" changed during execution\n"
-msgstr "личный ключ \"%s\" поменялся во время исполнения\n"
+msgstr "личный ключ \"%s\" изменился во время исполнения\n"
 
 #: fe-secure.c:833
 #, c-format
 msgid "could not read private key file \"%s\": %s\n"
-msgstr "не получилось прочитать файд личного ключа \"%s\": %s\n"
+msgstr "не удалось прочитать файл личного ключа \"%s\": %s\n"
 
 #: fe-secure.c:848
 #, c-format
@@ -647,17 +648,17 @@ msgstr "сертификат не совпадает с файлом личного ключа \"%s\": %s\n"
 #: fe-secure.c:932
 #, c-format
 msgid "could not create SSL context: %s\n"
-msgstr "не получилось создать контекст SSL: %s\n"
+msgstr "не удалось создать контекст SSL: %s\n"
 
 #: fe-secure.c:977
 #, c-format
 msgid "could not read root certificate file \"%s\": %s\n"
-msgstr "не получилось файл корневых сертификатов \"%s\": %s\n"
+msgstr "не удалось прочитать файл корневых сертификатов \"%s\": %s\n"
 
 #: fe-secure.c:1079
 #, c-format
 msgid "certificate could not be validated: %s\n"
-msgstr "не получилось проверить сертификат: %s\n"
+msgstr "сертификат не может быть проверен: %s\n"
 
 #: fe-secure.c:1093
 #, c-format

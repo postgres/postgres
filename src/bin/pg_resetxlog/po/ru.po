@@ -1,9 +1,10 @@
 # ru.po
 # PG_RESETXLOG Translated Messages into the Russian Language (KOI8-R)
 #
-# $PostgreSQL: pgsql/src/bin/pg_resetxlog/po/ru.po,v 1.10 2004/08/13 16:34:23 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_resetxlog/po/ru.po,v 1.11 2005/01/13 21:23:50 petere Exp $
 #
 # ChangeLog:
+#   - December, 2004: Corrections and improvements by Oleg Bartunov <oleg@sai.msu.su>
 #   - April 6 - August 11, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>
 #   - July 24 - August 23, 2003: Updates for 7.4.*; <mokhov@cs.concordia.ca>
 #   - October 12, 2002: Complete post-7.3beta2 Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
@@ -24,7 +25,7 @@ msgstr ""
 #: pg_resetxlog.c:120
 #, c-format
 msgid "%s: invalid argument for option -x\n"
-msgstr "%s: неверный аргумент для опции -x\n"
+msgstr "%s: недопустимый аргумент для опции -x\n"
 
 #: pg_resetxlog.c:121
 #: pg_resetxlog.c:136
@@ -44,7 +45,7 @@ msgstr "%s: ID транзакции (-x) не должен быть 0\n"
 #: pg_resetxlog.c:135
 #, c-format
 msgid "%s: invalid argument for option -o\n"
-msgstr "%s: неверный аргумент для опции -o\n"
+msgstr "%s: ошибочный аргумент для опции -o\n"
 
 #: pg_resetxlog.c:141
 #, c-format
@@ -55,18 +56,18 @@ msgstr "%s: OID (-o) не должен быть 0\n"
 #: pg_resetxlog.c:157
 #, c-format
 msgid "%s: invalid argument for option -l\n"
-msgstr "%s: неверный аргумент для опции -l\n"
+msgstr "%s: ошибочный аргумент для опции -l\n"
 
 #: pg_resetxlog.c:171
 #, c-format
 msgid "%s: no data directory specified\n"
-msgstr "%s: директория данных не указана\n"
+msgstr "%s: не указана директория данных\n"
 
 #: pg_resetxlog.c:191
 #: pg_resetxlog.c:287
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
-msgstr "%s: не получилось открыть файл \"%s\" для чтения: %s\n"
+msgstr "%s: не удалось открыть файл \"%s\" для чтения: %s\n"
 
 #: pg_resetxlog.c:197
 #, c-format
@@ -74,7 +75,7 @@ msgid ""
 "%s: lock file \"%s\" exists\n"
 "Is a server running?  If not, delete the lock file and try again.\n"
 msgstr ""
-"%s: обнаржен lock-файл \"%s\"\n"
+"%s: обнаружен lock-файл \"%s\"\n"
 "Запущен ли сервер? Если нет, удалите этот файл и попробуйте снова.\n"
 
 #: pg_resetxlog.c:236
@@ -83,7 +84,7 @@ msgid ""
 "If these values seem acceptable, use -f to force reset.\n"
 msgstr ""
 "\n"
-"Если эти значения выглядят приемлемыми, используйте -f для принуждённого сброса.\n"
+"Если эти значения выглядят приемлемыми, используйте -f для принудительного  сброса.\n"
 
 #: pg_resetxlog.c:248
 msgid ""
@@ -93,7 +94,7 @@ msgid ""
 msgstr ""
 "Сервер баз данных не был аккуратно остановлен.\n"
 "Сброс лога транзакций может привести к потере данных.\n"
-"Если вы всё же хотите продолжить не смотря на это, используйте -f для принуждённого сброса.\n"
+"Если вы всё же хотите продолжить не смотря на это, используйте -f для принудительного сброса.\n"
 
 #: pg_resetxlog.c:261
 msgid "Transaction log reset\n"
@@ -106,14 +107,14 @@ msgid ""
 "  touch %s\n"
 "and try again.\n"
 msgstr ""
-"Если вы уверены что путь к директории данных правильный, наберите\n"
+"Если вы уверены, что путь к директории данных правильный, наберите\n"
 "  touch %s\n"
 "и попробуйте снова.\n"
 
 #: pg_resetxlog.c:303
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
-msgstr "%s: не получилось считать файл \"%s\": %s\n"
+msgstr "%s: не удалось считать файл \"%s\": %s\n"
 
 #: pg_resetxlog.c:326
 #, c-format
@@ -128,19 +129,19 @@ msgstr "%s: pg_control существует, но повреждён или неизвестной версии; игнориру
 #: pg_resetxlog.c:399
 #, c-format
 msgid "%s: invalid LC_COLLATE setting\n"
-msgstr "%s: неверное значение LC_COLLATE\n"
+msgstr "%s: ошибочное значение LC_COLLATE\n"
 
 #: pg_resetxlog.c:406
 #, c-format
 msgid "%s: invalid LC_CTYPE setting\n"
-msgstr "%s: неверное значение LC_CTYPE\n"
+msgstr "%s: ошибочное значение LC_CTYPE\n"
 
 #: pg_resetxlog.c:430
 msgid ""
 "Guessed pg_control values:\n"
 "\n"
 msgstr ""
-"Угаданные значения pg_control:\n"
+"Оценочные значения pg_control:\n"
 "\n"
 
 #: pg_resetxlog.c:432
@@ -199,7 +200,7 @@ msgstr "Размер блока базы:                    %u\n"
 #: pg_resetxlog.c:450
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
-msgstr "Блоков на сегмент большой связи:      %u\n"
+msgstr "Блоков на сегмент большого отношения:      %u\n"
 
 #: pg_resetxlog.c:451
 #, c-format
@@ -209,7 +210,7 @@ msgstr "Максимальная длина идентификаторов:   %u\n"
 #: pg_resetxlog.c:452
 #, c-format
 msgid "Maximum number of function arguments: %u\n"
-msgstr "Макс. число аргументов функции:       %u\n"
+msgstr "Максимальное число аргументов функции:       %u\n"
 
 #: pg_resetxlog.c:453
 #, c-format
@@ -247,12 +248,12 @@ msgstr "%s: внутренняя ошибка -- sizeof(ControlFileData) слишком велик ... надо 
 #: pg_resetxlog.c:531
 #, c-format
 msgid "%s: could not create pg_control file: %s\n"
-msgstr "%s: не получилось создать файл pg_control: %s\n"
+msgstr "%s: не удалось создать файл pg_control: %s\n"
 
 #: pg_resetxlog.c:542
 #, c-format
 msgid "%s: could not write pg_control file: %s\n"
-msgstr "%s: не получилось записать в файл pg_control: %s\n"
+msgstr "%s: не удалось записать в файл pg_control: %s\n"
 
 #: pg_resetxlog.c:549
 #: pg_resetxlog.c:704
@@ -263,28 +264,28 @@ msgstr "%s: ошибка fsync: %s\n"
 #: pg_resetxlog.c:570
 #, c-format
 msgid "%s: could not open directory \"%s\": %s\n"
-msgstr "%s: не получилось открыть директорию \"%s\": %s\n"
+msgstr "%s: не удалось открыть директорию \"%s\": %s\n"
 
 #: pg_resetxlog.c:584
 #, c-format
 msgid "%s: could not delete file \"%s\": %s\n"
-msgstr "%s: не получилось удалить файл \"%s\": %s\n"
+msgstr "%s: не удалось удалить файл \"%s\": %s\n"
 
 #: pg_resetxlog.c:600
 #, c-format
 msgid "%s: could not read from directory \"%s\": %s\n"
-msgstr "%s: не получилось считать из директории \"%s\": %s\n"
+msgstr "%s: не удалось считать из директории \"%s\": %s\n"
 
 #: pg_resetxlog.c:671
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
-msgstr "%s: не получилось открыть файл \"%s\": %s\n"
+msgstr "%s: не удалось открыть файл \"%s\": %s\n"
 
 #: pg_resetxlog.c:682
 #: pg_resetxlog.c:696
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
-msgstr "%s: не получилось записать файл \"%s\": %s\n"
+msgstr "%s: не удалось записать файл \"%s\": %s\n"
 
 #: pg_resetxlog.c:715
 #, c-format
@@ -303,7 +304,7 @@ msgid ""
 "\n"
 msgstr ""
 "Использование:\n"
-"  %s [ОПЦИЯ]... ДИРДАННЫХ\n"
+"  %s [OPTION]... DATADIR\n"
 "\n"
 
 #: pg_resetxlog.c:717
@@ -316,19 +317,19 @@ msgstr "  -f              принудительное выполнение обновления\n"
 
 #: pg_resetxlog.c:719
 msgid "  -l FILEID,SEG   force minimum WAL starting location for new transaction log\n"
-msgstr "  -l FILEID,SEG   выставить мин. начальное значение в WAL для нового лога транзакций\n"
+msgstr "  -l FILEID,SEG   выставить минимальное начальное положение сегмента WAL для нового лога транзакций\n"
 
 #: pg_resetxlog.c:720
 msgid "  -n              no update, just show extracted control values (for testing)\n"
-msgstr "  -n              без обновления, только показать считанные контрольные значения (для тестирования)\n"
+msgstr "  -n              без обновления, только показать извлеченные контрольные значения (для тестирования)\n"
 
 #: pg_resetxlog.c:721
 msgid "  -o OID          set next OID\n"
-msgstr "  -o OID          выставить последующий OID\n"
+msgstr "  -o OID          задать последующий OID\n"
 
 #: pg_resetxlog.c:722
 msgid "  -x XID          set next transaction ID\n"
-msgstr "  -x XID          выставить ID следующей транзакции\n"
+msgstr "  -x XID          задать ID следующей транзакции\n"
 
 #: pg_resetxlog.c:723
 msgid "  --help          show this help, then exit\n"
