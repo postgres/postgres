@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.59 2000/07/05 23:11:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.60 2000/07/27 23:16:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -272,15 +272,12 @@ join_selectivity(Oid functionObjectId,
 List *
 find_inheritance_children(Oid inhparent)
 {
-	static ScanKeyData key[1] = {
-		{0, Anum_pg_inherits_inhparent, F_OIDEQ}
-	};
-
 	List	   *list = NIL;
 	Relation	relation;
 	HeapScanDesc scan;
 	HeapTuple	inheritsTuple;
 	Oid			inhrelid;
+	ScanKeyData	key[1];
 
 	/*
 	 * Can skip the scan if pg_class shows the relation has never had
@@ -289,10 +286,11 @@ find_inheritance_children(Oid inhparent)
 	if (! has_subclass(inhparent))
 		return NIL;
 
-	fmgr_info(F_OIDEQ, &key[0].sk_func);
-	key[0].sk_nargs = key[0].sk_func.fn_nargs;
-	key[0].sk_argument = ObjectIdGetDatum(inhparent);
-
+	ScanKeyEntryInitialize(&key[0],
+						   (bits16) 0x0,
+						   (AttrNumber) Anum_pg_inherits_inhparent,
+						   (RegProcedure) F_OIDEQ,
+						   ObjectIdGetDatum(inhparent));
 	relation = heap_openr(InheritsRelationName, AccessShareLock);
 	scan = heap_beginscan(relation, 0, SnapshotNow, 1, key);
 	while (HeapTupleIsValid(inheritsTuple = heap_getnext(scan, 0)))
@@ -330,45 +328,3 @@ has_subclass(Oid relationId)
 			 relationId);
 	return ((Form_pg_class) GETSTRUCT(tuple))->relhassubclass;
 }
-
-#ifdef NOT_USED
-/*
- * VersionGetParents
- *
- * Returns a LISP list containing the OIDs of all relations which are
- * base relations of the relation with OID 'verrelid'.
- */
-List *
-VersionGetParents(Oid verrelid)
-{
-	static ScanKeyData key[1] = {
-		{0, Anum_pg_version_verrelid, F_OIDEQ}
-	};
-
-	HeapTuple	versionTuple;
-	Relation	relation;
-	HeapScanDesc scan;
-	Oid			verbaseid;
-	List	   *list = NIL;
-
-	fmgr_info(F_OIDEQ, &key[0].sk_func);
-	key[0].sk_nargs = key[0].sk_func.fn_nargs;
-	key[0].sk_argument = ObjectIdGetDatum(verrelid);
-	relation = heap_openr(VersionRelationName, AccessShareLock);
-	scan = heap_beginscan(relation, 0, SnapshotNow, 1, key);
-	while (HeapTupleIsValid(versionTuple = heap_getnext(scan, 0)))
-	{
-		verbaseid = ((Form_pg_version)
-					 GETSTRUCT(versionTuple))->verbaseid;
-
-		list = lconsi(verbaseid, list);
-
-		key[0].sk_argument = ObjectIdGetDatum(verbaseid);
-		heap_rescan(scan, 0, key);
-	}
-	heap_endscan(scan);
-	heap_close(relation, AccessShareLock);
-	return list;
-}
-
-#endif

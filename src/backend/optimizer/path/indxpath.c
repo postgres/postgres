@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.89 2000/07/26 23:46:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.90 2000/07/27 23:15:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1153,7 +1153,7 @@ one_pred_clause_test(Expr *predicate, Node *clause)
  * this test should always be considered false.
  */
 
-static StrategyNumber
+static const StrategyNumber
 			BT_implic_table[BTMaxStrategyNumber][BTMaxStrategyNumber] = {
 	{2, 2, 0, 0, 0},
 	{1, 2, 0, 0, 0},

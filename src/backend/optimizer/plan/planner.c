@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.85 2000/06/20 04:22:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.86 2000/07/27 23:15:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,22 @@ Plan *
 planner(Query *parse)
 {
 	Plan	   *result_plan;
+	Index		save_PlannerQueryLevel;
+	List	   *save_PlannerInitPlan;
+	List	   *save_PlannerParamVar;
+	int			save_PlannerPlanId;
+
+	/*
+	 * The planner can be called recursively (an example is when
+	 * eval_const_expressions tries to simplify an SQL function).
+	 * So, global state variables must be saved and restored.
+	 *
+	 * (Perhaps these should be moved into the Query structure instead?)
+	 */
+	save_PlannerQueryLevel = PlannerQueryLevel;
+	save_PlannerInitPlan = PlannerInitPlan;
+	save_PlannerParamVar = PlannerParamVar;
+	save_PlannerPlanId = PlannerPlanId;
 
 	/* Initialize state for subselects */
 	PlannerQueryLevel = 1;
@@ -77,6 +93,12 @@ planner(Query *parse)
 
 	/* final cleanup of the plan */
 	set_plan_references(result_plan);
+
+	/* restore state for outer planner, if any */
+	PlannerQueryLevel = save_PlannerQueryLevel;
+	PlannerInitPlan = save_PlannerInitPlan;
+	PlannerParamVar = save_PlannerParamVar;
+	PlannerPlanId = save_PlannerPlanId;
 
 	return result_plan;
 }
