@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.32 2002/01/10 01:11:45 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.33 2002/01/18 19:17:05 momjian Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -393,7 +393,7 @@ usage(const char *progname)
 				 "  -F, --format={c|t}       specify backup file format\n"
 				 "  -h, --host=HOSTNAME      server host name\n"
 				 "  -i, --index=NAME         restore named index\n"
-	"  -l, --list               print summarized TOC of the archive\n"
+	   "  -l, --list               print summarized TOC of the archive\n"
 				 "  -L, --use-list=FILENAME  use specified table of contents for ordering\n"
 				 "                           output from this file\n"
 			"  -N, --orig-order         restore in original dump order\n"
@@ -429,12 +429,12 @@ usage(const char *progname)
 				 "  -F {c|t}                 specify backup file format\n"
 				 "  -h HOSTNAME              server host name\n"
 				 "  -i NAME                  restore named index\n"
-				 "  -l                       print summarized TOC of the archive\n"
+	   "  -l                       print summarized TOC of the archive\n"
 				 "  -L FILENAME              use specified table of contents for ordering\n"
 				 "                           output from this file\n"
 			"  -N                       restore in original dump order\n"
 				 "  -o                       restore in OID order\n"
-				 "  -O                       do not reconnect to database to match\n"
+	 "  -O                       do not reconnect to database to match\n"
 				 "                           object owner\n"
 				 "  -p PORT                  server port number\n"
 				 "  -P NAME                  restore named function\n"

@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.237 2002/01/11 23:21:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.238 2002/01/18 19:17:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2035,7 +2035,7 @@ getFuncs(int *numFuncs)
  * numTables is set to the number of tables read in
  */
 TableInfo *
-getTables(int *numTables, FuncInfo *finfo, int numFuncs, const char* tablename)
+getTables(int *numTables, FuncInfo *finfo, int numFuncs, const char *tablename)
 {
 	PGresult   *res;
 	int			ntups;
@@ -2127,14 +2127,15 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs, const char* tablename)
 
 	/*
 	 * First pass: extract data from result and lock tables.  We do the
-	 * locking before anything else, to minimize the window wherein a table
-	 * could disappear under us.
+	 * locking before anything else, to minimize the window wherein a
+	 * table could disappear under us.
 	 *
 	 * Note that we have to collect info about all tables here, even when
 	 * dumping only one, because we don't know which tables might be
 	 * inheritance ancestors of the target table.  Possible future
 	 * improvement: suppress later collection of schema info about tables
-	 * that are determined not to be either targets or ancestors of targets.
+	 * that are determined not to be either targets or ancestors of
+	 * targets.
 	 */
 	tblinfo = (TableInfo *) malloc(ntups * sizeof(TableInfo));
 
@@ -2167,26 +2168,27 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs, const char* tablename)
 		 *
 		 * If no target tablename was specified, lock all tables we see,
 		 * otherwise lock only the specified table.  (This is incomplete
-		 * because we'll still try to collect schema info about all tables,
-		 * and could possibly lose during that phase.  But for the typical
-		 * use where we're dumping all tables anyway, it matters not.)
+		 * because we'll still try to collect schema info about all
+		 * tables, and could possibly lose during that phase.  But for the
+		 * typical use where we're dumping all tables anyway, it matters
+		 * not.)
 		 *
-		 * NOTE: it'd be kinda nice to lock views and sequences too, not
-		 * only plain tables, but the backend doesn't presently allow that.
+		 * NOTE: it'd be kinda nice to lock views and sequences too, not only
+		 * plain tables, but the backend doesn't presently allow that.
 		 */
 		if ((tblinfo[i].relkind == RELKIND_RELATION) &&
-			(tablename == NULL || strcmp(tblinfo[i].relname, tablename) == 0))
+		(tablename == NULL || strcmp(tblinfo[i].relname, tablename) == 0))
 		{
-			PGresult *lres;
+			PGresult   *lres;
 
 			resetPQExpBuffer(lockquery);
 			appendPQExpBuffer(lockquery,
 							  "LOCK TABLE %s IN ACCESS SHARE MODE",
 							  fmtId(tblinfo[i].relname, force_quotes));
-			lres = PQexec(g_conn,lockquery->data);
+			lres = PQexec(g_conn, lockquery->data);
 			if (!lres || PQresultStatus(lres) != PGRES_COMMAND_OK)
 			{
-				write_msg(NULL, "Attempt to lock table \"%s\" failed.  %s", 
+				write_msg(NULL, "Attempt to lock table \"%s\" failed.  %s",
 						  tblinfo[i].relname, PQerrorMessage(g_conn));
 				exit_nicely();
 			}
@@ -2198,8 +2200,8 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs, const char* tablename)
 	res = NULL;
 
 	/*
-	 * Second pass: pick up additional information about each table,
-	 * as required.
+	 * Second pass: pick up additional information about each table, as
+	 * required.
 	 */
 	for (i = 0; i < *numTables; i++)
 	{

@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.30 2002/01/18 17:13:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.31 2002/01/18 19:17:05 momjian Exp $
  *
  * NOTES
  *
@@ -20,7 +20,7 @@
  *
  * Modifications - 18-Jan-2002 - pjw@rhyme.com.au
  *
- *    - Split ExecuteSqlCommandBuf into 3 routines for (slightly) improved 
+ *	  - Split ExecuteSqlCommandBuf into 3 routines for (slightly) improved
  *		clarity. Modify loop to cater for COPY commands buried in the SQL
  *		command buffer (prev version assumed COPY command was executed
  *		in prior call). This was to fix the buf in the 'set max oid' code.
@@ -51,8 +51,8 @@ static void _check_database_version(ArchiveHandle *AH, bool ignoreVersion);
 static PGconn *_connectDB(ArchiveHandle *AH, const char *newdbname, const char *newUser);
 static int	_executeSqlCommand(ArchiveHandle *AH, PGconn *conn, PQExpBuffer qry, char *desc);
 static void notice_processor(void *arg, const char *message);
-static char* _sendSQLLine( ArchiveHandle *AH, char *qry, char *eos);
-static char* _sendCopyLine( ArchiveHandle *AH, char *qry, char *eos);
+static char *_sendSQLLine(ArchiveHandle *AH, char *qry, char *eos);
+static char *_sendCopyLine(ArchiveHandle *AH, char *qry, char *eos);
 
 
 /*
@@ -544,23 +544,24 @@ _executeSqlCommand(ArchiveHandle *AH, PGconn *conn, PQExpBuffer qry, char *desc)
 	return strlen(qry->data);
 }
 
-/* 
+/*
  * Used by ExecuteSqlCommandBuf to send one buffered line when running a COPY command.
  */
-static char*
-_sendCopyLine( ArchiveHandle *AH, char *qry, char *eos) 
+static char *
+_sendCopyLine(ArchiveHandle *AH, char *qry, char *eos)
 {
-	int			loc; /* Location of next newline */
-    int			pos = 0; /* Current position */ 
-	int 		sPos = 0; /* Last pos of a slash char */
-    int         isEnd = 0;
+	int			loc;			/* Location of next newline */
+	int			pos = 0;		/* Current position */
+	int			sPos = 0;		/* Last pos of a slash char */
+	int			isEnd = 0;
 
 	/* loop to find unquoted newline ending the line of COPY data */
-    for (;;) {
+	for (;;)
+	{
 		loc = strcspn(&qry[pos], "\n") + pos;
 
 		/* If no match, then wait */
-		if (loc >= (eos - qry))		/* None found */
+		if (loc >= (eos - qry)) /* None found */
 		{
 			appendBinaryPQExpBuffer(AH->pgCopyBuf, qry, (eos - qry));
 			return eos;
@@ -579,8 +580,8 @@ _sendCopyLine( ArchiveHandle *AH, char *qry, char *eos)
 		sPos = loc - sPos;
 
 		/*
-		 * If an odd number of preceding slashes, then \n was escaped
-		 * so set the next search pos, and loop (if any left).
+		 * If an odd number of preceding slashes, then \n was escaped so
+		 * set the next search pos, and loop (if any left).
 		 */
 		if ((sPos & 1) == 1)
 		{
@@ -591,9 +592,9 @@ _sendCopyLine( ArchiveHandle *AH, char *qry, char *eos)
 				appendBinaryPQExpBuffer(AH->pgCopyBuf, qry, (eos - qry));
 				return eos;
 			}
-		} else {
-			break;
 		}
+		else
+			break;
 	}
 
 	/* We found an unquoted newline */
@@ -613,8 +614,7 @@ _sendCopyLine( ArchiveHandle *AH, char *qry, char *eos)
 	resetPQExpBuffer(AH->pgCopyBuf);
 
 	/*
-	 * fprintf(stderr, "Buffer is '%s'\n",
-	 * AH->pgCopyBuf->data);
+	 * fprintf(stderr, "Buffer is '%s'\n", AH->pgCopyBuf->data);
 	 */
 
 	if (isEnd)
@@ -628,24 +628,23 @@ _sendCopyLine( ArchiveHandle *AH, char *qry, char *eos)
 	return qry + loc + 1;
 }
 
-/* 
+/*
  * Used by ExecuteSqlCommandBuf to send one buffered line of SQL (not data for the copy command).
  */
-static char*
-_sendSQLLine( ArchiveHandle *AH, char *qry, char *eos) 
+static char *
+_sendSQLLine(ArchiveHandle *AH, char *qry, char *eos)
 {
-    int			pos = 0; /* Current position */ 
+	int			pos = 0;		/* Current position */
 
 	/*
-	 * The following is a mini state machine to assess the end of an
-	 * SQL statement. It really only needs to parse good SQL, or at
-	 * least that's the theory... End-of-statement is assumed to be an
-	 * unquoted, un commented semi-colon.
+	 * The following is a mini state machine to assess the end of an SQL
+	 * statement. It really only needs to parse good SQL, or at least
+	 * that's the theory... End-of-statement is assumed to be an unquoted,
+	 * un commented semi-colon.
 	 */
 
 	/*
-	 * fprintf(stderr, "Buffer at start is: '%s'\n\n",
-	 * AH->sqlBuf->data);
+	 * fprintf(stderr, "Buffer at start is: '%s'\n\n", AH->sqlBuf->data);
 	 */
 
 	for (pos = 0; pos < (eos - qry); pos++)
@@ -656,7 +655,7 @@ _sendSQLLine( ArchiveHandle *AH, char *qry, char *eos)
 		switch (AH->sqlparse.state)
 		{
 
-			case SQL_SCAN:	/* Default state == 0, set in _allocAH */
+			case SQL_SCAN:		/* Default state == 0, set in _allocAH */
 
 				if (qry[pos] == ';' && AH->sqlparse.braceDepth == 0)
 				{
@@ -670,11 +669,12 @@ _sendSQLLine( ArchiveHandle *AH, char *qry, char *eos)
 					resetPQExpBuffer(AH->sqlBuf);
 					AH->sqlparse.lastChar = '\0';
 
-					/* Remove any following newlines - so that embedded COPY commands don't get a 
-					 * starting newline.
+					/*
+					 * Remove any following newlines - so that embedded
+					 * COPY commands don't get a starting newline.
 					 */
 					pos++;
-					for ( ; pos < (eos - qry) && qry[pos] == '\n' ; pos++ ) ;
+					for (; pos < (eos - qry) && qry[pos] == '\n'; pos++);
 
 					/* We've got our line, so exit */
 					return qry + pos;
@@ -741,8 +741,11 @@ _sendSQLLine( ArchiveHandle *AH, char *qry, char *eos)
 		/* fprintf(stderr, "\n"); */
 	}
 
-    /* If we get here, we've processed entire string with no complete SQL stmt */
-    return eos;
+	/*
+	 * If we get here, we've processed entire string with no complete SQL
+	 * stmt
+	 */
+	return eos;
 
 }
 
@@ -762,11 +765,10 @@ ExecuteSqlCommandBuf(ArchiveHandle *AH, void *qryv, int bufLen)
 	/* Could switch between command and COPY IN mode at each line */
 	while (qry < eos)
 	{
-		if (AH->pgCopyIn) {
+		if (AH->pgCopyIn)
 			qry = _sendCopyLine(AH, qry, eos);
-		} else {
+		else
 			qry = _sendSQLLine(AH, qry, eos);
-		}
 	}
 
 	return 1;
