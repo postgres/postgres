@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.74 2000/07/14 22:17:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.75 2000/10/08 03:18:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -261,15 +261,11 @@ inv_close(LargeObjectDesc *obj_desc)
 {
 	Assert(PointerIsValid(obj_desc));
 
-	if (obj_desc->iscan != (IndexScanDesc) NULL)
-	{
-		index_endscan(obj_desc->iscan);
-		obj_desc->iscan = NULL;
-	}
-
+	if (obj_desc->flags & IFS_WRLOCK)
+		heap_close(obj_desc->heap_r, RowExclusiveLock);
+	else if (obj_desc->flags & IFS_RDLOCK)
+		heap_close(obj_desc->heap_r, AccessShareLock);
 	index_close(obj_desc->index_r);
-	heap_close(obj_desc->heap_r, AccessShareLock);
-
 	pfree(obj_desc);
 }
 

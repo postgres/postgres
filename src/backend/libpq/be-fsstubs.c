@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.50 2000/07/17 03:04:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.51 2000/10/08 03:18:54 momjian Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -267,7 +267,7 @@ lo_creat(PG_FUNCTION_ARGS)
 		PG_RETURN_OID(InvalidOid);
 	}
 
-	lobjId = RelationGetRelid(lobjDesc->heap_r);
+	lobjId = lobjDesc->id;
 
 	inv_close(lobjDesc);
 
@@ -512,8 +512,10 @@ lo_commit(bool isCommit)
 	{
 		if (cookies[i] != NULL)
 		{
+/*
 			if (isCommit)
 				inv_cleanindex(cookies[i]);
+*/
 			cookies[i] = NULL;
 		}
 	}

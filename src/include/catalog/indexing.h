@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.40 2000/06/17 04:56:30 tgl Exp $
+ * $Id: indexing.h,v 1.41 2000/10/08 03:18:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #define Num_pg_index_indices		2
 #define Num_pg_inherits_indices		1
 #define Num_pg_language_indices		2
+#define Num_pg_largeobject_indices		2
 #define Num_pg_listener_indices		1
 #define Num_pg_opclass_indices		2
 #define Num_pg_operator_indices		2
@@ -92,6 +93,7 @@ extern char *Name_pg_group_indices[];
 extern char *Name_pg_index_indices[];
 extern char *Name_pg_inherits_indices[];
 extern char *Name_pg_language_indices[];
+extern char *Name_pg_largeobject_indices[];
 extern char *Name_pg_listener_indices[];
 extern char *Name_pg_opclass_indices[];
 extern char *Name_pg_operator_indices[];

@@ -2,7 +2,7 @@
 #
 # Makefile for catalog
 #
-# $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.25 2000/09/17 13:02:30 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.26 2000/10/08 03:18:53 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -11,7 +11,8 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 OBJS = catalog.o heap.o index.o indexing.o aclchk.o \
-       pg_aggregate.o pg_operator.o pg_proc.o pg_type.o
+       pg_aggregate.o pg_largeobject.o pg_operator.o pg_proc.o \
+       pg_type.o
 
 BKIFILES = global.bki template1.bki global.description template1.description
 
