@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.26 1997/02/13 15:40:03 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.27 1997/03/26 02:52:49 vadim Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -128,7 +128,7 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 	opt_with, def_args, def_name_list, func_argtypes, 
 	oper_argtypes, OptStmtList, OptStmtBlock, OptStmtMulti,
 	opt_column_list, columnList,
-	sort_clause, sortby_list, index_params, 
+	sort_clause, sortby_list, index_params, index_list,
 	name_list, from_clause, from_list, opt_array_bounds, nest_array_bounds,
 	expr_list, attrs, res_target_list, res_target_list2,
 	def_list, opt_indirection, group_clause, groupby_list
@@ -1465,17 +1465,16 @@ OptUseOp:  USING Op				{ $$ = $2; }
 	|  /*EMPTY*/				{ $$ = "<"; /*default*/ }
 	;
 
-
-index_params: index_elem			{ $$ = lcons($1,NIL); }
+index_params: index_list			{ $$ = $1; }
 	| func_index				{ $$ = lcons($1,NIL); }
 	;
 
-/*index_list:
+index_list:
 	  index_list ',' index_elem
 		{ $$ = lappend($1, $3); }
 	| index_elem
 		{ $$ = lcons($1, NIL); }
-	;*/
+	;
 
 func_index: name '(' name_list ')' opt_type opt_class
 		{
