@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.159 2002/03/06 06:09:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.160 2002/03/06 19:58:26 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -53,10 +53,10 @@
 #include "utils/relcache.h"
 #include "utils/temprel.h"
 
-
 static void drop_default(Oid relid, int16 attnum);
 static bool needs_toast_table(Relation rel);
-
+static void AlterTableOwnerId(Oid relationOid, int32 newOwnerSysId);
+static void CheckTupleType(Form_pg_class tuple_class);
 
 /* --------------------------------
  *		PortalCleanup
@@ -1559,42 +1559,96 @@ AlterTableDropConstraint(const char *relationName,
 		elog(NOTICE, "Multiple constraints dropped");
 }
 
-
 /*
  * ALTER TABLE OWNER
  */
 void
 AlterTableOwner(const char *relationName, const char *newOwnerName)
 {
-	Relation	class_rel;
-	HeapTuple	tuple;
-	int32		newOwnerSysid;
-	Relation	idescs[Num_pg_class_indices];
+	Oid relationOid;
+	Relation relation;
+	int32 newOwnerSysId;
 
-	/*
-	 * first check that we are a superuser
-	 */
+	/* check that we are the superuser */
 	if (!superuser())
 		elog(ERROR, "ALTER TABLE: permission denied");
 
-	/*
-	 * look up the new owner in pg_shadow and get the sysid
-	 */
-	newOwnerSysid = get_usesysid(newOwnerName);
+	/* lookup the OID of the target relation */
+	relation = RelationNameGetRelation(relationName);
+	relationOid = relation->rd_id;
+	RelationClose(relation);
 
-	/*
-	 * find the table's entry in pg_class and make a modifiable copy
-	 */
-	class_rel = heap_openr(RelationRelationName, RowExclusiveLock);
+	/* lookup the sysid of the new owner */
+	newOwnerSysId = get_usesysid(newOwnerName);
 
-	tuple = SearchSysCacheCopy(RELNAME,
-							   PointerGetDatum(relationName),
+	/* do all the actual work */
+	AlterTableOwnerId(relationOid, newOwnerSysId);
+}
+
+static void
+AlterTableOwnerId(Oid relationOid, int32 newOwnerSysId)
+{
+	Relation		class_rel;
+	HeapTuple		tuple;
+	Relation		idescs[Num_pg_class_indices];
+	Form_pg_class	tuple_class;
+
+	tuple = SearchSysCacheCopy(RELOID,
+							   ObjectIdGetDatum(relationOid),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
-			 relationName);
+		elog(ERROR, "ALTER TABLE: object ID %hd not found",
+				relationOid);
 
-	switch (((Form_pg_class) GETSTRUCT(tuple))->relkind)
+	tuple_class = (Form_pg_class) GETSTRUCT(tuple);
+
+	/* Can we change the ownership of this tuple? */
+	CheckTupleType(tuple_class);
+
+	/*
+	 * Okay, this is a valid tuple: change its ownership and
+	 * write to the heap.
+	 */
+	class_rel = heap_openr(RelationRelationName, RowExclusiveLock);
+	tuple_class->relowner = newOwnerSysId;
+	simple_heap_update(class_rel, &tuple->t_self, tuple);
+
+	/* Keep the catalog indices up to date */
+	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
+	CatalogIndexInsert(idescs, Num_pg_class_indices, class_rel, tuple);
+	CatalogCloseIndices(Num_pg_class_indices, idescs);
+
+	/*
+	 * If we are operating on a table, also change the ownership
+	 * of all of its indexes.
+	 */
+	if (tuple_class->relkind == RELKIND_RELATION)
+	{
+		Relation target_rel;
+		List *index_oid_list, *i;
+
+		/* Find all the indexes belonging to this relation */
+		target_rel = heap_open(relationOid, RowExclusiveLock);
+		index_oid_list = RelationGetIndexList(target_rel);
+		heap_close(target_rel, RowExclusiveLock);
+
+		/* For each index, recursively change its ownership */
+		foreach (i, index_oid_list)
+		{
+			AlterTableOwnerId(lfirsti(i), newOwnerSysId);
+		}
+
+		freeList(index_oid_list);
+	}
+
+	heap_freetuple(tuple);
+	heap_close(class_rel, NoLock);
+}
+
+static void
+CheckTupleType(Form_pg_class tuple_class)
+{
+	switch (tuple_class->relkind)
 	{
 		case RELKIND_RELATION:
 		case RELKIND_INDEX:
@@ -1604,28 +1658,9 @@ AlterTableOwner(const char *relationName, const char *newOwnerName)
 			break;
 		default:
 			elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table, index, view, or sequence",
-				 relationName);
+				 NameStr(tuple_class->relname));
 	}
-
-	/*
-	 * modify the table's entry and write to the heap
-	 */
-	((Form_pg_class) GETSTRUCT(tuple))->relowner = newOwnerSysid;
-
-	simple_heap_update(class_rel, &tuple->t_self, tuple);
-
-	/* Keep the catalog indices up to date */
-	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
-	CatalogIndexInsert(idescs, Num_pg_class_indices, class_rel, tuple);
-	CatalogCloseIndices(Num_pg_class_indices, idescs);
-
-	/*
-	 * unlock everything and return
-	 */
-	heap_freetuple(tuple);
-	heap_close(class_rel, NoLock);
 }
-
 
 /*
  * ALTER TABLE CREATE TOAST TABLE

@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.91 2002/03/06 06:10:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.92 2002/03/06 19:58:26 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -141,7 +141,6 @@ static void get_opclass_name(Oid opclass, Oid actual_datatype,
 				 StringInfo buf);
 static bool tleIsArrayAssign(TargetEntry *tle);
 static char *quote_identifier(char *ident);
-static char *get_relation_name(Oid relid);
 static char *get_relid_attribute_name(Oid relid, AttrNumber attnum);
 
 #define only_marker(rte)  ((rte)->inh ? "" : "ONLY ")
@@ -752,7 +751,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 
 	/* The relation the rule is fired on */
 	appendStringInfo(buf, " TO %s",
-					 quote_identifier(get_relation_name(ev_class)));
+					 quote_identifier(get_rel_name(ev_class)));
 	if (ev_attr > 0)
 		appendStringInfo(buf, ".%s",
 					  quote_identifier(get_relid_attribute_name(ev_class,
@@ -2696,30 +2695,6 @@ quote_identifier(char *ident)
 	sprintf(result, "\"%s\"", ident);
 	return result;
 }
-
-/* ----------
- * get_relation_name			- Get a relation name by Oid
- * ----------
- */
-static char *
-get_relation_name(Oid relid)
-{
-	HeapTuple	classtup;
-	Form_pg_class classStruct;
-	char	   *result;
-
-	classtup = SearchSysCache(RELOID,
-							  ObjectIdGetDatum(relid),
-							  0, 0, 0);
-	if (!HeapTupleIsValid(classtup))
-		elog(ERROR, "cache lookup of relation %u failed", relid);
-
-	classStruct = (Form_pg_class) GETSTRUCT(classtup);
-	result = pstrdup(NameStr(classStruct->relname));
-	ReleaseSysCache(classtup);
-	return result;
-}
-
 
 /* ----------
  * get_relid_attribute_name
