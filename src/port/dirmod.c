@@ -10,7 +10,7 @@
  *	Win32 (NT, Win2k, XP).	replace() doesn't work on Win95/98/Me.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.34.4.1 2005/02/13 16:50:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.34.4.2 2005/03/24 02:11:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,7 @@ fe_palloc(Size size)
 
 	if ((res = malloc(size)) == NULL)
 	{
-		fprintf(stderr, gettext("out of memory\n"));
+		fprintf(stderr, "out of memory\n");
 		exit(1);
 	}
 	return res;
@@ -85,7 +85,7 @@ fe_pstrdup(const char *string)
 
 	if ((res = strdup(string)) == NULL)
 	{
-		fprintf(stderr, gettext("out of memory\n"));
+		fprintf(stderr, "out of memory\n");
 		exit(1);
 	}
 	return res;
@@ -98,7 +98,7 @@ fe_repalloc(void *pointer, Size size)
 
 	if ((res = realloc(pointer, size)) == NULL)
 	{
-		fprintf(stderr, gettext("out of memory\n"));
+		fprintf(stderr, "out of memory\n");
 		exit(1);
 	}
 	return res;
@@ -325,10 +325,19 @@ fnames(char *path)
 
 	dir = opendir(path);
 	if (dir == NULL)
+	{
+#ifndef FRONTEND
+		elog(WARNING, "could not open directory \"%s\": %m", path);
+#else
+		fprintf(stderr, "could not open directory \"%s\": %s\n",
+				path, strerror(errno));
+#endif
 		return NULL;
+	}
 
 	filenames = (char **) palloc(fnsize * sizeof(char *));
 
+	errno = 0;
 	while ((file = readdir(dir)) != NULL)
 	{
 		if (strcmp(file->d_name, ".") != 0 && strcmp(file->d_name, "..") != 0)
@@ -341,6 +350,25 @@ fnames(char *path)
 			}
 			filenames[numnames++] = pstrdup(file->d_name);
 		}
+		errno = 0;
+	}
+#ifdef WIN32
+
+	/*
+	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but
+	 * not in released version
+	 */
+	if (GetLastError() == ERROR_NO_MORE_FILES)
+		errno = 0;
+#endif
+	if (errno)
+	{
+#ifndef FRONTEND
+		elog(WARNING, "could not read directory \"%s\": %m", path);
+#else
+		fprintf(stderr, "could not read directory \"%s\": %s\n",
+				path, strerror(errno));
+#endif
 	}
 
 	filenames[numnames] = NULL;
@@ -433,7 +461,8 @@ report_and_fail:
 #ifndef FRONTEND
 	elog(WARNING, "could not remove file or directory \"%s\": %m", filepath);
 #else
-	fprintf(stderr, "could not remove file or directory \"%s\": %s\n", filepath, strerror(errno));
+	fprintf(stderr, "could not remove file or directory \"%s\": %s\n",
+			filepath, strerror(errno));
 #endif
 	fnames_cleanup(filenames);
 	return false;
