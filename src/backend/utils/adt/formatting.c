@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.47 2001/12/10 15:34:05 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.48 2002/01/02 22:09:23 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
@@ -371,10 +371,7 @@ typedef struct
 				ddd,
 				mm,
 				ms,
-				yyyy,
-				yyy,
-				yy,
-				y,
+				year,
 				bc,
 				iw,
 				ww,
@@ -393,10 +390,10 @@ typedef struct
  */
 #ifdef DEBUG_TO_FROM_CHAR
 #define DEBUG_TMFC( _X ) \
-		elog(DEBUG_elog_output, "TMFC:\nhh %d\nam %d\npm %d\nmi %d\nss %d\nssss %d\nd %d\ndd %d\nddd %d\nmm %d\nms: %d\nyyyy %d\nbc %d\niw %d\nww %d\nw %d\ncc %d\nq %d\nj %d\nus: %d", \
+		elog(DEBUG_elog_output, "TMFC:\nhh %d\nam %d\npm %d\nmi %d\nss %d\nssss %d\nd %d\ndd %d\nddd %d\nmm %d\nms: %d\nyear %d\nbc %d\niw %d\nww %d\nw %d\ncc %d\nq %d\nj %d\nus: %d", \
 			(_X)->hh, (_X)->am, (_X)->pm, (_X)->mi, (_X)->ss, \
 			(_X)->ssss, (_X)->d, (_X)->dd, (_X)->ddd, (_X)->mm, (_X)->ms, \
-			(_X)->yyyy, (_X)->bc, (_X)->iw, (_X)->ww, (_X)->w, \
+			(_X)->year, (_X)->bc, (_X)->iw, (_X)->ww, (_X)->w, \
 			(_X)->cc, (_X)->q, (_X)->j, (_X)->us);
 #define DEBUG_TM( _X ) \
 		elog(DEBUG_elog_output, "TM:\nsec %d\nyear %d\nmin %d\nwday %d\nhour %d\nyday %d\nmday %d\nnisdst %d\nmon %d\n",\
@@ -2396,8 +2393,8 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			{
 				int			cc;
 
-				sscanf(inout, "%d,%03d", &cc, &tmfc->yyyy);
-				tmfc->yyyy += (cc * 1000);
+				sscanf(inout, "%d,%03d", &cc, &tmfc->year);
+				tmfc->year += (cc * 1000);
 
 				return strdigits_len(inout) + 3 + SKIP_THth(suf);
 			}
@@ -2417,12 +2414,12 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			{
 				if (S_FM(suf) || is_next_separator(node))
 				{
-					sscanf(inout, "%d", &tmfc->yyyy);
+					sscanf(inout, "%d", &tmfc->year);
 					return strdigits_len(inout) - 1 + SKIP_THth(suf);
 				}
 				else
 				{
-					sscanf(inout, "%04d", &tmfc->yyyy);
+					sscanf(inout, "%04d", &tmfc->year);
 					return 3 + SKIP_THth(suf);
 				}
 			}
@@ -2443,7 +2440,18 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			}
 			else if (flag == FROM_CHAR)
 			{
-				sscanf(inout, "%03d", &tmfc->yyy);
+				sscanf(inout, "%03d", &tmfc->year);
+				
+				/*
+				 * 3-digit year:
+				 *	'100' ... '999' = 1100 ... 1999
+				 *	'000' ... '099' = 2000 ... 2099
+				 */
+				if (tmfc->year >= 100)
+					tmfc->year += 1000;
+				else
+					tmfc->year += 2000;
+
 				return 2 + SKIP_THth(suf);
 			}
 			break;
@@ -2463,7 +2471,18 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			}
 			else if (flag == FROM_CHAR)
 			{
-				sscanf(inout, "%02d", &tmfc->yy);
+				sscanf(inout, "%02d", &tmfc->year);
+
+				/*
+				 * 2-digit year:
+				 * '00' ... '69'  = 2000 ... 2069
+				 * '70' ... '99'  = 1970 ... 1999
+		 		 */
+				if (tmfc->year < 70)
+					tmfc->year += 2000;
+				else
+					tmfc->year += 1900;
+
 				return 1 + SKIP_THth(suf);
 			}
 			break;
@@ -2483,7 +2502,13 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			}
 			else if (flag == FROM_CHAR)
 			{
-				sscanf(inout, "%1d", &tmfc->y);
+				sscanf(inout, "%1d", &tmfc->year);
+				
+				/*
+				 * 1-digit year: always +2000
+				 */
+				tmfc->year += 2000;
+
 				return 0 + SKIP_THth(suf);
 			}
 			break;
@@ -3002,48 +3027,8 @@ to_timestamp(PG_FUNCTION_ARGS)
 			break;
 	}
 
-	if (tmfc.yyyy)
-		tm.tm_year = tmfc.yyyy;
-
-	else if (tmfc.y)
-	{
-		/*
-		 * 1-digit year: always +2000
-		 */
-		tm.tm_year = tmfc.y + 2000;
-	}
-	else if (tmfc.yy)
-	{
-
-		/*---------
-		 * 2-digit year:
-		 * '00' ... '69'  = 2000 ... 2069
-		 * '70' ... '99'  = 1970 ... 1999
-		 *---------
-		 */
-		tm.tm_year = tmfc.yy;
-
-		if (tm.tm_year < 70)
-			tm.tm_year += 2000;
-		else
-			tm.tm_year += 1900;
-	}
-	else if (tmfc.yyy)
-	{
-
-		/*---------
-		 * 3-digit year:
-		 *	'100' ... '999' = 1100 ... 1999
-		 *	'000' ... '099' = 2000 ... 2099
-		 *---------
-		 */
-		tm.tm_year = tmfc.yyy;
-
-		if (tm.tm_year >= 100)
-			tm.tm_year += 1000;
-		else
-			tm.tm_year += 2000;
-	}
+	if (tmfc.year)
+		tm.tm_year = tmfc.year;
 
 	if (tmfc.bc)
 	{
