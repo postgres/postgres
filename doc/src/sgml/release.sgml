@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.216 2003/10/22 17:27:14 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.217 2003/10/26 04:50:16 momjian Exp $
 -->
 
 <appendix id="release">
@@ -101,8 +101,9 @@ required for those wishing to migrate data from any previous release.</para>
        and error codes have been added.</para></listitem>
      <listitem><para> ANSI inner joins may behave differently because they are now better optimized</para></listitem>
      <listitem><para> A number of server variables have been renamed for clarity</para></listitem>
-     <listitem><para> MOVE/FETCH 0 now does nothing; return value of MOVE/FETCH 1/0
-       varies based on the current offset in the cursor</para></listitem>
+     <listitem><para> MOVE/FETCH 0 now does nothing</para></listitem>
+     <listitem><para> MOVE/FETCH now returns the actual number of rows moved/fetched, or zero
+        if at the beginning/end of the cursor</para></listitem>
      <listitem><para> COPY now can process carriage-return/line-feed and carriage-return
        terminated files.  Literal carriage-returns and line-feeds are no
        longer accepted as data values;  use \r and \n instead.</para></listitem>
@@ -248,9 +249,9 @@ required for those wishing to migrate data from any previous release.</para>
 <itemizedlist>
 <listitem><para>Add ON COMMIT clause to CREATE TABLE for temp tables (Gavin)</para></listitem>
 <listitem><para>Allow cursors outside transactions using WITH HOLD (Neil)</para></listitem>
-<listitem><para>Make MOVE/FETCH 0 actually move/fetch 0 (Bruce)</para></listitem>
-<listitem><para>Cause FETCH 1 to return the next cursor row number,  or zero if at
-       beginning/end of cursor, per SQL spec (Bruce)</para></listitem>
+<listitem><para>Make MOVE/FETCH 0 now does nothing (Bruce)</para></listitem>
+<listitem><para>Cause MOVE/FETCH now returns the number of rows moved/fetched, or zero if at the beginning/end of cursor,
+   per SQL spec (Bruce)</para></listitem>
 <listitem><para>Have MOVE return 0 or 1 depending on cursor position (Bruce)</para></listitem>
 <listitem><para>Properly handle SCROLL with cursors, or report an error (Neil)</para></listitem>
 <listitem><para>Implement SQL92-compatible FIRST, LAST, ABSOLUTE n, RELATIVE n options
