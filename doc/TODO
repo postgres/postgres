@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sun Aug  1 01:15:12 EDT 2004
+Last updated:		Sun Aug  1 09:55:09 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -791,7 +791,7 @@ Developers who have claimed items are:
 * Joe is Joe Conway <mail@joeconway.com>
 * Karel is Karel Zak <zakkr@zf.jcu.cz>
 * Kris is Kris Jurka 
-* Magnus is Magnus Haglander (?)
+* Magnus is Magnus Hagander <mha@sollentuna.net>
 * Manfred is Manfred Koizar <
 * Marc is Marc Fournier <scrappy@hub.org> of PostgreSQL, Inc.
 * Matthew T. O'Connor <matthew@zeut.net>
