@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.90.2.2 2001/05/17 13:29:36 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.90.2.3 2001/05/31 21:50:47 momjian Exp $
 -->
 
  <appendix id="release">
@@ -112,7 +112,7 @@ Python fixes (Darcy)
   </sect1>
 
 
-  <sect1>
+  <sect1 id="release-7-1">
    <title>Release 7.1</title>
 
    <note>
