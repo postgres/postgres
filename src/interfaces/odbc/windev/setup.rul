@@ -1,0 +1,495 @@
+/*
+#	Insight Distribution Systems - System V - Apr 1998
+#ident	"@(#)setup.rul	1.13 :/sccs/sql/odbc/s.setup.rul 1/6/99 14:47:48"
+*/
+
+/*----------------------------------------------------------------------------*\
+ *
+ *   PostgreSQL ODBC Driver Installation Script for InstallShield
+ *
+\*----------------------------------------------------------------------------*/
+
+
+#define APP_NAME                "PostgreSQL ODBC Driver"
+#define DRIVER_NAME             "PostgreSQL"
+#define DRIVER_FILE             "PSQLODBC.DLL"
+#define OLD_DRIVER_FILE			"PODBC32.DLL"
+#define OLD_DRIVER_FILE_RENAMED	"podbc32_sav.dll"
+
+#define COMPANY_NAME            "Insight"
+#define PRODUCT_NAME            "PostgreSQL ODBC Driver"
+#define PRODUCT_VERSION         "6.3"
+#define PRODUCT_KEY             "PSQLODBC.DLL"
+#define UNINSTALL_KEY           "PSQLODBCv6.3"
+
+#define ODBC_DM_KEY      "\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\SharedDLLs"
+#define ODBC_COMP_KEY    "\\SOFTWARE\\ODBC\\ODBCINST.INI"
+#define ODBC_CORE_KEY    "\\SOFTWARE\\ODBC\\ODBCINST.INI\\ODBC Core"
+#define ODBC_DRIVERS_KEY "\\SOFTWARE\\ODBC\\ODBCINST.INI\\ODBC Drivers"
+
+
+declare
+        // functions
+        prototype SetupScreen();
+        prototype FileCompare(STRING, STRING, STRING, STRING);
+
+        // variables
+        STRING svMainDirectory [_MAX_STRING], svGrp, svUninstLogFile, svPath;
+        STRING svValue, szName, szKey, szMessage;
+        STRING szMsg, szTmp, szTmp2, szFileSet, szProgram;
+        NUMBER nResult, pos, nvType, nvSize, nStartup, ComponentUsageCount;
+
+        NUMBER nvDoNot, nvVersion, nvInstall, nCore, nDM;
+        STRING dm, core, szFileName, svFileName;        
+        NUMBER options, nvInfo, nvResult;
+        LONG lResult;
+        STRING svCompVersion, svFileVersion, svCompDate, svCompTime, svFileDate, svFileTime;
+
+program
+
+StartHere:
+        Disable( BACKGROUND );
+
+        // Set up the installation screen.
+        SetupScreen();
+        InstallationInfo(COMPANY_NAME, PRODUCT_NAME, PRODUCT_VERSION, PRODUCT_KEY);
+        RegDBSetAppInfo("Location", REGDB_STRING, WINSYSDIR ^ DRIVER_FILE, -1);
+
+// Create a Welcome dialog.
+WelcomeDlg:
+        Disable( BACKBUTTON );
+        Welcome( "Welcome to the PostgreSQL Odbc Driver Installation", 0 );
+        Enable( BACKBUTTON );
+        Enable( NEXTBUTTON );
+        
+GetTargetDirectory:
+        svMainDirectory = WINSYSDIR;
+
+OptionsDlg:
+        RegDBSetDefaultRoot(HKEY_LOCAL_MACHINE);
+        szKey = ODBC_DM_KEY;
+        nCore = RegDBKeyExist(szKey);
+
+        szName = WINSYSDIR ^ "ODBC32.DLL";
+        nDM = RegDBGetKeyValueEx(szKey, szName, nvType, svValue, nvSize);
+
+        szMessage = "Select options for installing the ODBC Driver Manager.\n" +
+                "Analysis of your system suggests that the ODBC Driver Manager\n";
+
+        nvDoNot = FALSE;
+        nvInstall = FALSE;
+        nvVersion = FALSE;
+        if (nCore >= 0 && nDM >= 0) then
+                nvDoNot = TRUE;
+                szMessage = szMessage + "is already installed.  Therefore, you may choose not to install it.";
+        else
+                nvInstall = TRUE;
+                szMessage = szMessage + "is not installed.  Therefore, you should install it now.";
+        endif;
+
+        Enable(FINISHBUTTON);
+        nResult = AskOptions(EXCLUSIVE, szMessage,
+                 "Do not install Driver Manager", nvDoNot,
+                 "Install Driver Manager ", nvInstall,
+                 "Install Driver Manager (with version checking)", nvVersion);
+
+        if (nResult = BACK) then
+                Disable(FINISHBUTTON);
+                goto WelcomeDlg;
+        endif;
+
+Version:
+        CompressInfo("driver.z", DRIVER_FILE, COMP_INFO_VERSIONMS|COMP_INFO_VERSIONLS, nvInfo, svCompVersion);
+
+        szFileName = WINSYSDIR ^ DRIVER_FILE;
+        nResult = VerGetFileVersion(szFileName, svFileVersion);
+
+        // MessageBox("System file PSQLODBC.dll version is " + svFileVersion, INFORMATION);
+
+        lResult = VerCompare(svCompVersion, svFileVersion, VERSION);
+
+        if (lResult = EQUALS) then
+                //date
+                CompressInfo("driver.z", DRIVER_FILE, COMP_INFO_DATE, nvInfo, svCompDate);
+                GetFileInfo(szFileName, FILE_DATE, nvResult, svFileDate);
+
+                //time
+                CompressInfo("driver.z", DRIVER_FILE, COMP_INFO_TIME, nvInfo, svCompTime);
+                GetFileInfo(szFileName, FILE_TIME, nvResult, svFileTime);
+
+                // If compressed file date/time is earlier than system file date/time
+                // then 
+                nResult = FileCompare(svCompDate, svCompTime, svFileDate, svFileTime);
+                if (nResult < 0) then
+                        lResult = LESS_THAN;
+                endif;
+
+                NumToStr(szTmp, nResult);
+                // MessageBox("File Compare = " + szTmp, INFORMATION);
+        endif;
+                
+        if (lResult = LESS_THAN) then
+                MessageBeep(0);
+                nResult = AskYesNo("The " + PRODUCT_NAME + " is already installed on your system \nand is a newer version than the one that is about to be installed.\n\n" +
+                        "Would you like to continue the installation anyway (not recommended)?", NO);
+                if (nResult = NO) then
+                        MessageBeep(0);
+                        MessageBox("Installation has been aborted.\nNo changes have been made to your system.", WARNING);
+                        exit;
+                endif;
+        else
+        /*
+                nResult = AskYesNo("Ready to install " + PRODUCT_NAME + ".\n\nPress Yes to proceed with the installation.\nPress No to abort the installation.", YES);
+                if (nResult = NO) then
+                        MessageBeep(0);
+                        MessageBox("Installation has been aborted.\nNo changes have been made to your system.", WARNING);
+                        exit;
+                endif;
+        */
+        endif;
+
+CheckRegistry:
+        Enable(STATUSDLG);
+
+        SetStatusWindow(5, "Checking registry entries...");
+        Delay(1);
+
+        RegDBSetDefaultRoot(HKEY_LOCAL_MACHINE);
+        szKey = ODBC_DM_KEY;
+        nResult = RegDBKeyExist(szKey);
+        if (nResult < 0 && nvDoNot = TRUE) then
+                MessageBeep(0);
+                MessageBox("ODBC Core Components are not installed!", SEVERE);
+                Disable(STATUSDLG);
+                MessageBeep(0);
+                MessageBox("Please install the ODBC Core Components\nand rerun this setup program.", INFORMATION);
+                exit;
+        endif;
+
+        szName = WINSYSDIR ^ "ODBC32.DLL";
+        nResult = RegDBGetKeyValueEx(szKey, szName, nvType, svValue, nvSize);
+        if (nResult < 0 && nvDoNot = TRUE) then
+                MessageBeep(0);
+                MessageBox("ODBC Driver Manager (ODBC32.DLL) is not installed!", SEVERE);
+                Disable(STATUSDLG);
+                MessageBeep(0);
+                MessageBox("Please install the ODBC Driver Manager\nand rerun this setup program.", INFORMATION);
+                exit;
+        endif;
+
+
+FileSetup:
+
+        SetStatusWindow( 10, "Copying program files...");
+        StatusUpdate(ON, 90);
+
+        DeinstallStart(svMainDirectory, svUninstLogFile, UNINSTALL_KEY, 0);
+
+        //      Show the uninstall under Add/Remove Programs in Control Panel
+        RegDBSetItem(REGDB_UNINSTALL_NAME, PRODUCT_NAME);
+
+        szFileSet = "psqlodbc";
+
+        TARGETDIR = svMainDirectory;    // winsys
+
+        FileSetBeginDefine(szFileSet);
+
+
+        nResult = CompressGet("driver.z", "*.*", COMP_NORMAL);
+        if (nResult < 0) then
+                NumToStr(szTmp, nResult);
+                MessageBox("Compress Get Error on driver.z files.\n\nError # " + szTmp, SEVERE);
+                exit;
+        endif;
+
+        TARGETDIR = svMainDirectory;    // winsys
+
+        //      Driver Manager stuff
+        if (! nvDoNot) then
+                if (nvVersion) then
+                        options = COMP_UPDATE_VERSION;
+                else
+                        options = COMP_NORMAL;
+                endif;
+
+        //      The File usage count increments are handled by CompressGet
+        //      with the SHAREDFILE option.
+
+                nResult = CompressGet("redist.z", "*.*", options|SHAREDFILE);
+                if (nResult < 0) then
+                        NumToStr(szTmp, nResult);
+                        MessageBox("Compress Get Error on redist.z files.\n\nError # " + szTmp, SEVERE);
+                        exit;
+                endif;
+        endif;
+
+
+        FileSetEndDefine(szFileSet);
+
+FileTransfer:
+        nResult = FileSetPerformEz(szFileSet, 0);
+
+        switch(nResult)
+        case FS_DONE:
+        case FS_CREATEDIR:
+                MessageBeep(0);
+                MessageBox("Unable to create a required subdirectory under " + TARGETDIR + "."
+                + "\nPlease check write access to this directory.", SEVERE);
+
+                abort;
+        default:
+                NumToStr(szTmp, nResult);
+                MessageBeep(0);
+                MessageBox("Error copying files to " + TARGETDIR + "."
+                + "\nPlease check this location and try again."
+                + "\n\nError Number:"+szTmp, SEVERE);
+
+                abort;
+
+        endswitch;
+
+
+UpdateRegistry:
+        SetStatusWindow(95, "Creating registry entries...");
+        Delay(2);
+
+        RegDBSetDefaultRoot(HKEY_LOCAL_MACHINE);
+
+        Disable(LOGGING);
+
+        // Create ODBC Core Subkey (if it doesn't exist)
+        //      (But don't create uninstall information for it)
+        szKey = ODBC_CORE_KEY;
+        nResult = RegDBCreateKeyEx(szKey, "");
+        if (nResult < 0) then
+                MessageBeep(0);
+                MessageBox("Unable to create ODBC Core subkey.", SEVERE);
+                exit;
+        endif;
+        
+        // Create Installed Driver Key (if it doesn't exist)
+        //      (But don't create uninstall information for it)
+        szKey = ODBC_DRIVERS_KEY;
+        nResult = RegDBCreateKeyEx(szKey, "");
+        if (nResult < 0) then
+                MessageBeep(0);
+                MessageBox("Unable to create ODBC Drivers subkey.", SEVERE);
+                exit;
+        endif;
+
+
+        // Increment Driver Manager Component UsageCount
+        szKey = ODBC_CORE_KEY;
+        szName = "UsageCount";
+        if (RegDBGetKeyValueEx(szKey, szName, nvType, svValue, nvSize) < 0) then
+                ComponentUsageCount = 0;
+        endif;
+
+        // MessageBox("Current Driver Manager Component Usage Count = " + svValue, INFORMATION);
+
+        StrToNum(ComponentUsageCount, svValue);
+        ComponentUsageCount = ComponentUsageCount + 1;
+        NumToStr(szTmp, ComponentUsageCount);
+        // MessageBox("New Driver Manager Component Usage Count = " + szTmp, INFORMATION);
+        
+        nResult = RegDBSetKeyValueEx(szKey, szName, REGDB_NUMBER, szTmp, -1);
+        if (nResult < 0) then
+                MessageBeep(0);
+                MessageBox("Unable to increment Driver Manager component usage count.", SEVERE);
+                exit;
+        endif;
+
+        //      Re-enable logging now
+        Enable(LOGGING);
+
+        //      set ODBC Drivers Subkey (installed)
+        szKey = ODBC_DRIVERS_KEY;
+        nResult = RegDBSetKeyValueEx(szKey, DRIVER_NAME, REGDB_STRING, "Installed", -1);
+        if (nResult < 0) then
+                MessageBeep(0);
+                MessageBox("Unable to create 'Installed' key value.", SEVERE);
+                exit;
+        endif;
+
+
+        //      Driver Specification Subkey (PostgreSQL)
+        szKey = ODBC_COMP_KEY + "\\" + DRIVER_NAME;
+        nResult = RegDBCreateKeyEx(szKey, "");
+        if (nResult < 0) then
+                MessageBeep(0);
+                MessageBox("Unable to create ODBC Driver Key.", SEVERE);
+                exit;
+        endif;
+
+        nResult = RegDBSetKeyValueEx(szKey, "APILevel", REGDB_STRING, "1", -1);
+        if (nResult < 0) then
+                MessageBeep(0);
+                MessageBox("Unable to create 'APILevel' key value.", SEVERE);
+                exit;
+        endif;
+
+        nResult = RegDBSetKeyValueEx(szKey, "ConnectFunctions", REGDB_STRING, "YYN", -1);
+        if (nResult < 0) then
+                MessageBeep(0);
+                MessageBox("Unable to create 'ConnectFunctions' key value.", SEVERE);
+                exit;
+        endif;
+
+        nResult = RegDBSetKeyValueEx(szKey, "Driver", REGDB_STRING, WINSYSDIR ^ DRIVER_FILE, -1);
+        if (nResult < 0) then
+                MessageBeep(0);
+                MessageBox("Unable to create 'Driver' key value.", SEVERE);
+                exit;
+        endif;
+
+        nResult = RegDBSetKeyValueEx(szKey, "DriverODBCVer", REGDB_STRING, "02.00", -1);
+        if (nResult < 0) then
+                MessageBeep(0);
+                MessageBox("Unable to create 'DriverODBCVer' key value.", SEVERE);
+                exit;
+        endif;
+
+        nResult = RegDBSetKeyValueEx(szKey, "FileUsage", REGDB_STRING, "0", -1);
+        if (nResult < 0) then
+                MessageBeep(0);
+                MessageBox("Unable to create 'FileUsage' key value.", SEVERE);
+                exit;
+        endif;
+
+        nResult = RegDBSetKeyValueEx(szKey, "Setup", REGDB_STRING, WINSYSDIR ^ DRIVER_FILE, -1);
+        if (nResult < 0) then
+                MessageBeep(0);
+                MessageBox("Unable to create 'Setup' key value.", SEVERE);
+                exit;
+        endif;
+
+        nResult = RegDBSetKeyValueEx(szKey, "SQLLevel", REGDB_STRING, "1", -1);
+        if (nResult < 0) then
+                MessageBeep(0);
+                MessageBox("Unable to create 'SQLLevel' key value.", SEVERE);
+                exit;
+        endif;
+
+        nResult = RegDBSetKeyValueEx(szKey, "UsageCount", REGDB_NUMBER, "1", -1);
+        if (nResult < 0) then
+                MessageBeep(0);
+                MessageBox("Unable to create 'UsageCount' key value.", SEVERE);
+                exit;
+        endif;
+
+        pos = StrFind(CMDLINE, "UseDeclareFetch=");
+        if (pos >= 0) then
+                StrSub(svValue, CMDLINE, pos + 16, 1);
+                nResult = RegDBSetKeyValueEx(szKey, "UseDeclareFetch", REGDB_STRING, svValue, -1);
+                if (nResult < 0) then
+                        MessageBeep(0);
+                        MessageBox("Unable to create 'UseDeclareFetch' key value.", SEVERE);
+                        exit;
+                endif;
+        endif;
+
+        pos = StrFind(CMDLINE, "Protocol=");
+        if (pos >= 0) then
+                StrSub(svValue, CMDLINE, pos + 9, 3);
+                nResult = RegDBSetKeyValueEx(szKey, "Protocol", REGDB_STRING, svValue, -1);
+                if (nResult < 0) then
+                        MessageBeep(0);
+                        MessageBox("Unable to create 'Protocol' key value.", SEVERE);
+                        exit;
+                endif;
+        endif;
+
+RenameOld:
+		if (FindFile(WINSYSDIR, OLD_DRIVER_FILE, svFileName) = 0) then
+			szMessage = "Renaming old driver to "  + OLD_DRIVER_FILE_RENAMED + " ...";
+			SetStatusWindow(98, szMessage);
+			Delay(1);
+
+			Disable(LOGGING);
+
+			SRCDIR= WINSYSDIR;
+			TARGETDIR = WINSYSDIR;
+
+			RenameFile(OLD_DRIVER_FILE, OLD_DRIVER_FILE_RENAMED);
+
+			Enable(LOGGING);
+		endif;
+
+Done:
+        Delay(1);
+        SetStatusWindow(100, "Installation complete");
+
+        Delay(1);
+        Disable(STATUSDLG);
+
+        if (BATCH_INSTALL = TRUE) then
+                szMsg = "Some files could not be updated because they are " +
+                        "currently in use by other programs on the system. " +
+                        "Files in use will be updated the next time you restart " +
+                        "your system.";
+                RebootDialog("Restart Windows", szMsg, SYS_BOOTMACHINE);
+                CommitSharedFiles(0);
+                szMsg = "Driver setup complete.\n\nReboot your system to complete the installation.";
+                MessageBeep(0);
+                MessageBox(szMsg, INFORMATION);
+        else
+
+                szMsg = "Driver installation completed successfully.";
+                MessageBeep(0);
+                MessageBox(szMsg, INFORMATION);
+        endif;
+
+        exit;
+
+/*---------------------------------------------------------------------------*\
+ *
+ * Function:  SetupScreen
+ *
+ *  Purpose:  This function will set up the screen look.  This includes
+ *            colors, fonts, text to be displayed, etc.
+ *
+ *
+ *    Input:
+ *
+ *  Returns:
+ *
+ * Comments:
+\*---------------------------------------------------------------------------*/
+
+function SetupScreen()
+        begin
+
+          Enable( INDVFILESTATUS );
+
+          SetTitle( APP_NAME + " Setup", 28, WHITE );
+
+          SetTitle( "Setup", 0, BACKGROUNDCAPTION ); // Caption bar text.
+
+          Enable( BACKGROUND );
+
+        end;
+
+function FileCompare(szCompInfoDate, szCompInfoTime, szFileInfoDate, szFileInfoTime)
+        STRING year, month, day, file_date, file_time;
+        NUMBER nResult;
+        begin
+                StrSub(year, szFileInfoDate, 2, 2);
+                StrSub(month, szFileInfoDate, 5, 2);
+                StrSub(day, szFileInfoDate, 8, 2);
+                file_date = month + "-" + day + "-" + year;
+
+                nResult = StrCompare(szCompInfoDate, file_date);
+                if (nResult != 0) then
+                        return nResult;
+                endif;
+
+                StrSub(file_time, szFileInfoTime, 0, 5);
+
+                // MessageBox("Comp = " + szCompInfoDate + " " + szCompInfoTime + ", File = " + file_date + " " + file_time, INFORMATION);
+                nResult = StrCompare(szCompInfoTime, file_time);
+
+                return nResult;
+        end;
+
+
+
