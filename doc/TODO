@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Feb 28 04:23:56 EST 2000
+Last updated:		Thu Mar  9 18:21:39 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -84,6 +84,7 @@ MISC
   promotion occurs
 * Modification  of  pg_class  can  happen while table in use by
   another backend.  Might  lead  to  MVCC  inside  of  syscache
+* Permission to UPDATE table allows DELETE also
 
 ENHANCEMENTS
 ------------
