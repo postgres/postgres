@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.189 2002/08/11 21:17:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.190 2002/08/28 20:46:47 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -561,7 +561,7 @@ index_create(Oid heapRelationId,
 		elog(ERROR, "Shared indexes cannot be created after initdb");
 
 	if (get_relname_relid(indexRelationName, namespaceId))
-		elog(ERROR, "index named \"%s\" already exists",
+		elog(ERROR, "relation named \"%s\" already exists",
 			 indexRelationName);
 
 	/*
