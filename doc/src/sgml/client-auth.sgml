@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.50 2003/06/11 14:14:50 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.51 2003/06/25 01:14:05 momjian Exp $
 -->
 
 <chapter id="client-authentication">
@@ -488,7 +488,7 @@ local   db1,db2,@demodbs  all                                       md5
     Unix-domain socket file using file-system permissions.  To do this, set the
     <varname>unix_socket_permissions</varname> (and possibly
     <varname>unix_socket_group</varname>) configuration parameters as
-    described in <xref linkend="runtime-config-general">.  Or you
+    described in <xref linkend="runtime-config-connection">.  Or you
     could set the <varname>unix_socket_directory</varname>
     configuration parameter to place the socket file in a suitably
     restricted directory.
