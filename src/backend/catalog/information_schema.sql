@@ -4,7 +4,7 @@
  *
  * Copyright 2003, PostgreSQL Global Development Group
  *
- * $Id: information_schema.sql,v 1.14 2003/10/18 12:53:35 petere Exp $
+ * $Id: information_schema.sql,v 1.15 2003/10/18 19:06:10 tgl Exp $
  */
 
 /*
@@ -178,7 +178,10 @@ CREATE VIEW column_privileges AS
            UNION ALL
            SELECT 0, 0, 'PUBLIC'
          ) AS grantee (usesysid, grosysid, name),
-         (SELECT 'SELECT' UNION ALL SELECT 'INSERT' UNION ALL SELECT 'UPDATE' UNION ALL SELECT 'REFERENCES') AS pr (type)
+         (SELECT 'SELECT' UNION ALL
+          SELECT 'INSERT' UNION ALL
+          SELECT 'UPDATE' UNION ALL
+          SELECT 'REFERENCES') AS pr (type)
 
     WHERE a.attrelid = c.oid
           AND c.relnamespace = nc.oid
@@ -389,6 +392,22 @@ GRANT SELECT ON columns TO PUBLIC;
  * CONSTRAINT_COLUMN_USAGE view
  */
 
+/* This returns the integers from 1 to INDEX_MAX_KEYS/FUNC_MAX_ARGS */
+CREATE FUNCTION _pg_keypositions() RETURNS SETOF integer
+    LANGUAGE sql
+    IMMUTABLE
+    AS 'select 1 union all select 2 union all select 3 union all
+        select 4 union all select 5 union all select 6 union all
+        select 7 union all select 8 union all select 9 union all
+        select 10 union all select 11 union all select 12 union all
+        select 13 union all select 14 union all select 15 union all
+        select 16 union all select 17 union all select 18 union all
+        select 19 union all select 20 union all select 21 union all
+        select 22 union all select 23 union all select 24 union all
+        select 25 union all select 26 union all select 27 union all
+        select 28 union all select 29 union all select 30 union all
+        select 31 union all select 32';
+
 CREATE VIEW constraint_column_usage AS
     SELECT CAST(current_database() AS sql_identifier) AS table_catalog,
            CAST(tblschema AS sql_identifier) AS table_schema,
@@ -419,14 +438,8 @@ CREATE VIEW constraint_column_usage AS
 
         /* unique/primary key/foreign key constraints */
         SELECT nr.nspname, r.relname, r.relowner, a.attname, nc.nspname, c.conname
-          FROM pg_namespace nr, pg_class r, pg_attribute a, pg_namespace nc, pg_constraint c,
-            (select 1 union all select 2 union all select 3 union all select 4 union all select 5 union all
-             select 6 union all select 7 union all select 8 union all select 9 union all select 10 union all
-             select 11 union all select 12 union all select 13 union all select 14 union all select 15 union all
-             select 16 union all select 17 union all select 18 union all select 19 union all select 20 union all
-             select 21 union all select 22 union all select 23 union all select 24 union all select 25 union all
-             select 26 union all select 27 union all select 28 union all select 29 union all select 30 union all
-             select 31 union all select 32) AS pos(n)
+          FROM pg_namespace nr, pg_class r, pg_attribute a, pg_namespace nc,
+               pg_constraint c, _pg_keypositions() AS pos(n)
           WHERE nr.oid = r.relnamespace
             AND r.oid = a.attrelid
             AND r.oid = c.conrelid
@@ -659,16 +672,8 @@ CREATE VIEW key_column_usage AS
            CAST(a.attname AS sql_identifier) AS column_name,
            CAST(pos.n AS cardinal_number) AS ordinal_position
 
-    FROM pg_namespace nr, pg_class r, pg_attribute a, pg_namespace nc, pg_constraint c,
-         pg_user u,
-         (select 1 union all select 2 union all select 3 union all select 4 union all select 5 union all
-          select 6 union all select 7 union all select 8 union all select 9 union all select 10 union all
-          select 11 union all select 12 union all select 13 union all select 14 union all select 15 union all
-          select 16 union all select 17 union all select 18 union all select 19 union all select 20 union all
-          select 21 union all select 22 union all select 23 union all select 24 union all select 25 union all
-          select 26 union all select 27 union all select 28 union all select 29 union all select 30 union all
-          select 31 union all select 32) AS pos(n)
-
+    FROM pg_namespace nr, pg_class r, pg_attribute a, pg_namespace nc,
+         pg_constraint c, pg_user u, _pg_keypositions() AS pos(n)
     WHERE nr.oid = r.relnamespace
           AND r.oid = a.attrelid
           AND r.oid = c.conrelid
@@ -693,7 +698,7 @@ CREATE VIEW parameters AS
     SELECT CAST(current_database() AS sql_identifier) AS specific_catalog,
            CAST(n.nspname AS sql_identifier) AS specific_schema,
            CAST(p.proname || '_' || CAST(p.oid AS text) AS sql_identifier) AS specific_name,
-           CAST(n + 1 AS cardinal_number) AS ordinal_position,
+           CAST(pos.n AS cardinal_number) AS ordinal_position,
            CAST('IN' AS character_data) AS parameter_mode,
            CAST('NO' AS character_data) AS is_result,
            CAST('NO' AS character_data) AS as_locator,
@@ -724,19 +729,13 @@ CREATE VIEW parameters AS
            CAST(null AS sql_identifier) AS scope_schema,
            CAST(null AS sql_identifier) AS scope_name,
            CAST(null AS cardinal_number) AS maximum_cardinality,
-           CAST(n + 1 AS sql_identifier) AS dtd_identifier
+           CAST(pos.n AS sql_identifier) AS dtd_identifier
 
     FROM pg_namespace n, pg_proc p, pg_type t, pg_namespace nt, pg_user u,
-         (select 0 union all select 1 union all select 2 union all select 3 union all select 4 union all
-          select 5 union all select 6 union all select 7 union all select 8 union all select 9 union all
-          select 10 union all select 11 union all select 12 union all select 13 union all select 14 union all
-          select 15 union all select 16 union all select 17 union all select 18 union all select 19 union all
-          select 20 union all select 21 union all select 22 union all select 23 union all select 24 union all
-          select 25 union all select 26 union all select 27 union all select 28 union all select 29 union all
-          select 30 union all select 31) AS pos(n)
+         _pg_keypositions() AS pos(n)
 
-    WHERE n.oid = p.pronamespace AND p.pronargs > pos.n
-          AND p.proargtypes[n] = t.oid AND t.typnamespace = nt.oid
+    WHERE n.oid = p.pronamespace AND p.pronargs >= pos.n
+          AND p.proargtypes[pos.n-1] = t.oid AND t.typnamespace = nt.oid
           AND p.proowner = u.usesysid
           AND (u.usename = current_user OR has_function_privilege(p.oid, 'EXECUTE'));
 
@@ -752,7 +751,7 @@ CREATE FUNCTION _pg_keyissubset(smallint[], smallint[]) RETURNS boolean
     LANGUAGE sql
     IMMUTABLE
     RETURNS NULL ON NULL INPUT
-    AS 'select $1[1] is null or ($1[1] = any ($2) and coalesce(information_schema._pg_keyissubset($1[2:array_upper($1,1)], $2), true))';
+    AS 'select $1[1] is null or ($1[1] = any ($2) and coalesce(information_schema._pg_keyissubset($1[2:pg_catalog.array_upper($1,1)], $2), true))';
 
 CREATE FUNCTION _pg_keysequal(smallint[], smallint[]) RETURNS boolean
     LANGUAGE sql
@@ -831,7 +830,10 @@ CREATE VIEW role_column_grants AS
          pg_namespace nc,
          pg_user u_grantor,
          pg_group g_grantee,
-         (SELECT 'SELECT' UNION ALL SELECT 'INSERT' UNION ALL SELECT 'UPDATE' UNION ALL SELECT 'REFERENCES') AS pr (type)
+         (SELECT 'SELECT' UNION ALL
+          SELECT 'INSERT' UNION ALL
+          SELECT 'UPDATE' UNION ALL
+          SELECT 'REFERENCES') AS pr (type)
 
     WHERE a.attrelid = c.oid
           AND c.relnamespace = nc.oid
@@ -900,8 +902,13 @@ CREATE VIEW role_table_grants AS
          pg_namespace nc,
          pg_user u_grantor,
          pg_group g_grantee,
-         (SELECT 'SELECT' UNION ALL SELECT 'DELETE' UNION ALL SELECT 'INSERT' UNION ALL SELECT 'UPDATE'
-          UNION ALL SELECT 'REFERENCES' UNION ALL SELECT 'RULE' UNION ALL SELECT 'TRIGGER') AS pr (type)
+         (SELECT 'SELECT' UNION ALL
+          SELECT 'DELETE' UNION ALL
+          SELECT 'INSERT' UNION ALL
+          SELECT 'UPDATE' UNION ALL
+          SELECT 'REFERENCES' UNION ALL
+          SELECT 'RULE' UNION ALL
+          SELECT 'TRIGGER') AS pr (type)
 
     WHERE c.relnamespace = nc.oid
           AND c.relkind IN ('r', 'v')
@@ -1310,8 +1317,13 @@ CREATE VIEW table_privileges AS
            UNION ALL
            SELECT 0, 0, 'PUBLIC'
          ) AS grantee (usesysid, grosysid, name),
-         (SELECT 'SELECT' UNION ALL SELECT 'DELETE' UNION ALL SELECT 'INSERT' UNION ALL SELECT 'UPDATE'
-          UNION ALL SELECT 'REFERENCES' UNION ALL SELECT 'RULE' UNION ALL SELECT 'TRIGGER') AS pr (type)
+         (SELECT 'SELECT' UNION ALL
+          SELECT 'DELETE' UNION ALL
+          SELECT 'INSERT' UNION ALL
+          SELECT 'UPDATE' UNION ALL
+          SELECT 'REFERENCES' UNION ALL
+          SELECT 'RULE' UNION ALL
+          SELECT 'TRIGGER') AS pr (type)
 
     WHERE c.relnamespace = nc.oid
           AND c.relkind IN ('r', 'v')
@@ -1414,7 +1426,9 @@ CREATE VIEW triggers AS
            CAST(null AS sql_identifier) AS condition_reference_new_table
 
     FROM pg_namespace n, pg_class c, pg_trigger t, pg_user u,
-         (SELECT 4, 'INSERT' UNION ALL SELECT 8, 'DELETE' UNION ALL SELECT 16, 'UPDATE') AS em (num, text)
+         (SELECT 4, 'INSERT' UNION ALL
+          SELECT 8, 'DELETE' UNION ALL
+          SELECT 16, 'UPDATE') AS em (num, text)
 
     WHERE n.oid = c.relnamespace
           AND c.oid = t.tgrelid
@@ -1640,7 +1654,8 @@ CREATE VIEW element_types AS
     FROM pg_namespace n, pg_type at, pg_namespace nbt, pg_type bt,
          (
            /* columns */
-           SELECT c.relnamespace, c.relname, 'TABLE'::text, a.attnum, a.atttypid
+           SELECT c.relnamespace, CAST(c.relname AS sql_identifier),
+                  'TABLE'::text, a.attnum, a.atttypid
            FROM pg_class c, pg_attribute a
            WHERE c.oid = a.attrelid
                  AND c.relkind IN ('r', 'v')
@@ -1649,28 +1664,24 @@ CREATE VIEW element_types AS
            UNION ALL
 
            /* domains */
-           SELECT t.typnamespace, t.typname, 'DOMAIN'::text, 1, t.typbasetype
+           SELECT t.typnamespace, CAST(t.typname AS sql_identifier),
+                  'DOMAIN'::text, 1, t.typbasetype
            FROM pg_type t
            WHERE t.typtype = 'd'
 
            UNION ALL
 
            /* parameters */
-           SELECT p.pronamespace, p.proname, 'ROUTINE'::text, pos.n + 1, p.proargtypes[n]
-           FROM pg_proc p,
-             (select 0 union all select 1 union all select 2 union all select 3 union all select 4 union all
-              select 5 union all select 6 union all select 7 union all select 8 union all select 9 union all
-              select 10 union all select 11 union all select 12 union all select 13 union all select 14 union all
-              select 15 union all select 16 union all select 17 union all select 18 union all select 19 union all
-              select 20 union all select 21 union all select 22 union all select 23 union all select 24 union all
-              select 25 union all select 26 union all select 27 union all select 28 union all select 29 union all
-              select 30 union all select 31) AS pos(n)
-           WHERE p.pronargs > pos.n
+           SELECT p.pronamespace, CAST(p.proname || '_' || CAST(p.oid AS text) AS sql_identifier),
+                  'ROUTINE'::text, pos.n, p.proargtypes[pos.n-1]
+           FROM pg_proc p, _pg_keypositions() AS pos(n)
+           WHERE p.pronargs >= pos.n
 
            UNION ALL
 
            /* result types */
-           SELECT p.pronamespace, p.proname, 'ROUTINE'::text, 0, p.prorettype
+           SELECT p.pronamespace, CAST(p.proname || '_' || CAST(p.oid AS text) AS sql_identifier),
+                  'ROUTINE'::text, 0, p.prorettype
            FROM pg_proc p
 
          ) AS x (objschema, objname, objtype, objdtdid, objtypeid)
