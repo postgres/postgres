@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.53 2001/06/20 18:07:55 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.54 2001/07/21 00:29:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +122,6 @@ pg_krb4_recvauth(Port *port)
 
 	return STATUS_ERROR;
 }
-
 #endif	 /* KRB4 */
 
 
@@ -304,7 +303,6 @@ pg_krb5_recvauth(Port *port)
 
 	return STATUS_ERROR;
 }
-
 #endif	 /* KRB5 */
 
 
@@ -399,7 +397,6 @@ recv_and_check_passwordv0(Port *port)
  * Note that many sorts of failure report additional information in the
  * postmaster log, which we hope is only readable by good guys.
  */
-
 static void
 auth_failed(Port *port)
 {
@@ -435,7 +432,6 @@ auth_failed(Port *port)
 }
 
 
-
 /*
  * Client authentication starts here.  If there is an error, this
  * function does not return and the backend process is terminated.
@@ -451,7 +447,6 @@ ClientAuthentication(Port *port)
 	 * hba config file, not with the request.  hba.c should have dropped
 	 * an error message into the postmaster logfile if it failed.
 	 */
-
 	if (hba_getauthmethod(port) != STATUS_OK)
 		elog(FATAL, "Missing or erroneous pg_hba.conf file, see postmaster log for details");
 
@@ -464,26 +459,24 @@ ClientAuthentication(Port *port)
 	}
 
 	/* Handle new style authentication. */
-
 	switch (port->auth_method)
 	{
 		case uaReject:
-
-			/*
-			 * This could have come from an explicit "reject" entry in
-			 * pg_hba.conf, but more likely it means there was no
-			 * matching entry.	Take pity on the poor user and issue a
-			 * helpful error message.  NOTE: this is not a security
-			 * breach, because all the info reported here is known at
-			 * the frontend and must be assumed known to bad guys.
-			 * We're merely helping out the less clueful good guys.
-			 */
+		/*
+		 * This could have come from an explicit "reject" entry in
+		 * pg_hba.conf, but more likely it means there was no
+		 * matching entry.	Take pity on the poor user and issue a
+		 * helpful error message.  NOTE: this is not a security
+		 * breach, because all the info reported here is known at
+		 * the frontend and must be assumed known to bad guys.
+		 * We're merely helping out the less clueful good guys.
+		 */
 		{
 			const char *hostinfo = "localhost";
 
 			if (port->raddr.sa.sa_family == AF_INET)
 				hostinfo = inet_ntoa(port->raddr.in.sin_addr);
-			elog(FATAL, 
+			elog(FATAL,
 				 "No pg_hba.conf entry for host %s, user %s, database %s",
 				 hostinfo, port->user, port->database);
 			return;
@@ -530,7 +523,6 @@ ClientAuthentication(Port *port)
 /*
  * Send an authentication request packet to the frontend.
  */
-
 static void
 sendAuthRequest(Port *port, AuthRequest areq)
 {
@@ -556,7 +548,6 @@ sendAuthRequest(Port *port, AuthRequest areq)
 /*
  * Called when we have received the password packet.
  */
-
 static int
 recv_and_check_password_packet(Port *port)
 {
@@ -638,7 +629,6 @@ old_be_recvauth(Port *port)
  * allow the connection anyway, disallow it anyway, or use the result)
  * depending on what authentication we really want to use.
  */
-
 static int
 map_old_to_new(Port *port, UserAuth old, int status)
 {
