@@ -45,26 +45,26 @@ SELECT CAST(name 'namefield' AS text) AS "text(name)";
  namefield
 (1 row)
 
-SELECT CAST(f1 AS char) AS "char(text)" FROM TEXT_TBL;
-    char(text)     
--------------------
- doh!
- hi de ho neighbor
+SELECT CAST(f1 AS char(10)) AS "char(text)" FROM TEXT_TBL;
+ char(text) 
+------------
+ doh!      
+ hi de ho n
 (2 rows)
 
-SELECT CAST(f1 AS char) AS "char(varchar)" FROM VARCHAR_TBL;
+SELECT CAST(f1 AS char(10)) AS "char(varchar)" FROM VARCHAR_TBL;
  char(varchar) 
 ---------------
- a
- ab
- abcd
- abcd
+ a         
+ ab        
+ abcd      
+ abcd      
 (4 rows)
 
-SELECT CAST(name 'namefield' AS char) AS "char(name)";
+SELECT CAST(name 'namefield' AS char(10)) AS "char(name)";
  char(name) 
 ------------
- namefield
+ namefield 
 (1 row)
 
 SELECT CAST(f1 AS varchar) AS "varchar(text)" FROM TEXT_TBL;
@@ -155,10 +155,10 @@ SELECT text 'text' || ' and unknown' AS "Concat text to unknown type";
  text and unknown
 (1 row)
 
-SELECT text 'text' || char ' and char' AS "Concat text to char";
+SELECT text 'text' || char(10) ' and characters' AS "Concat text to char";
  Concat text to char 
 ---------------------
- text and char
+ text and chara
 (1 row)
 
 SELECT text 'text' || varchar ' and varchar' AS "Concat text to varchar";

@@ -25,11 +25,11 @@ SELECT CAST(f1 AS text) AS "text(varchar)" FROM VARCHAR_TBL;
 
 SELECT CAST(name 'namefield' AS text) AS "text(name)";
 
-SELECT CAST(f1 AS char) AS "char(text)" FROM TEXT_TBL;
+SELECT CAST(f1 AS char(10)) AS "char(text)" FROM TEXT_TBL;
 
-SELECT CAST(f1 AS char) AS "char(varchar)" FROM VARCHAR_TBL;
+SELECT CAST(f1 AS char(10)) AS "char(varchar)" FROM VARCHAR_TBL;
 
-SELECT CAST(name 'namefield' AS char) AS "char(name)";
+SELECT CAST(name 'namefield' AS char(10)) AS "char(name)";
 
 SELECT CAST(f1 AS varchar) AS "varchar(text)" FROM TEXT_TBL;
 
@@ -65,7 +65,7 @@ SELECT 'unknown' || ' and unknown' AS "Concat unknown types";
 
 SELECT text 'text' || ' and unknown' AS "Concat text to unknown type";
 
-SELECT text 'text' || char ' and char' AS "Concat text to char";
+SELECT text 'text' || char(10) ' and characters' AS "Concat text to char";
 
 SELECT text 'text' || varchar ' and varchar' AS "Concat text to varchar";
 
