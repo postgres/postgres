@@ -1,7 +1,7 @@
 /* -------------------------------------------------------------------------
  * pg_dumplo
  *
- * $PostgreSQL: pgsql/contrib/pg_dumplo/main.c,v 1.21 2004/11/27 18:51:04 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pg_dumplo/main.c,v 1.22 2004/11/28 23:49:49 tgl Exp $
  *
  *					Karel Zak 1999-2000
  * -------------------------------------------------------------------------
@@ -150,13 +150,10 @@ main(int argc, char **argv)
 	/*
 	 * Check space
 	 */
-	if (!pgLO->space && !pgLO->action == ACTION_SHOW)
+	if (pgLO->space==NULL && pgLO->action != ACTION_SHOW)
 	{
 		if (!(pgLO->space = getenv("PWD")))
-		{
-			fprintf(stderr, "%s: not set space for dump-tree (option '-s' or $PWD).\n", progname);
-			exit(RE_ERROR);
-		}
+			pgLO->space = ".";
 	}
 
 	if (!pgLO->action)
@@ -230,9 +227,8 @@ static void
 parse_lolist(LODumpMaster * pgLO)
 {
 	LOlist	   *ll;
-	char	  **d,
-			   *loc,
-				buff[MAX_TABLE_NAME + MAX_ATTR_NAME + 1];
+	char	  **d, *loc, *loc2, 
+		  buff[MAX_SCHEMA_NAME + MAX_TABLE_NAME + MAX_ATTR_NAME + 3];
 
 	pgLO->lolist = (LOlist *) malloc(pgLO->argc * sizeof(LOlist));
 
@@ -247,16 +243,31 @@ parse_lolist(LODumpMaster * pgLO)
 		 d++, ll++)
 	{
 
-		strncpy(buff, *d, MAX_TABLE_NAME + MAX_ATTR_NAME);
+		strncpy(buff, *d, MAX_SCHEMA_NAME + MAX_TABLE_NAME + MAX_ATTR_NAME + 2);
 
-		if ((loc = strchr(buff, '.')) == NULL)
+		if ((loc = strchr(buff, '.')) == NULL || *(loc+1)=='\0')
 		{
-			fprintf(stderr, "%s: '%s' is bad 'table.attr'\n", progname, buff);
+			fprintf(stderr, "%s: '%s' is bad 'table.attr' or 'schema.table.attr'\n", progname, buff);
 			exit(RE_ERROR);
 		}
+		loc2 = strchr(loc+1, '.');
 		*loc = '\0';
-		ll->lo_table = strdup(buff);
-		ll->lo_attr = strdup(++loc);
+		
+		if (loc2)
+		{
+			/* "schema.table.attr" 
+			 */
+			*loc2 = '\0';
+			ll->lo_schema = strdup(buff);
+			ll->lo_table = strdup(loc+1);
+			ll->lo_attr = strdup(loc2+1);
+		}
+		else
+		{
+			ll->lo_schema = strdup("public");
+			ll->lo_table = strdup(buff);
+			ll->lo_attr = strdup(loc+1);
+		}
 	}
 	ll++;
 	ll->lo_table = ll->lo_attr = (char *) NULL;
@@ -277,7 +288,7 @@ usage(void)
 		 "-s --space=<dir>             directory with dump tree (for export/import)\n"
 		 "-i --import                  import large obj dump tree to DB\n"
 	"-e --export                  export (dump) large obj to dump tree\n"
-		 "-l <table.attr ...>          dump attribute (columns) with LO to dump tree\n"
+		"-l <schema.table.attr ...>   dump attribute (columns) with LO to dump tree\n"
 		 "-a --all                     dump all LO in DB (default)\n"
 		 "-r --remove                  if is set '-i' try remove old LO\n"
 		 "-q --quiet                   run quietly\n"
@@ -288,8 +299,9 @@ usage(void)
 		 "Example (import): pg_dumplo -i -d my_db -s /my_dump/dir\n"
 		 "Example (show):   pg_dumplo -w -d my_db\n\n"
 		 "Note:  * option '-l' must be last option!\n"
-	"       * option '-i' without option '-r' make new large obj in DB\n"
+		 "       * default schema is \"public\"\n"
+  		 "       * option '-i' without option '-r' make new large obj in DB\n"
 		 "         not rewrite old, the '-i' UPDATE oid numbers in table.attr only!\n"
-		 "       * if option -s is not set, pg_dumplo uses $PWD\n"
+		 "       * if option -s is not set, pg_dumplo uses $PWD or \".\"\n"
 		);						/* puts() */
 }

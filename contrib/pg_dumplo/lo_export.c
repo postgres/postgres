@@ -1,9 +1,9 @@
 /* -------------------------------------------------------------------------
  * pg_dumplo
  *
- * $PostgreSQL: pgsql/contrib/pg_dumplo/lo_export.c,v 1.12 2003/11/29 19:51:35 pgsql Exp $
+ * $PostgreSQL: pgsql/contrib/pg_dumplo/lo_export.c,v 1.13 2004/11/28 23:49:49 tgl Exp $
  *
- *					Karel Zak 1999-2000
+ * Karel Zak 1999-2004
  * -------------------------------------------------------------------------
  */
 
@@ -29,7 +29,7 @@ load_lolist(LODumpMaster * pgLO)
 	LOlist	   *ll;
 	int			i;
 	int			n;
-
+	
 	/*
 	 * Now find any candidate tables who have columns of type oid.
 	 *
@@ -39,15 +39,16 @@ load_lolist(LODumpMaster * pgLO)
 	 * NOTE: the system oid column is ignored, as it has attnum < 1. This
 	 * shouldn't matter for correctness, but it saves time.
 	 */
-	pgLO->res = PQexec(pgLO->conn,
-					   "SELECT c.relname, a.attname "
-					   "FROM pg_class c, pg_attribute a, pg_type t "
+	pgLO->res = PQexec(pgLO->conn, 	   "SELECT c.relname, a.attname, n.nspname "
+					   "FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a, "
+					   "     pg_catalog.pg_type t, pg_catalog.pg_namespace n "
 					   "WHERE a.attnum > 0 "
 					   "    AND a.attrelid = c.oid "
 					   "    AND a.atttypid = t.oid "
 					   "    AND t.typname = 'oid' "
 					   "    AND c.relkind = 'r' "
-					   "    AND c.relname NOT LIKE 'pg_%'");
+					   "    AND c.relname NOT LIKE 'pg_%' "
+					   "    AND n.oid = c.relnamespace");
 
 	if (PQresultStatus(pgLO->res) != PGRES_TUPLES_OK)
 	{
@@ -63,6 +64,7 @@ load_lolist(LODumpMaster * pgLO)
 	}
 
 	pgLO->lolist = (LOlist *) malloc((n + 1) * sizeof(LOlist));
+	memset(pgLO->lolist, 0, (n + 1) * sizeof(LOlist));
 
 	if (!pgLO->lolist)
 	{
@@ -74,8 +76,8 @@ load_lolist(LODumpMaster * pgLO)
 	{
 		ll->lo_table = strdup(PQgetvalue(pgLO->res, i, 0));
 		ll->lo_attr = strdup(PQgetvalue(pgLO->res, i, 1));
+		ll->lo_schema = strdup(PQgetvalue(pgLO->res, i, 2));
 	}
-	ll->lo_table = ll->lo_attr = (char *) NULL;
 
 	PQclear(pgLO->res);
 }
@@ -98,7 +100,7 @@ pglo_export(LODumpMaster * pgLO)
 		fprintf(pgLO->index, "#\tHost:     %s\n", pgLO->host);
 		fprintf(pgLO->index, "#\tDatabase: %s\n", pgLO->db);
 		fprintf(pgLO->index, "#\tUser:     %s\n", pgLO->user);
-		fprintf(pgLO->index, "#\n# oid\ttable\tattribut\tinfile\n#\n");
+		fprintf(pgLO->index, "#\n# oid\ttable\tattribut\tinfile\tschema\n#\n");
 	}
 
 	pgLO->counter = 0;
@@ -109,8 +111,9 @@ pglo_export(LODumpMaster * pgLO)
 		 * Query: find the LOs referenced by this column
 		 */
 		snprintf(Qbuff, QUERY_BUFSIZ,
-				 "SELECT DISTINCT l.loid FROM \"%s\" x, pg_largeobject l WHERE x.\"%s\" = l.loid",
-				 ll->lo_table, ll->lo_attr);
+				 "SELECT DISTINCT l.loid FROM \"%s\".\"%s\" x, pg_catalog.pg_largeobject l "
+				 "WHERE x.\"%s\" = l.loid",
+				 ll->lo_schema, ll->lo_table, ll->lo_attr);
 
 		/* puts(Qbuff); */
 
@@ -124,8 +127,8 @@ pglo_export(LODumpMaster * pgLO)
 		else if ((tuples = PQntuples(pgLO->res)) == 0)
 		{
 			if (!pgLO->quiet && pgLO->action == ACTION_EXPORT_ATTR)
-				printf("%s: no large objects in \"%s\".\"%s\"\n",
-					   progname, ll->lo_table, ll->lo_attr);
+				printf("%s: no large objects in \"%s\".\"%s\".\"%s\"\n",
+					   progname, ll->lo_schema, ll->lo_table, ll->lo_attr);
 		}
 		else
 		{
@@ -140,7 +143,19 @@ pglo_export(LODumpMaster * pgLO)
 			{
 
 				snprintf(path, BUFSIZ, "%s/%s/%s", pgLO->space, pgLO->db,
-						 ll->lo_table);
+						 ll->lo_schema);
+
+				if (mkdir(path, DIR_UMASK) == -1)
+				{
+					if (errno != EEXIST)
+					{
+						perror(path);
+						exit(RE_ERROR);
+					}
+				}
+				
+				snprintf(path, BUFSIZ, "%s/%s/%s/%s", pgLO->space, pgLO->db,
+						 ll->lo_schema, ll->lo_table);
 
 				if (mkdir(path, DIR_UMASK) == -1)
 				{
@@ -151,8 +166,8 @@ pglo_export(LODumpMaster * pgLO)
 					}
 				}
 
-				snprintf(path, BUFSIZ, "%s/%s/%s/%s", pgLO->space, pgLO->db,
-						 ll->lo_table, ll->lo_attr);
+				snprintf(path, BUFSIZ, "%s/%s/%s/%s/%s", pgLO->space, pgLO->db,
+						 ll->lo_schema, ll->lo_table, ll->lo_attr);
 
 				if (mkdir(path, DIR_UMASK) == -1)
 				{
@@ -164,8 +179,8 @@ pglo_export(LODumpMaster * pgLO)
 				}
 
 				if (!pgLO->quiet)
-					printf("dump %s.%s (%d large obj)\n",
-						   ll->lo_table, ll->lo_attr, tuples);
+					printf("dump %s.%s.%s (%d large obj)\n",
+						   ll->lo_schema, ll->lo_table, ll->lo_attr, tuples);
 			}
 
 			pgLO->counter += tuples;
@@ -180,20 +195,22 @@ pglo_export(LODumpMaster * pgLO)
 
 				if (pgLO->action == ACTION_SHOW)
 				{
-					printf("%s.%s: %u\n", ll->lo_table, ll->lo_attr, lo);
+					printf("%s.%s.%s: %u\n", ll->lo_schema, ll->lo_table, ll->lo_attr, lo);
 					continue;
 				}
 
-				snprintf(path, BUFSIZ, "%s/%s/%s/%s/%s", pgLO->space,
-						 pgLO->db, ll->lo_table, ll->lo_attr, val);
+				snprintf(path, BUFSIZ, "%s/%s/%s/%s/%s/%s", pgLO->space,
+						 pgLO->db, ll->lo_schema, ll->lo_table, ll->lo_attr, val);
 
 				if (lo_export(pgLO->conn, lo, path) < 0)
 					fprintf(stderr, "%s: lo_export failed:\n%s", progname,
 							PQerrorMessage(pgLO->conn));
 
 				else
-					fprintf(pgLO->index, "%s\t%s\t%s\t%s/%s/%s/%s\n", val,
-							ll->lo_table, ll->lo_attr, pgLO->db, ll->lo_table, ll->lo_attr, val);
+					fprintf(pgLO->index, "%s\t%s\t%s\t%s/%s/%s/%s/%s\t%s\n", 
+							val, ll->lo_table, ll->lo_attr, pgLO->db, 
+							ll->lo_schema, ll->lo_table, ll->lo_attr, 
+							val, ll->lo_schema);
 			}
 		}
 

@@ -1,9 +1,9 @@
 /* -------------------------------------------------------------------------
  * pg_dumplo.h
  *
- * $PostgreSQL: pgsql/contrib/pg_dumplo/pg_dumplo.h,v 1.10 2003/11/29 19:51:35 pgsql Exp $
+ * $PostgreSQL: pgsql/contrib/pg_dumplo/pg_dumplo.h,v 1.11 2004/11/28 23:49:49 tgl Exp $
  *
- *					Karel Zak 1999-2000
+ * Karel Zak 1999-2004
  * -------------------------------------------------------------------------
  */
 
@@ -25,6 +25,7 @@
 #define RE_OK		0
 #define RE_ERROR	1
 
+#define MAX_SCHEMA_NAME	128
 #define MAX_TABLE_NAME	128
 #define MAX_ATTR_NAME	128
 
@@ -36,10 +37,11 @@
  */
 typedef struct
 {
-	char	   *lo_table,
-			   *lo_attr;
-	Oid			lo_oid;
-}	LOlist;
+	char	*lo_schema,   
+		*lo_table,
+		*lo_attr;
+	Oid	lo_oid;
+} LOlist;
 
 typedef struct
 {

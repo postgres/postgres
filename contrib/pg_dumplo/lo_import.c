@@ -1,9 +1,9 @@
 /* -------------------------------------------------------------------------
  * pg_dumplo
  *
- * $PostgreSQL: pgsql/contrib/pg_dumplo/lo_import.c,v 1.10 2003/11/29 19:51:35 pgsql Exp $
+ * $PostgreSQL: pgsql/contrib/pg_dumplo/lo_import.c,v 1.11 2004/11/28 23:49:49 tgl Exp $
  *
- *					Karel Zak 1999-2000
+ * Karel Zak 1999-2004
  * -------------------------------------------------------------------------
  */
 
@@ -27,26 +27,47 @@ pglo_import(LODumpMaster * pgLO)
 {
 	LOlist		loa;
 	Oid			new_oid;
+	int		ret, line=0;
 	char		tab[MAX_TABLE_NAME],
 				attr[MAX_ATTR_NAME],
+				sch[MAX_SCHEMA_NAME],
 				path[BUFSIZ],
 				lo_path[BUFSIZ],
 				Qbuff[QUERY_BUFSIZ];
 
 	while (fgets(Qbuff, QUERY_BUFSIZ, pgLO->index))
 	{
-
+		line++;
+		
 		if (*Qbuff == '#')
 			continue;
 
 		if (!pgLO->remove && !pgLO->quiet)
 			printf(Qbuff);
 
-		sscanf(Qbuff, "%u\t%s\t%s\t%s\n", &loa.lo_oid, tab, attr, path);
+		if ((ret=sscanf(Qbuff, "%u\t%s\t%s\t%s\t%s\n", &loa.lo_oid, tab, attr, path, sch)) < 5)
+		{
+			/* backward compatible mode */
+			ret = sscanf(Qbuff, "%u\t%s\t%s\t%s\n", &loa.lo_oid, tab, attr, path);
+			strcpy(sch, "public");
+		}
+		if (ret < 4)
+		{
+			fprintf(stderr, "%s: index file reading failed at line %d\n", progname, line);
+			PQexec(pgLO->conn, "ROLLBACK");
+			fprintf(stderr, "\n%s: ROLLBACK\n", progname);
+			exit(RE_ERROR);
+		}
+		
+		loa.lo_schema = sch;
 		loa.lo_table = tab;
 		loa.lo_attr = attr;
 
-		snprintf(lo_path, BUFSIZ, "%s/%s", pgLO->space, path);
+		if (path && *path=='/')
+			/* absolute path */
+			snprintf(lo_path, BUFSIZ, "%s", path);
+		else
+			snprintf(lo_path, BUFSIZ, "%s/%s", pgLO->space, path);
 
 		/*
 		 * Import LO
@@ -80,10 +101,10 @@ pglo_import(LODumpMaster * pgLO)
 		 * UPDATE oid in tab
 		 */
 		snprintf(Qbuff, QUERY_BUFSIZ,
-				 "UPDATE \"%s\" SET \"%s\"=%u WHERE \"%s\"=%u",
-			loa.lo_table, loa.lo_attr, new_oid, loa.lo_attr, loa.lo_oid);
+				 "UPDATE \"%s\".\"%s\" SET \"%s\"=%u WHERE \"%s\"=%u",
+			loa.lo_schema, loa.lo_table, loa.lo_attr, new_oid, loa.lo_attr, loa.lo_oid);
 
-		/* fprintf(stderr, Qbuff); */
+		/*fprintf(stderr, Qbuff);*/
 
 		pgLO->res = PQexec(pgLO->conn, Qbuff);
 
