@@ -4,7 +4,7 @@
 
 --
 -- first, define the datatype.  Turn off echoing so that expected file
--- does not depend on contents of earthdistance.sql or cube.sql.
+-- does not depend on contents of earthdistance.sql.
 --
 \set ECHO none
 \i earthdistance.sql
