@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.50 1998/08/20 22:07:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.51 1998/08/20 23:01:24 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1171,21 +1171,23 @@ index_create(char *heapRelationName,
 void
 index_destroy(Oid indexId)
 {
+	Relation	userindexRelation;
 	Relation	indexRelation;
-	Relation	catalogRelation;
+	Relation	relationRelation;
 	Relation	attributeRelation;
 	HeapTuple	tuple;
 	int16		attnum;
 	
 	Assert(OidIsValid(indexId));
 
-	indexRelation = index_open(indexId);
+	/* why open it here?  bjm 1998/08/20 */
+	userindexRelation = index_open(indexId);
 
 	/* ----------------
 	 * fix RELATION relation
 	 * ----------------
 	 */
-	catalogRelation = heap_openr(RelationRelationName);
+	relationRelation = heap_openr(RelationRelationName);
 
 	tuple = SearchSysCacheTupleCopy(RELOID,
 									ObjectIdGetDatum(indexId),
@@ -1193,9 +1195,9 @@ index_destroy(Oid indexId)
 
 	AssertState(HeapTupleIsValid(tuple));
 
-	heap_delete(catalogRelation, &tuple->t_ctid);
+	heap_delete(relationRelation, &tuple->t_ctid);
 	pfree(tuple);
-	heap_close(catalogRelation);
+	heap_close(relationRelation);
 
 	/* ----------------
 	 * fix ATTRIBUTE relation
@@ -1226,23 +1228,24 @@ index_destroy(Oid indexId)
 
 	if (!HeapTupleIsValid(tuple))
 		elog(NOTICE, "IndexRelationDestroy: %s's INDEX tuple missing",
-			 RelationGetRelationName(indexRelation));
+			 RelationGetRelationName(userindexRelation));
 
-	Assert(ItemPointerIsValid(&tuple->t_ctid));
+	indexRelation = heap_openr(IndexRelationName);
 			         
 	heap_delete(indexRelation, &tuple->t_ctid);
 	pfree(tuple);
+	heap_close(indexRelation);
 
 	/*
 	 * flush cache and physically remove the file
 	 */
-	ReleaseRelationBuffers(indexRelation);
+	ReleaseRelationBuffers(userindexRelation);
 
-	if (FileNameUnlink(relpath(indexRelation->rd_rel->relname.data)) < 0)
+	if (FileNameUnlink(relpath(userindexRelation->rd_rel->relname.data)) < 0)
 		elog(ERROR, "amdestroyr: unlink: %m");
 
-	index_close(indexRelation);
-	RelationForgetRelation(RelationGetRelid(indexRelation));
+	index_close(userindexRelation);
+	RelationForgetRelation(RelationGetRelid(userindexRelation));
 }
 
 /* ----------------------------------------------------------------
