@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.98 2000/09/06 14:15:16 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.99 2000/09/12 04:30:08 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -55,6 +55,9 @@
 
 
 static bool needs_toast_table(Relation rel);
+static bool is_view(char *relname, char *command);
+
+
 
 
 /* --------------------------------
@@ -1087,9 +1090,6 @@ void
 AlterTableAddConstraint(char *relationName,
 						bool inh, Node *newConstraint)
 {
-	char rulequery[41+NAMEDATALEN]; 
-	void *qplan;
-	char nulls[1]="";
 
 	if (newConstraint == NULL)
 		elog(ERROR, "ALTER TABLE / ADD CONSTRAINT passed invalid constraint.");
@@ -1100,19 +1100,8 @@ AlterTableAddConstraint(char *relationName,
 #endif
 
 	/* check to see if the table to be constrained is a view. */
-	sprintf(rulequery, "select * from pg_views where viewname='%s'", relationName);
-	if (SPI_connect()!=SPI_OK_CONNECT)
-		elog(ERROR, "ALTER TABLE: Unable to determine if %s is a view - SPI_connect failure..", relationName);
-        qplan=SPI_prepare(rulequery, 0, NULL);
-	if (!qplan)
-		elog(ERROR, "ALTER TABLE: Unable to determine if %s is a view - SPI_prepare failure.", relationName);
-	qplan=SPI_saveplan(qplan);
-	if (SPI_execp(qplan, NULL, nulls, 1)!=SPI_OK_SELECT) 
-		elog(ERROR, "ALTER TABLE: Unable to determine if %s is a view - SPI_execp failure.", relationName);
-        if (SPI_processed != 0)
-                elog(ERROR, "ALTER TABLE: Cannot add constraints to views.");
-        if (SPI_finish() != SPI_OK_FINISH)
-                elog(NOTICE, "SPI_finish() failed in ALTER TABLE");
+	if (is_view(relationName, "ALTER TABLE"))
+		 elog(ERROR, "ALTER TABLE: Cannot add constraints to views.");
 		
 	switch (nodeTag(newConstraint))
 	{
@@ -1261,19 +1250,8 @@ AlterTableAddConstraint(char *relationName,
 				}
 
 				/* check to see if the referenced table is a view. */
-				sprintf(rulequery, "select * from pg_views where viewname='%s'", fkconstraint->pktable_name);
-				if (SPI_connect()!=SPI_OK_CONNECT)
-					elog(ERROR, "ALTER TABLE: Unable to determine if %s is a view.", relationName);
-			        qplan=SPI_prepare(rulequery, 0, NULL);
-				if (!qplan)
-					elog(ERROR, "ALTER TABLE: Unable to determine if %s is a view.", relationName);
-				qplan=SPI_saveplan(qplan);
-				if (SPI_execp(qplan, NULL, nulls, 1)!=SPI_OK_SELECT) 
-					elog(ERROR, "ALTER TABLE: Unable to determine if %s is a view.", relationName);
-			        if (SPI_processed != 0)
-			                elog(ERROR, "ALTER TABLE: Cannot add constraints to views.");
-			        if (SPI_finish() != SPI_OK_FINISH)
-			                elog(NOTICE, "SPI_finish() failed in RI_FKey_check()");
+				if (is_view(fkconstraint->pktable_name, "ALTER TABLE"))
+				 elog(ERROR, "ALTER TABLE: Cannot add constraints to views.");
 
 				/*
 				 * Grab an exclusive lock on the pk table, so that someone
@@ -1720,6 +1698,9 @@ LockTableCommand(LockStmt *lockstmt)
 	Relation	rel;
 	int			aclresult;
 
+	if (is_view(lockstmt->relname, "LOCK TABLE")) 
+			elog(ERROR, "LOCK TABLE: cannot lock a view");
+
 	rel = heap_openr(lockstmt->relname, NoLock);
 
 	if (lockstmt->mode == AccessShareLock)
@@ -1735,3 +1716,29 @@ LockTableCommand(LockStmt *lockstmt)
 	heap_close(rel, NoLock);	/* close rel, keep lock */
 }
 
+
+static
+bool
+is_view (char * relname, char *command)
+{
+	bool retval;
+	char rulequery[41+NAMEDATALEN]; 
+	void *qplan;
+	char nulls[1]="";
+
+	sprintf(rulequery, "select * from pg_views where viewname='%s'", relname);
+	if (SPI_connect()!=SPI_OK_CONNECT)
+		elog(ERROR, "%s: Unable to determine if %s is a view - SPI_connect failure..", command, relname);
+	qplan=SPI_prepare(rulequery, 0, NULL);
+	if (!qplan)
+		elog(ERROR, "%s: Unable to determine if %s is a view - SPI_prepare failure.", command, relname);
+	qplan=SPI_saveplan(qplan);
+	if (SPI_execp(qplan, NULL, nulls, 1)!=SPI_OK_SELECT) 
+		elog(ERROR, "%s: Unable to determine if %s is a view - SPI_execp failure.", command, relname);
+
+	retval = (SPI_processed != 0);
+  if (SPI_finish() != SPI_OK_FINISH)
+	 elog(NOTICE, "SPI_finish() failed in %s", command);
+
+  return retval;
+}
