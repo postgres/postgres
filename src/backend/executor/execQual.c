@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.53 1999/06/12 19:22:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.53.2.1 1999/09/18 23:30:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1128,9 +1128,10 @@ ExecEvalCase(CaseExpr *caseExpr, ExprContext *econtext, bool *isNull)
 
 		/*
 		 * if we have a true test, then we return the result, since the
-		 * case statement is satisfied.
+		 * case statement is satisfied.  A NULL result from the test is
+		 * not considered true.
 		 */
-		if (DatumGetInt32(const_value) != 0)
+		if (DatumGetInt32(const_value) != 0 && ! *isNull)
 		{
 			const_value = ExecEvalExpr((Node *) wclause->result,
 									   econtext,
