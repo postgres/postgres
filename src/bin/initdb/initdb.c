@@ -43,7 +43,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $Header: /cvsroot/pgsql/src/bin/initdb/initdb.c,v 1.13 2003/11/23 22:17:59 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/initdb/initdb.c,v 1.14 2003/11/25 19:18:26 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -485,18 +485,18 @@ pclose_check(FILE *stream)
 	}
 	else if (WIFEXITED(exitstatus))
 	{
-		fprintf(stderr, _("child process exited with exit code %d\n"),
-				WEXITSTATUS(exitstatus));
+		fprintf(stderr, _("%s: child process exited with exit code %d\n"),
+				progname, WEXITSTATUS(exitstatus));
 	}
 	else if (WIFSIGNALED(exitstatus))
 	{
-		fprintf(stderr, _("child process was terminated by signal %d\n"),
-				WTERMSIG(exitstatus));
+		fprintf(stderr, _("%s: child process was terminated by signal %d\n"),
+				progname, WTERMSIG(exitstatus));
 	}
 	else
 	{
-		fprintf(stderr, _("child process exited with unexpected status %d\n"),
-				exitstatus);
+		fprintf(stderr, _("%s: child process exited with unrecognized status %d\n"),
+				progname, exitstatus);
 	}
 
 	exit_nicely();
@@ -842,9 +842,9 @@ check_input(char *path)
 	if (stat(path, &statbuf) != 0 || !S_ISREG(statbuf.st_mode))
 	{
 		fprintf(stderr,
-				_("%s: file \"%s\" not found\n"
-		   "This means you have a corrupted installation or identified\n"
-				"the wrong directory with the invocation option -L.\n"),
+				_("%s: file \"%s\" does not exist\n"
+				  "This means you have a corrupted installation or identified\n"
+				  "the wrong directory with the invocation option -L.\n"),
 				progname, path);
 		exit(1);
 	}
@@ -1900,7 +1900,7 @@ check_ok()
 	}
 	else if (output_failed)
 	{
-		printf(_("failed to write to child process\n"));
+		printf(_("could not write to child process\n"));
 		exit_nicely();
 	}
 	else
@@ -2252,7 +2252,7 @@ main(int argc, char *argv[])
 
 	if ((short_version = get_short_version()) == NULL)
 	{
-		fprintf(stderr, _("%s: could not get valid short version\n"), progname);
+		fprintf(stderr, _("%s: could not determine valid short version string\n"), progname);
 		exit(1);
 	}
 
