@@ -760,7 +760,7 @@ SELECT '' AS to_number_9,  to_number('.0', '99999999.99999999');
 SELECT '' AS to_number_10, to_number('0', '99.99');
 SELECT '' AS to_number_11, to_number('.-01', 'S99.99');
 SELECT '' AS to_number_12, to_number('.01-', '99.99S');
-SELECT '' AS to_number_13, to_number(' . 0 1 -', ' 9 9 . 9 9 S');
+SELECT '' AS to_number_13, to_number(' . 0 1-', ' 9 9 . 9 9 S');
 
 --
 -- Input syntax

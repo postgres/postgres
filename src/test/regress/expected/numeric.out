@@ -1191,7 +1191,7 @@ SELECT '' AS to_number_12, to_number('.01-', '99.99S');
               |     -0.01
 (1 row)
 
-SELECT '' AS to_number_13, to_number(' . 0 1 -', ' 9 9 . 9 9 S');
+SELECT '' AS to_number_13, to_number(' . 0 1-', ' 9 9 . 9 9 S');
  to_number_13 | to_number 
 --------------+-----------
               |     -0.01

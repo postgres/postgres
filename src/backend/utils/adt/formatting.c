@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.79 2004/10/13 01:25:11 neilc Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.80 2004/10/28 18:55:06 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2004, PostgreSQL Global Development Group
@@ -853,7 +853,8 @@ typedef struct NUMProc
 				num_pre,		/* space before first number	*/
 
 				read_dec,		/* to_number - was read dec. point	*/
-				read_post;		/* to_number - number of dec. digit */
+				read_post,		/* to_number - number of dec. digit */
+				read_pre;		/* to_number - number non-dec. digit */
 
 	char	   *number,			/* string with number	*/
 			   *number_p,		/* pointer to current number position */
@@ -3623,15 +3624,18 @@ get_last_relevant_decnum(char *num)
 static void
 NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 {
-
+	bool isread = FALSE;
+		
 #ifdef DEBUG_TO_FROM_CHAR
-	elog(DEBUG_elog_output, " --- scan start --- ");
+	elog(DEBUG_elog_output, " --- scan start --- id=%s",
+		(id==NUM_0 || id==NUM_9) ? "NUM_0/9" : id==NUM_DEC ? "NUM_DEC" : "???");
 #endif
 
 	if (*Np->inout_p == ' ')
 		Np->inout_p++;
 
 #define OVERLOAD_TEST	(Np->inout_p >= Np->inout + plen)
+#define AMOUNT_TEST(_s)	(plen-(Np->inout_p-Np->inout) >= _s)
 
 	if (*Np->inout_p == ' ')
 		Np->inout_p++;
@@ -3640,68 +3644,73 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 		return;
 
 	/*
-	 * read sign
+	 * read sign before number
 	 */
-	if (*Np->number == ' ' && (id == NUM_0 || id == NUM_9 || NUM_S))
+	if (*Np->number == ' ' && (id == NUM_0 || id == NUM_9 ) && 
+			(Np->read_pre + Np->read_post)==0)
 	{
 
 #ifdef DEBUG_TO_FROM_CHAR
-		elog(DEBUG_elog_output, "Try read sign (%c)", *Np->inout_p);
+		elog(DEBUG_elog_output, "Try read sign (%c), locale positive: %s, negative: %s", 
+				*Np->inout_p, Np->L_positive_sign, Np->L_negative_sign);
 #endif
 
 		/*
 		 * locale sign
 		 */
-		if (IS_LSIGN(Np->Num))
+		if (IS_LSIGN(Np->Num) && Np->Num->lsign == NUM_LSIGN_PRE)
 		{
-
-			int			x = strlen(Np->L_negative_sign);
-
+			int x=0;
 #ifdef DEBUG_TO_FROM_CHAR
-			elog(DEBUG_elog_output, "Try read locale sign (%c)", *Np->inout_p);
+			elog(DEBUG_elog_output, "Try read locale pre-sign (%c)", *Np->inout_p);
 #endif
-			if (!strncmp(Np->inout_p, Np->L_negative_sign, x))
+			if ((x = strlen(Np->L_negative_sign)) && 
+				AMOUNT_TEST(x) &&
+				strncmp(Np->inout_p, Np->L_negative_sign, x)==0)
 			{
-				Np->inout_p += x - 1;
+				Np->inout_p += x;
 				*Np->number = '-';
-				return;
 			}
-
-			x = strlen(Np->L_positive_sign);
-			if (!strncmp(Np->inout_p, Np->L_positive_sign, x))
+			else if ((x = strlen(Np->L_positive_sign)) && 
+				AMOUNT_TEST(x) &&
+				strncmp(Np->inout_p, Np->L_positive_sign, x)==0)
 			{
-				Np->inout_p += x - 1;
+				Np->inout_p += x;
 				*Np->number = '+';
-				return;
 			}
 		}
-
+		else
+		{
 #ifdef DEBUG_TO_FROM_CHAR
-		elog(DEBUG_elog_output, "Try read simple sign (%c)", *Np->inout_p);
+			elog(DEBUG_elog_output, "Try read simple sign (%c)", *Np->inout_p);
 #endif
+			/*
+			 * simple + - < >
+			 */
+			if (*Np->inout_p == '-' || (IS_BRACKET(Np->Num) &&
+										*Np->inout_p == '<'))
+			{
 
-		/*
-		 * simple + - < >
-		 */
-		if (*Np->inout_p == '-' || (IS_BRACKET(Np->Num) &&
-									*Np->inout_p == '<'))
-		{
+				*Np->number = '-';	/* set - */
+				Np->inout_p++;
 
-			*Np->number = '-';	/* set - */
-			Np->inout_p++;
+			}
+			else if (*Np->inout_p == '+')
+			{
 
-		}
-		else if (*Np->inout_p == '+')
-		{
-
-			*Np->number = '+';	/* set + */
-			Np->inout_p++;
+				*Np->number = '+';	/* set + */
+				Np->inout_p++;
+			}
 		}
 	}
 
 	if (OVERLOAD_TEST)
 		return;
-
+	
+#ifdef DEBUG_TO_FROM_CHAR
+	elog(DEBUG_elog_output, "Scan for numbers (%c), current number: '%s'", *Np->inout_p, Np->number);
+#endif
+	
 	/*
 	 * read digit
 	 */
@@ -3716,16 +3725,19 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 
 		if (Np->read_dec)
 			Np->read_post++;
+		else
+			Np->read_pre++;
 
+		isread = TRUE;
+		
 #ifdef DEBUG_TO_FROM_CHAR
 		elog(DEBUG_elog_output, "Read digit (%c)", *Np->inout_p);
 #endif
-
-		/*
-		 * read decimal point
-		 */
+	/*
+	 * read decimal point
+	 */
 	}
-	else if (IS_DECIMAL(Np->Num))
+	else if (IS_DECIMAL(Np->Num) && Np->read_dec == FALSE)
 	{
 
 #ifdef DEBUG_TO_FROM_CHAR
@@ -3737,7 +3749,7 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 			*Np->number_p = '.';
 			Np->number_p++;
 			Np->read_dec = TRUE;
-
+			isread = TRUE;
 		}
 		else
 		{
@@ -3747,13 +3759,88 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 			elog(DEBUG_elog_output, "Try read locale point (%c)",
 				 *Np->inout_p);
 #endif
-			if (!strncmp(Np->inout_p, Np->decimal, x))
+			if (x && AMOUNT_TEST(x) && strncmp(Np->inout_p, Np->decimal, x)==0)
 			{
 				Np->inout_p += x - 1;
 				*Np->number_p = '.';
 				Np->number_p++;
 				Np->read_dec = TRUE;
+				isread = TRUE;
 			}
+		}
+	}
+
+	if (OVERLOAD_TEST)
+		return;
+	
+	/*
+	 * Read sign behind "last" number
+	 *
+	 * We need sign detection because determine exact position of 
+	 * post-sign is difficult:
+	 *
+	 * 	FM9999.9999999S 	-> 123.001-
+	 * 	9.9S			-> .5-
+	 * 	FM9.999999MI		-> 5.01-
+	 */
+	if (*Np->number == ' ' && Np->read_pre + Np->read_post > 0)
+	{
+		/*
+	   	 * locale sign (NUM_S) is always anchored behind a last number, if:
+		 *	- locale sign expected
+		 *	- last read char was NUM_0/9 or NUM_DEC
+		 *	- and next char is not digit
+      		 */		 
+		if (IS_LSIGN(Np->Num) && isread && 
+				(Np->inout_p+1) <= Np->inout + plen &&
+				isdigit(*(Np->inout_p+1))==0)
+		{
+			int x;
+			char *tmp = Np->inout_p++;
+			
+#ifdef DEBUG_TO_FROM_CHAR
+			elog(DEBUG_elog_output, "Try read locale post-sign (%c)", *Np->inout_p);
+#endif
+			if ((x = strlen(Np->L_negative_sign)) && 
+				AMOUNT_TEST(x) &&
+				strncmp(Np->inout_p, Np->L_negative_sign, x)==0)
+			{
+				Np->inout_p += x-1;		/* -1 .. NUM_processor() do inout_p++ */
+				*Np->number = '-';
+			}
+			else if ((x = strlen(Np->L_positive_sign)) && 
+				AMOUNT_TEST(x) && 
+				strncmp(Np->inout_p, Np->L_positive_sign, x)==0)
+			{
+				Np->inout_p += x-1;		/* -1 .. NUM_processor() do inout_p++ */
+				*Np->number = '+';
+			}
+			if (*Np->number == ' ')
+				/* no sign read */
+				Np->inout_p = tmp;
+		}
+		
+		/*
+		 * try read non-locale sign, it's happen only if format is not exact
+		 * and we cannot determine sign position of MI/PL/SG, an example:
+		 *
+		 * FM9.999999MI            -> 5.01-
+		 *
+		 * if (.... && IS_LSIGN(Np->Num)==FALSE) prevents read wrong formats
+		 * like to_number('1 -', '9S') where sign is not anchored to last number.
+		 */
+		else if (isread==FALSE && IS_LSIGN(Np->Num)==FALSE && 
+				(IS_PLUS(Np->Num) || IS_MINUS(Np->Num)))
+		{
+#ifdef DEBUG_TO_FROM_CHAR
+			elog(DEBUG_elog_output, "Try read simple post-sign (%c)", *Np->inout_p);
+#endif
+			/*
+			 * simple + -
+			 */
+			if (*Np->inout_p == '-' || *Np->inout_p == '+')
+				/* NUM_processor() do inout_p++ */
+				*Np->number = *Np->inout_p;
 		}
 	}
 }
@@ -3978,6 +4065,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 	Np->inout = inout;
 	Np->last_relevant = NULL;
 	Np->read_post = 0;
+	Np->read_pre = 0; 
 	Np->read_dec = FALSE;
 
 	if (Np->Num->zero_start)
@@ -4130,6 +4218,11 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 		{
 			/*
 			 * Create/reading digit/zero/blank/sing
+			 *
+			 * 'NUM_S' note:
+			 *    The locale sign is anchored to number and we read/write it
+			 *    when we work with first or last number (NUM_0/NUM_9). This 
+			 *    is reason why NUM_S missing in follow switch().
 			 */
 			switch (n->key->id)
 			{
