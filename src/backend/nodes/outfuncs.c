@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.10 1997/09/08 21:44:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.11 1997/12/04 23:20:32 thomas Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -68,6 +68,70 @@ _outIntList(StringInfo str, List *list)
 }
 
 static void
+_outCreateStmt(StringInfo str, CreateStmt *node)
+{
+	char		buf[500];
+
+	sprintf(buf, "CREATE");
+	appendStringInfo(str, buf);
+
+	sprintf(buf, " :relname %s", node->relname);
+	appendStringInfo(str, buf);
+	appendStringInfo(str, " :columns");
+	_outNode(str, node->tableElts);
+} /* _outCreateStmt() */
+
+static void
+_outIndexStmt(StringInfo str, IndexStmt *node)
+{
+	char		buf[500];
+
+	sprintf(buf, "INDEX");
+	appendStringInfo(str, buf);
+
+	sprintf(buf, " :idxname %s", node->idxname);
+	appendStringInfo(str, buf);
+	sprintf(buf, " :relname %s", node->relname);
+	appendStringInfo(str, buf);
+	sprintf(buf, " :method %s", node->accessMethod);
+	appendStringInfo(str, buf);
+	sprintf(buf, " :unique %s", (node->unique? "y": "n"));
+	appendStringInfo(str, buf);
+	appendStringInfo(str, " :columns");
+	_outNode(str, node->indexParams);
+} /* _outIndexStmt() */
+
+static void
+_outColumnDef(StringInfo str, ColumnDef *node)
+{
+	char		buf[500];
+
+	sprintf(buf, "COLUMNDEF");
+	appendStringInfo(str, buf);
+
+	sprintf(buf, " :colname %s", node->colname);
+	appendStringInfo(str, buf);
+	appendStringInfo(str, " :typename");
+	_outNode(str, node->typename);
+} /* _outColumnDef() */
+
+static void
+_outIndexElem(StringInfo str, IndexElem *node)
+{
+	char		buf[500];
+
+	sprintf(buf, "INDEXELEM");
+	appendStringInfo(str, buf);
+
+	sprintf(buf, " :name %s", node->name);
+	appendStringInfo(str, buf);
+	sprintf(buf, " :class %s", node->class);
+	appendStringInfo(str, buf);
+	appendStringInfo(str, " :tname");
+	_outNode(str, node->tname);
+} /* _outIndexElem() */
+
+static void
 _outQuery(StringInfo str, Query *node)
 {
 	char		buf[500];
@@ -77,14 +141,41 @@ _outQuery(StringInfo str, Query *node)
 
 	sprintf(buf, " :command %d", node->commandType);
 	appendStringInfo(str, buf);
-	if (node->utilityStmt &&
-		nodeTag(node->utilityStmt) == T_NotifyStmt)
-		sprintf(buf, " :utility %s",
-				((NotifyStmt *) (node->utilityStmt))->relname);
+	if (node->utilityStmt)
+	{
+		switch (nodeTag(node->utilityStmt))
+		{
+			case T_CreateStmt:
+				sprintf(buf, " :create %s",
+					((CreateStmt *) (node->utilityStmt))->relname);
+				appendStringInfo(str, buf);
+				_outNode(str, node->utilityStmt);
+				break;
+
+			case T_IndexStmt:
+				sprintf(buf, " :index %s on %s",
+					((IndexStmt *) (node->utilityStmt))->idxname,
+					((IndexStmt *) (node->utilityStmt))->relname);
+				appendStringInfo(str, buf);
+				_outNode(str, node->utilityStmt);
+				break;
+
+			case T_NotifyStmt:
+				sprintf(buf, " :utility %s",
+					((NotifyStmt *) (node->utilityStmt))->relname);
+				appendStringInfo(str, buf);
+				break;
+
+			default:
+				sprintf(buf, " :utility ?");
+				appendStringInfo(str, buf);
+		}
+	}
 	else
+	{
 /* use "" to designate	*/
-		sprintf(buf, " :utility \"\"");
-	appendStringInfo(str, buf);
+		appendStringInfo(str, " :utility \"\"");
+	}
 
 	sprintf(buf, " :resrel %d", node->resultRelation);
 	appendStringInfo(str, buf);
@@ -1527,6 +1618,20 @@ _outNode(StringInfo str, void *obj)
 		appendStringInfo(str, "{");
 		switch (nodeTag(obj))
 		{
+			case T_CreateStmt:
+				_outCreateStmt(str, obj);
+				break;
+			case T_IndexStmt:
+				_outIndexStmt(str, obj);
+				break;
+
+			case T_ColumnDef:
+				_outColumnDef(str, obj);
+				break;
+			case T_IndexElem:
+				_outIndexElem(str, obj);
+				break;
+
 			case T_Query:
 				_outQuery(str, obj);
 				break;
