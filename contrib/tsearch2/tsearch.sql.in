@@ -6,9 +6,9 @@ BEGIN;
 --dict conf
 CREATE TABLE pg_ts_dict (
 	dict_name	text not null primary key,
-	dict_init	oid,
+	dict_init	regprocedure,
 	dict_initoption	text,
-	dict_lexize	oid not null,
+	dict_lexize	regprocedure not null,
 	dict_comment	text
 ) with oids;
 
@@ -136,11 +136,11 @@ insert into pg_ts_dict select
 --dict conf
 CREATE TABLE pg_ts_parser (
 	prs_name	text not null primary key,
-	prs_start	oid not null,
-	prs_nexttoken	oid not null,
-	prs_end		oid not null,
-	prs_headline	oid not null,
-	prs_lextype	oid not null,
+	prs_start	regprocedure not null,
+	prs_nexttoken	regprocedure not null,
+	prs_end		regprocedure not null,
+	prs_headline	regprocedure not null,
+	prs_lextype	regprocedure not null,
 	prs_comment	text
 ) with oids;
 
