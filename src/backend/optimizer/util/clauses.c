@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.166 2004/03/21 22:29:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.167 2004/03/24 22:40:28 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2347,6 +2347,10 @@ expression_tree_walker(Node *node,
 	 */
 	if (node == NULL)
 		return false;
+
+	/* Guard against stack overflow due to overly complex expressions */
+	check_stack_depth();
+
 	switch (nodeTag(node))
 	{
 		case T_Var:
@@ -2720,6 +2724,10 @@ expression_tree_mutator(Node *node,
 
 	if (node == NULL)
 		return NULL;
+
+	/* Guard against stack overflow due to overly complex expressions */
+	check_stack_depth();
+
 	switch (nodeTag(node))
 	{
 		case T_Var:

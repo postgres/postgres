@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.192 2004/03/23 01:23:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.193 2004/03/24 22:40:29 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1024,6 +1024,15 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
+		{"max_stack_depth", PGC_SUSET, RESOURCES_MEM,
+			gettext_noop("Sets the maximum stack depth, in kilobytes."),
+			NULL
+		},
+		&max_stack_depth,
+		2048, 100, INT_MAX / 1024, assign_max_stack_depth, NULL
+	},
+
+	{
 		{"vacuum_cost_page_hit", PGC_USERSET, RESOURCES,
 			gettext_noop("Vacuum cost for a page found in the buffer cache."),
 			NULL
@@ -1097,14 +1106,6 @@ static struct config_int ConfigureNamesInt[] =
 		0, 0, INT_MAX, NULL, NULL
 	},
 #endif
-	{
-		{"max_expr_depth", PGC_USERSET, CLIENT_CONN_OTHER,
-			gettext_noop("Sets the maximum expression nesting depth."),
-			NULL
-		},
-		&max_expr_depth,
-		DEFAULT_MAX_EXPR_DEPTH, 10, INT_MAX, NULL, NULL
-	},
 
 	{
 		{"statement_timeout", PGC_USERSET, CLIENT_CONN_STATEMENT,
@@ -1246,7 +1247,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"debug_shared_buffers", PGC_POSTMASTER, RESOURCES_MEM,
+		{"debug_shared_buffers", PGC_POSTMASTER, STATS_MONITORING,
 			gettext_noop("Interval to report shared buffer status in seconds"),
 			NULL
 		},

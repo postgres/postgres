@@ -58,7 +58,7 @@
 #shared_buffers = 1000		# min 16, at least max_connections*2, 8KB each
 #work_mem = 1024		# min 64, size in KB
 #maintenance_work_mem = 16384	# min 1024, size in KB
-#debug_shared_buffers = 0	# 0-600 seconds
+#max_stack_depth = 2048		# min 100, size in KB
 
 #vacuum_cost_page_hit = 1	# 0-10000 credits
 #vacuum_cost_page_miss = 10	# 0-10000 credits
@@ -204,6 +204,8 @@
 #log_executor_stats = false
 #log_statement_stats = false
 
+#debug_shared_buffers = 0	# 0-600 seconds
+
 # - Query/Index Statistics Collector -
 
 #stats_start_collector = true
@@ -243,7 +245,6 @@
 
 #explain_pretty_print = true
 #dynamic_library_path = '$libdir'
-#max_expr_depth = 10000		# min 10
 
 
 #---------------------------------------------------------------------------

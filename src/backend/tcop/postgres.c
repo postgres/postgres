@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.396 2004/03/21 22:29:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.397 2004/03/24 22:40:29 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -92,10 +92,21 @@ bool        Log_disconnections = false;
  */
 int			XfuncMode = 0;
 
+/* GUC variable for maximum stack depth (measured in kilobytes) */
+int			max_stack_depth = 2048;
+
+
 /* ----------------
  *		private variables
  * ----------------
  */
+
+/* max_stack_depth converted to bytes for speed of checking */
+static int	max_stack_depth_bytes = 2048*1024;
+
+/* stack base pointer (initialized by PostgresMain) */
+static char *stack_base_ptr = NULL;
+
 
 /*
  * Flag to mark SIGHUP. Whenever the main loop comes around it
@@ -1970,6 +1981,64 @@ ProcessInterrupts(void)
 }
 
 
+/*
+ * check_stack_depth: check for excessively deep recursion
+ *
+ * This should be called someplace in any recursive routine that might possibly
+ * recurse deep enough to overflow the stack.  Most Unixen treat stack
+ * overflow as an unrecoverable SIGSEGV, so we want to error out ourselves
+ * before hitting the hardware limit.  Unfortunately we have no direct way
+ * to detect the hardware limit, so we have to rely on the admin to set a
+ * GUC variable for it ...
+ */
+void
+check_stack_depth(void)
+{
+	char	stack_top_loc;
+	int		stack_depth;
+
+	/*
+	 * Compute distance from PostgresMain's local variables to my own
+	 *
+	 * Note: in theory stack_depth should be ptrdiff_t or some such, but
+	 * since the whole point of this code is to bound the value to something
+	 * much less than integer-sized, int should work fine.
+	 */
+	stack_depth = (int) (stack_base_ptr - &stack_top_loc);
+	/*
+	 * Take abs value, since stacks grow up on some machines, down on others
+	 */
+	if (stack_depth < 0)
+		stack_depth = -stack_depth;
+	/*
+	 * Trouble?
+	 *
+	 * The test on stack_base_ptr prevents us from erroring out if called
+	 * during process setup or in a non-backend process.  Logically it should
+	 * be done first, but putting it here avoids wasting cycles during normal
+	 * cases.
+	 */
+	if (stack_depth > max_stack_depth_bytes &&
+		stack_base_ptr != NULL)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_STATEMENT_TOO_COMPLEX),
+				 errmsg("stack depth limit exceeded"),
+				 errhint("Increase the configuration parameter \"max_stack_depth\".")));
+	}
+}
+
+/* GUC assign hook to update max_stack_depth_bytes from max_stack_depth */
+bool
+assign_max_stack_depth(int newval, bool doit, GucSource source)
+{
+	/* Range check was already handled by guc.c */
+	if (doit)
+		max_stack_depth_bytes = newval * 1024;
+	return true;
+}
+
+
 static void
 usage(char *progname)
 {
@@ -2030,6 +2099,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	GucSource	gucsource;
 	char	   *tmp;
 	int			firstchar;
+	char		stack_base;
 	StringInfoData	input_message;
 	volatile bool send_rfq = true;
 
@@ -2068,6 +2138,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 	set_ps_display("startup");
 
 	SetProcessingMode(InitProcessing);
+
+	/* Set up reference point for stack depth checking */
+	stack_base_ptr = &stack_base;
 
 	/*
 	 * Set default values for command-line options.

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.166 2004/03/17 20:48:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.167 2004/03/24 22:40:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,9 +35,6 @@
 #include "utils/syscache.h"
 
 
-int			max_expr_depth = DEFAULT_MAX_EXPR_DEPTH;
-static int	expr_depth_counter = 0;
-
 bool		Transform_null_equals = false;
 
 static Node *typecast_expression(ParseState *pstate, Node *expr,
@@ -45,19 +42,6 @@ static Node *typecast_expression(ParseState *pstate, Node *expr,
 static Node *transformColumnRef(ParseState *pstate, ColumnRef *cref);
 static Node *transformIndirection(ParseState *pstate, Node *basenode,
 					 List *indirection);
-
-
-/*
- * Initialize for parsing a new query.
- *
- * We reset the expression depth counter here, in case it was left nonzero
- * due to ereport()'ing out of the last parsing operation.
- */
-void
-parse_expr_init(void)
-{
-	expr_depth_counter = 0;
-}
 
 
 /*
@@ -92,20 +76,8 @@ transformExpr(ParseState *pstate, Node *expr)
 	if (expr == NULL)
 		return NULL;
 
-	/*
-	 * Guard against an overly complex expression leading to coredump due
-	 * to stack overflow here, or in later recursive routines that
-	 * traverse expression trees.  Note that this is very unlikely to
-	 * happen except with pathological queries; but we don't want someone
-	 * to be able to crash the backend quite that easily...
-	 */
-	if (++expr_depth_counter > max_expr_depth)
-		ereport(ERROR,
-				(errcode(ERRCODE_STATEMENT_TOO_COMPLEX),
-				 errmsg("expression too complex"),
-				 errdetail("Nesting depth exceeds maximum expression depth %d.",
-						   max_expr_depth),
-				 errhint("Increase the configuration parameter \"max_expr_depth\".")));
+	/* Guard against stack overflow due to overly complex expressions */
+	check_stack_depth();
 
 	switch (nodeTag(expr))
 	{
@@ -937,8 +909,6 @@ transformExpr(ParseState *pstate, Node *expr)
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(expr));
 			break;
 	}
-
-	expr_depth_counter--;
 
 	return result;
 }

@@ -14,7 +14,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parser.c,v 1.60 2003/11/29 19:51:52 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parser.c,v 1.61 2004/03/24 22:40:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,6 @@ raw_parser(const char *str)
 
 	scanner_init(str);
 	parser_init();
-	parse_expr_init();
 
 	yyresult = yyparse();
 

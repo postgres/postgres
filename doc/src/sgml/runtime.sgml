@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.253 2004/03/24 03:48:41 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.254 2004/03/24 22:40:28 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -885,6 +885,26 @@ SET ENABLE_SEQSCAN TO OFF;
         value significantly larger than <varname>work_mem</varname>.  Larger
         settings may improve performance for vacuuming and for restoring
         database dumps.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-max-stack-depth" xreflabel="max_stack_depth">
+      <term><varname>max_stack_depth</varname> (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        Specifies the maximum safe depth of the server's execution stack.
+        The ideal setting for this parameter is the actual stack size limit
+        enforced by the kernel (as set by <literal>ulimit -s</> or local
+        equivalent), less a safety margin of a megabyte or so.  The safety
+        margin is needed because the stack depth is not checked in every
+        routine in the server, but only in key potentially-recursive routines
+        such as expression evaluation.  Setting the parameter higher than
+        the actual kernel limit will mean that a runaway recursive function
+        can crash an individual backend process.  The default setting is
+        2048 KB (two megabytes), which is conservatively small and unlikely
+        to risk crashes.  However, it may be too small to allow execution
+        of complex functions.
        </para>
       </listitem>
      </varlistentry>
@@ -2569,18 +2589,6 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
         development purposes. The recommended way to set this parameter
         is in the <filename>postgresql.conf</filename> configuration
         file.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-max-expr-depth" xreflabel="max_expr_depth">
-      <term><varname>max_expr_depth</varname> (<type>integer</type>)</term>
-      <listitem>
-       <para>
-        Sets the maximum expression nesting depth of the parser. The
-        default value of 10000 is high enough for any normal query,
-        but you can raise it if needed. (But if you raise it too high,
-        you run the risk of server crashes due to stack overflow.)
        </para>
       </listitem>
      </varlistentry>

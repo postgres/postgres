@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.102 2004/03/23 01:23:48 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.103 2004/03/24 22:40:29 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -535,11 +535,11 @@ psql_completion(char *text, int start, int end)
 		"log_statement_stats",
 		"maintenance_work_mem",
 		"max_connections",
-		"max_expr_depth",
 		"max_files_per_process",
 		"max_fsm_pages",
 		"max_fsm_relations",
 		"max_locks_per_transaction",
+		"max_stack_depth",
 		"password_encryption",
 		"port",
 		"random_page_cost",

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.156 2004/03/17 20:48:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.157 2004/03/24 22:40:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,11 @@
  *		trying to speed it up, the execution plan should be pre-processed
  *		to facilitate attribute sharing between nodes wherever possible,
  *		instead of doing needless copying.	-cim 5/31/91
+ *
+ *		During expression evaluation, we check_stack_depth only in
+ *		ExecMakeFunctionResult rather than at every single node.  This
+ *		is a compromise that trades off precision of the stack limit setting
+ *		to gain speed.
  */
 
 #include "postgres.h"
@@ -840,6 +845,9 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 	bool		hasSetArg;
 	int			i;
 
+	/* Guard against stack overflow due to overly complex expressions */
+	check_stack_depth();
+
 	/*
 	 * arguments is a list of expressions to evaluate before passing to
 	 * the function manager.  We skip the evaluation if it was already
@@ -1057,6 +1065,9 @@ ExecMakeFunctionResultNoSets(FuncExprState *fcache,
 	Datum		result;
 	FunctionCallInfoData fcinfo;
 	int			i;
+
+	/* Guard against stack overflow due to overly complex expressions */
+	check_stack_depth();
 
 	if (isDone)
 		*isDone = ExprSingleResult;
@@ -2503,6 +2514,10 @@ ExecInitExpr(Expr *node, PlanState *parent)
 
 	if (node == NULL)
 		return NULL;
+
+	/* Guard against stack overflow due to overly complex expressions */
+	check_stack_depth();
+
 	switch (nodeTag(node))
 	{
 		case T_Var:
