@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.29 2000/08/03 16:34:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.30 2000/09/19 18:17:56 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,13 +136,6 @@ namege(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) >= 0);
 }
 
-/* SQL-function interface to GetPgUserName() */
-Datum
-getpgusername(PG_FUNCTION_ARGS)
-{
-	PG_RETURN_DATUM(DirectFunctionCall1(namein,
-										CStringGetDatum(GetPgUserName())));
-}
 
 /* (see char.c for comparison/operation routines) */
 
@@ -217,6 +210,21 @@ namestrcmp(Name name, const char *str)
 		return 1;				/* NULL < anything */
 	return strncmp(NameStr(*name), str, NAMEDATALEN);
 }
+
+
+/* SQL-functions CURRENT_USER and SESSION_USER */
+Datum
+current_user(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_DATUM(DirectFunctionCall1(namein, CStringGetDatum(GetUserName(GetUserId()))));
+}
+
+Datum
+session_user(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_DATUM(DirectFunctionCall1(namein, CStringGetDatum(GetUserName(GetSessionUserId()))));
+}
+
 
 /*****************************************************************************
  *	 PRIVATE ROUTINES														 *

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.35 2000/08/29 20:02:07 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.36 2000/09/19 18:17:53 petere Exp $
 -->
 
  <chapter id="datatype">
@@ -211,11 +211,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.35 2000/08/29 20:02:07 mo
       </row>
      </thead>
      <tbody>
-      <row>
-       <entry>getpgusername()</entry>
-       <entry>current_user</entry>
-       <entry>user name in current session</entry>
-      </row>
       <row>
        <entry>date('now')</entry>
        <entry>current_date</entry>

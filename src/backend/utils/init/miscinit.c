@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.54 2000/09/06 14:15:22 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.55 2000/09/19 18:17:57 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -272,50 +272,65 @@ convertstr(unsigned char *buff, int len, int dest)
 
 #endif
 
-/* ----------------
- *		GetPgUserName
- * ----------------
- */
-char *
-GetPgUserName(void)
-{
-	HeapTuple tuple;
-	Oid userid;
-
-	userid = GetUserId();
-
-	tuple = SearchSysCacheTuple(SHADOWSYSID, ObjectIdGetDatum(userid), 0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "invalid user id %u", (unsigned) userid);
-
-	return pstrdup( NameStr(((Form_pg_shadow) GETSTRUCT(tuple))->usename) );
-}
 
 
 /* ----------------------------------------------------------------
- *		GetUserId and SetUserId
+ * 	User ID things
+ *
+ * The session user is determined at connection start and never
+ * changes.  The current user may change when "setuid" functions
+ * are implemented.  Conceptually there is a stack, whose bottom
+ * is the session user.  You are yourself responsible to save and
+ * restore the current user id if you need to change it.
  * ----------------------------------------------------------------
  */
-static Oid	UserId = InvalidOid;
+static Oid	CurrentUserId = InvalidOid;
+static Oid	SessionUserId = InvalidOid;
 
 
+/*
+ * This function is relevant for all privilege checks.
+ */
 Oid
-GetUserId()
+GetUserId(void)
 {
-	AssertState(OidIsValid(UserId));
-	return UserId;
+	AssertState(OidIsValid(CurrentUserId));
+	return CurrentUserId;
 }
 
 
 void
 SetUserId(Oid newid)
 {
-	UserId = newid;
+	AssertArg(OidIsValid(newid));
+	CurrentUserId = newid;
+}
+
+
+/*
+ * This value is only relevant for informational purposes.
+ */
+Oid
+GetSessionUserId(void)
+{
+	AssertState(OidIsValid(SessionUserId));
+	return SessionUserId;
 }
 
 
 void
-SetUserIdFromUserName(const char *username)
+SetSessionUserId(Oid newid)
+{
+	AssertArg(OidIsValid(newid));
+	SessionUserId = newid;
+	/* Current user defaults to session user. */
+	if (!OidIsValid(CurrentUserId))
+		CurrentUserId = newid;
+}
+
+
+void
+SetSessionUserIdFromUserName(const char *username)
 {
 	HeapTuple	userTup;
 
@@ -330,13 +345,30 @@ SetUserIdFromUserName(const char *username)
 								  0, 0, 0);
 	if (!HeapTupleIsValid(userTup))
 		elog(FATAL, "user \"%s\" does not exist", username);
-	SetUserId( ((Form_pg_shadow) GETSTRUCT(userTup))->usesysid );
+	SetSessionUserId( ((Form_pg_shadow) GETSTRUCT(userTup))->usesysid );
 }
+
+
+/*
+ * Get user name from user id
+ */
+char *
+GetUserName(Oid userid)
+{
+	HeapTuple tuple;
+
+	tuple = SearchSysCacheTuple(SHADOWSYSID, ObjectIdGetDatum(userid), 0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "invalid user id %u", (unsigned) userid);
+
+	return pstrdup( NameStr(((Form_pg_shadow) GETSTRUCT(tuple))->usename) );
+}
+
 
 
 /*-------------------------------------------------------------------------
  *
- * posmaster pid file stuffs. $DATADIR/postmaster.pid is created when:
+ * postmaster pid file stuffs. $DATADIR/postmaster.pid is created when:
  *
  *	(1) postmaster starts. In this case pid > 0.
  *	(2) postgres starts in standalone mode. In this case

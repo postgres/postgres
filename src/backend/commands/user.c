@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.67 2000/08/27 21:50:17 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.68 2000/09/19 18:17:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -348,7 +348,7 @@ AlterUser(AlterUserStmt *stmt)
 	/* must be superuser or just want to change your own password */
 	if (!superuser() &&
 	  !(stmt->createdb == 0 && stmt->createuser == 0 && !stmt->validUntil
-		&& stmt->password && strcmp(GetPgUserName(), stmt->user) == 0))
+		&& stmt->password && strcmp(GetUserName(GetUserId()), stmt->user) == 0))
 		elog(ERROR, "ALTER USER: permission denied");
 
 	/* changes to the flat password file cannot be rolled back */

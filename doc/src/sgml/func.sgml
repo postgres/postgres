@@ -1510,6 +1510,61 @@ Not defined by this name. Implements the intersection operator '#'
   </sect1>
 
   <sect1>
+   <title id="misc-funcs">Miscellaneous Functions</>
+
+   <table>
+    <title>Miscellaneous Functions</>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Name</> <entry>Return type</> <entry>Description</></row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry>current_user</>
+       <entry>name</>
+       <entry>user name of current execution context</>
+      </row>
+      <row>
+       <entry>user</>
+       <entry>name</>
+       <entry>equivalent to <function>current_user</></>
+      </row>
+      <row>
+       <entry>session_user</>
+       <entry>name</>
+       <entry>session user name</>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    The <function>session_user</> is the user that initiated a database
+    connection and is fixed for the duration of that connection. The
+    <function>current_user</> is the user identifier that is applicable
+    for permission checking. Currently it is always equal to the session
+    user, but in the future there might be <quote>setuid</> functions and
+    other facilities to allow the current user to change temporarily.
+    In Unix parlance, the session user is the <quote>real user</>
+    and the current user is the <quote>effective user</>.
+   </para>
+
+   <para>
+    Note that these functions have special syntactic status in <acronym>SQL</>;
+    they must be called without trailing parentheses.
+   </para>
+
+   <note>
+    <title>Deprecated</>
+    <para>
+     The function <function>getpgusername()</> is an obsolete equivalent
+     of <function>current_user</>.
+    </para>
+   </note>
+  </sect1>
+
+  <sect1>
    <title id="aggregate-funcs">Aggregate Functions</title>
 
    <note>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.65 2000/09/06 14:15:22 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.66 2000/09/19 18:17:57 petere Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -374,9 +374,9 @@ InitPostgres(const char *dbname, const char *username)
 	 * user id.
 	 */
 	if (bootstrap)
-		SetUserId(geteuid());
+		SetSessionUserId(geteuid());
 	else
-		SetUserIdFromUserName(username);
+		SetSessionUserIdFromUserName(username);
 
 	setuid(geteuid());
 

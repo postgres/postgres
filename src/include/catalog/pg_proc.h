@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.166 2000/09/15 18:45:27 tgl Exp $
+ * $Id: pg_proc.h,v 1.167 2000/09/19 18:18:01 petere Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -928,8 +928,8 @@ DATA(insert OID = 681 (  oidvectorgt	   PGUID 12 f t t t 2 f 16 "30 30" 100 0 0 
 DESCR("greater-than");
 
 /* OIDS 700 - 799 */
-DATA(insert OID = 710 (  getpgusername	   PGUID 12 f t f t 0 f 19 "0" 100 0 0 100  getpgusername - ));
-DESCR("Return username");
+DATA(insert OID = 710 (  getpgusername	   PGUID 12 f t f t 0 f 19 "0" 100 0 0 100  current_user - ));
+DESCR("deprecated -- use current_user");
 DATA(insert OID = 711 (  userfntest		   PGUID 12 f t t t 1 f 23 "23" 100 0 0 100  userfntest - ));
 DESCR("");
 DATA(insert OID = 713 (  oidrand		   PGUID 12 f t f t 2 f 16 "26 23" 100 0 0 100  oidrand - ));
@@ -974,6 +974,12 @@ DESCR("greater-than-or-equal");
 
 DATA(insert OID = 744 (  array_eq		   PGUID 12 f t t t 2 f 16 "0 0" 100 0 0 100 array_eq -));
 DESCR("array equal");
+
+DATA(insert OID = 745 (  current_user	   PGUID 12 f t f t 0 f 19 "0" 100 0 0 100  current_user - ));
+DESCR("current user name");
+DATA(insert OID = 746 (  session_user	   PGUID 12 f t f t 0 f 19 "0" 100 0 0 100  session_user - ));
+DESCR("session user name");
+
 DATA(insert OID = 747 (  array_dims		   PGUID 12 f t t t 1 f 25 "0" 100 0 0 100 array_dims -));
 DESCR("array dimensions");
 DATA(insert OID = 750 (  array_in		   PGUID 12 f t t t 3 f 23 "0 26 23" 100 0 0 100	array_in - ));

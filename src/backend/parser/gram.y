@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.190 2000/09/15 18:45:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.191 2000/09/19 18:17:55 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4993,7 +4993,7 @@ c_expr:  attr
 		| CURRENT_USER
 				{
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "getpgusername";
+					n->funcname = "current_user";
 					n->args = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
@@ -5002,7 +5002,7 @@ c_expr:  attr
 		| SESSION_USER
 				{
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "getpgusername";
+					n->funcname = "session_user";
 					n->args = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
@@ -5011,7 +5011,7 @@ c_expr:  attr
 		| USER
 				{
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "getpgusername";
+					n->funcname = "current_user";
 					n->args = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
