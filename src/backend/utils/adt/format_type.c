@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.3 2000/08/21 18:23:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.4 2000/08/25 18:05:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "fmgr.h"
 #include "catalog/pg_type.h"
 #include "utils/builtins.h"
+#include "utils/numeric.h"
 #include "utils/syscache.h"
 
 #define MAX_INT32_LEN 11
@@ -213,6 +214,53 @@ format_type_internal(Oid type_oid, int32 typemod)
 	return buf;
 }
 
+
+/*
+ * type_maximum_size --- determine maximum length of a varlena column
+ *
+ * If the max length is indeterminate, return -1.  In particular, we return
+ * -1 for any type not known to this routine.  We assume the caller has
+ * already determined that the type is a varlena type, so it's not
+ * necessary to look up the type's pg_type tuple here.
+ *
+ * This may appear unrelated to format_type(), but in fact the two routines
+ * share knowledge of the encoding of typmod for different types, so it's
+ * convenient to keep them together.
+ */
+int32
+type_maximum_size(Oid type_oid, int32 typemod)
+{
+	if (typemod <= 0)
+		return -1;
+
+	switch (type_oid)
+	{
+		case BPCHAROID:
+		case VARCHAROID:
+			/* typemod includes varlena header */
+			return typemod;
+
+		case NUMERICOID:
+			/* precision (ie, max # of digits) is in upper bits of typmod */
+			if (typemod > VARHDRSZ)
+			{
+				int		precision = ((typemod - VARHDRSZ) >> 16) & 0xffff;
+
+				/* Numeric stores 2 decimal digits/byte, plus header */
+				return (precision + 1) / 2 + NUMERIC_HDRSZ;
+			}
+			break;
+
+		case VARBITOID:
+		case ZPBITOID:
+			/* typemod is the (max) number of bits */
+			return (typemod + (BITSPERBYTE-1)) / BITSPERBYTE
+				+ 2 * sizeof(int32);
+	}
+
+	/* Unknown type, or unlimited-length type such as 'text' */
+	return -1;
+}
 
 
 /*

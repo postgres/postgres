@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.95 2000/08/21 17:22:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.96 2000/08/25 18:05:54 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -19,6 +19,7 @@
  */
 #include "postgres.h"
 
+#include "access/tuptoaster.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/index.h"
@@ -50,6 +51,9 @@
 #include "parser/parse.h"
 #endif	 /* _DROP_COLUMN_HACK__ */
 #include "access/genam.h"
+
+
+static bool needs_toast_table(Relation rel);
 
 
 /* --------------------------------
@@ -715,6 +719,7 @@ systable_beginscan(Relation rel, const char *indexRelname, int nkeys, ScanKey en
 		sysscan->scan = heap_beginscan(rel, false, SnapshotNow, nkeys, entry);
 	return (void *) sysscan;
 }
+
 static void
 systable_endscan(void *scan)
 {
@@ -731,6 +736,7 @@ systable_endscan(void *scan)
 		heap_endscan(sysscan->scan);
 	pfree(scan);
 }
+
 static HeapTuple
 systable_getnext(void *scan)
 {
@@ -780,6 +786,7 @@ find_attribute_walker(Node *node, int attnum)
 	}
 	return expression_tree_walker(node, find_attribute_walker, (void *) attnum);
 }
+
 static bool
 find_attribute_in_node(Node *node, int attnum)
 {
@@ -1377,17 +1384,14 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 	HeapTuple			reltup;
 	HeapTupleData		classtuple;
 	TupleDesc			tupdesc;
-	Form_pg_attribute  *att;
 	Relation			class_rel;
 	Buffer				buffer;
 	Relation			ridescs[Num_pg_class_indices];
 	Oid					toast_relid;
 	Oid					toast_idxid;
-	bool				has_toastable_attrs = false;
-	int					i;
 	char				toast_relname[NAMEDATALEN + 1];
 	char				toast_idxname[NAMEDATALEN + 1];
-	Relation			toast_rel;
+	Relation			toast_idxrel;
 	IndexInfo		   *indexInfo;
 	Oid					classObjectId[1];
 
@@ -1400,15 +1404,23 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 #endif
 
 	/*
-	 * lock the pg_class tuple for update
+	 * Grab an exclusive lock on the target table, which we will NOT
+	 * release until end of transaction.
 	 */
+	rel = heap_openr(relationName, AccessExclusiveLock);
+	myrelid = RelationGetRelid(rel);
+
+	/*
+	 * lock the pg_class tuple for update (is that really needed?)
+	 */
+	class_rel = heap_openr(RelationRelationName, RowExclusiveLock);
+
 	reltup = SearchSysCacheTuple(RELNAME, PointerGetDatum(relationName),
 								 0, 0, 0);
-
 	if (!HeapTupleIsValid(reltup))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
 			 relationName);
-	class_rel = heap_openr(RelationRelationName, RowExclusiveLock);
+
 	classtuple.t_self = reltup->t_self;
 	switch (heap_mark4update(class_rel, &classtuple, &buffer))
 	{
@@ -1420,42 +1432,6 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 	}
 	reltup = heap_copytuple(&classtuple);
 	ReleaseBuffer(buffer);
-
-	/*
-	 * Grab an exclusive lock on the target table, which we will NOT
-	 * release until end of transaction.
-	 */
-	rel = heap_openr(relationName, AccessExclusiveLock);
-	myrelid = RelationGetRelid(rel);
-
-	/*
-	 * Check if there are any toastable attributes on the table
-	 */
-	tupdesc = rel->rd_att;
-	att = tupdesc->attrs;
-	for (i = 0; i < tupdesc->natts; i++)
-	{
-		if (att[i]->attstorage != 'p')
-		{
-			has_toastable_attrs = true;
-			break;
-		}
-	}
-
-	if (!has_toastable_attrs)
-	{
-	    if (silent)
-		{
-			heap_close(rel, NoLock);
-			heap_close(class_rel, NoLock);
-			heap_freetuple(reltup);
-			return;
-		}
-
-		elog(ERROR, "ALTER TABLE: relation \"%s\" has no toastable attributes",
-				relationName);
-	}
-
 
 	/*
 	 * XXX is the following check sufficient? At least it would
@@ -1480,8 +1456,25 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 		}
 
 		elog(ERROR, "ALTER TABLE: relation \"%s\" already has a toast table",
-				relationName);
+			 relationName);
     }
+
+	/*
+	 * Check to see whether the table actually needs a TOAST table.
+	 */
+	if (! needs_toast_table(rel))
+	{
+	    if (silent)
+		{
+			heap_close(rel, NoLock);
+			heap_close(class_rel, NoLock);
+			heap_freetuple(reltup);
+			return;
+		}
+
+		elog(ERROR, "ALTER TABLE: relation \"%s\" does not need a toast table",
+			 relationName);
+	}
 
 	/*
 	 * Create the toast table and its index
@@ -1518,8 +1511,9 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 	 * collision, and the toast rel will be destroyed when its master is,
 	 * so there's no need to handle the toast rel as temp.
 	 */
-	heap_create_with_catalog(toast_relname, tupdesc, RELKIND_TOASTVALUE,
-							 false, true);
+	toast_relid = heap_create_with_catalog(toast_relname, tupdesc,
+										   RELKIND_TOASTVALUE,
+										   false, true);
 
 	/* make the toast relation visible, else index creation will fail */
 	CommandCounterIncrement();
@@ -1540,18 +1534,18 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 				 BTREE_AM_OID, classObjectId,
 				 false, false, true);
 
-	/* make the index visible in this transaction */
-	CommandCounterIncrement();
+	/*
+	 * Update toast rel's pg_class entry to show that it has an index.
+	 * NOTE this also does CommandCounterIncrement() to make index visible.
+	 */
+	setRelhasindexInplace(toast_relid, true, false);
 
 	/*
-	 * Get the OIDs of the newly created objects
+	 * Get the OID of the newly created index
 	 */
-	toast_rel = heap_openr(toast_relname, NoLock);
-	toast_relid = RelationGetRelid(toast_rel);
-	heap_close(toast_rel, NoLock);
-	toast_rel = index_openr(toast_idxname);
-	toast_idxid = RelationGetRelid(toast_rel);
-	index_close(toast_rel);
+	toast_idxrel = index_openr(toast_idxname);
+	toast_idxid = RelationGetRelid(toast_idxrel);
+	index_close(toast_idxrel);
 
 	/*
 	 * Store the toast table- and index-Oid's in the relation tuple
@@ -1570,36 +1564,6 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 	heap_freetuple(reltup);
 
 	/*
-	 * Finally update the toast relations pg_class tuple to say
-	 * it has an index.
-	 */
-	reltup = SearchSysCacheTuple(RELNAME, PointerGetDatum(toast_relname),
-								 0, 0, 0);
-	if (!HeapTupleIsValid(reltup))
-		elog(ERROR, "ALTER TABLE: just created toast relation \"%s\" not found",
-			 toast_relname);
-	classtuple.t_self = reltup->t_self;
-	switch (heap_mark4update(class_rel, &classtuple, &buffer))
-	{
-		case HeapTupleSelfUpdated:
-		case HeapTupleMayBeUpdated:
-			break;
-		default:
-			elog(ERROR, "couldn't lock pg_class tuple");
-	}
-	reltup = heap_copytuple(&classtuple);
-	ReleaseBuffer(buffer);
-
-	((Form_pg_class) GETSTRUCT(reltup))->relhasindex = true;
-	heap_update(class_rel, &reltup->t_self, reltup, NULL);
-
-	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
-	CatalogIndexInsert(ridescs, Num_pg_class_indices, class_rel, reltup);
-	CatalogCloseIndices(Num_pg_class_indices, ridescs);
-
-	heap_freetuple(reltup);
-
-	/*
 	 * Close relations and make changes visible
 	 */
 	heap_close(class_rel, NoLock);
@@ -1608,6 +1572,56 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 	CommandCounterIncrement();
 }
 
+/*
+ * Check to see whether the table needs a TOAST table.  It does only if
+ * (1) there are any toastable attributes, and (2) the maximum length
+ * of a tuple could exceed TOAST_TUPLE_THRESHOLD.  (We don't want to
+ * create a toast table for something like "f1 varchar(20)".)
+ */
+static bool
+needs_toast_table(Relation rel)
+{
+	int32		data_length = 0;
+	bool		maxlength_unknown = false;
+	bool		has_toastable_attrs = false;
+	TupleDesc	tupdesc;
+	Form_pg_attribute  *att;
+	int32		tuple_length;
+	int			i;
+
+	tupdesc = rel->rd_att;
+	att = tupdesc->attrs;
+
+	for (i = 0; i < tupdesc->natts; i++)
+	{
+		data_length = att_align(data_length, att[i]->attlen, att[i]->attalign);
+		if (att[i]->attlen >= 0)
+		{
+			/* Fixed-length types are never toastable */
+			data_length += att[i]->attlen;
+		}
+		else
+		{
+			int32	maxlen = type_maximum_size(att[i]->atttypid,
+											   att[i]->atttypmod);
+
+			if (maxlen < 0)
+				maxlength_unknown = true;
+			else
+				data_length += maxlen;
+			if (att[i]->attstorage != 'p')
+				has_toastable_attrs = true;
+		}
+	}
+	if (!has_toastable_attrs)
+		return false;			/* nothing to toast? */
+	if (maxlength_unknown)
+		return true;			/* any unlimited-length attrs? */
+	tuple_length = MAXALIGN(offsetof(HeapTupleHeaderData, t_bits) +
+							BITMAPLEN(tupdesc->natts)) +
+		MAXALIGN(data_length);
+	return (tuple_length > TOAST_TUPLE_THRESHOLD);
+}
 
 
 /*
