@@ -29,10 +29,11 @@ PARSER
 * Select a[1] FROM test fails, it needs test.a[1]
 * Array index references without table name cause problems
 * Update table SET table.value = 3 fails
-* Creating index of TIMESTAMP fails, rename to DATETIME(Thomas)
+* Creating index of TIMESTAMP & RELTIME fails, rename to DATETIME(Thomas)
 * SELECT foo UNION SELECT foo is incorrectly simplified to SELECT foo
 * INSERT ... SELECT ... GROUP BY groups by target columns not source columns
 * CREATE TABLE test (a char(5) DEFAULT text '', b int4) fails on INSERT
+* UNION with LIMIT fails
 
 VIEWS
 
@@ -154,7 +155,7 @@ MISC
 * Allow cursors to be DECLAREd/OPENed/CLOSEed outside transactions
 * Allow PQrequestCancel() to terminate when in waiting-for-lock state
 * Transaction log, so re-do log can be on a separate disk by
-  logging SQL queries, or before/after row images
+  with after-row images
 * Populate backend status area and write program to dump status data
 * Make oid use unsigned int more reliably, pg_atoi()
 * Allow subqueries in target list
