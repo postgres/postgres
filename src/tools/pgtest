@@ -24,5 +24,4 @@ cat $TMP/0 |
 grep -i warning | 
 grep -v setproctitle | 
 grep -v find_rule | 
-grep -v yy_flex_realloc |
-grep -v '\[javac\] [0-9]* warning'
+grep -v yy_flex_realloc
