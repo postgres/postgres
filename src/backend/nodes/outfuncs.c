@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.15 1998/01/06 18:52:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.16 1998/01/06 23:19:47 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -80,7 +80,7 @@ _outCreateStmt(StringInfo str, CreateStmt *node)
 	_outNode(str, node->inhRelnames);
 	appendStringInfo(str, " :constraints");
 	_outNode(str, node->constraints);
-} /* _outCreateStmt() */
+}
 
 static void
 _outIndexStmt(StringInfo str, IndexStmt *node)
@@ -102,10 +102,10 @@ _outIndexStmt(StringInfo str, IndexStmt *node)
 	appendStringInfo(str, " :rangetable ");
 	_outNode(str, node->rangetable);
 	appendStringInfo(str, " :lossy ");
-	appendStringInfo(str, (*node->lossy ? "y": "n"));
+	appendStringInfo(str, (*node->lossy ? "true": "false"));
 	appendStringInfo(str, " :unique ");
-	appendStringInfo(str, (node->unique ? "y": "n"));
-} /* _outIndexStmt() */
+	appendStringInfo(str, (node->unique ? "true": "false"));
+}
 
 static void
 _outColumnDef(StringInfo str, ColumnDef *node)
@@ -117,12 +117,32 @@ _outColumnDef(StringInfo str, ColumnDef *node)
 	appendStringInfo(str, " :typename ");
 	_outNode(str, node->typename);
 	appendStringInfo(str, " :is_not_null ");
-	appendStringInfo(str, (node->is_not_null ? "y": "n"));
+	appendStringInfo(str, (node->is_not_null ? "true": "false"));
 	appendStringInfo(str, " :defval ");
 	appendStringInfo(str, node->defval);
 	appendStringInfo(str, " :constraints");
 	_outNode(str, node->constraints);
-} /* _outColumnDef() */
+}
+
+static void
+_outTypeName(StringInfo str, TypeName *node)
+{
+	char buf[500];
+	
+	appendStringInfo(str, "TYPENAME");
+
+	appendStringInfo(str, " :name ");
+	appendStringInfo(str, node->name);
+	appendStringInfo(str, " :timezone ");
+	appendStringInfo(str, (node->timezone ? "true" : "false"));
+	appendStringInfo(str, " :setof ");
+	appendStringInfo(str, (node->setof ? "true" : "false"));
+	appendStringInfo(str, " :arrayBounds ");
+	_outNode(str, node->arrayBounds);
+	appendStringInfo(str, " :typlen ");
+	sprintf(buf," %d ", node->typlen);
+	appendStringInfo(str, buf);
+}
 
 static void
 _outIndexElem(StringInfo str, IndexElem *node)
@@ -137,7 +157,7 @@ _outIndexElem(StringInfo str, IndexElem *node)
 	appendStringInfo(str, node->class);
 	appendStringInfo(str, " :tname");
 	_outNode(str, node->tname);
-} /* _outIndexElem() */
+}
 
 static void
 _outQuery(StringInfo str, Query *node)
@@ -190,11 +210,11 @@ _outQuery(StringInfo str, Query *node)
 	appendStringInfo(str, " :into ");
 	appendStringInfo(str, node->into);
 	appendStringInfo(str, " :isPortal ");
-	appendStringInfo(str, (node->isPortal ? "y": "n"));
+	appendStringInfo(str, (node->isPortal ? "true" : "false"));
 	appendStringInfo(str, " :isBinary ");
-	appendStringInfo(str, (node->isBinary ? "y": "n"));
+	appendStringInfo(str, (node->isBinary ? "true" : "false"));
 	appendStringInfo(str, " :unionall ");
-	appendStringInfo(str, (node->unionall ? "y": "n"));
+	appendStringInfo(str, (node->unionall ? "true" : "false"));
 	appendStringInfo(str, " :unique ");
 	appendStringInfo(str, node->uniqueFlag);
 	appendStringInfo(str, " :sortClause ");
@@ -220,21 +240,31 @@ _outQuery(StringInfo str, Query *node)
 }
 
 static void
-_outSortGroupBy(StringInfo str, SortGroupBy *node)
+_outSortClause(StringInfo str, SortClause *node)
 {
 	char		buf[500];
-	int i;
 	
-	appendStringInfo(str, "SORTGROUPBY");
+	appendStringInfo(str, "SORTCLAUSE");
 
-	appendStringInfo(str, " :resno ");
-	sprintf(buf," %d ", node->resno);
-	appendStringInfo(str, " :range ");
-	appendStringInfo(str, node->range);
-	appendStringInfo(str, " :name ");
-	appendStringInfo(str, node->name);
-	appendStringInfo(str, " :useOp ");
-	appendStringInfo(str, node->useOp);
+	appendStringInfo(str, " :resdom ");
+	_outNode(str, node->resdom);
+	appendStringInfo(str, " :opoid ");
+	sprintf(buf," %u ", node->opoid);
+	appendStringInfo(str, buf);
+}
+
+static void
+_outGroupClause(StringInfo str, GroupClause *node)
+{
+	char		buf[500];
+	
+	appendStringInfo(str, "GROUPCLAUSE");
+
+	appendStringInfo(str, " :entry ");
+	_outNode(str, node->entry);
+	appendStringInfo(str, " :grpOpoid ");
+	sprintf(buf," %u ", node->grpOpoid);
+	appendStringInfo(str, buf);
 }
 
 /*
@@ -252,7 +282,7 @@ _outPlanInfo(StringInfo str, Plan *node)
 	sprintf(buf, " :width %d", node->plan_width);
 	appendStringInfo(str, buf);
 	appendStringInfo(str, " :state ");
-	appendStringInfo(str,  (node->state == (EState *) NULL? "nil" : "non-NIL"));
+	appendStringInfo(str,  node->state ? "not-NULL" : "\"\"");
 	appendStringInfo(str, " :qptargetlist ");
 	_outNode(str, node->targetlist);
 	appendStringInfo(str, " :qpqual ");
@@ -1544,6 +1574,9 @@ _outNode(StringInfo str, void *obj)
 			case T_ColumnDef:
 				_outColumnDef(str, obj);
 				break;
+			case T_TypeName:
+				_outTypeName(str, obj);
+				break;
 			case T_IndexElem:
 				_outIndexElem(str, obj);
 				break;
@@ -1551,8 +1584,11 @@ _outNode(StringInfo str, void *obj)
 			case T_Query:
 				_outQuery(str, obj);
 				break;
-			case T_SortGroupBy:
-				_outSortGroupBy(str, obj);
+			case T_SortClause:
+				_outSortClause(str, obj);
+				break;
+			case T_GroupClause:
+				_outGroupClause(str, obj);
 				break;
 			case T_Plan:
 				_outPlan(str, obj);

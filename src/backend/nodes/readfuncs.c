@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.14 1998/01/06 18:52:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.15 1998/01/06 23:19:49 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -174,51 +174,49 @@ _readQuery()
 }
 
 /* ----------------
- *		_readSortGroupBy
+ *		_readSortClause
  * ----------------
  */
-static SortGroupBy *
-_readSortGroupBy()
+static SortClause *
+_readSortClause()
 {
-	SortGroupBy *local_node;
+	SortClause *local_node;
 	char	   *token;
 	int			length;
 
-	local_node = makeNode(SortGroupBy);
+	local_node = makeNode(SortClause);
 
-	token = lsptok(NULL, &length);		/* skip the :resno */
-	token = lsptok(NULL, &length);		/* get resno */
-	local_node->resno = atoi(token);
+	token = lsptok(NULL, &length);		/* skip the :resdom */
+	token = lsptok(NULL, &length);		/* get resdom */
+	local_node->resdom = nodeRead(true);
 
-	token = lsptok(NULL, &length);		/* skip :range */
-	token = lsptok(NULL, &length);		/* get range */
-	if (length == 0)
-		local_node->range = NULL;
-	else
-	{
-		local_node->range = palloc(length + 1);
-		StrNCpy(local_node->range, token, length+1);
-	}
+	token = lsptok(NULL, &length);		/* skip :opoid */
+	token = lsptok(NULL, &length);		/* get opoid */
+	local_node->opoid = strtoul(token,NULL,10);
 
-	token = lsptok(NULL, &length);		/* skip :name */
-	token = lsptok(NULL, &length);		/* get name */
-	if (length == 0)
-		local_node->name = NULL;
-	else
-	{
-		local_node->name = palloc(length + 1);
-		StrNCpy(local_node->name, token, length+1);
-	}
+	return (local_node);
+}
 
-	token = lsptok(NULL, &length);		/* skip :useOp */
-	token = lsptok(NULL, &length);		/* get useOp */
-	if (length == 0)
-		local_node->useOp = NULL;
-	else
-	{
-		local_node->useOp = palloc(length + 1);
-		StrNCpy(local_node->useOp, token, length+1);
-	}
+/* ----------------
+ *		_readGroupClause
+ * ----------------
+ */
+static GroupClause *
+_readGroupClause()
+{
+	GroupClause *local_node;
+	char	   *token;
+	int			length;
+
+	local_node = makeNode(GroupClause);
+
+	token = lsptok(NULL, &length);		/* skip the :entry */
+	token = lsptok(NULL, &length);		/* get entry */
+	local_node->entry = nodeRead(true);
+
+	token = lsptok(NULL, &length);		/* skip :grpOpoid */
+	token = lsptok(NULL, &length);		/* get grpOpoid */
+	local_node->grpOpoid = strtoul(token,NULL,10);
 
 	return (local_node);
 }
@@ -248,7 +246,7 @@ _getPlan(Plan *node)
 	token = lsptok(NULL, &length);		/* eat the :state stuff */
 	token = lsptok(NULL, &length);		/* now get the state */
 
-	if (!strncmp(token, "nil", 3))
+	if (length == 0)
 	{
 		node->state = (EState *) NULL;
 	}
@@ -343,7 +341,7 @@ _readAppend()
 
 	token = lsptok(NULL, &length);		/* eat :unionrelid */
 	token = lsptok(NULL, &length);		/* get unionrelid */
-	local_node->unionrelid = atoi(token);
+	local_node->unionrelid = strtoul(token,NULL,10);
 
 	token = lsptok(NULL, &length);		/* eat :unionrtentries */
 	local_node->unionrtentries = nodeRead(true);		/* now read it */
@@ -449,7 +447,7 @@ _readHashJoin()
 
 	token = lsptok(NULL, &length);		/* eat :hashjoinop */
 	token = lsptok(NULL, &length);		/* get hashjoinop */
-	local_node->hashjoinop = atoi(token);
+	local_node->hashjoinop = strtoul(token,NULL,10);
 
 	token = lsptok(NULL, &length);		/* eat :hashjointable */
 	token = lsptok(NULL, &length);		/* eat hashjointable */
@@ -490,7 +488,7 @@ _getScan(Scan *node)
 
 	token = lsptok(NULL, &length);		/* eat :scanrelid */
 	token = lsptok(NULL, &length);		/* get scanrelid */
-	node->scanrelid = atoi(token);
+	node->scanrelid = strtoul(token,NULL,10);
 }
 
 /* ----------------
@@ -735,7 +733,7 @@ _readResdom()
 
 	token = lsptok(NULL, &length);		/* eat :reskey */
 	token = lsptok(NULL, &length);		/* get reskey */
-	local_node->reskey = atoi(token);
+	local_node->reskey = strtoul(token,NULL,10);
 
 	token = lsptok(NULL, &length);		/* eat :reskeyop */
 	token = lsptok(NULL, &length);		/* get reskeyop */
@@ -816,7 +814,7 @@ _readVar()
 
 	token = lsptok(NULL, &length);		/* eat :varno */
 	token = lsptok(NULL, &length);		/* get varno */
-	local_node->varno = atoi(token);
+	local_node->varno = strtoul(token,NULL,10);
 
 	token = lsptok(NULL, &length);		/* eat :varattno */
 	token = lsptok(NULL, &length);		/* get varattno */
@@ -854,7 +852,7 @@ _readArray()
 
 	token = lsptok(NULL, &length);		/* eat :arrayelemtype */
 	token = lsptok(NULL, &length);		/* get arrayelemtype */
-	local_node->arrayelemtype = (Oid) atoi(token);
+	local_node->arrayelemtype = strtoul(token,NULL,10);
 
 	token = lsptok(NULL, &length);		/* eat :arrayelemlength */
 	token = lsptok(NULL, &length);		/* get arrayelemlength */
@@ -896,7 +894,7 @@ _readArrayRef()
 
 	token = lsptok(NULL, &length);		/* eat :refelemtype */
 	token = lsptok(NULL, &length);		/* get refelemtype */
-	local_node->refelemtype = (Oid) atoi(token);
+	local_node->refelemtype = strtoul(token,NULL,10);
 
 	token = lsptok(NULL, &length);		/* eat :refattrlength */
 	token = lsptok(NULL, &length);		/* get refattrlength */
@@ -947,7 +945,7 @@ _readConst()
 
 	token = lsptok(NULL, &length);		/* get :constlen */
 	token = lsptok(NULL, &length);		/* now read it */
-	local_node->constlen = atoi(token);
+	local_node->constlen = strtoul(token,NULL,10);
 
 	token = lsptok(NULL, &length);		/* get :constisnull */
 	token = lsptok(NULL, &length);		/* now read it */
@@ -1337,7 +1335,7 @@ _readRangeTblEntry()
 
 	token = lsptok(NULL, &length);		/* eat :inh */
 	token = lsptok(NULL, &length);		/* get :inh */
-	local_node->inh = atoi(token);
+	local_node->inh = (token[0] == 't') ? true : false;
 
 	token = lsptok(NULL, &length);		/* eat :refname */
 	token = lsptok(NULL, &length);		/* get :refname */
@@ -1351,7 +1349,7 @@ _readRangeTblEntry()
 
 	token = lsptok(NULL, &length);		/* eat :relid */
 	token = lsptok(NULL, &length);		/* get :relid */
-	local_node->relid = atoi(token);
+	local_node->relid = strtoul(token,NULL,10);
 
 	return (local_node);
 }
@@ -1676,7 +1674,7 @@ _readOrderKey()
 	token = lsptok(NULL, &length);		/* get :array_index */
 	token = lsptok(NULL, &length);		/* now read it */
 
-	local_node->array_index = atoi(token);
+	local_node->array_index = strtoul(token,NULL,10);
 
 	return (local_node);
 }
@@ -1838,7 +1836,7 @@ _readHInfo()
 	token = lsptok(NULL, &length);		/* get :hashop */
 	token = lsptok(NULL, &length);		/* now read it */
 
-	local_node->hashop = atoi(token);
+	local_node->hashop = strtoul(token,NULL,10);
 
 	token = lsptok(NULL, &length);		/* get :jmkeys */
 	local_node->jmethod.jmkeys = nodeRead(true);		/* now read it */
@@ -2108,9 +2106,13 @@ parsePlanString(void)
 	{
 		return_value = _readQuery();
 	}
-	else if (!strncmp(token, "SORTGROUPBY", 11))
+	else if (!strncmp(token, "SORTCLAUSE", 10))
 	{
-		return_value = _readSortGroupBy();
+		return_value = _readSortClause();
+	}
+	else if (!strncmp(token, "GROUPCLAUSE", 10))
+	{
+		return_value = _readGroupClause();
 	}
 	else
 	{
