@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.56 1998/10/02 16:27:53 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.57 1999/01/28 15:28:40 wieck Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -467,11 +467,12 @@ echo "UPDATE pg_type SET typname = 'pg_views' WHERE typname = 'xpg_views';" |\
 mv $PGDATA/base/template1/xpg_views $PGDATA/base/template1/pg_views
 
 echo "CREATE RULE \"_RETpg_views\" AS ON SELECT TO pg_views DO INSTEAD	\
-	    SELECT relname AS viewname, 				\
-		   pg_get_userbyid(relowner) AS viewowner,		\
-	           pg_get_viewdef(relname) AS definition		\
-	      FROM pg_class WHERE relhasrules AND			\
-	           pg_get_viewdef(relname) != 'Not a view';" | \
+	    SELECT C.relname AS viewname, 				\
+		   pg_get_userbyid(C.relowner) AS viewowner,		\
+	           pg_get_viewdef(C.relname) AS definition		\
+	      FROM pg_class C WHERE C.relhasrules AND			\
+	           EXISTS (SELECT rulename FROM pg_rewrite R	\
+			   			WHERE ev_class = C.oid AND ev_type = '1');" | \
 	postgres $PGSQL_OPT template1 > /dev/null
 
 echo "Creating view pg_tables"
@@ -489,13 +490,14 @@ echo "UPDATE pg_type SET typname = 'pg_tables' WHERE typname = 'xpg_tables';" |\
 mv $PGDATA/base/template1/xpg_tables $PGDATA/base/template1/pg_tables
 
 echo "CREATE RULE \"_RETpg_tables\" AS ON SELECT TO pg_tables DO INSTEAD	\
-	    SELECT relname AS tablename, 				\
-		   pg_get_userbyid(relowner) AS tableowner,		\
-		   relhasindex AS hasindexes,				\
-		   relhasrules AS hasrules,				\
-		   (reltriggers > 0) AS hastriggers			\
-	      FROM pg_class WHERE relkind IN ('r', 's')			\
-	           AND pg_get_viewdef(relname) = 'Not a view';" | \
+	    SELECT C.relname AS tablename, 				\
+		   pg_get_userbyid(C.relowner) AS tableowner,		\
+		   C.relhasindex AS hasindexes,				\
+		   C.relhasrules AS hasrules,				\
+		   (C.reltriggers > 0) AS hastriggers			\
+	      FROM pg_class C WHERE C.relkind IN ('r', 's')			\
+	           AND NOT EXISTS (SELECT rulename FROM pg_rewrite	\
+			   					WHERE ev_class = C.oid AND ev_type = '1');" | \
 	postgres $PGSQL_OPT template1 > /dev/null
 
 echo "Creating view pg_indexes"
