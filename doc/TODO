@@ -133,7 +133,6 @@ TYPES
 * Make Absolutetime/Relativetime int4 because time_t can be int8 on some ports
 * Functions returning sets don't really work right[function]
 * Make type equivalency apply to aggregates
-* allow aggregates on oid
 
 VIEWS
 
