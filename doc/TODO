@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jan 12 00:32:20 EST 2001
+Last updated:		Fri Jan 12 12:47:59 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -181,6 +181,7 @@ CLIENTS
   ORDER BY direction
 * Update reltuples from COPY command
 * Allow COPY to specify column names
+* Allow COPY to dump/load CSV format
 * fix array handling for ECPG
 * -add pg_dump option to dump type names as standard ANSI types
 * -make pg_dump dump in oid order, so dependencies are resolved (Philip)
