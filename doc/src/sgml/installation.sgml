@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.151 2003/10/24 16:30:53 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.152 2003/10/24 20:39:09 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1553,11 +1553,9 @@ gunzip -c postgres.ps.gz \
        <row>
 	<entry><systemitem class="osname">FreeBSD</></entry>
 	<entry><systemitem>x86</></entry>
-	<entry>7.3</entry>
-	<entry>2002-10-29,
-	 3.3, Nigel J. Andrews (<email>nandrews@investsystems.co.uk</email>),
-	 4.7, Larry Rosenman (<email>ler@lerctr.org</email>),
-	 5.0, Sean Chittenden (<email>sean@chittenden.org</email>)</entry>
+	<entry>7.4</entry>
+	<entry>2003-10-24,
+	 4.9 Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
         <entry></entry>
        </row>
        <row>
@@ -1708,13 +1706,12 @@ gunzip -c postgres.ps.gz \
 	<entry>see also <filename>doc/FAQ_SCO</filename></entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Windows</></entry>
+	<entry><systemitem class="osname">Windows With <application>Cygwin</application></></entry>
 	<entry><systemitem>x86</></entry>
-	<entry>7.3</entry>
-	<entry>2002-10-29,
-	 Dave Page (<email>dpage@vale-housing.co.uk</email>),
-	 Jason Tishler (<email>jason@tishler.net</email>)</entry>
-        <entry>with <application>Cygwin</application>; see <filename>doc/FAQ_MSWIN</filename></entry>
+	<entry>7.4</entry>
+	<entry>2003-10-24,
+	 Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
+        <entry>see <filename>doc/FAQ_MSWIN</filename></entry>
        </row>
       <row>
        <entry><systemitem class="osname">Windows</></entry>
