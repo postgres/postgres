@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.103 2003/08/08 21:41:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.104 2003/09/16 00:50:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -409,7 +409,7 @@ SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, int *attnum,
 	bool		isnull;
 	int			i;
 
-	if (rel == NULL || tuple == NULL || natts <= 0 || attnum == NULL || Values == NULL)
+	if (rel == NULL || tuple == NULL || natts < 0 || attnum == NULL || Values == NULL)
 	{
 		SPI_result = SPI_ERROR_ARGUMENT;
 		return NULL;
