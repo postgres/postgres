@@ -10,7 +10,7 @@ import postgresql.largeobject.*;
 import postgresql.util.*;
 
 /**
- * $Id: Connection.java,v 1.17 1999/05/18 23:17:15 peter Exp $
+ * $Id: Connection.java,v 1.18 1999/09/14 05:50:33 peter Exp $
  *
  * This abstract class is used by postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -692,4 +692,17 @@ public abstract class Connection
      * version (from jdbc1 or jdbc2) are returned.
      */
     protected abstract java.sql.ResultSet getResultSet(postgresql.Connection conn, Field[] fields, Vector tuples, String status, int updateCount) throws SQLException;
+    
+    /**
+     * Overides finalize(). If called, it closes the connection.
+     *
+     * This was done at the request of Rachel Greenham
+     * <rachel@enlarion.demon.co.uk> who hit a problem where multiple
+     * clients didn't close the connection, and once a fortnight enough
+     * clients were open to kill the postgres server.
+     */
+    public void finalize() throws Throwable
+    {
+	close();
+    }
 }

@@ -4,7 +4,7 @@
 #    Makefile for Java JDBC interface
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.14 1999/06/23 05:56:17 peter Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.15 1999/09/14 05:50:27 peter Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ FIND		= find
 IDL2JAVA	= idltojava -fno-cpp -fno-tie
 JAR		= jar
 JAVA		= java
-JAVAC		= javac
+JAVAC		= javac -g
 JAVADOC		= javadoc
 RM		= rm -f
 TOUCH		= touch
@@ -22,12 +22,26 @@ TOUCH		= touch
 	$(JAVAC) $<
 
 .SUFFIXES:	.class .java
-.PHONY:		all clean doc examples
+.PHONY:		all clean doc examples msg
 
 # In 6.5, the all rule builds the makeVersion class which then calls make using
 # the jdbc1 or jdbc2 rules
-all:	makeVersion.class
-	make $$($(JAVA) makeVersion)
+all:	
+	@echo ------------------------------------------------------------
+	@echo Due to problems with some JVMs that dont return a meaningful
+	@echo version number, we have had to make the choice of what jdbc
+	@echo version is built as a compile time option.
+	@echo
+	@echo If you are using JDK1.1.x, you will need the JDBC1.2 driver.
+	@echo To compile, type:
+	@echo "  make jdbc1"
+	@echo
+	@echo "If you are using JDK1.2 (aka Java2) you need the JDBC2."
+	@echo To compile, type:
+	@echo "  make jdbc2"
+	@echo ------------------------------------------------------------
+
+msg:	
 	@echo ------------------------------------------------------------
 	@echo The JDBC driver has now been built. To make it available to
 	@echo other applications, copy the postgresql.jar file to a public
@@ -107,34 +121,29 @@ OBJ_JDBC2=	postgresql/jdbc2/ResultSet.class \
 		postgresql/jdbc2/ResultSetMetaData.class \
 		postgresql/jdbc2/Statement.class
 
-# This rule should never occur, but will be called when makeVersion fails to
-# understand the java.version property correctly.
-jdbc0:
-	@echo
-	@echo FATAL ERROR!
-	@echo
-	@echo makeVersion has not been able to determine what version of
-	@echo the JDK you are using, and hence what version of the driver
-	@echo to compile.
-	@echo
-	@echo There are two versions available, one that conforms to the
-	@echo JDBC 1 specification, and one to the JDBC 2 specification.
-	@echo
-	@echo To build the driver for JDBC 1 (usually for JDK 1.1 thru 1.1.7)
-	@echo then type: make jdbc1
-	@echo
-	@echo To build the driver for JDBC 2 (usually for JDK 1.2 and later)
-	@echo then type: make jdbc2
-	@echo
-	@echo If you still have problems, then please email the interfaces
-	@echo or bugs lists, or better still to me direct (peter@retep.org.uk)
-	@echo
-
 # This rule builds the JDBC1 compliant driver
-jdbc1:	$(OBJ_COMMON) $(OBJ_JDBC1) postgresql.jar
+jdbc1:
+	(echo "package postgresql;" ;\
+	 echo "public class DriverClass {" ;\
+	 echo "public static String connectClass=\"postgresql.jdbc1.Connection\";" ;\
+	 echo "}" \
+	) >postgresql/DriverClass.java
+	@$(MAKE) jdbc1real
+
+jdbc2real: postgresql/DriverClass.class \
+	$(OBJ_COMMON) $(OBJ_JDBC2) postgresql.jar msg
 
 # This rule builds the JDBC2 compliant driver
-jdbc2:	$(OBJ_COMMON) $(OBJ_JDBC2) postgresql.jar
+jdbc2:	
+	(echo "package postgresql;" ;\
+	 echo "public class DriverClass {" ;\
+	 echo "public static String connectClass=\"postgresql.jdbc2.Connection\";" ;\
+	 echo "}" \
+	) >postgresql/DriverClass.java
+	@$(MAKE) jdbc2real
+
+jdbc2real: postgresql/DriverClass.class \
+	$(OBJ_COMMON) $(OBJ_JDBC2) postgresql.jar msg
 
 # If you have problems with this rule, replace the $( ) with ` ` as some
 # shells (mainly sh under Solaris) doesn't recognise $( )
@@ -143,7 +152,7 @@ jdbc2:	$(OBJ_COMMON) $(OBJ_JDBC2) postgresql.jar
 #	directory. We use this later for compiling the dual-mode driver.
 #
 postgresql.jar: $(OBJ) $(OBJ_COMMON)
-	$(JAR) -c0f $@ $$($(FIND) postgresql -name "*.class" -print) \
+	$(JAR) -c0f $@ `$(FIND) postgresql -name "*.class" -print` \
 		$(wildcard postgresql/*.properties)
 
 # This rule removes any temporary and compiled files from the source tree.

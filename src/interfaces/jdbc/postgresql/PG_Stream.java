@@ -39,8 +39,9 @@ public class PG_Stream
     // improvement on FreeBSD machines (caused by a bug in their TCP Stack)
     connection.setTcpNoDelay(true);
     
-    pg_input = connection.getInputStream();
-    pg_output = new BufferedOutputStream(connection.getOutputStream());
+    // Buffer sizes submitted by Sverre H Huseby <sverrehu@online.no>
+    pg_input = new BufferedInputStream(connection.getInputStream(), 8192);
+    pg_output = new BufferedOutputStream(connection.getOutputStream(), 8192);
   }
   
   /**
@@ -51,9 +52,13 @@ public class PG_Stream
    */
   public void SendChar(int val) throws IOException
   {
-    byte b[] = new byte[1];
-    b[0] = (byte)val;
-    pg_output.write(b);
+      // Original code
+      //byte b[] = new byte[1];
+      //b[0] = (byte)val;
+      //pg_output.write(b);
+      
+      // Optimised version by Sverre H. Huseby Aug 22 1999 Applied Sep 13 1999
+      pg_output.write((byte)val);
   }
   
   /**

@@ -1,3 +1,18 @@
+Mon Sep 13 23:56:00 BST 1999 peter@retep.org.uk
+	- PG_Stream.SendChar() optimised, increased default buffer size of
+	  output stream to 8k, and introduced an 8k buffer on the input stream
+	  Sverre H Huseby <sverrehu@online.no>
+	- Added a finalize() method to Connection class in both drivers so that
+	  the connection to the backend is really closed.
+	- Due to many JVM's not returning a meaningful value for java.version
+	  the decision for building the JDBC1.2 or JDBC2 driver is now a
+	  compile time option.
+	- Replaced $$(cmd...) with `cmd...` in the Makefile. This should allow
+	  the driver to compile when using shells other than Bash.
+
+Sun Aug  1 18:05:42 CEST 1999 jens@jens.de
+        - added support for getTransactionIsolation and setTransactionIsolation
+
 Sun Jun 27 12:00:00 BST 1999
 	- Fixed typo in postgresql.Driver that prevented compilation
 	- Implemented getTimestamp() fix submitted by Philipp Matthias Hahn

@@ -31,9 +31,6 @@ public class Driver implements java.sql.Driver
   static final int MAJORVERSION = 6;
   static final int MINORVERSION = 5;
     
-  // Cache the version of the JDK in use
-  static String connectClass;
-    
   static 
   {
     try {
@@ -56,11 +53,27 @@ public class Driver implements java.sql.Driver
   {
       // Set the connectClass variable so that future calls will handle the correct
       // base class
-      if(System.getProperty("java.version").startsWith("1.1")) {
-	  connectClass = "postgresql.jdbc1.Connection";
-      } else {
-	  connectClass = "postgresql.jdbc2.Connection";
-      }
+      //if(System.getProperty("java.version").startsWith("1.1")) {
+      //connectClass = "postgresql.jdbc1.Connection";
+      //} else {
+      //connectClass = "postgresql.jdbc2.Connection";
+      //}
+      
+      // Ok, when the above code was introduced in 6.5 it's intention was to allow
+      // the driver to automatically detect which version of JDBC was being used
+      // and to detect the version of the JVM accordingly.
+      //
+      // It did this by using the java.version parameter.
+      //
+      // However, it was quickly discovered that not all JVM's returned an easily
+      // parseable version number (ie "1.2") and some don't return a value at all.
+      // The latter came from a discussion on the advanced java list.
+      //
+      // So, to solve this, I've moved the decision out of the driver, and it's now
+      // a compile time parameter.
+      //
+      // For this to work, the Makefile creates a pseudo class which contains the class
+      // name that will actually make the connection.
   }
   
   /**
@@ -96,10 +109,10 @@ public class Driver implements java.sql.Driver
     if((props = parseURL(url,info))==null)
       return null;
     
-    DriverManager.println("Using "+connectClass);
+    DriverManager.println("Using "+DriverClass.connectClass);
     
     try {
-	postgresql.Connection con = (postgresql.Connection)(Class.forName(connectClass).newInstance());
+	postgresql.Connection con = (postgresql.Connection)(Class.forName(DriverClass.connectClass).newInstance());
 	con.openConnection (host(), port(), props, database(), url, this);
 	return (java.sql.Connection)con;
     } catch(ClassNotFoundException ex) {
@@ -302,8 +315,10 @@ public class Driver implements java.sql.Driver
     
     // PM June 29 1997
     // This now outputs the properties only if we are logging
-    if(DriverManager.getLogStream() != null)
-      urlProps.list(DriverManager.getLogStream());
+    // PM Sep 13 1999 Commented out, as it throws a Deprecation warning
+    // when compiled under JDK1.2.
+    //if(DriverManager.getLogStream() != null)
+    //  urlProps.list(DriverManager.getLogStream());
     
     return urlProps;
     

@@ -179,7 +179,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public String getDatabaseProductVersion() throws SQLException
   {
-    return ("6.4");
+    return ("6.5.2");
   }
   
   /**
@@ -1350,7 +1350,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public int getDefaultTransactionIsolation() throws SQLException
   {
-    return Connection.TRANSACTION_SERIALIZABLE;
+    return Connection.TRANSACTION_READ_COMMITTED;
   }
   
   /**
@@ -1368,7 +1368,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   
   /**
    * Does the database support the given transaction isolation level?
-   * We only support TRANSACTION_SERIALIZABLE
+   * We only support TRANSACTION_SERIALIZABLE and TRANSACTION_READ_COMMITTED
    * 
    * @param level the values are defined in java.sql.Connection
    * @return true if so
@@ -1377,10 +1377,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public boolean supportsTransactionIsolationLevel(int level) throws SQLException
   {
-    if (level == Connection.TRANSACTION_SERIALIZABLE)
-      return true;
-    else
-      return false;
+      if (level == Connection.TRANSACTION_SERIALIZABLE ||
+	  level == Connection.TRANSACTION_READ_COMMITTED)
+	  return true;
+      else
+	  return false;
   }
   
   /**
@@ -2151,21 +2152,19 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   public java.sql.ResultSet getPrimaryKeys(String catalog, String schema, String table) throws SQLException
   {
     return connection.createStatement().executeQuery("SELECT " +
-						     "'' as TABLE_CAT," +
-						     "'' AS TABLE_SCHEM," +
-						     "bc.relname AS TABLE_NAME," +
-						     "ic.relname AS COLUMN_NAME," +
-						     "'1' as KEY_SEQ,"+ // -- fake it as a String for now
-						     "t.typname as PK_NAME " +
-						     " FROM pg_class bc, pg_class ic, pg_index i, pg_attribute a, pg_type t " +
-						     " WHERE bc.relkind = 'r' " + //    -- not indices
-						     "  and bc.relname ~ '"+table+"'" +
-						     "  and i.indrelid = bc.oid" +
-						     "  and i.indexrelid = ic.oid" +
-						     "  and i.indkey[0] = a.attnum" +
-						     "  and i.indproc = '0'::oid" +
-						     "  and a.attrelid = bc.oid" +
-						     " ORDER BY TABLE_NAME, COLUMN_NAME;"
+						     " '' as TABLE_CAT," +
+						     " '' AS TABLE_SCHEM," +
+						     " bc.relname AS TABLE_NAME," +
+						     " a.attname AS COLUMN_NAME," +
+						     " a.attnum as KEY_SEQ," +
+						     " ic.relname as PK_NAME" +
+						     " from pg_class bc, pg_class ic, pg_index i, pg_attribute a, pg_type t" +
+						     " where bc.relkind = 'r'"+
+						     " and upper(bc.relname) = upper('test')" +
+						     " and i.indrelid = bc.oid" +
+						     " and i.indexrelid = ic.oid  and a.attrelid = ic.oid"+
+						     " and i.indisprimary='t'"+
+						     " order by table_name, pk_name,key_seq;"
 						     );
   }
   

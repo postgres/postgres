@@ -17,7 +17,7 @@ import postgresql.largeobject.*;
 import postgresql.util.*;
 
 /**
- * $Id: Connection.java,v 1.2 1999/05/18 23:17:21 peter Exp $
+ * $Id: Connection.java,v 1.3 1999/09/14 05:50:39 peter Exp $
  *
  * A Connection represents a session with a specific database.  Within the
  * context of a Connection, SQL statements are executed and results are
@@ -216,7 +216,7 @@ public class Connection extends postgresql.Connection implements java.sql.Connec
 	  pg_stream = null;
       }
   }
-  
+    
   /**
    * Tests to see if a Connection is closed
    *
@@ -311,9 +311,23 @@ public class Connection extends postgresql.Connection implements java.sql.Connec
    */
   public void setTransactionIsolation(int level) throws SQLException
   {
-    throw postgresql.Driver.notImplemented();
+      String q = "SET TRANSACTION ISOLATION LEVEL";
+      
+      switch(level) {
+	  
+      case java.sql.Connection.TRANSACTION_READ_COMMITTED:
+	  ExecSQL(q + " READ COMMITTED");
+	  return;
+	  
+      case java.sql.Connection.TRANSACTION_SERIALIZABLE:
+	  ExecSQL(q + " SERIALIZABLE");
+	  return;
+	  
+      default:
+	  throw new PSQLException("postgresql.con.isolevel",new Integer(level));
+      }
   }
-  
+    
   /**
    * Get this Connection's current transaction isolation mode.
    * 
@@ -322,9 +336,18 @@ public class Connection extends postgresql.Connection implements java.sql.Connec
    */
   public int getTransactionIsolation() throws SQLException
   {
-    return java.sql.Connection.TRANSACTION_SERIALIZABLE;
+      ExecSQL("show xactisolevel");
+      
+      SQLWarning w = getWarnings();
+      if (w != null) {
+	  if (w.getMessage().indexOf("READ COMMITTED") != -1) return java.sql.Connection.TRANSACTION_READ_COMMITTED; else
+	      if (w.getMessage().indexOf("READ UNCOMMITTED") != -1) return java.sql.Connection.TRANSACTION_READ_UNCOMMITTED; else
+		  if (w.getMessage().indexOf("REPEATABLE READ") != -1) return java.sql.Connection.TRANSACTION_REPEATABLE_READ; else
+		      if (w.getMessage().indexOf("SERIALIZABLE") != -1) return java.sql.Connection.TRANSACTION_SERIALIZABLE; 
+      }
+      return java.sql.Connection.TRANSACTION_READ_COMMITTED;
   }
-  
+    
   /**
    * The first warning reported by calls on this Connection is
    * returned.
