@@ -157,7 +157,7 @@ There was a problem with creating the required directory; this operation will
    To create a new database:
   </PARA>
   <ProgramListing>
-   <prompt>olly=></prompt></computeroutput> <userinput>create database lusiadas;</userinput>
+   <prompt>olly=></prompt> <userinput>create database lusiadas;</userinput>
   </ProgramListing>
   <PARA>
    To create a new database in an alternate area <filename>~/private_db</filename>:
@@ -189,7 +189,9 @@ There was a problem with creating the required directory; this operation will
    There are security and data integrity issues involved with using alternate database locations
    specified with absolute path names. See the Administrator's Guide for more information.
   </PARA>
-<!-- ------------------
+ </refsect1>
+
+<!--
 comment from Olly; response from Thomas...
   <comment>
    initlocation does not create a PG_VERSION file in the specified location.
@@ -198,8 +200,7 @@ comment from Olly; response from Thomas...
   </comment>
 Hmm. This isn't an issue since the upgrade would do a dump/reload from the main database area also.
 Not sure if the dump/reload would guarantee that the alternate data area gets refreshed though...
--------------------- -->
- </refsect1>
+-->
  
  <REFSECT1 ID="R1-SQL-CREATEDATABASE-4">
   <TITLE>
