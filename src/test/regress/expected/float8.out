@@ -4,14 +4,6 @@ QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('1004.30');
 QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('-34.84');
 QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('1.2345678901234e+200');
 QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('1.2345678901234e-200');
-QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('10e400');
-ERROR:  Bad float8 input format '10e400'
-QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('-10e400');
-ERROR:  Bad float8 input format '-10e400'
-QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('10e-400');
-ERROR:  Bad float8 input format '10e-400'
-QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('-10e-400');
-ERROR:  Bad float8 input format '-10e-400'
 QUERY: SELECT '' AS five, FLOAT8_TBL.*;
 five|f1                  
 ----+--------------------
@@ -214,6 +206,30 @@ bad|            ?column?
 
 QUERY: SELECT '' AS bad, f.f1 / '0.0' from FLOAT8_TBL f;
 ERROR:  float8div: divide by zero error
+QUERY: SELECT '' AS five, FLOAT8_TBL.*;
+five|f1                   
+----+---------------------
+    |0                    
+    |-34.84               
+    |-1004.3              
+    |-1.2345678901234e+200
+    |-1.2345678901234e-200
+(5 rows)
+
+QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('10e400');
+ERROR:  Bad float8 input format '10e400'
+QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('-10e400');
+ERROR:  Bad float8 input format '-10e400'
+QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('10e-400');
+ERROR:  Bad float8 input format '10e-400'
+QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('-10e-400');
+ERROR:  Bad float8 input format '-10e-400'
+QUERY: DELETE FROM FLOAT8_TBL;
+QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('0.0');
+QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('-34.84');
+QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('-1004.30');
+QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('-1.2345678901234e+200');
+QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('-1.2345678901234e-200');
 QUERY: SELECT '' AS five, FLOAT8_TBL.*;
 five|f1                   
 ----+---------------------

@@ -4,12 +4,6 @@ QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('1004.30');
 QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('-34.84');
 QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('1.2345678901234e+200');
 QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('1.2345678901234e-200');
-QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('10e400');
-ERROR:  Bad float8 input format '10e400'
-QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('-10e400');
-ERROR:  Bad float8 input format '-10e400'
-QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('10e-400');
-QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('-10e-400');
 QUERY: SELECT '' AS five, FLOAT8_TBL.*;
 five|f1                  
 ----+--------------------
@@ -18,9 +12,7 @@ five|f1
     |-34.84              
     |1.2345678901234e+200
     |1.2345678901234e-200
-    |0                   
-    |0                   
-(7 rows)
+(5 rows)
 
 QUERY: SELECT '' AS four, f.* FROM FLOAT8_TBL f WHERE f.f1 <> '1004.3';
 four|f1                  
@@ -29,9 +21,7 @@ four|f1
     |-34.84              
     |1.2345678901234e+200
     |1.2345678901234e-200
-    |0                   
-    |0                   
-(6 rows)
+(4 rows)
 
 QUERY: SELECT '' AS one, f.* FROM FLOAT8_TBL f WHERE f.f1 = '1004.3';
 one|    f1
@@ -45,9 +35,7 @@ three|                  f1
      |                   0
      |              -34.84
      |1.2345678901234e-200
-     |                   0
-     |                   0
-(5 rows)
+(3 rows)
 
 QUERY: SELECT '' AS three, f.* FROM FLOAT8_TBL f WHERE  f.f1 < '1004.3';
 three|                  f1
@@ -55,9 +43,7 @@ three|                  f1
      |                   0
      |              -34.84
      |1.2345678901234e-200
-     |                   0
-     |                   0
-(5 rows)
+(3 rows)
 
 QUERY: SELECT '' AS four, f.* FROM FLOAT8_TBL f WHERE '1004.3' >= f.f1;
 four|                  f1
@@ -66,9 +52,7 @@ four|                  f1
     |              1004.3
     |              -34.84
     |1.2345678901234e-200
-    |                   0
-    |                   0
-(6 rows)
+(4 rows)
 
 QUERY: SELECT '' AS four, f.* FROM FLOAT8_TBL f WHERE  f.f1 <= '1004.3';
 four|                  f1
@@ -77,9 +61,7 @@ four|                  f1
     |              1004.3
     |              -34.84
     |1.2345678901234e-200
-    |                   0
-    |                   0
-(6 rows)
+(4 rows)
 
 QUERY: SELECT '' AS three, f.f1, f.f1 * '-10' AS x
    FROM FLOAT8_TBL f
@@ -137,9 +119,7 @@ five|f1                  |abs_f1
     |-34.84              |34.84               
     |1.2345678901234e+200|1.2345678901234e+200
     |1.2345678901234e-200|1.2345678901234e-200
-    |0                   |0                   
-    |0                   |0                   
-(7 rows)
+(5 rows)
 
 QUERY: SELECT '' AS five, f.f1, %f.f1 AS trunc_f1
    FROM FLOAT8_TBL f;
@@ -150,9 +130,7 @@ five|f1                  |trunc_f1
     |-34.84              |-34                 
     |1.2345678901234e+200|1.2345678901234e+200
     |1.2345678901234e-200|0                   
-    |0                   |0                   
-    |0                   |0                   
-(7 rows)
+(5 rows)
 
 QUERY: SELECT '' AS five, f.f1, f.f1 % AS round_f1
    FROM FLOAT8_TBL f;
@@ -163,9 +141,7 @@ five|f1                  |round_f1
     |-34.84              |-35                 
     |1.2345678901234e+200|1.2345678901234e+200
     |1.2345678901234e-200|0                   
-    |0                   |0                   
-    |0                   |0                   
-(7 rows)
+(5 rows)
 
 QUERY: SELECT '' AS three, f.f1, |/f.f1 AS sqrt_f1
    FROM FLOAT8_TBL f
@@ -195,9 +171,7 @@ five|f1                  |cbrt_f1
     |-34.84              |-3.26607421344208   
     |1.2345678901234e+200|4.97933859234765e+66
     |1.2345678901234e-200|2.3112042409018e-67 
-    |0                   |0                   
-    |0                   |0                   
-(7 rows)
+(5 rows)
 
 QUERY: SELECT '' AS five, FLOAT8_TBL.*;
 five|f1                  
@@ -207,9 +181,7 @@ five|f1
     |-34.84              
     |1.2345678901234e+200
     |1.2345678901234e-200
-    |0                   
-    |0                   
-(7 rows)
+(5 rows)
 
 QUERY: UPDATE FLOAT8_TBL
    SET f1 = FLOAT8_TBL.f1 * '-1'
@@ -231,10 +203,30 @@ five|f1
 ----+---------------------
     |0                    
     |-34.84               
-    |0                    
-    |0                    
     |-1004.3              
     |-1.2345678901234e+200
     |-1.2345678901234e-200
-(7 rows)
+(5 rows)
+
+QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('10e400');
+ERROR:  Bad float8 input format '10e400'
+QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('-10e400');
+ERROR:  Bad float8 input format '-10e400'
+QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('10e-400');
+QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('-10e-400');
+QUERY: DELETE FROM FLOAT8_TBL;
+QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('0.0');
+QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('-34.84');
+QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('-1004.30');
+QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('-1.2345678901234e+200');
+QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('-1.2345678901234e-200');
+QUERY: SELECT '' AS five, FLOAT8_TBL.*;
+five|f1                   
+----+---------------------
+    |0                    
+    |-34.84               
+    |-1004.3              
+    |-1.2345678901234e+200
+    |-1.2345678901234e-200
+(5 rows)
 

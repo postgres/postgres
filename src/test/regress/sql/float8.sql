@@ -12,15 +12,6 @@ INSERT INTO FLOAT8_TBL(f1) VALUES ('1.2345678901234e+200');
 
 INSERT INTO FLOAT8_TBL(f1) VALUES ('1.2345678901234e-200');
 
--- test for over and under flow 
-INSERT INTO FLOAT8_TBL(f1) VALUES ('10e400');
-
-INSERT INTO FLOAT8_TBL(f1) VALUES ('-10e400');
-
-INSERT INTO FLOAT8_TBL(f1) VALUES ('10e-400');
-
-INSERT INTO FLOAT8_TBL(f1) VALUES ('-10e-400');
-
 
 SELECT '' AS five, FLOAT8_TBL.*;
 
@@ -98,6 +89,32 @@ SELECT '' AS bad, (; (f.f1)) from FLOAT8_TBL f where f.f1 < '0.0' ;
 SELECT '' AS bad, : (f.f1) from FLOAT8_TBL f;
 
 SELECT '' AS bad, f.f1 / '0.0' from FLOAT8_TBL f;
+
+SELECT '' AS five, FLOAT8_TBL.*;
+
+-- test for over and under flow 
+INSERT INTO FLOAT8_TBL(f1) VALUES ('10e400');
+
+INSERT INTO FLOAT8_TBL(f1) VALUES ('-10e400');
+
+INSERT INTO FLOAT8_TBL(f1) VALUES ('10e-400');
+
+INSERT INTO FLOAT8_TBL(f1) VALUES ('-10e-400');
+
+-- maintain external table consistency across platforms
+-- delete all values and reinsert well-behaved ones
+
+DELETE FROM FLOAT8_TBL;
+
+INSERT INTO FLOAT8_TBL(f1) VALUES ('0.0');
+
+INSERT INTO FLOAT8_TBL(f1) VALUES ('-34.84');
+
+INSERT INTO FLOAT8_TBL(f1) VALUES ('-1004.30');
+
+INSERT INTO FLOAT8_TBL(f1) VALUES ('-1.2345678901234e+200');
+
+INSERT INTO FLOAT8_TBL(f1) VALUES ('-1.2345678901234e-200');
 
 SELECT '' AS five, FLOAT8_TBL.*;
 
