@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Jan 4 19:54:19 EST 2004
+   Last updated: Tue Jan 6 16:42:01 EST 2004
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -244,7 +244,7 @@
    
      http://www.PostgreSQL.org
      
-   There is also an IRC channel on EFNet and Freenode, channel
+   There is also an IRC channel on Freenode and EFNet, channel
    #PostgreSQL. You can use the Unix command irc -c '#PostgreSQL' "$USER"
    irc.phoenix.net. or irc -c '#PostgreSQL' "$USER" irc.freenode.net.
    
