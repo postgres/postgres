@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.54 2002/03/21 09:42:50 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.55 2002/03/21 18:28:07 tgl Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -17,7 +17,7 @@ extern char *optarg;
 #include "extern.h"
 
 int			ret_value = 0,
-			autocommit = false;
+			autocommit = false,
 			auto_create_c = false;
 struct _include_path *include_paths = NULL;
 struct cursor *cur = NULL;
