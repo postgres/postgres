@@ -279,7 +279,7 @@ make_name(void)
 %type  <str>    key_match ColLabel SpecialRuleRelation ColId columnDef
 %type  <str>    ColConstraint ColConstraintElem drop_type Bitconst
 %type  <str>    OptTableElementList OptTableElement TableConstraint
-%type  <str>    ConstraintElem key_actions ColQualList TypeFuncId DropSchemaStmt
+%type  <str>    ConstraintElem key_actions ColQualList type_name DropSchemaStmt
 %type  <str>    target_list target_el update_target_list alias_clause
 %type  <str>    update_target_el opt_id relation_name database_name
 %type  <str>    access_method attr_name class index_name name func_name
@@ -357,7 +357,9 @@ make_name(void)
 %type  <str>    struct_type s_struct declaration declarations variable_declarations
 %type  <str>    s_union union_type ECPGSetAutocommit on_off
 %type  <str>	ECPGAllocateDescr ECPGDeallocateDescr symbol opt_symbol
-%type  <str>	ECPGGetDescriptorHeader ECPGTypeFuncId ECPGColId ECPGColLabel
+%type  <str>	ECPGGetDescriptorHeader ECPGColLabel
+%type  <str>	reserved_keyword unreserved_keyword
+%type  <str>	col_name_keyword func_name_keyword
 %type  <str>	ECPGTypeName variablelist cvariable
 
 %type  <descriptor> ECPGGetDescriptor
@@ -1964,7 +1966,7 @@ func_type:	Typename
 				{
 					$$ = $1;
 				}
-		| TypeFuncId '.' ColId '%' TYPE_P   
+		| type_name '.' ColId '%' TYPE_P   
 				{
 					$$ = cat_str(4, $1, make_str("."), $3, make_str("% type"));
 				}
@@ -2978,8 +2980,7 @@ ConstTypename:  Generic	{ $$ = $1; }
 		| Character	{ $$ = $1; }
 		;
 
-Generic:  TypeFuncId			{ $$ = $1; }
-		| ECPGTypeName			{ $$ = $1; }
+Generic:  type_name				{ $$ = $1; }
 		;
 
 /* SQL92 numeric data types
@@ -4875,48 +4876,48 @@ action : SQL_CONTINUE
 
 /* some other stuff for ecpg */
 
-/* additional ColId entries */
-ECPGKeywords: 	  SQL_BREAK			{ $$ = make_str("break"); }
-		| SQL_CALL			{ $$ = make_str("call"); }
-		| SQL_CARDINALITY	{ $$ = make_str("cardinality"); }
+/* additional unreserved keywords */
+ECPGKeywords:  SQL_BREAK		{ $$ = make_str("break"); }
+		| SQL_CALL				{ $$ = make_str("call"); }
+		| SQL_CARDINALITY		{ $$ = make_str("cardinality"); }
 		| SQL_CONNECT			{ $$ = make_str("connect"); }
 		| SQL_CONTINUE			{ $$ = make_str("continue"); }
-		| SQL_COUNT			{ $$ = make_str("count"); }
-		| SQL_DATA			{ $$ = make_str("data"); }
+		| SQL_COUNT				{ $$ = make_str("count"); }
+		| SQL_DATA				{ $$ = make_str("data"); }
 		| SQL_DATETIME_INTERVAL_CODE	{ $$ = make_str("datetime_interval_code"); }
 		| SQL_DATETIME_INTERVAL_PRECISION	{ $$ = make_str("datetime_interval_precision"); }
 		| SQL_DEALLOCATE		{ $$ = make_str("deallocate"); }
 		| SQL_DISCONNECT		{ $$ = make_str("disconnect"); }
-		| SQL_FOUND			{ $$ = make_str("found"); }
-		| SQL_GO			{ $$ = make_str("go"); }
-		| SQL_GOTO			{ $$ = make_str("goto"); }
+		| SQL_FOUND				{ $$ = make_str("found"); }
+		| SQL_GO				{ $$ = make_str("go"); }
+		| SQL_GOTO				{ $$ = make_str("goto"); }
 		| SQL_IDENTIFIED		{ $$ = make_str("identified"); }
 		| SQL_INDICATOR			{ $$ = make_str("indicator"); }
 		| SQL_KEY_MEMBER		{ $$ = make_str("key_member"); }
 		| SQL_LENGTH			{ $$ = make_str("length"); }
-		| SQL_NAME			{ $$ = make_str("name"); }
+		| SQL_NAME				{ $$ = make_str("name"); }
 		| SQL_NULLABLE			{ $$ = make_str("nullable"); }
 		| SQL_OCTET_LENGTH		{ $$ = make_str("octet_length"); }
-		| SQL_OPEN			{ $$ = make_str("open"); }
+		| SQL_OPEN				{ $$ = make_str("open"); }
 		| SQL_PREPARE			{ $$ = make_str("prepare"); }
 		| SQL_RELEASE			{ $$ = make_str("release"); }
 		| SQL_RETURNED_LENGTH		{ $$ = make_str("returned_length"); }
 		| SQL_RETURNED_OCTET_LENGTH	{ $$ = make_str("returned_octet_length"); }
-		| SQL_SCALE			{ $$ = make_str("scale"); }
+		| SQL_SCALE				{ $$ = make_str("scale"); }
 		| SQL_SECTION			{ $$ = make_str("section"); }
 		| SQL_SQLERROR			{ $$ = make_str("sqlerror"); }
 		| SQL_SQLPRINT			{ $$ = make_str("sqlprint"); }
 		| SQL_SQLWARNING		{ $$ = make_str("sqlwarning"); }
-		| SQL_STOP			{ $$ = make_str("stop"); }
-		| SQL_VAR			{ $$ = make_str("var"); }
+		| SQL_STOP				{ $$ = make_str("stop"); }
+		| SQL_VAR				{ $$ = make_str("var"); }
 		| SQL_WHENEVER			{ $$ = make_str("whenever"); }
-/*		| ECPGTypeName			{ $$ = $1 }*/
 		;
 
-ECPGTypeName:	  SQL_BOOL		{ $$ = make_str("bool"); }
-		| SQL_INT		{ $$ = make_str("int"); }
-		| SQL_LONG		{ $$ = make_str("long"); }
-		| SQL_SHORT		{ $$ = make_str("short"); }
+/* additional keywords that can be SQL type names (but not ECPGColLabels) */
+ECPGTypeName:  SQL_BOOL		{ $$ = make_str("bool"); }
+		| SQL_INT			{ $$ = make_str("int"); }
+		| SQL_LONG			{ $$ = make_str("long"); }
+		| SQL_SHORT			{ $$ = make_str("short"); }
 		| SQL_STRUCT		{ $$ = make_str("struct"); }
 		| SQL_SIGNED		{ $$ = make_str("signed"); }
 		| SQL_UNSIGNED		{ $$ = make_str("unsigned"); }
@@ -4929,25 +4930,72 @@ opt_symbol:	symbol		{ $$ = $1; }
 symbol:		ColLabel	{ $$ = $1; };
 
 /*
- * Keyword classification lists.  Generally, every keyword present in
- * the Postgres grammar should be in one of these lists.  (Presently,
- * "AS" is the sole exception: it is our only completely-reserved word.)
+ * Name classification hierarchy.
  *
- * Put a new keyword into the earliest list (of TypeFuncId, ColId, ColLabel)
- * that it can go into without creating shift or reduce conflicts.  The
- * earlier lists define "less reserved" categories of keywords.  Notice that
- * each list includes by reference the ones before it.
+ * IDENT is the lexeme returned by the lexer for identifiers that match
+ * no known keyword.  In most cases, we can accept certain keywords as
+ * names, not only IDENTs.  We prefer to accept as many such keywords
+ * as possible to minimize the impact of "reserved words" on programmers.
+ * So, we divide names into several possible classes.  The classification
+ * is chosen in part to make keywords acceptable as names wherever possible.
  */
 
-/* Type/func identifier --- names that can be type and function names
- * (as well as ColIds --- ie, these are completely unreserved keywords).
+/* Column identifier --- names that can be column, table, etc names.
  */
-TypeFuncId:  ECPGTypeFuncId				{ $$ = $1; }
+ColId:  ident							{ $$ = $1; }
+		| unreserved_keyword			{ $$ = $1; }
+		| col_name_keyword				{ $$ = $1; }
+		| ECPGKeywords                  { $$ = $1; }
+		| CHAR							{ $$ = make_str("char"); }
+		;
+
+/* Type identifier --- names that can be type names.
+ */
+type_name:  ident						{ $$ = $1; }
+		| unreserved_keyword			{ $$ = $1; }
+		| ECPGKeywords                  { $$ = $1; }
+		| ECPGTypeName					{ $$ = $1; }
+		;
+
+/* Function identifier --- names that can be function names.
+ */
+func_name:  ident						{ $$ = $1; }
+		| unreserved_keyword			{ $$ = $1; }
+		| func_name_keyword				{ $$ = $1; }
 		| ECPGKeywords                  { $$ = $1; }
 		;
 
-ECPGTypeFuncId:  ident					{ $$ = $1; }
-		| ABORT_TRANS					{ $$ = make_str("abort"); }
+/* Column label --- allowed labels in "AS" clauses.
+ * This presently includes *all* Postgres keywords.
+ */
+ColLabel:  ECPGColLabel					{ $$ = $1; }
+		| ECPGTypeName					{ $$ = $1; }
+		| CHAR							{ $$ = make_str("char"); }
+		| UNION							{ $$ = make_str("union"); }
+		;
+
+ECPGColLabel:  ident					{ $$ = $1; }
+		| unreserved_keyword			{ $$ = $1; }
+		| col_name_keyword				{ $$ = $1; }
+		| func_name_keyword				{ $$ = $1; }
+		| reserved_keyword				{ $$ = $1; }
+		| ECPGKeywords                  { $$ = $1; }
+		;
+
+
+/*
+ * Keyword classification lists.  Generally, every keyword present in
+ * the Postgres grammar should appear in exactly one of these lists.
+ *
+ * Put a new keyword into the first list that it can go into without causing
+ * shift or reduce conflicts.  The earlier lists define "less reserved"
+ * categories of keywords.
+ */
+
+/* "Unreserved" keywords --- available for use as any kind of name.
+ */
+unreserved_keyword:
+		  ABORT_TRANS					{ $$ = make_str("abort"); }
 		| ABSOLUTE						{ $$ = make_str("absolute"); }
 		| ACCESS						{ $$ = make_str("access"); }
 		| ACTION						{ $$ = make_str("action"); }
@@ -5103,69 +5151,96 @@ ECPGTypeFuncId:  ident					{ $$ = $1; }
 		| ZONE							{ $$ = make_str("zone"); }
 		;
 
-/* Column identifier --- names that can be column, table, etc names.
+/* Column identifier --- keywords that can be column, table, etc names.
  *
- * This contains the TypeFuncId list plus those keywords that conflict
- * only with typename productions, not with other uses.  Note that
- * most of these keywords will in fact be recognized as type names too;
- * they just have to have special productions for the purpose.
+ * Many of these keywords will in fact be recognized as type or function
+ * names too; but they have special productions for the purpose, and so
+ * can't be treated as "generic" type or function names.
  *
- * Most of these cannot be in TypeFuncId (ie, are not also usable as function
- * names) because they can be followed by '(' in typename productions, which
- * looks too much like a function call for a LALR(1) parser.
+ * The type names appearing here are not usable as function names
+ * because they can be followed by '(' in typename productions, which
+ * looks too much like a function call for an LR(1) parser.
  */
-ColId:  ECPGColId						{ $$ = $1; }
-		| CHAR							{ $$ = make_str("char"); }
-		;
-
-ECPGColId:  TypeFuncId					{ $$ = $1; }
-		| BIT							{ $$ = make_str("bit"); }
+col_name_keyword:
+		  BIT							{ $$ = make_str("bit"); }
 /* CHAR must be excluded from ECPGColLabel because of conflict with UNSIGNED
 		| CHAR							{ $$ = make_str("char"); }
  */
 		| CHARACTER						{ $$ = make_str("character"); }
+		| COALESCE						{ $$ = make_str("coalesce"); }
 		| DEC							{ $$ = make_str("dec"); }
 		| DECIMAL						{ $$ = make_str("decimal"); }
+		| EXISTS						{ $$ = make_str("exists"); }
+		| EXTRACT						{ $$ = make_str("extract"); }
 		| FLOAT							{ $$ = make_str("float"); }
 		| INTERVAL						{ $$ = make_str("interval"); }
 		| NCHAR							{ $$ = make_str("nchar"); }
 		| NONE							{ $$ = make_str("none"); }
+		| NULLIF						{ $$ = make_str("nullif"); }
 		| NUMERIC						{ $$ = make_str("numeric"); }
+		| POSITION						{ $$ = make_str("position"); }
 		| SETOF							{ $$ = make_str("setof"); }
+		| SUBSTRING						{ $$ = make_str("substring"); }
 		| TIME							{ $$ = make_str("time"); }
 		| TIMESTAMP						{ $$ = make_str("timestamp"); }
+		| TRIM							{ $$ = make_str("trim"); }
 		| VARCHAR						{ $$ = make_str("varchar"); }
 		;
 
-/* Column label --- allowed labels in "AS" clauses.
+/* Function identifier --- keywords that can be function names.
  *
- * Keywords appear here if they could not be distinguished from variable,
- * type, or function names in some contexts.
- * When adding a ColLabel, consider whether it can be added to func_name.
+ * Most of these are keywords that are used as operators in expressions;
+ * in general such keywords can't be column names because they would be
+ * ambiguous with variables, but they are unambiguous as function identifiers.
+ *
+ * Do not include POSITION, SUBSTRING, etc here since they have explicit
+ * productions in a_expr to support the goofy SQL9x argument syntax.
+ *  - thomas 2000-11-28
  */
-ColLabel:  ECPGColLabel					{ $$ = $1; }
-		| CHAR							{ $$ = make_str("char"); }
-		| UNION							{ $$ = make_str("union"); }
+func_name_keyword:
+		  BETWEEN						{ $$ = make_str("between"); }
+		| BINARY						{ $$ = make_str("binary"); }
+		| CROSS							{ $$ = make_str("cross"); }
+		| FREEZE						{ $$ = make_str("freeze"); }
+		| FULL							{ $$ = make_str("full"); }
+		| ILIKE							{ $$ = make_str("ilike"); }
+		| IN							{ $$ = make_str("in"); }
+		| INNER_P						{ $$ = make_str("inner"); }
+		| IS							{ $$ = make_str("is"); }
+		| ISNULL						{ $$ = make_str("isnull"); }
+		| JOIN							{ $$ = make_str("join"); }
+		| LEFT							{ $$ = make_str("left"); }
+		| LIKE							{ $$ = make_str("like"); }
+		| NATURAL						{ $$ = make_str("natural"); }
+		| NOTNULL						{ $$ = make_str("notnull"); }
+		| OUTER_P						{ $$ = make_str("outer"); }
+		| OVERLAPS						{ $$ = make_str("overlaps"); }
+		| PUBLIC						{ $$ = make_str("public"); }
+		| RIGHT							{ $$ = make_str("right"); }
+		| VERBOSE						{ $$ = make_str("verbose"); }
 		;
 
-ECPGColLabel:  ECPGColId				{ $$ = $1; }
-		| ALL							{ $$ = make_str("all"); }
+/* Reserved keyword --- these keywords are usable only as a ColLabel.
+ *
+ * Keywords appear here if they could not be distinguished from variable,
+ * type, or function names in some contexts.  Don't put things here unless
+ * forced to.
+ */
+reserved_keyword:
+		  ALL							{ $$ = make_str("all"); }
 		| ANALYSE						{ $$ = make_str("analyse"); } /* British */
 		| ANALYZE						{ $$ = make_str("analyze"); }
 		| AND							{ $$ = make_str("and"); }
 		| ANY							{ $$ = make_str("any"); }
+		| AS							{ $$ = make_str("as"); }
 		| ASC							{ $$ = make_str("asc"); }
-		| BETWEEN						{ $$ = make_str("between"); }
-		| BINARY						{ $$ = make_str("binary"); }
 		| BOTH							{ $$ = make_str("both"); }
 		| CASE							{ $$ = make_str("case"); }
 		| CAST							{ $$ = make_str("cast"); }
 		| CHECK							{ $$ = make_str("check"); }
-		| COALESCE						{ $$ = make_str("coalesce"); }
 		| COLLATE						{ $$ = make_str("collate"); }
 		| COLUMN						{ $$ = make_str("column"); }
 		| CONSTRAINT					{ $$ = make_str("constraint"); }
-		| CROSS							{ $$ = make_str("cross"); }
 		| CURRENT_DATE					{ $$ = make_str("current_date"); }
 		| CURRENT_TIME					{ $$ = make_str("current_time"); }
 		| CURRENT_TIMESTAMP				{ $$ = make_str("current_timestamp"); }
@@ -5178,34 +5253,19 @@ ECPGColLabel:  ECPGColId				{ $$ = $1; }
 		| ELSE							{ $$ = make_str("else"); }
 		| END_TRANS						{ $$ = make_str("end"); }
 		| EXCEPT						{ $$ = make_str("except"); }
-		| EXISTS						{ $$ = make_str("exists"); }
-		| EXTRACT						{ $$ = make_str("extract"); }
 		| FALSE_P						{ $$ = make_str("false"); }
 		| FOR							{ $$ = make_str("for"); }
 		| FOREIGN						{ $$ = make_str("foreign"); }
-		| FREEZE						{ $$ = make_str("freeze"); }
 		| FROM							{ $$ = make_str("from"); }
-		| FULL							{ $$ = make_str("full"); }
 		| GROUP							{ $$ = make_str("group"); }
 		| HAVING						{ $$ = make_str("having"); }
-		| ILIKE							{ $$ = make_str("ilike"); }
-		| IN							{ $$ = make_str("in"); }
 		| INITIALLY						{ $$ = make_str("initially"); }
-		| INNER_P						{ $$ = make_str("inner"); }
 		| INTERSECT						{ $$ = make_str("intersect"); }
 		| INTO							{ $$ = make_str("into"); }
-		| IS							{ $$ = make_str("is"); }
-		| ISNULL						{ $$ = make_str("isnull"); }
-		| JOIN							{ $$ = make_str("join"); }
 		| LEADING						{ $$ = make_str("leading"); }
-		| LEFT							{ $$ = make_str("left"); }
-		| LIKE							{ $$ = make_str("like"); }
 		| LIMIT							{ $$ = make_str("limit"); }
-		| NATURAL						{ $$ = make_str("natural"); }
 		| NEW							{ $$ = make_str("new"); }
 		| NOT							{ $$ = make_str("not"); }
-		| NOTNULL						{ $$ = make_str("notnull"); }
-		| NULLIF						{ $$ = make_str("nullif"); }
 		| NULL_P						{ $$ = make_str("null"); }
 		| OFF							{ $$ = make_str("off"); }
 		| OFFSET						{ $$ = make_str("offset"); }
@@ -5214,22 +5274,15 @@ ECPGColLabel:  ECPGColId				{ $$ = $1; }
 		| ONLY							{ $$ = make_str("only"); }
 		| OR							{ $$ = make_str("or"); }
 		| ORDER							{ $$ = make_str("order"); }
-		| OUTER_P						{ $$ = make_str("outer"); }
-		| OVERLAPS						{ $$ = make_str("overlaps"); }
-		| POSITION						{ $$ = make_str("position"); }
 		| PRIMARY						{ $$ = make_str("primary"); }
-		| PUBLIC						{ $$ = make_str("public"); }
 		| REFERENCES					{ $$ = make_str("references"); }
-		| RIGHT							{ $$ = make_str("right"); }
 		| SELECT						{ $$ = make_str("select"); }
 		| SESSION_USER					{ $$ = make_str("session_user"); }
 		| SOME							{ $$ = make_str("some"); }
-		| SUBSTRING						{ $$ = make_str("substring"); }
 		| TABLE							{ $$ = make_str("table"); }
 		| THEN							{ $$ = make_str("then"); }
 		| TO							{ $$ = make_str("to"); }
 		| TRAILING						{ $$ = make_str("trailing"); }
-		| TRIM							{ $$ = make_str("trim"); }
 		| TRUE_P						{ $$ = make_str("true"); }
 /* UNION must be excluded from ECPGColLabel because of conflict with s_union
 		| UNION							{ $$ = make_str("union"); }
@@ -5237,44 +5290,10 @@ ECPGColLabel:  ECPGColId				{ $$ = $1; }
 		| UNIQUE						{ $$ = make_str("unique"); }
 		| USER							{ $$ = make_str("user"); }
 		| USING							{ $$ = make_str("using"); }
-		| VERBOSE						{ $$ = make_str("verbose"); }
 		| WHEN							{ $$ = make_str("when"); }
 		| WHERE							{ $$ = make_str("where"); }
 		;
 
-/* Function identifier --- names that can be function names.
- *
- * This contains the TypeFuncId list plus some ColLabel keywords
- * that are used as operators in expressions; in general such keywords
- * can't be ColId because they would be ambiguous with variable names,
- * but they are unambiguous as function identifiers.
- *
- * Do not include POSITION, SUBSTRING, etc here since they have explicit
- * productions in a_expr to support the goofy SQL9x argument syntax.
- *  - thomas 2000-11-28
- */
-func_name:  TypeFuncId					{ $$ = $1; }
-		| BETWEEN						{ $$ = make_str("between"); }
-		| BINARY						{ $$ = make_str("binary"); }
-		| CROSS							{ $$ = make_str("cross"); }
-		| FREEZE						{ $$ = make_str("freeze"); }
-		| FULL							{ $$ = make_str("full"); }
-		| ILIKE							{ $$ = make_str("ilike"); }
-		| IN							{ $$ = make_str("in"); }
-		| INNER_P						{ $$ = make_str("inner"); }
-		| IS							{ $$ = make_str("is"); }
-		| ISNULL						{ $$ = make_str("isnull"); }
-		| JOIN							{ $$ = make_str("join"); }
-		| LEFT							{ $$ = make_str("left"); }
-		| LIKE							{ $$ = make_str("like"); }
-		| NATURAL						{ $$ = make_str("natural"); }
-		| NOTNULL						{ $$ = make_str("notnull"); }
-		| OUTER_P						{ $$ = make_str("outer"); }
-		| OVERLAPS						{ $$ = make_str("overlaps"); }
-		| PUBLIC						{ $$ = make_str("public"); }
-		| RIGHT							{ $$ = make_str("right"); }
-		| VERBOSE						{ $$ = make_str("verbose"); }
-		;
 
 into_list : coutputvariable | into_list ',' coutputvariable;
 
