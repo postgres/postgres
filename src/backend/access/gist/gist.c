@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.88 2002/02/11 22:41:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.88.2.1 2002/05/28 15:22:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -496,6 +496,14 @@ gistlayerinsert(Relation r, BlockNumber blkno,
 		/* key is modified, so old version must be deleted */
 		ItemPointerSet(&oldtid, blkno, child);
 		gistdelete(r, &oldtid);
+	
+		/*
+		 * if child was splitted, new key for child will be inserted
+		 * in the end list of child, so we must say to any scans
+		 * that page is changed beginning from 'child' offset
+		 */
+		if ( ret & SPLITED )
+			gistadjscans(r, GISTOP_SPLIT, blkno, child);
 	}
 
 	ret = INSERTED;
@@ -1412,10 +1420,6 @@ gistSplit(Relation r,
 		newtup[nlen - 1] = gistFormTuple(giststate, r, v.spl_lattr, v.spl_lattrsize, v.spl_lisnull);
 		ItemPointerSet(&(newtup[nlen - 1]->t_tid), lbknum, 1);
 	}
-
-
-	/* adjust active scans */
-	gistadjscans(r, GISTOP_SPLIT, BufferGetBlockNumber(buffer), FirstOffsetNumber);
 
 	/* !!! pfree */
 	pfree(rvectup);
