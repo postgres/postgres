@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.166 2003/08/10 01:20:34 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.167 2003/08/17 04:52:41 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -3869,6 +3869,11 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
       </tbody>
      </tgroup>
     </table>
+
+   <para>
+    Warning. <literal><function>to_char</function>(<type>interval</type>, <type>text</type>)</literal> 
+    is deprecated and should not be used in newly-written code. Will be removed in the next version.
+   </para>
 
    <para>
     In an output template string (for <function>to_char</>), there are certain patterns that are
