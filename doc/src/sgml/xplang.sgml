@@ -7,7 +7,8 @@
 -->
 
 <Para>
-    Since version 6.3 <ProductName>Postgres</ProductName> supports
+    Beginning with the release of version 6.3,
+    <ProductName>Postgres</ProductName> supports
     the definition of procedural languages.
     In the case of a function or trigger
     procedure defined in a procedural language, the database has
@@ -25,13 +26,17 @@
 -->
 
 <Sect1>
-<Title>Installing procedural languages</Title>
+<Title>Installing Procedural Languages</Title>
 
 <Para>
     <Procedure>
     <Title>
-    A procedural language is installed in the database in three steps.
+    Procedural Language Installation
     </Title>
+
+    <para>
+    A procedural language is installed in the database in three steps.
+
 	<Step Performance="Required">
 	    <Para>
 	        The shared object for the language handler
@@ -63,7 +68,7 @@
 	    <Para>
 	    	The PL must be declared with the command
 		<ProgramListing>
-    CREATE [TRUSTED] PROCEDURAL LANGUAGE '<Replaceable>language-name</Replaceable>'
+    CREATE [ TRUSTED ] PROCEDURAL LANGUAGE '<Replaceable>language-name</Replaceable>'
         HANDLER <Replaceable>handler_function_name</Replaceable>
 	LANCOMPILER '<Replaceable>description</Replaceable>';
 		</ProgramListing>
@@ -153,7 +158,7 @@
 <Title>Overview</Title>
 
 <Para>
-    The design rules of PL/pgSQL where to create a loadable procedural
+    The design goals of PL/pgSQL were to create a loadable procedural
     language that
     <ItemizedList>
     <ListItem>
@@ -178,7 +183,7 @@
     </ListItem>
     <ListItem>
 	<Para>
-        can be defined trusted,
+        can be defined to be trusted by the server,
 	</Para>
     </ListItem>
     <ListItem>
@@ -228,7 +233,7 @@
 
 <Para>
     The PL/pgSQL language is case insensitive. All keywords and
-    identifiers can be used in upper-/lowercase mixed.
+    identifiers can be used in mixed upper- and lowercase.
 </Para>
 <Para>
     PL/pgSQL is a block oriented language. A block is defined as
@@ -236,9 +241,9 @@
 <ProgramListing>
     [&lt;&lt;label&gt;&gt;]
     [DECLARE
-        -- declarations]
+        <replaceable>declarations</replaceable>]
     BEGIN
-        -- statements
+        <replaceable>statements</replaceable>
     END;
 </ProgramListing>
 
@@ -291,7 +296,7 @@
 
 <VarListEntry>
 <Term>
-<Replaceable>name</Replaceable> [CONSTANT] <Replaceable>type</Replaceable> [NOT NULL] [DEFAULT | := <Replaceable>value</Replaceable>];
+<Replaceable>name</Replaceable> [ CONSTANT ] <Replaceable>type</Replaceable> [ NOT NULL ] [ DEFAULT | := <Replaceable>value</Replaceable> ];
 </Term>
 <ListItem>
 <Para>
@@ -314,7 +319,7 @@
 
 <VarListEntry>
 <Term>
-<Replaceable>name</Replaceable> <Replaceable>class</Replaceable>&percnt;ROWTYPE;
+<Replaceable>name</Replaceable> <Replaceable>class</Replaceable>%ROWTYPE;
 </Term>
 <ListItem>
 <Para>
@@ -395,7 +400,7 @@ RENAME <Replaceable>oldname</Replaceable> TO <Replaceable>newname</Replaceable>;
 <!-- **** PL/pgSQL data types **** -->
 
 <Sect3>
-<Title>Data types</Title>
+<Title>Data Types</Title>
 
 <Para>
     The type of a varible can be any of the existing basetypes of
@@ -411,19 +416,20 @@ RENAME <Replaceable>oldname</Replaceable> TO <Replaceable>newname</Replaceable>;
     </ListItem>
     <ListItem>
         <Para>
-	<Replaceable>variable</Replaceable>&percnt;TYPE
+	<Replaceable>variable</Replaceable>%TYPE
 	</Para>
     </ListItem>
     <ListItem>
         <Para>
-	<Replaceable>class.field</Replaceable>&percnt;TYPE
+	<Replaceable>class.field</Replaceable>%TYPE
 	</Para>
     </ListItem>
     </ItemizedList>
 </Para>
 <Para>
-    <Replaceable>variable</Replaceable> is the name of a previously in the 
-    same function declared variable that is visible at this point.
+    <Replaceable>variable</Replaceable> is the name of a variable,
+previously declared in the 
+    same function, that is visible at this point.
 </Para>
 <Para>
     <Replaceable>class</Replaceable> is the name of an existing table
@@ -431,7 +437,7 @@ RENAME <Replaceable>oldname</Replaceable> TO <Replaceable>newname</Replaceable>;
     an attribute.
 </Para>
 <Para>
-    Using the <Replaceable>class.field</Replaceable>&percnt;TYPE
+    Using the <Replaceable>class.field</Replaceable>%TYPE
     causes PL/pgSQL to lookup the attributes definitions at the
     first call to the funciton during the lifetime of a backend.
     Have a table with a char(20) attribute and some PL/pgSQL functions
@@ -441,7 +447,7 @@ RENAME <Replaceable>oldname</Replaceable> TO <Replaceable>newname</Replaceable>;
     char(40) and restores the data. Ha - he forgot about the
     funcitons. The computations inside them will truncate the values
     to 20 characters. But if they are defined using the
-    <Replaceable>class.field</Replaceable>&percnt;TYPE
+    <Replaceable>class.field</Replaceable>%TYPE
     declarations, they will automagically handle the size change or
     if the new table schema defines the attribute as text type.
 </Para>
@@ -454,22 +460,24 @@ RENAME <Replaceable>oldname</Replaceable> TO <Replaceable>newname</Replaceable>;
 
 <Para>
     All expressions used in PL/pgSQL statements are processed using
-    the backends executor. Since even a constant looking expression
-    can have a totally different meaning for a particular data type
-    (as 'now' for datetime), it is impossible for the PL/pgSQL parser
+    the backends executor. Expressions which appear to contain
+constants may in fact require run-time evaluation (e.g. 'now' for the
+datetime type) so
+it is impossible for the PL/pgSQL parser
     to identify real constant values other than the NULL keyword. All
     expressions are evaluated internally by executing a query
     <ProgramListing>
     SELECT <Replaceable>expression</Replaceable>
     </ProgramListing>
-    over the SPI manager. In the expression, occurences of variable
+    using the SPI manager. In the expression, occurences of variable
     identifiers are substituted by parameters and the actual values from
     the variables are passed to the executor in the parameter array. All
     expressions used in a PL/pgSQL function are only prepared and
     saved once.
 </Para>
 <Para>
-    The type checking done by the postgres main parser has some side
+    The type checking done by the <productname>Postgres</productname>
+    main parser has some side
     effects to the interpretation of constant values. In detail there
     is a difference between what the two functions
 
@@ -553,7 +561,7 @@ Assignment
 </Term>
 <ListItem>
 <Para>
-    An assignment of a value to a varable or row/record field is
+    An assignment of a value to a variable or row/record field is
     written as
     <ProgramListing>
     <Replaceable>identifier</Replaceable> := <Replaceable>expression</Replaceable>;
@@ -587,7 +595,7 @@ Assignment
     <ProgramListing>
     SELECT * INTO myrec FROM EMP WHERE empname = myname;
     IF NOT FOUND THEN
-        RAISE EXCEPTION ''employee &percnt; not found'', myname;
+        RAISE EXCEPTION ''employee % not found'', myname;
     END IF;
     </ProgramListing>
 
@@ -650,13 +658,13 @@ Aborting and messages
     can throw messages into the <ProductName>Postgres</ProductName>
     elog mechanism.
     <ProgramListing>
-    RAISE level ''format'' [, identifier [...]];
+    RAISE <replaceable class="parameter">level</replaceable> ''<replaceable class="parameter">format</replaceable>'' [, <replaceable class="parameter">identifier</replaceable> [...]];
     </ProgramListing>
-    Inside the format, &percnt; is used as a placeholder for the
-    following, comma separated identifiers. Possible levels are
-    DEBUG (silently suppressed in productional running databases), NOTICE 
+    Inside the format, <quote>%</quote> is used as a placeholder for the
+    subsequent comma-separated identifiers. Possible levels are
+    DEBUG (silently suppressed in production running databases), NOTICE 
     (written into the database log and forwarded to the client application)
-    and EXCEPTION (written into the database log and aborting the transaction). 
+    and EXCEPTION (written into the database log and aborting the transaction).
 </Para>
 </ListItem>
 </VarListEntry>
@@ -669,9 +677,9 @@ Conditionals
 <Para>
     <ProgramListing>
     IF <Replaceable>expression</Replaceable> THEN
-        -- statements
+        <replaceable>statements</replaceable>
     [ELSE
-        -- statements]
+        <replaceable>statements</replaceable>]
     END IF;
     </ProgramListing>
     The <Replaceable>expression</Replaceable> must return a value that
@@ -690,7 +698,7 @@ Loops
     <ProgramListing>
     [&lt;&lt;label&gt;&gt;]
     LOOP
-        -- statements
+        <replaceable>statements</replaceable>
     END LOOP;
     </ProgramListing>
     An unconditional loop that must be terminated explicitly
@@ -700,15 +708,15 @@ Loops
     <ProgramListing>
     [&lt;&lt;label&gt;&gt;]
     WHILE <Replaceable>expression</Replaceable> LOOP
-        -- statements
+        <replaceable>statements</replaceable>
     END LOOP;
     </ProgramListing>
     A conditional loop that is executed as long as the evaluation
     of <Replaceable>expression</Replaceable> is true.
     <ProgramListing>
     [&lt;&lt;label&gt;&gt;]
-    FOR <Replaceable>name</Replaceable> IN [REVERSE] <Replaceable>expression</Replaceable> .. <Replaceable>expression</Replaceable> LOOP
-        -- statements
+    FOR <Replaceable>name</Replaceable> IN [ REVERSE ] <Replaceable>expression</Replaceable> .. <Replaceable>expression</Replaceable> LOOP
+        <replaceable>statements</replaceable>
     END LOOP;
     </ProgramListing>
     A loop that iterates over a range of integer values. The variable
@@ -719,7 +727,7 @@ Loops
     <ProgramListing>
     [&lt;&lt;label&gt;&gt;]
     FOR <Replaceable>record | row</Replaceable> IN <Replaceable>select_clause</Replaceable> LOOP
-        -- statements
+        <replaceable>statements</replaceable>
     END LOOP;
     </ProgramListing>
     The record or row is assigned all the rows resulting from the select
@@ -727,10 +735,12 @@ Loops
     with an EXIT statement, the last assigned row is still accessible 
     after the loop.
     <ProgramListing>
-    EXIT [label] [WHEN <Replaceable>expression</Replaceable>];
+    EXIT [ <Replaceable>label</Replaceable> ] [ WHEN <Replaceable>expression</Replaceable> ];
     </ProgramListing>
-    If no label given, the innermost loop is terminated and the
-    statement following END LOOP is executed next. If label is given, it
+    If no <Replaceable>label</Replaceable> given,
+ the innermost loop is terminated and the
+    statement following END LOOP is executed next.
+ If <Replaceable>label</Replaceable> is given, it
     must be the label of the current or an upper level of nested loop
     blocks. Then the named loop or block is terminated and control
     continues with the statement after the loops/blocks corresponding
@@ -746,7 +756,7 @@ Loops
 <!-- **** PL/pgSQL trigger procedures **** -->
 
 <Sect3>
-<Title>Trigger procedures</Title>
+<Title>Trigger Procedures</Title>
 
 <Para>
     PL/pgSQL can be used to define trigger procedures. They are created
@@ -956,7 +966,7 @@ upward compatible.
 </Para>
 
 <Sect3>
-<Title>Some simple PL/pgSQL functions</Title>
+<Title>Some Simple PL/pgSQL Functions</Title>
 
 <Para>
     The following two PL/pgSQL functions are identical to their
@@ -982,7 +992,7 @@ upward compatible.
 </Sect3>
 
 <Sect3>
-<Title>PL/pgSQL function on composite type</Title>
+<Title>PL/pgSQL Function on Composite Type</Title>
 
 <Para>
     Again it is the PL/pgSQL equivalent to the example from
@@ -1006,7 +1016,7 @@ upward compatible.
 </Sect3>
 
 <Sect3>
-<Title>PL/pgSQL trigger procedure</Title>
+<Title>PL/pgSQL Trigger Procedure</Title>
 
 <Para>
     This trigger ensures, that any time a row is inserted or updated
@@ -1028,12 +1038,12 @@ upward compatible.
                 RAISE EXCEPTION ''empname cannot be NULL value'';
             END IF;
             IF NEW.salary ISNULL THEN
-                RAISE EXCEPTION ''&percnt; cannot have NULL salary'', NEW.empname;
+                RAISE EXCEPTION ''% cannot have NULL salary'', NEW.empname;
             END IF;
 
             -- Who works for us when she must pay for?
             IF NEW.salary < 0 THEN
-                RAISE EXCEPTION ''&percnt; cannot have a negative salary'', NEW.empname;
+                RAISE EXCEPTION ''% cannot have a negative salary'', NEW.empname;
             END IF;
 
             -- Remember who changed the payroll when
@@ -1099,8 +1109,8 @@ upward compatible.
 <Para>
     The shared object for the PL/Tcl call handler is automatically built
     and installed in the <ProductName>Postgres</ProductName>
-    owners library directory if the Tcl/Tk support is specified
-    in the configure run.
+    library directory if the Tcl/Tk support is specified
+    in the configuration step of the installation procedure.
 </Para>
 </Sect2>
 
@@ -1110,7 +1120,7 @@ upward compatible.
 <Title>Description</Title>
 
 <Sect3>
-<Title><ProductName>Postgres</ProductName> functions and Tcl procedure names</Title>
+<Title><ProductName>Postgres</ProductName> Functions and Tcl Procedure Names</Title>
 
 <Para>
     In <ProductName>Postgres</ProductName>, one and the 
@@ -1126,7 +1136,7 @@ upward compatible.
 </Sect3>
 
 <Sect3>
-<Title>Defining functions in PL/Tcl</Title>
+<Title>Defining Functions in PL/Tcl</Title>
 
 <Para>
     To create a function in the PL/Tcl language, use the known syntax
@@ -1172,7 +1182,7 @@ upward compatible.
 </Sect3>
 
 <Sect3>
-<Title>Global data in PL/Tcl</Title>
+<Title>Global Data in PL/Tcl</Title>
 
 <Para>
     Sometimes (especially when using the SPI functions described later) it
@@ -1188,7 +1198,7 @@ upward compatible.
 </Sect3>
 
 <Sect3>
-<Title>Trigger procedures in PL/Tcl</Title>
+<Title>Trigger Procedures in PL/Tcl</Title>
 
 <Para>
     Trigger procedures are defined in <ProductName>Postgres</ProductName>
@@ -1366,7 +1376,7 @@ $args
 </Sect3>
 
 <Sect3>
-<Title>Database access from PL/Tcl</Title>
+<Title>Database Access from PL/Tcl</Title>
 
 <Para>
     The following commands are available to access the database from
@@ -1420,7 +1430,7 @@ quote <Replaceable>string</Replaceable>
     and has to be written as
 
     <ProgramListing>
-    "SELECT '[quote $val]' AS ret"
+    "SELECT '[ quote $val ]' AS ret"
     </ProgramListing>
 </Para>
 </ListItem>
@@ -1516,13 +1526,13 @@ spi_exec ?-count <Replaceable>n</Replaceable>? ?-array <Replaceable>name</Replac
 
     <ProgramListing>
     CREATE FUNCTION t1_count(int4, int4) RETURNS int4 AS '
-        if {![info exists GD(plan)]} {
+        if {![ info exists GD(plan) ]} {
             # prepare the saved plan on the first call
-            set GD(plan) [spi_prepare \\
+            set GD(plan) [ spi_prepare \\
                     "SELECT count(*) AS cnt FROM t1 WHERE num &gt;= \\$1 AND num &lt;= \\$2" \\
-                    int4]
+                    int4 ]
         }
-        spi_execp -count 1 $GD(plan) [list $1 $2]
+        spi_execp -count 1 $GD(plan) [ list $1 $2 ]
         return $cnt
     ' LANGUAGE 'pltcl';
     </ProgramListing>

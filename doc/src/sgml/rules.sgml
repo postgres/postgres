@@ -2,19 +2,24 @@
 <Title>The <ProductName>Postgres</ProductName> Rule System</Title>
 
 <Para>
-     Production  rule  systems  are conceptually simple, but
+     Production rule systems are conceptually simple, but
      there are many subtle points involved in actually using
-     them.  Consequently, we will not attempt to explain the
-     actual syntax and operation of the <ProductName>Postgres</ProductName> rule system
-     here.  Instead, you should read 
-[<XRef LinkEnd="STON90b" EndTerm="STON90b">] to understand
-     some of these points and the theoretical foundations of
-     the  <ProductName>Postgres</ProductName>  rule  system before trying to use rules.
-     The discussion in this section is intended  to  provide
-     an  overview  of the <ProductName>Postgres</ProductName> rule system and point the
-     user at helpful references and examples.
+     them. Some of these points and
+     the theoretical foundations of the <ProductName>Postgres</ProductName>
+     rule system can be found in
+[<XRef LinkEnd="STON90b" EndTerm="STON90b">].
+</Para>
 
-     The "query rewrite" rule  system  modifies  queries  to
+<Para>
+     Some other database systems define active database rules. These
+     are usually stored procedures and triggers and are implemented
+     in <ProductName>Postgres</ProductName> as functions and triggers.
+</Para>
+
+<Para>
+     The query rewrite rule system (the "rule system" from now on) 
+     is totally different from stored procedures and triggers.
+     It modifies  queries  to
      take rules into consideration, and then passes the modified 
      query to the query optimizer for  execution.   It
      is  very powerful, and can be used for many things such
@@ -23,297 +28,2094 @@
 [<XRef LinkEnd="ONG90" EndTerm="ONG90">]
  as well as
 [<XRef LinkEnd="STON90b" EndTerm="STON90b">].
-</Para>
 
 <Sect1>
-<Title>The Goodness of Rules</Title>
+<Title>What is a Querytree?</Title>
 
-<Note>
-<title>Editor's Note</title>
 <Para>
-This information resulted from an exchange of e-mail on 1998-02-20/22 between
-<ULink url="mailto:jwieck@debis.com">Jan Wieck</ULink>,
-<ULink url="mailto:Andreas.Zeugswetter@telecom.at">Andreas Zeugswetter</ULink>,
-and
-<ULink url="mailto:vadim@sable.krasnoyarsk.su">Vadim B. Mikheev</ULink>
-on the subject.
+    To understand how the rule system works it is necessary to know
+    when it is invoked and what it's input and results are.
 </Para>
-</Note>
 
 <Para>
-<ProgramListing>
-From: Zeugswetter Andreas SARZ
-To: Jan Wieck
-</ProgramListing>
+    The rule system is located between the query parser and the optimizer.
+    It takes the output of the parser, one querytree, and the rewrite
+    rules from the <FileName>pg_rewrite</FileName> catalog, which are
+    querytrees too with some extra information, and creates zero or many
+    querytrees as result. So it's input and output are always things
+    the parser itself could have produced and thus, anything it sees
+    is basically representable as an <Acronym>SQL</Acronym> statement.
+</Para>
 
 <Para>
-Since we have so little documentation on the rules, I think we should save
-every 
-little word describing them, so could you simply put the following into a
-rules.readme 
-(undigested is still better than not adding it)
-
-<Sect1>
-<Title>Rewrite Rules versus Triggers</Title>
+    Now what is a querytree? It is an internal representation of an
+    <Acronym>SQL</Acronym> statement where the single parts that built
+    it are stored separately. These querytrees are visible when starting
+    the <ProductName>Postgres</ProductName> backend with debuglevel 4
+    and typing queries into the interactive backend interface. The rule
+    actions in the <FileName>pg_rewrite</FileName> system catalog are
+    also stored as querytrees. They are not formatted like the debug
+    output, but they contain exactly the same information.
+</Para>
 
 <Para>
-> > Why I like the rewrite system is:
-The benefits of the rewrite rules system include:
+    Reading a querytree requires some experience and it was a hard
+    time when I started to work on the rule system. I can remember
+    that I was standing at the coffee machine and I saw the cup
+    in a targetlist, water and coffee powder in a rangetable and all
+    the buttons in a qualification expression. Since 
+    <Acronym>SQL</Acronym> representations of querytrees are
+    sufficient to understand the rule system, this document will
+    not teach how to read them. It might help to learn
+    it and the naming conventions are required in the later following
+    descriptions.
+</Para>
 
+<Sect2>
+<Title>The Parts of a Querytree</Title>
+
+<Para>
+    When reading the <Acronym>SQL</Acronym> representations of the 
+    querytrees in this document it is necessary to be able to identify
+    the parts the statement is broken into when it is in the querytree
+    structure. The parts of a querytree are
+</Para>
+
+<Para>
 <VariableList>
-<VarListEntry>
-<Term>
-Select Rewrite Possible
-</Term>
-<ListItem>
-<Para>
-A select trigger would be no good, due to optimizer concerns.
- 
-<Para>
-Exactly that's what is done if you create  a  view.  Postgres
-creates  a  regular  table  (look  at  pg_class  and into the
-database directory) and then sets up a relation level instead
-rewrite rule on select.
-</ListItem>
-</VarListEntry>
+    <VarListEntry>
+    <Term>
+        the commandtype
+    </Term>
+    <ListItem>
+    <Para>
+        This is a simple value telling which command
+	(SELECT, INSERT, UPDATE, DELETE) produced the parsetree.
+    </Para>
+    </ListItem>
+    </VarListEntry>
 
-<VarListEntry>
-<Term>
-Dumb Client Possible
-</Term>
-<ListItem>
-<Para>
-The client can be really dumb, like MS Access or some other
-standard ODBC tool
-which does not know anything about funcs procs and the like
-(even without using passthrough).
+    <VarListEntry>
+    <Term>
+        the rangetable
+    </Term>
+    <ListItem>
+    <Para>
+        The rangtable is a list of relations that are used in the query.
+	In a SELECT statement that are the relations given after
+	the FROM keyword.
+    </Para>
 
-<Para>
-The  client  must not know why and how and where the
-data is left and coming from. But that's true in any case - a
-trigger  for each row on insert can do anything different and
-push the data wherever it wants.
-</ListItem>
-</VarListEntry>
+    <Para>
+        Every rangetable entry identifies a table or view and tells
+	by which name it is called in the other parts of the query.
+	In the querytree the rangetable entries are referenced by
+	index rather than by name, so here it doesn't matter if there
+	are duplicate names as it would in an <Acronym>SQL</Acronym>
+	statement. This can happen after the rangetables of rules
+	have been merged in. The examples in this document will not have
+	this situation.
+    </Para>
+    </ListItem>
+    </VarListEntry>
 
-<VarListEntry>
-<Term>
-Rewrite rules are more powerful than views
-</Term>
-<ListItem>
-<Para>
-Views are only one special rule case in Postgres.
-</ListItem>
-</VarListEntry>
+    <VarListEntry>
+    <Term>
+        the resultrelation
+    </Term>
+    <ListItem>
+    <Para>
+        This is an index into the rangetable that identifies the
+	relation where the results of the query go.
+    </Para>
 
-<VarListEntry>
-<Term>
-Optimizer Used
-</Term>
-<ListItem>
-<Para>
-It allows the optimizer to get involved (this is where triggers
-fail per definition).
-</ListItem>
-</VarListEntry>
+    <Para>
+	SELECT queries
+	normally don't have a result relation. The special case
+	of a SELECT INTO is mostly identical to a CREATE TABLE,
+	INSERT ... SELECT sequence and is not discussed separately
+	here.
+    </Para>
 
-<VarListEntry>
-<Term>
-Simple to use
-</Term>
-<ListItem>
-<Para>
-Once understood it is very easy to use;
-easier than triggers with <Acronym>C</Acronym> stored procedures at least.
-</Para>
-</ListItem>
-</VarListEntry>
+    <Para>
+        On INSERT, UPDATE and DELETE queries the resultrelation
+	is the table (or view!) where the changes take effect.
+    </Para>
+    </ListItem>
+    </VarListEntry>
+
+    <VarListEntry>
+    <Term>
+        the targetlist
+    </Term>
+    <ListItem>
+    <Para>
+        The targetlist is a list of expressions that define the result
+	of the query. In the case of a SELECT, the expressions are what
+	builds the final output of the query. They are the expressions
+	between the SELECT and the FROM keywords (* is just an
+	abbreviation for all the attribute names of a relation). 
+    </Para>
+
+    <Para>
+        DELETE queries don't need a targetlist because they don't
+	produce any result. In fact the optimizer will add a special
+	entry to the empty targetlist. But this is after the rule
+	system and will be discussed later. For the rule system the
+	targetlist is empty.
+    </Para>
+
+    <Para>
+        In INSERT queries the targetlist describes the new rows that
+	should go into the resultrelation. Missing columns of the 
+	resultrelation will be added by the optimizer with a constant
+	NULL expression. It are the expressions in the VALUES clause
+	or the ones from the SELECT clause on INSERT ... SELECT.
+    </Para>
+
+    <Para>
+        On UPDATE queries, it describes the new rows that should
+	replace the old ones. Here now the optimizer will add missing
+	columns by inserting expressions that put the values from the
+	old rows into the new one. And it will add the special entry
+	like for DELETE too. It are the expressions from the
+	SET attribute = expression part of the query.
+    </Para>
+
+    <Para>
+        Every entry in the targetlist contains an expression that can
+	be a constant value, a variable pointing to an attribute of one
+	of the relations in the rangetable, a parameter or an expression
+	tree made of function calls, constants, variables, operators etc.
+    </Para>
+    </ListItem>
+    </VarListEntry>
+
+    <VarListEntry>
+    <Term>
+        the qualification
+    </Term>
+    <ListItem>
+    <Para>
+        The queries qualification is an expression much like one of those
+	contained in the targetlist entries. The result value of this
+	expression is a boolean that tells if the operation
+	(INSERT, UPDATE, DELETE or SELECT) for the final result row should be
+	executed or not. It is the WHERE clause of an
+	<Acronym>SQL</Acronym> statement.
+    </Para>
+    </ListItem>
+    </VarListEntry>
+
+    <VarListEntry>
+    <Term>
+        the others
+    </Term>
+    <ListItem>
+    <Para>
+        The other parts of the querytree like the ORDER BY 
+	clause arent of interest here. The rule system
+	substitutes entries there while applying rules, but that
+	doesn't have much to do with the fundamentals of the rule
+	system. GROUP BY is a special thing when it appears in
+        a view definition and still needs to be documented.
+    </Para>
+    </ListItem>
+    </VarListEntry>
+
 </VariableList>
-
-<Para>
-Optimizing again and again. If the rules aren't instead,  the
-querytree  get's  additional queries for every rule appended.
-Have a table field that references an entry in another  table
-and  this entry should have a refcount. So on update you must
-decrease the refcount from the old ref and increase it on the
-new.   You  create  two  rules so the UPDATE will result in 1
-scan and 2 nestloops with scans inside - really optimized  if
-the  referenced value doesn't change.  And don't think that a
-rule qual of NEW != CURRENT might help - that will result  in
-2 mergejoins where the scanned tuples are compared.
-
-<Note>
-<Para>
-I fought that like a windmill, I guess it would be better to kill the
-CURRENT keyword
-with this meaning alltogether, since it only has the same meaning as the
-tablename itself.
-I have already crossed it out of my mind and don't miss anything.
-</Para>
-</Note>
-
-I think there should instead be an OLD and NEW keyword
-like in triggers:
-<ProgramListing>
-referencing old as <replaceable class="parameter">oldname</replaceable> new as <replaceable class="parameter">newname</replaceable>
-</ProgramListing>
-that only reference the tuples in memory.
-
-<Para>
-BTW,  this  sample  doesn't  work currently because the rules
-queries are appended at the end of the  querytree,  thus  the
-decrement  scan  having  the  same qual will not find the old
-tuple    at    all    because    it's    already     outdated
-(command_counter_increment  between  processing the queries).
-Referencing CURRENT in a rule is not what most  people  think
-it is.
-
-<Para>
-The old 4.2 postgres had a second, instance level rule system
-(prs2 stubs) that fired the rules actions when  actually  the
-old  tuple and the new projected tuple where handy. There you
-could have made also things like 'UPDATE NEW SET a = 4'  that
-really   modified  the  in  memory  tuple  in  the  executors
-expression context. Who the hell removed all that? It was  so
-nice :-(
-
-<Note>
-<Title>Editor's Note</Title>
-<Para>
-This feature was removed by Jolly et. al. prior to v1.0.x.
-</Para>
-</Note>
-
-<Para>
-Absolutely !    I did cry up when that was done, but nobody responded :-(
-Well to be honest Vadim did respond with the trigger code, which made me
-feel comfortable again.
-
-<Para>
-A  really  simple to write trigger can compare old != new and
-only if send down the other two queries. This time they  wont
-be  nestloops,  they  are  simple  scans. And the trigger can
-arrange that the queries it uses  are  only  parsed  on  it's
-first  of  all  calls and store the generated execution plans
-permanently for quick execution (look at SPI_prepare).
-
-<Para>
-For the stored C procedures you're  totally  right.  I  don't
-like  the  C functions because it requires postgres superuser
-rights to develop them and thus I created  PL/Tcl  where  joe
-user  can  hack  around without having complete access to the
-whole database (look at src/pl/tcl). And  someday  after  6.3
-release  I'll really start on a plain PL/pgSQL implementation
-that would give a  normal  user  the  opportunity  to  create
-functions and triggers on a high level. There is light at the
-end of the tunnel - hope that it isn't the coming train :-)
-
-<Para>
-I guess if triggers could also trigger simple select statements, I could
-do
-most of what I want using triggers except of course the select stuff.
-But as I said I like the rules system very much, especially after your
-recent
-fixes Jan :-) So please stick to supporting all 3: triggers, views and
-rules. Wow :-)
-
-<Para>
-Well - a trigger cannot build a view. The relation underlying
-the view doesn't contain any tuples and a select trigger will
-never be fired.  As long as there is no possibility to return
-tuple  sets  from  non-SQL  functions.  But  a trigger can do
-things like the pg_hide_passwd stuff much more powerful.  You
-could  define  the trigger so that it checks if the user is a
-superuser and overwrite the passwd value  only  in  the  case
-where  he/she isn't. If fired at the right place it would too
-work for things like the copy command etc.
-
-<Para>
-We must stay with all 3 features. And I will take a  look  at
-the  INSERT  ...  SELECT  view problem really soon as it is a
-rule system problem that breaks views. But this is  only  the
-SELECT  rewriting part of the rule system which I really like
-(optimizable). The other areas (insert,  update,  delete)  of
-the  rule  system are dangerous and I really think a powerful
-PL/pgSQL language could make them obsolete.
+</Sect2>
+</Sect1>
 
 <Sect1>
-<Title>Summary from Andreas</Title>
+<Title>Views and the Rule System</Title>
+
+<Sect2>
+<Title>Implementation of Views in <ProductName>Postgres</ProductName></Title>
 
 <Para>
-Ok, to sum it up:
+    Views in <ProductName>Postgres</ProductName> are implemented
+    using the rule system. In fact there is absolutely no difference
+    between a
 
-<ItemizedList Mark="bullet">
-<ListItem>
-<Para>
-We need and want the select part of the rewrite rules.
-</Para>
-</ListItem>
-
-<ListItem>
-<Para>
-For the insert/update/delete rules the old instance rules system
-	    was much more appropriate. TODO: dig up the old code
-	    and merge it with the current trigger Implementation;
-		    it must be pretty much the wanted functionality (it
-supported SQL).
-
-<Note>
-<Title>Vadim's Note</Title>
-<Para>
-Old instance rules system was removed by Jolly & Andrew and so
-it never supported SQL. I hope that Jan will give us PL/pgSQL soon
-and it will be used for triggers, without changing current trigger 
-implementation...
-</Para>
-</Note>
-
-</Para>
-</ListItem>
-
-<ListItem>
-<Para>
-The CURRENT keyword in the i/u/d rewrite rules is stupid
-and should be disabled
-		   destroyed and burned in hell.
-
-<Note>
-<Title>Vadim's Note</Title>
-<Para>
-Agreed, if standard hasn't it. I know that OLD & NEW are in standard,
-for triggers atleast.
-</Para>
-</Note>
-
-</Para>
-</ListItem>
-
-<ListItem>
-<Para>
-To stick to the mainstream we should enhance the trigger
-syntax,
-		    and forget the rule stuff for i/u/d
-		
 <ProgramListing>
-		create trigger passwd_utr
-		..........
-		referencing old as o new as n
-		  for each row (statement, statement, statement, procedure,
-		...... all PL/pgSQL syntax allowed );
+    CREATE VIEW myview AS SELECT * FROM mytab;
 </ProgramListing>
-with a syntax to modify the new tuple in memory.
+    
+    compared against the two commands
 
-<Note>
-<Title>Vadim's Note</Title>
+<ProgramListing>
+    CREATE TABLE myview (<Replaceable>same attribute list as for mytab</Replaceable>);
+    CREATE RULE "_RETmyview" AS ON SELECT TO myview DO INSTEAD
+        SELECT * FROM mytab;
+</ProgramListing>
+    
+    because this is exactly what the CREATE VIEW command does internally.
+    This has some side effects. One of them is that
+    the information about a view in the <ProductName>Postgres</ProductName>
+    system catalogs is exactly the same as it is for a table. So for the
+    query parsers, there is absolutely no difference between
+    a table and a view. They are the same thing - relations. That is the
+    important one for now.
+</Para>
+</Sect2>
+
+<Sect2>
+<Title>How SELECT Rules Work</Title>
+
 <Para>
-Yes. Statement level triggers give the same functionality as rewrite 
-i/u/d rules. We could let them to return something special to skip 
-user' i/u/d itself, isn't it the same as INSTEAD ?
+    Rules ON SELECT are applied to all queries as the
+    last step, even if the command
+    given is an INSERT, UPDATE or DELETE. And they have different
+    semantics from the others in that they modify the parsetree in
+    place instead of creating a new one.
+    So SELECT rules are described first.
 </Para>
-</Note>
+
+<Para>
+    Currently, there could be only one action and it must be a
+    SELECT action that is INSTEAD. This restriction was required
+    to make rules safe enough to open them for ordinary users and
+    it restricts rules ON SELECT to real view rules.
+</Para>
+
+<Para>
+    The example for this document are two join views that do some calculations
+    and some more views using them in turn.
+    One of the two first views is customized later by adding rules for
+    INSERT, UPDATE and DELETE operations so that the final result will
+    be a view that behaves like a real table with some magic functionality.
+    It is not such a simple example to start from and this makes things
+    harder to get into. But it's better to have one example that covers
+    all the points discussed step by step rather than having many
+    different ones that might mix up in mind.
+</Para>
+
+<Para>
+    The database needed to play on the examples is named al_bundy.
+    You'll see soon why this is the database name. And it needs the
+    procedural language PL/pgSQL installed, because
+    we need a little min() function returning the lower of 2
+    integer values. We create that as
+
+<ProgramListing>
+    CREATE FUNCTION min(integer, integer) RETURNS integer AS
+        'BEGIN
+            IF $1 < $2 THEN
+                RETURN $1;
+            END IF;
+            RETURN $2;
+        END;'
+    LANGUAGE 'plpgsql';
+</ProgramListing>
+</Para>
+
+<Para>
+    The real tables we need in the first two rule system descripitons
+    are these:
+
+<ProgramListing>
+    CREATE TABLE shoe_data (
+        shoename   char(10),      -- primary key
+        sh_avail   integer,       -- available # of pairs
+        slcolor    char(10),      -- preferred shoelace color
+        slminlen   float,         -- miminum shoelace length
+        slmaxlen   float,         -- maximum shoelace length
+        slunit     char(8)        -- length unit
+    );
+
+    CREATE TABLE shoelace_data (
+        sl_name    char(10),      -- primary key
+        sl_avail   integer,       -- available # of pairs
+        sl_color   char(10),      -- shoelace color
+        sl_len     float,         -- shoelace length
+        sl_unit    char(8)        -- length unit
+    );
+
+    CREATE TABLE unit (
+        un_name    char(8),       -- the primary key
+        un_fact    float          -- factor to transform to cm
+    );
+</ProgramListing>
+
+    I think most of us wear shoes and can realize that this is
+    really useful data. Well there are shoes out in the world
+    that don't require shoelaces, but this doesn't make Al's
+    life easier and so we ignore it.
+</Para>
+
+<Para>
+    The views are created as
+
+<ProgramListing>
+    CREATE VIEW shoe AS
+        SELECT sh.shoename,
+               sh.sh_avail,
+               sh.slcolor,
+               sh.slminlen,
+               sh.slminlen * un.un_fact AS slminlen_cm,
+               sh.slmaxlen,
+               sh.slmaxlen * un.un_fact AS slmaxlen_cm,
+               sh.slunit
+          FROM shoe_data sh, unit un
+         WHERE sh.slunit = un.un_name;
+
+    CREATE VIEW shoelace AS
+        SELECT s.sl_name,
+               s.sl_avail,
+               s.sl_color,
+               s.sl_len,
+               s.sl_unit,
+               s.sl_len * u.un_fact AS sl_len_cm
+          FROM shoelace_data s, unit u
+         WHERE s.sl_unit = u.un_name;
+
+    CREATE VIEW shoe_ready AS
+        SELECT rsh.shoename,
+               rsh.sh_avail,
+               rsl.sl_name,
+               rsl.sl_avail,
+               min(rsh.sh_avail, rsl.sl_avail) AS total_avail
+          FROM shoe rsh, shoelace rsl
+         WHERE rsl.sl_color = rsh.slcolor
+           AND rsl.sl_len_cm >= rsh.slminlen_cm
+           AND rsl.sl_len_cm <= rsh.slmaxlen_cm;
+</ProgramListing>
+
+    The CREATE VIEW command for the <Filename>shoelace</Filename> 
+    view (which is the simplest one we have)
+    will create a relation shoelace and an entry 
+    in <FileName>pg_rewrite</FileName>
+    that tells that there is a rewrite rule that must be applied
+    whenever the relation shoelace is referenced in a queries rangetable.
+    The rule has no rule qualification (discussed in the
+    non SELECT rules since SELECT rules currently cannot have them) and
+    it is INSTEAD. Note that rule qualifications are not the same as
+    query qualifications! The rules action has a qualification.
+</Para>
+
+<Para>
+    The rules action is one querytree that is an exact copy of the
+    SELECT statement in the view creation command.
+    
+    <Note>
+    <Title>Note</Title>
+    <Para>
+    The two extra range
+    table entries for NEW and OLD (named *NEW* and *CURRENT* for
+    historical reasons in the printed querytree) you can see in
+    the <Filename>pg_rewrite</Filename> entry aren't of interest
+    for SELECT rules.
+    </Para>
+    </Note>
+
+    Now we populate <Filename>unit</Filename>, <Filename>shoe_data</Filename>
+    and <Filename>shoelace_data</Filename> and Al types the first 
+    SELECT in his life:
+
+<ProgramListing>
+    al_bundy=> INSERT INTO unit VALUES ('cm', 1.0);
+    al_bundy=> INSERT INTO unit VALUES ('m', 100.0);
+    al_bundy=> INSERT INTO unit VALUES ('inch', 2.54);
+    al_bundy=> 
+    al_bundy=> INSERT INTO shoe_data VALUES 
+    al_bundy->     ('sh1', 2, 'black', 70.0, 90.0, 'cm');
+    al_bundy=> INSERT INTO shoe_data VALUES 
+    al_bundy->     ('sh2', 0, 'black', 30.0, 40.0, 'inch');
+    al_bundy=> INSERT INTO shoe_data VALUES 
+    al_bundy->     ('sh3', 4, 'brown', 50.0, 65.0, 'cm');
+    al_bundy=> INSERT INTO shoe_data VALUES 
+    al_bundy->     ('sh4', 3, 'brown', 40.0, 50.0, 'inch');
+    al_bundy=> 
+    al_bundy=> INSERT INTO shoelace_data VALUES 
+    al_bundy->     ('sl1', 5, 'black', 80.0, 'cm');
+    al_bundy=> INSERT INTO shoelace_data VALUES 
+    al_bundy->     ('sl2', 6, 'black', 100.0, 'cm');
+    al_bundy=> INSERT INTO shoelace_data VALUES 
+    al_bundy->     ('sl3', 0, 'black', 35.0 , 'inch');
+    al_bundy=> INSERT INTO shoelace_data VALUES 
+    al_bundy->     ('sl4', 8, 'black', 40.0 , 'inch');
+    al_bundy=> INSERT INTO shoelace_data VALUES 
+    al_bundy->     ('sl5', 4, 'brown', 1.0 , 'm');
+    al_bundy=> INSERT INTO shoelace_data VALUES 
+    al_bundy->     ('sl6', 0, 'brown', 0.9 , 'm');
+    al_bundy=> INSERT INTO shoelace_data VALUES 
+    al_bundy->     ('sl7', 7, 'brown', 60 , 'cm');
+    al_bundy=> INSERT INTO shoelace_data VALUES 
+    al_bundy->     ('sl8', 1, 'brown', 40 , 'inch');
+    al_bundy=> 
+    al_bundy=> SELECT * FROM shoelace;
+    sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
+    ----------+--------+----------+------+--------+---------
+    sl1       |       5|black     |    80|cm      |       80
+    sl2       |       6|black     |   100|cm      |      100
+    sl7       |       7|brown     |    60|cm      |       60
+    sl3       |       0|black     |    35|inch    |     88.9
+    sl4       |       8|black     |    40|inch    |    101.6
+    sl8       |       1|brown     |    40|inch    |    101.6
+    sl5       |       4|brown     |     1|m       |      100
+    sl6       |       0|brown     |   0.9|m       |       90
+    (8 rows)
+</ProgramListing>
+
+    It's the simplest SELECT Al can do on our views, so we take this
+    to explain the basics of view rules.
+    The 'SELECT * FROM shoelace' was interpreted by the parser and
+    produced the parsetree
+
+<ProgramListing>
+    SELECT shoelace.sl_name, shoelace.sl_avail,
+           shoelace.sl_color, shoelace.sl_len,
+           shoelace.sl_unit, shoelace.sl_len_cm
+      FROM shoelace shoelace;
+</ProgramListing>
+
+    and this is given to the rule system. The rule system walks through the
+    rangetable and checks if there are rules in <Filename>pg_rewrite</Filename>
+    for any relation. When processing the rangetable entry for
+    <Filename>shoelace</Filename> (the only one up to now) it finds the
+    rule '_RETshoelace' with the parsetree
+
+<ProgramListing>
+    <FirstTerm>SELECT s.sl_name, s.sl_avail,
+           s.sl_color, s.sl_len, s.sl_unit,
+           float8mul(s.sl_len, u.un_fact) AS sl_len_cm
+      FROM shoelace *OLD*, shoelace *NEW*,
+           shoelace_data s, unit u
+     WHERE bpchareq(s.sl_unit, u.un_name);</FirstTerm>
+</ProgramListing>
+
+    Note that the parser changed the calculation and qualification into
+    calls to the appropriate functions. But
+    in fact this changes nothing.
+    The first step in rewriting is merging the two rangetables. The resulting
+    parsetree then reads
+
+<ProgramListing>
+    SELECT shoelace.sl_name, shoelace.sl_avail,
+           shoelace.sl_color, shoelace.sl_len,
+           shoelace.sl_unit, shoelace.sl_len_cm
+      FROM shoelace shoelace, <FirstTerm>shoelace *OLD*</FirstTerm>,
+           <FirstTerm>shoelace *NEW*</FirstTerm>, <FirstTerm>shoelace_data s</FirstTerm>,
+           <FirstTerm>unit u</FirstTerm>;
+</ProgramListing>
+
+    In step 2 it adds the qualification from the rule action to the
+    parsetree resulting in
+
+<ProgramListing>
+    SELECT shoelace.sl_name, shoelace.sl_avail,
+           shoelace.sl_color, shoelace.sl_len,
+           shoelace.sl_unit, shoelace.sl_len_cm
+      FROM shoelace shoelace, shoelace *OLD*,
+           shoelace *NEW*, shoelace_data s,
+           unit u
+     <FirstTerm>WHERE bpchareq(s.sl_unit, u.un_name)</FirstTerm>;
+</ProgramListing>
+
+    And in step 3 it replaces all the variables in the parsetree, that
+    reference the rangetable entry (the one for
+    <Filename>shoelace</Filename> that is currently processed)
+    by the corresponding targetlist expressions
+    from the rule action. This results in the final query
+
+<ProgramListing>
+    SELECT <FirstTerm>s.sl_name</FirstTerm>, <FirstTerm>s.sl_avail</FirstTerm>, 
+           <FirstTerm>s.sl_color</FirstTerm>, <FirstTerm>s.sl_len</FirstTerm>, 
+           <FirstTerm>s.sl_unit</FirstTerm>, <FirstTerm>float8mul(s.sl_len, u.un_fact)</FirstTerm> AS sl_len_cm
+      FROM shoelace shoelace, shoelace *OLD*,
+           shoelace *NEW*, shoelace_data s,
+           unit u
+     WHERE bpchareq(s.sl_unit, u.un_name);
+</ProgramListing>
+
+    Turning this back into a real <Acronym>SQL</Acronym> statement a human
+    user would type reads
+
+<ProgramListing>
+    SELECT s.sl_name, s.sl_avail,
+           s.sl_color, s.sl_len,
+           s.sl_unit, s.sl_len * u.un_fact AS sl_len_cm
+      FROM shoelace_data s, unit u
+     WHERE s.sl_unit = u.un_name;
+</ProgramListing>
+
+    That was the first rule applied. While this was done, the rangetable has
+    grown. So the rule system continues checking the range table entries.
+    The next one is number 2 (shoelace *OLD*).
+    Relation <Filename>shoelace</Filename>
+    has a rule, but this rangetable entry isn't referenced
+    in any of the variables of the parsetree, so it is ignored. Since all the
+    remaining rangetable entries either have no rules in
+    <Filename>pg_rewrite</Filename> or aren't referenced,
+    it reaches the end of the rangetable.
+    Rewriting is complete and the above is the final result given into
+    the optimizer.
+    The optimizer ignores the extra rangetable entries that aren't
+    referenced by variables in the parsetree and the plan produced
+    by the planner/optimizer would be exactly the same as if Al had typed
+    the above SELECT query instead of the view selection.
+</Para>
+
+<Para>
+    Now we face Al with the problem that the Blues Brothers appear
+    in his shop and
+    want to buy some new shoes, and as the Blues Brothers are,
+    they want to wear the same shoes. And they want to wear them
+    immediately, so they need shoelaces too.
+</Para>
+
+<Para>
+    Al needs to know for which shoes currently in the store
+    he has the matching shoelaces (color and size) and where the
+    total number of exactly matching pairs is greater or equal to two.
+    We theach him how to do and he asks his database:
+
+<ProgramListing>
+    al_bundy=> SELECT * FROM shoe_ready WHERE total_avail >= 2;
+    shoename  |sh_avail|sl_name   |sl_avail|total_avail
+    ----------+--------+----------+--------+-----------
+    sh1       |       2|sl1       |       5|          2
+    sh3       |       4|sl7       |       7|          4
+    (2 rows)
+</ProgramListing>
+
+    Al is a shoe guru and so he knows that only shoes of type sh1
+    would fit (shoelace sl7 is brown and shoes that need brown shoelaces
+    aren't shoes the Blues Brothers would ever wear).
+</Para>
+
+<Para>
+    The output of the parser this time is the parsetree
+
+<ProgramListing>
+    SELECT shoe_ready.shoename, shoe_ready.sh_avail,
+           shoe_ready.sl_name, shoe_ready.sl_avail,
+           shoe_ready.total_avail
+      FROM shoe_ready shoe_ready
+     WHERE int4ge(shoe_ready.total_avail, 2);
+</ProgramListing>
+
+    The first rule applied will be that one for the 
+    <Filename>shoe_ready</Filename> relation and it results in the
+    parsetree
+
+<ProgramListing>
+    SELECT <FirstTerm>rsh.shoename</FirstTerm>, <FirstTerm>rsh.sh_avail</FirstTerm>,
+           <FirstTerm>rsl.sl_name</FirstTerm>, <FirstTerm>rsl.sl_avail</FirstTerm>,
+           <FirstTerm>min(rsh.sh_avail, rsl.sl_avail) AS total_avail</FirstTerm>
+      FROM shoe_ready shoe_ready, <FirstTerm>shoe_ready *OLD*</FirstTerm>,
+           <FirstTerm>shoe_ready *NEW*</FirstTerm>, <FirstTerm>shoe rsh</FirstTerm>,
+           <FirstTerm>shoelace rsl</FirstTerm>
+     WHERE int4ge(<FirstTerm>min(rsh.sh_avail, rsl.sl_avail)</FirstTerm>, 2)
+       <FirstTerm>AND (bpchareq(rsl.sl_color, rsh.slcolor)
+            AND float8ge(rsl.sl_len_cm, rsh.slminlen_cm)
+            AND float8le(rsl.sl_len_cm, rsh.slmaxlen_cm)
+           )</FirstTerm>;
+</ProgramListing>
+
+    In reality the AND clauses in the qualification will be
+    operator nodes of type AND with a left and right expression. But
+    that makes it lesser readable as it already is, and there are more
+    rules to apply. So I only put them into some parantheses to group
+    them into logical units in the order they where added and we continue
+    with the rule for relation
+    <Filename>shoe</Filename> as it is the next rangetable entry
+    that is referenced and has a rule. The result of applying it is
+
+<ProgramListing>
+    SELECT <FirstTerm>sh.shoename</FirstTerm>, <FirstTerm>sh.sh_avail</FirstTerm>,
+           rsl.sl_name, rsl.sl_avail,
+           min(<FirstTerm>sh.sh_avail</FirstTerm>, rsl.sl_avail) AS total_avail,
+      FROM shoe_ready shoe_ready, shoe_ready *OLD*,
+           shoe_ready *NEW*, shoe rsh,
+           shoelace rsl, <FirstTerm>shoe *OLD*</FirstTerm>,
+           <FirstTerm>shoe *NEW*</FirstTerm>, <FirstTerm>shoe_data sh</FirstTerm>,
+           <FirstTerm>unit un</FirstTerm>
+     WHERE (int4ge(min(<FirstTerm>sh.sh_avail</FirstTerm>, rsl.sl_avail), 2)
+            AND (bpchareq(rsl.sl_color, <FirstTerm>sh.slcolor</FirstTerm>)
+                 AND float8ge(rsl.sl_len_cm, 
+                              <FirstTerm>float8mul(sh.slminlen, un.un_fact)</FirstTerm>)
+                 AND float8le(rsl.sl_len_cm, 
+                              <FirstTerm>float8mul(sh.slmaxlen, un.un_fact)</FirstTerm>)
+                )
+           )
+       <FirstTerm>AND bpchareq(sh.slunit, un.un_name)</FirstTerm>;
+</ProgramListing>
+
+    And finally we apply the already well known rule for
+    <Filename>shoelace</Filename> (this time on a parsetree that is
+    a little more complex) and get
+
+<ProgramListing>
+    SELECT sh.shoename, sh.sh_avail,
+           <FirstTerm>s.sl_name</FirstTerm>, <FirstTerm>s.sl_avail</FirstTerm>,
+           min(sh.sh_avail, <FirstTerm>s.sl_avail</FirstTerm>) AS total_avail
+      FROM shoe_ready shoe_ready, shoe_ready *OLD*,
+           shoe_ready *NEW*, shoe rsh,
+           shoelace rsl, shoe *OLD*,
+           shoe *NEW*, shoe_data sh,
+           unit un, <FirstTerm>shoelace *OLD*</FirstTerm>,
+           <FirstTerm>shoelace *NEW*</FirstTerm>, <FirstTerm>shoelace_data s</FirstTerm>,
+           <FirstTerm>unit u</FirstTerm>
+     WHERE (    (int4ge(min(sh.sh_avail, <FirstTerm>s.sl_avail</FirstTerm>), 2)
+                 AND (bpchareq(<FirstTerm>s.sl_color</FirstTerm>, sh.slcolor)
+                      AND float8ge(<FirstTerm>float8mul(s.sl_len, u.un_fact)</FirstTerm>, 
+                                   float8mul(sh.slminlen, un.un_fact))
+                      AND float8le(<FirstTerm>float8mul(s.sl_len, u.un_fact)</FirstTerm>, 
+                                   float8mul(sh.slmaxlen, un.un_fact))
+                     )
+                )
+            AND bpchareq(sh.slunit, un.un_name)
+           )
+       <FirstTerm>AND bpchareq(s.sl_unit, u.un_name)</FirstTerm>;
+</ProgramListing>
+
+    Again we reduce it to a real <Acronym>SQL</Acronym> statement
+    that is equivalent to the final output of the rule system:
+
+<ProgramListing>
+    SELECT sh.shoename, sh.sh_avail,
+           s.sl_name, s.sl_avail,
+           min(sh.sh_avail, s.sl_avail) AS total_avail
+      FROM shoe_data sh, shoelace_data s, unit u, unit un
+     WHERE min(sh.sh_avail, s.sl_avail) >= 2
+       AND s.sl_color = sh.slcolor
+       AND s.sl_len * u.un_fact >= sh.slminlen * un.un_fact
+       AND s.sl_len * u.un_fact <= sh.slmaxlen * un.un_fact
+       AND sh.sl_unit = un.un_name
+       AND s.sl_unit = u.un_name;
+</ProgramListing>
+
+    Recursive processing of rules rewrote one SELECT from a view
+    into a parsetree, that is equivalent to exactly that what Al
+    had to type if there would be no views at all.
+
+    <Note>
+    <Title>Note</Title>
+    <Para>
+    There is currently no recursion stopping mechanism for view
+    rules in the rule system (only for the other rules).
+    This doesn't hurt much, because the only way to push this
+    into an endless loop (blowing up the
+    backend until it reaches the memory limit)
+    is to create tables and then setup the
+    view rules by hand with CREATE RULE in such a way, that
+    one selects from the other that selects from the one.
+    This could never happen if CREATE VIEW is used because
+    on the first CREATE VIEW, the second relation does not exist
+    and thus the first view cannot select from the second.
+    </Para>
+    </Note>
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>View Rules in Non-SELECT Statements</Title>
+
+<Para>
+    Two details of the parsetree aren't touched in the description of
+    view rules above. These are the commandtype and the resultrelation.
+    In fact, view rules don't need these informations.
+</Para>
+
+<Para>
+    There are only a few differences between a parsetree for a SELECT
+    and one for any other command. Obviously they have another commandtype
+    and this time the resultrelation points to the rangetable entry where
+    the result should go. Anything else is absolutely the same. 
+    So having two tables t1 and t2 with attributes
+    a and b, the parsetrees for the two statements
+
+<ProgramListing>
+    SELECT t2.b FROM t1, t2 WHERE t1.a = t2.a;
+
+    UPDATE t1 SET b = t2.b WHERE t1.a = t2.a;
+</ProgramListing>
+
+    are nearly identical.
+
+    <ItemizedList>
+        <ListItem>
+	<Para>
+	    The rangetables contain entries for the tables t1 and t2.
+	</Para>
+        </ListItem>
+
+        <ListItem>
+	<Para>
+	    The targetlists contain one variable that points to attribute
+	    b of the rangetable entry for table t2.
+	</Para>
+        </ListItem>
+
+        <ListItem>
+	<Para>
+	    The qualification expressions compare the attributes a of both
+	    ranges for equality.
+	</Para>
+        </ListItem>
+    </ItemizedList>
+
+    The consequence is, that both parsetrees result in similar execution
+    plans. They are both joins over the two tables. For the UPDATE
+    the missing columns from t1 are added to the targetlist by the optimizer 
+    and the final parsetree will read as
+
+<ProgramListing>
+    UPDATE t1 SET a = t1.a, b = t2.b WHERE t1.a = t2.a;
+</ProgramListing>
+
+    and thus the executor run over the join will produce exactly the
+    same result set as a
+
+<ProgramListing>
+    SELECT t1.a, t2.b FROM t1, t2 WHERE t1.a = t2.a;
+</ProgramListing>
+    
+    will do. But there is a little problem in UPDATE. The executor does
+    not care what the results from the join it is doing are meant
+    for. It just produces a result set of rows. The difference that one
+    is a SELECT command and the other is an UPDATE is handled in the
+    caller of the executor. The caller still knows (looking at the
+    parsetree) that this is an UPDATE, and he knows that this result
+    should go into table t1. But which of the 666 rows that are there
+    has to be replaced by the new row? The plan executed is a join
+    with a qualification that potentially could produce any number of
+    rows between 0 and 666 in unknown order.
+</Para>
+
+<Para>
+    To resolve this problem, another entry is added to the targetlist
+    in UPDATE and DELETE statements. The current tuple ID (ctid). This
+    is a system attribute with a special feature. It contains the
+    block and position in the block for the row. Knowing the table,
+    the ctid can be used to find one specific row in a 1.5GB sized table
+    containing millions of rows by fetching one single data block.
+    After adding the ctid to the targetlist, the final result set
+    could be defined as
+
+<ProgramListing>
+    SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
+</ProgramListing>
+    
+    Now another detail of <ProductName>Postgres</ProductName> enters the
+    stage. At this moment, table rows aren't overwritten and this is why
+    ABORT TRANSACTION is fast. In an UPDATE, the new result row is inserted
+    into the table (after stripping ctid) and in the tuple header of the row 
+    that ctid pointed to the cmax and xmax entries are set to the current
+    command counter and current transaction ID. Thus the old row is hidden
+    and after the transaction commited the vacuum cleaner can really move
+    it out.
+</Para>
+
+<Para>
+    Knowing that all, we can simply apply view rules in absolutely
+    the same way to any command. There is no difference.
+</Para>
+</Sect2>
+
+<Sect2>
+<Title>The Power of Views in <ProductName>Postgres</ProductName></Title>
+
+<Para>
+    The above demonstrates how the rule system incorporates
+    view definitions into the original parsetree. In the second example
+    a simple SELECT from one view created a final parsetree that is
+    a join of 4 tables (unit is used twice with different names).
+</Para>
+
+<Sect3>
+<Title>Benefits</Title>
+
+<Para>
+    The benefit of implementing views with the rule system is,
+    that the optimizer has all
+    the information about which tables have to be scanned plus the
+    relationships between these tables plus the restrictive
+    qualifications from the views plus the qualifications from
+    the original query
+    in one single parsetree. And this is still the situation
+    when the original query is already a join over views.
+    Now the optimizer has to decide which is
+    the best path to execute the query. The more information
+    the optimizer has, the better this decision can be. And
+    the rule system as implemented in <ProductName>Postgres</ProductName>
+    ensures, that this is all information available about the query
+    up to now.
+</Para>
+</Sect3>
+
+<Sect3>
+<Title>Concerns</Title>
+
+<Para>
+    There was a long time where the <ProductName>Postgres</ProductName> 
+    rule system was considered broken. The use of rules was not
+    recommended and the only part working where view rules. And also
+    these view rules made problems because the rule system wasn't able
+    to apply them properly on other statements than a SELECT (for
+    example an UPDATE
+    that used data from a view didn't work).
+</Para>
+
+<Para>
+    During that time, development moved on and many features where
+    added to the parser and optimizer. The rule system got more and more
+    out of sync with their capabilities and it became harder and harder
+    to start fixing it. Thus, noone did.
+</Para>
+
+<Para>
+    For 6.4, someone locked the door, took a deep breath and shuffled
+    that damned thing up. What came out was a rule system with the
+    capabilities described in this document. But there are still some
+    constructs not handled and some where it fails due to 
+    things that are currently not
+    supported by the <ProductName>Postgres</ProductName> query
+    optimizer.
+
+    <ItemizedList>
+        <ListItem>
+	<Para>
+	    Views with aggregate columns have bad problems. Aggregate
+	    expressions in qualifications must be used in subselects.
+	    Currently it is not possible to do a join of two views,
+	    each having an aggregate column, and compare the two aggregate values
+	    in the qualification. In the meantime it is possible to
+	    put these aggregate expressions into functions with
+	    the appropriate arguments and use
+	    them in the view definition.
+	</Para>
+        </ListItem>
+
+        <ListItem>
+	<Para>
+	    Views of unions are currently not supported. Well it's easy
+	    to rewrite a simple SELECT into a union. But it is a little
+	    difficult if the view is part of a join doing an update.
+	</Para>
+        </ListItem>
+
+        <ListItem>
+	<Para>
+	    ORDER BY clauses in view definitions aren't supported.
+	</Para>
+        </ListItem>
+
+        <ListItem>
+	<Para>
+	    DISTINCT isn't supported in view definitions.
+	</Para>
+        </ListItem>
+    </ItemizedList>
+
+    There is no good reason why the optimizer should not
+    handle parsetree constructs that the parser could never produce
+    due to limitations in the <Acronym>SQL</Acronym> syntax.
+    The author hopes that these items disappear in the future.
+</Para>
+</Sect3>
+</Sect2>
+
+<Sect2>
+<Title>Implementation Side Effects</Title>
+
+<Para>
+    Using the described rule system to implement views has a funny
+    side effect. The following does not seem to work:
+
+<ProgramListing>
+    al_bundy=> INSERT INTO shoe (shoename, sh_avail, slcolor)
+    al_bundy->     VALUES ('sh5', 0, 'black');
+    INSERT 20128 1
+    al_bundy=> SELECT shoename, sh_avail, slcolor FROM shoe_data;
+    shoename  |sh_avail|slcolor   
+    ----------+--------+----------
+    sh1       |       2|black     
+    sh3       |       4|brown     
+    sh2       |       0|black     
+    sh4       |       3|brown     
+    (4 rows)
+</ProgramListing>
+
+    The interesting thing is that the return code for INSERT gave
+    us an object ID and told that 1 row has been inserted.
+    But it doesn't appear in <Filename>shoe_data</Filename>.
+    Looking into the database
+    directory we can see, that the database file for the
+    view relation <Filename>shoe</Filename> seems now to have
+    a data block. And that is definitely the case.
+</Para>
+
+<Para>
+    We can also issue a DELETE and if it does not have
+    a qualification, it tells us that rows have been deleted
+    and the next vacuum run will reset the file to zero size.
+</Para>
+
+<Para>
+    The reason for that behaviour is, that the parsetree for the
+    INSERT does not reference the <Filename>shoe</Filename> relation
+    in any variable. The targetlist contains only constant values.
+    So there is no rule to apply and it goes
+    down unchanged into execution and the row is inserted. And
+    so for the DELETE.
+</Para>
+
+<Para>
+    To change this we can define rules that modify the behaviour
+    of non-SELECT queries. This is the topic of the next section.
+</Para>
+</Sect2>
+
+</Sect1>
+
+<Sect1>
+<Title>Rules on INSERT, UPDATE and DELETE</Title>
+
+<Sect2>
+<Title>Differences to View Rules</Title>
+
+<Para>
+    Rules that are defined ON INSERT, UPDATE and DELETE are
+    totally different from the view rules described
+    in the previous section. First, their CREATE RULE
+    command allows more:
+
+    <ItemizedList>
+        <ListItem>
+	<Para>
+	    They can have no action.
+	</Para>
+	</ListItem>
+
+        <ListItem>
+	<Para>
+	    They can have multiple actions.
+	</Para>
+	</ListItem>
+
+        <ListItem>
+	<Para>
+	    The keyword INSTEAD is optional.
+	</Para>
+	</ListItem>
+
+        <ListItem>
+	<Para>
+	    The pseudo relations NEW and OLD become useful.
+	</Para>
+	</ListItem>
+
+        <ListItem>
+	<Para>
+	    They can have rule qualifications.
+	</Para>
+	</ListItem>
+    </ItemizedList>
+
+    Second, they don't modify the parsetree in place. Instead they
+    create zero or many new parsetrees and can throw away the
+    original one.
+</Para>
+
+<Sect2>
+<Title>How These Rules Work</Title>
+
+<Para>
+    Keep the syntax
+
+<ProgramListing>
+    CREATE RULE rule_name AS ON event
+        TO object [WHERE rule_qualification]
+        DO [INSTEAD] [action | (actions) | NOTHING];
+</ProgramListing>
+
+    in mind.
+    In the following, "update rules" means rules that are defined
+    ON INSERT, UPDATE or DELETE.
+</Para>
+
+<Para>
+    Update rules get applied by the rule system when the result
+    relation and the commandtype of a parsetree are equal to the
+    object and event given in the CREATE RULE command.
+    For update rules, the rule system creates a list of parsetrees.
+    Initially the parsetree list is empty.
+    There can be zero (NOTHING keyword), one or multiple actions.
+    To simplify, we look at a rule with one action. This rule
+    can have a qualification or not and it can be INSTEAD or not.
+</Para>
+
+<Para>
+    What is a rule qualification? It is a restriction that tells
+    when the actions of the rule should be done and when not. This
+    qualification can only reference the NEW and/or OLD pseudo relations
+    which are basically the relation given as object (but with a
+    special meaning).
+</Para>
+
+<Para>
+    So we have four cases that produce the following parsetrees for
+    a one-action rule.
+</Para>
+<Para>
+    <ItemizedList>
+    <ListItem>
+    <Para>
+        No qualification and not INSTEAD:
+        <ItemizedList>
+	    <ListItem>
+	    <Para>
+	        The parsetree from the rule action where the
+		original parsetrees qualification has been added.
+	    </Para>
+	    </ListItem>
+	</ItemizedList>
+    </Para>
+    </ListItem>
+
+    <ListItem>
+    <Para>
+        No qualification but INSTEAD:
+        <ItemizedList>
+	    <ListItem>
+	    <Para>
+	        The parsetree from the rule action where the
+		original parsetrees qualification has been added.
+	    </Para>
+	    </ListItem>
+	</ItemizedList>
+    </Para>
+    </ListItem>
+
+    <ListItem>
+    <Para>
+        Qualification given and not INSTEAD:
+        <ItemizedList>
+	    <ListItem>
+	    <Para>
+	        The parsetree from the rule action where the rule
+		qualification and the original parsetrees 
+		qualification have been added.
+	    </Para>
+	    </ListItem>
+	</ItemizedList>
+    </Para>
+    </ListItem>
+
+    <ListItem>
+    <Para>
+        Qualification given and INSTEAD:
+        <ItemizedList>
+	    <ListItem>
+	    <Para>
+	        The parsetree from the rule action where the rule
+		qualification and the original parsetrees 
+		qualification have been added.
+	    </Para>
+	    </ListItem>
+
+	    <ListItem>
+	    <Para>
+	        The original parsetree where the negated rule
+		qualification has been added.
+	    </Para>
+	    </ListItem>
+	</ItemizedList>
+    </Para>
+    </ListItem>
+    </ItemizedList>
+
+<Para>
+    Finally, if the rule is not INSTEAD, the unchanged original parsetree is
+    added to the list. Since only qualified INSTEAD rules already add the
+    original parsetree, we end up with a total maximum of two parsetrees
+    for a rule with one action.
+</Para>
+
+<Para>
+    The parsetrees generated from rule actions are thrown into the
+    rewrite system again and maybe more rules get applied resulting
+    in more or less parsetrees.
+    So the parsetrees in the rule actions must have either another commandtype
+    or another resultrelation. Otherwise this recursive process will end up in a loop.
+    There is a compiled in recursion limit of currently 10 iterations.
+    If after 10 iterations there are still update rules to apply the
+    rule system assumes a loop over multiple rule definitions and aborts the
+    transaction.
+</Para>
+
+<Para>
+    The parsetrees found in the actions of the <Filename>pg_rewrite</Filename>
+    system catalog are only templates. Since they can reference the
+    rangetable entries for NEW and OLD, some substitutions have to be made
+    before they can be used. For any reference to NEW, the targetlist of
+    the original query is searched for a corresponding entry. If found,
+    that entries expression is placed into the reference. Otherwise
+    NEW means the same as OLD. Any reference to OLD is replaced by a
+    reference to the rangetable entry which is the resultrelation.
+</Para>
+
+<Sect3>
+<Title>A First Rule Step by Step</Title>
+
+<Para>
+    We want to trace changes to the sl_avail column in the
+    <Filename>shoelace_data</Filename> relation. So we setup a
+    log table and a rule that writes us entries every time
+    and UPDATE is performed on <Filename>shoelace_data</Filename>.
+
+<ProgramListing>
+    CREATE TABLE shoelace_log (
+        sl_name    char(10),      -- shoelace changed
+        sl_avail   integer,       -- new available value
+        log_who    name,          -- who did it
+        log_when   datetime       -- when
+    );
+
+    CREATE RULE log_shoelace AS ON UPDATE TO shoelace_data
+        WHERE NEW.sl_avail != OLD.sl_avail
+        DO INSERT INTO shoelace_log VALUES (
+                                        NEW.sl_name,
+                                        NEW.sl_avail,
+                                        getpgusername(),
+                                        'now'::text
+                                    );
+</ProgramListing>
+
+    One interesting detail is the casting of 'now' in the rules
+    INSERT action to type text. Without that, the parser would see
+    at CREATE RULE time, that the target type in <Filename>shoelace_log</Filename>
+    is a datetime and tries to make a constant from it - with success.
+    So a constant datetime value would be stored in the rule action
+    and all log entries would have the time of the CREATE RULE statement.
+    Not exactly what we want. The casting causes that the parser
+    constructs a datetime('now'::text) from it and this will be 
+    evaluated when the rule is executed.
+</Para>
+
+<Para>
+    Now Al does
+
+<ProgramListing>
+    al_bundy=> UPDATE shoelace_data SET sl_avail = 6                       
+    al_bundy->     WHERE sl_name = 'sl7';
+</ProgramListing>
+
+    and we look at the logtable.
+
+<ProgramListing>
+    al_bundy=> SELECT * FROM shoelace_log;
+    sl_name   |sl_avail|log_who|log_when                        
+    ----------+--------+-------+--------------------------------
+    sl7       |       6|Al     |Tue Oct 20 16:14:45 1998 MET DST
+    (1 row)
+</ProgramListing>
+
+    That's what we expected. What happened in the background is the following.
+    The parser created the parsetree (this time the parts of the original
+    parsetree are highlighted because the base of operations is the
+    rule action for update rules).
+
+<ProgramListing>
+    <FirstTerm>UPDATE shoelace_data SET sl_avail = 6
+      FROM shoelace_data shoelace_data
+     WHERE bpchareq(shoelace_data.sl_name, 'sl7');</FirstTerm>
+</ProgramListing>
+
+    There is a rule 'log_shoelace' that is ON UPDATE with the rule
+    qualification expression
+
+<ProgramListing>
+    int4ne(NEW.sl_avail, OLD.sl_avail)
+</ProgramListing>
+
+    and one action
+
+<ProgramListing>
+    INSERT INTO shoelace_log SELECT 
+           *NEW*.sl_name, *NEW*.sl_avail,
+           getpgusername(), datetime('now'::text)
+      FROM shoelace_data *NEW*, shoelace_data *OLD*,
+           shoelace_log shoelace_log;
+</ProgramListing>
+
+    Don't trust the output of the pg_rules system view. It specially
+    handles the situation that there are only references to NEW
+    and OLD in the INSERT and outputs the VALUES format of INSERT.
+    In fact there is no difference between an INSERT ... VALUES
+    and an INSERT ... SELECT on parsetree level. They both have
+    rangetables, targetlists and maybe qualifications etc. The
+    optimizer later decides, if to create an execution plan of
+    type result, seqscan, indexscan, join or whatever for that
+    parsetree. If there are no references to
+    rangetable entries leftin the parsetree , it becomes
+    a result execution plan
+    (the INSERT ... VALUES version). The rule action above can
+    truely result in both variants.
+</Para>
+
+<Para>
+    The rule is a qualified non-INSTEAD rule, so the rule system
+    has to return two parsetrees. The modified rule action and the original
+    parsetree. In the first step the rangetable of the original query is
+    incorporated into the rules action parsetree. This results in
+
+<ProgramListing>
+    INSERT INTO shoelace_log SELECT 
+           *NEW*.sl_name, *NEW*.sl_avai,
+           getpgusername(), datetime('now'::text)
+      FROM <FirstTerm>shoelace_data shoelace_data</FirstTerm>, shoelace_data *NEW*,
+           shoelace_data *OLD*, shoelace_log shoelace_log;
+</ProgramListing>
+
+    In step 2 the rule qualification is added to it, so the result set
+    is restricted to rows where sl_avail changes.
+
+<ProgramListing>
+    INSERT INTO shoelace_log SELECT 
+           *NEW*.sl_name, *NEW*.sl_avai,
+           getpgusername(), datetime('now'::text)
+      FROM shoelace_data shoelace_data, shoelace_data *NEW*,
+           shoelace_data *OLD*, shoelace_log shoelace_log
+     <FirstTerm>WHERE int4ne(*NEW*.sl_avail, *OLD*.sl_avail)</FirstTerm>;
+</ProgramListing>
+
+    In step 3 the original parsetrees qualification is added,
+    restricting the resultset further to only the rows touched
+    by the original parsetree.
+
+<ProgramListing>
+    INSERT INTO shoelace_log SELECT 
+           *NEW*.sl_name, *NEW*.sl_avai,
+           getpgusername(), datetime('now'::text)
+      FROM shoelace_data shoelace_data, shoelace_data *NEW*,
+           shoelace_data *OLD*, shoelace_log shoelace_log
+     WHERE int4ne(*NEW*.sl_avail, *OLD*.sl_avail)
+       <FirstTerm>AND bpchareq(shoelace_data.sl_name, 'sl7')</FirstTerm>;
+</ProgramListing>
+
+    Step 4 substitutes NEW references by the targetlist entries from the
+    original parsetree or with the matching variable references
+    from the result relation.
+
+<ProgramListing>
+    INSERT INTO shoelace_log SELECT 
+           <FirstTerm>shoelace_data.sl_name</FirstTerm>, <FirstTerm>6</FirstTerm>,
+           getpgusername(), datetime('now'::text)
+      FROM shoelace_data shoelace_data, shoelace_data *NEW*,
+           shoelace_data *OLD*, shoelace_log shoelace_log
+     WHERE int4ne(<FirstTerm>6</FirstTerm>, *OLD*.sl_avail)
+       AND bpchareq(shoelace_data.sl_name, 'sl7');
+</ProgramListing>
+
+    Step 5 replaces OLD references into resultrelation references.
+
+<ProgramListing>
+    INSERT INTO shoelace_log SELECT 
+           shoelace_data.sl_name, 6,
+           getpgusername(), datetime('now'::text)
+      FROM shoelace_data shoelace_data, shoelace_data *NEW*,
+           shoelace_data *OLD*, shoelace_log shoelace_log
+     WHERE int4ne(6, <FirstTerm>shoelace_data.sl_avail</FirstTerm>)
+       AND bpchareq(shoelace_data.sl_name, 'sl7');
+</ProgramListing>
+
+    That's it. So reduced to the max the return from the rule system
+    is a list of two parsetrees that are the same as the statements:
+
+<ProgramListing>
+    INSERT INTO shoelace_log SELECT
+           shoelace_data.sl_name, 6,
+           getpgusername(), 'now'
+      FROM shoelace_data
+     WHERE 6 != shoelace_data.sl_avail
+       AND shoelace_data.sl_name = 'sl7';
+
+    UPDATE shoelace_data SET sl_avail = 6
+     WHERE sl_name = 'sl7';
+</ProgramListing>
+
+    These are executed in this order and that is exactly what
+    the rule defines. The subtitutions and the qualifications
+    added ensure, that if the original query would be an
+
+<ProgramListing>
+    UPDATE shoelace_data SET sl_color = 'green'
+     WHERE sl_name = 'sl7';
+</ProgramListing>
+
+    No log entry would get written because due to the fact that this
+    time the original parsetree does not contain a targetlist
+    entry for sl_avail, NEW.sl_avail will get replaced by
+    shoelace_data.sl_avail resulting in the extra query
+
+<ProgramListing>
+    INSERT INTO shoelace_log SELECT
+           shoelace_data.sl_name, <FirstTerm>shoelace_data.sl_avail</FirstTerm>,
+           getpgusername(), 'now'
+      FROM shoelace_data
+     WHERE <FirstTerm>shoelace_data.sl_avail</FirstTerm> != shoelace_data.sl_avail
+       AND shoelace_data.sl_name = 'sl7';
+</ProgramListing>
+
+    and that qualification will never be true. Since the is no
+    difference on parsetree level between an INSERT ... SELECT,
+    and an INSERT ... VALUES, it will also
+    work if the original query modifies multiple rows. So if Al
+    would issue the command
+
+<ProgramListing>
+    UPDATE shoelace_data SET sl_avail = 0
+     WHERE sl_color = 'black';
+</ProgramListing>
+
+    four rows in fact get updated (sl1, sl2, sl3 and sl4).
+    But sl3 already has sl_avail = 0. This time, the original
+    parsetrees qualification is different and that results
+    in the extra parsetree
+
+<ProgramListing>
+    INSERT INTO shoelace_log SELECT
+           shoelace_data.sl_name, 0,
+           getpgusername(), 'now'
+      FROM shoelace_data
+     WHERE 0 != shoelace_data.sl_avail
+       AND <FirstTerm>shoelace_data.sl_color = 'black'</FirstTerm>;
+</ProgramListing>
+
+    This parsetree will surely insert three new log entries. And
+    that's absolutely correct.
+</Para>
+
+<Para>
+    It is important, that the original parsetree is executed last.
+    The <ProductName>Postgres</ProductName> "traffic cop" does
+    a command counter increment between the execution of the two
+    parsetrees so the second one can see changes made by the first.
+    If the UPDATE would have been executed first, all the rows
+    are already set to zero, so the logging INSERT
+    would not find any row where 0 != shoelace_data.sl_avail.
+</Para>
+</Sect3>
+
+</Sect2>
+
+<Sect2>
+<Title>Cooperation with Views</Title>
+
+<Para>
+    A simple way to protect view relations from the mentioned
+    possibility that someone can INSERT, UPDATE and DELETE
+    invisible data on them is to let those parsetrees get
+    thrown away. We create the rules
+
+<ProgramListing>
+    CREATE RULE shoe_ins_protect AS ON INSERT TO shoe
+        DO INSTEAD NOTHING;
+    CREATE RULE shoe_upd_protect AS ON UPDATE TO shoe
+        DO INSTEAD NOTHING;
+    CREATE RULE shoe_del_protect AS ON DELETE TO shoe
+        DO INSTEAD NOTHING;
+</ProgramListing>
+
+    If Al now tries to do any of these operations on the view
+    relation <Filename>shoe</Filename>, the rule system will
+    apply the rules. Since the rules have
+    no actions and are INSTEAD, the resulting list of
+    parsetrees will be empty and the whole query will become
+    nothing because there is nothing left to be optimized or
+    executed after the rule system is done with it.
+
+    <Note>
+    <Title>Note</Title>
+    <Para>
+    This fact might irritate frontend applications because
+    absolutely nothing happened on the database and thus, the
+    backend will not return anything for the query. Not
+    even a PGRES_EMPTY_QUERY or so will be available in libpq.
+    In psql, nothing happens. This might change in the future.
+    </Para>
+    </Note>
 
 </Para>
-</ListItem>
-</ItemizedList>
+
+<Para>
+    A more sophisticated way to use the rule system is to
+    create rules that rewrite the parsetree into one that
+    does the right operation on the real tables. To do that
+    on the <Filename>shoelace</Filename> view, we create
+    the following rules:
+
+<ProgramListing>
+    CREATE RULE shoelace_ins AS ON INSERT TO shoelace
+        DO INSTEAD
+        INSERT INTO shoelace_data VALUES (
+               NEW.sl_name,
+               NEW.sl_avail,
+               NEW.sl_color,
+               NEW.sl_len,
+               NEW.sl_unit);
+
+    CREATE RULE shoelace_upd AS ON UPDATE TO shoelace
+        DO INSTEAD
+        UPDATE shoelace_data SET
+               sl_name = NEW.sl_name,
+               sl_avail = NEW.sl_avail,
+               sl_color = NEW.sl_color,
+               sl_len = NEW.sl_len,
+               sl_unit = NEW.sl_unit
+         WHERE sl_name = OLD.sl_name;
+
+    CREATE RULE shoelace_del AS ON DELETE TO shoelace
+        DO INSTEAD
+        DELETE FROM shoelace_data
+         WHERE sl_name = OLD.sl_name;
+</ProgramListing>
+
+    Now there is a pack of shoelaces arriving in Al's shop and it has
+    a big partlist. Al is not that good in calculating and so
+    we don't want him to manually update the shoelace view.
+    Instead we setup two little tables, one where he can
+    insert the items from the partlist and one with a special
+    trick. The create commands for anything are:
+
+<ProgramListing>
+    CREATE TABLE shoelace_arrive (
+        arr_name    char(10),
+        arr_quant   integer
+    );
+
+    CREATE TABLE shoelace_ok (
+        ok_name     char(10),
+        ok_quant    integer
+    );
+
+    CREATE RULE shoelace_ok_ins AS ON INSERT TO shoelace_ok
+        DO INSTEAD
+        UPDATE shoelace SET
+               sl_avail = sl_avail + NEW.ok_quant
+         WHERE sl_name = NEW.ok_name;
+</ProgramListing>
+
+    Now Al can sit down and do whatever until
+
+<ProgramListing>
+    al_bundy=> SELECT * FROM shoelace_arrive;
+    arr_name  |arr_quant
+    ----------+---------
+    sl3       |       10
+    sl6       |       20
+    sl8       |       20
+    (3 rows)
+</ProgramListing>
+
+    is exactly that what's on the part list. We take a quick look
+    at the current data,
+    
+<ProgramListing>
+    al_bundy=> SELECT * FROM shoelace ORDER BY sl_name;
+    sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
+    ----------+--------+----------+------+--------+---------
+    sl1       |       5|black     |    80|cm      |       80
+    sl2       |       6|black     |   100|cm      |      100
+    sl7       |       6|brown     |    60|cm      |       60
+    sl3       |       0|black     |    35|inch    |     88.9
+    sl4       |       8|black     |    40|inch    |    101.6
+    sl8       |       1|brown     |    40|inch    |    101.6
+    sl5       |       4|brown     |     1|m       |      100
+    sl6       |       0|brown     |   0.9|m       |       90
+    (8 rows)
+</ProgramListing>
+
+    move the arrived shoelaces in
+
+<ProgramListing>
+    al_bundy=> INSERT INTO shoelace_ok SELECT * FROM shoelace_arrive;
+</ProgramListing>
+
+    and check the results
+
+<ProgramListing>
+    al_bundy=> SELECT * FROM shoelace ORDER BY sl_name;
+    sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
+    ----------+--------+----------+------+--------+---------
+    sl1       |       5|black     |    80|cm      |       80
+    sl2       |       6|black     |   100|cm      |      100
+    sl7       |       6|brown     |    60|cm      |       60
+    sl4       |       8|black     |    40|inch    |    101.6
+    sl3       |      10|black     |    35|inch    |     88.9
+    sl8       |      21|brown     |    40|inch    |    101.6
+    sl5       |       4|brown     |     1|m       |      100
+    sl6       |      20|brown     |   0.9|m       |       90
+    (8 rows)
+
+    al_bundy=> SELECT * FROM shoelace_log;
+    sl_name   |sl_avail|log_who|log_when                        
+    ----------+--------+-------+--------------------------------
+    sl7       |       6|Al     |Tue Oct 20 19:14:45 1998 MET DST
+    sl3       |      10|Al     |Tue Oct 20 19:25:16 1998 MET DST
+    sl6       |      20|Al     |Tue Oct 20 19:25:16 1998 MET DST
+    sl8       |      21|Al     |Tue Oct 20 19:25:16 1998 MET DST
+    (4 rows)
+</ProgramListing>
+
+    It's a long way from the one INSERT ... SELECT to these
+    results. And it's description will be the last in this
+    document (but not the last example :-). First there was the parsers output
+
+<ProgramListing>
+    INSERT INTO shoelace_ok SELECT
+           shoelace_arrive.arr_name, shoelace_arrive.arr_quant
+      FROM shoelace_arrive shoelace_arrive, shoelace_ok shoelace_ok;
+</ProgramListing>
+
+    Now the first rule 'shoelace_ok_ins' is applied and turns it
+    into
+
+<ProgramListing>
+    UPDATE shoelace SET
+           sl_avail = int4pl(shoelace.sl_avail, shoelace_arrive.arr_quant)
+      FROM shoelace_arrive shoelace_arrive, shoelace_ok shoelace_ok,
+           shoelace_ok *OLD*, shoelace_ok *NEW*,
+           shoelace shoelace
+     WHERE bpchareq(shoelace.sl_name, showlace_arrive.arr_name);
+</ProgramListing>
+
+    and throws away the original INSERT on <Filename>shoelace_ok</Filename>.
+    This rewritten query is passed to the rule system again and
+    the second applied rule 'shoelace_upd' produced
+
+<ProgramListing>
+    UPDATE shoelace_data SET
+           sl_name = shoelace.sl_name,
+           sl_avail = int4pl(shoelace.sl_avail, shoelace_arrive.arr_quant),
+           sl_color = shoelace.sl_color,
+           sl_len = shoelace.sl_len,
+           sl_unit = shoelace.sl_unit
+      FROM shoelace_arrive shoelace_arrive, shoelace_ok shoelace_ok,
+           shoelace_ok *OLD*, shoelace_ok *NEW*,
+           shoelace shoelace, shoelace *OLD*,
+           shoelace *NEW*, shoelace_data showlace_data
+     WHERE bpchareq(shoelace.sl_name, showlace_arrive.arr_name)
+       AND bpchareq(shoelace_data.sl_name, shoelace.sl_name);
+</ProgramListing>
+
+    Again it's an INSTEAD rule and the previous parsetree is trashed.
+    Note that this query sill uses the view <Filename>shoelace</Filename>
+    But the rule system isn't finished with this loop so it continues
+    and applies the rule '_RETshoelace' on it and we get
+
+<ProgramListing>
+    UPDATE shoelace_data SET
+           sl_name = s.sl_name,
+           sl_avail = int4pl(s.sl_avail, shoelace_arrive.arr_quant),
+           sl_color = s.sl_color,
+           sl_len = s.sl_len,
+           sl_unit = s.sl_unit
+      FROM shoelace_arrive shoelace_arrive, shoelace_ok shoelace_ok,
+           shoelace_ok *OLD*, shoelace_ok *NEW*,
+           shoelace shoelace, shoelace *OLD*,
+           shoelace *NEW*, shoelace_data showlace_data,
+           shoelace *OLD*, shoelace *NEW*,
+           shoelace_data s, unit u
+     WHERE bpchareq(s.sl_name, showlace_arrive.arr_name)
+       AND bpchareq(shoelace_data.sl_name, s.sl_name);
+</ProgramListing>
+
+    Again an update rule has been applied and so the wheel
+    turns on and we are in rewrite round 3. This time rule
+    'log_shoelace' gets applied what produces the extra
+    parsetree
+
+<ProgramListing>
+    INSERT INTO shoelace_log SELECT
+           s.sl_name,
+           int4pl(s.sl_avail, shoelace_arrive.arr_quant),
+           getpgusername(),
+           datetime('now'::text)
+      FROM shoelace_arrive shoelace_arrive, shoelace_ok shoelace_ok,
+           shoelace_ok *OLD*, shoelace_ok *NEW*,
+           shoelace shoelace, shoelace *OLD*,
+           shoelace *NEW*, shoelace_data showlace_data,
+           shoelace *OLD*, shoelace *NEW*,
+           shoelace_data s, unit u,
+           shoelace_data *OLD*, shoelace_data *NEW*
+           shoelace_log shoelace_log
+     WHERE bpchareq(s.sl_name,  showlace_arrive.arr_name)
+       AND bpchareq(shoelace_data.sl_name, s.sl_name);
+       AND int4ne(int4pl(s.sl_avail, shoelace_arrive.arr_quant),
+                                                    s.sl_avail);
+</ProgramListing>
+    
+    After that the rule system runs out of rules and returns the 
+    generated parsetrees.
+    So we end up with two final parsetrees that are equal to the
+    <Acronym>SQL</Acronym> statements
+
+<ProgramListing>
+    INSERT INTO shoelace_log SELECT
+           s.sl_name,
+           s.sl_avail + shoelace_arrive.arr_quant,
+           getpgusername(),
+           'now'
+      FROM shoelace_arrive shoelace_arrive, shoelace_data shoelace_data,
+           shoelace_data s
+     WHERE s.sl_name = shoelace_arrive.arr_name
+       AND shoelace_data.sl_name = s.sl_name
+       AND s.sl_avail + shoelace_arrive.arr_quant != s.sl_avail;
+           
+    UPDATE shoelace_data SET
+           sl_avail = shoelace_data.sl_avail + shoelace_arrive.arr_quant
+     FROM shoelace_arrive shoelace_arrive, shoelace_data shoelace_data,
+          shoelace_data s
+    WHERE s.sl_name = shoelace_arrive.sl_name
+      AND shoelace_data.sl_name = s.sl_name;
+</ProgramListing>
+
+    The result is that data coming from one relation inserted into another,
+    changed into updates on a third, changed into updating
+    a fourth plus logging that final update in a fifth
+    gets reduced into two queries.
+</Para>
+
+<Para>
+    There is a little detail that's a bit ugly. Looking at
+    the two queries turns out, that the <Filename>shoelace_data</Filename>
+    relation appears twice in the rangetable where it could definitely
+    be reduced to one. The optimizer does not handle it and so the
+    execution plan for the rule systems output of the INSERT will be
+
+<ProgramListing>
+Nested Loop
+  ->  Merge Join
+        ->  Seq Scan
+              ->  Sort
+                    ->  Seq Scan on s
+        ->  Seq Scan
+              ->  Sort
+                    ->  Seq Scan on shoelace_arrive
+  ->  Seq Scan on shoelace_data
+</ProgramListing>
+
+    while omitting the extra rangetable entry would result in a
+
+<ProgramListing>
+Merge Join
+  ->  Seq Scan
+        ->  Sort
+              ->  Seq Scan on s
+  ->  Seq Scan
+        ->  Sort
+              ->  Seq Scan on shoelace_arrive
+</ProgramListing>
+
+    that totally produces the same entries in the log relation.
+    Thus, the rule system caused one extra scan on the
+    <Filename>shoelace_data</Filename> relation that is
+    absolutely not necessary. And the same obsolete scan
+    is done once more in the UPDATE. But it was a really hard
+    job to make that all possible at all.
+</Para>
+
+<Para>
+    A final demonstration of the <ProductName>Postgres</ProductName>
+    rule system and it's power. There is a cute blonde that
+    sells shoelaces. And what Al could never realize, she's not
+    only cute, she's smart too - a little too smart. Thus, it
+    happens from time to time that Al orders shoelaces that
+    are absolutely not sellable. This time he ordered 1000 pairs
+    of magenta shoelaces and since another kind is currently not
+    available but he committed to buy some, he also prepared
+    his database for pink ones.
+
+<ProgramListing>
+    al_bundy=> INSERT INTO shoelace VALUES 
+    al_bundy->     ('sl9', 0, 'pink', 35.0, 'inch', 0.0);
+    al_bundy=> INSERT INTO shoelace VALUES 
+    al_bundy->     ('sl10', 1000, 'magenta', 40.0, 'inch', 0.0);
+</ProgramListing>
+
+    Since this happens often, we must lookup for shoelace entries,
+    that fit for absolutely no shoe sometimes. We could do that in
+    a complicated statement every time, or we can setup a view
+    for it. The view for this is
+
+<ProgramListing>
+    CREATE VIEW shoelace_obsolete AS
+        SELECT * FROM shoelace WHERE NOT EXISTS
+            (SELECT shoename FROM shoe WHERE slcolor = sl_color);
+</ProgramListing>
+
+    It's output is
+
+<ProgramListing>
+    al_bundy=> SELECT * FROM shoelace_obsolete;
+    sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
+    ----------+--------+----------+------+--------+---------
+    sl9       |       0|pink      |    35|inch    |     88.9
+    sl10      |    1000|magenta   |    40|inch    |    101.6
+</ProgramListing>
+
+    For the 1000 magenta shoelaces we must debt Al before we can
+    throw 'em away, but that's another problem. The pink entry we delete.
+    To make it a little harder for <ProductName>Postgres</ProductName>,
+    we don't delete it directly. Instead we create one more view
+
+<ProgramListing>
+    CREATE VIEW shoelace_candelete AS
+        SELECT * FROM shoelace_obsolete WHERE sl_avail = 0;
+</ProgramListing>
+
+    and do it this way:
+
+<ProgramListing>
+    DELETE FROM shoelace WHERE EXISTS
+        (SELECT * FROM shoelace_candelete
+                 WHERE sl_name = shoelace.sl_name);
+</ProgramListing>
+
+    Voila:
+
+<ProgramListing>
+    al_bundy=> SELECT * FROM shoelace;
+    sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
+    ----------+--------+----------+------+--------+---------
+    sl1       |       5|black     |    80|cm      |       80
+    sl2       |       6|black     |   100|cm      |      100
+    sl7       |       6|brown     |    60|cm      |       60
+    sl4       |       8|black     |    40|inch    |    101.6
+    sl3       |      10|black     |    35|inch    |     88.9
+    sl8       |      21|brown     |    40|inch    |    101.6
+    sl10      |    1000|magenta   |    40|inch    |    101.6
+    sl5       |       4|brown     |     1|m       |      100
+    sl6       |      20|brown     |   0.9|m       |       90
+    (9 rows)
+</ProgramListing>
+
+    A DELETE on a view, with a subselect qualification that
+    in total uses 4 nesting/joined views, where one of them
+    itself has a subselect qualification containing a view
+    and where calculated view columns are used,
+    gets rewritten into 
+    one single parsetree that deletes the requested data
+    from a real table.
+</Para>
+
+<Para>
+    I think there are only a few situations out in the real
+    world, where such a construct is necessary. But
+    it makes me feel comfortable that it works.
+
+    <Note>
+    <Title>The truth is</Title>
+    <Para>
+    Doing this I found one more bug while writing this document.
+    But after fixing that I was a little amazed that it works at all.
+    </Para>
+    </Note>
+</Para>
+</Sect2>
+
+</Sect1>
+
+<Sect1>
+<Title>Rules and Permissions</Title>
+
+<Para>
+    Due to rewriting of queries by the <ProductName>Postgres</ProductName>
+    rule system, other tables/views than those used in the original
+    query get accessed. Using update rules, this can include write access
+    to tables.
+</Para>
+
+<Para>
+    Rewrite rules don't have a separate owner. The owner of
+    a relation (table or view) is automatically the owner of the
+    rewrite rules that are defined for it.
+    The <ProductName>Postgres</ProductName> rule system changes the
+    behaviour of the default access control system. Relations that
+    are used due to rules get checked during the rewrite against the
+    permissions of the relation owner, the rule is defined on.
+    This means, that a user does only need the required permissions
+    for the tables/views he names in his queries. 
+</Para>
+
+<Para>
+    For example: A user has a list of phone numbers where some of
+    them are private, the others are of interest for the secretary of the office.
+    He can construct the following:
+
+<ProgramListing>
+    CREATE TABLE phone_data (person text, phone text, private bool);
+    CREATE VIEW phone_number AS
+        SELECT person, phone FROM phone_data WHERE NOT private;
+    GRANT SELECT ON phone_number TO secretary;
+</ProgramListing>
+    
+    Nobody except him (and the database superusers) can access the
+    phone_data table. But due to the GRANT, the secretary can SELECT from the
+    phone_number view. The rule system will rewrite
+    the SELECT from phone_number into a SELECT from phone_data and add the qualification
+    that only entries where private is false are wanted. Since the
+    user is the owner of phone_number, the read access to phone_data
+    is now checked against his permissions and the query is considered
+    granted. The check for accessing phone_number is still performed,
+    so nobody than the secretary can use it.
+</Para>
+
+<Para>
+    The permissions are checked rule by rule. So the secretary is for now the
+    only one who can see the public phone numbers. But the secretary can setup
+    another view and grant access to that to public. Then, anyone
+    can see the phone_number data through the secretaries view.
+    What the secretary cannot do is to create a view that directly
+    accesses phone_data (actually he can, but it will not work since
+    every access aborts the transaction during the permission checks).
+    And as soon as the user will notice, that the secretary opened
+    his phone_number view, he can REVOKE his access. Immediately any
+    access to the secretaries view will fail.
+</Para>
+
+<Para>
+    Someone might think that this rule by rule checking is a security
+    hole, but in fact it isn't. If this would not work, the secretary
+    could setup a table with the same columns as phone_number and
+    copy the data to there once per day. Then it's his own data and
+    he can grant access to everyone he wants. A GRANT means "I trust you".
+    If someone you trust does the thing above, it's time to
+    think it over and then REVOKE.
+</Para>
+
+<Para>
+    This mechanism does also work for update rules. In the examples
+    of the previous section, the owner of the tables in Al's database
+    could GRANT SELECT, INSERT, UPDATE and DELETE on the shoelace view to al.
+    But only SELECT on shoelace_log. The rule action to write log entries
+    will still be executed successfull. And Al could see the log entries.
+    But he cannot create fake entries, nor could he manipulate or remove
+    existing ones.
+
+    <Note>
+    <Title>Warning</Title>
+    <Para>
+    GRANT ALL currently includes RULE permission. This means the granted
+    user could drop the rule, do the changes and reinstall it. I think
+    this should get changed quickly.
+    </Para>
+    </Note>
+</Para>
+</Sect1>
+
+<Sect1>
+<Title>Rules versus Triggers</Title>
+
+<Para>
+    Many things that can be done using triggers can also be
+    implemented using the <ProductName>Postgres</ProductName>
+    rule system. What currently cannot be implemented by
+    rules are some kinds of constraints. It is possible,
+    to place a qualified rule that rewrites a query to NOTHING
+    if the value of a column does not appear in another table.
+    But then the data is silently thrown away and that's
+    not a good idea. If checks for valid values are required,
+    and in the case of an invalid value an error message should
+    be generated, it must be done by a trigger for now.
+</Para>
+
+<Para>
+    On the other hand a trigger that is fired on INSERT 
+    on a view can do the same as a rule, put the data somewhere
+    else and suppress the insert in the view. But it cannot
+    do the same thing on UPDATE or DELETE, because there is
+    no real data in the view relation that could be scanned
+    and thus the trigger would never get called. Only a rule
+    will help.
+</Para>
+
+<Para>
+    For the things that can be implemented by both,
+    it depends on the usage of the database, which is the best.
+    A trigger is fired for any row affected once. A rule manipulates
+    the parsetree or generates an additional one. So if many
+    rows are affected in one statement, a rule issuing one extra
+    query would usually do a better job than a trigger that is
+    called for any single row and must execute his operations
+    this many times.
+</Para>
+
+<Para>
+    For example: There are two tables
+
+<ProgramListing>
+    CREATE TABLE computer (
+        hostname        text     -- indexed
+	manufacturer    text     -- indexed
+    );
+
+    CREATE TABLE software (
+        software        text,    -- indexed
+        hostname        text     -- indexed
+    );
+</ProgramListing>
+
+    Both tables have many
+    thousands of rows and the index on hostname is unique.
+    The hostname column contains the full qualified domain
+    name of the computer. The rule/trigger should constraint
+    delete rows from software that reference the deleted host.
+    Since the trigger is called for each individual row
+    deleted from computer, it can use the statement
+
+<ProgramListing>
+    DELETE FROM software WHERE hostname = $1;
+</ProgramListing>
+
+    in a prepared and saved plan and pass the hostname in
+    the parameter. The rule would be written as
+
+<ProgramListing>
+    CREATE RULE computer_del AS ON DELETE TO computer
+        DO DELETE FROM software WHERE hostname = OLD.hostname;
+</ProgramListing>
+
+    Now we look at different types of deletes. In the case of a 
+    
+<ProgramListing>
+    DELETE FROM computer WHERE hostname = 'mypc.local.net';
+</ProgramListing>
+
+    the table computer is scanned by index (fast) and the
+    query issued by the trigger would also be an index scan (fast too).
+    The extra query from the rule would be a
+
+<ProgramListing>
+    DELETE FROM software WHERE computer.hostname = 'mypc.local.net'
+                           AND software.hostname = computer.hostname;
+</ProgramListing>
+
+    Since there are appropriate indices setup, the optimizer
+    will create a plan of
+
+<ProgramListing>
+    Nestloop
+      ->  Index Scan using comp_hostidx on computer
+      ->  Index Scan using soft_hostidx on software
+</ProgramListing>
+
+    So there would be not that much difference in speed between
+    the trigger and the rule implementation. With the next delete
+    we want to get rid of all the 2000 computers where the hostname starts
+    with 'old'. There are two possible queries to do that. One is
+
+<ProgramListing>
+    DELETE FROM computer WHERE hostname >= 'old'
+                           AND hostname <  'ole'
+</ProgramListing>
+
+    Where the plan for the rule query will be a 
+
+<ProgramListing>
+    Hash Join
+      ->  Seq Scan on software
+      ->  Hash
+	    ->  Index Scan using comp_hostidx on computer
+</ProgramListing>
+
+    The other possible query is a
+
+<ProgramListing>
+    DELETE FROM computer WHERE hostname ~ '^old';
+</ProgramListing>
+
+    with the execution plan
+
+<ProgramListing>
+    Nestloop
+      ->  Index Scan using comp_hostidx on computer
+      ->  Index Scan using soft_hostidx on software
+</ProgramListing>
+
+    This shows, that the optimizer does not realize that the
+    qualification for the hostname on computer could also be
+    used for an index scan on software when there are
+    multiple qualification expressions combined with AND, what
+    he does in the regexp version of the query. The trigger will
+    get invoked once for any of the 2000 old computers that
+    have to be deleted and that will result in one index scan
+    over computer and 2000 index scans for the software. The
+    rule implementation will do it with two queries over indices.
+    And it depends on the overall size of the software table if
+    the rule will still be faster in the seqscan situation. 2000
+    query executions over the SPI manager take some time, even
+    if all the index blocks to look them up will soon appear in
+    the cache.
+</Para>
+
+<Para>
+    The last query we look at is a
+
+<ProgramListing>
+    DELETE FROM computer WHERE manufacurer = 'bim';
+</ProgramListing>
+
+    Again this could result in many rows to be deleted from
+    computer. So the trigger will again fire many queries into
+    the executor. But the rule plan will again be the Nestloop over
+    two IndexScan's. Only using another index on computer:
+
+<ProgramListing>
+    Nestloop
+      ->  Index Scan using comp_manufidx on computer
+      ->  Index Scan using soft_hostidx on software
+</ProgramListing>
+
+    resulting from the rules query
+
+<ProgramListing>
+    DELETE FROM software WHERE computer.manufacurer = 'bim'
+                           AND software.hostname = computer.hostname;
+</ProgramListing>
+
+    In any of these cases, the extra queries from the rule system will be
+    more or less independent from the number of affected rows
+    in a query. 
+</Para>
+
+<Para>
+    Another situation are cases on UPDATE where it depends on the
+    change of an attribute if an action should be performed or
+    not. In <ProductName>Postgres</ProductName> version 6.4, the
+    attribute specification for rule events is disabled (it will have
+    it's comeback latest in 6.5, maybe earlier 
+    - stay tuned). So for now the only way to
+    create a rule as in the shoelace_log example is to do it with
+    a rule qualification. That results in an extra query that is
+    performed allways, even if the attribute of interest cannot
+    change at all because it does not appear in the targetlist
+    of the initial query. When this is enabled again, it will be
+    one more advantage of rules over triggers. Optimization of
+    a trigger must fail by definition in this case, because the
+    fact that it's actions will only be done when a specific attribute
+    is updated is hidden in it's functionality. The definition of
+    a trigger only allows to specify it on row level, so whenever a
+    row is touched, the trigger must be called to make it's
+    decision. The rule system will know it by looking up the
+    targetlist and will suppress the additional query completely
+    if the attribute isn't touched. So the rule, qualified or not,
+    will only do it's scan's if there ever could be something to do.
+</Para>
+
+<Para>
+    Rules will only be significant slower than triggers if
+    their actions result in large and bad qualified joins, a situation
+    where the optimizer fails. They are a big hammer.
+    Using a big hammer without caution can cause big damage. But
+    used with the right touch, they can hit any nail on the head.
+</Para>
+</Sect1>
 
 </Chapter>
