@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.98 1999/10/30 23:13:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.99 1999/11/01 05:09:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -383,25 +383,25 @@ ExecCheckPerms(CmdType operation,
 			   List *rangeTable,
 			   Query *parseTree)
 {
-	int			i = 1;
-	Oid			relid;
-	HeapTuple	htup;
+	int			rtindex = 0;
 	List	   *lp;
 	List	   *qvars,
 			   *tvars;
 	int32		ok = 1,
 				aclcheck_result = -1;
 	char	   *opstr;
-	NameData	rname;
+	char	   *relName = NULL;
 	char	   *userName;
 
-#define CHECK(MODE)		pg_aclcheck(rname.data, userName, MODE)
+#define CHECK(MODE)		pg_aclcheck(relName, userName, MODE)
 
 	userName = GetPgUserName();
 
 	foreach(lp, rangeTable)
 	{
 		RangeTblEntry *rte = lfirst(lp);
+
+		++rtindex;
 
 		if (rte->skipAcl)
 		{
@@ -415,16 +415,8 @@ ExecCheckPerms(CmdType operation,
 			continue;
 		}
 
-		relid = rte->relid;
-		htup = SearchSysCacheTuple(RELOID,
-								   ObjectIdGetDatum(relid),
-								   0, 0, 0);
-		if (!HeapTupleIsValid(htup))
-			elog(ERROR, "ExecCheckPerms: bogus RT relid: %u", relid);
-		StrNCpy(rname.data,
-				((Form_pg_class) GETSTRUCT(htup))->relname.data,
-				NAMEDATALEN);
-		if (i == resultRelation)
+		relName = rte->relname;
+		if (rtindex == resultRelation)
 		{						/* this is the result relation */
 			qvars = pull_varnos(parseTree->qual);
 			tvars = pull_varnos((Node *) parseTree->targetList);
@@ -461,10 +453,9 @@ ExecCheckPerms(CmdType operation,
 		}
 		if (!ok)
 			break;
-		++i;
 	}
 	if (!ok)
-		elog(ERROR, "%s: %s", rname.data, aclcheck_error_strings[aclcheck_result]);
+		elog(ERROR, "%s: %s", relName, aclcheck_error_strings[aclcheck_result]);
 
 	if (parseTree != NULL && parseTree->rowMark != NULL)
 	{
@@ -475,19 +466,11 @@ ExecCheckPerms(CmdType operation,
 			if (!(rm->info & ROW_ACL_FOR_UPDATE))
 				continue;
 
-			relid = ((RangeTblEntry *) nth(rm->rti - 1, rangeTable))->relid;
-			htup = SearchSysCacheTuple(RELOID,
-									   ObjectIdGetDatum(relid),
-									   0, 0, 0);
-			if (!HeapTupleIsValid(htup))
-				elog(ERROR, "ExecCheckPerms: bogus RT relid: %u", relid);
-			StrNCpy(rname.data,
-					((Form_pg_class) GETSTRUCT(htup))->relname.data,
-					NAMEDATALEN);
+			relName = rt_fetch(rm->rti, rangeTable)->relname;
 			ok = ((aclcheck_result = CHECK(ACL_WR)) == ACLCHECK_OK);
 			opstr = "write";
 			if (!ok)
-				elog(ERROR, "%s: %s", rname.data, aclcheck_error_strings[aclcheck_result]);
+				elog(ERROR, "%s: %s", relName, aclcheck_error_strings[aclcheck_result]);
 		}
 	}
 }
@@ -586,10 +569,13 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 		resultRelationInfo->ri_IndexRelationInfo = NULL;
 
 		/*
-		 * open indices on result relation and save descriptors in the
-		 * result relation information..
+		 * If there are indices on the result relation, open them and save
+		 * descriptors in the result relation info, so that we can add new
+		 * index entries for the tuples we add/update.  We need not do this
+		 * for a DELETE, however, since deletion doesn't affect indexes.
 		 */
-		if (operation != CMD_DELETE)
+		if (resultRelationDesc->rd_rel->relhasindex &&
+			operation != CMD_DELETE)
 			ExecOpenIndices(resultRelationOid, resultRelationInfo);
 
 		estate->es_result_relation_info = resultRelationInfo;
@@ -618,7 +604,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 		foreach(l, parseTree->rowMark)
 		{
 			rm = lfirst(l);
-			relid = ((RangeTblEntry *) nth(rm->rti - 1, rangeTable))->relid;
+			relid = rt_fetch(rm->rti, rangeTable)->relid;
 			relation = heap_open(relid, RowShareLock);
 			if (!(rm->info & ROW_MARK_FOR_UPDATE))
 				continue;
@@ -740,6 +726,8 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 				 * XXX rather than having to call setheapoverride(true)
 				 * and then back to false, we should change the arguments
 				 * to heap_open() instead..
+				 *
+				 * XXX no, we should use commandCounterIncrement...
 				 */
 				setheapoverride(true);
 
