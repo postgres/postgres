@@ -169,7 +169,7 @@ WHERE o.oprleft = t.oid and ( o.oprright = t.oid or o.oprright=tq.oid )
 
 -- _int_overlap
 INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 3, true, c.opoid
+   SELECT opcl.oid, 3, false, c.opoid
    FROM pg_opclass opcl, _int_ops_tmp c
    WHERE
       opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
@@ -178,7 +178,7 @@ INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
 
 -- _int_same
 INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 6, true, c.opoid
+   SELECT opcl.oid, 6, false, c.opoid
    FROM pg_opclass opcl, _int_ops_tmp c
    WHERE
       opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
@@ -187,7 +187,7 @@ INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
 
 -- _int_contains
 INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 7, true, c.opoid
+   SELECT opcl.oid, 7, false, c.opoid
    FROM pg_opclass opcl, _int_ops_tmp c
    WHERE
       opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
@@ -196,7 +196,7 @@ INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
 
 -- _int_contained
 INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 8, true, c.opoid
+   SELECT opcl.oid, 8, false, c.opoid
    FROM pg_opclass opcl, _int_ops_tmp c
    WHERE
       opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
@@ -205,7 +205,7 @@ INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
 
 --boolean search
 INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 20, true, c.opoid
+   SELECT opcl.oid, 20, false, c.opoid
    FROM pg_opclass opcl, _int_ops_tmp c
    WHERE
       opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
@@ -213,7 +213,7 @@ INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
       and c.oprname = '@@';
 
 INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 20, true, c.opoid
+   SELECT opcl.oid, 20, false, c.opoid
    FROM pg_opclass opcl, _int_ops_tmp c
    WHERE
       opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')

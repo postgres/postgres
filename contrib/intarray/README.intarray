@@ -12,6 +12,9 @@ for additional information.
 
 CHANGES:
 
+September 28, 2001
+   1. gist__int_ops now is without lossy
+   2. add sort entry in picksplit
 September 21, 2001
    1. Added support for boolean query (indexable operator @@, looks like
       a @@ '1|(2&3)', perfomance is better in any case )
