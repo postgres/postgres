@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.25 1999/02/13 23:14:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.26 1999/04/13 17:18:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -367,8 +367,14 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, Size *keysok)
 							  &isNull);
 
 		/* btree doesn't support 'A is null' clauses, yet */
-		if (isNull || key[0].sk_flags & SK_ISNULL)
+		if (key[0].sk_flags & SK_ISNULL)
 			return false;
+		if (isNull)
+		{
+			if (*keysok < so->numberOfFirstKeys)
+				*keysok = -1;
+			return false;
+		}
 
 		if (key[0].sk_flags & SK_COMMUTE)
 		{

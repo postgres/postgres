@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.42 1999/03/28 20:31:58 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.43 1999/04/13 17:18:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -733,7 +733,8 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 			return res;
 		}
 
-	} while (keysok >= so->numberOfFirstKeys);
+	} while (keysok >= so->numberOfFirstKeys || 
+		 (keysok == -1 && ScanDirectionIsBackward(dir)));
 
 	ItemPointerSetInvalid(current);
 	so->btso_curbuf = InvalidBuffer;
@@ -775,6 +776,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	BTScanOpaque so;
 	ScanKeyData skdata;
 	Size		keysok;
+	int		i;
+	int		nKeyIndex = -1;
 
 	rel = scan->relation;
 	so = (BTScanOpaque) scan->opaque;
@@ -790,11 +793,34 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	{
 		_bt_orderkeys(rel, so);
 
-		strat = _bt_getstrat(rel, 1, so->keyData[0].sk_procedure);
+		if (ScanDirectionIsBackward(dir))
+		{
+			for (i=0; i<so->numberOfKeys; i++)
+			{
+				if (so->keyData[i].sk_attno != 1)
+					break;
+				strat = _bt_getstrat(rel, so->keyData[i].sk_attno, 
+					so->keyData[i].sk_procedure);
+				if (strat == BTLessStrategyNumber ||
+				    strat == BTLessEqualStrategyNumber||
+				    strat == BTEqualStrategyNumber)
+				{
+					nKeyIndex = i;
+					break;
+				}
+			}
+		}
+		else 
+		{
+			strat = _bt_getstrat(rel, 1, so->keyData[0].sk_procedure);
 
-		/* NOTE: it assumes ForwardScanDirection */
-		if (strat == BTLessStrategyNumber ||
-			strat == BTLessEqualStrategyNumber)
+			if (strat == BTLessStrategyNumber ||
+			    strat == BTLessEqualStrategyNumber)
+				;
+			else
+				nKeyIndex = 0;
+		}
+		if (nKeyIndex < 0)
 			scan->scanFromEnd = true;
 	}
 	else
@@ -823,8 +849,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		return (RetrieveIndexResult) NULL;
 	}
 	proc = index_getprocid(rel, 1, BTORDER_PROC);
-	ScanKeyEntryInitialize(&skdata, so->keyData[0].sk_flags, 1, proc,
-						   so->keyData[0].sk_argument);
+	ScanKeyEntryInitialize(&skdata, so->keyData[nKeyIndex].sk_flags,
+				1, proc, so->keyData[nKeyIndex].sk_argument);
 
 	stack = _bt_search(rel, 1, &skdata, &buf);
 	_bt_freestack(stack);
@@ -897,7 +923,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 
 	/* it's yet other place to add some code latter for is(not)null */
 
-	strat = _bt_getstrat(rel, 1, so->keyData[0].sk_procedure);
+	strat = _bt_getstrat(rel, 1, so->keyData[nKeyIndex].sk_procedure);
 
 	switch (strat)
 	{
@@ -914,9 +940,6 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 					result = _bt_compare(rel, itupdesc, page, 1, &skdata, offnum);
 				} while (result <= 0);
 
-				/* if this is true, the key we just looked at is gone */
-				if (result > 0)
-					_bt_twostep(scan, &buf, ForwardScanDirection);
 			}
 			break;
 
@@ -945,6 +968,21 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 				so->btso_curbuf = InvalidBuffer;
 				ItemPointerSetInvalid(&(scan->currentItemData));
 				return (RetrieveIndexResult) NULL;
+			}
+			else if (ScanDirectionIsBackward(dir))
+			{
+				do
+				{
+					if (!_bt_twostep(scan, &buf, ForwardScanDirection))
+						break;
+
+					offnum = ItemPointerGetOffsetNumber(current);
+					page = BufferGetPage(buf);
+					result = _bt_compare(rel, itupdesc, page, 1, &skdata, offnum);
+				} while (result == 0);
+
+				if (result < 0)
+					_bt_twostep(scan, &buf, BackwardScanDirection);
 			}
 			break;
 
@@ -1022,6 +1060,11 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		so->btso_curbuf = buf;
 	}
 	else if (keysok >= so->numberOfFirstKeys)
+	{
+		so->btso_curbuf = buf;
+		return _bt_next(scan, dir);
+	}
+	else if (keysok == -1 && ScanDirectionIsBackward(dir))
 	{
 		so->btso_curbuf = buf;
 		return _bt_next(scan, dir);
@@ -1491,6 +1534,11 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 		so->btso_curbuf = buf;
 	}
 	else if (keysok >= so->numberOfFirstKeys)
+	{
+		so->btso_curbuf = buf;
+		return _bt_next(scan, dir);
+	}
+	else if (keysok == -1 && ScanDirectionIsBackward(dir))
 	{
 		so->btso_curbuf = buf;
 		return _bt_next(scan, dir);

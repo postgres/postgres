@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.33 1999/02/21 03:48:40 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.34 1999/04/13 17:18:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,6 +96,8 @@ IndexNext(IndexScan *node)
 	Buffer		buffer = InvalidBuffer;
 	int			numIndices;
 
+ 	bool		bBackward;
+ 	int		indexNumber;
 	/* ----------------
 	 *	extract necessary information from index scan node
 	 * ----------------
@@ -151,8 +153,26 @@ IndexNext(IndexScan *node)
 	 *	appropriate heap tuple.. else return NULL.
 	 * ----------------
 	 */
-	while (indexstate->iss_IndexPtr < numIndices)
-	{
+ 	bBackward = ScanDirectionIsBackward(direction);
+ 	if (bBackward)
+  	{
+ 		indexNumber = numIndices - indexstate->iss_IndexPtr - 1;
+ 		if (indexNumber < 0)
+ 		{
+ 			indexNumber = 0;
+ 			indexstate->iss_IndexPtr = numIndices - 1;
+ 		}
+ 	}
+ 	else
+ 	{
+ 		if ((indexNumber = indexstate->iss_IndexPtr) < 0)
+ 		{
+ 			indexNumber = 0;
+ 			indexstate->iss_IndexPtr = 0;
+ 		}
+ 	}
+ 	while (indexNumber < numIndices)
+ 	{
 		scandesc = scanDescs[indexstate->iss_IndexPtr];
 		while ((result = index_getnext(scandesc, direction)) != NULL)
 		{
@@ -204,8 +224,14 @@ IndexNext(IndexScan *node)
 			if (BufferIsValid(buffer))
 				ReleaseBuffer(buffer);
 		}
-		if (indexstate->iss_IndexPtr < numIndices)
-			indexstate->iss_IndexPtr++;
+ 		if (indexNumber < numIndices)
+ 		{
+ 			indexNumber++;
+ 			if (bBackward)
+ 				indexstate->iss_IndexPtr--;
+ 			else
+ 				indexstate->iss_IndexPtr++;
+ 		}
 	}
 	/* ----------------
 	 *	if we get here it means the index scan failed so we
@@ -294,7 +320,7 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 	runtimeKeyInfo = (Pointer *) indexstate->iss_RuntimeKeyInfo;
 	indxqual = node->indxqual;
 	numScanKeys = indexstate->iss_NumScanKeys;
-	indexstate->iss_IndexPtr = 0;
+	indexstate->iss_IndexPtr = -1;
 
 	/* If this is re-scanning of PlanQual ... */
 	if (estate->es_evTuple != NULL && 
@@ -611,7 +637,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	  */
 	indexstate = makeNode(IndexScanState);
 	indexstate->iss_NumIndices = 0;
-	indexstate->iss_IndexPtr = 0;
+	indexstate->iss_IndexPtr = -1;
 	indexstate->iss_ScanKeys = NULL;
 	indexstate->iss_NumScanKeys = NULL;
 	indexstate->iss_RuntimeKeyInfo = NULL;
@@ -635,7 +661,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	indxid = node->indxid;
 	indxqual = node->indxqual;
 	numIndices = length(indxid);
-	indexPtr = 0;
+	indexPtr = -1;
 
 	CXT1_printf("ExecInitIndexScan: context is %d\n", CurrentMemoryContext);
 
