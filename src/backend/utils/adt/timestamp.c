@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.62.2.1 2002/03/05 03:45:43 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.62.2.2 2002/08/22 05:27:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,10 @@ timestamp_in(PG_FUNCTION_ARGS)
 	int			nf;
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
-	char		lowstr[MAXDATELEN + 1];
+	char		lowstr[MAXDATELEN + MAXDATEFIELDS];
+
+	if (strlen(str) >= sizeof(lowstr))
+		elog(ERROR, "Bad timestamp external representation (too long) '%s'", str);
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	  || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
@@ -185,7 +188,11 @@ timestamptz_in(PG_FUNCTION_ARGS)
 	int			nf;
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
-	char		lowstr[MAXDATELEN + 1];
+	char		lowstr[MAXDATELEN + MAXDATEFIELDS];
+
+	if (strlen(str) >= sizeof(lowstr))
+		elog(ERROR, "Bad timestamp with time zone"
+			 " external representation (too long) '%s'", str);
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	  || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
@@ -293,7 +300,10 @@ interval_in(PG_FUNCTION_ARGS)
 	int			nf;
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
-	char		lowstr[MAXDATELEN + 1];
+	char		lowstr[MAXDATELEN + MAXDATEFIELDS];
+
+	if (strlen(str) >= sizeof(lowstr))
+		elog(ERROR, "Bad interval external representation (too long) '%s'", str);
 
 	tm->tm_year = 0;
 	tm->tm_mon = 0;

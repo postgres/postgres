@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.57 2001/12/09 04:37:50 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.57.2.1 2002/08/22 05:27:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -274,26 +274,26 @@ static bool
 show_datestyle(void)
 {
 	char		buf[64];
+	char	   *dstyle;
 
-	strcpy(buf, "DateStyle is ");
 	switch (DateStyle)
 	{
 		case USE_ISO_DATES:
-			strcat(buf, "ISO");
+			dstyle = "ISO";
 			break;
 		case USE_SQL_DATES:
-			strcat(buf, "SQL");
+			dstyle = "SQL";
 			break;
 		case USE_GERMAN_DATES:
-			strcat(buf, "German");
+			dstyle = "German";
 			break;
 		default:
-			strcat(buf, "Postgres");
+			dstyle = "Postgres";
 			break;
-	};
-	strcat(buf, " with ");
-	strcat(buf, ((EuroDates) ? "European" : "US (NonEuropean)"));
-	strcat(buf, " conventions");
+	}
+
+	snprintf(buf, sizeof(buf), "DateStyle is %s with %s conventions",
+			 dstyle, EuroDates ? "European" : "US (NonEuropean");
 
 	elog(NOTICE, buf, NULL);
 
@@ -442,15 +442,14 @@ parse_timezone(List *args)
 				{
 					/* found something? then save it for later */
 					if ((defaultTZ = getenv("TZ")) != NULL)
-						strcpy(TZvalue, defaultTZ);
+						strncpy(TZvalue, defaultTZ, sizeof(TZvalue));
 
 					/* found nothing so mark with an invalid pointer */
 					else
 						defaultTZ = (char *) -1;
 				}
 
-				strcpy(tzbuf, "TZ=");
-				strcat(tzbuf, tok);
+				snprintf(tzbuf, sizeof(tzbuf), "TZ=%s", tok);
 				if (putenv(tzbuf) != 0)
 					elog(ERROR, "Unable to set TZ environment variable to %s", tok);
 
@@ -513,8 +512,7 @@ reset_timezone(void)
 	/* time zone was set and original explicit time zone available? */
 	else if (defaultTZ != (char *) -1)
 	{
-		strcpy(tzbuf, "TZ=");
-		strcat(tzbuf, TZvalue);
+		snprintf(tzbuf, sizeof(tzbuf), "TZ=%s", TZvalue);
 		if (putenv(tzbuf) != 0)
 			elog(ERROR, "Unable to set TZ environment variable to %s", TZvalue);
 		tzset();

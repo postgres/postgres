@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.37 2002/01/08 17:03:41 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.37.2.1 2002/08/22 05:27:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -199,6 +199,11 @@ lpad(PG_FUNCTION_ARGS)
 
 #ifdef MULTIBYTE
 	bytelen = pg_database_encoding_max_length() * len;
+
+	/* check for integer overflow */
+	if (len != 0 && bytelen / pg_database_encoding_max_length() != len)
+		elog(ERROR, "Requested length too large");
+
 	ret = (text *) palloc(VARHDRSZ + bytelen);
 #else
 	ret = (text *) palloc(VARHDRSZ + len);
@@ -310,6 +315,11 @@ rpad(PG_FUNCTION_ARGS)
 
 #ifdef MULTIBYTE
 	bytelen = pg_database_encoding_max_length() * len;
+
+	/* Check for integer overflow */
+	if (len != 0 && bytelen / pg_database_encoding_max_length() != len)
+		elog(ERROR, "Requested length too large");
+
 	ret = (text *) palloc(VARHDRSZ + bytelen);
 #else
 	ret = (text *) palloc(VARHDRSZ + len);
@@ -996,6 +1006,16 @@ repeat(PG_FUNCTION_ARGS)
 
 	slen = (VARSIZE(string) - VARHDRSZ);
 	tlen = (VARHDRSZ + (count * slen));
+
+	/* Check for integer overflow */
+	if (slen != 0 && count != 0)
+	{
+		int check = count * slen;
+		int check2 = check + VARHDRSZ;
+
+		if ((check / slen) != count || check2 <= check)
+			elog(ERROR, "Requested buffer is too large.");
+	}
 
 	result = (text *) palloc(tlen);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.64.2.1 2002/03/15 23:37:48 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.64.2.2 2002/08/22 05:27:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,6 +52,9 @@ date_in(PG_FUNCTION_ARGS)
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
 	char		lowstr[MAXDATELEN + 1];
+
+	if (strlen(str) >= sizeof(lowstr))
+		elog(ERROR, "Bad date external representation (too long) '%s'", str);
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	 || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tzp) != 0))
@@ -441,6 +444,9 @@ time_in(PG_FUNCTION_ARGS)
 	char	   *field[MAXDATEFIELDS];
 	int			dtype;
 	int			ftype[MAXDATEFIELDS];
+
+	if (strlen(str) >= sizeof(lowstr))
+		elog(ERROR, "Bad time external representation (too long) '%s'", str);
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	 || (DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, NULL) != 0))
@@ -950,6 +956,10 @@ timetz_in(PG_FUNCTION_ARGS)
 	char	   *field[MAXDATEFIELDS];
 	int			dtype;
 	int			ftype[MAXDATEFIELDS];
+
+	if (strlen(str) >= sizeof(lowstr))
+		elog(ERROR, "Bad time with time zone external representation"
+			 " (too long) '%s'", str);
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	  || (DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))

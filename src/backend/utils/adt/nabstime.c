@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.91 2001/10/25 05:49:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.91.2.1 2002/08/22 05:27:41 momjian Exp $
  *
  * NOTES
  *
@@ -145,21 +145,21 @@ GetCurrentAbsoluteTime(void)
 		 * XXX is there a better way to get local timezone string w/o
 		 * tzname? - tgl 97/03/18
 		 */
-		strftime(CTZName, MAXTZLEN, "%Z", tm);
+		strftime(CTZName, MAXTZLEN + 1, "%Z", tm);
 #endif
 
 		/*
 		 * XXX FreeBSD man pages indicate that this should work - thomas
 		 * 1998-12-12
 		 */
-		strcpy(CTZName, tm->tm_zone);
+		StrNCpy(CTZName, tm->tm_zone, MAXTZLEN + 1);
 
 #elif defined(HAVE_INT_TIMEZONE)
 		tm = localtime(&now);
 
 		CDayLight = tm->tm_isdst;
 		CTimeZone = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
-		strcpy(CTZName, tzname[tm->tm_isdst]);
+		StrNCpy(CTZName, tzname[tm->tm_isdst], MAXTZLEN + 1);
 #else							/* neither HAVE_TM_ZONE nor
 								 * HAVE_INT_TIMEZONE */
 		CTimeZone = tb.timezone * 60;
@@ -169,7 +169,7 @@ GetCurrentAbsoluteTime(void)
 		 * XXX does this work to get the local timezone string in V7? -
 		 * tgl 97/03/18
 		 */
-		strftime(CTZName, MAXTZLEN, "%Z", localtime(&now));
+		strftime(CTZName, MAXTZLEN + 1, "%Z", localtime(&now));
 #endif
 	}
 
@@ -227,21 +227,21 @@ GetCurrentAbsoluteTimeUsec(int *usec)
 		 * XXX is there a better way to get local timezone string w/o
 		 * tzname? - tgl 97/03/18
 		 */
-		strftime(CTZName, MAXTZLEN, "%Z", tm);
+		strftime(CTZName, MAXTZLEN + 1, "%Z", tm);
 #endif
 
 		/*
 		 * XXX FreeBSD man pages indicate that this should work - thomas
 		 * 1998-12-12
 		 */
-		strcpy(CTZName, tm->tm_zone);
+		StrNCpy(CTZName, tm->tm_zone, MAXTZLEN + 1);
 
 #elif defined(HAVE_INT_TIMEZONE)
 		tm = localtime(&now);
 
 		CDayLight = tm->tm_isdst;
 		CTimeZone = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
-		strcpy(CTZName, tzname[tm->tm_isdst]);
+		StrNCpy(CTZName, tzname[tm->tm_isdst], MAXTZLEN + 1);
 #else							/* neither HAVE_TM_ZONE nor
 								 * HAVE_INT_TIMEZONE */
 		CTimeZone = tb.timezone * 60;
@@ -251,7 +251,7 @@ GetCurrentAbsoluteTimeUsec(int *usec)
 		 * XXX does this work to get the local timezone string in V7? -
 		 * tgl 97/03/18
 		 */
-		strftime(CTZName, MAXTZLEN, "%Z", localtime(&now));
+		strftime(CTZName, MAXTZLEN + 1, "%Z", localtime(&now));
 #endif
 	};
 
@@ -503,8 +503,8 @@ nabstimein(PG_FUNCTION_ARGS)
 	int			nf,
 				ftype[MAXDATEFIELDS];
 
-	if (strlen(str) > MAXDATELEN)
-		elog(ERROR, "Bad (length) abstime external representation '%s'", str);
+	if (strlen(str) >= sizeof(lowstr))
+		elog(ERROR, "Bad abstime external representation '%s' (too long)", str);
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	  || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
@@ -856,8 +856,8 @@ reltimein(PG_FUNCTION_ARGS)
 				ftype[MAXDATEFIELDS];
 	char		lowstr[MAXDATELEN + 1];
 
-	if (strlen(str) > MAXDATELEN)
-		elog(ERROR, "Bad (length) reltime external representation '%s'", str);
+	if (strlen(str) >= sizeof(lowstr))
+		elog(ERROR, "Bad reltime external representation '%s' (too long)", str);
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 		|| (DecodeDateDelta(field, ftype, nf, &dtype, tm, &fsec) != 0))
