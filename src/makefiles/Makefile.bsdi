@@ -1,1 +1,0 @@
-CC=gcc2 -O2 -m486 -pipe

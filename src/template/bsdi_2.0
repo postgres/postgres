@@ -1,5 +1,6 @@
 AROPT:cq
-CFLAGS:-DPRE_BSDI_2_1
+CC:gcc2
+CFLAGS:-O2 -m486 -pipe -DPRE_BSDI_2_1
 SHARED_LIB:
 ALL:
 SRCH_INC:/usr/local/include
