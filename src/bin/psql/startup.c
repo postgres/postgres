@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.29 2000/04/12 17:16:23 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.30 2000/05/11 01:37:54 momjian Exp $
  */
 #include "postgres.h"
 
@@ -314,6 +314,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 		{"host", required_argument, NULL, 'h'},
 		{"html", no_argument, NULL, 'H'},
 		{"list", no_argument, NULL, 'l'},
+		{"noreadline", no_argument, NULL, 'n'},
 		{"output", required_argument, NULL, 'o'},
 		{"port", required_argument, NULL, 'p'},
 		{"pset", required_argument, NULL, 'P'},

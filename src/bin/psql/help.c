@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.27 2000/05/09 19:08:36 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.28 2000/05/11 01:37:54 momjian Exp $
  */
 #include "postgres.h"
 #include "help.h"
@@ -104,6 +104,7 @@ usage(void)
 
 	puts("  -H              HTML table output mode (-P format=html)");
 	puts("  -l              List available databases, then exit");
+	puts("  -n              Disable readline");
 	puts("  -o <filename>   Send query output to filename (or |pipe)");
 
 	/* Display default port */
@@ -198,11 +199,13 @@ slashUsage(void)
 	/* if you add/remove a line here, change the row test above */
 	fprintf(fout, " \\a             toggle between unaligned and aligned mode\n");
 	fprintf(fout, " \\c[onnect] [dbname|- [user]]\n"
-			"                 connect to new database (currently '%s')\n", PQdb(pset.db));
+			"                connect to new database (currently '%s')\n", PQdb(pset.db));
+	fprintf(fout, " \\C <title>     table title\n");
 	fprintf(fout, " \\copy ...      perform SQL COPY with data stream to the client machine\n");
 	fprintf(fout, " \\copyright     show PostgreSQL usage and distribution terms\n");
 	fprintf(fout, " \\d <table>     describe table (or view, index, sequence)\n");
-	fprintf(fout, " \\d{i|s|t|v|S}  list only indices/sequences/tables/views/system tables\n");
+	fprintf(fout, " \\d{t|i|s|v}    list tables/indices/sequences/views\n");
+	fprintf(fout, " \\d{p|S|l}      list permissions/system tables/lobjects\n");
 	fprintf(fout, " \\da            list aggregates\n");
 	fprintf(fout, " \\dd [object]   list comment for table, type, function, or operator\n");
 	fprintf(fout, " \\df            list functions\n");
@@ -219,17 +222,18 @@ slashUsage(void)
 	fprintf(fout, " \\i <file>      read and execute queries from <file>\n");
 	fprintf(fout, " \\l             list all databases\n");
 	fprintf(fout, " \\lo_export, \\lo_import, \\lo_list, \\lo_unlink\n"
-			"                  large object operations\n");
+			"                large object operations\n");
 	fprintf(fout, " \\o [file]      send all query results to [file], or |pipe\n");
 	fprintf(fout, " \\p             show the content of the current query buffer\n");
-	fprintf(fout, " \\pset {format|border|expanded|fieldsep|recordsep|tuples_only|title|tableattr\n"
-			"     |pager}    set table output options\n");
+	fprintf(fout, " \\pset <opt>    set table output  <opt> = {format|border|expanded|fieldsep|\n"
+			"                null|recordsep|tuples_only|title|tableattr|pager}\n");
 	fprintf(fout, " \\q             quit psql\n");
 	fprintf(fout, " \\qecho <text>  write text to query output stream (see \\o)\n");
 	fprintf(fout, " \\r             reset (clear) the query buffer\n");
 	fprintf(fout, " \\s [file]      print history or save it in [file]\n");
 	fprintf(fout, " \\set <var> <value>  set internal variable\n");
 	fprintf(fout, " \\t             don't show table headers or footers (currently %s)\n", ON(pset.popt.topt.tuples_only));
+	fprintf(fout, " \\T <tags>      HTML table tags\n");
 	fprintf(fout, " \\unset <var>   unset (delete) internal variable\n");
 	fprintf(fout, " \\w <file>      write current query buffer to a <file>\n");
 	fprintf(fout, " \\x             toggle expanded output (currently %s)\n", ON(pset.popt.topt.expanded));
