@@ -96,13 +96,129 @@ your own user account is enough.
 </para>
 <para>
 Running <ProductName>PostgreSQL</ProductName> as <literal>root</literal>, <literal>bin</literal>,
-or any other account with special access rights is a security risk and therefore
-won't be allowed.
+or any other account with special access rights is a security risk;
+<emphasis>don't do it</emphasis>.  The postmaster will in fact refuse
+to start as root.
 </para>
 <Para>
 You need not do the building and installation itself under this account
 (although you can). You will be told when you need to login as the
 database superuser.
+</Para>
+</Step>
+
+<Step Performance="required">
+<Para>
+Configure the source code for your system.  It is this step at which
+you can specify your actual installation path for the build process
+and make choices about what gets installed. Change into the <filename>src</filename>
+subdirectory and type:
+<ProgramListing>
+./configure
+</ProgramListing>
+followed by any options you might want to give it. For a first installation
+you should be able to do fine without any.
+For a complete list of options, type:
+<ProgramListing>
+./configure --help
+</ProgramListing>
+     Some of the more commonly used ones are:
+<VariableList>
+ <varlistentry>
+  <term>--prefix=BASEDIR</term>
+  <listitem>
+   <para>
+    Selects a different base directory for the installation of
+    <ProductName>PostgreSQL</ProductName>. The default is <filename>/usr/local/pgsql</filename>.
+   </para>
+  </listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term>--enable-locale</term>
+  <listitem>
+   <para>
+    If you want to use locales.
+   </para>
+  </listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term>--enable-multibyte</term>
+  <listitem>
+   <para>
+    Allows the use of multibyte character encodings. This is primarily for
+    languages like Japanese, Korean, or Chinese.
+   </para>
+  </listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term>--with-perl</term>
+  <listitem>
+   <para>
+    Builds the Perl interface and plperl extension language.
+    Please note that the Perl interface needs to be
+    installed into the usual place for Perl modules (typically under
+    <filename>/usr/lib/perl</filename>), so you must have root access
+    to perform the installation step.  (It is often easiest to leave out
+    <term>--with-perl</term> initially, and then build and install the
+    Perl interface after completing the installation of PostgreSQL
+    itself.)
+   </para>
+  </listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term>--with-odbc</term>
+  <listitem>
+   <para>
+    Builds the ODBC driver package.
+   </para>
+  </listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term>--with-tcl</term>
+  <listitem>
+   <para>
+    Builds interface libraries and programs requiring
+    Tcl/Tk, including libpgtcl, pgtclsh, and pgtksh.
+   </para>
+  </listitem>
+ </varlistentry>
+</VariableList>
+
+</Para>
+</step>
+
+<Step Performance="required">
+<Para>
+Compile the program.  Type
+<ProgramListing>
+gmake
+</ProgramListing>
+The compilation process can take anywhere from 10 minutes to an hour.
+Your mileage will most certainly vary. Remember to use GNU make.
+</Para>
+
+<Para>
+The last line displayed will hopefully be 
+<programlisting>
+All of PostgreSQL is successfully made. Ready to install.
+</programlisting>
+</Para>
+</Step>
+
+<Step Performance="optional">
+<Para>
+If you want to test the newly built server before you install it,
+you can run the regression tests at this point.  The regression tests
+are a test suite to verify that <ProductName>PostgreSQL</ProductName>
+runs on your machine in the way the developers expected it to.
+For detailed instructions see <xref linkend="regress" endterm="regress-title">.
+(Be sure to use the "parallel regress test" method, since the sequential
+method only works with an already-installed server.)
 </Para>
 </Step>
 
@@ -128,12 +244,13 @@ in tables), don't do it.
 <Para>
 Make sure to use the <application>pg_dumpall</application>
 command from the version you are currently running.
-However, do not use the <application>pg_dumpall</application> 
-script from 6.0 or everything will be owned by the
-<ProductName>PostgreSQL</ProductName> super user. In that case
+7.0's <application>pg_dumpall</application> will not work on older databases.
+However, if you are still using 6.0, do not use the
+<application>pg_dumpall</application> script from 6.0 or everything will be
+owned by the <ProductName>PostgreSQL</ProductName> superuser after you
+reload. In that case
 you should grab <application>pg_dumpall</application> from a later
-6.x.x release. 7.0's <application>pg_dumpall</application>
-will not work on older databases.
+6.x.x release.
 If you are upgrading from a version prior to
 <ProductName>Postgres95</ProductName> v1.09 then you must back up your database,
 install <ProductName>Postgres95</ProductName> v1.09, restore your database,
@@ -194,123 +311,31 @@ Also move the old directories  out of the way. Type the following:
 <programlisting>
 mv /usr/local/pgsql /usr/local/pgsql.old
 </programlisting>
-or replace your particular paths.
+(substitute your particular paths).
 </Para>
 
 </Step>
 
 <Step Performance="required" id="continue">
 <Para>
-Configure the source code for your system.  It is this step at which
-you can specify your actual installation path for the build process
-and make choices about what gets installed. Change into the <filename>src</filename>
-subdirectory and type:
-<ProgramListing>
-./configure
-</ProgramListing>
-followed by any options you might want to give it. For a first installation
-you should be able to do fine without any.
-For a complete list of options, type:
-<ProgramListing>
-./configure --help
-</ProgramListing>
-     Some of the more commonly used ones are:
-<VariableList>
- <varlistentry>
-  <term>--prefix=BASEDIR</term>
-  <listitem>
-   <para>
-    Selects a different base directory for the installation of
-    <ProductName>PostgreSQL</ProductName>. The default is <filename>/usr/local/pgsql</filename>.
-   </para>
-  </listitem>
- </varlistentry>
-
- <varlistentry>
-  <term>--enable-locale</term>
-  <listitem>
-   <para>
-    If you want to use locales.
-   </para>
-  </listitem>
- </varlistentry>
-
- <varlistentry>
-  <term>--enable-multibyte</term>
-  <listitem>
-   <para>
-    Allows the use of multibyte character encodings. This is primarily for
-    languages like Japanese, Korean, or Chinese.
-   </para>
-  </listitem>
- </varlistentry>
-
- <varlistentry>
-  <term>--with-perl</term>
-  <listitem>
-   <para>
-    Builds the Perl interface. Please note that the Perl interface will be
-    installed into the usual place for Perl modules (typically under
-    <filename>/usr/lib/perl</filename>), so you must have root access to use
-    this option successfully.
-   </para>
-  </listitem>
- </varlistentry>
-
- <varlistentry>
-  <term>--with-odbc</term>
-  <listitem>
-   <para>
-    Builds the ODBC driver package.
-   </para>
-  </listitem>
- </varlistentry>
-
- <varlistentry>
-  <term>--with-tcl</term>
-  <listitem>
-   <para>
-    Builds interface libraries and programs requiring
-    Tcl/Tk, including libpgtcl, pgtclsh, and pgtksh.
-   </para>
-  </listitem>
- </varlistentry>
-</VariableList>
-
-</Para>
-</step>
-
-<Step Performance="required">
-<Para>
-Compile the program.  Type
-<ProgramListing>
-gmake
-</ProgramListing>
-The compilation process can take anywhere from 10 minutes to an hour.
-Your milage will most certainly vary. Remember to use GNU make.
-</Para>
-
-<Para>
-The last line displayed will hopefully be 
-<programlisting>
-All of PostgreSQL is successfully made. Ready to install.
-</programlisting>
-</Para>
-</Step>
-
-<Step Performance="required">
-<Para>
-Install the program.  Type
+Install the <ProductName>PostgreSQL</ProductName> executable files and
+libraries.  Type
 <ProgramListing>
 gmake install
 </ProgramListing>
 </Para>
+<Para>
+You should do this step as the user that you want the installed executables
+to be owned by.  This does not have to be the same as the database superuser;
+some people prefer to have the installed files be owned by root.
+</Para>
 </Step>
 
 <Step Performance="required">
 <Para>
-Tell your system how to find the new shared libraries. How to do this varies between
-platforms. What tends to work everywhere is to set the environment variable
+If necessary, tell your system how to find the new shared libraries.
+How to do this varies between platforms. The most widely usable method
+is to set the environment variable
 <envar>LD_LIBRARY_PATH</envar>:
 <programlisting>
 LD_LIBRARY_PATH=/usr/local/pgsql/lib
@@ -347,7 +372,8 @@ then the above was necessary.  Simply do this step then.
 
 <Step Performance="required">
 <Para>
-Create the database installation. To do this you must log in to your
+Create the database installation (the working data files).
+To do this you must log in to your
 <ProductName>PostgreSQL</ProductName> superuser account. It will not
 work as root.
 <ProgramListing>
@@ -361,21 +387,29 @@ su - postgres
 The <option>-D</option> option specifies the location where the data will be
 stored. You can use any path you want, it does not have to be under
 the installation directory. Just make sure that the superuser account
-can write to the directory (or create it) before starting <command>initdb</command>.
+can write to the directory (or create it, if it doesn't already exist)
+before starting <command>initdb</command>.
 (If you have already been doing the installation up to now as the <productname>PostgreSQL</productname>
-superuser, you may have to log in as root temporarily to create the data directory.)
+superuser, you may have to log in as root temporarily to create the data
+directory underneath a root-owned directory.)
 </Para>
 </Step>
 
 <Step Performance="required">
 <Para>
 The previous step should have told you how to start up the database server.
-Do so now.
+Do so now.  The command should look something like
 <programlisting>
 /usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data
 </programlisting>
 This will start the server in the foreground. To make it detach to
-the background, use the <option>-S</option>.
+the background, you can use the <option>-S</option> option, but then you won't
+see any log messages the server produces.  A better way to put the server
+in the background is
+<programlisting>
+nohup /usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data \
+    &lt;/dev/null &gt;>server.log 2&gt;>1 &amp;
+</programlisting>
 </Para>
 </Step>
 
@@ -400,7 +434,7 @@ you should look at the following optional steps and suggestions.
 <itemizedlist>
 <listitem>
 <Para>
-Life will be more convenient if you set up some enviroment variables. First of all
+Life will be more convenient if you set up some environment variables. First of all
 you probably want to include <filename>/usr/local/pgsql/bin</filename> (or equivalent)
 into your <envar>PATH</envar>. To do this, add the following to your shell startup
 file, such as <filename>~/.bash_profile</filename> (or <filename>/etc/profile</filename>,
@@ -537,12 +571,10 @@ Then make a softlink to this file from
 
 <listitem>
 <Para>
-Run the regression tests. The regression tests are a test suite to verify that
-PostgreSQL runs on your machine in the way the developers expected it to.
-You should definitely do this before putting a server into production use.
-The file <filename>/usr/src/pgsql/postgresql-7.0/src/test/regress/README</filename>
-has detailed
-instructions for running and interpreting the regression tests.
+Run the regression tests against the installed server (using the sequential
+test method).  If you didn't run the tests before installation, you should
+definitely do it now.
+For detailed instructions see <xref linkend="regress" endterm="regress-title">.
 </Para>
 </listitem>
 
@@ -558,8 +590,8 @@ Then enter
 <ProgramListing>
 psql testdb
 </ProgramListing>
-to connect to that database. At the prompt you can enter SQL and start
-experimenting.
+to connect to that database. At the prompt you can enter SQL commands
+and start experimenting.
 </Para>
 
 </Sect1>
