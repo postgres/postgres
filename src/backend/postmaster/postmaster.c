@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.421 2004/08/08 20:17:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.422 2004/08/29 03:16:30 momjian Exp $
  *
  * NOTES
  *
@@ -3736,11 +3736,6 @@ win32_RemoveChild(pid_t pid)
 static pid_t
 win32_waitpid(int *exitstatus)
 {
-	Assert(win32_childPIDArray && win32_childHNDArray);
-	elog(DEBUG3, "waiting on %lu children", win32_numChildren);
-
-	if (win32_numChildren > 0)
-	{
 		/*
 		 * Note: Do NOT use WaitForMultipleObjectsEx, as we don't want to
 		 * run queued APCs here.
@@ -3748,28 +3743,33 @@ win32_waitpid(int *exitstatus)
 		int			index;
 		DWORD		exitCode;
 		DWORD		ret;
+	unsigned long offset;
 
-		ret = WaitForMultipleObjects(win32_numChildren, win32_childHNDArray,
-									 FALSE, 0);
+	Assert(win32_childPIDArray && win32_childHNDArray);
+	elog(DEBUG3, "waiting on %lu children", win32_numChildren);
+
+	for (offset = 0; offset < win32_numChildren; offset += MAXIMUM_WAIT_OBJECTS)
+	{
+		unsigned long num = min(MAXIMUM_WAIT_OBJECTS, win32_numChildren - offset);
+		ret = WaitForMultipleObjects(num, &win32_childHNDArray[offset], FALSE, 0);
 		switch (ret)
 		{
 			case WAIT_FAILED:
 				ereport(LOG,
-				   (errmsg_internal("failed to wait on %lu children: %d",
-							  win32_numChildren, (int) GetLastError())));
+						(errmsg_internal("failed to wait on %lu of %lu children: %d",
+										 num, win32_numChildren, (int) GetLastError())));
 				return -1;
 
 			case WAIT_TIMEOUT:
-				/* No children have finished */
-				return -1;
+				/* No children (in this chunk) have finished */
+				break;
 
 			default:
-
 				/*
 				 * Get the exit code, and return the PID of, the
 				 * respective process
 				 */
-				index = ret - WAIT_OBJECT_0;
+				index = offset + ret - WAIT_OBJECT_0;
 				Assert(index >= 0 && index < win32_numChildren);
 				if (!GetExitCodeProcess(win32_childHNDArray[index], &exitCode))
 				{
@@ -3787,7 +3787,7 @@ win32_waitpid(int *exitstatus)
 		}
 	}
 
-	/* No children */
+	/* No children have finished */
 	return -1;
 }
 
