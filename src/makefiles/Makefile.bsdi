@@ -1,5 +1,4 @@
 # for bsdi 4.0 ELF
 # if we defined .so in template/bsdi_4.0
 %.so: %.o
-	$(CC) -shared -o $@ $<
-
+	$(LD) -shared -o $@ $<
