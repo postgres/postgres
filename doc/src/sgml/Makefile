@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.29 2001/02/03 19:03:26 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.30 2001/02/04 12:23:11 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -107,19 +107,26 @@ $(addsuffix .html, $(ALLBOOKS)): %.html: %.sgml $(ALLSGML)
 
 # RTF to allow minor editing for hardcopy
 $(addsuffix .rtf, $(ALLBOOKS)): %.rtf: %.sgml $(ALLSGML)
-	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -d $(PDSL) -t rtf book-decl.sgml $<
+	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -d $(PDSL) -t rtf -V rtf-backend book-decl.sgml $<
 
 # TeX and DVI
 $(addsuffix .tex, $(ALLBOOKS)): %.tex: %.sgml $(ALLSGML)
-	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -d $(PDSL) -t tex book-decl.sgml $<
+	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -d $(PDSL) -t tex -V tex-backend book-decl.sgml $<
 
 %.dvi: %.tex
+	jadetex $<
 	jadetex $<
 	jadetex $<
 
 # Postscript from TeX
 %.ps: %.dvi
 	dvips -o $@ $<
+
+%.pdf: %.tex
+	pdfjadetex $<
+	pdfjadetex $<
+	pdfjadetex $<
+
 
 # Graphics
 
