@@ -1,13 +1,13 @@
 
 POSTGRES95 Data Base Management System
 
-This directory contains the 2.0 release of Postgres95. See INSTALL for
+This directory contains the 6.0 release of PostgreSQL. See INSTALL for
 the installation notes and HISTORY for the changes.
 
 We also have a WWW home page located at:
-	http://www.ki.net/postgres95
+	http://www.postgreSQL.org
 
-Postgres95 is not public domain software.  It is copyrighted by the
+PostgreSQL is not public domain software.  It is copyrighted by the
 University of California but may be used according to the licensing
 terms of the the copyright below:
 

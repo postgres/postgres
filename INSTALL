@@ -2,7 +2,7 @@ POSTGRESQL INSTALLATION INSTRUCTIONS
 Copyright (c) 1996 Regents of the University of California
 
 This directory contains the source and documentation for PostgreSQL
-(version 1.09) PostgreSQL is a derivative of POSTGRES 4.2 (the last
+(version 6.0) PostgreSQL is a derivative of POSTGRES 4.2 (the last
 release of the UC Berkeley research project).  For copyright terms for
 PostgreSQL, please see the file named COPYRIGHT.  This version was
 developed by a team of developers on the postgres developers mailing
@@ -15,23 +15,21 @@ REQUIREMENTS TO RUN POSTGRESQL
 
 PostgreSQL has been tested on the following platforms:
 
-	alpha		-	DEC Alpha AXP on OSF/1 2.0
-	hpux		-	HP PA-RISC on HP-UX 9.0
-	i386_solaris	-	i386 Solaris
-	sparc_solaris	-	SUN SPARC on Solaris 2.4
-	sparc		-	SUN SPARC on SunOS 4.1.3
-	ultrix4		-	DEC MIPS on Ultrix 4.4
-	linux		-	Intel x86 on Linux 1.2 (or above) ELF or a.out
-	BSD44_derived	-	OSs derived from 4.4-lite BSD (NetBSD, FreeBSD)
-        bsdi            -       BSD/OS 2.0 and 2.01
-        bsdi_2_1        -       BSD/OS 2.1
-	aix		-	IBM on AIX 3.2.5
-	irix5		-	SGI MIPS on IRIX 5.3 
-	dgux            -       DG/UX 5.4R3.10
-  Some hooks are provided for
-	svr4		-	Intel x86 on Intel SVR4
-	next		-	Motorola MC68K or Intel x86 on NeXTSTEP 3.2
-  but these are guaranteed not to work as of yet.
+   aix            IBM on AIX 3.2.5
+   alpha          DEC Alpha AXP on OSF/1 2.0
+   BSD44_derived  OSs derived from 4.4-lite BSD (NetBSD, FreeBSD)
+   bsdi           BSD/OS 2.0, 2.01, 2.1
+   dgux           DG/UX 5.4R3.10
+   hpux           HP PA-RISC on HP-UX 9.0
+   i386_solaris   i386 Solaris
+   irix5          SGI MIPS on IRIX 5.3
+   linux          Intel x86 on Linux 1.2 and Linux ELF
+                  (For non-ELF Linux, see LINUX_ELF below).
+   next           Motorola MC68K or Intel x86 on NeXTSTEP 3.2
+   sparc_solaris  SUN SPARC on Solaris 2.4
+   sunos4          SUN SPARC on SunOS 4.1.3
+   svr4           Intel x86 on Intel SVR4
+   ultrix4        DEC MIPS on Ultrix 4.4
 
 PostgreSQL is also known to work on a number of other platforms that the
 authors have not personally tested.
@@ -40,18 +38,13 @@ You should have at least 8 MB of memory and at least 30 MB of disk space to
 hold the source, binaries, and user databases.
 
 
-MIGRATING FROM POSTGRES VERSION 1.0
+MIGRATING FROM POSTGRES VERSION 1.*
 -----------------------------------
 
-Version 1.01 and 1.02 (and above) are mostly backward compatible with Version
-1.0, but the database format is incompatible, so if you have databases that
-you use with Version 1, you need to convert them before you can use them with
-Version 1.02.  Once you do that, you won't be able to use them with Version 1
-anymore.
-
-For details on how to do this conversion, see the files doc/MIGRATION_1.0_to_1.01
-and MIGRATION_to_1.02.1
-
+People migrating data from earlier releases must dump the data under
+1.09 and reload them under 6.0.  The pg_dump utility is designed to do
+this.  It is important you use 1.09 because earlier releases may not
+have the proper copy format to load into the 6.0 database.
 
 INSTALLING POSTGRESQL
 ---------------------
@@ -64,11 +57,11 @@ system to use it.
 To install PostgreSQL on UNIX platforms:
 
 1. Unpack the source distribution into a source directory.  We'll assume
-   "/usr/src/postgres95" in this discussion.  This should be a new directory.
+   "/usr/src/pgsql" in this discussion.  This should be a new directory.
   
 2. Set your current directory to the source directory:
 
-   cd /usr/src/postgres95
+   cd /usr/src/pgsql
 
 3. Build PostgreSQL:
 
@@ -102,12 +95,6 @@ To install PostgreSQL on UNIX platforms:
      - POSTGRESDIR specifies the top-level directory where PostgreSQL
        binaries, header files, libraries, and databases are installed.
 
-     - NAMEDATALEN and OIDNAMELEN allows you to set the maximum length of
-       system identifiers (table names, function names, etc.)  It
-       defaults to 32.  You may alter this if you like, but be aware that
-       databases created with different NAMEDATALEN's do not
-       interoperate.
-
      - USE_READLINE specifies whether you want to use the GNU readline and
        history libraries for the psql interactive frontend program.  GNU
        readline is not supplied with PostgreSQL and can be found in the
@@ -123,7 +110,7 @@ To install PostgreSQL on UNIX platforms:
      % cd src
      % gmake 
 
-   The gmake ultimately issues the message "All of Postgres95 is
+   The gmake ultimately issues the message "All of PostgreSQL is
    successfully made.  Ready to install."  If you don't get that, the make
    failed, and there should be error messages at the end detailing why.
 
@@ -164,7 +151,7 @@ The program initdb (part of Postgres) is what initializes (creates) a
 database system.  Initdb uses the defaults specified in Makefile.global.
 See the man page for initdb for more information.
 
-  % initdb
+  % initdb --pgdata=/usr/local/pgsql/data --pglib=/usr/local/pgsql/lib
 
 By default, the user issuing the initdb command becomes the Postgres
 superuser, and only the unix superuser can specify any other user as the
@@ -189,12 +176,10 @@ Postgres superuser.  See the postgres man page.
 So, for example, you can login as the Postgres superuser and issue the
 command:
 
-  % postmaster -S -D/usr/lib/postgres/postgres_data -p5432
+  $ nohup postmaster -D/usr/local/pgsql/data >server.log 2>&1 &
 
-This says to run the postmaster against the database system created above,
-to accept connections from users on the conventional TCP port 5432, and
-(-S) to run in the background without issuing messages about normal 
-execution.
+This says to run the postmaster against the database system created
+above.
 
 This is a good daemon to start via system startup scripts, using su (be
 careful NOT to run the postmaster as the unix superuser by mistake).
@@ -208,20 +193,16 @@ installed successfully and works as designed in your environment.  The
 regression tests can be found in src/test/regress. (see
 src/test/regress/README for more details)
 
-     % cd /usr/src/postgres95/src/test/regress
+     % cd /usr/src/pgsql/test/regress
      % gmake all runtest
 
-This will run a whole slew of regression tests and might take a long time
+This will run a whole slew of regression tests and might take an hour
 to run.  When it's done, the output is in the file obj/regress.out.  You
 can compare this to a sample run that we supply in the file
 sample.regress.out. (You should get roughly the same output except for
 some pathnames.)
 
-     % diff obj/regress.out sample.regress.out
-
-The regression test takes about half an hour to run on a Sparc 10.  You
-may want to use 'grep -v' to remove unsignificant differences.
-
+     % diff expected.out regress.out
 
 PLAYING WITH POSTGRESQL
 -----------------------
@@ -231,14 +212,11 @@ daemon is running, and the regression tests have passed, you'll want to
 see PostgreSQL do something.  That's easy.  Invoke the interactive interface
 to PostgreSQL, psql, and start typing SQL:
 
-  % psql -p 5432 template1
+  $ psql template1
 
 (psql has to open a particular database, but at this point the only one
 that exists is the template1 database, which always exists.  We will connect
 to it only long enough to create another one and switch to it).
-
-Note that we have told psql to connect to Port 5432, which is what we told
-the postmaster to listen on when we started it above.
 
 The response from psql is:
 
@@ -280,11 +258,11 @@ QUESTIONS? BUGS? FEEDBACK?
 First, please read the Frequently Asked Questions and answers in the file
 called FAQ.
 
-If you still have questions, please send them to
-postgres95@postgres95.vnet.net.
+If you still have questions, please send them to:
+questions@postgreSQL.org
 
 If you have a bug report to make, please send a filled out version of
-the file named "bug.template" to pg95-dev@ki.net.
+the file named "bug.template" to hackers@postgreSQL.org.
 
 If you would like to help out with the development and maintenance of
 PostgreSQL, send subscribe to the developers mailing list.  See
