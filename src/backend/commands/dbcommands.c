@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.53 2000/04/12 17:14:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.54 2000/05/25 06:53:43 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,13 +148,21 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 
 	snprintf(buf, sizeof(buf), "cp %s%cbase%ctemplate1%c* '%s'",
 			 DataDir, SEP_CHAR, SEP_CHAR, SEP_CHAR, loc);
+#if defined(sun)
+	if (system(buf) != 0 && errno != ECHILD)
+#else
 	if (system(buf) != 0)
+#endif
 	{
 		int			ret;
 
 		snprintf(buf, sizeof(buf), "rm -rf '%s'", loc);
 		ret = system(buf);
+#if defined(sun)
+		if (ret == 0 || errno == ECHILD)
+#else
 		if (ret == 0)
+#endif
 			elog(ERROR, "CREATE DATABASE: could not initialize database directory");
 		else
 			elog(ERROR, "CREATE DATABASE: Could not initialize database directory. Delete failed as well");
@@ -281,7 +289,11 @@ dropdb(const char *dbname)
 	 * Remove the database's subdirectory and everything in it.
 	 */
 	snprintf(buf, sizeof(buf), "rm -rf '%s'", path);
+#if defined(sun)
+	if (system(buf) != 0 && errno != ECHILD)
+#else
 	if (system(buf) != 0)
+#endif
 		elog(NOTICE, "DROP DATABASE: The database directory '%s' could not be removed", path);
 }
 
