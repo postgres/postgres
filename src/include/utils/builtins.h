@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.200 2002/09/18 21:35:24 tgl Exp $
+ * $Id: builtins.h,v 1.201 2002/09/19 22:48:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -398,7 +398,7 @@ extern Datum pg_get_constraintdef(PG_FUNCTION_ARGS);
 extern Datum pg_get_userbyid(PG_FUNCTION_ARGS);
 extern Datum pg_get_expr(PG_FUNCTION_ARGS);
 extern char *deparse_expression(Node *expr, List *dpcontext,
-				   bool forceprefix);
+				   bool forceprefix, bool showimplicit);
 extern List *deparse_context_for(const char *aliasname, Oid relid);
 extern List *deparse_context_for_plan(int outer_varno, Node *outercontext,
 						 int inner_varno, Node *innercontext,

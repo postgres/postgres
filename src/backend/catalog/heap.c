@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.227 2002/09/18 21:35:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.228 2002/09/19 22:48:33 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1179,7 +1179,7 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin)
 	adsrc = deparse_expression(expr,
 						deparse_context_for(RelationGetRelationName(rel),
 											RelationGetRelid(rel)),
-							   false);
+							   false, false);
 
 	/*
 	 * Make the pg_attrdef entry.
@@ -1277,7 +1277,7 @@ StoreRelCheck(Relation rel, char *ccname, char *ccbin)
 	ccsrc = deparse_expression(expr,
 						deparse_context_for(RelationGetRelationName(rel),
 											RelationGetRelid(rel)),
-							   false);
+							   false, false);
 
 	/*
 	 * Find columns of rel that are used in ccbin

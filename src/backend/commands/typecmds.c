@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.13 2002/09/04 20:31:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.14 2002/09/19 22:48:33 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -514,7 +514,7 @@ DefineDomain(CreateDomainStmt *stmt)
 				defaultValue = deparse_expression(defaultExpr,
 										  deparse_context_for(domainName,
 															  InvalidOid),
-												  false);
+												  false, false);
 				defaultValueBin = nodeToString(defaultExpr);
 				break;
 

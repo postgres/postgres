@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.122 2002/09/18 21:35:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.123 2002/09/19 22:48:33 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -147,9 +147,11 @@ static void get_names_for_var(Var *var, deparse_context *context,
 				  char **schemaname, char **refname, char **attname);
 static RangeTblEntry *find_rte_by_refname(const char *refname,
 					deparse_context *context);
-static void get_rule_expr(Node *node, deparse_context *context);
+static void get_rule_expr(Node *node, deparse_context *context,
+						  bool showimplicit);
 static void get_oper_expr(Expr *expr, deparse_context *context);
-static void get_func_expr(Expr *expr, deparse_context *context);
+static void get_func_expr(Expr *expr, deparse_context *context,
+						  bool showimplicit);
 static void get_agg_expr(Aggref *aggref, deparse_context *context);
 static Node *strip_type_coercion(Node *expr, Oid resultType);
 static void get_const_expr(Const *constval, deparse_context *context);
@@ -515,7 +517,7 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 			node = (Node *) make_ands_explicit((List *) node);
 		/* Deparse */
 		context = deparse_context_for(get_rel_name(indrelid), indrelid);
-		str = deparse_expression(node, context, false);
+		str = deparse_expression(node, context, false, false);
 		appendStringInfo(&buf, " WHERE %s", str);
 	}
 
@@ -792,7 +794,7 @@ pg_get_expr(PG_FUNCTION_ARGS)
 
 	/* Deparse */
 	context = deparse_context_for(relname, relid);
-	str = deparse_expression(node, context, false);
+	str = deparse_expression(node, context, false, false);
 
 	/* Pass the result back as TEXT */
 	result = DatumGetTextP(DirectFunctionCall1(textin,
@@ -850,11 +852,14 @@ pg_get_userbyid(PG_FUNCTION_ARGS)
  *
  * forceprefix is TRUE to force all Vars to be prefixed with their table names.
  *
+ * showimplicit is TRUE to force all implicit casts to be shown explicitly.
+ *
  * The result is a palloc'd string.
  * ----------
  */
 char *
-deparse_expression(Node *expr, List *dpcontext, bool forceprefix)
+deparse_expression(Node *expr, List *dpcontext,
+				   bool forceprefix, bool showimplicit)
 {
 	StringInfoData buf;
 	deparse_context context;
@@ -864,7 +869,7 @@ deparse_expression(Node *expr, List *dpcontext, bool forceprefix)
 	context.namespaces = dpcontext;
 	context.varprefix = forceprefix;
 
-	get_rule_expr(expr, &context);
+	get_rule_expr(expr, &context, showimplicit);
 
 	return buf.data;
 }
@@ -1139,7 +1144,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 		dpns.outer_varno = dpns.inner_varno = 0;
 		dpns.outer_rte = dpns.inner_rte = NULL;
 
-		get_rule_expr(qual, &context);
+		get_rule_expr(qual, &context, false);
 	}
 
 	appendStringInfo(buf, " DO ");
@@ -1364,7 +1369,7 @@ get_select_query_def(Query *query, deparse_context *context,
 	if (query->limitOffset != NULL)
 	{
 		appendStringInfo(buf, " OFFSET ");
-		get_rule_expr(query->limitOffset, context);
+		get_rule_expr(query->limitOffset, context, false);
 	}
 	if (query->limitCount != NULL)
 	{
@@ -1373,7 +1378,7 @@ get_select_query_def(Query *query, deparse_context *context,
 			((Const *) query->limitCount)->constisnull)
 			appendStringInfo(buf, "ALL");
 		else
-			get_rule_expr(query->limitCount, context);
+			get_rule_expr(query->limitCount, context, false);
 	}
 }
 
@@ -1429,7 +1434,7 @@ get_basic_select_query(Query *query, deparse_context *context,
 		sep = ", ";
 		colno++;
 
-		get_rule_expr(tle->expr, context);
+		get_rule_expr(tle->expr, context, true);
 
 		/*
 		 * Figure out what the result column should be called.	In the
@@ -1469,7 +1474,7 @@ get_basic_select_query(Query *query, deparse_context *context,
 	if (query->jointree->quals != NULL)
 	{
 		appendStringInfo(buf, " WHERE ");
-		get_rule_expr(query->jointree->quals, context);
+		get_rule_expr(query->jointree->quals, context, false);
 	}
 
 	/* Add the GROUP BY clause if given */
@@ -1492,7 +1497,7 @@ get_basic_select_query(Query *query, deparse_context *context,
 	if (query->havingQual != NULL)
 	{
 		appendStringInfo(buf, " HAVING ");
-		get_rule_expr(query->havingQual, context);
+		get_rule_expr(query->havingQual, context, false);
 	}
 }
 
@@ -1573,7 +1578,7 @@ get_rule_sortgroupclause(SortClause *srt, List *tlist, bool force_colno,
 		appendStringInfo(buf, "%d", tle->resdom->resno);
 	}
 	else
-		get_rule_expr(expr, context);
+		get_rule_expr(expr, context, true);
 
 	return expr;
 }
@@ -1642,7 +1647,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 
 			appendStringInfo(buf, sep);
 			sep = ", ";
-			get_rule_expr(tle->expr, context);
+			get_rule_expr(tle->expr, context, false);
 		}
 		appendStringInfoChar(buf, ')');
 	}
@@ -1692,7 +1697,7 @@ get_update_query_def(Query *query, deparse_context *context)
 		if (!tleIsArrayAssign(tle))
 			appendStringInfo(buf, "%s = ",
 							 quote_identifier(tle->resdom->resname));
-		get_rule_expr(tle->expr, context);
+		get_rule_expr(tle->expr, context, false);
 	}
 
 	/* Add the FROM clause if needed */
@@ -1702,7 +1707,7 @@ get_update_query_def(Query *query, deparse_context *context)
 	if (query->jointree->quals != NULL)
 	{
 		appendStringInfo(buf, " WHERE ");
-		get_rule_expr(query->jointree->quals, context);
+		get_rule_expr(query->jointree->quals, context, false);
 	}
 }
 
@@ -1730,7 +1735,7 @@ get_delete_query_def(Query *query, deparse_context *context)
 	if (query->jointree->quals != NULL)
 	{
 		appendStringInfo(buf, " WHERE ");
-		get_rule_expr(query->jointree->quals, context);
+		get_rule_expr(query->jointree->quals, context, false);
 	}
 }
 
@@ -1890,10 +1895,20 @@ find_rte_by_refname(const char *refname, deparse_context *context)
 
 /* ----------
  * get_rule_expr			- Parse back an expression
+ *
+ * Note: showimplicit determines whether we display any implicit cast that
+ * is present at the top of the expression tree.  It is a passed argument,
+ * not a field of the context struct, because we change the value as we
+ * recurse down into the expression.  In general we suppress implicit casts
+ * when the result type is known with certainty (eg, the arguments of an
+ * OR must be boolean).  We display implicit casts for arguments of functions
+ * and operators, since this is needed to be certain that the same function
+ * or operator will be chosen when the expression is re-parsed.
  * ----------
  */
 static void
-get_rule_expr(Node *node, deparse_context *context)
+get_rule_expr(Node *node, deparse_context *context,
+			  bool showimplicit)
 {
 	StringInfo	buf = context->buf;
 
@@ -1966,42 +1981,44 @@ get_rule_expr(Node *node, deparse_context *context)
 							Node	   *arg1 = (Node *) lfirst(args);
 							Node	   *arg2 = (Node *) lsecond(args);
 
-							get_rule_expr(arg1, context);
+							get_rule_expr(arg1, context, true);
 							appendStringInfo(buf, " IS DISTINCT FROM ");
-							get_rule_expr(arg2, context);
+							get_rule_expr(arg2, context, true);
 						}
 						appendStringInfoChar(buf, ')');
 						break;
 
 					case FUNC_EXPR:
-						get_func_expr(expr, context);
+						get_func_expr(expr, context, showimplicit);
 						break;
 
 					case OR_EXPR:
 						appendStringInfoChar(buf, '(');
-						get_rule_expr((Node *) lfirst(args), context);
+						get_rule_expr((Node *) lfirst(args), context, false);
 						while ((args = lnext(args)) != NIL)
 						{
 							appendStringInfo(buf, " OR ");
-							get_rule_expr((Node *) lfirst(args), context);
+							get_rule_expr((Node *) lfirst(args), context,
+										  false);
 						}
 						appendStringInfoChar(buf, ')');
 						break;
 
 					case AND_EXPR:
 						appendStringInfoChar(buf, '(');
-						get_rule_expr((Node *) lfirst(args), context);
+						get_rule_expr((Node *) lfirst(args), context, false);
 						while ((args = lnext(args)) != NIL)
 						{
 							appendStringInfo(buf, " AND ");
-							get_rule_expr((Node *) lfirst(args), context);
+							get_rule_expr((Node *) lfirst(args), context,
+										  false);
 						}
 						appendStringInfoChar(buf, ')');
 						break;
 
 					case NOT_EXPR:
 						appendStringInfo(buf, "(NOT ");
-						get_rule_expr((Node *) lfirst(args), context);
+						get_rule_expr((Node *) lfirst(args), context, false);
 						appendStringInfoChar(buf, ')');
 						break;
 
@@ -2042,7 +2059,7 @@ get_rule_expr(Node *node, deparse_context *context)
 				 */
 				if (aref->refassgnexpr)
 					context->varprefix = false;
-				get_rule_expr(aref->refexpr, context);
+				get_rule_expr(aref->refexpr, context, showimplicit);
 				context->varprefix = savevarprefix;
 				lowlist = aref->reflowerindexpr;
 				foreach(uplist, aref->refupperindexpr)
@@ -2050,17 +2067,18 @@ get_rule_expr(Node *node, deparse_context *context)
 					appendStringInfo(buf, "[");
 					if (lowlist)
 					{
-						get_rule_expr((Node *) lfirst(lowlist), context);
+						get_rule_expr((Node *) lfirst(lowlist), context,
+									  false);
 						appendStringInfo(buf, ":");
 						lowlist = lnext(lowlist);
 					}
-					get_rule_expr((Node *) lfirst(uplist), context);
+					get_rule_expr((Node *) lfirst(uplist), context, false);
 					appendStringInfo(buf, "]");
 				}
 				if (aref->refassgnexpr)
 				{
 					appendStringInfo(buf, " = ");
-					get_rule_expr(aref->refassgnexpr, context);
+					get_rule_expr(aref->refassgnexpr, context, showimplicit);
 				}
 			}
 			break;
@@ -2096,7 +2114,7 @@ get_rule_expr(Node *node, deparse_context *context)
 				 * are *not* simple.  So, always use parenthesized syntax.
 				 */
 				appendStringInfoChar(buf, '(');
-				get_rule_expr(fselect->arg, context);
+				get_rule_expr(fselect->arg, context, true);
 				appendStringInfo(buf, ").%s", quote_identifier(fieldname));
 			}
 			break;
@@ -2106,10 +2124,11 @@ get_rule_expr(Node *node, deparse_context *context)
 				RelabelType *relabel = (RelabelType *) node;
 				Node   *arg = relabel->arg;
 
-				if (relabel->relabelformat == COERCE_IMPLICIT_CAST)
+				if (relabel->relabelformat == COERCE_IMPLICIT_CAST &&
+					!showimplicit)
 				{
-					/* don't show an implicit cast */
-					get_rule_expr(arg, context);
+					/* don't show the implicit cast */
+					get_rule_expr(arg, context, showimplicit);
 				}
 				else
 				{
@@ -2122,7 +2141,7 @@ get_rule_expr(Node *node, deparse_context *context)
 					arg = strip_type_coercion(arg, relabel->resulttype);
 
 					appendStringInfoChar(buf, '(');
-					get_rule_expr(arg, context);
+					get_rule_expr(arg, context, showimplicit);
 					appendStringInfo(buf, ")::%s",
 							format_type_with_typemod(relabel->resulttype,
 													 relabel->resulttypmod));
@@ -2141,12 +2160,12 @@ get_rule_expr(Node *node, deparse_context *context)
 					CaseWhen   *when = (CaseWhen *) lfirst(temp);
 
 					appendStringInfo(buf, " WHEN ");
-					get_rule_expr(when->expr, context);
+					get_rule_expr(when->expr, context, false);
 					appendStringInfo(buf, " THEN ");
-					get_rule_expr(when->result, context);
+					get_rule_expr(when->result, context, true);
 				}
 				appendStringInfo(buf, " ELSE ");
-				get_rule_expr(caseexpr->defresult, context);
+				get_rule_expr(caseexpr->defresult, context, true);
 				appendStringInfo(buf, " END");
 			}
 			break;
@@ -2156,7 +2175,7 @@ get_rule_expr(Node *node, deparse_context *context)
 				NullTest   *ntest = (NullTest *) node;
 
 				appendStringInfo(buf, "(");
-				get_rule_expr(ntest->arg, context);
+				get_rule_expr(ntest->arg, context, true);
 				switch (ntest->nulltesttype)
 				{
 					case IS_NULL:
@@ -2177,7 +2196,7 @@ get_rule_expr(Node *node, deparse_context *context)
 				BooleanTest *btest = (BooleanTest *) node;
 
 				appendStringInfo(buf, "(");
-				get_rule_expr(btest->arg, context);
+				get_rule_expr(btest->arg, context, false);
 				switch (btest->booltesttype)
 				{
 					case IS_TRUE:
@@ -2213,7 +2232,7 @@ get_rule_expr(Node *node, deparse_context *context)
 				 * We assume that the operations of the constraint node
 				 * need not be explicitly represented in the output.
 				 */
-				get_rule_expr(ctest->arg, context);
+				get_rule_expr(ctest->arg, context, showimplicit);
 			}
 			break;
 
@@ -2267,12 +2286,12 @@ get_oper_expr(Expr *expr, deparse_context *context)
 		Node	   *arg1 = (Node *) lfirst(args);
 		Node	   *arg2 = (Node *) lsecond(args);
 
-		get_rule_expr(arg1, context);
+		get_rule_expr(arg1, context, true);
 		appendStringInfo(buf, " %s ",
 						 generate_operator_name(opno,
 												exprType(arg1),
 												exprType(arg2)));
-		get_rule_expr(arg2, context);
+		get_rule_expr(arg2, context, true);
 	}
 	else
 	{
@@ -2294,10 +2313,10 @@ get_oper_expr(Expr *expr, deparse_context *context)
 								 generate_operator_name(opno,
 														InvalidOid,
 														exprType(arg)));
-				get_rule_expr(arg, context);
+				get_rule_expr(arg, context, true);
 				break;
 			case 'r':
-				get_rule_expr(arg, context);
+				get_rule_expr(arg, context, true);
 				appendStringInfo(buf, " %s",
 								 generate_operator_name(opno,
 														exprType(arg),
@@ -2315,7 +2334,8 @@ get_oper_expr(Expr *expr, deparse_context *context)
  * get_func_expr			- Parse back a Func node
  */
 static void
-get_func_expr(Expr *expr, deparse_context *context)
+get_func_expr(Expr *expr, deparse_context *context,
+			  bool showimplicit)
 {
 	StringInfo	buf = context->buf;
 	Func	   *func = (Func *) (expr->oper);
@@ -2327,19 +2347,20 @@ get_func_expr(Expr *expr, deparse_context *context)
 
 	/*
 	 * If the function call came from an implicit coercion, then just show
-	 * the first argument.
+	 * the first argument --- unless caller wants to see implicit coercions.
 	 */
-	if (func->funcformat == COERCE_IMPLICIT_CAST)
+	if (func->funcformat == COERCE_IMPLICIT_CAST && !showimplicit)
 	{
-		get_rule_expr((Node *) lfirst(expr->args), context);
+		get_rule_expr((Node *) lfirst(expr->args), context, showimplicit);
 		return;
 	}
 
 	/*
-	 * If the function call came from an explicit cast, then show
+	 * If the function call came from a cast, then show
 	 * the first argument plus an explicit cast operation.
 	 */
-	if (func->funcformat == COERCE_EXPLICIT_CAST)
+	if (func->funcformat == COERCE_EXPLICIT_CAST ||
+		func->funcformat == COERCE_IMPLICIT_CAST)
 	{
 		Node	   *arg = lfirst(expr->args);
 		Oid			rettype = expr->typeOid;
@@ -2357,7 +2378,7 @@ get_func_expr(Expr *expr, deparse_context *context)
 		arg = strip_type_coercion(arg, rettype);
 
 		appendStringInfoChar(buf, '(');
-		get_rule_expr(arg, context);
+		get_rule_expr(arg, context, showimplicit);
 		appendStringInfo(buf, ")::%s",
 						 format_type_with_typemod(rettype, coercedTypmod));
 
@@ -2384,7 +2405,7 @@ get_func_expr(Expr *expr, deparse_context *context)
 	{
 		appendStringInfo(buf, sep);
 		sep = ", ";
-		get_rule_expr((Node *) lfirst(l), context);
+		get_rule_expr((Node *) lfirst(l), context, true);
 	}
 	appendStringInfoChar(buf, ')');
 }
@@ -2404,7 +2425,7 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 	if (aggref->aggstar)
 		appendStringInfo(buf, "*");
 	else
-		get_rule_expr(aggref->target, context);
+		get_rule_expr(aggref->target, context, true);
 	appendStringInfoChar(buf, ')');
 }
 
@@ -2618,7 +2639,7 @@ get_sublink_expr(Node *node, deparse_context *context)
 		{
 			appendStringInfo(buf, sep);
 			sep = ", ";
-			get_rule_expr((Node *) lfirst(l), context);
+			get_rule_expr((Node *) lfirst(l), context, true);
 		}
 
 		if (need_paren)
@@ -2750,7 +2771,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 				break;
 			case RTE_FUNCTION:
 				/* Function RTE */
-				get_rule_expr(rte->funcexpr, context);
+				get_rule_expr(rte->funcexpr, context, true);
 				/* might need to emit column list for RECORD function */
 				coldeflist = rte->coldeflist;
 				break;
@@ -2850,7 +2871,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			else if (j->quals)
 			{
 				appendStringInfo(buf, " ON (");
-				get_rule_expr(j->quals, context);
+				get_rule_expr(j->quals, context, false);
 				appendStringInfoChar(buf, ')');
 			}
 		}
