@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: random.c,v 1.1 2001/09/23 04:12:44 momjian Exp $
+ * $Id: random.c,v 1.2 2001/09/29 03:12:51 momjian Exp $
  */
 
 
@@ -80,7 +80,7 @@ px_get_random_bytes(uint8 *dst, unsigned count)
 
 #ifdef RAND_SILLY
 
-int px_get_random_bytes(char *dst, unsigned count)
+int px_get_random_bytes(uint8 *dst, unsigned count)
 {
 	int i;
 	for (i = 0; i < count; i++) {
