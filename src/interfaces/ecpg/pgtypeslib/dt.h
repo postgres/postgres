@@ -216,14 +216,6 @@ do { \
 } while(0)
 #endif
 
-/* Global variable holding time zone information. */
-#if !defined(__CYGWIN__) && !defined(WIN32)
-#define TIMEZONE_GLOBAL timezone
-#else
-#define TIMEZONE_GLOBAL _timezone
-#define tzname _tzname			/* should be in time.h? */
-#endif
-
 /*
  * Date/time validation
  * Include check for leap year.

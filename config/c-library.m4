@@ -1,5 +1,5 @@
 # Macros that test various C library quirks
-# $PostgreSQL: pgsql/config/c-library.m4,v 1.26 2004/06/07 22:39:44 momjian Exp $
+# $PostgreSQL: pgsql/config/c-library.m4,v 1.27 2004/09/08 19:43:00 momjian Exp $
 
 
 # PGAC_VAR_INT_TIMEZONE
@@ -10,7 +10,11 @@ AC_DEFUN([PGAC_VAR_INT_TIMEZONE],
 [AC_CACHE_CHECK(for int timezone, pgac_cv_var_int_timezone,
 [AC_TRY_LINK([#include <time.h>
 int res;],
-  [res = timezone / 60;],
+  [#ifndef __CYGWIN__
+res = timezone / 60;
+#else
+res = _timezone / 60;
+#endif],
   [pgac_cv_var_int_timezone=yes],
   [pgac_cv_var_int_timezone=no])])
 if test x"$pgac_cv_var_int_timezone" = xyes ; then

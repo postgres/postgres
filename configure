@@ -10725,7 +10725,11 @@ int res;
 int
 main ()
 {
+#ifndef __CYGWIN__
 res = timezone / 60;
+#else
+res = _timezone / 60;
+#endif
   ;
   return 0;
 }
