@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.11 2000/12/25 23:15:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.12 2001/02/15 21:11:17 tgl Exp $
 Postgres documentation
 -->
 
@@ -166,7 +166,7 @@ NOTICE:  Closing pre-existing portal "<replaceable class="parameter">cursorname<
 
      <varlistentry>
       <term><computeroutput>
-ERROR:  Named portals may only be used in begin/end transaction blocks
+ERROR:  DECLARE CURSOR may only be used in begin/end transaction blocks
        </computeroutput></term>
       <listitem>
        <para>
@@ -223,8 +223,8 @@ ERROR:  Named portals may only be used in begin/end transaction blocks
 
   <para>
    String representation is architecture-neutral whereas binary
-   representation can differ between different machine architectures
-   and <emphasis><productname>Postgres</productname> does not resolve
+   representation can differ between different machine architectures.
+   <emphasis><productname>Postgres</productname> does not resolve
     byte ordering or representation issues for binary cursors</emphasis>.
    Therefore, if your client machine and server machine use different
    representations (e.g., "big-endian" versus "little-endian"),
