@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.80 2003/08/08 21:41:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.81 2003/11/09 21:30:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -488,8 +488,6 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			/* if we didn't find a boundary for the preceding attr, quit */
 			if (attno > keysCount + 1)
 				break;
-			strat = _bt_getstrat(rel, attno,
-								 so->keyData[i].sk_procedure);
 
 			/*
 			 * Can we use this key as a starting boundary for this attr?
@@ -497,6 +495,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			 * We can use multiple keys if they look like, say, = >= = but we
 			 * have to stop after accepting a > or < boundary.
 			 */
+			strat = so->keyData[i].sk_strategy;
 			if (strat == strat_total ||
 				strat == BTEqualStrategyNumber)
 				nKeyIs[keysCount++] = i;
@@ -555,13 +554,17 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			elog(ERROR, "btree doesn't support is(not)null, yet");
 			return false;
 		}
+		/*
+		 * XXX what if sk_argtype is not same as index?
+		 */
 		procinfo = index_getprocinfo(rel, i + 1, BTORDER_PROC);
 		ScanKeyEntryInitializeWithInfo(scankeys + i,
 									   so->keyData[j].sk_flags,
 									   i + 1,
+									   InvalidStrategy,
 									   procinfo,
-									   CurrentMemoryContext,
-									   so->keyData[j].sk_argument);
+									   so->keyData[j].sk_argument,
+									   so->keyData[j].sk_argtype);
 	}
 	if (nKeyIs)
 		pfree(nKeyIs);

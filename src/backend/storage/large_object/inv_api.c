@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.98 2003/08/04 02:40:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.99 2003/11/09 21:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,6 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/htup.h"
-#include "access/nbtree.h"
 #include "access/tuptoaster.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
@@ -203,11 +202,10 @@ inv_getsize(LargeObjectDesc *obj_desc)
 
 	Assert(PointerIsValid(obj_desc));
 
-	ScanKeyEntryInitialize(&skey[0],
-						   (bits16) 0x0,
-						   (AttrNumber) 1,
-						   (RegProcedure) F_OIDEQ,
-						   ObjectIdGetDatum(obj_desc->id));
+	ScanKeyEntryInitialize(&skey[0], 0,
+						   Anum_pg_largeobject_loid,
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(obj_desc->id), OIDOID);
 
 	sd = index_beginscan(obj_desc->heap_r, obj_desc->index_r,
 						 SnapshotNow, 1, skey);
@@ -308,17 +306,15 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 	if (nbytes <= 0)
 		return 0;
 
-	ScanKeyEntryInitialize(&skey[0],
-						   (bits16) 0x0,
-						   (AttrNumber) 1,
-						   (RegProcedure) F_OIDEQ,
-						   ObjectIdGetDatum(obj_desc->id));
+	ScanKeyEntryInitialize(&skey[0], 0,
+						   Anum_pg_largeobject_loid,
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(obj_desc->id), OIDOID);
 
-	ScanKeyEntryInitialize(&skey[1],
-						   (bits16) 0x0,
-						   (AttrNumber) 2,
-						   (RegProcedure) F_INT4GE,
-						   Int32GetDatum(pageno));
+	ScanKeyEntryInitialize(&skey[1], 0,
+						   Anum_pg_largeobject_pageno,
+						   BTGreaterEqualStrategyNumber, F_INT4GE,
+						   Int32GetDatum(pageno), INT4OID);
 
 	sd = index_beginscan(obj_desc->heap_r, obj_desc->index_r,
 						 SnapshotNow, 2, skey);
@@ -417,17 +413,15 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 
 	indstate = CatalogOpenIndexes(obj_desc->heap_r);
 
-	ScanKeyEntryInitialize(&skey[0],
-						   (bits16) 0x0,
-						   (AttrNumber) 1,
-						   (RegProcedure) F_OIDEQ,
-						   ObjectIdGetDatum(obj_desc->id));
+	ScanKeyEntryInitialize(&skey[0], 0,
+						   Anum_pg_largeobject_loid,
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(obj_desc->id), OIDOID);
 
-	ScanKeyEntryInitialize(&skey[1],
-						   (bits16) 0x0,
-						   (AttrNumber) 2,
-						   (RegProcedure) F_INT4GE,
-						   Int32GetDatum(pageno));
+	ScanKeyEntryInitialize(&skey[1], 0,
+						   Anum_pg_largeobject_pageno,
+						   BTGreaterEqualStrategyNumber, F_INT4GE,
+						   Int32GetDatum(pageno), INT4OID);
 
 	sd = index_beginscan(obj_desc->heap_r, obj_desc->index_r,
 						 SnapshotNow, 2, skey);

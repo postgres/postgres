@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.21 2003/09/26 15:27:31 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.22 2003/11/09 21:30:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_opclass.h"
+#include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
 #include "parser/parse_func.h"
@@ -270,9 +271,10 @@ DefineOpClass(CreateOpClassStmt *stmt)
 		ScanKeyData skey[1];
 		SysScanDesc scan;
 
-		ScanKeyEntryInitialize(&skey[0], 0x0,
-							   Anum_pg_opclass_opcamid, F_OIDEQ,
-							   ObjectIdGetDatum(amoid));
+		ScanKeyEntryInitialize(&skey[0], 0,
+							   Anum_pg_opclass_opcamid,
+							   BTEqualStrategyNumber, F_OIDEQ,
+							   ObjectIdGetDatum(amoid), OIDOID);
 
 		scan = systable_beginscan(rel, OpclassAmNameNspIndex, true,
 								  SnapshotNow, 1, skey);
@@ -589,8 +591,9 @@ RemoveOpClassById(Oid opclassOid)
 	 * Remove associated entries in pg_amop.
 	 */
 	ScanKeyEntryInitialize(&skey[0], 0,
-						   Anum_pg_amop_amopclaid, F_OIDEQ,
-						   ObjectIdGetDatum(opclassOid));
+						   Anum_pg_amop_amopclaid,
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(opclassOid), OIDOID);
 
 	rel = heap_openr(AccessMethodOperatorRelationName, RowExclusiveLock);
 
@@ -607,8 +610,9 @@ RemoveOpClassById(Oid opclassOid)
 	 * Remove associated entries in pg_amproc.
 	 */
 	ScanKeyEntryInitialize(&skey[0], 0,
-						   Anum_pg_amproc_amopclaid, F_OIDEQ,
-						   ObjectIdGetDatum(opclassOid));
+						   Anum_pg_amproc_amopclaid,
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(opclassOid), OIDOID);
 
 	rel = heap_openr(AccessMethodProcedureRelationName, RowExclusiveLock);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.91 2003/10/31 20:00:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.92 2003/11/09 21:30:35 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -367,8 +367,9 @@ ExecuteGrantStmt_Database(GrantStmt *stmt)
 
 		relation = heap_openr(DatabaseRelationName, RowExclusiveLock);
 		ScanKeyEntryInitialize(&entry[0], 0,
-							   Anum_pg_database_datname, F_NAMEEQ,
-							   CStringGetDatum(dbname));
+							   Anum_pg_database_datname,
+							   BTEqualStrategyNumber, F_NAMEEQ,
+							   CStringGetDatum(dbname), NAMEOID);
 		scan = heap_beginscan(relation, SnapshotNow, 1, entry);
 		tuple = heap_getnext(scan, ForwardScanDirection);
 		if (!HeapTupleIsValid(tuple))
@@ -1130,9 +1131,10 @@ pg_database_aclcheck(Oid db_oid, AclId userid, AclMode mode)
 	 * There's no syscache for pg_database, so must look the hard way
 	 */
 	pg_database = heap_openr(DatabaseRelationName, AccessShareLock);
-	ScanKeyEntryInitialize(&entry[0], 0x0,
-						   ObjectIdAttributeNumber, F_OIDEQ,
-						   ObjectIdGetDatum(db_oid));
+	ScanKeyEntryInitialize(&entry[0], 0,
+						   ObjectIdAttributeNumber,
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(db_oid), OIDOID);
 	scan = heap_beginscan(pg_database, SnapshotNow, 1, entry);
 	tuple = heap_getnext(scan, ForwardScanDirection);
 	if (!HeapTupleIsValid(tuple))
@@ -1529,9 +1531,10 @@ pg_database_ownercheck(Oid db_oid, AclId userid)
 
 	/* There's no syscache for pg_database, so must look the hard way */
 	pg_database = heap_openr(DatabaseRelationName, AccessShareLock);
-	ScanKeyEntryInitialize(&entry[0], 0x0,
-						   ObjectIdAttributeNumber, F_OIDEQ,
-						   ObjectIdGetDatum(db_oid));
+	ScanKeyEntryInitialize(&entry[0], 0,
+						   ObjectIdAttributeNumber,
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(db_oid), OIDOID);
 	scan = heap_beginscan(pg_database, SnapshotNow, 1, entry);
 
 	dbtuple = heap_getnext(scan, ForwardScanDirection);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.108 2003/08/04 02:40:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.109 2003/11/09 21:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -937,6 +937,7 @@ CatalogCacheInitializeCache(CatCache *cache)
 	for (i = 0; i < cache->cc_nkeys; ++i)
 	{
 		Oid			keytype;
+		RegProcedure eqfunc;
 
 		CatalogCacheInitializeCache_DEBUG2;
 
@@ -951,7 +952,7 @@ CatalogCacheInitializeCache(CatCache *cache)
 
 		GetCCHashEqFuncs(keytype,
 						 &cache->cc_hashfunc[i],
-						 &cache->cc_skey[i].sk_procedure);
+						 &eqfunc);
 
 		cache->cc_isname[i] = (keytype == NAMEOID);
 
@@ -959,12 +960,16 @@ CatalogCacheInitializeCache(CatCache *cache)
 		 * Do equality-function lookup (we assume this won't need a
 		 * catalog lookup for any supported type)
 		 */
-		fmgr_info_cxt(cache->cc_skey[i].sk_procedure,
+		fmgr_info_cxt(eqfunc,
 					  &cache->cc_skey[i].sk_func,
 					  CacheMemoryContext);
 
 		/* Initialize sk_attno suitably for HeapKeyTest() and heap scans */
 		cache->cc_skey[i].sk_attno = cache->cc_key[i];
+
+		/* Fill in sk_strategy and sk_argtype correctly as well */
+		cache->cc_skey[i].sk_strategy = BTEqualStrategyNumber;
+		cache->cc_skey[i].sk_argtype = keytype;
 
 		CACHE4_elog(DEBUG2, "CatalogCacheInit %s %d %p",
 					cache->cc_relname,

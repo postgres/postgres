@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.128 2003/10/02 06:36:37 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.129 2003/11/09 21:30:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1074,9 +1074,10 @@ DropUser(DropUserStmt *stmt)
 		pg_rel = heap_openr(DatabaseRelationName, AccessShareLock);
 		pg_dsc = RelationGetDescr(pg_rel);
 
-		ScanKeyEntryInitialize(&scankey, 0x0,
-							   Anum_pg_database_datdba, F_INT4EQ,
-							   Int32GetDatum(usesysid));
+		ScanKeyEntryInitialize(&scankey, 0,
+							   Anum_pg_database_datdba,
+							   BTEqualStrategyNumber, F_INT4EQ,
+							   Int32GetDatum(usesysid), INT4OID);
 
 		scan = heap_beginscan(pg_rel, SnapshotNow, 1, &scankey);
 

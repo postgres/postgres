@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.218 2003/08/17 23:43:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.219 2003/11/09 21:30:36 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -336,6 +336,16 @@ _outIndexScan(StringInfo str, IndexScan *node)
 	WRITE_OIDLIST_FIELD(indxid);
 	WRITE_NODE_FIELD(indxqual);
 	WRITE_NODE_FIELD(indxqualorig);
+	/* this can become WRITE_NODE_FIELD when intlists are normal objects: */
+	{
+		List    *tmp;
+
+		appendStringInfo(str, " :indxstrategy ");
+		foreach(tmp, node->indxstrategy)
+		{
+			_outIntList(str, lfirst(tmp));
+		}
+	}
 	WRITE_ENUM_FIELD(indxorderdir, ScanDirection);
 }
 

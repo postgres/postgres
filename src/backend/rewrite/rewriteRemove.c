@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.56 2003/08/04 02:40:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.57 2003/11/09 21:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_rewrite.h"
+#include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "rewrite/rewriteRemove.h"
 #include "rewrite/rewriteSupport.h"
@@ -104,9 +105,10 @@ RemoveRewriteRuleById(Oid ruleOid)
 	/*
 	 * Find the tuple for the target rule.
 	 */
-	ScanKeyEntryInitialize(&skey[0], 0x0,
-						   ObjectIdAttributeNumber, F_OIDEQ,
-						   ObjectIdGetDatum(ruleOid));
+	ScanKeyEntryInitialize(&skey[0], 0,
+						   ObjectIdAttributeNumber,
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(ruleOid), OIDOID);
 
 	rcscan = systable_beginscan(RewriteRelation, RewriteOidIndex, true,
 								SnapshotNow, 1, skey);

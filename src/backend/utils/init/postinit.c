@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.127 2003/09/25 06:58:05 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.128 2003/11/09 21:30:37 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -26,6 +26,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_shadow.h"
+#include "catalog/pg_type.h"
 #include "commands/trigger.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
@@ -91,8 +92,10 @@ ReverifyMyDatabase(const char *name)
 	 */
 	pgdbrel = heap_openr(DatabaseRelationName, AccessShareLock);
 
-	ScanKeyEntryInitialize(&key, 0, Anum_pg_database_datname,
-						   F_NAMEEQ, NameGetDatum(name));
+	ScanKeyEntryInitialize(&key, 0,
+						   Anum_pg_database_datname,
+						   BTEqualStrategyNumber, F_NAMEEQ,
+						   NameGetDatum(name), NAMEOID);
 
 	pgdbscan = heap_beginscan(pgdbrel, SnapshotNow, 1, &key);
 

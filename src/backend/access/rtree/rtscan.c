@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.47 2003/08/04 02:39:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.48 2003/11/09 21:30:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
 
 #include "access/genam.h"
 #include "access/rtree.h"
-
+#include "utils/lsyscache.h"
 
 
 /* routines defined and used here */
@@ -71,7 +71,6 @@ rtrescan(PG_FUNCTION_ARGS)
 	IndexScanDesc s = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ScanKey		key = (ScanKey) PG_GETARG_POINTER(1);
 	RTreeScanOpaque p;
-	RegProcedure internal_proc;
 	int			i;
 
 	/*
@@ -116,14 +115,23 @@ rtrescan(PG_FUNCTION_ARGS)
 		 */
 		for (i = 0; i < s->numberOfKeys; i++)
 		{
-			internal_proc = RTMapOperator(s->indexRelation,
-										  s->keyData[i].sk_attno,
-										  s->keyData[i].sk_procedure);
+			AttrNumber	attno = s->keyData[i].sk_attno;
+			Oid			opclass;
+			StrategyNumber int_strategy;
+			Oid			int_oper;
+			RegProcedure int_proc;
+
+			opclass = s->indexRelation->rd_index->indclass[attno-1];
+			int_strategy = RTMapToInternalOperator(s->keyData[i].sk_strategy);
+			int_oper = get_opclass_member(opclass, int_strategy);
+			int_proc = get_opcode(int_oper);
 			ScanKeyEntryInitialize(&(p->s_internalKey[i]),
 								   s->keyData[i].sk_flags,
-								   s->keyData[i].sk_attno,
-								   internal_proc,
-								   s->keyData[i].sk_argument);
+								   attno,
+								   int_strategy,
+								   int_proc,
+								   s->keyData[i].sk_argument,
+								   s->keyData[i].sk_argtype);
 		}
 	}
 

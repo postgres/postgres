@@ -4,7 +4,7 @@
 #    Makefile for access/gist
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/gist/Makefile,v 1.10 2000/08/31 16:09:31 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/gist/Makefile,v 1.11 2003/11/09 21:30:35 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ subdir = src/backend/access/gist
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = gist.o gistget.o gistscan.o giststrat.o
+OBJS = gist.o gistget.o gistscan.o
 
 all: SUBSYS.o
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistscan.c,v 1.47 2003/08/04 02:39:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistscan.c,v 1.48 2003/11/09 21:30:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,17 +106,13 @@ gistrescan(PG_FUNCTION_ARGS)
 				s->numberOfKeys * sizeof(ScanKeyData));
 
 		/*
-		 * Play games here with the scan key to use the Consistent
-		 * function for all comparisons: 1) the sk_procedure field will
-		 * now be used to hold the strategy number 2) the sk_func field
-		 * will point to the Consistent function
+		 * Modify the scan key so that the Consistent function is called
+		 * for all comparisons.  The original operator is passed to the
+		 * Consistent function in the form of its strategy number, which
+		 * is available from the sk_strategy field.
 		 */
 		for (i = 0; i < s->numberOfKeys; i++)
 		{
-			s->keyData[i].sk_procedure =
-				RelationGetGISTStrategy(s->indexRelation,
-										s->keyData[i].sk_attno,
-										s->keyData[i].sk_procedure);
 			s->keyData[i].sk_func = p->giststate->consistentFn[s->keyData[i].sk_attno - 1];
 		}
 	}

@@ -7,14 +7,13 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.68 2003/09/24 18:54:01 tgl Exp $
+ * $Id: rel.h,v 1.69 2003/11/09 21:30:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef REL_H
 #define REL_H
 
-#include "access/strat.h"
 #include "access/tupdesc.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_class.h"
@@ -88,9 +87,8 @@ typedef struct TriggerDesc
 } TriggerDesc;
 
 
-/* ----------
+/*
  * Same for the statistics collector data in Relation and scan data.
- * ----------
  */
 typedef struct PgStat_Info
 {
@@ -138,9 +136,15 @@ typedef struct RelationData
 	/* "struct HeapTupleData *" avoids need to include htup.h here	*/
 	Form_pg_am	rd_am;			/* pg_am tuple for index's AM */
 
-	/* index access support info (used only for an index relation) */
+	/*
+	 * index access support info (used only for an index relation)
+	 *
+	 * Note: only operators and support procs for the index's own datatype
+	 * are cached, not any cross-type operators.  The arrays are indexed by
+	 * strategy or support number, which is a sufficient identifier given
+	 * that restriction.
+	 */
 	MemoryContext rd_indexcxt;	/* private memory cxt for this stuff */
-	IndexStrategy rd_istrat;	/* operator strategy map */
 	Oid		   *rd_operator;	/* OIDs of index operators */
 	RegProcedure *rd_support;	/* OIDs of support procedures */
 	struct FmgrInfo *rd_supportinfo;	/* lookup info for support
@@ -240,16 +244,6 @@ typedef Relation *RelationPtr;
  *		Returns tuple descriptor for a relation.
  */
 #define RelationGetDescr(relation) ((relation)->rd_att)
-
-/*
- * RelationGetIndexStrategy
- *		Returns index strategy for a relation.
- *
- * Note:
- *		Assumes relation descriptor is valid.
- *		Assumes relation descriptor is for an index relation.
- */
-#define RelationGetIndexStrategy(relation) ((relation)->rd_istrat)
 
 /*
  * RelationGetRelationName

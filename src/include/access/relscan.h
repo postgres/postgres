@@ -7,13 +7,14 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relscan.h,v 1.32 2003/08/04 02:40:10 momjian Exp $
+ * $Id: relscan.h,v 1.33 2003/11/09 21:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef RELSCAN_H
 #define RELSCAN_H
 
+#include "access/skey.h"
 #include "utils/tqual.h"
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.29 2003/08/04 02:39:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.30 2003/11/09 21:30:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,12 +57,9 @@ index_keytest(IndexTuple tuple,
 		if (key->sk_flags & SK_ISNULL)
 			return false;
 
-		if (key->sk_flags & SK_COMMUTE)
-			test = FunctionCall2(&key->sk_func, key->sk_argument, datum);
-		else
-			test = FunctionCall2(&key->sk_func, datum, key->sk_argument);
+		test = FunctionCall2(&key->sk_func, datum, key->sk_argument);
 
-		if (DatumGetBool(test) == !!(key->sk_flags & SK_NEGATE))
+		if (!DatumGetBool(test))
 			return false;
 
 		key++;

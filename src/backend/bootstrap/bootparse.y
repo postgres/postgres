@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.60 2003/08/04 02:39:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.61 2003/11/09 21:30:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,6 @@
 #include "access/htup.h"
 #include "access/itup.h"
 #include "access/skey.h"
-#include "access/strat.h"
 #include "access/tupdesc.h"
 #include "access/xact.h"
 #include "bootstrap/bootstrap.h"

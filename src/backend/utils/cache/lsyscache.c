@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.108 2003/10/04 18:22:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.109 2003/11/09 21:30:37 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -53,21 +53,20 @@ op_in_opclass(Oid opno, Oid opclass)
 }
 
 /*
- * op_requires_recheck
+ * get_op_opclass_properties
  *
- *		Return t if operator 'opno' requires a recheck when used as a
- *		member of opclass 'opclass' (ie, this opclass is lossy for this
- *		operator).
+ *		Get the operator's strategy number and recheck (lossy) flag
+ *		within the specified opclass.
  *
  * Caller should already have verified that opno is a member of opclass,
  * therefore we raise an error if the tuple is not found.
  */
-bool
-op_requires_recheck(Oid opno, Oid opclass)
+void
+get_op_opclass_properties(Oid opno, Oid opclass,
+						  int *strategy, bool *recheck)
 {
 	HeapTuple	tp;
 	Form_pg_amop amop_tup;
-	bool		result;
 
 	tp = SearchSysCache(AMOPOPID,
 						ObjectIdGetDatum(opno),
@@ -77,10 +76,9 @@ op_requires_recheck(Oid opno, Oid opclass)
 		elog(ERROR, "operator %u is not a member of opclass %u",
 			 opno, opclass);
 	amop_tup = (Form_pg_amop) GETSTRUCT(tp);
-
-	result = amop_tup->amopreqcheck;
+	*strategy = amop_tup->amopstrategy;
+	*recheck = amop_tup->amopreqcheck;
 	ReleaseSysCache(tp);
-	return result;
 }
 
 /*

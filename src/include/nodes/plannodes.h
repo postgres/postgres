@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.68 2003/08/08 21:42:48 momjian Exp $
+ * $Id: plannodes.h,v 1.69 2003/11/09 21:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,15 +153,19 @@ typedef Scan SeqScan;
 
 /* ----------------
  *		index scan node
+ *
+ * Note: this can actually represent N indexscans, all on the same table
+ * but potentially using different indexes, put together with OR semantics.
  * ----------------
  */
 typedef struct IndexScan
 {
 	Scan		scan;
-	List	   *indxid;
-	List	   *indxqual;
-	List	   *indxqualorig;
-	ScanDirection indxorderdir;
+	List	   *indxid;			/* list of index OIDs (1 per scan) */
+	List	   *indxqual;		/* list of sublists of index quals */
+	List	   *indxqualorig;	/* the same in original form */
+	List	   *indxstrategy;	/* list of sublists of strategy numbers */
+	ScanDirection indxorderdir;	/* forward or backward or don't care */
 } IndexScan;
 
 /* ----------------

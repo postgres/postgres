@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.190 2003/09/25 06:58:05 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.191 2003/11/09 21:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,6 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "access/istrat.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
@@ -68,6 +67,8 @@
  * name of relcache init file, used to speed up backend startup
  */
 #define RELCACHE_INIT_FILENAME	"pg_internal.init"
+
+#define RELCACHE_INIT_FILEMAGIC		0x573261 /* version ID value */
 
 /*
  *		hardcoded tuple descriptors.  see include/catalog/pg_attribute.h
@@ -260,6 +261,8 @@ do { \
 
 /*
  * Special cache for opclass-related information
+ *
+ * Note: only non-cross-type operators and support procs get cached
  */
 typedef struct opclasscacheent
 {
@@ -268,7 +271,6 @@ typedef struct opclasscacheent
 	StrategyNumber numStrats;	/* max # of strategies (from pg_am) */
 	StrategyNumber numSupport;	/* max # of support procs (from pg_am) */
 	Oid		   *operatorOids;	/* strategy operators' OIDs */
-	RegProcedure *operatorProcs;	/* strategy operators' procs */
 	RegProcedure *supportProcs; /* support procs */
 } OpClassCacheEnt;
 
@@ -298,7 +300,6 @@ static void AttrDefaultFetch(Relation relation);
 static void CheckConstraintFetch(Relation relation);
 static List *insert_ordered_oid(List *list, Oid datum);
 static void IndexSupportInitialize(Form_pg_index iform,
-					   IndexStrategy indexStrategy,
 					   Oid *indexOperator,
 					   RegProcedure *indexSupport,
 					   StrategyNumber maxStrategyNumber,
@@ -337,8 +338,9 @@ ScanPgRelation(RelationBuildDescInfo buildinfo, bool indexOK)
 		case INFO_RELID:
 			ScanKeyEntryInitialize(&key[0], 0,
 								   ObjectIdAttributeNumber,
-								   F_OIDEQ,
-								   ObjectIdGetDatum(buildinfo.i.info_id));
+								   BTEqualStrategyNumber, F_OIDEQ,
+								   ObjectIdGetDatum(buildinfo.i.info_id),
+								   OIDOID);
 			nkeys = 1;
 			indexRelname = ClassOidIndex;
 			break;
@@ -346,12 +348,14 @@ ScanPgRelation(RelationBuildDescInfo buildinfo, bool indexOK)
 		case INFO_RELNAME:
 			ScanKeyEntryInitialize(&key[0], 0,
 								   Anum_pg_class_relname,
-								   F_NAMEEQ,
-								   NameGetDatum(buildinfo.i.info_name));
+								   BTEqualStrategyNumber, F_NAMEEQ,
+								   NameGetDatum(buildinfo.i.info_name),
+								   NAMEOID);
 			ScanKeyEntryInitialize(&key[1], 0,
 								   Anum_pg_class_relnamespace,
-								   F_OIDEQ,
-								 ObjectIdGetDatum(PG_CATALOG_NAMESPACE));
+								   BTEqualStrategyNumber, F_OIDEQ,
+								   ObjectIdGetDatum(PG_CATALOG_NAMESPACE),
+								   OIDOID);
 			nkeys = 2;
 			indexRelname = ClassNameNspIndex;
 			break;
@@ -481,12 +485,13 @@ RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
 	 */
 	ScanKeyEntryInitialize(&skey[0], 0,
 						   Anum_pg_attribute_attrelid,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(RelationGetRelid(relation)));
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(RelationGetRelid(relation)),
+						   OIDOID);
 	ScanKeyEntryInitialize(&skey[1], 0,
 						   Anum_pg_attribute_attnum,
-						   F_INT2GT,
-						   Int16GetDatum(0));
+						   BTGreaterStrategyNumber, F_INT2GT,
+						   Int16GetDatum(0), INT2OID);
 
 	/*
 	 * Open pg_attribute and begin a scan.	Force heap scan if we haven't
@@ -531,14 +536,10 @@ RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
 		if (attp->atthasdef)
 		{
 			if (attrdef == NULL)
-			{
 				attrdef = (AttrDefault *)
-					MemoryContextAlloc(CacheMemoryContext,
-									   relation->rd_rel->relnatts *
-									   sizeof(AttrDefault));
-				MemSet(attrdef, 0,
-					   relation->rd_rel->relnatts * sizeof(AttrDefault));
-			}
+					MemoryContextAllocZero(CacheMemoryContext,
+										   relation->rd_rel->relnatts *
+										   sizeof(AttrDefault));
 			attrdef[ndef].adnum = attp->attnum;
 			attrdef[ndef].adbin = NULL;
 			ndef++;
@@ -605,9 +606,8 @@ RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
 		{
 			constr->num_check = relation->rd_rel->relchecks;
 			constr->check = (ConstrCheck *)
-				MemoryContextAlloc(CacheMemoryContext,
-								constr->num_check * sizeof(ConstrCheck));
-			MemSet(constr->check, 0, constr->num_check * sizeof(ConstrCheck));
+				MemoryContextAllocZero(CacheMemoryContext,
+									constr->num_check * sizeof(ConstrCheck));
 			CheckConstraintFetch(relation);
 		}
 		else
@@ -675,8 +675,9 @@ RelationBuildRuleLock(Relation relation)
 	 */
 	ScanKeyEntryInitialize(&key, 0,
 						   Anum_pg_rewrite_ev_class,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(RelationGetRelid(relation)));
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(RelationGetRelid(relation)),
+						   OIDOID);
 
 	/*
 	 * open pg_rewrite and begin a scan
@@ -950,7 +951,6 @@ RelationInitIndexAccessInfo(Relation relation)
 	Form_pg_am	aform;
 	MemoryContext indexcxt;
 	MemoryContext oldcontext;
-	IndexStrategy strategy;
 	Oid		   *operator;
 	RegProcedure *support;
 	FmgrInfo   *supportinfo;
@@ -1016,33 +1016,20 @@ RelationInitIndexAccessInfo(Relation relation)
 	 * Allocate arrays to hold data
 	 */
 	if (amstrategies > 0)
-	{
-		int			noperators = natts * amstrategies;
-		Size		stratSize;
-
-		stratSize = AttributeNumberGetIndexStrategySize(natts, amstrategies);
-		strategy = (IndexStrategy) MemoryContextAlloc(indexcxt, stratSize);
-		MemSet(strategy, 0, stratSize);
 		operator = (Oid *)
-			MemoryContextAlloc(indexcxt, noperators * sizeof(Oid));
-		MemSet(operator, 0, noperators * sizeof(Oid));
-	}
+			MemoryContextAllocZero(indexcxt,
+								   natts * amstrategies * sizeof(Oid));
 	else
-	{
-		strategy = NULL;
 		operator = NULL;
-	}
 
 	if (amsupport > 0)
 	{
 		int			nsupport = natts * amsupport;
 
 		support = (RegProcedure *)
-			MemoryContextAlloc(indexcxt, nsupport * sizeof(RegProcedure));
-		MemSet(support, 0, nsupport * sizeof(RegProcedure));
+			MemoryContextAllocZero(indexcxt, nsupport * sizeof(RegProcedure));
 		supportinfo = (FmgrInfo *)
-			MemoryContextAlloc(indexcxt, nsupport * sizeof(FmgrInfo));
-		MemSet(supportinfo, 0, nsupport * sizeof(FmgrInfo));
+			MemoryContextAllocZero(indexcxt, nsupport * sizeof(FmgrInfo));
 	}
 	else
 	{
@@ -1050,17 +1037,16 @@ RelationInitIndexAccessInfo(Relation relation)
 		supportinfo = NULL;
 	}
 
-	relation->rd_istrat = strategy;
 	relation->rd_operator = operator;
 	relation->rd_support = support;
 	relation->rd_supportinfo = supportinfo;
 
 	/*
-	 * Fill the strategy map and the support RegProcedure arrays.
+	 * Fill the operator and support procedure OID arrays.
 	 * (supportinfo is left as zeroes, and is filled on-the-fly when used)
 	 */
 	IndexSupportInitialize(relation->rd_index,
-						   strategy, operator, support,
+						   operator, support,
 						   amstrategies, amsupport, natts);
 
 	/*
@@ -1072,11 +1058,11 @@ RelationInitIndexAccessInfo(Relation relation)
 
 /*
  * IndexSupportInitialize
- *		Initializes an index strategy and associated support procedures,
+ *		Initializes an index's cached lists of operators and support procs,
  *		given the index's pg_index tuple.
  *
- * Data is returned into *indexStrategy, *indexOperator, and *indexSupport,
- * all of which are objects allocated by the caller.
+ * Data is returned into *indexOperator and *indexSupport, which are arrays
+ * allocated by the caller.
  *
  * The caller also passes maxStrategyNumber, maxSupportNumber, and
  * maxAttributeNumber, since these indicate the size of the arrays
@@ -1086,7 +1072,6 @@ RelationInitIndexAccessInfo(Relation relation)
  */
 static void
 IndexSupportInitialize(Form_pg_index iform,
-					   IndexStrategy indexStrategy,
 					   Oid *indexOperator,
 					   RegProcedure *indexSupport,
 					   StrategyNumber maxStrategyNumber,
@@ -1094,8 +1079,6 @@ IndexSupportInitialize(Form_pg_index iform,
 					   AttrNumber maxAttributeNumber)
 {
 	int			attIndex;
-
-	maxStrategyNumber = AMStrategies(maxStrategyNumber);
 
 	/*
 	 * XXX note that the following assumes the INDEX tuple is well formed
@@ -1113,52 +1096,15 @@ IndexSupportInitialize(Form_pg_index iform,
 									 maxStrategyNumber,
 									 maxSupportNumber);
 
-		/* load the strategy information for the index operators */
+		/* copy cached data into relcache entry */
 		if (maxStrategyNumber > 0)
-		{
-			StrategyMap map;
-			Oid		   *opers;
-			StrategyNumber strategy;
-
-			map = IndexStrategyGetStrategyMap(indexStrategy,
-											  maxStrategyNumber,
-											  attIndex + 1);
-			opers = &indexOperator[attIndex * maxStrategyNumber];
-
-			for (strategy = 0; strategy < maxStrategyNumber; strategy++)
-			{
-				ScanKey		mapentry;
-
-				mapentry = StrategyMapGetScanKeyEntry(map, strategy + 1);
-				if (RegProcedureIsValid(opcentry->operatorProcs[strategy]))
-				{
-					MemSet(mapentry, 0, sizeof(*mapentry));
-					mapentry->sk_flags = 0;
-					mapentry->sk_procedure = opcentry->operatorProcs[strategy];
-
-					/*
-					 * Mark mapentry->sk_func invalid, until and unless
-					 * someone sets it up.
-					 */
-					mapentry->sk_func.fn_oid = InvalidOid;
-				}
-				else
-					ScanKeyEntrySetIllegal(mapentry);
-				opers[strategy] = opcentry->operatorOids[strategy];
-			}
-		}
-
-		/* if support routines exist for this access method, load them */
+			memcpy(&indexOperator[attIndex * maxStrategyNumber],
+				   opcentry->operatorOids,
+				   maxStrategyNumber * sizeof(Oid));
 		if (maxSupportNumber > 0)
-		{
-			RegProcedure *procs;
-			StrategyNumber support;
-
-			procs = &indexSupport[attIndex * maxSupportNumber];
-
-			for (support = 0; support < maxSupportNumber; ++support)
-				procs[support] = opcentry->supportProcs[support];
-		}
+			memcpy(&indexSupport[attIndex * maxSupportNumber],
+				   opcentry->supportProcs,
+				   maxSupportNumber * sizeof(RegProcedure));
 	}
 }
 
@@ -1231,29 +1177,16 @@ LookupOpclassInfo(Oid operatorClassOid,
 	opcentry->numSupport = numSupport;
 
 	if (numStrats > 0)
-	{
 		opcentry->operatorOids = (Oid *)
-			MemoryContextAlloc(CacheMemoryContext,
-							   numStrats * sizeof(Oid));
-		MemSet(opcentry->operatorOids, 0, numStrats * sizeof(Oid));
-		opcentry->operatorProcs = (RegProcedure *)
-			MemoryContextAlloc(CacheMemoryContext,
-							   numStrats * sizeof(RegProcedure));
-		MemSet(opcentry->operatorProcs, 0, numStrats * sizeof(RegProcedure));
-	}
+			MemoryContextAllocZero(CacheMemoryContext,
+								   numStrats * sizeof(Oid));
 	else
-	{
 		opcentry->operatorOids = NULL;
-		opcentry->operatorProcs = NULL;
-	}
 
 	if (numSupport > 0)
-	{
 		opcentry->supportProcs = (RegProcedure *)
-			MemoryContextAlloc(CacheMemoryContext,
-							   numSupport * sizeof(RegProcedure));
-		MemSet(opcentry->supportProcs, 0, numSupport * sizeof(RegProcedure));
-	}
+			MemoryContextAllocZero(CacheMemoryContext,
+								   numSupport * sizeof(RegProcedure));
 	else
 		opcentry->supportProcs = NULL;
 
@@ -1273,8 +1206,9 @@ LookupOpclassInfo(Oid operatorClassOid,
 	{
 		ScanKeyEntryInitialize(&key, 0,
 							   Anum_pg_amop_amopclaid,
-							   F_OIDEQ,
-							   ObjectIdGetDatum(operatorClassOid));
+							   BTEqualStrategyNumber, F_OIDEQ,
+							   ObjectIdGetDatum(operatorClassOid),
+							   OIDOID);
 		pg_amop_desc = heap_openr(AccessMethodOperatorRelationName,
 								  AccessShareLock);
 		pg_amop_scan = systable_beginscan(pg_amop_desc,
@@ -1293,8 +1227,6 @@ LookupOpclassInfo(Oid operatorClassOid,
 					 amopform->amopstrategy, operatorClassOid);
 			opcentry->operatorOids[amopform->amopstrategy - 1] =
 				amopform->amopopr;
-			opcentry->operatorProcs[amopform->amopstrategy - 1] =
-				get_opcode(amopform->amopopr);
 		}
 
 		systable_endscan(pg_amop_scan);
@@ -1308,8 +1240,9 @@ LookupOpclassInfo(Oid operatorClassOid,
 	{
 		ScanKeyEntryInitialize(&key, 0,
 							   Anum_pg_amproc_amopclaid,
-							   F_OIDEQ,
-							   ObjectIdGetDatum(operatorClassOid));
+							   BTEqualStrategyNumber, F_OIDEQ,
+							   ObjectIdGetDatum(operatorClassOid),
+							   OIDOID);
 		pg_amproc_desc = heap_openr(AccessMethodProcedureRelationName,
 									AccessShareLock);
 		pg_amproc_scan = systable_beginscan(pg_amproc_desc,
@@ -2550,11 +2483,11 @@ AttrDefaultFetch(Relation relation)
 	int			found;
 	int			i;
 
-	ScanKeyEntryInitialize(&skey,
-						   (bits16) 0x0,
-						   (AttrNumber) Anum_pg_attrdef_adrelid,
-						   (RegProcedure) F_OIDEQ,
-						   ObjectIdGetDatum(RelationGetRelid(relation)));
+	ScanKeyEntryInitialize(&skey, 0,
+						   Anum_pg_attrdef_adrelid,
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(RelationGetRelid(relation)),
+						   OIDOID);
 
 	adrel = heap_openr(AttrDefaultRelationName, AccessShareLock);
 	adscan = systable_beginscan(adrel, AttrDefaultIndex, true,
@@ -2617,9 +2550,11 @@ CheckConstraintFetch(Relation relation)
 	bool		isnull;
 	int			found = 0;
 
-	ScanKeyEntryInitialize(&skey[0], 0x0,
-						   Anum_pg_constraint_conrelid, F_OIDEQ,
-						   ObjectIdGetDatum(RelationGetRelid(relation)));
+	ScanKeyEntryInitialize(&skey[0], 0,
+						   Anum_pg_constraint_conrelid,
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(RelationGetRelid(relation)),
+						   OIDOID);
 
 	conrel = heap_openr(ConstraintRelationName, AccessShareLock);
 	conscan = systable_beginscan(conrel, ConstraintRelidIndex, true,
@@ -2707,11 +2642,11 @@ RelationGetIndexList(Relation relation)
 	result = NIL;
 
 	/* Prepare to scan pg_index for entries having indrelid = this rel. */
-	ScanKeyEntryInitialize(&skey,
-						   (bits16) 0x0,
-						   (AttrNumber) Anum_pg_index_indrelid,
-						   (RegProcedure) F_OIDEQ,
-						   ObjectIdGetDatum(RelationGetRelid(relation)));
+	ScanKeyEntryInitialize(&skey, 0,
+						   Anum_pg_index_indrelid,
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(RelationGetRelid(relation)),
+						   OIDOID);
 
 	indrel = heap_openr(IndexRelationName, AccessShareLock);
 	indscan = systable_beginscan(indrel, IndexIndrelidIndex, true,
@@ -2988,7 +2923,8 @@ load_relcache_init_file(void)
 				num_rels,
 				max_rels,
 				nailed_rels,
-				nailed_indexes;
+				nailed_indexes,
+				magic;
 	int			i;
 
 	snprintf(initfilename, sizeof(initfilename), "%s/%s",
@@ -3011,6 +2947,12 @@ load_relcache_init_file(void)
 	num_rels = 0;
 	nailed_rels = nailed_indexes = 0;
 	initFileRelationIds = NIL;
+
+	/* check for correct magic number (compatible version) */
+	if (fread(&magic, 1, sizeof(magic), fp) != sizeof(magic))
+		goto read_failed;
+	if (magic != RELCACHE_INIT_FILEMAGIC)
+		goto read_failed;
 
 	for (relno = 0;; relno++)
 	{
@@ -3088,11 +3030,9 @@ load_relcache_init_file(void)
 		{
 			Form_pg_am	am;
 			MemoryContext indexcxt;
-			IndexStrategy strat;
 			Oid		   *operator;
 			RegProcedure *support;
-			int			nstrategies,
-						nsupport;
+			int			nsupport;
 
 			/* Count nailed indexes to ensure we have 'em all */
 			if (rel->rd_isnailed)
@@ -3131,21 +3071,6 @@ load_relcache_init_file(void)
 											 ALLOCSET_SMALL_MAXSIZE);
 			rel->rd_indexcxt = indexcxt;
 
-			/* next, read the index strategy map */
-			if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
-				goto read_failed;
-
-			strat = (IndexStrategy) MemoryContextAlloc(indexcxt, len);
-			if ((nread = fread(strat, 1, len, fp)) != len)
-				goto read_failed;
-
-			/* have to invalidate any FmgrInfo data in the strategy maps */
-			nstrategies = am->amstrategies * relform->relnatts;
-			for (i = 0; i < nstrategies; i++)
-				strat->strategyMapData[i].entry[0].sk_func.fn_oid = InvalidOid;
-
-			rel->rd_istrat = strat;
-
 			/* next, read the vector of operator OIDs */
 			if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
 				goto read_failed;
@@ -3168,8 +3093,7 @@ load_relcache_init_file(void)
 			/* add a zeroed support-fmgr-info vector */
 			nsupport = relform->relnatts * am->amsupport;
 			rel->rd_supportinfo = (FmgrInfo *)
-				MemoryContextAlloc(indexcxt, nsupport * sizeof(FmgrInfo));
-			MemSet(rel->rd_supportinfo, 0, nsupport * sizeof(FmgrInfo));
+				MemoryContextAllocZero(indexcxt, nsupport * sizeof(FmgrInfo));
 		}
 		else
 		{
@@ -3181,7 +3105,6 @@ load_relcache_init_file(void)
 			Assert(rel->rd_indextuple == NULL);
 			Assert(rel->rd_am == NULL);
 			Assert(rel->rd_indexcxt == NULL);
-			Assert(rel->rd_istrat == NULL);
 			Assert(rel->rd_operator == NULL);
 			Assert(rel->rd_support == NULL);
 			Assert(rel->rd_supportinfo == NULL);
@@ -3277,6 +3200,7 @@ write_relcache_init_file(void)
 	FILE	   *fp;
 	char		tempfilename[MAXPGPATH];
 	char		finalfilename[MAXPGPATH];
+	int			magic;
 	HASH_SEQ_STATUS status;
 	RelIdCacheEnt *idhentry;
 	MemoryContext oldcxt;
@@ -3308,6 +3232,14 @@ write_relcache_init_file(void)
 		  errdetail("Continuing anyway, but there's something wrong.")));
 		return;
 	}
+
+	/*
+	 * Write a magic number to serve as a file version identifier.  We can
+	 * change the magic number whenever the relcache layout changes.
+	 */
+	magic = RELCACHE_INIT_FILEMAGIC;
+	if (fwrite(&magic, 1, sizeof(magic), fp) != sizeof(magic))
+		elog(FATAL, "could not write init file");
 
 	/*
 	 * Write all the reldescs (in no particular order).
@@ -3373,15 +3305,6 @@ write_relcache_init_file(void)
 				elog(FATAL, "could not write init file");
 
 			if (fwrite(am, 1, len, fp) != len)
-				elog(FATAL, "could not write init file");
-
-			/* next, write the index strategy map */
-			len = AttributeNumberGetIndexStrategySize(relform->relnatts,
-													  am->amstrategies);
-			if (fwrite(&len, 1, sizeof(len), fp) != sizeof(len))
-				elog(FATAL, "could not write init file");
-
-			if (fwrite(rel->rd_istrat, 1, len, fp) != len)
 				elog(FATAL, "could not write init file");
 
 			/* next, write the vector of operator OIDs */

@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.71 2003/09/25 06:57:58 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.72 2003/11/09 21:30:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,23 +156,18 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 
 	/* Use the index to search for a matching old tuple */
 
-	ScanKeyEntryInitialize(&skey[0],
-						   (bits16) 0x0,
-						   (AttrNumber) 1,
-						   (RegProcedure) F_OIDEQ,
-						   ObjectIdGetDatum(oid));
-
-	ScanKeyEntryInitialize(&skey[1],
-						   (bits16) 0x0,
-						   (AttrNumber) 2,
-						   (RegProcedure) F_OIDEQ,
-						   ObjectIdGetDatum(classoid));
-
-	ScanKeyEntryInitialize(&skey[2],
-						   (bits16) 0x0,
-						   (AttrNumber) 3,
-						   (RegProcedure) F_INT4EQ,
-						   Int32GetDatum(subid));
+	ScanKeyEntryInitialize(&skey[0], 0,
+						   Anum_pg_description_objoid,
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(oid), OIDOID);
+	ScanKeyEntryInitialize(&skey[1], 0,
+						   Anum_pg_description_classoid,
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(classoid), OIDOID);
+	ScanKeyEntryInitialize(&skey[2], 0,
+						   Anum_pg_description_objsubid,
+						   BTEqualStrategyNumber, F_INT4EQ,
+						   Int32GetDatum(subid), INT4OID);
 
 	description = heap_openr(DescriptionRelationName, RowExclusiveLock);
 
@@ -236,19 +231,21 @@ DeleteComments(Oid oid, Oid classoid, int32 subid)
 
 	/* Use the index to search for all matching old tuples */
 
-	ScanKeyEntryInitialize(&skey[0], 0x0,
-						   Anum_pg_description_objoid, F_OIDEQ,
-						   ObjectIdGetDatum(oid));
-
-	ScanKeyEntryInitialize(&skey[1], 0x0,
-						   Anum_pg_description_classoid, F_OIDEQ,
-						   ObjectIdGetDatum(classoid));
+	ScanKeyEntryInitialize(&skey[0], 0,
+						   Anum_pg_description_objoid,
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(oid), OIDOID);
+	ScanKeyEntryInitialize(&skey[1], 0,
+						   Anum_pg_description_classoid,
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(classoid), OIDOID);
 
 	if (subid != 0)
 	{
-		ScanKeyEntryInitialize(&skey[2], 0x0,
-							   Anum_pg_description_objsubid, F_INT4EQ,
-							   Int32GetDatum(subid));
+		ScanKeyEntryInitialize(&skey[2], 0,
+							   Anum_pg_description_objsubid,
+							   BTEqualStrategyNumber, F_INT4EQ,
+							   Int32GetDatum(subid), INT4OID);
 		nkeys = 3;
 	}
 	else
@@ -541,11 +538,10 @@ CommentRule(List *qualname, char *comment)
 		rulename = strVal(lfirst(qualname));
 
 		/* Search pg_rewrite for such a rule */
-		ScanKeyEntryInitialize(&scanKeyData,
-							   0,
+		ScanKeyEntryInitialize(&scanKeyData, 0,
 							   Anum_pg_rewrite_rulename,
-							   F_NAMEEQ,
-							   PointerGetDatum(rulename));
+							   BTEqualStrategyNumber, F_NAMEEQ,
+							   PointerGetDatum(rulename), NAMEOID);
 
 		RewriteRelation = heap_openr(RewriteRelationName, AccessShareLock);
 		scanDesc = heap_beginscan(RewriteRelation, SnapshotNow,
@@ -795,14 +791,15 @@ CommentTrigger(List *qualname, char *comment)
 	 * because of the unique index.
 	 */
 	pg_trigger = heap_openr(TriggerRelationName, AccessShareLock);
-	ScanKeyEntryInitialize(&entry[0], 0x0,
+	ScanKeyEntryInitialize(&entry[0], 0,
 						   Anum_pg_trigger_tgrelid,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(RelationGetRelid(relation)));
-	ScanKeyEntryInitialize(&entry[1], 0x0,
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(RelationGetRelid(relation)),
+						   OIDOID);
+	ScanKeyEntryInitialize(&entry[1], 0,
 						   Anum_pg_trigger_tgname,
-						   F_NAMEEQ,
-						   CStringGetDatum(trigname));
+						   BTEqualStrategyNumber, F_NAMEEQ,
+						   CStringGetDatum(trigname), NAMEOID);
 	scan = systable_beginscan(pg_trigger, TriggerRelidNameIndex, true,
 							  SnapshotNow, 2, entry);
 	triggertuple = systable_getnext(scan);
@@ -875,9 +872,11 @@ CommentConstraint(List *qualname, char *comment)
 	 */
 	pg_constraint = heap_openr(ConstraintRelationName, AccessShareLock);
 
-	ScanKeyEntryInitialize(&skey[0], 0x0,
-						   Anum_pg_constraint_conrelid, F_OIDEQ,
-						   ObjectIdGetDatum(RelationGetRelid(relation)));
+	ScanKeyEntryInitialize(&skey[0], 0,
+						   Anum_pg_constraint_conrelid,
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(RelationGetRelid(relation)),
+						   OIDOID);
 
 	scan = systable_beginscan(pg_constraint, ConstraintRelidIndex, true,
 							  SnapshotNow, 1, skey);

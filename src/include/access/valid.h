@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: valid.h,v 1.31 2003/09/25 18:58:35 tgl Exp $
+ * $Id: valid.h,v 1.32 2003/11/09 21:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,15 +31,16 @@ do \
 /* We use underscores to protect the variable passed in as parameters */ \
 /* We use two underscore here because this macro is included in the \
    macro below */ \
-	bool		__isnull; \
-	Datum		__atp; \
-	Datum		__test; \
 	int			__cur_nkeys = (nkeys); \
 	ScanKey		__cur_keys = (keys); \
  \
 	(result) = true; /* may change */ \
 	for (; __cur_nkeys--; __cur_keys++) \
 	{ \
+		Datum	__atp; \
+		bool	__isnull; \
+		Datum	__test; \
+ \
 		__atp = heap_getattr((tuple), \
 							 __cur_keys->sk_attno, \
 							 (tupdesc), \
@@ -58,16 +59,11 @@ do \
 			break; \
 		} \
  \
-		if (__cur_keys->sk_flags & SK_COMMUTE) \
-			__test = FunctionCall2(&__cur_keys->sk_func, \
-								   __cur_keys->sk_argument, __atp); \
-		else \
-			__test = FunctionCall2(&__cur_keys->sk_func, \
-								   __atp, __cur_keys->sk_argument); \
+		__test = FunctionCall2(&__cur_keys->sk_func, \
+							   __atp, __cur_keys->sk_argument); \
  \
-		if (DatumGetBool(__test) == !!(__cur_keys->sk_flags & SK_NEGATE)) \
+		if (!DatumGetBool(__test)) \
 		{ \
-			/* XXX eventually should check if SK_ISNULL */ \
 			(result) = false; \
 			break; \
 		} \

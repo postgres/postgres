@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.116 2003/09/25 06:57:58 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.117 2003/11/09 21:30:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_type.h"
 #include "commands/cluster.h"
 #include "commands/tablecmds.h"
 #include "miscadmin.h"
@@ -880,8 +881,8 @@ get_tables_to_cluster(MemoryContext cluster_context)
 	indRelation = relation_openr(IndexRelationName, AccessShareLock);
 	ScanKeyEntryInitialize(&entry, 0,
 						   Anum_pg_index_indisclustered,
-						   F_BOOLEQ,
-						   BoolGetDatum(true));
+						   BTEqualStrategyNumber, F_BOOLEQ,
+						   BoolGetDatum(true), BOOLOID);
 	scan = heap_beginscan(indRelation, SnapshotNow, 1, &entry);
 	while ((indexTuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_constraint.c,v 1.16 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_constraint.c,v 1.17 2003/11/09 21:30:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -281,13 +281,15 @@ ConstraintNameIsUsed(CONSTRAINTCATEGORY conCat, Oid objId, Oid objNamespace, con
 
 	found = false;
 
-	ScanKeyEntryInitialize(&skey[0], 0x0,
-						   Anum_pg_constraint_conname, F_NAMEEQ,
-						   CStringGetDatum(cname));
+	ScanKeyEntryInitialize(&skey[0], 0,
+						   Anum_pg_constraint_conname,
+						   BTEqualStrategyNumber, F_NAMEEQ,
+						   CStringGetDatum(cname), NAMEOID);
 
-	ScanKeyEntryInitialize(&skey[1], 0x0,
-						   Anum_pg_constraint_connamespace, F_OIDEQ,
-						   ObjectIdGetDatum(objNamespace));
+	ScanKeyEntryInitialize(&skey[1], 0,
+						   Anum_pg_constraint_connamespace,
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(objNamespace), OIDOID);
 
 	conscan = systable_beginscan(conDesc, ConstraintNameNspIndex, true,
 								 SnapshotNow, 2, skey);
@@ -353,13 +355,15 @@ GenerateConstraintName(CONSTRAINTCATEGORY conCat, Oid objId, Oid objNamespace, i
 		 */
 		found = false;
 
-		ScanKeyEntryInitialize(&skey[0], 0x0,
-							   Anum_pg_constraint_conname, F_NAMEEQ,
-							   CStringGetDatum(cname));
+		ScanKeyEntryInitialize(&skey[0], 0,
+							   Anum_pg_constraint_conname,
+							   BTEqualStrategyNumber, F_NAMEEQ,
+							   CStringGetDatum(cname), NAMEOID);
 
-		ScanKeyEntryInitialize(&skey[1], 0x0,
-							   Anum_pg_constraint_connamespace, F_OIDEQ,
-							   ObjectIdGetDatum(objNamespace));
+		ScanKeyEntryInitialize(&skey[1], 0,
+							   Anum_pg_constraint_connamespace,
+							   BTEqualStrategyNumber, F_OIDEQ,
+							   ObjectIdGetDatum(objNamespace), OIDOID);
 
 		conscan = systable_beginscan(conDesc, ConstraintNameNspIndex, true,
 									 SnapshotNow, 2, skey);
@@ -418,9 +422,10 @@ RemoveConstraintById(Oid conId)
 
 	conDesc = heap_openr(ConstraintRelationName, RowExclusiveLock);
 
-	ScanKeyEntryInitialize(&skey[0], 0x0,
-						   ObjectIdAttributeNumber, F_OIDEQ,
-						   ObjectIdGetDatum(conId));
+	ScanKeyEntryInitialize(&skey[0], 0,
+						   ObjectIdAttributeNumber,
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(conId), OIDOID);
 
 	conscan = systable_beginscan(conDesc, ConstraintOidIndex, true,
 								 SnapshotNow, 1, skey);

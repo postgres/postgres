@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.263 2003/10/02 23:19:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.264 2003/11/09 21:30:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_index.h"
+#include "catalog/pg_type.h"
 #include "commands/vacuum.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
@@ -399,10 +400,10 @@ getrels(const RangeVar *vacrel, const char *stmttype)
 		HeapTuple	tuple;
 		ScanKeyData key;
 
-		ScanKeyEntryInitialize(&key, 0x0,
+		ScanKeyEntryInitialize(&key, 0,
 							   Anum_pg_class_relkind,
-							   F_CHAREQ,
-							   CharGetDatum(RELKIND_RELATION));
+							   BTEqualStrategyNumber, F_CHAREQ,
+							   CharGetDatum(RELKIND_RELATION), CHAROID);
 
 		pgclass = heap_openr(RelationRelationName, AccessShareLock);
 
@@ -582,9 +583,10 @@ vac_update_dbstats(Oid dbid,
 	relation = heap_openr(DatabaseRelationName, RowExclusiveLock);
 
 	/* Must use a heap scan, since there's no syscache for pg_database */
-	ScanKeyEntryInitialize(&entry[0], 0x0,
-						   ObjectIdAttributeNumber, F_OIDEQ,
-						   ObjectIdGetDatum(dbid));
+	ScanKeyEntryInitialize(&entry[0], 0,
+						   ObjectIdAttributeNumber,
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(dbid), OIDOID);
 
 	scan = heap_beginscan(relation, SnapshotNow, 1, entry);
 

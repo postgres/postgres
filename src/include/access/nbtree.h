@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.71 2003/09/29 23:40:26 tgl Exp $
+ * $Id: nbtree.h,v 1.72 2003/11/09 21:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -340,15 +340,9 @@ typedef struct xl_btree_newpage
 
 
 /*
- *	Operator strategy numbers -- ordering of these is <, <=, =, >=, >
+ *	Operator strategy numbers for B-tree have been moved to access/skey.h,
+ *	because many places need to use them in ScanKeyEntryInitialize() calls.
  */
-
-#define BTLessStrategyNumber			1
-#define BTLessEqualStrategyNumber		2
-#define BTEqualStrategyNumber			3
-#define BTGreaterEqualStrategyNumber	4
-#define BTGreaterStrategyNumber			5
-#define BTMaxStrategyNumber				5
 
 /*
  *	When a new operator class is declared, we require that the user
@@ -478,12 +472,6 @@ extern bool _bt_next(IndexScanDesc scan, ScanDirection dir);
 extern bool _bt_first(IndexScanDesc scan, ScanDirection dir);
 extern bool _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir);
 extern Buffer _bt_get_endpoint(Relation rel, uint32 level, bool rightmost);
-
-/*
- * prototypes for functions in nbtstrat.c
- */
-extern StrategyNumber _bt_getstrat(Relation rel, AttrNumber attno,
-			 RegProcedure proc);
 
 /*
  * prototypes for functions in nbtutils.c

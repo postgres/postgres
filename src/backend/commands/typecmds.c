@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.48 2003/10/02 06:34:03 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.49 2003/11/09 21:30:36 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -1362,9 +1362,10 @@ AlterDomainDropConstraint(List *names, const char *constrName, DropBehavior beha
 	conrel = heap_openr(ConstraintRelationName, RowExclusiveLock);
 
 	/* Use the index to scan only constraints of the target relation */
-	ScanKeyEntryInitialize(&key[0], 0x0,
-						   Anum_pg_constraint_contypid, F_OIDEQ,
-						   ObjectIdGetDatum(HeapTupleGetOid(tup)));
+	ScanKeyEntryInitialize(&key[0], 0,
+						   Anum_pg_constraint_contypid,
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(HeapTupleGetOid(tup)), OIDOID);
 
 	conscan = systable_beginscan(conrel, ConstraintTypidIndex, true,
 								 SnapshotNow, 1, key);
@@ -1614,12 +1615,14 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 	 */
 	depRel = relation_openr(DependRelationName, AccessShareLock);
 
-	ScanKeyEntryInitialize(&key[0], 0x0,
-						   Anum_pg_depend_refclassid, F_OIDEQ,
-						   ObjectIdGetDatum(RelOid_pg_type));
-	ScanKeyEntryInitialize(&key[1], 0x0,
-						   Anum_pg_depend_refobjid, F_OIDEQ,
-						   ObjectIdGetDatum(domainOid));
+	ScanKeyEntryInitialize(&key[0], 0,
+						   Anum_pg_depend_refclassid,
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(RelOid_pg_type), OIDOID);
+	ScanKeyEntryInitialize(&key[1], 0,
+						   Anum_pg_depend_refobjid,
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(domainOid), OIDOID);
 
 	depScan = systable_beginscan(depRel, DependReferenceIndex, true,
 								 SnapshotNow, 2, key);
@@ -1898,9 +1901,10 @@ GetDomainConstraints(Oid typeOid)
 			notNull = true;
 
 		/* Look for CHECK Constraints on this domain */
-		ScanKeyEntryInitialize(&key[0], 0x0,
-							   Anum_pg_constraint_contypid, F_OIDEQ,
-							   ObjectIdGetDatum(typeOid));
+		ScanKeyEntryInitialize(&key[0], 0,
+							   Anum_pg_constraint_contypid,
+							   BTEqualStrategyNumber, F_OIDEQ,
+							   ObjectIdGetDatum(typeOid), OIDOID);
 
 		scan = systable_beginscan(conRel, ConstraintTypidIndex, true,
 								  SnapshotNow, 1, key);

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * btutils.c
+ * nbtutils.c
  *	  Utility code for Postgres btree implementation.
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.54 2003/08/04 02:39:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.55 2003/11/09 21:30:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,13 +16,10 @@
 #include "postgres.h"
 
 #include "access/genam.h"
-#include "access/istrat.h"
 #include "access/nbtree.h"
 #include "catalog/catalog.h"
 #include "executor/execdebug.h"
-
-
-static int	_bt_getstrategynumber(RegProcedure sk_procedure, StrategyMap map);
+#include "utils/lsyscache.h"
 
 
 /*
@@ -39,10 +36,6 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 	TupleDesc	itupdesc;
 	int			natts;
 	int			i;
-	FmgrInfo   *procinfo;
-	Datum		arg;
-	bool		null;
-	bits16		flag;
 
 	itupdesc = RelationGetDescr(rel);
 	natts = RelationGetNumberOfAttributes(rel);
@@ -51,15 +44,23 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 
 	for (i = 0; i < natts; i++)
 	{
+		FmgrInfo   *procinfo;
+		Datum		arg;
+		bool		null;
+
+		/*
+		 * We can use the cached support procs since no cross-type comparison
+		 * can be needed.
+		 */
 		procinfo = index_getprocinfo(rel, i + 1, BTORDER_PROC);
 		arg = index_getattr(itup, i + 1, itupdesc, &null);
-		flag = null ? SK_ISNULL : 0x0;
 		ScanKeyEntryInitializeWithInfo(&skey[i],
-									   flag,
+									   null ? SK_ISNULL : 0,
 									   (AttrNumber) (i + 1),
+									   InvalidStrategy,
 									   procinfo,
-									   CurrentMemoryContext,
-									   arg);
+									   arg,
+									   itupdesc->attrs[i]->atttypid);
 	}
 
 	return skey;
@@ -68,33 +69,42 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 /*
  * _bt_mkscankey_nodata
  *		Build a scan key that contains comparator routines appropriate to
- *		the key datatypes, but no comparison data.
+ *		the key datatypes, but no comparison data.  The comparison data
+ *		ultimately used must match the key datatypes.
  *
  *		The result cannot be used with _bt_compare().  Currently this
- *		routine is only called by utils/sort/tuplesort.c, which has its
- *		own comparison routine.
+ *		routine is only called by nbtsort.c and tuplesort.c, which have
+ *		their own comparison routines.
  */
 ScanKey
 _bt_mkscankey_nodata(Relation rel)
 {
 	ScanKey		skey;
+	TupleDesc	itupdesc;
 	int			natts;
 	int			i;
-	FmgrInfo   *procinfo;
 
+	itupdesc = RelationGetDescr(rel);
 	natts = RelationGetNumberOfAttributes(rel);
 
 	skey = (ScanKey) palloc(natts * sizeof(ScanKeyData));
 
 	for (i = 0; i < natts; i++)
 	{
+		FmgrInfo   *procinfo;
+
+		/*
+		 * We can use the cached support procs since no cross-type comparison
+		 * can be needed.
+		 */
 		procinfo = index_getprocinfo(rel, i + 1, BTORDER_PROC);
 		ScanKeyEntryInitializeWithInfo(&skey[i],
 									   SK_ISNULL,
 									   (AttrNumber) (i + 1),
+									   InvalidStrategy,
 									   procinfo,
-									   CurrentMemoryContext,
-									   (Datum) 0);
+									   (Datum) 0,
+									   itupdesc->attrs[i]->atttypid);
 	}
 
 	return skey;
@@ -185,17 +195,6 @@ _bt_formitem(IndexTuple itup)
  * The initial ordering of the keys is expected to be by attribute already
  * (see group_clauses_by_indexkey() in indxpath.c).  The task here is to
  * standardize the appearance of multiple keys for the same attribute.
- *
- * XXX this routine is one of many places that fail to handle SK_COMMUTE
- * scankeys properly.  Currently, the planner is careful never to generate
- * any indexquals that would require SK_COMMUTE to be set.	Someday we ought
- * to try to fix this, though it's not real critical as long as indexable
- * operators all have commutators...
- *
- * Note: this routine invokes comparison operators via OidFunctionCallN,
- * ie, without caching function lookups.  No point in trying to be smarter,
- * since these comparisons are executed only when the user expresses a
- * hokey qualification, and happen only once per scan anyway.
  *----------
  */
 void
@@ -208,7 +207,6 @@ _bt_orderkeys(IndexScanDesc scan)
 	int			numberOfKeys = so->numberOfKeys;
 	ScanKey		key;
 	ScanKey		cur;
-	StrategyMap map;
 	Datum		test;
 	int			i,
 				j;
@@ -229,6 +227,32 @@ _bt_orderkeys(IndexScanDesc scan)
 	if (cur->sk_attno != 1)
 		elog(ERROR, "key(s) for attribute 1 missed");
 
+#if 0
+	/* XXX verify that operator strategy info is correct */
+	/* XXX this is temporary for debugging; it's pretty expensive */
+	/* XXX can't do it during bootstrap, else will recurse infinitely */
+	{
+		extern bool criticalRelcachesBuilt;
+		static bool inRecursion = false;
+
+		if (criticalRelcachesBuilt && !inRecursion)
+		{
+			inRecursion = true;
+			for (i = 0; i < numberOfKeys; i++)
+			{
+				AttrNumber	attno = key[i].sk_attno;
+				Oid			opclass;
+				Oid			chk_oper;
+
+				opclass = relation->rd_index->indclass[attno-1];
+				chk_oper = get_opclass_member(opclass, key[i].sk_strategy);
+				Assert(key[i].sk_func.fn_oid == get_opcode(chk_oper));
+			}
+			inRecursion = false;
+		}
+	}
+#endif
+
 	/* We can short-circuit most of the work if there's just one key */
 	if (numberOfKeys == 1)
 	{
@@ -243,11 +267,7 @@ _bt_orderkeys(IndexScanDesc scan)
 				 relation->rd_rel->relnatts == 1)
 		{
 			/* it's a unique index, do we have an equality qual? */
-			map = IndexStrategyGetStrategyMap(RelationGetIndexStrategy(relation),
-											  BTMaxStrategyNumber,
-											  1);
-			j = _bt_getstrategynumber(cur->sk_procedure, map);
-			if (j == (BTEqualStrategyNumber - 1))
+			if (cur->sk_strategy == BTEqualStrategyNumber)
 				scan->keys_are_unique = true;
 		}
 		so->numberOfRequiredKeys = 1;
@@ -267,9 +287,6 @@ _bt_orderkeys(IndexScanDesc scan)
 	 * any; init[i] is TRUE if we have found such a key for this attr.
 	 */
 	attno = 1;
-	map = IndexStrategyGetStrategyMap(RelationGetIndexStrategy(relation),
-									  BTMaxStrategyNumber,
-									  attno);
 	MemSet(xform, 0, sizeof(xform));	/* not really necessary */
 	MemSet(init, 0, sizeof(init));
 
@@ -324,9 +341,9 @@ _bt_orderkeys(IndexScanDesc scan)
 						j == (BTEqualStrategyNumber - 1))
 						continue;
 					chk = &xform[j];
-					test = OidFunctionCall2(chk->sk_procedure,
-											eq->sk_argument,
-											chk->sk_argument);
+					test = FunctionCall2(&chk->sk_func,
+										 eq->sk_argument,
+										 chk->sk_argument);
 					if (!DatumGetBool(test))
 						so->qual_ok = false;
 				}
@@ -350,9 +367,9 @@ _bt_orderkeys(IndexScanDesc scan)
 				ScanKeyData *lt = &xform[BTLessStrategyNumber - 1];
 				ScanKeyData *le = &xform[BTLessEqualStrategyNumber - 1];
 
-				test = OidFunctionCall2(le->sk_procedure,
-										lt->sk_argument,
-										le->sk_argument);
+				test = FunctionCall2(&le->sk_func,
+									 lt->sk_argument,
+									 le->sk_argument);
 				if (DatumGetBool(test))
 					init[BTLessEqualStrategyNumber - 1] = false;
 				else
@@ -366,9 +383,9 @@ _bt_orderkeys(IndexScanDesc scan)
 				ScanKeyData *gt = &xform[BTGreaterStrategyNumber - 1];
 				ScanKeyData *ge = &xform[BTGreaterEqualStrategyNumber - 1];
 
-				test = OidFunctionCall2(ge->sk_procedure,
-										gt->sk_argument,
-										ge->sk_argument);
+				test = FunctionCall2(&ge->sk_func,
+									 gt->sk_argument,
+									 ge->sk_argument);
 				if (DatumGetBool(test))
 					init[BTGreaterEqualStrategyNumber - 1] = false;
 				else
@@ -404,15 +421,12 @@ _bt_orderkeys(IndexScanDesc scan)
 
 			/* Re-initialize for new attno */
 			attno = cur->sk_attno;
-			map = IndexStrategyGetStrategyMap(RelationGetIndexStrategy(relation),
-											  BTMaxStrategyNumber,
-											  attno);
 			MemSet(xform, 0, sizeof(xform));	/* not really necessary */
 			MemSet(init, 0, sizeof(init));
 		}
 
 		/* figure out which strategy this key's operator corresponds to */
-		j = _bt_getstrategynumber(cur->sk_procedure, map);
+		j = cur->sk_strategy - 1;
 
 		/* have we seen one of these before? */
 		if (init[j])
@@ -444,25 +458,6 @@ _bt_orderkeys(IndexScanDesc scan)
 	if (allEqualSoFar && relation->rd_index->indisunique &&
 		relation->rd_rel->relnatts == new_numberOfKeys)
 		scan->keys_are_unique = true;
-}
-
-/*
- * Determine which btree strategy an operator procedure matches.
- *
- * Result is strategy number minus 1.
- */
-static int
-_bt_getstrategynumber(RegProcedure sk_procedure, StrategyMap map)
-{
-	int			j;
-
-	for (j = BTMaxStrategyNumber; --j >= 0;)
-	{
-		if (sk_procedure == map->entry[j].sk_procedure)
-			return j;
-	}
-	elog(ERROR, "could not identify operator %u", sk_procedure);
-	return -1;					/* keep compiler quiet */
 }
 
 /*
@@ -533,14 +528,9 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple,
 			return false;
 		}
 
-		if (key->sk_flags & SK_COMMUTE)
-			test = FunctionCall2(&key->sk_func,
-								 key->sk_argument, datum);
-		else
-			test = FunctionCall2(&key->sk_func,
-								 datum, key->sk_argument);
+		test = FunctionCall2(&key->sk_func, datum, key->sk_argument);
 
-		if (DatumGetBool(test) == !!(key->sk_flags & SK_NEGATE))
+		if (!DatumGetBool(test))
 		{
 			/*
 			 * Tuple fails this qual.  If it's a required qual, then we

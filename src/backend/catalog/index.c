@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.219 2003/09/29 00:05:24 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.220 2003/11/09 21:30:36 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -25,7 +25,6 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "access/istrat.h"
 #include "bootstrap/bootstrap.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
@@ -995,8 +994,8 @@ setRelhasindex(Oid relid, bool hasindex, bool isprimary, Oid reltoastidxid)
 
 		ScanKeyEntryInitialize(&key[0], 0,
 							   ObjectIdAttributeNumber,
-							   F_OIDEQ,
-							   ObjectIdGetDatum(relid));
+							   BTEqualStrategyNumber, F_OIDEQ,
+							   ObjectIdGetDatum(relid), OIDOID);
 
 		pg_class_scan = heap_beginscan(pg_class, SnapshotNow, 1, key);
 		tuple = heap_getnext(pg_class_scan, ForwardScanDirection);
@@ -1198,8 +1197,8 @@ UpdateStats(Oid relid, double reltuples)
 
 		ScanKeyEntryInitialize(&key[0], 0,
 							   ObjectIdAttributeNumber,
-							   F_OIDEQ,
-							   ObjectIdGetDatum(relid));
+							   BTEqualStrategyNumber, F_OIDEQ,
+							   ObjectIdGetDatum(relid), OIDOID);
 
 		pg_class_scan = heap_beginscan(pg_class, SnapshotNow, 1, key);
 		tuple = heap_getnext(pg_class_scan, ForwardScanDirection);

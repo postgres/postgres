@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * btinsert.c
+ * nbtinsert.c
  *	  Item insertion in Lehman and Yao btrees for Postgres.
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.106 2003/09/25 06:57:57 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.107 2003/11/09 21:30:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */

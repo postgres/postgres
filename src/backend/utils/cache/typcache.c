@@ -33,7 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/typcache.c,v 1.1 2003/08/17 19:58:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/typcache.c,v 1.2 2003/11/09 21:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,9 +248,10 @@ lookup_default_opclass(Oid type_id, Oid am_id)
 	 */
 	rel = heap_openr(OperatorClassRelationName, AccessShareLock);
 
-	ScanKeyEntryInitialize(&skey[0], 0x0,
-						   Anum_pg_opclass_opcamid, F_OIDEQ,
-						   ObjectIdGetDatum(am_id));
+	ScanKeyEntryInitialize(&skey[0], 0,
+						   Anum_pg_opclass_opcamid,
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(am_id), OIDOID);
 
 	scan = systable_beginscan(rel, OpclassAmNameNspIndex, true,
 							  SnapshotNow, 1, skey);

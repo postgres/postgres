@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.38 2003/08/04 23:59:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.39 2003/11/09 21:30:35 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -31,6 +31,7 @@
 #include "access/genam.h"
 #include "access/tuptoaster.h"
 #include "catalog/catalog.h"
+#include "catalog/pg_type.h"
 #include "utils/rel.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -967,11 +968,11 @@ toast_delete_datum(Relation rel, Datum value)
 	 * Setup a scan key to fetch from the index by va_valueid (we don't
 	 * particularly care whether we see them in sequence or not)
 	 */
-	ScanKeyEntryInitialize(&toastkey,
-						   (bits16) 0,
+	ScanKeyEntryInitialize(&toastkey, 0,
 						   (AttrNumber) 1,
-						   (RegProcedure) F_OIDEQ,
-			  ObjectIdGetDatum(attr->va_content.va_external.va_valueid));
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(attr->va_content.va_external.va_valueid),
+						   OIDOID);
 
 	/*
 	 * Find the chunks by index
@@ -1039,11 +1040,11 @@ toast_fetch_datum(varattrib *attr)
 	/*
 	 * Setup a scan key to fetch from the index by va_valueid
 	 */
-	ScanKeyEntryInitialize(&toastkey,
-						   (bits16) 0,
+	ScanKeyEntryInitialize(&toastkey, 0,
 						   (AttrNumber) 1,
-						   (RegProcedure) F_OIDEQ,
-			  ObjectIdGetDatum(attr->va_content.va_external.va_valueid));
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(attr->va_content.va_external.va_valueid),
+						   OIDOID);
 
 	/*
 	 * Read the chunks by index
@@ -1194,37 +1195,33 @@ toast_fetch_datum_slice(varattrib *attr, int32 sliceoffset, int32 length)
 	 * Setup a scan key to fetch from the index. This is either two keys
 	 * or three depending on the number of chunks.
 	 */
-	ScanKeyEntryInitialize(&toastkey[0],
-						   (bits16) 0,
+	ScanKeyEntryInitialize(&toastkey[0], 0,
 						   (AttrNumber) 1,
-						   (RegProcedure) F_OIDEQ,
-			  ObjectIdGetDatum(attr->va_content.va_external.va_valueid));
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(attr->va_content.va_external.va_valueid),
+						   OIDOID);
 
 	/*
-	 * Now dependent on number of chunks:
+	 * Use equality condition for one chunk, a range condition otherwise:
 	 */
-
 	if (numchunks == 1)
 	{
-		ScanKeyEntryInitialize(&toastkey[1],
-							   (bits16) 0,
+		ScanKeyEntryInitialize(&toastkey[1], 0,
 							   (AttrNumber) 2,
-							   (RegProcedure) F_INT4EQ,
-							   Int32GetDatum(startchunk));
+							   BTEqualStrategyNumber, F_INT4EQ,
+							   Int32GetDatum(startchunk), INT4OID);
 		nscankeys = 2;
 	}
 	else
 	{
-		ScanKeyEntryInitialize(&toastkey[1],
-							   (bits16) 0,
+		ScanKeyEntryInitialize(&toastkey[1], 0,
 							   (AttrNumber) 2,
-							   (RegProcedure) F_INT4GE,
-							   Int32GetDatum(startchunk));
-		ScanKeyEntryInitialize(&toastkey[2],
-							   (bits16) 0,
+							   BTGreaterEqualStrategyNumber, F_INT4GE,
+							   Int32GetDatum(startchunk), INT4OID);
+		ScanKeyEntryInitialize(&toastkey[2], 0,
 							   (AttrNumber) 2,
-							   (RegProcedure) F_INT4LE,
-							   Int32GetDatum(endchunk));
+							   BTLessEqualStrategyNumber, F_INT4LE,
+							   Int32GetDatum(endchunk), INT4OID);
 		nscankeys = 3;
 	}
 

@@ -6,7 +6,7 @@
  * for developers.	If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * $Id: pg_config_manual.h,v 1.6 2003/09/21 17:57:21 tgl Exp $
+ * $Id: pg_config_manual.h,v 1.7 2003/11/09 21:30:37 tgl Exp $
  *------------------------------------------------------------------------
  */
 
@@ -229,7 +229,6 @@
  */
 /* #define IPORTAL_DEBUG  */
 /* #define HEAPDEBUGALL  */
-/* #define ISTRATDEBUG	*/
 /* #define ACLDEBUG */
 /* #define RTDEBUG */
 /* #define GISTDEBUG */

@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.37 2003/08/17 19:58:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.38 2003/11/09 21:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -471,11 +471,16 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 		SelectSortFunction(sortOperators[i], &sortFunction,
 						   &state->sortFnKinds[i]);
 
-		ScanKeyEntryInitialize(&state->scanKeys[i],
-							   0x0,
+		/*
+		 * We needn't fill in sk_strategy or sk_argtype since these scankeys
+		 * will never be passed to an index.
+		 */
+		ScanKeyEntryInitialize(&state->scanKeys[i], 0,
 							   attNums[i],
+							   InvalidStrategy,
 							   sortFunction,
-							   (Datum) 0);
+							   (Datum) 0,
+							   InvalidOid);
 	}
 
 	return state;
@@ -1929,12 +1934,7 @@ comparetup_heap(Tuplesortstate *state, const void *a, const void *b)
 										  datum1, isnull1,
 										  datum2, isnull2);
 		if (compare != 0)
-		{
-			/* dead code? SK_COMMUTE can't actually be set here, can it? */
-			if (scanKey->sk_flags & SK_COMMUTE)
-				compare = -compare;
 			return compare;
-		}
 	}
 
 	return 0;

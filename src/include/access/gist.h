@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: gist.h,v 1.37 2003/08/04 02:40:10 momjian Exp $
+ * $Id: gist.h,v 1.38 2003/11/09 21:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,8 +175,6 @@ extern void freeGISTstate(GISTSTATE *giststate);
 extern void gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
 			   Datum k, Relation r, Page pg, OffsetNumber o,
 			   int b, bool l, bool isNull);
-extern StrategyNumber RelationGetGISTStrategy(Relation, AttrNumber,
-						RegProcedure);
 
 extern void gist_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void gist_undo(XLogRecPtr lsn, XLogRecord *record);

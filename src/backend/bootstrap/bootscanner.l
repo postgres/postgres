@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.30 2003/08/04 02:39:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.31 2003/11/09 21:30:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,6 @@
 #include "access/htup.h"
 #include "access/itup.h"
 #include "access/skey.h"
-#include "access/strat.h"
 #include "access/tupdesc.h"
 #include "bootstrap/bootstrap.h"
 #include "catalog/pg_am.h"

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.38 2003/10/02 06:34:03 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.39 2003/11/09 21:30:36 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -1097,10 +1097,10 @@ DropCastById(Oid castOid)
 
 	relation = heap_openr(CastRelationName, RowExclusiveLock);
 
-	ScanKeyEntryInitialize(&scankey, 0x0,
+	ScanKeyEntryInitialize(&scankey, 0,
 						   ObjectIdAttributeNumber,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(castOid));
+						   BTEqualStrategyNumber, F_OIDEQ,
+						   ObjectIdGetDatum(castOid), OIDOID);
 	scan = systable_beginscan(relation, CastOidIndex, true,
 							  SnapshotNow, 1, &scankey);
 

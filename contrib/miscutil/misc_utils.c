@@ -21,6 +21,7 @@
 #include "access/tupdesc.h"
 #include "catalog/catname.h"
 #include "catalog/pg_listener.h"
+#include "catalog/pg_type.h"
 #include "commands/async.h"
 #include "fmgr.h"
 #include "storage/lmgr.h"
@@ -88,8 +89,8 @@ active_listeners(text *relname)
 		memcpy(listen_name, VARDATA(relname), len);
 		ScanKeyEntryInitialize(&key, 0,
 							   Anum_pg_listener_relname,
-							   F_NAMEEQ,
-							   PointerGetDatum(listen_name));
+							   BTEqualStrategyNumber, F_NAMEEQ,
+							   PointerGetDatum(listen_name), NAMEOID);
 		sRel = heap_beginscan(lRel, SnapshotNow, 1, &key);
 	}
 	else
