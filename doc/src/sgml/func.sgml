@@ -440,10 +440,10 @@
 	<entry>text(varchar 'varchar string')</entry>
        </row>
        <row>
-	<entry>textpos(text,text)</entry>
+	<entry>strpos(text,text)</entry>
 	<entry>text</entry>
 	<entry>locate specified substring</entry>
-	<entry>position('high','ig')</entry>
+	<entry>strpos('high','ig')</entry>
        </row>
        <row>
 	<entry>to_ascii(text [,name|int])</entry>
