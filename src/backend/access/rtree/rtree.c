@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtree.c,v 1.82 2004/01/07 18:56:24 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtree.c,v 1.83 2004/02/10 03:42:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "access/rtree.h"
 #include "access/xlogutils.h"
 #include "catalog/index.h"
+#include "commands/vacuum.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
 
@@ -1219,6 +1220,8 @@ rtbulkdelete(PG_FUNCTION_ARGS)
 
 	while (index_getnext_indexitem(iscan, ForwardScanDirection))
 	{
+		vacuum_delay_point();
+
 		if (callback(&iscan->xs_ctup.t_self, callback_state))
 		{
 			ItemPointerData indextup = iscan->currentItemData;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.157 2004/02/10 01:55:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.158 2004/02/10 03:42:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,6 @@
 #include <math.h>
 #include <signal.h>
 #include <sys/file.h>
-#include <sys/time.h>
 #include <unistd.h>
 
 #include "lib/stringinfo.h"
@@ -972,7 +971,7 @@ BufferBackgroundWriter(void)
 		 * Nap for the configured time or sleep for 10 seconds if
 		 * there was nothing to do at all.
 		 */
-		PG_USLEEP((n > 0) ? BgWriterDelay * 1000 : 10000000);
+		pg_usleep((n > 0) ? BgWriterDelay * 1000L : 10000000L);
 	}
 }
 

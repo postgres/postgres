@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.152 2004/02/08 22:28:57 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.153 2004/02/10 03:42:45 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -22,7 +22,6 @@
  */
 #ifndef MISCADMIN_H
 #define MISCADMIN_H
-
 
 
 /*****************************************************************************
@@ -83,10 +82,10 @@ do { \
 #else
 #define CHECK_FOR_INTERRUPTS() \
 do { \
-	WaitForSingleObjectEx(GetCurrentThread(),0,TRUE);	\
+	WaitForSingleObjectEx(GetCurrentThread(),0,TRUE); \
 	if (InterruptPending) \
 		ProcessInterrupts(); \
-} while (0)
+} while(0)
 #endif
 
 
@@ -106,34 +105,6 @@ do { \
 	CritSectionCount--; \
 } while(0)
 
-#ifndef WIN32
-#define PG_USLEEP(_usec) \
-do { \
-	/* This will overflow on systems with 32-bit ints for > ~2000 secs */ \
-	struct timeval delay; \
-	\
-	delay.tv_sec = (_usec) / 1000000; \
-	delay.tv_usec = ((_usec) % 1000000); \
-	(void) select(0, NULL, NULL, NULL, &delay); \
-} while(0)
-#define PG_MSLEEP(_msec) \
-do { \
-	struct timeval _delay; \
-	_delay.tv_sec = (_msec) / 1000; \
-	_delay.tv_usec = ((_msec) % 1000) * 1000; \
-	(void) select (0, NULL, NULL, NULL, &_delay); \
-} while(0)
-#else
-#define PG_USLEEP(_usec) \
-do { \
-	SleepEx(((_usec) < 500 ? 1 : ((_usec) + 500) / 1000), TRUE); \
-} while(0)
-#define PG_MSLEEP(_msec) PG_USLEEP((_msec) * 1000)
-#endif
-
-#ifdef WIN32
-#define ftruncate(a,b)	chsize(a,b)
-#endif
 
 /*****************************************************************************
  *	  globals.h --															 *
@@ -227,14 +198,14 @@ extern bool enableFsync;
 extern bool allowSystemTableMods;
 extern DLLIMPORT int work_mem;
 extern DLLIMPORT int maintenance_work_mem;
-extern int	VacuumMem;
 
 extern int	VacuumCostPageHit;
 extern int	VacuumCostPageMiss;
 extern int	VacuumCostPageDirty;
 extern int	VacuumCostLimit;
-extern int	VacuumCostBalance;
 extern int	VacuumCostNaptime;
+
+extern int	VacuumCostBalance;
 extern bool	VacuumCostActive;
 
 /*

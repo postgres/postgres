@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.66 2004/01/06 18:07:31 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.67 2004/02/10 03:42:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -529,7 +529,7 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 		rows[numrows++] = heap_copytuple(tuple);
 		if (numrows >= targrows)
 			break;
-		CHECK_FOR_INTERRUPTS();
+		vacuum_delay_point();
 	}
 	heap_endscan(scan);
 
@@ -604,7 +604,7 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 		OffsetNumber targoffset,
 					maxoffset;
 
-		CHECK_FOR_INTERRUPTS();
+		vacuum_delay_point();
 
 		t = select_next_random_record(t, targrows, &rstate);
 		/* Try to read the t'th record in the table */
@@ -912,7 +912,7 @@ compute_minimal_stats(VacAttrStats *stats,
 		int			firstcount1,
 					j;
 
-		CHECK_FOR_INTERRUPTS();
+		vacuum_delay_point();
 
 		value = heap_getattr(tuple, stats->attnum, tupDesc, &isnull);
 
@@ -1214,7 +1214,7 @@ compute_scalar_stats(VacAttrStats *stats,
 		Datum		value;
 		bool		isnull;
 
-		CHECK_FOR_INTERRUPTS();
+		vacuum_delay_point();
 
 		value = heap_getattr(tuple, stats->attnum, tupDesc, &isnull);
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.47 2003/11/29 22:40:59 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.48 2004/02/10 03:42:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,7 @@ extern void vacuum_set_xid_limits(VacuumStmt *vacstmt, bool sharedRel,
 extern bool vac_is_partial_index(Relation indrel);
 extern void vac_init_rusage(VacRUsage *ru0);
 extern const char *vac_show_rusage(VacRUsage *ru0);
+extern void vacuum_delay_point(void);
 
 /* in commands/vacuumlazy.c */
 extern void lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.162 2004/02/10 01:55:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.163 2004/02/10 03:42:43 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -142,7 +142,6 @@
 #include "postgres.h"
 
 #include <unistd.h>
-#include <sys/time.h>
 
 #include "access/gistscan.h"
 #include "access/hash.h"
@@ -562,7 +561,7 @@ RecordTransactionCommit(void)
 			 */
 			if (CommitDelay > 0 && enableFsync &&
 				CountActiveBackends() >= CommitSiblings)
-				PG_USLEEP(CommitDelay);
+				pg_usleep(CommitDelay);
 
 			XLogFlush(recptr);
 		}

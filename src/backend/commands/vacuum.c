@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.272 2004/02/10 01:55:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.273 2004/02/10 03:42:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,6 +180,10 @@ vacuum(VacuumStmt *vacstmt)
 	 */
 	if (vacstmt->vacuum)
 		PreventTransactionChain((void *) vacstmt, stmttype);
+
+	/* Turn vacuum cost accounting on or off */
+	VacuumCostActive = (VacuumCostNaptime > 0);
+	VacuumCostBalance = 0;
 
 	/*
 	 * Send info about dead objects to the statistics collector
@@ -374,6 +378,9 @@ vacuum(VacuumStmt *vacstmt)
 
 	if (anl_context)
 		MemoryContextDelete(anl_context);
+
+	/* Turn off vacuum cost accounting */
+	VacuumCostActive = false;
 }
 
 /*
@@ -1082,7 +1089,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		bool		do_reap,
 					do_frag;
 
-		CHECK_FOR_INTERRUPTS();
+		vacuum_delay_point();
 
 		buf = ReadBuffer(onerel, blkno);
 		page = BufferGetPage(buf);
@@ -1528,7 +1535,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 		 blkno > last_move_dest_block;
 		 blkno--)
 	{
-		CHECK_FOR_INTERRUPTS();
+		vacuum_delay_point();
 
 		/*
 		 * Forget fraged_pages pages at or after this one; they're no
@@ -2311,7 +2318,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 		 i < vacuumed_pages;
 		 i++, curpage++)
 	{
-		CHECK_FOR_INTERRUPTS();
+		vacuum_delay_point();
+
 		Assert((*curpage)->blkno < blkno);
 		if ((*curpage)->offsets_used == 0)
 		{
@@ -2342,7 +2350,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 		 i < num_fraged_pages;
 		 i++, curpage++)
 	{
-		CHECK_FOR_INTERRUPTS();
+		vacuum_delay_point();
+
 		Assert((*curpage)->blkno < blkno);
 		if ((*curpage)->blkno > last_move_dest_block)
 			break;				/* no need to scan any further */
@@ -2553,7 +2562,8 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 
 	for (i = 0, vacpage = vacuum_pages->pagedesc; i < nblocks; i++, vacpage++)
 	{
-		CHECK_FOR_INTERRUPTS();
+		vacuum_delay_point();
+
 		if ((*vacpage)->offsets_free > 0)
 		{
 			buf = ReadBuffer(onerel, (*vacpage)->blkno);
@@ -3163,4 +3173,35 @@ vac_show_rusage(VacRUsage *ru0)
 			 (int) (ru1.tv.tv_usec - ru0->tv.tv_usec) / 10000);
 
 	return result;
+}
+
+/*
+ * vacuum_delay_point --- check for interrupts and cost-based delay.
+ *
+ * This should be called in each major loop of VACUUM processing,
+ * typically once per page processed.
+ */
+void
+vacuum_delay_point(void)
+{
+	/* Always check for interrupts */
+	CHECK_FOR_INTERRUPTS();
+
+	/* Nap if appropriate */
+	if (VacuumCostActive && !InterruptPending &&
+		VacuumCostBalance >= VacuumCostLimit)
+	{
+		int		msec;
+
+		msec = VacuumCostNaptime * VacuumCostBalance / VacuumCostLimit;
+		if (msec > VacuumCostNaptime * 4)
+			msec = VacuumCostNaptime * 4;
+
+		pg_usleep(msec * 1000L);
+
+		VacuumCostBalance = 0;
+
+		/* Might have gotten an interrupt while sleeping */
+		CHECK_FOR_INTERRUPTS();
+	}
 }

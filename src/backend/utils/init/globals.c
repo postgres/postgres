@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/globals.c,v 1.83 2004/02/06 19:36:18 wieck Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/globals.c,v 1.84 2004/02/10 03:42:45 tgl Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -82,10 +82,11 @@ int			work_mem = 1024;
 int			maintenance_work_mem = 16384;
 int			NBuffers = 1000;
 
-int			VacuumCostPageHit = 1;
+int			VacuumCostPageHit = 1;			/* GUC parameters for vacuum */
 int			VacuumCostPageMiss = 10;
 int			VacuumCostPageDirty = 20;
 int			VacuumCostLimit = 200;
-int			VacuumCostBalance = 0;
 int			VacuumCostNaptime = 0;
+
+int			VacuumCostBalance = 0;			/* working state for vacuum */
 bool		VacuumCostActive = false;

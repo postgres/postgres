@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.36 2004/02/10 01:55:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.37 2004/02/10 03:42:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,10 +148,6 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	vac_open_indexes(onerel, &nindexes, &Irel);
 	hasindex = (nindexes > 0);
 
-	/* Turn vacuum cost accounting on or off */
-	VacuumCostActive = (VacuumCostNaptime > 0);
-	VacuumCostBalance = 0;
-
 	/* Do the vacuuming */
 	lazy_scan_heap(onerel, vacrelstats, Irel, nindexes);
 
@@ -171,9 +167,6 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 
 	/* Update shared free space map with final free space info */
 	lazy_update_fsm(onerel, vacrelstats);
-
-	/* Turn off vacuum cost accounting */
-	VacuumCostActive = false;
 
 	/* Update statistics in pg_class */
 	vac_update_relstats(RelationGetRelid(onerel), vacrelstats->rel_pages,
@@ -233,26 +226,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 					hastup;
 		int			prev_dead_count;
 
-		CHECK_FOR_INTERRUPTS();
-
-		/*
-		 * Do the napping in a cost based vacuum.
-		 */
-		if (VacuumCostActive && !InterruptPending &&
-				VacuumCostBalance >= VacuumCostLimit)
-		{
-			int		msec;
-
-			msec = VacuumCostNaptime * VacuumCostBalance / VacuumCostLimit;
-			if (msec < VacuumCostNaptime * 4)
-				PG_MSLEEP(msec);
-			else
-				PG_MSLEEP(VacuumCostNaptime * 4);
-
-			VacuumCostBalance = 0;
-
-			CHECK_FOR_INTERRUPTS();
-		}
+		vacuum_delay_point();
 
 		/*
 		 * If we are close to overrunning the available space for
@@ -493,26 +467,7 @@ lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats)
 		Buffer		buf;
 		Page		page;
 
-		CHECK_FOR_INTERRUPTS();
-
-		/*
-		 * Do the napping in a cost based vacuum.
-		 */
-		if (VacuumCostActive && !InterruptPending &&
-				VacuumCostBalance >= VacuumCostLimit)
-		{
-			int		msec;
-
-			msec = VacuumCostNaptime * VacuumCostBalance / VacuumCostLimit;
-			if (msec < VacuumCostNaptime * 4)
-				PG_MSLEEP(msec);
-			else
-				PG_MSLEEP(VacuumCostNaptime * 4);
-
-			VacuumCostBalance = 0;
-
-			CHECK_FOR_INTERRUPTS();
-		}
+		vacuum_delay_point();
 
 		tblk = ItemPointerGetBlockNumber(&vacrelstats->dead_tuples[tupindex]);
 		buf = ReadBuffer(onerel, tblk);
@@ -845,26 +800,7 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 					tupgone,
 					hastup;
 
-		CHECK_FOR_INTERRUPTS();
-
-		/*
-		 * Do the napping in a cost based vacuum.
-		 */
-		if (VacuumCostActive && !InterruptPending &&
-				VacuumCostBalance >= VacuumCostLimit)
-		{
-			int		msec;
-
-			msec = VacuumCostNaptime * VacuumCostBalance / VacuumCostLimit;
-			if (msec < VacuumCostNaptime * 4)
-				PG_MSLEEP(msec);
-			else
-				PG_MSLEEP(VacuumCostNaptime * 4);
-
-			VacuumCostBalance = 0;
-
-			CHECK_FOR_INTERRUPTS();
-		}
+		vacuum_delay_point();
 
 		blkno--;
 
