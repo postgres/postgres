@@ -1,7 +1,7 @@
 
                Otvety na chasto zadavaemye voprosy po PostgreSQL
                                        
-   Data poslednego obnovleniya: Vtornik 31 avgusta 23:28:03 EDT 2004
+   Data poslednego obnovleniya: Sreda 15 dekabrya 20:06:34 EST 2004
    
    Anglijskij variant soprovozhdaet: Bryus Mom'yan (Bruce Momjian)
    (pgman@candle.pha.pa.us)
@@ -109,8 +109,7 @@
    4.25) Kak mne vernut' iz funkcii neskol'ko zapisej?
    4.26) Pochemu ya ne mogu nadezhno sozdavat'/udalyat' vremennye tablicy
    v funkciyah PL/PgSQL?
-   4.27) Kakie opcii replikacii suschestvuyut?
-   4.28) Kakie opcii shifrovaniya suschestvuyut?
+   4.27) Kakie opcii shifrovaniya suschestvuyut?
    
                           Rasshireniya PostgreSQL
                                       
@@ -208,7 +207,9 @@
    Nachinaya s versii 8.0, PostgreSQL bez vsyakih uhischrenij rabotaet na
    operacionnyh sistemah Microsoft Windows, osnovannyh na NT, takih kak
    Win2000, WinXP i Win2003. Paket installyatora dostupen po adresu
-   http://pgfoundry.org/projects/pginstaller.
+   http://pgfoundry.org/projects/pginstaller. Versii Windows, osnovannye
+   na MS-DOS (Win95, Win98, WinMe) mogut zapuskat' PostgreSQL s
+   pomosch'yu Cygwin.
    
    Takzhe suschestvuet versiya sportirovannaya pod Novell Netware 6 na
    http://forge.novell.com.
@@ -259,17 +260,20 @@
    
      http://www.PostgreSQL.org
      
-   Esche suschestvuet IRC kanal na Freenode i EFNet, s nazvaniem
-   #PostgreSQL. YA ispol'zuyu dlya podklyucheniya k `etomu kanalu komandu
-   Unix irc -c '#PostgreSQL' "$USER" irc.phoenix.net. ili irc -c
-   '#PostgreSQL' "$USER" irc.freenode.net.
+   Glavnym IRC kanalom yavlyaetsya #postgreql, raspolozhennyj na servere
+   Freenode (irc.freenode.net). CHtoby podklyuchit'sya, vy mozhete
+   ispol'zovat' komandu Unix irc -c '#postgresql' "$USER"
+   irc.freenode.net ili lyuboj drugoj IRC klient. Na `etom zhe servere
+   suschestvuyut kanaly na ispanskom (#postgresql-es) i francuzskom
+   (#postgresqlfr) yazykah. Takzhe suschestvuet kanal po PostgreSQL na
+   servere EFNet.
    
    Spisok kommercheskoj podderzhki kompanij dostupen na
    http://techdocs.postgresql.org/companies.php.
    
     1.7) Kakaya poslednyaya versiya?
     
-   Poslednij vypusk PostgreSQL - `eto versiya 7.4.5
+   Poslednij vypusk PostgreSQL - `eto versiya 7.4.6
    
    My planiruem vypuskat' novye versii kazhdye 6-8 mesyacev.
    
@@ -338,9 +342,8 @@
    
     1.13) Kak otpravit' soobschenie ob oshibke??
     
-   Pozhalujsta posetite stranichku PostgreSQL BugTool na
-   http://www.PostgreSQL.org/bugs/bugs.php, na kotoroj predostavleny
-   detal'nye instrukcii o tom kak otpravit' soobschenie ob oshibke.
+   Zapolnite formu ob oshibke v PostgreSQL, kotoraya raspolozhena na
+   http://www.postgresql.org/bugform.html.
    
    Takzhe ne zabud'te posmotret' na ftp://ftp.PostgreSQL.org/pub na
    predmet bolee svezhih versij PostgreSQL ili zaplat.
@@ -360,7 +363,7 @@
           dlya raboty s soderzhimym blokirovok.
           
    Proizvoditel'nost'
-          PostgreSQL imeet proizvoditel'nost' shozhuyu s drugimi
+          PostgreSQL imeet proizvoditel'nost' shodnuyu s drugimi
           kommercheskimi SUBD i s SUBD s otkrytym ishodnym kodom, v
           kakih-to aspektah rabotaya bystree chem oni, v kakih-to
           medlenee. V sravnenii s MySQL ili obydennee SUBD, my bystree,
@@ -473,10 +476,12 @@
     
    Da, suschestvuet neskol'ko graficheskih interfejsov dlya PostgreSQL.
    `Eto PgAccess (http://www.pgaccess.org), PgAdmin III
-   (http://www.pgadmin.org), RHDB Admin (http://sources.redhat.com/rhdb/)
-   i Rekall ( http://www.thekompany.com/products/rekall/, kommercheskij).
-   Takzhe est' PhpPgAdmin ( http://phppgadmin.sourceforge.net/) -
-   interfejs k PostgreSQL, osnovannyj na Web.
+   (http://www.pgadmin.org), RHDB Admin
+   (http://sources.redhat.com/rhdb/), TORA (http://www.globecom.net/tora/
+   (chastichno kommercheskoe PO) i Rekall (
+   http://www.thekompany.com/products/rekall/, kommercheskij). Takzhe
+   est' PhpPgAdmin ( http://phppgadmin.sourceforge.net/) - interfejs k
+   PostgreSQL, osnovannyj na Web.
    
     2.4) Kakie yazyki mogut vzaimodejstvovat' s PostgreSQL?
     
@@ -520,7 +525,7 @@
    backend processov vy nastroili dlya postmaster. Dlya bol'shinstva
    sistem, s kolichestvom buferov i processov po umolchaniyu, neobhodimyj
    minimum - `eto okolo 1 megabajta. Podrobnosti o razdelyaemoj pamyati i
-   semaforah smotrite v Rukovodstve administratora PostgreSQL.
+   semaforah smotrite v Rukovodstve administratora PostgreSQL..
    
     3.4) Kogda ya pytayus' zapustit' postmaster, ya poluchayu oshibki
     IpcSemaphoreCreate. Pochemu?
@@ -566,23 +571,23 @@
    nad udaleniem i peresozdaniem indeksov, kogda vy vypolnyaete bol'shie
    izmeneniya dannyh.
    
-   Suschestvuet neskol'ko opcij nastrojki. Vy mozhete zapretit' fsync()
-   pri starte postmaster s opciej -o -F. `Eto predotvratit vyzovy
-   fsync(), kotorye privodyat k sbrosu dannyh na disk posle kazhdoj
-   tranzakcii.
+   Suschestvuet neskol'ko opcij nastrojki v Rukovodstve Administratora
+   PostgreSQL. Vy mozhete zapretit' fsync() pri starte postmaster s
+   opciej -o -F. `Eto predotvratit vyzovy fsync(), kotorye privodyat k
+   sbrosu dannyh na disk posle kazhdoj tranzakcii.
    
-   Vy mozhete takzhe ispol'zovat' dlya postmaster opciyu -B dlya
+   Vy mozhete takzhe ispol'zovat' opciyu shared_buffers -B dlya
    uvelicheniya kolichestva buferov razdelyaemoj pamyati, kotoraya
    ispol'zuetsya backend processami. Esli vy sdelaete znachenie `etogo
    parametra slishkom bol'shim, to postmaster mozhet ne zapustitsya
    potomu chto vy ischerpaete ogranichenie yadra na ob"em razdelyaemoj
    pamyati. Kazhdyj bufer imeet razmer v 8 kilobajt i po umolchaniyu
-   vydelyaetsya 64 bufera.
+   vydelyaetsya 1000 buferov.
    
-   Vy mozhete takzhe ispol'zovat' backend opciyu -S dlya uvelicheniya
-   maksimal'nogo kolichestva pamyati, kotoroe ispol'zuetsya backend
-   processom dlya vremennyh sortirovok. Znachenie dlya opcii -S zadaetsya
-   v kilobajtah i po umolchaniyu ravno 512 (t.e. 512K).
+   Vy mozhete takzhe ispol'zovat' backend opcii sort_mem i work_mem dlya
+   uvelicheniya maksimal'nogo kolichestva pamyati, kotoroe ispol'zuetsya
+   backend processom dlya vremennyh sortirovok. Znachenie po umolchaniyu
+   sostavlyaet 1024 (t.e. 1MB).
    
    Vy takzhe mozhete ispol'zovat' komandu CLUSTER dlya gruppirovki dannyh
    v tablicah na sovpadayuschij indeks. Podrobnosti smotrite na stranice
@@ -623,10 +628,13 @@
    blokirovok/backend ne mogut byt' vosproizvedeny.
    
    Esli postmaster zapuschen, zapustite psql v odnom okne, zatem najdite
-   PID processa postgres, ispol'zuemyj psql. Ispol'zujte otdadchik dlya
-   podklyucheniya k postgres PID. Vy mozhete ustanovit' tochki
-   preryvaniya v otladchike i zapustit' zapros iz psql. Esli vy
-   proizvodite otladku zapuska postgres, vy mozhete ustanovit'
+   PID processa postgres, ispol'zuemyj psql, ispol'zuya
+        SELECT pg_backend_pid()
+
+
+   Ispol'zujte otdadchik dlya podklyucheniya k postgres PID. Vy mozhete
+   ustanovit' tochki preryvaniya v otladchike i zapustit' zapros iz psql.
+   Esli vy proizvodite otladku zapuska postgres, vy mozhete ustanovit'
    PGOPTIONS="-W n", i zatem zapustit' psql. `Eta opciya privodit k
    zaderzhke processa zapuska na n sekund, v techenie kotoryh vy mozhete
    podklyuchit' k processu otladchik, ustanovit' lyubye tochki
@@ -893,7 +901,16 @@ a
      * Poisk nezavisimyj ot registra, takoj kak ILIKE i ~* ne ispol'zuet
        indeksy. Vmesto nego, ispol'zujte funkcional'nye indeksy, kotorye
        opisyvayutsya v sekcii 4.12.
-     * Vo vremya initdb dolzhna ispol'zovat'sya lokal' po umolchaniyu C.
+     * Vo vremya initdb dolzhna ispol'zovat'sya lokal' po umolchaniyu C,
+       potomu chto ne suschestvuet vozmozhnosti uznat' next-greater
+       simvol dlya ne-C lokali. Vy mozhete dlya takih sluchaev sozdat'
+       special'nyj indeks
+        text_pattern_ops
+
+       kotoryj rabotaet tol'ko dlya
+        LIKE
+
+       indeksirovaniya.
        
    V vypuskah do versii 8.0, indeksy chasto nel'zya bylo ispol'zovat',
    esli tipy dannyh tochno ne sovpadali s indeksnymi tipami kolonok. `Eto
@@ -1251,17 +1268,7 @@ CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
    EXECUTE dlya dostupa k vremennym tablicam v PL/PgSQL. Ispol'zovanie
    `etogo operatora zastavit zapros peregenerirovat'sya kazhdyj raz.
    
-    4.27) Kakie opcii replikacii suschestvuyut?
-    
-   Est' neskol'ko opcij dlya replikacii tipa master/slave. Oni dopuskayut
-   ispol'zovanie tol'ko master servera dlya vneseniya izmenenij v bazu
-   dannyh, a slave servery prosto pozvolyayut chitat' dannye iz bazy. Ob
-   `etom chitajte zdes':
-   http://gborg.PostgreSQL.org/genpage?replication_research. O replikacii
-   s neskol'kimi master serverami chitajte zdes':
-   http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php.
-   
-    4.28) Kakie opcii shifrovaniya suschestvuyut?
+    4.27) Kakie opcii shifrovaniya suschestvuyut?
     
      * contrib/pgcrypto soderzhit mnogo funkcij shifrovaniya dlya
        ispol'zovaniya v SQL zaprosah.

@@ -12,13 +12,13 @@
   <BODY bgcolor="#ffffff" text="#000000" link="#ff0000" vlink="#a00000" alink="#0000ff">
     <H1>Ответы на часто задаваемые вопросы по PostgreSQL</H1>
 
-    <P>Дата последнего обновления: Вторник 31 августа 23:28:03 EDT 2004</P>
+    <P>Дата последнего обновления: Среда 15 декабря 20:06:34 EST 2004</P>
 
     <P>Английский вариант сопровождает: Брюс Момьян (Bruce Momjian) (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
     </P>
     <P>Перевел на русский: Виктор Вислобоков (<A href=
-    "mailto:pgman@candle.pha.pa.us">corochoone@perm.ru</A>)<BR>
+    "mailto:corochoone@perm.ru">corochoone@perm.ru</A>)<BR>
     </P>
 
     <P>Самую свежую английскую версию документа можно найти на
@@ -139,8 +139,7 @@
      <A href="#4.25">4.25</A>) Как мне вернуть из функции несколько записей?<BR>
      <A href="#4.26">4.26</A>) Почему я не могу надежно создавать/удалять
      временные таблицы в функциях PL/PgSQL?<BR>
-     <A href="#4.27">4.27</A>) Какие опции репликации существуют?<BR>
-     <A href="#4.28">4.28</A>) Какие опции шифрования существуют?<BR>
+     <A href="#4.27">4.27</A>) Какие опции шифрования существуют?<BR>
 
     <H2 align="center">Расширения PostgreSQL</H2>
     <A href="#5.1">5.1</A>) Я написал функцию определяемую пользователем.
@@ -201,8 +200,9 @@
 
     <P>Система Управления Базами Данных PostgreSQL</P>
 
-    <P>Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
-    Portions Copyright (c) 1994-6 Regents of the University of California</P>
+    <P>Portions copyright (c) 1996-2004, PostgreSQL Global Development
+    Group Portions Copyright (c) 1994-6 Regents of the University of
+    California</P>
 
     <P>Предоставляются права на использование, копирование, изменение
     и распространение данного программного обеспечения и его документации
@@ -244,7 +244,9 @@
     операционных системах Microsoft Windows, основанных на NT, таких как
     Win2000, WinXP и Win2003. Пакет инсталлятора доступен по адресу
     <A href="http://pgfoundry.org/projects/pginstaller">
-    http://pgfoundry.org/projects/pginstaller</A>.</P>
+    http://pgfoundry.org/projects/pginstaller</A>. Версии Windows,
+    основанные на MS-DOS (Win95, Win98, WinMe) могут запускать
+    PostgreSQL с помощью Cygwin.</P>
     
     <P>Также существует версия спортированная под Novell Netware 6 на
     <a href="http://forge.novell.com/">http://forge.novell.com</a>.</P>
@@ -307,17 +309,20 @@
       <A href="http://www.PostgreSQL.org">http://www.PostgreSQL.org</A>
     </BLOCKQUOTE>
 
-    <P>Еще существует IRC канал на Freenode и EFNet, с названием
-    <I>#PostgreSQL</I>. Я использую для подключения к этому каналу команду Unix
-    <CODE>irc -c '#PostgreSQL' "$USER" irc.phoenix.net.</CODE> или
-    <CODE>irc -c '#PostgreSQL' "$USER" irc.freenode.net.</CODE></P>
+    <P>Главным IRC каналом является <I>#postgreql</I>,
+    расположенный на сервере Freenode (<I>irc.freenode.net</I>). Чтобы
+    подключиться, вы можете использовать команду Unix
+    <code>irc -c '#postgresql' "$USER" irc.freenode.net</code> или
+    любой другой IRC клиент. На этом же сервере существуют каналы на
+    испанском (<I>#postgresql-es</I>) и французском (<I>#postgresqlfr</I>)
+    языках. Также существует канал по PostgreSQL на сервере EFNet.</P>
 
     <P>Список коммерческой поддержки компаний доступен на
     <A href="http://techdocs.postgresql.org/companies.php">http://techdocs.postgresql.org/companies.php</A>.</P>
 
     <H4><A name="1.7">1.7</A>) Какая последняя версия?</H4>
 
-    <P>Последний выпуск PostgreSQL - это версия 7.4.5</P>
+    <P>Последний выпуск PostgreSQL - это версия 7.4.6</P>
 
     <P>Мы планируем выпускать новые версии каждые 6-8 месяцев.</P>
 
@@ -397,10 +402,8 @@
 
     <H4><A name="1.13">1.13</A>) Как отправить сообщение об ошибке??</H4>
 
-    <P>Пожалуйста посетите страничку PostgreSQL BugTool на <A href=
-    "http://www.postgresql.org/bugs/bugs.php">http://www.PostgreSQL.org/bugs/bugs.php</A>,
-    на которой предоставлены детальные инструкции о том как отправить
-    сообщение об ошибке.</P>
+    <P>Заполните форму об ошибке в PostgreSQL, которая расположена на 
+    <A href="http://www.postgresql.org/bugform.html">http://www.postgresql.org/bugform.html</A>.</P>
 
     <P>Также не забудьте посмотреть на <A href=
     "ftp://ftp.PostgreSQL.org/pub">ftp://ftp.PostgreSQL.org/pub</A>
@@ -428,7 +431,7 @@
 
       <DT><B>Производительность</B></DT>
 
-      <DD>PostgreSQL имеет производительность схожую с другими коммерческими
+      <DD>PostgreSQL имеет производительность сходную с другими коммерческими
       СУБД и с СУБД с открытым исходным кодом, в каких-то аспектах работая
       быстрее чем они, в каких-то медленее. В сравнении с MySQL или обыденнее
       СУБД, мы быстрее, когда пользователей много, а также на комплексных
@@ -555,7 +558,9 @@
     <P>Да, существует несколько графических интерфейсов для PostgreSQL.
     Это PgAccess (<A href="http://www.pgaccess.org/">http://www.pgaccess.org</A>),
     PgAdmin III (<A href="http://www.pgadmin.org/">http://www.pgadmin.org</A>),
-    RHDB Admin (<A href="http://sources.redhat.com/rhdb/">http://sources.redhat.com/rhdb/</A>)
+    RHDB Admin (<A href="http://sources.redhat.com/rhdb/">http://sources.redhat.com/rhdb/</A>),
+    TORA (<A href="http://www.globecom.net/tora/">http://www.globecom.net/tora/
+    (частично коммерческое ПО)</A>
     и Rekall (<A href="http://www.thekompany.com/products/rekall/">
     http://www.thekompany.com/products/rekall/</A>, коммерческий). Также есть
     PhpPgAdmin (<A href="http://phppgadmin.sourceforge.net/">
@@ -613,8 +618,8 @@
     с количеством буферов и процессов по умолчанию, необходимый минимум -
     это около 1 мегабайта. Подробности о разделяемой памяти и семафорах
     смотрите в <A href=
-    "http://www.postgresql.org/docs/viev.php?version=current&amp;idoc=1&amp;file=kernel-resources.html">Руководстве
-    администратора PostgreSQL</A>.</P>
+    "http://www.postgresql.org/docs/current/static/kernel-resources.html">Руководстве
+    администратора PostgreSQL.</A>.</P>
 
     <H4><A name="3.4">3.4</A>) Когда я пытаюсь запустить <I>postmaster</I>, я
     получаю ошибки <I>IpcSemaphoreCreate</I>. Почему?</H4>
@@ -662,22 +667,24 @@
     и пересозданием индексов, когда вы выполняете большие изменения
     данных.</P>
 
-    <P>Существует несколько опций настройки. Вы можете запретить
+    <P>Существует несколько опций настройки в 
+    <A href="http://www.postgresql.org/docs/current/static/runtime.html">
+    Руководстве Администратора PostgreSQL</A>. Вы можете запретить
     <I>fsync()</I> при старте <I>postmaster</I> с опцией <I>-o -F</I>.
     Это предотвратит вызовы <I>fsync()</I>, которые приводят к сбросу
     данных на диск после каждой транзакции.</P>
 
-    <P>Вы можете также использовать для <I>postmaster</I> опцию <I>-B</I>
+    <P>Вы можете также использовать опцию <I>shared_buffers</I> <I>-B</I>
     для увеличения количества буферов разделяемой памяти, которая
     используется backend процессами. Если вы сделаете значение этого параметра
     слишком большим, то <I>postmaster</I> может не запустится потому что
     вы исчерпаете ограничение ядра на объем разделяемой памяти. Каждый
-    буфер имеет размер в 8 килобайт и по умолчанию выделяется 64 буфера.</P>
+    буфер имеет размер в 8 килобайт и по умолчанию выделяется 1000 буферов.</P>
 
-    <P>Вы можете также использовать backend опцию <I>-S</I> для увеличения
-    максимального количества памяти, которое используется backend процессом
-    для временных сортировок. Значение для опции <I>-S</I> задается в
-    килобайтах и по умолчанию равно 512 (т.е. 512K).</P>
+    <P>Вы можете также использовать backend опции <I>sort_mem</I> и
+    <I>work_mem</I> для увеличения максимального количества памяти, которое
+    используется backend процессом для временных сортировок. Значение по
+    умолчанию составляет 1024 (т.е. 1MB).</P>
 
     <P>Вы также можете использовать команду <SMALL>CLUSTER</SMALL> для
     группировки данных в таблицах на совпадающий индекс. Подробности смотрите
@@ -723,9 +730,15 @@
 
     <P>Если <I>postmaster</I> запущен, запустите <I>psql</I> в одном
     окне, затем найдите <SMALL>PID</SMALL> процесса <I>postgres</I>,
-    используемый <I>psql</I>. Используйте отдадчик для подключения к
-    <I>postgres</I> <SMALL>PID</SMALL>. Вы можете установить точки
-    прерывания в отладчике и запустить запрос из <I>psql</I>. Если
+    используемый <I>psql</I>, используя </P>
+    
+    <PRE>
+	SELECT pg_backend_pid()
+    </PRE>
+    
+    <P>Используйте отдадчик для подключения к <I>postgres</I> <SMALL>PID</SMALL>.
+    Вы можете установить точки прерывания в отладчике и запустить запрос
+    из <I>psql</I>. Если
     вы производите отладку запуска <I>postgres</I>, вы можете установить
     PGOPTIONS="-W n", и затем запустить <I>psql</I>. Эта опция приводит
     к задержке процесса запуска на <I>n</I> секунд, в течение которых
@@ -1014,7 +1027,17 @@
     <i>~*</i> не использует индексы. Вместо него, используйте функциональные
     индексы, которые описываются в секции <A href="#4.12">4.12</A>.</LI>
     <LI>Во время <i>initdb</i> должна использоваться локаль по умолчанию
-    <i>C</i>.
+    <i>C</i>, потому что не существует возможности узнать next-greater
+    символ для не-C локали. Вы можете для таких случаев создать специальный
+    индекс
+    <PRE>
+	text_pattern_ops
+    </PRE>
+    который работает только для
+    <PRE>
+	LIKE
+    </PRE>
+    индексирования.</LI>
     </UL>
     </P>
     
@@ -1432,17 +1455,7 @@ BYTEA           bytea           массив байт переменной длины (можно использовать
     таблицам в PL/PgSQL. Использование этого оператора заставит запрос
     перегенерироваться каждый раз.</P>
 
-    <H4><A name="4.27">4.27</A>) Какие опции репликации существуют?</H4>
-
-    <P>Есть несколько опций для репликации типа master/slave. Они допускают
-    использование только master сервера для внесения изменений в базу данных,
-    а slave серверы просто позволяют читать данные из базы. Об этом читайте
-    здесь: <A href="http://gborg.postgresql.org/genpage?replication_research">
-    http://gborg.PostgreSQL.org/genpage?replication_research</A>. О репликации
-    с несколькими master серверами читайте здесь:
-    <a href="http://gborg.postgresql.org/project/pgreplication/projdisplay.php">http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</A>.</P>
-
-    <h4><a name="4.28">4.28</a>) Какие опции шифрования существуют?
+    <h4><a name="4.27">4.27</a>) Какие опции шифрования существуют?
     </h4>
     <ul>
     <li><i>contrib/pgcrypto</i> содержит много функций шифрования для
