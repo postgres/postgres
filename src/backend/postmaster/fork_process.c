@@ -7,11 +7,13 @@
  * Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/fork_process.c,v 1.1 2005/03/10 07:14:03 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/fork_process.c,v 1.2 2005/03/13 23:27:38 tgl Exp $
  */
 #include "postgres.h"
 #include "postmaster/fork_process.h"
 
+#include <time.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 /*
