@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: outfuncs.c,v 1.63 1999/02/03 20:15:22 momjian Exp $
+ *  $Id: outfuncs.c,v 1.64 1999/02/04 01:46:54 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -1137,10 +1137,10 @@ _outJoinMethod(StringInfo str, JoinMethod *node)
 }
 
 /*
- * HInfo is a subclass of JoinMethod.
+ * HashInfo is a subclass of JoinMethod.
  */
 static void
-_outHInfo(StringInfo str, HInfo *node)
+_outHashInfo(StringInfo str, HashInfo *node)
 {
 	appendStringInfo(str, " HASHINFO :hashop %u :jmkeys ", node->hashop);
 	_outNode(str, node->jmethod.jmkeys);
@@ -1578,8 +1578,8 @@ _outNode(StringInfo str, void *obj)
 			case T_JoinMethod:
 				_outJoinMethod(str, obj);
 				break;
-			case T_HInfo:
-				_outHInfo(str, obj);
+			case T_HashInfo:
+				_outHashInfo(str, obj);
 				break;
 			case T_JoinInfo:
 				_outJoinInfo(str, obj);

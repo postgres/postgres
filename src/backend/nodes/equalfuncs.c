@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.22 1999/02/03 20:15:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.23 1999/02/04 01:46:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -476,10 +476,10 @@ _equalMergeOrder(MergeOrder *a, MergeOrder *b)
 }
 
 static bool
-_equalHInfo(HInfo *a, HInfo *b)
+_equalHashInfo(HashInfo *a, HashInfo *b)
 {
-	Assert(IsA(a, HInfo));
-	Assert(IsA(b, HInfo));
+	Assert(IsA(a, HashInfo));
+	Assert(IsA(b, HashInfo));
 
 	if (a->hashop != b->hashop)
 		return false;
@@ -696,8 +696,8 @@ equal(void *a, void *b)
 		case T_MergeOrder:
 			retval = _equalMergeOrder(a, b);
 			break;
-		case T_HInfo:
-			retval = _equalHInfo(a, b);
+		case T_HashInfo:
+			retval = _equalHashInfo(a, b);
 			break;
 		case T_IndexScan:
 			retval = _equalIndexScan(a, b);

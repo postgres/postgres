@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.17 1998/09/01 04:29:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.18 1999/02/04 01:46:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@ static List *prune_joinrel(RelOptInfo * rel, List *other_rels);
 /*
  * prune-joinrels--
  *	  Removes any redundant relation entries from a list of rel nodes
- *	  'rel-list'.  Obviosly, the first relation can't be a duplicate.
+ *	  'rel-list'.  Obviously, the first relation can't be a duplicate.
  *
  * Returns the resulting list.
  *
@@ -59,7 +59,7 @@ prune_joinrels(List *rel_list)
  *
  */
 static List *
-prune_joinrel(RelOptInfo * rel, List *other_rels)
+prune_joinrel(RelOptInfo *rel, List *other_rels)
 {
 	List	   *i = NIL;
 	List	   *result = NIL;
@@ -135,8 +135,7 @@ prune_rel_path(RelOptInfo * rel, Path *unorderedpath)
 	Path	   *cheapest = set_cheapest(rel, rel->pathlist);
 
 	/* don't prune if not pruneable  -- JMH, 11/23/92 */
-	if (unorderedpath != cheapest
-		&& rel->pruneable)
+	if (unorderedpath != cheapest && rel->pruneable)
 	{
 
 		rel->unorderedpath = (Path *) NULL;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.12 1999/02/03 20:15:46 momjian Exp $
+ * $Id: relation.h,v 1.13 1999/02/04 01:47:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,7 @@ typedef struct RelOptInfo
 
 	/* materialization information */
 	List	   *targetlist;
-	List	   *pathlist;
+	List	   *pathlist;		/* Path structures */
 	struct Path *unorderedpath;
 	struct Path *cheapestpath;
 	bool		pruneable;
@@ -102,11 +102,11 @@ typedef struct RelOptInfo
 
 	/* used by various scans and joins: */
 	Oid		   *ordering;		/* OID of operators in sort order */
-	List	   *restrictinfo;		/* restriction clauses */
-	List	   *joininfo;		/* join clauses */
+	List	   *restrictinfo;	/* RestrictInfo structures */
+	List	   *joininfo;		/* JoinInfo structures */
 	List	   *innerjoin;
 	List	   *superrels;
-}			RelOptInfo;
+} RelOptInfo;
 
 extern Var *get_expr(TargetEntry *foo);
 
@@ -132,7 +132,7 @@ typedef struct PathOrder
 	{
 		Oid		   *sortop;
 		MergeOrder *merge;
-	}			ord;
+	} ord;
 } PathOrder;
 
 typedef struct Path
@@ -230,11 +230,11 @@ typedef struct JoinMethod
 	List	   *clauses;
 } JoinMethod;
 
-typedef struct HInfo
+typedef struct HashInfo
 {
 	JoinMethod	jmethod;
 	Oid			hashop;
-} HInfo;
+} HashInfo;
 
 typedef struct MInfo
 {
@@ -250,7 +250,7 @@ typedef struct JoinInfo
 	bool		mergejoinable;
 	bool		hashjoinable;
 	bool		inactive;
-}			JoinInfo;
+} JoinInfo;
 
 typedef struct Iter
 {

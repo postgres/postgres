@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.46 1999/02/03 21:16:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.47 1999/02/04 01:46:54 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1906,19 +1906,19 @@ _readJoinMethod()
 }
 
 /* ----------------
- *		_readHInfo
+ *		_readHashInfo
  *
- * HInfo is a subclass of JoinMethod.
+ * HashInfo is a subclass of JoinMethod.
  * ----------------
  */
-static HInfo *
-_readHInfo()
+static HashInfo *
+_readHashInfo()
 {
-	HInfo	   *local_node;
+	HashInfo	   *local_node;
 	char	   *token;
 	int			length;
 
-	local_node = makeNode(HInfo);
+	local_node = makeNode(HashInfo);
 
 	token = lsptok(NULL, &length);		/* get :hashop */
 	token = lsptok(NULL, &length);		/* now read it */
@@ -2094,7 +2094,7 @@ parsePlanString(void)
 	else if (!strncmp(token, "JOININFO", length))
 		return_value = _readJoinInfo();
 	else if (!strncmp(token, "HINFO", length))
-		return_value = _readHInfo();
+		return_value = _readHashInfo();
 	else if (!strncmp(token, "ITER", length))
 		return_value = _readIter();
 	else if (!strncmp(token, "QUERY", length))

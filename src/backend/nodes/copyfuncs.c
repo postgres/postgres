@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.59 1999/02/03 21:16:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.60 1999/02/04 01:46:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1378,13 +1378,13 @@ _copyJoinMethod(JoinMethod *from)
 }
 
 /* ----------------
- *		_copyHInfo
+ *		_copyHashInfo
  * ----------------
  */
-static HInfo *
-_copyHInfo(HInfo *from)
+static HashInfo *
+_copyHashInfo(HashInfo *from)
 {
-	HInfo	   *newnode = makeNode(HInfo);
+	HashInfo	   *newnode = makeNode(HashInfo);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -1797,8 +1797,8 @@ copyObject(void *from)
 		case T_JoinMethod:
 			retval = _copyJoinMethod(from);
 			break;
-		case T_HInfo:
-			retval = _copyHInfo(from);
+		case T_HashInfo:
+			retval = _copyHashInfo(from);
 			break;
 		case T_MInfo:
 			retval = _copyMInfo(from);

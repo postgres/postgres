@@ -93,8 +93,9 @@ planner()
 
 Optimizer Structures
 --------------------
-Path		- info about every way to access a relation(sequential, index)
-  PathOrder - info about every ordering (sort, merge of relations)
-RelOptInfo	- info about every relation 
-  JoinInfo	- info about join combinations
-RestrictInfo	- info about restrictions
+RelOptInfo		- info about every relation
+  RestrictInfo	- info about restrictions
+  JoinInfo		- info about join combinations
+  Path			- info about every way to access a relation(sequential, index)
+    PathOrder 	- info about every ordering (sort, merge of relations)
+

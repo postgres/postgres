@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.36 1999/02/03 20:15:46 momjian Exp $
+ * $Id: nodes.h,v 1.37 1999/02/04 01:47:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,7 @@ typedef enum NodeTag
 	T_MergeOrder,
 	T_RestrictInfo,
 	T_JoinMethod,
-	T_HInfo,
+	T_HashInfo,
 	T_MInfo,
 	T_JoinInfo,
 	T_Iter,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.12 1999/02/03 21:16:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.13 1999/02/04 01:46:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -579,7 +579,7 @@ hash_inner_and_outer(RelOptInfo * joinrel,
 					 RelOptInfo * innerrel,
 					 List *hashinfo_list)
 {
-	HInfo	   *xhashinfo = (HInfo *) NULL;
+	HashInfo	   *xhashinfo = (HashInfo *) NULL;
 	List	   *hjoin_list = NIL;
 	HashPath   *temp_node = (HashPath *) NULL;
 	List	   *i = NIL;
@@ -589,7 +589,7 @@ hash_inner_and_outer(RelOptInfo * joinrel,
 
 	foreach(i, hashinfo_list)
 	{
-		xhashinfo = (HInfo *) lfirst(i);
+		xhashinfo = (HashInfo *) lfirst(i);
 		outerkeys = extract_path_keys(((JoinMethod *) xhashinfo)->jmkeys,
 							  outerrel->targetlist,
 							  OUTER);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/hashutils.c,v 1.9 1999/02/03 21:16:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/hashutils.c,v 1.10 1999/02/04 01:46:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 #include "optimizer/clauses.h"
 
 
-static HInfo *match_hashop_hashinfo(Oid hashop, List *hashinfo_list);
+static HashInfo *match_hashop_hashinfo(Oid hashop, List *hashinfo_list);
 
 /*
  * group-clauses-by-hashop--
@@ -54,7 +54,7 @@ group_clauses_by_hashop(List *restrictinfo_list,
 		 */
 		if (hashjoinop)
 		{
-			HInfo	   *xhashinfo = (HInfo *) NULL;
+			HashInfo	   *xhashinfo = (HashInfo *) NULL;
 			Expr	   *clause = restrictinfo->clause;
 			Var		   *leftop = get_leftop(clause);
 			Var		   *rightop = get_rightop(clause);
@@ -77,7 +77,7 @@ group_clauses_by_hashop(List *restrictinfo_list,
 
 			if (xhashinfo == NULL)
 			{
-				xhashinfo = makeNode(HInfo);
+				xhashinfo = makeNode(HashInfo);
 				xhashinfo->hashop = hashjoinop;
 
 				xhashinfo->jmethod.jmkeys = NIL;
@@ -105,21 +105,21 @@ group_clauses_by_hashop(List *restrictinfo_list,
  * Returns the node if it exists.
  *
  */
-static HInfo *
+static HashInfo *
 match_hashop_hashinfo(Oid hashop, List *hashinfo_list)
 {
 	Oid			key = 0;
-	HInfo	   *xhashinfo = (HInfo *) NULL;
+	HashInfo	   *xhashinfo = (HashInfo *) NULL;
 	List	   *i = NIL;
 
 	foreach(i, hashinfo_list)
 	{
-		xhashinfo = (HInfo *) lfirst(i);
+		xhashinfo = (HashInfo *) lfirst(i);
 		key = xhashinfo->hashop;
 		if (hashop == key)
 		{						/* found */
 			return xhashinfo;	/* should be a hashinfo node ! */
 		}
 	}
-	return (HInfo *) NIL;
+	return (HashInfo *) NIL;
 }
