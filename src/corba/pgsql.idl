@@ -9,6 +9,8 @@
 #include "CosQueryCollection.idl"
 #endif
 
+#pragma prefix ""
+
 module PostgreSQL {
 	
 	// Built-in types
@@ -26,7 +28,7 @@ module PostgreSQL {
 	typedef boolean Null;
 	
 	union Value switch (Null) {
-	  case false: any value;
+	  case FALSE: any value;
 	};
 	
 	
@@ -61,11 +63,26 @@ module PostgreSQL {
 	// I'm not sure yet about LOCK and UNLOCK.
 	// </info>
 	
+	// Expirable object
 	
+	interface Expirable {
+		/* oneway? */ void keepalive();
+		void remove();
+	};
+	
+	
+	// Upcall object
+	
+	interface Upcall {
+		void notice(in string message);
+		void abort();
+	};
+	
+		
 	// Connected database object
 	
-	interface Database : CosQuery::QueryableCollection {
-		void disconnect();
+	interface Database : CosQuery::QueryableCollection, Expirable {
+		void setupcall(in Upcall obj);
 	};
 	
 	
