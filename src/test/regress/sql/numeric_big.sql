@@ -2,6 +2,18 @@
 -- * Test suite for the Postgres NUMERIC data type
 -- ******************************
 
+-- Must drop tables created by short numeric test.
+DROP TABLE num_data;
+DROP TABLE num_exp_add;
+DROP TABLE num_exp_sub;
+DROP TABLE num_exp_div;
+DROP TABLE num_exp_mul;
+DROP TABLE num_exp_sqrt;
+DROP TABLE num_exp_ln;
+DROP TABLE num_exp_log10;
+DROP TABLE num_exp_power_10_ln;
+DROP TABLE num_result;
+
 CREATE TABLE num_data (id int4, val numeric(1000,800));
 CREATE TABLE num_exp_add (id1 int4, id2 int4, expected numeric(1000,800));
 CREATE TABLE num_exp_sub (id1 int4, id2 int4, expected numeric(1000,800));
@@ -623,10 +635,10 @@ SELECT t1.id1, t1.result, t2.expected
     AND t1.result != t2.expected;
 
 -- ******************************
--- * POWER(10, LN(value)) check
+-- * POW(10, LN(value)) check
 -- ******************************
 DELETE FROM num_result;
-INSERT INTO num_result SELECT id, 0, POWER('10'::numeric, LN(ABS(round(val,1000))))
+INSERT INTO num_result SELECT id, 0, POW(numeric '10', LN(ABS(round(val,1000))))
     FROM num_data
     WHERE val != '0.0';
 SELECT t1.id1, t1.result, t2.expected
