@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.3 2002/09/01 02:37:02 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.4 2002/09/15 13:04:16 petere Exp $ -->
 
 <refentry id="SQL-CREATECAST">
  <refmeta>
@@ -117,7 +117,7 @@ INSERT INTO foo(f1) VALUES(42);
        be schema-qualified.  If it is not, the function will be looked
        up in the path.  The argument type must be identical to the
        source type, the result data type must match the target type of
-       the cast.  Cast functions must be marked immutable.
+       the cast.  Cast functions must be marked immutable or stable.
       </para>
      </listitem>
     </varlistentry>

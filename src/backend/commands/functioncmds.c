@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.19 2002/09/04 20:31:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.20 2002/09/15 13:04:16 petere Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -676,8 +676,8 @@ CreateCast(CreateCastStmt *stmt)
 			elog(ERROR, "argument of cast function must match source data type");
 		if (procstruct->prorettype != targettypeid)
 			elog(ERROR, "return data type of cast function must match target data type");
-		if (procstruct->provolatile != PROVOLATILE_IMMUTABLE)
-			elog(ERROR, "cast function must be immutable");
+		if (procstruct->provolatile == PROVOLATILE_VOLATILE)
+			elog(ERROR, "cast function must not be volatile");
 		if (procstruct->proisagg)
 			elog(ERROR, "cast function must not be an aggregate function");
 		if (procstruct->proretset)
