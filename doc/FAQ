@@ -406,9 +406,9 @@
    For web integration, PHP is an excellent interface. It is at
    http://www.php.net
    
-   For complex cases, many use the perl interface and CGI.pm.
+   For complex cases, many use the Perl interface and CGI.pm.
    
-   A WWW gateway based on WDB using perl can be downloaded from
+   A WWW gateway based on WDB using Perl can be downloaded from
    http://www.eol.ists.ca/~dunlop/wdb-p95
    
     2.3) Does PostgreSQL have a graphical user interface? A report generator?
@@ -866,7 +866,7 @@ BYTEA           bytea           variable-length array of bytes
 
    Finally, you could use the OID returned from the INSERT statement to
    lookup the default value, though this is probably the least portable
-   approach. In perl, using DBI with Edmund Mergl's DBD::Pg module, the
+   approach. In Perl, using DBI with Edmund Mergl's DBD::Pg module, the
    oid value is made available via $sth->{pg_oid_status} after
    $sth->execute().
    
