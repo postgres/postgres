@@ -34,7 +34,7 @@ REVOKE ALL ON atest1 FROM PUBLIC;
 SELECT * FROM atest1;
 
 GRANT ALL ON atest1 TO regressuser2;
-GRANT SELECT ON atest1 TO regressuser3;
+GRANT SELECT ON atest1 TO regressuser3, regressuser4;
 SELECT * FROM atest1;
 
 CREATE TABLE atest2 (col1 varchar(10), col2 boolean);
@@ -93,6 +93,7 @@ SET SESSION AUTHORIZATION regressuser4;
 COPY atest2 FROM stdin; -- ok
 bar	true
 \.
+SELECT * FROM atest1; -- ok
 
 
 -- groups
@@ -117,8 +118,7 @@ CREATE VIEW atestv2 AS SELECT * FROM atest2;
 CREATE VIEW atestv3 AS SELECT * FROM atest3; -- ok
 
 SELECT * FROM atestv1; -- ok
-GRANT SELECT ON atestv1 TO regressuser4;
-GRANT SELECT ON atestv3 TO regressuser4;
+GRANT SELECT ON atestv1, atestv3 TO regressuser4;
 
 SET SESSION AUTHORIZATION regressuser4;
 

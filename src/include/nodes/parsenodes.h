@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.130 2001/06/04 23:27:23 momjian Exp $
+ * $Id: parsenodes.h,v 1.131 2001/06/09 23:21:55 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,15 +137,27 @@ typedef struct AlterTableStmt
 } AlterTableStmt;
 
 /* ----------------------
- *		Change ACL Statement
+ *		Grant Statement
  * ----------------------
  */
-typedef struct ChangeACLStmt
+
+typedef struct GrantStmt
 {
 	NodeTag		type;
-	List	   *relNames;
-	char	   *aclString;
-} ChangeACLStmt;
+	bool		is_grant;		/* not revoke */
+	List	   *relnames;
+	char	   *privileges;
+	List	   *grantees;
+} GrantStmt;
+
+
+typedef struct PrivGrantee
+{
+	NodeTag		type;
+	char	   *username;		/* if both are NULL then PUBLIC */
+	char	   *groupname;
+} PrivGrantee;
+
 
 /* ----------------------
  *		Close Portal Statement

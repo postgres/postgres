@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.143 2001/06/05 05:26:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.144 2001/06/09 23:21:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@
 
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
-#include "utils/acl.h"
 
 
 /*
@@ -1856,14 +1855,29 @@ _copyAlterTableStmt(AlterTableStmt *from)
 	return newnode;
 }
 
-static ChangeACLStmt *
-_copyChangeACLStmt(ChangeACLStmt *from)
+static GrantStmt *
+_copyGrantStmt(GrantStmt *from)
 {
-	ChangeACLStmt *newnode = makeNode(ChangeACLStmt);
+	GrantStmt *newnode = makeNode(GrantStmt);
 
-	Node_Copy(from, newnode, relNames);
-	if (from->aclString)
-		newnode->aclString = pstrdup(from->aclString);
+	newnode->is_grant = from->is_grant;
+	Node_Copy(from, newnode, relnames);
+	if (from->privileges)
+		newnode->privileges = pstrdup(from->privileges);
+	Node_Copy(from, newnode, grantees);
+
+	return newnode;
+}
+
+static PrivGrantee *
+_copyPrivGrantee(PrivGrantee *from)
+{
+	PrivGrantee *newnode = makeNode(PrivGrantee);
+
+	if (from->username)
+		newnode->username = pstrdup(from->username);
+	if (from->groupname)
+		newnode->groupname = pstrdup(from->groupname);
 
 	return newnode;
 }
@@ -2729,8 +2743,8 @@ copyObject(void *from)
 		case T_AlterTableStmt:
 			retval = _copyAlterTableStmt(from);
 			break;
-		case T_ChangeACLStmt:
-			retval = _copyChangeACLStmt(from);
+		case T_GrantStmt:
+			retval = _copyGrantStmt(from);
 			break;
 		case T_ClosePortalStmt:
 			retval = _copyClosePortalStmt(from);
@@ -2942,6 +2956,9 @@ copyObject(void *from)
 			break;
 		case T_FkConstraint:
 			retval = _copyFkConstraint(from);
+			break;
+		case T_PrivGrantee:
+			retval = _copyPrivGrantee(from);
 			break;
 
 		default:

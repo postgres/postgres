@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.229 2001/06/07 04:50:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.230 2001/06/09 23:21:54 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -177,7 +177,9 @@ static void doNegateFloat(Value *v);
 		OptUseOp, opt_class, SpecialRuleRelation
 
 %type <str>		opt_level, opt_encoding
-%type <str>		privileges, operation_commalist, grantee
+%type <str>		privileges, operation_commalist
+%type <node>	grantee
+%type <list>	grantee_list
 %type <chr>		operation, TriggerOneEvent
 
 %type <list>	stmtblock, stmtmulti,
@@ -2241,14 +2243,18 @@ from_in:  IN
 
 /*****************************************************************************
  *
- *		QUERY:
- *				GRANT [privileges] ON [relation_name_list] TO [GROUP] grantee
+ * GRANT privileges ON [TABLE] relation_name_list TO [GROUP] grantee, ...
  *
  *****************************************************************************/
 
-GrantStmt:  GRANT privileges ON opt_table relation_name_list TO grantee opt_with_grant
+GrantStmt:  GRANT privileges ON opt_table relation_name_list TO grantee_list opt_with_grant
 				{
-					$$ = (Node*)makeAclStmt($2,$5,$7,'+');
+					GrantStmt *n = makeNode(GrantStmt);
+					n->is_grant = true;
+					n->relnames = $5;
+					n->privileges = $2;
+					n->grantees = $7;
+					$$ = (Node*)n;
 				}
 		;
 
@@ -2308,17 +2314,30 @@ operation:  SELECT
 
 grantee:  PUBLIC
 				{
-						$$ = aclmakeuser("A","");
+					PrivGrantee *n = makeNode(PrivGrantee);
+					n->username = NULL;
+					n->groupname = NULL;
+					$$ = (Node *)n;
 				}
 		| GROUP ColId
 				{
-						$$ = aclmakeuser("G",$2);
+					PrivGrantee *n = makeNode(PrivGrantee);
+					n->username = NULL;
+					n->groupname = $2;
+					$$ = (Node *)n;
 				}
 		| ColId
 				{
-						$$ = aclmakeuser("U",$1);
+					PrivGrantee *n = makeNode(PrivGrantee);
+					n->username = $1;
+					n->groupname = NULL;
+					$$ = (Node *)n;
 				}
 		;
+
+grantee_list: grantee					{ $$ = makeList1($1); }
+		| grantee_list ',' grantee		{ $$ = lappend($1, $3); }
+
 
 opt_with_grant:  WITH GRANT OPTION
 				{
@@ -2330,14 +2349,18 @@ opt_with_grant:  WITH GRANT OPTION
 
 /*****************************************************************************
  *
- *		QUERY:
- *				REVOKE [privileges] ON [relation_name] FROM [user]
+ * REVOKE privileges ON [TABLE] relation_name_list FROM user, ...
  *
  *****************************************************************************/
 
-RevokeStmt:  REVOKE privileges ON opt_table relation_name_list FROM grantee
+RevokeStmt:  REVOKE privileges ON opt_table relation_name_list FROM grantee_list
 				{
-					$$ = (Node*)makeAclStmt($2,$5,$7,'-');
+					GrantStmt *n = makeNode(GrantStmt);
+					n->is_grant = false;
+					n->relnames = $5;
+					n->privileges = $2;
+					n->grantees = $7;
+					$$ = (Node *)n;
 				}
 		;
 

@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.91 2001/06/05 05:26:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.92 2001/06/09 23:21:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,6 @@
 
 #include "nodes/plannodes.h"
 #include "nodes/relation.h"
-#include "utils/acl.h"
 #include "utils/datum.h"
 
 
@@ -755,15 +754,26 @@ _equalAlterTableStmt(AlterTableStmt *a, AlterTableStmt *b)
 }
 
 static bool
-_equalChangeACLStmt(ChangeACLStmt *a, ChangeACLStmt *b)
+_equalGrantStmt(GrantStmt *a, GrantStmt *b)
 {
-	if (!equal(a->relNames, b->relNames))
+	if (a->is_grant != b->is_grant)
 		return false;
-	if (!equalstr(a->aclString, b->aclString))
+	if (!equal(a->relnames, b->relnames))
+		return false;
+	if (!equalstr(a->privileges, b->privileges))
+		return false;
+	if (!equal(a->grantees, b->grantees))
 		return false;
 
 	return true;
 }
+
+static bool
+_equalPrivGrantee(PrivGrantee *a, PrivGrantee *b)
+{
+	return equalstr(a->username, b->username)
+		&& equalstr(a->groupname, b->groupname);
+}	
 
 static bool
 _equalClosePortalStmt(ClosePortalStmt *a, ClosePortalStmt *b)
@@ -1898,8 +1908,8 @@ equal(void *a, void *b)
 		case T_AlterTableStmt:
 			retval = _equalAlterTableStmt(a, b);
 			break;
-		case T_ChangeACLStmt:
-			retval = _equalChangeACLStmt(a, b);
+		case T_GrantStmt:
+			retval = _equalGrantStmt(a, b);
 			break;
 		case T_ClosePortalStmt:
 			retval = _equalClosePortalStmt(a, b);
@@ -2112,6 +2122,9 @@ equal(void *a, void *b)
 			break;
 		case T_FkConstraint:
 			retval = _equalFkConstraint(a, b);
+			break;
+		case T_PrivGrantee:
+			retval = _equalPrivGrantee(a, b);
 			break;
 
 		default:

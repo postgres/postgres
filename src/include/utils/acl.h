@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.33 2001/06/05 19:34:56 tgl Exp $
+ * $Id: acl.h,v 1.34 2001/06/09 23:21:55 petere Exp $
  *
  * NOTES
  *	  For backward-compatibility purposes we have to allow there
@@ -170,17 +170,14 @@ extern char *aclcheck_error_strings[];
 /*
  * routines used internally
  */
-extern Acl *acldefault(char *relname, AclId ownerid);
-
-extern Acl *aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg);
+extern Acl *acldefault(const char *relname, AclId ownerid);
+extern Acl *aclinsert3(const Acl *old_acl, const AclItem *mod_aip, unsigned modechg);
 
 /*
  * routines used by the parser
  */
-extern char *aclmakepriv(char *old_privlist, char new_priv);
-extern char *aclmakeuser(char *user_type, char *user);
-extern ChangeACLStmt *makeAclStmt(char *privs, List *rel_list, char *grantee,
-			char grant_or_revoke);
+extern char *aclmakepriv(const char *old_privlist, char new_priv);
+extern char *aclmakeuser(const char *user_type, const char *user);
 
 /*
  * exported routines (from acl.c)
@@ -191,12 +188,13 @@ extern Datum aclitemout(PG_FUNCTION_ARGS);
 extern Datum aclinsert(PG_FUNCTION_ARGS);
 extern Datum aclremove(PG_FUNCTION_ARGS);
 extern Datum aclcontains(PG_FUNCTION_ARGS);
-extern void ExecuteChangeACLStmt(ChangeACLStmt *stmt);
+extern const char *aclparse(const char *s, AclItem *aip, unsigned *modechg);
+extern char *makeAclString(const char *privileges, const char *grantee, char grant_or_revoke);
 
 /*
  * prototypes for functions in aclchk.c
  */
-extern void ChangeAcl(char *relname, AclItem *mod_aip, unsigned modechg);
+extern void ExecuteGrantStmt(GrantStmt *stmt);
 extern AclId get_grosysid(char *groname);
 extern char *get_groname(AclId grosysid);
 

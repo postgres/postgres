@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.49 2001/06/05 19:34:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.50 2001/06/09 23:21:54 petere Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -63,94 +63,131 @@ dumpacl(Acl *acl)
 
 #endif /* ACLDEBUG */
 
+
 /*
- * ChangeAcl
+ * Called to execute the utility commands GRANT and REVOKE
  */
 void
-ChangeAcl(char *relname,
-		  AclItem *mod_aip,
-		  unsigned modechg)
+ExecuteGrantStmt(GrantStmt *stmt)
 {
-	unsigned	i;
-	Acl		   *old_acl,
-			   *new_acl;
-	Relation	relation;
-	HeapTuple	tuple;
-	HeapTuple	newtuple;
-	Datum		aclDatum;
-	Datum		values[Natts_pg_class];
-	char		nulls[Natts_pg_class];
-	char		replaces[Natts_pg_class];
-	Relation	idescs[Num_pg_class_indices];
-	bool		isNull;
+	List	   *i;
+	List	   *j;
 
-	/*
-	 * Find the pg_class tuple matching 'relname' and extract the ACL. If
-	 * there's no ACL, create a default using the pg_class.relowner field.
-	 */
-	relation = heap_openr(RelationRelationName, RowExclusiveLock);
-	tuple = SearchSysCache(RELNAME,
-						   PointerGetDatum(relname),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
+	/* see comment in pg_type.h */
+	Assert(ACLITEMSIZE == sizeof(AclItem));
+
+	foreach(i, stmt->relnames)
 	{
+		char	   *relname = strVal(lfirst(i));
+		Relation	relation;
+		HeapTuple	tuple;
+		Form_pg_class pg_class_tuple;
+		Datum		aclDatum;
+		bool		isNull;
+		Acl		   *old_acl;
+		Acl		   *new_acl;
+		unsigned	i;
+		HeapTuple	newtuple;
+		Datum		values[Natts_pg_class];
+		char		nulls[Natts_pg_class];
+		char		replaces[Natts_pg_class];
+
+
+		if (!pg_ownercheck(GetUserId(), relname, RELNAME))
+			elog(ERROR, "permission denied");
+
+		/* open pg_class */
+		relation = heap_openr(RelationRelationName, RowExclusiveLock);
+		tuple = SearchSysCache(RELNAME,
+							   PointerGetDatum(relname),
+							   0, 0, 0);
+		if (!HeapTupleIsValid(tuple))
+		{
+			heap_close(relation, RowExclusiveLock);
+			elog(ERROR, "relation \"%s\" not found",
+				 relname);
+		}
+		pg_class_tuple = (Form_pg_class) GETSTRUCT(tuple);
+
+		if (pg_class_tuple->relkind == RELKIND_INDEX)
+			elog(ERROR, "\"%s\" is an index",
+				 relname);
+
+		/*
+		 * If there's no ACL, create a default using the
+		 * pg_class.relowner field.
+		 */
+		aclDatum = SysCacheGetAttr(RELNAME, tuple, Anum_pg_class_relacl,
+								   &isNull);
+		if (isNull)
+			old_acl = acldefault(relname, pg_class_tuple->relowner);
+		else
+			/* get a detoasted copy of the rel's ACL */
+			old_acl = DatumGetAclPCopy(aclDatum);
+
+#ifdef ACLDEBUG
+		dumpacl(old_acl);
+#endif
+		new_acl = old_acl;
+
+		foreach(j, stmt->grantees)
+		{
+			PrivGrantee *grantee = (PrivGrantee *)lfirst(j);
+			char	   *granteeString;
+			char	   *aclString;
+			AclItem		aclitem;
+			unsigned	modechg;
+
+			if (grantee->username)
+				granteeString = aclmakeuser("U", grantee->username);
+			else if (grantee->groupname)
+				granteeString = aclmakeuser("G", grantee->groupname);
+			else
+				granteeString = aclmakeuser("A", "");
+
+			aclString = makeAclString(stmt->privileges, granteeString,
+									  stmt->is_grant ? '+' : '-');
+
+			/* Convert string ACL spec into internal form */
+			aclparse(aclString, &aclitem, &modechg);
+			new_acl = aclinsert3(new_acl, &aclitem, modechg);
+#ifdef ACLDEBUG
+			dumpacl(new_acl);
+#endif
+		}
+
+		/* finished building new ACL value, now insert it */
+		for (i = 0; i < Natts_pg_class; ++i)
+		{
+			replaces[i] = ' ';
+			nulls[i] = ' ';		/* ignored if replaces[i]==' ' anyway */
+			values[i] = (Datum) NULL; /* ignored if replaces[i]==' ' anyway */
+		}
+		replaces[Anum_pg_class_relacl - 1] = 'r';
+		values[Anum_pg_class_relacl - 1] = PointerGetDatum(new_acl);
+		newtuple = heap_modifytuple(tuple, relation, values, nulls, replaces);
+
+		ReleaseSysCache(tuple);
+
+		simple_heap_update(relation, &newtuple->t_self, newtuple);
+
+		{
+			/* keep the catalog indexes up to date */
+			Relation	idescs[Num_pg_class_indices];
+			CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices,
+							   idescs);
+			CatalogIndexInsert(idescs, Num_pg_class_indices, relation, newtuple);
+			CatalogCloseIndices(Num_pg_class_indices, idescs);
+		}
+
+		pfree(old_acl);
+		pfree(new_acl);
+
 		heap_close(relation, RowExclusiveLock);
-		elog(ERROR, "ChangeAcl: class \"%s\" not found",
-			 relname);
 	}
-
-	aclDatum = SysCacheGetAttr(RELNAME, tuple, Anum_pg_class_relacl,
-							   &isNull);
-	if (isNull)
-	{
-		/* No ACL, so build default ACL for rel */
-		AclId		ownerId;
-
-		ownerId = ((Form_pg_class) GETSTRUCT(tuple))->relowner;
-		old_acl = acldefault(relname, ownerId);
-	}
-	else
-	{
-		/* get a detoasted copy of the rel's ACL */
-		old_acl = DatumGetAclPCopy(aclDatum);
-	}
-
-#ifdef ACLDEBUG
-	dumpacl(old_acl);
-#endif
-
-	new_acl = aclinsert3(old_acl, mod_aip, modechg);
-
-#ifdef ACLDEBUG
-	dumpacl(new_acl);
-#endif
-
-	for (i = 0; i < Natts_pg_class; ++i)
-	{
-		replaces[i] = ' ';
-		nulls[i] = ' ';			/* ignored if replaces[i] == ' ' anyway */
-		values[i] = (Datum) NULL;		/* ignored if replaces[i] == ' '
-										 * anyway */
-	}
-	replaces[Anum_pg_class_relacl - 1] = 'r';
-	values[Anum_pg_class_relacl - 1] = PointerGetDatum(new_acl);
-	newtuple = heap_modifytuple(tuple, relation, values, nulls, replaces);
-
-	ReleaseSysCache(tuple);
-
-	simple_heap_update(relation, &newtuple->t_self, newtuple);
-
-	/* keep the catalog indices up to date */
-	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices,
-					   idescs);
-	CatalogIndexInsert(idescs, Num_pg_class_indices, relation, newtuple);
-	CatalogCloseIndices(Num_pg_class_indices, idescs);
-
-	heap_close(relation, RowExclusiveLock);
-
-	pfree(old_acl);
-	pfree(new_acl);
 }
+
+
 
 AclId
 get_grosysid(char *groname)

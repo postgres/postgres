@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.60 2001/06/05 19:34:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.61 2001/06/09 23:21:55 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,14 +27,12 @@
 #include "utils/memutils.h"
 #include "utils/syscache.h"
 
-static char *getid(char *s, char *n);
-static bool aclitemeq(AclItem *a1, AclItem *a2);
-static bool aclitemgt(AclItem *a1, AclItem *a2);
-static char *aclparse(char *s, AclItem *aip, unsigned *modechg);
+static const char *getid(const char *s, char *n);
+static bool aclitemeq(const AclItem *a1, const AclItem *a2);
+static bool aclitemgt(const AclItem *a1, const AclItem *a2);
 
 #define ACL_IDTYPE_GID_KEYWORD	"group"
 #define ACL_IDTYPE_UID_KEYWORD	"user"
-
 
 /*
  * getid
@@ -48,11 +46,11 @@ static char *aclparse(char *s, AclItem *aip, unsigned *modechg);
  *		- loads the identifier into 'name'.  (If no identifier is found, 'name'
  *		  contains an empty string.)  name must be NAMEDATALEN bytes.
  */
-static char *
-getid(char *s, char *n)
+static const char *
+getid(const char *s, char *n)
 {
 	unsigned	len;
-	char	   *id;
+	const char *id;
 	int			in_quotes = 0;
 
 	Assert(s && n);
@@ -105,8 +103,8 @@ getid(char *s, char *n)
  *		  UID/GID, id type identifier and mode type values.
  *		- loads 'modechg' with the mode change flag.
  */
-static char *
-aclparse(char *s, AclItem *aip, unsigned *modechg)
+const char *
+aclparse(const char *s, AclItem *aip, unsigned *modechg)
 {
 	HeapTuple	htup;
 	char		name[NAMEDATALEN];
@@ -245,7 +243,7 @@ makeacl(int n)
 Datum
 aclitemin(PG_FUNCTION_ARGS)
 {
-	char	   *s = PG_GETARG_CSTRING(0);
+	const char *s = PG_GETARG_CSTRING(0);
 	AclItem    *aip;
 	unsigned	modechg;
 
@@ -351,13 +349,13 @@ aclitemout(PG_FUNCTION_ARGS)
  *		a boolean value indicating = or >
  */
 static bool
-aclitemeq(AclItem *a1, AclItem *a2)
+aclitemeq(const AclItem *a1, const AclItem *a2)
 {
 	return a1->ai_idtype == a2->ai_idtype && a1->ai_id == a2->ai_id;
 }
 
 static bool
-aclitemgt(AclItem *a1, AclItem *a2)
+aclitemgt(const AclItem *a1, const AclItem *a2)
 {
 	return ((a1->ai_idtype > a2->ai_idtype) ||
 			(a1->ai_idtype == a2->ai_idtype && a1->ai_id > a2->ai_id));
@@ -371,7 +369,7 @@ aclitemgt(AclItem *a1, AclItem *a2)
  * newly-created tables (or any table with a NULL acl entry in pg_class)
  */
 Acl *
-acldefault(char *relname, AclId ownerid)
+acldefault(const char *relname, AclId ownerid)
 {
 	Acl		   *acl;
 	AclItem    *aip;
@@ -398,7 +396,7 @@ acldefault(char *relname, AclId ownerid)
  * NB: caller is responsible for having detoasted the input ACL, if needed.
  */
 Acl *
-aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg)
+aclinsert3(const Acl *old_acl, const AclItem *mod_aip, unsigned modechg)
 {
 	Acl		   *new_acl;
 	AclItem    *old_aip,
@@ -595,41 +593,6 @@ aclcontains(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(false);
 }
 
-/*
- * ExecuteChangeACLStmt
- *		Called to execute the utility command type ChangeACLStmt
- */
-void
-ExecuteChangeACLStmt(ChangeACLStmt *stmt)
-{
-	AclItem aclitem;
-	unsigned	modechg;
-	List	   *i;
-
-	/* see comment in pg_type.h */
-	Assert(ACLITEMSIZE == sizeof(AclItem));
-
-	/* Convert string ACL spec into internal form */
-	aclparse(stmt->aclString, &aclitem, &modechg);
-
-	foreach(i, stmt->relNames)
-	{
-		char	   *relname = strVal(lfirst(i));
-		Relation	rel;
-
-		rel = heap_openr(relname, AccessExclusiveLock);
-		if (rel && rel->rd_rel->relkind == RELKIND_INDEX)
-			elog(ERROR, "\"%s\" is an index relation",
-				 relname);
-		if (!pg_ownercheck(GetUserId(), relname, RELNAME))
-			elog(ERROR, "you do not own class \"%s\"",
-				 relname);
-		ChangeAcl(relname, &aclitem, modechg);
-		/* close rel, but keep lock until end of xact */
-		heap_close(rel, NoLock);
-	}
-}
-
 
 /*
  * Parser support routines for ACL-related statements.
@@ -648,7 +611,7 @@ ExecuteChangeACLStmt(ChangeACLStmt *stmt)
  * does not add duplicate privileges
  */
 char *
-aclmakepriv(char *old_privlist, char new_priv)
+aclmakepriv(const char *old_privlist, char new_priv)
 {
 	char	   *priv;
 	int			i;
@@ -698,7 +661,7 @@ aclmakepriv(char *old_privlist, char new_priv)
  * Per above comments, we can't try to resolve a user or group name here.
  */
 char *
-aclmakeuser(char *user_type, char *user)
+aclmakeuser(const char *user_type, const char *user)
 {
 	char	   *user_list;
 
@@ -707,22 +670,20 @@ aclmakeuser(char *user_type, char *user)
 	return user_list;
 }
 
+
 /*
- * makeAclStmt:
- *	  create a ChangeACLStmt at parse time.
- *	  we take in the privileges, relation_name_list, and grantee
- *	  as well as a single character '+' or '-' to indicate grant or revoke
+ * makeAclString:  We take in the privileges and grantee as well as a
+ * single character '+' or '-' to indicate grant or revoke.
  *
  * We convert the information to the same external form recognized by
- * aclitemin (see aclparse), and save that string in the ChangeACLStmt.
- * Conversion to internal form happens when the statement is executed.
+ * aclitemin (see aclparse) and return that string.  Conversion to
+ * internal form happens when the statement is executed.
  */
-ChangeACLStmt *
-makeAclStmt(char *privileges, List *rel_list, char *grantee,
-			char grant_or_revoke)
+char *
+makeAclString(const char *privileges, const char *grantee, char grant_or_revoke)
 {
-	ChangeACLStmt *n = makeNode(ChangeACLStmt);
 	StringInfoData str;
+	char *ret;
 
 	initStringInfo(&str);
 
@@ -745,9 +706,7 @@ makeAclStmt(char *privileges, List *rel_list, char *grantee,
 		appendStringInfo(&str, "%c%s",
 						 grant_or_revoke, privileges);
 	}
-	n->relNames = rel_list;
-	n->aclString = pstrdup(str.data);
-
+	ret = pstrdup(str.data);
 	pfree(str.data);
-	return n;
+	return ret;
 }

@@ -39,7 +39,7 @@ SELECT * FROM atest1;
 (0 rows)
 
 GRANT ALL ON atest1 TO regressuser2;
-GRANT SELECT ON atest1 TO regressuser3;
+GRANT SELECT ON atest1 TO regressuser3, regressuser4;
 SELECT * FROM atest1;
  a | b 
 ---+---
@@ -90,7 +90,7 @@ ERROR:  LOCK TABLE: permission denied
 COPY atest2 FROM stdin; -- fail
 ERROR:  atest2: Permission denied.
 GRANT ALL ON atest1 TO PUBLIC; -- fail
-ERROR:  you do not own class "atest1"
+ERROR:  permission denied
 -- checks in subquery, both ok
 SELECT * FROM atest1 WHERE ( b IN ( SELECT col1 FROM atest2 ) );
  a | b 
@@ -146,6 +146,13 @@ SELECT * FROM atest2 WHERE ( col1 IN ( SELECT b FROM atest1 ) );
 ERROR:  atest2: Permission denied.
 SET SESSION AUTHORIZATION regressuser4;
 COPY atest2 FROM stdin; -- ok
+SELECT * FROM atest1; -- ok
+ a |  b  
+---+-----
+ 1 | two
+ 1 | two
+(2 rows)
+
 -- groups
 SET SESSION AUTHORIZATION regressuser3;
 CREATE TABLE atest3 (one int, two int, three int);
@@ -167,8 +174,7 @@ SELECT * FROM atestv1; -- ok
  1 | two
 (2 rows)
 
-GRANT SELECT ON atestv1 TO regressuser4;
-GRANT SELECT ON atestv3 TO regressuser4;
+GRANT SELECT ON atestv1, atestv3 TO regressuser4;
 SET SESSION AUTHORIZATION regressuser4;
 SELECT * FROM atestv1; -- ok
  a |  b  

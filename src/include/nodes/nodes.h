@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.89 2001/04/24 00:08:38 tgl Exp $
+ * $Id: nodes.h,v 1.90 2001/06/09 23:21:55 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,7 +148,7 @@ typedef enum NodeTag
 	T_SelectStmt,
 	T_AlterTableStmt,
 	T_SetOperationStmt,
-	T_ChangeACLStmt,
+	T_GrantStmt,
 	T_ClosePortalStmt,
 	T_ClusterStmt,
 	T_CopyStmt,
@@ -224,6 +224,7 @@ typedef enum NodeTag
 	T_CaseWhen,
 	T_RowMarkXXX,				/* not used anymore; tag# available */
 	T_FkConstraint,
+	T_PrivGrantee,
 
 	/*
 	 * TAGS FOR FUNCTION-CALL CONTEXT AND RESULTINFO NODES (see fmgr.h)

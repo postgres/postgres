@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.112 2001/05/30 20:52:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.113 2001/06/09 23:21:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -472,13 +472,13 @@ ProcessUtility(Node *parsetree,
 			break;
 
 
-		case T_ChangeACLStmt:
+		case T_GrantStmt:
 			{
-				ChangeACLStmt *stmt = (ChangeACLStmt *) parsetree;
+				GrantStmt *stmt = (GrantStmt *) parsetree;
+				commandTag = stmt->is_grant ? "GRANT" : "REVOKE";
+				set_ps_display(commandTag);
 
-				set_ps_display(commandTag = "CHANGE");
-
-				ExecuteChangeACLStmt(stmt);
+				ExecuteGrantStmt(stmt);
 			}
 			break;
 
