@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.22 2000/01/26 05:56:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.23 2000/04/12 04:58:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,7 +209,7 @@ SpinAcquire(SPINLOCK lock)
 void
 SpinRelease(SPINLOCK lock)
 {
-	Assert(SpinIsLocked(lock))
+	Assert(SpinIsLocked(lock));
 	PROC_DECR_SLOCK(lock);
 	IpcSemaphoreUnlock(SpinLockId, lock, IpcExclusiveLock);
 }
