@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.153 2005/01/08 05:19:18 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.154 2005/01/17 18:47:15 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -1351,7 +1351,7 @@ SELECT b, char_length(b) FROM test2;
         <entry>time intervals</entry>
         <entry>-178000000 years</entry>
         <entry>178000000 years</entry>
-        <entry>1 microsecond</entry>
+        <entry>1 microsecond / 14 digits</entry>
        </row>
        <row>
         <entry><type>date</type></entry>
@@ -1367,7 +1367,7 @@ SELECT b, char_length(b) FROM test2;
         <entry>times of day only</entry>
         <entry>00:00:00.00</entry>
         <entry>23:59:59.99</entry>
-        <entry>1 microsecond</entry>
+        <entry>1 microsecond / 14 digits</entry>
        </row>
        <row>
         <entry><type>time [ (<replaceable>p</replaceable>) ] with time zone</type></entry>
@@ -1375,7 +1375,7 @@ SELECT b, char_length(b) FROM test2;
         <entry>times of day only, with time zone</entry>
         <entry>00:00:00.00+12</entry>
         <entry>23:59:59.99-12</entry>
-        <entry>1 microsecond</entry>
+        <entry>1 microsecond / 14 digits</entry>
        </row>
       </tbody>
      </tgroup>
@@ -1410,7 +1410,11 @@ SELECT b, char_length(b) FROM test2;
     eight-byte integers (a compile-time
     option), microsecond precision is available over the full range of
     values. However eight-byte integer timestamps have a more limited range of
-    dates than shown above: from 4713 BC up to 294276 AD.
+    dates than shown above: from 4713 BC up to 294276 AD.  The same
+    compile-time option also determines whether <type>time</type> and
+    <type>interval</type> values are stored as floating-point or eight-byte
+    integers.  In the floating-point case, large <type>interval</type> values
+    degrade in precision as the size of the interval increases.
    </para>
    </note>
 
