@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.62 2004/09/14 23:46:46 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.63 2004/10/12 15:44:15 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1639,7 +1639,18 @@ opt_label		:
 opt_exitlabel	:
 					{ $$ = NULL; }
 				| T_LABEL
-					{ $$ = strdup(yytext); }
+					{
+						char	*name;
+
+						plpgsql_convert_ident(yytext, &name, 1);
+						$$ = strdup(name);
+						pfree(name);
+					}
+				| T_WORD
+					{
+						/* just to give a better error than "syntax error" */
+						yyerror("no such label");
+					}
 				;
 
 opt_exitcond	: ';'
