@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.95 2000/01/14 22:11:33 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.96 2000/01/16 21:37:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,6 +65,21 @@ static int	CountTuples(Relation relation);
  */
 static int	lineno;
 static bool	fe_eof;
+
+/*
+ * These static variables are used to avoid incurring overhead for each
+ * attribute processed.  attribute_buf is reused on each CopyReadAttribute
+ * call to hold the string being read in.  Under normal use it will soon
+ * grow to a suitable size, and then we will avoid palloc/pfree overhead
+ * for subsequent attributes.  Note that CopyReadAttribute returns a pointer
+ * to attribute_buf's data buffer!
+ * encoding, if needed, can be set once at the start of the copy operation.
+ */
+static StringInfoData	attribute_buf;
+#ifdef MULTIBYTE
+static int				encoding;
+#endif
+
 
 /*
  * Internal communications functions
@@ -276,78 +291,88 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 			 "directly to or from a file.  Anyone can COPY to stdout or "
 			 "from stdin.  Psql's \\copy command also works for anyone.");
 
-		if (from)
-		{						/* copy from file to database */
-			if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
-				elog(ERROR, "You can't change sequence relation %s", relname);
-			if (pipe)
+	/*
+	 * Set up variables to avoid per-attribute overhead.
+	 */
+	initStringInfo(&attribute_buf);
+#ifdef MULTIBYTE
+	encoding = pg_get_client_encoding();
+#endif
+
+	if (from)
+	{							/* copy from file to database */
+		if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
+			elog(ERROR, "You can't change sequence relation %s", relname);
+		if (pipe)
+		{
+			if (IsUnderPostmaster)
 			{
-				if (IsUnderPostmaster)
-				{
-					ReceiveCopyBegin();
-					fp = NULL;
-				}
-				else
-					fp = stdin;
+				ReceiveCopyBegin();
+				fp = NULL;
 			}
 			else
-			{
-#ifndef __CYGWIN32__
-				fp = AllocateFile(filename, "r");
-#else
-				fp = AllocateFile(filename, "rb");
-#endif
-				if (fp == NULL)
-					elog(ERROR, "COPY command, running in backend with "
-						 "effective uid %d, could not open file '%s' for "
-						 "reading.  Errno = %s (%d).",
-						 geteuid(), filename, strerror(errno), errno);
-			}
-			CopyFrom(rel, binary, oids, fp, delim, null_print);
+				fp = stdin;
 		}
 		else
-		{						/* copy from database to file */
-			if (pipe)
+		{
+#ifndef __CYGWIN32__
+			fp = AllocateFile(filename, "r");
+#else
+			fp = AllocateFile(filename, "rb");
+#endif
+			if (fp == NULL)
+				elog(ERROR, "COPY command, running in backend with "
+					 "effective uid %d, could not open file '%s' for "
+					 "reading.  Errno = %s (%d).",
+					 geteuid(), filename, strerror(errno), errno);
+		}
+		CopyFrom(rel, binary, oids, fp, delim, null_print);
+	}
+	else
+	{							/* copy from database to file */
+		if (pipe)
+		{
+			if (IsUnderPostmaster)
 			{
-				if (IsUnderPostmaster)
-				{
-					SendCopyBegin();
-					pq_startcopyout();
-					fp = NULL;
-				}
-				else
-					fp = stdout;
+				SendCopyBegin();
+				pq_startcopyout();
+				fp = NULL;
 			}
 			else
-			{
-				mode_t		oumask;		/* Pre-existing umask value */
+				fp = stdout;
+		}
+		else
+		{
+			mode_t		oumask;		/* Pre-existing umask value */
 
             oumask = umask((mode_t) 022);
 #ifndef __CYGWIN32__
-				fp = AllocateFile(filename, "w");
+			fp = AllocateFile(filename, "w");
 #else
-				fp = AllocateFile(filename, "wb");
+			fp = AllocateFile(filename, "wb");
 #endif
-				umask(oumask);
-				if (fp == NULL)
-					elog(ERROR, "COPY command, running in backend with "
-						 "effective uid %d, could not open file '%s' for "
-						 "writing.  Errno = %s (%d).",
-						 geteuid(), filename, strerror(errno), errno);
-			}
-			CopyTo(rel, binary, oids, fp, delim, null_print);
+			umask(oumask);
+			if (fp == NULL)
+				elog(ERROR, "COPY command, running in backend with "
+					 "effective uid %d, could not open file '%s' for "
+					 "writing.  Errno = %s (%d).",
+					 geteuid(), filename, strerror(errno), errno);
 		}
-		if (!pipe)
-		{
-			FreeFile(fp);
-		}
-		else if (!from)
-		{
-			if (!binary)
-				CopySendData("\\.\n", 3, fp);
-			if (IsUnderPostmaster)
-				pq_endcopyout(false);
-		}
+		CopyTo(rel, binary, oids, fp, delim, null_print);
+	}
+
+	if (!pipe)
+	{
+		FreeFile(fp);
+	}
+	else if (!from)
+	{
+		if (!binary)
+			CopySendData("\\.\n", 3, fp);
+		if (IsUnderPostmaster)
+			pq_endcopyout(false);
+	}
+	pfree(attribute_buf.data);
 
 	/*
 	 * Close the relation.  If reading, we can release the AccessShareLock
@@ -717,7 +742,6 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 					loaded_oid = oidin(string);
 					if (loaded_oid < BootstrapObjectIdData)
 						elog(ERROR, "COPY TEXT: Invalid Oid. line: %d", lineno);
-					pfree(string);
 				}
 			}
 			for (i = 0; i < attr_count && !done; i++)
@@ -727,8 +751,6 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 				{
 					values[i] = PointerGetDatum(NULL);
 					nulls[i] = 'n';
-					if (string)
-						pfree(string);
 				}
 				else if (string == NULL)
 					done = 1;
@@ -745,7 +767,6 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 					if (!PointerIsValid(values[i]) &&
 						!(rel->rd_att->attrs[i]->attbyval))
 						elog(ERROR, "copy from line %d: Bad file format", lineno);
-					pfree(string);
 				}
 			}
 			if (!done)
@@ -1115,9 +1136,10 @@ CopyReadNewline(FILE *fp, int *newline)
 /*
  * Read the value of a single attribute.
  *
- * Result is either a palloc'd string, or NULL (if EOF or a null attribute).
- * *isnull is set true if a null attribute, else false.
+ * Result is either a string, or NULL (if EOF or a null attribute).
+ * Note that the caller should not pfree the string!
  *
+ * *isnull is set true if a null attribute, else false.
  * delim is the string of acceptable delimiter characters(s).
  * *newline remembers whether we've seen a newline ending this tuple.
  * null_print says how NULL values are represented
@@ -1126,18 +1148,19 @@ CopyReadNewline(FILE *fp, int *newline)
 static char *
 CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline, char *null_print)
 {
-	StringInfoData	attribute_buf;
 	char		c;
 #ifdef MULTIBYTE
 	int			mblen;
-	int			encoding;
 	unsigned char s[2];
 	char	   *cvt;
 	int			j;
 
-	encoding = pg_get_client_encoding();
 	s[1] = 0;
 #endif
+
+	/* reset attribute_buf to empty */
+	attribute_buf.len = 0;
+	attribute_buf.data[0] = '\0';
 
 	/* if last delimiter was a newline return a NULL attribute */
 	if (*newline)
@@ -1147,8 +1170,6 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline, char *null_
 	}
 
 	*isnull = (bool) false;		/* set default */
-
-	initStringInfo(&attribute_buf);
 
 	if (CopyGetEof(fp))
 		goto endOfFile;
@@ -1265,17 +1286,20 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline, char *null_
 									   attribute_buf.len);
 	if (cvt != attribute_buf.data)
 	{
-		pfree(attribute_buf.data);
-		return cvt;
+		/* transfer converted data back to attribute_buf */
+		attribute_buf.len = 0;
+		attribute_buf.data[0] = '\0';
+		appendBinaryStringInfo(&attribute_buf, cvt, strlen(cvt));
+		pfree(cvt);
 	}
 #endif
+
     if (strcmp(attribute_buf.data, null_print)==0)
         *isnull = true;
 
 	return attribute_buf.data;
 
 endOfFile:
-	pfree(attribute_buf.data);
 	return NULL;
 }
 
@@ -1286,13 +1310,11 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim)
 	char		c;
 #ifdef MULTIBYTE
 	char	   *string_start;
-	int			encoding;
 	int			mblen;
 	int			i;
 #endif
 
 #ifdef MULTIBYTE
-	encoding = pg_get_client_encoding();
 	string = (char *) pg_server_to_client((unsigned char *) server_string,
 										  strlen(server_string));
 	string_start = string;
