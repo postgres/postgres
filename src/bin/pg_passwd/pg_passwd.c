@@ -18,18 +18,23 @@ extern char *crypt(const char *, const char *);
 
 #endif
 
-char	   *comname;
-static void usage(FILE *stream);
+#define PG_PASSWD_LEN 13		/* not including null */
+
+const char * progname;
+
+static void usage(void);
 static void read_pwd_file(char *filename);
 static void write_pwd_file(char *filename, char *bkname);
-static void encrypt_pwd(char key[9], char salt[3], char passwd[14]);
+static void encrypt_pwd(char key[9], char salt[3], char passwd[PG_PASSWD_LEN+1]);
 static void prompt_for_username(char *username);
 static void prompt_for_password(char *prompt, char *password);
 
 static void
-usage(FILE *stream)
+usage(void)
 {
-	fprintf(stream, "Usage: %s <password file>\n", comname);
+	printf("%s manipulates flat text password files for PostgreSQL.\n\n", progname);
+	printf("Usage:\n  %s PASSWORD-FILE\n\n", progname);
+	printf("Report bugs to <pgsql-bugs@postgresql.org>.\n");
 }
 
 typedef struct
@@ -97,8 +102,8 @@ try_again:
 		if (line[l - 1] == '\n')
 			line[l - 1] = '\0';
 		else
-		{						/* too long */
-			fprintf(stderr, "%s: line %d: line too long.\n",
+		{
+			fprintf(stderr, "%s:%d: line too long\n",
 					filename, npwds + 1);
 			exit(1);
 		}
@@ -110,7 +115,7 @@ try_again:
 
 		if (strlen(p) == 0)
 		{
-			fprintf(stderr, "%s: line %d: null user name.\n",
+			fprintf(stderr, "%s:%d: null user name\n",
 					filename, npwds + 1);
 			exit(1);
 		}
@@ -121,7 +126,8 @@ try_again:
 		{
 			if (strcmp(pwds[i].uname, pwds[npwds].uname) == 0)
 			{
-				fprintf(stderr, "%s: duplicated entry.\n", pwds[npwds].uname);
+				fprintf(stderr, "Duplicated entry: %s\n",
+						pwds[npwds].uname);
 				exit(1);
 			}
 		}
@@ -135,9 +141,9 @@ try_again:
 			if (q != NULL)
 				*(q++) = '\0';
 
-			if (strlen(p) != 13 && strcmp(p, "+")!=0)
+			if (strlen(p) != PG_PASSWD_LEN && strcmp(p, "+")!=0)
 			{
-				fprintf(stderr, "WARNING: %s: line %d: invalid password length.\n",
+				fprintf(stderr, "%s:%d: warning: invalid password length\n",
 						filename, npwds + 1);
 			}
 			pwds[npwds].pwd = strdup(p);
@@ -201,7 +207,7 @@ link_again:
 }
 
 static void
-encrypt_pwd(char key[9], char salt[3], char passwd[14])
+encrypt_pwd(char key[9], char salt[3], char passwd[PG_PASSWD_LEN + 1])
 {
 	int			n;
 
@@ -233,9 +239,9 @@ encrypt_pwd(char key[9], char salt[3], char passwd[14])
 
 #ifdef NOT_USED
 static int
-check_pwd(char key[9], char passwd[14])
+check_pwd(char key[9], char passwd[PG_PASSWD_LEN + 1])
 {
-	char		shouldbe[14];
+	char		shouldbe[PG_PASSWD_LEN + 1];
 	char		salt[3];
 
 	salt[0] = passwd[0];
@@ -243,7 +249,7 @@ check_pwd(char key[9], char passwd[14])
 	salt[2] = '\0';
 	encrypt_pwd(key, salt, shouldbe);
 
-	return strncmp(shouldbe, passwd, 13) == 0 ? 1 : 0;
+	return strncmp(shouldbe, passwd, PG_PASSWD_LEN) == 0 ? 1 : 0;
 }
 
 #endif
@@ -314,24 +320,45 @@ prompt_for_password(char *prompt, char *password)
 int
 main(int argc, char *argv[])
 {
-	static char bkname[512];
+	static char bkname[MAXPGPATH];
+	char       *filename;
 	char		username[9];
 	char		salt[3];
 	char		key[9],
 				key2[9];
-	char		e_passwd[14];
+	char		e_passwd[PG_PASSWD_LEN + 1];
 	int			i;
 
-	comname = argv[0];
+	progname = argv[0];
+
 	if (argc != 2)
 	{
-		usage(stderr);
+		fprintf(stderr, "%s: too %s arguments\nTry '%s -?' for help.\n",
+				progname, argc > 2 ? "many" : "few", progname);
 		exit(1);
 	}
 
+	if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
+	{
+		usage();
+		exit(0);
+	}
+	if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
+	{
+		puts("pg_passwd (PostgreSQL) " PG_VERSION);
+		exit(0);
+	}
+	if (argv[1][0] == '-')
+	{
+		fprintf(stderr, "%s: invalid option: %s\nTry '%s -?' for help.\n",
+				progname, argv[1], progname);
+		exit(1);
+	}
+
+	filename = argv[1];
 
 	/* open file */
-	read_pwd_file(argv[1]);
+	read_pwd_file(filename);
 
 	/* ask for the user name and the password */
 	prompt_for_username(username);
@@ -339,7 +366,7 @@ main(int argc, char *argv[])
 	prompt_for_password("Re-enter new password: ", key2);
 	if (strncmp(key, key2, 8) != 0)
 	{
-		fprintf(stderr, "Password mismatch.\n");
+		fprintf(stderr, "Password mismatch\n");
 		exit(1);
 	}
 	salt[0] = '\0';
@@ -358,7 +385,7 @@ main(int argc, char *argv[])
 	{							/* did not exist */
 		if (npwds == MAXPWDS)
 		{
-			fprintf(stderr, "%s: cannot handle so may entries.\n", comname);
+			fprintf(stderr, "Cannot handle so may entries\n");
 			exit(1);
 		}
 		pwds[npwds].uname = strdup(username);
@@ -368,8 +395,8 @@ main(int argc, char *argv[])
 	}
 
 	/* write back the file */
-	sprintf(bkname, "%s.bk", argv[1]);
-	write_pwd_file(argv[1], bkname);
+	sprintf(bkname, "%s.bk", filename);
+	write_pwd_file(filename, bkname);
 
 	return 0;
 }
