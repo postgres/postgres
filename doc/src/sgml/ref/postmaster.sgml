@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.13 2000/11/13 15:18:08 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.14 2000/11/13 23:57:20 momjian Exp $
 Postgres documentation
 -->
 
@@ -132,23 +132,22 @@ postmaster [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -D <re
 	Specifies the TCP/IP hostname or address
 	on which the <application>postmaster</application>
 	is to listen for connections from frontend applications.  Defaults to
-	the value of the 
-	<envar>PGHOST</envar> 
+	the value of the <envar>PGHOST</envar> 
 	environment variable, or if <envar>PGHOST</envar>
-	is not set, then defaults to "all", meaning listen on all configured addresses
+	is not set, it defaults to listening on all configured addresses
 	(including localhost).
        </para>
        <para>
-	If you use a hostname or address other than "all", do not try to run
+	If you use a hostname do not try to run
 	multiple instances of <application>postmaster</application> on the
 	same IP address but different ports.  Doing so will result in them
 	attempting (incorrectly) to use the same shared memory segments.
-	Also, if you use a hostname other than "all", all of the host's IP addresses
+	Also, if you use a hostname, all of the host's IP addresses
 	on which <application>postmaster</application> instances are
 	listening must be distinct in the two last octets.
        </para>
        <para>
-	If you do use "all" (the default), then each instance must listen on a
+	If you don't use this option, each instance must listen on a
 	different port (via -p or <envar>PGPORT</envar>).  And, of course, do
 	not try to use both approaches on one host.
        </para>

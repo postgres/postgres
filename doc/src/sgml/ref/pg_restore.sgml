@@ -307,8 +307,8 @@ pg_restore [ <replaceable class="parameter">archive-file</replaceable>  ]
        <para>
 	Specifies the hostname of the machine on which the
 	<application>postmaster</application>
-	is running.  Defaults to using a local Unix domain socket
-	rather than an IP connection.
+	is running.  If host begins with a slash, it is used 
+	as the path to a unix domain socket.
        </para>
       </listitem>
      </varlistentry>

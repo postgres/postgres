@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.12 2000/11/13 23:37:51 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.13 2000/11/13 23:57:20 momjian Exp $
 Postgres documentation
 -->
 
@@ -119,7 +119,8 @@ Postgres documentation
        <para>
 	Specifies the hostname of the machine on which the 
 	<application>postmaster</application>
-	is running.
+	is running.  If host begins with a slash, it is used 
+	as the path to a unix domain socket.
        </para>
       </listitem>
      </varlistentry>
