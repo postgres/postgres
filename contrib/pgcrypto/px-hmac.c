@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: px-hmac.c,v 1.2 2001/10/25 05:49:20 momjian Exp $
+ * $Id: px-hmac.c,v 1.3 2001/11/20 15:50:53 momjian Exp $
  */
 
 
@@ -50,9 +50,9 @@ hmac_block_size(PX_HMAC * h)
 }
 
 static void
-hmac_init(PX_HMAC * h, const uint8 *key, uint klen)
+hmac_init(PX_HMAC * h, const uint8 *key, unsigned klen)
 {
-	uint		bs,
+	unsigned	bs,
 				hlen,
 				i;
 	uint8	   *keybuf;
@@ -88,14 +88,14 @@ static void
 hmac_reset(PX_HMAC * h)
 {
 	PX_MD	   *md = h->md;
-	uint		bs = px_md_block_size(md);
+	unsigned	bs = px_md_block_size(md);
 
 	px_md_reset(md);
 	px_md_update(md, h->p.ipad, bs);
 }
 
 static void
-hmac_update(PX_HMAC * h, const uint8 *data, uint dlen)
+hmac_update(PX_HMAC * h, const uint8 *data, unsigned dlen)
 {
 	px_md_update(h->md, data, dlen);
 }
@@ -104,7 +104,7 @@ static void
 hmac_finish(PX_HMAC * h, uint8 *dst)
 {
 	PX_MD	   *md = h->md;
-	uint		bs,
+	unsigned	bs,
 				hlen;
 	uint8	   *buf;
 
@@ -127,7 +127,7 @@ hmac_finish(PX_HMAC * h, uint8 *dst)
 static void
 hmac_free(PX_HMAC * h)
 {
-	uint		bs;
+	unsigned	bs;
 
 	bs = px_md_block_size(h->md);
 	px_md_free(h->md);
@@ -148,7 +148,7 @@ px_find_hmac(const char *name, PX_HMAC ** res)
 	int			err;
 	PX_MD	   *md;
 	PX_HMAC    *h;
-	uint		bs;
+	unsigned	bs;
 
 	err = px_find_digest(name, &md);
 	if (err)

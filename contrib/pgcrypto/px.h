@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: px.h,v 1.4 2001/11/05 17:46:23 momjian Exp $
+ * $Id: px.h,v 1.5 2001/11/20 15:50:53 momjian Exp $
  */
 
 #ifndef __PX_H
@@ -64,16 +64,16 @@ typedef struct px_combo PX_Combo;
 
 struct px_digest
 {
-	uint		(*result_size) (PX_MD * h);
-	uint		(*block_size) (PX_MD * h);
+	unsigned	(*result_size) (PX_MD * h);
+	unsigned	(*block_size) (PX_MD * h);
 	void		(*reset) (PX_MD * h);
-	void		(*update) (PX_MD * h, const uint8 *data, uint dlen);
+	void		(*update) (PX_MD * h, const uint8 *data, unsigned dlen);
 	void		(*finish) (PX_MD * h, uint8 *dst);
 	void		(*free) (PX_MD * h);
 	/* private */
 	union
 	{
-		uint		code;
+		unsigned	code;
 		const void *ptr;
 	}			p;
 };
@@ -86,13 +86,13 @@ struct px_alias
 
 struct px_hmac
 {
-	uint		(*result_size) (PX_HMAC * h);
-	uint		(*block_size) (PX_HMAC * h);
+	unsigned	(*result_size) (PX_HMAC * h);
+	unsigned	(*block_size) (PX_HMAC * h);
 	void		(*reset) (PX_HMAC * h);
-	void		(*update) (PX_HMAC * h, const uint8 *data, uint dlen);
+	void		(*update) (PX_HMAC * h, const uint8 *data, unsigned dlen);
 	void		(*finish) (PX_HMAC * h, uint8 *dst);
 	void		(*free) (PX_HMAC * h);
-	void		(*init) (PX_HMAC * h, const uint8 *key, uint klen);
+	void		(*init) (PX_HMAC * h, const uint8 *key, unsigned klen);
 
 	PX_MD	   *md;
 	/* private */
@@ -105,13 +105,13 @@ struct px_hmac
 
 struct px_cipher
 {
-	uint		(*block_size) (PX_Cipher * c);
-	uint		(*key_size) (PX_Cipher * c);	/* max key len */
-	uint		(*iv_size) (PX_Cipher * c);
+	unsigned	(*block_size) (PX_Cipher * c);
+	unsigned	(*key_size) (PX_Cipher * c);	/* max key len */
+	unsigned	(*iv_size) (PX_Cipher * c);
 
-	int			(*init) (PX_Cipher * c, const uint8 *key, uint klen, const uint8 *iv);
-	int			(*encrypt) (PX_Cipher * c, const uint8 *data, uint dlen, uint8 *res);
-	int			(*decrypt) (PX_Cipher * c, const uint8 *data, uint dlen, uint8 *res);
+	int			(*init) (PX_Cipher * c, const uint8 *key, unsigned klen, const uint8 *iv);
+	int			(*encrypt) (PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res);
+	int			(*decrypt) (PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res);
 	void		(*free) (PX_Cipher * c);
 	/* private */
 	void	   *ptr;
@@ -120,18 +120,18 @@ struct px_cipher
 
 struct px_combo
 {
-	int			(*init) (PX_Combo * cx, const uint8 *key, uint klen,
-									 const uint8 *iv, uint ivlen);
-	int			(*encrypt) (PX_Combo * cx, const uint8 *data, uint dlen,
-										uint8 *res, uint *rlen);
-	int			(*decrypt) (PX_Combo * cx, const uint8 *data, uint dlen,
-										uint8 *res, uint *rlen);
-	uint		(*encrypt_len) (PX_Combo * cx, uint dlen);
-	uint		(*decrypt_len) (PX_Combo * cx, uint dlen);
+	int			(*init) (PX_Combo * cx, const uint8 *key, unsigned klen,
+									 const uint8 *iv, unsigned ivlen);
+	int			(*encrypt) (PX_Combo * cx, const uint8 *data, unsigned dlen,
+										uint8 *res, unsigned *rlen);
+	int			(*decrypt) (PX_Combo * cx, const uint8 *data, unsigned dlen,
+										uint8 *res, unsigned *rlen);
+	unsigned	(*encrypt_len) (PX_Combo * cx, unsigned dlen);
+	unsigned	(*decrypt_len) (PX_Combo * cx, unsigned dlen);
 	void		(*free) (PX_Combo * cx);
 
 	PX_Cipher  *cipher;
-	uint		padding;
+	unsigned	padding;
 };
 
 int			px_find_digest(const char *name, PX_MD ** res);

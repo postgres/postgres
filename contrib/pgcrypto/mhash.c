@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: mhash.c,v 1.5 2001/10/25 05:49:19 momjian Exp $
+ * $Id: mhash.c,v 1.6 2001/11/20 15:50:53 momjian Exp $
  */
 
 #include <postgres.h>
@@ -75,7 +75,7 @@ digest_reset(PX_MD * h)
 }
 
 static void
-digest_update(PX_MD * h, const uint8 *data, uint dlen)
+digest_update(PX_MD * h, const uint8 *data, unsigned dlen)
 {
 	MHASH		mh = (MHASH) h->p.ptr;
 
@@ -86,7 +86,7 @@ static void
 digest_finish(PX_MD * h, uint8 *dst)
 {
 	MHASH		mh = (MHASH) h->p.ptr;
-	uint		hlen = digest_result_size(h);
+	unsigned	hlen = digest_result_size(h);
 	hashid		id = mhash_get_mhash_algo(mh);
 	uint8	   *buf = mhash_end(mh);
 
@@ -136,7 +136,7 @@ cipher_iv_size(PX_Cipher * c)
 }
 
 static int
-cipher_init(PX_Cipher * c, const uint8 *key, uint klen, const uint8 *iv)
+cipher_init(PX_Cipher * c, const uint8 *key, unsigned klen, const uint8 *iv)
 {
 	int			err;
 	MCRYPT		ctx = (MCRYPT) c->ptr;
@@ -150,7 +150,7 @@ cipher_init(PX_Cipher * c, const uint8 *key, uint klen, const uint8 *iv)
 }
 
 static int
-cipher_encrypt(PX_Cipher * c, const uint8 *data, uint dlen, uint8 *res)
+cipher_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
 {
 	int			err;
 	MCRYPT		ctx = (MCRYPT) c->ptr;
@@ -164,7 +164,7 @@ cipher_encrypt(PX_Cipher * c, const uint8 *data, uint dlen, uint8 *res)
 }
 
 static int
-cipher_decrypt(PX_Cipher * c, const uint8 *data, uint dlen, uint8 *res)
+cipher_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
 {
 	int			err;
 	MCRYPT		ctx = (MCRYPT) c->ptr;

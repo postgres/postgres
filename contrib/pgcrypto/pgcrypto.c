@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: pgcrypto.c,v 1.10 2001/10/25 05:49:19 momjian Exp $
+ * $Id: pgcrypto.c,v 1.11 2001/11/20 15:50:53 momjian Exp $
  */
 
 #include <postgres.h>
@@ -51,7 +51,7 @@ pg_digest(PG_FUNCTION_ARGS)
 {
 	bytea	   *arg;
 	text	   *name;
-	uint		len,
+	unsigned	len,
 				hlen;
 	PX_MD	   *md;
 	bytea	   *res;
@@ -117,7 +117,7 @@ pg_hmac(PG_FUNCTION_ARGS)
 	bytea	   *arg;
 	bytea	   *key;
 	text	   *name;
-	uint		len,
+	unsigned	len,
 				hlen,
 				klen;
 	PX_HMAC    *h;
@@ -187,7 +187,7 @@ Datum
 pg_gen_salt(PG_FUNCTION_ARGS)
 {
 	text	   *arg0;
-	uint		len;
+	unsigned	len;
 	text	   *res;
 	char		buf[PX_MAX_SALT_LEN + 1];
 
@@ -221,7 +221,7 @@ pg_gen_salt_rounds(PG_FUNCTION_ARGS)
 {
 	text	   *arg0;
 	int			rounds;
-	uint		len;
+	unsigned	len;
 	text	   *res;
 	char		buf[PX_MAX_SALT_LEN + 1];
 
@@ -256,7 +256,7 @@ pg_crypt(PG_FUNCTION_ARGS)
 {
 	text	   *arg0;
 	text	   *arg1;
-	uint		len0,
+	unsigned	len0,
 				len1,
 				clen;
 	char	   *buf0,
@@ -319,7 +319,7 @@ pg_encrypt(PG_FUNCTION_ARGS)
 			   *res;
 	text	   *type;
 	PX_Combo   *c;
-	uint		dlen,
+	unsigned	dlen,
 				klen,
 				rlen;
 
@@ -368,7 +368,7 @@ pg_decrypt(PG_FUNCTION_ARGS)
 			   *res;
 	text	   *type;
 	PX_Combo   *c;
-	uint		dlen,
+	unsigned	dlen,
 				klen,
 				rlen;
 
@@ -417,7 +417,7 @@ pg_encrypt_iv(PG_FUNCTION_ARGS)
 			   *res;
 	text	   *type;
 	PX_Combo   *c;
-	uint		dlen,
+	unsigned	dlen,
 				klen,
 				ivlen,
 				rlen;
@@ -471,7 +471,7 @@ pg_decrypt_iv(PG_FUNCTION_ARGS)
 			   *res;
 	text	   *type;
 	PX_Combo   *c;
-	uint		dlen,
+	unsigned	dlen,
 				klen,
 				rlen,
 				ivlen;
@@ -542,8 +542,8 @@ find_provider(text *name,
 	void	   *res;
 	char		buf[PX_MAX_NAMELEN + 1],
 			   *p;
-	uint		len;
-	uint		i;
+	unsigned	len;
+	unsigned	i;
 	int			err;
 
 	len = VARSIZE(name) - VARHDRSZ;

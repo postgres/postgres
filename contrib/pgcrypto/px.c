@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: px.c,v 1.4 2001/11/08 15:56:58 momjian Exp $
+ * $Id: px.c,v 1.5 2001/11/20 15:50:53 momjian Exp $
  */
 
 #include <postgres.h>
@@ -51,23 +51,23 @@ px_resolve_alias(const PX_Alias * list, const char *name)
  */
 
 static uint
-combo_encrypt_len(PX_Combo * cx, uint dlen)
+combo_encrypt_len(PX_Combo * cx, unsigned dlen)
 {
 	return dlen + 512;
 }
 
 static uint
-combo_decrypt_len(PX_Combo * cx, uint dlen)
+combo_decrypt_len(PX_Combo * cx, unsigned dlen)
 {
 	return dlen;
 }
 
 static int
-combo_init(PX_Combo * cx, const uint8 *key, uint klen,
-		   const uint8 *iv, uint ivlen)
+combo_init(PX_Combo * cx, const uint8 *key, unsigned klen,
+		   const uint8 *iv, unsigned ivlen)
 {
 	int			err;
-	uint		bs,
+	unsigned	bs,
 				ks,
 				ivs;
 	PX_Cipher  *c = cx->cipher;
@@ -104,12 +104,12 @@ combo_init(PX_Combo * cx, const uint8 *key, uint klen,
 }
 
 static int
-combo_encrypt(PX_Combo * cx, const uint8 *data, uint dlen,
-			  uint8 *res, uint *rlen)
+combo_encrypt(PX_Combo * cx, const uint8 *data, unsigned dlen,
+			  uint8 *res, unsigned *rlen)
 {
 	int			err = 0;
 	uint8	   *bbuf;
-	uint		bs,
+	unsigned	bs,
 				maxlen,
 				bpos,
 				i,
@@ -175,13 +175,13 @@ out:
 }
 
 static int
-combo_decrypt(PX_Combo * cx, const uint8 *data, uint dlen,
-			  uint8 *res, uint *rlen)
+combo_decrypt(PX_Combo * cx, const uint8 *data, unsigned dlen,
+			  uint8 *res, unsigned *rlen)
 {
-	uint		bs,
+	unsigned	bs,
 				i,
 				pad;
-	uint		pad_ok;
+	unsigned	pad_ok;
 
 	PX_Cipher  *c = cx->cipher;
 

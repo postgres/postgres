@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: internal.c,v 1.8 2001/11/05 17:46:23 momjian Exp $
+ * $Id: internal.c,v 1.9 2001/11/20 15:50:53 momjian Exp $
  */
 
 
@@ -90,7 +90,7 @@ int_md5_block_len(PX_MD * h)
 }
 
 static void
-int_md5_update(PX_MD * h, const uint8 *data, uint dlen)
+int_md5_update(PX_MD * h, const uint8 *data, unsigned dlen)
 {
 	MD5_CTX    *ctx = (MD5_CTX *) h->p.ptr;
 
@@ -137,7 +137,7 @@ int_sha1_block_len(PX_MD * h)
 }
 
 static void
-int_sha1_update(PX_MD * h, const uint8 *data, uint dlen)
+int_sha1_update(PX_MD * h, const uint8 *data, unsigned dlen)
 {
 	SHA1_CTX   *ctx = (SHA1_CTX *) h->p.ptr;
 
@@ -225,7 +225,7 @@ struct int_ctx
 		blf_ctx		bf;
 		rijndael_ctx rj;
 	}			ctx;
-	uint		keylen;
+	unsigned	keylen;
 	int			is_init;
 	int			mode;
 };
@@ -269,7 +269,7 @@ rj_iv_size(PX_Cipher * c)
 }
 
 static int
-rj_init(PX_Cipher * c, const uint8 *key, uint klen, const uint8 *iv)
+rj_init(PX_Cipher * c, const uint8 *key, unsigned klen, const uint8 *iv)
 {
 	struct int_ctx *cx = (struct int_ctx *) c->ptr;
 
@@ -298,7 +298,7 @@ rj_real_init(struct int_ctx * cx, int dir)
 }
 
 static int
-rj_encrypt(PX_Cipher * c, const uint8 *data, uint dlen, uint8 *res)
+rj_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
 {
 	struct int_ctx *cx = (struct int_ctx *) c->ptr;
 
@@ -328,7 +328,7 @@ rj_encrypt(PX_Cipher * c, const uint8 *data, uint dlen, uint8 *res)
 }
 
 static int
-rj_decrypt(PX_Cipher * c, const uint8 *data, uint dlen, uint8 *res)
+rj_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
 {
 	struct int_ctx *cx = (struct int_ctx *) c->ptr;
 
@@ -407,7 +407,7 @@ bf_iv_size(PX_Cipher * c)
 }
 
 static int
-bf_init(PX_Cipher * c, const uint8 *key, uint klen, const uint8 *iv)
+bf_init(PX_Cipher * c, const uint8 *key, unsigned klen, const uint8 *iv)
 {
 	struct int_ctx *cx = (struct int_ctx *) c->ptr;
 
@@ -419,7 +419,7 @@ bf_init(PX_Cipher * c, const uint8 *key, uint klen, const uint8 *iv)
 }
 
 static int
-bf_encrypt(PX_Cipher * c, const uint8 *data, uint dlen, uint8 *res)
+bf_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
 {
 	struct int_ctx *cx = (struct int_ctx *) c->ptr;
 
@@ -443,7 +443,7 @@ bf_encrypt(PX_Cipher * c, const uint8 *data, uint dlen, uint8 *res)
 }
 
 static int
-bf_decrypt(PX_Cipher * c, const uint8 *data, uint dlen, uint8 *res)
+bf_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
 {
 	struct int_ctx *cx = (struct int_ctx *) c->ptr;
 

@@ -48,7 +48,7 @@ void		rijndael_decrypt(rijndael_ctx *, const u4byte *, u4byte *);
 
 /* conventional interface */
 
-void		aes_set_key(rijndael_ctx * ctx, const uint8 *key, uint keybits, int enc);
+void		aes_set_key(rijndael_ctx * ctx, const uint8 *key, unsigned keybits, int enc);
 void		aes_ecb_encrypt(rijndael_ctx * ctx, uint8 *data, unsigned len);
 void		aes_ecb_decrypt(rijndael_ctx * ctx, uint8 *data, unsigned len);
 void		aes_cbc_encrypt(rijndael_ctx * ctx, uint8 *iva, uint8 *data, unsigned len);
