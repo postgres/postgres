@@ -3285,7 +3285,7 @@ msgstr ""
 msgid ""
 "\"%s\": found %.0f removable, %.0f nonremovable row versions in %u pages"
 msgstr ""
-"\"%s\": encontrados %0.f versões de registros removíveis e %0.f que não "
+"\"%s\": encontrados %.0f versões de registros removíveis e %.0f que não "
 "podem ser removidos em %u páginas"
 
 #: commands/vacuum.c:1370
