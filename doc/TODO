@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Nov  4 19:21:50 EST 2000
+Last updated:		Sun Nov  5 22:54:00 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -279,6 +279,8 @@ MISC
   lock and truncate table [vacuum]
 * -BSD/OS does not support locale because there is no LC_MESSAGES (Bruce)
 * Add connection pooling [pool]
+* Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
+  ANALYZE, and CLUSTER
 
 SOURCE CODE
 -----------
