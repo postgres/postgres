@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.50 2003/04/10 01:22:44 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.51 2003/04/13 09:57:35 petere Exp $
 -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
@@ -211,7 +211,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.50 2003/04/10 01:22:44 pe
   </partintro>
 
   &extend;
-  &xindex;
   &indexcost;
   &rules;
   &trigger;

@@ -1,31 +1,24 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.29 2002/09/21 18:32:54 petere Exp $
-PostgreSQL documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.30 2003/04/13 09:57:35 petere Exp $
 -->
 
-<chapter id="xindex">
+<sect1 id="xindex">
  <title>Interfacing Extensions To Indexes</title>
-
- <sect1 id="xindex-intro">
-  <title>Introduction</title>
 
   <para>
    The procedures described thus far let you define new types, new
-   functions, and new operators. However, we cannot yet define a
-   secondary index (such as a B-tree, R-tree, or hash access method)
-   over a new type, nor associate operators of a new type with secondary
-   indexes.
-   To do these things, we must define an <firstterm>operator class</>
-   for the new data type.  We will describe operator classes in the
-   context of a running example:  a  new  operator
-   class for the B-tree access method that stores and
-   sorts complex numbers in ascending absolute value order.
+   functions, and new operators. However, we cannot yet define an
+   index on a column of a new data type.  To do this, we must define an
+   <firstterm>operator class</> for the new data type.  Later in this
+   section, we will illustrate this concept in an example: a new
+   operator class for the B-tree index method that stores and sorts
+   complex numbers in ascending absolute value order.
   </para>
 
   <note>
    <para>
     Prior to <productname>PostgreSQL</productname> release 7.3, it was
-    necessary to make manual additions to
+    necessary to make manual additions to the system catalogs
     <classname>pg_amop</>, <classname>pg_amproc</>, and
     <classname>pg_opclass</> in order to create a user-defined
     operator class.  That approach is now deprecated in favor of
@@ -33,59 +26,59 @@ PostgreSQL documentation
     and less error-prone way of creating the necessary catalog entries.
    </para>
   </note>
- </sect1>
 
- <sect1 id="xindex-am">
-  <title>Access Methods and Operator Classes</title>
+ <sect2 id="xindex-im">
+  <title>Index Methods and Operator Classes</title>
 
   <para>
    The <classname>pg_am</classname> table contains one row for every
-   index access method.  Support for access to regular tables is
-   built into <productname>PostgreSQL</productname>, but all index access
-   methods are described in <classname>pg_am</classname>.  It is possible
-   to add a new index access method by defining the required interface
-   routines and then creating a row in <classname>pg_am</classname> ---
-   but that is far beyond the scope of this chapter.
+   index method (internally known as access method).  Support for
+   regular access to tables is built into
+   <productname>PostgreSQL</productname>, but all index methods are
+   described in <classname>pg_am</classname>.  It is possible to add a
+   new index method by defining the required interface routines and
+   then creating a row in <classname>pg_am</classname> --- but that is
+   far beyond the scope of this chapter.
   </para>
 
   <para>
-   The routines for an index access method do not directly know anything
-   about the data types the access method will operate on.  Instead, an
+   The routines for an index method do not directly know anything
+   about the data types that the index method will operate on.  Instead, an
    <firstterm>operator class</> identifies the set of operations that the
-   access method needs to be able to use to work with a particular data type.
+   index method needs to use to work with a particular data type.
    Operator classes are so called because one thing they specify is the set
-   of WHERE-clause operators that can be used with an index (ie, can be
-   converted into an index scan qualification).  An operator class may also
+   of <literal>WHERE</>-clause operators that can be used with an index (i.e., can be
+   converted into an index-scan qualification).  An operator class may also
    specify some <firstterm>support procedures</> that are needed by the
-   internal operations of the index access method, but do not directly
-   correspond to any WHERE-clause operator that can be used with the index.
+   internal operations of the index method, but do not directly
+   correspond to any <literal>WHERE</>-clause operator that can be used with the index.
   </para>
 
   <para>
    It is possible to define multiple operator classes for the same
-   input data type and index access method.  By doing this, multiple
+   data type and index method.  By doing this, multiple
    sets of indexing semantics can be defined for a single data type.
    For example, a B-tree index requires a sort ordering to be defined
    for each data type it works on.
    It might be useful for a complex-number data type
    to have one B-tree operator class that sorts the data by complex
    absolute value, another that sorts by real part, and so on.
-   Typically one of the operator classes will be deemed most commonly
+   Typically, one of the operator classes will be deemed most commonly
    useful and will be marked as the default operator class for that
-   data type and index access method.
+   data type and index method.
   </para>
 
   <para>
    The same operator class name
-   can be used for several different access methods (for example, both B-tree
-   and hash access methods have operator classes named
+   can be used for several different index methods (for example, both B-tree
+   and hash index methods have operator classes named
    <literal>oid_ops</literal>), but each such class is an independent
    entity and must be defined separately.
   </para>
- </sect1>
+ </sect2>
 
- <sect1 id="xindex-strategies">
-  <title>Access Method Strategies</title>
+ <sect2 id="xindex-strategies">
+  <title>Index Method Strategies</title>
 
   <para>
    The operators associated with an operator class are identified by
@@ -98,21 +91,20 @@ PostgreSQL documentation
    <productname>PostgreSQL</productname> allows the user to define operators,
    <productname>PostgreSQL</productname> cannot look at the name of an operator
    (e.g., <literal>&lt;</> or <literal>&gt;=</>) and tell what kind of
-   comparison it is.  Instead, the index access method defines a set of
+   comparison it is.  Instead, the index method defines a set of
    <quote>strategies</>, which can be thought of as generalized operators.
-   Each operator class shows which actual operator corresponds to each
+   Each operator class specifies which actual operator corresponds to each
    strategy for a particular data type and interpretation of the index
    semantics.
   </para>
 
   <para>
-   B-tree indexes define 5 strategies, as shown in <xref
+   The B-tree index method defines five strategies, shown in <xref
    linkend="xindex-btree-strat-table">.
   </para>
 
    <table tocentry="1" id="xindex-btree-strat-table">
     <title>B-tree Strategies</title>
-    <titleabbrev>B-tree</titleabbrev>
     <tgroup cols="2">
      <thead>
       <row>
@@ -146,13 +138,12 @@ PostgreSQL documentation
    </table>
 
   <para>
-   Hash indexes express only bitwise similarity, and so they define only 1
-   strategy, as shown in <xref linkend="xindex-hash-strat-table">.
+   Hash indexes express only bitwise equality, and so they use only one
+   strategy, shown in <xref linkend="xindex-hash-strat-table">.
   </para>
 
    <table tocentry="1" id="xindex-hash-strat-table">
     <title>Hash Strategies</title>
-    <titleabbrev>Hash</titleabbrev>
     <tgroup cols="2">
      <thead>
       <row>
@@ -171,12 +162,11 @@ PostgreSQL documentation
 
   <para>
    R-tree indexes express rectangle-containment relationships.
-   They define 8 strategies, as shown in <xref linkend="xindex-rtree-strat-table">.
+   They use eight strategies, shown in <xref linkend="xindex-rtree-strat-table">.
   </para>
 
    <table tocentry="1" id="xindex-rtree-strat-table">
     <title>R-tree Strategies</title>
-    <titleabbrev>R-tree</titleabbrev>
     <tgroup cols="2">
      <thead>
       <row>
@@ -224,58 +214,59 @@ PostgreSQL documentation
   <para>
    GiST indexes are even more flexible: they do not have a fixed set of
    strategies at all.  Instead, the <quote>consistency</> support routine
-   of a particular GiST operator class interprets the strategy numbers
+   of each particular GiST operator class interprets the strategy numbers
    however it likes.
+  </para>
+
+  <para>
+   Note that all strategy operators return Boolean values.  In
+   practice, all operators defined as index method strategies must
+   return type <type>boolean</type>, since they must appear at the top
+   level of a <literal>WHERE</> clause to be used with an index.
   </para>
 
   <para>
    By the way, the <structfield>amorderstrategy</structfield> column
    in <classname>pg_am</> tells whether
-   the access method supports ordered scan.  Zero means it doesn't; if it
+   the index method supports ordered scans.  Zero means it doesn't; if it
    does, <structfield>amorderstrategy</structfield> is the strategy
    number that corresponds to the ordering operator.  For example, B-tree
    has <structfield>amorderstrategy</structfield> = 1, which is its
    <quote>less than</quote> strategy number.
   </para>
+ </sect2>
 
-  <para>
-   In short, an operator class must specify a set of operators that express
-   each of these semantic ideas for the operator class's data type.
-  </para>
- </sect1>
-
- <sect1 id="xindex-support">
-  <title>Access Method Support Routines</title>
+ <sect2 id="xindex-support">
+  <title>Index Method Support Routines</title>
 
   <para>
    Strategies aren't usually enough information for the system to figure
-   out how to use an index.  In practice, the access methods require
+   out how to use an index.  In practice, the index methods require
    additional support routines in order to work. For example, the B-tree
-   access method must be able to compare two keys and determine whether one
+   index method must be able to compare two keys and determine whether one
    is greater than, equal to, or less than the other.  Similarly, the
-   R-tree access method must be able to compute
+   R-tree index method must be able to compute
    intersections,  unions, and sizes of rectangles.  These
    operations do not correspond to operators used in qualifications in
-   SQL queries;  they are administrative routines used by
-   the access methods, internally.
+   SQL commands;  they are administrative routines used by
+   the index methods, internally.
   </para>
 
   <para>
-   Just as with operators, the operator class identifies which specific
+   Just as with strategies, the operator class identifies which specific
    functions should play each of these roles for a given data type and
-   semantic interpretation.  The index access method specifies the set
+   semantic interpretation.  The index method defines the set
    of functions it needs, and the operator class identifies the correct
-   functions to use by assigning <quote>support function numbers</> to them.
+   functions to use by assigning them to the <quote>support function numbers</>.
   </para>
 
   <para>
-   B-trees require a single support function, as shown in <xref
+   B-trees require a single support function, shown in <xref
    linkend="xindex-btree-support-table">.
   </para>
 
    <table tocentry="1" id="xindex-btree-support-table">
     <title>B-tree Support Functions</title>
-    <titleabbrev>B-tree</titleabbrev>
     <tgroup cols="2">
      <thead>
       <row>
@@ -297,13 +288,12 @@ PostgreSQL documentation
    </table>
 
   <para>
-   Hash indexes likewise require one support function, as shown in <xref
+   Hash indexes likewise require one support function, shown in <xref
    linkend="xindex-hash-support-table">.
   </para>
 
    <table tocentry="1" id="xindex-hash-support-table">
     <title>Hash Support Functions</title>
-    <titleabbrev>Hash</titleabbrev>
     <tgroup cols="2">
      <thead>
       <row>
@@ -322,12 +312,11 @@ PostgreSQL documentation
 
   <para>
    R-tree indexes require three support functions,
-   as shown in <xref linkend="xindex-rtree-support-table">.
+   shown in <xref linkend="xindex-rtree-support-table">.
   </para>
 
    <table tocentry="1" id="xindex-rtree-support-table">
     <title>R-tree Support Functions</title>
-    <titleabbrev>R-tree</titleabbrev>
     <tgroup cols="2">
      <thead>
       <row>
@@ -354,12 +343,11 @@ PostgreSQL documentation
 
   <para>
    GiST indexes require seven support functions,
-   as shown in <xref linkend="xindex-gist-support-table">.
+   shown in <xref linkend="xindex-gist-support-table">.
   </para>
 
    <table tocentry="1" id="xindex-gist-support-table">
     <title>GiST Support Functions</title>
-    <titleabbrev>GiST</titleabbrev>
     <tgroup cols="2">
      <thead>
       <row>
@@ -400,18 +388,24 @@ PostgreSQL documentation
     </tgroup>
    </table>
 
- </sect1>
+  <para>
+   Unlike strategy operators, support functions return whichever data
+   type the particular index method expects, for example in the case
+   of the comparison function for B-trees, a signed integer.
+  </para>
+ </sect2>
 
- <sect1 id="xindex-operators">
-  <title>Creating the Operators and Support Routines</title>
+ <sect2 id="xindex-example">
+  <title>An Example</title>
 
   <para>
-   Now that we have seen the ideas, here is the promised example
-   of creating a new operator class.  First, we need a set of operators.
-   The procedure for
-   defining operators was discussed in <xref linkend="xoper">.
-   For  the  <literal>complex_abs_ops</literal>  operator  class on B-trees,
-   the operators we require are:
+   Now that we have seen the ideas, here is the promised example of
+   creating a new operator class.  The operator class encapsulates
+   operators that sort complex numbers in absolute value order, so we
+   choose the name <literal>complex_abs_ops</literal>.  First, we need
+   a set of operators.  The procedure for defining operators was
+   discussed in <xref linkend="xoper">.  For an operator class on
+   B-trees, the operators we require are:
 
    <itemizedlist spacing="compact">
     <listitem><simpara>absolute-value less-than (strategy 1)</></>
@@ -423,128 +417,102 @@ PostgreSQL documentation
   </para>
 
   <para>
-   Suppose the code that implements these functions
-   is stored in the file
-   <filename><replaceable>PGROOT</replaceable>/src/tutorial/complex.c</filename>,
-   which we have compiled into
-   <filename><replaceable>PGROOT</replaceable>/src/tutorial/complex.so</filename>.
-   Part of the C code looks like this:
+   The C code for the equality operator look like this:
 
 <programlisting>
 #define Mag(c) ((c)-&gt;x*(c)-&gt;x + (c)-&gt;y*(c)-&gt;y)
 
-         bool
-         complex_abs_eq(Complex *a, Complex *b)
-         {
-             double amag = Mag(a), bmag = Mag(b);
-             return (amag==bmag);
-         }
+bool
+complex_abs_eq(Complex *a, Complex *b)
+{
+    double amag = Mag(a), bmag = Mag(b);
+    return (amag == bmag);
+}
 </programlisting>
-   (Note that we will only show the equality operator in this text.
-   The other four operators are very similar.  Refer to
-   <filename>complex.c</filename> or
-   <filename>complex.source</filename> for the details.)
+   The other four operators are very similar.  You can find their code
+   in <filename>src/tutorial/complex.c</filename> and
+   <filename>src/tutorial/complex.sql</filename> in the source
+   distribution.
   </para>
 
   <para>
-   We make the function known to <productname>PostgreSQL</productname> like this:
+   Now declare the functions and the operators based on the functions:
 <programlisting>
 CREATE FUNCTION complex_abs_eq(complex, complex) RETURNS boolean
-    AS '<replaceable>PGROOT</replaceable>/src/tutorial/complex'
+    AS '<replaceable>filename</replaceable>', 'complex_abs_eq'
     LANGUAGE C;
+
+CREATE OPERATOR = (
+    leftarg = complex,
+    rightarg = complex,
+    procedure = complex_abs_eq,
+    restrict = eqsel,
+    join = eqjoinsel
+);
 </programlisting>
+   It is important to specify the restriction and join selectivity
+   functions, otherwise the optimizer will be unable to make effective
+   use of the index.  Note that there less-than, equal, and
+   greater-than cases should use different selectivity functions.
   </para>
 
   <para>
-   There are some important things that are happening here:
+   Other things worth noting are happening here:
 
   <itemizedlist>
    <listitem>
-  <para>
-   First, note that operators for less-than, less-than-or-equal, equal,
-   greater-than-or-equal, and greater-than for <filename>complex</filename>
-   are being defined.  We can only have one operator named, say, = and
-   taking type <filename>complex</filename> for both operands.  In this case
-   we don't have any other operator = for <filename>complex</filename>,
-   but if we were building a practical data type we'd probably want = to
-   be the ordinary equality operation for complex numbers.  In that case,
-   we'd need to use some other operator name for <function>complex_abs_eq</>.
-  </para>
+    <para>
+     There can only be one operator named, say, <literal>=</literal>
+     and taking type <type>complex</type> for both operands.  In this
+     case we don't have any other operator <literal>=</literal> for
+     <type>complex</type>, but if we were building a practical data
+     type we'd probably want <literal>=</literal> to be the ordinary
+     equality operation for complex numbers (and not the equality of
+     the absolute values).  In that case, we'd need to use some other
+     operator name for <function>complex_abs_eq</>.
+    </para>
    </listitem>
 
    <listitem>
-  <para>
-   Second, although <productname>PostgreSQL</productname> can cope with operators having
-   the same name as long as they have different input data types, C can only
-   cope with one global routine having a given name, period.  So we shouldn't
-   name the C function something simple like <filename>abs_eq</filename>.
-   Usually it's a good practice to include the data type name in the C
-   function name, so as not to conflict with functions for other data types.
-  </para>
+    <para>
+     Although <productname>PostgreSQL</productname> can cope with
+     functions having the same name as long as they have different
+     argument data types, C can only cope with one global function
+     having a given name.  So we shouldn't name the C function
+     something simple like <filename>abs_eq</filename>.  Usually it's
+     a good practice to include the data type name in the C function
+     name, so as not to conflict with functions for other data types.
+    </para>
    </listitem>
 
    <listitem>
-  <para>
-   Third, we could have made the <productname>PostgreSQL</productname> name of the function
-   <filename>abs_eq</filename>, relying on <productname>PostgreSQL</productname> to distinguish it
-   by input data types from any other <productname>PostgreSQL</productname> function of the same name.
-   To keep the example simple, we make the function have the same names
-   at the C level and <productname>PostgreSQL</productname> level.
-  </para>
-   </listitem>
-
-   <listitem>
-  <para>
-   Finally, note that these operator functions return Boolean values.
-   In practice, all operators defined as index access method
-   strategies must return type <type>boolean</type>, since they must
-   appear at the top level of a <literal>WHERE</> clause to be used with an index.
-   (On the other hand, support functions return whatever the
-   particular access method expects -- in the case of the comparison
-   function for B-trees, a signed integer.)
-  </para>
+    <para>
+     We could have made the <productname>PostgreSQL</productname> name
+     of the function <filename>abs_eq</filename>, relying on
+     <productname>PostgreSQL</productname> to distinguish it by
+     argument data types from any other
+     <productname>PostgreSQL</productname> function of the same name.
+     To keep the example simple, we make the function have the same
+     names at the C level and <productname>PostgreSQL</productname>
+     level.
+    </para>
    </listitem>
   </itemizedlist>
   </para>
 
   <para>
-   Now we are ready to define the operators:
-
-<programlisting>
-CREATE OPERATOR = (
-     leftarg = complex, rightarg = complex,
-     procedure = complex_abs_eq,
-     restrict = eqsel, join = eqjoinsel
-         );
-</programlisting>
-
-   The important
-   things here are the procedure names (which are the C
-   functions defined above) and the restriction and join selectivity
-   functions.  You should just use the selectivity functions used in
-   the example (see <filename>complex.source</filename>).
-   Note that there
-   are different such functions for the less-than, equal, and greater-than
-   cases.  These must be supplied or the optimizer will be unable to
-   make effective use of the index.
-  </para>
-
-  <para>
-   The next step is the registration of the comparison <quote>support
-   routine</quote> required by B-trees.  The C code that implements this
-   is in the same file that contains the operator procedures:
+   The next step is the registration of the support routine required
+   by B-trees.  The example C code that implements this is in the same
+   file that contains the operator functions.  This is how we declare
+   the function:
 
 <programlisting>
 CREATE FUNCTION complex_abs_cmp(complex, complex)
     RETURNS integer
-    AS '<replaceable>PGROOT</replaceable>/src/tutorial/complex'
+    AS '<replaceable>filename</replaceable>'
     LANGUAGE C;
 </programlisting>
   </para>
- </sect1>
-
- <sect1 id="xindex-opclass">
-  <title>Creating the Operator Class</title>
 
   <para>
    Now that we have the required operators and support routine,
@@ -563,7 +531,7 @@ CREATE OPERATOR CLASS complex_abs_ops
   </para>
 
   <para>
-   And we're done!  (Whew.)  It should now be possible to create
+   And we're done!  It should now be possible to create
    and use B-tree indexes on <type>complex</type> columns.
   </para>
 
@@ -581,28 +549,28 @@ CREATE OPERATOR CLASS complex_abs_ops
    default B-tree operator class for the <type>complex</type> data type.
    If you don't, just leave out the word <literal>DEFAULT</>.
   </para>
- </sect1>
+ </sect2>
 
- <sect1 id="xindex-opclass-features">
+ <sect2 id="xindex-opclass-features">
   <title>Special Features of Operator Classes</title>
 
   <para>
    There are two special features of operator classes that we have
    not discussed yet, mainly because they are not very useful
-   with the default B-tree index access method.
+   with the default B-tree index method.
   </para>
 
   <para>
    Normally, declaring an operator as a member of an operator class means
-   that the index access method can retrieve exactly the set of rows
-   that satisfy a WHERE condition using the operator.  For example,
+   that the index method can retrieve exactly the set of rows
+   that satisfy a <literal>WHERE</> condition using the operator.  For example,
 <programlisting>
 SELECT * FROM table WHERE integer_column &lt; 4;
 </programlisting>
    can be satisfied exactly by a B-tree index on the integer column.
    But there are cases where an index is useful as an inexact guide to
    the matching rows.  For example, if an R-tree index stores only
-   bounding boxes for objects, then it cannot exactly satisfy a WHERE
+   bounding boxes for objects, then it cannot exactly satisfy a <literal>WHERE</>
    condition that tests overlap between nonrectangular objects such as
    polygons.  Yet we could use the index to find objects whose bounding
    box overlaps the bounding box of the target object, and then do the
@@ -611,8 +579,8 @@ SELECT * FROM table WHERE integer_column &lt; 4;
    operator, and we add <literal>RECHECK</> to the <literal>OPERATOR</> clause
    in the <command>CREATE OPERATOR CLASS</> command.
    <literal>RECHECK</> is valid if the index is guaranteed to return
-   all the required tuples, plus perhaps some additional tuples, which
-   can be eliminated by performing the original operator comparison.
+   all the required rows, plus perhaps some additional rows, which
+   can be eliminated by performing the original operator invocation.
   </para>
 
   <para>
@@ -620,7 +588,7 @@ SELECT * FROM table WHERE integer_column &lt; 4;
    the bounding box of a complex object such as a polygon.  In this
    case there's not much value in storing the whole polygon in the index
    entry --- we may as well store just a simpler object of type
-   <literal>box</>.  This situation is expressed by the <literal>STORAGE</>
+   <type>box</>.  This situation is expressed by the <literal>STORAGE</>
    option in <command>CREATE OPERATOR CLASS</>: we'd write something like
 
 <programlisting>
@@ -630,15 +598,15 @@ CREATE OPERATOR CLASS polygon_ops
         STORAGE box;
 </programlisting>
 
-   At present, only the GiST access method supports a
+   At present, only the GiST index method supports a
    <literal>STORAGE</> type that's different from the column data type.
    The GiST <literal>compress</> and <literal>decompress</> support
    routines must deal with data-type conversion when <literal>STORAGE</>
    is used.
   </para>
- </sect1>
+ </sect2>
 
-</chapter>
+</sect1>
 
 <!-- Keep this comment at the end of the file
 Local variables:

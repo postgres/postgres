@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.21 2003/04/10 01:22:44 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.22 2003/04/13 09:57:35 petere Exp $
 -->
 
  <chapter id="extend">
@@ -106,6 +106,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.21 2003/04/10 01:22:44 pete
   &xtypes;
   &xoper;
   &xaggr;
+  &xindex;
 
  </chapter>
 
