@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.54 1998/04/27 17:08:41 scrappy Exp $
+ * $Id: pg_proc.h,v 1.55 1998/04/29 12:39:32 scrappy Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1921,6 +1921,10 @@ DATA(insert OID =  1317 (  nextval	   PGUID 11 f t f 1 f 23 "25" 100 0 0 100  fo
 DESCR("sequence next value");
 DATA(insert OID =  1319 (  currval	   PGUID 11 f t f 1 f 23 "25" 100 0 0 100  foo bar ));
 DESCR("sequence current value");
+
+DATA(insert OID = 1600 ( version       PGUID 11 f t t 0 f 25 "" 100 0 0 100 foo bar ));
+DESCR("PostgreSQL version string");
+
 
 /*
  * prototypes for functions pg_proc.c

@@ -7,34 +7,59 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.29 1998/04/27 14:45:33 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.30 1998/04/29 12:40:56 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  *	 DESCRIPTION
- *		The following code fragment should be written (in assembly
- *		language) on machines that have a native test-and-set instruction:
+ *      The public functions that must be provided are:
+ *
+ *      void S_INIT_LOCK(slock_t *lock)
+ *
+ *		void S_LOCK(slock_t *lock)
+ *
+ *      void S_UNLOCK(slock_t *lock)
+ *
+ *      int S_LOCK_FREE(slock_t *lock) 
+ *      	Tests if the lock is free. Returns non-zero if free, 0 if locked.
+ *
+ *      The S_LOCK() function (in s_lock.c) implements a primitive but
+ *		still useful random backoff to avoid hordes of busywaiting lockers
+ *		chewing CPU.
  *
  *		void
- *		S_LOCK(char_address)
- *			char *char_address;
+ *		S_LOCK(slock_t *lock)
  *		{
- *			while (test_and_set(char_address))
- *				;
+ *		    while (TAS(lock))
+ *		    {
+ *			// back off the cpu for a semi-random short time
+ *		    }
  *		}
  *
- *		If this is not done, POSTGRES will default to using System V
- *		semaphores (and take a large performance hit -- around 40% of
- *		its time on a DS5000/240 is spent in semop(3)...).
+ *		This implementation takes advantage of a tas function written 
+ *      (in assembly language) on machines that have a native test-and-set
+ *      instruction. Alternative mutex implementations may also be used.
+ *		This function is hidden under the TAS macro to allow substitutions.
  *
- *	 NOTES
+ *		#define TAS(lock) tas(lock)
+ *		int tas(slock_t *lock)		// True if lock already set
+ *
+ *		If none of this can be done, POSTGRES will default to using
+ *		System V semaphores (and take a large performance hit -- around 40%
+ *		of its time on a DS5000/240 is spent in semop(3)...).
+ *
+ *	NOTES
  *		AIX has a test-and-set but the recommended interface is the cs(3)
  *		system call.  This provides an 8-instruction (plus system call
  *		overhead) uninterruptible compare-and-set operation.  True
  *		spinlocks might be faster but using cs(3) still speeds up the
  *		regression test suite by about 25%.  I don't have an assembler
  *		manual for POWER in any case.
+ *
+ *		There are default implementations for all these macros at the bottom
+ *		of this file. Check if your platform can use these or needs to
+ *		override them.
  *
  */
 #ifndef S_LOCK_H
@@ -44,22 +69,41 @@
 
 #if defined(HAS_TEST_AND_SET)
 
+#if defined(linux)
+/***************************************************************************
+ * All Linux
+ */
+
+#if defined(__alpha__)
+
+#define S_UNLOCK(lock) { __asm__("mb"); *(lock) = 0; }
+
+#endif							/* defined(__alpha__) && defined(linux) */
+
+
+
+
+#else /* defined(linux) */
+/***************************************************************************
+ * All non Linux
+ */
+
 #if defined (nextstep)
 /*
  * NEXTSTEP (mach)
  * slock_t is defined as a struct mutex.
  */
+
 #define S_LOCK(lock)	mutex_lock(lock)
 
 #define S_UNLOCK(lock)	mutex_unlock(lock)
 
 #define S_INIT_LOCK(lock)	mutex_init(lock)
 
- /* S_LOCK_FREE should return 1 if lock is free; 0 if lock is locked */
 /* For Mach, we have to delve inside the entrails of `struct mutex'.  Ick! */
 #define S_LOCK_FREE(alock)	((alock)->lock == 0)
 
-#endif							/* next */
+#endif							/* nextstep */
 
 
 

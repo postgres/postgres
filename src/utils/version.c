@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/utils/Attic/version.c,v 1.8 1997/09/08 02:41:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/utils/Attic/version.c,v 1.9 1998/04/29 12:41:29 scrappy Exp $
  *
  * NOTES
  *		XXX eventually, should be able to handle version identifiers
@@ -88,12 +88,12 @@ ValidatePgVersion(const char *path, char **reason_p)
 		}
 		else
 		{
-			if (version[2] != '0' + PG_VERSION ||
-				version[0] != '0' + PG_RELEASE)
+			if (version[2] != PG_VERSION[0] ||
+				version[0] != PG_RELEASE[0])
 			{
 				*reason_p = malloc(200);
 				sprintf(*reason_p,
-						"Version number in file '%s' should be %d.%d, "
+						"Version number in file '%s' should be %s.%s, "
 						"not %c.%c.",
 						full_path,
 						PG_RELEASE, PG_VERSION, version[0], version[2]);
@@ -135,9 +135,9 @@ SetPgVersion(const char *path, char **reason_p)
 	{
 		int			rc;			/* return code from some function we call */
 
-		version[0] = '0' + PG_RELEASE;
+		version[0] = PG_RELEASE[0];
 		version[1] = '.';
-		version[2] = '0' + PG_VERSION;
+		version[2] = PG_VERSION[0];
 		version[3] = '\n';
 		rc = write(fd, version, 4);
 		if (rc != 4)

@@ -7,7 +7,6 @@
 #define JMP_BUF
 #define USE_POSIX_TIME
 #define USE_POSIX_SIGNALS
-#define NEED_I386_TAS_ASM
 #define HAS_TEST_AND_SET
 
 #if defined(PPC)
@@ -16,7 +15,7 @@ typedef unsigned int slock_t;
 #elif defined(__alpha)
 typedef long int slock_t;
 
-#else
+#else /* i386 probably */
 typedef unsigned char slock_t;
 
 #endif

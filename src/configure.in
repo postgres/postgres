@@ -300,6 +300,14 @@ else
 	AC_PROG_CC
 fi
 
+if test "$CC" = "gcc"
+then
+	CC_VERSION=`${CC} --version`
+else
+	CC_VERSION=""
+fi
+AC_SUBST(CC_VERSION)
+
 CPPFLAGS="$CPPFLAGS $PGSQL_CPPFLAGS"
 export CPPFLAGS
 echo "- setting CPPFLAGS=$CPPFLAGS"
@@ -413,7 +421,7 @@ if test "$TRSTRINGS" = "ABCDEF"; then
 elif test "$TRCLASS" = "ABCDEF"; then
 	TRARGS="'[[:lower:]]' '[[:upper:]]'"
 else
-	AC_MSG_ERROR("Can\'t find method to covert from upper to lower case with tr")
+	AC_MSG_ERROR("Can\'t find method to convert from upper to lower case with tr")
 fi
 AC_SUBST(TRARGS)
 
@@ -697,4 +705,4 @@ then
 	LDFLAGS="$ice_save_LDFLAGS"
 fi
 
-AC_OUTPUT(GNUmakefile Makefile.global backend/port/Makefile bin/pg_version/Makefile bin/psql/Makefile bin/pg_dump/Makefile backend/utils/Gen_fmgrtab.sh interfaces/libpq/Makefile interfaces/libpgtcl/Makefile interfaces/ecpg/lib/Makefile )
+AC_OUTPUT(GNUmakefile Makefile.global backend/port/Makefile bin/pg_version/Makefile bin/psql/Makefile bin/pg_dump/Makefile backend/utils/Gen_fmgrtab.sh interfaces/libpq/Makefile interfaces/libpgtcl/Makefile interfaces/ecpg/lib/Makefile include/version.h)
