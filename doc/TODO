@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Nov  2 15:53:17 EST 2000
+Last updated:		Thu Nov  2 16:16:45 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -168,7 +168,7 @@ CLIENTS
 * allow psql \d to show primary and foreign keys
 * allow psql \d to show temporary table schema
 * add XML interface capability
-* Allow dumping of users/groups separately
+* -Allow dumping of users/groups separately
 
 REFERENTIAL INTEGRITY
 
