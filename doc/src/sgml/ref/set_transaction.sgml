@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.22 2004/09/20 00:04:19 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.23 2004/09/26 23:48:07 neilc Exp $ -->
 <refentry id="SQL-SET-TRANSACTION">
  <refmeta>
   <refentrytitle id="SQL-SET-TRANSACTION-TITLE">SET TRANSACTION</refentrytitle>
@@ -118,10 +118,10 @@ where <replaceable class="parameter">transaction_mode</replaceable> is one of:
   </para>
 
   <para>
-   It is possible to dispense with <command>SET TRANSACTION</command> by
-   instead specifying the desired <replaceable
+   It is possible to dispense with <command>SET TRANSACTION</command>
+   by instead specifying the desired <replaceable
    class="parameter">transaction_modes</replaceable> in
-   <command>START TRANSACTION</command>.
+   <command>BEGIN</command> or <command>START TRANSACTION</command>.
   </para>
 
   <para>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select_into.sgml,v 1.30 2004/08/24 00:06:51 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select_into.sgml,v 1.31 2004/09/26 23:48:07 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -119,10 +119,9 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
    in <application>ECPG</application> (see <xref linkend="ecpg">) and
    <application>PL/pgSQL</application> (see <xref linkend="plpgsql">).
    The <productname>PostgreSQL</productname> usage of <command>SELECT
-   INTO</command> to represent table creation is historical.  It's
+   INTO</command> to represent table creation is historical.  It is
    best to use <command>CREATE TABLE AS</command> for this purpose in
-   new code.  (<command>CREATE TABLE AS</command> isn't standard
-   either, but it's less likely to cause confusion.)
+   new code.
   </para>
  </refsect1>
 </refentry>
