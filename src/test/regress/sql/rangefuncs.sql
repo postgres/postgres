@@ -1,4 +1,4 @@
-SELECT * FROM pg_settings WHERE name LIKE 'enable%';
+SELECT name, setting FROM pg_settings WHERE name LIKE 'enable%';
 
 CREATE TABLE foo2(fooid int, f2 int);
 INSERT INTO foo2 VALUES(1, 11);

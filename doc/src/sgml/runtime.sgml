@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.195 2003/07/23 20:30:35 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.196 2003/07/27 04:35:53 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -571,14 +571,45 @@ SET ENABLE_SEQSCAN TO OFF;
       <row>
        <entry><literal>name</literal></entry>
        <entry><type>text</type></entry>
-       <entry>The name of the run-time configuration parameter</entry>
+       <entry>run-time configuration parameter name</entry>
       </row>
  
       <row>
        <entry><literal>setting</literal></entry>
        <entry><type>text</type></entry>
-       <entry>The current value of the run-time configuration parameter</entry>
+       <entry>current value of the parameter</entry>
       </row>
+
+      <row>
+       <entry><literal>context</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>context required to set the parameter's value</entry>
+      </row>
+
+      <row>
+       <entry><literal>vartype</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>parameter type</entry>
+      </row>
+
+      <row>
+       <entry><literal>source</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>source of the current parameter value</entry>
+      </row>
+
+      <row>
+       <entry><literal>min_val</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>minimum allowed value of the parameter</entry>
+      </row>
+
+      <row>
+       <entry><literal>max_val</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>maximum allowed value of the parameter</entry>
+      </row>
+
      </tbody>
     </tgroup>
     </table>

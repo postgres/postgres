@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  *
- *	  $Id: guc_tables.h,v 1.1 2003/07/04 16:41:22 tgl Exp $
+ *	  $Id: guc_tables.h,v 1.2 2003/07/27 04:35:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,10 +61,10 @@ enum config_group
  */
 enum config_type
 {
-	PGC_BOOL,
-	PGC_INT,
-	PGC_REAL,
-	PGC_STRING
+	PGC_BOOL = 0,
+	PGC_INT = 1,
+	PGC_REAL = 2,
+	PGC_STRING = 3
 };
 
 /*

@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.198 2003/07/23 08:46:54 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.199 2003/07/27 04:35:53 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -1000,7 +1000,9 @@ CREATE VIEW pg_locks AS \
 
 CREATE VIEW pg_settings AS \
     SELECT * \
-    FROM pg_show_all_settings() AS A(name text, setting text);
+    FROM pg_show_all_settings() AS A \
+    (name text, setting text, context text, vartype text, \
+     source text, min_val text, max_val text);
 
 CREATE RULE pg_settings_u AS \
     ON UPDATE TO pg_settings \

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.139 2003/07/25 20:17:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.140 2003/07/27 04:35:53 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -153,6 +153,47 @@ static char *server_version_string;
 static char *session_authorization_string;
 static char *timezone_string;
 static char *XactIsoLevel_string;
+
+
+/*
+ * Used for pg_settings. Keep in sync with config_type enum above
+ */
+static char *config_type_name[] = 
+{
+	"bool",
+	"integer",
+	"real",
+	"string"
+};
+
+/*
+ * Used for pg_settings. Keep in sync with GucContext enum in guc.h
+ */
+static char *GucContextName[] = 
+{
+	"internal",
+	"postmaster",
+	"sighup",
+	"backend",
+	"super-user",
+	"user"
+};
+
+/*
+ * Used for pg_settings. Keep in sync with GucSource enum in guc.h
+ */
+static char *GucSourceName[] = 
+{
+	"default",
+	"environment variable",
+	"configuration file",
+	"command line",
+	"database",
+	"user",
+	"client",
+	"override",
+	"session"
+};
 
 
 /* Macros for freeing malloc'd pointers only if appropriate to do so */
@@ -3323,23 +3364,102 @@ GetConfigOptionByName(const char *name, const char **varname)
  * Return GUC variable value by variable number; optionally return canonical
  * form of name.  Return value is palloc'd.
  */
-char *
-GetConfigOptionByNum(int varnum, const char **varname, bool *noshow)
+void
+GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 {
-	struct config_generic *conf;
+	char					buffer[256];
+	struct config_generic  *conf;
 
 	/* check requested variable number valid */
 	Assert((varnum >= 0) && (varnum < num_guc_variables));
 
 	conf = guc_variables[varnum];
 
-	if (varname)
-		*varname = conf->name;
-
 	if (noshow)
 		*noshow = (conf->flags & GUC_NO_SHOW_ALL) ? true : false;
 
-	return _ShowOption(conf);
+	/* first get the generic attributes */
+
+	/* name */
+	values[0] = conf->name;
+
+	/* setting : use _ShowOption in order to avoid duplicating the logic */
+	values[1] = _ShowOption(conf);
+
+	/* context */
+	values[2] = GucContextName[conf->context];
+
+	/* vartype */
+	values[3] = config_type_name[conf->vartype];
+
+	/* source */
+	values[4] = GucSourceName[conf->source];
+
+	/* now get the type specifc attributes */
+	switch (conf->vartype)
+	{
+		case PGC_BOOL:
+			{
+				/* min_val */
+				values[5] = NULL;
+
+				/* max_val */
+				values[6] = NULL;
+			}
+			break;
+
+		case PGC_INT:
+			{
+				struct config_int *lconf = (struct config_int *) conf;
+
+				/* min_val */
+				snprintf(buffer, sizeof(buffer), "%d", lconf->min);
+				values[5] = pstrdup(buffer);
+
+				/* max_val */
+				snprintf(buffer, sizeof(buffer), "%d", lconf->max);
+				values[6] = pstrdup(buffer);
+			}
+			break;
+
+		case PGC_REAL:
+			{
+				struct config_real *lconf = (struct config_real *) conf;
+
+				/* min_val */
+				snprintf(buffer, sizeof(buffer), "%g", lconf->min);
+				values[5] = pstrdup(buffer);
+
+				/* max_val */
+				snprintf(buffer, sizeof(buffer), "%g", lconf->max);
+				values[6] = pstrdup(buffer);
+			}
+			break;
+
+		case PGC_STRING:
+			{
+				/* min_val */
+				values[5] = NULL;
+
+				/* max_val */
+				values[6] = NULL;
+			}
+			break;
+
+		default:
+			{
+				/*
+				 * should never get here, but in case we do, set 'em to NULL
+				 */
+
+				/* min_val */
+				values[5] = NULL;
+
+				/* max_val */
+				values[6] = NULL;
+			}
+			break;
+	}
 }
 
 /*
@@ -3379,6 +3499,8 @@ show_config_by_name(PG_FUNCTION_ARGS)
  * show_all_settings - equiv to SHOW ALL command but implemented as
  * a Table Function.
  */
+#define NUM_PG_SETTINGS_ATTS	7
+
 Datum
 show_all_settings(PG_FUNCTION_ARGS)
 {
@@ -3402,11 +3524,24 @@ show_all_settings(PG_FUNCTION_ARGS)
 		 */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		/* need a tuple descriptor representing two TEXT columns */
-		tupdesc = CreateTemplateTupleDesc(2, false);
+		/*
+		 * need a tuple descriptor representing NUM_PG_SETTINGS_ATTS columns
+		 * of the appropriate types
+		 */
+		tupdesc = CreateTemplateTupleDesc(NUM_PG_SETTINGS_ATTS, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
 						   TEXTOID, -1, 0, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "setting",
+						   TEXTOID, -1, 0, false);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "context",
+						   TEXTOID, -1, 0, false);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "vartype",
+						   TEXTOID, -1, 0, false);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "source",
+						   TEXTOID, -1, 0, false);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 6, "min_val",
+						   TEXTOID, -1, 0, false);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 7, "max_val",
 						   TEXTOID, -1, 0, false);
 
 		/* allocate a slot for a tuple with this tupdesc */
@@ -3438,9 +3573,7 @@ show_all_settings(PG_FUNCTION_ARGS)
 
 	if (call_cntr < max_calls)	/* do when there is more left to send */
 	{
-		char	   *values[2];
-		char	   *varname;
-		char	   *varval;
+		char	   *values[NUM_PG_SETTINGS_ATTS];
 		bool		noshow;
 		HeapTuple	tuple;
 		Datum		result;
@@ -3450,15 +3583,9 @@ show_all_settings(PG_FUNCTION_ARGS)
 		 */
 		do
 		{
-			varval = GetConfigOptionByNum(call_cntr,
-										  (const char **) &varname,
-										  &noshow);
+			GetConfigOptionByNum(call_cntr, (const char **) values, &noshow);
 			if (noshow)
 			{
-				/* varval is a palloc'd copy, so free it */
-				if (varval != NULL)
-					pfree(varval);
-
 				/* bump the counter and get the next config setting */
 				call_cntr = ++funcctx->call_cntr;
 
@@ -3468,23 +3595,11 @@ show_all_settings(PG_FUNCTION_ARGS)
 			}
 		} while (noshow);
 
-		/*
-		 * Prepare a values array for storage in our slot. This should be
-		 * an array of C strings which will be processed later by the
-		 * appropriate "in" functions.
-		 */
-		values[0] = varname;
-		values[1] = varval;
-
 		/* build a tuple */
 		tuple = BuildTupleFromCStrings(attinmeta, values);
 
 		/* make the tuple into a datum */
 		result = TupleGetDatum(slot, tuple);
-
-		/* Clean up */
-		if (varval != NULL)
-			pfree(varval);
 
 		SRF_RETURN_NEXT(funcctx, result);
 	}

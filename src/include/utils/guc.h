@@ -7,7 +7,7 @@
  * Copyright 2000-2003 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $Id: guc.h,v 1.35 2003/07/21 21:02:12 momjian Exp $
+ * $Id: guc.h,v 1.36 2003/07/27 04:35:54 momjian Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -55,13 +55,13 @@
  */
 typedef enum
 {
-	PGC_INTERNAL,
-	PGC_POSTMASTER,
-	PGC_SIGHUP,
-	PGC_BACKEND,
-	PGC_SUSET,
-	PGC_USERLIMIT,
-	PGC_USERSET
+	PGC_INTERNAL = 0,
+	PGC_POSTMASTER = 1,
+	PGC_SIGHUP = 2,
+	PGC_BACKEND = 3,
+	PGC_SUSET = 4,
+	PGC_USERLIMIT = 5,
+	PGC_USERSET = 6
 } GucContext;
 
 /*
@@ -73,6 +73,8 @@ typedef enum
  * Sources <= PGC_S_OVERRIDE will set the default used by RESET, as well
  * as the current value.  Note that source == PGC_S_OVERRIDE should be
  * used when setting a PGC_INTERNAL option.
+ *
+ * Keep in sync with GucSourceName in guc.c
  */
 typedef enum
 {
@@ -91,7 +93,6 @@ typedef enum
 	PGC_S_OVERRIDE = 8,			/* special case to forcibly set default */
 	PGC_S_SESSION = 9			/* SET command */
 } GucSource;
-
 
 /* GUC vars that are actually declared in guc.c, rather than elsewhere */
 extern bool log_statement;
@@ -132,7 +133,7 @@ extern bool set_config_option(const char *name, const char *value,
 extern void ShowGUCConfigOption(const char *name, DestReceiver *dest);
 extern void ShowAllGUCConfig(DestReceiver *dest);
 extern char *GetConfigOptionByName(const char *name, const char **varname);
-extern char *GetConfigOptionByNum(int varnum, const char **varname, bool *noshow);
+extern void GetConfigOptionByNum(int varnum, const char **values, bool *noshow);
 extern int	GetNumConfigOptions(void);
 
 extern void SetPGVariable(const char *name, List *args, bool is_local);
