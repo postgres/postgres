@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.102 2002/11/15 03:11:17 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.103 2002/12/13 05:49:10 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -2136,14 +2136,14 @@ for information on correct values for these environment variables.
  <primary>files</primary>
 </indexterm>
 <para>
-<anchor id="pgpassfile"/>
+<anchor id="pgpassfile">
 <indexterm>
  <primary>password</primary>
  <secondary>.pgpass</secondary>
 </indexterm>
-The file <filename>.pgpass</filename> in the home directory is a file
-that can contain passwords to be used if the connection requires a
-password. This file should have the format:
+The <filename>.pgpass</filename> file in a user's home directory is a
+file that can contain passwords to be used if the connection requires
+a password. This file should have the format:
 <synopsis>
 <replaceable>hostname</replaceable>:<replaceable>port</replaceable>:<replaceable>database</replaceable>:<replaceable>username</replaceable>:<replaceable>password</replaceable>
 </synopsis>
@@ -2155,7 +2155,7 @@ with <literal>\</literal>.
 <para>
 The permissions on <filename>.pgpass</filename> must disallow any
 access to world or group; achieve this by the command
-<command>chmod 0600 .pgaccess</command>.
+<command>chmod 0600 ~/.pgpass</command>.
 If the permissions are less strict than this, the file will be ignored.
 </para>
 </sect1>
