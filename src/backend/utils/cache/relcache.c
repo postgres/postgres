@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.18 1997/08/21 04:09:51 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.19 1997/08/22 03:35:44 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,6 +82,7 @@
 #include "catalog/pg_log.h"
 #include "catalog/pg_time.h"
 #include "catalog/pg_attrdef.h"
+#include "catalog/pg_relcheck.h"
 #include "catalog/indexing.h"
 #include "catalog/index.h"
 #include "fmgr.h"
@@ -260,6 +261,7 @@ static void build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 static Relation RelationBuildDesc(RelationBuildDescInfo buildinfo);
 static void IndexedAccessMethodInitialize(Relation relation);
 static void AttrDefaultFetch (Relation relation);
+static void RelCheckFetch (Relation relation);
 
 /*
  * newlyCreatedRelns -
@@ -482,7 +484,7 @@ AllocateRelationDesc(u_int natts, Form_pg_class relp)
  *	RelationBuildTupleDesc
  *
  *	Form the relation's tuple descriptor from information in
- *	the pg_attribute system catalog.
+ *	the pg_attribute, pg_attrdef & pg_relcheck system cataloges.
  * --------------------------------
  */
 static void
@@ -499,13 +501,7 @@ RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
     if (IsBootstrapProcessingMode())
 	build_tupdesc_seq(buildinfo, relation, natts);
     else
-    {
-    	relation->rd_att->constr = (TupleConstr *) palloc(sizeof(TupleConstr));
-    	relation->rd_att->constr->num_check = 0;
-    	relation->rd_att->constr->num_defval = 0;
-    	relation->rd_att->constr->has_not_null = false;
 	build_tupdesc_ind(buildinfo, relation, natts);
-    }
 }
 
 static void
@@ -580,10 +576,13 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
     Relation attrel;
     HeapTuple atttup;
     AttributeTupleForm	attp;
+    TupleConstr *constr = (TupleConstr *) palloc(sizeof(TupleConstr));
     AttrDefault	*attrdef = NULL;
     int ndef = 0;
     int i;
-
+    
+    constr->has_not_null = false;
+    
     attrel = heap_openr(AttributeRelationName);
     
     for (i = 1; i <= relation->rd_rel->relnatts; i++) {
@@ -604,7 +603,7 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 
 	/* Update if this attribute have a constraint */
 	if (attp->attnotnull)
-	    relation->rd_att->constr->has_not_null = true;
+	    constr->has_not_null = true;
 	
 	if (attp->atthasdef)
 	{
@@ -619,16 +618,39 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
     }
     
     heap_close(attrel);
-
-    if ( ndef > 0 )
+    
+    if ( constr->has_not_null || ndef > 0 || relation->rd_rel->relchecks )
     {
-    	if ( ndef > relation->rd_rel->relnatts )
-    	    relation->rd_att->constr->defval = (AttrDefault*) 
+    	relation->rd_att->constr = constr;
+    	
+    	if ( ndef > 0 )					/* DEFAULTs */
+    	{
+    	    if ( ndef < relation->rd_rel->relnatts )
+    	    	constr->defval = (AttrDefault*) 
     	    		repalloc (attrdef, ndef * sizeof (AttrDefault));
+    	    else
+    	    	constr->defval = attrdef;
+    	    constr->num_defval = ndef;
+    	    AttrDefaultFetch (relation);
+    	}
     	else
-    	    relation->rd_att->constr->defval = attrdef;
-    	relation->rd_att->constr->num_defval = ndef;
-    	AttrDefaultFetch (relation);
+    	    constr->num_defval = 0;
+    	
+	if ( relation->rd_rel->relchecks > 0 )		/* CHECKs */
+	{
+	    constr->num_check = relation->rd_rel->relchecks;
+	    constr->check = (ConstrCheck *) palloc (constr->num_check * 
+	    						sizeof (ConstrCheck));
+	    memset (constr->check, 0, constr->num_check * sizeof (ConstrCheck));
+	    RelCheckFetch (relation);
+	}
+	else
+	    constr->num_check = 0;
+    }
+    else
+    {
+    	pfree (constr);
+    	relation->rd_att->constr = NULL;
     }
     
 }
@@ -1252,8 +1274,6 @@ static void
 RelationFlushRelation(Relation *relationPtr,
 		      bool onlyFlushReferenceCountZero)
 {
-    int			i;
-    AttributeTupleForm	*p;
     MemoryContext	oldcxt;
     Relation 		relation = *relationPtr;
     
@@ -1268,14 +1288,8 @@ RelationFlushRelation(Relation *relationPtr,
 	oldcxt = MemoryContextSwitchTo((MemoryContext)CacheCxt);
 	
 	RelationCacheDelete(relation);
-
-	p = relation->rd_att->attrs;
-	for (i = 0; i < relation->rd_rel->relnatts; i++, p++)
-	    pfree (*p);
-	pfree (relation->rd_att->attrs);
-        if (relation->rd_att->constr)
-           pfree (relation->rd_att->constr);
-        pfree (relation->rd_att);
+	
+	FreeTupleDesc (relation->rd_att);
 
 #if 0
 	if (relation->rd_rules) {
@@ -1641,8 +1655,9 @@ AttrDefaultFetch (Relation relation)
 	pfree(indexRes);
     	if (!HeapTupleIsValid(tuple))
     	    continue;
+    	found++;
     	adform = (Form_pg_attrdef) GETSTRUCT(tuple);
-    	for (i = 1; i <= ndef; i++)
+    	for (i = 0; i < ndef; i++)
     	{
     	    if ( adform->adnum != attrdef[i].adnum )
     	    	continue;
@@ -1667,10 +1682,10 @@ AttrDefaultFetch (Relation relation)
     	    	    NAMEDATALEN, relation->rd_att->attrs[adform->adnum - 1]->attname.data,
     	    	    NAMEDATALEN, relation->rd_rel->relname.data);
     	    attrdef[i].adsrc = textout (val);
-    	    found++;
+    	    break;
     	}
 	
-    	if ( i > ndef )
+    	if ( i >= ndef )
     	    elog (WARN, "AttrDefaultFetch: unexpected record found for attr %d in rel %.*s",
     	    	    	adform->adnum,
     	    	    	NAMEDATALEN, relation->rd_rel->relname.data);
@@ -1686,6 +1701,88 @@ AttrDefaultFetch (Relation relation)
     pfree (sd);
     index_close (irel);
     heap_close (adrel);
+    
+}
+
+static void
+RelCheckFetch (Relation relation)
+{
+    ConstrCheck *check = relation->rd_att->constr->check;
+    int ncheck = relation->rd_att->constr->num_check;
+    Relation rcrel;
+    Relation irel;
+    ScanKeyData skey;
+    HeapTuple tuple;
+    IndexScanDesc sd;
+    RetrieveIndexResult indexRes;
+    Buffer buffer;
+    ItemPointer iptr;
+    Name rcname;
+    struct varlena *val;
+    bool isnull;
+    int found;
+    
+    ScanKeyEntryInitialize(&skey,
+			   (bits16)0x0,
+			   (AttrNumber)1,
+			   (RegProcedure)ObjectIdEqualRegProcedure,
+			   ObjectIdGetDatum(relation->rd_id));
+    
+    rcrel = heap_openr(RelCheckRelationName);
+    irel = index_openr(RelCheckIndex);
+    sd = index_beginscan(irel, false, 1, &skey);
+    tuple = (HeapTuple)NULL;
+    
+    for (found = 0; ; )
+    {
+	indexRes = index_getnext(sd, ForwardScanDirection);
+	if (!indexRes)
+	    break;
+	    
+	iptr = &indexRes->heap_iptr;
+	tuple = heap_fetch(rcrel, NowTimeQual, iptr, &buffer);
+	pfree(indexRes);
+    	if (!HeapTupleIsValid(tuple))
+    	    continue;
+    	if ( found == ncheck )
+    	    elog (WARN, "RelCheckFetch: unexpected record found for rel %.*s",
+    	    	    	NAMEDATALEN, relation->rd_rel->relname.data);
+    	
+    	rcname = (Name) fastgetattr (tuple, 
+    	    				Anum_pg_relcheck_rcname,
+    	    				rcrel->rd_att, &isnull);
+    	if ( isnull )
+    	    elog (WARN, "RelCheckFetch: rcname IS NULL for rel %.*s",
+    	    	    NAMEDATALEN, relation->rd_rel->relname.data);
+    	check[found].ccname = nameout (rcname);
+    	val = (struct varlena*) fastgetattr (tuple, 
+    	    					Anum_pg_relcheck_rcbin,
+    	    					rcrel->rd_att, &isnull);
+    	if ( isnull )
+    	    elog (WARN, "RelCheckFetch: rcbin IS NULL for rel %.*s",
+    	    	    NAMEDATALEN, relation->rd_rel->relname.data);
+    	check[found].ccbin = textout (val);
+    	val = (struct varlena*) fastgetattr (tuple, 
+    	    					Anum_pg_relcheck_rcsrc,
+    	    					rcrel->rd_att, &isnull);
+    	if ( isnull )
+    	    elog (WARN, "RelCheckFetch: rcsrc IS NULL for rel %.*s",
+    	    	    NAMEDATALEN, relation->rd_rel->relname.data);
+    	check[found].ccsrc = textout (val);
+    	found++;
+	
+	ReleaseBuffer(buffer);
+    }
+    
+    if ( found < ncheck )
+    	elog (WARN, "RelCheckFetch: %d record not found for rel %.*s",
+    	    	    	ncheck - found,
+    	    	    	NAMEDATALEN, relation->rd_rel->relname.data);
+    
+    index_endscan (sd);
+    pfree (sd);
+    index_close (irel);
+    heap_close (rcrel);
     
 }
 
