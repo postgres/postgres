@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.184 2004/02/03 17:34:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.185 2004/02/04 01:24:53 wieck Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -95,8 +95,6 @@ static const char *assign_msglvl(int *var, const char *newval,
 static const char *assign_log_error_verbosity(const char *newval, bool doit,
 						   GucSource source);
 static bool assign_phony_autocommit(bool newval, bool doit, GucSource source);
-extern const char *BgWriterAssignSyncMethod(const char *method,
-						   bool doit, GucSource source);
 
 
 /*
@@ -1689,15 +1687,6 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&XLOG_sync_method,
 		XLOG_sync_method_default, assign_xlog_sync_method, NULL
-	},
-
-	{
-		{"bgwriter_flush_method", PGC_SIGHUP, RESOURCES,
-			gettext_noop("Selects the method used by the bgwriter for forcing writes out to disk."),
-			NULL
-		},
-		&BgWriterFlushMethod_str,
-		BgWriterFlushMethod_default, BgWriterAssignSyncMethod, NULL
 	},
 
 	/* End-of-list marker */
