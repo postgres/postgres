@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.200 2001/04/04 06:47:30 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.201 2001/04/05 02:50:01 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -494,7 +494,8 @@ dumpClasses_dumpData(Archive *fout, char *oid, void *dctxv)
 	int			tuple;
 	int			field;
 
-	appendPQExpBuffer(q, "SELECT * FROM %s", fmtId(classname, force_quotes));
+	appendPQExpBuffer(q, "SELECT * FROM ONLY %s",
+					  fmtId(classname, force_quotes));
 	res = PQexec(g_conn, q->data);
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
