@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_am.h,v 1.6 1998/08/11 05:32:43 momjian Exp $
+ * $Id: pg_am.h,v 1.7 1998/08/11 18:28:37 momjian Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -36,7 +36,7 @@
 CATALOG(pg_am)
 {
 	NameData	amname;
-	Oid			amowner;
+	int4		amowner;
 	char		amkind;
 	int2		amstrategies;
 	int2		amsupport;

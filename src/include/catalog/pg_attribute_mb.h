@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute_mb.h,v 1.2 1998/08/06 05:13:03 momjian Exp $
+ * $Id: pg_attribute_mb.h,v 1.3 1998/08/11 18:28:41 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -179,7 +179,7 @@ typedef FormData_pg_attribute *AttributeTupleForm;
  */
 #define Schema_pg_type \
 { 1247, {"typname"},	   19, 0, NAMEDATALEN,  1, 0, -1, -1, '\0', '\0', 'i', '\0', '\0' }, \
-{ 1247, {"typowner"},	   26, 0,	4,	2, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
+{ 1247, {"typowner"},	   23, 0,	4,	2, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
 { 1247, {"typlen"},		   21, 0,	2,	3, 0, -1, -1, '\001', '\0', 's', '\0', '\0' }, \
 { 1247, {"typprtlen"},     21, 0,	2,	4, 0, -1, -1, '\001', '\0', 's', '\0', '\0' }, \
 { 1247, {"typbyval"},	   16, 0,	1,	5, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
@@ -196,7 +196,7 @@ typedef FormData_pg_attribute *AttributeTupleForm;
 { 1247, {"typdefault"},    25, 0,  -1, 16, 0, -1, -1, '\0'	, '\0', 'i', '\0', '\0' }
 
 DATA(insert OID = 0 ( 1247 typname			19 0 NAMEDATALEN   1 0 -1 -1 f f i f f));
-DATA(insert OID = 0 ( 1247 typowner			26 0  4   2 0 -1 -1 t f i f f));
+DATA(insert OID = 0 ( 1247 typowner			23 0  4   2 0 -1 -1 t f i f f));
 DATA(insert OID = 0 ( 1247 typlen			21 0  2   3 0 -1 -1 t f s f f));
 DATA(insert OID = 0 ( 1247 typprtlen		21 0  2   4 0 -1 -1 t f s f f));
 DATA(insert OID = 0 ( 1247 typbyval			16 0  1   5 0 -1 -1 t f c f f));
@@ -239,7 +239,7 @@ DATA(insert OID = 0 ( 1262 cmax				29 0  4  -6 0 -1 -1 t f i f f));
  */
 #define Schema_pg_proc \
 { 1255, {"proname"},			19, 0, NAMEDATALEN,  1, 0, -1, -1, '\0', '\0', 'i', '\0', '\0' }, \
-{ 1255, {"proowner"},			26, 0,  4,  2, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
+{ 1255, {"proowner"},			23, 0,  4,  2, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
 { 1255, {"prolang"},			26, 0,  4,  3, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
 { 1255, {"proisinh"},			16, 0,  1,  4, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
 { 1255, {"proistrusted"},		16, 0,  1,  5, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
@@ -256,7 +256,7 @@ DATA(insert OID = 0 ( 1262 cmax				29 0  4  -6 0 -1 -1 t f i f f));
 { 1255, {"probin"},				17, 0, -1,  16,	0, -1, -1, '\0', '\0', 'i', '\0', '\0' }
 
 DATA(insert OID = 0 ( 1255 proname			19 0 NAMEDATALEN   1 0 -1 -1 f f i f f));
-DATA(insert OID = 0 ( 1255 proowner			26 0  4   2 0 -1 -1 t f i f f));
+DATA(insert OID = 0 ( 1255 proowner			23 0  4   2 0 -1 -1 t f i f f));
 DATA(insert OID = 0 ( 1255 prolang			26 0  4   3 0 -1 -1 t f i f f));
 DATA(insert OID = 0 ( 1255 proisinh			16 0  1   4 0 -1 -1 t f c f f));
 DATA(insert OID = 0 ( 1255 proistrusted		16 0  1   5 0 -1 -1 t f c f f));
@@ -359,7 +359,7 @@ DATA(insert OID = 0 ( 1249 cmax				29 0  4  -6 0 -1 -1 t f i f f));
 #define Schema_pg_class \
 { 1259, {"relname"},	   19, 0, NAMEDATALEN,  1, 0, -1, -1, '\0', '\0', 'i', '\0', '\0' }, \
 { 1259, {"reltype"},	   26, 0,	4,	2, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
-{ 1259, {"relowner"},	   26, 0,	4,	3, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
+{ 1259, {"relowner"},	   23, 0,	4,	3, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
 { 1259, {"relam"},		   26, 0,	4,	4, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
 { 1259, {"relpages"},	   23,	0,  4,  5, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
 { 1259, {"reltuples"},     23,	0,  4,  6, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
@@ -374,7 +374,7 @@ DATA(insert OID = 0 ( 1249 cmax				29 0  4  -6 0 -1 -1 t f i f f));
 
 DATA(insert OID = 0 ( 1259 relname			19 0 NAMEDATALEN   1 0 -1 -1 f f i f f));
 DATA(insert OID = 0 ( 1259 reltype			26 0  4   2 0 -1 -1 t f i f f));
-DATA(insert OID = 0 ( 1259 relowner			26 0  4   3 0 -1 -1 t f i f f));
+DATA(insert OID = 0 ( 1259 relowner			23 0  4   3 0 -1 -1 t f i f f));
 DATA(insert OID = 0 ( 1259 relam			26 0  4   4 0 -1 -1 t f i f f));
 DATA(insert OID = 0 ( 1259 relpages			23 0  4   5 0 -1 -1 t f i f f));
 DATA(insert OID = 0 ( 1259 reltuples		23 0  4   6 0 -1 -1 t f i f f));

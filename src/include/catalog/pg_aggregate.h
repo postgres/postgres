@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_aggregate.h,v 1.15 1998/07/08 14:08:58 thomas Exp $
+ * $Id: pg_aggregate.h,v 1.16 1998/08/11 18:28:36 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -45,7 +45,7 @@
 CATALOG(pg_aggregate)
 {
 	NameData	aggname;
-	Oid			aggowner;
+	int4		aggowner;
 	regproc		aggtransfn1;
 	regproc		aggtransfn2;
 	regproc		aggfinalfn;

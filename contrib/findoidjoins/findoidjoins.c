@@ -39,7 +39,7 @@ main(int argc, char **argv)
 			   typname = 'regproc') AND \
 			  a.attrelid = c.oid AND \
 			  a.atttypid = t.oid \
-		ORDER BY 2, 3; \
+		ORDER BY 2, a.attnum ; \
 		");
 	doquery("FETCH ALL IN c_attributes");
 	attres = get_result();

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.63 1998/07/24 03:32:16 scrappy Exp $
+ * $Id: pg_proc.h,v 1.64 1998/08/11 18:28:47 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -39,7 +39,7 @@
 CATALOG(pg_proc) BOOTSTRAP
 {
 	NameData	proname;
-	Oid			proowner;
+	int4		proowner;
 	Oid			prolang;
 	bool		proisinh;
 	bool		proistrusted;

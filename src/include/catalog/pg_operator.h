@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.32 1998/07/08 14:08:59 thomas Exp $
+ * $Id: pg_operator.h,v 1.33 1998/08/11 18:28:45 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -36,7 +36,7 @@
 CATALOG(pg_operator)
 {
 	NameData	oprname;
-	Oid			oprowner;
+	int4		oprowner;
 	int2		oprprec;
 	char		oprkind;
 	bool		oprisleft;

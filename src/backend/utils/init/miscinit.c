@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.18 1998/07/26 04:31:01 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.19 1998/08/11 18:28:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -442,7 +442,7 @@ SetPgUserName()
  */
 static Oid	UserId = InvalidOid;
 
-Oid
+int
 GetUserId()
 {
 	Assert(OidIsValid(UserId));

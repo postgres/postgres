@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.45 1998/08/01 15:26:29 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.46 1998/08/11 18:28:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1063,7 +1063,7 @@ formrdesc(char *relationName,
 	}
 	else
 	{
-		relation->rd_rel->relowner = InvalidOid;		/* XXX incorrect */
+		relation->rd_rel->relowner = 0;
 		relation->rd_rel->relisshared = false;
 	}
 

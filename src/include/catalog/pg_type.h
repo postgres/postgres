@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.42 1998/07/20 19:21:45 momjian Exp $
+ * $Id: pg_type.h,v 1.43 1998/08/11 18:28:49 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -40,7 +40,7 @@
 CATALOG(pg_type) BOOTSTRAP
 {
 	NameData	typname;
-	Oid			typowner;
+	int4		typowner;
 	int2		typlen;
 
 	/*

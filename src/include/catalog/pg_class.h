@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.21 1998/08/06 05:13:05 momjian Exp $
+ * $Id: pg_class.h,v 1.22 1998/08/11 18:28:43 momjian Exp $
  *
  * NOTES
  *	  ``pg_relation'' is being replaced by ``pg_class''.  currently
@@ -54,7 +54,7 @@ CATALOG(pg_class) BOOTSTRAP
 {
 	NameData	relname;
 	Oid			reltype;
-	Oid			relowner;
+	int4		relowner;
 	Oid			relam;
 	int4		relpages;
 	int4		reltuples;

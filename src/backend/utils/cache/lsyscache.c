@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.17 1998/08/11 14:32:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.18 1998/08/11 18:28:18 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -50,7 +50,7 @@ op_class(Oid oprno, int32 opclass, Oid amopid)
 	if (SearchSysCacheStruct(AMOPOPID,
 							 (char *) &amoptup,
 							 ObjectIdGetDatum(opclass),
-							 ObjectIdGetDatum(opno),
+							 ObjectIdGetDatum(oprno),
 							 ObjectIdGetDatum(amopid),
 							 0))
 		return true;
@@ -245,7 +245,6 @@ op_mergejoinable(Oid opno, Oid ltype, Oid rtype, Oid *leftOp, Oid *rightOp)
 		optup.oprleft == ltype &&
 		optup.oprright == rtype)
 	{
-
 		*leftOp = ObjectIdGetDatum(optup.oprlsortop);
 		*rightOp = ObjectIdGetDatum(optup.oprrsortop);
 		return TRUE;
