@@ -43,10 +43,12 @@ three days of hard work to get it as you see it now.
 You will need Tcl/Tk package, I am using now Tcl 7.6 and Tk 4.2. There
 are some problems running under Tcl/Tk 8.0 but I will soon fix them.
 
-Also, you will need the PostgreSQL to Tcl interface library.  It is
-called libpgtcl and the source is located in the PostgreSQL directory
-/src/interfaces/libpgtcl.  Specifically, you will need a libpgtcl
-library that is 'load'-able from tck/tk.
+Also, you will need the PostgreSQL to Tcl interface library, lined as a
+Tcl/Tk 'load'-able module.  It is called libpgtcl and the source is
+located in the PostgreSQL directory /src/interfaces/libpgtcl. 
+Specifically, you will need a libpgtcl library that is 'load'-able from
+Tcl/Tk.  This is technically different from an ordinary PostgreSQL
+loadable object file, because libpgtcl is a collection of object files.
 
 Under Linux, this is called libpgtcl.so.  You will find a pre-compiled
 copy of it for Linux i386 systems at : http://www.flex.ro/pgaccess. 
