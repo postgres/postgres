@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.53 2000/10/07 00:58:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.54 2000/10/16 17:08:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,13 +81,11 @@ RemoveOperator(char *operatorName,		/* operator name */
 
 	if (HeapTupleIsValid(tup))
 	{
-#ifndef NO_SECURITY
 		if (!pg_ownercheck(GetUserId(),
 						   (char *) ObjectIdGetDatum(tup->t_data->t_oid),
 						   OPEROID))
 			elog(ERROR, "RemoveOperator: operator '%s': permission denied",
 				 operatorName);
-#endif
 
 		/*** Delete any comments associated with this operator ***/
 
@@ -250,11 +248,9 @@ RemoveType(char *typeName)		/* type name to be removed */
 	Oid			typeOid;
 	char	   *shadow_type;
 
-#ifndef NO_SECURITY
 	if (!pg_ownercheck(GetUserId(), typeName, TYPENAME))
 		elog(ERROR, "RemoveType: type '%s': permission denied",
 			 typeName);
-#endif
 
 	relation = heap_openr(TypeRelationName, RowExclusiveLock);
 
@@ -334,13 +330,11 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 		}
 	}
 
-#ifndef NO_SECURITY
 	if (!pg_func_ownercheck(GetUserId(), functionName, nargs, argList))
 	{
 		elog(ERROR, "RemoveFunction: function '%s': permission denied",
 			 functionName);
 	}
-#endif
 
 	relation = heap_openr(ProcedureRelationName, RowExclusiveLock);
 	tup = SearchSysCacheTuple(PROCNAME,
@@ -396,7 +390,6 @@ RemoveAggregate(char *aggName, char *aggType)
 	else
 		basetypeID = 0;
 
-#ifndef NO_SECURITY
 	if (!pg_aggr_ownercheck(GetUserId(), aggName, basetypeID))
 	{
 		if (aggType)
@@ -410,7 +403,6 @@ RemoveAggregate(char *aggName, char *aggType)
 				 aggName);
 		}
 	}
-#endif
 
 	relation = heap_openr(AggregateRelationName, RowExclusiveLock);
 	tup = SearchSysCacheTuple(AGGNAME,

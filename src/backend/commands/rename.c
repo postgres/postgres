@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.48 2000/10/16 14:52:03 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.49 2000/10/16 17:08:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,12 +71,10 @@ renameatt(char *relname,
 	if (!allowSystemTableMods && IsSystemRelationName(relname))
 		elog(ERROR, "renameatt: class \"%s\" is a system catalog",
 			 relname);
-#ifndef NO_SECURITY
 	if (!IsBootstrapProcessingMode() &&
 		!pg_ownercheck(GetUserId(), relname, RELNAME))
 		elog(ERROR, "renameatt: you do not own class \"%s\"",
 			 relname);
-#endif
 
 	/*
 	 * Grab an exclusive lock on the target table, which we will NOT

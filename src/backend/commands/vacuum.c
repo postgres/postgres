@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.167 2000/10/05 19:48:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.168 2000/10/16 17:08:05 momjian Exp $
  *
 
  *-------------------------------------------------------------------------
@@ -397,7 +397,6 @@ vacuum_rel(Oid relid, bool analyze, bool is_toastrel)
 	 */
 	onerel = heap_open(relid, AccessExclusiveLock);
 
-#ifndef NO_SECURITY
 	if (!pg_ownercheck(GetUserId(), RelationGetRelationName(onerel),
 					   RELNAME))
 	{
@@ -408,7 +407,6 @@ vacuum_rel(Oid relid, bool analyze, bool is_toastrel)
 			CommitTransactionCommand();
 		return;
 	}
-#endif
 
 	/*
 	 * Remember the relation'ss TOAST relation for later

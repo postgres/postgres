@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.77 2000/09/06 14:15:16 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.78 2000/10/16 17:08:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,10 +68,8 @@ CreateTrigger(CreateTrigStmt *stmt)
 	if (!allowSystemTableMods && IsSystemRelationName(stmt->relname))
 		elog(ERROR, "CreateTrigger: can't create trigger for system relation %s", stmt->relname);
 
-#ifndef NO_SECURITY
 	if (!pg_ownercheck(GetUserId(), stmt->relname, RELNAME))
 		elog(ERROR, "%s: %s", stmt->relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
-#endif
 
 	/* ----------
 	 * If trigger is a constraint, user trigger name as constraint
@@ -308,10 +306,8 @@ DropTrigger(DropTrigStmt *stmt)
 	int			found = 0;
 	int			tgfound = 0;
 
-#ifndef NO_SECURITY
 	if (!pg_ownercheck(GetUserId(), stmt->relname, RELNAME))
 		elog(ERROR, "%s: %s", stmt->relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
-#endif
 
 	rel = heap_openr(stmt->relname, AccessExclusiveLock);
 

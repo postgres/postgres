@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.95 2000/10/07 00:58:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.96 2000/10/16 17:08:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,11 +174,9 @@ ProcessUtility(Node *parsetree,
 							 relname);
 					/* close rel, but keep lock until end of xact */
 					heap_close(rel, NoLock);
-#ifndef NO_SECURITY
 					if (!pg_ownercheck(GetUserId(), relname, RELNAME))
 						elog(ERROR, "you do not own class \"%s\"",
 							 relname);
-#endif
 				}
 				/* OK, terminate 'em all */
 				foreach(arg, args)
@@ -210,10 +208,8 @@ ProcessUtility(Node *parsetree,
 						 relname);
 				heap_close(rel, NoLock);
 
-#ifndef NO_SECURITY
 				if (!pg_ownercheck(GetUserId(), relname, RELNAME))
 					elog(ERROR, "you do not own class \"%s\"", relname);
-#endif
 				TruncateRelation(relname);
 			}
 			break;
@@ -270,10 +266,8 @@ ProcessUtility(Node *parsetree,
 				if (!allowSystemTableMods && IsSystemRelationName(relname))
 					elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
 						 relname);
-#ifndef NO_SECURITY
 				if (!pg_ownercheck(GetUserId(), relname, RELNAME))
 					elog(ERROR, "permission denied");
-#endif
 
 				/* ----------------
 				 *	XXX using len == 3 to tell the difference
@@ -430,12 +424,10 @@ ProcessUtility(Node *parsetree,
 				RuleStmt   *stmt = (RuleStmt *) parsetree;
 				int			aclcheck_result;
 
-#ifndef NO_SECURITY
 				relname = stmt->object->relname;
 				aclcheck_result = pg_aclcheck(relname, GetUserId(), ACL_RU);
 				if (aclcheck_result != ACLCHECK_OK)
 					elog(ERROR, "%s: %s", relname, aclcheck_error_strings[aclcheck_result]);
-#endif
 				set_ps_display(commandTag = "CREATE");
 
 				DefineQueryRewrite(stmt);
@@ -473,10 +465,8 @@ ProcessUtility(Node *parsetree,
 						if (!allowSystemTableMods && IsSystemRelationName(relname))
 							elog(ERROR, "class \"%s\" is a system catalog index",
 								 relname);
-#ifndef NO_SECURITY
 						if (!pg_ownercheck(GetUserId(), relname, RELNAME))
 							elog(ERROR, "%s: %s", relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
-#endif
 						RemoveIndex(relname);
 						break;
 					case RULE:
@@ -484,20 +474,15 @@ ProcessUtility(Node *parsetree,
 							char	   *rulename = stmt->name;
 							int			aclcheck_result;
 
-#ifndef NO_SECURITY
-
 							relationName = RewriteGetRuleEventRel(rulename);
 							aclcheck_result = pg_aclcheck(relationName, GetUserId(), ACL_RU);
 							if (aclcheck_result != ACLCHECK_OK)
 								elog(ERROR, "%s: %s", relationName, aclcheck_error_strings[aclcheck_result]);
-#endif
 							RemoveRewriteRule(rulename);
 						}
 						break;
 					case TYPE_P:
-#ifndef NO_SECURITY
 						/* XXX moved to remove.c */
-#endif
 						RemoveType(stmt->name);
 						break;
 					case VIEW:
@@ -505,14 +490,11 @@ ProcessUtility(Node *parsetree,
 							char	   *viewName = stmt->name;
 							char	   *ruleName;
 
-#ifndef NO_SECURITY
-
 							ruleName = MakeRetrieveViewRuleName(viewName);
 							relationName = RewriteGetRuleEventRel(ruleName);
 							if (!pg_ownercheck(GetUserId(), relationName, RELNAME))
 								elog(ERROR, "%s: %s", relationName, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
 							pfree(ruleName);
-#endif
 							RemoveView(viewName);
 						}
 						break;
@@ -810,10 +792,8 @@ ProcessUtility(Node *parsetree,
 								elog(ERROR, "\"%s\" is a system index. call REINDEX under standalone postgres with -P -O options",
 								 relname);
 						}
-#ifndef NO_SECURITY
 						if (!pg_ownercheck(GetUserId(), relname, RELNAME))
 							elog(ERROR, "%s: %s", relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
-#endif
 						ReindexIndex(relname, stmt->force);
 						break;
 					case TABLE:
@@ -828,10 +808,8 @@ ProcessUtility(Node *parsetree,
 
 								 relname);
 						}
-#ifndef NO_SECURITY
 						if (!pg_ownercheck(GetUserId(), relname, RELNAME))
 							elog(ERROR, "%s: %s", relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
-#endif
 						ReindexTable(relname, stmt->force);
 						break;
 					case DATABASE:

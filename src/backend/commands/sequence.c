@@ -201,11 +201,9 @@ nextval(PG_FUNCTION_ARGS)
 				next,
 				rescnt = 0;
 
-#ifndef NO_SECURITY
 	if (pg_aclcheck(seqname, GetUserId(), ACL_WR) != ACLCHECK_OK)
 		elog(ERROR, "%s.nextval: you don't have permissions to set sequence %s",
 			 seqname, seqname);
-#endif
 
 	/* open and AccessShareLock sequence */
 	elm = init_sequence("nextval", seqname);
@@ -298,11 +296,9 @@ currval(PG_FUNCTION_ARGS)
 	SeqTable	elm;
 	int32		result;
 
-#ifndef NO_SECURITY
 	if (pg_aclcheck(seqname, GetUserId(), ACL_RD) != ACLCHECK_OK)
 		elog(ERROR, "%s.currval: you don't have permissions to read sequence %s",
 			 seqname, seqname);
-#endif
 
 	/* open and AccessShareLock sequence */
 	elm = init_sequence("currval", seqname);
@@ -318,18 +314,16 @@ currval(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(result);
 }
 
-static void 
+static void
 do_setval(char *seqname, int32 next, bool iscalled)
 {
 	SeqTable	elm;
 	Buffer		buf;
 	Form_pg_sequence seq;
 
-#ifndef NO_SECURITY
 	if (pg_aclcheck(seqname, GetUserId(), ACL_WR) != ACLCHECK_OK)
 		elog(ERROR, "%s.setval: you don't have permissions to set sequence %s",
 			 seqname, seqname);
-#endif
 
 	/* open and AccessShareLock sequence */
 	elm = init_sequence("setval", seqname);

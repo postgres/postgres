@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.129 2000/10/05 19:11:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.130 2000/10/16 17:08:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -619,9 +619,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	/*
 	 * Do permissions checks.
 	 */
-#ifndef NO_SECURITY
 	ExecCheckQueryPerms(operation, parseTree, plan);
-#endif
 
 	/*
 	 * get information from query descriptor

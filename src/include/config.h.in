@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.142 2000/10/14 23:56:58 momjian Exp $
+ * $Id: config.h.in,v 1.143 2000/10/16 17:08:11 momjian Exp $
  */
 
 #ifndef CONFIG_H
@@ -276,7 +276,6 @@
 /* #define RTDEBUG */
 /* #define GISTDEBUG */
 /* #define OMIT_PARTIAL_INDEX */
-/* #define NO_SECURITY        */
 /* #define LOCK_DEBUG */
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.7 2000/10/05 19:48:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.8 2000/10/16 17:08:05 momjian Exp $
  *
 
  *-------------------------------------------------------------------------
@@ -98,7 +98,6 @@ analyze_rel(Oid relid, List *anal_cols2, int MESSAGE_LEVEL)
 
 	onerel = heap_open(relid, AccessShareLock);
 
-#ifndef NO_SECURITY
 	if (!pg_ownercheck(GetUserId(), RelationGetRelationName(onerel),
 					   RELNAME))
 	{
@@ -110,7 +109,6 @@ analyze_rel(Oid relid, List *anal_cols2, int MESSAGE_LEVEL)
 		CommitTransactionCommand();
 		return;
 	}
-#endif
 
 	elog(MESSAGE_LEVEL, "Analyzing...");
 

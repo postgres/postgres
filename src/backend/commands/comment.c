@@ -283,10 +283,8 @@ CommentRelation(int reltype, char *relname, char *comment)
 
 	/*** First, check object security ***/
 
-#ifndef NO_SECURITY
 	if (!pg_ownercheck(GetUserId(), relname, RELNAME))
 		elog(ERROR, "you are not permitted to comment on class '%s'", relname);
-#endif
 
 	/*** Now, attempt to find the oid in the cached version of pg_class ***/
 
@@ -349,10 +347,8 @@ CommentAttribute(char *relname, char *attrname, char *comment)
 
 	/*** First, check object security ***/
 
-#ifndef NO_SECURITY
 	if (!pg_ownercheck(GetUserId(), relname, RELNAME))
 		elog(ERROR, "you are not permitted to comment on class '%s\'", relname);
-#endif
 
 	/*** Now, fetch the attribute oid from the system cache ***/
 

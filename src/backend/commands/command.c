@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.106 2000/10/10 17:13:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.107 2000/10/16 17:08:05 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -311,10 +311,8 @@ AlterTableAddColumn(const char *relationName,
 	if (!allowSystemTableMods && IsSystemRelationName(relationName))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
 			 relationName);
-#ifndef NO_SECURITY
 	if (!pg_ownercheck(GetUserId(), relationName, RELNAME))
 		elog(ERROR, "ALTER TABLE: permission denied");
-#endif
 
 	/*
 	 * Grab an exclusive lock on the target table, which we will NOT
@@ -1149,7 +1147,7 @@ AlterTableAddConstraint(char *relationName,
 					scan = heap_beginscan(rel, false, SnapshotNow, 0, NULL);
 					AssertState(scan != NULL);
 
-					/* 
+					/*
 					 * We need to make a parse state and range table to allow
 					 * us to transformExpr and fix_opids to get a version of
 					 * the expression we can pass to ExecQual
@@ -1195,7 +1193,7 @@ AlterTableAddConstraint(char *relationName,
 					rte->eref->relname = relationName;
 					rtlist = makeList1(rte);
 
-					/* 
+					/*
 					 * Scan through the rows now, making the necessary things
 					 * for ExecQual, and then call it to evaluate the
 					 * expression.
@@ -1224,13 +1222,13 @@ AlterTableAddConstraint(char *relationName,
 					pfree(rte);
 
 					heap_endscan(scan);
-					heap_close(rel, NoLock);		
+					heap_close(rel, NoLock);
 
-					if (!successful) 
+					if (!successful)
 					{
 						elog(ERROR, "AlterTableAddConstraint: rejected due to CHECK constraint %s", name);
 					}
-					/* 
+					/*
 					 * Call AddRelationRawConstraints to do the real adding --
 					 * It duplicates some of the above, but does not check the
 					 * validity of the constraint against tuples already in
@@ -1274,7 +1272,7 @@ AlterTableAddConstraint(char *relationName,
 
 			pkrel = heap_openr(fkconstraint->pktable_name, AccessExclusiveLock);
 			if (pkrel->rd_rel->relkind != RELKIND_RELATION)
-				elog(ERROR, "referenced table \"%s\" not a relation", 
+				elog(ERROR, "referenced table \"%s\" not a relation",
 					 fkconstraint->pktable_name);
 
 			/*
@@ -1328,7 +1326,7 @@ AlterTableAddConstraint(char *relationName,
 						}
 					}
 					if (found)
-						break;          
+						break;
 					indexStruct = NULL;
 				}
 			if (!found)
@@ -1591,7 +1589,7 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 
 	if (((Form_pg_class) GETSTRUCT(reltup))->reltoastrelid != InvalidOid)
 	{
-	    if (silent)
+		if (silent)
 		{
 			heap_close(rel, NoLock);
 			heap_close(class_rel, NoLock);
@@ -1601,14 +1599,14 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 
 		elog(ERROR, "ALTER TABLE: relation \"%s\" already has a toast table",
 			 relationName);
-    }
+	}
 
 	/*
 	 * Check to see whether the table actually needs a TOAST table.
 	 */
 	if (! needs_toast_table(rel))
 	{
-	    if (silent)
+		if (silent)
 		{
 			heap_close(rel, NoLock);
 			heap_close(class_rel, NoLock);
@@ -1784,7 +1782,7 @@ LockTableCommand(LockStmt *lockstmt)
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 			elog(ERROR, "LOCK TABLE: %s is not a table", lockstmt->relname);
 
-	if (is_view(rel)) 
+	if (is_view(rel))
 			elog(ERROR, "LOCK TABLE: cannot lock a view");
 
 	if (lockstmt->mode == AccessShareLock)
@@ -1842,7 +1840,7 @@ is_view(Relation rel)
 
 	while (HeapTupleIsValid(tuple = heap_getnext(scanDesc, 0)))
 	{
-		if (tuple->t_data != NULL) 
+		if (tuple->t_data != NULL)
 		{
 			data = (Form_pg_rewrite) GETSTRUCT(tuple);
 			if (data->ev_type == '1')
@@ -1856,6 +1854,6 @@ is_view(Relation rel)
 
 	heap_endscan(scanDesc);
 	heap_close(RewriteRelation, RowExclusiveLock);
-	
+
   return retval;
 }
