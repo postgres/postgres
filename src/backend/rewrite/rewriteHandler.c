@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.93 2001/05/03 17:47:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.93.2.1 2001/06/12 18:54:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,7 @@ gatherRewriteMeta(Query *parsetree,
 
 	/*
 	 * Adjust rule action and qual to offset its varnos, so that we can
-	 * merge its rtable into the main parsetree's rtable.
+	 * merge its rtable with the main parsetree's rtable.
 	 *
 	 * If the rule action is an INSERT...SELECT, the OLD/NEW rtable entries
 	 * will be in the SELECT part, and we have to modify that rather than
@@ -99,23 +99,19 @@ gatherRewriteMeta(Query *parsetree,
 				   PRS2_OLD_VARNO + rt_length, rt_index, 0);
 
 	/*
-	 * We want the main parsetree's rtable to end up as the concatenation
-	 * of its original contents plus those of all the relevant rule
-	 * actions.  Also store same into all the rule_action rtables. Some of
-	 * the entries may be unused after we finish rewriting, but if we
-	 * tried to clean those out we'd have a much harder job to adjust RT
-	 * indexes in the query's Vars.  It's OK to have unused RT entries,
-	 * since planner will ignore them.
+	 * Generate expanded rtable consisting of main parsetree's rtable
+	 * plus rule action's rtable; this becomes the complete rtable for the
+	 * rule action.  Some of the entries may be unused after we finish
+	 * rewriting, but if we tried to clean those out we'd have a much harder
+	 * job to adjust RT indexes in the query's Vars.  It's OK to have unused
+	 * RT entries, since planner will ignore them.
 	 *
-	 * NOTE KLUGY HACK: we assume the parsetree rtable had at least one entry
-	 * to begin with (OK enough, else where'd the rule come from?).
-	 * Because of this, if multiple rules nconc() their rtable additions
-	 * onto parsetree->rtable, they'll all see the same rtable because
-	 * they all have the same list head pointer.
+	 * NOTE: because planner will destructively alter rtable, we must ensure
+	 * that rule action's rtable is separate and shares no substructure with
+	 * the main rtable.  Hence do a deep copy here.
 	 */
-	parsetree->rtable = nconc(parsetree->rtable,
-							  sub_action->rtable);
-	sub_action->rtable = parsetree->rtable;
+	sub_action->rtable = nconc((List *) copyObject(parsetree->rtable),
+							   sub_action->rtable);
 
 	/*
 	 * Each rule action's jointree should be the main parsetree's jointree
@@ -128,6 +124,9 @@ gatherRewriteMeta(Query *parsetree,
 	 * data for the quals.	We don't want the original rtindex to be
 	 * joined twice, however, so avoid keeping it if the rule action
 	 * mentions it.
+	 *
+	 * As above, the action's jointree must not share substructure with
+	 * the main parsetree's.
 	 */
 	if (sub_action->jointree != NULL)
 	{
@@ -193,13 +192,13 @@ gatherRewriteMeta(Query *parsetree,
  * occurrence of the given rt_index as a top-level join item (we do not look
  * for it within join items; this is OK because we are only expecting to find
  * it as an UPDATE or DELETE target relation, which will be at the top level
- * of the join).  Returns modified jointree list --- original list is not
- * changed.
+ * of the join).  Returns modified jointree list --- this is a separate copy
+ * sharing no nodes with the original.
  */
 static List *
 adjustJoinTreeList(Query *parsetree, bool removert, int rt_index)
 {
-	List	   *newjointree = listCopy(parsetree->jointree->fromlist);
+	List	   *newjointree = copyObject(parsetree->jointree->fromlist);
 	List	   *jjt;
 
 	if (removert)
