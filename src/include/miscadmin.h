@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.43 1999/10/06 21:58:13 vadim Exp $
+ * $Id: miscadmin.h,v 1.44 1999/10/08 04:28:52 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -59,7 +59,7 @@ extern bool TransactionInitWasProcessed;
 
 extern bool IsUnderPostmaster;
 
-extern short DebugLvl;
+extern int DebugLvl;
 
 /* Date/Time Configuration
  *

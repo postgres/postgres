@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.5 1999/08/06 13:50:31 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.6 1999/10/08 04:28:42 momjian Exp $
 Postgres documentation
 -->
 
@@ -23,9 +23,9 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-postmaster [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -D <replaceable class="parameter">DataDir</replaceable> ] [ -i ]
+postmaster [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -D <replaceable class="parameter">DataDir</replaceable> ] [ -i ] [ -l ]
 postmaster [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -D <replaceable class="parameter">DataDir</replaceable> ] [ -N <replaceable class="parameter">nBackends</replaceable> ] [ -S ]
-   [ -d [ <replaceable class="parameter">DebugLevel</replaceable> ] [ -i ] [ -o <replaceable class="parameter">BackendOptions</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ]
+   [ -d [ <replaceable class="parameter">DebugLevel</replaceable> ] [ -i ] [ -l ] [ -o <replaceable class="parameter">BackendOptions</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ]
 postmaster [ -n | -s ] ...
   </synopsis>
 
@@ -102,7 +102,7 @@ postmaster [ -n | -s ] ...
       <term>-d [ <replaceable class="parameter">DebugLevel</replaceable> ]</term>
       <listitem>
        <para>
-	The optional argument <replaceable class="parameter">DebugLevel</replaceable>
+	This argument <replaceable class="parameter">DebugLevel</replaceable>
 	determines the amount of debugging output the backend servers will
 	produce.
 	If <replaceable class="parameter">DebugLevel</replaceable>
@@ -126,6 +126,17 @@ postmaster [ -n | -s ] ...
 	This enables TCP/IP or Internet domain socket communication.
 	Without this option, only local Unix domain socket communication is
 	possible.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-l</term>
+      <listitem>
+       <para>
+	This enables SSL socket communication.  The <term>-i</term> option
+	is also required.
+	You have to have compiled with SSL enabled to use this option.
        </para>
       </listitem>
      </varlistentry>

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.37 1999/09/27 20:27:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.38 1999/10/08 04:28:48 momjian Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -63,7 +63,7 @@ bool		TransactionInitWasProcessed = false;
 
 bool		IsUnderPostmaster = false;
 
-short		DebugLvl = 0;
+int			DebugLvl = 0;
 
 int			DateStyle = USE_POSTGRES_DATES;
 bool		EuroDates = false;

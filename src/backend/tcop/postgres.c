@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.131 1999/10/06 21:58:08 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.132 1999/10/08 04:28:45 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -130,7 +130,7 @@ bool		ExitAfterAbort = false;
 
 extern int	NBuffers;
 
-static int	EchoQuery = 0;		/* default don't echo */
+static bool	EchoQuery = false;		/* default don't echo */
 time_t		tim;
 char		pg_pathname[256];
 FILE	   *StatFp;
@@ -901,7 +901,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	char	   *DBDate = NULL;
 	extern int	optind;
 	extern char *optarg;
-	extern short DebugLvl;
+	extern int  DebugLvl;
 
 	/*
 	 * Set default values for command-line options.
@@ -1017,13 +1017,13 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				break;
 
 			case 'd':			/* debug level */
-				DebugLvl = (short) atoi(optarg);
+				DebugLvl = atoi(optarg);
 				if (DebugLvl >= 1)
-					Verbose = DebugLvl;
+					Verbose = true;
 				if (DebugLvl >= 2)
 					DebugPrintQuery = true;
 				if (DebugLvl >= 3)
-					DebugPrintQuery = DebugLvl;
+					DebugPrintQuery = true ;
 				if (DebugLvl >= 4)
 				{
 					DebugPrintParse = true;
@@ -1157,7 +1157,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				 *	Q - set Quiet mode (reduce debugging output)
 				 * ----------------
 				 */
-				Verbose = 0;
+				Verbose = false;
 				break;
 
 			case 'S':
@@ -1443,7 +1443,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	 */
 	if (Verbose)
 	{
-		if (Verbose == 1)
+		if (Verbose)
 		{
 			TPRINTF(TRACE_VERBOSE, "started: host=%s user=%s database=%s",
 					remote_host, userName, DBName);
@@ -1455,7 +1455,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 			TPRINTF(TRACE_VERBOSE, "\tRemoteHost   = %s", remote_host);
 			TPRINTF(TRACE_VERBOSE, "\tRemotePort   = %d", remote_port);
 			TPRINTF(TRACE_VERBOSE, "\tDatabaseName = %s", DBName);
-			TPRINTF(TRACE_VERBOSE, "\tVerbose      = %d", Verbose);
+			TPRINTF(TRACE_VERBOSE, "\tDebug Level  = %d", DebugLvl);
 			TPRINTF(TRACE_VERBOSE, "\tNoversion    = %c", Noversion ? 't' : 'f');
 			TPRINTF(TRACE_VERBOSE, "\ttimings      = %c", ShowStats ? 't' : 'f');
 			TPRINTF(TRACE_VERBOSE, "\tdates        = %s",
@@ -1508,7 +1508,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.131 $ $Date: 1999/10/06 21:58:08 $\n");
+		puts("$Revision: 1.132 $ $Date: 1999/10/08 04:28:45 $\n");
 	}
 
 	/*

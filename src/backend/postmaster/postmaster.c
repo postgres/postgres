@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.123 1999/10/08 02:16:22 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.124 1999/10/08 04:28:43 momjian Exp $
  *
  * NOTES
  *
@@ -412,7 +412,7 @@ PostmasterMain(int argc, char *argv[])
 	DataDir = getenv("PGDATA"); /* default value */
 
 	opterr = 0;
-	while ((opt = getopt(nonblank_argc, argv, "A:a:B:b:D:di::m:MN:no:p:Ss")) != EOF)
+	while ((opt = getopt(nonblank_argc, argv, "A:a:B:b:D:d:ilm:MN:no:p:Ss")) != EOF)
 	{
 		switch (opt)
 		{
@@ -459,27 +459,21 @@ PostmasterMain(int argc, char *argv[])
 				DataDir = optarg;
 				break;
 			case 'd':
-
 				/*
 				 * Turn on debugging for the postmaster and the backend
 				 * servers descended from it.
 				 */
-				if ((optind < nonblank_argc) && *argv[optind] != '-')
-				{
-					DebugLvl = atoi(argv[optind]);
-					optind++;
-				}
-				else
-					DebugLvl = 1;
+				DebugLvl = atoi(optarg);
 				pg_options[TRACE_VERBOSE] = DebugLvl;
 				break;
 			case 'i':
 				NetServer = true;
-#ifdef USE_SSL
-				if (optarg && !strcasecmp(optarg,"s")) 
-				  SecureNetServer = true;
-#endif
 				break;
+#ifdef USE_SSL
+			case 'l':
+				SecureNetServer = true;
+				break;
+#endif
 			case 'm':
 				/* Multiplexed backends no longer supported. */
 				break;
@@ -581,6 +575,12 @@ PostmasterMain(int argc, char *argv[])
 	}
 
 #ifdef USE_SSL
+	if (!NetServer && SecureNetServer)
+	{
+		fprintf(stderr, "For SSL, you must enable TCP/IP connections.\n",
+				argv[0]);
+		exit(1);
+	}
 	InitSSL();
 #endif
 
@@ -689,7 +689,7 @@ usage(const char *progname)
 	fprintf(stderr, "\t-d [1|2|3]\tset debugging level\n");
 	fprintf(stderr, "\t-i \t\tlisten on TCP/IP sockets as well as Unix domain socket\n");
 #ifdef USE_SSL
-	fprintf(stderr," \t-is\t\tlisten on TCP/IP sockets as above, but only SSL connections\n");
+	fprintf(stderr," \t-l \t\tfor TCP/IP sockets, listen only on SSL connections\n");
 #endif
 	fprintf(stderr, "\t-N nprocs\tset max number of backends (1..%d, default %d)\n",
 			MAXBACKENDS, DEF_MAXBACKENDS);
@@ -1669,22 +1669,18 @@ BackendStartup(Port *port)
 static void
 split_opts(char **argv, int *argcp, char *s)
 {
-	int			i = *argcp;
-
 	while (s && *s)
 	{
 		while (isspace(*s))
 			++s;
 		if (*s == '\0')
 			break;
-		argv[i++] = s;
+		argv[(*argcp)++] = s;
 		while (*s && !isspace(*s))
 			++s;
 		if (*s)
 			*s++ = '\0';
 	}
-
-	*argcp = i;
 }
 
 /*
