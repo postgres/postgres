@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Mar 30 20:03:25 EST 2001
+Last updated:		Sat Mar 31 10:28:08 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -146,7 +146,7 @@ INDEXES
 * -Allow SQL function indexes
 * Add FILLFACTOR to index creation
 * Re-enable partial indexes
-* Allow inherited tables to inherit index and primary key
+* Allow inherited tables to inherit index, UNIQUE constraint, and primary key
 * Prevent pg_attribute from having duplicate oids for indexes (Tom)
 * Add UNIQUE capability to non-btree indexes
 * Certain indexes will not shrink, i.e. oid indexes with many inserts (Vadim)
