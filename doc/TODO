@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Jul 10 20:18:28 EDT 2004
+Last updated:		Sat Jul 10 20:26:38 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -444,7 +444,8 @@ Miscellaneous
 * Allow partitioning of table into multiple subtables
 * -Use background process to write dirty shared buffers to disk
 * Investigate SMP context switching issues
-
+* Use a phantom command counter for nested subtransactions to reduce
+  tuple overhead
 
 Source Code
 ===========
