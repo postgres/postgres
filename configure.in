@@ -725,10 +725,12 @@ if test "$with_krb4" = yes ; then
 fi
 
 if test "$with_krb5" = yes ; then
-  AC_CHECK_LIB(com_err, [com_err], [], [AC_MSG_ERROR([library 'com_err' is required for Kerberos 5])])
-  AC_CHECK_LIB(crypto,  [krb5_encrypt], [],
-    [AC_CHECK_LIB(k5crypto, [krb5_encrypt], [], [AC_MSG_ERROR([library 'crypto' or 'k5crypto' is required for Kerberos 5])])])
-  AC_CHECK_LIB(krb5,    [krb5_sendauth], [], [AC_MSG_ERROR([library 'krb5' is required for Kerberos 5])])
+  AC_SEARCH_LIBS(com_err, [krb5 'krb5 -ldes -lasn1 -lroken' com_err], [],
+                 [AC_MSG_ERROR([could not find function 'com_err' required for Kerberos 5])])
+  AC_SEARCH_LIBS(krb5_encrypt, [krb5 'krb5 -ldes -lasn1 -lroken' crypto k5crypto], [],
+                 [AC_MSG_ERROR([could not find function 'krb5_encrypt' required for Kerberos 5])])
+  AC_SEARCH_LIBS(krb5_sendauth, [krb5 'krb5 -ldes -lasn1 -lroken'], [],
+                 [AC_MSG_ERROR([could not find function 'krb5_sendauth' required for Kerberos 5])])
 fi
 
 if test "$with_openssl" = yes ; then
@@ -801,6 +803,21 @@ PGAC_STRUCT_CMSGCRED
 PGAC_STRUCT_FCRED
 PGAC_STRUCT_SOCKCRED
 PGAC_STRUCT_SOCKADDR_UN
+
+if test "$with_krb5" = yes; then
+# Check for differences between MIT and Heimdal (KTH) releases
+  PGAC_CHECK_MEMBER([krb5_ticket.enc_part2], [],
+                    [PGAC_CHECK_MEMBER([krb5_ticket.client], [],
+                                       [AC_MSG_ERROR([could not determine how to get client name from Kerberos 5 ticket])],
+                                       [#include <krb5.h>])],
+                    [#include <krb5.h>])
+  PGAC_CHECK_MEMBER([krb5_error.text.data], [],
+                    [PGAC_CHECK_MEMBER([krb5_error.e_data], [],
+                                       [AC_MSG_ERROR([could not determine how to extract Kerberos 5 error messages])],
+                                       [#include <krb5.h>])],
+                    [#include <krb5.h>])
+fi
+
 
 ##
 ## Functions, global variables
