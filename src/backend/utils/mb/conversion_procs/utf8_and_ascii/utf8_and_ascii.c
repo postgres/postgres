@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_ascii/utf8_and_ascii.c,v 1.4 2002/09/13 06:41:17 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_ascii/utf8_and_ascii.c,v 1.5 2002/10/26 15:01:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,8 +15,8 @@
 #include "fmgr.h"
 #include "mb/pg_wchar.h"
 
-PG_FUNCTION_INFO_V1(ascii_to_utf8)
-PG_FUNCTION_INFO_V1(utf8_to_ascii)
+PG_FUNCTION_INFO_V1(ascii_to_utf8);
+PG_FUNCTION_INFO_V1(utf8_to_ascii);
 
 extern Datum ascii_to_utf8(PG_FUNCTION_ARGS);
 extern Datum utf8_to_ascii(PG_FUNCTION_ARGS);

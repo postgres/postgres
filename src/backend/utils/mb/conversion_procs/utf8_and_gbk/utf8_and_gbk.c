@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_gbk/utf8_and_gbk.c,v 1.4 2002/09/13 06:41:17 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_gbk/utf8_and_gbk.c,v 1.5 2002/10/26 15:01:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,8 +17,8 @@
 #include "../../Unicode/gbk_to_utf8.map"
 #include "../../Unicode/utf8_to_gbk.map"
 
-PG_FUNCTION_INFO_V1(gbk_to_utf8)
-PG_FUNCTION_INFO_V1(utf8_to_gbk)
+PG_FUNCTION_INFO_V1(gbk_to_utf8);
+PG_FUNCTION_INFO_V1(utf8_to_gbk);
 
 extern Datum gbk_to_utf8(PG_FUNCTION_ARGS);
 extern Datum utf8_to_gbk(PG_FUNCTION_ARGS);

@@ -4,7 +4,7 @@
  * darcy@druid.net
  * http://www.druid.net/darcy/
  *
- * $Id: chkpass.c,v 1.8 2002/08/29 12:18:20 darcy Exp $
+ * $Id: chkpass.c,v 1.9 2002/10/26 15:00:59 tgl Exp $
  * best viewed with tabs set to 4
  */
 
@@ -62,7 +62,7 @@ verify_pass(const char *str)
 /*
  * CHKPASS reader.
  */
-PG_FUNCTION_INFO_V1(chkpass_in)
+PG_FUNCTION_INFO_V1(chkpass_in);
 Datum
 chkpass_in(PG_FUNCTION_ARGS)
 {
@@ -110,7 +110,7 @@ chkpass_in(PG_FUNCTION_ARGS)
  * Just like any string but we know it is max 15 (13 plus colon and terminator.)
  */
 
-PG_FUNCTION_INFO_V1(chkpass_out)
+PG_FUNCTION_INFO_V1(chkpass_out);
 Datum
 chkpass_out(PG_FUNCTION_ARGS)
 {
@@ -134,7 +134,7 @@ chkpass_out(PG_FUNCTION_ARGS)
  * special output function that doesn't output the colon
  */
 
-PG_FUNCTION_INFO_V1(chkpass_rout)
+PG_FUNCTION_INFO_V1(chkpass_rout);
 Datum
 chkpass_rout(PG_FUNCTION_ARGS)
 {
@@ -158,7 +158,7 @@ chkpass_rout(PG_FUNCTION_ARGS)
  * Boolean tests
  */
 
-PG_FUNCTION_INFO_V1(chkpass_eq)
+PG_FUNCTION_INFO_V1(chkpass_eq);
 Datum
 chkpass_eq(PG_FUNCTION_ARGS)
 {
@@ -177,7 +177,7 @@ chkpass_eq(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(strcmp(a1->password, crypt(str, a1->password)) == 0);
 }
 
-PG_FUNCTION_INFO_V1(chkpass_ne)
+PG_FUNCTION_INFO_V1(chkpass_ne);
 Datum
 chkpass_ne(PG_FUNCTION_ARGS)
 {

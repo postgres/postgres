@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/cyrillic_and_mic/cyrillic_and_mic.c,v 1.4 2002/09/13 06:41:17 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/cyrillic_and_mic/cyrillic_and_mic.c,v 1.5 2002/10/26 15:00:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,26 +17,26 @@
 
 #define ENCODING_GROWTH_RATE 4
 
-PG_FUNCTION_INFO_V1(koi8r_to_mic)
-PG_FUNCTION_INFO_V1(mic_to_koi8r)
-PG_FUNCTION_INFO_V1(iso_to_mic)
-PG_FUNCTION_INFO_V1(mic_to_iso)
-PG_FUNCTION_INFO_V1(win1251_to_mic)
-PG_FUNCTION_INFO_V1(mic_to_win1251)
-PG_FUNCTION_INFO_V1(alt_to_mic)
-PG_FUNCTION_INFO_V1(mic_to_alt)
-PG_FUNCTION_INFO_V1(koi8r_to_win1251)
-PG_FUNCTION_INFO_V1(win1251_to_koi8r)
-PG_FUNCTION_INFO_V1(koi8r_to_alt)
-PG_FUNCTION_INFO_V1(alt_to_koi8r)
-PG_FUNCTION_INFO_V1(alt_to_win1251)
-PG_FUNCTION_INFO_V1(win1251_to_alt)
-PG_FUNCTION_INFO_V1(iso_to_koi8r)
-PG_FUNCTION_INFO_V1(koi8r_to_iso)
-PG_FUNCTION_INFO_V1(iso_to_win1251)
-PG_FUNCTION_INFO_V1(win1251_to_iso)
-PG_FUNCTION_INFO_V1(iso_to_alt)
-PG_FUNCTION_INFO_V1(alt_to_iso)
+PG_FUNCTION_INFO_V1(koi8r_to_mic);
+PG_FUNCTION_INFO_V1(mic_to_koi8r);
+PG_FUNCTION_INFO_V1(iso_to_mic);
+PG_FUNCTION_INFO_V1(mic_to_iso);
+PG_FUNCTION_INFO_V1(win1251_to_mic);
+PG_FUNCTION_INFO_V1(mic_to_win1251);
+PG_FUNCTION_INFO_V1(alt_to_mic);
+PG_FUNCTION_INFO_V1(mic_to_alt);
+PG_FUNCTION_INFO_V1(koi8r_to_win1251);
+PG_FUNCTION_INFO_V1(win1251_to_koi8r);
+PG_FUNCTION_INFO_V1(koi8r_to_alt);
+PG_FUNCTION_INFO_V1(alt_to_koi8r);
+PG_FUNCTION_INFO_V1(alt_to_win1251);
+PG_FUNCTION_INFO_V1(win1251_to_alt);
+PG_FUNCTION_INFO_V1(iso_to_koi8r);
+PG_FUNCTION_INFO_V1(koi8r_to_iso);
+PG_FUNCTION_INFO_V1(iso_to_win1251);
+PG_FUNCTION_INFO_V1(win1251_to_iso);
+PG_FUNCTION_INFO_V1(iso_to_alt);
+PG_FUNCTION_INFO_V1(alt_to_iso);
 
 extern Datum koi8r_to_mic(PG_FUNCTION_ARGS);
 extern Datum mic_to_koi8r(PG_FUNCTION_ARGS);

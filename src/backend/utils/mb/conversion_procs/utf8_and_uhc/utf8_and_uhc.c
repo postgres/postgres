@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_uhc/utf8_and_uhc.c,v 1.4 2002/09/13 06:41:17 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_uhc/utf8_and_uhc.c,v 1.5 2002/10/26 15:01:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,8 +17,8 @@
 #include "../../Unicode/uhc_to_utf8.map"
 #include "../../Unicode/utf8_to_uhc.map"
 
-PG_FUNCTION_INFO_V1(uhc_to_utf8)
-PG_FUNCTION_INFO_V1(utf8_to_uhc)
+PG_FUNCTION_INFO_V1(uhc_to_utf8);
+PG_FUNCTION_INFO_V1(utf8_to_uhc);
 
 extern Datum uhc_to_utf8(PG_FUNCTION_ARGS);
 extern Datum utf8_to_uhc(PG_FUNCTION_ARGS);

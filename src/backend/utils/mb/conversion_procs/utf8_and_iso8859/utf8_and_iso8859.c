@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859/utf8_and_iso8859.c,v 1.4 2002/09/13 06:41:17 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859/utf8_and_iso8859.c,v 1.5 2002/10/26 15:01:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,8 +41,8 @@
 #include "../../Unicode/iso8859_15_to_utf8.map"
 #include "../../Unicode/iso8859_16_to_utf8.map"
 
-PG_FUNCTION_INFO_V1(iso8859_to_utf8)
-PG_FUNCTION_INFO_V1(utf8_to_iso8859)
+PG_FUNCTION_INFO_V1(iso8859_to_utf8);
+PG_FUNCTION_INFO_V1(utf8_to_iso8859);
 
 extern Datum iso8859_to_utf8(PG_FUNCTION_ARGS);
 extern Datum utf8_to_iso8859(PG_FUNCTION_ARGS);

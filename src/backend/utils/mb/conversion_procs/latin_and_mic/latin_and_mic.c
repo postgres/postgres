@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/latin_and_mic/latin_and_mic.c,v 1.4 2002/09/13 06:41:17 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/latin_and_mic/latin_and_mic.c,v 1.5 2002/10/26 15:01:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,12 +15,12 @@
 #include "fmgr.h"
 #include "mb/pg_wchar.h"
 
-PG_FUNCTION_INFO_V1(latin1_to_mic)
-PG_FUNCTION_INFO_V1(mic_to_latin1)
-PG_FUNCTION_INFO_V1(latin3_to_mic)
-PG_FUNCTION_INFO_V1(mic_to_latin3)
-PG_FUNCTION_INFO_V1(latin4_to_mic)
-PG_FUNCTION_INFO_V1(mic_to_latin4)
+PG_FUNCTION_INFO_V1(latin1_to_mic);
+PG_FUNCTION_INFO_V1(mic_to_latin1);
+PG_FUNCTION_INFO_V1(latin3_to_mic);
+PG_FUNCTION_INFO_V1(mic_to_latin3);
+PG_FUNCTION_INFO_V1(latin4_to_mic);
+PG_FUNCTION_INFO_V1(mic_to_latin4);
 
 extern Datum latin1_to_mic(PG_FUNCTION_ARGS);
 extern Datum mic_to_latin1(PG_FUNCTION_ARGS);

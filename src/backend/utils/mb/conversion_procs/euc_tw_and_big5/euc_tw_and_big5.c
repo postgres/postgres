@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/euc_tw_and_big5/euc_tw_and_big5.c,v 1.4 2002/09/13 06:41:17 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/euc_tw_and_big5/euc_tw_and_big5.c,v 1.5 2002/10/26 15:00:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,12 +17,12 @@
 
 #define ENCODING_GROWTH_RATE 4
 
-PG_FUNCTION_INFO_V1(euc_tw_to_big5)
-PG_FUNCTION_INFO_V1(big5_to_euc_tw)
-PG_FUNCTION_INFO_V1(euc_tw_to_mic)
-PG_FUNCTION_INFO_V1(mic_to_euc_tw)
-PG_FUNCTION_INFO_V1(big5_to_mic)
-PG_FUNCTION_INFO_V1(mic_to_big5)
+PG_FUNCTION_INFO_V1(euc_tw_to_big5);
+PG_FUNCTION_INFO_V1(big5_to_euc_tw);
+PG_FUNCTION_INFO_V1(euc_tw_to_mic);
+PG_FUNCTION_INFO_V1(mic_to_euc_tw);
+PG_FUNCTION_INFO_V1(big5_to_mic);
+PG_FUNCTION_INFO_V1(mic_to_big5);
 
 extern Datum euc_tw_to_big5(PG_FUNCTION_ARGS);
 extern Datum big5_to_euc_tw(PG_FUNCTION_ARGS);

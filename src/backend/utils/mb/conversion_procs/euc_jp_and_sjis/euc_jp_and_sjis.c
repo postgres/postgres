@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/euc_jp_and_sjis/euc_jp_and_sjis.c,v 1.4 2002/09/13 06:41:17 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/euc_jp_and_sjis/euc_jp_and_sjis.c,v 1.5 2002/10/26 15:00:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,12 +29,12 @@
 
 #define ENCODING_GROWTH_RATE 4
 
-PG_FUNCTION_INFO_V1(euc_jp_to_sjis)
-PG_FUNCTION_INFO_V1(sjis_to_euc_jp)
-PG_FUNCTION_INFO_V1(euc_jp_to_mic)
-PG_FUNCTION_INFO_V1(mic_to_euc_jp)
-PG_FUNCTION_INFO_V1(sjis_to_mic)
-PG_FUNCTION_INFO_V1(mic_to_sjis)
+PG_FUNCTION_INFO_V1(euc_jp_to_sjis);
+PG_FUNCTION_INFO_V1(sjis_to_euc_jp);
+PG_FUNCTION_INFO_V1(euc_jp_to_mic);
+PG_FUNCTION_INFO_V1(mic_to_euc_jp);
+PG_FUNCTION_INFO_V1(sjis_to_mic);
+PG_FUNCTION_INFO_V1(mic_to_sjis);
 
 extern Datum euc_jp_to_sjis(PG_FUNCTION_ARGS);
 extern Datum sjis_to_euc_jp(PG_FUNCTION_ARGS);

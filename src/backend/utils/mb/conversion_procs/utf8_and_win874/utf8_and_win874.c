@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win874/Attic/utf8_and_win874.c,v 1.4 2002/09/13 06:41:18 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win874/Attic/utf8_and_win874.c,v 1.5 2002/10/26 15:01:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,8 +17,8 @@
 #include "../../Unicode/utf8_to_win874.map"
 #include "../../Unicode/win874_to_utf8.map"
 
-PG_FUNCTION_INFO_V1(utf_to_win874)
-PG_FUNCTION_INFO_V1(win874_to_utf)
+PG_FUNCTION_INFO_V1(utf_to_win874);
+PG_FUNCTION_INFO_V1(win874_to_utf);
 
 extern Datum utf_to_win874(PG_FUNCTION_ARGS);
 extern Datum win874_to_utf(PG_FUNCTION_ARGS);
