@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.41 2000/08/10 02:33:19 inoue Exp $
+ * $Id: nbtree.h,v 1.42 2000/09/12 06:07:52 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,6 +182,72 @@ typedef BTStackData *BTStack;
 #define P_HIKEY			((OffsetNumber) 1)
 #define P_FIRSTKEY		((OffsetNumber) 2)
 #define P_FIRSTDATAKEY(opaque)  (P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY)
+
+
+#ifdef XLOG
+
+/* XLOG stuff */
+
+/*
+ * XLOG allows to store some information in high 4 bits of log
+ * record xl_info field
+ */
+#define	XLOG_BTREE_DELETE	0x00	/* delete btitem */
+#define	XLOG_BTREE_INSERT	0x10	/* add btitem without split */
+#define	XLOG_BTREE_SPLIT	0x20	/* add btitem with split */
+#define	XLOG_BTREE_ONLEFT	0x40	/* flag for split case: new btitem */
+									/* goes to the left sibling */
+
+/*
+ * All what we need to find changed index tuple (18 bytes)
+ */
+typedef struct xl_btreetid
+{
+	RelFileNode			node;
+	CommandId			cid;		/* this is for "better" tuple' */
+									/* identification - it allows to avoid */
+									/* "compensation" records for undo */
+	ItemPointerData		tid;		/* changed tuple id */
+} xl_btreetid;
+
+/* This is what we need to know about delete - ALIGN(18) = 24 bytes */
+typedef struct xl_btree_delete
+{
+	xl_btreetid			target;		/* deleted tuple id */
+} xl_btree_delete;
+
+#define	SizeOfBtreeDelete	(offsetof(xl_btreetid, tid) + SizeOfIptrData))
+
+/* This is what we need to know about pure (without split) insert - 26 + key data */
+typedef struct xl_btree_insert
+{
+	xl_btreetid			target;		/* inserted tuple id */
+	BTItemData			btitem;
+	/* KEY DATA FOLLOWS AT END OF STRUCT */
+} xl_btree_insert;
+
+#define SizeOfBtreeInsert	(offsetof(xl_btree_insert, btitem) + sizeof(BTItemData))
+
+
+/* This is what we need to know about insert with split - 26 + right sibling btitems */
+typedef struct xl_btree_split
+{
+	xl_btreetid			target;		/* inserted tuple id */
+	BlockNumber			othblk;		/* second block participated in split: */
+									/* first one is stored in target' tid */
+	BlockNumber			parblk;		/* parent block to be updated */
+	/* 
+	 * We log all btitems from the right sibling. If new btitem goes on
+	 * the left sibling then we log it too and it will be first BTItemData
+	 * at the end of this struct.
+	 */
+} xl_btree_split;
+
+#define SizeOfBtreeSplit	(offsetof(xl_btree_insert, parblk) + sizeof(BlockNumber))
+
+/* end of XLOG stuff */
+
+#endif	/* XLOG */
 
 /*
  *	Operator strategy numbers -- ordering of these is <, <=, =, >=, >
