@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * be-connect.c
+ * be-secure.c
  *	  functions related to setting up a secure connection to the frontend.
  *	  Secure connections are expected to provide confidentiality,
  *	  message integrity and endpoint authentication.
@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.13 2002/09/04 20:31:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.14 2002/09/04 23:31:34 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database

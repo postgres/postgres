@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqformat.c,v 1.24 2002/09/03 21:45:42 petere Exp $
+ *	$Id: pqformat.c,v 1.25 2002/09/04 23:31:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,10 +38,10 @@
  *		pq_puttextmessage - generate a character set-converted message in one step
  *
  * Message input:
- *		pq_getint		- get an integer from connection
- *		pq_getstr		- get a null terminated string from connection
- * pq_getstr performs character set conversion on the collected string.
- * Use the raw pqcomm.c routines pq_getstring or pq_getbytes
+ *		pq_getint			- get an integer from connection
+ *		pq_getstr_bounded	- get a null terminated string from connection
+ * pq_getstr_bounded performs character set conversion on the collected
+ * string.  Use the raw pqcomm.c routines pq_getstring or pq_getbytes
  * to fetch data without conversion.
  */
 
@@ -247,21 +247,23 @@ pq_getint(int *result, int b)
 }
 
 /* --------------------------------
- *		pq_getstr - get a null terminated string from connection
+ *		pq_getstr_bounded - get a null terminated string from connection
  *
  *		The return value is placed in an expansible StringInfo.
  *		Note that space allocation comes from the current memory context!
+ *
+ *		The maxlen parameter is interpreted as per pq_getstring.
  *
  *		returns 0 if OK, EOF if trouble
  * --------------------------------
  */
 int
-pq_getstr(StringInfo s)
+pq_getstr_bounded(StringInfo s, int maxlen)
 {
 	int			result;
 	char	   *p;
 
-	result = pq_getstring(s);
+	result = pq_getstring(s, maxlen);
 
 	p = (char *) pg_client_to_server((unsigned char *) s->data, s->len);
 	if (p != s->data)			/* actual conversion has been done? */

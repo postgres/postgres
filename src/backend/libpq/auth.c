@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.90 2002/09/04 20:31:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.91 2002/09/04 23:31:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -563,12 +563,11 @@ pam_passwd_conv_proc(int num_msg, const struct pam_message ** msg, struct pam_re
 	{
 		sendAuthRequest(pam_port_cludge, AUTH_REQ_PASSWORD);
 		if (pq_eof() == EOF || pq_getint(&len, 4) == EOF)
-		{
 			return PAM_CONV_ERR;	/* client didn't want to send password */
-		}
 
 		initStringInfo(&buf);
-		pq_getstr(&buf);
+		if (pq_getstr_bounded(&buf, 1000) == EOF)
+			return PAM_CONV_ERR;	/* EOF while reading password */
 
 		/* Do not echo failed password to logs, for security. */
 		elog(DEBUG5, "received PAM packet");
@@ -707,7 +706,7 @@ recv_and_check_password_packet(Port *port)
 		return STATUS_EOF;		/* client didn't want to send password */
 
 	initStringInfo(&buf);
-	if (pq_getstr(&buf) == EOF) /* receive password */
+	if (pq_getstr_bounded(&buf, 1000) == EOF) /* receive password */
 	{
 		pfree(buf.data);
 		return STATUS_EOF;

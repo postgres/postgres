@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.51 2002/06/20 20:29:49 momjian Exp $
+ * $Id: libpq.h,v 1.52 2002/09/04 23:31:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@ extern int	StreamConnection(int server_fd, Port *port);
 extern void StreamClose(int sock);
 extern void pq_init(void);
 extern int	pq_getbytes(char *s, size_t len);
-extern int	pq_getstring(StringInfo s);
+extern int	pq_getstring(StringInfo s, int maxlen);
 extern int	pq_getbyte(void);
 extern int	pq_peekbyte(void);
 extern int	pq_putbytes(const char *s, size_t len);

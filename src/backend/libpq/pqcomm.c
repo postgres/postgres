@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.140 2002/09/04 20:31:19 momjian Exp $
+ *	$Id: pqcomm.c,v 1.141 2002/09/04 23:31:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -555,16 +555,24 @@ pq_getbytes(char *s, size_t len)
  *		The return value is placed in an expansible StringInfo.
  *		Note that space allocation comes from the current memory context!
  *
+ *		If maxlen is not zero, it is an upper limit on the length of the
+ *		string we are willing to accept.  We abort the connection (by
+ *		returning EOF) if client tries to send more than that.  Note that
+ *		since we test maxlen in the outer per-bufferload loop, the limit
+ *		is fuzzy: we might accept up to PQ_BUFFER_SIZE more bytes than
+ *		specified.  This is fine for the intended purpose, which is just
+ *		to prevent DoS attacks from not-yet-authenticated clients.
+ *
  *		NOTE: this routine does not do any character set conversion,
  *		even though it is presumably useful only for text, because
  *		no code in this module should depend on the encoding.
- *		See pq_getstr in pqformat.c for that.
+ *		See pq_getstr_bounded in pqformat.c for that.
  *
  *		returns 0 if OK, EOF if trouble
  * --------------------------------
  */
 int
-pq_getstring(StringInfo s)
+pq_getstring(StringInfo s, int maxlen)
 {
 	int			i;
 
@@ -572,7 +580,7 @@ pq_getstring(StringInfo s)
 	s->len = 0;
 	s->data[0] = '\0';
 
-	/* Read until we get the terminating '\0' */
+	/* Read until we get the terminating '\0' or overrun maxlen */
 	for (;;)
 	{
 		while (PqRecvPointer >= PqRecvLength)
@@ -594,10 +602,13 @@ pq_getstring(StringInfo s)
 		}
 
 		/* If we're here we haven't got the \0 in the buffer yet. */
-
 		appendBinaryStringInfo(s, PqRecvBuffer + PqRecvPointer,
 							   PqRecvLength - PqRecvPointer);
 		PqRecvPointer = PqRecvLength;
+
+		/* If maxlen is specified, check for overlength input. */
+		if (maxlen > 0 && s->len > maxlen)
+			return EOF;
 	}
 }
 
