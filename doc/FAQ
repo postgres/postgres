@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Apr 8 18:51:15 EDT 2001
+   Last updated: Mon Apr 9 15:27:47 EDT 2001
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -438,7 +438,8 @@
    kernel. The exact amount you need depends on your architecture and how
    many buffers and backend processes you configure for the postmaster.
    For most systems, with default numbers of buffers and processes, you
-   need a minimum of ~1MB.
+   need a minimum of ~1MB. See the PostgreSQL Administrator's Guide for
+   more detailed information about shared memory and semaphores.
    
     3.4) When I try to start the postmaster, I get IpcSemaphoreCreate errors.
     Why?
@@ -452,7 +453,9 @@
    increase your kernel's SEMMNS and SEMMNI parameters.
    
    If the error message is something else, you might not have semaphore
-   support configured in your kernel at all.
+   support configured in your kernel at all. See the PostgreSQL
+   Administrator's Guide for more detailed information about shared
+   memory and semaphores.
    
     3.5) How do I prevent other hosts from accessing my PostgreSQL database?
     
