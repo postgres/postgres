@@ -11,10 +11,12 @@
 
 #include "extern.h"
 
-struct _include_path *include_paths;
 int		ret_value = OK, autocommit = 0;
+struct _include_path *include_paths = NULL;
 struct cursor *cur = NULL;
 struct typedefs *types = NULL;
+struct _defines *defines = NULL;
+
 
 static void
 usage(char *progname)
