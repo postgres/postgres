@@ -1,0 +1,512 @@
+From pgsql-hackers-owner+M15878=candle.pha.pa.us=pgman@postgresql.org Mon Nov 26 18:35:28 2001
+Return-path: <pgsql-hackers-owner+M15878=candle.pha.pa.us=pgman@postgresql.org>
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fAQNZRf08314
+	for <pgman@candle.pha.pa.us>; Mon, 26 Nov 2001 18:35:28 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fAQNXtR48254
+	for <pgman@candle.pha.pa.us>; Mon, 26 Nov 2001 17:34:22 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M15878=candle.pha.pa.us=pgman@postgresql.org)
+Received: from sss.pgh.pa.us ([192.204.191.242])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fAQNSam38109
+	for <pgsql-hackers@postgresql.org>; Mon, 26 Nov 2001 18:28:36 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id fAQNSIk16033;
+	Mon, 26 Nov 2001 18:28:18 -0500 (EST)
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Philip Warner <pjw@rhyme.com.au>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Minor buglet in update...from (I think) 
+In-Reply-To: <200111262022.fAQKMtj16709@candle.pha.pa.us> 
+References: <200111262022.fAQKMtj16709@candle.pha.pa.us>
+Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
+	message dated "Mon, 26 Nov 2001 15:22:55 -0500"
+Date: Mon, 26 Nov 2001 18:28:17 -0500
+Message-ID: <16030.1006817297@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: ORr
+
+Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> Can anyone explain this failure?  It still exists in CVS.
+
+>> update t1 set f2=count(*) from t2 where t1.f1=2 and t2.f1=t1.f1 ;
+>> ERROR:  ExecutePlan: (junk) `ctid' is NULL!
+
+As I recall, discussion about fixing that problem trailed off because
+no one could explain what an aggregate means in UPDATE.  My thought
+is we should probably forbid the construct entirely (SQL does).
+See previous discussion around 7/7/00.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From tgl@sss.pgh.pa.us Mon Nov 26 19:28:31 2001
+Return-path: <tgl@sss.pgh.pa.us>
+Received: from sss.pgh.pa.us (root@[192.204.191.242])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fAR0SVf13056
+	for <pgman@candle.pha.pa.us>; Mon, 26 Nov 2001 19:28:31 -0500 (EST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id fAR0SVk16312;
+	Mon, 26 Nov 2001 19:28:31 -0500 (EST)
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Philip Warner <pjw@rhyme.com.au>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Minor buglet in update...from (I think) 
+In-Reply-To: <200111270023.fAR0NHJ12366@candle.pha.pa.us> 
+References: <200111270023.fAR0NHJ12366@candle.pha.pa.us>
+Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
+	message dated "Mon, 26 Nov 2001 19:23:17 -0500"
+Date: Mon, 26 Nov 2001 19:28:31 -0500
+Message-ID: <16309.1006820911@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: ORr
+
+Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> Oh, so it is the aggregate.  What threw me off is that both parts of the
+> WHERE clause are required to cause the failure,
+
+Not necessarily; I think it's got more to do with a null aggregate
+result:
+
+regression=# create table t1 (f1 datetime);
+CREATE
+regression=# create table t2 (f2 datetime);
+CREATE
+regression=# update t2 set f2 = min(f1) from t1;
+ERROR:  ExecutePlan: (junk) `ctid' is NULL!
+regression=# insert into t1 values ('now');
+INSERT 400577 1
+regression=# update t2 set f2 = min(f1) from t1;
+ERROR:  ExecutePlan: (junk) `ctid' is NULL!
+regression=# insert into t2 values ('now');
+INSERT 400578 1
+regression=# update t2 set f2 = min(f1) from t1;
+UPDATE 1
+regression=#
+
+However the ERROR is only one symptom.  The real problem is that the
+calculation that's being done is useless/nonsensical.
+
+> I don't see a problem with aggregates in UPDATE,
+
+Think harder ... what is the aggregate being taken over, and how do you
+associate the aggregate's single result row with any particular row in
+the UPDATE's target table?
+
+			regards, tom lane
+
+From pgsql-hackers-owner+M15883=candle.pha.pa.us=pgman@postgresql.org Mon Nov 26 19:40:39 2001
+Return-path: <pgsql-hackers-owner+M15883=candle.pha.pa.us=pgman@postgresql.org>
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fAR0ecf14089
+	for <pgman@candle.pha.pa.us>; Mon, 26 Nov 2001 19:40:38 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fAR0YFR49958
+	for <pgman@candle.pha.pa.us>; Mon, 26 Nov 2001 18:37:54 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M15883=candle.pha.pa.us=pgman@postgresql.org)
+Received: from sss.pgh.pa.us ([192.204.191.242])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fAR0Sjm40352
+	for <pgsql-hackers@postgresql.org>; Mon, 26 Nov 2001 19:28:45 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id fAR0SVk16312;
+	Mon, 26 Nov 2001 19:28:31 -0500 (EST)
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Philip Warner <pjw@rhyme.com.au>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Minor buglet in update...from (I think) 
+In-Reply-To: <200111270023.fAR0NHJ12366@candle.pha.pa.us> 
+References: <200111270023.fAR0NHJ12366@candle.pha.pa.us>
+Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
+	message dated "Mon, 26 Nov 2001 19:23:17 -0500"
+Date: Mon, 26 Nov 2001 19:28:31 -0500
+Message-ID: <16309.1006820911@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> Oh, so it is the aggregate.  What threw me off is that both parts of the
+> WHERE clause are required to cause the failure,
+
+Not necessarily; I think it's got more to do with a null aggregate
+result:
+
+regression=# create table t1 (f1 datetime);
+CREATE
+regression=# create table t2 (f2 datetime);
+CREATE
+regression=# update t2 set f2 = min(f1) from t1;
+ERROR:  ExecutePlan: (junk) `ctid' is NULL!
+regression=# insert into t1 values ('now');
+INSERT 400577 1
+regression=# update t2 set f2 = min(f1) from t1;
+ERROR:  ExecutePlan: (junk) `ctid' is NULL!
+regression=# insert into t2 values ('now');
+INSERT 400578 1
+regression=# update t2 set f2 = min(f1) from t1;
+UPDATE 1
+regression=#
+
+However the ERROR is only one symptom.  The real problem is that the
+calculation that's being done is useless/nonsensical.
+
+> I don't see a problem with aggregates in UPDATE,
+
+Think harder ... what is the aggregate being taken over, and how do you
+associate the aggregate's single result row with any particular row in
+the UPDATE's target table?
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M15884=candle.pha.pa.us=pgman@postgresql.org Mon Nov 26 19:49:23 2001
+Return-path: <pgsql-hackers-owner+M15884=candle.pha.pa.us=pgman@postgresql.org>
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fAR0nNf14894
+	for <pgman@candle.pha.pa.us>; Mon, 26 Nov 2001 19:49:23 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fAR0ijR50260
+	for <pgman@candle.pha.pa.us>; Mon, 26 Nov 2001 18:47:51 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M15884=candle.pha.pa.us=pgman@postgresql.org)
+Received: from candle.pha.pa.us (candle.navpoint.com [162.33.245.46])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fAR0dCm40733
+	for <pgsql-hackers@postgresql.org>; Mon, 26 Nov 2001 19:39:12 -0500 (EST)
+	(envelope-from pgman@candle.pha.pa.us)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.11.6/8.10.1) id fAR0d6d13929;
+	Mon, 26 Nov 2001 19:39:06 -0500 (EST)
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-ID: <200111270039.fAR0d6d13929@candle.pha.pa.us>
+Subject: Re: [HACKERS] Minor buglet in update...from (I think)
+In-Reply-To: <16309.1006820911@sss.pgh.pa.us> "from Tom Lane at Nov 26, 2001
+	07:28:31 pm"
+To: Tom Lane <tgl@sss.pgh.pa.us>
+Date: Mon, 26 Nov 2001 19:39:06 -0500 (EST)
+cc: Philip Warner <pjw@rhyme.com.au>, pgsql-hackers@postgresql.org
+X-Mailer: ELM [version 2.4ME+ PL90 (25)]
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+> Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> > Oh, so it is the aggregate.  What threw me off is that both parts of the
+> > WHERE clause are required to cause the failure,
+> 
+> Not necessarily; I think it's got more to do with a null aggregate
+> result:
+> 
+> regression=# create table t1 (f1 datetime);
+> CREATE
+> regression=# create table t2 (f2 datetime);
+> CREATE
+> regression=# update t2 set f2 = min(f1) from t1;
+> ERROR:  ExecutePlan: (junk) `ctid' is NULL!
+> regression=# insert into t1 values ('now');
+> INSERT 400577 1
+> regression=# update t2 set f2 = min(f1) from t1;
+> ERROR:  ExecutePlan: (junk) `ctid' is NULL!
+> regression=# insert into t2 values ('now');
+> INSERT 400578 1
+> regression=# update t2 set f2 = min(f1) from t1;
+> UPDATE 1
+> regression=#
+> 
+> However the ERROR is only one symptom.  The real problem is that the
+> calculation that's being done is useless/nonsensical.
+> 
+> > I don't see a problem with aggregates in UPDATE,
+> 
+> Think harder ... what is the aggregate being taken over, and how do you
+> associate the aggregate's single result row with any particular row in
+> the UPDATE's target table?
+
+I thought the aggregate would be generated on all rows in the table in
+the pre-transaction version of the table, so in this example:
+
+	regression=# update t2 set f2 = min(f1) from t1;
+
+It places the minimum value of t1.f1 in all t2.f2 rows.  Is there
+another way to look at it?
+
+-- 
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From tgl@sss.pgh.pa.us Mon Nov 26 19:51:12 2001
+Return-path: <tgl@sss.pgh.pa.us>
+Received: from sss.pgh.pa.us (root@[192.204.191.242])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fAR0pCf14964
+	for <pgman@candle.pha.pa.us>; Mon, 26 Nov 2001 19:51:12 -0500 (EST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id fAR0pDk16384;
+	Mon, 26 Nov 2001 19:51:13 -0500 (EST)
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Philip Warner <pjw@rhyme.com.au>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Minor buglet in update...from (I think) 
+In-Reply-To: <200111270039.fAR0d6d13929@candle.pha.pa.us> 
+References: <200111270039.fAR0d6d13929@candle.pha.pa.us>
+Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
+	message dated "Mon, 26 Nov 2001 19:39:06 -0500"
+Date: Mon, 26 Nov 2001 19:51:13 -0500
+Message-ID: <16381.1006822273@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: ORr
+
+Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> I thought the aggregate would be generated on all rows in the table in
+> the pre-transaction version of the table, so in this example:
+> 	regression=# update t2 set f2 = min(f1) from t1;
+> It places the minimum value of t1.f1 in all t2.f2 rows.
+
+This actually is not the most interesting example, because the aggregate
+doesn't depend at all on t2.  Try this instead:
+
+regression=# create table t1(f1 int);
+CREATE
+regression=# create table t2(f1 int);
+CREATE
+regression=# insert into t1 values(-1);
+INSERT 400599 1
+regression=# insert into t1 values(-2);
+INSERT 400600 1
+regression=# insert into t1 values(-3);
+INSERT 400601 1
+regression=# insert into t2 values(-1);
+INSERT 400602 1
+regression=# insert into t2 values(-2);
+INSERT 400603 1
+regression=# insert into t2 values(-3);
+INSERT 400604 1
+regression=# update t2 set f1 = count(*) from t1;
+UPDATE 1
+regression=# select * from t2;
+ f1
+----
+ -2
+ -3
+  9
+(3 rows)
+
+regression=#
+
+This is certainly broken, but what's the correct behavior?
+Or how about this, which doesn't even use an aggregate:
+
+regression=# update t2 set f1 = t1.f1 from t1;
+UPDATE 3
+regression=# select * from t2;
+ f1
+----
+ -1
+ -1
+ -1
+(3 rows)
+
+regression=#
+
+That's surprising too, perhaps, but what would you have expected
+and why?
+
+There's a reason why SQL99 forbids joins and aggregates in UPDATE ...
+they're not always well-defined.
+
+I had a proposal (GROUP BY ctid) in the older thread for fixing the
+aggregate misbehavior, but it doesn't solve the more general problem
+of a join that produces multiple matches for the same target row.
+Seems like that probably ought to draw an error.
+
+			regards, tom lane
+
+From pgsql-hackers-owner+M15885=candle.pha.pa.us=pgman@postgresql.org Mon Nov 26 20:10:34 2001
+Return-path: <pgsql-hackers-owner+M15885=candle.pha.pa.us=pgman@postgresql.org>
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fAR1AXf16581
+	for <pgman@candle.pha.pa.us>; Mon, 26 Nov 2001 20:10:33 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fAR12nR50907
+	for <pgman@candle.pha.pa.us>; Mon, 26 Nov 2001 19:06:09 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M15885=candle.pha.pa.us=pgman@postgresql.org)
+Received: from candle.pha.pa.us (candle.navpoint.com [162.33.245.46])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fAR0wHm41320
+	for <pgsql-hackers@postgresql.org>; Mon, 26 Nov 2001 19:58:17 -0500 (EST)
+	(envelope-from pgman@candle.pha.pa.us)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.11.6/8.10.1) id fAR0w6c15346;
+	Mon, 26 Nov 2001 19:58:06 -0500 (EST)
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-ID: <200111270058.fAR0w6c15346@candle.pha.pa.us>
+Subject: Re: [HACKERS] Minor buglet in update...from (I think)
+In-Reply-To: <16381.1006822273@sss.pgh.pa.us> "from Tom Lane at Nov 26, 2001
+	07:51:13 pm"
+To: Tom Lane <tgl@sss.pgh.pa.us>
+Date: Mon, 26 Nov 2001 19:58:06 -0500 (EST)
+cc: Philip Warner <pjw@rhyme.com.au>, pgsql-hackers@postgresql.org
+X-Mailer: ELM [version 2.4ME+ PL90 (25)]
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+> Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> > I thought the aggregate would be generated on all rows in the table in
+> > the pre-transaction version of the table, so in this example:
+> > 	regression=# update t2 set f2 = min(f1) from t1;
+> > It places the minimum value of t1.f1 in all t2.f2 rows.
+> 
+> This actually is not the most interesting example, because the aggregate
+> doesn't depend at all on t2.  Try this instead:
+> 
+> regression=# create table t1(f1 int);
+> CREATE
+> regression=# create table t2(f1 int);
+> CREATE
+> regression=# insert into t1 values(-1);
+> INSERT 400599 1
+> regression=# insert into t1 values(-2);
+> INSERT 400600 1
+> regression=# insert into t1 values(-3);
+> INSERT 400601 1
+> regression=# insert into t2 values(-1);
+> INSERT 400602 1
+> regression=# insert into t2 values(-2);
+> INSERT 400603 1
+> regression=# insert into t2 values(-3);
+> INSERT 400604 1
+> regression=# update t2 set f1 = count(*) from t1;
+> UPDATE 1
+> regression=# select * from t2;
+>  f1
+> ----
+>  -2
+>  -3
+>   9
+> (3 rows)
+> 
+> regression=#
+> 
+> This is certainly broken, but what's the correct behavior?
+
+Shouldn't it be 9 because there is no join of t1 and t2?
+I can also see 3 as a valid answer.
+
+> Or how about this, which doesn't even use an aggregate:
+> 
+> regression=# update t2 set f1 = t1.f1 from t1;
+> UPDATE 3
+> regression=# select * from t2;
+>  f1
+> ----
+>  -1
+>  -1
+>  -1
+> (3 rows)
+> 
+> regression=#
+> 
+> That's surprising too, perhaps, but what would you have expected
+> and why?
+
+So it grabs the first match.  Seems reasonable because t1 returns more
+than one row.
+
+> 
+> There's a reason why SQL99 forbids joins and aggregates in UPDATE ...
+> they're not always well-defined.
+
+Yes, I see that now.
+
+> I had a proposal (GROUP BY ctid) in the older thread for fixing the
+> aggregate misbehavior, but it doesn't solve the more general problem
+> of a join that produces multiple matches for the same target row.
+> Seems like that probably ought to draw an error.
+
+Or a NOTICE stating a random row was chosen.
+
+-- 
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M4046@hub.org Fri Jun 30 08:55:30 2000
+Received: from hub.org (root@hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id HAA17845
+	for <pgman@candle.pha.pa.us>; Fri, 30 Jun 2000 07:55:30 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e5UBuOu21797;
+	Fri, 30 Jun 2000 07:56:24 -0400 (EDT)
+Received: from acheron.rime.com.au (root@albatr.lnk.telstra.net [139.130.54.222])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e5UBtgu21623
+	for <pgsql-hackers@postgresql.org>; Fri, 30 Jun 2000 07:55:44 -0400 (EDT)
+Received: from oberon (Oberon.rime.com.au [203.8.195.100])
+	by acheron.rime.com.au (8.9.3/8.9.3) with SMTP id VAA27179
+	for <pgsql-hackers@postgresql.org>; Fri, 30 Jun 2000 21:50:24 +1000
+Message-ID: <3.0.5.32.20000630215746.03221df0@mail.rhyme.com.au>
+X-Sender: pjw@mail.rhyme.com.au
+X-Mailer: QUALCOMM Windows Eudora Pro Version 3.0.5 (32)
+Date: Fri, 30 Jun 2000 21:57:46 +1000
+To: pgsql-hackers@postgresql.org
+From: Philip Warner <pjw@rhyme.com.au>
+Subject: [HACKERS] Minor buglet in update...from (I think)
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: ORr
+
+
+A minor nasty error I got when trying to improve the query used to disable
+triggers:
+
+create table t1(f1 int4, f2 int4);
+create table t2(f1 int4, f2 int4);
+
+insert into t1 values(1, 0);
+insert into t1 values(2, 0);
+
+insert into t2 values(1, 0);
+
+update t1 set f2=count(*) from t2 where t1.f1=1 and t2.f1=t1.f1 ;
+UPDATE 1
+
+update t1 set f2=count(*) from t2 where t1.f1=2 and t2.f1=t1.f1 ;
+ERROR:  ExecutePlan: (junk) `ctid' is NULL!
+
+I would have expected no update to occur since no rows match.
+
+
+----------------------------------------------------------------
+Philip Warner                    |     __---_____
+Albatross Consulting Pty. Ltd.   |----/       -  \
+(A.C.N. 008 659 498)             |          /(@)   ______---_
+Tel: (+61) 0500 83 82 81         |                 _________  \
+Fax: (+61) 0500 83 82 82         |                 ___________ |
+Http://www.rhyme.com.au          |                /           \|
+                                 |    --________--
+PGP key available upon request,  |  /
+and from pgp5.ai.mit.edu:11371   |/
+
