@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.131 2000/01/18 23:30:20 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.132 2000/01/20 02:24:50 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1032,6 +1032,7 @@ columnDef:  ColId Typename ColConstraintList
 					n->colname = $1;
 					n->typename = makeNode(TypeName);
 					n->typename->name = xlateSqlType("integer");
+					n->typename->typmod = -1;
 					n->raw_default = NULL;
 					n->cooked_default = NULL;
 					n->is_not_null = TRUE;
@@ -2280,6 +2281,7 @@ func_return:  set_opt TypeId
 					n->name = $2;
 					n->setof = $1;
 					n->arrayBounds = NULL;
+					n->typmod = -1;
 					$$ = (Node *)n;
 				}
 		;
@@ -3643,12 +3645,13 @@ Numeric:  FLOAT opt_float
 		| DOUBLE PRECISION
 				{
 					$$ = makeNode(TypeName);
-					$$->name = xlateSqlType("float");
+					$$->name = xlateSqlType("float8");
+					$$->typmod = -1;
 				}
 		| DECIMAL opt_decimal
 				{
 					$$ = makeNode(TypeName);
-					$$->name = xlateSqlType("numeric");
+					$$->name = xlateSqlType("decimal");
 					$$->typmod = $2;
 				}
 		| NUMERIC opt_numeric
@@ -3664,7 +3667,7 @@ numeric:  FLOAT
 		| DOUBLE PRECISION
 				{	$$ = xlateSqlType("float8"); }
 		| DECIMAL
-				{	$$ = xlateSqlType("numeric"); }
+				{	$$ = xlateSqlType("decimal"); }
 		| NUMERIC
 				{	$$ = xlateSqlType("numeric"); }
 		;
@@ -3707,7 +3710,8 @@ opt_numeric:  '(' Iconst ',' Iconst ')'
 				}
 		| /*EMPTY*/
 				{
-					$$ = ((NUMERIC_DEFAULT_PRECISION << 16) | NUMERIC_DEFAULT_SCALE) + VARHDRSZ;
+					/* Insert "-1" meaning "default"; may be replaced later */
+					$$ = -1;
 				}
 		;
 
@@ -3732,53 +3736,39 @@ opt_decimal:  '(' Iconst ',' Iconst ')'
 				}
 		| /*EMPTY*/
 				{
-					$$ = ((NUMERIC_DEFAULT_PRECISION << 16) | NUMERIC_DEFAULT_SCALE) + VARHDRSZ;
+					/* Insert "-1" meaning "default"; may be replaced later */
+					$$ = -1;
 				}
 		;
 
 
-/* SQL92 character data types
+/*
+ * SQL92 character data types
  * The following implements CHAR() and VARCHAR().
  */
 Character:  character '(' Iconst ')'
 				{
 					$$ = makeNode(TypeName);
-					if (strcasecmp($1, "char") == 0)
-						$$->name = xlateSqlType("bpchar");
-					else if (strcasecmp($1, "varchar") == 0)
-						$$->name = xlateSqlType("varchar");
-					else
-						yyerror("internal parsing error; unrecognized character type");
-
+					$$->name = xlateSqlType($1);
 					if ($3 < 1)
-						elog(ERROR,"length for '%s' type must be at least 1",$1);
+						elog(ERROR,"length for type '%s' must be at least 1",$1);
 					else if ($3 > MaxAttrSize)
 						elog(ERROR,"length for type '%s' cannot exceed %ld",$1,
 							MaxAttrSize);
 
-					/* we actually implement this sort of like a varlen, so
+					/* we actually implement these like a varlen, so
 					 * the first 4 bytes is the length. (the difference
-					 * between this and "text" is that we blank-pad and
-					 * truncate where necessary
+					 * between these and "text" is that we blank-pad and
+					 * truncate where necessary)
 					 */
 					$$->typmod = VARHDRSZ + $3;
 				}
 		| character
 				{
 					$$ = makeNode(TypeName);
-					/* Let's try to make all single-character types into bpchar(1)
-					 * - thomas 1998-05-07
-					 */
-					if (strcasecmp($1, "char") == 0)
-					{
-						$$->name = xlateSqlType("bpchar");
-						$$->typmod = VARHDRSZ + 1;
-					}
-					else
-					{
-						$$->name = xlateSqlType($1);
-						$$->typmod = -1;
-					}
+					$$->name = xlateSqlType($1);
+					/* default length, if needed, will be inserted later */
+					$$->typmod = -1;
 				}
 		;
 
@@ -5131,6 +5121,7 @@ ColLabel:  ColId						{ $$ = $1; }
 		| EXPLAIN						{ $$ = "explain"; }
 		| EXTEND						{ $$ = "extend"; }
 		| FALSE_P						{ $$ = "false"; }
+		| FLOAT							{ $$ = "float"; }
 		| FOREIGN						{ $$ = "foreign"; }
 		| GLOBAL						{ $$ = "global"; }
 		| GROUP							{ $$ = "group"; }
@@ -5314,6 +5305,10 @@ xlateSqlType(char *name)
 	else if (!strcasecmp(name, "real")
 	 || !strcasecmp(name, "float"))
 		return "float8";
+	else if (!strcasecmp(name, "decimal"))
+		return "numeric";
+	else if (!strcasecmp(name, "char"))
+		return "bpchar";
 	else if (!strcasecmp(name, "interval"))
 		return "timespan";
 	else if (!strcasecmp(name, "boolean"))

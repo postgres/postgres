@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.130 2000/01/16 08:21:59 tgl Exp $
+ *	$Id: analyze.c,v 1.131 2000/01/20 02:24:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,11 @@
 #include "parser/parse_clause.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
+#include "parser/parse_type.h"
 #include "utils/builtins.h"
+#include "utils/numeric.h"
+
+void		CheckSelectForUpdate(Query *qry); /* no points for style... */
 
 static Query *transformStmt(ParseState *pstate, Node *stmt);
 static Query *transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt);
@@ -38,7 +42,7 @@ static Query *transformCreateStmt(ParseState *pstate, CreateStmt *stmt);
 
 static void transformForUpdate(Query *qry, List *forUpdate);
 static void transformFkeyGetPrimaryKey(FkConstraint *fkconstraint);
-void		CheckSelectForUpdate(Query *qry);
+static void transformColumnType(ParseState *pstate, ColumnDef *column);
 
 /* kluge to return extra info from transformCreateStmt() */
 static List	   *extras_before;
@@ -600,6 +604,8 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 			case T_ColumnDef:
 				column = (ColumnDef *) element;
 				columns = lappend(columns, column);
+
+				transformColumnType(pstate, column);
 
 				/* Special case SERIAL type? */
 				if (column->is_sequence)
@@ -1701,4 +1707,31 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint)
 	heap_close(pkrel, AccessShareLock);
 }
 
-
+/*
+ * Special handling of type definition for a column
+ */
+static void
+transformColumnType(ParseState *pstate, ColumnDef *column)
+{
+	/*
+	 * If the column doesn't have an explicitly specified typmod,
+	 * check to see if we want to insert a default length.
+	 *
+	 * Note that we deliberately do NOT look at array or set information
+	 * here; "numeric[]" needs the same default typmod as "numeric".
+	 */
+	if (column->typename->typmod == -1)
+	{
+		switch (typeTypeId(typenameType(column->typename->name)))
+		{
+			case BPCHAROID:
+				/* "char" -> "char(1)" */
+				column->typename->typmod = VARHDRSZ + 1;
+				break;
+			case NUMERICOID:
+				column->typename->typmod = VARHDRSZ +
+					((NUMERIC_DEFAULT_PRECISION<<16) | NUMERIC_DEFAULT_SCALE);
+				break;
+		}
+	}
+}
