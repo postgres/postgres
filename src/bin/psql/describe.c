@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.86 2003/10/17 00:57:04 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.87 2003/10/26 02:53:45 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -549,7 +549,7 @@ objectDescription(const char *pattern)
 
 	appendPQExpBuffer(&buf,
 					  ") AS tt\n"
-					  "  JOIN pg_catalog.pg_description d ON (tt.oid = d.objoid and tt.tableoid = d.classoid and d.objsubid = 0)\n");
+					  "  JOIN pg_catalog.pg_description d ON (tt.oid = d.objoid AND tt.tableoid = d.classoid AND d.objsubid = 0)\n");
 
 	appendPQExpBuffer(&buf, "ORDER BY 1, 2, 3;");
 
@@ -1028,7 +1028,7 @@ describeOneTableDetails(const char *schemaname,
 				 "SELECT t.tgname, pg_catalog.pg_get_triggerdef(t.oid)\n"
 							  "FROM pg_catalog.pg_trigger t\n"
 							  "WHERE t.tgrelid = '%s' "
-							  "and (not tgisconstraint "
+							  "AND (not tgisconstraint "
 							  " OR NOT EXISTS"
 							  "  (SELECT 1 FROM pg_catalog.pg_depend d "
 							  "   JOIN pg_catalog.pg_constraint c ON (d.refclassid = c.tableoid AND d.refobjid = c.oid) "
