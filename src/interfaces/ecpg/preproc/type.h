@@ -77,6 +77,7 @@ struct when
 
 struct index
 {
-	int ival;
-	char *str;
+    int index1;
+    int index2;
+    char *str;
 };

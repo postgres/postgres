@@ -5,11 +5,11 @@ extern "C" {
 #endif
 
 void		ECPGdebug(int, FILE *);
-bool		ECPGconnect(const char *dbname);
+bool		ECPGconnect(const char *);
 bool		ECPGdo(int, char *,...);
 bool		ECPGtrans(int, const char *);
 bool		ECPGfinish(void);
-bool		ECPGstatus(void);
+bool		ECPGdisconnect(const char *);
 
 void		ECPGlog(const char *format,...);
 
@@ -39,3 +39,5 @@ void		sqlprint(void);
 #ifdef __cplusplus
 }
 #endif
+
+#include <ecpgerrno.h>

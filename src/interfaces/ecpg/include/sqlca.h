@@ -10,10 +10,11 @@ struct sqlca
 	int			sqlcode;
 	struct
 	{
-		int			sqlerrml;
+		int		sqlerrml;
 		char		sqlerrmc[1000];
 	}			sqlerrm;
-}			sqlca;
+	long			sqlerrd[6];
+} sqlca;
 
 #endif
 

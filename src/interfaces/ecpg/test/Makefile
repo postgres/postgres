@@ -1,14 +1,18 @@
-all: test2 perftest
+all: test1 test2 perftest
+
+LDFLAGS=-g -I ../include -I ../../libpq -L../lib -lecpg -L../../libpq -lpq -lcrypt --static
+
+test1: test1.c
+test1.c: test1.pgc
+	../preproc/ecpg $?
 
 test2: test2.c
-	gcc -g -I ../include -I ../../libpq -o test2 test2.c -L../lib -lecpg -L../../libpq -lpq -lcrypt --static
 test2.c: test2.pgc
-	../preproc/ecpg test2.pgc
+	../preproc/ecpg $?
 
 perftest: perftest.c
-	gcc -g -I ../include -I ../../libpq -o perftest perftest.c -L../lib -lecpg -L../../libpq -lpq -lcrypt --static
-perftest.c: perftest.pgc
-	../preproc/ecpg perftest.pgc
+perftest.c:perftest.pgc
+	../preproc/ecpg $?
 
 clean:
-	/bin/rm test2 test2.c perftest perftest.c log
+	/bin/rm test1 test2 perftest *.c log

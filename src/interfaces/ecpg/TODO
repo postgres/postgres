@@ -1,55 +1,14 @@
-This list is still from Linus. MM
-
-The variables should be static.
-
-There should be different error numbers for the different errors instead of
-just -1 for them all.
-    
-Missing library functions to_date et al.
-    
-Oracle has array operations that enhances speed. When implementing it in
-ecpg it is done for compatibility reasons only. For them to improve speed
-would require a lot more insight in the postgres internal mechanisms than I
-possess.
-    
-As well as complex types like records and arrays, typedefs would be a good
-thing to take care of.
-    
-To set up a database you need a few scripts with table definitions and other
-configuration parameters. If you have these scripts for an old database you
-would like to just apply them to get a postgres database that works in the
-same way. The functionality could be accomplished with some conversion
-scripts. Speed will never be accomplished in this way. To do this you need a
-bigger insight in the database construction and the use of the database than
-could be realised in a script.
-
-Now comes my list (MM):
-
-The return code is alway -1 in case of an error. You cannot see which error
-occured by examining the return code.
-
 ecpg does not understand enum datatypes.
 
-There is no exec sql prepare statement.
-
 The complete structure definition has to be listed inside the declare
-section for ecpg to be able to understand it.
+section of the structure variable for ecpg to be able to understand it.
 
-There is no way yet to fill a complete array with one call except arrays of
-[unsigned] char which are considered strings.
+Variable type bool has to be checked. I never used it so far.
 
 ecpg cannot use pointer variables except [unsigned] char *
 
-give back the number of tuples affected via sqlca
+There is no exec sql type statement which is the SQL version of a typedef.
 
-exec sql disconnect {current|default|all|connectionname|connection_hostvar};
- oder <disconnect statement> ::=
-    DISCONNECT <disconnect object>
+There is no exec sql prepare statement.
 
- <disconnect object> ::=
-      <connection object>
-    | ALL
-    | CURRENT
- commit release|commit work release auch disconnect
-
-It is not neccessary to check for "not found" after all commands.
+There is no SQLSTATE

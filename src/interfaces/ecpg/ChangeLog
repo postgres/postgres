@@ -149,3 +149,43 @@ Mon Apr 27 14:26:55 CEST 1998
 	  and :foo.bar as variables.
 	- Set version to 2.2.0
 
+Tue Apr 28 14:48:41 CEST 1998
+
+	- Put operator "->" back into parser. Note that :foo->bar means the
+	  C term, but :foo ->bar means the operator "->".
+
+Tue Apr 28 15:49:07 CEST 1998
+
+	- Added exec sql disconnect command.
+	- Allow varchar in C to be written in uppercase too.
+	- Added whenever option "do break;"
+
+Wed Apr 29 09:17:53 CEST 1998
+
+	- Corrected parsing of C comments.
+	- Also allow C++ style comments.
+	- Make sure not found is only checked after commands that could
+          return it.
+	- Added error codes, see ecpgerror.h for details.
+	- Added "exec sql <TransactionStmt> release" as disconnect statement
+	  for compatibility issues.
+
+Thu Apr 30 10:42:10 CEST 1998
+
+	- Added a -t option to disable automatic transaction start.
+	- Added sqlerrd[] to sqlca struct.
+	- Give back number of tuples affect in sqlca.sqlerrd[2].
+
+Thu Apr 30 13:36:02 CEST 1998
+
+	- Make the return code different in case of different errors.
+
+Wed May  6 11:42:48 CEST 1998
+
+	- Free memory if possible
+	- Some bugfixes for bugs I found while changing the memory
+          allocation code
+	- Now able to fill complete array with one call (see test1.pgc for
+          an example)
+	- Set version to 2.3.0
+	- Set library version to 2.1

@@ -121,5 +121,7 @@ exec sql end declare section;
 
 	exec sql commit;
 
+	exec sql disconnect;
+
 	return (0);
 }

@@ -21,6 +21,7 @@
  */
 static ScanKeyword ScanKeywords[] = {
 	/* name					value			*/
+	{"VARCHAR", S_VARCHAR},
 	{"auto", S_AUTO},
 	{"bool", S_BOOL},
 	{"char", S_CHAR},

@@ -43,3 +43,11 @@ extern void *mm_alloc(size_t), *mm_realloc(void *, size_t);
 ScanKeyword * ScanECPGKeywordLookup(char *);
 ScanKeyword * ScanCKeywordLookup(char *);
 extern void yyerror(char *);
+
+/* return codes */
+
+#define OK		0
+#define NO_INCLUDE_FILE	1
+#define PARSE_ERROR	2
+#define OUT_OF_MEMORY	3
+#define ILLEGAL_OPTION	4

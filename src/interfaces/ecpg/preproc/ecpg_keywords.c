@@ -21,15 +21,18 @@
  */
 static ScanKeyword ScanKeywords[] = {
 	/* name					value			*/
+	{"break", SQL_BREAK},
 	{"call", SQL_CALL},
 	{"connect", SQL_CONNECT},
 	{"continue", SQL_CONTINUE},
+	{"disconnect", SQL_DISCONNECT},
 	{"found", SQL_FOUND},
 	{"go", SQL_GO},
 	{"goto", SQL_GOTO},
 	{"immediate", SQL_IMMEDIATE},
 	{"indicator", SQL_INDICATOR},
 	{"open", SQL_OPEN},
+	{"release", SQL_RELEASE},
 	{"section", SQL_SECTION},
 	{"sqlerror", SQL_SQLERROR},
 	{"sqlprint", SQL_SQLPRINT},

@@ -1,0 +1,63 @@
+#include <stdio.h>
+
+exec sql whenever sqlerror sqlprint;
+
+exec sql include sqlca;
+
+int
+main ()
+{
+exec sql begin declare section;
+        int amount[5];
+        char name[5][8];
+exec sql end declare section;
+	char msg[128], command[128];
+        FILE *dbgs;
+        int i,j;
+
+	if ((dbgs = fopen("log", "w")) != NULL)
+                ECPGdebug(1, dbgs);
+
+	strcpy(msg, "connect");
+	exec sql connect mm;
+
+	strcpy(msg, "create");
+	exec sql create table test(name char(8), amount int);
+
+	strcpy(msg, "execute insert 1");
+        sprintf(command, "insert into test(name, amount) values ('foobar', 1)");
+        exec sql execute immediate :command;
+
+        strcpy(msg, "excute insert 2");
+        sprintf(command, "insert into test(name, amount) select name, amount+1 from test");
+        exec sql execute immediate :command;
+
+        strcpy(msg, "excute insert 3");
+        sprintf(command, "insert into test(name, amount) select name, amount+10 from test");
+        exec sql execute immediate :command;
+        
+	printf("Inserted %d tuples via execute immediate\n", sqlca.sqlerrd[2]);
+
+	strcpy(msg, "commit");
+	exec sql commit;
+
+        strcpy(msg, "select");
+        exec sql select name, amount into :name, :amount from test;
+
+        for (i=0, j=sqlca.sqlerrd[2]; i<j; i++)
+            printf("name[%d]=%8.8s, amount[%d]=%d\n", i, name[i], i, amount[i]);
+        
+	strcpy(msg, "drop");
+	exec sql drop table test;
+
+	strcpy(msg, "commit");
+	exec sql commit;
+
+	strcpy(msg, "disconnect"); 
+        exec sql disconnect;
+        
+	if (dbgs != NULL)
+                fclose(dbgs);
+
+	return (0);
+}

@@ -2,13 +2,6 @@
 
 exec sql include header_test;
 
-static int not_found = 0;
-static void
-set_not_found(void)
-{
-	not_found = 1;
-}
-
 int
 main ()
 {
@@ -43,10 +36,7 @@ exec sql end declare section;
 	exec sql insert into meskes(name, born, age, married) values ('Michael', 19660117, 32, '19900404');
 	exec sql insert into meskes(name, born, age) values ('Carsten', 19910103, 7);
 	exec sql insert into meskes(name, born, age) values ('Marc', 19930907, 4);
-
-	sprintf(command, "insert into meskes(name, born, age) values ('Chris', 19970923, 0)");
-	strcpy(msg, "execute");
-	exec sql execute immediate :command;
+	exec sql insert into meskes(name, born, age) values ('Chris', 19970923, 0);
 
 	strcpy(msg, "commit");
 	exec sql commit;
@@ -58,11 +48,10 @@ exec sql end declare section;
 	strcpy(msg, "open");
 	exec sql open cur;
 
-	while (not_found == 0) {
+	while (1) {
 		strcpy(msg, "fetch");
 		exec sql fetch cur into :personal:ind_personal, :married:ind_married;
-		if (not_found == 0)
-			printf ("%8.8s was born %d (age = %d) %s%s\n", personal.name.arr, personal.birth.born, personal.birth.age, ind_married ? "" : "and married ", ind_married ? "" : married);
+                printf ("%8.8s was born %d (age = %d) %s%s\n", personal.name.arr, personal.birth.born, personal.birth.age, ind_married ? "" : "and married ", ind_married ? "" : married);
 	}
 
 	strcpy(msg, "close");
@@ -74,6 +63,9 @@ exec sql end declare section;
 	strcpy(msg, "commit");
 	exec sql commit;
 
+	strcpy(msg, "disconnect"); 
+
+	exec sql disconnect;
 	if (dbgs != NULL)
                 fclose(dbgs);
 

@@ -39,6 +39,7 @@ int debugging = 0;
 extern YYSTYPE yylval;
 int llen;
 char literal[MAX_PARSE_BUFFER];
+int before_comment;
 
 struct _yy_buffer { YY_BUFFER_STATE 	buffer;
 		    long		lineno;
@@ -153,7 +154,7 @@ space			[ \t\n\f]
 other			.
 
 /* some stuff needed for ecpg */
-ccomment        \/\*([^*]|\*[^/]|\*\*[^/])*\*\/
+ccomment	"//".*\n
 exec    [eE][xX][eE][cC]
 include [iI][nN][cC][lL][uU][dD][eE]
 sql     [sS][qQ][lL]
@@ -174,12 +175,18 @@ sql     [sS][qQ][lL]
 %%
 <SQL>{comment}		{ /* ignore */ }
 
-<SQL>{xcline}		{ /* ignore */ }
+{xcline}		{ /* ignore */ }
 
-<xc>{xcstar}	|
-<SQL>{xcstart}		{ BEGIN(xc); }
+<xc>{xcstar}		{ /* ignore */ }
+{xcstart}		{
+				fprintf(stderr,"ys = %d %d\n", YYSTATE, before_comment);
+				before_comment = YYSTATE;
+	 			BEGIN(xc);
+				fprintf(stderr,"ys = %d %d\n", YYSTATE,
+before_comment);
+			}
 
-<xc>{xcstop}	{ BEGIN(SQL); }
+<xc>{xcstop}	{ fprintf(stderr,"ys = %d %d\n", YYSTATE, before_comment);BEGIN(before_comment); }
 
 <xc>{xcinside}	{ /* ignore */ }
 
@@ -306,7 +313,6 @@ sql     [sS][qQ][lL]
 					return (yytext[0]);
 				}
 <SQL>{self}				{ 	return (yytext[0]); }
-<SQL>"->"                      { return S_STRUCTPOINTER; }
 <SQL>{operator}/-[\.0-9]	{
 					yylval.str = strdup((char*)yytext);
 					return (Op);
@@ -402,7 +408,7 @@ sql     [sS][qQ][lL]
 					return (FCONST);
 				}
 
-<SQL>:{identifier}	{
+<SQL>:{identifier}(("->"|\.){identifier})*	{
 					yylval.str = strdup((char*)yytext+1);
 					return(CVARIABLE);
 			}
@@ -436,6 +442,7 @@ sql     [sS][qQ][lL]
 <SQL>{other}			{ return (yytext[0]); }
 
 <C>{exec}{space}{sql}		{ BEGIN SQL; return SQL_START; }
+<C>{ccomment}			{ /* ignore */ } 
 <C>{identifier}	{
 					ScanKeyword		*keyword;
 
@@ -501,7 +508,7 @@ sql     [sS][qQ][lL]
 			  if (!yyin)
 			  {
 				fprintf(stderr, "Error: Cannot open include file %s in line %d\n", yytext, yylineno);
-				exit(1); 
+				exit(NO_INCLUDE_FILE); 
 			  }
 
 			  input_filename = strdup(inc_file);

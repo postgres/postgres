@@ -22,12 +22,13 @@ extern char *optarg;
 #include "extern.h"
 
 struct _include_path *include_paths;
- 
+static int no_auto_trans = 0;
+
 static void
 usage(char *progname)
 {
 	fprintf(stderr, "ecpg - the postgresql preprocessor, version: %d.%d.%d\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
-	fprintf(stderr, "Usage: %s: [-v] [-I include path] [ -o output file name] file1 [file2] ...\n", progname);
+	fprintf(stderr, "Usage: %s: [-v] [-t] [-I include path] [ -o output file name] file1 [file2] ...\n", progname);
 }
 
 static void
@@ -51,7 +52,7 @@ main(int argc, char *const argv[])
 	add_include_path("/usr/local/include");
 	add_include_path(".");
 
-	while ((c = getopt(argc, argv, "vo:I:")) != EOF)
+	while ((c = getopt(argc, argv, "vo:I:t")) != EOF)
 	{
 		switch (c)
 		{
@@ -65,23 +66,26 @@ main(int argc, char *const argv[])
 			case 'I':
 				add_include_path(optarg);
 		                break;
+		        case 't':
+		        	no_auto_trans = 1;
+		        	break;
 			case 'v':
 				fprintf(stderr, "ecpg - the postgresql preprocessor, version: %d.%d.%d\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
 				fprintf(stderr, "exec sql include ... search starts here:\n");
 				for (ip = include_paths; ip != NULL; ip = ip->next)
 					fprintf(stderr, " %s\n", ip->path);
 				fprintf(stderr, "End of search list.\n");
-				return (0);
+				return (OK);
 			default:
 				usage(argv[0]);
-				return (1);
+				return (ILLEGAL_OPTION);
 		}
 	}
 
 	if (optind >= argc)			/* no files specified */
 	{
 		usage(argv[0]);
-		return(1);
+		return(ILLEGAL_OPTION);
 	}
 	else
 	{
@@ -151,8 +155,8 @@ main(int argc, char *const argv[])
 				
 				cur = NULL;
 				
-				/* we need two includes */
-				fprintf(yyout, "/* Processed by ecpg (%d.%d.%d) */\n/*These two include files are added by the preprocessor */\n#include <ecpgtype.h>\n#include <ecpglib.h>\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
+				/* we need two includes and a constant */
+				fprintf(yyout, "/* Processed by ecpg (%d.%d.%d) */\n/*These two include files are added by the preprocessor */\n#include <ecpgtype.h>\n#include <ecpglib.h>\n\nconst int no_auto_trans = %d;\n\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL, no_auto_trans);
 
 				/* and parse the source */
 				yyparse();
@@ -169,5 +173,5 @@ main(int argc, char *const argv[])
 			free(input_filename);
 		}
 	}
-	return (0);
+	return (OK);
 }
