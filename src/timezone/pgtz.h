@@ -1,4 +1,5 @@
 #include "postgres.h"
+#include "miscadmin.h"
 
 #ifndef HAVE_SYMLINK
 #define HAVE_SYMLINK 0

@@ -17974,8 +17974,9 @@ ac_config_files="$ac_config_files GNUmakefile src/Makefile.global"
 ac_config_links="$ac_config_links src/backend/port/dynloader.c:src/backend/port/dynloader/${template}.c src/backend/port/pg_sema.c:${SEMA_IMPLEMENTATION} src/backend/port/pg_shmem.c:${SHMEM_IMPLEMENTATION} src/include/dynloader.h:src/backend/port/dynloader/${template}.h src/include/pg_config_os.h:src/include/port/${template}.h src/Makefile.port:src/makefiles/Makefile.${template}"
 
 
-case $host_os in mingw*)
-ac_config_commands="$ac_config_commands default-1"
+case $host_os in mingw*);;
+*)
+ac_config_commands="$ac_config_commands check_win32_symlinks"
 
 	;;
 esac
@@ -18450,14 +18451,7 @@ done
 
 _ACEOF
 
-cat >>$CONFIG_STATUS <<_ACEOF
-#
-# INIT-COMMANDS section.
-#
 
-
-
-_ACEOF
 
 
 
@@ -18475,7 +18469,7 @@ do
   "src/include/dynloader.h" ) CONFIG_LINKS="$CONFIG_LINKS src/include/dynloader.h:src/backend/port/dynloader/${template}.h" ;;
   "src/include/pg_config_os.h" ) CONFIG_LINKS="$CONFIG_LINKS src/include/pg_config_os.h:src/include/port/${template}.h" ;;
   "src/Makefile.port" ) CONFIG_LINKS="$CONFIG_LINKS src/Makefile.port:src/makefiles/Makefile.${template}" ;;
-  "default-1" ) CONFIG_COMMANDS="$CONFIG_COMMANDS default-1" ;;
+  "check_win32_symlinks" ) CONFIG_COMMANDS="$CONFIG_COMMANDS check_win32_symlinks" ;;
   "src/include/pg_config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS src/include/pg_config.h" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
@@ -19229,13 +19223,12 @@ ac_abs_top_srcdir=`cd "$ac_dir" && cd $ac_top_srcdir && pwd`
   { echo "$as_me:$LINENO: executing $ac_dest commands" >&5
 echo "$as_me: executing $ac_dest commands" >&6;}
   case $ac_dest in
-    default-1 )
+    check_win32_symlinks )
 # Links sometimes fail undetected on Mingw -
 # so here we detect it and warn the user
 for FILE in "$CONFIG_LINKS"
  do
 	# test -e works for symlinks in the MinGW console
-	# We can't call AC_MSG_WARN from here, so we expand it
 	test -e `expr "$FILE" : '\(^:*\)'` || { echo "$as_me:$LINENO: WARNING: *** link for $FILE - please fix by hand" >&5
 echo "$as_me: WARNING: *** link for $FILE - please fix by hand" >&2;}
  done
