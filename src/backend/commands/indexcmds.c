@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.106 2003/08/17 19:58:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.107 2003/09/19 19:57:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -658,16 +658,40 @@ void
 ReindexTable(RangeVar *relation, bool force)
 {
 	Oid			heapOid;
-	char		relkind;
+	HeapTuple	tuple;
 
 	heapOid = RangeVarGetRelid(relation, false);
-	relkind = get_rel_relkind(heapOid);
+	tuple = SearchSysCache(RELOID,
+						   ObjectIdGetDatum(heapOid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))		/* shouldn't happen */
+		elog(ERROR, "cache lookup failed for relation %u", heapOid);
 
-	if (relkind != RELKIND_RELATION && relkind != RELKIND_TOASTVALUE)
+	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_RELATION &&
+		((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_TOASTVALUE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("relation \"%s\" is not a table",
 						relation->relname)));
+
+	if (IsSystemClass((Form_pg_class) GETSTRUCT(tuple)) &&
+		!IsToastClass((Form_pg_class) GETSTRUCT(tuple)))
+	{
+		if (!allowSystemTableMods)
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("permission denied: \"%s\" is a system table",
+							relation->relname),
+					 errhint("Do REINDEX in standalone postgres with -O -P options.")));
+		if (!IsIgnoringSystemIndexes())
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("permission denied: \"%s\" is a system table",
+							relation->relname),
+					 errhint("Do REINDEX in standalone postgres with -P -O options.")));
+	}
+
+	ReleaseSysCache(tuple);
 
 	/*
 	 * In-place REINDEX within a transaction block is dangerous, because
