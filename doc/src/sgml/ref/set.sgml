@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.36 2000/04/07 13:31:18 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.37 2000/04/08 23:12:01 momjian Exp $
 Postgres documentation
 -->
 
@@ -159,7 +159,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
 	  <term>DEFAULT</term>
 	  <listitem>
 	   <para>
-	    restores the default values (<literal>US,Postgres</literal>)
+	    restores the default values (<literal>ISO</literal>)
 	   </para>
 	  </listitem>
 	 </varlistentry>

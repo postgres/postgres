@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.41 2000/03/31 03:27:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.42 2000/04/08 23:11:59 momjian Exp $
 -->
 
  <chapter id="release">
@@ -186,7 +186,7 @@ Issue ecpg error if NULL value is returned to variable with no NULL
 indicator (Christof)
 Allow ^C to cancel COPY command (Massimo)
 Add SET FSYNC and SHOW PG_OPTIONS commands(Massimo)
-Improve CREATE FUNCTION to allow type conversion (Bernie Frankpitt)
+Function name overloading for dynamically-loaded C functions (Frankpitt)
 Add CmdTuples() to libpq++(Vince)
 New CREATE CONSTRAINT TRIGGER and SET CONSTRAINTS commands(Jan)
 Allow CREATE FUNCTION/WITH clause to be used for all language types

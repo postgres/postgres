@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.18 2000/03/31 03:27:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.19 2000/04/08 23:12:00 momjian Exp $
 -->
 
  <chapter id="syntax">
@@ -98,7 +98,7 @@ VACUUM VERBOSE
      are allowed to be present as column labels, but not as identifiers:
 
      <programlisting>
-CASE COALESCE CROSS CURRENT CURRENT_USER 
+CASE COALESCE CROSS CURRENT CURRENT_USER CURRENT_SESSION
 DEC DECIMAL 
 ELSE END
 FALSE FOREIGN 

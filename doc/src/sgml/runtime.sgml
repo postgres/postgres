@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.7 2000/03/31 03:27:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.8 2000/04/08 23:12:00 momjian Exp $
 -->
 
  <Chapter Id="runtime">
@@ -606,6 +606,17 @@ showportnumber
       <listitem>
        <para>
 	Remove duplicate tuples from pg_listener.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       fsync
+      </term>
+      <listitem>
+       <para>
+	Disable fsync on a per-backend basis.
        </para>
       </listitem>
      </varlistentry>
