@@ -5086,6 +5086,7 @@ c_anything:  IDENT 	{ $$ = $1; }
 	| CSTRING	{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
 	| Iconst	{ $$ = $1; }
 	| Fconst	{ $$ = $1; }
+	| Sconst	{ $$ = $1; }
 	| '*'		{ $$ = make_str("*"); }
 	| '+'		{ $$ = make_str("+"); }
 	| '-'		{ $$ = make_str("-"); }
@@ -5112,8 +5113,6 @@ c_anything:  IDENT 	{ $$ = $1; }
 	| VARCHAR	{ $$ = make_str("varchar"); }
         | '['		{ $$ = make_str("["); }
 	| ']'		{ $$ = make_str("]"); }
-/*        | '('		{ $$ = make_str("("); }
-	| ')'		{ $$ = make_str(")"); }*/
 	| '='		{ $$ = make_str("="); }
 
 blockstart : '{' {

@@ -848,5 +848,9 @@ Thu Mar  2 17:42:16 CET 2000
 
 	- Print error message if an indicator array is given for input
 	  variables.
+
+Fri Mar  3 10:47:06 CET 2000
+
+	- Fixed handling of double quote in C code.
 	- Set library version to 3.1.0.
 	- Set ecpg version to 2.7.0.

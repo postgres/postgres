@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.51 2000/02/22 19:57:10 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.52 2000/03/03 09:56:03 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ static int		literalalloc;	/* current allocated buffer size */
 #define startlit()  (literalbuf[0] = '\0', literallen = 0)
 static void addlit(char *ytext, int yleng);
 
-int before_comment;
+int state_before;
 
 struct _yy_buffer { YY_BUFFER_STATE 	buffer;
 		    long		lineno;
@@ -268,12 +268,12 @@ cppline			{space}*#(.*\\{line_end})*.*
 {xcline}		{ ECHO; }
 
 {xcstart}		{
-				before_comment = YYSTATE;
+				state_before = YYSTATE;
 				ECHO;
 	 			BEGIN(xc);
 			}
 
-<xc>{xcstop}	{ ECHO; BEGIN(before_comment); }
+<xc>{xcstop}	{ ECHO; BEGIN(state_before); }
 
 <xc>{xcinside}	{ ECHO; }
 
@@ -303,7 +303,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 					BEGIN(xh);
 					startlit();
 				}
-<xh>{xhstop}	{
+<xh>{xhstop}			{
 					char* endptr;
 
 					BEGIN(SQL);
@@ -314,45 +314,36 @@ cppline			{space}*#(.*\\{line_end})*.*
 					return ICONST;
 				}
 
-<SQL>{xqstart}		{
+{xqstart}			{
+					state_before == YYSTATE;
 					BEGIN(xq);
 					startlit();
 				}
-<xq>{xqstop}	{
-					BEGIN(SQL);
+<xq>{xqstop}			{
+					BEGIN(state_before);
 					yylval.str = mm_strdup(literalbuf);
 					return SCONST;
 				}
 <xq>{xqdouble}	|
 <xq>{xqinside}	|
-<xq>{xqliteral} {
+<xq>{xqliteral} 		{
 					addlit(yytext, yyleng);
 				}
-<xq>{xqcat}		{		/* ignore */
+<xq>{xqcat}			{
+					/* ignore */
 				}
 
-<SQL>{xdstart}		{
+{xdstart}			{
+					state_before = YYSTATE;
 					BEGIN(xd);
 					startlit();
 				}
-<xd>{xdstop}	{
-					BEGIN(SQL);
+<xd>{xdstop}			{
+					BEGIN(state_before);
 					yylval.str = mm_strdup(literalbuf);
 					return CSTRING;
 				}
-<xd>{xdinside}	{
-					addlit(yytext, yyleng);
-				}
-{xdstart}		{
-					BEGIN(xdc);
-					startlit();
-				}
-<xdc>{xdstop}	{
-					BEGIN(C);
-					yylval.str = mm_strdup(literalbuf);
-					return CSTRING;
-				}
-<xdc>{xdcinside}	{
+<xd>{xdinside}			{
 					addlit(yytext, yyleng);
 				}
 <SQL>{typecast}			{ 	return TYPECAST; }
@@ -365,7 +356,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 					 BEGIN C;
 				  return yytext[0];
 				}
-<SQL>{operator}		{
+<SQL>{operator}			{
 					if (strcmp((char*)yytext,"!=") == 0)
 						yylval.str = mm_strdup("<>"); /* compatability */
 					else
