@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.28 1999/10/25 03:07:55 tgl Exp $
+ * $Id: postgres.h,v 1.29 1999/11/04 08:01:07 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,6 +138,7 @@ typedef uint32 CommandId;
 #define DATA(x) extern int errno
 #define DESCR(x) extern int errno
 #define DECLARE_INDEX(x) extern int errno
+#define DECLARE_UNIQUE_INDEX(x) extern int errno
 
 #define BUILD_INDICES
 #define BOOTSTRAP

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.27 1999/11/01 04:00:57 momjian Exp $
+ * $Id: indexing.h,v 1.28 1999/11/04 08:01:06 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,11 +119,11 @@ DECLARE_INDEX(pg_index_indexrelid_index on pg_index using btree(indexrelid oid_o
 DECLARE_INDEX(pg_proc_oid_index on pg_proc using btree(oid oid_ops));
 DECLARE_INDEX(pg_proc_proname_narg_type_index on pg_proc using btree(proname name_ops, pronargs int2_ops, proargtypes oid8_ops));
 
-DECLARE_INDEX(pg_type_oid_index on pg_type using btree(oid oid_ops));
-DECLARE_INDEX(pg_type_typname_index on pg_type using btree(typname name_ops));
+DECLARE_UNIQUE_INDEX(pg_type_oid_index on pg_type using btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_type_typname_index on pg_type using btree(typname name_ops));
 
-DECLARE_INDEX(pg_class_oid_index on pg_class using btree(oid oid_ops));
-DECLARE_INDEX(pg_class_relname_index on pg_class using btree(relname name_ops));
+DECLARE_UNIQUE_INDEX(pg_class_oid_index on pg_class using btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_class_relname_index on pg_class using btree(relname name_ops));
 
 DECLARE_INDEX(pg_attrdef_adrelid_index on pg_attrdef using btree(adrelid oid_ops));
 

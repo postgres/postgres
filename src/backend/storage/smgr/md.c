@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.57 1999/10/25 03:07:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.58 1999/11/04 08:01:00 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,6 +120,7 @@ mdcreate(Relation reln)
 				vfd;
 	char	   *path;
 
+	Assert(reln->rd_unlinked && reln->rd_fd < 0);
 	path = relpath(reln->rd_rel->relname.data);
 #ifndef __CYGWIN32__
 	fd = FileNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL, 0600);
@@ -128,28 +129,49 @@ mdcreate(Relation reln)
 #endif
 
 	/*
-	 * If the file already exists and is empty, we pretend that the create
-	 * succeeded.  During bootstrap processing, we skip that check,
-	 * because pg_time, pg_variable, and pg_log get created before their
-	 * .bki file entries are processed.
+	 * During bootstrap processing, we skip that check, because pg_time,
+	 * pg_variable, and pg_log get created before their .bki file entries
+	 * are processed.
 	 *
-	 * As the result of this pretence it was possible to have in pg_class > 1
-	 * records with the same relname. Actually, it should be fixed in
-	 * upper levels, too, but... -	vadim 05/06/97
+	 * For cataloged relations,pg_class is guaranteed to have an unique
+	 * record with the same relname by the unique index.
+	 * So we are able to reuse existent files for new catloged relations.
+	 * Currently we reuse them in the following cases.
+	 * 1. they are empty.
+	 * 2. they are used for Index relations and their size == BLCKSZ * 2.
 	 */
 
 	if (fd < 0)
 	{
-		if (!IsBootstrapProcessingMode())
+		if (!IsBootstrapProcessingMode() &&
+			reln->rd_rel->relkind == RELKIND_UNCATALOGED)
 			return -1;
+
 #ifndef __CYGWIN32__
-		fd = FileNameOpenFile(path, O_RDWR, 0600);		/* Bootstrap */
+		fd = FileNameOpenFile(path, O_RDWR, 0600);
 #else
-		fd = FileNameOpenFile(path, O_RDWR | O_BINARY, 0600);	/* Bootstrap */
+		fd = FileNameOpenFile(path, O_RDWR | O_BINARY, 0600);
 #endif
 		if (fd < 0)
 			return -1;
+		if (!IsBootstrapProcessingMode())
+		{
+			bool	reuse = false;	
+			int	len = FileSeek(fd, 0L, SEEK_END);
+
+			if (len == 0)
+				reuse = true;
+			else if (reln->rd_rel->relkind == RELKIND_INDEX &&
+				 len == BLCKSZ * 2)
+				reuse = true;
+			if (!reuse)
+			{
+				FileClose(fd);
+				return -1;
+			}
+		}
 	}
+	reln->rd_unlinked = false;
 
 	vfd = _fdvec_alloc();
 	if (vfd < 0)
@@ -176,6 +198,11 @@ mdunlink(Relation reln)
 	MdfdVec    *v;
 	MemoryContext oldcxt;
 
+	/* If the relation is already unlinked,we have nothing to do
+	 * any more.
+	 */
+	if (reln->rd_unlinked && reln->rd_fd < 0)
+		return SM_SUCCESS;
 	/*
 	 * Force all segments of the relation to be opened, so that we
 	 * won't miss deleting any of them.
@@ -218,8 +245,9 @@ mdunlink(Relation reln)
 
 	_fdvec_free(fd);
 
-	/* be sure to mark relation closed */
+	/* be sure to mark relation closed && unlinked */
 	reln->rd_fd = -1;
+	reln->rd_unlinked = true;
 
 	return SM_SUCCESS;
 }
@@ -290,6 +318,7 @@ mdopen(Relation reln)
 	int			fd;
 	int			vfd;
 
+	Assert(reln->rd_fd < 0);
 	path = relpath(reln->rd_rel->relname.data);
 
 #ifndef __CYGWIN32__
@@ -311,10 +340,14 @@ mdopen(Relation reln)
 		}
 		if (fd < 0)
 		{
-			elog(ERROR, "mdopen: couldn't open %s: %m", path);
+			elog(NOTICE, "mdopen: couldn't open %s: %m", path);
+			/* mark relation closed and unlinked */
+			reln->rd_fd = -1;
+			reln->rd_unlinked = true;
 			return -1;
 		}
 	}
+	reln->rd_unlinked = false;
 
 	vfd = _fdvec_alloc();
 	if (vfd < 0)

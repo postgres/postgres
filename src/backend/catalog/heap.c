@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.105 1999/10/26 03:12:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.106 1999/11/04 08:00:56 inoue Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -176,7 +176,8 @@ Relation
 heap_create(char *relname,
 			TupleDesc tupDesc,
 			bool isnoname,
-			bool istemp)
+			bool istemp,
+			bool storage_create)
 {
 	unsigned	i;
 	Oid			relid;
@@ -264,7 +265,8 @@ heap_create(char *relname,
 
 	rel = (Relation) palloc(len);
 	MemSet((char *) rel, 0, len);
-
+	rel->rd_fd = -1;		/* table is not open */
+	rel->rd_unlinked = TRUE;	/* table is not created yet */
 	/*
 	 * create a new tuple descriptor from the one passed in
 	 */
@@ -316,9 +318,9 @@ heap_create(char *relname,
 	 * ----------------
 	 */
 
-	rel->rd_nonameunlinked = TRUE;		/* change once table is created */
-	rel->rd_fd = (File) smgrcreate(DEFAULT_SMGR, rel);
-	rel->rd_nonameunlinked = FALSE;
+	/* smgrcreate() is moved to heap_storage_create() */
+	if (storage_create)
+		heap_storage_create(rel);
 
 	RelationRegisterRelation(rel);
 
@@ -334,6 +336,19 @@ heap_create(char *relname,
 	return rel;
 }
 
+bool
+heap_storage_create(Relation rel)
+{
+	bool smgrcall = false;
+
+	if (rel->rd_unlinked)
+	{
+		rel->rd_fd = (File) smgrcreate(DEFAULT_SMGR, rel);
+		rel->rd_unlinked = FALSE;
+		smgrcall = true;
+	}
+	return smgrcall;
+}
 
 /* ----------------------------------------------------------------
  *		heap_create_with_catalog		- Create a cataloged relation
@@ -795,16 +810,26 @@ heap_create_with_catalog(char *relname,
 	}
 
 	/* ----------------
-	 *	ok, relation does not already exist so now we
-	 *	create an uncataloged relation and pull its relation oid
-	 *	from the newly formed relation descriptor.
+	 *	get_temp_rel_by_name() couldn't check the simultaneous
+	 *	creation. Uniqueness will be really checked by unique
+	 *	indexes of system tables but we couldn't check it here.
+	 *	We have to pospone to create the disk file for this
+	 *	relation.
+	 *	Another boolean parameter "storage_create" was added
+	 *	to heap_create() function. If the parameter is false
+	 *	heap_create() only registers an uncataloged relation
+	 *	to relation cache and heap_storage_create() should be
+	 *	called later.
+	 *	We could pull its relation oid from the newly formed
+	 *	relation descriptor.
 	 *
-	 *	Note: The call to heap_create() does all the "real" work
-	 *	of creating the disk file for the relation.
-	 *	This changes relname for noname and temp tables.
+	 *	Note: The call to heap_create() changes relname for
+	 *	noname and temp tables.
+	 *	The call to heap_storage_create() does all the "real"
+	 *	work of creating the disk file for the relation.
 	 * ----------------
 	 */
-	new_rel_desc = heap_create(relname, tupdesc, false, istemp);
+	new_rel_desc = heap_create(relname, tupdesc, false, istemp, false);
 
 	new_rel_oid = new_rel_desc->rd_att->attrs[0]->attrelid;
 
@@ -843,6 +868,10 @@ heap_create_with_catalog(char *relname,
 		pfree(temp_relname);
 	}
 
+	/*
+	 * We create the disk file for this relation here
+	 */
+	heap_storage_create(new_rel_desc);
 	/* ----------------
 	 *	ok, the relation has been cataloged, so close our relations
 	 *	and return the oid of the newly created relation.
@@ -1519,10 +1548,10 @@ heap_destroy_with_catalog(char *relname)
 	 *	unlink the relation's physical file and finish up.
 	 * ----------------
 	 */
-	if (!(rel->rd_isnoname) || !(rel->rd_nonameunlinked))
+	if (!(rel->rd_isnoname) || !(rel->rd_unlinked))
 		smgrunlink(DEFAULT_SMGR, rel);
 
-	rel->rd_nonameunlinked = TRUE;
+	rel->rd_unlinked = TRUE;
 
 	/*
 	 * Close relcache entry, but *keep* AccessExclusiveLock on the
@@ -1548,9 +1577,9 @@ void
 heap_destroy(Relation rel)
 {
 	ReleaseRelationBuffers(rel);
-	if (!(rel->rd_isnoname) || !(rel->rd_nonameunlinked))
+	if (!(rel->rd_isnoname) || !(rel->rd_unlinked))
 		smgrunlink(DEFAULT_SMGR, rel);
-	rel->rd_nonameunlinked = TRUE;
+	rel->rd_unlinked = TRUE;
 	heap_close(rel, NoLock);
 	RemoveFromNoNameRelList(rel);
 }

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.29 1999/09/02 02:57:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.30 1999/11/04 08:01:01 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,7 +182,8 @@ smgropen(int16 which, Relation reln)
 {
 	int			fd;
 
-	if ((fd = (*(smgrsw[which].smgr_open)) (reln)) < 0)
+	if ((fd = (*(smgrsw[which].smgr_open)) (reln)) < 0 &&
+		!reln->rd_unlinked)
 		elog(ERROR, "cannot open %s", reln->rd_rel->relname.data);
 
 	return fd;

@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh.in,v 1.3 1999/06/04 21:12:06 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh.in,v 1.4 1999/11/04 08:00:56 inoue Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -162,6 +162,20 @@ raw == 1 	{ print; next; }
 
 	data = substr($0, 15, length($0) - 15);
 	print "declare index " data
+}
+
+/^DECLARE_UNIQUE_INDEX\(/ {
+# ----
+#  end any prior catalog data insertions before starting a define unique index
+# ----
+	if (reln_open == 1) {
+#		print "show";
+		print "close " catalog;
+		reln_open = 0;
+	}
+
+	data = substr($0, 22, length($0) - 22);
+	print "declare unique index " data
 }
 
 /^BUILD_INDICES/	{ print "build indices"; }

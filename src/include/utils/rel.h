@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.27 1999/09/29 16:06:28 wieck Exp $
+ * $Id: rel.h,v 1.28 1999/11/04 08:01:09 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@ typedef struct RelationData
 	bool		rd_myxactonly;	/* rel uses the local buffer mgr */
 	bool		rd_isnailed;	/* rel is nailed in cache */
 	bool		rd_isnoname;	/* rel has no name */
-	bool		rd_nonameunlinked;		/* noname rel already unlinked */
+	bool		rd_unlinked;	/* rel already unlinked or not created yet */
 	Form_pg_am	rd_am;			/* AM tuple */
 	Form_pg_class rd_rel;		/* RELATION tuple */
 	Oid			rd_id;			/* relation's object id */

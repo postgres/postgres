@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.93 1999/11/01 02:29:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.94 1999/11/04 08:00:56 inoue Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -997,7 +997,7 @@ index_create(char *heapRelationName,
 	 * ----------------
 	 */
 	indexRelation = heap_create(indexRelationName,
-								indexTupDesc, false, istemp);
+				indexTupDesc, false, istemp, false);
 
 	/* ----------------
 	 *	  construct the index relation descriptor
@@ -1014,6 +1014,10 @@ index_create(char *heapRelationName,
 	 */
 	indexoid = UpdateRelationRelation(indexRelation, temp_relname);
 
+	/*
+	 * We create the disk file for this relation here
+	 */
+	heap_storage_create(indexRelation);
 	/* ----------------
 	 * Now get the index procedure (only relevant for functional indices).
 	 * ----------------

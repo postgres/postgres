@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.74 1999/10/03 23:55:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.75 1999/11/04 08:00:59 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1065,7 +1065,7 @@ RelationIdCacheGetRelation(Oid relationId)
 		if (rd->rd_fd == -1)
 		{
 			rd->rd_fd = smgropen(DEFAULT_SMGR, rd);
-			Assert(rd->rd_fd != -1);
+			Assert(rd->rd_fd != -1 || rd->rd_unlinked);
 		}
 
 		RelationIncrementReferenceCount(rd);
@@ -1099,7 +1099,7 @@ RelationNameCacheGetRelation(char *relationName)
 		if (rd->rd_fd == -1)
 		{
 			rd->rd_fd = smgropen(DEFAULT_SMGR, rd);
-			Assert(rd->rd_fd != -1);
+			Assert(rd->rd_fd != -1 || rd->rd_unlinked);
 		}
 
 		RelationIncrementReferenceCount(rd);
@@ -1613,10 +1613,10 @@ RelationPurgeLocalRelation(bool xactCommitted)
 			 */
 			if (reln->rd_isnoname)
 			{
-				if (!(reln->rd_nonameunlinked))
+				if (!(reln->rd_unlinked))
 				{
 					smgrunlink(DEFAULT_SMGR, reln);
-					reln->rd_nonameunlinked = TRUE;
+					reln->rd_unlinked = TRUE;
 				}
 			}
 			else

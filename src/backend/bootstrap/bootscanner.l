@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.15 1999/09/11 22:26:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.16 1999/11/04 08:00:58 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,6 +90,7 @@ insert			{ return(INSERT_TUPLE); }
 "declare"		{ return(XDECLARE); }
 "build"			{ return(XBUILD); }
 "indices"		{ return(INDICES); }
+"unique"		{ return(UNIQUE); }
 "index"			{ return(INDEX); }
 "on"			{ return(ON); }
 "using"			{ return(USING); }

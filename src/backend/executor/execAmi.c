@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: execAmi.c,v 1.42 1999/09/18 19:06:47 tgl Exp $
+ *	$Id: execAmi.c,v 1.43 1999/11/04 08:00:57 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -503,7 +503,7 @@ ExecCreatR(TupleDesc tupType,
 		 * heap_create creates a name if the argument to heap_create is
 		 * '\0 '
 		 */
-		relDesc = heap_create(NULL, tupType, true, false);
+		relDesc = heap_create(NULL, tupType, true, false, true);
 	}
 	else
 	{

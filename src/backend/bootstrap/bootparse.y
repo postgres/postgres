@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.27 1999/07/17 20:16:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.28 1999/11/04 08:00:58 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ static Oid objectid;
 %token <ival> CONST ID
 %token OPEN XCLOSE XCREATE INSERT_TUPLE
 %token STRING XDEFINE
-%token XDECLARE INDEX ON USING XBUILD INDICES
+%token XDECLARE INDEX ON USING XBUILD INDICES UNIQUE
 %token COMMA EQUALS LPAREN RPAREN
 %token OBJ_ID XBOOTSTRAP NULLVAL
 %start TopLevel
@@ -106,6 +106,7 @@ Boot_Query :
 		| Boot_CreateStmt
 		| Boot_InsertStmt
 		| Boot_DeclareIndexStmt
+		| Boot_DeclareUniqueIndexStmt
 		| Boot_BuildIndsStmt
 		;
 
@@ -164,7 +165,7 @@ Boot_CreateStmt:
 							puts("creating bootstrap relation");
 						tupdesc = CreateTupleDesc(numattr,attrtypes);
 						reldesc = heap_create(LexIDStr($3), tupdesc,
-											  false, false);
+											  false, false, true);
 						if (DebugMode)
 							puts("bootstrap relation created ok");
 					}
@@ -226,6 +227,19 @@ Boot_DeclareIndexStmt:
 								LexIDStr($3),
 								LexIDStr($7),
 								$9, NIL, 0, 0, 0, NIL);
+					DO_END;
+				}
+		;
+
+Boot_DeclareUniqueIndexStmt:
+		  XDECLARE UNIQUE INDEX boot_ident ON boot_ident USING boot_ident LPAREN boot_index_params RPAREN
+				{
+					DO_START;
+
+					DefineIndex(LexIDStr($6),
+								LexIDStr($4),
+								LexIDStr($8),
+								$10, NIL, 1, 0, 0, NIL);
 					DO_END;
 				}
 		;

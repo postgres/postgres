@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heap.h,v 1.24 1999/10/26 03:12:37 momjian Exp $
+ * $Id: heap.h,v 1.25 1999/11/04 08:01:04 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,8 @@ typedef struct RawColumnDefault
 
 extern Oid RelnameFindRelid(char *relname);
 extern Relation heap_create(char *relname, TupleDesc att,
-			    bool isnoname, bool istemp);
+			    bool isnoname, bool istemp, bool storage_create);
+extern bool heap_storage_create(Relation rel);
 
 extern Oid heap_create_with_catalog(char *relname, TupleDesc tupdesc, 
 				    char relkind, bool istemp);
