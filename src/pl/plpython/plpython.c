@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.4 2001/06/01 18:17:44 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.5 2001/09/12 03:03:25 momjian Exp $
  *
  *********************************************************************
  */
@@ -595,9 +595,10 @@ PLy_trigger_build_args(PG_FUNCTION_ARGS, PLyProcedure *proc, HeapTuple *rv)
 {
   DECLARE_EXC();
   TriggerData *tdata;
-  PyObject *pltname, *pltevent, *pltwhen, *pltlevel;
+  PyObject *pltname, *pltevent, *pltwhen, *pltlevel, *pltrelid;
   PyObject *pltargs, *pytnew, *pytold;
   PyObject *pltdata = NULL;  
+  char *stroid;
 
   enter();
 
@@ -620,6 +621,15 @@ PLy_trigger_build_args(PG_FUNCTION_ARGS, PLyProcedure *proc, HeapTuple *rv)
   pltname = PyString_FromString(tdata->tg_trigger->tgname);
   PyDict_SetItemString(pltdata, "name", pltname);
   Py_DECREF(pltname);
+
+  stroid = DatumGetCString(DirectFunctionCall1(oidout,
+                                                ObjectIdGetDatum(tdata->tg_relation->rd_id)));
+  pltrelid = PyString_FromString(stroid);
+  PyDict_SetItemString(pltdata, "relid", pltrelid);
+  Py_DECREF(pltrelid);
+  pfree(stroid);
+
+
 
   if (TRIGGER_FIRED_BEFORE(tdata->tg_event))
     pltwhen = PyString_FromString("BEFORE");
