@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.202 2003/09/27 09:21:26 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.203 2003/09/27 16:27:57 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -1091,8 +1091,9 @@ $ECHO_N "creating information schema... "$ECHO_C
   echo "COPY information_schema.sql_features (feature_id, feature_name, sub_feature_id, sub_feature_name, is_supported, comments) FROM STDIN;"
   cat "$datadir"/sql_features.txt
   echo "\."
-) \
-	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+) |
+tr -d '\r' | # make newlines consistent for Win32
+"$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 echo "ok"
 
 $ECHO_N "vacuuming database template1... "$ECHO_C
