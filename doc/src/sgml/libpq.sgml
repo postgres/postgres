@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.59 2001/03/21 19:09:03 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.60 2001/04/30 17:38:00 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -696,6 +696,8 @@ SSL *PQgetssl(const PGconn *conn);
 Once a connection to a database server has been successfully
 established, the functions described here are used to perform
 SQL queries and commands.
+<sect2 id="libpq-exec-main">
+  <title>Main Routines</title>
 <itemizedlist>
 <listitem>
 <para>
@@ -809,6 +811,46 @@ when you want to know the status from the latest operation on the connection.
 
 <listitem>
 <para>
+<function>PQclear</function>
+          Frees  the  storage  associated with the PGresult.
+          Every query result should be freed via PQclear  when
+          it  is  no  longer needed.
+<synopsis>
+void PQclear(PQresult *res);
+</synopsis>
+          You can keep a PGresult object around for as long as you
+          need it; it does not go away when you issue a new query,
+          nor even if you close the connection.  To get rid of it,
+          you must call <function>PQclear</function>.  Failure to do this will
+          result in memory leaks in  the  frontend  application.
+</para>
+</listitem>
+
+<listitem>
+<para>
+<function>PQmakeEmptyPGresult</function>
+          Constructs an empty PGresult object with the given status.
+<synopsis>
+PGresult* PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status);
+</synopsis>
+This is libpq's internal routine to allocate and initialize an empty
+PGresult object.  It is exported because some applications find it
+useful to generate result objects (particularly objects with error
+status) themselves.  If conn is not NULL and status indicates an error,
+the connection's current errorMessage is copied into the PGresult.
+Note that PQclear should eventually be called on the object, just
+as with a PGresult returned by libpq itself.
+</para>
+</listitem>
+</itemizedlist>
+</sect2>
+
+<sect2 id="libpq-exec-select-info">
+  <title>Retrieving SELECT Result Information</title>
+
+<itemizedlist>
+<listitem>
+<para>
 <function>PQntuples</function>
           Returns the number of tuples (rows)
           in the query result.
@@ -829,23 +871,11 @@ int PQnfields(const PGresult *res);
 </para>
 </listitem>
 
-<listitem>
-<para>
-<function>PQbinaryTuples</function>
-          Returns 1 if the PGresult contains binary tuple data,
-	  0 if it contains ASCII data.
-<synopsis>
-int PQbinaryTuples(const PGresult *res);
-</synopsis>
-Currently, binary tuple data can only be returned by a query that
-extracts data from a <acronym>BINARY</acronym> cursor.
-</para>
-</listitem>
 
 <listitem>
 <para>
 <function>PQfname</function>
- Returns the field (attribute) name associated with the given field  index.
+ Returns the field (attribute) name associated with the given field index.
  Field  indices start at 0.
 <synopsis>
 char *PQfname(const PGresult *res,
@@ -890,6 +920,19 @@ in the source tree.
 
 <listitem>
 <para>
+<function>PQfmod</function>
+          Returns  the type-specific modification data of the field
+          associated with the given field index.
+          Field indices start at 0.
+<synopsis>
+int PQfmod(const PGresult *res,
+           int field_index);
+</synopsis>
+</para>
+</listitem>
+
+<listitem>
+<para>
 <function>PQfsize</function>
           Returns  the  size  in bytes of the field
           associated with the given field index.
@@ -902,21 +945,28 @@ int PQfsize(const PGresult *res,
 	tuple, in other words the size of the server's binary representation
 	of the data type.  -1 is returned if the field is variable size.
 </para>
+
 </listitem>
 
 <listitem>
 <para>
-<function>PQfmod</function>
-          Returns  the type-specific modification data of the field
-          associated with the given field index.
-          Field indices start at 0.
+<function>PQbinaryTuples</function>
+          Returns 1 if the PGresult contains binary tuple data,
+	  0 if it contains ASCII data.
 <synopsis>
-int PQfmod(const PGresult *res,
-           int field_index);
+int PQbinaryTuples(const PGresult *res);
 </synopsis>
+Currently, binary tuple data can only be returned by a query that
+extracts data from a <acronym>BINARY</acronym> cursor.
 </para>
 </listitem>
+</itemizedlist>
+</sect2>
 
+<sect2 id="libpq-exec-select-values">
+  <title>Retrieving SELECT Result Values</title>
+
+<itemizedlist>
 <listitem>
 <para>
 <function>PQgetvalue</function>
@@ -947,22 +997,6 @@ be used past the lifetime of the  PGresult  structure itself.
 
 <listitem>
 <para>
-<function>PQgetlength</function>
-          Returns   the   length  of  a  field (attribute) in bytes.
-          Tuple and field indices start at 0.
-<synopsis>
-int PQgetlength(const PGresult *res,
-                int tup_num,
-                int field_num);
-</synopsis>
-This is the actual data length for the particular data value, that is the
-size of the object pointed to by PQgetvalue.  Note that for ASCII-represented
-values, this size has little to do with the binary size reported by PQfsize.
-</para>
-</listitem>
-
-<listitem>
-<para>
 <function>PQgetisnull</function>
            Tests a field for a NULL entry.
            Tuple and field indices start at 0.
@@ -978,6 +1012,57 @@ int PQgetisnull(const PGresult *res,
 </para>
 </listitem>
 
+<listitem>
+<para>
+<function>PQgetlength</function>
+          Returns   the   length  of  a  field (attribute) value in bytes.
+          Tuple and field indices start at 0.
+<synopsis>
+int PQgetlength(const PGresult *res,
+                int tup_num,
+                int field_num);
+</synopsis>
+This is the actual data length for the particular data value, that is the
+size of the object pointed to by PQgetvalue.  Note that for ASCII-represented
+values, this size has little to do with the binary size reported by PQfsize.
+</para>
+</listitem>
+
+<listitem>
+<para>
+<function>PQprint</function>
+          Prints out all the  tuples  and,  optionally,  the
+          attribute  names  to  the specified output stream.
+       <synopsis>
+void PQprint(FILE* fout,      /* output stream */
+             const PGresult *res,
+             const PQprintOpt *po);
+
+struct {
+    pqbool  header;      /* print output field headings and row count */
+    pqbool  align;       /* fill align the fields */
+    pqbool  standard;    /* old brain dead format */
+    pqbool  html3;       /* output html tables */
+    pqbool  expanded;    /* expand tables */
+    pqbool  pager;       /* use pager for output if needed */
+    char    *fieldSep;   /* field separator */
+    char    *tableOpt;   /* insert to HTML <replaceable>table ...</replaceable> */
+    char    *caption;    /* HTML <replaceable>caption</replaceable> */
+    char    **fieldName; /* null terminated array of replacement field names */
+} PQprintOpt;
+       </synopsis>
+This function was formerly used by <application>psql</application>
+to print query results, but this is no longer the case and this
+function is no longer actively supported.
+</para>
+</listitem>
+</itemizedlist>
+</sect2>
+
+<sect2 id="libpq-exec-nonselect">
+  <title>Retrieving Non-SELECT Result Information</title>
+
+<itemizedlist>
 <listitem>
 <para>
 <function>PQcmdStatus</function>
@@ -1032,70 +1117,9 @@ and is not thread-safe.
 </para>
 </listitem>
 
-<listitem>
-<para>
-<function>PQprint</function>
-          Prints out all the  tuples  and,  optionally,  the
-          attribute  names  to  the specified output stream.
-       <synopsis>
-void PQprint(FILE* fout,      /* output stream */
-             const PGresult *res,
-             const PQprintOpt *po);
-
-struct {
-    pqbool  header;      /* print output field headings and row count */
-    pqbool  align;       /* fill align the fields */
-    pqbool  standard;    /* old brain dead format */
-    pqbool  html3;       /* output html tables */
-    pqbool  expanded;    /* expand tables */
-    pqbool  pager;       /* use pager for output if needed */
-    char    *fieldSep;   /* field separator */
-    char    *tableOpt;   /* insert to HTML <replaceable>table ...</replaceable> */
-    char    *caption;    /* HTML <replaceable>caption</replaceable> */
-    char    **fieldName; /* null terminated array of replacement field names */
-} PQprintOpt;
-       </synopsis>
-This function was formerly used by <application>psql</application>
-to print query results, but this is no longer the case and this
-function is no longer actively supported.
-</para>
-</listitem>
-
-<listitem>
-<para>
-<function>PQclear</function>
-          Frees  the  storage  associated with the PGresult.
-          Every query result should be freed via PQclear  when
-          it  is  no  longer needed.
-<synopsis>
-void PQclear(PQresult *res);
-</synopsis>
-          You can keep a PGresult object around for as long as you
-          need it; it does not go away when you issue a new query,
-          nor even if you close the connection.  To get rid of it,
-          you must call <function>PQclear</function>.  Failure to do this will
-          result in memory leaks in  the  frontend  application.
-</para>
-</listitem>
-
-<listitem>
-<para>
-<function>PQmakeEmptyPGresult</function>
-          Constructs an empty PGresult object with the given status.
-<synopsis>
-PGresult* PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status);
-</synopsis>
-This is libpq's internal routine to allocate and initialize an empty
-PGresult object.  It is exported because some applications find it
-useful to generate result objects (particularly objects with error
-status) themselves.  If conn is not NULL and status indicates an error,
-the connection's current errorMessage is copied into the PGresult.
-Note that PQclear should eventually be called on the object, just
-as with a PGresult returned by libpq itself.
-</para>
-</listitem>
 
 </itemizedlist>
+</sect2>
 </para>
 </sect1>
 

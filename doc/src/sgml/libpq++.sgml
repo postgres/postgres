@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.25 2001/04/30 04:26:01 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.26 2001/04/30 17:38:00 momjian Exp $
 -->
 
  <chapter id="libpqplusplus">
@@ -283,6 +283,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.25 2001/04/30 04:26:
 
   <sect1 id="libpqpp-exec">
    <title>Query Execution Functions</title>
+
+<sect2 id="libpqpp-exec-main">
+  <title>Main Routines</title>
    <para>  
     <itemizedlist>
      <listitem>
@@ -352,22 +355,19 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.25 2001/04/30 04:26:
        </synopsis>
       </para>
      </listitem>
+</itemizedlist>
+</sect2>
+
+<sect2 id="libpqpp-exec-select-info">
+  <title>Retrieving SELECT Result Information</title>
+
+<itemizedlist>
      <listitem>
       <para>
        <function>Tuples</function>
        Returns the number of tuples (rows) in the query result. 
        <synopsis>
 	int PgDatabase::Tuples()
-       </synopsis>
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-       <function>CmdTuples</function>
-              Returns the number of rows affected after an INSERT, UPDATE or DELETE. 
-              If the command was anything else, it returns -1. 
-       <synopsis>
-      int PgDatabase::CmdTuples()
        </synopsis>
       </para>
      </listitem>
@@ -451,6 +451,14 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.25 2001/04/30 04:26:
        variable size.
       </para>
      </listitem>
+</itemizedlist>
+</sect2>
+
+
+<sect2 id="libpqpp-exec-select-values">
+  <title>Retrieving SELECT Result Values</title>
+
+<itemizedlist>
      <listitem>
       <para>
        <function>GetValue</function>
@@ -541,6 +549,39 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.25 2001/04/30 04:26:
        </synopsis>
       </para>
      </listitem>
+</itemizedlist>
+</sect2>
+
+<sect2 id="libpqpp-exec-nonselect">
+  <title>Retrieving Non-SELECT Result Information</title>
+
+<itemizedlist>
+     <listitem>
+      <para>
+       <function>CmdTuples</function>
+              Returns the number of rows affected after an INSERT, UPDATE or DELETE. 
+              If the command was anything else, it returns -1. 
+       <synopsis>
+      int PgDatabase::CmdTuples()
+       </synopsis>
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       <function>OidStatus</function>
+       <synopsis>
+	const char *PgDatabase::OidStatus()
+       </synopsis>
+      </para>
+     </listitem>
+</itemizedlist>
+</sect2>
+
+<sect2 id="libpqpp-exec-copy">
+  <title>Handling COPY Queries</title>
+
+<itemizedlist>
      <listitem>
       <para>
        <function>GetLine</function>
@@ -559,14 +600,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.25 2001/04/30 04:26:
      </listitem>
      <listitem>
       <para>
-       <function>OidStatus</function>
-       <synopsis>
-	const char *PgDatabase::OidStatus()
-       </synopsis>
-      </para>
-     </listitem>
-     <listitem>
-      <para>
        <function>EndCopy</function>
        <synopsis>
 	int PgDatabase::EndCopy()
@@ -575,7 +608,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.25 2001/04/30 04:26:
      </listitem>
     </itemizedlist>
    </para>
-  </sect1>
+</itemizedlist>
+</sect2>
+</sect1>
 
   <sect1 id="libpqpp-notify">
    <title>Asynchronous Notification</title>
