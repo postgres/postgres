@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.33 2004/05/19 04:21:49 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.34 2004/05/20 01:47:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #include <pwd.h>
 #include <netdb.h>
 #endif
+#include <ctype.h>
 
 /* non-blocking */
 bool set_noblock(int sock);
