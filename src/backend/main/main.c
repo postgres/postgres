@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.5 1997/04/12 09:37:31 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.6 1997/04/15 17:39:17 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@ main(int argc, char *argv[])
 #ifdef USE_LOCALE
     setlocale(LC_CTYPE,""); /* take locale information from an environment */
     setlocale(LC_COLLATE,"");
+    setlocale(LC_MONETARY,"");
 #endif
 #if defined(NOFIXADE) || defined(NOPRINTADE)
     /*

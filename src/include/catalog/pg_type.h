@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.9 1997/03/25 08:11:01 scrappy Exp $
+ * $Id: pg_type.h,v 1.10 1997/04/15 17:41:19 scrappy Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -143,24 +143,20 @@ typedef TypeTupleFormData	*TypeTupleForm;
 
 /* OIDS 1 - 99 */
 DATA(insert OID = 16 (  bool       PGUID  1   1 t b t \054 0   0 boolin boolout boolin boolout c _null_ ));
-
 #define BOOLOID		16
 
 DATA(insert OID = 17 (  bytea      PGUID -1  -1 f b t \054 0  18 byteain byteaout byteain byteaout i _null_ ));
 DATA(insert OID = 18 (  char       PGUID  1   1 t b t \054 0   0 charin charout charin charout c _null_ ));
 #define CHAROID 18
 
-DATA(insert OID = 19 (  name      PGUID NAMEDATALEN NAMEDATALEN  f b t \054 0  18 namein nameout namein nameout d _null_ ));
+DATA(insert OID = 19 (  name       PGUID NAMEDATALEN NAMEDATALEN  f b t \054 0  18 namein nameout namein nameout d _null_ ));
 #define NAMEOID 19
 
 DATA(insert OID = 20 (  char16     PGUID 16  16 f b t \054 0  18 char16in char16out char16in char16out i _null_ ));
-/*DATA(insert OID = 20 (  dt         PGUID  4  10 t b t \054 0   0 dtin dtout dtin dtout i _null_ )); */
 DATA(insert OID = 21 (  int2       PGUID  2   5 t b t \054 0   0 int2in int2out int2in int2out s _null_ ));
-
 #define INT2OID		21
 
 DATA(insert OID = 22 (  int28      PGUID 16  50 f b t \054 0  21 int28in int28out int28in int28out i _null_ ));
-
 /*
  * XXX -- the implementation of int28's in postgres is a hack, and will
  *	  go away someday.  until that happens, there is a case (in the
@@ -168,12 +164,9 @@ DATA(insert OID = 22 (  int28      PGUID 16  50 f b t \054 0  21 int28in int28ou
  *	  over piles of int28's on the sidewalk.  in order to do so, we
  *	  need the OID of the int28 row from pg_type.
  */
-
 #define INT28OID	22
 
-
 DATA(insert OID = 23 (  int4       PGUID  4  10 t b t \054 0   0 int4in int4out int4in int4out i _null_ ));
-
 #define INT4OID		23
 
 DATA(insert OID = 24 (  regproc    PGUID  4  16 t b t \054 0   0 regprocin regprocout regprocin regprocout i _null_ ));
@@ -181,7 +174,6 @@ DATA(insert OID = 25 (  text       PGUID -1  -1 f b t \054 0  18 textin textout 
 #define TEXTOID 25
 
 DATA(insert OID = 26 (  oid        PGUID  4  10 t b t \054 0   0 int4in int4out int4in int4out i _null_ ));
-
 #define OIDOID		26
 
 DATA(insert OID = 27 (  tid        PGUID  6  19 f b t \054 0   0 tidin tidout tidin tidout i _null_ ));
@@ -232,20 +224,19 @@ DATA(insert OID = 605 (  filename  PGUID 256 -1 f b t \054 0 18 filename_in file
 
 /* OIDS 700 - 799 */
 
-#define FLOAT4OID 700
-
 DATA(insert OID = 700 (  float4    PGUID  4  12 f b t \054 0   0 float4in float4out float4in float4out i _null_ ));
-
-
-#define FLOAT8OID 701
-
+#define FLOAT4OID 700
 DATA(insert OID = 701 (  float8    PGUID  8  24 f b t \054 0   0 float8in float8out float8in float8out d _null_ ));
+#define FLOAT8OID 701
 DATA(insert OID = 702 (  abstime   PGUID  4  20 t b t \054 0   0 nabstimein nabstimeout nabstimein nabstimeout i _null_ ));
 DATA(insert OID = 703 (  reltime   PGUID  4  20 t b t \054 0   0 reltimein reltimeout reltimein reltimeout i _null_ ));
 DATA(insert OID = 704 (  tinterval PGUID 12  47 f b t \054 0   0 tintervalin tintervalout tintervalin tintervalout i _null_ ));
 DATA(insert OID = 705 (  unknown   PGUID -1  -1 f b t \054 0   18 textin textout textin textout i _null_ ));
-
 #define UNKNOWNOID	705
+
+DATA(insert OID = 790 (  money     PGUID  4  47 f b t \054 0    0 cash_in cash_out cash_in cash_out i _null_ ));
+#define CASHOID	790
+DATA(insert OID = 791 (  _money    PGUID  -1 -1 f b t \054 0  790 array_in array_out array_in array_out i _null_ ));
 
 /* OIDS 800 - 899 */
 DATA(insert OID = 810 (  oidint2   PGUID  6  20 f b t \054 0   0 oidint2in oidint2out oidint2in oidint2out i _null_ ));
@@ -292,10 +283,10 @@ DATA(insert OID = 1039 (  _char2     PGUID -1  -1 f b t \054 0  409 array_in arr
 DATA(insert OID = 1040 (  _char4     PGUID -1  -1 f b t \054 0  410 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1041 (  _char8     PGUID -1  -1 f b t \054 0  411 array_in array_out array_in array_out i _null_ ));
 
-#define	BPCHAROID	1042
 DATA(insert OID = 1042 ( bpchar      PGUID -1  -1 f b t \054 0  18 bpcharin bpcharout bpcharin bpcharout i _null_ ));
-#define	VARCHAROID	1043
+#define	BPCHAROID	1042
 DATA(insert OID = 1043 ( varchar     PGUID -1  -1 f b t \054 0  18 varcharin varcharout varcharin varcharout i _null_ ));
+#define	VARCHAROID	1043
 
 DATA(insert OID = 1082 ( date        PGUID  4  10 t b t \054 0  0 date_in date_out date_in date_out i _null_ ));
 #define DATEOID		1082

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.14 1997/04/02 18:31:52 scrappy Exp $
+ * $Id: builtins.h,v 1.15 1997/04/15 17:41:35 scrappy Exp $
  *
  * NOTES
  *    This should normally only be included by fmgr.h.
@@ -22,6 +22,7 @@
 #include <utils/geo_decls.h>
 #include <utils/datetime.h>
 #include <utils/nabstime.h>
+#include <utils/cash.h>
 #include <utils/rel.h>
 
 /*

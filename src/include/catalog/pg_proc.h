@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.16 1997/04/02 18:36:24 scrappy Exp $
+ * $Id: pg_proc.h,v 1.17 1997/04/15 17:41:03 scrappy Exp $
  *
  * NOTES
  *    The script catalog/genbki.sh reads this file and generates .bki
@@ -618,6 +618,21 @@ DATA(insert OID =  859 (  namenlike        PGUID 11 f t f 2 f 16 "19 25" 100 0 0
 DATA(insert OID =  860 (  char16like       PGUID 11 f t f 2 f 16 "20 25" 100 0 0 100  foo bar ));
 DATA(insert OID =  861 (  char16nlike      PGUID 11 f t f 2 f 16 "20 25" 100 0 0 100  foo bar ));
  
+DATA(insert OID =  886 (  cash_in          PGUID 11 f t f 1 f 790 "0" 100 0 0 100  foo bar ));
+DATA(insert OID =  887 (  cash_out         PGUID 11 f t f 1 f  23 "0" 100 0 0 100  foo bar ));
+DATA(insert OID =  888 (  cash_eq          PGUID 11 f t f 2 f  16 "790 790" 100 0 0 100  foo bar ));
+DATA(insert OID =  889 (  cash_ne          PGUID 11 f t f 2 f  16 "790 790" 100 0 0 100  foo bar ));
+DATA(insert OID =  890 (  cash_lt          PGUID 11 f t f 2 f  16 "790 790" 100 0 0 100  foo bar ));
+DATA(insert OID =  891 (  cash_le          PGUID 11 f t f 2 f  16 "790 790" 100 0 0 100  foo bar ));
+DATA(insert OID =  892 (  cash_gt          PGUID 11 f t f 2 f  16 "790 790" 100 0 0 100  foo bar ));
+DATA(insert OID =  893 (  cash_ge          PGUID 11 f t f 2 f  16 "790 790" 100 0 0 100  foo bar ));
+DATA(insert OID =  894 (  cash_pl          PGUID 11 f t f 2 f 790 "790 790" 100 0 0 100  foo bar ));
+DATA(insert OID =  895 (  cash_mi          PGUID 11 f t f 2 f 790 "790 790" 100 0 0 100  foo bar ));
+DATA(insert OID =  896 (  cash_mul         PGUID 11 f t f 2 f 790 "790 701" 100 0 0 100  foo bar ));
+DATA(insert OID =  897 (  cash_div         PGUID 11 f t f 2 f 790 "790 701" 100 0 0 100  foo bar ));
+DATA(insert OID =  898 (  cashlarger       PGUID 11 f t f 2 f 790 "790 790" 100 0 0 100  foo bar ));
+DATA(insert OID =  899 (  cashsmaller      PGUID 11 f t f 2 f 790 "790 790" 100 0 0 100  foo bar ));
+
 /* OIDS 900 - 999 */
 
 DATA(insert OID = 920 (  oidint4in	   PGUID 11 f t f 1 f 910 "0" 100 0 0 100  foo bar));
@@ -790,6 +805,7 @@ DATA(insert OID = 1193 (  timespan_text      PGUID 11 f t f 1 f 1186 "25" 100 0 
 DATA(insert OID = 1194 (  timespan_reltime   PGUID 11 f t f 1 f  703 "1186" 100 0 0 100  foo bar ));
 /* reserve OIDs 1195-1199 for additional date/time conversion routines! tgl 97/03/19 */
 
+/* OIDS 1200 - 1299 */
 DATA(insert OID = 1200 (  int42reltime     PGUID 11 f t f 1 f 703 "21" 100 0 0 100  foo bar ));
 
 DATA(insert OID = 1290 (  char2icregexeq   PGUID 11 f t f 2 f 16 "409 25" 100 0 0 100  foo bar ));
@@ -808,6 +824,8 @@ DATA(insert OID = 1241 (  nameicregexne    PGUID 11 f t f 2 f 16 "19 25" 100 0 0
 DATA(insert OID = 1297 (  timestamp_in     PGUID 11 f t f 1 f 1296 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 1298 (  timestamp_out    PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 1299 (  now              PGUID 11 f t f 0 f 1296 "0" 100 0 0 100  foo bar ));
+
+/* OIDS 1300 - 1399 */
 DATA(insert OID = 1306 (  timestampeq      PGUID 11 f t f 2 f 16 "1296 1296" 100 0 0 100  foo bar ));
 DATA(insert OID = 1307 (  timestampne      PGUID 11 f t f 2 f 16 "1296 1296" 100 0 0 100  foo bar ));
 DATA(insert OID = 1308 (  timestamplt      PGUID 11 f t f 2 f 16 "1296 1296" 100 0 0 100  foo bar ));
@@ -854,6 +872,7 @@ DATA(insert OID = 1391 (  isfinite     PGUID 14 f t f 1 f   16 "1186" 100 0 0 10
 DATA(insert OID = 1392 (  isfinite     PGUID 14 f t f 1 f   16  "702" 100 0 0 100  "select abstime_finite($1)" - ));
 /* reserve OIDs 1370-1399 for additional date/time conversion routines! tgl 97/04/01 */
 
+/* OIDS 1400 - 1499 */
 DATA(insert OID = 1400 (  float        PGUID 14 f t f 1 f  701  "701" 100 0 0 100  "select $1" - ));
 DATA(insert OID = 1401 (  float        PGUID 14 f t f 1 f  701  "700" 100 0 0 100  "select ftod($1)" - ));
 DATA(insert OID = 1402 (  float4       PGUID 14 f t f 1 f  700  "700" 100 0 0 100  "select $1" - ));
@@ -861,7 +880,6 @@ DATA(insert OID = 1403 (  float4       PGUID 14 f t f 1 f  700  "701" 100 0 0 10
 DATA(insert OID = 1404 (  int          PGUID 14 f t f 1 f   23   "23" 100 0 0 100  "select $1" - ));
 DATA(insert OID = 1405 (  int2         PGUID 14 f t f 1 f   21   "21" 100 0 0 100  "select $1" - ));
 
-/* reserve OIDs 1370-1399 for additional date/time conversion routines! tgl 97/04/01 */
 /* Oracle Compatibility Related Functions - By Edmund Mergl <E.Mergl@bawue.de> */
 DATA(insert OID =  870 (  lower        PGUID 11 f t f 1 f 25 "25" 100 0 0 100  foo bar ));
 DATA(insert OID =  871 (  upper        PGUID 11 f t f 1 f 25 "25" 100 0 0 100  foo bar ));
