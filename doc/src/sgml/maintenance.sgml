@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.16 2002/06/23 03:37:12 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.17 2002/06/23 03:51:55 momjian Exp $
 -->
 
 <chapter id="maintenance">
@@ -393,7 +393,7 @@ VACUUM
   <para>
    As a solution, you can use the <command>REINDEX</> command
    periodically to discard pages used by deleted rows. There is also
-   <filename>contrib/reindex</> which can reindex an entire database.
+   <filename>contrib/reindexdb</> which can reindex an entire database.
   </para>
  </sect1>
 

@@ -1,5 +1,5 @@
 
-                                  reindex
+                                  reindexdb
 
 Indexes are known to grow over time.  Being as vacuum doesn't slow or
 clean up after this growth, and there is no command to reindex all tables

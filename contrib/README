@@ -149,7 +149,7 @@ pgcrypto -
 	Cryptographic functions
 	by Marko Kreen <marko@l-t.ee>
 
-reindex - 
+reindexdb - 
 	Reindexes a database
 	by Shaun Thomas <sthomas@townnews.com>
 
