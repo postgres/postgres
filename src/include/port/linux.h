@@ -12,7 +12,7 @@
 #if defined(PPC)
 typedef unsigned int slock_t;
 
-#elif defined(__alpha)
+#elif defined(__alpha__)
 typedef long int slock_t;
 
 #else /* i386 probably */
@@ -33,14 +33,6 @@ typedef unsigned char slock_t;
 #endif
 
 #if defined(PPC)
-#undef NEED_I386_TAS_ASM
 #undef HAVE_INT_TIMEZONE
 #endif
 
-#if defined(sparc)
-#undef NEED_I386_TAS_ASM
-#endif
-
-#if defined(__alpha)
-#undef NEED_I386_TAS_ASM
-#endif

@@ -4,7 +4,7 @@
 #    Makefile for storage/buffer
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/buffer/Makefile,v 1.8 1998/04/29 12:37:51 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/storage/buffer/Makefile,v 1.9 1998/05/04 15:44:39 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,11 +24,11 @@ depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean: 
-	rm -f SUBSYS.o $(OBJS) tas_test
+	rm -f SUBSYS.o $(OBJS) s_lock_test
 
-tas_test: s_lock.c
-	$(CC) $(CFLAGS) -DTAS_TEST=1 -g s_lock.c -o tas_test
-	./tas_test
+s_lock_test: s_lock.c
+	$(CC) $(CFLAGS) -DS_LOCK_TEST=1 -g s_lock.c -o s_lock_test
+	./s_lock_test
 
 ifeq (depend,$(wildcard depend))
 include depend
