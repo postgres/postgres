@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.105 2003/05/18 01:06:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.106 2003/06/25 21:14:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3510,6 +3510,7 @@ EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str)
 				is_before = (tm->tm_mday < 0);
 				is_nonzero = TRUE;
 			}
+
 			if ((!is_nonzero) || (tm->tm_hour != 0) || (tm->tm_min != 0)
 				|| (tm->tm_sec != 0) || (fsec != 0))
 			{
@@ -3523,7 +3524,7 @@ EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str)
 				/* Mark as "non-zero" since the fields are now filled in */
 				is_nonzero = TRUE;
 
-				/* fractional seconds? */
+				/* need fractional seconds? */
 				if (fsec != 0)
 				{
 #ifdef HAVE_INT64_TIMESTAMP
@@ -3536,14 +3537,11 @@ EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str)
 #endif
 					TrimTrailingZeros(cp);
 					cp += strlen(cp);
-					is_nonzero = TRUE;
 				}
-				/* otherwise, integer seconds only? */
-				else if (tm->tm_sec != 0)
+				else
 				{
 					sprintf(cp, ":%02d", abs(tm->tm_sec));
 					cp += strlen(cp);
-					is_nonzero = TRUE;
 				}
 			}
 			break;
