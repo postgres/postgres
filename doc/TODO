@@ -111,7 +111,7 @@ TYPES
 * Add non-large-object binary field
 * Add index on NUMERIC/DECIMAL type
 * Make Absolutetime/Relativetime int4 because time_t can be int8 on some ports
-* Functions returning sets don't really work right(see TODO.detail/functions)
+* Functions returning sets don't really work right(see TODO.detail/function)
 
 VIEWS
 
@@ -157,7 +157,7 @@ CLIENTS
 * Update reltuples from COPY command
 * Allow psql \copy to allow delimiters
 * Add a function to return the last inserted oid, for use in psql scripts
-* Allow psql to print nulls as distinct from ""(see TODO.detail/nulls)
+* Allow psql to print nulls as distinct from ""(see TODO.detail/null)
 * PQrequestCancel() be able to terminate backend waiting for lock
 
 EXOTIC FEATURES

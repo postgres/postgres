@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.119 1999/09/01 23:05:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.120 1999/09/23 19:11:09 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -3192,7 +3192,7 @@ dumpSequence(FILE *fout, TableInfo tbinfo)
 	if (called == 'f')
 		return;					/* nothing to do more */
 
-	sprintf(query, "SELECT nextval ('%s');\n", tbinfo.relname);
+	sprintf(query, "SELECT nextval ('%s');\n", fmtId(tbinfo.relname, force_quotes));
 	fputs(query, fout);
 
 }
