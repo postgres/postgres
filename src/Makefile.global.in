@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.4 1997/01/24 03:19:48 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.5 1997/01/24 03:57:14 scrappy Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -197,7 +197,7 @@ TK_LIB= -ltk4.1
 
 X11_INCDIR= /usr/include
 X11_LIBDIR= /usr/lib
-X11_LIB= -lX11 -lsocket -lnsl
+X11_LIB= -lX11 @SOCKET_LIB@ @NSL_LIB@
 
 ##############################################################################
 #
@@ -284,14 +284,12 @@ CC= @CC@
 # LEX
 #
 LEX= @LEX@
-LD_ADD_BE = @LEXLIB@
+
+LDADD_BE= @MATH_LIB@ @DL_LIB@ @LEXLIB@ @SOCKET_LIB@ @NSL_LIB@
 
 #----------------------------------------------------------------------
 ifeq ($(PORTNAME), BSD44_derived)
 # cc is gcc, but never mind about that...
-
-INSTALL= /usr/bin/install
-RANLIB=	/usr/bin/ranlib
 
 # FreeBSD 2.1R with new Flex v2.5.2 in /usr/local
 
@@ -311,11 +309,9 @@ endif
 #--------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), aix)
-# might want to try installbsd instead 
-INSTALL= /usr/ucb/install
 
 # the -lm is because "pow" is defined in libbsd.a and we want pow(3m)
-LDADD_BE= -lm -lbsd -ll -lld
+LDADD_BE+= -lbsd -ll -lld
 
 # MAKE_EXPORTS is required for svr4 loaders that want a file of
 # symbol names to tell them what to export/import.
@@ -348,7 +344,7 @@ $(POSTGRES_EXP):
 	@echo Making share library $@ from $*.o, $*$(EXPSUFF), and postgres.exp
 	$(LD) -H512 -T512 -o $@ -e _nostart \
 	  -bI:$(POSTGRES_EXP) -bE:$*$(EXPSUFF) \
-	  $*.o -lm -lc 2>/dev/null
+	  $*.o @MATH_LIB@ -lc 2>/dev/null
 endif
 
 #---------------------------------------------------------------------------
@@ -365,7 +361,7 @@ CFLAGS_BE= -DNOFIXADE
 else
 CFLAGS_BE= -DNOPRINTADE
 endif
-LDADD_BE= -lln
+LDADD_BE+= -lln
 
 # use the regex library
 USE_REGEX= 1
@@ -393,7 +389,7 @@ endif
 ifeq ($(PRE_BSDI_2_1), false)
 # cc is gcc v1.42
 # gcc is gcc v2.7.2
-  LDADD_BE= -ltermcap -ldl
+  LDADD_BE+= -ltermcap 
   ifeq ($(shell uname -r), 2.1)
     LDADD_BE+= -lipc
   endif
@@ -403,7 +399,7 @@ else
 # use the regex library
   USE_REGEX= 1
   CFLAGS_BE= -DPRE_BSDI_2_1
-  LDADD_BE= -ldld -lcompat -lipc
+  LDADD_BE+= -ldld -lcompat -lipc
 endif
 
 DLSUFFIX= .o
@@ -417,11 +413,7 @@ CFLAGS_SL= -fpic
 %.so: %.o
 	$(CC) -shared -o $@ $<
 
-LDADD_BE= -ldl 
-
 YACC= bison -y
-
-INSTALL=/usr/bin/X11/bsdinst
 
 endif
 
@@ -431,7 +423,7 @@ ifeq ($(PORTNAME), hpux)
 # -W l,-E	export symbols for linking with the shared libraries 
 #		dynamic loader
 
-LDADD_BE= -lBSD -ll
+LDADD_BE+= -lBSD -ll
 ifeq $(CC), cc)
   CFLAGS_BE= -W l,-E
   LDFLAGS_BE= -W l,-E
@@ -465,12 +457,6 @@ ifeq ($(CC), cc)
 CFLAGS_BE+= -Ae
 endif
 
-# This is a script from the MIT X11 distribution. 
-INSTALL= bsdinst
-
-# RANLIB is not used on HP-UX
-RANLIB= touch
-
 CFLAGS_SL= +z
 DLSUFFIX= .sl
 
@@ -487,21 +473,14 @@ endif
 ifeq ($(PORTNAME), i386_solaris)
 # cc won't work!
 
-# RANLIB is not used on solaris
-RANLIB= touch
-
-INSTALL= /usr/ucb/install
-
-                                  #
-       # Random things that must be passed everywhere to enable
-                    # everything to compile.  :-/
-                                  #
-   # The extra -I flag is to scoop up extra BSD-emulating headers.
+#
+# Random things that must be passed everywhere to enable
+# everything to compile.  :-/
+#
+# The extra -I flag is to scoop up extra BSD-emulating headers.
 # This needs to be fixed.  Things other than the backend should not be
-            # accessing headers in the backend directory.
-          CFLAGS_BE= -I$(SRCDIR)/backend/port/sparc_solaris
-                  LDADD_BE= -lsocket -lnsl -ll -ldl
-                        LD_ADD= -lsocket -lnsl
+# accessing headers in the backend directory.
+CFLAGS_BE= -I$(SRCDIR)/backend/port/sparc_solaris
 
 ifeq ($(CC), cc)
 CFLAGS_SL= -K PIC
@@ -520,22 +499,10 @@ endif
 #----------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), irix5)
-LDADD_BE= -ll
+LDADD_BE+= -ll
 
 # RANLIB is not used on IRIX 5
 RANLIB= touch
-
-#If you have GNU install, by all means set CUSTOM_INSTALL to that in
-#Makefile.custom.  If you read the man page for /usr/bin/X11/bsdinst,
-#you will see it is not intended for end user use.  It chowns the files
-#it installs to root.
-INSTALL= /usr/bin/X11/bsdinst
-
-IPCSDIR= /usr/sbin
-
-INSTLOPTS=      -m 444
-INSTL_EXE_OPTS= -m 555
-INSTL_LIB_OPTS= -m 664
 
 %.so: %.o
 	$(LD) -G -Bdynamic -o $@ $< $(LD_ADD)
@@ -550,10 +517,9 @@ endif
 ifeq ($(PORTNAME), linux)
 ifndef LINUX_ELF
 DLSUFFIX= .o
-LDADD_BE= -ldld
+LDADD_BE+= -ldld
 else
 DLSUFFIX= .so
-LDADD_BE= -ldl
 LDFLAGS_BE= -rdynamic
 endif
 MK_NO_LORDER= true
@@ -574,17 +540,13 @@ endif
 #---------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), sunos4)
-# cc won't work!
-
-INSTALL= /usr/bin/install
-RANLIB= /usr/bin/ranlib
 
 ifeq ($(CC), cc)
 CFLAGS_SL= -PIC
 else
 CFLAGS_SL= -fPIC
 endif
-LDADD_BE= -lln -ldl
+LDADD_BE+= -lln 
 
 %.so: %.o
 	$(LD) -dc -dp -Bdynamic -o $@ $<
@@ -593,23 +555,12 @@ endif
 #----------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), sparc_solaris)
-# cc won't work!
-
-LDADD_BE= -lsocket -lnsl -ll -ldl
-LD_ADD= -lsocket -lnsl
-
-# RANLIB is not used on solaris
-RANLIB= touch
-
-INSTALL= /usr/ucb/install
-
 #
 # Random things that must be passed everywhere to enable 
 # everything to compile.  :-/
 #
 # The extra -I flag is to scoop up extra BSD-emulating headers.
 CFLAGS_BE= -I$(SRCDIR)/backend/port/sparc_solaris
-LDADD_BE+= -lsocket -lnsl
 
 ifeq ($(CC), cc)
 CFLAGS_SL= -K PIC
@@ -635,19 +586,13 @@ YACC= bison -y
 # symbol names to tell them what to export/import.
 MAKE_EXPORTS= true
 
-# RANLIB is not used on svr4
-RANLIB= touch
-
-# GNU install
-INSTALL= /home/tools/bin/install
-
 #
 # Random things that must be passed everywhere to enable
 # everything to compile.  :-/
 #
 # The extra -I flag is to scoop up extra BSD-emulating headers.
 CFLAGS_BE+= -I$(SRCDIR)/backend/port/svr4
-LDADD_BE= -lsocket -lnsl -lc /usr/ucblib/libucb.a -ll -ldl
+LDADD_BE+= -lc /usr/ucblib/libucb.a 
 LDFLAGS_BE= -LD-Blargedynsym
 
 %.so: %.o
@@ -663,13 +608,10 @@ ifeq ($(PORTNAME), ultrix4)
 ifdef ENFORCE_ALIGNMENT
 CFLAGS_BE= -DNOFIXADE
 endif
-LDADD_BE= -ldl -lln
+LDADD_BE+= -lln
 
 # install creates intermediate directories
 NO_BEFOREINSTL= true
-
-INSTALL= /usr/bin/install
-RANLIB= /usr/bin/ranlib
 
 CFLAGS_SL= -G 0
 DLSUFFIX= .o
@@ -687,9 +629,7 @@ endif
 #---------------------------------------------------------------------------
 # All others need -lm
 
-ifneq ($(PORTNAME), nextstep)
-LD_ADD+= -lm
-endif
+LD_ADD+= @MATH_LIB@
 
 # This goes here so that customization in Makefile.custom is effective
 ##############################################################################

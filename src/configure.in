@@ -75,14 +75,22 @@ dnl   if the library readline is present,
 dnl   set the shell variable USE_READLINE
 dnl   to have the value  USE_READLINE=true
 dnl   and substitute it into the makefiles
-AC_CHECK_LIB(readline, readline, READLINE_LIB='-lreadline')
+AC_CHECK_LIB(readline, main, READLINE_LIB='-lreadline')
 AC_SUBST(READLINE_LIB)
-AC_CHECK_LIB(history, history, HISTORY_LIB='-lhistory')
+AC_CHECK_LIB(history, main, HISTORY_LIB='-lhistory')
 AC_SUBST(HISTORY_LIB)
 AC_CHECK_LIB(curses, main, CURSES_LIB='-lcurses')
 AC_SUBST(CURSES_LIB)
 AC_CHECK_LIB(termcap, main, TERMCAP_LIB='-ltermcap')
 AC_SUBST(TERMCAP_LIB)
+AC_CHECK_LIB(m, main, MATH_LIB='-lm')
+AC_SUBST(MATH_LIB)
+AC_CHECK_LIB(dl, main, DL_LIB='-ldl')
+AC_SUBST(DL_LIB)
+AC_CHECK_LIB(socket, main, SOCKET_LIB='-lsocket')
+AC_SUBST(SOCKET_LIB)
+AC_CHECK_LIB(nsl, main, NSL_LIB='-lnsl')
+AC_SUBST(NSL_LIB)
 
 dnl Checks for header files.
 AC_HEADER_STDC
