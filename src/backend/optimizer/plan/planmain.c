@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.36 1999/05/25 16:09:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.37 1999/06/12 19:38:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,9 +68,9 @@ query_planner(Query *root,
 			  List *qual)
 {
 	List	   *constant_qual = NIL;
-	List	   *var_only_tlist = NIL;
-	List	   *level_tlist = NIL;
-	Plan	   *subplan = NULL;
+	List	   *var_only_tlist;
+	List	   *level_tlist;
+	Plan	   *subplan;
 
 	if (PlannerQueryLevel > 1)
 	{
@@ -88,28 +88,14 @@ query_planner(Query *root,
 #endif
 
 	/*
-	 * A command without a target list or qualification is an error,
-	 * except for "delete foo".
-	 */
-	if (tlist == NIL && qual == NULL)
-	{
-		if (command_type == CMD_DELETE)
-		{
-			return ((Plan *) make_seqscan(NIL,
-										  NIL,
-										  root->resultRelation,
-										  (Plan *) NULL));
-		}
-		else
-			return (Plan *) NULL;
-	}
-
-	/*
 	 * Pull out any non-variable qualifications so these can be put in the
-	 * topmost result node.  The opids for the remaining qualifications
-	 * will be changed to regprocs later.
+	 * topmost result node.
 	 */
 	qual = pull_constant_clauses(qual, &constant_qual);
+	/*
+	 * The opids for the variable qualifications will be fixed later, but
+	 * someone seems to think that the constant quals need to be fixed here.
+	 */
 	fix_opids(constant_qual);
 
 	/*
@@ -143,13 +129,13 @@ query_planner(Query *root,
 			case CMD_UPDATE:
 				{
 					SeqScan    *scan = make_seqscan(tlist,
-													(List *) NULL,
+													NIL,
 													root->resultRelation,
 													(Plan *) NULL);
 
 					if (constant_qual != NULL)
 						return ((Plan *) make_result(tlist,
-												  (Node *) constant_qual,
+													 (Node *) constant_qual,
 													 (Plan *) scan));
 					else
 						return (Plan *) scan;
