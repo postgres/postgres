@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.99 1997/09/24 17:46:14 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.100 1997/11/03 04:21:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <sys/param.h>			/* for MAXPATHLEN */
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <ctype.h>
@@ -96,6 +97,16 @@ typedef struct _psqlSettings
 								 * password */
 } PsqlSettings;
 
+#ifdef TIOCGWINSZ
+struct winsize screen_size;
+#else
+struct winsize
+{
+	int			ws_row;
+	int			ws_col;
+}			screen_size;
+#endif
+
 /* declarations for functions in this file */
 static void usage(char *progname);
 static void slashUsage();
@@ -104,7 +115,7 @@ static void
 handleCopyIn(PGresult *res, const bool mustprompt,
 			 FILE *copystream);
 static int	tableList(PsqlSettings *pset, bool deep_tablelist, char info_type);
-static int	tableDesc(PsqlSettings *pset, char *table);
+static int	tableDesc(PsqlSettings *pset, char *table, FILE *fout);
 static int	rightsList(PsqlSettings *pset);
 static void prompt_for_password(char *username, char *password);
 static char *
@@ -122,7 +133,7 @@ static int
 HandleSlashCmds(PsqlSettings *pset,
 				char *line,
 				char *query);
-static int	MainLoop(PsqlSettings *pset, FILE *source);
+static int	MainLoop(PsqlSettings *pset, char *query, FILE *source);
 
 /* probably should move this into libpq */
 void
@@ -181,9 +192,23 @@ slashUsage(PsqlSettings *pset)
 	char	   *pagerenv;
 	FILE	   *fout;
 
+#ifdef TIOCGWINSZ
+	if (pset->notty == 0 &&
+		(ioctl(fileno(stdout), TIOCGWINSZ, &screen_size) == -1 ||
+		 screen_size.ws_col == 0 ||
+		 screen_size.ws_row == 0))
+	{
+#endif
+		screen_size.ws_row = 24;
+		screen_size.ws_col = 80;
+#ifdef TIOCGWINSZ
+	}
+#endif
+
 	if (pset->notty == 0 &&
 		(pagerenv = getenv("PAGER")) &&
 		(pagerenv[0] != '\0') &&
+		screen_size.ws_row <= 28 &&
 		(fout = popen(pagerenv, "w")))
 	{
 		usePipe = 1;
@@ -192,6 +217,7 @@ slashUsage(PsqlSettings *pset)
 	else
 		fout = stdout;
 
+		/* if you add/remove a line here, change the row test above */
 	fprintf(fout, " \\?           -- help\n");
 	fprintf(fout, " \\a           -- toggle field-alignment (currenty %s)\n", on(pset->opt.align));
 	fprintf(fout, " \\C [<captn>] -- set html3 caption (currently '%s')\n", pset->opt.caption ? pset->opt.caption : "");
@@ -201,7 +227,8 @@ slashUsage(PsqlSettings *pset)
 	fprintf(fout, " \\di          -- list only indices in database\n");
 	fprintf(fout, " \\ds          -- list only sequences in database\n");
 	fprintf(fout, " \\dt          -- list only tables in database\n");
-	fprintf(fout, " \\e [<fname>] -- edit the current query buffer or <fname>, \\E execute too\n");
+	fprintf(fout, " \\e [<fname>] -- edit the current query buffer or <fname>\n");
+	fprintf(fout, " \\E [<fname>] -- edit the current query buffer or <fname>, and execute\n");
 	fprintf(fout, " \\f [<sep>]   -- change field separater (currently '%s')\n", pset->opt.fieldSep);
 	fprintf(fout, " \\g [<fname>] [|<cmd>] -- send query to backend [and results in <fname> or pipe]\n");
 	fprintf(fout, " \\h [<cmd>]   -- help on syntax of sql commands, * for all commands\n");
@@ -285,9 +312,24 @@ tableList(PsqlSettings *pset, bool deep_tablelist, char info_type)
 	int			i;
 	char	   *rk;
 	char	   *rr;
-
 	PGresult   *res;
+	int			usePipe = 0;
+	char	   *pagerenv;
+	FILE	   *fout;
 
+#ifdef TIOCGWINSZ
+	if (pset->notty == 0 &&
+		(ioctl(fileno(stdout), TIOCGWINSZ, &screen_size) == -1 ||
+		 screen_size.ws_col == 0 ||
+		 screen_size.ws_row == 0))
+	{
+#endif
+		screen_size.ws_row = 24;
+		screen_size.ws_col = 80;
+#ifdef TIOCGWINSZ
+	}
+#endif
+	
 	listbuf[0] = '\0';
 	strcat(listbuf, "SELECT usename, relname, relkind, relhasrules");
 	strcat(listbuf, "  FROM pg_class, pg_user ");
@@ -322,6 +364,19 @@ tableList(PsqlSettings *pset, bool deep_tablelist, char info_type)
 	nColumns = PQntuples(res);
 	if (nColumns > 0)
 	{
+		if (pset->notty == 0 &&
+			(pagerenv = getenv("PAGER")) &&
+			pagerenv[0] != '\0' &&
+			(deep_tablelist ||
+			 screen_size.ws_row <= nColumns + 7) &&
+			(fout = popen(pagerenv, "w")))
+		{
+			usePipe = 1;
+			pqsignal(SIGPIPE, SIG_IGN);
+		}
+		else
+			fout = stdout;
+
 		if (deep_tablelist)
 		{
 			/* describe everything here */
@@ -340,46 +395,49 @@ tableList(PsqlSettings *pset, bool deep_tablelist, char info_type)
 				strcpy(table[i], PQgetvalue(res, i, 1));
 			}
 
-			PQclear(res);		/* PURIFY */
+			PQclear(res);
 			for (i = 0; i < nColumns; i++)
-			{
-				tableDesc(pset, table[i]);
-			}
+				tableDesc(pset, table[i], fout);
 			free(table);
 		}
 		else
 		{
 			/* Display the information */
 
-			printf("\nDatabase    = %s\n", PQdb(pset->db));
-			printf(" +------------------+----------------------------------+----------+\n");
-			printf(" |  Owner           |             Relation             |   Type   |\n");
-			printf(" +------------------+----------------------------------+----------+\n");
+			fprintf(fout,"\nDatabase    = %s\n", PQdb(pset->db));
+			fprintf(fout," +------------------+----------------------------------+----------+\n");
+			fprintf(fout," |  Owner           |             Relation             |   Type   |\n");
+			fprintf(fout," +------------------+----------------------------------+----------+\n");
 
 			/* next, print out the instances */
 			for (i = 0; i < PQntuples(res); i++)
 			{
-				printf(" | %-16.16s", PQgetvalue(res, i, 0));
-				printf(" | %-32.32s | ", PQgetvalue(res, i, 1));
+				fprintf(fout," | %-16.16s", PQgetvalue(res, i, 0));
+				fprintf(fout," | %-32.32s | ", PQgetvalue(res, i, 1));
 				rk = PQgetvalue(res, i, 2);
 				rr = PQgetvalue(res, i, 3);
 				if (strcmp(rk, "r") == 0)
-					printf("%-8.8s |", (rr[0] == 't') ? "view?" : "table");
+					fprintf(fout,"%-8.8s |", (rr[0] == 't') ? "view?" : "table");
 				else if (strcmp(rk, "i") == 0)
-					printf("%-8.8s |", "index");
+					fprintf(fout,"%-8.8s |", "index");
 				else
-					printf("%-8.8s |", "sequence");
-				printf("\n");
+					fprintf(fout,"%-8.8s |", "sequence");
+				fprintf(fout,"\n");
 			}
-			printf(" +------------------+----------------------------------+----------+\n");
+			fprintf(fout," +------------------+----------------------------------+----------+\n");
 			PQclear(res);
+		}
+		if (usePipe)
+		{
+			pclose(fout);
+			pqsignal(SIGPIPE, SIG_DFL);
 		}
 		return (0);
 
 	}
 	else
 	{
-		PQclear(res);			/* PURIFY */
+		PQclear(res);
 		switch (info_type)
 		{
 			case 't':
@@ -460,16 +518,31 @@ rightsList(PsqlSettings *pset)
  *
  */
 int
-tableDesc(PsqlSettings *pset, char *table)
+tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 {
 	char		descbuf[256];
 	int			nColumns;
 	char	   *rtype;
 	int			i;
 	int			rsize;
-
 	PGresult   *res;
+	int			usePipe = 0;
+	char	   *pagerenv;
 
+#ifdef TIOCGWINSZ
+	if (fout == NULL &&
+		pset->notty == 0 &&
+		(ioctl(fileno(stdout), TIOCGWINSZ, &screen_size) == -1 ||
+		 screen_size.ws_col == 0 ||
+		 screen_size.ws_row == 0))
+	{
+#endif
+		screen_size.ws_row = 24;
+		screen_size.ws_col = 80;
+#ifdef TIOCGWINSZ
+	}
+#endif
+	
 	/* Build the query */
 
 	for (i = strlen(table); i >= 0; i--)
@@ -492,42 +565,55 @@ tableDesc(PsqlSettings *pset, char *table)
 	nColumns = PQntuples(res);
 	if (nColumns > 0)
 	{
-
+		if (fout == NULL)
+		{
+			if (pset->notty == 0 &&
+				(pagerenv = getenv("PAGER")) &&
+				pagerenv[0] != '\0' &&
+				screen_size.ws_row <= nColumns + 7 &&
+				(fout = popen(pagerenv, "w")))
+			{
+				usePipe = 1;
+				pqsignal(SIGPIPE, SIG_IGN);
+			}
+			else
+				fout = stdout;
+		}
 		/*
 		 * * Display the information
 		 */
 
-		printf("\nTable    = %s\n", table);
-		printf("+----------------------------------+----------------------------------+-------+\n");
-		printf("|              Field               |              Type                | Length|\n");
-		printf("+----------------------------------+----------------------------------+-------+\n");
+		fprintf(fout,"\nTable    = %s\n", table);
+		fprintf(fout,"+----------------------------------+----------------------------------+-------+\n");
+		fprintf(fout,"|              Field               |              Type                | Length|\n");
+		fprintf(fout,"+----------------------------------+----------------------------------+-------+\n");
 
 		/* next, print out the instances */
 		for (i = 0; i < PQntuples(res); i++)
 		{
-			printf("| %-32.32s | ", PQgetvalue(res, i, 1));
+			fprintf(fout,"| %-32.32s | ", PQgetvalue(res, i, 1));
 			rtype = PQgetvalue(res, i, 2);
 			rsize = atoi(PQgetvalue(res, i, 3));
 			if (strcmp(rtype, "text") == 0)
 			{
-				printf("%-32.32s |", rtype);
-				printf("%6s |", "var");
+				fprintf(fout,"%-32.32s |", rtype);
+				fprintf(fout,"%6s |", "var");
 			}
 			else if (strcmp(rtype, "bpchar") == 0)
 			{
-				printf("%-32.32s |", "(bp)char");
-				printf("%6i |", rsize > 0 ? rsize - 4 : 0);
+				fprintf(fout,"%-32.32s |", "(bp)char");
+				fprintf(fout,"%6i |", rsize > 0 ? rsize - 4 : 0);
 			}
 			else if (strcmp(rtype, "varchar") == 0)
 			{
-				printf("%-32.32s |", rtype);
-				printf("%6i |", rsize > 0 ? rsize - 4 : 0);
+				fprintf(fout,"%-32.32s |", rtype);
+				fprintf(fout,"%6i |", rsize > 0 ? rsize - 4 : 0);
 			}
 			else
 			{
 				/* array types start with an underscore */
 				if (rtype[0] != '_')
-					printf("%-32.32s |", rtype);
+					fprintf(fout,"%-32.32s |", rtype);
 				else
 				{
 					char	   *newname;
@@ -535,19 +621,24 @@ tableDesc(PsqlSettings *pset, char *table)
 					newname = malloc(strlen(rtype) + 2);
 					strcpy(newname, rtype + 1);
 					strcat(newname, "[]");
-					printf("%-32.32s |", newname);
+					fprintf(fout,"%-32.32s |", newname);
 					free(newname);
 				}
 				if (rsize > 0)
-					printf("%6i |", rsize);
+					fprintf(fout,"%6i |", rsize);
 				else
-					printf("%6s |", "var");
+					fprintf(fout,"%6s |", "var");
 			}
-			printf("\n");
+			fprintf(fout,"\n");
 		}
-		printf("+----------------------------------+----------------------------------+-------+\n");
+		fprintf(fout,"+----------------------------------+----------------------------------+-------+\n");
 
 		PQclear(res);
+		if (usePipe)
+		{
+			pclose(fout);
+			pqsignal(SIGPIPE, SIG_DFL);
+		}
 		return (0);
 
 	}
@@ -1406,28 +1497,28 @@ HandleSlashCmds(PsqlSettings *pset,
 								 * table */
 			if (strncmp(cmd, "dt", 2) == 0)
 			{					/* only tables */
-				tableList(pset, 0, 't');
+				tableList(pset, false, 't');
 			}
 			else if (strncmp(cmd, "di", 2) == 0)
 			{					/* only indices */
-				tableList(pset, 0, 'i');
+				tableList(pset, false, 'i');
 			}
 			else if (strncmp(cmd, "ds", 2) == 0)
 			{					/* only sequences */
-				tableList(pset, 0, 'S');
+				tableList(pset, false, 'S');
 			}
 			else if (!optarg)
 			{					/* show tables, sequences and indices */
-				tableList(pset, 0, 'b');
+				tableList(pset, false, 'b');
 			}
 			else if (strcmp(optarg, "*") == 0)
 			{					/* show everything */
-				if (tableList(pset, 0, 'b') == 0)
-					tableList(pset, 1, 'b');
+				if (tableList(pset, false, 'b') == 0)
+					tableList(pset, true, 'b');
 			}
 			else
 			{					/* describe the specified table */
-				tableDesc(pset, optarg);
+				tableDesc(pset, optarg, NULL);
 			}
 			break;
 		case 'e':				/* edit */
@@ -1473,7 +1564,7 @@ HandleSlashCmds(PsqlSettings *pset,
 					fclose(fd);
 					break;
 				}
-				MainLoop(pset, fd);
+				MainLoop(pset, query, fd);
 				fclose(fd);
 				break;
 			}
@@ -1523,7 +1614,7 @@ HandleSlashCmds(PsqlSettings *pset,
 					fprintf(stderr, "file named %s could not be opened\n", optarg);
 					break;
 				}
-				MainLoop(pset, fd);
+				MainLoop(pset, query, fd);
 				fclose(fd);
 				break;
 			}
@@ -1622,13 +1713,12 @@ HandleSlashCmds(PsqlSettings *pset,
  */
 
 static int
-MainLoop(PsqlSettings *pset, FILE *source)
+MainLoop(PsqlSettings *pset, char *query, FILE *source)
 {
 	char	   *line;			/* line of input */
 	char	   *xcomment;		/* start of extended comment */
 	int			len;			/* length of the line */
-	char		query[MAX_QUERY_BUFFER];		/* multi-line query
-												 * storage */
+	bool		query_alloced = false;
 	int			successResult = 1;
 	int			slashCmdStatus = CMD_SEND;
 
@@ -1652,6 +1742,12 @@ MainLoop(PsqlSettings *pset, FILE *source)
 	bool		was_bslash;	/* backslash */
 	int			paren_level;
 	char	   *query_start;
+
+	if (query == NULL)
+	{
+		query = malloc(MAX_QUERY_BUFFER);
+		query_alloced = true;
+	}
 
 	interactive = ((source == stdin) && !pset->notty);
 	if (interactive)
@@ -1727,6 +1823,14 @@ MainLoop(PsqlSettings *pset, FILE *source)
 		 * for next command
 		 */
 
+		if (line == NULL)
+		{		/* 	No more input.	Time to quit, or \i done */
+			if (!pset->quiet)
+				printf("EOF\n");/* Goes on prompt line */
+			eof = true;
+			continue;
+		}
+
 		/* not currently inside an extended comment? */
 		if (xcomment == NULL)
 		{
@@ -1740,217 +1844,205 @@ MainLoop(PsqlSettings *pset, FILE *source)
 			xcomment = line;
 		}
 
-		if (line == NULL)
-		{						/* No more input.  Time to quit */
-			if (!pset->quiet)
-				printf("EOF\n");/* Goes on prompt line */
-			eof = true;
+		/* remove whitespaces on the right, incl. \n's */
+		line = rightTrim(line);
+
+		/* echo back if input is from file */
+		if (!interactive && !pset->singleStep && !pset->quiet)
+			fprintf(stderr, "%s\n", line);
+
+		/* nothing on line after trimming? then ignore */
+		if (line[0] == '\0')
+		{
+			free(line);
+			continue;
+		}
+
+		len = strlen(line);
+
+		if (pset->singleLineMode)
+		{
+			SendQuery(&success, pset, line, false, false, 0);
+			successResult &= success;
+			querySent = true;
 		}
 		else
 		{
-			/* remove whitespaces on the right, incl. \n's */
-			line = rightTrim(line);
+			int			i;
 
-			/* echo back if input is from file */
-			if (!interactive && !pset->singleStep && !pset->quiet)
-				fprintf(stderr, "%s\n", line);
+			was_bslash = false;
 
-			/* nothing on line after trimming? then ignore */
-			if (line[0] == '\0')
+			for (i = 0; i < len; i++)
 			{
-				free(line);
-				continue;
-			}
-
-			len = strlen(line);
-
-			if (pset->singleLineMode)
-			{
-				SendQuery(&success, pset, line, false, false, 0);
-				successResult &= success;
-				querySent = true;
-
-			}
-			else
-			{
-				int			i;
-
-				was_bslash = false;
-
-				for (i = 0; i < len; i++)
+				if (line[i] == '\\' && !in_quote)
 				{
-					if (line[i] == '\\' && !in_quote)
-					{
-						char		hold_char = line[i];
+					char		hold_char = line[i];
 
-						line[i] = '\0';
-						if (query_start[0] != '\0')
+					line[i] = '\0';
+					if (query_start[0] != '\0')
+					{
+						if (query[0] != '\0')
 						{
-							if (query[0] != '\0')
-							{
-								strcat(query, "\n");
-								strcat(query, query_start);
-							}
-							else
-							{
-								strcpy(query, query_start);
-							}
+							strcat(query, "\n");
+							strcat(query, query_start);
 						}
-						line[i] = hold_char;
-						query_start = line + i;
-						break;	/* handle command */
-
-						/* start an extended comment? */
-					}
-
-					if (querySent && !isspace(line[i]))
-					{
-						query[0] = '\0';
-						querySent = false;
-					}
-
-					if (was_bslash)
-						was_bslash = false;
-					else if (i > 0 && line[i-1] == '\\')
-						was_bslash = true;
-
-					/* inside a quote? */
-					if (in_quote && (line[i] != '\'' || was_bslash))
-					{
-						/* do nothing */;
-					}
-					else if (xcomment != NULL)	/*inside an extended comment?*/
-					{
-						if (line[i] == '*' && line[i + 1] == '/')
+						else
 						{
-							xcomment = NULL;
-							i++;
+							strcpy(query, query_start);
 						}
 					}
-						/* possible backslash command? */
-					else if (line[i] == '/' && line[i + 1] == '*')
+					line[i] = hold_char;
+					query_start = line + i;
+					break;	/* handle command */
+
+					/* start an extended comment? */
+				}
+
+				if (querySent && !isspace(line[i]))
+				{
+					query[0] = '\0';
+					querySent = false;
+				}
+
+				if (was_bslash)
+					was_bslash = false;
+				else if (i > 0 && line[i-1] == '\\')
+					was_bslash = true;
+
+				/* inside a quote? */
+				if (in_quote && (line[i] != '\'' || was_bslash))
+				{
+					/* do nothing */;
+				}
+				else if (xcomment != NULL)	/*inside an extended comment?*/
+				{
+					if (line[i] == '*' && line[i + 1] == '/')
 					{
-						xcomment = line + i;
+						xcomment = NULL;
 						i++;
-
-					}
-						/* single-line comment? truncate line */
-					else if ((line[i] == '-' && line[i + 1] == '-') ||
-							 (line[i] == '/' && line[i + 1] == '/'))
-					{
-						/* print comment at top of query */
-						if (pset->singleStep)
-							fprintf(stdout, "%s\n", line + i);
-						line[i] = '\0'; /* remove comment */
-						break;
-					}
-					else if (line[i] == '\'')
-					{
-						in_quote ^= 1;
-					}
-						/* semi-colon? then send query now */
-					else if (!paren_level && line[i] == ';')
-					{
-						char		hold_char = line[i + 1];
-
-						line[i + 1] = '\0';
-						if (query_start[0] != '\0')
-						{
-							if (query[0] != '\0')
-							{
-								strcat(query, "\n");
-								strcat(query, query_start);
-							}
-							else
-								strcpy(query, query_start);
-						}
-						SendQuery(&success, pset, query, false, false, 0);
-						successResult &= success;
-						line[i + 1] = hold_char;
-						query_start = line + i + 1;
-						querySent = true;
-
-					}
-					else if (line[i] == '(')
-					{
-						paren_level++;
-
-					}
-					else if (paren_level && line[i] == ')')
-					{
-						paren_level--;
 					}
 				}
-			}
-
-			/* nothing on line after trimming? then ignore */
-			if (line[0] == '\0')
-			{
-				free(line);
-				continue;
-			}
-
-			slashCmdStatus = CMD_UNKNOWN;
-			if (!in_quote && query_start[0] == '\\')
-			{
-				slashCmdStatus = HandleSlashCmds(pset,
-												 query_start,
-												 query);
-				if (slashCmdStatus == CMD_SKIP_LINE)
+					/* possible backslash command? */
+				else if (line[i] == '/' && line[i + 1] == '*')
 				{
-					if (query[0] == '\0')
-						paren_level = 0;
-					free(line);
-					continue;
+					xcomment = line + i;
+					i++;
+
 				}
-				if (slashCmdStatus == CMD_TERMINATE)
+					/* single-line comment? truncate line */
+				else if ((line[i] == '-' && line[i + 1] == '-') ||
+						 (line[i] == '/' && line[i + 1] == '/'))
 				{
-					free(line);
+					/* print comment at top of query */
+					if (pset->singleStep)
+						fprintf(stdout, "%s\n", line + i);
+					line[i] = '\0'; /* remove comment */
 					break;
 				}
-				free(line);
-			}
-			else if (strlen(query) + strlen(query_start) > MAX_QUERY_BUFFER)
-			{
-				fprintf(stderr, "query buffer max length of %d exceeded\n",
-						MAX_QUERY_BUFFER);
-				fprintf(stderr, "query line ignored\n");
-				free(line);
-			}
-			else
-			{
-				if (query_start[0] != '\0')
+				else if (line[i] == '\'')
 				{
-
-					querySent = false;
-					if (query[0] != '\0')
-					{
-						strcat(query, "\n");
-						strcat(query, query_start);
-					}
-					else
-						strcpy(query, query_start);
+					in_quote ^= 1;
 				}
-				free(line);		/* PURIFY */
-			}
-
-			/* had a backslash-g? force the query to be sent */
-			if (slashCmdStatus == CMD_SEND)
-			{
-#if FALSE
-				if (!querySent)
+					/* semi-colon? then send query now */
+				else if (!paren_level && line[i] == ';')
 				{
+					char		hold_char = line[i + 1];
+
+					line[i + 1] = '\0';
+					if (query_start[0] != '\0')
+					{
+						if (query[0] != '\0')
+						{
+							strcat(query, "\n");
+							strcat(query, query_start);
+						}
+						else
+							strcpy(query, query_start);
+					}
 					SendQuery(&success, pset, query, false, false, 0);
 					successResult &= success;
+					line[i + 1] = hold_char;
+					query_start = line + i + 1;
+						/* sometimes, people do ';\g', don't execute twice */
+					if (*query_start && /* keeps us from going off the end */
+						*query_start == '\\' &&
+						*(query_start+1) == 'g')
+						query_start += 2;
+					querySent = true;
 				}
-#else
-				SendQuery(&success, pset, query, false, false, 0);
-				successResult &= success;
-#endif
-				querySent = true;
+				else if (line[i] == '(')
+				{
+					paren_level++;
+
+				}
+				else if (paren_level && line[i] == ')')
+				{
+					paren_level--;
+				}
 			}
 		}
+
+		/* nothing on line after trimming? then ignore */
+		if (line[0] == '\0')
+		{
+			free(line);
+			continue;
+		}
+
+		slashCmdStatus = CMD_UNKNOWN;
+		if (!in_quote && query_start[0] == '\\')
+		{
+			slashCmdStatus = HandleSlashCmds(pset,
+											 query_start,
+											 query);
+			if (slashCmdStatus == CMD_SKIP_LINE)
+			{
+				if (query[0] == '\0')
+					paren_level = 0;
+				free(line);
+				continue;
+			}
+			if (slashCmdStatus == CMD_TERMINATE)
+			{
+				free(line);
+				break;
+			}
+			free(line);
+		}
+		else if (strlen(query) + strlen(query_start) > MAX_QUERY_BUFFER)
+		{
+			fprintf(stderr, "query buffer max length of %d exceeded\n",
+					MAX_QUERY_BUFFER);
+			fprintf(stderr, "query line ignored\n");
+			free(line);
+		}
+		else
+		{
+			if (query_start[0] != '\0')
+			{
+				querySent = false;
+				if (query[0] != '\0')
+				{
+					strcat(query, "\n");
+					strcat(query, query_start);
+				}
+				else
+					strcpy(query, query_start);
+			}
+			free(line);
+		}
+
+		/* had a backslash-g? force the query to be sent */
+		if (slashCmdStatus == CMD_SEND)
+		{
+			SendQuery(&success, pset, query, false, false, 0);
+			successResult &= success;
+			querySent = true;
+		}
 	}							/* while */
+	if (query_alloced)
+		free(query);
+
 	return successResult;
 }								/* MainLoop() */
 
@@ -2134,7 +2226,7 @@ main(int argc, char **argv)
 			sprintf(line, "\\i %s", qfilename);
 		}
 		HandleSlashCmds(&settings, line, "");
-		free(line);				/* PURIFY */
+		free(line);
 	}
 	else
 	{
@@ -2146,13 +2238,13 @@ main(int argc, char **argv)
 			successResult = success;
 		}
 		else
-			successResult = MainLoop(&settings, stdin);
+			successResult = MainLoop(&settings, NULL, stdin);
 	}
 
 	PQfinish(settings.db);
-	free(settings.opt.fieldSep);/* PURIFY */
+	free(settings.opt.fieldSep);
 	if (settings.prompt)
-		free(settings.prompt);	/* PURIFY */
+		free(settings.prompt);
 
 	return !successResult;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.38 1997/09/08 21:55:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.39 1997/11/03 04:21:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,14 +31,12 @@
 
 #ifdef TIOCGWINSZ
 struct winsize screen_size;
-
 #else
 struct winsize
 {
 	int			ws_row;
 	int			ws_col;
 }			screen_size;
-
 #endif
 
 /* the rows array in a PGresGroup  has to grow to accommodate the rows */
