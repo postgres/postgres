@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.69 2000/11/01 20:39:58 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.70 2000/11/08 22:09:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -340,19 +340,16 @@ btbuild(PG_FUNCTION_ARGS)
 	{
 		Oid			hrelid = RelationGetRelid(heap);
 		Oid			irelid = RelationGetRelid(index);
-		bool		inplace = IsReindexProcessing();
 
 		heap_close(heap, NoLock);
 		index_close(index);
-
-		UpdateStats(hrelid, nhtups, inplace);
-		UpdateStats(irelid, nitups, inplace);
+		UpdateStats(hrelid, nhtups);
+		UpdateStats(irelid, nitups);
 		if (oldPred != NULL)
 		{
 			if (nitups == nhtups)
 				pred = NULL;
-			if (!inplace)
-				UpdateIndexPredicate(irelid, oldPred, pred);
+			UpdateIndexPredicate(irelid, oldPred, pred);
 		}
 	}
 

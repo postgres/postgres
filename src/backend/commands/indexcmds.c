@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.39 2000/10/22 23:32:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.40 2000/11/08 22:09:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -214,7 +214,7 @@ DefineIndex(char *heapRelationName,
 	 * backends to flush their relcache entries and in particular their
 	 * cached lists of the indexes for this relation.
 	 */
-	setRelhasindexInplace(relationId, true, false);
+	setRelhasindex(relationId, true);
 }
 
 
@@ -635,6 +635,15 @@ ReindexIndex(const char *name, bool force /* currently unused */ )
 {
 	HeapTuple	tuple;
 
+	/* ----------------
+	 *	REINDEX within a transaction block is dangerous, because
+	 *	if the transaction is later rolled back we have no way to
+	 *	undo truncation of the index's physical file.  Disallow it.
+	 * ----------------
+	 */
+	if (IsTransactionBlock())
+		elog(ERROR, "REINDEX cannot run inside a BEGIN/END block");
+
 	tuple = SearchSysCacheTuple(RELNAME,
 								PointerGetDatum(name),
 								0, 0, 0);
@@ -665,6 +674,15 @@ void
 ReindexTable(const char *name, bool force)
 {
 	HeapTuple	tuple;
+
+	/* ----------------
+	 *	REINDEX within a transaction block is dangerous, because
+	 *	if the transaction is later rolled back we have no way to
+	 *	undo truncation of the index's physical file.  Disallow it.
+	 * ----------------
+	 */
+	if (IsTransactionBlock())
+		elog(ERROR, "REINDEX cannot run inside a BEGIN/END block");
 
 	tuple = SearchSysCacheTuple(RELNAME,
 								PointerGetDatum(name),

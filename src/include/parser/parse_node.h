@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_node.h,v 1.22 2000/09/29 18:21:40 tgl Exp $
+ * $Id: parse_node.h,v 1.23 2000/11/08 22:10:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@ typedef struct ParseState
 	List	   *p_joinlist;		/* join items so far (will become
 								 * FromExpr node's fromlist) */
 	int			p_last_resno;	/* last targetlist resno assigned */
+	List	   *p_forUpdate;	/* FOR UPDATE clause, if any (see gram.y) */
 	bool		p_hasAggs;
 	bool		p_hasSubLinks;
 	bool		p_is_insert;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.37 2000/06/08 19:51:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.38 2000/11/08 22:10:01 tgl Exp $
  *
  * Note - this code is real crufty...
  *
@@ -80,10 +80,10 @@ typedef InvalidationMessageData *InvalidationMessage;
 
 /*
  * ----------------
- *	Invalidation info was devided into three parts.
- *	1) shared invalidation to be registerd for all backends
+ *	Invalidation info is divided into three parts.
+ *	1) shared invalidation to be registered for all backends
  *	2) local invalidation for the transaction itself
- *	3) rollback information for the transaction itself
+ *	3) rollback information for the transaction itself (in case we abort)
  * ----------------
  */
 
@@ -160,7 +160,9 @@ LocalInvalidRegister(LocalInvalid invalid,
  * --------------------------------
  */
 static void
-			LocalInvalidInvalidate(LocalInvalid invalid, void (*function) (), bool freemember)
+LocalInvalidInvalidate(LocalInvalid invalid,
+					   void (*function) (),
+					   bool freemember)
 {
 	InvalidationEntryData *entryDataP;
 
@@ -216,15 +218,10 @@ elog(DEBUG, "CacheIdRegisterLocalInvalid(%d, %d, [%d, %d])", \
 elog(DEBUG, "CacheIdRegisterLocalRollback(%d, %d, [%d, %d])", \
 	 cacheId, hashIndex, ItemPointerGetBlockNumber(pointer), \
 	 ItemPointerGetOffsetNumber(pointer))
-#define CacheIdImmediateRegisterSharedInvalid_DEBUG1 \
-elog(DEBUG, "CacheIdImmediateRegisterSharedInvalid(%d, %d, [%d, %d])", \
-	 cacheId, hashIndex, ItemPointerGetBlockNumber(pointer), \
-	 ItemPointerGetOffsetNumber(pointer))
 #else
 #define CacheIdRegisterSpecifiedLocalInvalid_DEBUG1
 #define CacheIdRegisterLocalInvalid_DEBUG1
 #define CacheIdRegisterLocalRollback_DEBUG1
-#define CacheIdImmediateRegisterSharedInvalid_DEBUG1
 #endif	 /* INVALIDDEBUG */
 
 /* --------------------------------
@@ -233,7 +230,9 @@ elog(DEBUG, "CacheIdImmediateRegisterSharedInvalid(%d, %d, [%d, %d])", \
  */
 static LocalInvalid
 CacheIdRegisterSpecifiedLocalInvalid(LocalInvalid invalid,
-					 Index cacheId, Index hashIndex, ItemPointer pointer)
+									 Index cacheId,
+									 Index hashIndex,
+									 ItemPointer pointer)
 {
 	InvalidationMessage message;
 
@@ -315,43 +314,6 @@ CacheIdRegisterLocalRollback(Index cacheId, Index hashIndex,
 	 */
 	RollbackStack = CacheIdRegisterSpecifiedLocalInvalid(
 							 RollbackStack, cacheId, hashIndex, pointer);
-}
-
-/* --------------------------------
- *		CacheIdImmediateRegisterSharedInvalid
- * --------------------------------
- */
-static void
-CacheIdImmediateRegisterSharedInvalid(Index cacheId, Index hashIndex,
-									  ItemPointer pointer)
-{
-	InvalidationMessage message;
-
-	/* ----------------
-	 *	debugging stuff
-	 * ----------------
-	 */
-	CacheIdImmediateRegisterSharedInvalid_DEBUG1;
-
-	/* ----------------
-	 *	create a message describing the system catalog tuple
-	 *	we wish to invalidate.
-	 * ----------------
-	 */
-	message = (InvalidationMessage)
-		InvalidationEntryAllocate(sizeof(InvalidationMessageData));
-
-	message->kind = 'c';
-	message->any.catalog.cacheId = cacheId;
-	message->any.catalog.hashIndex = hashIndex;
-
-	ItemPointerCopy(pointer, &message->any.catalog.pointerData);
-	/* ----------------
-	 *	Register a shared catalog cache invalidation.
-	 * ----------------
-	 */
-	InvalidationMessageRegisterSharedInvalid(message);
-	free((Pointer) &((InvalidationUserData *) message)->dataP[-1]);
 }
 
 /* --------------------------------
@@ -446,44 +408,6 @@ RelationIdRegisterLocalRollback(Oid relationId, Oid objectId)
 	 */
 	RollbackStack = RelationIdRegisterSpecifiedLocalInvalid(
 									RollbackStack, relationId, objectId);
-}
-
-/* --------------------------------
- *		RelationIdImmediateRegisterSharedInvalid
- * --------------------------------
- */
-static void
-RelationIdImmediateRegisterSharedInvalid(Oid relationId, Oid objectId)
-{
-	InvalidationMessage message;
-
-	/* ----------------
-	 *	debugging stuff
-	 * ----------------
-	 */
-#ifdef	INVALIDDEBUG
-	elog(DEBUG, "RelationImmediateRegisterSharedInvalid(%u, %u)", relationId,
-		 objectId);
-#endif	 /* defined(INVALIDDEBUG) */
-
-	/* ----------------
-	 *	create a message describing the relation descriptor
-	 *	we wish to invalidate.
-	 * ----------------
-	 */
-	message = (InvalidationMessage)
-		InvalidationEntryAllocate(sizeof(InvalidationMessageData));
-
-	message->kind = 'r';
-	message->any.relation.relationId = relationId;
-	message->any.relation.objectId = objectId;
-
-	/* ----------------
-	 *	Register a shared catalog cache invalidation.
-	 * ----------------
-	 */
-	InvalidationMessageRegisterSharedInvalid(message);
-	free((Pointer) &((InvalidationUserData *) message)->dataP[-1]);
 }
 
 /* --------------------------------
@@ -890,55 +814,3 @@ RelationMark4RollbackHeapTuple(Relation relation, HeapTuple tuple)
 								RelationIdRegisterLocalRollback,
 								"RelationMark4RollbackHeapTuple");
 }
-
-/*
- * ImmediateInvalidateSharedHeapTuple
- *		Different from RelationInvalidateHeapTuple()
- *		this function queues shared invalidation info immediately.
- */
-void
-ImmediateInvalidateSharedHeapTuple(Relation relation, HeapTuple tuple)
-{
-	InvokeHeapTupleInvalidation(relation, tuple,
-								CacheIdImmediateRegisterSharedInvalid,
-								RelationIdImmediateRegisterSharedInvalid,
-								"ImmediateInvalidateSharedHeapTuple");
-}
-
-#ifdef NOT_USED
-/*
- * ImmediateSharedRelationCacheInvalidate
- *	Register shared relation cache invalidation immediately
- *
- *	This is needed for smgrunlink()/smgrtruncate().
- *	Those functions unlink/truncate the base file immediately
- *	and couldn't be rollbacked in case of abort/crash.
- *	So relation cache invalidation must be registerd immediately.
- *	Note:
- *		Assumes Relation is valid.
- */
-void
-ImmediateSharedRelationCacheInvalidate(Relation relation)
-{
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
-	 */
-	Assert(RelationIsValid(relation));
-
-	if (IsBootstrapProcessingMode())
-		return;
-
-	/* ----------------
-	 *	debugging stuff
-	 * ----------------
-	 */
-#ifdef	INVALIDDEBUG
-	elog(DEBUG, "ImmediateSharedRelationCacheInvalidate(%s)", \
-		 RelationGetPhysicalRelationName(relation));
-#endif	 /* defined(INVALIDDEBUG) */
-
-	RelationIdImmediateRegisterSharedInvalid(
-							RelOid_pg_class, RelationGetRelid(relation));
-}
-#endif

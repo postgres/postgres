@@ -62,10 +62,10 @@ alter table rename;
 ERROR:  parser: parse error at or near ";"
 -- no such relation 
 alter table nonesuch rename to newnonesuch;
-ERROR:  Relation 'nonesuch' does not exist
+ERROR:  Relation "nonesuch" does not exist
 -- no such relation 
 alter table nonesuch rename to stud_emp;
-ERROR:  Relation 'nonesuch' does not exist
+ERROR:  Relation "nonesuch" does not exist
 -- system relation 
 alter table stud_emp rename to pg_stud_emp;
 ERROR:  renamerel: Illegal class name: "pg_stud_emp" -- pg_ is reserved for system catalogs

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.96 2000/11/04 12:43:23 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.97 2000/11/08 22:09:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1151,7 +1151,7 @@ build_indices()
 		 * -mer
 		 */
 		if (!BootstrapAlreadySeen(RelationGetRelid(heap)))
-			UpdateStats(RelationGetRelid(heap), 0, true);
+			UpdateStats(RelationGetRelid(heap), 0);
 
 		/* XXX Probably we ought to close the heap and index here? */
 	}

@@ -11,13 +11,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.42 2000/10/28 16:20:57 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.43 2000/11/08 22:10:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "storage/bufmgr.h"
 #include "storage/smgr.h"
+#include "utils/memutils.h"
+
 
 static void smgrshutdown(void);
 
@@ -26,7 +29,7 @@ typedef struct f_smgr
 	int			(*smgr_init) (void);	/* may be NULL */
 	int			(*smgr_shutdown) (void);		/* may be NULL */
 	int			(*smgr_create) (Relation reln);
-	int			(*smgr_unlink) (Relation reln);
+	int			(*smgr_unlink) (RelFileNode rnode);
 	int			(*smgr_extend) (Relation reln, char *buffer);
 	int			(*smgr_open) (Relation reln);
 	int			(*smgr_close) (Relation reln);
@@ -60,10 +63,11 @@ static f_smgr smgrsw[] = {
 	{mdinit, NULL, mdcreate, mdunlink, mdextend, mdopen, mdclose,
 		mdread, mdwrite, mdflush, mdblindwrt, mdmarkdirty, mdblindmarkdirty,
 #ifdef XLOG
-	mdnblocks, mdtruncate, mdcommit, mdabort, mdsync},
+	mdnblocks, mdtruncate, mdcommit, mdabort, mdsync
 #else
-	mdnblocks, mdtruncate, mdcommit, mdabort},
+	mdnblocks, mdtruncate, mdcommit, mdabort
 #endif
+	},
 
 #ifdef STABLE_MEMORY_STORAGE
 	/* main memory */
@@ -92,6 +96,31 @@ static bool smgrwo[] = {
 #endif
 
 static int	NSmgr = lengthof(smgrsw);
+
+/*
+ * We keep a list of all relations (represented as RelFileNode values)
+ * that have been created or deleted in the current transaction.  When
+ * a relation is created, we create the physical file immediately, but
+ * remember it so that we can delete the file again if the current
+ * transaction is aborted.  Conversely, a deletion request is NOT
+ * executed immediately, but is just entered in the list.  When and if
+ * the transaction commits, we can delete the physical file.
+ *
+ * NOTE: the list is kept in TopMemoryContext to be sure it won't disappear
+ * unbetimes.  It'd probably be OK to keep it in TopTransactionContext,
+ * but I'm being paranoid.
+ */
+
+typedef struct PendingRelDelete
+{
+	RelFileNode relnode;		/* relation that may need to be deleted */
+	int16 which;				/* which storage manager? */
+	bool atCommit;				/* T=delete at commit; F=delete at abort */
+	struct PendingRelDelete *next; /* linked-list link */
+} PendingRelDelete;
+
+static PendingRelDelete *pendingDeletes = NULL;	/* head of linked list */
+
 
 /*
  *	smgrinit(), smgrshutdown() -- Initialize or shut down all storage
@@ -147,9 +176,19 @@ int
 smgrcreate(int16 which, Relation reln)
 {
 	int			fd;
+	PendingRelDelete *pending;
 
 	if ((fd = (*(smgrsw[which].smgr_create)) (reln)) < 0)
 		elog(ERROR, "cannot create %s: %m", RelationGetRelationName(reln));
+
+	/* Add the relation to the list of stuff to delete at abort */
+	pending = (PendingRelDelete *)
+		MemoryContextAlloc(TopMemoryContext, sizeof(PendingRelDelete));
+	pending->relnode = reln->rd_node;
+	pending->which = which;
+	pending->atCommit = false;	/* delete if abort */
+	pending->next = pendingDeletes;
+	pendingDeletes = pending;
 
 	return fd;
 }
@@ -157,17 +196,38 @@ smgrcreate(int16 which, Relation reln)
 /*
  *	smgrunlink() -- Unlink a relation.
  *
- *		The relation is removed from the store.
+ *		The relation is removed from the store.  Actually, we just remember
+ *		that we want to do this at transaction commit.
  */
 int
 smgrunlink(int16 which, Relation reln)
 {
-	int			status;
+	PendingRelDelete *pending;
 
-	if ((status = (*(smgrsw[which].smgr_unlink)) (reln)) == SM_FAIL)
-		elog(ERROR, "cannot unlink %s: %m", RelationGetRelationName(reln));
+	/* Make sure the file is closed */
+	if (reln->rd_fd >= 0)
+		smgrclose(which, reln);
 
-	return status;
+	/* Add the relation to the list of stuff to delete at commit */
+	pending = (PendingRelDelete *)
+		MemoryContextAlloc(TopMemoryContext, sizeof(PendingRelDelete));
+	pending->relnode = reln->rd_node;
+	pending->which = which;
+	pending->atCommit = true;	/* delete if commit */
+	pending->next = pendingDeletes;
+	pendingDeletes = pending;
+
+	/*
+	 * NOTE: if the relation was created in this transaction, it will now
+	 * be present in the pending-delete list twice, once with atCommit true
+	 * and once with atCommit false.  Hence, it will be physically deleted
+	 * at end of xact in either case (and the other entry will be ignored
+	 * by smgrDoPendingDeletes, so no error will occur).  We could instead
+	 * remove the existing list entry and delete the physical file
+	 * immediately, but for now I'll keep the logic simple.
+	 */
+
+	return SM_SUCCESS;
 }
 
 /*
@@ -193,29 +253,24 @@ smgrextend(int16 which, Relation reln, char *buffer)
 /*
  *	smgropen() -- Open a relation using a particular storage manager.
  *
- *		Returns the fd for the open relation on success, aborts the
- *		transaction on failure.
+ *		Returns the fd for the open relation on success.
+ *
+ *		On failure, returns -1 if failOK, else aborts the transaction.
  */
 int
-smgropen(int16 which, Relation reln)
+smgropen(int16 which, Relation reln, bool failOK)
 {
 	int			fd;
 
-	if ((fd = (*(smgrsw[which].smgr_open)) (reln)) < 0 &&
-		!reln->rd_unlinked)
-		elog(ERROR, "cannot open %s: %m", RelationGetRelationName(reln));
+	if ((fd = (*(smgrsw[which].smgr_open)) (reln)) < 0)
+		if (! failOK)
+			elog(ERROR, "cannot open %s: %m", RelationGetRelationName(reln));
 
 	return fd;
 }
 
 /*
  *	smgrclose() -- Close a relation.
- *
- *		NOTE: underlying manager should allow case where relation is
- *		already closed.  Indeed relation may have been unlinked!
- *		This is currently called only from RelationFlushRelation() when
- *		the relation cache entry is about to be dropped; could be doing
- *		simple relation cache clear, or finishing up DROP TABLE.
  *
  *		Returns SM_SUCCESS on success, aborts on failure.
  */
@@ -409,6 +464,41 @@ smgrtruncate(int16 which, Relation reln, int nblocks)
 	}
 
 	return newblks;
+}
+
+/*
+ * smgrDoPendingDeletes() -- take care of relation deletes at end of xact.
+ */
+int
+smgrDoPendingDeletes(bool isCommit)
+{
+	while (pendingDeletes != NULL)
+	{
+		PendingRelDelete *pending = pendingDeletes;
+
+		pendingDeletes = pending->next;
+		if (pending->atCommit == isCommit)
+		{
+			/*
+			 * Get rid of any leftover buffers for the rel (shouldn't be
+			 * any in the commit case, but there can be in the abort case).
+			 */
+			DropRelFileNodeBuffers(pending->relnode);
+			/*
+			 * And delete the physical files.
+			 *
+			 * Note: we treat deletion failure as a NOTICE, not an error,
+			 * because we've already decided to commit or abort the current
+			 * xact.
+			 */
+			if ((*(smgrsw[pending->which].smgr_unlink)) (pending->relnode) == SM_FAIL)
+				elog(NOTICE, "cannot unlink %u/%u: %m",
+					 pending->relnode.tblNode, pending->relnode.relNode);
+		}
+		pfree(pending);
+	}
+
+	return SM_SUCCESS;
 }
 
 /*

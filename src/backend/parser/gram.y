@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.207 2000/11/08 21:28:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.208 2000/11/08 22:09:58 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -334,7 +334,7 @@ static void doNegateFloat(Value *v);
  * when some sort of pg_privileges relation is introduced.
  * - Todd A. Brandys 1998-01-01?
  */
-%token	ABORT_TRANS, ACCESS, AFTER, AGGREGATE, ANALYZE, ANALYSE /* British */
+%token	ABORT_TRANS, ACCESS, AFTER, AGGREGATE, ANALYZE, ANALYSE,
 		BACKWARD, BEFORE, BINARY, BIT,
 		CACHE, CHECKPOINT, CLUSTER, COMMENT, COPY, CREATEDB, CREATEUSER, CYCLE,
 		DATABASE, DELIMITERS, DO,
@@ -2466,11 +2466,7 @@ ExtendStmt:  EXTEND INDEX index_name where_clause
 /* NOT USED
 RecipeStmt:  EXECUTE RECIPE recipe_name
 				{
-					RecipeStmt *n;
-					if (!IsTransactionBlock())
-						elog(ERROR,"EXECUTE RECIPE may only be used in begin/end transaction blocks");
-
-					n = makeNode(RecipeStmt);
+					RecipeStmt *n = makeNode(RecipeStmt);
 					n->recipeName = $3;
 					$$ = (Node *)n;
 				}
@@ -2633,8 +2629,6 @@ oper_argtypes:	Typename
 ReindexStmt:  REINDEX reindex_type name opt_force
 				{
 					ReindexStmt *n = makeNode(ReindexStmt);
-					if (IsTransactionBlock())
-						elog(ERROR,"REINDEX command could only be used outside begin/end transaction blocks");
 					n->reindexType = $2;
 					n->name = $3;
 					n->force = $4;

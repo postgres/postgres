@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.64 2000/09/12 21:06:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.65 2000/11/08 22:09:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,6 +150,20 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	StoreCatalogInheritance(relationId, inheritList);
 
 	/*
+	 * We must bump the command counter to make the newly-created relation
+	 * tuple visible for opening.
+	 */
+	CommandCounterIncrement();
+
+	/*
+	 * Open the new relation and acquire exclusive lock on it.  This isn't
+	 * really necessary for locking out other backends (since they can't
+	 * see the new rel anyway until we commit), but it keeps the lock manager
+	 * from complaining about deadlock risks.
+	 */
+	rel = heap_openr(relname, AccessExclusiveLock);
+
+	/*
 	 * Now add any newly specified column default values and CHECK
 	 * constraints to the new relation.  These are passed to us in the
 	 * form of raw parsetrees; we need to transform them to executable
@@ -181,25 +195,11 @@ DefineRelation(CreateStmt *stmt, char relkind)
 		rawDefaults = lappend(rawDefaults, rawEnt);
 	}
 
-	/* If no raw defaults and no constraints, nothing to do. */
-	if (rawDefaults == NIL && stmt->constraints == NIL)
-		return;
-
 	/*
-	 * We must bump the command counter to make the newly-created relation
-	 * tuple visible for opening.
+	 * Parse and add the defaults/constraints, if any.
 	 */
-	CommandCounterIncrement();
-
-	/*
-	 * Open the new relation.
-	 */
-	rel = heap_openr(relname, AccessExclusiveLock);
-
-	/*
-	 * Parse and add the defaults/constraints.
-	 */
-	AddRelationRawConstraints(rel, rawDefaults, stmt->constraints);
+	if (rawDefaults || stmt->constraints)
+		AddRelationRawConstraints(rel, rawDefaults, stmt->constraints);
 
 	/*
 	 * Clean up.  We keep lock on new relation (although it shouldn't be

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.49 2000/09/29 18:21:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.50 2000/11/08 22:09:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@ static Node *scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte,
 							  char *colname);
 static Node *scanJoinForColumn(JoinExpr *join, char *colname,
 							   int sublevels_up);
+static bool isForUpdate(ParseState *pstate, char *relname);
 static List *expandNamesVars(ParseState *pstate, List *names, List *vars);
 static void warnAutoRange(ParseState *pstate, char *refname);
 
@@ -477,6 +478,7 @@ addRangeTableEntry(ParseState *pstate,
 				   bool inFromCl)
 {
 	char	   *refname = alias ? alias->relname : relname;
+	LOCKMODE	lockmode;
 	Relation	rel;
 	RangeTblEntry *rte;
 	Attr	   *eref;
@@ -502,17 +504,22 @@ addRangeTableEntry(ParseState *pstate,
 
 	/*
 	 * Get the rel's OID.  This access also ensures that we have an
-	 * up-to-date relcache entry for the rel.  We don't need to keep it
-	 * open, however. Since this is open anyway, let's check that the
-	 * number of column aliases is reasonable. - Thomas 2000-02-04
+	 * up-to-date relcache entry for the rel.  Since this is typically
+	 * the first access to a rel in a statement, be careful to get the
+	 * right access level depending on whether we're doing SELECT FOR UPDATE.
 	 */
-	rel = heap_openr(relname, AccessShareLock);
+	lockmode = isForUpdate(pstate, relname) ? RowShareLock : AccessShareLock;
+	rel = heap_openr(relname, lockmode);
 	rte->relid = RelationGetRelid(rel);
-	maxattrs = RelationGetNumberOfAttributes(rel);
 
 	eref = alias ? (Attr *) copyObject(alias) : makeAttr(refname, NULL);
 	numaliases = length(eref->attrs);
 
+	/*
+	 * Since the rel is open anyway, let's check that the
+	 * number of column aliases is reasonable. - Thomas 2000-02-04
+	 */
+	maxattrs = RelationGetNumberOfAttributes(rel);
 	if (maxattrs < numaliases)
 		elog(ERROR, "Table \"%s\" has %d columns available but %d columns specified",
 			 refname, maxattrs, numaliases);
@@ -527,7 +534,12 @@ addRangeTableEntry(ParseState *pstate,
 	}
 	rte->eref = eref;
 
-	heap_close(rel, AccessShareLock);
+	/*
+	 * Drop the rel refcount, but keep the access lock till end of transaction
+	 * so that the table can't be deleted or have its schema modified
+	 * underneath us.
+	 */
+	heap_close(rel, NoLock);
 
 	/*----------
 	 * Flags:
@@ -641,6 +653,41 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 		pstate->p_rtable = lappend(pstate->p_rtable, rte);
 
 	return rte;
+}
+
+/*
+ * Has the specified relname been selected FOR UPDATE?
+ */
+static bool
+isForUpdate(ParseState *pstate, char *relname)
+{
+	/* Outer loop to check parent query levels as well as this one */
+	while (pstate != NULL)
+	{
+		if (pstate->p_forUpdate != NIL)
+		{
+			if (lfirst(pstate->p_forUpdate) == NULL)
+			{
+				/* all tables used in query */
+				return true;
+			}
+			else
+			{
+				/* just the named tables */
+				List   *l;
+
+				foreach(l, pstate->p_forUpdate)
+				{
+					char	   *rname = lfirst(l);
+
+					if (strcmp(relname, rname) == 0)
+						return true;
+				}
+			}
+		}
+		pstate = pstate->parentParseState;
+	}
+	return false;
 }
 
 /*

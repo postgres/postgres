@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.114 2000/10/28 16:20:57 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.115 2000/11/08 22:10:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -954,7 +954,6 @@ static Relation
 RelationBuildDesc(RelationBuildDescInfo buildinfo,
 				  Relation oldrelation)
 {
-	File		fd;
 	Relation	relation;
 	Oid			relid;
 	Oid			relam;
@@ -1069,18 +1068,10 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	 *	by the storage manager code to rd_fd.
 	 * ----------------
 	 */
-	if (relation->rd_rel->relkind != RELKIND_VIEW) {
-		fd = smgropen(DEFAULT_SMGR, relation);
-
-		Assert(fd >= -1);
-		if (fd == -1)
-			elog(NOTICE, "RelationBuildDesc: smgropen(%s): %m",
-				 NameStr(relation->rd_rel->relname));
-
-		relation->rd_fd = fd;
-	} else {
+	if (relation->rd_rel->relkind != RELKIND_VIEW)
+		relation->rd_fd = smgropen(DEFAULT_SMGR, relation, false);
+	else
 		relation->rd_fd = -1;
-	}
 
 	/* ----------------
 	 *	insert newly created relation into proper relcaches,
@@ -1337,14 +1328,11 @@ RelationIdCacheGetRelation(Oid relationId)
 
 	if (RelationIsValid(rd))
 	{
+		/* re-open files if necessary */
 		if (rd->rd_fd == -1 && rd->rd_rel->relkind != RELKIND_VIEW)
-		{
-			rd->rd_fd = smgropen(DEFAULT_SMGR, rd);
-			Assert(rd->rd_fd != -1 || rd->rd_unlinked);
-		}
+			rd->rd_fd = smgropen(DEFAULT_SMGR, rd, false);
 
 		RelationIncrementReferenceCount(rd);
-
 	}
 
 	return rd;
@@ -1371,14 +1359,11 @@ RelationNameCacheGetRelation(const char *relationName)
 
 	if (RelationIsValid(rd))
 	{
+		/* re-open files if necessary */
 		if (rd->rd_fd == -1 && rd->rd_rel->relkind != RELKIND_VIEW)
-		{
-			rd->rd_fd = smgropen(DEFAULT_SMGR, rd);
-			Assert(rd->rd_fd != -1 || rd->rd_unlinked);
-		}
+			rd->rd_fd = smgropen(DEFAULT_SMGR, rd, false);
 
 		RelationIncrementReferenceCount(rd);
-
 	}
 
 	return rd;
@@ -1393,14 +1378,11 @@ RelationNodeCacheGetRelation(RelFileNode rnode)
 
 	if (RelationIsValid(rd))
 	{
+		/* re-open files if necessary */
 		if (rd->rd_fd == -1 && rd->rd_rel->relkind != RELKIND_VIEW)
-		{
-			rd->rd_fd = smgropen(DEFAULT_SMGR, rd);
-			Assert(rd->rd_fd != -1 || rd->rd_unlinked);
-		}
+			rd->rd_fd = smgropen(DEFAULT_SMGR, rd, false);
 
 		RelationIncrementReferenceCount(rd);
-
 	}
 
 	return rd;
@@ -1536,15 +1518,13 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 
 	/*
 	 * Make sure smgr and lower levels close the relation's files, if they
-	 * weren't closed already.  We do this unconditionally; if the
-	 * relation is not deleted, the next smgr access should reopen the
-	 * files automatically.  This ensures that the low-level file access
-	 * state is updated after, say, a vacuum truncation.
-	 *
-	 * NOTE: this call is a no-op if the relation's smgr file is already
-	 * closed or unlinked.
+	 * weren't closed already.  If the relation is not getting deleted,
+	 * the next smgr access should reopen the files automatically.  This
+	 * ensures that the low-level file access state is updated after, say,
+	 * a vacuum truncation.
 	 */
-	smgrclose(DEFAULT_SMGR, relation);
+	if (relation->rd_fd >= 0)
+		smgrclose(DEFAULT_SMGR, relation);
 
 	/*
 	 * Never, never ever blow away a nailed-in system relation, because
@@ -1617,7 +1597,6 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 		MemoryContext old_rulescxt = relation->rd_rulescxt;
 		TriggerDesc *old_trigdesc = relation->trigdesc;
 		int			old_nblocks = relation->rd_nblocks;
-		bool		relDescChanged = false;
 		RelationBuildDescInfo buildinfo;
 
 		buildinfo.infotype = INFO_RELID;
@@ -1644,7 +1623,6 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 		else
 		{
 			FreeTupleDesc(old_att);
-			relDescChanged = true;
 		}
 		if (equalRuleLocks(old_rules, relation->rd_rules))
 		{
@@ -1657,7 +1635,6 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 		{
 			if (old_rulescxt)
 				MemoryContextDelete(old_rulescxt);
-			relDescChanged = true;
 		}
 		if (equalTriggerDescs(old_trigdesc, relation->trigdesc))
 		{
@@ -1667,7 +1644,6 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 		else
 		{
 			FreeTriggerDesc(old_trigdesc);
-			relDescChanged = true;
 		}
 		relation->rd_nblocks = old_nblocks;
 
@@ -1675,14 +1651,7 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 		 * this is kind of expensive, but I think we must do it in case
 		 * relation has been truncated...
 		 */
-		if (relation->rd_unlinked)
-			relation->rd_nblocks = 0;
-		else
-			relation->rd_nblocks = RelationGetNumberOfBlocks(relation);
-
-		if (relDescChanged && !RelationHasReferenceCountZero(relation))
-			elog(ERROR, "RelationClearRelation: relation %u modified while in use",
-				 buildinfo.i.info_id);
+		relation->rd_nblocks = RelationGetNumberOfBlocks(relation);
 	}
 }
 
@@ -1934,9 +1903,6 @@ RelationRegisterRelation(Relation relation)
 void
 RelationPurgeLocalRelation(bool xactCommitted)
 {
-	if (newlyCreatedRelns == NULL)
-		return;
-
 	while (newlyCreatedRelns)
 	{
 		List	   *l = newlyCreatedRelns;
@@ -1949,19 +1915,7 @@ RelationPurgeLocalRelation(bool xactCommitted)
 		newlyCreatedRelns = lnext(newlyCreatedRelns);
 		pfree(l);
 
-		if (!xactCommitted)
-		{
-			/*
-			 * remove the file if we abort. This is so that files for
-			 * tables created inside a transaction block get removed.
-			 */
-			if (! reln->rd_unlinked)
-			{
-				smgrunlink(DEFAULT_SMGR, reln);
-				reln->rd_unlinked = true;
-			}
-		}
-
+		/* XXX is this step still needed?  If so, why? */
 		if (!IsBootstrapProcessingMode())
 			RelationClearRelation(reln, false);
 	}

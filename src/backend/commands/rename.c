@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.51 2000/10/22 23:32:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.52 2000/11/08 22:09:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -183,16 +183,9 @@ renamerel(const char *oldrelname, const char *newrelname)
 	Oid			reloid;
 	char		relkind;
 	Relation	irelations[Num_pg_class_indices];
-#ifdef OLD_FILE_NAMING
-	int			i;
-	char		oldpath[MAXPGPATH],
-				newpath[MAXPGPATH],
-				toldpath[MAXPGPATH + 10],
-				tnewpath[MAXPGPATH + 10];
-#endif
 
 	if (!allowSystemTableMods && IsSystemRelationName(oldrelname))
-		elog(ERROR, "renamerel: system relation \"%s\" not renamed",
+		elog(ERROR, "renamerel: system relation \"%s\" may not be renamed",
 			 oldrelname);
 
 	if (!allowSystemTableMods && IsSystemRelationName(newrelname))
@@ -201,7 +194,7 @@ renamerel(const char *oldrelname, const char *newrelname)
 
 	/*
 	 * Check for renaming a temp table, which only requires altering
-	 * the temp-table mapping, not the physical table.
+	 * the temp-table mapping, not the underlying table.
 	 */
 	if (rename_temp_relation(oldrelname, newrelname))
 		return;					/* all done... */
@@ -213,7 +206,7 @@ renamerel(const char *oldrelname, const char *newrelname)
 	targetrelation = RelationNameGetRelation(oldrelname);
 
 	if (!RelationIsValid(targetrelation))
-		elog(ERROR, "Relation '%s' does not exist", oldrelname);
+		elog(ERROR, "Relation \"%s\" does not exist", oldrelname);
 
 	/*
 	 * Grab an exclusive lock on the target table, which we will NOT
@@ -221,45 +214,8 @@ renamerel(const char *oldrelname, const char *newrelname)
 	 */
 	LockRelation(targetrelation, AccessExclusiveLock);
 
-	/* ----------------
-	 *	RENAME TABLE within a transaction block is dangerous, because
-	 *	if the transaction is later rolled back we have no way to
-	 *	undo the rename of the relation's physical file.  For now, allow it
-	 *	but emit a warning message.
-	 *	Someday we might want to consider postponing the physical rename
-	 *	until transaction commit, but that's a lot of work...
-	 *	The only case that actually works right is for relations created
-	 *	in the current transaction, since the post-abort state would be that
-	 *	they don't exist anyway.  So, no warning in that case.
-	 * ----------------
-	 */
-	if (IsTransactionBlock() && !targetrelation->rd_myxactonly)
-		elog(NOTICE, "Caution: RENAME TABLE cannot be rolled back, so don't abort now");
-
 	reloid = RelationGetRelid(targetrelation);
 	relkind = targetrelation->rd_rel->relkind;
-
-	/*
-	 * Flush all blocks of the relation out of the buffer pool.  We need
-	 * this because the blocks are marked with the relation's name as well
-	 * as OID. If some backend tries to write a dirty buffer with
-	 * mdblindwrt after we've renamed the physical file, we'll be in big
-	 * trouble.
-	 *
-	 * Since we hold the exclusive lock on the relation, we don't have to
-	 * worry about more blocks being read in while we finish the rename.
-	 */
-	if (FlushRelationBuffers(targetrelation, (BlockNumber) 0) < 0)
-		elog(ERROR, "renamerel: unable to flush relation from buffer pool");
-
-	/*
-	 * Make sure smgr and lower levels close the relation's files. (Next
-	 * access to rel will reopen them.)
-	 *
-	 * Note: we rely on shared cache invalidation message to make other
-	 * backends close and re-open the files.
-	 */
-	smgrclose(DEFAULT_SMGR, targetrelation);
 
 	/*
 	 * Close rel, but keep exclusive lock!
@@ -271,8 +227,9 @@ renamerel(const char *oldrelname, const char *newrelname)
 	 * the right instant).  It'll get rebuilt on next access to relation.
 	 *
 	 * XXX What if relation is myxactonly?
+	 *
+	 * XXX this is probably not necessary anymore?
 	 */
-	targetrelation = NULL;		/* make sure I don't touch it again */
 	RelationIdInvalidateRelationCacheByRelationId(reloid);
 
 	/*
@@ -291,7 +248,8 @@ renamerel(const char *oldrelname, const char *newrelname)
 		elog(ERROR, "renamerel: relation \"%s\" exists", newrelname);
 
 	/*
-	 * Update pg_class tuple with new relname.
+	 * Update pg_class tuple with new relname.  (Scribbling on oldreltup
+	 * is OK because it's a copy...)
 	 */
 	StrNCpy(NameStr(((Form_pg_class) GETSTRUCT(oldreltup))->relname),
 			newrelname, NAMEDATALEN);
@@ -310,36 +268,4 @@ renamerel(const char *oldrelname, const char *newrelname)
 	 */
 	if (relkind != RELKIND_INDEX)
 		TypeRename(oldrelname, newrelname);
-
-#ifdef OLD_FILE_NAMING
-	/*
-	 * Perform physical rename of files.  If this fails, we haven't yet
-	 * done anything irreversible.  NOTE that this MUST be the last step;
-	 * an error occurring afterwards would leave the relation hosed!
-	 *
-	 * XXX smgr.c ought to provide an interface for this; doing it directly
-	 * is bletcherous.
-	 */
-	strcpy(oldpath, relpath(oldrelname));
-	strcpy(newpath, relpath(newrelname));
-	if (rename(oldpath, newpath) < 0)
-		elog(ERROR, "renamerel: unable to rename %s to %s: %m",
-			 oldpath, newpath);
-
-	/* rename additional segments of relation, too */
-	for (i = 1;; i++)
-	{
-		sprintf(toldpath, "%s.%d", oldpath, i);
-		sprintf(tnewpath, "%s.%d", newpath, i);
-		if (rename(toldpath, tnewpath) < 0)
-		{
-			/* expected case is that there's not another segment file */
-			if (errno == ENOENT)
-				break;
-			/* otherwise we're up the creek... */
-			elog(ERROR, "renamerel: unable to rename %s to %s: %m",
-				 toldpath, tnewpath);
-		}
-	}
-#endif
 }

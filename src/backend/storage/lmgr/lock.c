@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.71 2000/07/17 03:05:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.72 2000/11/08 22:10:00 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -453,7 +453,7 @@ LockMethodTableRename(LOCKMETHOD lockmethod)
 bool
 LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 {
-	XIDLookupEnt *result,
+	XIDLookupEnt *xident,
 				item;
 	HTAB	   *xidTable;
 	bool		found;
@@ -559,9 +559,9 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	/*
 	 * Find or create an xid entry with this tag
 	 */
-	result = (XIDLookupEnt *) hash_search(xidTable, (Pointer) &item,
+	xident = (XIDLookupEnt *) hash_search(xidTable, (Pointer) &item,
 										  HASH_ENTER, &found);
-	if (!result)
+	if (!xident)
 	{
 		SpinRelease(masterLock);
 		elog(NOTICE, "LockAcquire: xid table corrupted");
@@ -573,16 +573,41 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	 */
 	if (!found)
 	{
-		result->nHolding = 0;
-		MemSet((char *) result->holders, 0, sizeof(int) * MAX_LOCKMODES);
-		ProcAddLock(&result->queue);
-		XID_PRINT("LockAcquire: new", result);
+		xident->nHolding = 0;
+		MemSet((char *) xident->holders, 0, sizeof(int) * MAX_LOCKMODES);
+		ProcAddLock(&xident->queue);
+		XID_PRINT("LockAcquire: new", xident);
 	}
 	else
 	{
-		XID_PRINT("LockAcquire: found", result);
-		Assert((result->nHolding > 0) && (result->holders[lockmode] >= 0));
-		Assert(result->nHolding <= lock->nActive);
+		int			i;
+
+		XID_PRINT("LockAcquire: found", xident);
+		Assert((xident->nHolding > 0) && (xident->holders[lockmode] >= 0));
+		Assert(xident->nHolding <= lock->nActive);
+		/*
+		 * Issue warning if we already hold a lower-level lock on this
+		 * object and do not hold a lock of the requested level or higher.
+		 * This indicates a deadlock-prone coding practice (eg, we'd have
+		 * a deadlock if another backend were following the same code path
+		 * at about the same time).
+		 *
+		 * XXX Doing numeric comparison on the lockmodes is a hack;
+		 * it'd be better to use a table.  For now, though, this works.
+		 */
+		for (i = lockMethodTable->ctl->numLockModes; i > 0; i--)
+		{
+			if (xident->holders[i] > 0)
+			{
+				if (i >= (int) lockmode)
+					break;		/* safe: we have a lock >= req level */
+				elog(DEBUG, "Deadlock risk: raising lock level"
+					 " from %s to %s on object %u/%u/%u",
+					 lock_types[i], lock_types[lockmode],
+					 lock->tag.relId, lock->tag.dbId, lock->tag.objId.blkno);
+				break;
+			}
+		}
 	}
 
 	/* ----------------
@@ -601,12 +626,12 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	 * hold this lock.
 	 * --------------------
 	 */
-	if (result->nHolding == lock->nActive || result->holders[lockmode] != 0)
+	if (xident->nHolding == lock->nActive || xident->holders[lockmode] != 0)
 	{
-		result->holders[lockmode]++;
-		result->nHolding++;
-		XID_PRINT("LockAcquire: owning", result);
-		Assert((result->nHolding > 0) && (result->holders[lockmode] > 0));
+		xident->holders[lockmode]++;
+		xident->nHolding++;
+		XID_PRINT("LockAcquire: owning", xident);
+		Assert((xident->nHolding > 0) && (xident->holders[lockmode] > 0));
 		GrantLock(lock, lockmode);
 		SpinRelease(masterLock);
 		return TRUE;
@@ -623,27 +648,27 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 		 * If I don't hold locks or my locks don't conflict with waiters
 		 * then force to sleep.
 		 */
-		if (result->nHolding > 0)
+		if (xident->nHolding > 0)
 		{
 			for (; i <= lockMethodTable->ctl->numLockModes; i++)
 			{
-				if (result->holders[i] > 0 &&
+				if (xident->holders[i] > 0 &&
 					lockMethodTable->ctl->conflictTab[i] & lock->waitMask)
 					break;		/* conflict */
 			}
 		}
 
-		if (result->nHolding == 0 || i > lockMethodTable->ctl->numLockModes)
+		if (xident->nHolding == 0 || i > lockMethodTable->ctl->numLockModes)
 		{
 			XID_PRINT("LockAcquire: higher priority proc waiting",
-					  result);
+					  xident);
 			status = STATUS_FOUND;
 		}
 		else
-			status = LockResolveConflicts(lockmethod, lock, lockmode, xid, result);
+			status = LockResolveConflicts(lockmethod, lock, lockmode, xid, xident);
 	}
 	else
-		status = LockResolveConflicts(lockmethod, lock, lockmode, xid, result);
+		status = LockResolveConflicts(lockmethod, lock, lockmode, xid, xident);
 
 	if (status == STATUS_OK)
 		GrantLock(lock, lockmode);
@@ -657,17 +682,17 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 		 */
 		if (lockmethod == USER_LOCKMETHOD)
 		{
-			if (!result->nHolding)
+			if (!xident->nHolding)
 			{
-				SHMQueueDelete(&result->queue);
-				result = (XIDLookupEnt *) hash_search(xidTable,
-													  (Pointer) result,
+				SHMQueueDelete(&xident->queue);
+				xident = (XIDLookupEnt *) hash_search(xidTable,
+													  (Pointer) xident,
 													HASH_REMOVE, &found);
-				if (!result || !found)
+				if (!xident || !found)
 					elog(NOTICE, "LockAcquire: remove xid, table corrupted");
 			}
 			else
-				XID_PRINT("LockAcquire: NHOLDING", result);
+				XID_PRINT("LockAcquire: NHOLDING", xident);
 			lock->nHolding--;
 			lock->holders[lockmode]--;
 			LOCK_PRINT("LockAcquire: user lock failed", lock, lockmode);
@@ -682,7 +707,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 		 * Construct bitmask of locks we hold before going to sleep.
 		 */
 		MyProc->holdLock = 0;
-		if (result->nHolding > 0)
+		if (xident->nHolding > 0)
 		{
 			int			i,
 						tmpMask = 2;
@@ -690,7 +715,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 			for (i = 1; i <= lockMethodTable->ctl->numLockModes;
 				 i++, tmpMask <<= 1)
 			{
-				if (result->holders[i] > 0)
+				if (xident->holders[i] > 0)
 					MyProc->holdLock |= tmpMask;
 			}
 			Assert(MyProc->holdLock != 0);
@@ -702,15 +727,15 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 		 * Check the xid entry status, in case something in the ipc
 		 * communication doesn't work correctly.
 		 */
-		if (!((result->nHolding > 0) && (result->holders[lockmode] > 0)))
+		if (!((xident->nHolding > 0) && (xident->holders[lockmode] > 0)))
 		{
-			XID_PRINT("LockAcquire: INCONSISTENT", result);
+			XID_PRINT("LockAcquire: INCONSISTENT", xident);
 			LOCK_PRINT("LockAcquire: INCONSISTENT", lock, lockmode);
 			/* Should we retry ? */
 			SpinRelease(masterLock);
 			return FALSE;
 		}
-		XID_PRINT("LockAcquire: granted", result);
+		XID_PRINT("LockAcquire: granted", xident);
 		LOCK_PRINT("LockAcquire: granted", lock, lockmode);
 	}
 
@@ -738,7 +763,7 @@ LockResolveConflicts(LOCKMETHOD lockmethod,
 					 TransactionId xid,
 					 XIDLookupEnt *xidentP)		/* xident ptr or NULL */
 {
-	XIDLookupEnt *result,
+	XIDLookupEnt *xident,
 				item;
 	int		   *myHolders;
 	int			numLockModes;
@@ -758,7 +783,7 @@ LockResolveConflicts(LOCKMETHOD lockmethod,
 		 * A pointer to the xid entry was supplied from the caller.
 		 * Actually only LockAcquire can do it.
 		 */
-		result = xidentP;
+		xident = xidentP;
 	}
 	else
 	{
@@ -788,9 +813,9 @@ LockResolveConflicts(LOCKMETHOD lockmethod,
 		/*
 		 * Find or create an xid entry with this tag
 		 */
-		result = (XIDLookupEnt *) hash_search(xidTable, (Pointer) &item,
+		xident = (XIDLookupEnt *) hash_search(xidTable, (Pointer) &item,
 											  HASH_ENTER, &found);
-		if (!result)
+		if (!xident)
 		{
 			elog(NOTICE, "LockResolveConflicts: xid table corrupted");
 			return STATUS_ERROR;
@@ -808,14 +833,14 @@ LockResolveConflicts(LOCKMETHOD lockmethod,
 			 * the lock stats.
 			 * ---------------
 			 */
-			MemSet(result->holders, 0, numLockModes * sizeof(*(lock->holders)));
-			result->nHolding = 0;
-			XID_PRINT("LockResolveConflicts: NOT FOUND", result);
+			MemSet(xident->holders, 0, numLockModes * sizeof(*(lock->holders)));
+			xident->nHolding = 0;
+			XID_PRINT("LockResolveConflicts: NOT FOUND", xident);
 		}
 		else
-			XID_PRINT("LockResolveConflicts: found", result);
+			XID_PRINT("LockResolveConflicts: found", xident);
 	}
-	Assert((result->nHolding >= 0) && (result->holders[lockmode] >= 0));
+	Assert((xident->nHolding >= 0) && (xident->holders[lockmode] >= 0));
 
 	/* ----------------------------
 	 * first check for global conflicts: If no locks conflict
@@ -829,10 +854,10 @@ LockResolveConflicts(LOCKMETHOD lockmethod,
 	 */
 	if (!(LockMethodTable[lockmethod]->ctl->conflictTab[lockmode] & lock->mask))
 	{
-		result->holders[lockmode]++;
-		result->nHolding++;
-		XID_PRINT("LockResolveConflicts: no conflict", result);
-		Assert((result->nHolding > 0) && (result->holders[lockmode] > 0));
+		xident->holders[lockmode]++;
+		xident->nHolding++;
+		XID_PRINT("LockResolveConflicts: no conflict", xident);
+		Assert((xident->nHolding > 0) && (xident->holders[lockmode] > 0));
 		return STATUS_OK;
 	}
 
@@ -842,7 +867,7 @@ LockResolveConflicts(LOCKMETHOD lockmethod,
 	 * that does not reflect our own locks.
 	 * ------------------------
 	 */
-	myHolders = result->holders;
+	myHolders = xident->holders;
 	bitmask = 0;
 	tmpMask = 2;
 	for (i = 1; i <= numLockModes; i++, tmpMask <<= 1)
@@ -861,14 +886,14 @@ LockResolveConflicts(LOCKMETHOD lockmethod,
 	if (!(LockMethodTable[lockmethod]->ctl->conflictTab[lockmode] & bitmask))
 	{
 		/* no conflict. Get the lock and go on */
-		result->holders[lockmode]++;
-		result->nHolding++;
-		XID_PRINT("LockResolveConflicts: resolved", result);
-		Assert((result->nHolding > 0) && (result->holders[lockmode] > 0));
+		xident->holders[lockmode]++;
+		xident->nHolding++;
+		XID_PRINT("LockResolveConflicts: resolved", xident);
+		Assert((xident->nHolding > 0) && (xident->holders[lockmode] > 0));
 		return STATUS_OK;
 	}
 
-	XID_PRINT("LockResolveConflicts: conflicting", result);
+	XID_PRINT("LockResolveConflicts: conflicting", xident);
 	return STATUS_FOUND;
 }
 
@@ -965,7 +990,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	SPINLOCK	masterLock;
 	bool		found;
 	LOCKMETHODTABLE *lockMethodTable;
-	XIDLookupEnt *result,
+	XIDLookupEnt *xident,
 				item;
 	HTAB	   *xidTable;
 	TransactionId xid;
@@ -1053,9 +1078,9 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	 * Find an xid entry with this tag
 	 */
 	xidTable = lockMethodTable->xidHash;
-	result = (XIDLookupEnt *) hash_search(xidTable, (Pointer) &item,
+	xident = (XIDLookupEnt *) hash_search(xidTable, (Pointer) &item,
 										  HASH_FIND_SAVE, &found);
-	if (!result || !found)
+	if (!xident || !found)
 	{
 		SpinRelease(masterLock);
 #ifdef USER_LOCKS
@@ -1066,23 +1091,23 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 			elog(NOTICE, "LockRelease: xid table corrupted");
 		return FALSE;
 	}
-	XID_PRINT("LockRelease: found", result);
-	Assert(result->tag.lock == MAKE_OFFSET(lock));
+	XID_PRINT("LockRelease: found", xident);
+	Assert(xident->tag.lock == MAKE_OFFSET(lock));
 
 	/*
 	 * Check that we are actually holding a lock of the type we want to
 	 * release.
 	 */
-	if (!(result->holders[lockmode] > 0))
+	if (!(xident->holders[lockmode] > 0))
 	{
 		SpinRelease(masterLock);
-		XID_PRINT("LockAcquire: WRONGTYPE", result);
+		XID_PRINT("LockAcquire: WRONGTYPE", xident);
 		elog(NOTICE, "LockRelease: you don't own a lock of type %s",
 			 lock_types[lockmode]);
-		Assert(result->holders[lockmode] >= 0);
+		Assert(xident->holders[lockmode] >= 0);
 		return FALSE;
 	}
-	Assert(result->nHolding > 0);
+	Assert(xident->nHolding > 0);
 
 	/*
 	 * fix the general lock stats
@@ -1147,27 +1172,27 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	 * now check to see if I have any private locks.  If I do, decrement
 	 * the counts associated with them.
 	 */
-	result->holders[lockmode]--;
-	result->nHolding--;
-	XID_PRINT("LockRelease: updated", result);
-	Assert((result->nHolding >= 0) && (result->holders[lockmode] >= 0));
+	xident->holders[lockmode]--;
+	xident->nHolding--;
+	XID_PRINT("LockRelease: updated", xident);
+	Assert((xident->nHolding >= 0) && (xident->holders[lockmode] >= 0));
 
 	/*
 	 * If this was my last hold on this lock, delete my entry in the XID
 	 * table.
 	 */
-	if (!result->nHolding)
+	if (!xident->nHolding)
 	{
-		if (result->queue.prev == INVALID_OFFSET)
+		if (xident->queue.prev == INVALID_OFFSET)
 			elog(NOTICE, "LockRelease: xid.prev == INVALID_OFFSET");
-		if (result->queue.next == INVALID_OFFSET)
+		if (xident->queue.next == INVALID_OFFSET)
 			elog(NOTICE, "LockRelease: xid.next == INVALID_OFFSET");
-		if (result->queue.next != INVALID_OFFSET)
-			SHMQueueDelete(&result->queue);
-		XID_PRINT("LockRelease: deleting", result);
-		result = (XIDLookupEnt *) hash_search(xidTable, (Pointer) &result,
+		if (xident->queue.next != INVALID_OFFSET)
+			SHMQueueDelete(&xident->queue);
+		XID_PRINT("LockRelease: deleting", xident);
+		xident = (XIDLookupEnt *) hash_search(xidTable, (Pointer) &xident,
 											  HASH_REMOVE_SAVED, &found);
-		if (!result || !found)
+		if (!xident || !found)
 		{
 			SpinRelease(masterLock);
 			elog(NOTICE, "LockRelease: remove xid, table corrupted");
@@ -1196,7 +1221,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 	int			done;
 	XIDLookupEnt *xidLook = NULL;
 	XIDLookupEnt *tmp = NULL;
-	XIDLookupEnt *result;
+	XIDLookupEnt *xident;
 	SHMEM_OFFSET end = MAKE_OFFSET(lockQueue);
 	SPINLOCK	masterLock;
 	LOCKMETHODTABLE *lockMethodTable;
@@ -1371,11 +1396,11 @@ LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 		 */
 
 		XID_PRINT("LockReleaseAll: deleting", xidLook);
-		result = (XIDLookupEnt *) hash_search(lockMethodTable->xidHash,
+		xident = (XIDLookupEnt *) hash_search(lockMethodTable->xidHash,
 											  (Pointer) xidLook,
 											  HASH_REMOVE,
 											  &found);
-		if (!result || !found)
+		if (!xident || !found)
 		{
 			SpinRelease(masterLock);
 			elog(NOTICE, "LockReleaseAll: xid table corrupted");

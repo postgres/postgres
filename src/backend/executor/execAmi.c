@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: execAmi.c,v 1.54 2000/10/26 21:35:15 tgl Exp $
+ *	$Id: execAmi.c,v 1.55 2000/11/08 22:09:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,11 +61,8 @@ static Pointer ExecBeginScan(Relation relation, int nkeys, ScanKey skeys,
  *		  nkeys    -- number of keys
  *		  skeys    -- keys to restrict scanning
  *			 isindex  -- if this is true, the relation is the relid of
- *						 an index relation, else it is an index into the
- *						 range table.
+ *						 an index relation, else it is a heap relation.
  *		Returns the relation as(relDesc scanDesc)
- *		   If this structure is changed, need to modify the access macros
- *		defined in execInt.h.
  * ----------------------------------------------------------------
  */
 void
@@ -90,16 +87,19 @@ ExecOpenScanR(Oid relOid,
 	 */
 
 	/* ----------------
-	 *	open the relation with the correct call depending
+	 *	Open the relation with the correct call depending
 	 *	on whether this is a heap relation or an index relation.
 	 *
-	 *	Do not lock the rel here; beginscan will acquire AccessShareLock.
+	 *	For a table, acquire AccessShareLock for the duration of the query
+	 *	execution.  For indexes, acquire no lock here; the index machinery
+	 *	does its own locks and unlocks.  (We rely on having some kind of
+	 *	lock on the parent table to ensure the index won't go away!)
 	 * ----------------
 	 */
 	if (isindex)
 		relation = index_open(relOid);
 	else
-		relation = heap_open(relOid, NoLock);
+		relation = heap_open(relOid, AccessShareLock);
 
 	scanDesc = ExecBeginScan(relation,
 							 nkeys,
@@ -135,8 +135,6 @@ ExecBeginScan(Relation relation,
 			  Snapshot snapshot)
 {
 	Pointer		scanDesc;
-
-	scanDesc = NULL;
 
 	/* ----------------
 	 *	open the appropriate type of scan.
@@ -183,12 +181,11 @@ ExecCloseR(Plan *node)
 	HeapScanDesc scanDesc;
 
 	/* ----------------
-	 *	shut down the heap scan and close the heap relation
+	 *	get state for node and shut down the heap scan, if any
 	 * ----------------
 	 */
 	switch (nodeTag(node))
 	{
-
 		case T_SeqScan:
 			state = ((SeqScan *) node)->scanstate;
 			break;
@@ -212,18 +209,9 @@ ExecCloseR(Plan *node)
 	if (scanDesc != NULL)
 		heap_endscan(scanDesc);
 
-	/*
-	 * endscan released AccessShareLock acquired by beginscan.	If we are
-	 * holding any stronger locks on the rel, they should be held till end
-	 * of xact.  Therefore, we need only close the rel and not release
-	 * locks.
-	 */
-	if (relation != NULL)
-		heap_close(relation, NoLock);
-
 	/* ----------------
 	 *	if this is an index scan then we have to take care
-	 *	of the index relations as well..
+	 *	of the index relations as well.
 	 * ----------------
 	 */
 	if (IsA(node, IndexScan))
@@ -242,7 +230,7 @@ ExecCloseR(Plan *node)
 		for (i = 0; i < numIndices; i++)
 		{
 			/* ----------------
-			 *	shut down each of the scans and
+			 *	shut down each of the index scans and
 			 *	close each of the index relations
 			 * ----------------
 			 */
@@ -253,6 +241,16 @@ ExecCloseR(Plan *node)
 				index_close(indexRelationDescs[i]);
 		}
 	}
+
+	/*
+	 * Finally, close the heap relation.
+	 *
+	 * Currently, we do not release the AccessShareLock acquired by
+	 * ExecOpenScanR.  This lock should be held till end of transaction.
+	 * (There is a faction that considers this too much locking, however.)
+	 */
+	if (relation != NULL)
+		heap_close(relation, NoLock);
 }
 
 /* ----------------------------------------------------------------

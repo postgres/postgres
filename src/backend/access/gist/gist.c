@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.63 2000/10/21 15:43:09 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.64 2000/11/08 22:09:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,13 +266,12 @@ gistbuild(PG_FUNCTION_ARGS)
 	{
 		Oid			hrelid = RelationGetRelid(heap);
 		Oid			irelid = RelationGetRelid(index);
-		bool		inplace = IsReindexProcessing();
 
 		heap_close(heap, NoLock);
 		index_close(index);
-		UpdateStats(hrelid, nhtups, inplace);
-		UpdateStats(irelid, nitups, inplace);
-		if (oldPred != NULL && !inplace)
+		UpdateStats(hrelid, nhtups);
+		UpdateStats(irelid, nitups);
+		if (oldPred != NULL)
 		{
 			if (nitups == nhtups)
 				pred = NULL;

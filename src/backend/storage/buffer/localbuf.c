@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.33 2000/10/28 16:20:56 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.34 2000/11/08 22:09:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -183,7 +183,7 @@ WriteLocalBuffer(Buffer buffer, bool release)
  *	  flushes a local buffer
  */
 int
-FlushLocalBuffer(Buffer buffer, bool release)
+FlushLocalBuffer(Buffer buffer, bool sync, bool release)
 {
 	int			bufid;
 	Relation	bufrel;
@@ -199,13 +199,18 @@ FlushLocalBuffer(Buffer buffer, bool release)
 	bufHdr = &LocalBufferDescriptors[bufid];
 	bufHdr->flags &= ~BM_DIRTY;
 	bufrel = RelationNodeCacheGetRelation(bufHdr->tag.rnode);
-
 	Assert(bufrel != NULL);
-	smgrflush(DEFAULT_SMGR, bufrel, bufHdr->tag.blockNum,
-			  (char *) MAKE_PTR(bufHdr->data));
+
+	if (sync)
+		smgrflush(DEFAULT_SMGR, bufrel, bufHdr->tag.blockNum,
+				  (char *) MAKE_PTR(bufHdr->data));
+	else
+		smgrwrite(DEFAULT_SMGR, bufrel, bufHdr->tag.blockNum,
+				  (char *) MAKE_PTR(bufHdr->data));
+
 	LocalBufferFlushCount++;
 
-	/* drop relcache refcount incremented by RelationIdCacheGetRelation */
+	/* drop relcache refcount incremented by RelationNodeCacheGetRelation */
 	RelationDecrementReferenceCount(bufrel);
 
 	if (release)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/xlog_bufmgr.c,v 1.1 2000/10/28 16:20:56 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/xlog_bufmgr.c,v 1.2 2000/11/08 22:09:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -838,7 +838,7 @@ BufferSync()
 
 		SpinRelease(BufMgrLock);
 
-		/* drop refcnt obtained by RelationIdCacheGetRelation */
+		/* drop refcnt obtained by RelationNodeCacheGetRelation */
 		if (reln != (Relation) NULL)
 		{
 			RelationDecrementReferenceCount(reln);
@@ -1128,7 +1128,7 @@ BufferReplace(BufferDesc *bufHdr)
 							  false);	/* no fsync */
 	}
 
-	/* drop relcache refcnt incremented by RelationIdCacheGetRelation */
+	/* drop relcache refcnt incremented by RelationNodeCacheGetRelation */
 	if (reln != (Relation) NULL)
 		RelationDecrementReferenceCount(reln);
 
@@ -1159,21 +1159,23 @@ RelationGetNumberOfBlocks(Relation relation)
 }
 
 /* ---------------------------------------------------------------------
- *		ReleaseRelationBuffers
+ *		DropRelationBuffers
  *
  *		This function removes all the buffered pages for a relation
  *		from the buffer pool.  Dirty pages are simply dropped, without
- *		bothering to write them out first.  This is used when the
- *		relation is about to be deleted.  We assume that the caller
- *		holds an exclusive lock on the relation, which should assure
- *		that no new buffers will be acquired for the rel meanwhile.
+ *		bothering to write them out first.  This is NOT rollback-able,
+ *		and so should be used only with extreme caution!
+ *
+ *		We assume that the caller holds an exclusive lock on the relation,
+ *		which should assure that no new buffers will be acquired for the rel
+ *		meanwhile.
  *
  *		XXX currently it sequentially searches the buffer pool, should be
  *		changed to more clever ways of searching.
  * --------------------------------------------------------------------
  */
 void
-ReleaseRelationBuffers(Relation rel)
+DropRelationBuffers(Relation rel)
 {
 	int			i;
 	BufferDesc *bufHdr;
@@ -1249,6 +1251,91 @@ recheck:
 }
 
 /* ---------------------------------------------------------------------
+ *		DropRelFileNodeBuffers
+ *
+ *		This is the same as DropRelationBuffers, except that the target
+ *		relation is specified by RelFileNode.
+ *
+ *		This is NOT rollback-able.  One legitimate use is to clear the
+ *		buffer cache of buffers for a relation that is being deleted
+ *		during transaction abort.
+ * --------------------------------------------------------------------
+ */
+void
+DropRelFileNodeBuffers(RelFileNode rnode)
+{
+	int			i;
+	BufferDesc *bufHdr;
+
+	/* We have to search both local and shared buffers... */
+
+	for (i = 0; i < NLocBuffer; i++)
+	{
+		bufHdr = &LocalBufferDescriptors[i];
+		if (RelFileNodeEquals(bufHdr->tag.rnode, rnode))
+		{
+			bufHdr->flags &= ~(BM_DIRTY | BM_JUST_DIRTIED);
+			bufHdr->cntxDirty = false;
+			LocalRefCount[i] = 0;
+			bufHdr->tag.rnode.relNode = InvalidOid;
+		}
+	}
+
+	SpinAcquire(BufMgrLock);
+	for (i = 1; i <= NBuffers; i++)
+	{
+		bufHdr = &BufferDescriptors[i - 1];
+recheck:
+		if (RelFileNodeEquals(bufHdr->tag.rnode, rnode))
+		{
+
+			/*
+			 * If there is I/O in progress, better wait till it's done;
+			 * don't want to delete the relation out from under someone
+			 * who's just trying to flush the buffer!
+			 */
+			if (bufHdr->flags & BM_IO_IN_PROGRESS)
+			{
+				WaitIO(bufHdr, BufMgrLock);
+
+				/*
+				 * By now, the buffer very possibly belongs to some other
+				 * rel, so check again before proceeding.
+				 */
+				goto recheck;
+			}
+			/* Now we can do what we came for */
+			bufHdr->flags &= ~(BM_DIRTY | BM_JUST_DIRTIED);
+			bufHdr->cntxDirty = false;
+
+			/*
+			 * Release any refcount we may have.
+			 *
+			 * This is very probably dead code, and if it isn't then it's
+			 * probably wrong.	I added the Assert to find out --- tgl
+			 * 11/99.
+			 */
+			if (!(bufHdr->flags & BM_FREE))
+			{
+				/* Assert checks that buffer will actually get freed! */
+				Assert(PrivateRefCount[i - 1] == 1 &&
+					   bufHdr->refcount == 1);
+				/* ReleaseBuffer expects we do not hold the lock at entry */
+				SpinRelease(BufMgrLock);
+				ReleaseBuffer(i);
+				SpinAcquire(BufMgrLock);
+			}
+			/*
+			 * And mark the buffer as no longer occupied by this rel.
+			 */
+			BufTableDelete(bufHdr);
+		}
+	}
+
+	SpinRelease(BufMgrLock);
+}
+
+/* ---------------------------------------------------------------------
  *		DropBuffers
  *
  *		This function removes all the buffers in the buffer cache for a
@@ -1256,7 +1343,7 @@ recheck:
  *		bothering to write them out first.  This is used when we destroy a
  *		database, to avoid trying to flush data to disk when the directory
  *		tree no longer exists.	Implementation is pretty similar to
- *		ReleaseRelationBuffers() which is for destroying just one relation.
+ *		DropRelationBuffers() which is for destroying just one relation.
  * --------------------------------------------------------------------
  */
 void
@@ -1399,33 +1486,32 @@ BufferPoolBlowaway()
 /* ---------------------------------------------------------------------
  *		FlushRelationBuffers
  *
- *		This function flushes all dirty pages of a relation out to disk.
+ *		This function writes all dirty pages of a relation out to disk.
  *		Furthermore, pages that have blocknumber >= firstDelBlock are
  *		actually removed from the buffer pool.  An error code is returned
  *		if we fail to dump a dirty buffer or if we find one of
  *		the target pages is pinned into the cache.
  *
- *		This is used by VACUUM before truncating the relation to the given
- *		number of blocks.  (TRUNCATE TABLE also uses it in the same way.)
- *		It might seem unnecessary to flush dirty pages before firstDelBlock,
- *		since VACUUM should already have committed its changes.  However,
- *		it is possible for there still to be dirty pages: if some page
- *		had unwritten on-row tuple status updates from a prior transaction,
- *		and VACUUM had no additional changes to make to that page, then
- *		VACUUM won't have written it.  This is harmless in most cases but
- *		will break pg_upgrade, which relies on VACUUM to ensure that *all*
- *		tuples have correct on-row status.  So, we check and flush all
- *		dirty pages of the rel regardless of block number.
+ *		This is called by DROP TABLE to clear buffers for the relation
+ *		from the buffer pool.  Note that we must write dirty buffers,
+ *		rather than just dropping the changes, because our transaction
+ *		might abort later on; we want to roll back safely in that case.
  *
- *		This is also used by RENAME TABLE (with firstDelBlock = 0)
- *		to clear out the buffer cache before renaming the physical files of
- *		a relation.  Without that, some other backend might try to do a
- *		blind write of a buffer page (relying on the BlindId of the buffer)
- *		and fail because it's not got the right filename anymore.
+ *		This is also called by VACUUM before truncating the relation to the
+ *		given number of blocks.  It might seem unnecessary for VACUUM to
+ *		write dirty pages before firstDelBlock, since VACUUM should already
+ *		have committed its changes.  However, it is possible for there still
+ *		to be dirty pages: if some page had unwritten on-row tuple status
+ *		updates from a prior transaction, and VACUUM had no additional
+ *		changes to make to that page, then VACUUM won't have written it.
+ *		This is harmless in most cases but will break pg_upgrade, which
+ *		relies on VACUUM to ensure that *all* tuples have correct on-row
+ *		status.  So, we check and flush all dirty pages of the rel
+ *		regardless of block number.
  *
  *		In all cases, the caller should be holding AccessExclusiveLock on
  *		the target relation to ensure that no other backend is busy reading
- *		more blocks of the relation.
+ *		more blocks of the relation (or might do so before we commit).
  *
  *		Formerly, we considered it an error condition if we found dirty
  *		buffers here.	However, since BufferSync no longer forces out all

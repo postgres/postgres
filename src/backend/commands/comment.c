@@ -356,10 +356,8 @@ CommentAttribute(char *relname, char *attrname, char *comment)
 	attrtuple = SearchSysCacheTuple(ATTNAME, ObjectIdGetDatum(relation->rd_id),
 									PointerGetDatum(attrname), 0, 0);
 	if (!HeapTupleIsValid(attrtuple))
-	{
 		elog(ERROR, "'%s' is not an attribute of class '%s'",
 			 attrname, relname);
-	}
 	oid = attrtuple->t_data->t_oid;
 
 	/*** Call CreateComments() to create/drop the comments ***/
@@ -368,8 +366,7 @@ CommentAttribute(char *relname, char *attrname, char *comment)
 
 	/*** Now, close the heap relation and return ***/
 
-	heap_close(relation, AccessShareLock);
-
+	heap_close(relation, NoLock);
 }
 
 /*------------------------------------------------------------------
@@ -840,6 +837,5 @@ CommentTrigger(char *trigger, char *relname, char *comment)
 
 	heap_endscan(scan);
 	heap_close(pg_trigger, AccessShareLock);
-	heap_close(relation, AccessShareLock);
-
+	heap_close(relation, NoLock);
 }

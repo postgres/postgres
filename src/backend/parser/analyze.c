@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.164 2000/11/05 01:42:07 tgl Exp $
+ *	$Id: analyze.c,v 1.165 2000/11/08 22:09:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,7 +115,7 @@ static void
 release_pstate_resources(ParseState *pstate)
 {
 	if (pstate->p_target_relation != NULL)
-		heap_close(pstate->p_target_relation, AccessShareLock);
+		heap_close(pstate->p_target_relation, NoLock);
 	pstate->p_target_relation = NULL;
 	pstate->p_target_rangetblentry = NULL;
 }
@@ -292,6 +292,7 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	qry->commandType = CMD_DELETE;
 
 	/* set up a range table */
+	lockTargetTable(pstate, stmt->relname);
 	makeRangeTable(pstate, NIL);
 	setTargetTable(pstate, stmt->relname, stmt->inh, true);
 
@@ -330,6 +331,13 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 
 	qry->commandType = CMD_INSERT;
 	pstate->p_is_insert = true;
+
+	/*
+	 * Must get write lock on target table before scanning SELECT,
+	 * else we will grab the wrong kind of initial lock if the target
+	 * table is also mentioned in the SELECT part.
+	 */
+	lockTargetTable(pstate, stmt->relname);
 
 	/*
 	 * Is it INSERT ... SELECT or INSERT ... VALUES?
@@ -1522,6 +1530,16 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 	qry->utilityStmt = (Node *) stmt;
 
 	/*
+	 * To avoid deadlock, make sure the first thing we do is grab
+	 * AccessExclusiveLock on the target relation.  This will be
+	 * needed by DefineQueryRewrite(), and we don't want to grab a lesser
+	 * lock beforehand.  We don't need to hold a refcount on the relcache
+	 * entry, however.
+	 */
+	heap_close(heap_openr(stmt->object->relname, AccessExclusiveLock),
+			   NoLock);
+
+	/*
 	 * NOTE: 'OLD' must always have a varno equal to 1 and 'NEW'
 	 * equal to 2.  Set up their RTEs in the main pstate for use
 	 * in parsing the rule qualification.
@@ -1727,6 +1745,9 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 		qry->isBinary = FALSE;
 	}
 
+	/* make FOR UPDATE clause available to addRangeTableEntry */
+	pstate->p_forUpdate = stmt->forUpdate;
+
 	/* set up a range table */
 	makeRangeTable(pstate, stmt->fromClause);
 
@@ -1765,7 +1786,7 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->rtable = pstate->p_rtable;
 	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
 
-	if (stmt->forUpdate != NULL)
+	if (stmt->forUpdate != NIL)
 		transformForUpdate(qry, stmt->forUpdate);
 
 	return qry;
@@ -1951,7 +1972,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->rtable = pstate->p_rtable;
 	qry->jointree = makeFromExpr(pstate->p_joinlist, NULL);
 
-	if (forUpdate != NULL)
+	if (forUpdate != NIL)
 		transformForUpdate(qry, forUpdate);
 
 	return qry;
@@ -2159,6 +2180,7 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	 * used in FROM, we'd fail to notice that it should be marked
 	 * checkForRead as well as checkForWrite.  See setTargetTable().
 	 */
+	lockTargetTable(pstate, stmt->relname);
 	makeRangeTable(pstate, stmt->fromClause);
 	setTargetTable(pstate, stmt->relname, stmt->inh, true);
 

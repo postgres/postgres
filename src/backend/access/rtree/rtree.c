@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.54 2000/10/21 15:43:20 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.55 2000/11/08 22:09:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -237,13 +237,12 @@ rtbuild(PG_FUNCTION_ARGS)
 	{
 		Oid			hrelid = RelationGetRelid(heap);
 		Oid			irelid = RelationGetRelid(index);
-		bool		inplace = IsReindexProcessing();
 
 		heap_close(heap, NoLock);
 		index_close(index);
-		UpdateStats(hrelid, nhtups, inplace);
-		UpdateStats(irelid, nitups, inplace);
-		if (oldPred != NULL && !inplace)
+		UpdateStats(hrelid, nhtups);
+		UpdateStats(irelid, nitups);
+		if (oldPred != NULL)
 		{
 			if (nitups == nhtups)
 				pred = NULL;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.67 2000/10/05 19:48:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.68 2000/11/08 22:09:53 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -228,7 +228,9 @@ FreeTupleDesc(TupleDesc tupdesc)
 bool
 equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 {
-	int			i;
+	int			i,
+				j,
+				n;
 
 	if (tupdesc1->natts != tupdesc2->natts)
 		return false;
@@ -240,7 +242,9 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 		/*
 		 * We do not need to check every single field here, and in fact
 		 * some fields such as attdispersion probably shouldn't be
-		 * compared.
+		 * compared.  We can also disregard attnum (it was used to
+		 * place the row in the attrs array) and everything derived
+		 * from the column datatype.
 		 */
 		if (strcmp(NameStr(attr1->attname), NameStr(attr2->attname)) != 0)
 			return false;
@@ -260,32 +264,53 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 
 		if (constr2 == NULL)
 			return false;
-		if (constr1->num_defval != constr2->num_defval)
+		if (constr1->has_not_null != constr2->has_not_null)
 			return false;
-		for (i = 0; i < (int) constr1->num_defval; i++)
+		n = constr1->num_defval;
+		if (n != (int) constr2->num_defval)
+			return false;
+		for (i = 0; i < n; i++)
 		{
 			AttrDefault *defval1 = constr1->defval + i;
-			AttrDefault *defval2 = constr2->defval + i;
+			AttrDefault *defval2 = constr2->defval;
 
-			if (defval1->adnum != defval2->adnum)
+			/*
+			 * We can't assume that the items are always read from the
+			 * system catalogs in the same order; so use the adnum field to
+			 * identify the matching item to compare.
+			 */
+			for (j = 0; j < n; defval2++, j++)
+			{
+				if (defval1->adnum == defval2->adnum)
+					break;
+			}
+			if (j >= n)
 				return false;
 			if (strcmp(defval1->adbin, defval2->adbin) != 0)
 				return false;
 		}
-		if (constr1->num_check != constr2->num_check)
+		n = constr1->num_check;
+		if (n != (int) constr2->num_check)
 			return false;
-		for (i = 0; i < (int) constr1->num_check; i++)
+		for (i = 0; i < n; i++)
 		{
 			ConstrCheck *check1 = constr1->check + i;
-			ConstrCheck *check2 = constr2->check + i;
+			ConstrCheck *check2 = constr2->check;
 
-			if (strcmp(check1->ccname, check2->ccname) != 0)
-				return false;
-			if (strcmp(check1->ccbin, check2->ccbin) != 0)
+			/*
+			 * Similarly, don't assume that the checks are always read
+			 * in the same order; match them up by name and contents.
+			 * (The name *should* be unique, but...)
+			 */
+			for (j = 0; j < n; check2++, j++)
+			{
+				if (strcmp(check1->ccname, check2->ccname) == 0 &&
+					strcmp(check1->ccbin, check2->ccbin) == 0)
+					break;
+			}
+			if (j >= n)
 				return false;
 		}
-		if (constr1->has_not_null != constr2->has_not_null)
-			return false;
 	}
 	else if (tupdesc2->constr != NULL)
 		return false;

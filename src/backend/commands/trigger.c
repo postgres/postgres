@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.78 2000/10/16 17:08:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.79 2000/11/08 22:09:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -388,6 +388,7 @@ RelationRemoveTriggers(Relation rel)
 	HeapScanDesc tgscan;
 	ScanKeyData key;
 	HeapTuple	tup;
+	bool		found = false;
 
 	tgrel = heap_openr(TriggerRelationName, RowExclusiveLock);
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
@@ -403,17 +404,44 @@ RelationRemoveTriggers(Relation rel)
 		DeleteComments(tup->t_data->t_oid);
 
 		heap_delete(tgrel, &tup->t_self, NULL);
+
+		found = true;
 	}
 
 	heap_endscan(tgscan);
 
 	/* ----------
-	 * Need to bump it here so the following doesn't see
-	 * the already deleted triggers again for a self-referencing
-	 * table.
+	 * If we deleted any triggers, must update pg_class entry and
+	 * advance command counter to make the updated entry visible.
+	 * This is fairly annoying, since we'e just going to drop the
+	 * durn thing later, but it's necessary to have a consistent
+	 * state in case we do CommandCounterIncrement() below ---
+	 * if RelationBuildTriggers() runs, it will complain otherwise.
+	 * Perhaps RelationBuildTriggers() shouldn't be so picky...
 	 * ----------
 	 */
-	CommandCounterIncrement();
+	if (found)
+	{
+		Relation	pgrel;
+		Relation	ridescs[Num_pg_class_indices];
+
+		pgrel = heap_openr(RelationRelationName, RowExclusiveLock);
+		tup = SearchSysCacheTupleCopy(RELOID,
+									  RelationGetRelid(rel),
+									  0, 0, 0);
+		if (!HeapTupleIsValid(tup))
+			elog(ERROR, "RelationRemoveTriggers: relation %u not found in pg_class",
+				 RelationGetRelid(rel));
+
+		((Form_pg_class) GETSTRUCT(tup))->reltriggers = 0;
+		heap_update(pgrel, &tup->t_self, tup, NULL);
+		CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
+		CatalogIndexInsert(ridescs, Num_pg_class_indices, pgrel, tup);
+		CatalogCloseIndices(Num_pg_class_indices, ridescs);
+		heap_freetuple(tup);
+		heap_close(pgrel, RowExclusiveLock);
+		CommandCounterIncrement();
+	}
 
 	/* ----------
 	 * Also drop all constraint triggers referencing this relation
@@ -431,13 +459,12 @@ RelationRemoveTriggers(Relation rel)
 
 		pg_trigger = (Form_pg_trigger) GETSTRUCT(tup);
 
-		refrel = heap_open(pg_trigger->tgrelid, NoLock);
+		stmt.trigname = pstrdup(NameStr(pg_trigger->tgname));
+
+		/* May as well grab AccessExclusiveLock, since DropTrigger will. */
+		refrel = heap_open(pg_trigger->tgrelid, AccessExclusiveLock);
 		stmt.relname = pstrdup(RelationGetRelationName(refrel));
 		heap_close(refrel, NoLock);
-
-		stmt.trigname = DatumGetCString(DirectFunctionCall1(nameout,
-						NameGetDatum(&pg_trigger->tgname)));
-
 
 		elog(NOTICE, "DROP TABLE implicitly drops referential integrity trigger from table \"%s\"", stmt.relname);
 
@@ -445,8 +472,8 @@ RelationRemoveTriggers(Relation rel)
 
 		/* ----------
 		 * Need to do a command counter increment here to show up
-		 * new pg_class.reltriggers in the next loop invocation already
-		 * (there are multiple referential integrity action
+		 * new pg_class.reltriggers in the next loop iteration
+		 * (in case there are multiple referential integrity action
 		 * triggers for the same FK table defined on the PK table).
 		 * ----------
 		 */
@@ -747,9 +774,6 @@ equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2)
 	 * We need not examine the "index" data, just the trigger array
 	 * itself; if we have the same triggers with the same types, the
 	 * derived index data should match.
-	 *
-	 * XXX It seems possible that the same triggers could appear in different
-	 * orders in the two trigger arrays; do we need to handle that?
 	 */
 	if (trigdesc1 != NULL)
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.92 2000/10/29 18:33:39 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.93 2000/11/08 22:09:54 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -780,19 +780,13 @@ heap_beginscan(Relation relation,
 
 	/* ----------------
 	 *	increment relation ref count while scanning relation
+	 *
+	 *	This is just to make really sure the relcache entry won't go away
+	 *	while the scan has a pointer to it.  Caller should be holding the
+	 *	rel open anyway, so this is redundant in all normal scenarios...
 	 * ----------------
 	 */
 	RelationIncrementReferenceCount(relation);
-
-	/* ----------------
-	 *	Acquire AccessShareLock for the duration of the scan
-	 *
-	 *	Note: we could get an SI inval message here and consequently have
-	 *	to rebuild the relcache entry.	The refcount increment above
-	 *	ensures that we will rebuild it and not just flush it...
-	 * ----------------
-	 */
-	LockRelation(relation, AccessShareLock);
 
 	/* XXX someday assert SelfTimeQual if relkind == RELKIND_UNCATALOGED */
 	if (relation->rd_rel->relkind == RELKIND_UNCATALOGED)
@@ -809,13 +803,11 @@ heap_beginscan(Relation relation,
 	scan->rs_snapshot = snapshot;
 	scan->rs_nkeys = (short) nkeys;
 
+	/*
+	 * we do this here instead of in initscan() because heap_rescan
+	 * also calls initscan() and we don't want to allocate memory again
+	 */
 	if (nkeys)
-
-		/*
-		 * we do this here instead of in initscan() because heap_rescan
-		 * also calls initscan() and we don't want to allocate memory
-		 * again
-		 */
 		scan->rs_key = (ScanKey) palloc(sizeof(ScanKeyData) * nkeys);
 	else
 		scan->rs_key = NULL;
@@ -841,8 +833,6 @@ heap_rescan(HeapScanDesc scan,
 	IncrHeapAccessStat(local_rescan);
 	IncrHeapAccessStat(global_rescan);
 
-	/* Note: set relation level read lock is still set */
-
 	/* ----------------
 	 *	unpin scan buffers
 	 * ----------------
@@ -853,7 +843,7 @@ heap_rescan(HeapScanDesc scan,
 	 *	reinitialize scan descriptor
 	 * ----------------
 	 */
-	scan->rs_atend = (bool) scanFromEnd;
+	scan->rs_atend = scanFromEnd;
 	initscan(scan, scan->rs_rd, scanFromEnd, scan->rs_nkeys, key);
 }
 
@@ -881,12 +871,6 @@ heap_endscan(HeapScanDesc scan)
 	 * ----------------
 	 */
 	unpinscan(scan);
-
-	/* ----------------
-	 *	Release AccessShareLock acquired by heap_beginscan()
-	 * ----------------
-	 */
-	UnlockRelation(scan->rs_rd, AccessShareLock);
 
 	/* ----------------
 	 *	decrement relation reference count and free scan descriptor storage

@@ -8,16 +8,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.77 2000/10/28 16:20:57 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.78 2000/11/08 22:10:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include <errno.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/file.h>
-
-#include "postgres.h"
 
 #include "catalog/catalog.h"
 #include "miscadmin.h"
@@ -123,63 +123,39 @@ mdinit()
 int
 mdcreate(Relation reln)
 {
+	char	   *path;
 	int			fd,
 				vfd;
-	char	   *path;
 
-	Assert(reln->rd_unlinked && reln->rd_fd < 0);
+	Assert(reln->rd_fd < 0);
 
 	path = relpath(reln->rd_node);
-	fd = FileNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY, 0600);
 
-	/*
-	 * For cataloged relations, pg_class is guaranteed to have a unique
-	 * record with the same relname by the unique index. So we are able to
-	 * reuse existent files for new cataloged relations. Currently we reuse
-	 * them in the following cases. 1. they are empty. 2. they are used
-	 * for Index relations and their size == BLCKSZ * 2.
-	 *
-	 * During bootstrap processing, we skip that check, because pg_time,
-	 * pg_variable, and pg_log get created before their .bki file entries
-	 * are processed.
-	 */
+	fd = FileNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY, 0600);
 
 	if (fd < 0)
 	{
 		int		save_errno = errno;
 
-		if (!IsBootstrapProcessingMode() &&
-			reln->rd_rel->relkind == RELKIND_UNCATALOGED)
-			return -1;
-
-		fd = FileNameOpenFile(path, O_RDWR | PG_BINARY, 0600);
+		/*
+		 * During bootstrap, there are cases where a system relation will be
+		 * accessed (by internal backend processes) before the bootstrap
+		 * script nominally creates it.  Therefore, allow the file to exist
+		 * already, but in bootstrap mode only.  (See also mdopen)
+		 */
+		if (IsBootstrapProcessingMode())
+			fd = FileNameOpenFile(path, O_RDWR | PG_BINARY, 0600);
 		if (fd < 0)
 		{
+			pfree(path);
 			/* be sure to return the error reported by create, not open */
 			errno = save_errno;
 			return -1;
 		}
-		if (!IsBootstrapProcessingMode())
-		{
-			bool		reuse = false;
-			long		len = FileSeek(fd, 0L, SEEK_END);
-
-			if (len == 0)
-				reuse = true;
-			else if (reln->rd_rel->relkind == RELKIND_INDEX &&
-					 len == BLCKSZ * 2)
-				reuse = true;
-			if (!reuse)
-			{
-				FileClose(fd);
-				/* be sure to return the error reported by create */
-				errno = save_errno;
-				return -1;
-			}
-		}
 		errno = 0;
 	}
-	reln->rd_unlinked = false;
+
+	pfree(path);
 
 	vfd = _fdvec_alloc();
 	if (vfd < 0)
@@ -187,12 +163,10 @@ mdcreate(Relation reln)
 
 	Md_fdvec[vfd].mdfd_vfd = fd;
 	Md_fdvec[vfd].mdfd_flags = (uint16) 0;
+	Md_fdvec[vfd].mdfd_lstbcnt = 0;
 #ifndef LET_OS_MANAGE_FILESIZE
 	Md_fdvec[vfd].mdfd_chain = (MdfdVec *) NULL;
 #endif
-	Md_fdvec[vfd].mdfd_lstbcnt = 0;
-
-	pfree(path);
 
 	return vfd;
 }
@@ -201,65 +175,50 @@ mdcreate(Relation reln)
  *	mdunlink() -- Unlink a relation.
  */
 int
-mdunlink(Relation reln)
+mdunlink(RelFileNode rnode)
 {
-	int			nblocks;
-	int			fd;
-	MdfdVec    *v;
+	int			status = SM_SUCCESS;
+	int			save_errno = 0;
+	char	   *path;
 
-	/*
-	 * If the relation is already unlinked,we have nothing to do any more.
-	 */
-	if (reln->rd_unlinked && reln->rd_fd < 0)
-		return SM_SUCCESS;
+	path = relpath(rnode);
 
-	/*
-	 * Force all segments of the relation to be opened, so that we won't
-	 * miss deleting any of them.
-	 */
-	nblocks = mdnblocks(reln);
-
-	/*
-	 * Clean out the mdfd vector, letting fd.c unlink the physical files.
-	 *
-	 * NOTE: We truncate the file(s) before deleting 'em, because if other
-	 * backends are holding the files open, the unlink will fail on some
-	 * platforms (think Microsoft).  Better a zero-size file gets left
-	 * around than a big file.	Those other backends will be forced to
-	 * close the relation by cache invalidation, but that probably hasn't
-	 * happened yet.
-	 */
-	fd = RelationGetFile(reln);
-	if (fd < 0)					/* should not happen */
-		elog(ERROR, "mdunlink: mdnblocks didn't open relation");
-
-	Md_fdvec[fd].mdfd_flags = (uint16) 0;
+	/* Delete the first segment, or only segment if not doing segmenting */
+	if (unlink(path) < 0)
+	{
+		status = SM_FAIL;
+		save_errno = errno;
+	}
 
 #ifndef LET_OS_MANAGE_FILESIZE
-	for (v = &Md_fdvec[fd]; v != (MdfdVec *) NULL;)
+	/* Get the additional segments, if any */
+	if (status == SM_SUCCESS)
 	{
-		MdfdVec    *ov = v;
+		char	   *segpath = (char *) palloc(strlen(path) + 12);
+		int			segno;
 
-		FileTruncate(v->mdfd_vfd, 0);
-		FileUnlink(v->mdfd_vfd);
-		v = v->mdfd_chain;
-		if (ov != &Md_fdvec[fd])
-			pfree(ov);
+		for (segno = 1; ; segno++)
+		{
+			sprintf(segpath, "%s.%d", path, segno);
+			if (unlink(segpath) < 0)
+			{
+				/* ENOENT is expected after the last segment... */
+				if (errno != ENOENT)
+				{
+					status = SM_FAIL;
+					save_errno = errno;
+				}
+				break;
+			}
+		}
+		pfree(segpath);
 	}
-	Md_fdvec[fd].mdfd_chain = (MdfdVec *) NULL;
-#else
-	v = &Md_fdvec[fd];
-	FileTruncate(v->mdfd_vfd, 0);
-	FileUnlink(v->mdfd_vfd);
 #endif
 
-	_fdvec_free(fd);
+	pfree(path);
 
-	/* be sure to mark relation closed && unlinked */
-	reln->rd_fd = -1;
-	reln->rd_unlinked = true;
-
-	return SM_SUCCESS;
+	errno = save_errno;
+	return status;
 }
 
 /*
@@ -327,24 +286,29 @@ mdopen(Relation reln)
 	int			vfd;
 
 	Assert(reln->rd_fd < 0);
+
 	path = relpath(reln->rd_node);
 
 	fd = FileNameOpenFile(path, O_RDWR | PG_BINARY, 0600);
+
 	if (fd < 0)
 	{
-		/* in bootstrap mode, accept mdopen as substitute for mdcreate */
+		/*
+		 * During bootstrap, there are cases where a system relation will be
+		 * accessed (by internal backend processes) before the bootstrap
+		 * script nominally creates it.  Therefore, accept mdopen() as a
+		 * substitute for mdcreate() in bootstrap mode only.  (See mdcreate)
+		 */
 		if (IsBootstrapProcessingMode())
 			fd = FileNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY, 0600);
 		if (fd < 0)
 		{
-			elog(NOTICE, "mdopen: couldn't open %s: %m", path);
-			/* mark relation closed and unlinked */
-			reln->rd_fd = -1;
-			reln->rd_unlinked = true;
+			pfree(path);
 			return -1;
 		}
 	}
-	reln->rd_unlinked = false;
+
+	pfree(path);
 
 	vfd = _fdvec_alloc();
 	if (vfd < 0)
@@ -361,8 +325,6 @@ mdopen(Relation reln)
 		elog(FATAL, "segment too big on relopen!");
 #endif
 #endif
-
-	pfree(path);
 
 	return vfd;
 }

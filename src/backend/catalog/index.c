@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.128 2000/10/11 21:28:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.129 2000/11/08 22:09:56 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -26,6 +26,7 @@
 #include "access/heapam.h"
 #include "access/istrat.h"
 #include "bootstrap/bootstrap.h"
+#include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
@@ -43,10 +44,10 @@
 #include "utils/builtins.h"
 #include "utils/catcache.h"
 #include "utils/fmgroids.h"
+#include "utils/inval.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 #include "utils/temprel.h"
-#include "utils/inval.h"
 
 /*
  * macros used in guessing how many tuples are on a page.
@@ -927,6 +928,13 @@ index_create(char *heapRelationName,
 	indexRelation = heap_create(indexRelationName, indexTupDesc,
 								istemp, false, allow_system_table_mods);
 
+	/*
+	 * Obtain exclusive lock on it.  Although no other backends can see it
+	 * until we commit, this prevents deadlock-risk complaints from lock
+	 * manager in cases such as CLUSTER.
+	 */
+	LockRelation(indexRelation, AccessExclusiveLock);
+
 	/* ----------------
 	 *	  construct the index relation descriptor
 	 *
@@ -990,7 +998,8 @@ index_create(char *heapRelationName,
 	 *
 	 * In normal processing mode, the heap and index relations are closed by
 	 * index_build() --- but we continue to hold the ShareLock on the heap
-	 * that we acquired above, until end of transaction.
+	 * and the exclusive lock on the index that we acquired above, until
+	 * end of transaction.
 	 */
 	if (IsBootstrapProcessingMode())
 	{
@@ -1020,6 +1029,7 @@ index_drop(Oid indexId)
 	Relation	attributeRelation;
 	HeapTuple	tuple;
 	int16		attnum;
+	int			i;
 
 	Assert(OidIsValid(indexId));
 
@@ -1040,19 +1050,11 @@ index_drop(Oid indexId)
 	LockRelation(userIndexRelation, AccessExclusiveLock);
 
 	/* ----------------
-	 *	DROP INDEX within a transaction block is dangerous, because
-	 *	if the transaction is later rolled back there will be no way to
-	 *	undo the unlink of the relation's physical file.  For now, allow it
-	 *	but emit a warning message.
-	 *	Someday we might want to consider postponing the physical unlink
-	 *	until transaction commit, but that's a lot of work...
-	 *	The only case that actually works right is for relations created
-	 *	in the current transaction, since the post-abort state would be that
-	 *	they don't exist anyway.  So, no warning in that case.
+	 *	Note: unlike heap_drop_with_catalog, we do not need to prevent
+	 *	deletion of system indexes here; that's checked for upstream.
+	 *	If we did check it here, deletion of TOAST tables would fail...
 	 * ----------------
 	 */
-	if (IsTransactionBlock() && !userIndexRelation->rd_myxactonly)
-		elog(NOTICE, "Caution: DROP INDEX cannot be rolled back, so don't abort now");
 
 	/* ----------------
 	 * fix DESCRIPTION relation
@@ -1077,20 +1079,14 @@ index_drop(Oid indexId)
 	heap_freetuple(tuple);
 
 	/*
-	 * Find the pg_class tuple for the owning relation.  We do not attempt
-	 * to clear relhasindex, since we are too lazy to test whether any other
-	 * indexes remain (the next VACUUM will fix it if necessary).  But we
-	 * must send out a shared-cache-inval notice on the owning relation
-	 * to ensure other backends update their relcache lists of indexes.
+	 * Update the pg_class tuple for the owning relation.  We are presently
+	 * too lazy to attempt to compute the new correct value of relhasindex
+	 * (the next VACUUM will fix it if necessary).  But we must send out a
+	 * shared-cache-inval notice on the owning relation to ensure other
+	 * backends update their relcache lists of indexes.  So, unconditionally
+	 * do setRelhasindex(true).
 	 */
-	tuple = SearchSysCacheTupleCopy(RELOID,
-									ObjectIdGetDatum(heapId),
-									0, 0, 0);
-
-	Assert(HeapTupleIsValid(tuple));
-
-	ImmediateInvalidateSharedHeapTuple(relationRelation, tuple);
-	heap_freetuple(tuple);
+	setRelhasindex(heapId, true);
 
 	heap_close(relationRelation, RowExclusiveLock);
 
@@ -1131,10 +1127,11 @@ index_drop(Oid indexId)
 	/*
 	 * flush buffer cache and physically remove the file
 	 */
-	ReleaseRelationBuffers(userIndexRelation);
+	i = FlushRelationBuffers(userIndexRelation, (BlockNumber) 0);
+	if (i < 0)
+		elog(ERROR, "index_drop: FlushRelationBuffers returned %d", i);
 
-	if (smgrunlink(DEFAULT_SMGR, userIndexRelation) != SM_SUCCESS)
-		elog(ERROR, "index_drop: unlink: %m");
+	smgrunlink(DEFAULT_SMGR, userIndexRelation);
 
 	/*
 	 * Close rels, but keep locks
@@ -1144,7 +1141,7 @@ index_drop(Oid indexId)
 
 	RelationForgetRelation(indexId);
 
-	/* does something only if it is a temp index */
+	/* if it's a temp index, clear the temp mapping table entry */
 	remove_temp_rel_by_relid(indexId);
 }
 
@@ -1331,7 +1328,11 @@ LockClassinfoForUpdate(Oid relid, HeapTuple rtup,
 		return false;
 	rtup->t_self = classTuple->t_self;
 	pgcform = (Form_pg_class) GETSTRUCT(classTuple);
-	relationRelation = heap_openr(RelationRelationName, RowShareLock);
+	/*
+	 * NOTE: get and hold RowExclusiveLock on pg_class, because caller will
+	 * probably modify the rel's pg_class tuple later on.
+	 */
+	relationRelation = heap_openr(RelationRelationName, RowExclusiveLock);
 	test = heap_mark4update(relationRelation, rtup, buffer);
 	switch (test)
 	{
@@ -1388,57 +1389,38 @@ IndexesAreActive(Oid relid, bool confirmCommitted)
 	if (!heap_getnext(scan, 0))
 		isactive = true;
 	heap_endscan(scan);
-	heap_close(indexRelation, NoLock);
+	heap_close(indexRelation, AccessShareLock);
 	return isactive;
 }
 
 /* ----------------
- *		set relhasindex of pg_class in place
+ *		set relhasindex of relation's pg_class entry
+ *
+ * NOTE: an important side-effect of this operation is that an SI invalidation
+ * message is sent out to all backends --- including me --- causing relcache
+ * entries to be flushed or updated with the new hasindex data.
+ * Therefore, we execute the update even if relhasindex has the right value
+ * already.  Possible future improvement: skip the disk update and just send
+ * an SI message in that case.
  * ----------------
  */
 void
-setRelhasindexInplace(Oid relid, bool hasindex, bool immediate)
+setRelhasindex(Oid relid, bool hasindex)
 {
-	Relation	whichRel;
 	Relation	pg_class;
 	HeapTuple	tuple;
-	Form_pg_class rd_rel;
 	HeapScanDesc pg_class_scan = NULL;
 
-	/* ----------------
-	 * This routine handles updates for only the heap relation
-	 * hasindex. In order to guarantee that we're able to *see* the index
-	 * relation tuple, we bump the command counter id here.
-	 * ----------------
-	 */
-	CommandCounterIncrement();
-
-	/* ----------------
-	 * CommandCounterIncrement() flushes invalid cache entries, including
-	 * those for the heap and index relations for which we're updating
-	 * statistics.	Now that the cache is flushed, it's safe to open the
-	 * relation again.	We need the relation open in order to figure out
-	 * how many blocks it contains.
-	 * ----------------
-	 */
-
-	whichRel = heap_open(relid, ShareLock);
-
-	if (!RelationIsValid(whichRel))
-		elog(ERROR, "setRelhasindexInplace: cannot open relation id %u", relid);
-
-	/* ----------------
-	 * Find the RELATION relation tuple for the given relation.
-	 * ----------------
+	/*
+	 * Find the tuple to update in pg_class.
 	 */
 	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
-	if (!RelationIsValid(pg_class))
-		elog(ERROR, "setRelhasindexInplace: could not open RELATION relation");
 
 	if (!IsIgnoringSystemIndexes())
 	{
 		tuple = SearchSysCacheTupleCopy(RELOID,
-										ObjectIdGetDatum(relid), 0, 0, 0);
+										ObjectIdGetDatum(relid),
+										0, 0, 0);
 	}
 	else
 	{
@@ -1458,72 +1440,46 @@ setRelhasindexInplace(Oid relid, bool hasindex, bool immediate)
 		if (pg_class_scan)
 			heap_endscan(pg_class_scan);
 		heap_close(pg_class, RowExclusiveLock);
-		elog(ERROR, "setRelhasindexInplace: cannot scan RELATION relation");
+		elog(ERROR, "setRelhasindex: cannot find relation %u in pg_class",
+			 relid);
 	}
-
-	/*
-	 * Confirm that target tuple is locked by this transaction in case of
-	 * immediate updation.
-	 */
-	if (immediate)
-	{
-		HeapTupleHeader th = tuple->t_data;
-
-		if (!(th->t_infomask & HEAP_XMIN_COMMITTED))
-			elog(ERROR, "Immediate hasindex updation can be done only for committed tuples %x", th->t_infomask);
-		if (th->t_infomask & HEAP_XMAX_INVALID)
-			elog(ERROR, "Immediate hasindex updation can be done only for locked tuples %x", th->t_infomask);
-		if (th->t_infomask & HEAP_XMAX_COMMITTED)
-			elog(ERROR, "Immediate hasindex updation can be done only for locked tuples %x", th->t_infomask);
-		if (!(th->t_infomask & HEAP_MARKED_FOR_UPDATE))
-			elog(ERROR, "Immediate hasindex updation can be done only for locked tuples %x", th->t_infomask);
-		if (!(TransactionIdIsCurrentTransactionId(th->t_xmax)))
-			elog(ERROR, "The updating tuple is already locked by another backend");
-	}
-
-	/*
-	 * We shouldn't have to do this, but we do...  Modify the reldesc in
-	 * place with the new values so that the cache contains the latest
-	 * copy.
-	 */
-	whichRel->rd_rel->relhasindex = hasindex;
 
 	/* ----------------
 	 *	Update hasindex in pg_class.
 	 * ----------------
 	 */
+	((Form_pg_class) GETSTRUCT(tuple))->relhasindex = hasindex;
+
 	if (pg_class_scan)
 	{
-		rd_rel = (Form_pg_class) GETSTRUCT(tuple);
-		rd_rel->relhasindex = hasindex;
+		/* Write the modified tuple in-place */
 		WriteNoReleaseBuffer(pg_class_scan->rs_cbuf);
+		/* Send out shared cache inval if necessary */
+		if (!IsBootstrapProcessingMode())
+			RelationInvalidateHeapTuple(pg_class, tuple);
 	}
 	else
 	{
-		HeapTupleData htup;
-		Buffer		buffer;
+		heap_update(pg_class, &tuple->t_self, tuple, NULL);
 
-		htup.t_self = tuple->t_self;
-		heap_fetch(pg_class, SnapshotNow, &htup, &buffer);
-		rd_rel = (Form_pg_class) GETSTRUCT(&htup);
-		rd_rel->relhasindex = hasindex;
-		WriteBuffer(buffer);
+		/* Keep the catalog indices up to date */
+		if (!IsIgnoringSystemIndexes())
+		{
+			Relation	idescs[Num_pg_class_indices];
+
+			CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices,
+							   idescs);
+			CatalogIndexInsert(idescs, Num_pg_class_indices, pg_class, tuple);
+			CatalogCloseIndices(Num_pg_class_indices, idescs);
+		}
 	}
-
-	/*
-	 * Send out a shared-cache-inval message so other backends notice the
-	 * update and fix their syscaches/relcaches.
-	 */
-	if (!IsBootstrapProcessingMode())
-		ImmediateInvalidateSharedHeapTuple(pg_class, tuple);
 
 	if (!pg_class_scan)
 		heap_freetuple(tuple);
 	else
 		heap_endscan(pg_class_scan);
 
-	heap_close(pg_class, NoLock);
-	heap_close(whichRel, NoLock);
+	heap_close(pg_class, RowExclusiveLock);
 }
 
 /* ----------------
@@ -1531,7 +1487,7 @@ setRelhasindexInplace(Oid relid, bool hasindex, bool immediate)
  * ----------------
  */
 void
-UpdateStats(Oid relid, long reltuples, bool inplace)
+UpdateStats(Oid relid, long reltuples)
 {
 	Relation	whichRel;
 	Relation	pg_class;
@@ -1573,6 +1529,7 @@ UpdateStats(Oid relid, long reltuples, bool inplace)
 	if (!RelationIsValid(whichRel))
 		elog(ERROR, "UpdateStats: cannot open relation id %u", relid);
 
+	/* Grab lock to be held till end of xact (probably redundant...) */
 	LockRelation(whichRel, ShareLock);
 
 	/* ----------------
@@ -1580,10 +1537,9 @@ UpdateStats(Oid relid, long reltuples, bool inplace)
 	 * ----------------
 	 */
 	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
-	if (!RelationIsValid(pg_class))
-		elog(ERROR, "UpdateStats: could not open RELATION relation");
 
-	in_place_upd = (inplace || IsBootstrapProcessingMode());
+	in_place_upd = (IsReindexProcessing() || IsBootstrapProcessingMode());
+
 	if (!in_place_upd)
 	{
 		tuple = SearchSysCacheTupleCopy(RELOID,
@@ -1608,7 +1564,8 @@ UpdateStats(Oid relid, long reltuples, bool inplace)
 		if (pg_class_scan)
 			heap_endscan(pg_class_scan);
 		heap_close(pg_class, RowExclusiveLock);
-		elog(ERROR, "UpdateStats: cannot scan RELATION relation");
+		elog(ERROR, "UpdateStats: cannot find relation %u in pg_class",
+			 relid);
 	}
 
 	/* ----------------
@@ -1655,17 +1612,16 @@ UpdateStats(Oid relid, long reltuples, bool inplace)
 	 */
 	if (in_place_upd)
 	{
-
 		/*
 		 * At bootstrap time, we don't need to worry about concurrency or
-		 * visibility of changes, so we cheat.
+		 * visibility of changes, so we cheat.  Also cheat if REINDEX.
 		 */
-		if (!IsBootstrapProcessingMode())
-			ImmediateInvalidateSharedHeapTuple(pg_class, tuple);
 		rd_rel = (Form_pg_class) GETSTRUCT(tuple);
 		rd_rel->relpages = relpages;
 		rd_rel->reltuples = reltuples;
 		WriteNoReleaseBuffer(pg_class_scan->rs_cbuf);
+		if (!IsBootstrapProcessingMode())
+			RelationInvalidateHeapTuple(pg_class, tuple);
 	}
 	else
 	{
@@ -1700,7 +1656,7 @@ UpdateStats(Oid relid, long reltuples, bool inplace)
 
 	heap_close(pg_class, RowExclusiveLock);
 	/* Cheating a little bit since we didn't open it with heap_open... */
-	heap_close(whichRel, ShareLock);
+	heap_close(whichRel, NoLock);
 }
 
 
@@ -1868,18 +1824,16 @@ DefaultBuild(Relation heapRelation,
 	{
 		Oid			hrelid = RelationGetRelid(heapRelation);
 		Oid			irelid = RelationGetRelid(indexRelation);
-		bool		inplace = IsReindexProcessing();
 
 		heap_close(heapRelation, NoLock);
 		index_close(indexRelation);
-		UpdateStats(hrelid, reltuples, inplace);
-		UpdateStats(irelid, indtuples, inplace);
+		UpdateStats(hrelid, reltuples);
+		UpdateStats(irelid, indtuples);
 		if (oldPred != NULL)
 		{
 			if (indtuples == reltuples)
 				predicate = NULL;
-			if (!inplace)
-				UpdateIndexPredicate(irelid, oldPred, predicate);
+			UpdateIndexPredicate(irelid, oldPred, predicate);
 		}
 	}
 }
@@ -1981,6 +1935,15 @@ reindex_index(Oid indexId, bool force)
 				accessMethodId;
 	bool		old;
 
+	/* ----------------
+	 *	REINDEX within a transaction block is dangerous, because
+	 *	if the transaction is later rolled back we have no way to
+	 *	undo truncation of the index's physical file.  Disallow it.
+	 * ----------------
+	 */
+	if (IsTransactionBlock())
+		elog(ERROR, "REINDEX cannot run inside a BEGIN/END block");
+
 	old = SetReindexProcessing(true);
 
 	/* Scan pg_index to find the index's pg_index entry */
@@ -2024,7 +1987,7 @@ reindex_index(Oid indexId, bool force)
 	 * Release any buffers associated with this index.	If they're dirty,
 	 * they're just dropped without bothering to flush to disk.
 	 */
-	ReleaseRelationBuffers(iRel);
+	DropRelationBuffers(iRel);
 
 	/* Now truncate the actual data and set blocks to zero */
 	smgrtruncate(DEFAULT_SMGR, iRel, 0);
@@ -2056,7 +2019,7 @@ activate_indexes_of_a_table(Oid relid, bool activate)
 	if (IndexesAreActive(relid, true))
 	{
 		if (!activate)
-			setRelhasindexInplace(relid, false, true);
+			setRelhasindex(relid, false);
 		else
 			return false;
 	}
@@ -2117,7 +2080,7 @@ reindex_relation(Oid relid, bool force)
 	heap_endscan(scan);
 	heap_close(indexRelation, AccessShareLock);
 	if (reindexed)
-		setRelhasindexInplace(relid, true, false);
+		setRelhasindex(relid, true);
 	SetReindexProcessing(old);
 	return reindexed;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.70 2000/10/07 00:58:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.71 2000/11/08 22:09:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,6 +88,34 @@ makeRangeTable(ParseState *pstate, List *frmList)
 }
 
 /*
+ * lockTargetTable
+ *	  Find the target relation of INSERT/UPDATE/DELETE and acquire write
+ *	  lock on it.  This must be done before building the range table,
+ *	  in case the target is also mentioned as a source relation --- we
+ *	  want to be sure to grab the write lock before any read lock.
+ *
+ * The ParseState's link to the target relcache entry is also set here.
+ */
+void
+lockTargetTable(ParseState *pstate, char *relname)
+{
+	/* Close old target; this could only happen for multi-action rules */
+	if (pstate->p_target_relation != NULL)
+		heap_close(pstate->p_target_relation, NoLock);
+	pstate->p_target_relation = NULL;
+	pstate->p_target_rangetblentry = NULL; /* setTargetTable will set this */
+
+	/*
+	 * Open target rel and grab suitable lock (which we will hold till
+	 * end of transaction).
+	 *
+	 * analyze.c will eventually do the corresponding heap_close(),
+	 * but *not* release the lock.
+	 */
+	pstate->p_target_relation = heap_openr(relname, RowExclusiveLock);
+}
+
+/*
  * setTargetTable
  *	  Add the target relation of INSERT/UPDATE/DELETE to the range table,
  *	  and make the special links to it in the ParseState.
@@ -133,13 +161,10 @@ setTargetTable(ParseState *pstate, char *relname, bool inh, bool inJoinSet)
 	if (inJoinSet)
 		addRTEtoJoinList(pstate, rte);
 
-	/* This could only happen for multi-action rules */
-	if (pstate->p_target_relation != NULL)
-		heap_close(pstate->p_target_relation, AccessShareLock);
+	/* lockTargetTable should have been called earlier */
+	Assert(pstate->p_target_relation != NULL);
 
 	pstate->p_target_rangetblentry = rte;
-	pstate->p_target_relation = heap_open(rte->relid, AccessShareLock);
-	/* will close relation later, see analyze.c */
 }
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.108 2000/10/26 21:34:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.109 2000/11/08 22:09:57 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -1661,9 +1661,13 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 
 	/*
 	 * Update toast rel's pg_class entry to show that it has an index.
-	 * NOTE this also does CommandCounterIncrement() to make index visible.
 	 */
-	setRelhasindexInplace(toast_relid, true, false);
+	setRelhasindex(toast_relid, true);
+
+	/*
+	 * Make index visible
+	 */
+	CommandCounterIncrement();
 
 	/*
 	 * Get the OID of the newly created index

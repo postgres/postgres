@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.58 2000/07/14 22:17:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.59 2000/11/08 22:09:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,20 +34,14 @@
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
-static Relation copy_heap(Oid OIDOldHeap);
-static void copy_index(Oid OIDOldIndex, Oid OIDNewHeap);
+static Oid copy_heap(Oid OIDOldHeap, char *NewName);
+static void copy_index(Oid OIDOldIndex, Oid OIDNewHeap, char *NewIndexName);
 static void rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
 
 /*
  * cluster
  *
- *	 Check that the relation is a relation in the appropriate user
- *	 ACL. I will use the same security that limits users on the
- *	 renamerel() function.
- *
- *	 Check that the index specified is appropriate for the task
- *	 ( ie it's an index over this relation ). This is trickier.
- *
+ * STILL TO DO:
  *	 Create a list of all the other indicies on this relation. Because
  *	 the cluster will wreck all the tids, I'll need to destroy bogus
  *	 indicies. The user will have to re-create them. Not nice, but
@@ -55,14 +49,6 @@ static void rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
  *	 destroy re-build. This may be possible. I'll check out what the
  *	 index create functiond want in the way of paramaters. On the other
  *	 hand, re-creating n indicies may blow out the space.
- *
- *	 Create new (temporary) relations for the base heap and the new
- *	 index.
- *
- *	 Exclusively lock the relations.
- *
- *	 Create new clustered index and base heap relation.
- *
  */
 void
 cluster(char *oldrelname, char *oldindexname)
@@ -70,101 +56,93 @@ cluster(char *oldrelname, char *oldindexname)
 	Oid			OIDOldHeap,
 				OIDOldIndex,
 				OIDNewHeap;
-
 	Relation	OldHeap,
 				OldIndex;
-	Relation	NewHeap;
-
-	char		NewIndexName[NAMEDATALEN];
+	HeapTuple	tuple;
 	char		NewHeapName[NAMEDATALEN];
+	char		NewIndexName[NAMEDATALEN];
 	char		saveoldrelname[NAMEDATALEN];
 	char		saveoldindexname[NAMEDATALEN];
 
 	/*
-	 * Copy the arguments into local storage, because they are probably
-	 * in palloc'd storage that will go away when we commit a transaction.
+	 * Copy the arguments into local storage, just to be safe.
 	 */
-	strcpy(saveoldrelname, oldrelname);
-	strcpy(saveoldindexname, oldindexname);
+	StrNCpy(saveoldrelname, oldrelname, NAMEDATALEN);
+	StrNCpy(saveoldindexname, oldindexname, NAMEDATALEN);
 
 	/*
-	 * Like vacuum, cluster spans transactions, so I'm going to handle it
-	 * in the same way: commit and restart transactions where needed.
-	 *
 	 * We grab exclusive access to the target rel and index for the duration
-	 * of the initial transaction.
+	 * of the transaction.
 	 */
-
 	OldHeap = heap_openr(saveoldrelname, AccessExclusiveLock);
 	OIDOldHeap = RelationGetRelid(OldHeap);
 
-	OldIndex = index_openr(saveoldindexname); /* Open old index relation	*/
+	OldIndex = index_openr(saveoldindexname);
 	LockRelation(OldIndex, AccessExclusiveLock);
 	OIDOldIndex = RelationGetRelid(OldIndex);
 
 	/*
-	 * XXX Should check that index is in fact an index on this relation?
+	 * Check that index is in fact an index on the given relation
 	 */
+	tuple = SearchSysCacheTuple(INDEXRELID,
+								ObjectIdGetDatum(OIDOldIndex),
+								0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "CLUSTER: no pg_index entry for index %u",
+			 OIDOldIndex);
+	if (((Form_pg_index) GETSTRUCT(tuple))->indrelid != OIDOldHeap)
+		elog(ERROR, "CLUSTER: \"%s\" is not an index for table \"%s\"",
+			 saveoldindexname, saveoldrelname);
 
-	heap_close(OldHeap, NoLock);/* do NOT give up the locks */
+	/* Drop relcache refcnts, but do NOT give up the locks */
+	heap_close(OldHeap, NoLock);
 	index_close(OldIndex);
 
 	/*
-	 * I need to build the copies of the heap and the index. The Commit()
-	 * between here is *very* bogus. If someone is appending stuff, they
-	 * will get the lock after being blocked and add rows which won't be
-	 * present in the new table. Bleagh! I'd be best to try and ensure
-	 * that no-one's in the tables for the entire duration of this process
-	 * with a pg_vlock.  XXX Isn't the above comment now invalid?
+	 * Create the new heap with a temporary name.
 	 */
-	NewHeap = copy_heap(OIDOldHeap);
-	OIDNewHeap = RelationGetRelid(NewHeap);
-	strcpy(NewHeapName, RelationGetRelationName(NewHeap));
+	snprintf(NewHeapName, NAMEDATALEN, "temp_%u", OIDOldHeap);
+
+	OIDNewHeap = copy_heap(OIDOldHeap, NewHeapName);
 
 	/* To make the new heap visible (which is until now empty). */
 	CommandCounterIncrement();
 
+	/*
+	 * Copy the heap data into the new table in the desired order.
+	 */
 	rebuildheap(OIDNewHeap, OIDOldHeap, OIDOldIndex);
 
-	/* To flush the filled new heap (and the statistics about it). */
+	/* To make the new heap's data visible. */
 	CommandCounterIncrement();
 
 	/* Create new index over the tuples of the new heap. */
-	copy_index(OIDOldIndex, OIDNewHeap);
-	snprintf(NewIndexName, NAMEDATALEN, "temp_%x", OIDOldIndex);
+	snprintf(NewIndexName, NAMEDATALEN, "temp_%u", OIDOldIndex);
 
-	/*
-	 * make this really happen. Flush all the buffers. (Believe me, it is
-	 * necessary ... ended up in a mess without it.)
-	 */
-	CommitTransactionCommand();
-	StartTransactionCommand();
+	copy_index(OIDOldIndex, OIDNewHeap, NewIndexName);
+
+	CommandCounterIncrement();
 
 	/* Destroy old heap (along with its index) and rename new. */
 	heap_drop_with_catalog(saveoldrelname, allowSystemTableMods);
 
-	CommitTransactionCommand();
-	StartTransactionCommand();
+	CommandCounterIncrement();
 
 	renamerel(NewHeapName, saveoldrelname);
+
+	/* This one might be unnecessary, but let's be safe. */
+	CommandCounterIncrement();
+
 	renamerel(NewIndexName, saveoldindexname);
 }
 
-static Relation
-copy_heap(Oid OIDOldHeap)
+static Oid
+copy_heap(Oid OIDOldHeap, char *NewName)
 {
-	char		NewName[NAMEDATALEN];
 	TupleDesc	OldHeapDesc,
 				tupdesc;
 	Oid			OIDNewHeap;
-	Relation	NewHeap,
-				OldHeap;
-
-	/*
-	 * Create a new heap relation with a temporary name, which has the
-	 * same tuple description as the old one.
-	 */
-	snprintf(NewName, NAMEDATALEN, "temp_%x", OIDOldHeap);
+	Relation	OldHeap;
 
 	OldHeap = heap_open(OIDOldHeap, AccessExclusiveLock);
 	OldHeapDesc = RelationGetDescr(OldHeap);
@@ -173,7 +151,6 @@ copy_heap(Oid OIDOldHeap)
 	 * Need to make a copy of the tuple descriptor,
 	 * heap_create_with_catalog modifies it.
 	 */
-
 	tupdesc = CreateTupleDescCopy(OldHeapDesc);
 
 	OIDNewHeap = heap_create_with_catalog(NewName, tupdesc,
@@ -181,19 +158,15 @@ copy_heap(Oid OIDOldHeap)
 										  allowSystemTableMods);
 
 	if (!OidIsValid(OIDNewHeap))
-		elog(ERROR, "clusterheap: cannot create temporary heap relation\n");
+		elog(ERROR, "copy_heap: cannot create temporary heap relation");
 
-	/* XXX why are we bothering to do this: */
-	NewHeap = heap_open(OIDNewHeap, AccessExclusiveLock);
+	heap_close(OldHeap, NoLock);
 
-	heap_close(NewHeap, AccessExclusiveLock);
-	heap_close(OldHeap, AccessExclusiveLock);
-
-	return NewHeap;
+	return OIDNewHeap;
 }
 
 static void
-copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
+copy_index(Oid OIDOldIndex, Oid OIDNewHeap, char *NewIndexName)
 {
 	Relation	OldIndex,
 				NewHeap;
@@ -202,18 +175,17 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 	Form_pg_index Old_pg_index_Form;
 	Form_pg_class Old_pg_index_relation_Form;
 	IndexInfo  *indexInfo;
-	char	   *NewIndexName;
 
 	NewHeap = heap_open(OIDNewHeap, AccessExclusiveLock);
 	OldIndex = index_open(OIDOldIndex);
 
 	/*
-	 * OK. Create a new (temporary) index for the one that's already here.
+	 * Create a new (temporary) index like the one that's already here.
 	 * To do this I get the info from pg_index, and add a new index with
 	 * a temporary name.
 	 */
 	Old_pg_index_Tuple = SearchSysCacheTupleCopy(INDEXRELID,
-							ObjectIdGetDatum(RelationGetRelid(OldIndex)),
+												 ObjectIdGetDatum(OIDOldIndex),
 												 0, 0, 0);
 	Assert(Old_pg_index_Tuple);
 	Old_pg_index_Form = (Form_pg_index) GETSTRUCT(Old_pg_index_Tuple);
@@ -221,14 +193,10 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 	indexInfo = BuildIndexInfo(Old_pg_index_Tuple);
 
 	Old_pg_index_relation_Tuple = SearchSysCacheTupleCopy(RELOID,
-							ObjectIdGetDatum(RelationGetRelid(OldIndex)),
+														  ObjectIdGetDatum(OIDOldIndex),
 														  0, 0, 0);
 	Assert(Old_pg_index_relation_Tuple);
 	Old_pg_index_relation_Form = (Form_pg_class) GETSTRUCT(Old_pg_index_relation_Tuple);
-
-	/* Set the name. */
-	NewIndexName = palloc(NAMEDATALEN); /* XXX */
-	snprintf(NewIndexName, NAMEDATALEN, "temp_%x", OIDOldIndex);
 
 	index_create(RelationGetRelationName(NewHeap),
 				 NewIndexName,
@@ -239,10 +207,10 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 				 Old_pg_index_Form->indisprimary,
 				 allowSystemTableMods);
 
-	setRelhasindexInplace(OIDNewHeap, true, false);
+	setRelhasindex(OIDNewHeap, true);
 
 	index_close(OldIndex);
-	heap_close(NewHeap, AccessExclusiveLock);
+	heap_close(NewHeap, NoLock);
 }
 
 
@@ -294,6 +262,6 @@ rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	index_endscan(ScanDesc);
 
 	index_close(LocalOldIndex);
-	heap_close(LocalOldHeap, AccessExclusiveLock);
-	heap_close(LocalNewHeap, AccessExclusiveLock);
+	heap_close(LocalOldHeap, NoLock);
+	heap_close(LocalNewHeap, NoLock);
 }

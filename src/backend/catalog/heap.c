@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.150 2000/10/22 23:32:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.151 2000/11/08 22:09:56 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -289,8 +289,7 @@ heap_create(char *relname,
 	 */
 	rel = (Relation) palloc(sizeof(RelationData));
 	MemSet((char *) rel, 0, sizeof(RelationData));
-	rel->rd_fd = -1;			/* table is not open */
-	rel->rd_unlinked = true;	/* table is not created yet */
+	rel->rd_fd = -1;			/* physical file is not open */
 
 	RelationSetReferenceCount(rel, 1);
 
@@ -345,8 +344,6 @@ heap_create(char *relname,
 	 *	have the storage manager create the relation.
 	 * ----------------
 	 */
-
-	/* smgrcreate() is moved to heap_storage_create() */
 	if (storage_create)
 		heap_storage_create(rel);
 
@@ -355,18 +352,12 @@ heap_create(char *relname,
 	return rel;
 }
 
-bool
+void
 heap_storage_create(Relation rel)
 {
-	bool		smgrcall = false;
-
-	if (rel->rd_unlinked)
-	{
-		rel->rd_fd = (File) smgrcreate(DEFAULT_SMGR, rel);
-		rel->rd_unlinked = false;
-		smgrcall = true;
-	}
-	return smgrcall;
+	Assert(rel->rd_fd < 0);
+	rel->rd_fd = smgrcreate(DEFAULT_SMGR, rel);
+	Assert(rel->rd_fd >= 0);
 }
 
 /* ----------------------------------------------------------------
@@ -1062,7 +1053,11 @@ RelationRemoveIndexes(Relation relation)
 						  &entry);
 
 	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+	{
 		index_drop(((Form_pg_index) GETSTRUCT(tuple))->indexrelid);
+		/* advance cmd counter to make catalog changes visible */
+		CommandCounterIncrement();
+	}
 
 	heap_endscan(scan);
 	heap_close(indexRelation, RowExclusiveLock);
@@ -1165,10 +1160,10 @@ RelationTruncateIndexes(Oid heapId)
 		LockRelation(currentIndex, AccessExclusiveLock);
 
 		/*
-		 * Release any buffers associated with this index.	If they're
+		 * Drop any buffers associated with this index.	If they're
 		 * dirty, they're just dropped without bothering to flush to disk.
 		 */
-		ReleaseRelationBuffers(currentIndex);
+		DropRelationBuffers(currentIndex);
 
 		/* Now truncate the actual data and set blocks to zero */
 		smgrtruncate(DEFAULT_SMGR, currentIndex, 0);
@@ -1212,24 +1207,19 @@ heap_truncate(char *relname)
 	/* ----------------
 	 *	TRUNCATE TABLE within a transaction block is dangerous, because
 	 *	if the transaction is later rolled back we have no way to
-	 *	undo truncation of the relation's physical file.  For now, allow it
-	 *	but emit a warning message.
-	 *	Someday we might want to consider postponing the physical truncate
-	 *	until transaction commit, but that's a lot of work...
-	 *	The only case that actually works right is for relations created
-	 *	in the current transaction, since the post-abort state would be that
-	 *	they don't exist anyway.  So, no warning in that case.
+	 *	undo truncation of the relation's physical file.  Disallow it
+	 *	except for a rel created in the current xact (which would be deleted
+	 *	on abort, anyway).
 	 * ----------------
 	 */
 	if (IsTransactionBlock() && !rel->rd_myxactonly)
-		elog(NOTICE, "Caution: TRUNCATE TABLE cannot be rolled back, so don't abort now");
+		elog(ERROR, "TRUNCATE TABLE cannot run inside a BEGIN/END block");
 
 	/*
 	 * Release any buffers associated with this relation.  If they're
 	 * dirty, they're just dropped without bothering to flush to disk.
 	 */
-
-	ReleaseRelationBuffers(rel);
+	DropRelationBuffers(rel);
 
 	/* Now truncate the actual data and set blocks to zero */
 
@@ -1416,8 +1406,9 @@ heap_drop_with_catalog(const char *relname,
 {
 	Relation	rel;
 	Oid			rid;
-	bool		istemp = (get_temp_rel_by_username(relname) != NULL);
 	bool		has_toasttable;
+	bool		istemp = (get_temp_rel_by_username(relname) != NULL);
+	int			i;
 
 	/* ----------------
 	 *	Open and lock the relation.
@@ -1425,6 +1416,7 @@ heap_drop_with_catalog(const char *relname,
 	 */
 	rel = heap_openr(relname, AccessExclusiveLock);
 	rid = RelationGetRelid(rel);
+	has_toasttable = rel->rd_rel->reltoastrelid != InvalidOid;
 
 	/* ----------------
 	 *	prevent deletion of system relations
@@ -1433,23 +1425,28 @@ heap_drop_with_catalog(const char *relname,
 	/* allow temp of pg_class? Guess so. */
 	if (!istemp && !allow_system_table_mods &&
 		IsSystemRelationName(RelationGetRelationName(rel)))
-		elog(ERROR, "System relation '%s' cannot be destroyed",
+		elog(ERROR, "System relation \"%s\" may not be dropped",
 			 RelationGetRelationName(rel));
 
 	/* ----------------
-	 *	DROP TABLE within a transaction block is dangerous, because
-	 *	if the transaction is later rolled back there will be no way to
-	 *	undo the unlink of the relation's physical file.  For now, allow it
-	 *	but emit a warning message.
-	 *	Someday we might want to consider postponing the physical unlink
-	 *	until transaction commit, but that's a lot of work...
-	 *	The only case that actually works right is for relations created
-	 *	in the current transaction, since the post-abort state would be that
-	 *	they don't exist anyway.  So, no warning in that case.
+	 * Release all buffers that belong to this relation, after writing
+	 * any that are dirty
 	 * ----------------
 	 */
-	if (IsTransactionBlock() && !rel->rd_myxactonly)
-		elog(NOTICE, "Caution: DROP TABLE cannot be rolled back, so don't abort now");
+	i = FlushRelationBuffers(rel, (BlockNumber) 0);
+	if (i < 0)
+		elog(ERROR, "heap_drop_with_catalog: FlushRelationBuffers returned %d",
+			 i);
+
+	/* ----------------
+	 *	remove rules if necessary
+	 * ----------------
+	 */
+	if (rel->rd_rules != NULL)
+		RelationRemoveRules(rid);
+
+	/* triggers */
+	RelationRemoveTriggers(rel);
 
 	/* ----------------
 	 *	remove inheritance information
@@ -1461,18 +1458,7 @@ heap_drop_with_catalog(const char *relname,
 	 *	remove indexes if necessary
 	 * ----------------
 	 */
-	/* should ignore relhasindex */
 	RelationRemoveIndexes(rel);
-
-	/* ----------------
-	 *	remove rules if necessary
-	 * ----------------
-	 */
-	if (rel->rd_rules != NULL)
-		RelationRemoveRules(rid);
-
-	/* triggers */
-	RelationRemoveTriggers(rel);
 
 	/* ----------------
 	 *	delete attribute tuples
@@ -1502,23 +1488,12 @@ heap_drop_with_catalog(const char *relname,
 	 */
 	DeleteRelationTuple(rel);
 
-	/*
-	 * release dirty buffers of this relation; don't bother to write them
-	 */
-	ReleaseRelationBuffers(rel);
-
 	/* ----------------
 	 *	unlink the relation's physical file and finish up.
 	 * ----------------
 	 */
-	if (rel->rd_rel->relkind != RELKIND_VIEW && ! rel->rd_unlinked)
+	if (rel->rd_rel->relkind != RELKIND_VIEW)
 		smgrunlink(DEFAULT_SMGR, rel);
-	rel->rd_unlinked = true;
-
-	/*
-	 * Remember if there is a toast relation for below
-	 */
-	has_toasttable = rel->rd_rel->reltoastrelid != InvalidOid;
 
 	/*
 	 * Close relcache entry, but *keep* AccessExclusiveLock on the
@@ -1533,6 +1508,7 @@ heap_drop_with_catalog(const char *relname,
 	 */
 	RelationForgetRelation(rid);
 
+	/* and from the temp-table map */
 	if (istemp)
 		remove_temp_rel_by_relid(rid);
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.41 2000/09/07 09:58:38 vadim Exp $
+ * $Id: rel.h,v 1.42 2000/11/08 22:10:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,7 +92,6 @@ typedef struct RelationData
 	uint16		rd_refcnt;		/* reference count */
 	bool		rd_myxactonly;	/* rel uses the local buffer mgr */
 	bool		rd_isnailed;	/* rel is nailed in cache */
-	bool		rd_unlinked;	/* rel already unlinked or not created yet */
 	bool		rd_indexfound;	/* true if rd_indexlist is valid */
 	bool		rd_uniqueindex;	/* true if rel is a UNIQUE index */
 	Form_pg_am	rd_am;			/* AM tuple */

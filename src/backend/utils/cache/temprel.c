@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.29 2000/10/19 23:06:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.30 2000/11/08 22:10:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,9 +27,9 @@
  * to drop the underlying physical relations at session shutdown.
  */
 
-#include <sys/types.h>
-
 #include "postgres.h"
+
+#include <sys/types.h>
 
 #include "catalog/heap.h"
 #include "catalog/index.h"
@@ -47,11 +47,19 @@ static List *temp_rels = NIL;
 
 typedef struct TempTable
 {
-	char	   *user_relname;	/* logical name of temp table */
-	char	   *relname;		/* underlying unique name */
+	NameData	user_relname;	/* logical name of temp table */
+	NameData	relname;		/* underlying unique name */
 	Oid			relid;			/* needed properties of rel */
 	char		relkind;
-	TransactionId xid;			/* xact in which temp tab was created */
+	/*
+	 * If this entry was created during this xact, it should be deleted
+	 * at xact abort.  Conversely, if this entry was deleted during this
+	 * xact, it should be removed at xact commit.  We leave deleted entries
+	 * in the list until commit so that we can roll back if needed ---
+	 * but we ignore them for purposes of lookup!
+	 */
+	bool		created_in_cur_xact;
+	bool		deleted_in_cur_xact;
 } TempTable;
 
 
@@ -71,14 +79,15 @@ create_temp_relation(const char *relname, HeapTuple pg_class_tuple)
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	temp_rel = (TempTable *) palloc(sizeof(TempTable));
-	temp_rel->user_relname = (char *) palloc(NAMEDATALEN);
-	temp_rel->relname = (char *) palloc(NAMEDATALEN);
 
-	StrNCpy(temp_rel->user_relname, relname, NAMEDATALEN);
-	StrNCpy(temp_rel->relname, NameStr(pg_class_form->relname), NAMEDATALEN);
+	StrNCpy(NameStr(temp_rel->user_relname), relname,
+			NAMEDATALEN);
+	StrNCpy(NameStr(temp_rel->relname), NameStr(pg_class_form->relname),
+			NAMEDATALEN);
 	temp_rel->relid = pg_class_tuple->t_data->t_oid;
 	temp_rel->relkind = pg_class_form->relkind;
-	temp_rel->xid = GetCurrentTransactionId();
+	temp_rel->created_in_cur_xact = true;
+	temp_rel->deleted_in_cur_xact = false;
 
 	temp_rels = lcons(temp_rel, temp_rels);
 
@@ -86,11 +95,106 @@ create_temp_relation(const char *relname, HeapTuple pg_class_tuple)
 }
 
 /*
+ * Remove a temp relation map entry (part of DROP TABLE on a temp table).
+ * We don't actually remove the entry, just mark it dead.
+ *
+ * We don't have the relname for indexes, so we just pass the oid.
+ */
+void
+remove_temp_rel_by_relid(Oid relid)
+{
+	List	   *l;
+
+	foreach(l, temp_rels)
+	{
+		TempTable  *temp_rel = (TempTable *) lfirst(l);
+
+		if (temp_rel->relid == relid)
+			temp_rel->deleted_in_cur_xact = true;
+		/* Keep scanning 'cause there could be multiple matches; see RENAME */
+	}
+}
+
+/*
+ * To implement ALTER TABLE RENAME on a temp table, we shouldn't touch
+ * the underlying physical table at all, just change the map entry!
+ *
+ * This routine is invoked early in ALTER TABLE RENAME to check for
+ * the temp-table case.  If oldname matches a temp table name, change
+ * the mapping to the new logical name and return TRUE (or elog if
+ * there is a conflict with another temp table name).  If there is
+ * no match, return FALSE indicating that normal rename should proceed.
+ *
+ * We also reject an attempt to rename a normal table to a name in use
+ * as a temp table name.  That would fail later on anyway when rename.c
+ * looks for a rename conflict, but we can give a more specific error
+ * message for the problem here.
+ *
+ * It might seem that we need to check for attempts to rename the physical
+ * file underlying a temp table, but that'll be rejected anyway because
+ * pg_tempXXX looks like a system table name.
+ */
+bool
+rename_temp_relation(const char *oldname,
+					 const char *newname)
+{
+	List	   *l;
+
+	foreach(l, temp_rels)
+	{
+		TempTable  *temp_rel = (TempTable *) lfirst(l);
+		MemoryContext oldcxt;
+		TempTable  *new_temp_rel;
+
+		if (temp_rel->deleted_in_cur_xact)
+			continue;			/* ignore it if logically deleted */
+
+		if (strcmp(NameStr(temp_rel->user_relname), oldname) != 0)
+			continue;			/* ignore non-matching entries */
+
+		/* We are renaming a temp table --- is it OK to do so? */
+		if (get_temp_rel_by_username(newname) != NULL)
+			elog(ERROR, "Cannot rename temp table \"%s\": temp table \"%s\" already exists",
+				 oldname, newname);
+
+		/*
+		 * Create a new mapping entry and mark the old one deleted in this
+		 * xact.  One of these entries will be deleted at xact end.
+		 */
+		oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
+
+		new_temp_rel = (TempTable *) palloc(sizeof(TempTable));
+		memcpy(new_temp_rel, temp_rel, sizeof(TempTable));
+
+		StrNCpy(NameStr(new_temp_rel->user_relname), newname, NAMEDATALEN);
+		new_temp_rel->created_in_cur_xact = true;
+
+		temp_rels = lcons(new_temp_rel, temp_rels);
+
+		temp_rel->deleted_in_cur_xact = true;
+
+		MemoryContextSwitchTo(oldcxt);
+
+		return true;
+	}
+
+	/* Old name does not match any temp table name, what about new? */
+	if (get_temp_rel_by_username(newname) != NULL)
+		elog(ERROR, "Cannot rename \"%s\" to \"%s\": a temp table by that name already exists",
+			 oldname, newname);
+
+	return false;
+}
+
+
+/*
  * Remove underlying relations for all temp rels at backend shutdown.
  */
 void
 remove_all_temp_relations(void)
 {
+	List	   *l;
+
 	/* skip xact start overhead if nothing to do */
 	if (temp_rels == NIL)
 		return;
@@ -99,21 +203,24 @@ remove_all_temp_relations(void)
 	StartTransactionCommand();
 
 	/*
-	 * The way this works is that each time through the loop, we delete
-	 * the frontmost entry.  The DROP will call remove_temp_rel_by_relid()
-	 * as a side effect, thereby removing the entry in the temp_rels list.
-	 * So this is not an infinite loop, even though it looks like one.
+	 * Scan the list and delete all entries not already deleted.
+	 * We need not worry about list entries getting deleted from under us,
+	 * because remove_temp_rel_by_relid() doesn't remove entries, only
+	 * mark them dead.
 	 */
-	while (temp_rels != NIL)
+	foreach(l, temp_rels)
 	{
-		TempTable  *temp_rel = (TempTable *) lfirst(temp_rels);
+		TempTable  *temp_rel = (TempTable *) lfirst(l);
+
+		if (temp_rel->deleted_in_cur_xact)
+			continue;			/* ignore it if deleted already */
 
 		if (temp_rel->relkind != RELKIND_INDEX)
 		{
 			char		relname[NAMEDATALEN];
 
 			/* safe from deallocation */
-			strcpy(relname, temp_rel->user_relname);
+			strcpy(relname, NameStr(temp_rel->user_relname));
 			heap_drop_with_catalog(relname, allowSystemTableMods);
 		}
 		else
@@ -126,18 +233,19 @@ remove_all_temp_relations(void)
 }
 
 /*
- * Remove a temp relation map entry (part of DROP TABLE on a temp table)
+ * Clean up temprel mapping entries during transaction commit or abort.
  *
- * we don't have the relname for indexes, so we just pass the oid
+ * During commit, remove entries that were deleted during this transaction;
+ * during abort, remove those created during this transaction.
+ *
+ * We do not need to worry about removing the underlying physical relation;
+ * that's someone else's job.
  */
 void
-remove_temp_rel_by_relid(Oid relid)
+AtEOXact_temp_relations(bool isCommit)
 {
-	MemoryContext oldcxt;
 	List	   *l,
 			   *prev;
-
-	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	prev = NIL;
 	l = temp_rels;
@@ -145,10 +253,10 @@ remove_temp_rel_by_relid(Oid relid)
 	{
 		TempTable  *temp_rel = (TempTable *) lfirst(l);
 
-		if (temp_rel->relid == relid)
+		if (isCommit ? temp_rel->deleted_in_cur_xact :
+			temp_rel->created_in_cur_xact)
 		{
-			pfree(temp_rel->user_relname);
-			pfree(temp_rel->relname);
+			/* This entry must be removed */
 			pfree(temp_rel);
 			/* remove from linked list */
 			if (prev != NIL)
@@ -166,115 +274,13 @@ remove_temp_rel_by_relid(Oid relid)
 		}
 		else
 		{
+			/* This entry must be preserved */
+			temp_rel->created_in_cur_xact = false;
+			temp_rel->deleted_in_cur_xact = false;
 			prev = l;
 			l = lnext(l);
 		}
 	}
-
-	MemoryContextSwitchTo(oldcxt);
-}
-
-/*
- * Remove freshly-created map entries during transaction abort.
- *
- * The underlying physical rel will be removed by normal abort processing.
- * We just have to delete the map entry.
- */
-void
-remove_temp_rel_in_myxid(void)
-{
-	MemoryContext oldcxt;
-	List	   *l,
-			   *prev;
-
-	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-
-	prev = NIL;
-	l = temp_rels;
-	while (l != NIL)
-	{
-		TempTable  *temp_rel = (TempTable *) lfirst(l);
-
-		if (temp_rel->xid == GetCurrentTransactionId())
-		{
-			pfree(temp_rel->user_relname);
-			pfree(temp_rel->relname);
-			pfree(temp_rel);
-			/* remove from linked list */
-			if (prev != NIL)
-			{
-				lnext(prev) = lnext(l);
-				pfree(l);
-				l = lnext(prev);
-			}
-			else
-			{
-				temp_rels = lnext(l);
-				pfree(l);
-				l = temp_rels;
-			}
-		}
-		else
-		{
-			prev = l;
-			l = lnext(l);
-		}
-	}
-
-	MemoryContextSwitchTo(oldcxt);
-}
-
-/*
- * To implement ALTER TABLE RENAME on a temp table, we shouldn't touch
- * the underlying physical table at all, just change the map entry!
- *
- * This routine is invoked early in ALTER TABLE RENAME to check for
- * the temp-table case.  If oldname matches a temp table name, change
- * the map entry to the new logical name and return TRUE (or elog if
- * there is a conflict with another temp table name).  If there is
- * no match, return FALSE indicating that normal rename should proceed.
- *
- * We also reject an attempt to rename a normal table to a name in use
- * as a temp table name.  That would fail later on anyway when rename.c
- * looks for a rename conflict, but we can give a more specific error
- * message for the problem here.
- *
- * It might seem that we need to check for attempts to rename the physical
- * file underlying a temp table, but that'll be rejected anyway because
- * pg_tempXXX looks like a system table name.
- *
- * A nitpicker might complain that the rename should be undone if the
- * current xact is later aborted, but I'm not going to fix that now.
- * This whole mapping mechanism ought to be replaced with something
- * schema-based, anyhow.
- */
-bool
-rename_temp_relation(const char *oldname,
-					 const char *newname)
-{
-	List	   *l;
-
-	foreach(l, temp_rels)
-	{
-		TempTable  *temp_rel = (TempTable *) lfirst(l);
-
-		if (strcmp(temp_rel->user_relname, oldname) == 0)
-		{
-			if (get_temp_rel_by_username(newname) != NULL)
-				elog(ERROR, "Cannot rename temp table \"%s\": temp table \"%s\" already exists",
-					 oldname, newname);
-			/* user_relname was palloc'd NAMEDATALEN, so safe to re-use it */
-			StrNCpy(temp_rel->user_relname, newname, NAMEDATALEN);
-			return true;
-		}
-	}
-
-	/* Old name does not match any temp table name, what about new? */
-	if (get_temp_rel_by_username(newname) != NULL)
-		elog(ERROR, "Cannot rename \"%s\" to \"%s\": a temp table by that name already exists",
-			 oldname, newname);
-
-	return false;
 }
 
 
@@ -292,8 +298,11 @@ get_temp_rel_by_username(const char *user_relname)
 	{
 		TempTable  *temp_rel = (TempTable *) lfirst(l);
 
-		if (strcmp(temp_rel->user_relname, user_relname) == 0)
-			return temp_rel->relname;
+		if (temp_rel->deleted_in_cur_xact)
+			continue;			/* ignore it if logically deleted */
+
+		if (strcmp(NameStr(temp_rel->user_relname), user_relname) == 0)
+			return NameStr(temp_rel->relname);
 	}
 	return NULL;
 }
@@ -310,8 +319,11 @@ get_temp_rel_by_physicalname(const char *relname)
 	{
 		TempTable  *temp_rel = (TempTable *) lfirst(l);
 
-		if (strcmp(temp_rel->relname, relname) == 0)
-			return temp_rel->user_relname;
+		if (temp_rel->deleted_in_cur_xact)
+			continue;			/* ignore it if logically deleted */
+
+		if (strcmp(NameStr(temp_rel->relname), relname) == 0)
+			return NameStr(temp_rel->user_relname);
 	}
 	/* needed for bootstrapping temp tables */
 	return pstrdup(relname);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.82 2000/10/05 19:11:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.83 2000/11/08 22:09:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -363,14 +363,6 @@ static Query *
 fireRIRrules(Query *parsetree)
 {
 	int			rt_index;
-	RangeTblEntry *rte;
-	Relation	rel;
-	List	   *locks;
-	RuleLock   *rules;
-	RewriteRule *rule;
-	bool		relIsUsed;
-	int			i;
-	List	   *l;
 
 	/*
 	 * don't try to convert this into a foreach loop, because rtable list
@@ -379,6 +371,16 @@ fireRIRrules(Query *parsetree)
 	rt_index = 0;
 	while (rt_index < length(parsetree->rtable))
 	{
+		RangeTblEntry *rte;
+		Relation	rel;
+		List	   *locks;
+		RuleLock   *rules;
+		RewriteRule *rule;
+		LOCKMODE	lockmode;
+		bool		relIsUsed;
+		int			i;
+		List	   *l;
+
 		++rt_index;
 
 		rte = rt_fetch(rt_index, parsetree->rtable);
@@ -406,11 +408,32 @@ fireRIRrules(Query *parsetree)
 		if (!relIsUsed && rt_index != parsetree->resultRelation)
 			continue;
 
-		rel = heap_openr(rte->relname, AccessShareLock);
+		/*
+		 * This may well be the first access to the relation during
+		 * the current statement (it will be, if this Query was extracted
+		 * from a rule or somehow got here other than via the parser).
+		 * Therefore, grab the appropriate lock type for the relation,
+		 * and do not release it until end of transaction.  This protects
+		 * the rewriter and planner against schema changes mid-query.
+		 *
+		 * If the relation is the query's result relation, then RewriteQuery()
+		 * already got the right lock on it, so we need no additional lock.
+		 * Otherwise, check to see if the relation is accessed FOR UPDATE
+		 * or not.
+		 */
+		if (rt_index == parsetree->resultRelation)
+			lockmode = NoLock;
+		else if (intMember(rt_index, parsetree->rowMarks))
+			lockmode = RowShareLock;
+		else
+			lockmode = AccessShareLock;
+
+		rel = heap_openr(rte->relname, lockmode);
+
 		rules = rel->rd_rules;
 		if (rules == NULL)
 		{
-			heap_close(rel, AccessShareLock);
+			heap_close(rel, NoLock);
 			continue;
 		}
 
@@ -450,7 +473,7 @@ fireRIRrules(Query *parsetree)
 										  relIsUsed);
 		}
 
-		heap_close(rel, AccessShareLock);
+		heap_close(rel, NoLock);
 	}
 
 	/*
@@ -761,8 +784,19 @@ RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
 	 * the statement is an update, insert or delete - fire rules on it.
 	 */
 	result_relation = parsetree->resultRelation;
+	Assert(result_relation != 0);
 	rt_entry = rt_fetch(result_relation, parsetree->rtable);
-	rt_entry_relation = heap_openr(rt_entry->relname, AccessShareLock);
+
+	/*
+	 * This may well be the first access to the result relation during
+	 * the current statement (it will be, if this Query was extracted
+	 * from a rule or somehow got here other than via the parser).
+	 * Therefore, grab the appropriate lock type for a result relation,
+	 * and do not release it until end of transaction.  This protects the
+	 * rewriter and planner against schema changes mid-query.
+	 */
+	rt_entry_relation = heap_openr(rt_entry->relname, RowExclusiveLock);
+
 	rt_entry_locks = rt_entry_relation->rd_rules;
 
 	if (rt_entry_locks != NULL)
@@ -778,7 +812,7 @@ RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
 									qual_products);
 	}
 
-	heap_close(rt_entry_relation, AccessShareLock);
+	heap_close(rt_entry_relation, NoLock); /* keep lock! */
 
 	return product_queries;
 }

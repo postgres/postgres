@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.19 2000/04/10 23:41:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.20 2000/11/08 22:10:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -204,9 +204,11 @@ mmcreate(Relation reln)
 
 /*
  *	mmunlink() -- Unlink a relation.
+ *
+ * XXX currently broken: needs to accept RelFileNode, not Relation
  */
 int
-mmunlink(Relation reln)
+mmunlink(RelFileNode rnode)
 {
 	int			i;
 	Oid			reldbid;
