@@ -1,4 +1,4 @@
-PostgreSQL 6.3               Sun Feb  1 14:57:30 EST 1998
+PostgreSQL 6.3               Sun Mar  1 14:57:30 EST 1998
 -------------------------------------------------------------
 
 A dump/restore is required for those wishing to migrate data from
@@ -39,16 +39,16 @@ Generate elog(ERROR) on over-large integer(Bruce)
 Allow multiple-argument functions in constraint clauses(Thomas)
 Check boolean input literals for 'true','false','yes','no','1','0'
 	and throw elog(ERROR) if unrecognized(Thomas)
-Change default table creation from ACL_RD to ACL_NO (aka private tables)(marc)
-
+Major large objects fix
 
 Enhancements
 ------------
+Subselects with EXISTS, IN, ALL, ANY keywords (Vadim, Bruce, Thomas)
+New User Manual(Thomas, others)
+Speedup by inlining some frequently-called functions
 Real deadlock detection, no more timeouts(Bruce)
-<NOT DONE YET> Subselects with EXISTS, IN, ALL, ANY keywords (Vadim, Bruce, Thomas)
 Add SQL92 "constants" CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP, 
 	CURRENT_USER(Thomas)
-Speedup by inlining some frequently-called functions
 Modify constraint syntax to be SQL92-compliant(Thomas)
 Implement SQL92 PRIMARY KEY and UNIQUE clauses using indices(Thomas)
 Recognize SQL92 syntax for FOREIGN KEY. Throw elog notice(Thomas)
@@ -107,7 +107,6 @@ Add UNION, GROUP, DISTINCT to INSERT(Bruce)
 varchar() stores only necessary bytes on disk(Bruce)
 Fix for BLOBs(Peter)
 Mega-Patch for JDBC...see README_6.3 for list of changes(Peter)
-Allow installation data block size and max tuple size configuration(Darren)
 Remove unused "option" from PQconnectdb()
 New LOCK command and lock manual page describing deadlocks(Bruce)
 Add new psql \da, \dd, \df, \do, \dS, and \dT commands(Bruce)
@@ -122,8 +121,17 @@ Add Unix socket support to DBD::Pg(Goran)
 New python interface (PyGreSQL 2.0)(D'Arcy)
 New frontend/backend protocol has a version number, network byte order(Phil)
 Security features in pg_hba.conf enhanced and documented, many cleanups(Phil)
-New HTML and Postscript documentation(Thomas)
-
+CHAR() now faster access than VARCHAR() or TEXT
+ecpg embedded SQL preprocessor
+Add GROUP BY to INSERT INTO table SELECT * FROM table2
+Reduce system column overhead(Vadmin)
+Remove pg_time table(Vadim)
+Add pg_type attribute to identify types that need length (bpchar, varchar)
+Add report of offending line when COPY command fails
+Allow VIEW permissions to be set separately from the underlying tables. 
+	For security, use GRANT/REVOKE on views as appropriate(Jan)
+Tables now have no default GRANT SELECT TO PUBLIC.  You must
+	explicitly grant such permissions.
 
 Source Tree Changes
 -------------------
@@ -160,6 +168,7 @@ Start an AUX port
 Start a Cygnus port
 Add string functions to regression suite(Thomas)
 Expand a few function names formerly truncated to 16 characters(Thomas)
+Remove un-needed malloc() calls and replace with palloc()(Bruce)
 
 
 PostgreSQL 6.2.1                 Fri Oct 17 00:01:27 EDT 1997

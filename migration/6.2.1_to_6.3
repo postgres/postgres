@@ -1,15 +1,60 @@
 This migration requires a complete dump of the 6.2 or 6.2.1 database and a
 restore of the database in 6.3.
 
-In addition, 6.3 has separate permissions for views, rather than relying
-on the permissions set on the underlying tables.  For this reason, you will
-have to set permissions on your views if you want anything but the default
-permissions.
+There are some general 6.3 issues that I want to mention.  These are
+only the big items that can not be described in one sentence.  A review
+of the HISTORY files is still needed.
 
-6.3 has had its default permissions on a table set such that unless you 
-are the owner, when a table is created, other users of the system won't 
-have access to them.  You *must* do a 'GRANT' for each table you wish open
-to other ppl.  
+First, we now have subselects.  Now that we have them, I would like to
+mention that without subselects, SQL is a very limited language.
+Subselects are a major feature, and you should review your code for
+places where subselects provide a better solution for your queries.  I
+think you will find that there are more uses for subselects than you may
+think.  Vadim has put us on the big SQL map with subselects, and fully
+functional ones too.  The only thing you can't do with subselects is to
+use them in the target list.
 
-Those migrating from earlier 1.* releases should first upgrade to 1.09
-because the COPY output format was improved from the 1.02 release.
+Second, 6.3 uses unix domain sockets rather than TCP/IP by default.  To
+enable connections from other machines, you have to use the new
+postmaster -i option, and of course edit pg_hba.conf.  Also, for this
+reason, the format of pg_hba.conf has changed.
+
+Third, char() fields will now allow faster access than varchar() or
+text. Specifically, the text and varchar() have a penalty for access to
+any columns after the first column of this type.  char() used to also
+have this access penalty, but it no longer does.  This may suggest that
+you redesign some of your tables, especially if you have short character
+columns that you have defined as varchar() or text.  This and other
+changes make 6.3 even faster than earlier releases.
+
+We now have passwords definable independent of any Unix file.  There are
+new SQL USER commands.  See the pg_hba.conf manual page for more
+information.  There is a new table, pg_shadow, which is used to store
+user information and user passwords, and it by default only SELECT-able
+by the postgres super-user.  pg_user is now a view of pg_shadow, and is
+SELECT-able by PUBLIC.  You should keep using pg_user in your
+application without changes.
+
+User-created tables now no longer have SELECT permission to PUBLIC by
+default.  This was done because the ANSI standard requires it.  You can
+of course GRANT any permissions you want after the table is created. 
+System tables continue to be SELECT-able by PUBLIC.
+
+We also have real deadlock detection code.  No more sixty-second
+timeouts.  And the new locking code implements a FIFO better, so there
+should be less resource starvation during heavy use.  For performance
+reasons, time travel is gone, but can be implemented using triggers (see
+pgsql/contrib/spi/README).  Please check out the new \d command for
+types, operators, etc.  Also, views have their own permissions now, not
+based on the underlying tables, so permissions on them have to be set
+separately.  Check /pgsql/interfaces for some new ways to talk to
+PostgreSQL.
+
+This is the first release that really required an explaination for
+existing users.  In many ways, this was necessary because the new
+release removes many limitations, and the work-arounds people were using
+are no longer needed.
+
+Long live PostgreSQL.
+
+-- Bruce Momjian
