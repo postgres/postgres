@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.16 2004/02/17 03:45:17 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.17 2004/03/22 16:46:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,12 @@
 #include "access/xlog.h"
 #include "catalog/catversion.h"
 #include "catalog/pg_control.h"
+
+extern int	optind;
+extern char *optarg;
+
+#define _(x) gettext((x))
+
 
 /******************** stuff copied from xlog.c ********************/
 
@@ -62,8 +68,6 @@
 
 /******************** end of stuff copied from xlog.c ********************/
 
-#define _(x) gettext((x))
-
 static char XLogDir[MAXPGPATH];
 static char ControlFilePath[MAXPGPATH];
 
@@ -80,9 +84,6 @@ static void RewriteControlFile(void);
 static void KillExistingXLOG(void);
 static void WriteEmptyXLOG(void);
 static void usage(void);
-
-extern char *optarg;
-
 
 
 int
