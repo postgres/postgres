@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.29 1998/08/19 02:01:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.30 1998/08/25 21:33:56 scrappy Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -35,8 +35,8 @@
 
 #ifdef BTREE_BUILD_STATS
 #include <tcop/tcopprot.h>
-extern int	ShowExecutorStats;
-
+#include <utils/trace.h>
+#define ShowExecutorStats pg_options[TRACE_EXECUTORSTATS]
 #endif
 
 

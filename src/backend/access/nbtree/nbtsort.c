@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: nbtsort.c,v 1.30 1998/06/15 19:27:59 momjian Exp $
+ *	  $Id: nbtsort.c,v 1.31 1998/08/25 21:33:57 scrappy Exp $
  *
  * NOTES
  *
@@ -64,8 +64,8 @@
 
 #ifdef BTREE_BUILD_STATS
 #include "tcop/tcopprot.h"
-extern int	ShowExecutorStats;
-
+#include <utils/trace.h>
+#define ShowExecutorStats pg_options[TRACE_EXECUTORSTATS]
 #endif
 
 static BTItem _bt_buildadd(Relation index, void *pstate, BTItem bti, int flags);

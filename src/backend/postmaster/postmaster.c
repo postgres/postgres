@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.94 1998/08/25 21:04:36 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.95 1998/08/25 21:33:59 scrappy Exp $
  *
  * NOTES
  *
@@ -92,6 +92,7 @@
 #include "port-protos.h"		/* For gethostname() */
 #endif
 #include "storage/fd.h"
+#include "utils/trace.h"
 
 #if !defined(MAXINT)
 #define MAXINT		   INT_MAX
@@ -115,6 +116,8 @@ typedef struct bkend
 	int			pid;			/* process id of backend */
 	long		cancel_key;		/* cancel key for cancels for this backend */
 } Backend;
+
+Port *MyBackendPort = NULL;
 
 /* list of active backends.  For garbage collection only now. */
 
@@ -232,6 +235,7 @@ static int processCancelRequest(Port *port, PacketLen len, void *pkt);
 static int initMasks(fd_set *rmask, fd_set *wmask);
 static long PostmasterRandom(void);
 static void RandomSalt(char *salt);
+static void SignalChildren(SIGNAL_ARGS);
 
 #ifdef CYR_RECODE
 void GetCharSetByHost(char *, int, char *);
@@ -314,16 +318,16 @@ PostmasterMain(int argc, char *argv[])
 	 *	We need three params so we can display status.  If we don't
 	 *	get them from the user, let's make them ourselves.
 	 */
-	if (argc < 4)
+	if (argc < 5)
 	{
 		int i;
-		char *new_argv[5];
+		char *new_argv[6];
 
 		for (i=0; i < argc; i++)
 			new_argv[i] = argv[i];
-		for (; i < 4; i++)
+		for (; i < 5; i++)
 			new_argv[i] = "";
-		new_argv[4] = NULL;
+		new_argv[5] = NULL;
 
 		if (!Execfile[0] && FindExec(Execfile, argv[0], "postmaster") < 0)
 		{
@@ -363,6 +367,7 @@ PostmasterMain(int argc, char *argv[])
 		hostName = hostbuf;
 	}
 
+	MyProcPid = getpid();
 	DataDir = getenv("PGDATA"); /* default value */
 
 	opterr = 0;
@@ -424,6 +429,7 @@ PostmasterMain(int argc, char *argv[])
 				}
 				else
 					DebugLvl = 1;
+				pg_options[TRACE_VERBOSE] = DebugLvl;
 				break;
 			case 'i':
 				NetServer = true;
@@ -535,14 +541,17 @@ PostmasterMain(int argc, char *argv[])
 	 * Set up signal handlers for the postmaster process.
 	 */
 
-	pqsignal(SIGINT, pmdie);
-	pqsignal(SIGCHLD, reaper);
-	pqsignal(SIGTTIN, SIG_IGN);
-	pqsignal(SIGTTOU, SIG_IGN);
-	pqsignal(SIGHUP, pmdie);
-	pqsignal(SIGTERM, pmdie);
-	pqsignal(SIGCONT, dumpstatus);
-	pqsignal(SIGPIPE, SIG_IGN);
+	pqsignal(SIGHUP,   pmdie);		/* send SIGHUP, don't die */
+	pqsignal(SIGINT,   pmdie);		/* die */
+	pqsignal(SIGQUIT,  pmdie);		/* send SIGTERM and die */
+	pqsignal(SIGTERM,  pmdie);		/* send SIGTERM,SIGKILL and die */
+	pqsignal(SIGPIPE,  SIG_IGN);	/* ignored */
+	pqsignal(SIGUSR1,  pmdie);		/* send SIGUSR1 and die */
+	pqsignal(SIGUSR2,  pmdie);		/* send SIGUSR2, don't die */
+	pqsignal(SIGCHLD,  reaper);		/* handle child termination */
+	pqsignal(SIGTTIN,  SIG_IGN);	/* ignored */
+	pqsignal(SIGTTOU,  SIG_IGN);	/* ignored */
+	pqsignal(SIGWINCH, dumpstatus);	/* dump port status */
 
 	status = ServerLoop();
 
@@ -980,6 +989,52 @@ reset_shared(short port)
 static void
 pmdie(SIGNAL_ARGS)
 {
+	int i;
+
+	TPRINTF(TRACE_VERBOSE, "pmdie %d", postgres_signal_arg);
+
+	/*
+	 * Kill self and/or children processes depending on signal number.
+	 */
+	switch (postgres_signal_arg) {
+		case SIGHUP:
+			/* Send SIGHUP to all children (update options flags) */
+			SignalChildren(SIGHUP);
+			/* Don't die */
+			return;
+		case SIGINT:
+			/* Die without killing children */
+			break;
+		case SIGQUIT:
+			/* Shutdown all children with SIGTERM */
+			SignalChildren(SIGTERM);
+			/* Don't die */
+			return;
+		case SIGTERM:
+			/* Shutdown all children with SIGTERM and SIGKILL, then die */
+			SignalChildren(SIGTERM);
+			for (i=0; i<10; i++) {
+				if (!DLGetHead(BackendList)) {
+					break;
+				}
+				sleep(1);
+			}
+			if (DLGetHead(BackendList)) {
+				SignalChildren(SIGKILL);
+			}
+			break;
+		case SIGUSR1:
+			/* Quick die all children with SIGUSR1 and die */
+			SignalChildren(SIGUSR1);
+			break;
+		case SIGUSR2:
+			/* Send SIGUSR2 to all children (AsyncNotifyHandler) */
+			SignalChildren(SIGUSR2);
+			/* Don't die */
+			return;
+	}
+
+	/* exit postmaster */
 	proc_exit(0);
 }
 
@@ -1119,6 +1174,35 @@ CleanupProc(int pid,
 					progname);
 		shmem_exit(0);
 		reset_shared(PostPortName);
+	}
+}
+
+/*
+ * Send a signal to all chidren processes.
+ */
+static void
+SignalChildren(int signal)
+{
+	Dlelem		*curr,
+				*next;
+	Backend 	*bp;
+	int			mypid = getpid();
+
+	curr = DLGetHead(BackendList);
+	while (curr)
+	{
+		next = DLGetSucc(curr);
+		bp = (Backend *) DLE_VAL(curr);
+
+		if (bp->pid != mypid)
+		{
+			TPRINTF(TRACE_VERBOSE,
+					"SignalChildren: sending signal %d to process %d",
+					signal, bp->pid);
+			kill(bp->pid, signal);
+		}
+
+		curr = next;
 	}
 }
 
@@ -1342,6 +1426,9 @@ DoBackend(Port *port)
 		StreamClose(ServerSock_INET);
 	StreamClose(ServerSock_UNIX);
 
+	/* Save port for ps status */
+	MyProcPort = port;
+
 	/*
 	 * Don't want backend to be able to see the postmaster random number
 	 * generator state.  We have to clobber the static random_seed *and*
@@ -1368,7 +1455,13 @@ DoBackend(Port *port)
 	 *	a big win.
 	 */
 	
+#ifndef linux
+	/*
+	 * This doesn't work on linux and overwrites the only valid
+	 * pointer to the argv buffer.  See PS_INIT_STATUS macro.
+	 */
 	real_argv[0] = Execfile;
+#endif
 
 	/* Tell the backend it is being called from the postmaster */
 	av[ac++] = "-p";
@@ -1386,8 +1479,6 @@ DoBackend(Port *port)
 		sprintf(debugbuf, "-d%d", DebugLvl);
 		av[ac++] = debugbuf;
 	}
-	else
-		av[ac++] = "-Q";
 
 	/* Pass the requested debugging output file */
 	if (port->tty[0])

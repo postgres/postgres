@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.30 1998/07/12 04:43:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.31 1998/08/25 21:34:01 scrappy Exp $
  *
  * NOTES
  *
@@ -39,6 +39,7 @@
 #include <sys/shm.h>
 #include "utils/memutils.h"
 #include "libpq/libpq.h"
+#include "utils/trace.h"
 
 #if defined(solaris_sparc)
 #include <string.h>
@@ -113,16 +114,25 @@ proc_exit(int code)
 {
 	int			i;
 
+	TPRINTF(TRACE_VERBOSE, "proc_exit(%d) [#%d]", code, proc_exit_inprogress);
+
+    /*
+	 * If proc_exit is called too many times something bad is
+	 * happenig, so exit immediately.
+	 */
+	if (proc_exit_inprogress > 9) {
+		elog(ERROR, "infinite recursion in proc_exit");
+		goto exit;
+	}
+
 	/* ----------------
 	 *	if proc_exit_inprocess is true, then it means that we
 	 *	are being invoked from within an on_exit() handler
 	 *	and so we return immediately to avoid recursion.
 	 * ----------------
 	 */
-	if (proc_exit_inprogress)
+	if (proc_exit_inprogress++)
 		return;
-
-	proc_exit_inprogress = 1;
 
 	/* do our shared memory exits first */
 	shmem_exit(code);
@@ -134,6 +144,8 @@ proc_exit(int code)
 	for (i = on_proc_exit_index - 1; i >= 0; --i)
 		(*on_proc_exit_list[i].function) (code, on_proc_exit_list[i].arg);
 
+exit:
+	TPRINTF(TRACE_VERBOSE, "exit(%d)", code);
 	exit(code);
 }
 
@@ -150,16 +162,26 @@ shmem_exit(int code)
 {
 	int			i;
 
+	TPRINTF(TRACE_VERBOSE, "shmem_exit(%d) [#%d]",
+			code, shmem_exit_inprogress);
+
+	/*
+	 * If shmem_exit is called too many times something bad is
+	 * happenig, so exit immediately.
+	 */
+	if (shmem_exit_inprogress > 9) {
+		elog(ERROR, "infinite recursion in shmem_exit");
+		exit(-1);
+	}
+
 	/* ----------------
 	 *	if shmem_exit_inprocess is true, then it means that we
 	 *	are being invoked from within an on_exit() handler
 	 *	and so we return immediately to avoid recursion.
 	 * ----------------
 	 */
-	if (shmem_exit_inprogress)
+	if (shmem_exit_inprogress++)
 		return;
-
-	shmem_exit_inprogress = 1;
 
 	/* ----------------
 	 *	call all the callbacks registered before calling exit().
@@ -315,7 +337,7 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 	{
 		*status = IpcSemIdNotExist;		/* there doesn't exist a semaphore */
 #ifdef DEBUG_IPC
-		fprintf(stderr, "calling semget with %d, %d , %d\n",
+		EPRINTF("calling semget with %d, %d , %d\n",
 				semKey,
 				semNum,
 				IPC_CREAT | permission);
@@ -324,8 +346,9 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 
 		if (semId < 0)
 		{
-			perror("semget");
-			IpcConfigTip();
+			EPRINTF("IpcSemaphoreCreate: semget failed (%s) "
+					"key=%d, num=%d, permission=%o",
+					strerror(errno), semKey, semNum, permission);
 			proc_exit(3);
 		}
 		for (i = 0; i < semNum; i++)
@@ -334,8 +357,8 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 		errStatus = semctl(semId, 0, SETALL, semun);
 		if (errStatus == -1)
 		{
-			perror("semctl");
-			IpcConfigTip();
+			EPRINTF("IpcSemaphoreCreate: semctl failed (%s) id=%d",
+					strerror(errno), semId);
 		}
 
 		if (removeOnExit)
@@ -349,7 +372,7 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 	}
 
 #ifdef DEBUG_IPC
-	fprintf(stderr, "\nIpcSemaphoreCreate, status %d, returns %d\n",
+	EPRINTF("\nIpcSemaphoreCreate, status %d, returns %d\n",
 			*status,
 			semId);
 	fflush(stdout);
@@ -379,8 +402,8 @@ IpcSemaphoreSet(int semId, int semno, int value)
 
 	if (errStatus == -1)
 	{
-		perror("semctl");
-		IpcConfigTip();
+	    EPRINTF("IpcSemaphoreSet: semctl failed (%s) id=%d",
+				strerror(errno), semId);
 	}
 }
 
@@ -441,8 +464,8 @@ IpcSemaphoreLock(IpcSemaphoreId semId, int sem, int lock)
 
 	if (errStatus == -1)
 	{
-		perror("semop");
-		IpcConfigTip();
+		EPRINTF("IpcSemaphoreLock: semop failed (%s) id=%d",
+				strerror(errno), semId);
 		proc_exit(255);
 	}
 }
@@ -486,8 +509,8 @@ IpcSemaphoreUnlock(IpcSemaphoreId semId, int sem, int lock)
 
 	if (errStatus == -1)
 	{
-		perror("semop");
-		IpcConfigTip();
+		EPRINTF("IpcSemaphoreUnlock: semop failed (%s) id=%d",
+				strerror(errno), semId);
 		proc_exit(255);
 	}
 }
@@ -534,10 +557,9 @@ IpcMemoryCreate(IpcMemoryKey memKey, uint32 size, int permission)
 
 	if (shmid < 0)
 	{
-		fprintf(stderr, "IpcMemoryCreate: memKey=%d , size=%d , permission=%d",
-				memKey, size, permission);
-		perror("IpcMemoryCreate: shmget(..., create, ...) failed");
-		IpcConfigTip();
+		EPRINTF("IpcMemoryCreate: shmget failed (%s) "
+				"key=%d, size=%d, permission=%o",
+				strerror(errno), memKey, size, permission);
 		return (IpcMemCreationFailed);
 	}
 
@@ -560,10 +582,9 @@ IpcMemoryIdGet(IpcMemoryKey memKey, uint32 size)
 
 	if (shmid < 0)
 	{
-		fprintf(stderr, "IpcMemoryIdGet: memKey=%d , size=%d , permission=%d",
-				memKey, size, 0);
-		perror("IpcMemoryIdGet:  shmget() failed");
-		IpcConfigTip();
+		EPRINTF("IpcMemoryIdGet: shmget failed (%s) "
+				"key=%d, size=%d, permission=%o",
+				strerror(errno), memKey, size, 0);
 		return (IpcMemIdGetFailed);
 	}
 
@@ -602,8 +623,8 @@ IpcMemoryAttach(IpcMemoryId memId)
 	/* if ( *memAddress == -1) { XXX ??? */
 	if (memAddress == (char *) -1)
 	{
-		perror("IpcMemoryAttach: shmat() failed");
-		IpcConfigTip();
+		EPRINTF("IpcMemoryAttach: shmat failed (%s) id=%d",
+				strerror(errno), memId);
 		return (IpcMemAttachFailed);
 	}
 

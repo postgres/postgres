@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.31 1998/07/07 22:00:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.32 1998/08/25 21:34:08 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,10 +24,29 @@
 #include <unistd.h>
 #include <signal.h>
 
+#ifdef USE_SYSLOG
+#include <syslog.h>
+#endif
+
 #include "postgres.h"
 #include "miscadmin.h"
 #include "libpq/libpq.h"
 #include "storage/proc.h"
+#include "utils/trace.h"
+
+#ifdef USE_SYSLOG
+/*
+ * Global option to control the use of syslog(3) for logging:
+ *
+ *		0 	stdout/stderr only
+ *  	1   stdout/stderr + syslog
+ *  	2   syslog only
+ */
+#define UseSyslog pg_options[OPT_SYSLOG]
+#define PG_LOG_FACILITY	LOG_LOCAL0
+#else
+#define UseSyslog 0
+#endif
 
 static int	Debugfile = -1;
 static int	Err_file = -1;
@@ -52,12 +71,12 @@ elog(int lev, const char *fmt,...)
 
 #ifndef PG_STANDALONE
 	extern FILE *Pfout;
-
-#endif							/* !PG_STANDALONE */
-#ifdef ELOG_TIMESTAMPS
-	time_t		tim;
-
 #endif
+
+#ifdef USE_SYSLOG
+	int			log_level;
+#endif
+
 	int			len;
 	int			i = 0;
 
@@ -72,7 +91,7 @@ elog(int lev, const char *fmt,...)
 				i = 0;
 			if (i > 30)
 				i = i % 30;
-			cp = "DEBUG:  ";
+			cp = "DEBUG: ";
 			break;
 		case DEBUG:
 			i = ElogDebugIndentLevel;
@@ -80,27 +99,25 @@ elog(int lev, const char *fmt,...)
 				i = 0;
 			if (i > 30)
 				i = i % 30;
-			cp = "DEBUG:  ";
+			cp = "DEBUG: ";
 			break;
 		case NOTICE:
-			cp = "NOTICE:  ";
+			cp = "NOTICE: ";
 			break;
 		case ERROR:
-			cp = "ERROR:  ";
+			cp = "ERROR: ";
 			break;
 		default:
-			sprintf(line, "FATAL %d:  ", lev);
+			sprintf(line, "FATAL %d: ", lev);
 			cp = line;
 	}
 #ifdef ELOG_TIMESTAMPS
-	time(&tim);
-	strcat(strcpy(buf, cp), ctime(&tim) + 4);
-	bp = buf + strlen(buf) - 6;
-	*bp++ = ':';
+	strcpy(buf, tprintf_timestamp());
+	strcat(buf, cp);
 #else
 	strcpy(buf, cp);
-	bp = buf + strlen(buf);
 #endif
+	bp = buf + strlen(buf);
 	while (i-- > 0)
 		*bp++ = ' ';
 	for (cp = fmt; *cp; cp++)
@@ -118,8 +135,31 @@ elog(int lev, const char *fmt,...)
 	*bp = '\0';
 	vsprintf(line, buf, ap);
 	va_end(ap);
+
+#ifdef USE_SYSLOG
+	switch (lev) {
+	case NOIND:
+		log_level = LOG_DEBUG;
+		break;
+	case DEBUG:
+		log_level = LOG_DEBUG;
+		break;
+	case NOTICE:
+		log_level = LOG_NOTICE;
+		break;
+	case ERROR:
+		log_level = LOG_WARNING;
+		break;
+	case FATAL:
+	default:
+		log_level = LOG_ERR;
+		break;
+	}
+	write_syslog(log_level, line+TIMESTAMP_SIZE);
+#endif
+
 	len = strlen(strcat(line, "\n"));
-	if (Debugfile > -1)
+	if ((Debugfile > -1) && (UseSyslog <= 1))
 		write(Debugfile, line, len);
 	if (lev == DEBUG || lev == NOIND)
 		return;
@@ -135,7 +175,7 @@ elog(int lev, const char *fmt,...)
 	 * log.  This is a major pain.
 	 */
 
-	if (Err_file > -1 && Debugfile != Err_file)
+	if (Err_file > -1 && Debugfile != Err_file && (UseSyslog <= 1))
 	{
 		if (write(Err_file, line, len) < 0)
 		{
@@ -157,7 +197,7 @@ elog(int lev, const char *fmt,...)
 		else
 			pq_putnchar("E", 1);
 		/* pq_putint(-101, 4); *//* should be query id */
-		pq_putstr(line);
+		pq_putstr(line+TIMESTAMP_SIZE);		/* don't show timestamps */
 		pq_flush();
 	}
 	if (Pfout == NULL)
@@ -178,7 +218,7 @@ elog(int lev, const char *fmt,...)
 		ProcReleaseSpins(NULL); /* get rid of spinlocks we hold */
 		if (!InError)
 		{
-			kill(MyProcPid, SIGHUP); /* abort to traffic cop */
+			kill(MyProcPid, SIGQUIT); /* abort to traffic cop */
 			pause();
 		}
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.85 1998/08/25 21:04:38 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.86 1998/08/25 21:34:04 scrappy Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -36,7 +36,9 @@
 #if HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif							/* aix */
-
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
 
 #include "postgres.h"
 #include "miscadmin.h"
@@ -66,6 +68,7 @@
 #include "tcop/utility.h"
 #include "utils/mcxt.h"
 #include "utils/rel.h"
+#include "utils/ps_status.h"
 
 #if FALSE
 #include "nodes/relation.h"
@@ -83,27 +86,43 @@
 #include "nodes/memnodes.h"
 #endif
 
+#include "utils/trace.h"
+
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif
+
+/*
+ * Trace flags, see backend/utils/misc/trace.c
+ */
+#define Verbose				pg_options[TRACE_VERBOSE]
+#define DebugPrintQuery		pg_options[TRACE_QUERY]
+#define DebugPrintPlan		pg_options[TRACE_PLAN]
+#define DebugPrintParse		pg_options[TRACE_PARSE]
+#define ShowParserStats		pg_options[TRACE_PARSERSTATS]
+#define ShowPlannerStats	pg_options[TRACE_PLANNERSTATS]
+#define ShowExecutorStats	pg_options[TRACE_EXECUTORSTATS]
+#define DebugPrintRewrittenParsetree \
+							pg_options[TRACE_REWRITTEN]
+#ifdef LOCK_MGR_DEBUG
+#define LockDebug			pg_options[TRACE_LOCKS]
+#endif
+
+#define DeadlockCheckTimer	pg_options[OPT_DEADLOCKTIMEOUT]
+#define HostnameLookup		pg_options[OPT_HOSTLOOKUP]
+#define ShowPortNumber		pg_options[OPT_SHOWPORTNUMBER]
 
 /* ----------------
  *		global variables
  * ----------------
  */
-static bool DebugPrintQuery = false;
-static bool DebugPrintPlan = false;
-static bool DebugPrintParse = false;
-static bool DebugPrintRewrittenParsetree = false;
 
 /*static bool	EnableRewrite = true; , never changes why have it*/
 CommandDest whereToSendOutput;
-const char **ps_status;	/* this is our 'ps' status, argv[3] */
 
-#ifdef LOCK_MGR_DEBUG
-extern int	lockDebug;
+/* Define status buffer needed by PS_SET_STATUS */
+PS_DEFINE_BUFFER;
 
-#endif
 extern int	lockingOff;
 extern int	NBuffers;
 
@@ -129,9 +148,6 @@ extern int	NBuffers;
 static int	EchoQuery = 0;		/* default don't echo */
 time_t		tim;
 char		pg_pathname[256];
-static int	ShowParserStats;
-static int	ShowPlannerStats;
-int			ShowExecutorStats;
 FILE	   *StatFp;
 
 /* ----------------
@@ -260,7 +276,7 @@ InteractiveBackend(char *inBuf)
 
 		if (end)
 		{
-			if (!Quiet)
+			if (Verbose)
 				puts("EOF");
 			IsEmptyQuery = true;
 			proc_exit(0);
@@ -278,7 +294,7 @@ InteractiveBackend(char *inBuf)
 	 * ----------------
 	 */
 	if (EchoQuery)
-		printf("query is: %s\n", inBuf);
+		printf("query: %s\n", inBuf);
 
 	return ('Q');
 }
@@ -521,9 +537,9 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 		}
 	}
 
-	if (DebugPrintRewrittenParsetree == true)
+	if (DebugPrintRewrittenParsetree)
 	{
-		printf("\n---- \tafter rewriting:\n");
+		TPRINTF(TRACE_REWRITTEN, "after rewriting:");
 
 		for (i = 0; i < querytree_list->len; i++)
 		{
@@ -584,11 +600,10 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 			 *	also for queries in functions.	DZ - 27-8-1996
 			 * ----------------
 			 */
-			if (DebugPrintPlan == true)
+			if (DebugPrintPlan)
 			{
-				printf("\n---- \tplan is :\n");
+				TPRINTF(TRACE_PLAN, "plan:");
 				nodeDisplay(plan);
-				printf("\n");
 			}
 #endif
 		}
@@ -696,11 +711,11 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 			 *	 because that is done in ProcessUtility.
 			 * ----------------
 			 */
-			if (!Quiet)
-			{
-				time(&tim);
-				printf("\tProcessUtility() at %s\n", ctime(&tim));
-			}
+			if (DebugPrintQuery) {
+				TPRINTF(TRACE_QUERY, "ProcessUtility: %s", query_string);
+			} else if (Verbose) {
+				TPRINTF(TRACE_VERBOSE, "ProcessUtility");
+			} 
 
 			ProcessUtility(querytree->utilityStmt, dest);
 
@@ -726,11 +741,10 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 			 *	print plan if debugging
 			 * ----------------
 			 */
-			if (DebugPrintPlan == true)
+			if (DebugPrintPlan)
 			{
-				printf("\n---- plan is :\n");
+				TPRINTF(TRACE_PLAN, "plan:");
 				nodeDisplay(plan);
-				printf("\n");
 			}
 #endif
 
@@ -743,10 +757,9 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 
 			for (j = 0; j < _exec_repeat_; j++)
 			{
-				if (!Quiet)
+				if (Verbose)
 				{
-					time(&tim);
-					printf("\tProcessQuery() at %s\n", ctime(&tim));
+					TPRINTF(TRACE_VERBOSE, "ProcessQuery");
 				}
 				ProcessQuery(querytree, plan, dest);
 			}
@@ -775,7 +788,7 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 /* --------------------------------
  *		signal handler routines used in PostgresMain()
  *
- *		handle_warn() is used to catch kill(getpid(), SIGHUP) which
+ *		handle_warn() is used to catch kill(getpid(),SIGQUIT) which
  *		occurs when elog(ERROR) is called.
  *
  *		quickdie() occurs when signalled by the postmaster.
@@ -887,17 +900,20 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 					flagEu = false;
 	int				flag;
 
-	char	   *DBName = NULL;
-	int			errs = 0;
+	char	   		*DBName = NULL;
+	int				errs = 0;
 
-	char		firstchar;
-	char		parser_input[MAX_PARSE_BUFFER];
-	char	   *userName;
+	char			firstchar;
+	char			parser_input[MAX_PARSE_BUFFER];
+	char	   		*userName;
+	char	   		*remote_info;
+	char	   		*remote_host;
+	unsigned short 	remote_port = 0;
 
-	char	   *DBDate = NULL;
-	extern int	optind;
-	extern char *optarg;
-	extern short DebugLvl;
+	char	   		*DBDate = NULL;
+	extern int		optind;
+	extern char 	*optarg;
+	extern short 	DebugLvl;
 
 	/* ----------------
 	 *	parse command line arguments
@@ -909,8 +925,9 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	 */
 	ShowStats = 0;
 	ShowParserStats = ShowPlannerStats = ShowExecutorStats = 0;
+	DeadlockCheckTimer = DEADLOCK_CHECK_TIMER;
 #ifdef LOCK_MGR_DEBUG
-	lockDebug = 0;
+	LockDebug = 0;
 #endif
 
 	/*
@@ -944,6 +961,11 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		else if (strcasecmp(DBDate, "EURO") == 0)
 			EuroDates = TRUE;
 	}
+	
+	/*
+	 * Read default pg_options from file $DATADIR/pg_options.
+	 */
+	read_pg_options(0);
 
     optind = 1; /* reset after postmaster usage */
 	
@@ -994,10 +1016,20 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 			case 'd':			/* debug level */
 				flagQ = false;
 				DebugLvl = (short) atoi(optarg);
-				if (DebugLvl > 1)
-					DebugPrintQuery = true;
-				if (DebugLvl > 2)
+				if (DebugLvl >= 1)
 				{
+					Verbose = DebugLvl;
+				}
+				if (DebugLvl >= 2)
+				{
+  					DebugPrintQuery = true;
+				}
+				if (DebugLvl >= 3)
+				{
+					DebugPrintQuery = DebugLvl;
+				}
+				if (DebugLvl >= 4)
+  				{
 					DebugPrintParse = true;
 					DebugPrintPlan = true;
 					DebugPrintRewrittenParsetree = true;
@@ -1061,7 +1093,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
 			case 'K':
 #ifdef LOCK_MGR_DEBUG
-				lockDebug = atoi(optarg);
+				LockDebug = atoi(optarg);
 #else
 				fprintf(stderr, "Lock debug not compiled in\n");
 #endif
@@ -1122,6 +1154,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				 * ----------------
 				 */
 				flagQ = true;
+				Verbose = 0;
 				break;
 
 			case 'S':
@@ -1145,6 +1178,10 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				 */
 				ShowStats = 1;
 				StatFp = stderr;
+				break;
+
+	    	case 'T':
+				parse_options(optarg);
 				break;
 
 			case 't':
@@ -1278,47 +1315,79 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	}
 
 	Noversion = flagC;
-	Quiet = flagQ;
 	EchoQuery = flagE;
 	EuroDates = flagEu;
 
-	/* ----------------
-	 *	print flags
-	 * ----------------
+	/*
+	 * Find remote host name or address.
 	 */
-	if (!Quiet)
-	{
-		puts("\t---debug info---");
-		printf("\tQuiet =        %c\n", Quiet ? 't' : 'f');
-		printf("\tNoversion =    %c\n", Noversion ? 't' : 'f');
-		printf("\ttimings   =    %c\n", ShowStats ? 't' : 'f');
-		printf("\tdates     =    %s\n", EuroDates ? "European" : "Normal");
-		printf("\tbufsize   =    %d\n", NBuffers);
-		printf("\tsortmem   =    %d\n", SortMem);
+	if (IsUnderPostmaster) {
+		switch (MyProcPort->raddr.sa.sa_family) {
+			struct hostent *host_ent;
 
-		printf("\tquery echo =   %c\n", EchoQuery ? 't' : 'f');
-		printf("\tDatabaseName = [%s]\n", DBName);
-		puts("\t----------------\n");
+		    case AF_INET:
+				remote_info = remote_host = malloc(48);
+				remote_port = ntohs(MyProcPort->raddr.in.sin_port);
+				strcpy(remote_host, inet_ntoa(MyProcPort->raddr.in.sin_addr));
+				if (HostnameLookup) {
+					host_ent = \
+						gethostbyaddr((char *)&MyProcPort->raddr.in.sin_addr,
+									  sizeof(MyProcPort->raddr.in.sin_addr),
+									  AF_INET);
+					if (host_ent) {
+						strncpy(remote_host, host_ent->h_name, 48);
+						*(remote_host+47) = '\0';
+					}
+				}
+				if (ShowPortNumber) {
+					remote_info = malloc(strlen(remote_host)+6);
+					sprintf(remote_info, "%s:%d", remote_host, remote_port);
+				}
+				break;
+		    case AF_UNIX:
+				remote_info = remote_host = "localhost";
+				break;
+		    default:
+				remote_info = remote_host = "unknown";
+				break;
+		}
 	}
 
 	/* ----------------
 	 *	set process params for ps
 	 * ----------------
 	 */
-	if (IsUnderPostmaster)
-	{
-		int i;
-
-		Assert(real_argc >= 4);
-		real_argv[1] = userName;
-		real_argv[2] = DBName;
-		ps_status = (const char **)&real_argv[3];
-		*ps_status = "idle";
-		for (i = 4; i < real_argc; i++)
-			real_argv[i] = "";  /* blank them */
+	if (IsUnderPostmaster) {
+		PS_INIT_STATUS(real_argc, real_argv, argv[0], 
+					   remote_info, userName, DBName);
+		PS_SET_STATUS("idle");
 	}
-	/* we just put a dummy here so we don't have to test everywhere */
-	else	ps_status = malloc(sizeof(char *));
+
+	/* ----------------
+	 *	print flags
+	 * ----------------
+	 */
+	if (Verbose)
+	{
+		if (Verbose == 1) {
+			TPRINTF(TRACE_VERBOSE, "started: host=%s user=%s database=%s",
+					remote_host, userName, DBName);
+		} else {
+			TPRINTF(TRACE_VERBOSE, "debug info:");
+			TPRINTF(TRACE_VERBOSE, "\tUser         = %s", userName);
+			TPRINTF(TRACE_VERBOSE, "\tRemoteHost   = %s", remote_host);
+			TPRINTF(TRACE_VERBOSE, "\tRemotePort   = %d", remote_port);
+			TPRINTF(TRACE_VERBOSE, "\tDatabaseName = %s", DBName);
+			TPRINTF(TRACE_VERBOSE, "\tVerbose      = %d", Verbose);
+			TPRINTF(TRACE_VERBOSE, "\tNoversion    = %c", Noversion ? 't' : 'f');
+			TPRINTF(TRACE_VERBOSE, "\ttimings      = %c", ShowStats ? 't' : 'f');
+			TPRINTF(TRACE_VERBOSE, "\tdates        = %s",
+					EuroDates ? "European" : "Normal");
+			TPRINTF(TRACE_VERBOSE, "\tbufsize      = %d", NBuffers);
+			TPRINTF(TRACE_VERBOSE, "\tsortmem      = %d", SortMem);
+			TPRINTF(TRACE_VERBOSE, "\tquery echo   = %c", EchoQuery ? 't' : 'f');
+		}
+	}
 
 	/* ----------------
 	 *	initialize portal file descriptors
@@ -1341,19 +1410,19 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	SetProcessingMode(InitProcessing);
 
 	/* initialize */
-	if (!Quiet)
-		puts("\tInitPostgres()..");
+	if (Verbose)
+		TPRINTF(TRACE_VERBOSE, "InitPostgres");
 
 	InitPostgres(DBName);
 
 #ifdef MULTIBYTE
 	/* set default client encoding */
-	if (!Quiet)
+	if (Verbose)
 	{
 		puts("\treset_client_encoding()..");
 	}
 	reset_client_encoding();
-	if (!Quiet)
+	if (Verbose)
 	{
 		puts("\treset_client_encoding() done.");
 	}
@@ -1366,7 +1435,15 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	 * ----------------
 	 */
 
-	pqsignal(SIGINT, QueryCancelHandler);
+	pqsignal(SIGHUP,  read_pg_options);		/* upate pg_options from file */
+	pqsignal(SIGINT,  QueryCancelHandler);	/* cancel current query */
+	pqsignal(SIGQUIT, handle_warn);			/* handle error */
+	pqsignal(SIGTERM, die);
+	pqsignal(SIGPIPE, die);
+	pqsignal(SIGUSR1, quickdie);
+	pqsignal(SIGUSR2, Async_NotifyHandler);	/* flush also sinval cache */
+	pqsignal(SIGCHLD, SIG_IGN);				/* ignored, sent by LockOwners */
+	pqsignal(SIGFPE,  FloatExceptionHandler);
 
 	if (whereToSendOutput == Remote &&
 		PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
@@ -1384,12 +1461,10 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	 *	so that the slaves signal the master to abort the transaction
 	 *	rather than calling AbortCurrentTransaction() themselves.
 	 *
-	 *	Note:  elog(ERROR) causes a kill(getpid(), SIGHUP) to occur sending
-	 *		   us back here.
+	 *	Note:  elog(ERROR) causes a kill(getpid(),SIGQUIT) to occur
+	 *		   sending us back here.
 	 * ----------------
 	 */
-
-	pqsignal(SIGHUP, handle_warn);
 
 	if (sigsetjmp(Warn_restart, 1) != 0)
 	{
@@ -1397,8 +1472,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
 		time(&tim);
 
-		if (!Quiet)
-			printf("\tAbortCurrentTransaction() at %s\n", ctime(&tim));
+		if (Verbose)
+			TPRINTF(TRACE_VERBOSE, "AbortCurrentTransaction");
 
 		MemSet(parser_input, 0, MAX_PARSE_BUFFER);
 
@@ -1415,7 +1490,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.85 $ $Date: 1998/08/25 21:04:38 $");
+		puts("$Revision: 1.86 $ $Date: 1998/08/25 21:34:04 $");
 	}
 
 	/* ----------------
@@ -1457,15 +1532,14 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				IsEmptyQuery = false;
 
 				/* start an xact for this function invocation */
-				if (!Quiet)
+				if (Verbose)
 				{
-					time(&tim);
-					printf("\tStartTransactionCommand() at %s\n", ctime(&tim));
+					TPRINTF(TRACE_VERBOSE, "StartTransactionCommand");
 				}
 
 				StartTransactionCommand();
 				HandleFunctionRequest();
-				*ps_status = "idle";
+				PS_SET_STATUS("idle");
 				break;
 
 				/* ----------------
@@ -1495,16 +1569,15 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 						ResetUsage();
 
 					/* start an xact for this query */
-					if (!Quiet)
+					if (Verbose)
 					{
-						time(&tim);
-						printf("\tStartTransactionCommand() at %s\n", ctime(&tim));
+						TPRINTF(TRACE_VERBOSE, "StartTransactionCommand");
 					}
 					StartTransactionCommand();
 
 					pg_exec_query(parser_input);
 
-					*ps_status = "idle";
+					PS_SET_STATUS("idle");
 
 					if (ShowStats)
 						ShowUsage();
@@ -1533,12 +1606,13 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		 */
 		if (!IsEmptyQuery)
 		{
-			if (!Quiet)
+			if (Verbose)
 			{
-				time(&tim);
-				printf("\tCommitTransactionCommand() at %s\n", ctime(&tim));
+				TPRINTF(TRACE_VERBOSE, "CommitTransactionCommand");
 			}
+			PS_SET_STATUS("commit");
 			CommitTransactionCommand();
+			PS_SET_STATUS("idle");
 
 		}
 		else

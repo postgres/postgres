@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.14 1998/06/27 15:47:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.15 1998/08/25 21:34:03 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #include "storage/shmem.h"
 #include "storage/spin.h"
 #include "storage/proc.h"
+#include "utils/trace.h"
 
 #ifndef HAS_TEST_AND_SET
 #include <sys/sem.h>
@@ -81,10 +82,12 @@ InitSpinLocks(int init, IPCKey key)
 }
 
 #ifdef LOCKDEBUG
-#define PRINT_LOCK(LOCK) printf("(locklock = %d, flag = %d, nshlocks = %d, \
-shlock = %d, exlock =%d)\n", LOCK->locklock, \
-								LOCK->flag, LOCK->nshlocks, LOCK->shlock, \
-								LOCK->exlock)
+#define PRINT_LOCK(LOCK) \
+    TPRINTF(TRACE_SPINLOCKS, \
+			"(locklock = %d, flag = %d, nshlocks = %d, shlock = %d, " \
+			"exlock =%d)\n", LOCK->locklock, \
+			LOCK->flag, LOCK->nshlocks, LOCK->shlock, \
+			LOCK->exlock)
 #endif
 
 /* from ipc.c */
@@ -98,8 +101,7 @@ SpinAcquire(SPINLOCK lockid)
 	/* This used to be in ipc.c, but move here to reduce function calls */
 	slckP = &(SLockArray[lockid]);
 #ifdef LOCKDEBUG
-	printf("SpinAcquire(%d)\n", lockid);
-	printf("IN: ");
+	TPRINTF(TRACE_SPINLOCKS, "SpinAcquire: %d", lockid);
 	PRINT_LOCK(slckP);
 #endif
 ex_try_again:
@@ -112,7 +114,7 @@ ex_try_again:
 			S_LOCK(&(slckP->shlock));
 			S_UNLOCK(&(slckP->locklock));
 #ifdef LOCKDEBUG
-			printf("OUT: ");
+			TPRINTF(TRACE_SPINLOCKS, "OUT: ");
 			PRINT_LOCK(slckP);
 #endif
 			break;
@@ -124,6 +126,9 @@ ex_try_again:
 			goto ex_try_again;
 	}
 	PROC_INCR_SLOCK(lockid);
+#ifdef LOCKDEBUG
+	TPRINTF(TRACE_SPINLOCKS, "SpinAcquire: got %d", lockid);
+#endif
 }
 
 void
@@ -131,13 +136,23 @@ SpinRelease(SPINLOCK lockid)
 {
 	SLock	   *slckP;
 
-	PROC_DECR_SLOCK(lockid);
-
 	/* This used to be in ipc.c, but move here to reduce function calls */
 	slckP = &(SLockArray[lockid]);
+
+#ifdef USE_ASSERT_CHECKING
+	/*
+	 * Check that we are actually holding the lock we are releasing.
+	 * This can be done only after MyProc has been initialized.
+	 */
+	if (MyProc)
+		Assert(MyProc->sLocks[lockid] > 0);
+	Assert(slckP->flag != NOLOCK);
+#endif
+
+	PROC_DECR_SLOCK(lockid);
+
 #ifdef LOCKDEBUG
-	printf("SpinRelease(%d)\n", lockid);
-	printf("IN: ");
+	TPRINTF("SpinRelease: %d\n", lockid);
 	PRINT_LOCK(slckP);
 #endif
 	S_LOCK(&(slckP->locklock));
@@ -160,7 +175,7 @@ SpinRelease(SPINLOCK lockid)
 	S_UNLOCK(&(slckP->exlock));
 	S_UNLOCK(&(slckP->locklock));
 #ifdef LOCKDEBUG
-	printf("OUT: ");
+	TPRINTF(TRACE_SPINLOCKS, "SpinRelease: released %d", lockid);
 	PRINT_LOCK(slckP);
 #endif
 }

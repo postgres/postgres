@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.9 1998/06/18 16:35:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.10 1998/08/25 21:34:06 scrappy Exp $
  *
  * NOTE
  *	  This should eventually work with elog(), dlog(), etc.
@@ -21,6 +21,7 @@
 #include "utils/module.h"
 
 #include "utils/exc.h"
+#include "utils/trace.h"
 
 int
 ExceptionalCondition(char *conditionName,
@@ -39,7 +40,7 @@ ExceptionalCondition(char *conditionName,
 		|| !PointerIsValid(fileName)
 		|| !PointerIsValid(exceptionP))
 	{
-		fprintf(stderr, "ExceptionalCondition: bad arguments\n");
+		EPRINTF("TRAP: ExceptionalCondition: bad arguments\n");
 
 		ExcAbort(exceptionP,
 				 (ExcDetail) detail,
@@ -48,9 +49,9 @@ ExceptionalCondition(char *conditionName,
 	}
 	else
 	{
-		fprintf(stderr,
-				"%s(\"%s:%s\", File: \"%s\", Line: %d)\n",
-		exceptionP->message, conditionName, detail == NULL ? "" : detail,
+		EPRINTF("TRAP: %s(\"%s:%s\", File: \"%s\", Line: %d)\n",
+				exceptionP->message, conditionName, 
+				(detail == NULL ? "" : detail),
 				fileName, lineNumber);
 	}
 
