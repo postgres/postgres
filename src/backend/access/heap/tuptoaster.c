@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.11 2000/08/03 16:33:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.12 2000/08/04 04:16:07 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -22,11 +22,10 @@
  *-------------------------------------------------------------------------
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#include "postgres.h"
+
 #include <unistd.h>
 #include <fcntl.h>
-#include "postgres.h"
 
 #include "access/heapam.h"
 #include "access/genam.h"
@@ -39,6 +38,7 @@
 
 
 #ifdef TUPLE_TOASTER_ACTIVE
+
 #undef TOAST_DEBUG
 
 static void			toast_delete(Relation rel, HeapTuple oldtup);
@@ -47,7 +47,6 @@ static void			toast_insert_or_update(Relation rel, HeapTuple newtup,
 								HeapTuple oldtup);
 static Datum		toast_compress_datum(Datum value);
 static Datum		toast_save_datum(Relation rel, Oid mainoid, int16 attno, Datum value);
-								
 static varattrib   *toast_fetch_datum(varattrib *attr);
 
 
@@ -209,7 +208,7 @@ toast_delete(Relation rel, HeapTuple oldtup)
 /* ----------
  * toast_insert_or_update -
  *
- *	Delete no more used toast-entries and create new ones to
+ *	Delete no-longer-used toast-entries and create new ones to
  *	make the new tuple fit on INSERT or UPDATE
  * ----------
  */
@@ -375,7 +374,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 	}
 
 	/* ----------
-	 * Compress and/or save external until data fits
+	 * Compress and/or save external until data fits into target length
 	 *
 	 *	1: Inline compress attributes with attstorage 'x'
 	 *	2: Store attributes with attstorage 'x' or 'e' external
@@ -386,7 +385,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 	maxDataLen = offsetof(HeapTupleHeaderData, t_bits);
 	if (has_nulls)
 		maxDataLen += BITMAPLEN(numAttrs);
-	maxDataLen = (MaxTupleSize / 4) - MAXALIGN(maxDataLen);
+	maxDataLen = TOAST_TUPLE_TARGET - MAXALIGN(maxDataLen);
 
 	/* ----------
 	 * Look for attributes with attstorage 'x' to compress
@@ -560,7 +559,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 
 		/* ----------
 		 * Search for the biggest yet inlined attribute with
-		 * attstorage = 'x' or 'e'
+		 * attstorage = 'm'
 		 * ----------
 		 */
 		for (i = 0; i < numAttrs; i++)
@@ -684,15 +683,13 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 			if (toast_delold[i])
 				toast_delete_datum(rel,
 					heap_getattr(oldtup, i + 1, tupleDesc, &old_isnull));
-
-	return;
 }
 
 
 /* ----------
  * toast_compress_datum -
  *
- *	Create a compressed version of a datum
+ *	Create a compressed version of a varlena datum
  * ----------
  */
 static Datum
@@ -726,9 +723,9 @@ toast_save_datum(Relation rel, Oid mainoid, int16 attno, Datum value)
 	InsertIndexResult	idxres;
 	TupleDesc			toasttupDesc;
 	Datum				t_values[3];
-	char				t_nulls[4];
+	char				t_nulls[3];
 	varattrib		   *result;
-	char				chunk_data[MaxTupleSize];
+	char				chunk_data[VARHDRSZ + TOAST_MAX_CHUNK_SIZE];
 	int32				chunk_size;
 	int32				chunk_seq = 0;
 	char			   *data_p;
@@ -769,7 +766,6 @@ toast_save_datum(Relation rel, Oid mainoid, int16 attno, Datum value)
 	t_nulls[0] = ' ';
 	t_nulls[1] = ' ';
 	t_nulls[2] = ' ';
-	t_nulls[3] = '\0';
 
 	/* ----------
 	 * Get the data to process
@@ -783,16 +779,8 @@ toast_save_datum(Relation rel, Oid mainoid, int16 attno, Datum value)
 	 * ----------
 	 */
 	toastrel = heap_open(rel->rd_rel->reltoastrelid, RowExclusiveLock);
-	if (toastrel == NULL)
-		elog(ERROR, "Failed to open secondary relation of %s",
-					DatumGetCString(DirectFunctionCall1(nameout,
-					NameGetDatum(&(rel->rd_rel->relname)))));
 	toasttupDesc = toastrel->rd_att;
 	toastidx = index_open(rel->rd_rel->reltoastidxid);
-	if (toastidx == NULL)
-		elog(ERROR, "Failed to open index for secondary relation of %s",
-					DatumGetCString(DirectFunctionCall1(nameout,
-					NameGetDatum(&(rel->rd_rel->relname)))));
 	
 	/* ----------
 	 * Split up the item into chunks 
@@ -804,14 +792,13 @@ toast_save_datum(Relation rel, Oid mainoid, int16 attno, Datum value)
 		 * Calculate the size of this chunk
 		 * ----------
 		 */
-		chunk_size = (TOAST_MAX_CHUNK_SIZE < data_todo) ? 
-						TOAST_MAX_CHUNK_SIZE : data_todo;
+		chunk_size = Min(TOAST_MAX_CHUNK_SIZE, data_todo);
 
 		/* ----------
 		 * Build a tuple
 		 * ----------
 		 */
-		t_values[1] = (Datum)(chunk_seq++);
+		t_values[1] = Int32GetDatum(chunk_seq++);
 		VARATT_SIZEP(chunk_data) = chunk_size + VARHDRSZ;
 		memcpy(VARATT_DATA(chunk_data), data_p, chunk_size);
 		toasttup = heap_formtuple(toasttupDesc, t_values, t_nulls);
@@ -882,11 +869,7 @@ toast_delete_datum(Relation rel, Datum value)
 	 */
 	toastrel	= heap_open(attr->va_content.va_external.va_toastrelid,
 					RowExclusiveLock);
-	if (toastrel == NULL)
-		elog(ERROR, "Failed to open secondary relation at TOAST fetch");
 	toastidx = index_open(attr->va_content.va_external.va_toastidxid);
-	if (toastidx == NULL)
-		elog(ERROR, "Failed to open index of secondary relation at TOAST fetch");
 
 	/* ----------
 	 * Setup a scan key to fetch from the index by va_valueid
@@ -928,8 +911,6 @@ toast_delete_datum(Relation rel, Datum value)
 	index_endscan(toastscan);
 	index_close(toastidx);
 	heap_close(toastrel, RowExclusiveLock);
-
-	return;
 }
 
 
@@ -957,14 +938,15 @@ toast_fetch_datum(varattrib *attr)
 	int32					ressize;
 	int32					residx;
 	int						numchunks;
-	Datum					chunk;
+	Pointer					chunk;
 	bool					isnull;
+	int32					chunksize;
 
 	char				   *chunks_found;
 	char				   *chunks_expected;
 
 	ressize = attr->va_content.va_external.va_extsize;
-    numchunks = (ressize / TOAST_MAX_CHUNK_SIZE) + 1;
+    numchunks = ((ressize - 1) / TOAST_MAX_CHUNK_SIZE) + 1;
 
 	chunks_found    = palloc(numchunks);
 	chunks_expected = palloc(numchunks);
@@ -982,12 +964,8 @@ toast_fetch_datum(varattrib *attr)
 	 */
 	toastrel	= heap_open(attr->va_content.va_external.va_toastrelid,
 					AccessShareLock);
-	if (toastrel == NULL)
-		elog(ERROR, "Failed to open secondary relation at TOAST fetch");
 	toasttupDesc = toastrel->rd_att;
 	toastidx = index_open(attr->va_content.va_external.va_toastidxid);
-	if (toastidx == NULL)
-		elog(ERROR, "Failed to open index of secondary relation at TOAST fetch");
 
 	/* ----------
 	 * Setup a scan key to fetch from the index by va_valueid
@@ -1001,6 +979,8 @@ toast_fetch_datum(varattrib *attr)
 
 	/* ----------
 	 * Read the chunks by index
+	 *
+	 * Note we will not necessarily see the chunks in sequence-number order.
 	 * ----------
 	 */
 	toastscan = index_beginscan(toastidx, false, 1, &toastkey);
@@ -1018,30 +998,46 @@ toast_fetch_datum(varattrib *attr)
 		 * Have a chunk, extract the sequence number and the data
 		 * ----------
 		 */
-		residx = (int32)heap_getattr(ttup, 2, toasttupDesc, &isnull);
-		chunk = heap_getattr(ttup, 3, toasttupDesc, &isnull);
+		residx = DatumGetInt32(heap_getattr(ttup, 2, toasttupDesc, &isnull));
+		Assert(!isnull);
+		chunk = DatumGetPointer(heap_getattr(ttup, 3, toasttupDesc, &isnull));
+		Assert(!isnull);
+		chunksize = VARATT_SIZE(chunk) - VARHDRSZ;
 
 		/* ----------
 		 * Some checks on the data we've found
 		 * ----------
 		 */
-		if (residx * TOAST_MAX_CHUNK_SIZE + VARATT_SIZE(chunk) - VARHDRSZ
-						> ressize)
-			elog(ERROR, "chunk data exceeds original data size for "
-						"toast value %d", 
-						attr->va_content.va_external.va_valueid);
+		if (residx < 0 || residx >= numchunks)
+			elog(ERROR, "unexpected chunk number %d for toast value %d",
+				 residx,
+				 attr->va_content.va_external.va_valueid);
+		if (residx < numchunks-1)
+		{
+			if (chunksize != TOAST_MAX_CHUNK_SIZE)
+				elog(ERROR, "unexpected chunk size %d in chunk %d for toast value %d",
+					 chunksize, residx,
+					 attr->va_content.va_external.va_valueid);
+		}
+		else
+		{
+			if ((residx * TOAST_MAX_CHUNK_SIZE + chunksize) != ressize)
+				elog(ERROR, "unexpected chunk size %d in chunk %d for toast value %d",
+					 chunksize, residx,
+					 attr->va_content.va_external.va_valueid);
+		}
 		if (chunks_found[residx]++ > 0)
 			elog(ERROR, "chunk %d for toast value %d appears multiple times",
-						residx,
-						attr->va_content.va_external.va_valueid);
+				 residx,
+				 attr->va_content.va_external.va_valueid);
 
 		/* ----------
-		 * Copy the data into our result
+		 * Copy the data into proper place in our result
 		 * ----------
 		 */
 		memcpy(((char *)VARATT_DATA(result)) + residx * TOAST_MAX_CHUNK_SIZE,
-					VARATT_DATA(chunk),
-					VARATT_SIZE(chunk) - VARHDRSZ);
+			   VARATT_DATA(chunk),
+			   chunksize);
 
 		ReleaseBuffer(buffer);
 	}

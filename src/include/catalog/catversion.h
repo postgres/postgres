@@ -37,7 +37,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catversion.h,v 1.38 2000/07/30 22:13:59 tgl Exp $
+ * $Id: catversion.h,v 1.39 2000/08/04 04:16:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,6 @@
  */
 
 /*							yyyymmddN */
-#define CATALOG_VERSION_NO	200007301
+#define CATALOG_VERSION_NO	200008031
 
 #endif

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.93 2000/08/03 19:19:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.94 2000/08/04 04:16:06 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -1503,6 +1503,14 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 					   "chunk_data",
 					   BYTEAOID,
 					   -1, 0, false);
+	/*
+	 * Ensure that the toast table doesn't itself get toasted,
+	 * or we'll be toast :-(.  This is essential for chunk_data because
+	 * type bytea is toastable; hit the other two just to be sure.
+	 */
+	tupdesc->attrs[0]->attstorage = 'p';
+	tupdesc->attrs[1]->attstorage = 'p';
+	tupdesc->attrs[2]->attstorage = 'p';
 
 	/*
 	 * Note: the toast relation is considered a "normal" relation even if
