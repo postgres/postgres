@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.2 1996/10/31 09:51:05 scrappy Exp $
+ * $Id: acl.h,v 1.3 1996/11/04 07:18:36 scrappy Exp $
  *
  * NOTES
  *    For backward-compatability purposes we have to allow there
@@ -22,8 +22,8 @@
 #ifndef ACL_H
 #define ACL_H
 
-#include "utils/array.h"
-#include "nodes/parsenodes.h" /* for ChangeACLStmt */
+#include <nodes/parsenodes.h>
+#include <utils/array.h>
 
 /*
  * AclId	system identifier for the user, group, etc.

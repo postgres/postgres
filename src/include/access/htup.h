@@ -6,15 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.2 1996/10/19 04:02:39 scrappy Exp $
+ * $Id: htup.h,v 1.3 1996/11/04 07:18:11 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	HTUP_H
 #define HTUP_H
 
-#include "storage/itemptr.h"
-#include "utils/nabstime.h"
+#include <utils/nabstime.h>
+#include <storage/itemptr.h>
 
 #define MinHeapTupleBitmapSize	32		/* 8 * 4 */
 

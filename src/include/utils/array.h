@@ -10,7 +10,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: array.h,v 1.2 1996/11/04 04:00:36 momjian Exp $
+ * $Id: array.h,v 1.3 1996/11/04 07:18:39 scrappy Exp $
  *
  * NOTES
  *    XXX the data array should be LONGALIGN'd -- notice that the array
@@ -22,8 +22,7 @@
 #ifndef ARRAY_H
 #define ARRAY_H
 
-#include <stdio.h>	/* for FILE (XXX should use File) */
-#include "utils/memutils.h"
+#include <stdio.h>
 
 typedef struct {
     int	size;		/* total array size (in bytes) */ 

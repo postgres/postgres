@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fcache.h,v 1.1 1996/08/28 01:58:57 scrappy Exp $
+ * $Id: fcache.h,v 1.2 1996/11/04 07:18:42 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	FCACHE_H
 #define	FCACHE_H
 
-#include "fmgr.h"
 
 typedef struct
 {

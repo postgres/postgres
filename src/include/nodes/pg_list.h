@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_list.h,v 1.2 1996/10/19 03:58:29 scrappy Exp $
+ * $Id: pg_list.h,v 1.3 1996/11/04 07:18:19 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	PG_LIST_H
 #define	PG_LIST_H
 
-#include "nodes/nodes.h"
+#include <nodes/nodes.h>
 
 /* ----------------------------------------------------------------
  *			node definitions

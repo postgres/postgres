@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.4 1996/11/03 08:17:38 scrappy Exp $
+ * $Id: tqual.h,v 1.5 1996/11/04 07:18:46 scrappy Exp $
  *
  * NOTE
  *    It may be desirable to allow time qualifications to indicate
@@ -17,7 +17,7 @@
 #ifndef	TQUAL_H
 #define TQUAL_H
 
-#include "access/htup.h"
+#include <access/htup.h>
 
 typedef struct TimeQualSpace {
     char	data[12];

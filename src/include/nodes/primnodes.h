@@ -6,16 +6,16 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.5 1996/11/03 12:12:58 scrappy Exp $
+ * $Id: primnodes.h,v 1.6 1996/11/04 07:18:21 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PRIMNODES_H
 #define	PRIMNODES_H
 
-#include "nodes/pg_list.h"
-#include "access/attnum.h"
-#include "utils/fcache.h"
+#include <utils/fcache.h>
+#include <access/attnum.h>
+#include <nodes/pg_list.h>
 
 /* ----------------------------------------------------------------
  *			node definitions

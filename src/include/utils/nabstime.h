@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nabstime.h,v 1.3 1996/11/04 04:00:50 momjian Exp $
+ * $Id: nabstime.h,v 1.4 1996/11/04 07:18:45 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,6 @@ typedef TimeIntervalData *TimeInterval;
  * these integer constants depending on whether the constant is signed 
  * or not!
  */
-#include <values.h>
 /*#define NOSTART_ABSTIME	((AbsoluteTime) HIBITI)	*/	/* - 2^31 */
 #define NOSTART_ABSTIME      ((AbsoluteTime) INT_MIN)
 #else
