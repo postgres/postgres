@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.23 1997/09/25 14:10:23 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.24 1997/10/15 01:12:21 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,6 +94,7 @@ xqdouble		{quote}{quote}
 xqinside		[^\\']*
 xqembedded		"\\'"
 xqliteral		[\\](.|\n)
+xqcat			{quote}{space}*\n{space}*{quote}
 
 xcline			[\/][\*].*[\*][\/]{space}*\n*
 xcstart			[\/][\*]{op_and_self}*
@@ -185,6 +186,8 @@ other			.
 						elog(WARN,"quoted string parse buffer of %d chars exceeded",MAX_PARSE_BUFFER);
 					memcpy(literal+llen, yytext, yyleng+1);
 					llen += yyleng;
+				}
+<xq>{xqcat}		{
 				}
 
 <xm>{space}*	{ /* ignore */ }
