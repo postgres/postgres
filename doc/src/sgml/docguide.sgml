@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.42 2002/07/28 15:22:20 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.43 2003/02/19 04:06:27 momjian Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -1327,7 +1327,7 @@ End:
       <listitem>
        <para>
         If the program uses 0 for success and non-zero for failure,
-        then you don't need to document it.  If there is a meaning
+        then you do not need to document it.  If there is a meaning
         behind the different non-zero exit codes, list them here.
        </para>
       </listitem>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.208 2002/12/15 16:17:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.209 2003/02/19 04:06:28 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1894,8 +1894,8 @@ reindex_relation(Oid relid, bool force)
 
 	/*
 	 * Ensure to hold an exclusive lock throughout the transaction. The
-	 * lock could be less intensive (in the non-overwrite path) but now
-	 * it's AccessExclusiveLock for simplicity.
+	 * lock could be less intensive (in the non-overwrite path) but for
+	 * now it's AccessExclusiveLock for simplicity.
 	 */
 	rel = heap_open(relid, AccessExclusiveLock);
 

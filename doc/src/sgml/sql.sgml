@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.28 2003/01/15 18:01:05 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.29 2003/02/19 04:06:28 momjian Exp $
 -->
 
  <chapter id="sql">
@@ -24,7 +24,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.28 2003/01/15 18:01:05 momjian
   <para>
    <acronym>SQL</acronym> has become the most popular relational query 
    language.
-   The name "<acronym>SQL</acronym>" is an abbreviation for
+   The name <quote><acronym>SQL</acronym></quote> is an abbreviation for
    <firstterm>Structured Query Language</firstterm>. 
    In 1974 Donald Chamberlin and others defined the
    language SEQUEL (<firstterm>Structured English Query
@@ -72,10 +72,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.28 2003/01/15 18:01:05 momjian
    (<acronym>ISO</acronym>).
    This original standard version of <acronym>SQL</acronym> is often
    referred to,
-   informally, as "<abbrev>SQL/86</abbrev>". In 1989 the original
+   informally, as <quote><abbrev>SQL/86</abbrev></quote>. In 1989 the original
    standard was extended
    and this new standard is often, again informally, referred to as
-   "<abbrev>SQL/89</abbrev>". Also in 1989, a related standard called
+   <quote><abbrev>SQL/89</abbrev></quote>. Also in 1989, a related standard called
    <firstterm>Database Language Embedded <acronym>SQL</acronym></firstterm>
    (<acronym>ESQL</acronym>) was developed.
   </para>
@@ -86,11 +86,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.28 2003/01/15 18:01:05 momjian
    definition of a greatly expanded version of the original standard,
    referred to informally as <firstterm><acronym>SQL2</acronym></firstterm>
    or <firstterm><acronym>SQL/92</acronym></firstterm>. This version became a
-   ratified standard - "International Standard ISO/IEC 9075:1992,
-   Database Language <acronym>SQL</acronym>" - in late 1992.
+   ratified standard - <quote>International Standard ISO/IEC 9075:1992,
+   Database Language <acronym>SQL</acronym></quote> - in late 1992.
    <acronym>SQL/92</acronym> is the version
-   normally meant when people refer to "the <acronym>SQL</acronym>
-   standard". A detailed
+   normally meant when people refer to <quote>the <acronym>SQL</acronym>
+   standard</quote>. A detailed
    description of <acronym>SQL/92</acronym> is given in 
    <xref linkend="DATE97" endterm="DATE97">. At the time of
    writing this document a new standard informally referred to
@@ -768,8 +768,8 @@ x(A) &mid; F(x)
      can be formulated using relational algebra can also be formulated 
      using the relational calculus and vice versa.
      This was first proved by E. F. Codd in
-     1972. This proof is based on an algorithm ("Codd's reduction
-     algorithm") by which an arbitrary expression of the relational
+     1972. This proof is based on an algorithm (<quote>Codd's reduction
+     algorithm</quote>) by which an arbitrary expression of the relational
      calculus can be reduced to a semantically equivalent expression of
      relational algebra. For a more detailed discussion on that refer to
      <xref linkend="DATE94" endterm="DATE94">
@@ -778,11 +778,12 @@ x(A) &mid; F(x)
     </para>
 
     <para>
-     It is sometimes said that languages based on the relational calculus
-     are "higher level" or "more declarative" than languages based on
-     relational algebra because the algebra (partially) specifies the order
-     of operations while the calculus leaves it to a compiler or
-     interpreter to determine the most efficient order of evaluation.
+     It is sometimes said that languages based on the relational
+     calculus are <quote>higher level</quote> or <quote>more
+     declarative</quote> than languages based on relational algebra
+     because the algebra (partially) specifies the order of operations
+     while the calculus leaves it to a compiler or interpreter to
+     determine the most efficient order of evaluation.
     </para>
    </sect2>
   </sect1>
@@ -870,9 +871,10 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
     </para>
 
     <para>
-     Now we will illustrate the complex syntax of the SELECT statement
-     with various examples. The tables used for the examples are defined in
-     <xref linkend="supplier-fig" endterm="supplier-fig">.
+     Now we will illustrate the complex syntax of the
+     <command>SELECT</command> statement with various examples. The
+     tables used for the examples are defined in <xref
+     linkend="supplier-fig" endterm="supplier-fig">.
     </para>
 
     <sect3>
@@ -903,7 +905,7 @@ SELECT * FROM PART
        </para>
 
        <para>
-	Using "*" in the SELECT statement will deliver all attributes from
+	Using <quote>*</quote> in the SELECT statement will deliver all attributes from
 	the table. If we want to retrieve only the attributes PNAME and PRICE
 	from table PART we use the statement:
 
@@ -922,9 +924,10 @@ SELECT PNAME, PRICE
                       Cam    |   25
 	</programlisting>
 
-	Note that the <acronym>SQL</acronym> SELECT corresponds to the 
-	"projection" in relational algebra not to the "selection"
-	(see <xref linkend="rel-alg" endterm="rel-alg"> for more details).
+	Note that the <acronym>SQL</acronym> SELECT corresponds to the
+	<quote>projection</quote> in relational algebra not to the
+	<quote>selection</quote> (see <xref linkend="rel-alg"
+	endterm="rel-alg"> for more details).
        </para>
 
        <para>

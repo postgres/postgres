@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.11 2003/02/19 03:13:24 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.12 2003/02/19 04:06:27 momjian Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -115,8 +115,8 @@ CREATE TABLE products (
   </para>
 
   <para>
-   If you don't need a table anymore, you can remove it using the
-   <literal>DROP TABLE</literal> command.  For example:
+   If you no longer need a table, you can remove it using the
+   <command>DROP TABLE</command> command.  For example:
 <programlisting>
 DROP TABLE my_first_table;
 DROP TABLE products;
@@ -718,7 +718,7 @@ CREATE TABLE order_items (
 
    <para>
     We know that the foreign keys disallow creation of orders that
-    don't relate to any products.  But what if a product is removed
+    do not relate to any products.  But what if a product is removed
     after an order is created that references it?  SQL allows you to
     specify that as well.  Intuitively, we have a few options:
     <itemizedlist spacing="compact">
@@ -759,7 +759,7 @@ CREATE TABLE order_items (
    <para>
     Restricting and cascading deletes are the two most common options.
     <literal>RESTRICT</literal> can also be written as <literal>NO
-    ACTION</literal> and it's also the default if you don't specify
+    ACTION</literal> and it's also the default if you do not specify
     anything.  There are two other options for what should happen with
     the foreign key columns when a primary key is deleted:
     <literal>SET NULL</literal> and <literal>SET DEFAULT</literal>.
@@ -1602,7 +1602,7 @@ REVOKE CREATE ON public FROM PUBLIC;
    <para>
     In the SQL standard, the notion of objects in the same schema
     being owned by different users does not exist.  Moreover, some
-    implementations don't allow you to create schemas that have a
+    implementations do not allow you to create schemas that have a
     different name than their owner.  In fact, the concepts of schema
     and user are nearly equivalent in a database system that
     implements only the basic schema support specified in the
@@ -1686,7 +1686,7 @@ NOTICE:  constraint $1 on table orders depends on table products
 ERROR:  Cannot drop table products because other objects depend on it
         Use DROP ... CASCADE to drop the dependent objects too
 </screen>
-   The error message contains a useful hint: If you don't want to
+   The error message contains a useful hint: if you do not want to
    bother deleting all the dependent objects individually, you can run
 <screen>
 DROP TABLE products CASCADE;

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.32 2003/01/11 00:00:02 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.33 2003/02/19 04:06:28 momjian Exp $
 -->
 
  <chapter id="mvcc">
@@ -38,9 +38,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.32 2003/01/11 00:00:02 petere
    </para>
 
    <para>
-    The main difference between multiversion and lock models is that
-    in <acronym>MVCC</acronym> locks acquired for querying (reading)
-    data don't conflict with locks acquired for writing data, and so
+    The main advantage to using the <acronym>MVCC</acronym> model of
+    concurrency control rather than locking is that in
+    <acronym>MVCC</acronym> locks acquired for querying (reading) data
+    do not conflict with locks acquired for writing data, and so
     reading never blocks writing and writing never blocks reading.
    </para>
 
@@ -437,10 +438,10 @@ ERROR:  Can't serialize access due to concurrent update
 	</para>
 
 	<para>
-	 The <command>SELECT</command> command acquires a
-	 lock of this mode on referenced tables.  In general, any query
-	 that only reads a table and does not modify it will acquire
-	 this lock mode.
+	 The commands <command>SELECT</command> and
+	 <command>ANALYZE</command> acquire a lock of this mode on
+	 referenced tables.  In general, any query that only reads a table
+	 and does not modify it will acquire this lock mode.
 	</para>
        </listitem>
       </varlistentry>
@@ -586,9 +587,10 @@ ERROR:  Can't serialize access due to concurrent update
 
 	<para>
 	 Acquired by the <command>ALTER TABLE</command>, <command>DROP
-	 TABLE</command>, and <command>VACUUM FULL</command> commands.
-	 This is also the default lock mode for <command>LOCK TABLE</command>
-         statements that do not specify a mode explicitly.
+	 TABLE</command>, <command>REINDEX</command>,
+	 <command>CLUSTER</command>, and <command>VACUUM FULL</command>
+	 commands.  This is also the default lock mode for <command>LOCK
+	 TABLE</command> statements that do not specify a mode explicitly.
 	</para>
        </listitem>
       </varlistentry>
@@ -612,7 +614,7 @@ ERROR:  Can't serialize access due to concurrent update
      A row-level lock on a specific row is automatically acquired when the
      row is updated (or deleted or marked for update).  The lock is held
      until the transaction commits or rolls back.
-     Row-level locks don't affect data
+     Row-level locks do not affect data
      querying; they block <emphasis>writers to the same row</emphasis>
      only.  To acquire a row-level lock on a row without actually
      modifying the row, select the row with <command>SELECT FOR
@@ -726,7 +728,7 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
 
    <para>
     Because readers in <productname>PostgreSQL</productname>
-    don't lock data, regardless of
+    do not lock data, regardless of
     transaction isolation level, data read by one transaction can be
     overwritten by another concurrent transaction. In other words,
     if a row is returned by <command>SELECT</command> it doesn't mean that

@@ -196,9 +196,10 @@ data. Empty in ordinary tables.</entry>
  
  <para>
  
-  The final section is the "special section" which may contain anything the
-  access method wishes to store. Ordinary tables do not use this at all
-  (indicated by setting <structfield>pd_special</> to equal the pagesize).
+  The final section is the <quote>special section</quote> which may
+  contain anything the access method wishes to store. Ordinary tables
+  do not use this at all (indicated by setting
+  <structfield>pd_special</> to equal the pagesize).
   
  </para>
  

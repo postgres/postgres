@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/reindex.sgml,v 1.14 2002/11/17 23:43:32 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/reindex.sgml,v 1.15 2003/02/19 04:06:28 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -38,8 +38,9 @@ REINDEX { DATABASE | TABLE | INDEX } <replaceable class="PARAMETER">name</replac
       <term>DATABASE</term>
       <listitem>
        <para>
-	Recreate all system indexes of a specified database.
-	(User-table indexes are not included.)
+	Recreate all system indexes of a specified database. Indexes on
+	user tables are not included. This form of <command>REINDEX</> can
+	only be used in standalone mode (see below).
        </para>
       </listitem>
      </varlistentry>
@@ -116,16 +117,35 @@ REINDEX
    Description
   </title>
   <para>
-   <command>REINDEX</command> is used to rebuild corrupted indexes.
-   Although in theory this should never be necessary, in practice
-   indexes may become corrupted due to software bugs or hardware
-   failures.  <command>REINDEX</command> provides a recovery method.
-  </para>
+   <command>REINDEX</command> rebuilds an index based on the data
+   stored in the table, replacing the old copy of the index. There are
+   two main reasons to use <command>REINDEX</command>:
 
-  <para>
-   <command>REINDEX</command> also removes certain dead index pages that
-   can't be reclaimed any other way. See the "Routine Reindexing"
-   section in the manual for more information.
+   <orderedlist>
+    <listitem>
+     <para>
+      An index has become corrupted, and no longer contains valid
+      data. Although in theory this should never be necessary, in
+      practice indexes may become corrupted due to software bugs or
+      hardware failures.  <command>REINDEX</command> provides a
+      recovery method.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The index in question contains a lot of dead index pages that
+      are not being reclaimed. This can occur with B+-tree indexes
+      under certain access patterns. <command>REINDEX</command>
+      provides a way to reduce the space consumption of the index by
+      writing a new version of the index without the dead pages. See
+      the <quote>Routine Reindexing</quote> section in the
+      &cite-admin; for more information. The rest of this section
+      mostly discusses how to use <command>REINDEX</command> to
+      recover from index corruption.
+     </para>
+    </listitem>
+   </orderedlist>
   </para>
 
   <para>

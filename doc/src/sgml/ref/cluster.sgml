@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.23 2002/12/30 18:42:12 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.24 2003/02/19 04:06:28 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -117,9 +117,17 @@ CLUSTER
    <command>CLUSTER</command> without any parameter re-clusters all the tables
    in the
    current database that the calling user owns, or all tables if called
-   by a superuser.  (Never-clustered tables are not touched.)  This
+   by a superuser.  (Never-clustered tables are not included.)  This
    form of <command>CLUSTER</command> cannot be called from inside a
    transaction or function.
+  </para>
+
+  <para>
+   When a table is being clustered, an <literal>ACCESS
+   EXCLUSIVE</literal> lock is acquired on it. This prevents any other
+   database operations (both reads and writes) from preceding on the
+   table until the <command>CLUSTER</command> is finished. See the
+   &cite-user; for more information on database locking.
   </para>
 
   <refsect2 id="R2-SQL-CLUSTER-3">
@@ -159,8 +167,9 @@ CLUSTER
    </para>
 
    <para>
-    <command>CLUSTER</command> preserves GRANT, inheritance, index, foreign
-    key, and other ancillary information about the table.
+    <command>CLUSTER</command> preserves <command>GRANT</command>,
+    inheritance, index, foreign key, and other ancillary information
+    about the table.
    </para>
 
    <para>
@@ -212,13 +221,15 @@ SELECT <replaceable class="parameter">columnlist</replaceable> INTO TABLE <repla
    Usage
   </title>
   <para>
-   Cluster the employees relation on the basis of its ID attribute:
+   Cluster the <literal>employees</literal> relation on the basis of
+   its ID attribute:
   </para>
   <programlisting>
 CLUSTER emp_ind ON emp;
   </programlisting>
   <para>
-   Cluster the employees relation using the same index that was used before:
+   Cluster the <literal>employees</literal> relation using the same
+   index that was used before:
   </para>
   <programlisting>
 CLUSTER emp;
@@ -247,6 +258,14 @@ CLUSTER;
     There is no <command>CLUSTER</command> statement in SQL92.
    </para>
   </refsect2>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="app-clusterdb" endterm="app-clusterdb-title"></member>
+  </simplelist>
  </refsect1>
 </refentry>
 

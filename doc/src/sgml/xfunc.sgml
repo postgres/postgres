@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.64 2003/01/19 00:13:28 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.65 2003/02/19 04:06:28 momjian Exp $
 -->
 
  <chapter id="xfunc">
@@ -606,7 +606,7 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
     The newer <quote>version 1</quote> calling convention is indicated by writing
     a <literal>PG_FUNCTION_INFO_V1()</literal> macro call for the function,
     as illustrated below.  Lack of such a macro indicates an old-style
-    ("version 0") function.  The language name specified in <command>CREATE FUNCTION</command>
+    (<quote>version 0</quote>) function.  The language name specified in <command>CREATE FUNCTION</command>
     is <literal>C</literal> in either case.  Old-style functions are now deprecated
     because of portability problems and lack of functionality, but they
     are still supported for compatibility reasons.
@@ -1380,7 +1380,7 @@ concat_text(PG_FUNCTION_ARGS)
     zero, and a negative length requests that the remainder of the
     value be returned. These routines provide more efficient access to
     parts of large values in the case where they have storage type
-    "external". (The storage type of a column can be specified using
+    <quote>external</quote>. (The storage type of a column can be specified using
     <literal>ALTER TABLE <replaceable>tablename</replaceable> ALTER
     COLUMN <replaceable>colname</replaceable> SET STORAGE
     <replaceable>storagetype</replaceable></literal>. Storage type is one of
@@ -1583,7 +1583,7 @@ TupleTableSlot *TupleDescGetSlot(TupleDesc tupdesc)
 HeapTuple BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 </programlisting>
      can be used to build a <structname>HeapTuple</> given user data
-     in C string form.  "values" is an array of C strings, one for
+     in C string form.  <quote>values</quote> is an array of C strings, one for
      each attribute of the return tuple. Each C string should be in
      the form expected by the input function of the attribute data
      type. In order to return a null value for one of the attributes,

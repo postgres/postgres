@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.31 2002/11/11 20:14:02 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.32 2003/02/19 04:06:27 momjian Exp $
 -->
 
  <chapter id="tutorial-advanced">
@@ -41,7 +41,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.31 2002/11/11 20:14:02 pe
    <para>
     Refer back to the queries in <xref linkend="tutorial-join">.
     Suppose the combined listing of weather records and city location
-    is of particular interest to your application, but you don't want
+    is of particular interest to your application, but you do not want
     to type the query each time you need it.  You can create a
     <firstterm>view</firstterm> over the query, which gives a name to
     the query that you can refer to like an ordinary table.
@@ -232,7 +232,7 @@ COMMIT;
    </para>
 
    <para>
-    If, partway through the transaction, we decide we don't want to
+    If, partway through the transaction, we decide we do not want to
     commit (perhaps we just noticed that Alice's balance went negative),
     we can issue the command <command>ROLLBACK</> instead of
     <command>COMMIT</>, and all our updates so far will be canceled.
@@ -240,7 +240,7 @@ COMMIT;
 
    <para>
     <productname>PostgreSQL</> actually treats every SQL statement as being
-    executed within a transaction.  If you don't issue a <command>BEGIN</>
+    executed within a transaction.  If you do not issue a <command>BEGIN</>
     command, 
     then each individual statement has an implicit <command>BEGIN</> and
     (if successful) <command>COMMIT</> wrapped around it.  A group of

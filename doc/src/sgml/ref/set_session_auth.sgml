@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_session_auth.sgml,v 1.7 2002/09/21 18:32:54 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_session_auth.sgml,v 1.8 2003/02/19 04:06:28 momjian Exp $ -->
 <refentry id="SQL-SET-SESSION-AUTHORIZATION">
  <docinfo>
   <date>2001-04-21</date>
@@ -16,7 +16,7 @@
 
  <refsynopsisdiv>
 <synopsis>
-SET [ SESSION | LOCAL ] SESSION AUTHORIZATION <parameter>username</parameter>
+SET [ SESSION | LOCAL ] SESSION AUTHORIZATION <replaceable class="PARAMETER">username</replaceable>
 SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT
 RESET SESSION AUTHORIZATION
 </synopsis>
@@ -27,12 +27,12 @@ RESET SESSION AUTHORIZATION
 
   <para>
    This command sets the session user identifier and the current user
-   identifier of the current SQL-session context to be
-   <parameter>username</parameter>.  The user name may be written as
-   either an identifier or a string literal.
-   The session user identifier is valid for the duration of a
-   connection; for example, it is possible to temporarily become an
-   unprivileged user and later switch back to become a superuser.
+   identifier of the current SQL-session context to be <replaceable
+   class="PARAMETER">username</replaceable>.  The user name may be
+   written as either an identifier or a string literal.  The session
+   user identifier is valid for the duration of a connection; for
+   example, it is possible to temporarily become an unprivileged user
+   and later switch back to become a superuser.
   </para>
 
   <para>
@@ -68,19 +68,21 @@ RESET SESSION AUTHORIZATION
  <refsect1>
   <title>Examples</title>
 
-<screen>
-<userinput>SELECT SESSION_USER, CURRENT_USER;</userinput>
- current_user | session_user
+<programlisting>
+SELECT SESSION_USER, CURRENT_USER;
+
+ session_user | current_user 
 --------------+--------------
  peter        | peter
 
-<userinput>SET SESSION AUTHORIZATION 'paul';</userinput>
+SET SESSION AUTHORIZATION 'paul';
 
-<userinput>SELECT SESSION_USER, CURRENT_USER;</userinput>
- current_user | session_user
+SELECT SESSION_USER, CURRENT_USER;
+
+ session_user | current_user 
 --------------+--------------
  paul         | paul
-</screen>
+</programlisting>
  </refsect1>
 
  <refsect1>

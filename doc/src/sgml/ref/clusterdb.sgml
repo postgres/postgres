@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.6 2003/02/13 05:37:43 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.7 2003/02/19 04:06:28 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -37,7 +37,7 @@ PostgreSQL documentation
    in a <productname>PostgreSQL</productname> database.  It finds tables
    that have previously been clustered, and clusters them again on the same
    index that was last used.  Tables that have never been clustered are not
-   touched.
+   affected.
   </para>
 
   <para>

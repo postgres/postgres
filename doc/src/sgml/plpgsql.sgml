@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.14 2003/01/19 00:13:28 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.15 2003/02/19 04:06:28 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -578,7 +578,7 @@ user_id   users.user_id%TYPE;
         </para>
 
         <para>
-         By using <type>%TYPE</type> you don't need to know
+         By using <type>%TYPE</type> you do not need to know
          the data type of the structure you are referencing,
          and most important, if the data type of the
          referenced item changes in the future (e.g: you
@@ -1649,7 +1649,7 @@ END LOOP;
     up a <firstterm>cursor</> that encapsulates the query, and then read
     the query result a few rows at a time. One reason for doing this is
     to avoid memory overrun when the result contains a large number of
-    rows. (However, <application>PL/pgSQL</> users don't normally need
+    rows. (However, <application>PL/pgSQL</> users do not normally need
     to worry about that, since FOR loops automatically use a cursor
     internally to avoid memory problems.) A more interesting usage is to
     return a reference to a cursor that it has created, allowing the

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.168 2003/02/06 20:25:31 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.169 2003/02/19 04:06:28 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -122,7 +122,7 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
   <para>
    However, while the directory contents are secure, the default
    client authentication setup allows any local user to connect to the
-   database and even become the database superuser. If you don't trust
+   database and even become the database superuser. If you do not trust
    other local users, we recommend you use <command>initdb</command>'s
    <option>-W</option> or <option>--pwprompt</option> option to assign a
    password to the database superuser. After <command>initdb</command>,
@@ -365,7 +365,7 @@ FATAL 1:  ShmemCreate: cannot create region
      probably means your kernel's limit on the size of shared memory is
      smaller than the buffer area <productname>PostgreSQL</productname>
      is trying to create (83918612 bytes in this example). Or it could
-     mean that you don't have System-V-style shared memory support
+     mean that you do not have System-V-style shared memory support
      configured into your kernel at all. As a temporary workaround, you
      can try starting the postmaster with a smaller-than-normal number
      of buffers (<option>-B</option> switch). You will eventually want
@@ -2937,7 +2937,7 @@ default:\
     On the other side of the coin, some systems allow individual
     processes to open large numbers of files; if more than a few
     processes do so then the system-wide limit can easily be exceeded.
-    If you find this happening, and don't want to alter the system-wide
+    If you find this happening, and you do not want to alter the system-wide
     limit, you can set <productname>PostgreSQL</productname>'s
     <varname>max_files_per_process</varname> configuration parameter to
     limit the consumption of open files.

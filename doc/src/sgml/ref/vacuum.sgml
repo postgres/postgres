@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.28 2003/01/19 00:13:31 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.29 2003/02/19 04:06:28 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -285,6 +285,14 @@ VACUUM
     There is no <command>VACUUM</command> statement in <acronym>SQL92</acronym>.
    </para>
   </refsect2>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="app-vacuumdb" endterm="app-vacuumdb-title"></member>
+  </simplelist>
  </refsect1>
 </refentry>
 

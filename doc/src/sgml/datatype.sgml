@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.114 2003/02/19 03:48:10 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.115 2003/02/19 04:06:27 momjian Exp $
 -->
 
  <chapter id="datatype">
@@ -895,7 +895,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
     actual string, and in case of <type>character</type> plus the
     padding. Long strings are compressed by the system automatically, so
     the physical requirement on disk may be less. Long values are also
-    stored in background tables so they don't interfere with rapid
+    stored in background tables so they do not interfere with rapid
     access to the shorter column values. In any case, the longest
     possible character string that can be stored is about 1 GB. (The
     maximum value that will be allowed for <replaceable>n</> in the data

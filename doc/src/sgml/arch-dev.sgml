@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.17 2003/01/19 00:13:28 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.18 2003/02/19 04:06:27 momjian Exp $
 -->
 
  <chapter id="overview">
@@ -17,15 +17,15 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.17 2003/01/19 00:13:28 mo
 
   <para>
    This chapter gives an overview of the internal structure of the
-   backend of <productname>PostgreSQL</productname>.
-   After having read the following sections you
-   should have an idea of how a query is processed. Don't expect a
-   detailed description here (I think such a description dealing with
-   all data structures and functions used within <productname>PostgreSQL</productname>
-   would exceed 1000
-   pages!). This chapter is intended to help understanding the general
-   control and data flow within the backend from receiving a query to
-   sending the results.
+   backend of <productname>PostgreSQL</productname>.  After having
+   read the following sections you should have an idea of how a query
+   is processed. This chapter does not aim to provide a detailed
+   description of the internal operation of
+   <productname>PostgreSQL</productname>, as such a document would be
+   very extensive. Rather, this chapter is intended to help the reader
+   understand the general sequence of operations that occur within the
+   backend from the point at which a query is received, to the point
+   when the results are returned to the client.
   </para>
 
   <sect1 id="query-path">
@@ -118,23 +118,25 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.17 2003/01/19 00:13:28 mo
    <title>How Connections are Established</title>
 
    <para>
-    <productname>PostgreSQL</productname> is implemented using a simple "process per-user"
-    client/server model.  In this model there is one <firstterm>client process</firstterm>
-    connected to exactly one <firstterm>server process</firstterm>.
-    As we don't know <foreignphrase>per se</foreignphrase> 
-    how many connections will be made, we have to use a <firstterm>master process</firstterm>
-    that spawns a new server process every time a connection is
-    requested. This master process is called <literal>postmaster</literal> and 
-    listens at a specified TCP/IP port for incoming connections. Whenever
-    a request for a connection is detected the <literal>postmaster</literal> process
-    spawns a new server process called <literal>postgres</literal>. The server
-    tasks (<literal>postgres</literal> processes) communicate with each other using
-    <firstterm>semaphores</firstterm> and <firstterm>shared memory</firstterm>
-    to ensure data integrity
-    throughout concurrent data access. Figure
-    \ref{connection} illustrates the interaction of the master process 
-    <literal>postmaster</literal> the server process <literal>postgres</literal> and a client
-    application. 
+    <productname>PostgreSQL</productname> is implemented using a
+    simple "process per-user" client/server model.  In this model
+    there is one <firstterm>client process</firstterm> connected to
+    exactly one <firstterm>server process</firstterm>.  As we do not
+    know ahead of time how many connections will be made, we have to
+    use a <firstterm>master process</firstterm> that spawns a new
+    server process every time a connection is requested. This master
+    process is called <literal>postmaster</literal> and listens at a
+    specified TCP/IP port for incoming connections. Whenever a request
+    for a connection is detected the <literal>postmaster</literal>
+    process spawns a new server process called
+    <literal>postgres</literal>. The server tasks
+    (<literal>postgres</literal> processes) communicate with each
+    other using <firstterm>semaphores</firstterm> and
+    <firstterm>shared memory</firstterm> to ensure data integrity
+    throughout concurrent data access. Figure \ref{connection}
+    illustrates the interaction of the master process
+    <literal>postmaster</literal> the server process
+    <literal>postgres</literal> and a client application.
    </para>
 
    <para>
@@ -686,7 +688,7 @@ current context are performed.
      for the <literal>varno</literal> fields in the
      <literal>VAR</literal> nodes appearing in the <literal>mergeclauses</literal> list (and also in the
      <literal>targetlist</literal>) mean that not the tuples of the current node should be
-     considered but the tuples of the next "deeper" nodes (i.e. the top
+     considered but the tuples of the next <quote>deeper</quote> nodes (i.e. the top
      nodes of the subplans) should be used instead.
     </para>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.55 2003/02/13 05:19:59 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.56 2003/02/19 04:06:28 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -367,7 +367,7 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
     default and NOT NULL clauses for the new column are not supported.
     The new column always comes into being with all values NULL.
     You can use the <literal>SET DEFAULT</literal> form
-    of <command>ALTER TABLE</command> to set the default afterwards.
+    of <command>ALTER TABLE</command> to set the default afterward.
     (You may also want to update the already existing rows to the
     new default value, using
     <xref linkend="sql-update" endterm="sql-update-title">.)
@@ -392,19 +392,21 @@ VACUUM FULL table;
    </para>
 
    <para>
-    If a table has any descendant tables, it is not permitted to ADD or
-    RENAME a column in the parent table without doing the same to the
-    descendants --- that is, ALTER TABLE ONLY will be rejected.  This
-    ensures that the descendants always have columns matching the parent.
+    If a table has any descendant tables, it is not permitted to ADD
+    or RENAME a column in the parent table without doing the same to
+    the descendants --- that is, <command>ALTER TABLE ONLY</command>
+    will be rejected.  This ensures that the descendants always have
+    columns matching the parent.
    </para>
 
    <para>
-    A recursive DROP COLUMN operation will remove a descendant table's column
-    only if the descendant does not inherit that column from any other
-    parents and never had an independent definition of the column.
-    A nonrecursive DROP COLUMN (i.e., ALTER TABLE ONLY ... DROP COLUMN)
-    never removes any descendant columns, but instead marks them as
-    independently defined rather than inherited.
+    A recursive <literal>DROP COLUMN</literal> operation will remove a
+    descendant table's column only if the descendant does not inherit
+    that column from any other parents and never had an independent
+    definition of the column.  A nonrecursive <literal>DROP
+    COLUMN</literal> (i.e., <command>ALTER TABLE ONLY ... DROP
+    COLUMN</command>) never removes any descendant columns, but
+    instead marks them as independently defined rather than inherited.
    </para>
 
    <para>
