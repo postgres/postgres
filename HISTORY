@@ -8,7 +8,7 @@
    This release contains a variety of fixes from 7.4.1.
      _________________________________________________________________
 
-                         Migration to version 7.4.2
+Migration to version 7.4.2
 
    A dump/restore is not required for those running 7.4.X. However, it
    may be advisable as the easiest method of incorporating fixes for two
@@ -69,7 +69,7 @@ VACUUM FREEZE;
 UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
      _________________________________________________________________
 
-                                  Changes
+Changes
 
    Release 7.4.2 incorporates all the fixes included in release 7.3.6,
    plus the following fixes:
@@ -113,7 +113,7 @@ UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
    This release contains a variety of fixes from 7.4.
      _________________________________________________________________
 
-                         Migration to version 7.4.1
+Migration to version 7.4.1
 
    A dump/restore is *not* required for those running 7.4.
 
@@ -128,7 +128,7 @@ DROP SCHEMA information_schema CASCADE;
    Substitute your installation path in the second command.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
      * Fixed bug in "CREATE SCHEMA" parsing in ECPG (Michael)
      * Fix compile error when "--enable-thread-safety" and "--with-perl"
@@ -191,7 +191,7 @@ DROP SCHEMA information_schema CASCADE;
      Release date: 2003-11-17
      _________________________________________________________________
 
-                                  Overview
+Overview
 
    Major changes in this release:
 
@@ -292,7 +292,7 @@ DROP SCHEMA information_schema CASCADE;
           more like fully-supported data types.
      _________________________________________________________________
 
-                          Migration to version 7.4
+Migration to version 7.4
 
    A dump/restore using pg_dump is required for those wishing to migrate
    data from any previous release.
@@ -356,7 +356,7 @@ DROP SCHEMA information_schema CASCADE;
        adjacent to operators.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
    Below you will find a detailed account of the changes between release
    7.4 and the previous major release.
@@ -959,12 +959,12 @@ Contrib Changes
    This release contains a variety of fixes from 7.3.5.
      _________________________________________________________________
 
-                         Migration to version 7.3.6
+Migration to version 7.3.6
 
    A dump/restore is *not* required for those running 7.3.*.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
      * Revert erroneous changes in rule permissions checking
        A patch applied in 7.3.3 to fix a corner case in rule permissions
@@ -1002,12 +1002,12 @@ Contrib Changes
    This has a variety of fixes from 7.3.4.
      _________________________________________________________________
 
-                         Migration to version 7.3.5
+Migration to version 7.3.5
 
    A dump/restore is *not* required for those running 7.3.*.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
      * Force zero_damaged_pages to be on during recovery from WAL
      * Prevent some obscure cases of "variable not in subplan target
@@ -1049,12 +1049,12 @@ Contrib Changes
    This has a variety of fixes from 7.3.3.
      _________________________________________________________________
 
-                         Migration to version 7.3.4
+Migration to version 7.3.4
 
    A dump/restore is *not* required for those running 7.3.*.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
      * Repair breakage in timestamp-to-date conversion for dates before
        2000
@@ -1076,12 +1076,12 @@ Contrib Changes
    This release contains a variety of fixes for version 7.3.2.
      _________________________________________________________________
 
-                         Migration to version 7.3.3
+Migration to version 7.3.3
 
    A dump/restore is *not* required for those running version 7.3.*.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
      * Repair sometimes-incorrect computation of StartUpID after a crash
      * Avoid slowness with lots of deferred triggers in one transaction
@@ -1199,12 +1199,12 @@ Contrib Changes
    This release contains a variety of fixes for version 7.3.1.
      _________________________________________________________________
 
-                         Migration to version 7.3.2
+Migration to version 7.3.2
 
    A dump/restore is *not* required for those running version 7.3.*.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
      * Restore creation of OID column in CREATE TABLE AS / SELECT INTO
      * Fix pg_dump core dump when dumping views having comments
@@ -1255,7 +1255,7 @@ Contrib Changes
    This release contains a variety of fixes for version 7.3.
      _________________________________________________________________
 
-                         Migration to version 7.3.1
+Migration to version 7.3.1
 
    A dump/restore is *not* required for those running version 7.3.
    However, it should be noted that the main PostgreSQL interface
@@ -1263,7 +1263,7 @@ Contrib Changes
    may require recompilation of client code in certain cases.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
      * Fix a core dump of COPY TO when client/server encodings don't
        match (Tom)
@@ -1291,7 +1291,7 @@ Contrib Changes
      Release date: 2002-11-27
      _________________________________________________________________
 
-                                  Overview
+Overview
 
    Major changes in this release:
 
@@ -1346,7 +1346,7 @@ Contrib Changes
           result types.
      _________________________________________________________________
 
-                          Migration to version 7.3
+Migration to version 7.3
 
    A dump/restore using pg_dump is required for those wishing to migrate
    data from any previous release. If your application examines the
@@ -1381,7 +1381,7 @@ Contrib Changes
        integer field. Formerly, it was silently interpreted as 0.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 Server Operation
 
@@ -1839,12 +1839,12 @@ Contrib
    fixes to prevent possible data loss.
      _________________________________________________________________
 
-                         Migration to version 7.2.4
+Migration to version 7.2.4
 
    A dump/restore is *not* required for those running version 7.2.*.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
      * Fix some additional cases of VACUUM "No one parent tuple was
        found" error
@@ -1870,12 +1870,12 @@ Contrib
    fixes to prevent possible data loss.
      _________________________________________________________________
 
-                         Migration to version 7.2.3
+Migration to version 7.2.3
 
    A dump/restore is *not* required for those running version 7.2.*.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
      * Prevent possible compressed transaction log loss (Tom)
      * Prevent non-superuser from increasing most recent vacuum info
@@ -1893,12 +1893,12 @@ Contrib
    This release contains a variety of fixes for version 7.2.1.
      _________________________________________________________________
 
-                         Migration to version 7.2.2
+Migration to version 7.2.2
 
    A dump/restore is *not* required for those running version 7.2.*.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
      * Allow EXECUTE of "CREATE TABLE AS ... SELECT" in PL/pgSQL (Tom)
      * Fix for compressed transaction log id wraparound (Tom)
@@ -1924,12 +1924,12 @@ Contrib
    This release contains a variety of fixes for version 7.2.
      _________________________________________________________________
 
-                         Migration to version 7.2.1
+Migration to version 7.2.1
 
    A dump/restore is *not* required for those running version 7.2.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
      * Ensure that sequence counters do not go backwards after a crash
        (Tom)
@@ -1959,7 +1959,7 @@ Contrib
      Release date: 2002-02-04
      _________________________________________________________________
 
-                                  Overview
+Overview
 
    This release improves PostgreSQL for use in high-volume applications.
 
@@ -1997,7 +1997,7 @@ Contrib
           languages.
      _________________________________________________________________
 
-                          Migration to version 7.2
+Migration to version 7.2
 
    A dump/restore using "pg_dump" is required for those wishing to
    migrate data from any previous release.
@@ -2026,7 +2026,7 @@ Contrib
    clauses, e.g. LIMIT 10 OFFSET 20.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 Server Operation
 
@@ -2425,12 +2425,12 @@ Contrib
      Release date: 2001-08-15
      _________________________________________________________________
 
-                         Migration to version 7.1.3
+Migration to version 7.1.3
 
    A dump/restore is *not* required for those running 7.1.X.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 Remove unused WAL segements of large transactions (Tom)
 Multiaction rule fix (Tom)
@@ -2452,12 +2452,12 @@ Cygwin build (Jason Tishler)
    This has one fix from 7.1.1.
      _________________________________________________________________
 
-                         Migration to version 7.1.2
+Migration to version 7.1.2
 
    A dump/restore is *not* required for those running 7.1.X.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 Fix PL/pgSQL SELECTs when returning no rows
 Fix for psql backslash core dump
@@ -2474,12 +2474,12 @@ pg_dump cleanups
    This has a variety of fixes from 7.1.
      _________________________________________________________________
 
-                         Migration to version 7.1.1
+Migration to version 7.1.1
 
    A dump/restore is *not* required for those running 7.1.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 Fix for numeric MODULO operator (Tom)
 pg_dump fixes (Philip)
@@ -2542,13 +2542,13 @@ Python fixes (Darcy)
           default. Subqueries in FROM are now supported.
      _________________________________________________________________
 
-                          Migration to version 7.1
+Migration to version 7.1
 
    A dump/restore using pg_dump is required for those wishing to migrate
    data from any previous release.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 Bug Fixes
 ---------
@@ -2745,12 +2745,12 @@ New FreeBSD tools ipc_check, start-scripts/freebsd
    This has a variety of fixes from 7.0.2.
      _________________________________________________________________
 
-                         Migration to version 7.0.3
+Migration to version 7.0.3
 
    A dump/restore is *not* required for those running 7.0.*.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 Jdbc fixes (Peter)
 Large object fix (Tom)
@@ -2801,12 +2801,12 @@ Fix for crash of backend, on abort (Tom)
    This is a repackaging of 7.0.1 with added documentation.
      _________________________________________________________________
 
-                         Migration to version 7.0.2
+Migration to version 7.0.2
 
    A dump/restore is *not* required for those running 7.*.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 Added documentation to tarball.
 
@@ -2819,12 +2819,12 @@ Added documentation to tarball.
    This is a cleanup release for 7.0.
      _________________________________________________________________
 
-                         Migration to version 7.0.1
+Migration to version 7.0.1
 
    A dump/restore is *not* required for those running 7.0.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 Fix many CLUSTER failures (Tom)
 Allow ALTER TABLE RENAME works on indexes (Tom)
@@ -2885,7 +2885,7 @@ ecpg changes (Michael)
           are available, as are column correlation names.
      _________________________________________________________________
 
-                          Migration to version 7.0
+Migration to version 7.0
 
    A dump/restore using pg_dump is required for those wishing to migrate
    data from any previous release of PostgreSQL. For those upgrading from
@@ -2916,7 +2916,7 @@ ecpg changes (Michael)
        geometric types.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 Bug Fixes
 ---------
@@ -3249,12 +3249,12 @@ New multibyte encodings
    PgAccess that was missing in 6.5.2, and installed an NT-specific fix.
      _________________________________________________________________
 
-                         Migration to version 6.5.3
+Migration to version 6.5.3
 
    A dump/restore is *not* required for those running 6.5.*.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 Updated version of pgaccess 0.98
 NT-specific patch
@@ -3270,12 +3270,12 @@ Fix dumping rules on inherited tables
    of problems reported by 6.5.1 users.
      _________________________________________________________________
 
-                         Migration to version 6.5.2
+Migration to version 6.5.2
 
    A dump/restore is *not* required for those running 6.5.*.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 subselect+CASE fixes(Tom)
 Add SHLIB_LINK setting for solaris_i386 and solaris_sparc ports(Daren Sefcik)
@@ -3314,12 +3314,12 @@ Updated version of pgaccess 0.98
    of problems reported by 6.5 users.
      _________________________________________________________________
 
-                         Migration to version 6.5.1
+Migration to version 6.5.1
 
    A dump/restore is *not* required for those running 6.5.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 Add NT README file
 Portability fixes for linux_ppc, IRIX, linux_alpha, OpenBSD, alpha
@@ -3417,7 +3417,7 @@ Add Win1250 (Czech) support (Pavel Behal)
           CVSup.
      _________________________________________________________________
 
-                          Migration to version 6.5
+Migration to version 6.5
 
    A dump/restore using pg_dump is required for those wishing to migrate
    data from any previous release of PostgreSQL. pg_upgrade can *not* be
@@ -3463,7 +3463,7 @@ Multiversion Concurrency Control
    referential integrity will be implemented.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 Bug Fixes
 ---------
@@ -3640,12 +3640,12 @@ New install commands for plpgsql(Jan)
    additional bug fix.
      _________________________________________________________________
 
-                         Migration to version 6.4.2
+Migration to version 6.4.2
 
    A dump/restore is *not* required for those running 6.4.*.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 Fix for datetime constant problem on some platforms(Thomas)
      _________________________________________________________________
@@ -3658,12 +3658,12 @@ Fix for datetime constant problem on some platforms(Thomas)
    of problems reported by 6.4 users.
      _________________________________________________________________
 
-                         Migration to version 6.4.1
+Migration to version 6.4.1
 
    A dump/restore is *not* required for those running 6.4.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 Add pg_dump -N flag to force double quotes around identifiers.  This is
         the default(Thomas)
@@ -3736,13 +3736,13 @@ Upgrade to PyGreSQL 2.2(D'Arcy)
        it has ever been.
      _________________________________________________________________
 
-                          Migration to version 6.4
+Migration to version 6.4
 
    A dump/restore using pg_dump or pg_dumpall is required for those
    wishing to migrate data from any previous release of PostgreSQL.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 Bug Fixes
 ---------
@@ -3965,7 +3965,7 @@ new Makefile.shlib for shared library configuration(Tom)
    migration instructions for version 6.3.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 Configure detection improvements for tcl/tk(Brook Milligan, Alvin)
 Manual page improvements(Bruce)
@@ -4008,7 +4008,7 @@ ASSERT fixes(Bruce)
    migration instructions for version 6.3.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 ecpg cleanup/fixes, now version 1.1(Michael Meskes)
 pg_user cleanup(Bruce)
@@ -4121,13 +4121,13 @@ Better identify tcl and tk libs and includes(Bruce)
    using are no longer needed.
      _________________________________________________________________
 
-                          Migration to version 6.3
+Migration to version 6.3
 
    A dump/restore using pg_dump or pg_dumpall is required for those
    wishing to migrate data from any previous release of PostgreSQL.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 Bug Fixes
 ---------
@@ -4315,7 +4315,7 @@ Remove un-needed malloc() calls and replace with palloc()(Bruce)
    notes for instructions.
      _________________________________________________________________
 
-                Migration from version 6.2 to version 6.2.1
+Migration from version 6.2 to version 6.2.1
 
    This is a minor bug-fix release. A dump/reload is not required from
    version 6.2, but is required from any release prior to 6.2.
@@ -4333,7 +4333,7 @@ Remove un-needed malloc() calls and replace with palloc()(Bruce)
    template1.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 Allow TIME and TYPE column names(Thomas)
 Allow larger range of true/false as boolean values(Thomas)
@@ -4357,7 +4357,7 @@ Trigger function for inserting user names for INSERT/UPDATE(Brook Milligan)
    previous releases of PostgreSQL.
      _________________________________________________________________
 
-                 Migration from version 6.1 to version 6.2
+Migration from version 6.1 to version 6.2
 
    This migration requires a complete dump of the 6.1 database and a
    restore of the database in 6.2.
@@ -4366,13 +4366,13 @@ Trigger function for inserting user names for INSERT/UPDATE(Brook Milligan)
    used to dump the 6.1 database.
      _________________________________________________________________
 
-                 Migration from version 1.x to version 6.2
+Migration from version 1.x to version 6.2
 
    Those migrating from earlier 1.* releases should first upgrade to 1.09
    because the COPY output format was improved from the 1.02 release.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 Bug Fixes
 ---------
@@ -4493,14 +4493,14 @@ SPI and Trigger programming guides (Vadim & D'Arcy)
      Release date: 1997-07-22
      _________________________________________________________________
 
-                Migration from version 6.1 to version 6.1.1
+Migration from version 6.1 to version 6.1.1
 
    This is a minor bug-fix release. A dump/reload is not required from
    version 6.1, but is required from any release prior to 6.1. Refer to
    the release notes for 6.1 for more details.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 fix for SET with options (Thomas)
 allow pg_dump/pg_dumpall to preserve ownership of all tables/objects(Bruce)
@@ -4561,7 +4561,7 @@ pg_dumpall now returns proper status, portability fix(Bruce)
    on my test machine (Linux/gcc/i686).
      _________________________________________________________________
 
-                          Migration to version 6.1
+Migration to version 6.1
 
    This migration requires a complete dump of the 6.0 database and a
    restore of the database in 6.1.
@@ -4570,7 +4570,7 @@ pg_dumpall now returns proper status, portability fix(Bruce)
    because the COPY output format was improved from the 1.02 release.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 Bug Fixes
 ---------
@@ -4676,19 +4676,19 @@ DG/UX, Ultrix, IRIX, AIX portability fixes
    previous releases of PostgreSQL.
      _________________________________________________________________
 
-                 Migration from version 1.09 to version 6.0
+Migration from version 1.09 to version 6.0
 
    This migration requires a complete dump of the 1.09 database and a
    restore of the database in 6.0.
      _________________________________________________________________
 
-                   Migration from pre-1.09 to version 6.0
+Migration from pre-1.09 to version 6.0
 
    Those migrating from earlier 1.* releases should first upgrade to 1.09
    because the COPY output format was improved from the 1.02 release.
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 Bug Fixes
 ---------
@@ -4811,7 +4811,7 @@ Unused/uninialized variables corrected
      Release date: 1996-08-01
      _________________________________________________________________
 
-               Migration from version 1.02 to version 1.02.1
+Migration from version 1.02 to version 1.02.1
 
    Here is a new migration file for 1.02.1. It includes the 'copy' change
    and a script to convert old ASCII files.
@@ -4839,7 +4839,7 @@ Unused/uninialized variables corrected
        present in 1.02. This is not a cause for concern.
      _________________________________________________________________
 
-                           Dump/Reload Procedure
+Dump/Reload Procedure
 
    If you are trying to reload a pg_dump or text-mode, copy tablename to
    stdout generated with a previous version, you will need to run the
@@ -4863,7 +4863,7 @@ create operator !~* (leftarg = varchar, rightarg = text, procedure = texticrege
 xne);
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 Source code maintenance and development
  * worldwide team of volunteers
@@ -4897,7 +4897,7 @@ New Ports
      Release date: 1996-02-23
      _________________________________________________________________
 
-                 Migration from version 1.0 to version 1.01
+Migration from version 1.0 to version 1.01
 
    The following notes are for the benefit of users who want to migrate
    databases from Postgres95 1.0 to Postgres95 1.01.
@@ -4987,7 +4987,7 @@ create operator !~* (leftarg = text, rightarg = text, procedure = texticregexne
 );
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 Incompatibilities:
  * 1.01 is backwards compatible with 1.0 database provided the user
@@ -5028,7 +5028,7 @@ Bug fixes:
      Release date: 1995-09-05
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 Copyright change:
  * The copyright of Postgres 1.0 has been loosened to be freely modifiable
@@ -5076,7 +5076,7 @@ Bug fixes:
      Release date: 1995-07-21
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 Incompatible changes:
  * BETA-0.3 IS INCOMPATIBLE WITH DATABASES CREATED WITH PREVIOUS VERSIONS
@@ -5190,7 +5190,7 @@ New documentation:
      Release date: 1995-05-25
      _________________________________________________________________
 
-                                  Changes
+Changes
 
 Incompatible changes:
  * The SQL statement for creating a database is 'CREATE DATABASE' instead
