@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.52 2001/09/06 04:57:28 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.53 2001/09/19 15:19:12 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -462,12 +462,12 @@ parse_XactIsoLevel(char *value)
 	}
 
 
-	if (strcasecmp(value, "SERIALIZABLE") == 0)
+	if (strcmp(value, "serializable") == 0)
 		XactIsoLevel = XACT_SERIALIZABLE;
-	else if (strcasecmp(value, "READ COMMITTED") == 0)
+	else if (strcmp(value, "read committed") == 0)
 		XactIsoLevel = XACT_READ_COMMITTED;
 	else
-		elog(ERROR, "Bad TRANSACTION ISOLATION LEVEL (%s)", value);
+		elog(ERROR, "invalid transaction isolation level: %s", value);
 
 	return TRUE;
 }
