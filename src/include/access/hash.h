@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.21 1999/02/13 23:20:52 momjian Exp $
+ * $Id: hash.h,v 1.22 1999/04/15 02:23:37 thomas Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -21,6 +21,7 @@
 #include <storage/bufpage.h>
 #include <access/relscan.h>
 #include <access/itup.h>
+#include <utils/int8.h>
 
 /*
  * An overflow page is a spare page allocated for storing data whose
@@ -264,6 +265,7 @@ extern void hashdelete(Relation rel, ItemPointer tid);
 /* hashfunc.c */
 extern uint32 hashint2(int16 key);
 extern uint32 hashint4(uint32 key);
+extern uint32 hashint8(int64 *key);
 extern uint32 hashfloat4(float32 keyp);
 extern uint32 hashfloat8(float64 keyp);
 extern uint32 hashoid(Oid key);
