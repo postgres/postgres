@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.15 2003/03/06 21:45:52 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.16 2003/03/14 22:45:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -327,7 +327,7 @@ dumpGroups(PGconn *conn)
 
 		val = strdup(PQgetvalue(res, i, 2));
 		tok = strtok(val, ",{}");
-		do
+		while (tok)
 		{
 			PGresult   *res2;
 			PQExpBuffer buf2 = createPQExpBuffer();
@@ -347,7 +347,7 @@ dumpGroups(PGconn *conn)
 
 			tok = strtok(NULL, "{},");
 		}
-		while (tok);
+		free(val);
 
 		printf("%s", buf->data);
 		destroyPQExpBuffer(buf);
