@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/s_lock.c,v 1.14 2003/08/04 15:28:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/s_lock.c,v 1.15 2003/08/06 16:43:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@ s_lock_stuck(volatile slock_t *lock, const char *file, int line)
 	fprintf(stderr,
 			"\nStuck spinlock (%p) detected at %s:%d.\n",
 			lock, file, line);
-	abort();
+	exit(1);
 #else
 	elog(PANIC, "stuck spinlock (%p) detected at %s:%d",
 		 lock, file, line);
@@ -45,34 +45,67 @@ s_lock_stuck(volatile slock_t *lock, const char *file, int line)
 void
 s_lock(volatile slock_t *lock, const char *file, int line)
 {
-	unsigned	spins = 0;
-	unsigned	delays = 0;
-	struct timeval delay;
-
 	/*
 	 * We loop tightly for awhile, then delay using select() and try
 	 * again. Preferably, "awhile" should be a small multiple of the
 	 * maximum time we expect a spinlock to be held.  100 iterations seems
-	 * about right.
+	 * about right.  In most multi-CPU scenarios, the spinlock is probably
+	 * held by a process on another CPU and will be released before we
+	 * finish 100 iterations.  However, on a uniprocessor, the tight loop
+	 * is just a waste of cycles, so don't iterate thousands of times.
 	 *
-	 * We use a 10 millisec select delay because that is the lower limit on
-	 * many platforms.	The timeout is figured on this delay only, and so
-	 * the nominal 1 minute is a lower bound.
+	 * Once we do decide to block, we use randomly increasing select() delays.
+	 * The first delay is 10 msec, then the delay randomly increases to about
+	 * one second, after which we reset to 10 msec and start again.  The idea
+	 * here is that in the presence of heavy contention we need to increase
+	 * the delay, else the spinlock holder may never get to run and release
+	 * the lock.  (Consider situation where spinlock holder has been nice'd
+	 * down in priority by the scheduler --- it will not get scheduled until
+	 * all would-be acquirers are sleeping, so if we always use a 10-msec
+	 * sleep, there is a real possibility of starvation.)  But we can't just
+	 * clamp the delay to an upper bound, else it would take a long time to
+	 * make a reasonable number of tries.
+	 *
+	 * We time out and declare error after NUM_DELAYS delays (thus, exactly
+	 * that many tries).  With the given settings, this will usually take
+	 * 3 or so minutes.  It seems better to fix the total number of tries (and
+	 * thus the probability of unintended failure) than to fix the total time
+	 * spent.
+	 *
+	 * The select() delays are measured in centiseconds (0.01 sec) because
+	 * 10 msec is a common resolution limit at the OS level.
 	 */
 #define SPINS_PER_DELAY		100
-#define DELAY_MSEC			10
-#define TIMEOUT_MSEC		(60 * 1000)
+#define NUM_DELAYS			1000
+#define MIN_DELAY_CSEC		1
+#define MAX_DELAY_CSEC		100
+
+	int			spins = 0;
+	int			delays = 0;
+	int			cur_delay = MIN_DELAY_CSEC;
+	struct timeval delay;
 
 	while (TAS(lock))
 	{
 		if (++spins > SPINS_PER_DELAY)
 		{
-			if (++delays > (TIMEOUT_MSEC / DELAY_MSEC))
+			if (++delays > NUM_DELAYS)
 				s_lock_stuck(lock, file, line);
 
-			delay.tv_sec = 0;
-			delay.tv_usec = DELAY_MSEC * 1000;
+			delay.tv_sec = cur_delay / 100;
+			delay.tv_usec = (cur_delay % 100) * 10000;
 			(void) select(0, NULL, NULL, NULL, &delay);
+
+#if defined(S_LOCK_TEST)
+			fprintf(stdout, "*"); fflush(stdout);
+#endif
+
+			/* increase delay by a random fraction between 1X and 2X */
+			cur_delay += (int) (cur_delay *
+				(((double) random()) / ((double) MAX_RANDOM_VALUE)) + 0.5);
+			/* wrap back to minimum delay when max is exceeded */
+			if (cur_delay > MAX_DELAY_CSEC)
+				cur_delay = MIN_DELAY_CSEC;
 
 			spins = 0;
 		}
@@ -217,6 +250,8 @@ volatile slock_t test_lock;
 int
 main()
 {
+	srandom((unsigned int) time(NULL));
+
 	S_INIT_LOCK(&test_lock);
 
 	if (!S_LOCK_FREE(&test_lock))
@@ -249,9 +284,9 @@ main()
 		return 1;
 	}
 
-	printf("S_LOCK_TEST: this will hang for a minute or so and then abort\n");
-	printf("             with a 'stuck spinlock' message if S_LOCK()\n");
-	printf("             and TAS() are working.\n");
+	printf("S_LOCK_TEST: this will print %d stars and then\n", NUM_DELAYS);
+	printf("             exit with a 'stuck spinlock' message\n");
+	printf("             if S_LOCK() and TAS() are working.\n");
 	fflush(stdout);
 
 	s_lock(&test_lock, __FILE__, __LINE__);
