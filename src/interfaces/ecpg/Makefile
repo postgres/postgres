@@ -1,4 +1,4 @@
-SUBDIRS = src/include src/lib src/preproc
+SUBDIRS = include lib preproc
 
-all install uninstall clean::
+all install uninstall clean:
 	for i in $(SUBDIRS); do ( cd $$i; make $@ ); done
