@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.199 2004/10/06 15:12:32 momjian Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.200 2004/10/06 15:14:13 momjian Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -399,7 +399,7 @@ ifneq (,$(PGAPPICON))
 PGICOSTR=$(subst /,\/,IDI_ICON ICON \"$(top_builddir)/src/port/$(PGAPPICON).ico\")
 endif
 win32ver.rc: $(top_builddir)/src/port/win32ver.rc
-	sed -e 's;FILEDESC;$(PGFILEDESC);' -e "s/VFT_APP/$(PGFTYPE)/" -e "s/_ICO_/$(PGICOSTR)/" $(top_builddir)/src/port/win32ver.rc > win32ver.rc	
+	sed -e 's;FILEDESC;$(PGFILEDESC);' -e 's;VFT_APP;$(PGFTYPE);' -e 's;_ICO_;$(PGICOSTR);' $(top_builddir)/src/port/win32ver.rc > win32ver.rc
 win32ver.o: win32ver.rc
 	windres -i win32ver.rc -o win32ver.o --include-dir=$(top_builddir)/src/include
 	rm -f win32ver.rc
