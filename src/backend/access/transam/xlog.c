@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.85 2001/12/28 18:16:41 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.86 2002/01/14 17:55:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1262,15 +1262,40 @@ XLogFlush(XLogRecPtr record)
 			WriteRqst.Write = WriteRqstPtr;
 			WriteRqst.Flush = record;
 			XLogWrite(WriteRqst);
-			if (XLByteLT(LogwrtResult.Flush, record))
-				elog(STOP, "XLogFlush: request %X/%X is not satisfied --- flushed only to %X/%X",
-					 record.xlogid, record.xrecoff,
-				  LogwrtResult.Flush.xlogid, LogwrtResult.Flush.xrecoff);
 		}
 		LWLockRelease(WALWriteLock);
 	}
 
 	END_CRIT_SECTION();
+
+	/*
+	 * If we still haven't flushed to the request point then we have a
+	 * problem; most likely, the requested flush point is past end of XLOG.
+	 * This has been seen to occur when a disk page has a corrupted LSN.
+	 *
+	 * Formerly we treated this as a STOP condition, but that hurts the
+	 * system's robustness rather than helping it: we do not want to take
+	 * down the whole system due to corruption on one data page.  In
+	 * particular, if the bad page is encountered again during recovery then
+	 * we would be unable to restart the database at all!  (This scenario
+	 * has actually happened in the field several times with 7.1 releases.
+	 * Note that we cannot get here while InRedo is true, but if the bad
+	 * page is brought in and marked dirty during recovery then
+	 * CreateCheckpoint will try to flush it at the end of recovery.)
+	 *
+	 * The current approach is to ERROR under normal conditions, but only
+	 * NOTICE during recovery, so that the system can be brought up even if
+	 * there's a corrupt LSN.  Note that for calls from xact.c, the ERROR
+	 * will be promoted to STOP since xact.c calls this routine inside a
+	 * critical section.  However, calls from bufmgr.c are not within
+	 * critical sections and so we will not force a restart for a bad LSN
+	 * on a data page.
+	 */
+	if (XLByteLT(LogwrtResult.Flush, record))
+		elog(InRecovery ? NOTICE : ERROR,
+			 "XLogFlush: request %X/%X is not satisfied --- flushed only to %X/%X",
+			 record.xlogid, record.xrecoff,
+			 LogwrtResult.Flush.xlogid, LogwrtResult.Flush.xrecoff);
 }
 
 /*
