@@ -85,8 +85,8 @@ SELECT [ALL|DISTINCT [ON <replaceable class="PARAMETER">column</replaceable>] ]
 	If the INTO TABLE clause is specified, the result of the
 	query will be stored in another table with the indicated
 	name.
-	If <replaceable class="PARAMETER">new_table</replaceable> does
-	not exist, it will be created automatically.
+        The <replaceable class="PARAMETER">new_table</replaceable> will
+        be created automatically and should not exist before this command.
 	Refer to <command>SELECT INTO</command> for more information.
 	<note>
 	 <para>
