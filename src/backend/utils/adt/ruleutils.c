@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.24 1999/08/28 03:59:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.25 1999/09/02 03:04:04 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -43,8 +43,9 @@
 #include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
 #include "utils/lsyscache.h"
-#include "catalog/pg_shadow.h"
 #include "catalog/pg_index.h"
+#include "catalog/pg_operator.h"
+#include "catalog/pg_shadow.h"
 
 #define BUFSIZE 8192
 
@@ -1270,6 +1271,7 @@ get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 		case T_Expr:
 			{
 				Expr	   *expr = (Expr *) node;
+				List	   *args = expr->args;
 
 				/* ----------
 				 * Expr nodes have to be handled a bit detailed
@@ -1279,15 +1281,56 @@ get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 				{
 					case OP_EXPR:
 						strcat(buf, "(");
-						strcat(buf, get_rule_expr(qh, rt_index,
-											   (Node *) get_leftop(expr),
-												  varprefix));
-						strcat(buf, " ");
-						strcat(buf, get_opname(((Oper *) expr->oper)->opno));
-						strcat(buf, " ");
-						strcat(buf, get_rule_expr(qh, rt_index,
-											  (Node *) get_rightop(expr),
-												  varprefix));
+						if (length(args) == 2)
+						{
+							/* binary operator */
+							strcat(buf,
+								   get_rule_expr(qh, rt_index,
+												 (Node *) lfirst(args),
+												 varprefix));
+							strcat(buf, " ");
+							strcat(buf,
+								   get_opname(((Oper *) expr->oper)->opno));
+							strcat(buf, " ");
+							strcat(buf,
+								   get_rule_expr(qh, rt_index,
+												 (Node *) lsecond(args),
+												 varprefix));
+						}
+						else
+						{
+							/* unary operator --- but which side? */
+							Oid			opno = ((Oper *) expr->oper)->opno;
+							HeapTuple	tp;
+							Form_pg_operator optup;
+
+							tp = SearchSysCacheTuple(OPROID,
+													 ObjectIdGetDatum(opno),
+													 0, 0, 0);
+							Assert(HeapTupleIsValid(tp));
+							optup = (Form_pg_operator) GETSTRUCT(tp);
+							switch (optup->oprkind)
+							{
+								case 'l':
+									strcat(buf, get_opname(opno));
+									strcat(buf, " ");
+									strcat(buf,
+										   get_rule_expr(qh, rt_index,
+														 (Node *) lfirst(args),
+														 varprefix));
+									break;
+								case 'r':
+									strcat(buf,
+										   get_rule_expr(qh, rt_index,
+														 (Node *) lfirst(args),
+														 varprefix));
+									strcat(buf, " ");
+									strcat(buf, get_opname(opno));
+									break;
+								default:
+									elog(ERROR, "get_rule_expr: bogus oprkind");
+							}
+						}
 						strcat(buf, ")");
 						return pstrdup(buf);
 						break;
@@ -1295,12 +1338,18 @@ get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 					case OR_EXPR:
 						strcat(buf, "(");
 						strcat(buf, get_rule_expr(qh, rt_index,
-											   (Node *) get_leftop(expr),
+												  (Node *) lfirst(args),
 												  varprefix));
-						strcat(buf, " OR ");
-						strcat(buf, get_rule_expr(qh, rt_index,
-											  (Node *) get_rightop(expr),
-												  varprefix));
+						/* It's not clear that we can ever see N-argument
+						 * OR/AND clauses here, but might as well cope...
+						 */
+						while ((args = lnext(args)) != NIL)
+						{
+							strcat(buf, " OR ");
+							strcat(buf, get_rule_expr(qh, rt_index,
+													  (Node *) lfirst(args),
+													  varprefix));
+						}
 						strcat(buf, ")");
 						return pstrdup(buf);
 						break;
@@ -1308,12 +1357,15 @@ get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 					case AND_EXPR:
 						strcat(buf, "(");
 						strcat(buf, get_rule_expr(qh, rt_index,
-											   (Node *) get_leftop(expr),
+												  (Node *) lfirst(args),
 												  varprefix));
-						strcat(buf, " AND ");
-						strcat(buf, get_rule_expr(qh, rt_index,
-											  (Node *) get_rightop(expr),
-												  varprefix));
+						while ((args = lnext(args)) != NIL)
+						{
+							strcat(buf, " AND ");
+							strcat(buf, get_rule_expr(qh, rt_index,
+													  (Node *) lfirst(args),
+													  varprefix));
+						}
 						strcat(buf, ")");
 						return pstrdup(buf);
 						break;
@@ -1335,7 +1387,7 @@ get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 
 					default:
 						printf("\n%s\n", nodeToString(node));
-						elog(ERROR, "Expr type not supported");
+						elog(ERROR, "get_rule_expr: expr type not supported");
 				}
 			}
 			break;
