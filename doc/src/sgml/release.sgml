@@ -132,11 +132,65 @@
      is required for those wishing to migrate data from any
      previous release of <productname>Postgres</productname>.
     </para>
-   </sect2>
+
+    <para>
+
+     Because readers in 6.5 don't lock data, regardless of transaction
+     isolation level, data read by one transaction can be overwritten by
+     another. In the other words, if a row is returned by
+     <command>SELECT</command> it doesn't mean that this row really exists
+     at the time it is returned (i.e. sometime after the statement or
+     transaction began) nor that the row is protected from deletion or
+     updation by concurrent transactions before the current transaction does
+     a commit or rollback.
+
+    </para>
+
+    <para>
+
+     To ensure the actual existance of a row and protect it against
+     concurrent updates one must use <command>SELECT FOR UPDATE</command> or
+     an appropriate <command>LOCK TABLE</command> statement. This should be
+     taken into account when porting applications from previous releases of
+     <productname>Postgres</productname> and other environments.
+
+    </para>
+
+    <para>
+
+     Keep above in mind if you are using contrib/refint.* triggers for
+     referential integrity. Additional technics are required now. One way is
+     to use <command>LOCK parent_table IN SHARE ROW EXCLUSIVE MODE</command>
+     command if a transaction is going to update/delete a primary key and
+     use <command>LOCK parent_table IN SHARE MODE</command> command if a
+     transaction is going to update/insert a foreign key.
+
+        <note>
+        <para>
+
+     Note that if you run a transaction in SERIALIZABLE mode then you must
+     execute <command>LOCK</command> commands above before execution of any
+     DML statement
+     (<command>SELECT/INSERT/DELETE/UPDATE/FETCH/COPY_TO</command>) in the
+     transaction.
+
+        </para>
+        </note>
+
+        <para>
+
+     These inconveniences will disappear when the ability to read durty
+     (uncommitted) data, regardless of isolation level, and true referential
+     integrity will be implemented.
+
+        </para>
+
+    </para>
+
+    </sect2>
 
    <sect2>
     <title>Detailed Change List</title>
-
     <para>
      <programlisting>
 Bug Fixes
