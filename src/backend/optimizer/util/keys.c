@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.14 1999/02/10 21:02:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.15 1999/02/11 04:08:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,7 @@ extract_join_subkey(JoinKey *jk, int which_subkey)
 }
 
 /*
- * samekeys--
+ * pathkeys_match--
  *	  Returns t iff two sets of path keys are equivalent.  They are
  *	  equivalent if the first Var nodes match the second Var nodes.
  *
@@ -118,7 +118,7 @@ extract_join_subkey(JoinKey *jk, int which_subkey)
  *
  */
 bool
-samekeys(List *keys1, List *keys2)
+pathkeys_match(List *keys1, List *keys2, int *longer_key)
 {
 	List	   *key1,
 			   *key2,
@@ -133,9 +133,20 @@ samekeys(List *keys1, List *keys2)
 			 key1a != NIL && key2a != NIL;
 			 key1a = lnext(key1a), key2a = lnext(key2a))
 			if (!equal(lfirst(key1a), lfirst(key2a)))
+			{
+				*longer_key = 0;
 				return false;
-		if (key1a != NIL)
-			return false;
+			}
+		if (key1a != NIL && key2a == NIL)
+		{
+			*longer_key = 1;
+			return true;
+		}
+		if (key1a == NIL && key2a != NIL)
+		{
+			*longer_key = 2;
+			return true;
+		}
 	}
 
 	/* Now the result should be true if list keys2 has at least as many
@@ -143,10 +154,18 @@ samekeys(List *keys1, List *keys2)
 	 * If key1 is now NIL then we hit the end of keys1 before or at the
 	 * same time as the end of keys2.
 	 */
-	if (key1 == NIL)
+	if (key1 != NIL && key2 == NIL)
+	{
+		*longer_key = 1;
 		return true;
-	else
-		return false;
+	}
+	if (key1 == NIL && key2 != NIL)
+	{
+		*longer_key = 2;
+		return true;
+	}
+	*longer_key = 0;
+	return true;
 }
 
 /*

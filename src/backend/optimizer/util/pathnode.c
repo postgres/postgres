@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.23 1999/02/10 21:02:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.24 1999/02/11 04:08:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@
 
 #include "parser/parsetree.h"	/* for getrelid() */
 
-static Path *better_path(Path *new_path, List *unique_paths, bool *noOther);
+static Path *better_path(Path *new_path, List *unique_paths, bool *isNew);
 
 
 /*****************************************************************************
@@ -107,16 +107,16 @@ add_pathlist(RelOptInfo *parent_rel, List *unique_paths, List *new_paths)
 	{
 		Path	   *new_path = (Path *) lfirst(p1);
  		Path	   *old_path;
-		bool		noOther;
+		bool		is_new;
 
 		/* Is this new path already in unique_paths? */
 		if (member(new_path, unique_paths))
 			continue;
 
 		/* Find best matching path */
-		old_path = better_path(new_path, unique_paths, &noOther);
+		old_path = better_path(new_path, unique_paths, &is_new);
 
-		if (noOther)
+		if (is_new)
 		{
 			/* This is a brand new path.  */
 			new_path->parent = parent_rel;
@@ -153,19 +153,19 @@ add_pathlist(RelOptInfo *parent_rel, List *unique_paths, List *new_paths)
  *
  */
 static Path *
-better_path(Path *new_path, List *unique_paths, bool *noOther)
+better_path(Path *new_path, List *unique_paths, bool *is_new)
 {
-	Path	   *old_path = (Path *) NULL;
 	Path	   *path = (Path *) NULL;
 	List	   *temp = NIL;
-	Path	   *retval = NULL;
+	int			longer_key;
 
 	foreach(temp, unique_paths)
 	{
 		path = (Path *) lfirst(temp);
 
 #ifdef OPTDUP_DEBUG
-		if (!samekeys(path->pathkeys, new_path->pathkeys))
+		if (!pathkeys_match(new_path->pathkeys, path->pathkeys, &longer_key) ||
+		    longer_key != 0)
 		{
 			printf("oldpath\n");
 			pprint(path->pathkeys);
@@ -176,8 +176,7 @@ better_path(Path *new_path, List *unique_paths, bool *noOther)
 				length(lfirst(path->pathkeys)) < length(lfirst(new_path->pathkeys)))
 				sleep(0); /* set breakpoint here */
 		}
-		if (!equal_path_ordering(path->path_order,
-								new_path->path_order))
+		if (!equal_path_ordering(new_path->path_order, path->path_order))
 		{
 			printf("oldord\n");
 			pprint(path->path_order);
@@ -185,26 +184,35 @@ better_path(Path *new_path, List *unique_paths, bool *noOther)
 			pprint(new_path->path_order);
 		}
 #endif
-		
-		if (samekeys(path->pathkeys, new_path->pathkeys) &&
-			equal_path_ordering(path->path_order,
-								new_path->path_order))
+
+		if (pathkeys_match(new_path->pathkeys, path->pathkeys, &longer_key))
 		{
-			old_path = path;
-			break;
+			if (equal_path_ordering(new_path->path_order, path->path_order))
+			{
+				/*
+				 * Replace pathkeys that match exactly, (1,2), (1,2).
+				 * Replace pathkeys (1,2) with (1,2,3) if the latter is not
+				 * more expensive and replace unordered path with ordered
+				 * path if it is not more expensive.
+				 */
+			    if ((longer_key == 0 && new_path->path_cost <  path->path_cost) ||
+					(longer_key == 1 && new_path->path_cost <= path->path_cost) ||
+					(longer_key == 2 && new_path->path_cost >= path->path_cost))
+				{
+					*is_new = false;
+					return new_path;
+				}
+				else
+				{
+					*is_new = false;
+					return NULL;
+				}
+			}
 		}
 	}
 
-	if (old_path == NULL)
-		*noOther = true;
-	else
-	{
-		*noOther = false;
-		if (path_is_cheaper(new_path, old_path))
-			retval = old_path;
-	}
-
-	return retval;
+	*is_new = true;
+	return NULL;
 }
 
 
