@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/begin.sgml,v 1.29 2004/01/11 05:46:58 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/begin.sgml,v 1.30 2004/01/11 09:24:17 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -142,9 +142,9 @@ BEGIN;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-start-transaction" endterm="sql-start-transaction-title"></member>
    <member><xref linkend="sql-commit" endterm="sql-commit-title"></member>
    <member><xref linkend="sql-rollback" endterm="sql-rollback-title"></member>
+   <member><xref linkend="sql-start-transaction" endterm="sql-start-transaction-title"></member>
   </simplelist>
  </refsect1>
 </refentry>
