@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.91 2000/05/21 21:19:53 tgl Exp $
+ *	$Id: pqcomm.c,v 1.92 2000/05/26 01:26:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,11 @@ void
 pq_close(void)
 {
 	if (MyProcPort != NULL)
+	{
 		close(MyProcPort->sock);
+		/* make sure any subsequent attempts to do I/O fail cleanly */
+		MyProcPort->sock = -1;
+	}
 }
 
 
