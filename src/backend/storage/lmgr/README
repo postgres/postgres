@@ -1,17 +1,12 @@
-$Header: /cvsroot/pgsql/src/backend/storage/lmgr/README,v 1.2 1998/01/28 02:29:26 momjian Exp $
+$Header: /cvsroot/pgsql/src/backend/storage/lmgr/README,v 1.3 1998/07/06 18:16:07 momjian Exp $
 
-This file is an attempt to save me (and future code maintainers) some
-time and a lot of headaches.  The existing lock manager code at the time
-of this writing (June 16 1992) can best be described as confusing.  The
-complexity seems inherent in lock manager functionality, but variable
-names chosen in the current implementation really confuse me everytime
-I have to track down a bug.  Also, what gets done where and by whom isn't
-always clear....
+There are two fundemental lock structures.  Lock methods describe the
+locking behavior.  We currently only support multi-level locking.  Lock
+modes describe the mode of the lock(read/write or shared/exclusive). 
+See src/tools/backend/index.html and src/include/storage/lock.h for more
+details.
 
-Starting with the data structures the lock manager relies upon...
-
-(NOTE - these will undoubtedly change over time and it is likely
-that this file won't always be updated along with the structs.)
+---------------------------------------------------------------------------
 
 The lock manager's LOCK:
 
@@ -90,10 +85,3 @@ activeHolders -
 
 ---------------------------------------------------------------------------
 
-Locks are accessed in two ways.  Each PROC structure has a lockQueue,
-that is a circular linked list of LOCK pointers that this process holds
-or is waiting on.
-
-Second, there is a hash table that can do a lookup by combined LOCK
-address and transaction id(xid) which allows a process to see what
-type of locks it holds on that table.
