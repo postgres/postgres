@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.93 1997/09/08 21:50:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.94 1997/09/12 21:58:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1009,6 +1009,8 @@ do_connect(const char *new_dbname,
 {
 	if (!new_dbname)
 		fprintf(stderr, "\\connect must be followed by a database name\n");
+	else if (new_user != NULL && settings.getPassword)
+		fprintf(stderr, "You can't specify a username when using passwords.\n");
 	else
 	{
 		PGconn	   *olddb = settings->db;
