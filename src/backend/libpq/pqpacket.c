@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.16 1998/07/09 03:28:46 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.17 1998/08/25 21:22:27 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,8 @@
  * Set up a packet read for the postmaster event loop.
  */
 
-void		PacketReceiveSetup(Packet *pkt, PacketDoneProc iodone, void *arg)
+void
+PacketReceiveSetup(Packet *pkt, PacketDoneProc iodone, void *arg)
 {
 	pkt->nrtodo = sizeof(pkt->len);
 	pkt->ptr = (char *) &pkt->len;
