@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Feb 12 09:08:58 EST 2003
+Last updated:		Wed Feb 12 09:11:11 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -164,7 +164,6 @@ Commands
 * Add CORRESPONDING BY to UNION/INTERSECT/EXCEPT
 * Allow REINDEX to rebuild all indexes, remove /contrib/reindex
 * Make a transaction-safe TRUNCATE
-* Fix SELECT ... INTO and CREATE TABLE AS to have appopriate OID column
 * Add ROLLUP, CUBE, GROUPING SETS options to GROUP BY
 
 
