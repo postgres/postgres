@@ -1,5 +1,5 @@
 From: Zeugswetter Andreas <ZeugswetterA@spardat.at>
-$Date: 2002/11/11 19:59:56 $
+$Date: 2002/11/12 20:02:38 $
 
 On AIX 4.3.2 PostgreSQL compiled with the native IBM compiler xlc
 (vac.C 5.0.1) passes all regression tests.  Other versions of OS and
@@ -18,7 +18,3 @@ Compiling PostgreSQL with gcc (2.95.3) on AIX also works.
 You need libm.a that is in the fileset bos.adt.libm.  (Try the
 following command.)
 $ lslpp -l bos.adt.libm
-
-Since the mktime() function does not work on AIX for dates before
-1970, all localtime formatted datetimes will not use daylight-saving
-time for dates before 1970.
