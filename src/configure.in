@@ -69,63 +69,29 @@ else
 	ECHO_C='\c'
 fi
 
-cat <<EOT
-**************************************************************
-	PostreSQL v6.3.2 Installation Program
-
-Welcome to the new improved PostgreSQL installation program.
-This configuration program is for version 6.3.2 of the
-PostgreSQL software.
-
-EOT
-
 dnl this part selects the template from the one in the
 dnl template directory.
 
-if test "X$with_template" != "X"
-then
-	TEMPLATE=template/$with_template
-else
-	TEMPLATE=DO_NOT_CHANGE_THIS_INVALID_FILENAME
-fi
-
-if test ! -f $TEMPLATE
-then
-	cat <<EOT
-Please select a template from the ones listed below.  If no
-template is available, then select the 'generic' one and
-consider emailling scrappy@hub.org with the above line which
-starts 'checking host system type...'
-**************************************************************
-EOT
-	TEMPLATE=generic
-	GUESS=`grep "^$host_no_ver=" template/.similar 2>/dev/null`
-	if test ! "$GUESS"
-	then	host_no_ver=`echo "$host" | sed 's/[[0-9.]]*$//'`
-		GUESS=`grep "$host_no_ver" template/.similar 2>/dev/null`
-	fi
-	if test "$GUESS"
-	then
-		TEMPLATE=`echo $GUESS | sed 's/.*=//'`
-	fi
-	export TEMPLATE
-	ls template
-	echo "**************************************************************"
-	$ECHO_N "Appropriate template file { $TEMPLATE }: $ECHO_C"
-	read a
-	if test "$a." != "."
-	then
-		TEMPLATE=$a
-	fi
-	if test ! -f template/$TEMPLATE
-	then
-		echo "You must choose an appropriate template file."
-		exit
-	fi
-	TEMPLATE=template/$TEMPLATE
-fi
+AC_MSG_CHECKING(setting template to)
+AC_ARG_WITH(template,
+    [  --with-template=TEMPLATE
+                          use operating system template file 
+                              see template directory],
+    [  TEMPLATE=template/$withval ],
+    [  TEMPLATE=template/`uname -s | tr A-Z a-z` ])
+AC_MSG_RESULT($TEMPLATE)
+        
 export TEMPLATE
-echo ""
+if test ! -f "$TEMPLATE"; then
+	echo ""
+	echo "$TEMPLATE does not exist"
+	echo ""
+	echo "Available Templates (set using --with-template):"
+	echo ""
+	ls template
+	echo ""
+	exit
+fi
 
 AROPT=`grep '^AROPT:' $TEMPLATE | awk -F: '{print $2}'`
 SHARED_LIB=`grep '^SHARED_LIB:' $TEMPLATE | awk -F: '{print $2}'`
