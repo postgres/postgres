@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.87 1998/12/30 19:56:32 wieck Exp $
+ * $Id: pg_proc.h,v 1.88 1999/02/13 04:19:54 thomas Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -842,7 +842,7 @@ DESCR("smaller of two");
 
 DATA(insert OID = 460 (  int8in			   PGUID 11 f t f 1 f 20 "0" 100 0 0 100  foo bar ));
 DESCR("(internal)");
-DATA(insert OID = 461 (  int8out		   PGUID 11 f t f 1 f 19 "0" 100 0 0 100  foo bar ));
+DATA(insert OID = 461 (  int8out		   PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
 DESCR("(internal)");
 DATA(insert OID = 462 (  int8um			   PGUID 11 f t f 1 f 20 "20" 100 0 0 100  foo bar ));
 DESCR("unary minus");
@@ -1546,6 +1546,11 @@ DESCR("multiply");
 DATA(insert OID = 1281 (  int48div		   PGUID 11 f t f 2 f 20 "23 20" 100 0 0 100  foo bar ));
 DESCR("divide");
 
+DATA(insert OID = 1288 (  int8_text		   PGUID 11 f t f 1 f 25 "20" 100 0 0 100  foo bar ));
+DESCR("convert int8 to text");
+DATA(insert OID = 1289 (  text_int8		   PGUID 11 f t f 1 f 20 "25" 100 0 0 100  foo bar ));
+DESCR("convert text to int8");
+
 DATA(insert OID = 1297 (  timestamp_in	   PGUID 11 f t f 1 f 1296 "0" 100 0 0 100	foo bar ));
 DESCR("(internal)");
 DATA(insert OID = 1298 (  timestamp_out    PGUID 11 f t f 1 f	23 "0" 100 0 0 100	foo bar ));
@@ -2026,6 +2031,19 @@ DATA(insert OID = 1606 (  text		   PGUID 14 f t f 1 f  25 "701" 100 0 0 100  "se
 DESCR("convert float8 to text");
 DATA(insert OID = 1607 (  text		   PGUID 14 f t f 1 f  25 "700" 100 0 0 100  "select float4_text($1)" - ));
 DESCR("convert float4 to text");
+
+DATA(insert OID = 1619 (  varchar	   PGUID 14 f t f 1 f 1043 "23" 100 0 0 100  "select int4_text($1)" - ));
+DESCR("convert int4 to varchar");
+DATA(insert OID = 1620 (  int4		   PGUID 14 f t f 1 f   23 "1043" 100 0 0 100  "select text_int4($1)" - ));
+DESCR("convert varchar to int4");
+DATA(insert OID = 1621 (  text		   PGUID 14 f t f 1 f  25 "20" 100 0 0 100  "select int8_text($1)" - ));
+DESCR("convert int8 to text");
+DATA(insert OID = 1622 (  int8		   PGUID 14 f t f 1 f  20 "25" 100 0 0 100  "select text_int8($1)" - ));
+DESCR("convert text to int8");
+DATA(insert OID = 1623 (  varchar	   PGUID 14 f t f 1 f 1043 "20" 100 0 0 100  "select int8_text($1)" - ));
+DESCR("convert int8 to varchar");
+DATA(insert OID = 1624 (  int8		   PGUID 14 f t f 1 f  20 "1043" 100 0 0 100  "select text_int8($1)" - ));
+DESCR("convert varchar to int8");
 
 /* Oracle Compatibility Related Functions - By Edmund Mergl <E.Mergl@bawue.de> */
 DATA(insert OID =  868 (  strpos	   PGUID 14 f t f 2 f 23 "25 25" 100 0 0 100  "select textpos($1, $2)" - ));
