@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.402 2004/06/03 02:08:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.403 2004/06/11 03:54:43 momjian Exp $
  *
  * NOTES
  *
@@ -829,6 +829,10 @@ PostmasterMain(int argc, char *argv[])
 	 * We're ready to rock and roll...
 	 */
 	StartupPID = StartupDataBase();
+
+#ifdef EXEC_BACKEND
+	write_nondefault_variables(PGC_POSTMASTER);
+#endif
 
 	status = ServerLoop();
 
