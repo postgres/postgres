@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.19 2000/03/24 03:57:06 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.20 2000/03/28 14:35:27 thomas Exp $
 Postgres documentation
 -->
 
@@ -224,72 +224,62 @@ ERROR <replaceable class="PARAMETER">name</replaceable>: Table does not exist.
   <title>
    Description
   </title>
-   <title>
-    Terms
-   </title>
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term>EXCLUSIVE</term>
-      <listitem>
-       <para>
-	Exclusive lock that prevents other locks from being granted.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-
-    <variablelist>
-     <varlistentry>
-      <term>SHARE</term>
-      <listitem>
-       <para>
-	Allows others to share lock.  Prevents EXCLUSIVE locks.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-
-    <variablelist>
-     <varlistentry>
-      <term>ACCESS</term>
-      <listitem>
-       <para>
-	Locks table schema.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-
-    <variablelist>
-     <varlistentry>
-      <term>ROW</term>
-      <listitem>
-       <para>
-	Locks individual rows.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-
-    <variablelist>
-     <varlistentry>
-      <term>Notes</term>
-      <listitem>
-       <para>
-	If EXCLUSIVE or SHARE are not specified, EXCLUSIVE is assumed.
-	Locks exist for the duration of the transaction.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-
-   </para>
 
   <para>
+   <command>LOCK TABLE</command> controls concurrent access to a table
+   for the duration of a transaction.
    <productname>Postgres</productname> always uses the least restrictive
    lock mode whenever possible. <command>LOCK TABLE</command> 
    provided for cases when you might need more restrictive locking.
+  </para>
+
+  <para>
+   <acronym>RDBMS</acronym> locking uses the following terminology:
+
+   <variablelist>
+    <varlistentry>
+     <term>EXCLUSIVE</term>
+     <listitem>
+      <para>
+       Exclusive lock that prevents other locks from being granted.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>SHARE</term>
+     <listitem>
+      <para>
+       Allows others to share lock.  Prevents EXCLUSIVE locks.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>ACCESS</term>
+     <listitem>
+      <para>
+       Locks table schema.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>ROW</term>
+     <listitem>
+      <para>
+       Locks individual rows.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+
+   <note>
+    <para>
+     If EXCLUSIVE or SHARE are not specified, EXCLUSIVE is assumed.
+     Locks exist for the duration of the transaction.
+    </para>
+   </note>
   </para>
 
   <para>
