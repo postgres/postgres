@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.27 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.28 2002/06/17 05:40:32 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -22,7 +22,7 @@ PostgreSQL documentation
   </refsynopsisdivinfo>
   <synopsis>
 CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
-    [ WITH [ OWNER [=] <replaceable class="parameter">dbowner</replaceable> ]
+    [ [ WITH ] [ OWNER [=] <replaceable class="parameter">dbowner</replaceable> ]
            [ LOCATION [=] '<replaceable class="parameter">dbpath</replaceable>' ]
            [ TEMPLATE [=] <replaceable class="parameter">template</replaceable> ]
            [ ENCODING [=] <replaceable class="parameter">encoding</replaceable> ] ]

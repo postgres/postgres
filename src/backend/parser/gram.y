@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.323 2002/06/15 03:00:03 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.324 2002/06/17 05:40:32 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -201,7 +201,7 @@ static void doNegateFloat(Value *v);
 
 %type <list>	stmtblock, stmtmulti,
 		OptTableElementList, OptInherit, definition, opt_distinct,
-		opt_with, func_args, func_args_list, func_as, createfunc_opt_list
+		opt_definition, func_args, func_args_list, func_as, createfunc_opt_list
 		oper_argtypes, RuleActionList, RuleActionMulti,
 		opt_column_list, columnList, opt_name_list,
 		sort_clause, sortby_list, index_params, index_list, name_list,
@@ -232,7 +232,7 @@ static void doNegateFloat(Value *v);
 %type <ival>	opt_interval
 %type <node>	overlay_placing, substr_from, substr_for
 
-%type <boolean>	opt_binary, opt_using, opt_instead, opt_cursor
+%type <boolean>	opt_binary, opt_using, opt_instead, opt_cursor, opt_with
 %type <boolean>	opt_with_copy, index_opt_unique, opt_verbose, opt_full
 %type <boolean>	opt_freeze, analyze_keyword
 
@@ -469,7 +469,7 @@ stmt : AlterDatabaseSetStmt
 		| CreateUserStmt
 		| ClusterStmt
 		| DefineStmt
-		| DropStmt		
+		| DropStmt
 		| DropSchemaStmt
 		| TruncateStmt
 		| CommentStmt
@@ -518,20 +518,18 @@ stmt : AlterDatabaseSetStmt
  *
  *****************************************************************************/
 
-CreateUserStmt:  CREATE USER UserId OptUserList 
-				{
-					CreateUserStmt *n = makeNode(CreateUserStmt);
-					n->user = $3;
-					n->options = $4;
-					$$ = (Node *)n;
-				}
-			| CREATE USER UserId WITH OptUserList
+CreateUserStmt:  CREATE USER UserId opt_with OptUserList
 				{
 					CreateUserStmt *n = makeNode(CreateUserStmt);
 					n->user = $3;
 					n->options = $5;
 					$$ = (Node *)n;
-				}                   
+				}
+		;
+
+
+opt_with:	WITH								{ $$ = TRUE; }
+		| /*EMPTY*/								{ $$ = TRUE; }
 		;
 
 /*****************************************************************************
@@ -541,14 +539,7 @@ CreateUserStmt:  CREATE USER UserId OptUserList
  *
  *****************************************************************************/
 
-AlterUserStmt:  ALTER USER UserId OptUserList
-				 {
-					AlterUserStmt *n = makeNode(AlterUserStmt);
-					n->user = $3;
-					n->options = $4;
-					$$ = (Node *)n;
-				 }
-			    | ALTER USER UserId WITH OptUserList
+AlterUserStmt:  ALTER USER UserId opt_with OptUserList
 				 {
 					AlterUserStmt *n = makeNode(AlterUserStmt);
 					n->user = $3;
@@ -600,19 +591,19 @@ OptUserList: OptUserList OptUserElem		{ $$ = lappend($1, $2); }
 		;
 
 OptUserElem:  PASSWORD Sconst
-				{ 
+				{
 					$$ = makeNode(DefElem);
 					$$->defname = "password";
 					$$->arg = (Node *)makeString($2);
 				}
 			| ENCRYPTED PASSWORD Sconst
-				{ 
+				{
 					$$ = makeNode(DefElem);
 					$$->defname = "encryptedPassword";
 					$$->arg = (Node *)makeString($3);
 				}
 			| UNENCRYPTED PASSWORD Sconst
-				{ 
+				{
 					$$ = makeNode(DefElem);
 					$$->defname = "unencryptedPassword";
 					$$->arg = (Node *)makeString($3);
@@ -624,37 +615,37 @@ OptUserElem:  PASSWORD Sconst
 					$$->arg = (Node *)makeInteger($2);
 				}
 			| CREATEDB
-				{ 
+				{
 					$$ = makeNode(DefElem);
 					$$->defname = "createdb";
 					$$->arg = (Node *)makeInteger(TRUE);
 				}
 			| NOCREATEDB
-				{ 
+				{
 					$$ = makeNode(DefElem);
 					$$->defname = "createdb";
 					$$->arg = (Node *)makeInteger(FALSE);
 				}
 			| CREATEUSER
-				{ 
+				{
 					$$ = makeNode(DefElem);
 					$$->defname = "createuser";
 					$$->arg = (Node *)makeInteger(TRUE);
 				}
 			| NOCREATEUSER
-				{ 
+				{
 					$$ = makeNode(DefElem);
 					$$->defname = "createuser";
 					$$->arg = (Node *)makeInteger(FALSE);
 				}
 			| IN_P GROUP_P user_list
-				{ 
+				{
 					$$ = makeNode(DefElem);
 					$$->defname = "groupElts";
 					$$->arg = (Node *)$3;
 				}
 			| VALID UNTIL Sconst
-				{ 
+				{
 					$$ = makeNode(DefElem);
 					$$->defname = "validUntil";
 					$$->arg = (Node *)makeString($3);
@@ -680,14 +671,7 @@ user_list:  user_list ',' UserId
  *
  *****************************************************************************/
 
-CreateGroupStmt:  CREATE GROUP_P UserId OptGroupList
-				{
-					CreateGroupStmt *n = makeNode(CreateGroupStmt);
-					n->name = $3;
-					n->options = $4;
-					$$ = (Node *)n;
-				}
-			| CREATE GROUP_P UserId WITH OptGroupList
+CreateGroupStmt:  CREATE GROUP_P UserId opt_with OptGroupList
 				{
 					CreateGroupStmt *n = makeNode(CreateGroupStmt);
 					n->name = $3;
@@ -704,7 +688,7 @@ OptGroupList: OptGroupList OptGroupElem		{ $$ = lappend($1, $2); }
 		;
 
 OptGroupElem:  USER user_list
-				{ 
+				{
 					$$ = makeNode(DefElem);
 					$$->defname = "userElts";
 					$$->arg = (Node *)$2;
@@ -1504,7 +1488,7 @@ ColConstraintElem:
 					n->keys = NULL;
 					$$ = (Node *)n;
 				}
-			| REFERENCES qualified_name opt_column_list key_match key_actions 
+			| REFERENCES qualified_name opt_column_list key_match key_actions
 				{
 					FkConstraint *n = makeNode(FkConstraint);
 					n->constr_name		= NULL;
@@ -1880,7 +1864,7 @@ DropPLangStmt:  DROP opt_procedural LANGUAGE ColId_or_Sconst
 opt_procedural: PROCEDURAL		{ $$ = TRUE; }
 			| /*EMPTY*/			{ $$ = TRUE; }
 		;
-		
+
 /*****************************************************************************
  *
  *		QUERIES :
@@ -1913,7 +1897,7 @@ CreateTrigStmt:  CREATE TRIGGER name TriggerActionTime TriggerEvents ON
 					$$ = (Node *)n;
 				}
 		| CREATE CONSTRAINT TRIGGER name AFTER TriggerEvents ON
-				qualified_name OptConstrFromTable 
+				qualified_name OptConstrFromTable
 				ConstraintAttributeSpec
 				FOR EACH ROW EXECUTE PROCEDURE
 				func_name '(' TriggerFuncArgs ')'
@@ -2237,13 +2221,13 @@ TruncateStmt:  TRUNCATE opt_table qualified_name
  *  the object associated with the comment. The form of the statement is:
  *
  *  COMMENT ON [ [ DATABASE | DOMAIN | INDEX | SEQUENCE | TABLE | TYPE | VIEW ]
- *               <objname> | AGGREGATE <aggname> (<aggtype>) | FUNCTION 
- *		 <funcname> (arg1, arg2, ...) | OPERATOR <op> 
+ *               <objname> | AGGREGATE <aggname> (<aggtype>) | FUNCTION
+ *		 <funcname> (arg1, arg2, ...) | OPERATOR <op>
  *		 (leftoperand_typ rightoperand_typ) | TRIGGER <triggername> ON
  *		 <relname> | RULE <rulename> ON <relname> ] IS 'text'
  *
  *****************************************************************************/
- 
+
 CommentStmt:	COMMENT ON comment_type any_name IS comment_text
 			{
 				CommentStmt *n = makeNode(CommentStmt);
@@ -2319,12 +2303,12 @@ comment_type:	COLUMN { $$ = COLUMN; }
 		| DOMAIN_P { $$ = TYPE_P; }
 		| TYPE_P { $$ = TYPE_P; }
 		| VIEW { $$ = VIEW; }
-		;		
+		;
 
 comment_text:	Sconst { $$ = $1; }
 		| NULL_P { $$ = NULL; }
 		;
-		
+
 /*****************************************************************************
  *
  *		QUERY:
@@ -2775,7 +2759,7 @@ RecipeStmt:  EXECUTE RECIPE recipe_name
  *****************************************************************************/
 
 CreateFunctionStmt:	CREATE opt_or_replace FUNCTION func_name func_args
-			 RETURNS func_return createfunc_opt_list opt_with
+			 RETURNS func_return createfunc_opt_list opt_definition
 				{
 					CreateFunctionStmt *n = makeNode(CreateFunctionStmt);
 					n->replace = $2;
@@ -2951,7 +2935,7 @@ func_as: Sconst
 				{ 	$$ = makeList2(makeString($1), makeString($3)); }
 		;
 
-opt_with:  WITH definition						{ $$ = $2; }
+opt_definition:  WITH definition				{ $$ = $2; }
 		| /*EMPTY*/								{ $$ = NIL; }
 		;
 
@@ -3118,7 +3102,7 @@ RuleStmt:  CREATE RULE name AS
 
 RuleActionList:  NOTHING				{ $$ = NIL; }
 		| RuleActionStmt				{ $$ = makeList1($1); }
-		| '(' RuleActionMulti ')'		{ $$ = $2; } 
+		| '(' RuleActionMulti ')'		{ $$ = $2; }
 		;
 
 /* the thrashing around here is to discard "empty" statements... */
@@ -3324,7 +3308,7 @@ LoadStmt:  LOAD file_name
  *
  *****************************************************************************/
 
-CreatedbStmt:  CREATE DATABASE database_name WITH createdb_opt_list
+CreatedbStmt:  CREATE DATABASE database_name opt_with createdb_opt_list
 				{
 					CreatedbStmt *n = makeNode(CreatedbStmt);
 					List   *l;
@@ -3425,7 +3409,7 @@ createdb_opt_item:  LOCATION opt_equal Sconst
 				{
 					$$ = lconsi(3, makeListi1(-1));
 				}
-		| OWNER opt_equal name 
+		| OWNER opt_equal name
 				{
 					$$ = lconsi(4, makeList1($3));
 				}
@@ -3437,7 +3421,8 @@ createdb_opt_item:  LOCATION opt_equal Sconst
 
 /*
  *	Though the equals sign doesn't match other WITH options, pg_dump uses
- *  equals for backward compability, and it doesn't seem worth remove it.
+ *  equals for backward compability, and it doesn't seem worth removing it.
+ *  2002-02-25
  */
 opt_equal: '='								{ $$ = TRUE; }
 		| /*EMPTY*/							{ $$ = FALSE; }
@@ -3496,7 +3481,7 @@ CreateDomainStmt:  CREATE DOMAIN_P any_name opt_as Typename ColQualList opt_coll
 					n->domainname = $3;
 					n->typename = $5;
 					n->constraints = $6;
-					
+
 					if ($7 != NULL)
 						elog(NOTICE,"CREATE DOMAIN / COLLATE %s not yet "
 							"implemented; clause ignored", $7);
@@ -3940,7 +3925,7 @@ simple_select: SELECT opt_distinct target_list
 					$$ = (Node *)n;
 				}
 		| select_clause UNION opt_all select_clause
-			{	
+			{
 				$$ = makeSetOp(SETOP_UNION, $3, $1, $4);
 			}
 		| select_clause INTERSECT opt_all select_clause
@@ -3951,7 +3936,7 @@ simple_select: SELECT opt_distinct target_list
 			{
 				$$ = makeSetOp(SETOP_EXCEPT, $3, $1, $4);
 			}
-		; 
+		;
 
 into_clause:  INTO OptTempTableName		{ $$ = $2; }
 		| /*EMPTY*/		{ $$ = NULL; }
@@ -3962,22 +3947,22 @@ into_clause:  INTO OptTempTableName		{ $$ = $2; }
  * since TEMP is not a reserved word.  See also OptTemp.
  */
 OptTempTableName:  TEMPORARY opt_table qualified_name
-				{ 
+				{
 					$$ = $3;
 					$$->istemp = true;
 				}
 			| TEMP opt_table qualified_name
-				{ 
+				{
 					$$ = $3;
 					$$->istemp = true;
 				}
 			| LOCAL TEMPORARY opt_table qualified_name
-				{ 
+				{
 					$$ = $4;
 					$$->istemp = true;
 				}
 			| LOCAL TEMP opt_table qualified_name
-				{ 
+				{
 					$$ = $4;
 					$$->istemp = true;
 				}
@@ -3994,12 +3979,12 @@ OptTempTableName:  TEMPORARY opt_table qualified_name
 					$$->istemp = true;
 				}
 			| TABLE qualified_name
-				{ 
+				{
 					$$ = $2;
 					$$->istemp = false;
 				}
 			| qualified_name
-				{ 
+				{
 					$$ = $1;
 					$$->istemp = false;
 				}
@@ -6122,7 +6107,7 @@ insert_target_list:  insert_target_list ',' insert_target_el
 		;
 
 insert_target_el:  target_el	{	$$ = $1;  }
-				| DEFAULT		{	
+				| DEFAULT		{
 									InsertDefault *def = makeNode(InsertDefault);
 									$$ = makeNode(ResTarget);
 									$$->name = NULL;
