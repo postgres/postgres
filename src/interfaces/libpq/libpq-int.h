@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.29 2000/11/13 23:37:54 momjian Exp $
+ * $Id: libpq-int.h,v 1.30 2001/01/20 23:07:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -334,19 +334,10 @@ extern int	pqWriteReady(PGconn *conn);
 #define DefaultAuthtype		  ""
 #define DefaultPassword		  ""
 
-/* supply an implementation of strerror() macro if system doesn't have it */
-#ifndef strerror
-#if defined(sun) && defined(__sparc__) && !defined(__SVR4)
-extern char *sys_errlist[];
-
-#define strerror(A) (sys_errlist[(A)])
-#endif	 /* sunos4 */
-#endif	 /* !strerror */
-
 /*
  * this is so that we can check is a connection is non-blocking internally
  * without the overhead of a function call
  */
-#define pqIsnonblocking(conn)	(conn->nonblocking)
+#define pqIsnonblocking(conn)	((conn)->nonblocking)
 
 #endif	 /* LIBPQ_INT_H */

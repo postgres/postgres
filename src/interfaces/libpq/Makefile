@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.47 2000/10/30 10:31:45 ishii Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.48 2001/01/20 23:07:27 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,7 +20,8 @@ SO_MINOR_VERSION= 1
 override CPPFLAGS += -DFRONTEND -I$(srcdir) -DSYSCONFDIR='"$(sysconfdir)"'
 
 OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
-      pqexpbuffer.o dllist.o pqsignal.o $(SNPRINTF) $(INET_ATON)
+      pqexpbuffer.o dllist.o pqsignal.o \
+      $(INET_ATON) $(SNPRINTF) $(STRERROR)
 
 ifdef MULTIBYTE
 OBJS+= common.o wchar.o
@@ -48,12 +49,16 @@ backend_src = $(top_srcdir)/src/backend
 dllist.c: $(backend_src)/lib/dllist.c
 	rm -f $@ && $(LN_S) $< .
 
+# this only gets done if configure finds system doesn't have inet_aton()
+inet_aton.c: $(backend_src)/port/inet_aton.c
+	rm -f $@ && $(LN_S) $< .
+
 # this only gets done if configure finds system doesn't have snprintf()
 snprintf.c: $(backend_src)/port/snprintf.c
 	rm -f $@ && $(LN_S) $< .
 
-# this only gets done if configure finds system doesn't have inet_aton()
-inet_aton.c: $(backend_src)/port/inet_aton.c
+# this only gets done if configure finds system doesn't have strerror()
+strerror.c: $(backend_src)/port/strerror.c
 	rm -f $@ && $(LN_S) $< .
 
 ifdef MULTIBYTE
@@ -77,7 +82,8 @@ uninstall: uninstall-lib
 	rm -f $(addprefix $(DESTDIR)$(includedir)/, libpq-fe.h libpq-int.h pqexpbuffer.h)
 
 clean distclean maintainer-clean: clean-lib
-	rm -f $(OBJS) dllist.c snprintf.c inet_aton.c common.c wchar.c conv.c big5.c
+	rm -f $(OBJS) dllist.c common.c wchar.c conv.c big5.c
+	rm -f $(OBJS) inet_aton.c snprintf.c strerror.c
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend
