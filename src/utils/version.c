@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/utils/Attic/version.c,v 1.2 1996/11/11 14:44:04 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/utils/Attic/version.c,v 1.3 1996/11/26 01:17:56 bryanh Exp $
  *
  * NOTES
  *	XXX eventually, should be able to handle version identifiers
@@ -18,6 +18,7 @@
  *-------------------------------------------------------------------------
  */
 #include <sys/file.h>
+#include <fcntl.h>      /* For open() flags */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <ctype.h>
