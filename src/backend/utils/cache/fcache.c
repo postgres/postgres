@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.35 2000/08/08 15:42:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.36 2000/08/11 18:35:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,9 +49,6 @@ GetDynamicFuncArgType(Var *arg, ExprContext *econtext)
 	if (!tup)
 		elog(ERROR, "Lookup failed on type tuple for class %s",
 			 relname);
-
-	/* TEST: I bet this routine is unnecessary ... */
-	Assert(arg->vartype == tup->t_data->t_oid);
 
 	return tup->t_data->t_oid;
 }
