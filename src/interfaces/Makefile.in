@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/Attic/Makefile.in,v 1.2 2000/06/11 11:39:59 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/Attic/Makefile.in,v 1.3 2000/06/19 16:58:43 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,9 +13,10 @@ VPATH = @srcdir@
 
 top_srcdir = @top_srcdir@
 top_builddir = ../..
+subdir = src/interfaces
 
 USE_TCL = @USE_TCL@
-USE_ODBC = @USE_ODBC@
+enable_odbc = @enable_odbc@
 with_CXX = @with_CXX@
 with_perl = @with_perl@
 with_python = @with_python@
@@ -36,26 +37,28 @@ endif
 ifeq ($(with_python), yes)
 	$(MAKE) -C python $@
 endif
-ifeq ($(USE_ODBC), true)
+ifeq ($(enable_odbc), yes)
 	$(MAKE) -C odbc $@
 endif
 
 distclean maintainer-clean: clean
 	-$(MAKE) -C perl5 $@
 	-$(MAKE) -C python $@
+	-$(MAKE) -C odbc $@
 	rm -f Makefile \
 	  libpq/Makefile \
 	  ecpg/lib/Makefile \
 	  ecpg/preproc/Makefile \
 	  libpq++/Makefile \
 	  libpgeasy/Makefile \
-	  libpgtcl/Makefile \
-	  odbc/GNUmakefile \
-	  odbc/Makefile.global \
-	  odbc/port \
-	  odbc/makefiles \
-	  odbc/template \
-	  odbc/config.h
+	  libpgtcl/Makefile
 
 
 .PHONY: all install dep depend clean distclean maintainer-clean
+
+
+GNUmakefile: GNUmakefile.in $(top_builddir)/config.status
+	CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= ./config.status
+
+$(top_builddir)/config.status: $(top_srcdir)/configure
+	cd $(top_builddir) && ./config.status --recheck

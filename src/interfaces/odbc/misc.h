@@ -16,9 +16,7 @@
 
 #ifndef WIN32
 #include "gpps.h"
-#ifndef HAVE_SQL_GET_PRIV_PROFILE
 #define SQLGetPrivateProfileString(a,b,c,d,e,f) GetPrivateProfileString(a,b,c,d,e,f)
-#endif
 #endif
 
 #include <stdio.h>

@@ -31,18 +31,17 @@
 
 /* INI File Stuff */
 #ifndef WIN32
-#define ODBC_INI        ".odbc.ini"
-#ifdef ODBCINST
-#define xstr(s)         str(s)
-#define str(s)          #s
-#define ODBCINST_INI    xstr(ODBCINST) "/odbcinst.ini"
-#else
-#define ODBCINST_INI    "/etc/odbcinst.ini"
-#endif
-#else
-#define ODBC_INI        "ODBC.INI"         /* ODBC initialization file */
-#define ODBCINST_INI    "ODBCINST.INI"      /* ODBC Installation file */
-#endif
+# define ODBC_INI        ".odbc.ini"
+# ifdef ODBCINSTDIR
+#  define ODBCINST_INI    ODBCINSTDIR "/odbcinst.ini"
+# else
+#  define ODBCINST_INI    "/etc/odbcinst.ini"
+#  warning "location of odbcinst.ini file defaulted to /etc"
+# endif
+#else /* WIN32 */
+# define ODBC_INI        "ODBC.INI"         /* ODBC initialization file */
+# define ODBCINST_INI    "ODBCINST.INI"     /* ODBC Installation file */
+#endif /* WIN32 */
 
 
 #define INI_DSN           DBMS_NAME         /* Name of default Datasource in ini file (not used?) */

@@ -1,103 +1,64 @@
 #-------------------------------------------------------------------------
 #
-# GNUMakefile.in--
-#    Build and install psqlodbc (Postgres ODBC driver).
+# GNUMakefile.in for psqlodbc (Postgres ODBC driver).
 #
-# Copyright (c) 1994, Regents of the University of California
-#
-#
-# IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile.in,v 1.15 2000/06/14 02:43:46 momjian Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile.in,v 1.16 2000/06/19 16:58:44 petere Exp $
 #
 #-------------------------------------------------------------------------
 
+srcdir = @srcdir@
+VPATH = @srcdir@
+top_srcdir = @top_srcdir@
+top_builddir = ../../..
+subdir = src/interfaces/odbc
+
+mkinstalldirs = @mkinstalldirs@
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+
+prefix = @prefix@
+datadir = @datadir@
+odbcinst_ini_dir = @odbcinst_ini_dir@
+includedir = @includedir@
+
+# Shared library parameters
 NAME = psqlodbc
-SRCDIR= ../..
-ODBCSRCDIR= @srcdir@
+SO_MAJOR_VERSION = 0
+SO_MINOR_VERSION = 26
+
+
+SRCDIR= $(top_srcdir)/src
 include $(SRCDIR)/Makefile.global
 
-include Version.mk
+CFLAGS += -I. @DEFS@ -DODBCINSTDIR='"$(odbcinst_ini_dir)"'
 
-FIND= @find@
-# assuming gnu tar and split here
-TAR= @tar@
-SPLIT= @split@
-
-CFLAGS += -I. @DEFS@
-
-SOURCES = *.c *.h *.in Config.mk \
-	TODO.txt Version.mk config.guess config.sub configure \
-	install-sh license.txt notice.txt odbcinst.ini \
-	psqlodbc.def \
-	psqlodbc.rc readme.txt
 
 OBJS = info.o bind.o columninfo.o connection.o convert.o drvconn.o \
         environ.o execute.o lobj.o misc.o options.o \
         pgtypes.o psqlodbc.o qresult.o results.o socket.o parse.o statement.o \
-        gpps.o tuple.o tuplelist.o dlg_specific.o $(OBJX)
+        gpps.o tuple.o tuplelist.o dlg_specific.o
 
-SHLIB_LINK= $(LD_FLAGS)
-SHLIB_LINK+= $(SHLIB_ODBC)
 
 # Shared library stuff, also default 'all' target
 include $(SRCDIR)/Makefile.shlib
 
-.PHONY: install install-ini beforeinstall-headers install-headers
+install: all installdirs install-headers install-ini install-lib $(install-shlib-dep)
 
-install: $(HEADERDIR) $(LIBDIR) $(ODBCINST) install-headers \
-	install-ini install-lib $(install-shlib-dep)
+installdirs:
+	$(mkinstalldirs) $(includedir)/iodbc $(LIBDIR) $(odbcinst_ini_dir)
 
-$(HEADERDIR) $(LIBDIR) $(ODBCINST):
-	mkdir -p $@
-
-install-headers: beforeinstall-headers isql.h isqlext.h iodbc.h
-	$(INSTALL) $(INSTLOPTS) iodbc.h $(HEADERDIR)/iodbc/iodbc.h
-	$(INSTALL) $(INSTLOPTS) isql.h $(HEADERDIR)/iodbc/isql.h
-	$(INSTALL) $(INSTLOPTS) isqlext.h $(HEADERDIR)/iodbc/isqlext.h
-
-beforeinstall-headers:
-	@if [ ! -d $(HEADERDIR)/iodbc ]; then mkdir -p $(HEADERDIR)/iodbc; fi
+install-headers: isql.h isqlext.h iodbc.h
+	$(INSTALL_DATA) $^ $(includedir)/iodbc/
 
 install-ini: odbcinst.ini
-	$(INSTALL) $(INSTL_LIB_OPTS) odbcinst.ini $(ODBCINST)/odbcinst.ini
-
-.PHONY: clean
+	$(INSTALL_DATA) odbcinst.ini $(odbcinst_ini_dir)
 
 clean: clean-shlib
-	-rm -f lib$(NAME).a $(OBJS)
+	rm -f lib$(NAME).a $(OBJS)
 
-.PHONY: distclean
+distclean maintainer-clean: clean
+	rm -f GNUmakefile
 
-distclean: clean
-	-rm -f config.h GNUmakefile Makefile.global
-	-rm -f config.cache config.log config.status
-ifeq ($(PORTNAME), win)
-	@if [ $SRCDIR != $ODBCSRCDIR ]; then rm -f template makefiles port; fi
-else
-	@if [ $SRCDIR ne $ODBCSRCDIR ]; then rm -f template makefiles port; fi
-endif
-
-.PHONY: standalone
-
-standalone:
-	@if test "$SRCDIR" = "$ODBCSRCDIR"; then \
-		echo "****************************************************"; \
-		echo "Note: This was a standalone installation already"; \
-		echo "This may produce a slightly inconsistant tar file..."; \
-		echo "You should use the original tar file instead"; \
-		echo "****************************************************"; \
-	fi
-	-rm -f psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION).tar.gz
-	$(TAR) -chf psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION).tar \
-	    $(SOURCES) -C $(SRCDIR) makefiles template Makefile.shlib
-	gzip psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION).tar
-
-.PHONY: integrated
-
-integrated:
-	-rm -f psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION)-int.tar.gz
-	$(TAR) -cf psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION)-int.tar $(SOURCES)
-	gzip psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION)-int.tar
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend
@@ -105,3 +66,12 @@ depend dep:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
+
+.PHONY: all install installdirs install-headers install-lib install-ini clean distclean maintainer-clean
+
+
+GNUmakefile: GNUmakefile.in $(top_builddir)/config.status
+	CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= ./config.status
+
+$(top_builddir)/config.status: $(top_srcdir)/configure
+	cd $(top_builddir) && ./config.status --recheck

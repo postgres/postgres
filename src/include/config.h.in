@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.119 2000/06/17 00:09:56 petere Exp $
+ * $Id: config.h.in,v 1.120 2000/06/19 16:58:37 petere Exp $
  */
 
 #ifndef CONFIG_H
@@ -283,9 +283,6 @@
 /* Define if you have the ANSI C header files.  */
 #undef STDC_HEADERS
 
-/* default path for the location of the odbcinst.ini file */
-#undef ODBCINST
-
 /* Define if you have the setproctitle function.  */
 #undef HAVE_SETPROCTITLE
 
@@ -304,9 +301,6 @@
 /*
  * Block of parameters for the ODBC code.
  */
-
-/* are we building against a libodbcinst */
-#undef HAVE_SQLGETPRIVATEPROFILESTRING
 
 /* Set to 1 if you have <pwd.h> */
 #undef HAVE_PWD_H

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.79 2000/06/17 00:09:31 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.80 2000/06/19 16:58:35 petere Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the
@@ -89,10 +89,6 @@ POSTDOCDIR= $(POSTGRESDIR)/doc
 # Where the header files necessary to build frontend programs get installed.
 HEADERDIR= $(POSTGRESDIR)/include
 
-# Where the ODBC installation-wide configuration file gets installed.
-# This needs to be a client-side readable area, so can't go in $PGDATA.
-# - thomas 1998-10-05
-ODBCINST= $(POSTGRESDIR)
 
 ##############################################################################
 #

@@ -21,16 +21,14 @@
 #endif
 
 #ifndef WIN32
-#include <string.h>
-#include "gpps.h"
-#ifndef HAVE_SQL_GET_PRIV_PROFILE
-#define SQLGetPrivateProfileString(a,b,c,d,e,f) GetPrivateProfileString(a,b,c,d,e,f)
-#define SQLWritePrivateProfileString(a,b,c,d) WritePrivateProfileString(a,b,c,d)
-#endif
-#ifndef HAVE_STRICMP
-#define stricmp(s1,s2)	strcasecmp(s1,s2)
-#define strnicmp(s1,s2,n)	strncasecmp(s1,s2,n)
-#endif
+# include <string.h>
+# include "gpps.h"
+# define SQLGetPrivateProfileString(a,b,c,d,e,f) GetPrivateProfileString(a,b,c,d,e,f)
+# define SQLWritePrivateProfileString(a,b,c,d) WritePrivateProfileString(a,b,c,d)
+# ifndef HAVE_STRICMP
+#  define stricmp(s1,s2)      strcasecmp(s1,s2)
+#  define strnicmp(s1,s2,n)   strncasecmp(s1,s2,n)
+# endif
 #endif
 
 #include "dlg_specific.h"

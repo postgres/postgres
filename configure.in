@@ -497,99 +497,41 @@ AC_DEFINE_UNQUOTED(PG_KRB_SRVTAB, ["$krb_srvtab"], [The location of the Kerberos
 
 
 
-dnl We include odbc support unless we disable it with --with-odbc=false
-AC_MSG_CHECKING(setting USE_ODBC)
-AC_ARG_WITH(
-   odbc,
-   [  --with-odbc             build ODBC driver package ],
-   [
-	case "$withval" in
-	y | ye | yes)		USE_ODBC=true; AC_MSG_RESULT(enabled) ;;
-	*)			USE_ODBC=false; AC_MSG_RESULT(disabled) ;;
-	esac
-   ],
-   [ USE_ODBC=false; AC_MSG_RESULT(disabled) ]
-)
-export USE_ODBC
+dnl
+dnl Optionally enable the building of the ODBC driver
+dnl
+ 
+dnl Old option name
+if test "x${with_odbc+set}" = xset && test "x${enable_odbc+set}" != xset; then
+  enable_odbc=$with_odbc
+fi
+ 
+AC_MSG_CHECKING(whether to build the ODBC driver)
+AC_ARG_ENABLE(odbc, [  --enable-odbc           build the ODBC driver package],
+[if test x"$enableval" = x"yes" ; then
+  AC_MSG_RESULT(yes)
+else
+  AC_MSG_RESULT(no)
+fi],
+[AC_MSG_RESULT(no)])
+AC_SUBST(enable_odbc)
 
-dnl check if we want to use unixODBC to provide access to the odbc.ini
-dnl files
-
-use_unixODBC=no
-AC_MSG_CHECKING(setting USE_UNIXODBC)
-AC_ARG_WITH(
-    unixODBC,
-    [  --with-unixODBC[=DIR]   Use unixODBC located in DIR],
-    [
-        use_unixODBC=yes;
-        unixODBC="$withval";
-        USE_ODBC=true;
-        AC_MSG_RESULT(enabled);
-    ],
-    [ USE_ODBC=false; use_unixODBC=no; AC_MSG_RESULT(disabled) ]
-)
-export USE_ODBC
 
 dnl Allow for overriding the default location of the odbcinst.ini
-dnl file which is normally ${prefix}/share or ${prefix} if this is
-dnl being compiled inside the postgres distribution.
-dnl Link in the port and template directories
-dnl to help build a "standalone ODBC" tar file
-if test "X$USE_ODBC" = "Xtrue"
-then
-   AC_LINK_FILES(src/include/port, src/interfaces/odbc/port)
-   AC_LINK_FILES(src/makefiles, src/interfaces/odbc/makefiles)
-   AC_LINK_FILES(src/template, src/interfaces/odbc/template)
-   AC_LINK_FILES(src/include/config.h, src/interfaces/odbc/config.h)
-
-   AC_MSG_CHECKING(setting ODBCINST)
-   AC_ARG_WITH(
-      odbcinst,
-      [  --with-odbcinst=DIR     change default directory for odbcinst.ini],
-      AC_DEFINE_UNQUOTED(ODBCINST, ${with_odbcinst}) AC_MSG_RESULT($with_odbcinst),
-      AC_DEFINE_UNQUOTED(ODBCINST, ${ODBCINSTDIR}) AC_MSG_RESULT(${ODBCINSTDIR})
-   )
+dnl file which is normally ${datadir} (i.e., ${prefix}/share).
+if test x"$enable_odbc" = x"yes" ; then
+AC_ARG_WITH(odbcinst, [  --with-odbcinst=DIR     default directory for odbcinst.ini [datadir]],
+[if test x"$with_odbcinst" = x"yes" || test x"$with_odbcinst" = x"no" ; then
+  AC_MSG_ERROR([You must supply an argument to the --with-odbcinst option.])
 fi
-if test "X$with_odbcinst" != "X"
-then
-    ODBCINSTDIR=$with_odbcinst
+odbcinst_ini_dir=$withval],
+[odbcinst_ini_dir='${datadir}'])
+else
+  odbcinst_ini_dir='${datadir}'
 fi
-AC_SUBST(ODBCINSTDIR)
+AC_SUBST(odbcinst_ini_dir)
 
-#check for unixODBC libs
 
-if test "x$use_unixODBC" = "xyes"
-then
-
-  # default to /usr/local if not specified
-  if test "x$unixODBC" = "x"
-  then
-      unixODBC="/usr/local";
-  fi
-  
-  unixODBC_libs="$unixODBC/lib"
-  unixODBC_includes="$unixODBC/include"
-
-  INCLUDES="$INCLUDES -I$unixODBC_includes"
-  AC_CHECK_HEADERS(sql.h sqlext.h odbcinst.h,
-          unixODBC_ok=yes;
-          odbc_headers="$odbc_headers $ac_hdr",
-          unixODBC_ok=no )
-  
-  if test "x$unixODBC_ok" != "xyes"
-  then
-      AC_MSG_ERROR([Unable to find the unixODBC headers in $1])
-  fi
- 
-  save_LIBS="$LIBS"
-  LIBS="-L$unixODBC_libs $LIBS"
-  
-  AC_CHECK_LIB(odbcinst,SQLGetPrivateProfileString,
-    [AC_DEFINE(HAVE_SQL_GET_PRIV_PROFILE)
-    SHLIB_ODBC="$LDFLAGS_ODBC -L$unixODBC_libs -lodbcinst" ],
-    [LIBS="$save_LIBS"] )
-fi
-export SHLIB_ODBC
 
 dnl Unless we specify the command line options
 dnl	--enable cassert	to explicitly enable it
@@ -658,8 +600,6 @@ AC_SUBST(DL_LIB)
 AC_SUBST(USE_TCL)
 AC_SUBST(USE_TK)
 AC_SUBST(WISH)
-AC_SUBST(USE_ODBC)
-AC_SUBST(SHLIB_ODBC)
 AC_SUBST(MULTIBYTE)
 
 
@@ -699,12 +639,15 @@ case "$host_os" in
  hpux*)
 	INSTL_SHLIB_OPTS="-m 555" ;;
 esac
-
-AC_SUBST(INSTALL)
 AC_SUBST(INSTLOPTS)
 AC_SUBST(INSTL_LIB_OPTS)
 AC_SUBST(INSTL_SHLIB_OPTS)
 AC_SUBST(INSTL_EXE_OPTS)
+
+
+INSTALL_SHLIB="\${INSTALL} $INST_SHLIB_OPTS"
+AC_SUBST(INSTALL_SHLIB)
+
 
 AC_PROG_AWK
 
@@ -788,9 +731,8 @@ AC_CHECK_HEADERS(unistd.h)
 AC_CHECK_HEADERS(values.h)
 AC_CHECK_HEADERS(sys/exec.h sys/pstat.h machine/vmparam.h)
 AC_CHECK_HEADERS(sys/types.h sys/socket.h)
-dnl ODBC headers...
 AC_CHECK_HEADERS(sys/param.h pwd.h)
-dnl
+
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -1241,26 +1183,6 @@ See the file 'config.log' for further diagnostics.])
 	LDFLAGS="$ice_save_LDFLAGS"
 fi
 
-dnl cause configure to recurse into subdirectories with their own configure
-dnl Darn, setting AC_CONFIG_SUBDIRS sets a list $subdirs$ in the configure output
-dnl  file, but then configure doesn't bother using that list. Probably a bug in
-dnl  this version of autoconf.
-dnl So at the moment interfaces/odbc gets configured unconditionally.
-dnl - thomas 1998-10-05
-#if test "X$USE_ODBC" = "Xtrue"
-#then
-#	AC_CONFIG_SUBDIRS(interfaces/odbc)
-#fi
-if test "$USE_ODBC" = "true"
-then
-	PWD_INCDIR=no
-	AC_CHECK_HEADER(pwd.h, PWD_INCDIR=yes)
-	if test "$PWD_INCDIR" = "no"; then
-		AC_MSG_WARN(odbc support disabled; pwd.h missing)
-		USE_ODBC=
-	fi
-	AC_SUBST(USE_ODBC)
-fi
 
 dnl Output files that are neither makefiles nor shell scripts probably
 dnl need fully-expanded substitutions, rather than partial expansions
@@ -1304,7 +1226,6 @@ AC_OUTPUT(
 	src/interfaces/libpgeasy/Makefile
 	src/interfaces/libpgtcl/Makefile
 	src/interfaces/odbc/GNUmakefile
-	src/interfaces/odbc/Makefile.global
 	src/interfaces/python/GNUmakefile
 	src/pl/Makefile
 	src/pl/plpgsql/src/Makefile
