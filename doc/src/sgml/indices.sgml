@@ -1,0 +1,57 @@
+<chapter id="indices">
+<title>Indices</title>
+
+<para>
+
+<sect1>
+<title>Partial Indices</title>
+
+<para>
+<note>
+<title>Author</title>
+<para>
+This is from a reply to a question on the e-mail list
+by <ulink url="aoki@CS.Berkeley.EDU">Paul M. Aoki</ulink>
+on 1998-08-11.
+<!--
+  Paul M. Aoki         | University of California at Berkeley
+  aoki@CS.Berkeley.EDU | Dept. of EECS, Computer Science Division #1776
+                       | Berkeley, CA 94720-1776
+-->
+</note>
+
+A <firstterm>partial index</firstterm>
+is an index built over a subset of a table; the subset is defined by
+a predicate.  <productname>Postgres</productname>
+ supported partial indices with arbitrary
+predicates.  I believe IBM's db2 for as/400 supports partial indices
+using single-clause predicates.
+
+<para>
+The main motivation for partial indices is this:
+if all of the queries you ask that can
+profitably use an index fall into a certain range, why build an index
+over the whole table and suffer the associated space/time costs?
+
+(There are other reasons too; see 
+<xref linkend="STON89b-full" endterm="STON89b"> for details.)
+
+<para>
+The machinery to build, update and query partial indices isn't too
+bad.  The hairy parts are index selection (which indices do I build?)
+and query optimization (which indices do I use?); i.e., the parts
+that involve deciding what predicate(s) match the workload/query in
+some useful way.  For those who are into database theory, the problems
+are basically analogous to the corresponding materialized view
+problems, albeit with different cost parameters and formulae.  These
+are, in the general case, hard problems for the standard ordinal 
+<acronym>SQL</acronym>
+types; they're super-hard problems with black-box extension types,
+because the selectivity estimation technology is so crude.
+
+<para>
+Check <xref linkend="STON89b-full" endterm="STON89b">,
+<xref linkend="OLSON93-full" endterm="OLSON93">,
+and
+<xref linkend="SESHADRI95-full" endterm="SESHADRI95">
+for more information.
