@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_language.h,v 1.8 1999/02/13 23:21:11 momjian Exp $
+ * $Id: pg_language.h,v 1.9 1999/10/06 18:20:31 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -65,8 +65,6 @@ typedef FormData_pg_language *Form_pg_language;
 DATA(insert OID = 11 ( internal f 0 0 "n/a" ));
 DESCR("");
 #define INTERNALlanguageId 11
-DATA(insert OID = 12 ( lisp f 0 0 "/usr/ucb/liszt" ));
-DESCR("");
 DATA(insert OID = 13 ( "C" f 0 0 "/bin/cc" ));
 DESCR("");
 #define ClanguageId 13
