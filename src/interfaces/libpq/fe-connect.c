@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.186 2002/06/14 04:23:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.187 2002/06/15 22:06:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,13 +61,6 @@ inet_aton(const char *cp, struct in_addr * inp)
 }
 #endif
 
-#ifdef USE_SSL
-extern int secure_initialize(PGconn *);
-extern void secure_destroy(void);
-extern int secure_open_client(PGconn *);
-extern void secure_close(PGconn *);
-extern SSL * PQgetssl(PGconn *);
-#endif
 
 #define NOTIFYLIST_INITIAL_SIZE 10
 #define NOTIFYLIST_GROWBY 10
@@ -968,7 +961,8 @@ retry2:
 		}
 		if (SSLok == 'S')
 		{
-			if (secure_initialize(conn) == -1 || secure_open_client(conn) == -1)
+			if (pqsecure_initialize(conn) == -1 ||
+				pqsecure_open_client(conn) == -1)
 			{
 				goto connect_errReturn;
 			}
@@ -979,7 +973,7 @@ retry2:
 			/* Received error - probably protocol mismatch */
 			if (conn->Pfdebug)
 				fprintf(conn->Pfdebug, "Postmaster reports error, attempting fallback to pre-7.0.\n");
-			secure_close(conn);
+			pqsecure_close(conn);
 #ifdef WIN32
 			closesocket(conn->sock);
 #else
@@ -1021,7 +1015,7 @@ retry2:
 connect_errReturn:
 	if (conn->sock >= 0)
 	{
-		secure_close(conn);
+		pqsecure_close(conn);
 #ifdef WIN32
 		closesocket(conn->sock);
 #else
@@ -1896,11 +1890,9 @@ freePGconn(PGconn *conn)
 	if (!conn)
 		return;
 	pqClearAsyncResult(conn);	/* deallocate result and curTuple */
-#ifdef USE_SSL
-	secure_close(conn);
-#endif
 	if (conn->sock >= 0)
 	{
+		pqsecure_close(conn);
 #ifdef WIN32
 		closesocket(conn->sock);
 #else
@@ -1974,7 +1966,7 @@ closePGconn(PGconn *conn)
 	 */
 	if (conn->sock >= 0)
 	{
-		secure_close(conn);
+		pqsecure_close(conn);
 #ifdef WIN32
 		closesocket(conn->sock);
 #else

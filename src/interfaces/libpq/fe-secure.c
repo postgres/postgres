@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * fe-connect.c
+ * fe-secure.c
  *	  functions related to setting up a secure connection to the backend.
  *	  Secure connections are expected to provide confidentiality,
  *	  message integrity and endpoint authentication.
@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.4 2002/06/14 04:38:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.5 2002/06/15 22:06:09 tgl Exp $
  *	  
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -26,7 +26,7 @@
  *	  to sign the server certificate, should be present in the
  *	  "$HOME/.postgresql/root.crt" file.  If this file isn't
  *	  readable, or the server certificate can't be validated, 
- *	  secure_open_client() will return an error code.
+ *	  pqsecure_open_client() will return an error code.
  *
  *	  Additionally, the server certificate's "common name" must
  *	  resolve to the other end of the socket.  This makes it
@@ -38,7 +38,7 @@
  *	  Unfortunately neither the current front- or back-end handle
  *	  failure gracefully, resulting in the backend hiccupping.
  *	  This points out problems in each (the frontend shouldn't even
- *	  try to do SSL if secure_initialize() fails, and the backend
+ *	  try to do SSL if pqsecure_initialize() fails, and the backend
  *	  shouldn't crash/recover if an SSH negotiation fails.  The 
  *	  backend definitely needs to be fixed, to prevent a "denial
  *	  of service" attack, but I don't know enough about how the 
@@ -75,30 +75,6 @@
  * OS DEPENDENCIES
  *	  The code currently assumes a POSIX password entry.  How should
  *	  Windows and Mac users be handled?
- *
- * PATCH LEVEL
- *	  milestone 1: fix basic coding errors
- *	  [*] existing SSL code pulled out of existing files.
- *	  [*] SSL_get_error() after SSL_read() and SSL_write(),
- *	      SSL_shutdown(), default to TLSv1.
- *	
- *	  milestone 2: provide endpoint authentication (server)
- *	  [*] client verifies server cert
- *	  [*] client verifies server hostname
- *
- *	  milestone 3: improve confidentially, support perfect forward secrecy
- *	  [ ] use 'random' file, read from '/dev/urandom?'
- *	  [*] emphermal DH keys, default values
- *
- *	  milestone 4: provide endpoint authentication (client)
- *	  [*] server verifies client certificates
- *
- *	  milestone 5: provide informational callbacks
- *	  [*] provide informational callbacks
- *
- *	  other changes
- *	  [ ] tcp-wrappers
- *	  [ ] more informative psql
  *
  *-------------------------------------------------------------------------
  */
@@ -142,12 +118,6 @@
 #include <openssl/e_os.h>
 #endif /* USE_SSL */
 
-int secure_initialize(PGconn *);
-void secure_destroy(void);
-int secure_open_client(PGconn *);
-void secure_close(PGconn *);
-ssize_t secure_read(PGconn *, void *ptr, size_t len);
-ssize_t secure_write(PGconn *, const void *ptr, size_t len);
 
 #ifdef USE_SSL
 static int verify_cb(int ok, X509_STORE_CTX *ctx);
@@ -228,7 +198,7 @@ KWbuHn491xNO25CQWMtem80uKw+pTnisBRF/454n1Jnhub144YRBoN8CAQI=\n\
  *	Initialize global context
  */
 int
-secure_initialize (PGconn *conn)
+pqsecure_initialize (PGconn *conn)
 {
 	int r = 0;
 
@@ -243,7 +213,7 @@ secure_initialize (PGconn *conn)
  *	Destroy global context
  */
 void
-secure_destroy (void)
+pqsecure_destroy (void)
 {
 #ifdef USE_SSL
 	destroy_SSL();
@@ -254,7 +224,7 @@ secure_destroy (void)
  *	Attempt to negotiate secure session.
  */
 int 
-secure_open_client (PGconn *conn)
+pqsecure_open_client (PGconn *conn)
 {
 	int r = 0;
 
@@ -269,7 +239,7 @@ secure_open_client (PGconn *conn)
  *	Close secure session.
  */
 void
-secure_close (PGconn *conn)
+pqsecure_close (PGconn *conn)
 {
 #ifdef USE_SSL
 	if (conn->ssl)
@@ -281,7 +251,7 @@ secure_close (PGconn *conn)
  *	Read data from a secure connection.
  */
 ssize_t
-secure_read (PGconn *conn, void *ptr, size_t len)
+pqsecure_read (PGconn *conn, void *ptr, size_t len)
 {
 	ssize_t n;
 
@@ -306,7 +276,7 @@ secure_read (PGconn *conn, void *ptr, size_t len)
 				libpq_gettext("SSL error: %s\n"), SSLerrmessage());
 			/* fall through */
 		case SSL_ERROR_ZERO_RETURN:
-			secure_close(conn);
+			pqsecure_close(conn);
 			SOCK_ERRNO = ECONNRESET;
 			n = -1;
 			break;
@@ -323,7 +293,7 @@ secure_read (PGconn *conn, void *ptr, size_t len)
  *	Write data to a secure connection.
  */
 ssize_t
-secure_write (PGconn *conn, const void *ptr, size_t len)
+pqsecure_write (PGconn *conn, const void *ptr, size_t len)
 {
 	ssize_t n;
 
@@ -352,7 +322,7 @@ secure_write (PGconn *conn, const void *ptr, size_t len)
 				libpq_gettext("SSL error: %s\n"), SSLerrmessage());
 			/* fall through */
 		case SSL_ERROR_ZERO_RETURN:
-			secure_close(conn);
+			pqsecure_close(conn);
 			SOCK_ERRNO = ECONNRESET;
 			n = -1;
 			break;
@@ -925,4 +895,5 @@ PQgetssl(PGconn *conn)
 		return NULL;
 	return conn->ssl;
 }
+
 #endif /* USE_SSL */

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.49 2002/06/14 04:23:17 momjian Exp $
+ * $Id: libpq-int.h,v 1.50 2002/06/15 22:06:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -330,6 +330,15 @@ extern int	pqSendSome(PGconn *conn);
 extern int	pqWait(int forRead, int forWrite, PGconn *conn);
 extern int	pqReadReady(PGconn *conn);
 extern int	pqWriteReady(PGconn *conn);
+
+/* === in fe-secure.c === */
+
+extern int pqsecure_initialize(PGconn *);
+extern void pqsecure_destroy(void);
+extern int pqsecure_open_client(PGconn *);
+extern void pqsecure_close(PGconn *);
+extern ssize_t pqsecure_read(PGconn *, void *ptr, size_t len);
+extern ssize_t pqsecure_write(PGconn *, const void *ptr, size_t len);
 
 /* bits in a byte */
 #define BYTELEN 8

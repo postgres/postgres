@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.74 2002/06/15 20:01:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.75 2002/06/15 22:06:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,10 +54,6 @@
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif
-
-extern void secure_close(PGconn *);
-extern ssize_t secure_read(PGconn *, void *, size_t);
-extern ssize_t secure_write(PGconn *, const void *, size_t);
 
 #define DONOTICE(conn,message) \
 	((*(conn)->noticeHook) ((conn)->noticeArg, (message)))
@@ -490,8 +486,8 @@ pqReadData(PGconn *conn)
 
 	/* OK, try to read some data */
 retry3:
-	nread = secure_read(conn, conn->inBuffer + conn->inEnd,
-						conn->inBufSize - conn->inEnd);
+	nread = pqsecure_read(conn, conn->inBuffer + conn->inEnd,
+						 conn->inBufSize - conn->inEnd);
 	if (nread < 0)
 	{
 		if (SOCK_ERRNO == EINTR)
@@ -570,8 +566,8 @@ retry3:
 	 * arrived.
 	 */
 retry4:
-	nread = secure_read(conn, conn->inBuffer + conn->inEnd,
-						conn->inBufSize - conn->inEnd);
+	nread = pqsecure_read(conn, conn->inBuffer + conn->inEnd,
+						  conn->inBufSize - conn->inEnd);
 	if (nread < 0)
 	{
 		if (SOCK_ERRNO == EINTR)
@@ -612,7 +608,7 @@ definitelyFailed:
 			   "\tThis probably means the server terminated abnormally\n"
 						 "\tbefore or while processing the request.\n"));
 	conn->status = CONNECTION_BAD;		/* No more connection to backend */
-	secure_close(conn);
+	pqsecure_close(conn);
 #ifdef WIN32
 	closesocket(conn->sock);
 #else
@@ -654,7 +650,7 @@ pqSendSome(PGconn *conn)
 	{
 		int			sent;
 
-		sent = secure_write(conn, ptr, len);
+		sent = pqsecure_write(conn, ptr, len);
 
 		if (sent < 0)
 		{
