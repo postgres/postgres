@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.95 2004/01/10 23:28:44 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.96 2004/01/23 02:13:11 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@
 #include "optimizer/plancat.h"
 #include "optimizer/prep.h"
 #include "parser/gramparse.h"
+#include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
@@ -47,7 +48,6 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
-#include "utils/guc.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/relcache.h"
@@ -189,22 +189,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	if (parentHasOids)
 		descriptor->tdhasoid = true;
 	else
-	{
-		switch (stmt->hasoids)
-		{
-			case MUST_HAVE_OIDS:
-				descriptor->tdhasoid = true;
-				break;
-
-			case MUST_NOT_HAVE_OIDS:
-				descriptor->tdhasoid = false;
-				break;
-
-			case DEFAULT_OIDS:
-				descriptor->tdhasoid = default_with_oids;
-				break;
-		}
-	}
+		descriptor->tdhasoid = interpretOidsOption(stmt->hasoids);
 
 	if (old_constraints != NIL)
 	{

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.296 2004/01/14 23:01:55 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.297 2004/01/23 02:13:12 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,6 +142,7 @@ static void release_pstate_resources(ParseState *pstate);
 static FromExpr *makeFromExpr(List *fromlist, Node *quals);
 static bool check_parameter_resolution_walker(Node *node,
 							check_parameter_resolution_context *context);
+static char *makeObjectName(char *name1, char *name2, char *typename);
 
 
 /*
@@ -735,7 +736,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
  *	from the truncated characters.	Currently it seems best to keep it simple,
  *	so that the generated names are easily predictable by a person.
  */
-char *
+static char *
 makeObjectName(char *name1, char *name2, char *typename)
 {
 	char	   *name;
@@ -859,7 +860,6 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt,
 	cxt.stmtType = "CREATE TABLE";
 	cxt.relation = stmt->relation;
 	cxt.inhRelations = stmt->inhRelations;
-	cxt.hasoids = stmt->hasoids;
 	cxt.relOid = InvalidOid;
 	cxt.columns = NIL;
 	cxt.ckconstraints = NIL;
@@ -868,6 +868,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt,
 	cxt.blist = NIL;
 	cxt.alist = NIL;
 	cxt.pkey = NULL;
+	cxt.hasoids = interpretOidsOption(stmt->hasoids);
 
 	/*
 	 * Run through each primary element in the table creation clause.
@@ -1979,20 +1980,7 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	if (stmt->intoColNames)
 		applyColumnNames(qry->targetList, stmt->intoColNames);
 
-	switch (stmt->intoHasOids)
-	{
-		case MUST_HAVE_OIDS:
-			qry->intoHasOids = true;
-			break;
-
-		case MUST_NOT_HAVE_OIDS:
-			qry->intoHasOids = false;
-			break;
-
-		case DEFAULT_OIDS:
-			qry->intoHasOids = default_with_oids;
-			break;
-	}
+	qry->intoHasOids = interpretOidsOption(stmt->intoHasOids);
 
 	/* mark column origins */
 	markTargetListOrigins(pstate, qry->targetList);

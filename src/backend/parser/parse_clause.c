@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.126 2004/01/14 23:01:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.127 2004/01/23 02:13:12 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -191,7 +191,33 @@ interpretInhOption(InhOption inhOpt)
 		case INH_DEFAULT:
 			return SQL_inheritance;
 	}
-	elog(ERROR, "bogus InhOption value");
+	elog(ERROR, "bogus InhOption value: %d", inhOpt);
+	return false;				/* keep compiler quiet */
+}
+
+/*
+ * Given an enum that indicates whether WITH / WITHOUT OIDS was
+ * specified by the user, return true iff the specified table/result
+ * set should be created with OIDs. This needs to be done after
+ * parsing the query string because the return value can depend upon
+ * the default_with_oids GUC var.
+ */
+bool
+interpretOidsOption(ContainsOids opt)
+{
+	switch (opt)
+	{
+		case MUST_HAVE_OIDS:
+			return true;
+
+		case MUST_NOT_HAVE_OIDS:
+			return false;
+
+		case DEFAULT_OIDS:
+			return default_with_oids;
+	}
+
+	elog(ERROR, "bogus ContainsOids value: %d", opt);
 	return false;				/* keep compiler quiet */
 }
 
