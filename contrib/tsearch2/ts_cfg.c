@@ -21,6 +21,8 @@
 #include "common.h"
 #include "tsvector.h"
 
+#define IGNORE_LONGLEXEME	1
+
 /*********top interface**********/
 
 static void *plan_getcfg_bylocale = NULL;
@@ -288,10 +290,18 @@ parsetext_v2(TSCfgInfo * cfg, PRSTEXT * prs, char *buf, int4 buflen)
 									   PointerGetDatum(&lenlemm)))) != 0)
 	{
 
-		if (lenlemm >= MAXSTRLEN)
+		if (lenlemm >= MAXSTRLEN) {
+#ifdef IGNORE_LONGLEXEME
+			ereport(NOTICE,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("word is too long")));
+			continue;
+#else 
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("word is too long")));
+#endif
+		}
 
 		if (type >= cfg->len)	/* skip this type of lexem */
 			continue;
@@ -414,10 +424,18 @@ hlparsetext(TSCfgInfo * cfg, HLPRSTEXT * prs, QUERYTYPE * query, char *buf, int4
 									   PointerGetDatum(&lenlemm)))) != 0)
 	{
 
-		if (lenlemm >= MAXSTRLEN)
+		if (lenlemm >= MAXSTRLEN) {
+#ifdef IGNORE_LONGLEXEME
+			ereport(NOTICE,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("word is too long")));
+			continue;
+#else 
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("word is too long")));
+#endif
+		}
 
 		hladdword(prs, lemm, lenlemm, type);
 
