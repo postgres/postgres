@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.172 1999/03/15 02:18:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.173 1999/03/24 06:55:14 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2841,7 +2841,7 @@ main(int argc, char **argv)
 	settings.getPassword = 0;
 #endif
 
-#ifdef MUTIBYTE
+#ifdef MULTIBYTE
 	has_client_encoding = getenv("PGCLIENTENCODING");
 #endif
 
