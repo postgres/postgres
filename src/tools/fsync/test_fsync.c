@@ -172,6 +172,7 @@ main(int argc, char *argv[])
 	printf("\n");
 
 	printf("\nCompare file sync methods with 2 8k writes:\n");
+	printf("(The fastest should be used for wal_sync_method)\n");
 
 #ifdef OPEN_DATASYNC_FLAG
 	/* open_dsync, write */
