@@ -106,6 +106,7 @@
 <!entity select             system "select.sgml">
 <!entity set                system "set.sgml">
 <!entity show               system "show.sgml">
+<!entity unlisten           system "unlisten.sgml">
 <!entity update             system "update.sgml">
 <!entity vacuum             system "vacuum.sgml">
 

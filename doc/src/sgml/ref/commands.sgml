@@ -57,6 +57,7 @@ commands supported by <productname>Postgres</productname>.
 &select;
 &set;
 &show;
+&unlisten;
 &update;
 &vacuum;
 
