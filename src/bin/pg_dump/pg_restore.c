@@ -88,7 +88,7 @@ static char* _cleanupName(char* name);
 
 typedef struct option optType;
 
-#ifdef HAVE_GETOPT_H
+#ifdef HAVE_GETOPT_LONG
 struct option cmdopts[] = {	
 				{ "clean", 0, NULL, 'c' },
 				{ "create", 0, NULL, 'C' },
