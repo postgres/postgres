@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.12 1997/10/25 01:10:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.13 1997/10/25 05:12:38 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,7 @@ char16out(char *s)
 		result[1] = '\0';
 	}
 	else
-		StrNCpy(result, s, 16);
+		StrNCpy(result, s, 17);
 	return (result);
 }
 
