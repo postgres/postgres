@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.44 2000/12/22 18:06:46 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.45 2000/12/30 15:03:09 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1305,7 +1305,7 @@ env PGOPTIONS='-c geqo=off' psql
     consistently across different systems; <xref
     linkend="sysvipc-parameters"> gives an overview. The methods to
     set them, however, vary; suggestions for some platforms are given
-    below. Be aware that you will probably have to reboot your
+    below. Be warned that it is often necessary to reboot your
     machine at least, possibly even recompile the kernel, to change these
     settings.
    </para>
@@ -1594,6 +1594,22 @@ options         SEMMAP=256
 <prompt>$</prompt> <userinput>echo 134217728 >/proc/sys/kernel/shmmax</userinput>
 </screen>
         You could put these commands into a script run at boot-time.
+       </para>
+
+       <para>
+        Alternatively, you can use
+        <citerefentry><refentrytitle>sysctl</refentrytitle>
+        <manvolnum>8</manvolnum></citerefentry>, if available, to
+        control these parameters.  Look for a file called
+        <filename>/etc/sysctl.conf</filename> and add lines like the
+        following to it:
+<programlisting>
+kernel.shmall = 134217728
+kernel.shmmax = 134217728
+</programlisting>
+        This file is usually processed at boot time, but
+        <application>sysctl</application> can also be called
+        explicitly later.
        </para>
 
        <para>
