@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.82 2004/12/31 22:00:56 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.83 2005/04/04 04:34:41 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,9 +53,6 @@
  *	cannot be redistributed to other tables.  We could build a simple
  *	hash bucket garbage collector if need be.  Right now, it seems
  *	unnecessary.
- *
- *		See InitSem() in sem.c for an example of how to use the
- *	shmem index.
  */
 
 #include "postgres.h"
@@ -84,8 +81,6 @@ NON_EXEC_STATIC void *ShmemIndexAlloc = NULL;	/* Memory actually
 												 * ShmemIndex */
 
 static HTAB *ShmemIndex = NULL; /* primary index hashtable for shmem */
-
-static bool ShmemBootstrap = false;		/* bootstrapping shmem index? */
 
 
 /*
@@ -213,10 +208,10 @@ InitShmemIndex(void)
 	/*
 	 * Since ShmemInitHash calls ShmemInitStruct, which expects the
 	 * ShmemIndex hashtable to exist already, we have a bit of a
-	 * circularity problem in initializing the ShmemIndex itself.  We set
-	 * ShmemBootstrap to tell ShmemInitStruct to fake it.
+	 * circularity problem in initializing the ShmemIndex itself.  The
+	 * special "ShmemIndex" hash table name will tell ShmemInitStruct
+	 * to fake it.
 	 */
-	ShmemBootstrap = true;
 
 	/* create the shared memory shmem index */
 	info.keysize = SHMEM_INDEX_KEYSIZE;
@@ -245,12 +240,11 @@ InitShmemIndex(void)
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of shared memory")));
 
-		Assert(ShmemBootstrap && !found);
+		Assert(!found);
 
 		result->location = MAKE_OFFSET(ShmemIndex->hctl);
 		result->size = SHMEM_INDEX_SIZE;
 
-		ShmemBootstrap = false;
 	}
 
 	/* now release the lock acquired in ShmemInitStruct */
@@ -349,11 +343,10 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 
 	if (!ShmemIndex)
 	{
+		Assert(strcmp(name, "ShmemIndex") == 0);
 		if (IsUnderPostmaster)
 		{
 			/* Must be initializing a (non-standalone) backend */
-			Assert(strcmp(name, "ShmemIndex") == 0);
-			Assert(ShmemBootstrap);
 			Assert(ShmemIndexAlloc);
 			*foundPtr = TRUE;
 		}
@@ -366,8 +359,6 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 			 * Notice that the ShmemIndexLock is held until the shmem index
 			 * has been completely initialized.
 			 */
-			Assert(strcmp(name, "ShmemIndex") == 0);
-			Assert(ShmemBootstrap);
 			*foundPtr = FALSE;
 			ShmemIndexAlloc = ShmemAlloc(size);
 		}
