@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.8 1997/09/08 20:55:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.9 1997/09/08 21:43:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,7 +182,7 @@ exec_append_initialize_next(Append *node)
  * ----------------------------------------------------------------
  */
 bool
-ExecInitAppend(Append *node, EState * estate, Plan * parent)
+ExecInitAppend(Append *node, EState *estate, Plan *parent)
 {
 	AppendState *unionstate;
 	int			nplans;

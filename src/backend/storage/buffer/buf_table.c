@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.7 1997/09/08 20:56:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.8 1997/09/08 21:46:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ typedef struct lookup
 {
 	BufferTag	key;
 	Buffer		id;
-}			LookupEnt;
+} LookupEnt;
 
 /*
  * Initialize shmem hash table for mapping buffers
@@ -74,7 +74,7 @@ InitBufTable()
 }
 
 BufferDesc *
-BufTableLookup(BufferTag * tagPtr)
+BufTableLookup(BufferTag *tagPtr)
 {
 	LookupEnt  *result;
 	bool		found;

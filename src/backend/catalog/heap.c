@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.27 1997/09/08 20:54:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.28 1997/09/08 21:42:16 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		heap_creatr()			- Create an uncataloged heap relation
@@ -164,7 +164,7 @@ typedef struct tempRelList
 	int			num;			/* number of temporary relations */
 	int			size;			/* size of space allocated for the rels
 								 * array */
-}			TempRelList;
+} TempRelList;
 
 #define TEMP_REL_LIST_SIZE	32
 
@@ -1518,10 +1518,10 @@ DestroyTempRels(void)
 	tempRels = NULL;
 }
 
-extern List *flatten_tlist(List * tlist);
+extern List *flatten_tlist(List *tlist);
 extern List *
-pg_plan(char *query_string, Oid * typev, int nargs,
-		QueryTreeList ** queryListP, CommandDest dest);
+pg_plan(char *query_string, Oid *typev, int nargs,
+		QueryTreeList **queryListP, CommandDest dest);
 
 static void
 StoreAttrDefault(Relation rel, AttrDefault *attrdef)
@@ -1598,7 +1598,7 @@ start:;
 }
 
 static void
-StoreRelCheck(Relation rel, ConstrCheck * check)
+StoreRelCheck(Relation rel, ConstrCheck *check)
 {
 	char		str[MAX_PARSE_BUFFER];
 	QueryTreeList *queryTree_list;

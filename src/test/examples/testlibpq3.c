@@ -31,7 +31,7 @@ tuple 1: got
 #include "utils/geo-decls.h"	/* for the POLYGON type */
 
 void
-exit_nicely(PGconn * conn)
+exit_nicely(PGconn *conn)
 {
 	PQfinish(conn);
 	exit(1);

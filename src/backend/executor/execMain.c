@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.24 1997/09/08 02:22:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.25 1997/09/08 21:42:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,28 +57,28 @@
 
 /* decls for local routines only used within this module */
 static void
-ExecCheckPerms(CmdType operation, int resultRelation, List * rangeTable,
-			   Query * parseTree);
+ExecCheckPerms(CmdType operation, int resultRelation, List *rangeTable,
+			   Query *parseTree);
 static TupleDesc
-InitPlan(CmdType operation, Query * parseTree,
-		 Plan * plan, EState * estate);
-static void EndPlan(Plan * plan, EState * estate);
+InitPlan(CmdType operation, Query *parseTree,
+		 Plan *plan, EState *estate);
+static void EndPlan(Plan *plan, EState *estate);
 static TupleTableSlot *
-ExecutePlan(EState * estate, Plan * plan,
-			Query * parseTree, CmdType operation,
+ExecutePlan(EState *estate, Plan *plan,
+			Query *parseTree, CmdType operation,
 			int numberTuples, ScanDirection direction,
 			void (*printfunc) ());
-static void ExecRetrieve(TupleTableSlot * slot, void (*printfunc) (),
-									 EState * estate);
+static void ExecRetrieve(TupleTableSlot *slot, void (*printfunc) (),
+									 EState *estate);
 static void
-ExecAppend(TupleTableSlot * slot, ItemPointer tupleid,
-		   EState * estate);
+ExecAppend(TupleTableSlot *slot, ItemPointer tupleid,
+		   EState *estate);
 static void
-ExecDelete(TupleTableSlot * slot, ItemPointer tupleid,
-		   EState * estate);
+ExecDelete(TupleTableSlot *slot, ItemPointer tupleid,
+		   EState *estate);
 static void
-ExecReplace(TupleTableSlot * slot, ItemPointer tupleid,
-			EState * estate, Query * parseTree);
+ExecReplace(TupleTableSlot *slot, ItemPointer tupleid,
+			EState *estate, Query *parseTree);
 
 /* end of local decls */
 
@@ -110,7 +110,7 @@ ExecutorLimit(int limit)
  * ----------------------------------------------------------------
  */
 TupleDesc
-ExecutorStart(QueryDesc * queryDesc, EState * estate)
+ExecutorStart(QueryDesc *queryDesc, EState *estate)
 {
 	TupleDesc	result;
 
@@ -155,7 +155,7 @@ ExecutorStart(QueryDesc * queryDesc, EState * estate)
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecutorRun(QueryDesc * queryDesc, EState * estate, int feature, int count)
+ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count)
 {
 	CmdType		operation;
 	Query	   *parseTree;
@@ -279,7 +279,7 @@ ExecutorRun(QueryDesc * queryDesc, EState * estate, int feature, int count)
  * ----------------------------------------------------------------
  */
 void
-ExecutorEnd(QueryDesc * queryDesc, EState * estate)
+ExecutorEnd(QueryDesc *queryDesc, EState *estate)
 {
 	/* sanity checks */
 	Assert(queryDesc != NULL);
@@ -300,8 +300,8 @@ ExecutorEnd(QueryDesc * queryDesc, EState * estate)
 static void
 ExecCheckPerms(CmdType operation,
 			   int resultRelation,
-			   List * rangeTable,
-			   Query * parseTree)
+			   List *rangeTable,
+			   Query *parseTree)
 {
 	int			i = 1;
 	Oid			relid;
@@ -390,7 +390,7 @@ ExecCheckPerms(CmdType operation,
  * ----------------------------------------------------------------
  */
 static TupleDesc
-InitPlan(CmdType operation, Query * parseTree, Plan * plan, EState * estate)
+InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 {
 	List	   *rangeTable;
 	int			resultRelation;
@@ -625,7 +625,7 @@ InitPlan(CmdType operation, Query * parseTree, Plan * plan, EState * estate)
  * ----------------------------------------------------------------
  */
 static void
-EndPlan(Plan * plan, EState * estate)
+EndPlan(Plan *plan, EState *estate)
 {
 	RelationInfo *resultRelationInfo;
 	Relation	intoRelationDesc;
@@ -699,9 +699,9 @@ EndPlan(Plan * plan, EState * estate)
    user can see it*/
 
 static TupleTableSlot *
-ExecutePlan(EState * estate,
-			Plan * plan,
-			Query * parseTree,
+ExecutePlan(EState *estate,
+			Plan *plan,
+			Query *parseTree,
 			CmdType operation,
 			int numberTuples,
 			ScanDirection direction,
@@ -898,9 +898,9 @@ ExecutePlan(EState * estate,
  * ----------------------------------------------------------------
  */
 static void
-ExecRetrieve(TupleTableSlot * slot,
+ExecRetrieve(TupleTableSlot *slot,
 			 void (*printfunc) (),
-			 EState * estate)
+			 EState *estate)
 {
 	HeapTuple	tuple;
 	TupleDesc	attrtype;
@@ -941,9 +941,9 @@ ExecRetrieve(TupleTableSlot * slot,
  */
 
 static void
-ExecAppend(TupleTableSlot * slot,
+ExecAppend(TupleTableSlot *slot,
 		   ItemPointer tupleid,
-		   EState * estate)
+		   EState *estate)
 {
 	HeapTuple	tuple;
 	RelationInfo *resultRelationInfo;
@@ -1046,9 +1046,9 @@ ExecAppend(TupleTableSlot * slot,
  * ----------------------------------------------------------------
  */
 static void
-ExecDelete(TupleTableSlot * slot,
+ExecDelete(TupleTableSlot *slot,
 		   ItemPointer tupleid,
-		   EState * estate)
+		   EState *estate)
 {
 	RelationInfo *resultRelationInfo;
 	Relation	resultRelationDesc;
@@ -1114,10 +1114,10 @@ ExecDelete(TupleTableSlot * slot,
  * ----------------------------------------------------------------
  */
 static void
-ExecReplace(TupleTableSlot * slot,
+ExecReplace(TupleTableSlot *slot,
 			ItemPointer tupleid,
-			EState * estate,
-			Query * parseTree)
+			EState *estate,
+			Query *parseTree)
 {
 	HeapTuple	tuple;
 	RelationInfo *resultRelationInfo;

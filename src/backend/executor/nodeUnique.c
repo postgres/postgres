@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.9 1997/09/08 02:22:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.10 1997/09/08 21:43:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,9 +47,9 @@
  *		same ADT value. -cim
  * ----------------------------------------------------------------
  */
-static bool				/* true if tuples are identical, false
+static bool						/* true if tuples are identical, false
 								 * otherwise */
-ExecIdenticalTuples(TupleTableSlot * t1, TupleTableSlot * t2)
+ExecIdenticalTuples(TupleTableSlot *t1, TupleTableSlot *t2)
 {
 	HeapTuple	h1;
 	HeapTuple	h2;
@@ -108,7 +108,7 @@ ExecIdenticalTuples(TupleTableSlot * t1, TupleTableSlot * t2)
  * ----------------------------------------------------------------
  */
 TupleTableSlot *				/* return: a tuple or NULL */
-ExecUnique(Unique * node)
+ExecUnique(Unique *node)
 {
 	UniqueState *uniquestate;
 	TupleTableSlot *resultTupleSlot;
@@ -243,7 +243,7 @@ ExecUnique(Unique * node)
  * ----------------------------------------------------------------
  */
 bool							/* return: initialization status */
-ExecInitUnique(Unique * node, EState * estate, Plan * parent)
+ExecInitUnique(Unique *node, EState *estate, Plan *parent)
 {
 	UniqueState *uniquestate;
 	Plan	   *outerPlan;
@@ -323,7 +323,7 @@ ExecInitUnique(Unique * node, EState * estate, Plan * parent)
 }
 
 int
-ExecCountSlotsUnique(Unique * node)
+ExecCountSlotsUnique(Unique *node)
 {
 	return ExecCountSlotsNode(outerPlan(node)) +
 	ExecCountSlotsNode(innerPlan(node)) +
@@ -338,7 +338,7 @@ ExecCountSlotsUnique(Unique * node)
  * ----------------------------------------------------------------
  */
 void
-ExecEndUnique(Unique * node)
+ExecEndUnique(Unique *node)
 {
 	UniqueState *uniquestate;
 

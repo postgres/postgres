@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: nbtsort.c,v 1.22 1997/09/08 20:54:28 momjian Exp $
+ *	  $Id: nbtsort.c,v 1.23 1997/09/08 21:41:28 momjian Exp $
  *
  * NOTES
  *
@@ -800,7 +800,7 @@ _bt_spool(Relation index, BTItem btitem, void *spool)
  * allocate a new, clean btree page, not linked to any siblings.
  */
 static void
-_bt_blnewpage(Relation index, Buffer *buf, Page * page, int flags)
+_bt_blnewpage(Relation index, Buffer *buf, Page *page, int flags)
 {
 	BTPageOpaque opaque;
 

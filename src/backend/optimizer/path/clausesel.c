@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.3 1997/09/08 02:24:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.4 1997/09/08 21:44:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
 #include "utils/elog.h"
 #include "utils/lsyscache.h"
 
-static Cost compute_selec(Query * root, List * clauses, List * or_selectivities);
+static Cost compute_selec(Query *root, List *clauses, List *or_selectivities);
 
 /****************************************************************************
  *		ROUTINES TO SET CLAUSE SELECTIVITIES
@@ -47,7 +47,7 @@ static Cost compute_selec(Query * root, List * clauses, List * or_selectivities)
  *
  */
 void
-set_clause_selectivities(List * clauseinfo_list, Cost new_selectivity)
+set_clause_selectivities(List *clauseinfo_list, Cost new_selectivity)
 {
 	List	   *temp;
 	CInfo	   *clausenode;
@@ -71,7 +71,7 @@ set_clause_selectivities(List * clauseinfo_list, Cost new_selectivity)
  * Returns a flonum corresponding to the selectivity of 'clauseinfo-list'.
  */
 Cost
-product_selec(List * clauseinfo_list)
+product_selec(List *clauseinfo_list)
 {
 	Cost		result = 1.0;
 
@@ -99,7 +99,7 @@ product_selec(List * clauseinfo_list)
  *		  slots.
  */
 void
-set_rest_relselec(Query * root, List * rel_list)
+set_rest_relselec(Query *root, List *rel_list)
 {
 	Rel		   *rel;
 	List	   *x;
@@ -120,7 +120,7 @@ set_rest_relselec(Query * root, List * rel_list)
  *
  */
 void
-set_rest_selec(Query * root, List * clauseinfo_list)
+set_rest_selec(Query *root, List *clauseinfo_list)
 {
 	List	   *temp = NIL;
 	CInfo	   *clausenode = (CInfo *) NULL;
@@ -163,7 +163,7 @@ set_rest_selec(Query * root, List * clauseinfo_list)
  *
  */
 Cost
-compute_clause_selec(Query * root, Node * clause, List * or_selectivities)
+compute_clause_selec(Query *root, Node *clause, List *or_selectivities)
 {
 	if (!is_opclause(clause))
 	{
@@ -223,7 +223,7 @@ compute_clause_selec(Query * root, Node * clause, List * or_selectivities)
  *
  */
 static Cost
-compute_selec(Query * root, List * clauses, List * or_selectivities)
+compute_selec(Query *root, List *clauses, List *or_selectivities)
 {
 	Cost		s1 = 0;
 	List	   *clause = lfirst(clauses);

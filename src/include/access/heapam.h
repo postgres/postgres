@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.14 1997/09/08 20:58:03 momjian Exp $
+ * $Id: heapam.h,v 1.15 1997/09/08 21:50:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,7 @@ typedef struct HeapAccessStatisticsData
 	int			local_heapgettup;
 	int			local_RelationPutHeapTuple;
 	int			local_RelationPutLongHeapTuple;
-}			HeapAccessStatisticsData;
+} HeapAccessStatisticsData;
 
 typedef HeapAccessStatisticsData *HeapAccessStatistics;
 
@@ -117,13 +117,13 @@ extern void doinsert(Relation relation, HeapTuple tup);
 extern Relation heap_open(Oid relationId);
 extern Relation heap_openr(char *relationName);
 extern void heap_close(Relation relation);
-extern		HeapScanDesc
+extern HeapScanDesc
 heap_beginscan(Relation relation, int atend,
 			   TimeQual timeQual, unsigned nkeys, ScanKey key);
 extern void heap_rescan(HeapScanDesc sdesc, bool scanFromEnd, ScanKey key);
 extern void heap_endscan(HeapScanDesc sdesc);
 extern HeapTuple heap_getnext(HeapScanDesc scandesc, int backw, Buffer *b);
-extern		HeapTuple
+extern HeapTuple
 heap_fetch(Relation relation, TimeQual timeQual,
 		   ItemPointer tid, Buffer *b);
 extern Oid	heap_insert(Relation relation, HeapTuple tup);
@@ -139,19 +139,19 @@ extern Size ComputeDataSize(TupleDesc tupleDesc, Datum value[], char nulls[]);
 extern void
 DataFill(char *data, TupleDesc tupleDesc,
 		 Datum value[], char nulls[], char *infomask,
-		 bits8 * bit);
+		 bits8 *bit);
 extern int	heap_attisnull(HeapTuple tup, int attnum);
 extern int	heap_sysattrlen(AttrNumber attno);
 extern bool heap_sysattrbyval(AttrNumber attno);
 extern char *heap_getsysattr(HeapTuple tup, Buffer b, int attnum);
 extern char *
 fastgetattr(HeapTuple tup, int attnum,
-			TupleDesc att, bool * isnull);
+			TupleDesc att, bool *isnull);
 extern HeapTuple heap_copytuple(HeapTuple tuple);
-extern		HeapTuple
+extern HeapTuple
 heap_formtuple(TupleDesc tupleDescriptor,
 			   Datum value[], char nulls[]);
-extern		HeapTuple
+extern HeapTuple
 heap_modifytuple(HeapTuple tuple, Buffer buffer,
 	 Relation relation, Datum replValue[], char replNull[], char repl[]);
 HeapTuple	heap_addheader(uint32 natts, int structlen, char *structure);

@@ -47,7 +47,7 @@ typedef struct AggFuncInfo
 	int			finalfn_nargs;
 } AggFuncInfo;
 
-static Datum aggGetAttr(TupleTableSlot * tuple, Aggreg *agg, bool * isNull);
+static Datum aggGetAttr(TupleTableSlot *tuple, Aggreg *agg, bool *isNull);
 
 
 /* ---------------------------------------
@@ -376,7 +376,7 @@ ExecAgg(Agg *node)
 				value2[i] =
 					(Datum) fmgr_c(aggfns->xfn2, aggfns->xfn2_oid,
 								   aggfns->xfn2_nargs,
-								   (FmgrValues *) & xfn2_val, &isNull2);
+								   (FmgrValues *) &xfn2_val, &isNull2);
 				Assert(!isNull2);
 			}
 		}
@@ -488,7 +488,7 @@ ExecAgg(Agg *node)
  * -----------------
  */
 bool
-ExecInitAgg(Agg *node, EState * estate, Plan * parent)
+ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 {
 	AggState   *aggstate;
 	Plan	   *outerPlan;
@@ -591,9 +591,9 @@ ExecEndAgg(Agg *node)
  *	  over from the tuple
  */
 static Datum
-aggGetAttr(TupleTableSlot * slot,
+aggGetAttr(TupleTableSlot *slot,
 		   Aggreg *agg,
-		   bool * isNull)
+		   bool *isNull)
 {
 	Datum		result;
 	AttrNumber	attnum;

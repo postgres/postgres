@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.19 1997/09/08 02:30:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.20 1997/09/08 21:48:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -981,7 +981,7 @@ dtrunc(float64 arg1)
 	if (*arg1 >= 0)
 		*result = (float64data) floor(tmp);
 	else
-		*result = (float64data) - (floor(-tmp));
+		*result = (float64data) -(floor(-tmp));
 	return (result);
 }
 

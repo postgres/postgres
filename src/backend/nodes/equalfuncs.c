@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.9 1997/09/08 20:55:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.10 1997/09/08 21:44:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@
 #include "utils/elog.h"
 #include "storage/itemptr.h"
 
-static bool equali(List * a, List * b);
+static bool equali(List *a, List *b);
 
 /*
  *	Stuff from primnodes.h
@@ -36,7 +36,7 @@ static bool equali(List * a, List * b);
  *	Resdom is a subclass of Node.
  */
 static bool
-_equalResdom(Resdom * a, Resdom * b)
+_equalResdom(Resdom *a, Resdom *b)
 {
 	if (a->resno != b->resno)
 		return (false);
@@ -55,7 +55,7 @@ _equalResdom(Resdom * a, Resdom * b)
 }
 
 static bool
-_equalFjoin(Fjoin * a, Fjoin * b)
+_equalFjoin(Fjoin *a, Fjoin *b)
 {
 	int			nNodes;
 
@@ -79,7 +79,7 @@ _equalFjoin(Fjoin * a, Fjoin * b)
  *	Expr is a subclass of Node.
  */
 static bool
-_equalExpr(Expr * a, Expr * b)
+_equalExpr(Expr *a, Expr *b)
 {
 	if (a->opType != b->opType)
 		return (false);
@@ -92,13 +92,13 @@ _equalExpr(Expr * a, Expr * b)
 }
 
 static bool
-_equalIter(Iter * a, Iter * b)
+_equalIter(Iter *a, Iter *b)
 {
 	return (equal(a->iterexpr, b->iterexpr));
 }
 
 static bool
-_equalStream(Stream * a, Stream * b)
+_equalStream(Stream *a, Stream *b)
 {
 	if (a->clausetype != b->clausetype)
 		return (false);
@@ -121,7 +121,7 @@ _equalStream(Stream * a, Stream * b)
  *	Var is a subclass of Expr.
  */
 static bool
-_equalVar(Var * a, Var * b)
+_equalVar(Var *a, Var *b)
 {
 	if (a->varno != b->varno)
 		return (false);
@@ -177,7 +177,7 @@ _equalArrayRef(ArrayRef *a, ArrayRef *b)
  *	Oper is a subclass of Expr.
  */
 static bool
-_equalOper(Oper * a, Oper * b)
+_equalOper(Oper *a, Oper *b)
 {
 	if (a->opno != b->opno)
 		return (false);
@@ -191,7 +191,7 @@ _equalOper(Oper * a, Oper * b)
  *	Const is a subclass of Expr.
  */
 static bool
-_equalConst(Const * a, Const * b)
+_equalConst(Const *a, Const *b)
 {
 
 	/*
@@ -214,7 +214,7 @@ _equalConst(Const * a, Const * b)
  *	Param is a subclass of Expr.
  */
 static bool
-_equalParam(Param * a, Param * b)
+_equalParam(Param *a, Param *b)
 {
 	if (a->paramkind != b->paramkind)
 		return (false);
@@ -254,7 +254,7 @@ _equalParam(Param * a, Param * b)
  *	Func is a subclass of Expr.
  */
 static bool
-_equalFunc(Func * a, Func * b)
+_equalFunc(Func *a, Func *b)
 {
 	if (a->funcid != b->funcid)
 		return (false);
@@ -276,7 +276,7 @@ _equalFunc(Func * a, Func * b)
  * CInfo is a subclass of Node.
  */
 static bool
-_equalCInfo(CInfo * a, CInfo * b)
+_equalCInfo(CInfo *a, CInfo *b)
 {
 	Assert(IsA(a, CInfo));
 	Assert(IsA(b, CInfo));
@@ -298,7 +298,7 @@ _equalCInfo(CInfo * a, CInfo * b)
 }
 
 static bool
-_equalJoinMethod(JoinMethod * a, JoinMethod * b)
+_equalJoinMethod(JoinMethod *a, JoinMethod *b)
 {
 	Assert(IsA(a, JoinMethod));
 	Assert(IsA(b, JoinMethod));
@@ -313,7 +313,7 @@ _equalJoinMethod(JoinMethod * a, JoinMethod * b)
 }
 
 static bool
-_equalPath(Path * a, Path * b)
+_equalPath(Path *a, Path *b)
 {
 	if (a->pathtype != b->pathtype)
 		return (false);
@@ -368,7 +368,7 @@ _equalPath(Path * a, Path * b)
 }
 
 static bool
-_equalIndexPath(IndexPath * a, IndexPath * b)
+_equalIndexPath(IndexPath *a, IndexPath *b)
 {
 	if (!_equalPath((Path *) a, (Path *) b))
 		return (false);
@@ -380,7 +380,7 @@ _equalIndexPath(IndexPath * a, IndexPath * b)
 }
 
 static bool
-_equalJoinPath(JoinPath * a, JoinPath * b)
+_equalJoinPath(JoinPath *a, JoinPath *b)
 {
 	Assert(IsA_JoinPath(a));
 	Assert(IsA_JoinPath(b));
@@ -397,7 +397,7 @@ _equalJoinPath(JoinPath * a, JoinPath * b)
 }
 
 static bool
-_equalMergePath(MergePath * a, MergePath * b)
+_equalMergePath(MergePath *a, MergePath *b)
 {
 	Assert(IsA(a, MergePath));
 	Assert(IsA(b, MergePath));
@@ -414,7 +414,7 @@ _equalMergePath(MergePath * a, MergePath * b)
 }
 
 static bool
-_equalHashPath(HashPath * a, HashPath * b)
+_equalHashPath(HashPath *a, HashPath *b)
 {
 	Assert(IsA(a, HashPath));
 	Assert(IsA(b, HashPath));
@@ -431,7 +431,7 @@ _equalHashPath(HashPath * a, HashPath * b)
 }
 
 static bool
-_equalJoinKey(JoinKey * a, JoinKey * b)
+_equalJoinKey(JoinKey *a, JoinKey *b)
 {
 	Assert(IsA(a, JoinKey));
 	Assert(IsA(b, JoinKey));
@@ -444,7 +444,7 @@ _equalJoinKey(JoinKey * a, JoinKey * b)
 }
 
 static bool
-_equalMergeOrder(MergeOrder * a, MergeOrder * b)
+_equalMergeOrder(MergeOrder *a, MergeOrder *b)
 {
 	if (a == (MergeOrder *) NULL && b == (MergeOrder *) NULL)
 		return (true);
@@ -465,7 +465,7 @@ _equalMergeOrder(MergeOrder * a, MergeOrder * b)
 }
 
 static bool
-_equalHInfo(HInfo * a, HInfo * b)
+_equalHInfo(HInfo *a, HInfo *b)
 {
 	Assert(IsA(a, HInfo));
 	Assert(IsA(b, HInfo));
@@ -479,7 +479,7 @@ _equalHInfo(HInfo * a, HInfo * b)
  *		fixed to compare all fields.
  */
 static bool
-_equalIndexScan(IndexScan * a, IndexScan * b)
+_equalIndexScan(IndexScan *a, IndexScan *b)
 {
 	Assert(IsA(a, IndexScan));
 	Assert(IsA(b, IndexScan));
@@ -500,7 +500,7 @@ _equalIndexScan(IndexScan * a, IndexScan * b)
 }
 
 static bool
-_equalJInfo(JInfo * a, JInfo * b)
+_equalJInfo(JInfo *a, JInfo *b)
 {
 	Assert(IsA(a, JInfo));
 	Assert(IsA(b, JInfo));
@@ -523,7 +523,7 @@ _equalJInfo(JInfo * a, JInfo * b)
  *	EState is a subclass of Node.
  */
 static bool
-_equalEState(EState * a, EState * b)
+_equalEState(EState *a, EState *b)
 {
 	if (a->es_direction != b->es_direction)
 		return (false);
@@ -538,7 +538,7 @@ _equalEState(EState * a, EState * b)
 }
 
 static bool
-_equalTargetEntry(TargetEntry * a, TargetEntry * b)
+_equalTargetEntry(TargetEntry *a, TargetEntry *b)
 {
 	if (!equal(a->resdom, b->resdom))
 		return (false);
@@ -558,7 +558,7 @@ _equalTargetEntry(TargetEntry * a, TargetEntry * b)
  *		to be recursive, but it should run faster if we iterate.
  */
 static bool
-_equalValue(Value * a, Value * b)
+_equalValue(Value *a, Value *b)
 {
 	if (a->type != b->type)
 		return (false);
@@ -722,7 +722,7 @@ equal(void *a, void *b)
  * XXX temp hack. needs something like T_IntList
  */
 static bool
-equali(List * a, List * b)
+equali(List *a, List *b)
 {
 	List	   *la = (List *) a;
 	List	   *lb = (List *) b;

@@ -4,7 +4,7 @@
 *
 *	 TSP mutation routines
 *
-* $Id: geqo_mutation.c,v 1.3 1997/09/08 02:23:57 momjian Exp $
+* $Id: geqo_mutation.c,v 1.4 1997/09/08 21:44:27 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -51,7 +51,7 @@
 #include "optimizer/geqo_mutation.h"
 
 void
-geqo_mutation(Gene * tour, int num_gene)
+geqo_mutation(Gene *tour, int num_gene)
 {
 	int			swap1;
 	int			swap2;

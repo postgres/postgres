@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: skey.h,v 1.5 1997/09/08 02:34:26 momjian Exp $
+ * $Id: skey.h,v 1.6 1997/09/08 21:51:01 momjian Exp $
  *
  *
  * Note:
@@ -26,7 +26,7 @@ typedef struct ScanKeyData
 	func_ptr	sk_func;
 	int32		sk_nargs;
 	Datum		sk_argument;	/* data to compare */
-}			ScanKeyData;
+} ScanKeyData;
 
 typedef ScanKeyData *ScanKey;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.12 1997/09/08 02:31:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.13 1997/09/08 21:48:45 momjian Exp $
  *
  * Notes:
  *		XXX This needs to use exception.h to handle recovery when
@@ -34,7 +34,7 @@
 #include "catalog/pg_type.h"	/* for OID of int28 type */
 #include "lib/dllist.h"
 
-static void CatCacheRemoveCTup(CatCache * cache, Dlelem * e);
+static void CatCacheRemoveCTup(CatCache *cache, Dlelem *e);
 static Index CatalogCacheComputeHashIndex(struct catcache * cacheInP);
 static Index
 CatalogCacheComputeTupleHashIndex(struct catcache * cacheInOutP,
@@ -213,7 +213,7 @@ CatalogCacheInitializeCache(struct catcache * cache,
 				EQPROC(tupdesc->attrs[cache->cc_key[i] - 1]->atttypid);
 
 			fmgr_info(cache->cc_skey[i].sk_procedure,
-					  (func_ptr *) & cache->cc_skey[i].sk_func,
+					  (func_ptr *) &cache->cc_skey[i].sk_func,
 					  (int *) &cache->cc_skey[i].sk_nargs);
 
 			CACHE5_elog(DEBUG, "CatalogCacheInit %16s %d %d %x",
@@ -268,7 +268,7 @@ CatalogCacheInitializeCache(struct catcache * cache,
  */
 #ifdef NOT_USED
 void
-CatalogCacheSetId(CatCache * cacheInOutP, int id)
+CatalogCacheSetId(CatCache *cacheInOutP, int id)
 {
 	Assert(id == InvalidCatalogCacheId || id >= 0);
 	cacheInOutP->id = id;
@@ -439,7 +439,7 @@ CatalogCacheComputeTupleHashIndex(struct catcache * cacheInOutP,
  * --------------------------------
  */
 static void
-CatCacheRemoveCTup(CatCache * cache, Dlelem * elt)
+CatCacheRemoveCTup(CatCache *cache, Dlelem *elt)
 {
 	CatCTup    *ct;
 	CatCTup    *other_ct;
@@ -651,7 +651,7 @@ InitSysCache(char *relname,
 			 int id,
 			 int nkeys,
 			 int key[],
-			 HeapTuple(*iScanfuncP) ())
+			 HeapTuple (*iScanfuncP) ())
 {
 	CatCache   *cp;
 	register int i;

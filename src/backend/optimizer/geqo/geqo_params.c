@@ -5,7 +5,7 @@
 *
 * Copyright (c) 1994, Regents of the University of California
 *
-* $Id: geqo_params.c,v 1.7 1997/09/08 02:24:00 momjian Exp $
+* $Id: geqo_params.c,v 1.8 1997/09/08 21:44:30 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -270,7 +270,7 @@ geqo_params(int string_length)
  * other cases return 0.
  */
 static int
-next_token(FILE * fp, char *buf, int bufsz)
+next_token(FILE *fp, char *buf, int bufsz)
 {
 	int			c;
 	char	   *eb = buf + (bufsz - 1);

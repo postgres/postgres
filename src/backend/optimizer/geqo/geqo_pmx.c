@@ -6,7 +6,7 @@
 *	 PMX operator according to Goldberg & Lingle
 *	 (Proc Int'l Conf on GA's)
 *
-* $Id: geqo_pmx.c,v 1.3 1997/09/08 02:24:06 momjian Exp $
+* $Id: geqo_pmx.c,v 1.4 1997/09/08 21:44:33 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -59,7 +59,7 @@
  *	 partially matched crossover
  */
 void
-pmx(Gene * tour1, Gene * tour2, Gene * offspring, int num_gene)
+pmx(Gene *tour1, Gene *tour2, Gene *offspring, int num_gene)
 {
 	int		   *failed = (int *) palloc((num_gene + 1) * sizeof(int));
 	int		   *from = (int *) palloc((num_gene + 1) * sizeof(int));

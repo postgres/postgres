@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.22 1997/09/08 20:57:56 momjian Exp $
+ * $Id: pg_dump.h,v 1.23 1997/09/08 21:49:59 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -42,7 +42,7 @@ typedef struct _typeInfo
 	char	   *usename;
 	int			passedbyvalue;
 	int			isArray;
-}			TypeInfo;
+} TypeInfo;
 
 typedef struct _funcInfo
 {
@@ -60,7 +60,7 @@ typedef struct _funcInfo
 	char	   *probin;
 	char	   *usename;
 	int			dumped;			/* 1 if already dumped */
-}			FuncInfo;
+} FuncInfo;
 
 typedef struct _tableInfo
 {
@@ -89,13 +89,13 @@ typedef struct _tableInfo
 	int		   *attlen;			/* attribute lengths */
 	char	   *usename;
 
-}			TableInfo;
+} TableInfo;
 
 typedef struct _inhInfo
 {
 	char	   *inhrel;
 	char	   *inhparent;
-}			InhInfo;
+} InhInfo;
 
 typedef struct _indInfo
 {
@@ -109,7 +109,7 @@ typedef struct _indInfo
 										 * attributes */
 	char	   *indclass[INDEX_MAX_KEYS];		/* opclass of the keys */
 	char	   *indisunique;	/* is this index unique? */
-}			IndInfo;
+} IndInfo;
 
 typedef struct _aggInfo
 {
@@ -146,7 +146,7 @@ typedef struct _oprInfo
 								 * operators */
 	char	   *oprrsortop;
 	char	   *usename;
-}			OprInfo;
+} OprInfo;
 
 
 /* global decls */
@@ -170,21 +170,21 @@ extern char g_opaque_type[10];	/* name for the opaque type */
 */
 
 extern TableInfo *
-dumpSchema(FILE * fout,
+dumpSchema(FILE *fout,
 		   int *numTablesPtr,
 		   const char *tablename,
 		   const bool acls);
 extern void
-dumpSchemaIdx(FILE * fout,
+dumpSchemaIdx(FILE *fout,
 			  int *numTablesPtr,
 			  const char *tablename,
-			  TableInfo * tblinfo,
+			  TableInfo *tblinfo,
 			  int numTables);
 
-extern char *findTypeByOid(TypeInfo * tinfo, int numTypes, const char *oid);
-extern char *findOprByOid(OprInfo * oprinfo, int numOprs, const char *oid);
-extern int	findFuncByName(FuncInfo * finfo, int numFuncs, const char *name);
-extern int	findTableByName(TableInfo * tbinfo, int numTables, const char *relname);
+extern char *findTypeByOid(TypeInfo *tinfo, int numTypes, const char *oid);
+extern char *findOprByOid(OprInfo *oprinfo, int numOprs, const char *oid);
+extern int	findFuncByName(FuncInfo *finfo, int numFuncs, const char *name);
+extern int	findTableByName(TableInfo *tbinfo, int numTables, const char *relname);
 
 extern void check_conn_and_db(void);
 extern void parseArgTypes(char **argtypes, const char *str);
@@ -207,28 +207,28 @@ extern void clearTypeInfo(TypeInfo *, int);
 extern OprInfo *getOperators(int *numOperators);
 extern TableInfo *getTables(int *numTables);
 extern InhInfo *getInherits(int *numInherits);
-extern void getTableAttrs(TableInfo * tbinfo, int numTables);
+extern void getTableAttrs(TableInfo *tbinfo, int numTables);
 extern IndInfo *getIndices(int *numIndices);
 extern void
-dumpTypes(FILE * fout, FuncInfo * finfo, int numFuncs,
-		  TypeInfo * tinfo, int numTypes);
+dumpTypes(FILE *fout, FuncInfo *finfo, int numFuncs,
+		  TypeInfo *tinfo, int numTypes);
 extern void
-dumpFuncs(FILE * fout, FuncInfo * finfo, int numFuncs,
-		  TypeInfo * tinfo, int numTypes);
+dumpFuncs(FILE *fout, FuncInfo *finfo, int numFuncs,
+		  TypeInfo *tinfo, int numTypes);
 extern void
-dumpAggs(FILE * fout, AggInfo *agginfo, int numAggregates,
-		 TypeInfo * tinfo, int numTypes);
+dumpAggs(FILE *fout, AggInfo *agginfo, int numAggregates,
+		 TypeInfo *tinfo, int numTypes);
 extern void
-dumpOprs(FILE * fout, OprInfo * agginfo, int numOperators,
-		 TypeInfo * tinfo, int numTypes);
+dumpOprs(FILE *fout, OprInfo *agginfo, int numOperators,
+		 TypeInfo *tinfo, int numTypes);
 extern void
-dumpTables(FILE * fout, TableInfo * tbinfo, int numTables,
-		   InhInfo * inhinfo, int numInherits,
-		   TypeInfo * tinfo, int numTypes, const char *tablename,
+dumpTables(FILE *fout, TableInfo *tbinfo, int numTables,
+		   InhInfo *inhinfo, int numInherits,
+		   TypeInfo *tinfo, int numTypes, const char *tablename,
 		   const bool acls);
 extern void
-dumpIndices(FILE * fout, IndInfo * indinfo, int numIndices,
-			TableInfo * tbinfo, int numTables, const char *tablename);
+dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
+			TableInfo *tbinfo, int numTables, const char *tablename);
 
 /* largest query string size */
 #define MAXQUERYLEN  5000

@@ -6,7 +6,7 @@
 *	 OX1 operator according to Davis
 *	 (Proc Int'l Joint Conf on AI)
 *
-* $Id: geqo_ox1.c,v 1.3 1997/09/08 02:23:58 momjian Exp $
+* $Id: geqo_ox1.c,v 1.4 1997/09/08 21:44:28 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -59,7 +59,7 @@
  *	 position crossover
  */
 void
-ox1(Gene * tour1, Gene * tour2, Gene * offspring, int num_gene, City * city_table)
+ox1(Gene *tour1, Gene *tour2, Gene *offspring, int num_gene, City *city_table)
 {
 	int			left,
 				right,

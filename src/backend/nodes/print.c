@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.8 1997/09/08 02:23:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.9 1997/09/08 21:44:10 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -33,7 +33,7 @@
 #include "nodes/plannodes.h"
 #include "optimizer/clauses.h"
 
-static char *plannode_type(Plan * p);
+static char *plannode_type(Plan *p);
 
 /*
  * print--
@@ -135,7 +135,7 @@ pprint(void *obj)
  *	  print contents of range table
  */
 void
-print_rt(List * rtable)
+print_rt(List *rtable)
 {
 	List	   *l;
 	int			i = 1;
@@ -160,7 +160,7 @@ print_rt(List * rtable)
  *	  print an expression
  */
 void
-print_expr(Node * expr, List * rtable)
+print_expr(Node *expr, List *rtable)
 {
 	if (expr == NULL)
 	{
@@ -230,7 +230,7 @@ print_expr(Node * expr, List * rtable)
  *	  temporary here. where is keys list of list??
  */
 void
-print_keys(List * keys, List * rtable)
+print_keys(List *keys, List *rtable)
 {
 	List	   *k;
 
@@ -251,7 +251,7 @@ print_keys(List * keys, List * rtable)
  *	  print targetlist in a more legible way.
  */
 void
-print_tl(List * tlist, List * rtable)
+print_tl(List *tlist, List *rtable)
 {
 	List	   *tl;
 
@@ -280,7 +280,7 @@ print_tl(List * tlist, List * rtable)
  *	  print out the tuple with the given TupleTableSlot
  */
 void
-print_slot(TupleTableSlot * slot)
+print_slot(TupleTableSlot *slot)
 {
 	if (!slot->val)
 	{
@@ -297,7 +297,7 @@ print_slot(TupleTableSlot * slot)
 }
 
 static char *
-plannode_type(Plan * p)
+plannode_type(Plan *p)
 {
 	switch (nodeTag(p))
 	{
@@ -375,7 +375,7 @@ plannode_type(Plan * p)
 
 */
 void
-print_plan_recursive(Plan * p, Query * parsetree, int indentLevel, char *label)
+print_plan_recursive(Plan *p, Query *parsetree, int indentLevel, char *label)
 {
 	int			i;
 	char		extraInfo[100];
@@ -386,7 +386,7 @@ print_plan_recursive(Plan * p, Query * parsetree, int indentLevel, char *label)
 		printf(" ");
 	printf("%s%s :c=%.4f :s=%d :w=%d ", label, plannode_type(p),
 		   p->cost, p->plan_size, p->plan_width);
-	if (IsA(p, Scan) || IsA(p, SeqScan))
+	if (IsA(p, Scan) ||IsA(p, SeqScan))
 	{
 		RangeTblEntry *rte;
 
@@ -414,7 +414,7 @@ print_plan_recursive(Plan * p, Query * parsetree, int indentLevel, char *label)
   prints just the plan node types */
 
 void
-print_plan(Plan * p, Query * parsetree)
+print_plan(Plan *p, Query *parsetree)
 {
 	print_plan_recursive(p, parsetree, 0, "");
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.6 1997/09/08 02:31:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.7 1997/09/08 21:48:56 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -57,7 +57,7 @@ extern bool AMI_OVERRIDE;		/* XXX style */
 #include "utils/syscache.h"
 #include "catalog/indexing.h"
 
-typedef		HeapTuple(*ScanFunc) ();
+typedef HeapTuple (*ScanFunc) ();
 
 /* ----------------
  *		Warning:  cacheinfo[] below is changed, then be sure and
@@ -179,7 +179,7 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0,
 		0},
-		offsetof(TypeTupleFormData, typalign) + sizeof(char),
+		offsetof(TypeTupleFormData, typalign) +sizeof(char),
 		TypeNameIndex,
 	TypeNameIndexScan},
 	{TypeRelationName,			/* TYPOID */
@@ -383,7 +383,7 @@ InitCatalogCache()
  * XXX The tuple that is returned is NOT supposed to be pfree'd!
  */
 HeapTuple
-SearchSysCacheTuple(int cacheId,		/* cache selection code */
+SearchSysCacheTuple(int cacheId,/* cache selection code */
 					Datum key1,
 					Datum key2,
 					Datum key3,

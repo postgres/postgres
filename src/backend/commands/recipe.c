@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.8 1997/09/08 02:22:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.9 1997/09/08 21:42:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@ extern CommandDest whereToSendOutput;
 #ifndef TIOGA
 
 void
-beginRecipe(RecipeStmt * stmt)
+beginRecipe(RecipeStmt *stmt)
 {
 	elog(NOTICE, "You must compile with TIOGA defined in order to use recipes\n");
 }
@@ -61,36 +61,36 @@ typedef struct _teeInfo
 	TeePlanInfo *val;
 }			TeeInfo;
 
-QueryTreeList *appendQlist(QueryTreeList * q1, QueryTreeList * q2);
-void		OffsetVarAttno(Node * node, int varno, int offset);
+QueryTreeList *appendQlist(QueryTreeList *q1, QueryTreeList *q2);
+void		OffsetVarAttno(Node *node, int varno, int offset);
 
 static void
 appendTeeQuery(TeeInfo * teeInfo,
-			   QueryTreeList * q,
+			   QueryTreeList *q,
 			   char *teeNodeName);
 
 static Plan *
-replaceTeeScans(Plan * plan,
-				Query * parsetree,
+replaceTeeScans(Plan *plan,
+				Query *parsetree,
 				TeeInfo * teeInfo);
 static void
-replaceSeqScan(Plan * plan,
-			   Plan * parent,
+replaceSeqScan(Plan *plan,
+			   Plan *parent,
 			   int rt_ind,
-			   Plan * tplan);
+			   Plan *tplan);
 
 static void
 tg_rewriteQuery(TgRecipe * r, TgNode * n,
-				QueryTreeList * q,
-				QueryTreeList * inputQlist);
+				QueryTreeList *q,
+				QueryTreeList *inputQlist);
 static Node *
-tg_replaceNumberedParam(Node * expression,
+tg_replaceNumberedParam(Node *expression,
 						int pnum,
 						int rt_ind,
 						char *teeRelName);
 static Node *
-tg_rewriteParamsInExpr(Node * expression,
-					   QueryTreeList * inputQlist);
+tg_rewriteParamsInExpr(Node *expression,
+					   QueryTreeList *inputQlist);
 static QueryTreeList *
 tg_parseSubQuery(TgRecipe * r,
 				 TgNode * n,
@@ -99,7 +99,7 @@ static QueryTreeList *
 tg_parseTeeNode(TgRecipe * r,
 				TgNode * n,
 				int i,
-				QueryTreeList * qList,
+				QueryTreeList *qList,
 				TeeInfo * teeInfo);
 
 
@@ -127,7 +127,7 @@ tg_parseTeeNode(TgRecipe * r,
  */
 
 void
-beginRecipe(RecipeStmt * stmt)
+beginRecipe(RecipeStmt *stmt)
 {
 	TgRecipe   *r;
 	int			i;
@@ -317,8 +317,8 @@ beginRecipe(RecipeStmt * stmt)
 static void
 tg_rewriteQuery(TgRecipe * r,
 				TgNode * n,
-				QueryTreeList * q,
-				QueryTreeList * inputQlist)
+				QueryTreeList *q,
+				QueryTreeList *inputQlist)
 {
 	Query	   *orig;
 	Query	   *inputQ;
@@ -426,7 +426,7 @@ tg_rewriteQuery(TgRecipe * r,
 
 */
 static Node *
-tg_replaceNumberedParam(Node * expression,
+tg_replaceNumberedParam(Node *expression,
 						int pnum,		/* the number of the parameter */
 						int rt_ind,		/* the range table index */
 						char *teeRelName)		/* the relname of the tee
@@ -573,7 +573,7 @@ tg_replaceNumberedParam(Node * expression,
 
 */
 static Node *
-tg_rewriteParamsInExpr(Node * expression, QueryTreeList * inputQlist)
+tg_rewriteParamsInExpr(Node *expression, QueryTreeList *inputQlist)
 {
 	List	   *tl;
 	TargetEntry *param_tle,
@@ -759,7 +759,7 @@ static QueryTreeList *
 tg_parseTeeNode(TgRecipe * r,
 				TgNode * n,		/* the tee node */
 				int i,			/* which input this node is to its parent */
-				QueryTreeList * qList,
+				QueryTreeList *qList,
 				TeeInfo * teeInfo)
 
 {
@@ -1104,7 +1104,7 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
  */
 
 void
-OffsetVarAttno(Node * node, int varno, int offset)
+OffsetVarAttno(Node *node, int varno, int offset)
 {
 	if (node == NULL)
 		return;
@@ -1157,7 +1157,7 @@ OffsetVarAttno(Node * node, int varno, int offset)
  */
 
 QueryTreeList *
-appendQlist(QueryTreeList * q1, QueryTreeList * q2)
+appendQlist(QueryTreeList *q1, QueryTreeList *q2)
 {
 	QueryTreeList *newq;
 	int			i,
@@ -1189,7 +1189,7 @@ appendQlist(QueryTreeList * q1, QueryTreeList * q2)
  *	modify the query field of the teeInfo list of the particular tee node
  */
 static void
-appendTeeQuery(TeeInfo * teeInfo, QueryTreeList * q, char *teeNodeName)
+appendTeeQuery(TeeInfo * teeInfo, QueryTreeList *q, char *teeNodeName)
 {
 	int			i;
 
@@ -1220,8 +1220,8 @@ appendTeeQuery(TeeInfo * teeInfo, QueryTreeList * q, char *teeNodeName)
  * qual or targetlist because the child plan has been replaced with a tee node
  */
 static void
-replaceSeqScan(Plan * plan, Plan * parent,
-			   int rt_ind, Plan * tplan)
+replaceSeqScan(Plan *plan, Plan *parent,
+			   int rt_ind, Plan *tplan)
 {
 	Scan	   *snode;
 	Tee		   *teePlan;
@@ -1307,7 +1307,7 @@ replaceSeqScan(Plan * plan, Plan * parent,
  * a connection to the actual tee plan node
  */
 static Plan *
-replaceTeeScans(Plan * plan, Query * parsetree, TeeInfo * teeInfo)
+replaceTeeScans(Plan *plan, Query *parsetree, TeeInfo * teeInfo)
 {
 
 	int			i;

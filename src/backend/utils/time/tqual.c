@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.6 1997/09/08 02:32:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.7 1997/09/08 21:49:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,12 +58,12 @@ typedef struct TimeQualData
 	AbsoluteTime start;
 	AbsoluteTime end;
 	TimeQualMode mode;
-}			TimeQualData;
+} TimeQualData;
 
 typedef TimeQualData *InternalTimeQual;
 
 static TimeQualData SelfTimeQualData;
-TimeQual	SelfTimeQual = (Pointer) & SelfTimeQualData;
+TimeQual	SelfTimeQual = (Pointer) &SelfTimeQualData;
 
 extern bool PostgresIsInitialized;
 
@@ -172,7 +172,7 @@ TimeQualIsValid(TimeQual qual)
 		}
 		if (hasStartTime)
 		{
-			return ((bool) ! AbsoluteTimeIsBefore(
+			return ((bool) !AbsoluteTimeIsBefore(
 										  ((InternalTimeQual) qual)->end,
 									  ((InternalTimeQual) qual)->start));
 		}
@@ -322,7 +322,7 @@ TimeQualIsSnapshot(TimeQual qual)
 		return (false);
 	}
 
-	return ((bool) ! !(((InternalTimeQual) qual)->mode & TimeQualAt));
+	return ((bool) !!(((InternalTimeQual) qual)->mode & TimeQualAt));
 }
 
 /*
@@ -342,7 +342,7 @@ TimeQualIsRanged(TimeQual qual)
 		return (false);
 	}
 
-	return ((bool) ! (((InternalTimeQual) qual)->mode & TimeQualAt));
+	return ((bool) !(((InternalTimeQual) qual)->mode & TimeQualAt));
 }
 
 /*
@@ -911,7 +911,7 @@ HeapTupleSatisfiesUpperUnboundedInternalTimeQual(HeapTuple tuple,
 
 			Assert(TransactionIdIsCurrentTransactionId((TransactionId) tuple->t_xmax));
 
-			return ((bool) ! CommandIdGEScanCommandId(tuple->t_cmax));
+			return ((bool) !CommandIdGEScanCommandId(tuple->t_cmax));
 		}
 
 		if (!TransactionIdDidCommit((TransactionId) tuple->t_xmin))

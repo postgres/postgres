@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_aggregate.h,v 1.10 1997/09/08 02:34:54 momjian Exp $
+ * $Id: pg_aggregate.h,v 1.11 1997/09/08 21:51:27 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -141,6 +141,6 @@ AggregateCreate(char *aggName,
 				char *agginitval2);
 extern char *
 AggNameGetInitVal(char *aggName, Oid basetype,
-				  int xfuncno, bool * isNull);
+				  int xfuncno, bool *isNull);
 
 #endif							/* PG_AGGREGATE_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itemptr.h,v 1.6 1997/09/08 02:39:03 momjian Exp $
+ * $Id: itemptr.h,v 1.7 1997/09/08 21:54:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@ typedef struct ItemPointerData
 {
 	BlockIdData ip_blkid;
 	OffsetNumber ip_posid;
-}			ItemPointerData;
+} ItemPointerData;
 
 typedef ItemPointerData *ItemPointer;
 

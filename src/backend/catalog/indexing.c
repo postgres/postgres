@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.14 1997/09/08 20:55:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.15 1997/09/08 21:42:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,7 @@ CatalogOpenIndices(int nIndices, char *names[], Relation idescs[])
  * This is the inverse routine to CatalogOpenIndices()
  */
 void
-CatalogCloseIndices(int nIndices, Relation * idescs)
+CatalogCloseIndices(int nIndices, Relation *idescs)
 {
 	int			i;
 
@@ -103,7 +103,7 @@ CatalogCloseIndices(int nIndices, Relation * idescs)
  * each catalog index.
  */
 void
-CatalogIndexInsert(Relation * idescs,
+CatalogIndexInsert(Relation *idescs,
 				   int nIndices,
 				   Relation heapRelation,
 				   HeapTuple heapTuple)
@@ -345,7 +345,7 @@ HeapTuple
 ProcedureNameIndexScan(Relation heapRelation,
 					   char *procName,
 					   int nargs,
-					   Oid * argTypes)
+					   Oid *argTypes)
 {
 	Relation	idesc;
 	ScanKeyData skey;
@@ -435,7 +435,7 @@ ProcedureNameIndexScan(Relation heapRelation,
 
 
 HeapTuple
-ProcedureSrcIndexScan(Relation heapRelation, text * procSrc)
+ProcedureSrcIndexScan(Relation heapRelation, text *procSrc)
 {
 	Relation	idesc;
 	IndexScanDesc sd;

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_gene.h,v 1.3 1997/09/08 02:37:44 momjian Exp $
+ * $Id: geqo_gene.h,v 1.4 1997/09/08 21:53:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,19 +26,19 @@
 /* we presume that int instead of Relid
    is o.k. for Gene; so don't change it! */
 typedef
-int			Gene;
+int Gene;
 
 typedef struct Chromosome
 {
 	Gene	   *string;
 	Cost		worth;
-}			Chromosome;
+} Chromosome;
 
 typedef struct Pool
 {
 	Chromosome *data;
 	int			size;
 	int			string_length;
-}			Pool;
+} Pool;
 
 #endif							/* GEQO_GENE_H */

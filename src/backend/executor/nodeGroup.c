@@ -13,7 +13,7 @@
  *	  columns. (ie. tuples from the same group are consecutive)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.8 1997/09/08 20:55:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.9 1997/09/08 21:43:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,10 +28,10 @@
 #include "executor/executor.h"
 #include "executor/nodeGroup.h"
 
-static TupleTableSlot *ExecGroupEveryTuple(Group * node);
-static TupleTableSlot *ExecGroupOneTuple(Group * node);
+static TupleTableSlot *ExecGroupEveryTuple(Group *node);
+static TupleTableSlot *ExecGroupOneTuple(Group *node);
 static bool
-sameGroup(TupleTableSlot * oldslot, TupleTableSlot * newslot,
+sameGroup(TupleTableSlot *oldslot, TupleTableSlot *newslot,
 		  int numCols, AttrNumber *grpColIdx, TupleDesc tupdesc);
 
 /* ---------------------------------------
@@ -51,7 +51,7 @@ sameGroup(TupleTableSlot * oldslot, TupleTableSlot * newslot,
  * ------------------------------------------
  */
 TupleTableSlot *
-ExecGroup(Group * node)
+ExecGroup(Group *node)
 {
 	if (node->tuplePerGroup)
 		return ExecGroupEveryTuple(node);
@@ -64,7 +64,7 @@ ExecGroup(Group * node)
  *	 return every tuple with a NULL between each group
  */
 static TupleTableSlot *
-ExecGroupEveryTuple(Group * node)
+ExecGroupEveryTuple(Group *node)
 {
 	GroupState *grpstate;
 	EState	   *estate;
@@ -165,7 +165,7 @@ ExecGroupEveryTuple(Group * node)
  *	  tuples.
  */
 static TupleTableSlot *
-ExecGroupOneTuple(Group * node)
+ExecGroupOneTuple(Group *node)
 {
 	GroupState *grpstate;
 	EState	   *estate;
@@ -289,7 +289,7 @@ ExecGroupOneTuple(Group * node)
  * -----------------
  */
 bool
-ExecInitGroup(Group * node, EState * estate, Plan * parent)
+ExecInitGroup(Group *node, EState *estate, Plan *parent)
 {
 	GroupState *grpstate;
 	Plan	   *outerPlan;
@@ -345,7 +345,7 @@ ExecInitGroup(Group * node, EState * estate, Plan * parent)
 }
 
 int
-ExecCountSlotsGroup(Group * node)
+ExecCountSlotsGroup(Group *node)
 {
 	return ExecCountSlotsNode(outerPlan(node)) + GROUP_NSLOTS;
 }
@@ -356,7 +356,7 @@ ExecCountSlotsGroup(Group * node)
  * -----------------------
  */
 void
-ExecEndGroup(Group * node)
+ExecEndGroup(Group *node)
 {
 	GroupState *grpstate;
 	Plan	   *outerPlan;
@@ -380,8 +380,8 @@ ExecEndGroup(Group * node)
  * code swiped from nodeUnique.c
  */
 static bool
-sameGroup(TupleTableSlot * oldslot,
-		  TupleTableSlot * newslot,
+sameGroup(TupleTableSlot *oldslot,
+		  TupleTableSlot *newslot,
 		  int numCols,
 		  AttrNumber *grpColIdx,
 		  TupleDesc tupdesc)

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo.h,v 1.5 1997/09/08 02:37:42 momjian Exp $
+ * $Id: geqo.h,v 1.6 1997/09/08 21:53:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,13 +66,13 @@ double		SelectionBias;
  /* ^^^						*/
 
 /* geqo prototypes */
-extern Rel *geqo(Query * root);
+extern Rel *geqo(Query *root);
 
 extern void geqo_params(int string_length);
 
-extern Cost geqo_eval(Query * root, Gene * tour, int num_gene);
+extern Cost geqo_eval(Query *root, Gene *tour, int num_gene);
 double		geqo_log(double x, double b);
-extern Rel *gimme_tree(Query * root, Gene * tour, int rel_count, int num_gene, Rel * outer_rel);
+extern Rel *gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, Rel *outer_rel);
 
 
 #endif							/* GEQO_H */

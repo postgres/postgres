@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.6 1997/09/08 02:22:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.7 1997/09/08 21:43:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,10 +31,10 @@
 #include "parser/parsetree.h"
 
 static Oid
-InitScanRelation(SeqScan * node, EState * estate,
-				 CommonScanState * scanstate, Plan * outerPlan);
+InitScanRelation(SeqScan *node, EState *estate,
+				 CommonScanState *scanstate, Plan *outerPlan);
 
-static TupleTableSlot *SeqNext(SeqScan * node);
+static TupleTableSlot *SeqNext(SeqScan *node);
 
 /* ----------------------------------------------------------------
  *						Scan Support
@@ -47,7 +47,7 @@ static TupleTableSlot *SeqNext(SeqScan * node);
  * ----------------------------------------------------------------
  */
 static TupleTableSlot *
-SeqNext(SeqScan * node)
+SeqNext(SeqScan *node)
 {
 	HeapTuple	tuple;
 	HeapScanDesc scandesc;
@@ -115,7 +115,7 @@ SeqNext(SeqScan * node)
  */
 
 TupleTableSlot *
-ExecSeqScan(SeqScan * node)
+ExecSeqScan(SeqScan *node)
 {
 	TupleTableSlot *slot;
 	Plan	   *outerPlan;
@@ -151,8 +151,8 @@ ExecSeqScan(SeqScan * node)
  * ----------------------------------------------------------------
  */
 static Oid
-InitScanRelation(SeqScan * node, EState * estate,
-				 CommonScanState * scanstate, Plan * outerPlan)
+InitScanRelation(SeqScan *node, EState *estate,
+				 CommonScanState *scanstate, Plan *outerPlan)
 {
 	Index		relid;
 	List	   *rangeTable;
@@ -190,7 +190,7 @@ InitScanRelation(SeqScan * node, EState * estate,
 					  direction,/* scan direction */
 					  timeQual, /* time qual */
 					  &currentRelation, /* return: rel desc */
-					  (Pointer *) & currentScanDesc);	/* return: scan desc */
+					  (Pointer *) &currentScanDesc);	/* return: scan desc */
 
 		scanstate->css_currentRelation = currentRelation;
 		scanstate->css_currentScanDesc = currentScanDesc;
@@ -236,7 +236,7 @@ InitScanRelation(SeqScan * node, EState * estate,
  * ----------------------------------------------------------------
  */
 bool
-ExecInitSeqScan(SeqScan * node, EState * estate, Plan * parent)
+ExecInitSeqScan(SeqScan *node, EState *estate, Plan *parent)
 {
 	CommonScanState *scanstate;
 	Plan	   *outerPlan;
@@ -296,7 +296,7 @@ ExecInitSeqScan(SeqScan * node, EState * estate, Plan * parent)
 }
 
 int
-ExecCountSlotsSeqScan(SeqScan * node)
+ExecCountSlotsSeqScan(SeqScan *node)
 {
 	return ExecCountSlotsNode(outerPlan(node)) +
 	ExecCountSlotsNode(innerPlan(node)) +
@@ -312,7 +312,7 @@ ExecCountSlotsSeqScan(SeqScan * node)
  * ----------------------------------------------------------------
  */
 void
-ExecEndSeqScan(SeqScan * node)
+ExecEndSeqScan(SeqScan *node)
 {
 	CommonScanState *scanstate;
 	Plan	   *outerPlan;
@@ -366,7 +366,7 @@ ExecEndSeqScan(SeqScan * node)
  * ----------------------------------------------------------------
  */
 void
-ExecSeqReScan(SeqScan * node, ExprContext * exprCtxt, Plan * parent)
+ExecSeqReScan(SeqScan *node, ExprContext *exprCtxt, Plan *parent)
 {
 	CommonScanState *scanstate;
 	EState	   *estate;
@@ -403,7 +403,7 @@ ExecSeqReScan(SeqScan * node, ExprContext * exprCtxt, Plan * parent)
  * ----------------------------------------------------------------
  */
 void
-ExecSeqMarkPos(SeqScan * node)
+ExecSeqMarkPos(SeqScan *node)
 {
 	CommonScanState *scanstate;
 	Plan	   *outerPlan;
@@ -442,7 +442,7 @@ ExecSeqMarkPos(SeqScan * node)
  * ----------------------------------------------------------------
  */
 void
-ExecSeqRestrPos(SeqScan * node)
+ExecSeqRestrPos(SeqScan *node)
 {
 	CommonScanState *scanstate;
 	Plan	   *outerPlan;

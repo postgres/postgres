@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.56 1997/09/08 20:56:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.57 1997/09/08 21:46:16 momjian Exp $
  *
  * NOTES
  *
@@ -156,7 +156,7 @@ static int	MultiplexedBackendPort;
  */
 static void pmdaemonize(void);
 static void
-ConnStartup(Port * port, int *status,
+ConnStartup(Port *port, int *status,
 			char *errormsg, const int errormsg_len);
 static int	ConnCreate(int serverFd, int *newFdP);
 static void reset_shared(short port);
@@ -164,12 +164,12 @@ static void pmdie(SIGNAL_ARGS);
 static void reaper(SIGNAL_ARGS);
 static void dumpstatus(SIGNAL_ARGS);
 static void CleanupProc(int pid, int exitstatus);
-static int	DoExec(StartupInfo * packet, int portFd);
+static int	DoExec(StartupInfo *packet, int portFd);
 static void ExitPostmaster(int status);
 static void usage(const char *);
 static int	ServerLoop(void);
-static int	BackendStartup(StartupInfo * packet, Port * port, int *pidPtr);
-static void send_error_reply(Port * port, const char *errormsg);
+static int	BackendStartup(StartupInfo *packet, Port *port, int *pidPtr);
+static void send_error_reply(Port *port, const char *errormsg);
 
 extern char *optarg;
 extern int	optind,
@@ -178,7 +178,7 @@ extern int	optind,
 
 
 static void
-checkDataDir(const char *DataDir, bool * DataDirOK)
+checkDataDir(const char *DataDir, bool *DataDirOK)
 {
 	if (DataDir == NULL)
 	{
@@ -686,7 +686,7 @@ ServerLoop(void)
 */
 
 static void
-ConnStartup(Port * port, int *status,
+ConnStartup(Port *port, int *status,
 			char *errormsg, const int errormsg_len)
 {
 	MsgType		msgType;
@@ -791,7 +791,7 @@ ConnStartup(Port * port, int *status,
 */
 
 static void
-send_error_reply(Port * port, const char *errormsg)
+send_error_reply(Port *port, const char *errormsg)
 {
 	int			rc;				/* return code from sendto */
 	char	   *reply;
@@ -1040,8 +1040,8 @@ CleanupProc(int pid,
  *
  */
 static int
-BackendStartup(StartupInfo * packet,	/* client's startup packet */
-			   Port * port,
+BackendStartup(StartupInfo *packet,		/* client's startup packet */
+			   Port *port,
 			   int *pidPtr)
 {
 	Backend    *bn;				/* for backend cleanup */
@@ -1173,7 +1173,7 @@ split_opts(char **argv, int *argcp, char *s)
  *		If execv() fails, return status.
  */
 static int
-DoExec(StartupInfo * packet, int portFd)
+DoExec(StartupInfo *packet, int portFd)
 {
 	char		execbuf[MAXPATHLEN];
 	char		portbuf[ARGV_SIZE];

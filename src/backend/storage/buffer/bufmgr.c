@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.22 1997/09/08 20:56:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.23 1997/09/08 21:46:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,7 @@ ReadBufferWithBufferLock(Relation relation, BlockNumber blockNum,
 						 bool bufferLockHeld);
 static BufferDesc *
 BufferAlloc(Relation reln, BlockNumber blockNum,
-			bool * foundPtr, bool bufferLockHeld);
+			bool *foundPtr, bool bufferLockHeld);
 static int	FlushBuffer(Buffer buffer, bool release);
 static void BufferSync(void);
 static int	BufferReplace(BufferDesc *bufHdr, bool bufferLockHeld);
@@ -354,7 +354,7 @@ ReadBufferWithBufferLock(Relation reln,
 static BufferDesc *
 BufferAlloc(Relation reln,
 			BlockNumber blockNum,
-			bool * foundPtr,
+			bool *foundPtr,
 			bool bufferLockHeld)
 {
 	BufferDesc *buf,
@@ -1154,7 +1154,7 @@ long		NDirectFileRead;	/* some I/O's are direct file access.
 long		NDirectFileWrite;	/* e.g., I/O in psort and hashjoin.					*/
 
 void
-PrintBufferUsage(FILE * statfp)
+PrintBufferUsage(FILE *statfp)
 {
 	float		hitrate;
 	float		localhitrate;

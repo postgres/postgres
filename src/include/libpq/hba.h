@@ -4,7 +4,7 @@
  *	  Interface to hba.c
  *
  *
- * $Id: hba.h,v 1.4 1997/09/07 04:58:19 momjian Exp $
+ * $Id: hba.h,v 1.5 1997/09/08 21:52:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,16 +38,17 @@
 
 enum Userauth
 {
-	Trust, Ident, Password
+	Trust, Ident,
+				Password
 };
 
 extern int
-hba_recvauth(const Port * port, const char database[], const char user[],
+hba_recvauth(const Port *port, const char database[], const char user[],
 			 const char DataDir[]);
 void
 find_hba_entry(const char DataDir[], const struct in_addr ip_addr,
 			   const char database[],
-			   bool * host_ok_p, enum Userauth * userauth_p,
+			   bool *host_ok_p, enum Userauth * userauth_p,
 			   char usermap_name[], bool find_password_entries);
 
 #endif

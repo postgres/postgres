@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashscan.c,v 1.10 1997/09/08 02:20:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashscan.c,v 1.11 1997/09/08 21:40:48 momjian Exp $
  *
  * NOTES
  *	  Because we can be doing an index scan on a relation while we
@@ -38,7 +38,7 @@ typedef struct HashScanListData
 {
 	IndexScanDesc hashsl_scan;
 	struct HashScanListData *hashsl_next;
-}			HashScanListData;
+} HashScanListData;
 
 typedef HashScanListData *HashScanList;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.21 1997/09/08 02:23:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.22 1997/09/08 21:43:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,7 +100,7 @@ pq_init(int fd)
  *	 used for debugging libpq
  */
 static int
-pq_getc(FILE * fin)
+pq_getc(FILE *fin)
 {
 	int			c;
 
@@ -643,7 +643,7 @@ StreamServerPort(char *hostName, short portName, int *fdP)
  * RETURNS: STATUS_OK or STATUS_ERROR
  */
 int
-StreamConnection(int server_fd, Port * port)
+StreamConnection(int server_fd, Port *port)
 {
 	int			addrlen;
 
@@ -712,7 +712,7 @@ StreamClose(int sock)
  * ---------------------------
  */
 int
-StreamOpen(char *hostName, short portName, Port * port)
+StreamOpen(char *hostName, short portName, Port *port)
 {
 	struct hostent *hp;
 	int			laddrlen = sizeof(struct sockaddr_in);

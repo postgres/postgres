@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.5 1997/09/08 02:20:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.6 1997/09/08 21:40:47 momjian Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -23,7 +23,7 @@
 uint32
 hashint2(int16 key)
 {
-	return ((uint32) ~ key);
+	return ((uint32) ~key);
 }
 
 uint32
@@ -130,7 +130,7 @@ hashfloat8(float64 keyp)
 uint32
 hashoid(Oid key)
 {
-	return ((uint32) ~ key);
+	return ((uint32) ~key);
 }
 
 
@@ -204,7 +204,7 @@ hashchar8(char *key)
 }
 
 uint32
-hashname(NameData * n)
+hashname(NameData *n)
 {
 	uint32		h;
 	int			len;

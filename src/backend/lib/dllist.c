@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.7 1997/09/08 02:22:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.8 1997/09/08 21:43:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@ DLNewList(void)
 
  /* free up a list and all the nodes in it */
 void
-DLFreeList(Dllist * l)
+DLFreeList(Dllist *l)
 {
 	Dlelem	   *curr;
 
@@ -56,13 +56,13 @@ DLNewElem(void *val)
 }
 
 void
-DLFreeElem(Dlelem * e)
+DLFreeElem(Dlelem *e)
 {
 	free(e);
 }
 
 Dlelem	   *
-DLGetHead(Dllist * l)
+DLGetHead(Dllist *l)
 {
 	return (l ? l->dll_head : 0);
 }
@@ -70,7 +70,7 @@ DLGetHead(Dllist * l)
 /* get the value stored in the first element */
 #ifdef NOT_USED
 void	   *
-DLGetHeadVal(Dllist * l)
+DLGetHeadVal(Dllist *l)
 {
 	Dlelem	   *e = DLGetHead(l);
 
@@ -80,7 +80,7 @@ DLGetHeadVal(Dllist * l)
 #endif
 
 Dlelem	   *
-DLGetTail(Dllist * l)
+DLGetTail(Dllist *l)
 {
 	return (l ? l->dll_tail : 0);
 }
@@ -88,7 +88,7 @@ DLGetTail(Dllist * l)
 /* get the value stored in the first element */
 #ifdef NOT_USED
 void	   *
-DLGetTailVal(Dllist * l)
+DLGetTailVal(Dllist *l)
 {
 	Dlelem	   *e = DLGetTail(l);
 
@@ -98,19 +98,19 @@ DLGetTailVal(Dllist * l)
 #endif
 
 Dlelem	   *
-DLGetPred(Dlelem * e)			/* get predecessor */
+DLGetPred(Dlelem *e)			/* get predecessor */
 {
 	return (e ? e->dle_prev : 0);
 }
 
 Dlelem	   *
-DLGetSucc(Dlelem * e)			/* get successor */
+DLGetSucc(Dlelem *e)			/* get successor */
 {
 	return (e ? e->dle_next : 0);
 }
 
 void
-DLRemove(Dlelem * e)
+DLRemove(Dlelem *e)
 {
 	Dllist	   *l;
 
@@ -129,7 +129,7 @@ DLRemove(Dlelem * e)
 }
 
 void
-DLAddHead(Dllist * l, Dlelem * e)
+DLAddHead(Dllist *l, Dlelem *e)
 {
 	e->dle_list = l;
 
@@ -146,7 +146,7 @@ DLAddHead(Dllist * l, Dlelem * e)
 }
 
 void
-DLAddTail(Dllist * l, Dlelem * e)
+DLAddTail(Dllist *l, Dlelem *e)
 {
 	e->dle_list = l;
 
@@ -163,7 +163,7 @@ DLAddTail(Dllist * l, Dlelem * e)
 }
 
 Dlelem	   *
-DLRemHead(Dllist * l)
+DLRemHead(Dllist *l)
 {
 	/* remove and return the head */
 	Dlelem	   *result;
@@ -189,7 +189,7 @@ DLRemHead(Dllist * l)
 }
 
 Dlelem	   *
-DLRemTail(Dllist * l)
+DLRemTail(Dllist *l)
 {
 	/* remove and return the tail */
 	Dlelem	   *result;

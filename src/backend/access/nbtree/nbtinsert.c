@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.19 1997/09/08 02:20:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.20 1997/09/08 21:41:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -435,7 +435,7 @@ _bt_insertonpg(Relation rel,
 			maxoff = PageGetMaxOffsetNumber(page);
 			llimit = PageGetPageSize(page) - sizeof(PageHeaderData) -
 				DOUBLEALIGN(sizeof(BTPageOpaqueData))
-				+ sizeof(ItemIdData);
+				+sizeof(ItemIdData);
 			llimit /= 2;
 			firstright = _bt_findsplitloc(rel, page, start, maxoff, llimit);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.8 1997/09/08 02:24:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.9 1997/09/08 21:45:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,9 +47,9 @@
 
 #include "executor/executor.h"
 
-static Plan *make_sortplan(List * tlist, List * sortcls, Plan * plannode);
-static Plan *init_query_planner(Query * parse);
-static Existential *make_existential(Plan * left, Plan * right);
+static Plan *make_sortplan(List *tlist, List *sortcls, Plan *plannode);
+static Plan *init_query_planner(Query *parse);
+static Existential *make_existential(Plan *left, Plan *right);
 
 /*****************************************************************************
  *
@@ -69,7 +69,7 @@ static Existential *make_existential(Plan * left, Plan * right);
  *
  */
 Plan	   *
-planner(Query * parse)
+planner(Query *parse)
 {
 	List	   *tlist = parse->targetList;
 	List	   *rangetable = parse->rtable;
@@ -143,7 +143,7 @@ planner(Query * parse)
  * sortops:  (sortop1 sortop2 sortop3 ...)
  */
 static Plan *
-make_sortplan(List * tlist, List * sortcls, Plan * plannode)
+make_sortplan(List *tlist, List *sortcls, Plan *plannode)
 {
 	Plan	   *sortplan = (Plan *) NULL;
 	List	   *temp_tlist = NIL;
@@ -204,7 +204,7 @@ make_sortplan(List * tlist, List * sortcls, Plan * plannode)
  *
  */
 static Plan *
-init_query_planner(Query * root)
+init_query_planner(Query *root)
 {
 	List	   *primary_qual;
 	List	   *existential_qual;
@@ -254,7 +254,7 @@ init_query_planner(Query * root)
  *	  the left and right subtree slots.
  */
 static Existential *
-make_existential(Plan * left, Plan * right)
+make_existential(Plan *left, Plan *right)
 {
 	Existential *node = makeNode(Existential);
 
@@ -273,7 +273,7 @@ make_existential(Plan * left, Plan * right)
  * type he claims.
  */
 void
-pg_checkretval(Oid rettype, QueryTreeList * queryTreeList)
+pg_checkretval(Oid rettype, QueryTreeList *queryTreeList)
 {
 	Query	   *parse;
 	List	   *tlist;
@@ -399,6 +399,7 @@ pg_checkretval(Oid rettype, QueryTreeList * queryTreeList)
 			tletype = (Oid) ((Param *) thenode)->paramtype;
 		else if (IsA(thenode, Expr))
 			tletype = Expr;
+
 		else if (IsA(thenode, LispList))
 		{
 			thenode = lfirst(thenode);

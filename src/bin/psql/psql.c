@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.92 1997/09/08 02:33:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.93 1997/09/08 21:50:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,44 +94,44 @@ typedef struct _psqlSettings
 	bool		useReadline;	/* use libreadline routines */
 	bool		getPassword;	/* prompt the user for a username and
 								 * password */
-}			PsqlSettings;
+} PsqlSettings;
 
 /* declarations for functions in this file */
 static void usage(char *progname);
 static void slashUsage();
-static void handleCopyOut(PGresult * res, bool quiet, FILE * copystream);
+static void handleCopyOut(PGresult *res, bool quiet, FILE *copystream);
 static void
-handleCopyIn(PGresult * res, const bool mustprompt,
-			 FILE * copystream);
-static int	tableList(PsqlSettings * ps, bool deep_tablelist, char info_type);
-static int	tableDesc(PsqlSettings * ps, char *table);
-static int	rightsList(PsqlSettings * ps);
+handleCopyIn(PGresult *res, const bool mustprompt,
+			 FILE *copystream);
+static int	tableList(PsqlSettings *ps, bool deep_tablelist, char info_type);
+static int	tableDesc(PsqlSettings *ps, char *table);
+static int	rightsList(PsqlSettings *ps);
 static void prompt_for_password(char *username, char *password);
 static char *
 make_connect_string(char *host, char *port, char *dbname,
 					char *username, char *password);
 
-static char *gets_noreadline(char *prompt, FILE * source);
-static char *gets_readline(char *prompt, FILE * source);
-static char *gets_fromFile(char *prompt, FILE * source);
-static int	listAllDbs(PsqlSettings * settings);
+static char *gets_noreadline(char *prompt, FILE *source);
+static char *gets_readline(char *prompt, FILE *source);
+static char *gets_fromFile(char *prompt, FILE *source);
+static int	listAllDbs(PsqlSettings *settings);
 static void
-SendQuery(bool * success_p, PsqlSettings * settings, const char *query,
-		  const bool copy_in, const bool copy_out, FILE * copystream);
+SendQuery(bool *success_p, PsqlSettings *settings, const char *query,
+		  const bool copy_in, const bool copy_out, FILE *copystream);
 static int
-HandleSlashCmds(PsqlSettings * settings,
+HandleSlashCmds(PsqlSettings *settings,
 				char *line,
 				char *query);
-static int	MainLoop(PsqlSettings * settings, FILE * source);
+static int	MainLoop(PsqlSettings *settings, FILE *source);
 
 /* probably should move this into libpq */
 void
-PQprint(FILE * fp,
-		PGresult * res,
-		PQprintOpt * po
+PQprint(FILE *fp,
+		PGresult *res,
+		PQprintOpt *po
 );
 
-static FILE *setFout(PsqlSettings * ps, char *fname);
+static FILE *setFout(PsqlSettings *ps, char *fname);
 
 /*
  * usage print out usage for command line arguments
@@ -175,7 +175,7 @@ on(bool f)
 }
 
 static void
-slashUsage(PsqlSettings * ps)
+slashUsage(PsqlSettings *ps)
 {
 	int			usePipe = 0;
 	char	   *pagerenv;
@@ -228,7 +228,7 @@ slashUsage(PsqlSettings * ps)
 }
 
 static PGresult *
-PSQLexec(PsqlSettings * ps, char *query)
+PSQLexec(PsqlSettings *ps, char *query)
 {
 	PGresult   *res;
 
@@ -256,7 +256,7 @@ PSQLexec(PsqlSettings * ps, char *query)
  */
 
 static int
-listAllDbs(PsqlSettings * ps)
+listAllDbs(PsqlSettings *ps)
 {
 	PGresult   *results;
 	char	   *query = "select * from pg_database;";
@@ -278,7 +278,7 @@ listAllDbs(PsqlSettings * ps)
  *
  */
 int
-tableList(PsqlSettings * ps, bool deep_tablelist, char info_type)
+tableList(PsqlSettings *ps, bool deep_tablelist, char info_type)
 {
 	char		listbuf[256];
 	int			nColumns;
@@ -405,7 +405,7 @@ tableList(PsqlSettings * ps, bool deep_tablelist, char info_type)
  *
  */
 int
-rightsList(PsqlSettings * ps)
+rightsList(PsqlSettings *ps)
 {
 	char		listbuf[256];
 	int			nColumns;
@@ -460,7 +460,7 @@ rightsList(PsqlSettings * ps)
  *
  */
 int
-tableDesc(PsqlSettings * ps, char *table)
+tableDesc(PsqlSettings *ps, char *table)
 {
 	char		descbuf[256];
 	int			nColumns;
@@ -558,14 +558,14 @@ tableDesc(PsqlSettings * ps, char *table)
 	}
 }
 
-typedef char *(*READ_ROUTINE) (char *prompt, FILE * source);
+typedef char *(*READ_ROUTINE) (char *prompt, FILE *source);
 
 /*
  * gets_noreadline	prompt source gets a line of input without calling
  * readline, the source is ignored
  */
 static char *
-gets_noreadline(char *prompt, FILE * source)
+gets_noreadline(char *prompt, FILE *source)
 {
 	fputs(prompt, stdout);
 	fflush(stdout);
@@ -577,7 +577,7 @@ gets_noreadline(char *prompt, FILE * source)
  * the source is ignored the prompt argument is used as the prompting string
  */
 static char *
-gets_readline(char *prompt, FILE * source)
+gets_readline(char *prompt, FILE *source)
 {
 	char	   *s;
 
@@ -601,7 +601,7 @@ gets_readline(char *prompt, FILE * source)
  * argument is a FILE *
  */
 static char *
-gets_fromFile(char *prompt, FILE * source)
+gets_fromFile(char *prompt, FILE *source)
 {
 	char	   *line;
 	int			len;
@@ -630,8 +630,8 @@ gets_fromFile(char *prompt, FILE * source)
  * the query executed successfully returns *success_p = 0 otherwise
  */
 static void
-SendQuery(bool * success_p, PsqlSettings * settings, const char *query,
-		  const bool copy_in, const bool copy_out, FILE * copystream)
+SendQuery(bool *success_p, PsqlSettings *settings, const char *query,
+		  const bool copy_in, const bool copy_out, FILE *copystream)
 {
 
 	PGresult   *results;
@@ -781,7 +781,7 @@ editFile(char *fname)
 }
 
 static bool
-toggle(PsqlSettings * settings, bool * sw, char *msg)
+toggle(PsqlSettings *settings, bool *sw, char *msg)
 {
 	*sw = !*sw;
 	if (!settings->quiet)
@@ -853,7 +853,7 @@ unescape(char *dest, const char *source)
 static void
 parse_slash_copy(const char *args, char *table, const int table_len,
 				 char *file, const int file_len,
-				 bool * from_p, bool * error_p)
+				 bool *from_p, bool *error_p)
 {
 
 	char		work_args[200];
@@ -931,7 +931,7 @@ parse_slash_copy(const char *args, char *table, const int table_len,
 
 
 static void
-do_copy(const char *args, PsqlSettings * settings)
+do_copy(const char *args, PsqlSettings *settings)
 {
 	/*---------------------------------------------------------------------------
 	  Execute a \copy command (frontend copy).	We have to open a file, then
@@ -1005,7 +1005,7 @@ do_copy(const char *args, PsqlSettings * settings)
 static void
 do_connect(const char *new_dbname,
 		   const char *new_user,
-		   PsqlSettings * settings)
+		   PsqlSettings *settings)
 {
 	if (!new_dbname)
 		fprintf(stderr, "\\connect must be followed by a database name\n");
@@ -1155,7 +1155,7 @@ do_edit(const char *filename_arg, char *query, int *status_p)
 
 
 static void
-do_help(PsqlSettings * ps, const char *topic)
+do_help(PsqlSettings *ps, const char *topic)
 {
 
 	if (!topic)
@@ -1282,7 +1282,7 @@ do_shell(const char *command)
  *	3 - new query supplied by edit
  */
 static int
-HandleSlashCmds(PsqlSettings * settings,
+HandleSlashCmds(PsqlSettings *settings,
 				char *line,
 				char *query)
 {
@@ -1620,7 +1620,7 @@ HandleSlashCmds(PsqlSettings * settings,
  */
 
 static int
-MainLoop(PsqlSettings * settings, FILE * source)
+MainLoop(PsqlSettings *settings, FILE *source)
 {
 	char	   *line;			/* line of input */
 	char	   *xcomment;		/* start of extended comment */
@@ -2156,7 +2156,7 @@ main(int argc, char **argv)
 #define COPYBUFSIZ	8192
 
 static void
-handleCopyOut(PGresult * res, bool quiet, FILE * copystream)
+handleCopyOut(PGresult *res, bool quiet, FILE *copystream)
 {
 	bool		copydone;
 	char		copybuf[COPYBUFSIZ];
@@ -2197,7 +2197,7 @@ handleCopyOut(PGresult * res, bool quiet, FILE * copystream)
 
 
 static void
-handleCopyIn(PGresult * res, const bool mustprompt, FILE * copystream)
+handleCopyIn(PGresult *res, const bool mustprompt, FILE *copystream)
 {
 	bool		copydone = false;
 	bool		firstload;
@@ -2261,7 +2261,7 @@ handleCopyIn(PGresult * res, const bool mustprompt, FILE * copystream)
  */
 
 static FILE *
-setFout(PsqlSettings * ps, char *fname)
+setFout(PsqlSettings *ps, char *fname)
 {
 	if (ps->queryFout && ps->queryFout != stdout)
 	{

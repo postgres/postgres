@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.6 1997/09/08 02:31:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.7 1997/09/08 21:48:58 momjian Exp $
  *
  * NOTE
  *	  This should eventually work with elog(), dlog(), etc.
@@ -23,7 +23,7 @@
 
 int
 ExceptionalCondition(char *conditionName,
-					 Exception * exceptionP,
+					 Exception *exceptionP,
 					 char *detail,
 					 char *fileName,
 					 int lineNumber)

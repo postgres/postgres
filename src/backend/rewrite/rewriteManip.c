@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.6 1997/09/08 02:28:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.7 1997/09/08 21:46:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,12 +28,12 @@
 #include "nodes/plannodes.h"
 #include "optimizer/clauses.h"
 
-static void ResolveNew(RewriteInfo * info, List * targetlist, Node ** node);
+static void ResolveNew(RewriteInfo *info, List *targetlist, Node **node);
 
 
 
 void
-OffsetVarNodes(Node * node, int offset)
+OffsetVarNodes(Node *node, int offset)
 {
 	if (node == NULL)
 		return;
@@ -78,7 +78,7 @@ OffsetVarNodes(Node * node, int offset)
 }
 
 void
-ChangeVarNodes(Node * node, int old_varno, int new_varno)
+ChangeVarNodes(Node *node, int old_varno, int new_varno)
 {
 	if (node == NULL)
 		return;
@@ -126,7 +126,7 @@ ChangeVarNodes(Node * node, int old_varno, int new_varno)
 }
 
 void
-AddQual(Query * parsetree, Node * qual)
+AddQual(Query *parsetree, Node *qual)
 {
 	Node	   *copy,
 			   *old;
@@ -144,7 +144,7 @@ AddQual(Query * parsetree, Node * qual)
 }
 
 void
-AddNotQual(Query * parsetree, Node * qual)
+AddNotQual(Query *parsetree, Node *qual)
 {
 	Node	   *copy;
 
@@ -170,7 +170,7 @@ make_null(Oid type)
 }
 
 void
-FixResdomTypes(List * tlist)
+FixResdomTypes(List *tlist)
 {
 	List	   *i;
 
@@ -189,7 +189,7 @@ FixResdomTypes(List * tlist)
 }
 
 static Node *
-FindMatchingNew(List * tlist, int attno)
+FindMatchingNew(List *tlist, int attno)
 {
 	List	   *i;
 
@@ -206,7 +206,7 @@ FindMatchingNew(List * tlist, int attno)
 }
 
 static Node *
-FindMatchingTLEntry(List * tlist, char *e_attname)
+FindMatchingTLEntry(List *tlist, char *e_attname)
 {
 	List	   *i;
 
@@ -223,7 +223,7 @@ FindMatchingTLEntry(List * tlist, char *e_attname)
 }
 
 static void
-ResolveNew(RewriteInfo * info, List * targetlist, Node ** nodePtr)
+ResolveNew(RewriteInfo *info, List *targetlist, Node **nodePtr)
 {
 	Node	   *node = *nodePtr;
 
@@ -272,7 +272,7 @@ ResolveNew(RewriteInfo * info, List * targetlist, Node ** nodePtr)
 
 				foreach(l, (List *) node)
 				{
-					ResolveNew(info, targetlist, (Node **) & (lfirst(l)));
+					ResolveNew(info, targetlist, (Node **) &(lfirst(l)));
 				}
 				break;
 			}
@@ -283,17 +283,17 @@ ResolveNew(RewriteInfo * info, List * targetlist, Node ** nodePtr)
 }
 
 void
-FixNew(RewriteInfo * info, Query * parsetree)
+FixNew(RewriteInfo *info, Query *parsetree)
 {
 	ResolveNew(info, parsetree->targetList,
-			   (Node **) & (info->rule_action->targetList));
+			   (Node **) &(info->rule_action->targetList));
 	ResolveNew(info, parsetree->targetList, &info->rule_action->qual);
 }
 
 static void
-nodeHandleRIRAttributeRule(Node ** nodePtr,
-						   List * rtable,
-						   List * targetlist,
+nodeHandleRIRAttributeRule(Node **nodePtr,
+						   List *rtable,
+						   List *targetlist,
 						   int rt_index,
 						   int attr_num,
 						   int *modified,
@@ -387,9 +387,9 @@ nodeHandleRIRAttributeRule(Node ** nodePtr,
  *			do instead retrieve (attribute = expression) w/qual'
  */
 void
-HandleRIRAttributeRule(Query * parsetree,
-					   List * rtable,
-					   List * targetlist,
+HandleRIRAttributeRule(Query *parsetree,
+					   List *rtable,
+					   List *targetlist,
 					   int rt_index,
 					   int attr_num,
 					   int *modified,
@@ -404,9 +404,9 @@ HandleRIRAttributeRule(Query * parsetree,
 
 
 static void
-nodeHandleViewRule(Node ** nodePtr,
-				   List * rtable,
-				   List * targetlist,
+nodeHandleViewRule(Node **nodePtr,
+				   List *rtable,
+				   List *targetlist,
 				   int rt_index,
 				   int *modified)
 {
@@ -477,9 +477,9 @@ nodeHandleViewRule(Node ** nodePtr,
 }
 
 void
-HandleViewRule(Query * parsetree,
-			   List * rtable,
-			   List * targetlist,
+HandleViewRule(Query *parsetree,
+			   List *rtable,
+			   List *targetlist,
 			   int rt_index,
 			   int *modified)
 {

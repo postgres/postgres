@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.7 1997/09/08 02:39:05 momjian Exp $
+ * $Id: lock.h,v 1.8 1997/09/08 21:54:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@ typedef struct ltag
 	Oid			relId;
 	Oid			dbId;
 	ItemPointerData tupleId;
-}			LOCKTAG;
+} LOCKTAG;
 
 #define TAGSIZE (sizeof(LOCKTAG))
 
@@ -91,7 +91,7 @@ typedef struct lockctl
 	int			conflictTab[MAX_LOCKTYPES];
 	int			prio[MAX_LOCKTYPES];
 	SPINLOCK	masterLock;
-}			LOCKCTL;
+} LOCKCTL;
 
 /*
  * lockHash -- hash table on lock Ids,
@@ -104,7 +104,7 @@ typedef struct ltable
 	HTAB	   *lockHash;
 	HTAB	   *xidHash;
 	LOCKCTL    *ctl;
-}			LOCKTAB;
+} LOCKTAB;
 
 /* -----------------------
  * A transaction never conflicts with its own locks.  Hence, if
@@ -140,7 +140,7 @@ typedef struct XIDTAG
 	SHMEM_OFFSET lock;
 	int			pid;
 	TransactionId xid;
-}			XIDTAG;
+} XIDTAG;
 
 typedef struct XIDLookupEnt
 {
@@ -151,7 +151,7 @@ typedef struct XIDLookupEnt
 	int			holders[MAX_LOCKTYPES];
 	int			nHolding;
 	SHM_QUEUE	queue;
-}			XIDLookupEnt;
+} XIDLookupEnt;
 
 #define XID_TAGSIZE (sizeof(XIDTAG))
 
@@ -160,7 +160,7 @@ typedef struct procQueue
 {
 	SHM_QUEUE	links;
 	int			size;
-}			PROC_QUEUE;
+} PROC_QUEUE;
 
 
 /*
@@ -186,7 +186,7 @@ typedef struct Lock
 	int			nHolding;
 	int			activeHolders[MAX_LOCKTYPES];
 	int			nActive;
-}			LOCK;
+} LOCK;
 
 #define LockGetLock_nHolders(l) l->nHolders
 
@@ -204,16 +204,16 @@ extern SPINLOCK LockMgrLock;
  */
 extern void InitLocks(void);
 extern void LockDisable(int status);
-extern		LockTableId
-LockTabInit(char *tabName, MASK * conflictsP, int *prioP,
+extern LockTableId
+LockTabInit(char *tabName, MASK *conflictsP, int *prioP,
 			int ntypes);
-extern bool LockAcquire(LockTableId tableId, LOCKTAG * lockName, LOCKT lockt);
+extern bool LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt);
 extern int
-LockResolveConflicts(LOCKTAB * ltable, LOCK * lock, LOCKT lockt,
+LockResolveConflicts(LOCKTAB *ltable, LOCK *lock, LOCKT lockt,
 					 TransactionId xid);
-extern bool LockRelease(LockTableId tableId, LOCKTAG * lockName, LOCKT lockt);
-extern void GrantLock(LOCK * lock, LOCKT lockt);
-extern bool LockReleaseAll(LockTableId tableId, SHM_QUEUE * lockQueue);
+extern bool LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt);
+extern void GrantLock(LOCK *lock, LOCKT lockt);
+extern bool LockReleaseAll(LockTableId tableId, SHM_QUEUE *lockQueue);
 extern int	LockShmemSize(void);
 extern bool LockingDisabled(void);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.22 1997/09/08 20:54:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.23 1997/09/08 21:41:24 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -59,9 +59,9 @@ btbuild(Relation heap,
 		AttrNumber *attnum,
 		IndexStrategy istrat,
 		uint16 pcount,
-		Datum * params,
-		FuncIndexInfo * finfo,
-		PredInfo * predInfo)
+		Datum *params,
+		FuncIndexInfo *finfo,
+		PredInfo *predInfo)
 {
 	HeapScanDesc hscan;
 	Buffer		buffer;
@@ -356,7 +356,7 @@ btbuild(Relation heap,
  *		return an InsertIndexResult to the caller.
  */
 InsertIndexResult
-btinsert(Relation rel, Datum * datum, char *nulls, ItemPointer ht_ctid, Relation heapRel)
+btinsert(Relation rel, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation heapRel)
 {
 	BTItem		btitem;
 	IndexTuple	itup;

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.5 1997/09/08 02:30:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.6 1997/09/08 21:48:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,9 +44,9 @@ static Arr_TgString *TextArray2ArrTgString(char *str);
 	  "select * from Edge e where e.belongsTo = '%s'"
 
 /* static functions only used here */
-static void fillTgElement(TgElement * elem, PortalBuffer * pbuf, int tupno);
-static void fillTgNode(TgRecipe * r, TgNode * node, PortalBuffer * pbuf, int tupno);
-static TgRecipe *fillTgRecipe(PortalBuffer * pbuf, int tupno);
+static void fillTgElement(TgElement * elem, PortalBuffer *pbuf, int tupno);
+static void fillTgNode(TgRecipe * r, TgNode * node, PortalBuffer *pbuf, int tupno);
+static TgRecipe *fillTgRecipe(PortalBuffer *pbuf, int tupno);
 static void lookupEdges(TgRecipe * r, char *name);
 static void fillAllNodes(TgRecipe * r, char *name);
 static void fillAllElements(TgRecipe * r, char *name);
@@ -174,7 +174,7 @@ fillTgNode
 -------------------------------------- */
 
 void
-fillTgNode(TgRecipe * r, TgNode * node, PortalBuffer * pbuf, int tupno)
+fillTgNode(TgRecipe * r, TgNode * node, PortalBuffer *pbuf, int tupno)
 {
 	char	   *nodeType;
 	char	   *nodeElem;
@@ -259,7 +259,7 @@ fillTgElement
   ------------------------------------ */
 
 void
-fillTgElement(TgElement * elem, PortalBuffer * pbuf, int tupno)
+fillTgElement(TgElement * elem, PortalBuffer *pbuf, int tupno)
 {
 	char	   *srcLang,
 			   *elemType;
@@ -621,7 +621,7 @@ fillTgRecipe
 	and converts it to a C TgRecipe strcture
   ------------------------------------ */
 TgRecipe   *
-fillTgRecipe(PortalBuffer * pbuf, int tupno)
+fillTgRecipe(PortalBuffer *pbuf, int tupno)
 {
 	TgRecipe   *r;
 	int			i,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/ordering.c,v 1.5 1997/09/08 02:24:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/ordering.c,v 1.6 1997/09/08 21:45:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
 #include "optimizer/internal.h"
 #include "optimizer/ordering.h"
 
-static bool equal_sortops_order(Oid * ordering1, Oid * ordering2);
+static bool equal_sortops_order(Oid *ordering1, Oid *ordering2);
 
 /*
  * equal-path-path-ordering--
@@ -26,8 +26,8 @@ static bool equal_sortops_order(Oid * ordering1, Oid * ordering2);
  *
  */
 bool
-equal_path_path_ordering(PathOrder * path_ordering1,
-						 PathOrder * path_ordering2)
+equal_path_path_ordering(PathOrder *path_ordering1,
+						 PathOrder *path_ordering2)
 {
 	if (path_ordering1 == path_ordering2)
 		return true;
@@ -77,8 +77,8 @@ equal_path_path_ordering(PathOrder * path_ordering1,
  *
  */
 bool
-equal_path_merge_ordering(Oid * path_ordering,
-						  MergeOrder * merge_ordering)
+equal_path_merge_ordering(Oid *path_ordering,
+						  MergeOrder *merge_ordering)
 {
 	if (path_ordering == NULL || merge_ordering == NULL)
 		return (false);
@@ -96,8 +96,8 @@ equal_path_merge_ordering(Oid * path_ordering,
  *
  */
 bool
-equal_merge_merge_ordering(MergeOrder * merge_ordering1,
-						   MergeOrder * merge_ordering2)
+equal_merge_merge_ordering(MergeOrder *merge_ordering1,
+						   MergeOrder *merge_ordering2)
 {
 	return (equal(merge_ordering1, merge_ordering2));
 }
@@ -111,7 +111,7 @@ equal_merge_merge_ordering(MergeOrder * merge_ordering1,
  *	  Returns true iff the sort operators are in the same order.
  */
 static bool
-equal_sortops_order(Oid * ordering1, Oid * ordering2)
+equal_sortops_order(Oid *ordering1, Oid *ordering2)
 {
 	int			i = 0;
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.24 1997/09/08 20:59:19 momjian Exp $
+ * $Id: builtins.h,v 1.25 1997/09/08 21:54:50 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -92,7 +92,7 @@ extern int32 char8cmp(char *arg1, char *arg2);
 extern int32 int2in(char *num);
 extern char *int2out(int16 sh);
 extern int16 *int28in(char *shs);
-extern char *int28out(int16(*shs)[]);
+extern char *int28out(int16 (*shs)[]);
 extern int32 *int44in(char *input_string);
 extern char *int44out(int32 an_array[]);
 extern int32 int4in(char *num);
@@ -123,7 +123,7 @@ extern bool int42lt(int32 arg1, int32 arg2);
 extern bool int42le(int32 arg1, int32 arg2);
 extern bool int42gt(int32 arg1, int32 arg2);
 extern bool int42ge(int32 arg1, int32 arg2);
-extern bool keyfirsteq(int16 * arg1, int16 arg2);
+extern bool keyfirsteq(int16 *arg1, int16 arg2);
 extern int32 int4um(int32 arg);
 extern int32 int4pl(int32 arg1, int32 arg2);
 extern int32 int4mi(int32 arg1, int32 arg2);
@@ -157,13 +157,13 @@ extern int32 int4smaller(int32 arg1, int32 arg2);
 
 /* name.c */
 extern NameData *namein(char *s);
-extern char *nameout(NameData * s);
-extern bool nameeq(NameData * arg1, NameData * arg2);
-extern bool namene(NameData * arg1, NameData * arg2);
-extern bool namelt(NameData * arg1, NameData * arg2);
-extern bool namele(NameData * arg1, NameData * arg2);
-extern bool namegt(NameData * arg1, NameData * arg2);
-extern bool namege(NameData * arg1, NameData * arg2);
+extern char *nameout(NameData *s);
+extern bool nameeq(NameData *arg1, NameData *arg2);
+extern bool namene(NameData *arg1, NameData *arg2);
+extern bool namelt(NameData *arg1, NameData *arg2);
+extern bool namele(NameData *arg1, NameData *arg2);
+extern bool namegt(NameData *arg1, NameData *arg2);
+extern bool namege(NameData *arg1, NameData *arg2);
 extern int	namecmp(Name n1, Name n2);
 extern int	namecpy(Name n1, Name n2);
 extern int	namestrcpy(Name name, char *str);
@@ -195,7 +195,7 @@ extern int32 btchar2cmp(uint16 a, uint16 b);
 extern int32 btchar4cmp(uint32 a, uint32 b);
 extern int32 btchar8cmp(char *a, char *b);
 extern int32 btchar16cmp(char *a, char *b);
-extern int32 btnamecmp(NameData * a, NameData * b);
+extern int32 btnamecmp(NameData *a, NameData *b);
 extern int32 bttextcmp(struct varlena * a, struct varlena * b);
 
 /* support routines for the rtree access method, by opclass */
@@ -203,9 +203,9 @@ extern BOX *rt_box_union(BOX *a, BOX *b);
 extern BOX *rt_box_inter(BOX *a, BOX *b);
 extern void rt_box_size(BOX *a, float *size);
 extern void rt_bigbox_size(BOX *a, float *size);
-extern void rt_poly_size(POLYGON * a, float *size);
-extern POLYGON *rt_poly_union(POLYGON * a, POLYGON * b);
-extern POLYGON *rt_poly_inter(POLYGON * a, POLYGON * b);
+extern void rt_poly_size(POLYGON *a, float *size);
+extern POLYGON *rt_poly_union(POLYGON *a, POLYGON *b);
+extern POLYGON *rt_poly_inter(POLYGON *a, POLYGON *b);
 
 /* projection utilities */
 /* extern char *GetAttributeByName();
@@ -222,7 +222,7 @@ extern int32 reltimein(char *timestring);
 extern char *reltimeout(int32 timevalue);
 extern TimeInterval tintervalin(char *intervalstr);
 extern char *tintervalout(TimeInterval interval);
-extern RelativeTime timespan_reltime(TimeSpan * timespan);
+extern RelativeTime timespan_reltime(TimeSpan *timespan);
 extern TimeSpan *reltime_timespan(RelativeTime reltime);
 extern TimeInterval mktinterval(AbsoluteTime t1, AbsoluteTime t2);
 extern AbsoluteTime timepl(AbsoluteTime t1, RelativeTime t2);
@@ -254,9 +254,9 @@ extern text *timeofday(void);
 
 /* dt.c */
 extern DateTime *datetime_in(char *str);
-extern char *datetime_out(DateTime * datetime);
+extern char *datetime_out(DateTime *datetime);
 extern TimeSpan *timespan_in(char *str);
-extern char *timespan_out(TimeSpan * timespan);
+extern char *timespan_out(TimeSpan *timespan);
 extern int	datetime2tm(DateTime dt, int *tzp, struct tm * tm, double *fsec, char **tzn);
 
 /* filename.c */
@@ -341,8 +341,8 @@ extern bool float84ge(float64 arg1, float32 arg2);
 extern double *box_area(BOX *box);
 
 /* misc.c */
-extern bool nullvalue(Datum value, bool * isNull);
-extern bool nonnullvalue(Datum value, bool * isNull);
+extern bool nullvalue(Datum value, bool *isNull);
+extern bool nonnullvalue(Datum value, bool *isNull);
 extern bool oidrand(Oid o, int32 X);
 extern bool oidsrand(int32 X);
 extern int32 userfntest(int i);
@@ -357,7 +357,7 @@ extern bool oidnotin(Oid the_oid, char *compare);
 
 /* oid.c */
 extern Oid *oid8in(char *oidString);
-extern char *oid8out(Oid(*oidArray)[]);
+extern char *oid8out(Oid (*oidArray)[]);
 extern Oid	oidin(char *s);
 extern char *oidout(Oid o);
 extern bool oideq(Oid arg1, Oid arg2);
@@ -375,8 +375,8 @@ extern bool char8regexeq(char *s, struct varlena * p);
 extern bool char8regexne(char *s, struct varlena * p);
 extern bool char16regexeq(char *s, struct varlena * p);
 extern bool char16regexne(char *s, struct varlena * p);
-extern bool nameregexeq(NameData * n, struct varlena * p);
-extern bool nameregexne(NameData * s, struct varlena * p);
+extern bool nameregexeq(NameData *n, struct varlena * p);
+extern bool nameregexne(NameData *s, struct varlena * p);
 extern bool textregexeq(struct varlena * s, struct varlena * p);
 extern bool textregexne(struct varlena * s, struct varlena * p);
 extern bool char2icregexeq(uint16 arg1, struct varlena * p);
@@ -387,8 +387,8 @@ extern bool char8icregexeq(char *s, struct varlena * p);
 extern bool char8icregexne(char *s, struct varlena * p);
 extern bool char16icregexeq(char *s, struct varlena * p);
 extern bool char16icregexne(char *s, struct varlena * p);
-extern bool nameicregexeq(NameData * s, struct varlena * p);
-extern bool nameicregexne(NameData * s, struct varlena * p);
+extern bool nameicregexeq(NameData *s, struct varlena * p);
+extern bool nameicregexne(NameData *s, struct varlena * p);
 extern bool texticregexeq(struct varlena * s, struct varlena * p);
 extern bool texticregexne(struct varlena * s, struct varlena * p);
 
@@ -462,14 +462,14 @@ extern struct varlena *byteain(char *inputText);
 extern char *byteaout(struct varlena * vlena);
 extern struct varlena *textin(char *inputText);
 extern char *textout(struct varlena * vlena);
-extern text *textcat(text * t1, text * t2);
+extern text *textcat(text *t1, text *t2);
 extern bool texteq(struct varlena * arg1, struct varlena * arg2);
 extern bool textne(struct varlena * arg1, struct varlena * arg2);
 extern bool text_lt(struct varlena * arg1, struct varlena * arg2);
 extern bool text_le(struct varlena * arg1, struct varlena * arg2);
 extern bool text_gt(struct varlena * arg1, struct varlena * arg2);
 extern bool text_ge(struct varlena * arg1, struct varlena * arg2);
-extern int32 textpos(text * t1, text * t2);
+extern int32 textpos(text *t1, text *t2);
 extern int32 byteaGetSize(struct varlena * v);
 extern int32 byteaGetByte(struct varlena * v, int32 n);
 extern int32 byteaGetBit(struct varlena * v, int32 n);
@@ -492,19 +492,19 @@ extern int32 date_mi(DateADT dateVal1, DateADT dateVal2);
 extern DateADT date_pli(DateADT dateVal, int32 days);
 extern DateADT date_mii(DateADT dateVal, int32 days);
 extern DateTime *date_datetime(DateADT date);
-extern DateADT datetime_date(DateTime * datetime);
-extern DateTime *datetime_datetime(DateADT date, TimeADT * time);
+extern DateADT datetime_date(DateTime *datetime);
+extern DateTime *datetime_datetime(DateADT date, TimeADT *time);
 extern DateADT abstime_date(AbsoluteTime abstime);
 
 extern TimeADT *time_in(char *timestr);
-extern char *time_out(TimeADT * time);
-extern bool time_eq(TimeADT * time1, TimeADT * time2);
-extern bool time_ne(TimeADT * time1, TimeADT * time2);
-extern bool time_lt(TimeADT * time1, TimeADT * time2);
-extern bool time_le(TimeADT * time1, TimeADT * time2);
-extern bool time_gt(TimeADT * time1, TimeADT * time2);
-extern bool time_ge(TimeADT * time1, TimeADT * time2);
-extern int	time_cmp(TimeADT * time1, TimeADT * time2);
+extern char *time_out(TimeADT *time);
+extern bool time_eq(TimeADT *time1, TimeADT *time2);
+extern bool time_ne(TimeADT *time1, TimeADT *time2);
+extern bool time_lt(TimeADT *time1, TimeADT *time2);
+extern bool time_le(TimeADT *time1, TimeADT *time2);
+extern bool time_gt(TimeADT *time1, TimeADT *time2);
+extern bool time_ge(TimeADT *time1, TimeADT *time2);
+extern int	time_cmp(TimeADT *time1, TimeADT *time2);
 extern int32 int42reltime(int32 timevalue);
 
 /* like.c */
@@ -516,22 +516,22 @@ extern bool char8like(char *s, struct varlena * p);
 extern bool char8nlike(char *s, struct varlena * p);
 extern bool char16like(char *s, struct varlena * p);
 extern bool char16nlike(char *s, struct varlena * p);
-extern bool namelike(NameData * n, struct varlena * p);
-extern bool namenlike(NameData * s, struct varlena * p);
+extern bool namelike(NameData *n, struct varlena * p);
+extern bool namenlike(NameData *s, struct varlena * p);
 extern bool textlike(struct varlena * s, struct varlena * p);
 extern bool textnlike(struct varlena * s, struct varlena * p);
 
 /* oracle_compat.c */
 
-extern text *lower(text * string);
-extern text *upper(text * string);
-extern text *initcap(text * string);
-extern text *lpad(text * string1, int4 len, text * string2);
-extern text *rpad(text * string1, int4 len, text * string2);
-extern text *ltrim(text * string, text * set);
-extern text *rtrim(text * string, text * set);
-extern text *substr(text * string, int4 m, int4 n);
-extern text *translate(text * string, char from, char to);
+extern text *lower(text *string);
+extern text *upper(text *string);
+extern text *initcap(text *string);
+extern text *lpad(text *string1, int4 len, text *string2);
+extern text *rpad(text *string1, int4 len, text *string2);
+extern text *ltrim(text *string, text *set);
+extern text *rtrim(text *string, text *set);
+extern text *substr(text *string, int4 m, int4 n);
+extern text *translate(text *string, char from, char to);
 
 /* acl.c */
 

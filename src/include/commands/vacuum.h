@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.9 1997/09/08 02:36:05 momjian Exp $
+ * $Id: vacuum.h,v 1.10 1997/09/08 21:51:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@ typedef struct VAttListData
 {
 	int			val_dummy;
 	struct VAttListData *val_next;
-}			VAttListData;
+} VAttListData;
 
 typedef VAttListData *VAttList;
 
@@ -31,7 +31,7 @@ typedef struct VPageDescrData
 	uint16		vpd_nusd;		/* Number of OffNums used by vacuum */
 	uint16		vpd_noff;		/* Number of OffNums free or to be free */
 	OffsetNumber vpd_voff[1];	/* Array of its OffNums */
-}			VPageDescrData;
+} VPageDescrData;
 
 typedef VPageDescrData *VPageDescr;
 
@@ -40,7 +40,7 @@ typedef struct VPageListData
 	int			vpl_nemend;		/* Number of "empty" end-pages */
 	int			vpl_npages;		/* Number of pages in vpl_pgdesc */
 	VPageDescr *vpl_pgdesc;		/* Descriptions of pages */
-}			VPageListData;
+} VPageListData;
 
 typedef VPageListData *VPageList;
 
@@ -50,7 +50,7 @@ typedef struct
 	FuncIndexInfo *finfoP;
 	IndexTupleForm tform;
 	int			natts;
-}			IndDesc;
+} IndDesc;
 
 typedef struct
 {
@@ -78,13 +78,13 @@ typedef struct
 				f_cmpgt;
 	regproc		outfunc;
 	bool		initialized;
-}			VacAttrStats;
+} VacAttrStats;
 
 typedef struct VRelListData
 {
 	Oid			vrl_relid;
 	struct VRelListData *vrl_next;
-}			VRelListData;
+} VRelListData;
 
 typedef VRelListData *VRelList;
 
@@ -98,12 +98,12 @@ typedef struct VRelStats
 	bool		hasindex;
 	int			va_natts;		/* number of attrs being analyzed */
 	VacAttrStats *vacattrstats;
-}			VRelStats;
+} VRelStats;
 
 extern bool VacuumRunning;
 
 extern void vc_abort(void);
-extern void vacuum(char *vacrel, bool verbose, bool analyze, List * va_spec);
+extern void vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec);
 
 #define ATTNVALS_SCALE	1000000000		/* XXX so it can act as a float4 */
 

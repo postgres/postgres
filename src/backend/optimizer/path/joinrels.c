@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.6 1997/09/08 02:24:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.7 1997/09/08 21:45:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,19 +31,19 @@ bool		_use_right_sided_plans_ = false;
 
 #endif
 
-static List *find_clause_joins(Query * root, Rel * outer_rel, List * joininfo_list);
-static List *find_clauseless_joins(Rel * outer_rel, List * inner_rels);
-static Rel *init_join_rel(Rel * outer_rel, Rel * inner_rel, JInfo * joininfo);
+static List *find_clause_joins(Query *root, Rel *outer_rel, List *joininfo_list);
+static List *find_clauseless_joins(Rel *outer_rel, List *inner_rels);
+static Rel *init_join_rel(Rel *outer_rel, Rel *inner_rel, JInfo *joininfo);
 static List *
-new_join_tlist(List * tlist, List * other_relids,
+new_join_tlist(List *tlist, List *other_relids,
 			   int first_resdomno);
-static List *new_joininfo_list(List * joininfo_list, List * join_relids);
-static void add_superrels(Rel * rel, Rel * super_rel);
-static bool nonoverlap_rels(Rel * rel1, Rel * rel2);
-static bool nonoverlap_sets(List * s1, List * s2);
+static List *new_joininfo_list(List *joininfo_list, List *join_relids);
+static void add_superrels(Rel *rel, Rel *super_rel);
+static bool nonoverlap_rels(Rel *rel1, Rel *rel2);
+static bool nonoverlap_sets(List *s1, List *s2);
 static void
-set_joinrel_size(Rel * joinrel, Rel * outer_rel, Rel * inner_rel,
-				 JInfo * jinfo);
+set_joinrel_size(Rel *joinrel, Rel *outer_rel, Rel *inner_rel,
+				 JInfo *jinfo);
 
 /*
  * find-join-rels--
@@ -59,7 +59,7 @@ set_joinrel_size(Rel * joinrel, Rel * outer_rel, Rel * inner_rel,
  * Returns a list of rel nodes corresponding to the new join relations.
  */
 List	   *
-find_join_rels(Query * root, List * outer_rels)
+find_join_rels(Query *root, List *outer_rels)
 {
 	List	   *joins = NIL;
 	List	   *join_list = NIL;
@@ -97,7 +97,7 @@ find_join_rels(Query * root, List * outer_rels)
  * Returns a list of new join relations.
  */
 static List *
-find_clause_joins(Query * root, Rel * outer_rel, List * joininfo_list)
+find_clause_joins(Query *root, Rel *outer_rel, List *joininfo_list)
 {
 	List	   *join_list = NIL;
 	List	   *i = NIL;
@@ -158,7 +158,7 @@ find_clause_joins(Query * root, Rel * outer_rel, List * joininfo_list)
  * Returns a list of new join relations.
  */
 static List *
-find_clauseless_joins(Rel * outer_rel, List * inner_rels)
+find_clauseless_joins(Rel *outer_rel, List *inner_rels)
 {
 	Rel		   *inner_rel;
 	List	   *t_list = NIL;
@@ -193,7 +193,7 @@ find_clauseless_joins(Rel * outer_rel, List * inner_rels)
  * Returns the new join relation node.
  */
 static Rel *
-init_join_rel(Rel * outer_rel, Rel * inner_rel, JInfo * joininfo)
+init_join_rel(Rel *outer_rel, Rel *inner_rel, JInfo *joininfo)
 {
 	Rel		   *joinrel = makeNode(Rel);
 	List	   *joinrel_joininfo_list = NIL;
@@ -273,8 +273,8 @@ init_join_rel(Rel * outer_rel, Rel * inner_rel, JInfo * joininfo)
  * Returns the new target list.
  */
 static List *
-new_join_tlist(List * tlist,
-			   List * other_relids,
+new_join_tlist(List *tlist,
+			   List *other_relids,
 			   int first_resdomno)
 {
 	int			resdomno = first_resdomno - 1;
@@ -323,7 +323,7 @@ new_join_tlist(List * tlist,
  * Returns a list of joininfo nodes, new and old.
  */
 static List *
-new_joininfo_list(List * joininfo_list, List * join_relids)
+new_joininfo_list(List *joininfo_list, List *join_relids)
 {
 	List	   *current_joininfo_list = NIL;
 	List	   *new_otherrels = NIL;
@@ -387,7 +387,7 @@ new_joininfo_list(List * joininfo_list, List * join_relids)
  * Modifies the joininfo field of appropriate rel nodes.
  */
 void
-add_new_joininfos(Query * root, List * joinrels, List * outerrels)
+add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 {
 	List	   *xjoinrel = NIL;
 	List	   *xrelid = NIL;
@@ -487,7 +487,7 @@ add_new_joininfos(Query * root, List * joinrels, List * outerrels)
  * Returns the list of final join relations.
  */
 List	   *
-final_join_rels(List * join_rel_list)
+final_join_rels(List *join_rel_list)
 {
 	List	   *xrel = NIL;
 	List	   *temp = NIL;
@@ -533,7 +533,7 @@ final_join_rels(List * join_rel_list)
  * Modifies the superrels field of rel
  */
 static void
-add_superrels(Rel * rel, Rel * super_rel)
+add_superrels(Rel *rel, Rel *super_rel)
 {
 	rel->superrels = lappend(rel->superrels, super_rel);
 }
@@ -548,13 +548,13 @@ add_superrels(Rel * rel, Rel * super_rel)
  * Returns non-nil if rel1 and rel2 do not overlap.
  */
 static bool
-nonoverlap_rels(Rel * rel1, Rel * rel2)
+nonoverlap_rels(Rel *rel1, Rel *rel2)
 {
 	return (nonoverlap_sets(rel1->relids, rel2->relids));
 }
 
 static bool
-nonoverlap_sets(List * s1, List * s2)
+nonoverlap_sets(List *s1, List *s2)
 {
 	List	   *x = NIL;
 
@@ -569,7 +569,7 @@ nonoverlap_sets(List * s1, List * s2)
 }
 
 static void
-set_joinrel_size(Rel * joinrel, Rel * outer_rel, Rel * inner_rel, JInfo * jinfo)
+set_joinrel_size(Rel *joinrel, Rel *outer_rel, Rel *inner_rel, JInfo *jinfo)
 {
 	int			ntuples;
 	float		selec;

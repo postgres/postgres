@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.13 1997/09/08 20:58:26 momjian Exp $
+ * $Id: pqcomm.h,v 1.14 1997/09/08 21:52:38 momjian Exp $
  *
  * NOTES
  *	  Some of this should move to libpq.h
@@ -74,7 +74,7 @@ typedef struct StartupInfo
 	char		options[ARGV_SIZE];		/* possible additional args */
 	char		execFile[ARGV_SIZE];	/* possible backend to use */
 	char		tty[PATH_SIZE]; /* possible tty for debug output */
-}			StartupInfo;
+} StartupInfo;
 
 /* amount of available data in a packet buffer */
 #define MESSAGE_SIZE	sizeof(StartupInfo) + 5 /* why 5? BJM 2/11/97 */
@@ -91,7 +91,7 @@ typedef struct PacketBuf
 	int			len;
 	MsgType		msgtype;
 	char		data[MESSAGE_SIZE];
-}			PacketBuf;
+} PacketBuf;
 
 /* update the conversion routines
   StartupInfo2PacketBuf() and PacketBuf2StartupInfo() (decl. below)
@@ -113,7 +113,7 @@ typedef struct Port
 	 * PacketBufId				id;
 *//* id of packet buf currently in use */
 	PacketBuf	buf;			/* stream implementation (curr pack buf) */
-}			Port;
+} Port;
 
 /* invalid socket descriptor */
 #define INVALID_SOCK	(-1)
@@ -147,9 +147,9 @@ int			pqPutByte(int, FILE *);
 /*
  * prototypes for functions in pqpacket.c
  */
-extern int	PacketReceive(Port * port, PacketBuf * buf, char nonBlocking);
+extern int	PacketReceive(Port *port, PacketBuf *buf, char nonBlocking);
 extern int
-PacketSend(Port * port, PacketBuf * buf,
+PacketSend(Port *port, PacketBuf *buf,
 		   PacketLen len, char nonBlocking);
 
 /* extern PacketBuf* StartupInfo2PacketBuf(StartupInfo*); */

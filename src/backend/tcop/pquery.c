@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.9 1997/09/08 02:29:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.10 1997/09/08 21:47:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@
 #include "commands/command.h"
 
 static char *CreateOperationTag(int operationType);
-static void ProcessQueryDesc(QueryDesc * queryDesc);
+static void ProcessQueryDesc(QueryDesc *queryDesc);
 
 
 /* ----------------------------------------------------------------
@@ -47,8 +47,8 @@ static void ProcessQueryDesc(QueryDesc * queryDesc);
  * ----------------------------------------------------------------
  */
 QueryDesc  *
-CreateQueryDesc(Query * parsetree,
-				Plan * plantree,
+CreateQueryDesc(Query *parsetree,
+				Plan *plantree,
 				CommandDest dest)
 {
 	QueryDesc  *qd = (QueryDesc *) palloc(sizeof(QueryDesc));
@@ -150,9 +150,9 @@ CreateOperationTag(int operationType)
 
 void
 ProcessPortal(char *portalName,
-			  Query * parseTree,
-			  Plan * plan,
-			  EState * state,
+			  Query *parseTree,
+			  Plan *plan,
+			  EState *state,
 			  TupleDesc attinfo,
 			  CommandDest dest)
 {
@@ -203,7 +203,7 @@ ProcessPortal(char *portalName,
  * ----------------------------------------------------------------
  */
 static void
-ProcessQueryDesc(QueryDesc * queryDesc)
+ProcessQueryDesc(QueryDesc *queryDesc)
 {
 	Query	   *parseTree;
 	Plan	   *plan;
@@ -355,16 +355,16 @@ ProcessQueryDesc(QueryDesc * queryDesc)
  */
 
 void
-ProcessQuery(Query * parsetree,
-			 Plan * plan,
+ProcessQuery(Query *parsetree,
+			 Plan *plan,
 			 char *argv[],
-			 Oid * typev,
+			 Oid *typev,
 			 int nargs,
 			 CommandDest dest)
 {
 	QueryDesc  *queryDesc;
 	extern int	dontExecute;	/* from postgres.c */
-	extern void print_plan(Plan * p, Query * parsetree);		/* from print.c */
+	extern void print_plan(Plan *p, Query *parsetree);	/* from print.c */
 
 	queryDesc = CreateQueryDesc(parsetree, plan, dest);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-dumpdata.c,v 1.7 1997/09/08 02:23:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-dumpdata.c,v 1.8 1997/09/08 21:43:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,7 @@ be_portalinit(void)
  * ----------------
  */
 void
-be_portalpush(PortalEntry * entry)
+be_portalpush(PortalEntry *entry)
 {
 	DLAddTail(be_portalstack, DLNewElem(entry));
 }
@@ -166,7 +166,7 @@ be_newportal(void)
  * ----------------
  */
 void
-be_typeinit(PortalEntry * entry,
+be_typeinit(PortalEntry *entry,
 			TupleDesc tupDesc,
 			int natts)
 {

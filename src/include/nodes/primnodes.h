@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.10 1997/09/08 20:58:50 momjian Exp $
+ * $Id: primnodes.h,v 1.11 1997/09/08 21:52:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ typedef struct Resdom
 	Index		reskey;
 	Oid			reskeyop;
 	int			resjunk;
-}			Resdom;
+} Resdom;
 
 /* -------------
  * Fjoin
@@ -73,7 +73,7 @@ typedef struct Fjoin
 	List	   *fj_innerNode;
 	DatumPtr	fj_results;
 	BoolPtr		fj_alwaysDone;
-}			Fjoin;
+} Fjoin;
 
 /* ----------------
  * Expr
@@ -87,7 +87,7 @@ typedef struct Fjoin
 typedef enum OpType
 {
 	OP_EXPR, FUNC_EXPR, OR_EXPR, AND_EXPR, NOT_EXPR
-}			OpType;
+} OpType;
 
 typedef struct Expr
 {
@@ -96,7 +96,7 @@ typedef struct Expr
 	OpType		opType;			/* type of the op */
 	Node	   *oper;			/* could be Oper or Func */
 	List	   *args;			/* list of argument nodes */
-}			Expr;
+} Expr;
 
 /* ----------------
  * Var
@@ -124,7 +124,7 @@ typedef struct Var
 	Oid			vartype;
 	Index		varnoold;		/* only used by optimizer */
 	AttrNumber	varoattno;		/* only used by optimizer */
-}			Var;
+} Var;
 
 /* ----------------
  * Oper
@@ -154,7 +154,7 @@ typedef struct Oper
 	Oid			opresulttype;
 	int			opsize;
 	FunctionCachePtr op_fcache;
-}			Oper;
+} Oper;
 
 
 /* ----------------
@@ -183,7 +183,7 @@ typedef struct Const
 	bool		constbyval;
 	bool		constisset;
 	bool		constiscast;
-}			Const;
+} Const;
 
 /* ----------------
  * Param
@@ -220,7 +220,7 @@ typedef struct Param
 	char	   *paramname;
 	Oid			paramtype;
 	List	   *param_tlist;
-}			Param;
+} Param;
 
 
 /* ----------------
@@ -248,7 +248,7 @@ typedef struct Func
 	FunctionCachePtr func_fcache;
 	List	   *func_tlist;
 	List	   *func_planlist;
-}			Func;
+} Func;
 
 /* ----------------
  * Aggreg

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.24 1997/09/08 02:25:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.25 1997/09/08 21:46:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@
 #include "optimizer/clauses.h"
 
 void		init_io();			/* from scan.l */
-void		parser_init(Oid * typev, int nargs);		/* from gram.y */
+void		parser_init(Oid *typev, int nargs); /* from gram.y */
 int			yyparse();			/* from gram.c */
 
 char	   *parseString;		/* the char* which holds the string to be
@@ -58,7 +58,7 @@ static void define_sets();
  *	CALLER is responsible for free'ing the list returned
  */
 QueryTreeList *
-parser(char *str, Oid * typev, int nargs)
+parser(char *str, Oid *typev, int nargs)
 {
 	QueryTreeList *queryList;
 	int			yyresult;
@@ -112,7 +112,7 @@ parser(char *str, Oid * typev, int nargs)
 
 #ifdef SETS_FIXED
 static void
-fixupsets(Query * parse)
+fixupsets(Query *parse)
 {
 	if (parse == NULL)
 		return;
@@ -129,7 +129,7 @@ fixupsets(Query * parse)
  * the set, and store the OID of the new set in the Const instead.
  */
 static void
-define_sets(Node * clause)
+define_sets(Node *clause)
 {
 	Oid			setoid;
 	Type		t = type("oid");
@@ -210,7 +210,7 @@ define_sets(Node * clause)
 */
 
 Node	   *
-parser_typecast(Value * expr, TypeName * typename, int typlen)
+parser_typecast(Value *expr, TypeName *typename, int typlen)
 {
 	/* check for passing non-ints */
 	Const	   *adt;
@@ -347,7 +347,7 @@ parser_typecast(Value * expr, TypeName * typename, int typlen)
 }
 
 Node	   *
-parser_typecast2(Node * expr, Oid exprType, Type tp, int typlen)
+parser_typecast2(Node *expr, Oid exprType, Type tp, int typlen)
 {
 	/* check for passing non-ints */
 	Const	   *adt;
@@ -486,7 +486,7 @@ parser_typecast2(Node * expr, Oid exprType, Type tp, int typlen)
 }
 
 Aggreg	   *
-ParseAgg(char *aggname, Oid basetype, Node * target)
+ParseAgg(char *aggname, Oid basetype, Node *target)
 {
 	Oid			fintype;
 	Oid			vartype;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fstack.h,v 1.4 1997/09/08 02:36:51 momjian Exp $
+ * $Id: fstack.h,v 1.5 1997/09/08 21:52:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ typedef struct FixedStackData
 	FixedItem	top;			/* Top item on the stack or NULL */
 	Offset		offset;			/* Offset from struct base to item */
 	/* this could be signed short int! */
-}			FixedStackData;
+} FixedStackData;
 
 typedef FixedStackData *FixedStack;
 

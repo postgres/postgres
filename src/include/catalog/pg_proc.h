@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.29 1997/09/08 02:35:23 momjian Exp $
+ * $Id: pg_proc.h,v 1.30 1997/09/08 21:51:29 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1103,7 +1103,7 @@ DATA(insert OID =  1319 (  currval	   PGUID 11 f t f 1 f 23 "25" 100 0 0 100  fo
 /*
  * prototypes for functions pg_proc.c
  */
-extern		Oid
+extern Oid
 ProcedureCreate(char *procedureName,
 				bool returnsSet,
 				char *returnTypeName,
@@ -1116,7 +1116,7 @@ ProcedureCreate(char *procedureName,
 				int32 perbyte_cpu,
 				int32 percall_cpu,
 				int32 outin_ratio,
-				List * argList,
+				List *argList,
 				CommandDest dest);
 
 

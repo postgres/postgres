@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/hasht.c,v 1.6 1997/09/08 02:22:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/hasht.c,v 1.7 1997/09/08 21:43:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@
  * -----------------------------------
  */
 void
-HashTableWalk(HTAB * hashtable, HashtFunc function, int arg)
+HashTableWalk(HTAB *hashtable, HashtFunc function, int arg)
 {
 	long	   *hashent;
 	long	   *data;

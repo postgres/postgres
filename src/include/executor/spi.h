@@ -40,7 +40,7 @@ typedef struct
 	uint32		free;			/* # of free vals */
 	TupleDesc	tupdesc;		/* tuple descriptor */
 	HeapTuple  *vals;			/* tuples */
-}			SPITupleTable;
+} SPITupleTable;
 
 #define SPI_ERROR_CONNECT		-1
 #define SPI_ERROR_COPY			-2
@@ -73,12 +73,12 @@ extern int	SPI_connect(void);
 extern int	SPI_finish(void);
 extern int	SPI_exec(char *src, int tcount);
 extern int	SPI_execp(void *plan, char **values, char *Nulls, int tcount);
-extern void *SPI_prepare(char *src, int nargs, Oid * argtypes);
+extern void *SPI_prepare(char *src, int nargs, Oid *argtypes);
 extern void *SPI_saveplan(void *plan);
 
 extern int	SPI_fnumber(TupleDesc tupdesc, char *fname);
 extern char *SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber);
-extern char *SPI_getbinval(HeapTuple tuple, TupleDesc tupdesc, int fnumber, bool * isnull);
+extern char *SPI_getbinval(HeapTuple tuple, TupleDesc tupdesc, int fnumber, bool *isnull);
 extern char *SPI_gettype(TupleDesc tupdesc, int fnumber);
 extern Oid	SPI_gettypeid(TupleDesc tupdesc, int fnumber);
 extern char *SPI_getrelname(Relation rel);

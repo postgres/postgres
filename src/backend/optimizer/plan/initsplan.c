@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.7 1997/09/08 02:24:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.8 1997/09/08 21:45:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,14 +35,14 @@
 
 extern int	Quiet;
 
-static void add_clause_to_rels(Query * root, List * clause);
+static void add_clause_to_rels(Query *root, List *clause);
 static void
-add_join_clause_info_to_rels(Query * root, CInfo * clauseinfo,
-							 List * join_relids);
-static void add_vars_to_rels(Query * root, List * vars, List * join_relids);
+add_join_clause_info_to_rels(Query *root, CInfo *clauseinfo,
+							 List *join_relids);
+static void add_vars_to_rels(Query *root, List *vars, List *join_relids);
 
-static MergeOrder *mergesortop(Expr * clause);
-static Oid	hashjoinop(Expr * clause);
+static MergeOrder *mergesortop(Expr *clause);
+static Oid	hashjoinop(Expr *clause);
 
 
 /*****************************************************************************
@@ -61,7 +61,7 @@ static Oid	hashjoinop(Expr * clause);
  *	  Returns nothing.
  */
 void
-initialize_base_rels_list(Query * root, List * tlist)
+initialize_base_rels_list(Query *root, List *tlist)
 {
 	List	   *tlist_vars = NIL;
 	List	   *l = NIL;
@@ -98,7 +98,7 @@ initialize_base_rels_list(Query * root, List * tlist)
  *	  into a join.
  */
 void
-add_missing_vars_to_base_rels(Query * root, List * tlist)
+add_missing_vars_to_base_rels(Query *root, List *tlist)
 {
 	List	   *l;
 	int			varno;
@@ -145,7 +145,7 @@ add_missing_vars_to_base_rels(Query * root, List * tlist)
  *	  Returns nothing of interest.
  */
 void
-initialize_base_rels_jinfo(Query * root, List * clauses)
+initialize_base_rels_jinfo(Query *root, List *clauses)
 {
 	List	   *clause;
 
@@ -166,7 +166,7 @@ initialize_base_rels_jinfo(Query * root, List * clauses)
  *	  Returns nothing of interest.
  */
 static void
-add_clause_to_rels(Query * root, List * clause)
+add_clause_to_rels(Query *root, List *clause)
 {
 	List	   *relids;
 	List	   *vars;
@@ -259,7 +259,7 @@ add_clause_to_rels(Query * root, List * clause)
  *
  */
 static void
-add_join_clause_info_to_rels(Query * root, CInfo * clauseinfo, List * join_relids)
+add_join_clause_info_to_rels(Query *root, CInfo *clauseinfo, List *join_relids)
 {
 	List	   *join_relid;
 
@@ -300,7 +300,7 @@ add_join_clause_info_to_rels(Query * root, CInfo * clauseinfo, List * join_relid
  *	  Returns nothing.
  */
 static void
-add_vars_to_rels(Query * root, List * vars, List * join_relids)
+add_vars_to_rels(Query *root, List *vars, List *join_relids)
 {
 	Var		   *var;
 	List	   *temp = NIL;
@@ -334,7 +334,7 @@ add_vars_to_rels(Query * root, List * vars, List * join_relids)
  *	  Returns nothing.
  */
 void
-initialize_join_clause_info(List * rel_list)
+initialize_join_clause_info(List *rel_list)
 {
 	List	   *x,
 			   *y,
@@ -387,7 +387,7 @@ initialize_join_clause_info(List * rel_list)
  *	  a mergesortable operator.
  */
 static MergeOrder *
-mergesortop(Expr * clause)
+mergesortop(Expr *clause)
 {
 	Oid			leftOp,
 				rightOp;
@@ -421,7 +421,7 @@ mergesortop(Expr * clause)
  *	  a hashjoinable operator.
  */
 static Oid
-hashjoinop(Expr * clause)
+hashjoinop(Expr *clause)
 {
 	return (op_hashjoinable(((Oper *) clause->oper)->opno,
 							(get_leftop(clause))->vartype,

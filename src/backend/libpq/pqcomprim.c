@@ -46,7 +46,7 @@
 
 /* --------------------------------------------------------------------- */
 int
-pqPutShort(int integer, FILE * f)
+pqPutShort(int integer, FILE *f)
 {
 	int			retval = 0;
 	u_short		n,
@@ -62,7 +62,7 @@ pqPutShort(int integer, FILE * f)
 
 /* --------------------------------------------------------------------- */
 int
-pqPutLong(int integer, FILE * f)
+pqPutLong(int integer, FILE *f)
 {
 	int			retval = 0;
 	u_long		n;
@@ -76,7 +76,7 @@ pqPutLong(int integer, FILE * f)
 
 /* --------------------------------------------------------------------- */
 int
-pqGetShort(int *result, FILE * f)
+pqGetShort(int *result, FILE *f)
 {
 	int			retval = 0;
 	u_short		n;
@@ -90,7 +90,7 @@ pqGetShort(int *result, FILE * f)
 
 /* --------------------------------------------------------------------- */
 int
-pqGetLong(int *result, FILE * f)
+pqGetLong(int *result, FILE *f)
 {
 	int			retval = 0;
 	u_long		n;
@@ -107,7 +107,7 @@ pqGetLong(int *result, FILE * f)
 		Return 0 if ok.
 */
 int
-pqGetNBytes(char *s, size_t len, FILE * f)
+pqGetNBytes(char *s, size_t len, FILE *f)
 {
 	int			cnt;
 
@@ -123,7 +123,7 @@ pqGetNBytes(char *s, size_t len, FILE * f)
 
 /* --------------------------------------------------------------------- */
 int
-pqPutNBytes(const char *s, size_t len, FILE * f)
+pqPutNBytes(const char *s, size_t len, FILE *f)
 {
 	if (f == NULL)
 		return 0;
@@ -136,7 +136,7 @@ pqPutNBytes(const char *s, size_t len, FILE * f)
 
 /* --------------------------------------------------------------------- */
 int
-pqGetString(char *s, size_t len, FILE * f)
+pqGetString(char *s, size_t len, FILE *f)
 {
 	int			c;
 
@@ -153,7 +153,7 @@ pqGetString(char *s, size_t len, FILE * f)
 
 /* --------------------------------------------------------------------- */
 int
-pqPutString(const char *s, FILE * f)
+pqPutString(const char *s, FILE *f)
 {
 	if (f == NULL)
 		return 0;
@@ -170,14 +170,14 @@ pqPutString(const char *s, FILE * f)
 
 /* --------------------------------------------------------------------- */
 int
-pqGetByte(FILE * f)
+pqGetByte(FILE *f)
 {
 	return getc(f);
 }
 
 /* --------------------------------------------------------------------- */
 int
-pqPutByte(int c, FILE * f)
+pqPutByte(int c, FILE *f)
 {
 	if (!f)
 		return 0;

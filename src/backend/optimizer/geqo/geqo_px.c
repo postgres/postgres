@@ -6,7 +6,7 @@
 *	 PX operator according to Syswerda
 *	 (The Genetic Algorithms Handbook, L Davis, ed)
 *
-* $Id: geqo_px.c,v 1.3 1997/09/08 02:24:07 momjian Exp $
+* $Id: geqo_px.c,v 1.4 1997/09/08 21:44:35 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -59,7 +59,7 @@
  *	 position crossover
  */
 void
-px(Gene * tour1, Gene * tour2, Gene * offspring, int num_gene, City * city_table)
+px(Gene *tour1, Gene *tour2, Gene *offspring, int num_gene, City *city_table)
 {
 
 	int			num_positions;

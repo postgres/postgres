@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.23 1997/09/08 02:28:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.24 1997/09/08 21:47:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,24 +50,24 @@
  * slock_t is defined as a struct mutex.
  */
 void
-S_LOCK(slock_t * lock)
+S_LOCK(slock_t *lock)
 {
 	mutex_lock(lock);
 }
 void
-S_UNLOCK(slock_t * lock)
+S_UNLOCK(slock_t *lock)
 {
 	mutex_unlock(lock);
 }
 void
-S_INIT_LOCK(slock_t * lock)
+S_INIT_LOCK(slock_t *lock)
 {
 	mutex_init(lock);
 }
 
  /* S_LOCK_FREE should return 1 if lock is free; 0 if lock is locked */
 int
-S_LOCK_FREE(slock_t * lock)
+S_LOCK_FREE(slock_t *lock)
 {
 /* For Mach, we have to delve inside the entrails of `struct mutex'.  Ick! */
 	return (lock->lock == 0);
@@ -88,7 +88,7 @@ S_LOCK_FREE(slock_t * lock)
  * for the R3000 chips out there.
  */
 void
-S_LOCK(slock_t * lock)
+S_LOCK(slock_t *lock)
 {
 	/* spin_lock(lock); */
 	while (!acquire_lock(lock))
@@ -96,20 +96,20 @@ S_LOCK(slock_t * lock)
 }
 
 void
-S_UNLOCK(slock_t * lock)
+S_UNLOCK(slock_t *lock)
 {
 	release_lock(lock);
 }
 
 void
-S_INIT_LOCK(slock_t * lock)
+S_INIT_LOCK(slock_t *lock)
 {
 	init_lock(lock);
 }
 
 /* S_LOCK_FREE should return 1 if lock is free; 0 if lock is locked */
 int
-S_LOCK_FREE(slock_t * lock)
+S_LOCK_FREE(slock_t *lock)
 {
 	return (stat_lock(lock) == UNLOCKED);
 }
@@ -127,26 +127,26 @@ S_LOCK_FREE(slock_t * lock)
 #if defined(__alpha__) || defined(__alpha)
 
 void
-S_LOCK(slock_t * lock)
+S_LOCK(slock_t *lock)
 {
 	while (msem_lock(lock, MSEM_IF_NOWAIT) < 0)
 		;
 }
 
 void
-S_UNLOCK(slock_t * lock)
+S_UNLOCK(slock_t *lock)
 {
 	msem_unlock(lock, 0);
 }
 
 void
-S_INIT_LOCK(slock_t * lock)
+S_INIT_LOCK(slock_t *lock)
 {
 	msem_init(lock, MSEM_UNLOCKED);
 }
 
 int
-S_LOCK_FREE(slock_t * lock)
+S_LOCK_FREE(slock_t *lock)
 {
 	return (lock->msem_state ? 0 : 1);
 }
@@ -161,23 +161,23 @@ S_LOCK_FREE(slock_t * lock)
 	defined(sparc_solaris)
 /* for xxxxx_solaris, this is defined in port/.../tas.s */
 
-static int	tas(slock_t * lock);
+static int	tas(slock_t *lock);
 
 void
-S_LOCK(slock_t * lock)
+S_LOCK(slock_t *lock)
 {
 	while (tas(lock))
 		;
 }
 
 void
-S_UNLOCK(slock_t * lock)
+S_UNLOCK(slock_t *lock)
 {
 	*lock = 0;
 }
 
 void
-S_INIT_LOCK(slock_t * lock)
+S_INIT_LOCK(slock_t *lock)
 {
 	S_UNLOCK(lock);
 }
@@ -194,20 +194,20 @@ S_INIT_LOCK(slock_t * lock)
 #if defined(aix)
 
 void
-S_LOCK(slock_t * lock)
+S_LOCK(slock_t *lock)
 {
 	while (cs((int *) lock, 0, 1))
 		;
 }
 
 void
-S_UNLOCK(slock_t * lock)
+S_UNLOCK(slock_t *lock)
 {
 	*lock = 0;
 }
 
 void
-S_INIT_LOCK(slock_t * lock)
+S_INIT_LOCK(slock_t *lock)
 {
 	S_UNLOCK(lock);
 }
@@ -229,29 +229,29 @@ S_INIT_LOCK(slock_t * lock)
 */
 static slock_t clear_lock = {-1, -1, -1, -1};
 
-static int	tas(slock_t * lock);
+static int	tas(slock_t *lock);
 
 void
-S_LOCK(slock_t * lock)
+S_LOCK(slock_t *lock)
 {
 	while (tas(lock))
 		;
 }
 
 void
-S_UNLOCK(slock_t * lock)
+S_UNLOCK(slock_t *lock)
 {
 	*lock = clear_lock;			/* struct assignment */
 }
 
 void
-S_INIT_LOCK(slock_t * lock)
+S_INIT_LOCK(slock_t *lock)
 {
 	S_UNLOCK(lock);
 }
 
 int
-S_LOCK_FREE(slock_t * lock)
+S_LOCK_FREE(slock_t *lock)
 {
 	register int *lock_word = (int *) (((long) lock + 15) & ~15);
 
@@ -266,22 +266,22 @@ S_LOCK_FREE(slock_t * lock)
 
 #if defined(sun3)
 
-static int	tas(slock_t * lock);
+static int	tas(slock_t *lock);
 
 void
-S_LOCK(slock_t * lock)
+S_LOCK(slock_t *lock)
 {
 	while (tas(lock));
 }
 
 void
-S_UNLOCK(slock_t * lock)
+S_UNLOCK(slock_t *lock)
 {
 	*lock = 0;
 }
 
 void
-S_INIT_LOCK(slock_t * lock)
+S_INIT_LOCK(slock_t *lock)
 {
 	S_UNLOCK(lock);
 }
@@ -320,7 +320,7 @@ tas_dummy()
 #define asm(x)	__asm__(x)
 #endif
 
-static int	tas(slock_t * lock);
+static int	tas(slock_t *lock);
 
 static int
 tas_dummy()
@@ -386,7 +386,7 @@ S_INIT_LOCK(unsigned char *addr)
 #if defined(NEED_I386_TAS_ASM)
 
 void
-S_LOCK(slock_t * lock)
+S_LOCK(slock_t *lock)
 {
 	slock_t		res;
 
@@ -397,13 +397,13 @@ __asm__("xchgb %0,%1": "=q"(res), "=m"(*lock):"0"(0x1));
 }
 
 void
-S_UNLOCK(slock_t * lock)
+S_UNLOCK(slock_t *lock)
 {
 	*lock = 0;
 }
 
 void
-S_INIT_LOCK(slock_t * lock)
+S_INIT_LOCK(slock_t *lock)
 {
 	S_UNLOCK(lock);
 }
@@ -414,7 +414,7 @@ S_INIT_LOCK(slock_t * lock)
 #if defined(__alpha__) && defined(linux)
 
 void
-S_LOCK(slock_t * lock)
+S_LOCK(slock_t *lock)
 {
 	slock_t		res;
 
@@ -437,14 +437,14 @@ __asm__("    ldq   $0, %0	     \n\
 }
 
 void
-S_UNLOCK(slock_t * lock)
+S_UNLOCK(slock_t *lock)
 {
 	__asm__("mb");
 	*lock = 0;
 }
 
 void
-S_INIT_LOCK(slock_t * lock)
+S_INIT_LOCK(slock_t *lock)
 {
 	S_UNLOCK(lock);
 }
@@ -454,7 +454,7 @@ S_INIT_LOCK(slock_t * lock)
 #if defined(linux) && defined(sparc)
 
 void
-S_LOCK(slock_t * lock)
+S_LOCK(slock_t *lock)
 {
 	slock_t		res;
 
@@ -467,13 +467,13 @@ S_LOCK(slock_t * lock)
 }
 
 void
-S_UNLOCK(slock_t * lock)
+S_UNLOCK(slock_t *lock)
 {
 	*lock = 0;
 }
 
 void
-S_INIT_LOCK(slock_t * lock)
+S_INIT_LOCK(slock_t *lock)
 {
 	S_UNLOCK(lock);
 }
@@ -502,20 +502,20 @@ success:		\n\
 }
 
 void
-S_LOCK(slock_t * lock)
+S_LOCK(slock_t *lock)
 {
 	while (tas(lock))
 		;
 }
 
 void
-S_UNLOCK(slock_t * lock)
+S_UNLOCK(slock_t *lock)
 {
 	*lock = 0;
 }
 
 void
-S_INIT_LOCK(slock_t * lock)
+S_INIT_LOCK(slock_t *lock)
 {
 	S_UNLOCK(lock);
 }

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lmgr.h,v 1.7 1997/09/08 02:39:04 momjian Exp $
+ * $Id: lmgr.h,v 1.8 1997/09/08 21:54:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@ typedef struct LRelId
 {
 	Oid			relId;			/* a relation identifier */
 	Oid			dbId;			/* a database identifier */
-}			LRelId;
+} LRelId;
 
 typedef struct LockInfoData
 {
@@ -32,7 +32,7 @@ typedef struct LockInfoData
 	LRelId		lRelId;
 	TransactionId transactionIdData;
 	uint16		flags;
-}			LockInfoData;
+} LockInfoData;
 typedef LockInfoData *LockInfo;
 
 #define LockInfoIsValid(linfo) \
@@ -73,7 +73,7 @@ extern void RelationUnsetWIntentLock(Relation relation);
 
 /* single.c */
 extern bool SingleLockReln(LockInfo linfo, LOCKT lockt, int action);
-extern		bool
+extern bool
 SingleLockPage(LockInfo linfo, ItemPointer tidPtr,
 			   LOCKT lockt, int action);
 

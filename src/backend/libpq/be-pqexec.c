@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.6 1997/09/08 02:23:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.7 1997/09/08 21:43:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@ PQfn(int fnid,
 	 int *result_buf,			/* can't use void, dec compiler barfs */
 	 int result_len,
 	 int result_is_int,
-	 PQArgBlock * args,
+	 PQArgBlock *args,
 	 int nargs)
 {
 	char	   *retval;			/* XXX - should be datum, maybe ? */

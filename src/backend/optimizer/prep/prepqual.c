@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.5 1997/09/08 02:24:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.6 1997/09/08 21:45:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,17 +24,17 @@
 
 #include "utils/lsyscache.h"
 
-static Expr *pull_args(Expr * qual);
-static List *pull_ors(List * orlist);
-static List *pull_ands(List * andlist);
-static Expr *find_nots(Expr * qual);
-static Expr *push_nots(Expr * qual);
-static Expr *normalize(Expr * qual);
-static List *or_normalize(List * orlist);
-static List *distribute_args(List * item, List * args);
-static List *qualcleanup(Expr * qual);
-static List *remove_ands(Expr * qual);
-static List *remove_duplicates(List * list);
+static Expr *pull_args(Expr *qual);
+static List *pull_ors(List *orlist);
+static List *pull_ands(List *andlist);
+static Expr *find_nots(Expr *qual);
+static Expr *push_nots(Expr *qual);
+static Expr *normalize(Expr *qual);
+static List *or_normalize(List *orlist);
+static List *distribute_args(List *item, List *args);
+static List *qualcleanup(Expr *qual);
+static List *remove_ands(Expr *qual);
+static List *remove_duplicates(List *list);
 
 /*
  * preprocess-qualification--
@@ -48,7 +48,7 @@ static List *remove_duplicates(List * list);
  *		normal form  (see cnfify() below )
  */
 List	   *
-preprocess_qualification(Expr * qual, List * tlist, List ** existentialQualPtr)
+preprocess_qualification(Expr *qual, List *tlist, List **existentialQualPtr)
 {
 	List	   *cnf_qual = cnfify(qual, true);
 
@@ -101,7 +101,7 @@ preprocess_qualification(Expr * qual, List * tlist, List ** existentialQualPtr)
  *
  */
 List	   *
-cnfify(Expr * qual, bool removeAndFlag)
+cnfify(Expr *qual, bool removeAndFlag)
 {
 	Expr	   *newqual = NULL;
 
@@ -134,7 +134,7 @@ cnfify(Expr * qual, bool removeAndFlag)
  *
  */
 static Expr *
-pull_args(Expr * qual)
+pull_args(Expr *qual)
 {
 	if (qual == NULL)
 		return (NULL);
@@ -182,7 +182,7 @@ pull_args(Expr * qual)
  * Returns the modified list.
  */
 static List *
-pull_ors(List * orlist)
+pull_ors(List *orlist)
 {
 	if (orlist == NIL)
 		return (NIL);
@@ -208,7 +208,7 @@ pull_ors(List * orlist)
  * Returns the modified list.
  */
 static List *
-pull_ands(List * andlist)
+pull_ands(List *andlist)
 {
 	if (andlist == NIL)
 		return (NIL);
@@ -237,7 +237,7 @@ pull_ands(List * andlist)
  *
  */
 static Expr *
-find_nots(Expr * qual)
+find_nots(Expr *qual)
 {
 	if (qual == NULL)
 		return (NULL);
@@ -286,7 +286,7 @@ find_nots(Expr * qual)
  *
  */
 static Expr *
-push_nots(Expr * qual)
+push_nots(Expr *qual)
 {
 	if (qual == NULL)
 		return (NULL);
@@ -373,7 +373,7 @@ push_nots(Expr * qual)
  *
  */
 static Expr *
-normalize(Expr * qual)
+normalize(Expr *qual)
 {
 	if (qual == NULL)
 		return (NULL);
@@ -438,7 +438,7 @@ normalize(Expr * qual)
  *
  */
 static List *
-or_normalize(List * orlist)
+or_normalize(List *orlist)
 {
 	List	   *distributable = NIL;
 	List	   *new_orlist = NIL;
@@ -477,7 +477,7 @@ or_normalize(List * orlist)
  *
  */
 static List *
-distribute_args(List * item, List * args)
+distribute_args(List *item, List *args)
 {
 	List	   *or_list = NIL;
 	List	   *n_list = NIL;
@@ -507,7 +507,7 @@ distribute_args(List * item, List * args)
  *
  */
 static List *
-qualcleanup(Expr * qual)
+qualcleanup(Expr *qual)
 {
 	if (qual == NULL)
 		return (NIL);
@@ -568,7 +568,7 @@ qualcleanup(Expr * qual)
  * MODIFIES: qual
  */
 static List *
-remove_ands(Expr * qual)
+remove_ands(Expr *qual)
 {
 	List	   *t_list = NIL;
 
@@ -621,7 +621,7 @@ remove_ands(Expr * qual)
  */
 #ifdef NOT_USED
 static List *
-update_relations(List * tlist)
+update_relations(List *tlist)
 {
 	return (NIL);
 }
@@ -635,7 +635,7 @@ update_relations(List * tlist)
  *****************************************************************************/
 
 static List *
-remove_duplicates(List * list)
+remove_duplicates(List *list)
 {
 	List	   *i;
 	List	   *j;

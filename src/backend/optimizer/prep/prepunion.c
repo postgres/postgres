@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.5 1997/09/08 02:24:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.6 1997/09/08 21:45:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,21 +35,21 @@
 #include "optimizer/prep.h"
 
 static List *
-plan_union_query(List * relids, Index rt_index,
-				 RangeTblEntry * rt_entry, Query * parse, UnionFlag flag,
-				 List ** union_rtentriesPtr);
+plan_union_query(List *relids, Index rt_index,
+				 RangeTblEntry *rt_entry, Query *parse, UnionFlag flag,
+				 List **union_rtentriesPtr);
 static RangeTblEntry *
 new_rangetable_entry(Oid new_relid,
-					 RangeTblEntry * old_entry);
+					 RangeTblEntry *old_entry);
 static Query *
-subst_rangetable(Query * root, Index index,
-				 RangeTblEntry * new_entry);
+subst_rangetable(Query *root, Index index,
+				 RangeTblEntry *new_entry);
 static void
 fix_parsetree_attnums(Index rt_index, Oid old_relid,
-					  Oid new_relid, Query * parsetree);
+					  Oid new_relid, Query *parsetree);
 static Append *
-make_append(List * unionplans, Index rt_index,
-			List * union_rt_entries, List * tlist);
+make_append(List *unionplans, Index rt_index,
+			List *union_rt_entries, List *tlist);
 
 
 /*
@@ -59,8 +59,8 @@ make_append(List * unionplans, Index rt_index,
  *		lists.
  */
 List	   *
-find_all_inheritors(List * unexamined_relids,
-					List * examined_relids)
+find_all_inheritors(List *unexamined_relids,
+					List *examined_relids)
 {
 	List	   *new_inheritors = NIL;
 	List	   *new_examined_relids = NIL;
@@ -103,7 +103,7 @@ find_all_inheritors(List * unexamined_relids,
  *		Returns a rangetable index.,  Returns -1 if no matches
  */
 int
-first_matching_rt_entry(List * rangetable, UnionFlag flag)
+first_matching_rt_entry(List *rangetable, UnionFlag flag)
 {
 	int			count = 0;
 	List	   *temp = NIL;
@@ -143,7 +143,7 @@ first_matching_rt_entry(List * rangetable, UnionFlag flag)
  */
 Append	   *
 plan_union_queries(Index rt_index,
-				   Query * parse,
+				   Query *parse,
 				   UnionFlag flag)
 {
 	List	   *rangetable = parse->rtable;
@@ -226,12 +226,12 @@ plan_union_queries(Index rt_index,
  *	  in union_rtentries.
  */
 static List *
-plan_union_query(List * relids,
+plan_union_query(List *relids,
 				 Index rt_index,
-				 RangeTblEntry * rt_entry,
-				 Query * root,
+				 RangeTblEntry *rt_entry,
+				 Query *root,
 				 UnionFlag flag,
-				 List ** union_rtentriesPtr)
+				 List **union_rtentriesPtr)
 {
 	List	   *i;
 	List	   *union_plans = NIL;
@@ -286,7 +286,7 @@ plan_union_query(List * relids,
  *		Returns a copy of 'old-entry' with the parameters substituted.
  */
 static RangeTblEntry *
-new_rangetable_entry(Oid new_relid, RangeTblEntry * old_entry)
+new_rangetable_entry(Oid new_relid, RangeTblEntry *old_entry)
 {
 	RangeTblEntry *new_entry = copyObject(old_entry);
 
@@ -308,7 +308,7 @@ new_rangetable_entry(Oid new_relid, RangeTblEntry * old_entry)
  * Returns a new copy of 'root'.
  */
 static Query *
-subst_rangetable(Query * root, Index index, RangeTblEntry * new_entry)
+subst_rangetable(Query *root, Index index, RangeTblEntry *new_entry)
 {
 	Query	   *new_root = copyObject(root);
 	List	   *temp = NIL;
@@ -325,7 +325,7 @@ static void
 fix_parsetree_attnums_nodes(Index rt_index,
 							Oid old_relid,
 							Oid new_relid,
-							Node * node)
+							Node *node)
 {
 	if (node == NULL)
 		return;
@@ -396,7 +396,7 @@ static void
 fix_parsetree_attnums(Index rt_index,
 					  Oid old_relid,
 					  Oid new_relid,
-					  Query * parsetree)
+					  Query *parsetree)
 {
 	if (old_relid == new_relid)
 		return;
@@ -408,10 +408,10 @@ fix_parsetree_attnums(Index rt_index,
 }
 
 static Append *
-make_append(List * unionplans,
+make_append(List *unionplans,
 			Index rt_index,
-			List * union_rt_entries,
-			List * tlist)
+			List *union_rt_entries,
+			List *tlist)
 {
 	Append	   *node = makeNode(Append);
 

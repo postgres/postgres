@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.41 1997/09/08 20:56:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.42 1997/09/08 21:46:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,54 +44,54 @@
 #include "port-protos.h"		/* strdup() */
 
 /* convert the parse tree into a query tree */
-static Query *transformStmt(ParseState * pstate, Node * stmt);
+static Query *transformStmt(ParseState *pstate, Node *stmt);
 
-static Query *transformDeleteStmt(ParseState * pstate, DeleteStmt * stmt);
-static Query *transformInsertStmt(ParseState * pstate, AppendStmt *stmt);
-static Query *transformIndexStmt(ParseState * pstate, IndexStmt * stmt);
-static Query *transformExtendStmt(ParseState * pstate, ExtendStmt * stmt);
-static Query *transformRuleStmt(ParseState * query, RuleStmt * stmt);
-static Query *transformSelectStmt(ParseState * pstate, RetrieveStmt * stmt);
-static Query *transformUpdateStmt(ParseState * pstate, ReplaceStmt * stmt);
-static Query *transformCursorStmt(ParseState * pstate, CursorStmt * stmt);
-static Node *handleNestedDots(ParseState * pstate, Attr *attr, int *curr_resno);
+static Query *transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt);
+static Query *transformInsertStmt(ParseState *pstate, AppendStmt *stmt);
+static Query *transformIndexStmt(ParseState *pstate, IndexStmt *stmt);
+static Query *transformExtendStmt(ParseState *pstate, ExtendStmt *stmt);
+static Query *transformRuleStmt(ParseState *query, RuleStmt *stmt);
+static Query *transformSelectStmt(ParseState *pstate, RetrieveStmt *stmt);
+static Query *transformUpdateStmt(ParseState *pstate, ReplaceStmt *stmt);
+static Query *transformCursorStmt(ParseState *pstate, CursorStmt *stmt);
+static Node *handleNestedDots(ParseState *pstate, Attr *attr, int *curr_resno);
 
 #define EXPR_COLUMN_FIRST	 1
 #define EXPR_RELATION_FIRST  2
-static Node *transformExpr(ParseState * pstate, Node * expr, int precedence);
-static Node *transformIdent(ParseState * pstate, Node * expr, int precedence);
+static Node *transformExpr(ParseState *pstate, Node *expr, int precedence);
+static Node *transformIdent(ParseState *pstate, Node *expr, int precedence);
 
-static void makeRangeTable(ParseState * pstate, char *relname, List * frmList);
-static List *expandAllTables(ParseState * pstate);
-static char *figureColname(Node * expr, Node * resval);
-static List *makeTargetNames(ParseState * pstate, List * cols);
-static List *transformTargetList(ParseState * pstate, List * targetlist);
+static void makeRangeTable(ParseState *pstate, char *relname, List *frmList);
+static List *expandAllTables(ParseState *pstate);
+static char *figureColname(Node *expr, Node *resval);
+static List *makeTargetNames(ParseState *pstate, List *cols);
+static List *transformTargetList(ParseState *pstate, List *targetlist);
 static TargetEntry *
-make_targetlist_expr(ParseState * pstate,
-					 char *colname, Node * expr,
-					 List * arrayRef);
+make_targetlist_expr(ParseState *pstate,
+					 char *colname, Node *expr,
+					 List *arrayRef);
 static bool inWhereClause = false;
-static Node *transformWhereClause(ParseState * pstate, Node * a_expr);
+static Node *transformWhereClause(ParseState *pstate, Node *a_expr);
 static List *
-transformGroupClause(ParseState * pstate, List * grouplist,
-					 List * targetlist);
+transformGroupClause(ParseState *pstate, List *grouplist,
+					 List *targetlist);
 static List *
-transformSortClause(ParseState * pstate,
-					List * orderlist, List * targetlist,
+transformSortClause(ParseState *pstate,
+					List *orderlist, List *targetlist,
 					char *uniqueFlag);
 
-static void parseFromClause(ParseState * pstate, List * frmList);
+static void parseFromClause(ParseState *pstate, List *frmList);
 static Node *
-ParseFunc(ParseState * pstate, char *funcname,
-		  List * fargs, int *curr_resno);
+ParseFunc(ParseState *pstate, char *funcname,
+		  List *fargs, int *curr_resno);
 static List *setup_tlist(char *attname, Oid relid);
 static List *setup_base_tlist(Oid typeid);
 static void
-make_arguments(int nargs, List * fargs, Oid * input_typeids,
-			   Oid * function_typeids);
-static void AddAggToParseState(ParseState * pstate, Aggreg *aggreg);
-static void finalizeAggregates(ParseState * pstate, Query * qry);
-static void parseCheckAggregates(ParseState * pstate, Query * qry);
+make_arguments(int nargs, List *fargs, Oid *input_typeids,
+			   Oid *function_typeids);
+static void AddAggToParseState(ParseState *pstate, Aggreg *aggreg);
+static void finalizeAggregates(ParseState *pstate, Query *qry);
+static void parseCheckAggregates(ParseState *pstate, Query *qry);
 static ParseState *makeParseState(void);
 
 /*****************************************************************************
@@ -135,7 +135,7 @@ makeParseState(void)
  * CALLER is responsible for freeing the QueryTreeList* returned
  */
 QueryTreeList *
-parse_analyze(List * pl)
+parse_analyze(List *pl)
 {
 	QueryTreeList *result;
 	ParseState *pstate;
@@ -166,7 +166,7 @@ parse_analyze(List * pl)
  *	  into a Query tree.
  */
 static Query *
-transformStmt(ParseState * pstate, Node * parseTree)
+transformStmt(ParseState *pstate, Node *parseTree)
 {
 	Query	   *result = NULL;
 
@@ -271,7 +271,7 @@ transformStmt(ParseState * pstate, Node * parseTree)
  *	  transforms a Delete Statement
  */
 static Query *
-transformDeleteStmt(ParseState * pstate, DeleteStmt * stmt)
+transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
 
@@ -300,7 +300,7 @@ transformDeleteStmt(ParseState * pstate, DeleteStmt * stmt)
  *	  transform an Insert Statement
  */
 static Query *
-transformInsertStmt(ParseState * pstate, AppendStmt *stmt)
+transformInsertStmt(ParseState *pstate, AppendStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);	/* make a new query tree */
 
@@ -335,7 +335,7 @@ transformInsertStmt(ParseState * pstate, AppendStmt *stmt)
  *	  transforms the qualification of the index statement
  */
 static Query *
-transformIndexStmt(ParseState * pstate, IndexStmt * stmt)
+transformIndexStmt(ParseState *pstate, IndexStmt *stmt)
 {
 	Query	   *q;
 
@@ -357,7 +357,7 @@ transformIndexStmt(ParseState * pstate, IndexStmt * stmt)
  *
  */
 static Query *
-transformExtendStmt(ParseState * pstate, ExtendStmt * stmt)
+transformExtendStmt(ParseState *pstate, ExtendStmt *stmt)
 {
 	Query	   *q;
 
@@ -378,7 +378,7 @@ transformExtendStmt(ParseState * pstate, ExtendStmt * stmt)
  *	  trees which is transformed into a list of query trees.
  */
 static Query *
-transformRuleStmt(ParseState * pstate, RuleStmt * stmt)
+transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 {
 	Query	   *q;
 	List	   *actions;
@@ -426,7 +426,7 @@ transformRuleStmt(ParseState * pstate, RuleStmt * stmt)
  *
  */
 static Query *
-transformSelectStmt(ParseState * pstate, RetrieveStmt * stmt)
+transformSelectStmt(ParseState *pstate, RetrieveStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
 
@@ -478,7 +478,7 @@ transformSelectStmt(ParseState * pstate, RetrieveStmt * stmt)
  *
  */
 static Query *
-transformUpdateStmt(ParseState * pstate, ReplaceStmt * stmt)
+transformUpdateStmt(ParseState *pstate, ReplaceStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
 
@@ -513,7 +513,7 @@ transformUpdateStmt(ParseState * pstate, ReplaceStmt * stmt)
  *
  */
 static Query *
-transformCursorStmt(ParseState * pstate, CursorStmt * stmt)
+transformCursorStmt(ParseState *pstate, CursorStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
 
@@ -571,7 +571,7 @@ transformCursorStmt(ParseState * pstate, CursorStmt * stmt)
  *	  here.
  */
 static Node *
-transformExpr(ParseState * pstate, Node * expr, int precedence)
+transformExpr(ParseState *pstate, Node *expr, int precedence)
 {
 	Node	   *result = NULL;
 
@@ -791,7 +791,7 @@ transformExpr(ParseState * pstate, Node * expr, int precedence)
 }
 
 static Node *
-transformIdent(ParseState * pstate, Node * expr, int precedence)
+transformIdent(ParseState *pstate, Node *expr, int precedence)
 {
 	Ident	   *ident = (Ident *) expr;
 	RangeTblEntry *rte;
@@ -856,7 +856,7 @@ transformIdent(ParseState * pstate, Node * expr, int precedence)
  *
  */
 static void
-parseFromClause(ParseState * pstate, List * frmList)
+parseFromClause(ParseState *pstate, List *frmList)
 {
 	List	   *fl;
 
@@ -893,7 +893,7 @@ parseFromClause(ParseState * pstate, List * frmList)
  *	  from-clause.
  */
 static void
-makeRangeTable(ParseState * pstate, char *relname, List * frmList)
+makeRangeTable(ParseState *pstate, char *relname, List *frmList)
 {
 	RangeTblEntry *rte;
 
@@ -919,7 +919,7 @@ makeRangeTable(ParseState * pstate, char *relname, List * frmList)
  *	  returns the Oid of the type of the expression. (Used for typechecking.)
  */
 Oid
-exprType(Node * expr)
+exprType(Node *expr)
 {
 	Oid			type = (Oid) 0;
 
@@ -967,7 +967,7 @@ exprType(Node * expr)
  *	  relations in the range table)
  */
 static List *
-expandAllTables(ParseState * pstate)
+expandAllTables(ParseState *pstate)
 {
 	List	   *target = NIL;
 	List	   *legit_rtable = NIL;
@@ -1033,7 +1033,7 @@ expandAllTables(ParseState * pstate)
  *
  */
 static char *
-figureColname(Node * expr, Node * resval)
+figureColname(Node *expr, Node *resval)
 {
 	switch (nodeTag(expr))
 	{
@@ -1067,7 +1067,7 @@ figureColname(Node * expr, Node * resval)
  *	  (used exclusively for inserts)
  */
 static List *
-makeTargetNames(ParseState * pstate, List * cols)
+makeTargetNames(ParseState *pstate, List *cols)
 {
 	List	   *tl = NULL;
 
@@ -1110,7 +1110,7 @@ makeTargetNames(ParseState * pstate, List * cols)
  *	  turns a list of ResTarget's into a list of TargetEntry's
  */
 static List *
-transformTargetList(ParseState * pstate, List * targetlist)
+transformTargetList(ParseState *pstate, List *targetlist)
 {
 	List	   *p_target = NIL;
 	List	   *tail_p_target = NIL;
@@ -1397,10 +1397,10 @@ transformTargetList(ParseState * pstate, List * targetlist)
  * arrayRef is a list of transformed A_Indices
  */
 static TargetEntry *
-make_targetlist_expr(ParseState * pstate,
+make_targetlist_expr(ParseState *pstate,
 					 char *colname,
-					 Node * expr,
-					 List * arrayRef)
+					 Node *expr,
+					 List *arrayRef)
 {
 	Oid			type_id,
 				attrtype;
@@ -1607,7 +1607,7 @@ make_targetlist_expr(ParseState * pstate,
  *
  */
 static Node *
-transformWhereClause(ParseState * pstate, Node * a_expr)
+transformWhereClause(ParseState *pstate, Node *a_expr)
 {
 	Node	   *qual;
 
@@ -1639,7 +1639,7 @@ transformWhereClause(ParseState * pstate, Node * a_expr)
  *
  */
 static TargetEntry *
-find_targetlist_entry(ParseState * pstate, SortGroupBy * sortgroupby, List * tlist)
+find_targetlist_entry(ParseState *pstate, SortGroupBy *sortgroupby, List *tlist)
 {
 	List	   *i;
 	int			real_rtable_pos = 0,
@@ -1716,7 +1716,7 @@ any_ordering_op(int restype)
  *
  */
 static List *
-transformGroupClause(ParseState * pstate, List * grouplist, List * targetlist)
+transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
 {
 	List	   *glist = NIL,
 			   *gl = NIL;
@@ -1756,8 +1756,8 @@ transformGroupClause(ParseState * pstate, List * grouplist, List * targetlist)
  *
  */
 static List *
-transformSortClause(ParseState * pstate,
-					List * orderlist, List * targetlist,
+transformSortClause(ParseState *pstate,
+					List *orderlist, List *targetlist,
 					char *uniqueFlag)
 {
 	List	   *sortlist = NIL;
@@ -1872,7 +1872,7 @@ transformSortClause(ParseState * pstate,
  ** a tree with of Iter and Func nodes.
  */
 static Node *
-handleNestedDots(ParseState * pstate, Attr *attr, int *curr_resno)
+handleNestedDots(ParseState *pstate, Attr *attr, int *curr_resno)
 {
 	List	   *mutator_iter;
 	Node	   *retval = NULL;
@@ -1915,9 +1915,9 @@ handleNestedDots(ParseState * pstate, Attr *attr, int *curr_resno)
  */
 static void
 make_arguments(int nargs,
-			   List * fargs,
-			   Oid * input_typeids,
-			   Oid * function_typeids)
+			   List *fargs,
+			   Oid *input_typeids,
+			   Oid *function_typeids)
 {
 
 	/*
@@ -2016,10 +2016,10 @@ setup_base_tlist(Oid typeid)
  *	  This routine returns NULL if it can't handle the projection (eg. sets).
  */
 static Node *
-ParseComplexProjection(ParseState * pstate,
+ParseComplexProjection(ParseState *pstate,
 					   char *funcname,
-					   Node * first_arg,
-					   bool * attisset)
+					   Node *first_arg,
+					   bool *attisset)
 {
 	Oid			argtype;
 	Oid			argrelid;
@@ -2174,7 +2174,7 @@ ParseComplexProjection(ParseState * pstate,
 }
 
 static Node *
-ParseFunc(ParseState * pstate, char *funcname, List * fargs, int *curr_resno)
+ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
 {
 	Oid			rettype = (Oid) 0;
 	Oid			argrelid = (Oid) 0;
@@ -2524,7 +2524,7 @@ ParseFunc(ParseState * pstate, char *funcname, List * fargs, int *curr_resno)
  * SIDE EFFECT: aggno in target list entry will be modified
  */
 static void
-AddAggToParseState(ParseState * pstate, Aggreg *aggreg)
+AddAggToParseState(ParseState *pstate, Aggreg *aggreg)
 {
 	List	   *ag;
 	int			i;
@@ -2562,7 +2562,7 @@ AddAggToParseState(ParseState * pstate, Aggreg *aggreg)
  *	  are used in the proper place.
  */
 static void
-finalizeAggregates(ParseState * pstate, Query * qry)
+finalizeAggregates(ParseState *pstate, Query *qry)
 {
 	List	   *l;
 	int			i;
@@ -2584,7 +2584,7 @@ finalizeAggregates(ParseState * pstate, Query * qry)
  *	  Returns true if any aggregate found.
  */
 static bool
-contain_agg_clause(Node * clause)
+contain_agg_clause(Node *clause)
 {
 	if (clause == NULL)
 		return FALSE;
@@ -2642,12 +2642,12 @@ contain_agg_clause(Node * clause)
  *	  returns true if the expression does not contain non-group columns.
  */
 static bool
-exprIsAggOrGroupCol(Node * expr, List * groupClause)
+exprIsAggOrGroupCol(Node *expr, List *groupClause)
 {
 	List	   *gl;
 
 	if (expr == NULL || IsA(expr, Const) ||
-		IsA(expr, Param) || IsA(expr, Aggreg))
+		IsA(expr, Param) ||IsA(expr, Aggreg))
 		return TRUE;
 
 	foreach(gl, groupClause)
@@ -2676,12 +2676,12 @@ exprIsAggOrGroupCol(Node * expr, List * groupClause)
  *	  returns true if the TargetEntry is Agg or GroupCol.
  */
 static bool
-tleIsAggOrGroupCol(TargetEntry * tle, List * groupClause)
+tleIsAggOrGroupCol(TargetEntry *tle, List *groupClause)
 {
 	Node	   *expr = tle->expr;
 	List	   *gl;
 
-	if (expr == NULL || IsA(expr, Const) || IsA(expr, Param))
+	if (expr == NULL || IsA(expr, Const) ||IsA(expr, Param))
 		return TRUE;
 
 	foreach(gl, groupClause)
@@ -2719,7 +2719,7 @@ tleIsAggOrGroupCol(TargetEntry * tle, List * groupClause)
  *	  here when the target list and the qualifications are finalized.
  */
 static void
-parseCheckAggregates(ParseState * pstate, Query * qry)
+parseCheckAggregates(ParseState *pstate, Query *qry)
 {
 	List	   *tl;
 

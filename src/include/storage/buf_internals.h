@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.17 1997/09/08 20:59:00 momjian Exp $
+ * $Id: buf_internals.h,v 1.18 1997/09/08 21:54:14 momjian Exp $
  *
  * NOTE
  *		If BUFFERPAGE0 is defined, then 0 will be used as a
@@ -212,7 +212,7 @@ extern void InitFreeList(bool init);
 
 /* buf_table.c */
 extern void InitBufTable(void);
-extern BufferDesc *BufTableLookup(BufferTag * tagPtr);
+extern BufferDesc *BufTableLookup(BufferTag *tagPtr);
 extern bool BufTableDelete(BufferDesc *buf);
 extern bool BufTableInsert(BufferDesc *buf);
 
@@ -231,7 +231,7 @@ extern int	NLocBuffer;
 
 extern BufferDesc *
 LocalBufferAlloc(Relation reln, BlockNumber blockNum,
-				 bool * foundPtr);
+				 bool *foundPtr);
 extern int	WriteLocalBuffer(Buffer buffer, bool release);
 extern int	FlushLocalBuffer(Buffer buffer, bool release);
 extern void InitLocalBuffer(void);

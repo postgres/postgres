@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.12 1997/09/08 02:21:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.13 1997/09/08 21:41:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@ static void
 rtadjone(IndexScanDesc s, int op, BlockNumber blkno,
 		 OffsetNumber offnum);
 static void
-adjuststack(RTSTACK * stk, BlockNumber blkno,
+adjuststack(RTSTACK *stk, BlockNumber blkno,
 			OffsetNumber offnum);
 static void
 adjustiptr(IndexScanDesc s, ItemPointer iptr,
@@ -54,7 +54,7 @@ typedef struct RTScanListData
 {
 	IndexScanDesc rtsl_scan;
 	struct RTScanListData *rtsl_next;
-}			RTScanListData;
+} RTScanListData;
 
 typedef RTScanListData *RTScanList;
 
@@ -421,7 +421,7 @@ adjustiptr(IndexScanDesc s,
  */
 /*ARGSUSED*/
 static void
-adjuststack(RTSTACK * stk,
+adjuststack(RTSTACK *stk,
 			BlockNumber blkno,
 			OffsetNumber offnum)
 {

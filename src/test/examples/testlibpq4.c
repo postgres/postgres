@@ -9,7 +9,7 @@
 #include "libpq-fe.h"
 
 void
-exit_nicely(PGconn * conn1, PGconn * conn2)
+exit_nicely(PGconn *conn1, PGconn *conn2)
 {
 	if (conn1)
 		PQfinish(conn1);
@@ -19,7 +19,7 @@ exit_nicely(PGconn * conn1, PGconn * conn2)
 }
 
 void
-check_conn(PGconn * conn)
+check_conn(PGconn *conn)
 {
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(conn) == CONNECTION_BAD)

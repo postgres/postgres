@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.13 1997/09/08 02:33:50 momjian Exp $
+ * $Id: miscadmin.h,v 1.14 1997/09/08 21:50:26 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -154,7 +154,7 @@ typedef enum ProcessingMode
 	BootstrapProcessing,		/* bootstrap creation of template database */
 	InitProcessing,				/* initializing system */
 	NormalProcessing			/* normal processing */
-}			ProcessingMode;
+} ProcessingMode;
 
 
 /*****************************************************************************

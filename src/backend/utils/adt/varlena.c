@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.20 1997/09/08 02:31:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.21 1997/09/08 21:48:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -212,7 +212,7 @@ textout(struct varlena * vlena)
  */
 #ifdef NOT_USED
 int
-textlen(text * t)
+textlen(text *t)
 {
 	int			i = 0;
 	int			max = VARSIZE(t) - VARHDRSZ;
@@ -239,7 +239,7 @@ textlen(text * t)
  */
 
 text	   *
-textcat(text * t1, text * t2)
+textcat(text *t1, text *t2)
 {
 	int			len1,
 				len2,
@@ -281,7 +281,7 @@ textcat(text * t1, text * t2)
  */
 
 int32
-textpos(text * t1, text * t2)
+textpos(text *t1, text *t2)
 {
 	int			pos;
 	int			px,
@@ -348,7 +348,7 @@ texteq(struct varlena * arg1, struct varlena * arg2)
 bool
 textne(struct varlena * arg1, struct varlena * arg2)
 {
-	return ((bool) ! texteq(arg1, arg2));
+	return ((bool) !texteq(arg1, arg2));
 }
 
 /* text_lt()
@@ -466,13 +466,13 @@ text_le(struct varlena * arg1, struct varlena * arg2)
 bool
 text_gt(struct varlena * arg1, struct varlena * arg2)
 {
-	return ((bool) ! text_le(arg1, arg2));
+	return ((bool) !text_le(arg1, arg2));
 }
 
 bool
 text_ge(struct varlena * arg1, struct varlena * arg2)
 {
-	return ((bool) ! text_lt(arg1, arg2));
+	return ((bool) !text_lt(arg1, arg2));
 }
 
 /*-------------------------------------------------------------

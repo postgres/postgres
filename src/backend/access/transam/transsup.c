@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.12 1997/09/08 20:54:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.13 1997/09/08 21:41:46 momjian Exp $
  *
  * NOTES
  *	  This file contains support functions for the high
@@ -111,7 +111,7 @@ TransComputeBlockNumber(Relation relation,		/* relation to test */
 static XidStatus
 TransBlockGetLastTransactionIdStatus(Block tblock,
 									 TransactionId baseXid,
-									 TransactionId * returnXidP)
+									 TransactionId *returnXidP)
 {
 	Index		index;
 	Index		maxIndex;
@@ -392,7 +392,7 @@ XidStatus
 TransBlockNumberGetXidStatus(Relation relation,
 							 BlockNumber blockNumber,
 							 TransactionId xid,
-							 bool * failP)
+							 bool *failP)
 {
 	Buffer		buffer;			/* buffer associated with block */
 	Block		block;			/* block containing xstatus */
@@ -449,7 +449,7 @@ TransBlockNumberSetXidStatus(Relation relation,
 							 BlockNumber blockNumber,
 							 TransactionId xid,
 							 XidStatus xstatus,
-							 bool * failP)
+							 bool *failP)
 {
 	Buffer		buffer;			/* buffer associated with block */
 	Block		block;			/* block containing xstatus */
@@ -502,7 +502,7 @@ AbsoluteTime
 TransBlockNumberGetCommitTime(Relation relation,
 							  BlockNumber blockNumber,
 							  TransactionId xid,
-							  bool * failP)
+							  bool *failP)
 {
 	Buffer		buffer;			/* buffer associated with block */
 	Block		block;			/* block containing commit time */
@@ -563,7 +563,7 @@ TransBlockNumberSetCommitTime(Relation relation,
 							  BlockNumber blockNumber,
 							  TransactionId xid,
 							  AbsoluteTime xtime,
-							  bool * failP)
+							  bool *failP)
 {
 	Buffer		buffer;			/* buffer associated with block */
 	Block		block;			/* block containing commit time */
@@ -618,7 +618,7 @@ void
 TransGetLastRecordedTransaction(Relation relation,
 								TransactionId xid,		/* return: transaction
 														 * id */
-								bool * failP)
+								bool *failP)
 {
 	BlockNumber blockNumber;	/* block number */
 	Buffer		buffer;			/* buffer associated with block */

@@ -36,14 +36,14 @@ typedef struct FormData_pg_sequence
 	int4		cache_value;
 	char		is_cycled;
 	char		is_called;
-}			FormData_pg_sequence;
+} FormData_pg_sequence;
 
 typedef FormData_pg_sequence *SequenceTupleForm;
 
 typedef struct sequence_magic
 {
 	uint32		magic;
-}			sequence_magic;
+} sequence_magic;
 
 typedef struct SeqTableData
 {
@@ -54,7 +54,7 @@ typedef struct SeqTableData
 	int4		last;
 	int4		increment;
 	struct SeqTableData *next;
-}			SeqTableData;
+} SeqTableData;
 
 typedef SeqTableData *SeqTable;
 
@@ -62,15 +62,15 @@ static SeqTable seqtab = NULL;
 
 static SeqTable init_sequence(char *caller, char *name);
 static SequenceTupleForm read_info(char *caller, SeqTable elm, Buffer *buf);
-static void init_params(CreateSeqStmt * seq, SequenceTupleForm new);
-static int	get_param(DefElem * def);
+static void init_params(CreateSeqStmt *seq, SequenceTupleForm new);
+static int	get_param(DefElem *def);
 
 /*
  * DefineSequence --
  *				Creates a new sequence relation
  */
 void
-DefineSequence(CreateSeqStmt * seq)
+DefineSequence(CreateSeqStmt *seq)
 {
 	FormData_pg_sequence new;
 	CreateStmt *stmt = makeNode(CreateStmt);
@@ -459,7 +459,7 @@ CloseSequences(void)
 
 
 static void
-init_params(CreateSeqStmt * seq, SequenceTupleForm new)
+init_params(CreateSeqStmt *seq, SequenceTupleForm new)
 {
 	DefElem    *last_value = NULL;
 	DefElem    *increment_by = NULL;
@@ -544,7 +544,7 @@ init_params(CreateSeqStmt * seq, SequenceTupleForm new)
 
 
 static int
-get_param(DefElem * def)
+get_param(DefElem *def)
 {
 	if (def->arg == (Node *) NULL)
 		elog(WARN, "DefineSequence: \"%s\" value unspecified", def->defname);

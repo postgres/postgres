@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itup.h,v 1.7 1997/09/08 02:34:16 momjian Exp $
+ * $Id: itup.h,v 1.8 1997/09/08 21:50:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@ typedef struct IndexTupleData
 	 * IndexInfoFindDataOffset() for the reason.
 	 */
 
-}			IndexTupleData;		/* MORE DATA FOLLOWS AT END OF STRUCT */
+} IndexTupleData;				/* MORE DATA FOLLOWS AT END OF STRUCT */
 
 typedef IndexTupleData *IndexTuple;
 
@@ -45,7 +45,7 @@ typedef IndexTupleData *IndexTuple;
 typedef struct InsertIndexResultData
 {
 	ItemPointerData pointerData;
-}			InsertIndexResultData;
+} InsertIndexResultData;
 
 typedef InsertIndexResultData *InsertIndexResult;
 
@@ -54,7 +54,7 @@ typedef struct RetrieveIndexResultData
 {
 	ItemPointerData index_iptr;
 	ItemPointerData heap_iptr;
-}			RetrieveIndexResultData;
+} RetrieveIndexResultData;
 
 typedef RetrieveIndexResultData *RetrieveIndexResult;
 
@@ -68,7 +68,7 @@ typedef struct PredInfo
 {
 	Node	   *pred;
 	Node	   *oldPred;
-}			PredInfo;
+} PredInfo;
 
 
 /* ----------------
@@ -89,16 +89,16 @@ typedef struct PredInfo
 
 
 /* indextuple.h */
-extern		IndexTuple
+extern IndexTuple
 index_formtuple(TupleDesc tupleDescriptor,
 				Datum value[], char null[]);
-extern		Datum
+extern Datum
 index_getattr(IndexTuple tuple, AttrNumber attNum,
-			  TupleDesc tupDesc, bool * isNullOutP);
-extern		RetrieveIndexResult
+			  TupleDesc tupDesc, bool *isNullOutP);
+extern RetrieveIndexResult
 FormRetrieveIndexResult(ItemPointer indexItemPointer,
 						ItemPointer heapItemPointer);
-extern void CopyIndexTuple(IndexTuple source, IndexTuple * target);
+extern void CopyIndexTuple(IndexTuple source, IndexTuple *target);
 
 
 #endif							/* ITUP_H */

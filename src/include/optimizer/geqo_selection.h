@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_selection.h,v 1.3 1997/09/08 02:37:49 momjian Exp $
+ * $Id: geqo_selection.h,v 1.4 1997/09/08 21:53:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,6 @@
 #define GEQO_SELECTION_H
 
 
-extern void geqo_selection(Chromosome * momma, Chromosome * daddy, Pool * pool, double bias);
+extern void geqo_selection(Chromosome *momma, Chromosome *daddy, Pool *pool, double bias);
 
 #endif							/* GEQO_SELECTION_H */

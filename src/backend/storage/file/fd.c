@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Id: fd.c,v 1.24 1997/09/08 02:28:38 momjian Exp $
+ *	  $Id: fd.c,v 1.25 1997/09/08 21:46:54 momjian Exp $
  *
  * NOTES:
  *
@@ -111,7 +111,7 @@ typedef struct vfd
 	char	   *fileName;
 	int			fileFlags;
 	int			fileMode;
-}			Vfd;
+} Vfd;
 
 /*
  * Virtual File Descriptor array pointer and size.	This grows as
@@ -883,7 +883,7 @@ TryAgain:
  * AllocateFile()?
  */
 void
-FreeFile(FILE * file)
+FreeFile(FILE *file)
 {
 	DO_DB(elog(DEBUG, "FreeFile: Allocated %d.", allocatedFiles));
 

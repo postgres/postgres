@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/joinutils.c,v 1.3 1997/09/08 02:24:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/joinutils.c,v 1.4 1997/09/08 21:45:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,18 +27,18 @@
 
 
 static int
-match_pathkey_joinkeys(List * pathkey, List * joinkeys,
+match_pathkey_joinkeys(List *pathkey, List *joinkeys,
 					   int which_subkey);
 static bool
-every_func(List * joinkeys, List * pathkey,
+every_func(List *joinkeys, List *pathkey,
 		   int which_subkey);
 static List *
-new_join_pathkey(List * subkeys,
-				 List * considered_subkeys, List * join_rel_tlist,
-				 List * joinclauses);
+new_join_pathkey(List *subkeys,
+				 List *considered_subkeys, List *join_rel_tlist,
+				 List *joinclauses);
 static List *
-new_matching_subkeys(Var * subkey, List * considered_subkeys,
-					 List * join_rel_tlist, List * joinclauses);
+new_matching_subkeys(Var *subkey, List *considered_subkeys,
+					 List *join_rel_tlist, List *joinclauses);
 
 /****************************************************************************
  *		KEY COMPARISONS
@@ -74,11 +74,11 @@ new_matching_subkeys(Var * subkey, List * considered_subkeys,
  * in matchedJoinClausesPtr.  - ay 11/94
  */
 List	   *
-match_pathkeys_joinkeys(List * pathkeys,
-						List * joinkeys,
-						List * joinclauses,
+match_pathkeys_joinkeys(List *pathkeys,
+						List *joinkeys,
+						List *joinclauses,
 						int which_subkey,
-						List ** matchedJoinClausesPtr)
+						List **matchedJoinClausesPtr)
 {
 	List	   *matched_joinkeys = NIL;
 	List	   *matched_joinclauses = NIL;
@@ -127,8 +127,8 @@ match_pathkeys_joinkeys(List * pathkeys,
  *	  outer or inner subkey matches any subkey of 'pathkey'.
  */
 static int
-match_pathkey_joinkeys(List * pathkey,
-					   List * joinkeys,
+match_pathkey_joinkeys(List *pathkey,
+					   List *joinkeys,
 					   int which_subkey)
 {
 	Var		   *path_subkey;
@@ -175,7 +175,7 @@ match_pathkey_joinkeys(List * pathkey,
  * Returns the matching path node if one exists, nil otherwise.
  */
 static bool
-every_func(List * joinkeys, List * pathkey, int which_subkey)
+every_func(List *joinkeys, List *pathkey, int which_subkey)
 {
 	JoinKey    *xjoinkey;
 	Var		   *temp;
@@ -212,9 +212,9 @@ every_func(List * joinkeys, List * pathkey, int which_subkey)
  *	  find the cheapest path that matches the join keys
  */
 Path	   *
-match_paths_joinkeys(List * joinkeys,
-					 PathOrder * ordering,
-					 List * paths,
+match_paths_joinkeys(List *joinkeys,
+					 PathOrder *ordering,
+					 List *paths,
 					 int which_subkey)
 {
 	Path	   *matched_path = NULL;
@@ -264,8 +264,8 @@ match_paths_joinkeys(List * joinkeys,
  * [I've no idea why they have to be list of lists. Should be fixed. -ay 12/94]
  */
 List	   *
-extract_path_keys(List * joinkeys,
-				  List * tlist,
+extract_path_keys(List *joinkeys,
+				  List *tlist,
 				  int which_subkey)
 {
 	List	   *pathkeys = NIL;
@@ -326,9 +326,9 @@ extract_path_keys(List * joinkeys,
  *
  */
 List	   *
-new_join_pathkeys(List * outer_pathkeys,
-				  List * join_rel_tlist,
-				  List * joinclauses)
+new_join_pathkeys(List *outer_pathkeys,
+				  List *join_rel_tlist,
+				  List *joinclauses)
 {
 	List	   *outer_pathkey = NIL;
 	List	   *t_list = NIL;
@@ -366,10 +366,10 @@ new_join_pathkeys(List * outer_pathkeys,
  *
  */
 static List *
-new_join_pathkey(List * subkeys,
-				 List * considered_subkeys,
-				 List * join_rel_tlist,
-				 List * joinclauses)
+new_join_pathkey(List *subkeys,
+				 List *considered_subkeys,
+				 List *join_rel_tlist,
+				 List *joinclauses)
 {
 	List	   *t_list = NIL;
 	Var		   *subkey;
@@ -426,10 +426,10 @@ new_join_pathkey(List * subkeys,
  *
  */
 static List *
-new_matching_subkeys(Var * subkey,
-					 List * considered_subkeys,
-					 List * join_rel_tlist,
-					 List * joinclauses)
+new_matching_subkeys(Var *subkey,
+					 List *considered_subkeys,
+					 List *join_rel_tlist,
+					 List *joinclauses)
 {
 	Expr	   *joinclause = NULL;
 	List	   *t_list = NIL;

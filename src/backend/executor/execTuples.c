@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.8 1997/09/08 02:22:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.9 1997/09/08 21:43:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,7 +131,7 @@
 #include "parser/catalog_utils.h"
 #include "catalog/pg_type.h"
 
-static TupleTableSlot *NodeGetResultTupleSlot(Plan * node);
+static TupleTableSlot *NodeGetResultTupleSlot(Plan *node);
 
 
 /* ----------------------------------------------------------------
@@ -150,8 +150,8 @@ static TupleTableSlot *NodeGetResultTupleSlot(Plan * node);
  * --------------------------------
  */
 TupleTable						/* return: address of table */
-ExecCreateTupleTable(int initialSize)			/* initial number of slots
-												 * in table */
+ExecCreateTupleTable(int initialSize)	/* initial number of slots in
+										 * table */
 {
 	TupleTable	newtable;		/* newly allocated table */
 	TupleTableSlot *array;		/* newly allocated slot array */
@@ -349,7 +349,7 @@ ExecAllocTableSlot(TupleTable table)
  */
 TupleTableSlot *				/* return: slot passed */
 ExecStoreTuple(HeapTuple tuple, /* tuple to store */
-			   TupleTableSlot * slot,	/* slot in which to store tuple */
+			   TupleTableSlot *slot,	/* slot in which to store tuple */
 			   Buffer buffer,	/* buffer associated with tuple */
 			   bool shouldFree) /* true if we call pfree() when we gc. */
 {
@@ -381,7 +381,7 @@ ExecStoreTuple(HeapTuple tuple, /* tuple to store */
  * --------------------------------
  */
 TupleTableSlot *				/* return: slot passed */
-ExecClearTuple(TupleTableSlot * slot)	/* slot in which to store tuple */
+ExecClearTuple(TupleTableSlot *slot)	/* slot in which to store tuple */
 {
 	HeapTuple	oldtuple;		/* prior contents of slot */
 
@@ -441,7 +441,7 @@ ExecClearTuple(TupleTableSlot * slot)	/* slot in which to store tuple */
  */
 #ifdef NOT_USED
 bool							/* return: slot policy */
-ExecSlotPolicy(TupleTableSlot * slot)			/* slot to inspect */
+ExecSlotPolicy(TupleTableSlot *slot)	/* slot to inspect */
 {
 	return slot->ttc_shouldFree;
 }
@@ -458,7 +458,7 @@ ExecSlotPolicy(TupleTableSlot * slot)			/* slot to inspect */
  * --------------------------------
  */
 bool							/* return: old slot policy */
-ExecSetSlotPolicy(TupleTableSlot * slot,		/* slot to change */
+ExecSetSlotPolicy(TupleTableSlot *slot, /* slot to change */
 				  bool shouldFree)		/* true if we call pfree() when we
 										 * gc. */
 {
@@ -487,7 +487,7 @@ ExecSetSlotPolicy(TupleTableSlot * slot,		/* slot to change */
  * --------------------------------
  */
 TupleDesc						/* return: old slot tuple descriptor */
-ExecSetSlotDescriptor(TupleTableSlot * slot,			/* slot to change */
+ExecSetSlotDescriptor(TupleTableSlot *slot,		/* slot to change */
 					  TupleDesc tupdesc)		/* tuple descriptor */
 {
 	TupleDesc	old_tupdesc = slot->ttc_tupleDescriptor;
@@ -503,7 +503,7 @@ ExecSetSlotDescriptor(TupleTableSlot * slot,			/* slot to change */
  * --------------------------------
  */
 void
-ExecSetSlotDescriptorIsNew(TupleTableSlot * slot,		/* slot to change */
+ExecSetSlotDescriptorIsNew(TupleTableSlot *slot,		/* slot to change */
 						   bool isNew)	/* "isNew" setting */
 {
 	slot->ttc_descIsNew = isNew;
@@ -518,7 +518,7 @@ ExecSetSlotDescriptorIsNew(TupleTableSlot * slot,		/* slot to change */
  */
 #ifdef NOT_USED
 TupleDesc						/* return: old slot tuple descriptor */
-ExecSetNewSlotDescriptor(TupleTableSlot * slot,			/* slot to change */
+ExecSetNewSlotDescriptor(TupleTableSlot *slot,	/* slot to change */
 						 TupleDesc tupdesc)		/* tuple descriptor */
 {
 	TupleDesc	old_tupdesc = slot->ttc_tupleDescriptor;
@@ -554,7 +554,7 @@ ExecSetNewSlotDescriptor(TupleTableSlot * slot,			/* slot to change */
  */
 #ifdef NOT_USED
 Buffer							/* return: old slot buffer */
-ExecSetSlotBuffer(TupleTableSlot * slot,		/* slot to change */
+ExecSetSlotBuffer(TupleTableSlot *slot, /* slot to change */
 				  Buffer b)		/* tuple descriptor */
 {
 	Buffer		oldb = slot->ttc_buffer;
@@ -575,7 +575,7 @@ ExecSetSlotBuffer(TupleTableSlot * slot,		/* slot to change */
  * --------------------------------
  */
 void
-ExecIncrSlotBufferRefcnt(TupleTableSlot * slot) /* slot to bump refcnt */
+ExecIncrSlotBufferRefcnt(TupleTableSlot *slot)	/* slot to bump refcnt */
 {
 /*	  Buffer b = SlotBuffer((TupleTableSlot*) slot); */
 	Buffer		b = slot->ttc_buffer;
@@ -597,7 +597,7 @@ ExecIncrSlotBufferRefcnt(TupleTableSlot * slot) /* slot to bump refcnt */
  * ----------------
  */
 bool							/* return: true if tuple in slot is NULL */
-TupIsNull(TupleTableSlot * slot)		/* slot to check */
+TupIsNull(TupleTableSlot *slot) /* slot to check */
 {
 	HeapTuple	tuple;			/* contents of slot (returned) */
 
@@ -629,7 +629,7 @@ TupIsNull(TupleTableSlot * slot)		/* slot to check */
  */
 #ifdef NOT_USED
 bool							/* return: descriptor "is new" */
-ExecSlotDescriptorIsNew(TupleTableSlot * slot)			/* slot to inspect */
+ExecSlotDescriptorIsNew(TupleTableSlot *slot)	/* slot to inspect */
 {
 /*	  bool isNew = SlotTupleDescriptorIsNew((TupleTableSlot*) slot);
 	return isNew; */
@@ -667,7 +667,7 @@ ExecSlotDescriptorIsNew(TupleTableSlot * slot)			/* slot to inspect */
  * ----------------
  */
 void
-ExecInitResultTupleSlot(EState * estate, CommonState * commonstate)
+ExecInitResultTupleSlot(EState *estate, CommonState *commonstate)
 {
 	INIT_SLOT_DEFS;
 	INIT_SLOT_ALLOC;
@@ -679,7 +679,7 @@ ExecInitResultTupleSlot(EState * estate, CommonState * commonstate)
  * ----------------
  */
 void
-ExecInitScanTupleSlot(EState * estate, CommonScanState * commonscanstate)
+ExecInitScanTupleSlot(EState *estate, CommonScanState *commonscanstate)
 {
 	INIT_SLOT_DEFS;
 	INIT_SLOT_ALLOC;
@@ -691,7 +691,7 @@ ExecInitScanTupleSlot(EState * estate, CommonScanState * commonscanstate)
  * ----------------
  */
 void
-ExecInitMarkedTupleSlot(EState * estate, MergeJoinState * mergestate)
+ExecInitMarkedTupleSlot(EState *estate, MergeJoinState *mergestate)
 {
 	INIT_SLOT_DEFS;
 	INIT_SLOT_ALLOC;
@@ -703,7 +703,7 @@ ExecInitMarkedTupleSlot(EState * estate, MergeJoinState * mergestate)
  * ----------------
  */
 void
-ExecInitOuterTupleSlot(EState * estate, HashJoinState * hashstate)
+ExecInitOuterTupleSlot(EState *estate, HashJoinState *hashstate)
 {
 	INIT_SLOT_DEFS;
 	INIT_SLOT_ALLOC;
@@ -716,7 +716,7 @@ ExecInitOuterTupleSlot(EState * estate, HashJoinState * hashstate)
  */
 #ifdef NOT_USED
 void
-ExecInitHashTupleSlot(EState * estate, HashJoinState * hashstate)
+ExecInitHashTupleSlot(EState *estate, HashJoinState *hashstate)
 {
 	INIT_SLOT_DEFS;
 	INIT_SLOT_ALLOC;
@@ -726,7 +726,7 @@ ExecInitHashTupleSlot(EState * estate, HashJoinState * hashstate)
 #endif
 
 static TupleTableSlot *
-NodeGetResultTupleSlot(Plan * node)
+NodeGetResultTupleSlot(Plan *node)
 {
 	TupleTableSlot *slot;
 
@@ -894,7 +894,7 @@ NodeGetResultTupleSlot(Plan * node)
  */
 
 TupleDesc
-ExecGetTupType(Plan * node)
+ExecGetTupType(Plan *node)
 {
 	TupleTableSlot *slot;
 	TupleDesc	tupType;
@@ -946,7 +946,7 @@ ExecCopyTupType(TupleDesc td, int natts)
  * ----------------------------------------------------------------
  */
 TupleDesc
-ExecTypeFromTL(List * targetList)
+ExecTypeFromTL(List *targetList)
 {
 	List	   *tlcdr;
 	TupleDesc	typeInfo;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.20 1997/09/08 02:29:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.21 1997/09/08 21:47:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ typedef struct _MdfdVec
 	int			mdfd_lstbcnt;	/* most recent block count */
 	int			mdfd_nextFree;	/* next free vector */
 	struct _MdfdVec *mdfd_chain;/* for large relations */
-}			MdfdVec;
+} MdfdVec;
 
 static int	Nfds = 100;
 static MdfdVec *Md_fdvec = (MdfdVec *) NULL;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.9 1997/09/08 20:55:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.10 1997/09/08 21:43:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@
  *	  its contents. (good for list of pointers as well as list of integers).
  */
 List	   *
-listCopy(List * list)
+listCopy(List *list)
 {
 	List	   *newlist = NIL;
 	List	   *l,
@@ -78,7 +78,7 @@ listCopy(List * list)
  * ----------------
  */
 static void
-CopyPlanFields(Plan * from, Plan * newnode)
+CopyPlanFields(Plan *from, Plan *newnode)
 {
 	newnode->cost = from->cost;
 	newnode->plan_size = from->plan_size;
@@ -95,7 +95,7 @@ CopyPlanFields(Plan * from, Plan * newnode)
  * ----------------
  */
 static Plan *
-_copyPlan(Plan * from)
+_copyPlan(Plan *from)
 {
 	Plan	   *newnode = makeNode(Plan);
 
@@ -114,7 +114,7 @@ _copyPlan(Plan * from)
  * ----------------
  */
 static Existential *
-_copyExistential(Existential * from)
+_copyExistential(Existential *from)
 {
 	Existential *newnode = makeNode(Existential);
 
@@ -132,7 +132,7 @@ _copyExistential(Existential * from)
  * ----------------
  */
 static Result *
-_copyResult(Result * from)
+_copyResult(Result *from)
 {
 	Result	   *newnode = makeNode(Result);
 
@@ -188,7 +188,7 @@ _copyAppend(Append *from)
  * ----------------
  */
 static void
-CopyScanFields(Scan * from, Scan * newnode)
+CopyScanFields(Scan *from, Scan *newnode)
 {
 	newnode->scanrelid = from->scanrelid;
 	Node_Copy(from, newnode, scanstate);
@@ -200,7 +200,7 @@ CopyScanFields(Scan * from, Scan * newnode)
  * ----------------
  */
 static Scan *
-_copyScan(Scan * from)
+_copyScan(Scan *from)
 {
 	Scan	   *newnode = makeNode(Scan);
 
@@ -219,7 +219,7 @@ _copyScan(Scan * from)
  * ----------------
  */
 static SeqScan *
-_copySeqScan(SeqScan * from)
+_copySeqScan(SeqScan *from)
 {
 	SeqScan    *newnode = makeNode(SeqScan);
 
@@ -238,7 +238,7 @@ _copySeqScan(SeqScan * from)
  * ----------------
  */
 static IndexScan *
-_copyIndexScan(IndexScan * from)
+_copyIndexScan(IndexScan *from)
 {
 	IndexScan  *newnode = makeNode(IndexScan);
 
@@ -268,7 +268,7 @@ _copyIndexScan(IndexScan * from)
  * ----------------
  */
 static void
-CopyJoinFields(Join * from, Join * newnode)
+CopyJoinFields(Join *from, Join *newnode)
 {
 	/* nothing extra */
 	return;
@@ -280,7 +280,7 @@ CopyJoinFields(Join * from, Join * newnode)
  * ----------------
  */
 static Join *
-_copyJoin(Join * from)
+_copyJoin(Join *from)
 {
 	Join	   *newnode = makeNode(Join);
 
@@ -300,7 +300,7 @@ _copyJoin(Join * from)
  * ----------------
  */
 static NestLoop *
-_copyNestLoop(NestLoop * from)
+_copyNestLoop(NestLoop *from)
 {
 	NestLoop   *newnode = makeNode(NestLoop);
 
@@ -326,7 +326,7 @@ _copyNestLoop(NestLoop * from)
  * ----------------
  */
 static MergeJoin *
-_copyMergeJoin(MergeJoin * from)
+_copyMergeJoin(MergeJoin *from)
 {
 	MergeJoin  *newnode = makeNode(MergeJoin);
 	List	   *newlist;
@@ -365,7 +365,7 @@ _copyMergeJoin(MergeJoin * from)
  * ----------------
  */
 static HashJoin *
-_copyHashJoin(HashJoin * from)
+_copyHashJoin(HashJoin *from)
 {
 	HashJoin   *newnode = makeNode(HashJoin);
 
@@ -403,7 +403,7 @@ _copyHashJoin(HashJoin * from)
  * ----------------
  */
 static void
-CopyTempFields(Temp * from, Temp * newnode)
+CopyTempFields(Temp *from, Temp *newnode)
 {
 	newnode->tempid = from->tempid;
 	newnode->keycount = from->keycount;
@@ -416,7 +416,7 @@ CopyTempFields(Temp * from, Temp * newnode)
  * ----------------
  */
 static Temp *
-_copyTemp(Temp * from)
+_copyTemp(Temp *from)
 {
 	Temp	   *newnode = makeNode(Temp);
 
@@ -435,7 +435,7 @@ _copyTemp(Temp * from)
  * ----------------
  */
 static Material *
-_copyMaterial(Material * from)
+_copyMaterial(Material *from)
 {
 	Material   *newnode = makeNode(Material);
 
@@ -461,7 +461,7 @@ _copyMaterial(Material * from)
  * ----------------
  */
 static Sort *
-_copySort(Sort * from)
+_copySort(Sort *from)
 {
 	Sort	   *newnode = makeNode(Sort);
 
@@ -512,7 +512,7 @@ _copyAgg(Agg *from)
  * ----------------
  */
 static Unique *
-_copyUnique(Unique * from)
+_copyUnique(Unique *from)
 {
 	Unique	   *newnode = makeNode(Unique);
 
@@ -538,7 +538,7 @@ _copyUnique(Unique * from)
  * ----------------
  */
 static Hash *
-_copyHash(Hash * from)
+_copyHash(Hash *from)
 {
 	Hash	   *newnode = makeNode(Hash);
 
@@ -572,7 +572,7 @@ _copyHash(Hash * from)
  * ----------------
  */
 static Resdom *
-_copyResdom(Resdom * from)
+_copyResdom(Resdom *from)
 {
 	Resdom	   *newnode = makeNode(Resdom);
 
@@ -596,7 +596,7 @@ _copyResdom(Resdom * from)
 }
 
 static Fjoin *
-_copyFjoin(Fjoin * from)
+_copyFjoin(Fjoin *from)
 {
 	Fjoin	   *newnode = makeNode(Fjoin);
 
@@ -633,7 +633,7 @@ _copyFjoin(Fjoin * from)
  * ----------------
  */
 static Expr *
-_copyExpr(Expr * from)
+_copyExpr(Expr *from)
 {
 	Expr	   *newnode = makeNode(Expr);
 
@@ -655,7 +655,7 @@ _copyExpr(Expr * from)
  * ----------------
  */
 static Var *
-_copyVar(Var * from)
+_copyVar(Var *from)
 {
 	Var		   *newnode = makeNode(Var);
 
@@ -678,7 +678,7 @@ _copyVar(Var * from)
  * ----------------
  */
 static Oper *
-_copyOper(Oper * from)
+_copyOper(Oper *from)
 {
 	Oper	   *newnode = makeNode(Oper);
 
@@ -706,7 +706,7 @@ _copyOper(Oper * from)
  * ----------------
  */
 static Const *
-_copyConst(Const * from)
+_copyConst(Const *from)
 {
 	static Oid	cached_type;
 	static bool cached_typbyval;
@@ -817,7 +817,7 @@ _copyConst(Const * from)
  * ----------------
  */
 static Param *
-_copyParam(Param * from)
+_copyParam(Param *from)
 {
 	Param	   *newnode = makeNode(Param);
 
@@ -846,7 +846,7 @@ _copyParam(Param * from)
  * ----------------
  */
 static Func *
-_copyFunc(Func * from)
+_copyFunc(Func *from)
 {
 	Func	   *newnode = makeNode(Func);
 
@@ -946,7 +946,7 @@ _copyArrayRef(ArrayRef *from)
  **			-- JMH, 8/2/93
  */
 static Rel *
-_copyRel(Rel * from)
+_copyRel(Rel *from)
 {
 	Rel		   *newnode = makeNode(Rel);
 	int			i,
@@ -1024,7 +1024,7 @@ _copyRel(Rel * from)
  * ----------------
  */
 static void
-CopyPathFields(Path * from, Path * newnode)
+CopyPathFields(Path *from, Path *newnode)
 {
 	newnode->pathtype = from->pathtype;
 
@@ -1079,7 +1079,7 @@ CopyPathFields(Path * from, Path * newnode)
  * ----------------
  */
 static Path *
-_copyPath(Path * from)
+_copyPath(Path *from)
 {
 	Path	   *newnode = makeNode(Path);
 
@@ -1093,7 +1093,7 @@ _copyPath(Path * from)
  * ----------------
  */
 static IndexPath *
-_copyIndexPath(IndexPath * from)
+_copyIndexPath(IndexPath *from)
 {
 	IndexPath  *newnode = makeNode(IndexPath);
 
@@ -1136,7 +1136,7 @@ _copyIndexPath(IndexPath * from)
  * ----------------
  */
 static void
-CopyJoinPathFields(JoinPath * from, JoinPath * newnode)
+CopyJoinPathFields(JoinPath *from, JoinPath *newnode)
 {
 	Node_Copy(from, newnode, pathclauseinfo);
 	Node_Copy(from, newnode, outerjoinpath);
@@ -1148,7 +1148,7 @@ CopyJoinPathFields(JoinPath * from, JoinPath * newnode)
  * ----------------
  */
 static JoinPath *
-_copyJoinPath(JoinPath * from)
+_copyJoinPath(JoinPath *from)
 {
 	JoinPath   *newnode = makeNode(JoinPath);
 
@@ -1167,7 +1167,7 @@ _copyJoinPath(JoinPath * from)
  * ----------------
  */
 static MergePath *
-_copyMergePath(MergePath * from)
+_copyMergePath(MergePath *from)
 {
 	MergePath  *newnode = makeNode(MergePath);
 
@@ -1194,7 +1194,7 @@ _copyMergePath(MergePath * from)
  * ----------------
  */
 static HashPath *
-_copyHashPath(HashPath * from)
+_copyHashPath(HashPath *from)
 {
 	HashPath   *newnode = makeNode(HashPath);
 
@@ -1221,7 +1221,7 @@ _copyHashPath(HashPath * from)
  * ----------------
  */
 static OrderKey *
-_copyOrderKey(OrderKey * from)
+_copyOrderKey(OrderKey *from)
 {
 	OrderKey   *newnode = makeNode(OrderKey);
 
@@ -1241,7 +1241,7 @@ _copyOrderKey(OrderKey * from)
  * ----------------
  */
 static JoinKey *
-_copyJoinKey(JoinKey * from)
+_copyJoinKey(JoinKey *from)
 {
 	JoinKey    *newnode = makeNode(JoinKey);
 
@@ -1260,7 +1260,7 @@ _copyJoinKey(JoinKey * from)
  * ----------------
  */
 static MergeOrder *
-_copyMergeOrder(MergeOrder * from)
+_copyMergeOrder(MergeOrder *from)
 {
 	MergeOrder *newnode = makeNode(MergeOrder);
 
@@ -1282,7 +1282,7 @@ _copyMergeOrder(MergeOrder * from)
  * ----------------
  */
 static CInfo *
-_copyCInfo(CInfo * from)
+_copyCInfo(CInfo *from)
 {
 	CInfo	   *newnode = makeNode(CInfo);
 
@@ -1311,7 +1311,7 @@ _copyCInfo(CInfo * from)
  * ----------------
  */
 static void
-CopyJoinMethodFields(JoinMethod * from, JoinMethod * newnode)
+CopyJoinMethodFields(JoinMethod *from, JoinMethod *newnode)
 {
 	Node_Copy(from, newnode, jmkeys);
 	Node_Copy(from, newnode, clauses);
@@ -1323,7 +1323,7 @@ CopyJoinMethodFields(JoinMethod * from, JoinMethod * newnode)
  * ----------------
  */
 static JoinMethod *
-_copyJoinMethod(JoinMethod * from)
+_copyJoinMethod(JoinMethod *from)
 {
 	JoinMethod *newnode = makeNode(JoinMethod);
 
@@ -1337,7 +1337,7 @@ _copyJoinMethod(JoinMethod * from)
  * ----------------
  */
 static HInfo *
-_copyHInfo(HInfo * from)
+_copyHInfo(HInfo *from)
 {
 	HInfo	   *newnode = makeNode(HInfo);
 
@@ -1355,7 +1355,7 @@ _copyHInfo(HInfo * from)
  * ----------------
  */
 static MInfo *
-_copyMInfo(MInfo * from)
+_copyMInfo(MInfo *from)
 {
 	MInfo	   *newnode = makeNode(MInfo);
 
@@ -1373,7 +1373,7 @@ _copyMInfo(MInfo * from)
  * ----------------
  */
 static JInfo *
-_copyJInfo(JInfo * from)
+_copyJInfo(JInfo *from)
 {
 	JInfo	   *newnode = makeNode(JInfo);
 
@@ -1392,7 +1392,7 @@ _copyJInfo(JInfo * from)
 }
 
 static Iter *
-_copyIter(Iter * from)
+_copyIter(Iter *from)
 {
 	Iter	   *newnode = makeNode(Iter);
 
@@ -1403,7 +1403,7 @@ _copyIter(Iter * from)
 }
 
 static Stream *
-_copyStream(Stream * from)
+_copyStream(Stream *from)
 {
 	Stream	   *newnode = makeNode(Stream);
 
@@ -1428,7 +1428,7 @@ _copyStream(Stream * from)
  */
 
 static TargetEntry *
-_copyTargetEntry(TargetEntry * from)
+_copyTargetEntry(TargetEntry *from)
 {
 	TargetEntry *newnode = makeNode(TargetEntry);
 
@@ -1439,7 +1439,7 @@ _copyTargetEntry(TargetEntry * from)
 }
 
 static RangeTblEntry *
-_copyRangeTblEntry(RangeTblEntry * from)
+_copyRangeTblEntry(RangeTblEntry *from)
 {
 	RangeTblEntry *newnode = makeNode(RangeTblEntry);
 
@@ -1468,7 +1468,7 @@ _copyRangeTblEntry(RangeTblEntry * from)
 }
 
 static SortClause *
-_copySortClause(SortClause * from)
+_copySortClause(SortClause *from)
 {
 	SortClause *newnode = makeNode(SortClause);
 
@@ -1490,7 +1490,7 @@ _copyAConst(A_Const *from)
 }
 
 static TypeName *
-_copyTypeName(TypeName * from)
+_copyTypeName(TypeName *from)
 {
 	TypeName   *newnode = makeNode(TypeName);
 
@@ -1510,7 +1510,7 @@ _copyTypeName(TypeName * from)
 }
 
 static Query *
-_copyQuery(Query * from)
+_copyQuery(Query *from)
 {
 	Query	   *newnode = makeNode(Query);
 
@@ -1564,7 +1564,7 @@ _copyQuery(Query * from)
  */
 
 static Value *
-_copyValue(Value * from)
+_copyValue(Value *from)
 {
 	Value	   *newnode = makeNode(Value);
 

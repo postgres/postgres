@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dynamic_loader.h,v 1.7 1997/09/08 02:39:38 momjian Exp $
+ * $Id: dynamic_loader.h,v 1.8 1997/09/08 21:54:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@ typedef struct df_files
 	ino_t		inode;			/* Inode number of file */
 	void	   *handle;			/* a handle for pg_dl* functions */
 	struct df_files *next;
-}			DynamicFileList;
+} DynamicFileList;
 
 extern void *pg_dlopen(char *filename);
 extern func_ptr pg_dlsym(void *handle, char *funcname);

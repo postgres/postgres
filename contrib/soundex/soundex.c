@@ -14,7 +14,7 @@
 char	   *soundex(char *instr, char *outstr);
 
 text	   *
-text_soundex(text * t)
+text_soundex(text *t)
 {
 	/* ABCDEFGHIJKLMNOPQRSTUVWXYZ */
 	char	   *table = "01230120022455012623010202";

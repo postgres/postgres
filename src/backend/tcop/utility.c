@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.23 1997/09/08 02:29:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.24 1997/09/08 21:47:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@
  * ----------------
  */
 void
-ProcessUtility(Node * parsetree,
+ProcessUtility(Node *parsetree,
 			   CommandDest dest)
 {
 	char	   *commandTag = NULL;
@@ -330,6 +330,7 @@ ProcessUtility(Node * parsetree,
 				CHECK_IF_ABORTED();
 
 				aip = stmt->aclitem;
+
 				modechg = stmt->modechg;
 #ifndef NO_SECURITY
 				foreach(i, stmt->relNames)

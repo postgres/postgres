@@ -71,7 +71,7 @@ int64	   *int48(int32 val);
 int32		int84(int64 * val);
 
 #if FALSE
-int64	   *int28(int16 val);
+int64	   *int28 (int16 val);
 int16		int82(int64 * val);
 
 #endif
@@ -340,7 +340,7 @@ int84(int64 * val)
 
 #if FALSE
 int64	   *
-int28(int16 val)
+int28		(int16 val)
 {
 	int64	   *result;
 

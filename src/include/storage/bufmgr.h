@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.14 1997/09/08 20:59:05 momjian Exp $
+ * $Id: bufmgr.h,v 1.15 1997/09/08 21:54:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,7 @@ ReleaseAndReadBuffer(Buffer buffer, Relation relation,
 					 BlockNumber blockNum);
 
 extern void InitBufferPool(IPCKey key);
-extern void PrintBufferUsage(FILE * statfp);
+extern void PrintBufferUsage(FILE *statfp);
 extern void ResetBufferUsage(void);
 extern void ResetBufferPool(void);
 extern int	BufferPoolCheckLeak(void);

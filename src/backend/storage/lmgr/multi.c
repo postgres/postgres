@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.6 1997/09/08 02:29:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.7 1997/09/08 21:47:29 momjian Exp $
  *
  * NOTES:
  *	 (1) The lock.c module assumes that the caller here is doing
@@ -30,10 +30,10 @@
 #include "miscadmin.h"			/* MyDatabaseId */
 
 static bool
-MultiAcquire(LockTableId tableId, LOCKTAG * tag, LOCKT lockt,
+MultiAcquire(LockTableId tableId, LOCKTAG *tag, LOCKT lockt,
 			 LOCK_LEVEL level);
 static bool
-MultiRelease(LockTableId tableId, LOCKTAG * tag, LOCKT lockt,
+MultiRelease(LockTableId tableId, LOCKTAG *tag, LOCKT lockt,
 			 LOCK_LEVEL level);
 
 /*
@@ -199,7 +199,7 @@ MultiLockPage(LockInfo linfo, ItemPointer tidPtr, LOCKT lockt)
  */
 static bool
 MultiAcquire(LockTableId tableId,
-			 LOCKTAG * tag,
+			 LOCKTAG *tag,
 			 LOCKT lockt,
 			 LOCK_LEVEL level)
 {
@@ -359,7 +359,7 @@ MultiReleaseReln(LockInfo linfo, LOCKT lockt)
  */
 static bool
 MultiRelease(LockTableId tableId,
-			 LOCKTAG * tag,
+			 LOCKTAG *tag,
 			 LOCKT lockt,
 			 LOCK_LEVEL level)
 {

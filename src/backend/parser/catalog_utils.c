@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.24 1997/09/08 02:25:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.25 1997/09/08 21:46:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,7 +121,7 @@ typedef struct _InhPaths
 	int			nsupers;		/* number of superclasses */
 	Oid			self;			/* this class */
 	Oid		   *supervec;		/* vector of superclasses */
-}			InhPaths;
+} InhPaths;
 
 /*
  *	This structure holds a list of possible functions or operators that
@@ -133,9 +133,9 @@ typedef struct _CandidateList
 	struct _CandidateList *next;
 }		   *CandidateList;
 
-static Oid **argtype_inherit(int nargs, Oid * oid_array);
-static Oid **genxprod(InhPaths * arginh, int nargs);
-static int	findsupers(Oid relid, Oid ** supervec);
+static Oid **argtype_inherit(int nargs, Oid *oid_array);
+static Oid **genxprod(InhPaths *arginh, int nargs);
+static int	findsupers(Oid relid, Oid **supervec);
 static bool check_typeid(Oid id);
 static char *instr1(TypeTupleForm tp, char *string, int typlen);
 static void op_error(char *op, Oid arg1, Oid arg2);
@@ -308,7 +308,7 @@ static int
 binary_oper_get_candidates(char *opname,
 						   Oid leftTypeId,
 						   Oid rightTypeId,
-						   CandidateList * candidates)
+						   CandidateList *candidates)
 {
 	CandidateList current_candidate;
 	Relation	pg_operator_desc;
@@ -624,7 +624,7 @@ oper(char *op, Oid arg1, Oid arg2, bool noWarnings)
 static int
 unary_oper_get_candidates(char *op,
 						  Oid typeId,
-						  CandidateList * candidates,
+						  CandidateList *candidates,
 						  char rightleft)
 {
 	CandidateList current_candidate;
@@ -641,10 +641,10 @@ unary_oper_get_candidates(char *op,
 
 	*candidates = NULL;
 
-	fmgr_info(NameEqualRegProcedure, (func_ptr *) & opKey[0].sk_func,
+	fmgr_info(NameEqualRegProcedure, (func_ptr *) &opKey[0].sk_func,
 			  &opKey[0].sk_nargs);
 	opKey[0].sk_argument = NameGetDatum(op);
-	fmgr_info(CharacterEqualRegProcedure, (func_ptr *) & opKey[1].sk_func,
+	fmgr_info(CharacterEqualRegProcedure, (func_ptr *) &opKey[1].sk_func,
 			  &opKey[1].sk_nargs);
 	opKey[1].sk_argument = CharGetDatum(rightleft);
 
@@ -954,7 +954,7 @@ GetArrayElementType(Oid typearray)
 	if (type_struct_array->typelem == InvalidOid)
 	{
 		elog(WARN, "GetArrayElementType: type %s is not an array",
-			 (Name) & (type_struct_array->typname.data[0]));
+			 (Name) &(type_struct_array->typname.data[0]));
 	}
 
 	return (type_struct_array->typelem);
@@ -1061,7 +1061,7 @@ func_get_candidates(char *funcname, int nargs)
  * can input_typeids be coerced to func_typeids?
  */
 static bool
-can_coerce(int nargs, Oid * input_typeids, Oid * func_typeids)
+can_coerce(int nargs, Oid *input_typeids, Oid *func_typeids)
 {
 	int			i;
 	Type		tp;
@@ -1101,9 +1101,9 @@ can_coerce(int nargs, Oid * input_typeids, Oid * func_typeids)
  */
 static int
 match_argtypes(int nargs,
-			   Oid * input_typeids,
+			   Oid *input_typeids,
 			   CandidateList function_typeids,
-			   CandidateList * candidates)		/* return value */
+			   CandidateList *candidates)		/* return value */
 {
 	CandidateList current_candidate;
 	CandidateList matching_candidate;
@@ -1139,7 +1139,7 @@ match_argtypes(int nargs,
  */
 static Oid *
 func_select_candidate(int nargs,
-					  Oid * input_typeids,
+					  Oid *input_typeids,
 					  CandidateList candidates)
 {
 	/* XXX no conflict resolution implemeneted yet */
@@ -1149,11 +1149,11 @@ func_select_candidate(int nargs,
 bool
 func_get_detail(char *funcname,
 				int nargs,
-				Oid * oid_array,
-				Oid * funcid,	/* return value */
-				Oid * rettype,	/* return value */
-				bool * retset,	/* return value */
-				Oid ** true_typeids)	/* return value */
+				Oid *oid_array,
+				Oid *funcid,	/* return value */
+				Oid *rettype,	/* return value */
+				bool *retset,	/* return value */
+				Oid **true_typeids)		/* return value */
 {
 	Oid		  **input_typeid_vector;
 	Oid		   *current_input_typeids;
@@ -1292,7 +1292,7 @@ func_get_detail(char *funcname,
  *		catalogs.
  */
 static Oid **
-argtype_inherit(int nargs, Oid * oid_array)
+argtype_inherit(int nargs, Oid *oid_array)
 {
 	Oid			relid;
 	int			i;
@@ -1328,10 +1328,10 @@ argtype_inherit(int nargs, Oid * oid_array)
 typedef struct _SuperQE
 {
 	Oid			sqe_relid;
-}			SuperQE;
+} SuperQE;
 
 static int
-findsupers(Oid relid, Oid ** supervec)
+findsupers(Oid relid, Oid **supervec)
 {
 	Oid		   *relidvec;
 	Relation	inhrel;
@@ -1452,7 +1452,7 @@ findsupers(Oid relid, Oid ** supervec)
 }
 
 static Oid **
-genxprod(InhPaths * arginh, int nargs)
+genxprod(InhPaths *arginh, int nargs)
 {
 	int			nanswers;
 	Oid		  **result,
@@ -1657,7 +1657,7 @@ op_error(char *op, Oid arg1, Oid arg2)
  * argument types
  */
 void
-func_error(char *caller, char *funcname, int nargs, Oid * argtypes)
+func_error(char *caller, char *funcname, int nargs, Oid *argtypes)
 {
 	char		p[(NAMEDATALEN + 2) * MAXFMGRARGS],
 			   *ptr;

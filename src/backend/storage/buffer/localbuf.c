@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.10 1997/09/08 02:28:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.11 1997/09/08 21:46:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@ static int	nextFreeLocalBuf = 0;
  *	  allocate a local buffer. We do round robin allocation for now.
  */
 BufferDesc *
-LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool * foundPtr)
+LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 {
 	int			i;
 	BufferDesc *bufHdr = (BufferDesc *) NULL;

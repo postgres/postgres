@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.39 1997/09/08 02:30:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.40 1997/09/08 21:48:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,12 +45,12 @@ DecodeTime(char *str, int fmask, int *tmask,
 static int	DecodeTimezone(char *str, int *tzp);
 static int	DecodeUnits(int field, char *lowtoken, int *val);
 static int	EncodeSpecialDateTime(DateTime dt, char *str);
-static datetkn *datebsearch(char *key, datetkn * base, unsigned int nel);
+static datetkn *datebsearch(char *key, datetkn *base, unsigned int nel);
 static DateTime dt2local(DateTime dt, int timezone);
 static void dt2time(DateTime dt, int *hour, int *min, double *sec);
 static int	j2day(int jd);
-static int	timespan2tm(TimeSpan span, struct tm * tm, float8 * fsec);
-static int	tm2timespan(struct tm * tm, double fsec, TimeSpan * span);
+static int	timespan2tm(TimeSpan span, struct tm * tm, float8 *fsec);
+static int	tm2timespan(struct tm * tm, double fsec, TimeSpan *span);
 
 #define USE_DATE_CACHE 1
 #define ROUND_ALL 0
@@ -162,7 +162,7 @@ datetime_in(char *str)
  * Convert a datetime to external form.
  */
 char	   *
-datetime_out(DateTime * dt)
+datetime_out(DateTime *dt)
 {
 	char	   *result;
 	int			tz;
@@ -258,7 +258,7 @@ timespan_in(char *str)
  * Convert a time span to external form.
  */
 char	   *
-timespan_out(TimeSpan * span)
+timespan_out(TimeSpan *span)
 {
 	char	   *result;
 
@@ -289,7 +289,7 @@ timespan_out(TimeSpan * span)
 
 
 bool
-datetime_finite(DateTime * datetime)
+datetime_finite(DateTime *datetime)
 {
 	if (!PointerIsValid(datetime))
 		return FALSE;
@@ -300,7 +300,7 @@ datetime_finite(DateTime * datetime)
 
 #ifdef NOT_USED
 bool
-timespan_finite(TimeSpan * timespan)
+timespan_finite(TimeSpan *timespan)
 {
 	if (!PointerIsValid(timespan))
 		return FALSE;
@@ -371,7 +371,7 @@ SetDateTime(DateTime dt)
 /*		datetime_relop	- is datetime1 relop datetime2
  */
 bool
-datetime_eq(DateTime * datetime1, DateTime * datetime2)
+datetime_eq(DateTime *datetime1, DateTime *datetime2)
 {
 	DateTime	dt1,
 				dt2;
@@ -394,7 +394,7 @@ datetime_eq(DateTime * datetime1, DateTime * datetime2)
 }								/* datetime_eq() */
 
 bool
-datetime_ne(DateTime * datetime1, DateTime * datetime2)
+datetime_ne(DateTime *datetime1, DateTime *datetime2)
 {
 	DateTime	dt1,
 				dt2;
@@ -417,7 +417,7 @@ datetime_ne(DateTime * datetime1, DateTime * datetime2)
 }								/* datetime_ne() */
 
 bool
-datetime_lt(DateTime * datetime1, DateTime * datetime2)
+datetime_lt(DateTime *datetime1, DateTime *datetime2)
 {
 	DateTime	dt1,
 				dt2;
@@ -440,7 +440,7 @@ datetime_lt(DateTime * datetime1, DateTime * datetime2)
 }								/* datetime_lt() */
 
 bool
-datetime_gt(DateTime * datetime1, DateTime * datetime2)
+datetime_gt(DateTime *datetime1, DateTime *datetime2)
 {
 	DateTime	dt1,
 				dt2;
@@ -466,7 +466,7 @@ datetime_gt(DateTime * datetime1, DateTime * datetime2)
 }								/* datetime_gt() */
 
 bool
-datetime_le(DateTime * datetime1, DateTime * datetime2)
+datetime_le(DateTime *datetime1, DateTime *datetime2)
 {
 	DateTime	dt1,
 				dt2;
@@ -489,7 +489,7 @@ datetime_le(DateTime * datetime1, DateTime * datetime2)
 }								/* datetime_le() */
 
 bool
-datetime_ge(DateTime * datetime1, DateTime * datetime2)
+datetime_ge(DateTime *datetime1, DateTime *datetime2)
 {
 	DateTime	dt1,
 				dt2;
@@ -516,7 +516,7 @@ datetime_ge(DateTime * datetime1, DateTime * datetime2)
  *		collate invalid datetime at the end
  */
 int
-datetime_cmp(DateTime * datetime1, DateTime * datetime2)
+datetime_cmp(DateTime *datetime1, DateTime *datetime2)
 {
 	DateTime	dt1,
 				dt2;
@@ -552,7 +552,7 @@ datetime_cmp(DateTime * datetime1, DateTime * datetime2)
 /*		timespan_relop	- is timespan1 relop timespan2
  */
 bool
-timespan_eq(TimeSpan * timespan1, TimeSpan * timespan2)
+timespan_eq(TimeSpan *timespan1, TimeSpan *timespan2)
 {
 	if (!PointerIsValid(timespan1) || !PointerIsValid(timespan2))
 		return FALSE;
@@ -565,7 +565,7 @@ timespan_eq(TimeSpan * timespan1, TimeSpan * timespan2)
 }								/* timespan_eq() */
 
 bool
-timespan_ne(TimeSpan * timespan1, TimeSpan * timespan2)
+timespan_ne(TimeSpan *timespan1, TimeSpan *timespan2)
 {
 	if (!PointerIsValid(timespan1) || !PointerIsValid(timespan2))
 		return FALSE;
@@ -578,7 +578,7 @@ timespan_ne(TimeSpan * timespan1, TimeSpan * timespan2)
 }								/* timespan_ne() */
 
 bool
-timespan_lt(TimeSpan * timespan1, TimeSpan * timespan2)
+timespan_lt(TimeSpan *timespan1, TimeSpan *timespan2)
 {
 	double		span1,
 				span2;
@@ -600,7 +600,7 @@ timespan_lt(TimeSpan * timespan1, TimeSpan * timespan2)
 }								/* timespan_lt() */
 
 bool
-timespan_gt(TimeSpan * timespan1, TimeSpan * timespan2)
+timespan_gt(TimeSpan *timespan1, TimeSpan *timespan2)
 {
 	double		span1,
 				span2;
@@ -622,7 +622,7 @@ timespan_gt(TimeSpan * timespan1, TimeSpan * timespan2)
 }								/* timespan_gt() */
 
 bool
-timespan_le(TimeSpan * timespan1, TimeSpan * timespan2)
+timespan_le(TimeSpan *timespan1, TimeSpan *timespan2)
 {
 	double		span1,
 				span2;
@@ -644,7 +644,7 @@ timespan_le(TimeSpan * timespan1, TimeSpan * timespan2)
 }								/* timespan_le() */
 
 bool
-timespan_ge(TimeSpan * timespan1, TimeSpan * timespan2)
+timespan_ge(TimeSpan *timespan1, TimeSpan *timespan2)
 {
 	double		span1,
 				span2;
@@ -669,7 +669,7 @@ timespan_ge(TimeSpan * timespan1, TimeSpan * timespan2)
 /*		timespan_cmp	- 3-state comparison for timespan
  */
 int
-timespan_cmp(TimeSpan * timespan1, TimeSpan * timespan2)
+timespan_cmp(TimeSpan *timespan1, TimeSpan *timespan2)
 {
 	double		span1,
 				span2;
@@ -707,7 +707,7 @@ timespan_cmp(TimeSpan * timespan1, TimeSpan * timespan2)
  *---------------------------------------------------------*/
 
 DateTime   *
-datetime_smaller(DateTime * datetime1, DateTime * datetime2)
+datetime_smaller(DateTime *datetime1, DateTime *datetime2)
 {
 	DateTime   *result;
 
@@ -744,7 +744,7 @@ datetime_smaller(DateTime * datetime1, DateTime * datetime2)
 }								/* datetime_smaller() */
 
 DateTime   *
-datetime_larger(DateTime * datetime1, DateTime * datetime2)
+datetime_larger(DateTime *datetime1, DateTime *datetime2)
 {
 	DateTime   *result;
 
@@ -782,7 +782,7 @@ datetime_larger(DateTime * datetime1, DateTime * datetime2)
 
 
 TimeSpan   *
-datetime_mi(DateTime * datetime1, DateTime * datetime2)
+datetime_mi(DateTime *datetime1, DateTime *datetime2)
 {
 	TimeSpan   *result;
 
@@ -831,7 +831,7 @@ datetime_mi(DateTime * datetime1, DateTime * datetime2)
  *	to the last day of month.
  */
 DateTime   *
-datetime_pl_span(DateTime * datetime, TimeSpan * span)
+datetime_pl_span(DateTime *datetime, TimeSpan *span)
 {
 	DateTime   *result;
 	DateTime	dt;
@@ -925,7 +925,7 @@ datetime_pl_span(DateTime * datetime, TimeSpan * span)
 }								/* datetime_pl_span() */
 
 DateTime   *
-datetime_mi_span(DateTime * datetime, TimeSpan * span)
+datetime_mi_span(DateTime *datetime, TimeSpan *span)
 {
 	DateTime   *result;
 	TimeSpan	tspan;
@@ -943,7 +943,7 @@ datetime_mi_span(DateTime * datetime, TimeSpan * span)
 
 
 TimeSpan   *
-timespan_um(TimeSpan * timespan)
+timespan_um(TimeSpan *timespan)
 {
 	TimeSpan   *result;
 
@@ -960,7 +960,7 @@ timespan_um(TimeSpan * timespan)
 
 
 TimeSpan   *
-timespan_smaller(TimeSpan * timespan1, TimeSpan * timespan2)
+timespan_smaller(TimeSpan *timespan1, TimeSpan *timespan2)
 {
 	TimeSpan   *result;
 
@@ -1015,7 +1015,7 @@ timespan_smaller(TimeSpan * timespan1, TimeSpan * timespan2)
 }								/* timespan_smaller() */
 
 TimeSpan   *
-timespan_larger(TimeSpan * timespan1, TimeSpan * timespan2)
+timespan_larger(TimeSpan *timespan1, TimeSpan *timespan2)
 {
 	TimeSpan   *result;
 
@@ -1071,7 +1071,7 @@ timespan_larger(TimeSpan * timespan1, TimeSpan * timespan2)
 
 
 TimeSpan   *
-timespan_pl(TimeSpan * span1, TimeSpan * span2)
+timespan_pl(TimeSpan *span1, TimeSpan *span2)
 {
 	TimeSpan   *result;
 
@@ -1087,7 +1087,7 @@ timespan_pl(TimeSpan * span1, TimeSpan * span2)
 }								/* timespan_pl() */
 
 TimeSpan   *
-timespan_mi(TimeSpan * span1, TimeSpan * span2)
+timespan_mi(TimeSpan *span1, TimeSpan *span2)
 {
 	TimeSpan   *result;
 
@@ -1103,7 +1103,7 @@ timespan_mi(TimeSpan * span1, TimeSpan * span2)
 }								/* timespan_mi() */
 
 TimeSpan   *
-timespan_div(TimeSpan * span1, float8 * arg2)
+timespan_div(TimeSpan *span1, float8 *arg2)
 {
 	TimeSpan   *result;
 
@@ -1129,7 +1129,7 @@ timespan_div(TimeSpan * span1, float8 * arg2)
  *	is done.
  */
 TimeSpan   *
-datetime_age(DateTime * datetime1, DateTime * datetime2)
+datetime_age(DateTime *datetime1, DateTime *datetime2)
 {
 	TimeSpan   *result;
 
@@ -1276,7 +1276,7 @@ datetime_age(DateTime * datetime1, DateTime * datetime2)
  * Convert datetime to text data type.
  */
 text	   *
-datetime_text(DateTime * datetime)
+datetime_text(DateTime *datetime)
 {
 	text	   *result;
 	char	   *str;
@@ -1309,7 +1309,7 @@ datetime_text(DateTime * datetime)
  *	then call the standard input routine.
  */
 DateTime   *
-text_datetime(text * str)
+text_datetime(text *str)
 {
 	DateTime   *result;
 	int			i;
@@ -1336,7 +1336,7 @@ text_datetime(text * str)
  * Convert timespan to text data type.
  */
 text	   *
-timespan_text(TimeSpan * timespan)
+timespan_text(TimeSpan *timespan)
 {
 	text	   *result;
 	char	   *str;
@@ -1370,7 +1370,7 @@ timespan_text(TimeSpan * timespan)
  */
 #ifdef NOT_USED
 TimeSpan   *
-text_timespan(text * str)
+text_timespan(text *str)
 {
 	TimeSpan   *result;
 	int			i;
@@ -1398,7 +1398,7 @@ text_timespan(text * str)
  * Extract specified field from datetime.
  */
 DateTime   *
-datetime_trunc(text * units, DateTime * datetime)
+datetime_trunc(text *units, DateTime *datetime)
 {
 	DateTime   *result;
 
@@ -1546,7 +1546,7 @@ datetime_trunc(text * units, DateTime * datetime)
  * Extract specified field from timespan.
  */
 TimeSpan   *
-timespan_trunc(text * units, TimeSpan * timespan)
+timespan_trunc(text *units, TimeSpan *timespan)
 {
 	TimeSpan   *result;
 
@@ -1672,7 +1672,7 @@ timespan_trunc(text * units, TimeSpan * timespan)
  * Extract specified field from datetime.
  */
 float64
-datetime_part(text * units, DateTime * datetime)
+datetime_part(text *units, DateTime *datetime)
 {
 	float64		result;
 
@@ -1824,7 +1824,7 @@ datetime_part(text * units, DateTime * datetime)
  * Extract specified field from timespan.
  */
 float64
-timespan_part(text * units, TimeSpan * timespan)
+timespan_part(text *units, TimeSpan *timespan)
 {
 	float64		result;
 
@@ -1961,7 +1961,7 @@ timespan_part(text * units, TimeSpan * timespan)
  * Encode datetime type with specified time zone.
  */
 text	   *
-datetime_zone(text * zone, DateTime * datetime)
+datetime_zone(text *zone, DateTime *datetime)
 {
 	text	   *result;
 
@@ -2553,7 +2553,7 @@ datetime2tm(DateTime dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
  * Also, month is one-based, _not_ zero-based.
  */
 int
-tm2datetime(struct tm * tm, double fsec, int *tzp, DateTime * result)
+tm2datetime(struct tm * tm, double fsec, int *tzp, DateTime *result)
 {
 
 	double		date,
@@ -2581,7 +2581,7 @@ tm2datetime(struct tm * tm, double fsec, int *tzp, DateTime * result)
  * Convert a timespan data type to a tm structure.
  */
 static int
-timespan2tm(TimeSpan span, struct tm * tm, float8 * fsec)
+timespan2tm(TimeSpan span, struct tm * tm, float8 *fsec)
 {
 	double		time;
 
@@ -2618,7 +2618,7 @@ timespan2tm(TimeSpan span, struct tm * tm, float8 * fsec)
 }								/* timespan2tm() */
 
 static int
-tm2timespan(struct tm * tm, double fsec, TimeSpan * span)
+tm2timespan(struct tm * tm, double fsec, TimeSpan *span)
 {
 	span->month = ((tm->tm_year * 12) + tm->tm_mon);
 	span->time = ((((((tm->tm_mday * 24) + tm->tm_hour) * 60) + tm->tm_min) * 60) + tm->tm_sec);
@@ -3995,7 +3995,7 @@ DecodeUnits(int field, char *lowtoken, int *val)
  * is WAY faster than the generic bsearch().
  */
 static datetkn *
-datebsearch(char *key, datetkn * base, unsigned int nel)
+datebsearch(char *key, datetkn *base, unsigned int nel)
 {
 	register datetkn *last = base + nel - 1,
 			   *position;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.40 1997/09/08 02:40:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.41 1997/09/08 21:55:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,11 +39,11 @@
 
 
 /* use a local version instead of the one found in pqpacket.c */
-static ConnStatusType connectDB(PGconn * conn);
+static ConnStatusType connectDB(PGconn *conn);
 
-static void startup2PacketBuf(StartupInfo * s, PacketBuf * res);
-static void freePGconn(PGconn * conn);
-static void closePGconn(PGconn * conn);
+static void startup2PacketBuf(StartupInfo *s, PacketBuf *res);
+static void freePGconn(PGconn *conn);
+static void closePGconn(PGconn *conn);
 static int	conninfo_parse(const char *conninfo, char *errorMessage);
 static char *conninfo_getval(char *keyword);
 static void conninfo_free(void);
@@ -463,7 +463,7 @@ PQsetdb(const char *pghost, const char *pgport, const char *pgoptions, const cha
  *
  */
 static ConnStatusType
-connectDB(PGconn * conn)
+connectDB(PGconn *conn)
 {
 	struct hostent *hp;
 
@@ -646,7 +646,7 @@ connect_errReturn:
  *
  */
 static void
-freePGconn(PGconn * conn)
+freePGconn(PGconn *conn)
 {
 	if (!conn)
 		return;
@@ -674,7 +674,7 @@ freePGconn(PGconn * conn)
 	 - properly close a connection to the backend
 */
 static void
-closePGconn(PGconn * conn)
+closePGconn(PGconn *conn)
 {
 /* GH: What to do for !USE_POSIX_SIGNALS ? */
 #if defined(USE_POSIX_SIGNALS)
@@ -721,7 +721,7 @@ closePGconn(PGconn * conn)
 	  after this
 */
 void
-PQfinish(PGconn * conn)
+PQfinish(PGconn *conn)
 {
 	if (!conn)
 	{
@@ -740,7 +740,7 @@ PQfinish(PGconn * conn)
    closes the existing connection and makes a new one
 */
 void
-PQreset(PGconn * conn)
+PQreset(PGconn *conn)
 {
 	if (!conn)
 	{
@@ -768,8 +768,8 @@ PQreset(PGconn * conn)
  *
 */
 int
-packetSend(Port * port,
-		   PacketBuf * buf,
+packetSend(Port *port,
+		   PacketBuf *buf,
 		   PacketLen len,
 		   bool nonBlocking)
 {
@@ -798,7 +798,7 @@ packetSend(Port * port,
  * converts a StartupInfo structure to a PacketBuf
  */
 static void
-startup2PacketBuf(StartupInfo * s, PacketBuf * res)
+startup2PacketBuf(StartupInfo *s, PacketBuf *res)
 {
 	char	   *tmp;
 
@@ -1088,7 +1088,7 @@ conninfo_free()
 
 /* =========== accessor functions for PGconn ========= */
 char	   *
-PQdb(PGconn * conn)
+PQdb(PGconn *conn)
 {
 	if (!conn)
 	{
@@ -1099,7 +1099,7 @@ PQdb(PGconn * conn)
 }
 
 char	   *
-PQuser(PGconn * conn)
+PQuser(PGconn *conn)
 {
 	if (!conn)
 	{
@@ -1110,7 +1110,7 @@ PQuser(PGconn * conn)
 }
 
 char	   *
-PQhost(PGconn * conn)
+PQhost(PGconn *conn)
 {
 	if (!conn)
 	{
@@ -1122,7 +1122,7 @@ PQhost(PGconn * conn)
 }
 
 char	   *
-PQoptions(PGconn * conn)
+PQoptions(PGconn *conn)
 {
 	if (!conn)
 	{
@@ -1133,7 +1133,7 @@ PQoptions(PGconn * conn)
 }
 
 char	   *
-PQtty(PGconn * conn)
+PQtty(PGconn *conn)
 {
 	if (!conn)
 	{
@@ -1144,7 +1144,7 @@ PQtty(PGconn * conn)
 }
 
 char	   *
-PQport(PGconn * conn)
+PQport(PGconn *conn)
 {
 	if (!conn)
 	{
@@ -1155,7 +1155,7 @@ PQport(PGconn * conn)
 }
 
 ConnStatusType
-PQstatus(PGconn * conn)
+PQstatus(PGconn *conn)
 {
 	if (!conn)
 	{
@@ -1166,7 +1166,7 @@ PQstatus(PGconn * conn)
 }
 
 char	   *
-PQerrorMessage(PGconn * conn)
+PQerrorMessage(PGconn *conn)
 {
 	if (!conn)
 	{
@@ -1177,7 +1177,7 @@ PQerrorMessage(PGconn * conn)
 }
 
 void
-PQtrace(PGconn * conn, FILE * debug_port)
+PQtrace(PGconn *conn, FILE *debug_port)
 {
 	if (conn == NULL ||
 		conn->status == CONNECTION_BAD)
@@ -1189,7 +1189,7 @@ PQtrace(PGconn * conn, FILE * debug_port)
 }
 
 void
-PQuntrace(PGconn * conn)
+PQuntrace(PGconn *conn)
 {
 	if (conn == NULL ||
 		conn->status == CONNECTION_BAD)

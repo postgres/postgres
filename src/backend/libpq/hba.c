@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.21 1997/09/08 02:23:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.22 1997/09/08 21:43:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ isblank(const char c)
 
 
 static void
-next_token(FILE * fp, char *buf, const int bufsz)
+next_token(FILE *fp, char *buf, const int bufsz)
 {
 /*--------------------------------------------------------------------------
   Grab one token out of fp.  Tokens are strings of non-blank
@@ -85,7 +85,7 @@ next_token(FILE * fp, char *buf, const int bufsz)
 
 
 static void
-read_through_eol(FILE * file)
+read_through_eol(FILE *file)
 {
 	int			c;
 
@@ -97,8 +97,8 @@ read_through_eol(FILE * file)
 
 
 static void
-read_hba_entry2(FILE * file, enum Userauth * userauth_p, char usermap_name[],
-			bool * error_p, bool * matches_p, bool find_password_entries)
+read_hba_entry2(FILE *file, enum Userauth * userauth_p, char usermap_name[],
+			  bool *error_p, bool *matches_p, bool find_password_entries)
 {
 /*--------------------------------------------------------------------------
   Read from file FILE the rest of a host record, after the mask field,
@@ -182,9 +182,9 @@ read_hba_entry2(FILE * file, enum Userauth * userauth_p, char usermap_name[],
 
 
 static void
-process_hba_record(FILE * file,
+process_hba_record(FILE *file,
 				   const struct in_addr ip_addr, const char database[],
-				   bool * matches_p, bool * error_p,
+				   bool *matches_p, bool *error_p,
 				   enum Userauth * userauth_p, char usermap_name[],
 				   bool find_password_entries)
 {
@@ -311,9 +311,9 @@ process_hba_record(FILE * file,
 
 
 static void
-process_open_config_file(FILE * file,
+process_open_config_file(FILE *file,
 					 const struct in_addr ip_addr, const char database[],
-						 bool * host_ok_p, enum Userauth * userauth_p,
+						 bool *host_ok_p, enum Userauth * userauth_p,
 						 char usermap_name[], bool find_password_entries)
 {
 /*---------------------------------------------------------------------------
@@ -370,7 +370,7 @@ process_open_config_file(FILE * file,
 void
 find_hba_entry(const char DataDir[], const struct in_addr ip_addr,
 			   const char database[],
-			   bool * host_ok_p, enum Userauth * userauth_p,
+			   bool *host_ok_p, enum Userauth * userauth_p,
 			   char usermap_name[], bool find_password_entries)
 {
 /*--------------------------------------------------------------------------
@@ -461,7 +461,7 @@ find_hba_entry(const char DataDir[], const struct in_addr ip_addr,
 
 static void
 interpret_ident_response(char ident_response[],
-						 bool * error_p, char ident_username[])
+						 bool *error_p, char ident_username[])
 {
 /*----------------------------------------------------------------------------
   Parse the string "ident_response[]" as a response from a query to an Ident
@@ -549,7 +549,7 @@ interpret_ident_response(char ident_response[],
 static void
 ident(const struct in_addr remote_ip_addr, const struct in_addr local_ip_addr,
 	  const ushort remote_port, const ushort local_port,
-	  bool * ident_failed, char ident_username[])
+	  bool *ident_failed, char ident_username[])
 {
 /*--------------------------------------------------------------------------
   Talk to the ident server on host "remote_ip_addr" and find out who
@@ -661,7 +661,7 @@ ident(const struct in_addr remote_ip_addr, const struct in_addr local_ip_addr,
 
 
 static void
-parse_map_record(FILE * file,
+parse_map_record(FILE *file,
 				 char file_map[], char file_pguser[], char file_iuser[])
 {
 /*---------------------------------------------------------------------------
@@ -702,11 +702,11 @@ parse_map_record(FILE * file,
 
 
 static void
-verify_against_open_usermap(FILE * file,
+verify_against_open_usermap(FILE *file,
 							const char pguser[],
 							const char ident_username[],
 							const char usermap_name[],
-							bool * checks_out_p)
+							bool *checks_out_p)
 {
 /*--------------------------------------------------------------------------
   This function does the same thing as verify_against_usermap,
@@ -758,7 +758,7 @@ verify_against_usermap(const char DataDir[],
 					   const char pguser[],
 					   const char ident_username[],
 					   const char usermap_name[],
-					   bool * checks_out_p)
+					   bool *checks_out_p)
 {
 /*--------------------------------------------------------------------------
   See if the user with ident username "ident_username" is allowed to act
@@ -838,7 +838,7 @@ static void
 authident(const char DataDir[],
 		  const Port port, const char postgres_username[],
 		  const char usermap_name[],
-		  bool * authentic_p)
+		  bool *authentic_p)
 {
 /*---------------------------------------------------------------------------
   Talk to the ident server on the remote host and find out who owns the
@@ -878,7 +878,7 @@ authident(const char DataDir[],
 
 
 extern int
-hba_recvauth(const Port * port, const char database[], const char user[],
+hba_recvauth(const Port *port, const char database[], const char user[],
 			 const char DataDir[])
 {
 /*---------------------------------------------------------------------------
@@ -923,7 +923,7 @@ hba_recvauth(const Port * port, const char database[], const char user[],
 			case Trust:
 				retvalue = STATUS_OK;
 				break;
-			case Ident:
+				case Ident:
 				{
 
 					/*
@@ -934,14 +934,15 @@ hba_recvauth(const Port * port, const char database[], const char user[],
 					bool		authentic;		/* He is who he says he
 												 * is. */
 
-					authident(DataDir, *port, user, usermap_name, &authentic);
+								authident(DataDir, *port, user, usermap_name, &authentic);
 
-					if (authentic)
-						retvalue = STATUS_OK;
+					if			(authentic)
+									retvalue = STATUS_OK;
 					else
-						retvalue = STATUS_ERROR;
+									retvalue = STATUS_ERROR;
 				}
-				break;
+							break;
+
 			default:
 				retvalue = STATUS_ERROR;
 				Assert(false);

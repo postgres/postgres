@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.15 1997/09/08 02:22:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.16 1997/09/08 21:42:38 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -53,8 +53,8 @@
 #include <tcop/dest.h>
 #include <catalog/pg_user.h>
 
-static char *defGetString(DefElem * def);
-static int	defGetTypeLength(DefElem * def);
+static char *defGetString(DefElem *def);
+static int	defGetTypeLength(DefElem *def);
 
 #define DEFAULT_TYPDELIM		','
 
@@ -80,8 +80,8 @@ case_translate_language_name(const char *input, char *output)
 
 
 static void
-compute_return_type(const Node * returnType,
-					char **prorettype_p, bool * returnsSet_p)
+compute_return_type(const Node *returnType,
+					char **prorettype_p, bool *returnsSet_p)
 {
 /*---------------------------------------------------------------------------
    Examine the "returns" clause returnType of the CREATE FUNCTION statement
@@ -106,9 +106,9 @@ compute_return_type(const Node * returnType,
 
 
 static void
-compute_full_attributes(const List * parameters, int32 * byte_pct_p,
-						int32 * perbyte_cpu_p, int32 * percall_cpu_p,
-						int32 * outin_ratio_p, bool * canCache_p)
+compute_full_attributes(const List *parameters, int32 *byte_pct_p,
+						int32 *perbyte_cpu_p, int32 *percall_cpu_p,
+						int32 *outin_ratio_p, bool *canCache_p)
 {
 /*--------------------------------------------------------------------------
   Interpret the parameters *parameters and return their contents as
@@ -210,7 +210,7 @@ interpret_AS_clause(const char languageName[], const char as[],
  *
  */
 void
-CreateFunction(ProcedureStmt * stmt, CommandDest dest)
+CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 {
 	char	   *probin_str;
 
@@ -315,7 +315,7 @@ CreateFunction(ProcedureStmt * stmt, CommandDest dest)
  */
 void
 DefineOperator(char *oprName,
-			   List * parameters)
+			   List *parameters)
 {
 	uint16		precedence = 0; /* operator precedence */
 	bool		canHash = false;/* operator hashes */
@@ -461,7 +461,7 @@ DefineOperator(char *oprName,
  * ------------------
  */
 void
-DefineAggregate(char *aggName, List * parameters)
+DefineAggregate(char *aggName, List *parameters)
 
 {
 	char	   *stepfunc1Name = NULL;
@@ -570,7 +570,7 @@ DefineAggregate(char *aggName, List * parameters)
  *
  */
 void
-DefineType(char *typeName, List * parameters)
+DefineType(char *typeName, List *parameters)
 {
 	int16		internalLength = 0;		/* int2 */
 	int16		externalLength = 0;		/* int2 */
@@ -720,7 +720,7 @@ DefineType(char *typeName, List * parameters)
 }
 
 static char *
-defGetString(DefElem * def)
+defGetString(DefElem *def)
 {
 	if (nodeTag(def->arg) != T_String)
 		elog(WARN, "Define: \"%s\" = what?", def->defname);
@@ -728,7 +728,7 @@ defGetString(DefElem * def)
 }
 
 static int
-defGetTypeLength(DefElem * def)
+defGetTypeLength(DefElem *def)
 {
 	if (nodeTag(def->arg) == T_Integer)
 		return (intVal(def->arg));

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.6 1997/09/08 02:39:53 momjian Exp $
+ * $Id: portal.h,v 1.7 1997/09/08 21:55:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@ typedef struct PortalBlockData
 {
 	AllocSetData setData;
 	FixedItemData itemData;
-}			PortalBlockData;
+} PortalBlockData;
 
 typedef PortalBlockData *PortalBlock;
 
@@ -69,13 +69,13 @@ extern void EnablePortalManager(bool on);
 extern Portal GetPortalByName(char *name);
 extern Portal BlankPortalAssignName(char *name);
 extern void
-PortalSetQuery(Portal portal, QueryDesc * queryDesc,
-			   TupleDesc attinfo, EState * state,
+PortalSetQuery(Portal portal, QueryDesc *queryDesc,
+			   TupleDesc attinfo, EState *state,
 			   void (*cleanup) (Portal portal));
 extern QueryDesc *PortalGetQueryDesc(Portal portal);
 extern EState *PortalGetState(Portal portal);
 extern Portal CreatePortal(char *name);
-extern void PortalDestroy(Portal * portalP);
+extern void PortalDestroy(Portal *portalP);
 extern void StartPortalAllocMode(AllocMode mode, Size limit);
 extern void EndPortalAllocMode(void);
 extern PortalVariableMemory PortalGetVariableMemory(Portal portal);

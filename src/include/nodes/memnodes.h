@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memnodes.h,v 1.6 1997/09/08 02:37:19 momjian Exp $
+ * $Id: memnodes.h,v 1.7 1997/09/08 21:52:44 momjian Exp $
  *
  * XXX the typedefs in this file are different from the other ???nodes.h;
  *	  they are pointers to structures instead of the structures themselves.
@@ -48,10 +48,10 @@
 
 typedef struct MemoryContextMethodsData
 {
-	Pointer(*alloc) ();
+	Pointer		(*alloc) ();
 	void		(*free_p) ();	/* need to use free as a #define, so can't
 								 * use free */
-				Pointer(*realloc) ();
+	Pointer		(*realloc) ();
 	char	   *(*getName) ();
 	void		(*dump) ();
 }		   *MemoryContextMethods;

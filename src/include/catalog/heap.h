@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heap.h,v 1.6 1997/09/08 02:34:50 momjian Exp $
+ * $Id: heap.h,v 1.7 1997/09/08 21:51:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
 
 extern Relation heap_creatr(char *relname, unsigned smgr, TupleDesc att);
 
-extern		Oid
+extern Oid
 heap_create(char relname[],
 			char *typename,
 			int arch,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgrtype.c,v 1.4 1997/09/08 02:29:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgrtype.c,v 1.5 1997/09/08 21:47:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
 typedef struct smgrid
 {
 	char	   *smgr_name;
-}			smgrid;
+} smgrid;
 
 /*
  *	StorageManager[] -- List of defined storage managers.

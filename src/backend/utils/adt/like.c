@@ -122,7 +122,7 @@ char16nlike(char *s, struct varlena * p)
 }
 
 bool
-namelike(NameData * n, struct varlena * p)
+namelike(NameData *n, struct varlena * p)
 {
 	if (!n)
 		return FALSE;
@@ -130,7 +130,7 @@ namelike(NameData * n, struct varlena * p)
 }
 
 bool
-namenlike(NameData * s, struct varlena * p)
+namenlike(NameData *s, struct varlena * p)
 {
 	return (!namelike(s, p));
 }
@@ -150,7 +150,7 @@ textnlike(struct varlena * s, struct varlena * p)
 }
 
 
-/*	$Revision: 1.8 $
+/*	$Revision: 1.9 $
 **	"like.c" A first attempt at a LIKE operator for Postgres95.
 **
 **	Originally written by Rich $alz, mirror!rs, Wed Nov 26 19:03:17 EST 1986.
@@ -189,7 +189,7 @@ DoMatch(register char *text, register char *p)
 {
 	register int matched;
 
-	for (; *p; text++, p++)
+	for (; *p; text ++, p++)
 	{
 		if (*text == '\0' && *p != '%')
 			return LIKE_ABORT;
@@ -200,7 +200,7 @@ DoMatch(register char *text, register char *p)
 				p++;
 				/* FALLTHROUGH */
 			default:
-				if (*text != *p)
+				if (*text !=*p)
 					return LIKE_FALSE;
 				continue;
 			case '_':
@@ -214,7 +214,7 @@ DoMatch(register char *text, register char *p)
 					/* Trailing percent matches everything. */
 					return LIKE_TRUE;
 				while (*text)
-					if ((matched = DoMatch(text++, p)) != LIKE_FALSE)
+					if ((matched = DoMatch(text ++, p)) != LIKE_FALSE)
 						return matched;
 				return LIKE_ABORT;
 		}

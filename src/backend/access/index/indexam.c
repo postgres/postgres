@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.15 1997/09/08 02:20:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.16 1997/09/08 21:41:06 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relationId
@@ -162,7 +162,7 @@ index_close(Relation relation)
  */
 InsertIndexResult
 index_insert(Relation relation,
-			 Datum * datum,
+			 Datum *datum,
 			 char *nulls,
 			 ItemPointer heap_t_ctid,
 			 Relation heapRel)
@@ -371,8 +371,8 @@ GetIndexValue(HeapTuple tuple,
 			  TupleDesc hTupDesc,
 			  int attOff,
 			  AttrNumber attrNums[],
-			  FuncIndexInfo * fInfo,
-			  bool * attNull,
+			  FuncIndexInfo *fInfo,
+			  bool *attNull,
 			  Buffer buffer)
 {
 	Datum		returnVal;

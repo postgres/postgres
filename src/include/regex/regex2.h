@@ -130,7 +130,7 @@ typedef struct
 	uch			hash;			/* hash code */
 	size_t		smultis;
 	char	   *multis;			/* -> char[smulti]	ab\0cd\0ef\0\0 */
-}			cset;
+} cset;
 
 /* note that CHadd and CHsub are unsafe, and CHIN doesn't yield 0/1 */
 #define CHadd(cs, c)	((cs)->ptr[(uch)(c)] |= (cs)->mask, (cs)->hash += (c))

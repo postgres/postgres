@@ -90,9 +90,9 @@ extern		"C"
 	static int	p_simp_re(struct parse * p, int starordinary);
 	static int	p_count(struct parse * p);
 	static void p_bracket(struct parse * p);
-	static void p_b_term(struct parse * p, cset * cs);
-	static void p_b_cclass(struct parse * p, cset * cs);
-	static void p_b_eclass(struct parse * p, cset * cs);
+	static void p_b_term(struct parse * p, cset *cs);
+	static void p_b_cclass(struct parse * p, cset *cs);
+	static void p_b_eclass(struct parse * p, cset *cs);
 	static char p_b_symbol(struct parse * p);
 	static char p_b_coll_elem(struct parse * p, int endc);
 	static char othercase(int ch);
@@ -102,13 +102,13 @@ extern		"C"
 	static void repeat(struct parse * p, sopno start, int from, int to);
 	static int	seterr(struct parse * p, int e);
 	static cset *allocset(struct parse * p);
-	static void freeset(struct parse * p, cset * cs);
-	static int	freezeset(struct parse * p, cset * cs);
-	static int	firstch(struct parse * p, cset * cs);
-	static int	nch(struct parse * p, cset * cs);
-	static void mcadd(struct parse * p, cset * cs, char *cp);
-	static void mcinvert(struct parse * p, cset * cs);
-	static void mccase(struct parse * p, cset * cs);
+	static void freeset(struct parse * p, cset *cs);
+	static int	freezeset(struct parse * p, cset *cs);
+	static int	firstch(struct parse * p, cset *cs);
+	static int	nch(struct parse * p, cset *cs);
+	static void mcadd(struct parse * p, cset *cs, char *cp);
+	static void mcinvert(struct parse * p, cset *cs);
+	static void mccase(struct parse * p, cset *cs);
 	static int	isinsets(struct re_guts * g, int c);
 	static int	samesets(struct re_guts * g, int c1, int c2);
 	static void categorize(struct parse * p, struct re_guts * g);
@@ -1501,7 +1501,7 @@ register struct re_guts *g;
  - dupl - emit a duplicate of a bunch of sops
  == static sopno dupl(register struct parse *p, sopno start, sopno finish);
  */
-static sopno			/* start of duplicate */
+static sopno					/* start of duplicate */
 dupl(p, start, finish)
 register struct parse *p;
 sopno		start;				/* from here */
@@ -1752,7 +1752,7 @@ register struct re_guts *g;
  - pluscount - count + nesting
  == static sopno pluscount(register struct parse *p, register struct re_guts *g);
  */
-static sopno			/* nesting depth */
+static sopno					/* nesting depth */
 pluscount(p, g)
 struct parse *p;
 register struct re_guts *g;

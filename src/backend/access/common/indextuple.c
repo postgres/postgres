@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.17 1997/09/08 02:19:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.18 1997/09/08 21:40:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@
 static Size IndexInfoFindDataOffset(unsigned short t_info);
 static char *
 fastgetiattr(IndexTuple tup, int attnum,
-			 TupleDesc att, bool * isnull);
+			 TupleDesc att, bool *isnull);
 
 /* ----------------------------------------------------------------
  *				  index_ tuple interface routines
@@ -137,7 +137,7 @@ static char *
 fastgetiattr(IndexTuple tup,
 			 int attnum,
 			 TupleDesc tupleDesc,
-			 bool * isnull)
+			 bool *isnull)
 {
 	register char *tp;			/* ptr to att in tuple */
 	register char *bp = NULL;	/* ptr to att in tuple */
@@ -368,7 +368,7 @@ fastgetiattr(IndexTuple tup,
 					off = SHORTALIGN(off) +sizeof(short);
 					break;
 				case sizeof(int32):
-					off = INTALIGN(off) + sizeof(int32);
+					off = INTALIGN(off) +sizeof(int32);
 					break;
 				case -1:
 					usecache = false;
@@ -430,7 +430,7 @@ Datum
 index_getattr(IndexTuple tuple,
 			  AttrNumber attNum,
 			  TupleDesc tupDesc,
-			  bool * isNullOutP)
+			  bool *isNullOutP)
 {
 	Assert(attNum > 0);
 
@@ -483,7 +483,7 @@ IndexInfoFindDataOffset(unsigned short t_info)
  * we assume we have space that is already palloc'ed.
  */
 void
-CopyIndexTuple(IndexTuple source, IndexTuple * target)
+CopyIndexTuple(IndexTuple source, IndexTuple *target)
 {
 	Size		size;
 	IndexTuple	ret;

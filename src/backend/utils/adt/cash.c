@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.11 1997/09/08 02:30:27 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.12 1997/09/08 21:48:13 momjian Exp $
  */
 
 #include <stdio.h>
@@ -165,7 +165,7 @@ cash_in(const char *str)
  *	positive-valued amounts. - tgl 97/04/14
  */
 const char *
-cash_out(Cash * value)
+cash_out(Cash *value)
 {
 	char	   *result;
 	char		buf[CASH_BUFSZ];
@@ -271,7 +271,7 @@ cash_out(Cash * value)
 
 
 bool
-cash_eq(Cash * c1, Cash * c2)
+cash_eq(Cash *c1, Cash *c2)
 {
 	if (!PointerIsValid(c1) || !PointerIsValid(c2))
 		return (FALSE);
@@ -280,7 +280,7 @@ cash_eq(Cash * c1, Cash * c2)
 }								/* cash_eq() */
 
 bool
-cash_ne(Cash * c1, Cash * c2)
+cash_ne(Cash *c1, Cash *c2)
 {
 	if (!PointerIsValid(c1) || !PointerIsValid(c2))
 		return (FALSE);
@@ -289,7 +289,7 @@ cash_ne(Cash * c1, Cash * c2)
 }								/* cash_ne() */
 
 bool
-cash_lt(Cash * c1, Cash * c2)
+cash_lt(Cash *c1, Cash *c2)
 {
 	if (!PointerIsValid(c1) || !PointerIsValid(c2))
 		return (FALSE);
@@ -298,7 +298,7 @@ cash_lt(Cash * c1, Cash * c2)
 }								/* cash_lt() */
 
 bool
-cash_le(Cash * c1, Cash * c2)
+cash_le(Cash *c1, Cash *c2)
 {
 	if (!PointerIsValid(c1) || !PointerIsValid(c2))
 		return (FALSE);
@@ -307,7 +307,7 @@ cash_le(Cash * c1, Cash * c2)
 }								/* cash_le() */
 
 bool
-cash_gt(Cash * c1, Cash * c2)
+cash_gt(Cash *c1, Cash *c2)
 {
 	if (!PointerIsValid(c1) || !PointerIsValid(c2))
 		return (FALSE);
@@ -316,7 +316,7 @@ cash_gt(Cash * c1, Cash * c2)
 }								/* cash_gt() */
 
 bool
-cash_ge(Cash * c1, Cash * c2)
+cash_ge(Cash *c1, Cash *c2)
 {
 	if (!PointerIsValid(c1) || !PointerIsValid(c2))
 		return (FALSE);
@@ -329,7 +329,7 @@ cash_ge(Cash * c1, Cash * c2)
  * Add two cash values.
  */
 Cash	   *
-cash_pl(Cash * c1, Cash * c2)
+cash_pl(Cash *c1, Cash *c2)
 {
 	Cash	   *result;
 
@@ -349,7 +349,7 @@ cash_pl(Cash * c1, Cash * c2)
  * Subtract two cash values.
  */
 Cash	   *
-cash_mi(Cash * c1, Cash * c2)
+cash_mi(Cash *c1, Cash *c2)
 {
 	Cash	   *result;
 
@@ -369,7 +369,7 @@ cash_mi(Cash * c1, Cash * c2)
  * Multiply cash by floating point number.
  */
 Cash	   *
-cash_mul(Cash * c, float8 * f)
+cash_mul(Cash *c, float8 *f)
 {
 	Cash	   *result;
 
@@ -392,7 +392,7 @@ cash_mul(Cash * c, float8 * f)
  * Round for now. - tgl 97/04/15
  */
 Cash	   *
-cash_div(Cash * c, float8 * f)
+cash_div(Cash *c, float8 *f)
 {
 	Cash	   *result;
 
@@ -415,7 +415,7 @@ cash_div(Cash * c, float8 * f)
  * Return larger of two cash values.
  */
 Cash	   *
-cashlarger(Cash * c1, Cash * c2)
+cashlarger(Cash *c1, Cash *c2)
 {
 	Cash	   *result;
 
@@ -435,7 +435,7 @@ cashlarger(Cash * c1, Cash * c2)
  * Return smaller of two cash values.
  */
 Cash	   *
-cashsmaller(Cash * c1, Cash * c2)
+cashsmaller(Cash *c1, Cash *c2)
 {
 	Cash	   *result;
 
@@ -456,7 +456,7 @@ cashsmaller(Cash * c1, Cash * c2)
  * Obviously way North American centric - sorry
  */
 const char *
-cash_words_out(Cash * value)
+cash_words_out(Cash *value)
 {
 	static char buf[128];
 	char	   *p = buf;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lsyscache.h,v 1.5 1997/09/08 02:39:49 momjian Exp $
+ * $Id: lsyscache.h,v 1.6 1997/09/08 21:55:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,9 +23,9 @@ extern Oid	get_atttype(Oid relid, AttrNumber attnum);
 extern bool get_attisset(Oid relid, char *attname);
 extern RegProcedure get_opcode(Oid opid);
 extern char *get_opname(Oid opid);
-extern		bool
+extern bool
 op_mergesortable(Oid opid, Oid ltype, Oid rtype,
-				 Oid * leftOp, Oid * rightOp);
+				 Oid *leftOp, Oid *rightOp);
 extern Oid	op_hashjoinable(Oid opid, Oid ltype, Oid rtype);
 extern Oid	get_commutator(Oid opid);
 extern HeapTuple get_operator_tuple(Oid opno);
@@ -34,7 +34,7 @@ extern RegProcedure get_oprrest(Oid opid);
 extern RegProcedure get_oprjoin(Oid opid);
 extern int	get_relnatts(Oid relid);
 extern char *get_rel_name(Oid relid);
-extern struct varlena *get_relstub(Oid relid, int no, bool * islast);
+extern struct varlena *get_relstub(Oid relid, int no, bool *islast);
 extern Oid	get_ruleid(char *rulename);
 extern Oid	get_eventrelid(Oid ruleid);
 extern int16 get_typlen(Oid typid);

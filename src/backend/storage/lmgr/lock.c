@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.13 1997/09/08 02:29:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.14 1997/09/08 21:47:26 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -49,7 +49,7 @@
 #include "access/transam.h"
 
 static int
-WaitOnLock(LOCKTAB * ltable, LockTableId tableId, LOCK * lock,
+WaitOnLock(LOCKTAB *ltable, LockTableId tableId, LOCK *lock,
 		   LOCKT lockt);
 
 /*#define LOCK_MGR_DEBUG*/
@@ -194,8 +194,8 @@ LockDisable(int status)
  * Notes: just copying.  Should only be called once.
  */
 static void
-LockTypeInit(LOCKTAB * ltable,
-			 MASK * conflictsP,
+LockTypeInit(LOCKTAB *ltable,
+			 MASK *conflictsP,
 			 int *prioP,
 			 int ntypes)
 {
@@ -222,7 +222,7 @@ LockTypeInit(LOCKTAB * ltable,
  */
 LockTableId
 LockTabInit(char *tabName,
-			MASK * conflictsP,
+			MASK *conflictsP,
 			int *prioP,
 			int ntypes)
 {
@@ -452,7 +452,7 @@ LockTabRename(LockTableId tableId)
 #endif
  */
 bool
-LockAcquire(LockTableId tableId, LOCKTAG * lockName, LOCKT lockt)
+LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 {
 	XIDLookupEnt *result,
 				item;
@@ -559,7 +559,7 @@ LockAcquire(LockTableId tableId, LOCKTAG * lockName, LOCKT lockt)
 	}
 #endif
 
-	result = (XIDLookupEnt *) hash_search(xidTable, (Pointer) & item, HASH_ENTER, &found);
+	result = (XIDLookupEnt *) hash_search(xidTable, (Pointer) &item, HASH_ENTER, &found);
 	if (!result)
 	{
 		elog(NOTICE, "LockAcquire: xid table corrupted");
@@ -619,7 +619,7 @@ LockAcquire(LockTableId tableId, LOCKTAG * lockName, LOCKT lockt)
 			if (!result->nHolding)
 			{
 				SHMQueueDelete(&result->queue);
-				hash_search(xidTable, (Pointer) & item, HASH_REMOVE, &found);
+				hash_search(xidTable, (Pointer) &item, HASH_REMOVE, &found);
 			}
 			lock->nHolding--;
 			lock->holders[lockt]--;
@@ -656,8 +656,8 @@ LockAcquire(LockTableId tableId, LOCKTAG * lockName, LOCKT lockt)
  * ----------------------------
  */
 int
-LockResolveConflicts(LOCKTAB * ltable,
-					 LOCK * lock,
+LockResolveConflicts(LOCKTAB *ltable,
+					 LOCK *lock,
 					 LOCKT lockt,
 					 TransactionId xid)
 {
@@ -690,7 +690,7 @@ LockResolveConflicts(LOCKTAB * ltable,
 #endif
 
 	if (!(result = (XIDLookupEnt *)
-		  hash_search(xidTable, (Pointer) & item, HASH_ENTER, &found)))
+		  hash_search(xidTable, (Pointer) &item, HASH_ENTER, &found)))
 	{
 		elog(NOTICE, "LockResolveConflicts: xid table corrupted");
 		return (STATUS_ERROR);
@@ -770,7 +770,7 @@ LockResolveConflicts(LOCKTAB * ltable,
 }
 
 static int
-WaitOnLock(LOCKTAB * ltable, LockTableId tableId, LOCK * lock, LOCKT lockt)
+WaitOnLock(LOCKTAB *ltable, LockTableId tableId, LOCK *lock, LOCKT lockt)
 {
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
 
@@ -819,7 +819,7 @@ WaitOnLock(LOCKTAB * ltable, LockTableId tableId, LOCK * lock, LOCKT lockt)
  *		come along and request the lock).
  */
 bool
-LockRelease(LockTableId tableId, LOCKTAG * lockName, LOCKT lockt)
+LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 {
 	LOCK	   *lock = NULL;
 	SPINLOCK	masterLock;
@@ -935,7 +935,7 @@ LockRelease(LockTableId tableId, LOCKTAG * lockName, LOCKT lockt)
 			 */
 			Assert(ltable->lockHash->hash == tag_hash);
 			lock = (LOCK *) hash_search(ltable->lockHash,
-										(Pointer) & (lock->tag),
+										(Pointer) &(lock->tag),
 										HASH_REMOVE_SAVED,
 										&found);
 			Assert(lock && found);
@@ -971,7 +971,7 @@ LockRelease(LockTableId tableId, LOCKTAG * lockName, LOCKT lockt)
 #endif
 
 	if (!(result = (XIDLookupEnt *) hash_search(xidTable,
-												(Pointer) & item,
+												(Pointer) &item,
 												HASH_FIND_SAVE,
 												&found))
 		|| !found)
@@ -1020,7 +1020,7 @@ LockRelease(LockTableId tableId, LOCKTAG * lockName, LOCKT lockt)
 		if (result->queue.next != INVALID_OFFSET)
 			SHMQueueDelete(&result->queue);
 		if (!(result = (XIDLookupEnt *)
-			  hash_search(xidTable, (Pointer) & item, HASH_REMOVE_SAVED, &found)) ||
+			  hash_search(xidTable, (Pointer) &item, HASH_REMOVE_SAVED, &found)) ||
 			!found)
 		{
 			SpinRelease(masterLock);
@@ -1062,7 +1062,7 @@ LockRelease(LockTableId tableId, LOCKTAG * lockName, LOCKT lockt)
 			 */
 			Assert(ltable->lockHash->hash == tag_hash);
 			lock = (LOCK *) hash_search(ltable->lockHash,
-										(Pointer) & (lock->tag),
+										(Pointer) &(lock->tag),
 										HASH_REMOVE,
 										&found);
 			Assert(lock && found);
@@ -1103,7 +1103,7 @@ LockRelease(LockTableId tableId, LOCKTAG * lockName, LOCKT lockt)
  *		the new lock holder.
  */
 void
-GrantLock(LOCK * lock, LOCKT lockt)
+GrantLock(LOCK *lock, LOCKT lockt)
 {
 	lock->nActive++;
 	lock->activeHolders[lockt]++;
@@ -1123,7 +1123,7 @@ GrantLock(LOCK * lock, LOCKT lockt)
  */
 #endif
 bool
-LockReleaseAll(LockTableId tableId, SHM_QUEUE * lockQueue)
+LockReleaseAll(LockTableId tableId, SHM_QUEUE *lockQueue)
 {
 	PROC_QUEUE *waitQueue;
 	int			done;
@@ -1168,7 +1168,7 @@ LockReleaseAll(LockTableId tableId, SHM_QUEUE * lockQueue)
 #ifdef USER_LOCKS
 	SpinAcquire(masterLock);
 #endif
-	SHMQueueFirst(lockQueue, (Pointer *) & xidLook, &xidLook->queue);
+	SHMQueueFirst(lockQueue, (Pointer *) &xidLook, &xidLook->queue);
 
 	XID_PRINT("LockReleaseAll", xidLook);
 
@@ -1312,7 +1312,7 @@ LockReleaseAll(LockTableId tableId, SHM_QUEUE * lockQueue)
 
 			Assert(ltable->lockHash->hash == tag_hash);
 			lock = (LOCK *)
-				hash_search(ltable->lockHash, (Pointer) & (lock->tag), HASH_REMOVE, &found);
+				hash_search(ltable->lockHash, (Pointer) &(lock->tag), HASH_REMOVE, &found);
 			if ((!lock) || (!found))
 			{
 				SpinRelease(masterLock);
@@ -1341,7 +1341,7 @@ next_item:
 #endif
 		if (done)
 			break;
-		SHMQueueFirst(&xidLook->queue, (Pointer *) & tmp, &tmp->queue);
+		SHMQueueFirst(&xidLook->queue, (Pointer *) &tmp, &tmp->queue);
 		xidLook = tmp;
 	}
 	SpinRelease(masterLock);
@@ -1444,7 +1444,7 @@ DumpLocks()
 	if (SHMQueueEmpty(lockQueue))
 		return;
 
-	SHMQueueFirst(lockQueue, (Pointer *) & xidLook, &xidLook->queue);
+	SHMQueueFirst(lockQueue, (Pointer *) &xidLook, &xidLook->queue);
 	end = MAKE_OFFSET(lockQueue);
 
 	LOCK_DUMP("DumpLocks", MyProc->waitLock, 0);
@@ -1471,7 +1471,7 @@ DumpLocks()
 
 		if (done)
 			break;
-		SHMQueueFirst(&xidLook->queue, (Pointer *) & tmp, &tmp->queue);
+		SHMQueueFirst(&xidLook->queue, (Pointer *) &tmp, &tmp->queue);
 		xidLook = tmp;
 	}
 }

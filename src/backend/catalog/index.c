@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.21 1997/09/08 02:21:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.22 1997/09/08 21:42:18 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -67,10 +67,10 @@ static Oid
 RelationNameGetObjectId(char *relationName, Relation pg_class,
 						bool setHasIndexAttribute);
 static Oid	GetHeapRelationOid(char *heapRelationName, char *indexRelationName);
-static TupleDesc BuildFuncTupleDesc(FuncIndexInfo * funcInfo);
+static TupleDesc BuildFuncTupleDesc(FuncIndexInfo *funcInfo);
 static TupleDesc
 ConstructTupleDescriptor(Oid heapoid, Relation heapRelation,
-						 List * attributeList,
+						 List *attributeList,
 						 int numatts, AttrNumber attNums[]);
 
 static void ConstructIndexReldesc(Relation indexRelation, Oid amoid);
@@ -83,14 +83,14 @@ static void
 			AppendAttributeTuples(Relation indexRelation, int numatts);
 static void
 UpdateIndexRelation(Oid indexoid, Oid heapoid,
-					FuncIndexInfo * funcInfo, int natts,
-				 AttrNumber attNums[], Oid classOids[], Node * predicate,
-					List * attributeList, bool islossy, bool unique);
+					FuncIndexInfo *funcInfo, int natts,
+				  AttrNumber attNums[], Oid classOids[], Node *predicate,
+					List *attributeList, bool islossy, bool unique);
 static void
 DefaultBuild(Relation heapRelation, Relation indexRelation,
 			 int numberOfAttributes, AttrNumber attributeNumber[],
 			 IndexStrategy indexStrategy, uint16 parameterCount,
-	  Datum parameter[], FuncIndexInfoPtr funcInfo, PredInfo * predInfo);
+	   Datum parameter[], FuncIndexInfoPtr funcInfo, PredInfo *predInfo);
 
 /* ----------------------------------------------------------------
  *	  sysatts is a structure containing attribute tuple forms
@@ -269,7 +269,7 @@ GetHeapRelationOid(char *heapRelationName, char *indexRelationName)
 }
 
 static TupleDesc
-BuildFuncTupleDesc(FuncIndexInfo * funcInfo)
+BuildFuncTupleDesc(FuncIndexInfo *funcInfo)
 {
 	HeapTuple	tuple;
 	TupleDesc	funcTupDesc;
@@ -334,7 +334,7 @@ BuildFuncTupleDesc(FuncIndexInfo * funcInfo)
 static TupleDesc
 ConstructTupleDescriptor(Oid heapoid,
 						 Relation heapRelation,
-						 List * attributeList,
+						 List *attributeList,
 						 int numatts,
 						 AttrNumber attNums[])
 {
@@ -777,12 +777,12 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 static void
 UpdateIndexRelation(Oid indexoid,
 					Oid heapoid,
-					FuncIndexInfo * funcInfo,
+					FuncIndexInfo *funcInfo,
 					int natts,
 					AttrNumber attNums[],
 					Oid classOids[],
-					Node * predicate,
-					List * attributeList,
+					Node *predicate,
+					List *attributeList,
 					bool islossy,
 					bool unique)
 {
@@ -901,7 +901,7 @@ UpdateIndexRelation(Oid indexoid,
  * ----------------------------------------------------------------
  */
 void
-UpdateIndexPredicate(Oid indexoid, Node * oldPred, Node * predicate)
+UpdateIndexPredicate(Oid indexoid, Node *oldPred, Node *predicate)
 {
 	Node	   *newPred;
 	char	   *predString;
@@ -1065,15 +1065,15 @@ InitIndexStrategy(int numatts,
 void
 index_create(char *heapRelationName,
 			 char *indexRelationName,
-			 FuncIndexInfo * funcInfo,
-			 List * attributeList,
+			 FuncIndexInfo *funcInfo,
+			 List *attributeList,
 			 Oid accessMethodObjectId,
 			 int numatts,
 			 AttrNumber attNums[],
 			 Oid classObjectId[],
 			 uint16 parameterCount,
-			 Datum * parameter,
-			 Node * predicate,
+			 Datum *parameter,
+			 Node *predicate,
 			 bool islossy,
 			 bool unique)
 {
@@ -1321,7 +1321,7 @@ FormIndexDatum(int numberOfAttributes,
 			   HeapTuple heapTuple,
 			   TupleDesc heapDescriptor,
 			   Buffer buffer,
-			   Datum * datum,
+			   Datum *datum,
 			   char *nullv,
 			   FuncIndexInfoPtr fInfo)
 {
@@ -1379,7 +1379,7 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 	char		nulls[Natts_pg_class];
 	char		replace[Natts_pg_class];
 
-	fmgr_info(ObjectIdEqualRegProcedure, (func_ptr *) & key[0].sk_func,
+	fmgr_info(ObjectIdEqualRegProcedure, (func_ptr *) &key[0].sk_func,
 			  &key[0].sk_nargs);
 
 	/* ----------------
@@ -1501,8 +1501,8 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
  * -------------------------
  */
 void
-FillDummyExprContext(ExprContext * econtext,
-					 TupleTableSlot * slot,
+FillDummyExprContext(ExprContext *econtext,
+					 TupleTableSlot *slot,
 					 TupleDesc tupdesc,
 					 Buffer buffer)
 {
@@ -1532,7 +1532,7 @@ DefaultBuild(Relation heapRelation,
 			 uint16 parameterCount,		/* not used */
 			 Datum parameter[], /* not used */
 			 FuncIndexInfoPtr funcInfo,
-			 PredInfo * predInfo)
+			 PredInfo *predInfo)
 {
 	HeapScanDesc scan;
 	HeapTuple	heapTuple;
@@ -1732,9 +1732,9 @@ index_build(Relation heapRelation,
 			int numberOfAttributes,
 			AttrNumber attributeNumber[],
 			uint16 parameterCount,
-			Datum * parameter,
-			FuncIndexInfo * funcInfo,
-			PredInfo * predInfo)
+			Datum *parameter,
+			FuncIndexInfo *funcInfo,
+			PredInfo *predInfo)
 {
 	RegProcedure procedure;
 

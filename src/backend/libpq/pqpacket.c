@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.7 1997/09/08 02:23:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.8 1997/09/08 21:43:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,8 +57,8 @@
  *
  */
 int
-PacketReceive(Port * port,		/* receive port */
-			  PacketBuf * buf,	/* MAX_PACKET_SIZE-worth of buffer space */
+PacketReceive(Port *port,		/* receive port */
+			  PacketBuf *buf,	/* MAX_PACKET_SIZE-worth of buffer space */
 			  bool nonBlocking) /* NON_BLOCKING or BLOCKING i/o */
 {
 	PacketLen	max_size = sizeof(PacketBuf);
@@ -219,8 +219,8 @@ PacketReceive(Port * port,		/* receive port */
  *
  */
 int
-PacketSend(Port * port,
-		   PacketBuf * buf,
+PacketSend(Port *port,
+		   PacketBuf *buf,
 		   PacketLen len,
 		   bool nonBlocking)
 {

@@ -3,7 +3,7 @@
 * geqo_erx.c--
 *	 edge recombination crossover [ER]
 *
-* $Id: geqo_erx.c,v 1.4 1997/09/08 02:23:52 momjian Exp $
+* $Id: geqo_erx.c,v 1.5 1997/09/08 21:44:16 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -52,11 +52,11 @@
 #include "optimizer/geqo_random.h"
 
 
-static int	gimme_edge(Gene gene1, Gene gene2, Edge * edge_table);
-static void remove_gene(Gene gene, Edge edge, Edge * edge_table);
-static Gene gimme_gene(Edge edge, Edge * edge_table);
+static int	gimme_edge(Gene gene1, Gene gene2, Edge *edge_table);
+static void remove_gene(Gene gene, Edge edge, Edge *edge_table);
+static Gene gimme_gene(Edge edge, Edge *edge_table);
 
-static Gene edge_failure(Gene * gene, int index, Edge * edge_table, int num_gene);
+static Gene edge_failure(Gene *gene, int index, Edge *edge_table, int num_gene);
 
 
 /* alloc_edge_table--
@@ -86,7 +86,7 @@ alloc_edge_table(int num_gene)
  *
  */
 void
-free_edge_table(Edge * edge_table)
+free_edge_table(Edge *edge_table)
 {
 	pfree(edge_table);
 }
@@ -105,7 +105,7 @@ free_edge_table(Edge * edge_table)
  *
  */
 float
-gimme_edge_table(Gene * tour1, Gene * tour2, int num_gene, Edge * edge_table)
+gimme_edge_table(Gene *tour1, Gene *tour2, int num_gene, Edge *edge_table)
 {
 	int			i,
 				index1,
@@ -165,7 +165,7 @@ gimme_edge_table(Gene * tour1, Gene * tour2, int num_gene, Edge * edge_table)
  *			  0 if edge was already registered and edge_table is unchanged
  */
 static int
-gimme_edge(Gene gene1, Gene gene2, Edge * edge_table)
+gimme_edge(Gene gene1, Gene gene2, Edge *edge_table)
 {
 	int			i;
 	int			edges;
@@ -207,7 +207,7 @@ gimme_edge(Gene gene1, Gene gene2, Edge * edge_table)
  *
  */
 int
-gimme_tour(Edge * edge_table, Gene * new_gene, int num_gene)
+gimme_tour(Edge *edge_table, Gene *new_gene, int num_gene)
 {
 	int			i;
 	int			edge_failures = 0;
@@ -256,7 +256,7 @@ gimme_tour(Edge * edge_table, Gene * new_gene, int num_gene)
  *
  */
 static void
-remove_gene(Gene gene, Edge edge, Edge * edge_table)
+remove_gene(Gene gene, Edge edge, Edge *edge_table)
 {
 	int			i,
 				j;
@@ -298,7 +298,7 @@ remove_gene(Gene gene, Edge edge, Edge * edge_table)
  *
  */
 static Gene
-gimme_gene(Edge edge, Edge * edge_table)
+gimme_gene(Edge edge, Edge *edge_table)
 {
 	int			i;
 	Gene		friend;
@@ -389,7 +389,7 @@ gimme_gene(Edge edge, Edge * edge_table)
  *
  */
 static Gene
-edge_failure(Gene * gene, int index, Edge * edge_table, int num_gene)
+edge_failure(Gene *gene, int index, Edge *edge_table, int num_gene)
 {
 	int			i;
 	Gene		fail_gene = gene[index];

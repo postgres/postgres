@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: genam.h,v 1.9 1997/09/08 02:34:04 momjian Exp $
+ * $Id: genam.h,v 1.10 1997/09/08 21:50:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,30 +25,30 @@
 extern Relation index_open(Oid relationId);
 extern Relation index_openr(char *relationName);
 extern void index_close(Relation relation);
-extern		InsertIndexResult
+extern InsertIndexResult
 index_insert(Relation relation,
-			 Datum * datum, char *nulls,
+			 Datum *datum, char *nulls,
 			 ItemPointer heap_t_ctid,
 			 Relation heapRel);
 extern void index_delete(Relation relation, ItemPointer indexItem);
-extern		IndexScanDesc
+extern IndexScanDesc
 index_beginscan(Relation relation, bool scanFromEnd,
 				uint16 numberOfKeys, ScanKey key);
 extern void index_rescan(IndexScanDesc scan, bool scanFromEnd, ScanKey key);
 extern void index_endscan(IndexScanDesc scan);
-extern		RetrieveIndexResult
+extern RetrieveIndexResult
 index_getnext(IndexScanDesc scan,
 			  ScanDirection direction);
-extern		RegProcedure
+extern RegProcedure
 index_getprocid(Relation irel, AttrNumber attnum,
 				uint16 procnum);
-extern		Datum
+extern Datum
 GetIndexValue(HeapTuple tuple, TupleDesc hTupDesc,
-			  int attOff, AttrNumber attrNums[], FuncIndexInfo * fInfo,
-			  bool * attNull, Buffer buffer);
+			  int attOff, AttrNumber attrNums[], FuncIndexInfo *fInfo,
+			  bool *attNull, Buffer buffer);
 
 /* in genam.c */
-extern		IndexScanDesc
+extern IndexScanDesc
 RelationGetIndexScan(Relation relation, bool scanFromEnd,
 					 uint16 numberOfKeys, ScanKey key);
 extern void IndexScanMarkPosition(IndexScanDesc scan);

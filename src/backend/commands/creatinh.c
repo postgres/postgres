@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.16 1997/09/08 02:22:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.17 1997/09/08 21:42:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,9 +35,9 @@
 
 static int
 checkAttrExists(char *attributeName,
-				char *attributeType, List * schema);
-static List *MergeAttributes(List * schema, List * supers, List ** supconstr);
-static void StoreCatalogInheritance(Oid relationId, List * supers);
+				char *attributeType, List *schema);
+static List *MergeAttributes(List *schema, List *supers, List **supconstr);
+static void StoreCatalogInheritance(Oid relationId, List *supers);
 
 /* ----------------------------------------------------------------
  *		DefineRelation --
@@ -45,7 +45,7 @@ static void StoreCatalogInheritance(Oid relationId, List * supers);
  * ----------------------------------------------------------------
  */
 void
-DefineRelation(CreateStmt * stmt)
+DefineRelation(CreateStmt *stmt)
 {
 	char	   *relname = palloc(NAMEDATALEN);
 	List	   *schema = stmt->tableElts;
@@ -280,7 +280,7 @@ RemoveRelation(char *name)
  *						   stud_emp {7:percent}
  */
 static List *
-MergeAttributes(List * schema, List * supers, List ** supconstr)
+MergeAttributes(List *schema, List *supers, List **supconstr)
 {
 	List	   *entry;
 	List	   *inhSchema = NIL;
@@ -459,7 +459,7 @@ MergeAttributes(List * schema, List * supers, List ** supconstr)
  *		Updates the system catalogs with proper inheritance information.
  */
 static void
-StoreCatalogInheritance(Oid relationId, List * supers)
+StoreCatalogInheritance(Oid relationId, List *supers)
 {
 	Relation	relation;
 	TupleDesc	desc;
@@ -640,7 +640,7 @@ again:
  * returns 1 if attribute already exists in schema, 0 otherwise.
  */
 static int
-checkAttrExists(char *attributeName, char *attributeType, List * schema)
+checkAttrExists(char *attributeName, char *attributeType, List *schema)
 {
 	List	   *s;
 

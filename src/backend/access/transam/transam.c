@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.12 1997/09/08 20:54:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.13 1997/09/08 21:41:42 momjian Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -134,7 +134,7 @@ SetRecoveryCheckingEnabled(bool state)
  * --------------------------------
  */
 
-static bool				/* true/false: does transaction id have
+static bool						/* true/false: does transaction id have
 								 * specified status? */
 TransactionLogTest(TransactionId transactionId, /* transaction id to test */
 				   XidStatus status)	/* transaction status */

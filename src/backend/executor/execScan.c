@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.5 1997/09/08 02:22:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.6 1997/09/08 21:43:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,8 +43,8 @@
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecScan(Scan * node,
-		 TupleTableSlot * (*accessMtd) ())		/* function returning a
+ExecScan(Scan *node,
+		 TupleTableSlot *(*accessMtd) ())		/* function returning a
 												 * tuple */
 {
 	CommonScanState *scanstate;

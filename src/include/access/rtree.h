@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rtree.h,v 1.9 1997/09/08 20:58:11 momjian Exp $
+ * $Id: rtree.h,v 1.10 1997/09/08 21:50:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@
 typedef struct RTreePageOpaqueData
 {
 	uint32		flags;
-}			RTreePageOpaqueData;
+} RTreePageOpaqueData;
 
 typedef RTreePageOpaqueData *RTreePageOpaque;
 
@@ -56,7 +56,7 @@ typedef struct RTSTACK
 	struct RTSTACK *rts_parent;
 	OffsetNumber rts_child;
 	BlockNumber rts_blk;
-}			RTSTACK;
+} RTSTACK;
 
 /*
  *	When we're doing a scan, we need to keep track of the parent stack
@@ -75,7 +75,7 @@ typedef struct RTreeScanOpaqueData
 	uint16		s_flags;
 	uint16		s_internalNKey;
 	ScanKey		s_internalKey;
-}			RTreeScanOpaqueData;
+} RTreeScanOpaqueData;
 
 typedef RTreeScanOpaqueData *RTreeScanOpaque;
 
@@ -105,7 +105,7 @@ typedef RTreeScanOpaqueData *RTreeScanOpaque;
 #define RTOP_SPLIT		1
 
 /* defined in rtree.c */
-extern void freestack(RTSTACK * s);
+extern void freestack(RTSTACK *s);
 
 /* rget.c */
 extern RetrieveIndexResult rtgettuple(IndexScanDesc s, ScanDirection dir);
@@ -114,13 +114,13 @@ extern RetrieveIndexResult rtgettuple(IndexScanDesc s, ScanDirection dir);
  *		RTree code.
  *		Defined in access/index-rtree/
  */
-extern		InsertIndexResult
-rtinsert(Relation r, Datum * datum, char *nulls,
+extern InsertIndexResult
+rtinsert(Relation r, Datum *datum, char *nulls,
 		 ItemPointer ht_ctid, Relation heapRel);
 extern char *rtdelete(Relation r, ItemPointer tid);
 
 extern RetrieveIndexResult rtgettuple(IndexScanDesc s, ScanDirection dir);
-extern		IndexScanDesc
+extern IndexScanDesc
 rtbeginscan(Relation r, bool fromEnd, uint16 nkeys,
 			ScanKey key);
 
@@ -131,7 +131,7 @@ extern void rtrescan(IndexScanDesc s, bool fromEnd, ScanKey key);
 extern void
 rtbuild(Relation heap, Relation index, int natts,
 		AttrNumber *attnum, IndexStrategy istrat, uint16 pcount,
-		Datum * params, FuncIndexInfo * finfo, PredInfo * predInfo);
+		Datum *params, FuncIndexInfo *finfo, PredInfo *predInfo);
 extern void _rtdump(Relation r);
 
 /* rtscan.c */
@@ -140,7 +140,7 @@ rtadjscans(Relation r, int op, BlockNumber blkno,
 		   OffsetNumber offnum);
 
 /* rtstrat.h */
-extern		RegProcedure
+extern RegProcedure
 RTMapOperator(Relation r, AttrNumber attnum,
 			  RegProcedure proc);
 

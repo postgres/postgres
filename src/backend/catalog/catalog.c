@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.9 1997/09/08 02:21:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.10 1997/09/08 21:42:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -183,7 +183,7 @@ fillatt(TupleDesc tupleDesc)
 		}
 		else
 		{
-			(*attributeP)->attnum = (int16)++ i;
+			(*attributeP)->attnum = (int16) ++i;
 
 			/*
 			 * Check if the attr is a set before messing with the length

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psort.h,v 1.9 1997/09/08 02:39:54 momjian Exp $
+ * $Id: psort.h,v 1.10 1997/09/08 21:55:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ typedef struct Psortstate
 	bool		using_tape_files;
 
 	HeapTuple  *memtuples;
-}			Psortstate;
+} Psortstate;
 
 #ifdef	EBUG
 #include <stdio.h>
@@ -98,10 +98,10 @@ if (1) CODE; else
 #endif
 
 /* psort.c */
-extern bool psort_begin(Sort * node, int nkeys, ScanKey key);
-extern HeapTuple psort_grabtuple(Sort * node);
-extern void psort_markpos(Sort * node);
-extern void psort_restorepos(Sort * node);
-extern void psort_end(Sort * node);
+extern bool psort_begin(Sort *node, int nkeys, ScanKey key);
+extern HeapTuple psort_grabtuple(Sort *node);
+extern void psort_markpos(Sort *node);
+extern void psort_restorepos(Sort *node);
+extern void psort_end(Sort *node);
 
 #endif							/* PSORT_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.16 1997/09/08 20:56:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.17 1997/09/08 21:47:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,14 +64,14 @@
 
 /* non-export function prototypes */
 static HeapTuple
-inv_newtuple(LargeObjectDesc * obj_desc, Buffer buffer,
+inv_newtuple(LargeObjectDesc *obj_desc, Buffer buffer,
 			 Page page, char *dbuf, int nwrite);
-static HeapTuple inv_fetchtup(LargeObjectDesc * obj_desc, Buffer *bufP);
-static int	inv_wrnew(LargeObjectDesc * obj_desc, char *buf, int nbytes);
+static HeapTuple inv_fetchtup(LargeObjectDesc *obj_desc, Buffer *bufP);
+static int	inv_wrnew(LargeObjectDesc *obj_desc, char *buf, int nbytes);
 static int
-inv_wrold(LargeObjectDesc * obj_desc, char *dbuf, int nbytes,
+inv_wrold(LargeObjectDesc *obj_desc, char *dbuf, int nbytes,
 		  HeapTuple htup, Buffer buffer);
-static void inv_indextup(LargeObjectDesc * obj_desc, HeapTuple htup);
+static void inv_indextup(LargeObjectDesc *obj_desc, HeapTuple htup);
 static int	_inv_getsize(Relation hreln, TupleDesc hdesc, Relation ireln);
 
 /*
@@ -267,7 +267,7 @@ inv_open(Oid lobjId, int flags)
  * Closes an existing large object descriptor.
  */
 void
-inv_close(LargeObjectDesc * obj_desc)
+inv_close(LargeObjectDesc *obj_desc)
 {
 	Assert(PointerIsValid(obj_desc));
 
@@ -313,7 +313,7 @@ inv_destroy(Oid lobjId)
  */
 #ifdef NOT_USED
 int
-inv_stat(LargeObjectDesc * obj_desc, struct pgstat * stbuf)
+inv_stat(LargeObjectDesc *obj_desc, struct pgstat * stbuf)
 {
 	Assert(PointerIsValid(obj_desc));
 	Assert(stbuf != NULL);
@@ -346,7 +346,7 @@ inv_stat(LargeObjectDesc * obj_desc, struct pgstat * stbuf)
 #endif
 
 int
-inv_seek(LargeObjectDesc * obj_desc, int offset, int whence)
+inv_seek(LargeObjectDesc *obj_desc, int offset, int whence)
 {
 	int			oldOffset;
 	Datum		d;
@@ -423,7 +423,7 @@ inv_seek(LargeObjectDesc * obj_desc, int offset, int whence)
 }
 
 int
-inv_tell(LargeObjectDesc * obj_desc)
+inv_tell(LargeObjectDesc *obj_desc)
 {
 	Assert(PointerIsValid(obj_desc));
 
@@ -431,7 +431,7 @@ inv_tell(LargeObjectDesc * obj_desc)
 }
 
 int
-inv_read(LargeObjectDesc * obj_desc, char *buf, int nbytes)
+inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 {
 	HeapTuple	htup;
 	Buffer		b;
@@ -495,7 +495,7 @@ inv_read(LargeObjectDesc * obj_desc, char *buf, int nbytes)
 }
 
 int
-inv_write(LargeObjectDesc * obj_desc, char *buf, int nbytes)
+inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 {
 	HeapTuple	htup;
 	Buffer		b;
@@ -576,7 +576,7 @@ inv_write(LargeObjectDesc * obj_desc, char *buf, int nbytes)
  *				such tuple exists.
  */
 static HeapTuple
-inv_fetchtup(LargeObjectDesc * obj_desc, Buffer *bufP)
+inv_fetchtup(LargeObjectDesc *obj_desc, Buffer *bufP)
 {
 	HeapTuple	htup;
 	RetrieveIndexResult res;
@@ -691,7 +691,7 @@ inv_fetchtup(LargeObjectDesc * obj_desc, Buffer *bufP)
  *				number of bytes actually written to the new tuple.
  */
 static int
-inv_wrnew(LargeObjectDesc * obj_desc, char *buf, int nbytes)
+inv_wrnew(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 {
 	Relation	hr;
 	HeapTuple	ntup;
@@ -762,7 +762,7 @@ inv_wrnew(LargeObjectDesc * obj_desc, char *buf, int nbytes)
 }
 
 static int
-inv_wrold(LargeObjectDesc * obj_desc,
+inv_wrold(LargeObjectDesc *obj_desc,
 		  char *dbuf,
 		  int nbytes,
 		  HeapTuple htup,
@@ -939,7 +939,7 @@ inv_wrold(LargeObjectDesc * obj_desc,
 }
 
 static HeapTuple
-inv_newtuple(LargeObjectDesc * obj_desc,
+inv_newtuple(LargeObjectDesc *obj_desc,
 			 Buffer buffer,
 			 Page page,
 			 char *dbuf,
@@ -1061,7 +1061,7 @@ inv_newtuple(LargeObjectDesc * obj_desc,
 }
 
 static void
-inv_indextup(LargeObjectDesc * obj_desc, HeapTuple htup)
+inv_indextup(LargeObjectDesc *obj_desc, HeapTuple htup)
 {
 	InsertIndexResult res;
 	Datum		v[1];

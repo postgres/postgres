@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/xid.c,v 1.9 1997/09/08 02:21:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/xid.c,v 1.10 1997/09/08 21:41:56 momjian Exp $
  *
  * OLD COMMENTS
  * XXX WARNING
@@ -73,7 +73,7 @@ xidout(TransactionId transactionId)
  * ----------------------------------------------------------------
  */
 void
-StoreInvalidTransactionId(TransactionId * destination)
+StoreInvalidTransactionId(TransactionId *destination)
 {
 	*destination = NullTransactionId;
 }
@@ -86,7 +86,7 @@ StoreInvalidTransactionId(TransactionId * destination)
  */
 void
 TransactionIdStore(TransactionId transactionId,
-				   TransactionId * destination)
+				   TransactionId *destination)
 {
 	*destination = transactionId;
 }
@@ -134,7 +134,7 @@ xideq(TransactionId xid1, TransactionId xid2)
  */
 #ifdef NOT_USED
 void
-TransactionIdIncrement(TransactionId * transactionId)
+TransactionIdIncrement(TransactionId *transactionId)
 {
 
 	(*transactionId)++;
@@ -150,7 +150,7 @@ TransactionIdIncrement(TransactionId * transactionId)
  * ----------------------------------------------------------------
  */
 void
-TransactionIdAdd(TransactionId * xid, int value)
+TransactionIdAdd(TransactionId *xid, int value)
 {
 	*xid += value;
 	return;

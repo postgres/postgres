@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.18 1997/09/08 20:54:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.19 1997/09/08 21:40:57 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1188,7 +1188,7 @@ heap_insert(Relation relation, HeapTuple tup)
 		 */
 		SetRefreshWhenInvalidate(ImmediateInvalidation);
 		RelationInvalidateHeapTuple(relation, tup);
-		SetRefreshWhenInvalidate((bool) ! ImmediateInvalidation);
+		SetRefreshWhenInvalidate((bool) !ImmediateInvalidation);
 	}
 
 	return (tup->t_oid);
@@ -1287,7 +1287,7 @@ heap_delete(Relation relation, ItemPointer tid)
 	 */
 	SetRefreshWhenInvalidate(ImmediateInvalidation);
 	RelationInvalidateHeapTuple(relation, tp);
-	SetRefreshWhenInvalidate((bool) ! ImmediateInvalidation);
+	SetRefreshWhenInvalidate((bool) !ImmediateInvalidation);
 
 	WriteBuffer(b);
 	if (IsSystemRelationName(RelationGetRelationName(relation)->data))
@@ -1441,7 +1441,7 @@ heap_replace(Relation relation, ItemPointer otid, HeapTuple tup)
 	 */
 	SetRefreshWhenInvalidate(ImmediateInvalidation);
 	RelationInvalidateHeapTuple(relation, tp);
-	SetRefreshWhenInvalidate((bool) ! ImmediateInvalidation);
+	SetRefreshWhenInvalidate((bool) !ImmediateInvalidation);
 
 	WriteBuffer(buffer);
 

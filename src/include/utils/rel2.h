@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel2.h,v 1.3 1997/09/07 05:02:58 momjian Exp $
+ * $Id: rel2.h,v 1.4 1997/09/08 21:55:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,6 @@ extern IndexStrategy RelationGetIndexStrategy(Relation relation);
 
 extern void
 RelationSetIndexSupport(Relation relation, IndexStrategy strategy,
-						RegProcedure * support);
+						RegProcedure *support);
 
 #endif							/* TMP_REL2_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: funcindex.h,v 1.4 1997/09/08 02:34:03 momjian Exp $
+ * $Id: funcindex.h,v 1.5 1997/09/08 21:50:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@ typedef struct
 	Oid			arglist[8];
 	Oid			procOid;
 	NameData	funcName;
-}			FuncIndexInfo;
+} FuncIndexInfo;
 
 typedef FuncIndexInfo *FuncIndexInfoPtr;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.22 1997/09/08 02:31:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.23 1997/09/08 21:48:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,7 @@
 #include "fmgr.h"
 
 static void
-RelationFlushRelation(Relation * relationPtr,
+RelationFlushRelation(Relation *relationPtr,
 					  bool onlyFlushReferenceCountZero);
 static Relation RelationNameCacheGetRelation(char *relationName);
 static void init_irels(void);
@@ -145,19 +145,19 @@ typedef struct RelationBuildDescInfo
 		Oid			info_id;	/* relation object id */
 		char	   *info_name;	/* relation name */
 	}			i;
-}			RelationBuildDescInfo;
+} RelationBuildDescInfo;
 
 typedef struct relidcacheent
 {
 	Oid			reloid;
 	Relation	reldesc;
-}			RelIdCacheEnt;
+} RelIdCacheEnt;
 
 typedef struct relnamecacheent
 {
 	NameData	relname;
 	Relation	reldesc;
-}			RelNameCacheEnt;
+} RelNameCacheEnt;
 
 /* -----------------
  *		macros to manipulate name cache and id cache
@@ -251,7 +251,7 @@ formrdesc(char *relationName, u_int natts,
 		  FormData_pg_attribute att[]);
 
 #if 0							/* See comments at line 1304 */
-static void RelationFlushIndexes(Relation * r, Oid accessMethodId);
+static void RelationFlushIndexes(Relation *r, Oid accessMethodId);
 
 #endif
 
@@ -1329,7 +1329,7 @@ RelationClose(Relation relation)
  * --------------------------------
  */
 static void
-RelationFlushRelation(Relation * relationPtr,
+RelationFlushRelation(Relation *relationPtr,
 					  bool onlyFlushReferenceCountZero)
 {
 	MemoryContext oldcxt;
@@ -1459,7 +1459,7 @@ RelationIdInvalidateRelationCacheByRelationId(Oid relationId)
  * --------------------------------
  */
 static void
-RelationFlushIndexes(Relation * r,
+RelationFlushIndexes(Relation *r,
 					 Oid accessMethodId)
 {
 	Relation	relation = *r;

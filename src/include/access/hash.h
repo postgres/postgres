@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.10 1997/09/08 20:58:02 momjian Exp $
+ * $Id: hash.h,v 1.11 1997/09/08 21:50:44 momjian Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -82,7 +82,7 @@ typedef struct HashPageOpaqueData
 	OverflowPageAddress hasho_oaddr;	/* ovfl address of this ovfl pg */
 	BlockNumber hasho_nextblkno;/* next ovfl blkno */
 	BlockNumber hasho_prevblkno;/* previous ovfl (or bucket) blkno */
-}			HashPageOpaqueData;
+} HashPageOpaqueData;
 
 typedef HashPageOpaqueData *HashPageOpaque;
 
@@ -98,7 +98,7 @@ typedef struct HashScanOpaqueData
 {
 	Buffer		hashso_curbuf;
 	Buffer		hashso_mrkbuf;
-}			HashScanOpaqueData;
+} HashScanOpaqueData;
 
 typedef HashScanOpaqueData *HashScanOpaque;
 
@@ -160,7 +160,7 @@ typedef struct HashMetaPageData
 										 * splitpoints */
 	BlockNumber hashm_mapp[NCACHED];	/* blknumbers of ovfl page maps */
 	RegProcedure hashm_procid;	/* hash procedure id from pg_proc */
-}			HashMetaPageData;
+} HashMetaPageData;
 
 typedef HashMetaPageData *HashMetaPage;
 
@@ -180,7 +180,7 @@ extern bool BuildingHash;
 typedef struct HashItemData
 {
 	IndexTupleData hash_itup;
-}			HashItemData;
+} HashItemData;
 
 typedef HashItemData *HashItem;
 
@@ -251,9 +251,9 @@ typedef HashItemData *HashItem;
 extern void
 hashbuild(Relation heap, Relation index, int natts,
 		  AttrNumber *attnum, IndexStrategy istrat, uint16 pcount,
-		  Datum * params, FuncIndexInfo * finfo, PredInfo * predInfo);
-extern		InsertIndexResult
-hashinsert(Relation rel, Datum * datum, char *nulls,
+		  Datum *params, FuncIndexInfo *finfo, PredInfo *predInfo);
+extern InsertIndexResult
+hashinsert(Relation rel, Datum *datum, char *nulls,
 		   ItemPointer ht_ctid, Relation heapRel);
 extern char *hashgettuple(IndexScanDesc scan, ScanDirection dir);
 extern char *
@@ -277,7 +277,7 @@ extern uint32 hashchar4(uint32 intkey);
 extern uint32 hashchar8(char *key);
 extern uint32 hashchar16(char *key);
 extern uint32 hashtext(struct varlena * key);
-extern uint32 hashname(NameData * n);
+extern uint32 hashname(NameData *n);
 
 /* private routines */
 
@@ -288,7 +288,7 @@ extern InsertIndexResult _hash_doinsert(Relation rel, HashItem hitem);
 /* hashovfl.c */
 extern Buffer _hash_addovflpage(Relation rel, Buffer *metabufp, Buffer buf);
 extern Buffer _hash_freeovflpage(Relation rel, Buffer ovflbuf);
-extern		int32
+extern int32
 _hash_initbitmap(Relation rel, HashMetaPage metap, int32 pnum,
 				 int32 nbits, int32 ndx);
 extern void
@@ -302,7 +302,7 @@ extern Buffer _hash_getbuf(Relation rel, BlockNumber blkno, int access);
 extern void _hash_relbuf(Relation rel, Buffer buf, int access);
 extern void _hash_wrtbuf(Relation rel, Buffer buf);
 extern void _hash_wrtnorelbuf(Relation rel, Buffer buf);
-extern		Page
+extern Page
 _hash_chgbufaccess(Relation rel, Buffer *bufp, int from_access,
 				   int to_access);
 extern void _hash_pageinit(Page page, Size size);
@@ -322,13 +322,13 @@ _hash_search(Relation rel, int keysz, ScanKey scankey,
 			 Buffer *bufP, HashMetaPage metap);
 extern RetrieveIndexResult _hash_next(IndexScanDesc scan, ScanDirection dir);
 extern RetrieveIndexResult _hash_first(IndexScanDesc scan, ScanDirection dir);
-extern		bool
+extern bool
 _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir,
 		   Buffer metabuf);
 
 
 /* hashutil.c */
-extern		ScanKey
+extern ScanKey
 _hash_mkscankey(Relation rel, IndexTuple itup,
 				HashMetaPage metap);
 extern void _hash_freeskey(ScanKey skey);

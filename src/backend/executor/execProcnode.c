@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.4 1997/09/08 02:22:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.5 1997/09/08 21:42:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,7 +103,7 @@
  * ------------------------------------------------------------------------
  */
 bool
-ExecInitNode(Plan * node, EState * estate, Plan * parent)
+ExecInitNode(Plan *node, EState *estate, Plan *parent)
 {
 	bool		result;
 
@@ -207,7 +207,7 @@ ExecInitNode(Plan * node, EState * estate, Plan * parent)
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecProcNode(Plan * node, Plan * parent)
+ExecProcNode(Plan *node, Plan *parent)
 {
 	TupleTableSlot *result;
 
@@ -302,7 +302,7 @@ ExecProcNode(Plan * node, Plan * parent)
 }
 
 int
-ExecCountSlotsNode(Plan * node)
+ExecCountSlotsNode(Plan *node)
 {
 	if (node == (Plan *) NULL)
 		return 0;
@@ -387,7 +387,7 @@ ExecCountSlotsNode(Plan * node)
  * ----------------------------------------------------------------
  */
 void
-ExecEndNode(Plan * node, Plan * parent)
+ExecEndNode(Plan *node, Plan *parent)
 {
 	/* ----------------
 	 *	do nothing when we get to the end

@@ -8,7 +8,7 @@
 #include "libpq-fe.h"
 
 void
-exit_nicely(PGconn * conn)
+exit_nicely(PGconn *conn)
 {
 	PQfinish(conn);
 	exit(1);

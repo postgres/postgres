@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.45 1997/09/08 20:55:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.46 1997/09/08 21:42:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,37 +74,37 @@ static int	MESSAGE_LEVEL;		/* message level */
 /* non-export function prototypes */
 static void vc_init(void);
 static void vc_shutdown(void);
-static void vc_vacuum(NameData * VacRelP, bool analyze, List * va_cols);
-static VRelList vc_getrels(NameData * VacRelP);
-static void vc_vacone(Oid relid, bool analyze, List * va_cols);
-static void vc_scanheap(VRelStats * vacrelstats, Relation onerel, VPageList Vvpl, VPageList Fvpl);
-static void vc_rpfheap(VRelStats * vacrelstats, Relation onerel, VPageList Vvpl, VPageList Fvpl, int nindices, Relation * Irel);
-static void vc_vacheap(VRelStats * vacrelstats, Relation onerel, VPageList vpl);
+static void vc_vacuum(NameData *VacRelP, bool analyze, List *va_cols);
+static VRelList vc_getrels(NameData *VacRelP);
+static void vc_vacone(Oid relid, bool analyze, List *va_cols);
+static void vc_scanheap(VRelStats *vacrelstats, Relation onerel, VPageList Vvpl, VPageList Fvpl);
+static void vc_rpfheap(VRelStats *vacrelstats, Relation onerel, VPageList Vvpl, VPageList Fvpl, int nindices, Relation *Irel);
+static void vc_vacheap(VRelStats *vacrelstats, Relation onerel, VPageList vpl);
 static void vc_vacpage(Page page, VPageDescr vpd, Relation archrel);
 static void vc_vaconeind(VPageList vpl, Relation indrel, int nhtups);
 static void vc_scanoneind(Relation indrel, int nhtups);
-static void vc_attrstats(Relation onerel, VRelStats * vacrelstats, HeapTuple htup);
-static void vc_bucketcpy(AttributeTupleForm attr, Datum value, Datum * bucket, int16 * bucket_len);
-static void vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VRelStats * vacrelstats);
+static void vc_attrstats(Relation onerel, VRelStats *vacrelstats, HeapTuple htup);
+static void vc_bucketcpy(AttributeTupleForm attr, Datum value, Datum *bucket, int16 *bucket_len);
+static void vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VRelStats *vacrelstats);
 static void vc_delhilowstats(Oid relid, int attcnt, int *attnums);
 static void vc_setpagelock(Relation rel, BlockNumber blkno);
 static VPageDescr vc_tidreapped(ItemPointer itemptr, VPageList vpl);
 static void vc_reappage(VPageList vpl, VPageDescr vpc);
 static void vc_vpinsert(VPageList vpl, VPageDescr vpnew);
 static void vc_free(VRelList vrl);
-static void vc_getindices(Oid relid, int *nindices, Relation ** Irel);
-static void vc_clsindices(int nindices, Relation * Irel);
+static void vc_getindices(Oid relid, int *nindices, Relation **Irel);
+static void vc_clsindices(int nindices, Relation *Irel);
 static Relation vc_getarchrel(Relation heaprel);
 static void vc_archive(Relation archrel, HeapTuple htup);
 static bool vc_isarchrel(char *rname);
-static void vc_mkindesc(Relation onerel, int nindices, Relation * Irel, IndDesc ** Idesc);
+static void vc_mkindesc(Relation onerel, int nindices, Relation *Irel, IndDesc **Idesc);
 static char *vc_find_eq(char *bot, int nelem, int size, char *elm, int (*compar) (char *, char *));
 static int	vc_cmp_blk(char *left, char *right);
 static int	vc_cmp_offno(char *left, char *right);
 static bool vc_enough_space(VPageDescr vpd, Size len);
 
 void
-vacuum(char *vacrel, bool verbose, bool analyze, List * va_spec)
+vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec)
 {
 	char	   *pname;
 	MemoryContext old;
@@ -236,7 +236,7 @@ vc_abort()
  *		locks at one time.
  */
 static void
-vc_vacuum(NameData * VacRelP, bool analyze, List * va_cols)
+vc_vacuum(NameData *VacRelP, bool analyze, List *va_cols)
 {
 	VRelList	vrl,
 				cur;
@@ -255,7 +255,7 @@ vc_vacuum(NameData * VacRelP, bool analyze, List * va_cols)
 }
 
 static VRelList
-vc_getrels(NameData * VacRelP)
+vc_getrels(NameData *VacRelP)
 {
 	Relation	pgclass;
 	TupleDesc	pgcdesc;
@@ -402,7 +402,7 @@ vc_getrels(NameData * VacRelP)
  *		us to lock the entire database during one pass of the vacuum cleaner.
  */
 static void
-vc_vacone(Oid relid, bool analyze, List * va_cols)
+vc_vacone(Oid relid, bool analyze, List *va_cols)
 {
 	Relation	pgclass;
 	TupleDesc	pgcdesc;
@@ -639,7 +639,7 @@ vc_vacone(Oid relid, bool analyze, List * va_cols)
  *		on the number of live tuples in a heap.
  */
 static void
-vc_scanheap(VRelStats * vacrelstats, Relation onerel,
+vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 			VPageList Vvpl, VPageList Fvpl)
 {
 	int			nblocks,
@@ -969,8 +969,8 @@ Tup %u: Vac %u, Crash %u, UnUsed %u, MinLen %u, MaxLen %u; Re-using: Free/Avail.
  *		if some end-blocks are gone away.
  */
 static void
-vc_rpfheap(VRelStats * vacrelstats, Relation onerel,
-		   VPageList Vvpl, VPageList Fvpl, int nindices, Relation * Irel)
+vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
+		   VPageList Vvpl, VPageList Fvpl, int nindices, Relation *Irel)
 {
 	TransactionId myXID;
 	CommandId	myCID;
@@ -1424,7 +1424,7 @@ Elapsed %u/%u sec.",
  *		if there are "empty" end-blocks.
  */
 static void
-vc_vacheap(VRelStats * vacrelstats, Relation onerel, VPageList Vvpl)
+vc_vacheap(VRelStats *vacrelstats, Relation onerel, VPageList Vvpl)
 {
 	Buffer		buf;
 	Page		page;
@@ -1700,7 +1700,7 @@ vc_tidreapped(ItemPointer itemptr, VPageList vpl)
  *
  */
 static void
-vc_attrstats(Relation onerel, VRelStats * vacrelstats, HeapTuple htup)
+vc_attrstats(Relation onerel, VRelStats *vacrelstats, HeapTuple htup)
 {
 	int			i,
 				attr_cnt = vacrelstats->va_natts;
@@ -1800,7 +1800,7 @@ vc_attrstats(Relation onerel, VRelStats * vacrelstats, HeapTuple htup)
  *
  */
 static void
-vc_bucketcpy(AttributeTupleForm attr, Datum value, Datum * bucket, int16 * bucket_len)
+vc_bucketcpy(AttributeTupleForm attr, Datum value, Datum *bucket, int16 *bucket_len)
 {
 	if (attr->attbyval && attr->attlen != -1)
 		*bucket = value;
@@ -1831,7 +1831,7 @@ vc_bucketcpy(AttributeTupleForm attr, Datum value, Datum * bucket, int16 * bucke
  *		historical queries very expensive.
  */
 static void
-vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VRelStats * vacrelstats)
+vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VRelStats *vacrelstats)
 {
 	Relation	rd,
 				ad,
@@ -2259,7 +2259,7 @@ vc_cmp_offno(char *left, char *right)
 
 
 static void
-vc_getindices(Oid relid, int *nindices, Relation ** Irel)
+vc_getindices(Oid relid, int *nindices, Relation **Irel)
 {
 	Relation	pgindex;
 	Relation	irel;
@@ -2336,7 +2336,7 @@ vc_getindices(Oid relid, int *nindices, Relation ** Irel)
 
 
 static void
-vc_clsindices(int nindices, Relation * Irel)
+vc_clsindices(int nindices, Relation *Irel)
 {
 
 	if (Irel == (Relation *) NULL)
@@ -2352,7 +2352,7 @@ vc_clsindices(int nindices, Relation * Irel)
 
 
 static void
-vc_mkindesc(Relation onerel, int nindices, Relation * Irel, IndDesc ** Idesc)
+vc_mkindesc(Relation onerel, int nindices, Relation *Irel, IndDesc **Idesc)
 {
 	IndDesc    *idcur;
 	HeapTuple	pgIndexTup;

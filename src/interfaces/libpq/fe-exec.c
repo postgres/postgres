@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.37 1997/09/08 02:40:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.38 1997/09/08 21:55:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,15 +56,15 @@ const char *pgresStatus[] = {
 };
 
 
-static PGresult *makePGresult(PGconn * conn, char *pname);
-static void addTuple(PGresult * res, PGresAttValue * tup);
-static PGresAttValue *getTuple(PGconn * conn, PGresult * res, int binary);
-static PGresult *makeEmptyPGresult(PGconn * conn, ExecStatusType status);
-static void fill(int length, int max, char filler, FILE * fp);
+static PGresult *makePGresult(PGconn *conn, char *pname);
+static void addTuple(PGresult *res, PGresAttValue *tup);
+static PGresAttValue *getTuple(PGconn *conn, PGresult *res, int binary);
+static PGresult *makeEmptyPGresult(PGconn *conn, ExecStatusType status);
+static void fill(int length, int max, char filler, FILE *fp);
 static char *
-do_header(FILE * fout, PQprintOpt * po, const int nFields,
+do_header(FILE *fout, PQprintOpt *po, const int nFields,
 		  int fieldMax[], char *fieldNames[], unsigned char fieldNotNum[],
-		  const int fs_len, PGresult * res);
+		  const int fs_len, PGresult *res);
 
 /*
  * PQclear -
@@ -72,7 +72,7 @@ do_header(FILE * fout, PQprintOpt * po, const int nFields,
  *
  */
 void
-PQclear(PGresult * res)
+PQclear(PGresult *res)
 {
 	int			i,
 				j;
@@ -114,7 +114,7 @@ PQclear(PGresult * res)
  */
 
 static PGresult *
-makeEmptyPGresult(PGconn * conn, ExecStatusType status)
+makeEmptyPGresult(PGconn *conn, ExecStatusType status)
 {
 	PGresult   *result;
 
@@ -140,7 +140,7 @@ makeEmptyPGresult(PGconn * conn, ExecStatusType status)
  */
 
 static PGresAttValue *
-getTuple(PGconn * conn, PGresult * result, int binary)
+getTuple(PGconn *conn, PGresult *result, int binary)
 {
 	char		bitmap[MAX_FIELDS];		/* the backend sends us a bitmap
 										 * of  */
@@ -225,7 +225,7 @@ getTuple(PGconn * conn, PGresult * result, int binary)
  *
  */
 static void
-addTuple(PGresult * res, PGresAttValue * tup)
+addTuple(PGresult *res, PGresAttValue *tup)
 {
 	if (res->ntups == res->tupArrSize)
 	{
@@ -262,7 +262,7 @@ addTuple(PGresult * res, PGresAttValue * tup)
  */
 
 static PGresult *
-makePGresult(PGconn * conn, char *pname)
+makePGresult(PGconn *conn, char *pname)
 {
 	PGresult   *result;
 	int			id;
@@ -406,9 +406,9 @@ makePGresult_badResponse_return:
  */
 
 static void
-process_response_from_backend(FILE * pfin, FILE * pfout, FILE * pfdebug,
-							  PGconn * conn,
-							  PGresult ** result_p, char *const reason)
+process_response_from_backend(FILE *pfin, FILE *pfout, FILE *pfdebug,
+							  PGconn *conn,
+							  PGresult **result_p, char *const reason)
 {
 
 	int			id;
@@ -630,7 +630,7 @@ process_response_from_backend(FILE * pfin, FILE * pfout, FILE * pfdebug,
  */
 
 PGresult   *
-PQexec(PGconn * conn, const char *query)
+PQexec(PGconn *conn, const char *query)
 {
 	PGresult   *result;
 	char		buffer[MAX_MESSAGE_LEN];
@@ -692,7 +692,7 @@ PQexec(PGconn * conn, const char *query)
  */
 
 PGnotify   *
-PQnotifies(PGconn * conn)
+PQnotifies(PGconn *conn)
 {
 	Dlelem	   *e;
 
@@ -727,7 +727,7 @@ PQnotifies(PGconn * conn)
  *		1 in other cases
  */
 int
-PQgetline(PGconn * conn, char *s, int maxlen)
+PQgetline(PGconn *conn, char *s, int maxlen)
 {
 	int			c = '\0';
 
@@ -764,7 +764,7 @@ PQgetline(PGconn * conn, char *s, int maxlen)
  *
  */
 void
-PQputline(PGconn * conn, const char *s)
+PQputline(PGconn *conn, const char *s)
 {
 	if (conn && (conn->Pfout))
 	{
@@ -783,7 +783,7 @@ PQputline(PGconn * conn, const char *s)
  *		1 on failure
  */
 int
-PQendcopy(PGconn * conn)
+PQendcopy(PGconn *conn)
 {
 	FILE	   *pfin,
 			   *pfdebug;
@@ -819,7 +819,7 @@ PQendcopy(PGconn * conn)
 
 /* simply send out max-length number of filler characters to fp */
 static void
-fill(int length, int max, char filler, FILE * fp)
+fill(int length, int max, char filler, FILE *fp)
 {
 	int			count;
 	char		filltmp[2];
@@ -838,8 +838,8 @@ fill(int length, int max, char filler, FILE * fp)
  * kept for backward compatibility
  */
 void
-PQdisplayTuples(PGresult * res,
-				FILE * fp,		/* where to send the output */
+PQdisplayTuples(PGresult *res,
+				FILE *fp,		/* where to send the output */
 				int fillAlign,	/* pad the fields with spaces */
 				const char *fieldSep,	/* field separator */
 				int printHeader,/* display headers? */
@@ -934,8 +934,8 @@ PQdisplayTuples(PGresult * res,
  *
  */
 void
-PQprintTuples(PGresult * res,
-			  FILE * fout,		/* output stream */
+PQprintTuples(PGresult *res,
+			  FILE *fout,		/* output stream */
 			  int PrintAttNames,/* print attribute names or not */
 			  int TerseOutput,	/* delimiter bars or not? */
 			  int colWidth		/* width of column, if 0, use variable
@@ -1014,12 +1014,12 @@ PQprintTuples(PGresult * res,
 
 
 static void
-do_field(PQprintOpt * po, PGresult * res,
+do_field(PQprintOpt *po, PGresult *res,
 		 const int i, const int j, char *buf, const int fs_len,
 		 char *fields[],
 		 const int nFields, char *fieldNames[],
 		 unsigned char fieldNotNum[], int fieldMax[],
-		 const int fieldMaxLen, FILE * fout
+		 const int fieldMaxLen, FILE *fout
 )
 {
 
@@ -1114,9 +1114,9 @@ do_field(PQprintOpt * po, PGresult * res,
 
 
 static char *
-do_header(FILE * fout, PQprintOpt * po, const int nFields, int fieldMax[],
+do_header(FILE *fout, PQprintOpt *po, const int nFields, int fieldMax[],
 		  char *fieldNames[], unsigned char fieldNotNum[],
-		  const int fs_len, PGresult * res)
+		  const int fs_len, PGresult *res)
 {
 
 	int			j;				/* for loop index */
@@ -1202,7 +1202,7 @@ do_header(FILE * fout, PQprintOpt * po, const int nFields, int fieldMax[],
 
 
 static void
-output_row(FILE * fout, PQprintOpt * po, const int nFields, char *fields[],
+output_row(FILE *fout, PQprintOpt *po, const int nFields, char *fields[],
 		   unsigned char fieldNotNum[], int fieldMax[], char *border,
 		   const int row_index)
 {
@@ -1257,9 +1257,9 @@ output_row(FILE * fout, PQprintOpt * po, const int nFields, char *fields[],
  */
 
 void
-PQprint(FILE * fout,
-		PGresult * res,
-		PQprintOpt * po
+PQprint(FILE *fout,
+		PGresult *res,
+		PQprintOpt *po
 )
 {
 	int			nFields;
@@ -1502,12 +1502,12 @@ PQprint(FILE * fout,
  */
 
 PGresult   *
-PQfn(PGconn * conn,
+PQfn(PGconn *conn,
 	 int fnid,
 	 int *result_buf,
 	 int *actual_result_len,
 	 int result_is_int,
-	 PQArgBlock * args,
+	 PQArgBlock *args,
 	 int nargs)
 {
 	FILE	   *pfin,
@@ -1609,7 +1609,7 @@ PQfn(PGconn * conn,
 /* ====== accessor funcs for PGresult ======== */
 
 ExecStatusType
-PQresultStatus(PGresult * res)
+PQresultStatus(PGresult *res)
 {
 	if (!res)
 	{
@@ -1621,7 +1621,7 @@ PQresultStatus(PGresult * res)
 }
 
 int
-PQntuples(PGresult * res)
+PQntuples(PGresult *res)
 {
 	if (!res)
 	{
@@ -1632,7 +1632,7 @@ PQntuples(PGresult * res)
 }
 
 int
-PQnfields(PGresult * res)
+PQnfields(PGresult *res)
 {
 	if (!res)
 	{
@@ -1646,7 +1646,7 @@ PQnfields(PGresult * res)
    returns NULL if the field_num is invalid
 */
 char	   *
-PQfname(PGresult * res, int field_num)
+PQfname(PGresult *res, int field_num)
 {
 	if (!res)
 	{
@@ -1673,7 +1673,7 @@ PQfname(PGresult * res, int field_num)
    returns -1 on a bad field name
 */
 int
-PQfnumber(PGresult * res, const char *field_name)
+PQfnumber(PGresult *res, const char *field_name)
 {
 	int			i;
 
@@ -1698,7 +1698,7 @@ PQfnumber(PGresult * res, const char *field_name)
 }
 
 Oid
-PQftype(PGresult * res, int field_num)
+PQftype(PGresult *res, int field_num)
 {
 	if (!res)
 	{
@@ -1721,7 +1721,7 @@ PQftype(PGresult * res, int field_num)
 }
 
 int2
-PQfsize(PGresult * res, int field_num)
+PQfsize(PGresult *res, int field_num)
 {
 	if (!res)
 	{
@@ -1744,7 +1744,7 @@ PQfsize(PGresult * res, int field_num)
 }
 
 char	   *
-PQcmdStatus(PGresult * res)
+PQcmdStatus(PGresult *res)
 {
 	if (!res)
 	{
@@ -1761,7 +1761,7 @@ PQcmdStatus(PGresult * res)
 */
 static char oidStatus[32] = {0};
 const char *
-PQoidStatus(PGresult * res)
+PQoidStatus(PGresult *res)
 {
 	if (!res)
 	{
@@ -1791,7 +1791,7 @@ PQoidStatus(PGresult * res)
 	of inserted/affected tuples, if not, return ""
 */
 const char *
-PQcmdTuples(PGresult * res)
+PQcmdTuples(PGresult *res)
 {
 	if (!res)
 	{
@@ -1841,7 +1841,7 @@ PQcmdTuples(PGresult * res)
 	if res is not binary, a null-terminated ASCII string is returned.
 */
 char	   *
-PQgetvalue(PGresult * res, int tup_num, int field_num)
+PQgetvalue(PGresult *res, int tup_num, int field_num)
 {
 	if (!res)
 	{
@@ -1876,7 +1876,7 @@ PQgetvalue(PGresult * res, int tup_num, int field_num)
 	 NOT include the size field of the varlena.
 */
 int
-PQgetlength(PGresult * res, int tup_num, int field_num)
+PQgetlength(PGresult *res, int tup_num, int field_num)
 {
 	if (!res)
 	{
@@ -1903,7 +1903,7 @@ PQgetlength(PGresult * res, int tup_num, int field_num)
 	 returns the null status of a field value.
 */
 int
-PQgetisnull(PGresult * res, int tup_num, int field_num)
+PQgetisnull(PGresult *res, int tup_num, int field_num)
 {
 	if (!res)
 	{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.6 1997/09/08 20:55:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.7 1997/09/08 21:43:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecNestLoop(NestLoop * node, Plan * parent)
+ExecNestLoop(NestLoop *node, Plan *parent)
 {
 	NestLoopState *nlstate;
 	Plan	   *innerPlan;
@@ -86,7 +86,7 @@ ExecNestLoop(NestLoop * node, Plan * parent)
 	 */
 	econtext = nlstate->jstate.cs_ExprContext;
 
-	/* ----------------		  * get the current outer tuple
+	/* ----------------			* get the current outer tuple
 	 * ----------------
 	 */
 	outerTupleSlot = nlstate->jstate.cs_OuterTupleSlot;
@@ -265,7 +265,7 @@ ExecNestLoop(NestLoop * node, Plan * parent)
  * ----------------------------------------------------------------
  */
 bool
-ExecInitNestLoop(NestLoop * node, EState * estate, Plan * parent)
+ExecInitNestLoop(NestLoop *node, EState *estate, Plan *parent)
 {
 	NestLoopState *nlstate;
 
@@ -331,7 +331,7 @@ ExecInitNestLoop(NestLoop * node, EState * estate, Plan * parent)
 }
 
 int
-ExecCountSlotsNestLoop(NestLoop * node)
+ExecCountSlotsNestLoop(NestLoop *node)
 {
 	return ExecCountSlotsNode(outerPlan(node)) +
 	ExecCountSlotsNode(innerPlan(node)) +
@@ -345,7 +345,7 @@ ExecCountSlotsNestLoop(NestLoop * node)
  * ----------------------------------------------------------------
  */
 void
-ExecEndNestLoop(NestLoop * node)
+ExecEndNestLoop(NestLoop *node)
 {
 	NestLoopState *nlstate;
 

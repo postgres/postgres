@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.5 1997/09/08 02:24:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.6 1997/09/08 21:45:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,8 +47,8 @@
 
 /* local funcs */
 static int
-xfunc_card_unreferenced(Query * queryInfo,
-						Expr * clause, Relid referenced);
+xfunc_card_unreferenced(Query *queryInfo,
+						Expr *clause, Relid referenced);
 
 */
 
@@ -146,11 +146,11 @@ xfunc_trypullup(Rel rel)
  **			  XFUNC_JOINPRD if a secondary join predicate is to be pulled up
  */
 int
-xfunc_shouldpull(Query * queryInfo,
+xfunc_shouldpull(Query *queryInfo,
 				 Path childpath,
 				 JoinPath parentpath,
 				 int whichchild,
-				 CInfo * maxcinfopt)	/* Out: pointer to clause to
+				 CInfo *maxcinfopt)		/* Out: pointer to clause to
 										 * pullup */
 {
 	LispValue	clauselist,
@@ -231,8 +231,8 @@ xfunc_shouldpull(Query * queryInfo,
 			  || (!is_join(childpath)
 				  && (whichchild == INNER)
 				  && IsA(parentpath, JoinPath)
-				  && !IsA(parentpath, HashPath)
-				  && !IsA(parentpath, MergePath)))))
+				  &&!IsA(parentpath, HashPath)
+				  &&!IsA(parentpath, MergePath)))))
 		{
 
 			*maxcinfopt = maxcinfo;
@@ -267,7 +267,7 @@ xfunc_shouldpull(Query * queryInfo,
  ** Now returns a pointer to the new pulled-up CInfo. -- JMH, 11/18/92
  */
 CInfo
-xfunc_pullup(Query * queryInfo,
+xfunc_pullup(Query *queryInfo,
 			 Path childpath,
 			 JoinPath parentpath,
 			 CInfo cinfo,		/* clause to pull up */
@@ -360,7 +360,7 @@ xfunc_pullup(Query * queryInfo,
  ** calculate (selectivity-1)/cost.
  */
 Cost
-xfunc_rank(Query * queryInfo, LispValue clause)
+xfunc_rank(Query *queryInfo, LispValue clause)
 {
 	Cost		selec = compute_clause_selec(queryInfo, clause, LispNil);
 	Cost		cost = xfunc_expense(queryInfo, clause);
@@ -379,7 +379,7 @@ xfunc_rank(Query * queryInfo, LispValue clause)
  ** referenced in the clause.
  */
 Cost
-xfunc_expense(Query * queryInfo, clause)
+xfunc_expense(Query *queryInfo, clause)
 LispValue	clause;
 {
 	Cost		cost = xfunc_local_expense(clause);
@@ -400,7 +400,7 @@ LispValue	clause;
  **    Find global expense of a join clause
  */
 Cost
-xfunc_join_expense(Query * queryInfo, JoinPath path, int whichchild)
+xfunc_join_expense(Query *queryInfo, JoinPath path, int whichchild)
 {
 	LispValue	primjoinclause = xfunc_primary_join(path);
 
@@ -435,7 +435,7 @@ xfunc_local_expense(LispValue clause)
 	LispValue	tmpclause;
 
 	/* First handle the base case */
-	if (IsA(clause, Const) || IsA(clause, Var) || IsA(clause, Param))
+	if (IsA(clause, Const) ||IsA(clause, Var) ||IsA(clause, Param))
 		return (0);
 	/* now other stuff */
 	else if (IsA(clause, Iter))
@@ -519,7 +519,7 @@ xfunc_func_expense(LispValue node, LispValue args)
 		LispValue	tmpplan;
 		List		planlist;
 
-		if (IsA(node, Oper) || get_func_planlist((Func) node) == LispNil)
+		if (IsA(node, Oper) ||get_func_planlist((Func) node) == LispNil)
 		{
 			Oid		   *argOidVect;		/* vector of argtypes */
 			char	   *pq_src; /* text of PQ function */
@@ -735,7 +735,7 @@ exit:
  ** for joins).
  */
 static Count
-xfunc_card_unreferenced(Query * queryInfo,
+xfunc_card_unreferenced(Query *queryInfo,
 						LispValue clause, Relid referenced)
 {
 	Relid		unreferenced,
@@ -763,7 +763,7 @@ xfunc_card_unreferenced(Query * queryInfo,
  **   multiple together cardinalities of a list relations.
  */
 Count
-xfunc_card_product(Query * queryInfo, Relid relids)
+xfunc_card_product(Query *queryInfo, Relid relids)
 {
 	LispValue	cinfonode;
 	LispValue	temp;
@@ -813,7 +813,7 @@ xfunc_find_references(LispValue clause)
 	/* Base cases */
 	if (IsA(clause, Var))
 		return (lispCons(lfirst(get_varid((Var) clause)), LispNil));
-	else if (IsA(clause, Const) || IsA(clause, Param))
+	else if (IsA(clause, Const) ||IsA(clause, Param))
 		return ((List) LispNil);
 
 	/* recursion */
@@ -929,7 +929,7 @@ xfunc_primary_join(JoinPath pathnode)
  **   get the expensive function costs of the path
  */
 Cost
-xfunc_get_path_cost(Query * queryInfo, Path pathnode)
+xfunc_get_path_cost(Query *queryInfo, Path pathnode)
 {
 	Cost		cost = 0;
 	LispValue	tmplist;
@@ -1048,7 +1048,7 @@ xfunc_total_path_cost(JoinPath pathnode)
 	}
 	else if (IsA(pathnode, HashPath))
 	{
-		HashPath	hashnode = (HashPath) pathnode;
+		HashPath hashnode = (HashPath) pathnode;
 
 		cost += cost_hashjoin(get_path_cost((Path) get_outerjoinpath(hashnode)),
 					   get_path_cost((Path) get_innerjoinpath(hashnode)),
@@ -1153,7 +1153,7 @@ xfunc_fixvars(LispValue clause, /* clause being pulled up */
 	TargetEntry *tle;			/* tlist member corresponding to var */
 
 
-	if (IsA(clause, Const) || IsA(clause, Param))
+	if (IsA(clause, Const) ||IsA(clause, Param))
 		return;
 	else if (IsA(clause, Var))
 	{
@@ -1261,7 +1261,7 @@ xfunc_disjunct_sort(LispValue clause_list)
  ** arg1 and arg2 are really pointers to disjuncts
  */
 int
-xfunc_disjunct_compare(Query * queryInfo, void *arg1, void *arg2)
+xfunc_disjunct_compare(Query *queryInfo, void *arg1, void *arg2)
 {
 	LispValue	disjunct1 = *(LispValue *) arg1;
 	LispValue	disjunct2 = *(LispValue *) arg2;
@@ -1436,11 +1436,11 @@ xfunc_LispRemove(LispValue foo, List bar)
  **   Just like _copyRel, but doesn't copy the paths
  */
 bool
-xfunc_copyrel(Rel from, Rel * to)
+xfunc_copyrel(Rel from, Rel *to)
 {
 	Rel			newnode;
 
-	Pointer(*alloc) () = palloc;
+	Pointer		(*alloc) () = palloc;
 
 	/* COPY_CHECKARGS() */
 	if (to == NULL)

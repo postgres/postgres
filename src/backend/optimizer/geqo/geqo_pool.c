@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_pool.c,v 1.3 1997/09/08 02:24:06 momjian Exp $
+ * $Id: geqo_pool.c,v 1.4 1997/09/08 21:44:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ alloc_pool(int pool_size, int string_length)
  *		deallocates memory for GA pool
  */
 void
-free_pool(Pool * pool)
+free_pool(Pool *pool)
 {
 	Chromosome *chromo;
 	int			i;
@@ -102,7 +102,7 @@ free_pool(Pool * pool)
  *		initialize genetic pool
  */
 void
-random_init_pool(Query * root, Pool * pool, int strt, int stp)
+random_init_pool(Query *root, Pool *pool, int strt, int stp)
 {
 	Chromosome *chromo = (Chromosome *) pool->data;
 	int			i;
@@ -125,7 +125,7 @@ random_init_pool(Query * root, Pool * pool, int strt, int stp)
  *	 maybe you have to change compare() for different ordering ...
  */
 void
-sort_pool(Pool * pool)
+sort_pool(Pool *pool)
 {
 	pg_qsort(pool->data, pool->size, sizeof(Chromosome), compare);
 
@@ -170,7 +170,7 @@ alloc_chromo(int string_length)
  *	  deallocates a chromosome and string space
  */
 void
-free_chromo(Chromosome * chromo)
+free_chromo(Chromosome *chromo)
 {
 	pfree(chromo->string);
 	pfree(chromo);
@@ -181,7 +181,7 @@ free_chromo(Chromosome * chromo)
  *	 assumes best->worst = smallest->largest
  */
 void
-spread_chromo(Chromosome * chromo, Pool * pool)
+spread_chromo(Chromosome *chromo, Pool *pool)
 {
 	int			top,
 				mid,

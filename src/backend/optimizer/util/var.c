@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.5 1997/09/08 02:25:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.6 1997/09/08 21:45:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
  *		(though it currently is, see primnodes.h)
  */
 List	   *
-pull_varnos(Node * me)
+pull_varnos(Node *me)
 {
 	List	   *i,
 			   *result = NIL;
@@ -75,7 +75,7 @@ pull_varnos(Node * me)
  *	  Returns true if any varnode found.
  */
 bool
-contain_var_clause(Node * clause)
+contain_var_clause(Node *clause)
 {
 	if (clause == NULL)
 		return FALSE;
@@ -144,7 +144,7 @@ contain_var_clause(Node * clause)
  *	  Returns list of varnodes found.
  */
 List	   *
-pull_var_clause(Node * clause)
+pull_var_clause(Node *clause)
 {
 	List	   *retval = NIL;
 
@@ -204,9 +204,9 @@ pull_var_clause(Node * clause)
  *		Returns t iff two var nodes correspond to the same attribute.
  */
 bool
-var_equal(Var * var1, Var * var2)
+var_equal(Var *var1, Var *var2)
 {
-	if (IsA(var1, Var) && IsA(var2, Var) &&
+	if (IsA(var1, Var) &&IsA(var2, Var) &&
 		(((Var *) var1)->varno == ((Var *) var2)->varno) &&
 		(((Var *) var1)->vartype == ((Var *) var2)->vartype) &&
 		(((Var *) var1)->varattno == ((Var *) var2)->varattno))

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.20 1997/09/08 02:25:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.21 1997/09/08 21:46:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@
 #include "nodes/makefuncs.h"
 
 static void
-checkTargetTypes(ParseState * pstate, char *target_colname,
+checkTargetTypes(ParseState *pstate, char *target_colname,
 				 char *refname, char *colname);
 
 Oid		   *param_type_info;
@@ -47,7 +47,7 @@ int			pfunc_num_args;
 
 /* given refname, return a pointer to the range table entry */
 RangeTblEntry *
-refnameRangeTableEntry(List * rtable, char *refname)
+refnameRangeTableEntry(List *rtable, char *refname)
 {
 	List	   *temp;
 
@@ -63,7 +63,7 @@ refnameRangeTableEntry(List * rtable, char *refname)
 
 /* given refname, return id of variable; position starts with 1 */
 int
-refnameRangeTablePosn(List * rtable, char *refname)
+refnameRangeTablePosn(List *rtable, char *refname)
 {
 	int			index;
 	List	   *temp;
@@ -84,7 +84,7 @@ refnameRangeTablePosn(List * rtable, char *refname)
  * returns range entry if found, else NULL
  */
 RangeTblEntry *
-colnameRangeTableEntry(ParseState * pstate, char *colname)
+colnameRangeTableEntry(ParseState *pstate, char *colname)
 {
 	List	   *et;
 	List	   *rtable;
@@ -124,11 +124,11 @@ colnameRangeTableEntry(ParseState * pstate, char *colname)
  * if pstate null
 */
 RangeTblEntry *
-addRangeTableEntry(ParseState * pstate,
+addRangeTableEntry(ParseState *pstate,
 				   char *relname,
 				   char *refname,
 				   bool inh, bool inFromCl,
-				   TimeRange * timeRange)
+				   TimeRange *timeRange)
 {
 	Relation	relation;
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
@@ -180,7 +180,7 @@ addRangeTableEntry(ParseState * pstate,
  *	  assumes reldesc caching works
  */
 List	   *
-expandAll(ParseState * pstate, char *relname, char *refname, int *this_resno)
+expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
 {
 	Relation	rdesc;
 	List	   *te_tail = NIL,
@@ -305,7 +305,7 @@ makeTimeRange(char *datestring1,
 }
 
 static void
-disallow_setop(char *op, Type optype, Node * operand)
+disallow_setop(char *op, Type optype, Node *operand)
 {
 	if (operand == NULL)
 		return;
@@ -321,7 +321,7 @@ disallow_setop(char *op, Type optype, Node * operand)
 
 static Node *
 make_operand(char *opname,
-			 Node * tree,
+			 Node *tree,
 			 Oid orig_typeId,
 			 Oid true_typeId)
 {
@@ -374,7 +374,7 @@ make_operand(char *opname,
 
 
 Expr	   *
-make_op(char *opname, Node * ltree, Node * rtree)
+make_op(char *opname, Node *ltree, Node *rtree)
 {
 	Oid			ltypeId,
 				rtypeId;
@@ -525,7 +525,7 @@ find_atttype(Oid relid, char *attrname)
 
 
 Var		   *
-make_var(ParseState * pstate, char *refname, char *attrname, Oid * type_id)
+make_var(ParseState *pstate, char *refname, char *attrname, Oid *type_id)
 {
 	Var		   *varnode;
 	int			vnum,
@@ -568,8 +568,8 @@ make_var(ParseState * pstate, char *refname, char *attrname, Oid * type_id)
  *	indirection is a list of A_Indices
  */
 ArrayRef   *
-make_array_ref(Node * expr,
-			   List * indirection)
+make_array_ref(Node *expr,
+			   List *indirection)
 {
 	Oid			typearray;
 	HeapTuple	type_tuple;
@@ -596,7 +596,7 @@ make_array_ref(Node * expr,
 	if (type_struct_array->typelem == InvalidOid)
 	{
 		elog(WARN, "make_array_ref: type %s is not an array",
-			 (Name) & (type_struct_array->typname.data[0]));
+			 (Name) &(type_struct_array->typname.data[0]));
 	}
 
 	/* get the type tuple for the element type */
@@ -650,10 +650,10 @@ make_array_ref(Node * expr,
 }
 
 ArrayRef   *
-make_array_set(Expr * target_expr,
-			   List * upperIndexpr,
-			   List * lowerIndexpr,
-			   Expr * expr)
+make_array_set(Expr *target_expr,
+			   List *upperIndexpr,
+			   List *lowerIndexpr,
+			   Expr *expr)
 {
 	Oid			typearray;
 	HeapTuple	type_tuple;
@@ -678,7 +678,7 @@ make_array_set(Expr * target_expr,
 	if (type_struct_array->typelem == InvalidOid)
 	{
 		elog(WARN, "make_array_ref: type %s is not an array",
-			 (Name) & (type_struct_array->typname.data[0]));
+			 (Name) &(type_struct_array->typname.data[0]));
 	}
 	/* get the type tuple for the element type */
 	type_tuple = SearchSysCacheTuple(TYPOID,
@@ -724,7 +724,7 @@ make_array_set(Expr * target_expr,
  * eventually, produces a "const" lisp-struct as per nodedefs.cl
  */
 Const	   *
-make_const(Value * value)
+make_const(Value *value)
 {
 	Type		tp;
 	Datum		val;
@@ -786,7 +786,7 @@ make_const(Value * value)
  * used in postquel functions
  */
 void
-param_type_init(Oid * typev, int nargs)
+param_type_init(Oid *typev, int nargs)
 {
 	pfunc_num_args = nargs;
 	param_type_info = typev;
@@ -805,7 +805,7 @@ param_type(int t)
  *	  use column names from insert
  */
 void
-handleTargetColname(ParseState * pstate, char **resname,
+handleTargetColname(ParseState *pstate, char **resname,
 					char *refname, char *colname)
 {
 	if (pstate->p_is_insert)
@@ -829,7 +829,7 @@ handleTargetColname(ParseState * pstate, char **resname,
  *	  checks value and target column types
  */
 static void
-checkTargetTypes(ParseState * pstate, char *target_colname,
+checkTargetTypes(ParseState *pstate, char *target_colname,
 				 char *refname, char *colname)
 {
 	Oid			attrtype_id,

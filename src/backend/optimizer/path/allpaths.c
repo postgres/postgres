@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.12 1997/09/08 02:24:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.13 1997/09/08 21:44:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,8 +43,8 @@ bool		_use_geqo_ = false;
 int32		_use_geqo_rels_ = GEQO_RELS;
 
 
-static void find_rel_paths(Query * root, List * rels);
-static List *find_join_paths(Query * root, List * outer_rels, int levels_left);
+static void find_rel_paths(Query *root, List *rels);
+static List *find_join_paths(Query *root, List *outer_rels, int levels_left);
 
 /*
  * find-paths--
@@ -54,7 +54,7 @@ static List *find_join_paths(Query * root, List * outer_rels, int levels_left);
  * 'rels' is the list of single relation entries appearing in the query
  */
 List	   *
-find_paths(Query * root, List * rels)
+find_paths(Query *root, List *rels)
 {
 	int			levels_left;
 
@@ -102,7 +102,7 @@ find_paths(Query * root, List * rels)
  *	  MODIFIES: rels
  */
 static void
-find_rel_paths(Query * root, List * rels)
+find_rel_paths(Query *root, List *rels)
 {
 	List	   *temp;
 	Rel		   *rel;
@@ -172,7 +172,7 @@ find_rel_paths(Query * root, List * rels)
  * the result of joining all the original relations togehter.
  */
 static List *
-find_join_paths(Query * root, List * outer_rels, int levels_left)
+find_join_paths(Query *root, List *outer_rels, int levels_left)
 {
 	List	   *x;
 	List	   *new_rels;
@@ -281,10 +281,10 @@ find_join_paths(Query * root, List * outer_rels, int levels_left)
 
 #ifdef OPTIMIZER_DEBUG
 static void
-print_joinclauses(Query * root, List * clauses)
+print_joinclauses(Query *root, List *clauses)
 {
 	List	   *l;
-	extern void print_expr(Node * expr, List * rtable); /* in print.c */
+	extern void print_expr(Node *expr, List *rtable);	/* in print.c */
 
 	foreach(l, clauses)
 	{
@@ -297,7 +297,7 @@ print_joinclauses(Query * root, List * clauses)
 }
 
 static void
-print_path(Query * root, Path * path, int indent)
+print_path(Query *root, Path *path, int indent)
 {
 	char	   *ptype = NULL;
 	JoinPath   *jp;
@@ -404,7 +404,7 @@ print_path(Query * root, Path * path, int indent)
 }
 
 static void
-debug_print_rel(Query * root, Rel * rel)
+debug_print_rel(Query *root, Rel *rel)
 {
 	List	   *l;
 

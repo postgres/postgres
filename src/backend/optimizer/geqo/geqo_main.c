@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_main.c,v 1.5 1997/09/08 02:23:55 momjian Exp $
+ * $Id: geqo_main.c,v 1.6 1997/09/08 21:44:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@
  */
 
 Rel		   *
-geqo(Query * root)
+geqo(Query *root)
 {
 	int			generation;
 	Chromosome *momma;

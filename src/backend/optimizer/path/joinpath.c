@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.4 1997/09/08 02:24:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.5 1997/09/08 21:44:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,21 +29,21 @@
 #include "optimizer/cost.h"		/* for _enable_{hashjoin,
 								 * _enable_mergesort} */
 
-static Path *best_innerjoin(List * join_paths, List * outer_relid);
+static Path *best_innerjoin(List *join_paths, List *outer_relid);
 static List *
-sort_inner_and_outer(Rel * joinrel, Rel * outerrel, Rel * innerrel,
-					 List * mergeinfo_list);
+sort_inner_and_outer(Rel *joinrel, Rel *outerrel, Rel *innerrel,
+					 List *mergeinfo_list);
 static List *
-match_unsorted_outer(Rel * joinrel, Rel * outerrel, Rel * innerrel,
-	 List * outerpath_list, Path * cheapest_inner, Path * best_innerjoin,
-					 List * mergeinfo_list);
+match_unsorted_outer(Rel *joinrel, Rel *outerrel, Rel *innerrel,
+		List *outerpath_list, Path *cheapest_inner, Path *best_innerjoin,
+					 List *mergeinfo_list);
 static List *
-match_unsorted_inner(Rel * joinrel, Rel * outerrel, Rel * innerrel,
-					 List * innerpath_list, List * mergeinfo_list);
-static bool EnoughMemoryForHashjoin(Rel * hashrel);
+match_unsorted_inner(Rel *joinrel, Rel *outerrel, Rel *innerrel,
+					 List *innerpath_list, List *mergeinfo_list);
+static bool EnoughMemoryForHashjoin(Rel *hashrel);
 static List *
-hash_inner_and_outer(Rel * joinrel, Rel * outerrel, Rel * innerrel,
-					 List * hashinfo_list);
+hash_inner_and_outer(Rel *joinrel, Rel *outerrel, Rel *innerrel,
+					 List *hashinfo_list);
 
 /*
  * find-all-join-paths--
@@ -67,7 +67,7 @@ hash_inner_and_outer(Rel * joinrel, Rel * outerrel, Rel * innerrel,
  * It does a destructive modification.
  */
 void
-find_all_join_paths(Query * root, List * joinrels)
+find_all_join_paths(Query *root, List *joinrels)
 {
 	List	   *mergeinfo_list = NIL;
 	List	   *hashinfo_list = NIL;
@@ -206,7 +206,7 @@ find_all_join_paths(Query * root, List * joinrels)
  * Returns the pathnode of the selected path.
  */
 static Path *
-best_innerjoin(List * join_paths, List * outer_relids)
+best_innerjoin(List *join_paths, List *outer_relids)
 {
 	Path	   *cheapest = (Path *) NULL;
 	List	   *join_path;
@@ -240,10 +240,10 @@ best_innerjoin(List * join_paths, List * outer_relids)
  * Returns a list of mergesort paths.
  */
 static List *
-sort_inner_and_outer(Rel * joinrel,
-					 Rel * outerrel,
-					 Rel * innerrel,
-					 List * mergeinfo_list)
+sort_inner_and_outer(Rel *joinrel,
+					 Rel *outerrel,
+					 Rel *innerrel,
+					 List *mergeinfo_list)
 {
 	List	   *ms_list = NIL;
 	MInfo	   *xmergeinfo = (MInfo *) NULL;
@@ -318,13 +318,13 @@ sort_inner_and_outer(Rel * joinrel,
  * Returns a list of possible join path nodes.
  */
 static List *
-match_unsorted_outer(Rel * joinrel,
-					 Rel * outerrel,
-					 Rel * innerrel,
-					 List * outerpath_list,
-					 Path * cheapest_inner,
-					 Path * best_innerjoin,
-					 List * mergeinfo_list)
+match_unsorted_outer(Rel *joinrel,
+					 Rel *outerrel,
+					 Rel *innerrel,
+					 List *outerpath_list,
+					 Path *cheapest_inner,
+					 Path *best_innerjoin,
+					 List *mergeinfo_list)
 {
 	Path	   *outerpath = (Path *) NULL;
 	List	   *jp_list = NIL;
@@ -485,11 +485,11 @@ match_unsorted_outer(Rel * joinrel,
  * Returns a list of possible merge paths.
  */
 static List *
-match_unsorted_inner(Rel * joinrel,
-					 Rel * outerrel,
-					 Rel * innerrel,
-					 List * innerpath_list,
-					 List * mergeinfo_list)
+match_unsorted_inner(Rel *joinrel,
+					 Rel *outerrel,
+					 Rel *innerrel,
+					 List *innerpath_list,
+					 List *mergeinfo_list)
 {
 	Path	   *innerpath = (Path *) NULL;
 	List	   *mp_list = NIL;
@@ -583,7 +583,7 @@ match_unsorted_inner(Rel * joinrel,
 }
 
 static bool
-EnoughMemoryForHashjoin(Rel * hashrel)
+EnoughMemoryForHashjoin(Rel *hashrel)
 {
 	int			ntuples;
 	int			tupsize;
@@ -617,10 +617,10 @@ EnoughMemoryForHashjoin(Rel * hashrel)
  * Returns a list of hashjoin paths.
  */
 static List *
-hash_inner_and_outer(Rel * joinrel,
-					 Rel * outerrel,
-					 Rel * innerrel,
-					 List * hashinfo_list)
+hash_inner_and_outer(Rel *joinrel,
+					 Rel *outerrel,
+					 Rel *innerrel,
+					 List *hashinfo_list)
 {
 	HInfo	   *xhashinfo = (HInfo *) NULL;
 	List	   *hjoin_list = NIL;

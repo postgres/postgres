@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.22 1997/09/08 02:40:36 momjian Exp $
+ * $Id: libpq-fe.h,v 1.23 1997/09/08 21:55:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@ extern		"C"
 	{
 		CONNECTION_OK,
 		CONNECTION_BAD
-	}			ConnStatusType;
+	} ConnStatusType;
 
 	typedef enum
 	{
@@ -49,7 +49,7 @@ extern		"C"
 		PGRES_NONFATAL_ERROR,
 		PGRES_FATAL_ERROR
 
-	}			ExecStatusType;
+	} ExecStatusType;
 
 /* string descriptions of the ExecStatusTypes */
 	extern const char *pgresStatus[];
@@ -79,14 +79,14 @@ extern		"C"
 			int		   *ptr;	/* can't use void (dec compiler barfs)	 */
 			int			integer;
 		}			u;
-	}			PQArgBlock;
+	} PQArgBlock;
 
 	typedef struct pgresAttDesc
 	{
 		char	   *name;		/* type name */
 		Oid			adtid;		/* type id */
 		short		adtsize;	/* type size */
-	}			PGresAttDesc;
+	} PGresAttDesc;
 
 /* use char* for Attribute values,
    ASCII tuples are guaranteed to be null-terminated
@@ -100,14 +100,14 @@ extern		"C"
 	{
 		int			len;		/* length in bytes of the value */
 		char	   *value;		/* actual value */
-	}			PGresAttValue;
+	} PGresAttValue;
 
 	typedef struct pgNotify
 	{
 		char		relname[NAMEDATALEN];		/* name of relation
 												 * containing data */
 		int			be_pid;		/* process id of backend */
-	}			PGnotify;
+	} PGnotify;
 
 	typedef struct pgLobjfuncs
 	{
@@ -120,7 +120,7 @@ extern		"C"
 		Oid			fn_lo_tell; /* OID of backend function lo_tell		*/
 		Oid			fn_lo_read; /* OID of backend function LOread		*/
 		Oid			fn_lo_write;/* OID of backend function LOwrite		*/
-	}			PGlobjfuncs;
+	} PGlobjfuncs;
 
 /* PGconn encapsulates a connection to the backend */
 	typedef struct pg_conn
@@ -147,7 +147,7 @@ extern		"C"
 		char	   *pgauth;
 		PGlobjfuncs *lobjfuncs; /* Backend function OID's for large object
 								 * access */
-	}			PGconn;
+	} PGconn;
 
 #define CMDSTATUS_LEN 40
 
@@ -167,7 +167,7 @@ extern		"C"
 		int			binary;		/* binary tuple values if binary == 1,
 								 * otherwise ASCII */
 		PGconn	   *conn;
-	}			PGresult;
+	} PGresult;
 
 	typedef char pqbool;
 
@@ -224,55 +224,55 @@ extern		"C"
 	extern PGconn *PQsetdb(const char *pghost, const char *pgport, const char *pgoptions,
 								  const char *pgtty, const char *dbName);
 	/* close the current connection and free the PGconn data structure */
-	extern void PQfinish(PGconn * conn);
+	extern void PQfinish(PGconn *conn);
 
 	/*
 	 * close the current connection and restablish a new one with the same
 	 * parameters
 	 */
-	extern void PQreset(PGconn * conn);
+	extern void PQreset(PGconn *conn);
 
-	extern char *PQdb(PGconn * conn);
-	extern char *PQuser(PGconn * conn);
-	extern char *PQhost(PGconn * conn);
-	extern char *PQoptions(PGconn * conn);
-	extern char *PQport(PGconn * conn);
-	extern char *PQtty(PGconn * conn);
-	extern ConnStatusType PQstatus(PGconn * conn);
-	extern char *PQerrorMessage(PGconn * conn);
-	extern void PQtrace(PGconn * conn, FILE * debug_port);
-	extern void PQuntrace(PGconn * conn);
+	extern char *PQdb(PGconn *conn);
+	extern char *PQuser(PGconn *conn);
+	extern char *PQhost(PGconn *conn);
+	extern char *PQoptions(PGconn *conn);
+	extern char *PQport(PGconn *conn);
+	extern char *PQtty(PGconn *conn);
+	extern ConnStatusType PQstatus(PGconn *conn);
+	extern char *PQerrorMessage(PGconn *conn);
+	extern void PQtrace(PGconn *conn, FILE *debug_port);
+	extern void PQuntrace(PGconn *conn);
 
 /* === in fe-exec.c === */
-	extern PGresult *PQexec(PGconn * conn, const char *query);
-	extern int	PQgetline(PGconn * conn, char *string, int length);
-	extern int	PQendcopy(PGconn * conn);
-	extern void PQputline(PGconn * conn, const char *string);
-	extern ExecStatusType PQresultStatus(PGresult * res);
-	extern int	PQntuples(PGresult * res);
-	extern int	PQnfields(PGresult * res);
-	extern char *PQfname(PGresult * res, int field_num);
-	extern int	PQfnumber(PGresult * res, const char *field_name);
-	extern Oid	PQftype(PGresult * res, int field_num);
-	extern short PQfsize(PGresult * res, int field_num);
-	extern char *PQcmdStatus(PGresult * res);
-	extern const char *PQoidStatus(PGresult * res);
-	extern const char *PQcmdTuples(PGresult * res);
-	extern char *PQgetvalue(PGresult * res, int tup_num, int field_num);
-	extern int	PQgetlength(PGresult * res, int tup_num, int field_num);
-	extern int	PQgetisnull(PGresult * res, int tup_num, int field_num);
-	extern void PQclear(PGresult * res);
+	extern PGresult *PQexec(PGconn *conn, const char *query);
+	extern int	PQgetline(PGconn *conn, char *string, int length);
+	extern int	PQendcopy(PGconn *conn);
+	extern void PQputline(PGconn *conn, const char *string);
+	extern ExecStatusType PQresultStatus(PGresult *res);
+	extern int	PQntuples(PGresult *res);
+	extern int	PQnfields(PGresult *res);
+	extern char *PQfname(PGresult *res, int field_num);
+	extern int	PQfnumber(PGresult *res, const char *field_name);
+	extern Oid	PQftype(PGresult *res, int field_num);
+	extern short PQfsize(PGresult *res, int field_num);
+	extern char *PQcmdStatus(PGresult *res);
+	extern const char *PQoidStatus(PGresult *res);
+	extern const char *PQcmdTuples(PGresult *res);
+	extern char *PQgetvalue(PGresult *res, int tup_num, int field_num);
+	extern int	PQgetlength(PGresult *res, int tup_num, int field_num);
+	extern int	PQgetisnull(PGresult *res, int tup_num, int field_num);
+	extern void PQclear(PGresult *res);
 /* PQdisplayTuples() is a better version of PQprintTuples() */
-	extern void PQdisplayTuples(PGresult * res,
-											FILE * fp,	/* where to send the
+	extern void PQdisplayTuples(PGresult *res,
+											FILE *fp,	/* where to send the
 														 * output */
 											int fillAlign,		/* pad the fields with
 																 * spaces */
 											const char *fieldSep,		/* field separator */
 											int printHeader,	/* display headers? */
 											int quiet);
-	extern void PQprintTuples(PGresult * res,
-										  FILE * fout,	/* output stream */
+	extern void PQprintTuples(PGresult *res,
+										  FILE *fout,	/* output stream */
 										  int printAttName,		/* print attribute names
 																 * or not */
 										  int terseOutput,		/* delimiter bars or
@@ -280,17 +280,17 @@ extern		"C"
 										  int width		/* width of column, if
 														 * 0, use variable width */
 	);
-	extern void PQprint(FILE * fout,	/* output stream */
-									PGresult * res,
-									PQprintOpt * ps		/* option structure */
+	extern void PQprint(FILE *fout,		/* output stream */
+									PGresult *res,
+									PQprintOpt *ps		/* option structure */
 	);
-	extern PGnotify *PQnotifies(PGconn * conn);
-	extern PGresult *PQfn(PGconn * conn,
+	extern PGnotify *PQnotifies(PGconn *conn);
+	extern PGresult *PQfn(PGconn *conn,
 									  int fnid,
 									  int *result_buf,
 									  int *result_len,
 									  int result_is_int,
-									  PQArgBlock * args,
+									  PQArgBlock *args,
 									  int nargs);
 /* === in fe-auth.c === */
 	extern MsgType fe_getauthsvc(char *PQerrormsg);
@@ -302,30 +302,30 @@ extern		"C"
    returns 0 if successful
    if debug is non-null, debugging output is sent to that stream
 */
-	extern int	pqGets(char *s, int maxlen, FILE * stream, FILE * debug);
-	extern int	pqGetnchar(char *s, int maxlen, FILE * stream, FILE * debug);
-	extern int	pqPutnchar(const char *s, int maxlen, FILE * stream, FILE * debug);
-	extern int	pqPuts(const char *s, FILE * stream, FILE * debug);
-	extern int	pqGetc(FILE * stream, FILE * debug);
+	extern int	pqGets(char *s, int maxlen, FILE *stream, FILE *debug);
+	extern int	pqGetnchar(char *s, int maxlen, FILE *stream, FILE *debug);
+	extern int	pqPutnchar(const char *s, int maxlen, FILE *stream, FILE *debug);
+	extern int	pqPuts(const char *s, FILE *stream, FILE *debug);
+	extern int	pqGetc(FILE *stream, FILE *debug);
 /* get a n-byte integer from the stream into result */
 /* returns 0 if successful */
-	extern int	pqGetInt(int *result, int bytes, FILE * stream, FILE * debug);
+	extern int	pqGetInt(int *result, int bytes, FILE *stream, FILE *debug);
 /* put a n-byte integer into the stream */
 /* returns 0 if successful */
-	extern int	pqPutInt(const int n, int bytes, FILE * stream, FILE * debug);
-	extern void pqFlush(FILE * stream, FILE * debug);
+	extern int	pqPutInt(const int n, int bytes, FILE *stream, FILE *debug);
+	extern void pqFlush(FILE *stream, FILE *debug);
 
 /* === in fe-lobj.c === */
-	int			lo_open(PGconn * conn, Oid lobjId, int mode);
-	int			lo_close(PGconn * conn, int fd);
-	int			lo_read(PGconn * conn, int fd, char *buf, int len);
-	int			lo_write(PGconn * conn, int fd, char *buf, int len);
-	int			lo_lseek(PGconn * conn, int fd, int offset, int whence);
-	Oid			lo_creat(PGconn * conn, int mode);
-	int			lo_tell(PGconn * conn, int fd);
-	int			lo_unlink(PGconn * conn, Oid lobjId);
-	Oid			lo_import(PGconn * conn, char *filename);
-	int			lo_export(PGconn * conn, Oid lobjId, char *filename);
+	int			lo_open(PGconn *conn, Oid lobjId, int mode);
+	int			lo_close(PGconn *conn, int fd);
+	int			lo_read(PGconn *conn, int fd, char *buf, int len);
+	int			lo_write(PGconn *conn, int fd, char *buf, int len);
+	int			lo_lseek(PGconn *conn, int fd, int offset, int whence);
+	Oid			lo_creat(PGconn *conn, int mode);
+	int			lo_tell(PGconn *conn, int fd);
+	int			lo_unlink(PGconn *conn, Oid lobjId);
+	Oid			lo_import(PGconn *conn, char *filename);
+	int			lo_export(PGconn *conn, Oid lobjId, char *filename);
 /* max length of message to send  */
 #define MAX_MESSAGE_LEN 8193
 

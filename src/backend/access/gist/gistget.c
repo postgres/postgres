@@ -37,7 +37,7 @@ static RetrieveIndexResult gistnext(IndexScanDesc s, ScanDirection dir);
 static ItemPointer gistheapptr(Relation r, ItemPointer itemp);
 static bool
 gistindex_keytest(IndexTuple tuple, TupleDesc tupdesc,
-				  int scanKeySize, ScanKey key, GISTSTATE * giststate,
+				  int scanKeySize, ScanKey key, GISTSTATE *giststate,
 				  Relation r, Page p, OffsetNumber offset);
 
 
@@ -252,7 +252,7 @@ gistindex_keytest(IndexTuple tuple,
 				  TupleDesc tupdesc,
 				  int scanKeySize,
 				  ScanKey key,
-				  GISTSTATE * giststate,
+				  GISTSTATE *giststate,
 				  Relation r,
 				  Page p,
 				  OffsetNumber offset)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/test/examples/Attic/testlo2.c,v 1.4 1997/09/08 02:40:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/test/examples/Attic/testlo2.c,v 1.5 1997/09/08 21:55:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
  *
  */
 Oid
-importFile(PGconn * conn, char *filename)
+importFile(PGconn *conn, char *filename)
 {
 	Oid			lobjId;
 	int			lobj_fd;
@@ -71,7 +71,7 @@ importFile(PGconn * conn, char *filename)
 }
 
 void
-pickout(PGconn * conn, Oid lobjId, int start, int len)
+pickout(PGconn *conn, Oid lobjId, int start, int len)
 {
 	int			lobj_fd;
 	char	   *buf;
@@ -101,7 +101,7 @@ pickout(PGconn * conn, Oid lobjId, int start, int len)
 }
 
 void
-overwrite(PGconn * conn, Oid lobjId, int start, int len)
+overwrite(PGconn *conn, Oid lobjId, int start, int len)
 {
 	int			lobj_fd;
 	char	   *buf;
@@ -140,7 +140,7 @@ overwrite(PGconn * conn, Oid lobjId, int start, int len)
  *
  */
 void
-exportFile(PGconn * conn, Oid lobjId, char *filename)
+exportFile(PGconn *conn, Oid lobjId, char *filename)
 {
 	int			lobj_fd;
 	char		buf[BUFSIZE];
@@ -188,7 +188,7 @@ exportFile(PGconn * conn, Oid lobjId, char *filename)
 }
 
 void
-exit_nicely(PGconn * conn)
+exit_nicely(PGconn *conn)
 {
 	PQfinish(conn);
 	exit(1);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/indexnode.c,v 1.4 1997/09/08 02:24:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/indexnode.c,v 1.5 1997/09/08 21:45:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
 #include "optimizer/pathnode.h" /* where the decls go */
 
 
-static List *find_secondary_index(Query * root, Oid relid);
+static List *find_secondary_index(Query *root, Oid relid);
 
 /*
  * find-relation-indices--
@@ -33,7 +33,7 @@ static List *find_secondary_index(Query * root, Oid relid);
  *
  */
 List	   *
-find_relation_indices(Query * root, Rel * rel)
+find_relation_indices(Query *root, Rel *rel)
 {
 	if (rel->indexed)
 	{
@@ -57,7 +57,7 @@ find_relation_indices(Query * root, Rel * rel)
  *
  */
 static List *
-find_secondary_index(Query * root, Oid relid)
+find_secondary_index(Query *root, Oid relid)
 {
 	IdxInfoRetval indexinfo;
 	List	   *indexes = NIL;

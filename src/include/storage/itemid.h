@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itemid.h,v 1.3 1997/09/08 02:39:02 momjian Exp $
+ * $Id: itemid.h,v 1.4 1997/09/08 21:54:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@ typedef struct ItemIdData
 	/* can be reduced by 2 if necc. */
 				lp_flags:6,		/* flags on tuple */
 				lp_len:13;		/* length of tuple */
-}			ItemIdData;
+} ItemIdData;
 
 typedef struct ItemIdData *ItemId;
 

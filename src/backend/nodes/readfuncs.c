@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.8 1997/09/08 02:23:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.9 1997/09/08 21:44:11 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -54,7 +54,7 @@
 static Datum readDatum(Oid type);
 
 static List *
-toIntList(List * list)
+toIntList(List *list)
 {
 	List	   *l;
 
@@ -128,7 +128,7 @@ _readQuery()
  * ----------------
  */
 static void
-_getPlan(Plan * node)
+_getPlan(Plan *node)
 {
 	char	   *token;
 	int			length;
@@ -155,7 +155,7 @@ _getPlan(Plan * node)
 	else
 	{							/* Disgusting hack until I figure out what
 								 * to do here */
-		node->state = (EState *) ! NULL;
+		node->state = (EState *) !NULL;
 	}
 
 	token = lsptok(NULL, &length);		/* eat :qptargetlist */
@@ -273,7 +273,7 @@ _readAppend()
  * ----------------
  */
 static void
-_getJoin(Join * node)
+_getJoin(Join *node)
 {
 	_getPlan((Plan *) node);
 }
@@ -396,7 +396,7 @@ _readHashJoin()
  * ----------------
  */
 static void
-_getScan(Scan * node)
+_getScan(Scan *node)
 {
 	char	   *token;
 	int			length;

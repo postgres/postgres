@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.7 1997/09/08 02:29:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.8 1997/09/08 21:47:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@
 #include "storage/bufmgr.h"
 #include "access/transam.h"		/* for AmiTransactionId */
 
-static void LRelIdAssign(LRelId * lRelId, Oid dbId, Oid relId);
+static void LRelIdAssign(LRelId *lRelId, Oid dbId, Oid relId);
 
 /* ----------------
  *
@@ -166,7 +166,7 @@ bool
 DatabaseIdIsMyDatabaseId(Oid databaseId)
 {
 	return (bool)
-		(!OidIsValid(databaseId) || databaseId == MyDatabaseId);
+	(!OidIsValid(databaseId) || databaseId == MyDatabaseId);
 }
 
 #endif
@@ -180,7 +180,7 @@ bool
 LRelIdContainsMyDatabaseId(LRelId lRelId)
 {
 	return (bool)
-		(!OidIsValid(lRelId.dbId) || lRelId.dbId == MyDatabaseId);
+	(!OidIsValid(lRelId.dbId) || lRelId.dbId == MyDatabaseId);
 }
 
 #endif
@@ -960,7 +960,7 @@ RelationUnsetLockForExtend(Relation relation)
  * Create an LRelid --- Why not just pass in a pointer to the storage?
  */
 static void
-LRelIdAssign(LRelId * lRelId, Oid dbId, Oid relId)
+LRelIdAssign(LRelId *lRelId, Oid dbId, Oid relId)
 {
 	lRelId->dbId = dbId;
 	lRelId->relId = relId;

@@ -26,7 +26,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.10 1997/09/08 02:39:16 momjian Exp $
+ * $Id: dest.h,v 1.11 1997/09/08 21:54:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ typedef enum
 	RemoteInternal,				/* results sent to frontend process in
 								 * internal (binary) form */
 	SPI							/* results sent to SPI manager */
-}			CommandDest;
+} CommandDest;
 
 
 /* AttrInfo* replaced with TupleDesc, now that TupleDesc also has within it

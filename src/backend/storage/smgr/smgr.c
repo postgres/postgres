@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.10 1997/09/08 02:29:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.11 1997/09/08 21:47:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ typedef struct f_smgr
 	int			(*smgr_truncate) ();
 	int			(*smgr_commit) ();		/* may be NULL */
 	int			(*smgr_abort) ();		/* may be NULL */
-}			f_smgr;
+} f_smgr;
 
 /*
  *	The weird placement of commas in this init block is to keep the compiler

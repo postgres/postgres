@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/oidname.c,v 1.6 1997/09/08 02:30:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/oidname.c,v 1.7 1997/09/08 21:48:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,32 +61,32 @@ bool
 oidnamelt(OidName o1, OidName o2)
 {
 	return (bool)
-		(o1->id < o2->id ||
-		 (o1->id == o2->id && namecmp(&o1->name, &o2->name) < 0));
+	(o1->id < o2->id ||
+	 (o1->id == o2->id && namecmp(&o1->name, &o2->name) < 0));
 }
 
 bool
 oidnamele(OidName o1, OidName o2)
 {
 	return (bool)
-		(o1->id < o2->id ||
-		 (o1->id == o2->id && namecmp(&o1->name, &o2->name) <= 0));
+	(o1->id < o2->id ||
+	 (o1->id == o2->id && namecmp(&o1->name, &o2->name) <= 0));
 }
 
 bool
 oidnameeq(OidName o1, OidName o2)
 {
 	return (bool)
-		(o1->id == o2->id &&
-		 (namecmp(&o1->name, &o2->name) == 0));
+	(o1->id == o2->id &&
+	 (namecmp(&o1->name, &o2->name) == 0));
 }
 
 bool
 oidnamene(OidName o1, OidName o2)
 {
 	return (bool)
-		(o1->id != o2->id ||
-		 (namecmp(&o1->name, &o2->name) != 0));
+	(o1->id != o2->id ||
+	 (namecmp(&o1->name, &o2->name) != 0));
 }
 
 bool

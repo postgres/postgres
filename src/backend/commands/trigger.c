@@ -37,13 +37,13 @@ TriggerData *CurrentTriggerData = NULL;
 void		RelationBuildTriggers(Relation relation);
 void		FreeTriggerDesc(Relation relation);
 
-static void DescribeTrigger(TriggerDesc * trigdesc, Trigger * trigger);
+static void DescribeTrigger(TriggerDesc *trigdesc, Trigger *trigger);
 
-extern void fmgr_info(Oid procedureId, func_ptr * function, int *nargs);
+extern void fmgr_info(Oid procedureId, func_ptr *function, int *nargs);
 extern GlobalMemory CacheCxt;
 
 void
-CreateTrigger(CreateTrigStmt * stmt)
+CreateTrigger(CreateTrigStmt *stmt)
 {
 	int16		tgtype;
 	int16		tgattr[8] = {0};
@@ -211,7 +211,7 @@ CreateTrigger(CreateTrigStmt * stmt)
 }
 
 void
-DropTrigger(DropTrigStmt * stmt)
+DropTrigger(DropTrigStmt *stmt)
 {
 	Relation	rel;
 	Relation	tgrel;
@@ -481,7 +481,7 @@ FreeTriggerDesc(Relation relation)
 }
 
 static void
-DescribeTrigger(TriggerDesc * trigdesc, Trigger * trigger)
+DescribeTrigger(TriggerDesc *trigdesc, Trigger *trigger)
 {
 	uint16	   *n;
 	Trigger  ***t,

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.7 1997/09/08 02:37:08 momjian Exp $
+ * $Id: libpq.h,v 1.8 1997/09/08 21:52:36 momjian Exp $
  *
  * NOTES
  *	  This file contains definitions for structures and
@@ -36,7 +36,7 @@ typedef struct
 		int		   *ptr;		/* can't use void (dec compiler barfs)	 */
 		int			integer;
 	}			u;
-}			PQArgBlock;
+} PQArgBlock;
 
 /* ----------------
  * TypeBlock --
@@ -50,7 +50,7 @@ typedef struct TypeBlock
 	char		name[NAMEDATALEN];		/* name of the attribute */
 	int			adtid;			/* adtid of the type */
 	int			adtsize;		/* adtsize of the type */
-}			TypeBlock;
+} TypeBlock;
 
 /* ----------------
  * TupleBlock --
@@ -66,7 +66,7 @@ typedef struct TupleBlock
 												 * foreach tuple */
 	struct TupleBlock *next;	/* next tuple block */
 	int			tuple_index;	/* current tuple index */
-}			TupleBlock;
+} TupleBlock;
 
 /* ----------------
  * GroupBuffer --
@@ -80,7 +80,7 @@ typedef struct GroupBuffer
 	TypeBlock  *types;			/* types of the attributes */
 	TupleBlock *tuples;			/* tuples in this group */
 	struct GroupBuffer *next;	/* next group */
-}			GroupBuffer;
+} GroupBuffer;
 
 /* ----------------
  * PortalBuffer --
@@ -93,7 +93,7 @@ typedef struct PortalBuffer
 	int			no_tuples;		/* number of tuples in this portal buffer */
 	int			no_groups;		/* number of tuple groups */
 	GroupBuffer *groups;		/* linked list of tuple groups */
-}			PortalBuffer;
+} PortalBuffer;
 
 /* ----------------
  * PortalEntry --
@@ -111,7 +111,7 @@ typedef struct PortalEntry
 	PortalBuffer *portal;		/* tuples contained in this portal */
 	Pointer		portalcxt;		/* memory context (for backend) */
 	Pointer		result;			/* result for PQexec */
-}			PortalEntry;
+} PortalEntry;
 
 #define PORTALS_INITIAL_SIZE 32
 #define PORTALS_GROW_BY		 32
@@ -130,7 +130,7 @@ typedef struct PQNotifyList
 	int			be_pid;			/* process id of backend */
 	int			valid;			/* has this already been handled by user. */
 /*	  SLNode Node; */
-}			PQNotifyList;
+} PQNotifyList;
 
 /*
  * Exceptions.
@@ -170,37 +170,37 @@ extern void PQuntrace(void);
 extern int	PQnportals(int rule_p);
 extern void PQpnames(char **pnames, int rule_p);
 extern PortalBuffer *PQparray(char *pname);
-extern int	PQrulep(PortalBuffer * portal);
-extern int	PQntuples(PortalBuffer * portal);
-extern int	PQninstances(PortalBuffer * portal);
-extern int	PQngroups(PortalBuffer * portal);
-extern int	PQntuplesGroup(PortalBuffer * portal, int group_index);
-extern int	PQninstancesGroup(PortalBuffer * portal, int group_index);
-extern int	PQnfieldsGroup(PortalBuffer * portal, int group_index);
-extern int	PQfnumberGroup(PortalBuffer * portal, int group_index, char *field_name);
-extern char *PQfnameGroup(PortalBuffer * portal, int group_index, int field_number);
+extern int	PQrulep(PortalBuffer *portal);
+extern int	PQntuples(PortalBuffer *portal);
+extern int	PQninstances(PortalBuffer *portal);
+extern int	PQngroups(PortalBuffer *portal);
+extern int	PQntuplesGroup(PortalBuffer *portal, int group_index);
+extern int	PQninstancesGroup(PortalBuffer *portal, int group_index);
+extern int	PQnfieldsGroup(PortalBuffer *portal, int group_index);
+extern int	PQfnumberGroup(PortalBuffer *portal, int group_index, char *field_name);
+extern char *PQfnameGroup(PortalBuffer *portal, int group_index, int field_number);
 extern int
-PQftypeGroup(PortalBuffer * portal, int group_index,
+PQftypeGroup(PortalBuffer *portal, int group_index,
 			 int field_number);
 extern int
-PQfsizeGroup(PortalBuffer * portal, int group_index,
+PQfsizeGroup(PortalBuffer *portal, int group_index,
 			 int field_number);
-extern GroupBuffer *PQgroup(PortalBuffer * portal, int tuple_index);
-extern int	PQgetgroup(PortalBuffer * portal, int tuple_index);
-extern int	PQnfields(PortalBuffer * portal, int tuple_index);
-extern int	PQfnumber(PortalBuffer * portal, int tuple_index, char *field_name);
-extern char *PQfname(PortalBuffer * portal, int tuple_index, int field_number);
-extern int	PQftype(PortalBuffer * portal, int tuple_index, int field_number);
-extern int	PQfsize(PortalBuffer * portal, int tuple_index, int field_number);
-extern int	PQsametype(PortalBuffer * portal, int tuple_index1, int tuple_index2);
-extern char *PQgetvalue(PortalBuffer * portal, int tuple_index, int field_number);
-extern char *PQgetAttr(PortalBuffer * portal, int tuple_index, int field_number);
-extern int	PQgetlength(PortalBuffer * portal, int tuple_index, int field_number);
+extern GroupBuffer *PQgroup(PortalBuffer *portal, int tuple_index);
+extern int	PQgetgroup(PortalBuffer *portal, int tuple_index);
+extern int	PQnfields(PortalBuffer *portal, int tuple_index);
+extern int	PQfnumber(PortalBuffer *portal, int tuple_index, char *field_name);
+extern char *PQfname(PortalBuffer *portal, int tuple_index, int field_number);
+extern int	PQftype(PortalBuffer *portal, int tuple_index, int field_number);
+extern int	PQfsize(PortalBuffer *portal, int tuple_index, int field_number);
+extern int	PQsametype(PortalBuffer *portal, int tuple_index1, int tuple_index2);
+extern char *PQgetvalue(PortalBuffer *portal, int tuple_index, int field_number);
+extern char *PQgetAttr(PortalBuffer *portal, int tuple_index, int field_number);
+extern int	PQgetlength(PortalBuffer *portal, int tuple_index, int field_number);
 extern void PQclear(char *pname);
 extern void PQcleanNotify(void);
 extern void PQnotifies_init(void);
 extern PQNotifyList *PQnotifies(void);
-extern void PQremoveNotify(PQNotifyList * nPtr);
+extern void PQremoveNotify(PQNotifyList *nPtr);
 extern void PQappendNotify(char *relname, int pid);
 
 /*
@@ -209,7 +209,7 @@ extern void PQappendNotify(char *relname, int pid);
 extern caddr_t pbuf_alloc(size_t size);
 extern void pbuf_free(caddr_t pointer);
 extern PortalBuffer *pbuf_addPortal(void);
-extern GroupBuffer *pbuf_addGroup(PortalBuffer * portal);
+extern GroupBuffer *pbuf_addGroup(PortalBuffer *portal);
 extern TypeBlock *pbuf_addTypes(int n);
 extern TupleBlock *pbuf_addTuples(void);
 extern char **pbuf_addTuple(int n);
@@ -217,18 +217,18 @@ extern int *pbuf_addTupleValueLengths(int n);
 extern char *pbuf_addValues(int n);
 extern PortalEntry *pbuf_addEntry(void);
 extern void pbuf_freeEntry(int i);
-extern void pbuf_freeTypes(TypeBlock * types);
-extern void pbuf_freeTuples(TupleBlock * tuples, int no_tuples, int no_fields);
-extern void pbuf_freeGroup(GroupBuffer * group);
-extern void pbuf_freePortal(PortalBuffer * portal);
+extern void pbuf_freeTypes(TypeBlock *types);
+extern void pbuf_freeTuples(TupleBlock *tuples, int no_tuples, int no_fields);
+extern void pbuf_freeGroup(GroupBuffer *group);
+extern void pbuf_freePortal(PortalBuffer *portal);
 extern int	pbuf_getIndex(char *pname);
-extern void pbuf_setportalinfo(PortalEntry * entry, char *pname);
+extern void pbuf_setportalinfo(PortalEntry *entry, char *pname);
 extern PortalEntry *pbuf_setup(char *pname);
 extern void pbuf_close(char *pname);
-extern GroupBuffer *pbuf_findGroup(PortalBuffer * portal, int group_index);
-extern int	pbuf_findFnumber(GroupBuffer * group, char *field_name);
-extern void pbuf_checkFnumber(GroupBuffer * group, int field_number);
-extern char *pbuf_findFname(GroupBuffer * group, int field_number);
+extern GroupBuffer *pbuf_findGroup(PortalBuffer *portal, int group_index);
+extern int	pbuf_findFnumber(GroupBuffer *group, char *field_name);
+extern void pbuf_checkFnumber(GroupBuffer *group, int field_number);
+extern char *pbuf_findFname(GroupBuffer *group, int field_number);
 
 /*
  * prototypes for functions in pqcomm.c
@@ -253,12 +253,12 @@ extern int	pq_getinserv(struct sockaddr_in * sin, char *host, char *serv);
 extern int
 pq_connect(char *dbname, char *user, char *args, char *hostName,
 		   char *debugTty, char *execFile, short portName);
-extern int	StreamOpen(char *hostName, short portName, Port * port);
+extern int	StreamOpen(char *hostName, short portName, Port *port);
 extern void pq_regoob(void (*fptr) ());
 extern void pq_unregoob(void);
 extern void pq_async_notify(void);
 extern int	StreamServerPort(char *hostName, short portName, int *fdP);
-extern int	StreamConnection(int server_fd, Port * port);
+extern int	StreamConnection(int server_fd, Port *port);
 extern void StreamClose(int sock);
 
 #endif							/* LIBPQ_H */

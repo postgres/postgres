@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.5 1997/09/08 02:28:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.6 1997/09/08 21:47:10 momjian Exp $
  *
  * NOTES
  *
@@ -39,7 +39,7 @@
  *		to itself
  */
 void
-SHMQueueInit(SHM_QUEUE * queue)
+SHMQueueInit(SHM_QUEUE *queue)
 {
 	Assert(SHM_PTR_VALID(queue));
 	(queue)->prev = (queue)->next = MAKE_OFFSET(queue);
@@ -51,7 +51,7 @@ SHMQueueInit(SHM_QUEUE * queue)
  */
 #ifdef NOT_USED
 bool
-SHMQueueIsDetached(SHM_QUEUE * queue)
+SHMQueueIsDetached(SHM_QUEUE *queue)
 {
 	Assert(SHM_PTR_VALID(queue));
 	return ((queue)->prev == INVALID_OFFSET);
@@ -63,7 +63,7 @@ SHMQueueIsDetached(SHM_QUEUE * queue)
  * SHMQueueElemInit -- clear an element's links
  */
 void
-SHMQueueElemInit(SHM_QUEUE * queue)
+SHMQueueElemInit(SHM_QUEUE *queue)
 {
 	Assert(SHM_PTR_VALID(queue));
 	(queue)->prev = (queue)->next = INVALID_OFFSET;
@@ -74,7 +74,7 @@ SHMQueueElemInit(SHM_QUEUE * queue)
  *		close the links
  */
 void
-SHMQueueDelete(SHM_QUEUE * queue)
+SHMQueueDelete(SHM_QUEUE *queue)
 {
 	SHM_QUEUE  *nextElem = (SHM_QUEUE *) MAKE_PTR((queue)->next);
 	SHM_QUEUE  *prevElem = (SHM_QUEUE *) MAKE_PTR((queue)->prev);
@@ -97,7 +97,7 @@ SHMQueueDelete(SHM_QUEUE * queue)
 
 #ifdef SHMQUEUE_DEBUG
 void
-dumpQ(SHM_QUEUE * q, char *s)
+dumpQ(SHM_QUEUE *q, char *s)
 {
 	char		elem[16];
 	char		buf[1024];
@@ -152,7 +152,7 @@ dumpQ(SHM_QUEUE * q, char *s)
  */
 #ifdef NOT_USED
 void
-SHMQueueInsertHD(SHM_QUEUE * queue, SHM_QUEUE * elem)
+SHMQueueInsertHD(SHM_QUEUE *queue, SHM_QUEUE *elem)
 {
 	SHM_QUEUE  *prevPtr = (SHM_QUEUE *) MAKE_PTR((queue)->prev);
 	SHMEM_OFFSET elemOffset = MAKE_OFFSET(elem);
@@ -177,7 +177,7 @@ SHMQueueInsertHD(SHM_QUEUE * queue, SHM_QUEUE * elem)
 #endif
 
 void
-SHMQueueInsertTL(SHM_QUEUE * queue, SHM_QUEUE * elem)
+SHMQueueInsertTL(SHM_QUEUE *queue, SHM_QUEUE *elem)
 {
 	SHM_QUEUE  *nextPtr = (SHM_QUEUE *) MAKE_PTR((queue)->next);
 	SHMEM_OFFSET elemOffset = MAKE_OFFSET(elem);
@@ -222,7 +222,7 @@ SHMQueueInsertTL(SHM_QUEUE * queue, SHM_QUEUE * elem)
  * next.
  */
 void
-SHMQueueFirst(SHM_QUEUE * queue, Pointer * nextPtrPtr, SHM_QUEUE * nextQueue)
+SHMQueueFirst(SHM_QUEUE *queue, Pointer *nextPtrPtr, SHM_QUEUE *nextQueue)
 {
 	SHM_QUEUE  *elemPtr = (SHM_QUEUE *) MAKE_PTR((queue)->next);
 
@@ -243,7 +243,7 @@ SHMQueueFirst(SHM_QUEUE * queue, Pointer * nextPtrPtr, SHM_QUEUE * nextQueue)
  * SHMQueueEmpty -- TRUE if queue head is only element, FALSE otherwise
  */
 bool
-SHMQueueEmpty(SHM_QUEUE * queue)
+SHMQueueEmpty(SHM_QUEUE *queue)
 {
 	Assert(SHM_PTR_VALID(queue));
 

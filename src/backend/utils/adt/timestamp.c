@@ -209,7 +209,7 @@ timestamp_datetime(time_t timestamp)
 	if (!PointerIsValid(result = PALLOCTYPE(DateTime)))
 		elog(WARN, "Memory allocation failed, can't convert timestamp to datetime", NULL);
 
-	tm = localtime((time_t *) & timestamp);
+	tm = localtime((time_t *) &timestamp);
 	tm->tm_year += 1900;
 	tm->tm_mon += 1;
 

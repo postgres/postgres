@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.17 1997/09/08 20:55:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.18 1997/09/08 21:43:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,7 @@ ResetTupleCount(void)
  */
 #ifdef NOT_USED
 void
-DisplayTupleCount(FILE * statfp)
+DisplayTupleCount(FILE *statfp)
 {
 	if (NTupleProcessed > 0)
 		fprintf(statfp, "!\t%d tuple%s processed, ", NTupleProcessed,
@@ -157,7 +157,7 @@ DisplayTupleCount(FILE * statfp)
  * ----------------
  */
 void
-ExecAssignNodeBaseInfo(EState * estate, CommonState * cstate, Plan * parent)
+ExecAssignNodeBaseInfo(EState *estate, CommonState *cstate, Plan *parent)
 {
 	int			baseId;
 
@@ -176,7 +176,7 @@ ExecAssignNodeBaseInfo(EState * estate, CommonState * cstate, Plan * parent)
  * ----------------
  */
 void
-ExecAssignExprContext(EState * estate, CommonState * commonstate)
+ExecAssignExprContext(EState *estate, CommonState *commonstate)
 {
 	ExprContext *econtext;
 	ParamListInfo paraminfo;
@@ -207,7 +207,7 @@ ExecAssignExprContext(EState * estate, CommonState * commonstate)
  * ----------------
  */
 void
-ExecAssignResultType(CommonState * commonstate,
+ExecAssignResultType(CommonState *commonstate,
 					 TupleDesc tupDesc)
 {
 	TupleTableSlot *slot;
@@ -221,7 +221,7 @@ ExecAssignResultType(CommonState * commonstate,
  * ----------------
  */
 void
-ExecAssignResultTypeFromOuterPlan(Plan * node, CommonState * commonstate)
+ExecAssignResultTypeFromOuterPlan(Plan *node, CommonState *commonstate)
 {
 	Plan	   *outerPlan;
 	TupleDesc	tupDesc;
@@ -237,7 +237,7 @@ ExecAssignResultTypeFromOuterPlan(Plan * node, CommonState * commonstate)
  * ----------------
  */
 void
-ExecAssignResultTypeFromTL(Plan * node, CommonState * commonstate)
+ExecAssignResultTypeFromTL(Plan *node, CommonState *commonstate)
 {
 	List	   *targetList;
 	int			i;
@@ -293,7 +293,7 @@ ExecAssignResultTypeFromTL(Plan * node, CommonState * commonstate)
  * ----------------
  */
 TupleDesc
-ExecGetResultType(CommonState * commonstate)
+ExecGetResultType(CommonState *commonstate)
 {
 	TupleTableSlot *slot = commonstate->cs_ResultTupleSlot;
 
@@ -306,7 +306,7 @@ ExecGetResultType(CommonState * commonstate)
  */
 #ifdef NOT_USED
 void
-ExecFreeResultType(CommonState * commonstate)
+ExecFreeResultType(CommonState *commonstate)
 {
 	TupleTableSlot *slot;
 	TupleDesc	tupType;
@@ -326,7 +326,7 @@ ExecFreeResultType(CommonState * commonstate)
  * ----------------
  */
 void
-ExecAssignProjectionInfo(Plan * node, CommonState * commonstate)
+ExecAssignProjectionInfo(Plan *node, CommonState *commonstate)
 {
 	ProjectionInfo *projInfo;
 	List	   *targetList;
@@ -352,7 +352,7 @@ ExecAssignProjectionInfo(Plan * node, CommonState * commonstate)
  * ----------------
  */
 void
-ExecFreeProjectionInfo(CommonState * commonstate)
+ExecFreeProjectionInfo(CommonState *commonstate)
 {
 	ProjectionInfo *projInfo;
 
@@ -391,7 +391,7 @@ ExecFreeProjectionInfo(CommonState * commonstate)
  * ----------------
  */
 TupleDesc
-ExecGetScanType(CommonScanState * csstate)
+ExecGetScanType(CommonScanState *csstate)
 {
 	TupleTableSlot *slot = csstate->css_ScanTupleSlot;
 
@@ -404,7 +404,7 @@ ExecGetScanType(CommonScanState * csstate)
  */
 #ifdef NOT_USED
 void
-ExecFreeScanType(CommonScanState * csstate)
+ExecFreeScanType(CommonScanState *csstate)
 {
 	TupleTableSlot *slot;
 	TupleDesc	tupType;
@@ -423,7 +423,7 @@ ExecFreeScanType(CommonScanState * csstate)
  * ----------------
  */
 void
-ExecAssignScanType(CommonScanState * csstate,
+ExecAssignScanType(CommonScanState *csstate,
 				   TupleDesc tupDesc)
 {
 	TupleTableSlot *slot;
@@ -437,7 +437,7 @@ ExecAssignScanType(CommonScanState * csstate,
  * ----------------
  */
 void
-ExecAssignScanTypeFromOuterPlan(Plan * node, CommonScanState * csstate)
+ExecAssignScanTypeFromOuterPlan(Plan *node, CommonScanState *csstate)
 {
 	Plan	   *outerPlan;
 	TupleDesc	tupDesc;
@@ -569,7 +569,7 @@ ExecFreeTypeInfo(TupleDesc typeInfo)
  * ----------------------------------------------------------------
  */
 TupleDesc
-QueryDescGetTypeInfo(QueryDesc * queryDesc)
+QueryDescGetTypeInfo(QueryDesc *queryDesc)
 {
 	Plan	   *plan;
 	TupleDesc	tupleType;
@@ -706,7 +706,7 @@ ExecGetIndexKeyInfo(IndexTupleForm indexTuple,
  */
 void
 ExecOpenIndices(Oid resultRelationOid,
-				RelationInfo * resultRelationInfo)
+				RelationInfo *resultRelationInfo)
 {
 	Relation	indexRd;
 	HeapScanDesc indexSd;
@@ -952,7 +952,7 @@ ExecOpenIndices(Oid resultRelationOid,
  * ----------------------------------------------------------------
  */
 void
-ExecCloseIndices(RelationInfo * resultRelationInfo)
+ExecCloseIndices(RelationInfo *resultRelationInfo)
 {
 	int			i;
 	int			numIndices;
@@ -984,7 +984,7 @@ IndexTuple
 ExecFormIndexTuple(HeapTuple heapTuple,
 				   Relation heapRelation,
 				   Relation indexRelation,
-				   IndexInfo * indexInfo)
+				   IndexInfo *indexInfo)
 {
 	IndexTuple	indexTuple;
 	TupleDesc	heapDescriptor;
@@ -1070,9 +1070,9 @@ ExecFormIndexTuple(HeapTuple heapTuple,
  * ----------------------------------------------------------------
  */
 void
-ExecInsertIndexTuples(TupleTableSlot * slot,
+ExecInsertIndexTuples(TupleTableSlot *slot,
 					  ItemPointer tupleid,
-					  EState * estate,
+					  EState *estate,
 					  bool is_update)
 {
 	HeapTuple	heapTuple;
@@ -1186,8 +1186,8 @@ ExecInsertIndexTuples(TupleTableSlot * slot,
  * ----------------------------------------------------------------
  */
 void
-setVarAttrLenForCreateTable(TupleDesc tupType, List * targetList,
-							List * rangeTable)
+setVarAttrLenForCreateTable(TupleDesc tupType, List *targetList,
+							List *rangeTable)
 {
 	List	   *tl;
 	TargetEntry *tle;

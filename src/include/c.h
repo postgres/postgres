@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.18 1997/09/08 02:33:49 momjian Exp $
+ * $Id: c.h,v 1.19 1997/09/08 21:50:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -277,7 +277,7 @@ typedef unsigned int Index;
 typedef struct
 {
 	int			indx[MAXDIM];
-}			IntArray;
+} IntArray;
 
 /*
  * Offset --
@@ -568,7 +568,7 @@ typedef char *ExcMessage;
 typedef struct Exception
 {
 	ExcMessage	message;
-}			Exception;
+} Exception;
 
 /*
  * NO_ASSERT_CHECKING, if defined, turns off all the assertions.
@@ -704,7 +704,7 @@ extern Exception BadState;
 /* in utils/error/assert.c */
 extern int
 ExceptionalCondition(char *conditionName,
-					 Exception * exceptionP, char *details,
+					 Exception *exceptionP, char *details,
 					 char *fileName, int lineNumber);
 
 

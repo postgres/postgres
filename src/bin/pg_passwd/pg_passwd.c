@@ -24,7 +24,7 @@ extern char *crypt(const char *, const char *);
 #endif
 
 char	   *comname;
-void		usage(FILE * stream);
+void		usage(FILE *stream);
 void		read_pwd_file(char *filename);
 void		write_pwd_file(char *filename, char *bkname);
 void		encrypt_pwd(char key[9], char salt[3], char passwd[14]);
@@ -33,7 +33,7 @@ void		prompt_for_username(char *username);
 void		prompt_for_password(char *prompt, char *password);
 
 void
-usage(FILE * stream)
+usage(FILE *stream)
 {
 	fprintf(stream, "Usage: %s <password file>\n", comname);
 }
@@ -43,7 +43,7 @@ typedef struct
 	char	   *uname;
 	char	   *pwd;
 	char	   *rest;
-}			pg_pwd;
+} pg_pwd;
 
 #define MAXPWDS 1024
 

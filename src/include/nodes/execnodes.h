@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.11 1997/09/08 20:58:40 momjian Exp $
+ * $Id: execnodes.h,v 1.12 1997/09/08 21:52:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ typedef struct IndexInfo
 	AttrNumber *ii_KeyAttributeNumbers;
 	FuncIndexInfoPtr ii_FuncIndexInfo;
 	Node	   *ii_Predicate;
-}			IndexInfo;
+} IndexInfo;
 
 /* ----------------
  *	  RelationInfo information
@@ -65,7 +65,7 @@ typedef struct RelationInfo
 	int			ri_NumIndices;
 	RelationPtr ri_IndexRelationDescs;
 	IndexInfo **ri_IndexRelationInfo;
-}			RelationInfo;
+} RelationInfo;
 
 /* ----------------
  *	  ExprContext
@@ -90,7 +90,7 @@ typedef struct ExprContext
 	List	   *ecxt_range_table;
 	Datum	   *ecxt_values;	/* precomputed values for aggreg */
 	char	   *ecxt_nulls;		/* null flags for aggreg  values */
-}			ExprContext;
+} ExprContext;
 
 /* ----------------
  *		ProjectionInfo node information
@@ -116,7 +116,7 @@ typedef struct ProjectionInfo
 	Datum	   *pi_tupValue;
 	ExprContext *pi_exprContext;
 	TupleTableSlot *pi_slot;
-}			ProjectionInfo;
+} ProjectionInfo;
 
 /* ----------------
  *	  JunkFilter
@@ -157,7 +157,7 @@ typedef struct JunkFilter
 	int			jf_cleanLength;
 	TupleDesc	jf_cleanTupType;
 	AttrNumber *jf_cleanMap;
-}			JunkFilter;
+} JunkFilter;
 
 /* ----------------
  *	  EState information
@@ -205,7 +205,7 @@ typedef struct EState
 	int		   *es_refcount;
 	uint32		es_processed;	/* # of tuples processed */
 	Oid			es_lastoid;		/* last oid processed (by INSERT) */
-}			EState;
+} EState;
 
 /* ----------------
  *		Executor Type information needed by plannodes.h
@@ -265,7 +265,7 @@ typedef struct CommonState
 	ExprContext *cs_ExprContext;
 	ProjectionInfo *cs_ProjInfo;
 	bool		cs_TupFromTlist;
-}			CommonState;
+} CommonState;
 
 
 /* ----------------------------------------------------------------
@@ -293,7 +293,7 @@ typedef struct ResultState
 {
 	CommonState cstate;			/* its first field is NodeTag */
 	int			rs_done;
-}			ResultState;
+} ResultState;
 
 /* ----------------
  *	 AppendState information
@@ -362,7 +362,7 @@ typedef struct CommonScanState
 	Relation	css_currentRelation;
 	HeapScanDesc css_currentScanDesc;
 	TupleTableSlot *css_ScanTupleSlot;
-}			CommonScanState;
+} CommonScanState;
 
 /* ----------------
  *	 IndexScanState information
@@ -400,7 +400,7 @@ typedef struct IndexScanState
 	Pointer		iss_RuntimeKeyInfo;
 	RelationPtr iss_RelationDescs;
 	IndexScanDescPtr iss_ScanDescs;
-}			IndexScanState;
+} IndexScanState;
 
 
 /* ----------------------------------------------------------------
@@ -444,7 +444,7 @@ typedef struct NestLoopState
 {
 	JoinState	jstate;			/* its first field is NodeTag */
 	bool		nl_PortalFlag;
-}			NestLoopState;
+} NestLoopState;
 
 /* ----------------
  *	 MergeJoinState information
@@ -473,7 +473,7 @@ typedef struct MergeJoinState
 	List	   *mj_ISortopO;
 	int			mj_JoinState;
 	TupleTableSlot *mj_MarkedTupleSlot;
-}			MergeJoinState;
+} MergeJoinState;
 
 /* ----------------
  *	 HashJoinState information
@@ -523,7 +523,7 @@ typedef struct HashJoinState
 	int			hj_OuterReadBlk;
 	TupleTableSlot *hj_OuterTupleSlot;
 	TupleTableSlot *hj_HashTupleSlot;
-}			HashJoinState;
+} HashJoinState;
 
 
 /* ----------------------------------------------------------------
@@ -562,7 +562,7 @@ typedef struct MaterialState
 	CommonScanState csstate;	/* its first field is NodeTag */
 	bool		mat_Flag;
 	Relation	mat_TempRelation;
-}			MaterialState;
+} MaterialState;
 
 /* ---------------------
  *	AggregateState information
@@ -587,7 +587,7 @@ typedef struct GroupState
 	bool		grp_useLastTuple;		/* last tuple not processed yet */
 	bool		grp_done;
 	TupleTableSlot *grp_lastSlot;
-}			GroupState;
+} GroupState;
 
 /* ----------------
  *	 SortState information
@@ -626,7 +626,7 @@ typedef struct SortState
 	bool		sort_Flag;
 	ScanKey		sort_Keys;
 	bool		cleaned;
-}			SortState;
+} SortState;
 
 /* ----------------
  *	 UniqueState information
@@ -670,7 +670,7 @@ typedef struct HashState
 {
 	CommonState cstate;			/* its first field is NodeTag */
 	File	   *hashBatches;
-}			HashState;
+} HashState;
 
 /* -----------------------
  *	TeeState information
@@ -697,6 +697,6 @@ typedef struct TeeState
 	MemoryContext tee_mcxt;
 	HeapScanDesc tee_leftScanDesc;
 	HeapScanDesc tee_rightScanDesc;
-}			TeeState;
+} TeeState;
 
 #endif							/* EXECNODES_H */

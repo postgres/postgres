@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.8 1997/09/08 02:33:54 momjian Exp $
+ * $Id: postgres.h,v 1.9 1997/09/08 21:50:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@ typedef struct varlena text;
 typedef struct char8
 {
 	char		data[8];
-}			char8;
+} char8;
 
 /* ----------------
  *		char16
@@ -100,7 +100,7 @@ typedef struct char8
 typedef struct char16
 {
 	char		data[16];
-}			char16;
+} char16;
 
 typedef char16 *Char16;
 
@@ -110,7 +110,7 @@ typedef Oid oid8[8];
 typedef struct nameData
 {
 	char		data[NAMEDATALEN];
-}			NameData;
+} NameData;
 typedef NameData *Name;
 
 /* ----------------
@@ -123,7 +123,7 @@ typedef struct OidInt4Data
 {
 	Oid			oi_oid;
 	int32		oi_int4;
-}			OidInt4Data;
+} OidInt4Data;
 
 typedef struct OidInt4Data *OidInt4;
 
@@ -137,7 +137,7 @@ typedef struct OidInt2Data
 {
 	Oid			oi_oid;
 	int16		oi_int2;
-}			OidInt2Data;
+} OidInt2Data;
 
 typedef struct OidInt2Data *OidInt2;
 
@@ -151,7 +151,7 @@ typedef struct OidNameData
 {
 	Oid			id;
 	NameData	name;
-}			OidNameData;
+} OidNameData;
 
 typedef struct OidNameData *OidName;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.7 1997/09/08 02:32:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.8 1997/09/08 21:49:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@
 
 #include "utils/portal.h"
 
-static void CollectNamedPortals(Portal * portalP, int destroy);
+static void CollectNamedPortals(Portal *portalP, int destroy);
 static Portal PortalHeapMemoryGetPortal(PortalHeapMemory context);
 static PortalVariableMemory PortalHeapMemoryGetVariableMemory(PortalHeapMemory context);
 static void PortalResetHeapMemory(Portal portal);
@@ -118,7 +118,7 @@ typedef struct portalhashent
 {
 	char		portalname[MAX_PORTALNAME_LEN];
 	Portal		portal;
-}			PortalHashEnt;
+} PortalHashEnt;
 
 #define PortalManagerEnabled	(PortalManagerEnableCount >= 1)
 
@@ -174,7 +174,7 @@ typedef struct HeapMemoryBlockData
 {
 	AllocSetData setData;
 	FixedItemData itemData;
-}			HeapMemoryBlockData;
+} HeapMemoryBlockData;
 
 typedef HeapMemoryBlockData *HeapMemoryBlock;
 
@@ -379,14 +379,14 @@ CreateNewBlankPortal()
 	/*
 	 * initialize portal variable context
 	 */
-	NodeSetTag((Node *) & portal->variable, T_PortalVariableMemory);
+	NodeSetTag((Node *) &portal->variable, T_PortalVariableMemory);
 	AllocSetInit(&portal->variable.setData, DynamicAllocMode, (Size) 0);
 	portal->variable.method = &PortalVariableContextMethodsData;
 
 	/*
 	 * initialize portal heap context
 	 */
-	NodeSetTag((Node *) & portal->heap, T_PortalHeapMemory);
+	NodeSetTag((Node *) &portal->heap, T_PortalHeapMemory);
 	portal->heap.block = NULL;
 	FixedStackInit(&portal->heap.stackData,
 				   offsetof(HeapMemoryBlockData, itemData));
@@ -426,7 +426,7 @@ PortalNameIsSpecial(char *pname)
  * and screws up the sequential walk of the table). -mer 17 Aug 1992
  */
 static void
-CollectNamedPortals(Portal * portalP, int destroy)
+CollectNamedPortals(Portal *portalP, int destroy)
 {
 	static Portal *portalList = (Portal *) NULL;
 	static int	listIndex = 0;
@@ -479,7 +479,7 @@ AtEOXact_portals()
  */
 #ifdef NOT_USED
 static void
-PortalDump(Portal * thisP)
+PortalDump(Portal *thisP)
 {
 	/* XXX state/argument checking here */
 
@@ -640,7 +640,7 @@ BlankPortalAssignName(char *name)		/* XXX PortalName */
 	 */
 	length = 1 + strlen(name);
 	portal->name = (char *)
-		MemoryContextAlloc((MemoryContext) & portal->variable, length);
+		MemoryContextAlloc((MemoryContext) &portal->variable, length);
 
 	strncpy(portal->name, name, length);
 
@@ -664,9 +664,9 @@ BlankPortalAssignName(char *name)		/* XXX PortalName */
  */
 void
 PortalSetQuery(Portal portal,
-			   QueryDesc * queryDesc,
+			   QueryDesc *queryDesc,
 			   TupleDesc attinfo,
-			   EState * state,
+			   EState *state,
 			   void (*cleanup) (Portal portal))
 {
 	AssertState(PortalManagerEnabled);
@@ -747,12 +747,12 @@ CreatePortal(char *name)		/* XXX PortalName */
 		MemoryContextAlloc((MemoryContext) PortalMemory, sizeof *portal);
 
 	/* initialize portal variable context */
-	NodeSetTag((Node *) & portal->variable, T_PortalVariableMemory);
+	NodeSetTag((Node *) &portal->variable, T_PortalVariableMemory);
 	AllocSetInit(&portal->variable.setData, DynamicAllocMode, (Size) 0);
 	portal->variable.method = &PortalVariableContextMethodsData;
 
 	/* initialize portal heap context */
-	NodeSetTag((Node *) & portal->heap, T_PortalHeapMemory);
+	NodeSetTag((Node *) &portal->heap, T_PortalHeapMemory);
 	portal->heap.block = NULL;
 	FixedStackInit(&portal->heap.stackData,
 				   offsetof(HeapMemoryBlockData, itemData));
@@ -761,7 +761,7 @@ CreatePortal(char *name)		/* XXX PortalName */
 	/* initialize portal name */
 	length = 1 + strlen(name);
 	portal->name = (char *)
-		MemoryContextAlloc((MemoryContext) & portal->variable, length);
+		MemoryContextAlloc((MemoryContext) &portal->variable, length);
 	strncpy(portal->name, name, length);
 
 	/* initialize portal query */
@@ -786,7 +786,7 @@ CreatePortal(char *name)		/* XXX PortalName */
  *		BadArg if portal is invalid.
  */
 void
-PortalDestroy(Portal * portalP)
+PortalDestroy(Portal *portalP)
 {
 	Portal		portal = *portalP;
 
@@ -802,7 +802,7 @@ PortalDestroy(Portal * portalP)
 		(*portal->cleanup) (portal);
 
 	PortalResetHeapMemory(portal);
-	MemoryContextFree((MemoryContext) & portal->variable,
+	MemoryContextFree((MemoryContext) &portal->variable,
 					  (Pointer) portal->name);
 	AllocSetReset(&portal->variable.setData);	/* XXX log */
 
@@ -989,7 +989,7 @@ PortalVariableMemoryGetHeapMemory(PortalVariableMemory context)
 {
 	return ((PortalHeapMemory) ((char *) context
 								- offsetof(PortalD, variable)
-								+ offsetof(PortalD, heap)));
+								+offsetof(PortalD, heap)));
 }
 
 #endif
@@ -1007,5 +1007,5 @@ PortalHeapMemoryGetVariableMemory(PortalHeapMemory context)
 {
 	return ((PortalVariableMemory) ((char *) context
 									- offsetof(PortalD, heap)
-									+ offsetof(PortalD, variable)));
+									+offsetof(PortalD, variable)));
 }

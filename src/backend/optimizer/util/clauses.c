@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.10 1997/09/08 20:56:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.11 1997/09/08 21:45:47 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -34,11 +34,11 @@
 #include "optimizer/internal.h"
 #include "optimizer/var.h"
 
-static bool agg_clause(Node * clause);
+static bool agg_clause(Node *clause);
 
 
 Expr	   *
-make_clause(int type, Node * oper, List * args)
+make_clause(int type, Node *oper, List *args)
 {
 	if (type == AND_EXPR || type == OR_EXPR || type == NOT_EXPR ||
 		type == OP_EXPR || type == FUNC_EXPR)
@@ -79,11 +79,11 @@ make_clause(int type, Node * oper, List * args)
  *												- ay 10/94.]
  */
 bool
-is_opclause(Node * clause)
+is_opclause(Node *clause)
 {
 	return
-		(clause != NULL &&
-	  nodeTag(clause) == T_Expr && ((Expr *) clause)->opType == OP_EXPR);
+	(clause != NULL &&
+	 nodeTag(clause) == T_Expr && ((Expr *) clause)->opType == OP_EXPR);
 }
 
 /*
@@ -93,7 +93,7 @@ is_opclause(Node * clause)
  *
  */
 Expr	   *
-make_opclause(Oper * op, Var * leftop, Var * rightop)
+make_opclause(Oper *op, Var *leftop, Var *rightop)
 {
 	Expr	   *expr = makeNode(Expr);
 
@@ -112,7 +112,7 @@ make_opclause(Oper * op, Var * leftop, Var * rightop)
  * NB: it is assumed (for now) that all expr must be Var nodes
  */
 Var		   *
-get_leftop(Expr * clause)
+get_leftop(Expr *clause)
 {
 	if (clause->args != NULL)
 		return (lfirst(clause->args));
@@ -127,7 +127,7 @@ get_leftop(Expr * clause)
  *
  */
 Var		   *
-get_rightop(Expr * clause)
+get_rightop(Expr *clause)
 {
 	if (clause->args != NULL && lnext(clause->args) != NULL)
 		return (lfirst(lnext(clause->args)));
@@ -140,7 +140,7 @@ get_rightop(Expr * clause)
  *****************************************************************************/
 
 static bool
-agg_clause(Node * clause)
+agg_clause(Node *clause)
 {
 	return
 	(clause != NULL && nodeTag(clause) == T_Aggreg);
@@ -157,11 +157,11 @@ agg_clause(Node * clause)
  *
  */
 bool
-is_funcclause(Node * clause)
+is_funcclause(Node *clause)
 {
 	return
-		(clause != NULL &&
-	nodeTag(clause) == T_Expr && ((Expr *) clause)->opType == FUNC_EXPR);
+	(clause != NULL &&
+	 nodeTag(clause) == T_Expr && ((Expr *) clause)->opType == FUNC_EXPR);
 }
 
 /*
@@ -172,7 +172,7 @@ is_funcclause(Node * clause)
  *
  */
 Expr	   *
-make_funcclause(Func * func, List * funcargs)
+make_funcclause(Func *func, List *funcargs)
 {
 	Expr	   *expr = makeNode(Expr);
 
@@ -194,11 +194,11 @@ make_funcclause(Func * func, List * funcargs)
  *
  */
 bool
-or_clause(Node * clause)
+or_clause(Node *clause)
 {
 	return
-		(clause != NULL &&
-	  nodeTag(clause) == T_Expr && ((Expr *) clause)->opType == OR_EXPR);
+	(clause != NULL &&
+	 nodeTag(clause) == T_Expr && ((Expr *) clause)->opType == OR_EXPR);
 }
 
 /*
@@ -208,7 +208,7 @@ or_clause(Node * clause)
  *
  */
 Expr	   *
-make_orclause(List * orclauses)
+make_orclause(List *orclauses)
 {
 	Expr	   *expr = makeNode(Expr);
 
@@ -230,10 +230,10 @@ make_orclause(List * orclauses)
  *
  */
 bool
-not_clause(Node * clause)
+not_clause(Node *clause)
 {
 	return
-		(clause != NULL &&
+	(clause != NULL &&
 	 nodeTag(clause) == T_Expr && ((Expr *) clause)->opType == NOT_EXPR);
 }
 
@@ -244,7 +244,7 @@ not_clause(Node * clause)
  *
  */
 Expr	   *
-make_notclause(Expr * notclause)
+make_notclause(Expr *notclause)
 {
 	Expr	   *expr = makeNode(Expr);
 
@@ -262,7 +262,7 @@ make_notclause(Expr * notclause)
  *
  */
 Expr	   *
-get_notclausearg(Expr * notclause)
+get_notclausearg(Expr *notclause)
 {
 	return (lfirst(notclause->args));
 }
@@ -279,10 +279,10 @@ get_notclausearg(Expr * notclause)
  *
  */
 bool
-and_clause(Node * clause)
+and_clause(Node *clause)
 {
 	return
-		(clause != NULL &&
+	(clause != NULL &&
 	 nodeTag(clause) == T_Expr && ((Expr *) clause)->opType == AND_EXPR);
 }
 
@@ -293,7 +293,7 @@ and_clause(Node * clause)
  *
  */
 Expr	   *
-make_andclause(List * andclauses)
+make_andclause(List *andclauses)
 {
 	Expr	   *expr = makeNode(Expr);
 
@@ -321,7 +321,7 @@ make_andclause(List * andclauses)
  *
  */
 List	   *
-pull_constant_clauses(List * quals, List ** constantQual)
+pull_constant_clauses(List *quals, List **constantQual)
 {
 	List	   *q;
 	List	   *constqual = NIL;
@@ -356,7 +356,7 @@ pull_constant_clauses(List * quals, List ** constantQual)
  *
  */
 void
-clause_relids_vars(Node * clause, List ** relids, List ** vars)
+clause_relids_vars(Node *clause, List **relids, List **vars)
 {
 	List	   *clvars = pull_var_clause(clause);
 	List	   *var_list = NIL;
@@ -396,7 +396,7 @@ clause_relids_vars(Node * clause, List ** relids, List ** vars)
  * Returns the number of different relations referenced in 'clause'.
  */
 int
-NumRelids(Node * clause)
+NumRelids(Node *clause)
 {
 	List	   *vars = pull_var_clause(clause);
 	List	   *i = NIL;
@@ -423,7 +423,7 @@ NumRelids(Node * clause)
  *
  */
 bool
-contains_not(Node * clause)
+contains_not(Node *clause)
 {
 	if (single_node(clause))
 		return (false);
@@ -452,7 +452,7 @@ contains_not(Node * clause)
  *
  */
 bool
-join_clause_p(Node * clause)
+join_clause_p(Node *clause)
 {
 	Node	   *leftop,
 			   *rightop;
@@ -467,7 +467,7 @@ join_clause_p(Node * clause)
 	 * One side of the clause (i.e. left or right operands) must either be
 	 * a var node ...
 	 */
-	if (IsA(leftop, Var) || IsA(rightop, Var))
+	if (IsA(leftop, Var) ||IsA(rightop, Var))
 		return true;
 
 	/*
@@ -486,7 +486,7 @@ join_clause_p(Node * clause)
  *
  */
 bool
-qual_clause_p(Node * clause)
+qual_clause_p(Node *clause)
 {
 	if (!is_opclause(clause))
 		return false;
@@ -512,7 +512,7 @@ qual_clause_p(Node * clause)
  *
  */
 void
-fix_opid(Node * clause)
+fix_opid(Node *clause)
 {
 	if (clause == NULL || single_node(clause))
 	{
@@ -560,7 +560,7 @@ fix_opid(Node * clause)
  *
  */
 List	   *
-fix_opids(List * clauses)
+fix_opids(List *clauses)
 {
 	List	   *clause;
 
@@ -595,10 +595,10 @@ fix_opids(List * clauses)
  *
  */
 void
-get_relattval(Node * clause,
+get_relattval(Node *clause,
 			  int *relid,
 			  AttrNumber *attno,
-			  Datum * constval,
+			  Datum *constval,
 			  int *flag)
 {
 	Var		   *left = get_leftop((Expr *) clause);
@@ -628,7 +628,7 @@ get_relattval(Node * clause,
 		}
 #ifdef INDEXSCAN_PATCH
 	}
-	else if (is_opclause(clause) && IsA(left, Var) && IsA(right, Param))
+	else if (is_opclause(clause) && IsA(left, Var) &&IsA(right, Param))
 	{
 		/* Function parameter used as index scan arg.  DZ - 27-8-1996 */
 		*relid = left->varno;
@@ -691,7 +691,7 @@ get_relattval(Node * clause,
 		}
 #ifdef INDEXSCAN_PATCH
 	}
-	else if (is_opclause(clause) && IsA(right, Var) && IsA(left, Param))
+	else if (is_opclause(clause) && IsA(right, Var) &&IsA(left, Param))
 	{
 		/* ...And here... - vadim 01/22/97 */
 		*relid = right->varno;
@@ -726,7 +726,7 @@ get_relattval(Node * clause,
  *
  */
 void
-get_rels_atts(Node * clause,
+get_rels_atts(Node *clause,
 			  int *relid1,
 			  AttrNumber *attno1,
 			  int *relid2,
@@ -736,9 +736,9 @@ get_rels_atts(Node * clause,
 	Var		   *right = get_rightop((Expr *) clause);
 	bool		var_left = (IsA(left, Var));
 	bool		var_right = (IsA(right, Var));
-	bool		varexpr_left = (bool) ((IsA(left, Func) || IsA(left, Oper)) &&
+	bool		varexpr_left = (bool) ((IsA(left, Func) ||IsA(left, Oper)) &&
 									   contain_var_clause((Node *) left));
-	bool		varexpr_right = (bool) ((IsA(right, Func) || IsA(right, Oper)) &&
+	bool		varexpr_right = (bool) ((IsA(right, Func) ||IsA(right, Oper)) &&
 									 contain_var_clause((Node *) right));
 
 	if (is_opclause(clause))
@@ -780,7 +780,7 @@ get_rels_atts(Node * clause,
 }
 
 void
-CommuteClause(Node * clause)
+CommuteClause(Node *clause)
 {
 	Node	   *temp;
 	Oper	   *commu;

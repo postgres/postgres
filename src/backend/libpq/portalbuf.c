@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.6 1997/09/08 02:23:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.7 1997/09/08 21:43:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,7 +160,7 @@ pbuf_addPortal()
  * --------------------------------
  */
 GroupBuffer *
-pbuf_addGroup(PortalBuffer * portal)
+pbuf_addGroup(PortalBuffer *portal)
 {
 	GroupBuffer *group,
 			   *group1;
@@ -285,7 +285,7 @@ pbuf_freeEntry(int i)
  * --------------------------------
  */
 void
-pbuf_freeTypes(TypeBlock * types)
+pbuf_freeTypes(TypeBlock *types)
 {
 	pbuf_free((caddr_t) types);
 }
@@ -295,7 +295,7 @@ pbuf_freeTypes(TypeBlock * types)
  * --------------------------------
  */
 void
-pbuf_freeTuples(TupleBlock * tuples,
+pbuf_freeTuples(TupleBlock *tuples,
 				int no_tuples,
 				int no_fields)
 {
@@ -328,7 +328,7 @@ pbuf_freeTuples(TupleBlock * tuples,
  * --------------------------------
  */
 void
-pbuf_freeGroup(GroupBuffer * group)
+pbuf_freeGroup(GroupBuffer *group)
 {
 	if (group->next != NULL)
 		pbuf_freeGroup(group->next);
@@ -347,7 +347,7 @@ pbuf_freeGroup(GroupBuffer * group)
  * --------------------------------
  */
 void
-pbuf_freePortal(PortalBuffer * portal)
+pbuf_freePortal(PortalBuffer *portal)
 {
 	if (portal->groups != NULL)
 		pbuf_freeGroup(portal->groups);
@@ -381,7 +381,7 @@ pbuf_getIndex(char *pname)
  * --------------------------------
  */
 void
-pbuf_setportalinfo(PortalEntry * entry, char *pname)
+pbuf_setportalinfo(PortalEntry *entry, char *pname)
 {
 	if (entry)
 		strNcpy(entry->name, pname, PortalNameLength - 1);
@@ -449,7 +449,7 @@ pbuf_close(char *pname)
  * --------------------------------
  */
 GroupBuffer *
-pbuf_findGroup(PortalBuffer * portal,
+pbuf_findGroup(PortalBuffer *portal,
 			   int group_index)
 {
 	GroupBuffer *group;
@@ -473,7 +473,7 @@ pbuf_findGroup(PortalBuffer * portal,
  * --------------------------------
  */
 int
-pbuf_findFnumber(GroupBuffer * group,
+pbuf_findFnumber(GroupBuffer *group,
 				 char *field_name)
 {
 	TypeBlock  *types;
@@ -498,7 +498,7 @@ pbuf_findFnumber(GroupBuffer * group,
  * --------------------------------
  */
 void
-pbuf_checkFnumber(GroupBuffer * group,
+pbuf_checkFnumber(GroupBuffer *group,
 				  int field_number)
 {
 	if (field_number < 0 || field_number >= group->no_fields)
@@ -511,7 +511,7 @@ pbuf_checkFnumber(GroupBuffer * group,
  * --------------------------------
  */
 char	   *
-pbuf_findFname(GroupBuffer * group,
+pbuf_findFname(GroupBuffer *group,
 			   int field_number)
 {
 	pbuf_checkFnumber(group, field_number);

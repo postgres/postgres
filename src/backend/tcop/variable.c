@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO', 'SHOW var' and 'RESET var'
  * statements.
  *
- * $Id: variable.c,v 1.15 1997/09/08 02:29:52 momjian Exp $
+ * $Id: variable.c,v 1.16 1997/09/08 21:47:59 momjian Exp $
  *
  */
 
@@ -402,9 +402,9 @@ reset_date()
 struct VariableParsers
 {
 	const char *name;
-				bool(*parser) (const char *);
-				bool(*show) ();
-				bool(*reset) ();
+	bool		(*parser) (const char *);
+	bool		(*show) ();
+	bool		(*reset) ();
 }			VariableParsers[] =
 
 {

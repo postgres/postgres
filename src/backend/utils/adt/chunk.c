@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.9 1997/09/08 20:57:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.10 1997/09/08 21:48:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ static int
 _FindBestChunk(int size, int dmax[], int dbest[], int dim,
 			   int A[MAXPAT][MAXDIM + 1], int N);
 static int	get_next(int d[], int k, int C, int dmax[]);
-static void initialize_info(CHUNK_INFO * A, int ndim, int dim[], int chunk[]);
+static void initialize_info(CHUNK_INFO *A, int ndim, int dim[], int chunk[]);
 
 #ifdef LOARRAY
 static void
@@ -63,7 +63,7 @@ static int	seek_and_read(int pos, int size, char buff[], int fp, int from);
 
 #endif
 static int
-GetChunkSize(FILE * fd, int ndim, int dim[MAXDIM], int baseSize,
+GetChunkSize(FILE *fd, int ndim, int dim[MAXDIM], int baseSize,
 			 int d[MAXDIM]);
 
 /*------------------------------------------------------------------------
@@ -77,7 +77,7 @@ GetChunkSize(FILE * fd, int ndim, int dim[MAXDIM], int baseSize,
  */
 char	   *
 _ChunkArray(int fd,
-			FILE * afd,
+			FILE *afd,
 			int ndim,
 			int dim[],
 			int baseSize,
@@ -130,7 +130,7 @@ _ChunkArray(int fd,
  *-----------------------------------------------------------------------
  */
 static int
-GetChunkSize(FILE * fd,
+GetChunkSize(FILE *fd,
 			 int ndim,
 			 int dim[MAXDIM],
 			 int baseSize,
@@ -276,7 +276,7 @@ static char a_chunk[BLCKSZ + 4];/* 4 since a_chunk is in varlena format */
 #endif
 
 static void
-initialize_info(CHUNK_INFO * A, int ndim, int dim[], int chunk[])
+initialize_info(CHUNK_INFO *A, int ndim, int dim[], int chunk[])
 {
 	int			i;
 
@@ -441,7 +441,7 @@ _ReadChunkArray(int st[],
 				char *destfp,
 				ArrayType *array,
 				int isDestLO,
-				bool * isNull)
+				bool *isNull)
 {
 	int			i,
 				j,
@@ -638,7 +638,7 @@ _ReadChunkArray1El(int st[],
 				   int bsize,
 				   int fp,
 				   ArrayType *array,
-				   bool * isNull)
+				   bool *isNull)
 {
 	int			i,
 				j,

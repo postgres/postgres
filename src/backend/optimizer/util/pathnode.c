@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.5 1997/09/08 02:24:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.6 1997/09/08 21:45:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@
 
 #include "parser/parsetree.h"	/* for getrelid() */
 
-static Path *better_path(Path * new_path, List * unique_paths, bool * noOther);
+static Path *better_path(Path *new_path, List *unique_paths, bool *noOther);
 
 
 /*****************************************************************************
@@ -42,7 +42,7 @@ static Path *better_path(Path * new_path, List * unique_paths, bool * noOther);
  *
  */
 bool
-path_is_cheaper(Path * path1, Path * path2)
+path_is_cheaper(Path *path1, Path *path2)
 {
 	Cost		cost1 = path1->path_cost;
 	Cost		cost2 = path2->path_cost;
@@ -62,7 +62,7 @@ path_is_cheaper(Path * path1, Path * path2)
  *
  */
 Path	   *
-set_cheapest(Rel * parent_rel, List * pathlist)
+set_cheapest(Rel *parent_rel, List *pathlist)
 {
 	List	   *p;
 	Path	   *cheapest_so_far;
@@ -101,7 +101,7 @@ set_cheapest(Rel * parent_rel, List * pathlist)
  *
  */
 List	   *
-add_pathlist(Rel * parent_rel, List * unique_paths, List * new_paths)
+add_pathlist(Rel *parent_rel, List *unique_paths, List *new_paths)
 {
 	List	   *x;
 	Path	   *new_path;
@@ -154,7 +154,7 @@ add_pathlist(Rel * parent_rel, List * unique_paths, List * new_paths)
  *
  */
 static Path *
-better_path(Path * new_path, List * unique_paths, bool * noOther)
+better_path(Path *new_path, List *unique_paths, bool *noOther)
 {
 	Path	   *old_path = (Path *) NULL;
 	Path	   *path = (Path *) NULL;
@@ -208,7 +208,7 @@ better_path(Path * new_path, List * unique_paths, bool * noOther)
  *
  */
 Path	   *
-create_seqscan_path(Rel * rel)
+create_seqscan_path(Rel *rel)
 {
 	int			relid = 0;
 
@@ -258,10 +258,10 @@ create_seqscan_path(Rel * rel)
  *
  */
 IndexPath  *
-create_index_path(Query * root,
-				  Rel * rel,
-				  Rel * index,
-				  List * restriction_clauses,
+create_index_path(Query *root,
+				  Rel *rel,
+				  Rel *index,
+				  List *restriction_clauses,
 				  bool is_join_scan)
 {
 	IndexPath  *pathnode = makeNode(IndexPath);
@@ -418,11 +418,11 @@ create_index_path(Query * root,
  *
  */
 JoinPath   *
-create_nestloop_path(Rel * joinrel,
-					 Rel * outer_rel,
-					 Path * outer_path,
-					 Path * inner_path,
-					 List * keys)
+create_nestloop_path(Rel *joinrel,
+					 Rel *outer_rel,
+					 Path *outer_path,
+					 Path *inner_path,
+					 List *keys)
 {
 	JoinPath   *pathnode = makeNode(JoinPath);
 
@@ -495,18 +495,18 @@ create_nestloop_path(Rel * joinrel,
  *
  */
 MergePath  *
-create_mergesort_path(Rel * joinrel,
+create_mergesort_path(Rel *joinrel,
 					  int outersize,
 					  int innersize,
 					  int outerwidth,
 					  int innerwidth,
-					  Path * outer_path,
-					  Path * inner_path,
-					  List * keys,
-					  MergeOrder * order,
-					  List * mergeclauses,
-					  List * outersortkeys,
-					  List * innersortkeys)
+					  Path *outer_path,
+					  Path *inner_path,
+					  List *keys,
+					  MergeOrder *order,
+					  List *mergeclauses,
+					  List *outersortkeys,
+					  List *innersortkeys)
 {
 	MergePath  *pathnode = makeNode(MergePath);
 
@@ -561,18 +561,18 @@ create_mergesort_path(Rel * joinrel,
  *
  */
 HashPath   *
-create_hashjoin_path(Rel * joinrel,
+create_hashjoin_path(Rel *joinrel,
 					 int outersize,
 					 int innersize,
 					 int outerwidth,
 					 int innerwidth,
-					 Path * outer_path,
-					 Path * inner_path,
-					 List * keys,
+					 Path *outer_path,
+					 Path *inner_path,
+					 List *keys,
 					 Oid operator,
-					 List * hashclauses,
-					 List * outerkeys,
-					 List * innerkeys)
+					 List *hashclauses,
+					 List *outerkeys,
+					 List *innerkeys)
 {
 	HashPath   *pathnode = makeNode(HashPath);
 

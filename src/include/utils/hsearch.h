@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hsearch.h,v 1.5 1997/09/08 02:39:47 momjian Exp $
+ * $Id: hsearch.h,v 1.6 1997/09/08 21:55:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@ typedef struct element
 {
 	unsigned long next;			/* secret from user		 */
 	long		key;
-}			ELEMENT;
+} ELEMENT;
 
 typedef unsigned long BUCKET_INDEX;
 
@@ -67,7 +67,7 @@ typedef struct hashhdr
 	long		accesses;
 	long		collisions;
 #endif
-}			HHDR;
+} HHDR;
 
 typedef struct htab
 {
@@ -79,7 +79,7 @@ typedef struct htab
 	long	   *(*alloc) ();	/* memory allocator (long * for alignment
 								 * reasons) */
 
-}			HTAB;
+} HTAB;
 
 typedef struct hashctl
 {
@@ -97,7 +97,7 @@ typedef struct hashctl
 	long	   *dir;			/* directory if allocated already */
 	long	   *hctl;			/* location of header information in shd
 								 * mem */
-}			HASHCTL;
+} HASHCTL;
 
 /* Flags to indicate action for hctl */
 #define HASH_BUCKET		0x001	/* Setting bucket size */
@@ -125,18 +125,18 @@ typedef enum
 	HASH_REMOVE,
 	HASH_FIND_SAVE,
 	HASH_REMOVE_SAVED
-}			HASHACTION;
+} HASHACTION;
 
 /*
  * prototypes from functions in dynahash.c
  */
-extern HTAB *hash_create(int nelem, HASHCTL * info, int flags);
-extern void hash_destroy(HTAB * hashp);
-extern void hash_stats(char *where, HTAB * hashp);
+extern HTAB *hash_create(int nelem, HASHCTL *info, int flags);
+extern void hash_destroy(HTAB *hashp);
+extern void hash_stats(char *where, HTAB *hashp);
 extern long *
-hash_search(HTAB * hashp, char *keyPtr, HASHACTION action,
-			bool * foundPtr);
-extern long *hash_seq(HTAB * hashp);
+hash_search(HTAB *hashp, char *keyPtr, HASHACTION action,
+			bool *foundPtr);
+extern long *hash_seq(HTAB *hashp);
 
 /*
  * prototypes from functions in hashfn.c

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.4 1997/09/08 02:24:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.5 1997/09/08 21:45:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,8 +22,8 @@
 #include "optimizer/tlist.h"
 
 
-static Expr *matching2_tlvar(int var, List * tlist, bool(*test) ());
-static bool equal_indexkey_var(int index_key, Var * var);
+static Expr *matching2_tlvar(int var, List *tlist, bool (*test) ());
+static bool equal_indexkey_var(int index_key, Var *var);
 
 /*
  * 1. index key
@@ -54,7 +54,7 @@ static bool equal_indexkey_var(int index_key, Var * var);
  *
  */
 bool
-match_indexkey_operand(int indexkey, Var * operand, Rel * rel)
+match_indexkey_operand(int indexkey, Var *operand, Rel *rel)
 {
 	if (IsA(operand, Var) &&
 		(lfirsti(rel->relids) == operand->varno) &&
@@ -71,7 +71,7 @@ match_indexkey_operand(int indexkey, Var * operand, Rel * rel)
  *
  */
 static bool
-equal_indexkey_var(int index_key, Var * var)
+equal_indexkey_var(int index_key, Var *var)
 {
 	if (index_key == var->varattno)
 		return (true);
@@ -86,7 +86,7 @@ equal_indexkey_var(int index_key, Var * var)
  *
  */
 Var		   *
-extract_subkey(JoinKey * jk, int which_subkey)
+extract_subkey(JoinKey *jk, int which_subkey)
 {
 	Var		   *retval;
 
@@ -118,7 +118,7 @@ extract_subkey(JoinKey * jk, int which_subkey)
  *
  */
 bool
-samekeys(List * keys1, List * keys2)
+samekeys(List *keys1, List *keys2)
 {
 	bool		allmember = true;
 	List	   *key1,
@@ -153,7 +153,7 @@ samekeys(List * keys1, List * keys2)
  * They should be merged.
  */
 static Expr *
-matching2_tlvar(int var, List * tlist, bool(*test) ())
+matching2_tlvar(int var, List *tlist, bool (*test) ())
 {
 	TargetEntry *tlentry = NULL;
 
@@ -179,7 +179,7 @@ matching2_tlvar(int var, List * tlist, bool(*test) ())
 
 
 List	   *
-collect_index_pathkeys(int *index_keys, List * tlist)
+collect_index_pathkeys(int *index_keys, List *tlist)
 {
 	List	   *retval = NIL;
 

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.7 1997/09/08 02:40:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.8 1997/09/08 21:55:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
    if debug is set, also echo the character fetched
 */
 int
-pqGetc(FILE * fin, FILE * debug)
+pqGetc(FILE *fin, FILE *debug)
 {
 	int			c;
 
@@ -49,7 +49,7 @@ pqGetc(FILE * fin, FILE * debug)
    returns 1 if there was an error, 0 otherwise.
 */
 int
-pqPutnchar(const char *s, int len, FILE * f, FILE * debug)
+pqPutnchar(const char *s, int len, FILE *f, FILE *debug)
 {
 	if (f == NULL)
 		return 1;
@@ -68,7 +68,7 @@ pqPutnchar(const char *s, int len, FILE * f, FILE * debug)
    get a string of exactly len length from stream f
 */
 int
-pqGetnchar(char *s, int len, FILE * f, FILE * debug)
+pqGetnchar(char *s, int len, FILE *f, FILE *debug)
 {
 	int			cnt;
 
@@ -90,7 +90,7 @@ pqGetnchar(char *s, int len, FILE * f, FILE * debug)
    get a string of up to length len from stream f
 */
 int
-pqGets(char *s, int len, FILE * f, FILE * debug)
+pqGets(char *s, int len, FILE *f, FILE *debug)
 {
 	int			c;
 	const char *str = s;
@@ -116,7 +116,7 @@ pqGets(char *s, int len, FILE * f, FILE * debug)
    returns 0 if successful, 1 otherwise
 */
 int
-pqPutInt(const int integer, int bytes, FILE * f, FILE * debug)
+pqPutInt(const int integer, int bytes, FILE *f, FILE *debug)
 {
 	int			retval = 0;
 
@@ -146,7 +146,7 @@ pqPutInt(const int integer, int bytes, FILE * f, FILE * debug)
    returns 0 if successful
 */
 int
-pqGetInt(int *result, int bytes, FILE * f, FILE * debug)
+pqGetInt(int *result, int bytes, FILE *f, FILE *debug)
 {
 	int			retval = 0;
 
@@ -171,7 +171,7 @@ pqGetInt(int *result, int bytes, FILE * f, FILE * debug)
 
 /* --------------------------------------------------------------------- */
 int
-pqPuts(const char *s, FILE * f, FILE * debug)
+pqPuts(const char *s, FILE *f, FILE *debug)
 {
 	if (f == NULL)
 		return 1;
@@ -193,7 +193,7 @@ pqPuts(const char *s, FILE * f, FILE * debug)
 
 /* --------------------------------------------------------------------- */
 void
-pqFlush(FILE * f, FILE * debug)
+pqFlush(FILE *f, FILE *debug)
 {
 	if (f)
 		fflush(f);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinvaladt.h,v 1.5 1997/09/08 02:39:13 momjian Exp $
+ * $Id: sinvaladt.h,v 1.6 1997/09/08 21:54:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ typedef struct ProcState
 	bool		resetState;		/* true, if backend has to reset its state */
 	int			tag;			/* special tag, recieved from the
 								 * postmaster */
-}			ProcState;
+} ProcState;
 
 
 typedef struct SISeg
@@ -74,7 +74,7 @@ typedef struct SISeg
 	ProcState	procState[MaxBackendId];		/* reflects the
 												 * invalidation state */
 	/* here starts the entry section, controlled by offsets */
-}			SISeg;
+} SISeg;
 
 #define SizeSISeg	  sizeof(SISeg)
 
@@ -83,7 +83,7 @@ typedef struct SharedInvalidData
 	int			cacheId;		/* XXX */
 	Index		hashIndex;
 	ItemPointerData pointerData;
-}			SharedInvalidData;
+} SharedInvalidData;
 
 typedef SharedInvalidData *SharedInvalid;
 
@@ -93,7 +93,7 @@ typedef struct SISegEntry
 	SharedInvalidData entryData;/* the message data */
 	bool		isfree;			/* entry free? */
 	Offset		next;			/* offset to next entry */
-}			SISegEntry;
+} SISegEntry;
 
 #define SizeOfOneSISegEntry   sizeof(SISegEntry)
 
@@ -102,7 +102,7 @@ typedef struct SISegOffsets
 	Offset		startSegment;	/* always 0 (for now) */
 	Offset		offsetToFirstEntry;		/* A + a = B */
 	Offset		offsetToEndOfSegemnt;	/* A + a + b */
-}			SISegOffsets;
+} SISegOffsets;
 
 
 /****************************************************************************/
@@ -119,15 +119,15 @@ extern SISeg *shmInvalBuffer;
 /*
  * prototypes for functions in sinvaladt.c
  */
-extern int	SIBackendInit(SISeg * segInOutP);
+extern int	SIBackendInit(SISeg *segInOutP);
 extern int	SISegmentInit(bool killExistingSegment, IPCKey key);
 
-extern bool SISetDataEntry(SISeg * segP, SharedInvalidData * data);
-extern void SISetProcStateInvalid(SISeg * segP);
-extern bool SIDelDataEntry(SISeg * segP);
+extern bool SISetDataEntry(SISeg *segP, SharedInvalidData *data);
+extern void SISetProcStateInvalid(SISeg *segP);
+extern bool SIDelDataEntry(SISeg *segP);
 extern void
-SIReadEntryData(SISeg * segP, int backendId,
+SIReadEntryData(SISeg *segP, int backendId,
 				void (*invalFunction) (), void (*resetFunction) ());
-extern void SIDelExpiredDataEntries(SISeg * segP);
+extern void SIDelExpiredDataEntries(SISeg *segP);
 
 #endif							/* SINVALADT_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.9 1997/09/08 02:21:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.10 1997/09/08 21:42:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@ TypeShellMakeWithOpenRelation(Relation pg_type_desc,
 static Oid
 TypeGetWithOpenRelation(Relation pg_type_desc,
 						char *typeName,
-						bool * defined)
+						bool *defined)
 {
 	HeapScanDesc scan;
 	HeapTuple	tup;
@@ -116,7 +116,7 @@ TypeGetWithOpenRelation(Relation pg_type_desc,
  */
 Oid
 TypeGet(char *typeName,			/* name of type to be fetched */
-		bool * defined)			/* has the type been defined? */
+		bool *defined)			/* has the type been defined? */
 {
 	Relation	pg_type_desc;
 	Oid			typeoid;

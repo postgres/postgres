@@ -18,8 +18,8 @@
 */
 
 int			add_one(int arg);
-char16	   *concat16(char16 * arg1, char16 * arg2);
-text	   *copytext(text * t);
+char16	   *concat16(char16 *arg1, char16 *arg2);
+text	   *copytext(text *t);
 
 bool
 c_overpaid(TUPLE t,				/* the current instance of EMP */
@@ -34,7 +34,7 @@ add_one(int arg)
 }
 
 char16	   *
-concat16(char16 * arg1, char16 * arg2)
+concat16(char16 *arg1, char16 *arg2)
 {
 	char16	   *new_c16 = (char16 *) palloc(sizeof(char16));
 
@@ -44,7 +44,7 @@ concat16(char16 * arg1, char16 * arg2)
 }
 
 text	   *
-copytext(text * t)
+copytext(text *t)
 {
 
 	/*

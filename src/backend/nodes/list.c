@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.6 1997/09/08 02:23:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.7 1997/09/08 21:44:04 momjian Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -58,7 +58,7 @@ makeList(void *elem,...)
 }
 
 List	   *
-lcons(void *obj, List * list)
+lcons(void *obj, List *list)
 {
 	List	   *l = makeNode(List);
 
@@ -68,7 +68,7 @@ lcons(void *obj, List * list)
 }
 
 List	   *
-lconsi(int datum, List * list)
+lconsi(int datum, List *list)
 {
 	List	   *l = makeNode(List);
 
@@ -78,13 +78,13 @@ lconsi(int datum, List * list)
 }
 
 List	   *
-lappend(List * list, void *obj)
+lappend(List *list, void *obj)
 {
 	return nconc(list, lcons(obj, NIL));
 }
 
 List	   *
-lappendi(List * list, int datum)
+lappendi(List *list, int datum)
 {
 	return nconc(list, lconsi(datum, NIL));
 }
@@ -121,7 +121,7 @@ makeString(char *str)
 
 /* n starts with 0 */
 void	   *
-nth(int n, List * l)
+nth(int n, List *l)
 {
 	/* XXX assume list is long enough */
 	while (n > 0)
@@ -133,7 +133,7 @@ nth(int n, List * l)
 }
 
 int
-nthi(int n, List * l)
+nthi(int n, List *l)
 {
 	/* XXX assume list is long enough */
 	while (n > 0)
@@ -146,7 +146,7 @@ nthi(int n, List * l)
 
 /* this is here solely for rt_store. Get rid of me some day! */
 void
-set_nth(List * l, int n, void *elem)
+set_nth(List *l, int n, void *elem)
 {
 	/* XXX assume list is long enough */
 	while (n > 0)
@@ -159,7 +159,7 @@ set_nth(List * l, int n, void *elem)
 }
 
 int
-length(List * l)
+length(List *l)
 {
 	int			i = 0;
 
@@ -172,7 +172,7 @@ length(List * l)
 }
 
 void
-freeList(List * list)
+freeList(List *list)
 {
 	while (list != NIL)
 	{
@@ -187,7 +187,7 @@ freeList(List * list)
  * below are for backwards compatibility
  */
 List	   *
-append(List * l1, List * l2)
+append(List *l1, List *l2)
 {
 	List	   *newlist,
 			   *newlist2,
@@ -209,7 +209,7 @@ append(List * l1, List * l2)
  * below are for backwards compatibility
  */
 List	   *
-intAppend(List * l1, List * l2)
+intAppend(List *l1, List *l2)
 {
 	List	   *newlist,
 			   *newlist2,
@@ -228,7 +228,7 @@ intAppend(List * l1, List * l2)
 }
 
 List	   *
-nconc(List * l1, List * l2)
+nconc(List *l1, List *l2)
 {
 	List	   *temp;
 
@@ -248,7 +248,7 @@ nconc(List * l1, List * l2)
 
 
 List	   *
-nreverse(List * list)
+nreverse(List *list)
 {
 	List	   *rlist = NIL;
 	List	   *p = NIL;
@@ -278,7 +278,7 @@ nreverse(List * list)
  * XXX only good for IntList	-ay
  */
 bool
-same(List * foo, List * bar)
+same(List *foo, List *bar)
 {
 	List	   *temp = NIL;
 
@@ -300,7 +300,7 @@ same(List * foo, List * bar)
 }
 
 List	   *
-LispUnion(List * foo, List * bar)
+LispUnion(List *foo, List *bar)
 {
 	List	   *retval = NIL;
 	List	   *i = NIL;
@@ -332,7 +332,7 @@ LispUnion(List * foo, List * bar)
 }
 
 List	   *
-LispUnioni(List * foo, List * bar)
+LispUnioni(List *foo, List *bar)
 {
 	List	   *retval = NIL;
 	List	   *i = NIL;
@@ -369,7 +369,7 @@ LispUnioni(List * foo, List * bar)
  *	 bar
  */
 bool
-member(void *foo, List * bar)
+member(void *foo, List *bar)
 {
 	List	   *i;
 
@@ -380,7 +380,7 @@ member(void *foo, List * bar)
 }
 
 bool
-intMember(int foo, List * bar)
+intMember(int foo, List *bar)
 {
 	List	   *i;
 
@@ -395,7 +395,7 @@ intMember(int foo, List * bar)
  *	  only does pointer comparisons. Removes 'elem' from the the linked list.
  */
 List	   *
-lremove(void *elem, List * list)
+lremove(void *elem, List *list)
 {
 	List	   *l;
 	List	   *prev = NIL;
@@ -422,7 +422,7 @@ lremove(void *elem, List * list)
 }
 
 List	   *
-LispRemove(void *elem, List * list)
+LispRemove(void *elem, List *list)
 {
 	List	   *temp = NIL;
 	List	   *prev = NIL;
@@ -447,7 +447,7 @@ LispRemove(void *elem, List * list)
 
 #ifdef NOT_USED
 List	   *
-intLispRemove(int elem, List * list)
+intLispRemove(int elem, List *list)
 {
 	List	   *temp = NIL;
 	List	   *prev = NIL;
@@ -473,7 +473,7 @@ intLispRemove(int elem, List * list)
 #endif
 
 List	   *
-set_difference(List * list1, List * list2)
+set_difference(List *list1, List *list2)
 {
 	List	   *temp1 = NIL;
 	List	   *result = NIL;
@@ -490,7 +490,7 @@ set_difference(List * list1, List * list2)
 }
 
 List	   *
-set_differencei(List * list1, List * list2)
+set_differencei(List *list1, List *list2)
 {
 	List	   *temp1 = NIL;
 	List	   *result = NIL;

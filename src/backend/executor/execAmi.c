@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.7 1997/09/08 02:22:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.8 1997/09/08 21:42:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,8 +71,8 @@ ExecOpenScanR(Oid relOid,
 			  bool isindex,
 			  ScanDirection dir,
 			  TimeQual timeRange,
-			  Relation * returnRelation,		/* return */
-			  Pointer * returnScanDesc) /* return */
+			  Relation *returnRelation, /* return */
+			  Pointer *returnScanDesc)	/* return */
 {
 	Relation	relation;
 	Pointer		scanDesc;
@@ -195,7 +195,7 @@ ExecBeginScan(Relation relation,
  * ----------------------------------------------------------------
  */
 void
-ExecCloseR(Plan * node)
+ExecCloseR(Plan *node)
 {
 	CommonScanState *state;
 	Relation	relation;
@@ -288,7 +288,7 @@ ExecCloseR(Plan * node)
  * ----------------------------------------------------------------
  */
 void
-ExecReScan(Plan * node, ExprContext * exprCtxt, Plan * parent)
+ExecReScan(Plan *node, ExprContext *exprCtxt, Plan *parent)
 {
 	switch (nodeTag(node))
 	{
@@ -328,7 +328,7 @@ ExecReScan(Plan * node, ExprContext * exprCtxt, Plan * parent)
  * ----------------------------------------------------------------
  */
 HeapScanDesc
-ExecReScanR(Relation relDesc,			/* LLL relDesc unused  */
+ExecReScanR(Relation relDesc,	/* LLL relDesc unused  */
 			HeapScanDesc scanDesc,
 			ScanDirection direction,
 			int nkeys,			/* LLL nkeys unused  */
@@ -351,7 +351,7 @@ ExecReScanR(Relation relDesc,			/* LLL relDesc unused  */
  * ----------------------------------------------------------------
  */
 void
-ExecMarkPos(Plan * node)
+ExecMarkPos(Plan *node)
 {
 	switch (nodeTag(node))
 	{
@@ -381,7 +381,7 @@ ExecMarkPos(Plan * node)
  * ----------------------------------------------------------------
  */
 void
-ExecRestrPos(Plan * node)
+ExecRestrPos(Plan *node)
 {
 	switch (nodeTag(node))
 	{

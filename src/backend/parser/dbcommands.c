@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/dbcommands.c,v 1.8 1997/09/08 02:25:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/dbcommands.c,v 1.9 1997/09/08 21:46:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@
 /* non-export function prototypes */
 static void
 check_permissions(char *command, char *dbname,
-				  Oid * dbIdP, Oid * userIdP);
+				  Oid *dbIdP, Oid *userIdP);
 static HeapTuple get_pg_dbtup(char *command, char *dbname, Relation dbrel);
 static void stop_vacuum(char *dbname);
 
@@ -161,8 +161,8 @@ get_pg_dbtup(char *command, char *dbname, Relation dbrel)
 static void
 check_permissions(char *command,
 				  char *dbname,
-				  Oid * dbIdP,
-				  Oid * userIdP)
+				  Oid *dbIdP,
+				  Oid *userIdP)
 {
 	Relation	dbrel;
 	HeapTuple	dbtup,

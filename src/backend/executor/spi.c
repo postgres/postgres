@@ -17,7 +17,7 @@ typedef struct
 	Portal		portal;			/* portal per procedure */
 	MemoryContext savedcxt;
 	CommandId	savedId;
-}			_SPI_connection;
+} _SPI_connection;
 
 static Portal _SPI_portal = (Portal) NULL;
 static _SPI_connection *_SPI_stack = NULL;
@@ -37,20 +37,20 @@ typedef struct
 	List	   *ptlist;
 	int			nargs;
 	Oid		   *argtypes;
-}			_SPI_plan;
+} _SPI_plan;
 
-static int	_SPI_execute(char *src, int tcount, _SPI_plan * plan);
-static int	_SPI_pquery(QueryDesc * queryDesc, EState * state, int tcount);
+static int	_SPI_execute(char *src, int tcount, _SPI_plan *plan);
+static int	_SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount);
 
 #if 0
-static void _SPI_fetch(FetchStmt * stmt);
+static void _SPI_fetch(FetchStmt *stmt);
 
 #endif
 static int
-_SPI_execute_plan(_SPI_plan * plan,
+_SPI_execute_plan(_SPI_plan *plan,
 				  char **Values, char *Nulls, int tcount);
 
-static _SPI_plan *_SPI_copy_plan(_SPI_plan * plan, bool local);
+static _SPI_plan *_SPI_copy_plan(_SPI_plan *plan, bool local);
 
 static int	_SPI_begin_call(bool execmem);
 static int	_SPI_end_call(bool procmem);
@@ -217,7 +217,7 @@ SPI_execp(void *plan, char **Values, char *Nulls, int tcount)
 }
 
 void	   *
-SPI_prepare(char *src, int nargs, Oid * argtypes)
+SPI_prepare(char *src, int nargs, Oid *argtypes)
 {
 	_SPI_plan  *plan;
 
@@ -320,7 +320,7 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 }
 
 char	   *
-SPI_getbinval(HeapTuple tuple, TupleDesc tupdesc, int fnumber, bool * isnull)
+SPI_getbinval(HeapTuple tuple, TupleDesc tupdesc, int fnumber, bool *isnull)
 {
 	char	   *val;
 
@@ -457,7 +457,7 @@ spi_printtup(HeapTuple tuple, TupleDesc tupdesc)
  */
 
 static int
-_SPI_execute(char *src, int tcount, _SPI_plan * plan)
+_SPI_execute(char *src, int tcount, _SPI_plan *plan)
 {
 	QueryTreeList *queryTree_list;
 	List	   *planTree_list;
@@ -554,7 +554,7 @@ _SPI_execute(char *src, int tcount, _SPI_plan * plan)
 }
 
 static int
-_SPI_execute_plan(_SPI_plan * plan, char **Values, char *Nulls, int tcount)
+_SPI_execute_plan(_SPI_plan *plan, char **Values, char *Nulls, int tcount)
 {
 	QueryTreeList *queryTree_list = plan->qtlist;
 	List	   *planTree_list = plan->ptlist;
@@ -625,7 +625,7 @@ _SPI_execute_plan(_SPI_plan * plan, char **Values, char *Nulls, int tcount)
 }
 
 static int
-_SPI_pquery(QueryDesc * queryDesc, EState * state, int tcount)
+_SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 {
 	Query	   *parseTree;
 	Plan	   *plan;
@@ -723,7 +723,7 @@ _SPI_pquery(QueryDesc * queryDesc, EState * state, int tcount)
 
 #if 0
 static void
-_SPI_fetch(FetchStmt * stmt)
+_SPI_fetch(FetchStmt *stmt)
 {
 	char	   *name = stmt->portalname;
 	int			feature = (stmt->direction == FORWARD) ? EXEC_FOR : EXEC_BACK;
@@ -864,7 +864,7 @@ _SPI_checktuples(bool isRetrieveIntoRelation)
 }
 
 static _SPI_plan *
-_SPI_copy_plan(_SPI_plan * plan, bool local)
+_SPI_copy_plan(_SPI_plan *plan, bool local)
 {
 	_SPI_plan  *newplan;
 	MemoryContext oldcxt;

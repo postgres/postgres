@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.3 1997/09/08 02:24:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.4 1997/09/08 21:45:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,12 +32,12 @@
 
 
 static void
-best_or_subclause_indices(Query * root, Rel * rel, List * subclauses,
-						  List * indices, List * examined_indexids, Cost subcost, List * selectivities,
-						  List ** indexids, Cost * cost, List ** selecs);
+best_or_subclause_indices(Query *root, Rel *rel, List *subclauses,
+List *indices, List *examined_indexids, Cost subcost, List *selectivities,
+						  List **indexids, Cost *cost, List **selecs);
 static void
-best_or_subclause_index(Query * root, Rel * rel, Expr * subclause,
-				List * indices, int *indexid, Cost * cost, Cost * selec);
+best_or_subclause_index(Query *root, Rel *rel, Expr *subclause,
+				   List *indices, int *indexid, Cost *cost, Cost *selec);
 
 
 /*
@@ -51,8 +51,8 @@ best_or_subclause_index(Query * root, Rel * rel, Expr * subclause,
  *
  */
 List	   *
-create_or_index_paths(Query * root,
-					  Rel * rel, List * clauses)
+create_or_index_paths(Query *root,
+					  Rel *rel, List *clauses)
 {
 	List	   *t_list = NIL;
 
@@ -158,16 +158,16 @@ create_or_index_paths(Query * root,
  * 'cost' is a flonum, and 's' is a flonum.
  */
 static void
-best_or_subclause_indices(Query * root,
-						  Rel * rel,
-						  List * subclauses,
-						  List * indices,
-						  List * examined_indexids,
+best_or_subclause_indices(Query *root,
+						  Rel *rel,
+						  List *subclauses,
+						  List *indices,
+						  List *examined_indexids,
 						  Cost subcost,
-						  List * selectivities,
-						  List ** indexids,		/* return value */
-						  Cost * cost,	/* return value */
-						  List ** selecs)		/* return value */
+						  List *selectivities,
+						  List **indexids,		/* return value */
+						  Cost *cost,	/* return value */
+						  List **selecs)		/* return value */
 {
 	if (subclauses == NIL)
 	{
@@ -213,13 +213,13 @@ best_or_subclause_indices(Query * root,
  *
  */
 static void
-best_or_subclause_index(Query * root,
-						Rel * rel,
-						Expr * subclause,
-						List * indices,
+best_or_subclause_index(Query *root,
+						Rel *rel,
+						Expr *subclause,
+						List *indices,
 						int *retIndexid,		/* return value */
-						Cost * retCost, /* return value */
-						Cost * retSelec)		/* return value */
+						Cost *retCost,	/* return value */
+						Cost *retSelec) /* return value */
 {
 	if (indices != NIL)
 	{

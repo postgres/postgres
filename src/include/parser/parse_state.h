@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_state.h,v 1.7 1997/09/08 02:38:15 momjian Exp $
+ * $Id: parse_state.h,v 1.8 1997/09/08 21:53:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@ typedef struct ParseState
 	bool		p_is_rule;
 	Relation	p_target_relation;
 	RangeTblEntry *p_target_rangetblentry;
-}			ParseState;
+} ParseState;
 
 
 #endif							/* PARSE_QUERY_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.9 1997/09/08 02:22:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.10 1997/09/08 21:43:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@
 #define LEFT_OP			1
 #define RIGHT_OP		2
 
-static TupleTableSlot *IndexNext(IndexScan * node);
+static TupleTableSlot *IndexNext(IndexScan *node);
 
 /* ----------------------------------------------------------------
  *		IndexNext
@@ -80,7 +80,7 @@ static TupleTableSlot *IndexNext(IndexScan * node);
  * ----------------------------------------------------------------
  */
 static TupleTableSlot *
-IndexNext(IndexScan * node)
+IndexNext(IndexScan *node)
 {
 	EState	   *estate;
 	CommonScanState *scanstate;
@@ -192,7 +192,7 @@ IndexNext(IndexScan * node)
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecIndexScan(IndexScan * node)
+ExecIndexScan(IndexScan *node)
 {
 	TupleTableSlot *returnTuple;
 
@@ -217,7 +217,7 @@ ExecIndexScan(IndexScan * node)
  * ----------------------------------------------------------------
  */
 void
-ExecIndexReScan(IndexScan * node, ExprContext * exprCtxt, Plan * parent)
+ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 {
 	EState	   *estate;
 	IndexScanState *indexstate;
@@ -331,7 +331,7 @@ ExecIndexReScan(IndexScan * node, ExprContext * exprCtxt, Plan * parent)
  * ----------------------------------------------------------------
  */
 void
-ExecEndIndexScan(IndexScan * node)
+ExecEndIndexScan(IndexScan *node)
 {
 	CommonScanState *scanstate;
 	IndexScanState *indexstate;
@@ -395,7 +395,7 @@ ExecEndIndexScan(IndexScan * node)
  * ----------------------------------------------------------------
  */
 void
-ExecIndexMarkPos(IndexScan * node)
+ExecIndexMarkPos(IndexScan *node)
 {
 	IndexScanState *indexstate;
 	IndexScanDescPtr indexScanDescs;
@@ -426,7 +426,7 @@ ExecIndexMarkPos(IndexScan * node)
  * ----------------------------------------------------------------
  */
 void
-ExecIndexRestrPos(IndexScan * node)
+ExecIndexRestrPos(IndexScan *node)
 {
 	IndexScanState *indexstate;
 	IndexScanDescPtr indexScanDescs;
@@ -461,7 +461,7 @@ ExecIndexRestrPos(IndexScan * node)
  * ----------------------------------------------------------------
  */
 bool
-ExecInitIndexScan(IndexScan * node, EState * estate, Plan * parent)
+ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 {
 	IndexScanState *indexstate;
 	CommonScanState *scanstate;
@@ -677,7 +677,7 @@ ExecInitIndexScan(IndexScan * node, EState * estate, Plan * parent)
 			 */
 			leftop = (Node *) get_leftop(clause);
 
-			if (IsA(leftop, Var) && var_is_rel((Var *) leftop))
+			if (IsA(leftop, Var) &&var_is_rel((Var *) leftop))
 			{
 				/* ----------------
 				 *	if the leftop is a "rel-var", then it means
@@ -750,7 +750,7 @@ ExecInitIndexScan(IndexScan * node, EState * estate, Plan * parent)
 			 */
 			rightop = (Node *) get_rightop(clause);
 
-			if (IsA(rightop, Var) && var_is_rel((Var *) rightop))
+			if (IsA(rightop, Var) &&var_is_rel((Var *) rightop))
 			{
 				/* ----------------
 				 *	here we make sure only one op identifies the
@@ -920,7 +920,7 @@ ExecInitIndexScan(IndexScan * node, EState * estate, Plan * parent)
 				  direction,	/* scan direction */
 				  timeQual,		/* time qual */
 				  &currentRelation,		/* return: rel desc */
-				  (Pointer *) & currentScanDesc);		/* return: scan desc */
+				  (Pointer *) &currentScanDesc);		/* return: scan desc */
 
 	scanstate->css_currentRelation = currentRelation;
 	scanstate->css_currentScanDesc = currentScanDesc;
@@ -959,7 +959,7 @@ ExecInitIndexScan(IndexScan * node, EState * estate, Plan * parent)
 						  direction,	/* scan direction */
 						  timeQual,		/* time qual */
 						  &(relationDescs[i]),	/* return: rel desc */
-						  (Pointer *) & (scanDescs[i]));
+						  (Pointer *) &(scanDescs[i]));
 			/* return: scan desc */
 		}
 	}
@@ -977,7 +977,7 @@ ExecInitIndexScan(IndexScan * node, EState * estate, Plan * parent)
 }
 
 int
-ExecCountSlotsIndexScan(IndexScan * node)
+ExecCountSlotsIndexScan(IndexScan *node)
 {
 	return ExecCountSlotsNode(outerPlan((Plan *) node)) +
 	ExecCountSlotsNode(innerPlan((Plan *) node)) +

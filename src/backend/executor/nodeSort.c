@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.8 1997/09/08 02:22:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.9 1997/09/08 21:43:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@
  * ----------------------------------------------------------------
  */
 static ScanKey
-FormSortKeys(Sort * sortnode)
+FormSortKeys(Sort *sortnode)
 {
 	ScanKey		sortkeys;
 	List	   *targetList;
@@ -102,7 +102,7 @@ FormSortKeys(Sort * sortnode)
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecSort(Sort * node)
+ExecSort(Sort *node)
 {
 	EState	   *estate;
 	SortState  *sortstate;
@@ -229,7 +229,7 @@ ExecSort(Sort * node)
  * ----------------------------------------------------------------
  */
 bool
-ExecInitSort(Sort * node, EState * estate, Plan * parent)
+ExecInitSort(Sort *node, EState *estate, Plan *parent)
 {
 	SortState  *sortstate;
 	Plan	   *outerPlan;
@@ -314,7 +314,7 @@ ExecInitSort(Sort * node, EState * estate, Plan * parent)
 }
 
 int
-ExecCountSlotsSort(Sort * node)
+ExecCountSlotsSort(Sort *node)
 {
 	return ExecCountSlotsNode(outerPlan((Plan *) node)) +
 	ExecCountSlotsNode(innerPlan((Plan *) node)) +
@@ -328,7 +328,7 @@ ExecCountSlotsSort(Sort * node)
  * ----------------------------------------------------------------
  */
 void
-ExecEndSort(Sort * node)
+ExecEndSort(Sort *node)
 {
 	SortState  *sortstate;
 	Plan	   *outerPlan;
@@ -369,7 +369,7 @@ ExecEndSort(Sort * node)
  * ----------------------------------------------------------------
  */
 void
-ExecSortMarkPos(Sort * node)
+ExecSortMarkPos(Sort *node)
 {
 	SortState  *sortstate;
 
@@ -393,7 +393,7 @@ ExecSortMarkPos(Sort * node)
  * ----------------------------------------------------------------
  */
 void
-ExecSortRestrPos(Sort * node)
+ExecSortRestrPos(Sort *node)
 {
 	SortState  *sortstate;
 

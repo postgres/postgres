@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.32 1997/09/08 20:55:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.33 1997/09/08 21:42:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,8 +42,8 @@
 
 
 /* non-export function prototypes */
-static void CopyTo(Relation rel, bool binary, bool oids, FILE * fp, char *delim);
-static void CopyFrom(Relation rel, bool binary, bool oids, FILE * fp, char *delim);
+static void CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim);
+static void CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim);
 static Oid	GetOutputFunction(Oid type);
 static Oid	GetTypeElement(Oid type);
 static Oid	GetInputFunction(Oid type);
@@ -51,17 +51,17 @@ static Oid	IsTypeByVal(Oid type);
 static void
 GetIndexRelations(Oid main_relation_oid,
 				  int *n_indices,
-				  Relation ** index_rels);
+				  Relation **index_rels);
 
 #ifdef COPY_PATCH
-static void CopyReadNewline(FILE * fp, int *newline);
-static char *CopyReadAttribute(FILE * fp, bool * isnull, char *delim, int *newline);
+static void CopyReadNewline(FILE *fp, int *newline);
+static char *CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline);
 
 #else
-static char *CopyReadAttribute(FILE * fp, bool * isnull, char *delim);
+static char *CopyReadAttribute(FILE *fp, bool *isnull, char *delim);
 
 #endif
-static void CopyAttributeOut(FILE * fp, char *string, char *delim);
+static void CopyAttributeOut(FILE *fp, char *string, char *delim);
 static int	CountTuples(Relation relation);
 
 extern FILE *Pfout,
@@ -197,7 +197,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 
 
 static void
-CopyTo(Relation rel, bool binary, bool oids, FILE * fp, char *delim)
+CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 {
 	HeapTuple	tuple;
 	HeapScanDesc scandesc;
@@ -356,7 +356,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE * fp, char *delim)
 }
 
 static void
-CopyFrom(Relation rel, bool binary, bool oids, FILE * fp, char *delim)
+CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 {
 	HeapTuple	tuple;
 	AttrNumber	attr_count;
@@ -648,17 +648,17 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE * fp, char *delim)
 						switch (attr[i]->attlen)
 						{
 							case sizeof(char):
-								values[i] = (Datum) * (unsigned char *) ptr;
+								values[i] = (Datum) *(unsigned char *) ptr;
 								ptr += sizeof(char);
 								break;
 							case sizeof(short):
 								ptr = (char *) SHORTALIGN(ptr);
-								values[i] = (Datum) * (unsigned short *) ptr;
+								values[i] = (Datum) *(unsigned short *) ptr;
 								ptr += sizeof(short);
 								break;
 							case sizeof(int32):
 								ptr = (char *) INTALIGN(ptr);
-								values[i] = (Datum) * (uint32 *) ptr;
+								values[i] = (Datum) *(uint32 *) ptr;
 								ptr += sizeof(int32);
 								break;
 							default:
@@ -904,12 +904,12 @@ typedef struct rel_list
 {
 	Oid			index_rel_oid;
 	struct rel_list *next;
-}			RelationList;
+} RelationList;
 
 static void
 GetIndexRelations(Oid main_relation_oid,
 				  int *n_indices,
-				  Relation ** index_rels)
+				  Relation **index_rels)
 {
 	RelationList *head,
 			   *scan;
@@ -1002,7 +1002,7 @@ inString(char c, char *s)
  */
 
 void
-CopyReadNewline(FILE * fp, int *newline)
+CopyReadNewline(FILE *fp, int *newline)
 {
 	if (!*newline)
 	{
@@ -1028,9 +1028,9 @@ CopyReadNewline(FILE * fp, int *newline)
 
 static char *
 #ifdef COPY_PATCH
-CopyReadAttribute(FILE * fp, bool * isnull, char *delim, int *newline)
+CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline)
 #else
-CopyReadAttribute(FILE * fp, bool * isnull, char *delim)
+CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 #endif
 {
 	static char attribute[EXT_ATTLEN];
@@ -1151,7 +1151,7 @@ CopyReadAttribute(FILE * fp, bool * isnull, char *delim)
 }
 
 static void
-CopyAttributeOut(FILE * fp, char *string, char *delim)
+CopyAttributeOut(FILE *fp, char *string, char *delim)
 {
 	char		c;
 	int			is_array = false;

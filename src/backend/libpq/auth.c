@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.16 1997/09/08 02:23:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.17 1997/09/08 21:43:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -424,7 +424,7 @@ pg_krb5_recvauth(int sock,
 #endif							/* KRB5 */
 
 static int
-pg_password_recvauth(Port * port, char *database, char *DataDir)
+pg_password_recvauth(Port *port, char *database, char *DataDir)
 {
 	PacketBuf	buf;
 	char	   *user,
@@ -449,7 +449,7 @@ pg_password_recvauth(Port * port, char *database, char *DataDir)
  * be_recvauth -- server demux routine for incoming authentication information
  */
 int
-be_recvauth(MsgType msgtype_arg, Port * port, char *username, StartupInfo * sp)
+be_recvauth(MsgType msgtype_arg, Port *port, char *username, StartupInfo *sp)
 {
 	MsgType		msgtype;
 

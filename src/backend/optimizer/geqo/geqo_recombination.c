@@ -3,7 +3,7 @@
 * geqo_recombination.c--
 *	 misc recombination procedures
 *
-* $Id: geqo_recombination.c,v 1.3 1997/09/08 02:24:08 momjian Exp $
+* $Id: geqo_recombination.c,v 1.4 1997/09/08 21:44:36 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -51,7 +51,7 @@
  *
  */
 void
-init_tour(Gene * tour, int num_gene)
+init_tour(Gene *tour, int num_gene)
 {
 	Gene	   *tmp;
 	int			remainder;
@@ -105,7 +105,7 @@ alloc_city_table(int num_gene)
  *
  */
 void
-free_city_table(City * city_table)
+free_city_table(City *city_table)
 {
 	pfree(city_table);
 }

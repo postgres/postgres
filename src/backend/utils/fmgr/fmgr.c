@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.5 1997/09/08 02:31:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.6 1997/09/08 21:49:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,8 +33,8 @@ char	   *
 fmgr_c(func_ptr user_fn,
 	   Oid func_id,
 	   int n_arguments,
-	   FmgrValues * values,
-	   bool * isNull)
+	   FmgrValues *values,
+	   bool *isNull)
 {
 	char	   *returnValue = (char *) NULL;
 
@@ -115,7 +115,7 @@ fmgr_c(func_ptr user_fn,
 }
 
 void
-fmgr_info(Oid procedureId, func_ptr * function, int *nargs)
+fmgr_info(Oid procedureId, func_ptr *function, int *nargs)
 {
 	func_ptr	user_fn = NULL;
 	FmgrCall   *fcp;
@@ -252,7 +252,7 @@ fmgr_ptr(func_ptr user_fn, Oid func_id,...)
  * to fmgr_c().
  */
 char	   *
-fmgr_array_args(Oid procedureId, int nargs, char *args[], bool * isNull)
+fmgr_array_args(Oid procedureId, int nargs, char *args[], bool *isNull)
 {
 	func_ptr	user_fn;
 	int			true_arguments;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.15 1997/09/08 20:55:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.16 1997/09/08 21:43:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,27 +69,27 @@ bool		execConstByVal;
 int			execConstLen;
 
 /* static functions decls */
-static Datum ExecEvalAggreg(Aggreg *agg, ExprContext * econtext, bool * isNull);
+static Datum ExecEvalAggreg(Aggreg *agg, ExprContext *econtext, bool *isNull);
 static Datum
-ExecEvalArrayRef(ArrayRef *arrayRef, ExprContext * econtext,
-				 bool * isNull, bool * isDone);
-static Datum ExecEvalAnd(Expr * andExpr, ExprContext * econtext, bool * isNull);
+ExecEvalArrayRef(ArrayRef *arrayRef, ExprContext *econtext,
+				 bool *isNull, bool *isDone);
+static Datum ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull);
 static Datum
-ExecEvalFunc(Expr * funcClause, ExprContext * econtext,
-			 bool * isNull, bool * isDone);
+ExecEvalFunc(Expr *funcClause, ExprContext *econtext,
+			 bool *isNull, bool *isDone);
 static void
-ExecEvalFuncArgs(FunctionCachePtr fcache, ExprContext * econtext,
-				 List * argList, Datum argV[], bool * argIsDone);
-static Datum ExecEvalNot(Expr * notclause, ExprContext * econtext, bool * isNull);
+ExecEvalFuncArgs(FunctionCachePtr fcache, ExprContext *econtext,
+				 List *argList, Datum argV[], bool *argIsDone);
+static Datum ExecEvalNot(Expr *notclause, ExprContext *econtext, bool *isNull);
 static Datum
-ExecEvalOper(Expr * opClause, ExprContext * econtext,
-			 bool * isNull);
-static Datum ExecEvalOr(Expr * orExpr, ExprContext * econtext, bool * isNull);
-static Datum ExecEvalVar(Var * variable, ExprContext * econtext, bool * isNull);
+ExecEvalOper(Expr *opClause, ExprContext *econtext,
+			 bool *isNull);
+static Datum ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull);
+static Datum ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull);
 static Datum
-ExecMakeFunctionResult(Node * node, List * arguments,
-				   ExprContext * econtext, bool * isNull, bool * isDone);
-static bool ExecQualClause(Node * clause, ExprContext * econtext);
+ExecMakeFunctionResult(Node *node, List *arguments,
+					   ExprContext *econtext, bool *isNull, bool *isDone);
+static bool ExecQualClause(Node *clause, ExprContext *econtext);
 
 /* --------------------------------
  *	  ExecEvalArrayRef
@@ -102,9 +102,9 @@ static bool ExecQualClause(Node * clause, ExprContext * econtext);
  */
 static Datum
 ExecEvalArrayRef(ArrayRef *arrayRef,
-				 ExprContext * econtext,
-				 bool * isNull,
-				 bool * isDone)
+				 ExprContext *econtext,
+				 bool *isNull,
+				 bool *isDone)
 {
 	bool		dummy;
 	int			i = 0,
@@ -200,7 +200,7 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalAggreg(Aggreg *agg, ExprContext * econtext, bool * isNull)
+ExecEvalAggreg(Aggreg *agg, ExprContext *econtext, bool *isNull)
 {
 
 	*isNull = econtext->ecxt_nulls[agg->aggno];
@@ -231,7 +231,7 @@ ExecEvalAggreg(Aggreg *agg, ExprContext * econtext, bool * isNull)
  *
  * ---------------------------------------------------------------- */
 static Datum
-ExecEvalVar(Var * variable, ExprContext * econtext, bool * isNull)
+ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 {
 	Datum		result;
 	TupleTableSlot *slot;
@@ -377,7 +377,7 @@ ExecEvalVar(Var * variable, ExprContext * econtext, bool * isNull)
  * ----------------------------------------------------------------
  */
 Datum
-ExecEvalParam(Param * expression, ExprContext * econtext, bool * isNull)
+ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull)
 {
 
 	char	   *thisParameterName;
@@ -509,9 +509,9 @@ ExecEvalParam(Param * expression, ExprContext * econtext, bool * isNull)
  */
 #ifdef NOT_USED
 static char *
-GetAttributeByNum(TupleTableSlot * slot,
+GetAttributeByNum(TupleTableSlot *slot,
 				  AttrNumber attrno,
-				  bool * isNull)
+				  bool *isNull)
 {
 	Datum		retval;
 
@@ -546,9 +546,9 @@ GetAttributeByNum(TupleTableSlot * slot,
 /* XXX char16 name for catalogs */
 #ifdef NOT_USED
 char	   *
-att_by_num(TupleTableSlot * slot,
+att_by_num(TupleTableSlot *slot,
 		   AttrNumber attrno,
-		   bool * isNull)
+		   bool *isNull)
 {
 	return (GetAttributeByNum(slot, attrno, isNull));
 }
@@ -556,7 +556,7 @@ att_by_num(TupleTableSlot * slot,
 #endif
 
 char	   *
-GetAttributeByName(TupleTableSlot * slot, char *attname, bool * isNull)
+GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull)
 {
 	AttrNumber	attrno;
 	TupleDesc	tupdesc;
@@ -609,7 +609,7 @@ GetAttributeByName(TupleTableSlot * slot, char *attname, bool * isNull)
 /* XXX char16 name for catalogs */
 #ifdef NOT_USED
 char	   *
-att_by_name(TupleTableSlot * slot, char *attname, bool * isNull)
+att_by_name(TupleTableSlot *slot, char *attname, bool *isNull)
 {
 	return (GetAttributeByName(slot, attname, isNull));
 }
@@ -618,10 +618,10 @@ att_by_name(TupleTableSlot * slot, char *attname, bool * isNull)
 
 static void
 ExecEvalFuncArgs(FunctionCachePtr fcache,
-				 ExprContext * econtext,
-				 List * argList,
+				 ExprContext *econtext,
+				 List *argList,
 				 Datum argV[],
-				 bool * argIsDone)
+				 bool *argIsDone)
 {
 	int			i;
 	bool		argIsNull,
@@ -664,11 +664,11 @@ ExecEvalFuncArgs(FunctionCachePtr fcache,
  * ----------------
  */
 static Datum
-ExecMakeFunctionResult(Node * node,
-					   List * arguments,
-					   ExprContext * econtext,
-					   bool * isNull,
-					   bool * isDone)
+ExecMakeFunctionResult(Node *node,
+					   List *arguments,
+					   ExprContext *econtext,
+					   bool *isNull,
+					   bool *isDone)
 {
 	Datum		argv[MAXFMGRARGS];
 	FunctionCachePtr fcache;
@@ -864,7 +864,7 @@ ExecMakeFunctionResult(Node * node,
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalOper(Expr * opClause, ExprContext * econtext, bool * isNull)
+ExecEvalOper(Expr *opClause, ExprContext *econtext, bool *isNull)
 {
 	Oper	   *op;
 	List	   *argList;
@@ -909,10 +909,10 @@ ExecEvalOper(Expr * opClause, ExprContext * econtext, bool * isNull)
  */
 
 static Datum
-ExecEvalFunc(Expr * funcClause,
-			 ExprContext * econtext,
-			 bool * isNull,
-			 bool * isDone)
+ExecEvalFunc(Expr *funcClause,
+			 ExprContext *econtext,
+			 bool *isNull,
+			 bool *isDone)
 {
 	Func	   *func;
 	List	   *argList;
@@ -964,7 +964,7 @@ ExecEvalFunc(Expr * funcClause,
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalNot(Expr * notclause, ExprContext * econtext, bool * isNull)
+ExecEvalNot(Expr *notclause, ExprContext *econtext, bool *isNull)
 {
 	Datum		expr_value;
 	Node	   *clause;
@@ -1003,7 +1003,7 @@ ExecEvalNot(Expr * notclause, ExprContext * econtext, bool * isNull)
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalOr(Expr * orExpr, ExprContext * econtext, bool * isNull)
+ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull)
 {
 	List	   *clauses;
 	List	   *clause;
@@ -1067,7 +1067,7 @@ ExecEvalOr(Expr * orExpr, ExprContext * econtext, bool * isNull)
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalAnd(Expr * andExpr, ExprContext * econtext, bool * isNull)
+ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull)
 {
 	List	   *clauses;
 	List	   *clause;
@@ -1144,10 +1144,10 @@ ExecEvalAnd(Expr * andExpr, ExprContext * econtext, bool * isNull)
  * ----------------------------------------------------------------
  */
 Datum
-ExecEvalExpr(Node * expression,
-			 ExprContext * econtext,
-			 bool * isNull,
-			 bool * isDone)
+ExecEvalExpr(Node *expression,
+			 ExprContext *econtext,
+			 bool *isNull,
+			 bool *isDone)
 {
 	Datum		retDatum = 0;
 
@@ -1257,7 +1257,7 @@ ExecEvalExpr(Node * expression,
  * ----------------------------------------------------------------
  */
 static bool
-ExecQualClause(Node * clause, ExprContext * econtext)
+ExecQualClause(Node *clause, ExprContext *econtext)
 {
 	Datum		expr_value;
 	bool		isNull;
@@ -1302,7 +1302,7 @@ ExecQualClause(Node * clause, ExprContext * econtext)
  * ----------------------------------------------------------------
  */
 bool
-ExecQual(List * qual, ExprContext * econtext)
+ExecQual(List *qual, ExprContext *econtext)
 {
 	List	   *clause;
 	bool		result;
@@ -1354,7 +1354,7 @@ ExecQual(List * qual, ExprContext * econtext)
 }
 
 int
-ExecTargetListLength(List * targetlist)
+ExecTargetListLength(List *targetlist)
 {
 	int			len;
 	List	   *tl;
@@ -1381,12 +1381,12 @@ ExecTargetListLength(List * targetlist)
  * ----------------------------------------------------------------
  */
 static HeapTuple
-ExecTargetList(List * targetlist,
+ExecTargetList(List *targetlist,
 			   int nodomains,
 			   TupleDesc targettype,
-			   Datum * values,
-			   ExprContext * econtext,
-			   bool * isDone)
+			   Datum *values,
+			   ExprContext *econtext,
+			   bool *isDone)
 {
 	char		nulls_array[64];
 	bool		fjNullArray[64];
@@ -1579,7 +1579,7 @@ ExecTargetList(List * targetlist,
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecProject(ProjectionInfo * projInfo, bool * isDone)
+ExecProject(ProjectionInfo *projInfo, bool *isDone)
 {
 	TupleTableSlot *slot;
 	List	   *targetlist;

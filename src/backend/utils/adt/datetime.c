@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.15 1997/09/08 02:30:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.16 1997/09/08 21:48:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -268,7 +268,7 @@ date_datetime(DateADT dateVal)
  * Convert datetime to date data type.
  */
 DateADT
-datetime_date(DateTime * datetime)
+datetime_date(DateTime *datetime)
 {
 	DateADT		result;
 	struct tm	tt,
@@ -485,7 +485,7 @@ time_in(char *str)
 
 
 char	   *
-time_out(TimeADT * time)
+time_out(TimeADT *time)
 {
 	char	   *result;
 	struct tm	tt,
@@ -539,7 +539,7 @@ time_out(TimeADT * time)
 
 
 bool
-time_eq(TimeADT * time1, TimeADT * time2)
+time_eq(TimeADT *time1, TimeADT *time2)
 {
 	if (!PointerIsValid(time1) || !PointerIsValid(time2))
 		return (FALSE);
@@ -548,7 +548,7 @@ time_eq(TimeADT * time1, TimeADT * time2)
 }								/* time_eq() */
 
 bool
-time_ne(TimeADT * time1, TimeADT * time2)
+time_ne(TimeADT *time1, TimeADT *time2)
 {
 	if (!PointerIsValid(time1) || !PointerIsValid(time2))
 		return (FALSE);
@@ -557,7 +557,7 @@ time_ne(TimeADT * time1, TimeADT * time2)
 }								/* time_eq() */
 
 bool
-time_lt(TimeADT * time1, TimeADT * time2)
+time_lt(TimeADT *time1, TimeADT *time2)
 {
 	if (!PointerIsValid(time1) || !PointerIsValid(time2))
 		return (FALSE);
@@ -566,7 +566,7 @@ time_lt(TimeADT * time1, TimeADT * time2)
 }								/* time_eq() */
 
 bool
-time_le(TimeADT * time1, TimeADT * time2)
+time_le(TimeADT *time1, TimeADT *time2)
 {
 	if (!PointerIsValid(time1) || !PointerIsValid(time2))
 		return (FALSE);
@@ -575,7 +575,7 @@ time_le(TimeADT * time1, TimeADT * time2)
 }								/* time_eq() */
 
 bool
-time_gt(TimeADT * time1, TimeADT * time2)
+time_gt(TimeADT *time1, TimeADT *time2)
 {
 	if (!PointerIsValid(time1) || !PointerIsValid(time2))
 		return (FALSE);
@@ -584,7 +584,7 @@ time_gt(TimeADT * time1, TimeADT * time2)
 }								/* time_eq() */
 
 bool
-time_ge(TimeADT * time1, TimeADT * time2)
+time_ge(TimeADT *time1, TimeADT *time2)
 {
 	if (!PointerIsValid(time1) || !PointerIsValid(time2))
 		return (FALSE);
@@ -593,7 +593,7 @@ time_ge(TimeADT * time1, TimeADT * time2)
 }								/* time_eq() */
 
 int
-time_cmp(TimeADT * time1, TimeADT * time2)
+time_cmp(TimeADT *time1, TimeADT *time2)
 {
 	return ((*time1 < *time2) ? -1 : (((*time1 > *time2) ? 1 : 0)));
 }								/* time_cmp() */
@@ -603,7 +603,7 @@ time_cmp(TimeADT * time1, TimeADT * time2)
  * Convert date and time to datetime data type.
  */
 DateTime   *
-datetime_datetime(DateADT date, TimeADT * time)
+datetime_datetime(DateADT date, TimeADT *time)
 {
 	DateTime   *result;
 

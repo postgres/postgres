@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.22 1997/09/08 20:53:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.23 1997/09/08 21:40:27 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -437,7 +437,7 @@ TupleDescMakeSelfReference(TupleDesc desc,
  * ----------------------------------------------------------------
  */
 TupleDesc
-BuildDescForRelation(List * schema, char *relname)
+BuildDescForRelation(List *schema, char *relname)
 {
 	int			natts;
 	AttrNumber	attnum;

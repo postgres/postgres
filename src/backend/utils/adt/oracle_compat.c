@@ -1,7 +1,7 @@
 /*
  *	Edmund Mergl <E.Mergl@bawue.de>
  *
- *	$Id: oracle_compat.c,v 1.9 1997/09/08 02:30:57 momjian Exp $
+ *	$Id: oracle_compat.c,v 1.10 1997/09/08 21:48:39 momjian Exp $
  *
  */
 
@@ -10,16 +10,16 @@
 #include "postgres.h"
 
 
-text	   *lower(text * string);
-text	   *upper(text * string);
-text	   *initcap(text * string);
-text	   *lpad(text * string1, int4 len, text * string2);
-text	   *rpad(text * string1, int4 len, text * string2);
-text	   *btrim(text * string, text * set);
-text	   *ltrim(text * string, text * set);
-text	   *rtrim(text * string, text * set);
-text	   *substr(text * string, int4 m, int4 n);
-text	   *translate(text * string, char from, char to);
+text	   *lower(text *string);
+text	   *upper(text *string);
+text	   *initcap(text *string);
+text	   *lpad(text *string1, int4 len, text *string2);
+text	   *rpad(text *string1, int4 len, text *string2);
+text	   *btrim(text *string, text *set);
+text	   *ltrim(text *string, text *set);
+text	   *rtrim(text *string, text *set);
+text	   *substr(text *string, int4 m, int4 n);
+text	   *translate(text *string, char from, char to);
 
 
 /********************************************************************
@@ -37,7 +37,7 @@ text	   *translate(text * string, char from, char to);
  ********************************************************************/
 
 text	   *
-lower(text * string)
+lower(text *string)
 {
 	text	   *ret;
 	char	   *ptr,
@@ -77,7 +77,7 @@ lower(text * string)
  ********************************************************************/
 
 text	   *
-upper(text * string)
+upper(text *string)
 {
 	text	   *ret;
 	char	   *ptr,
@@ -119,7 +119,7 @@ upper(text * string)
  ********************************************************************/
 
 text	   *
-initcap(text * string)
+initcap(text *string)
 {
 	text	   *ret;
 	char	   *ptr,
@@ -170,7 +170,7 @@ initcap(text * string)
  ********************************************************************/
 
 text	   *
-lpad(text * string1, int4 len, text * string2)
+lpad(text *string1, int4 len, text *string2)
 {
 	text	   *ret;
 	char	   *ptr1,
@@ -226,7 +226,7 @@ lpad(text * string1, int4 len, text * string2)
  ********************************************************************/
 
 text	   *
-rpad(text * string1, int4 len, text * string2)
+rpad(text *string1, int4 len, text *string2)
 {
 	text	   *ret;
 	char	   *ptr1,
@@ -282,7 +282,7 @@ rpad(text * string1, int4 len, text * string2)
  ********************************************************************/
 
 text	   *
-btrim(text * string, text * set)
+btrim(text *string, text *set)
 {
 	text	   *ret;
 	char	   *ptr,
@@ -368,7 +368,7 @@ btrim(text * string, text * set)
  ********************************************************************/
 
 text	   *
-ltrim(text * string, text * set)
+ltrim(text *string, text *set)
 {
 	text	   *ret;
 	char	   *ptr,
@@ -431,7 +431,7 @@ ltrim(text * string, text * set)
  ********************************************************************/
 
 text	   *
-rtrim(text * string, text * set)
+rtrim(text *string, text *set)
 {
 	text	   *ret;
 	char	   *ptr,
@@ -503,7 +503,7 @@ rtrim(text * string, text * set)
  ********************************************************************/
 
 text	   *
-substr(text * string, int4 m, int4 n)
+substr(text *string, int4 m, int4 n)
 {
 	text	   *ret;
 	char	   *ptr,
@@ -549,7 +549,7 @@ substr(text * string, int4 m, int4 n)
  ********************************************************************/
 
 text	   *
-translate(text * string, char from, char to)
+translate(text *string, char from, char to)
 {
 	text	   *ret;
 	char	   *ptr,

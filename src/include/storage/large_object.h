@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: large_object.h,v 1.6 1997/09/08 02:39:03 momjian Exp $
+ * $Id: large_object.h,v 1.7 1997/09/08 21:54:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@ typedef struct LargeObjectDesc
 #define IFS_ATEOF		(1 << 2)
 
 	u_long		flags;			/* locking info, etc */
-}			LargeObjectDesc;
+} LargeObjectDesc;
 
 /*
  * Function definitions...
@@ -47,11 +47,11 @@ typedef struct LargeObjectDesc
 /* inversion stuff in inv_api.c */
 extern LargeObjectDesc *inv_create(int flags);
 extern LargeObjectDesc *inv_open(Oid lobjId, int flags);
-extern void inv_close(LargeObjectDesc * obj_desc);
+extern void inv_close(LargeObjectDesc *obj_desc);
 extern int	inv_destroy(Oid lobjId);
-extern int	inv_seek(LargeObjectDesc * obj_desc, int offset, int whence);
-extern int	inv_tell(LargeObjectDesc * obj_desc);
-extern int	inv_read(LargeObjectDesc * obj_desc, char *buf, int nbytes);
-extern int	inv_write(LargeObjectDesc * obj_desc, char *buf, int nbytes);
+extern int	inv_seek(LargeObjectDesc *obj_desc, int offset, int whence);
+extern int	inv_tell(LargeObjectDesc *obj_desc);
+extern int	inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes);
+extern int	inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes);
 
 #endif							/* LARGE_OBJECT_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.13 1997/09/08 20:55:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.14 1997/09/08 21:42:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -330,7 +330,7 @@ RemoveType(char *typeName)		/* type name to be removed */
 void
 RemoveFunction(char *functionName,		/* function name to be removed */
 			   int nargs,
-			   List * argNameList /* list of TypeNames */ )
+			   List *argNameList /* list of TypeNames */ )
 {
 	Relation	relation;
 	HeapScanDesc scan;

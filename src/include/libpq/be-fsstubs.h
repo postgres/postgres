@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: be-fsstubs.h,v 1.4 1997/09/08 02:37:00 momjian Exp $
+ * $Id: be-fsstubs.h,v 1.5 1997/09/08 21:52:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,8 +21,8 @@
 #define LOread(f,l) loread(f,l)
 #define LOwrite(f,b) lowrite(f,b)
 
-extern Oid	lo_import(text * filename);
-extern int4 lo_export(Oid lobjId, text * filename);
+extern Oid	lo_import(text *filename);
+extern int4 lo_export(Oid lobjId, text *filename);
 
 extern Oid	lo_creat(int mode);
 

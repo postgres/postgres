@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.9 1997/09/08 02:31:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.10 1997/09/08 21:49:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,10 +66,10 @@
  */
 static long *DynaHashAlloc(unsigned int size);
 static void DynaHashFree(Pointer ptr);
-static uint32 call_hash(HTAB * hashp, char *k, int len);
-static SEG_OFFSET seg_alloc(HTAB * hashp);
-static int	bucket_alloc(HTAB * hashp);
-static int	dir_realloc(HTAB * hashp);
+static uint32 call_hash(HTAB *hashp, char *k, int len);
+static SEG_OFFSET seg_alloc(HTAB *hashp);
+static int	bucket_alloc(HTAB *hashp);
+static int	dir_realloc(HTAB *hashp);
 
 typedef long *((*dhalloc_ptr) ());
 
@@ -122,9 +122,9 @@ DynaHashFree(Pointer ptr)
  * ----------------
  */
 
-static int	expand_table(HTAB * hashp);
-static int	hdefault(HTAB * hashp);
-static int	init_htab(HTAB * hashp, int nelem);
+static int	expand_table(HTAB *hashp);
+static int	hdefault(HTAB *hashp);
+static int	init_htab(HTAB *hashp, int nelem);
 
 
 /*
@@ -155,7 +155,7 @@ static long hash_accesses,
 /************************** CREATE ROUTINES **********************/
 
 HTAB	   *
-hash_create(int nelem, HASHCTL * info, int flags)
+hash_create(int nelem, HASHCTL *info, int flags)
 {
 	register HHDR *hctl;
 	HTAB	   *hashp;
@@ -267,7 +267,7 @@ hash_create(int nelem, HASHCTL * info, int flags)
   Allocate and initialize an HTAB structure
   */
 static int
-hdefault(HTAB * hashp)
+hdefault(HTAB *hashp)
 {
 	HHDR	   *hctl;
 
@@ -300,7 +300,7 @@ hdefault(HTAB * hashp)
 
 
 static int
-init_htab(HTAB * hashp, int nelem)
+init_htab(HTAB *hashp, int nelem)
 {
 	register SEG_OFFSET *segp;
 	register int nbuckets;
@@ -380,7 +380,7 @@ init_htab(HTAB * hashp, int nelem)
 /********************** DESTROY ROUTINES ************************/
 
 void
-hash_destroy(HTAB * hashp)
+hash_destroy(HTAB *hashp)
 {
 	/* cannot destroy a shared memory hash table */
 	Assert(!hashp->segbase);
@@ -419,7 +419,7 @@ hash_destroy(HTAB * hashp)
 }
 
 void
-hash_stats(char *where, HTAB * hashp)
+hash_stats(char *where, HTAB *hashp)
 {
 #if HASH_STATISTICS
 
@@ -441,7 +441,7 @@ hash_stats(char *where, HTAB * hashp)
 /*******************************SEARCH ROUTINES *****************************/
 
 static uint32
-call_hash(HTAB * hashp, char *k, int len)
+call_hash(HTAB *hashp, char *k, int len)
 {
 	long		hash_val,
 				bucket;
@@ -470,11 +470,11 @@ call_hash(HTAB * hashp, char *k, int len)
  *		(FALSE if we entered one).
  */
 long	   *
-hash_search(HTAB * hashp,
+hash_search(HTAB *hashp,
 			char *keyPtr,
 			HASHACTION action,	/* HASH_FIND / HASH_ENTER / HASH_REMOVE
 								 * HASH_FIND_SAVE / HASH_REMOVE_SAVED */
-			bool * foundPtr)
+			bool *foundPtr)
 {
 	uint32		bucket;
 	long		segment_num;
@@ -654,7 +654,7 @@ hash_search(HTAB * hashp,
  *
  */
 long	   *
-hash_seq(HTAB * hashp)
+hash_seq(HTAB *hashp)
 {
 	static uint32 curBucket = 0;
 	static BUCKET_INDEX curIndex;
@@ -721,7 +721,7 @@ hash_seq(HTAB * hashp)
 
 /********************************* UTILITIES ************************/
 static int
-expand_table(HTAB * hashp)
+expand_table(HTAB *hashp)
 {
 	HHDR	   *hctl;
 	SEGMENT		old_seg,
@@ -809,7 +809,7 @@ expand_table(HTAB * hashp)
 
 
 static int
-dir_realloc(HTAB * hashp)
+dir_realloc(HTAB *hashp)
 {
 	register char *p;
 	char	  **p_ptr;
@@ -841,7 +841,7 @@ dir_realloc(HTAB * hashp)
 
 
 static SEG_OFFSET
-seg_alloc(HTAB * hashp)
+seg_alloc(HTAB *hashp)
 {
 	SEGMENT		segp;
 	SEG_OFFSET	segOffset;
@@ -866,7 +866,7 @@ seg_alloc(HTAB * hashp)
  * allocate some new buckets and link them into the free list
  */
 static int
-bucket_alloc(HTAB * hashp)
+bucket_alloc(HTAB *hashp)
 {
 	int			i;
 	ELEMENT    *tmpBucket;

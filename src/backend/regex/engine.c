@@ -120,7 +120,7 @@ extern		"C"
 #define NNONCHAR		(CODEMAX-CHAR_MAX)
 #ifdef REDEBUG
 	static void
-				print(struct match * m, char *caption, states st, int ch, FILE * d);
+				print(struct match * m, char *caption, states st, int ch, FILE *d);
 #endif
 #ifdef REDEBUG
 	static void

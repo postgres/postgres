@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.15 1997/09/08 02:32:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.16 1997/09/08 21:49:50 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -36,14 +36,14 @@
 #include "pg_dump.h"
 
 static char **
-findParentsByOid(TableInfo * tbinfo, int numTables,
-				 InhInfo * inhinfo, int numInherits,
+findParentsByOid(TableInfo *tbinfo, int numTables,
+				 InhInfo *inhinfo, int numInherits,
 				 const char *oid,
 				 int *numParents);
-static int	findTableByOid(TableInfo * tbinfo, int numTables, const char *oid);
+static int	findTableByOid(TableInfo *tbinfo, int numTables, const char *oid);
 static void
-flagInhAttrs(TableInfo * tbinfo, int numTables,
-			 InhInfo * inhinfo, int numInherits);
+flagInhAttrs(TableInfo *tbinfo, int numTables,
+			 InhInfo *inhinfo, int numInherits);
 static int	strInArray(const char *pattern, char **arr, int arr_size);
 
 /*
@@ -56,7 +56,7 @@ static int	strInArray(const char *pattern, char **arr, int arr_size);
  */
 
 char	   *
-findTypeByOid(TypeInfo * tinfo, int numTypes, const char *oid)
+findTypeByOid(TypeInfo *tinfo, int numTypes, const char *oid)
 {
 	int			i;
 
@@ -84,7 +84,7 @@ findTypeByOid(TypeInfo * tinfo, int numTypes, const char *oid)
  *
  */
 char	   *
-findOprByOid(OprInfo * oprinfo, int numOprs, const char *oid)
+findOprByOid(OprInfo *oprinfo, int numOprs, const char *oid)
 {
 	int			i;
 
@@ -111,8 +111,8 @@ findOprByOid(OprInfo * oprinfo, int numOprs, const char *oid)
  */
 
 static char **
-findParentsByOid(TableInfo * tblinfo, int numTables,
-				 InhInfo * inhinfo, int numInherits, const char *oid,
+findParentsByOid(TableInfo *tblinfo, int numTables,
+				 InhInfo *inhinfo, int numInherits, const char *oid,
 				 int *numParentsPtr)
 {
 	int			i,
@@ -221,7 +221,7 @@ strInArray(const char *pattern, char **arr, int arr_size)
  */
 
 TableInfo  *
-dumpSchema(FILE * fout,
+dumpSchema(FILE *fout,
 		   int *numTablesPtr,
 		   const char *tablename,
 		   const bool acls)
@@ -336,8 +336,8 @@ dumpSchema(FILE * fout,
  */
 
 extern void
-dumpSchemaIdx(FILE * fout, int *numTablesPtr, const char *tablename,
-			  TableInfo * tblinfo, int numTables)
+dumpSchemaIdx(FILE *fout, int *numTablesPtr, const char *tablename,
+			  TableInfo *tblinfo, int numTables)
 {
 	int			numIndices;
 	IndInfo    *indinfo;
@@ -367,8 +367,8 @@ dumpSchemaIdx(FILE * fout, int *numTablesPtr, const char *tablename,
  *
  */
 static void
-flagInhAttrs(TableInfo * tblinfo, int numTables,
-			 InhInfo * inhinfo, int numInherits)
+flagInhAttrs(TableInfo *tblinfo, int numTables,
+			 InhInfo *inhinfo, int numInherits)
 {
 	int			i,
 				j,
@@ -413,7 +413,7 @@ flagInhAttrs(TableInfo * tblinfo, int numTables,
  */
 
 int
-findTableByName(TableInfo * tblinfo, int numTables, const char *relname)
+findTableByName(TableInfo *tblinfo, int numTables, const char *relname)
 {
 	int			i;
 
@@ -434,7 +434,7 @@ findTableByName(TableInfo * tblinfo, int numTables, const char *relname)
  */
 
 static int
-findTableByOid(TableInfo * tblinfo, int numTables, const char *oid)
+findTableByOid(TableInfo *tblinfo, int numTables, const char *oid)
 {
 	int			i;
 
@@ -456,7 +456,7 @@ findTableByOid(TableInfo * tblinfo, int numTables, const char *oid)
  */
 
 int
-findFuncByName(FuncInfo * finfo, int numFuncs, const char *name)
+findFuncByName(FuncInfo *finfo, int numFuncs, const char *name)
 {
 	int			i;
 

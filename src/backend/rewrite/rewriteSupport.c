@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.8 1997/09/08 02:28:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.9 1997/09/08 21:46:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@
  */
 #ifdef NOT_USED
 static Node *
-RuleIdGetActionInfo(Oid ruleoid, bool * instead_flag, Query ** parseTrees)
+RuleIdGetActionInfo(Oid ruleoid, bool *instead_flag, Query **parseTrees)
 {
 	HeapTuple	ruletuple;
 	char	   *ruleaction = NULL;
@@ -169,8 +169,8 @@ prs2_addToRelation(Oid relid,
 				   CmdType event_type,
 				   AttrNumber attno,
 				   bool isInstead,
-				   Node * qual,
-				   List * actions)
+				   Node *qual,
+				   List *actions)
 {
 	Relation	relation;
 	RewriteRule *thisRule;

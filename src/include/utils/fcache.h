@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fcache.h,v 1.4 1997/09/08 02:39:43 momjian Exp $
+ * $Id: fcache.h,v 1.5 1997/09/08 21:54:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,7 @@ typedef struct
 								 * of tuples */
 
 	bool		istrusted;		/* trusted fn? */
-}			FunctionCache, *FunctionCachePtr;
+} FunctionCache,
+		   *FunctionCachePtr;
 
 #endif							/* FCACHE_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plancat.h,v 1.5 1997/09/08 02:37:54 momjian Exp $
+ * $Id: plancat.h,v 1.6 1997/09/08 21:53:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,20 +31,20 @@ typedef struct IdxInfoRetval
 	Oid		   *classlist;		/* classes of AM operators */
 	Oid			indproc;
 	Node	   *indpred;
-}			IdxInfoRetval;
+} IdxInfoRetval;
 
 
 extern void
-relation_info(Query * root,
+relation_info(Query *root,
 			  Oid relid,
-			  bool * hashindex, int *pages,
+			  bool *hashindex, int *pages,
 			  int *tuples);
 
-extern		bool
-index_info(Query * root,
-		   bool first, int relid, IdxInfoRetval * info);
+extern bool
+index_info(Query *root,
+		   bool first, int relid, IdxInfoRetval *info);
 
-extern		Cost
+extern Cost
 restriction_selectivity(Oid functionObjectId,
 						Oid operatorObjectId,
 						Oid relationObjectId,
@@ -53,11 +53,11 @@ restriction_selectivity(Oid functionObjectId,
 						int32 constFlag);
 
 extern void
-index_selectivity(Oid indid, Oid * classes, List * opnos,
-				  Oid relid, List * attnos, List * values, List * flags,
+index_selectivity(Oid indid, Oid *classes, List *opnos,
+				  Oid relid, List *attnos, List *values, List *flags,
 				  int32 nkeys, float *idxPages, float *idxSelec);
 
-extern		Cost
+extern Cost
 join_selectivity(Oid functionObjectId, Oid operatorObjectId,
 				 Oid relationObjectId1, AttrNumber attributeNumber1,
 				 Oid relationObjectId2, AttrNumber attributeNumber2);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/excabort.c,v 1.3 1997/09/07 04:53:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/excabort.c,v 1.4 1997/09/08 21:49:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
 #include "utils/exc.h"			/* where function declarations go */
 
 void
-ExcAbort(const Exception * excP,
+ExcAbort(const Exception *excP,
 		 ExcDetail detail,
 		 ExcData data,
 		 ExcMessage message)

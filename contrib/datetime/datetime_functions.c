@@ -14,7 +14,7 @@
 
 
 TimeADT    *
-time_difference(TimeADT * time1, TimeADT * time2)
+time_difference(TimeADT *time1, TimeADT *time2)
 {
 	TimeADT    *result = (TimeADT *) palloc(sizeof(TimeADT));
 
@@ -51,25 +51,25 @@ currentdate()
 }
 
 int4
-hours(TimeADT * time)
+hours(TimeADT *time)
 {
 	return (*time / (60 * 60));
 }
 
 int4
-minutes(TimeADT * time)
+minutes(TimeADT *time)
 {
 	return (((int) (*time / 60)) % 60);
 }
 
 int4
-seconds(TimeADT * time)
+seconds(TimeADT *time)
 {
 	return (((int) *time) % 60);
 }
 
 int4
-day(DateADT * date)
+day(DateADT *date)
 {
 	struct tm	tm;
 
@@ -80,7 +80,7 @@ day(DateADT * date)
 }
 
 int4
-month(DateADT * date)
+month(DateADT *date)
 {
 	struct tm	tm;
 
@@ -91,7 +91,7 @@ month(DateADT * date)
 }
 
 int4
-year(DateADT * date)
+year(DateADT *date)
 {
 	struct tm	tm;
 
@@ -102,7 +102,7 @@ year(DateADT * date)
 }
 
 int4
-asminutes(TimeADT * time)
+asminutes(TimeADT *time)
 {
 	int			seconds = (int) *time;
 
@@ -110,7 +110,7 @@ asminutes(TimeADT * time)
 }
 
 int4
-asseconds(TimeADT * time)
+asseconds(TimeADT *time)
 {
 	int			seconds = (int) *time;
 

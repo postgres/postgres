@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.12 1997/09/08 02:22:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.13 1997/09/08 21:43:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@ static int	HashTBSize;
 
 static void mk_hj_temp(char *tempname);
 static int	hashFunc(char *key, int len);
-static int	ExecHashPartition(Hash * node);
+static int	ExecHashPartition(Hash *node);
 static RelativeAddr hashTableAlloc(int size, HashJoinTable hashtable);
 static void
 ExecHashOverflowInsert(HashJoinTable hashtable,
@@ -62,7 +62,7 @@ ExecHashOverflowInsert(HashJoinTable hashtable,
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecHash(Hash * node)
+ExecHash(Hash *node)
 {
 	EState	   *estate;
 	HashState  *hashstate;
@@ -165,7 +165,7 @@ ExecHash(Hash * node)
  * ----------------------------------------------------------------
  */
 bool
-ExecInitHash(Hash * node, EState * estate, Plan * parent)
+ExecInitHash(Hash *node, EState *estate, Plan *parent)
 {
 	HashState  *hashstate;
 	Plan	   *outerPlan;
@@ -224,7 +224,7 @@ ExecInitHash(Hash * node, EState * estate, Plan * parent)
 }
 
 int
-ExecCountSlotsHash(Hash * node)
+ExecCountSlotsHash(Hash *node)
 {
 	return ExecCountSlotsNode(outerPlan(node)) +
 	ExecCountSlotsNode(innerPlan(node)) +
@@ -238,7 +238,7 @@ ExecCountSlotsHash(Hash * node)
  * ----------------------------------------------------------------
  */
 void
-ExecEndHash(Hash * node)
+ExecEndHash(Hash *node)
 {
 	HashState  *hashstate;
 	Plan	   *outerPlan;
@@ -288,7 +288,7 @@ hashTableAlloc(int size, HashJoinTable hashtable)
 #define FUDGE_FAC				1.5
 
 HashJoinTable
-ExecHashTableCreate(Hash * node)
+ExecHashTableCreate(Hash *node)
 {
 	Plan	   *outerNode;
 	int			nbatch;
@@ -456,9 +456,9 @@ ExecHashTableCreate(Hash * node)
  */
 void
 ExecHashTableInsert(HashJoinTable hashtable,
-					ExprContext * econtext,
-					Var * hashkey,
-					File * batches)
+					ExprContext *econtext,
+					Var *hashkey,
+					File *batches)
 {
 	TupleTableSlot *slot;
 	HeapTuple	heapTuple;
@@ -548,8 +548,8 @@ ExecHashTableDestroy(HashJoinTable hashtable)
  */
 int
 ExecHashGetBucket(HashJoinTable hashtable,
-				  ExprContext * econtext,
-				  Var * hashkey)
+				  ExprContext *econtext,
+				  Var *hashkey)
 {
 	int			bucketno;
 	Datum		keyval;
@@ -681,11 +681,11 @@ ExecHashOverflowInsert(HashJoinTable hashtable,
  * ----------------------------------------------------------------
  */
 HeapTuple
-ExecScanHashBucket(HashJoinState * hjstate,
+ExecScanHashBucket(HashJoinState *hjstate,
 				   HashBucket bucket,
 				   HeapTuple curtuple,
-				   List * hjclauses,
-				   ExprContext * econtext)
+				   List *hjclauses,
+				   ExprContext *econtext)
 {
 	HeapTuple	heapTuple;
 	bool		qualResult;
@@ -826,7 +826,7 @@ hashFunc(char *key, int len)
  * ----------------------------------------------------------------
  */
 static int
-ExecHashPartition(Hash * node)
+ExecHashPartition(Hash *node)
 {
 	Plan	   *outerNode;
 	int			b;

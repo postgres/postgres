@@ -15,7 +15,7 @@
  *		ExecEndTee
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.8 1997/09/08 02:22:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.9 1997/09/08 21:43:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@
  * ------------------------------------------------------------------
  */
 bool
-ExecInitTee(Tee * node, EState * currentEstate, Plan * parent)
+ExecInitTee(Tee *node, EState *currentEstate, Plan *parent)
 {
 	TeeState   *teeState;
 	Plan	   *outerPlan;
@@ -214,7 +214,7 @@ ExecInitTee(Tee * node, EState * currentEstate, Plan * parent)
 }
 
 int
-ExecCountSlotsTee(Tee * node)
+ExecCountSlotsTee(Tee *node)
 {
 	/* Tee nodes can't have innerPlans */
 	return ExecCountSlotsNode(outerPlan(node)) + TEE_NSLOTS;
@@ -230,7 +230,7 @@ ExecCountSlotsTee(Tee * node)
 * ----------------------------------------------------------------
 */
 static void
-initTeeScanDescs(Tee * node)
+initTeeScanDescs(Tee *node)
 {
 	TeeState   *teeState;
 	Relation	bufferRel;
@@ -290,7 +290,7 @@ initTeeScanDescs(Tee * node)
  */
 
 TupleTableSlot *
-ExecTee(Tee * node, Plan * parent)
+ExecTee(Tee *node, Plan *parent)
 {
 	EState	   *estate;
 	TeeState   *teeState;
@@ -443,7 +443,7 @@ ExecTee(Tee * node, Plan * parent)
  * ----------------------------------------------------------------
  */
 void
-ExecTeeReScan(Tee * node, ExprContext * exprCtxt, Plan * parent)
+ExecTeeReScan(Tee *node, ExprContext *exprCtxt, Plan *parent)
 {
 
 	EState	   *estate;
@@ -490,7 +490,7 @@ ExecTeeReScan(Tee * node, ExprContext * exprCtxt, Plan * parent)
  */
 
 void
-ExecEndTee(Tee * node, Plan * parent)
+ExecEndTee(Tee *node, Plan *parent)
 {
 	EState	   *estate;
 	TeeState   *teeState;

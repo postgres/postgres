@@ -16,7 +16,7 @@
 #include <storage/block.h>
 #include <utils/rel.h>
 
-extern		IndexScanDesc
+extern IndexScanDesc
 gistbeginscan(Relation r, bool fromEnd,
 			  uint16 nkeys, ScanKey key);
 extern void gistrescan(IndexScanDesc s, bool fromEnd, ScanKey key);

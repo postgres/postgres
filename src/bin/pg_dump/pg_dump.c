@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.43 1997/09/08 20:57:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.44 1997/09/08 21:49:57 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -67,15 +67,15 @@
 
 #include "pg_dump.h"
 
-static void dumpSequence(FILE * fout, TableInfo tbinfo);
+static void dumpSequence(FILE *fout, TableInfo tbinfo);
 static char *checkForQuote(const char *s);
 static void clearTableInfo(TableInfo *, int);
 static void
-dumpOneFunc(FILE * fout, FuncInfo * finfo, int i,
-			TypeInfo * tinfo, int numTypes);
+dumpOneFunc(FILE *fout, FuncInfo *finfo, int i,
+			TypeInfo *tinfo, int numTypes);
 static int	findLastBuiltinOid(void);
 static bool isViewRule(char *relname);
-static void setMaxOid(FILE * fout);
+static void setMaxOid(FILE *fout);
 
 extern char *optarg;
 extern int	optind,
@@ -137,7 +137,7 @@ usage(const char *progname)
 }
 
 static void
-exit_nicely(PGconn * conn)
+exit_nicely(PGconn *conn)
 {
 	PQfinish(conn);
 	exit(1);
@@ -189,7 +189,7 @@ isViewRule(char *relname)
 
 
 static void
-dumpClasses_nodumpData(FILE * fout, const char *classname, const bool oids)
+dumpClasses_nodumpData(FILE *fout, const char *classname, const bool oids)
 {
 
 	PGresult   *res;
@@ -282,7 +282,7 @@ dumpClasses_nodumpData(FILE * fout, const char *classname, const bool oids)
 
 
 static void
-dumpClasses_dumpData(FILE * fout, const char *classname,
+dumpClasses_dumpData(FILE *fout, const char *classname,
 					 const TableInfo tblinfo, bool oids)
 {
 
@@ -389,7 +389,7 @@ dumpClasses_dumpData(FILE * fout, const char *classname,
  *	  dump the contents of all the classes.
  */
 static void
-dumpClasses(const TableInfo tblinfo[], const int numTables, FILE * fout,
+dumpClasses(const TableInfo tblinfo[], const int numTables, FILE *fout,
 			const char *onlytable, const bool oids)
 {
 
@@ -816,7 +816,7 @@ getOperators(int *numOprs)
 }
 
 void
-clearTypeInfo(TypeInfo * tp, int numTypes)
+clearTypeInfo(TypeInfo *tp, int numTypes)
 {
 	int			i;
 
@@ -855,7 +855,7 @@ clearTypeInfo(TypeInfo * tp, int numTypes)
 }
 
 void
-clearFuncInfo(FuncInfo * fun, int numFuncs)
+clearFuncInfo(FuncInfo *fun, int numFuncs)
 {
 	int			i,
 				a;
@@ -884,7 +884,7 @@ clearFuncInfo(FuncInfo * fun, int numFuncs)
 }
 
 static void
-clearTableInfo(TableInfo * tblinfo, int numTables)
+clearTableInfo(TableInfo *tblinfo, int numTables)
 {
 	int			i,
 				j;
@@ -938,7 +938,7 @@ clearTableInfo(TableInfo * tblinfo, int numTables)
 }
 
 void
-clearInhInfo(InhInfo * inh, int numInherits)
+clearInhInfo(InhInfo *inh, int numInherits)
 {
 	int			i;
 
@@ -955,7 +955,7 @@ clearInhInfo(InhInfo * inh, int numInherits)
 }
 
 void
-clearOprInfo(OprInfo * opr, int numOprs)
+clearOprInfo(OprInfo *opr, int numOprs)
 {
 	int			i;
 
@@ -996,7 +996,7 @@ clearOprInfo(OprInfo * opr, int numOprs)
 }
 
 void
-clearIndInfo(IndInfo * ind, int numIndices)
+clearIndInfo(IndInfo *ind, int numIndices)
 {
 	int			i,
 				a;
@@ -1416,7 +1416,7 @@ getInherits(int *numInherits)
  *	modifies tblinfo
  */
 void
-getTableAttrs(TableInfo * tblinfo, int numTables)
+getTableAttrs(TableInfo *tblinfo, int numTables)
 {
 	int			i,
 				j;
@@ -1596,8 +1596,8 @@ getIndices(int *numIndices)
  *
  */
 void
-dumpTypes(FILE * fout, FuncInfo * finfo, int numFuncs,
-		  TypeInfo * tinfo, int numTypes)
+dumpTypes(FILE *fout, FuncInfo *finfo, int numFuncs,
+		  TypeInfo *tinfo, int numTypes)
 {
 	int			i;
 	char		q[MAXQUERYLEN];
@@ -1670,8 +1670,8 @@ dumpTypes(FILE * fout, FuncInfo * finfo, int numFuncs,
  *
  */
 void
-dumpFuncs(FILE * fout, FuncInfo * finfo, int numFuncs,
-		  TypeInfo * tinfo, int numTypes)
+dumpFuncs(FILE *fout, FuncInfo *finfo, int numFuncs,
+		  TypeInfo *tinfo, int numTypes)
 {
 	int			i;
 
@@ -1689,8 +1689,8 @@ dumpFuncs(FILE * fout, FuncInfo * finfo, int numFuncs,
  */
 
 static void
-dumpOneFunc(FILE * fout, FuncInfo * finfo, int i,
-			TypeInfo * tinfo, int numTypes)
+dumpOneFunc(FILE *fout, FuncInfo *finfo, int i,
+			TypeInfo *tinfo, int numTypes)
 {
 	char		q[MAXQUERYLEN];
 	int			j;
@@ -1730,8 +1730,8 @@ dumpOneFunc(FILE * fout, FuncInfo * finfo, int i,
  *
  */
 void
-dumpOprs(FILE * fout, OprInfo * oprinfo, int numOperators,
-		 TypeInfo * tinfo, int numTypes)
+dumpOprs(FILE *fout, OprInfo *oprinfo, int numOperators,
+		 TypeInfo *tinfo, int numTypes)
 {
 	int			i;
 	char		q[MAXQUERYLEN];
@@ -1837,8 +1837,8 @@ dumpOprs(FILE * fout, OprInfo * oprinfo, int numOperators,
  *
  */
 void
-dumpAggs(FILE * fout, AggInfo *agginfo, int numAggs,
-		 TypeInfo * tinfo, int numTypes)
+dumpAggs(FILE *fout, AggInfo *agginfo, int numAggs,
+		 TypeInfo *tinfo, int numTypes)
 {
 	int			i;
 	char		q[MAXQUERYLEN];
@@ -1924,9 +1924,9 @@ dumpAggs(FILE * fout, AggInfo *agginfo, int numAggs,
  */
 
 void
-dumpTables(FILE * fout, TableInfo * tblinfo, int numTables,
-		   InhInfo * inhinfo, int numInherits,
-		   TypeInfo * tinfo, int numTypes, const char *tablename,
+dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
+		   InhInfo *inhinfo, int numInherits,
+		   TypeInfo *tinfo, int numTypes, const char *tablename,
 		   const bool acls)
 {
 	int			i,
@@ -2064,8 +2064,8 @@ dumpTables(FILE * fout, TableInfo * tblinfo, int numTables,
  *	  write out to fout all the user-define indices
  */
 void
-dumpIndices(FILE * fout, IndInfo * indinfo, int numIndices,
-			TableInfo * tblinfo, int numTables, const char *tablename)
+dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
+			TableInfo *tblinfo, int numTables, const char *tablename)
 {
 	int			i,
 				k;
@@ -2212,7 +2212,7 @@ dumpIndices(FILE * fout, IndInfo * indinfo, int numIndices,
  */
 #ifdef NOT_USED
 void
-dumpTuples(PGresult * res, FILE * fout, int *attrmap)
+dumpTuples(PGresult *res, FILE *fout, int *attrmap)
 {
 	int			j,
 				k;
@@ -2271,7 +2271,7 @@ dumpTuples(PGresult * res, FILE * fout, int *attrmap)
 */
 
 static void
-setMaxOid(FILE * fout)
+setMaxOid(FILE *fout)
 {
 	PGresult   *res;
 	Oid			max_oid;
@@ -2387,7 +2387,7 @@ checkForQuote(const char *s)
 
 
 static void
-dumpSequence(FILE * fout, TableInfo tbinfo)
+dumpSequence(FILE *fout, TableInfo tbinfo)
 {
 	PGresult   *res;
 	int4		last,

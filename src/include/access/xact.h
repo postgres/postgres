@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.8 1997/09/08 02:34:33 momjian Exp $
+ * $Id: xact.h,v 1.9 1997/09/08 21:51:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@ typedef struct TransactionStateData
 	AbsoluteTime startTime;
 	int			state;
 	int			blockState;
-}			TransactionStateData;
+} TransactionStateData;
 
 /* ----------------
  *		transaction states
@@ -89,12 +89,12 @@ extern TransactionId xidin(char *representation);
 extern char *xidout(TransactionId transactionId);
 extern bool xideq(TransactionId xid1, TransactionId xid2);
 extern bool TransactionIdIsValid(TransactionId transactionId);
-extern void StoreInvalidTransactionId(TransactionId * destination);
+extern void StoreInvalidTransactionId(TransactionId *destination);
 extern void
 TransactionIdStore(TransactionId transactionId,
-				   TransactionId * destination);
+				   TransactionId *destination);
 extern bool TransactionIdEquals(TransactionId id1, TransactionId id2);
 extern bool TransactionIdIsLessThan(TransactionId id1, TransactionId id2);
-extern void TransactionIdAdd(TransactionId * xid, int value);
+extern void TransactionIdAdd(TransactionId *xid, int value);
 
 #endif							/* XACT_H */

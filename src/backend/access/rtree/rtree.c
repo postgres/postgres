@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.16 1997/09/08 20:54:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.17 1997/09/08 21:41:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,38 +40,38 @@ typedef struct SPLITVEC
 	OffsetNumber *spl_right;
 	int			spl_nright;
 	char	   *spl_rdatum;
-}			SPLITVEC;
+} SPLITVEC;
 
 typedef struct RTSTATE
 {
 	func_ptr	unionFn;		/* union function */
 	func_ptr	sizeFn;			/* size function */
 	func_ptr	interFn;		/* intersection function */
-}			RTSTATE;
+} RTSTATE;
 
 /* non-export function prototypes */
 static InsertIndexResult
 rtdoinsert(Relation r, IndexTuple itup,
-		   RTSTATE * rtstate);
+		   RTSTATE *rtstate);
 static void
-rttighten(Relation r, RTSTACK * stk, char *datum, int att_size,
-		  RTSTATE * rtstate);
+rttighten(Relation r, RTSTACK *stk, char *datum, int att_size,
+		  RTSTATE *rtstate);
 static InsertIndexResult
-dosplit(Relation r, Buffer buffer, RTSTACK * stack,
-		IndexTuple itup, RTSTATE * rtstate);
+dosplit(Relation r, Buffer buffer, RTSTACK *stack,
+		IndexTuple itup, RTSTATE *rtstate);
 static void
-rtintinsert(Relation r, RTSTACK * stk, IndexTuple ltup,
-			IndexTuple rtup, RTSTATE * rtstate);
+rtintinsert(Relation r, RTSTACK *stk, IndexTuple ltup,
+			IndexTuple rtup, RTSTATE *rtstate);
 static void rtnewroot(Relation r, IndexTuple lt, IndexTuple rt);
 static void
-picksplit(Relation r, Page page, SPLITVEC * v, IndexTuple itup,
-		  RTSTATE * rtstate);
+picksplit(Relation r, Page page, SPLITVEC *v, IndexTuple itup,
+		  RTSTATE *rtstate);
 static void RTInitBuffer(Buffer b, uint32 f);
 static OffsetNumber
 choose(Relation r, Page p, IndexTuple it,
-	   RTSTATE * rtstate);
+	   RTSTATE *rtstate);
 static int	nospace(Page p, IndexTuple it);
-static void initRtstate(RTSTATE * rtstate, Relation index);
+static void initRtstate(RTSTATE *rtstate, Relation index);
 
 
 void
@@ -81,9 +81,9 @@ rtbuild(Relation heap,
 		AttrNumber *attnum,
 		IndexStrategy istrat,
 		uint16 pcount,
-		Datum * params,
-		FuncIndexInfo * finfo,
-		PredInfo * predInfo)
+		Datum *params,
+		FuncIndexInfo *finfo,
+		PredInfo *predInfo)
 {
 	HeapScanDesc scan;
 	Buffer		buffer;
@@ -305,7 +305,7 @@ rtbuild(Relation heap,
  *	  It doesn't do any work; just locks the relation and passes the buck.
  */
 InsertIndexResult
-rtinsert(Relation r, Datum * datum, char *nulls, ItemPointer ht_ctid, Relation heapRel)
+rtinsert(Relation r, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation heapRel)
 {
 	InsertIndexResult res;
 	IndexTuple	itup;
@@ -324,7 +324,7 @@ rtinsert(Relation r, Datum * datum, char *nulls, ItemPointer ht_ctid, Relation h
 }
 
 static InsertIndexResult
-rtdoinsert(Relation r, IndexTuple itup, RTSTATE * rtstate)
+rtdoinsert(Relation r, IndexTuple itup, RTSTATE *rtstate)
 {
 	Page		page;
 	Buffer		buffer;
@@ -409,10 +409,10 @@ rtdoinsert(Relation r, IndexTuple itup, RTSTATE * rtstate)
 
 static void
 rttighten(Relation r,
-		  RTSTACK * stk,
+		  RTSTACK *stk,
 		  char *datum,
 		  int att_size,
-		  RTSTATE * rtstate)
+		  RTSTATE *rtstate)
 {
 	char	   *oldud;
 	char	   *tdatum;
@@ -483,9 +483,9 @@ rttighten(Relation r,
 static InsertIndexResult
 dosplit(Relation r,
 		Buffer buffer,
-		RTSTACK * stack,
+		RTSTACK *stack,
 		IndexTuple itup,
-		RTSTATE * rtstate)
+		RTSTATE *rtstate)
 {
 	Page		p;
 	Buffer		leftbuf,
@@ -614,9 +614,9 @@ dosplit(Relation r,
 
 	tupDesc = r->rd_att;
 	ltup = (IndexTuple) index_formtuple(tupDesc,
-									 (Datum *) & (v.spl_ldatum), isnull);
+									  (Datum *) &(v.spl_ldatum), isnull);
 	rtup = (IndexTuple) index_formtuple(tupDesc,
-									 (Datum *) & (v.spl_rdatum), isnull);
+									  (Datum *) &(v.spl_rdatum), isnull);
 	pfree(isnull);
 
 	/* set pointers to new child pages in the internal index tuples */
@@ -633,10 +633,10 @@ dosplit(Relation r,
 
 static void
 rtintinsert(Relation r,
-			RTSTACK * stk,
+			RTSTACK *stk,
 			IndexTuple ltup,
 			IndexTuple rtup,
-			RTSTATE * rtstate)
+			RTSTATE *rtstate)
 {
 	IndexTuple	old;
 	Buffer		b;
@@ -714,9 +714,9 @@ rtnewroot(Relation r, IndexTuple lt, IndexTuple rt)
 static void
 picksplit(Relation r,
 		  Page page,
-		  SPLITVEC * v,
+		  SPLITVEC *v,
 		  IndexTuple itup,
-		  RTSTATE * rtstate)
+		  RTSTATE *rtstate)
 {
 	OffsetNumber maxoff;
 	OffsetNumber i,
@@ -900,7 +900,7 @@ RTInitBuffer(Buffer b, uint32 f)
 }
 
 static OffsetNumber
-choose(Relation r, Page p, IndexTuple it, RTSTATE * rtstate)
+choose(Relation r, Page p, IndexTuple it, RTSTATE *rtstate)
 {
 	OffsetNumber maxoff;
 	OffsetNumber i;
@@ -944,7 +944,7 @@ nospace(Page p, IndexTuple it)
 }
 
 void
-freestack(RTSTACK * s)
+freestack(RTSTACK *s)
 {
 	RTSTACK    *p;
 
@@ -986,7 +986,7 @@ rtdelete(Relation r, ItemPointer tid)
 }
 
 static void
-initRtstate(RTSTATE * rtstate, Relation index)
+initRtstate(RTSTATE *rtstate, Relation index)
 {
 	RegProcedure union_proc,
 				size_proc,

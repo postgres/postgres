@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.12 1997/09/08 02:28:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.13 1997/09/08 21:47:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -342,7 +342,7 @@ HTAB	   *
 ShmemInitHash(char *name,		/* table string name for binding */
 			  long init_size,	/* initial size */
 			  long max_size,	/* max size of the table */
-			  HASHCTL * infoP,	/* info about key and bucket size */
+			  HASHCTL *infoP,	/* info about key and bucket size */
 			  int hash_flags)	/* info about infoP */
 {
 	bool		found;
@@ -400,7 +400,7 @@ ShmemInitHash(char *name,		/* table string name for binding */
  *		locationPtr.
  */
 bool
-ShmemPIDLookup(int pid, SHMEM_OFFSET * locationPtr)
+ShmemPIDLookup(int pid, SHMEM_OFFSET *locationPtr)
 {
 	BindingEnt *result,
 				item;
@@ -497,7 +497,7 @@ ShmemPIDDestroy(int pid)
  *		initialized).
  */
 long	   *
-ShmemInitStruct(char *name, unsigned long size, bool * foundPtr)
+ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
 {
 	BindingEnt *result,
 				item;

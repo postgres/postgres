@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.6 1997/09/08 02:31:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.7 1997/09/08 21:48:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,12 +35,12 @@
 #include <string.h>
 #endif
 
-static Oid	GetDynamicFuncArgType(Var * arg, ExprContext * econtext);
+static Oid	GetDynamicFuncArgType(Var *arg, ExprContext *econtext);
 static FunctionCachePtr
 init_fcache(Oid foid,
 			bool use_syscache,
-			List * argList,
-			ExprContext * econtext);
+			List *argList,
+			ExprContext *econtext);
 
 /*-----------------------------------------------------------------
  *
@@ -56,7 +56,7 @@ init_fcache(Oid foid,
 	(IsA(arg,Var) && ((Var*)arg)->varattno == InvalidAttrNumber)
 
 static Oid
-GetDynamicFuncArgType(Var * arg, ExprContext * econtext)
+GetDynamicFuncArgType(Var *arg, ExprContext *econtext)
 {
 	char	   *relname;
 	int			rtid;
@@ -80,8 +80,8 @@ GetDynamicFuncArgType(Var * arg, ExprContext * econtext)
 static FunctionCachePtr
 init_fcache(Oid foid,
 			bool use_syscache,
-			List * argList,
-			ExprContext * econtext)
+			List *argList,
+			ExprContext *econtext)
 {
 	HeapTuple	procedureTuple;
 	HeapTuple	typeTuple;
@@ -291,7 +291,7 @@ init_fcache(Oid foid,
 }
 
 void
-setFcache(Node * node, Oid foid, List * argList, ExprContext * econtext)
+setFcache(Node *node, Oid foid, List *argList, ExprContext *econtext)
 {
 	Func	   *fnode;
 	Oper	   *onode;

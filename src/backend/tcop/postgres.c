@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.44 1997/09/08 02:29:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.45 1997/09/08 21:47:51 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -146,7 +146,7 @@ typedef struct frontend
 	FILE	   *fn_Pfout;		/* the output fd */
 	bool		fn_done;		/* set after the frontend closes its
 								 * connection */
-}			FrontEnd;
+} FrontEnd;
 
 static Dllist *frontendList;
 
@@ -397,9 +397,9 @@ ReadCommand(char *inBuf, bool multiplexedBackend)
 
 List	   *
 pg_plan(char *query_string,		/* string to execute */
-		Oid * typev,			/* argument types */
+		Oid *typev,				/* argument types */
 		int nargs,				/* number of arguments */
-		QueryTreeList ** queryListP,	/* pointer to the parse trees */
+		QueryTreeList **queryListP,		/* pointer to the parse trees */
 		CommandDest dest)		/* where results should go */
 {
 	QueryTreeList *querytree_list;
@@ -646,7 +646,7 @@ pg_plan(char *query_string,		/* string to execute */
  */
 
 void
-pg_eval(char *query_string, char **argv, Oid * typev, int nargs)
+pg_eval(char *query_string, char **argv, Oid *typev, int nargs)
 {
 	pg_eval_dest(query_string, argv, typev, nargs, whereToSendOutput);
 }
@@ -654,7 +654,7 @@ pg_eval(char *query_string, char **argv, Oid * typev, int nargs)
 void
 pg_eval_dest(char *query_string,/* string to execute */
 			 char **argv,		/* arguments */
-			 Oid * typev,		/* argument types */
+			 Oid *typev,		/* argument types */
 			 int nargs,			/* number of arguments */
 			 CommandDest dest)	/* where results should go */
 {
@@ -1385,7 +1385,7 @@ PostgresMain(int argc, char *argv[])
 	if (IsUnderPostmaster == false)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.44 $ $Date: 1997/09/08 02:29:48 $");
+		puts("$Revision: 1.45 $ $Date: 1997/09/08 21:47:51 $");
 	}
 
 	/* ----------------

@@ -22,7 +22,7 @@ typedef struct TriggerData
 	HeapTuple	tg_trigtuple;
 	HeapTuple	tg_newtuple;
 	Trigger    *tg_trigger;
-}			TriggerData;
+} TriggerData;
 
 extern TriggerData *CurrentTriggerData;
 
@@ -58,8 +58,8 @@ extern TriggerData *CurrentTriggerData;
 		(!TRIGGER_FIRED_BEFORE (event))
 
 
-extern void CreateTrigger(CreateTrigStmt * stmt);
-extern void DropTrigger(DropTrigStmt * stmt);
+extern void CreateTrigger(CreateTrigStmt *stmt);
+extern void DropTrigger(DropTrigStmt *stmt);
 extern void RelationRemoveTriggers(Relation rel);
 
 extern HeapTuple ExecBRInsertTriggers(Relation rel, HeapTuple tuple);

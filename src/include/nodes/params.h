@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: params.h,v 1.5 1997/09/08 02:37:22 momjian Exp $
+ * $Id: params.h,v 1.6 1997/09/08 21:52:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,7 @@ typedef struct ParamListInfoData
 	bool		isnull;
 	bool		byval;
 	Datum		value;
-}			ParamListInfoData;
+} ParamListInfoData;
 
 typedef ParamListInfoData *ParamListInfo;
 

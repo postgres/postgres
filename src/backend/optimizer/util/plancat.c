@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.8 1997/09/08 02:25:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.9 1997/09/08 21:45:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,8 +56,8 @@ IndexSelectivity(Oid indexrelid, Oid indrelid, int32 nIndexKeys,
  *				number of tuples
  */
 void
-relation_info(Query * root, Index relid,
-			  bool * hasindex, int *pages, int *tuples)
+relation_info(Query *root, Index relid,
+			  bool *hasindex, int *pages, int *tuples)
 {
 	HeapTuple	relationTuple;
 	Form_pg_class relation;
@@ -101,7 +101,7 @@ relation_info(Query * root, Index relid,
  *
  */
 bool
-index_info(Query * root, bool first, int relid, IdxInfoRetval * info)
+index_info(Query *root, bool first, int relid, IdxInfoRetval *info)
 {
 	register	i;
 	HeapTuple	indexTuple,
@@ -246,12 +246,12 @@ index_info(Query * root, bool first, int relid, IdxInfoRetval * info)
  */
 void
 index_selectivity(Oid indid,
-				  Oid * classes,
-				  List * opnos,
+				  Oid *classes,
+				  List *opnos,
 				  Oid relid,
-				  List * attnos,
-				  List * values,
-				  List * flags,
+				  List *attnos,
+				  List *values,
+				  List *flags,
 				  int32 nkeys,
 				  float *idxPages,
 				  float *idxSelec)
@@ -355,7 +355,7 @@ restriction_selectivity(Oid functionObjectId,
 		elog(WARN, "RestrictionClauseSelectivity: bad value %lf",
 			 *result);
 
-	return ((Cost) * result);
+	return ((Cost) *result);
 }
 
 /*
@@ -394,7 +394,7 @@ join_selectivity(Oid functionObjectId,
 		elog(WARN, "JoinClauseSelectivity: bad value %lf",
 			 *result);
 
-	return ((Cost) * result);
+	return ((Cost) *result);
 }
 
 /*

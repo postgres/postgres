@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/oidint4.c,v 1.3 1997/09/08 02:30:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/oidint4.c,v 1.4 1997/09/08 21:48:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,8 +60,8 @@ bool
 oidint4lt(OidInt4 o1, OidInt4 o2)
 {
 	return
-		((bool) (o1->oi_oid < o2->oi_oid ||
-			   (o1->oi_oid == o2->oi_oid && o1->oi_int4 < o2->oi_int4)));
+	((bool) (o1->oi_oid < o2->oi_oid ||
+			 (o1->oi_oid == o2->oi_oid && o1->oi_int4 < o2->oi_int4)));
 }
 
 bool

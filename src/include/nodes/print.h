@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: print.h,v 1.4 1997/09/08 02:37:28 momjian Exp $
+ * $Id: print.h,v 1.5 1997/09/08 21:52:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,14 +21,14 @@
 
 extern void print(void *obj);
 extern void pprint(void *obj);
-extern void print_rt(List * rtable);
-extern void print_expr(Node * expr, List * rtable);
-extern void print_keys(List * keys, List * rtable);
-extern void print_tl(List * tlist, List * rtable);
-extern void print_slot(TupleTableSlot * slot);
+extern void print_rt(List *rtable);
+extern void print_expr(Node *expr, List *rtable);
+extern void print_keys(List *keys, List *rtable);
+extern void print_tl(List *tlist, List *rtable);
+extern void print_slot(TupleTableSlot *slot);
 extern void
-print_plan_recursive(Plan * p, Query * parsetree,
+print_plan_recursive(Plan *p, Query *parsetree,
 					 int indentLevel, char *label);
-extern void print_plan(Plan * p, Query * parsetree);
+extern void print_plan(Plan *p, Query *parsetree);
 
 #endif							/* PRINT_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.20 1997/09/08 02:29:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.21 1997/09/08 21:47:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.20 1997/09/08 02:29:17 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.21 1997/09/08 21:47:30 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -77,7 +77,7 @@
 #include "storage/proc.h"
 
 static void HandleDeadLock(int sig);
-static PROC *ProcWakeup(PROC * proc, int errType);
+static PROC *ProcWakeup(PROC *proc, int errType);
 
 /*
  * timeout (in seconds) for resolving possible deadlock
@@ -106,7 +106,7 @@ static PROC_HDR *ProcGlobal = NULL;
 PROC	   *MyProc = NULL;
 
 static void ProcKill(int exitStatus, int pid);
-static void ProcGetNewSemKeyAndNum(IPCKey * key, int *semNum);
+static void ProcGetNewSemKeyAndNum(IPCKey *key, int *semNum);
 static void ProcFreeSem(IpcSemaphoreKey semKey, int semNum);
 
 /*
@@ -441,7 +441,7 @@ ProcQueueAlloc(char *name)
  * ProcQueueInit -- initialize a shared memory process queue
  */
 void
-ProcQueueInit(PROC_QUEUE * queue)
+ProcQueueInit(PROC_QUEUE *queue)
 {
 	SHMQueueInit(&(queue->links));
 	queue->size = 0;
@@ -462,11 +462,11 @@ ProcQueueInit(PROC_QUEUE * queue)
  * NOTES: The process queue is now a priority queue for locking.
  */
 int
-ProcSleep(PROC_QUEUE * queue,
+ProcSleep(PROC_QUEUE *queue,
 		  SPINLOCK spinlock,
 		  int token,
 		  int prio,
-		  LOCK * lock)
+		  LOCK *lock)
 {
 	int			i;
 	PROC	   *proc;
@@ -556,7 +556,7 @@ ProcSleep(PROC_QUEUE * queue,
  *	 RETURN: the next process in the wait queue.
  */
 static PROC *
-ProcWakeup(PROC * proc, int errType)
+ProcWakeup(PROC *proc, int errType)
 {
 	PROC	   *retProc;
 
@@ -597,7 +597,7 @@ ProcGetId()
  *		released.
  */
 int
-ProcLockWakeup(PROC_QUEUE * queue, char *ltable, char *lock)
+ProcLockWakeup(PROC_QUEUE *queue, char *ltable, char *lock)
 {
 	PROC	   *proc;
 	int			count;
@@ -642,7 +642,7 @@ ProcLockWakeup(PROC_QUEUE * queue, char *ltable, char *lock)
 }
 
 void
-ProcAddLock(SHM_QUEUE * elem)
+ProcAddLock(SHM_QUEUE *elem)
 {
 	SHMQueueInsertTL(&MyProc->lockQueue, elem);
 }
@@ -741,7 +741,7 @@ HandleDeadLock(int sig)
 }
 
 void
-ProcReleaseSpins(PROC * proc)
+ProcReleaseSpins(PROC *proc)
 {
 	int			i;
 
@@ -772,7 +772,7 @@ ProcReleaseSpins(PROC * proc)
  *	  semaphore set.)
  */
 static void
-ProcGetNewSemKeyAndNum(IPCKey * key, int *semNum)
+ProcGetNewSemKeyAndNum(IPCKey *key, int *semNum)
 {
 	int			i;
 	int32	   *freeSemMap = ProcGlobal->freeSemMap;

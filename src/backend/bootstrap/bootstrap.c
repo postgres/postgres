@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.24 1997/09/08 20:54:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.25 1997/09/08 21:42:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,7 +108,7 @@ static hashnode *AddStr(char *str, int strlength, int mderef);
 static AttributeTupleForm AllocateAttribute(void);
 static bool BootstrapAlreadySeen(Oid id);
 static int	CompHash(char *str, int len);
-static hashnode *FindStr(char *str, int length, hashnode * mderef);
+static hashnode *FindStr(char *str, int length, hashnode *mderef);
 static int	gettype(char *type);
 static void cleanup(void);
 
@@ -234,7 +234,7 @@ typedef struct _IndexList
 	FuncIndexInfo *il_finfo;
 	PredInfo   *il_predInfo;
 	struct _IndexList *il_next;
-}			IndexList;
+} IndexList;
 
 static IndexList *ILHead = (IndexList *) NULL;
 
@@ -1002,7 +1002,7 @@ CompHash(char *str, int len)
  * ----------------
  */
 static hashnode *
-FindStr(char *str, int length, hashnode * mderef)
+FindStr(char *str, int length, hashnode *mderef)
 {
 	hashnode   *node;
 
@@ -1113,9 +1113,9 @@ index_register(char *heap,
 			   int natts,
 			   AttrNumber *attnos,
 			   uint16 nparams,
-			   Datum * params,
-			   FuncIndexInfo * finfo,
-			   PredInfo * predInfo)
+			   Datum *params,
+			   FuncIndexInfo *finfo,
+			   PredInfo *predInfo)
 {
 	Datum	   *v;
 	IndexList  *newind;

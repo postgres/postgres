@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.18 1997/09/08 20:57:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.19 1997/09/08 21:48:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ _ReadArrayStr(char *arrayStr, int nitems, int ndim, int dim[],
 
 #ifdef LOARRAY
 static char *
-_ReadLOArray(char *str, int *nbytes, int *fd, bool * chunkFlag,
+_ReadLOArray(char *str, int *nbytes, int *fd, bool *chunkFlag,
 			 int ndim, int dim[], int baseSize);
 
 #endif
@@ -60,7 +60,7 @@ _CopyArrayEls(char **values, char *p, int nitems, int typlen,
 			  char typalign, bool typbyval);
 static void
 system_cache_lookup(Oid element_type, bool input, int *typlen,
-			  bool * typbyval, char *typdelim, Oid * typelem, Oid * proc,
+				 bool *typbyval, char *typdelim, Oid *typelem, Oid *proc,
 					char *typalign);
 static Datum _ArrayCast(char *value, bool byval, int len);
 
@@ -74,10 +74,10 @@ _ArrayRange(int st[], int endp[], int bsize, char *destPtr,
 static int	_ArrayClipCount(int stI[], int endpI[], ArrayType *array);
 static void
 _LOArrayRange(int st[], int endp[], int bsize, int srcfd,
-			  int destfd, ArrayType *array, int isSrcLO, bool * isNull);
+			  int destfd, ArrayType *array, int isSrcLO, bool *isNull);
 static void
 _ReadArray(int st[], int endp[], int bsize, int srcfd, int destfd,
-		   ArrayType *array, int isDestLO, bool * isNull);
+		   ArrayType *array, int isDestLO, bool *isNull);
 static ArrayCastAndSet(char *src, bool typbyval, int typlen, char *dest);
 static SanityCheckInput(int ndim, int n, int dim[], int lb[], int indx[]);
 static int	array_read(char *destptr, int eltsize, int nitems, char *srcptr);
@@ -521,7 +521,7 @@ static char *
 _ReadLOArray(char *str,
 			 int *nbytes,
 			 int *fd,
-			 bool * chunkFlag,
+			 bool *chunkFlag,
 			 int ndim,
 			 int dim[],
 			 int baseSize)
@@ -771,7 +771,7 @@ array_out(ArrayType *v, Oid element_type)
  *----------------------------------------------------------------------------
  */
 char	   *
-array_dims(ArrayType *v, bool * isNull)
+array_dims(ArrayType *v, bool *isNull)
 {
 	char	   *p,
 			   *save_p;
@@ -816,7 +816,7 @@ array_ref(ArrayType *array,
 		  int reftype,
 		  int elmlen,
 		  int arraylen,
-		  bool * isNull)
+		  bool *isNull)
 {
 	int			i,
 				ndim,
@@ -937,7 +937,7 @@ array_clip(ArrayType *array,
 		   int lowerIndx[],
 		   int reftype,
 		   int len,
-		   bool * isNull)
+		   bool *isNull)
 {
 	int			i,
 				ndim,
@@ -1080,7 +1080,7 @@ array_set(ArrayType *array,
 		  int reftype,
 		  int elmlen,
 		  int arraylen,
-		  bool * isNull)
+		  bool *isNull)
 {
 	int			ndim,
 			   *dim,
@@ -1215,7 +1215,7 @@ array_assgn(ArrayType *array,
 			ArrayType *newArr,
 			int reftype,
 			int len,
-			bool * isNull)
+			bool *isNull)
 {
 	int			i,
 				ndim,
@@ -1301,10 +1301,10 @@ static void
 system_cache_lookup(Oid element_type,
 					bool input,
 					int *typlen,
-					bool * typbyval,
+					bool *typbyval,
 					char *typdelim,
-					Oid * typelem,
-					Oid * proc,
+					Oid *typelem,
+					Oid *proc,
 					char *typalign)
 {
 	HeapTuple	typeTuple;
@@ -1343,12 +1343,12 @@ _ArrayCast(char *value, bool byval, int len)
 		switch (len)
 		{
 				case 1:
-				return ((Datum) * value);
+				return ((Datum) *value);
 			case 2:
-				return ((Datum) * (int16 *) value);
+				return ((Datum) *(int16 *) value);
 			case 3:
 			case 4:
-				return ((Datum) * (int32 *) value);
+				return ((Datum) *(int32 *) value);
 			default:
 				elog(WARN, "array_ref: byval and elt len > 4!");
 				break;
@@ -1570,7 +1570,7 @@ _LOArrayRange(int st[],
 			  int destfd,
 			  ArrayType *array,
 			  int isSrcLO,
-			  bool * isNull)
+			  bool *isNull)
 {
 	int			n,
 			   *dim,
@@ -1624,7 +1624,7 @@ _ReadArray(int st[],
 		   int destfd,
 		   ArrayType *array,
 		   int isDestLO,
-		   bool * isNull)
+		   bool *isNull)
 {
 	int			n,
 			   *dim,

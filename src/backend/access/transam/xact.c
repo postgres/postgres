@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.15 1997/09/08 02:21:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.16 1997/09/08 21:41:52 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -202,9 +202,9 @@ TransactionState CurrentTransactionState =
  *			   V1 transaction system.  -cim 3/18/90
  * ----------------
  */
-TransactionId DisabledTransactionId = (TransactionId) - 1;
+TransactionId DisabledTransactionId = (TransactionId) -1;
 
-CommandId	DisabledCommandId = (CommandId) - 1;
+CommandId	DisabledCommandId = (CommandId) -1;
 
 AbsoluteTime DisabledStartTime = (AbsoluteTime) BIG_ABSTIME;	/* 1073741823; */
 

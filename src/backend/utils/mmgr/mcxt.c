@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.5 1997/09/08 02:32:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.6 1997/09/08 21:49:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,7 +121,7 @@ static struct GlobalMemory TopGlobalMemoryData = {
  *		allocate something here, you are expected to clean it up when
  *		appropriate.
  */
-MemoryContext TopMemoryContext = (MemoryContext) & TopGlobalMemoryData;
+MemoryContext TopMemoryContext = (MemoryContext) &TopGlobalMemoryData;
 
 
 
@@ -367,7 +367,7 @@ MemoryContextSwitchTo(MemoryContext context)
  *		BadArg if name is invalid.
  */
 GlobalMemory
-CreateGlobalMemory(char *name)			/* XXX MemoryContextName */
+CreateGlobalMemory(char *name)	/* XXX MemoryContextName */
 {
 	GlobalMemory context;
 	MemoryContext savecxt;

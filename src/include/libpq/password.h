@@ -7,7 +7,7 @@
 #define PWFILE_NAME_SIZE USERMAP_NAME_SIZE
 
 int
-verify_password(char *user, char *password, Port * port,
+verify_password(char *user, char *password, Port *port,
 				char *database, char *DataDir);
 
 #endif

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nabstime.h,v 1.12 1997/09/08 02:39:51 momjian Exp $
+ * $Id: nabstime.h,v 1.13 1997/09/08 21:55:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@ typedef struct
 {
 	int32		status;
 	AbsoluteTime data[2];
-}			TimeIntervalData;
+} TimeIntervalData;
 typedef TimeIntervalData *TimeInterval;
 
 /*
@@ -112,7 +112,7 @@ extern bool abstimele(AbsoluteTime t1, AbsoluteTime t2);
 extern bool abstimege(AbsoluteTime t1, AbsoluteTime t2);
 extern bool abstime_finite(AbsoluteTime time);
 
-extern AbsoluteTime datetime_abstime(DateTime * datetime);
+extern AbsoluteTime datetime_abstime(DateTime *datetime);
 extern DateTime *abstime_datetime(AbsoluteTime abstime);
 
 extern bool AbsoluteTimeIsBefore(AbsoluteTime time1, AbsoluteTime time2);

@@ -26,7 +26,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dllist.h,v 1.6 1997/09/08 02:36:47 momjian Exp $
+ * $Id: dllist.h,v 1.7 1997/09/08 21:52:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,13 +44,13 @@ typedef struct Dlelem
 	struct Dlelem *dle_prev;	/* previous element */
 	void	   *dle_val;		/* value of the element */
 	struct Dllist *dle_list;	/* what list this element is in */
-}			Dlelem;
+} Dlelem;
 
 typedef struct Dllist
 {
 	Dlelem	   *dll_head;
 	Dlelem	   *dll_tail;
-}			Dllist;
+} Dllist;
 
 extern Dllist *DLNewList(void); /* initialize a new list */
 extern void DLFreeList(Dllist *);		/* free up a list and all the
@@ -59,14 +59,13 @@ extern Dlelem *DLNewElem(void *val);
 extern void DLFreeElem(Dlelem *);
 extern Dlelem *DLGetHead(Dllist *);
 extern Dlelem *DLGetTail(Dllist *);
-extern Dlelem *DLRemTail(Dllist * l);
+extern Dlelem *DLRemTail(Dllist *l);
 extern Dlelem *DLGetPred(Dlelem *);		/* get predecessor */
 extern Dlelem *DLGetSucc(Dlelem *);		/* get successor */
 extern void DLRemove(Dlelem *); /* removes node from list */
-extern void DLAddHead(Dllist * list, Dlelem * node);
-extern void DLAddTail(Dllist * list, Dlelem * node);
-extern Dlelem *DLRemHead(Dllist * list);		/* remove and return the
-												 * head */
+extern void DLAddHead(Dllist *list, Dlelem *node);
+extern void DLAddTail(Dllist *list, Dlelem *node);
+extern Dlelem *DLRemHead(Dllist *list); /* remove and return the head */
 
 #define DLE_VAL(x)	(x->dle_val)
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.15 1997/09/08 20:55:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.16 1997/09/08 21:42:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,18 +39,18 @@
 #define IsFuncIndex(ATTR_LIST) (((IndexElem*)lfirst(ATTR_LIST))->args!=NULL)
 
 /* non-export function prototypes */
-static void CheckPredicate(List * predList, List * rangeTable, Oid baseRelOid);
+static void CheckPredicate(List *predList, List *rangeTable, Oid baseRelOid);
 static void
-CheckPredExpr(Node * predicate, List * rangeTable,
+CheckPredExpr(Node *predicate, List *rangeTable,
 			  Oid baseRelOid);
 static void
-			CheckPredClause(Expr * predicate, List * rangeTable, Oid baseRelOid);
+			CheckPredClause(Expr *predicate, List *rangeTable, Oid baseRelOid);
 static void
-FuncIndexArgs(IndexElem * funcIndex, AttrNumber *attNumP,
-			  Oid * argTypes, Oid * opOidP, Oid relId);
+FuncIndexArgs(IndexElem *funcIndex, AttrNumber *attNumP,
+			  Oid *argTypes, Oid *opOidP, Oid relId);
 static void
-NormIndexAttrs(List * attList, AttrNumber *attNumP,
-			   Oid * opOidP, Oid relId);
+NormIndexAttrs(List *attList, AttrNumber *attNumP,
+			   Oid *opOidP, Oid relId);
 static char *GetDefaultOpClass(Oid atttypid);
 
 /*
@@ -70,11 +70,11 @@ void
 DefineIndex(char *heapRelationName,
 			char *indexRelationName,
 			char *accessMethodName,
-			List * attributeList,
-			List * parameterList,
+			List *attributeList,
+			List *parameterList,
 			bool unique,
-			Expr * predicate,
-			List * rangetable)
+			Expr *predicate,
+			List *rangetable)
 {
 	Oid		   *classObjectId;
 	Oid			accessMethodId;
@@ -223,7 +223,7 @@ DefineIndex(char *heapRelationName,
  *		XXX
  */
 void
-ExtendIndex(char *indexRelationName, Expr * predicate, List * rangetable)
+ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 {
 	Oid		   *classObjectId;
 	Oid			accessMethodId;
@@ -364,7 +364,7 @@ ExtendIndex(char *indexRelationName, Expr * predicate, List * rangetable)
  */
 
 static void
-CheckPredicate(List * predList, List * rangeTable, Oid baseRelOid)
+CheckPredicate(List *predList, List *rangeTable, Oid baseRelOid)
 {
 	List	   *item;
 
@@ -375,7 +375,7 @@ CheckPredicate(List * predList, List * rangeTable, Oid baseRelOid)
 }
 
 static void
-CheckPredExpr(Node * predicate, List * rangeTable, Oid baseRelOid)
+CheckPredExpr(Node *predicate, List *rangeTable, Oid baseRelOid)
 {
 	List	   *clauses = NIL,
 			   *clause;
@@ -399,7 +399,7 @@ CheckPredExpr(Node * predicate, List * rangeTable, Oid baseRelOid)
 }
 
 static void
-CheckPredClause(Expr * predicate, List * rangeTable, Oid baseRelOid)
+CheckPredClause(Expr *predicate, List *rangeTable, Oid baseRelOid)
 {
 	Var		   *pred_var;
 	Const	   *pred_const;
@@ -421,10 +421,10 @@ CheckPredClause(Expr * predicate, List * rangeTable, Oid baseRelOid)
 
 
 static void
-FuncIndexArgs(IndexElem * funcIndex,
+FuncIndexArgs(IndexElem *funcIndex,
 			  AttrNumber *attNumP,
-			  Oid * argTypes,
-			  Oid * opOidP,
+			  Oid *argTypes,
+			  Oid *opOidP,
 			  Oid relId)
 {
 	List	   *rest;
@@ -470,9 +470,9 @@ FuncIndexArgs(IndexElem * funcIndex,
 }
 
 static void
-NormIndexAttrs(List * attList,	/* list of IndexElem's */
+NormIndexAttrs(List *attList,	/* list of IndexElem's */
 			   AttrNumber *attNumP,
-			   Oid * opOidP,
+			   Oid *opOidP,
 			   Oid relId)
 {
 	List	   *rest;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: inval.h,v 1.6 1997/09/08 02:39:48 momjian Exp $
+ * $Id: inval.h,v 1.7 1997/09/08 21:55:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,13 +30,13 @@ extern void RelationInvalidateHeapTuple(Relation relation, HeapTuple tuple);
 typedef struct InvalidationUserData
 {
 	struct InvalidationUserData *dataP[1];		/* VARIABLE LENGTH */
-}			InvalidationUserData;		/* VARIABLE LENGTH STRUCTURE */
+} InvalidationUserData;			/* VARIABLE LENGTH STRUCTURE */
 
 typedef struct InvalidationEntryData
 {
 	InvalidationUserData *nextP;
 	InvalidationUserData userData;		/* VARIABLE LENGTH ARRAY */
-}			InvalidationEntryData;		/* VARIABLE LENGTH STRUCTURE */
+} InvalidationEntryData;		/* VARIABLE LENGTH STRUCTURE */
 
 typedef Pointer InvalidationEntry;
 

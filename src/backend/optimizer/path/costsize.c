@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.18 1997/09/08 02:24:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.19 1997/09/08 21:44:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,9 +39,9 @@
 
 extern int	NBuffers;
 
-static int	compute_attribute_width(TargetEntry * tlistentry);
+static int	compute_attribute_width(TargetEntry *tlistentry);
 static double base_log(double x, double b);
-static int	compute_targetlist_width(List * targetlist);
+static int	compute_targetlist_width(List *targetlist);
 
 int			_disable_cost_ = 30000000;
 
@@ -177,7 +177,7 @@ cost_index(Oid indexid,
  *
  */
 Cost
-cost_sort(List * keys, int tuples, int width, bool noread)
+cost_sort(List *keys, int tuples, int width, bool noread)
 {
 	Cost		temp = 0;
 	int			npages = page_size(tuples, width);
@@ -278,8 +278,8 @@ cost_nestloop(Cost outercost,
 Cost
 cost_mergesort(Cost outercost,
 			   Cost innercost,
-			   List * outersortkeys,
-			   List * innersortkeys,
+			   List *outersortkeys,
+			   List *innersortkeys,
 			   int outersize,
 			   int innersize,
 			   int outerwidth,
@@ -316,8 +316,8 @@ cost_mergesort(Cost outercost,
 Cost
 cost_hashjoin(Cost outercost,
 			  Cost innercost,
-			  List * outerkeys,
-			  List * innerkeys,
+			  List *outerkeys,
+			  List *innerkeys,
 			  int outersize,
 			  int innersize,
 			  int outerwidth,
@@ -363,7 +363,7 @@ cost_hashjoin(Cost outercost,
  * Returns the size.
  */
 int
-compute_rel_size(Rel * rel)
+compute_rel_size(Rel *rel)
 {
 	Cost		temp;
 	int			temp1;
@@ -390,7 +390,7 @@ compute_rel_size(Rel * rel)
  * Returns the width of the tuple as a fixnum.
  */
 int
-compute_rel_width(Rel * rel)
+compute_rel_width(Rel *rel)
 {
 	return (compute_targetlist_width(get_actual_tlist(rel->targetlist)));
 }
@@ -402,7 +402,7 @@ compute_rel_width(Rel * rel)
  * Returns the width of the tuple as a fixnum.
  */
 static int
-compute_targetlist_width(List * targetlist)
+compute_targetlist_width(List *targetlist)
 {
 	List	   *temp_tl;
 	int			tuple_width = 0;
@@ -425,7 +425,7 @@ compute_targetlist_width(List * targetlist)
  * Returns the width of the attribute as a fixnum.
  */
 static int
-compute_attribute_width(TargetEntry * tlistentry)
+compute_attribute_width(TargetEntry *tlistentry)
 {
 	int			width = get_typlen(tlistentry->resdom->restype);
 
@@ -442,7 +442,7 @@ compute_attribute_width(TargetEntry * tlistentry)
  * Returns a fixnum.
  */
 int
-compute_joinrel_size(JoinPath * joinpath)
+compute_joinrel_size(JoinPath *joinpath)
 {
 	Cost		temp = 1.0;
 	int			temp1 = 0;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.17 1997/09/08 20:58:09 momjian Exp $
+ * $Id: nbtree.h,v 1.18 1997/09/08 21:50:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,12 +213,12 @@ typedef struct BTPageState
 /*
  * prototypes for functions in nbtinsert.c
  */
-extern		InsertIndexResult
+extern InsertIndexResult
 _bt_doinsert(Relation rel, BTItem btitem,
 			 bool index_is_unique, Relation heapRel);
 
  /* default is to allow duplicates */
-extern		bool
+extern bool
 _bt_itemcmp(Relation rel, Size keysz, BTItem item1, BTItem item2,
 			StrategyNumber strat);
 
@@ -244,9 +244,9 @@ extern bool BuildingBtree;		/* in nbtree.c */
 extern void
 btbuild(Relation heap, Relation index, int natts,
 		AttrNumber *attnum, IndexStrategy istrat, uint16 pcount,
-		Datum * params, FuncIndexInfo * finfo, PredInfo * predInfo);
-extern		InsertIndexResult
-btinsert(Relation rel, Datum * datum, char *nulls,
+		Datum *params, FuncIndexInfo *finfo, PredInfo *predInfo);
+extern InsertIndexResult
+btinsert(Relation rel, Datum *datum, char *nulls,
 		 ItemPointer ht_ctid, Relation heapRel);
 extern char *btgettuple(IndexScanDesc scan, ScanDirection dir);
 extern char *
@@ -276,10 +276,10 @@ _bt_search(Relation rel, int keysz, ScanKey scankey,
 extern Buffer
 _bt_moveright(Relation rel, Buffer buf, int keysz,
 			  ScanKey scankey, int access);
-extern		bool
+extern bool
 _bt_skeycmp(Relation rel, Size keysz, ScanKey scankey,
 			Page page, ItemId itemid, StrategyNumber strat);
-extern		OffsetNumber
+extern OffsetNumber
 _bt_binsrch(Relation rel, Buffer buf, int keysz,
 			ScanKey scankey, int srchtype);
 extern RetrieveIndexResult _bt_next(IndexScanDesc scan, ScanDirection dir);
@@ -289,10 +289,10 @@ extern bool _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir);
 /*
  * prototypes for functions in nbtstrat.c
  */
-extern		StrategyNumber
+extern StrategyNumber
 _bt_getstrat(Relation rel, AttrNumber attno,
 			 RegProcedure proc);
-extern		bool
+extern bool
 _bt_invokestrat(Relation rel, AttrNumber attno,
 				StrategyNumber strat, Datum left, Datum right);
 
@@ -303,7 +303,7 @@ extern ScanKey _bt_mkscankey(Relation rel, IndexTuple itup);
 extern void _bt_freeskey(ScanKey skey);
 extern void _bt_freestack(BTStack stack);
 extern void _bt_orderkeys(Relation relation, BTScanOpaque so);
-extern bool _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, Size * keysok);
+extern bool _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, Size *keysok);
 extern BTItem _bt_formitem(IndexTuple itup);
 
 /*

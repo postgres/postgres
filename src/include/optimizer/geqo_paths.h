@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_paths.h,v 1.3 1997/09/08 02:37:47 momjian Exp $
+ * $Id: geqo_paths.h,v 1.4 1997/09/08 21:53:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 #define GEQO_PATHS_H
 
 
-extern List *geqo_prune_rels(List * rel_list);
-extern void geqo_rel_paths(Rel * rel);
+extern List *geqo_prune_rels(List *rel_list);
+extern void geqo_rel_paths(Rel *rel);
 
 #endif							/* GEQO_PATHS_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.11 1997/09/08 02:20:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.12 1997/09/08 21:41:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -540,7 +540,7 @@ OperatorRelationFillScanKeyEntry(Relation operatorRelation,
  */
 void
 IndexSupportInitialize(IndexStrategy indexStrategy,
-					   RegProcedure * indexSupport,
+					   RegProcedure *indexSupport,
 					   Oid indexObjectId,
 					   Oid accessMethodObjectId,
 					   StrategyNumber maxStrategyNumber,

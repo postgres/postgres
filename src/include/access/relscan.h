@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relscan.h,v 1.7 1997/09/08 02:34:22 momjian Exp $
+ * $Id: relscan.h,v 1.8 1997/09/08 21:50:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@ typedef struct HeapScanDescData
 	uint16		rs_cdelta;		/* current delta in chain */
 	uint16		rs_nkeys;		/* number of attributes in keys */
 	ScanKey		rs_key;			/* key descriptors */
-}			HeapScanDescData;
+} HeapScanDescData;
 
 typedef HeapScanDescData *HeapScanDesc;
 
@@ -55,7 +55,7 @@ typedef struct IndexScanDescData
 	bool		scanFromEnd;	/* restart scan at end? */
 	uint16		numberOfKeys;	/* number of key attributes */
 	ScanKey		keyData;		/* key descriptor */
-}			IndexScanDescData;
+} IndexScanDescData;
 
 typedef IndexScanDescData *IndexScanDesc;
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.10 1997/09/08 20:58:12 momjian Exp $
+ * $Id: transam.h,v 1.11 1997/09/08 21:51:03 momjian Exp $
  *
  *	 NOTES
  *		Transaction System Version 101 now support proper oid
@@ -86,7 +86,7 @@ typedef unsigned char XidStatus;/* (2 bits) */
 typedef struct LogRelationContentsData
 {
 	int			TransSystemVersion;
-}			LogRelationContentsData;
+} LogRelationContentsData;
 
 typedef LogRelationContentsData *LogRelationContents;
 
@@ -105,7 +105,7 @@ typedef LogRelationContentsData *LogRelationContents;
 typedef struct TimeRelationContentsData
 {
 	int			TransSystemVersion;
-}			TimeRelationContentsData;
+} TimeRelationContentsData;
 
 typedef TimeRelationContentsData *TimeRelationContents;
 
@@ -131,7 +131,7 @@ typedef struct VariableRelationContentsData
 	TransactionId nextXidData;
 	TransactionId lastXidData;
 	Oid			nextOid;
-}			VariableRelationContentsData;
+} VariableRelationContentsData;
 
 typedef VariableRelationContentsData *VariableRelationContents;
 
@@ -155,26 +155,26 @@ extern void AmiTransactionOverride(bool flag);
 extern void
 TransComputeBlockNumber(Relation relation,
 			  TransactionId transactionId, BlockNumber *blockNumberOutP);
-extern		XidStatus
+extern XidStatus
 TransBlockNumberGetXidStatus(Relation relation,
-			   BlockNumber blockNumber, TransactionId xid, bool * failP);
+				BlockNumber blockNumber, TransactionId xid, bool *failP);
 extern void
 TransBlockNumberSetXidStatus(Relation relation,
 		   BlockNumber blockNumber, TransactionId xid, XidStatus xstatus,
-							 bool * failP);
+							 bool *failP);
 extern AbsoluteTime
 TransBlockNumberGetCommitTime(Relation relation,
-			   BlockNumber blockNumber, TransactionId xid, bool * failP);
+				BlockNumber blockNumber, TransactionId xid, bool *failP);
 extern void
 TransBlockNumberSetCommitTime(Relation relation,
 		  BlockNumber blockNumber, TransactionId xid, AbsoluteTime xtime,
-							  bool * failP);
+							  bool *failP);
 
 /* in transam/varsup.c */
 extern void VariableRelationPutNextXid(TransactionId xid);
-extern void GetNewTransactionId(TransactionId * xid);
+extern void GetNewTransactionId(TransactionId *xid);
 extern void UpdateLastCommittedXid(TransactionId xid);
-extern void GetNewObjectId(Oid * oid_return);
+extern void GetNewObjectId(Oid *oid_return);
 extern void CheckMaxObjectId(Oid assigned_oid);
 
 /* ----------------

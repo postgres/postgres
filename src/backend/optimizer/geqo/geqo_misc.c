@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.c,v 1.4 1997/09/08 02:23:57 momjian Exp $
+ * $Id: geqo_misc.c,v 1.5 1997/09/08 21:44:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,13 +41,13 @@
 #include "optimizer/geqo_recombination.h"
 #include "optimizer/geqo_misc.h"
 
-static float avg_pool(Pool * pool);
+static float avg_pool(Pool *pool);
 
 /* avg_pool--
  *
  */
 static float
-avg_pool(Pool * pool)
+avg_pool(Pool *pool)
 {
 	int			i;
 	double		cumulative = 0.0;
@@ -64,7 +64,7 @@ avg_pool(Pool * pool)
 /* print_pool--
  */
 void
-print_pool(FILE * fp, Pool * pool, int start, int stop)
+print_pool(FILE *fp, Pool *pool, int start, int stop)
 {
 	int			i,
 				j;
@@ -97,7 +97,7 @@ print_pool(FILE * fp, Pool * pool, int start, int stop)
  *
  */
 void
-print_gen(FILE * fp, Pool * pool, int generation)
+print_gen(FILE *fp, Pool *pool, int generation)
 {
 	int			lowest;
 
@@ -116,7 +116,7 @@ print_gen(FILE * fp, Pool * pool, int generation)
 
 
 void
-print_edge_table(FILE * fp, Edge * edge_table, int num_gene)
+print_edge_table(FILE *fp, Edge *edge_table, int num_gene)
 {
 	int			i,
 				j;
@@ -139,10 +139,10 @@ print_edge_table(FILE * fp, Edge * edge_table, int num_gene)
  *************************************************************/
 
 void
-geqo_print_joinclauses(Query * root, List * clauses)
+geqo_print_joinclauses(Query *root, List *clauses)
 {
 	List	   *l;
-	extern void print_expr(Node * expr, List * rtable); /* in print.c */
+	extern void print_expr(Node *expr, List *rtable);	/* in print.c */
 
 	foreach(l, clauses)
 	{
@@ -155,7 +155,7 @@ geqo_print_joinclauses(Query * root, List * clauses)
 }
 
 void
-geqo_print_path(Query * root, Path * path, int indent)
+geqo_print_path(Query *root, Path *path, int indent)
 {
 	char	   *ptype = NULL;
 	JoinPath   *jp;
@@ -262,7 +262,7 @@ geqo_print_path(Query * root, Path * path, int indent)
 }
 
 void
-geqo_print_rel(Query * root, Rel * rel)
+geqo_print_rel(Query *root, Rel *rel)
 {
 	List	   *l;
 

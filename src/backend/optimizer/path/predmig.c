@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/predmig.c,v 1.5 1997/09/08 20:56:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/predmig.c,v 1.6 1997/09/08 21:45:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@
 
 static void
 xfunc_predmig(JoinPath pathnode, Stream streamroot,
-			  Stream laststream, bool * progressp);
+			  Stream laststream, bool *progressp);
 static bool xfunc_series_llel(Stream stream);
 static bool xfunc_llel_chains(Stream root, Stream bottom);
 static Stream xfunc_complete_stream(Stream stream);
@@ -78,7 +78,7 @@ static int	xfunc_stream_compare(void *arg1, void *arg2);
 static bool xfunc_check_stream(Stream node);
 static bool xfunc_in_stream(Stream node, Stream stream);
 
-/* -----------------	 MAIN FUNCTIONS		  ------------------------ */
+/* -----------------   MAIN FUNCTIONS		------------------------ */
 /*
 ** xfunc_do_predmig
 **	  wrapper for Predicate Migration.	It calls xfunc_predmig until no
@@ -120,7 +120,7 @@ xfunc_predmig(JoinPath pathnode,/* root of the join tree */
 			  Stream laststream,/* for recursive calls -- these are the
 								 * root of the stream under construction,
 								 * and the lowest node created so far */
-			  bool * progressp)
+			  bool *progressp)
 {
 	Stream		newstream;
 
@@ -410,7 +410,7 @@ xfunc_prdmig_pullup(Stream origstream, Stream pullme, JoinPath joinpath)
  ** the same groupcost and groupsel (since they're in the same group!)
  */
 static void
-xfunc_form_groups(Query * queryInfo, Stream root, Stream bottom)
+xfunc_form_groups(Query *queryInfo, Stream root, Stream bottom)
 {
 	Stream		temp,
 				parent;
@@ -495,7 +495,7 @@ xfunc_form_groups(Query * queryInfo, Stream root, Stream bottom)
 }
 
 
-/* -------------------	   UTILITY FUNCTIONS	 ------------------------- */
+/* -------------------		 UTILITY FUNCTIONS	   ------------------------- */
 
 /*
  ** xfunc_free_stream --
@@ -765,7 +765,7 @@ xfunc_stream_compare(void *arg1, void *arg2)
 	}
 }
 
-/* ------------------  DEBUGGING ROUTINES	  ---------------------------- */
+/* ------------------  DEBUGGING ROUTINES	---------------------------- */
 
 /*
  ** Make sure all pointers in stream make sense.  Make sure no joins are

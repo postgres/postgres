@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.6 1997/09/08 02:25:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.7 1997/09/08 21:45:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@
 #include "nodes/makefuncs.h"
 #include "parser/catalog_utils.h"
 
-static Node *flatten_tlistentry(Node * tlistentry, List * flat_tlist);
+static Node *flatten_tlistentry(Node *tlistentry, List *flat_tlist);
 
 /*****************************************************************************
  *	---------- RELATION node target list routines ----------
@@ -45,7 +45,7 @@ static Node *flatten_tlistentry(Node * tlistentry, List * flat_tlist);
  *			 targetlist = valid sequence
  */
 TargetEntry *
-tlistentry_member(Var * var, List * targetlist)
+tlistentry_member(Var *var, List *targetlist)
 {
 	if (var)
 	{
@@ -70,7 +70,7 @@ tlistentry_member(Var * var, List * targetlist)
  *
  */
 Expr	   *
-matching_tlvar(Var * var, List * targetlist)
+matching_tlvar(Var *var, List *targetlist)
 {
 	TargetEntry *tlentry;
 
@@ -94,7 +94,7 @@ matching_tlvar(Var * var, List * targetlist)
  * CREATES:  new var-node iff no matching var-node exists in targetlist
  */
 void
-add_tl_element(Rel * rel, Var * var)
+add_tl_element(Rel *rel, Var *var)
 {
 	Expr	   *oldvar = (Expr *) NULL;
 
@@ -130,7 +130,7 @@ add_tl_element(Rel * rel, Var * var)
  * CREATES:  new targetlist entry (always).
  */
 TargetEntry *
-create_tl_element(Var * var, int resdomno)
+create_tl_element(Var *var, int resdomno)
 {
 	TargetEntry *tlelement = makeNode(TargetEntry);
 
@@ -153,7 +153,7 @@ create_tl_element(Var * var, int resdomno)
  *
  */
 List	   *
-get_actual_tlist(List * tlist)
+get_actual_tlist(List *tlist)
 {
 
 	/*
@@ -200,7 +200,7 @@ get_actual_tlist(List * tlist)
  *
  */
 Resdom	   *
-tlist_member(Var * var, List * tlist)
+tlist_member(Var *var, List *tlist)
 {
 	List	   *i = NIL;
 	TargetEntry *temp_tle = (TargetEntry *) NULL;
@@ -230,7 +230,7 @@ tlist_member(Var * var, List * tlist)
  *	 Routine to get the resdom out of a targetlist.
  */
 Resdom	   *
-tlist_resdom(List * tlist, Resdom * resnode)
+tlist_resdom(List *tlist, Resdom *resnode)
 {
 	Resdom	   *resdom = (Resdom *) NULL;
 	List	   *i = NIL;
@@ -265,7 +265,7 @@ tlist_resdom(List * tlist, Resdom * resnode)
  *	varoattno. Also, nested attnos are long gone. - ay 2/95]
  */
 TargetEntry *
-match_varid(Var * test_var, List * tlist)
+match_varid(Var *test_var, List *tlist)
 {
 	List	   *tl;
 	Oid			type_var;
@@ -311,7 +311,7 @@ match_varid(Var * test_var, List * tlist)
  *
  */
 List	   *
-new_unsorted_tlist(List * targetlist)
+new_unsorted_tlist(List *targetlist)
 {
 	List	   *new_targetlist = (List *) copyObject((Node *) targetlist);
 	List	   *x = NIL;
@@ -339,7 +339,7 @@ new_unsorted_tlist(List * targetlist)
  *
  */
 List	   *
-copy_vars(List * target, List * source)
+copy_vars(List *target, List *source)
 {
 	List	   *result = NIL;
 	List	   *src = NIL;
@@ -367,7 +367,7 @@ copy_vars(List * target, List * source)
  *
  */
 List	   *
-flatten_tlist(List * tlist)
+flatten_tlist(List *tlist)
 {
 	int			last_resdomno = 1;
 	List	   *new_tlist = NIL;
@@ -423,7 +423,7 @@ flatten_tlist(List * tlist)
  *
  */
 List	   *
-flatten_tlist_vars(List * full_tlist, List * flat_tlist)
+flatten_tlist_vars(List *full_tlist, List *flat_tlist)
 {
 	List	   *x = NIL;
 	List	   *result = NIL;
@@ -454,7 +454,7 @@ flatten_tlist_vars(List * full_tlist, List * flat_tlist)
  *
  */
 static Node *
-flatten_tlistentry(Node * tlistentry, List * flat_tlist)
+flatten_tlistentry(Node *tlistentry, List *flat_tlist)
 {
 	if (tlistentry == NULL)
 	{
@@ -544,7 +544,7 @@ flatten_tlistentry(Node * tlistentry, List * flat_tlist)
 
 
 TargetEntry *
-MakeTLE(Resdom * resdom, Node * expr)
+MakeTLE(Resdom *resdom, Node *expr)
 {
 	TargetEntry *rt = makeNode(TargetEntry);
 
@@ -554,7 +554,7 @@ MakeTLE(Resdom * resdom, Node * expr)
 }
 
 Var		   *
-get_expr(TargetEntry * tle)
+get_expr(TargetEntry *tle)
 {
 	Assert(tle != NULL);
 	Assert(tle->expr != NULL);
@@ -574,7 +574,7 @@ get_expr(TargetEntry * tle)
  */
 #ifdef NOT_USED
 void
-AddGroupAttrToTlist(List * tlist, List * grpCl)
+AddGroupAttrToTlist(List *tlist, List *grpCl)
 {
 	List	   *gl;
 	int			last_resdomno = length(tlist) + 1;
@@ -606,7 +606,7 @@ AddGroupAttrToTlist(List * tlist, List * grpCl)
 /* was ExecTargetListLength() in execQual.c,
    moved here to reduce dependencies on the executor module */
 int
-exec_tlist_length(List * targetlist)
+exec_tlist_length(List *targetlist)
 {
 	int			len;
 	List	   *tl;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.12 1997/09/08 02:20:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.13 1997/09/08 21:41:11 momjian Exp $
  *
  *	NOTES
  *		These functions are stored in pg_amproc.  For each operator class
@@ -126,7 +126,7 @@ btchar16cmp(char *a, char *b)
 }
 
 int32
-btnamecmp(NameData * a, NameData * b)
+btnamecmp(NameData *a, NameData *b)
 {
 	return (strncmp(a->data, b->data, NAMEDATALEN));
 }

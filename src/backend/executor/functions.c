@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.9 1997/09/08 02:22:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.10 1997/09/08 21:43:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@
 typedef enum
 {
 	F_EXEC_START, F_EXEC_RUN, F_EXEC_DONE
-}			ExecStatus;
+} ExecStatus;
 
 typedef struct local_es
 {
@@ -52,30 +52,30 @@ typedef struct local_es
 	EState	   *estate;
 	struct local_es *next;
 	ExecStatus	status;
-}			execution_state;
+} execution_state;
 
 #define LAST_POSTQUEL_COMMAND(es) ((es)->next == (execution_state *)NULL)
 
 /* non-export function prototypes */
-static TupleDesc postquel_start(execution_state * es);
+static TupleDesc postquel_start(execution_state *es);
 static execution_state *
 init_execution_state(FunctionCachePtr fcache,
 					 char *args[]);
-static TupleTableSlot *postquel_getnext(execution_state * es);
-static void postquel_end(execution_state * es);
+static TupleTableSlot *postquel_getnext(execution_state *es);
+static void postquel_end(execution_state *es);
 static void
-postquel_sub_params(execution_state * es, int nargs,
-					char *args[], bool * nullV);
+postquel_sub_params(execution_state *es, int nargs,
+					char *args[], bool *nullV);
 static Datum
-postquel_execute(execution_state * es, FunctionCachePtr fcache,
-				 List * fTlist, char **args, bool * isNull);
+postquel_execute(execution_state *es, FunctionCachePtr fcache,
+				 List *fTlist, char **args, bool *isNull);
 
 
 Datum
 ProjectAttribute(TupleDesc TD,
-				 TargetEntry * tlist,
+				 TargetEntry *tlist,
 				 HeapTuple tup,
-				 bool * isnullP)
+				 bool *isnullP)
 {
 	Datum		val,
 				valueP;
@@ -172,7 +172,7 @@ init_execution_state(FunctionCachePtr fcache,
 }
 
 static TupleDesc
-postquel_start(execution_state * es)
+postquel_start(execution_state *es)
 {
 #ifdef FUNC_UTIL_PATCH
 
@@ -189,7 +189,7 @@ postquel_start(execution_state * es)
 }
 
 static TupleTableSlot *
-postquel_getnext(execution_state * es)
+postquel_getnext(execution_state *es)
 {
 	int			feature;
 
@@ -214,7 +214,7 @@ postquel_getnext(execution_state * es)
 }
 
 static void
-postquel_end(execution_state * es)
+postquel_end(execution_state *es)
 {
 #ifdef FUNC_UTIL_PATCH
 
@@ -231,10 +231,10 @@ postquel_end(execution_state * es)
 }
 
 static void
-postquel_sub_params(execution_state * es,
+postquel_sub_params(execution_state *es,
 					int nargs,
 					char *args[],
-					bool * nullV)
+					bool *nullV)
 {
 	ParamListInfo paramLI;
 	EState	   *estate;
@@ -256,7 +256,7 @@ postquel_sub_params(execution_state * es,
 
 static TupleTableSlot *
 copy_function_result(FunctionCachePtr fcache,
-					 TupleTableSlot * resultSlot)
+					 TupleTableSlot *resultSlot)
 {
 	TupleTableSlot *funcSlot;
 	TupleDesc	resultTd;
@@ -299,11 +299,11 @@ copy_function_result(FunctionCachePtr fcache,
 }
 
 static Datum
-postquel_execute(execution_state * es,
+postquel_execute(execution_state *es,
 				 FunctionCachePtr fcache,
-				 List * fTlist,
+				 List *fTlist,
 				 char **args,
-				 bool * isNull)
+				 bool *isNull)
 {
 	TupleTableSlot *slot;
 	Datum		value;
@@ -398,7 +398,7 @@ postquel_execute(execution_state * es,
 }
 
 Datum
-postquel_function(Func * funcNode, char **args, bool * isNull, bool * isDone)
+postquel_function(Func *funcNode, char **args, bool *isNull, bool *isDone)
 {
 	execution_state *es;
 	Datum		result = 0;

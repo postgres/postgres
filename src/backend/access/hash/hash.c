@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.15 1997/09/08 20:53:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.16 1997/09/08 21:40:45 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -48,9 +48,9 @@ hashbuild(Relation heap,
 		  AttrNumber *attnum,
 		  IndexStrategy istrat,
 		  uint16 pcount,
-		  Datum * params,
-		  FuncIndexInfo * finfo,
-		  PredInfo * predInfo)
+		  Datum *params,
+		  FuncIndexInfo *finfo,
+		  PredInfo *predInfo)
 {
 	HeapScanDesc hscan;
 	Buffer		buffer;
@@ -278,7 +278,7 @@ hashbuild(Relation heap,
  *	to the caller.
  */
 InsertIndexResult
-hashinsert(Relation rel, Datum * datum, char *nulls, ItemPointer ht_ctid, Relation heapRel)
+hashinsert(Relation rel, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation heapRel)
 {
 	HashItem	hitem;
 	IndexTuple	itup;

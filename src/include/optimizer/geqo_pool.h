@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_pool.h,v 1.3 1997/09/08 02:37:47 momjian Exp $
+ * $Id: geqo_pool.h,v 1.4 1997/09/08 21:53:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,14 +24,14 @@
 
 
 extern Pool *alloc_pool(int pool_size, int string_length);
-extern void free_pool(Pool * pool);
+extern void free_pool(Pool *pool);
 
-extern void random_init_pool(Query * root, Pool * pool, int strt, int stop);
+extern void random_init_pool(Query *root, Pool *pool, int strt, int stop);
 extern Chromosome *alloc_chromo(int string_length);
-extern void free_chromo(Chromosome * chromo);
+extern void free_chromo(Chromosome *chromo);
 
-extern void spread_chromo(Chromosome * chromo, Pool * pool);
+extern void spread_chromo(Chromosome *chromo, Pool *pool);
 
-extern void sort_pool(Pool * pool);
+extern void sort_pool(Pool *pool);
 
 #endif							/* GEQO_POOL_H */

@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.12 1997/09/08 20:59:27 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.13 1997/09/08 21:56:01 momjian Exp $
  */
 
 #include <float.h>				/* faked on sunos */
@@ -18,11 +18,11 @@
 
 typedef void *TUPLE;
 
-extern double *regress_dist_ptpath(Point * pt, PATH * path);
-extern double *regress_path_dist(PATH * p1, PATH * p2);
-extern PATH *poly2path(POLYGON * poly);
-extern Point *interpt_pp(PATH * p1, PATH * p2);
-extern void regress_lseg_construct(LSEG * lseg, Point * pt1, Point * pt2);
+extern double *regress_dist_ptpath(Point *pt, PATH *path);
+extern double *regress_path_dist(PATH *p1, PATH *p2);
+extern PATH *poly2path(POLYGON *poly);
+extern Point *interpt_pp(PATH *p1, PATH *p2);
+extern void regress_lseg_construct(LSEG *lseg, Point *pt1, Point *pt2);
 extern char overpaid(TUPLE tuple);
 extern int	boxarea(BOX *box);
 extern char *reverse_c16(char *string);
@@ -203,7 +203,7 @@ typedef struct
 
 WIDGET	   *widget_in(char *str);
 char	   *widget_out(WIDGET * widget);
-int			pt_in_widget(Point * point, WIDGET * widget);
+int			pt_in_widget(Point *point, WIDGET * widget);
 
 #define NARGS	3
 

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execdesc.h,v 1.5 1997/09/08 02:36:16 momjian Exp $
+ * $Id: execdesc.h,v 1.6 1997/09/08 21:51:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,11 +30,11 @@ typedef struct QueryDesc
 	Query	   *parsetree;
 	Plan	   *plantree;
 	CommandDest dest;			/* the destination output of the execution */
-}			QueryDesc;
+} QueryDesc;
 
 /* in pquery.c */
 extern QueryDesc *
-CreateQueryDesc(Query * parsetree, Plan * plantree,
+CreateQueryDesc(Query *parsetree, Plan *plantree,
 				CommandDest dest);
 
 #endif							/* EXECDESC_H  */

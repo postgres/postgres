@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.9 1997/09/08 20:58:48 momjian Exp $
+ * $Id: plannodes.h,v 1.10 1997/09/08 21:52:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@ typedef struct Plan
 	List	   *qual;			/* Node* or List* ?? */
 	struct Plan *lefttree;
 	struct Plan *righttree;
-}			Plan;
+} Plan;
 
 /* ----------------
  *	these are are defined to avoid confusion problems with "left"
@@ -116,7 +116,7 @@ typedef struct Result
 	Plan		plan;
 	Node	   *resconstantqual;
 	ResultState *resstate;
-}			Result;
+} Result;
 
 /* ----------------
  *		append node
@@ -141,7 +141,7 @@ typedef struct Scan
 	Plan		plan;
 	Index		scanrelid;		/* relid is index into the range table */
 	CommonScanState *scanstate;
-}			Scan;
+} Scan;
 
 /* ----------------
  *		sequential scan node
@@ -159,7 +159,7 @@ typedef struct IndexScan
 	List	   *indxid;
 	List	   *indxqual;
 	IndexScanState *indxstate;
-}			IndexScan;
+} IndexScan;
 
 /*
  * ==========
@@ -181,7 +181,7 @@ typedef struct NestLoop
 {
 	Join		join;
 	NestLoopState *nlstate;
-}			NestLoop;
+} NestLoop;
 
 /* ----------------
  *		merge join node
@@ -195,7 +195,7 @@ typedef struct MergeJoin
 	Oid		   *mergerightorder;/* inner sort operator */
 	Oid		   *mergeleftorder; /* outer sort operator */
 	MergeJoinState *mergestate;
-}			MergeJoin;
+} MergeJoin;
 
 /* ----------------
  *		hash join (probe) node
@@ -211,7 +211,7 @@ typedef struct HashJoin
 	IpcMemoryKey hashjointablekey;
 	int			hashjointablesize;
 	bool		hashdone;
-}			HashJoin;
+} HashJoin;
 
 /* ---------------
  *		aggregate node
@@ -242,7 +242,7 @@ typedef struct Group
 	int			numCols;		/* number of group columns */
 	AttrNumber *grpColIdx;		/* index into the target list */
 	GroupState *grpstate;
-}			Group;
+} Group;
 
 /*
  * ==========
@@ -254,7 +254,7 @@ typedef struct Temp
 	Plan		plan;
 	Oid			tempid;
 	int			keycount;
-}			Temp;
+} Temp;
 
 /* ----------------
  *		materialization node
@@ -266,7 +266,7 @@ typedef struct Material
 	Oid			tempid;
 	int			keycount;
 	MaterialState *matstate;
-}			Material;
+} Material;
 
 /* ----------------
  *		sort node
@@ -280,7 +280,7 @@ typedef struct Sort
 	SortState  *sortstate;
 	void	   *psortstate;
 	bool		cleaned;
-}			Sort;
+} Sort;
 
 /* ----------------
  *		unique node
@@ -296,7 +296,7 @@ typedef struct Unique
 	AttrNumber	uniqueAttrNum;	/* attribute number of attribute to select
 								 * distinct on */
 	UniqueState *uniquestate;
-}			Unique;
+} Unique;
 
 /* ----------------
  *		hash build node
@@ -310,7 +310,7 @@ typedef struct Hash
 	HashJoinTable hashtable;
 	IpcMemoryKey hashtablekey;
 	int			hashtablesize;
-}			Hash;
+} Hash;
 
 /* ---------------------
  *		choose node
@@ -320,7 +320,7 @@ typedef struct Choose
 {
 	Plan		plan;
 	List	   *chooseplanlist;
-}			Choose;
+} Choose;
 
 /* -------------------
  *		Tee node information
@@ -340,6 +340,6 @@ typedef struct Tee
 	List	   *rtentries;		/* the range table for the plan below the
 								 * Tee may be different than the parent
 								 * plans */
-}			Tee;
+} Tee;
 
 #endif							/* PLANNODES_H */

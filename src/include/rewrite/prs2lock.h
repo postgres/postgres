@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: prs2lock.h,v 1.6 1997/09/08 02:38:46 momjian Exp $
+ * $Id: prs2lock.h,v 1.7 1997/09/08 21:54:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@ typedef struct RewriteRule
 	Node	   *qual;
 	List	   *actions;
 	bool		isInstead;
-}			RewriteRule;
+} RewriteRule;
 
 /*
  * RuleLock -
@@ -40,6 +40,6 @@ typedef struct RuleLock
 {
 	int			numLocks;
 	RewriteRule **rules;
-}			RuleLock;
+} RuleLock;
 
 #endif							/* REWRITE_H */

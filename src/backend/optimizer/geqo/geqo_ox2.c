@@ -6,7 +6,7 @@
 *	 OX2 operator according to Syswerda
 *	 (The Genetic Algorithms Handbook, ed L Davis)
 *
-* $Id: geqo_ox2.c,v 1.3 1997/09/08 02:23:59 momjian Exp $
+* $Id: geqo_ox2.c,v 1.4 1997/09/08 21:44:29 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -59,7 +59,7 @@
  *	 position crossover
  */
 void
-ox2(Gene * tour1, Gene * tour2, Gene * offspring, int num_gene, City * city_table)
+ox2(Gene *tour1, Gene *tour2, Gene *offspring, int num_gene, City *city_table)
 {
 	int			k,
 				j,

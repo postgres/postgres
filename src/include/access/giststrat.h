@@ -15,7 +15,7 @@
 #include <access/strat.h>
 #include <utils/rel.h>
 
-extern		StrategyNumber
+extern StrategyNumber
 RelationGetGISTStrategy(Relation r,
 						AttrNumber attnum, RegProcedure proc);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/rel.c,v 1.2 1997/09/07 04:53:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/rel.c,v 1.3 1997/09/08 21:48:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,7 @@ RelationGetIndexStrategy(Relation relation)
 void
 RelationSetIndexSupport(Relation relation,
 						IndexStrategy strategy,
-						RegProcedure * support)
+						RegProcedure *support)
 {
 	Assert(PointerIsValid(relation));
 	Assert(IndexStrategyIsValid(strategy));

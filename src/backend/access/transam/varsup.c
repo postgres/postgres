@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.11 1997/09/08 02:21:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.12 1997/09/08 21:41:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,12 +20,12 @@
 #include <access/heapam.h>
 #include <catalog/catname.h>
 
-static void GetNewObjectIdBlock(Oid * oid_return, int oid_block_size);
-static void VariableRelationGetNextOid(Oid * oid_return);
-static void VariableRelationGetNextXid(TransactionId * xidP);
+static void GetNewObjectIdBlock(Oid *oid_return, int oid_block_size);
+static void VariableRelationGetNextOid(Oid *oid_return);
+static void VariableRelationGetNextXid(TransactionId *xidP);
 static void VariableRelationPutLastXid(TransactionId xid);
-static void VariableRelationPutNextOid(Oid * oidP);
-static void VariableRelationGetLastXid(TransactionId * xidP);
+static void VariableRelationPutNextOid(Oid *oidP);
+static void VariableRelationGetLastXid(TransactionId *xidP);
 
 /* ---------------------
  *		spin lock for oid generation
@@ -43,7 +43,7 @@ int			OidGenLockId;
  * --------------------------------
  */
 static void
-VariableRelationGetNextXid(TransactionId * xidP)
+VariableRelationGetNextXid(TransactionId *xidP)
 {
 	Buffer		buf;
 	VariableRelationContents var;
@@ -85,7 +85,7 @@ VariableRelationGetNextXid(TransactionId * xidP)
  * --------------------------------
  */
 static void
-VariableRelationGetLastXid(TransactionId * xidP)
+VariableRelationGetLastXid(TransactionId *xidP)
 {
 	Buffer		buf;
 	VariableRelationContents var;
@@ -217,7 +217,7 @@ VariableRelationPutLastXid(TransactionId xid)
  * --------------------------------
  */
 static void
-VariableRelationGetNextOid(Oid * oid_return)
+VariableRelationGetNextOid(Oid *oid_return)
 {
 	Buffer		buf;
 	VariableRelationContents var;
@@ -287,7 +287,7 @@ VariableRelationGetNextOid(Oid * oid_return)
  * --------------------------------
  */
 static void
-VariableRelationPutNextOid(Oid * oidP)
+VariableRelationPutNextOid(Oid *oidP)
 {
 	Buffer		buf;
 	VariableRelationContents var;
@@ -387,7 +387,7 @@ static int	prefetched_xid_count = 0;
 static TransactionId next_prefetched_xid;
 
 void
-GetNewTransactionId(TransactionId * xid)
+GetNewTransactionId(TransactionId *xid)
 {
 	TransactionId nextid;
 
@@ -497,7 +497,7 @@ UpdateLastCommittedXid(TransactionId xid)
  * ----------------
  */
 static void
-GetNewObjectIdBlock(Oid * oid_return,	/* place to return the new object
+GetNewObjectIdBlock(Oid *oid_return,	/* place to return the new object
 										 * id */
 					int oid_block_size) /* number of oids desired */
 {
@@ -558,7 +558,7 @@ static int	prefetched_oid_count = 0;
 static Oid	next_prefetched_oid;
 
 void
-GetNewObjectId(Oid * oid_return)/* place to return the new object id */
+GetNewObjectId(Oid *oid_return) /* place to return the new object id */
 {
 	/* ----------------
 	 *	if we run out of prefetched oids, then we get some

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.3 1997/09/08 02:24:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.4 1997/09/08 21:45:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
  *
  */
 List	   *
-group_clauses_by_order(List * clauseinfo_list,
+group_clauses_by_order(List *clauseinfo_list,
 					   int inner_relid)
 {
 	List	   *mergeinfo_list = NIL;
@@ -106,7 +106,7 @@ group_clauses_by_order(List * clauseinfo_list,
  *
  */
 MInfo	   *
-match_order_mergeinfo(PathOrder * ordering, List * mergeinfo_list)
+match_order_mergeinfo(PathOrder *ordering, List *mergeinfo_list)
 {
 	MergeOrder *xmergeorder;
 	List	   *xmergeinfo = NIL;

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.5 1997/09/08 02:28:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.6 1997/09/08 21:46:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,12 +30,12 @@
 #include "access/heapam.h"
 
 static void
-ApplyRetrieveRule(Query * parsetree, RewriteRule * rule,
+ApplyRetrieveRule(Query *parsetree, RewriteRule *rule,
 				  int rt_index, int relation_level, int *modified);
 static List *
-fireRules(Query * parsetree, int rt_index, CmdType event,
-		  bool * instead_flag, List * locks, List ** qual_products);
-static List *deepRewriteQuery(Query * parsetree);
+fireRules(Query *parsetree, int rt_index, CmdType event,
+		  bool *instead_flag, List *locks, List **qual_products);
+static List *deepRewriteQuery(Query *parsetree);
 
 /*
  * gatherRewriteMeta -
@@ -44,12 +44,12 @@ static List *deepRewriteQuery(Query * parsetree);
  *	  maintain semantic validity
  */
 static RewriteInfo *
-gatherRewriteMeta(Query * parsetree,
-				  Query * rule_action,
-				  Node * rule_qual,
+gatherRewriteMeta(Query *parsetree,
+				  Query *rule_action,
+				  Node *rule_qual,
 				  int rt_index,
 				  CmdType event,
-				  bool * instead_flag)
+				  bool *instead_flag)
 {
 	RewriteInfo *info;
 	int			rt_length;
@@ -110,7 +110,7 @@ gatherRewriteMeta(Query * parsetree,
 }
 
 static List *
-OptimizeRIRRules(List * locks)
+OptimizeRIRRules(List *locks)
 {
 	List	   *attr_level = NIL,
 			   *i;
@@ -133,7 +133,7 @@ OptimizeRIRRules(List * locks)
  * excess semantically queasy queries aren't processed
  */
 static List *
-orderRules(List * locks)
+orderRules(List *locks)
 {
 	List	   *regular = NIL,
 			   *i;
@@ -152,7 +152,7 @@ orderRules(List * locks)
 }
 
 static int
-AllRetrieve(List * actions)
+AllRetrieve(List *actions)
 {
 	List	   *n;
 
@@ -172,10 +172,10 @@ AllRetrieve(List * actions)
 }
 
 static List *
-FireRetrieveRulesAtQuery(Query * parsetree,
+FireRetrieveRulesAtQuery(Query *parsetree,
 						 int rt_index,
 						 Relation relation,
-						 bool * instead_flag,
+						 bool *instead_flag,
 						 int rule_flag)
 {
 	List	   *i,
@@ -242,8 +242,8 @@ FireRetrieveRulesAtQuery(Query * parsetree,
  * side effect: parsetree's rtable field might be changed
  */
 static void
-ApplyRetrieveRule(Query * parsetree,
-				  RewriteRule * rule,
+ApplyRetrieveRule(Query *parsetree,
+				  RewriteRule *rule,
 				  int rt_index,
 				  int relation_level,
 				  int *modified)
@@ -310,9 +310,9 @@ ApplyRetrieveRule(Query * parsetree,
 }
 
 static List *
-ProcessRetrieveQuery(Query * parsetree,
-					 List * rtable,
-					 bool * instead_flag,
+ProcessRetrieveQuery(Query *parsetree,
+					 List *rtable,
+					 bool *instead_flag,
 					 bool rule)
 {
 	List	   *rt;
@@ -377,9 +377,9 @@ ProcessRetrieveQuery(Query * parsetree,
 }
 
 static Query *
-CopyAndAddQual(Query * parsetree,
-			   List * actions,
-			   Node * rule_qual,
+CopyAndAddQual(Query *parsetree,
+			   List *actions,
+			   Node *rule_qual,
 			   int rt_index,
 			   CmdType event)
 {
@@ -419,12 +419,12 @@ CopyAndAddQual(Query * parsetree,
  *
  */
 static List *
-fireRules(Query * parsetree,
+fireRules(Query *parsetree,
 		  int rt_index,
 		  CmdType event,
-		  bool * instead_flag,
-		  List * locks,
-		  List ** qual_products)
+		  bool *instead_flag,
+		  List *locks,
+		  List **qual_products)
 {
 	RewriteInfo *info;
 	List	   *results = NIL;
@@ -536,7 +536,7 @@ fireRules(Query * parsetree,
 }
 
 static List *
-RewriteQuery(Query * parsetree, bool * instead_flag, List ** qual_products)
+RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
 {
 	CmdType		event;
 	List	   *product_queries = NIL;
@@ -621,7 +621,7 @@ static int	numQueryRewriteInvoked = 0;
  *	  queries
  */
 List	   *
-QueryRewrite(Query * parsetree)
+QueryRewrite(Query *parsetree)
 {
 	numQueryRewriteInvoked = 0;
 
@@ -636,7 +636,7 @@ QueryRewrite(Query * parsetree)
  *	  rewrites the query and apply the rules again on the queries rewritten
  */
 static List *
-deepRewriteQuery(Query * parsetree)
+deepRewriteQuery(Query *parsetree)
 {
 	List	   *n;
 	List	   *rewritten = NIL;

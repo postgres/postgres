@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.13 1997/09/08 02:28:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.14 1997/09/08 21:46:59 momjian Exp $
  *
  * NOTES
  *
@@ -73,7 +73,7 @@ typedef struct _PrivateMemStruct
 {
 	int			id;
 	char	   *memptr;
-}			PrivateMem;
+} PrivateMem;
 
 PrivateMem	IpcPrivateMem[16];
 
@@ -668,11 +668,11 @@ AttachSLockMemory(IPCKey key)
 	slockM = (struct ipcdummy *) IpcMemoryAttach(SLockMemoryId);
 	if (slockM == IpcMemAttachFailed)
 		elog(FATAL, "AttachSLockMemory: could not attach segment");
-	FreeSLockPP = (SLock **) & (slockM->free);
+	FreeSLockPP = (SLock **) &(slockM->free);
 	UnusedSLockIP = (int *) &(slockM->unused);
-	SLockMemoryLock = (slock_t *) & (slockM->memlock);
+	SLockMemoryLock = (slock_t *) &(slockM->memlock);
 	S_INIT_LOCK(SLockMemoryLock);
-	SLockArray = (SLock *) & (slockM->slocks[0]);
+	SLockArray = (SLock *) &(slockM->slocks[0]);
 	return;
 }
 

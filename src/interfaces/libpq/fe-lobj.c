@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.9 1997/09/08 02:40:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.10 1997/09/08 21:55:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 
 #define LO_BUFSIZE		  1024
 
-static int	lo_initialize(PGconn * conn);
+static int	lo_initialize(PGconn *conn);
 
 /*
  * lo_open
@@ -33,7 +33,7 @@ static int	lo_initialize(PGconn * conn);
  * return -1 upon failure.
  */
 int
-lo_open(PGconn * conn, Oid lobjId, int mode)
+lo_open(PGconn *conn, Oid lobjId, int mode)
 {
 	int			fd;
 	int			result_len;
@@ -79,7 +79,7 @@ lo_open(PGconn * conn, Oid lobjId, int mode)
  * returns -1 upon failure.
  */
 int
-lo_close(PGconn * conn, int fd)
+lo_close(PGconn *conn, int fd)
 {
 	PQArgBlock	argv[1];
 	PGresult   *res;
@@ -117,7 +117,7 @@ lo_close(PGconn * conn, int fd)
  */
 
 int
-lo_read(PGconn * conn, int fd, char *buf, int len)
+lo_read(PGconn *conn, int fd, char *buf, int len)
 {
 	PQArgBlock	argv[2];
 	PGresult   *res;
@@ -156,7 +156,7 @@ lo_read(PGconn * conn, int fd, char *buf, int len)
  *
  */
 int
-lo_write(PGconn * conn, int fd, char *buf, int len)
+lo_write(PGconn *conn, int fd, char *buf, int len)
 {
 	PQArgBlock	argv[2];
 	PGresult   *res;
@@ -201,7 +201,7 @@ lo_write(PGconn * conn, int fd, char *buf, int len)
  */
 
 int
-lo_lseek(PGconn * conn, int fd, int offset, int whence)
+lo_lseek(PGconn *conn, int fd, int offset, int whence)
 {
 	PQArgBlock	argv[3];
 	PGresult   *res;
@@ -249,7 +249,7 @@ lo_lseek(PGconn * conn, int fd, int offset, int whence)
  */
 
 Oid
-lo_creat(PGconn * conn, int mode)
+lo_creat(PGconn *conn, int mode)
 {
 	PQArgBlock	argv[1];
 	PGresult   *res;
@@ -286,7 +286,7 @@ lo_creat(PGconn * conn, int mode)
  */
 
 int
-lo_tell(PGconn * conn, int fd)
+lo_tell(PGconn *conn, int fd)
 {
 	int			retval;
 	PQArgBlock	argv[1];
@@ -323,7 +323,7 @@ lo_tell(PGconn * conn, int fd)
  */
 
 int
-lo_unlink(PGconn * conn, Oid lobjId)
+lo_unlink(PGconn *conn, Oid lobjId)
 {
 	PQArgBlock	argv[1];
 	PGresult   *res;
@@ -362,7 +362,7 @@ lo_unlink(PGconn * conn, Oid lobjId)
  */
 
 Oid
-lo_import(PGconn * conn, char *filename)
+lo_import(PGconn *conn, char *filename)
 {
 	int			fd;
 	int			nbytes,
@@ -427,7 +427,7 @@ lo_import(PGconn * conn, char *filename)
  * returns -1 upon failure, 1 otherwise
  */
 int
-lo_export(PGconn * conn, Oid lobjId, char *filename)
+lo_export(PGconn *conn, Oid lobjId, char *filename)
 {
 	int			fd;
 	int			nbytes,
@@ -488,7 +488,7 @@ lo_export(PGconn * conn, Oid lobjId, char *filename)
  * ----------------
  */
 static int
-lo_initialize(PGconn * conn)
+lo_initialize(PGconn *conn)
 {
 	PGresult   *res;
 	PGlobjfuncs *lobjfuncs;

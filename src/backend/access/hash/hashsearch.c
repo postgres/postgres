@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.13 1997/09/08 20:54:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.14 1997/09/08 21:40:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,7 +127,7 @@ _hash_next(IndexScanDesc scan, ScanDirection dir)
 
 static void
 _hash_readnext(Relation rel,
-			   Buffer *bufp, Page * pagep, HashPageOpaque * opaquep)
+			   Buffer *bufp, Page *pagep, HashPageOpaque *opaquep)
 {
 	BlockNumber blkno;
 
@@ -146,7 +146,7 @@ _hash_readnext(Relation rel,
 
 static void
 _hash_readprev(Relation rel,
-			   Buffer *bufp, Page * pagep, HashPageOpaque * opaquep)
+			   Buffer *bufp, Page *pagep, HashPageOpaque *opaquep)
 {
 	BlockNumber blkno;
 

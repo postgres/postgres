@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/Attic/archive.c,v 1.3 1997/09/08 02:24:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/Attic/archive.c,v 1.4 1997/09/08 21:45:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@
 #include "commands/creatinh.h"
 
 void
-plan_archive(List * rt)
+plan_archive(List *rt)
 {
 	List	   *rtitem;
 	RangeTblEntry *rte;

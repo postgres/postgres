@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.10 1997/09/08 02:22:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.11 1997/09/08 21:42:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@
  *---------------------------------------------------------------------
  */
 static void
-DefineVirtualRelation(char *relname, List * tlist)
+DefineVirtualRelation(char *relname, List *tlist)
 {
 	CreateStmt	createStmt;
 	List	   *attrList,
@@ -143,7 +143,7 @@ MakeRetrieveViewRuleName(char *viewName)
 }
 
 static RuleStmt *
-FormViewRetrieveRule(char *viewName, Query * viewParse)
+FormViewRetrieveRule(char *viewName, Query *viewParse)
 {
 	RuleStmt   *rule;
 	char	   *rname;
@@ -170,7 +170,7 @@ FormViewRetrieveRule(char *viewName, Query * viewParse)
 }
 
 static void
-DefineViewRules(char *viewName, Query * viewParse)
+DefineViewRules(char *viewName, Query *viewParse)
 {
 	RuleStmt   *retrieve_rule = NULL;
 
@@ -224,7 +224,7 @@ DefineViewRules(char *viewName, Query * viewParse)
  *---------------------------------------------------------------
  */
 static void
-UpdateRangeTableOfViewParse(char *viewName, Query * viewParse)
+UpdateRangeTableOfViewParse(char *viewName, Query *viewParse)
 {
 	List	   *old_rt;
 	List	   *new_rt;
@@ -275,7 +275,7 @@ UpdateRangeTableOfViewParse(char *viewName, Query * viewParse)
  *-------------------------------------------------------------------
  */
 void
-DefineView(char *viewName, Query * viewParse)
+DefineView(char *viewName, Query *viewParse)
 {
 	List	   *viewTlist;
 

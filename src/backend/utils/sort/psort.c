@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.20 1997/09/08 02:32:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.21 1997/09/08 21:49:33 momjian Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -64,14 +64,14 @@
 #include "miscadmin.h"
 #include "storage/fd.h"
 
-static bool createrun(Sort * node, FILE * file, bool * empty);
-static void destroytape(FILE * file);
-static void dumptuples(FILE * file, Sort * node);
+static bool createrun(Sort *node, FILE *file, bool *empty);
+static void destroytape(FILE *file);
+static void dumptuples(FILE *file, Sort *node);
 static FILE *gettape(void);
-static void initialrun(Sort * node, bool * empty);
-static void inittapes(Sort * node);
-static void merge(Sort * node, struct tape * dest);
-static FILE *mergeruns(Sort * node);
+static void initialrun(Sort *node, bool *empty);
+static void inittapes(Sort *node);
+static void merge(Sort *node, struct tape * dest);
+static FILE *mergeruns(Sort *node);
 static HeapTuple tuplecopy(HeapTuple tup);
 
 
@@ -123,7 +123,7 @@ static long shortzero = 0;		/* used to delimit runs */
  *						  Allocates and initializes sort node's psort state.
  */
 bool
-psort_begin(Sort * node, int nkeys, ScanKey key)
+psort_begin(Sort *node, int nkeys, ScanKey key)
 {
 	bool		empty;			/* to answer: is child node empty? */
 
@@ -170,7 +170,7 @@ psort_begin(Sort * node, int nkeys, ScanKey key)
  *				number of allocated tapes
  */
 static void
-inittapes(Sort * node)
+inittapes(Sort *node)
 {
 	register int i;
 	register struct tape *tp;
@@ -268,7 +268,7 @@ inittapes(Sort * node)
  *				Also, perhaps allocate tapes when needed. Split into 2 funcs.
  */
 static void
-initialrun(Sort * node, bool * empty)
+initialrun(Sort *node, bool *empty)
 {
 	/* register struct tuple   *tup; */
 	register struct tape *tp;
@@ -350,7 +350,7 @@ initialrun(Sort * node, bool * empty)
  *				Tuples contains the tuples for the following run upon exit
  */
 static bool
-createrun(Sort * node, FILE * file, bool * empty)
+createrun(Sort *node, FILE *file, bool *empty)
 {
 	register HeapTuple lasttuple;
 	register HeapTuple tup;
@@ -437,7 +437,7 @@ createrun(Sort * node, FILE * file, bool * empty)
 	/* if we did not see any tuples, mark empty */
 	*empty = (cr_tuples > 0) ? false : true;
 
-	return ((bool) ! foundeor); /* XXX - works iff bool is {0,1} */
+	return ((bool) !foundeor);	/* XXX - works iff bool is {0,1} */
 }
 
 /*
@@ -468,7 +468,7 @@ tuplecopy(HeapTuple tup)
  *				file of tuples in order
  */
 static FILE *
-mergeruns(Sort * node)
+mergeruns(Sort *node)
 {
 	register struct tape *tp;
 
@@ -495,7 +495,7 @@ mergeruns(Sort * node)
  *						  (polyphase merge Alg.D(D5)--Knuth, Vol.3, p271)
  */
 static void
-merge(Sort * node, struct tape * dest)
+merge(Sort *node, struct tape * dest)
 {
 	register HeapTuple tup;
 	register struct tape *lasttp;		/* (TAPE[P]) */
@@ -602,7 +602,7 @@ merge(Sort * node, struct tape * dest)
  * dumptuples	- stores all the tuples in tree into file
  */
 static void
-dumptuples(FILE * file, Sort * node)
+dumptuples(FILE *file, Sort *node)
 {
 	register struct leftist *tp;
 	register struct leftist *newp;
@@ -648,7 +648,7 @@ dumptuples(FILE * file, Sort * node)
  *						  a NULL indicating the last tuple has been processed.
  */
 HeapTuple
-psort_grabtuple(Sort * node)
+psort_grabtuple(Sort *node)
 {
 	register HeapTuple tup;
 	long		tuplen;
@@ -690,7 +690,7 @@ psort_grabtuple(Sort * node)
  *		psort_markpos	- saves current position in the merged sort file
  */
 void
-psort_markpos(Sort * node)
+psort_markpos(Sort *node)
 {
 	Assert(node != (Sort *) NULL);
 	Assert(PS(node) != (Psortstate *) NULL);
@@ -703,7 +703,7 @@ psort_markpos(Sort * node)
  *						  last saved position
  */
 void
-psort_restorepos(Sort * node)
+psort_restorepos(Sort *node)
 {
 	Assert(node != (Sort *) NULL);
 	Assert(PS(node) != (Psortstate *) NULL);
@@ -718,7 +718,7 @@ psort_restorepos(Sort * node)
  *						  called unless psort_grabtuple has returned a NULL.
  */
 void
-psort_end(Sort * node)
+psort_end(Sort *node)
 {
 	register struct tape *tp;
 
@@ -819,7 +819,7 @@ gettape()
  */
 #ifdef NOT_USED
 static void
-resettape(FILE * file)
+resettape(FILE *file)
 {
 	register struct tapelst *tp;
 	register int fd;
@@ -851,7 +851,7 @@ resettape(FILE * file)
  *				Exits instead of returning status, if given invalid tape.
  */
 static void
-destroytape(FILE * file)
+destroytape(FILE *file)
 {
 	register struct tapelst *tp,
 			   *tq;

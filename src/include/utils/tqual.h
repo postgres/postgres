@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.8 1997/09/08 02:39:59 momjian Exp $
+ * $Id: tqual.h,v 1.9 1997/09/08 21:55:19 momjian Exp $
  *
  * NOTE
  *	  It may be desirable to allow time qualifications to indicate
@@ -22,7 +22,7 @@
 typedef struct TimeQualSpace
 {
 	char		data[12];
-}			TimeQualSpace;
+} TimeQualSpace;
 
 typedef Pointer TimeQual;
 
@@ -36,7 +36,7 @@ extern void setheapoverride(bool on);
 extern bool heapisoverride(void);
 
 extern TimeQual TimeFormSnapshotTimeQual(AbsoluteTime time);
-extern		TimeQual
+extern TimeQual
 TimeFormRangedTimeQual(AbsoluteTime startTime,
 					   AbsoluteTime endTime);
 extern bool HeapTupleSatisfiesTimeQual(HeapTuple tuple, TimeQual qual);

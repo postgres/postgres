@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.9 1997/09/08 20:55:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.10 1997/09/08 21:44:07 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -53,7 +53,7 @@ static void _outNode(StringInfo str, void *obj);
  *	   converts a List of integers
  */
 static void
-_outIntList(StringInfo str, List * list)
+_outIntList(StringInfo str, List *list)
 {
 	List	   *l;
 	char		buf[500];
@@ -68,7 +68,7 @@ _outIntList(StringInfo str, List * list)
 }
 
 static void
-_outQuery(StringInfo str, Query * node)
+_outQuery(StringInfo str, Query *node)
 {
 	char		buf[500];
 
@@ -110,7 +110,7 @@ _outQuery(StringInfo str, Query * node)
  * print the basic stuff of all nodes that inherit from Plan
  */
 static void
-_outPlanInfo(StringInfo str, Plan * node)
+_outPlanInfo(StringInfo str, Plan *node)
 {
 	char		buf[500];
 
@@ -142,7 +142,7 @@ _outPlanInfo(StringInfo str, Plan * node)
  *	Stuff from plannodes.h
  */
 static void
-_outPlan(StringInfo str, Plan * node)
+_outPlan(StringInfo str, Plan *node)
 {
 	char		buf[500];
 
@@ -153,7 +153,7 @@ _outPlan(StringInfo str, Plan * node)
 }
 
 static void
-_outResult(StringInfo str, Result * node)
+_outResult(StringInfo str, Result *node)
 {
 	char		buf[500];
 
@@ -171,7 +171,7 @@ _outResult(StringInfo str, Result * node)
  *	Existential is a subclass of Plan.
  */
 static void
-_outExistential(StringInfo str, Existential * node)
+_outExistential(StringInfo str, Existential *node)
 {
 	char		buf[500];
 
@@ -211,7 +211,7 @@ _outAppend(StringInfo str, Append *node)
  *	Join is a subclass of Plan
  */
 static void
-_outJoin(StringInfo str, Join * node)
+_outJoin(StringInfo str, Join *node)
 {
 	char		buf[500];
 
@@ -225,7 +225,7 @@ _outJoin(StringInfo str, Join * node)
  *	NestLoop is a subclass of Join
  */
 static void
-_outNestLoop(StringInfo str, NestLoop * node)
+_outNestLoop(StringInfo str, NestLoop *node)
 {
 	char		buf[500];
 
@@ -238,7 +238,7 @@ _outNestLoop(StringInfo str, NestLoop * node)
  *	MergeJoin is a subclass of Join
  */
 static void
-_outMergeJoin(StringInfo str, MergeJoin * node)
+_outMergeJoin(StringInfo str, MergeJoin *node)
 {
 	char		buf[500];
 
@@ -264,7 +264,7 @@ _outMergeJoin(StringInfo str, MergeJoin * node)
  *	HashJoin is a subclass of Join.
  */
 static void
-_outHashJoin(StringInfo str, HashJoin * node)
+_outHashJoin(StringInfo str, HashJoin *node)
 {
 	char		buf[500];
 
@@ -292,7 +292,7 @@ _outHashJoin(StringInfo str, HashJoin * node)
  *	Scan is a subclass of Node
  */
 static void
-_outScan(StringInfo str, Scan * node)
+_outScan(StringInfo str, Scan *node)
 {
 	char		buf[500];
 
@@ -309,7 +309,7 @@ _outScan(StringInfo str, Scan * node)
  *	SeqScan is a subclass of Scan
  */
 static void
-_outSeqScan(StringInfo str, SeqScan * node)
+_outSeqScan(StringInfo str, SeqScan *node)
 {
 	char		buf[500];
 
@@ -327,7 +327,7 @@ _outSeqScan(StringInfo str, SeqScan * node)
  *	IndexScan is a subclass of Scan
  */
 static void
-_outIndexScan(StringInfo str, IndexScan * node)
+_outIndexScan(StringInfo str, IndexScan *node)
 {
 	char		buf[500];
 
@@ -352,7 +352,7 @@ _outIndexScan(StringInfo str, IndexScan * node)
  *	Temp is a subclass of Plan
  */
 static void
-_outTemp(StringInfo str, Temp * node)
+_outTemp(StringInfo str, Temp *node)
 {
 	char		buf[500];
 
@@ -371,7 +371,7 @@ _outTemp(StringInfo str, Temp * node)
  *	Sort is a subclass of Temp
  */
 static void
-_outSort(StringInfo str, Sort * node)
+_outSort(StringInfo str, Sort *node)
 {
 	char		buf[500];
 
@@ -401,7 +401,7 @@ _outAgg(StringInfo str, Agg *node)
 }
 
 static void
-_outGroup(StringInfo str, Group * node)
+_outGroup(StringInfo str, Group *node)
 {
 	char		buf[500];
 
@@ -422,7 +422,7 @@ _outGroup(StringInfo str, Group * node)
  *	For some reason, unique is a subclass of Temp.
  */
 static void
-_outUnique(StringInfo str, Unique * node)
+_outUnique(StringInfo str, Unique *node)
 {
 	char		buf[500];
 
@@ -442,7 +442,7 @@ _outUnique(StringInfo str, Unique * node)
  *	Hash is a subclass of Temp
  */
 static void
-_outHash(StringInfo str, Hash * node)
+_outHash(StringInfo str, Hash *node)
 {
 	char		buf[500];
 
@@ -463,7 +463,7 @@ _outHash(StringInfo str, Hash * node)
 }
 
 static void
-_outTee(StringInfo str, Tee * node)
+_outTee(StringInfo str, Tee *node)
 {
 	char		buf[500];
 
@@ -494,7 +494,7 @@ _outTee(StringInfo str, Tee * node)
  *	Resdom is a subclass of Node
  */
 static void
-_outResdom(StringInfo str, Resdom * node)
+_outResdom(StringInfo str, Resdom *node)
 {
 	char		buf[500];
 
@@ -519,7 +519,7 @@ _outResdom(StringInfo str, Resdom * node)
 }
 
 static void
-_outFjoin(StringInfo str, Fjoin * node)
+_outFjoin(StringInfo str, Fjoin *node)
 {
 	char		buf[500];
 	int			i;
@@ -550,7 +550,7 @@ _outFjoin(StringInfo str, Fjoin * node)
  *	Expr is a subclass of Node
  */
 static void
-_outExpr(StringInfo str, Expr * node)
+_outExpr(StringInfo str, Expr *node)
 {
 	char		buf[500];
 	char	   *opstr = NULL;
@@ -592,7 +592,7 @@ _outExpr(StringInfo str, Expr * node)
  *	Var is a subclass of Expr
  */
 static void
-_outVar(StringInfo str, Var * node)
+_outVar(StringInfo str, Var *node)
 {
 	char		buf[500];
 
@@ -614,7 +614,7 @@ _outVar(StringInfo str, Var * node)
  *	Const is a subclass of Expr
  */
 static void
-_outConst(StringInfo str, Const * node)
+_outConst(StringInfo str, Const *node)
 {
 	char		buf[500];
 
@@ -743,7 +743,7 @@ _outArrayRef(StringInfo str, ArrayRef *node)
  *	Func is a subclass of Expr
  */
 static void
-_outFunc(StringInfo str, Func * node)
+_outFunc(StringInfo str, Func *node)
 {
 	char		buf[500];
 
@@ -772,7 +772,7 @@ _outFunc(StringInfo str, Func * node)
  *	Oper is a subclass of Expr
  */
 static void
-_outOper(StringInfo str, Oper * node)
+_outOper(StringInfo str, Oper *node)
 {
 	char		buf[500];
 
@@ -791,7 +791,7 @@ _outOper(StringInfo str, Oper * node)
  *	Param is a subclass of Expr
  */
 static void
-_outParam(StringInfo str, Param * node)
+_outParam(StringInfo str, Param *node)
 {
 	char		buf[500];
 
@@ -818,7 +818,7 @@ _outParam(StringInfo str, Param * node)
  *	EState is a subclass of Node.
  */
 static void
-_outEState(StringInfo str, EState * node)
+_outEState(StringInfo str, EState *node)
 {
 	char		buf[500];
 
@@ -841,7 +841,7 @@ _outEState(StringInfo str, EState * node)
  *	Stuff from relation.h
  */
 static void
-_outRel(StringInfo str, Rel * node)
+_outRel(StringInfo str, Rel *node)
 {
 	char		buf[500];
 
@@ -917,7 +917,7 @@ _outRel(StringInfo str, Rel * node)
  *	TargetEntry is a subclass of Node.
  */
 static void
-_outTargetEntry(StringInfo str, TargetEntry * node)
+_outTargetEntry(StringInfo str, TargetEntry *node)
 {
 	char		buf[500];
 
@@ -940,7 +940,7 @@ _outTargetEntry(StringInfo str, TargetEntry * node)
 }
 
 static void
-_outRangeTblEntry(StringInfo str, RangeTblEntry * node)
+_outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 {
 	char		buf[500];
 
@@ -966,7 +966,7 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry * node)
  *	Path is a subclass of Node.
  */
 static void
-_outPath(StringInfo str, Path * node)
+_outPath(StringInfo str, Path *node)
 {
 	char		buf[500];
 
@@ -989,7 +989,7 @@ _outPath(StringInfo str, Path * node)
  *	IndexPath is a subclass of Path.
  */
 static void
-_outIndexPath(StringInfo str, IndexPath * node)
+_outIndexPath(StringInfo str, IndexPath *node)
 {
 	char		buf[500];
 
@@ -1030,7 +1030,7 @@ _outIndexPath(StringInfo str, IndexPath * node)
  *	JoinPath is a subclass of Path
  */
 static void
-_outJoinPath(StringInfo str, JoinPath * node)
+_outJoinPath(StringInfo str, JoinPath *node)
 {
 	char		buf[500];
 
@@ -1084,7 +1084,7 @@ _outJoinPath(StringInfo str, JoinPath * node)
  *	MergePath is a subclass of JoinPath.
  */
 static void
-_outMergePath(StringInfo str, MergePath * node)
+_outMergePath(StringInfo str, MergePath *node)
 {
 	char		buf[500];
 
@@ -1140,7 +1140,7 @@ _outMergePath(StringInfo str, MergePath * node)
  *	HashPath is a subclass of JoinPath.
  */
 static void
-_outHashPath(StringInfo str, HashPath * node)
+_outHashPath(StringInfo str, HashPath *node)
 {
 	char		buf[500];
 
@@ -1196,7 +1196,7 @@ _outHashPath(StringInfo str, HashPath * node)
  *	OrderKey is a subclass of Node.
  */
 static void
-_outOrderKey(StringInfo str, OrderKey * node)
+_outOrderKey(StringInfo str, OrderKey *node)
 {
 	char		buf[500];
 
@@ -1213,7 +1213,7 @@ _outOrderKey(StringInfo str, OrderKey * node)
  *	JoinKey is a subclass of Node.
  */
 static void
-_outJoinKey(StringInfo str, JoinKey * node)
+_outJoinKey(StringInfo str, JoinKey *node)
 {
 	char		buf[500];
 
@@ -1234,7 +1234,7 @@ _outJoinKey(StringInfo str, JoinKey * node)
  *	MergeOrder is a subclass of Node.
  */
 static void
-_outMergeOrder(StringInfo str, MergeOrder * node)
+_outMergeOrder(StringInfo str, MergeOrder *node)
 {
 	char		buf[500];
 
@@ -1258,7 +1258,7 @@ _outMergeOrder(StringInfo str, MergeOrder * node)
  *	CInfo is a subclass of Node.
  */
 static void
-_outCInfo(StringInfo str, CInfo * node)
+_outCInfo(StringInfo str, CInfo *node)
 {
 	char		buf[500];
 
@@ -1291,7 +1291,7 @@ _outCInfo(StringInfo str, CInfo * node)
  *	JoinMethod is a subclass of Node.
  */
 static void
-_outJoinMethod(StringInfo str, JoinMethod * node)
+_outJoinMethod(StringInfo str, JoinMethod *node)
 {
 	char		buf[500];
 
@@ -1313,7 +1313,7 @@ _outJoinMethod(StringInfo str, JoinMethod * node)
  * HInfo is a subclass of JoinMethod.
  */
 static void
-_outHInfo(StringInfo str, HInfo * node)
+_outHInfo(StringInfo str, HInfo *node)
 {
 	char		buf[500];
 
@@ -1339,7 +1339,7 @@ _outHInfo(StringInfo str, HInfo * node)
  *	JInfo is a subclass of Node.
  */
 static void
-_outJInfo(StringInfo str, JInfo * node)
+_outJInfo(StringInfo str, JInfo *node)
 {
 	char		buf[500];
 
@@ -1431,7 +1431,7 @@ _outDatum(StringInfo str, Datum value, Oid type)
 }
 
 static void
-_outIter(StringInfo str, Iter * node)
+_outIter(StringInfo str, Iter *node)
 {
 	appendStringInfo(str, "ITER");
 
@@ -1440,7 +1440,7 @@ _outIter(StringInfo str, Iter * node)
 }
 
 static void
-_outStream(StringInfo str, Stream * node)
+_outStream(StringInfo str, Stream *node)
 {
 	char		buf[500];
 
@@ -1472,7 +1472,7 @@ _outStream(StringInfo str, Stream * node)
 }
 
 static void
-_outValue(StringInfo str, Value * value)
+_outValue(StringInfo str, Value *value)
 {
 	char		buf[500];
 

@@ -4,7 +4,7 @@
 typedef struct
 {
 	int			sem[4];
-}			slock_t;
+} slock_t;
 
 #ifndef			BIG_ENDIAN
 #define			BIG_ENDIAN		4321

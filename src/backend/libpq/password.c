@@ -10,7 +10,7 @@
 #endif
 
 int
-verify_password(char *user, char *password, Port * port,
+verify_password(char *user, char *password, Port *port,
 				char *database, char *DataDir)
 {
 	bool		host_ok;

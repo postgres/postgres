@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catcache.h,v 1.7 1997/09/08 02:39:34 momjian Exp $
+ * $Id: catcache.h,v 1.8 1997/09/08 21:54:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@ typedef struct catctup
 	Dlelem	   *ct_node;		/* points to LRU list is the CatCTup is in
 								 * the cache, else, points to the cache if
 								 * the CatCTup is in LRU list */
-}			CatCTup;
+} CatCTup;
 
 /* voodoo constants */
 #define NCCBUCK 500				/* CatCache buckets */
@@ -43,7 +43,7 @@ typedef struct catcache
 	Oid			indexId;
 	char	   *cc_relname;		/* relation name for defered open */
 	char	   *cc_indname;		/* index name for defered open */
-				HeapTuple(*cc_iscanfunc) ();	/* index scanfunction */
+	HeapTuple	(*cc_iscanfunc) ();		/* index scanfunction */
 	TupleDesc	cc_tupdesc;		/* tuple descriptor from reldesc */
 	int			id;				/* XXX could be improved -hirohama */
 	short		cc_ntup;		/* # of tuples in this cache	*/
@@ -56,7 +56,7 @@ typedef struct catcache
 	struct catcache *cc_next;
 	Dllist	   *cc_lrulist;		/* LRU list, most recent first */
 	Dllist	   *cc_cache[NCCBUCK + 1];
-}			CatCache;
+} CatCache;
 
 #define InvalidCatalogCacheId	(-1)
 
@@ -69,8 +69,8 @@ CatalogCacheIdInvalidate(int cacheId, Index hashIndex,
 extern void ResetSystemCache(void);
 extern CatCache *
 InitSysCache(char *relname, char *indname, int id, int nkeys,
-			 int key[], HeapTuple(*iScanfuncP) ());
-extern		HeapTuple
+			 int key[], HeapTuple (*iScanfuncP) ());
+extern HeapTuple
 SearchSysCache(struct catcache * cache, Datum v1, Datum v2,
 			   Datum v3, Datum v4);
 extern void

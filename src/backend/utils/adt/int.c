@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.7 1997/09/08 20:57:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.8 1997/09/08 21:48:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,12 +69,12 @@ int2out(int16 sh)
 int16	   *
 int28in(char *shs)
 {
-	register	int16(*result)[];
+	register int16 (*result)[];
 	int			nums;
 
 	if (shs == NULL)
 		return (NULL);
-	result = (int16(*)[]) palloc(sizeof(int16[8]));
+	result = (int16 (*)[]) palloc(sizeof(int16[8]));
 	if ((nums = sscanf(shs, "%hd%hd%hd%hd%hd%hd%hd%hd",
 					   *result,
 					   *result + 1,
@@ -96,7 +96,7 @@ int28in(char *shs)
  *		int28out		- converts internal form to "num num ..."
  */
 char	   *
-int28out(int16(*shs)[])
+int28out(int16 (*shs)[])
 {
 	register int num;
 	register int16 *sp;
@@ -389,7 +389,7 @@ int42ge(int32 arg1, int32 arg2)
 
 
 bool
-keyfirsteq(int16 * arg1, int16 arg2)
+keyfirsteq(int16 *arg1, int16 arg2)
 {
 	return (*arg1 == arg2);
 }

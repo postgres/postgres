@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.10 1997/09/08 02:40:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.11 1997/09/08 21:55:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -457,7 +457,7 @@ pg_krb5_sendauth(const char *PQerrormsg, int sock,
 #endif							/* KRB5 */
 
 static int
-pg_password_sendauth(Port * port, const char *user, const char *password)
+pg_password_sendauth(Port *port, const char *user, const char *password)
 {
 	PacketBuf	buf;
 	char	   *tmp;
@@ -478,7 +478,7 @@ pg_password_sendauth(Port * port, const char *user, const char *password)
  * fe_sendauth -- client demux routine for outgoing authentication information
  */
 int
-fe_sendauth(MsgType msgtype, Port * port, const char *hostname,
+fe_sendauth(MsgType msgtype, Port *port, const char *hostname,
 		  const char *user, const char *password, const char *PQerrormsg)
 {
 	switch (msgtype)

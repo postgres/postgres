@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: syscache.h,v 1.6 1997/09/08 02:39:58 momjian Exp $
+ * $Id: syscache.h,v 1.7 1997/09/08 21:55:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,16 +73,15 @@ struct cachedesc
 	int			size;			/* sizeof(appropriate struct) */
 	char	   *indname;		/* index relation for this cache, if
 								 * exists */
-				HeapTuple(*iScanFunc) ();		/* function to handle
-												 * index scans */
+	HeapTuple	(*iScanFunc) ();/* function to handle index scans */
 };
 
 extern void zerocaches(void);
 extern void InitCatalogCache(void);
-extern		HeapTuple
+extern HeapTuple
 SearchSysCacheTuple(int cacheId, Datum key1, Datum key2,
 					Datum key3, Datum key4);
-extern		int32
+extern int32
 SearchSysCacheStruct(int cacheId, char *returnStruct,
 					 Datum key1, Datum key2, Datum key3, Datum key4);
 extern void *

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.7 1997/09/08 20:57:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.8 1997/09/08 21:48:50 momjian Exp $
  *
  * Note - this code is real crufty...
  *
@@ -48,13 +48,13 @@ typedef struct CatalogInvalidationData
 	Index		cacheId;
 	Index		hashIndex;
 	ItemPointerData pointerData;
-}			CatalogInvalidationData;
+} CatalogInvalidationData;
 
 typedef struct RelationInvalidationData
 {
 	Oid			relationId;
 	Oid			objectId;
-}			RelationInvalidationData;
+} RelationInvalidationData;
 
 typedef union AnyInvalidation
 {
@@ -66,7 +66,7 @@ typedef struct InvalidationMessageData
 {
 	char		kind;
 	AnyInvalidation any;
-}			InvalidationMessageData;
+} InvalidationMessageData;
 
 typedef InvalidationMessageData *InvalidationMessage;
 
@@ -103,7 +103,7 @@ InvalidationEntryAllocate(uint16 size)
 	entryDataP = (InvalidationEntryData *)
 		malloc(sizeof(char *) + size);	/* XXX alignment */
 	entryDataP->nextP = NULL;
-	return ((Pointer) & entryDataP->userData);
+	return ((Pointer) &entryDataP->userData);
 }
 
 /* --------------------------------
@@ -137,11 +137,11 @@ LocalInvalidInvalidate(LocalInvalid invalid, void (*function) ())
 	while (PointerIsValid(invalid))
 	{
 		entryDataP = (InvalidationEntryData *)
-			& ((InvalidationUserData *) invalid)->dataP[-1];
+			&((InvalidationUserData *) invalid)->dataP[-1];
 
 		if (PointerIsValid(function))
 		{
-			(*function) ((Pointer) & entryDataP->userData);
+			(*function) ((Pointer) &entryDataP->userData);
 		}
 
 		invalid = (Pointer) entryDataP->nextP;

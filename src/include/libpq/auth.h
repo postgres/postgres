@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: auth.h,v 1.6 1997/09/08 02:36:58 momjian Exp $
+ * $Id: auth.h,v 1.7 1997/09/08 21:52:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,11 +30,11 @@
 #define DEFAULT_CLIENT_AUTHSVC	"kerberos"
 #endif							/* KRB4 || KRB5 */
 
-extern int	fe_sendauth(MsgType msgtype, Port * port, char *hostname);
+extern int	fe_sendauth(MsgType msgtype, Port *port, char *hostname);
 extern void fe_setauthsvc(char *name);
 extern MsgType fe_getauthsvc();
 extern char *fe_getauthname(void);
-extern int	be_recvauth(MsgType msgtype, Port * port, char *username, StartupInfo * sp);
+extern int	be_recvauth(MsgType msgtype, Port *port, char *username, StartupInfo *sp);
 extern void be_setauthsvc(char *name);
 
 /* the value that matches any dbName value when doing

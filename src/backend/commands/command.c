@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.15 1997/09/08 02:22:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.16 1997/09/08 21:42:29 momjian Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -255,7 +255,7 @@ void
 PerformAddAttribute(char *relationName,
 					char *userName,
 					bool inherits,
-					ColumnDef * colDef)
+					ColumnDef *colDef)
 {
 	Relation	relrdesc,
 				attrdesc;

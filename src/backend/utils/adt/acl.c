@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.16 1997/09/08 20:57:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.17 1997/09/08 21:48:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -653,13 +653,14 @@ aclmakeuser(char *user_type, char *user)
  */
 
 ChangeACLStmt *
-makeAclStmt(char *privileges, List * rel_list, char *grantee,
+makeAclStmt(char *privileges, List *rel_list, char *grantee,
 			char grant_or_revoke)
 {
 	ChangeACLStmt *n = makeNode(ChangeACLStmt);
 	char		str[MAX_PARSE_BUFFER];
 
 	n->aclitem = (AclItem *) palloc(sizeof(AclItem));
+
 	/* the grantee string is "G <group_name>", "U  <user_name>", or "ALL" */
 	if (grantee[0] == 'G')		/* group permissions */
 	{

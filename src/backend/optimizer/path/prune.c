@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.5 1997/09/08 02:24:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.6 1997/09/08 21:45:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
 #include "utils/elog.h"
 
 
-static List *prune_joinrel(Rel * rel, List * other_rels);
+static List *prune_joinrel(Rel *rel, List *other_rels);
 
 /*
  * prune-joinrels--
@@ -35,7 +35,7 @@ static List *prune_joinrel(Rel * rel, List * other_rels);
  *
  */
 List	   *
-prune_joinrels(List * rel_list)
+prune_joinrels(List *rel_list)
 {
 	List	   *temp_list = NIL;
 
@@ -60,7 +60,7 @@ prune_joinrels(List * rel_list)
  *
  */
 static List *
-prune_joinrel(Rel * rel, List * other_rels)
+prune_joinrel(Rel *rel, List *other_rels)
 {
 	List	   *i = NIL;
 	List	   *t_list = NIL;
@@ -97,7 +97,7 @@ prune_joinrel(Rel * rel, List * other_rels)
  *
  */
 void
-prune_rel_paths(List * rel_list)
+prune_rel_paths(List *rel_list)
 {
 	List	   *x = NIL;
 	List	   *y = NIL;
@@ -140,7 +140,7 @@ prune_rel_paths(List * rel_list)
  *
  */
 Path	   *
-prune_rel_path(Rel * rel, Path * unorderedpath)
+prune_rel_path(Rel *rel, Path *unorderedpath)
 {
 	Path	   *cheapest = set_cheapest(rel, rel->pathlist);
 
@@ -171,7 +171,7 @@ prune_rel_path(Rel * rel, Path * unorderedpath)
  * Returns one pruned rel node list
  */
 List	   *
-merge_joinrels(List * rel_list1, List * rel_list2)
+merge_joinrels(List *rel_list1, List *rel_list2)
 {
 	List	   *xrel = NIL;
 
@@ -197,7 +197,7 @@ merge_joinrels(List * rel_list1, List * rel_list2)
  * Returns a new list of rel nodes
  */
 List	   *
-prune_oldrels(List * old_rels)
+prune_oldrels(List *old_rels)
 {
 	Rel		   *rel;
 	List	   *joininfo_list,

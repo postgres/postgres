@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.6 1997/09/08 02:37:29 momjian Exp $
+ * $Id: relation.h,v 1.7 1997/09/08 21:53:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,9 +106,9 @@ typedef struct Rel
 	List	   *joininfo;		/* join clauses */
 	List	   *innerjoin;
 	List	   *superrels;
-}			Rel;
+} Rel;
 
-extern Var *get_expr(TargetEntry * foo);
+extern Var *get_expr(TargetEntry *foo);
 
 typedef struct MergeOrder
 {
@@ -118,12 +118,12 @@ typedef struct MergeOrder
 	Oid			right_operator;
 	Oid			left_type;
 	Oid			right_type;
-}			MergeOrder;
+} MergeOrder;
 
 typedef enum OrderType
 {
 	MERGE_ORDER, SORTOP_ORDER
-}			OrderType;
+} OrderType;
 
 typedef struct PathOrder
 {
@@ -133,7 +133,7 @@ typedef struct PathOrder
 		Oid		   *sortop;
 		MergeOrder *merge;
 	}			ord;
-}			PathOrder;
+} PathOrder;
 
 typedef struct Path
 {
@@ -150,7 +150,7 @@ typedef struct Path
 	Cost		outerjoincost;
 	Relid		joinid;
 	List	   *locclauseinfo;
-}			Path;
+} Path;
 
 typedef struct IndexPath
 {
@@ -159,7 +159,7 @@ typedef struct IndexPath
 	List	   *indexqual;
 	int		   *indexkeys;		/* to transform heap attnos into index
 								 * ones */
-}			IndexPath;
+} IndexPath;
 
 typedef struct JoinPath
 {
@@ -167,7 +167,7 @@ typedef struct JoinPath
 	List	   *pathclauseinfo;
 	Path	   *outerjoinpath;
 	Path	   *innerjoinpath;
-}			JoinPath;
+} JoinPath;
 
 typedef struct MergePath
 {
@@ -175,7 +175,7 @@ typedef struct MergePath
 	List	   *path_mergeclauses;
 	List	   *outersortkeys;
 	List	   *innersortkeys;
-}			MergePath;
+} MergePath;
 
 typedef struct HashPath
 {
@@ -183,7 +183,7 @@ typedef struct HashPath
 	List	   *path_hashclauses;
 	List	   *outerhashkeys;
 	List	   *innerhashkeys;
-}			HashPath;
+} HashPath;
 
 /******
  * Keys
@@ -194,14 +194,14 @@ typedef struct OrderKey
 	NodeTag		type;
 	int			attribute_number;
 	Index		array_index;
-}			OrderKey;
+} OrderKey;
 
 typedef struct JoinKey
 {
 	NodeTag		type;
 	Var		   *outer;
 	Var		   *inner;
-}			JoinKey;
+} JoinKey;
 
 /*******
  * clause info
@@ -221,26 +221,26 @@ typedef struct CInfo
 	/* hashjoin only */
 	Oid			hashjoinoperator;
 	Relid		cinfojoinid;
-}			CInfo;
+} CInfo;
 
 typedef struct JoinMethod
 {
 	NodeTag		type;
 	List	   *jmkeys;
 	List	   *clauses;
-}			JoinMethod;
+} JoinMethod;
 
 typedef struct HInfo
 {
 	JoinMethod	jmethod;
 	Oid			hashop;
-}			HInfo;
+} HInfo;
 
 typedef struct MInfo
 {
 	JoinMethod	jmethod;
 	MergeOrder *m_ordering;
-}			MInfo;
+} MInfo;
 
 typedef struct JInfo
 {
@@ -250,7 +250,7 @@ typedef struct JInfo
 	bool		mergesortable;
 	bool		hashjoinable;
 	bool		inactive;
-}			JInfo;
+} JInfo;
 
 typedef struct Iter
 {
@@ -258,7 +258,7 @@ typedef struct Iter
 	Node	   *iterexpr;
 	Oid			itertype;		/* type of the iter expr (use for type
 								 * checking) */
-}			Iter;
+} Iter;
 
 /*
 ** Stream:
@@ -292,6 +292,6 @@ typedef struct Stream
 	bool		groupup;
 	Cost		groupcost;
 	Cost		groupsel;
-}			Stream;
+} Stream;
 
 #endif							/* RELATION_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fe-auth.h,v 1.5 1997/09/08 02:40:23 momjian Exp $
+ * $Id: fe-auth.h,v 1.6 1997/09/08 21:55:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@
 #endif							/* KRB4 || KRB5 */
 
 extern int
-fe_sendauth(MsgType msgtype, Port * port, const char *hostname,
+fe_sendauth(MsgType msgtype, Port *port, const char *hostname,
 			const char *user, const char *password,
 			const char *PQerromsg);
 extern void fe_setauthsvc(const char *name, char *PQerrormsg);

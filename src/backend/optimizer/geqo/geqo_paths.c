@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_paths.c,v 1.6 1997/09/08 02:24:05 momjian Exp $
+ * $Id: geqo_paths.c,v 1.7 1997/09/08 21:44:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,8 +28,8 @@
 #include "optimizer/geqo_paths.h"
 
 
-static List *geqo_prune_rel(Rel * rel, List * other_rels);
-static Path *set_paths(Rel * rel, Path * unorderedpath);
+static List *geqo_prune_rel(Rel *rel, List *other_rels);
+static Path *set_paths(Rel *rel, Path *unorderedpath);
 
 /*
  * geqo-prune-rels--
@@ -40,7 +40,7 @@ static Path *set_paths(Rel * rel, Path * unorderedpath);
  *
  */
 List	   *
-geqo_prune_rels(List * rel_list)
+geqo_prune_rels(List *rel_list)
 {
 	List	   *temp_list = NIL;
 
@@ -65,7 +65,7 @@ geqo_prune_rels(List * rel_list)
  *
  */
 static List *
-geqo_prune_rel(Rel * rel, List * other_rels)
+geqo_prune_rel(Rel *rel, List *other_rels)
 {
 	List	   *i = NIL;
 	List	   *t_list = NIL;
@@ -102,7 +102,7 @@ geqo_prune_rel(Rel * rel, List * other_rels)
  *
  */
 void
-geqo_rel_paths(Rel * rel)
+geqo_rel_paths(Rel *rel)
 {
 	List	   *y = NIL;
 	Path	   *path = (Path *) NULL;
@@ -134,7 +134,7 @@ geqo_rel_paths(Rel * rel)
  *
  */
 static Path *
-set_paths(Rel * rel, Path * unorderedpath)
+set_paths(Rel *rel, Path *unorderedpath)
 {
 	Path	   *cheapest = set_cheapest(rel, rel->pathlist);
 

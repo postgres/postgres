@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.13 1997/09/08 02:21:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.14 1997/09/08 21:41:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -347,7 +347,7 @@ _bt_checkforkeys(IndexScanDesc scan, IndexTuple itup, Size keysz)
 #endif
 
 bool
-_bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, Size * keysok)
+_bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, Size *keysok)
 {
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	Size		keysz = so->numberOfKeys;

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.18 1997/09/08 02:35:32 momjian Exp $
+ * $Id: pg_type.h,v 1.19 1997/09/08 21:51:31 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -326,9 +326,9 @@ DATA(insert OID = 1296 ( timestamp	 PGUID	4  19 t b t \054 0	0 timestamp_in time
 /*
  * prototypes for functions in pg_type.c
  */
-extern Oid	TypeGet(char *typeName, bool * defined);
+extern Oid	TypeGet(char *typeName, bool *defined);
 extern Oid	TypeShellMake(char *typeName);
-extern		Oid
+extern Oid
 TypeCreate(char *typeName,
 		   Oid relationOid,
 		   int16 internalSize,

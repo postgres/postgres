@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.11 1997/09/08 20:55:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.12 1997/09/08 21:43:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,7 +84,7 @@
 #include "utils/lsyscache.h"
 #include "utils/psort.h"
 
-static bool MergeCompare(List * eqQual, List * compareQual, ExprContext * econtext);
+static bool MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext);
 
 /* ----------------------------------------------------------------
  *		MarkInnerTuple and RestoreInnerTuple macros
@@ -143,7 +143,7 @@ static bool MergeCompare(List * eqQual, List * compareQual, ExprContext * econte
  * ----------------------------------------------------------------
  */
 static List *
-MJFormOSortopI(List * qualList, Oid sortOp)
+MJFormOSortopI(List *qualList, Oid sortOp)
 {
 	List	   *qualCopy;
 	List	   *qualcdr;
@@ -207,7 +207,7 @@ MJFormOSortopI(List * qualList, Oid sortOp)
  *	----------------------------------------------------------------
  */
 static List *
-MJFormISortopO(List * qualList, Oid sortOp)
+MJFormISortopO(List *qualList, Oid sortOp)
 {
 	List	   *ISortopO;
 	List	   *qualcdr;
@@ -258,7 +258,7 @@ MJFormISortopO(List * qualList, Oid sortOp)
  * ----------------------------------------------------------------
  */
 static bool
-MergeCompare(List * eqQual, List * compareQual, ExprContext * econtext)
+MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
 {
 	List	   *clause;
 	List	   *eqclause;
@@ -328,7 +328,7 @@ MergeCompare(List * eqQual, List * compareQual, ExprContext * econtext)
  */
 #ifdef EXEC_MERGEJOINDEBUG
 void
-ExecMergeTupleDumpInner(ExprContext * econtext)
+ExecMergeTupleDumpInner(ExprContext *econtext)
 {
 	TupleTableSlot *innerSlot;
 
@@ -342,7 +342,7 @@ ExecMergeTupleDumpInner(ExprContext * econtext)
 }
 
 void
-ExecMergeTupleDumpOuter(ExprContext * econtext)
+ExecMergeTupleDumpOuter(ExprContext *econtext)
 {
 	TupleTableSlot *outerSlot;
 
@@ -356,8 +356,8 @@ ExecMergeTupleDumpOuter(ExprContext * econtext)
 }
 
 void
-ExecMergeTupleDumpMarked(ExprContext * econtext,
-						 MergeJoinState * mergestate)
+ExecMergeTupleDumpMarked(ExprContext *econtext,
+						 MergeJoinState *mergestate)
 {
 	TupleTableSlot *markedSlot;
 
@@ -372,7 +372,7 @@ ExecMergeTupleDumpMarked(ExprContext * econtext,
 }
 
 void
-ExecMergeTupleDump(ExprContext * econtext, MergeJoinState * mergestate)
+ExecMergeTupleDump(ExprContext *econtext, MergeJoinState *mergestate)
 {
 	printf("******** ExecMergeTupleDump ********\n");
 
@@ -386,7 +386,7 @@ ExecMergeTupleDump(ExprContext * econtext, MergeJoinState * mergestate)
 #endif
 
 static void
-CleanUpSort(Plan * plan)
+CleanUpSort(Plan *plan)
 {
 
 	if (plan == NULL)
@@ -449,7 +449,7 @@ CleanUpSort(Plan * plan)
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecMergeJoin(MergeJoin * node)
+ExecMergeJoin(MergeJoin *node)
 {
 	EState	   *estate;
 	MergeJoinState *mergestate;
@@ -749,7 +749,8 @@ ExecMergeJoin(MergeJoin * node)
 				 *
 				 * new outer tuple > marked tuple
 				 *
-				******************************
+				*****************************
+				 *
 				 *
 				 *
 				 *
@@ -830,7 +831,8 @@ ExecMergeJoin(MergeJoin * node)
 				 * we have to advance the outer scan until we find the outer
 				 * 8.
 				 *
-				******************************
+				*****************************
+				 *
 				 *
 				 *
 				 *
@@ -933,7 +935,8 @@ ExecMergeJoin(MergeJoin * node)
 				 * we have to advance the inner scan until we find the inner
 				 * 12.
 				 *
-				******************************
+				*****************************
+				 *
 				 *
 				 *
 				 *
@@ -1065,7 +1068,7 @@ ExecMergeJoin(MergeJoin * node)
  * ----------------------------------------------------------------
  */
 bool
-ExecInitMergeJoin(MergeJoin * node, EState * estate, Plan * parent)
+ExecInitMergeJoin(MergeJoin *node, EState *estate, Plan *parent)
 {
 	MergeJoinState *mergestate;
 	List	   *joinclauses;
@@ -1185,7 +1188,7 @@ ExecInitMergeJoin(MergeJoin * node, EState * estate, Plan * parent)
 }
 
 int
-ExecCountSlotsMergeJoin(MergeJoin * node)
+ExecCountSlotsMergeJoin(MergeJoin *node)
 {
 	return ExecCountSlotsNode(outerPlan((Plan *) node)) +
 	ExecCountSlotsNode(innerPlan((Plan *) node)) +
@@ -1200,7 +1203,7 @@ ExecCountSlotsMergeJoin(MergeJoin * node)
  * ----------------------------------------------------------------
  */
 void
-ExecEndMergeJoin(MergeJoin * node)
+ExecEndMergeJoin(MergeJoin *node)
 {
 	MergeJoinState *mergestate;
 

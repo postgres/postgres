@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.11 1997/09/08 02:39:55 momjian Exp $
+ * $Id: rel.h,v 1.12 1997/09/08 21:55:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@ typedef struct Trigger
 	int16		tgnargs;
 	int16		tgattr[8];
 	char	  **tgargs;
-}			Trigger;
+} Trigger;
 
 typedef struct TriggerDesc
 {
@@ -42,7 +42,7 @@ typedef struct TriggerDesc
 	Trigger   **tg_after_row[4];
 	Trigger   **tg_after_statement[4];
 	Trigger    *triggers;
-}			TriggerDesc;
+} TriggerDesc;
 
 typedef struct RelationData
 {
@@ -62,7 +62,7 @@ typedef struct RelationData
 	IndexStrategy rd_istrat;
 	RegProcedure *rd_support;
 	TriggerDesc *trigdesc;
-}			RelationData;
+} RelationData;
 
 typedef RelationData *Relation;
 
@@ -190,6 +190,6 @@ extern IndexStrategy RelationGetIndexStrategy(Relation relation);
 
 extern void
 RelationSetIndexSupport(Relation relation, IndexStrategy strategy,
-						RegProcedure * support);
+						RegProcedure *support);
 
 #endif							/* REL_H */

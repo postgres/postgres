@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.10 1997/09/08 20:57:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.11 1997/09/08 21:48:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@ charin(char *ch)
 {
 	if (ch == NULL)
 		return ((int32) NULL);
-	return ((int32) * ch);
+	return ((int32) *ch);
 }
 
 /*

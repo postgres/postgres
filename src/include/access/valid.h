@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: valid.h,v 1.6 1997/09/08 02:34:32 momjian Exp $
+ * $Id: valid.h,v 1.7 1997/09/08 21:51:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,11 +22,11 @@
  * ----------------
  */
 
-extern		bool
+extern bool
 heap_keytest(HeapTuple t, TupleDesc tupdesc,
 			 int nkeys, ScanKey keys);
 
-extern		HeapTuple
+extern HeapTuple
 heap_tuple_satisfies(ItemId itemId, Relation relation,
 					 Buffer buffer, PageHeader disk_page,
 					 TimeQual qual, int nKeys,

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupdesc.h,v 1.11 1997/09/08 20:58:13 momjian Exp $
+ * $Id: tupdesc.h,v 1.12 1997/09/08 21:51:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@ typedef struct constrCheck
 	char	   *ccname;
 	char	   *ccbin;
 	char	   *ccsrc;
-}			ConstrCheck;
+} ConstrCheck;
 
 /* This structure contains constraints of a tuple */
 typedef struct tupleConstr
@@ -40,7 +40,7 @@ typedef struct tupleConstr
 	uint16		num_defval;
 	uint16		num_check;
 	bool		has_not_null;
-}			TupleConstr;
+} TupleConstr;
 
 /*
  * This structure contains all information (i.e. from Classes
@@ -65,7 +65,7 @@ extern TupleDesc CreateTupleDescCopyConstr(TupleDesc tupdesc);
 
 extern void FreeTupleDesc(TupleDesc tupdesc);
 
-extern		bool
+extern bool
 TupleDescInitEntry(TupleDesc desc,
 				   AttrNumber attributeNumber,
 				   char *attributeName,
@@ -73,6 +73,6 @@ TupleDescInitEntry(TupleDesc desc,
 				   int attdim,
 				   bool attisset);
 
-extern TupleDesc BuildDescForRelation(List * schema, char *relname);
+extern TupleDesc BuildDescForRelation(List *schema, char *relname);
 
 #endif							/* TUPDESC_H */

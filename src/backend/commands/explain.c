@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.12 1997/09/08 02:22:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.13 1997/09/08 21:42:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,9 +32,9 @@ typedef struct ExplainState
 	bool		printNodes;		/* do nodeToString() instead */
 	/* other states */
 	List	   *rtable;			/* range table */
-}			ExplainState;
+} ExplainState;
 
-static char *Explain_PlanToString(Plan * plan, ExplainState * es);
+static char *Explain_PlanToString(Plan *plan, ExplainState *es);
 
 /*
  * ExplainQuery -
@@ -42,7 +42,7 @@ static char *Explain_PlanToString(Plan * plan, ExplainState * es);
  *
  */
 void
-ExplainQuery(Query * query, bool verbose, CommandDest dest)
+ExplainQuery(Query *query, bool verbose, CommandDest dest)
 {
 	char	   *s = NULL,
 			   *s2;
@@ -116,7 +116,7 @@ ExplainQuery(Query * query, bool verbose, CommandDest dest)
  *	  converts a Node into ascii string and append it to 'str'
  */
 static void
-explain_outNode(StringInfo str, Plan * plan, int indent, ExplainState * es)
+explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 {
 	char	   *pname;
 	char		buf[1000];
@@ -225,7 +225,7 @@ explain_outNode(StringInfo str, Plan * plan, int indent, ExplainState * es)
 }
 
 static char *
-Explain_PlanToString(Plan * plan, ExplainState * es)
+Explain_PlanToString(Plan *plan, ExplainState *es)
 {
 	StringInfo	str;
 	char	   *s;

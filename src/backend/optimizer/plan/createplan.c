@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.14 1997/09/08 20:56:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.15 1997/09/08 21:45:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,47 +44,47 @@
 #define TEMP_SORT		1
 #define TEMP_MATERIAL	2
 
-static List *switch_outer(List * clauses);
-static Scan *create_scan_node(Path * best_path, List * tlist);
-static Join *create_join_node(JoinPath * best_path, List * tlist);
+static List *switch_outer(List *clauses);
+static Scan *create_scan_node(Path *best_path, List *tlist);
+static Join *create_join_node(JoinPath *best_path, List *tlist);
 static SeqScan *
-create_seqscan_node(Path * best_path, List * tlist,
-					List * scan_clauses);
+create_seqscan_node(Path *best_path, List *tlist,
+					List *scan_clauses);
 static IndexScan *
-create_indexscan_node(IndexPath * best_path, List * tlist,
-					  List * scan_clauses);
+create_indexscan_node(IndexPath *best_path, List *tlist,
+					  List *scan_clauses);
 static NestLoop *
-create_nestloop_node(JoinPath * best_path, List * tlist,
-				   List * clauses, Plan * outer_node, List * outer_tlist,
-					 Plan * inner_node, List * inner_tlist);
+create_nestloop_node(JoinPath *best_path, List *tlist,
+					 List *clauses, Plan *outer_node, List *outer_tlist,
+					 Plan *inner_node, List *inner_tlist);
 static MergeJoin *
-create_mergejoin_node(MergePath * best_path, List * tlist,
-				   List * clauses, Plan * outer_node, List * outer_tlist,
-					  Plan * inner_node, List * inner_tlist);
+create_mergejoin_node(MergePath *best_path, List *tlist,
+					  List *clauses, Plan *outer_node, List *outer_tlist,
+					  Plan *inner_node, List *inner_tlist);
 static HashJoin *
-create_hashjoin_node(HashPath * best_path, List * tlist,
-				   List * clauses, Plan * outer_node, List * outer_tlist,
-					 Plan * inner_node, List * inner_tlist);
-static Node *fix_indxqual_references(Node * clause, Path * index_path);
+create_hashjoin_node(HashPath *best_path, List *tlist,
+					 List *clauses, Plan *outer_node, List *outer_tlist,
+					 Plan *inner_node, List *inner_tlist);
+static Node *fix_indxqual_references(Node *clause, Path *index_path);
 static Temp *
-make_temp(List * tlist, List * keys, Oid * operators,
-		  Plan * plan_node, int temptype);
+make_temp(List *tlist, List *keys, Oid *operators,
+		  Plan *plan_node, int temptype);
 static IndexScan *
-make_indexscan(List * qptlist, List * qpqual, Index scanrelid,
-			   List * indxid, List * indxqual);
+make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
+			   List *indxid, List *indxqual);
 static NestLoop *
-make_nestloop(List * qptlist, List * qpqual, Plan * lefttree,
-			  Plan * righttree);
+make_nestloop(List *qptlist, List *qpqual, Plan *lefttree,
+			  Plan *righttree);
 static HashJoin *
-make_hashjoin(List * tlist, List * qpqual,
-			  List * hashclauses, Plan * lefttree, Plan * righttree);
-static Hash *make_hash(List * tlist, Var * hashkey, Plan * lefttree);
+make_hashjoin(List *tlist, List *qpqual,
+			  List *hashclauses, Plan *lefttree, Plan *righttree);
+static Hash *make_hash(List *tlist, Var *hashkey, Plan *lefttree);
 static MergeJoin *
-make_mergesort(List * tlist, List * qpqual,
-			   List * mergeclauses, Oid opcode, Oid * rightorder,
-			   Oid * leftorder, Plan * righttree, Plan * lefttree);
+make_mergesort(List *tlist, List *qpqual,
+			   List *mergeclauses, Oid opcode, Oid *rightorder,
+			   Oid *leftorder, Plan *righttree, Plan *lefttree);
 static Material *
-make_material(List * tlist, Oid tempid, Plan * lefttree,
+make_material(List *tlist, Oid tempid, Plan *lefttree,
 			  int keycount);
 
 /*
@@ -103,7 +103,7 @@ make_material(List * tlist, Oid tempid, Plan * lefttree,
  *	  Returns the optimal(?) access plan.
  */
 Plan	   *
-create_plan(Path * best_path)
+create_plan(Path *best_path)
 {
 	List	   *tlist;
 	Plan	   *plan_node = (Plan *) NULL;
@@ -167,7 +167,7 @@ create_plan(Path * best_path)
  *	 Returns the scan node.
  */
 static Scan *
-create_scan_node(Path * best_path, List * tlist)
+create_scan_node(Path *best_path, List *tlist)
 {
 
 	Scan	   *node = NULL;
@@ -216,7 +216,7 @@ create_scan_node(Path * best_path, List * tlist)
  *	  Returns the join node.
  */
 static Join *
-create_join_node(JoinPath * best_path, List * tlist)
+create_join_node(JoinPath *best_path, List *tlist)
 {
 	Plan	   *outer_node;
 	List	   *outer_tlist;
@@ -298,7 +298,7 @@ create_join_node(JoinPath * best_path, List * tlist)
  *	 with restriction clauses 'scan-clauses' and targetlist 'tlist'.
  */
 static SeqScan *
-create_seqscan_node(Path * best_path, List * tlist, List * scan_clauses)
+create_seqscan_node(Path *best_path, List *tlist, List *scan_clauses)
 {
 	SeqScan    *scan_node = (SeqScan *) NULL;
 	Index		scan_relid = -1;
@@ -326,9 +326,9 @@ create_seqscan_node(Path * best_path, List * tlist, List * scan_clauses)
  *	  with restriction clauses 'scan-clauses' and targetlist 'tlist'.
  */
 static IndexScan *
-create_indexscan_node(IndexPath * best_path,
-					  List * tlist,
-					  List * scan_clauses)
+create_indexscan_node(IndexPath *best_path,
+					  List *tlist,
+					  List *scan_clauses)
 {
 
 	/*
@@ -430,13 +430,13 @@ create_indexscan_node(IndexPath * best_path,
  *****************************************************************************/
 
 static NestLoop *
-create_nestloop_node(JoinPath * best_path,
-					 List * tlist,
-					 List * clauses,
-					 Plan * outer_node,
-					 List * outer_tlist,
-					 Plan * inner_node,
-					 List * inner_tlist)
+create_nestloop_node(JoinPath *best_path,
+					 List *tlist,
+					 List *clauses,
+					 Plan *outer_node,
+					 List *outer_tlist,
+					 Plan *inner_node,
+					 List *inner_tlist)
 {
 	NestLoop   *join_node = (NestLoop *) NULL;
 
@@ -512,13 +512,13 @@ create_nestloop_node(JoinPath * best_path,
 }
 
 static MergeJoin *
-create_mergejoin_node(MergePath * best_path,
-					  List * tlist,
-					  List * clauses,
-					  Plan * outer_node,
-					  List * outer_tlist,
-					  Plan * inner_node,
-					  List * inner_tlist)
+create_mergejoin_node(MergePath *best_path,
+					  List *tlist,
+					  List *clauses,
+					  Plan *outer_node,
+					  List *outer_tlist,
+					  Plan *inner_node,
+					  List *inner_tlist)
 {
 	List	   *qpqual,
 			   *mergeclauses;
@@ -609,13 +609,13 @@ create_mergejoin_node(MergePath * best_path,
  *		these??  at runtime?  what about a hash index?
  */
 static HashJoin *
-create_hashjoin_node(HashPath * best_path,
-					 List * tlist,
-					 List * clauses,
-					 Plan * outer_node,
-					 List * outer_tlist,
-					 Plan * inner_node,
-					 List * inner_tlist)
+create_hashjoin_node(HashPath *best_path,
+					 List *tlist,
+					 List *clauses,
+					 Plan *outer_node,
+					 List *outer_tlist,
+					 Plan *inner_node,
+					 List *inner_tlist)
 {
 	List	   *qpqual;
 	List	   *hashclauses;
@@ -663,7 +663,7 @@ create_hashjoin_node(HashPath * best_path,
  *****************************************************************************/
 
 static Node *
-fix_indxqual_references(Node * clause, Path * index_path)
+fix_indxqual_references(Node *clause, Path *index_path)
 {
 	Node	   *newclause;
 
@@ -800,7 +800,7 @@ fix_indxqual_references(Node * clause, Path * index_path)
  *	  XXX Shouldn't the operator be commuted?!
  */
 static List *
-switch_outer(List * clauses)
+switch_outer(List *clauses)
 {
 	List	   *t_list = NIL;
 	Expr	   *temp = NULL;
@@ -844,7 +844,7 @@ switch_outer(List * clauses)
  *	  Returns the modified target list.
  */
 static List *
-set_temp_tlist_operators(List * tlist, List * pathkeys, Oid * operators)
+set_temp_tlist_operators(List *tlist, List *pathkeys, Oid *operators)
 {
 	Node	   *keys = NULL;
 	int			keyno = 1;
@@ -892,10 +892,10 @@ set_temp_tlist_operators(List * tlist, List * pathkeys, Oid * operators)
  *	  'temptype' indicates which operation(sort or hash) to perform
  */
 static Temp *
-make_temp(List * tlist,
-		  List * keys,
-		  Oid * operators,
-		  Plan * plan_node,
+make_temp(List *tlist,
+		  List *keys,
+		  Oid *operators,
+		  Plan *plan_node,
 		  int temptype)
 {
 	List	   *temp_tlist;
@@ -936,10 +936,10 @@ make_temp(List * tlist,
 
 
 SeqScan    *
-make_seqscan(List * qptlist,
-			 List * qpqual,
+make_seqscan(List *qptlist,
+			 List *qpqual,
 			 Index scanrelid,
-			 Plan * lefttree)
+			 Plan *lefttree)
 {
 	SeqScan    *node = makeNode(SeqScan);
 	Plan	   *plan = &node->plan;
@@ -957,11 +957,11 @@ make_seqscan(List * qptlist,
 }
 
 static IndexScan *
-make_indexscan(List * qptlist,
-			   List * qpqual,
+make_indexscan(List *qptlist,
+			   List *qpqual,
 			   Index scanrelid,
-			   List * indxid,
-			   List * indxqual)
+			   List *indxid,
+			   List *indxqual)
 {
 	IndexScan  *node = makeNode(IndexScan);
 	Plan	   *plan = &node->scan.plan;
@@ -982,10 +982,10 @@ make_indexscan(List * qptlist,
 
 
 static NestLoop *
-make_nestloop(List * qptlist,
-			  List * qpqual,
-			  Plan * lefttree,
-			  Plan * righttree)
+make_nestloop(List *qptlist,
+			  List *qpqual,
+			  Plan *lefttree,
+			  Plan *righttree)
 {
 	NestLoop   *node = makeNode(NestLoop);
 	Plan	   *plan = &node->join;
@@ -1002,11 +1002,11 @@ make_nestloop(List * qptlist,
 }
 
 static HashJoin *
-make_hashjoin(List * tlist,
-			  List * qpqual,
-			  List * hashclauses,
-			  Plan * lefttree,
-			  Plan * righttree)
+make_hashjoin(List *tlist,
+			  List *qpqual,
+			  List *hashclauses,
+			  Plan *lefttree,
+			  Plan *righttree)
 {
 	HashJoin   *node = makeNode(HashJoin);
 	Plan	   *plan = &node->join;
@@ -1027,7 +1027,7 @@ make_hashjoin(List * tlist,
 }
 
 static Hash *
-make_hash(List * tlist, Var * hashkey, Plan * lefttree)
+make_hash(List *tlist, Var *hashkey, Plan *lefttree)
 {
 	Hash	   *node = makeNode(Hash);
 	Plan	   *plan = &node->plan;
@@ -1047,14 +1047,14 @@ make_hash(List * tlist, Var * hashkey, Plan * lefttree)
 }
 
 static MergeJoin *
-make_mergesort(List * tlist,
-			   List * qpqual,
-			   List * mergeclauses,
+make_mergesort(List *tlist,
+			   List *qpqual,
+			   List *mergeclauses,
 			   Oid opcode,
-			   Oid * rightorder,
-			   Oid * leftorder,
-			   Plan * righttree,
-			   Plan * lefttree)
+			   Oid *rightorder,
+			   Oid *leftorder,
+			   Plan *righttree,
+			   Plan *lefttree)
 {
 	MergeJoin  *node = makeNode(MergeJoin);
 	Plan	   *plan = &node->join;
@@ -1074,7 +1074,7 @@ make_mergesort(List * tlist,
 }
 
 Sort	   *
-make_sort(List * tlist, Oid tempid, Plan * lefttree, int keycount)
+make_sort(List *tlist, Oid tempid, Plan *lefttree, int keycount)
 {
 	Sort	   *node = makeNode(Sort);
 	Plan	   *plan = &node->plan;
@@ -1092,9 +1092,9 @@ make_sort(List * tlist, Oid tempid, Plan * lefttree, int keycount)
 }
 
 static Material *
-make_material(List * tlist,
+make_material(List *tlist,
 			  Oid tempid,
-			  Plan * lefttree,
+			  Plan *lefttree,
 			  int keycount)
 {
 	Material   *node = makeNode(Material);
@@ -1113,7 +1113,7 @@ make_material(List * tlist,
 }
 
 Agg		   *
-make_agg(List * tlist, int nagg, Aggreg **aggs)
+make_agg(List *tlist, int nagg, Aggreg **aggs)
 {
 	Agg		   *node = makeNode(Agg);
 
@@ -1130,11 +1130,11 @@ make_agg(List * tlist, int nagg, Aggreg **aggs)
 }
 
 Group	   *
-make_group(List * tlist,
+make_group(List *tlist,
 		   bool tuplePerGroup,
 		   int ngrp,
 		   AttrNumber *grpColIdx,
-		   Sort * lefttree)
+		   Sort *lefttree)
 {
 	Group	   *node = makeNode(Group);
 
@@ -1160,7 +1160,7 @@ make_group(List * tlist,
  */
 
 Unique	   *
-make_unique(List * tlist, Plan * lefttree, char *uniqueAttr)
+make_unique(List *tlist, Plan *lefttree, char *uniqueAttr)
 {
 	Unique	   *node = makeNode(Unique);
 	Plan	   *plan = &node->plan;
@@ -1183,7 +1183,7 @@ make_unique(List * tlist, Plan * lefttree, char *uniqueAttr)
 }
 
 List	   *
-generate_fjoin(List * tlist)
+generate_fjoin(List *tlist)
 {
 #if 0
 	List		tlistP;

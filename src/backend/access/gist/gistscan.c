@@ -33,7 +33,7 @@ static void
 gistadjone(IndexScanDesc s, int op, BlockNumber blkno,
 		   OffsetNumber offnum);
 static void
-adjuststack(GISTSTACK * stk, BlockNumber blkno,
+adjuststack(GISTSTACK *stk, BlockNumber blkno,
 			OffsetNumber offnum);
 static void
 adjustiptr(IndexScanDesc s, ItemPointer iptr,
@@ -53,7 +53,7 @@ typedef struct GISTScanListData
 {
 	IndexScanDesc gsl_scan;
 	struct GISTScanListData *gsl_next;
-}			GISTScanListData;
+} GISTScanListData;
 
 typedef GISTScanListData *GISTScanList;
 
@@ -418,7 +418,7 @@ adjustiptr(IndexScanDesc s,
  */
 /*ARGSUSED*/
 static void
-adjuststack(GISTSTACK * stk,
+adjuststack(GISTSTACK *stk,
 			BlockNumber blkno,
 			OffsetNumber offnum)
 {

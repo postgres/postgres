@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.4 1997/09/08 02:24:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.5 1997/09/08 21:45:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,11 +34,11 @@
 #include "optimizer/tlist.h"
 
 static List *
-expand_targetlist(List * tlist, Oid relid, int command_type,
+expand_targetlist(List *tlist, Oid relid, int command_type,
 				  Index result_relation);
 static List *
-replace_matching_resname(List * new_tlist,
-						 List * old_tlist);
+replace_matching_resname(List *new_tlist,
+						 List *old_tlist);
 static List *
 new_relation_targetlist(Oid relid, Index rt_index,
 						NodeTag node_type);
@@ -55,10 +55,10 @@ new_relation_targetlist(Oid relid, Index rt_index,
  *	  Returns the new targetlist.
  */
 List	   *
-preprocess_targetlist(List * tlist,
+preprocess_targetlist(List *tlist,
 					  int command_type,
 					  Index result_relation,
-					  List * range_table)
+					  List *range_table)
 {
 	List	   *expanded_tlist = NIL;
 	Oid			relid = InvalidOid;
@@ -144,7 +144,7 @@ preprocess_targetlist(List * tlist,
  * Returns the expanded target list, sorted in resno order.
  */
 static List *
-expand_targetlist(List * tlist,
+expand_targetlist(List *tlist,
 				  Oid relid,
 				  int command_type,
 				  Index result_relation)
@@ -178,7 +178,7 @@ expand_targetlist(List * tlist,
 
 
 static List *
-replace_matching_resname(List * new_tlist, List * old_tlist)
+replace_matching_resname(List *new_tlist, List *old_tlist)
 {
 	List	   *temp,
 			   *i;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.22 1997/09/08 20:57:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.23 1997/09/08 21:48:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,38 +28,38 @@
 #define PI 3.1415926536
 #endif
 
-static int	point_inside(Point * p, int npts, Point plist[]);
+static int	point_inside(Point *p, int npts, Point plist[]);
 static int	lseg_crossing(double x, double y, double px, double py);
 static BOX *box_construct(double x1, double x2, double y1, double y2);
 static BOX *box_copy(BOX *box);
 static BOX *box_fill(BOX *result, double x1, double x2, double y1, double y2);
 static double box_ht(BOX *box);
 static double box_wd(BOX *box);
-static double circle_ar(CIRCLE * circle);
-static CIRCLE *circle_copy(CIRCLE * circle);
-static LINE *line_construct_pm(Point * pt, double m);
-static bool line_horizontal(LINE * line);
-static Point *line_interpt(LINE * l1, LINE * l2);
-static bool line_intersect(LINE * l1, LINE * l2);
-static bool line_parallel(LINE * l1, LINE * l2);
-static bool line_vertical(LINE * line);
-static double lseg_dt(LSEG * l1, LSEG * l2);
-static void make_bound_box(POLYGON * poly);
-static PATH *path_copy(PATH * path);
+static double circle_ar(CIRCLE *circle);
+static CIRCLE *circle_copy(CIRCLE *circle);
+static LINE *line_construct_pm(Point *pt, double m);
+static bool line_horizontal(LINE *line);
+static Point *line_interpt(LINE *l1, LINE *l2);
+static bool line_intersect(LINE *l1, LINE *l2);
+static bool line_parallel(LINE *l1, LINE *l2);
+static bool line_vertical(LINE *line);
+static double lseg_dt(LSEG *l1, LSEG *l2);
+static void make_bound_box(POLYGON *poly);
+static PATH *path_copy(PATH *path);
 static bool plist_same(int npts, Point p1[], Point p2[]);
 static Point *point_construct(double x, double y);
-static Point *point_copy(Point * pt);
-static int	single_decode(char *str, float8 * x, char **ss);
+static Point *point_copy(Point *pt);
+static int	single_decode(char *str, float8 *x, char **ss);
 static int	single_encode(float8 x, char *str);
-static int	pair_decode(char *str, float8 * x, float8 * y, char **s);
+static int	pair_decode(char *str, float8 *x, float8 *y, char **s);
 static int	pair_encode(float8 x, float8 y, char *str);
 static int	pair_count(char *s, char delim);
-static int	path_decode(int opentype, int npts, char *str, int *isopen, char **ss, Point * p);
-static char *path_encode(bool closed, int npts, Point * pt);
-static void statlseg_construct(LSEG * lseg, Point * pt1, Point * pt2);
+static int	path_decode(int opentype, int npts, char *str, int *isopen, char **ss, Point *p);
+static char *path_encode(bool closed, int npts, Point *pt);
+static void statlseg_construct(LSEG *lseg, Point *pt1, Point *pt2);
 static double box_ar(BOX *box);
-static Point *interpt_sl(LSEG * lseg, LINE * line);
-static LINE *line_construct_pp(Point * pt1, Point * pt2);
+static Point *interpt_sl(LSEG *lseg, LINE *line);
+static LINE *line_construct_pp(Point *pt1, Point *pt2);
 
 
 /*
@@ -109,7 +109,7 @@ static int	digits8 = P_MAXDIG;
  */
 
 static int
-single_decode(char *str, float8 * x, char **s)
+single_decode(char *str, float8 *x, char **s)
 {
 	char	   *cp;
 
@@ -141,7 +141,7 @@ single_encode(float8 x, char *str)
 }								/* single_encode() */
 
 static int
-pair_decode(char *str, float8 * x, float8 * y, char **s)
+pair_decode(char *str, float8 *x, float8 *y, char **s)
 {
 	int			has_delim;
 	char	   *cp;
@@ -192,7 +192,7 @@ pair_encode(float8 x, float8 y, char *str)
 }
 
 static int
-path_decode(int opentype, int npts, char *str, int *isopen, char **ss, Point * p)
+path_decode(int opentype, int npts, char *str, int *isopen, char **ss, Point *p)
 {
 	int			depth = 0;
 	char	   *s,
@@ -264,7 +264,7 @@ path_decode(int opentype, int npts, char *str, int *isopen, char **ss, Point * p
 }								/* path_decode() */
 
 static char *
-path_encode(bool closed, int npts, Point * pt)
+path_encode(bool closed, int npts, Point *pt)
 {
 	char	   *result = PALLOC(npts * (P_MAXLEN + 3) + 2);
 
@@ -389,7 +389,7 @@ box_out(BOX *box)
 	if (!PointerIsValid(box))
 		return (NULL);
 
-	return (path_encode(-1, 2, (Point *) & (box->high)));
+	return (path_encode(-1, 2, (Point *) &(box->high)));
 }								/* box_out() */
 
 
@@ -777,7 +777,7 @@ box_diagonal(BOX *box)
  *---------------------------------------------------------*/
 
 static LINE *					/* point-slope */
-line_construct_pm(Point * pt, double m)
+line_construct_pm(Point *pt, double m)
 {
 	LINE	   *result = PALLOCTYPE(LINE);
 
@@ -793,7 +793,7 @@ line_construct_pm(Point * pt, double m)
 
 
 static LINE *					/* two points */
-line_construct_pp(Point * pt1, Point * pt2)
+line_construct_pp(Point *pt1, Point *pt2)
 {
 	LINE	   *result = PALLOCTYPE(LINE);
 
@@ -845,13 +845,13 @@ line_construct_pp(Point * pt1, Point * pt2)
  *---------------------------------------------------------*/
 
 static bool
-line_intersect(LINE * l1, LINE * l2)
+line_intersect(LINE *l1, LINE *l2)
 {
 	return (!line_parallel(l1, l2));
 }
 
 static bool
-line_parallel(LINE * l1, LINE * l2)
+line_parallel(LINE *l1, LINE *l2)
 {
 #if FALSE
 	return (FPeq(l1->m, l2->m));
@@ -866,7 +866,7 @@ line_parallel(LINE * l1, LINE * l2)
 
 #ifdef NOT_USED
 bool
-line_perp(LINE * l1, LINE * l2)
+line_perp(LINE *l1, LINE *l2)
 {
 #if FALSE
 	if (l1->m)
@@ -889,7 +889,7 @@ line_perp(LINE * l1, LINE * l2)
 #endif
 
 static bool
-line_vertical(LINE * line)
+line_vertical(LINE *line)
 {
 #if FALSE
 	return (FPeq(line->A, -1.0) && FPzero(line->B));
@@ -898,7 +898,7 @@ line_vertical(LINE * line)
 }								/* line_vertical() */
 
 static bool
-line_horizontal(LINE * line)
+line_horizontal(LINE *line)
 {
 #if FALSE
 	return (FPzero(line->m));
@@ -908,7 +908,7 @@ line_horizontal(LINE * line)
 
 #ifdef NOT_USED
 bool
-line_eq(LINE * l1, LINE * l2)
+line_eq(LINE *l1, LINE *l2)
 {
 	double		k;
 
@@ -933,7 +933,7 @@ line_eq(LINE * l1, LINE * l2)
  *---------------------------------------------------------*/
 
 double	   *					/* distance between l1, l2 */
-line_distance(LINE * l1, LINE * l2)
+line_distance(LINE *l1, LINE *l2)
 {
 	double	   *result = PALLOCTYPE(double);
 	Point	   *tmp;
@@ -958,7 +958,7 @@ line_distance(LINE * l1, LINE * l2)
  * Point where two lines l1, l2 intersect (if any)
  */
 static Point *
-line_interpt(LINE * l1, LINE * l2)
+line_interpt(LINE *l1, LINE *l2)
 {
 	Point	   *result;
 	double		x,
@@ -1068,7 +1068,7 @@ path_in(char *str)
 		depth++;
 	}
 
-	size = offsetof(PATH, p[0]) + (sizeof(path->p[0]) * npts);
+	size = offsetof(PATH, p[0]) +(sizeof(path->p[0]) * npts);
 	path = PALLOC(size);
 
 	path->size = size;
@@ -1085,12 +1085,12 @@ path_in(char *str)
 
 
 char	   *
-path_out(PATH * path)
+path_out(PATH *path)
 {
 	if (!PointerIsValid(path))
 		return NULL;
 
-	return (path_encode(path->closed, path->npts, (Point *) & (path->p[0])));
+	return (path_encode(path->closed, path->npts, (Point *) &(path->p[0])));
 }								/* path_out() */
 
 
@@ -1103,31 +1103,31 @@ path_out(PATH * path)
  *---------------------------------------------------------*/
 
 bool
-path_n_lt(PATH * p1, PATH * p2)
+path_n_lt(PATH *p1, PATH *p2)
 {
 	return ((p1->npts < p2->npts));
 }
 
 bool
-path_n_gt(PATH * p1, PATH * p2)
+path_n_gt(PATH *p1, PATH *p2)
 {
 	return ((p1->npts > p2->npts));
 }
 
 bool
-path_n_eq(PATH * p1, PATH * p2)
+path_n_eq(PATH *p1, PATH *p2)
 {
 	return ((p1->npts == p2->npts));
 }
 
 bool
-path_n_le(PATH * p1, PATH * p2)
+path_n_le(PATH *p1, PATH *p2)
 {
 	return ((p1->npts <= p2->npts));
 }
 
 bool
-path_n_ge(PATH * p1, PATH * p2)
+path_n_ge(PATH *p1, PATH *p2)
 {
 	return ((p1->npts >= p2->npts));
 }
@@ -1138,7 +1138,7 @@ path_n_ge(PATH * p1, PATH * p2)
  *---------------------------------------------------------*/
 
 bool
-path_isclosed(PATH * path)
+path_isclosed(PATH *path)
 {
 	if (!PointerIsValid(path))
 		return FALSE;
@@ -1147,7 +1147,7 @@ path_isclosed(PATH * path)
 }								/* path_isclosed() */
 
 bool
-path_isopen(PATH * path)
+path_isopen(PATH *path)
 {
 	if (!PointerIsValid(path))
 		return FALSE;
@@ -1157,7 +1157,7 @@ path_isopen(PATH * path)
 
 
 int4
-path_npoints(PATH * path)
+path_npoints(PATH *path)
 {
 	if (!PointerIsValid(path))
 		return 0;
@@ -1166,7 +1166,7 @@ path_npoints(PATH * path)
 }								/* path_npoints() */
 
 PATH	   *
-path_close(PATH * path)
+path_close(PATH *path)
 {
 	PATH	   *result;
 
@@ -1181,7 +1181,7 @@ path_close(PATH * path)
 
 
 PATH	   *
-path_open(PATH * path)
+path_open(PATH *path)
 {
 	PATH	   *result;
 
@@ -1196,12 +1196,12 @@ path_open(PATH * path)
 
 
 PATH	   *
-path_copy(PATH * path)
+path_copy(PATH *path)
 {
 	PATH	   *result;
 	int			size;
 
-	size = offsetof(PATH, p[0]) + (sizeof(path->p[0]) * path->npts);
+	size = offsetof(PATH, p[0]) +(sizeof(path->p[0]) * path->npts);
 	result = PALLOC(size);
 
 	memmove((char *) result, (char *) path, size);
@@ -1215,7 +1215,7 @@ path_copy(PATH * path)
  *		O(n^2) iterative edge check.
  */
 bool
-path_inter(PATH * p1, PATH * p2)
+path_inter(PATH *p1, PATH *p2)
 {
 	BOX			b1,
 				b2;
@@ -1264,7 +1264,7 @@ path_inter(PATH * p1, PATH * p2)
 /* this essentially does a cartesian product of the lsegs in the
    two paths, and finds the min distance between any two lsegs */
 double	   *
-path_distance(PATH * p1, PATH * p2)
+path_distance(PATH *p1, PATH *p2)
 {
 	double	   *min = NULL,
 			   *tmp;
@@ -1307,7 +1307,7 @@ path_distance(PATH * p1, PATH * p2)
  *---------------------------------------------------------*/
 
 double	   *
-path_length(PATH * path)
+path_length(PATH *path)
 {
 	double	   *result;
 	int			i;
@@ -1324,7 +1324,7 @@ path_length(PATH * path)
 
 #ifdef NOT_USED
 double
-path_ln(PATH * path)
+path_ln(PATH *path)
 {
 	double		result;
 	int			i;
@@ -1375,7 +1375,7 @@ point_in(char *str)
 }								/* point_in() */
 
 char	   *
-point_out(Point * pt)
+point_out(Point *pt)
 {
 	if (!PointerIsValid(pt))
 		return (NULL);
@@ -1396,7 +1396,7 @@ point_construct(double x, double y)
 
 
 static Point *
-point_copy(Point * pt)
+point_copy(Point *pt)
 {
 	Point	   *result;
 
@@ -1421,43 +1421,43 @@ point_copy(Point * pt)
  *---------------------------------------------------------*/
 
 bool
-point_left(Point * pt1, Point * pt2)
+point_left(Point *pt1, Point *pt2)
 {
 	return (FPlt(pt1->x, pt2->x));
 }
 
 bool
-point_right(Point * pt1, Point * pt2)
+point_right(Point *pt1, Point *pt2)
 {
 	return (FPgt(pt1->x, pt2->x));
 }
 
 bool
-point_above(Point * pt1, Point * pt2)
+point_above(Point *pt1, Point *pt2)
 {
 	return (FPgt(pt1->y, pt2->y));
 }
 
 bool
-point_below(Point * pt1, Point * pt2)
+point_below(Point *pt1, Point *pt2)
 {
 	return (FPlt(pt1->y, pt2->y));
 }
 
 bool
-point_vert(Point * pt1, Point * pt2)
+point_vert(Point *pt1, Point *pt2)
 {
 	return (FPeq(pt1->x, pt2->x));
 }
 
 bool
-point_horiz(Point * pt1, Point * pt2)
+point_horiz(Point *pt1, Point *pt2)
 {
 	return (FPeq(pt1->y, pt2->y));
 }
 
 bool
-point_eq(Point * pt1, Point * pt2)
+point_eq(Point *pt1, Point *pt2)
 {
 	return (point_horiz(pt1, pt2) && point_vert(pt1, pt2));
 }
@@ -1467,7 +1467,7 @@ point_eq(Point * pt1, Point * pt2)
  *---------------------------------------------------------*/
 
 int32
-pointdist(Point * p1, Point * p2)
+pointdist(Point *p1, Point *p2)
 {
 	int32		result;
 
@@ -1476,7 +1476,7 @@ pointdist(Point * p1, Point * p2)
 }
 
 double	   *
-point_distance(Point * pt1, Point * pt2)
+point_distance(Point *pt1, Point *pt2)
 {
 	double	   *result = PALLOCTYPE(double);
 
@@ -1486,13 +1486,13 @@ point_distance(Point * pt1, Point * pt2)
 
 
 double
-point_dt(Point * pt1, Point * pt2)
+point_dt(Point *pt1, Point *pt2)
 {
 	return (HYPOT(pt1->x - pt2->x, pt1->y - pt2->y));
 }
 
 double	   *
-point_slope(Point * pt1, Point * pt2)
+point_slope(Point *pt1, Point *pt2)
 {
 	double	   *result = PALLOCTYPE(double);
 
@@ -1505,7 +1505,7 @@ point_slope(Point * pt1, Point * pt2)
 
 
 double
-point_sl(Point * pt1, Point * pt2)
+point_sl(Point *pt1, Point *pt2)
 {
 	return (point_vert(pt1, pt2)
 			? (double) DBL_MAX
@@ -1552,12 +1552,12 @@ lseg_in(char *str)
 
 
 char	   *
-lseg_out(LSEG * ls)
+lseg_out(LSEG *ls)
 {
 	if (!PointerIsValid(ls))
 		return (NULL);
 
-	return (path_encode(FALSE, 2, (Point *) & (ls->p[0])));
+	return (path_encode(FALSE, 2, (Point *) &(ls->p[0])));
 }								/* lseg_out() */
 
 
@@ -1565,7 +1565,7 @@ lseg_out(LSEG * ls)
  *		form a LSEG from two Points.
  */
 LSEG	   *
-lseg_construct(Point * pt1, Point * pt2)
+lseg_construct(Point *pt1, Point *pt2)
 {
 	LSEG	   *result = PALLOCTYPE(LSEG);
 
@@ -1581,7 +1581,7 @@ lseg_construct(Point * pt1, Point * pt2)
 
 /* like lseg_construct, but assume space already allocated */
 static void
-statlseg_construct(LSEG * lseg, Point * pt1, Point * pt2)
+statlseg_construct(LSEG *lseg, Point *pt1, Point *pt2)
 {
 	lseg->p[0].x = pt1->x;
 	lseg->p[0].y = pt1->y;
@@ -1600,7 +1600,7 @@ statlseg_construct(LSEG * lseg, Point * pt1, Point * pt2)
  **  both segments.
  */
 bool
-lseg_intersect(LSEG * l1, LSEG * l2)
+lseg_intersect(LSEG *l1, LSEG *l2)
 {
 	LINE	   *ln;
 	Point	   *interpt;
@@ -1620,7 +1620,7 @@ lseg_intersect(LSEG * l1, LSEG * l2)
 }
 
 bool
-lseg_parallel(LSEG * l1, LSEG * l2)
+lseg_parallel(LSEG *l1, LSEG *l2)
 {
 #if FALSE
 	return (FPeq(l1->m, l2->m));
@@ -1630,7 +1630,7 @@ lseg_parallel(LSEG * l1, LSEG * l2)
 }								/* lseg_parallel() */
 
 bool
-lseg_perp(LSEG * l1, LSEG * l2)
+lseg_perp(LSEG *l1, LSEG *l2)
 {
 	double		m1,
 				m2;
@@ -1646,20 +1646,20 @@ lseg_perp(LSEG * l1, LSEG * l2)
 }								/* lseg_perp() */
 
 bool
-lseg_vertical(LSEG * lseg)
+lseg_vertical(LSEG *lseg)
 {
 	return (FPeq(lseg->p[0].x, lseg->p[1].x));
 }
 
 bool
-lseg_horizontal(LSEG * lseg)
+lseg_horizontal(LSEG *lseg)
 {
 	return (FPeq(lseg->p[0].y, lseg->p[1].y));
 }
 
 
 bool
-lseg_eq(LSEG * l1, LSEG * l2)
+lseg_eq(LSEG *l1, LSEG *l2)
 {
 	return (FPeq(l1->p[0].x, l2->p[0].x) &&
 			FPeq(l1->p[1].y, l2->p[1].y) &&
@@ -1678,7 +1678,7 @@ lseg_eq(LSEG * l1, LSEG * l2)
  *		segment.
  */
 double	   *
-lseg_distance(LSEG * l1, LSEG * l2)
+lseg_distance(LSEG *l1, LSEG *l2)
 {
 	double	   *result = PALLOCTYPE(double);
 
@@ -1689,7 +1689,7 @@ lseg_distance(LSEG * l1, LSEG * l2)
 
 /* distance between l1, l2 */
 static double
-lseg_dt(LSEG * l1, LSEG * l2)
+lseg_dt(LSEG *l1, LSEG *l2)
 {
 	double	   *d,
 				result;
@@ -1720,7 +1720,7 @@ lseg_dt(LSEG * l1, LSEG * l2)
 
 
 Point	   *
-lseg_center(LSEG * lseg)
+lseg_center(LSEG *lseg)
 {
 	Point	   *result;
 
@@ -1746,7 +1746,7 @@ lseg_center(LSEG * lseg)
  *	lsb residue. - tgl 1997-07-09
  */
 Point	   *
-lseg_interpt(LSEG * l1, LSEG * l2)
+lseg_interpt(LSEG *l1, LSEG *l2)
 {
 	Point	   *result;
 	LINE	   *tmp1,
@@ -1806,7 +1806,7 @@ lseg_interpt(LSEG * l1, LSEG * l2)
  *-------------------------------------------------------------------*/
 
 double	   *
-dist_pl(Point * pt, LINE * line)
+dist_pl(Point *pt, LINE *line)
 {
 	double	   *result = PALLOCTYPE(double);
 
@@ -1817,7 +1817,7 @@ dist_pl(Point * pt, LINE * line)
 }
 
 double	   *
-dist_ps(Point * pt, LSEG * lseg)
+dist_ps(Point *pt, LSEG *lseg)
 {
 	double		m;				/* slope of perp. */
 	LINE	   *ln;
@@ -1888,7 +1888,7 @@ dist_ps(Point * pt, LSEG * lseg)
  ** Distance from a point to a path
  */
 double	   *
-dist_ppath(Point * pt, PATH * path)
+dist_ppath(Point *pt, PATH *path)
 {
 	double	   *result;
 	double	   *tmp;
@@ -1928,7 +1928,7 @@ dist_ppath(Point * pt, PATH * path)
 }
 
 double	   *
-dist_pb(Point * pt, BOX *box)
+dist_pb(Point *pt, BOX *box)
 {
 	Point	   *tmp;
 	double	   *result;
@@ -1942,7 +1942,7 @@ dist_pb(Point * pt, BOX *box)
 
 
 double	   *
-dist_sl(LSEG * lseg, LINE * line)
+dist_sl(LSEG *lseg, LINE *line)
 {
 	double	   *result,
 			   *d2;
@@ -1973,7 +1973,7 @@ dist_sl(LSEG * lseg, LINE * line)
 
 
 double	   *
-dist_sb(LSEG * lseg, BOX *box)
+dist_sb(LSEG *lseg, BOX *box)
 {
 	Point	   *tmp;
 	double	   *result;
@@ -1995,7 +1995,7 @@ dist_sb(LSEG * lseg, BOX *box)
 
 
 double	   *
-dist_lb(LINE * line, BOX *box)
+dist_lb(LINE *line, BOX *box)
 {
 	Point	   *tmp;
 	double	   *result;
@@ -2017,7 +2017,7 @@ dist_lb(LINE * line, BOX *box)
 
 
 double	   *
-dist_cpoly(CIRCLE * circle, POLYGON * poly)
+dist_cpoly(CIRCLE *circle, POLYGON *poly)
 {
 	double	   *result;
 	int			i;
@@ -2080,7 +2080,7 @@ dist_cpoly(CIRCLE * circle, POLYGON * poly)
  *-------------------------------------------------------------------*/
 
 static Point *
-interpt_sl(LSEG * lseg, LINE * line)
+interpt_sl(LSEG *lseg, LINE *line)
 {
 	LINE	   *tmp;
 	Point	   *p;
@@ -2127,7 +2127,7 @@ interpt_sl(LSEG * lseg, LINE * line)
  *		through the point.
  */
 Point	   *
-close_pl(Point * pt, LINE * line)
+close_pl(Point *pt, LINE *line)
 {
 	Point	   *result;
 	LINE	   *tmp;
@@ -2175,7 +2175,7 @@ close_pl(Point * pt, LINE * line)
  *		point of the segment and its perpendicular through the point.
  */
 Point	   *
-close_ps(Point * pt, LSEG * lseg)
+close_ps(Point *pt, LSEG *lseg)
 {
 	Point	   *result;
 	LINE	   *tmp;
@@ -2227,7 +2227,7 @@ close_ps(Point * pt, LSEG * lseg)
 }								/* close_ps() */
 
 Point	   *
-close_pb(Point * pt, BOX *box)
+close_pb(Point *pt, BOX *box)
 {
 	/* think about this one for a while */
 	elog(WARN, "close_pb not implemented", NULL);
@@ -2236,7 +2236,7 @@ close_pb(Point * pt, BOX *box)
 }
 
 Point	   *
-close_sl(LSEG * lseg, LINE * line)
+close_sl(LSEG *lseg, LINE *line)
 {
 	Point	   *result;
 	double	   *d1,
@@ -2258,7 +2258,7 @@ close_sl(LSEG * lseg, LINE * line)
 }
 
 Point	   *
-close_sb(LSEG * lseg, BOX *box)
+close_sb(LSEG *lseg, BOX *box)
 {
 	/* think about this one for a while */
 	elog(WARN, "close_sb not implemented", NULL);
@@ -2267,7 +2267,7 @@ close_sb(LSEG * lseg, BOX *box)
 }
 
 Point	   *
-close_lb(LINE * line, BOX *box)
+close_lb(LINE *line, BOX *box)
 {
 	/* think about this one for a while */
 	elog(WARN, "close_lb not implemented", NULL);
@@ -2284,7 +2284,7 @@ close_lb(LINE * line, BOX *box)
  *		Does the point satisfy the equation?
  */
 bool
-on_pl(Point * pt, LINE * line)
+on_pl(Point *pt, LINE *line)
 {
 	if (!PointerIsValid(pt) || !PointerIsValid(line))
 		return (FALSE);
@@ -2298,7 +2298,7 @@ on_pl(Point * pt, LINE * line)
  * This algorithm seems to behave nicely even with lsb residues - tgl 1997-07-09
  */
 bool
-on_ps(Point * pt, LSEG * lseg)
+on_ps(Point *pt, LSEG *lseg)
 {
 	if (!PointerIsValid(pt) || !PointerIsValid(lseg))
 		return (FALSE);
@@ -2308,7 +2308,7 @@ on_ps(Point * pt, LSEG * lseg)
 }
 
 bool
-on_pb(Point * pt, BOX *box)
+on_pb(Point *pt, BOX *box)
 {
 	if (!PointerIsValid(pt) || !PointerIsValid(box))
 		return (FALSE);
@@ -2331,7 +2331,7 @@ on_pb(Point * pt, BOX *box)
 #define NEXT(A) ((A+1) % path->npts)	/* cyclic "i+1" */
 
 bool
-on_ppath(Point * pt, PATH * path)
+on_ppath(Point *pt, PATH *path)
 {
 #if FALSE
 	int			above,
@@ -2424,7 +2424,7 @@ on_ppath(Point * pt, PATH * path)
 
 
 bool
-on_sl(LSEG * lseg, LINE * line)
+on_sl(LSEG *lseg, LINE *line)
 {
 	if (!PointerIsValid(lseg) || !PointerIsValid(line))
 		return (FALSE);
@@ -2433,7 +2433,7 @@ on_sl(LSEG * lseg, LINE * line)
 }								/* on_sl() */
 
 bool
-on_sb(LSEG * lseg, BOX *box)
+on_sb(LSEG *lseg, BOX *box)
 {
 	if (!PointerIsValid(lseg) || !PointerIsValid(box))
 		return (FALSE);
@@ -2447,7 +2447,7 @@ on_sb(LSEG * lseg, BOX *box)
  *-------------------------------------------------------------------*/
 
 bool
-inter_sl(LSEG * lseg, LINE * line)
+inter_sl(LSEG *lseg, LINE *line)
 {
 	Point	   *tmp;
 
@@ -2466,7 +2466,7 @@ inter_sl(LSEG * lseg, LINE * line)
 /* XXX segment and box should be able to intersect; tgl - 97/01/09 */
 
 bool
-inter_sb(LSEG * lseg, BOX *box)
+inter_sb(LSEG *lseg, BOX *box)
 {
 	return (0);
 }
@@ -2474,7 +2474,7 @@ inter_sb(LSEG * lseg, BOX *box)
 /* XXX line and box should be able to intersect; tgl - 97/01/09 */
 
 bool
-inter_lb(LINE * line, BOX *box)
+inter_lb(LINE *line, BOX *box)
 {
 	return (0);
 }
@@ -2491,7 +2491,7 @@ inter_lb(LINE * line, BOX *box)
  * Make the smallest bounding box for the given polygon.
  *---------------------------------------------------------------------*/
 static void
-make_bound_box(POLYGON * poly)
+make_bound_box(POLYGON *poly)
 {
 	int			i;
 	double		x1,
@@ -2546,7 +2546,7 @@ poly_in(char *str)
 	if ((npts = pair_count(str, ',')) <= 0)
 		elog(WARN, "Bad polygon external representation '%s'", str);
 
-	size = offsetof(POLYGON, p[0]) + (sizeof(poly->p[0]) * npts);
+	size = offsetof(POLYGON, p[0]) +(sizeof(poly->p[0]) * npts);
 	poly = PALLOC(size);
 
 	memset((char *) poly, 0, size);		/* zero any holes */
@@ -2568,7 +2568,7 @@ poly_in(char *str)
  *			  also support old format "(f8,f8,...,f8,f8)"
  *---------------------------------------------------------------*/
 char	   *
-poly_out(POLYGON * poly)
+poly_out(POLYGON *poly)
 {
 	if (!PointerIsValid(poly))
 		return NULL;
@@ -2583,7 +2583,7 @@ poly_out(POLYGON * poly)
  * of B?
  *-------------------------------------------------------*/
 bool
-poly_left(POLYGON * polya, POLYGON * polyb)
+poly_left(POLYGON *polya, POLYGON *polyb)
 {
 	return (polya->boundbox.high.x < polyb->boundbox.low.x);
 }
@@ -2594,7 +2594,7 @@ poly_left(POLYGON * polya, POLYGON * polyb)
  * of B?
  *-------------------------------------------------------*/
 bool
-poly_overleft(POLYGON * polya, POLYGON * polyb)
+poly_overleft(POLYGON *polya, POLYGON *polyb)
 {
 	return (polya->boundbox.low.x <= polyb->boundbox.high.x);
 }
@@ -2605,7 +2605,7 @@ poly_overleft(POLYGON * polya, POLYGON * polyb)
  * of B?
  *-------------------------------------------------------*/
 bool
-poly_right(POLYGON * polya, POLYGON * polyb)
+poly_right(POLYGON *polya, POLYGON *polyb)
 {
 	return (polya->boundbox.low.x > polyb->boundbox.high.x);
 }
@@ -2616,7 +2616,7 @@ poly_right(POLYGON * polya, POLYGON * polyb)
  * of B?
  *-------------------------------------------------------*/
 bool
-poly_overright(POLYGON * polya, POLYGON * polyb)
+poly_overright(POLYGON *polya, POLYGON *polyb)
 {
 	return (polya->boundbox.high.x > polyb->boundbox.low.x);
 }
@@ -2629,7 +2629,7 @@ poly_overright(POLYGON * polya, POLYGON * polyb)
  *	closed shapes.
  *-------------------------------------------------------*/
 bool
-poly_same(POLYGON * polya, POLYGON * polyb)
+poly_same(POLYGON *polya, POLYGON *polyb)
 {
 	if (!PointerIsValid(polya) || !PointerIsValid(polyb))
 		return FALSE;
@@ -2655,7 +2655,7 @@ poly_same(POLYGON * polya, POLYGON * polyb)
  * their bounding boxes overlap.
  *-----------------------------------------------------------------*/
 bool
-poly_overlap(POLYGON * polya, POLYGON * polyb)
+poly_overlap(POLYGON *polya, POLYGON *polyb)
 {
 	return box_overlap(&(polya->boundbox), &(polyb->boundbox));
 }
@@ -2667,7 +2667,7 @@ poly_overlap(POLYGON * polya, POLYGON * polyb)
  *-----------------------------------------------------------------*/
 #if FALSE
 bool
-poly_contain(POLYGON * polya, POLYGON * polyb)
+poly_contain(POLYGON *polya, POLYGON *polyb)
 {
 	return box_contain(&(polya->boundbox), &(polyb->boundbox));
 }
@@ -2675,7 +2675,7 @@ poly_contain(POLYGON * polya, POLYGON * polyb)
 #endif
 
 bool
-poly_contain(POLYGON * polya, POLYGON * polyb)
+poly_contain(POLYGON *polya, POLYGON *polyb)
 {
 	int			i;
 
@@ -2721,7 +2721,7 @@ poly_contain(POLYGON * polya, POLYGON * polyb)
  *-----------------------------------------------------------------*/
 #if FALSE
 bool
-poly_contained(POLYGON * polya, POLYGON * polyb)
+poly_contained(POLYGON *polya, POLYGON *polyb)
 {
 	return (box_contained(&(polya->boundbox), &(polyb->boundbox)));
 }
@@ -2729,7 +2729,7 @@ poly_contained(POLYGON * polya, POLYGON * polyb)
 #endif
 
 bool
-poly_contained(POLYGON * polya, POLYGON * polyb)
+poly_contained(POLYGON *polya, POLYGON *polyb)
 {
 	return (poly_contain(polyb, polya));
 }								/* poly_contained() */
@@ -2746,7 +2746,7 @@ poly_contained(POLYGON * polya, POLYGON * polyb)
  */
 
 bool
-poly_contain_pt(POLYGON * poly, Point * p)
+poly_contain_pt(POLYGON *poly, Point *p)
 {
 	if (!PointerIsValid(poly) || !PointerIsValid(p))
 		return (FALSE);
@@ -2755,7 +2755,7 @@ poly_contain_pt(POLYGON * poly, Point * p)
 }								/* poly_contain_pt() */
 
 bool
-pt_contained_poly(Point * p, POLYGON * poly)
+pt_contained_poly(Point *p, POLYGON *poly)
 {
 	if (!PointerIsValid(p) || !PointerIsValid(poly))
 		return (FALSE);
@@ -2765,7 +2765,7 @@ pt_contained_poly(Point * p, POLYGON * poly)
 
 
 double	   *
-poly_distance(POLYGON * polya, POLYGON * polyb)
+poly_distance(POLYGON *polya, POLYGON *polyb)
 {
 	double	   *result;
 
@@ -2787,7 +2787,7 @@ poly_distance(POLYGON * polya, POLYGON * polyb)
  ***********************************************************************/
 
 Point	   *
-point(float8 * x, float8 * y)
+point(float8 *x, float8 *y)
 {
 	if (!(PointerIsValid(x) && PointerIsValid(y)))
 		return (NULL);
@@ -2797,7 +2797,7 @@ point(float8 * x, float8 * y)
 
 
 Point	   *
-point_add(Point * p1, Point * p2)
+point_add(Point *p1, Point *p2)
 {
 	Point	   *result;
 
@@ -2813,7 +2813,7 @@ point_add(Point * p1, Point * p2)
 }								/* point_add() */
 
 Point	   *
-point_sub(Point * p1, Point * p2)
+point_sub(Point *p1, Point *p2)
 {
 	Point	   *result;
 
@@ -2829,7 +2829,7 @@ point_sub(Point * p1, Point * p2)
 }								/* point_sub() */
 
 Point	   *
-point_mul(Point * p1, Point * p2)
+point_mul(Point *p1, Point *p2)
 {
 	Point	   *result;
 
@@ -2845,7 +2845,7 @@ point_mul(Point * p1, Point * p2)
 }								/* point_mul() */
 
 Point	   *
-point_div(Point * p1, Point * p2)
+point_div(Point *p1, Point *p2)
 {
 	Point	   *result;
 	double		div;
@@ -2874,7 +2874,7 @@ point_div(Point * p1, Point * p2)
  ***********************************************************************/
 
 BOX		   *
-box(Point * p1, Point * p2)
+box(Point *p1, Point *p2)
 {
 	BOX		   *result;
 
@@ -2887,7 +2887,7 @@ box(Point * p1, Point * p2)
 }								/* box() */
 
 BOX		   *
-box_add(BOX *box, Point * p)
+box_add(BOX *box, Point *p)
 {
 	BOX		   *result;
 
@@ -2901,7 +2901,7 @@ box_add(BOX *box, Point * p)
 }								/* box_add() */
 
 BOX		   *
-box_sub(BOX *box, Point * p)
+box_sub(BOX *box, Point *p)
 {
 	BOX		   *result;
 
@@ -2915,7 +2915,7 @@ box_sub(BOX *box, Point * p)
 }								/* box_sub() */
 
 BOX		   *
-box_mul(BOX *box, Point * p)
+box_mul(BOX *box, Point *p)
 {
 	BOX		   *result;
 	Point	   *high,
@@ -2935,7 +2935,7 @@ box_mul(BOX *box, Point * p)
 }								/* box_mul() */
 
 BOX		   *
-box_div(BOX *box, Point * p)
+box_div(BOX *box, Point *p)
 {
 	BOX		   *result;
 	Point	   *high,
@@ -2975,7 +2975,7 @@ box_div(BOX *box, Point * p)
  * Concatenate two paths (only if they are both open).
  */
 PATH	   *
-path_add(PATH * p1, PATH * p2)
+path_add(PATH *p1, PATH *p2)
 {
 	PATH	   *result;
 	int			size;
@@ -2985,7 +2985,7 @@ path_add(PATH * p1, PATH * p2)
 		|| p1->closed || p2->closed)
 		return (NULL);
 
-	size = offsetof(PATH, p[0]) + (sizeof(p1->p[0]) * (p1->npts + p2->npts));
+	size = offsetof(PATH, p[0]) +(sizeof(p1->p[0]) * (p1->npts + p2->npts));
 	result = PALLOC(size);
 
 	result->size = size;
@@ -3010,7 +3010,7 @@ path_add(PATH * p1, PATH * p2)
  * Translation operator.
  */
 PATH	   *
-path_add_pt(PATH * path, Point * point)
+path_add_pt(PATH *path, Point *point)
 {
 	PATH	   *result;
 	int			i;
@@ -3030,7 +3030,7 @@ path_add_pt(PATH * path, Point * point)
 }								/* path_add_pt() */
 
 PATH	   *
-path_sub_pt(PATH * path, Point * point)
+path_sub_pt(PATH *path, Point *point)
 {
 	PATH	   *result;
 	int			i;
@@ -3054,7 +3054,7 @@ path_sub_pt(PATH * path, Point * point)
  * Rotation and scaling operators.
  */
 PATH	   *
-path_mul_pt(PATH * path, Point * point)
+path_mul_pt(PATH *path, Point *point)
 {
 	PATH	   *result;
 	Point	   *p;
@@ -3077,7 +3077,7 @@ path_mul_pt(PATH * path, Point * point)
 }								/* path_mul_pt() */
 
 PATH	   *
-path_div_pt(PATH * path, Point * point)
+path_div_pt(PATH *path, Point *point)
 {
 	PATH	   *result;
 	Point	   *p;
@@ -3101,7 +3101,7 @@ path_div_pt(PATH * path, Point * point)
 
 
 bool
-path_contain_pt(PATH * path, Point * p)
+path_contain_pt(PATH *path, Point *p)
 {
 	if (!PointerIsValid(path) || !PointerIsValid(p))
 		return (FALSE);
@@ -3110,7 +3110,7 @@ path_contain_pt(PATH * path, Point * p)
 }								/* path_contain_pt() */
 
 bool
-pt_contained_path(Point * p, PATH * path)
+pt_contained_path(Point *p, PATH *path)
 {
 	if (!PointerIsValid(p) || !PointerIsValid(path))
 		return (FALSE);
@@ -3120,7 +3120,7 @@ pt_contained_path(Point * p, PATH * path)
 
 
 Point	   *
-path_center(PATH * path)
+path_center(PATH *path)
 {
 	Point	   *result;
 
@@ -3136,7 +3136,7 @@ path_center(PATH * path)
 }								/* path_center() */
 
 POLYGON    *
-path_poly(PATH * path)
+path_poly(PATH *path)
 {
 	POLYGON    *poly;
 	int			size;
@@ -3148,7 +3148,7 @@ path_poly(PATH * path)
 	if (!path->closed)
 		elog(WARN, "Open path cannot be converted to polygon", NULL);
 
-	size = offsetof(POLYGON, p[0]) + (sizeof(poly->p[0]) * path->npts);
+	size = offsetof(POLYGON, p[0]) +(sizeof(poly->p[0]) * path->npts);
 	poly = PALLOC(size);
 
 	poly->size = size;
@@ -3174,7 +3174,8 @@ path_poly(PATH * path)
  *			  '[(x1,y1),...]' for open path
  */
 PATH
-* upgradepath(PATH * path)
+		   *
+upgradepath(PATH *path)
 {
 	PATH	   *result;
 	int			size,
@@ -3188,7 +3189,7 @@ PATH
 		elog(WARN, "upgradepath: path already upgraded?", NULL);
 
 	npts = (path->npts - 1);
-	size = offsetof(PATH, p[0]) + (sizeof(path->p[0]) * npts);
+	size = offsetof(PATH, p[0]) +(sizeof(path->p[0]) * npts);
 	result = PALLOC(size);
 	memset((char *) result, 0, size);
 
@@ -3206,7 +3207,7 @@ PATH
 }								/* upgradepath() */
 
 bool
-isoldpath(PATH * path)
+isoldpath(PATH *path)
 {
 	if (!PointerIsValid(path) || (path->npts < 2))
 		return (FALSE);
@@ -3222,7 +3223,7 @@ isoldpath(PATH * path)
  ***********************************************************************/
 
 int4
-poly_npoints(POLYGON * poly)
+poly_npoints(POLYGON *poly)
 {
 	if (!PointerIsValid(poly))
 		return (0);
@@ -3232,7 +3233,7 @@ poly_npoints(POLYGON * poly)
 
 
 Point	   *
-poly_center(POLYGON * poly)
+poly_center(POLYGON *poly)
 {
 	Point	   *result;
 	CIRCLE	   *circle;
@@ -3256,7 +3257,7 @@ poly_center(POLYGON * poly)
 
 
 BOX		   *
-poly_box(POLYGON * poly)
+poly_box(POLYGON *poly)
 {
 	BOX		   *box;
 
@@ -3282,7 +3283,7 @@ box_poly(BOX *box)
 		return (NULL);
 
 	/* map four corners of the box to a polygon */
-	size = offsetof(POLYGON, p[0]) + (sizeof(poly->p[0]) * 4);
+	size = offsetof(POLYGON, p[0]) +(sizeof(poly->p[0]) * 4);
 	poly = PALLOC(size);
 
 	poly->size = size;
@@ -3304,7 +3305,7 @@ box_poly(BOX *box)
 
 
 PATH	   *
-poly_path(POLYGON * poly)
+poly_path(POLYGON *poly)
 {
 	PATH	   *path;
 	int			size;
@@ -3313,7 +3314,7 @@ poly_path(POLYGON * poly)
 	if (!PointerIsValid(poly) || (poly->npts < 0))
 		return (NULL);
 
-	size = offsetof(PATH, p[0]) + (sizeof(path->p[0]) * poly->npts);
+	size = offsetof(PATH, p[0]) +(sizeof(path->p[0]) * poly->npts);
 	path = PALLOC(size);
 
 	path->size = size;
@@ -3336,7 +3337,8 @@ poly_path(POLYGON * poly)
  * New-style: '(x1,y1,x2,y2,...)'
  */
 POLYGON
-* upgradepoly(POLYGON * poly)
+		   *
+upgradepoly(POLYGON *poly)
 {
 	POLYGON    *result;
 	int			size;
@@ -3347,7 +3349,7 @@ POLYGON
 	if (!PointerIsValid(poly) || (poly->npts < 1))
 		return (NULL);
 
-	size = offsetof(POLYGON, p[0]) + (sizeof(poly->p[0]) * poly->npts);
+	size = offsetof(POLYGON, p[0]) +(sizeof(poly->p[0]) * poly->npts);
 	result = PALLOC(size);
 	memset((char *) result, 0, size);
 
@@ -3382,7 +3384,8 @@ POLYGON
  * Reverse effect of upgradepoly().
  */
 POLYGON
-* revertpoly(POLYGON * poly)
+		   *
+revertpoly(POLYGON *poly)
 {
 	POLYGON    *result;
 	int			size;
@@ -3393,7 +3396,7 @@ POLYGON
 	if (!PointerIsValid(poly) || (poly->npts < 1))
 		return (NULL);
 
-	size = offsetof(POLYGON, p[0]) + (sizeof(poly->p[0]) * poly->npts);
+	size = offsetof(POLYGON, p[0]) +(sizeof(poly->p[0]) * poly->npts);
 	result = PALLOC(size);
 	memset((char *) result, 0, size);
 
@@ -3506,7 +3509,7 @@ circle_in(char *str)
 /*		circle_out		-		convert a circle to external form.
  */
 char	   *
-circle_out(CIRCLE * circle)
+circle_out(CIRCLE *circle)
 {
 	char	   *result;
 	char	   *cp;
@@ -3544,7 +3547,7 @@ circle_out(CIRCLE * circle)
 /*		circles identical?
  */
 bool
-circle_same(CIRCLE * circle1, CIRCLE * circle2)
+circle_same(CIRCLE *circle1, CIRCLE *circle2)
 {
 	return (FPeq(circle1->radius, circle2->radius)
 			&& FPeq(circle1->center.x, circle2->center.x)
@@ -3554,7 +3557,7 @@ circle_same(CIRCLE * circle1, CIRCLE * circle2)
 /*		circle_overlap	-		does circle1 overlap circle2?
  */
 bool
-circle_overlap(CIRCLE * circle1, CIRCLE * circle2)
+circle_overlap(CIRCLE *circle1, CIRCLE *circle2)
 {
 	return (FPle(point_dt(&circle1->center, &circle2->center), (circle1->radius + circle2->radius)));
 }
@@ -3563,7 +3566,7 @@ circle_overlap(CIRCLE * circle1, CIRCLE * circle2)
  *								the right edge of circle2?
  */
 bool
-circle_overleft(CIRCLE * circle1, CIRCLE * circle2)
+circle_overleft(CIRCLE *circle1, CIRCLE *circle2)
 {
 	return (FPle((circle1->center.x + circle1->radius), (circle2->center.x + circle2->radius)));
 }
@@ -3571,7 +3574,7 @@ circle_overleft(CIRCLE * circle1, CIRCLE * circle2)
 /*		circle_left		-		is circle1 strictly left of circle2?
  */
 bool
-circle_left(CIRCLE * circle1, CIRCLE * circle2)
+circle_left(CIRCLE *circle1, CIRCLE *circle2)
 {
 	return (FPle((circle1->center.x + circle1->radius), (circle2->center.x - circle2->radius)));
 }
@@ -3579,7 +3582,7 @@ circle_left(CIRCLE * circle1, CIRCLE * circle2)
 /*		circle_right	-		is circle1 strictly right of circle2?
  */
 bool
-circle_right(CIRCLE * circle1, CIRCLE * circle2)
+circle_right(CIRCLE *circle1, CIRCLE *circle2)
 {
 	return (FPge((circle1->center.x - circle1->radius), (circle2->center.x + circle2->radius)));
 }
@@ -3588,7 +3591,7 @@ circle_right(CIRCLE * circle1, CIRCLE * circle2)
  *								the left edge of circle2?
  */
 bool
-circle_overright(CIRCLE * circle1, CIRCLE * circle2)
+circle_overright(CIRCLE *circle1, CIRCLE *circle2)
 {
 	return (FPge((circle1->center.x - circle1->radius), (circle2->center.x - circle2->radius)));
 }
@@ -3596,7 +3599,7 @@ circle_overright(CIRCLE * circle1, CIRCLE * circle2)
 /*		circle_contained		-		is circle1 contained by circle2?
  */
 bool
-circle_contained(CIRCLE * circle1, CIRCLE * circle2)
+circle_contained(CIRCLE *circle1, CIRCLE *circle2)
 {
 	return (FPle((point_dt(&circle1->center, &circle2->center) + circle1->radius), circle2->radius));
 }
@@ -3604,7 +3607,7 @@ circle_contained(CIRCLE * circle1, CIRCLE * circle2)
 /*		circle_contain	-		does circle1 contain circle2?
  */
 bool
-circle_contain(CIRCLE * circle1, CIRCLE * circle2)
+circle_contain(CIRCLE *circle1, CIRCLE *circle2)
 {
 	return (FPle((point_dt(&circle1->center, &circle2->center) + circle2->radius), circle1->radius));
 }
@@ -3614,13 +3617,13 @@ circle_contain(CIRCLE * circle1, CIRCLE * circle2)
  *				is circle1 entirely {above,below} circle2?
  */
 bool
-circle_below(CIRCLE * circle1, CIRCLE * circle2)
+circle_below(CIRCLE *circle1, CIRCLE *circle2)
 {
 	return (FPle((circle1->center.y + circle1->radius), (circle2->center.y - circle2->radius)));
 }
 
 bool
-circle_above(CIRCLE * circle1, CIRCLE * circle2)
+circle_above(CIRCLE *circle1, CIRCLE *circle2)
 {
 	return (FPge((circle1->center.y - circle1->radius), (circle2->center.y + circle2->radius)));
 }
@@ -3630,37 +3633,37 @@ circle_above(CIRCLE * circle1, CIRCLE * circle2)
  *								our accuracy constraint?
  */
 bool
-circle_eq(CIRCLE * circle1, CIRCLE * circle2)
+circle_eq(CIRCLE *circle1, CIRCLE *circle2)
 {
 	return (FPeq(circle_ar(circle1), circle_ar(circle2)));
 }								/* circle_eq() */
 
 bool
-circle_ne(CIRCLE * circle1, CIRCLE * circle2)
+circle_ne(CIRCLE *circle1, CIRCLE *circle2)
 {
 	return (!circle_eq(circle1, circle2));
 }								/* circle_ne() */
 
 bool
-circle_lt(CIRCLE * circle1, CIRCLE * circle2)
+circle_lt(CIRCLE *circle1, CIRCLE *circle2)
 {
 	return (FPlt(circle_ar(circle1), circle_ar(circle2)));
 }								/* circle_lt() */
 
 bool
-circle_gt(CIRCLE * circle1, CIRCLE * circle2)
+circle_gt(CIRCLE *circle1, CIRCLE *circle2)
 {
 	return (FPgt(circle_ar(circle1), circle_ar(circle2)));
 }								/* circle_gt() */
 
 bool
-circle_le(CIRCLE * circle1, CIRCLE * circle2)
+circle_le(CIRCLE *circle1, CIRCLE *circle2)
 {
 	return (FPle(circle_ar(circle1), circle_ar(circle2)));
 }								/* circle_le() */
 
 bool
-circle_ge(CIRCLE * circle1, CIRCLE * circle2)
+circle_ge(CIRCLE *circle1, CIRCLE *circle2)
 {
 	return (FPge(circle_ar(circle1), circle_ar(circle2)));
 }								/* circle_ge() */
@@ -3675,7 +3678,7 @@ circle_ge(CIRCLE * circle1, CIRCLE * circle2)
  *---------------------------------------------------------*/
 
 static CIRCLE *
-circle_copy(CIRCLE * circle)
+circle_copy(CIRCLE *circle)
 {
 	CIRCLE	   *result;
 
@@ -3693,7 +3696,7 @@ circle_copy(CIRCLE * circle)
  * Translation operator.
  */
 CIRCLE	   *
-circle_add_pt(CIRCLE * circle, Point * point)
+circle_add_pt(CIRCLE *circle, Point *point)
 {
 	CIRCLE	   *result;
 
@@ -3709,7 +3712,7 @@ circle_add_pt(CIRCLE * circle, Point * point)
 }								/* circle_add_pt() */
 
 CIRCLE	   *
-circle_sub_pt(CIRCLE * circle, Point * point)
+circle_sub_pt(CIRCLE *circle, Point *point)
 {
 	CIRCLE	   *result;
 
@@ -3729,7 +3732,7 @@ circle_sub_pt(CIRCLE * circle, Point * point)
  * Rotation and scaling operators.
  */
 CIRCLE	   *
-circle_mul_pt(CIRCLE * circle, Point * point)
+circle_mul_pt(CIRCLE *circle, Point *point)
 {
 	CIRCLE	   *result;
 	Point	   *p;
@@ -3749,7 +3752,7 @@ circle_mul_pt(CIRCLE * circle, Point * point)
 }								/* circle_mul_pt() */
 
 CIRCLE	   *
-circle_div_pt(CIRCLE * circle, Point * point)
+circle_div_pt(CIRCLE *circle, Point *point)
 {
 	CIRCLE	   *result;
 	Point	   *p;
@@ -3772,7 +3775,7 @@ circle_div_pt(CIRCLE * circle, Point * point)
 /*		circle_area		-		returns the area of the circle.
  */
 double	   *
-circle_area(CIRCLE * circle)
+circle_area(CIRCLE *circle)
 {
 	double	   *result;
 
@@ -3786,7 +3789,7 @@ circle_area(CIRCLE * circle)
 /*		circle_diameter -		returns the diameter of the circle.
  */
 double	   *
-circle_diameter(CIRCLE * circle)
+circle_diameter(CIRCLE *circle)
 {
 	double	   *result;
 
@@ -3800,7 +3803,7 @@ circle_diameter(CIRCLE * circle)
 /*		circle_radius	-		returns the radius of the circle.
  */
 double	   *
-circle_radius(CIRCLE * circle)
+circle_radius(CIRCLE *circle)
 {
 	double	   *result;
 
@@ -3815,7 +3818,7 @@ circle_radius(CIRCLE * circle)
  *								  two circles.
  */
 double	   *
-circle_distance(CIRCLE * circle1, CIRCLE * circle2)
+circle_distance(CIRCLE *circle1, CIRCLE *circle2)
 {
 	double	   *result;
 
@@ -3830,7 +3833,7 @@ circle_distance(CIRCLE * circle1, CIRCLE * circle2)
 
 
 bool
-circle_contain_pt(CIRCLE * circle, Point * point)
+circle_contain_pt(CIRCLE *circle, Point *point)
 {
 	bool		within;
 	double	   *d;
@@ -3847,7 +3850,7 @@ circle_contain_pt(CIRCLE * circle, Point * point)
 
 
 bool
-pt_contained_circle(Point * point, CIRCLE * circle)
+pt_contained_circle(Point *point, CIRCLE *circle)
 {
 	return (circle_contain_pt(circle, point));
 }								/* circle_contain_pt() */
@@ -3857,7 +3860,7 @@ pt_contained_circle(Point * point, CIRCLE * circle)
  *						  a point and a circle.
  */
 double	   *
-dist_pc(Point * point, CIRCLE * circle)
+dist_pc(Point *point, CIRCLE *circle)
 {
 	double	   *result;
 
@@ -3874,7 +3877,7 @@ dist_pc(Point * point, CIRCLE * circle)
 /*		circle_center	-		returns the center point of the circle.
  */
 Point	   *
-circle_center(CIRCLE * circle)
+circle_center(CIRCLE *circle)
 {
 	Point	   *result;
 
@@ -3889,7 +3892,7 @@ circle_center(CIRCLE * circle)
 /*		circle_ar		-		returns the area of the circle.
  */
 static double
-circle_ar(CIRCLE * circle)
+circle_ar(CIRCLE *circle)
 {
 	return (PI * (circle->radius * circle->radius));
 }
@@ -3900,7 +3903,7 @@ circle_ar(CIRCLE * circle)
  */
 #ifdef NOT_USED
 double
-circle_dt(CIRCLE * circle1, CIRCLE * circle2)
+circle_dt(CIRCLE *circle1, CIRCLE *circle2)
 {
 	double		result;
 
@@ -3916,7 +3919,7 @@ circle_dt(CIRCLE * circle1, CIRCLE * circle2)
  *---------------------------------------------------------*/
 
 CIRCLE	   *
-circle(Point * center, float8 * radius)
+circle(Point *center, float8 *radius)
 {
 	CIRCLE	   *result;
 
@@ -3934,7 +3937,7 @@ circle(Point * center, float8 * radius)
 
 
 BOX		   *
-circle_box(CIRCLE * circle)
+circle_box(CIRCLE *circle)
 {
 	BOX		   *box;
 	double		delta;
@@ -3977,7 +3980,7 @@ box_circle(BOX *box)
 
 
 POLYGON    *
-circle_poly(int npts, CIRCLE * circle)
+circle_poly(int npts, CIRCLE *circle)
 {
 	POLYGON    *poly;
 	int			size;
@@ -3990,7 +3993,7 @@ circle_poly(int npts, CIRCLE * circle)
 	if (FPzero(circle->radius) || (npts < 2))
 		elog(WARN, "Unable to convert circle to polygon", NULL);
 
-	size = offsetof(POLYGON, p[0]) + (sizeof(poly->p[0]) * npts);
+	size = offsetof(POLYGON, p[0]) +(sizeof(poly->p[0]) * npts);
 	poly = PALLOC(size);
 
 	memset((char *) poly, 0, size);		/* zero any holes */
@@ -4015,7 +4018,7 @@ circle_poly(int npts, CIRCLE * circle)
  *	rather than straight average values of points - tgl 97/01/21.
  */
 CIRCLE	   *
-poly_circle(POLYGON * poly)
+poly_circle(POLYGON *poly)
 {
 	CIRCLE	   *circle;
 	int			i;
@@ -4062,7 +4065,7 @@ poly_circle(POLYGON * poly)
 #define HIT_IT INT_MAX
 
 static int
-point_inside(Point * p, int npts, Point plist[])
+point_inside(Point *p, int npts, Point plist[])
 {
 	double		x0,
 				y0;

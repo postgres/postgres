@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.6 1997/09/08 02:24:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.7 1997/09/08 21:45:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,12 +38,12 @@
 #include "utils/mcxt.h"
 #include "utils/lsyscache.h"
 
-static Plan *subplanner(Query * root, List * flat_tlist, List * qual);
-static Result *make_result(List * tlist, Node * resconstantqual, Plan * subplan);
+static Plan *subplanner(Query *root, List *flat_tlist, List *qual);
+static Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
 
 static Plan *
-make_groupPlan(List ** tlist, bool tuplePerGroup,
-			   List * groupClause, Plan * subplan);
+make_groupPlan(List **tlist, bool tuplePerGroup,
+			   List *groupClause, Plan *subplan);
 
 /*
  * query_planner--
@@ -63,10 +63,10 @@ make_groupPlan(List ** tlist, bool tuplePerGroup,
  *	  Returns a query plan.
  */
 Plan	   *
-query_planner(Query * root,
+query_planner(Query *root,
 			  int command_type,
-			  List * tlist,
-			  List * qual)
+			  List *tlist,
+			  List *qual)
 {
 	List	   *constant_qual = NIL;
 	List	   *flattened_tlist = NIL;
@@ -278,9 +278,9 @@ query_planner(Query * root,
  *
  */
 static Plan *
-subplanner(Query * root,
-		   List * flat_tlist,
-		   List * qual)
+subplanner(Query *root,
+		   List *flat_tlist,
+		   List *qual)
 {
 	Rel		   *final_relation;
 	List	   *final_relation_list;
@@ -354,9 +354,9 @@ subplanner(Query * root,
  *****************************************************************************/
 
 static Result *
-make_result(List * tlist,
-			Node * resconstantqual,
-			Plan * subplan)
+make_result(List *tlist,
+			Node *resconstantqual,
+			Plan *subplan)
 {
 	Result	   *node = makeNode(Result);
 	Plan	   *plan = &node->plan;
@@ -378,10 +378,10 @@ make_result(List * tlist,
  *****************************************************************************/
 
 static Plan *
-make_groupPlan(List ** tlist,
+make_groupPlan(List **tlist,
 			   bool tuplePerGroup,
-			   List * groupClause,
-			   Plan * subplan)
+			   List *groupClause,
+			   Plan *subplan)
 {
 	List	   *sort_tlist;
 	List	   *sl,

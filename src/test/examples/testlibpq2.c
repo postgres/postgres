@@ -22,7 +22,7 @@ INSERT INTO TBL1 values (10);
 #include "libpq-fe.h"
 
 void
-exit_nicely(PGconn * conn)
+exit_nicely(PGconn *conn)
 {
 	PQfinish(conn);
 	exit(1);

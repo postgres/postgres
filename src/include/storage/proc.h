@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.7 1997/09/08 02:39:07 momjian Exp $
+ * $Id: proc.h,v 1.8 1997/09/08 21:54:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@ typedef struct
 	int			semNum;
 	IpcSemaphoreId semId;
 	IpcSemaphoreKey semKey;
-}			SEMA;
+} SEMA;
 
 /*
  * Each backend has:
@@ -54,7 +54,7 @@ typedef struct proc
 	short		sLocks[MAX_SPINS];		/* Spin lock stats */
 	SHM_QUEUE	lockQueue;		/* locks associated with current
 								 * transaction */
-}			PROC;
+} PROC;
 
 
 /*
@@ -72,7 +72,7 @@ typedef struct procglobal
 	int			numProcs;
 	IPCKey		currKey;
 	int32		freeSemMap[MAX_PROC_SEMS / PROC_NSEMS_PER_SET];
-}			PROC_HDR;
+} PROC_HDR;
 
 extern PROC *MyProc;
 
@@ -101,13 +101,13 @@ extern bool ProcRemove(int pid);
 /* extern bool ProcKill(int exitStatus, int pid); */
 /* make static in storage/lmgr/proc.c -- jolly */
 
-extern void ProcQueueInit(PROC_QUEUE * queue);
+extern void ProcQueueInit(PROC_QUEUE *queue);
 extern int
-ProcSleep(PROC_QUEUE * queue, SPINLOCK spinlock, int token,
-		  int prio, LOCK * lock);
-extern int	ProcLockWakeup(PROC_QUEUE * queue, char *ltable, char *lock);
-extern void ProcAddLock(SHM_QUEUE * elem);
-extern void ProcReleaseSpins(PROC * proc);
+ProcSleep(PROC_QUEUE *queue, SPINLOCK spinlock, int token,
+		  int prio, LOCK *lock);
+extern int	ProcLockWakeup(PROC_QUEUE *queue, char *ltable, char *lock);
+extern void ProcAddLock(SHM_QUEUE *elem);
+extern void ProcReleaseSpins(PROC *proc);
 extern void ProcFreeAllSemaphores(void);
 
 #endif							/* PROC_H */

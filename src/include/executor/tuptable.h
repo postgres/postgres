@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tuptable.h,v 1.6 1997/09/08 02:36:45 momjian Exp $
+ * $Id: tuptable.h,v 1.7 1997/09/08 21:52:16 momjian Exp $
  *
  * NOTES
  *	  The tuple table interface is getting pretty ugly.
@@ -53,7 +53,7 @@ typedef struct TupleTableSlot
 	TupleDesc	ttc_tupleDescriptor;
 	Buffer		ttc_buffer;
 	int			ttc_whichplan;
-}			TupleTableSlot;
+} TupleTableSlot;
 
 /* ----------------
  *		tuple table data structure
@@ -64,7 +64,7 @@ typedef struct TupleTableData
 	int			size;			/* size of the table */
 	int			next;			/* next available slot number */
 	TupleTableSlot *array;		/* array of TupleTableSlot's */
-}			TupleTableData;
+} TupleTableData;
 
 typedef TupleTableData *TupleTable;
 

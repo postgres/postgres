@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.14 1997/09/08 02:23:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.15 1997/09/08 21:43:41 momjian Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -49,7 +49,7 @@ static LargeObjectDesc *cookies[MAX_LOBJ_FDS];
 static GlobalMemory fscxt = NULL;
 
 
-static int	newLOfd(LargeObjectDesc * lobjCookie);
+static int	newLOfd(LargeObjectDesc *lobjCookie);
 static void deleteLOfd(int fd);
 
 
@@ -254,7 +254,7 @@ lowrite(int fd, struct varlena * wbuf)
  *	  imports a file as an (inversion) large object.
  */
 Oid
-lo_import(text * filename)
+lo_import(text *filename)
 {
 	int			fd;
 	int			nbytes,
@@ -317,7 +317,7 @@ lo_import(text * filename)
  *	  exports an (inversion) large object.
  */
 int4
-lo_export(Oid lobjId, text * filename)
+lo_export(Oid lobjId, text *filename)
 {
 	int			fd;
 	int			nbytes,
@@ -377,7 +377,7 @@ lo_export(Oid lobjId, text * filename)
  *****************************************************************************/
 
 static int
-newLOfd(LargeObjectDesc * lobjCookie)
+newLOfd(LargeObjectDesc *lobjCookie)
 {
 	int			i;
 

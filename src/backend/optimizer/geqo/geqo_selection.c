@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_selection.c,v 1.3 1997/09/08 02:24:08 momjian Exp $
+ * $Id: geqo_selection.c,v 1.4 1997/09/08 21:44:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@ static int	linear(int max, double bias);
  *	 second genes are selected from the pool
  */
 void
-geqo_selection(Chromosome * momma, Chromosome * daddy, Pool * pool, double bias)
+geqo_selection(Chromosome *momma, Chromosome *daddy, Pool *pool, double bias)
 {
 	int			first,
 				second;
