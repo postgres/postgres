@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.27 1999/07/16 04:59:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.28 1999/07/17 04:00:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 #include <signal.h>
 
 #include "postgres.h"
-
 
 #include "catalog/catalog.h"
 #include "executor/execdebug.h"

@@ -8,12 +8,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scansup.c,v 1.14 1999/07/15 15:19:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scansup.c,v 1.15 1999/07/17 04:00:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-
-#include "config.h"
 
 #include <ctype.h>
 #include <string.h>

@@ -1,6 +1,8 @@
-/* $Id: isinf.c,v 1.8 1999/07/16 04:59:35 momjian Exp $ */
+/* $Id: isinf.c,v 1.9 1999/07/17 04:00:29 momjian Exp $ */
 
 #include <math.h>
+
+#include "config.h"
 
 #if HAVE_FPCLASS
 #if HAVE_IEEEFP_H
