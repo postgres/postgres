@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.17 1998/07/19 05:49:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.18 1998/07/19 10:05:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -354,23 +354,6 @@ ExecMergeTupleDump(ExprContext *econtext, MergeJoinState *mergestate)
 
 #endif
 
-static void
-CleanUpSort(Plan *plan)
-{
-
-	if (plan == NULL)
-		return;
-
-	if (plan->type == T_Sort)
-	{
-		Sort	   *sort = (Sort *) plan;
-
-		/* This may need to be fixed or moved somewhere else, bjm */
-		/* psort_end(sort); */
-
-	}
-}
-
 /* ----------------------------------------------------------------
  *		ExecMergeJoin
  *
@@ -665,8 +648,6 @@ ExecMergeJoin(MergeJoin *node)
 				if (TupIsNull(outerTupleSlot))
 				{
 					MJ_printf("ExecMergeJoin: **** outer tuple is nil ****\n");
-					CleanUpSort(node->join.lefttree->lefttree);
-					CleanUpSort(node->join.righttree->lefttree);
 					return NULL;
 				}
 
