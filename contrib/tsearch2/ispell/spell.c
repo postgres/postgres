@@ -744,7 +744,7 @@ NormalizeSubWord(IspellDict * Conf, char *word, char flag) {
 	}
 
 	if (cur == forms) {
-		free(forms);
+		pfree(forms);
 		return (NULL);
 	}
 	return (forms);
@@ -848,14 +848,14 @@ SplitToVariants( IspellDict * Conf, SPNode *snode, SplitVar * orig, char *word, 
 					new->nstem++;
 					sptr++;
 				}
-				free(subres);
+				pfree(subres);
 
 				while( ptr->next ) 
 					ptr = ptr->next;
 				ptr->next = SplitToVariants(Conf, NULL, new, word, wordlen, startpos+lenaff, startpos+lenaff);
  
-				free(new->stem);
-				free(new);
+				pfree(new->stem);
+				pfree(new);
 			}
 		}
 
@@ -926,16 +926,16 @@ NINormalizeWord(IspellDict * Conf, char *word) {
 						cur++; ptr++;
 					}
 					*cur=NULL;
-					free(subres);
+					pfree(subres);
 					var->stem[ 0 ] = NULL;
 				}
 			}
 	
 			for(i=0;i<var->nstem && var->stem[ i ];i++)
-				free( var->stem[i] );	
+				pfree( var->stem[i] );	
 			ptr = var->next;
-			free(var->stem);
-			free(var);	
+			pfree(var->stem);
+			pfree(var);	
 			var=ptr;
 		}
 	}
