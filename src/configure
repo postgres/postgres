@@ -1390,7 +1390,7 @@ done
 test -n "$INSTALL" || INSTALL="NONE"
 
 if test "$INSTALL" = "NONE"
-for ac_prog in installbsd
+then	for ac_prog in installbsd
 do
 # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -1429,7 +1429,7 @@ test -n "$INSTALL" || INSTALL="NONE"
 
 fi
 if test "$INSTALL" = "NONE"
-for ac_prog in bsdinst
+then	for ac_prog in bsdinst
 do
 # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -1468,7 +1468,7 @@ test -n "$INSTALL" || INSTALL="NONE"
 
 fi
 if test "$INSTALL" = "NONE"
-for ac_prog in scoinst
+then	for ac_prog in scoinst
 do
 # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -1507,7 +1507,7 @@ test -n "$INSTALL" || INSTALL="NONE"
 
 fi
 if test "$INSTALL" = "NONE"
-for ac_prog in install
+then	for ac_prog in install
 do
 # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -1546,7 +1546,7 @@ test -n "$INSTALL" || INSTALL="NONE"
 
 fi
 if test "$INSTALL" = "NONE"
-for ac_prog in install-sh
+then	for ac_prog in install-sh
 do
 # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
