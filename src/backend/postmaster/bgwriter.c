@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.13 2005/01/10 20:02:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.14 2005/02/19 23:16:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -508,6 +508,23 @@ RequestCheckpoint(bool waitforit)
 	volatile BgWriterShmemStruct *bgs = BgWriterShmem;
 	sig_atomic_t old_failed = bgs->ckpt_failed;
 	sig_atomic_t old_started = bgs->ckpt_started;
+
+	/*
+	 * If in a standalone backend, just do it ourselves.
+	 */
+	if (!IsPostmasterEnvironment)
+	{
+		CreateCheckPoint(false, true);
+
+		/*
+		 * After any checkpoint, close all smgr files.	This is so we
+		 * won't hang onto smgr references to deleted files
+		 * indefinitely.
+		 */
+		smgrcloseall();
+
+		return;
+	}
 
 	/*
 	 * Send signal to request checkpoint.  When waitforit is false, we
