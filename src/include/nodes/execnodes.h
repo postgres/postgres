@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.97 2003/04/08 23:20:04 tgl Exp $
+ * $Id: execnodes.h,v 1.98 2003/05/28 16:04:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,19 +27,17 @@
 /* ----------------
  *	  IndexInfo information
  *
- *		this class holds the information needed to construct new index
+ *		this struct holds the information needed to construct new index
  *		entries for a particular index.  Used for both index_build and
  *		retail creation of index entries.
  *
  *		NumIndexAttrs		number of columns in this index
- *							(1 if a func. index, else same as NumKeyAttrs)
- *		NumKeyAttrs			number of key attributes for this index
- *							(ie, number of attrs from underlying relation)
  *		KeyAttrNumbers		underlying-rel attribute numbers used as keys
+ *							(zeroes indicate expressions)
+ *		Expressions			expr trees for expression entries, or NIL if none
+ *		ExpressionsState	exec state for expressions, or NIL if none
  *		Predicate			partial-index predicate, or NIL if none
  *		PredicateState		exec state for predicate, or NIL if none
- *		FuncOid				OID of function, or InvalidOid if not f. index
- *		FuncInfo			fmgr lookup data for function, if FuncOid valid
  *		Unique				is it a unique index?
  * ----------------
  */
@@ -47,12 +45,11 @@ typedef struct IndexInfo
 {
 	NodeTag		type;
 	int			ii_NumIndexAttrs;
-	int			ii_NumKeyAttrs;
 	AttrNumber	ii_KeyAttrNumbers[INDEX_MAX_KEYS];
+	List	   *ii_Expressions;	/* list of Expr */
+	List	   *ii_ExpressionsState; /* list of ExprState */
 	List	   *ii_Predicate;	/* list of Expr */
 	List	   *ii_PredicateState; /* list of ExprState */
-	Oid			ii_FuncOid;
-	FmgrInfo	ii_FuncInfo;
 	bool		ii_Unique;
 } IndexInfo;
 

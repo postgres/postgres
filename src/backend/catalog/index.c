@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.209 2003/02/19 04:06:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.210 2003/05/28 16:03:56 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -42,6 +42,7 @@
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "optimizer/prep.h"
+#include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "storage/sinval.h"
 #include "storage/smgr.h"
@@ -63,11 +64,9 @@
 	((natts) * AVG_ATTR_SIZE + MAXALIGN(sizeof(HeapTupleHeaderData))))
 
 /* non-export function prototypes */
-static TupleDesc BuildFuncTupleDesc(Oid funcOid,
-				   Oid *classObjectId);
 static TupleDesc ConstructTupleDescriptor(Relation heapRelation,
-						 int numatts, AttrNumber *attNums,
-						 Oid *classObjectId);
+										  IndexInfo *indexInfo,
+										  Oid *classObjectId);
 static void UpdateRelationRelation(Relation indexRelation);
 static void InitializeAttributeOids(Relation indexRelation,
 						int numatts, Oid indexoid);
@@ -98,95 +97,18 @@ IsReindexProcessing(void)
 	return reindexing;
 }
 
-static TupleDesc
-BuildFuncTupleDesc(Oid funcOid,
-				   Oid *classObjectId)
-{
-	TupleDesc	funcTupDesc;
-	HeapTuple	tuple;
-	Oid			keyType;
-	Oid			retType;
-	Form_pg_type typeTup;
-
-	/*
-	 * Allocate and zero a tuple descriptor for a one-column tuple.
-	 */
-	funcTupDesc = CreateTemplateTupleDesc(1, false);
-	funcTupDesc->attrs[0] = (Form_pg_attribute) palloc0(ATTRIBUTE_TUPLE_SIZE);
-
-	/*
-	 * Lookup the function to get its name and return type.
-	 */
-	tuple = SearchSysCache(PROCOID,
-						   ObjectIdGetDatum(funcOid),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "Function %u does not exist", funcOid);
-	retType = ((Form_pg_proc) GETSTRUCT(tuple))->prorettype;
-
-	/*
-	 * make the attributes name the same as the functions
-	 */
-	namestrcpy(&funcTupDesc->attrs[0]->attname,
-			   NameStr(((Form_pg_proc) GETSTRUCT(tuple))->proname));
-
-	ReleaseSysCache(tuple);
-
-	/*
-	 * Check the opclass to see if it provides a keytype (overriding the
-	 * function result type).
-	 */
-	tuple = SearchSysCache(CLAOID,
-						   ObjectIdGetDatum(classObjectId[0]),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "Opclass %u does not exist", classObjectId[0]);
-	keyType = ((Form_pg_opclass) GETSTRUCT(tuple))->opckeytype;
-	ReleaseSysCache(tuple);
-
-	if (!OidIsValid(keyType))
-		keyType = retType;
-
-	/*
-	 * Lookup the key type in pg_type for the type length etc.
-	 */
-	tuple = SearchSysCache(TYPEOID,
-						   ObjectIdGetDatum(keyType),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "Type %u does not exist", keyType);
-	typeTup = (Form_pg_type) GETSTRUCT(tuple);
-
-	/*
-	 * Assign some of the attributes values. Leave the rest as 0.
-	 */
-	funcTupDesc->attrs[0]->attnum = 1;
-	funcTupDesc->attrs[0]->atttypid = keyType;
-	funcTupDesc->attrs[0]->attlen = typeTup->typlen;
-	funcTupDesc->attrs[0]->attbyval = typeTup->typbyval;
-	funcTupDesc->attrs[0]->attstorage = typeTup->typstorage;
-	funcTupDesc->attrs[0]->attalign = typeTup->typalign;
-	funcTupDesc->attrs[0]->attcacheoff = -1;
-	funcTupDesc->attrs[0]->atttypmod = -1;
-	funcTupDesc->attrs[0]->attislocal = true;
-
-	ReleaseSysCache(tuple);
-
-	return funcTupDesc;
-}
-
-/* ----------------------------------------------------------------
+/*
  *		ConstructTupleDescriptor
  *
- * Build an index tuple descriptor for a new index (plain not functional)
- * ----------------------------------------------------------------
+ * Build an index tuple descriptor for a new index
  */
 static TupleDesc
 ConstructTupleDescriptor(Relation heapRelation,
-						 int numatts,
-						 AttrNumber *attNums,
+						 IndexInfo *indexInfo,
 						 Oid *classObjectId)
 {
+	int			numatts = indexInfo->ii_NumIndexAttrs;
+	List	   *indexprs = indexInfo->ii_Expressions;
 	TupleDesc	heapTupDesc;
 	TupleDesc	indexTupDesc;
 	int			natts;			/* #atts in heap rel --- for error checks */
@@ -198,69 +120,109 @@ ConstructTupleDescriptor(Relation heapRelation,
 	/*
 	 * allocate the new tuple descriptor
 	 */
-
 	indexTupDesc = CreateTemplateTupleDesc(numatts, false);
 
-	/* ----------------
-	 *	  for each attribute we are indexing, obtain its attribute
-	 *	  tuple form from either the static table of system attribute
-	 *	  tuple forms or the relation tuple descriptor
-	 * ----------------
+	/*
+	 * For simple index columns, we copy the pg_attribute row from the
+	 * parent relation and modify it as necessary.  For expressions we
+	 * have to cons up a pg_attribute row the hard way.
 	 */
 	for (i = 0; i < numatts; i++)
 	{
-		AttrNumber	atnum;		/* attributeNumber[attributeOffset] */
-		Form_pg_attribute from;
+		AttrNumber	atnum = indexInfo->ii_KeyAttrNumbers[i];
 		Form_pg_attribute to;
 		HeapTuple	tuple;
+		Form_pg_type typeTup;
 		Oid			keyType;
 
-		/*
-		 * get the attribute number and make sure it's valid; determine
-		 * which attribute descriptor to copy
-		 */
-		atnum = attNums[i];
+		indexTupDesc->attrs[i] = to =
+			(Form_pg_attribute) palloc0(ATTRIBUTE_TUPLE_SIZE);
 
-		if (!AttrNumberIsForUserDefinedAttr(atnum))
+		if (atnum != 0)
 		{
+			/* Simple index column */
+			Form_pg_attribute from;
+
+			if (atnum < 0)
+			{
+				/*
+				 * here we are indexing on a system attribute (-1...-n)
+				 */
+				from = SystemAttributeDefinition(atnum,
+												 heapRelation->rd_rel->relhasoids);
+			}
+			else
+			{
+				/*
+				 * here we are indexing on a normal attribute (1...n)
+				 */
+				if (atnum > natts)
+					elog(ERROR, "cannot create index: column %d does not exist",
+						 atnum);
+				from = heapTupDesc->attrs[AttrNumberGetAttrOffset(atnum)];
+			}
+
 			/*
-			 * here we are indexing on a system attribute (-1...-n)
+			 * now that we've determined the "from", let's copy the tuple desc
+			 * data...
 			 */
-			from = SystemAttributeDefinition(atnum,
-									   heapRelation->rd_rel->relhasoids);
+			memcpy(to, from, ATTRIBUTE_TUPLE_SIZE);
+
+			/*
+			 * Fix the stuff that should not be the same as the underlying
+			 * attr
+			 */
+			to->attnum = i + 1;
+
+			to->attstattarget = 0;
+			to->attcacheoff = -1;
+			to->attnotnull = false;
+			to->atthasdef = false;
+			to->attislocal = true;
+			to->attinhcount = 0;
 		}
 		else
 		{
+			/* Expressional index */
+			Node	   *indexkey;
+
+			if (indexprs == NIL)
+				elog(ERROR, "too few entries in indexprs list");
+			indexkey = (Node *) lfirst(indexprs);
+			indexprs = lnext(indexprs);
+
 			/*
-			 * here we are indexing on a normal attribute (1...n)
+			 * Make the attribute's name "pg_expresssion_nnn" (maybe think
+			 * of something better later)
 			 */
-			if (atnum > natts)
-				elog(ERROR, "cannot create index: column %d does not exist",
-					 atnum);
+			sprintf(NameStr(to->attname), "pg_expression_%d", i + 1);
 
-			from = heapTupDesc->attrs[AttrNumberGetAttrOffset(atnum)];
+			/*
+			 * Lookup the expression type in pg_type for the type length etc.
+			 */
+			keyType = exprType(indexkey);
+			tuple = SearchSysCache(TYPEOID,
+								   ObjectIdGetDatum(keyType),
+								   0, 0, 0);
+			if (!HeapTupleIsValid(tuple))
+				elog(ERROR, "Type %u does not exist", keyType);
+			typeTup = (Form_pg_type) GETSTRUCT(tuple);
+
+			/*
+			 * Assign some of the attributes values. Leave the rest as 0.
+			 */
+			to->attnum = i + 1;
+			to->atttypid = keyType;
+			to->attlen = typeTup->typlen;
+			to->attbyval = typeTup->typbyval;
+			to->attstorage = typeTup->typstorage;
+			to->attalign = typeTup->typalign;
+			to->attcacheoff = -1;
+			to->atttypmod = -1;
+			to->attislocal = true;
+
+			ReleaseSysCache(tuple);
 		}
-
-		/*
-		 * now that we've determined the "from", let's copy the tuple desc
-		 * data...
-		 */
-		indexTupDesc->attrs[i] = to =
-			(Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
-		memcpy(to, from, ATTRIBUTE_TUPLE_SIZE);
-
-		/*
-		 * Fix the stuff that should not be the same as the underlying
-		 * attr
-		 */
-		to->attnum = i + 1;
-
-		to->attstattarget = 0;
-		to->attcacheoff = -1;
-		to->attnotnull = false;
-		to->atthasdef = false;
-		to->attislocal = true;
-		to->attinhcount = 0;
 
 		/*
 		 * We do not yet have the correct relation OID for the index, so
@@ -284,8 +246,6 @@ ConstructTupleDescriptor(Relation heapRelation,
 		if (OidIsValid(keyType) && keyType != to->atttypid)
 		{
 			/* index value and heap value have different types */
-			Form_pg_type typeTup;
-
 			tuple = SearchSysCache(TYPEOID,
 								   ObjectIdGetDatum(keyType),
 								   0, 0, 0);
@@ -421,6 +381,7 @@ UpdateIndexRelation(Oid indexoid,
 {
 	int16		indkey[INDEX_MAX_KEYS];
 	Oid			indclass[INDEX_MAX_KEYS];
+	Datum		exprsDatum;
 	Datum		predDatum;
 	Datum		values[Natts_pg_index];
 	char		nulls[Natts_pg_index];
@@ -430,20 +391,32 @@ UpdateIndexRelation(Oid indexoid,
 
 	/*
 	 * Copy the index key and opclass info into zero-filled vectors
-	 *
-	 * (zero filling is essential 'cause we don't store the number of
-	 * index columns explicitly in pg_index, which is pretty grotty...)
 	 */
 	MemSet(indkey, 0, sizeof(indkey));
-	for (i = 0; i < indexInfo->ii_NumKeyAttrs; i++)
-		indkey[i] = indexInfo->ii_KeyAttrNumbers[i];
-
 	MemSet(indclass, 0, sizeof(indclass));
 	for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
+	{
+		indkey[i] = indexInfo->ii_KeyAttrNumbers[i];
 		indclass[i] = classOids[i];
+	}
 
 	/*
-	 * Convert the index-predicate (if any) to a text datum
+	 * Convert the index expressions (if any) to a text datum
+	 */
+	if (indexInfo->ii_Expressions != NIL)
+	{
+		char	   *exprsString;
+
+		exprsString = nodeToString(indexInfo->ii_Expressions);
+		exprsDatum = DirectFunctionCall1(textin,
+										 CStringGetDatum(exprsString));
+		pfree(exprsString);
+	}
+	else
+		exprsDatum = (Datum) 0;
+
+	/*
+	 * Convert the index predicate (if any) to a text datum
 	 */
 	if (indexInfo->ii_Predicate != NIL)
 	{
@@ -455,8 +428,7 @@ UpdateIndexRelation(Oid indexoid,
 		pfree(predString);
 	}
 	else
-		predDatum = DirectFunctionCall1(textin,
-										CStringGetDatum(""));
+		predDatum = (Datum) 0;
 
 	/*
 	 * open the system catalog index relation
@@ -470,14 +442,18 @@ UpdateIndexRelation(Oid indexoid,
 
 	values[Anum_pg_index_indexrelid - 1] = ObjectIdGetDatum(indexoid);
 	values[Anum_pg_index_indrelid - 1] = ObjectIdGetDatum(heapoid);
-	values[Anum_pg_index_indproc - 1] = ObjectIdGetDatum(indexInfo->ii_FuncOid);
 	values[Anum_pg_index_indkey - 1] = PointerGetDatum(indkey);
 	values[Anum_pg_index_indclass - 1] = PointerGetDatum(indclass);
-	values[Anum_pg_index_indisclustered - 1] = BoolGetDatum(false);
+	values[Anum_pg_index_indnatts - 1] = Int16GetDatum(indexInfo->ii_NumIndexAttrs);
 	values[Anum_pg_index_indisunique - 1] = BoolGetDatum(indexInfo->ii_Unique);
 	values[Anum_pg_index_indisprimary - 1] = BoolGetDatum(primary);
-	values[Anum_pg_index_indreference - 1] = ObjectIdGetDatum(InvalidOid);
+	values[Anum_pg_index_indisclustered - 1] = BoolGetDatum(false);
+	values[Anum_pg_index_indexprs - 1] = exprsDatum;
+	if (exprsDatum == (Datum) 0)
+		nulls[Anum_pg_index_indexprs - 1] = 'n';
 	values[Anum_pg_index_indpred - 1] = predDatum;
+	if (predDatum == (Datum) 0)
+		nulls[Anum_pg_index_indpred - 1] = 'n';
 
 	tuple = heap_formtuple(RelationGetDescr(pg_index), values, nulls);
 
@@ -538,8 +514,7 @@ index_create(Oid heapRelationId,
 	/*
 	 * check parameters
 	 */
-	if (indexInfo->ii_NumIndexAttrs < 1 ||
-		indexInfo->ii_NumKeyAttrs < 1)
+	if (indexInfo->ii_NumIndexAttrs < 1)
 		elog(ERROR, "must index at least one column");
 
 	if (!allow_system_table_mods &&
@@ -564,16 +539,9 @@ index_create(Oid heapRelationId,
 	/*
 	 * construct tuple descriptor for index tuples
 	 */
-	if (OidIsValid(indexInfo->ii_FuncOid))
-		indexTupDesc = BuildFuncTupleDesc(indexInfo->ii_FuncOid,
-										  classObjectId);
-	else
-		indexTupDesc = ConstructTupleDescriptor(heapRelation,
-												indexInfo->ii_NumKeyAttrs,
-											indexInfo->ii_KeyAttrNumbers,
-												classObjectId);
-
-	indexTupDesc->tdhasoid = false;
+	indexTupDesc = ConstructTupleDescriptor(heapRelation,
+											indexInfo,
+											classObjectId);
 
 	/*
 	 * create the index relation's relcache entry and physical disk file.
@@ -675,6 +643,10 @@ index_create(Oid heapRelationId,
 				constraintType = 0;		/* keep compiler quiet */
 			}
 
+			/* Shouldn't have any expressions */
+			if (indexInfo->ii_Expressions)
+				elog(ERROR, "constraints can't have index expressions");
+
 			conOid = CreateConstraintEntry(indexRelationName,
 										   namespaceId,
 										   constraintType,
@@ -682,7 +654,7 @@ index_create(Oid heapRelationId,
 										   false,		/* isDeferred */
 										   heapRelationId,
 										   indexInfo->ii_KeyAttrNumbers,
-										   indexInfo->ii_NumKeyAttrs,
+										   indexInfo->ii_NumIndexAttrs,
 										   InvalidOid,	/* no domain */
 										   InvalidOid,	/* no foreign key */
 										   NULL,
@@ -703,13 +675,17 @@ index_create(Oid heapRelationId,
 		}
 		else
 		{
-			for (i = 0; i < indexInfo->ii_NumKeyAttrs; i++)
+			/* Create auto dependencies on simply-referenced columns */
+			for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
 			{
-				referenced.classId = RelOid_pg_class;
-				referenced.objectId = heapRelationId;
-				referenced.objectSubId = indexInfo->ii_KeyAttrNumbers[i];
+				if (indexInfo->ii_KeyAttrNumbers[i] != 0)
+				{
+					referenced.classId = RelOid_pg_class;
+					referenced.objectId = heapRelationId;
+					referenced.objectSubId = indexInfo->ii_KeyAttrNumbers[i];
 
-				recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
+					recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
+				}
 			}
 		}
 
@@ -723,14 +699,24 @@ index_create(Oid heapRelationId,
 			recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 		}
 
-		/* Store the dependency on the function (if appropriate) */
-		if (OidIsValid(indexInfo->ii_FuncOid))
+		/* Store dependencies on anything mentioned in index expressions */
+		if (indexInfo->ii_Expressions)
 		{
-			referenced.classId = RelOid_pg_proc;
-			referenced.objectId = indexInfo->ii_FuncOid;
-			referenced.objectSubId = 0;
+			recordDependencyOnSingleRelExpr(&myself,
+											(Node *) indexInfo->ii_Expressions,
+											heapRelationId,
+											DEPENDENCY_NORMAL,
+											DEPENDENCY_AUTO);
+		}
 
-			recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+		/* Store dependencies on anything mentioned in predicate */
+		if (indexInfo->ii_Predicate)
+		{
+			recordDependencyOnSingleRelExpr(&myself,
+											(Node *) indexInfo->ii_Predicate,
+											heapRelationId,
+											DEPENDENCY_NORMAL,
+											DEPENDENCY_AUTO);
 		}
 	}
 
@@ -864,7 +850,7 @@ index_drop(Oid indexId)
 
 /* ----------------
  *		BuildIndexInfo
- *			Construct an IndexInfo record given the index's pg_index tuple
+ *			Construct an IndexInfo record for an open index
  *
  * IndexInfo stores the information about the index that's needed by
  * FormIndexDatum, which is used for both index_build() and later insertion
@@ -873,62 +859,31 @@ index_drop(Oid indexId)
  * ----------------
  */
 IndexInfo *
-BuildIndexInfo(Form_pg_index indexStruct)
+BuildIndexInfo(Relation index)
 {
 	IndexInfo  *ii = makeNode(IndexInfo);
+	Form_pg_index indexStruct = index->rd_index;
 	int			i;
 	int			numKeys;
 
-	/*
-	 * count the number of keys, and copy them into the IndexInfo
-	 */
-	numKeys = 0;
-	for (i = 0; i < INDEX_MAX_KEYS &&
-		 indexStruct->indkey[i] != InvalidAttrNumber; i++)
-	{
+	/* check the number of keys, and copy attr numbers into the IndexInfo */
+	numKeys = indexStruct->indnatts;
+	if (numKeys < 1 || numKeys > INDEX_MAX_KEYS)
+		elog(ERROR, "invalid indnatts %d for index %u",
+			 numKeys, RelationGetRelid(index));
+	ii->ii_NumIndexAttrs = numKeys;
+	for (i = 0; i < numKeys; i++)
 		ii->ii_KeyAttrNumbers[i] = indexStruct->indkey[i];
-		numKeys++;
-	}
-	ii->ii_NumKeyAttrs = numKeys;
 
-	/*
-	 * Handle functional index.
-	 *
-	 * If we have a functional index then the number of attributes defined in
-	 * the index must be 1 (the function's single return value). Otherwise
-	 * it's same as number of keys.
-	 */
-	ii->ii_FuncOid = indexStruct->indproc;
+	/* fetch any expressions needed for expressional indexes */
+	ii->ii_Expressions = RelationGetIndexExpressions(index);
+	ii->ii_ExpressionsState = NIL;
 
-	if (OidIsValid(indexStruct->indproc))
-	{
-		ii->ii_NumIndexAttrs = 1;
-		/* Do a lookup on the function, too */
-		fmgr_info(indexStruct->indproc, &ii->ii_FuncInfo);
-	}
-	else
-		ii->ii_NumIndexAttrs = numKeys;
+	/* fetch index predicate if any */
+	ii->ii_Predicate = RelationGetIndexPredicate(index);
+	ii->ii_PredicateState = NIL;
 
-	/*
-	 * If partial index, convert predicate into expression nodetree
-	 */
-	if (VARSIZE(&indexStruct->indpred) > VARHDRSZ)
-	{
-		char	   *predString;
-
-		predString = DatumGetCString(DirectFunctionCall1(textout,
-								PointerGetDatum(&indexStruct->indpred)));
-		ii->ii_Predicate = stringToNode(predString);
-		ii->ii_PredicateState = NIL;
-		pfree(predString);
-	}
-	else
-	{
-		ii->ii_Predicate = NIL;
-		ii->ii_PredicateState = NIL;
-	}
-
-	/* Other info */
+	/* other info */
 	ii->ii_Unique = indexStruct->indisunique;
 
 	return ii;
@@ -941,9 +896,13 @@ BuildIndexInfo(Form_pg_index indexStruct)
  *	indexInfo		Info about the index
  *	heapTuple		Heap tuple for which we must prepare an index entry
  *	heapDescriptor	tupledesc for heap tuple
- *	resultCxt		Temporary memory context for any palloc'd datums created
+ *	estate			executor state for evaluating any index expressions
  *	datum			Array of index Datums (output area)
  *	nullv			Array of is-null indicators (output area)
+ *
+ * When there are no index expressions, estate may be NULL.  Otherwise it
+ * must be supplied, *and* the ecxt_scantuple slot of its per-tuple expr
+ * context must point to the heap tuple passed in.
  *
  * For largely historical reasons, we don't actually call index_formtuple()
  * here, we just prepare its input arrays datum[] and nullv[].
@@ -953,69 +912,58 @@ void
 FormIndexDatum(IndexInfo *indexInfo,
 			   HeapTuple heapTuple,
 			   TupleDesc heapDescriptor,
-			   MemoryContext resultCxt,
+			   EState *estate,
 			   Datum *datum,
 			   char *nullv)
 {
-	MemoryContext oldContext;
+	List	   *indexprs;
 	int			i;
-	Datum		iDatum;
-	bool		isNull;
 
-	oldContext = MemoryContextSwitchTo(resultCxt);
-
-	if (OidIsValid(indexInfo->ii_FuncOid))
+	if (indexInfo->ii_Expressions != NIL &&
+		indexInfo->ii_ExpressionsState == NIL)
 	{
-		/*
-		 * Functional index --- compute the single index attribute
-		 */
-		FunctionCallInfoData fcinfo;
-		bool		anynull = false;
+		/* First time through, set up expression evaluation state */
+		indexInfo->ii_ExpressionsState = (List *)
+			ExecPrepareExpr((Expr *) indexInfo->ii_Expressions,
+							estate);
+		/* Check caller has set up context correctly */
+		Assert(GetPerTupleExprContext(estate)->ecxt_scantuple->val == heapTuple);
+	}
+	indexprs = indexInfo->ii_ExpressionsState;
 
-		MemSet(&fcinfo, 0, sizeof(fcinfo));
-		fcinfo.flinfo = &indexInfo->ii_FuncInfo;
-		fcinfo.nargs = indexInfo->ii_NumKeyAttrs;
+	for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
+	{
+		int			keycol = indexInfo->ii_KeyAttrNumbers[i];
+		Datum		iDatum;
+		bool		isNull;
 
-		for (i = 0; i < indexInfo->ii_NumKeyAttrs; i++)
+		if (keycol != 0)
 		{
-			fcinfo.arg[i] = heap_getattr(heapTuple,
-										 indexInfo->ii_KeyAttrNumbers[i],
-										 heapDescriptor,
-										 &fcinfo.argnull[i]);
-			anynull |= fcinfo.argnull[i];
-		}
-		if (indexInfo->ii_FuncInfo.fn_strict && anynull)
-		{
-			/* force a null result for strict function */
-			iDatum = (Datum) 0;
-			isNull = true;
+			/*
+			 * Plain index column; get the value we need directly from the
+			 * heap tuple.
+			 */
+			iDatum = heap_getattr(heapTuple, keycol, heapDescriptor, &isNull);
 		}
 		else
 		{
-			iDatum = FunctionCallInvoke(&fcinfo);
-			isNull = fcinfo.isnull;
+			/*
+			 * Index expression --- need to evaluate it.
+			 */
+			if (indexprs == NIL)
+				elog(ERROR, "wrong number of index expressions");
+			iDatum = ExecEvalExprSwitchContext((ExprState *) lfirst(indexprs),
+											   GetPerTupleExprContext(estate),
+											   &isNull,
+											   NULL);
+			indexprs = lnext(indexprs);
 		}
-		datum[0] = iDatum;
-		nullv[0] = (isNull) ? 'n' : ' ';
-	}
-	else
-	{
-		/*
-		 * Plain index --- for each attribute we need from the heap tuple,
-		 * get the attribute and stick it into the datum and nullv arrays.
-		 */
-		for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
-		{
-			iDatum = heap_getattr(heapTuple,
-								  indexInfo->ii_KeyAttrNumbers[i],
-								  heapDescriptor,
-								  &isNull);
-			datum[i] = iDatum;
-			nullv[i] = (isNull) ? 'n' : ' ';
-		}
+		datum[i] = iDatum;
+		nullv[i] = (isNull) ? 'n' : ' ';
 	}
 
-	MemoryContextSwitchTo(oldContext);
+	if (indexprs != NIL)
+		elog(ERROR, "wrong number of index expressions");
 }
 
 
@@ -1501,7 +1449,7 @@ IndexBuildHeapScan(Relation heapRelation,
 	heapDescriptor = RelationGetDescr(heapRelation);
 
 	/*
-	 * Need an EState for evaluation of functional-index functions
+	 * Need an EState for evaluation of index expressions
 	 * and partial-index predicates.
 	 */
 	estate = CreateExecutorState();
@@ -1510,9 +1458,9 @@ IndexBuildHeapScan(Relation heapRelation,
 	/*
 	 * If this is a predicate (partial) index, we will need to evaluate
 	 * the predicate using ExecQual, which requires the current tuple to
-	 * be in a slot of a TupleTable.
+	 * be in a slot of a TupleTable.  Likewise if there are any expressions.
 	 */
-	if (indexInfo->ii_Predicate != NIL)
+	if (indexInfo->ii_Predicate != NIL || indexInfo->ii_Expressions != NIL)
 	{
 		tupleTable = ExecCreateTupleTable(1);
 		slot = ExecAllocTableSlot(tupleTable);
@@ -1521,11 +1469,7 @@ IndexBuildHeapScan(Relation heapRelation,
 		/* Arrange for econtext's scan tuple to be the tuple under test */
 		econtext->ecxt_scantuple = slot;
 
-		/*
-		 * Set up execution state for predicate.  Note: we mustn't attempt to
-		 * cache this in the indexInfo, since we're building it in a transient
-		 * EState.
-		 */
+		/* Set up execution state for predicate. */
 		predicate = (List *)
 			ExecPrepareExpr((Expr *) indexInfo->ii_Predicate,
 							estate);
@@ -1676,12 +1620,12 @@ IndexBuildHeapScan(Relation heapRelation,
 		/*
 		 * For the current heap tuple, extract all the attributes we use
 		 * in this index, and note which are null.	This also performs
-		 * evaluation of the function, if this is a functional index.
+		 * evaluation of any expressions needed.
 		 */
 		FormIndexDatum(indexInfo,
 					   heapTuple,
 					   heapDescriptor,
-					   econtext->ecxt_per_tuple_memory,
+					   estate,
 					   attdata,
 					   nulls);
 
@@ -1702,6 +1646,10 @@ IndexBuildHeapScan(Relation heapRelation,
 		ExecDropTupleTable(tupleTable, true);
 
 	FreeExecutorState(estate);
+
+	/* These may have been pointing to the now-gone estate */
+	indexInfo->ii_ExpressionsState = NIL;
+	indexInfo->ii_PredicateState = NIL;
 
 	return reltuples;
 }
@@ -1807,7 +1755,7 @@ reindex_index(Oid indexId, bool force, bool inplace)
 	}
 
 	/* Fetch info needed for index_build */
-	indexInfo = BuildIndexInfo(iRel->rd_index);
+	indexInfo = BuildIndexInfo(iRel);
 
 	if (inplace)
 	{

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relcache.h,v 1.34 2002/08/06 02:36:35 tgl Exp $
+ * $Id: relcache.h,v 1.35 2003/05/28 16:04:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,8 @@ extern void RelationClose(Relation relation);
  * Routines to compute/retrieve additional cached information
  */
 extern List *RelationGetIndexList(Relation relation);
+extern List *RelationGetIndexExpressions(Relation relation);
+extern List *RelationGetIndexPredicate(Relation relation);
 
 extern void RelationInitIndexAccessInfo(Relation relation);
 

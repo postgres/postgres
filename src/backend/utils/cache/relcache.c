@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.184 2003/02/09 06:56:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.185 2003/05/28 16:03:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,6 +52,8 @@
 #include "catalog/pg_type.h"
 #include "commands/trigger.h"
 #include "miscadmin.h"
+#include "optimizer/clauses.h"
+#include "optimizer/planmain.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
@@ -939,10 +941,9 @@ void
 RelationInitIndexAccessInfo(Relation relation)
 {
 	HeapTuple	tuple;
-	Size		iformsize;
-	Form_pg_index iform;
 	Form_pg_am	aform;
 	MemoryContext indexcxt;
+	MemoryContext oldcontext;
 	IndexStrategy strategy;
 	Oid		   *operator;
 	RegProcedure *support;
@@ -952,8 +953,9 @@ RelationInitIndexAccessInfo(Relation relation)
 	uint16		amsupport;
 
 	/*
-	 * Make a copy of the pg_index entry for the index.  Note that this is
-	 * a variable-length tuple.
+	 * Make a copy of the pg_index entry for the index.  Since pg_index
+	 * contains variable-length and possibly-null fields, we have to do
+	 * this honestly rather than just treating it as a Form_pg_index struct.
 	 */
 	tuple = SearchSysCache(INDEXRELID,
 						   ObjectIdGetDatum(RelationGetRelid(relation)),
@@ -961,11 +963,11 @@ RelationInitIndexAccessInfo(Relation relation)
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "RelationInitIndexAccessInfo: no pg_index entry for index %u",
 			 RelationGetRelid(relation));
-	iformsize = tuple->t_len - tuple->t_data->t_hoff;
-	iform = (Form_pg_index) MemoryContextAlloc(CacheMemoryContext, iformsize);
-	memcpy(iform, GETSTRUCT(tuple), iformsize);
+	oldcontext = MemoryContextSwitchTo(CacheMemoryContext);
+	relation->rd_indextuple = heap_copytuple(tuple);
+	relation->rd_index = (Form_pg_index) GETSTRUCT(relation->rd_indextuple);
+	MemoryContextSwitchTo(oldcontext);
 	ReleaseSysCache(tuple);
-	relation->rd_index = iform;
 
 	/*
 	 * Make a copy of the pg_am entry for the index's access method
@@ -982,6 +984,9 @@ RelationInitIndexAccessInfo(Relation relation)
 	relation->rd_am = aform;
 
 	natts = relation->rd_rel->relnatts;
+	if (natts != relation->rd_index->indnatts)
+		elog(ERROR, "RelationInitIndexAccessInfo: relnatts disagrees with indnatts for index %u",
+			 RelationGetRelid(relation));
 	amstrategies = aform->amstrategies;
 	amsupport = aform->amsupport;
 
@@ -1047,9 +1052,15 @@ RelationInitIndexAccessInfo(Relation relation)
 	 * Fill the strategy map and the support RegProcedure arrays.
 	 * (supportinfo is left as zeroes, and is filled on-the-fly when used)
 	 */
-	IndexSupportInitialize(iform,
+	IndexSupportInitialize(relation->rd_index,
 						   strategy, operator, support,
 						   amstrategies, amsupport, natts);
+
+	/*
+	 * expressions and predicate cache will be filled later
+	 */
+	relation->rd_indexprs = NIL;
+	relation->rd_indpred = NIL;
 }
 
 /*
@@ -1087,8 +1098,7 @@ IndexSupportInitialize(Form_pg_index iform,
 	{
 		OpClassCacheEnt *opcentry;
 
-		if (iform->indkey[attIndex] == InvalidAttrNumber ||
-			!OidIsValid(iform->indclass[attIndex]))
+		if (!OidIsValid(iform->indclass[attIndex]))
 			elog(ERROR, "IndexSupportInitialize: bogus pg_index tuple");
 
 		/* look up the info for this opclass, using a cache */
@@ -1729,8 +1739,8 @@ RelationClearRelation(Relation relation, bool rebuild)
 	 * with, we can only get rid of these fields:
 	 */
 	FreeTriggerDesc(relation->trigdesc);
-	if (relation->rd_index)
-		pfree(relation->rd_index);
+	if (relation->rd_indextuple)
+		pfree(relation->rd_indextuple);
 	if (relation->rd_am)
 		pfree(relation->rd_am);
 	if (relation->rd_rel)
@@ -2659,6 +2669,136 @@ insert_ordered_oid(List *list, Oid datum)
 	return list;
 }
 
+/*
+ * RelationGetIndexExpressions -- get the index expressions for an index
+ *
+ * We cache the result of transforming pg_index.indexprs into a node tree.
+ * If the rel is not an index or has no expressional columns, we return NIL.
+ * Otherwise, the returned tree is copied into the caller's memory context.
+ * (We don't want to return a pointer to the relcache copy, since it could
+ * disappear due to relcache invalidation.)
+ */
+List *
+RelationGetIndexExpressions(Relation relation)
+{
+	List	   *result;
+	Datum		exprsDatum;
+	bool		isnull;
+	char	   *exprsString;
+	MemoryContext oldcxt;
+
+	/* Quick exit if we already computed the result. */
+	if (relation->rd_indexprs)
+		return (List *) copyObject(relation->rd_indexprs);
+
+	/* Quick exit if there is nothing to do. */
+	if (relation->rd_indextuple == NULL ||
+		heap_attisnull(relation->rd_indextuple, Anum_pg_index_indexprs))
+		return NIL;
+
+	/*
+	 * We build the tree we intend to return in the caller's context.
+	 * After successfully completing the work, we copy it into the relcache
+	 * entry.  This avoids problems if we get some sort of
+	 * error partway through.
+	 *
+	 * We make use of the syscache's copy of pg_index's tupledesc
+	 * to access the non-fixed fields of the tuple.  We assume that
+	 * the syscache will be initialized before any access of a
+	 * partial index could occur.  (This would probably fail if we
+	 * were to allow partial indexes on system catalogs.)
+	 */
+	exprsDatum = SysCacheGetAttr(INDEXRELID, relation->rd_indextuple,
+								 Anum_pg_index_indexprs, &isnull);
+	Assert(!isnull);
+	exprsString = DatumGetCString(DirectFunctionCall1(textout, exprsDatum));
+	result = (List *) stringToNode(exprsString);
+	pfree(exprsString);
+
+	/*
+	 * Run the expressions through eval_const_expressions.  This is not just
+	 * an optimization, but is necessary, because the planner will be
+	 * comparing them to const-folded qual clauses, and may fail to detect
+	 * valid matches without this.
+	 */
+	result = (List *) eval_const_expressions((Node *) result);
+
+	/* May as well fix opfuncids too */
+	fix_opfuncids((Node *) result);
+
+	/* Now save a copy of the completed tree in the relcache entry. */
+	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
+	relation->rd_indexprs = (List *) copyObject(result);
+	MemoryContextSwitchTo(oldcxt);
+
+	return result;
+}
+
+/*
+ * RelationGetIndexPredicate -- get the index predicate for an index
+ *
+ * We cache the result of transforming pg_index.indpred into a node tree.
+ * If the rel is not an index or has no predicate, we return NIL.
+ * Otherwise, the returned tree is copied into the caller's memory context.
+ * (We don't want to return a pointer to the relcache copy, since it could
+ * disappear due to relcache invalidation.)
+ */
+List *
+RelationGetIndexPredicate(Relation relation)
+{
+	List	   *result;
+	Datum		predDatum;
+	bool		isnull;
+	char	   *predString;
+	MemoryContext oldcxt;
+
+	/* Quick exit if we already computed the result. */
+	if (relation->rd_indpred)
+		return (List *) copyObject(relation->rd_indpred);
+
+	/* Quick exit if there is nothing to do. */
+	if (relation->rd_indextuple == NULL ||
+		heap_attisnull(relation->rd_indextuple, Anum_pg_index_indpred))
+		return NIL;
+
+	/*
+	 * We build the tree we intend to return in the caller's context.
+	 * After successfully completing the work, we copy it into the relcache
+	 * entry.  This avoids problems if we get some sort of
+	 * error partway through.
+	 *
+	 * We make use of the syscache's copy of pg_index's tupledesc
+	 * to access the non-fixed fields of the tuple.  We assume that
+	 * the syscache will be initialized before any access of a
+	 * partial index could occur.  (This would probably fail if we
+	 * were to allow partial indexes on system catalogs.)
+	 */
+	predDatum = SysCacheGetAttr(INDEXRELID, relation->rd_indextuple,
+								Anum_pg_index_indpred, &isnull);
+	Assert(!isnull);
+	predString = DatumGetCString(DirectFunctionCall1(textout, predDatum));
+	result = (List *) stringToNode(predString);
+	pfree(predString);
+
+	/*
+	 * Run the expression through eval_const_expressions.  This is not just
+	 * an optimization, but is necessary, because the planner will be
+	 * comparing it to const-folded qual clauses, and may fail to detect
+	 * valid matches without this.
+	 */
+	result = (List *) eval_const_expressions((Node *) result);
+
+	/* May as well fix opfuncids too */
+	fix_opfuncids((Node *) result);
+
+	/* Now save a copy of the completed tree in the relcache entry. */
+	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
+	relation->rd_indpred = (List *) copyObject(result);
+	MemoryContextSwitchTo(oldcxt);
+
+	return result;
+}
+
 
 /*
  *	load_relcache_init_file, write_relcache_init_file
@@ -2829,13 +2969,18 @@ load_relcache_init_file(void)
 			if (rel->rd_isnailed)
 				nailed_indexes++;
 
-			/* next, read the pg_index tuple form */
+			/* next, read the pg_index tuple */
 			if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
 				goto read_failed;
 
-			rel->rd_index = (Form_pg_index) palloc(len);
-			if ((nread = fread(rel->rd_index, 1, len, fp)) != len)
+			rel->rd_indextuple = (HeapTuple) palloc(len);
+			if ((nread = fread(rel->rd_indextuple, 1, len, fp)) != len)
 				goto read_failed;
+
+			/* Fix up internal pointers in the tuple -- see heap_copytuple */
+			rel->rd_indextuple->t_datamcxt = CurrentMemoryContext;
+			rel->rd_indextuple->t_data = (HeapTupleHeader) ((char *) rel->rd_indextuple + HEAPTUPLESIZE);
+			rel->rd_index = (Form_pg_index) GETSTRUCT(rel->rd_indextuple);
 
 			/* next, read the access method tuple form */
 			if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
@@ -2904,6 +3049,7 @@ load_relcache_init_file(void)
 				nailed_rels++;
 
 			Assert(rel->rd_index == NULL);
+			Assert(rel->rd_indextuple == NULL);
 			Assert(rel->rd_am == NULL);
 			Assert(rel->rd_indexcxt == NULL);
 			Assert(rel->rd_istrat == NULL);
@@ -2917,11 +3063,13 @@ load_relcache_init_file(void)
 		 * format is complex and subject to change).  They must be rebuilt
 		 * if needed by RelationCacheInitializePhase2.	This is not
 		 * expected to be a big performance hit since few system catalogs
-		 * have such.
+		 * have such.  Ditto for index expressions and predicates.
 		 */
 		rel->rd_rules = NULL;
 		rel->rd_rulescxt = NULL;
 		rel->trigdesc = NULL;
+		rel->rd_indexprs = NIL;
+		rel->rd_indpred = NIL;
 
 		/*
 		 * Reset transient-state fields in the relcache entry
@@ -3076,26 +3224,15 @@ write_relcache_init_file(void)
 		if (rel->rd_rel->relkind == RELKIND_INDEX)
 		{
 			Form_pg_am	am = rel->rd_am;
-			HeapTuple	tuple;
 
-			/*
-			 * We need to write the index tuple form, but this is a bit
-			 * tricky since it's a variable-length struct.  Rather than
-			 * hoping to intuit the length, fetch the pg_index tuple
-			 * afresh using the syscache, and write that.
-			 */
-			tuple = SearchSysCache(INDEXRELID,
-								 ObjectIdGetDatum(RelationGetRelid(rel)),
-								   0, 0, 0);
-			if (!HeapTupleIsValid(tuple))
-				elog(ERROR, "write_relcache_init_file: no pg_index entry for index %u",
-					 RelationGetRelid(rel));
-			len = tuple->t_len - tuple->t_data->t_hoff;
+			/* write the pg_index tuple */
+			/* we assume this was created by heap_copytuple! */
+			len = HEAPTUPLESIZE + rel->rd_indextuple->t_len;
 			if (fwrite(&len, 1, sizeof(len), fp) != sizeof(len))
-				elog(FATAL, "cannot write init file -- index tuple form length");
-			if (fwrite(GETSTRUCT(tuple), 1, len, fp) != len)
-				elog(FATAL, "cannot write init file -- index tuple form");
-			ReleaseSysCache(tuple);
+				elog(FATAL, "cannot write init file -- index tuple length");
+
+			if (fwrite(rel->rd_indextuple, 1, len, fp) != len)
+				elog(FATAL, "cannot write init file -- index tuple");
 
 			/* next, write the access method tuple form */
 			len = sizeof(FormData_pg_am);

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.142 2003/05/12 00:17:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.143 2003/05/28 16:03:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1198,60 +1198,74 @@ fix_indxqual_operand(Node *node, int baserelid, IndexOptInfo *index,
 					 Oid *opclass)
 {
 	/*
-	 * Remove any binary-compatible relabeling of the indexkey
-	 */
-	if (IsA(node, RelabelType))
-		node = (Node *) ((RelabelType *) node)->arg;
-
-	/*
 	 * We represent index keys by Var nodes having the varno of the base
 	 * table but varattno equal to the index's attribute number (index
 	 * column position).  This is a bit hokey ... would be cleaner to use
 	 * a special-purpose node type that could not be mistaken for a
 	 * regular Var.  But it will do for now.
 	 */
-	if (IsA(node, Var))
+	Var		   *result;
+	int			pos;
+	List	   *indexprs;
+
+	/*
+	 * Remove any binary-compatible relabeling of the indexkey
+	 */
+	if (IsA(node, RelabelType))
+		node = (Node *) ((RelabelType *) node)->arg;
+
+	if (IsA(node, Var) &&
+		((Var *) node)->varno == baserelid)
 	{
-		/* If it's a var, find which index key position it occupies */
-		Assert(index->indproc == InvalidOid);
+		/* Try to match against simple index columns */
+		int			varatt = ((Var *) node)->varattno;
 
-		if (((Var *) node)->varno == baserelid)
+		if (varatt != 0)
 		{
-			int			varatt = ((Var *) node)->varattno;
-			int			pos;
-
-			for (pos = 0; pos < index->nkeys; pos++)
+			for (pos = 0; pos < index->ncolumns; pos++)
 			{
 				if (index->indexkeys[pos] == varatt)
 				{
-					Node	   *newnode = copyObject(node);
-
-					((Var *) newnode)->varattno = pos + 1;
+					result = (Var *) copyObject(node);
+					result->varattno = pos + 1;
 					/* return the correct opclass, too */
 					*opclass = index->classlist[pos];
-					return newnode;
+					return (Node *) result;
 				}
 			}
 		}
-
-		/*
-		 * Oops, this Var isn't an indexkey!
-		 */
-		elog(ERROR, "fix_indxqual_operand: var is not index attribute");
 	}
 
-	/*
-	 * Else, it must be a func expression matching a functional index.
-	 * Since we currently only support single-column functional indexes,
-	 * the returned varattno must be 1.
-	 */
-	Assert(index->indproc != InvalidOid);
-	Assert(is_funcclause(node));	/* not a very thorough check, but easy */
+	/* Try to match against index expressions */
+	indexprs = index->indexprs;
+	for (pos = 0; pos < index->ncolumns; pos++)
+	{
+		if (index->indexkeys[pos] == 0)
+		{
+			Node	   *indexkey;
 
-	/* classlist[0] is the only class of a functional index */
-	*opclass = index->classlist[0];
+			if (indexprs == NIL)
+				elog(ERROR, "too few entries in indexprs list");
+			indexkey = (Node *) lfirst(indexprs);
+			if (indexkey && IsA(indexkey, RelabelType))
+				indexkey = (Node *) ((RelabelType *) indexkey)->arg;
+			if (equal(node, indexkey))
+			{
+				/* Found a match */
+				result = makeVar(baserelid, pos + 1,
+								 exprType(lfirst(indexprs)), -1,
+								 0);
+				/* return the correct opclass, too */
+				*opclass = index->classlist[pos];
+				return (Node *) result;
+			}
+			indexprs = lnext(indexprs);
+		}
+	}
 
-	return (Node *) makeVar(baserelid, 1, exprType(node), -1, 0);
+	/* Ooops... */
+	elog(ERROR, "fix_indxqual_operand: node is not index attribute");
+	return NULL;				/* keep compiler quiet */
 }
 
 /*

@@ -1492,10 +1492,7 @@ get_pkey_attnames(Oid relid, int16 *numatts)
 		/* we're only interested if it is the primary key */
 		if (index->indisprimary == TRUE)
 		{
-			i = 0;
-			while (index->indkey[i++] != 0)
-				(*numatts)++;
-
+			*numatts = index->indnatts;
 			if (*numatts > 0)
 			{
 				result = (char **) palloc(*numatts * sizeof(char *));

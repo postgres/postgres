@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.41 2003/05/15 15:50:18 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.42 2003/05/28 16:03:55 tgl Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -20,8 +20,7 @@
   <title>Introduction</title>
 
   <para>
-   The classical example for the need of an index is if there is a
-   table similar to this:
+   Suppose we have a table similar to this:
 <programlisting>
 CREATE TABLE test1 (
     id integer,
@@ -32,24 +31,24 @@ CREATE TABLE test1 (
 <programlisting>
 SELECT content FROM test1 WHERE id = <replaceable>constant</replaceable>;
 </programlisting>
-   Ordinarily, the system would have to scan the entire
-   <structname>test1</structname> table row by row to find all
+   With no advance preparation, the system would have to scan the entire
+   <structname>test1</structname> table, row by row, to find all
    matching entries.  If there are a lot of rows in
-   <structname>test1</structname> and only a few rows (possibly zero
-   or one) returned by the query, then this is clearly an inefficient
-   method.  If the system were instructed to maintain an index on the
-   <structfield>id</structfield> column, then it could use a more
+   <structname>test1</structname> and only a few rows (perhaps only zero
+   or one) that would be returned by such a query, then this is clearly an
+   inefficient method.  But if the system has been instructed to maintain an
+   index on the <structfield>id</structfield> column, then it can use a more
    efficient method for locating matching rows.  For instance, it
    might only have to walk a few levels deep into a search tree.
   </para>
 
   <para>
-   A similar approach is used in most books of non-fiction:  Terms and
+   A similar approach is used in most books of non-fiction:  terms and
    concepts that are frequently looked up by readers are collected in
    an alphabetic index at the end of the book.  The interested reader
    can scan the index relatively quickly and flip to the appropriate
-   page, and would not have to read the entire book to find the
-   interesting location.  As it is the task of the author to
+   page(s), rather than having to read the entire book to find the
+   material of interest.  Just as it is the task of the author to
    anticipate the items that the readers are most likely to look up,
    it is the task of the database programmer to foresee which indexes
    would be of advantage.
@@ -73,13 +72,14 @@ CREATE INDEX test1_id_index ON test1 (id);
 
   <para>
    Once the index is created, no further intervention is required: the
-   system will use the index when it thinks it would be more efficient
+   system will update the index when the table is modified, and it will
+   use the index in queries when it thinks this would be more efficient
    than a sequential table scan.  But you may have to run the
    <command>ANALYZE</command> command regularly to update
    statistics to allow the query planner to make educated decisions.
    Also read <xref linkend="performance-tips"> for information about
    how to find out whether an index is used and when and why the
-   planner may choose to <emphasis>not</emphasis> use an index.
+   planner may choose <emphasis>not</emphasis> to use an index.
   </para>
 
   <para>
@@ -198,7 +198,7 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
      than B-tree indexes, and the index size and build time for hash
      indexes is much worse. Hash indexes also suffer poor performance
      under high concurrency. For these reasons, hash index use is
-     discouraged.
+     presently discouraged.
     </para>
    </note>  
   </para>
@@ -250,14 +250,13 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
    Currently, only the B-tree and GiST implementations support multicolumn
    indexes.  Up to 32 columns may be specified.  (This limit can be
    altered when building <productname>PostgreSQL</productname>; see the
-   file <filename>pg_config.h</filename>.)
+   file <filename>pg_config_manual.h</filename>.)
   </para>
 
   <para>
    The query planner can use a multicolumn index for queries that
-   involve the leftmost column in the index definition and any number
-   of columns listed to the right of it without a gap (when
-   used with appropriate operators).  For example,
+   involve the leftmost column in the index definition plus any number
+   of columns listed to the right of it, without a gap.  For example,
    an index on <literal>(a, b, c)</literal> can be used in queries
    involving all of <literal>a</literal>, <literal>b</literal>, and
    <literal>c</literal>, or in queries involving both
@@ -266,7 +265,9 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
    (In a query involving <literal>a</literal> and <literal>c</literal>
    the planner might choose to use the index for
    <literal>a</literal> only and treat <literal>c</literal> like an
-   ordinary unindexed column.)
+   ordinary unindexed column.)  Of course, each column must be used with
+   operators appropriate to the index type; clauses that involve other
+   operators will not be considered.
   </para>
 
   <para>
@@ -283,8 +284,8 @@ SELECT name FROM test2 WHERE major = <replaceable>constant</replaceable> OR mino
   <para>
    Multicolumn indexes should be used sparingly.  Most of the time,
    an index on a single column is sufficient and saves space and time.
-   Indexes with more than three columns are almost certainly
-   inappropriate.
+   Indexes with more than three columns are unlikely to be helpful
+   unless the usage of the table is extremely stylized.
   </para>
  </sect1>
 
@@ -332,19 +333,19 @@ CREATE UNIQUE INDEX <replaceable>name</replaceable> ON <replaceable>table</repla
  </sect1>
 
 
- <sect1 id="indexes-functional">
-  <title>Functional Indexes</title>
+ <sect1 id="indexes-expressional">
+  <title>Indexes on Expressions</title>
 
-  <indexterm zone="indexes-functional">
+  <indexterm zone="indexes-expressional">
    <primary>indexes</primary>
-   <secondary>on functions</secondary>
+   <secondary>on expressions</secondary>
   </indexterm>
 
   <para>
-   For a <firstterm>functional index</firstterm>, an index is defined
-   on the result of a function applied to one or more columns of a
-   single table.  Functional indexes can be used to obtain fast access
-   to data based on the result of function calls.
+   An index column need not be just a column of the underlying table,
+   but can be a function or scalar expression computed from one or
+   more columns of the table.  This feature is useful to obtain fast
+   access to tables based on the results of computations.
   </para>
 
   <para>
@@ -362,20 +363,29 @@ CREATE INDEX test1_lower_col1_idx ON test1 (lower(col1));
   </para>
 
   <para>
-   The function in the index definition can take more than one
-   argument, but they must be table columns, not constants.
-   Functional indexes are always single-column (namely, the function
-   result) even if the function uses more than one input column; there
-   cannot be multicolumn indexes that contain function calls.
+   As another example, if one often does queries like this:
+<programlisting>
+SELECT * FROM people WHERE (first_name || ' ' || last_name) = 'John Smith';
+</programlisting>
+   then it might be worth creating an index like this:
+<programlisting>
+CREATE INDEX people_names ON people ((first_name || ' ' || last_name));
+</programlisting>
   </para>
 
-  <tip>
-   <para>
-    The restrictions mentioned in the previous paragraph can easily be
-    worked around by defining a custom function to use in the index
-    definition that computes any desired result internally.
-   </para>
-  </tip>
+  <para>
+   The syntax of the <command>CREATE INDEX</> command normally requires
+   writing parentheses around index expressions, as shown in the second
+   example.  The parentheses may be omitted when the expression is just
+   a function call, as in the first example.
+  </para>
+
+  <para>
+   Index expressions are relatively expensive to maintain, since the
+   derived expression(s) must be computed for each row upon insertion
+   or whenever it is updated.  Therefore they should be used only when
+   queries that can use the index are very frequent.
+  </para>
  </sect1>
 
 
@@ -391,8 +401,8 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
    The operator class identifies the operators to be used by the index
    for that column.  For example, a B-tree index on the type <type>int4</type>
    would use the <literal>int4_ops</literal> class; this operator
-   class includes comparison functions for values of type <type>int4</type>.  In
-   practice the default operator class for the column's data type is
+   class includes comparison functions for values of type <type>int4</type>.
+   In practice the default operator class for the column's data type is
    usually sufficient.  The main point of having operator classes is
    that for some data types, there could be more than one meaningful
    ordering.  For example, we might want to sort a complex-number data
@@ -427,24 +437,25 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
       <literal>name_pattern_ops</literal> support B-tree indexes on
       the types <type>text</type>, <type>varchar</type>,
       <type>char</type>, and <type>name</type>, respectively.  The
-      difference to the ordinary operator classes is that the values
+      difference from the ordinary operator classes is that the values
       are compared strictly character by character rather than
       according to the locale-specific collation rules.  This makes
       these operator classes suitable for use by queries involving
       pattern matching expressions (<literal>LIKE</literal> or POSIX
       regular expressions) if the server does not use the standard
-      <quote>C</quote> locale.  As an example, to index a
+      <quote>C</quote> locale.  As an example, you might index a
       <type>varchar</type> column like this:
 <programlisting>
 CREATE INDEX test_index ON test_table (col varchar_pattern_ops);
 </programlisting>
-      If you do use the C locale, you should instead create an index
-      with the default operator class.  Also note that you should
+      If you do use the C locale, you may instead create an index
+      with the default operator class, and it will still be useful
+      for pattern-matching queries.  Also note that you should
       create an index with the default operator class if you want
       queries involving ordinary comparisons to use an index.  Such
       queries cannot use the
       <literal><replaceable>xxx</replaceable>_pattern_ops</literal>
-      operator classes.  It is possible, however, to create multiple
+      operator classes.  It is allowed to create multiple
       indexes on the same column with different operator classes.
      </para>
     </listitem>

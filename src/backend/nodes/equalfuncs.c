@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.193 2003/05/06 00:20:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.194 2003/05/28 16:03:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1466,8 +1466,7 @@ static bool
 _equalIndexElem(IndexElem *a, IndexElem *b)
 {
 	COMPARE_STRING_FIELD(name);
-	COMPARE_NODE_FIELD(funcname);
-	COMPARE_NODE_FIELD(args);
+	COMPARE_NODE_FIELD(expr);
 	COMPARE_NODE_FIELD(opclass);
 
 	return true;

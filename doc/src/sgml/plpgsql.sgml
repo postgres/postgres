@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.18 2003/04/27 22:21:22 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.19 2003/05/28 16:03:55 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -136,9 +136,10 @@ END;
    <para>
     Except for input/output conversion and calculation functions
     for user-defined types, anything that can be defined in C language
-    functions can also be done with <application>PL/pgSQL</application>. For example, it is possible to
+    functions can also be done with <application>PL/pgSQL</application>.
+    For example, it is possible to
     create complex conditional computation functions and later use
-    them to define operators or use them in functional indexes.
+    them to define operators or use them in index expressions.
    </para>
 
   <sect2 id="plpgsql-advantages">

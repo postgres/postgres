@@ -81,3 +81,17 @@ INSERT INTO func_index_heap VALUES('ABCD', 'EF');
 ERROR:  Cannot insert a duplicate key into unique index func_index_index
 -- but this shouldn't:
 INSERT INTO func_index_heap VALUES('QWERTY');
+--
+-- Same test, expressional index
+--
+DROP TABLE func_index_heap;
+CREATE TABLE func_index_heap (f1 text, f2 text);
+CREATE UNIQUE INDEX func_index_index on func_index_heap ((f1 || f2) text_ops);
+INSERT INTO func_index_heap VALUES('ABC','DEF');
+INSERT INTO func_index_heap VALUES('AB','CDEFG');
+INSERT INTO func_index_heap VALUES('QWE','RTY');
+-- this should fail because of unique index:
+INSERT INTO func_index_heap VALUES('ABCD', 'EF');
+ERROR:  Cannot insert a duplicate key into unique index func_index_index
+-- but this shouldn't:
+INSERT INTO func_index_heap VALUES('QWERTY');

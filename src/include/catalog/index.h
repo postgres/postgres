@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.50 2002/09/23 00:42:48 tgl Exp $
+ * $Id: index.h,v 1.51 2003/05/28 16:04:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "access/itup.h"
 #include "catalog/pg_index.h"
 #include "nodes/execnodes.h"
+
 
 #define DEFAULT_INDEX_TYPE	"btree"
 
@@ -40,12 +41,12 @@ extern Oid index_create(Oid heapRelationId,
 
 extern void index_drop(Oid indexId);
 
-extern IndexInfo *BuildIndexInfo(Form_pg_index indexStruct);
+extern IndexInfo *BuildIndexInfo(Relation index);
 
 extern void FormIndexDatum(IndexInfo *indexInfo,
 			   HeapTuple heapTuple,
 			   TupleDesc heapDescriptor,
-			   MemoryContext resultCxt,
+			   EState *estate,
 			   Datum *datum,
 			   char *nullv);
 

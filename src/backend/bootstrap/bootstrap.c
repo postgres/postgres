@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.158 2003/05/27 17:49:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.159 2003/05/28 16:03:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1169,6 +1169,10 @@ index_register(Oid heap,
 	newind->il_info = (IndexInfo *) palloc(sizeof(IndexInfo));
 
 	memcpy(newind->il_info, indexInfo, sizeof(IndexInfo));
+	/* expressions will likely be null, but may as well copy it */
+	newind->il_info->ii_Expressions = (List *)
+		copyObject(indexInfo->ii_Expressions);
+	newind->il_info->ii_ExpressionsState = NIL;
 	/* predicate will likely be null, but may as well copy it */
 	newind->il_info->ii_Predicate = (List *)
 		copyObject(indexInfo->ii_Predicate);

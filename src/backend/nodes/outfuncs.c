@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.205 2003/05/06 00:20:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.206 2003/05/28 16:03:56 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1181,8 +1181,7 @@ _outIndexElem(StringInfo str, IndexElem *node)
 	WRITE_NODE_TYPE("INDEXELEM");
 
 	WRITE_STRING_FIELD(name);
-	WRITE_NODE_FIELD(funcname);
-	WRITE_NODE_FIELD(args);
+	WRITE_NODE_FIELD(expr);
 	WRITE_NODE_FIELD(opclass);
 }
 

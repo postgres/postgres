@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.140 2003/05/20 20:35:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.141 2003/05/28 16:03:59 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -535,12 +535,14 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	Form_pg_index idxrec;
 	Form_pg_class idxrelrec;
 	Form_pg_am	amrec;
+	List	   *indexprs;
+	List	   *context;
 	Oid			indrelid;
 	int			len;
 	int			keyno;
-	Oid			keycoltypes[INDEX_MAX_KEYS];
+	Oid			keycoltype;
 	StringInfoData buf;
-	StringInfoData keybuf;
+	char	   *str;
 	char	   *sep;
 
 	/*
@@ -577,6 +579,30 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	amrec = (Form_pg_am) GETSTRUCT(ht_am);
 
 	/*
+	 * Get the index expressions, if any.  (NOTE: we do not use the relcache
+	 * versions of the expressions and predicate, because we want to display
+	 * non-const-folded expressions.)
+	 */
+	if (!heap_attisnull(ht_idx, Anum_pg_index_indexprs))
+	{
+		Datum		exprsDatum;
+		bool		isnull;
+		char	   *exprsString;
+
+		exprsDatum = SysCacheGetAttr(INDEXRELID, ht_idx,
+									 Anum_pg_index_indexprs, &isnull);
+		Assert(!isnull);
+		exprsString = DatumGetCString(DirectFunctionCall1(textout,
+														  exprsDatum));
+		indexprs = (List *) stringToNode(exprsString);
+		pfree(exprsString);
+	}
+	else
+		indexprs = NIL;
+
+	context = deparse_context_for(get_rel_name(indrelid), indrelid);
+
+	/*
 	 * Start the index definition.	Note that the index's name should
 	 * never be schema-qualified, but the indexed rel's name may be.
 	 */
@@ -588,57 +614,50 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 					 quote_identifier(NameStr(amrec->amname)));
 
 	/*
-	 * Collect the indexed attributes in keybuf
+	 * Report the indexed attributes
 	 */
-	initStringInfo(&keybuf);
 	sep = "";
-	for (keyno = 0; keyno < INDEX_MAX_KEYS; keyno++)
+	for (keyno = 0; keyno < idxrec->indnatts; keyno++)
 	{
 		AttrNumber	attnum = idxrec->indkey[keyno];
-		char	   *attname;
 
-		if (attnum == InvalidAttrNumber)
-			break;
-
-		attname = get_relid_attribute_name(indrelid, attnum);
-		keycoltypes[keyno] = get_atttype(indrelid, attnum);
-
-		appendStringInfo(&keybuf, sep);
+		appendStringInfo(&buf, sep);
 		sep = ", ";
 
-		/*
-		 * Add the indexed field name
-		 */
-		appendStringInfo(&keybuf, "%s", quote_identifier(attname));
+		if (attnum != 0)
+		{
+			/* Simple index column */
+			char	   *attname;
+
+			attname = get_relid_attribute_name(indrelid, attnum);
+			appendStringInfo(&buf, "%s", quote_identifier(attname));
+			keycoltype = get_atttype(indrelid, attnum);
+		}
+		else
+		{
+			/* expressional index */
+			Node	   *indexkey;
+
+			if (indexprs == NIL)
+				elog(ERROR, "too few entries in indexprs list");
+			indexkey = (Node *) lfirst(indexprs);
+			indexprs = lnext(indexprs);
+			/* Deparse */
+			str = deparse_expression(indexkey, context, false, false);
+			/* Need parens if it's not a bare function call */
+			if (indexkey && IsA(indexkey, FuncExpr) &&
+				((FuncExpr *) indexkey)->funcformat == COERCE_EXPLICIT_CALL)
+				appendStringInfo(&buf, "%s", str);
+			else
+				appendStringInfo(&buf, "(%s)", str);
+			keycoltype = exprType(indexkey);
+		}
 
 		/*
-		 * If not a functional index, add the operator class name
+		 * Add the operator class name
 		 */
-		if (idxrec->indproc == InvalidOid)
-			get_opclass_name(idxrec->indclass[keyno],
-							 keycoltypes[keyno],
-							 &keybuf);
-	}
-
-	if (idxrec->indproc != InvalidOid)
-	{
-		/*
-		 * For functional index say 'func (attrs) opclass'
-		 */
-		appendStringInfo(&buf, "%s(%s)",
-						 generate_function_name(idxrec->indproc,
-												keyno, keycoltypes),
-						 keybuf.data);
-		get_opclass_name(idxrec->indclass[0],
-						 get_func_rettype(idxrec->indproc),
+		get_opclass_name(idxrec->indclass[keyno], keycoltype,
 						 &buf);
-	}
-	else
-	{
-		/*
-		 * Otherwise say 'attr opclass [, ...]'
-		 */
-		appendStringInfo(&buf, "%s", keybuf.data);
 	}
 
 	appendStringInfoChar(&buf, ')');
@@ -646,18 +665,21 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	/*
 	 * If it's a partial index, decompile and append the predicate
 	 */
-	if (VARSIZE(&idxrec->indpred) > VARHDRSZ)
+	if (!heap_attisnull(ht_idx, Anum_pg_index_indpred))
 	{
 		Node	   *node;
-		List	   *context;
-		char	   *exprstr;
-		char	   *str;
+		Datum		predDatum;
+		bool		isnull;
+		char	   *predString;
 
-		/* Convert TEXT object to C string */
-		exprstr = DatumGetCString(DirectFunctionCall1(textout,
-									 PointerGetDatum(&idxrec->indpred)));
-		/* Convert expression to node tree */
-		node = (Node *) stringToNode(exprstr);
+		/* Convert text string to node tree */
+		predDatum = SysCacheGetAttr(INDEXRELID, ht_idx,
+									Anum_pg_index_indpred, &isnull);
+		Assert(!isnull);
+		predString = DatumGetCString(DirectFunctionCall1(textout,
+														 predDatum));
+		node = (Node *) stringToNode(predString);
+		pfree(predString);
 
 		/*
 		 * If top level is a List, assume it is an implicit-AND structure,
@@ -667,7 +689,6 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 		if (node && IsA(node, List))
 			node = (Node *) make_ands_explicit((List *) node);
 		/* Deparse */
-		context = deparse_context_for(get_rel_name(indrelid), indrelid);
 		str = deparse_expression(node, context, false, false);
 		appendStringInfo(&buf, " WHERE %s", str);
 	}
@@ -681,7 +702,6 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	memcpy(VARDATA(indexdef), buf.data, buf.len);
 
 	pfree(buf.data);
-	pfree(keybuf.data);
 
 	ReleaseSysCache(ht_idx);
 	ReleaseSysCache(ht_idxrel);

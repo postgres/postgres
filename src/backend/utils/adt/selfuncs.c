@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.138 2003/05/26 00:11:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.139 2003/05/28 16:03:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3905,14 +3905,13 @@ btcostestimate(PG_FUNCTION_ARGS)
 						indexSelectivity, indexCorrelation);
 
 	/*
-	 * If it's a functional index, leave the default zero-correlation
-	 * estimate in place.  If not, and if we can get an estimate for the
-	 * first variable's ordering correlation C from pg_statistic, estimate
+	 * If the first column is a simple variable, and we can get an estimate
+	 * for its ordering correlation C from pg_statistic, estimate
 	 * the index correlation as C / number-of-columns. (The idea here is
 	 * that multiple columns dilute the importance of the first column's
 	 * ordering, but don't negate it entirely.)
 	 */
-	if (index->indproc == InvalidOid)
+	if (index->indexkeys[0] != 0)
 	{
 		Oid			relid;
 		HeapTuple	tuple;
@@ -3942,8 +3941,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 
 				Assert(nnumbers == 1);
 				varCorrelation = numbers[0];
-				for (nKeys = 1; index->indexkeys[nKeys] != 0; nKeys++)
-					 /* skip */ ;
+				nKeys = index->ncolumns;
 
 				*indexCorrelation = varCorrelation / nKeys;
 

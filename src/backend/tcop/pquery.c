@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.65 2003/05/27 17:49:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.66 2003/05/28 16:03:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -713,8 +713,9 @@ PortalRunUtility(Portal portal, Query *query,
 	 * without freezing a snapshot.  By extension we allow SHOW
 	 * not to set a snapshot.  The other stmts listed are just
 	 * efficiency hacks.  Beware of listing anything that can
-	 * modify the database --- if, say, it has to update a
-	 * functional index, then it had better have a snapshot.
+	 * modify the database --- if, say, it has to update an
+	 * index with expressions that invoke user-defined functions,
+	 * then it had better have a snapshot.
 	 */
 	if (! (IsA(utilityStmt, TransactionStmt) ||
 		   IsA(utilityStmt, LockStmt) ||

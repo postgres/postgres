@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.99 2003/05/14 03:26:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.100 2003/05/28 16:03:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@
 #include "optimizer/prep.h"
 #include "parser/parsetree.h"
 #include "parser/parse_coerce.h"
+#include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -39,19 +40,13 @@
 #include "utils/syscache.h"
 
 
-#define IsFuncIndex(ATTR_LIST) (((IndexElem*)lfirst(ATTR_LIST))->funcname != NIL)
-
 /* non-export function prototypes */
-static void CheckPredicate(List *predList, List *rangeTable, Oid baseRelOid);
-static void FuncIndexArgs(IndexInfo *indexInfo, Oid *classOidP,
-			  IndexElem *funcIndex,
-			  Oid relId,
-			  char *accessMethodName, Oid accessMethodId);
-static void NormIndexAttrs(IndexInfo *indexInfo, Oid *classOidP,
+static void CheckPredicate(List *predList);
+static void ComputeIndexAttrs(IndexInfo *indexInfo, Oid *classOidP,
 			   List *attList,
 			   Oid relId,
 			   char *accessMethodName, Oid accessMethodId);
-static Oid GetAttrOpClass(IndexElem *attribute, Oid attrType,
+static Oid GetIndexOpClass(List *opclass, Oid attrType,
 			   char *accessMethodName, Oid accessMethodId);
 static Oid	GetDefaultOpClass(Oid attrType, Oid accessMethodId);
 
@@ -59,8 +54,8 @@ static Oid	GetDefaultOpClass(Oid attrType, Oid accessMethodId);
  * DefineIndex
  *		Creates a new index.
  *
- * 'attributeList' is a list of IndexElem specifying either a functional
- *		index or a list of attributes to index on.
+ * 'attributeList' is a list of IndexElem specifying columns and expressions
+ *		to index on.
  * 'predicate' is the qual specified in the where clause.
  * 'rangetable' is needed to interpret the predicate.
  */
@@ -156,6 +151,16 @@ DefineIndex(RangeVar *heapRelation,
 	ReleaseSysCache(tuple);
 
 	/*
+	 * If a range table was created then check that only the base rel is
+	 * mentioned.
+	 */
+	if (rangetable != NIL)
+	{
+		if (length(rangetable) != 1 || getrelid(1, rangetable) != relationId)
+			elog(ERROR, "index expressions and predicates may refer only to the base relation");
+	}
+
+	/*
 	 * Convert the partial-index predicate from parsetree form to an
 	 * implicit-AND qual expression, for easier evaluation at runtime.
 	 * While we are at it, we reduce it to a canonical (CNF or DNF) form
@@ -164,14 +169,14 @@ DefineIndex(RangeVar *heapRelation,
 	if (predicate)
 	{
 		cnfPred = canonicalize_qual((Expr *) copyObject(predicate), true);
-		CheckPredicate(cnfPred, rangetable, relationId);
+		CheckPredicate(cnfPred);
 	}
 
 	/*
 	 * Check that all of the attributes in a primary key are marked
 	 * as not null, otherwise attempt to ALTER TABLE .. SET NOT NULL
 	 */
-	if (primary && !IsFuncIndex(attributeList))
+	if (primary)
 	{
 		List   *keys;
 
@@ -179,6 +184,9 @@ DefineIndex(RangeVar *heapRelation,
 		{
 			IndexElem   *key = (IndexElem *) lfirst(keys);
 			HeapTuple	atttuple;
+
+			if (!key->name)
+				elog(ERROR, "primary keys cannot be expressions");
 
 			/* System attributes are never null, so no problem */
 			if (SystemAttributeByName(key->name, rel->rd_rel->relhasoids))
@@ -216,43 +224,16 @@ DefineIndex(RangeVar *heapRelation,
 	 * structure
 	 */
 	indexInfo = makeNode(IndexInfo);
+	indexInfo->ii_NumIndexAttrs = numberOfAttributes;
+	indexInfo->ii_Expressions = NIL; /* for now */
+	indexInfo->ii_ExpressionsState = NIL;
 	indexInfo->ii_Predicate = cnfPred;
 	indexInfo->ii_PredicateState = NIL;
-	indexInfo->ii_FuncOid = InvalidOid;
 	indexInfo->ii_Unique = unique;
 
-	if (IsFuncIndex(attributeList))
-	{
-		IndexElem  *funcIndex = (IndexElem *) lfirst(attributeList);
-		int			nargs;
-
-		/* Parser should have given us only one list item, but check */
-		if (numberOfAttributes != 1)
-			elog(ERROR, "Functional index can only have one attribute");
-
-		nargs = length(funcIndex->args);
-		if (nargs > INDEX_MAX_KEYS)
-			elog(ERROR, "Index function can take at most %d arguments",
-				 INDEX_MAX_KEYS);
-
-		indexInfo->ii_NumIndexAttrs = 1;
-		indexInfo->ii_NumKeyAttrs = nargs;
-
-		classObjectId = (Oid *) palloc(sizeof(Oid));
-
-		FuncIndexArgs(indexInfo, classObjectId, funcIndex,
+	classObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
+	ComputeIndexAttrs(indexInfo, classObjectId, attributeList,
 					  relationId, accessMethodName, accessMethodId);
-	}
-	else
-	{
-		indexInfo->ii_NumIndexAttrs = numberOfAttributes;
-		indexInfo->ii_NumKeyAttrs = numberOfAttributes;
-
-		classObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
-
-		NormIndexAttrs(indexInfo, classObjectId, attributeList,
-					   relationId, accessMethodName, accessMethodId);
-	}
 
 	index_create(relationId, indexRelationName,
 				 indexInfo, accessMethodId, classObjectId,
@@ -271,8 +252,7 @@ DefineIndex(RangeVar *heapRelation,
 
 /*
  * CheckPredicate
- *		Checks that the given list of partial-index predicates refer
- *		(via the given range table) only to the given base relation oid.
+ *		Checks that the given list of partial-index predicates is valid.
  *
  * This used to also constrain the form of the predicate to forms that
  * indxpath.c could do something with.	However, that seems overly
@@ -281,14 +261,9 @@ DefineIndex(RangeVar *heapRelation,
  * any evaluatable predicate will work.  So accept any predicate here
  * (except ones requiring a plan), and let indxpath.c fend for itself.
  */
-
 static void
-CheckPredicate(List *predList, List *rangeTable, Oid baseRelOid)
+CheckPredicate(List *predList)
 {
-	if (length(rangeTable) != 1 || getrelid(1, rangeTable) != baseRelOid)
-		elog(ERROR,
-		 "Partial-index predicates may refer only to the base relation");
-
 	/*
 	 * We don't currently support generation of an actual query plan for a
 	 * predicate, only simple scalar expressions; hence these
@@ -301,119 +276,19 @@ CheckPredicate(List *predList, List *rangeTable, Oid baseRelOid)
 
 	/*
 	 * A predicate using mutable functions is probably wrong, for the same
-	 * reasons that we don't allow a functional index to use one.
+	 * reasons that we don't allow an index expression to use one.
 	 */
 	if (contain_mutable_functions((Node *) predList))
 		elog(ERROR, "Functions in index predicate must be marked IMMUTABLE");
 }
 
-
 static void
-FuncIndexArgs(IndexInfo *indexInfo,
-			  Oid *classOidP,
-			  IndexElem *funcIndex,
-			  Oid relId,
-			  char *accessMethodName,
-			  Oid accessMethodId)
-{
-	Oid			argTypes[FUNC_MAX_ARGS];
-	List	   *arglist;
-	int			nargs = 0;
-	int			i;
-	FuncDetailCode fdresult;
-	Oid			funcid;
-	Oid			rettype;
-	bool		retset;
-	Oid		   *true_typeids;
-
-	/*
-	 * process the function arguments, which are a list of T_String
-	 * (someday ought to allow more general expressions?)
-	 *
-	 * Note caller already checked that list is not too long.
-	 */
-	MemSet(argTypes, 0, sizeof(argTypes));
-
-	foreach(arglist, funcIndex->args)
-	{
-		char	   *arg = strVal(lfirst(arglist));
-		HeapTuple	tuple;
-		Form_pg_attribute att;
-
-		tuple = SearchSysCacheAttName(relId, arg);
-		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "DefineIndex: column \"%s\" named in key does not exist", arg);
-		att = (Form_pg_attribute) GETSTRUCT(tuple);
-		indexInfo->ii_KeyAttrNumbers[nargs] = att->attnum;
-		argTypes[nargs] = att->atttypid;
-		ReleaseSysCache(tuple);
-		nargs++;
-	}
-
-	/*
-	 * Lookup the function procedure to get its OID and result type.
-	 *
-	 * We rely on parse_func.c to find the correct function in the possible
-	 * presence of binary-compatible types.  However, parse_func may do
-	 * too much: it will accept a function that requires run-time coercion
-	 * of input types, and the executor is not currently set up to support
-	 * that.  So, check to make sure that the selected function has
-	 * exact-match or binary-compatible input types.
-	 */
-	fdresult = func_get_detail(funcIndex->funcname, funcIndex->args,
-							   nargs, argTypes,
-							   &funcid, &rettype, &retset,
-							   &true_typeids);
-	if (fdresult != FUNCDETAIL_NORMAL)
-	{
-		if (fdresult == FUNCDETAIL_AGGREGATE)
-			elog(ERROR, "DefineIndex: functional index may not use an aggregate function");
-		else if (fdresult == FUNCDETAIL_COERCION)
-			elog(ERROR, "DefineIndex: functional index must use a real function, not a type coercion"
-				 "\n\tTry specifying the index opclass you want to use, instead");
-		else
-			func_error("DefineIndex", funcIndex->funcname, nargs, argTypes,
-					   NULL);
-	}
-
-	if (retset)
-		elog(ERROR, "DefineIndex: cannot index on a function returning a set");
-
-	for (i = 0; i < nargs; i++)
-	{
-		if (!IsBinaryCoercible(argTypes[i], true_typeids[i]))
-			func_error("DefineIndex", funcIndex->funcname, nargs, true_typeids,
-					   "Index function must be binary-compatible with table datatype");
-	}
-
-	/*
-	 * Require that the function be marked immutable.  Using a mutable
-	 * function for a functional index is highly questionable, since if
-	 * you aren't going to get the same result for the same data every
-	 * time, it's not clear what the index entries mean at all.
-	 */
-	if (func_volatile(funcid) != PROVOLATILE_IMMUTABLE)
-		elog(ERROR, "DefineIndex: index function must be marked IMMUTABLE");
-
-	/* Process opclass, using func return type as default type */
-
-	classOidP[0] = GetAttrOpClass(funcIndex, rettype,
-								  accessMethodName, accessMethodId);
-
-	/* OK, return results */
-
-	indexInfo->ii_FuncOid = funcid;
-	/* Need to do the fmgr function lookup now, too */
-	fmgr_info(funcid, &indexInfo->ii_FuncInfo);
-}
-
-static void
-NormIndexAttrs(IndexInfo *indexInfo,
-			   Oid *classOidP,
-			   List *attList,	/* list of IndexElem's */
-			   Oid relId,
-			   char *accessMethodName,
-			   Oid accessMethodId)
+ComputeIndexAttrs(IndexInfo *indexInfo,
+				  Oid *classOidP,
+				  List *attList,	/* list of IndexElem's */
+				  Oid relId,
+				  char *accessMethodName,
+				  Oid accessMethodId)
 {
 	List	   *rest;
 	int			attn = 0;
@@ -424,31 +299,75 @@ NormIndexAttrs(IndexInfo *indexInfo,
 	foreach(rest, attList)
 	{
 		IndexElem  *attribute = (IndexElem *) lfirst(rest);
-		HeapTuple	atttuple;
-		Form_pg_attribute attform;
+		Oid			atttype;
 
-		if (attribute->name == NULL)
-			elog(ERROR, "missing attribute for define index");
+		if (attribute->name != NULL)
+		{
+			/* Simple index attribute */
+			HeapTuple	atttuple;
+			Form_pg_attribute attform;
 
-		atttuple = SearchSysCacheAttName(relId, attribute->name);
-		if (!HeapTupleIsValid(atttuple))
-			elog(ERROR, "DefineIndex: attribute \"%s\" not found",
-				 attribute->name);
-		attform = (Form_pg_attribute) GETSTRUCT(atttuple);
+			Assert(attribute->expr == NULL);
+			atttuple = SearchSysCacheAttName(relId, attribute->name);
+			if (!HeapTupleIsValid(atttuple))
+				elog(ERROR, "DefineIndex: attribute \"%s\" not found",
+					 attribute->name);
+			attform = (Form_pg_attribute) GETSTRUCT(atttuple);
+			indexInfo->ii_KeyAttrNumbers[attn] = attform->attnum;
+			atttype = attform->atttypid;
+			ReleaseSysCache(atttuple);
+		}
+		else if (attribute->expr && IsA(attribute->expr, Var))
+		{
+			/* Tricky tricky, he wrote (column) ... treat as simple attr */
+			Var	   *var = (Var *) attribute->expr;
 
-		indexInfo->ii_KeyAttrNumbers[attn] = attform->attnum;
+			indexInfo->ii_KeyAttrNumbers[attn] = var->varattno;
+			atttype = get_atttype(relId, var->varattno);
+		}
+		else
+		{
+			/* Index expression */
+			Assert(attribute->expr != NULL);
+			indexInfo->ii_KeyAttrNumbers[attn] = 0;	/* marks expression */
+			indexInfo->ii_Expressions = lappend(indexInfo->ii_Expressions,
+												attribute->expr);
+			atttype = exprType(attribute->expr);
 
-		classOidP[attn] = GetAttrOpClass(attribute, attform->atttypid,
-									   accessMethodName, accessMethodId);
+			/*
+			 * We don't currently support generation of an actual query plan
+			 * for an index expression, only simple scalar expressions;
+			 * hence these restrictions.
+			 */
+			if (contain_subplans(attribute->expr))
+				elog(ERROR, "Cannot use subselect in index expression");
+			if (contain_agg_clause(attribute->expr))
+				elog(ERROR, "Cannot use aggregate in index expression");
 
-		ReleaseSysCache(atttuple);
+			/*
+			 * A expression using mutable functions is probably wrong,
+			 * since if you aren't going to get the same result for the same
+			 * data every time, it's not clear what the index entries mean at
+			 * all.
+			 */
+			if (contain_mutable_functions(attribute->expr))
+				elog(ERROR, "Functions in index expression must be marked IMMUTABLE");
+		}
+
+		classOidP[attn] = GetIndexOpClass(attribute->opclass,
+										  atttype,
+										  accessMethodName,
+										  accessMethodId);
 		attn++;
 	}
 }
 
+/*
+ * Resolve possibly-defaulted operator class specification
+ */
 static Oid
-GetAttrOpClass(IndexElem *attribute, Oid attrType,
-			   char *accessMethodName, Oid accessMethodId)
+GetIndexOpClass(List *opclass, Oid attrType,
+				char *accessMethodName, Oid accessMethodId)
 {
 	char	   *schemaname;
 	char	   *opcname;
@@ -456,7 +375,32 @@ GetAttrOpClass(IndexElem *attribute, Oid attrType,
 	Oid			opClassId,
 				opInputType;
 
-	if (attribute->opclass == NIL)
+	/*
+	 * Release 7.0 removed network_ops, timespan_ops, and
+	 * datetime_ops, so we ignore those opclass names
+	 * so the default *_ops is used.  This can be
+	 * removed in some later release.  bjm 2000/02/07
+	 *
+	 * Release 7.1 removes lztext_ops, so suppress that too
+	 * for a while.  tgl 2000/07/30
+	 *
+	 * Release 7.2 renames timestamp_ops to timestamptz_ops,
+	 * so suppress that too for awhile.  I'm starting to
+	 * think we need a better approach.  tgl 2000/10/01
+	 */
+	if (length(opclass) == 1)
+	{
+		char   *claname = strVal(lfirst(opclass));
+
+		if (strcmp(claname, "network_ops") == 0 ||
+			strcmp(claname, "timespan_ops") == 0 ||
+			strcmp(claname, "datetime_ops") == 0 ||
+			strcmp(claname, "lztext_ops") == 0 ||
+			strcmp(claname, "timestamp_ops") == 0)
+			opclass = NIL;
+	}
+
+	if (opclass == NIL)
 	{
 		/* no operator class specified, so find the default */
 		opClassId = GetDefaultOpClass(attrType, accessMethodId);
@@ -473,7 +417,7 @@ GetAttrOpClass(IndexElem *attribute, Oid attrType,
 	 */
 
 	/* deconstruct the name list */
-	DeconstructQualifiedName(attribute->opclass, &schemaname, &opcname);
+	DeconstructQualifiedName(opclass, &schemaname, &opcname);
 
 	if (schemaname)
 	{
@@ -501,7 +445,7 @@ GetAttrOpClass(IndexElem *attribute, Oid attrType,
 
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "DefineIndex: operator class \"%s\" not supported by access method \"%s\"",
-			 NameListToString(attribute->opclass), accessMethodName);
+			 NameListToString(opclass), accessMethodName);
 
 	/*
 	 * Verify that the index operator class accepts this datatype.	Note
@@ -512,7 +456,7 @@ GetAttrOpClass(IndexElem *attribute, Oid attrType,
 
 	if (!IsBinaryCoercible(attrType, opInputType))
 		elog(ERROR, "operator class \"%s\" does not accept data type %s",
-		 NameListToString(attribute->opclass), format_type_be(attrType));
+		 NameListToString(opclass), format_type_be(attrType));
 
 	ReleaseSysCache(tuple);
 
@@ -773,7 +717,7 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 	for (i = 0; i < relcnt; i++)
 	{
 		StartTransactionCommand();
-		SetQuerySnapshot();		/* might be needed for functional index */
+		SetQuerySnapshot();		/* might be needed for functions in indexes */
 		if (reindex_relation(relids[i], force))
 			elog(NOTICE, "relation %u was reindexed", relids[i]);
 		CommitTransactionCommand();

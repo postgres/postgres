@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.72 2003/04/29 22:13:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.73 2003/05/28 16:03:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1103,6 +1103,7 @@ renameatt(Oid myrelid,
 	Relation	attrelation;
 	HeapTuple	atttup;
 	Form_pg_attribute attform;
+	int			attnum;
 	List	   *indexoidlist;
 	List	   *indexoidscan;
 
@@ -1178,7 +1179,8 @@ renameatt(Oid myrelid,
 			 oldattname);
 	attform = (Form_pg_attribute) GETSTRUCT(atttup);
 
-	if (attform->attnum < 0)
+	attnum = attform->attnum;
+	if (attnum < 0)
 		elog(ERROR, "renameatt: system attribute \"%s\" may not be renamed",
 			 oldattname);
 
@@ -1217,43 +1219,48 @@ renameatt(Oid myrelid,
 	{
 		Oid			indexoid = lfirsto(indexoidscan);
 		HeapTuple	indextup;
+		Form_pg_index indexform;
+		int			i;
 
 		/*
-		 * First check to see if index is a functional index. If so, its
-		 * column name is a function name and shouldn't be renamed here.
+		 * Scan through index columns to see if there's any simple index
+		 * entries for this attribute.  We ignore expressional entries.
 		 */
 		indextup = SearchSysCache(INDEXRELID,
 								  ObjectIdGetDatum(indexoid),
 								  0, 0, 0);
 		if (!HeapTupleIsValid(indextup))
 			elog(ERROR, "renameatt: can't find index id %u", indexoid);
-		if (OidIsValid(((Form_pg_index) GETSTRUCT(indextup))->indproc))
+		indexform = (Form_pg_index) GETSTRUCT(indextup);
+
+		for (i = 0; i < indexform->indnatts; i++)
 		{
-			ReleaseSysCache(indextup);
-			continue;
+			if (attnum != indexform->indkey[i])
+				continue;
+			/*
+			 * Found one, rename it.
+			 */
+			atttup = SearchSysCacheCopy(ATTNUM,
+										ObjectIdGetDatum(indexoid),
+										Int16GetDatum(i + 1),
+										0, 0);
+			if (!HeapTupleIsValid(atttup))
+				continue;		/* should we raise an error? */
+			/*
+			 * Update the (copied) attribute tuple.
+			 */
+			namestrcpy(&(((Form_pg_attribute) GETSTRUCT(atttup))->attname),
+					   newattname);
+
+			simple_heap_update(attrelation, &atttup->t_self, atttup);
+
+			/* keep system catalog indexes current */
+			CatalogUpdateIndexes(attrelation, atttup);
+
+			heap_freetuple(atttup);
 		}
+
 		ReleaseSysCache(indextup);
-
-		/*
-		 * Okay, look to see if any column name of the index matches the
-		 * old attribute name.
-		 */
-		atttup = SearchSysCacheCopyAttName(indexoid, oldattname);
-		if (!HeapTupleIsValid(atttup))
-			continue;			/* Nope, so ignore it */
-
-		/*
-		 * Update the (copied) attribute tuple.
-		 */
-		namestrcpy(&(((Form_pg_attribute) GETSTRUCT(atttup))->attname),
-				   newattname);
-
-		simple_heap_update(attrelation, &atttup->t_self, atttup);
-
-		/* keep system catalog indexes current */
-		CatalogUpdateIndexes(attrelation, atttup);
-
-		heap_freetuple(atttup);
 	}
 
 	freeList(indexoidlist);
@@ -1986,8 +1993,7 @@ AlterTableAlterColumnDropNotNull(Oid myrelid, bool recurse,
 			 * Loop over each attribute in the primary key and see if it
 			 * matches the to-be-altered attribute
 			 */
-			for (i = 0; i < INDEX_MAX_KEYS &&
-				 indexStruct->indkey[i] != InvalidAttrNumber; i++)
+			for (i = 0; i < indexStruct->indnatts; i++)
 			{
 				if (indexStruct->indkey[i] == attnum)
 					elog(ERROR, "ALTER TABLE: Attribute \"%s\" is in a primary key", colName);
@@ -3185,9 +3191,10 @@ transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
 
 	/*
 	 * Now build the list of PK attributes from the indkey definition
+	 * (we assume a primary key cannot have expressional elements)
 	 */
 	*attnamelist = NIL;
-	for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++)
+	for (i = 0; i < indexStruct->indnatts; i++)
 	{
 		int			pkattno = indexStruct->indkey[i];
 
@@ -3241,26 +3248,40 @@ transformFkeyCheckAttrs(Relation pkrel,
 		indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
 
 		/*
-		 * Must be unique, not a functional index, and not a partial index
+		 * Must have the right number of columns; must be unique and not a
+		 * partial index; forget it if there are any expressions, too
 		 */
-		if (indexStruct->indisunique &&
-			indexStruct->indproc == InvalidOid &&
-			VARSIZE(&indexStruct->indpred) <= VARHDRSZ)
+		if (indexStruct->indnatts == numattrs &&
+			indexStruct->indisunique &&
+			heap_attisnull(indexTuple, Anum_pg_index_indpred) &&
+			heap_attisnull(indexTuple, Anum_pg_index_indexprs))
 		{
-			for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++)
-				;
-			if (i == numattrs)
+			/*
+			 * The given attnum list may match the index columns in any
+			 * order.  Check that each list is a subset of the other.
+			 */
+			for (i = 0; i < numattrs; i++)
 			{
-				/*
-				 * The given attnum list may match the index columns in any
-				 * order.  Check that each list is a subset of the other.
-				 */
+				found = false;
+				for (j = 0; j < numattrs; j++)
+				{
+					if (attnums[i] == indexStruct->indkey[j])
+					{
+						found = true;
+						break;
+					}
+				}
+				if (!found)
+					break;
+			}
+			if (found)
+			{
 				for (i = 0; i < numattrs; i++)
 				{
 					found = false;
 					for (j = 0; j < numattrs; j++)
 					{
-						if (attnums[i] == indexStruct->indkey[j])
+						if (attnums[j] == indexStruct->indkey[i])
 						{
 							found = true;
 							break;
@@ -3268,23 +3289,6 @@ transformFkeyCheckAttrs(Relation pkrel,
 					}
 					if (!found)
 						break;
-				}
-				if (found)
-				{
-					for (i = 0; i < numattrs; i++)
-					{
-						found = false;
-						for (j = 0; j < numattrs; j++)
-						{
-							if (attnums[j] == indexStruct->indkey[i])
-							{
-								found = true;
-								break;
-							}
-						}
-						if (!found)
-							break;
-					}
 				}
 			}
 		}
@@ -4020,12 +4024,12 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 
 	indexInfo = makeNode(IndexInfo);
 	indexInfo->ii_NumIndexAttrs = 2;
-	indexInfo->ii_NumKeyAttrs = 2;
 	indexInfo->ii_KeyAttrNumbers[0] = 1;
 	indexInfo->ii_KeyAttrNumbers[1] = 2;
+	indexInfo->ii_Expressions = NIL;
+	indexInfo->ii_ExpressionsState = NIL;
 	indexInfo->ii_Predicate = NIL;
 	indexInfo->ii_PredicateState = NIL;
-	indexInfo->ii_FuncOid = InvalidOid;
 	indexInfo->ii_Unique = true;
 
 	classObjectId[0] = OID_BTREE_OPS_OID;

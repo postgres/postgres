@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.70 2003/05/08 22:19:55 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.71 2003/05/28 16:03:55 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -1934,25 +1934,17 @@
      </row>
 
      <row>
-      <entry><structfield>indproc</structfield></entry>
-      <entry><type>regproc</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
-      <entry>The function's OID if this is a functional index,
-      else zero</entry>
-     </row>
-
-     <row>
       <entry><structfield>indkey</structfield></entry>
       <entry><type>int2vector</type></entry>
       <entry>pg_attribute.attnum</entry>
       <entry>
-       This is an array of up to
-       <symbol>INDEX_MAX_KEYS</symbol> values that indicate which
-       table columns this index pertains to.  For example a value of
-       <literal>1 3</literal> would mean that the first and the third
-       column make up the index key.  For a functional index, these
-       columns are the inputs to the function, and the function's return
-       value is the index key.
+       This is an array of <structfield>indnatts</structfield> (up to
+       <symbol>INDEX_MAX_KEYS</symbol>) values that indicate which
+       table columns this index indexes.  For example a value of
+       <literal>1 3</literal> would mean that the first and the third table
+       columns make up the index key.  A zero in this array indicates that the
+       corresponding index attribute is an expression over the table columns,
+       rather than a simple column reference.
       </entry>
      </row>
 
@@ -1961,17 +1953,18 @@
       <entry><type>oidvector</type></entry>
       <entry>pg_opclass.oid</entry>
       <entry>
-       For each column in the index key this contains a reference to
+       For each column in the index key this contains the OID of
        the operator class to use.  See
        <structname>pg_opclass</structname> for details.
       </entry>
      </row>
 
      <row>
-      <entry><structfield>indisclustered</structfield></entry>
-      <entry><type>bool</type></entry>
+      <entry><structfield>indnatts</structfield></entry>
+      <entry><type>int2</type></entry>
       <entry></entry>
-      <entry>If true, the table was last clustered on this index.</entry>
+      <entry>The number of columns in the index (duplicates
+      <literal>pg_class.relnatts</literal>)</entry>
      </row>
 
      <row>
@@ -1990,19 +1983,28 @@
      </row>
 
      <row>
-      <entry><structfield>indreference</structfield></entry>
-      <entry><type>oid</type></entry>
+      <entry><structfield>indisclustered</structfield></entry>
+      <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>unused</entry>
+      <entry>If true, the table was last clustered on this index.</entry>
+     </row>
+
+     <row>
+      <entry><structfield>indexprs</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>Expression trees (in <function>nodeToString()</function> representation)
+      for index attributes that are not simple column references.  This is a
+      list with one element for each zero entry in <structfield>indkey</>.
+      Null if all index attributes are simple references.</entry>
      </row>
 
      <row>
       <entry><structfield>indpred</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
-      <entry>Expression tree (in the form of a <function>nodeToString()</function> representation)
-      for partial index predicate.  Empty string if not a partial
-      index.</entry>
+      <entry>Expression tree (in <function>nodeToString()</function> representation)
+      for partial index predicate.  Null if not a partial index.</entry>
      </row>
     </tbody>
    </tgroup>

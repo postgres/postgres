@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.82 2003/05/12 00:17:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.83 2003/05/28 16:03:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/plancat.h"
 #include "parser/parsetree.h"
+#include "rewrite/rewriteManip.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
@@ -116,77 +117,66 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 			Relation	indexRelation;
 			Form_pg_index index;
 			IndexOptInfo *info;
+			int			ncolumns;
 			int			i;
 			int16		amorderstrategy;
 
 			/* Extract info from the relation descriptor for the index */
 			indexRelation = index_open(indexoid);
+			index = indexRelation->rd_index;
 
 			info = makeNode(IndexOptInfo);
 
-			/*
-			 * Need to make these arrays large enough to be sure there is room
-			 * for a terminating 0 at the end of each one.
-			 */
-			info->classlist = (Oid *) palloc(sizeof(Oid) * (INDEX_MAX_KEYS + 1));
-			info->indexkeys = (int *) palloc(sizeof(int) * (INDEX_MAX_KEYS + 1));
-			info->ordering = (Oid *) palloc(sizeof(Oid) * (INDEX_MAX_KEYS + 1));
-
-			/* Extract info from the pg_index tuple */
-			index = indexRelation->rd_index;
 			info->indexoid = index->indexrelid;
-			info->indproc = index->indproc; /* functional index ?? */
-			if (VARSIZE(&index->indpred) > VARHDRSZ) /* partial index ?? */
-			{
-				char	   *predString;
+			info->ncolumns = ncolumns = index->indnatts;
 
-				predString = DatumGetCString(DirectFunctionCall1(textout,
-																 PointerGetDatum(&index->indpred)));
-				info->indpred = (List *) stringToNode(predString);
-				pfree(predString);
-			}
-			else
-				info->indpred = NIL;
-			info->unique = index->indisunique;
+			/*
+			 * Need to make classlist and ordering arrays large enough to put
+			 * a terminating 0 at the end of each one.
+			 */
+			info->indexkeys = (int *) palloc(sizeof(int) * ncolumns);
+			info->classlist = (Oid *) palloc0(sizeof(Oid) * (ncolumns + 1));
+			info->ordering = (Oid *) palloc0(sizeof(Oid) * (ncolumns + 1));
 
-			for (i = 0; i < INDEX_MAX_KEYS; i++)
+			for (i = 0; i < ncolumns; i++)
 			{
-				if (index->indclass[i] == (Oid) 0)
-					break;
 				info->classlist[i] = index->indclass[i];
-			}
-			info->classlist[i] = (Oid) 0;
-			info->ncolumns = i;
-
-			for (i = 0; i < INDEX_MAX_KEYS; i++)
-			{
-				if (index->indkey[i] == 0)
-					break;
 				info->indexkeys[i] = index->indkey[i];
 			}
-			info->indexkeys[i] = 0;
-			info->nkeys = i;
 
 			info->relam = indexRelation->rd_rel->relam;
 			info->pages = indexRelation->rd_rel->relpages;
 			info->tuples = indexRelation->rd_rel->reltuples;
 			info->amcostestimate = index_cost_estimator(indexRelation);
-			amorderstrategy = indexRelation->rd_am->amorderstrategy;
 
 			/*
 			 * Fetch the ordering operators associated with the index, if any.
 			 */
-			MemSet(info->ordering, 0, sizeof(Oid) * (INDEX_MAX_KEYS + 1));
+			amorderstrategy = indexRelation->rd_am->amorderstrategy;
 			if (amorderstrategy != 0)
 			{
 				int			oprindex = amorderstrategy - 1;
 
-				for (i = 0; i < info->ncolumns; i++)
+				for (i = 0; i < ncolumns; i++)
 				{
 					info->ordering[i] = indexRelation->rd_operator[oprindex];
 					oprindex += indexRelation->rd_am->amstrategies;
 				}
 			}
+
+			/*
+			 * Fetch the index expressions and predicate, if any.  We must
+			 * modify the copies we obtain from the relcache to have the
+			 * correct varno for the parent relation, so that they match up
+			 * correctly against qual clauses.
+			 */
+			info->indexprs = RelationGetIndexExpressions(indexRelation);
+			info->indpred = RelationGetIndexPredicate(indexRelation);
+			if (info->indexprs && varno != 1)
+				ChangeVarNodes((Node *) info->indexprs, 1, varno, 0);
+			if (info->indpred && varno != 1)
+				ChangeVarNodes((Node *) info->indpred, 1, varno, 0);
+			info->unique = index->indisunique;
 
 			/* initialize cached join info to empty */
 			info->outer_relids = NULL;
@@ -372,15 +362,15 @@ has_unique_index(RelOptInfo *rel, AttrNumber attno)
 		IndexOptInfo *index = (IndexOptInfo *) lfirst(ilist);
 
 		/*
-		 * Note: ignore functional and partial indexes, since they don't
-		 * allow us to conclude that all attr values are distinct. Also, a
-		 * multicolumn unique index doesn't allow us to conclude that just
-		 * the specified attr is unique.
+		 * Note: ignore partial indexes, since they don't allow us to conclude
+		 * that all attr values are distinct.  We don't take any interest in
+		 * expressional indexes either. Also, a multicolumn unique index
+		 * doesn't allow us to conclude that just the specified attr is
+		 * unique.
 		 */
 		if (index->unique &&
-			index->nkeys == 1 &&
+			index->ncolumns == 1 &&
 			index->indexkeys[0] == attno &&
-			index->indproc == InvalidOid &&
 			index->indpred == NIL)
 			return true;
 	}

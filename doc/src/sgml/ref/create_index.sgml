@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.38 2003/04/22 10:08:08 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.39 2003/05/28 16:03:55 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -16,12 +16,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> ON <replaceable class="parameter">table</replaceable>
-    [ USING <replaceable class="parameter">method</replaceable> ] ( <replaceable class="parameter">column</replaceable> [ <replaceable class="parameter">ops_name</replaceable> ] [, ...] )
-    [ WHERE <replaceable class="parameter">predicate</replaceable> ]
-
-CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> ON <replaceable class="parameter">table</replaceable>
-    [ USING <replaceable class="parameter">method</replaceable> ] ( <replaceable class="parameter">func_name</replaceable>( <replaceable class="parameter">column</replaceable> [, ... ]) [ <replaceable class="parameter">ops_name</replaceable> ] )
+CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> ON <replaceable class="parameter">table</replaceable> [ USING <replaceable class="parameter">method</replaceable> ]
+    ( { <replaceable class="parameter">column</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ <replaceable class="parameter">opclass</replaceable> ] [, ...] )
     [ WHERE <replaceable class="parameter">predicate</replaceable> ]
 </synopsis>
  </refsynopsisdiv>
@@ -32,25 +28,22 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> 
   <para>
    <command>CREATE INDEX</command> constructs an index <replaceable
    class="parameter">index_name</replaceable> on the specified table.
-   Indexes are primarily used to enhance database performance.  But
-   inappropriate use will result in slower performance.
+   Indexes are primarily used to enhance database performance (though
+   inappropriate use will result in slower performance).
   </para>
 
   <para>
-   In the first syntax shown above, the key field(s) for the
-   index are specified as column names.
+   The key field(s) for the index are specified as column names,
+   or alternatively as expressions written in parentheses.
    Multiple fields can be specified if the index method supports
    multicolumn indexes.
   </para>
 
   <para>
-   In the second syntax shown above, an index is defined on the result
-   of a user-specified function <replaceable
-   class="parameter">func_name</replaceable> applied to one or more
-   columns of a single table. These <firstterm>functional
-   indexes</firstterm> can be used to obtain fast access to data based
-   on operators that would normally require some transformation to apply
-   them to the base data. For example, a functional index on
+   An index field can be an expression computed from the values of
+   one or more columns of the table row.  This feature can be used
+   to obtain fast access to data based on some transformation of
+   the basic data. For example, an index computed on
    <literal>upper(col)</> would allow the clause
    <literal>WHERE upper(col) = 'JIM'</> to use an index.
   </para>
@@ -84,6 +77,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> 
     only to columns of the underlying table (but it can use all columns,
     not only the one(s) being indexed).  Presently, subqueries and
     aggregate expressions are also forbidden in <literal>WHERE</literal>.
+    The same restrictions apply to index fields that are expressions.
   </para>
 
   <para>
@@ -92,8 +86,8 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> 
    their arguments and never on any outside influence (such as
    the contents of another table or the current time).  This restriction
    ensures that the behavior of the index is well-defined.  To use a
-   user-defined function in an index, remember to mark the function immutable
-   when you create it.
+   user-defined function in an index expression or <literal>WHERE</literal>
+   clause, remember to mark the function immutable when you create it.
   </para>
  </refsect1>
 
@@ -156,19 +150,22 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> 
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="parameter">ops_name</replaceable></term>
+      <term><replaceable class="parameter">expression</replaceable></term>
       <listitem>
        <para>
-	An associated operator class. See below for details.
+	An expression based on one or more columns of the table.  The
+	expression usually must be written with surrounding parentheses,
+	as shown in the syntax.  However, the parentheses may be omitted
+	if the expression has the form of a function call.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="parameter">func_name</replaceable></term>
+      <term><replaceable class="parameter">opclass</replaceable></term>
       <listitem>
        <para>
-	A function, which returns a value that can be indexed.
+	The name of an operator class. See below for details.
        </para>
       </listitem>
      </varlistentry>
@@ -177,7 +174,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> 
       <term><replaceable class="parameter">predicate</replaceable></term>
       <listitem>
        <para>
-	Defines the constraint expression for a partial index.
+	The constraint expression for a partial index.
        </para>
       </listitem>
      </varlistentry>

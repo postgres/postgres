@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.414 2003/05/15 16:35:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.415 2003/05/28 16:03:57 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -210,7 +210,7 @@ static void doNegateFloat(Value *v);
 				oper_argtypes RuleActionList RuleActionMulti
 				opt_column_list columnList opt_name_list
 				sort_clause opt_sort_clause sortby_list index_params
-				index_list name_list from_clause from_list opt_array_bounds
+				name_list from_clause from_list opt_array_bounds
 				qualified_name_list any_name any_name_list
 				any_operator expr_list dotted_name attrs
 				target_list update_target_list insert_column_list
@@ -276,7 +276,7 @@ static void doNegateFloat(Value *v);
 %type <columnref>	columnref
 %type <alias>	alias_clause
 %type <sortgroupby>		sortby
-%type <ielem>	index_elem func_index
+%type <ielem>	index_elem
 %type <node>	table_ref
 %type <jexpr>	joined_table
 %type <range>	relation_expr
@@ -408,7 +408,7 @@ static void doNegateFloat(Value *v);
 %token			UNIONJOIN
 
 /* Special keywords, not in the query language - see the "lex" file */
-%token <str>	IDENT FCONST SCONST NCONST BCONST XCONST Op
+%token <str>	IDENT FCONST SCONST BCONST XCONST Op
 %token <ival>	ICONST PARAM
 
 /* precedence: lowest to highest */
@@ -2932,7 +2932,7 @@ function_with_argtypes:
  *
  *		QUERY:
  *				create index <indexname> on <relname>
- *				  [ using <access> ] "(" (<col> with <op>)+ ")"
+ *				  [ using <access> ] "(" ( <col> [ using <opclass> ] )+ ")"
  *				  [ where <predicate> ]
  *
  *****************************************************************************/
@@ -2958,70 +2958,48 @@ index_opt_unique:
 
 access_method_clause:
 			USING access_method						{ $$ = $2; }
-			/* If btree changes as our default, update pg_get_indexdef() */
 			| /*EMPTY*/								{ $$ = DEFAULT_INDEX_TYPE; }
 		;
 
-index_params:
-			index_list								{ $$ = $1; }
-			| func_index							{ $$ = makeList1($1); }
+index_params:	index_elem							{ $$ = makeList1($1); }
+			| index_params ',' index_elem			{ $$ = lappend($1, $3); }
 		;
 
-index_list:	index_elem								{ $$ = makeList1($1); }
-			| index_list ',' index_elem				{ $$ = lappend($1, $3); }
-		;
-
-func_index: func_name '(' name_list ')' opt_class
-				{
-					$$ = makeNode(IndexElem);
-					$$->name = NULL;
-					$$->funcname = $1;
-					$$->args = $3;
-					$$->opclass = $5;
-				}
-		  ;
-
-index_elem: attr_name opt_class
+/*
+ * Index attributes can be either simple column references, or arbitrary
+ * expressions in parens.  For backwards-compatibility reasons, we allow
+ * an expression that's just a function call to be written without parens.
+ */
+index_elem:	attr_name opt_class
 				{
 					$$ = makeNode(IndexElem);
 					$$->name = $1;
-					$$->funcname = NIL;
-					$$->args = NIL;
+					$$->expr = NULL;
 					$$->opclass = $2;
+				}
+			| func_name '(' expr_list ')' opt_class
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = $1;
+					n->args = $3;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
+
+					$$ = makeNode(IndexElem);
+					$$->name = NULL;
+					$$->expr = (Node *)n;
+					$$->opclass = $5;
+				}
+			| '(' a_expr ')' opt_class
+				{
+					$$ = makeNode(IndexElem);
+					$$->name = NULL;
+					$$->expr = $2;
+					$$->opclass = $4;
 				}
 		;
 
-opt_class:	any_name
-				{
-					/*
-					 * Release 7.0 removed network_ops, timespan_ops, and
-					 * datetime_ops, so we suppress it from being passed to
-					 * the parser so the default *_ops is used.  This can be
-					 * removed in some later release.  bjm 2000/02/07
-					 *
-					 * Release 7.1 removes lztext_ops, so suppress that too
-					 * for a while.  tgl 2000/07/30
-					 *
-					 * Release 7.2 renames timestamp_ops to timestamptz_ops,
-					 * so suppress that too for awhile.  I'm starting to
-					 * think we need a better approach.  tgl 2000/10/01
-					 */
-					if (length($1) == 1)
-					{
-						char   *claname = strVal(lfirst($1));
-
-						if (strcmp(claname, "network_ops") != 0 &&
-							strcmp(claname, "timespan_ops") != 0 &&
-							strcmp(claname, "datetime_ops") != 0 &&
-							strcmp(claname, "lztext_ops") != 0 &&
-							strcmp(claname, "timestamp_ops") != 0)
-							$$ = $1;
-						else
-							$$ = NIL;
-					}
-					else
-						$$ = $1;
-				}
+opt_class:	any_name								{ $$ = $1; }
 			| USING any_name						{ $$ = $2; }
 			| /*EMPTY*/								{ $$ = NIL; }
 		;

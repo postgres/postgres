@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.244 2003/05/12 00:17:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.245 2003/05/28 16:03:55 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1885,47 +1885,30 @@ RemoveStatistics(Relation rel, AttrNumber attnum)
 static void
 RelationTruncateIndexes(Oid heapId)
 {
-	Relation	indexRelation;
-	ScanKeyData entry;
-	SysScanDesc scan;
-	HeapTuple	indexTuple;
+	Relation	heapRelation;
+	List	   *indlist;
 
-	/* Scan pg_index to find indexes on specified heap */
-	indexRelation = heap_openr(IndexRelationName, AccessShareLock);
-	ScanKeyEntryInitialize(&entry, 0,
-						   Anum_pg_index_indrelid,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(heapId));
-	scan = systable_beginscan(indexRelation, IndexIndrelidIndex, true,
-							  SnapshotNow, 1, &entry);
+	/*
+	 * Open the heap rel.  We need grab no lock because we assume
+	 * heap_truncate is holding an exclusive lock on the heap rel.
+	 */
+	heapRelation = heap_open(heapId, NoLock);
 
-	while (HeapTupleIsValid(indexTuple = systable_getnext(scan)))
+	/* Ask the relcache to produce a list of the indexes of the rel */
+	foreach(indlist, RelationGetIndexList(heapRelation))
 	{
-		Form_pg_index indexform = (Form_pg_index) GETSTRUCT(indexTuple);
-		Oid			indexId;
+		Oid			indexId = lfirsto(indlist);
+		Relation	currentIndex;
 		IndexInfo  *indexInfo;
-		Relation	heapRelation,
-					currentIndex;
-
-		/*
-		 * For each index, fetch info needed for index_build
-		 */
-		indexId = indexform->indexrelid;
-		indexInfo = BuildIndexInfo(indexform);
-
-		/*
-		 * We have to re-open the heap rel each time through this loop
-		 * because index_build will close it again.  We need grab no lock,
-		 * however, because we assume heap_truncate is holding an
-		 * exclusive lock on the heap rel.
-		 */
-		heapRelation = heap_open(heapId, NoLock);
 
 		/* Open the index relation */
 		currentIndex = index_open(indexId);
 
 		/* Obtain exclusive lock on it, just to be sure */
 		LockRelation(currentIndex, AccessExclusiveLock);
+
+		/* Fetch info needed for index_build */
+		indexInfo = BuildIndexInfo(currentIndex);
 
 		/*
 		 * Drop any buffers associated with this index. If they're dirty,
@@ -1943,13 +1926,14 @@ RelationTruncateIndexes(Oid heapId)
 
 		/*
 		 * index_build will close both the heap and index relations (but
-		 * not give up the locks we hold on them).
+		 * not give up the locks we hold on them).  We're done with this
+		 * index, but we must re-open the heap rel.
 		 */
+		heapRelation = heap_open(heapId, NoLock);
 	}
 
-	/* Complete the scan and close pg_index */
-	systable_endscan(scan);
-	heap_close(indexRelation, AccessShareLock);
+	/* Finish by closing the heap rel again */
+	heap_close(heapRelation, NoLock);
 }
 
 /*

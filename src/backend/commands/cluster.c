@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.109 2003/05/14 03:26:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.110 2003/05/28 16:03:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -214,7 +214,7 @@ cluster(ClusterStmt *stmt)
 
 			/* Start a new transaction for each relation. */
 			StartTransactionCommand();
-			SetQuerySnapshot();	/* might be needed for functional index */
+			SetQuerySnapshot();	/* might be needed for functions in indexes */
 			cluster_rel(rvtc, true);
 			CommitTransactionCommand();
 		}
@@ -320,7 +320,7 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 	 * seqscan pass over the table to copy the missing rows, but that seems
 	 * expensive and tedious.
 	 */
-	if (VARSIZE(&OldIndex->rd_index->indpred) > VARHDRSZ) /* partial? */
+	if (!heap_attisnull(OldIndex->rd_indextuple, Anum_pg_index_indpred))
 		elog(ERROR, "CLUSTER: cannot cluster on partial index");
 	if (!OldIndex->rd_am->amindexnulls)
 	{
@@ -332,14 +332,24 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 		 * at the first column; multicolumn-capable AMs are *required* to
 		 * index nulls in columns after the first.
 		 */
-		if (OidIsValid(OldIndex->rd_index->indproc))
-			elog(ERROR, "CLUSTER: cannot cluster on functional index when index access method does not handle nulls");
 		colno = OldIndex->rd_index->indkey[0];
-		if (colno > 0)			/* system columns are non-null */
+		if (colno > 0)
+		{
+			/* ordinary user attribute */
 			if (!OldHeap->rd_att->attrs[colno - 1]->attnotnull)
 				elog(ERROR, "CLUSTER: cannot cluster when index access method does not handle nulls"
 					 "\n\tYou may be able to work around this by marking column \"%s\" NOT NULL",
 					 NameStr(OldHeap->rd_att->attrs[colno - 1]->attname));
+		}
+		else if (colno < 0)
+		{
+			/* system column --- okay, always non-null */
+		}
+		else
+		{
+			/* index expression, lose... */
+			elog(ERROR, "CLUSTER: cannot cluster on expressional index when index access method does not handle nulls");
+		}
 	}
 
 	/*
@@ -557,43 +567,24 @@ get_indexattr_list(Relation OldHeap, Oid OldIndex)
 	foreach(indlist, RelationGetIndexList(OldHeap))
 	{
 		Oid			indexOID = lfirsto(indlist);
-		HeapTuple	indexTuple;
-		HeapTuple	classTuple;
-		Form_pg_index indexForm;
-		Form_pg_class classForm;
+		Relation	oldIndex;
 		IndexAttrs *attrs;
 
-		indexTuple = SearchSysCache(INDEXRELID,
-									ObjectIdGetDatum(indexOID),
-									0, 0, 0);
-		if (!HeapTupleIsValid(indexTuple))
-			elog(ERROR, "Cache lookup failed for index %u", indexOID);
-		indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
-		Assert(indexForm->indexrelid == indexOID);
+		oldIndex = index_open(indexOID);
 
 		attrs = (IndexAttrs *) palloc(sizeof(IndexAttrs));
 		attrs->indexOID = indexOID;
-		attrs->indexInfo = BuildIndexInfo(indexForm);
+		attrs->indexName = pstrdup(NameStr(oldIndex->rd_rel->relname));
+		attrs->accessMethodOID = oldIndex->rd_rel->relam;
+		attrs->indexInfo = BuildIndexInfo(oldIndex);
 		attrs->classOID = (Oid *)
 			palloc(sizeof(Oid) * attrs->indexInfo->ii_NumIndexAttrs);
-		memcpy(attrs->classOID, indexForm->indclass,
+		memcpy(attrs->classOID, oldIndex->rd_index->indclass,
 			   sizeof(Oid) * attrs->indexInfo->ii_NumIndexAttrs);
 		/* We adjust the isclustered attribute to correct new state */
 		attrs->isclustered = (indexOID == OldIndex);
 
-		/* Name and access method of each index come from pg_class */
-		classTuple = SearchSysCache(RELOID,
-									ObjectIdGetDatum(indexOID),
-									0, 0, 0);
-		if (!HeapTupleIsValid(classTuple))
-			elog(ERROR, "Cache lookup failed for index %u", indexOID);
-		classForm = (Form_pg_class) GETSTRUCT(classTuple);
-
-		attrs->indexName = pstrdup(NameStr(classForm->relname));
-		attrs->accessMethodOID = classForm->relam;
-
-		ReleaseSysCache(classTuple);
-		ReleaseSysCache(indexTuple);
+		index_close(oldIndex);
 
 		/*
 		 * Cons the gathered data into the list.  We do not care about

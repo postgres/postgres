@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.79 2003/02/08 20:20:55 tgl Exp $
+ * $Id: relation.h,v 1.80 2003/05/28 16:04:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,15 +227,16 @@ typedef struct RelOptInfo
  *		and indexes, but that created confusion without actually doing anything
  *		useful.  So now we have a separate IndexOptInfo struct for indexes.
  *
- *		ncolumns and nkeys are the same except for a functional index,
- *		wherein ncolumns is 1 (the single function output) while nkeys
- *		is the number of table columns passed to the function. classlist[]
- *		and ordering[] have ncolumns entries, while indexkeys[] has nkeys
- *		entries.
+ *		classlist[], indexkeys[], and ordering[] have ncolumns entries.
+ *		Zeroes in the indexkeys[] array indicate index columns that are
+ *		expressions; there is one element in indexprs for each such column.
  *
- *		Note: for historical reasons, the arrays classlist, indexkeys and
- *		ordering have an extra entry that is always zero.  Some code scans
- *		until it sees a zero rather than looking at ncolumns or nkeys.
+ *		Note: for historical reasons, the classlist and ordering arrays have
+ *		an extra entry that is always zero.  Some code scans until it sees a
+ *		zero entry, rather than looking at ncolumns.
+ *
+ *		The indexprs and indpred expressions have been run through
+ *		eval_const_expressions() for ease of matching to WHERE clauses.
  */
 
 typedef struct IndexOptInfo
@@ -250,15 +251,14 @@ typedef struct IndexOptInfo
 
 	/* index descriptor information */
 	int			ncolumns;		/* number of columns in index */
-	int			nkeys;			/* number of keys used by index */
 	Oid		   *classlist;		/* OIDs of operator classes for columns */
-	int		   *indexkeys;		/* column numbers of index's keys */
+	int		   *indexkeys;		/* column numbers of index's keys, or 0 */
 	Oid		   *ordering;		/* OIDs of sort operators for each column */
 	Oid			relam;			/* OID of the access method (in pg_am) */
 
 	RegProcedure amcostestimate;	/* OID of the access method's cost fcn */
 
-	Oid			indproc;		/* OID of func if functional index, else 0 */
+	List	   *indexprs;		/* expressions for non-simple index columns */
 	List	   *indpred;		/* predicate if a partial index, else NIL */
 	bool		unique;			/* true if a unique index */
 
@@ -289,9 +289,8 @@ typedef struct PathKeyItem
 
 	/*
 	 * key typically points to a Var node, ie a relation attribute, but it
-	 * can also point to a FuncExpr clause representing the value indexed by a
-	 * functional index.  Someday we might allow arbitrary expressions as
-	 * path keys, so don't assume more than you must.
+	 * can also point to an arbitrary expression representing the value
+	 * indexed by an index expression.
 	 */
 } PathKeyItem;
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.24 2003/05/27 17:49:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.25 2003/05/28 16:03:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -843,6 +843,91 @@ recordDependencyOnExpr(const ObjectAddress *depender,
 	eliminate_duplicate_dependencies(&context.addrs);
 
 	/* And record 'em */
+	recordMultipleDependencies(depender,
+							   context.addrs.refs, context.addrs.numrefs,
+							   behavior);
+
+	term_object_addresses(&context.addrs);
+}
+
+/*
+ * recordDependencyOnSingleRelExpr - find expression dependencies
+ *
+ * As above, but only one relation is expected to be referenced (with
+ * varno = 1 and varlevelsup = 0).  Pass the relation OID instead of a
+ * range table.  An additional frammish is that dependencies on that
+ * relation (or its component columns) will be marked with 'self_behavior',
+ * whereas 'behavior' is used for everything else.
+ */
+void
+recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
+								Node *expr, Oid relId,
+								DependencyType behavior,
+								DependencyType self_behavior)
+{
+	find_expr_references_context context;
+	RangeTblEntry rte;
+
+	init_object_addresses(&context.addrs);
+
+	/* We gin up a rather bogus rangetable list to handle Vars */
+	MemSet(&rte, 0, sizeof(rte));
+	rte.type = T_RangeTblEntry;
+	rte.rtekind = RTE_RELATION;
+	rte.relid = relId;
+
+	context.rtables = makeList1(makeList1(&rte));
+
+	/* Scan the expression tree for referenceable objects */
+	find_expr_references_walker(expr, &context);
+
+	/* Remove any duplicates */
+	eliminate_duplicate_dependencies(&context.addrs);
+
+	/* Separate self-dependencies if necessary */
+	if (behavior != self_behavior && context.addrs.numrefs > 0)
+	{
+		ObjectAddresses self_addrs;
+		ObjectAddress *outobj;
+		int			oldref,
+					outrefs;
+
+		init_object_addresses(&self_addrs);
+
+		outobj = context.addrs.refs;
+		outrefs = 0;
+		for (oldref = 0; oldref < context.addrs.numrefs; oldref++)
+		{
+			ObjectAddress *thisobj = context.addrs.refs + oldref;
+
+			if (thisobj->classId == RelOid_pg_class &&
+				thisobj->objectId == relId)
+			{
+				/* Move this ref into self_addrs */
+				add_object_address(OCLASS_CLASS, relId, thisobj->objectSubId,
+								   &self_addrs);
+			}
+			else
+			{
+				/* Keep it in context.addrs */
+				outobj->classId = thisobj->classId;
+				outobj->objectId = thisobj->objectId;
+				outobj->objectSubId = thisobj->objectSubId;
+				outobj++;
+				outrefs++;
+			}
+		}
+		context.addrs.numrefs = outrefs;
+
+		/* Record the self-dependencies */
+		recordMultipleDependencies(depender,
+								   self_addrs.refs, self_addrs.numrefs,
+								   self_behavior);
+
+		term_object_addresses(&self_addrs);
+	}
+
+	/* Record the external dependencies */
 	recordMultipleDependencies(depender,
 							   context.addrs.refs, context.addrs.numrefs,
 							   behavior);

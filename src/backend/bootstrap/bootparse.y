@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.57 2003/05/27 17:49:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.58 2003/05/28 16:03:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,7 +273,7 @@ boot_index_param:
 				{
 					IndexElem *n = makeNode(IndexElem);
 					n->name = LexIDStr($1);
-					n->funcname = n->args = NIL; /* no func indexes */
+					n->expr = NULL;
 					n->opclass = makeList1(makeString(LexIDStr($2)));
 					$$ = n;
 				}

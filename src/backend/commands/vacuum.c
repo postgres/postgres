@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.254 2003/05/27 17:49:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.255 2003/05/28 16:03:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -304,7 +304,7 @@ vacuum(VacuumStmt *vacstmt)
 			if (vacstmt->vacuum)
 			{
 				StartTransactionCommand();
-				SetQuerySnapshot();	/* might be needed for functional index */
+				SetQuerySnapshot();	/* might be needed for functions in indexes */
 			}
 			else
 				old_context = MemoryContextSwitchTo(anl_context);
@@ -728,7 +728,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 
 	/* Begin a transaction for vacuuming this relation */
 	StartTransactionCommand();
-	SetQuerySnapshot();			/* might be needed for functional index */
+	SetQuerySnapshot();			/* might be needed for functions in indexes */
 
 	/*
 	 * Check for user-requested abort.	Note we want this to be inside a
@@ -3028,7 +3028,10 @@ vac_is_partial_index(Relation indrel)
 		return true;
 
 	/* Otherwise, look to see if there's a partial-index predicate */
-	return (VARSIZE(&indrel->rd_index->indpred) > VARHDRSZ);
+	if (!heap_attisnull(indrel->rd_indextuple, Anum_pg_index_indpred))
+		return true;
+
+	return false;
 }
 
 

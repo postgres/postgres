@@ -8,7 +8,7 @@
  * <opcamid, opcname> --- that is, there is a row for each valid combination
  * of opclass name and index access method type.  This row specifies the
  * expected input data type for the opclass (the type of the heap column,
- * or the function output type in the case of a functional index).	Note
+ * or the expression output type in the case of an index expression).  Note
  * that types binary-coercible to the specified type will be accepted too.
  *
  * For a given <opcamid, opcintype> pair, there can be at most one row that
@@ -26,7 +26,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_opclass.h,v 1.49 2003/05/26 00:11:27 tgl Exp $
+ * $Id: pg_opclass.h,v 1.50 2003/05/28 16:04:00 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

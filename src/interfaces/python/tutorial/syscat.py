@@ -36,8 +36,8 @@ def list_simple_ind(pgcnx):
 			ic.relname AS index_name, a.attname
 		FROM pg_class bc, pg_class ic, pg_index i, pg_attribute a
 		WHERE i.indrelid = bc.oid AND i.indexrelid = bc.oid
-				AND i.indkey[0] = a.attnum AND a.attrelid = bc.oid
-				AND i.indproc = '0'::oid AND a.attisdropped = 'f'
+				AND i.indkey[0] = a.attnum AND i.indnatts = 1
+				AND a.attrelid = bc.oid AND a.attisdropped = 'f'
 		ORDER BY class_name, index_name, attname""")
 	return result
 

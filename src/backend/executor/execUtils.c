@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.99 2003/05/05 17:57:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.100 2003/05/28 16:03:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -706,10 +706,8 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo)
 		if (!indexDesc->rd_am->amconcurrent)
 			LockRelation(indexDesc, AccessExclusiveLock);
 
-		/*
-		 * extract index key information from the index's pg_index tuple
-		 */
-		ii = BuildIndexInfo(indexDesc->rd_index);
+		/* extract index key information from the index's pg_index info */
+		ii = BuildIndexInfo(indexDesc);
 
 		relationDescs[i] = indexDesc;
 		indexInfoArray[i] = ii;
@@ -797,7 +795,7 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 
 	/*
 	 * We will use the EState's per-tuple context for evaluating
-	 * predicates and functional-index functions (creating it if it's not
+	 * predicates and index expressions (creating it if it's not
 	 * already there).
 	 */
 	econtext = GetPerTupleExprContext(estate);
@@ -844,11 +842,12 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 		/*
 		 * FormIndexDatum fills in its datum and null parameters with
 		 * attribute information taken from the given heap tuple.
+		 * It also computes any expressions needed.
 		 */
 		FormIndexDatum(indexInfo,
 					   heapTuple,
 					   heapDescriptor,
-					   econtext->ecxt_per_tuple_memory,
+					   estate,
 					   datum,
 					   nullv);
 

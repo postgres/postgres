@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.64 2002/11/23 03:59:09 momjian Exp $
+ * $Id: rel.h,v 1.65 2003/05/28 16:04:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,6 +132,8 @@ typedef struct RelationData
 
 	/* These are non-NULL only for an index relation: */
 	Form_pg_index rd_index;		/* pg_index tuple describing this index */
+	struct HeapTupleData *rd_indextuple; /* all of pg_index tuple */
+	/* "struct HeapTupleData *" avoids need to include htup.h here  */
 	Form_pg_am	rd_am;			/* pg_am tuple for index's AM */
 
 	/* index access support info (used only for an index relation) */
@@ -142,6 +144,8 @@ typedef struct RelationData
 	struct FmgrInfo *rd_supportinfo;	/* lookup info for support
 										 * procedures */
 	/* "struct FmgrInfo" avoids need to include fmgr.h here */
+	List	   *rd_indexprs;	/* index expression trees, if any */
+	List	   *rd_indpred;		/* index predicate tree, if any */
 
 	/* statistics collection area */
 	PgStat_Info pgstat_info;

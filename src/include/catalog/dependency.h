@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dependency.h,v 1.7 2003/03/06 22:54:49 tgl Exp $
+ * $Id: dependency.h,v 1.8 2003/05/28 16:03:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,6 +90,11 @@ extern void deleteWhatDependsOn(const ObjectAddress *object,
 extern void recordDependencyOnExpr(const ObjectAddress *depender,
 					   Node *expr, List *rtable,
 					   DependencyType behavior);
+
+extern void recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
+					   Node *expr, Oid relId,
+					   DependencyType behavior,
+					   DependencyType self_behavior);
 
 /* in pg_depend.c */
 

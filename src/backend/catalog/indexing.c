@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.102 2002/09/04 20:31:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.103 2003/05/28 16:03:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,11 +30,9 @@
  * In the current implementation, we share code for opening/closing the
  * indexes with execUtils.c.  But we do not use ExecInsertIndexTuples,
  * because we don't want to create an EState.  This implies that we
- * do not support partial indexes on system catalogs.  Nor do we handle
- * functional indexes very well (the code will work, but will leak memory
- * intraquery, because the index function is called in the per-query context
- * that we are invoked in).  This could be fixed with localized changes here
- * if we wanted to pay the extra overhead of building an EState.
+ * do not support partial or expressional indexes on system catalogs.
+ * This could be fixed with localized changes here if we wanted to pay
+ * the extra overhead of building an EState.
  */
 CatalogIndexState
 CatalogOpenIndexes(Relation heapRel)
@@ -99,7 +97,11 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 
 		indexInfo = indexInfoArray[i];
 
-		/* Partial indexes on system catalogs are not supported */
+		/*
+		 * Expressional and partial indexes on system catalogs are not
+		 * supported
+		 */
+		Assert(indexInfo->ii_Expressions == NIL);
 		Assert(indexInfo->ii_Predicate == NIL);
 
 		/*
@@ -109,7 +111,7 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 		FormIndexDatum(indexInfo,
 					   heapTuple,
 					   heapDescriptor,
-					   CurrentMemoryContext,
+					   NULL,	/* no expression eval to do */
 					   datum,
 					   nullv);
 

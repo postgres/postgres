@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.271 2003/05/06 00:20:32 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.272 2003/05/28 16:03:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1311,8 +1311,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 			/* OK, add it to the index definition */
 			iparam = makeNode(IndexElem);
 			iparam->name = pstrdup(key);
-			iparam->funcname = NIL;
-			iparam->args = NIL;
+			iparam->expr = NULL;
 			iparam->opclass = NIL;
 			index->indexParams = lappend(index->indexParams, iparam);
 		}
@@ -1386,11 +1385,13 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 
 		if (index->idxname == NULL && index->indexParams != NIL)
 		{
-			iparam = lfirst(index->indexParams);
+			iparam = (IndexElem *) lfirst(index->indexParams);
+			/* we should never see an expression item here */
+			Assert(iparam->expr == NULL);
 			index->idxname = CreateIndexName(cxt->relation->relname,
-											 iparam->name ? iparam->name :
-										 strVal(llast(iparam->funcname)),
-											 "key", cxt->alist);
+											 iparam->name,
+											 "key",
+											 cxt->alist);
 		}
 		if (index->idxname == NULL)		/* should not happen */
 			elog(ERROR, "%s: failed to make implicit index name",
@@ -1454,7 +1455,8 @@ static Query *
 transformIndexStmt(ParseState *pstate, IndexStmt *stmt)
 {
 	Query	   *qry;
-	RangeTblEntry *rte;
+	RangeTblEntry *rte = NULL;
+	List	   *l;
 
 	qry = makeNode(Query);
 	qry->commandType = CMD_UTILITY;
@@ -1475,6 +1477,32 @@ transformIndexStmt(ParseState *pstate, IndexStmt *stmt)
 		addRTEtoQuery(pstate, rte, false, true);
 
 		stmt->whereClause = transformWhereClause(pstate, stmt->whereClause);
+	}
+
+	/* take care of any index expressions */
+	foreach(l, stmt->indexParams)
+	{
+		IndexElem	*ielem = (IndexElem *) lfirst(l);
+
+		if (ielem->expr)
+		{
+			/* Set up rtable as for predicate, see notes above */
+			if (rte == NULL)
+			{
+				rte = addRangeTableEntry(pstate, stmt->relation, NULL,
+										 false, true);
+				/* no to join list, yes to namespace */
+				addRTEtoQuery(pstate, rte, false, true);
+			}
+			ielem->expr = transformExpr(pstate, ielem->expr);
+			/*
+			 * We check only that the result type is legitimate; this is
+			 * for consistency with what transformWhereClause() checks for
+			 * the predicate.  DefineIndex() will make more checks.
+			 */
+			if (expression_returns_set(ielem->expr))
+				elog(ERROR, "index expression may not return a set");
+		}
 	}
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;

@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.76 2003/03/27 16:57:39 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.77 2003/05/28 16:03:59 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -711,10 +711,7 @@ describeOneTableDetails(const char *schemaname,
 	headers[cols] = NULL;
 
 	/* Get column info (index requires additional checks) */
-	if (tableinfo.relkind == 'i')
-		printfPQExpBuffer(&buf, "SELECT\n  CASE i.indproc WHEN ('-'::pg_catalog.regproc) THEN a.attname\n  ELSE SUBSTR(pg_catalog.pg_get_indexdef(attrelid),\n  POSITION('(' in pg_catalog.pg_get_indexdef(attrelid)))\n  END,");
-	else
-		printfPQExpBuffer(&buf, "SELECT a.attname,");
+	printfPQExpBuffer(&buf, "SELECT a.attname,");
 	appendPQExpBuffer(&buf, "\n  pg_catalog.format_type(a.atttypid, a.atttypmod),"
 					  "\n  (SELECT substring(d.adsrc for 128) FROM pg_catalog.pg_attrdef d"
 					  "\n   WHERE d.adrelid = a.attrelid AND d.adnum = a.attnum AND a.atthasdef),"

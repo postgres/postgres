@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.48 2003/05/02 19:48:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.49 2003/05/28 16:03:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -636,73 +636,50 @@ build_index_pathkeys(Query *root,
 	List	   *retval = NIL;
 	int		   *indexkeys = index->indexkeys;
 	Oid		   *ordering = index->ordering;
-	PathKeyItem *item;
-	Oid			sortop;
+	List	   *indexprs = index->indexprs;
 
-	if (!indexkeys || indexkeys[0] == 0 ||
-		!ordering || ordering[0] == InvalidOid)
-		return NIL;				/* unordered index? */
-
-	if (index->indproc)
+	while (*ordering != InvalidOid)
 	{
-		/* Functional index: build a representation of the function call */
-		Expr	   *funcnode;
-		List	   *funcargs = NIL;
+		PathKeyItem *item;
+		Oid			sortop;
+		Node	   *indexkey;
+		List	   *cpathkey;
 
 		sortop = *ordering;
 		if (ScanDirectionIsBackward(scandir))
 		{
 			sortop = get_commutator(sortop);
 			if (sortop == InvalidOid)
-				return NIL;		/* oops, no reverse sort operator? */
+				break;			/* oops, no reverse sort operator? */
 		}
 
-		while (*indexkeys != 0)
+		if (*indexkeys != 0)
 		{
-			funcargs = lappend(funcargs,
-							   find_indexkey_var(root, rel, *indexkeys));
-			indexkeys++;
+			/* simple index column */
+			indexkey = (Node *) find_indexkey_var(root, rel, *indexkeys);
 		}
-
-		funcnode = make_funcclause(index->indproc,
-								   get_func_rettype(index->indproc),
-								   false, /* cannot be a set */
-								   COERCE_DONTCARE,	/* to match any user expr */
-								   funcargs);
-
-		/* Make a one-sublist pathkeys list for the function expression */
-		item = makePathKeyItem((Node *) funcnode, sortop);
-		retval = makeList1(make_canonical_pathkey(root, item));
-	}
-	else
-	{
-		/* Normal non-functional index */
-		while (*indexkeys != 0 && *ordering != InvalidOid)
+		else
 		{
-			Var		   *relvar = find_indexkey_var(root, rel, *indexkeys);
-			List	   *cpathkey;
-
-			sortop = *ordering;
-			if (ScanDirectionIsBackward(scandir))
-			{
-				sortop = get_commutator(sortop);
-				if (sortop == InvalidOid)
-					break;		/* oops, no reverse sort operator? */
-			}
-
-			/* OK, make a sublist for this sort key */
-			item = makePathKeyItem((Node *) relvar, sortop);
-			cpathkey = make_canonical_pathkey(root, item);
-
-			/*
-			 * Eliminate redundant ordering info; could happen if query is
-			 * such that index keys are equijoined...
-			 */
-			if (!ptrMember(cpathkey, retval))
-				retval = lappend(retval, cpathkey);
-			indexkeys++;
-			ordering++;
+			/* expression --- assume we need not copy it */
+			if (indexprs == NIL)
+				elog(ERROR, "wrong number of index expressions");
+			indexkey = (Node *) lfirst(indexprs);
+			indexprs = lnext(indexprs);
 		}
+
+		/* OK, make a sublist for this sort key */
+		item = makePathKeyItem(indexkey, sortop);
+		cpathkey = make_canonical_pathkey(root, item);
+
+		/*
+		 * Eliminate redundant ordering info; could happen if query is
+		 * such that index keys are equijoined...
+		 */
+		if (!ptrMember(cpathkey, retval))
+			retval = lappend(retval, cpathkey);
+
+		indexkeys++;
+		ordering++;
 	}
 
 	return retval;
