@@ -50,7 +50,7 @@ geo_distance(Point *pt1, Point *pt2)
 				long2,
 				lat2;
 	double		longdiff;
-        double		sino;
+	double		sino;
 	double	   *resultp = palloc(sizeof(double));
 
 	/* convert degrees to radians */

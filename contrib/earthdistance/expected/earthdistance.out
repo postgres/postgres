@@ -3,79 +3,626 @@
 --
 --
 -- first, define the datatype.  Turn off echoing so that expected file
--- does not depend on contents of earthdistance.sql.
+-- does not depend on contents of earthdistance.sql or cube.sql.
 --
 \set ECHO none
+psql:../cube/cube.sql:12: NOTICE:  ProcedureCreate: type cube is not yet defined
+psql:../cube/cube.sql:17: NOTICE:  Argument type "cube" is only a shell
+--
+-- The radius of the Earth we are using.
+--
+select earth()::numeric(20,5);
+     earth     
+---------------
+ 6378168.00000
+(1 row)
+
+--
+-- Convert straight line distances to great circle distances.
+--
+select (pi()*earth())::numeric(20,5);
+    numeric     
+----------------
+ 20037605.73216
+(1 row)
+
+select sec_to_gc(0)::numeric(20,5);
+ sec_to_gc 
+-----------
+   0.00000
+(1 row)
+
+select sec_to_gc(2*earth())::numeric(20,5);
+   sec_to_gc    
+----------------
+ 20037605.73216
+(1 row)
+
+select sec_to_gc(10*earth())::numeric(20,5);
+   sec_to_gc    
+----------------
+ 20037605.73216
+(1 row)
+
+select sec_to_gc(-earth())::numeric(20,5);
+ sec_to_gc 
+-----------
+   0.00000
+(1 row)
+
+select sec_to_gc(1000)::numeric(20,5);
+ sec_to_gc  
+------------
+ 1000.00000
+(1 row)
+
+select sec_to_gc(10000)::numeric(20,5);
+  sec_to_gc  
+-------------
+ 10000.00102
+(1 row)
+
+select sec_to_gc(100000)::numeric(20,5);
+  sec_to_gc   
+--------------
+ 100001.02426
+(1 row)
+
+select sec_to_gc(1000000)::numeric(20,5);
+   sec_to_gc   
+---------------
+ 1001027.07131
+(1 row)
+
+--
+-- Convert great circle distances to straight line distances.
+--
+select gc_to_sec(0)::numeric(20,5);
+ gc_to_sec 
+-----------
+   0.00000
+(1 row)
+
+select gc_to_sec(sec_to_gc(2*earth()))::numeric(20,5);
+   gc_to_sec    
+----------------
+ 12756336.00000
+(1 row)
+
+select gc_to_sec(10*earth())::numeric(20,5);
+   gc_to_sec    
+----------------
+ 12756336.00000
+(1 row)
+
+select gc_to_sec(pi()*earth())::numeric(20,5);
+   gc_to_sec    
+----------------
+ 12756336.00000
+(1 row)
+
+select gc_to_sec(-1000)::numeric(20,5);
+ gc_to_sec 
+-----------
+   0.00000
+(1 row)
+
+select gc_to_sec(1000)::numeric(20,5);
+ gc_to_sec  
+------------
+ 1000.00000
+(1 row)
+
+select gc_to_sec(10000)::numeric(20,5);
+ gc_to_sec  
+------------
+ 9999.99898
+(1 row)
+
+select gc_to_sec(100000)::numeric(20,5);
+  gc_to_sec  
+-------------
+ 99998.97577
+(1 row)
+
+select gc_to_sec(1000000)::numeric(20,5);
+  gc_to_sec   
+--------------
+ 998976.08618
+(1 row)
+
+--
+-- Set coordinates using latitude and longitude.
+-- Extract each coordinate separately so we can round them.
+--
+select cube_ll_coord(ll_to_earth(0,0),1)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(0,0),2)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(0,0),3)::numeric(20,5);
+ cube_ll_coord | cube_ll_coord | cube_ll_coord 
+---------------+---------------+---------------
+ 6378168.00000 |       0.00000 |       0.00000
+(1 row)
+
+select cube_ll_coord(ll_to_earth(360,360),1)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(360,360),2)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(360,360),3)::numeric(20,5);
+ cube_ll_coord | cube_ll_coord | cube_ll_coord 
+---------------+---------------+---------------
+ 6378168.00000 |       0.00000 |       0.00000
+(1 row)
+
+select cube_ll_coord(ll_to_earth(180,180),1)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(180,180),2)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(180,180),3)::numeric(20,5);
+ cube_ll_coord | cube_ll_coord | cube_ll_coord 
+---------------+---------------+---------------
+ 6378168.00000 |       0.00000 |       0.00000
+(1 row)
+
+select cube_ll_coord(ll_to_earth(180,360),1)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(180,360),2)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(180,360),3)::numeric(20,5);
+ cube_ll_coord  | cube_ll_coord | cube_ll_coord 
+----------------+---------------+---------------
+ -6378168.00000 |       0.00000 |       0.00000
+(1 row)
+
+select cube_ll_coord(ll_to_earth(-180,-360),1)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(-180,-360),2)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(-180,-360),3)::numeric(20,5);
+ cube_ll_coord  | cube_ll_coord | cube_ll_coord 
+----------------+---------------+---------------
+ -6378168.00000 |       0.00000 |       0.00000
+(1 row)
+
+select cube_ll_coord(ll_to_earth(0,180),1)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(0,180),2)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(0,180),3)::numeric(20,5);
+ cube_ll_coord  | cube_ll_coord | cube_ll_coord 
+----------------+---------------+---------------
+ -6378168.00000 |       0.00000 |       0.00000
+(1 row)
+
+select cube_ll_coord(ll_to_earth(0,-180),1)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(0,-180),2)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(0,-180),3)::numeric(20,5);
+ cube_ll_coord  | cube_ll_coord | cube_ll_coord 
+----------------+---------------+---------------
+ -6378168.00000 |       0.00000 |       0.00000
+(1 row)
+
+select cube_ll_coord(ll_to_earth(90,0),1)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(90,0),2)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(90,0),3)::numeric(20,5);
+ cube_ll_coord | cube_ll_coord | cube_ll_coord 
+---------------+---------------+---------------
+       0.00000 |       0.00000 | 6378168.00000
+(1 row)
+
+select cube_ll_coord(ll_to_earth(90,180),1)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(90,180),2)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(90,180),3)::numeric(20,5);
+ cube_ll_coord | cube_ll_coord | cube_ll_coord 
+---------------+---------------+---------------
+       0.00000 |       0.00000 | 6378168.00000
+(1 row)
+
+select cube_ll_coord(ll_to_earth(-90,0),1)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(-90,0),2)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(-90,0),3)::numeric(20,5);
+ cube_ll_coord | cube_ll_coord | cube_ll_coord  
+---------------+---------------+----------------
+       0.00000 |       0.00000 | -6378168.00000
+(1 row)
+
+select cube_ll_coord(ll_to_earth(-90,180),1)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(-90,180),2)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(-90,180),3)::numeric(20,5);
+ cube_ll_coord | cube_ll_coord | cube_ll_coord  
+---------------+---------------+----------------
+       0.00000 |       0.00000 | -6378168.00000
+(1 row)
+
+--
+-- Test getting the latitude of a location.
+--
+select latitude(ll_to_earth(0,0))::numeric(20,10);
+   latitude   
+--------------
+ 0.0000000000
+(1 row)
+
+select latitude(ll_to_earth(45,0))::numeric(20,10);
+   latitude    
+---------------
+ 45.0000000000
+(1 row)
+
+select latitude(ll_to_earth(90,0))::numeric(20,10);
+   latitude    
+---------------
+ 90.0000000000
+(1 row)
+
+select latitude(ll_to_earth(-45,0))::numeric(20,10);
+    latitude    
+----------------
+ -45.0000000000
+(1 row)
+
+select latitude(ll_to_earth(-90,0))::numeric(20,10);
+    latitude    
+----------------
+ -90.0000000000
+(1 row)
+
+select latitude(ll_to_earth(0,90))::numeric(20,10);
+   latitude   
+--------------
+ 0.0000000000
+(1 row)
+
+select latitude(ll_to_earth(45,90))::numeric(20,10);
+   latitude    
+---------------
+ 45.0000000000
+(1 row)
+
+select latitude(ll_to_earth(90,90))::numeric(20,10);
+   latitude    
+---------------
+ 90.0000000000
+(1 row)
+
+select latitude(ll_to_earth(-45,90))::numeric(20,10);
+    latitude    
+----------------
+ -45.0000000000
+(1 row)
+
+select latitude(ll_to_earth(-90,90))::numeric(20,10);
+    latitude    
+----------------
+ -90.0000000000
+(1 row)
+
+select latitude(ll_to_earth(0,180))::numeric(20,10);
+   latitude   
+--------------
+ 0.0000000000
+(1 row)
+
+select latitude(ll_to_earth(45,180))::numeric(20,10);
+   latitude    
+---------------
+ 45.0000000000
+(1 row)
+
+select latitude(ll_to_earth(90,180))::numeric(20,10);
+   latitude    
+---------------
+ 90.0000000000
+(1 row)
+
+select latitude(ll_to_earth(-45,180))::numeric(20,10);
+    latitude    
+----------------
+ -45.0000000000
+(1 row)
+
+select latitude(ll_to_earth(-90,180))::numeric(20,10);
+    latitude    
+----------------
+ -90.0000000000
+(1 row)
+
+select latitude(ll_to_earth(0,-90))::numeric(20,10);
+   latitude   
+--------------
+ 0.0000000000
+(1 row)
+
+select latitude(ll_to_earth(45,-90))::numeric(20,10);
+   latitude    
+---------------
+ 45.0000000000
+(1 row)
+
+select latitude(ll_to_earth(90,-90))::numeric(20,10);
+   latitude    
+---------------
+ 90.0000000000
+(1 row)
+
+select latitude(ll_to_earth(-45,-90))::numeric(20,10);
+    latitude    
+----------------
+ -45.0000000000
+(1 row)
+
+select latitude(ll_to_earth(-90,-90))::numeric(20,10);
+    latitude    
+----------------
+ -90.0000000000
+(1 row)
+
+--
+-- Test getting the longitude of a location.
+--
+select longitude(ll_to_earth(0,0))::numeric(20,10);
+  longitude   
+--------------
+ 0.0000000000
+(1 row)
+
+select longitude(ll_to_earth(45,0))::numeric(20,10);
+  longitude   
+--------------
+ 0.0000000000
+(1 row)
+
+select longitude(ll_to_earth(90,0))::numeric(20,10);
+  longitude   
+--------------
+ 0.0000000000
+(1 row)
+
+select longitude(ll_to_earth(-45,0))::numeric(20,10);
+  longitude   
+--------------
+ 0.0000000000
+(1 row)
+
+select longitude(ll_to_earth(-90,0))::numeric(20,10);
+  longitude   
+--------------
+ 0.0000000000
+(1 row)
+
+select longitude(ll_to_earth(0,90))::numeric(20,10);
+   longitude   
+---------------
+ 90.0000000000
+(1 row)
+
+select longitude(ll_to_earth(45,90))::numeric(20,10);
+   longitude   
+---------------
+ 90.0000000000
+(1 row)
+
+select longitude(ll_to_earth(90,90))::numeric(20,10);
+   longitude   
+---------------
+ 90.0000000000
+(1 row)
+
+select longitude(ll_to_earth(-45,90))::numeric(20,10);
+   longitude   
+---------------
+ 90.0000000000
+(1 row)
+
+select longitude(ll_to_earth(-90,90))::numeric(20,10);
+   longitude   
+---------------
+ 90.0000000000
+(1 row)
+
+select longitude(ll_to_earth(0,180))::numeric(20,10);
+   longitude    
+----------------
+ 180.0000000000
+(1 row)
+
+select longitude(ll_to_earth(45,180))::numeric(20,10);
+   longitude    
+----------------
+ 180.0000000000
+(1 row)
+
+select longitude(ll_to_earth(90,180))::numeric(20,10);
+   longitude    
+----------------
+ 180.0000000000
+(1 row)
+
+select longitude(ll_to_earth(-45,180))::numeric(20,10);
+   longitude    
+----------------
+ 180.0000000000
+(1 row)
+
+select longitude(ll_to_earth(-90,180))::numeric(20,10);
+   longitude    
+----------------
+ 180.0000000000
+(1 row)
+
+select longitude(ll_to_earth(0,-90))::numeric(20,10);
+   longitude    
+----------------
+ -90.0000000000
+(1 row)
+
+select longitude(ll_to_earth(45,-90))::numeric(20,10);
+   longitude    
+----------------
+ -90.0000000000
+(1 row)
+
+select longitude(ll_to_earth(90,-90))::numeric(20,10);
+   longitude    
+----------------
+ -90.0000000000
+(1 row)
+
+select longitude(ll_to_earth(-45,-90))::numeric(20,10);
+   longitude    
+----------------
+ -90.0000000000
+(1 row)
+
+select longitude(ll_to_earth(-90,-90))::numeric(20,10);
+   longitude    
+----------------
+ -90.0000000000
+(1 row)
+
+--
+-- For the distance tests the following is some real life data.
+--
+-- Chicago has a latitude of 41.8 and a longitude of 87.6.
+-- Albuquerque has a latitude of 35.1 and a longitude of 106.7.
+-- (Note that latitude and longitude are specified differently
+-- in the cube based functions than for the point based functions.)
+--
+--
+-- Test getting the distance between two points using earth_distance.
+--
+select earth_distance(ll_to_earth(0,0),ll_to_earth(0,0))::numeric(20,5);
+ earth_distance 
+----------------
+        0.00000
+(1 row)
+
+select earth_distance(ll_to_earth(0,0),ll_to_earth(0,180))::numeric(20,5);
+ earth_distance 
+----------------
+ 20037605.73216
+(1 row)
+
+select earth_distance(ll_to_earth(0,0),ll_to_earth(90,0))::numeric(20,5);
+ earth_distance 
+----------------
+ 10018802.86608
+(1 row)
+
+select earth_distance(ll_to_earth(0,0),ll_to_earth(0,90))::numeric(20,5);
+ earth_distance 
+----------------
+ 10018802.86608
+(1 row)
+
+select earth_distance(ll_to_earth(0,0),ll_to_earth(0,1))::numeric(20,5);
+ earth_distance 
+----------------
+   111320.03185
+(1 row)
+
+select earth_distance(ll_to_earth(0,0),ll_to_earth(1,0))::numeric(20,5);
+ earth_distance 
+----------------
+   111320.03185
+(1 row)
+
+select earth_distance(ll_to_earth(30,0),ll_to_earth(30,1))::numeric(20,5);
+ earth_distance 
+----------------
+    96405.66962
+(1 row)
+
+select earth_distance(ll_to_earth(30,0),ll_to_earth(31,0))::numeric(20,5);
+ earth_distance 
+----------------
+   111320.03185
+(1 row)
+
+select earth_distance(ll_to_earth(60,0),ll_to_earth(60,1))::numeric(20,5);
+ earth_distance 
+----------------
+    55659.48608
+(1 row)
+
+select earth_distance(ll_to_earth(60,0),ll_to_earth(61,0))::numeric(20,5);
+ earth_distance 
+----------------
+   111320.03185
+(1 row)
+
+select earth_distance(ll_to_earth(41.8,87.6),ll_to_earth(35.1,106.7))::numeric(20,5);
+ earth_distance 
+----------------
+  1819303.21265
+(1 row)
+
+select (earth_distance(ll_to_earth(41.8,87.6),ll_to_earth(35.1,106.7))*
+      100./2.54/12./5280.)::numeric(20,5);
+  numeric   
+------------
+ 1130.46261
+(1 row)
+
 --
 -- Test getting the distance between two points using geo_distance.
 --
-SELECT geo_distance('(0,0)'::point,'(0,0)'::point)::numeric(20,5);
+select geo_distance('(0,0)'::point,'(0,0)'::point)::numeric(20,5);
  geo_distance 
 --------------
       0.00000
 (1 row)
 
-SELECT geo_distance('(0,0)'::point,'(180,0)'::point)::numeric(20,5);
+select geo_distance('(0,0)'::point,'(180,0)'::point)::numeric(20,5);
  geo_distance 
 --------------
   12436.77274
 (1 row)
 
-SELECT geo_distance('(0,0)'::point,'(0,90)'::point)::numeric(20,5);
+select geo_distance('(0,0)'::point,'(0,90)'::point)::numeric(20,5);
  geo_distance 
 --------------
    6218.38637
 (1 row)
 
-SELECT geo_distance('(0,0)'::point,'(90,0)'::point)::numeric(20,5);
+select geo_distance('(0,0)'::point,'(90,0)'::point)::numeric(20,5);
  geo_distance 
 --------------
    6218.38637
 (1 row)
 
-SELECT geo_distance('(0,0)'::point,'(1,0)'::point)::numeric(20,5);
+select geo_distance('(0,0)'::point,'(1,0)'::point)::numeric(20,5);
  geo_distance 
 --------------
      69.09318
 (1 row)
 
-SELECT geo_distance('(0,0)'::point,'(0,1)'::point)::numeric(20,5);
+select geo_distance('(0,0)'::point,'(0,1)'::point)::numeric(20,5);
  geo_distance 
 --------------
      69.09318
 (1 row)
 
-SELECT geo_distance('(0,30)'::point,'(1,30)'::point)::numeric(20,5);
+select geo_distance('(0,30)'::point,'(1,30)'::point)::numeric(20,5);
  geo_distance 
 --------------
      59.83626
 (1 row)
 
-SELECT geo_distance('(0,30)'::point,'(0,31)'::point)::numeric(20,5);
+select geo_distance('(0,30)'::point,'(0,31)'::point)::numeric(20,5);
  geo_distance 
 --------------
      69.09318
 (1 row)
 
-SELECT geo_distance('(0,60)'::point,'(1,60)'::point)::numeric(20,5);
+select geo_distance('(0,60)'::point,'(1,60)'::point)::numeric(20,5);
  geo_distance 
 --------------
      34.54626
 (1 row)
 
-SELECT geo_distance('(0,60)'::point,'(0,61)'::point)::numeric(20,5);
+select geo_distance('(0,60)'::point,'(0,61)'::point)::numeric(20,5);
  geo_distance 
 --------------
      69.09318
 (1 row)
 
-SELECT geo_distance('(87.6,41.8)'::point,'(106.7,35.1)'::point)::numeric(20,5);
+select geo_distance('(87.6,41.8)'::point,'(106.7,35.1)'::point)::numeric(20,5);
  geo_distance 
 --------------
    1129.18983
 (1 row)
 
-SELECT (geo_distance('(87.6,41.8)'::point,'(106.7,35.1)'::point)*5280.*12.*2.54/100.)::numeric(20,5);
+select (geo_distance('(87.6,41.8)'::point,'(106.7,35.1)'::point)*5280.*12.*2.54/100.)::numeric(20,5);
     numeric    
 ---------------
  1817254.87730
@@ -84,75 +631,318 @@ SELECT (geo_distance('(87.6,41.8)'::point,'(106.7,35.1)'::point)*5280.*12.*2.54/
 --
 -- Test getting the distance between two points using the <@> operator.
 --
-SELECT ('(0,0)'::point <@> '(0,0)'::point)::numeric(20,5);
+select ('(0,0)'::point <@> '(0,0)'::point)::numeric(20,5);
  numeric 
 ---------
  0.00000
 (1 row)
 
-SELECT ('(0,0)'::point <@> '(180,0)'::point)::numeric(20,5);
+select ('(0,0)'::point <@> '(180,0)'::point)::numeric(20,5);
    numeric   
 -------------
  12436.77274
 (1 row)
 
-SELECT ('(0,0)'::point <@> '(0,90)'::point)::numeric(20,5);
+select ('(0,0)'::point <@> '(0,90)'::point)::numeric(20,5);
   numeric   
 ------------
  6218.38637
 (1 row)
 
-SELECT ('(0,0)'::point <@> '(90,0)'::point)::numeric(20,5);
+select ('(0,0)'::point <@> '(90,0)'::point)::numeric(20,5);
   numeric   
 ------------
  6218.38637
 (1 row)
 
-SELECT ('(0,0)'::point <@> '(1,0)'::point)::numeric(20,5);
+select ('(0,0)'::point <@> '(1,0)'::point)::numeric(20,5);
  numeric  
 ----------
  69.09318
 (1 row)
 
-SELECT ('(0,0)'::point <@> '(0,1)'::point)::numeric(20,5);
+select ('(0,0)'::point <@> '(0,1)'::point)::numeric(20,5);
  numeric  
 ----------
  69.09318
 (1 row)
 
-SELECT ('(0,30)'::point <@> '(1,30)'::point)::numeric(20,5);
+select ('(0,30)'::point <@> '(1,30)'::point)::numeric(20,5);
  numeric  
 ----------
  59.83626
 (1 row)
 
-SELECT ('(0,30)'::point <@> '(0,31)'::point)::numeric(20,5);
+select ('(0,30)'::point <@> '(0,31)'::point)::numeric(20,5);
  numeric  
 ----------
  69.09318
 (1 row)
 
-SELECT ('(0,60)'::point <@> '(1,60)'::point)::numeric(20,5);
+select ('(0,60)'::point <@> '(1,60)'::point)::numeric(20,5);
  numeric  
 ----------
  34.54626
 (1 row)
 
-SELECT ('(0,60)'::point <@> '(0,61)'::point)::numeric(20,5);
+select ('(0,60)'::point <@> '(0,61)'::point)::numeric(20,5);
  numeric  
 ----------
  69.09318
 (1 row)
 
-SELECT ('(87.6,41.8)'::point <@> '(106.7,35.1)'::point)::numeric(20,5);
+select ('(87.6,41.8)'::point <@> '(106.7,35.1)'::point)::numeric(20,5);
   numeric   
 ------------
  1129.18983
 (1 row)
 
-SELECT (('(87.6,41.8)'::point <@> '(106.7,35.1)'::point)*5280.*12.*2.54/100.)::numeric(20,5);
+select (('(87.6,41.8)'::point <@> '(106.7,35.1)'::point)*5280.*12.*2.54/100.)::numeric(20,5);
     numeric    
 ---------------
  1817254.87730
+(1 row)
+
+--
+-- Test getting a bounding box around points.
+--
+select cube_ll_coord(earth_box(ll_to_earth(0,0),112000),1)::numeric(20,5),
+       cube_ll_coord(earth_box(ll_to_earth(0,0),112000),2)::numeric(20,5),
+       cube_ll_coord(earth_box(ll_to_earth(0,0),112000),3)::numeric(20,5),
+       cube_ur_coord(earth_box(ll_to_earth(0,0),112000),1)::numeric(20,5),
+       cube_ur_coord(earth_box(ll_to_earth(0,0),112000),2)::numeric(20,5),
+       cube_ur_coord(earth_box(ll_to_earth(0,0),112000),3)::numeric(20,5);
+ cube_ll_coord | cube_ll_coord | cube_ll_coord | cube_ur_coord | cube_ur_coord | cube_ur_coord 
+---------------+---------------+---------------+---------------+---------------+---------------
+ 6266169.43896 | -111998.56104 | -111998.56104 | 6490166.56104 |  111998.56104 |  111998.56104
+(1 row)
+
+select cube_ll_coord(earth_box(ll_to_earth(0,0),pi()*earth()),1)::numeric(20,5),
+       cube_ll_coord(earth_box(ll_to_earth(0,0),pi()*earth()),2)::numeric(20,5),
+       cube_ll_coord(earth_box(ll_to_earth(0,0),pi()*earth()),3)::numeric(20,5),
+       cube_ur_coord(earth_box(ll_to_earth(0,0),pi()*earth()),1)::numeric(20,5),
+       cube_ur_coord(earth_box(ll_to_earth(0,0),pi()*earth()),2)::numeric(20,5),
+       cube_ur_coord(earth_box(ll_to_earth(0,0),pi()*earth()),3)::numeric(20,5);
+ cube_ll_coord  |  cube_ll_coord  |  cube_ll_coord  | cube_ur_coord  | cube_ur_coord  | cube_ur_coord  
+----------------+-----------------+-----------------+----------------+----------------+----------------
+ -6378168.00000 | -12756336.00000 | -12756336.00000 | 19134504.00000 | 12756336.00000 | 12756336.00000
+(1 row)
+
+select cube_ll_coord(earth_box(ll_to_earth(0,0),10*earth()),1)::numeric(20,5),
+       cube_ll_coord(earth_box(ll_to_earth(0,0),10*earth()),2)::numeric(20,5),
+       cube_ll_coord(earth_box(ll_to_earth(0,0),10*earth()),3)::numeric(20,5),
+       cube_ur_coord(earth_box(ll_to_earth(0,0),10*earth()),1)::numeric(20,5),
+       cube_ur_coord(earth_box(ll_to_earth(0,0),10*earth()),2)::numeric(20,5),
+       cube_ur_coord(earth_box(ll_to_earth(0,0),10*earth()),3)::numeric(20,5);
+ cube_ll_coord  |  cube_ll_coord  |  cube_ll_coord  | cube_ur_coord  | cube_ur_coord  | cube_ur_coord  
+----------------+-----------------+-----------------+----------------+----------------+----------------
+ -6378168.00000 | -12756336.00000 | -12756336.00000 | 19134504.00000 | 12756336.00000 | 12756336.00000
+(1 row)
+
+--
+-- Test for points that should be in bounding boxes.
+--
+select earth_box(ll_to_earth(0,0),
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,1))*1.00001) @
+       ll_to_earth(0,1);
+ ?column? 
+----------
+ t
+(1 row)
+
+select earth_box(ll_to_earth(0,0),
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.1))*1.00001) @
+       ll_to_earth(0,0.1);
+ ?column? 
+----------
+ t
+(1 row)
+
+select earth_box(ll_to_earth(0,0),
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.01))*1.00001) @
+       ll_to_earth(0,0.01);
+ ?column? 
+----------
+ t
+(1 row)
+
+select earth_box(ll_to_earth(0,0),
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.001))*1.00001) @
+       ll_to_earth(0,0.001);
+ ?column? 
+----------
+ t
+(1 row)
+
+select earth_box(ll_to_earth(0,0),
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.0001))*1.00001) @
+       ll_to_earth(0,0.0001);
+ ?column? 
+----------
+ t
+(1 row)
+
+select earth_box(ll_to_earth(0,0),
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0.0001,0.0001))*1.00001) @
+       ll_to_earth(0.0001,0.0001);
+ ?column? 
+----------
+ t
+(1 row)
+
+select earth_box(ll_to_earth(45,45),
+       earth_distance(ll_to_earth(45,45),ll_to_earth(45.0001,45.0001))*1.00001) @
+       ll_to_earth(45.0001,45.0001);
+ ?column? 
+----------
+ t
+(1 row)
+
+select earth_box(ll_to_earth(90,180),
+       earth_distance(ll_to_earth(90,180),ll_to_earth(90.0001,180.0001))*1.00001) @
+       ll_to_earth(90.0001,180.0001);
+ ?column? 
+----------
+ t
+(1 row)
+
+--
+-- Test for points that shouldn't be in bounding boxes. Note that we need
+-- to make points way outside, since some points close may be in the box
+-- but further away than the distance we are testing.
+--
+select earth_box(ll_to_earth(0,0),
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,1))*.57735) @
+       ll_to_earth(0,1);
+ ?column? 
+----------
+ f
+(1 row)
+
+select earth_box(ll_to_earth(0,0),
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.1))*.57735) @
+       ll_to_earth(0,0.1);
+ ?column? 
+----------
+ f
+(1 row)
+
+select earth_box(ll_to_earth(0,0),
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.01))*.57735) @
+       ll_to_earth(0,0.01);
+ ?column? 
+----------
+ f
+(1 row)
+
+select earth_box(ll_to_earth(0,0),
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.001))*.57735) @
+       ll_to_earth(0,0.001);
+ ?column? 
+----------
+ f
+(1 row)
+
+select earth_box(ll_to_earth(0,0),
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.0001))*.57735) @
+       ll_to_earth(0,0.0001);
+ ?column? 
+----------
+ f
+(1 row)
+
+select earth_box(ll_to_earth(0,0),
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0.0001,0.0001))*.57735) @
+       ll_to_earth(0.0001,0.0001);
+ ?column? 
+----------
+ f
+(1 row)
+
+select earth_box(ll_to_earth(45,45),
+       earth_distance(ll_to_earth(45,45),ll_to_earth(45.0001,45.0001))*.57735) @
+       ll_to_earth(45.0001,45.0001);
+ ?column? 
+----------
+ f
+(1 row)
+
+select earth_box(ll_to_earth(90,180),
+       earth_distance(ll_to_earth(90,180),ll_to_earth(90.0001,180.0001))*.57735) @
+       ll_to_earth(90.0001,180.0001);
+ ?column? 
+----------
+ f
+(1 row)
+
+--
+-- Test the recommended constraints.
+--
+select is_point(ll_to_earth(0,0));
+ERROR:  Function is_point(earth) does not exist
+	Unable to identify a function that satisfies the given argument types
+	You may need to add explicit typecasts
+select cube_dim(ll_to_earth(0,0)) <= 3;
+ ?column? 
+----------
+ t
+(1 row)
+
+select abs(cube_distance(ll_to_earth(0,0), '(0)'::cube) / earth() - 1) <
+       '10e-12'::float8;
+ ?column? 
+----------
+ t
+(1 row)
+
+select is_point(ll_to_earth(30,60));
+ERROR:  Function is_point(earth) does not exist
+	Unable to identify a function that satisfies the given argument types
+	You may need to add explicit typecasts
+select cube_dim(ll_to_earth(30,60)) <= 3;
+ ?column? 
+----------
+ t
+(1 row)
+
+select abs(cube_distance(ll_to_earth(30,60), '(0)'::cube) / earth() - 1) <
+       '10e-12'::float8;
+ ?column? 
+----------
+ t
+(1 row)
+
+select is_point(ll_to_earth(60,90));
+ERROR:  Function is_point(earth) does not exist
+	Unable to identify a function that satisfies the given argument types
+	You may need to add explicit typecasts
+select cube_dim(ll_to_earth(60,90)) <= 3;
+ ?column? 
+----------
+ t
+(1 row)
+
+select abs(cube_distance(ll_to_earth(60,90), '(0)'::cube) / earth() - 1) <
+       '10e-12'::float8;
+ ?column? 
+----------
+ t
+(1 row)
+
+select is_point(ll_to_earth(-30,-90));
+ERROR:  Function is_point(earth) does not exist
+	Unable to identify a function that satisfies the given argument types
+	You may need to add explicit typecasts
+select cube_dim(ll_to_earth(-30,-90)) <= 3;
+ ?column? 
+----------
+ t
+(1 row)
+
+select abs(cube_distance(ll_to_earth(-30,-90), '(0)'::cube) / earth() - 1) <
+       '10e-12'::float8;
+ ?column? 
+----------
+ t
 (1 row)
 
