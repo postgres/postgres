@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.73 2002/07/20 05:49:27 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.74 2002/07/20 06:17:43 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -2262,7 +2262,7 @@ ShowGUCConfigOption(const char *name)
 	char		   *value;
 
 	/* need a tuple descriptor representing a single TEXT column */
-	tupdesc = CreateTemplateTupleDesc(1);
+	tupdesc = CreateTemplateTupleDesc(1, WITHOUTOID);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, (char *) name,
 					   TEXTOID, -1, 0, false);
 
@@ -2293,7 +2293,7 @@ ShowAllGUCConfig(void)
 	char		  *values[2];
 
 	/* need a tuple descriptor representing two TEXT columns */
-	tupdesc = CreateTemplateTupleDesc(2);
+	tupdesc = CreateTemplateTupleDesc(2, WITHOUTOID);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
 					   TEXTOID, -1, 0, false);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "setting",
