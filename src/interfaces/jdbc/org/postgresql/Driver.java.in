@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/Attic/Driver.java.in,v 1.36 2003/09/13 04:02:12 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/Attic/Driver.java.in,v 1.37 2003/11/03 15:22:06 davec Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,7 +111,7 @@ public class Driver implements java.sql.Driver
 	 *
 	 * Our protocol takes the forms:
 	 * <PRE>
-	 *	jdbc:org.postgresql://host:port/database?param1=val1&...
+	 *	jdbc:postgresql://host:port/database?param1=val1&...
 	 * </PRE>
 	 *
 	 * @param url the URL of the database to connect to
@@ -163,7 +163,7 @@ public class Driver implements java.sql.Driver
 	 * Returns true if the driver thinks it can open a connection to the
 	 * given URL.  Typically, drivers will return true if they understand
 	 * the subprotocol specified in the URL and false if they don't.  Our
-	 * protocols start with jdbc:org.postgresql:
+	 * protocols start with jdbc:postgresql:
 	 *
 	 * @see java.sql.Driver#acceptsURL
 	 * @param url the URL of the driver
@@ -286,7 +286,8 @@ public class Driver implements java.sql.Driver
 
 		//parse the server part of the url
 		StringTokenizer st = new StringTokenizer(l_urlServer, ":/", true);
-		for (int count = 0; (st.hasMoreTokens()); count++)
+		int count;
+		for (count = 0; (st.hasMoreTokens()); count++)
 		{
 			String token = st.nextToken();
 
@@ -357,6 +358,9 @@ public class Driver implements java.sql.Driver
 				}
 			}
 		}
+		if (count <= 1) {
+			return null;
+		}
 
 		// if we extracted an IPv6 address out earlier put it back
 		if (ipv6address != null)
@@ -364,7 +368,7 @@ public class Driver implements java.sql.Driver
 
 		//parse the args part of the url
 		StringTokenizer qst = new StringTokenizer(l_urlArgs, "&");
-		for (int count = 0; (qst.hasMoreTokens()); count++)
+		for (count = 0; (qst.hasMoreTokens()); count++)
 		{
 			String token = qst.nextToken();
 			int l_pos = token.indexOf('=');

@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.22 2003/10/29 02:39:09 davec Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.23 2003/11/03 15:22:07 davec Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -210,8 +210,8 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 	public byte getByte(int columnIndex) throws SQLException
 	{
 		String s = getString(columnIndex);
-
-		if (s != null)
+		
+		if (s != null )
 		{
 			try
 			{
@@ -232,6 +232,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 						s = s.trim();
 						break;
 				}
+				if ( s.length() == 0 ) return 0;
 				return Byte.parseByte(s);
 			}
 			catch (NumberFormatException e)

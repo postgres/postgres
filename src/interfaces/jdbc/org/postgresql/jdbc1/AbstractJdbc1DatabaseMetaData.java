@@ -3114,7 +3114,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			if ( deleteRule != null )
 			{
 
-				String rule = updateRule.substring(8, updateRule.length() - 4);
+				String rule = deleteRule.substring(8, deleteRule.length() - 4);
 
 				int action = java.sql.DatabaseMetaData.importedKeyNoAction;
 				if ("cascade".equals(rule))
@@ -3123,6 +3123,8 @@ public abstract class AbstractJdbc1DatabaseMetaData
 					action = java.sql.DatabaseMetaData.importedKeySetNull;
 				else if ("setdefault".equals(rule))
 					action = java.sql.DatabaseMetaData.importedKeySetDefault;
+				else if ("restrict".equals(rule))
+					action = java.sql.DatabaseMetaData.importedKeyRestrict;
 				tuple[10] = Integer.toString(action).getBytes();
 			}
 

@@ -9,7 +9,7 @@ import java.sql.*;
  *
  * PS: Do you know how difficult it is to type on a train? ;-)
  *
- * $Id: DatabaseMetaDataTest.java,v 1.18 2003/05/29 04:39:48 barry Exp $
+ * $Id: DatabaseMetaDataTest.java,v 1.19 2003/11/03 15:22:07 davec Exp $
  */
 
 public class DatabaseMetaDataTest extends TestCase
@@ -137,6 +137,38 @@ public class DatabaseMetaDataTest extends TestCase
 			fail(ex.getMessage());
 		}
 	}
+
+	public void testForeignKeyActions()
+	{
+		try {
+			Connection conn = TestUtil.openDB();
+			TestUtil.createTable(conn, "pkt", "id int primary key");
+			TestUtil.createTable(conn, "fkt1", "id int references pkt on update restrict on delete cascade");
+			TestUtil.createTable(conn, "fkt2", "id int references pkt on update set null on delete set default");
+			DatabaseMetaData dbmd = conn.getMetaData();
+
+			ResultSet rs = dbmd.getImportedKeys(null,"","fkt1");
+			assertTrue(rs.next());
+			assertTrue(rs.getInt("UPDATE_RULE") == DatabaseMetaData.importedKeyRestrict);
+			assertTrue(rs.getInt("DELETE_RULE") == DatabaseMetaData.importedKeyCascade);
+			rs.close();
+
+			rs = dbmd.getImportedKeys(null,"","fkt2");
+			assertTrue(rs.next());
+			assertTrue(rs.getInt("UPDATE_RULE") == DatabaseMetaData.importedKeySetNull);
+			assertTrue(rs.getInt("DELETE_RULE") == DatabaseMetaData.importedKeySetDefault);
+			rs.close();
+
+			TestUtil.dropTable(conn,"fkt2");
+			TestUtil.dropTable(conn,"fkt1");
+			TestUtil.dropTable(conn,"pkt");
+		}
+		catch (SQLException ex)
+		{
+			fail(ex.getMessage());
+		}
+	}
+
 	public void testForeignKeys()
 	{
 		try

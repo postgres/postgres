@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import java.sql.*;
 
 /*
- * $Id: DriverTest.java,v 1.5 2002/08/14 20:35:40 barry Exp $
+ * $Id: DriverTest.java,v 1.6 2003/11/03 15:22:07 davec Exp $
  *
  * Tests the dynamically created class org.postgresql.Driver
  *
@@ -37,10 +37,12 @@ public class DriverTest extends TestCase
 			assertTrue(drv.acceptsURL("jdbc:postgresql://localhost:5432/test"));
 			assertTrue(drv.acceptsURL("jdbc:postgresql://127.0.0.1/anydbname"));
 			assertTrue(drv.acceptsURL("jdbc:postgresql://127.0.0.1:5433/hidden"));
+			assertTrue(drv.acceptsURL("jdbc:postgresql://[::1]:5740/db"));
 
 			// Badly formatted url's
 			assertTrue(!drv.acceptsURL("jdbc:postgres:test"));
 			assertTrue(!drv.acceptsURL("postgresql:test"));
+			assertTrue(!drv.acceptsURL("db"));
 
 		}
 		catch (SQLException ex)
