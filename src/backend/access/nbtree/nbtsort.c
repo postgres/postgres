@@ -56,7 +56,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.88 2004/08/29 05:06:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.89 2004/09/27 04:01:22 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,7 +185,7 @@ void
 _bt_spooldestroy(BTSpool *btspool)
 {
 	tuplesort_end(btspool->sortstate);
-	pfree((void *) btspool);
+	pfree(btspool);
 }
 
 /*
@@ -551,7 +551,7 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, BTItem bti)
 		ItemPointerSet(&(state->btps_minkey->bti_itup.t_tid),
 					   oblkno, P_HIKEY);
 		_bt_buildadd(wstate, state->btps_next, state->btps_minkey);
-		pfree((void *) state->btps_minkey);
+		pfree(state->btps_minkey);
 
 		/*
 		 * Save a copy of the minimum key for the new page.  We have to
@@ -649,7 +649,7 @@ _bt_uppershutdown(BTWriteState *wstate, BTPageState *state)
 			ItemPointerSet(&(s->btps_minkey->bti_itup.t_tid),
 						   blkno, P_HIKEY);
 			_bt_buildadd(wstate, s->btps_next, s->btps_minkey);
-			pfree((void *) s->btps_minkey);
+			pfree(s->btps_minkey);
 			s->btps_minkey = NULL;
 		}
 
@@ -767,7 +767,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 			{
 				_bt_buildadd(wstate, state, bti);
 				if (should_free)
-					pfree((void *) bti);
+					pfree(bti);
 				bti = (BTItem) tuplesort_getindextuple(btspool->sortstate,
 													 true, &should_free);
 			}
@@ -775,7 +775,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 			{
 				_bt_buildadd(wstate, state, bti2);
 				if (should_free2)
-					pfree((void *) bti2);
+					pfree(bti2);
 				bti2 = (BTItem) tuplesort_getindextuple(btspool2->sortstate,
 													true, &should_free2);
 			}
@@ -794,7 +794,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 
 			_bt_buildadd(wstate, state, bti);
 			if (should_free)
-				pfree((void *) bti);
+				pfree(bti);
 		}
 	}
 
