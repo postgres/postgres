@@ -1,13 +1,13 @@
 # Swedish message translation file for pg_controldata
 # This file is put in the public domain.
-# Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004.
+# Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004, 2005.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-10-23 08:28+0200\n"
-"PO-Revision-Date: 2004-10-23 08:32+0200\n"
+"POT-Creation-Date: 2005-01-06 13:20+0100\n"
+"PO-Revision-Date: 2005-01-06 13:20+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,9 @@ msgstr ""
 msgid ""
 "%s displays control information of a PostgreSQL database cluster.\n"
 "\n"
-msgstr "%s visar kontrollinformation om ett PostgreSQL-databaskluster.\n\n"
+msgstr ""
+"%s visar kontrollinformation om ett PostgreSQL-databaskluster.\n"
+"\n"
 
 #: pg_controldata.c:30
 #, c-format
