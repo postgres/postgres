@@ -27,7 +27,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_opclass.h,v 1.62 2004/12/31 22:03:24 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_opclass.h,v 1.63 2005/03/26 23:29:19 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -92,6 +92,7 @@ DATA(insert OID =  397 (	403		array_ops		PGNSP PGUID 2277 t 0 ));
 #define ARRAY_BTREE_OPS_OID 397
 DATA(insert OID =  423 (	403		bit_ops			PGNSP PGUID 1560 t 0 ));
 DATA(insert OID =  424 (	403		bool_ops		PGNSP PGUID   16 t 0 ));
+#define BOOL_BTREE_OPS_OID 424
 DATA(insert OID =  425 (	402		box_ops			PGNSP PGUID  603 t 0 ));
 DATA(insert OID =  426 (	403		bpchar_ops		PGNSP PGUID 1042 t 0 ));
 #define BPCHAR_BTREE_OPS_OID 426
@@ -159,6 +160,7 @@ DATA(insert OID = 2098 (	403		name_pattern_ops	PGNSP PGUID   19 f 0 ));
 #define NAME_PATTERN_BTREE_OPS_OID 2098
 DATA(insert OID = 2099 (	403		money_ops		PGNSP PGUID  790 t 0 ));
 DATA(insert OID = 2222 (	405		bool_ops		PGNSP PGUID   16 t 0 ));
+#define BOOL_HASH_OPS_OID 2222
 DATA(insert OID = 2223 (	405		bytea_ops		PGNSP PGUID   17 t 0 ));
 DATA(insert OID = 2224 (	405		int2vector_ops	PGNSP PGUID   22 t 0 ));
 DATA(insert OID = 2225 (	405		xid_ops			PGNSP PGUID   28 t 0 ));

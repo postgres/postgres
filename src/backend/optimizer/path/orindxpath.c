@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.65 2005/03/01 01:40:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.66 2005/03/26 23:29:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -398,7 +398,7 @@ best_or_subclause_index(Query *root,
 			continue;
 
 		/* Convert clauses to indexquals the executor can handle */
-		indexquals = expand_indexqual_conditions(index, indexclauses);
+		indexquals = expand_indexqual_conditions(rel, index, indexclauses);
 
 		cost_index(&subclause_path, root, rel, index, indexquals, false);
 

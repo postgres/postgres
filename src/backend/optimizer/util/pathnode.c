@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.112 2005/03/10 23:21:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.113 2005/03/26 23:29:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -444,7 +444,7 @@ create_index_path(Query *root,
 	pathnode->path.pathkeys = pathkeys;
 
 	/* Convert clauses to indexquals the executor can handle */
-	indexquals = expand_indexqual_conditions(index, restriction_clauses);
+	indexquals = expand_indexqual_conditions(rel, index, restriction_clauses);
 
 	/* Flatten the clause-groups list to produce indexclauses list */
 	restriction_clauses = flatten_clausegroups_list(restriction_clauses);

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.169 2005/03/02 04:10:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.170 2005/03/26 23:29:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,9 @@
 #define is_indexable_operator(clause,opclass,indexkey_on_left) \
 	(indexable_operator(clause,opclass,indexkey_on_left) != InvalidOid)
 
+#define IsBooleanOpclass(opclass) \
+	((opclass) == BOOL_BTREE_OPS_OID || (opclass) == BOOL_HASH_OPS_OID)
+
 
 static List *group_clauses_by_indexkey(RelOptInfo *rel, IndexOptInfo *index);
 static List *group_clauses_by_indexkey_for_join(Query *root,
@@ -72,8 +75,16 @@ static Path *make_innerjoin_index_path(Query *root,
 						  List *clausegroups);
 static bool match_index_to_operand(Node *operand, int indexcol,
 					   RelOptInfo *rel, IndexOptInfo *index);
+static bool match_boolean_index_clause(Node *clause,
+									   int indexcol,
+									   RelOptInfo *rel,
+									   IndexOptInfo *index);
 static bool match_special_index_operator(Expr *clause, Oid opclass,
 							 bool indexkey_on_left);
+static Expr *expand_boolean_index_clause(Node *clause,
+										 int indexcol,
+										 RelOptInfo *rel,
+										 IndexOptInfo *index);
 static List *expand_indexqual_condition(RestrictInfo *rinfo, Oid opclass);
 static List *prefix_quals(Node *leftop, Oid opclass,
 			 Const *prefix, Pattern_Prefix_Status pstatus);
@@ -511,7 +522,7 @@ group_clauses_by_indexkey_for_or(RelOptInfo *rel,
  * match_clause_to_indexcol()
  *	  Determines whether a restriction clause matches a column of an index.
  *
- *	  To match, the clause:
+ *	  To match a normal index, the clause:
  *
  *	  (1)  must be in the form (indexkey op const) or (const op indexkey);
  *		   and
@@ -524,6 +535,9 @@ group_clauses_by_indexkey_for_or(RelOptInfo *rel,
  *	  on the right if we can commute the clause to put the key on the left.
  *	  We do not actually do the commuting here, but we check whether a
  *	  suitable commutator operator is available.
+ *
+ *	  For boolean indexes, it is also possible to match the clause directly
+ *	  to the indexkey; or perhaps the clause is (NOT indexkey).
  *
  * 'rel' is the relation of interest.
  * 'index' is an index on 'rel'.
@@ -547,7 +561,15 @@ match_clause_to_indexcol(RelOptInfo *rel,
 	Node	   *leftop,
 			   *rightop;
 
-	/* Clause must be a binary opclause. */
+	/* First check for boolean-index cases. */
+	if (IsBooleanOpclass(opclass))
+	{
+		if (match_boolean_index_clause((Node *) clause,
+									   indexcol, rel, index))
+			return true;
+	}
+
+	/* Else clause must be a binary opclause. */
 	if (!is_opclause(clause))
 		return false;
 	leftop = get_leftop(clause);
@@ -605,6 +627,8 @@ match_clause_to_indexcol(RelOptInfo *rel,
  *	  (2)  must contain an operator which is in the same class as the index
  *		   operator for this column, or is a "special" operator as recognized
  *		   by match_special_index_operator().
+ *
+ *	  The boolean-index cases don't apply.
  *
  *	  As above, we must be able to commute the clause to put the indexkey
  *	  on the left.
@@ -1662,7 +1686,7 @@ make_innerjoin_index_path(Query *root,
 	pathnode->path.pathkeys = NIL;
 
 	/* Convert clauses to indexquals the executor can handle */
-	indexquals = expand_indexqual_conditions(index, clausegroups);
+	indexquals = expand_indexqual_conditions(rel, index, clausegroups);
 
 	/* Flatten the clausegroups list to produce indexclauses list */
 	allclauses = flatten_clausegroups_list(clausegroups);
@@ -1868,20 +1892,77 @@ match_index_to_operand(Node *operand,
  * from LIKE to indexscan limits rather harder than one might think ...
  * but that's the basic idea.)
  *
- * Two routines are provided here, match_special_index_operator() and
- * expand_indexqual_conditions().  match_special_index_operator() is
- * just an auxiliary function for match_clause_to_indexcol(); after
- * the latter fails to recognize a restriction opclause's operator
- * as a member of an index's opclass, it asks match_special_index_operator()
- * whether the clause should be considered an indexqual anyway.
+ * Another thing that we do with this machinery is to provide special
+ * smarts for "boolean" indexes (that is, indexes on boolean columns
+ * that support boolean equality).  We can transform a plain reference
+ * to the indexkey into "indexkey = true", or "NOT indexkey" into
+ * "indexkey = false", so as to make the expression indexable using the
+ * regular index operators.  (As of Postgres 8.1, we must do this here
+ * because constant simplification does the reverse transformation;
+ * without this code there'd be no way to use such an index at all.)
+ *
+ * Three routines are provided here:
+ *
+ * match_special_index_operator() is just an auxiliary function for
+ * match_clause_to_indexcol(); after the latter fails to recognize a
+ * restriction opclause's operator as a member of an index's opclass,
+ * it asks match_special_index_operator() whether the clause should be
+ * considered an indexqual anyway.
+ *
+ * match_boolean_index_clause() similarly detects clauses that can be
+ * converted into boolean equality operators.
+ *
  * expand_indexqual_conditions() converts a list of lists of RestrictInfo
  * nodes (with implicit AND semantics across list elements) into
  * a list of clauses that the executor can actually handle.  For operators
  * that are members of the index's opclass this transformation is a no-op,
- * but operators recognized by match_special_index_operator() must be
- * converted into one or more "regular" indexqual conditions.
+ * but clauses recognized by match_special_index_operator() or
+ * match_boolean_index_clause() must be converted into one or more "regular"
+ * indexqual conditions.
  *----------
  */
+
+/*
+ * match_boolean_index_clause
+ *	  Recognize restriction clauses that can be matched to a boolean index.
+ *
+ * This should be called only when IsBooleanOpclass() recognizes the
+ * index's operator class.  We check to see if the clause matches the
+ * index's key.
+ */
+static bool
+match_boolean_index_clause(Node *clause,
+						   int indexcol,
+						   RelOptInfo *rel,
+						   IndexOptInfo *index)
+{
+	/* Direct match? */
+	if (match_index_to_operand(clause, indexcol, rel, index))
+		return true;
+	/* NOT clause? */
+	if (not_clause(clause))
+	{
+		if (match_index_to_operand((Node *) get_notclausearg((Expr *) clause),
+								   indexcol, rel, index))
+			return true;
+	}
+	/*
+	 * Since we only consider clauses at top level of WHERE, we can convert
+	 * indexkey IS TRUE and indexkey IS FALSE to index searches as well.
+	 * The different meaning for NULL isn't important.
+	 */
+	else if (clause && IsA(clause, BooleanTest))
+	{
+		BooleanTest	   *btest = (BooleanTest *) clause;
+
+		if (btest->booltesttype == IS_TRUE ||
+			btest->booltesttype == IS_FALSE)
+			if (match_index_to_operand((Node *) btest->arg,
+									   indexcol, rel, index))
+				return true;
+	}
+	return false;
+}
 
 /*
  * match_special_index_operator
@@ -2042,9 +2123,9 @@ match_special_index_operator(Expr *clause, Oid opclass,
  * expand_indexqual_conditions
  *	  Given a list of sublists of RestrictInfo nodes, produce a flat list
  *	  of index qual clauses.  Standard qual clauses (those in the index's
- *	  opclass) are passed through unchanged.  "Special" index operators
- *	  are expanded into clauses that the indexscan machinery will know
- *	  what to do with.
+ *	  opclass) are passed through unchanged.  Boolean clauses and "special"
+ *	  index operators are expanded into clauses that the indexscan machinery
+ *	  will know what to do with.
  *
  * The input list is ordered by index key, and so the output list is too.
  * (The latter is not depended on by any part of the planner, so far as I can
@@ -2054,10 +2135,11 @@ match_special_index_operator(Expr *clause, Oid opclass,
  * someday --- tgl 7/00)
  */
 List *
-expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
+expand_indexqual_conditions(RelOptInfo *rel, IndexOptInfo *index, List *clausegroups)
 {
 	List	   *resultquals = NIL;
 	ListCell   *clausegroup_item;
+	int			indexcol = 0;
 	Oid		   *classes = index->classlist;
 
 	if (clausegroups == NIL)
@@ -2073,12 +2155,32 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 		{
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 
+			/* First check for boolean cases */
+			if (IsBooleanOpclass(curClass))
+			{
+				Expr   *boolqual;
+
+				boolqual = expand_boolean_index_clause((Node *) rinfo->clause,
+													   indexcol,
+													   rel,
+													   index);
+				if (boolqual)
+				{
+					resultquals = lappend(resultquals,
+										  make_restrictinfo(boolqual,
+															true, true));
+					continue;
+				}
+			}
+
 			resultquals = list_concat(resultquals,
 									  expand_indexqual_condition(rinfo,
-															  curClass));
+																 curClass));
 		}
 
 		clausegroup_item = lnext(clausegroup_item);
+
+		indexcol++;
 		classes++;
 	} while (clausegroup_item != NULL && !DoneMatchingIndexKeys(classes));
 
@@ -2088,7 +2190,69 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 }
 
 /*
+ * expand_boolean_index_clause
+ *	  Convert a clause recognized by match_boolean_index_clause into
+ *	  a boolean equality operator clause.
+ *
+ * Returns NULL if the clause isn't a boolean index qual.
+ */
+static Expr *
+expand_boolean_index_clause(Node *clause,
+							int indexcol,
+							RelOptInfo *rel,
+							IndexOptInfo *index)
+{
+	/* Direct match? */
+	if (match_index_to_operand(clause, indexcol, rel, index))
+	{
+		/* convert to indexkey = TRUE */
+		return make_opclause(BooleanEqualOperator, BOOLOID, false,
+							 (Expr *) clause,
+							 (Expr *) makeBoolConst(true, false));
+	}
+	/* NOT clause? */
+	if (not_clause(clause))
+	{
+		Node   *arg = (Node *) get_notclausearg((Expr *) clause);
+
+		/* It must have matched the indexkey */
+		Assert(match_index_to_operand(arg, indexcol, rel, index));
+		/* convert to indexkey = FALSE */
+		return make_opclause(BooleanEqualOperator, BOOLOID, false,
+							 (Expr *) arg,
+							 (Expr *) makeBoolConst(false, false));
+	}
+	if (clause && IsA(clause, BooleanTest))
+	{
+		BooleanTest	   *btest = (BooleanTest *) clause;
+		Node   *arg = (Node *) btest->arg;
+
+		/* It must have matched the indexkey */
+		Assert(match_index_to_operand(arg, indexcol, rel, index));
+		if (btest->booltesttype == IS_TRUE)
+		{
+			/* convert to indexkey = TRUE */
+			return make_opclause(BooleanEqualOperator, BOOLOID, false,
+								 (Expr *) arg,
+								 (Expr *) makeBoolConst(true, false));
+		}
+		if (btest->booltesttype == IS_FALSE)
+		{
+			/* convert to indexkey = FALSE */
+			return make_opclause(BooleanEqualOperator, BOOLOID, false,
+								 (Expr *) arg,
+								 (Expr *) makeBoolConst(false, false));
+		}
+		/* Oops */
+		Assert(false);
+	}
+
+	return NULL;
+}
+
+/*
  * expand_indexqual_condition --- expand a single indexqual condition
+ *		(other than a boolean-qual case)
  *
  * The input is a single RestrictInfo, the output a list of RestrictInfos
  */
@@ -2096,7 +2260,6 @@ static List *
 expand_indexqual_condition(RestrictInfo *rinfo, Oid opclass)
 {
 	Expr	   *clause = rinfo->clause;
-
 	/* we know these will succeed */
 	Node	   *leftop = get_leftop(clause);
 	Node	   *rightop = get_rightop(clause);
