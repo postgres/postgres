@@ -1,34 +1,34 @@
 array set Messages {
 
-"Label" "Etiquette"
+"Label" "Libellé"
  
-"Save schema" "Sauver schémas"
+"Save schema" "Sauver schéma"
  
 "Is unique ?" "Est unique ?"
  
 "Report builder" "Constructeur d'états"
  
-"Criteria" "Critère"
+"Criteria" "Critères"
  
 "FATAL ERROR upgrading PgAccess table" "ERREUR FATALE en actualisant la table PgAccess"
  
-"Save this query as a view" "Sauver cette requête comme vue ?"
+"Save this query as a view" "Sauver cette requête en tant que vue"
  
 "Page header" "En-tête de page"
  
-"Query name" "Nom de requête"
+"Query name" "Nom de la requête"
  
-"Please select an object first!" "Selectionnez un objet d'abord"
+"Please select an object first!" "Veuillez sélectionner un objet d'abord"
  
-"Fields :" "Le champs de index"
+"Fields :" "Champs :"
  
 "Name" "Nom"
  
 "File name" "Nom du fichier"
  
-"Detail record" "Detail d'enregistrement"
+"Detail record" "Détail d'enregistrement"
  
-"Auto-load the last opened database at startup" "Chargement automatique de la base au démarrage"
+"Auto-load the last opened database at startup" "Chargement automatique de la dernière base ouverte au démarrage"
  
 "Maxvalue" "Valeur maximale"
  
@@ -38,9 +38,9 @@ array set Messages {
  
 "Test form" "Tester formulaire"
  
-"Error trying to connect to database '%s' on host %s \n\nPostgreSQL error message:%s" "Erreur de liaison à la base de données '%s' pour machine %s \n\nMessage d'erreur PostgreSQL :%s"
+"Error trying to connect to database '%s' on host %s \n\nPostgreSQL error message:%s" "Erreur de liaison à la base de données '%s' pour machine %s \n\nMessage d'erreur PostgreSQL:%s"
  
-"No field type ?" "Type champ inexistant ?"
+"No field type ?" "Type de champ inexistant ?"
  
 "User without name?" "Cette utilisateur a-t-il un nom?"
  
@@ -50,27 +50,27 @@ array set Messages {
  
 "Preferences" "Préférences"
  
-"View '%s' already exists!\nOverwrite ?" "La vue '%s' existe déjà!\n Ecraser ?"
+"View '%s' already exists!\nOverwrite ?" "La vue '%s' existe déjà !\n Écraser ?"
  
-"You have to select an index!" "Vous devez selectionner un index!"
+"You have to select an index!" "Vous devez sélectionner un index"
  
-"Field type" "Type de champ"
- 
+"Field type" "Type"
+
 "Script name" "Nom du script"
  
-"Reload" "Valider"
+"Reload" "Appliquer"
  
-"Remove table %s from query?" "Eliminer table %s de la requête ?"
+"Remove table %s from query?" "Énlever la table %s de la requête ?"
  
 "SQL window" "Fenêtre SQL"
  
 "Allow user to create other users" "Peut créer d'autres utilisateurs"
  
-"Delete current record ?" "Détruire enregistrement courant ?"
+"Delete current record ?" "Détruire l'enregistrement courant ?"
  
 "List box" "Liste"
  
-"Save to query builder" "Sauver le constructeur de requêtes"
+"Save to query builder" "Entregistrer la requête"
  
 "fixed width" "largeur de police fixe"
  
@@ -78,13 +78,13 @@ array set Messages {
  
 "Yes" "Oui"
  
-"Add label" "Ajouter étiquette"
+"Add label" "Ajouter un libellé"
  
-"Sequence created!" "Le séquence avait été créée"
+"Sequence created!" "La séquence a été créée"
  
 "Field information" "Information de champ"
  
-"Design" "Editer"
+"Design" "Éditer"
  
 "Field" "Champ"
  
@@ -93,24 +93,26 @@ array set Messages {
 "Increment" "Incrément"
  
 "No" "Non"
+
+"Form designer" "Créateur graphique de formulaires"
  
 "Form design" "Création du formulaire"
  
 "You must supply a return type!" "Vous devez fournir un type de retour"
  
-"Remove field from result ?" "Eliminer champ du résultat ?"
+"Remove field from result ?" "Éliminer le champ du résultat?"
  
 "There is another object (a %s) with the same name.\nPlease change it!" "Il y a un autre objet (%s) avec le même nom.\nChangez le SVP!"
  
-"This query has no commands?" "Cette requête n'a pas de définition?"
+"This query has no commands?" "Cette requête n'a pas de définition ?"
  
-"Execute query" "Execute requête"
+"Execute query" "Exécuter la requête"
  
-"field cannot be null" "champ ne peut être vide"
+"field cannot be null" "Ce champ ne peut être vide"
  
 "Help" "Aide"
  
-"Rename column" "Renomme champ"
+"Rename column" "Renommer champ"
  
 "Database" "Base de données"
  
@@ -122,11 +124,11 @@ array set Messages {
  
 "Table" "Table"
  
-"verify password" "encore un fois"
+"verify password" "encore une fois"
  
 "Vacuum" "Vider"
  
-"Default value" "Valeur par defaut"
+"Default value" "Valeur par défaut"
  
 "Import" "Importer"
  
@@ -140,27 +142,27 @@ array set Messages {
  
 "Create new table" "Création de nouvelle table"
  
-"Visual query designer" "Créateur visuel de requêtes"
+"Visual query designer" "Créateur graphique de requêtes"
  
-"Delete all" "Détruire tous"
+"Delete all" "Détruire"
  
 "You are going to delete\n\n %s \n\nProceed?" "Vous allez détruire\n\n %s \n\nD'accord?"
  
-"Schema name" "Nom de schéma"
+"Schema name" "Nom du schéma"
  
 "Error executing query" "Erreur en exécutant la requête"
  
 "Report name" "Nom de l'état"
  
-"Add field" "Ajout champ"
+"Add field" "Ajouter"
  
-"Field name" "Nom de champ"
+"Field name" "Nom"
  
 "FATAL ERROR searching for PgAccess system tables" "ERREUR FATALE en cherchant le système de tables PgAccess"
  
-"A big number of rows displayed in table view will take a lot of memory!" "L'affichage d'un grand nombre de colonnes prend beaucoup de mémoire"
+"A big number of rows displayed in table view will take a lot of memory!" "L'affichage d'un grand nombre de lignes prend beaucoup de mémoire"
  
-"Preview" "Pré-visualisation"
+"Preview" "Aperçu"
  
 "Users" "Utilisateurs"
  
@@ -168,7 +170,7 @@ array set Messages {
  
 "Form's window internal name" "Le nom interne de la fenêtre de formulaire"
  
-"Sort field" "Trier champs"
+"Sort field" "Ordre champs"
  
 "New name is the same as the old one!" "Le nouveau nom est le même que l'ancien"
  
@@ -188,33 +190,33 @@ array set Messages {
  
 "Returns" "Retours"
  
-"Define new user" "Définir nouvel utilisateur"
+"Define new user" "Créer un nouvel utilisateur"
  
 "Move down" "Descendre"
  
-"Design script" "Script de création"
+"Design script" "Créer un script"
  
 "Check box" "Case à cocher"
  
 "FINAL WARNING" "DERNIER AVERTISSEMENT"
  
-"Add table" "Ajouter table"
+"Add table" "Ajouter une table"
  
-"Table viewer font" "Police de visualisateur de tables"
+"Table viewer font" "Police du visualisateur de tables"
  
 "The field type is not specified!" "Le type de champ n'est pas spécifié"
  
-"Close test form" "Fermer test du formulaire"
+"Close test form" "Fermer le test du formulaire"
  
 "Export table" "Exporter"
  
-"Add new index" "Ajout nouvel index"
+"Add new index" "Ajouter un nouvel index"
  
 "Left" "Gauche"
  
-"Field delimiter" "Séparateur de champs"
+"Field delimiter" "Séparateur champ"
  
-"Add formula" "Ajouter formule"
+"Add formula" "Ajouter une formule"
  
 "Open database" "Ouvre la base de données"
  
@@ -224,23 +226,25 @@ array set Messages {
  
 "Error" "Erreur"
  
-"Enter a field name" "Entrez un nom de champ !"
+"Enter a field name" "Entrez un nom de champ"
  
-"field name" "Nom de champ"
+"field name" "Nom du champ"
  
 "Forms" "Formulaires"
  
-"Cannot add column" "Ne peut ajouter de colonne"
+"Cannot add column" "Impossible d'ajouter une colonne"
  
 "Clean" "Nettoyer"
  
-"Delete all objects ?" "Détruire tous les objets"
+"Delete all objects ?" "Détruire tous les objets ?"
  
 "Preferred language" "Langage préféré"
  
-"Execute SQL" "Exécute SQL"
+"Execute SQL" "Exécuter SQL"
  
 "Sequences" "Séquences"
+
+"Sequence" "Séquence"
  
 "Button" "Bouton"
  
@@ -252,17 +256,17 @@ array set Messages {
  
 "Font fixed" "Police fixe"
  
-"Table name" "Nom de table"
+"Table name" "Nom de la table"
  
-"Export" "Export"
+"Export" "Exporter"
  
 "Change user" "Changer utilisateur"
  
-"You must give object a new name!" "Vous devez donner un nouveau nom"
+"You must give object a new name!" "Vous devez donner un nouveau nom."
  
 "Query" "Requête"
  
-"User name" "Nom d'utilisateur"
+"User name" "Nom de l'utilisateur"
  
 "Font normal" "Police normale"
  
@@ -274,7 +278,7 @@ array set Messages {
  
 "You must supply a name for this function!" "Vous devez fournir un nom pour la fonction"
  
-"You have to select index fields!" "Vous devez selectionner le champ pour l'index"
+"You have to select index fields!" "Vous devez sélectionner le champ pour l'index"
  
 "Constraint" "Contrainte"
  
@@ -286,9 +290,9 @@ array set Messages {
  
 "Inherits" "Source"
  
-"Delete field" "Détruire"
+"Delete field" "Détruire champ"
  
-"About" "A propos"
+"About" "À propos"
  
 "Empty field name ?" "Nom de champ inexistant ?"
  
@@ -296,7 +300,7 @@ array set Messages {
  
 "Host" "Machine"
  
-"vacuuming database %s ..." "Vider base %s ..."
+"vacuuming database %s ..." "Vide la base %s ..."
  
 "Indexes defined" "Index définis"
  
@@ -304,53 +308,53 @@ array set Messages {
  
 "Schema '%s' already exists!" "Le schéma '%s' existe déjà!"
  
-"There is another field with the same name: '%s'!\n\nReplace it ?" "Il y a un autre champ avec le même nom : '%s'!\n\nRemplacer?"
+"There is another field with the same name: '%s'!\n\nReplace it ?" "Il y a un autre champ avec le même nom : '%s'\n\nRemplacer ?"
  
-"Contents" "Contient"
+"Contents" "Contenu"
  
 "Views" "Vues"
  
 "Variable" "Variable"
  
-"Error executing query\n\n%s\n\nPostgreSQL error message:\n%s\nPostgreSQL status:%s" "Erreur en exécutant la requête\n\n%s\n\nMessage d'erreur PostgreSQL :\n%s \n Statut de PostgreSQL:%s"
+"Error executing query\n\n%s\n\nPostgreSQL error message:\n%s\nPostgreSQL status:%s" "Erreur en exécutant la requête\n\n%s\n\nMessage d'erreur PostgreSQL:\n%s \n Statut de PostgreSQL:%s"
  
 "Filter conditions" "Conditions de filtre"
  
-"Error retrieving query definition" "Erreur en retrouvant la définition de la requête"
+"Error retrieving query definition" "Erreur en charchant la définition de la requête"
  
 "Error deleting view" "Erreur en détruisant la vue"
  
-"New" "Nouveau"
+"New" "Créer"
  
 "Tables" "Tables"
  
 "Create" "Créer"
  
-"Forms need an internal name, only literals, low case" "Les formulaires ont besoin d'un nom interne, seulement en lettres minuscules"
+"Forms need an internal name, only literals, low case" "Les formulaires ont besoin d'un nom interne, seulement en lettres alphabétiques minuscules"
  
 "Do you want to save the form into the database?" "Voulez vous sauver le formulaire dans la base?"
  
 "Schema '%s' was not found!" "Le schéma '%s' n'a pas été trouvé"
  
-"proportional" "Proportionnelle"
+"proportional" "proportionnelle"
  
-"Function saved!" "Le fonction avait ete créée"
+"Function saved!" "La fonction a été créée"
  
 "with OIDs" "avec des OIDs"
  
-"Table information" "Information de table"
+"Table information" "Informations sur la table"
  
-"Error inserting new record" "Erreur en introduisant le nouvel enregistrement"
+"Error inserting new record" "Erreur en écrivant le nouvel enregistrement"
  
 "Column name '%s' already exists in this table!" "Le nom de colonne existe déjà dans cette table !"
  
 "File" "Fichier"
  
-"Your table has no fields!" "Cette table n'a pas de champ?"
+"Your table has no columns!" "Cette table n'a pas de champ !"
  
 "Height" "Hauteur"
  
-"You will always get the latest version at:" "Le derniere version toujours à"
+"You will always get the latest version at:" "Dernière version disponible à :"
  
 "Form must have a name" "Le formulaire doit avoir un nom !"
  
@@ -362,33 +366,33 @@ array set Messages {
  
 "Allow user to create databases" "Peut créer une base"
  
-"Cancel" "Abandon"
+"Cancel" "Annuler"
  
 "Is clustered ?" "Est groupé ?"
  
-"Add new column" "Ajout nouveau champ"
- 
-"Show SQL" "Montrez le code SQL."
+"Add new column" "Ajouter un nouveau champ"
+
+"Show SQL" "Montrer SQL"
  
 "New name" "Nouveau nom"
  
-"Table '%s' not found!" "Le table '%s' n'est pas trouvée"
+"Table '%s' not found!" "La table '%s' est introuvable."
  
 "Form name" "Nom du formulaire"
  
-"Visual designer" "Créateur visuel"
+"Visual designer" "Créateur graphique"
  
-"You choose to delete index\n\n %s \n\nProceed?" "Vous allez détruire index\n\n %s \n\nConfirmation?"
+"You choose to delete index\n\n %s \n\nProceed?" "Vous allez détruire l'index\n\n %s \n\nConfirmation ?"
  
-"Error retrieving from" "Erreur en retrouvant..."
+"Error retrieving from" "Erreur en retrouvant"
  
 "Save query definition" "Sauver la définition de la requête"
  
-"A Tcl/Tk interface to\nPostgreSQL\nby Constantin Teodorescu" "Une Tcl/Tk interface pour\nPostgreSQL\npar Constantin Teodorescu"
+"A Tcl/Tk interface to\nPostgreSQL\nby Constantin Teodorescu" "Interface Tcl/Tk pour PostgreSQL\npar Constantin Teodorescu\nTraduction g.delafond@medsyn.fr"
  
 "Operation completed!" "Opération finie"
  
-"Max rows displayed in table/query view" "Nombre maximal de colonnes affichées dans la table/vue de requête"
+"Max rows displayed in table/query view" "Nombre maximal de lignes affichées dans la table/vue de requête"
  
 "Passwords do not match!" "Les mots de passe ne vont pas"
  
@@ -398,17 +402,17 @@ array set Messages {
  
 "Error retrieving schema definition" "Erreur en retrouvant la définition du schéma"
  
-"This is an action query!\n\nExecute it?" "Ceci est une requête d'action !\nExécuter ?"
+"This is an action query!\n\nExecute it?" "Ceci est une requête d'action.\nExécuter ?"
  
 "Error retrieving view definition for" "Erreur en lisant la définition pour la vue"
  
 "options" "options"
  
-"Sequence '%s' not found!" "Le séquence '%s' n'a pas été trouvée"
+"Sequence '%s' not found!" "La séquence '%s' n'a pas été trouvée"
  
 "Text" "Texte"
  
-"Tcl error executing pg_exec %s\n\n%s" "Erreur Tcl en exécutant %s\n\n%s"
+"Tcl error executing pg_exec %s\n\n%s" "Erreur Tcl en exécutant pg_exec %s\n\n%s"
  
 "Width" "Largeur"
  
@@ -422,7 +426,7 @@ array set Messages {
  
 "Queries" "Requêtes"
  
-"Query '%s' already exists!" "La requête '%s' existe dejà!"
+"Query '%s' already exists!" "La requête '%s' existe dejà !"
  
 "Font bold" "Police grasse"
  
@@ -432,7 +436,7 @@ array set Messages {
  
 "Top" "Haut"
  
-"You must supply a name for your table!" "Vous devez introduire un nom pour cette table"
+"You must supply a name for your table!" "Vous devez fournir un nom pour cette table"
  
 "Page footer" "Pied de page"
  
@@ -460,7 +464,7 @@ array set Messages {
  
 "Attributes" "Attributs"
  
-"Table '%s' already in schema" "Le table est déjà dans le schéma"
+"Table '%s' already in schema" "La table '%s' est déjà dans le schéma"
  
 "Username" "Utilisateur"
  
@@ -468,58 +472,114 @@ array set Messages {
  
 "Sequence name" "Nom de séquence"
  
-"Define sequence" "Définir la séquence"
+"Define sequence" "Créer la séquence"
  
 "Function" "Fonction"
  
-"Sorting and filtering not (yet) available from queries!\n\nPlease enter them in the query definition!" "Tri et filtrage pas (encore) possible à partir des requêtes!\n\nEntrez les dans la définition de la requête SVP"
+"Sorting and filtering not (yet) available from queries!\n\nPlease enter them in the query definition!" "Tri et filtrage pas (encore) possibles à partir des requêtes!\n\nEntrez les dans la définition de la requête SVP."
  
-"Reports" "Etats"
+"Reports" "États"
 
-"Columns" "Champs"
+"Columns" "Colonnes"
 
 "Indexes" "Index"
 
-"Permissions" "Permissions"
+"Table OID" "OID de la table"
 
-"not null" "non vide"
-
-"Cluster index" "index groupe" 
-
-"index columns" "index champs"
-
-"Add user" "Ajoute utilisateur"
-
-"Change permissions" "Change droits"
-
-"select" "sélections"
-
-"update" "actualise"
-
-"insert" "introduire"
-
-"rule" "règles"
-
-"Identification" "Identification"
-
-"Owner ID" "ID du propriétaire"
+"Owner ID" "ID de l'utilisateur"
 
 "Has primary key ?" "A une clé primaire ?"
 
-"Has rules ?" "A des règles?"
+"Has rules ?" "Utilise des règles ?"
+
+"Number of tuples" "Nombre de multiplets"
+
+"Number of pages" "Nombre de pages"
+
+"index columns" "Colonnes d'index"
+
+"Cluster index"  "Grouper index"
+
+"General" "Général"
 
 "Statistics" "Statistiques"
-
-"Number of tuples" "Nombre des enregistrements"
-
-"Number of pages" "Nombres des pages"
 
 "Index name" "Nom d'index"
 
 "Index fields" "Champs d'index"
 
-"Table OID" "OID de table"
+"select" "Sélectionner"
+
+"update" "Actualiser"
+
+"insert" "Insérer"
+
+"rule" "Règle"
+
+"Add user" "Ajouter un utilisateur"
+
+"Change permissions" "Changer les droits"
+
+"Comments" "Commentaires"
  
+"You must supply the function language!" "Vous devez fournir le langage de la fonction"
+
+"Database field" "Champ"
+
+"Class" "Groupe"
+
+"Font" "Police"
+
+"Align" "Aligner"
+
+"Foreground" "Avant-plan"
+
+"Background" "Arrière-plan"
+
+"Border width" "Largeur de bordure"
+
+"Width" "Largeur"
+
+"Height" "Hauteur"
+
+"Left" "Gauche"
+
+"Top" "Haut"
+
+"primary key" "Clé primaire"
+
+"Print" "Imprimer"
+
+"Report preview" "Aperçu de l'état"
+
+"The printed image in Postscript is in the file pgaccess-report.ps" "L'image imprimée en postscript est dans le fichier pgaccess-report.ps"
+
+"Delete current report object?" "Détruire l'objet d'état en cours ?"
+
+"Your query has been executed without error!" "Votre requête a été exécutée sans erreur"
+
+"Layout info changed !\nRescanning..." "Informations de sortie changées.\nRecharge..."
+
+"Visual schema designer" "Créateur graphique de schémas"
+
+"Print to Postscript" "Imprimer en Postscript"
+
+"Save Error: Unable to open '$fn' for writing\n$fid" "Erreur d'enregistrement : Impossible d'ouvrir '$fn' pour écrire\n$fid"
+
+"Query result:%s" "Résultat de la requête %s"
+
+"Loading maximum %s" "Charge au maximum %s"
+
+"records..." "enregistrements..."
+
+"Startup script" "Script de démarrage"
+
+"Multiple ($nrlay) layout info found\n\nPlease report the bug!" "Informations multiples trouvées dans ($nrlay) \n\n Veuillez reporter le bug"
+
+"Table information - %s" "Informations sur la table - %s"
+
+"Back" "Retour"
+
+"Loading maximum %s records ..." "Charge au maximum %s enregistrements..."
+
 }
-
-

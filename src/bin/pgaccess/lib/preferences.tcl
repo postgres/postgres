@@ -104,6 +104,7 @@ global PgAcVar
 	}
 	option add *Entry.background #fefefe
 	option add *Entry.foreground #000000
+	option add *Entry.Font $PgAcVar(pref,font_normal)
 	option add *Button.BorderWidth 1
 }
 

@@ -346,7 +346,7 @@ array set Messages {
  
 "File" "Datei"
  
-"Your table has no fields!" "Die Tabelle hat keine Felder."
+"Your table has no columns!" "Die Tabelle hat keine Felder."
  
 "Height" "Höhe"
  

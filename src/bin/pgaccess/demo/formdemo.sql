@@ -1,5 +1,5 @@
 CREATE SEQUENCE "cities_id_seq" start 7 increment 1 maxvalue 2147483647 minvalue 1  cache 1 ;
-SELECT nextval ('cities_id_seq');
+SELECT nextval ('"cities_id_seq"');
 CREATE TABLE "pga_queries" (
 	"queryname" character varying(64),
 	"querytype" character,
@@ -7,41 +7,50 @@ CREATE TABLE "pga_queries" (
 	"querytables" text,
 	"querylinks" text,
 	"queryresults" text,
-	"querycomments" text);
+	"querycomments" text
+);
 CREATE TABLE "pga_forms" (
 	"formname" character varying(64),
-	"formsource" text);
+	"formsource" text
+);
 CREATE TABLE "pga_scripts" (
 	"scriptname" character varying(64),
-	"scriptsource" text);
+	"scriptsource" text
+);
 CREATE TABLE "pga_reports" (
 	"reportname" character varying(64),
 	"reportsource" text,
 	"reportbody" text,
 	"reportprocs" text,
-	"reportoptions" text);
+	"reportoptions" text
+);
 CREATE TABLE "phonebook" (
 	"name" character varying(32),
 	"phone_nr" character varying(16),
 	"city" character varying(32),
 	"company" bool,
-	"continent" character varying(16));
+	"continent" character varying(16)
+);
 CREATE TABLE "pga_layout" (
 	"tablename" character varying(64),
 	"nrcols" int2,
 	"colnames" text,
-	"colwidth" text);
+	"colwidth" text
+);
 CREATE TABLE "pga_schema" (
 	"schemaname" character varying(64),
 	"schematables" text,
-	"schemalinks" text);
+	"schemalinks" text
+);
 REVOKE ALL on "pga_schema" from PUBLIC;
 GRANT ALL on "pga_schema" to PUBLIC;
 CREATE TABLE "cities" (
-	"id" int4 DEFAULT nextval ( '"cities_id_seq"' ) NOT NULL,
+	"id" int4 DEFAULT nextval('cities_id_seq'::text) NOT NULL,
 	"name" character varying(32) NOT NULL,
-	"prefix" character varying(16) NOT NULL);
+	"prefix" character varying(16) NOT NULL
+);
 REVOKE ALL on "cities" from PUBLIC;
+GRANT INSERT,SELECT,RULE on "cities" to "teo";
 CREATE FUNCTION "getcityprefix" (int4 ) RETURNS varchar AS 'select prefix from cities where id = $1 ' LANGUAGE 'SQL';
 COPY "pga_queries" FROM stdin;
 Query that can be saved as view	S	select * from phonebook where continent='usa'    	\N	\N	\N	\N

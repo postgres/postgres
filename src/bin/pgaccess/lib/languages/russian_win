@@ -346,7 +346,7 @@ array set Messages {
  
 "File" "Файл"
  
-"Your table has no fields!" "В Вашей таблице нет полей!"
+"Your table has no columns!" "В Вашей таблице нет полей!"
  
 "Height" "Высота"
  

@@ -22,7 +22,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 ---------------------------------------------------------------------------
 
 
-PGACCESS 0.98.4 29 January 2000
+PGACCESS 0.98.7 27 January 2001
 ================================
 I dedicate this program to my little daughters Ana-Maria and Emilia and to my
 wife for their understanding. I hope they will forgive me for spending so many
@@ -32,8 +32,7 @@ time far from them.
 
 1. How to INSTALL ?
 
-You will need a Tcl/Tk package, at least Tcl 7.6 and Tk 4.2, recommended
-Tcl/Tk 8.x
+You will need a Tcl/Tk package greater than  8.0
 
 For Unix users, unpack the pgaccess-xxx.tar.gz archieve in you preferred
 directory (usually /usr/local).

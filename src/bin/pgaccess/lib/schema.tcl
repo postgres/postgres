@@ -39,6 +39,9 @@ global PgAcVar CurrentDB
 	}
 	set PgAcVar(schema,links) $links
 	drawLinks
+	foreach {ulx uly lrx lry} [.pgaw:Schema.c bbox all] {
+		wm geometry .pgaw:Schema [expr $lrx+30]x[expr $lry+30]
+	}
 }
 
 
@@ -100,7 +103,7 @@ global PgAcVar
 	.pgaw:Schema.c lower rect
 	drawLinks
 
-	.pgaw:Schema.c bind mov <Button-1> {Schema::dragStart %W %x %y}
+	.pgaw:Schema.c bind mov <Button-1> {Schema::dragStart %W %x %y %s}
 	.pgaw:Schema.c bind mov <B1-Motion> {Schema::dragMove %W %x %y}
 	bind .pgaw:Schema.c <ButtonRelease-1> {Schema::dragStop %x %y}
 	bind .pgaw:Schema <Button-1> {Schema::canvasClick %x %y %W}
@@ -152,41 +155,44 @@ set PgAcVar(schema,nexty) $nexty
 proc {deleteObject} {} {
 global PgAcVar
 # Checking if there 
-set obj [.pgaw:Schema.c find withtag hili]
-if {$obj==""} return
+set objs [.pgaw:Schema.c find withtag hili]
+set numobj [llength $objs]
+if {$numobj == 0 } return
 # Is object a link ?
-if {[getTagInfo $obj link]=="s"} {
-	if {[tk_messageBox -title [intlmsg Warning] -icon question -parent .pgaw:Schema -message [intlmsg "Remove link ?"] -type yesno -default no]=="no"} return
-	set linkid [getTagInfo $obj lkid]
-	set PgAcVar(schema,links) [lreplace $PgAcVar(schema,links) $linkid $linkid]
+foreach obj $objs {
+	if {[getTagInfo $obj link]=="s"} {
+		if {[tk_messageBox -title [intlmsg Warning] -icon question -parent .pgaw:Schema -message [intlmsg "Remove link ?"] -type yesno -default no]=="no"} return
+		set linkid [getTagInfo $obj lkid]
+		set PgAcVar(schema,links) [lreplace $PgAcVar(schema,links) $linkid $linkid]
+		.pgaw:Schema.c delete links
+		drawLinks
+		return
+	}
+	# Is object a table ?
+	set tablealias [getTagInfo $obj tab]
+	set tablename $PgAcVar(schema,tablename$tablealias)
+	if {"$tablename"==""} return
+	if {[tk_messageBox -title [intlmsg Warning] -icon question -parent .pgaw:Schema -message [format [intlmsg "Remove table %s from schema?"] $tablename] -type yesno -default no]=="no"} return
+	for {set i [expr [llength $PgAcVar(schema,links)]-1]} {$i>=0} {incr i -1} {
+		set thelink [lindex $PgAcVar(schema,links) $i]
+		if {($tablename==[lindex $thelink 0]) || ($tablename==[lindex $thelink 2])} {
+			set PgAcVar(schema,links) [lreplace $PgAcVar(schema,links) $i $i]
+		}
+	}
+	for {set i 0} {$i<$PgAcVar(schema,ntables)} {incr i} {
+		set temp {}
+		catch {set temp $PgAcVar(schema,tablename$i)}
+		if {"$temp"=="$tablename"} {
+			unset PgAcVar(schema,tablename$i)
+			unset PgAcVar(schema,tablestruct$i)
+			break
+		}
+	}
+	#incr PgAcVar(schema,ntables) -1
+	.pgaw:Schema.c delete tab$tablealias
 	.pgaw:Schema.c delete links
 	drawLinks
-	return
-}
-# Is object a table ?
-set tablealias [getTagInfo $obj tab]
-set tablename $PgAcVar(schema,tablename$tablealias)
-if {"$tablename"==""} return
-if {[tk_messageBox -title [intlmsg Warning] -icon question -parent .pgaw:Schema -message [format [intlmsg "Remove table %s from query?"] $tablename] -type yesno -default no]=="no"} return
-for {set i [expr [llength $PgAcVar(schema,links)]-1]} {$i>=0} {incr i -1} {
-	set thelink [lindex $PgAcVar(schema,links) $i]
-	if {($tablealias==[lindex $thelink 0]) || ($tablealias==[lindex $thelink 2])} {
-		set PgAcVar(schema,links) [lreplace $PgAcVar(schema,links) $i $i]
 	}
-}
-for {set i 0} {$i<$PgAcVar(schema,ntables)} {incr i} {
-	set temp {}
-	catch {set temp $PgAcVar(schema,tablename$i)}
-	if {"$temp"=="$tablename"} {
-		unset PgAcVar(schema,tablename$i)
-		unset PgAcVar(schema,tablestruct$i)
-		break
-	}
-}
-#incr PgAcVar(schema,ntables) -1
-.pgaw:Schema.c delete tab$tablealias
-.pgaw:Schema.c delete links
-drawLinks
 }
 
 
@@ -196,7 +202,7 @@ global PgAcVar
 	set dx [expr $x - $PgAcVar(draginfo,x)]
 	set dy [expr $y - $PgAcVar(draginfo,y)]
 	if {$PgAcVar(draginfo,is_a_table)} {
-		$w move $PgAcVar(draginfo,tabletag) $dx $dy
+		$w move dragme $dx $dy
 		drawLinks
 	} else {
 		$w move $PgAcVar(draginfo,obj) $dx $dy
@@ -206,7 +212,7 @@ global PgAcVar
 }
 
 
-proc {dragStart} {w x y} {
+proc {dragStart} {w x y state} {
 global PgAcVar
 PgAcVar:clean draginfo,*
 set PgAcVar(draginfo,obj) [$w find closest $x $y]
@@ -223,8 +229,12 @@ if {[getTagInfo $PgAcVar(draginfo,obj) table]=="header"} {
 	set taglist [.pgaw:Schema.c gettags $PgAcVar(draginfo,obj)]
 	set PgAcVar(draginfo,tabletag) [lindex $taglist [lsearch -regexp $taglist "^tab\[0-9\]*"]]
 	.pgaw:Schema.c raise $PgAcVar(draginfo,tabletag)
-	.pgaw:Schema.c itemconfigure [.pgaw:Schema.c find withtag hili] -fill black
-	.pgaw:Schema.c dtag [.pgaw:Schema.c find withtag hili] hili
+	if {$state == 0} {
+		.pgaw:Schema.c itemconfigure hili -fill black
+		.pgaw:Schema.c dtag hili
+		.pgaw:Schema.c dtag dragme
+	}
+	.pgaw:Schema.c addtag dragme withtag $PgAcVar(draginfo,tabletag)
 	.pgaw:Schema.c addtag hili withtag $PgAcVar(draginfo,obj)
 	.pgaw:Schema.c itemconfigure hili -fill blue
 } else {
@@ -247,7 +257,11 @@ if {$este==""} return
 # Re-establish the normal paint order so
 # information won't be overlapped by table rectangles
 # or link lines
-.pgaw:Schema.c lower $PgAcVar(draginfo,obj)
+if {$PgAcVar(draginfo,is_a_table)} {
+	.pgaw:Schema.c lower $PgAcVar(draginfo,tabletag)
+} else {
+	.pgaw:Schema.c lower $PgAcVar(draginfo,obj)
+}
 .pgaw:Schema.c lower rect
 .pgaw:Schema.c lower links
 set PgAcVar(schema,panstarted) 0
@@ -327,26 +341,22 @@ foreach link $PgAcVar(schema,links) {
 			# Source object is on the left of target object
 			set x1 $sre
 			set y1 [expr ([lindex $sbbox 1]+[lindex $sbbox 3])/2]
-			.pgaw:Schema.c create line $x1 $y1 [expr $x1+10] $y1 \
-				-tags [subst {links lkid$i}] -width 3
 			set x2 [lindex $dbbox 0]
 			set y2 [expr ([lindex $dbbox 1]+[lindex $dbbox 3])/2]
-			.pgaw:Schema.c create line [expr $x2-10] $y2 $x2 $y2 \
-				-tags [subst {links lkid$i}] -width 3
-			.pgaw:Schema.c create line [expr $x1+10] $y1 [expr $x2-10] $y2 \
-				-tags [subst {links lkid$i}] -width 2
+			.pgaw:Schema.c create line $x1 $y1 [expr $x1+10] $y1 \
+					[expr $x1+10] $y1 [expr $x2-10] $y2 \
+					[expr $x2-10] $y2 $x2 $y2 \
+					-tags [subst {links lkid$i}] -width 2
 		} else {
 			# source object is on the right of target object
 			set x1 [lindex $sbbox 0]
 			set y1 [expr ([lindex $sbbox 1]+[lindex $sbbox 3])/2]
-			.pgaw:Schema.c create line $x1 $y1 [expr $x1-10] $y1 \
-				-tags [subst {links lkid$i}] -width 3
 			set x2 $dre
 			set y2 [expr ([lindex $dbbox 1]+[lindex $dbbox 3])/2]
-			.pgaw:Schema.c create line $x2 $y2 [expr $x2+10] $y2 -width 3 \
-				-tags [subst {links lkid$i}]
-			.pgaw:Schema.c create line [expr $x1-10] $y1 [expr $x2+10] $y2 \
-				-tags [subst {links lkid$i}] -width 2
+			.pgaw:Schema.c create line $x1 $y1 [expr $x1-10] $y1 \
+					[expr $x1-10] $y1 [expr $x2+10] $y2 \
+					$x2 $y2 [expr $x2+10] $y2 \
+					-tags [subst {links lkid$i}] -width 2
 		}
 		incr i
 	}
@@ -405,8 +415,8 @@ proc {linkClick} {x y} {
 global PgAcVar
 	set obj [.pgaw:Schema.c find closest $x $y 1 links]
 	if {[getTagInfo $obj link]!="s"} return
-	.pgaw:Schema.c itemconfigure [.pgaw:Schema.c find withtag hili] -fill black
-	.pgaw:Schema.c dtag [.pgaw:Schema.c find withtag hili] hili
+	.pgaw:Schema.c itemconfigure hili -fill black
+	.pgaw:Schema.c dtag hili
 	.pgaw:Schema.c addtag hili withtag $obj
 	.pgaw:Schema.c itemconfigure $obj -fill blue
 }
@@ -457,8 +467,8 @@ if {$w==".pgaw:Schema.c"} {
 	set PgAcVar(schema,panobject) tables
 	if {$canpan} {
 		if {[.pgaw:Schema.c find withtag hili]!=""} {
-			.pgaw:Schema.c itemconfigure [.pgaw:Schema.c find withtag hili] -fill black
-			.pgaw:Schema.c dtag [.pgaw:Schema.c find withtag hili] hili
+			.pgaw:Schema.c itemconfigure hili -fill black
+			.pgaw:Schema.c dtag hili
 		}
 
 		.pgaw:Schema configure -cursor hand1
@@ -482,7 +492,7 @@ global PgAcVar
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 759x530+10+13
-	wm maxsize $base 1280 1024
+	wm maxsize $base [winfo screenwidth .] [winfo screenheight .]
 	wm minsize $base 1 1
 	wm overrideredirect $base 0
 	wm resizable $base 1 1
@@ -558,9 +568,6 @@ Window destroy .pgaw:Schema} -padx 2 -pady 3 -text [intlmsg Close]
 	entry $base.f.esn \
 		-background #fefefe -borderwidth 1 -textvariable PgAcVar(schema,name) 
 	label $base.f.lsn -text [intlmsg {Schema name}]
-	place $base.c  -x 5 -y 30 -width 748 -height 500 -anchor nw -bordermode ignore 
-	place $base.f \
-		-x 5 -y 5 -width 748 -height 25 -anchor nw -bordermode ignore 
 	pack $base.f.l \
 		-in .pgaw:Schema.f -anchor center -expand 0 -fill none -side left 
 	pack $base.f.e \
@@ -580,6 +587,8 @@ Window destroy .pgaw:Schema} -padx 2 -pady 3 -text [intlmsg Close]
 	pack $base.f.lsn \
 		-in .pgaw:Schema.f -anchor center -expand 0 -fill none -side right 
 
+	pack $base.f -side top -anchor ne -expand 0 -fill x
+	pack $base.c -side bottom -fill both -expand 1
 }
 
 

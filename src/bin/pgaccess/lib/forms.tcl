@@ -803,6 +803,7 @@ switch $PgAcVar(fdobj,$item,class) {
 			set DataControlVar($base.$name,recno) 0
 			set DataControlVar($base.$name,nrecs) \[pg_result \$res -numTuples\]
 			setCursor NORMAL
+			pg_result \$res -clear
 		}"
 		namespace eval ::DataControl($base.$name) "proc setSQL {sqlcmd} {
 			global DataControlVar

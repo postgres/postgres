@@ -1185,8 +1185,8 @@ if {$PgAcVar(nt,tablename)==""} then {
 	focus .pgaw:NewTable.etabn
 	return
 }
-if {[.pgaw:NewTable.lb size]==0} then {
-	showError [intlmsg "Your table has no fields!"]
+if {([.pgaw:NewTable.lb size]==0) && ($PgAcVar(nt,inherits)=="")} then {
+	showError [intlmsg "Your table has no columns!"]
 	focus .pgaw:NewTable.e2
 	return
 }

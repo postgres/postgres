@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/sh
 
 PATH_TO_WISH='@WISH@'
 PGACCESS_HOME='@PGACCESSHOME@'

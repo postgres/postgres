@@ -903,7 +903,7 @@ proc vTclWindow.pgaw:About {base} {
 	wm title $base [intlmsg "About"]
 	label $base.l1  -borderwidth 3 -font -Adobe-Helvetica-Bold-R-Normal-*-*-180-*-*-*-*-*  -relief ridge -text PgAccess 
 	label $base.l2  -relief groove  -text [intlmsg "A Tcl/Tk interface to\nPostgreSQL\nby Constantin Teodorescu"]
-	label $base.l3  -borderwidth 0 -relief sunken -text {v 0.98.5}
+	label $base.l3  -borderwidth 0 -relief sunken -text {v 0.98.7}
 	label $base.l4  -relief groove  -text "[intlmsg {You will always get the latest version at:}]
 http://www.flex.ro/pgaccess
 
