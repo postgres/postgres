@@ -1,7 +1,7 @@
 # ru.po
 # POSTGRES Translated Messages into the Russian Language (KOI8-R)
 #
-# $Header: /cvsroot/pgsql/src/backend/po/Attic/ru.po,v 1.15 2004/06/10 17:18:14 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/po/Attic/ru.po,v 1.16 2004/06/13 21:41:33 petere Exp $
 #
 # ChangeLog:
 #   - March 27 - May 16, 2004: updates for 7.4 - 7.5 branches; <mokhov@cs.concordia.ca>
@@ -15,8 +15,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4.x\n"
-"POT-Creation-Date: 2004-05-29 07:22-0300\n"
-"PO-Revision-Date: 2004-05-29 19:30-0500\n"
+"POT-Creation-Date: 2004-06-12 19:13-0300\n"
+"PO-Revision-Date: 2004-06-13 14:46-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -803,7 +803,7 @@ msgid "type %s does not exist"
 msgstr "тип %s не существует"
 
 #: parser/parse_oper.c:185
-#: utils/adt/arrayfuncs.c:2397
+#: utils/adt/arrayfuncs.c:2403
 #: utils/adt/ri_triggers.c:3601
 #, c-format
 msgid "could not identify an equality operator for type %s"
@@ -4649,7 +4649,7 @@ msgstr ""
 #: utils/adt/arrayfuncs.c:212
 #: utils/adt/arrayfuncs.c:378
 #: utils/adt/arrayfuncs.c:897
-#: utils/adt/arrayfuncs.c:2237
+#: utils/adt/arrayfuncs.c:2243
 #, c-format
 msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
 msgstr "число размерностей массива (%d) превышает лимит (%d)"
@@ -5693,7 +5693,7 @@ msgstr "система баз данных в режиме восстановления"
 #: storage/ipc/sinval.c:54
 #: storage/lmgr/proc.c:226
 msgid "sorry, too many clients already"
-msgstr ""
+msgstr "извините, уже слишком много клиентов"
 
 #: postmaster/postmaster.c:1661
 msgid "received SIGHUP, reloading configuration files"
@@ -6000,7 +6000,7 @@ msgstr ""
 
 #: rewrite/rewriteDefine.c:256
 msgid "INSTEAD NOTHING rules on SELECT are not implemented"
-msgstr ""
+msgstr "правила INSTEAD NOTHING для SELECT не реализованы"
 
 #: rewrite/rewriteDefine.c:257
 msgid "Use views instead."
@@ -6709,7 +6709,7 @@ msgstr "неверный OID типа элементов массива: %u"
 
 #: utils/adt/array_userfuncs.c:358
 #: utils/adt/arrayfuncs.c:893
-#: utils/adt/arrayfuncs.c:2233
+#: utils/adt/arrayfuncs.c:2239
 #, c-format
 msgid "invalid number of dimensions: %d"
 msgstr ""
@@ -6877,11 +6877,11 @@ msgstr ""
 #: utils/adt/arrayfuncs.c:1662
 #: utils/adt/arrayfuncs.c:1684
 #: utils/adt/arrayfuncs.c:1696
-#: utils/adt/arrayfuncs.c:1851
-#: utils/adt/arrayfuncs.c:1868
-#: utils/adt/arrayfuncs.c:1879
-#: utils/adt/arrayfuncs.c:1888
-#: utils/adt/arrayfuncs.c:1899
+#: utils/adt/arrayfuncs.c:1857
+#: utils/adt/arrayfuncs.c:1874
+#: utils/adt/arrayfuncs.c:1885
+#: utils/adt/arrayfuncs.c:1894
+#: utils/adt/arrayfuncs.c:1905
 msgid "invalid array subscripts"
 msgstr ""
 
@@ -6889,34 +6889,35 @@ msgstr ""
 msgid "updates on slices of fixed-length arrays not implemented"
 msgstr ""
 
-#: utils/adt/arrayfuncs.c:1911
+#: utils/adt/arrayfuncs.c:1848
+#: utils/adt/arrayfuncs.c:1917
 msgid "source array too small"
 msgstr ""
 
-#: utils/adt/arrayfuncs.c:2135
-#: utils/adt/arrayfuncs.c:3031
+#: utils/adt/arrayfuncs.c:2141
+#: utils/adt/arrayfuncs.c:3037
 msgid "null array elements not supported"
 msgstr "значения NULL как элементы массива не поддерживается"
 
-#: utils/adt/arrayfuncs.c:2375
-#: utils/adt/arrayfuncs.c:2530
+#: utils/adt/arrayfuncs.c:2381
+#: utils/adt/arrayfuncs.c:2536
 msgid "cannot compare arrays of different element types"
 msgstr ""
 
-#: utils/adt/arrayfuncs.c:2547
+#: utils/adt/arrayfuncs.c:2553
 #, c-format
 msgid "could not identify a comparison function for type %s"
 msgstr ""
 
-#: utils/adt/arrayfuncs.c:2921
+#: utils/adt/arrayfuncs.c:2927
 msgid "could not determine target array type"
 msgstr ""
 
-#: utils/adt/arrayfuncs.c:2927
+#: utils/adt/arrayfuncs.c:2933
 msgid "target type is not an array"
 msgstr ""
 
-#: utils/adt/arrayfuncs.c:2939
+#: utils/adt/arrayfuncs.c:2945
 msgid "array coercion to domain type elements not currently supported"
 msgstr ""
 
@@ -6958,7 +6959,7 @@ msgstr "неверный входной синтаксис для типа money: \"%s\""
 #: utils/adt/int8.c:653
 #: utils/adt/int8.c:694
 #: utils/adt/numeric.c:3639
-#: utils/adt/timestamp.c:2002
+#: utils/adt/timestamp.c:2006
 msgid "division by zero"
 msgstr "деление на ноль"
 
@@ -6982,28 +6983,28 @@ msgstr "значение даты/времени \"current\" больше не поддерживается"
 #: utils/adt/nabstime.c:746
 #: utils/adt/timestamp.c:155
 #: utils/adt/timestamp.c:382
-#: utils/adt/timestamp.c:1735
-#: utils/adt/timestamp.c:1756
-#: utils/adt/timestamp.c:1813
-#: utils/adt/timestamp.c:1836
-#: utils/adt/timestamp.c:2218
-#: utils/adt/timestamp.c:2329
-#: utils/adt/timestamp.c:2563
-#: utils/adt/timestamp.c:2614
-#: utils/adt/timestamp.c:2671
-#: utils/adt/timestamp.c:2723
-#: utils/adt/timestamp.c:2969
-#: utils/adt/timestamp.c:3075
-#: utils/adt/timestamp.c:3082
-#: utils/adt/timestamp.c:3095
-#: utils/adt/timestamp.c:3103
-#: utils/adt/timestamp.c:3177
-#: utils/adt/timestamp.c:3296
-#: utils/adt/timestamp.c:3304
-#: utils/adt/timestamp.c:3583
-#: utils/adt/timestamp.c:3590
-#: utils/adt/timestamp.c:3617
+#: utils/adt/timestamp.c:1739
+#: utils/adt/timestamp.c:1760
+#: utils/adt/timestamp.c:1817
+#: utils/adt/timestamp.c:1840
+#: utils/adt/timestamp.c:2222
+#: utils/adt/timestamp.c:2333
+#: utils/adt/timestamp.c:2567
+#: utils/adt/timestamp.c:2618
+#: utils/adt/timestamp.c:2675
+#: utils/adt/timestamp.c:2727
+#: utils/adt/timestamp.c:2973
+#: utils/adt/timestamp.c:3079
+#: utils/adt/timestamp.c:3086
+#: utils/adt/timestamp.c:3099
+#: utils/adt/timestamp.c:3107
+#: utils/adt/timestamp.c:3181
+#: utils/adt/timestamp.c:3300
+#: utils/adt/timestamp.c:3308
+#: utils/adt/timestamp.c:3587
+#: utils/adt/timestamp.c:3594
 #: utils/adt/timestamp.c:3621
+#: utils/adt/timestamp.c:3625
 msgid "timestamp out of range"
 msgstr ""
 
@@ -7042,10 +7043,10 @@ msgstr "единицы типа \"time with time zone\" -- \"%s\" -- не распознаны"
 
 #: utils/adt/date.c:2185
 #: utils/adt/date.c:2222
-#: utils/adt/timestamp.c:3497
-#: utils/adt/timestamp.c:3522
-#: utils/adt/timestamp.c:3649
-#: utils/adt/timestamp.c:3673
+#: utils/adt/timestamp.c:3501
+#: utils/adt/timestamp.c:3526
+#: utils/adt/timestamp.c:3653
+#: utils/adt/timestamp.c:3677
 #, c-format
 msgid "time zone \"%s\" not recognized"
 msgstr ""
@@ -7846,9 +7847,9 @@ msgid "timestamp(%d) precision must be between %d and %d"
 msgstr ""
 
 #: utils/adt/timestamp.c:499
-#: utils/adt/timestamp.c:2213
-#: utils/adt/timestamp.c:2324
-#: utils/adt/timestamp.c:2823
+#: utils/adt/timestamp.c:2217
+#: utils/adt/timestamp.c:2328
+#: utils/adt/timestamp.c:2827
 msgid "interval out of range"
 msgstr ""
 
@@ -7857,75 +7858,75 @@ msgstr ""
 msgid "interval(%d) precision must be between %d and %d"
 msgstr ""
 
-#: utils/adt/timestamp.c:1689
+#: utils/adt/timestamp.c:1693
 msgid "cannot subtract infinite timestamps"
 msgstr ""
 
-#: utils/adt/timestamp.c:2384
+#: utils/adt/timestamp.c:2388
 #, c-format
 msgid "invalid input syntax for type timestamp: \"%s\""
 msgstr "неверный входной синтаксис для типа timestamp: \"%s\""
 
-#: utils/adt/timestamp.c:2444
+#: utils/adt/timestamp.c:2448
 #, c-format
 msgid "invalid input syntax for type timestamp with time zone: \"%s\""
 msgstr ""
 
-#: utils/adt/timestamp.c:2505
+#: utils/adt/timestamp.c:2509
 #, c-format
 msgid "invalid input syntax for type interval: \"%s\""
 msgstr "неверный входной синтаксис для типа interval: \"%s\""
 
-#: utils/adt/timestamp.c:2543
-#: utils/adt/timestamp.c:2620
-#: utils/adt/timestamp.c:2945
-#: utils/adt/timestamp.c:3121
+#: utils/adt/timestamp.c:2547
+#: utils/adt/timestamp.c:2624
+#: utils/adt/timestamp.c:2949
+#: utils/adt/timestamp.c:3125
 #, c-format
 msgid "timestamp units \"%s\" not recognized"
 msgstr ""
 
-#: utils/adt/timestamp.c:2606
-#: utils/adt/timestamp.c:3054
-#: utils/adt/timestamp.c:3111
+#: utils/adt/timestamp.c:2610
+#: utils/adt/timestamp.c:3058
+#: utils/adt/timestamp.c:3115
 #, c-format
 msgid "timestamp units \"%s\" not supported"
 msgstr ""
 
-#: utils/adt/timestamp.c:2652
-#: utils/adt/timestamp.c:2729
-#: utils/adt/timestamp.c:3153
-#: utils/adt/timestamp.c:3321
+#: utils/adt/timestamp.c:2656
+#: utils/adt/timestamp.c:2733
+#: utils/adt/timestamp.c:3157
+#: utils/adt/timestamp.c:3325
 #, c-format
 msgid "timestamp with time zone units \"%s\" not recognized"
 msgstr ""
 
-#: utils/adt/timestamp.c:2713
-#: utils/adt/timestamp.c:3274
-#: utils/adt/timestamp.c:3312
+#: utils/adt/timestamp.c:2717
+#: utils/adt/timestamp.c:3278
+#: utils/adt/timestamp.c:3316
 #, c-format
 msgid "timestamp with time zone units \"%s\" not supported"
 msgstr ""
 
-#: utils/adt/timestamp.c:2761
-#: utils/adt/timestamp.c:2832
-#: utils/adt/timestamp.c:3353
-#: utils/adt/timestamp.c:3465
+#: utils/adt/timestamp.c:2765
+#: utils/adt/timestamp.c:2836
+#: utils/adt/timestamp.c:3357
+#: utils/adt/timestamp.c:3469
 #, c-format
 msgid "interval units \"%s\" not recognized"
 msgstr ""
 
-#: utils/adt/timestamp.c:2816
-#: utils/adt/timestamp.c:3435
+#: utils/adt/timestamp.c:2820
+#: utils/adt/timestamp.c:3439
 #, c-format
 msgid "interval units \"%s\" not supported"
 msgstr ""
 
-#: utils/adt/timestamp.c:2856
+#: utils/adt/timestamp.c:2860
 msgid "cannot calculate week number without year information"
 msgstr ""
 
-#: utils/adt/timestamp.c:3548
-#: utils/adt/timestamp.c:3699
+#: utils/adt/timestamp.c:3552
+#: utils/adt/timestamp.c:3703
 #, c-format
 msgid "interval time zone \"%s\" must not specify month"
 msgstr ""
@@ -8263,7 +8264,7 @@ msgstr "Файл \"%s\" не содержит верные данные."
 
 #: utils/init/miscinit.c:837
 msgid "You may need to initdb."
-msgstr ""
+msgstr "Вам наверное надо выполнить initdb."
 
 #: utils/init/miscinit.c:845
 #, c-format
@@ -8302,7 +8303,7 @@ msgstr "Поддиректория баз данных \"%s\" отсутствует."
 #: utils/init/postinit.c:280
 #, c-format
 msgid "could not access directory \"%s\": %m"
-msgstr ""
+msgstr "ошибка при доступе к директории \"%s\": %m"
 
 #: utils/init/postinit.c:289
 #, c-format
@@ -8311,80 +8312,80 @@ msgstr "не получилось поменять директорию на \"%s\": %m"
 
 #: utils/init/postinit.c:371
 msgid "no users are defined in this database system"
-msgstr ""
+msgstr "пользователи не определены в этой системе баз данных"
 
 #: utils/init/postinit.c:372
 #, c-format
 msgid "You should immediately run CREATE USER \"%s\" WITH SYSID %d CREATEUSER;."
-msgstr ""
+msgstr "Вы должны немедленно выполнить CREATE USER \"%s\" WITH SYSID %d CREATEUSER;."
 
 #: utils/init/postinit.c:408
 msgid "connection limit exceeded for non-superusers"
-msgstr ""
+msgstr "превышен лимит подсоединений для обычных пользователей"
 
 #: utils/misc/guc.c:240
 msgid "Ungrouped"
-msgstr ""
+msgstr "Разное"
 
 #: utils/misc/guc.c:242
 msgid "Connections and Authentication"
-msgstr ""
+msgstr "Подсоединения и аутентификация"
 
 #: utils/misc/guc.c:244
 msgid "Connections and Authentication / Connection Settings"
-msgstr ""
+msgstr "Подсоединения и аутентификация / Настройки подсоединения"
 
 #: utils/misc/guc.c:246
 msgid "Connections and Authentication / Security and Authentication"
-msgstr ""
+msgstr "Подсоединения и аутентификация / Безопасность и аутентификация"
 
 #: utils/misc/guc.c:248
 msgid "Resource Usage"
-msgstr ""
+msgstr "Использование ресурсов"
 
 #: utils/misc/guc.c:250
 msgid "Resource Usage / Memory"
-msgstr ""
+msgstr "Использование ресурсов / Память"
 
 #: utils/misc/guc.c:252
 msgid "Resource Usage / Free Space Map"
-msgstr ""
+msgstr "Использование ресурсов / Карта свободного пространства"
 
 #: utils/misc/guc.c:254
 msgid "Resource Usage / Kernel Resources"
-msgstr ""
+msgstr "Использование ресурсов / Ресурсы ядра"
 
 #: utils/misc/guc.c:256
 msgid "Write-Ahead Log"
-msgstr ""
+msgstr "Write-Ahead Log"
 
 #: utils/misc/guc.c:258
 msgid "Write-Ahead Log / Settings"
-msgstr ""
+msgstr "Write-Ahead Log / Настройки"
 
 #: utils/misc/guc.c:260
 msgid "Write-Ahead Log / Checkpoints"
-msgstr ""
+msgstr "Write-Ahead Log / Контрольные точки"
 
 #: utils/misc/guc.c:262
 msgid "Query Tuning"
-msgstr ""
+msgstr "Настройка запросов"
 
 #: utils/misc/guc.c:264
 msgid "Query Tuning / Planner Method Enabling"
-msgstr ""
+msgstr "Настройка запросов / Включение методов планнера"
 
 #: utils/misc/guc.c:266
 msgid "Query Tuning / Planner Cost Constants"
-msgstr ""
+msgstr "Настройка запросов / Оценочные константы планнера"
 
 #: utils/misc/guc.c:268
 msgid "Query Tuning / Genetic Query Optimizer"
-msgstr ""
+msgstr "Настройка запросов / Общий оптимизатор запросов"
 
 #: utils/misc/guc.c:270
 msgid "Query Tuning / Other Planner Options"
-msgstr ""
+msgstr "Настройка запросов / Другие опции планнера"
 
 #: utils/misc/guc.c:272
 msgid "Reporting and Logging"
@@ -8404,15 +8405,15 @@ msgstr ""
 
 #: utils/misc/guc.c:280
 msgid "Statistics"
-msgstr ""
+msgstr "Статистика"
 
 #: utils/misc/guc.c:282
 msgid "Statistics / Monitoring"
-msgstr ""
+msgstr "Статистика / Мониторинг"
 
 #: utils/misc/guc.c:284
 msgid "Statistics / Query and Index Statistics Collector"
-msgstr ""
+msgstr "Статистика / Сборщик статистики запросов и индексов"
 
 #: utils/misc/guc.c:286
 msgid "Client Connection Defaults"
@@ -8432,19 +8433,19 @@ msgstr ""
 
 #: utils/misc/guc.c:294
 msgid "Lock Management"
-msgstr ""
+msgstr "Управление блокировками"
 
 #: utils/misc/guc.c:296
 msgid "Version and Platform Compatibility"
-msgstr ""
+msgstr "Версия и совместимость платформ"
 
 #: utils/misc/guc.c:298
 msgid "Version and Platform Compatibility / Previous PostgreSQL Versions"
-msgstr ""
+msgstr "Версия и совместимость платформ / Предыдущие версии PostgreSQL"
 
 #: utils/misc/guc.c:300
 msgid "Version and Platform Compatibility / Other Platforms and Clients"
-msgstr ""
+msgstr "Версия и совместимость платформ / Другие платформы и клиенты"
 
 #: utils/misc/guc.c:302
 msgid "Developer Options"
