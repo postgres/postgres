@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.47 1999/05/25 16:13:42 momjian Exp $
+ * $Id: pg_attribute.h,v 1.48 1999/07/31 19:07:25 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -40,10 +40,9 @@
  */
 CATALOG(pg_attribute) BOOTSTRAP
 {
-	Oid			attrelid;
+	Oid			attrelid;		/* OID of relation containing this attribute */
 	NameData	attname;
 	Oid			atttypid;
-
 	/*
 	 * atttypid is the OID of the instance in Catalog Class pg_type that
 	 * defines the data type of this attribute (e.g. int4).  Information
@@ -51,16 +50,21 @@ CATALOG(pg_attribute) BOOTSTRAP
 	 * attalign attributes of this instance, so they had better match or
 	 * Postgres will fail.
 	 */
-	float4		attdisbursion;
-	int2		attlen;
 
+	float4		attdisbursion;
+	/*
+	 * attdisbursion is the disbursion statistic of the column, or zero if
+	 * the statistic has not been calculated.
+	 */
+
+	int2		attlen;
 	/*
 	 * attlen is a copy of the typlen field from pg_type for this
 	 * attribute.  See atttypid above.	See struct Form_pg_type for
 	 * definition.
 	 */
-	int2		attnum;
 
+	int2		attnum;
 	/*
 	 * attnum is the "attribute number" for the attribute:	A value that
 	 * uniquely identifies this attribute within its class. For user
@@ -74,28 +78,27 @@ CATALOG(pg_attribute) BOOTSTRAP
 	 *
 	 * Note that (attnum - 1) is often used as the index to an array.
 	 */
-	int4		attnelems;
+
+	int4		attnelems;		/* number of dimensions, if an array type */
 
 	int4		attcacheoff;
-
 	/*
 	 * fastgetattr() uses attcacheoff to cache byte offsets of attributes
-	 * in heap tuples.	The data actually stored in pg_attribute (-1)
+	 * in heap tuples.	The value actually stored in pg_attribute (-1)
 	 * indicates no cached value.  But when we copy these tuples into a
 	 * tuple descriptor, we may then update attcacheoff in the copies.
 	 * This speeds up the attribute walking process.
 	 */
 
 	int4		atttypmod;
-
 	/*
-	 * atttypmod records type-specific modifications supplied at table
-	 * creation time, and passes it to input and output functions as the
-	 * third argument.
+	 * atttypmod records type-specific data supplied at table creation time
+	 * (for example, the max length of a varchar field).  It is passed to
+	 * type-specific input and output functions as the third argument.
+	 * The value will generally be -1 for types that do not need typmod.
 	 */
 
 	bool		attbyval;
-
 	/*
 	 * attbyval is a copy of the typbyval field from pg_type for this
 	 * attribute.  See atttypid above.	See struct Form_pg_type for
@@ -103,17 +106,15 @@ CATALOG(pg_attribute) BOOTSTRAP
 	 */
 	bool		attisset;
 	char		attalign;
-
 	/*
 	 * attalign is a copy of the typalign field from pg_type for this
 	 * attribute.  See atttypid above.	See struct Form_pg_type for
 	 * definition.
 	 */
-	bool		attnotnull;
 
+	bool		attnotnull;
 	/* This flag represents the "NOT NULL" constraint */
 	bool		atthasdef;
-
 	/* Has DEFAULT value or not */
 } FormData_pg_attribute;
 
