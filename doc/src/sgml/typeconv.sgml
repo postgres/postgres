@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.40 2003/12/01 21:53:15 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.41 2003/12/02 00:26:59 tgl Exp $
 -->
 
 <chapter Id="typeconv">
@@ -412,7 +412,7 @@ type to resolve the unknown literals to.
 </example>
 
 <example>
-<title>Absolute-Value and Factorial Operator Type Resolution</title>
+<title>Absolute-Value and Negation Operator Type Resolution</title>
 
 <para>
 The <productname>PostgreSQL</productname> operator catalog has several
@@ -435,6 +435,30 @@ not some other type was used:
 SELECT @ '-4.5e500' AS "abs";
 
 ERROR:  "-4.5e500" is out of range for type double precision
+</screen>
+</para>
+
+<para>
+On the other hand, the prefix operator <literal>~</> (bitwise negation)
+is defined only for integer data types, not for <type>float8</type>.  So, if we
+try a similar case with <literal>~</>, we get:
+<screen>
+SELECT ~ '20' AS "negation";
+
+ERROR:  operator is not unique: ~ "unknown"
+HINT:  Could not choose a best candidate operator. You may need to add explicit
+type casts.
+</screen>
+This happens because the system can't decide which of the several
+possible <literal>~</> operators should be preferred.  We can help
+it out with an explicit cast:
+<screen>
+SELECT ~ CAST('20' AS int8) AS "negation";
+
+ negation
+----------
+      -21
+(1 row)
 </screen>
 </para>
 </example>

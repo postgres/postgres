@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.23 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.24 2003/12/02 00:26:59 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -108,9 +108,9 @@ DROP OPERATOR ~ (none, bit);
 
   <para>
    Remove the right unary factorial operator <literal>x!</literal>
-   for type <type>integer</type>:
+   for type <type>bigint</type>:
 <programlisting>
-DROP OPERATOR ! (integer, none);
+DROP OPERATOR ! (bigint, none);
 </programlisting>
   </para>
  </refsect1>
