@@ -3,9 +3,238 @@
 -- does not depend on contents of seg.sql.
 --
 \set ECHO none
+--test query_int
+select '1'::query_int;
+ ?column? 
+----------
+ 1
+(1 row)
+
+select ' 1'::query_int;
+ ?column? 
+----------
+ 1
+(1 row)
+
+select '1 '::query_int;
+ ?column? 
+----------
+ 1
+(1 row)
+
+select ' 1 '::query_int;
+ ?column? 
+----------
+ 1
+(1 row)
+
+select ' ! 1 '::query_int;
+ ?column? 
+----------
+ !1
+(1 row)
+
+select '!1'::query_int;
+ ?column? 
+----------
+ !1
+(1 row)
+
+select '1|2'::query_int;
+ ?column? 
+----------
+ 1 | 2
+(1 row)
+
+select '1|!2'::query_int;
+ ?column? 
+----------
+ 1 | !2
+(1 row)
+
+select '!1|2'::query_int;
+ ?column? 
+----------
+ !1 | 2
+(1 row)
+
+select '!1|!2'::query_int;
+ ?column? 
+----------
+ !1 | !2
+(1 row)
+
+select '!(!1|!2)'::query_int;
+   ?column?   
+--------------
+ !( !1 | !2 )
+(1 row)
+
+select '!(!1|2)'::query_int;
+  ?column?   
+-------------
+ !( !1 | 2 )
+(1 row)
+
+select '!(1|!2)'::query_int;
+  ?column?   
+-------------
+ !( 1 | !2 )
+(1 row)
+
+select '!(1|2)'::query_int;
+  ?column?  
+------------
+ !( 1 | 2 )
+(1 row)
+
+select '1&2'::query_int;
+ ?column? 
+----------
+ 1 & 2
+(1 row)
+
+select '!1&2'::query_int;
+ ?column? 
+----------
+ !1 & 2
+(1 row)
+
+select '1&!2'::query_int;
+ ?column? 
+----------
+ 1 & !2
+(1 row)
+
+select '!1&!2'::query_int;
+ ?column? 
+----------
+ !1 & !2
+(1 row)
+
+select '(1&2)'::query_int;
+ ?column? 
+----------
+ 1 & 2
+(1 row)
+
+select '1&(2)'::query_int;
+ ?column? 
+----------
+ 1 & 2
+(1 row)
+
+select '!(1)&2'::query_int;
+ ?column? 
+----------
+ !1 & 2
+(1 row)
+
+select '!(1&2)'::query_int;
+  ?column?  
+------------
+ !( 1 & 2 )
+(1 row)
+
+select '1|2&3'::query_int;
+ ?column?  
+-----------
+ 1 | 2 & 3
+(1 row)
+
+select '1|(2&3)'::query_int;
+ ?column?  
+-----------
+ 1 | 2 & 3
+(1 row)
+
+select '(1|2)&3'::query_int;
+   ?column?    
+---------------
+ ( 1 | 2 ) & 3
+(1 row)
+
+select '1|2&!3'::query_int;
+  ?column?  
+------------
+ 1 | 2 & !3
+(1 row)
+
+select '1|!2&3'::query_int;
+  ?column?  
+------------
+ 1 | !2 & 3
+(1 row)
+
+select '!1|2&3'::query_int;
+  ?column?  
+------------
+ !1 | 2 & 3
+(1 row)
+
+select '!1|(2&3)'::query_int;
+  ?column?  
+------------
+ !1 | 2 & 3
+(1 row)
+
+select '!(1|2)&3'::query_int;
+    ?column?    
+----------------
+ !( 1 | 2 ) & 3
+(1 row)
+
+select '(!1|2)&3'::query_int;
+    ?column?    
+----------------
+ ( !1 | 2 ) & 3
+(1 row)
+
+select '1|(2|(4|(5|6)))'::query_int;
+           ?column?            
+-------------------------------
+ 1 | ( 2 | ( 4 | ( 5 | 6 ) ) )
+(1 row)
+
+select '1|2|4|5|6'::query_int;
+           ?column?            
+-------------------------------
+ ( ( ( 1 | 2 ) | 4 ) | 5 ) | 6
+(1 row)
+
+select '1&(2&(4&(5&6)))'::query_int;
+     ?column?      
+-------------------
+ 1 & 2 & 4 & 5 & 6
+(1 row)
+
+select '1&2&4&5&6'::query_int;
+     ?column?      
+-------------------
+ 1 & 2 & 4 & 5 & 6
+(1 row)
+
+select '1&(2&(4&(5|6)))'::query_int;
+       ?column?        
+-----------------------
+ 1 & 2 & 4 & ( 5 | 6 )
+(1 row)
+
+select '1&(2&(4&(5|!6)))'::query_int;
+        ?column?        
+------------------------
+ 1 & 2 & 4 & ( 5 | !6 )
+(1 row)
+
 CREATE TABLE test__int( a int[] );
 \copy test__int from 'data/test__int.data'
 SELECT count(*) from test__int WHERE a && '{23,50}';
+ count 
+-------
+   403
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '23|50';
  count 
 -------
    403
@@ -15,6 +244,36 @@ SELECT count(*) from test__int WHERE a @ '{23,50}';
  count 
 -------
     12
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '23&50';
+ count 
+-------
+    12
+(1 row)
+
+SELECT count(*) from test__int WHERE a @ '{20,23}';
+ count 
+-------
+    12
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '50&68';
+ count 
+-------
+     9
+(1 row)
+
+SELECT count(*) from test__int WHERE a @ '{20,23}' or a @ '{50,68}';
+ count 
+-------
+    21
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '(20&23)|(50&68)';
+ count 
+-------
+    21
 (1 row)
 
 CREATE INDEX text_idx on test__int using gist ( a gist__int_ops );
@@ -24,10 +283,46 @@ SELECT count(*) from test__int WHERE a && '{23,50}';
    403
 (1 row)
 
+SELECT count(*) from test__int WHERE a @@ '23|50';
+ count 
+-------
+   403
+(1 row)
+
 SELECT count(*) from test__int WHERE a @ '{23,50}';
  count 
 -------
     12
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '23&50';
+ count 
+-------
+    12
+(1 row)
+
+SELECT count(*) from test__int WHERE a @ '{20,23}';
+ count 
+-------
+    12
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '50&68';
+ count 
+-------
+     9
+(1 row)
+
+SELECT count(*) from test__int WHERE a @ '{20,23}' or a @ '{50,68}';
+ count 
+-------
+    21
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '(20&23)|(50&68)';
+ count 
+-------
+    21
 (1 row)
 
 drop index text_idx;
@@ -38,9 +333,45 @@ SELECT count(*) from test__int WHERE a && '{23,50}';
    403
 (1 row)
 
+SELECT count(*) from test__int WHERE a @@ '23|50';
+ count 
+-------
+   403
+(1 row)
+
 SELECT count(*) from test__int WHERE a @ '{23,50}';
  count 
 -------
     12
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '23&50';
+ count 
+-------
+    12
+(1 row)
+
+SELECT count(*) from test__int WHERE a @ '{20,23}';
+ count 
+-------
+    12
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '50&68';
+ count 
+-------
+     9
+(1 row)
+
+SELECT count(*) from test__int WHERE a @ '{20,23}' or a @ '{50,68}';
+ count 
+-------
+    21
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '(20&23)|(50&68)';
+ count 
+-------
+    21
 (1 row)
 

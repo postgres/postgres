@@ -2,6 +2,51 @@
 -- 
 BEGIN TRANSACTION;
 
+-- Query type
+CREATE FUNCTION bqarr_in(opaque)
+RETURNS opaque
+AS 'MODULE_PATHNAME'
+LANGUAGE 'c' with (isstrict);
+
+CREATE FUNCTION bqarr_out(opaque)
+RETURNS opaque
+AS 'MODULE_PATHNAME'
+LANGUAGE 'c' with (isstrict);
+
+CREATE TYPE query_int (
+internallength = -1,
+input = bqarr_in,
+output = bqarr_out
+);
+
+--only for debug
+CREATE FUNCTION querytree(query_int)
+RETURNS text
+AS 'MODULE_PATHNAME'
+LANGUAGE 'c' with (isstrict);
+
+
+CREATE FUNCTION boolop(_int4, query_int) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+
+COMMENT ON FUNCTION boolop(_int4, query_int) IS 'boolean operation with array';
+
+CREATE FUNCTION rboolop(query_int, _int4) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+
+COMMENT ON FUNCTION rboolop(query_int, _int4) IS 'boolean operation with array';
+
+CREATE OPERATOR @@ (
+   LEFTARG = _int4, RIGHTARG = query_int, PROCEDURE = boolop,
+   COMMUTATOR = '~~', RESTRICT = contsel, JOIN = contjoinsel
+);
+
+CREATE OPERATOR ~~ (
+   LEFTARG = query_int, RIGHTARG = _int4, PROCEDURE = rboolop,
+   COMMUTATOR = '@@', RESTRICT = contsel, JOIN = contjoinsel
+);
+
+
 --
 -- External C-functions for R-tree methods
 --
@@ -111,9 +156,10 @@ INSERT INTO pg_opclass (opcamid, opcname, opcintype, opcdefault, opckeytype)
 -- get the comparators for _intments and store them in a tmp table
 SELECT o.oid AS opoid, o.oprname
 INTO TEMP TABLE _int_ops_tmp
-FROM pg_operator o, pg_type t
-WHERE o.oprleft = t.oid and o.oprright = t.oid
-   and t.typname = '_int4';
+FROM pg_operator o, pg_type t, pg_type tq
+WHERE o.oprleft = t.oid and ( o.oprright = t.oid or o.oprright=tq.oid )
+   and t.typname = '_int4'
+   and tq.typname='query_int';
 
 -- make sure we have the right operators
 -- SELECT * from _int_ops_tmp;
@@ -156,6 +202,23 @@ INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
       opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
       and opcname = 'gist__int_ops' 
       and c.oprname = '~';
+
+--boolean search
+INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
+   SELECT opcl.oid, 20, true, c.opoid
+   FROM pg_opclass opcl, _int_ops_tmp c
+   WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
+      and opcname = 'gist__int_ops' 
+      and c.oprname = '@@';
+
+INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
+   SELECT opcl.oid, 20, true, c.opoid
+   FROM pg_opclass opcl, _int_ops_tmp c
+   WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
+      and opcname = 'gist__int_ops' 
+      and c.oprname = '~~';
 
 DROP TABLE _int_ops_tmp;
 
@@ -258,9 +321,10 @@ INSERT INTO pg_opclass (opcamid, opcname, opcintype, opcdefault, opckeytype)
 -- get the comparators for _intments and store them in a tmp table
 SELECT o.oid AS opoid, o.oprname
 INTO TEMP TABLE _int_ops_tmp
-FROM pg_operator o, pg_type t
-WHERE o.oprleft = t.oid and o.oprright = t.oid
-   and t.typname = '_int4';
+FROM pg_operator o, pg_type t, pg_type tq
+WHERE o.oprleft = t.oid and ( o.oprright = t.oid or o.oprright=tq.oid )
+   and t.typname = '_int4'
+   and tq.typname='query_int';
 
 -- make sure we have the right operators
 -- SELECT * from _int_ops_tmp;
@@ -294,6 +358,22 @@ INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
       opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
       and opcname = 'gist__intbig_ops' 
       and c.oprname = '~';
+
+--boolean search
+INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
+   SELECT opcl.oid, 20, true, c.opoid
+   FROM pg_opclass opcl, _int_ops_tmp c
+   WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
+      and opcname = 'gist__intbig_ops' 
+      and c.oprname = '@@';
+INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
+   SELECT opcl.oid, 20, true, c.opoid
+   FROM pg_opclass opcl, _int_ops_tmp c
+   WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
+      and opcname = 'gist__intbig_ops' 
+      and c.oprname = '~~';
 
 DROP TABLE _int_ops_tmp;
 
