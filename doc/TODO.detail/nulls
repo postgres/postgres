@@ -61,7 +61,7 @@ From owner-pgsql-general@hub.org Sun Oct 11 17:31:08 1998
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA20043
 	for <maillist@candle.pha.pa.us>; Sun, 11 Oct 1998 17:31:02 -0400 (EDT)
-Received: from hub.org (majordom@hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.7 $) with ESMTP id RAA03069 for <maillist@candle.pha.pa.us>; Sun, 11 Oct 1998 17:10:34 -0400 (EDT)
+Received: from hub.org (majordom@hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.8 $) with ESMTP id RAA03069 for <maillist@candle.pha.pa.us>; Sun, 11 Oct 1998 17:10:34 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.8.8/8.8.8) with SMTP id QAA10856;
 	Sun, 11 Oct 1998 16:57:34 -0400 (EDT)

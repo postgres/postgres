@@ -95,3 +95,436 @@ try to set up a group of macros like that, I think.
 
 			regards, tom lane
 
+From owner-pgsql-hackers@hub.org Wed Sep 22 20:31:02 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id UAA15611
+	for <maillist@candle.pha.pa.us>; Wed, 22 Sep 1999 20:31:01 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id UAA02926 for <maillist@candle.pha.pa.us>; Wed, 22 Sep 1999 20:21:24 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1])
+	by hub.org (8.9.3/8.9.3) with ESMTP id UAA75413;
+	Wed, 22 Sep 1999 20:09:35 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Wed, 22 Sep 1999 20:08:50 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id UAA75058
+	for pgsql-hackers-outgoing; Wed, 22 Sep 1999 20:06:58 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from sss.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by hub.org (8.9.3/8.9.3) with ESMTP id UAA74982
+	for <pgsql-hackers@postgreSQL.org>; Wed, 22 Sep 1999 20:06:25 -0400 (EDT)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss.sss.pgh.pa.us (localhost [127.0.0.1])
+	by sss.sss.pgh.pa.us (8.9.1/8.9.1) with ESMTP id UAA06411
+	for <pgsql-hackers@postgreSQL.org>; Wed, 22 Sep 1999 20:05:40 -0400 (EDT)
+To: pgsql-hackers@postgreSQL.org
+Subject: [HACKERS] Progress report: buffer refcount bugs and SQL functions
+Date: Wed, 22 Sep 1999 20:05:39 -0400
+Message-ID: <6408.938045139@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+I have been finding a lot of interesting stuff while looking into
+the buffer reference count/leakage issue.
+
+It turns out that there were two specific things that were camouflaging
+the existence of bugs in this area:
+
+1. The BufferLeakCheck routine that's run at transaction commit was
+only looking for nonzero PrivateRefCount to indicate a missing unpin.
+It failed to notice nonzero LastRefCount --- which meant that an
+error in refcount save/restore usage could leave a buffer pinned,
+and BufferLeakCheck wouldn't notice.
+
+2. The BufferIsValid macro, which you'd think just checks whether
+it's handed a valid buffer identifier or not, actually did more:
+it only returned true if the buffer ID was valid *and* the buffer
+had positive PrivateRefCount.  That meant that the common pattern
+	if (BufferIsValid(buf))
+		ReleaseBuffer(buf);
+wouldn't complain if it were handed a valid but already unpinned buffer.
+And that behavior masks bugs that result in buffers being unpinned too
+early.  For example, consider a sequence like
+
+1. LockBuffer (buffer now has refcount 1).  Store reference to
+   a tuple on that buffer page in a tuple table slot.
+2. Copy buffer reference to a second tuple-table slot, but forget to
+   increment buffer's refcount.
+3. Release second tuple table slot.  Buffer refcount drops to 0,
+   so it's unpinned.
+4. Release original tuple slot.  Because of BufferIsValid behavior,
+   no assert happens here; in fact nothing at all happens.
+
+This is, of course, buggy code: during the interval from 3 to 4 you
+still have an apparently valid tuple reference in the original slot,
+which someone might try to use; but the buffer it points to is unpinned
+and could be replaced at any time by another backend.
+
+In short, we had errors that would mask both missing-pin bugs and
+missing-unpin bugs.  And naturally there were a few such bugs lurking
+behind them...
+
+3. The buffer refcount save/restore stuff, which I had suspected
+was useless, is not only useless but also buggy.  The reason it's
+buggy is that it only works if used in a nested fashion.  You could
+save state A, pin some buffers, save state B, pin some more
+buffers, restore state B (thereby unpinning what you pinned since
+the save), and finally restore state A (unpinning the earlier stuff).
+What you could not do is save state A, pin, save B, pin more, then
+restore state A --- that might unpin some of A's buffers, or some
+of B's buffers, or some unforeseen combination thereof.  If you
+restore A and then restore B, you do not necessarily return to a zero-
+pins state, either.  And it turns out the actual usage pattern was a
+nearly random sequence of saves and restores, compounded by a failure to
+do all of the restores reliably (which was masked by the oversight in
+BufferLeakCheck).
+
+
+What I have done so far is to rip out the buffer refcount save/restore
+support (including LastRefCount), change BufferIsValid to a simple
+validity check (so that you get an assert if you unpin something that
+was pinned), change ExecStoreTuple so that it increments the refcount
+when it is handed a buffer reference (for symmetry with ExecClearTuple's
+decrement of the refcount), and fix about a dozen bugs exposed by these
+changes.
+
+I am still getting Buffer Leak notices in the "misc" regression test,
+specifically in the queries that invoke more than one SQL function.
+What I find there is that SQL functions are not always run to
+completion.  Apparently, when a function can return multiple tuples,
+it won't necessarily be asked to produce them all.  And when it isn't,
+postquel_end() isn't invoked for the function's current query, so its
+tuple table isn't cleared, so we have dangling refcounts if any of the
+tuples involved are in disk buffers.
+
+It may be that the save/restore code was a misguided attempt to fix
+this problem.  I can't tell.  But I think what we really need to do is
+find some way of ensuring that Postquel function execution contexts
+always get shut down by the end of the query, so that they don't leak
+resources.
+
+I suppose a straightforward approach would be to keep a list of open
+function contexts somewhere (attached to the outer execution context,
+perhaps), and clean them up at outer-plan shutdown.
+
+What I am wondering, though, is whether this addition is actually
+necessary, or is it a bug that the functions aren't run to completion
+in the first place?  I don't really understand the semantics of this
+"nested dot notation".  I suppose it is a Berkeleyism; I can't find
+anything about it in the SQL92 document.  The test cases shown in the
+misc regress test seem peculiar, not to say wrong.  For example:
+
+regression=> SELECT p.hobbies.equipment.name, p.hobbies.name, p.name FROM person p;
+name         |name       |name
+-------------+-----------+-----
+advil        |posthacking|mike
+peet's coffee|basketball |joe
+hightops     |basketball |sally
+(3 rows)
+
+which doesn't appear to agree with the contents of the underlying
+relations:
+
+regression=> SELECT * FROM hobbies_r;
+name       |person
+-----------+------
+posthacking|mike
+posthacking|jeff
+basketball |joe
+basketball |sally
+skywalking |
+(5 rows)
+
+regression=> SELECT * FROM equipment_r;
+name         |hobby
+-------------+-----------
+advil        |posthacking
+peet's coffee|posthacking
+hightops     |basketball
+guts         |skywalking
+(4 rows)
+
+I'd have expected an output along the lines of
+
+advil        |posthacking|mike
+peet's coffee|posthacking|mike
+hightops     |basketball |joe
+hightops     |basketball |sally
+
+Is the regression test's expected output wrong, or am I misunderstanding
+what this query is supposed to do?  Is there any documentation anywhere
+about how SQL functions returning multiple tuples are supposed to
+behave?
+
+			regards, tom lane
+
+************
+
+
+From owner-pgsql-hackers@hub.org Thu Sep 23 11:03:19 1999
+Received: from hub.org (hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA16211
+	for <maillist@candle.pha.pa.us>; Thu, 23 Sep 1999 11:03:17 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1])
+	by hub.org (8.9.3/8.9.3) with ESMTP id KAA58151;
+	Thu, 23 Sep 1999 10:53:46 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Thu, 23 Sep 1999 10:53:05 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id KAA57948
+	for pgsql-hackers-outgoing; Thu, 23 Sep 1999 10:52:23 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from sss.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by hub.org (8.9.3/8.9.3) with ESMTP id KAA57841
+	for <hackers@postgreSQL.org>; Thu, 23 Sep 1999 10:51:50 -0400 (EDT)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss.sss.pgh.pa.us (localhost [127.0.0.1])
+	by sss.sss.pgh.pa.us (8.9.1/8.9.1) with ESMTP id KAA14211;
+	Thu, 23 Sep 1999 10:51:10 -0400 (EDT)
+To: Andreas Zeugswetter <andreas.zeugswetter@telecom.at>
+cc: hackers@postgreSQL.org
+Subject: Re: [HACKERS] Progress report: buffer refcount bugs and SQL functions 
+In-reply-to: Your message of Thu, 23 Sep 1999 10:07:24 +0200 
+             <37E9DFBC.5C0978F@telecom.at> 
+Date: Thu, 23 Sep 1999 10:51:10 -0400
+Message-ID: <14209.938098270@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+Andreas Zeugswetter <andreas.zeugswetter@telecom.at> writes:
+> That is what I use it for. I have never used it with a 
+> returns setof function, but reading the comments in the regression test,
+> -- mike needs advil and peet's coffee,
+> -- joe and sally need hightops, and
+> -- everyone else is fine.
+> it looks like the results you expected are correct, and currently the 
+> wrong result is given.
+
+Yes, I have concluded the same (and partially fixed it, per my previous
+message).
+
+> Those that don't have a hobbie should return name|NULL|NULL. A hobbie
+> that does'nt need equipment name|hobbie|NULL.
+
+That's a good point.  Currently (both with and without my uncommitted
+fix) you get *no* rows out from ExecTargetList if there are any Iters
+that return empty result sets.  It might be more reasonable to treat an
+empty result set as if it were NULL, which would give the behavior you
+suggest.
+
+This would be an easy change to my current patch, and I'm prepared to
+make it before committing what I have, if people agree that that's a
+more reasonable definition.  Comments?
+
+			regards, tom lane
+
+************
+
+
+From owner-pgsql-hackers@hub.org Thu Sep 23 04:31:15 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id EAA11344
+	for <maillist@candle.pha.pa.us>; Thu, 23 Sep 1999 04:31:15 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id EAA05350 for <maillist@candle.pha.pa.us>; Thu, 23 Sep 1999 04:24:29 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1])
+	by hub.org (8.9.3/8.9.3) with ESMTP id EAA85679;
+	Thu, 23 Sep 1999 04:16:26 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Thu, 23 Sep 1999 04:09:52 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id EAA84708
+	for pgsql-hackers-outgoing; Thu, 23 Sep 1999 04:08:57 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from gandalf.telecom.at (gandalf.telecom.at [194.118.26.84])
+	by hub.org (8.9.3/8.9.3) with ESMTP id EAA84632
+	for <hackers@postgresql.org>; Thu, 23 Sep 1999 04:08:03 -0400 (EDT)
+	(envelope-from andreas.zeugswetter@telecom.at)
+Received: from telecom.at (w0188000580.f000.d0188.sd.spardat.at [172.18.65.249])
+	by gandalf.telecom.at (xxx/xxx) with ESMTP id KAA195294
+	for <hackers@postgresql.org>; Thu, 23 Sep 1999 10:07:27 +0200
+Message-ID: <37E9DFBC.5C0978F@telecom.at>
+Date: Thu, 23 Sep 1999 10:07:24 +0200
+From: Andreas Zeugswetter <andreas.zeugswetter@telecom.at>
+X-Mailer: Mozilla 4.61 [en] (Win95; I)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: hackers@postgreSQL.org
+Subject: Re: [HACKERS] Progress report: buffer refcount bugs and SQL functions
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+> Is the regression test's expected output wrong, or am I 
+> misunderstanding
+> what this query is supposed to do?  Is there any 
+> documentation anywhere
+> about how SQL functions returning multiple tuples are supposed to
+> behave?
+
+They are supposed to behave somewhat like a view.
+Not all rows are necessarily fetched.
+If used in a context that needs a single row answer,
+and the answer has multiple rows it is supposed to 
+runtime elog. Like in:
+
+select * from tbl where col=funcreturningmultipleresults();
+-- this must elog
+
+while this is ok:
+select * from tbl where col in (select funcreturningmultipleresults());
+
+But the caller could only fetch the first row if he wanted.
+
+The nested notation is supposed to call the function passing it the tuple
+as the first argument. This is what can be used to "fake" a column
+onto a table (computed column). 
+That is what I use it for. I have never used it with a 
+returns setof function, but reading the comments in the regression test,
+-- mike needs advil and peet's coffee,
+-- joe and sally need hightops, and
+-- everyone else is fine.
+it looks like the results you expected are correct, and currently the 
+wrong result is given.
+
+But I think this query could also elog whithout removing substantial
+functionality. 
+
+SELECT p.name, p.hobbies.name, p.hobbies.equipment.name FROM person p;
+
+Actually for me it would be intuitive, that this query return one row per 
+person, but elog on those that have more than one hobbie or a hobbie that 
+needs more than one equipment. Those that don't have a hobbie should 
+return name|NULL|NULL. A hobbie that does'nt need equipment name|hobbie|NULL.
+
+Andreas
+
+************
+
+
+From owner-pgsql-hackers@hub.org Wed Sep 22 22:01:07 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA16360
+	for <maillist@candle.pha.pa.us>; Wed, 22 Sep 1999 22:01:05 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id VAA08386 for <maillist@candle.pha.pa.us>; Wed, 22 Sep 1999 21:37:24 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1])
+	by hub.org (8.9.3/8.9.3) with ESMTP id VAA88083;
+	Wed, 22 Sep 1999 21:28:11 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Wed, 22 Sep 1999 21:27:48 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id VAA87938
+	for pgsql-hackers-outgoing; Wed, 22 Sep 1999 21:26:52 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from orion.SAPserv.Hamburg.dsh.de (Tpolaris2.sapham.debis.de [53.2.131.8])
+	by hub.org (8.9.3/8.9.3) with SMTP id VAA87909
+	for <pgsql-hackers@postgresql.org>; Wed, 22 Sep 1999 21:26:36 -0400 (EDT)
+	(envelope-from wieck@debis.com)
+Received: by orion.SAPserv.Hamburg.dsh.de 
+	for pgsql-hackers@postgresql.org 
+	id m11TxXw-0003kLC; Thu, 23 Sep 99 03:19 MET DST
+Message-Id: <m11TxXw-0003kLC@orion.SAPserv.Hamburg.dsh.de>
+From: wieck@debis.com (Jan Wieck)
+Subject: Re: [HACKERS] Progress report: buffer refcount bugs and SQL functions
+To: tgl@sss.pgh.pa.us (Tom Lane)
+Date: Thu, 23 Sep 1999 03:19:39 +0200 (MET DST)
+Cc: pgsql-hackers@postgreSQL.org
+Reply-To: wieck@debis.com (Jan Wieck)
+In-Reply-To: <6408.938045139@sss.pgh.pa.us> from "Tom Lane" at Sep 22, 99 08:05:39 pm
+X-Mailer: ELM [version 2.4 PL25]
+Content-Type: text
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+Tom Lane wrote:
+
+> [...]
+>
+> What I am wondering, though, is whether this addition is actually
+> necessary, or is it a bug that the functions aren't run to completion
+> in the first place?  I don't really understand the semantics of this
+> "nested dot notation".  I suppose it is a Berkeleyism; I can't find
+> anything about it in the SQL92 document.  The test cases shown in the
+> misc regress test seem peculiar, not to say wrong.  For example:
+>
+> [...]
+>
+> Is the regression test's expected output wrong, or am I misunderstanding
+> what this query is supposed to do?  Is there any documentation anywhere
+> about how SQL functions returning multiple tuples are supposed to
+> behave?
+
+    I've  said some time (maybe too long) ago, that SQL functions
+    returning tuple sets are broken in general. This  nested  dot
+    notation  (which  I  think  is  an artefact from the postquel
+    querylanguage) is implemented via set functions.
+
+    Set functions have total different semantics from  all  other
+    functions.   First  they  don't  really return a tuple set as
+    someone might think  -  all  that  screwed  up  code  instead
+    simulates  that  they  return  something you could consider a
+    scan of the last SQL statement in  the  function.   Then,  on
+    each  subsequent call inside of the same command, they return
+    a "tupletable slot" containing the next found  tuple  (that's
+    why their Func node is mangled up after the first call).
+
+    Second  they  have  a  targetlist what I think was originally
+    intended to extract attributes out  of  the  tuples  returned
+    when  the above scan is asked to get the next tuple. But as I
+    read the code it invokes the function again  and  this  might
+    cause the resource leakage you see.
+
+    Third,   all  this  seems  to  never  have  been  implemented
+    (thought?) to the end. A targetlist  doesn't  make  sense  at
+    this place because it could at max contain a single attribute
+    - so a single attno would have the same  power.  And  if  set
+    functions  could appear in the rangetable (FROM clause), than
+    they would be treated as that and regular Var  nodes  in  the
+    query would do it.
+
+    I  think  you  shouldn't really care for that regression test
+    and maybe we should disable set  functions  until  we  really
+    implement stored procedures returning sets in the rangetable.
+
+    Set  functions  where  planned  by  Stonebraker's   team   as
+    something  that  today is called stored procedures. But AFAIK
+    they never reached the useful state because even in  Postgres
+    4.2  you haven't been able to get more than one attribute out
+    of a  set  function.   It  was  a  feature  of  the  postquel
+    querylanguage  that  you  could  get one attribute from a set
+    function via
+
+        RETRIEVE (attributename(setfuncname()))
+
+    While working on the constraint  triggers  I've  came  across
+    another  regression test (triggers :-) that's errorneous too.
+    The funny_dup17 trigger proc executes an INSERT into the same
+    relation  where it get fired for by a previous INSERT. And it
+    stops this recursion only if it reaches a  nesting  level  of
+    17,  which  could  only  occur  if  it  is  fired  DURING the
+    execution of it's own SPI_exec(). After  Vadim  quouted  some
+    SQL92  definitions  about when constraint checks and triggers
+    are to be executed, I decided to fire regular triggers at the
+    end  of  a  query  too.  Thus, there is absolutely no nesting
+    possible for AFTER triggers resulting in an endless loop.
+
+
+Jan
+
+--
+
+#======================================================================#
+# It's easier to get forgiveness for being wrong than for being right. #
+# Let's break this rule - forgive me.                                  #
+#========================================= wieck@debis.com (Jan Wieck) #
+
+
+
+************
+
+

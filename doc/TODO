@@ -37,6 +37,7 @@ PARSER
 * UNION with LIMIT fails
 * Unique index on base column not honored on inserts from inherited table
   INSERT INTO inherit_table (unique_index_col) VALUES (dup) should fail
+  (see TODO.detail/inherit)
 * CREATE TABLE x AS SELECT 1 UNION SELECT 2 fails
 * CREATE TABLE test(col char(2) DEFAULT user) fails in length restriction
 * mismatched types in CREATE TABLE ... DEFAULT causes problems
@@ -109,6 +110,7 @@ TYPES
 * Add non-large-object binary field
 * Add index on NUMERIC/DECIMAL type
 * Make Absolutetime/Relativetime int4 because time_t can be int8 on some ports
+* Functions returning sets don't really work right(see TODO.detail/functions)
 
 VIEWS
 

@@ -2,7 +2,7 @@ From lockhart@alumni.caltech.edu Thu Jan  7 13:31:08 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id NAA07771
 	for <maillist@candle.pha.pa.us>; Thu, 7 Jan 1999 13:31:06 -0500 (EST)
-Received: from golem.jpl.nasa.gov (IDENT:root@hectic-2.jpl.nasa.gov [128.149.68.204]) by renoir.op.net (o1/$Revision: 1.7 $) with ESMTP id NAA14597 for <maillist@candle.pha.pa.us>; Thu, 7 Jan 1999 13:27:37 -0500 (EST)
+Received: from golem.jpl.nasa.gov (IDENT:root@hectic-2.jpl.nasa.gov [128.149.68.204]) by renoir.op.net (o1/$Revision: 1.8 $) with ESMTP id NAA14597 for <maillist@candle.pha.pa.us>; Thu, 7 Jan 1999 13:27:37 -0500 (EST)
 Received: from alumni.caltech.edu (localhost [127.0.0.1])
 	by golem.jpl.nasa.gov (8.8.5/8.8.5) with ESMTP id SAA13416;
 	Thu, 7 Jan 1999 18:26:56 GMT
@@ -71,7 +71,7 @@ From lockhart@alumni.caltech.edu Mon Feb 22 02:01:13 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id CAA22073
 	for <maillist@candle.pha.pa.us>; Mon, 22 Feb 1999 02:01:12 -0500 (EST)
-Received: from golem.jpl.nasa.gov (IDENT:root@hectic-2.jpl.nasa.gov [128.149.68.204]) by renoir.op.net (o1/$Revision: 1.7 $) with ESMTP id BAA26054 for <maillist@candle.pha.pa.us>; Mon, 22 Feb 1999 01:57:00 -0500 (EST)
+Received: from golem.jpl.nasa.gov (IDENT:root@hectic-2.jpl.nasa.gov [128.149.68.204]) by renoir.op.net (o1/$Revision: 1.8 $) with ESMTP id BAA26054 for <maillist@candle.pha.pa.us>; Mon, 22 Feb 1999 01:57:00 -0500 (EST)
 Received: from alumni.caltech.edu (localhost [127.0.0.1])
 	by golem.jpl.nasa.gov (8.8.5/8.8.5) with ESMTP id GAA04715;
 	Mon, 22 Feb 1999 06:56:36 GMT
@@ -157,7 +157,7 @@ From lockhart@alumni.caltech.edu Mon Mar  1 13:01:08 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id NAA21672
 	for <maillist@candle.pha.pa.us>; Mon, 1 Mar 1999 13:01:06 -0500 (EST)
-Received: from golem.jpl.nasa.gov (IDENT:root@hectic-2.jpl.nasa.gov [128.149.68.204]) by renoir.op.net (o1/$Revision: 1.7 $) with ESMTP id MAA12756 for <maillist@candle.pha.pa.us>; Mon, 1 Mar 1999 12:14:16 -0500 (EST)
+Received: from golem.jpl.nasa.gov (IDENT:root@hectic-2.jpl.nasa.gov [128.149.68.204]) by renoir.op.net (o1/$Revision: 1.8 $) with ESMTP id MAA12756 for <maillist@candle.pha.pa.us>; Mon, 1 Mar 1999 12:14:16 -0500 (EST)
 Received: from alumni.caltech.edu (localhost [127.0.0.1])
 	by golem.jpl.nasa.gov (8.8.5/8.8.5) with ESMTP id RAA09406;
 	Mon, 1 Mar 1999 17:10:49 GMT
@@ -191,7 +191,7 @@ From lockhart@alumni.caltech.edu Mon Mar  8 21:55:02 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA15978
 	for <maillist@candle.pha.pa.us>; Mon, 8 Mar 1999 21:54:57 -0500 (EST)
-Received: from golem.jpl.nasa.gov (IDENT:root@hectic-1.jpl.nasa.gov [128.149.68.203]) by renoir.op.net (o1/$Revision: 1.7 $) with ESMTP id VAA15837 for <maillist@candle.pha.pa.us>; Mon, 8 Mar 1999 21:48:33 -0500 (EST)
+Received: from golem.jpl.nasa.gov (IDENT:root@hectic-1.jpl.nasa.gov [128.149.68.203]) by renoir.op.net (o1/$Revision: 1.8 $) with ESMTP id VAA15837 for <maillist@candle.pha.pa.us>; Mon, 8 Mar 1999 21:48:33 -0500 (EST)
 Received: from alumni.caltech.edu (localhost [127.0.0.1])
 	by golem.jpl.nasa.gov (8.8.5/8.8.5) with ESMTP id CAA06996;
 	Tue, 9 Mar 1999 02:46:40 GMT

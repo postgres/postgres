@@ -2,7 +2,7 @@ From owner-pgsql-hackers@hub.org Tue Jun  1 22:31:18 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA09988
 	for <maillist@candle.pha.pa.us>; Tue, 1 Jun 1999 22:31:17 -0400 (EDT)
-Received: from hub.org (hub.org [209.167.229.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id WAA18944 for <maillist@candle.pha.pa.us>; Tue, 1 Jun 1999 22:08:09 -0400 (EDT)
+Received: from hub.org (hub.org [209.167.229.1]) by renoir.op.net (o1/$Revision: 1.5 $) with ESMTP id WAA18944 for <maillist@candle.pha.pa.us>; Tue, 1 Jun 1999 22:08:09 -0400 (EDT)
 Received: from hub.org (hub.org [209.167.229.1])
 	by hub.org (8.9.3/8.9.3) with ESMTP id WAA75604;
 	Tue, 1 Jun 1999 22:01:31 -0400 (EDT)
@@ -62,5 +62,83 @@ INSERT can do.
 
 I think it would be good if Postgres had all 3 features. Probably (b) is
 the least work.
+
+
+From owner-pgsql-general@hub.org Fri Jul  9 04:01:16 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id EAA22565
+	for <maillist@candle.pha.pa.us>; Fri, 9 Jul 1999 04:01:15 -0400 (EDT)
+Received: from hub.org (hub.org [209.167.229.1]) by renoir.op.net (o1/$Revision: 1.5 $) with ESMTP id DAA10238 for <maillist@candle.pha.pa.us>; Fri, 9 Jul 1999 03:56:46 -0400 (EDT)
+Received: from hub.org (hub.org [209.167.229.1])
+	by hub.org (8.9.3/8.9.3) with ESMTP id DAA79895;
+	Fri, 9 Jul 1999 03:53:13 -0400 (EDT)
+	(envelope-from owner-pgsql-general@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Fri, 09 Jul 1999 03:47:45 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id DAA79076
+	for pgsql-general-outgoing; Fri, 9 Jul 1999 03:47:43 -0400 (EDT)
+	(envelope-from owner-pgsql-general@postgreSQL.org)
+X-Authentication-Warning: hub.org: majordom set sender to owner-pgsql-general@postgreSQL.org using -f
+Received: from ns.idianet.net ([195.154.201.1])
+	by hub.org (8.9.3/8.9.3) with ESMTP id DAA79054
+	for <pgsql-general@postgreSQL.org>; Fri, 9 Jul 1999 03:47:37 -0400 (EDT)
+	(envelope-from haj@idianet.net)
+Received: from kosovo (ppp150-paris2.isdnet.net [194.149.182.150])
+	by ns.idianet.net (8.9.1/8.9.1) with SMTP id JAA08143;
+	Fri, 9 Jul 1999 09:43:35 +0200 (CEST)
+Message-ID: <000c01bec9df$3704bd20$0601a8c0@kosovo.idianet.net>
+Reply-To: "Jonathan davis" <haj@idianet.net>
+From: "Jonathan davis" <haj@idianet.net>
+To: "Bruce Momjian" <maillist@candle.pha.pa.us>
+Cc: "Pgsql-General@Postgresql. Org" <pgsql-general@postgreSQL.org>
+Subject: Re: [GENERAL] just little BUG
+Date: Fri, 9 Jul 1999 09:46:42 +0200
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook Express 4.72.3110.5
+X-MimeOLE: Produced By Microsoft MimeOLE V4.72.3110.3
+Sender: owner-pgsql-general@postgreSQL.org
+Precedence: bulk
+Status: ROr
+
+
+
+>[Charset iso-8859-1 unsupported, filtering to ASCII...]
+>> hello all
+>> 
+>> normaly a UNIQUE PRIMARY KEY is unique but 
+>> when you use a heritage, you can insert a duplicate key !!!!
+>
+>I assume you mean inheritance.
+>
+>Can you send us a little test sample please? 
+>
+>-- 
+hello all
+
+this is the problem:
+
+example:
+
+test=> CREATE TABLE MAN(name char(10) UNIQUE PRIMARY KEY);T
+
+test=> CREATE TABLE PROFESSOR(scool char(20))INHERITS(MAN);
+
+test=> INSERT INTO PROFESSOR(name) VALUES('DAVIS');
+INSERT 54424 1
+
+test=> INSERT INTO PROFESSOR(name) VALUES('DAVIS');
+INSERT 54425 1
+
+
+
+
+
+
+
 
 
