@@ -88,16 +88,21 @@ init_table_info(PGresult *res, int row, db_info * dbi)
 
 	new_tbl->table_name = (char *)
 		malloc(strlen(PQgetvalue(res, row, PQfnumber(res, "relname"))) +
-			   strlen(new_tbl->schema_name) + 2);
+			   strlen(new_tbl->schema_name) + 6);
 	if (!new_tbl->table_name)
 	{
 		log_entry("init_table_info: malloc failed on new_tbl->table_name");
 		fflush(LOGOUTPUT);
 		return NULL;
 	}
-	strcpy(new_tbl->table_name, new_tbl->schema_name);
-	strcat(new_tbl->table_name, ".");
+
+	/* Put both the schema and table name in quotes so that 
+		we can work with mixed case table names */
+	strcpy(new_tbl->table_name, "\"");
+	strcat(new_tbl->table_name, new_tbl->schema_name);
+	strcat(new_tbl->table_name, "\".\"");
 	strcat(new_tbl->table_name, PQgetvalue(res, row, PQfnumber(res, "relname")));
+	strcat(new_tbl->table_name, "\"");
 
 	new_tbl->CountAtLastAnalyze =
 		(atol(PQgetvalue(res, row, PQfnumber(res, "n_tup_ins"))) +
