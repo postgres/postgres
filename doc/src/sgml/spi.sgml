@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.39 2005/01/22 22:56:36 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.40 2005/03/29 02:53:53 neilc Exp $
 -->
 
 <chapter id="spi">
@@ -2149,6 +2149,60 @@ char * SPI_getrelname(Relation <parameter>rel</parameter>)
 
   <para>
    The name of the specified relation.
+  </para>
+ </refsect1>
+</refentry>
+
+<refentry id="spi-spi-getnspname">
+ <refmeta>
+  <refentrytitle>SPI_getnspname</refentrytitle>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SPI_getnspname</refname>
+  <refpurpose>return the namespace of the specified relation</refpurpose>
+ </refnamediv>
+
+ <indexterm><primary>SPI_getnspname</primary></indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+char * SPI_getnspname(Relation <parameter>rel</parameter>)
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <function>SPI_getnspname</function> returns a copy of the name of
+   the namespace that the specified <structname>Relation</structname>
+   belongs to. This is equivalent to the relation's schema. You should
+   <function>pfree</function> the return value of this function when
+   you are finished with it.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Arguments</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>Relation <parameter>rel</parameter></literal></term>
+    <listitem>
+     <para>
+      input relation
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Return Value</title>
+
+  <para>
+   The name of the specified relation's namespace.
   </para>
  </refsect1>
 </refentry>

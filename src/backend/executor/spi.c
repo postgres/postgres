@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.136 2005/03/25 21:57:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.137 2005/03/29 02:53:53 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -758,6 +758,12 @@ char *
 SPI_getrelname(Relation rel)
 {
 	return pstrdup(RelationGetRelationName(rel));
+}
+
+char *
+SPI_getnspname(Relation rel)
+{
+    return get_namespace_name(RelationGetNamespace(rel));
 }
 
 void *
