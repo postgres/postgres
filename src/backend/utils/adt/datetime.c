@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.8 1997/06/03 13:56:32 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.9 1997/06/23 14:47:26 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,23 +53,10 @@ static int	day_tab[2][12] = {
 /* date_in()
  * Given date text string, convert to internal date format.
  */
-#if USE_NEW_DATE
-
 DateADT
 date_in(char *str)
 {
     DateADT date;
-
-#else
-
-int4
-date_in(char *str)
-{
-    int4 result;
-    DateADT *date = (DateADT *)&result;
-
-#endif
-
     double fsec;
     struct tm tt, *tm = &tt;
     int tzp;
@@ -115,55 +102,22 @@ printf( "date_in- input string is %s\n", str);
 	elog(WARN, "date_in: day must be limited to values 1 through %d in '%s'",
 	     day_tab[isleap(tm->tm_year)][tm->tm_mon-1], str);
 
-#if USE_NEW_DATE
-
     date = (date2j( tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000,1,1));
 
     return(date);
-
-#else
-
-    date->day = tm->tm_mday;
-    date->month = tm->tm_mon;
-    date->year = tm->tm_year;
-
-    return(result);
-
-#endif
 } /* date_in() */
 
 /* date_out()
  * Given internal format date, convert to text string.
  */
-#if USE_NEW_DATE
-
 char *
 date_out(DateADT date)
 {
-
-#else
-
-char *
-date_out(int4 dateVal)
-{
-    DateADT *date = (DateADT *)&dateVal;
-
-#endif
     char *result;
     char buf[MAXDATELEN+1];
     int year, month, day;
 
-#if USE_NEW_DATE
-
     j2date( (date + date2j(2000,1,1)), &year, &month, &day);
-
-#else
-
-    day = date->day;
-    month = date->month;
-    year = date->year;
-
-#endif
 
     if (EuroDates == 1) /* Output European-format dates */
         sprintf(buf, "%02d-%02d-%04d", day, month, year);
@@ -176,8 +130,6 @@ date_out(int4 dateVal)
 
     return(result);
 } /* date_out() */
-
-#if USE_NEW_DATE
 
 int date2tm(DateADT dateVal, int *tzp, struct tm *tm, double *fsec, char **tzn);
 
@@ -354,7 +306,7 @@ abstime_date(AbsoluteTime abstime)
 	break;
 
     default:
-	abstime2tm(abstime, &tz, tm);
+	abstime2tm(abstime, &tz, tm, NULL);
 	result = date2j(tm->tm_year,tm->tm_mon,tm->tm_mday) - date2j(2000,1,1);
 	break;
     };
@@ -447,290 +399,6 @@ printf( "date2tm- convert %d-%d-%d %d:%d%d to datetime\n",
     return 0;
 } /* date2tm() */
 
-#else
-
-bool
-date_eq(int4 dateVal1, int4 dateVal2)
-{
-    int4 dateStore1 = dateVal1;
-    int4 dateStore2 = dateVal2;
-    DateADT *date1, *date2;
-    
-    date1 = (DateADT*)&dateStore1;
-    date2 = (DateADT*)&dateStore2;
-
-    return (date1->day==date2->day && 
-	    date1->month==date2->month &&
-	    date1->year==date2->year);
-}
-
-bool
-date_ne(int4 dateVal1, int4 dateVal2)
-{
-    int4 dateStore1 = dateVal1;
-    int4 dateStore2 = dateVal2;
-    DateADT *date1, *date2;
-    
-    date1 = (DateADT*)&dateStore1;
-    date2 = (DateADT*)&dateStore2;
-
-    return (date1->day!=date2->day || date1->month!=date2->month ||
-	    date1->year!=date2->year);
-}
-
-bool
-date_lt(int4 dateVal1, int4 dateVal2)
-{
-    int4 dateStore1 = dateVal1;
-    int4 dateStore2 = dateVal2;
-    DateADT *date1, *date2;
-    
-    date1 = (DateADT*)&dateStore1;
-    date2 = (DateADT*)&dateStore2;
-
-    if (date1->year!=date2->year)
-	return (date1->year<date2->year);
-    if (date1->month!=date2->month)
-	return (date1->month<date2->month);
-    return (date1->day<date2->day);
-}
-
-bool
-date_le(int4 dateVal1, int4 dateVal2)
-{
-
-    int4 dateStore1 = dateVal1;
-    int4 dateStore2 = dateVal2;
-    DateADT *date1, *date2;
-    
-    date1 = (DateADT*)&dateStore1;
-    date2 = (DateADT*)&dateStore2;
-
-    if (date1->year!=date2->year)
-	return (date1->year<=date2->year);
-    if (date1->month!=date2->month)
-	return (date1->month<=date2->month);
-    return (date1->day<=date2->day);
-}
-
-bool
-date_gt(int4 dateVal1, int4 dateVal2)
-{
-    int4 dateStore1 = dateVal1;
-    int4 dateStore2 = dateVal2;
-    DateADT *date1, *date2;
-    
-    date1 = (DateADT*)&dateStore1;
-    date2 = (DateADT*)&dateStore2;
-
-
-    if (date1->year!=date2->year)
-	return (date1->year>date2->year);
-    if (date1->month!=date2->month)
-	return (date1->month>date2->month);
-    return (date1->day>date2->day);
-}
-
-bool
-date_ge(int4 dateVal1, int4 dateVal2)
-{
-    int4 dateStore1 = dateVal1;
-    int4 dateStore2 = dateVal2;
-    DateADT *date1, *date2;
-    
-    date1 = (DateADT*)&dateStore1;
-    date2 = (DateADT*)&dateStore2;
-
-    if (date1->year!=date2->year)
-	return (date1->year>=date2->year);
-    if (date1->month!=date2->month)
-	return (date1->month>=date2->month);
-    return (date1->day>=date2->day);
-}
-
-int
-date_cmp(int4 dateVal1, int4 dateVal2)
-{
-    int4 dateStore1 = dateVal1;
-    int4 dateStore2 = dateVal2;
-    DateADT *date1, *date2;
-    
-    date1 = (DateADT*)&dateStore1;
-    date2 = (DateADT*)&dateStore2;
-
-    if (date1->year!=date2->year)
-	return ((date1->year<date2->year) ? -1 : 1);
-    if (date1->month!=date2->month)
-	return ((date1->month<date2->month) ? -1 : 1);
-    if (date1->day!=date2->day)
-	return ((date1->day<date2->day) ? -1 : 1);
-    return 0;
-}
-
-int4
-date_larger(int4 dateVal1, int4 dateVal2)
-{
-  return (date_gt (dateVal1, dateVal2) ? dateVal1 : dateVal2);
-}
-
-int4
-date_smaller(int4 dateVal1, int4 dateVal2)
-{
-  return (date_lt (dateVal1, dateVal2) ? dateVal1 : dateVal2);
-}
-
-/* Compute difference between two dates in days.  */
-int32
-date_mi(int4 dateVal1, int4 dateVal2)
-{
-    DateADT *date1, *date2;
-    int days;
-
-    date1 = (DateADT *) &dateVal1;
-    date2 = (DateADT *) &dateVal2;
-
-    days = (date2j(date1->year, date1->month, date1->day)
-          - date2j(date2->year, date2->month, date2->day));
-
-  return (days);
-}
-
-/* Add a number of days to a date, giving a new date.
-   Must handle both positive and negative numbers of days.  */
-int4
-date_pli(int4 dateVal, int32 days)
-{
-    DateADT *date1 = (DateADT *) &dateVal;
-    int date, year, month, day;
-
-    date = (date2j(date1->year, date1->month, date1->day) + days);
-    j2date( date, &year, &month, &day);
-    date1->year = year;
-    date1->month = month;
-    date1->day = day;
-
-    return (dateVal);
-} /* date_pli() */
-
-/* Subtract a number of days from a date, giving a new date.  */
-int4
-date_mii(int4 dateVal, int32 days)
-{
-    return (date_pli(dateVal, -days));
-}
-
-DateTime *
-date_datetime(int4 dateVal)
-{
-    DateTime *result;
-    DateADT *date = (DateADT *) &dateVal;
-
-    int tz;
-    double fsec;
-    char *tzn;
-    struct tm tt, *tm = &tt;
-
-    result = PALLOCTYPE(DateTime);
-
-    *result = (date2j(date->year, date->month, date->day) - date2j( 2000, 1, 1));
-    *result *= 86400;
-    *result += (12*60*60);
-
-    datetime2tm( *result, &tz, tm, &fsec, &tzn);
-    tm->tm_hour = 0;
-    tm->tm_min = 0;
-    tm->tm_sec = 0;
-    tm2datetime( tm, fsec, &tz, result);
-
-#ifdef DATEDEBUG
-printf( "date_datetime- convert %04d-%02d-%02d to %f\n",
- date->year, date->month, date->day, *result);
-#endif
-
-    return(result);
-} /* date_datetime() */
-
-int4
-datetime_date(DateTime *datetime)
-{
-    int4 result;
-    int tz;
-    double fsec;
-    char *tzn;
-    struct tm tt, *tm = &tt;
-    DateADT *date = (DateADT *) &result;
-
-    if (!PointerIsValid(datetime))
-	elog(WARN,"Unable to convert null datetime to date",NULL);
-
-    if (DATETIME_NOT_FINITE(*datetime))
-	elog(WARN,"Unable to convert datetime to date",NULL);
-
-    if (DATETIME_IS_EPOCH(*datetime)) {
-	datetime2tm( SetDateTime(*datetime), NULL, tm, &fsec, NULL);
-
-    } else if (DATETIME_IS_CURRENT(*datetime)) {
-	datetime2tm( SetDateTime(*datetime), &tz, tm, &fsec, &tzn);
-
-    } else {
-	if (datetime2tm( *datetime, &tz, tm, &fsec, &tzn) != 0)
-	    elog(WARN,"Unable to convert datetime to date",NULL);
-    };
-
-    date->year = tm->tm_year;
-    date->month = tm->tm_mon;
-    date->day = tm->tm_mday;
-
-    return(result);
-} /* datetime_date() */
-
-int4
-abstime_date(AbsoluteTime abstime)
-{
-    int4 result;
-    DateADT *date = (DateADT *) &result;
-    int tz;
-    struct tm tt, *tm = &tt;
-
-    switch (abstime) {
-    case INVALID_ABSTIME:
-    case NOSTART_ABSTIME:
-    case NOEND_ABSTIME:
-	elog(WARN,"Unable to convert reserved abstime value to date",NULL);
-	break;
-
-    case EPOCH_ABSTIME:
-	date->year = 1970;
-	date->month = 1;
-	date->day = 1;
-	break;
-
-    case CURRENT_ABSTIME:
-	abstime = GetCurrentTransactionStartTime();
-	abstime2tm(abstime, &tz, tm);
-	date->year = tm->tm_year;
-	date->month = tm->tm_mon;
-	date->day = tm->tm_mday;
-	break;
-
-    default:
-#if FALSE
-	tm = localtime((time_t *) &abstime);
-	tm->tm_year += 1900;
-	tm->tm_mon += 1;
-#endif
-	abstime2tm(abstime, &tz, tm);
-	date->year = tm->tm_year;
-	date->month = tm->tm_mon;
-	date->day = tm->tm_mday;
-	break;
-    };
-
-    return(result);
-} /* abstime_date() */
-
-#endif
-
 
 /*****************************************************************************
  *   Time ADT
@@ -767,17 +435,7 @@ time_in(char *str)
 
     time = PALLOCTYPE(TimeADT);
 
-#if USE_NEW_TIME
-
     *time = ((((tm->tm_hour*60)+tm->tm_min)*60)+tm->tm_sec+fsec);
-
-#else
-
-    time->hr = tm->tm_hour;
-    time->min = tm->tm_min;
-    time->sec = (tm->tm_sec + fsec);
-
-#endif
 
     return(time);
 } /* time_in() */
@@ -787,16 +445,12 @@ char *
 time_out(TimeADT *time)
 {
     char *result;
-#if USE_NEW_TIME
     int hour, min, sec;
     double fsec;
-#endif
     char buf[32];
 
     if (!PointerIsValid(time))
 	return NULL;
-
-#if USE_NEW_TIME
 
     hour = (*time / (60*60));
     min = (((int) (*time / 60)) % 60);
@@ -815,22 +469,6 @@ time_out(TimeADT *time)
 	};
     };
 
-#else
-
-    if (time->sec == 0.0) {
-	sprintf(buf, "%02d:%02d", (int)time->hr, (int)time->min);
-    } else {
-	if (((int) time->sec) == time->sec) {
-	    sprintf(buf, "%02d:%02d:%02d",
-	      (int)time->hr, (int)time->min, (int)time->sec);
-	} else {
-	    sprintf(buf, "%02d:%02d:%09.6f",
-	      (int)time->hr, (int)time->min, time->sec);
-	};
-    };
-
-#endif
-
     result = PALLOC(strlen(buf)+1);
 
     strcpy( result, buf);
@@ -838,8 +476,6 @@ time_out(TimeADT *time)
     return(result);
 } /* time_out() */
 
-
-#if USE_NEW_TIME
 
 bool
 time_eq(TimeADT *time1, TimeADT *time2)
@@ -922,101 +558,6 @@ datetime_datetime(DateADT date, TimeADT *time)
     return(result);
 } /* datetime_datetime() */
 
-#else
-
-bool
-time_eq(TimeADT *time1, TimeADT *time2)
-{
-    return (time1->sec==time2->sec && time1->min==time2->min &&
-	    time1->hr==time2->hr);
-}
-
-bool
-time_ne(TimeADT *time1, TimeADT *time2)
-{
-    return (time1->sec!=time2->sec || time1->min!=time2->min ||
-	    time1->hr!=time2->hr);
-}
-
-bool
-time_lt(TimeADT *time1, TimeADT *time2)
-{
-    if (time1->hr!=time2->hr)
-	return (time1->hr<time2->hr);
-    if (time1->min!=time2->min)
-	return (time1->min<time2->min);
-    return (time1->sec<time2->sec);
-}
-
-bool
-time_le(TimeADT *time1, TimeADT *time2)
-{
-    if (time1->hr!=time2->hr)
-	return (time1->hr<=time2->hr);
-    if (time1->min!=time2->min)
-	return (time1->min<=time2->min);
-    return (time1->sec<=time2->sec);
-}
-
-bool
-time_gt(TimeADT *time1, TimeADT *time2)
-{
-    if (time1->hr!=time2->hr)
-	return (time1->hr>time2->hr);
-    if (time1->min!=time2->min)
-	return (time1->min>time2->min);
-    return (time1->sec>time2->sec);
-}
-
-bool
-time_ge(TimeADT *time1, TimeADT *time2)
-{
-    if (time1->hr!=time2->hr)
-	return (time1->hr>=time2->hr);
-    if (time1->min!=time2->min)
-	return (time1->min>=time2->min);
-    return (time1->sec>=time2->sec);
-}
-
-int
-time_cmp(TimeADT *time1, TimeADT *time2)
-{
-    if (time1->hr!=time2->hr)
-	return ((time1->hr<time2->hr) ? -1 : 1);
-    if (time1->min!=time2->min)
-	return ((time1->min<time2->min) ? -1 : 1);
-    if (time1->sec!=time2->sec)
-	return ((time1->sec<time2->sec) ? -1 : 1);
-    return 0;
-}
-
-DateTime *
-datetime_datetime(int4 dateVal, TimeADT *time)
-{
-    DateTime *result;
-#ifdef DATEDEBUG
-    DateADT *date = (DateADT *) &dateVal;
-#endif
-
-    if (!PointerIsValid(time)) {
-	result = PALLOCTYPE(DateTime);
-	DATETIME_INVALID(*result);
-
-    } else {
-
-#ifdef DATEDEBUG
-printf( "datetime_datetime- convert %04d-%02d-%02d %02d:%02d:%05.2f\n",
- date->year, date->month, date->day, time->hr, time->min, time->sec);
-#endif
-
-	result = date_datetime(dateVal);
-	*result += (((time->hr*60)+time->min)*60+time->sec);
-    };
-
-    return(result);
-} /* datetime_datetime() */
-
-#endif
 
 int32   /* RelativeTime */
 int42reltime(int32 timevalue)
