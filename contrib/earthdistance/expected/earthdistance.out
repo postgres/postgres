@@ -6,8 +6,9 @@
 -- does not depend on contents of earthdistance.sql or cube.sql.
 --
 \set ECHO none
-psql:../cube/cube.sql:10: NOTICE:  ProcedureCreate: type cube is not yet defined
-psql:../cube/cube.sql:15: NOTICE:  Argument type "cube" is only a shell
+psql:../cube/cube.sql:10: NOTICE:  type cube is not yet defined
+DETAIL:  Creating a shell type definition.
+psql:../cube/cube.sql:15: NOTICE:  argument type cube is only a shell
 --
 -- The radius of the Earth we are using.
 --
@@ -879,9 +880,8 @@ SELECT earth_box(ll_to_earth(90,180),
 -- Test the recommended constraints.
 --
 SELECT is_point(ll_to_earth(0,0));
-ERROR:  Function is_point(earth) does not exist
-	Unable to identify a function that satisfies the given argument types
-	You may need to add explicit typecasts
+ERROR:  function is_point(earth) does not exist
+HINT:  No function matches the given name and argument types. You may need to add explicit typecasts.
 SELECT cube_dim(ll_to_earth(0,0)) <= 3;
  ?column? 
 ----------
@@ -896,9 +896,8 @@ SELECT abs(cube_distance(ll_to_earth(0,0), '(0)'::cube) / earth() - 1) <
 (1 row)
 
 SELECT is_point(ll_to_earth(30,60));
-ERROR:  Function is_point(earth) does not exist
-	Unable to identify a function that satisfies the given argument types
-	You may need to add explicit typecasts
+ERROR:  function is_point(earth) does not exist
+HINT:  No function matches the given name and argument types. You may need to add explicit typecasts.
 SELECT cube_dim(ll_to_earth(30,60)) <= 3;
  ?column? 
 ----------
@@ -913,9 +912,8 @@ SELECT abs(cube_distance(ll_to_earth(30,60), '(0)'::cube) / earth() - 1) <
 (1 row)
 
 SELECT is_point(ll_to_earth(60,90));
-ERROR:  Function is_point(earth) does not exist
-	Unable to identify a function that satisfies the given argument types
-	You may need to add explicit typecasts
+ERROR:  function is_point(earth) does not exist
+HINT:  No function matches the given name and argument types. You may need to add explicit typecasts.
 SELECT cube_dim(ll_to_earth(60,90)) <= 3;
  ?column? 
 ----------
@@ -930,9 +928,8 @@ SELECT abs(cube_distance(ll_to_earth(60,90), '(0)'::cube) / earth() - 1) <
 (1 row)
 
 SELECT is_point(ll_to_earth(-30,-90));
-ERROR:  Function is_point(earth) does not exist
-	Unable to identify a function that satisfies the given argument types
-	You may need to add explicit typecasts
+ERROR:  function is_point(earth) does not exist
+HINT:  No function matches the given name and argument types. You may need to add explicit typecasts.
 SELECT cube_dim(ll_to_earth(-30,-90)) <= 3;
  ?column? 
 ----------

@@ -68,7 +68,9 @@ pgxml_parse(PG_FUNCTION_ARGS)
 	p = XML_ParserCreate_MM(NULL, &mhs, NULL);
 	if (!p)
 	{
-		elog(ERROR, "pgxml: Could not create expat parser");
+		ereport(ERROR,
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				 errmsg("could not create expat parser")));
 		PG_RETURN_NULL();		/* seems appropriate if we couldn't parse */
 	}
 
@@ -141,7 +143,9 @@ build_xpath_results(text *doc, text *pathstr)
 	p = XML_ParserCreate_MM(NULL, &mhs, NULL);
 	if (!p)
 	{
-		elog(ERROR, "pgxml: Could not create expat parser");
+		ereport(ERROR,
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				 errmsg("could not create expat parser")));
 		pfree(xpr);
 		pfree(udata->path);
 		pfree(udata);
@@ -267,7 +271,7 @@ pgxml_starthandler(void *userData, const XML_Char * name,
 	char		sepstr[] = "/";
 
 	if ((strlen(name) + strlen(UD->currentpath)) > MAXPATHLENGTH - 2)
-		elog(WARNING, "Path too long");
+		elog(WARNING, "path too long");
 	else
 	{
 		strncat(UD->currentpath, sepstr, 1);
@@ -297,12 +301,13 @@ pgxml_endhandler(void *userData, const XML_Char * name)
 	sepptr = strrchr(UD->currentpath, '/');
 	if (sepptr == NULL)
 	{
-		elog(ERROR, "There's a problem...");
+		/* internal error */
+		elog(ERROR, "did not find '/'");
 		sepptr = UD->currentpath;
 	}
 	if (strcmp(name, sepptr + 1) != 0)
 	{
-		elog(WARNING, "Wanted [%s], got [%s]", sepptr, name);
+		elog(WARNING, "wanted [%s], got [%s]", sepptr, name);
 		/* unmatched entry, so do nothing */
 	}
 	else

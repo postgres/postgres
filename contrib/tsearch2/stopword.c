@@ -46,7 +46,11 @@ readstoplist(text *in, StopList *s) {
 		int reallen=0;
 
 		if ( (hin=fopen(filename,"r")) == NULL )
-			elog(ERROR,"Can't open file '%s': %s", filename, strerror(errno));
+			ereport(ERROR,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("could not open file \"%s\": %m",
+							 filename)));
+
 		while( fgets(buf,STOPBUFLEN,hin) ) {
 			buf[strlen(buf)-1] = '\0';
 			if ( *buf=='\0' ) continue;
@@ -58,7 +62,9 @@ readstoplist(text *in, StopList *s) {
 				if (!tmp) {
 					freestoplist(s);
 					fclose(hin); 
-					elog(ERROR,"Not enough memory");
+					ereport(ERROR,
+							(errcode(ERRCODE_OUT_OF_MEMORY),
+							 errmsg("out of memory")));
 				}
 				stop=tmp;
 			}
@@ -67,7 +73,9 @@ readstoplist(text *in, StopList *s) {
 			if ( !stop[s->len] ) {
 				freestoplist(s);
 				fclose(hin); 
-				elog(ERROR,"Not enough memory");
+				ereport(ERROR,
+						(errcode(ERRCODE_OUT_OF_MEMORY),
+						 errmsg("out of memory")));
 			}
 			if ( s->wordop ) 
 				stop[s->len]=(s->wordop)(stop[s->len]);

@@ -33,7 +33,9 @@ snb_en_init(PG_FUNCTION_ARGS) {
 	DictSnowball	*d = (DictSnowball*)malloc( sizeof(DictSnowball) );
 
 	if ( !d )
-		elog(ERROR, "No memory");
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 	memset(d,0,sizeof(DictSnowball));
 	d->stoplist.wordop=lowerstr;
 		
@@ -47,7 +49,9 @@ snb_en_init(PG_FUNCTION_ARGS) {
 	d->z = english_create_env();
 	if (!d->z) {
 		freestoplist(&(d->stoplist));
-		elog(ERROR,"No memory");
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 	}
 	d->stem=english_stem;
 
@@ -59,7 +63,9 @@ snb_ru_init(PG_FUNCTION_ARGS) {
 	DictSnowball	*d = (DictSnowball*)malloc( sizeof(DictSnowball) );
 
 	if ( !d )
-		elog(ERROR, "No memory");
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 	memset(d,0,sizeof(DictSnowball));
 	d->stoplist.wordop=lowerstr;
 		
@@ -73,7 +79,9 @@ snb_ru_init(PG_FUNCTION_ARGS) {
 	d->z = russian_create_env();
 	if (!d->z) {
 		freestoplist(&(d->stoplist));
-		elog(ERROR,"No memory");
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 	}
 	d->stem=russian_stem;
 

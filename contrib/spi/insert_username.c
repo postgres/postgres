@@ -30,10 +30,13 @@ insert_username(PG_FUNCTION_ARGS)
 
 	/* sanity checks from autoinc.c */
 	if (!CALLED_AS_TRIGGER(fcinfo))
+		/* internal error */
 		elog(ERROR, "insert_username: not fired by trigger manager");
 	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
+		/* internal error */
 		elog(ERROR, "insert_username: can't process STATEMENT events");
 	if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
+		/* internal error */
 		elog(ERROR, "insert_username: must be fired before event");
 
 	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
@@ -41,6 +44,7 @@ insert_username(PG_FUNCTION_ARGS)
 	else if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 		rettuple = trigdata->tg_newtuple;
 	else
+		/* internal error */
 		elog(ERROR, "insert_username: can't process DELETE events");
 
 	rel = trigdata->tg_relation;
@@ -50,6 +54,7 @@ insert_username(PG_FUNCTION_ARGS)
 
 	nargs = trigger->tgnargs;
 	if (nargs != 1)
+		/* internal error */
 		elog(ERROR, "insert_username (%s): one argument was expected", relname);
 
 	args = trigger->tgargs;
@@ -58,10 +63,15 @@ insert_username(PG_FUNCTION_ARGS)
 	attnum = SPI_fnumber(tupdesc, args[0]);
 
 	if (attnum < 0)
-		elog(ERROR, "insert_username (%s): there is no attribute %s", relname, args[0]);
+		ereport(ERROR,
+				(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
+				 errmsg("\"%s\" has no attribute \"%s\"", relname, args[0])));
+
 	if (SPI_gettypeid(tupdesc, attnum) != TEXTOID)
-		elog(ERROR, "insert_username (%s): attribute %s must be of TEXT type",
-			 relname, args[0]);
+		ereport(ERROR,
+				(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
+				 errmsg("attribute \"%s\" of \"%s\" must be type TEXT",
+						 args[0], relname)));
 
 	/* create fields containing name */
 	newval = DirectFunctionCall1(textin,
@@ -70,7 +80,8 @@ insert_username(PG_FUNCTION_ARGS)
 	/* construct new tuple */
 	rettuple = SPI_modifytuple(rel, rettuple, 1, &attnum, &newval, NULL);
 	if (rettuple == NULL)
-		elog(ERROR, "insert_username (%s): %d returned by SPI_modifytuple",
+		/* internal error */
+		elog(ERROR, "insert_username (\"%s\"): %d returned by SPI_modifytuple",
 			 relname, SPI_result);
 
 	pfree(relname);

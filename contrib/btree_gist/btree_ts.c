@@ -270,13 +270,19 @@ tskey_cmp(const void *a, const void *b)
 Datum
 tskey_in(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Not implemented");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("feature not implemented")));
+
 	PG_RETURN_POINTER(NULL);
 }
 
 Datum
 tskey_out(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Not implemented");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("feature not implemented")));
+
 	PG_RETURN_POINTER(NULL);
 }

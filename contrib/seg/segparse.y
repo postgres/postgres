@@ -4,8 +4,6 @@
 #include "postgres.h"
 
 #include <math.h>
-  
-#include "utils/elog.h"
 
 #include "segdata.h"
 #include "buffer.h"
@@ -75,7 +73,11 @@ range:
 	    ((SEG *)result)->upper = $3.val;
 	    if ( ((SEG *)result)->lower > ((SEG *)result)->upper ) {
 	      reset_parse_buffer();     
-	      elog(ERROR, "swapped boundaries: %g is greater than %g", ((SEG *)result)->lower, ((SEG *)result)->upper );
+	      ereport(ERROR,
+				  (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				   errmsg("swapped boundaries: %g is greater than %g",
+						  ((SEG *)result)->lower, ((SEG *)result)->upper)));
+
 	      YYERROR;
 	    }
 	    ((SEG *)result)->l_sigd = $1.sigd;
@@ -144,7 +146,10 @@ float seg_atof ( char *value ) {
   if ( errno ) {
     snprintf(buf, 256, "numeric value %s unrepresentable", value);
     reset_parse_buffer();     
-    elog(ERROR, "%s", buf);
+    ereport(ERROR,
+		    (errcode(ERRCODE_SYNTAX_ERROR),
+		     errmsg("syntax error"),
+		     errdetail("%s", buf)));
   }
 
   return result;
@@ -175,7 +180,10 @@ int seg_yyerror ( char *msg ) {
 	  );
 
   reset_parse_buffer();     
-  elog(ERROR, "%s", buf);
+  ereport(ERROR,
+		  (errcode(ERRCODE_SYNTAX_ERROR),
+		   errmsg("syntax error"),
+		   errdetail("%s", buf)));
   return 0;
 }
 

@@ -85,7 +85,9 @@ init_cfg(Oid id, TSCfgInfo *cfg) {
 			cfg->len=lexid+1;
 			cfg->map = (ListDictionary*)malloc( sizeof(ListDictionary)*cfg->len );
 			if ( !cfg->map )
-				ts_error(ERROR,"No memory");
+				ereport(ERROR,
+						(errcode(ERRCODE_OUT_OF_MEMORY),
+						 errmsg("out of memory")));
 			memset( cfg->map, 0, sizeof(ListDictionary)*cfg->len );
 		}
 
@@ -206,18 +208,25 @@ name2id_cfg(text *name) {
 	if ( !plan_name2id ) {
 		plan_name2id = SPI_saveplan( SPI_prepare( "select oid from pg_ts_cfg where ts_name = $1" , 1, arg ) );
 		if ( !plan_name2id ) 
+			/* internal error */
 			elog(ERROR, "SPI_prepare() failed");
 	}
 
 	stat = SPI_execp(plan_name2id, pars, " ", 1);
 	if ( stat < 0 )
+		/* internal error */
 		elog (ERROR, "SPI_execp return %d", stat);
 	if ( SPI_processed > 0 ) {
 		id=DatumGetObjectId( SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 1, &isnull) );
 		if ( isnull ) 
-			elog(ERROR, "Null id for tsearch config");
+			ereport(ERROR,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("null id for tsearch config")));
 	} else 
-		elog(ERROR, "No tsearch config");
+		ereport(ERROR,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("no tsearch config")));
+
 	SPI_finish();
 	addSNMap_t( &(CList.name2id_map), name, id );
 	return id;
@@ -245,8 +254,9 @@ parsetext_v2(TSCfgInfo *cfg, PRSTEXT * prs, char *buf, int4 buflen) {
 			PointerGetDatum(&lenlemm))) ) != 0 ) {
 
 		if ( lenlemm >= MAXSTRLEN )
-			elog(ERROR, "Word is too long");
-
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("word is too long")));
 
 		if ( type >= cfg->len ) /* skip this type of lexem */
 			continue; 
@@ -352,7 +362,9 @@ hlparsetext(TSCfgInfo *cfg, HLPRSTEXT * prs, QUERYTYPE *query, char *buf, int4 b
 			PointerGetDatum(&lenlemm))) ) != 0 ) {
 
 		if ( lenlemm >= MAXSTRLEN )
-			elog(ERROR, "Word is too long");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("word is too long")));
 
 		hladdword(prs,lemm,lenlemm,type);
 
@@ -451,6 +463,7 @@ get_currcfg(void) {
 	if ( !plan_getcfg_bylocale ) {
 		plan_getcfg_bylocale=SPI_saveplan( SPI_prepare( "select oid from pg_ts_cfg where locale = $1 ", 1, arg ) );
 		if ( !plan_getcfg_bylocale )
+			/* internal error */
 			elog(ERROR, "SPI_prepare() failed");
 	}
 
@@ -459,11 +472,14 @@ get_currcfg(void) {
 	stat = SPI_execp(plan_getcfg_bylocale, pars, " ", 1);
 
 	if ( stat < 0 )
+		/* internal error */
 		elog (ERROR, "SPI_execp return %d", stat);
 	if ( SPI_processed > 0 )
 		current_cfg_id = DatumGetObjectId( SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 1, &isnull) );
 	else 
-		elog(ERROR,"Can't find tsearch config by locale");
+		ereport(ERROR,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("could not find tsearch config by locale")));
 
 	pfree(DatumGetPointer(pars[0]));
 	SPI_finish();

@@ -21,14 +21,18 @@ Datum		ltree_gist_out(PG_FUNCTION_ARGS);
 Datum
 ltree_gist_in(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Unimplemented");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("ltree_gist_in() not implemented")));
 	PG_RETURN_DATUM(0);
 }
 
 Datum
 ltree_gist_out(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Unimplemented");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("ltree_gist_out() not implemented")));
 	PG_RETURN_DATUM(0);
 }
 
@@ -604,7 +608,9 @@ arrq_cons(ltree_gist *key, ArrayType *_query) {
         int     num = ArrayGetNItems(ARR_NDIM(_query), ARR_DIMS(_query));
 
         if (ARR_NDIM(_query) != 1)
-                elog(ERROR, "Dimension of array != 1");
+			ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("array must be one-dimensional")));
 
         while (num > 0) {
 		if ( gist_qe(key, query) && gist_between(key, query) ) 
@@ -701,7 +707,8 @@ ltree_consistent(PG_FUNCTION_ARGS)
 				res = arrq_cons(key, (ArrayType *) query);
 			break;
 		default:
-			elog(ERROR, "Unknown StrategyNumber: %d", strategy);
+			/* internal error */
+			elog(ERROR, "unrecognized StrategyNumber: %d", strategy);
 	}
 	PG_RETURN_BOOL(res);
 }

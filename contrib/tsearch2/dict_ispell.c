@@ -37,11 +37,15 @@ spell_init(PG_FUNCTION_ARGS) {
 	bool affloaded=false, dictloaded=false, stoploaded=false;
 
 	if ( PG_ARGISNULL(0) || PG_GETARG_POINTER(0)==NULL )
-		elog(ERROR,"ISpell confguration error");
+		ereport(ERROR,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("ISpell confguration error")));
  
 	d = (DictISpell*)malloc( sizeof(DictISpell) );
 	if ( !d )
-		elog(ERROR, "No memory");
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 	memset(d,0,sizeof(DictISpell));
 	d->stoplist.wordop=lowerstr;
 
@@ -53,28 +57,40 @@ spell_init(PG_FUNCTION_ARGS) {
 		if ( strcasecmp("DictFile", pcfg->key) == 0 ) {
 			if ( dictloaded ) {
 				freeDictISpell(d);
-				elog(ERROR,"Dictionary already loaded");
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("dictionary already loaded")));
 			}
 			if ( ImportDictionary(&(d->obj), pcfg->value) ) {
 				freeDictISpell(d);
-				elog(ERROR,"Can't load dictionary file (%s)", pcfg->value);
+				ereport(ERROR,
+						(errcode(ERRCODE_CONFIG_FILE_ERROR),
+						 errmsg("could not load dictionary file \"%s\"",
+								pcfg->value)));
 			}
 			dictloaded=true;
 		} else if ( strcasecmp("AffFile", pcfg->key) == 0 ) {
 			if ( affloaded ) {
 				freeDictISpell(d);
-				elog(ERROR,"Affixes already loaded");
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("affixes already loaded")));
 			}
 			if ( ImportAffixes(&(d->obj), pcfg->value) ) {
 				freeDictISpell(d);
-				elog(ERROR,"Can't load affix file (%s)", pcfg->value);
+				ereport(ERROR,
+						(errcode(ERRCODE_CONFIG_FILE_ERROR),
+						 errmsg("could not load affix file \"%s\"",
+								pcfg->value)));
 			}
 			affloaded=true;
 		} else if ( strcasecmp("StopFile", pcfg->key) == 0 ) {
 			text *tmp=char2text(pcfg->value);
 			if ( stoploaded ) {
 				freeDictISpell(d);
-				elog(ERROR,"Stop words already loaded");
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("stop words already loaded")));
 			}
 			readstoplist(tmp, &(d->stoplist));
 			sortstoplist(&(d->stoplist));
@@ -82,7 +98,10 @@ spell_init(PG_FUNCTION_ARGS) {
 			stoploaded=true;
 		} else {
 			freeDictISpell(d);
-			elog(ERROR,"Unknown option: %s => %s", pcfg->key, pcfg->value);
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("unrecognized option: %s => %s",
+							 pcfg->key, pcfg->value)));
 		}
 		pfree(pcfg->key);
 		pfree(pcfg->value);
@@ -95,10 +114,14 @@ spell_init(PG_FUNCTION_ARGS) {
 		SortAffixes(&(d->obj));
 	} else if ( !affloaded ) {
 		freeDictISpell(d);
-		elog(ERROR,"No affixes");
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("no affixes")));
 	} else {
 		freeDictISpell(d);
-		elog(ERROR,"No dictionary");
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("no dictionary")));
 	}
 
 	PG_RETURN_POINTER(d);

@@ -2,8 +2,6 @@
 
 #include "postgres.h"
 
-#include "utils/elog.h"
-
 static char *PARSE_BUFFER;
 static char *PARSE_BUFFER_PTR;
 static unsigned int PARSE_BUFFER_SIZE;
@@ -26,7 +24,10 @@ set_parse_buffer(char *s)
 	PARSE_BUFFER = s;
 	PARSE_BUFFER_SIZE = strlen(s);
 	if (PARSE_BUFFER_SIZE == 0)
-		elog(ERROR, "cube_in: can't parse an empty string");
+		ereport(ERROR,
+				(errcode(ERRCODE_ZERO_LENGTH_CHARACTER_STRING),
+				 errmsg("can't parse an empty string")));
+
 	PARSE_BUFFER_PTR = PARSE_BUFFER;
 	SCANNER_POS = 0;
 }

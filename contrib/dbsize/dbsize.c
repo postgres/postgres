@@ -52,13 +52,17 @@ database_size(PG_FUNCTION_ARGS)
 
 	dbid = get_database_oid(NameStr(*dbname));
 	if (!OidIsValid(dbid))
-		elog(ERROR, "database %s does not exist", NameStr(*dbname));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("database \"%s\" does not exist", NameStr(*dbname))));
 
 	dbpath = GetDatabasePath(dbid);
 
 	dirdesc = opendir(dbpath);
 	if (!dirdesc)
-		elog(ERROR, "could not open directory %s: %s", dbpath, strerror(errno));
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not open directory \"%s\": %m", dbpath)));
 
 	totalsize = 0;
 	for (;;)
@@ -71,7 +75,9 @@ database_size(PG_FUNCTION_ARGS)
 		if (!direntry)
 		{
 			if (errno)
-				elog(ERROR, "error reading directory: %s", strerror(errno));
+				ereport(ERROR,
+						(errcode_for_file_access(),
+						 errmsg("error reading directory: %m")));
 			else
 				break;
 		}
@@ -79,7 +85,10 @@ database_size(PG_FUNCTION_ARGS)
 		fullname = psnprintf(strlen(dbpath) + 1 + strlen(direntry->d_name) + 1,
 							 "%s/%s", dbpath, direntry->d_name);
 		if (stat(fullname, &statbuf) == -1)
-			elog(ERROR, "could not stat %s: %s", fullname, strerror(errno));
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not stat \"%s\": %m", fullname)));
+
 		totalsize += statbuf.st_size;
 		pfree(fullname);
 	}
@@ -133,7 +142,9 @@ relation_size(PG_FUNCTION_ARGS)
 			if (errno == ENOENT)
 				break;
 			else
-				elog(ERROR, "could not stat %s: %m", fullname);
+				ereport(ERROR,
+						(errcode_for_file_access(),
+						 errmsg("could not stat \"%s\": %m", fullname)));
 		}
 		totalsize += statbuf.st_size;
 		pfree(fullname);

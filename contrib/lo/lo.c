@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for managed LargeObjects.
  *
- *	$Header: /cvsroot/pgsql/contrib/lo/lo.c,v 1.12 2002/08/15 02:58:29 momjian Exp $
+ *	$Header: /cvsroot/pgsql/contrib/lo/lo.c,v 1.13 2003/07/24 17:52:30 tgl Exp $
  *
  */
 
@@ -57,10 +57,14 @@ lo_in(char *str)
 		count = sscanf(str, "%u", &oid);
 
 		if (count < 1)
-			elog(ERROR, "lo_in: error in parsing \"%s\"", str);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("error in parsing \"%s\"", str)));
 
 		if (oid == InvalidOid)
-			elog(ERROR, "lo_in: illegal oid \"%s\"", str);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("illegal oid: \"%s\"", str)));
 	}
 	else
 	{
@@ -70,7 +74,8 @@ lo_in(char *str)
 		oid = DatumGetObjectId(DirectFunctionCall1(lo_creat,
 								   Int32GetDatum(INV_READ | INV_WRITE)));
 		if (oid == InvalidOid)
-			elog(ERROR, "lo_in: InvalidOid returned from lo_creat");
+			/* internal error */
+			elog(ERROR, "InvalidOid returned from lo_creat");
 	}
 
 	result = (Blob *) palloc(sizeof(Blob));
@@ -143,7 +148,8 @@ lo_manage(PG_FUNCTION_ARGS)
 	HeapTuple	trigtuple;		/* The original value of tuple	*/
 
 	if (!CALLED_AS_TRIGGER(fcinfo))
-		elog(ERROR, "lo: not fired by trigger manager");
+		/* internal error */
+		elog(ERROR, "not fired by trigger manager");
 
 	/*
 	 * Fetch some values from trigdata

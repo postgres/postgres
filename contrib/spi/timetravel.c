@@ -82,14 +82,17 @@ timetravel(PG_FUNCTION_ARGS)
 
 	/* Called by trigger manager ? */
 	if (!CALLED_AS_TRIGGER(fcinfo))
+		/* internal error */
 		elog(ERROR, "timetravel: not fired by trigger manager");
 
 	/* Should be called for ROW trigger */
 	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
+		/* internal error */
 		elog(ERROR, "timetravel: can't process STATEMENT events");
 
 	/* Should be called BEFORE */
 	if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
+		/* internal error */
 		elog(ERROR, "timetravel: must be fired before event");
 
 	/* INSERT ? */
@@ -117,6 +120,7 @@ timetravel(PG_FUNCTION_ARGS)
 	trigger = trigdata->tg_trigger;
 
 	if (trigger->tgnargs != 2)
+		/* internal error */
 		elog(ERROR, "timetravel (%s): invalid (!= 2) number of arguments %d",
 			 relname, trigger->tgnargs);
 
@@ -128,10 +132,15 @@ timetravel(PG_FUNCTION_ARGS)
 	{
 		attnum[i] = SPI_fnumber(tupdesc, args[i]);
 		if (attnum[i] < 0)
-			elog(ERROR, "timetravel (%s): there is no attribute %s", relname, args[i]);
+			ereport(ERROR,
+					(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
+					 errmsg("\"%s\" has no attribute \"%s\"",
+							relname, args[i])));
 		if (SPI_gettypeid(tupdesc, attnum[i]) != ABSTIMEOID)
-			elog(ERROR, "timetravel (%s): attributes %s and %s must be of abstime type",
-				 relname, args[0], args[1]);
+			ereport(ERROR,
+					(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
+					 errmsg("attribute \"%s\" of \"%s\" must be type ABSTIME",
+							 args[i], relname)));
 	}
 
 	if (isinsert)				/* INSERT */
@@ -153,8 +162,10 @@ timetravel(PG_FUNCTION_ARGS)
 		{
 			if ((chnattrs == 0 && DatumGetInt32(oldon) >= NOEND_ABSTIME) ||
 			(chnattrs > 0 && DatumGetInt32(newvals[0]) >= NOEND_ABSTIME))
-				elog(ERROR, "timetravel (%s): %s ge %s",
-					 relname, args[0], args[1]);
+				ereport(ERROR,
+						(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
+						 errmsg("timetravel (%s): %s ge %s",
+						 relname, args[0], args[1])));
 			newvals[chnattrs] = NOEND_ABSTIME;
 			chattrs[chnattrs] = attnum[1];
 			chnattrs++;
@@ -165,8 +176,10 @@ timetravel(PG_FUNCTION_ARGS)
 				 DatumGetInt32(oldoff)) ||
 				(chnattrs > 0 && DatumGetInt32(newvals[0]) >=
 				 DatumGetInt32(oldoff)))
-				elog(ERROR, "timetravel (%s): %s ge %s",
-					 relname, args[0], args[1]);
+				ereport(ERROR,
+						(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
+						 errmsg("timetravel (%s): %s ge %s",
+						 relname, args[0], args[1])));
 		}
 
 		pfree(relname);
@@ -180,11 +193,16 @@ timetravel(PG_FUNCTION_ARGS)
 
 	oldon = SPI_getbinval(trigtuple, tupdesc, attnum[0], &isnull);
 	if (isnull)
-		elog(ERROR, "timetravel (%s): %s must be NOT NULL", relname, args[0]);
-
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("\"%s\" must be NOT NULL in \"%s\"",
+						args[0],relname)));
 	oldoff = SPI_getbinval(trigtuple, tupdesc, attnum[1], &isnull);
 	if (isnull)
-		elog(ERROR, "timetravel (%s): %s must be NOT NULL", relname, args[1]);
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("\"%s\" must be NOT NULL in \"%s\"",
+						args[1],relname)));
 
 	/*
 	 * If DELETE/UPDATE of tuple with stop_date neq INFINITY then say
@@ -194,14 +212,23 @@ timetravel(PG_FUNCTION_ARGS)
 	{
 		newon = SPI_getbinval(newtuple, tupdesc, attnum[0], &isnull);
 		if (isnull)
-			elog(ERROR, "timetravel (%s): %s must be NOT NULL", relname, args[0]);
+			ereport(ERROR,
+					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					 errmsg("\"%s\" must be NOT NULL in \"%s\"",
+							args[0],relname)));
 		newoff = SPI_getbinval(newtuple, tupdesc, attnum[1], &isnull);
 		if (isnull)
-			elog(ERROR, "timetravel (%s): %s must be NOT NULL", relname, args[1]);
+			ereport(ERROR,
+					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					 errmsg("\"%s\" must be NOT NULL in \"%s\"",
+							args[1],relname)));
 
 		if (oldon != newon || oldoff != newoff)
-			elog(ERROR, "timetravel (%s): you can't change %s and/or %s columns (use set_timetravel)",
-				 relname, args[0], args[1]);
+			ereport(ERROR,
+					(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
+					 errmsg("cannot change columns \"%s\" or \"%s\" in \"%s\"",
+							 args[0], args[1], relname),
+					 errhint("Use set_timetravel() instead.")));
 
 		if (newoff != NOEND_ABSTIME)
 		{
@@ -219,6 +246,7 @@ timetravel(PG_FUNCTION_ARGS)
 
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)
+		/* internal error */
 		elog(ERROR, "timetravel (%s): SPI_connect returned %d", relname, ret);
 
 	/* Fetch tuple values and nulls */
@@ -277,6 +305,7 @@ timetravel(PG_FUNCTION_ARGS)
 		/* Prepare plan for query */
 		pplan = SPI_prepare(sql, natts, ctypes);
 		if (pplan == NULL)
+			/* internal error */
 			elog(ERROR, "timetravel (%s): SPI_prepare returned %d", relname, SPI_result);
 
 		/*
@@ -286,6 +315,7 @@ timetravel(PG_FUNCTION_ARGS)
 		 */
 		pplan = SPI_saveplan(pplan);
 		if (pplan == NULL)
+			/* internal error */
 			elog(ERROR, "timetravel (%s): SPI_saveplan returned %d", relname, SPI_result);
 
 		plan->splan = pplan;
@@ -297,6 +327,7 @@ timetravel(PG_FUNCTION_ARGS)
 	ret = SPI_execp(plan->splan, cvals, cnulls, 0);
 
 	if (ret < 0)
+		/* internal error */
 		elog(ERROR, "timetravel (%s): SPI_execp returned %d", relname, ret);
 
 	/* Tuple to return to upper Executor ... */

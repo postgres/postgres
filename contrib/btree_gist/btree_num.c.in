@@ -247,14 +247,20 @@ __BTREE_GIST_TYPE2__key_cmp(const void *a, const void *b)
 Datum
 __BTREE_GIST_TYPE2__key_in(PG_FUNCTION_ARGS)
 {
-  elog(ERROR, "Not implemented");
+  ereport(ERROR,
+		(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+		 errmsg("<datatype>key_in() not implemented")));
+
   PG_RETURN_POINTER(NULL);
 }
 
 Datum
 __BTREE_GIST_TYPE2__key_out(PG_FUNCTION_ARGS)
 {
-  elog(ERROR, "Not implemented");
+  ereport(ERROR,
+		(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+		 errmsg("<datatype>key_out() not implemented")));
+
   PG_RETURN_POINTER(NULL);
 }
 

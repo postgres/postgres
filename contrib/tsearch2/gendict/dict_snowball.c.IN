@@ -28,7 +28,9 @@ dinit_CFG_MODNAME(PG_FUNCTION_ARGS) {
 	DictSnowball	*d = (DictSnowball*)malloc( sizeof(DictSnowball) );
 
 	if ( !d )
-		elog(ERROR, "No memory");
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 	memset(d,0,sizeof(DictSnowball));
 	d->stoplist.wordop=lowerstr;
 		
@@ -42,7 +44,9 @@ dinit_CFG_MODNAME(PG_FUNCTION_ARGS) {
 	d->z = CFG_PREFIX_create_env();
 	if (!d->z) {
 		freestoplist(&(d->stoplist));
-		elog(ERROR,"No memory");
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 	}
 	d->stem=CFG_PREFIX_stem;
 

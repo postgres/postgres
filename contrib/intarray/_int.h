@@ -6,8 +6,6 @@
 #include "access/itup.h"
 #include "access/rtree.h"
 #include "catalog/pg_type.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "storage/bufpage.h"
@@ -34,7 +32,11 @@
 #define ARRPTR(x)  ( (int4 *) ARR_DATA_PTR(x) )
 #define ARRNELEMS(x)  ArrayGetNItems( ARR_NDIM(x), ARR_DIMS(x))
 
-#define ARRISVOID(x) ( (x) ? ( ( ARR_NDIM(x) == NDIM ) ? ( ( ARRNELEMS( x ) ) ? 0 : 1 ) : ( ( ARR_NDIM(x) ) ? (elog(ERROR,"Array is not one-dimensional: %d dimensions",ARRNELEMS( x )),1) : 0 )  ) : 0 )
+#define ARRISVOID(x) ( (x) ? ( ( ARR_NDIM(x) == NDIM ) ? ( ( ARRNELEMS( x ) ) ? 0 : 1 ) : ( ( ARR_NDIM(x) ) ? ( \
+	ereport(ERROR, \
+			(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR), \
+			 errmsg("array must be one-dimensional, not %d dimensions", ARRNELEMS( x )))) \
+	,1) : 0 )  ) : 0 )
 
 #define SORT(x) \
 	do { \

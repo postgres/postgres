@@ -44,7 +44,9 @@ array_iterator(ArrayType *la, PGCALL2 callback, void *param, ltree ** found)
 	ltree	   *item = (ltree *) ARR_DATA_PTR(la);
 
 	if (ARR_NDIM(la) != 1)
-		elog(ERROR, "Dimension of array != 1");
+		ereport(ERROR,
+			(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+			 errmsg("array must be one-dimensional")));
 
 	if (found)
 		*found = NULL;
@@ -138,7 +140,9 @@ _lt_q_regex(PG_FUNCTION_ARGS)
         int     num = ArrayGetNItems(ARR_NDIM(_query), ARR_DIMS(_query));
 
         if (ARR_NDIM(_query) != 1)
-                elog(ERROR, "Dimension of array != 1");
+			ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("array must be one-dimensional")));
 
         while (num > 0) {
 		if ( array_iterator(_tree, ltq_regex, (void*)query, NULL) ) {

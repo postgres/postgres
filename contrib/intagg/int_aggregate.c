@@ -160,8 +160,10 @@ int_agg_state(PG_FUNCTION_ARGS)
 	PGARRAY    *p = GetPGArray(state, 1);
 
 	if (!p)
-		elog(ERROR, "No aggregate storage");
+		/* internal error */
+		elog(ERROR, "no aggregate storage");
 	else if (p->items >= p->lower)
+		/* internal error */
 		elog(ERROR, "aggregate storage too small");
 	else
 		p->array[p->items++] = value;
@@ -190,11 +192,13 @@ int_enum(PG_FUNCTION_ARGS)
 	ReturnSetInfo *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
 	if (!rsi || !IsA(rsi, ReturnSetInfo))
-		elog(ERROR, "No ReturnSetInfo sent! function must be declared returning a 'setof' integer");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("int_enum called in context that cannot accept a set")));
 
 	if (!p)
 	{
-		elog(WARNING, "No data sent");
+		elog(WARNING, "no data sent");
 		PG_RETURN_NULL();
 	}
 
@@ -211,7 +215,8 @@ int_enum(PG_FUNCTION_ARGS)
 			pc->flags = TOASTED;
 			if (!pc->p)
 			{
-				elog(ERROR, "Error in toaster!!! no detoasting");
+				/* internal error */
+				elog(ERROR, "error in toaster; not detoasting");
 				PG_RETURN_NULL();
 			}
 		}

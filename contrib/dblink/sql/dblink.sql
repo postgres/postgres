@@ -98,7 +98,7 @@ FROM dblink_fetch('rmt_foo_cursor',4) AS t(a int, b text, c text[]);
 -- close the cursor
 SELECT dblink_close('rmt_foo_cursor');
 
--- should generate "cursor not found: rmt_foo_cursor" error
+-- should generate 'cursor "rmt_foo_cursor" not found' error
 SELECT *
 FROM dblink_fetch('rmt_foo_cursor',4) AS t(a int, b text, c text[]);
 
@@ -162,7 +162,7 @@ FROM dblink('myconn','SELECT * FROM foo') AS t(a int, b text, c text[])
 WHERE t.a > 7;
 
 -- create a second named persistent connection
--- should error with "cannot save named connection"
+-- should error with "duplicate connection name"
 SELECT dblink_connect('myconn','dbname=regression');
 
 -- create a second named persistent connection with a new name
@@ -193,7 +193,7 @@ FROM dblink_fetch('myconn','rmt_foo_cursor',4) AS t(a int, b text, c text[]);
 -- close the cursor
 SELECT dblink_close('myconn','rmt_foo_cursor');
 
--- should generate "cursor not found: rmt_foo_cursor" error
+-- should generate 'cursor "rmt_foo_cursor" not found' error
 SELECT *
 FROM dblink_fetch('myconn','rmt_foo_cursor',4) AS t(a int, b text, c text[]);
 
@@ -236,5 +236,5 @@ WHERE a = 11;
 SELECT dblink_disconnect('myconn');
 
 -- close the named persistent connection again
--- should get "connection named "myconn" not found" error
+-- should get 'connection "myconn" not available' error
 SELECT dblink_disconnect('myconn');

@@ -75,11 +75,15 @@ AddSpell(IspellDict * Conf,const char * word,const char *flag){
 			Conf->Spell=(SPELL *)malloc(Conf->mspell*sizeof(SPELL));
 		}
 		if ( Conf->Spell == NULL )
-			elog(ERROR,"No memory for AddSpell"); 
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 	}
 	Conf->Spell[Conf->nspell].word=strdup(word);
 	if ( !Conf->Spell[Conf->nspell].word ) 
-		elog(ERROR,"No memory for AddSpell");
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 	strncpy(Conf->Spell[Conf->nspell].flag,flag,10);
 	Conf->nspell++;
 	return(0);
@@ -177,7 +181,9 @@ AddAffix(IspellDict * Conf,int flag,const char *mask,const char *find,const char
 			Conf->Affix = (AFFIX*)malloc(Conf->maffixes * sizeof(AFFIX));
 		}
 		if ( Conf->Affix == NULL ) 
-			elog(ERROR,"No memory for AddAffix");
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 	}
 	if (type=='s') {
 	    sprintf(Conf->Affix[Conf->naffixes].mask,"%s$",mask);

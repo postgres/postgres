@@ -6,8 +6,6 @@
 
 #include "access/gist.h"
 #include "access/itup.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
 #include "utils/builtins.h"
 #include "storage/bufpage.h"
 #include "executor/spi.h"
@@ -79,7 +77,8 @@ setweight(PG_FUNCTION_ARGS)
 		case 'b': w=2; break;
 		case 'c': w=1; break;
 		case 'd': w=0; break;
-		default: elog(ERROR,"Unknown weight");
+		/* internal error */
+		default: elog(ERROR,"unrecognized weight");
 	}
 
 	out=(tsvector*)palloc(in->len);

@@ -1,6 +1,6 @@
 --
 -- first, define the datatype.  Turn off echoing so that expected file
--- does not depend on contents of seg.sql.
+-- does not depend on contents of _int.sql.
 --
 \set ECHO none
 \i _int.sql

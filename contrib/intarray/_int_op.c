@@ -243,7 +243,9 @@ sort(PG_FUNCTION_ARGS)
 			 && (d[3] == 'C' || d[3] == 'c'))
 		dir = 0;
 	if (dir == -1)
-		elog(ERROR, "Invalid second parameter in function sort. It must be 'ASC' or 'DESC'.");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("second parameter must be \"ASC\" or \"DESC\"")));
 	QSORT(a, dir);
 	PG_RETURN_POINTER(a);
 }

@@ -22,13 +22,17 @@ addSNMap( SNMap *map, char *key, Oid value ) {
 		int len = (map->reallen) ? 2*map->reallen : 16;
 		tmp=(SNMapEntry*)realloc(map->list, sizeof(SNMapEntry) * len);
 		if ( !tmp )
-			elog(ERROR, "No memory");
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 		map->reallen=len;
 		map->list=tmp;
 	}
 	map->list[ map->len ].key = strdup(key);
 	if ( ! map->list[ map->len ].key )
-		elog(ERROR, "No memory");
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 	map->list[ map->len ].value=value;
 	map->len++;
 	if ( map->len>1 ) qsort(map->list, map->len, sizeof(SNMapEntry), compareSNMapEntry);

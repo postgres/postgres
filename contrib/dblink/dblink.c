@@ -30,6 +30,7 @@
  *
  */
 #include "postgres.h"
+
 #include "libpq-fe.h"
 #include "fmgr.h"
 #include "funcapi.h"
@@ -52,7 +53,6 @@
 #include "utils/array.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-#include "utils/palloc.h"
 #include "utils/dynahash.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
@@ -71,7 +71,7 @@ typedef struct remoteConn
  */
 static remoteConn *getConnectionByName(const char *name);
 static HTAB *createConnHash(void);
-static bool createNewConnection(const char *name,remoteConn *con);
+static void createNewConnection(const char *name,remoteConn *con);
 static void deleteConnection(const char *name);
 static char **get_pkey_attnames(Oid relid, int16 *numatts);
 static char *get_sql_insert(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattvals, char **tgt_pkattvals);
@@ -118,21 +118,35 @@ typedef struct remoteConnHashEnt
 			var_ = NULL; \
 		} \
 	} while (0)
-#define DBLINK_RES_ERROR(p1, p2) \
+#define DBLINK_RES_INTERNALERROR(p2) \
 	do { \
 			msg = pstrdup(PQerrorMessage(conn)); \
 			if (res) \
 				PQclear(res); \
-			elog(ERROR, "%s: %s: %s", p1, p2, msg); \
+			elog(ERROR, "%s: %s", p2, msg); \
 	} while (0)
-#define DBLINK_CONN_NOT_AVAIL(p1) \
+#define DBLINK_RES_ERROR(p2) \
+	do { \
+			msg = pstrdup(PQerrorMessage(conn)); \
+			if (res) \
+				PQclear(res); \
+			ereport(ERROR, \
+					(errcode(ERRCODE_SYNTAX_ERROR), \
+					 errmsg("%s", p2), \
+					 errdetail("%s", msg))); \
+	} while (0)
+#define DBLINK_CONN_NOT_AVAIL \
 	do { \
 		if(conname) \
-			elog(ERROR, "%s: connection %s not available", p1, conname); \
+			ereport(ERROR, \
+					(errcode(ERRCODE_CONNECTION_DOES_NOT_EXIST), \
+					 errmsg("connection \"%s\" not available", conname))); \
 		else \
-			elog(ERROR, "%s: connection not available", p1); \
+			ereport(ERROR, \
+					(errcode(ERRCODE_CONNECTION_DOES_NOT_EXIST), \
+					 errmsg("connection not available"))); \
 	} while (0)
-#define DBLINK_GET_CONN(p1) \
+#define DBLINK_GET_CONN \
 	do { \
 			char *conname_or_str = GET_STR(PG_GETARG_TEXT_P(0)); \
 			rcon = getConnectionByName(conname_or_str); \
@@ -149,7 +163,10 @@ typedef struct remoteConnHashEnt
 				{ \
 					msg = pstrdup(PQerrorMessage(conn)); \
 					PQfinish(conn); \
-					elog(ERROR, "%s: connection error: %s", p1, msg); \
+					ereport(ERROR, \
+							(errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION), \
+							 errmsg("could not establish connection"), \
+							 errdetail("%s", msg))); \
 				} \
 			} \
 	} while (0)
@@ -191,18 +208,17 @@ dblink_connect(PG_FUNCTION_ARGS)
 		PQfinish(conn);
 		if(rcon)
 			pfree(rcon);
-		elog(ERROR, "dblink_connect: connection error: %s", msg);
+
+		ereport(ERROR,
+				(errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
+				 errmsg("could not establish connection"),
+				 errdetail("%s", msg)));
 	}
 
 	if(connname)
 	{
 		rcon->con = conn;
-		if(createNewConnection(connname, rcon) == false)
-	 	{
-			PQfinish(conn);
-			pfree(rcon);
-			elog(ERROR, "dblink_connect: cannot save named connection");
-		}
+		createNewConnection(connname, rcon);
 	}
 	else
 		persistent_conn = conn;
@@ -217,14 +233,14 @@ PG_FUNCTION_INFO_V1(dblink_disconnect);
 Datum
 dblink_disconnect(PG_FUNCTION_ARGS)
 {
-	char	   *str = NULL;
+	char	   *conname = NULL;
 	remoteConn *rcon = NULL;
 	PGconn	   *conn = NULL;
 
 	if (PG_NARGS() ==1 )
 	{
-		str = GET_STR(PG_GETARG_TEXT_P(0));
-		rcon = getConnectionByName(str);
+		conname = GET_STR(PG_GETARG_TEXT_P(0));
+		rcon = getConnectionByName(conname);
 		if (rcon)
 			conn = rcon->con;
 	}
@@ -232,18 +248,12 @@ dblink_disconnect(PG_FUNCTION_ARGS)
 		conn = persistent_conn;
 
 	if (!conn)
-	{
-		if (str)
-			elog(ERROR,"dblink_disconnect: connection named \"%s\" not found",
-																		 str);
-		else
-			elog(ERROR,"dblink_disconnect: connection not found");
-	}
+		DBLINK_CONN_NOT_AVAIL;
 
 	PQfinish(conn);
 	if (rcon)
 	{
-		deleteConnection(str);
+		deleteConnection(conname);
 		pfree(rcon);
 	}
 
@@ -283,11 +293,11 @@ dblink_open(PG_FUNCTION_ARGS)
 	}
 
 	if (!conn)
-		DBLINK_CONN_NOT_AVAIL("dblink_open");
+		DBLINK_CONN_NOT_AVAIL;
 
 	res = PQexec(conn, "BEGIN");
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		DBLINK_RES_ERROR("dblink_open", "begin error");
+		DBLINK_RES_INTERNALERROR("begin error");
 
 	PQclear(res);
 
@@ -296,7 +306,7 @@ dblink_open(PG_FUNCTION_ARGS)
 	if (!res ||
 		(PQresultStatus(res) != PGRES_COMMAND_OK &&
 		 PQresultStatus(res) != PGRES_TUPLES_OK))
-		DBLINK_RES_ERROR("dblink_open", "sql error");
+		DBLINK_RES_ERROR("sql error");
 
 	PQclear(res);
 
@@ -333,21 +343,21 @@ dblink_close(PG_FUNCTION_ARGS)
 	}
 
 	if (!conn)
-		DBLINK_CONN_NOT_AVAIL("dblink_close");
+		DBLINK_CONN_NOT_AVAIL;
 
 	appendStringInfo(str, "CLOSE %s", curname);
 
 	/* close the cursor */
 	res = PQexec(conn, str->data);
 	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
-		DBLINK_RES_ERROR("dblink_close", "sql error");
+		DBLINK_RES_ERROR("sql error");
 
 	PQclear(res);
 
 	/* commit the transaction */
 	res = PQexec(conn, "COMMIT");
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		DBLINK_RES_ERROR("dblink_close", "commit error");
+		DBLINK_RES_INTERNALERROR("commit error");
 
 	PQclear(res);
 
@@ -402,7 +412,7 @@ dblink_fetch(PG_FUNCTION_ARGS)
 		}
 
 		if(!conn)
-			DBLINK_CONN_NOT_AVAIL("dblink_fetch");
+			DBLINK_CONN_NOT_AVAIL;
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -420,13 +430,15 @@ dblink_fetch(PG_FUNCTION_ARGS)
 			(PQresultStatus(res) != PGRES_COMMAND_OK &&
 			 PQresultStatus(res) != PGRES_TUPLES_OK))
 		{
-			DBLINK_RES_ERROR("dblink_fetch", "sql error");
+			DBLINK_RES_ERROR("sql error");
 		}
 		else if (PQresultStatus(res) == PGRES_COMMAND_OK)
 		{
 			/* cursor does not exist - closed already or bad name */
 			PQclear(res);
-			elog(ERROR, "dblink_fetch: cursor not found: %s", curname);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_CURSOR_NAME),
+					 errmsg("cursor \"%s\" does not exist", curname)));
 		}
 
 		funcctx->max_calls = PQntuples(res);
@@ -447,7 +459,8 @@ dblink_fetch(PG_FUNCTION_ARGS)
 		else if (functyptype == 'p' && functypeid == RECORDOID)
 			tupdesc = pgresultGetTupleDesc(res);
 		else
-			elog(ERROR, "dblink_fetch: return type must be a row type");
+			/* shouldn't happen */
+			elog(ERROR, "return type must be a row type");
 
 		/* store needed metadata for subsequent calls */
 		slot = TupleDescGetSlot(tupdesc);
@@ -549,7 +562,7 @@ dblink_record(PG_FUNCTION_ARGS)
 
 		if (PG_NARGS() == 2)
 		{
-			DBLINK_GET_CONN("dblink");
+			DBLINK_GET_CONN;
 			sql = GET_STR(PG_GETARG_TEXT_P(1));
 		}
 		else if (PG_NARGS() == 1)
@@ -558,14 +571,15 @@ dblink_record(PG_FUNCTION_ARGS)
 			sql = GET_STR(PG_GETARG_TEXT_P(0));
 		}
 		else
-			elog(ERROR, "dblink: wrong number of arguments");
+			/* shouldn't happen */
+			elog(ERROR, "wrong number of arguments");
 
 		if(!conn)
-			DBLINK_CONN_NOT_AVAIL("dblink_record");
+			DBLINK_CONN_NOT_AVAIL;
 
 		res = PQexec(conn, sql);
 		if (!res || (PQresultStatus(res) != PGRES_COMMAND_OK && PQresultStatus(res) != PGRES_TUPLES_OK))
-			DBLINK_RES_ERROR("dblink", "sql error");
+			DBLINK_RES_ERROR("sql error");
 
 		if (PQresultStatus(res) == PGRES_COMMAND_OK)
 		{
@@ -608,7 +622,8 @@ dblink_record(PG_FUNCTION_ARGS)
 			else if (functyptype == 'p' && functypeid == RECORDOID)
 				tupdesc = pgresultGetTupleDesc(res);
 			else
-				elog(ERROR, "dblink: return type must be a row type");
+				/* shouldn't happen */
+				elog(ERROR, "return type must be a row type");
 		}
 
 		/* store needed metadata for subsequent calls */
@@ -697,7 +712,7 @@ dblink_exec(PG_FUNCTION_ARGS)
 
 	if (PG_NARGS() == 2)
 	{
-		DBLINK_GET_CONN("dblink_exec");
+		DBLINK_GET_CONN;
 		sql = GET_STR(PG_GETARG_TEXT_P(1));
 	}
 	else if (PG_NARGS() == 1)
@@ -706,16 +721,17 @@ dblink_exec(PG_FUNCTION_ARGS)
 		sql = GET_STR(PG_GETARG_TEXT_P(0));
 	}
 	else
-		elog(ERROR, "dblink_exec: wrong number of arguments");
+		/* shouldn't happen */
+		elog(ERROR, "wrong number of arguments");
 
 	if(!conn)
-		DBLINK_CONN_NOT_AVAIL("dblink_exec");
+		DBLINK_CONN_NOT_AVAIL;
 
 	res = PQexec(conn, sql);
 	if (!res ||
 		(PQresultStatus(res) != PGRES_COMMAND_OK &&
 		 PQresultStatus(res) != PGRES_TUPLES_OK))
-		DBLINK_RES_ERROR("dblink_exec", "sql error");
+		DBLINK_RES_ERROR("sql error");
 
 	if (PQresultStatus(res) == PGRES_COMMAND_OK)
 	{
@@ -731,7 +747,9 @@ dblink_exec(PG_FUNCTION_ARGS)
 		sql_cmd_status = GET_TEXT(PQcmdStatus(res));
 	}
 	else
-		elog(ERROR, "dblink_exec: queries returning results not allowed");
+		ereport(ERROR,
+				(errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
+				 errmsg("statement returning results not allowed")));
 
 	PQclear(res);
 
@@ -780,8 +798,10 @@ dblink_get_pkey(PG_FUNCTION_ARGS)
 		/* convert relname to rel Oid */
 		relid = get_relid_from_relname(PG_GETARG_TEXT_P(0));
 		if (!OidIsValid(relid))
-			elog(ERROR, "dblink_get_pkey: relation does not exist");
-
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_TABLE),
+					 errmsg("relation \"%s\" does not exist",
+							GET_STR(PG_GETARG_TEXT_P(0)))));
 		/*
 		 * need a tuple descriptor representing one INT and one TEXT
 		 * column
@@ -920,20 +940,28 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 	 */
 	relid = get_relid_from_relname(relname_text);
 	if (!OidIsValid(relid))
-		elog(ERROR, "dblink_build_sql_insert: relation does not exist");
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+				 errmsg("relation \"%s\" does not exist",
+						GET_STR(relname_text))));
 
 	pkattnums = (int16 *) PG_GETARG_POINTER(1);
 	pknumatts_tmp = PG_GETARG_INT32(2);
 	if (pknumatts_tmp <= SHRT_MAX)
 		pknumatts = pknumatts_tmp;
 	else
-		elog(ERROR, "Bad input value for pknumatts; too large");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("input for number of primary key " \
+						"attributes too large")));
 
 	/*
 	 * There should be at least one key attribute
 	 */
 	if (pknumatts == 0)
-		elog(ERROR, "dblink_build_sql_insert: number of key attributes must be > 0.");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("number of key attributes must be > 0")));
 
 	src_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(3);
 	tgt_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(4);
@@ -950,7 +978,10 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 	 * There should be one source array key value for each key attnum
 	 */
 	if (src_nitems != pknumatts)
-		elog(ERROR, "dblink_build_sql_insert: source key array length does not match number of key attributes.");
+		ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("source key array length must match number of key " \
+						"attributes")));
 
 	/*
 	 * get array of pointers to c-strings from the input source array
@@ -980,7 +1011,10 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 	 * There should be one target array key value for each key attnum
 	 */
 	if (tgt_nitems != pknumatts)
-		elog(ERROR, "dblink_build_sql_insert: target key array length does not match number of key attributes.");
+		ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("target key array length must match number of key " \
+						"attributes")));
 
 	/*
 	 * get array of pointers to c-strings from the input target array
@@ -1053,20 +1087,28 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 	 */
 	relid = get_relid_from_relname(relname_text);
 	if (!OidIsValid(relid))
-		elog(ERROR, "dblink_build_sql_delete: relation does not exist");
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+				 errmsg("relation \"%s\" does not exist",
+						GET_STR(relname_text))));
 
 	pkattnums = (int16 *) PG_GETARG_POINTER(1);
 	pknumatts_tmp = PG_GETARG_INT32(2);
 	if (pknumatts_tmp <= SHRT_MAX)
 		pknumatts = pknumatts_tmp;
 	else
-		elog(ERROR, "Bad input value for pknumatts; too large");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("input for number of primary key " \
+						"attributes too large")));
 
 	/*
 	 * There should be at least one key attribute
 	 */
 	if (pknumatts == 0)
-		elog(ERROR, "dblink_build_sql_insert: number of key attributes must be > 0.");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("number of key attributes must be > 0")));
 
 	tgt_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(3);
 
@@ -1082,7 +1124,10 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 	 * There should be one target array key value for each key attnum
 	 */
 	if (tgt_nitems != pknumatts)
-		elog(ERROR, "dblink_build_sql_insert: target key array length does not match number of key attributes.");
+		ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("target key array length must match number of key " \
+						"attributes")));
 
 	/*
 	 * get array of pointers to c-strings from the input target array
@@ -1164,20 +1209,28 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 	 */
 	relid = get_relid_from_relname(relname_text);
 	if (!OidIsValid(relid))
-		elog(ERROR, "dblink_build_sql_update: relation does not exist");
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+				 errmsg("relation \"%s\" does not exist",
+						GET_STR(relname_text))));
 
 	pkattnums = (int16 *) PG_GETARG_POINTER(1);
 	pknumatts_tmp = PG_GETARG_INT32(2);
 	if (pknumatts_tmp <= SHRT_MAX)
 		pknumatts = pknumatts_tmp;
 	else
-		elog(ERROR, "Bad input value for pknumatts; too large");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("input for number of primary key " \
+						"attributes too large")));
 
 	/*
 	 * There should be one source array key values for each key attnum
 	 */
 	if (pknumatts == 0)
-		elog(ERROR, "dblink_build_sql_insert: number of key attributes must be > 0.");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("number of key attributes must be > 0")));
 
 	src_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(3);
 	tgt_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(4);
@@ -1194,7 +1247,10 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 	 * There should be one source array key value for each key attnum
 	 */
 	if (src_nitems != pknumatts)
-		elog(ERROR, "dblink_build_sql_insert: source key array length does not match number of key attributes.");
+		ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("source key array length must match number of key " \
+						"attributes")));
 
 	/*
 	 * get array of pointers to c-strings from the input source array
@@ -1224,7 +1280,10 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 	 * There should be one target array key value for each key attnum
 	 */
 	if (tgt_nitems != pknumatts)
-		elog(ERROR, "dblink_build_sql_insert: target key array length does not match number of key attributes.");
+		ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("target key array length must match number of key " \
+						"attributes")));
 
 	/*
 	 * get array of pointers to c-strings from the input target array
@@ -1358,7 +1417,9 @@ get_sql_insert(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattval
 
 	tuple = get_tuple_of_interest(relid, pkattnums, pknumatts, src_pkattvals);
 	if (!tuple)
-		elog(ERROR, "dblink_build_sql_insert: row not found");
+		ereport(ERROR,
+				(errcode(ERRCODE_CARDINALITY_VIOLATION),
+				 errmsg("source row not found")));
 
 	appendStringInfo(str, "INSERT INTO %s(", relname);
 
@@ -1428,7 +1489,7 @@ get_sql_delete(Oid relid, int16 *pkattnums, int16 pknumatts, char **tgt_pkattval
 	int			natts;
 	StringInfo	str = makeStringInfo();
 	char	   *sql;
-	char	   *val;
+	char	   *val = NULL;
 	int			i;
 
 	/* get relation name including any needed schema prefix and quoting */
@@ -1455,10 +1516,8 @@ get_sql_delete(Oid relid, int16 *pkattnums, int16 pknumatts, char **tgt_pkattval
 		if (tgt_pkattvals != NULL)
 			val = pstrdup(tgt_pkattvals[i]);
 		else
-		{
-			elog(ERROR, "Target key array must not be NULL");
-			val = NULL;			/* keep compiler quiet */
-		}
+			/* internal error */
+			elog(ERROR, "target key array must not be NULL");
 
 		if (val != NULL)
 		{
@@ -1504,7 +1563,9 @@ get_sql_update(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattval
 
 	tuple = get_tuple_of_interest(relid, pkattnums, pknumatts, src_pkattvals);
 	if (!tuple)
-		elog(ERROR, "dblink_build_sql_update: row not found");
+		ereport(ERROR,
+				(errcode(ERRCODE_CARDINALITY_VIOLATION),
+				 errmsg("source row not found")));
 
 	appendStringInfo(str, "UPDATE %s SET ", relname);
 
@@ -1652,7 +1713,8 @@ get_tuple_of_interest(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_p
 	 * Connect to SPI manager
 	 */
 	if ((ret = SPI_connect()) < 0)
-		elog(ERROR, "get_tuple_of_interest: SPI_connect returned %d", ret);
+		/* internal error */
+		elog(ERROR, "SPI connect failure - returned %d", ret);
 
 	/*
 	 * Build sql statement to look up tuple of interest Use src_pkattvals
@@ -1694,7 +1756,10 @@ get_tuple_of_interest(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_p
 	 * Only allow one qualifying tuple
 	 */
 	if ((ret == SPI_OK_SELECT) && (SPI_processed > 1))
-		elog(ERROR, "get_tuple_of_interest: Source criteria may not match more than one record.");
+		ereport(ERROR,
+				(errcode(ERRCODE_CARDINALITY_VIOLATION),
+				 errmsg("source criteria matched more than one record")));
+
 	else if (ret == SPI_OK_SELECT && SPI_processed == 1)
 	{
 		SPITupleTable *tuptable = SPI_tuptable;
@@ -1750,6 +1815,7 @@ pgresultGetTupleDesc(PGresult *res)
 	 */
 	natts = PQnfields(res);
 	if (natts < 1)
+		/* shouldn't happen */
 		elog(ERROR, "cannot create a description for empty results");
 
 	desc = CreateTemplateTupleDesc(natts, false);
@@ -1770,10 +1836,13 @@ pgresultGetTupleDesc(PGresult *res)
 		atttypmod = PQfmod(res, i);
 
 		if (PQfsize(res, i) != get_typlen(atttypid))
-			elog(ERROR, "Size of remote field \"%s\" does not match size "
-				 "of local type \"%s\"",
-				 attname,
-				 format_type_with_typemod(atttypid, atttypmod));
+			ereport(ERROR,
+					(errcode(ERRCODE_MOST_SPECIFIC_TYPE_MISMATCH),
+					 errmsg("field size mismatch"),
+					 errdetail("Size of remote field \"%s\" does not match " \
+								"size of local type \"%s\".", attname,
+								format_type_with_typemod(atttypid,
+														 atttypmod))));
 
 		attdim = 0;
 		attisset = false;
@@ -1803,7 +1872,8 @@ generate_relation_name(Oid relid)
 						ObjectIdGetDatum(relid),
 						0, 0, 0);
 	if (!HeapTupleIsValid(tp))
-		elog(ERROR, "cache lookup of relation %u failed", relid);
+		elog(ERROR, "cache lookup failed for relation %u", relid);
+
 	reltup = (Form_pg_class) GETSTRUCT(tp);
 
 	/* Qualify the name if not visible in search path */
@@ -1852,12 +1922,14 @@ createConnHash(void)
 	ptr=hash_create("Remote Con hash", NUMCONN, &ctl, HASH_ELEM);
 
 	if(!ptr)
-		elog(ERROR,"Can not create connections hash table. Out of memory");
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 
 	return(ptr);
 }
 
-static bool
+static void
 createNewConnection(const char *name, remoteConn *con)
 {
 	remoteConnHashEnt  *hentry;
@@ -1865,7 +1937,7 @@ createNewConnection(const char *name, remoteConn *con)
 	char				key[NAMEDATALEN];
 
 	if(!remoteConnHash)
-		remoteConnHash=createConnHash();
+		remoteConnHash = createConnHash();
 
 	MemSet(key, 0, NAMEDATALEN);
 	snprintf(key, NAMEDATALEN - 1, "%s", name);
@@ -1873,18 +1945,17 @@ createNewConnection(const char *name, remoteConn *con)
 											   HASH_ENTER, &found);
 
 	if(!hentry)
-		elog(ERROR, "failed to create connection");
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 
 	if(found)
-	{
-		elog(NOTICE, "cannot use a connection name more than once");
-		return false;
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("duplicate connection name")));
 
 	hentry->rcon = con;
 	strncpy(hentry->name, name, NAMEDATALEN - 1);
-
-	return true;
 }
 
 static void
@@ -1904,5 +1975,8 @@ deleteConnection(const char *name)
 											   key, HASH_REMOVE, &found);
 
 	if(!hentry)
-		elog(WARNING,"Trying to delete a connection that does not exist");
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("undefined connection name")));
+
 }

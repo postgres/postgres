@@ -40,18 +40,22 @@ noup(PG_FUNCTION_ARGS)
 
 	/* Called by trigger manager ? */
 	if (!CALLED_AS_TRIGGER(fcinfo))
+		/* internal error */
 		elog(ERROR, "noup: not fired by trigger manager");
 
 	/* Should be called for ROW trigger */
 	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
+		/* internal error */
 		elog(ERROR, "noup: can't process STATEMENT events");
 
-	/* Not should be called for INSERT */
+	/* Should not be called for INSERT */
 	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
+		/* internal error */
 		elog(ERROR, "noup: can't process INSERT events");
 
-	/* Not should be called for DELETE */
+	/* Should not be called for DELETE */
 	else if (TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
+		/* internal error */
 		elog(ERROR, "noup: can't process DELETE events");
 
 	/* check new Tuple */
@@ -67,6 +71,7 @@ noup(PG_FUNCTION_ARGS)
 
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)
+		/* internal error */
 		elog(ERROR, "noup: SPI_connect returned %d", ret);
 
 	/*
@@ -83,6 +88,7 @@ noup(PG_FUNCTION_ARGS)
 
 		/* Bad guys may give us un-existing column in CREATE TRIGGER */
 		if (fnumber < 0)
+			/* internal error */
 			elog(ERROR, "noup: there is no attribute %s in relation %s",
 				 args[i], SPI_getrelname(rel));
 
@@ -94,7 +100,6 @@ noup(PG_FUNCTION_ARGS)
 		 */
 		if (!isnull)
 		{
-
 			elog(WARNING, "%s: update not allowed", args[i]);
 			SPI_finish();
 			return PointerGetDatum(NULL);

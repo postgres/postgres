@@ -151,15 +151,21 @@ fti(PG_FUNCTION_ARGS)
 	 */
 
 	if (!CALLED_AS_TRIGGER(fcinfo))
-		elog(ERROR, "Full Text Indexing: Not fired by trigger manager");
+		/* internal error */
+		elog(ERROR, "not fired by trigger manager");
 
 	/* It's safe to cast now that we've checked */
 	trigdata = (TriggerData *) fcinfo->context;
 
 	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
-		elog(ERROR, "Full Text Indexing: Can't process STATEMENT events");
+		ereport(ERROR,
+				(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
+				 errmsg("can't process STATEMENT events")));
+
 	if (TRIGGER_FIRED_BEFORE(trigdata->tg_event))
-		elog(ERROR, "Full Text Indexing: Must be fired AFTER event");
+		ereport(ERROR,
+				(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
+				 errmsg("must be fired AFTER event")));
 
 	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
 		isinsert = true;
@@ -179,11 +185,14 @@ fti(PG_FUNCTION_ARGS)
 		rettuple = trigdata->tg_newtuple;
 
 	if ((ret = SPI_connect()) < 0)
-		elog(ERROR, "Full Text Indexing: SPI_connect: Failed, returned %d\n", ret);
+		/* internal error */
+		elog(ERROR, "SPI_connect failed, returned %d", ret);
 
 	nargs = trigger->tgnargs;
 	if (nargs < 2)
-		elog(ERROR, "Full Text Indexing: Trigger must have at least 2 arguments\n");
+		ereport(ERROR,
+				(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
+				 errmsg("fti trigger must have at least 2 arguments")));
 
 	args = trigger->tgargs;
 	indexname = args[0];
@@ -192,7 +201,10 @@ fti(PG_FUNCTION_ARGS)
 	/* get oid of current tuple, needed by all, so place here */
 	oid = HeapTupleGetOid(rettuple);
 	if (!OidIsValid(oid))
-		elog(ERROR, "Full Text Indexing: Oid of current tuple is invalid");
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("OID is not present"),
+				 errhint("Full Text Index requires indexed tables be created WITH OIDS.")));
 
 	if (isdelete)
 	{
@@ -216,10 +228,12 @@ fti(PG_FUNCTION_ARGS)
 			snprintf(query, MAX_FTI_QUERY_LENGTH, "DELETE FROM %s WHERE id = $1", indexname);
 			pplan = SPI_prepare(query, 1, argtypes);
 			if (!pplan)
-				elog(ERROR, "Full Text Indexing: SPI_prepare: Returned NULL in delete");
+				/* internal error */
+				elog(ERROR, "SPI_prepare returned NULL in delete");
 			pplan = SPI_saveplan(pplan);
 			if (pplan == NULL)
-				elog(ERROR, "Full Text Indexing: SPI_saveplan: Returned NULL in delete");
+				/* internal error */
+				elog(ERROR, "SPI_saveplan returned NULL in delete");
 
 			plan->splan = (void **) malloc(sizeof(void *));
 			*(plan->splan) = pplan;
@@ -230,7 +244,9 @@ fti(PG_FUNCTION_ARGS)
 
 		ret = SPI_execp(*(plan->splan), values, NULL, 0);
 		if (ret != SPI_OK_DELETE)
-			elog(ERROR, "Full Text Indexing: SPI_execp: Error executing plan in delete");
+			ereport(ERROR,
+					(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
+					 errmsg("error executing delete")));
 	}
 
 	if (isinsert)
@@ -267,11 +283,13 @@ fti(PG_FUNCTION_ARGS)
 					 indexname);
 			pplan = SPI_prepare(query, 2, argtypes);
 			if (!pplan)
-				elog(ERROR, "Full Text Indexing: SPI_prepare: Returned NULL in insert");
+				/* internal error */
+				elog(ERROR, "SPI_prepare returned NULL in insert");
 
 			pplan = SPI_saveplan(pplan);
 			if (pplan == NULL)
-				elog(ERROR, "Full Text Indexing: SPI_saveplan: Returned NULL in insert");
+				/* internal error */
+				elog(ERROR, "SPI_saveplan returned NULL in insert");
 
 			plan->splan = (void **) malloc(sizeof(void *));
 			*(plan->splan) = pplan;
@@ -283,7 +301,10 @@ fti(PG_FUNCTION_ARGS)
 		{
 			colnum = SPI_fnumber(tupdesc, args[i + 1]);
 			if (colnum == SPI_ERROR_NOATTRIBUTE)
-				elog(ERROR, "Full Text Indexing: SPI_fnumber: Column '%s' of '%s' not found", args[i + 1], indexname);
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("column \"%s\" of \"%s\" does not exist",
+						 args[i + 1], indexname)));
 
 			/* Get the char* representation of the column */
 			column = SPI_getvalue(rettuple, tupdesc, colnum);
@@ -317,7 +338,9 @@ fti(PG_FUNCTION_ARGS)
 
 					ret = SPI_execp(*(plan->splan), values, NULL, 0);
 					if (ret != SPI_OK_INSERT)
-						elog(ERROR, "Full Text Indexing: SPI_execp: Error executing plan in insert");
+						ereport(ERROR,
+								(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
+								 errmsg("error executing insert")));
 				}
 				pfree(buff);
 				pfree(data);

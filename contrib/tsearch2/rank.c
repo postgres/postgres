@@ -7,8 +7,6 @@
 
 #include "access/gist.h"
 #include "access/itup.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
 #include "utils/builtins.h"
 #include "fmgr.h"
 #include "funcapi.h"
@@ -217,7 +215,8 @@ calc_rank(float *w, tsvector *t, QUERYTYPE *q, int4 method) {
 		case 1: res /= log((float)cnt_length(t)); break;
 		case 2: res /= (float)cnt_length(t); break;
 		default:
-		elog(ERROR,"Unknown normalization method: %d",method);
+		/* internal error */
+		elog(ERROR,"unrecognized normalization method: %d", method);
         }
 
 	return res;
@@ -234,14 +233,21 @@ rank(PG_FUNCTION_ARGS) {
 	int i;
 
 	if ( ARR_NDIM(win) != 1 ) 
-		elog(ERROR,"Array of weight is not one dimentional");
+		ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("array of weight must be one-dimensional")));
+
 	if ( ARRNELEMS(win) < lengthof(weights) )
-		 elog(ERROR,"Array of weight is too short");
+		ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("array of weight is too short")));
 
 	for(i=0;i<lengthof(weights);i++) {
 		ws[ i ] = ( ((float4*)ARR_DATA_PTR(win))[i] >= 0 ) ? ((float4*)ARR_DATA_PTR(win))[i] : weights[i];
 		if ( ws[ i ] > 1.0 ) 
-			elog(ERROR,"Weight out of range");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("weight out of range")));
 	} 
 
 	if ( PG_NARGS() == 4 )
@@ -462,7 +468,8 @@ rank_cd(PG_FUNCTION_ARGS) {
 		case 1: res /= log((float)cnt_length(txt)); break;
 		case 2: res /= (float)cnt_length(txt); break;
 		default:
-		elog(ERROR,"Unknown normalization method: %d",method);
+		/* internal error */
+		elog(ERROR,"unrecognized normalization method: %d", method);
         }
 
 	pfree(doc);
@@ -527,7 +534,9 @@ get_covers(PG_FUNCTION_ARGS) {
 
 	for(i=0;i<txt->size;i++) {
 		if (!pptr[i].haspos)
-			elog(ERROR,"No pos info");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("no pos info")));
 		 dlen += POSDATALEN(txt,&(pptr[i]));
 	}
 

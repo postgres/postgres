@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.55 2003/07/22 22:14:57 tgl Exp $
+ * $Id: elog.h,v 1.56 2003/07/24 17:52:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,6 +99,9 @@
 #define ERRCODE_SQLSERVER_REJECTED_ESTABLISHMENT_OF_SQLCONNECTION	MAKE_SQLSTATE('0','8', '0','0','4')
 #define ERRCODE_TRANSACTION_RESOLUTION_UNKNOWN		MAKE_SQLSTATE('0','8', '0','0','7')
 #define ERRCODE_PROTOCOL_VIOLATION			MAKE_SQLSTATE('0','8', 'P','0','1')
+
+/* Class 09 - Triggered Action Exception */
+#define ERRCODE_TRIGGERED_ACTION_EXCEPTION	MAKE_SQLSTATE('0','9', '0','0','0')
 
 /* Class 0A - Feature Not Supported */
 #define ERRCODE_FEATURE_NOT_SUPPORTED		MAKE_SQLSTATE('0','A', '0','0','0')

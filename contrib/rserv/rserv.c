@@ -57,10 +57,12 @@ _rserv_log_()
 
 	/* Called by trigger manager ? */
 	if (!CurrentTriggerData)
+		/* internal error */
 		elog(ERROR, "_rserv_log_: triggers are not initialized");
 
 	/* Should be called for ROW trigger */
 	if (TRIGGER_FIRED_FOR_STATEMENT(CurrentTriggerData->tg_event))
+		/* internal error */
 		elog(ERROR, "_rserv_log_: can't process STATEMENT events");
 
 	tuple = CurrentTriggerData->tg_trigtuple;
@@ -70,11 +72,13 @@ _rserv_log_()
 	args = trigger->tgargs;
 
 	if (nargs != 1)				/* odd number of arguments! */
+		/* internal error */
 		elog(ERROR, "_rserv_log_: need in *one* argument");
 
 	keynum = atoi(args[0]);
 
 	if (keynum < 0 && keynum != ObjectIdAttributeNumber)
+		/* internal error */
 		elog(ERROR, "_rserv_log_: invalid keynum %d", keynum);
 
 	rel = CurrentTriggerData->tg_relation;
@@ -98,6 +102,7 @@ _rserv_log_()
 
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)
+		/* internal error */
 		elog(ERROR, "_rserv_log_: SPI_connect returned %d", ret);
 
 	if (keynum == ObjectIdAttributeNumber)
@@ -109,13 +114,17 @@ _rserv_log_()
 		key = SPI_getvalue(tuple, tupdesc, keynum);
 
 	if (key == NULL)
-		elog(ERROR, "_rserv_log_: key must be not null");
+		ereport(ERROR,
+				(errcode(ERRCODE_NOT_NULL_VIOLATION),
+				 errmsg("key must be not null")));
 
 	if (newtuple && keynum != ObjectIdAttributeNumber)
 	{
 		newkey = SPI_getvalue(newtuple, tupdesc, keynum);
 		if (newkey == NULL)
-			elog(ERROR, "_rserv_log_: key must be not null");
+			ereport(ERROR,
+					(errcode(ERRCODE_NOT_NULL_VIOLATION),
+					 errmsg("key must be not null")));
 		if (strcmp(newkey, key) == 0)
 			newkey = NULL;
 		else
@@ -137,13 +146,18 @@ _rserv_log_()
 	ret = SPI_exec(sql, 0);
 
 	if (ret < 0)
-		elog(ERROR, "_rserv_log_: SPI_exec(update) returned %d", ret);
+		ereport(ERROR,
+				(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
+				 errmsg("SPI_exec(update) returned %d", ret)));
 
 	/*
 	 * If no tuple was UPDATEd then do INSERT...
 	 */
 	if (SPI_processed > 1)
-		elog(ERROR, "_rserv_log_: duplicate tuples");
+		ereport(ERROR,
+				(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
+				 errmsg("duplicate tuples")));
+
 	else if (SPI_processed == 0)
 	{
 		snprintf(sql, 8192, "insert into _RSERV_LOG_ "
@@ -158,7 +172,9 @@ _rserv_log_()
 		ret = SPI_exec(sql, 0);
 
 		if (ret < 0)
-			elog(ERROR, "_rserv_log_: SPI_exec(insert) returned %d", ret);
+			ereport(ERROR,
+					(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
+					 errmsg("SPI_exec(insert) returned %d", ret)));
 	}
 
 	if (okey != key && okey != outbuf)
@@ -182,7 +198,9 @@ _rserv_log_()
 		ret = SPI_exec(sql, 0);
 
 		if (ret < 0)
-			elog(ERROR, "_rserv_log_: SPI_exec returned %d", ret);
+			ereport(ERROR,
+					(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
+					 errmsg("SPI_exec returned %d", ret)));
 
 		if (okey != newkey && okey != outbuf)
 			pfree(okey);
@@ -215,6 +233,7 @@ _rserv_sync_(int32 server)
 	int			ret;
 
 	if (SerializableSnapshot == NULL)
+		/* internal error */
 		elog(ERROR, "_rserv_sync_: SerializableSnapshot is NULL");
 
 	buf[0] = 0;
@@ -226,6 +245,7 @@ _rserv_sync_(int32 server)
 	}
 
 	if ((ret = SPI_connect()) < 0)
+		/* internal error */
 		elog(ERROR, "_rserv_sync_: SPI_connect returned %d", ret);
 
 	snprintf(sql, 8192, "insert into _RSERV_SYNC_ "
@@ -236,7 +256,9 @@ _rserv_sync_(int32 server)
 	ret = SPI_exec(sql, 0);
 
 	if (ret < 0)
-		elog(ERROR, "_rserv_sync_: SPI_exec returned %d", ret);
+		ereport(ERROR,
+				(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
+				 errmsg("SPI_exec returned %d", ret)));
 
 	SPI_finish();
 

@@ -8,8 +8,6 @@
 
 #include "access/gist.h"
 #include "access/itup.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
 #include "utils/builtins.h"
 #include "storage/bufpage.h"
 #include "executor/spi.h"
@@ -190,7 +188,9 @@ gettoken_tsvector(TI_IN_STATE * state)
 				oldstate = WAITENDWORD;
 			}
 			else if (state->oprisdelim && ISOPERATOR(*(state->prsbuf)))
-				elog(ERROR, "Syntax error");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("syntax error")));
 			else if (*(state->prsbuf) != ' ')
 			{
 				*(state->curpos) = *(state->prsbuf);
@@ -201,7 +201,9 @@ gettoken_tsvector(TI_IN_STATE * state)
 		else if (state->state == WAITNEXTCHAR)
 		{
 			if (*(state->prsbuf) == '\0')
-				elog(ERROR, "There is no escaped character");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("there is no escaped character")));
 			else
 			{
 				RESIZEPRSBUF;
@@ -222,12 +224,16 @@ gettoken_tsvector(TI_IN_STATE * state)
 			{
 				RESIZEPRSBUF;
 				if (state->curpos == state->word)
-					elog(ERROR, "Syntax error");
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("syntax error")));
 				*(state->curpos) = '\0';
 				return 1; 
 			} else if ( *(state->prsbuf) == ':' ) {
 				if (state->curpos == state->word)
-					elog(ERROR, "Syntax error");
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("syntax error")));
 				*(state->curpos) = '\0';
 				if ( state->oprisdelim )
 					return 1;
@@ -248,7 +254,9 @@ gettoken_tsvector(TI_IN_STATE * state)
 				RESIZEPRSBUF;
 				*(state->curpos) = '\0';
 				if (state->curpos == state->word)
-					elog(ERROR, "Syntax error");
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("syntax error")));
 				if ( state->oprisdelim ) {
 					state->prsbuf++;
 					return 1;
@@ -261,7 +269,9 @@ gettoken_tsvector(TI_IN_STATE * state)
 				oldstate = WAITENDCMPLX;
 			}
 			else if (*(state->prsbuf) == '\0')
-				elog(ERROR, "Syntax error");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("syntax error")));
 			else
 			{
 				RESIZEPRSBUF;
@@ -286,36 +296,51 @@ gettoken_tsvector(TI_IN_STATE * state)
 				(  *(uint16*)(state->pos) )++;
 				state->pos[ *(uint16*)(state->pos) ].pos = LIMITPOS(atoi(state->prsbuf));
 				if ( state->pos[ *(uint16*)(state->pos) ].pos == 0 )
-					elog(ERROR,"Wrong position info");
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("wrong position info")));
 				state->pos[ *(uint16*)(state->pos) ].weight = 0;
 				state->state = WAITPOSDELIM;
 			} else
-				elog(ERROR,"Syntax error");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("syntax error")));
 		} else if (state->state == WAITPOSDELIM) {
 			if ( *(state->prsbuf) == ',' ) {
 				state->state = INPOSINFO;
 			} else if ( tolower(*(state->prsbuf)) == 'a' || *(state->prsbuf)=='*' ) {
 				if ( state->pos[ *(uint16*)(state->pos) ].weight )
-					elog(ERROR,"Syntax error");
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("syntax error")));
 				state->pos[ *(uint16*)(state->pos) ].weight = 3;
 			} else if ( tolower(*(state->prsbuf)) == 'b' ) {
 				if ( state->pos[ *(uint16*)(state->pos) ].weight )
-					elog(ERROR,"Syntax error");
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("syntax error")));
 				state->pos[ *(uint16*)(state->pos) ].weight = 2;
 			} else if ( tolower(*(state->prsbuf)) == 'c' ) {
 				if ( state->pos[ *(uint16*)(state->pos) ].weight )
-					elog(ERROR,"Syntax error");
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("syntax error")));
 				state->pos[ *(uint16*)(state->pos) ].weight = 1;
 			} else if ( tolower(*(state->prsbuf)) == 'd' ) {
 				if ( state->pos[ *(uint16*)(state->pos) ].weight )
-					elog(ERROR,"Syntax error");
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("syntax error")));
 				state->pos[ *(uint16*)(state->pos) ].weight = 0;
 			} else if ( isspace(*(state->prsbuf)) || *(state->prsbuf) == '\0' ) {
 				return 1;
 			} else if ( !isdigit(*(state->prsbuf)) )
-				elog(ERROR,"Syntax error");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("syntax error")));
 		} else
-			elog(ERROR, "Inner bug :(");
+			/* internal error */
+			elog(ERROR, "internal error");
 		state->prsbuf++;
 	}
 
@@ -360,10 +385,14 @@ tsvector_in(PG_FUNCTION_ARGS)
 			cur = tmpbuf + dist;
 		}
 		if (state.curpos - state.word >= MAXSTRLEN)
-			elog(ERROR, "Word is too long");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("word is too long")));
 		arr[len].entry.len= state.curpos - state.word;
 		if (cur - tmpbuf > MAXSTRPOS)
-			elog(ERROR, "Too long value");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("too long value")));
 		arr[len].entry.pos=cur - tmpbuf;
 		memcpy((void *) cur, (void *) state.word, arr[len].entry.len);
 		cur += arr[len].entry.len;
@@ -583,7 +612,9 @@ makevalue(PRSTEXT * prs)
 	{
 		ptr->len = prs->words[i].len;
 		if (cur - str > MAXSTRPOS)
-			elog(ERROR, "Value is too big");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("value is too big")));
 		ptr->pos= cur - str;
 		memcpy((void *) cur, (void *) prs->words[i].word, prs->words[i].len);
 		pfree(prs->words[i].word);
@@ -701,12 +732,15 @@ tsearch2(PG_FUNCTION_ARGS)
 	Oid		funcoid = InvalidOid;
 
 	if (!CALLED_AS_TRIGGER(fcinfo))
+		/* internal error */
 		elog(ERROR, "TSearch: Not fired by trigger manager");
 
 	trigdata = (TriggerData *) fcinfo->context;
 	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
+		/* internal error */
 		elog(ERROR, "TSearch: Can't process STATEMENT events");
 	if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
+		/* internal error */
 		elog(ERROR, "TSearch: Must be fired BEFORE event");
 
 	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
@@ -714,17 +748,21 @@ tsearch2(PG_FUNCTION_ARGS)
 	else if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 		rettuple = trigdata->tg_newtuple;
 	else
+		/* internal error */
 		elog(ERROR, "TSearch: Unknown event");
 
 	trigger = trigdata->tg_trigger;
 	rel = trigdata->tg_relation;
 
 	if (trigger->tgnargs < 2)
+		/* internal error */
 		elog(ERROR, "TSearch: format tsearch2(tsvector_field, text_field1,...)");
 
 	numidxattr = SPI_fnumber(rel->rd_att, trigger->tgargs[0]);
 	if (numidxattr == SPI_ERROR_NOATTRIBUTE)
-		elog(ERROR, "TSearch: Can not find tsvector_field");
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("cannot find tsvector_field")));
 
 	prs.lenwords = 32;
 	prs.curwords = 0;
@@ -745,7 +783,11 @@ tsearch2(PG_FUNCTION_ARGS)
 		{
 			funcoid=findFunc(trigger->tgargs[i]);
 			if ( funcoid==InvalidOid )
-				elog(ERROR,"TSearch: can't find function or field '%s'",trigger->tgargs[i]);
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("cannot find function or field \"%s\"",
+								trigger->tgargs[i])));
+
 			continue;
 		}
 		oidtype = SPI_gettypeid(rel->rd_att, numattr);
@@ -798,6 +840,7 @@ tsearch2(PG_FUNCTION_ARGS)
 	}
 
 	if (rettuple == NULL)
+		/* internal error */
 		elog(ERROR, "TSearch: %d returned by SPI_modifytuple", SPI_result);
 
 	return PointerGetDatum(rettuple);

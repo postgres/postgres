@@ -68,7 +68,8 @@ ts_error(int state, const char *format, ...) {
 	}
 	va_end(args);
  
-	elog(state,buf);
+	/* ?? internal error ?? */
+	elog(state, "%s", buf);
 	pfree(buf);
 }
 

@@ -195,11 +195,17 @@ prsd_headline(PG_FUNCTION_ARGS) {
 		pfree(map);
 
 		if ( min_words >= max_words )
-			elog(ERROR,"Must be MinWords < MaxWords");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("must be MinWords < MaxWords")));
 		if ( min_words<=0 )
-			elog(ERROR,"Must be MinWords > 0");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("must be MinWords > 0")));
 		if ( shortword<0 )
-			elog(ERROR,"Must be ShortWord >= 0");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("must be ShortWord >= 0")));
 	}
 
 	while( hlCover(prs,query,&p,&q) ) {

@@ -40,13 +40,17 @@ Datum           _intbig_out(PG_FUNCTION_ARGS);
         
 Datum
 _intbig_in(PG_FUNCTION_ARGS) {
-        elog(ERROR, "Not implemented");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("_intbig_in() not implemented")));
         PG_RETURN_DATUM(0);
 }
                 
 Datum
 _intbig_out(PG_FUNCTION_ARGS) {
-        elog(ERROR, "Not implemented");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("_intbig_out() not implemented")));
         PG_RETURN_DATUM(0);
 }                                
 

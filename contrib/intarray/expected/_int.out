@@ -1,12 +1,14 @@
 --
 -- first, define the datatype.  Turn off echoing so that expected file
--- does not depend on contents of seg.sql.
+-- does not depend on contents of _int.sql.
 --
 \set ECHO none
-psql:_int.sql:13: NOTICE:  ProcedureCreate: type query_int is not yet defined
-psql:_int.sql:18: NOTICE:  Argument type "query_int" is only a shell
-psql:_int.sql:367: NOTICE:  ProcedureCreate: type intbig_gkey is not yet defined
-psql:_int.sql:372: NOTICE:  Argument type "intbig_gkey" is only a shell
+psql:_int.sql:13: NOTICE:  type query_int is not yet defined
+DETAIL:  Creating a shell type definition.
+psql:_int.sql:18: NOTICE:  argument type query_int is only a shell
+psql:_int.sql:367: NOTICE:  type intbig_gkey is not yet defined
+DETAIL:  Creating a shell type definition.
+psql:_int.sql:372: NOTICE:  argument type intbig_gkey is only a shell
 SELECT intset(1234);
  intset 
 --------

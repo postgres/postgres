@@ -3,18 +3,24 @@
 -- does not depend on contents of btree_gist.sql.
 --
 \set ECHO none
-psql:btree_gist.sql:8: NOTICE:  ProcedureCreate: type int2key is not yet defined
-psql:btree_gist.sql:13: NOTICE:  Argument type "int2key" is only a shell
-psql:btree_gist.sql:25: NOTICE:  ProcedureCreate: type int4key is not yet defined
-psql:btree_gist.sql:30: NOTICE:  Argument type "int4key" is only a shell
-psql:btree_gist.sql:42: NOTICE:  ProcedureCreate: type int8key is not yet defined
-psql:btree_gist.sql:47: NOTICE:  Argument type "int8key" is only a shell
-psql:btree_gist.sql:59: NOTICE:  ProcedureCreate: type float4key is not yet defined
-psql:btree_gist.sql:64: NOTICE:  Argument type "float4key" is only a shell
-psql:btree_gist.sql:77: NOTICE:  ProcedureCreate: type float8key is not yet defined
-psql:btree_gist.sql:82: NOTICE:  Argument type "float8key" is only a shell
-psql:btree_gist.sql:392: NOTICE:  ProcedureCreate: type tskey is not yet defined
-psql:btree_gist.sql:397: NOTICE:  Argument type "tskey" is only a shell
+psql:btree_gist.sql:8: NOTICE:  type int2key is not yet defined
+DETAIL:  Creating a shell type definition.
+psql:btree_gist.sql:13: NOTICE:  argument type int2key is only a shell
+psql:btree_gist.sql:25: NOTICE:  type int4key is not yet defined
+DETAIL:  Creating a shell type definition.
+psql:btree_gist.sql:30: NOTICE:  argument type int4key is only a shell
+psql:btree_gist.sql:42: NOTICE:  type int8key is not yet defined
+DETAIL:  Creating a shell type definition.
+psql:btree_gist.sql:47: NOTICE:  argument type int8key is only a shell
+psql:btree_gist.sql:59: NOTICE:  type float4key is not yet defined
+DETAIL:  Creating a shell type definition.
+psql:btree_gist.sql:64: NOTICE:  argument type float4key is only a shell
+psql:btree_gist.sql:77: NOTICE:  type float8key is not yet defined
+DETAIL:  Creating a shell type definition.
+psql:btree_gist.sql:82: NOTICE:  argument type float8key is only a shell
+psql:btree_gist.sql:392: NOTICE:  type tskey is not yet defined
+DETAIL:  Creating a shell type definition.
+psql:btree_gist.sql:397: NOTICE:  argument type tskey is only a shell
 CREATE TABLE int4tmp (b int4);
 \copy int4tmp from 'data/test_btree.data'
 CREATE TABLE int8tmp (b int8);

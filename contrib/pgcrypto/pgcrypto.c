@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: pgcrypto.c,v 1.12 2001/12/30 23:09:41 tgl Exp $
+ * $Id: pgcrypto.c,v 1.13 2003/07/24 17:52:33 tgl Exp $
  */
 
 #include <postgres.h>
@@ -202,7 +202,9 @@ pg_gen_salt(PG_FUNCTION_ARGS)
 	buf[len] = 0;
 	len = px_gen_salt(buf, buf, 0);
 	if (len == 0)
-		elog(ERROR, "No such crypt algorithm");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("no such crypt algorithm")));
 
 	res = (text *) palloc(len + VARHDRSZ);
 	VARATT_SIZEP(res) = len + VARHDRSZ;
@@ -237,7 +239,9 @@ pg_gen_salt_rounds(PG_FUNCTION_ARGS)
 	buf[len] = 0;
 	len = px_gen_salt(buf, buf, rounds);
 	if (len == 0)
-		elog(ERROR, "No such crypt algorithm or bad number of rounds");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("no such crypt algorithm or bad number of rounds")));
 
 	res = (text *) palloc(len + VARHDRSZ);
 	VARATT_SIZEP(res) = len + VARHDRSZ;
@@ -292,7 +296,9 @@ pg_crypt(PG_FUNCTION_ARGS)
 	pfree(buf1);
 
 	if (cres == NULL)
-		elog(ERROR, "crypt(3) returned NULL");
+		ereport(ERROR,
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
+				 errmsg("crypt(3) returned NULL")));
 
 	clen = strlen(cres);
 
@@ -349,7 +355,9 @@ pg_encrypt(PG_FUNCTION_ARGS)
 	if (err)
 	{
 		pfree(res);
-		elog(ERROR, "encrypt error: %d", err);
+		ereport(ERROR,
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
+				 errmsg("encrypt error: %d", err)));
 	}
 
 	VARATT_SIZEP(res) = VARHDRSZ + rlen;
@@ -393,7 +401,9 @@ pg_decrypt(PG_FUNCTION_ARGS)
 	px_combo_free(c);
 
 	if (err)
-		elog(ERROR, "decrypt error: %d", err);
+		ereport(ERROR,
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
+				 errmsg("decrypt error: %d", err)));
 
 	VARATT_SIZEP(res) = VARHDRSZ + rlen;
 
@@ -446,7 +456,9 @@ pg_encrypt_iv(PG_FUNCTION_ARGS)
 	px_combo_free(c);
 
 	if (err)
-		elog(ERROR, "encrypt_iv error: %d", err);
+		ereport(ERROR,
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
+				 errmsg("encrypt_iv error: %d", err)));
 
 	VARATT_SIZEP(res) = VARHDRSZ + rlen;
 
@@ -500,7 +512,9 @@ pg_decrypt_iv(PG_FUNCTION_ARGS)
 	px_combo_free(c);
 
 	if (err)
-		elog(ERROR, "decrypt_iv error: %d", err);
+		ereport(ERROR,
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
+				 errmsg("decrypt_iv error: %d", err)));
 
 	VARATT_SIZEP(res) = VARHDRSZ + rlen;
 
@@ -551,7 +565,9 @@ find_provider(text *name,
 	{
 		if (silent)
 			return NULL;
-		elog(ERROR, "%s type does not exist (name too long)", desc);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("%s type does not exist (name too long)", desc)));
 	}
 
 	p = VARDATA(name);
@@ -562,7 +578,9 @@ find_provider(text *name,
 	err = provider_lookup(buf, &res);
 
 	if (err && !silent)
-		elog(ERROR, "%s type does not exist: '%s'", desc, buf);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("%s type does not exist: \"%s\"", desc, buf)));
 
 	return err ? NULL : res;
 }

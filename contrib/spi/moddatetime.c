@@ -34,20 +34,25 @@ moddatetime(PG_FUNCTION_ARGS)
 	TupleDesc	tupdesc;		/* tuple description */
 
 	if (!CALLED_AS_TRIGGER(fcinfo))
-		elog(ERROR, "moddatetime: not fired by trigger manager.");
+		/* internal error */
+		elog(ERROR, "moddatetime: not fired by trigger manager");
 
 	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
-		elog(ERROR, "moddatetime: can't process STATEMENT events.");
+		/* internal error */
+		elog(ERROR, "moddatetime: can't process STATEMENT events");
 
 	if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
-		elog(ERROR, "moddatetime: must be fired before event.");
+		/* internal error */
+		elog(ERROR, "moddatetime: must be fired before event");
 
 	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
-		elog(ERROR, "moddatetime: must be fired before event.");
+		/* internal error */
+		elog(ERROR, "moddatetime: must be fired before event");
 	else if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 		rettuple = trigdata->tg_newtuple;
 	else
-		elog(ERROR, "moddatetime: can't process DELETE events.");
+		/* internal error */
+		elog(ERROR, "moddatetime: can't process DELETE events");
 
 	rel = trigdata->tg_relation;
 	relname = SPI_getrelname(rel);
@@ -57,7 +62,8 @@ moddatetime(PG_FUNCTION_ARGS)
 	nargs = trigger->tgnargs;
 
 	if (nargs != 1)
-		elog(ERROR, "moddatetime (%s): A single argument was expected.", relname);
+		/* internal error */
+		elog(ERROR, "moddatetime (%s): A single argument was expected", relname);
 
 	args = trigger->tgargs;
 	/* must be the field layout? */
@@ -81,8 +87,10 @@ moddatetime(PG_FUNCTION_ARGS)
 	 * even exits.	The above function must return -1 if name not found?
 	 */
 	if (attnum < 0)
-		elog(ERROR, "moddatetime (%s): there is no attribute %s", relname,
-			 args[0]);
+		ereport(ERROR,
+				(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
+				 errmsg("\"%s\" has no attribute \"%s\"",
+						relname, args[0])));
 
 	/*
 	 * OK, this is where we make sure the timestamp field that we are
@@ -90,8 +98,10 @@ moddatetime(PG_FUNCTION_ARGS)
 	 * novel idea !-)
 	 */
 	if (SPI_gettypeid(tupdesc, attnum) != TIMESTAMPOID)
-		elog(ERROR, "moddatetime (%s): attribute %s must be of TIMESTAMP type",
-			 relname, args[0]);
+		ereport(ERROR,
+				(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
+				 errmsg("attribute \"%s\" of \"%s\" must be type TIMESTAMP",
+						 args[0], relname)));
 
 /* 1 is the number of items in the arrays attnum and newdt.
 	attnum is the positional number of the field to be updated.
@@ -103,6 +113,7 @@ moddatetime(PG_FUNCTION_ARGS)
 	rettuple = SPI_modifytuple(rel, rettuple, 1, &attnum, &newdt, NULL);
 
 	if (rettuple == NULL)
+		/* internal error */
 		elog(ERROR, "moddatetime (%s): %d returned by SPI_modifytuple",
 			 relname, SPI_result);
 

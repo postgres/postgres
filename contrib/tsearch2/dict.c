@@ -258,7 +258,10 @@ Datum
 lexize_bycurrent(PG_FUNCTION_ARGS) {
 	Datum res;
 	if ( currect_dictionary_id == 0 )
-		elog(ERROR, "No currect dictionary. Execute select set_curdict().");
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("no currect dictionary"),
+				 errhint("Execute select set_curdict().")));
 
 	res = DirectFunctionCall3(
 		lexize,

@@ -137,22 +137,14 @@ do { \
 	hentry = (crosstab_HashEnt*) hash_search(crosstab_HashTable, \
 										 key, HASH_ENTER, &found); \
 	if (hentry == NULL) \
-		elog(ERROR, "out of memory in crosstab_HashTable"); \
+		ereport(ERROR, \
+				(errcode(ERRCODE_OUT_OF_MEMORY), \
+				 errmsg("out of memory"))); \
 	if (found) \
-		elog(ERROR, "trying to use a category name more than once"); \
+		ereport(ERROR, \
+				(errcode(ERRCODE_DUPLICATE_OBJECT), \
+				 errmsg("duplicate category name"))); \
 	hentry->catdesc = CATDESC; \
-} while(0)
-
-#define crosstab_HashTableDelete(CATNAME) \
-do { \
-	crosstab_HashEnt *hentry; char key[MAX_CATNAME_LEN]; \
-	\
-	MemSet(key, 0, MAX_CATNAME_LEN); \
-	snprintf(key, MAX_CATNAME_LEN - 1, "%s", CATNAME); \
-	hentry = (crosstab_HashEnt*) hash_search(crosstab_HashTable, \
-										 key, HASH_REMOVE, NULL); \
-	if (hentry == NULL) \
-		elog(WARNING, "trying to delete function name that does not exist."); \
 } while(0)
 
 /* hash table */
@@ -389,6 +381,7 @@ crosstab(PG_FUNCTION_ARGS)
 
 		/* Connect to SPI manager */
 		if ((ret = SPI_connect()) < 0)
+			/* internal error */
 			elog(ERROR, "crosstab: SPI_connect returned %d", ret);
 
 		/* Retrieve the desired rows */
@@ -410,8 +403,11 @@ crosstab(PG_FUNCTION_ARGS)
 			 * in the final result
 			 */
 			if (spi_tupdesc->natts != 3)
-				elog(ERROR, "crosstab: provided SQL must return 3 columns;"
-					 " a rowid, a category, and a values column");
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("invalid source data SQL statement"),
+						 errdetail("The provided SQL must return 3 " \
+								   " columns; rowid, category, and values.")));
 		}
 		else
 		{
@@ -437,7 +433,9 @@ crosstab(PG_FUNCTION_ARGS)
 		else if (functyptype == 'p' && functypeid == RECORDOID)
 		{
 			if (fcinfo->nargs != 2)
-				elog(ERROR, "Wrong number of arguments specified for function");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("wrong number of arguments")));
 			else
 			{
 				int			num_categories = PG_GETARG_INT32(1);
@@ -446,7 +444,9 @@ crosstab(PG_FUNCTION_ARGS)
 			}
 		}
 		else
-			elog(ERROR, "crosstab: return type must be a row type");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("return type must be a row type")));
 
 		/*
 		 * Check that return tupdesc is compatible with the one we got
@@ -454,8 +454,10 @@ crosstab(PG_FUNCTION_ARGS)
 		 * attributes
 		 */
 		if (!compatCrosstabTupleDescs(tupdesc, spi_tupdesc))
-			elog(ERROR, "crosstab: return and sql tuple descriptions are"
-				 " incompatible");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("return and sql tuple descriptions are " \
+							"incompatible")));
 
 		/* allocate a slot for a tuple with this tupdesc */
 		slot = TupleDescGetSlot(tupdesc);
@@ -706,8 +708,10 @@ crosstab_hash(PG_FUNCTION_ARGS)
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (!rsinfo || !(rsinfo->allowedModes & SFRM_Materialize))
-		elog(ERROR, "crosstab: materialize mode required, but it is not "
-			 "allowed in this context");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("materialize mode required, but it is not " \
+						"allowed in this context")));
 
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
@@ -723,8 +727,10 @@ crosstab_hash(PG_FUNCTION_ARGS)
 	 * function to complain if needed.
 	 */
 	if (tupdesc->natts < 2)
-		elog(ERROR, "crosstab: query-specified return tuple and " \
-					"crosstab function are not compatible");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("query-specified return tuple and " \
+						"crosstab function are not compatible")));
 
 	/* load up the categories hash table */
 	num_categories = load_categories_hash(cats_sql, per_query_ctx);
@@ -775,6 +781,7 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)
+		/* internal error */
 		elog(ERROR, "load_categories_hash: SPI_connect returned %d", ret);
 
 	/* Retrieve the category name rows */
@@ -793,8 +800,10 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 		 * category - the label or identifier for each column
 		 */
 		if (spi_tupdesc->natts != 1)
-			elog(ERROR, "load_categories_hash: provided categories SQL must " \
-						"return 1 column of at least one row");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("provided \"categories\" SQL must " \
+							"return 1 column of at least one row")));
 
 		for (i = 0; i < proc; i++)
 		{
@@ -824,11 +833,14 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 	{
 		/* no qualifying tuples */
 		SPI_finish();
-		elog(ERROR, "load_categories_hash: provided categories SQL must " \
-					"return 1 column of at least one row");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("provided \"categories\" SQL must " \
+						"return 1 column of at least one row")));
 	}
 
 	if (SPI_finish() != SPI_OK_FINISH)
+		/* internal error */
 		elog(ERROR, "load_categories_hash: SPI_finish() failed");
 
 	return num_categories;
@@ -856,6 +868,7 @@ get_crosstab_tuplestore(char *sql,
 
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)
+		/* internal error */
 		elog(ERROR, "get_crosstab_tuplestore: SPI_connect returned %d", ret);
 
 	/* Now retrieve the crosstab source rows */
@@ -887,17 +900,22 @@ get_crosstab_tuplestore(char *sql,
 		 * time we encounter a particular rowname.
 		 */
 		if (ncols < 3)
-			elog(ERROR, "get_crosstab_tuplestore: provided source SQL must " \
-						"return at least 3 columns; a rowid, a category, " \
-						"and a values column");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid source data SQL statement"),
+					 errdetail("The provided SQL must return 3 " \
+							   " columns; rowid, category, and values.")));
 
 		result_ncols = (ncols - 2) + num_categories;
 
 		/* Recheck to make sure we tuple descriptor still looks reasonable */
 		if (tupdesc->natts != result_ncols)
-			elog(ERROR, "get_crosstab_tuplestore: query-specified return " \
-						"tuple has %d columns but crosstab returns %d",
-						 tupdesc->natts, result_ncols);
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("invalid return type"),
+					 errdetail("query-specified return " \
+							   "tuple has %d columns but crosstab " \
+							   "returns %d", tupdesc->natts, result_ncols)));
 
 		/* allocate space */
 		values = (char **) palloc(result_ncols * sizeof(char *));
@@ -985,6 +1003,7 @@ get_crosstab_tuplestore(char *sql,
 	}
 
 	if (SPI_finish() != SPI_OK_FINISH)
+		/* internal error */
 		elog(ERROR, "get_crosstab_tuplestore: SPI_finish() failed");
 
 	tuplestore_donestoring(tupstore);
@@ -1048,8 +1067,10 @@ connectby_text(PG_FUNCTION_ARGS)
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (!rsinfo || !(rsinfo->allowedModes & SFRM_Materialize))
-		elog(ERROR, "connectby: materialize mode required, but it is not "
-			 "allowed in this context");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("materialize mode required, but it is not " \
+						"allowed in this context")));
 
 	if (fcinfo->nargs == 6)
 	{
@@ -1074,8 +1095,10 @@ connectby_text(PG_FUNCTION_ARGS)
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (!rsinfo || !(rsinfo->allowedModes & SFRM_Materialize))
-		elog(ERROR, "connectby requires Materialize mode, but it is not "
-			 "allowed in this context");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("materialize mode required, but it is not " \
+						"allowed in this context")));
 
 	/* OK, go to work */
 	rsinfo->returnMode = SFRM_Materialize;
@@ -1122,6 +1145,7 @@ connectby(char *relname,
 
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)
+		/* internal error */
 		elog(ERROR, "connectby: SPI_connect returned %d", ret);
 
 	/* switch to longer term context to create the tuple store */
@@ -1226,8 +1250,11 @@ build_tuplestore_recursively(char *key_fld,
 			 */
 
 			if (!compatConnectbyTupleDescs(tupdesc, spi_tupdesc))
-				elog(ERROR, "connectby: return and sql tuple descriptions are "
-					 "incompatible");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("invalid return type"),
+						 errdetail("Return and SQL tuple descriptions are " \
+								   "incompatible.")));
 
 			/* root value is the one we initially start with */
 			values[0] = start_with;
@@ -1346,30 +1373,44 @@ validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch)
 	if (show_branch)
 	{
 		if (tupdesc->natts != CONNECTBY_NCOLS)
-			elog(ERROR, "Query-specified return tuple not valid for Connectby: "
-				 "wrong number of columns");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("invalid return type"),
+					 errdetail("Query-specified return tuple has " \
+							   "wrong number of columns.")));
 	}
 	else
 	{
 		if (tupdesc->natts != CONNECTBY_NCOLS_NOBRANCH)
-			elog(ERROR, "Query-specified return tuple not valid for Connectby: "
-				 "wrong number of columns");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("invalid return type"),
+					 errdetail("Query-specified return tuple has " \
+							   "wrong number of columns.")));
 	}
 
 	/* check that the types of the first two columns match */
 	if (tupdesc->attrs[0]->atttypid != tupdesc->attrs[1]->atttypid)
-		elog(ERROR, "Query-specified return tuple not valid for Connectby: "
-			 "first two columns must be the same type");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("invalid return type"),
+				 errdetail("First two columns must be the same type.")));
 
 	/* check that the type of the third column is INT4 */
 	if (tupdesc->attrs[2]->atttypid != INT4OID)
-		elog(ERROR, "Query-specified return tuple not valid for Connectby: "
-			 "third column must be type %s", format_type_be(INT4OID));
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("invalid return type"),
+				 errdetail("Third column must be type %s.",
+						 format_type_be(INT4OID))));
 
 	/* check that the type of the fourth column is TEXT if applicable */
 	if (show_branch && tupdesc->attrs[3]->atttypid != TEXTOID)
-		elog(ERROR, "Query-specified return tuple not valid for Connectby: "
-			 "fourth column must be type %s", format_type_be(TEXTOID));
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("invalid return type"),
+				 errdetail("Fourth column must be type %s.",
+						 format_type_be(TEXTOID))));
 
 	/* OK, the tupdesc is valid for our purposes */
 }
@@ -1387,15 +1428,21 @@ compatConnectbyTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 	ret_atttypid = ret_tupdesc->attrs[0]->atttypid;
 	sql_atttypid = sql_tupdesc->attrs[0]->atttypid;
 	if (ret_atttypid != sql_atttypid)
-		elog(ERROR, "compatConnectbyTupleDescs: SQL key field datatype does "
-			 "not match return key field datatype");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("invalid return type"),
+				 errdetail("SQL key field datatype does " \
+						   "not match return key field datatype.")));
 
 	/* check the parent_key_fld types match */
 	ret_atttypid = ret_tupdesc->attrs[1]->atttypid;
 	sql_atttypid = sql_tupdesc->attrs[1]->atttypid;
 	if (ret_atttypid != sql_atttypid)
-		elog(ERROR, "compatConnectbyTupleDescs: SQL parent key field datatype "
-			 "does not match return parent key field datatype");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("invalid return type"),
+				 errdetail("SQL parent key field datatype does " \
+						   "not match return parent key field datatype.")));
 
 	/* OK, the two tupdescs are compatible for our purposes */
 	return true;
@@ -1417,8 +1464,11 @@ compatCrosstabTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 	ret_atttypid = ret_tupdesc->attrs[0]->atttypid;
 	sql_atttypid = sql_tupdesc->attrs[0]->atttypid;
 	if (ret_atttypid != sql_atttypid)
-		elog(ERROR, "compatCrosstabTupleDescs: SQL rowid datatype does not match"
-			 " return rowid datatype");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("invalid return type"),
+				 errdetail("SQL rowid datatype does not match " \
+						   "return rowid datatype.")));
 
 	/*
 	 * - attribute [1] of the sql tuple is the category; no need to check

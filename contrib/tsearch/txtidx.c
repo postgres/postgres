@@ -8,8 +8,6 @@
 
 #include "access/gist.h"
 #include "access/itup.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
 #include "utils/builtins.h"
 #include "storage/bufpage.h"
 #include "executor/spi.h"
@@ -128,7 +126,9 @@ gettoken_txtidx(TI_IN_STATE * state)
 				oldstate = WAITENDWORD;
 			}
 			else if (state->oprisdelim && ISOPERATOR(*(state->prsbuf)))
-				elog(ERROR, "Syntax error");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("syntax error")));
 			else if (*(state->prsbuf) != ' ')
 			{
 				*(state->curpos) = *(state->prsbuf);
@@ -139,7 +139,9 @@ gettoken_txtidx(TI_IN_STATE * state)
 		else if (state->state == WAITNEXTCHAR)
 		{
 			if (*(state->prsbuf) == '\0')
-				elog(ERROR, "There is no escaped character");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("there is no escaped character")));
 			else
 			{
 				RESIZEPRSBUF;
@@ -160,7 +162,9 @@ gettoken_txtidx(TI_IN_STATE * state)
 			{
 				RESIZEPRSBUF;
 				if (state->curpos == state->word)
-					elog(ERROR, "Syntax error");
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("syntax error")));
 				*(state->curpos) = '\0';
 				return 1;
 			}
@@ -178,7 +182,9 @@ gettoken_txtidx(TI_IN_STATE * state)
 				RESIZEPRSBUF;
 				*(state->curpos) = '\0';
 				if (state->curpos == state->word)
-					elog(ERROR, "Syntax error");
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("syntax error")));
 				state->prsbuf++;
 				return 1;
 			}
@@ -188,7 +194,9 @@ gettoken_txtidx(TI_IN_STATE * state)
 				oldstate = WAITENDCMPLX;
 			}
 			else if (*(state->prsbuf) == '\0')
-				elog(ERROR, "Syntax error");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("syntax error")));
 			else
 			{
 				RESIZEPRSBUF;
@@ -197,7 +205,8 @@ gettoken_txtidx(TI_IN_STATE * state)
 			}
 		}
 		else
-			elog(ERROR, "Inner bug :(");
+			/* internal error */
+			elog(ERROR, "internal error");
 		state->prsbuf++;
 	}
 
@@ -241,10 +250,14 @@ txtidx_in(PG_FUNCTION_ARGS)
 			cur = tmpbuf + dist;
 		}
 		if (state.curpos - state.word > 0xffff)
-			elog(ERROR, "Word is too long");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("word is too long")));
 		arr[len].len = state.curpos - state.word;
 		if (cur - tmpbuf > 0xffff)
-			elog(ERROR, "Too long value");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("too long value")));
 		arr[len].pos = cur - tmpbuf;
 		memcpy((void *) cur, (void *) state.word, arr[len].len);
 		cur += arr[len].len;
@@ -253,7 +266,9 @@ txtidx_in(PG_FUNCTION_ARGS)
 	pfree(state.word);
 
 	if (!len)
-		elog(ERROR, "Void value");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("void value")));
 
 	len = uniqueentry(arr, len, tmpbuf, &buflen);
 	totallen = CALCDATASIZE(len, buflen);
@@ -359,7 +374,9 @@ parsetext(PRSTEXT * prs, char *buf, int4 buflen)
 		if (tokenlen > 0xffff)
 		{
 			end_parse();
-			elog(ERROR, "Word is too long");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("word is too long")));
 		}
 
 		lenlemm = tokenlen;
@@ -461,7 +478,9 @@ makevalue(PRSTEXT * prs)
 	{
 		ptr->len = prs->words[i].len;
 		if (cur - str > 0xffff)
-			elog(ERROR, "Value is too big");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("value is too big")));
 		ptr->pos = cur - str;
 		ptr++;
 		memcpy((void *) cur, (void *) prs->words[i].word, prs->words[i].len);
@@ -512,12 +531,15 @@ tsearch(PG_FUNCTION_ARGS)
 	Datum		datum = (Datum) 0;
 
 	if (!CALLED_AS_TRIGGER(fcinfo))
+		/* internal error */
 		elog(ERROR, "TSearch: Not fired by trigger manager");
 
 	trigdata = (TriggerData *) fcinfo->context;
 	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
+		/* internal error */
 		elog(ERROR, "TSearch: Can't process STATEMENT events");
 	if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
+		/* internal error */
 		elog(ERROR, "TSearch: Must be fired BEFORE event");
 
 	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
@@ -525,18 +547,21 @@ tsearch(PG_FUNCTION_ARGS)
 	else if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 		rettuple = trigdata->tg_newtuple;
 	else
+		/* internal error */
 		elog(ERROR, "TSearch: Unknown event");
 
 	trigger = trigdata->tg_trigger;
 	rel = trigdata->tg_relation;
 
 	if (trigger->tgnargs < 2)
+		/* internal error */
 		elog(ERROR, "TSearch: format tsearch(txtidx_field, text_field1,...)");
 
 	numidxattr = SPI_fnumber(rel->rd_att, trigger->tgargs[0]);
 	if (numidxattr == SPI_ERROR_NOATTRIBUTE)
-		elog(ERROR, "TSearch: Can not find txtidx_field");
-
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("could not find txtidx_field")));
 	prs.lenwords = 32;
 	prs.curwords = 0;
 	prs.words = (WORD *) palloc(sizeof(WORD) * prs.lenwords);
@@ -594,6 +619,7 @@ tsearch(PG_FUNCTION_ARGS)
 	}
 
 	if (rettuple == NULL)
+		/* internal error */
 		elog(ERROR, "TSearch: %d returned by SPI_modifytuple", SPI_result);
 
 	return PointerGetDatum(rettuple);

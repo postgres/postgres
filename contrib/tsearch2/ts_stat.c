@@ -23,7 +23,9 @@ PG_FUNCTION_INFO_V1(tsstat_out);
 Datum           tsstat_out(PG_FUNCTION_ARGS);
 Datum           
 tsstat_out(PG_FUNCTION_ARGS) {
-	elog(ERROR,"Unimplemented");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("tsstat_out not implemented")));
 	PG_RETURN_NULL();
 }
 
@@ -316,13 +318,16 @@ get_ti_Oid(void) {
 	int ret;
 	bool isnull; 
 
-	if ( (ret = SPI_exec("select oid from pg_type where typname='tsvector'",1)) < 0 )	
+	if ( (ret = SPI_exec("select oid from pg_type where typname='tsvector'",1)) < 0 )
+		/* internal error */
 		elog(ERROR, "SPI_exec to get tsvector oid returns %d", ret);
 
 	if ( SPI_processed<0 )
+		/* internal error */
 		elog(ERROR, "There is no tsvector type");
 	tiOid = DatumGetObjectId( SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 1, &isnull) );
 	if ( tiOid==InvalidOid )
+		/* internal error */
 		elog(ERROR, "tsvector type has InvalidOid");
 }
 
@@ -339,18 +344,22 @@ ts_stat_sql(text *txt) {
 		get_ti_Oid();
 
 	if ( (plan = SPI_prepare(query,0,NULL))==NULL )
+		/* internal error */
 		elog(ERROR, "SPI_prepare('%s') returns NULL",query);
 
 	if ( (portal = SPI_cursor_open(NULL, plan, NULL, NULL)) == NULL )
+		/* internal error */
 		elog(ERROR, "SPI_cursor_open('%s') returns NULL",query);
 
 	SPI_cursor_fetch(portal, true, 100);
 
 	if ( SPI_tuptable->tupdesc->natts != 1 )
-		elog(ERROR, "Number of fields doesn't equal to 1");
+		/* internal error */
+		elog(ERROR, "number of fields doesn't equal to 1");
 
 	if ( SPI_gettypeid(SPI_tuptable->tupdesc, 1) != tiOid )
-		elog(ERROR, "Column isn't of tsvector type");
+		/* internal error */
+		elog(ERROR, "column isn't of tsvector type");
 
 	stat=palloc(STATHDRSIZE);
 	stat->len=STATHDRSIZE;

@@ -25,18 +25,22 @@ autoinc(PG_FUNCTION_ARGS)
 	int			i;
 
 	if (!CALLED_AS_TRIGGER(fcinfo))
-		elog(ERROR, "autoinc: not fired by trigger manager");
+		/* internal error */
+		elog(ERROR, "not fired by trigger manager");
 	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
-		elog(ERROR, "autoinc: can't process STATEMENT events");
+		/* internal error */
+		elog(ERROR, "can't process STATEMENT events");
 	if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
-		elog(ERROR, "autoinc: must be fired before event");
+		/* internal error */
+		elog(ERROR, "must be fired before event");
 
 	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
 		rettuple = trigdata->tg_trigtuple;
 	else if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 		rettuple = trigdata->tg_newtuple;
 	else
-		elog(ERROR, "autoinc: can't process DELETE events");
+		/* internal error */
+		elog(ERROR, "can't process DELETE events");
 
 	rel = trigdata->tg_relation;
 	relname = SPI_getrelname(rel);
@@ -45,6 +49,7 @@ autoinc(PG_FUNCTION_ARGS)
 
 	nargs = trigger->tgnargs;
 	if (nargs <= 0 || nargs % 2 != 0)
+		/* internal error */
 		elog(ERROR, "autoinc (%s): even number gt 0 of arguments was expected", relname);
 
 	args = trigger->tgargs;
@@ -60,11 +65,16 @@ autoinc(PG_FUNCTION_ARGS)
 		Datum		seqname;
 
 		if (attnum < 0)
-			elog(ERROR, "autoinc (%s): there is no attribute %s",
-				 relname, args[i]);
+			ereport(ERROR,
+					(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
+					 errmsg("\"%s\" has no attribute \"%s\"",
+							relname, args[i])));
+
 		if (SPI_gettypeid(tupdesc, attnum) != INT4OID)
-			elog(ERROR, "autoinc (%s): attribute %s must be of INT4 type",
-				 relname, args[i]);
+			ereport(ERROR,
+					(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
+					 errmsg("attribute \"%s\" of \"%s\" must be type INT4",
+							 args[i], relname)));
 
 		val = DatumGetInt32(SPI_getbinval(rettuple, tupdesc, attnum, &isnull));
 
@@ -95,6 +105,7 @@ autoinc(PG_FUNCTION_ARGS)
 	{
 		rettuple = SPI_modifytuple(rel, rettuple, chnattrs, chattrs, newvals, NULL);
 		if (rettuple == NULL)
+			/* internal error */
 			elog(ERROR, "autoinc (%s): %d returned by SPI_modifytuple",
 				 relname, SPI_result);
 	}

@@ -26,7 +26,9 @@ HASINIT dinit_CFG_MODNAME(PG_FUNCTION_ARGS) {
 HASINIT 	DictExample	*d = (DictExample*)malloc( sizeof(DictExample) );
 HASINIT 
 HASINIT 	if ( !d )
-HASINIT 		elog(ERROR, "No memory");
+HASINIT			ereport(ERROR,
+HASINIT					(errcode(ERRCODE_OUT_OF_MEMORY),
+HASINIT					 errmsg("out of memory")));
 HASINIT 	memset(d,0,sizeof(DictExample));
 HASINIT 
 HASINIT 	d->stoplist.wordop=lowerstr;

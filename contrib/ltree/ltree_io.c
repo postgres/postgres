@@ -20,7 +20,11 @@ PG_FUNCTION_INFO_V1(lquery_out);
 Datum		lquery_out(PG_FUNCTION_ARGS);
 
 
-#define UNCHAR elog(ERROR,"Syntax error in position %d near '%c'", (int)(ptr-buf), *ptr)
+#define UNCHAR ereport(ERROR, \
+					   (errcode(ERRCODE_SYNTAX_ERROR), \
+					    errmsg("syntax error at position %d near \"%c\"", \
+						(int)(ptr-buf), *ptr)));
+
 
 typedef struct
 {
@@ -73,8 +77,13 @@ ltree_in(PG_FUNCTION_ARGS)
 			{
 				lptr->len = ptr - lptr->start;
 				if (lptr->len > 255)
-					elog(ERROR, "Name of level is too long (%d, must be < 256) in position %d",
-						 lptr->len, (int) (lptr->start - buf));
+					ereport(ERROR,
+							(errcode(ERRCODE_NAME_TOO_LONG),
+							 errmsg("name of level is too long"),
+							 errdetail("name length is %d, must " \
+									"be < 256, in position %d",
+						 			lptr->len, (int) (lptr->start - buf))));
+
 				totallen += MAXALIGN(lptr->len + LEVEL_HDRSIZE);
 				lptr++;
 				state = LTPRS_WAITNAME;
@@ -83,7 +92,8 @@ ltree_in(PG_FUNCTION_ARGS)
 				UNCHAR;
 		}
 		else
-			elog(ERROR, "Inner error in parser");
+			/* internal error */
+			elog(ERROR, "internal error in parser");
 		ptr++;
 	}
 
@@ -91,13 +101,21 @@ ltree_in(PG_FUNCTION_ARGS)
 	{
 		lptr->len = ptr - lptr->start;
 		if (lptr->len > 255)
-			elog(ERROR, "Name of level is too long (%d, must be < 256) in position %d",
-				 lptr->len, (int) (lptr->start - buf));
+			ereport(ERROR,
+					(errcode(ERRCODE_NAME_TOO_LONG),
+					 errmsg("name of level is too long"),
+					 errdetail("name length is %d, must " \
+								"be < 256, in position %d",
+					 			lptr->len, (int) (lptr->start - buf))));
+
 		totallen += MAXALIGN(lptr->len + LEVEL_HDRSIZE);
 		lptr++;
 	}
 	else if (!(state == LTPRS_WAITNAME && lptr == list))
-		elog(ERROR, "Unexpected end of line");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("syntax error"),
+				 errdetail("Unexpected end of line.")));
 
 	result = (ltree *) palloc(LTREE_HDRSIZE + totallen);
 	result->len = LTREE_HDRSIZE + totallen;
@@ -261,8 +279,13 @@ lquery_in(PG_FUNCTION_ARGS)
 					((lptr->flag & LVAR_INCASE) ? 1 : 0) -
 					((lptr->flag & LVAR_ANYEND) ? 1 : 0);
 				if (lptr->len > 255)
-					elog(ERROR, "Name of level is too long (%d, must be < 256) in position %d",
-						 lptr->len, (int) (lptr->start - buf));
+					ereport(ERROR,
+							(errcode(ERRCODE_NAME_TOO_LONG),
+							 errmsg("name of level is too long"),
+							 errdetail("name length is %d, must " \
+										"be < 256, in position %d",
+							 			lptr->len, (int) (lptr->start - buf))));
+
 				state = LQPRS_WAITVAR;
 			}
 			else if (*ptr == '.')
@@ -272,8 +295,13 @@ lquery_in(PG_FUNCTION_ARGS)
 					((lptr->flag & LVAR_INCASE) ? 1 : 0) -
 					((lptr->flag & LVAR_ANYEND) ? 1 : 0);
 				if (lptr->len > 255)
-					elog(ERROR, "Name of level is too long (%d, must be < 256) in position %d",
-						 lptr->len, (int) (lptr->start - buf));
+					ereport(ERROR,
+							(errcode(ERRCODE_NAME_TOO_LONG),
+							 errmsg("name of level is too long"),
+							 errdetail("name length is %d, must " \
+										"be < 256, in position %d",
+							 			lptr->len, (int) (lptr->start - buf))));
+
 				state = LQPRS_WAITLEVEL;
 				curqlevel = NEXTLEV(curqlevel);
 			}
@@ -356,28 +384,44 @@ lquery_in(PG_FUNCTION_ARGS)
 				UNCHAR;
 		}
 		else
-			elog(ERROR, "Inner error in parser");
+			/* internal error */
+			elog(ERROR, "internal error in parser");
 		ptr++;
 	}
 
 	if (state == LQPRS_WAITDELIM)
 	{
 		if (lptr->start == ptr)
-			elog(ERROR, "Unexpected end of line");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("syntax error"),
+					 errdetail("Unexpected end of line.")));
+
 		lptr->len = ptr - lptr->start -
 			((lptr->flag & LVAR_SUBLEXEM) ? 1 : 0) -
 			((lptr->flag & LVAR_INCASE) ? 1 : 0) -
 			((lptr->flag & LVAR_ANYEND) ? 1 : 0);
 		if (lptr->len == 0)
-			elog(ERROR, "Unexpected end of line");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("syntax error"),
+					 errdetail("Unexpected end of line.")));
+
 		if (lptr->len > 255)
-			elog(ERROR, "Name of level is too long (%d, must be < 256) in position %d",
-				 lptr->len, (int) (lptr->start - buf));
+			ereport(ERROR,
+					(errcode(ERRCODE_NAME_TOO_LONG),
+					 errmsg("name of level is too long"),
+					 errdetail("name length is %d, must " \
+							"be < 256, in position %d",
+				 			lptr->len, (int) (lptr->start - buf))));
 	}
 	else if (state == LQPRS_WAITOPEN)
 		curqlevel->high = 0xffff;
 	else if (state != LQPRS_WAITEND)
-		elog(ERROR, "Unexpected end of line");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("syntax error"),
+				 errdetail("Unexpected end of line.")));
 
 	curqlevel = tmpql;
 	totallen = LQUERY_HDRSIZE;
@@ -394,7 +438,12 @@ lquery_in(PG_FUNCTION_ARGS)
 			}
 		}
 		else if (curqlevel->low > curqlevel->high)
-			elog(ERROR, "Low limit(%d) is greater than upper(%d)", curqlevel->low, curqlevel->high);
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("syntax error"),
+					 errdetail("Low limit(%d) is greater than upper(%d).",
+								curqlevel->low, curqlevel->high)));
+
 		curqlevel = NEXTLEV(curqlevel);
 	}
 

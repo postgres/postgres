@@ -5,8 +5,6 @@
 #include "access/gist.h"
 #include "access/itup.h"
 #include "access/rtree.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "storage/bufpage.h"
@@ -60,14 +58,18 @@ Datum		gtxtidx_picksplit(PG_FUNCTION_ARGS);
 Datum
 gtxtidx_in(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Not implemented");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("gtxtidx_in not implemented")));
 	PG_RETURN_DATUM(0);
 }
 
 Datum
 gtxtidx_out(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Not implemented");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("gtxtidx_out not implemented")));
 	PG_RETURN_DATUM(0);
 }
 

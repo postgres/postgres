@@ -81,13 +81,17 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, uint1
 					*flag = 0;
 				}
 				else if (!isspace((unsigned int) *(state->buf)))
-					elog(ERROR, "Operand syntax error");
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("operand syntax error")));
 				break;
 			case INOPERAND:
 				if (ISALNUM(*(state->buf)))
 				{
 					if (*flag)
-						elog(ERROR, "Modificators syntax error");
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("modificators syntax error")));
 					(*lenval)++;
 				}
 				else if (*(state->buf) == '%')
@@ -142,9 +146,13 @@ pushquery(QPRS_STATE * state, int4 type, int4 val, int4 distance, int4 lenval, u
 	tmp->val = val;
 	tmp->flag = flag;
 	if (distance > 0xffff)
-		elog(ERROR, "Value is too big");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("value is too big")));
 	if (lenval > 0xff)
-		elog(ERROR, "Operand is too long");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("operand is too long")));
 	tmp->distance = distance;
 	tmp->length = lenval;
 	tmp->next = state->str;
@@ -159,7 +167,9 @@ static void
 pushval_asis(QPRS_STATE * state, int type, char *strval, int lenval, uint16 flag)
 {
 	if (lenval > 0xffff)
-		elog(ERROR, "Word is too long");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("word is too long")));
 
 	pushquery(state, type, ltree_crc32_sz((uint8 *) strval, lenval),
 			  state->curop - state->op, lenval, flag);
@@ -214,7 +224,8 @@ makepol(QPRS_STATE * state)
 				else
 				{
 					if (lenstack == STACKDEPTH)
-						elog(ERROR, "Stack too short");
+						/* internal error */
+						elog(ERROR, "stack too short");
 					stack[lenstack] = val;
 					lenstack++;
 				}
@@ -239,7 +250,10 @@ makepol(QPRS_STATE * state)
 				break;
 			case ERR:
 			default:
-				elog(ERROR, "Syntax error");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("syntax error")));
+
 				return ERR;
 
 		}
@@ -314,7 +328,11 @@ queryin(char *buf)
 	/* parse query & make polish notation (postfix, but in reverse order) */
 	makepol(&state);
 	if (!state.num)
-		elog(ERROR, "Empty query");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("syntax error"),
+				 errdetail("Empty query.")));
+
 	/* make finish struct */
 	commonlen = COMPUTESIZE(state.num, state.sumlen);
 	query = (ltxtquery *) palloc(commonlen);
@@ -483,7 +501,11 @@ ltxtq_out(PG_FUNCTION_ARGS)
 	INFIX		nrm;
 
 	if (query->size == 0)
-		elog(ERROR, "Empty");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("syntax error"),
+				 errdetail("Empty query.")));
+
 	nrm.curpol = GETQUERY(query);
 	nrm.buflen = 32;
 	nrm.cur = nrm.buf = (char *) palloc(sizeof(char) * nrm.buflen);

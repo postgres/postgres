@@ -6,8 +6,9 @@
 -- does not depend on contents of cube.sql.
 --
 \set ECHO none
-psql:cube.sql:10: NOTICE:  ProcedureCreate: type cube is not yet defined
-psql:cube.sql:15: NOTICE:  Argument type "cube" is only a shell
+psql:cube.sql:10: NOTICE:  type cube is not yet defined
+DETAIL:  Creating a shell type definition.
+psql:cube.sql:15: NOTICE:  argument type cube is only a shell
 --
 -- testing the input and output functions
 --
@@ -256,89 +257,89 @@ SELECT '[(0,0,0,0),(1,0,0,0)]'::cube AS cube;
 
 -- invalid input: parse errors
 SELECT ''::cube AS cube;
-ERROR:  cube_in: can't parse an empty string
+ERROR:  can't parse an empty string
 SELECT 'ABC'::cube AS cube;
-ERROR:  syntax error at or before position 1, character ('A', \101), input: 'ABC'
-
+ERROR:  bad cube representation
+DETAIL:  syntax error at or before position 1, character ('A', \101), input: 'ABC'
 SELECT '()'::cube AS cube;
-ERROR:  syntax error at or before position 2, character (')', \051), input: '()'
-
+ERROR:  bad cube representation
+DETAIL:  syntax error at or before position 2, character (')', \051), input: '()'
 SELECT '[]'::cube AS cube;
-ERROR:  syntax error at or before position 2, character (']', \135), input: '[]'
-
+ERROR:  bad cube representation
+DETAIL:  syntax error at or before position 2, character (']', \135), input: '[]'
 SELECT '[()]'::cube AS cube;
-ERROR:  syntax error at or before position 3, character (')', \051), input: '[()]'
-
+ERROR:  bad cube representation
+DETAIL:  syntax error at or before position 3, character (')', \051), input: '[()]'
 SELECT '[(1)]'::cube AS cube;
-ERROR:  syntax error at or before position 5, character (']', \135), input: '[(1)]'
-
+ERROR:  bad cube representation
+DETAIL:  syntax error at or before position 5, character (']', \135), input: '[(1)]'
 SELECT '[(1),]'::cube AS cube;
-ERROR:  syntax error at or before position 6, character (']', \135), input: '[(1),]'
-
+ERROR:  bad cube representation
+DETAIL:  syntax error at or before position 6, character (']', \135), input: '[(1),]'
 SELECT '[(1),2]'::cube AS cube;
-ERROR:  syntax error at or before position 7, character (']', \135), input: '[(1),2]'
-
+ERROR:  bad cube representation
+DETAIL:  syntax error at or before position 7, character (']', \135), input: '[(1),2]'
 SELECT '[(1),(2),(3)]'::cube AS cube;
-ERROR:  syntax error at or before position 9, character (',', \054), input: '[(1),(2),(3)]'
-
+ERROR:  bad cube representation
+DETAIL:  syntax error at or before position 9, character (',', \054), input: '[(1),(2),(3)]'
 SELECT '1,'::cube AS cube;
-ERROR:  syntax error at or before position 2, character (',', \054), input: '1,'
-
+ERROR:  bad cube representation
+DETAIL:  syntax error at or before position 2, character (',', \054), input: '1,'
 SELECT '1,2,'::cube AS cube;
-ERROR:  syntax error at or before position 4, character (',', \054), input: '1,2,'
-
+ERROR:  bad cube representation
+DETAIL:  syntax error at or before position 4, character (',', \054), input: '1,2,'
 SELECT '1,,2'::cube AS cube;
-ERROR:  syntax error at or before position 3, character (',', \054), input: '1,,2'
-
+ERROR:  bad cube representation
+DETAIL:  syntax error at or before position 3, character (',', \054), input: '1,,2'
 SELECT '(1,)'::cube AS cube;
-ERROR:  syntax error at or before position 4, character (')', \051), input: '(1,)'
-
+ERROR:  bad cube representation
+DETAIL:  syntax error at or before position 4, character (')', \051), input: '(1,)'
 SELECT '(1,2,)'::cube AS cube;
-ERROR:  syntax error at or before position 6, character (')', \051), input: '(1,2,)'
-
+ERROR:  bad cube representation
+DETAIL:  syntax error at or before position 6, character (')', \051), input: '(1,2,)'
 SELECT '(1,,2)'::cube AS cube;
-ERROR:  syntax error at or before position 4, character (',', \054), input: '(1,,2)'
-
+ERROR:  bad cube representation
+DETAIL:  syntax error at or before position 4, character (',', \054), input: '(1,,2)'
 -- invalid input: semantic errors and trailing garbage
 SELECT '[(1),(2)],'::cube AS cube; -- 0
-ERROR:  (0) bad cube representation; garbage at or before char 9, (',', \054)
-
+ERROR:  bad cube representation
+DETAIL:  garbage at or before char 9, (',', \054)
 SELECT '[(1,2,3),(2,3)]'::cube AS cube; -- 1
-ERROR:  (1) bad cube representation; different point dimensions in (1,2,3) and (2,3)
-
+ERROR:  bad cube representation
+DETAIL:  different point dimensions in (1,2,3) and (2,3)
 SELECT '[(1,2),(1,2,3)]'::cube AS cube; -- 1
-ERROR:  (1) bad cube representation; different point dimensions in (1,2) and (1,2,3)
-
+ERROR:  bad cube representation
+DETAIL:  different point dimensions in (1,2) and (1,2,3)
 SELECT '(1),(2),'::cube AS cube; -- 2
-ERROR:  (2) bad cube representation; garbage at or before char 7, (',', \054)
-
+ERROR:  bad cube representation
+DETAIL:  garbage at or before char 7, (',', \054)
 SELECT '(1,2,3),(2,3)'::cube AS cube; -- 3
-ERROR:  (3) bad cube representation; different point dimensions in (1,2,3) and (2,3)
-
+ERROR:  bad cube representation
+DETAIL:  different point dimensions in (1,2,3) and (2,3)
 SELECT '(1,2),(1,2,3)'::cube AS cube; -- 3
-ERROR:  (3) bad cube representation; different point dimensions in (1,2) and (1,2,3)
-
+ERROR:  bad cube representation
+DETAIL:  different point dimensions in (1,2) and (1,2,3)
 SELECT '(1,2,3)ab'::cube AS cube; -- 4
-ERROR:  (4) bad cube representation; garbage at or before char 8, ('b', \142)
-
+ERROR:  bad cube representation
+DETAIL:  garbage at or before char 8, ('b', \142)
 SELECT '(1,2,3)a'::cube AS cube; -- 5
-ERROR:  (5) bad cube representation; garbage at or before char 8, ('end of input', \000)
-
+ERROR:  bad cube representation
+DETAIL:  garbage at or before char 8, ('end of input', \000)
 SELECT '(1,2)('::cube AS cube; -- 5
-ERROR:  (5) bad cube representation; garbage at or before char 6, ('end of input', \000)
-
+ERROR:  bad cube representation
+DETAIL:  garbage at or before char 6, ('end of input', \000)
 SELECT '1,2ab'::cube AS cube; -- 6
-ERROR:  (6) bad cube representation; garbage at or before char 4, ('b', \142)
-
+ERROR:  bad cube representation
+DETAIL:  garbage at or before char 4, ('b', \142)
 SELECT '1 e7'::cube AS cube; -- 6
-ERROR:  (6) bad cube representation; garbage at or before char 3, ('7', \067)
-
+ERROR:  bad cube representation
+DETAIL:  garbage at or before char 3, ('7', \067)
 SELECT '1,2a'::cube AS cube; -- 7
-ERROR:  (7) bad cube representation; garbage at or before char 4, ('end of input', \000)
-
+ERROR:  bad cube representation
+DETAIL:  garbage at or before char 4, ('end of input', \000)
 SELECT '1..2'::cube AS cube; -- 7
-ERROR:  (7) bad cube representation; garbage at or before char 4, ('end of input', \000)
-
+ERROR:  bad cube representation
+DETAIL:  garbage at or before char 4, ('end of input', \000)
 --
 -- Testing building cubes from float8 values
 --
@@ -397,11 +398,11 @@ SELECT '(0)'::text::cube;
 -- Testing limit of CUBE_MAX_DIM dimensions check in cube_in.
 --
 select '(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)'::cube;
-ERROR:  (8) bad cube representation; more than 100 dimensions
-
+ERROR:  bad cube representation
+DETAIL:  more than 100 dimensions
 select '(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0),(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)'::cube;
-ERROR:  (8) bad cube representation; more than 100 dimensions
-
+ERROR:  bad cube representation
+DETAIL:  more than 100 dimensions
 --
 -- testing the  operators
 --

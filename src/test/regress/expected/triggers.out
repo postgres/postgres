@@ -63,26 +63,29 @@ insert into fkeys2 values (40, '4', 5);
 insert into fkeys2 values (50, '5', 3);
 -- no key in pkeys
 insert into fkeys2 values (70, '5', 3);
-ERROR:  check_fkeys2_pkey_exist: tuple references non-existing key in pkeys
+ERROR:  tuple references non-existent key
+DETAIL:  Trigger "check_fkeys2_pkey_exist" found tuple referencing non-existent key in "pkeys".
 insert into fkeys values (10, '1', 2);
 insert into fkeys values (30, '3', 3);
 insert into fkeys values (40, '4', 2);
 insert into fkeys values (50, '5', 2);
 -- no key in pkeys
 insert into fkeys values (70, '5', 1);
-ERROR:  check_fkeys_pkey_exist: tuple references non-existing key in pkeys
+ERROR:  tuple references non-existent key
+DETAIL:  Trigger "check_fkeys_pkey_exist" found tuple referencing non-existent key in "pkeys".
 -- no key in fkeys2
 insert into fkeys values (60, '6', 4);
-ERROR:  check_fkeys_pkey2_exist: tuple references non-existing key in fkeys2
+ERROR:  tuple references non-existent key
+DETAIL:  Trigger "check_fkeys_pkey2_exist" found tuple referencing non-existent key in "fkeys2".
 delete from pkeys where pkey1 = 30 and pkey2 = '3';
 NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys are deleted
-ERROR:  check_fkeys2_fkey_restrict: tuple referenced in fkeys
+ERROR:  "check_fkeys2_fkey_restrict": tuple is referenced in "fkeys"
 delete from pkeys where pkey1 = 40 and pkey2 = '4';
 NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys are deleted
 NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys2 are deleted
 update pkeys set pkey1 = 7, pkey2 = '70' where pkey1 = 50 and pkey2 = '5';
 NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys are deleted
-ERROR:  check_fkeys2_fkey_restrict: tuple referenced in fkeys
+ERROR:  "check_fkeys2_fkey_restrict": tuple is referenced in "fkeys"
 update pkeys set pkey1 = 7, pkey2 = '70' where pkey1 = 10 and pkey2 = '1';
 NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys are deleted
 NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys2 are deleted

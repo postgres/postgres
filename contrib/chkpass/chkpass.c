@@ -4,7 +4,7 @@
  * darcy@druid.net
  * http://www.druid.net/darcy/
  *
- * $Id: chkpass.c,v 1.9 2002/10/26 15:00:59 tgl Exp $
+ * $Id: chkpass.c,v 1.10 2003/07/24 17:52:12 tgl Exp $
  * best viewed with tabs set to 4
  */
 
@@ -84,8 +84,10 @@ chkpass_in(PG_FUNCTION_ARGS)
 
 	if (verify_pass(str) != 0)
 	{
-		elog(ERROR, "chkpass_in: purported CHKPASS \"%s\" is a weak password",
-			 str);
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				 errmsg("password \"%s\" is weak", str)));
+
 		PG_RETURN_POINTER(NULL);
 	}
 

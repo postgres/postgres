@@ -177,7 +177,9 @@ makepol(WORKSTATE * state)
 				else
 				{
 					if (lenstack == STACKDEPTH)
-						elog(ERROR, "Stack too short");
+						ereport(ERROR,
+								(errcode(ERRCODE_STATEMENT_TOO_COMPLEX),
+								 errmsg("statement too complex")));
 					stack[lenstack] = val;
 					lenstack++;
 				}
@@ -202,7 +204,9 @@ makepol(WORKSTATE * state)
 				break;
 			case ERR:
 			default:
-				elog(ERROR, "Syntax error");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("syntax error")));
 				return ERR;
 
 		}
@@ -359,7 +363,7 @@ findoprnd(ITEM * ptr, int4 *pos)
 {
 #ifdef BS_DEBUG
 	elog(DEBUG3, (ptr[*pos].type == OPR) ?
-		 "%d  %c" : "%d  %d ", *pos, ptr[*pos].val);
+		 "%d  %c" : "%d  %d", *pos, ptr[*pos].val);
 #endif
 	if (ptr[*pos].type == VAL)
 	{
@@ -413,7 +417,9 @@ bqarr_in(PG_FUNCTION_ARGS)
 	/* make polish notation (postfix, but in reverse order) */
 	makepol(&state);
 	if (!state.num)
-		elog(ERROR, "Empty query");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("empty query")));
 
 	commonlen = COMPUTESIZE(state.num);
 	query = (QUERYTYPE *) palloc(commonlen);
@@ -548,7 +554,10 @@ bqarr_out(PG_FUNCTION_ARGS)
 	INFIX		nrm;
 
 	if (query->size == 0)
-		elog(ERROR, "Empty");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("empty query")));
+
 	nrm.curpol = GETQUERY(query) + query->size - 1;
 	nrm.buflen = 32;
 	nrm.cur = nrm.buf = (char *) palloc(sizeof(char) * nrm.buflen);
@@ -703,7 +712,9 @@ querytree(PG_FUNCTION_ARGS)
 	int4		len;
 
 	if (query->size == 0)
-		elog(ERROR, "Empty");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("empty query")));
 
 	q = (ITEM *) palloc(sizeof(ITEM) * query->size);
 	memcpy((void *) q, GETQUERY(query), sizeof(ITEM) * query->size);

@@ -15,8 +15,6 @@
 #include "access/gist.h"
 #include "access/itup.h"
 #include "access/rtree.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "storage/bufpage.h"
@@ -129,7 +127,9 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval)
 						return VAL;
 					}
 					else
-						elog(ERROR, "No operand");
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("no operand")));
 				}
 				break;
 			case WAITOPERATOR:
@@ -171,9 +171,13 @@ pushquery(QPRS_STATE * state, int4 type, int4 val, int4 distance, int4 lenval)
 	tmp->type = type;
 	tmp->val = val;
 	if (distance > 0xffff)
-		elog(ERROR, "Value is too big");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("value is too big")));
 	if (lenval > 0xffff)
-		elog(ERROR, "Operand is too long");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("operand is too long")));
 	tmp->distance = distance;
 	tmp->length = lenval;
 	tmp->next = state->str;
@@ -188,7 +192,9 @@ static void
 pushval_asis(QPRS_STATE * state, int type, char *strval, int lenval)
 {
 	if (lenval > 0xffff)
-		elog(ERROR, "Word is too long");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("word is too long")));
 
 	pushquery(state, type, crc32_sz((uint8 *) strval, lenval),
 			  state->curop - state->op, lenval);
@@ -226,7 +232,9 @@ pushval_morph(QPRS_STATE * state, int typeval, char *strval, int lenval)
 		if (tokenlen > 0xffff)
 		{
 			end_parse();
-			elog(ERROR, "Word is too long");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("word is too long")));
 		}
 		lenlemm = tokenlen;
 		lemm = lemmatize(token, &lenlemm, type);
@@ -278,7 +286,8 @@ makepol(QPRS_STATE * state, void (*pushval) (QPRS_STATE *, int, char *, int))
 				else
 				{
 					if (lenstack == STACKDEPTH)
-						elog(ERROR, "Stack too short");
+						/* internal error */
+						elog(ERROR, "stack too short");
 					stack[lenstack] = val;
 					lenstack++;
 				}
@@ -303,7 +312,10 @@ makepol(QPRS_STATE * state, void (*pushval) (QPRS_STATE *, int, char *, int))
 				break;
 			case ERR:
 			default:
-				elog(ERROR, "Syntax error");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("syntax error")));
+
 				return ERR;
 
 		}
@@ -450,7 +462,7 @@ findoprnd(ITEM * ptr, int4 *pos)
 {
 #ifdef BS_DEBUG
 	elog(DEBUG4, (ptr[*pos].type == OPR) ?
-		 "%d  %c" : "%d  %d ", *pos, ptr[*pos].val);
+		 "%d  %c" : "%d  %d", *pos, ptr[*pos].val);
 #endif
 	if (ptr[*pos].type == VAL || ptr[*pos].type == VALTRUE)
 	{
@@ -517,7 +529,9 @@ queryin(char *buf, void (*pushval) (QPRS_STATE *, int, char *, int))
 	makepol(&state, pushval);
 	pfree(state.valstate.word);
 	if (!state.num)
-		elog(ERROR, "Empty query");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("empty query")));
 
 	/* make finish struct */
 	commonlen = COMPUTESIZE(state.num, state.sumlen);

@@ -84,7 +84,10 @@ levenshtein(PG_FUNCTION_ARGS)
 	 * and memory usage).
 	 */
 	if ((cols > MAX_LEVENSHTEIN_STRLEN + 1) || (rows > MAX_LEVENSHTEIN_STRLEN + 1))
-		elog(ERROR, "levenshtein: Arguments may not exceed %d characters in length", MAX_LEVENSHTEIN_STRLEN);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("argument exceeds max length: %d",
+						 MAX_LEVENSHTEIN_STRLEN)));
 
 	/*
 	 * If either rows or cols is 0, the answer is the other value. This
@@ -214,15 +217,28 @@ metaphone(PG_FUNCTION_ARGS)
 	str_i_len = strlen(str_i);
 
 	if (str_i_len > MAX_METAPHONE_STRLEN)
-		elog(ERROR, "metaphone: Input string must not exceed %d characters", MAX_METAPHONE_STRLEN);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("argument exceeds max length: %d",
+						 MAX_METAPHONE_STRLEN)));
+
 	if (!(str_i_len > 0))
-		elog(ERROR, "metaphone: Input string length must be > 0");
+		ereport(ERROR,
+				(errcode(ERRCODE_ZERO_LENGTH_CHARACTER_STRING),
+				 errmsg("argument is empty string")));
 
 	reqlen = PG_GETARG_INT32(1);
 	if (reqlen > MAX_METAPHONE_STRLEN)
-		elog(ERROR, "metaphone: Requested Metaphone output length must not exceed %d characters", MAX_METAPHONE_STRLEN);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("output length exceeds max length: %d",
+						 MAX_METAPHONE_STRLEN)));
+
 	if (!(reqlen > 0))
-		elog(ERROR, "metaphone: Requested Metaphone output length must be > 0");
+		ereport(ERROR,
+				(errcode(ERRCODE_ZERO_LENGTH_CHARACTER_STRING),
+				 errmsg("output cannot be empty string")));
+
 
 	retval = _metaphone(str_i, reqlen, &metaph);
 	if (retval == META_SUCCESS)
@@ -232,6 +248,7 @@ metaphone(PG_FUNCTION_ARGS)
 	}
 	else
 	{
+		/* internal error */
 		elog(ERROR, "metaphone: failure");
 
 		/*
@@ -315,10 +332,12 @@ _metaphone(
 
 	/* Negative phoneme length is meaningless */
 	if (!(max_phonemes > 0))
+		/* internal error */
 		elog(ERROR, "metaphone: Requested output length must be > 0");
 
 	/* Empty/null string is meaningless */
 	if ((word == NULL) || !(strlen(word) > 0))
+		/* internal error */
 		elog(ERROR, "metaphone: Input string length must be > 0");
 
 	/*-- Allocate memory for our phoned_phrase --*/

@@ -58,7 +58,11 @@ parse_cfgdict(text *in, Map **m) {
 				begin=ptr;
 				state=CS_INKEY;
 			} else if ( !isspace(*ptr) )
-				elog(ERROR,"Syntax error in position %d near '%c'", ptr-VARDATA(in), *ptr);
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("syntax error"),
+						 errdetail("Syntax error in position %d near \"%c\"",
+									ptr-VARDATA(in), *ptr)));
 		} else if (state==CS_INKEY) {
 			if ( isspace(*ptr) ) {
 				mptr->key=nstrdup(begin, ptr-begin);
@@ -67,12 +71,20 @@ parse_cfgdict(text *in, Map **m) {
 				mptr->key=nstrdup(begin, ptr-begin);
 				state=CS_WAITVALUE;
 			} else if ( !isalpha(*ptr) ) 
-				elog(ERROR,"Syntax error in position %d near '%c'", ptr-VARDATA(in), *ptr);
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("syntax error"),
+						 errdetail("Syntax error in position %d near \"%c\"",
+									ptr-VARDATA(in), *ptr)));
 		} else if ( state==CS_WAITEQ ) {
 			if ( *ptr=='=' )
 				state=CS_WAITVALUE;
 			else if ( !isspace(*ptr) )
-				elog(ERROR,"Syntax error in position %d near '%c'", ptr-VARDATA(in), *ptr);
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("syntax error"),
+						 errdetail("Syntax error in position %d near \"%c\"",
+									ptr-VARDATA(in), *ptr)));
 		} else if ( state==CS_WAITVALUE ) {
 			if ( *ptr=='"' ) {
 				begin=ptr+1;
@@ -99,13 +111,21 @@ parse_cfgdict(text *in, Map **m) {
 			if ( *ptr==',' ) 
 				state=CS_WAITKEY; 
 			else if ( !isspace(*ptr) )
-				elog(ERROR,"Syntax error in position %d near '%c'", ptr-VARDATA(in), *ptr);
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("syntax error"),
+						 errdetail("Syntax error in position %d near \"%c\"",
+									ptr-VARDATA(in), *ptr)));
 		} else if ( state == CS_INESC ) {
 			state=CS_INVALUE;
 		} else if ( state == CS_IN2ESC ) {
 			state=CS_IN2VALUE;
 		} else 
-			elog(ERROR,"Bad parser state: %d at position %d near '%c'", state, ptr-VARDATA(in), *ptr);
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("bad parser state"),
+					 errdetail("%d at position %d near \"%c\"",
+								state, ptr-VARDATA(in), *ptr)));
 		ptr++;
 	}
 
@@ -113,7 +133,9 @@ parse_cfgdict(text *in, Map **m) {
 		mptr->value = nstrdup(begin, ptr-begin);
 		mptr++;
 	} else if ( !(state==CS_WAITDELIM || state==CS_WAITKEY) ) 
-		elog(ERROR,"Unexpected end of line");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("unexpected end of line")));
 }
 
 

@@ -11,9 +11,6 @@
 #include "cubedata.h"
 #include "buffer.h"
 
-#include "utils/palloc.h"
-#include "utils/elog.h"
-
 #undef yylex                 /* falure to redefine yylex will result in a call to  the */
 #define yylex cube_yylex     /* wrong scanner when running inside the postgres backend  */
 
@@ -48,19 +45,31 @@ box:
 	    if ( c != '\0' ) {
 	      /* Not at EOF */
 	      reset_parse_buffer();     
-	      elog(ERROR, "(0) bad cube representation; garbage at or before char %d, ('%c', \\%03o)\n", pos, c, c );
+          ereport(ERROR,
+                  (errcode(ERRCODE_SYNTAX_ERROR),
+                   errmsg("bad cube representation"),
+                   errdetail("garbage at or before char %d, ('%c', \\%03o)",
+                             pos, c, c)));
 	      YYERROR;
 	    }
 	    
 	    dim = delim_count($2, ',') + 1;
 	    if ( (delim_count($4, ',') + 1) != dim ) {
 	      reset_parse_buffer();     
-	      elog(ERROR, "(1) bad cube representation; different point dimensions in (%s) and (%s)\n", $2, $4);
+          ereport(ERROR,
+                  (errcode(ERRCODE_SYNTAX_ERROR),
+                   errmsg("bad cube representation"),
+                   errdetail("different point dimensions in (%s) and (%s)",
+                             $2, $4)));
 	      YYABORT;
 	    }
 	    if (dim > CUBE_MAX_DIM) {
               reset_parse_buffer();
-              elog(ERROR, "(8) bad cube representation; more than %d dimensions\n", CUBE_MAX_DIM);
+              ereport(ERROR,
+                      (errcode(ERRCODE_SYNTAX_ERROR),
+                       errmsg("bad cube representation"),
+                       errdetail("more than %d dimensions",
+                                 CUBE_MAX_DIM)));
               YYABORT;
             }
 	    
@@ -75,7 +84,11 @@ box:
 
 	    if ( c != '\0' ) {  /* Not at EOF */
 	      reset_parse_buffer();     
-	      elog(ERROR, "(2) bad cube representation; garbage at or before char %d, ('%c', \\%03o)\n", pos, c, c );
+          ereport(ERROR,
+                  (errcode(ERRCODE_SYNTAX_ERROR),
+                   errmsg("bad cube representation"),
+                   errdetail("garbage at or before char %d, ('%c', \\%03o)",
+                             pos, c, c)));
 	      YYABORT;
 	    }
 
@@ -83,12 +96,20 @@ box:
 	    
 	    if ( (delim_count($3, ',') + 1) != dim ) {
 	      reset_parse_buffer();     
-	      elog(ERROR, "(3) bad cube representation; different point dimensions in (%s) and (%s)\n", $1, $3);
+          ereport(ERROR,
+                  (errcode(ERRCODE_SYNTAX_ERROR),
+                   errmsg("bad cube representation"),
+                   errdetail("different point dimensions in (%s) and (%s)",
+                             $1, $3)));
 	      YYABORT;
 	    }
 	    if (dim > CUBE_MAX_DIM) {
               reset_parse_buffer();
-              elog(ERROR, "(8) bad cube representation; more than %d dimensions\n", CUBE_MAX_DIM);
+              ereport(ERROR,
+                      (errcode(ERRCODE_SYNTAX_ERROR),
+                       errmsg("bad cube representation"),
+                       errdetail("more than %d dimensions",
+                                 CUBE_MAX_DIM)));
               YYABORT;
             }
 	    
@@ -103,21 +124,33 @@ box:
 
 	    if ( c != '\0') {  /* Not at EOF */
 	      reset_parse_buffer();     
-	      elog(ERROR, "(4) bad cube representation; garbage at or before char %d, ('%c', \\%03o)\n", pos, c, c );
+          ereport(ERROR,
+                  (errcode(ERRCODE_SYNTAX_ERROR),
+                   errmsg("bad cube representation"),
+                   errdetail("garbage at or before char %d, ('%c', \\%03o)",
+                             pos, c, c)));
 	      YYABORT;
 	    }
 
 	    if ( yychar != YYEOF) {
 	      /* There's still a lookahead token to be parsed */
 	      reset_parse_buffer();     
-	      elog(ERROR, "(5) bad cube representation; garbage at or before char %d, ('end of input', \\%03o)\n", pos, c);
+          ereport(ERROR,
+                  (errcode(ERRCODE_SYNTAX_ERROR),
+                   errmsg("bad cube representation"),
+                   errdetail("garbage at or before char %d, ('end of input', \\%03o)",
+                             pos, c)));
 	      YYABORT;
 	    }
 
             dim = delim_count($1, ',') + 1;
 	    if (dim > CUBE_MAX_DIM) {
               reset_parse_buffer();
-              elog(ERROR, "(8) bad cube representation; more than %d dimensions\n", CUBE_MAX_DIM);
+              ereport(ERROR,
+                      (errcode(ERRCODE_SYNTAX_ERROR),
+                       errmsg("bad cube representation"),
+                       errdetail("more than %d dimensions",
+                                 CUBE_MAX_DIM)));
               YYABORT;
             }
 
@@ -133,21 +166,33 @@ box:
 
 	    if ( c != '\0') {  /* Not at EOF */
 	      reset_parse_buffer();
-	      elog(ERROR, "(6) bad cube representation; garbage at or before char %d, ('%c', \\%03o)\n", pos, c, c);
+          ereport(ERROR,
+                  (errcode(ERRCODE_SYNTAX_ERROR),
+                   errmsg("bad cube representation"),
+                   errdetail("garbage at or before char %d, ('%c', \\%03o)",
+                             pos, c, c)));
 	      YYABORT;
 	    }
 
 	    if ( yychar != YYEOF) {
 	      /* There's still a lookahead token to be parsed */
 	      reset_parse_buffer();
-	      elog(ERROR, "(7) bad cube representation; garbage at or before char %d, ('end of input', \\%03o)\n", pos, c);
+          ereport(ERROR,
+                  (errcode(ERRCODE_SYNTAX_ERROR),
+                   errmsg("bad cube representation"),
+                   errdetail("garbage at or before char %d, ('end of input', \\%03o)",
+                             pos, c)));
 	      YYABORT;
 	    }
 
             dim = delim_count($1, ',') + 1;
 	    if (dim > CUBE_MAX_DIM) {
               reset_parse_buffer();
-              elog(ERROR, "(8) bad cube representation; more than %d dimensions\n", CUBE_MAX_DIM);
+              ereport(ERROR,
+                      (errcode(ERRCODE_SYNTAX_ERROR),
+                       errmsg("bad cube representation"),
+                       errdetail("more than %d dimensions",
+                                 CUBE_MAX_DIM)));
               YYABORT;
             }
 	    *((void **)result) = write_point_as_box($1, dim);
@@ -191,7 +236,7 @@ int cube_yyerror ( char *msg ) {
   snprintf(
 	  buf, 
 	  256,
-	  "%s at or before position %d, character ('%c', \\%03o), input: '%s'\n", 
+	  "%s at or before position %d, character ('%c', \\%03o), input: '%s'", 
 	  msg,
 	  position,
 	  parse_buffer()[position - 1],
@@ -200,7 +245,11 @@ int cube_yyerror ( char *msg ) {
 	  );
 
   reset_parse_buffer();     
-  elog(ERROR, "%s", buf);
+  ereport(ERROR,
+          (errcode(ERRCODE_SYNTAX_ERROR),
+           errmsg("bad cube representation"),
+           errdetail("%s", buf)));
+
   return 0;
 }
 

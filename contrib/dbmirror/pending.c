@@ -1,6 +1,6 @@
 /****************************************************************************
  * pending.c
- * $Id: pending.c,v 1.11 2003/03/20 03:58:13 momjian Exp $
+ * $Id: pending.c,v 1.12 2003/07/24 17:52:20 tgl Exp $
  *
  * This file contains a trigger for Postgresql-7.x to record changes to tables
  * to a pending table for mirroring.
@@ -127,12 +127,15 @@ recordchange(PG_FUNCTION_ARGS)
 		if (storePending(fullyqualtblname, beforeTuple, afterTuple, tupdesc, trigdata, op))
 		{
 			/* An error occoured. Skip the operation. */
-			elog(ERROR, "Operation could not be mirrored");
+			ereport(ERROR,
+					(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
+					 errmsg("operation could not be mirrored")));
+
 			return PointerGetDatum(NULL);
 
 		}
 #if defined DEBUG_OUTPUT
-		elog(NOTICE, "Returning on success");
+		elog(NOTICE, "returning on success");
 #endif
 		SPI_pfree(fullyqualtblname);
 		SPI_finish();
@@ -175,7 +178,7 @@ storePending(char *cpTableName, HeapTuple tBeforeTuple,
 
 	vpPlan = SPI_prepare(cpQueryBase, 3, taPlanArgTypes);
 	if (vpPlan == NULL)
-		elog(NOTICE, "Error creating plan");
+		elog(NOTICE, "error creating plan");
 	/* SPI_saveplan(vpPlan); */
 
 	saPlanData[0] = PointerGetDatum(cpTableName);
@@ -218,7 +221,7 @@ storePending(char *cpTableName, HeapTuple tBeforeTuple,
 	}
 
 #if defined DEBUG_OUTPUT
-	elog(NOTICE, "Done storing keyinfo");
+	elog(NOTICE, "done storing keyinfo");
 #endif
 
 	return iResult;
@@ -241,19 +244,21 @@ storeKeyInfo(char *cpTableName, HeapTuple tTupleData,
 	pplan = SPI_prepare(insQuery, 1, saPlanArgTypes);
 	if (pplan == NULL)
 	{
-		elog(NOTICE, "Could not prepare INSERT plan");
+		elog(NOTICE, "could not prepare INSERT plan");
 		return -1;
 	}
 
 	/* pplan = SPI_saveplan(pplan); */
 	cpKeyData = packageData(tTupleData, tTupleDesc, tpTrigData, PRIMARY);
 	if (cpKeyData == NULL)
-	{
-		elog(ERROR,"Could not determine primary key data");
-		return -1;
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 /* cpTableName already contains quotes... */
+				 errmsg("there is no PRIMARY KEY for table %s",
+						cpTableName)));
+
 #if defined DEBUG_OUTPUT
-	elog(NOTICE, "KeyData: %s", cpKeyData);
+	elog(NOTICE, "key data: %s", cpKeyData);
 #endif
 	saPlanData[0] = PointerGetDatum(cpKeyData);
 
@@ -264,11 +269,11 @@ storeKeyInfo(char *cpTableName, HeapTuple tTupleData,
 
 	if (iRetCode != SPI_OK_INSERT)
 	{
-		elog(NOTICE, "Error inserting row in pendingDelete");
+		elog(NOTICE, "error inserting row in pendingDelete");
 		return -1;
 	}
 #if defined DEBUG_OUTPUT
-	elog(NOTICE, "Insert successful");
+	elog(NOTICE, "insert successful");
 #endif
 
 	return 0;
@@ -294,11 +299,9 @@ getPrimaryKey(Oid tblOid)
 	query = SPI_palloc(strlen(queryBase) + MAX_OID_LEN + 1);
 	sprintf(query, "%s%d", queryBase, tblOid);
 	ret = SPI_exec(query, 1);
+	SPI_pfree(query);
 	if (ret != SPI_OK_SELECT || SPI_processed != 1)
-	{
-		elog(NOTICE, "Could not select primary index key");
 		return NULL;
-	}
 
 	resTuple = SPI_tuptable->vals[0];
 	resDatum = SPI_getbinval(resTuple, SPI_tuptable->tupdesc, 1, &isNull);
@@ -307,7 +310,6 @@ getPrimaryKey(Oid tblOid)
 	resultKey = SPI_palloc(sizeof(int2vector));
 	memcpy(resultKey, tpResultKey, sizeof(int2vector));
 
-	SPI_pfree(query);
 	return resultKey;
 }
 
@@ -329,7 +331,7 @@ storeData(char *cpTableName, HeapTuple tTupleData, TupleDesc tTupleDesc,
 	pplan = SPI_prepare(insQuery, 1, planArgTypes);
 	if (pplan == NULL)
 	{
-		elog(NOTICE, "Could not prepare INSERT plan");
+		elog(NOTICE, "could not prepare INSERT plan");
 		return -1;
 	}
 
@@ -347,11 +349,11 @@ storeData(char *cpTableName, HeapTuple tTupleData, TupleDesc tTupleDesc,
 
 	if (iRetValue != SPI_OK_INSERT)
 	{
-		elog(NOTICE, "Error inserting row in pendingDelete");
+		elog(NOTICE, "error inserting row in pendingDelete");
 		return -1;
 	}
 #if defined DEBUG_OUTPUT
-	elog(NOTICE, "Insert successful");
+	elog(NOTICE, "insert successful");
 #endif
 
 	return 0;
@@ -394,7 +396,7 @@ packageData(HeapTuple tTupleData, TupleDesc tTupleDesc,
 	}
 #if defined DEBUG_OUTPUT
 	if (tpPKeys != NULL)
-		elog(NOTICE, "Have primary keys");
+		elog(NOTICE, "have primary keys");
 #endif
 	cpDataBlock = SPI_palloc(BUFFER_SIZE);
 	iDataBlockSize = BUFFER_SIZE;
@@ -429,7 +431,7 @@ packageData(HeapTuple tTupleData, TupleDesc tTupleDesc,
 				 * Don't use.
 				 */
 #if defined DEBUG_OUTPUT
-				elog(NOTICE, "Skipping column");
+				elog(NOTICE, "skipping column");
 #endif
 				continue;
 			}
@@ -437,7 +439,7 @@ packageData(HeapTuple tTupleData, TupleDesc tTupleDesc,
 		cpFieldName = DatumGetPointer(NameGetDatum(&tTupleDesc->attrs
 										 [iColumnCounter - 1]->attname));
 #if defined DEBUG_OUTPUT
-		elog(NOTICE, "FieldName: %s", cpFieldName);
+		elog(NOTICE, "field name: %s", cpFieldName);
 #endif
 		while (iDataBlockSize - iUsedDataBlock < strlen(cpFieldName) + 6)
 		{
@@ -465,8 +467,8 @@ packageData(HeapTuple tTupleData, TupleDesc tTupleDesc,
 
 		}
 #if defined DEBUG_OUTPUT
-		elog(NOTICE, "FieldData: %s", cpFieldData);
-		elog(NOTICE, "Starting format loop");
+		elog(NOTICE, "field data: \"%s\"", cpFieldData);
+		elog(NOTICE, "starting format loop");
 #endif
 		while (*cpUnFormatedPtr != 0)
 		{
@@ -499,14 +501,14 @@ packageData(HeapTuple tTupleData, TupleDesc tTupleDesc,
 		sprintf(cpFormatedPtr, "' ");
 		iUsedDataBlock = iUsedDataBlock + 2;
 #if defined DEBUG_OUTPUT
-		elog(NOTICE, "DataBlock: %s", cpDataBlock);
+		elog(NOTICE, "data block: \"%s\"", cpDataBlock);
 #endif
 
 	}							/* for iColumnCounter  */
 	if (tpPKeys != NULL)
 		SPI_pfree(tpPKeys);
 #if defined DEBUG_OUTPUT
-	elog(NOTICE, "Returning: DataBlockSize:%d iUsedDataBlock:%d",iDataBlockSize,
+	elog(NOTICE, "returning DataBlockSize:%d iUsedDataBlock:%d",iDataBlockSize,
 			iUsedDataBlock);
 #endif
 	memset(cpDataBlock + iUsedDataBlock, 0, iDataBlockSize - iUsedDataBlock);

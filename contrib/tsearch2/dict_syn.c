@@ -65,21 +65,30 @@ syn_init(PG_FUNCTION_ARGS) {
 	int slen;
 
 	if ( PG_ARGISNULL(0) || PG_GETARG_POINTER(0)==NULL )
-		elog(ERROR,"NULL config");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("NULL config")));
 
 	in = PG_GETARG_TEXT_P(0);
 	if ( VARSIZE(in) - VARHDRSZ == 0 )
-		elog(ERROR,"VOID config");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("VOID config")));
 
 	filename=text2char(in);
 	PG_FREE_IF_COPY(in, 0);
 	if ( (fin=fopen(filename,"r")) == NULL )
-		elog(ERROR,"Can't open file '%s': %s", filename, strerror(errno));
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not open file \"%s\": %m",
+						 filename)));
 
 	d = (DictSyn*)malloc( sizeof(DictSyn) );
 	if ( !d ) {
 		fclose(fin);
-		elog(ERROR, "No memory");
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 	}
 	memset(d,0,sizeof(DictSyn));
 
@@ -92,7 +101,9 @@ syn_init(PG_FUNCTION_ARGS) {
 			d->syn=(Syn*)realloc( d->syn, sizeof(Syn)*d->len );
 			if ( !d->syn ) {
 				fclose(fin);
-				elog(ERROR, "No memory");
+				ereport(ERROR,
+						(errcode(ERRCODE_OUT_OF_MEMORY),
+						 errmsg("out of memory")));
 			}
 		}
 
@@ -112,7 +123,9 @@ syn_init(PG_FUNCTION_ARGS) {
 		d->syn[cur].out=strdup(lowerstr(starto));
 		if ( !(d->syn[cur].in && d->syn[cur].out) ) {
 			fclose(fin);
-			elog(ERROR, "No memory");
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 		}
 
 		cur++; 

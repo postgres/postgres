@@ -317,7 +317,9 @@ lt_q_regex(PG_FUNCTION_ARGS)
         int     num = ArrayGetNItems(ARR_NDIM(_query), ARR_DIMS(_query));
 
         if (ARR_NDIM(_query) != 1)
-                elog(ERROR, "Dimension of array != 1");
+			ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("array must be one-dimensional")));
 
 	while (num > 0) {
 		if (DatumGetBool(DirectFunctionCall2(ltq_regex,

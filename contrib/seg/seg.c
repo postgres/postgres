@@ -10,8 +10,6 @@
 
 #include "access/gist.h"
 #include "access/rtree.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
 #include "utils/builtins.h"
 
 #include "segdata.h"
@@ -798,7 +796,7 @@ seg_cmp(SEG * a, SEG * b)
 		if (b->l_ext == '~')
 			return 1;
 		/* can't get here unless data is corrupt */
-		elog(ERROR, "seg_cmp: bogus lower boundary types %d %d",
+		elog(ERROR, "bogus lower boundary types %d %d",
 			 (int) a->l_ext, (int) b->l_ext);
 	}
 
@@ -857,7 +855,7 @@ seg_cmp(SEG * a, SEG * b)
 		if (b->u_ext == '~')
 			return -1;
 		/* can't get here unless data is corrupt */
-		elog(ERROR, "seg_cmp: bogus upper boundary types %d %d",
+		elog(ERROR, "bogus upper boundary types %d %d",
 			 (int) a->u_ext, (int) b->u_ext);
 	}
 

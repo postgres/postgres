@@ -26,7 +26,9 @@ dex_init(PG_FUNCTION_ARGS) {
 	DictExample	*d = (DictExample*)malloc( sizeof(DictExample) );
 
 	if ( !d )
-		elog(ERROR, "No memory");
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 	memset(d,0,sizeof(DictExample));
 
 	d->stoplist.wordop=lowerstr;

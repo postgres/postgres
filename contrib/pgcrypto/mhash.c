@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: mhash.c,v 1.7 2001/11/20 18:54:07 momjian Exp $
+ * $Id: mhash.c,v 1.8 2003/07/24 17:52:33 tgl Exp $
  */
 
 #include <postgres.h>
@@ -143,7 +143,10 @@ cipher_init(PX_Cipher * c, const uint8 *key, unsigned klen, const uint8 *iv)
 
 	err = mcrypt_generic_init(ctx, (char *) key, klen, (char *) iv);
 	if (err < 0)
-		elog(ERROR, "mcrypt_generic_init error: %s", mcrypt_strerror(err));
+		ereport(ERROR,
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
+				 errmsg("mcrypt_generic_init error"),
+				 errdetail("%s", mcrypt_strerror(err))));
 
 	c->pstat = 1;
 	return 0;
@@ -159,7 +162,10 @@ cipher_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
 
 	err = mcrypt_generic(ctx, res, dlen);
 	if (err < 0)
-		elog(ERROR, "mcrypt_generic error: %s", mcrypt_strerror(err));
+		ereport(ERROR,
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
+				 errmsg("mcrypt_generic error"),
+				 errdetail("%s", mcrypt_strerror(err))));
 	return 0;
 }
 
@@ -173,7 +179,10 @@ cipher_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
 
 	err = mdecrypt_generic(ctx, res, dlen);
 	if (err < 0)
-		elog(ERROR, "mdecrypt_generic error: %s", mcrypt_strerror(err));
+		ereport(ERROR,
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
+				 errmsg("mdecrypt_generic error"),
+				 errdetail("%s", mcrypt_strerror(err))));
 	return 0;
 }
 

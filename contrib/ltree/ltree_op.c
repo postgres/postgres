@@ -197,7 +197,9 @@ inner_subltree(ltree * t, int4 startpos, int4 endpos)
 	int			i;
 
 	if (startpos < 0 || endpos < 0 || startpos >= t->numlevel || startpos > endpos)
-		elog(ERROR, "Wrong positions");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid positions")));
 
 	if (endpos > t->numlevel)
 		endpos = t->numlevel;
