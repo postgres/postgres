@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Jul 29 17:40:51 EDT 2002
+Last updated:		Mon Jul 29 23:12:20 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -37,6 +37,7 @@ Reporting
 * -Change DEBUG startup tag to LOG (Bruce)
 * Show location of syntax error in query [yacc]
 * Add getpid() function to backend
+* Allow logging of query durations
 
 
 Permissions
@@ -64,7 +65,6 @@ Administration
   or postmaster startup (Bruce)
 * Remove behavior of postmaster -o after making postmaster/postgres
   flags unique
-* Allow logging of query durations
 * -Prevent SIGHUP and 'pg_ctl reload' from changing command line
   specified parameters to postgresql.conf defaults (Peter E)
 * Allow easy display of usernames in a group
