@@ -17,15 +17,15 @@ ac_help="$ac_help
 ac_help="$ac_help
   --with-libraries=DIR   site library directories for tk/tcl, etc in DIR"
 ac_help="$ac_help
-   --enable-locale         enable locale support "
+   --enable-locale	       enable locale support "
 ac_help="$ac_help
-   --enable-recode         enable cyrillic recode support "
+   --enable-recode	       enable cyrillic recode support "
 ac_help="$ac_help
    --with-pgport=<portnum> change default startup port "
 ac_help="$ac_help
-   --with-tcl              use tcl "
+   --with-tcl	       use tcl "
 ac_help="$ac_help
-   --with-perl             use perl "
+   --with-perl	       use perl "
 ac_help="$ac_help
    --enable-cassert        enable assertion checks (debugging) "
 ac_help="$ac_help
@@ -589,10 +589,10 @@ echo "$ac_t""$host" 1>&6
 tas_file=dummy.s
 case "$host_os" in
  solaris*)
-        case "$host_cpu" in
-          sparc) os=sparc_solaris need_tas=yes tas_file=sparc_solaris.s ;;
-           i386) os=i386_solaris need_tas=yes tas_file=i386_solaris.s ;;
-        esac ;;
+	case "$host_cpu" in
+	  sparc) os=sparc_solaris need_tas=yes tas_file=sparc_solaris.s ;;
+	   i386) os=i386_solaris need_tas=yes tas_file=i386_solaris.s ;;
+	esac ;;
    sunos*) os=sunos4 need_tas=no ;;
      aux*) os=aux need_tas=no ;;
    linux*) os=linux need_tas=no ;;
@@ -608,10 +608,10 @@ nextstep*) os=nextstep need_tas=no ;;
      sco*) os=sco need_tas=no ;;
  machten*) os=machten need_tas=no ;;
   cygwin*) os=win need_tas=no ;;
- sysv4.2*) 
+ sysv4.2*)
        case "$host_vendor" in
-               univel) os=univel need_tas=no ;;
-                    *) os=unknown need_tas=no ;;
+	       univel) os=univel need_tas=no ;;
+		    *) os=unknown need_tas=no ;;
        esac ;;
    sysv4*) os=svr4 need_tas=no ;;
 *) echo ""
@@ -630,14 +630,14 @@ if test "X$need_tas" = "Xyes"
 then
 	
 	TAS=tas.o
-	 
+	
 fi
 
 PORTNAME=${os}
 
 
 
- 
+
 
 
 
@@ -702,7 +702,7 @@ EOT
 		echo "You must choose an appropriate template file."
 		exit
 	fi
-	TEMPLATE=template/$TEMPLATE 
+	TEMPLATE=template/$TEMPLATE
 fi
 export TEMPLATE
 echo ""
@@ -737,11 +737,11 @@ fi
 
 if test "$INCLUDE_DIRS"; then
 	for dir in $INCLUDE_DIRS; do
-	    if test -d "$dir"; then
-		PGSQL_CPPFLAGS="$PGSQL_CPPFLAGS -I$dir"
-	    else
-		echo "configure: warning: *** Include directory $dir does not exist." 1>&2
-	    fi
+		if test -d "$dir"; then
+			PGSQL_CPPFLAGS="$PGSQL_CPPFLAGS -I$dir"
+		else
+			echo "configure: warning: *** Include directory $dir does not exist." 1>&2
+		fi
 	done
 fi
 
@@ -761,11 +761,11 @@ fi
 
 if test "$LIBRARY_DIRS"; then
 	for dir in $withval; do
-	    if test -d "$dir"; then
-		PGSQL_LDFLAGS="$PGSQL_LDFLAGS -L$dir"
-	    else
-		echo "configure: warning: *** Library directory $dir does not exist." 1>&2
-	    fi
+		if test -d "$dir"; then
+			PGSQL_LDFLAGS="$PGSQL_LDFLAGS -L$dir"
+		else
+			echo "configure: warning: *** Library directory $dir does not exist." 1>&2
+		fi
 	done
 fi
 
@@ -834,18 +834,18 @@ if test "$USE_TCL"; then
 	tcl_dirs="tcl8.0 tcl80 tcl7.6 tcl76"
 	tk_dirs="tk8.0 tk4.2"
 	for dir in $header_dirs; do
-	    for tcl_dir in $tcl_dirs; do
-		if test -d "$dir/$tcl_dir"; then
-		    PGSQL_CPPFLAGS="$PGSQL_CPPFLAGS -I$dir/$tcl_dir"
-		fi
-	    done
+		for tcl_dir in $tcl_dirs; do
+			if test -d "$dir/$tcl_dir"; then
+				PGSQL_CPPFLAGS="$PGSQL_CPPFLAGS -I$dir/$tcl_dir"
+			fi
+		done
 	done
 	for dir in $header_dirs; do
-	    for tk_dir in $tk_dirs; do
-		if test -d "$dir/$tk_dir"; then
-		    PGSQL_CPPFLAGS="$PGSQL_CPPFLAGS -I$dir/$tk_dir"
-		fi
-	    done
+		for tk_dir in $tk_dirs; do
+			if test -d "$dir/$tk_dir"; then
+			PGSQL_CPPFLAGS="$PGSQL_CPPFLAGS -I$dir/$tk_dir"
+			fi
+		done
 	done
 fi
 export USE_TCL
@@ -865,8 +865,8 @@ fi
 
 if test "$USE_PERL" = "true"; then
 	if test ! -x $prefix/bin/postgres; then
-	    echo "configure: warning: perl support disabled; postgres not previously installed" 1>&2
-	    USE_PERL=
+		echo "configure: warning: perl support disabled; postgres not previously installed" 1>&2
+		USE_PERL=
 	fi
 fi
 export USE_PERL
@@ -888,9 +888,9 @@ fi
 
 if test "X$with_compiler" != "X"
 then
-        CC=$with_compiler
+	CC=$with_compiler
 else
-        # Extract the first word of "gcc", so it can be a program name with args.
+	# Extract the first word of "gcc", so it can be a program name with args.
 set dummy gcc; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
 echo "configure:897: checking for $ac_word" >&5
@@ -1187,8 +1187,8 @@ test -n "$INSTALL" || INSTALL="NONE"
 
 if test $INSTALL = "NONE"
 then
-   echo "- No Install Script found - aborting."
-   exit 0;
+	echo "- No Install Script found - aborting."
+	exit 0;
 fi
 
 INSTLOPTS="-m 444"
@@ -1211,15 +1211,15 @@ echo "- Using $INSTALL"
 ECHO_N_OUT=`echo -n "" | wc -c`
 ECHO_C_OUT=`echo "\c" | wc -c`
 if test "$ECHO_N_OUT" -eq 0; then
-  DASH_N='-n'
-  BACKSLASH_C=
+	DASH_N='-n'
+	BACKSLASH_C=
 else
-  if test "ECHO_C_OUT" -eq 0; then
-    DASH_N=
-    BACKSLASH_C='\\\\c'
-  else
-    { echo "configure: error: "echo behaviour undetermined"" 1>&2; exit 1; }
-  fi
+	if test "ECHO_C_OUT" -eq 0; then
+		DASH_N=
+		BACKSLASH_C='\\\\c'
+	else
+		{ echo "configure: error: "echo behaviour undetermined"" 1>&2; exit 1; }
+	fi
 fi
 
 
@@ -1637,11 +1637,11 @@ TRSTRINGS="`echo ABCdef | $TR '[a-z]' '[A-Z]' 2>/dev/null | grep ABCDEF`"
 TRCLASS="`echo ABCdef | $TR '[:lower:]' '[:upper:]' 2>/dev/null | grep ABCDEF`"
 
 if test "$TRSTRINGS" = "ABCDEF"; then
-  TRARGS="'[a-z]' '[A-Z]'"
+	TRARGS="'[a-z]' '[A-Z]'"
 elif test "$TRCLASS" = "ABCDEF"; then
-  TRARGS="'[:lower:]' '[:upper:]'"
+	TRARGS="'[:lower:]' '[:upper:]'"
 else
-  { echo "configure: error: "Can\'t find method to covert from upper to lower case with tr"" 1>&2; exit 1; }
+	{ echo "configure: error: "Can\'t find method to covert from upper to lower case with tr"" 1>&2; exit 1; }
 fi
 
 
@@ -1710,7 +1710,7 @@ else
   echo "$ac_t""no" 1>&6
 fi
 
-if test -f "$YACC" 
+if test -f "$YACC"
 then
 	echo "- Using $YACC $YFLAGS"
 elif test -f "$bison"
@@ -2898,7 +2898,7 @@ else
 fi
 done
 
-for ac_hdr in readline/history.h ieeefp.h fp_class.h netinet/in.h
+for ac_hdr in readline/readline.h readline/history.h ieeefp.h fp_class.h
 do
 ac_safe=`echo "$ac_hdr" | sed 'y%./+-%__p_%'`
 echo $ac_n "checking for $ac_hdr""... $ac_c" 1>&6
@@ -2938,7 +2938,7 @@ else
 fi
 done
 
-for ac_hdr in string.h strings.h
+for ac_hdr in netinet/in.h string.h strings.h
 do
 ac_safe=`echo "$ac_hdr" | sed 'y%./+-%__p_%'`
 echo $ac_n "checking for $ac_hdr""... $ac_c" 1>&6
@@ -4541,12 +4541,12 @@ fi
 
 if test "$USE_X" = true; then
 
-ice_save_LIBS="$LIBS"
-ice_save_CFLAGS="$CFLAGS"
-ice_save_CPPFLAGS="$CPPFLAGS"
-ice_save_LDFLAGS="$LDFLAGS"
+	ice_save_LIBS="$LIBS"
+	ice_save_CFLAGS="$CFLAGS"
+	ice_save_CPPFLAGS="$CPPFLAGS"
+	ice_save_LDFLAGS="$LDFLAGS"
 
-# If we find X, set shell vars x_includes and x_libraries to the
+	# If we find X, set shell vars x_includes and x_libraries to the
 # paths, otherwise set no_x=yes.
 # Uses ac_ vars as temps to allow command line to override cache and checks.
 # --without-x overrides everything else, but does not touch the cache.
@@ -5381,14 +5381,14 @@ fi
 fi
 
 
-LIBS="$LIBS $X_EXTRA_LIBS"
-CFLAGS="$CFLAGS $X_CFLAGS"
-CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-LDFLAGS="$LDFLAGS $X_LIBS"
+	LIBS="$LIBS $X_EXTRA_LIBS"
+	CFLAGS="$CFLAGS $X_CFLAGS"
+	CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+	LDFLAGS="$LDFLAGS $X_LIBS"
 
-
-X11_LIBS=""
-echo $ac_n "checking for XOpenDisplay in -lX11""... $ac_c" 1>&6
+	
+	X11_LIBS=""
+	echo $ac_n "checking for XOpenDisplay in -lX11""... $ac_c" 1>&6
 echo "configure:5393: checking for XOpenDisplay in -lX11" >&5
 ac_lib_var=`echo X11'_'XOpenDisplay | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
@@ -5428,27 +5428,27 @@ else
   echo "$ac_t""no" 1>&6
 fi
 
-if test "$X11_LIBS" = ""; then
-echo "configure: warning: The X11 library '-lX11' could not be found.
-                    Please use the configure options '--x-includes=DIR'
-                    and '--x-libraries=DIR' to specify the X location.
-                    See the file 'config.log' for further diagnostics." 1>&2
-fi
+	if test "$X11_LIBS" = ""; then
+				echo "configure: warning: The X11 library '-lX11' could not be found.
+			    Please use the configure options '--x-includes=DIR'
+			    and '--x-libraries=DIR' to specify the X location.
+			    See the file 'config.log' for further diagnostics." 1>&2
+	fi
+	
+	
+	
 
-
-
-
-LIBS="$ice_save_LIBS"
-CFLAGS="$ice_save_CFLAGS"
-CPPFLAGS="$ice_save_CPPFLAGS"
-LDFLAGS="$ice_save_LDFLAGS"
+	LIBS="$ice_save_LIBS"
+	CFLAGS="$ice_save_CFLAGS"
+	CPPFLAGS="$ice_save_CPPFLAGS"
+	LDFLAGS="$ice_save_LDFLAGS"
 fi
 
 
 if test "$USE_TCL" = "true"
 then
-TCL_INCDIR=no
-ac_safe=`echo "tcl.h" | sed 'y%./+-%__p_%'`
+	TCL_INCDIR=no
+	ac_safe=`echo "tcl.h" | sed 'y%./+-%__p_%'`
 echo $ac_n "checking for tcl.h""... $ac_c" 1>&6
 echo "configure:5454: checking for tcl.h" >&5
 if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
@@ -5481,18 +5481,18 @@ else
   echo "$ac_t""no" 1>&6
 fi
 
-if test "$TCL_INCDIR" = "no"; then
-echo "configure: warning: tcl support disabled; tcl.h missing" 1>&2
-USE_TCL=
-fi
+	if test "$TCL_INCDIR" = "no"; then
+		echo "configure: warning: tcl support disabled; tcl.h missing" 1>&2
+		USE_TCL=
+	fi
 fi
 
 if test "$USE_TCL" = "true"; then
 	TCL_LIB=
 	tcl_libs="tcl8.0 tcl80 tcl7.6 tcl76 tcl"
 	for tcl_lib in $tcl_libs; do
-	    if test -z "$TCL_LIB"; then
-		echo $ac_n "checking for main in -l$tcl_lib""... $ac_c" 1>&6
+		if test -z "$TCL_LIB"; then
+			echo $ac_n "checking for main in -l$tcl_lib""... $ac_c" 1>&6
 echo "configure:5497: checking for main in -l$tcl_lib" >&5
 ac_lib_var=`echo $tcl_lib'_'main | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
@@ -5528,13 +5528,13 @@ else
   echo "$ac_t""no" 1>&6
 fi
 
-	    fi
+		fi
 	done
 	if test -z "$TCL_LIB"; then
-	    echo "configure: warning: tcl support disabled; Tcl library missing" 1>&2
-	    USE_TCL=
+		echo "configure: warning: tcl support disabled; Tcl library missing" 1>&2
+		USE_TCL=
 	else
-	    TCL_LIB=-l$TCL_LIB
+		TCL_LIB=-l$TCL_LIB
 	fi
 	
 fi
@@ -5542,28 +5542,27 @@ fi
 
 if test "$USE_TCL" = "true"
 then
+	ice_save_LIBS="$LIBS"
+	ice_save_CFLAGS="$CFLAGS"
+	ice_save_CPPFLAGS="$CPPFLAGS"
+	ice_save_LDFLAGS="$LDFLAGS"
 
-ice_save_LIBS="$LIBS"
-ice_save_CFLAGS="$CFLAGS"
-ice_save_CPPFLAGS="$CPPFLAGS"
-ice_save_LDFLAGS="$LDFLAGS"
+	CPPFLAGS="$CPPFLAGS $X_CFLAGS"
 
-CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-
-TK_INCDIR=no
-ac_safe=`echo "tk.h" | sed 'y%./+-%__p_%'`
+	TK_INCDIR=no
+	ac_safe=`echo "tk.h" | sed 'y%./+-%__p_%'`
 echo $ac_n "checking for tk.h""... $ac_c" 1>&6
-echo "configure:5557: checking for tk.h" >&5
+echo "configure:5556: checking for tk.h" >&5
 if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 5562 "configure"
+#line 5561 "configure"
 #include "confdefs.h"
 #include <tk.h>
 EOF
 ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
-{ (eval echo configure:5567: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+{ (eval echo configure:5566: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
 ac_err=`grep -v '^ *+' conftest.out`
 if test -z "$ac_err"; then
   rm -rf conftest*
@@ -5584,33 +5583,34 @@ else
   echo "$ac_t""no" 1>&6
 fi
 
-if test "$TK_INCDIR" = "no"; then
-echo "configure: warning: tcl support disabled; tk.h missing" 1>&2
-USE_TCL=
-fi
+	if test "$TK_INCDIR" = "no"; then
+		echo "configure: warning: tcl support disabled; tk.h missing" 1>&2
+		USE_TCL=
+	fi
 
-LIBS="$ice_save_LIBS"
-CFLAGS="$ice_save_CFLAGS"
-CPPFLAGS="$ice_save_CPPFLAGS"
-LDFLAGS="$ice_save_LDFLAGS"
+	LIBS="$ice_save_LIBS"
+	CFLAGS="$ice_save_CFLAGS"
+	CPPFLAGS="$ice_save_CPPFLAGS"
+	LDFLAGS="$ice_save_LDFLAGS"
 fi
 
 if test "$USE_TCL" = "true"
 then
-ice_save_LIBS="$LIBS"
-ice_save_CFLAGS="$CFLAGS"
-ice_save_CPPFLAGS="$CPPFLAGS"
-ice_save_LDFLAGS="$LDFLAGS"
-LIBS="$LIBS $X_EXTRA_LIBS"
-CFLAGS="$CFLAGS $X_CFLAGS"
-CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-LDFLAGS="$LDFLAGS $X_LIBS"
-TK_LIB=
+	ice_save_LIBS="$LIBS"
+	ice_save_CFLAGS="$CFLAGS"
+	ice_save_CPPFLAGS="$CPPFLAGS"
+	ice_save_LDFLAGS="$LDFLAGS"
+
+	LIBS="$LIBS $X_EXTRA_LIBS"
+	CFLAGS="$CFLAGS $X_CFLAGS"
+	CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+	LDFLAGS="$LDFLAGS $X_LIBS"
+
 	TK_LIB=
 	tk_libs="tk8.0 tk80 tk4.2 tk42 tk"
 	for tk_lib in $tk_libs; do
-	    if test -z "$TK_LIB"; then
-		echo $ac_n "checking for main in -l$tk_lib""... $ac_c" 1>&6
+		if test -z "$TK_LIB"; then
+			echo $ac_n "checking for main in -l$tk_lib""... $ac_c" 1>&6
 echo "configure:5615: checking for main in -l$tk_lib" >&5
 ac_lib_var=`echo $tk_lib'_'main | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
@@ -5646,20 +5646,21 @@ else
   echo "$ac_t""no" 1>&6
 fi
 
-	    fi
+		fi
 	done
 	if test -z "$TK_LIB"; then
-	    echo "configure: warning: tk support disabled; Tk library missing" 1>&2
-	    USE_TCL=
+		echo "configure: warning: tk support disabled; Tk library missing" 1>&2
+		USE_TCL=
 	else
-	    TK_LIB=-l$TK_LIB
+		TK_LIB=-l$TK_LIB
 	fi
+
 	
-fi
-LIBS="$ice_save_LIBS"
-CFLAGS="$ice_save_CFLAGS"
-CPPFLAGS="$ice_save_CPPFLAGS"
-LDFLAGS="$ice_save_LDFLAGS"
+
+	LIBS="$ice_save_LIBS"
+	CFLAGS="$ice_save_CFLAGS"
+	CPPFLAGS="$ice_save_CPPFLAGS"
+	LDFLAGS="$ice_save_LDFLAGS"
 fi
 
 trap '' 1 2 15
@@ -6110,4 +6111,4 @@ EOF
 chmod +x $CONFIG_STATUS
 rm -fr confdefs* $ac_clean_files
 test "$no_create" = yes || ${CONFIG_SHELL-/bin/sh} $CONFIG_STATUS || exit 1
- 
+
