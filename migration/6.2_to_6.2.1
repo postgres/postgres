@@ -13,10 +13,3 @@ from psql to update the existing system table:
 
 This will need to be done to every existing database, including template1.
 
-Another way to avoid dump/reload is to use the following SQL command
-from psql to update the existing system table:
-
-  update pg_aggregate set aggfinalfn = 'cash_div_flt8'
-   where aggname = 'avg' and aggbasetype = 790;
-
-This will need to be done to every existing database, including template1.
