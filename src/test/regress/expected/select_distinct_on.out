@@ -1,15 +1,18 @@
-QUERY: SELECT DISTINCT ON string4 two, string4, ten
+--
+-- SELECT_DISTINCT_ON
+--
+SELECT DISTINCT ON string4 two, string4, ten
 	   FROM tmp
    ORDER BY two using <, string4 using <, ten using <;
-two|string4|ten
----+-------+---
-  0|AAAAxx |  0
-  0|HHHHxx |  0
-  0|OOOOxx |  0
-  0|VVVVxx |  0
-  1|AAAAxx |  1
-  1|HHHHxx |  1
-  1|OOOOxx |  1
-  1|VVVVxx |  1
+ two | string4 | ten 
+-----+---------+-----
+   0 | AAAAxx  |   0
+   0 | HHHHxx  |   0
+   0 | OOOOxx  |   0
+   0 | VVVVxx  |   0
+   1 | AAAAxx  |   1
+   1 | HHHHxx  |   1
+   1 | OOOOxx  |   1
+   1 | VVVVxx  |   1
 (8 rows)
 

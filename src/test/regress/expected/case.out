@@ -1,97 +1,107 @@
-QUERY: CREATE TABLE CASE_TBL (
+--
+-- CASE
+-- Test the case statement
+--
+CREATE TABLE CASE_TBL (
   i integer,
   f double precision
 );
-QUERY: CREATE TABLE CASE2_TBL (
+CREATE TABLE CASE2_TBL (
   i integer,
   j integer
 );
-QUERY: INSERT INTO CASE_TBL VALUES (1, 10.1);
-QUERY: INSERT INTO CASE_TBL VALUES (2, 20.2);
-QUERY: INSERT INTO CASE_TBL VALUES (3, -30.3);
-QUERY: INSERT INTO CASE_TBL VALUES (4, NULL);
-QUERY: INSERT INTO CASE2_TBL VALUES (1, -1);
-QUERY: INSERT INTO CASE2_TBL VALUES (2, -2);
-QUERY: INSERT INTO CASE2_TBL VALUES (3, -3);
-QUERY: INSERT INTO CASE2_TBL VALUES (2, -4);
-QUERY: INSERT INTO CASE2_TBL VALUES (1, NULL);
-QUERY: INSERT INTO CASE2_TBL VALUES (NULL, -6);
-QUERY: SELECT '3' AS "One",
+INSERT INTO CASE_TBL VALUES (1, 10.1);
+INSERT INTO CASE_TBL VALUES (2, 20.2);
+INSERT INTO CASE_TBL VALUES (3, -30.3);
+INSERT INTO CASE_TBL VALUES (4, NULL);
+INSERT INTO CASE2_TBL VALUES (1, -1);
+INSERT INTO CASE2_TBL VALUES (2, -2);
+INSERT INTO CASE2_TBL VALUES (3, -3);
+INSERT INTO CASE2_TBL VALUES (2, -4);
+INSERT INTO CASE2_TBL VALUES (1, NULL);
+INSERT INTO CASE2_TBL VALUES (NULL, -6);
+--
+-- Simplest examples without tables
+--
+SELECT '3' AS "One",
   CASE
     WHEN 1 < 2 THEN 3
   END AS "Simple WHEN";
-One|Simple WHEN
----+-----------
-  3|          3
+ One | Simple WHEN 
+-----+-------------
+ 3   |           3
 (1 row)
 
-QUERY: SELECT '<NULL>' AS "One",
+SELECT '<NULL>' AS "One",
   CASE
     WHEN 1 > 2 THEN 3
   END AS "Simple default";
-One   |Simple default
-------+--------------
-<NULL>|              
+  One   | Simple default 
+--------+----------------
+ <NULL> |               
 (1 row)
 
-QUERY: SELECT '3' AS "One",
+SELECT '3' AS "One",
   CASE
     WHEN 1 < 2 THEN 3
     ELSE 4
   END AS "Simple ELSE";
-One|Simple ELSE
----+-----------
-  3|          3
+ One | Simple ELSE 
+-----+-------------
+ 3   |           3
 (1 row)
 
-QUERY: SELECT '4' AS "One",
+SELECT '4' AS "One",
   CASE
     WHEN 1 > 2 THEN 3
     ELSE 4
   END AS "ELSE default";
-One|ELSE default
----+------------
-  4|           4
+ One | ELSE default 
+-----+--------------
+ 4   |            4
 (1 row)
 
-QUERY: SELECT '6' AS "One",
+SELECT '6' AS "One",
   CASE
     WHEN 1 > 2 THEN 3
     WHEN 4 < 5 THEN 6
     ELSE 7
   END AS "Two WHEN with default";
-One|Two WHEN with default
----+---------------------
-  6|                    6
+ One | Two WHEN with default 
+-----+-----------------------
+ 6   |                     6
 (1 row)
 
-QUERY: SELECT '' AS "Five",
+--
+-- Examples of targets involving tables
+--
+SELECT '' AS "Five",
   CASE
     WHEN i >= 3 THEN i
   END AS ">= 3 or Null"
   FROM CASE_TBL;
-Five|>= 3 or Null
-----+------------
-    |            
-    |            
-    |           3
-    |           4
+ Five | >= 3 or Null 
+------+--------------
+      |             
+      |             
+      |            3
+      |            4
 (4 rows)
 
-QUERY: SELECT '' AS "Five",
+SELECT '' AS "Five",
   CASE WHEN i >= 3 THEN (i + i)
        ELSE i
   END AS "Simplest Math"
   FROM CASE_TBL;
-Five|Simplest Math
-----+-------------
-    |            1
-    |            2
-    |            6
-    |            8
+ Five | Simplest Math 
+------+---------------
+      |             1
+      |             2
+      |             6
+      |             8
 (4 rows)
 
-QUERY: SELECT '' AS "Five", i AS "Value",
+SELECT '' AS "Five", i AS "Value",
   CASE WHEN (i < 0) THEN 'small'
        WHEN (i = 0) THEN 'zero'
        WHEN (i = 1) THEN 'one'
@@ -99,15 +109,15 @@ QUERY: SELECT '' AS "Five", i AS "Value",
        ELSE 'big'
   END AS "Category"
   FROM CASE_TBL;
-Five|Value|Category
-----+-----+--------
-    |    1|one     
-    |    2|two     
-    |    3|big     
-    |    4|big     
+ Five | Value | Category 
+------+-------+----------
+      |     1 | one
+      |     2 | two
+      |     3 | big
+      |     4 | big
 (4 rows)
 
-QUERY: SELECT '' AS "Five",
+SELECT '' AS "Five",
   CASE WHEN ((i < 0) or (i < 0)) THEN 'small'
        WHEN ((i = 0) or (i = 0)) THEN 'zero'
        WHEN ((i = 1) or (i = 1)) THEN 'one'
@@ -115,141 +125,155 @@ QUERY: SELECT '' AS "Five",
        ELSE 'big'
   END AS "Category"
   FROM CASE_TBL;
-Five|Category
-----+--------
-    |one     
-    |two     
-    |big     
-    |big     
+ Five | Category 
+------+----------
+      | one
+      | two
+      | big
+      | big
 (4 rows)
 
-QUERY: SELECT * FROM CASE_TBL WHERE COALESCE(f,i) = 4;
-i|f
--+-
-4| 
+--
+-- Examples of qualifications involving tables
+--
+--
+-- NULLIF() and COALESCE()
+-- Shorthand forms for typical CASE constructs
+--  defined in the SQL92 standard.
+--
+SELECT * FROM CASE_TBL WHERE COALESCE(f,i) = 4;
+ i | f 
+---+---
+ 4 |  
 (1 row)
 
-QUERY: SELECT * FROM CASE_TBL WHERE NULLIF(f,i) = 2;
-i|f
--+-
+SELECT * FROM CASE_TBL WHERE NULLIF(f,i) = 2;
+ i | f 
+---+---
 (0 rows)
 
-QUERY: SELECT COALESCE(a.f, b.i, b.j)
+SELECT COALESCE(a.f, b.i, b.j)
   FROM CASE_TBL a, CASE2_TBL b;
- case
------
- 10.1
- 20.2
--30.3
-    1
- 10.1
- 20.2
--30.3
-    2
- 10.1
- 20.2
--30.3
-    3
- 10.1
- 20.2
--30.3
-    2
- 10.1
- 20.2
--30.3
-    1
- 10.1
- 20.2
--30.3
-   -6
+ case  
+-------
+  10.1
+  20.2
+ -30.3
+     1
+  10.1
+  20.2
+ -30.3
+     2
+  10.1
+  20.2
+ -30.3
+     3
+  10.1
+  20.2
+ -30.3
+     2
+  10.1
+  20.2
+ -30.3
+     1
+  10.1
+  20.2
+ -30.3
+    -6
 (24 rows)
 
-QUERY: SELECT *
+SELECT *
   FROM CASE_TBL a, CASE2_TBL b
   WHERE COALESCE(a.f, b.i, b.j) = 2;
-i|f|i| j
--+-+-+--
-4| |2|-2
-4| |2|-4
+ i | f | i | j  
+---+---+---+----
+ 4 |   | 2 | -2
+ 4 |   | 2 | -4
 (2 rows)
 
-QUERY: SELECT '' AS Five, NULLIF(a.i,b.i) AS "NULLIF(a.i,b.i)",
+SELECT '' AS Five, NULLIF(a.i,b.i) AS "NULLIF(a.i,b.i)",
   NULLIF(b.i, 4) AS "NULLIF(b.i,4)"
   FROM CASE_TBL a, CASE2_TBL b;
-five|NULLIF(a.i,b.i)|NULLIF(b.i,4)
-----+---------------+-------------
-    |               |            1
-    |              2|            1
-    |              3|            1
-    |              4|            1
-    |              1|            2
-    |               |            2
-    |              3|            2
-    |              4|            2
-    |              1|            3
-    |              2|            3
-    |               |            3
-    |              4|            3
-    |              1|            2
-    |               |            2
-    |              3|            2
-    |              4|            2
-    |               |            1
-    |              2|            1
-    |              3|            1
-    |              4|            1
-    |              1|             
-    |              2|             
-    |              3|             
-    |              4|             
+ five | NULLIF(a.i,b.i) | NULLIF(b.i,4) 
+------+-----------------+---------------
+      |                 |             1
+      |               2 |             1
+      |               3 |             1
+      |               4 |             1
+      |               1 |             2
+      |                 |             2
+      |               3 |             2
+      |               4 |             2
+      |               1 |             3
+      |               2 |             3
+      |                 |             3
+      |               4 |             3
+      |               1 |             2
+      |                 |             2
+      |               3 |             2
+      |               4 |             2
+      |                 |             1
+      |               2 |             1
+      |               3 |             1
+      |               4 |             1
+      |               1 |              
+      |               2 |              
+      |               3 |              
+      |               4 |              
 (24 rows)
 
-QUERY: SELECT '' AS "Two", *
+SELECT '' AS "Two", *
   FROM CASE_TBL a, CASE2_TBL b
   WHERE COALESCE(f,b.i) = 2;
-Two|i|f|i| j
----+-+-+-+--
-   |4| |2|-2
-   |4| |2|-4
+ Two | i | f | i | j  
+-----+---+---+---+----
+     | 4 |   | 2 | -2
+     | 4 |   | 2 | -4
 (2 rows)
 
-QUERY: UPDATE CASE_TBL
+--
+-- Examples of updates involving tables
+--
+UPDATE CASE_TBL
   SET i = CASE WHEN i >= 3 THEN (- i)
                 ELSE (2 * i) END;
-QUERY: SELECT * FROM CASE_TBL;
- i|    f
---+-----
- 2| 10.1
- 4| 20.2
--3|-30.3
--4|     
+SELECT * FROM CASE_TBL;
+ i  |   f   
+----+-------
+  2 |  10.1
+  4 |  20.2
+ -3 | -30.3
+ -4 |      
 (4 rows)
 
-QUERY: UPDATE CASE_TBL
+UPDATE CASE_TBL
   SET i = CASE WHEN i >= 2 THEN (2 * i)
                 ELSE (3 * i) END;
-QUERY: SELECT * FROM CASE_TBL;
-  i|    f
----+-----
-  4| 10.1
-  8| 20.2
- -9|-30.3
--12|     
+SELECT * FROM CASE_TBL;
+  i  |   f   
+-----+-------
+   4 |  10.1
+   8 |  20.2
+  -9 | -30.3
+ -12 |      
 (4 rows)
 
-QUERY: UPDATE CASE_TBL
+UPDATE CASE_TBL
   SET i = CASE WHEN b.i >= 2 THEN (2 * j)
                 ELSE (3 * j) END
   FROM CASE2_TBL b
   WHERE j = -CASE_TBL.i;
-QUERY: SELECT * FROM CASE_TBL;
-  i|    f
----+-----
-  8| 20.2
- -9|-30.3
--12|     
- -8| 10.1
+SELECT * FROM CASE_TBL;
+  i  |   f   
+-----+-------
+   8 |  20.2
+  -9 | -30.3
+ -12 |      
+  -8 |  10.1
 (4 rows)
 
-QUERY: DROP TABLE CASE_TBL;
-QUERY: DROP TABLE CASE2_TBL;
+--
+-- Clean up
+--
+DROP TABLE CASE_TBL;
+DROP TABLE CASE2_TBL;

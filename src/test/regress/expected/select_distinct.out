@@ -1,103 +1,126 @@
-QUERY: SELECT DISTINCT two FROM tmp;
-two
----
-  0
-  1
+--
+-- SELECT_DISTINCT
+--
+--
+-- awk '{print $3;}' onek.data | sort -n | uniq
+--
+SELECT DISTINCT two FROM tmp;
+ two 
+-----
+   0
+   1
 (2 rows)
 
-QUERY: SELECT DISTINCT ten FROM tmp;
-ten
----
-  0
-  1
-  2
-  3
-  4
-  5
-  6
-  7
-  8
-  9
+--
+-- awk '{print $5;}' onek.data | sort -n | uniq
+--
+SELECT DISTINCT ten FROM tmp;
+ ten 
+-----
+   0
+   1
+   2
+   3
+   4
+   5
+   6
+   7
+   8
+   9
 (10 rows)
 
-QUERY: SELECT DISTINCT string4 FROM tmp;
-string4
--------
-AAAAxx 
-HHHHxx 
-OOOOxx 
-VVVVxx 
+--
+-- awk '{print $16;}' onek.data | sort -d | uniq
+--
+SELECT DISTINCT string4 FROM tmp;
+ string4 
+---------
+ AAAAxx
+ HHHHxx
+ OOOOxx
+ VVVVxx
 (4 rows)
 
-QUERY: SELECT DISTINCT two, string4, ten
+--
+-- awk '{print $3,$16,$5;}' onek.data | sort -d | uniq |
+-- sort +0n -1 +1d -2 +2n -3
+--
+SELECT DISTINCT two, string4, ten
    FROM tmp
    ORDER BY two using <, string4 using <, ten using <;
-two|string4|ten
----+-------+---
-  0|AAAAxx |  0
-  0|AAAAxx |  2
-  0|AAAAxx |  4
-  0|AAAAxx |  6
-  0|AAAAxx |  8
-  0|HHHHxx |  0
-  0|HHHHxx |  2
-  0|HHHHxx |  4
-  0|HHHHxx |  6
-  0|HHHHxx |  8
-  0|OOOOxx |  0
-  0|OOOOxx |  2
-  0|OOOOxx |  4
-  0|OOOOxx |  6
-  0|OOOOxx |  8
-  0|VVVVxx |  0
-  0|VVVVxx |  2
-  0|VVVVxx |  4
-  0|VVVVxx |  6
-  0|VVVVxx |  8
-  1|AAAAxx |  1
-  1|AAAAxx |  3
-  1|AAAAxx |  5
-  1|AAAAxx |  7
-  1|AAAAxx |  9
-  1|HHHHxx |  1
-  1|HHHHxx |  3
-  1|HHHHxx |  5
-  1|HHHHxx |  7
-  1|HHHHxx |  9
-  1|OOOOxx |  1
-  1|OOOOxx |  3
-  1|OOOOxx |  5
-  1|OOOOxx |  7
-  1|OOOOxx |  9
-  1|VVVVxx |  1
-  1|VVVVxx |  3
-  1|VVVVxx |  5
-  1|VVVVxx |  7
-  1|VVVVxx |  9
+ two | string4 | ten 
+-----+---------+-----
+   0 | AAAAxx  |   0
+   0 | AAAAxx  |   2
+   0 | AAAAxx  |   4
+   0 | AAAAxx  |   6
+   0 | AAAAxx  |   8
+   0 | HHHHxx  |   0
+   0 | HHHHxx  |   2
+   0 | HHHHxx  |   4
+   0 | HHHHxx  |   6
+   0 | HHHHxx  |   8
+   0 | OOOOxx  |   0
+   0 | OOOOxx  |   2
+   0 | OOOOxx  |   4
+   0 | OOOOxx  |   6
+   0 | OOOOxx  |   8
+   0 | VVVVxx  |   0
+   0 | VVVVxx  |   2
+   0 | VVVVxx  |   4
+   0 | VVVVxx  |   6
+   0 | VVVVxx  |   8
+   1 | AAAAxx  |   1
+   1 | AAAAxx  |   3
+   1 | AAAAxx  |   5
+   1 | AAAAxx  |   7
+   1 | AAAAxx  |   9
+   1 | HHHHxx  |   1
+   1 | HHHHxx  |   3
+   1 | HHHHxx  |   5
+   1 | HHHHxx  |   7
+   1 | HHHHxx  |   9
+   1 | OOOOxx  |   1
+   1 | OOOOxx  |   3
+   1 | OOOOxx  |   5
+   1 | OOOOxx  |   7
+   1 | OOOOxx  |   9
+   1 | VVVVxx  |   1
+   1 | VVVVxx  |   3
+   1 | VVVVxx  |   5
+   1 | VVVVxx  |   7
+   1 | VVVVxx  |   9
 (40 rows)
 
-QUERY: SELECT DISTINCT p.age FROM person* p ORDER BY age using >;
-age
----
- 98
- 88
- 78
- 68
- 60
- 58
- 50
- 48
- 40
- 38
- 34
- 30
- 28
- 25
- 24
- 23
- 20
- 19
- 18
-  8
+--
+-- awk '{print $2;}' person.data |
+-- awk '{if(NF!=1){print $2;}else{print;}}' - emp.data |
+-- awk '{if(NF!=1){print $2;}else{print;}}' - student.data |
+-- awk 'BEGIN{FS="      ";}{if(NF!=1){print $5;}else{print;}}' - stud_emp.data |
+-- sort -n -r | uniq
+--
+SELECT DISTINCT p.age FROM person* p ORDER BY age using >;
+ age 
+-----
+  98
+  88
+  78
+  68
+  60
+  58
+  50
+  48
+  40
+  38
+  34
+  30
+  28
+  25
+  24
+  23
+  20
+  19
+  18
+   8
 (20 rows)
 

@@ -1,142 +1,151 @@
-QUERY: SELECT 1 AS one WHERE 1 IN (SELECT 1);
-one
----
-  1
+--
+-- SUBSELECT
+--
+SELECT 1 AS one WHERE 1 IN (SELECT 1);
+ one 
+-----
+   1
 (1 row)
 
-QUERY: SELECT 1 AS zero WHERE 1 NOT IN (SELECT 1);
-zero
-----
+SELECT 1 AS zero WHERE 1 NOT IN (SELECT 1);
+ zero 
+------
 (0 rows)
 
-QUERY: SELECT 1 AS zero WHERE 1 IN (SELECT 2);
-zero
-----
+SELECT 1 AS zero WHERE 1 IN (SELECT 2);
+ zero 
+------
 (0 rows)
 
-QUERY: CREATE TABLE SUBSELECT_TBL (
+-- Set up some simple test tables
+CREATE TABLE SUBSELECT_TBL (
   f1 integer,
   f2 integer,
   f3 float
 );
-QUERY: INSERT INTO SUBSELECT_TBL VALUES (1, 2, 3);
-QUERY: INSERT INTO SUBSELECT_TBL VALUES (2, 3, 4);
-QUERY: INSERT INTO SUBSELECT_TBL VALUES (3, 4, 5);
-QUERY: INSERT INTO SUBSELECT_TBL VALUES (1, 1, 1);
-QUERY: INSERT INTO SUBSELECT_TBL VALUES (2, 2, 2);
-QUERY: INSERT INTO SUBSELECT_TBL VALUES (3, 3, 3);
-QUERY: INSERT INTO SUBSELECT_TBL VALUES (6, 7, 8);
-QUERY: INSERT INTO SUBSELECT_TBL VALUES (8, 9, NULL);
-QUERY: SELECT '' AS eight, * FROM SUBSELECT_TBL;
-eight|f1|f2|f3
------+--+--+--
-     | 1| 2| 3
-     | 2| 3| 4
-     | 3| 4| 5
-     | 1| 1| 1
-     | 2| 2| 2
-     | 3| 3| 3
-     | 6| 7| 8
-     | 8| 9|  
+INSERT INTO SUBSELECT_TBL VALUES (1, 2, 3);
+INSERT INTO SUBSELECT_TBL VALUES (2, 3, 4);
+INSERT INTO SUBSELECT_TBL VALUES (3, 4, 5);
+INSERT INTO SUBSELECT_TBL VALUES (1, 1, 1);
+INSERT INTO SUBSELECT_TBL VALUES (2, 2, 2);
+INSERT INTO SUBSELECT_TBL VALUES (3, 3, 3);
+INSERT INTO SUBSELECT_TBL VALUES (6, 7, 8);
+INSERT INTO SUBSELECT_TBL VALUES (8, 9, NULL);
+SELECT '' AS eight, * FROM SUBSELECT_TBL;
+ eight | f1 | f2 | f3 
+-------+----+----+----
+       |  1 |  2 |  3
+       |  2 |  3 |  4
+       |  3 |  4 |  5
+       |  1 |  1 |  1
+       |  2 |  2 |  2
+       |  3 |  3 |  3
+       |  6 |  7 |  8
+       |  8 |  9 |   
 (8 rows)
 
-QUERY: SELECT '' AS two, f1 AS "Constant Select" FROM SUBSELECT_TBL
+-- Uncorrelated subselects
+SELECT '' AS two, f1 AS "Constant Select" FROM SUBSELECT_TBL
   WHERE f1 IN (SELECT 1);
-two|Constant Select
----+---------------
-   |              1
-   |              1
+ two | Constant Select 
+-----+-----------------
+     |               1
+     |               1
 (2 rows)
 
-QUERY: SELECT '' AS six, f1 AS "Uncorrelated Field" FROM SUBSELECT_TBL
+SELECT '' AS six, f1 AS "Uncorrelated Field" FROM SUBSELECT_TBL
   WHERE f1 IN (SELECT f2 FROM SUBSELECT_TBL);
-six|Uncorrelated Field
----+------------------
-   |                 1
-   |                 2
-   |                 3
-   |                 1
-   |                 2
-   |                 3
+ six | Uncorrelated Field 
+-----+--------------------
+     |                  1
+     |                  2
+     |                  3
+     |                  1
+     |                  2
+     |                  3
 (6 rows)
 
-QUERY: SELECT '' AS six, f1 AS "Uncorrelated Field" FROM SUBSELECT_TBL
+SELECT '' AS six, f1 AS "Uncorrelated Field" FROM SUBSELECT_TBL
   WHERE f1 IN (SELECT f2 FROM SUBSELECT_TBL WHERE
     f2 IN (SELECT f1 FROM SUBSELECT_TBL));
-six|Uncorrelated Field
----+------------------
-   |                 1
-   |                 2
-   |                 3
-   |                 1
-   |                 2
-   |                 3
+ six | Uncorrelated Field 
+-----+--------------------
+     |                  1
+     |                  2
+     |                  3
+     |                  1
+     |                  2
+     |                  3
 (6 rows)
 
-QUERY: SELECT '' AS six, f1 AS "Correlated Field", f3 AS "Second Field"
+-- Correlated subselects
+SELECT '' AS six, f1 AS "Correlated Field", f3 AS "Second Field"
   FROM SUBSELECT_TBL
   WHERE f1 IN (SELECT f2 FROM SUBSELECT_TBL WHERE f2 = f1);
-six|Correlated Field|Second Field
----+----------------+------------
-   |               1|           3
-   |               2|           4
-   |               3|           5
-   |               1|           1
-   |               2|           2
-   |               3|           3
+ six | Correlated Field | Second Field 
+-----+------------------+--------------
+     |                1 |            3
+     |                2 |            4
+     |                3 |            5
+     |                1 |            1
+     |                2 |            2
+     |                3 |            3
 (6 rows)
 
-QUERY: SELECT '' AS six, f1 AS "Correlated Field", f3 AS "Second Field"
+SELECT '' AS six, f1 AS "Correlated Field", f3 AS "Second Field"
   FROM SUBSELECT_TBL
   WHERE f1 IN (SELECT f2 FROM SUBSELECT_TBL WHERE CAST(f2 AS float) = f3);
-six|Correlated Field|Second Field
----+----------------+------------
-   |               1|           3
-   |               2|           4
-   |               3|           5
-   |               1|           1
-   |               2|           2
-   |               3|           3
+ six | Correlated Field | Second Field 
+-----+------------------+--------------
+     |                1 |            3
+     |                2 |            4
+     |                3 |            5
+     |                1 |            1
+     |                2 |            2
+     |                3 |            3
 (6 rows)
 
-QUERY: SELECT '' AS six, f1 AS "Correlated Field", f3 AS "Second Field"
+SELECT '' AS six, f1 AS "Correlated Field", f3 AS "Second Field"
   FROM SUBSELECT_TBL
   WHERE f1 IN (SELECT f2 FROM SUBSELECT_TBL WHERE f2 = CAST(f3 AS integer));
 ERROR:  dtoi4: unable to convert null
-QUERY: SELECT '' AS five, f1 AS "Correlated Field"
+SELECT '' AS five, f1 AS "Correlated Field"
   FROM SUBSELECT_TBL
   WHERE (f1, f2) IN (SELECT f2, CAST(f3 AS int4) FROM SUBSELECT_TBL WHERE f3 IS NOT NULL);
-five|Correlated Field
-----+----------------
-    |               2
-    |               3
-    |               1
-    |               2
-    |               3
+ five | Correlated Field 
+------+------------------
+      |                2
+      |                3
+      |                1
+      |                2
+      |                3
 (5 rows)
 
-QUERY: SELECT '' AS three, f1 AS "Correlated Field"
+SELECT '' AS three, f1 AS "Correlated Field"
   FROM SUBSELECT_TBL
   WHERE (f1, f2) NOT IN (SELECT f2, CAST(f3 AS int4) FROM SUBSELECT_TBL WHERE f3 IS NOT NULL);
-three|Correlated Field
------+----------------
-     |               1
-     |               6
-     |               8
+ three | Correlated Field 
+-------+------------------
+       |                1
+       |                6
+       |                8
 (3 rows)
 
-QUERY: SELECT '' AS eight, ss.f1 AS "Correlated Field", ss.f3 AS "Second Field"
+--
+-- Use some existing tables in the regression test
+--
+SELECT '' AS eight, ss.f1 AS "Correlated Field", ss.f3 AS "Second Field"
   FROM SUBSELECT_TBL ss
   WHERE f1 NOT IN (SELECT f1 FROM INT4_TBL WHERE f1 != ss.f1);
-eight|Correlated Field|Second Field
------+----------------+------------
-     |               1|           3
-     |               2|           4
-     |               3|           5
-     |               1|           1
-     |               2|           2
-     |               3|           3
-     |               6|           8
-     |               8|            
+ eight | Correlated Field | Second Field 
+-------+------------------+--------------
+       |                1 |            3
+       |                2 |            4
+       |                3 |            5
+       |                1 |            1
+       |                2 |            2
+       |                3 |            3
+       |                6 |            8
+       |                8 |             
 (8 rows)
 

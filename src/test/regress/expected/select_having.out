@@ -1,37 +1,41 @@
-QUERY: CREATE TABLE test_having (a int, b int, c char(8), d char);
-QUERY: INSERT INTO test_having VALUES (0, 1, 'XXXX', 'A');
-QUERY: INSERT INTO test_having VALUES (1, 2, 'AAAA', 'b');
-QUERY: INSERT INTO test_having VALUES (2, 2, 'AAAA', 'c');
-QUERY: INSERT INTO test_having VALUES (3, 3, 'BBBB', 'D');
-QUERY: INSERT INTO test_having VALUES (4, 3, 'BBBB', 'e');
-QUERY: INSERT INTO test_having VALUES (5, 3, 'bbbb', 'F');
-QUERY: INSERT INTO test_having VALUES (6, 4, 'cccc', 'g');
-QUERY: INSERT INTO test_having VALUES (7, 4, 'cccc', 'h');
-QUERY: INSERT INTO test_having VALUES (8, 4, 'CCCC', 'I');
-QUERY: INSERT INTO test_having VALUES (9, 4, 'CCCC', 'j');
-QUERY: SELECT b, c FROM test_having
+--
+-- SELECT_HAVING
+--
+-- load test data
+CREATE TABLE test_having (a int, b int, c char(8), d char);
+INSERT INTO test_having VALUES (0, 1, 'XXXX', 'A');
+INSERT INTO test_having VALUES (1, 2, 'AAAA', 'b');
+INSERT INTO test_having VALUES (2, 2, 'AAAA', 'c');
+INSERT INTO test_having VALUES (3, 3, 'BBBB', 'D');
+INSERT INTO test_having VALUES (4, 3, 'BBBB', 'e');
+INSERT INTO test_having VALUES (5, 3, 'bbbb', 'F');
+INSERT INTO test_having VALUES (6, 4, 'cccc', 'g');
+INSERT INTO test_having VALUES (7, 4, 'cccc', 'h');
+INSERT INTO test_having VALUES (8, 4, 'CCCC', 'I');
+INSERT INTO test_having VALUES (9, 4, 'CCCC', 'j');
+SELECT b, c FROM test_having
 	GROUP BY b, c HAVING count(*) = 1;
-b|c       
--+--------
-1|XXXX    
-3|bbbb    
+ b |    c     
+---+----------
+ 1 | XXXX    
+ 3 | bbbb    
 (2 rows)
 
-QUERY: SELECT lower(c), count(c) FROM test_having
+SELECT lower(c), count(c) FROM test_having
 	GROUP BY lower(c) HAVING count(*) > 2 OR min(a) = max(a);
-lower   |count
---------+-----
-bbbb    |    3
-cccc    |    4
-xxxx    |    1
+  lower   | count 
+----------+-------
+ bbbb     |     3
+ cccc     |     4
+ xxxx     |     1
 (3 rows)
 
-QUERY: SELECT c, max(a) FROM test_having
+SELECT c, max(a) FROM test_having
 	GROUP BY c HAVING count(*) > 2 OR min(a) = max(a);
-c       |max
---------+---
-XXXX    |  0
-bbbb    |  5
+    c     | max 
+----------+-----
+ XXXX     |   0
+ bbbb     |   5
 (2 rows)
 
-QUERY: DROP TABLE test_having;
+DROP TABLE test_having;

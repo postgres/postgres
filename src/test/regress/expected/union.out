@@ -1,241 +1,249 @@
-QUERY: SELECT 1 AS two UNION SELECT 2;
-two
----
-  1
-  2
+--
+-- UNION
+--
+-- Simple UNION constructs
+SELECT 1 AS two UNION SELECT 2;
+ two 
+-----
+   1
+   2
 (2 rows)
 
-QUERY: SELECT 1 AS one UNION SELECT 1;
-one
----
-  1
+SELECT 1 AS one UNION SELECT 1;
+ one 
+-----
+   1
 (1 row)
 
-QUERY: SELECT 1 AS two UNION ALL SELECT 2;
-two
----
-  1
-  2
-(2 rows)
-
-QUERY: SELECT 1 AS two UNION ALL SELECT 1;
-two
----
-  1
-  1
-(2 rows)
-
-QUERY: SELECT 1 AS three UNION SELECT 2 UNION SELECT 3;
-three
+SELECT 1 AS two UNION ALL SELECT 2;
+ two 
 -----
-    1
-    2
-    3
+   1
+   2
+(2 rows)
+
+SELECT 1 AS two UNION ALL SELECT 1;
+ two 
+-----
+   1
+   1
+(2 rows)
+
+SELECT 1 AS three UNION SELECT 2 UNION SELECT 3;
+ three 
+-------
+     1
+     2
+     3
 (3 rows)
 
-QUERY: SELECT 1 AS two UNION SELECT 2 UNION SELECT 2;
-two
----
-  1
-  2
+SELECT 1 AS two UNION SELECT 2 UNION SELECT 2;
+ two 
+-----
+   1
+   2
 (2 rows)
 
-QUERY: SELECT 1 AS three UNION SELECT 2 UNION ALL SELECT 2;
-three
------
-    1
-    2
-    2
+SELECT 1 AS three UNION SELECT 2 UNION ALL SELECT 2;
+ three 
+-------
+     1
+     2
+     2
 (3 rows)
 
-QUERY: SELECT 1.1 AS two UNION SELECT 2.2;
-two
----
-1.1
-2.2
+SELECT 1.1 AS two UNION SELECT 2.2;
+ two 
+-----
+ 1.1
+ 2.2
 (2 rows)
 
-QUERY: SELECT 1.1 AS two UNION SELECT 2;
-two
----
-1.1
-  2
+-- Mixed types
+SELECT 1.1 AS two UNION SELECT 2;
+ two 
+-----
+ 1.1
+   2
 (2 rows)
 
-QUERY: SELECT 1 AS two UNION SELECT 2.2;
-two
----
-  1
-  2
+SELECT 1 AS two UNION SELECT 2.2;
+ two 
+-----
+   1
+   2
 (2 rows)
 
-QUERY: SELECT 1 AS one UNION SELECT 1.1;
-one
----
-  1
+SELECT 1 AS one UNION SELECT 1.1;
+ one 
+-----
+   1
 (1 row)
 
-QUERY: SELECT 1.1 AS two UNION ALL SELECT 2;
-two
----
-1.1
-  2
-(2 rows)
-
-QUERY: SELECT 1 AS two UNION ALL SELECT 1;
-two
----
-  1
-  1
-(2 rows)
-
-QUERY: SELECT 1 AS three UNION SELECT 2 UNION SELECT 3;
-three
+SELECT 1.1 AS two UNION ALL SELECT 2;
+ two 
 -----
-    1
-    2
-    3
+ 1.1
+   2
+(2 rows)
+
+SELECT 1 AS two UNION ALL SELECT 1;
+ two 
+-----
+   1
+   1
+(2 rows)
+
+SELECT 1 AS three UNION SELECT 2 UNION SELECT 3;
+ three 
+-------
+     1
+     2
+     3
 (3 rows)
 
-QUERY: SELECT 1 AS two UNION SELECT 2 UNION SELECT 2;
-two
----
-  1
-  2
+SELECT 1 AS two UNION SELECT 2 UNION SELECT 2;
+ two 
+-----
+   1
+   2
 (2 rows)
 
-QUERY: SELECT 1 AS three UNION SELECT 2 UNION ALL SELECT 2;
-three
------
-    1
-    2
-    2
+SELECT 1 AS three UNION SELECT 2 UNION ALL SELECT 2;
+ three 
+-------
+     1
+     2
+     2
 (3 rows)
 
-QUERY: SELECT f1 AS five FROM FLOAT8_TBL
+--
+-- Try testing from tables...
+--
+SELECT f1 AS five FROM FLOAT8_TBL
 UNION
 SELECT f1 FROM FLOAT8_TBL;
-five                 
----------------------
--1.2345678901234e+200
--1004.3              
--34.84               
--1.2345678901234e-200
-0                    
+         five          
+-----------------------
+ -1.2345678901234e+200
+               -1004.3
+                -34.84
+ -1.2345678901234e-200
+                     0
 (5 rows)
 
-QUERY: SELECT f1 AS ten FROM FLOAT8_TBL
+SELECT f1 AS ten FROM FLOAT8_TBL
 UNION ALL
 SELECT f1 FROM FLOAT8_TBL;
-ten                  
----------------------
-0                    
--34.84               
--1004.3              
--1.2345678901234e+200
--1.2345678901234e-200
-0                    
--34.84               
--1004.3              
--1.2345678901234e+200
--1.2345678901234e-200
+          ten          
+-----------------------
+                     0
+                -34.84
+               -1004.3
+ -1.2345678901234e+200
+ -1.2345678901234e-200
+                     0
+                -34.84
+               -1004.3
+ -1.2345678901234e+200
+ -1.2345678901234e-200
 (10 rows)
 
-QUERY: SELECT f1 AS nine FROM FLOAT8_TBL
+SELECT f1 AS nine FROM FLOAT8_TBL
 UNION
 SELECT f1 FROM INT4_TBL;
-nine                 
----------------------
--1.2345678901234e+200
--2147483647          
--123456              
--1004.3              
--34.84               
--1.2345678901234e-200
-0                    
-123456               
-2147483647           
+         nine          
+-----------------------
+ -1.2345678901234e+200
+           -2147483647
+               -123456
+               -1004.3
+                -34.84
+ -1.2345678901234e-200
+                     0
+                123456
+            2147483647
 (9 rows)
 
-QUERY: SELECT f1 AS ten FROM FLOAT8_TBL
+SELECT f1 AS ten FROM FLOAT8_TBL
 UNION ALL
 SELECT f1 FROM INT4_TBL;
-ten                  
----------------------
-0                    
--34.84               
--1004.3              
--1.2345678901234e+200
--1.2345678901234e-200
-0                    
-123456               
--123456              
-2147483647           
--2147483647          
+          ten          
+-----------------------
+                     0
+                -34.84
+               -1004.3
+ -1.2345678901234e+200
+ -1.2345678901234e-200
+                     0
+                123456
+               -123456
+            2147483647
+           -2147483647
 (10 rows)
 
-QUERY: SELECT f1 AS five FROM FLOAT8_TBL
+SELECT f1 AS five FROM FLOAT8_TBL
   WHERE f1 BETWEEN -1e6 AND 1e6
 UNION
 SELECT f1 FROM INT4_TBL
   WHERE f1 BETWEEN 0 AND 1000000;
-                 five
----------------------
-              -1004.3
-               -34.84
--1.2345678901234e-200
-                    0
-               123456
+         five          
+-----------------------
+               -1004.3
+                -34.84
+ -1.2345678901234e-200
+                     0
+                123456
 (5 rows)
 
-QUERY: SELECT f1 AS five FROM VARCHAR_TBL
+SELECT f1 AS five FROM VARCHAR_TBL
 UNION
 SELECT f1 FROM CHAR_TBL;
-five
-----
-a   
-a   
-ab  
-ab  
-abcd
+ five 
+------
+ a
+ a   
+ ab
+ ab  
+ abcd
 (5 rows)
 
-QUERY: SELECT f1 AS three FROM VARCHAR_TBL
+SELECT f1 AS three FROM VARCHAR_TBL
 UNION
 SELECT TRIM(TRAILING FROM f1) FROM CHAR_TBL;
-three
------
-a    
-ab   
-abcd 
+ three 
+-------
+ a
+ ab
+ abcd
 (3 rows)
 
-QUERY: SELECT f1 AS eight FROM VARCHAR_TBL
+SELECT f1 AS eight FROM VARCHAR_TBL
 UNION ALL
 SELECT f1 FROM CHAR_TBL;
-eight
------
-a    
-ab   
-abcd 
-abcd 
-a    
-ab   
-abcd 
-abcd 
+ eight 
+-------
+ a
+ ab
+ abcd
+ abcd
+ a   
+ ab  
+ abcd
+ abcd
 (8 rows)
 
-QUERY: SELECT f1 AS five FROM TEXT_TBL
+SELECT f1 AS five FROM TEXT_TBL
 UNION
 SELECT f1 FROM VARCHAR_TBL
 UNION
 SELECT TRIM(TRAILING FROM f1) FROM CHAR_TBL;
-five             
------------------
-a                
-ab               
-abcd             
-doh!             
-hi de ho neighbor
+       five        
+-------------------
+ a
+ ab
+ abcd
+ doh!
+ hi de ho neighbor
 (5 rows)
 

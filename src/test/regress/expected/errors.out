@@ -1,8 +1,6 @@
 --
--- errors.source
+-- ERRORS
 --
--- $Header: /cvsroot/pgsql/src/test/regress/expected/errors.out,v 1.15 2000/01/05 17:31:08 thomas Exp $
- 
 -- bad in postquel, but ok in postsql
 select 1
 --

@@ -1,23 +1,35 @@
-QUERY: SELECT count(*) FROM onek;
-count
------
- 1000
+--
+-- RANDOM
+-- Test the random function
+--
+-- count the number of tuples originally
+SELECT count(*) FROM onek;
+ count 
+-------
+  1000
 (1 row)
 
-QUERY: SELECT count(*) AS random INTO RANDOM_TBL
+-- select roughly 1/10 of the tuples
+-- Assume that the "onek" table has 1000 tuples
+--  and try to bracket the correct number so we
+--  have a regression test which can pass/fail
+-- - thomas 1998-08-17
+SELECT count(*) AS random INTO RANDOM_TBL
   FROM onek WHERE oidrand(onek.oid, 10);
-QUERY: INSERT INTO RANDOM_TBL (random)
+-- select again, the count should be different
+INSERT INTO RANDOM_TBL (random)
   SELECT count(*)
   FROM onek WHERE oidrand(onek.oid, 10);
-QUERY: SELECT random, count(random) FROM RANDOM_TBL
+-- now test the results for randomness in the correct range
+SELECT random, count(random) FROM RANDOM_TBL
   GROUP BY random HAVING count(random) > 1;
-random|count
-------+-----
+ random | count 
+--------+-------
 (0 rows)
 
-QUERY: SELECT random FROM RANDOM_TBL
+SELECT random FROM RANDOM_TBL
   WHERE random NOT BETWEEN 80 AND 120;
-random
-------
+ random 
+--------
 (0 rows)
 

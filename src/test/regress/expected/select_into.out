@@ -1,10 +1,13 @@
-QUERY: SELECT *
+--
+-- SELECT_INTO
+--
+SELECT *
    INTO TABLE tmp1
    FROM tmp
    WHERE onek.unique1 < 2;
-QUERY: DROP TABLE tmp1;
-QUERY: SELECT *
+DROP TABLE tmp1;
+SELECT *
    INTO TABLE tmp1
    FROM tmp
    WHERE onek2.unique1 < 2;
-QUERY: DROP TABLE tmp1;
+DROP TABLE tmp1;
