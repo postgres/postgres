@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.404 2004/05/12 13:38:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.405 2004/05/13 22:45:03 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2159,7 +2159,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		}
 		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
 		{
-			puts("postgres (PostgreSQL) " PG_VERSION);
+			puts(PG_VERSIONSTR);
 			exit(0);
 		}
 	}
@@ -2646,14 +2646,12 @@ PostgresMain(int argc, char *argv[], const char *username)
 		}
 
 		/*
-		 * On some systems our dynloader code needs the executable's
-		 * pathname.  (If under postmaster, this was done already.)
+		 * On some systems our dynloader code needs the executable's pathname.
 		 */
-		if (find_my_exec(pg_pathname, argv[0]) < 0)
+		if (strlen(my_exec_path) == 0 && find_my_exec(my_exec_path, argv[0]) < 0)
 			ereport(FATAL,
 					(errmsg("%s: could not locate postgres executable",
 							argv[0])));
-
 		/*
 		 * Validate we have been given a reasonable-looking DataDir (if
 		 * under postmaster, assume postmaster did this already).

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.3 2004/05/13 01:47:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.4 2004/05/13 22:45:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,7 +184,6 @@ find_my_exec(char *full_path, const char *argv0)
 	char	   *path,
 			   *startp,
 			   *endp;
-	const char *binary_name = get_progname(argv0);
 
 	/*
 	 * First try: use the binary that's located in the
@@ -192,24 +191,23 @@ find_my_exec(char *full_path, const char *argv0)
 	 * Presumably the user used an explicit path because it
 	 * wasn't in PATH, and we don't want to use incompatible executables.
 	 *
-	 * This has the neat property that it works for installed binaries, old
-	 * source trees (obj/support/post{master,gres}) and new source
-	 * trees (obj/post{master,gres}) because they all put the two binaries
-	 * in the same place.
-	 *
-	 * for the binary: First try: if we're given some kind of path, use it
+	 * For the binary: First try: if we're given some kind of path, use it
 	 * (making sure that a relative path is made absolute before returning
 	 * it).
 	 */
-	if (argv0 && (p = last_path_separator(argv0)) && *++p)
+	/* Does argv0 have a separator? */
+	if (argv0 && (p = last_path_separator(argv0)))
 	{
+		if (*++p == '\0')
+		{
+			log_debug("argv[0] ends with a path separator \"%s\"", argv0);
+			return -1;
+		}
 		if (is_absolute_path(argv0) || !getcwd(buf, MAXPGPATH))
 			buf[0] = '\0';
-		else
+		else	/* path is not absolute and getcwd worked */
 			strcat(buf, "/");
 		strcat(buf, argv0);
-		p = last_path_separator(buf);
-		strcpy(++p, binary_name);
 		if (validate_exec(buf) == 0)
 		{
 			strncpy(full_path, buf, MAXPGPATH);
@@ -239,11 +237,11 @@ find_my_exec(char *full_path, const char *argv0)
 				*endp = '\0';
 			if (is_absolute_path(startp) || !getcwd(buf, MAXPGPATH))
 				buf[0] = '\0';
-			else
+			else	/* path is not absolute and getcwd worked */
 				strcat(buf, "/");
 			strcat(buf, startp);
 			strcat(buf, "/");
-			strcat(buf, binary_name);
+			strcat(buf, argv0);
 			switch (validate_exec(buf))
 			{
 				case 0: /* found ok */
@@ -265,7 +263,7 @@ find_my_exec(char *full_path, const char *argv0)
 		free(path);
 	}
 
-	log_debug("could not find a \"%s\" to execute", binary_name);
+	log_debug("could not find a \"%s\" to execute", argv0);
 	return -1;
 }
 

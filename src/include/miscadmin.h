@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.157 2004/05/11 21:57:15 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.158 2004/05/13 22:45:04 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -124,6 +124,8 @@ extern void SubPostmasterMain(int argc, char* argv[]);
 #endif
 extern void ClosePostmasterPorts(bool pgstat_too);
 
+#define PG_VERSIONSTR "postgres (PostgreSQL) " PG_VERSION "\n"
+
 /*
  * from utils/init/globals.c
  */
@@ -140,7 +142,7 @@ extern struct Port *MyProcPort;
 extern long MyCancelKey;
 
 extern char OutputFileName[];
-extern char pg_pathname[];
+extern char my_exec_path[];
 
 /*
  * done in storage/backendid.h for now.

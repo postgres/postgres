@@ -16,7 +16,7 @@ port_id		beos_dl_port_out = 0;
 sem_id		beos_shm_sem;
 
 /* Global var containing the postgres path */
-extern char pg_pathname[];
+extern char my_exec_path[];
 
 
 /* Shared library loading doesn't work after fork in beos. The solution is to use an exact
@@ -50,7 +50,7 @@ beos_dl_open(char *filename)
 			char		Cmd[4000];
 
 			/* Build arg list */
-			sprintf(Cmd, "%s -beossupportserver %d %d &", pg_pathname, (int) beos_dl_port_in, (int) beos_dl_port_out);
+			sprintf(Cmd, "%s -beossupportserver %d %d &", my_exec_path, (int) beos_dl_port_in, (int) beos_dl_port_out);
 
 			/* Lauch process */
 			system(Cmd);

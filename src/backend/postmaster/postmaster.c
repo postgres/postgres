@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.385 2004/05/12 13:38:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.386 2004/05/13 22:45:02 momjian Exp $
  *
  * NOTES
  *
@@ -181,7 +181,6 @@ static int	ListenSocket[MAXLISTEN];
 /* Used to reduce macros tests */
 #ifdef EXEC_BACKEND
 const bool	ExecBackend = true;
-
 #else
 const bool	ExecBackend = false;
 #endif
@@ -286,7 +285,7 @@ static long PostmasterRandom(void);
 static void RandomSalt(char *cryptSalt, char *md5Salt);
 static void SignalChildren(int signal);
 static int	CountChildren(void);
-static bool CreateOptsFile(int argc, char *argv[]);
+static bool CreateOptsFile(int argc, char *argv[], char *fullprogname);
 NON_EXEC_STATIC void SSDataBaseInit(int xlop);
 static pid_t SSDataBase(int xlop);
 static void
@@ -295,6 +294,9 @@ postmaster_error(const char *fmt,...)
 __attribute__((format(printf, 1, 2)));
 
 #ifdef EXEC_BACKEND
+
+static char	postgres_exec_path[MAXPGPATH];
+
 #ifdef WIN32
 pid_t win32_forkexec(const char* path, char *argv[]);
 
@@ -322,7 +324,6 @@ static void ShmemBackendArrayRemove(pid_t pid);
 #define CheckPointDataBase()	SSDataBase(BS_XLOG_CHECKPOINT)
 #define StartBackgroundWriter()	SSDataBase(BS_XLOG_BGWRITER)
 #define ShutdownDataBase()		SSDataBase(BS_XLOG_SHUTDOWN)
-
 
 static void
 checkDataDir(const char *checkdir)
@@ -692,11 +693,18 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * On some systems our dynloader code needs the executable's pathname.
 	 */
-	if (find_my_exec(pg_pathname, argv[0]) < 0)
+	if (find_my_exec(my_exec_path, argv[0]) < 0)
 		ereport(FATAL,
-				(errmsg("%s: could not locate postgres executable",
+				(errmsg("%s: could not locate my own executable path",
 						progname)));
 
+#ifdef EXEC_BACKEND
+	if (find_other_exec(postgres_exec_path, argv[0], "postgres", PG_VERSIONSTR) < 0)
+		ereport(FATAL,
+				(errmsg("%s: could not locate postgres executable or non-matching version",
+						progname)));
+#endif
+						
 	/*
 	 * Initialize SSL library, if specified.
 	 */
@@ -852,7 +860,7 @@ PostmasterMain(int argc, char *argv[])
 	 * recording bogus options (eg, NBuffers too high for available
 	 * memory).
 	 */
-	if (!CreateOptsFile(argc, argv))
+	if (!CreateOptsFile(argc, argv, my_exec_path))
 		ExitPostmaster(1);
 
 	/*
@@ -2754,10 +2762,10 @@ Backend_forkexec(Port *port)
   	Assert(ac <= lengthof(av));
 
 #ifdef WIN32
-	pid = win32_forkexec(pg_pathname,av); /* logs on error */
+	pid = win32_forkexec(postgres_exec_path, av); /* logs on error */
 #else
 	/* Fire off execv in child */
-	if ((pid = fork()) == 0 && (execv(pg_pathname,av) == -1))
+	if ((pid = fork()) == 0 && (execv(postgres_exec_path, av) == -1))
 		/*
 		 * FIXME: [fork/exec] suggestions for what to do here?
 		 *  Probably OK to issue error (unlike pgstat case)
@@ -3116,12 +3124,12 @@ SSDataBase(int xlop)
 #ifdef EXEC_BACKEND
 		/* EXEC_BACKEND case; fork/exec here */
 #ifdef WIN32
-		pid = win32_forkexec(pg_pathname,av); /* logs on error */
+		pid = win32_forkexec(postgres_exec_path, av); /* logs on error */
 #else
-		if ((pid = fork()) == 0 && (execv(pg_pathname,av) == -1))
+		if ((pid = fork()) == 0 && (execv(postgres_exec_path, av) == -1))
 		{
 			/* in child */
-			elog(ERROR,"unable to execv in SSDataBase: %m");
+			elog(ERROR, "unable to execv in SSDataBase: %m");
 			exit(0);
 		}
 #endif
@@ -3215,18 +3223,11 @@ SSDataBase(int xlop)
  * Create the opts file
  */
 static bool
-CreateOptsFile(int argc, char *argv[])
+CreateOptsFile(int argc, char *argv[], char *fullprogname)
 {
-	char		fullprogname[MAXPGPATH];
 	char		filename[MAXPGPATH];
 	FILE	   *fp;
 	int			i;
-
-	if (find_my_exec(fullprogname, argv[0]) < 0)
-	{
-		elog(LOG, "could not locate postmaster");
-		return false;
-	}
 
 	snprintf(filename, sizeof(filename), "%s/postmaster.opts", DataDir);
 
