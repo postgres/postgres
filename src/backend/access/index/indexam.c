@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.28 1998/10/02 16:27:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.29 1998/12/15 12:45:15 vadim Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relationId
@@ -225,7 +225,7 @@ index_beginscan(Relation relation,
 	RELATION_CHECKS;
 	GET_REL_PROCEDURE(beginscan, ambeginscan);
 
-	RelationSetRIntentLock(relation);
+	LockRelation(relation, AccessShareLock);
 
 	scandesc = (IndexScanDesc)
 		fmgr(procedure, relation, scanFromEnd, numberOfKeys, key);
@@ -262,7 +262,7 @@ index_endscan(IndexScanDesc scan)
 
 	fmgr(procedure, scan);
 
-	RelationUnsetRIntentLock(scan->relation);
+	UnlockRelation(scan->relation, AccessShareLock);
 }
 
 /* ----------------

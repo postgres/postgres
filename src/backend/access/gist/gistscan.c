@@ -65,7 +65,12 @@ gistbeginscan(Relation r,
 {
 	IndexScanDesc s;
 
+	/*
+	 * Let index_beginscan does its work...
+	 *
 	RelationSetLockForRead(r);
+	 */
+
 	s = RelationGetIndexScan(r, fromEnd, nkeys, key);
 	gistregscan(s);
 

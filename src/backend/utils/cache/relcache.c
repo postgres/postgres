@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.51 1998/11/27 19:52:28 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.52 1998/12/15 12:46:37 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -363,8 +363,6 @@ scan_pg_rel_seq(RelationBuildDescInfo buildinfo)
 	 * ----------------
 	 */
 	pg_class_desc = heap_openr(RelationRelationName);
-	if (!IsInitProcessingMode())
-		RelationSetLockForRead(pg_class_desc);
 	pg_class_scan = heap_beginscan(pg_class_desc, 0, SnapshotNow, 1, &key);
 	pg_class_tuple = heap_getnext(pg_class_scan, 0);
 
@@ -388,8 +386,6 @@ scan_pg_rel_seq(RelationBuildDescInfo buildinfo)
 
 	/* all done */
 	heap_endscan(pg_class_scan);
-	if (!IsInitProcessingMode())
-		RelationUnsetLockForRead(pg_class_desc);
 	heap_close(pg_class_desc);
 
 	return return_tuple;
@@ -403,7 +399,7 @@ scan_pg_rel_ind(RelationBuildDescInfo buildinfo)
 
 	pg_class_desc = heap_openr(RelationRelationName);
 	if (!IsInitProcessingMode())
-		RelationSetLockForRead(pg_class_desc);
+		LockRelation(pg_class_desc, AccessShareLock);
 
 	switch (buildinfo.infotype)
 	{
@@ -428,7 +424,7 @@ scan_pg_rel_ind(RelationBuildDescInfo buildinfo)
 
 	/* all done */
 	if (!IsInitProcessingMode())
-		RelationUnsetLockForRead(pg_class_desc);
+		UnlockRelation(pg_class_desc, AccessShareLock);
 	heap_close(pg_class_desc);
 
 	return return_tuple;
@@ -1126,7 +1122,6 @@ RelationIdCacheGetRelation(Oid relationId)
 		}
 
 		RelationIncrementReferenceCount(rd);
-		RelationSetLockForDescriptorOpen(rd);
 
 	}
 
@@ -1159,7 +1154,6 @@ RelationNameCacheGetRelation(char *relationName)
 		}
 
 		RelationIncrementReferenceCount(rd);
-		RelationSetLockForDescriptorOpen(rd);
 
 	}
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.44 1998/10/08 18:29:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.45 1998/12/15 12:46:19 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,7 +86,6 @@ static void WaitIO(BufferDesc *buf, SPINLOCK spinlock);
 #ifndef HAS_TEST_AND_SET
 static void SignalIO(BufferDesc *buf);
 extern long *NWaitIOBackendP;	/* defined in buf_init.c */
-
 #endif	 /* HAS_TEST_AND_SET */
 
 static Buffer ReadBufferWithBufferLock(Relation relation, BlockNumber blockNum,
@@ -583,7 +582,6 @@ BufferAlloc(Relation reln,
 					if (buf->refcount > 1)
 						SignalIO(buf);
 #endif	 /* !HAS_TEST_AND_SET */
-
 					/* give up the buffer since we don't need it any more */
 					buf->refcount--;
 					PrivateRefCount[BufferDescriptorGetBuffer(buf) - 1] = 0;
@@ -1096,6 +1094,7 @@ WaitIO(BufferDesc *buf, SPINLOCK spinlock)
 
 #else							/* HAS_TEST_AND_SET */
 IpcSemaphoreId WaitIOSemId;
+IpcSemaphoreId WaitCLSemId;
 
 static void
 WaitIO(BufferDesc *buf, SPINLOCK spinlock)
@@ -1932,4 +1931,148 @@ SetBufferCommitInfoNeedsSave(Buffer buffer)
 {
 	if (!BufferIsLocal(buffer))
 		CommitInfoNeedsSave[buffer - 1]++;
+}
+
+void
+UnlockBuffers()
+{
+	BufferDesc *buf;
+	int			i;
+
+	for (i = 0; i < NBuffers; i++)
+	{
+		if (BufferLocks[i] == 0)
+			continue;
+		
+		Assert(BufferIsValid(i+1));
+		buf = &(BufferDescriptors[i]);
+
+#ifdef HAS_TEST_AND_SET
+		S_LOCK(&(buf->cntx_lock));
+#else
+		IpcSemaphoreLock(WaitCLSemId, 0, IpcExclusiveLock);
+#endif
+
+		if (BufferLocks[i] & BL_R_LOCK)
+		{
+			Assert(buf->r_locks > 0);
+			(buf->r_locks)--;
+		}
+		if (BufferLocks[i] & BL_RI_LOCK)
+		{
+			Assert(buf->ri_lock);
+			buf->ri_lock = false;
+		}
+		if (BufferLocks[i] & BL_W_LOCK)
+		{
+			Assert(buf->w_lock);
+			buf->w_lock = false;
+		}
+#ifdef HAS_TEST_AND_SET
+		S_UNLOCK(&(buf->cntx_lock));
+#else
+		IpcSemaphoreUnlock(WaitCLSemId, 0, IpcExclusiveLock);
+#endif
+		BufferLocks[i] = 0;
+	}
+}
+
+void
+LockBuffer (Buffer buffer, int mode)
+{
+	BufferDesc *buf;
+
+	Assert(BufferIsValid(buffer));
+	if (BufferIsLocal(buffer))
+		return;
+
+	buf = &(BufferDescriptors[buffer-1]);
+
+#ifdef HAS_TEST_AND_SET
+		S_LOCK(&(buf->cntx_lock));
+#else
+		IpcSemaphoreLock(WaitCLSemId, 0, IpcExclusiveLock);
+#endif
+
+	if (mode == BUFFER_LOCK_UNLOCK)
+	{
+		if (BufferLocks[buffer-1] & BL_R_LOCK)
+		{
+			Assert(buf->r_locks > 0);
+			Assert(!(buf->w_lock));
+			Assert(!(BufferLocks[buffer-1] & (BL_W_LOCK | BL_RI_LOCK)))
+			(buf->r_locks)--;
+			BufferLocks[buffer-1] &= ~BL_R_LOCK;
+		}
+		else if (BufferLocks[buffer-1] & BL_W_LOCK)
+		{
+			Assert(buf->w_lock);
+			Assert(buf->r_locks == 0 && !buf->ri_lock);
+			Assert(!(BufferLocks[buffer-1] & (BL_R_LOCK | BL_RI_LOCK)))
+			buf->w_lock = false;
+			BufferLocks[buffer-1] &= ~BL_W_LOCK;
+		}
+		else
+			elog(ERROR, "UNLockBuffer: buffer %u is not locked", buffer);
+	}
+	else if (mode == BUFFER_LOCK_SHARE)
+	{
+		unsigned	i = 0;
+
+		Assert(!(BufferLocks[buffer-1] & (BL_R_LOCK | BL_W_LOCK | BL_RI_LOCK)));
+		while (buf->ri_lock || buf->w_lock)
+		{
+#ifdef HAS_TEST_AND_SET
+			S_UNLOCK(&(buf->cntx_lock));
+			s_lock_sleep(i++);
+			S_LOCK(&(buf->cntx_lock));
+#else
+			IpcSemaphoreUnlock(WaitCLSemId, 0, IpcExclusiveLock);
+			s_lock_sleep(i++)
+			IpcSemaphoreLock(WaitCLSemId, 0, IpcExclusiveLock);
+#endif
+		}
+		(buf->r_locks)++;
+		BufferLocks[buffer-1] |= BL_R_LOCK;
+	}
+	else if (mode == BUFFER_LOCK_EXCLUSIVE)
+	{
+		unsigned	i = 0;
+		
+		Assert(!(BufferLocks[buffer-1] & (BL_R_LOCK | BL_W_LOCK | BL_RI_LOCK)));
+		while (buf->r_locks > 0 || buf->w_lock)
+		{
+			if (buf->r_locks > 3)
+			{
+				if (!(BufferLocks[buffer-1] & BL_RI_LOCK))
+					BufferLocks[buffer-1] |= BL_RI_LOCK;
+				buf->ri_lock = true;
+			}
+#ifdef HAS_TEST_AND_SET
+			S_UNLOCK(&(buf->cntx_lock));
+			s_lock_sleep(i++);
+			S_LOCK(&(buf->cntx_lock));
+#else
+			IpcSemaphoreUnlock(WaitCLSemId, 0, IpcExclusiveLock);
+			s_lock_sleep(i++)
+			IpcSemaphoreLock(WaitCLSemId, 0, IpcExclusiveLock);
+#endif
+		}
+		buf->w_lock = true;
+		BufferLocks[buffer-1] |= BL_W_LOCK;
+		if (BufferLocks[buffer-1] & BL_RI_LOCK)
+		{
+			buf->ri_lock = false;
+			BufferLocks[buffer-1] &= ~BL_RI_LOCK;
+		}
+	}
+	else
+		elog(ERROR, "LockBuffer: unknown lock mode %d", mode);
+
+#ifdef HAS_TEST_AND_SET
+		S_UNLOCK(&(buf->cntx_lock));
+#else
+		IpcSemaphoreUnlock(WaitCLSemId, 0, IpcExclusiveLock);
+#endif
+
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.28 1998/11/27 19:51:56 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.29 1998/12/15 12:45:56 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -342,7 +342,7 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 	heapRelation = heap_open(relationId);
 	indexRelation = index_open(indexId);
 
-	RelationSetLockForWrite(heapRelation);
+	LockRelation(heapRelation, ShareLock);
 
 	InitIndexStrategy(numberOfAttributes, indexRelation, accessMethodId);
 

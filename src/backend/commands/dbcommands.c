@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.27 1998/12/14 05:18:43 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.28 1998/12/15 12:45:55 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,7 +235,7 @@ check_permissions(char *command,
 	 * delays when multiple 'createdb's or 'destroydb's are run simult.
 	 * -mer 7/3/91
 	 */
-	RelationSetLockForWrite(dbrel);
+	LockRelation(dbrel, AccessExclusiveLock);
 	dbtup = get_pg_dbtup(command, dbname, dbrel);
 	dbfound = HeapTupleIsValid(dbtup);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.19 1998/09/01 04:27:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.20 1998/12/15 12:45:30 vadim Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -172,8 +172,12 @@ TransactionLogTest(TransactionId transactionId, /* transaction id to test */
 
 	if (!fail)
 	{
-		TransactionIdStore(transactionId, &cachedTestXid);
-		cachedTestXidStatus = xidstatus;
+		/* must not cache status of running xaction !!! */
+		if (xidstatus != XID_INPROGRESS)
+		{
+			TransactionIdStore(transactionId, &cachedTestXid);
+			cachedTestXidStatus = xidstatus;
+		}
 		return (bool)
 			(status == xidstatus);
 	}
@@ -219,11 +223,14 @@ TransactionLogUpdate(TransactionId transactionId,		/* trans id to update */
 								 status,
 								 &fail);
 
-	/* ----------------
-	 *	 update (invalidate) our single item TransactionLogTest cache.
-	 * ----------------
-	 */
+	/*
+	 * update (invalidate) our single item TransactionLogTest cache.
+	 *
 	if (status != XID_COMMIT)
+	 *
+	 * What's the hell ?! Why != XID_COMMIT ?!
+	 */
+	if (status != XID_INPROGRESS)
 	{
 		TransactionIdStore(transactionId, &cachedTestXid);
 		cachedTestXidStatus = status;

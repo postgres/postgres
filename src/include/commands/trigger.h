@@ -12,6 +12,7 @@
 #include "access/tupdesc.h"
 #include "access/htup.h"
 #include "nodes/parsenodes.h"
+#include "nodes/execnodes.h"
 #include "utils/rel.h"
 
 typedef uint32 TriggerEvent;
@@ -65,9 +66,9 @@ extern void RelationRemoveTriggers(Relation rel);
 
 extern HeapTuple ExecBRInsertTriggers(Relation rel, HeapTuple tuple);
 extern void ExecARInsertTriggers(Relation rel, HeapTuple tuple);
-extern bool ExecBRDeleteTriggers(Relation rel, ItemPointer tupleid);
-extern void ExecARDeleteTriggers(Relation rel, ItemPointer tupleid);
-extern HeapTuple ExecBRUpdateTriggers(Relation rel, ItemPointer tupleid, HeapTuple tuple);
-extern void ExecARUpdateTriggers(Relation rel, ItemPointer tupleid, HeapTuple tuple);
+extern bool ExecBRDeleteTriggers(EState *estate, ItemPointer tupleid);
+extern void ExecARDeleteTriggers(EState *estate, ItemPointer tupleid);
+extern HeapTuple ExecBRUpdateTriggers(EState *estate, ItemPointer tupleid, HeapTuple tuple);
+extern void ExecARUpdateTriggers(EState *estate, ItemPointer tupleid, HeapTuple tuple);
 
 #endif	 /* TRIGGER_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.16 1998/09/01 03:21:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.17 1998/12/15 12:45:23 vadim Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -93,7 +93,7 @@ _bt_metapinit(Relation rel)
 
 	/* can't be sharing this with anyone, now... */
 	if (USELOCKING)
-		RelationSetLockForWrite(rel);
+		LockRelation(rel, AccessExclusiveLock);
 
 	if ((nblocks = RelationGetNumberOfBlocks(rel)) != 0)
 	{
@@ -120,7 +120,7 @@ _bt_metapinit(Relation rel)
 
 	/* all done */
 	if (USELOCKING)
-		RelationUnsetLockForWrite(rel);
+		UnlockRelation(rel, AccessExclusiveLock);
 }
 
 #ifdef NOT_USED
@@ -571,32 +571,26 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
 static void
 _bt_setpagelock(Relation rel, BlockNumber blkno, int access)
 {
-	ItemPointerData iptr;
 
 	if (USELOCKING)
 	{
-		ItemPointerSet(&iptr, blkno, P_HIKEY);
-
 		if (access == BT_WRITE)
-			RelationSetSingleWLockPage(rel, &iptr);
+			LockPage(rel, blkno, ExclusiveLock);
 		else
-			RelationSetSingleRLockPage(rel, &iptr);
+			LockPage(rel, blkno, ShareLock);
 	}
 }
 
 static void
 _bt_unsetpagelock(Relation rel, BlockNumber blkno, int access)
 {
-	ItemPointerData iptr;
 
 	if (USELOCKING)
 	{
-		ItemPointerSet(&iptr, blkno, P_HIKEY);
-
 		if (access == BT_WRITE)
-			RelationUnsetSingleWLockPage(rel, &iptr);
+			UnlockPage(rel, blkno, ExclusiveLock);
 		else
-			RelationUnsetSingleRLockPage(rel, &iptr);
+			UnlockPage(rel, blkno, ShareLock);
 	}
 }
 

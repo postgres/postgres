@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.40 1998/11/27 19:52:01 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.41 1998/12/15 12:46:05 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -868,7 +868,23 @@ ExecOpenIndices(Oid resultRelationOid,
 			indexOid = lfirsti(indexoid);
 			indexDesc = index_open(indexOid);
 			if (indexDesc != NULL)
+			{
 				relationDescs[i++] = indexDesc;
+				/*
+				 * Hack for not btree and hash indices: they use relation level
+				 * exclusive locking on updation (i.e. - they are not ready 
+				 * for MVCC) and so we have to exclusively lock indices here
+				 * to prevent deadlocks if we will scan them - index_beginscan
+				 * places AccessShareLock, indices update methods don't use 
+				 * locks at all. We release this lock in ExecCloseIndices.
+				 * Note, that hashes use page level locking - i.e. are not
+				 * deadlock-free, - let's them be on their way -:))
+				 *		vadim 03-12-1998
+				 */
+				if (indexDesc->rd_rel->relam != BTREE_AM_OID && 
+						indexDesc->rd_rel->relam != HASH_AM_OID)
+					LockRelation(indexDesc, AccessExclusiveLock);
+			}
 		}
 
 		/* ----------------
@@ -948,9 +964,18 @@ ExecCloseIndices(RelationInfo *resultRelationInfo)
 	relationDescs = resultRelationInfo->ri_IndexRelationDescs;
 
 	for (i = 0; i < numIndices; i++)
-		if (relationDescs[i] != NULL)
-			index_close(relationDescs[i]);
+	{
+		if (relationDescs[i] == NULL)
+			continue;
+		/*
+		 * Notes in ExecOpenIndices.
+		 */
+		if (relationDescs[i]->rd_rel->relam != BTREE_AM_OID && 
+				relationDescs[i]->rd_rel->relam != HASH_AM_OID)
+			UnlockRelation(relationDescs[i], AccessExclusiveLock);
 
+		index_close(relationDescs[i]);
+	}
 	/*
 	 * XXX should free indexInfo array here too.
 	 */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.29 1998/11/27 19:51:41 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.30 1998/12/15 12:45:25 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,9 +106,6 @@ rtbuild(Relation heap,
 	RTSTATE		rtState;
 
 	initRtstate(&rtState, index);
-
-	/* rtrees only know how to do stupid locking now */
-	RelationSetLockForWrite(index);
 
 	pred = predInfo->pred;
 	oldPred = predInfo->oldPred;
@@ -250,7 +247,6 @@ rtbuild(Relation heap,
 
 	/* okay, all heap tuples are indexed */
 	heap_endscan(scan);
-	RelationUnsetLockForWrite(index);
 
 	if (pred != NULL || oldPred != NULL)
 	{
@@ -308,10 +304,14 @@ rtinsert(Relation r, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation he
 	itup->t_tid = *ht_ctid;
 	initRtstate(&rtState, r);
 
+	/*
+	 * Notes in ExecUtils:ExecOpenIndices()
+	 *
 	RelationSetLockForWrite(r);
+	 */
+
 	res = rtdoinsert(r, itup, &rtState);
 
-	/* XXX two-phase locking -- don't unlock the relation until EOT */
 	return res;
 }
 
@@ -946,8 +946,12 @@ rtdelete(Relation r, ItemPointer tid)
 	Buffer		buf;
 	Page		page;
 
-	/* must write-lock on delete */
+	/*
+	 * Notes in ExecUtils:ExecOpenIndices()
+	 * Also note that only vacuum deletes index tuples now...
+	 *
 	RelationSetLockForWrite(r);
+	 */
 
 	blkno = ItemPointerGetBlockNumber(tid);
 	offnum = ItemPointerGetOffsetNumber(tid);
@@ -963,7 +967,6 @@ rtdelete(Relation r, ItemPointer tid)
 
 	WriteBuffer(buf);
 
-	/* XXX -- two-phase locking, don't release the write lock */
 	return (char *) NULL;
 }
 

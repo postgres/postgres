@@ -4,7 +4,7 @@
 #    Makefile for storage/lmgr
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Makefile,v 1.8 1998/07/26 04:30:40 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Makefile,v 1.9 1998/12/15 12:46:29 vadim Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,7 +16,7 @@ ifdef MULTIBYTE
 CFLAGS+= $(MBFLAGS)
 endif
 
-OBJS = lmgr.o lock.o multi.o proc.o single.o
+OBJS = lmgr.o lock.o proc.o
 
 all: SUBSYS.o
 

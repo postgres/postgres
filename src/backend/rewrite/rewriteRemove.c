@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.20 1998/12/14 00:02:17 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.21 1998/12/15 12:46:16 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,7 +127,7 @@ RemoveRewriteRule(char *ruleName)
 	/*
 	 * Now delete the tuple...
 	 */
-	heap_delete(RewriteRelation, &tuple->t_self);
+	heap_delete(RewriteRelation, &tuple->t_self, NULL);
 
 	pfree(tuple);
 	heap_close(RewriteRelation);
@@ -164,7 +164,7 @@ RelationRemoveRules(Oid relid)
 							  0, SnapshotNow, 1, &scanKeyData);
 
 	while (HeapTupleIsValid(tuple = heap_getnext(scanDesc, 0)))
-		heap_delete(RewriteRelation, &tuple->t_self);
+		heap_delete(RewriteRelation, &tuple->t_self, NULL);
 
 	heap_endscan(scanDesc);
 	heap_close(RewriteRelation);

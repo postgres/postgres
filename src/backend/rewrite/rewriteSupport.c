@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.29 1998/11/27 19:52:18 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.30 1998/12/15 12:46:18 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,7 +128,7 @@ setRelhasrulesInRelation(Oid relationId, bool relhasrules)
 
 	relationRelation = heap_openr(RelationRelationName);
 	((Form_pg_class) GETSTRUCT(tuple))->relhasrules = relhasrules;
-	heap_replace(relationRelation, &tuple->t_self, tuple);
+	heap_replace(relationRelation, &tuple->t_self, tuple, NULL);
 
 	/* keep the catalog indices up to date */
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);

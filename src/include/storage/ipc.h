@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.30 1998/09/01 04:38:16 momjian Exp $
+ * $Id: ipc.h,v 1.31 1998/12/15 12:46:57 vadim Exp $
  *
  * NOTES
  *	  This file is very architecture-specific.	This stuff should actually
@@ -186,6 +186,8 @@ typedef enum _LockId_
 		((key == PrivateIPCKey) ? key : 11 + (key))
 #define IPCKeyGetWaitIOSemaphoreKey(key) \
 		((key == PrivateIPCKey) ? key : 12 + (key))
+#define IPCKeyGetWaitCLSemaphoreKey(key) \
+		((key == PrivateIPCKey) ? key : 13 + (key))
 
 /* --------------------------
  * NOTE: This macro must always give the highest numbered key as every backend

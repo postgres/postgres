@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.38 1998/10/08 18:29:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.39 1998/12/15 12:46:30 vadim Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -84,7 +84,7 @@ static int WaitOnLock(LOCKMETHOD lockmethod, LOCK *lock, LOCKMODE lockmode,
 
 #define LOCK_PRINT_AUX(where,lock,type) \
 	TPRINTF(TRACE_ALL, \
-		 "%s: lock(%x) tbl(%d) rel(%d) db(%d) tid(%d,%d) mask(%x) " \
+		 "%s: lock(%x) tbl(%d) rel(%d) db(%d) obj(%u) mask(%x) " \
 		 "hold(%d,%d,%d,%d,%d)=%d " \
 		 "act(%d,%d,%d,%d,%d)=%d wait(%d) type(%s)", \
 		 where, \
@@ -92,9 +92,7 @@ static int WaitOnLock(LOCKMETHOD lockmethod, LOCK *lock, LOCKMODE lockmode,
 		 lock->tag.lockmethod, \
 		 lock->tag.relId, \
 		 lock->tag.dbId, \
-		 ((lock->tag.tupleId.ip_blkid.bi_hi<<16)+ \
-		  lock->tag.tupleId.ip_blkid.bi_lo), \
-		 lock->tag.tupleId.ip_posid, \
+		 lock->tag.objId.blkno, \
 		 lock->mask, \
 		 lock->holders[1], \
 		 lock->holders[2], \
@@ -498,10 +496,8 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	if (is_user_lock)
 	{
 #ifdef USER_LOCKS_DEBUG
-		TPRINTF(TRACE_USERLOCKS, "LockAcquire: user lock [%u,%u] %s",
-				locktag->tupleId.ip_posid,
-				((locktag->tupleId.ip_blkid.bi_hi << 16) +
-				 locktag->tupleId.ip_blkid.bi_lo),
+		TPRINTF(TRACE_USERLOCKS, "LockAcquire: user lock [%u] %s",
+				locktag->objId.blkno,
 				lock_types[lockmode]);
 #endif
 	}
@@ -550,8 +546,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 		MemSet((char *) lock->holders, 0, sizeof(int) * MAX_LOCKMODES);
 		MemSet((char *) lock->activeHolders, 0, sizeof(int) * MAX_LOCKMODES);
 		ProcQueueInit(&(lock->waitProcs));
-		Assert(BlockIdEquals(&(lock->tag.tupleId.ip_blkid),
-							 &(locktag->tupleId.ip_blkid)));
+		Assert(lock->tag.objId.blkno == locktag->objId.blkno);
 		LOCK_PRINT("LockAcquire: new", lock, lockmode);
 	}
 	else
@@ -993,10 +988,8 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	is_user_lock = (lockmethod == USER_LOCKMETHOD);
 	if (is_user_lock)
 	{
-		TPRINTF(TRACE_USERLOCKS, "LockRelease: user lock tag [%u,%u] %d",
-				locktag->tupleId.ip_posid,
-				((locktag->tupleId.ip_blkid.bi_hi << 16) +
-				 locktag->tupleId.ip_blkid.bi_lo),
+		TPRINTF(TRACE_USERLOCKS, "LockRelease: user lock tag [%u] %d",
+				locktag->objId.blkno,
 				lockmode);
 	}
 #endif
@@ -1336,19 +1329,15 @@ LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 			{
 				/* Should never happen */
 				elog(NOTICE,
-					 "LockReleaseAll: INVALID PID: [%u,%u] [%d,%d,%d]",
-					 lock->tag.tupleId.ip_posid,
-					 ((lock->tag.tupleId.ip_blkid.bi_hi << 16) +
-					  lock->tag.tupleId.ip_blkid.bi_lo),
+					 "LockReleaseAll: INVALID PID: [%u] [%d,%d,%d]",
+					 lock->tag.objId.blkno,
 				  xidLook->tag.lock, xidLook->tag.pid, xidLook->tag.xid);
 				nleft++;
 				goto next_item;
 			}
 			TPRINTF(TRACE_USERLOCKS,
-				"LockReleaseAll: releasing user lock [%u,%u] [%d,%d,%d]",
-					lock->tag.tupleId.ip_posid,
-					((lock->tag.tupleId.ip_blkid.bi_hi << 16) +
-					 lock->tag.tupleId.ip_blkid.bi_lo),
+				"LockReleaseAll: releasing user lock [%u] [%d,%d,%d]",
+					lock->tag.objId.blkno,
 				  xidLook->tag.lock, xidLook->tag.pid, xidLook->tag.xid);
 		}
 		else
@@ -1361,10 +1350,8 @@ LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 			if (xidLook->tag.pid != 0)
 			{
 				TPRINTF(TRACE_LOCKS,
-				  "LockReleaseAll: skiping user lock [%u,%u] [%d,%d,%d]",
-						lock->tag.tupleId.ip_posid,
-						((lock->tag.tupleId.ip_blkid.bi_hi << 16) +
-						 lock->tag.tupleId.ip_blkid.bi_lo),
+				  "LockReleaseAll: skiping user lock [%u] [%d,%d,%d]",
+						lock->tag.objId.blkno,
 				  xidLook->tag.lock, xidLook->tag.pid, xidLook->tag.xid);
 				nleft++;
 				goto next_item;
@@ -1649,7 +1636,7 @@ DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
 					 */
 
 					Assert(skip_check);
-					Assert(MyProc->prio == 2);
+					Assert(MyProc->prio >= 2);
 
 					lockMethodTable = LockMethodTable[1];
 					xidTable = lockMethodTable->xidHash;
@@ -1747,10 +1734,8 @@ LockOwners(LOCKMETHOD lockmethod, LOCKTAG *locktag)
 	is_user_lock = (lockmethod == USER_LOCKMETHOD);
 	if (is_user_lock)
 	{
-		TPRINTF(TRACE_USERLOCKS, "LockOwners: user lock tag [%u,%u]",
-				locktag->tupleId.ip_posid,
-				((locktag->tupleId.ip_blkid.bi_hi << 16) +
-				 locktag->tupleId.ip_blkid.bi_lo));
+		TPRINTF(TRACE_USERLOCKS, "LockOwners: user lock tag [%u]",
+				locktag->objId.blkno;,
 	}
 #endif
 

@@ -40,7 +40,7 @@ void		RelationBuildTriggers(Relation relation);
 void		FreeTriggerDesc(Relation relation);
 
 static void DescribeTrigger(TriggerDesc *trigdesc, Trigger *trigger);
-static HeapTuple GetTupleForTrigger(Relation relation, ItemPointer tid,
+static HeapTuple GetTupleForTrigger(EState *estate, ItemPointer tid,
 				   bool before);
 
 extern GlobalMemory CacheCxt;
@@ -77,7 +77,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 	if (!RelationIsValid(rel))
 		elog(ERROR, "CreateTrigger: there is no relation %s", stmt->relname);
 
-	RelationSetLockForWrite(rel);
+	LockRelation(rel, AccessExclusiveLock);
 
 	TRIGGER_CLEAR_TYPE(tgtype);
 	if (stmt->before)
@@ -114,7 +114,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 
 	/* Scan pg_trigger */
 	tgrel = heap_openr(TriggerRelationName);
-	RelationSetLockForWrite(tgrel);
+	LockRelation(tgrel, AccessExclusiveLock);
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
 						   F_OIDEQ, RelationGetRelid(rel));
 	tgscan = heap_beginscan(tgrel, 0, SnapshotNow, 1, &key);
@@ -211,7 +211,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 	CatalogIndexInsert(idescs, Num_pg_trigger_indices, tgrel, tuple);
 	CatalogCloseIndices(Num_pg_trigger_indices, idescs);
 	pfree(tuple);
-	RelationUnsetLockForWrite(tgrel);
+	UnlockRelation(tgrel, AccessExclusiveLock);
 	heap_close(tgrel);
 
 	pfree(DatumGetPointer(values[Anum_pg_trigger_tgname - 1]));
@@ -227,7 +227,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 	pgrel = heap_openr(RelationRelationName);
 	((Form_pg_class) GETSTRUCT(tuple))->reltriggers = found + 1;
 	RelationInvalidateHeapTuple(pgrel, tuple);
-	heap_replace(pgrel, &tuple->t_self, tuple);
+	heap_replace(pgrel, &tuple->t_self, tuple, NULL);
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
 	CatalogIndexInsert(ridescs, Num_pg_class_indices, pgrel, tuple);
 	CatalogCloseIndices(Num_pg_class_indices, ridescs);
@@ -267,10 +267,10 @@ DropTrigger(DropTrigStmt *stmt)
 	if (!RelationIsValid(rel))
 		elog(ERROR, "DropTrigger: there is no relation %s", stmt->relname);
 
-	RelationSetLockForWrite(rel);
+	LockRelation(rel, AccessExclusiveLock);
 
 	tgrel = heap_openr(TriggerRelationName);
-	RelationSetLockForWrite(tgrel);
+	LockRelation(tgrel, AccessExclusiveLock);
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
 						   F_OIDEQ, RelationGetRelid(rel));
 	tgscan = heap_beginscan(tgrel, 0, SnapshotNow, 1, &key);
@@ -280,7 +280,7 @@ DropTrigger(DropTrigStmt *stmt)
 
 		if (namestrcmp(&(pg_trigger->tgname), stmt->trigname) == 0)
 		{
-			heap_delete(tgrel, &tuple->t_self);
+			heap_delete(tgrel, &tuple->t_self, NULL);
 			tgfound++;
 		}
 		else
@@ -293,7 +293,7 @@ DropTrigger(DropTrigStmt *stmt)
 		elog(NOTICE, "DropTrigger: found (and deleted) %d trigger %s on relation %s",
 			 tgfound, stmt->trigname, stmt->relname);
 	heap_endscan(tgscan);
-	RelationUnsetLockForWrite(tgrel);
+	UnlockRelation(tgrel, AccessExclusiveLock);
 	heap_close(tgrel);
 
 	tuple = SearchSysCacheTupleCopy(RELNAME,
@@ -306,7 +306,7 @@ DropTrigger(DropTrigStmt *stmt)
 	pgrel = heap_openr(RelationRelationName);
 	((Form_pg_class) GETSTRUCT(tuple))->reltriggers = found;
 	RelationInvalidateHeapTuple(pgrel, tuple);
-	heap_replace(pgrel, &tuple->t_self, tuple);
+	heap_replace(pgrel, &tuple->t_self, tuple, NULL);
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
 	CatalogIndexInsert(ridescs, Num_pg_class_indices, pgrel, tuple);
 	CatalogCloseIndices(Num_pg_class_indices, ridescs);
@@ -333,17 +333,17 @@ RelationRemoveTriggers(Relation rel)
 	HeapTuple	tup;
 
 	tgrel = heap_openr(TriggerRelationName);
-	RelationSetLockForWrite(tgrel);
+	LockRelation(tgrel, AccessExclusiveLock);
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
 						   F_OIDEQ, RelationGetRelid(rel));
 
 	tgscan = heap_beginscan(tgrel, 0, SnapshotNow, 1, &key);
 
 	while (HeapTupleIsValid(tup = heap_getnext(tgscan, 0)))
-		heap_delete(tgrel, &tup->t_self);
+		heap_delete(tgrel, &tup->t_self, NULL);
 
 	heap_endscan(tgscan);
-	RelationUnsetLockForWrite(tgrel);
+	UnlockRelation(tgrel, AccessExclusiveLock);
 	heap_close(tgrel);
 
 }
@@ -376,7 +376,6 @@ RelationBuildTriggers(Relation relation)
 						   ObjectIdGetDatum(RelationGetRelid(relation)));
 
 	tgrel = heap_openr(TriggerRelationName);
-	RelationSetLockForRead(tgrel);
 	irel = index_openr(TriggerRelidIndex);
 	sd = index_beginscan(irel, false, 1, &skey);
 
@@ -450,7 +449,6 @@ RelationBuildTriggers(Relation relation)
 	index_endscan(sd);
 	pfree(sd);
 	index_close(irel);
-	RelationUnsetLockForRead(tgrel);
 	heap_close(tgrel);
 
 	/* Build trigdesc */
@@ -657,16 +655,17 @@ ExecARInsertTriggers(Relation rel, HeapTuple trigtuple)
 }
 
 bool
-ExecBRDeleteTriggers(Relation rel, ItemPointer tupleid)
+ExecBRDeleteTriggers(EState *estate, ItemPointer tupleid)
 {
-	TriggerData *SaveTriggerData;
-	int			ntrigs = rel->trigdesc->n_before_row[TRIGGER_EVENT_DELETE];
-	Trigger   **trigger = rel->trigdesc->tg_before_row[TRIGGER_EVENT_DELETE];
-	HeapTuple	trigtuple;
-	HeapTuple	newtuple = NULL;
-	int			i;
+	Relation		rel = estate->es_result_relation_info->ri_RelationDesc;
+	TriggerData	   *SaveTriggerData;
+	int				ntrigs = rel->trigdesc->n_before_row[TRIGGER_EVENT_DELETE];
+	Trigger		  **trigger = rel->trigdesc->tg_before_row[TRIGGER_EVENT_DELETE];
+	HeapTuple		trigtuple;
+	HeapTuple		newtuple = NULL;
+	int				i;
 
-	trigtuple = GetTupleForTrigger(rel, tupleid, true);
+	trigtuple = GetTupleForTrigger(estate, tupleid, true);
 	if (trigtuple == NULL)
 		return false;
 
@@ -692,15 +691,16 @@ ExecBRDeleteTriggers(Relation rel, ItemPointer tupleid)
 }
 
 void
-ExecARDeleteTriggers(Relation rel, ItemPointer tupleid)
+ExecARDeleteTriggers(EState *estate, ItemPointer tupleid)
 {
+	Relation		rel = estate->es_result_relation_info->ri_RelationDesc;
 	TriggerData *SaveTriggerData;
 	int			ntrigs = rel->trigdesc->n_after_row[TRIGGER_EVENT_DELETE];
 	Trigger   **trigger = rel->trigdesc->tg_after_row[TRIGGER_EVENT_DELETE];
 	HeapTuple	trigtuple;
 	int			i;
 
-	trigtuple = GetTupleForTrigger(rel, tupleid, false);
+	trigtuple = GetTupleForTrigger(estate, tupleid, false);
 	Assert(trigtuple != NULL);
 
 	SaveTriggerData = (TriggerData *) palloc(sizeof(TriggerData));
@@ -722,17 +722,18 @@ ExecARDeleteTriggers(Relation rel, ItemPointer tupleid)
 }
 
 HeapTuple
-ExecBRUpdateTriggers(Relation rel, ItemPointer tupleid, HeapTuple newtuple)
+ExecBRUpdateTriggers(EState *estate, ItemPointer tupleid, HeapTuple newtuple)
 {
-	TriggerData *SaveTriggerData;
-	int			ntrigs = rel->trigdesc->n_before_row[TRIGGER_EVENT_UPDATE];
-	Trigger   **trigger = rel->trigdesc->tg_before_row[TRIGGER_EVENT_UPDATE];
-	HeapTuple	trigtuple;
-	HeapTuple	oldtuple;
-	HeapTuple	intuple = newtuple;
-	int			i;
+	Relation		rel = estate->es_result_relation_info->ri_RelationDesc;
+	TriggerData	   *SaveTriggerData;
+	int				ntrigs = rel->trigdesc->n_before_row[TRIGGER_EVENT_UPDATE];
+	Trigger		  **trigger = rel->trigdesc->tg_before_row[TRIGGER_EVENT_UPDATE];
+	HeapTuple		trigtuple;
+	HeapTuple		oldtuple;
+	HeapTuple		intuple = newtuple;
+	int				i;
 
-	trigtuple = GetTupleForTrigger(rel, tupleid, true);
+	trigtuple = GetTupleForTrigger(estate, tupleid, true);
 	if (trigtuple == NULL)
 		return NULL;
 
@@ -759,15 +760,16 @@ ExecBRUpdateTriggers(Relation rel, ItemPointer tupleid, HeapTuple newtuple)
 }
 
 void
-ExecARUpdateTriggers(Relation rel, ItemPointer tupleid, HeapTuple newtuple)
+ExecARUpdateTriggers(EState *estate, ItemPointer tupleid, HeapTuple newtuple)
 {
+	Relation		rel = estate->es_result_relation_info->ri_RelationDesc;
 	TriggerData *SaveTriggerData;
 	int			ntrigs = rel->trigdesc->n_after_row[TRIGGER_EVENT_UPDATE];
 	Trigger   **trigger = rel->trigdesc->tg_after_row[TRIGGER_EVENT_UPDATE];
 	HeapTuple	trigtuple;
 	int			i;
 
-	trigtuple = GetTupleForTrigger(rel, tupleid, false);
+	trigtuple = GetTupleForTrigger(estate, tupleid, false);
 	Assert(trigtuple != NULL);
 
 	SaveTriggerData = (TriggerData *) palloc(sizeof(TriggerData));
@@ -789,48 +791,67 @@ ExecARUpdateTriggers(Relation rel, ItemPointer tupleid, HeapTuple newtuple)
 }
 
 static HeapTuple
-GetTupleForTrigger(Relation relation, ItemPointer tid, bool before)
+GetTupleForTrigger(EState *estate, ItemPointer tid, bool before)
 {
-	ItemId			lp;
+	Relation		relation = estate->es_result_relation_info->ri_RelationDesc;
 	HeapTupleData	tuple;
 	HeapTuple		result;
-	PageHeader		dp;
-	Buffer			b;
-
-	b = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
-
-	if (!BufferIsValid(b))
-		elog(ERROR, "GetTupleForTrigger: failed ReadBuffer");
-
-	dp = (PageHeader) BufferGetPage(b);
-	lp = PageGetItemId(dp, ItemPointerGetOffsetNumber(tid));
-
-	Assert(ItemIdIsUsed(lp));
-
-	tuple.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
-	tuple.t_len = ItemIdGetLength(lp);
-	tuple.t_self = *tid;
+	Buffer			buffer;
 
 	if (before)
 	{
-		if (TupleUpdatedByCurXactAndCmd(&tuple))
-		{
-			elog(NOTICE, "GetTupleForTrigger: Non-functional delete/update");
-			ReleaseBuffer(b);
-			return NULL;
-		}
+		int		test;
 
-		HeapTupleSatisfies(&tuple, relation, b, dp,
-						   false, 0, (ScanKey) NULL);
-		if (!tuple.t_data)
+		/*
+		 *	mark tuple for update
+		 */
+		tuple.t_self = *tid;
+		test = heap_mark4update(relation, &tuple, &buffer);
+		switch (test)
 		{
-			ReleaseBuffer(b);
-			elog(ERROR, "GetTupleForTrigger: (am)invalid tid");
+			case HeapTupleSelfUpdated:
+				ReleaseBuffer(buffer);
+				return(NULL);
+
+			case HeapTupleMayBeUpdated:
+				break;
+
+			case HeapTupleUpdated:
+				ReleaseBuffer(buffer);
+				if (XactIsoLevel == XACT_SERIALIZED)
+					elog(ERROR, "Serialize access failed due to concurrent update");
+				else
+					elog(ERROR, "Isolation level %u is not supported", XactIsoLevel);
+				return(NULL);
+
+			default:
+				ReleaseBuffer(buffer);
+				elog(ERROR, "Unknown status %u from heap_mark4update", test);
+				return(NULL);
 		}
+	}
+	else
+	{
+		PageHeader		dp;
+		ItemId			lp;
+
+		buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
+
+		if (!BufferIsValid(buffer))
+			elog(ERROR, "GetTupleForTrigger: failed ReadBuffer");
+
+		dp = (PageHeader) BufferGetPage(buffer);
+		lp = PageGetItemId(dp, ItemPointerGetOffsetNumber(tid));
+
+		Assert(ItemIdIsUsed(lp));
+
+		tuple.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
+		tuple.t_len = ItemIdGetLength(lp);
+		tuple.t_self = *tid;
 	}
 
 	result = heap_copytuple(&tuple);
-	ReleaseBuffer(b);
+	ReleaseBuffer(buffer);
 
 	return result;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.19 1998/09/01 04:31:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.20 1998/12/15 12:46:30 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,85 @@
 
 extern Oid	MyDatabaseId;
 
+static MASK LockConflicts[] = {
+	(int) NULL,
+
+/* AccessShareLock */
+	(1 << AccessExclusiveLock),
+
+/* RowShareLock */
+	(1 << ExclusiveLock) | (1 << AccessExclusiveLock),
+
+/* RowExclusiveLock */
+	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) | (1 << ShareLock) |
+	(1 << AccessExclusiveLock),
+
+/* ShareLock */
+	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) |
+	(1 << RowExclusiveLock) | (1 << AccessExclusiveLock),
+
+/* ShareRowExclusiveLock */
+	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) |
+	(1 << ShareLock) | (1 << RowExclusiveLock) | (1 << AccessExclusiveLock),
+
+/* ExclusiveLock */
+	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) | (1 << ShareLock) |
+	(1 << RowExclusiveLock) | (1 << RowShareLock) | (1 << AccessExclusiveLock),
+
+/* AccessExclusiveLock */
+	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) | (1 << ShareLock) |
+	(1 << RowExclusiveLock) | (1 << RowShareLock) | (1 << AccessExclusiveLock) | 
+	(1 << AccessShareLock),
+
+/* ExtendLock */
+	(1 << ExtendLock)
+
+};
+
+static int	LockPrios[] = {
+	(int) NULL,
+	1,
+	2,
+	3,
+	4,
+	5,
+	6,
+	7,
+	1
+};
+
+LOCKMETHOD	LockTableId = (LOCKMETHOD) NULL;
+LOCKMETHOD	LongTermTableId = (LOCKMETHOD) NULL;
+
+/*
+ * Create the lock table described by LockConflicts and LockPrios.
+ */
+LOCKMETHOD
+InitLockTable()
+{
+	int			lockmethod;
+
+	lockmethod = LockMethodTableInit("LockTable",
+						  LockConflicts, LockPrios, MAX_LOCKMODES - 1);
+	LockTableId = lockmethod;
+	if (!(LockTableId))
+		elog(ERROR, "InitLockTable: couldnt initialize lock table");
+
+#ifdef USER_LOCKS
+	/*
+	 * Allocate another tableId for long-term locks
+	 */
+	LongTermTableId = LockMethodTableRename(LockTableId);
+	if (!(LongTermTableId))
+	{
+		elog(ERROR,
+			 "InitLockTable: couldn't rename long-term lock table");
+	}
+#endif
+
+	return LockTableId;
+}
+
 /*
  * RelationInitLockInfo --
  *		Initializes the lock information in a relation descriptor.
@@ -82,215 +161,44 @@ RelationInitLockInfo(Relation relation)
 	else
 		info->lockRelId.dbId = MyDatabaseId;
 
-#ifdef LowLevelLocking
-	memset(info->lockHeld, 0, sizeof(info->lockHeld));
-#endif
-
 	relation->lockInfo = (Pointer) info;
 }
 
 /*
- * RelationSetLockForDescriptorOpen --
- *		Sets read locks for a relation descriptor.
- */
-#ifdef	LOCKDEBUGALL
-#define LOCKDEBUGALL_30 \
-elog(DEBUG, "RelationSetLockForDescriptorOpen(%s[%d,%d]) called", \
-	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId)
-#else
-#define LOCKDEBUGALL_30
-#endif	 /* LOCKDEBUGALL */
-
-void
-RelationSetLockForDescriptorOpen(Relation relation)
-{
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
-	 */
-	Assert(RelationIsValid(relation));
-	if (LockingDisabled())
-		return;
-
-	LOCKDEBUGALL_30;
-
-	/* ----------------
-	 * read lock catalog tuples which compose the relation descriptor
-	 * XXX race condition? XXX For now, do nothing.
-	 * ----------------
-	 */
-}
-
-/* ----------------
- *		RelationSetLockForRead
- * ----------------
- */
-#ifdef	LOCKDEBUG
-#define LOCKDEBUG_40 \
-elog(DEBUG, "RelationSetLockForRead(%s[%d,%d]) called", \
-	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId)
-#else
-#define LOCKDEBUG_40
-#endif	 /* LOCKDEBUG */
-
-/*
- * RelationSetLockForRead --
- *		Sets relation level read lock.
+ *		LockRelation
  */
 void
-RelationSetLockForRead(Relation relation)
+LockRelation(Relation relation, LOCKMODE lockmode)
 {
 	LockInfo	lockinfo;
+	LOCKTAG		tag;
 
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
-	 */
-	Assert(RelationIsValid(relation));
 	if (LockingDisabled())
 		return;
 
-	LOCKDEBUG_40;
-
-	/* ----------------
-	 * If we don't have lock info on the reln just go ahead and
-	 * lock it without trying to short circuit the lock manager.
-	 * ----------------
-	 */
 	if (!LockInfoIsValid(relation->lockInfo))
-	{
 		RelationInitLockInfo(relation);
-		lockinfo = (LockInfo) relation->lockInfo;
-		MultiLockReln(lockinfo, READ_LOCK);
-		return;
-	}
-	else
-		lockinfo = (LockInfo) relation->lockInfo;
-
-	MultiLockReln(lockinfo, READ_LOCK);
-}
-
-/* ----------------
- *		RelationUnsetLockForRead
- * ----------------
- */
-#ifdef	LOCKDEBUG
-#define LOCKDEBUG_50 \
-elog(DEBUG, "RelationUnsetLockForRead(%s[%d,%d]) called", \
-	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId)
-#else
-#define LOCKDEBUG_50
-#endif	 /* LOCKDEBUG */
-
-/*
- * RelationUnsetLockForRead --
- *		Unsets relation level read lock.
- */
-void
-RelationUnsetLockForRead(Relation relation)
-{
-	LockInfo	lockinfo;
-
-	/* ----------------
-	 *	sanity check
-	 * ----------------
-	 */
-	Assert(RelationIsValid(relation));
-	if (LockingDisabled())
-		return;
 
 	lockinfo = (LockInfo) relation->lockInfo;
 
-	/* ----------------
-	 * If we don't have lock info on the reln just go ahead and
-	 * release it.
-	 * ----------------
-	 */
-	if (!LockInfoIsValid(lockinfo))
-	{
-		elog(ERROR,
-			 "Releasing a lock on %s with invalid lock information",
-			 RelationGetRelationName(relation));
-	}
+	MemSet(&tag, 0, sizeof(tag));
+	tag.relId = lockinfo->lockRelId.relId;
+	tag.dbId = lockinfo->lockRelId.dbId;
+	tag.objId.blkno = InvalidBlockNumber;
 
-	MultiReleaseReln(lockinfo, READ_LOCK);
+	LockAcquire(LockTableId, &tag, lockmode);
+	return;
 }
 
-/* ----------------
- *		RelationSetLockForWrite(relation)
- * ----------------
- */
-#ifdef	LOCKDEBUG
-#define LOCKDEBUG_60 \
-elog(DEBUG, "RelationSetLockForWrite(%s[%d,%d]) called", \
-	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId)
-#else
-#define LOCKDEBUG_60
-#endif	 /* LOCKDEBUG */
-
 /*
- * RelationSetLockForWrite --
- *		Sets relation level write lock.
+ *		UnlockRelation
  */
 void
-RelationSetLockForWrite(Relation relation)
+UnlockRelation(Relation relation, LOCKMODE lockmode)
 {
 	LockInfo	lockinfo;
+	LOCKTAG		tag;
 
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
-	 */
-	Assert(RelationIsValid(relation));
-	if (LockingDisabled())
-		return;
-
-	LOCKDEBUG_60;
-
-	/* ----------------
-	 * If we don't have lock info on the reln just go ahead and
-	 * lock it without trying to short circuit the lock manager.
-	 * ----------------
-	 */
-	if (!LockInfoIsValid(relation->lockInfo))
-	{
-		RelationInitLockInfo(relation);
-		lockinfo = (LockInfo) relation->lockInfo;
-		MultiLockReln(lockinfo, WRITE_LOCK);
-		return;
-	}
-	else
-		lockinfo = (LockInfo) relation->lockInfo;
-
-	MultiLockReln(lockinfo, WRITE_LOCK);
-}
-
-/* ----------------
- *		RelationUnsetLockForWrite
- * ----------------
- */
-#ifdef	LOCKDEBUG
-#define LOCKDEBUG_70 \
-elog(DEBUG, "RelationUnsetLockForWrite(%s[%d,%d]) called", \
-	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId)
-#else
-#define LOCKDEBUG_70
-#endif	 /* LOCKDEBUG */
-
-/*
- * RelationUnsetLockForWrite --
- *		Unsets relation level write lock.
- */
-void
-RelationUnsetLockForWrite(Relation relation)
-{
-	LockInfo	lockinfo;
-
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
-	 */
-	Assert(RelationIsValid(relation));
 	if (LockingDisabled())
 		return;
 
@@ -303,309 +211,127 @@ RelationUnsetLockForWrite(Relation relation)
 			 RelationGetRelationName(relation));
 	}
 
-	MultiReleaseReln(lockinfo, WRITE_LOCK);
+	MemSet(&tag, 0, sizeof(tag));
+	tag.relId = lockinfo->lockRelId.relId;
+	tag.dbId = lockinfo->lockRelId.dbId;
+	tag.objId.blkno = InvalidBlockNumber;
+
+	LockRelease(LockTableId, &tag, lockmode);
+	return;
 }
 
-/* ----------------
- *		RelationSetLockForReadPage
- * ----------------
- */
-#ifdef	LOCKDEBUG
-#define LOCKDEBUG_90 \
-elog(DEBUG, "RelationSetLockForReadPage(%s[%d,%d], @%d) called", \
-	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId, page)
-#else
-#define LOCKDEBUG_90
-#endif	 /* LOCKDEBUG */
-
-/* ----------------
- *		RelationSetLockForWritePage
- * ----------------
- */
-#ifdef	LOCKDEBUG
-#define LOCKDEBUG_100 \
-elog(DEBUG, "RelationSetLockForWritePage(%s[%d,%d], @%d) called", \
-	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId, page)
-#else
-#define LOCKDEBUG_100
-#endif	 /* LOCKDEBUG */
-
 /*
- * RelationSetLockForWritePage --
- *		Sets write lock on a page.
+ *		LockPage
  */
 void
-RelationSetLockForWritePage(Relation relation,
-							ItemPointer itemPointer)
+LockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 {
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
-	 */
-	Assert(RelationIsValid(relation));
-	if (LockingDisabled())
-		return;
+	LockInfo	lockinfo;
+	LOCKTAG		tag;
 
-	/* ---------------
-	 * Make sure lockinfo is initialized
-	 * ---------------
-	 */
-	if (!LockInfoIsValid(relation->lockInfo))
-		RelationInitLockInfo(relation);
-
-	/* ----------------
-	 *	attempt to set lock
-	 * ----------------
-	 */
-	MultiLockPage((LockInfo) relation->lockInfo, itemPointer, WRITE_LOCK);
-}
-
-/* ----------------
- *		RelationUnsetLockForReadPage
- * ----------------
- */
-#ifdef	LOCKDEBUG
-#define LOCKDEBUG_110 \
-elog(DEBUG, "RelationUnsetLockForReadPage(%s[%d,%d], @%d) called", \
-	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId, page)
-#else
-#define LOCKDEBUG_110
-#endif	 /* LOCKDEBUG */
-
-/* ----------------
- *		RelationUnsetLockForWritePage
- * ----------------
- */
-#ifdef	LOCKDEBUG
-#define LOCKDEBUG_120 \
-elog(DEBUG, "RelationUnsetLockForWritePage(%s[%d,%d], @%d) called", \
-	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId, page)
-#else
-#define LOCKDEBUG_120
-#endif	 /* LOCKDEBUG */
-
-/*
- * Set a single level write page lock.	Assumes that you already
- * have a write intent lock on the relation.
- */
-void
-RelationSetSingleWLockPage(Relation relation,
-						   ItemPointer itemPointer)
-{
-
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
-	 */
-	Assert(RelationIsValid(relation));
 	if (LockingDisabled())
 		return;
 
 	if (!LockInfoIsValid(relation->lockInfo))
 		RelationInitLockInfo(relation);
 
-	SingleLockPage((LockInfo) relation->lockInfo, itemPointer, WRITE_LOCK, !UNLOCK);
+	lockinfo = (LockInfo) relation->lockInfo;
+
+	MemSet(&tag, 0, sizeof(tag));
+	tag.relId = lockinfo->lockRelId.relId;
+	tag.dbId = lockinfo->lockRelId.dbId;
+	tag.objId.blkno = blkno;
+
+	LockAcquire(LockTableId, &tag, lockmode);
+	return;
 }
 
 /*
- * Unset a single level write page lock
+ *		UnlockPage
  */
 void
-RelationUnsetSingleWLockPage(Relation relation,
-							 ItemPointer itemPointer)
+UnlockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 {
+	LockInfo	lockinfo;
+	LOCKTAG		tag;
 
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
-	 */
-	Assert(RelationIsValid(relation));
 	if (LockingDisabled())
 		return;
 
-	if (!LockInfoIsValid(relation->lockInfo))
+	lockinfo = (LockInfo) relation->lockInfo;
+
+	if (!LockInfoIsValid(lockinfo))
+	{
 		elog(ERROR,
 			 "Releasing a lock on %s with invalid lock information",
 			 RelationGetRelationName(relation));
+	}
 
-	SingleLockPage((LockInfo) relation->lockInfo, itemPointer, WRITE_LOCK, UNLOCK);
+	MemSet(&tag, 0, sizeof(tag));
+	tag.relId = lockinfo->lockRelId.relId;
+	tag.dbId = lockinfo->lockRelId.dbId;
+	tag.objId.blkno = blkno;
+
+	LockRelease(LockTableId, &tag, lockmode);
+	return;
 }
 
-/*
- * Set a single level read page lock.  Assumes you already have a read
- * intent lock set on the relation.
- */
 void
-RelationSetSingleRLockPage(Relation relation,
-						   ItemPointer itemPointer)
+XactLockTableInsert(TransactionId xid)
 {
+	LOCKTAG		tag;
 
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
-	 */
-	Assert(RelationIsValid(relation));
 	if (LockingDisabled())
 		return;
 
-	if (!LockInfoIsValid(relation->lockInfo))
-		RelationInitLockInfo(relation);
+	MemSet(&tag, 0, sizeof(tag));
+	tag.relId = XactLockTableId;
+	tag.dbId = InvalidOid;
+	tag.objId.xid = xid;
 
-	SingleLockPage((LockInfo) relation->lockInfo, itemPointer, READ_LOCK, !UNLOCK);
+	LockAcquire(LockTableId, &tag, ExclusiveLock);
+	return;
 }
 
-/*
- * Unset a single level read page lock.
- */
 void
-RelationUnsetSingleRLockPage(Relation relation,
-							 ItemPointer itemPointer)
+XactLockTableDelete(TransactionId xid)
 {
+	LOCKTAG		tag;
 
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
-	 */
-	Assert(RelationIsValid(relation));
 	if (LockingDisabled())
 		return;
 
-	if (!LockInfoIsValid(relation->lockInfo))
-		elog(ERROR,
-			 "Releasing a lock on %s with invalid lock information",
-			 RelationGetRelationName(relation));
+	MemSet(&tag, 0, sizeof(tag));
+	tag.relId = XactLockTableId;
+	tag.dbId = InvalidOid;
+	tag.objId.xid = xid;
 
-	SingleLockPage((LockInfo) relation->lockInfo, itemPointer, READ_LOCK, UNLOCK);
+	LockRelease(LockTableId, &tag, ExclusiveLock);
+	return;
 }
 
-/*
- * Set a read intent lock on a relation.
- *
- * Usually these are set in a multi-level table when you acquiring a
- * page level lock.  i.e. To acquire a lock on a page you first acquire
- * an intent lock on the entire relation.  Acquiring an intent lock along
- * allows one to use the single level locking routines later.  Good for
- * index scans that do a lot of page level locking.
- */
 void
-RelationSetRIntentLock(Relation relation)
+XactLockTableWait(TransactionId xid)
 {
-	/* -----------------
-	 * Sanity check
-	 * -----------------
-	 */
-	Assert(RelationIsValid(relation));
+	LOCKTAG		tag;
+
 	if (LockingDisabled())
 		return;
 
-	if (!LockInfoIsValid(relation->lockInfo))
-		RelationInitLockInfo(relation);
+	MemSet(&tag, 0, sizeof(tag));
+	tag.relId = XactLockTableId;
+	tag.dbId = InvalidOid;
+	tag.objId.xid = xid;
 
-	SingleLockReln((LockInfo) relation->lockInfo, READ_LOCK + INTENT, !UNLOCK);
-}
+	LockAcquire(LockTableId, &tag, ShareLock);
 
-/*
- * Unset a read intent lock on a relation
- */
-void
-RelationUnsetRIntentLock(Relation relation)
-{
-	/* -----------------
-	 * Sanity check
-	 * -----------------
+	/*
+	 * Transaction was committed/aborted/crashed - 
+	 * we have to update pg_log if transaction is still
+	 * marked as running.
 	 */
-	Assert(RelationIsValid(relation));
-	if (LockingDisabled())
-		return;
+	if (!TransactionIdDidCommit(xid) && !TransactionIdDidAbort(xid))
+		TransactionIdAbort(xid);
 
-	if (!LockInfoIsValid(relation->lockInfo))
-		RelationInitLockInfo(relation);
-
-	SingleLockReln((LockInfo) relation->lockInfo, READ_LOCK + INTENT, UNLOCK);
+	return;
 }
-
-/*
- * Set a write intent lock on a relation. For a more complete explanation
- * see RelationSetRIntentLock()
- */
-void
-RelationSetWIntentLock(Relation relation)
-{
-	/* -----------------
-	 * Sanity check
-	 * -----------------
-	 */
-	Assert(RelationIsValid(relation));
-	if (LockingDisabled())
-		return;
-
-	if (!LockInfoIsValid(relation->lockInfo))
-		RelationInitLockInfo(relation);
-
-	SingleLockReln((LockInfo) relation->lockInfo, WRITE_LOCK + INTENT, !UNLOCK);
-}
-
-/*
- * Unset a write intent lock.
- */
-void
-RelationUnsetWIntentLock(Relation relation)
-{
-	/* -----------------
-	 * Sanity check
-	 * -----------------
-	 */
-	Assert(RelationIsValid(relation));
-	if (LockingDisabled())
-		return;
-
-	if (!LockInfoIsValid(relation->lockInfo))
-		RelationInitLockInfo(relation);
-
-	SingleLockReln((LockInfo) relation->lockInfo, WRITE_LOCK + INTENT, UNLOCK);
-}
-
-/*
- * Extend locks are used primarily in tertiary storage devices such as
- * a WORM disk jukebox.  Sometimes need exclusive access to extend a
- * file by a block.
- */
-#ifdef NOT_USED
-void
-RelationSetLockForExtend(Relation relation)
-{
-	/* -----------------
-	 * Sanity check
-	 * -----------------
-	 */
-	Assert(RelationIsValid(relation));
-	if (LockingDisabled())
-		return;
-
-	if (!LockInfoIsValid(relation->lockInfo))
-		RelationInitLockInfo(relation);
-
-	MultiLockReln((LockInfo) relation->lockInfo, EXTEND_LOCK);
-}
-
-#endif
-
-#ifdef NOT_USED
-void
-RelationUnsetLockForExtend(Relation relation)
-{
-	/* -----------------
-	 * Sanity check
-	 * -----------------
-	 */
-	Assert(RelationIsValid(relation));
-	if (LockingDisabled())
-		return;
-
-	if (!LockInfoIsValid(relation->lockInfo))
-		RelationInitLockInfo(relation);
-
-	MultiReleaseReln((LockInfo) relation->lockInfo, EXTEND_LOCK);
-}
-
-#endif

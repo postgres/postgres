@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.17 1998/11/27 19:51:46 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.18 1998/12/15 12:45:39 vadim Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -162,7 +162,7 @@ ChangeAcl(char *relname,
 	tuple = heap_modifytuple(tuple, relation, values, nulls, replaces);
 	/* XXX handle index on pg_class? */
 	setheapoverride(true);
-	heap_replace(relation, &tuple->t_self, tuple);
+	heap_replace(relation, &tuple->t_self, tuple, NULL);
 	setheapoverride(false);
 
 	/* keep the catalog indices up to date */

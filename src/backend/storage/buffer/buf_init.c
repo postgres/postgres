@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.19 1998/09/01 04:31:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.20 1998/12/15 12:46:18 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,13 +62,13 @@ BufferBlock BufferBlocks;
 
 #ifndef HAS_TEST_AND_SET
 long	   *NWaitIOBackendP;
-
 #endif
 
 extern IpcSemaphoreId WaitIOSemId;
 
 long	   *PrivateRefCount;	/* also used in freelist.c */
 long	   *LastRefCount;		/* refcounts of last ExecMain level */
+bits8	   *BufferLocks;		/* */
 long	   *CommitInfoNeedsSave;/* to write buffers where we have filled
 								 * in t_infomask */
 
@@ -146,21 +146,6 @@ InitBufferPool(IPCKey key)
 				foundDescs;
 	int			i;
 
-	/* check padding of BufferDesc and BufferHdr */
-
-	/*
-	 * we need both checks because a sbufdesc_padded >
-	 * PADDED_SBUFDESC_SIZE will shrink sbufdesc to the required size,
-	 * which is bad
-	 */
-	if (sizeof(struct sbufdesc) != PADDED_SBUFDESC_SIZE ||
-		sizeof(struct sbufdesc_unpadded) > PADDED_SBUFDESC_SIZE)
-		elog(ERROR, "Internal error:  sbufdesc does not have the proper size, "
-			 "contact the Postgres developers");
-	if (sizeof(struct sbufdesc_unpadded) <= PADDED_SBUFDESC_SIZE / 2)
-		elog(ERROR, "Internal error:  sbufdesc is greatly over-sized, "
-			 "contact the Postgres developers");
-
 	Data_Descriptors = NBuffers;
 	Free_List_Descriptor = Data_Descriptors;
 	Lookup_List_Descriptor = Data_Descriptors + 1;
@@ -232,6 +217,7 @@ InitBufferPool(IPCKey key)
 			buf->buf_id = i;
 #ifdef HAS_TEST_AND_SET
 			S_INIT_LOCK(&(buf->io_in_progress_lock));
+			S_INIT_LOCK(&(buf->cntx_lock));
 #endif
 		}
 
@@ -252,10 +238,15 @@ InitBufferPool(IPCKey key)
 
 		WaitIOSemId = IpcSemaphoreCreate(IPCKeyGetWaitIOSemaphoreKey(key),
 										 1, IPCProtection, 0, 1, &status);
+		WaitCLSemId = IpcSemaphoreCreate(IPCKeyGetWaitCLSemaphoreKey(key),
+										 1, IPCProtection, 
+										 IpcSemaphoreDefaultStartValue, 
+										 1, &status);
 	}
 #endif
 	PrivateRefCount = (long *) calloc(NBuffers, sizeof(long));
 	LastRefCount = (long *) calloc(NBuffers, sizeof(long));
+	BufferLocks = (bits8*) calloc (NBuffers, sizeof(bits8));
 	CommitInfoNeedsSave = (long *) calloc(NBuffers, sizeof(long));
 }
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.16 1998/09/01 03:25:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.17 1998/12/15 12:46:24 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
 #include "postgres.h"
 
 #include "storage/ipc.h"
-#include "storage/multilev.h"
 #include "storage/sinval.h"
 #include "storage/bufmgr.h"
 #include "storage/proc.h"
@@ -92,7 +91,7 @@ CreateSharedMemoryAndSemaphores(IPCKey key)
 	 * ----------------
 	 */
 	InitLocks();
-	if (InitMultiLevelLocks() == INVALID_TABLEID)
+	if (InitLockTable() == INVALID_TABLEID)
 		elog(FATAL, "Couldn't create the lock table");
 
 	/* ----------------
@@ -145,7 +144,7 @@ AttachSharedMemoryAndSemaphores(IPCKey key)
 	 * ----------------
 	 */
 	InitLocks();
-	if (InitMultiLevelLocks() == INVALID_TABLEID)
+	if (InitLockTable() == INVALID_TABLEID)
 		elog(FATAL, "Couldn't attach to the lock table");
 
 	AttachSharedInvalidationState(key);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.15 1998/09/01 04:38:31 momjian Exp $
+ * $Id: proc.h,v 1.16 1998/12/15 12:46:59 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,11 +44,9 @@ typedef struct proc
 	TransactionId xid;			/* transaction currently being executed by
 								 * this proc */
 
-#ifdef LowLevelLocking
 	TransactionId xmin;			/* minimal running XID as it was when we
 								 * were starting our xact: vacuum must not
 								 * remove tuples deleted by xid >= xmin ! */
-#endif
 
 	LOCK	   *waitLock;		/* Lock we're sleeping on */
 	int			token;			/* info for proc wakeup routines */

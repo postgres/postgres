@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.22 1998/12/14 08:11:00 scrappy Exp $
+ * $Id: user.c,v 1.23 1998/12/15 12:46:00 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,7 +136,7 @@ DefineUser(CreateUserStmt *stmt)
 	 * Secure a write lock on pg_shadow so we can be sure of what the next
 	 * usesysid should be.
 	 */
-	RelationSetLockForWrite(pg_shadow_rel);
+	LockRelation(pg_shadow_rel, AccessExclusiveLock);
 
 	scan = heap_beginscan(pg_shadow_rel, false, SnapshotNow, 0, NULL);
 	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
@@ -154,7 +154,7 @@ DefineUser(CreateUserStmt *stmt)
 
 	if (exists)
 	{
-		RelationUnsetLockForWrite(pg_shadow_rel);
+		UnlockRelation(pg_shadow_rel, AccessExclusiveLock);
 		heap_close(pg_shadow_rel);
 		UserAbortTransactionBlock();
 		elog(ERROR, 
@@ -187,7 +187,7 @@ DefineUser(CreateUserStmt *stmt)
 	 * This goes after the UpdatePgPwdFile to be certain that two backends
 	 * to not attempt to write to the pg_pwd file at the same time.
 	 */
-	RelationUnsetLockForWrite(pg_shadow_rel);
+	UnlockRelation(pg_shadow_rel, AccessExclusiveLock);
 	heap_close(pg_shadow_rel);
 
 	if (IsTransactionBlock() && !inblock)
@@ -235,14 +235,14 @@ AlterUser(AlterUserStmt *stmt)
 	 * dump of the pg_pwd file is done, there is not another backend doing
 	 * the same.
 	 */
-	RelationSetLockForWrite(pg_shadow_rel);
+	LockRelation(pg_shadow_rel, AccessExclusiveLock);
 
 	tuple = SearchSysCacheTuple(USENAME,
 								PointerGetDatum(stmt->user),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
-		RelationUnsetLockForWrite(pg_shadow_rel);
+		UnlockRelation(pg_shadow_rel, AccessExclusiveLock);
 		heap_close(pg_shadow_rel);
 		UserAbortTransactionBlock();	/* needed? */
 		elog(ERROR, "alterUser: user \"%s\" does not exist", stmt->user);
@@ -288,7 +288,7 @@ AlterUser(AlterUserStmt *stmt)
 
 	UpdatePgPwdFile(sql);
 
-	RelationUnsetLockForWrite(pg_shadow_rel);
+	UnlockRelation(pg_shadow_rel, AccessExclusiveLock);
 	heap_close(pg_shadow_rel);
 
 	if (IsTransactionBlock() && !inblock)
@@ -342,14 +342,14 @@ RemoveUser(char *user)
 	 * dump of the pg_pwd file is done, there is not another backend doing
 	 * the same.
 	 */
-	RelationSetLockForWrite(pg_shadow_rel);
+	LockRelation(pg_shadow_rel, AccessExclusiveLock);
 
 	tuple = SearchSysCacheTuple(USENAME,
 								PointerGetDatum(user),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
-		RelationUnsetLockForWrite(pg_shadow_rel);
+		UnlockRelation(pg_shadow_rel, AccessExclusiveLock);
 		heap_close(pg_shadow_rel);
 		UserAbortTransactionBlock();
 		elog(ERROR, "removeUser: user \"%s\" does not exist", user);
@@ -422,7 +422,7 @@ RemoveUser(char *user)
 
 	UpdatePgPwdFile(sql);
 
-	RelationUnsetLockForWrite(pg_shadow_rel);
+	UnlockRelation(pg_shadow_rel, AccessExclusiveLock);
 	heap_close(pg_shadow_rel);
 
 	if (IsTransactionBlock() && !inblock)

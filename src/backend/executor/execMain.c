@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.59 1998/11/27 19:51:59 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.60 1998/12/15 12:46:04 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,7 @@
 /* #include "access/localam.h" */
 #include "optimizer/var.h"
 #include "access/heapam.h"
+#include "access/xact.h"
 #include "catalog/heap.h"
 #include "commands/trigger.h"
 
@@ -421,7 +422,6 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	{
 		/******************
 		 *	  if we have a result relation, open it and
-
 		 *	  initialize the result relation info stuff.
 		 ******************
 		 */
@@ -440,14 +440,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 			elog(ERROR, "You can't change sequence relation %s",
 				 resultRelationDesc->rd_rel->relname.data);
 
-		/*
-		 * Write-lock the result relation right away: if the relation is
-		 * used in a subsequent scan, we won't have to elevate the
-		 * read-lock set by heap_beginscan to a write-lock (needed by
-		 * heap_insert, heap_delete and heap_replace). This will hopefully
-		 * prevent some deadlocks.	- 01/24/94
-		 */
-		RelationSetLockForWrite(resultRelationDesc);
+		LockRelation(resultRelationDesc, RowExclusiveLock);
 
 		resultRelationInfo = makeNode(RelationInfo);
 		resultRelationInfo->ri_RangeTableIndex = resultRelationIndex;
@@ -461,7 +454,8 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 		 *	in the result relation information..
 		 ******************
 		 */
-		ExecOpenIndices(resultRelationOid, resultRelationInfo);
+		if (operation != CMD_DELETE)
+			ExecOpenIndices(resultRelationOid, resultRelationInfo);
 
 		estate->es_result_relation_info = resultRelationInfo;
 	}
@@ -1006,8 +1000,10 @@ ExecDelete(TupleTableSlot *slot,
 		   ItemPointer tupleid,
 		   EState *estate)
 {
-	RelationInfo *resultRelationInfo;
-	Relation	resultRelationDesc;
+	RelationInfo	   *resultRelationInfo;
+	Relation			resultRelationDesc;
+	ItemPointerData		ctid;
+	int					result;
 
 	/******************
 	 *	get the result relation information
@@ -1022,19 +1018,35 @@ ExecDelete(TupleTableSlot *slot,
 	{
 		bool		dodelete;
 
-		dodelete = ExecBRDeleteTriggers(resultRelationDesc, tupleid);
+		dodelete = ExecBRDeleteTriggers(estate, tupleid);
 
 		if (!dodelete)			/* "do nothing" */
 			return;
 	}
 
-	/******************
+	/*
 	 *	delete the tuple
-	 ******************
 	 */
-	if (heap_delete(resultRelationDesc, /* relation desc */
-					tupleid))	/* item pointer to tuple */
-		return;
+	result = heap_delete(resultRelationDesc, tupleid, &ctid);
+	switch (result)
+	{
+		case HeapTupleSelfUpdated:
+			return;
+
+		case HeapTupleMayBeUpdated:
+			break;
+
+		case HeapTupleUpdated:
+			if (XactIsoLevel == XACT_SERIALIZED)
+				elog(ERROR, "Serialize access failed due to concurrent update");
+			else
+				elog(ERROR, "Isolation level %u is not supported", XactIsoLevel);
+			return;
+
+		default:
+			elog(ERROR, "Unknown status %u from heap_delete", result);
+			return;
+	}
 
 	IncrDeleted();
 	(estate->es_processed)++;
@@ -1054,7 +1066,7 @@ ExecDelete(TupleTableSlot *slot,
 	/* AFTER ROW DELETE Triggers */
 	if (resultRelationDesc->trigdesc &&
 	 resultRelationDesc->trigdesc->n_after_row[TRIGGER_EVENT_DELETE] > 0)
-		ExecARDeleteTriggers(resultRelationDesc, tupleid);
+		ExecARDeleteTriggers(estate, tupleid);
 
 }
 
@@ -1075,10 +1087,12 @@ ExecReplace(TupleTableSlot *slot,
 			EState *estate,
 			Query *parseTree)
 {
-	HeapTuple	tuple;
-	RelationInfo *resultRelationInfo;
-	Relation	resultRelationDesc;
-	int			numIndices;
+	HeapTuple			tuple;
+	RelationInfo	   *resultRelationInfo;
+	Relation			resultRelationDesc;
+	ItemPointerData		ctid;
+	int					result;
+	int					numIndices;
 
 	/******************
 	 *	abort the operation if not running transactions
@@ -1117,7 +1131,7 @@ ExecReplace(TupleTableSlot *slot,
 	{
 		HeapTuple	newtuple;
 
-		newtuple = ExecBRUpdateTriggers(resultRelationDesc, tupleid, tuple);
+		newtuple = ExecBRUpdateTriggers(estate, tupleid, tuple);
 
 		if (newtuple == NULL)	/* "do nothing" */
 			return;
@@ -1140,19 +1154,28 @@ ExecReplace(TupleTableSlot *slot,
 		ExecConstraints("ExecReplace", resultRelationDesc, tuple);
 	}
 
-	/******************
+	/*
 	 *	replace the heap tuple
-	 *
-	 * Don't want to continue if our heap_replace didn't actually
-	 * do a replace. This would be the case if heap_replace
-	 * detected a non-functional update. -kw 12/30/93
-	 ******************
 	 */
-	if (heap_replace(resultRelationDesc,		/* relation desc */
-					 tupleid,	/* item ptr of tuple to replace */
-					 tuple))
-	{							/* replacement heap tuple */
-		return;
+	result = heap_replace(resultRelationDesc, tupleid, tuple, &ctid);
+	switch (result)
+	{
+		case HeapTupleSelfUpdated:
+			return;
+
+		case HeapTupleMayBeUpdated:
+			break;
+
+		case HeapTupleUpdated:
+			if (XactIsoLevel == XACT_SERIALIZED)
+				elog(ERROR, "Serialize access failed due to concurrent update");
+			else
+				elog(ERROR, "Isolation level %u is not supported", XactIsoLevel);
+			return;
+
+		default:
+			elog(ERROR, "Unknown status %u from heap_replace", result);
+			return;
 	}
 
 	IncrReplaced();
@@ -1187,7 +1210,7 @@ ExecReplace(TupleTableSlot *slot,
 	/* AFTER ROW UPDATE Triggers */
 	if (resultRelationDesc->trigdesc &&
 	 resultRelationDesc->trigdesc->n_after_row[TRIGGER_EVENT_UPDATE] > 0)
-		ExecARUpdateTriggers(resultRelationDesc, tupleid, tuple);
+		ExecARUpdateTriggers(estate, tupleid, tuple);
 }
 
 #if 0

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.26 1998/09/01 04:38:10 momjian Exp $
+ * $Id: buf_internals.h,v 1.27 1998/12/15 12:46:55 vadim Exp $
  *
  * NOTE
  *		If BUFFERPAGE0 is defined, then 0 will be used as a
@@ -83,32 +83,6 @@ struct buftag
  *		Dbname, relname, dbid, and relid are enough to determine where
  *		to put the buffer, for all storage managers.
  */
-
-#define PADDED_SBUFDESC_SIZE	128
-
-/* DO NOT CHANGE THIS NEXT STRUCTURE:
-   It is used only to get padding information for the real sbufdesc structure
-   It should match the sbufdesc structure exactly except for a missing sb_pad
-*/
-struct sbufdesc_unpadded
-{
-	Buffer		freeNext;
-	Buffer		freePrev;
-	SHMEM_OFFSET data;
-	BufferTag	tag;
-	int			buf_id;
-	BufFlags	flags;
-	unsigned	refcount;
-#ifdef HAS_TEST_AND_SET
-	slock_t		io_in_progress_lock;
-#endif	 /* HAS_TEST_AND_SET */
-	char		sb_dbname[NAMEDATALEN];
-
-	/* NOTE NO PADDING OF THE MEMBER HERE */
-	char		sb_relname[NAMEDATALEN];
-};
-
-/* THE REAL STRUCTURE - the structure above must match it, minus sb_pad */
 struct sbufdesc
 {
 	Buffer		freeNext;		/* link for freelist chain */
@@ -125,30 +99,24 @@ struct sbufdesc
 #ifdef HAS_TEST_AND_SET
 	/* can afford a dedicated lock if test-and-set locks are available */
 	slock_t		io_in_progress_lock;
+	slock_t		cntx_lock;		/* to lock access to page context */
 #endif	 /* HAS_TEST_AND_SET */
+	unsigned	r_locks;		/* # of shared locks */
+	bool		ri_lock;		/* read-intent lock */
+	bool		w_lock;			/* context exclusively locked */
 
 	char		sb_dbname[NAMEDATALEN]; /* name of db in which buf belongs */
-
-	/*
-	 * I padded this structure to a power of 2 (PADDED_SBUFDESC_SIZE)
-	 * because BufferDescriptorGetBuffer is called a billion times and it
-	 * does an C pointer subtraction (i.e., "x - y" -> array index of x
-	 * relative to y, which is calculated using division by struct size).
-	 * Integer ".div" hits you for 35 cycles, as opposed to a 1-cycle
-	 * "sra" ... this hack cut 10% off of the time to create the Wisconsin
-	 * database! It eats up more shared memory, of course, but we're
-	 * (allegedly) going to make some of these types bigger soon anyway...
-	 * -pma 1/2/93
-	 */
-
-	/*
-	 * please, don't take the sizeof() this member and use it for
-	 * something important
-	 */
-
-	char		sb_relname[NAMEDATALEN +		/* name of reln */
-				PADDED_SBUFDESC_SIZE - sizeof(struct sbufdesc_unpadded)];
+	char		sb_relname[NAMEDATALEN];/* name of reln */
 };
+
+/*
+ * Buffer lock infos in BufferLocks below.
+ * We have to free these locks in elog(ERROR)...
+ */
+#define	BL_IO_IN_PROGRESS	(1 << 0)	/* unimplemented */
+#define	BL_R_LOCK			(1 << 1)
+#define	BL_RI_LOCK			(1 << 2)
+#define	BL_W_LOCK			(1 << 3)
 
 /*
  *	mao tracing buffer allocation
@@ -201,6 +169,7 @@ extern BufferDesc *BufferDescriptors;
 extern BufferBlock BufferBlocks;
 extern long *PrivateRefCount;
 extern long *LastRefCount;
+extern bits8 *BufferLocks;
 extern long *CommitInfoNeedsSave;
 extern SPINLOCK BufMgrLock;
 

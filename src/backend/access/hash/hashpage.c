@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.17 1998/09/01 03:20:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.18 1998/12/15 12:45:10 vadim Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -81,7 +81,7 @@ _hash_metapinit(Relation rel)
 
 	/* can't be sharing this with anyone, now... */
 	if (USELOCKING)
-		RelationSetLockForWrite(rel);
+		LockRelation(rel, AccessExclusiveLock);
 
 	if ((nblocks = RelationGetNumberOfBlocks(rel)) != 0)
 	{
@@ -169,7 +169,7 @@ _hash_metapinit(Relation rel)
 	_hash_relbuf(rel, metabuf, HASH_WRITE);
 
 	if (USELOCKING)
-		RelationUnsetLockForWrite(rel);
+		UnlockRelation(rel, AccessExclusiveLock);
 }
 
 /*
@@ -316,19 +316,16 @@ _hash_setpagelock(Relation rel,
 				  BlockNumber blkno,
 				  int access)
 {
-	ItemPointerData iptr;
 
 	if (USELOCKING)
 	{
-		ItemPointerSet(&iptr, blkno, 1);
-
 		switch (access)
 		{
 			case HASH_WRITE:
-				RelationSetSingleWLockPage(rel, &iptr);
+				LockPage(rel, blkno, ExclusiveLock);
 				break;
 			case HASH_READ:
-				RelationSetSingleRLockPage(rel, &iptr);
+				LockPage(rel, blkno, ShareLock);
 				break;
 			default:
 				elog(ERROR, "_hash_setpagelock: invalid access (%d) on blk %x: %s",
@@ -343,19 +340,16 @@ _hash_unsetpagelock(Relation rel,
 					BlockNumber blkno,
 					int access)
 {
-	ItemPointerData iptr;
 
 	if (USELOCKING)
 	{
-		ItemPointerSet(&iptr, blkno, 1);
-
 		switch (access)
 		{
 			case HASH_WRITE:
-				RelationUnsetSingleWLockPage(rel, &iptr);
+				UnlockPage(rel, blkno, ExclusiveLock);
 				break;
 			case HASH_READ:
-				RelationUnsetSingleRLockPage(rel, &iptr);
+				UnlockPage(rel, blkno, ShareLock);
 				break;
 			default:
 				elog(ERROR, "_hash_unsetpagelock: invalid access (%d) on blk %x: %s",

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.39 1998/11/27 19:33:31 vadim Exp $
+ * $Id: heapam.h,v 1.40 1998/12/15 12:46:44 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,7 @@ typedef struct HeapAccessStatisticsData
 	int			global_insert;
 	int			global_delete;
 	int			global_replace;
+	int			global_mark4update;
 	int			global_markpos;
 	int			global_restrpos;
 	int			global_BufferGetRelation;
@@ -64,6 +65,7 @@ typedef struct HeapAccessStatisticsData
 	int			local_insert;
 	int			local_delete;
 	int			local_replace;
+	int			local_mark4update;
 	int			local_markpos;
 	int			local_restrpos;
 	int			local_BufferGetRelation;
@@ -253,9 +255,10 @@ extern void heap_endscan(HeapScanDesc scan);
 extern HeapTuple heap_getnext(HeapScanDesc scandesc, int backw);
 extern void heap_fetch(Relation relation, Snapshot snapshot, HeapTuple tup, Buffer *userbuf);
 extern Oid	heap_insert(Relation relation, HeapTuple tup);
-extern int	heap_delete(Relation relation, ItemPointer tid);
-extern int heap_replace(Relation relation, ItemPointer otid,
-			 HeapTuple tup);
+extern int	heap_delete(Relation relation, ItemPointer tid, ItemPointer ctid);
+extern int	heap_replace(Relation relation, ItemPointer otid, HeapTuple tup,
+							ItemPointer ctid);
+extern int	heap_mark4update(Relation relation, HeapTuple tup, Buffer *userbuf);
 extern void heap_markpos(HeapScanDesc scan);
 extern void heap_restrpos(HeapScanDesc scan);
 
@@ -280,10 +283,5 @@ HeapTuple	heap_addheader(uint32 natts, int structlen, char *structure);
 /* in common/heap/stats.c */
 extern void PrintHeapAccessStatistics(HeapAccessStatistics stats);
 extern void initam(void);
-
-/* hio.c */
-extern void RelationPutHeapTuple(Relation relation, BlockNumber blockIndex,
-					 HeapTuple tuple);
-extern void RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple);
 
 #endif	 /* HEAPAM_H */

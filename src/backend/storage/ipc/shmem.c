@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.31 1998/09/01 04:31:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.32 1998/12/15 12:46:24 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,8 @@
 #include "utils/dynahash.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
-#include "access/transam.h"
+#include "access/xact.h"
+#include "utils/tqual.h"
 
 /* shared memory global variables */
 
@@ -629,7 +630,6 @@ TransactionIdIsInProgress(TransactionId xid)
 	return false;
 }
 
-#ifdef LowLevelLocking
 /*
  * GetSnapshotData -- returns information about running transactions.
  *
@@ -645,16 +645,15 @@ Snapshot
 GetSnapshotData(bool serialized)
 {
 	Snapshot	snapshot = (Snapshot) malloc(sizeof(SnapshotData));
-	TransactionId snapshot->xip = (TransactionId *)
-	malloc(32 * sizeof(TransactionId));
 	ShmemIndexEnt *result;
 	PROC	   *proc;
 	TransactionId cid = GetCurrentTransactionId();
-	uint		count = 0;
-	unit		free = 31;
+	uint32		count = 0;
+	uint32		have = 31;
 
 	Assert(ShmemIndex);
 
+	snapshot->xip = (TransactionId *) malloc(32 * sizeof(TransactionId));
 	snapshot->xmax = cid;
 	snapshot->xmin = cid;
 
@@ -676,20 +675,20 @@ GetSnapshotData(bool serialized)
 			continue;
 		proc = (PROC *) MAKE_PTR(result->location);
 		if (proc == MyProc || proc->xid < FirstTransactionId ||
-			serialized && proc->xid >= cid)
+			(serialized && proc->xid >= cid))
 			continue;
 		if (proc->xid < snapshot->xmin)
 			snapshot->xmin = proc->xid;
 		else if (proc->xid > snapshot->xmax)
 			snapshot->xmax = proc->xid;
-		if (free == 0)
+		if (have == 0)
 		{
 			snapshot->xip = (TransactionId *) realloc(snapshot->xip,
 								   (count + 33) * sizeof(TransactionId));
-			free = 32;
+			have = 32;
 		}
 		snapshot->xip[count] = proc->xid;
-		free--;
+		have--;
 		count++;
 	}
 
@@ -699,5 +698,3 @@ GetSnapshotData(bool serialized)
 	elog(ERROR, "GetSnapshotData: ShmemIndex corrupted");
 	return NULL;
 }
-
-#endif

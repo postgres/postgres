@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.30 1998/11/27 19:51:57 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.31 1998/12/15 12:45:57 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,7 +102,7 @@ RemoveOperator(char *operatorName,		/* operator name */
 			elog(ERROR, "RemoveOperator: operator '%s': permission denied",
 				 operatorName);
 #endif
-		heap_delete(relation, &tup->t_self);
+		heap_delete(relation, &tup->t_self, NULL);
 	}
 	else
 	{
@@ -157,7 +157,7 @@ SingleOpOperatorRemove(Oid typeOid)
 		key[0].sk_attno = attnums[i];
 		scan = heap_beginscan(rel, 0, SnapshotNow, 1, key);
 		while (HeapTupleIsValid(tup = heap_getnext(scan, 0)))
-			heap_delete(rel, &tup->t_self);
+			heap_delete(rel, &tup->t_self, NULL);
 		heap_endscan(scan);
 	}
 	heap_close(rel);
@@ -268,7 +268,7 @@ RemoveType(char *typeName)		/* type name to be removed */
 
 	relation = heap_openr(TypeRelationName);
 	typeOid = tup->t_data->t_oid;
-	heap_delete(relation, &tup->t_self);
+	heap_delete(relation, &tup->t_self, NULL);
 
 	/* Now, Delete the "array of" that type */
 	shadow_type = makeArrayTypeName(typeName);
@@ -282,7 +282,7 @@ RemoveType(char *typeName)		/* type name to be removed */
 	}
 
 	typeOid = tup->t_data->t_oid;
-	heap_delete(relation, &tup->t_self);
+	heap_delete(relation, &tup->t_self, NULL);
 
 	heap_close(relation);
 }
@@ -357,7 +357,7 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 		elog(ERROR, "RemoveFunction: function \"%s\" is built-in", functionName);
 	}
 
-	heap_delete(relation, &tup->t_self);
+	heap_delete(relation, &tup->t_self, NULL);
 
 	heap_close(relation);
 }
@@ -428,7 +428,7 @@ RemoveAggregate(char *aggName, char *aggType)
 				 aggName);
 		}
 	}
-	heap_delete(relation, &tup->t_self);
+	heap_delete(relation, &tup->t_self, NULL);
 
 	heap_close(relation);
 }

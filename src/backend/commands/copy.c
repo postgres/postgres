@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.64 1998/11/27 19:51:54 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.65 1998/12/15 12:45:53 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -777,6 +777,20 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 		pfree(typmod);
 	}
 	pfree(byval);
+
+	/* comments in execUtils.c */
+	if (has_index)
+	{
+		for (i = 0; i < n_indices; i++)
+		{
+			if (index_rels[i] == NULL)
+				continue;
+			if ((index_rels[i])->rd_rel->relam != BTREE_AM_OID && 
+				(index_rels[i])->rd_rel->relam != HASH_AM_OID)
+				UnlockRelation(index_rels[i], AccessExclusiveLock);
+			index_close(index_rels[i]);
+		}
+	}
 	heap_close(rel);
 }
 
@@ -914,7 +928,14 @@ GetIndexRelations(Oid main_relation_oid,
 	*index_rels = (Relation *) palloc(*n_indices * sizeof(Relation));
 
 	for (i = 0, scan = head; i < *n_indices; i++, scan = scan->next)
+	{
 		(*index_rels)[i] = index_open(scan->index_rel_oid);
+		/* comments in execUtils.c */
+		if ((*index_rels)[i] != NULL && 
+			((*index_rels)[i])->rd_rel->relam != BTREE_AM_OID &&
+			((*index_rels)[i])->rd_rel->relam != HASH_AM_OID)
+			LockRelation((*index_rels)[i], AccessExclusiveLock);
+	}
 
 	for (i = 0, scan = head; i < *n_indices + 1; i++)
 	{

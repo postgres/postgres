@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.65 1998/12/13 04:37:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.66 1998/12/15 12:45:43 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -913,7 +913,7 @@ UpdateIndexPredicate(Oid indexoid, Node *oldPred, Node *predicate)
 
 	newtup = heap_modifytuple(tuple, pg_index, values, nulls, replace);
 
-	heap_replace(pg_index, &newtup->t_self, newtup);
+	heap_replace(pg_index, &newtup->t_self, newtup, NULL);
 
 	pfree(newtup);
 	heap_close(pg_index);
@@ -1039,15 +1039,11 @@ index_create(char *heapRelationName,
 
 	heapRelation = heap_open(heapoid);
 
-	/* ----------------
-	 * write lock heap to guarantee exclusive access
-	 * ----------------
-	RelationSetLockForWrite(heapRelation);
-	 *				  ^^^^^
-	 * Does it have any sense ?		- vadim 10/27/97
+	/*
+	 * Only SELECT ... FOR UPDATE are allowed
 	 */
 
-	RelationSetLockForRead(heapRelation);
+	LockRelation(heapRelation, ShareLock);
 
 	/* ----------------
 	 *	  construct new tuple descriptor
@@ -1195,7 +1191,7 @@ index_destroy(Oid indexId)
 
 	AssertState(HeapTupleIsValid(tuple));
 
-	heap_delete(relationRelation, &tuple->t_self);
+	heap_delete(relationRelation, &tuple->t_self, NULL);
 	pfree(tuple);
 	heap_close(relationRelation);
 
@@ -1212,7 +1208,7 @@ index_destroy(Oid indexId)
 												   Int16GetDatum(attnum),
 															0, 0)))
 	{
-		heap_delete(attributeRelation, &tuple->t_self);
+		heap_delete(attributeRelation, &tuple->t_self, NULL);
 		pfree(tuple);
 		attnum++;
 	}
@@ -1232,7 +1228,7 @@ index_destroy(Oid indexId)
 
 	indexRelation = heap_openr(IndexRelationName);
 
-	heap_delete(indexRelation, &tuple->t_self);
+	heap_delete(indexRelation, &tuple->t_self, NULL);
 	pfree(tuple);
 	heap_close(indexRelation);
 
@@ -1424,7 +1420,7 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 		values[Anum_pg_class_relhasindex - 1] = CharGetDatum(hasindex);
 
 		newtup = heap_modifytuple(tuple, pg_class, values, nulls, replace);
-		heap_replace(pg_class, &tuple->t_self, newtup);
+		heap_replace(pg_class, &tuple->t_self, newtup, NULL);
 		CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
 		CatalogIndexInsert(idescs, Num_pg_class_indices, pg_class, newtup);
 		CatalogCloseIndices(Num_pg_class_indices, idescs);

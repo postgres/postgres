@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.14 1998/11/27 19:51:36 vadim Exp $
+ *	  $Id: hio.c,v 1.15 1998/12/15 12:45:14 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #include <postgres.h>
 
 #include <storage/bufpage.h>
+#include <access/hio.h>
 #include <access/heapam.h>
 #include <storage/bufmgr.h>
 #include <utils/memutils.h>
@@ -29,19 +30,20 @@
  *	 Probably needs to have an amdelunique to allow for
  *	 internal index records to be deleted and reordered as needed.
  *	 For the heap AM, this should never be needed.
+ *
+ *	 Note - we assume that caller hold BUFFER_LOCK_EXCLUSIVE on the buffer.
+ *
  */
 void
 RelationPutHeapTuple(Relation relation,
-					 BlockNumber blockIndex,
+					 Buffer buffer,
 					 HeapTuple tuple)
 {
-	Buffer		buffer;
-	Page		pageHeader;
-	BlockNumber numberOfBlocks;
-	OffsetNumber offnum;
-	unsigned int len;
-	ItemId		itemId;
-	Item		item;
+	Page			pageHeader;
+	OffsetNumber	offnum;
+	unsigned int	len;
+	ItemId			itemId;
+	Item			item;
 
 	/* ----------------
 	 *	increment access statistics
@@ -49,21 +51,6 @@ RelationPutHeapTuple(Relation relation,
 	 */
 	IncrHeapAccessStat(local_RelationPutHeapTuple);
 	IncrHeapAccessStat(global_RelationPutHeapTuple);
-
-	Assert(RelationIsValid(relation));
-	Assert(HeapTupleIsValid(tuple));
-
-	numberOfBlocks = RelationGetNumberOfBlocks(relation);
-	Assert(blockIndex < numberOfBlocks);
-
-	buffer = ReadBuffer(relation, blockIndex);
-#ifndef NO_BUFFERISVALID
-	if (!BufferIsValid(buffer))
-	{
-		elog(ERROR, "RelationPutHeapTuple: no buffer for %ld in %s",
-			 blockIndex, &relation->rd_rel->relname);
-	}
-#endif
 
 	pageHeader = (Page) BufferGetPage(buffer);
 	len = (unsigned) DOUBLEALIGN(tuple->t_len); /* be conservative */
@@ -75,11 +62,17 @@ RelationPutHeapTuple(Relation relation,
 	itemId = PageGetItemId((Page) pageHeader, offnum);
 	item = PageGetItem((Page) pageHeader, itemId);
 
-	ItemPointerSet(&((HeapTupleHeader) item)->t_ctid, blockIndex, offnum);
+	ItemPointerSet(&((HeapTupleHeader) item)->t_ctid, 
+					BufferGetBlockNumber(buffer), offnum);
 
+	/*
+	 * Let the caller do this!
+	 *
 	WriteBuffer(buffer);
+	 */
+
 	/* return an accurate tuple */
-	ItemPointerSet(&tuple->t_self, blockIndex, offnum);
+	ItemPointerSet(&tuple->t_self, BufferGetBlockNumber(buffer), offnum);
 }
 
 /*
@@ -99,6 +92,7 @@ RelationPutHeapTuple(Relation relation,
  * RelationGetNumberOfBlocks to be useful.
  *
  * NOTE: This code presumes that we have a write lock on the relation.
+ * Not now - we use extend locking...
  *
  * Also note that this routine probably shouldn't have to exist, and does
  * screw up the call graph rather badly, but we are wasting so much time and
@@ -116,8 +110,8 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 	ItemId		itemId;
 	Item		item;
 
-	Assert(RelationIsValid(relation));
-	Assert(HeapTupleIsValid(tuple));
+	if (!relation->rd_islocal)
+		LockRelation(relation, ExtendLock);
 
 	/*
 	 * XXX This does an lseek - VERY expensive - but at the moment it is
@@ -132,16 +126,18 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 	{
 		buffer = ReadBuffer(relation, lastblock);
 		pageHeader = (Page) BufferGetPage(buffer);
-		if (PageIsNew((PageHeader) pageHeader))
-		{
-			buffer = ReleaseAndReadBuffer(buffer, relation, P_NEW);
-			pageHeader = (Page) BufferGetPage(buffer);
-			PageInit(pageHeader, BufferGetPageSize(buffer), 0);
-		}
+		/*
+		 * There was IF instead of ASSERT here ?!
+		 */
+		Assert(PageIsNew((PageHeader) pageHeader));
+		buffer = ReleaseAndReadBuffer(buffer, relation, P_NEW);
+		pageHeader = (Page) BufferGetPage(buffer);
+		PageInit(pageHeader, BufferGetPageSize(buffer), 0);
 	}
 	else
 		buffer = ReadBuffer(relation, lastblock - 1);
 
+	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 	pageHeader = (Page) BufferGetPage(buffer);
 	len = (unsigned) DOUBLEALIGN(tuple->t_len); /* be conservative */
 
@@ -152,13 +148,18 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 
 	if (len > PageGetFreeSpace(pageHeader))
 	{
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		buffer = ReleaseAndReadBuffer(buffer, relation, P_NEW);
+		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 		pageHeader = (Page) BufferGetPage(buffer);
 		PageInit(pageHeader, BufferGetPageSize(buffer), 0);
 
 		if (len > PageGetFreeSpace(pageHeader))
 			elog(ERROR, "Tuple is too big: size %d", len);
 	}
+
+	if (!relation->rd_islocal)
+		UnlockRelation(relation, ExtendLock);
 
 	offnum = PageAddItem((Page) pageHeader, (Item) tuple->t_data,
 						 tuple->t_len, InvalidOffsetNumber, LP_USED);
@@ -173,5 +174,7 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 	/* return an accurate tuple */
 	ItemPointerSet(&tuple->t_self, lastblock, offnum);
 
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 	WriteBuffer(buffer);
+
 }

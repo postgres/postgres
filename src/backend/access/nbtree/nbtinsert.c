@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.31 1998/11/27 19:51:40 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.32 1998/12/15 12:45:20 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include <storage/bufpage.h>
 #include <access/nbtree.h>
 #include <access/heapam.h>
+#include <access/xact.h>
 #include <storage/bufmgr.h>
 #include <fmgr.h>
 
@@ -67,6 +68,8 @@ _bt_doinsert(Relation rel, BTItem btitem, bool index_is_unique, Relation heapRel
 
 	/* trade in our read lock for a write lock */
 	_bt_relbuf(rel, buf, BT_READ);
+
+l1:
 	buf = _bt_getbuf(rel, blkno, BT_WRITE);
 
 	/*
@@ -120,9 +123,25 @@ _bt_doinsert(Relation rel, BTItem btitem, bool index_is_unique, Relation heapRel
 			{					/* they're equal */
 				btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offset));
 				htup.t_self = btitem->bti_itup.t_tid;
-				heap_fetch(heapRel, SnapshotSelf, &htup, &buffer);
-				if (htup.t_data	!= NULL)
-				{				/* it is a duplicate */
+				heap_fetch(heapRel, SnapshotDirty, &htup, &buffer);
+				if (htup.t_data	!= NULL)	/* it is a duplicate */
+				{
+					TransactionId xwait = 
+						(TransactionIdIsValid(SnapshotDirty->xmin)) ? 
+						SnapshotDirty->xmin : SnapshotDirty->xmax;
+
+					/*
+					 * If this tuple is being updated by other transaction
+					 * then we have to wait for its commit/abort.
+					 */
+					if (TransactionIdIsValid(xwait))
+					{
+						if (nbuf != InvalidBuffer)
+							_bt_relbuf(rel, nbuf, BT_READ);
+						_bt_relbuf(rel, buf, BT_WRITE);
+						XactLockTableWait(xwait);
+						goto l1;	/* continue from the begin */
+					}
 					elog(ERROR, "Cannot insert a duplicate key into a unique index");
 				}
 				/* htup null so no buffer to release */

@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.42 1998/11/27 19:51:53 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.43 1998/12/15 12:45:50 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,7 +218,7 @@ Async_Listen(char *relname, int pid)
 	TPRINTF(TRACE_NOTIFY, "Async_Listen: %s", relname);
 
 	lRel = heap_openr(ListenerRelationName);
-	RelationSetLockForWrite(lRel);
+	LockRelation(lRel, AccessExclusiveLock);
 	tdesc = RelationGetDescr(lRel);
 
 	/* Detect whether we are already listening on this relname */
@@ -242,7 +242,7 @@ Async_Listen(char *relname, int pid)
 	if (alreadyListener)
 	{
 		elog(NOTICE, "Async_Listen: We are already listening on %s", relname);
-		RelationUnsetLockForWrite(lRel);
+		UnlockRelation(lRel, AccessExclusiveLock);
 		heap_close(lRel);
 		return;
 	}
@@ -267,7 +267,7 @@ Async_Listen(char *relname, int pid)
 	heap_insert(lRel, newtup);
 	pfree(newtup);
 
-	RelationUnsetLockForWrite(lRel);
+	UnlockRelation(lRel, AccessExclusiveLock);
 	heap_close(lRel);
 
 	/*
@@ -320,9 +320,9 @@ Async_Unlisten(char *relname, int pid)
 	if (lTuple != NULL)
 	{
 		lRel = heap_openr(ListenerRelationName);
-		RelationSetLockForWrite(lRel);
-		heap_delete(lRel, &lTuple->t_self);
-		RelationUnsetLockForWrite(lRel);
+		LockRelation(lRel, AccessExclusiveLock);
+		heap_delete(lRel, &lTuple->t_self, NULL);
+		UnlockRelation(lRel, AccessExclusiveLock);
 		heap_close(lRel);
 	}
 	/* We do not complain about unlistening something not being listened;
@@ -358,7 +358,7 @@ Async_UnlistenAll()
 	TPRINTF(TRACE_NOTIFY, "Async_UnlistenAll");
 
 	lRel = heap_openr(ListenerRelationName);
-	RelationSetLockForWrite(lRel);
+	LockRelation(lRel, AccessExclusiveLock);
 	tdesc = RelationGetDescr(lRel);
 
 	/* Find and delete all entries with my listenerPID */
@@ -369,10 +369,10 @@ Async_UnlistenAll()
 	sRel = heap_beginscan(lRel, 0, SnapshotNow, 1, key);
 
 	while (HeapTupleIsValid(lTuple = heap_getnext(sRel, 0)))
-		heap_delete(lRel, &lTuple->t_self);
+		heap_delete(lRel, &lTuple->t_self, NULL);
 
 	heap_endscan(sRel);
-	RelationUnsetLockForWrite(lRel);
+	UnlockRelation(lRel, AccessExclusiveLock);
 	heap_close(lRel);
 }
 
@@ -463,7 +463,7 @@ AtCommit_Notify()
 	TPRINTF(TRACE_NOTIFY, "AtCommit_Notify");
 
 	lRel = heap_openr(ListenerRelationName);
-	RelationSetLockForWrite(lRel);
+	LockRelation(lRel, AccessExclusiveLock);
 	tdesc = RelationGetDescr(lRel);
 	sRel = heap_beginscan(lRel, 0, SnapshotNow, 0, (ScanKey) NULL);
 
@@ -516,7 +516,7 @@ AtCommit_Notify()
 					 * but as far as I can see we should just do it for any
 					 * failure (certainly at least for EPERM too...)
 					 */
-					heap_delete(lRel, &lTuple->t_self);
+					heap_delete(lRel, &lTuple->t_self, NULL);
 				}
 				else
 #endif
@@ -527,7 +527,7 @@ AtCommit_Notify()
 					{
 						rTuple = heap_modifytuple(lTuple, lRel,
 												  value, nulls, repl);
-						heap_replace(lRel, &lTuple->t_self, rTuple);
+						heap_replace(lRel, &lTuple->t_self, rTuple, NULL);
 					}
 				}
 			}
@@ -741,7 +741,7 @@ ProcessIncomingNotify(void)
 	StartTransactionCommand();
 
 	lRel = heap_openr(ListenerRelationName);
-	RelationSetLockForWrite(lRel);
+	LockRelation(lRel, AccessExclusiveLock);
 	tdesc = RelationGetDescr(lRel);
 
 	/* Scan only entries with my listenerPID */
@@ -772,7 +772,7 @@ ProcessIncomingNotify(void)
 			NotifyMyFrontEnd(relname, sourcePID);
 			/* Rewrite the tuple with 0 in notification column */
 			rTuple = heap_modifytuple(lTuple, lRel, value, nulls, repl);
-			heap_replace(lRel, &lTuple->t_self, rTuple);
+			heap_replace(lRel, &lTuple->t_self, rTuple, NULL);
 		}
 	}
 	heap_endscan(sRel);

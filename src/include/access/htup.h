@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.11 1998/11/27 19:33:31 vadim Exp $
+ * $Id: htup.h,v 1.12 1998/12/15 12:46:46 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,6 +116,7 @@ typedef HeapTupleData *HeapTuple;
 #define HEAP_XMIN_INVALID		0x0200	/* t_xmin invalid/aborted */
 #define HEAP_XMAX_COMMITTED		0x0400	/* t_xmax committed */
 #define HEAP_XMAX_INVALID		0x0800	/* t_xmax invalid/aborted */
+#define HEAP_MARKED_FOR_UPDATE	0x1000	/* marked for UPDATE */
 
 #define HEAP_XACT_MASK			0x0F00	/* */
 

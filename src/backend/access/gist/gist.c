@@ -104,8 +104,7 @@ gistbuild(Relation heap,
 	Buffer		buffer = InvalidBuffer;
 	bool	   *compvec;
 
-	/* GiSTs only know how to do stupid locking now */
-	RelationSetLockForWrite(index);
+	/* no locking is needed */
 
 	setheapoverride(true);		/* so we can see the new pg_index tuple */
 	initGISTstate(&giststate, index);
@@ -269,7 +268,6 @@ gistbuild(Relation heap,
 
 	/* okay, all heap tuples are indexed */
 	heap_endscan(scan);
-	RelationUnsetLockForWrite(index);
 
 	if (pred != NULL || oldPred != NULL)
 	{
@@ -343,7 +341,12 @@ gistinsert(Relation r, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation 
 	itup = index_formtuple(RelationGetDescr(r), datum, nulls);
 	itup->t_tid = *ht_ctid;
 
+	/*
+	 * Notes in ExecUtils:ExecOpenIndices()
+	 *
 	RelationSetLockForWrite(r);
+	 */
+
 	res = gistdoinsert(r, itup, &giststate);
 	for (i = 0; i < r->rd_att->natts; i++)
 		if (compvec[i] == TRUE)
@@ -351,7 +354,6 @@ gistinsert(Relation r, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation 
 	pfree(itup);
 	pfree(compvec);
 
-	/* XXX two-phase locking -- don't unlock the relation until EOT */
 	return res;
 }
 
@@ -1103,8 +1105,12 @@ gistdelete(Relation r, ItemPointer tid)
 	Buffer		buf;
 	Page		page;
 
-	/* must write-lock on delete */
+	/*
+	 * Notes in ExecUtils:ExecOpenIndices()
+	 * Also note that only vacuum deletes index tuples now...
+	 *
 	RelationSetLockForWrite(r);
+	 */
 
 	blkno = ItemPointerGetBlockNumber(tid);
 	offnum = ItemPointerGetOffsetNumber(tid);
@@ -1120,7 +1126,6 @@ gistdelete(Relation r, ItemPointer tid)
 
 	WriteBuffer(buf);
 
-	/* XXX -- two-phase locking, don't release the write lock */
 }
 
 void

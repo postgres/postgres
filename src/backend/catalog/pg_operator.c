@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.30 1998/11/27 19:51:50 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.31 1998/12/15 12:45:45 vadim Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -711,7 +711,7 @@ OperatorDef(char *operatorName,
 								   replaces);
 
 			setheapoverride(true);
-			heap_replace(pg_operator_desc, &tup->t_self, tup);
+			heap_replace(pg_operator_desc, &tup->t_self, tup, NULL);
 			setheapoverride(false);
 		}
 		else
@@ -830,7 +830,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 									   replaces);
 
 				setheapoverride(true);
-				heap_replace(pg_operator_desc, &tup->t_self, tup);
+				heap_replace(pg_operator_desc, &tup->t_self, tup, NULL);
 				setheapoverride(false);
 
 			}
@@ -855,7 +855,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 							   replaces);
 
 		setheapoverride(true);
-		heap_replace(pg_operator_desc, &tup->t_self, tup);
+		heap_replace(pg_operator_desc, &tup->t_self, tup, NULL);
 		setheapoverride(false);
 
 		values[Anum_pg_operator_oprcom - 1] = (Datum) NULL;
@@ -884,7 +884,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 							   replaces);
 
 		setheapoverride(true);
-		heap_replace(pg_operator_desc, &tup->t_self, tup);
+		heap_replace(pg_operator_desc, &tup->t_self, tup, NULL);
 		setheapoverride(false);
 	}
 

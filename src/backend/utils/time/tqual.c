@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.20 1998/11/27 19:52:36 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.21 1998/12/15 12:46:40 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,9 @@
 #include "utils/tqual.h"
 
 extern bool PostgresIsInitialized;
+
+SnapshotData	SnapshotDirtyData;
+Snapshot		SnapshotDirty = &SnapshotDirtyData;
 
 /*
  * XXX Transaction system override hacks start here
@@ -88,8 +91,9 @@ HeapTupleSatisfiesItself(HeapTupleHeader tuple)
 		{
 			if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid */
 				return true;
-			else
-				return false;
+			if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
+				return true;
+			return false;
 		}
 
 		if (!TransactionIdDidCommit(tuple->t_xmin))
@@ -107,10 +111,18 @@ HeapTupleSatisfiesItself(HeapTupleHeader tuple)
 		return true;
 
 	if (tuple->t_infomask & HEAP_XMAX_COMMITTED)
-		return false;
+	{
+		if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
+			return true;
+		return false;							/* updated by other */
+	}
 
 	if (TransactionIdIsCurrentTransactionId(tuple->t_xmax))
+	{
+		if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
+			return true;
 		return false;
+	}
 
 	if (!TransactionIdDidCommit(tuple->t_xmax))
 	{
@@ -121,6 +133,9 @@ HeapTupleSatisfiesItself(HeapTupleHeader tuple)
 
 	/* by here, deleting transaction has committed */
 	tuple->t_infomask |= HEAP_XMAX_COMMITTED;
+
+	if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
+		return true;
 
 	return false;
 }
@@ -151,13 +166,6 @@ HeapTupleSatisfiesItself(HeapTupleHeader tuple)
  *			 Cmax == my-command) ||
  *			(Xmax is not committed &&			the row was deleted by another transaction
  *			 Xmax != my-transaction))))			that has not been committed
- *
- * XXX
- *		CommandId stuff didn't work properly if one used SQL-functions in
- *		UPDATE/INSERT(fromSELECT)/DELETE scans: SQL-funcs call
- *		CommandCounterIncrement and made tuples changed/inserted by
- *		current command visible to command itself (so we had multiple
- *		update of updated tuples, etc).			- vadim 08/29/97
  *
  *		mao says 17 march 1993:  the tests in this routine are correct;
  *		if you think they're not, you're wrong, and you should think
@@ -203,6 +211,9 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple)
 
 			Assert(TransactionIdIsCurrentTransactionId(tuple->t_xmax));
 
+			if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
+				return true;
+
 			if (CommandIdGEScanCommandId(tuple->t_cmax))
 				return true;	/* deleted after scan started */
 			else
@@ -229,10 +240,16 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple)
 		return true;
 
 	if (tuple->t_infomask & HEAP_XMAX_COMMITTED)
+	{
+		if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
+			return true;
 		return false;
+	}
 
 	if (TransactionIdIsCurrentTransactionId(tuple->t_xmax))
 	{
+		if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
+			return true;
 		if (CommandIdGEScanCommandId(tuple->t_cmax))
 			return true;		/* deleted after scan started */
 		else
@@ -249,5 +266,173 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple)
 	/* xmax transaction committed */
 	tuple->t_infomask |= HEAP_XMAX_COMMITTED;
 
+	if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
+		return true;
+
 	return false;
+}
+
+int
+HeapTupleSatisfiesUpdate(HeapTuple tuple)
+{
+	HeapTupleHeader	th = tuple->t_data;
+
+	if (AMI_OVERRIDE)
+		return HeapTupleMayBeUpdated;
+
+	if (!(th->t_infomask & HEAP_XMIN_COMMITTED))
+	{
+		if (th->t_infomask & HEAP_XMIN_INVALID)	/* xid invalid or aborted */
+			return HeapTupleInvisible;
+
+		if (TransactionIdIsCurrentTransactionId(th->t_xmin))
+		{
+			if (CommandIdGEScanCommandId(th->t_cmin) && !heapisoverride())
+				return HeapTupleInvisible;	/* inserted after scan started */
+
+			if (th->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid */
+				return HeapTupleMayBeUpdated;
+
+			Assert(TransactionIdIsCurrentTransactionId(th->t_xmax));
+
+			if (th->t_infomask & HEAP_MARKED_FOR_UPDATE)
+				return HeapTupleMayBeUpdated;
+
+			if (CommandIdGEScanCommandId(th->t_cmax))
+				return HeapTupleSelfUpdated;/* updated after scan started */
+			else
+				return HeapTupleInvisible;	/* updated before scan started */
+		}
+
+		/*
+		 * This call is VERY expensive - requires a log table lookup.
+		 * Actually, this should be done by query before...
+		 */
+
+		if (!TransactionIdDidCommit(th->t_xmin))
+		{
+			if (TransactionIdDidAbort(th->t_xmin))
+				th->t_infomask |= HEAP_XMIN_INVALID; /* aborted */
+			return HeapTupleInvisible;
+		}
+
+		th->t_infomask |= HEAP_XMIN_COMMITTED;
+	}
+
+	/* by here, the inserting transaction has committed */
+
+	if (th->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid or aborted */
+		return HeapTupleMayBeUpdated;
+
+	if (th->t_infomask & HEAP_XMAX_COMMITTED)
+	{
+		if (th->t_infomask & HEAP_MARKED_FOR_UPDATE)
+			return HeapTupleMayBeUpdated;
+		return HeapTupleUpdated;			/* updated by other */
+	}
+
+	if (TransactionIdIsCurrentTransactionId(th->t_xmax))
+	{
+		if (th->t_infomask & HEAP_MARKED_FOR_UPDATE)
+			return HeapTupleMayBeUpdated;
+		if (CommandIdGEScanCommandId(th->t_cmax))
+			return HeapTupleSelfUpdated;/* updated after scan started */
+		else
+			return HeapTupleInvisible;	/* updated before scan started */
+	}
+
+	if (!TransactionIdDidCommit(th->t_xmax))
+	{
+		if (TransactionIdDidAbort(th->t_xmax))
+		{
+			th->t_infomask |= HEAP_XMAX_INVALID;		/* aborted */
+			return HeapTupleMayBeUpdated;
+		}
+		/* running xact */
+		return HeapTupleBeingUpdated;	/* in updation by other */
+	}
+
+	/* xmax transaction committed */
+	th->t_infomask |= HEAP_XMAX_COMMITTED;
+
+	if (th->t_infomask & HEAP_MARKED_FOR_UPDATE)
+		return HeapTupleMayBeUpdated;
+
+	return HeapTupleUpdated;			/* updated by other */
+}
+
+bool
+HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
+{
+	SnapshotDirty->xmin = SnapshotDirty->xmax = InvalidTransactionId;
+
+	if (AMI_OVERRIDE)
+		return true;
+
+	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
+	{
+		if (tuple->t_infomask & HEAP_XMIN_INVALID)	/* xid invalid or aborted */
+			return false;
+
+		if (TransactionIdIsCurrentTransactionId(tuple->t_xmin))
+		{
+			if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid */
+				return true;
+
+			Assert(TransactionIdIsCurrentTransactionId(tuple->t_xmax));
+
+			if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
+				return true;
+
+			return false;
+		}
+
+		if (!TransactionIdDidCommit(tuple->t_xmin))
+		{
+			if (TransactionIdDidAbort(tuple->t_xmin))
+			{
+				tuple->t_infomask |= HEAP_XMIN_INVALID; /* aborted */
+				return false;
+			}
+			SnapshotDirty->xmin = tuple->t_xmin;
+			return true;						/* in insertion by other */
+		}
+
+		tuple->t_infomask |= HEAP_XMIN_COMMITTED;
+	}
+
+	/* by here, the inserting transaction has committed */
+
+	if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid or aborted */
+		return true;
+
+	if (tuple->t_infomask & HEAP_XMAX_COMMITTED)
+	{
+		if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
+			return true;
+		return false;							/* updated by other */
+	}
+
+	if (TransactionIdIsCurrentTransactionId(tuple->t_xmax))
+		return false;
+
+	if (!TransactionIdDidCommit(tuple->t_xmax))
+	{
+		if (TransactionIdDidAbort(tuple->t_xmax))
+		{
+			tuple->t_infomask |= HEAP_XMAX_INVALID;		/* aborted */
+			return true;
+		}
+		/* running xact */
+		SnapshotDirty->xmax = tuple->t_xmax;
+		return true;							/* in updation by other */
+	}
+
+	/* xmax transaction committed */
+	tuple->t_infomask |= HEAP_XMAX_COMMITTED;
+
+	if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
+		return true;
+
+	return false;								/* updated by other */
 }

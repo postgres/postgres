@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.69 1998/12/14 05:18:37 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.70 1998/12/15 12:45:40 vadim Exp $
  *
  * INTERFACE ROUTINES
  *		heap_create()			- Create an uncataloged heap relation
@@ -929,7 +929,7 @@ RelationRemoveInheritance(Relation relation)
 
 	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 	{
-		heap_delete(catalogRelation, &tuple->t_self);
+		heap_delete(catalogRelation, &tuple->t_self, NULL);
 		found = true;
 	}
 
@@ -951,7 +951,7 @@ RelationRemoveInheritance(Relation relation)
 						  &entry);
 
 	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
-		heap_delete(catalogRelation, &tuple->t_self);
+		heap_delete(catalogRelation, &tuple->t_self, NULL);
 
 	heap_endscan(scan);
 	heap_close(catalogRelation);
@@ -1020,7 +1020,7 @@ DeletePgRelationTuple(Relation rel)
 	 *	delete the relation tuple from pg_class, and finish up.
 	 * ----------------
 	 */
-	heap_delete(pg_class_desc, &tup->t_self);
+	heap_delete(pg_class_desc, &tup->t_self, NULL);
 	pfree(tup);
 
 	heap_close(pg_class_desc);
@@ -1048,7 +1048,7 @@ DeletePgAttributeTuples(Relation rel)
 	 * Get a write lock _before_ getting the read lock in the scan
 	 * ----------------
 	 */
-	RelationSetLockForWrite(pg_attribute_desc);
+	LockRelation(pg_attribute_desc, AccessExclusiveLock);
 
 	for (attnum = FirstLowInvalidHeapAttributeNumber + 1;
 		 attnum <= rel->rd_att->natts;
@@ -1059,7 +1059,7 @@ DeletePgAttributeTuples(Relation rel)
 												   Int16GetDatum(attnum),
 														   0, 0)))
 		{
-			heap_delete(pg_attribute_desc, &tup->t_self);
+			heap_delete(pg_attribute_desc, &tup->t_self, NULL);
 			pfree(tup);
 		}
 	}
@@ -1068,7 +1068,7 @@ DeletePgAttributeTuples(Relation rel)
 	 * Release the write lock
 	 * ----------------
 	 */
-	RelationUnsetLockForWrite(pg_attribute_desc);
+	UnlockRelation(pg_attribute_desc, AccessExclusiveLock);
 	heap_close(pg_attribute_desc);
 }
 
@@ -1183,7 +1183,7 @@ DeletePgTypeTuple(Relation rel)
 	 *	we release the read lock on pg_type.  -mer 13 Aug 1991
 	 * ----------------
 	 */
-	heap_delete(pg_type_desc, &tup->t_self);
+	heap_delete(pg_type_desc, &tup->t_self, NULL);
 
 	heap_endscan(pg_type_scan);
 	heap_close(pg_type_desc);
@@ -1209,7 +1209,7 @@ heap_destroy_with_catalog(char *relname)
 	if (rel == NULL)
 		elog(ERROR, "Relation %s Does Not Exist!", relname);
 
-	RelationSetLockForWrite(rel);
+	LockRelation(rel, AccessExclusiveLock);
 	rid = rel->rd_id;
 
 	/* ----------------
@@ -1288,7 +1288,7 @@ heap_destroy_with_catalog(char *relname)
 
 	rel->rd_tmpunlinked = TRUE;
 
-	RelationUnsetLockForWrite(rel);
+	UnlockRelation(rel, AccessExclusiveLock);
 
 	heap_close(rel);
 
@@ -1608,16 +1608,16 @@ RemoveAttrDefault(Relation rel)
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_attrdef_adrelid,
 						   F_OIDEQ, rel->rd_id);
 
-	RelationSetLockForWrite(adrel);
+	LockRelation(adrel, AccessExclusiveLock);
 
 	adscan = heap_beginscan(adrel, 0, SnapshotNow, 1, &key);
 
 	while (HeapTupleIsValid(tup = heap_getnext(adscan, 0)))
-		heap_delete(adrel, &tup->t_self);
+		heap_delete(adrel, &tup->t_self, NULL);
 
 	heap_endscan(adscan);
 
-	RelationUnsetLockForWrite(adrel);
+	UnlockRelation(adrel, AccessExclusiveLock);
 	heap_close(adrel);
 
 }
@@ -1635,16 +1635,16 @@ RemoveRelCheck(Relation rel)
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_relcheck_rcrelid,
 						   F_OIDEQ, rel->rd_id);
 
-	RelationSetLockForWrite(rcrel);
+	LockRelation(rcrel, AccessExclusiveLock);
 
 	rcscan = heap_beginscan(rcrel, 0, SnapshotNow, 1, &key);
 
 	while (HeapTupleIsValid(tup = heap_getnext(rcscan, 0)))
-		heap_delete(rcrel, &tup->t_self);
+		heap_delete(rcrel, &tup->t_self, NULL);
 
 	heap_endscan(rcscan);
 
-	RelationUnsetLockForWrite(rcrel);
+	UnlockRelation(rcrel, AccessExclusiveLock);
 	heap_close(rcrel);
 
 }

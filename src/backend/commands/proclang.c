@@ -174,7 +174,7 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 	}
 
 	rel = heap_openr(LanguageRelationName);
-	heap_delete(rel, &langTup->t_self);
+	heap_delete(rel, &langTup->t_self, NULL);
 
 	pfree(langTup);
 	heap_close(rel);

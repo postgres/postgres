@@ -162,7 +162,7 @@ DefineSequence(CreateSeqStmt *seq)
 	rel = heap_openr(seq->seqname);
 	Assert(RelationIsValid(rel));
 
-	RelationSetLockForWrite(rel);
+	LockRelation(rel, AccessExclusiveLock);
 
 	tupDesc = RelationGetDescr(rel);
 
@@ -185,7 +185,7 @@ DefineSequence(CreateSeqStmt *seq)
 	if (WriteBuffer(buf) == STATUS_ERROR)
 		elog(ERROR, "DefineSequence: WriteBuffer failed");
 
-	RelationUnsetLockForWrite(rel);
+	UnlockRelation(rel, AccessExclusiveLock);
 	heap_close(rel);
 
 	return;
@@ -200,7 +200,6 @@ nextval(struct varlena * seqin)
 	SeqTable	elm;
 	Buffer		buf;
 	Form_pg_sequence seq;
-	ItemPointerData iptr;
 	int4		incby,
 				maxv,
 				minv,
@@ -209,7 +208,7 @@ nextval(struct varlena * seqin)
 				next,
 				rescnt = 0;
 
-	/* open and WIntentLock sequence */
+	/* open and AccessShareLock sequence */
 	elm = init_sequence("nextval", seqname);
 	pfree(seqname);
 
@@ -219,7 +218,7 @@ nextval(struct varlena * seqin)
 		return elm->last;
 	}
 
-	seq = read_info("nextval", elm, &buf);		/* lock page and read
+	seq = read_info("nextval", elm, &buf);		/* lock page' buffer and read
 												 * tuple */
 
 	next = result = seq->last_value;
@@ -282,11 +281,10 @@ nextval(struct varlena * seqin)
 	seq->last_value = next;		/* last fetched number */
 	seq->is_called = 't';
 
+	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+
 	if (WriteBuffer(buf) == STATUS_ERROR)
 		elog(ERROR, "%s.nextval: WriteBuffer failed", elm->name);
-
-	ItemPointerSet(&iptr, 0, FirstOffsetNumber);
-	RelationUnsetSingleWLockPage(elm->rel, &iptr);
 
 	return result;
 
@@ -300,7 +298,7 @@ currval(struct varlena * seqin)
 	SeqTable	elm;
 	int4		result;
 
-	/* open and WIntentLock sequence */
+	/* open and AccessShareLock sequence */
 	elm = init_sequence("currval", seqname);
 	pfree(seqname);
 
@@ -320,7 +318,6 @@ setval(struct varlena * seqin, int4 next)
 	SeqTable	elm;
 	Buffer		buf;
 	Form_pg_sequence seq;
-	ItemPointerData iptr;
 
 #ifndef NO_SECURITY
 	if (pg_aclcheck(seqname, getpgusername(), ACL_WR) != ACLCHECK_OK)
@@ -328,9 +325,9 @@ setval(struct varlena * seqin, int4 next)
 			 seqname, seqname);
 #endif
 
-	/* open and WIntentLock sequence */
+	/* open and AccessShareLock sequence */
 	elm = init_sequence("setval", seqname);
-	seq = read_info("setval", elm, &buf);		/* lock page and read
+	seq = read_info("setval", elm, &buf);		/* lock page' buffer and read
 												 * tuple */
 
 	if (seq->cache_value != 1)
@@ -353,11 +350,10 @@ setval(struct varlena * seqin, int4 next)
 	seq->last_value = next;		/* last fetched number */
 	seq->is_called = 't';
 
+	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+
 	if (WriteBuffer(buf) == STATUS_ERROR)
 		elog(ERROR, "%s.settval: WriteBuffer failed", seqname);
-
-	ItemPointerSet(&iptr, 0, FirstOffsetNumber);
-	RelationUnsetSingleWLockPage(elm->rel, &iptr);
 
 	return next;
 }
@@ -365,15 +361,11 @@ setval(struct varlena * seqin, int4 next)
 static Form_pg_sequence
 read_info(char *caller, SeqTable elm, Buffer *buf)
 {
-	ItemPointerData iptr;
-	PageHeader	page;
-	ItemId		lp;
+	PageHeader		page;
+	ItemId			lp;
 	HeapTupleData	tuple;
 	sequence_magic *sm;
-	Form_pg_sequence seq;
-
-	ItemPointerSet(&iptr, 0, FirstOffsetNumber);
-	RelationSetSingleWLockPage(elm->rel, &iptr);
+	Form_pg_sequence	seq;
 
 	if (RelationGetNumberOfBlocks(elm->rel) != 1)
 		elog(ERROR, "%s.%s: invalid number of blocks in sequence",
@@ -382,6 +374,8 @@ read_info(char *caller, SeqTable elm, Buffer *buf)
 	*buf = ReadBuffer(elm->rel, 0);
 	if (!BufferIsValid(*buf))
 		elog(ERROR, "%s.%s: ReadBuffer failed", elm->name, caller);
+
+	LockBuffer(*buf, BUFFER_LOCK_EXCLUSIVE);
 
 	page = (PageHeader) BufferGetPage(*buf);
 	sm = (sequence_magic *) PageGetSpecialPointer(page);
@@ -439,7 +433,7 @@ init_sequence(char *caller, char *name)
 	if (!RelationIsValid(temp->rel))
 		elog(ERROR, "%s.%s: sequence does not exist", name, caller);
 
-	RelationSetWIntentLock(temp->rel);
+	LockRelation(temp->rel, AccessShareLock);
 
 	if (temp->rel->rd_rel->relkind != RELKIND_SEQUENCE)
 		elog(ERROR, "%s.%s: %s is not sequence !", name, caller, name);
@@ -485,7 +479,7 @@ CloseSequences(void)
 		{
 			rel = elm->rel;
 			elm->rel = (Relation) NULL;
-			RelationUnsetWIntentLock(rel);
+			UnlockRelation(rel, AccessShareLock);
 			heap_close(rel);
 		}
 		elm = elm->next;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.34 1998/12/13 23:54:40 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.35 1998/12/15 12:46:14 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1115,7 +1115,6 @@ find_inheritors(Oid relid, Oid **supervec)
 
 
 	inhrel = heap_openr(InheritsRelationName);
-	RelationSetLockForRead(inhrel);
 	inhtupdesc = RelationGetDescr(inhrel);
 
 	/*
@@ -1182,7 +1181,6 @@ find_inheritors(Oid relid, Oid **supervec)
 		}
 	} while (qentry != (SuperQE *) NULL);
 
-	RelationUnsetLockForRead(inhrel);
 	heap_close(inhrel);
 
 	if (nvisited > 0)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.56 1998/10/31 02:06:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.57 1998/12/15 12:46:59 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +67,8 @@
 #define S_LOCK_H
 
 #include "storage/ipc.h"
+
+extern void s_lock_sleep(unsigned spin);
 
 #if defined(HAS_TEST_AND_SET)
 

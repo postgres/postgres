@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.23 1998/10/08 18:30:43 momjian Exp $
+ * $Id: bufmgr.h,v 1.24 1998/12/15 12:46:56 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,6 +72,14 @@ extern int	ShowPinTrace;
  */
 #define BUFFER_FLUSH_WRITE		0		/* immediate write */
 #define BUFFER_LATE_WRITE		1		/* delayed write: mark as DIRTY */
+
+/*
+ * Buffer context lock modes
+ */
+#define	BUFFER_LOCK_UNLOCK		0
+#define	BUFFER_LOCK_SHARE		1
+#define	BUFFER_LOCK_EXCLUSIVE	2
+
 
 /*
  * BufferIsValid --
@@ -154,5 +162,8 @@ extern void BufferRefCountReset(int *refcountsave);
 extern void BufferRefCountRestore(int *refcountsave);
 extern int	SetBufferWriteMode(int mode);
 extern void SetBufferCommitInfoNeedsSave(Buffer buffer);
+
+extern void UnlockBuffers(void);
+extern void LockBuffer(Buffer buffer, int mode);
 
 #endif	 /* !defined(BufMgrIncluded) */

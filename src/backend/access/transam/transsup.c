@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.17 1998/09/01 04:27:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.18 1998/12/15 12:45:33 vadim Exp $
  *
  * NOTES
  *	  This file contains support functions for the high
@@ -290,17 +290,11 @@ TransBlockNumberGetXidStatus(Relation relation,
 	bool		localfail;		/* bool used if failP = NULL */
 
 	/* ----------------
-	 *	SOMEDAY place a read lock on the log relation
-	 *	That someday is today 5 Aug 1991 -mer
-	 * ----------------
-	 */
-	RelationSetLockForRead(relation);
-
-	/* ----------------
 	 *	get the page containing the transaction information
 	 * ----------------
 	 */
 	buffer = ReadBuffer(relation, blockNumber);
+	LockBuffer(buffer, BUFFER_LOCK_SHARE);
 	block = BufferGetBlock(buffer);
 
 	/* ----------------
@@ -318,13 +312,8 @@ TransBlockNumberGetXidStatus(Relation relation,
 	 *	release the buffer and return the status
 	 * ----------------
 	 */
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 	ReleaseBuffer(buffer);
-
-	/* ----------------
-	 *	SOMEDAY release our lock on the log relation
-	 * ----------------
-	 */
-	RelationUnsetLockForRead(relation);
 
 	return
 		xstatus;
@@ -346,18 +335,11 @@ TransBlockNumberSetXidStatus(Relation relation,
 	bool		localfail;		/* bool used if failP = NULL */
 
 	/* ----------------
-	 *	SOMEDAY gain exclusive access to the log relation
-	 *
-	 *	That someday is today 5 Aug 1991 -mer
-	 * ----------------
-	 */
-	RelationSetLockForWrite(relation);
-
-	/* ----------------
 	 *	get the block containing the transaction status
 	 * ----------------
 	 */
 	buffer = ReadBuffer(relation, blockNumber);
+	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 	block = BufferGetBlock(buffer);
 
 	/* ----------------
@@ -372,16 +354,11 @@ TransBlockNumberSetXidStatus(Relation relation,
 
 	TransBlockSetXidStatus(block, xid, xstatus);
 
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 	if ((*failP) == false)
 		WriteBuffer(buffer);
 	else
 		ReleaseBuffer(buffer);
-
-	/* ----------------
-	 *	SOMEDAY release our lock on the log relation
-	 * ----------------
-	 */
-	RelationUnsetLockForWrite(relation);
 }
 
 /* --------------------------------

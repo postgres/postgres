@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.43 1998/12/13 05:07:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.44 1998/12/15 12:46:26 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,12 +203,12 @@ inv_create(int flags)
 
 	if (flags & INV_WRITE)
 	{
-		RelationSetLockForWrite(r);
+		LockRelation(r, ExclusiveLock);
 		retval->flags = IFS_WRLOCK | IFS_RDLOCK;
 	}
 	else if (flags & INV_READ)
 	{
-		RelationSetLockForRead(r);
+		LockRelation(r, ShareLock);
 		retval->flags = IFS_RDLOCK;
 	}
 	retval->flags |= IFS_ATEOF;
@@ -254,12 +254,12 @@ inv_open(Oid lobjId, int flags)
 
 	if (flags & INV_WRITE)
 	{
-		RelationSetLockForWrite(r);
+		LockRelation(r, ExclusiveLock);
 		retval->flags = IFS_WRLOCK | IFS_RDLOCK;
 	}
 	else if (flags & INV_READ)
 	{
-		RelationSetLockForRead(r);
+		LockRelation(r, ShareLock);
 		retval->flags = IFS_RDLOCK;
 	}
 
@@ -328,7 +328,7 @@ inv_stat(LargeObjectDesc *obj_desc, struct pgstat * stbuf)
 	/* need read lock for stat */
 	if (!(obj_desc->flags & IFS_RDLOCK))
 	{
-		RelationSetLockForRead(obj_desc->heap_r);
+		LockRelation(obj_desc->heap_r, ShareLock);
 		obj_desc->flags |= IFS_RDLOCK;
 	}
 
@@ -376,7 +376,7 @@ inv_seek(LargeObjectDesc *obj_desc, int offset, int whence)
 		/* need read lock for getsize */
 		if (!(obj_desc->flags & IFS_RDLOCK))
 		{
-			RelationSetLockForRead(obj_desc->heap_r);
+			LockRelation(obj_desc->heap_r, ShareLock);
 			obj_desc->flags |= IFS_RDLOCK;
 		}
 		offset += _inv_getsize(obj_desc->heap_r,
@@ -458,7 +458,7 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 	/* make sure we obey two-phase locking */
 	if (!(obj_desc->flags & IFS_RDLOCK))
 	{
-		RelationSetLockForRead(obj_desc->heap_r);
+		LockRelation(obj_desc->heap_r, ShareLock);
 		obj_desc->flags |= IFS_RDLOCK;
 	}
 
@@ -516,7 +516,7 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 
 	if (!(obj_desc->flags & IFS_WRLOCK))
 	{
-		RelationSetLockForRead(obj_desc->heap_r);
+		LockRelation(obj_desc->heap_r, ShareLock);
 		obj_desc->flags |= (IFS_WRLOCK | IFS_RDLOCK);
 	}
 

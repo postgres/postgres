@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.19 1998/10/08 18:30:45 momjian Exp $
+ * $Id: lock.h,v 1.20 1998/12/15 12:46:58 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,11 +42,7 @@ typedef int LOCKMODE;
 typedef int LOCKMETHOD;
 
 /* MAX_LOCKMODES cannot be larger than the bits in MASK */
-#ifdef LowLevelLocking
 #define MAX_LOCKMODES	9
-#else
-#define MAX_LOCKMODES	6
-#endif
 
 /*
  * MAX_LOCK_METHODS corresponds to the number of spin locks allocated in
@@ -69,7 +65,11 @@ typedef struct LTAG
 {
 	Oid			relId;
 	Oid			dbId;
-	ItemPointerData tupleId;
+	union
+	{
+		BlockNumber		blkno;
+		TransactionId	xid;
+	}			objId;
 	uint16		lockmethod;		/* needed by user locks */
 } LOCKTAG;
 
