@@ -4,3 +4,10 @@ CC="$CC -no-cpp-precomp"
 
 # Select appropriate semaphore support
 USE_NAMED_POSIX_SEMAPHORES=1
+
+THREAD_SUPPORT=yes
+# verified 2004-04-07
+STRERROR_THREADSAFE=yes
+GETPWUID_THREADSAFE=yes
+GETHOSTBYNAME_THREADSAFE=yes
+
