@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.6 2004/08/29 05:06:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.7 2004/12/14 22:16:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -639,7 +639,8 @@ repairTypeFuncLoop(DumpableObject *typeobj, DumpableObject *funcobj)
 /*
  * Because we force a view to depend on its ON SELECT rule, while there
  * will be an implicit dependency in the other direction, we need to break
- * the loop.  We can always do this by removing the implicit dependency.
+ * the loop.  If there are no other objects in the loop then we can remove
+ * the implicit dependency and leave the ON SELECT rule non-separate.
  */
 static void
 repairViewRuleLoop(DumpableObject *viewobj,
@@ -647,6 +648,29 @@ repairViewRuleLoop(DumpableObject *viewobj,
 {
 	/* remove rule's dependency on view */
 	removeObjectDependency(ruleobj, viewobj->dumpId);
+}
+
+/*
+ * However, if there are other objects in the loop, we must break the loop
+ * by making the ON SELECT rule a separately-dumped object.
+ *
+ * Because findLoop() finds shorter cycles before longer ones, it's likely
+ * that we will have previously fired repairViewRuleLoop() and removed the
+ * rule's dependency on the view.  Put it back to ensure the rule won't be
+ * emitted before the view...
+ */
+static void
+repairViewRuleMultiLoop(DumpableObject *viewobj,
+						DumpableObject *ruleobj)
+{
+	/* remove view's dependency on rule */
+	removeObjectDependency(viewobj, ruleobj->dumpId);
+	/* pretend view is a plain table and dump it that way */
+	((TableInfo *) viewobj)->relkind = 'r';		/* RELKIND_RELATION */
+	/* mark rule as needing its own dump */
+	((RuleInfo *) ruleobj)->separate = true;
+	/* put back rule's dependency on view */
+	addObjectDependency(ruleobj, viewobj->dumpId);
 }
 
 /*
@@ -765,7 +789,8 @@ repairDependencyLoop(DumpableObject **loop,
 		loop[0]->objType == DO_TABLE &&
 		loop[1]->objType == DO_RULE &&
 		((RuleInfo *) loop[1])->ev_type == '1' &&
-		((RuleInfo *) loop[1])->is_instead)
+		((RuleInfo *) loop[1])->is_instead &&
+		((RuleInfo *) loop[1])->ruletable == (TableInfo *) loop[0])
 	{
 		repairViewRuleLoop(loop[0], loop[1]);
 		return;
@@ -774,10 +799,33 @@ repairDependencyLoop(DumpableObject **loop,
 		loop[1]->objType == DO_TABLE &&
 		loop[0]->objType == DO_RULE &&
 		((RuleInfo *) loop[0])->ev_type == '1' &&
-		((RuleInfo *) loop[0])->is_instead)
+		((RuleInfo *) loop[0])->is_instead &&
+		((RuleInfo *) loop[0])->ruletable == (TableInfo *) loop[1])
 	{
 		repairViewRuleLoop(loop[1], loop[0]);
 		return;
+	}
+
+	/* Indirect loop involving view and ON SELECT rule */
+	if (nLoop > 2)
+	{
+		for (i = 0; i < nLoop; i++)
+		{
+			if (loop[i]->objType == DO_TABLE)
+			{
+				for (j = 0; j < nLoop; j++)
+				{
+					if (loop[j]->objType == DO_RULE &&
+						((RuleInfo *) loop[j])->ev_type == '1' &&
+						((RuleInfo *) loop[j])->is_instead &&
+						((RuleInfo *) loop[j])->ruletable == (TableInfo *) loop[i])
+					{
+						repairViewRuleMultiLoop(loop[i], loop[j]);
+						return;
+					}
+				}
+			}
+		}
 	}
 
 	/* Table and CHECK constraint */

@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.395 2004/12/14 21:35:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.396 2004/12/14 22:16:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3160,12 +3160,21 @@ getRules(int *numRules)
 			 */
 			if (ruleinfo[i].ruletable->relkind == RELKIND_VIEW &&
 				ruleinfo[i].ev_type == '1' && ruleinfo[i].is_instead)
+			{
 				addObjectDependency(&ruleinfo[i].ruletable->dobj,
 									ruleinfo[i].dobj.dumpId);
+				/* We'll merge the rule into CREATE VIEW, if possible */
+				ruleinfo[i].separate = false;
+			}
 			else
+			{
 				addObjectDependency(&ruleinfo[i].dobj,
 									ruleinfo[i].ruletable->dobj.dumpId);
+				ruleinfo[i].separate = true;
+			}
 		}
+		else
+			ruleinfo[i].separate = true;
 	}
 
 	PQclear(res);
@@ -7617,10 +7626,10 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 		return;
 
 	/*
-	 * If it is an ON SELECT rule, we do not need to dump it because it
-	 * will be handled via CREATE VIEW for the table.
+	 * If it is an ON SELECT rule that is created implicitly by CREATE VIEW,
+	 * we do not want to dump it as a separate object.
 	 */
-	if (rinfo->ev_type == '1' && rinfo->is_instead)
+	if (!rinfo->separate)
 		return;
 
 	/*
