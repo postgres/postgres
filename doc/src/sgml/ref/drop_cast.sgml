@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_cast.sgml,v 1.4 2003/08/31 17:32:22 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_cast.sgml,v 1.5 2003/09/22 00:16:58 petere Exp $ -->
 
 <refentry id="SQL-DROPCAST">
  <refmeta>
@@ -8,7 +8,7 @@
 
  <refnamediv>
   <refname>DROP CAST</refname>
-  <refpurpose>remove a user-defined cast</refpurpose>
+  <refpurpose>remove a cast</refpurpose>
  </refnamediv>
 
  <indexterm zone="sql-dropcast">

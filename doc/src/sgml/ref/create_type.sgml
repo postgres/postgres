@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.45 2003/09/09 18:28:53 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.46 2003/09/22 00:16:57 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -20,10 +20,10 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE TYPE <replaceable class="parameter">typename</replaceable> AS
+CREATE TYPE <replaceable class="parameter">name</replaceable> AS
     ( <replaceable class="PARAMETER">attribute_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [, ... ] )
 
-CREATE TYPE <replaceable class="parameter">typename</replaceable> (
+CREATE TYPE <replaceable class="parameter">name</replaceable> (
     INPUT = <replaceable class="parameter">input_function</replaceable>,
     OUTPUT = <replaceable class="parameter">output_function</replaceable>
     [ , RECEIVE = <replaceable class="parameter">receive_function</replaceable> ]
@@ -274,7 +274,7 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> (
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="parameter">typename</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of a type to be created.

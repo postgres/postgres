@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_trigger.sgml,v 1.6 2003/09/09 18:28:52 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_trigger.sgml,v 1.7 2003/09/22 00:16:57 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -20,8 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER TRIGGER <replaceable class="PARAMETER">trigger</replaceable> ON <replaceable class="PARAMETER">table</replaceable>
-    RENAME TO <replaceable class="PARAMETER">newname</replaceable>
+ALTER TRIGGER <replaceable class="PARAMETER">name</replaceable> ON <replaceable class="PARAMETER">table</replaceable> RENAME TO <replaceable class="PARAMETER">newname</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -45,7 +44,7 @@ ALTER TRIGGER <replaceable class="PARAMETER">trigger</replaceable> ON <replaceab
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">trigger</replaceable></term>
+    <term><replaceable class="PARAMETER">name</replaceable></term>
     <listitem>
      <para>
       The name of an existing trigger to alter.

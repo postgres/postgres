@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_language.sgml,v 1.19 2003/09/09 18:28:53 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_language.sgml,v 1.20 2003/09/22 00:16:58 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -11,7 +11,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>DROP LANGUAGE</refname>
-  <refpurpose>remove a user-defined procedural language</refpurpose>
+  <refpurpose>remove a procedural language</refpurpose>
  </refnamediv>
 
  <indexterm zone="sql-droplanguage">

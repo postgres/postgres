@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_constraint.sgml,v 1.11 2003/09/09 18:28:52 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_constraint.sgml,v 1.12 2003/09/22 00:16:57 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -22,8 +22,8 @@ PostgreSQL documentation
 <synopsis>
 CREATE CONSTRAINT TRIGGER <replaceable class="parameter">name</replaceable>
     AFTER <replaceable class="parameter">events</replaceable> ON
-    <replaceable class="parameter">table</replaceable> <replaceable class="parameter">constraint</replaceable> <replaceable class="parameter">attributes</replaceable>
-    FOR EACH ROW EXECUTE PROCEDURE <replaceable class="parameter">func</replaceable> ( <replaceable class="parameter">args</replaceable> )
+    <replaceable class="parameter">tablename</replaceable> <replaceable class="parameter">constraint</replaceable> <replaceable class="parameter">attributes</replaceable>
+    FOR EACH ROW EXECUTE PROCEDURE <replaceable class="parameter">funcname</replaceable> ( <replaceable class="parameter">args</replaceable> )
 </synopsis>
  </refsynopsisdiv>
 
@@ -62,7 +62,7 @@ CREATE CONSTRAINT TRIGGER <replaceable class="parameter">name</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">table</replaceable></term>
+      <term><replaceable class="PARAMETER">tablename</replaceable></term>
       <listitem>
        <para>
 	The name (possibly schema-qualified) of the table in which
@@ -90,7 +90,7 @@ CREATE CONSTRAINT TRIGGER <replaceable class="parameter">name</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">func</replaceable>(<replaceable class="PARAMETER">args</replaceable>)</term>
+      <term><replaceable class="PARAMETER">funcname</replaceable>(<replaceable class="PARAMETER">args</replaceable>)</term>
       <listitem>
        <para>
 	The function to call as part of the trigger processing.

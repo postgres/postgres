@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.50 2003/09/11 21:42:20 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.51 2003/09/22 00:16:57 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -11,7 +11,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>COPY</refname>
-  <refpurpose>copy data between files and tables</refpurpose>
+  <refpurpose>copy data between a file and a table</refpurpose>
  </refnamediv>
 
  <indexterm zone="sql-copy">
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-COPY <replaceable class="parameter">table</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ]
+COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ]
     FROM { '<replaceable class="parameter">filename</replaceable>' | STDIN }
     [ [ WITH ] 
           [ BINARY ] 
@@ -28,7 +28,7 @@ COPY <replaceable class="parameter">table</replaceable> [ ( <replaceable class="
           [ DELIMITER [ AS ] '<replaceable class="parameter">delimiter</replaceable>' ]
           [ NULL [ AS ] '<replaceable class="parameter">null string</replaceable>' ] ]
 
-COPY <replaceable class="parameter">table</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ]
+COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ]
     TO { '<replaceable class="parameter">filename</replaceable>' | STDOUT }
     [ [ WITH ] 
           [ BINARY ]
@@ -74,7 +74,7 @@ COPY <replaceable class="parameter">table</replaceable> [ ( <replaceable class="
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="parameter">table</replaceable></term>
+    <term><replaceable class="parameter">tablename</replaceable></term>
     <listitem>
      <para>
       The name (possibly schema-qualified) of an existing table.
@@ -571,12 +571,12 @@ ZW      ZIMBABWE
    still supported:
 
 <synopsis>
-COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
+COPY [ BINARY ] <replaceable class="parameter">tablename</replaceable> [ WITH OIDS ]
     FROM { '<replaceable class="parameter">filename</replaceable>' | STDIN }
     [ [USING] DELIMITERS '<replaceable class="parameter">delimiter</replaceable>' ]
     [ WITH NULL AS '<replaceable class="parameter">null string</replaceable>' ]
 
-COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
+COPY [ BINARY ] <replaceable class="parameter">tablename</replaceable> [ WITH OIDS ]
     TO { '<replaceable class="parameter">filename</replaceable>' | STDOUT }
     [ [USING] DELIMITERS '<replaceable class="parameter">delimiter</replaceable>' ]
     [ WITH NULL AS '<replaceable class="parameter">null string</replaceable>' ]

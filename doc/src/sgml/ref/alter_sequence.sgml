@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.4 2003/09/09 18:28:52 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.5 2003/09/22 00:16:57 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -24,7 +24,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
   <synopsis>
-ALTER SEQUENCE <replaceable class="parameter">seqname</replaceable> [ INCREMENT [ BY ] <replaceable class="parameter">increment</replaceable> ]
+ALTER SEQUENCE <replaceable class="parameter">name</replaceable> [ INCREMENT [ BY ] <replaceable class="parameter">increment</replaceable> ]
     [ MINVALUE <replaceable class="parameter">minvalue</replaceable> | NO MINVALUE ] [ MAXVALUE <replaceable class="parameter">maxvalue</replaceable> | NO MAXVALUE ]
     [ RESTART [ WITH ] <replaceable class="parameter">start</replaceable> ] [ CACHE <replaceable class="parameter">cache</replaceable> ] [ [ NO ] CYCLE ]
   </synopsis>
@@ -46,7 +46,7 @@ ALTER SEQUENCE <replaceable class="parameter">seqname</replaceable> [ INCREMENT 
    <para>
     <variablelist>
      <varlistentry>
-      <term><replaceable class="parameter">seqname</replaceable></term>
+      <term><replaceable class="parameter">name</replaceable></term>
       <listitem>
        <para>
 	The name (optionally schema-qualified) of a sequence to be altered.

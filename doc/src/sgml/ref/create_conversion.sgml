@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.12 2003/09/09 18:28:52 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.13 2003/09/22 00:16:57 petere Exp $ -->
 
 <refentry id="SQL-CREATECONVERSION">
  <refmeta>
@@ -8,7 +8,7 @@
 
  <refnamediv>
   <refname>CREATE CONVERSION</refname>
-  <refpurpose>define a user-defined conversion</refpurpose>
+  <refpurpose>define a new conversion</refpurpose>
  </refnamediv>
 
  <indexterm zone="sql-createconversion">

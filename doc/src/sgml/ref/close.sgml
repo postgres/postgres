@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/close.sgml,v 1.18 2003/09/09 18:28:52 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/close.sgml,v 1.19 2003/09/22 00:16:57 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CLOSE <replaceable class="PARAMETER">cursor</replaceable>
+CLOSE <replaceable class="PARAMETER">name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -51,7 +51,7 @@ CLOSE <replaceable class="PARAMETER">cursor</replaceable>
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">cursor</replaceable></term>
+    <term><replaceable class="PARAMETER">name</replaceable></term>
     <listitem>
      <para>
       The name of an open cursor to close.

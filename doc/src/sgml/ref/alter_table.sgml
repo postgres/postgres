@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.61 2003/09/09 18:28:52 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.62 2003/09/22 00:16:57 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -20,33 +20,33 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
+ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
     ADD [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> <replaceable class="PARAMETER">type</replaceable> [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
-ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
+ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
     DROP [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> [ RESTRICT | CASCADE ]
-ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> { SET DEFAULT <replaceable class="PARAMETER">value</replaceable> | DROP DEFAULT }
-ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
+ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> { SET DEFAULT <replaceable class="PARAMETER">expression</replaceable> | DROP DEFAULT }
+ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> { SET | DROP } NOT NULL
-ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
+ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STATISTICS <replaceable class="PARAMETER">integer</replaceable>
-ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
+ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }
-ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
+ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
     SET WITHOUT OIDS
-ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
+ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
     RENAME [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> TO <replaceable
     class="PARAMETER">new_column</replaceable>
-ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
-    RENAME TO <replaceable class="PARAMETER">new_table</replaceable>
-ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
+ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
+    RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
+ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
     ADD <replaceable class="PARAMETER">table_constraint</replaceable>
-ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
+ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
     DROP CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
-ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
-    OWNER TO <replaceable class="PARAMETER">new_owner</replaceable> 
-ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
-	CLUSTER ON <replaceable class="PARAMETER">index_name</replaceable>
+ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
+    OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
+ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
+    CLUSTER ON <replaceable class="PARAMETER">index_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -220,7 +220,7 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
     <variablelist>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">table</replaceable></term>
+      <term><replaceable class="PARAMETER">name</replaceable></term>
       <listitem>
        <para>
 	The name (possibly schema-qualified) of an existing table to
@@ -264,7 +264,7 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">new_table</replaceable></term>
+      <term><replaceable class="PARAMETER">new_name</replaceable></term>
       <listitem>
        <para>
 	New name for the table.

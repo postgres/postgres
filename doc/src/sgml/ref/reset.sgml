@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/reset.sgml,v 1.23 2003/09/11 17:31:45 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/reset.sgml,v 1.24 2003/09/22 00:16:58 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -20,9 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-RESET <replaceable class="PARAMETER">parameter</replaceable>
-</synopsis>
-<synopsis>
+RESET <replaceable class="PARAMETER">name</replaceable>
 RESET ALL
 </synopsis>
  </refsynopsisdiv>
@@ -61,7 +59,7 @@ SET <replaceable class="parameter">parameter</replaceable> TO DEFAULT
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">parameter</replaceable></term>
+    <term><replaceable class="PARAMETER">name</replaceable></term>
     <listitem>
      <para>
       The name of a run-time parameter. See <xref linkend="sql-set"

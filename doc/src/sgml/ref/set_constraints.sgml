@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_constraints.sgml,v 1.8 2003/09/11 21:42:20 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_constraints.sgml,v 1.9 2003/09/22 00:16:58 petere Exp $ -->
 <refentry id="SQL-SET-CONSTRAINTS">
  <refmeta>
   <refentrytitle id="SQL-SET-CONSTRAINTS-title">SET CONSTRAINTS</refentrytitle>
@@ -16,7 +16,7 @@
 
  <refsynopsisdiv>
 <synopsis>
-SET CONSTRAINTS { ALL | <replaceable class="parameter">constraint</replaceable> [, ...] } { DEFERRED | IMMEDIATE }
+SET CONSTRAINTS { ALL | <replaceable class="parameter">name</replaceable> [, ...] } { DEFERRED | IMMEDIATE }
 </synopsis>
  </refsynopsisdiv>
 

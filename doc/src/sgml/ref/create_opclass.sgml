@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.10 2003/09/09 18:28:52 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.11 2003/09/22 00:16:57 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -11,7 +11,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>CREATE OPERATOR CLASS</refname>
-  <refpurpose>define a new operator class for indexes</refpurpose>
+  <refpurpose>define a new operator class</refpurpose>
  </refnamediv>
 
  <indexterm zone="sql-createopclass">
@@ -22,7 +22,7 @@ PostgreSQL documentation
 <synopsis>
 CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAULT ] FOR TYPE <replaceable class="parameter">data_type</replaceable> USING <replaceable class="parameter">index_method</replaceable> AS
   {  OPERATOR <replaceable class="parameter">strategy_number</replaceable> <replaceable class="parameter">operator_name</replaceable> [ ( <replaceable class="parameter">op_type</replaceable>, <replaceable class="parameter">op_type</replaceable> ) ] [ RECHECK ]
-   | FUNCTION <replaceable class="parameter">support_number</replaceable> <replaceable class="parameter">func_name</replaceable> ( <replaceable class="parameter">argument_types</replaceable> )
+   | FUNCTION <replaceable class="parameter">support_number</replaceable> <replaceable class="parameter">funcname</replaceable> ( <replaceable class="parameter">argument_type</replaceable> [, ...] )
    | STORAGE <replaceable class="parameter">storage_type</replaceable>
   } [, ... ]
 </synopsis>
@@ -167,7 +167,7 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">func_name</replaceable></term>
+    <term><replaceable class="parameter">funcname</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of a function that is an

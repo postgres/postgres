@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.9 2003/09/09 18:28:52 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.10 2003/09/22 00:16:57 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -24,15 +24,15 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
   <synopsis>
-ALTER DOMAIN <replaceable class="PARAMETER">domain</replaceable>
-    { SET DEFAULT <replaceable class="PARAMETER">value</replaceable> | DROP DEFAULT }
-ALTER DOMAIN <replaceable class="PARAMETER">domain</replaceable>
+ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
+    { SET DEFAULT <replaceable class="PARAMETER">expression</replaceable> | DROP DEFAULT }
+ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
     { SET | DROP } NOT NULL
-ALTER DOMAIN <replaceable class="PARAMETER">domain</replaceable>
+ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
     ADD <replaceable class="PARAMETER">domain_constraint</replaceable>
-ALTER DOMAIN <replaceable class="PARAMETER">domain</replaceable>
+ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
     DROP CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
-ALTER DOMAIN <replaceable class="PARAMETER">domain</replaceable>
+ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
     OWNER TO <replaceable class="PARAMETER">new_owner</replaceable> 
   </synopsis>
  </refsynopsisdiv>
@@ -111,7 +111,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">domain</replaceable>
    <para>
     <variablelist>
      <varlistentry>
-      <term><replaceable class="PARAMETER"> domain </replaceable></term>
+      <term><replaceable class="PARAMETER">name</replaceable></term>
       <listitem>
        <para>
 	The name (possibly schema-qualified) of an existing domain to
@@ -121,7 +121,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">domain</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER"> domain_constraint </replaceable></term>
+      <term><replaceable class="PARAMETER">domain_constraint</replaceable></term>
       <listitem>
        <para>
 	New domain constraint for the domain.
@@ -130,7 +130,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">domain</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER"> constraint_name </replaceable></term>
+      <term><replaceable class="PARAMETER">constraint_name</replaceable></term>
       <listitem>
        <para>
 	Name of an existing constraint to drop.

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/move.sgml,v 1.24 2003/09/12 00:12:47 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/move.sgml,v 1.25 2003/09/22 00:16:58 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -11,7 +11,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>MOVE</refname>
-  <refpurpose>reposition a cursor</refpurpose>
+  <refpurpose>position a cursor</refpurpose>
  </refnamediv>
 
  <indexterm zone="sql-move">
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-MOVE [ <replaceable class="PARAMETER">direction</replaceable> { FROM | IN } ] <replaceable class="PARAMETER">cursor</replaceable>
+MOVE [ <replaceable class="PARAMETER">direction</replaceable> { FROM | IN } ] <replaceable class="PARAMETER">cursorname</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -30,7 +30,7 @@ MOVE [ <replaceable class="PARAMETER">direction</replaceable> { FROM | IN } ] <r
   <para>
    <command>MOVE</command> repositions a cursor without retrieving any data.
    <command>MOVE</command> works exactly like the <command>FETCH</command>
-   command, except it only repositions the cursor and does not return rows.
+   command, except it only positions the cursor and does not return rows.
   </para>
 
   <para>

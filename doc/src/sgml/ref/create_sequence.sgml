@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.36 2003/09/20 20:12:05 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.37 2003/09/22 00:16:57 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE [ TEMPORARY | TEMP ] SEQUENCE <replaceable class="parameter">seqname</replaceable> [ INCREMENT [ BY ] <replaceable class="parameter">increment</replaceable> ]
+CREATE [ TEMPORARY | TEMP ] SEQUENCE <replaceable class="parameter">name</replaceable> [ INCREMENT [ BY ] <replaceable class="parameter">increment</replaceable> ]
     [ MINVALUE <replaceable class="parameter">minvalue</replaceable> | NO MINVALUE ] [ MAXVALUE <replaceable class="parameter">maxvalue</replaceable> | NO MAXVALUE ]
     [ START [ WITH ] <replaceable class="parameter">start</replaceable> ] [ CACHE <replaceable class="parameter">cache</replaceable> ] [ [ NO ] CYCLE ]
 </synopsis>
@@ -33,7 +33,7 @@ CREATE [ TEMPORARY | TEMP ] SEQUENCE <replaceable class="parameter">seqname</rep
    <command>CREATE SEQUENCE</command> creates a new sequence number
    generator.  This involves creating and initializing a new special
    single-row table with the name <replaceable
-   class="parameter">seqname</replaceable>.  The generator will be
+   class="parameter">name</replaceable>.  The generator will be
    owned by the user issuing the command.
   </para>
 
@@ -59,7 +59,7 @@ CREATE [ TEMPORARY | TEMP ] SEQUENCE <replaceable class="parameter">seqname</rep
    Although you cannot update a sequence directly, you can use a query like
 
 <programlisting>
-SELECT * FROM <replaceable>seqname</replaceable>;
+SELECT * FROM <replaceable>name</replaceable>;
 </programlisting>
 
    to examine the parameters and current state of a sequence.  In particular,
@@ -88,7 +88,7 @@ SELECT * FROM <replaceable>seqname</replaceable>;
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">seqname</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of the sequence to be created.

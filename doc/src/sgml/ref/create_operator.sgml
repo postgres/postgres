@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.38 2003/09/09 18:28:52 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.39 2003/09/22 00:16:57 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE OPERATOR <replaceable>name</replaceable> (
-    PROCEDURE = <replaceable class="parameter">func_name</replaceable>
+    PROCEDURE = <replaceable class="parameter">funcname</replaceable>
     [, LEFTARG = <replaceable class="parameter">lefttype</replaceable> ] [, RIGHTARG = <replaceable class="parameter">righttype</replaceable> ]
     [, COMMUTATOR = <replaceable class="parameter">com_op</replaceable> ] [, NEGATOR = <replaceable class="parameter">neg_op</replaceable> ]
     [, RESTRICT = <replaceable class="parameter">res_proc</replaceable> ] [, JOIN = <replaceable class="parameter">join_proc</replaceable> ]
@@ -89,7 +89,7 @@ CREATE OPERATOR <replaceable>name</replaceable> (
   </para>
 
   <para>
-   The <replaceable class="parameter">func_name</replaceable>
+   The <replaceable class="parameter">funcname</replaceable>
    procedure must have been previously defined using <command>CREATE
    FUNCTION</command> and must be defined to accept the correct number
    of arguments (either one or two) of the indicated types.
@@ -121,7 +121,7 @@ CREATE OPERATOR <replaceable>name</replaceable> (
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="parameter">func_name</replaceable></term>
+      <term><replaceable class="parameter">funcname</replaceable></term>
       <listitem>
        <para>
 	The function used to implement this operator.

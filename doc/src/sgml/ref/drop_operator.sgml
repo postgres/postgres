@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.21 2003/09/09 18:28:53 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.22 2003/09/22 00:16:58 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -11,7 +11,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>DROP OPERATOR</refname>
-  <refpurpose>remove a user-defined operator</refpurpose>
+  <refpurpose>remove an operator</refpurpose>
  </refnamediv>
   
  <indexterm zone="sql-dropoperator">

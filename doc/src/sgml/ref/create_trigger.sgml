@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.36 2003/09/09 18:28:53 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.37 2003/09/22 00:16:57 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -22,7 +22,7 @@ PostgreSQL documentation
 <synopsis>
 CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTER } { <replaceable class="PARAMETER">event</replaceable> [ OR ... ] }
     ON <replaceable class="PARAMETER">table</replaceable> [ FOR [ EACH ] { ROW | STATEMENT } ]
-    EXECUTE PROCEDURE <replaceable class="PARAMETER">func</replaceable> ( <replaceable class="PARAMETER">arguments</replaceable> )
+    EXECUTE PROCEDURE <replaceable class="PARAMETER">funcname</replaceable> ( <replaceable class="PARAMETER">arguments</replaceable> )
 </synopsis>
  </refsynopsisdiv>
  

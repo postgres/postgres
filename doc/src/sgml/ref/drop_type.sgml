@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.23 2003/09/09 18:28:53 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.24 2003/09/22 00:16:58 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -11,7 +11,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>DROP TYPE</refname>
-  <refpurpose>remove a user-defined data type</refpurpose>
+  <refpurpose>remove a data type</refpurpose>
  </refnamediv>
 
  <indexterm zone="sql-droptype">
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP TYPE <replaceable class="PARAMETER">typename</replaceable> [, ...] [ CASCADE | RESTRICT ]
+DROP TYPE <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -38,7 +38,7 @@ DROP TYPE <replaceable class="PARAMETER">typename</replaceable> [, ...] [ CASCAD
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">typename</replaceable></term>
+    <term><replaceable class="PARAMETER">name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of the data type to remove.

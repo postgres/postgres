@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.9 2003/09/09 18:28:52 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.10 2003/09/22 00:16:57 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -20,8 +20,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> SET <replaceable>variable</replaceable> { TO | = } { <replaceable>value</replaceable> | DEFAULT }
-ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>variable</replaceable>
+ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> SET <replaceable>parameter</replaceable> { TO | = } { <replaceable>value</replaceable> | DEFAULT }
+ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>parameter</replaceable>
 
 ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>newname</replaceable>
 </synopsis>
@@ -70,12 +70,12 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RENAME TO <repl
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable>variable</replaceable></term>
+      <term><replaceable>parameter</replaceable></term>
       <term><replaceable>value</replaceable></term>
       <listitem>
        <para>
         Set the session default for this database of the specified
-        configuration variable to the given value.  If
+        configuration parameter to the given value.  If
         <replaceable>value</replaceable> is <literal>DEFAULT</literal>
         or, equivalently, <literal>RESET</literal> is used, the
         database-specific variable setting is removed and the system-wide
@@ -86,7 +86,7 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RENAME TO <repl
 
        <para>
         See <xref linkend="sql-set" endterm="sql-set-title"> and <xref linkend="runtime-config">
-        for more information about allowed variable names
+        for more information about allowed parameter names
         and values.
        </para>
       </listitem>
