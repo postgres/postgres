@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.111 2001/10/28 06:25:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.112 2001/10/30 19:58:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,6 +172,17 @@ subquery_planner(Query *parse, double tuple_fraction)
 
 	parse->havingQual = preprocess_expression(parse, parse->havingQual,
 											  EXPRKIND_HAVING);
+
+	/*
+	 * Check for ungrouped variables passed to subplans in targetlist and
+	 * HAVING clause (but not in WHERE or JOIN/ON clauses, since those are
+	 * evaluated before grouping).  We can't do this any earlier because
+	 * we must use the preprocessed targetlist for comparisons of grouped
+	 * expressions.
+	 */
+	if (parse->hasSubLinks &&
+		(parse->groupClause != NIL || parse->hasAggs))
+		check_subplans_for_ungrouped_vars(parse);
 
 	/*
 	 * A HAVING clause without aggregates is equivalent to a WHERE clause
@@ -623,22 +634,9 @@ preprocess_expression(Query *parse, Node *expr, int kind)
 #endif
 	}
 
+	/* Expand SubLinks to SubPlans */
 	if (parse->hasSubLinks)
-	{
-		/* Expand SubLinks to SubPlans */
 		expr = SS_process_sublinks(expr);
-
-		if (kind != EXPRKIND_WHERE &&
-			(parse->groupClause != NIL || parse->hasAggs))
-		{
-			/*
-			 * Check for ungrouped variables passed to subplans.  Note we
-			 * do NOT do this for subplans in WHERE (or JOIN/ON); it's
-			 * legal there because WHERE is evaluated pre-GROUP.
-			 */
-			check_subplans_for_ungrouped_vars(expr, parse);
-		}
-	}
 
 	/* Replace uplevel vars with Param nodes */
 	if (PlannerQueryLevel > 1)
@@ -1122,12 +1120,11 @@ grouping_planner(Query *parse, double tuple_fraction)
 
 		/*
 		 * If there are aggregates then the Group node should just return
-		 * the same set of vars as the subplan did (but we can exclude any
-		 * GROUP BY expressions).  If there are no aggregates then the
-		 * Group node had better compute the final tlist.
+		 * the same set of vars as the subplan did.  If there are no aggs
+		 * then the Group node had better compute the final tlist.
 		 */
 		if (parse->hasAggs)
-			group_tlist = flatten_tlist(result_plan->targetlist);
+			group_tlist = new_unsorted_tlist(result_plan->targetlist);
 		else
 			group_tlist = tlist;
 
@@ -1234,7 +1231,10 @@ grouping_planner(Query *parse, double tuple_fraction)
  * where the a+b target will be used by the Sort/Group steps, and the
  * other targets will be used for computing the final results.	(In the
  * above example we could theoretically suppress the a and b targets and
- * use only a+b, but it's not really worth the trouble.)
+ * pass down only c,d,a+b, but it's not really worth the trouble to
+ * eliminate simple var references from the subplan.  We will avoid doing
+ * the extra computation to recompute a+b at the outer level; see
+ * replace_vars_with_subplan_refs() in setrefs.c.)
  *
  * 'parse' is the query being processed.
  * 'tlist' is the query's target list.

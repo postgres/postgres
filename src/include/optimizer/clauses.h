@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.47 2001/10/28 06:26:07 momjian Exp $
+ * $Id: clauses.h,v 1.48 2001/10/30 19:58:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ extern List *pull_agg_clause(Node *clause);
 
 extern bool contain_subplans(Node *clause);
 extern List *pull_subplans(Node *clause);
-extern void check_subplans_for_ungrouped_vars(Node *clause, Query *query);
+extern void check_subplans_for_ungrouped_vars(Query *query);
 
 extern bool contain_noncachable_functions(Node *clause);
 
