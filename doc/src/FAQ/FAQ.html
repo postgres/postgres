@@ -12,7 +12,7 @@
   alink="#0000FF">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Sat Sep 22 20:07:41 EDT 2001</P>
+    <P>Last updated: Fri Oct 12 21:32:36 EDT 2001</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -1003,6 +1003,12 @@ BYTEA           bytea           variable-length byte array (null-safe)
     stored out-of-line by <SMALL>TOAST</SMALL>, so the space on disk
     might also be less than expected.</P>
 
+    <P>CHAR() is best when storing strings that are usually the
+    same length.  VARCHAR() is best when storing variable-length strings,
+    but you want to limit how long a string can be.  TEXT is for strings
+    of unlimited length, maximum 1 gigabyte.  BYTEA is for storing
+    binary data, particularly values that include NULL bytes.</P>
+    
     <H4><A name="4.16.1">4.16.1</A>) How do I create a
     serial/auto-incrementing field?</H4>
 
