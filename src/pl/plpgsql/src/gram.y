@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.17 2001/04/18 20:42:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.18 2001/05/18 21:16:59 wieck Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -147,6 +147,7 @@ static	PLpgSQL_expr	*make_tupret_expr(PLpgSQL_row *row);
 %token	K_DIAGNOSTICS
 %token	K_DOTDOT
 %token	K_ELSE
+%token	K_ELSIF
 %token	K_END
 %token	K_EXCEPTION
 %token	K_EXECUTE
@@ -544,6 +545,7 @@ proc_stmts		: proc_stmts proc_stmt
 								new->stmts[0] = (struct PLpgSQL_stmt *)$1;
 
 								$$ = new;
+
 						}
 				;
 
@@ -721,8 +723,53 @@ stmt_else		:
 							memset(new, 0, sizeof(PLpgSQL_stmts));
 							$$ = new;
 					}
+				| K_ELSIF lno expr_until_then proc_sect stmt_else
+					{
+					  /*
+					   * Translate the structure:	   into:
+					   *
+					   * IF c1 THEN					   IF c1 THEN		 
+					   *	 ...						   ...				 
+					   * ELSIF c2 THEN				   ELSE 
+					   *								   IF c2 THEN	
+					   *	 ...							   ...				 
+					   * ELSE							   ELSE				 
+					   *	 ...							   ...				 
+					   * END IF							   END IF			 
+					   *							   END IF
+					   * 
+					   */
+
+						PLpgSQL_stmts	*new;
+						PLpgSQL_stmt_if *new_if;
+
+						/* first create a new if-statement */
+						new_if = malloc(sizeof(PLpgSQL_stmt_if));
+						memset(new_if, 0, sizeof(PLpgSQL_stmt_if));
+
+						new_if->cmd_type	= PLPGSQL_STMT_IF;
+						new_if->lineno		= $2;
+						new_if->cond		= $3;
+						new_if->true_body	= $4;
+						new_if->false_body	= $5;
+						
+						/* this is a 'container' for the if-statement */
+						new = malloc(sizeof(PLpgSQL_stmts));
+						memset(new, 0, sizeof(PLpgSQL_stmts));
+						
+						new->stmts_alloc = 64;
+						new->stmts_used	 = 1;
+						new->stmts = malloc(sizeof(PLpgSQL_stmt *) * new->stmts_alloc);
+						new->stmts[0] = (struct PLpgSQL_stmt *)new_if;
+
+						$$ = new;
+						
+					}
+
 				| K_ELSE proc_sect
-					{ $$ = $2; }
+					{
+						$$ = $2;				
+					}
 				;
 
 stmt_loop		: opt_label K_LOOP lno loop_body
