@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.39 1999/02/23 07:51:53 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.40 1999/03/15 16:48:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "access/relscan.h"
 #include "access/sdir.h"
 #include "catalog/catname.h"
+#include "catalog/heap.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_proc.h"
@@ -440,7 +441,6 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 
 		if (nodeTag(pair) == T_Ident && ((Ident *) pair)->isRel)
 		{
-
 			/*
 			 * a relation
 			 */
@@ -573,16 +573,21 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		char	   *seqrel;
 		text	   *seqname;
 		int32		aclcheck_result = -1;
-		extern text *lower(text *string);
 
 		Assert(length(fargs) == ((funcid == F_SETVAL) ? 2 : 1));
 		seq = (Const *) lfirst(fargs);
 		if (!IsA((Node *) seq, Const))
 			elog(ERROR, "Only constant sequence names are acceptable for function '%s'", funcname);
-		seqname = lower((text *) DatumGetPointer(seq->constvalue));
-		pfree(DatumGetPointer(seq->constvalue));
-		seq->constvalue = PointerGetDatum(seqname);
-		seqrel = textout(seqname);
+
+		seqrel = textout((text *) DatumGetPointer(seq->constvalue));
+		if (RelnameFindRelid(seqrel) == InvalidOid)
+		{
+			pfree(seqrel);
+			seqname = lower((text *) DatumGetPointer(seq->constvalue));
+			pfree(DatumGetPointer(seq->constvalue));
+			seq->constvalue = PointerGetDatum(seqname);
+			seqrel = textout(seqname);
+		}
 
 		if ((aclcheck_result = pg_aclcheck(seqrel, GetPgUserName(),
 					   (((funcid == F_NEXTVAL) || (funcid == F_SETVAL)) ?
