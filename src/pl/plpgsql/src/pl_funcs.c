@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.38 2004/10/10 23:37:45 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.39 2005/02/22 07:18:24 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -59,7 +59,7 @@ void
 plpgsql_dstring_init(PLpgSQL_dstring *ds)
 {
 	ds->value = palloc(ds->alloc = 512);
-	ds->used = 0;
+	ds->used = 1;
 	ds->value[0] = '\0';
 }
 
@@ -74,6 +74,20 @@ plpgsql_dstring_free(PLpgSQL_dstring *ds)
 	pfree(ds->value);
 }
 
+static void
+plpgsql_dstring_expand(PLpgSQL_dstring *ds, int needed)
+{
+	/* Don't allow truncating the string */
+	Assert(needed > ds->alloc);
+	Assert(ds->used <= ds->alloc);
+
+	/* Might have to double more than once, if needed is large */
+	do
+	{
+		ds->alloc *= 2;
+	} while (needed > ds->alloc);
+	ds->value = repalloc(ds->value, ds->alloc);
+}
 
 /* ----------
  * plpgsql_dstring_append		Dynamic string extending
@@ -83,20 +97,30 @@ void
 plpgsql_dstring_append(PLpgSQL_dstring *ds, const char *str)
 {
 	int			len = strlen(str);
-	int			needed = ds->used + len + 1;
+	int			needed = ds->used + len;
 
 	if (needed > ds->alloc)
-	{
-		/* might have to double more than once, if len is large */
-		do
-		{
-			ds->alloc *= 2;
-		} while (needed > ds->alloc);
-		ds->value = repalloc(ds->value, ds->alloc);
-	}
+		plpgsql_dstring_expand(ds, needed);
 
-	strcpy(&(ds->value[ds->used]), str);
+	memcpy(&(ds->value[ds->used - 1]), str, len);
 	ds->used += len;
+	ds->value[ds->used - 1] = '\0';
+}
+
+/* ----------
+ * plpgsql_dstring_append_char	Append a single character
+ *								to a dynamic string
+ * ----------
+ */
+void
+plpgsql_dstring_append_char(PLpgSQL_dstring *ds, char c)
+{
+	if (ds->used == ds->alloc)
+		plpgsql_dstring_expand(ds, ds->used + 1);
+
+	ds->value[ds->used - 1] = c;
+	ds->value[ds->used] = '\0';
+	ds->used++;
 }
 
 
@@ -187,7 +211,7 @@ plpgsql_ns_pop(void)
  * ----------
  */
 void
-plpgsql_ns_additem(int itemtype, int itemno, char *name)
+plpgsql_ns_additem(int itemtype, int itemno, const char *name)
 {
 	PLpgSQL_ns *ns = ns_current;
 	PLpgSQL_nsitem *nse;
@@ -286,11 +310,8 @@ plpgsql_ns_rename(char *oldname, char *newname)
 	int			i;
 
 	/*
-	 * Lookup in the current namespace only
-	 */
-
-	/*
-	 * Lookup name in the namestack
+	 * Lookup name in the namestack; do the lookup in the current
+	 * namespace only.
 	 */
 	for (ns = ns_current; ns != NULL; ns = ns->upper)
 	{
@@ -584,20 +605,19 @@ dump_stmt(PLpgSQL_stmt *stmt)
 }
 
 static void
-dump_stmts(PLpgSQL_stmts *stmts)
+dump_stmts(List *stmts)
 {
-	int			i;
+	ListCell *s;
 
 	dump_indent += 2;
-	for (i = 0; i < stmts->stmts_used; i++)
-		dump_stmt(stmts->stmts[i]);
+	foreach (s, stmts)
+		dump_stmt((PLpgSQL_stmt *) lfirst(s));
 	dump_indent -= 2;
 }
 
 static void
 dump_block(PLpgSQL_stmt_block *block)
 {
-	int			i;
 	char	   *name;
 
 	if (block->label == NULL)
@@ -612,9 +632,11 @@ dump_block(PLpgSQL_stmt_block *block)
 
 	if (block->exceptions)
 	{
-		for (i = 0; i < block->exceptions->exceptions_used; i++)
+		ListCell *e;
+
+		foreach (e, block->exceptions)
 		{
-			PLpgSQL_exception *exc = block->exceptions->exceptions[i];
+			PLpgSQL_exception *exc = (PLpgSQL_exception *) lfirst(e);
 			PLpgSQL_condition *cond;
 
 			dump_ind();
@@ -863,12 +885,12 @@ dump_return_next(PLpgSQL_stmt_return_next *stmt)
 static void
 dump_raise(PLpgSQL_stmt_raise *stmt)
 {
-	int			i;
+	ListCell *l;
 
 	dump_ind();
 	printf("RAISE '%s'", stmt->message);
-	for (i = 0; i < stmt->nparams; i++)
-		printf(" %d", stmt->params[i]);
+	foreach (l, stmt->params)
+		printf(" %d", lfirst_int(l));
 	printf("\n");
 }
 
@@ -907,20 +929,20 @@ dump_dynfors(PLpgSQL_stmt_dynfors *stmt)
 static void
 dump_getdiag(PLpgSQL_stmt_getdiag *stmt)
 {
-	int			i;
+	ListCell *lc;
 
 	dump_ind();
 	printf("GET DIAGNOSTICS ");
-	for (i = 0; i < stmt->ndtitems; i++)
+	foreach (lc, stmt->diag_items)
 	{
-		PLpgSQL_diag_item *dtitem = &stmt->dtitems[i];
+		PLpgSQL_diag_item *diag_item = (PLpgSQL_diag_item *) lfirst(lc);
 
-		if (i != 0)
+		if (lc != list_head(stmt->diag_items))
 			printf(", ");
 
-		printf("{var %d} = ", dtitem->target);
+		printf("{var %d} = ", diag_item->target);
 
-		switch (dtitem->item)
+		switch (diag_item->kind)
 		{
 			case PLPGSQL_GETDIAG_ROW_COUNT:
 				printf("ROW_COUNT");

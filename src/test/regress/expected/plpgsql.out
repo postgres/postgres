@@ -2173,3 +2173,72 @@ select refcursor_test2(20000) as "Should be false",
  f               | t
 (1 row)
 
+--
+-- tests for "raise" processing
+--
+create function raise_test1(int) returns int as $$
+begin
+    raise notice 'This message has too many parameters!', $1;
+    return $1;
+end;
+$$ language plpgsql;
+select raise_test1(5);
+ERROR:  too many parameters specified for RAISE
+CONTEXT:  PL/pgSQL function "raise_test1" line 2 at raise
+create function raise_test2(int) returns int as $$
+begin
+    raise notice 'This message has too few parameters: %, %, %', $1, $1;
+    return $1;
+end;
+$$ language plpgsql;
+select raise_test2(10);
+ERROR:  too few parameters specified for RAISE
+CONTEXT:  PL/pgSQL function "raise_test2" line 2 at raise
+--
+-- reject function definitions that contain malformed SQL queries at
+-- compile-time, where possible
+--
+create function bad_sql1() returns int as $$
+declare a int;
+begin
+    a := 5;
+    Johnny Yuma;
+    a := 10;
+    return a;
+end$$ language plpgsql;
+ERROR:  syntax error at or near "Johnny" at character 1
+QUERY:  Johnny Yuma
+CONTEXT:  SQL statement in PL/PgSQL function "bad_sql1" near line 4
+LINE 1: Johnny Yuma
+        ^
+create function bad_sql2() returns int as $$
+declare r record;
+begin
+    for r in select I fought the law, the law won LOOP
+        raise notice 'in loop';
+    end loop;
+    return 5;
+end;$$ language plpgsql;
+ERROR:  syntax error at or near "fought" at character 11
+QUERY:   select I fought the law, the law won
+CONTEXT:  SQL statement in PL/PgSQL function "bad_sql2" near line 3
+LINE 1:  select I fought the law, the law won
+                  ^
+-- a RETURN expression is mandatory, except for void-returning
+-- functions, where it is not allowed
+create function missing_return_expr() returns int as $$
+begin
+    return ;
+end;$$ language plpgsql;
+ERROR:  syntax error at end of input at character 8
+QUERY:  SELECT 
+CONTEXT:  SQL statement in PL/PgSQL function "missing_return_expr" near line 2
+LINE 1: SELECT 
+               ^
+create function void_return_expr() returns void as $$
+begin
+    return 5;
+end;$$ language plpgsql;
+ERROR:  function returning void cannot specify RETURN expression at or near "5" at character 72
+LINE 3:     return 5;
+                   ^

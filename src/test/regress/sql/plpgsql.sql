@@ -1863,3 +1863,58 @@ $$ language 'plpgsql';
 
 select refcursor_test2(20000) as "Should be false",
        refcursor_test2(20) as "Should be true";
+
+--
+-- tests for "raise" processing
+--
+create function raise_test1(int) returns int as $$
+begin
+    raise notice 'This message has too many parameters!', $1;
+    return $1;
+end;
+$$ language plpgsql;
+
+select raise_test1(5);
+
+create function raise_test2(int) returns int as $$
+begin
+    raise notice 'This message has too few parameters: %, %, %', $1, $1;
+    return $1;
+end;
+$$ language plpgsql;
+
+select raise_test2(10);
+
+--
+-- reject function definitions that contain malformed SQL queries at
+-- compile-time, where possible
+--
+create function bad_sql1() returns int as $$
+declare a int;
+begin
+    a := 5;
+    Johnny Yuma;
+    a := 10;
+    return a;
+end$$ language plpgsql;
+
+create function bad_sql2() returns int as $$
+declare r record;
+begin
+    for r in select I fought the law, the law won LOOP
+        raise notice 'in loop';
+    end loop;
+    return 5;
+end;$$ language plpgsql;
+
+-- a RETURN expression is mandatory, except for void-returning
+-- functions, where it is not allowed
+create function missing_return_expr() returns int as $$
+begin
+    return ;
+end;$$ language plpgsql;
+
+create function void_return_expr() returns void as $$
+begin
+    return 5;
+end;$$ language plpgsql;

@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.38 2004/12/17 03:51:36 neilc Exp $
+ *    $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.39 2005/02/22 07:18:24 neilc Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -54,7 +54,7 @@ static char *scanbuf;
 static const char *scanstr;		/* original input string */
 
 static int	scanner_functype;
-static int	scanner_typereported;
+static bool	scanner_typereported;
 static int	pushback_token;
 static bool have_pushback_token;
 static int	lookahead_token;	
@@ -64,7 +64,7 @@ static int	cur_line_num;
 static char    *dolqstart;      /* current $foo$ quote start string */
 static int	dolqlen;			/* signal to plpgsql_get_string_value */
 
-int	plpgsql_SpaceScanned = 0;
+bool plpgsql_SpaceScanned = false;
 %}
 
 %option 8bit
@@ -114,7 +114,7 @@ dolqinside		[^$]+
      * ----------
      */
     BEGIN(INITIAL);
-    plpgsql_SpaceScanned = 0;
+    plpgsql_SpaceScanned = false;
 
     /* ----------
      * On the first call to a new source report the
@@ -123,7 +123,7 @@ dolqinside		[^$]+
      */
 	if (!scanner_typereported)
 	{
-		scanner_typereported = 1;
+		scanner_typereported = true;
 		return scanner_functype;
 	}
 
@@ -255,7 +255,7 @@ dump			{ return O_DUMP;			}
      * Ignore whitespaces but remember this happened
      * ----------
      */
-{space}+		{ plpgsql_SpaceScanned = 1;		}
+{space}+		{ plpgsql_SpaceScanned = true;		}
 
     /* ----------
      * Eat up comments
@@ -266,7 +266,7 @@ dump			{ return O_DUMP;			}
 \/\*			{ start_lineno = plpgsql_scanner_lineno();
 			  BEGIN(IN_COMMENT);
 			}
-<IN_COMMENT>\*\/	{ BEGIN(INITIAL); plpgsql_SpaceScanned = 1; }
+<IN_COMMENT>\*\/	{ BEGIN(INITIAL); plpgsql_SpaceScanned = true; }
 <IN_COMMENT>\n		;
 <IN_COMMENT>.		;
 <IN_COMMENT><<EOF>>	{
@@ -502,7 +502,7 @@ plpgsql_scanner_init(const char *str, int functype)
 	scanstr = str;
 
     scanner_functype = functype;
-    scanner_typereported = 0;
+    scanner_typereported = false;
 
 	have_pushback_token = false;
 	have_lookahead_token = false;
@@ -538,7 +538,7 @@ plpgsql_scanner_finish(void)
 
 /*
  * Called after a T_STRING token is read to get the string literal's value
- * as a malloc'd string.  (We make this a separate call because in many
+ * as a palloc'd string.  (We make this a separate call because in many
  * scenarios there's no need to get the decoded value.)
  *
  * Note: we expect the literal to be the most recently lexed token.  This
@@ -557,14 +557,14 @@ plpgsql_get_string_value(void)
 		/* Token is a $foo$...$foo$ string */
 		len = yyleng - 2 * dolqlen;
 		Assert(len >= 0);
-		result = (char *) malloc(len + 1);
+		result = (char *) palloc(len + 1);
 		memcpy(result, yytext + dolqlen, len);
 		result[len] = '\0';
 	}
 	else
 	{
 		/* Token is a '...' string */
-		result = (char *) malloc(yyleng + 1);	/* more than enough room */
+		result = (char *) palloc(yyleng + 1);	/* more than enough room */
 		len = 0;
 		for (cp = yytext; *cp; cp++)
 		{

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.56 2004/09/16 16:58:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.57 2005/02/22 07:18:24 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -50,7 +50,7 @@
  **********************************************************************/
 
 /* ----------
- * Compilers namestack item types
+ * Compiler's namestack item types
  * ----------
  */
 enum
@@ -147,7 +147,7 @@ enum
 typedef struct
 {								/* Dynamic string control structure */
 	int			alloc;
-	int			used;
+	int			used;			/* Including NUL terminator */
 	char	   *value;
 } PLpgSQL_dstring;
 
@@ -298,6 +298,7 @@ typedef struct
 } PLpgSQL_nsitem;
 
 
+/* XXX: consider adapting this to use List */
 typedef struct PLpgSQL_ns
 {								/* Compiler namestack level		*/
 	int			items_alloc;
@@ -314,14 +315,6 @@ typedef struct
 } PLpgSQL_stmt;
 
 
-typedef struct
-{								/* List of execution nodes		*/
-	int			stmts_alloc;	/* XXX this oughta just be a List ... */
-	int			stmts_used;
-	PLpgSQL_stmt **stmts;
-} PLpgSQL_stmts;
-
-
 typedef struct PLpgSQL_condition
 {								/* One EXCEPTION condition name */
 	int			sqlerrstate;	/* SQLSTATE code */
@@ -333,17 +326,8 @@ typedef struct
 {								/* One EXCEPTION ... WHEN clause */
 	int			lineno;
 	PLpgSQL_condition *conditions;
-	PLpgSQL_stmts *action;
+	List	   *action;			/* List of statements */
 } PLpgSQL_exception;
-
-
-typedef struct
-{								/* List of WHEN clauses			*/
-	int			exceptions_alloc;		/* XXX this oughta just be a List
-										 * ... */
-	int			exceptions_used;
-	PLpgSQL_exception **exceptions;
-} PLpgSQL_exceptions;
 
 
 typedef struct
@@ -351,8 +335,8 @@ typedef struct
 	int			cmd_type;
 	int			lineno;
 	char	   *label;
-	PLpgSQL_stmts *body;
-	PLpgSQL_exceptions *exceptions;
+	List	   *body;			/* List of statements */
+	List	   *exceptions;		/* List of WHEN clauses */
 	int			n_initvars;
 	int		   *initvarnos;
 } PLpgSQL_stmt_block;
@@ -375,7 +359,7 @@ typedef struct
 
 typedef struct
 {								/* Get Diagnostics item		*/
-	int			item;			/* id for diagnostic value desired */
+	int			kind;			/* id for diagnostic value desired */
 	int			target;			/* where to assign it */
 } PLpgSQL_diag_item;
 
@@ -383,8 +367,7 @@ typedef struct
 {								/* Get Diagnostics statement		*/
 	int			cmd_type;
 	int			lineno;
-	int			ndtitems;
-	PLpgSQL_diag_item *dtitems;
+	List	   *diag_items;		/* List of PLpgSQL_diag_item */
 } PLpgSQL_stmt_getdiag;
 
 
@@ -393,8 +376,8 @@ typedef struct
 	int			cmd_type;
 	int			lineno;
 	PLpgSQL_expr *cond;
-	PLpgSQL_stmts *true_body;
-	PLpgSQL_stmts *false_body;
+	List	   *true_body;		/* List of statements */
+	List	   *false_body;		/* List of statements */
 } PLpgSQL_stmt_if;
 
 
@@ -403,7 +386,7 @@ typedef struct
 	int			cmd_type;
 	int			lineno;
 	char	   *label;
-	PLpgSQL_stmts *body;
+	List	   *body;			/* List of statements */
 } PLpgSQL_stmt_loop;
 
 
@@ -413,7 +396,7 @@ typedef struct
 	int			lineno;
 	char	   *label;
 	PLpgSQL_expr *cond;
-	PLpgSQL_stmts *body;
+	List	   *body;			/* List of statements */
 } PLpgSQL_stmt_while;
 
 
@@ -426,7 +409,7 @@ typedef struct
 	PLpgSQL_expr *lower;
 	PLpgSQL_expr *upper;
 	int			reverse;
-	PLpgSQL_stmts *body;
+	List	   *body;			/* List of statements */
 } PLpgSQL_stmt_fori;
 
 
@@ -438,7 +421,7 @@ typedef struct
 	PLpgSQL_rec *rec;
 	PLpgSQL_row *row;
 	PLpgSQL_expr *query;
-	PLpgSQL_stmts *body;
+	List	   *body;			/* List of statements */
 } PLpgSQL_stmt_fors;
 
 
@@ -450,7 +433,7 @@ typedef struct
 	PLpgSQL_rec *rec;
 	PLpgSQL_row *row;
 	PLpgSQL_expr *query;
-	PLpgSQL_stmts *body;
+	List	   *body;			/* List of statements */
 } PLpgSQL_stmt_dynfors;
 
 
@@ -527,8 +510,7 @@ typedef struct
 	int			lineno;
 	int			elog_level;
 	char	   *message;
-	int			nparams;
-	int		   *params;
+	List	   *params;
 } PLpgSQL_stmt_raise;
 
 
@@ -577,6 +559,7 @@ typedef struct PLpgSQL_function
 	CommandId	fn_cmin;
 	int			fn_functype;
 	PLpgSQL_func_hashkey *fn_hashkey;	/* back-link to hashtable key */
+	MemoryContext fn_cxt;
 
 	Oid			fn_rettype;
 	int			fn_rettyplen;
@@ -649,8 +632,8 @@ typedef struct
  * Global variable declarations
  **********************************************************************/
 
-extern int	plpgsql_DumpExecTree;
-extern int	plpgsql_SpaceScanned;
+extern bool	plpgsql_DumpExecTree;
+extern bool	plpgsql_SpaceScanned;
 extern int	plpgsql_nDatums;
 extern PLpgSQL_datum **plpgsql_Datums;
 
@@ -663,6 +646,8 @@ extern char *plpgsql_base_yytext;
 #define plpgsql_yytext plpgsql_base_yytext
 
 extern PLpgSQL_function *plpgsql_curr_compile;
+extern bool		plpgsql_check_syntax;
+extern MemoryContext compile_tmp_cxt;
 
 /**********************************************************************
  * Function declarations
@@ -684,13 +669,14 @@ extern int	plpgsql_parse_wordrowtype(char *word);
 extern int	plpgsql_parse_dblwordrowtype(char *word);
 extern PLpgSQL_type *plpgsql_parse_datatype(const char *string);
 extern PLpgSQL_type *plpgsql_build_datatype(Oid typeOid, int32 typmod);
-extern PLpgSQL_variable *plpgsql_build_variable(char *refname, int lineno,
+extern PLpgSQL_variable *plpgsql_build_variable(const char *refname, int lineno,
 					   PLpgSQL_type *dtype,
 					   bool add2namespace);
 extern PLpgSQL_condition *plpgsql_parse_err_condition(char *condname);
 extern void plpgsql_adddatum(PLpgSQL_datum *new);
 extern int	plpgsql_add_initdatums(int **varnos);
 extern void plpgsql_HashTableInit(void);
+extern void plpgsql_compile_error_callback(void *arg);
 
 /* ----------
  * Functions in pl_handler.c
@@ -717,6 +703,7 @@ extern void plpgsql_xact_cb(XactEvent event, void *arg);
 extern void plpgsql_dstring_init(PLpgSQL_dstring *ds);
 extern void plpgsql_dstring_free(PLpgSQL_dstring *ds);
 extern void plpgsql_dstring_append(PLpgSQL_dstring *ds, const char *str);
+extern void plpgsql_dstring_append_char(PLpgSQL_dstring *ds, char c);
 extern char *plpgsql_dstring_get(PLpgSQL_dstring *ds);
 
 /* ----------
@@ -727,7 +714,7 @@ extern void plpgsql_ns_init(void);
 extern bool plpgsql_ns_setlocal(bool flag);
 extern void plpgsql_ns_push(char *label);
 extern void plpgsql_ns_pop(void);
-extern void plpgsql_ns_additem(int itemtype, int itemno, char *name);
+extern void plpgsql_ns_additem(int itemtype, int itemno, const char *name);
 extern PLpgSQL_nsitem *plpgsql_ns_lookup(char *name, char *nsname);
 extern void plpgsql_ns_rename(char *oldname, char *newname);
 

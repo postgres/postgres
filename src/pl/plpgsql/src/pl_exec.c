@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.129 2005/02/22 04:43:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.130 2005/02/22 07:18:24 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -74,13 +74,14 @@ static PLpgSQL_expr *active_simple_exprs = NULL;
  * Local function forward declarations
  ************************************************************/
 static void plpgsql_exec_error_callback(void *arg);
+static PLpgSQL_datum *copy_plpgsql_datum(PLpgSQL_datum *datum);
 static PLpgSQL_var *copy_var(PLpgSQL_var *var);
 static PLpgSQL_rec *copy_rec(PLpgSQL_rec *rec);
 
 static int exec_stmt_block(PLpgSQL_execstate *estate,
 				PLpgSQL_stmt_block *block);
 static int exec_stmts(PLpgSQL_execstate *estate,
-		   PLpgSQL_stmts *stmts);
+					  List *stmts);
 static int exec_stmt(PLpgSQL_execstate *estate,
 		  PLpgSQL_stmt *stmt);
 static int exec_stmt_assign(PLpgSQL_execstate *estate,
@@ -212,29 +213,7 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 	 */
 	estate.err_text = gettext_noop("during initialization of execution state");
 	for (i = 0; i < func->ndatums; i++)
-	{
-		switch (func->datums[i]->dtype)
-		{
-			case PLPGSQL_DTYPE_VAR:
-				estate.datums[i] = (PLpgSQL_datum *)
-					copy_var((PLpgSQL_var *) (func->datums[i]));
-				break;
-
-			case PLPGSQL_DTYPE_REC:
-				estate.datums[i] = (PLpgSQL_datum *)
-					copy_rec((PLpgSQL_rec *) (func->datums[i]));
-				break;
-
-			case PLPGSQL_DTYPE_ROW:
-			case PLPGSQL_DTYPE_RECFIELD:
-			case PLPGSQL_DTYPE_ARRAYELEM:
-				estate.datums[i] = func->datums[i];
-				break;
-
-			default:
-				elog(ERROR, "unrecognized dtype: %d", func->datums[i]->dtype);
-		}
-	}
+		estate.datums[i] = copy_plpgsql_datum(func->datums[i]);
 
 	/*
 	 * Store the actual call argument values into the variables
@@ -467,30 +446,7 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	 */
 	estate.err_text = gettext_noop("during initialization of execution state");
 	for (i = 0; i < func->ndatums; i++)
-	{
-		switch (func->datums[i]->dtype)
-		{
-			case PLPGSQL_DTYPE_VAR:
-				estate.datums[i] = (PLpgSQL_datum *)
-					copy_var((PLpgSQL_var *) (func->datums[i]));
-				break;
-
-			case PLPGSQL_DTYPE_REC:
-				estate.datums[i] = (PLpgSQL_datum *)
-					copy_rec((PLpgSQL_rec *) (func->datums[i]));
-				break;
-
-			case PLPGSQL_DTYPE_ROW:
-			case PLPGSQL_DTYPE_RECFIELD:
-			case PLPGSQL_DTYPE_ARRAYELEM:
-			case PLPGSQL_DTYPE_TRIGARG:
-				estate.datums[i] = func->datums[i];
-				break;
-
-			default:
-				elog(ERROR, "unrecognized dtype: %d", func->datums[i]->dtype);
-		}
-	}
+		estate.datums[i] = copy_plpgsql_datum(func->datums[i]);
 
 	/*
 	 * Put the OLD and NEW tuples into record variables
@@ -758,6 +714,35 @@ plpgsql_exec_error_callback(void *arg)
  * Support functions for copying local execution variables
  * ----------
  */
+static PLpgSQL_datum *
+copy_plpgsql_datum(PLpgSQL_datum *datum)
+{
+	PLpgSQL_datum *result = NULL;
+
+	switch (datum->dtype)
+	{
+		case PLPGSQL_DTYPE_VAR:
+			result = (PLpgSQL_datum *) copy_var((PLpgSQL_var *) datum);
+			break;
+
+		case PLPGSQL_DTYPE_REC:
+			result = (PLpgSQL_datum *) copy_rec((PLpgSQL_rec *) datum);
+			break;
+
+		case PLPGSQL_DTYPE_ROW:
+		case PLPGSQL_DTYPE_RECFIELD:
+		case PLPGSQL_DTYPE_ARRAYELEM:
+		case PLPGSQL_DTYPE_TRIGARG:
+			result = datum;
+			break;
+
+		default:
+			elog(ERROR, "unrecognized dtype: %d", datum->dtype);
+	}
+
+	return result;
+}
+
 static PLpgSQL_var *
 copy_var(PLpgSQL_var *var)
 {
@@ -920,9 +905,8 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 		}
 		PG_CATCH();
 		{
-			ErrorData  *edata;
-			PLpgSQL_exceptions *exceptions;
-			int			j;
+			ErrorData	*edata;
+			ListCell	*e;
 
 			/* Save error info */
 			MemoryContextSwitchTo(oldcontext);
@@ -942,10 +926,9 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 			SPI_restore_connection();
 
 			/* Look for a matching exception handler */
-			exceptions = block->exceptions;
-			for (j = 0; j < exceptions->exceptions_used; j++)
+			foreach (e, block->exceptions)
 			{
-				PLpgSQL_exception *exception = exceptions->exceptions[j];
+				PLpgSQL_exception *exception = (PLpgSQL_exception *) lfirst(e);
 
 				if (exception_matches_conditions(edata, exception->conditions))
 				{
@@ -955,7 +938,7 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 			}
 
 			/* If no match found, re-throw the error */
-			if (j >= exceptions->exceptions_used)
+			if (e == NULL)
 				ReThrowError(edata);
 			else
 				FreeErrorData(edata);
@@ -1005,14 +988,14 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
  * ----------
  */
 static int
-exec_stmts(PLpgSQL_execstate *estate, PLpgSQL_stmts *stmts)
+exec_stmts(PLpgSQL_execstate *estate, List *stmts)
 {
-	int			rc;
-	int			i;
+	ListCell   *s;
 
-	for (i = 0; i < stmts->stmts_used; i++)
+	foreach (s, stmts)
 	{
-		rc = exec_stmt(estate, stmts->stmts[i]);
+		PLpgSQL_stmt *stmt = (PLpgSQL_stmt *) lfirst(s);
+		int rc = exec_stmt(estate, stmt);
 		if (rc != PLPGSQL_RC_OK)
 			return rc;
 	}
@@ -1184,23 +1167,23 @@ exec_stmt_perform(PLpgSQL_execstate *estate, PLpgSQL_stmt_perform *stmt)
 static int
 exec_stmt_getdiag(PLpgSQL_execstate *estate, PLpgSQL_stmt_getdiag *stmt)
 {
-	int			i;
-	PLpgSQL_datum *var;
-	bool		isnull = false;
+	ListCell *lc;
 
-	for (i = 0; i < stmt->ndtitems; i++)
+	foreach (lc, stmt->diag_items)
 	{
-		PLpgSQL_diag_item *dtitem = &stmt->dtitems[i];
+		PLpgSQL_diag_item	*diag_item = (PLpgSQL_diag_item *) lfirst(lc);
+		PLpgSQL_datum		*var;
+		bool				 isnull = false;
 
-		if (dtitem->target <= 0)
+		if (diag_item->target <= 0)
 			continue;
 
-		var = (estate->datums[dtitem->target]);
+		var = estate->datums[diag_item->target];
 
 		if (var == NULL)
 			continue;
 
-		switch (dtitem->item)
+		switch (diag_item->kind)
 		{
 			case PLPGSQL_GETDIAG_ROW_COUNT:
 
@@ -1218,7 +1201,7 @@ exec_stmt_getdiag(PLpgSQL_execstate *estate, PLpgSQL_stmt_getdiag *stmt)
 
 			default:
 				elog(ERROR, "unrecognized attribute request: %d",
-					 dtitem->item);
+					 diag_item->kind);
 		}
 	}
 
@@ -1242,12 +1225,12 @@ exec_stmt_if(PLpgSQL_execstate *estate, PLpgSQL_stmt_if *stmt)
 
 	if (!isnull && value)
 	{
-		if (stmt->true_body != NULL)
+		if (stmt->true_body != NIL)
 			return exec_stmts(estate, stmt->true_body);
 	}
 	else
 	{
-		if (stmt->false_body != NULL)
+		if (stmt->false_body != NIL)
 			return exec_stmts(estate, stmt->false_body);
 	}
 
@@ -1749,6 +1732,7 @@ exec_stmt_return(PLpgSQL_execstate *estate, PLpgSQL_stmt_return *stmt)
 	if (estate->fn_rettype == VOIDOID)
 	{
 		/* Special hack for function returning VOID */
+		Assert(stmt->expr == NULL);
 		estate->retval = (Datum) 0;
 		estate->retisnull = false;
 		estate->rettype = VOIDOID;
@@ -1903,38 +1887,39 @@ exec_init_tuple_store(PLpgSQL_execstate *estate)
 static int
 exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 {
-	Oid			paramtypeid;
-	Datum		paramvalue;
-	bool		paramisnull;
-	char	   *extval;
-	int			pidx = 0;
-	char		c[2] = {0, 0};
 	char	   *cp;
 	PLpgSQL_dstring ds;
+	ListCell   *current_param;
 
 	plpgsql_dstring_init(&ds);
+	current_param = list_head(stmt->params);
 
 	for (cp = stmt->message; *cp; cp++)
 	{
 		/*
-		 * Occurrences of a single % are replaced by the next argument's
+		 * Occurrences of a single % are replaced by the next parameter's
 		 * external representation. Double %'s are converted to one %.
 		 */
-		if ((c[0] = *cp) == '%')
+		if (cp[0] == '%')
 		{
-			cp++;
-			if (*cp == '%')
+			Oid			paramtypeid;
+			Datum		paramvalue;
+			bool		paramisnull;
+			char	   *extval;
+
+			if (cp[1] == '%')
 			{
-				plpgsql_dstring_append(&ds, c);
+				plpgsql_dstring_append_char(&ds, cp[1]);
+				cp++;
 				continue;
 			}
-			cp--;
-			if (pidx >= stmt->nparams)
-			{
-				plpgsql_dstring_append(&ds, c);
-				continue;
-			}
-			exec_eval_datum(estate, estate->datums[stmt->params[pidx]],
+
+			if (current_param == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("too few parameters specified for RAISE")));
+
+			exec_eval_datum(estate, estate->datums[lfirst_int(current_param)],
 							InvalidOid,
 							&paramtypeid, &paramvalue, &paramisnull);
 			if (paramisnull)
@@ -1942,12 +1927,21 @@ exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 			else
 				extval = convert_value_to_string(paramvalue, paramtypeid);
 			plpgsql_dstring_append(&ds, extval);
-			pidx++;
+			current_param = lnext(current_param);
 			continue;
 		}
 
-		plpgsql_dstring_append(&ds, c);
+		plpgsql_dstring_append_char(&ds, cp[0]);
 	}
+
+	/*
+	 * If more parameters were specified than were required to process
+	 * the format string, throw an error
+	 */
+	if (current_param != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("too many parameters specified for RAISE")));
 
 	/*
 	 * Throw the error (may or may not come back)
