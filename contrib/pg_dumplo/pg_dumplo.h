@@ -1,7 +1,7 @@
 /* -------------------------------------------------------------------------
  * pg_dumplo
  *
- * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/pg_dumplo.h,v 1.7 2001/11/05 17:46:23 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/pg_dumplo.h,v 1.8 2001/11/12 17:44:14 momjian Exp $
  *
  *					Karel Zak 1999-2000
  * -------------------------------------------------------------------------
@@ -51,6 +51,7 @@ typedef struct
 			   *user,
 			   *db,
 			   *host,
+			   *port,
 			   *space;
 	FILE	   *index;
 	int			counter,

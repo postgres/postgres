@@ -1,7 +1,7 @@
 /* -------------------------------------------------------------------------
  * pg_dumplo
  *
- * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/main.c,v 1.9 2001/10/25 05:49:19 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/main.c,v 1.10 2001/11/12 17:44:14 momjian Exp $
  *
  *					Karel Zak 1999-2000
  * -------------------------------------------------------------------------
@@ -56,6 +56,7 @@ main(int argc, char **argv)
 	pgLO->user = NULL;
 	pgLO->db = NULL;
 	pgLO->host = NULL;
+	pgLO->port = NULL;
 	pgLO->space = NULL;
 	pgLO->index = NULL;
 	pgLO->remove = FALSE;
@@ -81,6 +82,7 @@ main(int argc, char **argv)
 			{"pwd", required_argument, 0, 'p'},
 			{"db", required_argument, 0, 'd'},
 			{"host", required_argument, 0, 'h'},
+			{"port", required_argument, 0, 'o'},
 			{"space", required_argument, 0, 's'},
 			{"import", no_argument, 0, 'i'},
 			{"export", no_argument, 0, 'e'},
@@ -91,10 +93,10 @@ main(int argc, char **argv)
 			{NULL, 0, 0, 0}
 		};
 
-		while ((arg = getopt_long(argc, argv, "?aehu:p:qd:l:t:irs:w", l_opt, &l_index)) != -1)
+		while ((arg = getopt_long(argc, argv, "?aeho:u:p:qd:l:t:irs:w", l_opt, &l_index)) != -1)
 		{
 #else
-		while ((arg = getopt(argc, argv, "?aehu:p:qd:l:t:irs:w")) != -1)
+		while ((arg = getopt(argc, argv, "?aeho:u:p:qd:l:t:irs:w")) != -1)
 		{
 #endif
 			switch (arg)
@@ -108,6 +110,9 @@ main(int argc, char **argv)
 					break;
 				case 't':
 					pgLO->host = strdup(optarg);
+					break;
+				case 'o':
+					pgLO->port = strdup(optarg);
 					break;
 				case 'p':
 					pwd = strdup(optarg);
@@ -173,7 +178,7 @@ main(int argc, char **argv)
 	/*
 	 * Make connection
 	 */
-	pgLO->conn = PQsetdbLogin(pgLO->host, NULL, NULL, NULL, pgLO->db,
+	pgLO->conn = PQsetdbLogin(pgLO->host, pgLO->port, NULL, NULL, pgLO->db,
 							  pgLO->user, pwd);
 
 	if (PQstatus(pgLO->conn) == CONNECTION_BAD)
@@ -279,6 +284,7 @@ usage()
 	   "-p --password=<password>     password for connection to server\n"
 		 "-d --db=<database>           database name\n"
 		 "-t --host=<hostname>         server hostname\n"
+		 "-o --port=<port>             database server port (default: 5432)\n" 
 		 "-s --space=<dir>             directory with dump tree (for export/import)\n"
 		 "-i --import                  import large obj dump tree to DB\n"
 	"-e --export                  export (dump) large obj to dump tree\n"
@@ -295,6 +301,7 @@ usage()
 	   "-p <password>                password for connection to server\n"
 		 "-d <database>                database name\n"
 		 "-t <hostname>                server hostname\n"
+		 "-o <port>                    database server port (default: 5432)\n" 
 		 "-s <dir>                     directory with dump tree (for export/import)\n"
 		 "-i                           import large obj dump tree to DB\n"
 	"-e                           export (dump) large obj to dump tree\n"
