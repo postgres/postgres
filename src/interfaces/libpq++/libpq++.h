@@ -31,8 +31,9 @@ extern "C" {
 #include "libpq-fe.h"
 }
 
-static char rcsid[] = "$Id: libpq++.h,v 1.5 2000/01/26 05:58:47 momjian Exp $";
+static char rcsid[] = "$Id: libpq++.h,v 1.6 2000/03/02 02:00:58 momjian Exp $";
 
+using namespace std;
 
 // ****************************************************************
 //

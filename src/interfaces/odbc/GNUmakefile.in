@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile.in,v 1.11 1999/06/30 23:57:29 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile.in,v 1.12 2000/03/02 02:01:00 momjian Exp $
 #
 #-------------------------------------------------------------------------
 @SET_MAKE@
@@ -37,7 +37,7 @@ OBJS = info.o bind.o columninfo.o connection.o convert.o drvconn.o \
         pgtypes.o psqlodbc.o qresult.o results.o socket.o parse.o statement.o \
         gpps.o tuple.o tuplelist.o dlg_specific.o $(OBJX)
 
-SHLIB_LINK= $(LIBS)
+SHLIB_LINK= $(LD_FLAGS)
 
 # Shared library stuff, also default 'all' target
 include $(SRCDIR)/Makefile.shlib

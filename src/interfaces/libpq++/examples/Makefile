@@ -12,7 +12,8 @@ LIBPQDIR= /usr/local/pgsql/lib
 # inevitably get the warning, "abstract declarator used as declaration"
 # because of our inclusion of c.h and we don't know how to stop that.
 
-CXXFLAGS= $(CFLAGS) -Wno-error -Wno-unused -Wl,-Bdynamic
+#CXXFLAGS= $(CFLAGS) -Wno-error -Wno-unused -Wl,-Bdynamic
+CXXFLAGS= $(CFLAGS)
 
 INCLUDE_OPT= -I$(HEADERDIR)
 
