@@ -70,13 +70,17 @@ miscutil -
 noupdate -
 	trigger to prevent updates on single columns
 
+pg_dumplo -
+	Dump large objects
+	by Karel Zak <zakkr@zf.jcu.cz>
+
 pgbench -
 	TPC-B like benchmarking tool
 	by Tatsuo Ishii <t-ishii@sra.co.jp>
 
-pg_dumplo -
-	Dump large objects
-	by Karel Zak <zakkr@zf.jcu.cz>
+pgcrypto -
+	Cryptographic hash functions
+	by Marko Kreen <marko@l-t.ee>
 
 soundex -
 	Soundex function
