@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.15 2001/11/15 06:15:34 ishii Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.16 2001/11/18 20:33:32 petere Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -18,8 +18,8 @@
     <listitem>
      <para>
       Using the locale features of the operating system to provide
-      locale-specific collation order, number formatting, and other
-      aspects.
+      locale-specific collation order, number formatting, translated
+      messages, and other aspects.
      </para>
     </listitem>
 
@@ -74,6 +74,12 @@
 </informalexample>
     Locale support only affects the server; all clients are compatible
     with servers with or without locale support.
+   </para>
+
+   <para>
+    To enable messages translated to the user's preferred language,
+    the <option>--enable-nls</option> option must be used.  This
+    option is independent of the other locale support.
    </para>
 
    <para>
@@ -132,21 +138,36 @@ export LANG=sv_SE
      </tgroup>
     </informaltable>
 
-    <envar>LC_MESSAGES</> only affects the messages that come from the
-    operating system, not <productname>PostgreSQL</>.
+    Additionally, all of these specific variables and the
+    <envar>LANG</> variable can be overridden with the
+    <envar>LC_ALL</> environment variable.
    </para>
+
+   <note>
+    <para>
+     Some message localization libraries also look at the environment
+     variable <envar>LANGUAGE</envar> which overrides all other locale
+     settings for the purpose of setting the language of messages.  If
+     in doubt, please refer to the documentation of your operating
+     system, in particular the
+     <citerefentry><refentrytitle>gettext</><manvolnum>3</></> manual
+     page, for more information.
+    </para>
+   </note>
 
    <para>
     If you want the system to behave as if it had no locale support,
     use the special locale <literal>C</> or <literal>POSIX</>, or
-    simply unset all locale related variables.
+    simply unset all locale-related variables.
    </para>
 
    <para>
-    Note that the locale behavior is determined by the environment
-    variables seen by the server, not by the environment of any client.
-    Therefore, be careful to set these variables before starting the
-    postmaster. 
+    Note that the locale behavior of the server is determined by the
+    environment variables seen by the server, not by the environment
+    of any client.  Therefore, be careful to set these variables
+    before starting the server.  A consequence of this is that if
+    client and server are set up to different locales, messages may
+    appear in different languages depending on where they originated.
    </para>
 
    <para>
@@ -238,6 +259,27 @@ perl: warning: Falling back to the standard locale ("C").
    <para>
     The directory <filename>src/test/locale</> contains a test suite
     for <productname>PostgreSQL</>'s locale support.
+   </para>
+
+   <para>
+    Client applications that handle server-side errors by parsing the
+    text of the error message will obviously have problems when the
+    server's messages are in a different language.  If you create such
+    an application you need to devise a plan to cope with this
+    situation.  The embedded SQL interface (<application>ecpg</>) is
+    also affected by this problem.  It is currently recommended that
+    servers interfacing with <application>ecpg</> applications be
+    configured to send messages in English.
+   </para>
+
+   <para>
+    Maintaining catalogs of message translations requires the on-going
+    efforts of many volunteers that want to see
+    <productname>PostgreSQL</> speak their preferred language well.
+    If messages in your language is currently not available or fully
+    translated, your assistance would be appreciated.  If you want to
+    help, refer to the <citetitle>Developer's Guide</> or write to the
+    developers' mailing list.
    </para>
   </sect2>
  </sect1>
