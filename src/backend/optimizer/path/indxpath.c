@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.74 1999/12/31 03:41:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.75 1999/12/31 05:38:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "catalog/pg_amop.h"
 #include "catalog/pg_operator.h"
 #include "executor/executor.h"
+#include "mb/pg_wchar.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
@@ -92,7 +93,12 @@ static Prefix_Status regex_fixed_prefix(char *patt, bool case_insensitive,
 										char **prefix);
 static List *prefix_quals(Var *leftop, Oid expr_op,
 						  char *prefix, Prefix_Status pstatus);
+static char *make_greater_string(const char * str, Oid datatype);
 static Oid find_operator(const char * opname, Oid datatype);
+static Datum string_to_datum(const char * str, Oid datatype);
+static Const *string_to_const(const char * str, Oid datatype);
+static bool string_lessthan(const char * str1, const char * str2,
+							Oid datatype);
 
 
 /*
@@ -1653,7 +1659,7 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 		case OID_TEXT_REGEXEQ_OP:
 		case OID_TEXT_ICREGEXEQ_OP:
 			if (! op_class(find_operator(">=", TEXTOID), opclass, relam) ||
-				! op_class(find_operator("<=", TEXTOID), opclass, relam))
+				! op_class(find_operator("<", TEXTOID), opclass, relam))
 				isIndexable = false;
 			break;
 
@@ -1661,7 +1667,7 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 		case OID_BPCHAR_REGEXEQ_OP:
 		case OID_BPCHAR_ICREGEXEQ_OP:
 			if (! op_class(find_operator(">=", BPCHAROID), opclass, relam) ||
-				! op_class(find_operator("<=", BPCHAROID), opclass, relam))
+				! op_class(find_operator("<", BPCHAROID), opclass, relam))
 				isIndexable = false;
 			break;
 
@@ -1669,7 +1675,7 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 		case OID_VARCHAR_REGEXEQ_OP:
 		case OID_VARCHAR_ICREGEXEQ_OP:
 			if (! op_class(find_operator(">=", VARCHAROID), opclass, relam) ||
-				! op_class(find_operator("<=", VARCHAROID), opclass, relam))
+				! op_class(find_operator("<", VARCHAROID), opclass, relam))
 				isIndexable = false;
 			break;
 
@@ -1677,7 +1683,7 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 		case OID_NAME_REGEXEQ_OP:
 		case OID_NAME_ICREGEXEQ_OP:
 			if (! op_class(find_operator(">=", NAMEOID), opclass, relam) ||
-				! op_class(find_operator("<=", NAMEOID), opclass, relam))
+				! op_class(find_operator("<", NAMEOID), opclass, relam))
 				isIndexable = false;
 			break;
 	}
@@ -1774,7 +1780,7 @@ expand_indexqual_conditions(List *indexquals)
 
 /*
  * Extract the fixed prefix, if any, for a LIKE pattern.
- * *prefix is set to a palloc'd prefix string with 1 spare byte,
+ * *prefix is set to a palloc'd prefix string,
  * or to NULL if no fixed prefix exists for the pattern.
  * The return value distinguishes no fixed prefix, a partial prefix,
  * or an exact-match-only pattern.
@@ -1786,7 +1792,7 @@ like_fixed_prefix(char *patt, char **prefix)
 	int			pos,
 				match_pos;
 
-	*prefix = match = palloc(strlen(patt)+2);
+	*prefix = match = palloc(strlen(patt)+1);
 	match_pos = 0;
 
 	for (pos = 0; patt[pos]; pos++)
@@ -1823,7 +1829,7 @@ like_fixed_prefix(char *patt, char **prefix)
 
 /*
  * Extract the fixed prefix, if any, for a regex pattern.
- * *prefix is set to a palloc'd prefix string with 1 spare byte,
+ * *prefix is set to a palloc'd prefix string,
  * or to NULL if no fixed prefix exists for the pattern.
  * The return value distinguishes no fixed prefix, a partial prefix,
  * or an exact-match-only pattern.
@@ -1858,7 +1864,7 @@ regex_fixed_prefix(char *patt, bool case_insensitive,
 	}
 
 	/* OK, allocate space for pattern */
-	*prefix = match = palloc(strlen(patt)+2);
+	*prefix = match = palloc(strlen(patt)+1);
 	match_pos = 0;
 
 	/* note start at pos 1 to skip leading ^ */
@@ -1906,11 +1912,10 @@ prefix_quals(Var *leftop, Oid expr_op,
 	List	   *result;
 	Oid			datatype;
 	Oid			oproid;
-	void	   *conval;
 	Const	   *con;
 	Oper	   *op;
 	Expr	   *expr;
-	int			prefixlen;
+	char	   *greaterstr;
 
 	Assert(pstatus != Prefix_None);
 
@@ -1953,14 +1958,7 @@ prefix_quals(Var *leftop, Oid expr_op,
 		oproid = find_operator("=", datatype);
 		if (oproid == InvalidOid)
 			elog(ERROR, "prefix_quals: no = operator for type %u", datatype);
-		/* Note: we cheat a little by assuming that textin() will do for
-		 * bpchar and varchar constants too...
-		 */
-		conval = (datatype == NAMEOID) ?
-			(void*) namein(prefix) : (void*) textin(prefix);
-		con = makeConst(datatype, ((datatype == NAMEOID) ? NAMEDATALEN : -1),
-						PointerGetDatum(conval),
-						false, false, false, false);
+		con = string_to_const(prefix, datatype);
 		op = makeOper(oproid, InvalidOid, BOOLOID, 0, NULL);
 		expr = make_opclause(op, leftop, (Var *) con);
 		result = lcons(expr, NIL);
@@ -1975,42 +1973,91 @@ prefix_quals(Var *leftop, Oid expr_op,
 	oproid = find_operator(">=", datatype);
 	if (oproid == InvalidOid)
 		elog(ERROR, "prefix_quals: no >= operator for type %u", datatype);
-	conval = (datatype == NAMEOID) ?
-		(void*) namein(prefix) : (void*) textin(prefix);
-	con = makeConst(datatype, ((datatype == NAMEOID) ? NAMEDATALEN : -1),
-					PointerGetDatum(conval),
-					false, false, false, false);
+	con = string_to_const(prefix, datatype);
 	op = makeOper(oproid, InvalidOid, BOOLOID, 0, NULL);
 	expr = make_opclause(op, leftop, (Var *) con);
 	result = lcons(expr, NIL);
 
 	/*
-	 * In ASCII locale we say "x <= prefix\377".  This does not
-	 * work for non-ASCII collation orders, and it's not really
-	 * right even for ASCII.  FIX ME!
-	 * Note we assume the passed prefix string is workspace with
-	 * an extra byte, as created by the xxx_fixed_prefix routines above.
+	 * If we can create a string larger than the prefix, say "x < greaterstr".
 	 */
-#ifndef USE_LOCALE
-	prefixlen = strlen(prefix);
-	prefix[prefixlen] = '\377';
-	prefix[prefixlen+1] = '\0';
-
-	oproid = find_operator("<=", datatype);
-	if (oproid == InvalidOid)
-		elog(ERROR, "prefix_quals: no <= operator for type %u", datatype);
-	conval = (datatype == NAMEOID) ?
-		(void*) namein(prefix) : (void*) textin(prefix);
-	con = makeConst(datatype, ((datatype == NAMEOID) ? NAMEDATALEN : -1),
-					PointerGetDatum(conval),
-					false, false, false, false);
-	op = makeOper(oproid, InvalidOid, BOOLOID, 0, NULL);
-	expr = make_opclause(op, leftop, (Var *) con);
-	result = lappend(result, expr);
-#endif
+	greaterstr = make_greater_string(prefix, datatype);
+	if (greaterstr)
+	{
+		oproid = find_operator("<", datatype);
+		if (oproid == InvalidOid)
+			elog(ERROR, "prefix_quals: no < operator for type %u", datatype);
+		con = string_to_const(greaterstr, datatype);
+		op = makeOper(oproid, InvalidOid, BOOLOID, 0, NULL);
+		expr = make_opclause(op, leftop, (Var *) con);
+		result = lappend(result, expr);
+		pfree(greaterstr);
+	}
 
 	return result;
 }
+
+/*
+ * Try to generate a string greater than the given string or any string it is
+ * a prefix of.  If successful, return a palloc'd string; else return NULL.
+ *
+ * To work correctly in non-ASCII locales with weird collation orders,
+ * we cannot simply increment "foo" to "fop" --- we have to check whether
+ * we actually produced a string greater than the given one.  If not,
+ * increment the righthand byte again and repeat.  If we max out the righthand
+ * byte, truncate off the last character and start incrementing the next.
+ * For example, if "z" were the last character in the sort order, then we
+ * could produce "foo" as a string greater than "fonz".
+ *
+ * This could be rather slow in the worst case, but in most cases we won't
+ * have to try more than one or two strings before succeeding.
+ *
+ * XXX in a sufficiently weird locale, this might produce incorrect results?
+ * For example, in German I believe "ss" is treated specially --- if we are
+ * given "foos" and return "foot", will this actually be greater than "fooss"?
+ */
+static char *
+make_greater_string(const char * str, Oid datatype)
+{
+	char	   *workstr;
+	int			len;
+
+	/* Make a modifiable copy, which will be our return value if successful */
+	workstr = pstrdup((char *) str);
+
+	while ((len = strlen(workstr)) > 0)
+	{
+		unsigned char  *lastchar = (unsigned char *) (workstr + len - 1);
+
+		/*
+		 * Try to generate a larger string by incrementing the last byte.
+		 */
+		while (*lastchar < (unsigned char) 255)
+		{
+			(*lastchar)++;
+			if (string_lessthan(str, workstr, datatype))
+				return workstr;			/* Success! */
+		}
+		/*
+		 * Truncate off the last character, which might be more than 1 byte
+		 * in MULTIBYTE case.
+		 */
+#ifdef MULTIBYTE
+		len = pg_mbcliplen((const unsigned char *) workstr, len, len-1);
+		workstr[len] = '\0';
+#else
+		*lastchar = '\0';
+#endif
+	}
+
+	/* Failed... */
+	pfree(workstr);
+	return NULL;
+}
+
+/*
+ * Handy subroutines for match_special_index_operator() and friends.
+ */
 
 /* See if there is a binary op of the given name for the given datatype */
 static Oid
@@ -2026,4 +2073,75 @@ find_operator(const char * opname, Oid datatype)
 	if (!HeapTupleIsValid(optup))
 		return InvalidOid;
 	return optup->t_data->t_oid;
+}
+
+/*
+ * Generate a Datum of the appropriate type from a C string.
+ * Note that all of the supported types are pass-by-ref, so the
+ * returned value should be pfree'd if no longer needed.
+ */
+static Datum
+string_to_datum(const char * str, Oid datatype)
+{
+	/* We cheat a little by assuming that textin() will do for
+	 * bpchar and varchar constants too...
+	 */
+	if (datatype == NAMEOID)
+		return PointerGetDatum(namein((char *) str));
+	else
+		return PointerGetDatum(textin((char *) str));
+}
+
+/*
+ * Generate a Const node of the appropriate type from a C string.
+ */
+static Const *
+string_to_const(const char * str, Oid datatype)
+{
+	Datum		conval = string_to_datum(str, datatype);
+
+	return makeConst(datatype, ((datatype == NAMEOID) ? NAMEDATALEN : -1),
+					 conval, false, false, false, false);
+}
+
+/*
+ * Test whether two strings are "<" according to the rules of the given
+ * datatype.  We do this the hard way, ie, actually calling the type's
+ * "<" operator function, to ensure we get the right result...
+ */
+static bool
+string_lessthan(const char * str1, const char * str2, Oid datatype)
+{
+	Datum		datum1 = string_to_datum(str1, datatype);
+	Datum		datum2 = string_to_datum(str2, datatype);
+	bool		result;
+
+	switch (datatype)
+	{
+		case TEXTOID:
+			result = text_lt((text *) datum1, (text *) datum2);
+			break;
+
+		case BPCHAROID:
+			result = bpcharlt((char *) datum1, (char *) datum2);
+			break;
+
+		case VARCHAROID:
+			result = varcharlt((char *) datum1, (char *) datum2);
+			break;
+
+		case NAMEOID:
+			result = namelt((NameData *) datum1, (NameData *) datum2);
+			break;
+
+		default:
+			elog(ERROR, "string_lessthan: unexpected datatype %u", datatype);
+			result = false;
+			break;
+	}
+
+	pfree(DatumGetPointer(datum1));
+	pfree(DatumGetPointer(datum2));
+
+	return result;
 }
