@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.48 2001/12/21 03:53:04 thomas Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.49 2002/01/30 21:54:17 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -139,21 +139,11 @@ $(addsuffix .rtf, $(ALLBOOKS)): %.rtf: %.sgml $(ALLSGML) stylesheet.dsl
 
 $(addsuffix .tex-ps, $(ALLBOOKS)): %.tex-ps: %.sgml $(ALLSGML) stylesheet.dsl
 	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -c $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print -V texdvi-output -o $@ book-decl.sgml $<
-# TeX transforms '--' into en-dashes.  This hack should go away when
-# OpenJade is fixed (ver. 1.4?)
-	$(PERL) -pi -e 's/\-\-/\\mbox{}-\\mbox{}-\\mbox{}/g' $@
-	$(PERL) -pi -e 's/\<\</\\mbox{}<\\mbox{}<\\mbox{}/g' $@
-	$(PERL) -pi -e 's/\>\>/\\mbox{}>\\mbox{}>\\mbox{}/g' $@
-	$(PERL) -pi -e "s/\'\'/\\\\mbox{}'\\\\mbox{}'\\\\mbox{}/g" $@
 
 programmer.tex-ps: catalogs.eps connections.eps
 
 $(addsuffix .tex-pdf, $(ALLBOOKS)): %.tex-pdf: %.sgml $(ALLSGML) stylesheet.dsl
 	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -c $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print -V texpdf-output -o $@ book-decl.sgml $<
-	$(PERL) -pi -e 's/\-\-/\\mbox{}-\\mbox{}-\\mbox{}/g' $@
-	$(PERL) -pi -e 's/\<\</\\mbox{}<\\mbox{}<\\mbox{}/g' $@
-	$(PERL) -pi -e 's/\>\>/\\mbox{}>\\mbox{}>\\mbox{}/g' $@
-	$(PERL) -pi -e "s/\'\'/\\\\mbox{}'\\\\mbox{}'\\\\mbox{}/g" $@
 
 programmer.tex-pdf: catalogs.pdf connections.pdf
 
