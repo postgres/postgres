@@ -8,6 +8,11 @@ extern int	yylineno,
 extern FILE *yyin,
 		   *yyout;
 
+struct _include_path {  char * path;
+                        struct _include_path * next;
+                     };
+
+extern struct _include_path *include_paths;
 
 /* functions */
 

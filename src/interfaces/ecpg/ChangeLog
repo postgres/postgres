@@ -71,3 +71,18 @@ Fri Feb 27 12:00:55 CET 1998
 	- removed all shift/reduce conflicts
 	- allow syntax 'fetch cursor' as well as 'fetch in cursor'
 
+Fri Mar 13 11:37:16 CET 1998
+
+	- finished transaction handling, needs only one function in ecpglib now
+	  old functions are still supported for compatibility
+	- set library to version 1.1.0
+
+Fri Mar 13 13:35:13 CET 1998
+
+	- exec sql include includes files during parsing
+	- set parser to version 1.1.0
+	- added -I option to ecpg to set include path
+
+Mon Mar 16 15:09:10 CET 1998
+
+	- fixed parser to print correct filename and line number

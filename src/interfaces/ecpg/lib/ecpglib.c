@@ -572,38 +572,33 @@ ECPGdo(int lineno, char *query,...)
 
 
 bool
-ECPGcommit(int lineno)
+ECPGtrans(int lineno, const char * transaction)
 {
 	PGresult   *res;
 
-	ECPGlog("ECPGcommit line %d\n", lineno);
-	if ((res = PQexec(simple_connection, "end")) == NULL)
+	ECPGlog("ECPGtrans line %d action = %s\n", lineno, transaction);
+	if ((res = PQexec(simple_connection, transaction)) == NULL)
 	{
-		register_error(-1, "Error committing line %d.", lineno);
+		register_error(-1, "Error in transaction processing line %d.", lineno);
 		return (FALSE);
 	}
 	PQclear(res);
 	committed = 1;
 	return (TRUE);
+}
+
+/* include these for compatibility */
+bool
+ECPGcommit(int lineno)
+{
+	return(ECPGtrans(lineno, "end"));
 }
 
 bool
 ECPGrollback(int lineno)
 {
-	PGresult   *res;
-
-	ECPGlog("ECPGrollback line %d\n", lineno);
-	if ((res = PQexec(simple_connection, "abort")) == NULL)
-	{
-		register_error(-1, "Error rolling back line %d.", lineno);
-		return (FALSE);
-	}
-	PQclear(res);
-	committed = 1;
-	return (TRUE);
+	return(ECPGtrans(lineno, "abort"));
 }
-
-
 
 bool
 ECPGsetdb(PGconn *newcon)

@@ -29,6 +29,10 @@
  */
 #include <stdio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum ECPGttype
 {
 	ECPGt_char = 1, ECPGt_unsigned_char, ECPGt_short, ECPGt_unsigned_short,
@@ -45,3 +49,7 @@ enum ECPGttype
 #define IS_SIMPLE_TYPE(type) ((type) >= ECPGt_char && (type) <= ECPGt_varchar2)
 
 const char * ECPGtype_name(enum ECPGttype);
+
+#ifdef __cplusplus
+}
+#endif

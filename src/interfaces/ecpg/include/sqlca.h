@@ -1,6 +1,10 @@
 #ifndef POSTGRES_SQLCA_H
 #define POSTGRES_SQLCA_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct sqlca
 {
 	int			sqlcode;
@@ -12,3 +16,8 @@ struct sqlca
 }			sqlca;
 
 #endif
+
+#ifdef __cplusplus
+}
+#endif
+ 

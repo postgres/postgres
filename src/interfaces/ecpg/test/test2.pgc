@@ -1,11 +1,8 @@
 #include <stdio.h>
 
-exec sql include sqlca;
+exec sql include header_test;
 
 extern void ECPGdebug(int n, FILE *dbgs);
-
-exec sql whenever not found do set_not_found();
-exec sql whenever sqlerror sqlprint;
 
 static int not_found = 0;
 static void

@@ -226,6 +226,7 @@ dump_variables(struct arguments * list)
 %token <tagname> SQL_COMMIT SQL_ROLLBACK SQL_RELEASE SQL_WORK SQL_WHENEVER
 %token <tagname> SQL_SQLERROR SQL_NOT_FOUND SQL_CONTINUE SQL_FROM SQL_FETCH
 %token <tagname> SQL_DO SQL_GOTO SQL_SQLPRINT SQL_STOP SQL_CONV
+%token <tagname> SQL_ABORT SQL_TRANSACTION SQL_VACUUM
 
 %token <tagname> S_SYMBOL S_LENGTH S_ANYTHING S_LABEL
 %token <tagname> S_VARCHAR S_VARCHAR2
@@ -236,32 +237,31 @@ dump_variables(struct arguments * list)
 
 %type <type> type type_detailed varchar_type simple_type struct_type string_type
 /* % type <type> array_type pointer_type */
-%type <symbolname> symbol label
+%type <symbolname> symbol label transactionstmt
 %type <tagname> maybe_storage_clause varchar_tag db_name cursor
 %type <type_enum> simple_tag char_tag
 %type <indexsize> index length
 %type <action> action
-%type <tagname> canything sqlanything both_anything vartext commit_release sqlcommand
-
+%type <tagname> canything sqlanything both_anything vartext sqlcommand
+%type <tagname> transbegin, transend, transabort
 %%
 prog : statements;
 
 statements : /* empty */
 	   | statements statement;
 
-statement : sqldeclaration
-	  | sqlinclude
-	  | sqlconnect
-	  | sqlopen
-	  | sqlcommit
-	  | sqlrollback
+statement : sqlconnect
+	  | sqldeclaration
 	  | sqlexecute
-	  | sqlwhenever
-	  | sqlstatement
 	  | sqlfetch
-	  | cthing
+	  | sqlinclude
+	  | sqlopen
+	  | sqlstatement
+	  | sqltransaction
+	  | sqlwhenever
 	  | blockstart
-	  | blockend;
+	  | blockend
+	  | cthing;
 
 sqldeclaration : sql_startdeclare
 		 variable_declarations
@@ -489,19 +489,32 @@ sqlgarbage : /* Empty */
 	   | sqlgarbage sqlanything;
 	    
 
-sqlcommit : SQL_START commit_release SQL_SEMI {
-    fprintf(yyout, "ECPGcommit(__LINE__);"); 
+sqltransaction : SQL_START transactionstmt SQL_SEMI {
+    fprintf(yyout, "ECPGtrans(__LINE__, \"%s\");", $<symbolname>2);
     whenever_action();
 }
 
-commit_release : SQL_COMMIT
-	       | SQL_COMMIT SQL_RELEASE
-	       | SQL_COMMIT SQL_WORK SQL_RELEASE;
 
-sqlrollback : SQL_START SQL_ROLLBACK SQL_SEMI {
-    fprintf(yyout, "ECPGrollback(__LINE__);");
-    whenever_action();
-};
+transactionstmt:  transbegin 
+			{
+				$<symbolname>$="begin";
+			}
+		| transend
+			{
+				$<symbolname>$="end";
+			}
+		| transabort
+			{
+				$<symbolname>$="abort";
+			}
+
+transabort: SQL_ABORT SQL_TRANSACTION | SQL_ROLLBACK SQL_WORK
+	  | SQL_ABORT | SQL_ROLLBACK;
+
+transend: SQL_END SQL_TRANSACTION | SQL_COMMIT | SQL_COMMIT SQL_RELEASE
+	| SQL_COMMIT SQL_WORK SQL_RELEASE;
+
+transbegin: SQL_BEGIN SQL_TRANSACTION | SQL_BEGIN SQL_WORK;
 
 sqlexecute : SQL_START SQL_EXECUTE SQL_IMMEDIATE  ':' symbol  SQL_SEMI {  
     fprintf(yyout, "ECPGdo(__LINE__, %s, ECPGt_EOIT, ECPGt_EORT );", $5);
@@ -605,9 +618,9 @@ sqlstatement : SQL_START { /* Reset stack */
 }
 
 /* FIXME: instead of S_SYMBOL we should list all possible commands */
-sqlcommand : S_SYMBOL | SQL_DECLARE;
+sqlcommand : S_SYMBOL | SQL_DECLARE | SQL_VACUUM;
 
-sqlstatement_words : sqlstatement_word
+sqlstatement_words : /* empty */
 		   | sqlstatement_words sqlstatement_word;
 	
 sqlstatement_word : ':' symbol 

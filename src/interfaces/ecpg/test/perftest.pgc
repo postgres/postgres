@@ -16,6 +16,7 @@ print_result(long sec, long usec, char *text)
 		usec+=1000000;
 	}
 	printf("I needed %ld seconds and %ld microseconds for the %s test.\n", sec, usec, text);
+	exec sql vacuum analyze;
 }
 
 int
@@ -106,8 +107,6 @@ exec sql end declare section;
 	exec sql drop index number1;
 
 	exec sql drop table perftest1;
-
-	exec sql commit;
 
 	return (0);
 }

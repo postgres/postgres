@@ -1,14 +1,22 @@
 #include <c.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void		ECPGdebug(int, FILE *);
 bool		ECPGconnect(const char *dbname);
 bool		ECPGdo(int, char *,...);
-bool		ECPGcommit(int);
-bool		ECPGrollback(int);
+bool		ECPGtrans(int, const char *);
 bool		ECPGfinish(void);
 bool		ECPGstatus(void);
 
 void		ECPGlog(const char *format,...);
+
+/* These functions are only kept for compatibility reasons. */
+/* Use ECPGtrans instead. */
+bool		ECPGcommit(int);
+bool		ECPGrollback(int);
 
 #ifdef LIBPQ_FE_H
 bool		ECPGsetdb(PGconn *);
@@ -32,3 +40,7 @@ void		sqlprint(void);
 /* define this for simplicity as well as compatibility */
 
 #define		  SQLCODE	 sqlca.sqlcode
+
+#ifdef __cplusplus
+}
+#endif
