@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.42 2001/11/12 15:57:08 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.43 2002/03/05 02:42:56 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -532,15 +532,23 @@ describeTableDetails(const char *name, bool desc)
 	headers[cols] = NULL;
 
 
-	/* Get column info */
-	strcpy(buf, "SELECT a.attname, format_type(a.atttypid, a.atttypmod), a.attnotnull, a.atthasdef, a.attnum");
+	/* Get column info (index requires additional checks) */
+	if (tableinfo.relkind == 'i')
+		strcpy(buf, "SELECT\n  CASE i.indproc WHEN ('-'::regproc) THEN a.attname\n  ELSE SUBSTR(pg_get_indexdef(attrelid),\n  POSITION('(' in pg_get_indexdef(attrelid)))\n  END, ");
+	else
+		strcpy(buf, "SELECT a.attname, ");
+	strcat(buf, "format_type(a.atttypid, a.atttypmod), a.attnotnull, a.atthasdef, a.attnum");
 	if (desc)
 		strcat(buf, ", col_description(a.attrelid, a.attnum)");
-	strcat(buf, "\nFROM pg_class c, pg_attribute a\n"
-		   "WHERE c.relname = '");
+	strcat(buf, "\nFROM pg_class c, pg_attribute a");
+	if (tableinfo.relkind == 'i')
+		strcat(buf, ", pg_index i");
+	strcat(buf, "\nWHERE c.relname = '");
 	strncat(buf, name, NAMEDATALEN);
-	strcat(buf, "'\n  AND a.attnum > 0 AND a.attrelid = c.oid\n"
-		   "ORDER BY a.attnum");
+	strcat(buf, "'\n  AND a.attnum > 0 AND a.attrelid = c.oid");
+	if (tableinfo.relkind == 'i')
+		strcat(buf, " AND a.attrelid = i.indexrelid");
+	strcat(buf, "\nORDER BY a.attnum");
 
 	res = PSQLexec(buf);
 	if (!res)
@@ -651,11 +659,11 @@ describeTableDetails(const char *name, bool desc)
 	{
 		/* Footer information about an index */
 		PGresult   *result;
-
-		sprintf(buf, "SELECT i.indisunique, i.indisprimary, a.amname,\n"
-				"       pg_get_expr(i.indpred, i.indrelid) as indpred\n"
-				"FROM pg_index i, pg_class c, pg_am a\n"
-				"WHERE i.indexrelid = c.oid AND c.relname = '%s' AND c.relam = a.oid",
+		sprintf(buf, "SELECT i.indisunique, i.indisprimary, a.amname, c2.relname,\n"
+				"pg_get_expr(i.indpred,i.indrelid)\n"
+				"FROM pg_index i, pg_class c, pg_class c2, pg_am a\n"
+				"WHERE i.indexrelid = c.oid AND c.relname = '%s' AND c.relam = a.oid\n"
+				"AND i.indrelid = c2.oid",
 				name);
 
 		result = PSQLexec(buf);
@@ -666,27 +674,18 @@ describeTableDetails(const char *name, bool desc)
 			char	   *indisunique = PQgetvalue(result, 0, 0);
 			char	   *indisprimary = PQgetvalue(result, 0, 1);
 			char	   *indamname = PQgetvalue(result, 0, 2);
-			char	   *indpred = PQgetvalue(result, 0, 3);
+			char	   *indtable = PQgetvalue(result, 0, 3);
+			char	   *indpred = PQgetvalue(result, 0, 4);
 
-			footers = xmalloc(3 * sizeof(*footers));
+			footers = xmalloc(2 * sizeof(*footers));
 			/* XXX This construction is poorly internationalized. */
-			footers[0] = xmalloc(NAMEDATALEN + 128);
-			snprintf(footers[0], NAMEDATALEN + 128, "%s%s",
+			footers[0] = xmalloc(NAMEDATALEN*4 + 128);
+			snprintf(footers[0], NAMEDATALEN*4 + 128, "%s%s for %s \"%s\"%s%s",
+					 strcmp(indisprimary, "t") == 0 ? _("primary key ") : 
 					 strcmp(indisunique, "t") == 0 ? _("unique ") : "",
-					 indamname);
-			if (strcmp(indisprimary, "t") == 0)
-				snprintf(footers[0] + strlen(footers[0]),
-						 NAMEDATALEN + 128 - strlen(footers[0]),
-						 _(" (primary key)"));
-			if (strlen(indpred) > 0)
-			{
-				footers[1] = xmalloc(64 + strlen(indpred));
-				snprintf(footers[1], 64 + strlen(indpred),
-						 _("Index predicate: %s"), indpred);
-				footers[2] = NULL;
-			}
-			else
-				footers[1] = NULL;
+					 indamname, _("table"), indtable, 
+					 strlen(indpred) ? " WHERE " : "",indpred);
+			footers[1] = NULL;
 		}
 
 		PQclear(result);
@@ -706,12 +705,8 @@ describeTableDetails(const char *name, bool desc)
 		PGresult   *result1 = NULL,
 				   *result2 = NULL,
 				   *result3 = NULL,
-				   *result4 = NULL,
-				   *result5 = NULL,
-				   *result6 = NULL;
+				   *result4 = NULL;
 		int			index_count = 0,
-					primary_count = 0,
-					unique_count = 0,
 					constr_count = 0,
 					rule_count = 0,
 					trigger_count = 0;
@@ -720,46 +715,18 @@ describeTableDetails(const char *name, bool desc)
 		/* count indexes */
 		if (!error && tableinfo.hasindex)
 		{
-			sprintf(buf, "SELECT c2.relname\n"
+			sprintf(buf, "SELECT c2.relname, i.indisprimary, i.indisunique,\n"
+					"SUBSTR(pg_get_indexdef(i.indexrelid),\n"
+					"POSITION('USING ' IN pg_get_indexdef(i.indexrelid))+5)\n"
 					"FROM pg_class c, pg_class c2, pg_index i\n"
 					"WHERE c.relname = '%s' AND c.oid = i.indrelid AND i.indexrelid = c2.oid\n"
-					"AND NOT i.indisunique ORDER BY c2.relname",
+					"ORDER BY i.indisprimary DESC, i.indisunique DESC, c2.relname",
 					name);
 			result1 = PSQLexec(buf);
 			if (!result1)
 				error = true;
 			else
 				index_count = PQntuples(result1);
-		}
-
-		/* count primary keys */
-		if (!error && tableinfo.hasindex)
-		{
-			sprintf(buf, "SELECT c2.relname\n"
-					"FROM pg_class c, pg_class c2, pg_index i\n"
-					"WHERE c.relname = '%s' AND c.oid = i.indrelid AND i.indexrelid = c2.oid\n"
-			  "AND i.indisprimary AND i.indisunique ORDER BY c2.relname",
-					name);
-			result5 = PSQLexec(buf);
-			if (!result5)
-				error = true;
-			else
-				primary_count = PQntuples(result5);
-		}
-
-		/* count unique constraints */
-		if (!error && tableinfo.hasindex)
-		{
-			sprintf(buf, "SELECT c2.relname\n"
-					"FROM pg_class c, pg_class c2, pg_index i\n"
-					"WHERE c.relname = '%s' AND c.oid = i.indrelid AND i.indexrelid = c2.oid\n"
-					"AND NOT i.indisprimary AND i.indisunique ORDER BY c2.relname",
-					name);
-			result6 = PSQLexec(buf);
-			if (!result6)
-				error = true;
-			else
-				unique_count = PQntuples(result6);
 		}
 
 		/* count table (and column) constraints */
@@ -806,54 +773,32 @@ describeTableDetails(const char *name, bool desc)
 				trigger_count = PQntuples(result4);
 		}
 
-		footers = xmalloc((index_count + primary_count + unique_count +
-						   constr_count + rule_count + trigger_count + 1)
+		footers = xmalloc((index_count + constr_count + rule_count + trigger_count + 1)
 						  * sizeof(*footers));
 
 		/* print indexes */
 		for (i = 0; i < index_count; i++)
 		{
 			char	   *s = _("Indexes");
-
+	
 			if (i == 0)
 				snprintf(buf, sizeof(buf), "%s: %s", s, PQgetvalue(result1, i, 0));
 			else
 				snprintf(buf, sizeof(buf), "%*s  %s", (int) strlen(s), "", PQgetvalue(result1, i, 0));
+
+			/* Label as primary key or unique (but not both) */
+			strcat(buf, strcmp(PQgetvalue(result1,i,1),"t") == 0 ? 
+				   _(" primary key") : strcmp(PQgetvalue(result1,i,2),"t") == 0 ? _(" unique") : "");
+
+			/* Everything after "USING" is echoed verbatim */
+			strcat(buf, PQgetvalue(result1,i,3));
+
 			if (i < index_count - 1)
 				strcat(buf, ",");
 
 			footers[count_footers++] = xstrdup(buf);
 		}
 
-		/* print primary keys */
-		for (i = 0; i < primary_count; i++)
-		{
-			char	   *s = _("Primary key");
-
-			if (i == 0)
-				snprintf(buf, sizeof(buf), "%s: %s", s, PQgetvalue(result5, i, 0));
-			else
-				snprintf(buf, sizeof(buf), "%*s  %s", (int) strlen(s), "", PQgetvalue(result5, i, 0));
-			if (i < primary_count - 1)
-				strcat(buf, ",");
-
-			footers[count_footers++] = xstrdup(buf);
-		}
-
-		/* print unique constraints */
-		for (i = 0; i < unique_count; i++)
-		{
-			char	   *s = _("Unique keys");
-
-			if (i == 0)
-				snprintf(buf, sizeof(buf), "%s: %s", s, PQgetvalue(result6, i, 0));
-			else
-				snprintf(buf, sizeof(buf), "%*s  %s", (int) strlen(s), "", PQgetvalue(result6, i, 0));
-			if (i < unique_count - 1)
-				strcat(buf, ",");
-
-			footers[count_footers++] = xstrdup(buf);
-		}
 
 		/* print constraints */
 		for (i = 0; i < constr_count; i++)
@@ -906,8 +851,6 @@ describeTableDetails(const char *name, bool desc)
 		PQclear(result2);
 		PQclear(result3);
 		PQclear(result4);
-		PQclear(result5);
-		PQclear(result6);
 	}
 
 	if (!error)
@@ -1031,9 +974,19 @@ listTables(const char *infotype, const char *name, bool desc)
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
 				 ",\n  obj_description(c.oid, 'pg_class') as \"%s\"",
 				 _("Description"));
-	strcat(buf,
-	 "\nFROM pg_class c LEFT JOIN pg_user u ON c.relowner = u.usesysid\n"
-		   "WHERE c.relkind IN (");
+    if (showIndexes) {
+		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+				 ",\n c2.relname as \"%s\"",
+				 _("Table"));
+		strcat(buf, "\nFROM pg_class c, pg_class c2, pg_index i, pg_user u\n"
+			   "WHERE c.relowner = u.usesysid\n"
+			   "AND i.indrelid = c2.oid AND i.indexrelid = c.oid\n");
+	}
+	else {
+		strcat(buf, "\nFROM pg_class c, pg_user u\n"
+			   "WHERE c.relowner = u.usesysid\n");
+	}
+	strcat(buf, "AND c.relkind IN (");
 	if (showTables)
 		strcat(buf, "'r',");
 	if (showViews)
