@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Aug  7 22:00:19 EDT 2003
+Last updated:		Fri Aug  8 12:33:31 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -249,7 +249,6 @@ Commands
 	  get_employee_salary(emp_id => 12345, tax_year => 2001)
 	o Add PL/PgSQL packages
 	o Allow array declarations and other data types in PL/PgSQL DECLARE
-	o Add PL/PgSQL PROCEDURES that can return multiple values
 	o Add table function support to pltcl, plperl, plpython
 	o -Make PL/PgSQL %TYPE schema-aware
 	o Allow PL/PgSQL to support array element assignment
@@ -474,7 +473,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1107 2003/08/08 02:00:20 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1107 2003/08/08 02:00:20 momjian Exp $
+* Change CVS $Id: TODO,v 1.1108 2003/08/08 16:33:35 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1108 2003/08/08 16:33:35 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
