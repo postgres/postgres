@@ -45,7 +45,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.109 2003/06/25 21:30:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.110 2003/07/01 19:10:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,7 @@
 #include "executor/nodeAgg.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
+#include "parser/parse_agg.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
@@ -1182,11 +1183,15 @@ ExecInitAgg(Agg *node, EState *estate)
 		AggrefExprState *aggrefstate = (AggrefExprState *) lfirst(alist);
 		Aggref	   *aggref = (Aggref *) aggrefstate->xprstate.expr;
 		AggStatePerAgg peraggstate;
+		Oid			inputType;
 		HeapTuple	aggTuple;
 		Form_pg_aggregate aggform;
+		Oid			aggtranstype;
 		AclResult	aclresult;
 		Oid			transfn_oid,
 					finalfn_oid;
+		Expr	   *transfnexpr,
+				   *finalfnexpr;
 		Datum		textInitVal;
 		int			i;
 
@@ -1217,6 +1222,13 @@ ExecInitAgg(Agg *node, EState *estate)
 		peraggstate->aggrefstate = aggrefstate;
 		peraggstate->aggref = aggref;
 
+		/*
+		 * Get actual datatype of the input.  We need this because it may
+		 * be different from the agg's declared input type, when the agg
+		 * accepts ANY (eg, COUNT(*)) or ANYARRAY or ANYELEMENT.
+		 */
+		inputType = exprType((Node *) aggref->target);
+
 		aggTuple = SearchSysCache(AGGFNOID,
 								  ObjectIdGetDatum(aggref->aggfnoid),
 								  0, 0, 0);
@@ -1231,10 +1243,47 @@ ExecInitAgg(Agg *node, EState *estate)
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, get_func_name(aggref->aggfnoid));
 
+		peraggstate->transfn_oid = transfn_oid = aggform->aggtransfn;
+		peraggstate->finalfn_oid = finalfn_oid = aggform->aggfinalfn;
+
+		/* resolve actual type of transition state, if polymorphic */
+		aggtranstype = aggform->aggtranstype;
+		if (aggtranstype == ANYARRAYOID || aggtranstype == ANYELEMENTOID)
+		{
+			/* have to fetch the agg's declared input type... */
+			Oid			agg_arg_types[FUNC_MAX_ARGS];
+			int			agg_nargs;
+
+			(void) get_func_signature(aggref->aggfnoid,
+									  agg_arg_types, &agg_nargs);
+			Assert(agg_nargs == 1);
+			aggtranstype = resolve_generic_type(aggtranstype,
+												inputType,
+												agg_arg_types[0]);
+		}
+
+		/* build expression trees using actual argument & result types */
+		build_aggregate_fnexprs(inputType,
+								aggtranstype,
+								aggref->aggtype,
+								transfn_oid,
+								finalfn_oid,
+								&transfnexpr,
+								&finalfnexpr);
+
+		fmgr_info(transfn_oid, &peraggstate->transfn);
+		peraggstate->transfn.fn_expr = (Node *) transfnexpr;
+
+		if (OidIsValid(finalfn_oid))
+		{
+			fmgr_info(finalfn_oid, &peraggstate->finalfn);
+			peraggstate->finalfn.fn_expr = (Node *) finalfnexpr;
+		}
+
 		get_typlenbyval(aggref->aggtype,
 						&peraggstate->resulttypeLen,
 						&peraggstate->resulttypeByVal);
-		get_typlenbyval(aggform->aggtranstype,
+		get_typlenbyval(aggtranstype,
 						&peraggstate->transtypeLen,
 						&peraggstate->transtypeByVal);
 
@@ -1250,14 +1299,7 @@ ExecInitAgg(Agg *node, EState *estate)
 			peraggstate->initValue = (Datum) 0;
 		else
 			peraggstate->initValue = GetAggInitVal(textInitVal,
-												   aggform->aggtranstype);
-
-		peraggstate->transfn_oid = transfn_oid = aggform->aggtransfn;
-		peraggstate->finalfn_oid = finalfn_oid = aggform->aggfinalfn;
-
-		fmgr_info(transfn_oid, &peraggstate->transfn);
-		if (OidIsValid(finalfn_oid))
-			fmgr_info(finalfn_oid, &peraggstate->finalfn);
+												   aggtranstype);
 
 		/*
 		 * If the transfn is strict and the initval is NULL, make sure
@@ -1268,26 +1310,13 @@ ExecInitAgg(Agg *node, EState *estate)
 		 */
 		if (peraggstate->transfn.fn_strict && peraggstate->initValueIsNull)
 		{
-			/*
-			 * Note: use the type from the input expression here, not from
-			 * pg_proc.proargtypes, because the latter might be 0.
-			 * (Consider COUNT(*).)
-			 */
-			Oid			inputType = exprType((Node *) aggref->target);
-
-			if (!IsBinaryCoercible(inputType, aggform->aggtranstype))
+			if (!IsBinaryCoercible(inputType, aggtranstype))
 				elog(ERROR, "Aggregate %u needs to have compatible input type and transition type",
 					 aggref->aggfnoid);
 		}
 
 		if (aggref->aggdistinct)
 		{
-			/*
-			 * Note: use the type from the input expression here, not from
-			 * pg_proc.proargtypes, because the latter might be a pseudotype.
-			 * (Consider COUNT(*).)
-			 */
-			Oid			inputType = exprType((Node *) aggref->target);
 			Oid			eq_function;
 
 			/* We don't implement DISTINCT aggs in the HASHED case */

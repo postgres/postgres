@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_coerce.h,v 1.51 2003/04/29 22:13:11 tgl Exp $
+ * $Id: parse_coerce.h,v 1.52 2003/07/01 19:10:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +67,9 @@ extern Oid enforce_generic_type_consistency(Oid *actual_arg_types,
 											Oid *declared_arg_types,
 											int nargs,
 											Oid rettype);
+extern Oid resolve_generic_type(Oid declared_type,
+								Oid context_actual_type,
+								Oid context_declared_type);
 
 extern bool find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 								  CoercionContext ccontext,

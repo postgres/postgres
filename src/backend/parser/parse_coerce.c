@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.101 2003/06/27 00:33:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.102 2003/07/01 19:10:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,8 +32,6 @@
 static Node *coerce_type_typmod(Node *node,
 								Oid targetTypeId, int32 targetTypMod,
 								CoercionForm cformat, bool isExplicit);
-static Node *build_func_call(Oid funcid, Oid rettype, List *args,
-							 CoercionForm fformat);
 
 
 /*
@@ -275,8 +273,9 @@ coerce_type(ParseState *pstate, Node *node,
 			 */
 			Oid			baseTypeId = getBaseType(targetTypeId);
 
-			result = build_func_call(funcId, baseTypeId, makeList1(node),
-									 cformat);
+			result = (Node *) makeFuncExpr(funcId, baseTypeId,
+										   makeList1(node),
+										   cformat);
 
 			/*
 			 * If domain, coerce to the domain type and relabel with
@@ -534,7 +533,7 @@ coerce_type_typmod(Node *node, Oid targetTypeId, int32 targetTypMod,
 			args = lappend(args, cons);
 		}
 
-		node = build_func_call(funcId, targetTypeId, args, cformat);
+		node = (Node *) makeFuncExpr(funcId, targetTypeId, args, cformat);
 	}
 
 	return node;
@@ -933,6 +932,76 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 
 	/* we don't return a generic type; send back the original return type */
 	return rettype;
+}
+
+/*
+ * resolve_generic_type()
+ *		Deduce an individual actual datatype on the assumption that
+ *		the rules for ANYARRAY/ANYELEMENT are being followed.
+ *
+ * declared_type is the declared datatype we want to resolve.
+ * context_actual_type is the actual input datatype to some argument
+ * that has declared datatype context_declared_type.
+ *
+ * If declared_type isn't polymorphic, we just return it.  Otherwise,
+ * context_declared_type must be polymorphic, and we deduce the correct
+ * return type based on the relationship of the two polymorphic types.
+ */
+Oid
+resolve_generic_type(Oid declared_type,
+					 Oid context_actual_type,
+					 Oid context_declared_type)
+{
+	if (declared_type == ANYARRAYOID)
+	{
+		if (context_declared_type == ANYARRAYOID)
+		{
+			/* Use actual type, but it must be an array */
+			Oid		array_typelem = get_element_type(context_actual_type);
+
+			if (!OidIsValid(array_typelem))
+				elog(ERROR, "Argument declared ANYARRAY is not an array: %s",
+					 format_type_be(context_actual_type));
+			return context_actual_type;
+		}
+		else if (context_declared_type == ANYELEMENTOID)
+		{
+			/* Use the array type corresponding to actual type */
+			Oid		array_typeid = get_array_type(context_actual_type);
+
+			if (!OidIsValid(array_typeid))
+				elog(ERROR, "Cannot find array type for datatype %s",
+					 format_type_be(context_actual_type));
+			return array_typeid;
+		}
+	}
+	else if (declared_type == ANYELEMENTOID)
+	{
+		if (context_declared_type == ANYARRAYOID)
+		{
+			/* Use the element type corresponding to actual type */
+			Oid		array_typelem = get_element_type(context_actual_type);
+
+			if (!OidIsValid(array_typelem))
+				elog(ERROR, "Argument declared ANYARRAY is not an array: %s",
+					 format_type_be(context_actual_type));
+			return array_typelem;
+		}
+		else if (context_declared_type == ANYELEMENTOID)
+		{
+			/* Use the actual type; it doesn't matter if array or not */
+			return context_actual_type;
+		}
+	}
+	else
+	{
+		/* declared_type isn't polymorphic, so return it as-is */
+		return declared_type;
+	}
+	/* If we get here, declared_type is polymorphic and context isn't */
+	/* NB: this is a calling-code logic error, not a user error */
+	elog(ERROR, "Cannot determine ANYARRAY/ANYELEMENT type because context isn't polymorphic");
+	return InvalidOid;			/* keep compiler quiet */
 }
 
 
@@ -1416,24 +1485,4 @@ find_typmod_coercion_function(Oid typeId, int *nargs)
 	}
 
 	return funcid;
-}
-
-/*
- * Build an expression tree representing a function call.
- *
- * The argument expressions must have been transformed already.
- */
-static Node *
-build_func_call(Oid funcid, Oid rettype, List *args, CoercionForm fformat)
-{
-	FuncExpr   *funcexpr;
-
-	funcexpr = makeNode(FuncExpr);
-	funcexpr->funcid = funcid;
-	funcexpr->funcresulttype = rettype;
-	funcexpr->funcretset = false;		/* only possible case here */
-	funcexpr->funcformat = fformat;
-	funcexpr->args = args;
-
-	return (Node *) funcexpr;
 }

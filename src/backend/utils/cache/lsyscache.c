@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.100 2003/06/27 00:33:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.101 2003/07/01 19:10:53 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -714,6 +714,36 @@ get_func_rettype(Oid funcid)
 		elog(ERROR, "Function OID %u does not exist", funcid);
 
 	result = ((Form_pg_proc) GETSTRUCT(tp))->prorettype;
+	ReleaseSysCache(tp);
+	return result;
+}
+
+/*
+ * get_func_signature
+ *		Given procedure id, return the function's argument and result types.
+ *		(The return value is the result type.)
+ *
+ * argtypes must point to a vector of size FUNC_MAX_ARGS.
+ */
+Oid
+get_func_signature(Oid funcid, Oid *argtypes, int *nargs)
+{
+	HeapTuple		tp;
+	Form_pg_proc	procstruct;
+	Oid			result;
+
+	tp = SearchSysCache(PROCOID,
+						ObjectIdGetDatum(funcid),
+						0, 0, 0);
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "Function OID %u does not exist", funcid);
+
+	procstruct = (Form_pg_proc) GETSTRUCT(tp);
+
+	result = procstruct->prorettype;
+	memcpy(argtypes, procstruct->proargtypes, FUNC_MAX_ARGS * sizeof(Oid));
+	*nargs = (int) procstruct->pronargs;
+
 	ReleaseSysCache(tp);
 	return result;
 }

@@ -8,18 +8,21 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.53 2003/06/06 15:04:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.54 2003/07/01 19:10:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "nodes/makefuncs.h"
+#include "nodes/params.h"
 #include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/parse_agg.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
+#include "utils/lsyscache.h"
 
 
 typedef struct
@@ -311,4 +314,92 @@ check_ungrouped_columns_walker(Node *node,
 	}
 	return expression_tree_walker(node, check_ungrouped_columns_walker,
 								  (void *) context);
+}
+
+/*
+ * Create expression trees for the transition and final functions
+ * of an aggregate.  These are needed so that polymorphic functions
+ * can be used within an aggregate --- without the expression trees,
+ * such functions would not know the datatypes they are supposed to use.
+ * (The trees will never actually be executed, however, so we can skimp
+ * a bit on correctness.)
+ *
+ * agg_input_type, agg_state_type, agg_result_type identify the input,
+ * transition, and result types of the aggregate.  These should all be
+ * resolved to actual types (ie, none should ever be ANYARRAY or ANYELEMENT).
+ *
+ * transfn_oid and finalfn_oid identify the funcs to be called; the latter
+ * may be InvalidOid.
+ *
+ * Pointers to the constructed trees are returned into *transfnexpr and
+ * *finalfnexpr.  The latter is set to NULL if there's no finalfn.
+ */
+void
+build_aggregate_fnexprs(Oid agg_input_type,
+						Oid agg_state_type,
+						Oid agg_result_type,
+						Oid transfn_oid,
+						Oid finalfn_oid,
+						Expr **transfnexpr,
+						Expr **finalfnexpr)
+{
+	Oid			transfn_arg_types[FUNC_MAX_ARGS];
+	int			transfn_nargs;
+	Param	   *arg0;
+	Param	   *arg1;
+	List	   *args;
+
+	/* get the transition function signature (only need nargs) */
+	(void) get_func_signature(transfn_oid, transfn_arg_types, &transfn_nargs);
+
+	/*
+	 * Build arg list to use in the transfn FuncExpr node. We really
+	 * only care that transfn can discover the actual argument types
+	 * at runtime using get_fn_expr_argtype(), so it's okay to use
+	 * Param nodes that don't correspond to any real Param.
+	 */
+	arg0 = makeNode(Param);
+	arg0->paramkind = PARAM_EXEC;
+	arg0->paramid = -1;
+	arg0->paramtype = agg_state_type;
+
+	if (transfn_nargs == 2)
+	{
+		arg1 = makeNode(Param);
+		arg1->paramkind = PARAM_EXEC;
+		arg1->paramid = -1;
+		arg1->paramtype = agg_input_type;
+
+		args = makeList2(arg0, arg1);
+	}
+	else
+	{
+		args = makeList1(arg0);
+	}
+
+   *transfnexpr = (Expr *) makeFuncExpr(transfn_oid,
+										agg_state_type,
+										args,
+										COERCE_DONTCARE);
+
+   /* see if we have a final function */
+   if (!OidIsValid(finalfn_oid))
+   {
+	   *finalfnexpr = NULL;
+	   return;
+   }
+
+   /*
+	* Build expr tree for final function
+	*/
+	arg0 = makeNode(Param);
+	arg0->paramkind = PARAM_EXEC;
+	arg0->paramid = -1;
+	arg0->paramtype = agg_state_type;
+	args = makeList1(arg0);
+
+   *finalfnexpr = (Expr *) makeFuncExpr(finalfn_oid,
+										agg_result_type,
+										args,
+										COERCE_DONTCARE);
 }
