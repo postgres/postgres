@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.9 2000/03/28 02:53:02 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.10 2000/03/28 02:59:55 tgl Exp $
 Postgres documentation
 -->
 
@@ -107,7 +107,7 @@ SELECT oid FROM pg_am WHERE amname = 'btree';
    impose a strict ordering on keys, lesser to greater.  Since
    <productname>Postgres</productname> allows the user to define operators,
    <productname>Postgres</productname> cannot look at the name of an operator
-   (eg, ">" or "<") and tell what kind of comparison it is.  In fact,
+   (eg, "&gt;" or "&lt;") and tell what kind of comparison it is.  In fact,
    some  access methods don't impose any ordering at all.  For example,
    <acronym>R-tree</acronym>s express a rectangle-containment relationship,
    whereas a hashed data structure expresses only bitwise similarity based
@@ -115,7 +115,7 @@ SELECT oid FROM pg_am WHERE amname = 'btree';
    needs some consistent way of taking a qualification in your query,
    looking at the operator and then deciding if a usable index exists.  This
    implies that <productname>Postgres</productname> needs to know, for
-   example, that the  "<="  and  ">" operators partition a
+   example, that the  "&lt;="  and  "&gt;" operators partition a
    <acronym>B-tree</acronym>.  <productname>Postgres</productname>
    uses strategies to express these relationships  between
    operators and the way they can be used to scan indices.
@@ -203,7 +203,7 @@ SELECT oid FROM pg_am WHERE amname = 'btree';
    <note>
     <para>
      Strictly  speaking, this routine can return a negative
-     number (< 0), 0, or a non-zero positive number (> 0).
+     number (&lt; 0), 0, or a non-zero positive number (&gt; 0).
     </para>
    </note>
   </para>
@@ -427,11 +427,11 @@ CREATE OPERATOR = (
         FROM pg_am am, pg_opclass opcl, complex_ops_tmp c
         WHERE amname = 'btree' AND
             opcname = 'complex_abs_ops' AND
-            c.oprname = '<';
+            c.oprname = '&lt;';
    </programlisting>
 
    Now do this for the other operators substituting for the "1" in the
-   third line above and the "<" in the last line.  Note the order:
+   third line above and the "&lt;" in the last line.  Note the order:
    "less than" is 1, "less than or equal" is 2, "equal" is 3, "greater
    than or equal" is 4, and "greater than" is 5.
   </para>
