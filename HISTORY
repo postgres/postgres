@@ -47,7 +47,7 @@ Migration to 7.1
 
 
 
-Last updated from CVS logs:  2001-01-29
+Last updated from CVS logs:  2001-04-02
 
 Bug Fixes
 ---------
@@ -97,6 +97,7 @@ Overhaul GIST code (Oleg)
 Fix CLUSTER to preserve constraints and column default (Tom)
 Improved deadlock detection handling (Tom)
 Allow multiple SERIAL columns in a table (Tom)
+Prevent occasional index corruption (Vadim)
 
 Enhancements
 ------------
@@ -168,6 +169,8 @@ New file format for COPY BINARY (Tom)
 New /contrib/oid2name to map numeric files to table names (B Palmer)
 New "idle in transaction" ps status message (Marc)
 Update to pgaccess 0.98.7 (Constantin Teodorescu)
+pg_ctl now defaults to -w (wait) on shutdown, new -l (log) option
+Add rudimentary dependency checking to pg_dump (Philip)
 
 Types
 -----
@@ -205,6 +208,7 @@ Solaris cleanups (Peter E)
 Overhaul /contrib Makefiles (Karel)
 New OpenSSL configuration option (Magnus, Peter E)
 AIX fixes (Andreas)
+QNX fixes (Maurizio)
 New heap_open(), heap_openr() API (Tom)
 Remove colon and semi-colon operators (Thomas)
 New pg_class.relkind value for views (Mark Hollomon)
@@ -226,7 +230,10 @@ New template0 database that contains no user additions (Tom)
 New /contrib/cube and /contrib/seg GIST sample code (Gene Selkov)
 Allow NetBSD's libedit instead of readline (Peter)
 Improved assembly language source code format (Bruce)
-
+New contrib/pg_logger
+New --template option to createdb
+New contrib/pg_control utility (Oliver)
+New FreeBSD tools ipc_check, start-scripts/freebsd
 
 
   ------------------------------------------------------------------------
