@@ -13,15 +13,14 @@ import org.postgresql.core.QueryExecutor;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.18 2003/03/07 18:39:44 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.19 2003/04/13 04:10:07 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
  */
 public abstract class AbstractJdbc1Statement implements BaseStatement
 {
-
-	// The connection who created us
+        // The connection who created us
 	protected BaseConnection connection;
 
 	/** The warnings chain. */
@@ -58,6 +57,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 
 	protected String[] m_bindTypes = new String[0];
 	protected String m_statementName = null;
+        protected boolean m_statementIsCursor = false;
 
 	private boolean m_useServerPrepare = false;
 	private static int m_preparedCount = 1;
@@ -159,7 +159,8 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 		{
 			try
 			{
-				connection.execSQL("DEALLOCATE " + m_statementName);
+                                if (!m_statementIsCursor)
+                                        connection.execSQL("DEALLOCATE " + m_statementName);
 			}
 			catch (Exception e)
 			{
@@ -167,6 +168,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 			finally
 			{
 				m_statementName = null;
+                                m_statementIsCursor = false;
 				m_origSqlFragments = null;
 				m_executeSqlFragments = null;
 			}
@@ -183,11 +185,8 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	 */
 	public java.sql.ResultSet executeQuery() throws SQLException
 	{
-		if (fetchSize > 0)
-			this.executeWithCursor();
-		else
-			this.execute();
-	
+                this.execute();
+
 		while (result != null && !result.reallyResultSet())
 			result = (BaseResultSet) result.getNext();
 		if (result == null)
@@ -268,9 +267,13 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	 * Some prepared statements return multiple results; the execute method
 	 * handles these complex statements as well as the simpler form of
 	 * statements handled by executeQuery and executeUpdate
+         *
+         * This method also handles the translation of the query into a cursor based
+         * query if the user has specified a fetch size and set the connection
+         * into a non-auto commit state.
 	 *
 	 * @return true if the next result is a ResultSet; false if it is an
-	 *		 *	update count or there are no more results
+	 *		 update count or there are no more results
 	 * @exception SQLException if a database access error occurs
 	 */
 	public boolean execute() throws SQLException
@@ -353,10 +356,75 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 			}
 		}
 
-		// New in 7.1, pass Statement so that ExecSQL can customise to it
+                // Use a cursor if directed and in a transaction.
+                else if (fetchSize > 0 && !connection.getAutoCommit())
+                {
+                        // The first thing to do is transform the statement text into the cursor form.
+                        String[] cursorBasedSql = new String[m_sqlFragments.length];
+                        // Pinch the prepared count for our own nefarious purposes.
+                        String statementName = "JDBC_CURS_" + m_preparedCount++;
+                        // Setup the cursor decleration.
+                        // Note that we don't need a BEGIN because we've already
+                        // made sure we're executing inside a transaction.
+                        String cursDecl = "DECLARE " + statementName + " CURSOR FOR ";
+                        String endCurs = " FETCH FORWARD " + fetchSize + " FROM " + statementName + ";";
+
+                        // Copy the real query to the curs decleration.
+                        try
+                        {
+                                // Need to confirm this with Barry Lind.
+                                if (cursorBasedSql.length > 1)
+                                        throw new IllegalStateException("cursor fetches not supported with prepared statements.");
+                                for (int i = 0; i < cursorBasedSql.length; i++)
+                                {
+                                        if (i == 0)
+                                        {
+                                                if (m_sqlFragments[i].trim().toUpperCase().startsWith("DECLARE "))
+                                                        throw new IllegalStateException("statement is already cursor based.");
+                                                cursorBasedSql[i] = cursDecl;
+                                        }
+
+                                        if (cursorBasedSql[i] != null)
+                                                cursorBasedSql[i] += m_sqlFragments[i];
+                                        else
+                                                cursorBasedSql[i] = m_sqlFragments[i];
+
+                                        if (i == cursorBasedSql.length - 1)
+                                        {
+                                                // We have to be smart about adding the delimitting ";"
+                                                if (m_sqlFragments[i].endsWith(";"))
+                                                        cursorBasedSql[i] += endCurs;
+                                                else
+                                                        cursorBasedSql[i] += (";" + endCurs);
+                                        }
+                                        else if (m_sqlFragments[i].indexOf(";") > -1)
+                                        {
+                                                throw new IllegalStateException("multiple statements not "
+                                                                                + "allowed with cursor based querys.");
+                                        }
+                                }
+
+                                // Make the cursor based query the one that will be used.
+                                if (org.postgresql.Driver.logDebug)
+                                        org.postgresql.Driver.debug("using cursor based sql with cursor name " + statementName);
+
+                                // Do all of this after exceptions have been thrown.
+                                m_statementName = statementName;
+                                m_statementIsCursor = true;
+                                m_sqlFragments = cursorBasedSql;
+                        }
+                        catch (IllegalStateException e)
+                        {
+                                // Something went wrong generating the cursor based statement.
+                                if (org.postgresql.Driver.logDebug)
+                                        org.postgresql.Driver.debug(e.getMessage());
+                        }
+                }
+
+		// New in 7.1, pass Statement so that ExecSQL can customise to it                
 		result = QueryExecutor.execute(m_sqlFragments,
-									   m_binds,
-									   this);
+                                               m_binds,
+                                               this);
 
 		//If we are executing a callable statement function set the return data
 		if (isFunction)
@@ -379,102 +447,6 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 			return (result != null && result.reallyResultSet());
 		}
 	}
-
-	/** version of execute which converts the query to a cursor.
-	 */
-	public boolean executeWithCursor() throws SQLException
-	{
-		if (isFunction && !returnTypeSet)
-			throw new PSQLException("postgresql.call.noreturntype");
-		if (isFunction)
-		{ // set entry 1 to dummy entry..
-			m_binds[0] = ""; // dummy entry which ensured that no one overrode
-			m_bindTypes[0] = PG_TEXT;
-			// and calls to setXXX (2,..) really went to first arg in a function call..
-		}
-
-		// New in 7.1, if we have a previous resultset then force it to close
-		// This brings us nearer to compliance, and helps memory management.
-		// Internal stuff will call ExecSQL directly, bypassing this.
-		if (result != null)
-		{
-			java.sql.ResultSet rs = getResultSet();
-			if (rs != null)
-				rs.close();
-		}
-
-		// I've pretty much ignored server prepared statements... can declare and prepare be
-		// used together?
-		// It's trivial to change this: you just have to resolve this issue
-		// of how to work out whether there's a function call. If there isn't then the first
-		// element of the array must be the bit that you extend to become the cursor
-		// decleration.
-		// The last thing that can go wrong is when the user supplies a cursor statement
-		// directly: the translation takes no account of that. I think we should just look
-		// for declare and stop the translation if we find it.
-
-		// The first thing to do is transform the statement text into the cursor form.
-		String[] origSqlFragments = m_sqlFragments;
-		m_sqlFragments = new String[origSqlFragments.length];
-		System.arraycopy(origSqlFragments, 0, m_sqlFragments, 0, origSqlFragments.length);
-		// Pinch the prepared count for our own nefarious purposes.
-		m_statementName = "JDBC_CURS_" + m_preparedCount++;
-		// The static bit to prepend to all querys.
-		String cursDecl = "BEGIN; DECLARE " + m_statementName + " CURSOR FOR ";
-		String endCurs = " FETCH FORWARD " + fetchSize + " FROM " + m_statementName + ";";
-
-		// Add the real query to the curs decleration.
-		// This is the bit that really makes the presumption about
-		// m_sqlFragments not being a function call.
-		if (m_sqlFragments.length < 1)
-			m_sqlFragments[0] = cursDecl + "SELECT NULL;";
-		
-		else if (m_sqlFragments.length < 2)
-		{
-			if (m_sqlFragments[0].endsWith(";"))
-				m_sqlFragments[0] = cursDecl + m_sqlFragments[0] + endCurs;
-			else
-				m_sqlFragments[0] = cursDecl + m_sqlFragments[0] + ";" + endCurs;
-		}
-		else
-		{
-			m_sqlFragments[0] = cursDecl + m_sqlFragments[0];
-			if (m_sqlFragments[m_sqlFragments.length - 1].endsWith(";"))
-				m_sqlFragments[m_sqlFragments.length - 1] += endCurs;
-			else
-				m_sqlFragments[m_sqlFragments.length - 1] += (";" + endCurs);
-		}
-
-		result = QueryExecutor.execute(m_sqlFragments,
-									   m_binds,
-									   this);
-
-		//If we are executing a callable statement function set the return data
-		if (isFunction)
-		{
-			if (!result.reallyResultSet())
-				throw new PSQLException("postgresql.call.noreturnval");
-			if (!result.next ())
-				throw new PSQLException ("postgresql.call.noreturnval");
-			callResult = result.getObject(1);
-			int columnType = result.getMetaData().getColumnType(1);
-			if (columnType != functionReturnType)
-			{
-				Object[] arr =
-					{ "java.sql.Types=" + columnType,
-					  "java.sql.Types=" + functionReturnType
-					};
-				throw new PSQLException ("postgresql.call.wrongrtntype",arr);
-			}
-			result.close ();
-			return true;
-		}
-		else
-		{
-			return (result != null && result.reallyResultSet());
-		}
-	}
-
 	
 	/*
 	 * setCursorName defines the SQL cursor name that will be used by
