@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.6 2003/04/03 21:50:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.7 2003/04/22 03:52:56 tgl Exp $
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design
@@ -158,9 +158,6 @@ getaddrinfo_unix(const char *path, const struct addrinfo *hintsp,
 #if SALEN
 	unp->sun_len = sizeof(struct sockaddr_un);
 #endif   /* SALEN */
-
-	if (hints.ai_flags & AI_PASSIVE)
-		unlink(unp->sun_path);
 
 	return 0;
 }
