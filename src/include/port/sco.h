@@ -11,12 +11,6 @@
 
 typedef unsigned char slock_t;
 
-/***************************************************************
- * The following include will get the needed prototype for the
- * strcasecmp() function.
- ***************************************************************/
-#include <strings.h>
-
 #ifndef			BIG_ENDIAN
 #define			BIG_ENDIAN		4321
 #endif

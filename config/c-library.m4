@@ -1,5 +1,5 @@
 # Macros that test various C library quirks
-# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.4 2000/10/02 03:58:31 momjian Exp $
+# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.5 2000/11/03 18:43:51 petere Exp $
 
 
 # PGAC_VAR_INT_TIMEZONE
@@ -96,3 +96,30 @@ if test x"$pgac_cv_func_posix_signals" = xyes ; then
 fi
 HAVE_POSIX_SIGNALS=$pgac_cv_func_posix_signals
 AC_SUBST(HAVE_POSIX_SIGNALS)])# PGAC_FUNC_POSIX_SIGNALS
+
+
+# PGAC_HEADER_STRING
+# ------------------
+# Tests whether <string.h> and <strings.h> can both be included
+# (without generating warnings).  This is mostly useful if you need
+# str[n]casecmp(), since this is not in the "standard" <string.h>
+# on some systems.
+AC_DEFUN([PGAC_HEADER_STRING],
+[AC_CACHE_CHECK([whether string.h and strings.h may both be included],
+                [pgac_cv_header_strings_both],
+[AC_TRY_CPP(
+[#include <string.h>
+#include <strings.h>
+],
+[AC_TRY_COMPILE(
+[#include <string.h>
+#include <strings.h>
+],
+[int n = strcasecmp("a", "b");],
+[pgac_cv_header_strings_both=yes],
+[pgac_cv_header_strings_both=no])],
+[pgac_cv_header_strings_both=no])])
+if test x"$pgac_cv_header_strings_both" = x"yes"; then
+  AC_DEFINE([STRING_H_WITH_STRINGS_H], 1,
+            [Define if string.h and strings.h may both be included])
+fi])

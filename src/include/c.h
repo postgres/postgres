@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.84 2000/10/03 03:11:22 momjian Exp $
+ * $Id: c.h,v 1.85 2000/11/03 18:43:52 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,9 @@
 #include <string.h>
 #include <stddef.h>
 #include <stdarg.h>
+#ifdef STRING_H_WITH_STRINGS_H
+#include <strings.h>
+#endif
 
 #ifdef __CYGWIN__
 #include <errno.h>

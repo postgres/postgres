@@ -694,6 +694,8 @@ AC_TRY_CPP([
 ], [AC_DEFINE(HAVE_NETINET_TCP_H) AC_MSG_RESULT(yes)],
 [AC_MSG_RESULT(no)])
 
+PGAC_HEADER_STRING
+
 AC_CHECK_HEADERS([readline/readline.h readline.h], [break])
 AC_CHECK_HEADERS([readline/history.h history.h], [break])
 

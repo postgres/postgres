@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.145 2000/10/30 07:17:31 ishii Exp $
+ * $Id: config.h.in,v 1.146 2000/11/03 18:43:52 petere Exp $
  */
 
 #ifndef CONFIG_H
@@ -373,6 +373,9 @@
 
 /* Set to 1 if you have <sys/pstat.h> */
 #undef HAVE_SYS_PSTAT_H
+
+/* Define if string.h and strings.h may both be included */
+#undef STRING_H_WITH_STRINGS_H
 
 /* Define if you have the setproctitle function.  */
 #undef HAVE_SETPROCTITLE

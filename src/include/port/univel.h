@@ -11,12 +11,6 @@ typedef unsigned char slock_t;
 
 #define DISABLE_COMPLEX_MACRO
 
-/***************************************************************
- * strcasecmp() is in c89.a. The following include will get the
- * needed prototype.
- ***************************************************************/
-#include <strings.h>
-
 #ifndef			BIG_ENDIAN
 #define			BIG_ENDIAN		4321
 #endif
