@@ -16,7 +16,7 @@ Migration to version 7.2.1
 
 Changes
 
- Properly set sequence values after backend crash (Tom)
+ Ensure that sequence counters do not go backwards after a crash (Tom)
  Fix pgaccess kanji-coversion key binding (Tatsuo)
  Optimizer improvements (Tom)
  cash I/O improvements (Tom)
