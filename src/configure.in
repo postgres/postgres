@@ -103,17 +103,23 @@ else
     # where the hostnamepattern is evaluated per the rules of expr(1) ---
     # namely, it is a standard regular expression with an implicit ^ at the
     # start.  If multiple lines match, we will end up using the last match.
-    GUESS=""
-    exec 4<template/.similar
-    while read LINE <&4
+    #
+    # The tempfile hackery is needed because some shells will run the loop
+    # inside a subshell, whereupon shell variables set therein aren't seen
+    # outside the loop :-(
+    TMPFILE="guesses.$$"
+    cat /dev/null > $TMPFILE
+    while read LINE
     do
 	SIMHOST=`expr "$LINE" : '\(.*\)='`
 	MATCH=`expr "$host" : "$SIMHOST"`
 	if test "$MATCH" != 0
-	then GUESS=`echo "$LINE" | sed 's/^.*=//'`
+	then
+	    echo "$LINE" | sed 's/^.*=//' > $TMPFILE
 	fi
-    done
-    exec 4<&-
+    done <template/.similar
+    GUESS=`cat $TMPFILE`
+    rm -f $TMPFILE
     if test "$GUESS"
     then TEMPLATE="$GUESS"
     else
