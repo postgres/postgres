@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.126 1999/07/19 02:27:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.127 1999/07/22 02:40:07 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -158,9 +158,9 @@ int			_exec_repeat_ = 1;
  *		decls for routines only used in this file
  * ----------------------------------------------------------------
  */
-static char InteractiveBackend(char *inBuf);
-static char SocketBackend(char *inBuf);
-static char ReadCommand(char *inBuf);
+static int InteractiveBackend(char *inBuf);
+static int SocketBackend(char *inBuf);
+static int ReadCommand(char *inBuf);
 static void pg_exec_query(char *query_string);
 
 
@@ -172,10 +172,12 @@ static void pg_exec_query(char *query_string);
 /* ----------------
  *	InteractiveBackend() is called for user interactive connections
  *	the string entered by the user is placed in its parameter inBuf.
+ *
+ *  EOF is returned if end-of-file input is seen; time to shut down.
  * ----------------
  */
 
-static char
+static int
 InteractiveBackend(char *inBuf)
 {
 	char	   *stuff = inBuf;	/* current place in input buffer */
@@ -244,8 +246,7 @@ InteractiveBackend(char *inBuf)
 		{
 			if (Verbose)
 				puts("EOF");
-			IsEmptyQuery = true;
-			proc_exit(0);
+			return EOF;
 		}
 
 		/* ----------------
@@ -274,11 +275,13 @@ InteractiveBackend(char *inBuf)
  *
  *	If the input is a fastpath function call (case 'F') then
  *	the function call is processed in HandleFunctionRequest().
- *	(now called from PostgresMain())
+ *	(now called from PostgresMain()).
+ *
+ *  EOF is returned if the connection is lost.
  * ----------------
  */
 
-static char
+static int
 SocketBackend(char *inBuf)
 {
 	char		qtype;
@@ -290,13 +293,7 @@ SocketBackend(char *inBuf)
 	 */
 	qtype = '?';
 	if (pq_getbytes(&qtype, 1) == EOF)
-	{
-		/* ------------
-		 *	when front-end applications quits/dies
-		 * ------------
-		 */
-		proc_exit(0);
-	}
+		return EOF;
 
 	switch (qtype)
 	{
@@ -305,7 +302,8 @@ SocketBackend(char *inBuf)
 			 * ----------------
 			 */
 		case 'Q':
-			pq_getstr(inBuf, MAX_PARSE_BUFFER);
+			if (pq_getstr(inBuf, MAX_PARSE_BUFFER))
+				return EOF;
 			result = 'Q';
 			break;
 
@@ -314,8 +312,8 @@ SocketBackend(char *inBuf)
 			 * ----------------
 			 */
 		case 'F':
-			pq_getstr(inBuf, MAX_PARSE_BUFFER); /* ignore the rest of the
-												 * line */
+			if (pq_getstr(inBuf, MAX_PARSE_BUFFER))
+				return EOF;		/* ignore "string" at start of F message */
 			result = 'F';
 			break;
 
@@ -345,10 +343,10 @@ SocketBackend(char *inBuf)
  *		ReadCommand reads a command from either the frontend or
  *		standard input, places it in inBuf, and returns a char
  *		representing whether the string is a 'Q'uery or a 'F'astpath
- *		call.
+ *		call.  EOF is returned if end of file.
  * ----------------
  */
-static char
+static int
 ReadCommand(char *inBuf)
 {
 	if (IsUnderPostmaster)
@@ -890,7 +888,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	bool		secure = true;
 	int			errs = 0;
 
-	char		firstchar;
+	int			firstchar;
 	char		parser_input[MAX_PARSE_BUFFER];
 	char	   *userName;
 
@@ -1494,7 +1492,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.126 $ $Date: 1999/07/19 02:27:06 $\n");
+		puts("$Revision: 1.127 $ $Date: 1999/07/22 02:40:07 $\n");
 	}
 
 	/* ----------------
@@ -1581,7 +1579,12 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 					TPRINTF(TRACE_VERBOSE, "StartTransactionCommand");
 				StartTransactionCommand();
 
-				HandleFunctionRequest();
+				if (HandleFunctionRequest() == EOF)
+				{
+					/* lost frontend connection during F message input */
+					pq_close();
+					proc_exit(0);
+				}
 				break;
 
 				/* ----------------
@@ -1621,10 +1624,13 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				break;
 
 				/* ----------------
-				 *	'X' means that the frontend is closing down the socket
+				 *	'X' means that the frontend is closing down the socket.
+				 *	EOF means unexpected loss of frontend connection.
+				 *	Either way, perform normal shutdown.
 				 * ----------------
 				 */
 			case 'X':
+			case EOF:
 				pq_close();
 				proc_exit(0);
 				break;

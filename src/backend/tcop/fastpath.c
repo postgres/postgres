@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.29 1999/07/17 20:17:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.30 1999/07/22 02:40:07 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -265,8 +265,11 @@ update_fp_info(Oid func_id, struct fp_info * fip)
  * This corresponds to the libpq protocol symbol "F".
  *
  * RETURNS:
- *		nothing of significance.
- *		All errors result in elog(ERROR,...).
+ *		0 if successful completion, EOF if frontend connection lost.
+ *
+ * Note: All ordinary errors result in elog(ERROR,...).  However,
+ * if we lose the frontend connection there is no one to elog to,
+ * and no use in proceeding...
  */
 int
 HandleFunctionRequest()
@@ -282,9 +285,11 @@ HandleFunctionRequest()
 	char	   *p;
 	struct fp_info *fip;
 
-	pq_getint(&tmp, 4);			/* function oid */
+	if (pq_getint(&tmp, 4))		/* function oid */
+		return EOF;
 	fid = (Oid) tmp;
-	pq_getint(&nargs, 4);		/* # of arguments */
+	if (pq_getint(&nargs, 4))	/* # of arguments */
+		return EOF;
 
 	/*
 	 * This is where the one-back caching is done. If you want to save
@@ -293,6 +298,13 @@ HandleFunctionRequest()
 	fip = &last_fp;
 	if (!valid_fp_info(fid, fip))
 		update_fp_info(fid, fip);
+
+	/*
+	 * XXX FIXME: elog() here means we lose sync with the frontend,
+	 * since we have not swallowed all of its input message.  What
+	 * should happen is we absorb all of the input message per protocol
+	 * syntax, and *then* do error checking and elog if appropriate.
+	 */
 
 	if (fip->nargs != nargs)
 	{
@@ -311,13 +323,15 @@ HandleFunctionRequest()
 			arg[i] = (char *) NULL;
 		else
 		{
-			pq_getint(&argsize, 4);
+			if (pq_getint(&argsize, 4))
+				return EOF;
 
 			Assert(argsize > 0);
 			if (fip->argbyval[i])
 			{					/* by-value */
 				Assert(argsize <= 4);
-				pq_getint(&tmp, argsize);
+				if (pq_getint(&tmp, argsize))
+					return EOF;
 				arg[i] = (char *) tmp;
 			}
 			else
@@ -329,14 +343,16 @@ HandleFunctionRequest()
 																 * 98 Jan 6 */
 						elog(ERROR, "HandleFunctionRequest: palloc failed");
 					VARSIZE(p) = argsize + VARHDRSZ;
-					pq_getbytes(VARDATA(p), argsize);
+					if (pq_getbytes(VARDATA(p), argsize))
+						return EOF;
 				}
 				else
 				{				/* ... fixed */
 					/* XXX cross our fingers and trust "argsize" */
 					if (!(p = palloc(argsize + 1)))
 						elog(ERROR, "HandleFunctionRequest: palloc failed");
-					pq_getbytes(p, argsize);
+					if (pq_getbytes(p, argsize))
+						return EOF;
 				}
 				palloced |= (1 << i);
 				arg[i] = p;
@@ -373,8 +389,6 @@ HandleFunctionRequest()
 
 	if (!fip->retbyval)
 		pfree(retval);
-
-
 
 	return 0;
 }

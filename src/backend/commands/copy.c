@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.85 1999/07/17 20:16:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.86 1999/07/22 02:40:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,15 +54,19 @@ static void GetIndexRelations(Oid main_relation_oid,
 #ifdef COPY_PATCH
 static void CopyReadNewline(FILE *fp, int *newline);
 static char *CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline);
-
 #else
 static char *CopyReadAttribute(FILE *fp, bool *isnull, char *delim);
-
 #endif
+
 static void CopyAttributeOut(FILE *fp, char *string, char *delim, int is_array);
 static int	CountTuples(Relation relation);
 
+/*
+ * Static communication variables ... pretty grotty, but COPY has
+ * never been reentrant...
+ */
 static int	lineno;
+static bool	fe_eof;
 
 /*
  * Internal communications functions
@@ -90,7 +94,10 @@ static void
 CopySendData(void *databuf, int datasize, FILE *fp)
 {
 	if (!fp)
-		pq_putbytes((char *) databuf, datasize);
+	{
+		if (pq_putbytes((char *) databuf, datasize))
+			fe_eof = true;
+	}
 	else
 		fwrite(databuf, datasize, 1, fp);
 }
@@ -121,7 +128,10 @@ static void
 CopyGetData(void *databuf, int datasize, FILE *fp)
 {
 	if (!fp)
-		pq_getbytes((char *) databuf, datasize);
+	{
+		if (pq_getbytes((char *) databuf, datasize))
+			fe_eof = true;
+	}
 	else
 		fread(databuf, datasize, 1, fp);
 }
@@ -134,7 +144,10 @@ CopyGetChar(FILE *fp)
 		unsigned char ch;
 
 		if (pq_getbytes((char *) &ch, 1))
+		{
+			fe_eof = true;
 			return EOF;
+		}
 		return ch;
 	}
 	else
@@ -145,8 +158,7 @@ static int
 CopyGetEof(FILE *fp)
 {
 	if (!fp)
-		return 0;				/* Never return EOF when talking to
-								 * frontend ? */
+		return fe_eof;
 	else
 		return feof(fp);
 }
@@ -154,7 +166,7 @@ CopyGetEof(FILE *fp)
 /*
  * CopyPeekChar reads a byte in "peekable" mode.
  * after each call to CopyPeekChar, a call to CopyDonePeek _must_
- * follow.
+ * follow, unless EOF was returned.
  * CopyDonePeek will either take the peeked char off the steam
  * (if pickup is != 0) or leave it on the stream (if pickup == 0)
  */
@@ -162,7 +174,12 @@ static int
 CopyPeekChar(FILE *fp)
 {
 	if (!fp)
-		return pq_peekbyte();
+	{
+		int ch = pq_peekbyte();
+		if (ch == EOF)
+			fe_eof = true;
+		return ch;
+	}
 	else
 		return getc(fp);
 }
@@ -668,6 +685,8 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 	}
 
 	lineno = 0;
+	fe_eof = false;
+
 	while (!done)
 	{
 		if (!binary)
@@ -1193,10 +1212,7 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 							else
 							{
 								if (CopyGetEof(fp))
-								{
-									CopyDonePeek(fp, c, 1);		/* pick up */
 									return NULL;
-								}
 								CopyDonePeek(fp, c, 0); /* Return to stream! */
 							}
 						}
