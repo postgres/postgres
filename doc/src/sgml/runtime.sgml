@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.41 2000/12/03 14:36:45 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.42 2000/12/17 11:22:00 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1300,11 +1300,12 @@ env PGOPTIONS='-c geqo=off' psql
     limits of the IPC resources then the postmaster will refuse to
     start up and should leave a marginally instructive error message
     about which problem was encountered and what needs to be done
-    about it. The relevant kernel parameters are named
+    about it.  (See also <xref linkend="postmaster-start-failures">.)
+    The relevant kernel parameters are named
     consistently across different systems; <xref
     linkend="sysvipc-parameters"> gives an overview. The methods to
     set them, however, vary; suggestions for some platforms are given
-    below. Be aware that you will have to reboot your
+    below. Be aware that you will probably have to reboot your
     machine at least, possibly even recompile the kernel, to change these
     settings.
    </para>
@@ -1332,13 +1333,13 @@ env PGOPTIONS='-c geqo=off' psql
       <row>
        <entry><varname>SHMMIN</></>
        <entry>Minimum size of shared memory segment (bytes)</>
-       <entry>1 (at most 144)</>
+       <entry>1 (at most about 256 kB)</>
       </row>
 
       <row>
        <entry><varname>SHMSEG</></>
        <entry>Maximum number of shared memory segments per process</>
-       <entry>must be at least 3, but the default is much higher</>
+       <entry>only 1 segment is needed, but the default is much higher</>
       </row>
 
        <row>
@@ -1356,13 +1357,13 @@ env PGOPTIONS='-c geqo=off' psql
        <row>
         <entry><varname>SEMMNS</></>
         <entry>Maximum number of semaphores system-wide</>
-        <entry>max_connections rounded up to multiple of 16, + room for other applications</>
+        <entry>ceil(max_connections / 16) * 17 + room for other applications</>
        </row>
 
        <row>
         <entry><varname>SEMMSL</></>
         <entry>Maximum number of semaphores per set</>
-        <entry>&gt;= 16</>
+        <entry>&gt;= 17</>
        </row>
 
        <row>
@@ -1396,34 +1397,36 @@ env PGOPTIONS='-c geqo=off' psql
     estimate the required segment size as the number of buffers times
     the block size (8192 kB by default) plus ample overhead (at least
     half a megabyte). Any error message you might get will contain the
-    size of the failed allocation. (<productname>Postgres</> will
-    actually use three shared memory segments, but the size of the
-    other two is negligible for this consideration.)
+    size of the failed allocation.
    </para>
 
    <para>
     Less likely to cause problems is the minimum size for shared
-    memory segments (<varname>SHMMIN</>), which must be at least 144
-    for <productname>Postgres</> (it's usually just 1), and the
-    maximum number of segments system-wide (<varname>SHMMNI</>, as
-    mentioned, 3 are needed) or per-process (<varname>SHMSEG</>,
-    ditto). Some systems also have a limit on the total amount of
-    shared memory in the system; see the platform-specific
-    instructions below.
+    memory segments (<varname>SHMMIN</>), which should be at most
+    somewhere around 256 kB for <productname>Postgres</> (it is
+    usually just 1). The maximum number of segments system-wide
+    (<varname>SHMMNI</>) or per-process (<varname>SHMSEG</>) should
+    not cause a problem unless your system has them set to zero. Some
+    systems also have a limit on the total amount of shared memory in
+    the system; see the platform-specific instructions below.
    </para>
 
    <para>
     <productname>Postgres</> uses one semaphore per allowed connection
-    (<option>-N</> option), in sets of 16. The maximum number of
-    semaphores in the system is set by <varname>SEMMNS</>, which
-    consequently must be at least as high as the connection setting.
-    The parameter <varname>SEMMNI</> determines the limit on the
-    number of semaphore sets that can exist on the system at one time.
-    Hence this parameter must be at least
-    <literal>ceil(max_connections / 16)</>. Lowering the number of
-    allowed connections is a temporary workaround for failures, which
-    are usually confusingly worded <quote><errorname>No space left on
-    device</></>, from the function <function>semget()</>.
+    (<option>-N</> option), in sets of 16.  Each such set will also
+    contain a 17th semaphore which contains a <quote>magic
+    number</quote>, to avoid collision with semaphore sets used by
+    other applications. The maximum number of semaphores in the system
+    is set by <varname>SEMMNS</>, which consequently must be at least
+    as high as the connection setting plus one extra for each 16
+    allowed connections (see the formula in <xref
+    linkend="sysvipc-parameters">.  The parameter <varname>SEMMNI</>
+    determines the limit on the number of semaphore sets that can
+    exist on the system at one time.  Hence this parameter must be at
+    least <literal>ceil(max_connections / 16)</>. Lowering the number
+    of allowed connections is a temporary workaround for failures,
+    which are usually confusingly worded <quote><errorname>No space
+    left on device</></>, from the function <function>semget()</>.
    </para>
 
    <para>
@@ -1441,7 +1444,7 @@ env PGOPTIONS='-c geqo=off' psql
 
    <para>
     The <varname>SEMMSL</> parameter, which determines how many
-    semaphores can be in a set, must be at least 16 for
+    semaphores can be in a set, must be at least 17 for
     <productname>Postgres</>.
    </para>
 
@@ -1558,11 +1561,11 @@ options         SEMMAP=256
 
 
      <varlistentry>
-      <term>HPUX</>
+      <term>HP-UX</>
       <listitem>
        <para>
         The default settings tend to suffice for normal installations.
-        On <productname>HPUX</> 10, the factory default for
+        On <productname>HP-UX</> 10, the factory default for
         <varname>SEMMNS</> is 128, which might be too low for larger
         database sites.
        </para>
@@ -1581,11 +1584,23 @@ options         SEMMAP=256
       <term>Linux</>
       <listitem>
        <para>
-        System V IPC is enabled by default and sufficiently sized for
-        most uses. The relevant parameters are in
+        The default shared memory limit (both
+        <varname>SHMMAX</varname> and <varname>SHMALL</varname>) is 32
+        MB in 2.2 kernels, but it can be changed in the
+        <filename>proc</filename> file system (without reboot).  For
+        example, to allow 128 MB:
+<screen>
+<prompt>$</prompt> <userinput>echo 134217728 >/proc/sys/kernel/shmall</userinput>
+<prompt>$</prompt> <userinput>echo 134217728 >/proc/sys/kernel/shmmax</userinput>
+</screen>
+        You could put these commands into a script run at boot-time.
+       </para>
+
+       <para>
+        Other parameters are sufficiently sized for any application.
+        If you want to see for yourself look into
         <filename>/usr/src/linux/include/asm-<replaceable>xxx</>/shmparam.h</>
-        and <filename>/usr/src/linux/include/linux/sem.h</>. Be sure
-        to do <command>make dep</> before rebuilding the kernel.
+        and <filename>/usr/src/linux/include/linux/sem.h</>.
        </para>
       </listitem>
      </varlistentry>
