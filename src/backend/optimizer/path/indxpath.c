@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.63 1999/07/24 23:21:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.64 1999/07/25 17:53:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,10 +55,11 @@ static bool one_pred_test(Expr *predicate, List *restrictinfo_list);
 static bool one_pred_clause_expr_test(Expr *predicate, Node *clause);
 static bool one_pred_clause_test(Expr *predicate, Node *clause);
 static bool clause_pred_clause_test(Expr *predicate, Node *clause);
-static List *indexable_joinclauses(RelOptInfo *rel, RelOptInfo *index,
-					  List *joininfo_list, List *restrictinfo_list);
-static List *index_innerjoin(Query *root, RelOptInfo *rel,
-				List *clausegroup_list, RelOptInfo *index);
+static void indexable_joinclauses(RelOptInfo *rel, RelOptInfo *index,
+								  List *joininfo_list, List *restrictinfo_list,
+								  List **clausegroups, List **outerrelids);
+static List *index_innerjoin(Query *root, RelOptInfo *rel, RelOptInfo *index,
+							 List *clausegroup_list, List *outerrelids_list);
 static List *create_index_path_group(Query *root, RelOptInfo *rel, RelOptInfo *index,
 						List *clausegroup_list, bool join);
 static bool match_index_to_operand(int indexkey, Expr *operand,
@@ -99,6 +100,7 @@ create_index_paths(Query *root,
 		RelOptInfo *index = (RelOptInfo *) lfirst(ilist);
 		List	   *scanclausegroups;
 		List	   *joinclausegroups;
+		List	   *joinouterrelids;
 
 		/*
 		 * If this is a partial index, we can only use it if it passes
@@ -161,9 +163,10 @@ create_index_paths(Query *root,
 		 * mergejoin, or if the index can possibly be used for scanning
 		 * the inner relation of a nestloop join.
 		 */
-		joinclausegroups = indexable_joinclauses(rel, index,
-												 joininfo_list,
-												 restrictinfo_list);
+		indexable_joinclauses(rel, index,
+							  joininfo_list, restrictinfo_list,
+							  &joinclausegroups,
+							  &joinouterrelids);
 
 		if (joinclausegroups != NIL)
 		{
@@ -174,9 +177,9 @@ create_index_paths(Query *root,
 												   joinclausegroups,
 												   true));
 			rel->innerjoin = nconc(rel->innerjoin,
-								   index_innerjoin(root, rel,
+								   index_innerjoin(root, rel, index,
 												   joinclausegroups,
-												   index));
+												   joinouterrelids));
 		}
 	}
 
@@ -326,19 +329,23 @@ match_index_orclause(RelOptInfo *rel,
  * 'index' is a index on 'rel'.
  * 'indexkeys' are the index keys to be matched.
  * 'classes' are the classes of the index operators on those keys.
- * 'clauses' is the list of available restriction clauses for 'rel'.
+ * 'restrictinfo_list' is the list of available restriction clauses for 'rel'.
  *
  * Returns NIL if no clauses can be used with this index.
  * Otherwise, a list containing a single sublist is returned (indicating
  * to create_index_path_group() that a single IndexPath should be created).
- * The sublist is ordered by index key, and contains sublists of clauses
- * that can be used with that index key.
+ * The sublist contains the RestrictInfo nodes for all clauses that can be
+ * used with this index.
+ *
+ * The sublist is ordered by index key (but as far as I can tell, this is
+ * an implementation artifact of this routine, and is not depended on by
+ * any user of the returned list --- tgl 7/99).
  *
  * Note that in a multi-key index, we stop if we find a key that cannot be
  * used with any clause.  For example, given an index on (A,B,C), we might
- * return (((C1 C2) (C3 C4))) if we find that clauses C1 and C2 use column A,
+ * return ((C1 C2 C3 C4)) if we find that clauses C1 and C2 use column A,
  * clauses C3 and C4 use column B, and no clauses use column C.  But if no
- * clauses match B we will return (((C1 C2))), whether or not there are
+ * clauses match B we will return ((C1 C2)), whether or not there are
  * clauses matching column C, because the executor couldn't use them anyway.
  */
 static List *
@@ -1108,21 +1115,35 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
  *	  Finds all groups of join clauses from among 'joininfo_list' that can
  *	  be used in conjunction with 'index'.
  *
- *	  The first clause in the group is marked as having the other relation
- *	  in the join clause as its outer join relation.
+ *	  Each clause group comes from a single joininfo node plus the current
+ *	  rel's restrictinfo list.  Therefore, every clause in the group references
+ *	  the current rel plus the same set of other rels (except for the restrict
+ *	  clauses, which only reference the current rel).  Therefore, this set
+ *    of clauses could be used as an indexqual if the relation is scanned
+ *	  as the inner side of a nestloop join when the outer side contains
+ *	  (at least) all those "other rels".
  *
- * Returns a list of these clause groups.
+ *	  XXX Actually, given that we are considering a join that requires an
+ *	  outer rel set (A,B,C), we should use all qual clauses that reference
+ *	  any subset of these rels, not just the full set or none.  This is
+ *	  doable with a doubly nested loop over joininfo_list; is it worth it?
  *
- *	  Added: restrictinfo_list - list of restriction RestrictInfos. It's to
- *		support multi-column indices in joins and for cases
- *		when a key is in both join & restriction clauses. - vadim 03/18/97
+ * Returns two parallel lists of the same length: the clause groups,
+ * and the required outer rel set for each one.
  *
+ * 'rel' is the relation for which 'index' is defined
+ * 'joininfo_list' is the list of JoinInfo nodes for 'rel'
+ * 'restrictinfo_list' is the list of restriction clauses for 'rel'
+ * '*clausegroups' receives a list of clause sublists
+ * '*outerrelids' receives a list of relid lists
  */
-static List *
+static void
 indexable_joinclauses(RelOptInfo *rel, RelOptInfo *index,
-					  List *joininfo_list, List *restrictinfo_list)
+					  List *joininfo_list, List *restrictinfo_list,
+					  List **clausegroups, List **outerrelids)
 {
 	List	   *cg_list = NIL;
+	List	   *relid_list = NIL;
 	List	   *i;
 
 	foreach(i, joininfo_list)
@@ -1139,15 +1160,32 @@ indexable_joinclauses(RelOptInfo *rel, RelOptInfo *index,
 											joininfo->jinfo_restrictinfo,
 													   restrictinfo_list);
 
+		/*----------
+		 * This code knows that group_clauses_by_ikey_for_joins() returns
+		 * either NIL or a list containing a single sublist of clauses.  
+		 * The line
+		 *		cg_list = nconc(cg_list, clausegroups);
+		 * is better read as
+		 *		cg_list = lappend(cg_list, lfirst(clausegroups));
+		 * That is, we are appending the only sublist returned by
+		 * group_clauses_by_ikey_for_joins() to the list of clause sublists
+		 * that this routine will return.  By using nconc() we recycle
+		 * a cons cell that would be wasted ... whoever wrote this code
+		 * was too clever by half...
+		 *----------
+		 */
 		if (clausegroups != NIL)
 		{
-			List	   *clauses = lfirst(clausegroups);
-
-			((RestrictInfo *) lfirst(clauses))->restrictinfojoinid = joininfo->unjoined_relids;
 			cg_list = nconc(cg_list, clausegroups);
+			relid_list = lappend(relid_list, joininfo->unjoined_relids);
 		}
 	}
-	return cg_list;
+
+	/* Make sure above clever code didn't screw up */
+	Assert(length(cg_list) == length(relid_list));
+
+	*clausegroups = cg_list;
+	*outerrelids = relid_list;
 }
 
 /****************************************************************************
@@ -1159,15 +1197,17 @@ indexable_joinclauses(RelOptInfo *rel, RelOptInfo *index,
  *	  Creates index path nodes corresponding to paths to be used as inner
  *	  relations in nestloop joins.
  *
- * 'clausegroup-list' is a list of list of restrictinfo nodes which can use
+ * 'rel' is the relation for which 'index' is defined
+ * 'clausegroup_list' is a list of lists of restrictinfo nodes which can use
  * 'index' on their inner relation.
+ * 'outerrelids_list' is a list of the required outer rels for each group
+ * of join clauses.
  *
  * Returns a list of index pathnodes.
- *
  */
 static List *
-index_innerjoin(Query *root, RelOptInfo *rel, List *clausegroup_list,
-				RelOptInfo *index)
+index_innerjoin(Query *root, RelOptInfo *rel, RelOptInfo *index,
+				List *clausegroup_list, List *outerrelids_list)
 {
 	List	   *path_list = NIL;
 	List	   *i;
@@ -1211,7 +1251,8 @@ index_innerjoin(Query *root, RelOptInfo *rel, List *clausegroup_list,
 		pathnode->indexkeys = index->indexkeys;
 		pathnode->indexqual = lcons(get_actual_clauses(clausegroup), NIL);
 
-		pathnode->path.joinid = ((RestrictInfo *) lfirst(clausegroup))->restrictinfojoinid;
+		/* joinid saves the rels needed on the outer side of the join */
+		pathnode->path.joinid = lfirst(outerrelids_list);
 
 		pathnode->path.path_cost = cost_index((Oid) lfirsti(index->relids),
 											  (int) temp_pages,
@@ -1235,6 +1276,7 @@ index_innerjoin(Query *root, RelOptInfo *rel, List *clausegroup_list,
 			((Path *) pathnode)->path_cost += xfunc_get_path_cost((Path *) pathnode);
 #endif
 		path_list = lappend(path_list, pathnode);
+		outerrelids_list = lnext(outerrelids_list);
 	}
 	return path_list;
 }
@@ -1245,7 +1287,7 @@ index_innerjoin(Query *root, RelOptInfo *rel, List *clausegroup_list,
  *	  (restriction or join) that can be used in conjunction with an index.
  *
  * 'rel' is the relation for which 'index' is defined
- * 'clausegroup-list' is the list of clause groups (lists of restrictinfo
+ * 'clausegroup_list' is the list of clause groups (lists of restrictinfo
  *				nodes) grouped by mergejoinorder
  * 'join' is a flag indicating whether or not the clauses are join
  *				clauses

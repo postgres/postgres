@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.22 1999/07/17 20:17:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.23 1999/07/25 17:53:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -929,7 +929,6 @@ _freeRestrictInfo(RestrictInfo *node)
 	freeObject(node->clause);
 	freeObject(node->indexids);
 	freeObject(node->mergejoinorder);
-	freeList(node->restrictinfojoinid);
 
 	pfree(node);
 }
