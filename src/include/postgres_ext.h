@@ -15,7 +15,7 @@
  *	use header files that are otherwise internal to Postgres to interface
  *	with the backend.
  *
- * $Id: postgres_ext.h,v 1.11 2002/08/13 20:40:44 momjian Exp $
+ * $Id: postgres_ext.h,v 1.12 2003/03/18 17:21:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,11 @@
  */
 typedef unsigned int Oid;
 
+#ifdef __cplusplus
+#define InvalidOid		(Oid(0))
+#else
 #define InvalidOid		((Oid) 0)
+#endif
 
 #define OID_MAX  UINT_MAX
 /* you will need to include <limits.h> to use the above #define */
