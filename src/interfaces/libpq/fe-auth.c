@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.68 2002/07/20 05:43:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.69 2002/08/29 03:22:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,6 +62,11 @@
 /*
  * common definitions for generic fe/be routines
  */
+
+#define STARTUP_MSG		7		/* Initialise a connection */
+#define STARTUP_KRB4_MSG	10	/* krb4 session follows */
+#define STARTUP_KRB5_MSG	11	/* krb5 session follows */
+#define STARTUP_PASSWORD_MSG	14		/* Password follows */
 
 struct authsvc
 {

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.85 2002/08/27 16:21:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.86 2002/08/29 03:22:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,11 +37,8 @@
 
 
 static void sendAuthRequest(Port *port, AuthRequest areq);
-static int	old_be_recvauth(Port *port);
-static int	map_old_to_new(Port *port, UserAuth old, int status);
 static void auth_failed(Port *port, int status);
 static int	recv_and_check_password_packet(Port *port);
-static int	recv_and_check_passwordv0(Port *port);
 
 char	   *pg_krb_server_keyfile;
 
@@ -319,86 +316,6 @@ pg_krb5_recvauth(Port *port)
 
 
 /*
- * Handle a v0 password packet.
- */
-static int
-recv_and_check_passwordv0(Port *port)
-{
-	int32		len;
-	char	   *buf;
-	PasswordPacketV0 *pp;
-	char	   *user,
-			   *password,
-			   *cp,
-			   *start;
-	int			status;
-
-	if (pq_getint(&len, 4) == EOF)
-		return STATUS_EOF;
-	len -= 4;
-	buf = palloc(len);
-	if (pq_getbytes(buf, len) == EOF)
-	{
-		pfree(buf);
-		return STATUS_EOF;
-	}
-
-	pp = (PasswordPacketV0 *) buf;
-
-	/*
-	 * The packet is supposed to comprise the user name and the password
-	 * as C strings.  Be careful to check that this is the case.
-	 */
-	user = password = NULL;
-
-	len -= sizeof(pp->unused);
-
-	cp = start = pp->data;
-
-	while (len-- > 0)
-		if (*cp++ == '\0')
-		{
-			if (user == NULL)
-				user = start;
-			else
-			{
-				password = start;
-				break;
-			}
-
-			start = cp;
-		}
-
-	if (user == NULL || password == NULL)
-	{
-		elog(LOG, "pg_password_recvauth: badly formed password packet");
-		status = STATUS_ERROR;
-	}
-	else
-	{
-		UserAuth	saved;
-
-		/* Check the password. */
-
-		saved = port->auth_method;
-		port->auth_method = uaPassword;
-
-		status = md5_crypt_verify(port, user, password);
-
-		port->auth_method = saved;
-
-		/* Adjust the result if necessary. */
-		if (map_old_to_new(port, uaPassword, status) != STATUS_OK)
-			status = STATUS_ERROR;
-	}
-
-	pfree(buf);
-
-	return status;
-}
-
-
-/*
  * Tell the user the authentication failed, but not (much about) why.
  *
  * There is a tradeoff here between security concerns and making life
@@ -481,16 +398,6 @@ ClientAuthentication(Port *port)
 	if (hba_getauthmethod(port) != STATUS_OK)
 		elog(FATAL, "Missing or erroneous pg_hba.conf file, see postmaster log for details");
 
-	/* Handle old style authentication. */
-	if (PG_PROTOCOL_MAJOR(port->proto) == 0)
-	{
-		status = old_be_recvauth(port);
-		if (status != STATUS_OK)
-			auth_failed(port, status);
-		return;
-	}
-
-	/* Handle new style authentication. */
 	switch (port->auth_method)
 	{
 		case uaReject:
@@ -827,91 +734,4 @@ recv_and_check_password_packet(Port *port)
 
 	pfree(buf.data);
 	return result;
-}
-
-
-/*
- * Server demux routine for incoming authentication information for protocol
- * version 0.
- */
-static int
-old_be_recvauth(Port *port)
-{
-	int			status;
-	MsgType		msgtype = (MsgType) port->proto;
-
-	/* Handle the authentication that's offered. */
-	switch (msgtype)
-	{
-		case STARTUP_KRB4_MSG:
-			status = map_old_to_new(port, uaKrb4, pg_krb4_recvauth(port));
-			break;
-
-		case STARTUP_KRB5_MSG:
-			status = map_old_to_new(port, uaKrb5, pg_krb5_recvauth(port));
-			break;
-
-		case STARTUP_MSG:
-			status = map_old_to_new(port, uaTrust, STATUS_OK);
-			break;
-
-		case STARTUP_PASSWORD_MSG:
-			status = recv_and_check_passwordv0(port);
-			break;
-
-		default:
-			elog(LOG, "Invalid startup message type: %u", msgtype);
-
-			return STATUS_ERROR;
-	}
-
-	return status;
-}
-
-
-/*
- * The old style authentication has been done.	Modify the result of this (eg.
- * allow the connection anyway, disallow it anyway, or use the result)
- * depending on what authentication we really want to use.
- */
-static int
-map_old_to_new(Port *port, UserAuth old, int status)
-{
-	switch (port->auth_method)
-	{
-		case uaMD5:
-		case uaCrypt:
-		case uaReject:
-#ifdef USE_PAM
-		case uaPAM:
-#endif   /* USE_PAM */
-			status = STATUS_ERROR;
-			break;
-
-		case uaKrb4:
-			if (old != uaKrb4)
-				status = STATUS_ERROR;
-			break;
-
-		case uaKrb5:
-			if (old != uaKrb5)
-				status = STATUS_ERROR;
-			break;
-
-		case uaTrust:
-			status = STATUS_OK;
-			break;
-
-		case uaIdent:
-			status = authident(port);
-			break;
-
-		case uaPassword:
-			if (old != uaPassword)
-				status = STATUS_ERROR;
-
-			break;
-	}
-
-	return status;
 }

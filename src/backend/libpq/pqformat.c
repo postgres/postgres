@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqformat.c,v 1.22 2002/08/08 06:32:26 ishii Exp $
+ *	$Id: pqformat.c,v 1.23 2002/08/29 03:22:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,41 +55,6 @@
 #include "mb/pg_wchar.h"
 #ifdef HAVE_ENDIAN_H
 #include <endian.h>
-#endif
-
-#ifndef BYTE_ORDER
-#error BYTE_ORDER must be defined as LITTLE_ENDIAN, BIG_ENDIAN or PDP_ENDIAN
-#endif
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-
-#define ntoh_s(n)	n
-#define ntoh_l(n)	n
-#define hton_s(n)	n
-#define hton_l(n)	n
-
-#else
-#if BYTE_ORDER == BIG_ENDIAN
-
-#define ntoh_s(n)	(uint16)((((uint16)n & 0x00ff) <<  8) | \
-				 (((uint16)n & 0xff00) >>  8))
-#define ntoh_l(n)	(uint32)((((uint32)n & 0x000000ff) << 24) | \
-				 (((uint32)n & 0x0000ff00) <<  8) | \
-				 (((uint32)n & 0x00ff0000) >>  8) | \
-				 (((uint32)n & 0xff000000) >> 24))
-#define hton_s(n)	(ntoh_s(n))
-#define hton_l(n)	(ntoh_l(n))
-
-#else
-#if BYTE_ORDER == PDP_ENDIAN
-
-#error PDP_ENDIAN macros not written yet
-
-#else
-
-#error BYTE_ORDER not defined as anything understood
-#endif
-#endif
 #endif
 
 
@@ -183,11 +148,11 @@ pq_sendint(StringInfo buf, int i, int b)
 			appendBinaryStringInfo(buf, (char *) &n8, 1);
 			break;
 		case 2:
-			n16 = ((PG_PROTOCOL_MAJOR(FrontendProtocol) == 0) ? hton_s(i) : htons((uint16) i));
+			n16 = htons((uint16) i);
 			appendBinaryStringInfo(buf, (char *) &n16, 2);
 			break;
 		case 4:
-			n32 = ((PG_PROTOCOL_MAJOR(FrontendProtocol) == 0) ? hton_l(i) : htonl((uint32) i));
+			n32 = htonl((uint32) i);
 			appendBinaryStringInfo(buf, (char *) &n32, 4);
 			break;
 		default:
@@ -261,13 +226,11 @@ pq_getint(int *result, int b)
 			break;
 		case 2:
 			status = pq_getbytes((char *) &n16, 2);
-			*result = (int) ((PG_PROTOCOL_MAJOR(FrontendProtocol) == 0) ?
-							 ntoh_s(n16) : ntohs(n16));
+			*result = (int) (ntohs(n16));
 			break;
 		case 4:
 			status = pq_getbytes((char *) &n32, 4);
-			*result = (int) ((PG_PROTOCOL_MAJOR(FrontendProtocol) == 0) ?
-							 ntoh_l(n32) : ntohl(n32));
+			*result = (int) (ntohl(n32));
 			break;
 		default:
 

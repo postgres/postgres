@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-be.h,v 1.33 2002/08/18 03:03:26 momjian Exp $
+ * $Id: libpq-be.h,v 1.34 2002/08/29 03:22:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,17 +29,8 @@
 #endif
 
 
-/* Protocol v0 password packet. */
-
-typedef struct PasswordPacketV0
-{
-	uint32		unused;
-	char		data[288];		/* User and password as strings. */
-} PasswordPacketV0;
-
-
 /*
- * This is used by the postmaster in its communication with frontends.	It is
+ * This is used by the postmaster in its communication with frontends.	It
  * contains all state information needed during this communication before the
  * backend is run.
  */

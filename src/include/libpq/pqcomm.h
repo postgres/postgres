@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.68 2002/08/27 16:21:51 momjian Exp $
+ * $Id: pqcomm.h,v 1.69 2002/08/29 03:22:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,7 @@ typedef union SockAddr
 
 /* The earliest and latest frontend/backend protocol version supported. */
 
-#define PG_PROTOCOL_EARLIEST	PG_PROTOCOL(0,0)
+#define PG_PROTOCOL_EARLIEST	PG_PROTOCOL(1,0)
 #define PG_PROTOCOL_LATEST	PG_PROTOCOL(2,0)
 
 /*
@@ -127,6 +127,9 @@ typedef uint32 PacketLen;
 
 typedef uint32 ProtocolVersion; /* Fe/Be protocol version number */
 
+typedef ProtocolVersion MsgType;
+
+
 typedef struct StartupPacket
 {
 	ProtocolVersion protoVersion;		/* Protocol version */
@@ -151,16 +154,6 @@ extern bool Db_user_namespace;
 #define AUTH_REQ_SCM_CREDS	6	/* transfer SCM credentials */
 
 typedef uint32 AuthRequest;
-
-
-/* This next section is to maintain compatibility with protocol v0.0. */
-
-#define STARTUP_MSG		7		/* Initialise a connection */
-#define STARTUP_KRB4_MSG	10	/* krb4 session follows */
-#define STARTUP_KRB5_MSG	11	/* krb5 session follows */
-#define STARTUP_PASSWORD_MSG	14		/* Password follows */
-
-typedef ProtocolVersion MsgType;
 
 
 /* A client can also send a cancel-current-operation request to the postmaster.
