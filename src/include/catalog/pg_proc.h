@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.3 1996/11/03 12:12:32 scrappy Exp $
+ * $Id: pg_proc.h,v 1.4 1996/11/05 10:37:16 scrappy Exp $
  *
  * NOTES
  *    The script catalog/genbki.sh reads this file and generates .bki
@@ -22,14 +22,14 @@
 #ifndef PG_PROC_H
 #define PG_PROC_H
 
+#include <tcop/dest.h>
+
 /* ----------------
  *	postgres.h contains the system type definintions and the
  *	CATALOG(), BOOTSTRAP and DATA() sugar words so this file
  *	can be read by both genbki.sh and the C compiler.
  * ----------------
  */
-#include "nodes/pg_list.h"
-#include "tcop/dest.h"
 
 /* ----------------
  *	pg_proc definition.  cpp turns this into

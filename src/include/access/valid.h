@@ -6,19 +6,16 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: valid.h,v 1.2 1996/10/31 09:46:44 scrappy Exp $
+ * $Id: valid.h,v 1.3 1996/11/05 10:37:07 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	VALID_H
 #define VALID_H
 
-#include "access/skey.h"
-#include "storage/buf.h"
-#include "utils/tqual.h"
-#include "access/tupdesc.h"
-#include "utils/rel.h"
-#include "storage/bufpage.h"
+#include <utils/tqual.h>
+#include <storage/bufpage.h>
+#include <utils/rel.h>
 
 /* ----------------
  *	extern decl's

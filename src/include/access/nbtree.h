@@ -6,27 +6,21 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.2 1996/10/23 07:41:29 scrappy Exp $
+ * $Id: nbtree.h,v 1.3 1996/11/05 10:37:08 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	NBTREE_H
 #define	NBTREE_H
 
-#include "access/attnum.h"
-#include "access/itup.h"
-#include "access/htup.h"
-#include "access/tupdesc.h"
-
-#include "access/istrat.h"
-#include "access/funcindex.h"
-#include "access/relscan.h"
-#include "access/sdir.h"
-#include "nodes/pg_list.h"
-#include "storage/page.h"
-#include "storage/bufpage.h"
-#include "storage/item.h"
-#include "utils/memutils.h"
+#include <access/sdir.h>
+#include <access/relscan.h>
+#include <storage/itemid.h>
+#include <storage/page.h>
+#include <access/funcindex.h>
+#include <access/itup.h>
+#include <storage/buf.h>
+#include <storage/itemptr.h>
 
 /*
  *  BTPageOpaqueData -- At the end of every page, we store a pointer

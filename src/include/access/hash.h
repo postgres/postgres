@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.2 1996/10/20 06:35:01 scrappy Exp $
+ * $Id: hash.h,v 1.3 1996/11/05 10:37:02 scrappy Exp $
  *
  * NOTES
  *	modeled after Margo Seltzer's hash implementation for unix. 
@@ -16,13 +16,11 @@
 #ifndef HASH_H
 #define HASH_H
 
-#include "access/htup.h"
-#include "access/itup.h"
-#include "storage/bufpage.h"
-#include "access/sdir.h"
-#include "access/funcindex.h"
-#include "storage/block.h"
-#include "access/relscan.h"
+#include <access/sdir.h>
+#include <access/funcindex.h>
+#include <storage/bufpage.h>
+#include <access/relscan.h>
+#include <access/itup.h>
 
 /* 
  * An overflow page is a spare page allocated for storing data whose 
