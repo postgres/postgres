@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.45.2.2 2003/11/15 17:24:19 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.45.2.3 2005/03/31 23:21:32 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -109,6 +109,7 @@ static char pgStat_fname[MAXPGPATH];
 static void pgstat_main(void);
 static void pgstat_recvbuffer(void);
 static void pgstat_die(SIGNAL_ARGS);
+static void pgstat_beshutdown_hook(int code, Datum arg);
 
 static int	pgstat_add_backend(PgStat_MsgHdr *msg);
 static void pgstat_sub_backend(int procpid);
@@ -522,6 +523,25 @@ pgstat_bestart(void)
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_BESTART);
 	pgstat_send(&msg, sizeof(msg));
+
+	/*
+	 * Set up a process-exit hook to ensure we flush the last batch of
+	 * statistics to the collector.
+	 */
+	on_proc_exit(pgstat_beshutdown_hook, 0);
+}
+
+/*
+ * Flush any remaining statistics counts out to the collector at process
+ * exit.   Without this, operations triggered during backend exit (such as
+ * temp table deletions) won't be counted.  This is an on_proc_exit hook,
+ * not on_shmem_exit, so that everything interesting must have happened
+ * already.
+ */
+static void
+pgstat_beshutdown_hook(int code, Datum arg)
+{
+	pgstat_report_tabstat();
 }
 
 
