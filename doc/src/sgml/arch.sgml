@@ -39,7 +39,7 @@
      applications  that  wish  to  access  a  given database
      within a cluster make calls to the   library.
      The library sends user requests over the network to the
-     <Application>postmaster</Application> (<XRef LinkEnd="ARCH-CLIENTSERVER" EndTerm="ARCH-CLIENTSERVER">),
+     <Application>postmaster</Application> (<XRef LinkEnd="ARCH-CLIENTSERVER">),
      which in turn  starts  a  new backend  server  process
      
 <Figure Id="ARCH-CLIENTSERVER">

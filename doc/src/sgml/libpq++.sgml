@@ -1,9 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.21 2000/12/22 18:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.22 2000/12/26 00:10:37 petere Exp $
 -->
 
  <chapter id="libpqplusplus">
-  <title>libpq - C++ Binding Library</title>
+  <title>libpq++ - C++ Binding Library</title>
   
   <para>
    <filename>libpq++</filename> is the C++ API to 
@@ -57,7 +57,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.21 2000/12/22 18:57:
      an application program:
      <note>
       <para>
-       Refer to the <xref endterm="libpq" linkend="libpq-envars"> for a complete
+       Refer to <xref linkend="libpq-envars"> for a complete
        list of available connection options.
       </para>
      </note>

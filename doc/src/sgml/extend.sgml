@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.7 2000/11/29 20:15:59 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.8 2000/12/26 00:10:37 petere Exp $
 -->
 
  <chapter id="extend">
@@ -196,7 +196,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.7 2000/11/29 20:15:59 peter
 
     The Reference Manual gives a more detailed  explanation
     of  these catalogs and their attributes.  However,
-    <xref endterm="EXTEND-CATALOGS" linkend="EXTEND-CATALOGS">
+    <xref linkend="EXTEND-CATALOGS">
     shows the major entities and their  relationships
     in  the system catalogs.  (Attributes that do not refer
     to other entities are not shown unless they are part of

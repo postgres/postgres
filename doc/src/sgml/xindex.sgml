@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.11 2000/03/31 03:27:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.12 2000/12/26 00:10:37 petere Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
 
   <para>
    Look back at
-   <xref endterm="EXTEND-CATALOGS" linkend="EXTEND-CATALOGS">.
+   <xref linkend="EXTEND-CATALOGS">.
    The right half shows the  catalogs  that we must modify in order to tell
    <productname>Postgres</productname> how to use a user-defined type and/or
    user-defined  operators with an index (i.e., <filename>pg_am, pg_amop,

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.12 2000/12/22 18:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.13 2000/12/26 00:10:37 petere Exp $
 -->
 
  <chapter id="overview">
@@ -284,7 +284,7 @@ select s.sname, se.pno
     <para>
      Figure \ref{parsetree} shows the <firstterm>parse tree</firstterm> built by the
      grammar rules and actions given in <filename>gram.y</filename> for the query
-     given in  <xref linkend="simple-select" endterm="simple-select">
+     given in  <xref linkend="simple-select">
      (without the <firstterm>operator tree</firstterm> for
      the <firstterm>where clause</firstterm> which is shown in figure \ref{where_clause}
      because there was not enough space to show both data structures in one
@@ -312,8 +312,8 @@ select s.sname, se.pno
 
     <para>
      Figure \ref{where_clause} shows the operator tree built for the
-     where clause of the SQL query given in example
-     <xref linkend="simple-select" endterm="simple-select">
+     where clause of the SQL query given in
+     <xref linkend="simple-select">
      which is attached to the field
      <literal>qual</literal> of the <literal>SelectStmt</literal> node. The top node of the
      operator tree is an <literal>A_Expr</literal> node representing an <literal>AND</literal>

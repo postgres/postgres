@@ -39,9 +39,9 @@
      within a cluster make calls to the   library.
      The library sends user requests over the network to the
      <Application>postmaster</Application>
-(<XRef LinkEnd="PGARCH-CONNECTIONS" EndTerm="PGARCH-CONNECTIONS">(a)), 
+(<XRef LinkEnd="PGARCH-CONNECTIONS">(a)), 
 which in turn  starts  a  new backend  server  process 
-(<XRef LinkEnd="PGARCH-CONNECTIONS" EndTerm="PGARCH-CONNECTIONS">(b)) 
+(<XRef LinkEnd="PGARCH-CONNECTIONS">(b)) 
      
 <Figure Id="PGARCH-CONNECTIONS">
 <Title>How a connection is established</Title>
@@ -49,7 +49,7 @@ which in turn  starts  a  new backend  server  process
 </Figure>
 
      and connects the frontend process to the new server 
-(<XRef LinkEnd="PGARCH-CONNECTIONS" EndTerm="PGARCH-CONNECTIONS">(c)).
+(<XRef LinkEnd="PGARCH-CONNECTIONS">(c)).
 From that  point  on,  the  frontend process and the backend
      server communicate without intervention by the 
      <Application>postmaster</Application>.   Hence, the <Application>postmaster</Application> is always running, waiting

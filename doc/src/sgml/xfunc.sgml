@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.25 2000/12/22 18:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.26 2000/12/26 00:10:37 petere Exp $
 -->
 
  <chapter id="xfunc">
@@ -342,7 +342,7 @@ SELECT clean_EMP();
     There are currently three procedural languages available in the standard
     <productname>Postgres</productname> distribution (PLSQL, PLTCL and
     PLPERL), and other languages can be defined.
-    Refer to <xref linkend="xplang-title" endterm="xplang-title"> for
+    Refer to <xref linkend="xplang"> for
     more information.
    </para>
   </sect1>
@@ -1200,7 +1200,7 @@ LANGUAGE 'c';
 	it  can  be  dynamically  loaded  into  
 	<productname>Postgres</productname>
 	always requires special flags.
-	See <xref linkend="dfunc-title" endterm="dfunc-title">
+	See <xref linkend="dfunc">
 	for  a  detailed explanation of how to do it for
 	your particular operating system.
        </para>
