@@ -106,7 +106,8 @@ TYPES
 	o Not to stuff everything as files in a single directory, hash dirs
 	o Allow large object vacuuming
 	o Tables that start with xinv confused to be large objects
-* Allow pg_descriptions when creating types, tables, columns, and functions
+* -Allow pg_descriptions when creating tables
+* Allow pg_descriptions when creating types, columns, and functions
 * Add IPv6 capability to INET/CIDR types
 * Make a separate SERIAL type?
 * Store binary-compatible type information in the system

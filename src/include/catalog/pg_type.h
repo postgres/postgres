@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.64 1999/07/14 01:20:09 momjian Exp $
+ * $Id: pg_type.h,v 1.65 1999/10/15 04:56:52 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -167,7 +167,7 @@ DESCR("31-character type for storing system identifiers");
 #define NAMEOID			19
 
 DATA(insert OID = 20 (	int8	   PGUID  8  20 f b t \054 0   0 int8in int8out int8in int8out d _null_ ));
-DESCR("eight-byte integer, >18 digits");
+DESCR("~18 digits, eight-byte integer, ");
 #define INT8OID			20
 
 DATA(insert OID = 21 (	int2	   PGUID  2   5 t b t \054 0   0 int2in int2out int2in int2out s _null_ ));
@@ -186,7 +186,7 @@ DESCR("8 2-byte integers, used internally");
 #define INT28OID		22
 
 DATA(insert OID = 23 (	int4	   PGUID  4  10 t b t \054 0   0 int4in int4out int4in int4out i _null_ ));
-DESCR("4-byte integer, -2B to 2B");
+DESCR("-2 billion to 2 billion, 4-byte integer, ");
 #define INT4OID			23
 
 DATA(insert OID = 24 (	regproc    PGUID  4  16 t b t \054 0   0 regprocin regprocout regprocin regprocout i _null_ ));
