@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/schemacmds.c,v 1.1 2002/04/15 05:22:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/schemacmds.c,v 1.2 2002/04/27 03:45:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "miscadmin.h"
 #include "parser/analyze.h"
 #include "tcop/utility.h"
+#include "utils/acl.h"
 #include "utils/lsyscache.h"
 
 
@@ -36,8 +37,13 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 	const char *owner_name;
 	Oid			owner_userid;
 	Oid			saved_userid;
+	AclResult	aclresult;
 
 	saved_userid = GetUserId();
+
+	/*
+	 * Figure out user identities.
+	 */
 
 	if (!authId)
 	{
@@ -66,6 +72,13 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 				 "\n\t\"%s\" is not a superuser, so cannot create a schema for \"%s\"",
 				 owner_name, authId);
 	}
+
+	/*
+	 * Permissions checks.
+	 */
+	aclresult = pg_database_aclcheck(MyDatabaseId, saved_userid, ACL_CREATE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, DatabaseName);
 
 	if (!allowSystemTableMods && IsReservedName(schemaName))
 		elog(ERROR, "CREATE SCHEMA: Illegal schema name: \"%s\" -- pg_ is reserved for system schemas",

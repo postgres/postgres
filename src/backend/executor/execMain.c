@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.158 2002/04/15 05:22:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.159 2002/04/27 03:45:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -360,7 +360,7 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
 {
 	Oid			relOid;
 	Oid			userid;
-	int32		aclcheck_result;
+	AclResult	aclcheck_result;
 
 	/*
 	 * If it's a subquery RTE, ignore it --- it will be checked when
@@ -388,9 +388,7 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
 	{
 		aclcheck_result = CHECK(ACL_SELECT);
 		if (aclcheck_result != ACLCHECK_OK)
-			elog(ERROR, "%s: %s",
-				 get_rel_name(relOid),
-				 aclcheck_error_strings[aclcheck_result]);
+			aclcheck_error(aclcheck_result, get_rel_name(relOid));
 	}
 
 	if (rte->checkForWrite)
@@ -419,9 +417,7 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
 				break;
 		}
 		if (aclcheck_result != ACLCHECK_OK)
-			elog(ERROR, "%s: %s",
-				 get_rel_name(relOid),
-				 aclcheck_error_strings[aclcheck_result]);
+			aclcheck_error(aclcheck_result, get_rel_name(relOid));
 	}
 }
 
@@ -701,7 +697,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 		if (!parseTree->isPortal)
 		{
 			/*
-			 * a select into table
+			 * a select into table --- need to create the "into" table
 			 */
 			if (parseTree->into != NULL)
 			{
@@ -711,10 +707,21 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 				TupleDesc	tupdesc;
 
 				/*
-				 * create the "into" relation
+				 * find namespace to create in, check permissions
 				 */
 				intoName = parseTree->into->relname;
 				namespaceId = RangeVarGetCreationNamespace(parseTree->into);
+
+				if (!isTempNamespace(namespaceId))
+				{
+					AclResult	aclresult;
+
+					aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(),
+													  ACL_CREATE);
+					if (aclresult != ACLCHECK_OK)
+						aclcheck_error(aclresult,
+									   get_namespace_name(namespaceId));
+				}
 
 				/*
 				 * have to copy tupType to get rid of constraints

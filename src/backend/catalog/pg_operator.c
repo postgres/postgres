@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.67 2002/04/25 02:56:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.68 2002/04/27 03:45:00 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -26,6 +26,7 @@
 #include "miscadmin.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -697,6 +698,7 @@ get_other_operator(List *otherOp, Oid otherLeftTypeId, Oid otherRightTypeId,
 	bool		otherDefined;
 	char	   *otherName;
 	Oid			otherNamespace;
+	AclResult	aclresult;
 
 	other_oid = OperatorLookup(otherOp,
 							   otherLeftTypeId,
@@ -727,6 +729,12 @@ get_other_operator(List *otherOp, Oid otherLeftTypeId, Oid otherRightTypeId,
 	}
 
 	/* not in catalogs, different from operator, so make shell */
+
+	aclresult = pg_namespace_aclcheck(otherNamespace, GetUserId(),
+									  ACL_CREATE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, get_namespace_name(otherNamespace));
+
 	other_oid = OperatorShellMake(otherName,
 								  otherNamespace,
 								  otherLeftTypeId,

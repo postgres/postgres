@@ -7,7 +7,7 @@
  * Copyright (c) 1999-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.44 2002/04/24 02:50:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.45 2002/04/27 03:45:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -324,8 +324,7 @@ CommentRelation(int objtype, List *relname, char *comment)
 
 	/* Check object security */
 	if (!pg_class_ownercheck(RelationGetRelid(relation), GetUserId()))
-		elog(ERROR, "you are not permitted to comment on class '%s'",
-			 RelationGetRelationName(relation));
+		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(relation));
 
 	/* Next, verify that the relation type matches the intent */
 
@@ -395,8 +394,7 @@ CommentAttribute(List *qualname, char *comment)
 	/* Check object security */
 
 	if (!pg_class_ownercheck(RelationGetRelid(relation), GetUserId()))
-		elog(ERROR, "you are not permitted to comment on class '%s'",
-			 RelationGetRelationName(relation));
+		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(relation));
 
 	/* Now, fetch the attribute number from the system cache */
 
@@ -498,7 +496,7 @@ CommentRule(List *qualname, char *comment)
 	Oid			reloid;
 	Oid			ruleoid;
 	Oid			classoid;
-	int32		aclcheck;
+	AclResult	aclcheck;
 
 	/* Separate relname and trig name */
 	nnames = length(qualname);
@@ -573,8 +571,7 @@ CommentRule(List *qualname, char *comment)
 
 	aclcheck = pg_class_aclcheck(reloid, GetUserId(), ACL_RULE);
 	if (aclcheck != ACLCHECK_OK)
-		elog(ERROR, "you are not permitted to comment on rule '%s'",
-			 rulename);
+		aclcheck_error(aclcheck, rulename);
 
 	/* pg_rewrite doesn't have a hard-coded OID, so must look it up */
 
@@ -613,8 +610,7 @@ CommentType(List *typename, char *comment)
 	/* Check object security */
 
 	if (!pg_type_ownercheck(oid, GetUserId()))
-		elog(ERROR, "you are not permitted to comment on type %s",
-			 TypeNameToString(tname));
+		aclcheck_error(ACLCHECK_NOT_OWNER, TypeNameToString(tname));
 
 	/* Call CreateComments() to create/drop the comments */
 
@@ -649,14 +645,7 @@ CommentAggregate(List *aggregate, List *arguments, char *comment)
 	/* Next, validate the user's attempt to comment */
 
 	if (!pg_proc_ownercheck(oid, GetUserId()))
-	{
-		if (baseoid == InvalidOid)
-			elog(ERROR, "you are not permitted to comment on aggregate %s for all types",
-				 NameListToString(aggregate));
-		else
-			elog(ERROR, "you are not permitted to comment on aggregate %s for type %s",
-				 NameListToString(aggregate), format_type_be(baseoid));
-	}
+		aclcheck_error(ACLCHECK_NOT_OWNER, NameListToString(aggregate));
 
 	/* Call CreateComments() to create/drop the comments */
 
@@ -685,8 +674,7 @@ CommentProc(List *function, List *arguments, char *comment)
 	/* Now, validate the user's ability to comment on this function */
 
 	if (!pg_proc_ownercheck(oid, GetUserId()))
-		elog(ERROR, "you are not permitted to comment on function %s",
-			 NameListToString(function));
+		aclcheck_error(ACLCHECK_NOT_OWNER, NameListToString(function));
 
 	/* Call CreateComments() to create/drop the comments */
 
@@ -723,8 +711,7 @@ CommentOperator(List *opername, List *arguments, char *comment)
 	/* Valid user's ability to comment on this operator */
 
 	if (!pg_oper_ownercheck(oid, GetUserId()))
-		elog(ERROR, "you are not permitted to comment on operator '%s'",
-			 NameListToString(opername));
+		aclcheck_error(ACLCHECK_NOT_OWNER, NameListToString(opername));
 
 	/* Get the procedure associated with the operator */
 
@@ -775,8 +762,7 @@ CommentTrigger(List *qualname, char *comment)
 	/* Check object security */
 
 	if (!pg_class_ownercheck(RelationGetRelid(relation), GetUserId()))
-		elog(ERROR, "you are not permitted to comment on trigger '%s' for relation '%s'",
-			 trigname, RelationGetRelationName(relation));
+		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(relation));
 
 	/*
 	 * Fetch the trigger tuple from pg_trigger.  There can be only one

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/aggregatecmds.c,v 1.1 2002/04/15 05:22:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/aggregatecmds.c,v 1.2 2002/04/27 03:45:00 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -26,6 +26,7 @@
 #include "catalog/catname.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_aggregate.h"
+#include "catalog/pg_proc.h"
 #include "commands/comment.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
@@ -45,6 +46,7 @@ DefineAggregate(List *names, List *parameters)
 {
 	char	   *aggName;
 	Oid			aggNamespace;
+	AclResult	aclresult;
 	List	   *transfuncName = NIL;
 	List	   *finalfuncName = NIL;
 	TypeName   *baseType = NULL;
@@ -56,6 +58,11 @@ DefineAggregate(List *names, List *parameters)
 
 	/* Convert list of names to a name and namespace */
 	aggNamespace = QualifiedNameGetCreationNamespace(names, &aggName);
+
+	/* Check we have creation rights in target namespace */
+	aclresult = pg_namespace_aclcheck(aggNamespace, GetUserId(), ACL_CREATE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, get_namespace_name(aggNamespace));
 
 	foreach(pl, parameters)
 	{
@@ -157,20 +164,6 @@ RemoveAggregate(List *aggName, TypeName *aggType)
 
 	procOid = find_aggregate_func("RemoveAggregate", aggName, basetypeID);
 
-	/* Permission check */
-
-	if (!pg_proc_ownercheck(procOid, GetUserId()))
-	{
-		if (basetypeID == InvalidOid)
-			elog(ERROR, "RemoveAggregate: aggregate %s for all types: permission denied",
-				 NameListToString(aggName));
-		else
-			elog(ERROR, "RemoveAggregate: aggregate %s for type %s: permission denied",
-				 NameListToString(aggName), format_type_be(basetypeID));
-	}
-
-	/* Remove the pg_proc tuple */
-
 	relation = heap_openr(ProcedureRelationName, RowExclusiveLock);
 
 	tup = SearchSysCache(PROCOID,
@@ -180,9 +173,16 @@ RemoveAggregate(List *aggName, TypeName *aggType)
 		elog(ERROR, "RemoveAggregate: couldn't find pg_proc tuple for %s",
 			 NameListToString(aggName));
 
+	/* Permission check: must own agg or its namespace */
+	if (!pg_proc_ownercheck(procOid, GetUserId()) &&
+		!pg_namespace_ownercheck(((Form_pg_proc) GETSTRUCT(tup))->pronamespace,
+								 GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, NameListToString(aggName));
+
 	/* Delete any comments associated with this function */
 	DeleteComments(procOid, RelationGetRelid(relation));
 
+	/* Remove the pg_proc tuple */
 	simple_heap_delete(relation, &tup->t_self);
 
 	ReleaseSysCache(tup);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.90 2002/02/18 23:11:13 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.91 2002/04/27 03:45:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -657,9 +657,6 @@ ExecMakeFunctionResult(FunctionCachePtr fcache,
 	ExprDoneCond argDone;
 	bool		hasSetArg;
 	int			i;
-
-	if (!fcache->permission_ok)
-		elog(ERROR, "permission denied");
 
 	/*
 	 * arguments is a list of expressions to evaluate before passing to

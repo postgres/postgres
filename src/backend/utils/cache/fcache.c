@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.43 2002/04/21 00:26:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.44 2002/04/27 03:45:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "miscadmin.h"
 #include "utils/acl.h"
 #include "utils/fcache.h"
+#include "utils/lsyscache.h"
 
 
 /*
@@ -26,6 +27,12 @@ FunctionCachePtr
 init_fcache(Oid foid, int nargs, MemoryContext fcacheCxt)
 {
 	FunctionCachePtr retval;
+	AclResult	aclresult;
+
+	/* Check permission to call function */
+	aclresult = pg_proc_aclcheck(foid, GetUserId(), ACL_EXECUTE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, get_func_name(foid));
 
 	/* Safety check (should never fail, as parser should check sooner) */
 	if (nargs > FUNC_MAX_ARGS)
@@ -41,8 +48,6 @@ init_fcache(Oid foid, int nargs, MemoryContext fcacheCxt)
 
 	/* Initialize additional info */
 	retval->setArgsValid = false;
-
-	retval->permission_ok = pg_proc_aclcheck(foid, GetUserId(), ACL_EXECUTE) == ACLCHECK_OK;
 
 	return retval;
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.70 2002/04/16 23:08:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.71 2002/04/27 03:45:03 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -563,6 +563,33 @@ get_oprjoin(Oid opno)
 }
 
 /*				---------- FUNCTION CACHE ----------					 */
+
+/*
+ * get_func_name
+ *	  returns the name of the function with the given funcid
+ *
+ * Note: returns a palloc'd copy of the string, or NULL if no such function.
+ */
+char *
+get_func_name(Oid funcid)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache(PROCOID,
+						ObjectIdGetDatum(funcid),
+						0, 0, 0);
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_proc functup = (Form_pg_proc) GETSTRUCT(tp);
+		char	   *result;
+
+		result = pstrdup(NameStr(functup->proname));
+		ReleaseSysCache(tp);
+		return result;
+	}
+	else
+		return NULL;
+}
 
 /*
  * get_func_rettype

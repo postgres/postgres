@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.66 2002/04/21 00:26:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.67 2002/04/27 03:45:00 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -46,16 +46,7 @@ static void ExecuteGrantStmt_Namespace(GrantStmt *stmt);
 
 static const char *privilege_to_string(AclMode privilege);
 
-static int32 aclcheck(Acl *acl, AclId id, uint32 idtype, AclMode mode);
-
-/* warning messages, now more explicit. */
-/* MUST correspond to the order of the ACLCHECK_* result codes in acl.h. */
-const char * const aclcheck_error_strings[] = {
-	"No error.",
-	"Permission denied.",
-	"Table does not exist.",
-	"Must be table owner."
-};
+static AclResult aclcheck(Acl *acl, AclId id, uint32 idtype, AclMode mode);
 
 
 #ifdef ACLDEBUG
@@ -208,8 +199,7 @@ ExecuteGrantStmt_Relation(GrantStmt *stmt)
 		pg_class_tuple = (Form_pg_class) GETSTRUCT(tuple);
 
 		if (!pg_class_ownercheck(relOid, GetUserId()))
-			elog(ERROR, "%s: permission denied",
-				 relvar->relname);
+			aclcheck_error(ACLCHECK_NOT_OWNER, relvar->relname);
 
 		if (pg_class_tuple->relkind == RELKIND_INDEX)
 			elog(ERROR, "\"%s\" is an index",
@@ -409,7 +399,8 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 		pg_proc_tuple = (Form_pg_proc) GETSTRUCT(tuple);
 
 		if (!pg_proc_ownercheck(oid, GetUserId()))
-			elog(ERROR, "permission denied");
+			aclcheck_error(ACLCHECK_NOT_OWNER,
+						   NameStr(pg_proc_tuple->proname));
 
 		/*
 		 * If there's no ACL, create a default using the pg_proc.proowner
@@ -601,7 +592,7 @@ ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 		pg_namespace_tuple = (Form_pg_namespace) GETSTRUCT(tuple);
 
 		if (!pg_namespace_ownercheck(tuple->t_data->t_oid, GetUserId()))
-			elog(ERROR, "permission denied");
+			aclcheck_error(ACLCHECK_NOT_OWNER, nspname);
 
 		/*
 		 * If there's no ACL, create a default using the pg_namespace.nspowner
@@ -776,6 +767,7 @@ in_group(AclId uid, AclId gid)
 	return result;
 }
 
+
 /*
  * aclcheck
  *
@@ -785,7 +777,7 @@ in_group(AclId uid, AclId gid)
  *
  * The ACL list is expected to be sorted in standard order.
  */
-static int32
+static AclResult
 aclcheck(Acl *acl, AclId id, uint32 idtype, AclMode mode)
 {
 	AclItem    *aip,
@@ -903,14 +895,37 @@ aclcheck(Acl *acl, AclId id, uint32 idtype, AclMode mode)
 
 
 /*
- * Exported routine for checking a user's access privileges to a table
- *
- * Returns an ACLCHECK_* result code.
+ * Standardized reporting of aclcheck permissions failures.
  */
-int32
+void
+aclcheck_error(AclResult errcode, const char *objectname)
+{
+	switch (errcode)
+	{
+		case ACLCHECK_OK:
+			/* no error, so return to caller */
+			break;
+		case ACLCHECK_NO_PRIV:
+			elog(ERROR, "%s: permission denied", objectname);
+			break;
+		case ACLCHECK_NOT_OWNER:
+			elog(ERROR, "%s: must be owner", objectname);
+			break;
+		default:
+			elog(ERROR, "%s: unexpected AclResult %d",
+				 objectname, (int) errcode);
+			break;
+	}
+}
+
+
+/*
+ * Exported routine for checking a user's access privileges to a table
+ */
+AclResult
 pg_class_aclcheck(Oid table_oid, Oid userid, AclMode mode)
 {
-	int32		result;
+	AclResult	result;
 	bool		usesuper,
 				usecatupd;
 	HeapTuple	tuple;
@@ -1004,13 +1019,11 @@ pg_class_aclcheck(Oid table_oid, Oid userid, AclMode mode)
 
 /*
  * Exported routine for checking a user's access privileges to a database
- *
- * Returns an ACLCHECK_* result code.
  */
-int32
+AclResult
 pg_database_aclcheck(Oid db_oid, Oid userid, AclMode mode)
 {
-	int32		result;
+	AclResult	result;
 	Relation	pg_database;
 	ScanKeyData entry[1];
 	HeapScanDesc scan;
@@ -1069,13 +1082,11 @@ pg_database_aclcheck(Oid db_oid, Oid userid, AclMode mode)
 
 /*
  * Exported routine for checking a user's access privileges to a function
- *
- * Returns an ACLCHECK_* result code.
  */
-int32
+AclResult
 pg_proc_aclcheck(Oid proc_oid, Oid userid, AclMode mode)
 {
-	int32		result;
+	AclResult	result;
 	HeapTuple	tuple;
 	Datum		aclDatum;
 	bool		isNull;
@@ -1124,13 +1135,11 @@ pg_proc_aclcheck(Oid proc_oid, Oid userid, AclMode mode)
 
 /*
  * Exported routine for checking a user's access privileges to a language
- *
- * Returns an ACLCHECK_* result code.
  */
-int32
+AclResult
 pg_language_aclcheck(Oid lang_oid, Oid userid, AclMode mode)
 {
-	int32		result;
+	AclResult	result;
 	HeapTuple	tuple;
 	Datum		aclDatum;
 	bool		isNull;
@@ -1176,13 +1185,11 @@ pg_language_aclcheck(Oid lang_oid, Oid userid, AclMode mode)
 
 /*
  * Exported routine for checking a user's access privileges to a namespace
- *
- * Returns an ACLCHECK_* result code.
  */
-int32
+AclResult
 pg_namespace_aclcheck(Oid nsp_oid, Oid userid, AclMode mode)
 {
-	int32		result;
+	AclResult	result;
 	HeapTuple	tuple;
 	Datum		aclDatum;
 	bool		isNull;

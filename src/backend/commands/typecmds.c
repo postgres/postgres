@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.1 2002/04/15 05:22:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.2 2002/04/27 03:45:02 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -45,6 +45,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
@@ -60,6 +61,7 @@ DefineType(List *names, List *parameters)
 {
 	char	   *typeName;
 	Oid			typeNamespace;
+	AclResult	aclresult;
 	int16		internalLength = -1;	/* int2 */
 	int16		externalLength = -1;	/* int2 */
 	Oid			elemType = InvalidOid;
@@ -82,6 +84,11 @@ DefineType(List *names, List *parameters)
 
 	/* Convert list of names to a name and namespace */
 	typeNamespace = QualifiedNameGetCreationNamespace(names, &typeName);
+
+	/* Check we have creation rights in target namespace */
+	aclresult = pg_namespace_aclcheck(typeNamespace, GetUserId(), ACL_CREATE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, get_namespace_name(typeNamespace));
 
 	/*
 	 * Type names must be one character shorter than other names, allowing
@@ -288,9 +295,11 @@ RemoveType(List *names)
 		elog(ERROR, "Type \"%s\" does not exist",
 			 TypeNameToString(typename));
 
-	if (!pg_type_ownercheck(typeoid, GetUserId()))
-		elog(ERROR, "RemoveType: type '%s': permission denied",
-			 TypeNameToString(typename));
+	/* Permission check: must own type or its namespace */
+	if (!pg_type_ownercheck(typeoid, GetUserId()) &&
+		!pg_namespace_ownercheck(((Form_pg_type) GETSTRUCT(tup))->typnamespace,
+								 GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, TypeNameToString(typename));
 
 	/* Delete any comments associated with this type */
 	DeleteComments(typeoid, RelationGetRelid(relation));
@@ -334,6 +343,7 @@ DefineDomain(CreateDomainStmt *stmt)
 {
 	char	   *domainName;
 	Oid			domainNamespace;
+	AclResult	aclresult;
 	int16		internalLength;
 	int16		externalLength;
 	Oid			inputProcedure;
@@ -359,6 +369,12 @@ DefineDomain(CreateDomainStmt *stmt)
 	/* Convert list of names to a name and namespace */
 	domainNamespace = QualifiedNameGetCreationNamespace(stmt->domainname,
 														&domainName);
+
+	/* Check we have creation rights in target namespace */
+	aclresult = pg_namespace_aclcheck(domainNamespace, GetUserId(),
+									  ACL_CREATE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, get_namespace_name(domainNamespace));
 
 	/*
 	 * Domainnames, unlike typenames don't need to account for the '_'
@@ -586,9 +602,11 @@ RemoveDomain(List *names, int behavior)
 		elog(ERROR, "RemoveDomain: type '%s' does not exist",
 			 TypeNameToString(typename));
 
-	if (!pg_type_ownercheck(typeoid, GetUserId()))
-		elog(ERROR, "RemoveDomain: type '%s': permission denied",
-			 TypeNameToString(typename));
+	/* Permission check: must own type or its namespace */
+	if (!pg_type_ownercheck(typeoid, GetUserId()) &&
+		!pg_namespace_ownercheck(((Form_pg_type) GETSTRUCT(tup))->typnamespace,
+								 GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, TypeNameToString(typename));
 
 	/* Check that this is actually a domain */
 	typtype = ((Form_pg_type) GETSTRUCT(tup))->typtype;

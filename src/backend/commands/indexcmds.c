@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.71 2002/04/17 20:57:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.72 2002/04/27 03:45:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
 #include "parser/parsetree.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_func.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -73,6 +74,7 @@ DefineIndex(RangeVar *heapRelation,
 	Oid		   *classObjectId;
 	Oid			accessMethodId;
 	Oid			relationId;
+	Oid			namespaceId;
 	Relation	rel;
 	HeapTuple	tuple;
 	Form_pg_am	accessMethodForm;
@@ -102,6 +104,7 @@ DefineIndex(RangeVar *heapRelation,
 			 heapRelation->relname);
 
 	relationId = RelationGetRelid(rel);
+	namespaceId = RelationGetNamespace(rel);
 
 	if (!IsBootstrapProcessingMode() &&
 		IsSystemRelation(rel) &&
@@ -109,6 +112,22 @@ DefineIndex(RangeVar *heapRelation,
 		elog(ERROR, "Existing indexes are inactive. REINDEX first");
 
 	heap_close(rel, NoLock);
+
+	/*
+	 * Verify we (still) have CREATE rights in the rel's namespace.
+	 * (Presumably we did when the rel was created, but maybe not anymore.)
+	 * Skip check if bootstrapping, since permissions machinery may not
+	 * be working yet; also, always allow if it's a temp table.
+	 */
+	if (!IsBootstrapProcessingMode() && !isTempNamespace(namespaceId))
+	{
+		AclResult	aclresult;
+
+		aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(),
+										  ACL_CREATE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, get_namespace_name(namespaceId));
+	}
 
 	/*
 	 * look up the access method, verify it can handle the requested

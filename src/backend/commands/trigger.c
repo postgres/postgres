@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.115 2002/04/26 19:29:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.116 2002/04/27 03:45:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 	Datum		values[Natts_pg_trigger];
 	char		nulls[Natts_pg_trigger];
 	Relation	rel;
+	AclResult	aclresult;
 	Relation	tgrel;
 	SysScanDesc	tgscan;
 	ScanKeyData key;
@@ -84,10 +85,10 @@ CreateTrigger(CreateTrigStmt *stmt)
 		elog(ERROR, "CreateTrigger: can't create trigger for system relation %s",
 			stmt->relation->relname);
 
-	if (pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
-						  stmt->isconstraint ? ACL_REFERENCES : ACL_TRIGGER)
-		!= ACLCHECK_OK)
-		elog(ERROR, "permission denied");
+	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
+						  stmt->isconstraint ? ACL_REFERENCES : ACL_TRIGGER);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, RelationGetRelationName(rel));
 
 	/*
 	 * If trigger is an RI constraint, use trigger name as constraint name
@@ -337,8 +338,7 @@ DropTrigger(Oid relid, const char *trigname)
 			 RelationGetRelationName(rel));
 
 	if (!pg_class_ownercheck(relid, GetUserId()))
-		elog(ERROR, "%s: %s", RelationGetRelationName(rel),
-			 aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
+		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
 
 	/*
 	 * Search pg_trigger, delete target trigger, count remaining triggers

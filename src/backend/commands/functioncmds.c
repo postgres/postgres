@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.2 2002/04/21 00:26:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.3 2002/04/27 03:45:01 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -86,6 +86,7 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 		else
 		{
 			Oid			namespaceId;
+			AclResult	aclresult;
 			char	   *typname;
 
 			if (languageOid == SQLlanguageId)
@@ -94,6 +95,10 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 				 typnam);
 			namespaceId = QualifiedNameGetCreationNamespace(returnType->names,
 															&typname);
+			aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(),
+											  ACL_CREATE);
+			if (aclresult != ACLCHECK_OK)
+				aclcheck_error(aclresult, get_namespace_name(namespaceId));
 			rettype = TypeShellMake(typname, namespaceId);
 			if (!OidIsValid(rettype))
 				elog(ERROR, "could not create type %s", typnam);
@@ -295,6 +300,7 @@ CreateFunction(ProcedureStmt *stmt)
 	Oid			languageOid;
 	char	   *funcname;
 	Oid			namespaceId;
+	AclResult	aclresult;
 	int			parameterCount;
 	Oid			parameterTypes[FUNC_MAX_ARGS];
 	int32		byte_pct,
@@ -311,6 +317,11 @@ CreateFunction(ProcedureStmt *stmt)
 	namespaceId = QualifiedNameGetCreationNamespace(stmt->funcname,
 													&funcname);
 
+	/* Check we have creation rights in target namespace */
+	aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_CREATE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, get_namespace_name(namespaceId));
+
 	/* Convert language name to canonical case */
 	case_translate_language_name(stmt->language, languageName);
 
@@ -324,10 +335,21 @@ CreateFunction(ProcedureStmt *stmt)
 	languageOid = languageTuple->t_data->t_oid;
 	languageStruct = (Form_pg_language) GETSTRUCT(languageTuple);
 
-	if (!((languageStruct->lanpltrusted
-		   && pg_language_aclcheck(languageOid, GetUserId(), ACL_USAGE) == ACLCHECK_OK)
-		  || superuser()))
-		elog(ERROR, "permission denied");
+	if (languageStruct->lanpltrusted)
+	{
+		/* if trusted language, need USAGE privilege */
+		AclResult	aclresult;
+
+		aclresult = pg_language_aclcheck(languageOid, GetUserId(), ACL_USAGE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, NameStr(languageStruct->lanname));
+	}
+	else
+	{
+		/* if untrusted language, must be superuser */
+		if (!superuser())
+			aclcheck_error(ACLCHECK_NO_PRIV, NameStr(languageStruct->lanname));
+	}
 
 	ReleaseSysCache(languageTuple);
 
@@ -404,9 +426,11 @@ RemoveFunction(List *functionName,		/* function name to be removed */
 		elog(ERROR, "RemoveFunction: couldn't find tuple for function %s",
 			 NameListToString(functionName));
 
-	if (!pg_proc_ownercheck(funcOid, GetUserId()))
-		elog(ERROR, "RemoveFunction: function '%s': permission denied",
-			 NameListToString(functionName));
+	/* Permission check: must own func or its namespace */
+	if (!pg_proc_ownercheck(funcOid, GetUserId()) &&
+		!pg_namespace_ownercheck(((Form_pg_proc) GETSTRUCT(tup))->pronamespace,
+								 GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, NameListToString(functionName));
 
 	if (((Form_pg_proc) GETSTRUCT(tup))->proisagg)
 		elog(ERROR, "RemoveFunction: function '%s' is an aggregate"

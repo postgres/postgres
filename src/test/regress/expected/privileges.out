@@ -69,11 +69,11 @@ SELECT * FROM atest2; -- ok
 
 INSERT INTO atest1 VALUES (2, 'two'); -- ok
 INSERT INTO atest2 VALUES ('foo', true); -- fail
-ERROR:  atest2: Permission denied.
+ERROR:  atest2: permission denied
 INSERT INTO atest1 SELECT 1, b FROM atest1; -- ok
 UPDATE atest1 SET a = 1 WHERE a = 2; -- ok
 UPDATE atest2 SET col2 = NOT col2; -- fail
-ERROR:  atest2: Permission denied.
+ERROR:  atest2: permission denied
 SELECT * FROM atest1 FOR UPDATE; -- ok
  a |  b  
 ---+-----
@@ -82,15 +82,15 @@ SELECT * FROM atest1 FOR UPDATE; -- ok
 (2 rows)
 
 SELECT * FROM atest2 FOR UPDATE; -- fail
-ERROR:  atest2: Permission denied.
+ERROR:  atest2: permission denied
 DELETE FROM atest2; -- fail
-ERROR:  atest2: Permission denied.
+ERROR:  atest2: permission denied
 LOCK atest2 IN ACCESS EXCLUSIVE MODE; -- fail
-ERROR:  LOCK TABLE: permission denied
+ERROR:  atest2: permission denied
 COPY atest2 FROM stdin; -- fail
-ERROR:  atest2: Permission denied.
+ERROR:  atest2: permission denied
 GRANT ALL ON atest1 TO PUBLIC; -- fail
-ERROR:  atest1: permission denied
+ERROR:  atest1: must be owner
 -- checks in subquery, both ok
 SELECT * FROM atest1 WHERE ( b IN ( SELECT col1 FROM atest2 ) );
  a | b 
@@ -117,33 +117,33 @@ SELECT * FROM atest1; -- ok
 (2 rows)
 
 SELECT * FROM atest2; -- fail
-ERROR:  atest2: Permission denied.
+ERROR:  atest2: permission denied
 INSERT INTO atest1 VALUES (2, 'two'); -- fail
-ERROR:  atest1: Permission denied.
+ERROR:  atest1: permission denied
 INSERT INTO atest2 VALUES ('foo', true); -- fail
-ERROR:  atest2: Permission denied.
+ERROR:  atest2: permission denied
 INSERT INTO atest1 SELECT 1, b FROM atest1; -- fail
-ERROR:  atest1: Permission denied.
+ERROR:  atest1: permission denied
 UPDATE atest1 SET a = 1 WHERE a = 2; -- fail
-ERROR:  atest1: Permission denied.
+ERROR:  atest1: permission denied
 UPDATE atest2 SET col2 = NULL; -- ok
 UPDATE atest2 SET col2 = NOT col2; -- fails; requires SELECT on atest2
-ERROR:  atest2: Permission denied.
+ERROR:  atest2: permission denied
 UPDATE atest2 SET col2 = true WHERE atest1.a = 5; -- ok
 SELECT * FROM atest1 FOR UPDATE; -- fail
-ERROR:  atest1: Permission denied.
+ERROR:  atest1: permission denied
 SELECT * FROM atest2 FOR UPDATE; -- fail
-ERROR:  atest2: Permission denied.
+ERROR:  atest2: permission denied
 DELETE FROM atest2; -- fail
-ERROR:  atest2: Permission denied.
+ERROR:  atest2: permission denied
 LOCK atest2 IN ACCESS EXCLUSIVE MODE; -- ok
 COPY atest2 FROM stdin; -- fail
-ERROR:  atest2: Permission denied.
+ERROR:  atest2: permission denied
 -- checks in subquery, both fail
 SELECT * FROM atest1 WHERE ( b IN ( SELECT col1 FROM atest2 ) );
-ERROR:  atest2: Permission denied.
+ERROR:  atest2: permission denied
 SELECT * FROM atest2 WHERE ( col1 IN ( SELECT b FROM atest1 ) );
-ERROR:  atest2: Permission denied.
+ERROR:  atest2: permission denied
 SET SESSION AUTHORIZATION regressuser4;
 COPY atest2 FROM stdin; -- ok
 SELECT * FROM atest1; -- ok
@@ -159,7 +159,7 @@ CREATE TABLE atest3 (one int, two int, three int);
 GRANT DELETE ON atest3 TO GROUP regressgroup2;
 SET SESSION AUTHORIZATION regressuser1;
 SELECT * FROM atest3; -- fail
-ERROR:  atest3: Permission denied.
+ERROR:  atest3: permission denied
 DELETE FROM atest3; -- ok
 -- views
 SET SESSION AUTHORIZATION regressuser3;
@@ -214,10 +214,10 @@ SELECT testfunc1(5), testfunc2(5); -- ok
 (1 row)
 
 CREATE FUNCTION testfunc3(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql; -- fail
-ERROR:  permission denied
+ERROR:  sql: permission denied
 SET SESSION AUTHORIZATION regressuser3;
 SELECT testfunc1(5); -- fail
-ERROR:  permission denied
+ERROR:  testfunc1: permission denied
 SET SESSION AUTHORIZATION regressuser4;
 SELECT testfunc1(5); -- ok
  testfunc1 
@@ -226,7 +226,7 @@ SELECT testfunc1(5); -- ok
 (1 row)
 
 DROP FUNCTION testfunc1(int); -- fail
-ERROR:  RemoveFunction: function 'testfunc1': permission denied
+ERROR:  testfunc1: must be owner
 \c -
 DROP FUNCTION testfunc1(int); -- ok
 -- restore to sanity

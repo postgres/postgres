@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fcache.h,v 1.21 2002/02/18 23:11:46 petere Exp $
+ * $Id: fcache.h,v 1.22 2002/04/27 03:45:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,8 +40,6 @@ typedef struct FunctionCache
 	 * Function manager's lookup info for the target function.
 	 */
 	FmgrInfo	func;
-
-	bool permission_ok;
 
 	/*
 	 * setArgsValid is true when we are evaluating a set-valued function

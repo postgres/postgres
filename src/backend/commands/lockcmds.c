@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/lockcmds.c,v 1.1 2002/04/15 05:22:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/lockcmds.c,v 1.2 2002/04/27 03:45:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "commands/lockcmds.h"
 #include "miscadmin.h"
 #include "utils/acl.h"
+#include "utils/lsyscache.h"
 
 
 /*
@@ -38,7 +39,7 @@ LockTableCommand(LockStmt *lockstmt)
 	{
 		RangeVar   *relation = lfirst(p);
 		Oid			reloid;
-		int32		aclresult;
+		AclResult	aclresult;
 		Relation	rel;
 
 		/*
@@ -55,7 +56,7 @@ LockTableCommand(LockStmt *lockstmt)
 										  ACL_UPDATE | ACL_DELETE);
 
 		if (aclresult != ACLCHECK_OK)
-			elog(ERROR, "LOCK TABLE: permission denied");
+			aclcheck_error(aclresult, get_rel_name(reloid));
 
 		rel = relation_open(reloid, lockstmt->mode);
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.43 2002/04/21 00:26:44 tgl Exp $
+ * $Id: acl.h,v 1.44 2002/04/27 03:45:03 tgl Exp $
  *
  * NOTES
  *	  For backward-compatibility purposes we have to allow there
@@ -165,13 +165,12 @@ typedef ArrayType IdList;
 
 
 /* result codes for pg_*_aclcheck */
-#define ACLCHECK_OK				  0
-#define ACLCHECK_NO_PRIV		  1
-#define ACLCHECK_NO_CLASS		  2
-#define ACLCHECK_NOT_OWNER		  3
-
-/* error messages (index by ACLCHECK_* result code).  set in aclchk.c. */
-extern const char * const aclcheck_error_strings[];
+typedef enum
+{
+	ACLCHECK_OK = 0,
+	ACLCHECK_NO_PRIV,
+	ACLCHECK_NOT_OWNER
+} AclResult;
 
 /*
  * routines used internally
@@ -181,7 +180,7 @@ extern Acl *aclinsert3(const Acl *old_acl, const AclItem *mod_aip,
 					   unsigned modechg);
 
 /*
- * exported routines (from acl.c)
+ * SQL functions (from acl.c)
  */
 extern Datum aclitemin(PG_FUNCTION_ARGS);
 extern Datum aclitemout(PG_FUNCTION_ARGS);
@@ -196,12 +195,13 @@ extern void ExecuteGrantStmt(GrantStmt *stmt);
 extern AclId get_grosysid(char *groname);
 extern char *get_groname(AclId grosysid);
 
-/* these return ACLCHECK_* result codes */
-extern int32 pg_class_aclcheck(Oid table_oid, Oid userid, AclMode mode);
-extern int32 pg_database_aclcheck(Oid db_oid, Oid userid, AclMode mode);
-extern int32 pg_proc_aclcheck(Oid proc_oid, Oid userid, AclMode mode);
-extern int32 pg_language_aclcheck(Oid lang_oid, Oid userid, AclMode mode);
-extern int32 pg_namespace_aclcheck(Oid nsp_oid, Oid userid, AclMode mode);
+extern AclResult pg_class_aclcheck(Oid table_oid, Oid userid, AclMode mode);
+extern AclResult pg_database_aclcheck(Oid db_oid, Oid userid, AclMode mode);
+extern AclResult pg_proc_aclcheck(Oid proc_oid, Oid userid, AclMode mode);
+extern AclResult pg_language_aclcheck(Oid lang_oid, Oid userid, AclMode mode);
+extern AclResult pg_namespace_aclcheck(Oid nsp_oid, Oid userid, AclMode mode);
+
+extern void aclcheck_error(AclResult errcode, const char *objectname);
 
 /* ownercheck routines just return true (owner) or false (not) */
 extern bool pg_class_ownercheck(Oid class_oid, Oid userid);

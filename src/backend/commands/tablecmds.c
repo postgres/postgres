@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.10 2002/04/26 19:29:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.11 2002/04/27 03:45:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,9 +106,21 @@ DefineRelation(CreateStmt *stmt, char relkind)
 
 	/*
 	 * Look up the namespace in which we are supposed to create the
-	 * relation.
+	 * relation.  Check we have permission to create there.
+	 * Skip check if bootstrapping, since permissions machinery may not
+	 * be working yet; also, always allow if it's a temp table.
 	 */
 	namespaceId = RangeVarGetCreationNamespace(stmt->relation);
+
+	if (!IsBootstrapProcessingMode() && !isTempNamespace(namespaceId))
+	{
+		AclResult	aclresult;
+
+		aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(),
+										  ACL_CREATE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, get_namespace_name(namespaceId));
+	}
 
 	/*
 	 * Merge domain attributes into the known columns before processing table
@@ -307,8 +319,7 @@ TruncateRelation(const RangeVar *relation)
 			 RelationGetRelationName(rel));
 
 	if (!pg_class_ownercheck(relid, GetUserId()))
-		elog(ERROR, "you do not own relation \"%s\"",
-			 RelationGetRelationName(rel));
+		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
 
 	/* Keep the lock until transaction commit */
 	heap_close(rel, NoLock);
@@ -483,8 +494,8 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 		 * demand that creator of a child table own the parent.
 		 */
 		if (!pg_class_ownercheck(RelationGetRelid(relation), GetUserId()))
-			elog(ERROR, "you do not own table \"%s\"",
-				 parent->relname);
+			aclcheck_error(ACLCHECK_NOT_OWNER,
+						   RelationGetRelationName(relation));
 
 		/*
 		 * Reject duplications in the list of parents.
@@ -1003,8 +1014,8 @@ renameatt(Oid relid,
 		elog(ERROR, "renameatt: class \"%s\" is a system catalog",
 			 RelationGetRelationName(targetrelation));
 	if (!pg_class_ownercheck(relid, GetUserId()))
-		elog(ERROR, "renameatt: you do not own class \"%s\"",
-			 RelationGetRelationName(targetrelation));
+		aclcheck_error(ACLCHECK_NOT_OWNER,
+					   RelationGetRelationName(targetrelation));
 
 	/*
 	 * if the 'recurse' flag is set then we are supposed to rename this
@@ -1558,8 +1569,7 @@ AlterTableAddColumn(Oid myrelid,
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
 			 RelationGetRelationName(rel));
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		elog(ERROR, "ALTER TABLE: \"%s\": permission denied",
-			 RelationGetRelationName(rel));
+		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
 
 	/*
 	 * Recurse to add the column to child classes, if requested.
@@ -1761,8 +1771,7 @@ AlterTableAlterColumnDropNotNull(Oid myrelid,
 			 RelationGetRelationName(rel));
 
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		elog(ERROR, "ALTER TABLE: \"%s\": permission denied",
-			 RelationGetRelationName(rel));
+		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
 
 	/*
 	 * Propagate to children if desired
@@ -1912,8 +1921,7 @@ AlterTableAlterColumnSetNotNull(Oid myrelid,
 			 RelationGetRelationName(rel));
 
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		elog(ERROR, "ALTER TABLE: \"%s\": permission denied",
-			 RelationGetRelationName(rel));
+		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
 
 	/*
 	 * Propagate to children if desired
@@ -2048,8 +2056,7 @@ AlterTableAlterColumnDefault(Oid myrelid,
 			 RelationGetRelationName(rel));
 
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		elog(ERROR, "ALTER TABLE: \"%s\": permission denied",
-			 RelationGetRelationName(rel));
+		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
 
 	/*
 	 * Propagate to children if desired
@@ -2208,8 +2215,7 @@ AlterTableAlterColumnFlags(Oid myrelid,
 			 RelationGetRelationName(rel));
 
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		elog(ERROR, "ALTER TABLE: \"%s\": permission denied",
-			 RelationGetRelationName(rel));
+		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
 
 	/*
 	 * Check the supplied parameters before anything else
@@ -2370,8 +2376,7 @@ AlterTableAddConstraint(Oid myrelid,
 			 RelationGetRelationName(rel));
 
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		elog(ERROR, "ALTER TABLE: \"%s\": permission denied",
-			 RelationGetRelationName(rel));
+		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
 
 	if (inh)
 	{
@@ -2695,8 +2700,7 @@ AlterTableDropConstraint(Oid myrelid,
 			 RelationGetRelationName(rel));
 
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		elog(ERROR, "ALTER TABLE: \"%s\": permission denied",
-			 RelationGetRelationName(rel));
+		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
 
 	/*
 	 * Since all we have is the name of the constraint, we have to look
@@ -2857,8 +2861,7 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 			 RelationGetRelationName(rel));
 
 	if (!pg_class_ownercheck(relOid, GetUserId()))
-		elog(ERROR, "ALTER TABLE: \"%s\": permission denied",
-			 RelationGetRelationName(rel));
+		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
 
 	/*
 	 * lock the pg_class tuple for update (is that really needed?)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.48 2002/04/18 20:01:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.49 2002/04/27 03:45:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ RemoveRewriteRule(Oid owningRel, const char *ruleName)
 	Oid			ruleId;
 	Oid			eventRelationOid;
 	bool		hasMoreRules;
-	int32		aclcheck_result;
+	AclResult	aclresult;
 
 	/*
 	 * Open the pg_rewrite relation.
@@ -82,12 +82,9 @@ RemoveRewriteRule(Oid owningRel, const char *ruleName)
 	/*
 	 * Verify user has appropriate permissions.
 	 */
-	aclcheck_result = pg_class_aclcheck(eventRelationOid, GetUserId(),
-										ACL_RULE);
-	if (aclcheck_result != ACLCHECK_OK)
-		elog(ERROR, "%s: %s",
-			 RelationGetRelationName(event_relation),
-			 aclcheck_error_strings[aclcheck_result]);
+	aclresult = pg_class_aclcheck(eventRelationOid, GetUserId(), ACL_RULE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, RelationGetRelationName(event_relation));
 
 	/* do not allow the removal of a view's SELECT rule */
 	if (event_relation->rd_rel->relkind == RELKIND_VIEW &&

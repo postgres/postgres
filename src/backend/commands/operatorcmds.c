@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/operatorcmds.c,v 1.2 2002/04/16 23:08:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/operatorcmds.c,v 1.3 2002/04/27 03:45:01 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -44,6 +44,7 @@
 #include "parser/parse_oper.h"
 #include "parser/parse_type.h"
 #include "utils/acl.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
@@ -60,6 +61,7 @@ DefineOperator(List *names, List *parameters)
 {
 	char	   *oprName;
 	Oid			oprNamespace;
+	AclResult	aclresult;
 	uint16		precedence = 0;			/* operator precedence */
 	bool		canHash = false;		/* operator hashes */
 	bool		canMerge = false;		/* operator merges */
@@ -84,6 +86,11 @@ DefineOperator(List *names, List *parameters)
 
 	/* Convert list of names to a name and namespace */
 	oprNamespace = QualifiedNameGetCreationNamespace(names, &oprName);
+
+	/* Check we have creation rights in target namespace */
+	aclresult = pg_namespace_aclcheck(oprNamespace, GetUserId(), ACL_CREATE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, get_namespace_name(oprNamespace));
 
 	/*
 	 * loop over the definition list and extract the information we need.
@@ -226,14 +233,15 @@ RemoveOperator(List *operatorName,		/* operator name */
 	tup = SearchSysCacheCopy(OPEROID,
 							 ObjectIdGetDatum(operOid),
 							 0, 0, 0);
-
 	if (!HeapTupleIsValid(tup))	/* should not happen */
 		elog(ERROR, "RemoveOperator: failed to find tuple for operator '%s'",
 			 NameListToString(operatorName));
 
-	if (!pg_oper_ownercheck(operOid, GetUserId()))
-		elog(ERROR, "RemoveOperator: operator '%s': permission denied",
-			 NameListToString(operatorName));
+	/* Permission check: must own operator or its namespace */
+	if (!pg_oper_ownercheck(operOid, GetUserId()) &&
+		!pg_namespace_ownercheck(((Form_pg_operator) GETSTRUCT(tup))->oprnamespace,
+								 GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, NameListToString(operatorName));
 
 	/* Delete any comments associated with this operator */
 	DeleteComments(operOid, RelationGetRelid(relation));
