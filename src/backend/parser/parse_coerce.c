@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.69 2002/04/09 20:35:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.70 2002/04/11 20:00:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@ Oid			PromoteTypeToNext(Oid inType);
 static Oid	PreferredType(CATEGORY category, Oid type);
 static Node *build_func_call(Oid funcid, Oid rettype, List *args);
 static Oid	find_coercion_function(Oid targetTypeId, Oid inputTypeId,
-								   Oid secondArgType);
+								   Oid secondArgType, bool isExplicit);
 
 
 /* coerce_type()
@@ -40,7 +40,7 @@ static Oid	find_coercion_function(Oid targetTypeId, Oid inputTypeId,
  */
 Node *
 coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
-			Oid targetTypeId, int32 atttypmod)
+			Oid targetTypeId, int32 atttypmod, bool isExplicit)
 {
 	Node	   *result;
 
@@ -131,7 +131,8 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 
 		funcId = find_coercion_function(baseTypeId,
 										getBaseType(inputTypeId),
-										InvalidOid);
+										InvalidOid,
+										isExplicit);
 		if (!OidIsValid(funcId))
 			elog(ERROR, "coerce_type: no conversion function from %s to %s",
 				 format_type_be(inputTypeId), format_type_be(targetTypeId));
@@ -171,13 +172,18 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
  *
  * There are a few types which are known apriori to be convertible.
  * We will check for those cases first, and then look for possible
- *	conversion functions.
+ * conversion functions.
+ *
+ * We must be told whether this is an implicit or explicit coercion
+ * (explicit being a CAST construct, explicit function call, etc).
+ * We will accept a wider set of coercion cases for an explicit coercion.
  *
  * Notes:
  * This uses the same mechanism as the CAST() SQL construct in gram.y.
  */
 bool
-can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
+can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids,
+				bool isExplicit)
 {
 	int			i;
 
@@ -230,7 +236,7 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 			return false;
 
 		/*
-		 * Else, try for explicit conversion using functions: look for a
+		 * Else, try for run-time conversion using functions: look for a
 		 * single-argument function named with the target type name and
 		 * accepting the source type.
 		 *
@@ -238,7 +244,8 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 		 */
 		funcId = find_coercion_function(getBaseType(targetTypeId),
 										getBaseType(inputTypeId),
-										InvalidOid);
+										InvalidOid,
+										isExplicit);
 		if (!OidIsValid(funcId))
 			return false;
 	}
@@ -279,7 +286,8 @@ coerce_type_typmod(ParseState *pstate, Node *node,
 	/* If given type is a domain, use base type instead */
 	baseTypeId = getBaseType(targetTypeId);
 
-	funcId = find_coercion_function(baseTypeId, baseTypeId, INT4OID);
+	/* Note this is always implicit coercion */
+	funcId = find_coercion_function(baseTypeId, baseTypeId, INT4OID, false);
 
 	if (OidIsValid(funcId))
 	{
@@ -321,9 +329,10 @@ coerce_to_boolean(ParseState *pstate, Node **pnode)
 	if (inputTypeId == BOOLOID)
 		return true;			/* no work */
 	targetTypeId = BOOLOID;
-	if (!can_coerce_type(1, &inputTypeId, &targetTypeId))
+	if (!can_coerce_type(1, &inputTypeId, &targetTypeId, false))
 		return false;			/* fail, but let caller choose error msg */
-	*pnode = coerce_type(pstate, *pnode, inputTypeId, targetTypeId, -1);
+	*pnode = coerce_type(pstate, *pnode, inputTypeId, targetTypeId, -1,
+						 false);
 	return true;
 }
 
@@ -378,7 +387,7 @@ select_common_type(List *typeids, const char *context)
 			}
 			else if (IsPreferredType(pcategory, ntype)
 					 && !IsPreferredType(pcategory, ptype)
-					 && can_coerce_type(1, &ptype, &ntype))
+					 && can_coerce_type(1, &ptype, &ntype, false))
 			{
 				/*
 				 * new one is preferred and can convert? then take it...
@@ -424,8 +433,9 @@ coerce_to_common_type(ParseState *pstate, Node *node,
 
 	if (inputTypeId == targetTypeId)
 		return node;			/* no work */
-	if (can_coerce_type(1, &inputTypeId, &targetTypeId))
-		node = coerce_type(pstate, node, inputTypeId, targetTypeId, -1);
+	if (can_coerce_type(1, &inputTypeId, &targetTypeId, false))
+		node = coerce_type(pstate, node, inputTypeId, targetTypeId, -1,
+						   false);
 	else
 	{
 		elog(ERROR, "%s unable to convert to type \"%s\"",
@@ -659,6 +669,9 @@ PreferredType(CATEGORY category, Oid type)
  * A coercion function must be named after (the internal name of) its
  * result type, and must accept exactly the specified input type.  We
  * also require it to be defined in the same namespace as its result type.
+ * Furthermore, unless we are doing explicit coercion the function must
+ * be marked as usable for implicit coercion --- this allows coercion
+ * functions to be provided that aren't implicitly invokable.
  *
  * This routine is also used to look for length-coercion functions, which
  * are similar but accept a second argument.  secondArgType is the type
@@ -668,16 +681,16 @@ PreferredType(CATEGORY category, Oid type)
  * If a function is found, return its pg_proc OID; else return InvalidOid.
  */
 static Oid
-find_coercion_function(Oid targetTypeId, Oid inputTypeId, Oid secondArgType)
+find_coercion_function(Oid targetTypeId, Oid inputTypeId, Oid secondArgType,
+					   bool isExplicit)
 {
+	Oid			funcid = InvalidOid;
 	Type		targetType;
 	char	   *typname;
 	Oid			typnamespace;
 	Oid			oid_array[FUNC_MAX_ARGS];
 	int			nargs;
 	HeapTuple	ftup;
-	Form_pg_proc pform;
-	Oid			funcid;
 
 	targetType = typeidType(targetTypeId);
 	typname = NameStr(((Form_pg_type) GETSTRUCT(targetType))->typname);
@@ -698,21 +711,24 @@ find_coercion_function(Oid targetTypeId, Oid inputTypeId, Oid secondArgType)
 						  Int16GetDatum(nargs),
 						  PointerGetDatum(oid_array),
 						  ObjectIdGetDatum(typnamespace));
-	if (!HeapTupleIsValid(ftup))
+	if (HeapTupleIsValid(ftup))
 	{
-		ReleaseSysCache(targetType);
-		return InvalidOid;
-	}
-	/* Make sure the function's result type is as expected, too */
-	pform = (Form_pg_proc) GETSTRUCT(ftup);
-	if (pform->prorettype != targetTypeId)
-	{
+		Form_pg_proc pform = (Form_pg_proc) GETSTRUCT(ftup);
+
+		/* Make sure the function's result type is as expected */
+		if (pform->prorettype == targetTypeId && !pform->proretset &&
+			!pform->proisagg)
+		{
+			/* If needed, make sure it can be invoked implicitly */
+			if (isExplicit || pform->proimplicit)
+			{
+				/* Okay to use it */
+				funcid = ftup->t_data->t_oid;
+			}
+		}
 		ReleaseSysCache(ftup);
-		ReleaseSysCache(targetType);
-		return InvalidOid;
 	}
-	funcid = ftup->t_data->t_oid;
-	ReleaseSysCache(ftup);
+
 	ReleaseSysCache(targetType);
 	return funcid;
 }

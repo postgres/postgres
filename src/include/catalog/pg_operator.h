@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.100 2002/03/29 19:06:19 tgl Exp $
+ * $Id: pg_operator.h,v 1.101 2002/04/11 20:00:11 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -289,10 +289,10 @@ DATA(insert OID = 612 (  ">="	   PGUID 0 b t f  26  26  16 611 609  0  0 oidge s
 #define MAX_OIDCMP 612			/* used by cache code */
 
 DATA(insert OID = 644 (  "<>"	   PGUID 0 b t f  30  30  16 644 649   0   0 oidvectorne neqsel neqjoinsel ));
-DATA(insert OID = 645 (  "<"	   PGUID 0 b t f  30  30  16 646 648   0   0 oidvectorlt - - ));
-DATA(insert OID = 646 (  ">"	   PGUID 0 b t f  30  30  16 645 647   0   0 oidvectorgt - - ));
-DATA(insert OID = 647 (  "<="	   PGUID 0 b t f  30  30  16 648 646   0   0 oidvectorle - - ));
-DATA(insert OID = 648 (  ">="	   PGUID 0 b t f  30  30  16 647 645   0   0 oidvectorge - - ));
+DATA(insert OID = 645 (  "<"	   PGUID 0 b t f  30  30  16 646 648   0   0 oidvectorlt scalarltsel scalarltjoinsel ));
+DATA(insert OID = 646 (  ">"	   PGUID 0 b t f  30  30  16 645 647   0   0 oidvectorgt scalargtsel scalargtjoinsel ));
+DATA(insert OID = 647 (  "<="	   PGUID 0 b t f  30  30  16 648 646   0   0 oidvectorle scalarltsel scalarltjoinsel ));
+DATA(insert OID = 648 (  ">="	   PGUID 0 b t f  30  30  16 647 645   0   0 oidvectorge scalargtsel scalargtjoinsel ));
 DATA(insert OID = 649 (  "="	   PGUID 0 b t t  30  30  16 649 644 645 645 oidvectoreq eqsel eqjoinsel ));
 
 DATA(insert OID = 613 (  "<->"	   PGUID 0 b t f 600 628 701   0   0  0  0 dist_pl - - ));

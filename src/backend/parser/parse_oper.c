@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.53 2002/03/20 19:44:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.54 2002/04/11 20:00:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -265,7 +265,8 @@ oper_select_candidate(int nargs,
 		 current_candidate != NULL;
 		 current_candidate = current_candidate->next)
 	{
-		if (can_coerce_type(nargs, input_typeids, current_candidate->args))
+		if (can_coerce_type(nargs, input_typeids, current_candidate->args,
+							false))
 		{
 			if (last_candidate == NULL)
 			{

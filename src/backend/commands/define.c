@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.74 2002/04/09 20:35:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.75 2002/04/11 19:59:57 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -141,13 +141,56 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 	*returnsSet_p = returnType->setof;
 }
 
-
-static void
-compute_full_attributes(List *parameters,
-						int32 *byte_pct_p, int32 *perbyte_cpu_p,
-						int32 *percall_cpu_p, int32 *outin_ratio_p,
-						bool *isStrict_p, char *volatility_p)
+/*
+ * Interpret the argument-types list of the CREATE FUNCTION statement.
+ */
+static int
+compute_parameter_types(List *argTypes, Oid languageOid,
+						Oid *parameterTypes)
 {
+	int			parameterCount = 0;
+	List	   *x;
+
+	MemSet(parameterTypes, 0, FUNC_MAX_ARGS * sizeof(Oid));
+	foreach(x, argTypes)
+	{
+		TypeName   *t = (TypeName *) lfirst(x);
+		Oid			toid;
+
+		if (parameterCount >= FUNC_MAX_ARGS)
+			elog(ERROR, "functions cannot have more than %d arguments",
+				 FUNC_MAX_ARGS);
+
+		toid = LookupTypeName(t);
+		if (OidIsValid(toid))
+		{
+			if (!get_typisdefined(toid))
+				elog(WARNING, "Argument type \"%s\" is only a shell",
+					 TypeNameToString(t));
+		}
+		else
+		{
+			char      *typnam = TypeNameToString(t);
+
+			if (strcmp(typnam, "opaque") == 0)
+			{
+				if (languageOid == SQLlanguageId)
+					elog(ERROR, "SQL functions cannot have arguments of type \"opaque\"");
+				toid = InvalidOid;
+			}
+			else
+				elog(ERROR, "Type \"%s\" does not exist", typnam);
+		}
+
+		if (t->setof)
+			elog(ERROR, "functions cannot accept set arguments");
+
+		parameterTypes[parameterCount++] = toid;
+	}
+
+	return parameterCount;
+}
+
 /*-------------
  *	 Interpret the parameters *parameters and return their contents as
  *	 *byte_pct_p, etc.
@@ -155,7 +198,10 @@ compute_full_attributes(List *parameters,
  *	These parameters supply optional information about a function.
  *	All have defaults if not specified.
  *
- *	Note: currently, only two of these parameters actually do anything:
+ *	Note: currently, only three of these parameters actually do anything:
+ *
+ *	 * isImplicit means the function may be used as an implicit type
+ *	   coercion.
  *
  *	 * isStrict means the function should not be called when any NULL
  *	   inputs are present; instead a NULL result value should be assumed.
@@ -168,6 +214,13 @@ compute_full_attributes(List *parameters,
  *	for a long time.
  *------------
  */
+static void
+compute_full_attributes(List *parameters,
+						int32 *byte_pct_p, int32 *perbyte_cpu_p,
+						int32 *percall_cpu_p, int32 *outin_ratio_p,
+						bool *isImplicit_p, bool *isStrict_p,
+						char *volatility_p)
+{
 	List	   *pl;
 
 	/* the defaults */
@@ -175,6 +228,7 @@ compute_full_attributes(List *parameters,
 	*perbyte_cpu_p = PERBYTE_CPU;
 	*percall_cpu_p = PERCALL_CPU;
 	*outin_ratio_p = OUTIN_RATIO;
+	*isImplicit_p = false;
 	*isStrict_p = false;
 	*volatility_p = PROVOLATILE_VOLATILE;
 
@@ -182,7 +236,9 @@ compute_full_attributes(List *parameters,
 	{
 		DefElem    *param = (DefElem *) lfirst(pl);
 
-		if (strcasecmp(param->defname, "isstrict") == 0)
+		if (strcasecmp(param->defname, "implicitcoercion") == 0)
+			*isImplicit_p = true;
+		else if (strcasecmp(param->defname, "isstrict") == 0)
 			*isStrict_p = true;
 		else if (strcasecmp(param->defname, "isimmutable") == 0)
 			*volatility_p = PROVOLATILE_IMMUTABLE;
@@ -276,11 +332,14 @@ CreateFunction(ProcedureStmt *stmt)
 	Oid			languageOid;
 	char	   *funcname;
 	Oid			namespaceId;
+	int			parameterCount;
+	Oid			parameterTypes[FUNC_MAX_ARGS];
 	int32		byte_pct,
 				perbyte_cpu,
 				percall_cpu,
 				outin_ratio;
-	bool		isStrict;
+	bool		isImplicit,
+				isStrict;
 	char		volatility;
 	HeapTuple	languageTuple;
 	Form_pg_language languageStruct;
@@ -316,9 +375,13 @@ CreateFunction(ProcedureStmt *stmt)
 	compute_return_type(stmt->returnType, languageOid,
 						&prorettype, &returnsSet);
 
+	parameterCount = compute_parameter_types(stmt->argTypes, languageOid,
+											 parameterTypes);
+
 	compute_full_attributes(stmt->withClause,
 							&byte_pct, &perbyte_cpu, &percall_cpu,
-							&outin_ratio, &isStrict, &volatility);
+							&outin_ratio, &isImplicit, &isStrict,
+							&volatility);
 
 	interpret_AS_clause(languageOid, languageName, stmt->as,
 						&prosrc_str, &probin_str);
@@ -335,16 +398,18 @@ CreateFunction(ProcedureStmt *stmt)
 					languageOid,
 					prosrc_str, /* converted to text later */
 					probin_str, /* converted to text later */
+					false,		/* not an aggregate */
 					true,		/* (obsolete "trusted") */
+					isImplicit,
 					isStrict,
 					volatility,
 					byte_pct,
 					perbyte_cpu,
 					percall_cpu,
 					outin_ratio,
-					stmt->argTypes);
+					parameterCount,
+					parameterTypes);
 }
-
 
 
 /*

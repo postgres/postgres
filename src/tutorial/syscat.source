@@ -7,7 +7,7 @@
 -- Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 -- Portions Copyright (c) 1994, Regents of the University of California
 --
--- $Id: syscat.source,v 1.5 2001/08/21 16:36:06 tgl Exp $
+-- $Id: syscat.source,v 1.6 2002/04/11 20:00:18 tgl Exp $
 --
 ---------------------------------------------------------------------------
 
@@ -129,10 +129,11 @@ SELECT p.proname, p.pronargs, t.typname
 --
 -- lists all aggregate functions and the types to which they can be applied
 --
-SELECT a.aggname, t.typname
-  FROM pg_aggregate a, pg_type t
-  WHERE a.aggbasetype = t.oid
-  ORDER BY aggname, typname;
+SELECT p.proname, t.typname
+  FROM pg_aggregate a, pg_proc p, pg_type t
+  WHERE a.aggfnoid = p.oid
+    and p.proargtypes[0] = t.oid
+  ORDER BY proname, typname;
 
 
 --

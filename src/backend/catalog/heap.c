@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.194 2002/03/31 06:26:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.195 2002/04/11 19:59:56 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1791,7 +1791,7 @@ cookDefault(ParseState *pstate,
 		if (type_id != atttypid)
 		{
 			if (CoerceTargetExpr(pstate, expr, type_id,
-								 atttypid, atttypmod) == NULL)
+								 atttypid, atttypmod, false) == NULL)
 				elog(ERROR, "Column \"%s\" is of type %s"
 					 " but default expression is of type %s"
 					 "\n\tYou will need to rewrite or cast the expression",

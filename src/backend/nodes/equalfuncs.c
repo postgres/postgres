@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.124 2002/04/09 20:35:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.125 2002/04/11 19:59:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,9 +220,7 @@ _equalFunc(Func *a, Func *b)
 static bool
 _equalAggref(Aggref *a, Aggref *b)
 {
-	if (strcmp(a->aggname, b->aggname) != 0)
-		return false;
-	if (a->basetype != b->basetype)
+	if (a->aggfnoid != b->aggfnoid)
 		return false;
 	if (a->aggtype != b->aggtype)
 		return false;

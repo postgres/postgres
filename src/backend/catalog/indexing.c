@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.87 2002/04/05 00:31:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.88 2002/04/11 19:59:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@
  */
 
 char	   *Name_pg_aggregate_indices[Num_pg_aggregate_indices] =
-{AggregateNameTypeIndex, AggregateOidIndex};
+{AggregateFnoidIndex};
 char	   *Name_pg_am_indices[Num_pg_am_indices] =
 {AmNameIndex, AmOidIndex};
 char	   *Name_pg_amop_indices[Num_pg_amop_indices] =

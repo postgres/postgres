@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.95 2002/03/22 02:56:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.96 2002/04/11 20:00:04 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -130,6 +130,7 @@ static void get_names_for_var(Var *var, deparse_context *context,
 				  char **refname, char **attname);
 static void get_rule_expr(Node *node, deparse_context *context);
 static void get_func_expr(Expr *expr, deparse_context *context);
+static void get_agg_expr(Aggref *aggref, deparse_context *context);
 static Node *strip_type_coercion(Node *expr, Oid resultType);
 static void get_tle_expr(TargetEntry *tle, deparse_context *context);
 static void get_const_expr(Const *constval, deparse_context *context);
@@ -1694,18 +1695,7 @@ get_rule_expr(Node *node, deparse_context *context)
 			break;
 
 		case T_Aggref:
-			{
-				Aggref	   *aggref = (Aggref *) node;
-
-				appendStringInfo(buf, "%s(%s",
-								 quote_identifier(aggref->aggname),
-								 aggref->aggdistinct ? "DISTINCT " : "");
-				if (aggref->aggstar)
-					appendStringInfo(buf, "*");
-				else
-					get_rule_expr(aggref->target, context);
-				appendStringInfoChar(buf, ')');
-			}
+			get_agg_expr((Aggref *) node, context);
 			break;
 
 		case T_Iter:
@@ -1995,6 +1985,45 @@ get_func_expr(Expr *expr, deparse_context *context)
 		sep = ", ";
 		get_rule_expr((Node *) lfirst(l), context);
 	}
+	appendStringInfoChar(buf, ')');
+
+	ReleaseSysCache(proctup);
+}
+
+/* ----------
+ * get_agg_expr			- Parse back an Aggref node
+ * ----------
+ */
+static void
+get_agg_expr(Aggref *aggref, deparse_context *context)
+{
+	StringInfo	buf = context->buf;
+	HeapTuple	proctup;
+	Form_pg_proc procStruct;
+	char	   *proname;
+
+	/*
+	 * Get the aggregate's pg_proc tuple
+	 */
+	proctup = SearchSysCache(PROCOID,
+							 ObjectIdGetDatum(aggref->aggfnoid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(proctup))
+		elog(ERROR, "cache lookup for proc %u failed", aggref->aggfnoid);
+
+	procStruct = (Form_pg_proc) GETSTRUCT(proctup);
+	proname = NameStr(procStruct->proname);
+
+	/*
+	 * Display it
+	 */
+	appendStringInfo(buf, "%s(%s",
+					 quote_identifier(proname),
+					 aggref->aggdistinct ? "DISTINCT " : "");
+	if (aggref->aggstar)
+		appendStringInfo(buf, "*");
+	else
+		get_rule_expr(aggref->target, context);
 	appendStringInfoChar(buf, ')');
 
 	ReleaseSysCache(proctup);

@@ -8,24 +8,17 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.48 2002/04/09 20:35:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.49 2002/04/11 20:00:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
-#include "catalog/namespace.h"
-#include "catalog/pg_aggregate.h"
+
 #include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
 #include "parser/parse_agg.h"
-#include "parser/parse_coerce.h"
-#include "parser/parse_expr.h"
 #include "parser/parsetree.h"
-#include "parser/parse_type.h"
-#include "utils/builtins.h"
-#include "utils/lsyscache.h"
-#include "utils/syscache.h"
+
 
 typedef struct
 {
@@ -184,71 +177,4 @@ parseCheckAggregates(ParseState *pstate, Query *qry, Node *qual)
 
 	/* Release the list storage (but not the pointed-to expressions!) */
 	freeList(groupClauses);
-}
-
-
-Aggref *
-ParseAgg(ParseState *pstate, List *aggname, Oid basetype,
-		 List *args, bool agg_star, bool agg_distinct)
-{
-	HeapTuple	aggtuple;
-	Form_pg_aggregate aggform;
-	Aggref	   *aggref;
-
-	aggtuple = SearchSysCache(AGGNAME,
-							  PointerGetDatum(strVal(llast(aggname))),
-							  ObjectIdGetDatum(basetype),
-							  0, 0);
-	/* shouldn't happen --- caller should have checked already */
-	if (!HeapTupleIsValid(aggtuple))
-		agg_error("ParseAgg", aggname, basetype);
-	aggform = (Form_pg_aggregate) GETSTRUCT(aggtuple);
-
-	/*
-	 * There used to be a really ugly hack for count(*) here.
-	 *
-	 * It's gone.  Now, the grammar transforms count(*) into count(1), which
-	 * does the right thing.  (It didn't use to do the right thing,
-	 * because the optimizer had the wrong ideas about semantics of
-	 * queries without explicit variables.	Fixed as of Oct 1999 --- tgl.)
-	 */
-
-	/*
-	 * We assume caller has already checked that given args are compatible
-	 * with the agg's basetype.
-	 */
-
-	aggref = makeNode(Aggref);
-	aggref->aggname = pstrdup(strVal(llast(aggname)));
-	aggref->basetype = aggform->aggbasetype;
-	aggref->aggtype = aggform->aggfinaltype;
-	aggref->target = lfirst(args);
-	aggref->aggstar = agg_star;
-	aggref->aggdistinct = agg_distinct;
-
-	ReleaseSysCache(aggtuple);
-
-	pstate->p_hasAggs = true;
-
-	return aggref;
-}
-
-/*
- * Error message when aggregate lookup fails that gives details of the
- * basetype
- */
-void
-agg_error(const char *caller, List *aggname, Oid basetypeID)
-{
-	/*
-	 * basetypeID that is Invalid (zero) means aggregate over all types.
-	 * (count)
-	 */
-
-	if (basetypeID == InvalidOid)
-		elog(ERROR, "%s: aggregate '%s' for all types does not exist",
-			 caller, NameListToString(aggname));
-	else
-		elog(ERROR, "%s: aggregate '%s' for type %s does not exist",
-			 caller, NameListToString(aggname), format_type_be(basetypeID));
 }

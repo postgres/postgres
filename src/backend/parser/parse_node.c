@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.60 2002/03/21 16:01:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.61 2002/04/11 20:00:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,8 @@ make_operand(char *opname,
 	{
 		/* must coerce? */
 		if (target_typeId != orig_typeId)
-			result = coerce_type(NULL, tree, orig_typeId, target_typeId, -1);
+			result = coerce_type(NULL, tree, orig_typeId, target_typeId, -1,
+								 false);
 		else
 			result = tree;
 	}
@@ -288,7 +289,7 @@ transformArraySubscripts(ParseState *pstate,
 				subexpr = transformExpr(pstate, ai->lidx);
 				/* If it's not int4 already, try to coerce */
 				subexpr = CoerceTargetExpr(pstate, subexpr, exprType(subexpr),
-										   INT4OID, -1);
+										   INT4OID, -1, false);
 				if (subexpr == NULL)
 					elog(ERROR, "array index expressions must be integers");
 			}
@@ -308,7 +309,7 @@ transformArraySubscripts(ParseState *pstate,
 		subexpr = transformExpr(pstate, ai->uidx);
 		/* If it's not int4 already, try to coerce */
 		subexpr = CoerceTargetExpr(pstate, subexpr, exprType(subexpr),
-								   INT4OID, -1);
+								   INT4OID, -1, false);
 		if (subexpr == NULL)
 			elog(ERROR, "array index expressions must be integers");
 		upperIndexpr = lappend(upperIndexpr, subexpr);
@@ -329,7 +330,7 @@ transformArraySubscripts(ParseState *pstate,
 				/* XXX fixme: need to get the array's atttypmod? */
 				assignFrom = CoerceTargetExpr(pstate, assignFrom,
 											  typesource, typeneeded,
-											  -1);
+											  -1, false);
 				if (assignFrom == NULL)
 					elog(ERROR, "Array assignment requires type '%s'"
 						 " but expression is of type '%s'"

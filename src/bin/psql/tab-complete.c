@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.47 2002/04/01 03:34:27 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.48 2002/04/11 20:00:09 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -132,7 +132,7 @@ typedef struct
 } pgsql_thing_t;
 
 pgsql_thing_t words_after_create[] = {
-	{"AGGREGATE", "SELECT distinct aggname FROM pg_aggregate WHERE substr(aggname,1,%d)='%s'"},
+	{"AGGREGATE", "SELECT distinct proname FROM pg_proc WHERE proisagg AND substr(proname,1,%d)='%s'"},
 	{"DATABASE", "SELECT datname FROM pg_database WHERE substr(datname,1,%d)='%s'"},
 	{"FUNCTION", "SELECT distinct proname FROM pg_proc WHERE substr(proname,1,%d)='%s'"},
 	{"GROUP", "SELECT groname FROM pg_group WHERE substr(groname,1,%d)='%s'"},

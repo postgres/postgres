@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.16 2001/12/08 03:24:34 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.17 2002/04/11 19:59:55 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -168,8 +168,9 @@ CREATE
   <para>
    An  aggregate  function is identified by its name and input data type.
    Two aggregates can have the same name if they operate on different
-   input types.  To avoid confusion, do not make an ordinary function
-   of the same name and input data type as an aggregate.
+   input types.  The
+   name and input data type of an aggregate must also be distinct from
+   the name and input data type of every ordinary function.
   </para>
   <para>
    An  aggregate function is made from one or two ordinary

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.34 2002/03/12 00:51:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.35 2002/04/11 20:00:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -485,7 +485,7 @@ flatten_join_alias_var(Var *var, Query *root, int expandRTI)
 				if (subtype != vartype)
 				{
 					l_var = coerce_type(NULL, l_var, subtype,
-										vartype, vartypmod);
+										vartype, vartypmod, false);
 					l_var = coerce_type_typmod(NULL, l_var,
 											   vartype, vartypmod);
 				}
@@ -504,7 +504,7 @@ flatten_join_alias_var(Var *var, Query *root, int expandRTI)
 				if (subtype != vartype)
 				{
 					r_var = coerce_type(NULL, r_var, subtype,
-										vartype, vartypmod);
+										vartype, vartypmod, false);
 					r_var = coerce_type_typmod(NULL, r_var,
 											   vartype, vartypmod);
 				}

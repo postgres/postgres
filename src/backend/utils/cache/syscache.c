@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.75 2002/04/09 20:35:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.76 2002/04/11 20:00:06 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -93,22 +93,12 @@ struct cachedesc
 };
 
 static const struct cachedesc cacheinfo[] = {
-	{AggregateRelationName,		/* AGGNAME */
-		AggregateNameTypeIndex,
-		0,
-		2,
-		{
-			Anum_pg_aggregate_aggname,
-			Anum_pg_aggregate_aggbasetype,
-			0,
-			0
-	}},
-	{AggregateRelationName,		/* AGGOID */
-		AggregateOidIndex,
+	{AggregateRelationName,		/* AGGFNOID */
+		AggregateFnoidIndex,
 		0,
 		1,
 		{
-			ObjectIdAttributeNumber,
+			Anum_pg_aggregate_aggfnoid,
 			0,
 			0,
 			0

@@ -46,7 +46,7 @@ WHERE p1.oid != p2.oid AND
     p1.pronargs = p2.pronargs AND
     p1.proargtypes = p2.proargtypes;
 
--- Considering only built-in procs (prolang = 11/12), look for multiple uses
+-- Considering only built-in procs (prolang = 12), look for multiple uses
 -- of the same internal function (ie, matching prosrc fields).  It's OK to
 -- have several entries with different pronames for the same internal function,
 -- but conflicts in the number of arguments and other critical items should
@@ -56,14 +56,14 @@ SELECT p1.oid, p1.proname, p2.oid, p2.proname
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
-    (p1.prolang = 11 OR p1.prolang = 12) AND
-    (p2.prolang = 11 OR p2.prolang = 12) AND
+    p1.prolang = 12 AND p2.prolang = 12 AND
     (p1.prolang != p2.prolang OR
-     p1.proisinh != p2.proisinh OR
+     p1.proisagg != p2.proisagg OR
      p1.proistrusted != p2.proistrusted OR
+     p1.proisstrict != p2.proisstrict OR
+     p1.proretset != p2.proretset OR
      p1.provolatile != p2.provolatile OR
-     p1.pronargs != p2.pronargs OR
-     p1.proretset != p2.proretset);
+     p1.pronargs != p2.pronargs);
 
 -- Look for uses of different type OIDs in the argument/result type fields
 -- for different aliases of the same built-in function.
@@ -71,78 +71,94 @@ WHERE p1.oid != p2.oid AND
 -- That's not wrong, necessarily, but we make lists of all the types being
 -- so treated.  Note that the expected output of this part of the test will
 -- need to be modified whenever new pairs of types are made binary-equivalent!
+-- Note: ignore aggregate functions here, since they all point to the same
+-- dummy built-in function.
 
 SELECT DISTINCT p1.prorettype, p2.prorettype
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
-    (p1.prolang = 11 OR p1.prolang = 12) AND
-    (p2.prolang = 11 OR p2.prolang = 12) AND
+    p1.prolang = 12 AND p2.prolang = 12 AND
+    NOT p1.proisagg AND NOT p2.proisagg AND
     (p1.prorettype < p2.prorettype);
 
 SELECT DISTINCT p1.proargtypes[0], p2.proargtypes[0]
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
-    (p1.prolang = 11 OR p1.prolang = 12) AND
-    (p2.prolang = 11 OR p2.prolang = 12) AND
+    p1.prolang = 12 AND p2.prolang = 12 AND
+    NOT p1.proisagg AND NOT p2.proisagg AND
     (p1.proargtypes[0] < p2.proargtypes[0]);
 
 SELECT DISTINCT p1.proargtypes[1], p2.proargtypes[1]
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
-    (p1.prolang = 11 OR p1.prolang = 12) AND
-    (p2.prolang = 11 OR p2.prolang = 12) AND
+    p1.prolang = 12 AND p2.prolang = 12 AND
+    NOT p1.proisagg AND NOT p2.proisagg AND
     (p1.proargtypes[1] < p2.proargtypes[1]);
 
 SELECT DISTINCT p1.proargtypes[2], p2.proargtypes[2]
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
-    (p1.prolang = 11 OR p1.prolang = 12) AND
-    (p2.prolang = 11 OR p2.prolang = 12) AND
+    p1.prolang = 12 AND p2.prolang = 12 AND
+    NOT p1.proisagg AND NOT p2.proisagg AND
     (p1.proargtypes[2] < p2.proargtypes[2]);
 
 SELECT DISTINCT p1.proargtypes[3], p2.proargtypes[3]
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
-    (p1.prolang = 11 OR p1.prolang = 12) AND
-    (p2.prolang = 11 OR p2.prolang = 12) AND
+    p1.prolang = 12 AND p2.prolang = 12 AND
+    NOT p1.proisagg AND NOT p2.proisagg AND
     (p1.proargtypes[3] < p2.proargtypes[3]);
 
 SELECT DISTINCT p1.proargtypes[4], p2.proargtypes[4]
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
-    (p1.prolang = 11 OR p1.prolang = 12) AND
-    (p2.prolang = 11 OR p2.prolang = 12) AND
+    p1.prolang = 12 AND p2.prolang = 12 AND
+    NOT p1.proisagg AND NOT p2.proisagg AND
     (p1.proargtypes[4] < p2.proargtypes[4]);
 
 SELECT DISTINCT p1.proargtypes[5], p2.proargtypes[5]
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
-    (p1.prolang = 11 OR p1.prolang = 12) AND
-    (p2.prolang = 11 OR p2.prolang = 12) AND
+    p1.prolang = 12 AND p2.prolang = 12 AND
+    NOT p1.proisagg AND NOT p2.proisagg AND
     (p1.proargtypes[5] < p2.proargtypes[5]);
 
 SELECT DISTINCT p1.proargtypes[6], p2.proargtypes[6]
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
-    (p1.prolang = 11 OR p1.prolang = 12) AND
-    (p2.prolang = 11 OR p2.prolang = 12) AND
+    p1.prolang = 12 AND p2.prolang = 12 AND
+    NOT p1.proisagg AND NOT p2.proisagg AND
     (p1.proargtypes[6] < p2.proargtypes[6]);
 
 SELECT DISTINCT p1.proargtypes[7], p2.proargtypes[7]
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
-    (p1.prolang = 11 OR p1.prolang = 12) AND
-    (p2.prolang = 11 OR p2.prolang = 12) AND
+    p1.prolang = 12 AND p2.prolang = 12 AND
+    NOT p1.proisagg AND NOT p2.proisagg AND
     (p1.proargtypes[7] < p2.proargtypes[7]);
+
+-- If a proc is marked as an implicit cast, then it should be something that
+-- the system might actually use as a cast function: name same as the name
+-- of its output type, and either one arg that's a different type, or two
+-- args where the first is the same as the output type and the second is int4.
+
+SELECT p1.oid, p1.proname
+FROM pg_proc as p1
+WHERE p1.proimplicit AND
+    (NOT EXISTS (SELECT 1 FROM pg_type t WHERE t.oid = p1.prorettype AND
+                 t.typname = p1.proname) OR
+     NOT ((p1.pronargs = 1 AND p1.proargtypes[0] != prorettype) OR
+          (p1.pronargs = 2 AND p1.proargtypes[0] = prorettype AND
+           p1.proargtypes[1] = 23)));
 
 -- **************** pg_operator ****************
 
@@ -192,6 +208,7 @@ WHERE p1.oprcom = p2.oid AND
 -- single-operand operators.
 -- We expect that B will always say that B.oprnegate = A as well; that's not
 -- inherently essential, but it would be inefficient not to mark it so.
+-- Also, A and B had better not be the same operator.
 
 SELECT p1.oid, p1.oprcode, p2.oid, p2.oprcode
 FROM pg_operator AS p1, pg_operator AS p2
@@ -201,7 +218,8 @@ WHERE p1.oprnegate = p2.oid AND
      p1.oprright != p2.oprright OR
      p1.oprresult != 16 OR
      p2.oprresult != 16 OR
-     p1.oid != p2.oprnegate);
+     p1.oid != p2.oprnegate OR
+     p1.oid = p2.oid);
 
 -- Look for mergejoin operators that don't match their links.
 -- A mergejoin link leads from an '=' operator to the
@@ -378,15 +396,30 @@ WHERE p1.oprjoin = p2.oid AND
 
 -- Look for illegal values in pg_aggregate fields.
 
-SELECT p1.oid, p1.aggname
+SELECT ctid, aggfnoid::oid
 FROM pg_aggregate as p1
-WHERE aggtransfn = 0 OR aggtranstype = 0 OR aggfinaltype = 0;
+WHERE aggfnoid = 0 OR aggtransfn = 0 OR aggtranstype = 0;
+
+-- Make sure the matching pg_proc entry is sensible, too.
+
+SELECT a.aggfnoid::oid, p.proname
+FROM pg_aggregate as a, pg_proc as p
+WHERE a.aggfnoid = p.oid AND
+    (NOT p.proisagg OR p.pronargs != 1 OR p.proretset);
+
+-- Make sure there are no proisagg pg_proc entries without matches.
+
+SELECT oid, proname
+FROM pg_proc as p
+WHERE p.proisagg AND
+    NOT EXISTS (SELECT 1 FROM pg_aggregate a WHERE a.aggfnoid = p.oid);
 
 -- If there is no finalfn then the output type must be the transtype.
 
-SELECT p1.oid, p1.aggname
-FROM pg_aggregate as p1
-WHERE p1.aggfinalfn = 0 AND p1.aggfinaltype != p1.aggtranstype;
+SELECT a.aggfnoid::oid, p.proname
+FROM pg_aggregate as a, pg_proc as p
+WHERE a.aggfnoid = p.oid AND
+    a.aggfinalfn = 0 AND p.prorettype != a.aggtranstype;
 
 -- Cross-check transfn against its entry in pg_proc.
 -- FIXME: what about binary-compatible types?
@@ -394,33 +427,36 @@ WHERE p1.aggfinalfn = 0 AND p1.aggfinaltype != p1.aggtranstype;
 -- implemented using int4larger/int4smaller.  Until we have
 -- some cleaner way of dealing with binary-equivalent types, just leave
 -- those two tuples in the expected output.
-SELECT p1.oid, p1.aggname, p2.oid, p2.proname
-FROM pg_aggregate AS p1, pg_proc AS p2
-WHERE p1.aggtransfn = p2.oid AND
+SELECT a.aggfnoid::oid, p.proname, p2.oid, p2.proname
+FROM pg_aggregate AS a, pg_proc AS p, pg_proc AS p2
+WHERE a.aggfnoid = p.oid AND
+    a.aggtransfn = p2.oid AND
     (p2.proretset OR
-     p1.aggtranstype != p2.prorettype OR
-     p1.aggtranstype != p2.proargtypes[0] OR
-     NOT ((p2.pronargs = 2 AND p1.aggbasetype = p2.proargtypes[1]) OR
-          (p2.pronargs = 1 AND p1.aggbasetype = 0)));
+     a.aggtranstype != p2.prorettype OR
+     a.aggtranstype != p2.proargtypes[0] OR
+     NOT ((p2.pronargs = 2 AND p.proargtypes[0] = p2.proargtypes[1]) OR
+          (p2.pronargs = 1 AND p.proargtypes[0] = 0)));
 
 -- Cross-check finalfn (if present) against its entry in pg_proc.
 -- FIXME: what about binary-compatible types?
 
-SELECT p1.oid, p1.aggname, p2.oid, p2.proname
-FROM pg_aggregate AS p1, pg_proc AS p2
-WHERE p1.aggfinalfn = p2.oid AND
-    (p2.proretset OR p1.aggfinaltype != p2.prorettype OR
+SELECT a.aggfnoid::oid, p.proname, p2.oid, p2.proname
+FROM pg_aggregate AS a, pg_proc AS p, pg_proc AS p2
+WHERE a.aggfnoid = p.oid AND
+    a.aggfinalfn = p2.oid AND
+    (p2.proretset OR p.prorettype != p2.prorettype OR
      p2.pronargs != 1 OR
-     p1.aggtranstype != p2.proargtypes[0]);
+     a.aggtranstype != p2.proargtypes[0]);
 
 -- If transfn is strict then either initval should be non-NULL, or
--- basetype should equal transtype so that the first non-null input
+-- input type should equal transtype so that the first non-null input
 -- can be assigned as the state value.
 
-SELECT p1.oid, p1.aggname, p2.oid, p2.proname
-FROM pg_aggregate AS p1, pg_proc AS p2
-WHERE p1.aggtransfn = p2.oid AND p2.proisstrict AND
-    p1.agginitval IS NULL AND p1.aggbasetype != p1.aggtranstype;
+SELECT a.aggfnoid::oid, p.proname, p2.oid, p2.proname
+FROM pg_aggregate AS a, pg_proc AS p, pg_proc AS p2
+WHERE a.aggfnoid = p.oid AND
+    a.aggtransfn = p2.oid AND p2.proisstrict AND
+    a.agginitval IS NULL AND p.proargtypes[0] != a.aggtranstype;
 
 -- **************** pg_opclass ****************
 
@@ -472,6 +508,15 @@ SELECT p1.amopclaid, p1.amopopr, p2.oid, p2.oprname
 FROM pg_amop AS p1, pg_operator AS p2
 WHERE p1.amopopr = p2.oid AND
     (p2.oprkind != 'b' OR p2.oprresult != 16 OR p2.oprleft != p2.oprright);
+
+-- Check that all operators linked to by opclass entries have selectivity
+-- estimators.  This is not absolutely required, but it seems a reasonable
+-- thing to insist on for all standard datatypes.
+
+SELECT p1.amopclaid, p1.amopopr, p2.oid, p2.oprname
+FROM pg_amop AS p1, pg_operator AS p2
+WHERE p1.amopopr = p2.oid AND
+    (p2.oprrest = 0 OR p2.oprjoin = 0);
 
 -- Check that operator input types match the opclass
 

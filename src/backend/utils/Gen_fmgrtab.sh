@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.22 2002/04/05 00:31:28 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.23 2002/04/11 20:00:04 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -88,6 +88,8 @@ trap 'echo "Caught signal." ; cleanup ; exit 1' 1 2 15
 # deal with preprocessor statements first (before we sort the
 # function table by oid).
 #
+# Note assumption here that prolang == $5 and INTERNALlanguageId == 12.
+#
 $AWK '
 BEGIN		{ raw = 0; }
 /^DATA/		{ print; next; }
@@ -161,6 +163,8 @@ cat > "$$-$OIDSFILE" <<FuNkYfMgRsTuFf
  */
 FuNkYfMgRsTuFf
 
+# Note assumption here that prosrc == $(NF-2).
+
 tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' < $RAWFILE | \
 $AWK '
 BEGIN	{ OFS = ""; }
@@ -209,6 +213,8 @@ cat > "$$-$TABLEFILE" <<FuNkYfMgRtAbStUfF
 
 FuNkYfMgRtAbStUfF
 
+# Note assumption here that prosrc == $(NF-2).
+
 $AWK '{ print "extern Datum", $(NF-2), "(PG_FUNCTION_ARGS);"; }' $RAWFILE >> "$$-$TABLEFILE"
 
 if [ $? -ne 0 ]; then
@@ -226,13 +232,16 @@ FuNkYfMgRtAbStUfF
 # Note: using awk arrays to translate from pg_proc values to fmgrtab values
 # may seem tedious, but avoid the temptation to write a quick x?y:z
 # conditional expression instead.  Not all awks have conditional expressions.
+#
+# Note assumptions here that prosrc == $(NF-2), pronargs == $12,
+# proisstrict == $9, proretset == $10
 
 $AWK 'BEGIN {
     Bool["t"] = "true"
     Bool["f"] = "false"
 }
 { printf ("  { %d, \"%s\", %d, %s, %s, %s },\n"), \
-	$1, $(NF-2), $10, Bool[$8], Bool[$11], $(NF-2)
+	$1, $(NF-2), $12, Bool[$9], Bool[$10], $(NF-2)
 }' $RAWFILE >> "$$-$TABLEFILE"
 
 if [ $? -ne 0 ]; then

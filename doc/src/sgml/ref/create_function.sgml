@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.35 2002/04/05 00:31:24 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.36 2002/04/11 19:59:55 tgl Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -214,6 +214,18 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term>implicitCoercion</term>
+      <listitem>
+       <para>
+	<option>implicitCoercion</option> indicates that the function 
+	may be used for implicit type conversions.
+	See <xref linkend="coercion-functions"
+	endterm="coercion-functions-title"> for more detail.
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
 
     Attribute names are not case-sensitive.
@@ -311,6 +323,54 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
   </para>
  </refsect1>
 
+ <refsect1 id="COERCION-FUNCTIONS">
+  <refsect1info>
+   <date>2002-04-11</date>
+  </refsect1info>
+  <title id="coercion-functions-title">
+   Type Coercion Functions
+  </title>
+  <para>
+   A function that has one parameter and is named the same as its output
+   datatype is considered to be a <firstterm>type coercion function</>:
+   it can be invoked to convert a value of its input datatype into a value
+   of its output datatype.  For example,
+<programlisting>
+	SELECT CAST(42 AS text);
+</programlisting>
+   converts the integer constant 42 to text by invoking a function
+   <literal>text(int4)</>, if such a function exists and returns type
+   text.  (If no suitable conversion function can be found, the cast fails.)
+  </para>
+
+  <para>
+   If a potential coercion function is marked <literal>implicitCoercion</>,
+   then it can be invoked in any context where the conversion it defines
+   is required.  Coercion functions not so marked can be invoked only by
+   explicit <literal>CAST</>,
+   <replaceable>x</><literal>::</><replaceable>typename</>,
+   or <replaceable>typename</>(<replaceable>x</>) constructs.
+   For example, supposing that foo.f1 is a column of type text, then
+<programlisting>
+	INSERT INTO foo(f1) VALUES(42);
+</programlisting>
+   will be allowed if <literal>text(int4)</> is marked
+   <literal>implicitCoercion</>, otherwise not.
+  </para>
+
+  <para>
+   It is wise to be conservative about marking coercion functions as
+   implicit coercions.  An overabundance of implicit coercion paths
+   can cause <productname>PostgreSQL</productname> to choose surprising
+   interpretations of commands, 
+   or to be unable to resolve commands at all because there are multiple
+   possible interpretations.  A good rule of thumb is to make coercions
+   implicitly invokable only for information-preserving transformations
+   between types in the same general type category.  For example, int2
+   to int4 coercion can reasonably be implicit, but be wary of marking
+   int4 to text or float8 to int4 as implicit coercions.
+  </para>
+ </refsect1>
   
  <refsect1 id="sql-createfunction-examples">
   <title>Examples</title>
@@ -356,8 +416,8 @@ CREATE TABLE product (
   </para>
 
   <para>
-   This example creates a function that does type conversion between the
-   user-defined type complex, and the internal type point.  The
+   This example creates a function that does type conversion from the
+   user-defined type complex to the built-in type point.  The
    function is implemented by a dynamically loaded object that was
    compiled from C source (we illustrate the now-deprecated alternative
    of specifying the absolute file name to the shared object file).

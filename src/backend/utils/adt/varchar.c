@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.88 2002/03/09 17:35:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.89 2002/04/11 20:00:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -306,19 +306,6 @@ _bpchar(PG_FUNCTION_ARGS)
 	return array_map(&locfcinfo, BPCHAROID, BPCHAROID);
 }
 
-
-/* bpchar_char()
- * Convert bpchar(1) to char.
- *
- * If input is multiple chars, only the first is returned.
- */
-Datum
-bpchar_char(PG_FUNCTION_ARGS)
-{
-	BpChar	   *s = PG_GETARG_BPCHAR_P(0);
-
-	PG_RETURN_CHAR(*VARDATA(s));
-}
 
 /* char_bpchar()
  * Convert char to bpchar(1).

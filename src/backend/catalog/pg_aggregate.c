@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.43 2002/04/09 20:35:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.44 2002/04/11 19:59:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,14 +19,15 @@
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_aggregate.h"
+#include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
-#include "catalog/pg_type.h"
-#include "miscadmin.h"
+#include "optimizer/cost.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_func.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
+
 
 /*
  * AggregateCreate
@@ -50,7 +51,7 @@ AggregateCreate(const char *aggName,
 	Oid			finaltype;
 	Oid			fnArgs[FUNC_MAX_ARGS];
 	int			nargs;
-	NameData	aname;
+	Oid			procOid;
 	TupleDesc	tupDesc;
 	int			i;
 
@@ -60,15 +61,6 @@ AggregateCreate(const char *aggName,
 
 	if (!aggtransfnName)
 		elog(ERROR, "aggregate must have a transition function");
-
-	/* make sure there is no existing agg of same name and base type */
-	if (SearchSysCacheExists(AGGNAME,
-							 PointerGetDatum(aggName),
-							 ObjectIdGetDatum(aggBaseType),
-							 0, 0))
-		elog(ERROR,
-			 "aggregate function \"%s\" with base type %s already exists",
-			 aggName, typeidTypeName(aggBaseType));
 
 	/* handle transfn */
 	MemSet(fnArgs, 0, FUNC_MAX_ARGS * sizeof(Oid));
@@ -109,8 +101,8 @@ AggregateCreate(const char *aggName,
 	/* handle finalfn, if supplied */
 	if (aggfinalfnName)
 	{
+		MemSet(fnArgs, 0, FUNC_MAX_ARGS * sizeof(Oid));
 		fnArgs[0] = aggTransType;
-		fnArgs[1] = 0;
 		finalfn = LookupFuncName(aggfinalfnName, 1, fnArgs);
 		if (!OidIsValid(finalfn))
 			func_error("AggregateCreate", aggfinalfnName, 1, fnArgs, NULL);
@@ -132,21 +124,47 @@ AggregateCreate(const char *aggName,
 	}
 	Assert(OidIsValid(finaltype));
 
+	/*
+	 * Everything looks okay.  Try to create the pg_proc entry for the
+	 * aggregate.  (This could fail if there's already a conflicting entry.)
+	 */
+	MemSet(fnArgs, 0, FUNC_MAX_ARGS * sizeof(Oid));
+	fnArgs[0] = aggBaseType;
+
+	procOid = ProcedureCreate(aggName,
+							  aggNamespace,
+							  false,		/* no replacement */
+							  false,		/* doesn't return a set */
+							  finaltype,	/* returnType */
+							  INTERNALlanguageId,	/* languageObjectId */
+							  "aggregate_dummy",	/* placeholder proc */
+							  "-",			/* probin */
+							  true,			/* isAgg */
+							  true,			/* (obsolete "trusted") */
+							  false,		/* isImplicit */
+							  false,		/* isStrict (not needed for agg) */
+							  PROVOLATILE_IMMUTABLE,	/* volatility (not needed for agg) */
+							  BYTE_PCT,		/* default cost values */
+							  PERBYTE_CPU,
+							  PERCALL_CPU,
+							  OUTIN_RATIO,
+							  1,			/* parameterCount */
+							  fnArgs);		/* parameterTypes */
+
+	/*
+	 * Okay to create the pg_aggregate entry.
+	 */
+
 	/* initialize nulls and values */
 	for (i = 0; i < Natts_pg_aggregate; i++)
 	{
 		nulls[i] = ' ';
 		values[i] = (Datum) NULL;
 	}
-	namestrcpy(&aname, aggName);
-	values[Anum_pg_aggregate_aggname - 1] = NameGetDatum(&aname);
-	values[Anum_pg_aggregate_aggowner - 1] = Int32GetDatum(GetUserId());
+	values[Anum_pg_aggregate_aggfnoid - 1] = ObjectIdGetDatum(procOid);
 	values[Anum_pg_aggregate_aggtransfn - 1] = ObjectIdGetDatum(transfn);
 	values[Anum_pg_aggregate_aggfinalfn - 1] = ObjectIdGetDatum(finalfn);
-	values[Anum_pg_aggregate_aggbasetype - 1] = ObjectIdGetDatum(aggBaseType);
 	values[Anum_pg_aggregate_aggtranstype - 1] = ObjectIdGetDatum(aggTransType);
-	values[Anum_pg_aggregate_aggfinaltype - 1] = ObjectIdGetDatum(finaltype);
-
 	if (agginitval)
 		values[Anum_pg_aggregate_agginitval - 1] =
 			DirectFunctionCall1(textin, CStringGetDatum(agginitval));
@@ -155,12 +173,9 @@ AggregateCreate(const char *aggName,
 
 	aggdesc = heap_openr(AggregateRelationName, RowExclusiveLock);
 	tupDesc = aggdesc->rd_att;
-	if (!HeapTupleIsValid(tup = heap_formtuple(tupDesc,
-											   values,
-											   nulls)))
-		elog(ERROR, "AggregateCreate: heap_formtuple failed");
-	if (!OidIsValid(heap_insert(aggdesc, tup)))
-		elog(ERROR, "AggregateCreate: heap_insert failed");
+
+	tup = heap_formtuple(tupDesc, values, nulls);
+	heap_insert(aggdesc, tup);
 
 	if (RelationGetForm(aggdesc)->relhasindex)
 	{
@@ -172,63 +187,4 @@ AggregateCreate(const char *aggName,
 	}
 
 	heap_close(aggdesc, RowExclusiveLock);
-}
-
-Datum
-AggNameGetInitVal(char *aggName, Oid basetype, bool *isNull)
-{
-	HeapTuple	tup;
-	Oid			transtype,
-				typinput,
-				typelem;
-	Datum		textInitVal;
-	char	   *strInitVal;
-	Datum		initVal;
-
-	Assert(PointerIsValid(aggName));
-	Assert(PointerIsValid(isNull));
-
-	tup = SearchSysCache(AGGNAME,
-						 PointerGetDatum(aggName),
-						 ObjectIdGetDatum(basetype),
-						 0, 0);
-	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "AggNameGetInitVal: cache lookup failed for aggregate '%s'",
-			 aggName);
-	transtype = ((Form_pg_aggregate) GETSTRUCT(tup))->aggtranstype;
-
-	/*
-	 * initval is potentially null, so don't try to access it as a struct
-	 * field. Must do it the hard way with SysCacheGetAttr.
-	 */
-	textInitVal = SysCacheGetAttr(AGGNAME, tup,
-								  Anum_pg_aggregate_agginitval,
-								  isNull);
-	if (*isNull)
-	{
-		ReleaseSysCache(tup);
-		return (Datum) 0;
-	}
-
-	strInitVal = DatumGetCString(DirectFunctionCall1(textout, textInitVal));
-
-	ReleaseSysCache(tup);
-
-	tup = SearchSysCache(TYPEOID,
-						 ObjectIdGetDatum(transtype),
-						 0, 0, 0);
-	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "AggNameGetInitVal: cache lookup failed on aggregate transition function return type %u", transtype);
-
-	typinput = ((Form_pg_type) GETSTRUCT(tup))->typinput;
-	typelem = ((Form_pg_type) GETSTRUCT(tup))->typelem;
-	ReleaseSysCache(tup);
-
-	initVal = OidFunctionCall3(typinput,
-							   CStringGetDatum(strInitVal),
-							   ObjectIdGetDatum(typelem),
-							   Int32GetDatum(-1));
-
-	pfree(strInitVal);
-	return initVal;
 }

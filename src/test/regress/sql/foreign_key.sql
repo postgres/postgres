@@ -431,11 +431,11 @@ DROP TABLE PKTABLE;
 --
 -- Basic one column, two table setup 
 CREATE TABLE PKTABLE (ptest1 int PRIMARY KEY);
--- This next should fail, because text=int does not exist
-CREATE TABLE FKTABLE (ftest1 text REFERENCES pktable);
+-- This next should fail, because inet=int does not exist
+CREATE TABLE FKTABLE (ftest1 inet REFERENCES pktable);
 -- This should also fail for the same reason, but here we
 -- give the column name
-CREATE TABLE FKTABLE (ftest1 text REFERENCES pktable(ptest1));
+CREATE TABLE FKTABLE (ftest1 inet REFERENCES pktable(ptest1));
 -- This should succeed, even though they are different types
 -- because varchar=int does exist
 CREATE TABLE FKTABLE (ftest1 varchar REFERENCES pktable);
@@ -446,42 +446,42 @@ DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
 
 -- Two columns, two tables
-CREATE TABLE PKTABLE (ptest1 int, ptest2 text, PRIMARY KEY(ptest1, ptest2));
+CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, PRIMARY KEY(ptest1, ptest2));
 -- This should fail, because we just chose really odd types
 CREATE TABLE FKTABLE (ftest1 cidr, ftest2 datetime, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable);
 -- Again, so should this...
 CREATE TABLE FKTABLE (ftest1 cidr, ftest2 datetime, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable(ptest1, ptest2));
 -- This fails because we mixed up the column ordering
-CREATE TABLE FKTABLE (ftest1 int, ftest2 text, FOREIGN KEY(ftest2, ftest1) REFERENCES pktable);
+CREATE TABLE FKTABLE (ftest1 int, ftest2 inet, FOREIGN KEY(ftest2, ftest1) REFERENCES pktable);
 -- As does this...
-CREATE TABLE FKTABLE (ftest1 int, ftest2 text, FOREIGN KEY(ftest2, ftest1) REFERENCES pktable(ptest1, ptest2));
+CREATE TABLE FKTABLE (ftest1 int, ftest2 inet, FOREIGN KEY(ftest2, ftest1) REFERENCES pktable(ptest1, ptest2));
 -- And again..
-CREATE TABLE FKTABLE (ftest1 int, ftest2 text, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable(ptest2, ptest1));
+CREATE TABLE FKTABLE (ftest1 int, ftest2 inet, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable(ptest2, ptest1));
 -- This works...
-CREATE TABLE FKTABLE (ftest1 int, ftest2 text, FOREIGN KEY(ftest2, ftest1) REFERENCES pktable(ptest2, ptest1));
+CREATE TABLE FKTABLE (ftest1 int, ftest2 inet, FOREIGN KEY(ftest2, ftest1) REFERENCES pktable(ptest2, ptest1));
 DROP TABLE FKTABLE;
 -- As does this
-CREATE TABLE FKTABLE (ftest1 int, ftest2 text, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable(ptest1, ptest2));
+CREATE TABLE FKTABLE (ftest1 int, ftest2 inet, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable(ptest1, ptest2));
 DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
 
 -- Two columns, same table
 -- Make sure this still works...
-CREATE TABLE PKTABLE (ptest1 int, ptest2 text, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest3,
+CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest3,
 ptest4) REFERENCES pktable(ptest1, ptest2));
 DROP TABLE PKTABLE;
 -- And this, 
-CREATE TABLE PKTABLE (ptest1 int, ptest2 text, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest3,
+CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest3,
 ptest4) REFERENCES pktable);
 DROP TABLE PKTABLE;
 -- This shouldn't (mixed up columns)
-CREATE TABLE PKTABLE (ptest1 int, ptest2 text, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest3,
+CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest3,
 ptest4) REFERENCES pktable(ptest2, ptest1));
 -- Nor should this... (same reason, we have 4,3 referencing 1,2 which mismatches types
-CREATE TABLE PKTABLE (ptest1 int, ptest2 text, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest4,
+CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest4,
 ptest3) REFERENCES pktable(ptest1, ptest2));
 -- Not this one either... Same as the last one except we didn't defined the columns being referenced.
-CREATE TABLE PKTABLE (ptest1 int, ptest2 text, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest4,
+CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest4,
 ptest3) REFERENCES pktable);
 
 --
@@ -557,26 +557,26 @@ drop table pktable_base;
 
 -- 2 columns (2 tables), mismatched types
 create table pktable_base(base1 int not null);
-create table pktable(ptest1 text, primary key(base1, ptest1)) inherits (pktable_base);
+create table pktable(ptest1 inet, primary key(base1, ptest1)) inherits (pktable_base);
 -- just generally bad types (with and without column references on the referenced table)
 create table fktable(ftest1 cidr, ftest2 int[], foreign key (ftest1, ftest2) references pktable);
 create table fktable(ftest1 cidr, ftest2 int[], foreign key (ftest1, ftest2) references pktable(base1, ptest1));
 -- let's mix up which columns reference which
-create table fktable(ftest1 int, ftest2 text, foreign key(ftest2, ftest1) references pktable);
-create table fktable(ftest1 int, ftest2 text, foreign key(ftest2, ftest1) references pktable(base1, ptest1));
-create table fktable(ftest1 int, ftest2 text, foreign key(ftest1, ftest2) references pktable(ptest1, base1));
+create table fktable(ftest1 int, ftest2 inet, foreign key(ftest2, ftest1) references pktable);
+create table fktable(ftest1 int, ftest2 inet, foreign key(ftest2, ftest1) references pktable(base1, ptest1));
+create table fktable(ftest1 int, ftest2 inet, foreign key(ftest1, ftest2) references pktable(ptest1, base1));
 drop table pktable;
 drop table pktable_base;
 
 -- 2 columns (1 table), mismatched types
 create table pktable_base(base1 int not null, base2 int);
-create table pktable(ptest1 text, ptest2 text[], primary key(base1, ptest1), foreign key(base2, ptest2) references
+create table pktable(ptest1 inet, ptest2 inet[], primary key(base1, ptest1), foreign key(base2, ptest2) references
                                              pktable(base1, ptest1)) inherits (pktable_base);
-create table pktable(ptest1 text, ptest2 text, primary key(base1, ptest1), foreign key(base2, ptest2) references
+create table pktable(ptest1 inet, ptest2 inet, primary key(base1, ptest1), foreign key(base2, ptest2) references
                                              pktable(ptest1, base1)) inherits (pktable_base);
-create table pktable(ptest1 text, ptest2 text, primary key(base1, ptest1), foreign key(ptest2, base2) references
+create table pktable(ptest1 inet, ptest2 inet, primary key(base1, ptest1), foreign key(ptest2, base2) references
                                              pktable(base1, ptest1)) inherits (pktable_base);
-create table pktable(ptest1 text, ptest2 text, primary key(base1, ptest1), foreign key(ptest2, base2) references
+create table pktable(ptest1 inet, ptest2 inet, primary key(base1, ptest1), foreign key(ptest2, base2) references
                                              pktable(base1, ptest1)) inherits (pktable_base);
 drop table pktable;
 drop table pktable_base;

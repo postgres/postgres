@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_coerce.h,v 1.41 2002/03/20 19:45:07 tgl Exp $
+ * $Id: parse_coerce.h,v 1.42 2002/04/11 20:00:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,9 +38,10 @@ extern bool IsBinaryCompatible(Oid type1, Oid type2);
 extern bool IsPreferredType(CATEGORY category, Oid type);
 extern CATEGORY TypeCategory(Oid type);
 
-extern bool can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids);
+extern bool can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids,
+							bool isExplicit);
 extern Node *coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
-			Oid targetTypeId, int32 atttypmod);
+			Oid targetTypeId, int32 atttypmod, bool isExplicit);
 extern Node *coerce_type_typmod(ParseState *pstate, Node *node,
 				   Oid targetTypeId, int32 atttypmod);
 

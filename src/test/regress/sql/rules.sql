@@ -604,7 +604,7 @@ SELECT * FROM shoe_ready WHERE total_avail >= 2;
                                         NEW.sl_name,
                                         NEW.sl_avail,
                                         'Al Bundy',
-                                        'epoch'::text
+                                        'epoch'
                                     );
 
 UPDATE shoelace_data SET sl_avail = 6 WHERE  sl_name = 'sl7';

@@ -101,10 +101,11 @@ def list_lang_func(pgcnx, l):
 
 # lists all the aggregate functions and the type to which they can be applied
 def list_agg_func(pgcnx):
-	result = pgcnx.query("""SELECT a.aggname, t.typname
-		FROM pg_aggregate a, pg_type t
-		WHERE a.aggbasetype = t.oid
-		ORDER BY aggname, typname""")
+	result = pgcnx.query("""SELECT p.proname, t.typname
+		FROM pg_aggregate a, pg_proc p, pg_type t
+		WHERE a.aggfnoid = p.oid
+			and p.proargtypes[0] = t.oid
+		ORDER BY proname, typname""")
 	return result
 
 # lists all the operator classes that can be used with each access method as

@@ -46,7 +46,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.80 2002/03/20 19:43:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.81 2002/04/11 19:59:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,10 +63,12 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_type.h"
+#include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/tuplesort.h"
 #include "utils/datum.h"
+
 
 /*
  * AggStatePerAggData - per-aggregate working state for the Agg scan
@@ -160,6 +162,7 @@ static void process_sorted_aggregate(AggState *aggstate,
 						 AggStatePerAgg peraggstate);
 static void finalize_aggregate(AggStatePerAgg peraggstate,
 				   Datum *resultVal, bool *resultIsNull);
+static Datum GetAggInitVal(Datum textInitVal, Oid transtype);
 
 
 /*
@@ -244,7 +247,7 @@ advance_transition_function(AggStatePerAgg peraggstate,
 			 * transValue has not been initialized. This is the first
 			 * non-NULL input value. We use it as the initial value for
 			 * transValue. (We already checked that the agg's input type
-			 * is binary- compatible with its transtype, so straight copy
+			 * is binary-compatible with its transtype, so straight copy
 			 * here is OK.)
 			 *
 			 * We had better copy the datum if it is pass-by-ref, since the
@@ -838,11 +841,11 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	{
 		Aggref	   *aggref = (Aggref *) lfirst(alist);
 		AggStatePerAgg peraggstate = &peragg[++aggno];
-		char	   *aggname = aggref->aggname;
 		HeapTuple	aggTuple;
 		Form_pg_aggregate aggform;
 		Oid			transfn_oid,
 					finalfn_oid;
+		Datum		textInitVal;
 
 		/* Mark Aggref node with its associated index in the result array */
 		aggref->aggno = aggno;
@@ -850,28 +853,34 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 		/* Fill in the peraggstate data */
 		peraggstate->aggref = aggref;
 
-		aggTuple = SearchSysCache(AGGNAME,
-								  PointerGetDatum(aggname),
-								  ObjectIdGetDatum(aggref->basetype),
-								  0, 0);
+		aggTuple = SearchSysCache(AGGFNOID,
+								  ObjectIdGetDatum(aggref->aggfnoid),
+								  0, 0, 0);
 		if (!HeapTupleIsValid(aggTuple))
-			elog(ERROR, "ExecAgg: cache lookup failed for aggregate %s(%s)",
-				 aggname,
-				 aggref->basetype ?
-				 typeidTypeName(aggref->basetype) : (char *) "");
+			elog(ERROR, "ExecAgg: cache lookup failed for aggregate %u",
+				 aggref->aggfnoid);
 		aggform = (Form_pg_aggregate) GETSTRUCT(aggTuple);
 
-		get_typlenbyval(aggform->aggfinaltype,
+		get_typlenbyval(aggref->aggtype,
 						&peraggstate->resulttypeLen,
 						&peraggstate->resulttypeByVal);
 		get_typlenbyval(aggform->aggtranstype,
 						&peraggstate->transtypeLen,
 						&peraggstate->transtypeByVal);
 
-		peraggstate->initValue =
-			AggNameGetInitVal(aggname,
-							  aggform->aggbasetype,
-							  &peraggstate->initValueIsNull);
+		/*
+		 * initval is potentially null, so don't try to access it as a struct
+		 * field. Must do it the hard way with SysCacheGetAttr.
+		 */
+		textInitVal = SysCacheGetAttr(AGGFNOID, aggTuple,
+									  Anum_pg_aggregate_agginitval,
+									  &peraggstate->initValueIsNull);
+
+		if (peraggstate->initValueIsNull)
+			peraggstate->initValue = (Datum) 0;
+		else
+			peraggstate->initValue = GetAggInitVal(textInitVal,
+												   aggform->aggtranstype);
 
 		peraggstate->transfn_oid = transfn_oid = aggform->aggtransfn;
 		peraggstate->finalfn_oid = finalfn_oid = aggform->aggfinalfn;
@@ -891,21 +900,21 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 		{
 			/*
 			 * Note: use the type from the input expression here, not
-			 * aggform->aggbasetype, because the latter might be 0.
+			 * from pg_proc.proargtypes, because the latter might be 0.
 			 * (Consider COUNT(*).)
 			 */
 			Oid			inputType = exprType(aggref->target);
 
 			if (!IsBinaryCompatible(inputType, aggform->aggtranstype))
-				elog(ERROR, "Aggregate %s needs to have compatible input type and transition type",
-					 aggname);
+				elog(ERROR, "Aggregate %u needs to have compatible input type and transition type",
+					 aggref->aggfnoid);
 		}
 
 		if (aggref->aggdistinct)
 		{
 			/*
 			 * Note: use the type from the input expression here, not
-			 * aggform->aggbasetype, because the latter might be 0.
+			 * from pg_proc.proargtypes, because the latter might be 0.
 			 * (Consider COUNT(*).)
 			 */
 			Oid			inputType = exprType(aggref->target);
@@ -930,6 +939,36 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	}
 
 	return TRUE;
+}
+
+static Datum
+GetAggInitVal(Datum textInitVal, Oid transtype)
+{
+	char	   *strInitVal;
+	HeapTuple	tup;
+	Oid			typinput,
+				typelem;
+	Datum		initVal;
+
+	strInitVal = DatumGetCString(DirectFunctionCall1(textout, textInitVal));
+
+	tup = SearchSysCache(TYPEOID,
+						 ObjectIdGetDatum(transtype),
+						 0, 0, 0);
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "GetAggInitVal: cache lookup failed on aggregate transition function return type %u", transtype);
+
+	typinput = ((Form_pg_type) GETSTRUCT(tup))->typinput;
+	typelem = ((Form_pg_type) GETSTRUCT(tup))->typelem;
+	ReleaseSysCache(tup);
+
+	initVal = OidFunctionCall3(typinput,
+							   CStringGetDatum(strInitVal),
+							   ObjectIdGetDatum(typelem),
+							   Int32GetDatum(-1));
+
+	pfree(strInitVal);
+	return initVal;
 }
 
 int
@@ -984,4 +1023,22 @@ ExecReScanAgg(Agg *node, ExprContext *exprCtxt, Plan *parent)
 	 */
 	if (((Plan *) node)->lefttree->chgParam == NULL)
 		ExecReScan(((Plan *) node)->lefttree, exprCtxt, (Plan *) node);
+}
+
+/*
+ * aggregate_dummy - dummy execution routine for aggregate functions
+ *
+ * This function is listed as the implementation (prosrc field) of pg_proc
+ * entries for aggregate functions.  Its only purpose is to throw an error
+ * if someone mistakenly executes such a function in the normal way.
+ *
+ * Perhaps someday we could assign real meaning to the prosrc field of
+ * an aggregate?
+ */
+Datum
+aggregate_dummy(PG_FUNCTION_ARGS)
+{
+	elog(ERROR, "Aggregate function %u called as normal function",
+		 fcinfo->flinfo->fn_oid);
+	return (Datum) 0;			/* keep compiler quiet */
 }

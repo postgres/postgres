@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.246 2002/04/05 11:51:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.247 2002/04/11 20:00:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1873,7 +1873,7 @@ getAggregates(int *numAggs)
 						  "(select usename from pg_user where aggowner = usesysid) as usename "
 						  "from pg_aggregate");
 	}
-	else
+	else if (g_fout->remoteVersion < 70300)
 	{
 		appendPQExpBuffer(query, "SELECT pg_aggregate.oid, aggname, aggtransfn, "
 						  "aggfinalfn, aggtranstype, aggbasetype, "
@@ -1881,6 +1881,16 @@ getAggregates(int *numAggs)
 						  "'t'::boolean as convertok, "
 						  "(select usename from pg_user where aggowner = usesysid) as usename "
 						  "from pg_aggregate");
+	}
+	else
+	{
+		appendPQExpBuffer(query, "SELECT p.oid, proname as aggname, aggtransfn, "
+						  "aggfinalfn, aggtranstype, proargtypes[0] as aggbasetype, "
+						  "agginitval, "
+						  "'t'::boolean as convertok, "
+						  "(select usename from pg_user where proowner = usesysid) as usename "
+						  "from pg_aggregate a, pg_proc p "
+						  "where a.aggfnoid = p.oid");
 	}
 
 	res = PQexec(g_conn, query->data);
@@ -1960,6 +1970,7 @@ getFuncs(int *numFuncs)
 	int			i_prosrc;
 	int			i_probin;
 	int			i_provolatile;
+	int			i_isimplicit;
 	int			i_isstrict;
 	int			i_usename;
 
@@ -1972,7 +1983,8 @@ getFuncs(int *numFuncs)
 						  "proretset, proargtypes, prosrc, probin, "
 						  "(select usename from pg_user where proowner = usesysid) as usename, "
 						  "case when proiscachable then 'i' else 'v' end as provolatile, "
-"'f'::boolean as proisstrict "
+						  "'f'::boolean as proimplicit, "
+						  "'f'::boolean as proisstrict "
 						  "from pg_proc "
 						  "where pg_proc.oid > '%u'::oid",
 						  g_last_builtin_oid);
@@ -1984,6 +1996,7 @@ getFuncs(int *numFuncs)
 						  "proretset, proargtypes, prosrc, probin, "
 						  "(select usename from pg_user where proowner = usesysid) as usename, "
 						  "case when proiscachable then 'i' else 'v' end as provolatile, "
+						  "'f'::boolean as proimplicit, "
 						  "proisstrict "
 						  "from pg_proc "
 						  "where pg_proc.oid > '%u'::oid",
@@ -1995,9 +2008,9 @@ getFuncs(int *numFuncs)
 		   "SELECT pg_proc.oid, proname, prolang, pronargs, prorettype, "
 						  "proretset, proargtypes, prosrc, probin, "
 						  "(select usename from pg_user where proowner = usesysid) as usename, "
-						  "provolatile, proisstrict "
+						  "provolatile, proimplicit, proisstrict "
 						  "from pg_proc "
-						  "where pg_proc.oid > '%u'::oid",
+						  "where pg_proc.oid > '%u'::oid and not proisagg",
 						  g_last_builtin_oid);
 	}
 
@@ -2028,6 +2041,7 @@ getFuncs(int *numFuncs)
 	i_prosrc = PQfnumber(res, "prosrc");
 	i_probin = PQfnumber(res, "probin");
 	i_provolatile = PQfnumber(res, "provolatile");
+	i_isimplicit = PQfnumber(res, "proimplicit");
 	i_isstrict = PQfnumber(res, "proisstrict");
 	i_usename = PQfnumber(res, "usename");
 
@@ -2045,6 +2059,7 @@ getFuncs(int *numFuncs)
 		finfo[i].lang = atooid(PQgetvalue(res, i, i_prolang));
 		finfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
 		finfo[i].provolatile = (PQgetvalue(res, i, i_provolatile))[0];
+		finfo[i].isimplicit = (strcmp(PQgetvalue(res, i, i_isimplicit), "t") == 0);
 		finfo[i].isstrict = (strcmp(PQgetvalue(res, i, i_isstrict), "t") == 0);
 
 		if (strlen(finfo[i].usename) == 0)
@@ -3670,6 +3685,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 	formatStringLiteral(q, func_lang, CONV_ALL);
 
 	if (finfo[i].provolatile != PROVOLATILE_VOLATILE ||
+		finfo[i].isimplicit ||
 		finfo[i].isstrict)		/* OR in new attrs here */
 	{
 		appendPQExpBuffer(q, " WITH (");
@@ -3692,11 +3708,18 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 			exit_nicely();
 		}
 
+		if (finfo[i].isimplicit)
+		{
+			appendPQExpBuffer(q, "%s implicitCoercion", listSep);
+			listSep = listSepComma;
+		}
+
 		if (finfo[i].isstrict)
 		{
 			appendPQExpBuffer(q, "%s isStrict", listSep);
 			listSep = listSepComma;
 		}
+
 		appendPQExpBuffer(q, " )");
 	}
 
@@ -4012,7 +4035,12 @@ dumpAggs(Archive *fout, AggInfo *agginfo, int numAggs,
 
 		resetPQExpBuffer(q);
 		appendPQExpBuffer(q, "AGGREGATE %s", aggSig->data);
-		dumpComment(fout, q->data, agginfo[i].oid, "pg_aggregate", 0, NULL);
+		if (g_fout->remoteVersion < 70300)
+			dumpComment(fout, q->data, agginfo[i].oid, "pg_aggregate",
+						0, NULL);
+		else
+			dumpComment(fout, q->data, agginfo[i].oid, "pg_proc",
+						0, NULL);
 	}
 
 	destroyPQExpBuffer(q);

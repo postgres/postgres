@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_aggregate.h,v 1.37 2002/04/09 20:35:54 tgl Exp $
+ * $Id: pg_aggregate.h,v 1.38 2002/04/11 20:00:11 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -31,25 +31,19 @@
  *
  *		cpp turns this into typedef struct FormData_pg_aggregate
  *
- *	aggname				name of the aggregate
- *	aggowner			owner (creator) of the aggregate
+ *	aggfnoid			pg_proc OID of the aggregate itself
  *	aggtransfn			transition function
  *	aggfinalfn			final function
- *	aggbasetype			type of data on which aggregate operates
  *	aggtranstype		type of aggregate's transition (state) data
- *	aggfinaltype		type of aggregate's final result
  *	agginitval			initial value for transition state
  * ----------------------------------------------------------------
  */
-CATALOG(pg_aggregate)
+CATALOG(pg_aggregate) BKI_WITHOUT_OIDS
 {
-	NameData	aggname;
-	int4		aggowner;
+	regproc		aggfnoid;
 	regproc		aggtransfn;
 	regproc		aggfinalfn;
-	Oid			aggbasetype;
 	Oid			aggtranstype;
-	Oid			aggfinaltype;
 	text		agginitval;		/* VARIABLE LENGTH FIELD */
 } FormData_pg_aggregate;
 
@@ -65,15 +59,12 @@ typedef FormData_pg_aggregate *Form_pg_aggregate;
  * ----------------
  */
 
-#define Natts_pg_aggregate				8
-#define Anum_pg_aggregate_aggname		1
-#define Anum_pg_aggregate_aggowner		2
-#define Anum_pg_aggregate_aggtransfn	3
-#define Anum_pg_aggregate_aggfinalfn	4
-#define Anum_pg_aggregate_aggbasetype	5
-#define Anum_pg_aggregate_aggtranstype	6
-#define Anum_pg_aggregate_aggfinaltype	7
-#define Anum_pg_aggregate_agginitval	8
+#define Natts_pg_aggregate				5
+#define Anum_pg_aggregate_aggfnoid		1
+#define Anum_pg_aggregate_aggtransfn	2
+#define Anum_pg_aggregate_aggfinalfn	3
+#define Anum_pg_aggregate_aggtranstype	4
+#define Anum_pg_aggregate_agginitval	5
 
 
 /* ----------------
@@ -81,76 +72,82 @@ typedef FormData_pg_aggregate *Form_pg_aggregate;
  * ---------------
  */
 
-DATA(insert OID = 0 ( avg	PGUID int8_accum	numeric_avg		20	 1231 1700 "{0,0,0}" ));
-DATA(insert OID = 0 ( avg	PGUID int4_avg_accum int8_avg		23	 1016 1700 "{0,0}" ));
-DATA(insert OID = 0 ( avg	PGUID int2_avg_accum int8_avg		21	 1016 1700 "{0,0}" ));
-DATA(insert OID = 0 ( avg	PGUID numeric_accum  numeric_avg	1700 1231 1700 "{0,0,0}" ));
-DATA(insert OID = 0 ( avg	PGUID float4_accum	float8_avg		700  1022 701 "{0,0,0}" ));
-DATA(insert OID = 0 ( avg	PGUID float8_accum	float8_avg		701  1022 701 "{0,0,0}" ));
-DATA(insert OID = 0 ( avg	PGUID interval_accum interval_avg	1186 1187 1186 "{0 second,0 second}" ));
+/* avg */
+DATA(insert ( 2100	int8_accum		numeric_avg		1231	"{0,0,0}" ));
+DATA(insert ( 2101	int4_avg_accum	int8_avg		1016	"{0,0}" ));
+DATA(insert ( 2102	int2_avg_accum	int8_avg		1016	"{0,0}" ));
+DATA(insert ( 2103	numeric_accum	numeric_avg		1231	"{0,0,0}" ));
+DATA(insert ( 2104	float4_accum	float8_avg		1022	"{0,0,0}" ));
+DATA(insert ( 2105	float8_accum	float8_avg		1022	"{0,0,0}" ));
+DATA(insert ( 2106	interval_accum	interval_avg	1187	"{0 second,0 second}" ));
 
-DATA(insert OID = 0 ( sum	PGUID int8_sum			-	20 1700 1700 _null_ ));
-DATA(insert OID = 0 ( sum	PGUID int4_sum			-	23	 20   20 _null_ ));
-DATA(insert OID = 0 ( sum	PGUID int2_sum			-	21	 20   20 _null_ ));
-DATA(insert OID = 0 ( sum	PGUID float4pl			-  700	700  700 _null_ ));
-DATA(insert OID = 0 ( sum	PGUID float8pl			-  701	701  701 _null_ ));
-DATA(insert OID = 0 ( sum	PGUID cash_pl			-  790	790  790 _null_ ));
-DATA(insert OID = 0 ( sum	PGUID interval_pl		- 1186 1186 1186 _null_ ));
-DATA(insert OID = 0 ( sum	PGUID numeric_add		- 1700 1700 1700 _null_ ));
+/* sum */
+DATA(insert ( 2107	int8_sum		-				1700	_null_ ));
+DATA(insert ( 2108	int4_sum		-				20		_null_ ));
+DATA(insert ( 2109	int2_sum		-				20		_null_ ));
+DATA(insert ( 2110	float4pl		-				700		_null_ ));
+DATA(insert ( 2111	float8pl		-				701		_null_ ));
+DATA(insert ( 2112	cash_pl			-				790		_null_ ));
+DATA(insert ( 2113	interval_pl		-				1186	_null_ ));
+DATA(insert ( 2114	numeric_add		-				1700	_null_ ));
 
-DATA(insert OID = 0 ( max	PGUID int8larger		-	20	 20   20 _null_ ));
-DATA(insert OID = 0 ( max	PGUID int4larger		-	23	 23   23 _null_ ));
-DATA(insert OID = 0 ( max	PGUID int2larger		-	21	 21   21 _null_ ));
-DATA(insert OID = 0 ( max	PGUID oidlarger			-	26	 26   26 _null_ ));
-DATA(insert OID = 0 ( max	PGUID float4larger		-  700	700  700 _null_ ));
-DATA(insert OID = 0 ( max	PGUID float8larger		-  701	701  701 _null_ ));
-DATA(insert OID = 0 ( max	PGUID int4larger		-  702	702  702 _null_ ));
-DATA(insert OID = 0 ( max	PGUID date_larger		- 1082 1082 1082 _null_ ));
-DATA(insert OID = 0 ( max	PGUID time_larger		- 1083 1083 1083 _null_ ));
-DATA(insert OID = 0 ( max	PGUID timetz_larger		- 1266 1266 1266 _null_ ));
-DATA(insert OID = 0 ( max	PGUID cashlarger		-  790	790  790 _null_ ));
-DATA(insert OID = 0 ( max	PGUID timestamp_larger	- 1114 1114 1114 _null_ ));
-DATA(insert OID = 0 ( max	PGUID timestamptz_larger - 1184 1184 1184 _null_ ));
-DATA(insert OID = 0 ( max	PGUID interval_larger	- 1186 1186 1186 _null_ ));
-DATA(insert OID = 0 ( max	PGUID text_larger		-	25	 25   25 _null_ ));
-DATA(insert OID = 0 ( max	PGUID numeric_larger	- 1700 1700 1700 _null_ ));
+/* max */
+DATA(insert ( 2115	int8larger		-				20		_null_ ));
+DATA(insert ( 2116	int4larger		-				23		_null_ ));
+DATA(insert ( 2117	int2larger		-				21		_null_ ));
+DATA(insert ( 2118	oidlarger		-				26		_null_ ));
+DATA(insert ( 2119	float4larger	-				700		_null_ ));
+DATA(insert ( 2120	float8larger	-				701		_null_ ));
+DATA(insert ( 2121	int4larger		-				702		_null_ ));
+DATA(insert ( 2122	date_larger		-				1082	_null_ ));
+DATA(insert ( 2123	time_larger		-				1083	_null_ ));
+DATA(insert ( 2124	timetz_larger	-				1266	_null_ ));
+DATA(insert ( 2125	cashlarger		-				790		_null_ ));
+DATA(insert ( 2126	timestamp_larger	-			1114	_null_ ));
+DATA(insert ( 2127	timestamptz_larger	-			1184	_null_ ));
+DATA(insert ( 2128	interval_larger	-				1186	_null_ ));
+DATA(insert ( 2129	text_larger		-				25		_null_ ));
+DATA(insert ( 2130	numeric_larger	-				1700	_null_ ));
 
-DATA(insert OID = 0 ( min	PGUID int8smaller		-	20	 20   20 _null_ ));
-DATA(insert OID = 0 ( min	PGUID int4smaller		-	23	 23   23 _null_ ));
-DATA(insert OID = 0 ( min	PGUID int2smaller		-	21	 21   21 _null_ ));
-DATA(insert OID = 0 ( min	PGUID oidsmaller		-	26	 26   26 _null_ ));
-DATA(insert OID = 0 ( min	PGUID float4smaller		-  700	700  700 _null_ ));
-DATA(insert OID = 0 ( min	PGUID float8smaller		-  701	701  701 _null_ ));
-DATA(insert OID = 0 ( min	PGUID int4smaller		-  702	702  702 _null_ ));
-DATA(insert OID = 0 ( min	PGUID date_smaller		- 1082 1082 1082 _null_ ));
-DATA(insert OID = 0 ( min	PGUID time_smaller		- 1083 1083 1083 _null_ ));
-DATA(insert OID = 0 ( min	PGUID timetz_smaller	- 1266 1266 1266 _null_ ));
-DATA(insert OID = 0 ( min	PGUID cashsmaller		-  790	790  790 _null_ ));
-DATA(insert OID = 0 ( min	PGUID timestamp_smaller - 1114 1114 1114 _null_ ));
-DATA(insert OID = 0 ( min	PGUID timestamptz_smaller - 1184 1184 1184 _null_ ));
-DATA(insert OID = 0 ( min	PGUID interval_smaller	- 1186 1186 1186 _null_ ));
-DATA(insert OID = 0 ( min	PGUID text_smaller		-	25	 25   25 _null_ ));
-DATA(insert OID = 0 ( min	PGUID numeric_smaller	- 1700 1700 1700 _null_ ));
+/* min */
+DATA(insert ( 2131	int8smaller		-				20		_null_ ));
+DATA(insert ( 2132	int4smaller		-				23		_null_ ));
+DATA(insert ( 2133	int2smaller		-				21		_null_ ));
+DATA(insert ( 2134	oidsmaller		-				26		_null_ ));
+DATA(insert ( 2135	float4smaller	-				700		_null_ ));
+DATA(insert ( 2136	float8smaller	-				701		_null_ ));
+DATA(insert ( 2137	int4smaller		-				702		_null_ ));
+DATA(insert ( 2138	date_smaller	-				1082	_null_ ));
+DATA(insert ( 2139	time_smaller	-				1083	_null_ ));
+DATA(insert ( 2140	timetz_smaller	-				1266	_null_ ));
+DATA(insert ( 2141	cashsmaller		-				790		_null_ ));
+DATA(insert ( 2142	timestamp_smaller	-			1114	_null_ ));
+DATA(insert ( 2143	timestamptz_smaller	-			1184	_null_ ));
+DATA(insert ( 2144	interval_smaller	-			1186	_null_ ));
+DATA(insert ( 2145	text_smaller	-				25		_null_ ));
+DATA(insert ( 2146	numeric_smaller	-				1700	_null_ ));
 
 /*
  * Using int8inc for count() is cheating a little, since it really only
  * takes 1 parameter not 2, but nodeAgg.c won't complain ...
  */
-DATA(insert OID = 0 ( count PGUID int8inc			- 0 20 20 0 ));
+DATA(insert ( 2147	int8inc		-					 20		0 ));
 
-DATA(insert OID = 0 ( variance	PGUID int8_accum	numeric_variance	20	 1231 1700 "{0,0,0}" ));
-DATA(insert OID = 0 ( variance	PGUID int4_accum	numeric_variance	23	 1231 1700 "{0,0,0}" ));
-DATA(insert OID = 0 ( variance	PGUID int2_accum	numeric_variance	21	 1231 1700 "{0,0,0}" ));
-DATA(insert OID = 0 ( variance	PGUID float4_accum	float8_variance		700  1022 701 "{0,0,0}" ));
-DATA(insert OID = 0 ( variance	PGUID float8_accum	float8_variance		701  1022 701 "{0,0,0}" ));
-DATA(insert OID = 0 ( variance	PGUID numeric_accum  numeric_variance	1700 1231 1700 "{0,0,0}" ));
+/* variance */
+DATA(insert ( 2148	int8_accum	numeric_variance	1231	"{0,0,0}" ));
+DATA(insert ( 2149	int4_accum	numeric_variance	1231	"{0,0,0}" ));
+DATA(insert ( 2150	int2_accum	numeric_variance	1231	"{0,0,0}" ));
+DATA(insert ( 2151	float4_accum	float8_variance	1022	"{0,0,0}" ));
+DATA(insert ( 2152	float8_accum	float8_variance	1022	"{0,0,0}" ));
+DATA(insert ( 2153	numeric_accum	numeric_variance	1231	"{0,0,0}" ));
 
-DATA(insert OID = 0 ( stddev	PGUID int8_accum	numeric_stddev		20	 1231 1700 "{0,0,0}" ));
-DATA(insert OID = 0 ( stddev	PGUID int4_accum	numeric_stddev		23	 1231 1700 "{0,0,0}" ));
-DATA(insert OID = 0 ( stddev	PGUID int2_accum	numeric_stddev		21	 1231 1700 "{0,0,0}" ));
-DATA(insert OID = 0 ( stddev	PGUID float4_accum	float8_stddev		700  1022 701 "{0,0,0}" ));
-DATA(insert OID = 0 ( stddev	PGUID float8_accum	float8_stddev		701  1022 701 "{0,0,0}" ));
-DATA(insert OID = 0 ( stddev	PGUID numeric_accum  numeric_stddev		1700 1231 1700 "{0,0,0}" ));
+/* stddev */
+DATA(insert ( 2154	int8_accum	numeric_stddev		1231	"{0,0,0}" ));
+DATA(insert ( 2155	int4_accum	numeric_stddev		1231	"{0,0,0}" ));
+DATA(insert ( 2156	int2_accum	numeric_stddev		1231	"{0,0,0}" ));
+DATA(insert ( 2157	float4_accum	float8_stddev	1022	"{0,0,0}" ));
+DATA(insert ( 2158	float8_accum	float8_stddev	1022	"{0,0,0}" ));
+DATA(insert ( 2159	numeric_accum	numeric_stddev	1231	"{0,0,0}" ));
 
 /*
  * prototypes for functions in pg_aggregate.c
@@ -162,8 +159,5 @@ extern void AggregateCreate(const char *aggName,
 							Oid aggBaseType,
 							Oid aggTransType,
 							const char *agginitval);
-
-extern Datum AggNameGetInitVal(char *aggName, Oid basetype,
-				  bool *isNull);
 
 #endif   /* PG_AGGREGATE_H */

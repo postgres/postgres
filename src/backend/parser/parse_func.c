@@ -8,23 +8,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.125 2002/04/09 20:35:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.126 2002/04/11 20:00:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/catname.h"
-#include "catalog/indexing.h"
 #include "catalog/namespace.h"
-#include "catalog/pg_aggregate.h"
 #include "catalog/pg_inherits.h"
-#include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "nodes/makefuncs.h"
-#include "parser/parse_agg.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
@@ -34,6 +29,7 @@
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+
 
 static Node *ParseComplexProjection(ParseState *pstate,
 					   char *funcname,
@@ -54,9 +50,6 @@ static int match_argtypes(int nargs,
 static FieldSelect *setup_field_select(Node *input, char *attname, Oid relid);
 static FuncCandidateList func_select_candidate(int nargs, Oid *input_typeids,
 								  FuncCandidateList candidates);
-static int	agg_get_candidates(List *aggname, Oid typeId,
-							   FuncCandidateList *candidates);
-static Oid	agg_select_candidate(Oid typeid, FuncCandidateList candidates);
 
 
 /*
@@ -89,14 +82,10 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	char	   *refname;
 	int			nargs = length(fargs);
 	int			argn;
-	Func	   *funcnode;
 	Oid			oid_array[FUNC_MAX_ARGS];
 	Oid		   *true_oid_array;
 	Node	   *retval;
 	bool		retset;
-	bool		must_be_agg = agg_star || agg_distinct;
-	bool		could_be_agg;
-	Expr	   *expr;
 	FuncDetailCode fdresult;
 
 	/*
@@ -123,7 +112,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * then the "function call" could be a projection.  We also check
 	 * that there wasn't any aggregate decoration.
 	 */
-	if (nargs == 1 && !must_be_agg && length(funcname) == 1)
+	if (nargs == 1 && !agg_star && !agg_distinct && length(funcname) == 1)
 	{
 		char	   *cname = strVal(lfirst(funcname));
 
@@ -148,84 +137,6 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 			retval = ParseComplexProjection(pstate, cname, first_arg);
 			if (retval)
 				return retval;
-		}
-	}
-
-	/*
-	 * See if it's an aggregate.
-	 */
-	if (must_be_agg)
-	{
-		/* We don't presently cope with, eg, foo(DISTINCT x,y) */
-		if (nargs != 1)
-			elog(ERROR, "Aggregate functions may only have one parameter");
-		/* Agg's argument can't be a relation name, either */
-		if (IsA(first_arg, RangeVar))
-			elog(ERROR, "Aggregate functions cannot be applied to relation names");
-		could_be_agg = true;
-	}
-	else
-	{
-		/* Try to parse as an aggregate if above-mentioned checks are OK */
-		could_be_agg = (nargs == 1) && !(IsA(first_arg, RangeVar));
-	}
-
-	if (could_be_agg)
-	{
-		Oid			basetype = exprType(lfirst(fargs));
-		int			ncandidates;
-		FuncCandidateList candidates;
-
-		/* try for exact match first... */
-		if (SearchSysCacheExists(AGGNAME,
-								 PointerGetDatum(strVal(llast(funcname))),
-								 ObjectIdGetDatum(basetype),
-								 0, 0))
-			return (Node *) ParseAgg(pstate, funcname, basetype,
-									 fargs, agg_star, agg_distinct);
-
-		/* check for aggregate-that-accepts-any-type (eg, COUNT) */
-		if (SearchSysCacheExists(AGGNAME,
-								 PointerGetDatum(strVal(llast(funcname))),
-								 ObjectIdGetDatum(0),
-								 0, 0))
-			return (Node *) ParseAgg(pstate, funcname, 0,
-									 fargs, agg_star, agg_distinct);
-
-		/*
-		 * No exact match yet, so see if there is another entry in the
-		 * aggregate table that is compatible. - thomas 1998-12-05
-		 */
-		ncandidates = agg_get_candidates(funcname, basetype, &candidates);
-		if (ncandidates > 0)
-		{
-			Oid			type;
-
-			type = agg_select_candidate(basetype, candidates);
-			if (OidIsValid(type))
-			{
-				lfirst(fargs) = coerce_type(pstate, lfirst(fargs),
-											basetype, type, -1);
-				basetype = type;
-				return (Node *) ParseAgg(pstate, funcname, basetype,
-										 fargs, agg_star, agg_distinct);
-			}
-			else
-			{
-				/* Multiple possible matches --- give up */
-				elog(ERROR, "Unable to select an aggregate function %s(%s)",
-					 NameListToString(funcname), format_type_be(basetype));
-			}
-		}
-
-		if (must_be_agg)
-		{
-			/*
-			 * No matching agg, but we had '*' or DISTINCT, so a plain
-			 * function could not have been meant.
-			 */
-			elog(ERROR, "There is no aggregate function %s(%s)",
-				 NameListToString(funcname), format_type_be(basetype));
 		}
 	}
 
@@ -321,9 +232,22 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		 * these cases, so why duplicate code...
 		 */
 		return coerce_type(pstate, lfirst(fargs),
-						   oid_array[0], rettype, -1);
+						   oid_array[0], rettype, -1, true);
 	}
-	if (fdresult != FUNCDETAIL_NORMAL)
+	else if (fdresult == FUNCDETAIL_NORMAL)
+	{
+		/*
+		 * Normal function found; was there anything indicating it must be
+		 * an aggregate?
+		 */
+		if (agg_star)
+			elog(ERROR, "%s(*) specified, but %s is not an aggregate function",
+				 NameListToString(funcname), NameListToString(funcname));
+		if (agg_distinct)
+			elog(ERROR, "DISTINCT specified, but %s is not an aggregate function",
+				 NameListToString(funcname));
+	}
+	else if (fdresult != FUNCDETAIL_AGGREGATE)
 	{
 		/*
 		 * Oops.  Time to die.
@@ -341,165 +265,62 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 				   "\n\tYou may need to add explicit typecasts");
 	}
 
-	/* got it */
-	funcnode = makeNode(Func);
-	funcnode->funcid = funcid;
-	funcnode->functype = rettype;
-	funcnode->func_fcache = NULL;
-
 	/* perform the necessary typecasting of arguments */
 	make_arguments(pstate, nargs, fargs, oid_array, true_oid_array);
 
-	expr = makeNode(Expr);
-	expr->typeOid = rettype;
-	expr->opType = FUNC_EXPR;
-	expr->oper = (Node *) funcnode;
-	expr->args = fargs;
-	retval = (Node *) expr;
-
-	/*
-	 * if the function returns a set of values, then we need to iterate
-	 * over all the returned values in the executor, so we stick an iter
-	 * node here.  if it returns a singleton, then we don't need the iter
-	 * node.
-	 */
-	if (retset)
+	/* build the appropriate output structure */
+	if (fdresult == FUNCDETAIL_NORMAL)
 	{
-		Iter	   *iter = makeNode(Iter);
+		Expr	   *expr = makeNode(Expr);
+		Func	   *funcnode = makeNode(Func);
 
-		iter->itertype = rettype;
-		iter->iterexpr = retval;
-		retval = (Node *) iter;
+		funcnode->funcid = funcid;
+		funcnode->functype = rettype;
+		funcnode->func_fcache = NULL;
+
+		expr->typeOid = rettype;
+		expr->opType = FUNC_EXPR;
+		expr->oper = (Node *) funcnode;
+		expr->args = fargs;
+
+		retval = (Node *) expr;
+
+		/*
+		 * if the function returns a set of values, then we need to iterate
+		 * over all the returned values in the executor, so we stick an iter
+		 * node here.  if it returns a singleton, then we don't need the iter
+		 * node.
+		 */
+		if (retset)
+		{
+			Iter	   *iter = makeNode(Iter);
+
+			iter->itertype = rettype;
+			iter->iterexpr = retval;
+			retval = (Node *) iter;
+		}
+	}
+	else
+	{
+		/* aggregate function */
+		Aggref	   *aggref = makeNode(Aggref);
+
+		aggref->aggfnoid = funcid;
+		aggref->aggtype = rettype;
+		aggref->target = lfirst(fargs);
+		aggref->aggstar = agg_star;
+		aggref->aggdistinct = agg_distinct;
+
+		retval = (Node *) aggref;
+
+		if (retset)
+			elog(ERROR, "Aggregates may not return sets");
+
+		pstate->p_hasAggs = true;
 	}
 
 	return retval;
 }
-
-
-static int
-agg_get_candidates(List *aggname,
-				   Oid typeId,
-				   FuncCandidateList *candidates)
-{
-	Relation	pg_aggregate_desc;
-	SysScanDesc	pg_aggregate_scan;
-	HeapTuple	tup;
-	int			ncandidates = 0;
-	ScanKeyData aggKey[1];
-
-	*candidates = NULL;
-
-	ScanKeyEntryInitialize(&aggKey[0], 0,
-						   Anum_pg_aggregate_aggname,
-						   F_NAMEEQ,
-						   NameGetDatum(strVal(llast(aggname))));
-
-	pg_aggregate_desc = heap_openr(AggregateRelationName, AccessShareLock);
-	pg_aggregate_scan = systable_beginscan(pg_aggregate_desc,
-										   AggregateNameTypeIndex, true,
-										   SnapshotNow,
-										   1, aggKey);
-
-	while (HeapTupleIsValid(tup = systable_getnext(pg_aggregate_scan)))
-	{
-		Form_pg_aggregate agg = (Form_pg_aggregate) GETSTRUCT(tup);
-		FuncCandidateList current_candidate;
-
-		current_candidate = (FuncCandidateList)
-			palloc(sizeof(struct _FuncCandidateList));
-		current_candidate->args[0] = agg->aggbasetype;
-		current_candidate->next = *candidates;
-		*candidates = current_candidate;
-		ncandidates++;
-	}
-
-	systable_endscan(pg_aggregate_scan);
-	heap_close(pg_aggregate_desc, AccessShareLock);
-
-	return ncandidates;
-}	/* agg_get_candidates() */
-
-/* agg_select_candidate()
- *
- * Try to choose only one candidate aggregate function from a list of
- * possible matches.  Return value is Oid of input type of aggregate
- * if successful, else InvalidOid.
- */
-static Oid
-agg_select_candidate(Oid typeid, FuncCandidateList candidates)
-{
-	FuncCandidateList current_candidate;
-	FuncCandidateList last_candidate;
-	Oid			current_typeid;
-	int			ncandidates;
-	CATEGORY	category,
-				current_category;
-
-	/*
-	 * First look for exact matches or binary compatible matches. (Of
-	 * course exact matches shouldn't even get here, but anyway.)
-	 */
-	ncandidates = 0;
-	last_candidate = NULL;
-	for (current_candidate = candidates;
-		 current_candidate != NULL;
-		 current_candidate = current_candidate->next)
-	{
-		current_typeid = current_candidate->args[0];
-
-		if (IsBinaryCompatible(current_typeid, typeid))
-		{
-			last_candidate = current_candidate;
-			ncandidates++;
-		}
-	}
-	if (ncandidates == 1)
-		return last_candidate->args[0];
-
-	/*
-	 * If no luck that way, look for candidates which allow coercion and
-	 * have a preferred type. Keep all candidates if none match.
-	 */
-	category = TypeCategory(typeid);
-	ncandidates = 0;
-	last_candidate = NULL;
-	for (current_candidate = candidates;
-		 current_candidate != NULL;
-		 current_candidate = current_candidate->next)
-	{
-		current_typeid = current_candidate->args[0];
-		current_category = TypeCategory(current_typeid);
-
-		if (current_category == category
-			&& IsPreferredType(current_category, current_typeid)
-			&& can_coerce_type(1, &typeid, &current_typeid))
-		{
-			/* only one so far? then keep it... */
-			if (last_candidate == NULL)
-			{
-				candidates = current_candidate;
-				last_candidate = current_candidate;
-				ncandidates = 1;
-			}
-			/* otherwise, keep this one too... */
-			else
-			{
-				last_candidate->next = current_candidate;
-				last_candidate = current_candidate;
-				ncandidates++;
-			}
-		}
-		/* otherwise, don't bother keeping this one around... */
-	}
-
-	if (last_candidate)			/* terminate rebuilt list */
-		last_candidate->next = NULL;
-
-	if (ncandidates == 1)
-		return candidates->args[0];
-
-	return InvalidOid;
-}	/* agg_select_candidate() */
 
 
 /* match_argtypes()
@@ -529,7 +350,8 @@ match_argtypes(int nargs,
 		 current_candidate = next_candidate)
 	{
 		next_candidate = current_candidate->next;
-		if (can_coerce_type(nargs, input_typeids, current_candidate->args))
+		if (can_coerce_type(nargs, input_typeids, current_candidate->args,
+							false))
 		{
 			current_candidate->next = *candidates;
 			*candidates = current_candidate;
@@ -1014,6 +836,7 @@ func_get_detail(List *funcname,
 	{
 		HeapTuple	ftup;
 		Form_pg_proc pform;
+		FuncDetailCode result;
 
 		*funcid = best_candidate->oid;
 		*true_typeids = best_candidate->args;
@@ -1026,8 +849,9 @@ func_get_detail(List *funcname,
 		pform = (Form_pg_proc) GETSTRUCT(ftup);
 		*rettype = pform->prorettype;
 		*retset = pform->proretset;
+		result = pform->proisagg ? FUNCDETAIL_AGGREGATE : FUNCDETAIL_NORMAL;
 		ReleaseSysCache(ftup);
-		return FUNCDETAIL_NORMAL;
+		return result;
 	}
 
 	return FUNCDETAIL_NOTFOUND;
@@ -1294,7 +1118,8 @@ make_arguments(ParseState *pstate,
 			lfirst(current_fargs) = coerce_type(pstate,
 												lfirst(current_fargs),
 												input_typeids[i],
-												function_typeids[i], -1);
+												function_typeids[i], -1,
+												false);
 		}
 	}
 }
@@ -1448,6 +1273,58 @@ func_error(const char *caller, List *funcname,
 			 caller, NameListToString(funcname), p,
 			 ((msg != NULL) ? "\n\t" : ""), ((msg != NULL) ? msg : ""));
 	}
+}
+
+/*
+ * find_aggregate_func
+ *		Convenience routine to check that a function exists and is an
+ *		aggregate.
+ *
+ * Note: basetype is InvalidOid if we are looking for an aggregate on
+ * all types.
+ */
+Oid
+find_aggregate_func(const char *caller, List *aggname, Oid basetype)
+{
+	Oid			oid;
+	HeapTuple	ftup;
+	Form_pg_proc pform;
+
+	oid = LookupFuncName(aggname, 1, &basetype);
+
+	if (!OidIsValid(oid))
+	{
+		if (basetype == InvalidOid)
+			elog(ERROR, "%s: aggregate '%s' for all types does not exist",
+				 caller, NameListToString(aggname));
+		else
+			elog(ERROR, "%s: aggregate '%s' for type %s does not exist",
+				 caller, NameListToString(aggname),
+				 format_type_be(basetype));
+	}
+
+	/* Make sure it's an aggregate */
+	ftup = SearchSysCache(PROCOID,
+						  ObjectIdGetDatum(oid),
+						  0, 0, 0);
+	if (!HeapTupleIsValid(ftup)) /* should not happen */
+		elog(ERROR, "function %u not found", oid);
+	pform = (Form_pg_proc) GETSTRUCT(ftup);
+
+	if (!pform->proisagg)
+	{
+		if (basetype == InvalidOid)
+			elog(ERROR, "%s: function %s(*) is not an aggregate",
+				 caller, NameListToString(aggname));
+		else
+			elog(ERROR, "%s: function %s(%s) is not an aggregate",
+				 caller, NameListToString(aggname),
+				 format_type_be(basetype));
+	}
+
+	ReleaseSysCache(ftup);
+
+	return oid;
 }
 
 /*

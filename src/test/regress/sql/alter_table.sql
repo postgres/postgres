@@ -234,8 +234,8 @@ DROP TABLE tmp2;
 -- is run in parallel with foreign_key.sql.
 
 CREATE TEMP TABLE PKTABLE (ptest1 int PRIMARY KEY);
-CREATE TEMP TABLE FKTABLE (ftest1 text);
--- This next should fail, because text=int does not exist
+CREATE TEMP TABLE FKTABLE (ftest1 inet);
+-- This next should fail, because inet=int does not exist
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable;
 -- This should also fail for the same reason, but here we
 -- give the column name
@@ -250,7 +250,7 @@ ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable(ptest1);
 DROP TABLE pktable;
 DROP TABLE fktable;
 
-CREATE TEMP TABLE PKTABLE (ptest1 int, ptest2 text,
+CREATE TEMP TABLE PKTABLE (ptest1 int, ptest2 inet,
                            PRIMARY KEY(ptest1, ptest2));
 -- This should fail, because we just chose really odd types
 CREATE TEMP TABLE FKTABLE (ftest1 cidr, ftest2 datetime);
@@ -262,7 +262,7 @@ ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2)
      references pktable(ptest1, ptest2);
 -- This fails because we mixed up the column ordering
 DROP TABLE FKTABLE;
-CREATE TEMP TABLE FKTABLE (ftest1 int, ftest2 text);
+CREATE TEMP TABLE FKTABLE (ftest1 int, ftest2 inet);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2)
      references pktable(ptest2, ptest1);
 -- As does this...

@@ -1,6 +1,10 @@
 --
 -- This is created by pgsql/contrib/findoidjoins/make_oidjoin_check
 --
+SELECT	ctid, pg_aggregate.aggfnoid 
+FROM	pg_aggregate 
+WHERE	pg_aggregate.aggfnoid != 0 AND 
+	NOT EXISTS(SELECT * FROM pg_proc AS t1 WHERE t1.oid = pg_aggregate.aggfnoid);
 SELECT	ctid, pg_aggregate.aggtransfn 
 FROM	pg_aggregate 
 WHERE	pg_aggregate.aggtransfn != 0 AND 
@@ -9,18 +13,10 @@ SELECT	ctid, pg_aggregate.aggfinalfn
 FROM	pg_aggregate 
 WHERE	pg_aggregate.aggfinalfn != 0 AND 
 	NOT EXISTS(SELECT * FROM pg_proc AS t1 WHERE t1.oid = pg_aggregate.aggfinalfn);
-SELECT	ctid, pg_aggregate.aggbasetype 
-FROM	pg_aggregate 
-WHERE	pg_aggregate.aggbasetype != 0 AND 
-	NOT EXISTS(SELECT * FROM pg_type AS t1 WHERE t1.oid = pg_aggregate.aggbasetype);
 SELECT	ctid, pg_aggregate.aggtranstype 
 FROM	pg_aggregate 
 WHERE	pg_aggregate.aggtranstype != 0 AND 
 	NOT EXISTS(SELECT * FROM pg_type AS t1 WHERE t1.oid = pg_aggregate.aggtranstype);
-SELECT	ctid, pg_aggregate.aggfinaltype 
-FROM	pg_aggregate 
-WHERE	pg_aggregate.aggfinaltype != 0 AND 
-	NOT EXISTS(SELECT * FROM pg_type AS t1 WHERE t1.oid = pg_aggregate.aggfinaltype);
 SELECT	ctid, pg_am.amgettuple 
 FROM	pg_am 
 WHERE	pg_am.amgettuple != 0 AND 

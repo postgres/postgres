@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.101 2002/04/05 05:47:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.102 2002/04/11 20:00:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -476,7 +476,7 @@ build_column_default(Relation rel, int attrno)
 	if (exprtype != atttype)
 	{
 		expr = CoerceTargetExpr(NULL, expr, exprtype,
-								atttype, atttypmod);
+								atttype, atttypmod, false);
 
 		/*
 		 * This really shouldn't fail; should have checked the

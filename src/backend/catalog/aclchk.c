@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.63 2002/04/11 05:32:02 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.64 2002/04/11 19:59:56 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -733,7 +733,7 @@ pg_class_aclcheck(Oid table_oid, Oid userid, AclMode mode)
 	Acl		   *acl;
 
 	/*
-	 * Validate userid, find out if he is superuser
+	 * Validate userid, find out if he is superuser, also get usecatupd
 	 */
 	tuple = SearchSysCache(SHADOWSYSID,
 						   ObjectIdGetDatum(userid),
@@ -1030,32 +1030,6 @@ pg_proc_ownercheck(Oid proc_oid, Oid userid)
 		elog(ERROR, "pg_proc_ownercheck: function %u not found", proc_oid);
 
 	owner_id = ((Form_pg_proc) GETSTRUCT(tuple))->proowner;
-
-	ReleaseSysCache(tuple);
-
-	return userid == owner_id;
-}
-
-/*
- * Ownership check for an aggregate function (specified by OID).
- */
-bool
-pg_aggr_ownercheck(Oid aggr_oid, Oid userid)
-{
-	HeapTuple	tuple;
-	AclId		owner_id;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(userid))
-		return true;
-
-	tuple = SearchSysCache(AGGOID,
-						   ObjectIdGetDatum(aggr_oid),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "pg_aggr_ownercheck: aggregate %u not found", aggr_oid);
-
-	owner_id = ((Form_pg_aggregate) GETSTRUCT(tuple))->aggowner;
 
 	ReleaseSysCache(tuple);
 

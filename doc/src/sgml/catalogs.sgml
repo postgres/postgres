@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.40 2002/04/05 00:31:22 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.41 2002/04/11 19:59:54 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -183,7 +183,11 @@
    that matches a query condition) and returns a single value computed
    from all these values.  Typical aggregate functions are
    <function>sum</function>, <function>count</function>, and
-   <function>max</function>.
+   <function>max</function>.  Each entry in
+   <structname>pg_aggregate</structname> is an extension of an entry
+   in <structname>pg_proc</structname>.  The <structname>pg_proc</structname>
+   entry carries the aggregate's name, input and output datatypes, and
+   other information that is similar to ordinary functions.
   </para>
 
   <table>
@@ -200,46 +204,28 @@
     </thead>
     <tbody>
      <row>
-      <entry>aggname</entry>
-      <entry><type>name</type></entry>
-      <entry></entry>
-      <entry>Name of the aggregate function</entry>
-     </row>
-     <row>
-      <entry>aggowner</entry>
-      <entry><type>int4</type></entry>
-      <entry>pg_shadow.usesysid</entry>
-      <entry>Owner (creator) of the aggregate function</entry>
+      <entry>aggfnoid</entry>
+      <entry><type>regproc</type></entry>
+      <entry>pg_proc.oid</entry>
+      <entry>pg_proc OID of the aggregate function</entry>
      </row>
      <row>
       <entry>aggtransfn</entry>
-      <entry><type>regproc</type> (function)</entry>
+      <entry><type>regproc</type></entry>
       <entry>pg_proc.oid</entry>
       <entry>Transition function</entry>
      </row>
      <row>
       <entry>aggfinalfn</entry>
-      <entry><type>regproc</type> (function)</entry>
+      <entry><type>regproc</type></entry>
       <entry>pg_proc.oid</entry>
       <entry>Final function</entry>
-     </row>
-     <row>
-      <entry>aggbasetype</entry>
-      <entry><type>oid</type></entry>
-      <entry>pg_type.oid</entry>
-      <entry>The input data type for this aggregate function</entry>
      </row>
      <row>
       <entry>aggtranstype</entry>
       <entry><type>oid</type></entry>
       <entry>pg_type.oid</entry>
       <entry>The type of the aggregate function's internal transition (state) data</entry>
-     </row>
-     <row>
-      <entry>aggfinaltype</entry>
-      <entry><type>oid</type></entry>
-      <entry>pg_type.oid</entry>
-      <entry>The type of the result</entry>
      </row>
      <row>
       <entry>agginitval</entry>
@@ -261,12 +247,6 @@
    AGGREGATE</command> command.  See the <citetitle>Programmer's
    Guide</citetitle> for more information about writing aggregate
    functions and the meaning of the transition functions, etc.
-  </para>
-
-  <para>
-   An aggregate function is identified through name
-   <emphasis>and</emphasis> argument type.  Hence aggname and aggbasetype
-   are the composite primary key.
   </para>
 
  </sect1>
@@ -1632,6 +1612,12 @@
    about the meaning of some fields.
   </para>
 
+  <para>
+   The table contains data for aggregate functions as well as plain functions.
+   If <structfield>proisagg</structfield> is true, there should be a matching
+   row in <structname>pg_aggregate</structname>.
+  </para>
+
   <table>
    <title>pg_proc Columns</title>
 
@@ -1677,10 +1663,10 @@
      </row>
 
      <row>
-      <entry>proisinh</entry>
+      <entry>proisagg</entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>unused</entry>
+      <entry>Function is an aggregate function</entry>
      </row>
 
      <row>
@@ -1688,6 +1674,13 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>not functional</entry>
+     </row>
+
+     <row>
+      <entry>proimplicit</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>Function may be invoked as an implicit type coercion</entry>
      </row>
 
      <row>
@@ -1700,6 +1693,14 @@
        that are not <quote>strict</quote> must be prepared to handle
        null inputs.
       </entry>
+     </row>
+
+     <row>
+      <entry>proretset</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>Function returns a set (ie, multiple values of the specified
+      data type)</entry>
      </row>
 
      <row>
@@ -1726,14 +1727,6 @@
       <entry><type>int2</type></entry>
       <entry></entry>
       <entry>Number of arguments</entry>
-     </row>
-
-     <row>
-      <entry>proretset</entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>Function returns a set (ie, multiple values of the specified
-      data type)</entry>
      </row>
 
      <row>

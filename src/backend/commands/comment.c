@@ -7,7 +7,7 @@
  * Copyright (c) 1999-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.39 2002/04/09 20:35:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.40 2002/04/11 19:59:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,15 +25,11 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_trigger.h"
-#include "catalog/pg_type.h"
 #include "commands/comment.h"
 #include "miscadmin.h"
-#include "nodes/makefuncs.h"
-#include "parser/parse_agg.h"
 #include "parser/parse_func.h"
 #include "parser/parse_type.h"
 #include "parser/parse.h"
-#include "rewrite/rewriteRemove.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -573,7 +569,6 @@ CommentAggregate(List *aggregate, List *arguments, char *comment)
 	TypeName   *aggtype = (TypeName *) lfirst(arguments);
 	Oid			baseoid,
 				oid;
-	Oid			classoid;
 
 	/* First, attempt to determine the base aggregate oid */
 	if (aggtype)
@@ -581,18 +576,13 @@ CommentAggregate(List *aggregate, List *arguments, char *comment)
 	else
 		baseoid = InvalidOid;
 
-	/* Now, attempt to find the actual tuple in pg_aggregate */
+	/* Now, attempt to find the actual tuple in pg_proc */
 
-	oid = GetSysCacheOid(AGGNAME,
-						 PointerGetDatum(strVal(lfirst(aggregate))), /* XXX */
-						 ObjectIdGetDatum(baseoid),
-						 0, 0);
-	if (!OidIsValid(oid))
-		agg_error("CommentAggregate", aggregate, baseoid);
+	oid = find_aggregate_func("CommentAggregate", aggregate, baseoid);
 
 	/* Next, validate the user's attempt to comment */
 
-	if (!pg_aggr_ownercheck(oid, GetUserId()))
+	if (!pg_proc_ownercheck(oid, GetUserId()))
 	{
 		if (baseoid == InvalidOid)
 			elog(ERROR, "you are not permitted to comment on aggregate %s for all types",
@@ -602,14 +592,9 @@ CommentAggregate(List *aggregate, List *arguments, char *comment)
 				 NameListToString(aggregate), format_type_be(baseoid));
 	}
 
-	/* pg_aggregate doesn't have a hard-coded OID, so must look it up */
-
-	classoid = get_relname_relid(AggregateRelationName, PG_CATALOG_NAMESPACE);
-	Assert(OidIsValid(classoid));
-
 	/* Call CreateComments() to create/drop the comments */
 
-	CreateComments(oid, classoid, 0, comment);
+	CreateComments(oid, RelOid_pg_proc, 0, comment);
 }
 
 /*

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: syscache.h,v 1.43 2002/04/09 20:35:55 tgl Exp $
+ * $Id: syscache.h,v 1.44 2002/04/11 20:00:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,37 +28,36 @@
  *		Keep them in alphabetical order.
  */
 
-#define AGGNAME			0
-#define AGGOID			1
-#define AMNAME			2
-#define AMOID			3
-#define AMOPOPID		4
-#define AMOPSTRATEGY	5
-#define AMPROCNUM		6
-#define ATTNAME			7
-#define ATTNUM			8
-#define CLAAMNAME		9
-#define CLAOID			10
-#define GRONAME			11
-#define GROSYSID		12
-#define INDEXRELID		13
-#define INHRELID		14
-#define LANGNAME		15
-#define LANGOID			16
-#define NAMESPACENAME	17
-#define NAMESPACEOID	18
-#define OPERNAME		19
-#define OPEROID			20
-#define PROCNAMENSP		21
-#define PROCOID			22
-#define RELNAMENSP		23
-#define RELOID			24
-#define RULENAME		25
-#define SHADOWNAME		26
-#define SHADOWSYSID		27
-#define STATRELATT		28
-#define TYPENAMENSP		29
-#define TYPEOID			30
+#define AGGFNOID		0
+#define AMNAME			1
+#define AMOID			2
+#define AMOPOPID		3
+#define AMOPSTRATEGY	4
+#define AMPROCNUM		5
+#define ATTNAME			6
+#define ATTNUM			7
+#define CLAAMNAME		8
+#define CLAOID			9
+#define GRONAME			10
+#define GROSYSID		11
+#define INDEXRELID		12
+#define INHRELID		13
+#define LANGNAME		14
+#define LANGOID			15
+#define NAMESPACENAME	16
+#define NAMESPACEOID	17
+#define OPERNAME		18
+#define OPEROID			19
+#define PROCNAMENSP		20
+#define PROCOID			21
+#define RELNAMENSP		22
+#define RELOID			23
+#define RULENAME		24
+#define SHADOWNAME		25
+#define SHADOWSYSID		26
+#define STATRELATT		27
+#define TYPENAMENSP		28
+#define TYPEOID			29
 
 
 extern void InitCatalogCache(void);

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.48 2002/04/05 11:52:38 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.49 2002/04/11 20:00:08 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -43,22 +43,23 @@ describeAggregates(const char *name)
 
 	/*
 	 * There are two kinds of aggregates: ones that work on particular
-	 * types ones that work on all
+	 * types and ones that work on all (denoted by input type = 0)
 	 */
 	snprintf(buf, sizeof(buf),
-			 "SELECT a.aggname AS \"%s\",\n"
-			 "  CASE a.aggbasetype\n"
+			 "SELECT p.proname AS \"%s\",\n"
+			 "  CASE p.proargtypes[0]\n"
 			 "    WHEN 0 THEN CAST('%s' AS text)\n"
-			 "    ELSE format_type(a.aggbasetype, NULL)\n"
+			 "    ELSE format_type(p.proargtypes[0], NULL)\n"
 			 "  END AS \"%s\",\n"
-			 "  obj_description(a.oid, 'pg_aggregate') as \"%s\"\n"
-			 "FROM pg_aggregate a\n",
+			 "  obj_description(p.oid, 'pg_proc') as \"%s\"\n"
+			 "FROM pg_proc p\n"
+			 "WHERE p.proisagg\n",
 			 _("Name"), _("(all types)"),
 			 _("Data type"), _("Description"));
 
 	if (name)
 	{
-		strcat(buf, "WHERE a.aggname ~ '^");
+		strcat(buf, "  AND p.proname ~ '^");
 		strncat(buf, name, REGEXP_CUTOFF);
 		strcat(buf, "'\n");
 	}
@@ -112,12 +113,12 @@ describeFunctions(const char *name, bool verbose)
 	if (!verbose)
 		strcat(buf,
 			   "\nFROM pg_proc p\n"
-			   "WHERE p.prorettype <> 0 AND (pronargs = 0 OR oidvectortypes(p.proargtypes) <> '')\n");
+			   "WHERE p.prorettype <> 0 AND (pronargs = 0 OR oidvectortypes(p.proargtypes) <> '') AND NOT p.proisagg\n");
 	else
 		strcat(buf,
 			   "\nFROM pg_proc p,  pg_language l, pg_user u\n"
 			   "WHERE p.prolang = l.oid AND p.proowner = u.usesysid\n"
-			   "  AND p.prorettype <> 0 AND (pronargs = 0 OR oidvectortypes(p.proargtypes) <> '')\n");
+			   "  AND p.prorettype <> 0 AND (pronargs = 0 OR oidvectortypes(p.proargtypes) <> '') AND NOT p.proisagg\n");
 
 	if (name)
 	{
@@ -347,16 +348,17 @@ objectDescription(const char *object)
 			 "FROM (\n"
 
 	/* Aggregate descriptions */
-			 "  SELECT a.oid as oid, a.tableoid as tableoid,\n"
-	  "  CAST(a.aggname AS text) as name, CAST('%s' AS text) as object\n"
-			 "  FROM pg_aggregate a\n"
+			 "  SELECT p.oid as oid, p.tableoid as tableoid,\n"
+	  "  CAST(p.proname AS text) as name, CAST('%s' AS text) as object\n"
+			 "  FROM pg_proc p\n"
+		"  WHERE p.proisagg\n"
 
 	/* Function descriptions (except in/outs for datatypes) */
 			 "UNION ALL\n"
 			 "  SELECT p.oid as oid, p.tableoid as tableoid,\n"
 	  "  CAST(p.proname AS text) as name, CAST('%s' AS text) as object\n"
 			 "  FROM pg_proc p\n"
-		"  WHERE p.pronargs = 0 or oidvectortypes(p.proargtypes) <> ''\n"
+		"  WHERE (p.pronargs = 0 or oidvectortypes(p.proargtypes) <> '') AND NOT p.proisagg\n"
 
 	/* Operator descriptions (must get comment via associated function) */
 			 "UNION ALL\n"

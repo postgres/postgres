@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.61 2002/04/05 00:31:32 tgl Exp $
+ * $Id: indexing.h,v 1.62 2002/04/11 20:00:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 /*
  * Number of indices that exist for each system catalog
  */
-#define Num_pg_aggregate_indices	2
+#define Num_pg_aggregate_indices	1
 #define Num_pg_am_indices			2
 #define Num_pg_amop_indices			2
 #define Num_pg_amproc_indices		1
@@ -51,8 +51,7 @@
 #define AccessMethodOperatorIndex	"pg_amop_opc_opr_index"
 #define AccessMethodStrategyIndex	"pg_amop_opc_strategy_index"
 #define AccessMethodProcedureIndex	"pg_amproc_opc_procnum_index"
-#define AggregateNameTypeIndex		"pg_aggregate_name_type_index"
-#define AggregateOidIndex			"pg_aggregate_oid_index"
+#define AggregateFnoidIndex			"pg_aggregate_fnoid_index"
 #define AmNameIndex					"pg_am_name_index"
 #define AmOidIndex					"pg_am_oid_index"
 #define AttrDefaultIndex			"pg_attrdef_adrelid_adnum_index"
@@ -145,8 +144,7 @@ extern void CatalogIndexInsert(Relation *idescs, int nIndices,
  * that is just like in a normal 'create index' SQL command.
  */
 
-DECLARE_UNIQUE_INDEX(pg_aggregate_name_type_index on pg_aggregate using btree(aggname name_ops, aggbasetype oid_ops));
-DECLARE_UNIQUE_INDEX(pg_aggregate_oid_index on pg_aggregate using btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_aggregate_fnoid_index on pg_aggregate using btree(aggfnoid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_am_name_index on pg_am using btree(amname name_ops));
 DECLARE_UNIQUE_INDEX(pg_am_oid_index on pg_am using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_amop_opc_opr_index on pg_amop using btree(amopclaid oid_ops, amopopr oid_ops));

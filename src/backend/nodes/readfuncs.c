@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.118 2002/03/22 02:56:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.119 2002/04/11 20:00:00 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1159,13 +1159,9 @@ _readAggref(void)
 
 	local_node = makeNode(Aggref);
 
-	token = pg_strtok(&length); /* eat :aggname */
-	token = pg_strtok(&length); /* get aggname */
-	local_node->aggname = debackslash(token, length);
-
-	token = pg_strtok(&length); /* eat :basetype */
-	token = pg_strtok(&length); /* get basetype */
-	local_node->basetype = atooid(token);
+	token = pg_strtok(&length); /* eat :aggfnoid */
+	token = pg_strtok(&length); /* get aggfnoid */
+	local_node->aggfnoid = atooid(token);
 
 	token = pg_strtok(&length); /* eat :aggtype */
 	token = pg_strtok(&length); /* get aggtype */

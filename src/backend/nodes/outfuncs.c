@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.153 2002/04/09 20:35:50 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.154 2002/04/11 19:59:59 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -785,10 +785,8 @@ _outConst(StringInfo str, Const *node)
 static void
 _outAggref(StringInfo str, Aggref *node)
 {
-	appendStringInfo(str, " AGGREG :aggname ");
-	_outToken(str, node->aggname);
-	appendStringInfo(str, " :basetype %u :aggtype %u :target ",
-					 node->basetype, node->aggtype);
+	appendStringInfo(str, " AGGREG :aggfnoid %u :aggtype %u :target ",
+					 node->aggfnoid, node->aggtype);
 	_outNode(str, node->target);
 
 	appendStringInfo(str, " :aggstar %s :aggdistinct %s ",

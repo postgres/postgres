@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.69 2002/04/09 20:35:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.70 2002/04/11 19:59:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,6 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
-#include "catalog/pg_type.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "parser/parse_coerce.h"
@@ -48,24 +47,25 @@ ProcedureCreate(const char *procedureName,
 				Oid languageObjectId,
 				const char *prosrc,
 				const char *probin,
+				bool isAgg,
 				bool trusted,
+				bool isImplicit,
 				bool isStrict,
 				char volatility,
 				int32 byte_pct,
 				int32 perbyte_cpu,
 				int32 percall_cpu,
 				int32 outin_ratio,
-				List *argList)
+				int parameterCount,
+				const Oid *parameterTypes)
 {
 	int			i;
 	Relation	rel;
 	HeapTuple	tup;
 	HeapTuple	oldtup;
-	uint16		parameterCount;
 	char		nulls[Natts_pg_proc];
 	Datum		values[Natts_pg_proc];
 	char		replaces[Natts_pg_proc];
-	List	   *x;
 	List	   *querytree_list;
 	Oid			typev[FUNC_MAX_ARGS];
 	Oid			relid;
@@ -79,43 +79,14 @@ ProcedureCreate(const char *procedureName,
 	Assert(PointerIsValid(prosrc));
 	Assert(PointerIsValid(probin));
 
-	parameterCount = 0;
+	if (parameterCount < 0 || parameterCount > FUNC_MAX_ARGS)
+		elog(ERROR, "functions cannot have more than %d arguments",
+			 FUNC_MAX_ARGS);
+
+	/* Make sure we have a zero-padded param type array */
 	MemSet(typev, 0, FUNC_MAX_ARGS * sizeof(Oid));
-	foreach(x, argList)
-	{
-		TypeName   *t = (TypeName *) lfirst(x);
-		Oid			toid;
-
-		if (parameterCount >= FUNC_MAX_ARGS)
-			elog(ERROR, "functions cannot have more than %d arguments",
-				 FUNC_MAX_ARGS);
-
-		toid = LookupTypeName(t);
-		if (OidIsValid(toid))
-		{
-			if (!get_typisdefined(toid))
-				elog(WARNING, "Argument type \"%s\" is only a shell",
-					 TypeNameToString(t));
-		}
-		else
-		{
-			char      *typnam = TypeNameToString(t);
-
-			if (strcmp(typnam, "opaque") == 0)
-			{
-				if (languageObjectId == SQLlanguageId)
-					elog(ERROR, "SQL functions cannot have arguments of type \"opaque\"");
-				toid = InvalidOid;
-			}
-			else
-				elog(ERROR, "Type \"%s\" does not exist", typnam);
-		}
-
-		if (t->setof)
-			elog(ERROR, "functions cannot accept set arguments");
-
-		typev[parameterCount++] = toid;
-	}
+	if (parameterCount > 0)
+		memcpy(typev, parameterTypes, parameterCount * sizeof(Oid));
 
 	if (languageObjectId == SQLlanguageId)
 	{
@@ -248,12 +219,13 @@ ProcedureCreate(const char *procedureName,
 	values[i++] = ObjectIdGetDatum(procNamespace); /* pronamespace */
 	values[i++] = Int32GetDatum(GetUserId());	/* proowner */
 	values[i++] = ObjectIdGetDatum(languageObjectId); /* prolang */
-	values[i++] = BoolGetDatum(false);			/* proisinh (unused) */
+	values[i++] = BoolGetDatum(isAgg);			/* proisagg */
 	values[i++] = BoolGetDatum(trusted);		/* proistrusted */
+	values[i++] = BoolGetDatum(isImplicit);		/* proimplicit */
 	values[i++] = BoolGetDatum(isStrict);		/* proisstrict */
+	values[i++] = BoolGetDatum(returnsSet);		/* proretset */
 	values[i++] = CharGetDatum(volatility);		/* provolatile */
 	values[i++] = UInt16GetDatum(parameterCount); /* pronargs */
-	values[i++] = BoolGetDatum(returnsSet);		/* proretset */
 	values[i++] = ObjectIdGetDatum(returnType);	/* prorettype */
 	values[i++] = PointerGetDatum(typev);		/* proargtypes */
 	values[i++] = Int32GetDatum(byte_pct);		/* probyte_pct */
@@ -297,6 +269,17 @@ ProcedureCreate(const char *procedureName,
 			returnsSet != oldproc->proretset)
 			elog(ERROR, "ProcedureCreate: cannot change return type of existing function."
 				 "\n\tUse DROP FUNCTION first.");
+
+		/* Can't change aggregate status, either */
+		if (oldproc->proisagg != isAgg)
+		{
+			if (oldproc->proisagg)
+				elog(ERROR, "function %s is an aggregate",
+					 procedureName);
+			else
+				elog(ERROR, "function %s is not an aggregate",
+					 procedureName);
+		}
 
 		/* do not change existing permissions, either */
 		replaces[Anum_pg_proc_proacl-1] = ' ';

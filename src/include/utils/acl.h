@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.41 2002/03/21 23:27:25 tgl Exp $
+ * $Id: acl.h,v 1.42 2002/04/11 20:00:17 tgl Exp $
  *
  * NOTES
  *	  For backward-compatibility purposes we have to allow there
@@ -209,6 +209,5 @@ extern bool pg_class_ownercheck(Oid class_oid, Oid userid);
 extern bool pg_type_ownercheck(Oid type_oid, Oid userid);
 extern bool pg_oper_ownercheck(Oid oper_oid, Oid userid);
 extern bool pg_proc_ownercheck(Oid proc_oid, Oid userid);
-extern bool pg_aggr_ownercheck(Oid aggr_oid, Oid userid);
 
 #endif   /* ACL_H */

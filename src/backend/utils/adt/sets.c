@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.42 2002/04/05 00:31:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.43 2002/04/11 20:00:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,16 +58,19 @@ SetDefine(char *querystr, Oid elemType)
 							 true,		/* returnsSet */
 							 elemType,	/* returnType */
 							 SQLlanguageId,	/* language */
-							 querystr,	/* sourceCode */
-							 fileName,	/* fileName */
+							 querystr,	/* prosrc */
+							 fileName,	/* probin */
+							 false,		/* not aggregate */
 							 true,		/* trusted */
+							 false,		/* not implicit coercion */
 							 false,		/* isStrict (irrelevant, no args) */
 							 PROVOLATILE_VOLATILE,	/* assume unsafe */
 							 100,		/* byte_pct */
 							 0, /* perbyte_cpu */
 							 0, /* percall_cpu */
 							 100,		/* outin_ratio */
-							 NIL);		/* argList */
+							 0,			/* parameterCount */
+							 NULL);		/* parameterTypes */
 
 	/*
 	 * Since we're still inside this command of the transaction, we can't

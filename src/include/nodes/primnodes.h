@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.60 2002/03/26 19:16:53 tgl Exp $
+ * $Id: primnodes.h,v 1.61 2002/04/11 20:00:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -322,13 +322,9 @@ typedef struct Iter
 typedef struct Aggref
 {
 	NodeTag		type;
-	char	   *aggname;		/* name of the aggregate */
-	Oid			basetype;		/* base type Oid of the aggregate (ie,
-								 * input type) */
-	Oid			aggtype;		/* type Oid of final result of the
-								 * aggregate */
-	Node	   *target;			/* attribute or expression we are
-								 * aggregating on */
+	Oid			aggfnoid;		/* pg_proc Oid of the aggregate */
+	Oid			aggtype;		/* type Oid of result of the aggregate */
+	Node	   *target;			/* expression we are aggregating on */
 	bool		aggstar;		/* TRUE if argument was really '*' */
 	bool		aggdistinct;	/* TRUE if it's agg(DISTINCT ...) */
 	int			aggno;			/* workspace for executor (see nodeAgg.c) */

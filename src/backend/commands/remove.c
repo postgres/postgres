@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.73 2002/04/09 20:35:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.74 2002/04/11 19:59:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@
 #include "commands/defrem.h"
 #include "miscadmin.h"
 #include "parser/parse.h"
-#include "parser/parse_agg.h"
 #include "parser/parse_func.h"
 #include "parser/parse_type.h"
 #include "utils/acl.h"
@@ -381,6 +380,11 @@ RemoveFunction(List *functionName,		/* function name to be removed */
 		elog(ERROR, "RemoveFunction: function '%s': permission denied",
 			 NameListToString(functionName));
 
+	if (((Form_pg_proc) GETSTRUCT(tup))->proisagg)
+		elog(ERROR, "RemoveFunction: function '%s' is an aggregate"
+			 "\n\tUse DROP AGGREGATE to remove it",
+			 NameListToString(functionName));
+
 	if (((Form_pg_proc) GETSTRUCT(tup))->prolang == INTERNALlanguageId)
 	{
 		/* "Helpful" WARNING when removing a builtin function ... */
@@ -404,6 +408,7 @@ RemoveAggregate(List *aggName, TypeName *aggType)
 	Relation	relation;
 	HeapTuple	tup;
 	Oid			basetypeID;
+	Oid			procOid;
 
 	/*
 	 * if a basetype is passed in, then attempt to find an aggregate for
@@ -413,23 +418,16 @@ RemoveAggregate(List *aggName, TypeName *aggType)
 	 * a basetype of zero.	This is valid. It means that the aggregate is
 	 * to apply to all basetypes (eg, COUNT).
 	 */
-
 	if (aggType)
 		basetypeID = typenameTypeId(aggType);
 	else
 		basetypeID = InvalidOid;
 
-	relation = heap_openr(AggregateRelationName, RowExclusiveLock);
+	procOid = find_aggregate_func("RemoveAggregate", aggName, basetypeID);
 
-	tup = SearchSysCache(AGGNAME,
-						 PointerGetDatum(strVal(llast(aggName))),
-						 ObjectIdGetDatum(basetypeID),
-						 0, 0);
+	/* Permission check */
 
-	if (!HeapTupleIsValid(tup))
-		agg_error("RemoveAggregate", aggName, basetypeID);
-
-	if (!pg_aggr_ownercheck(tup->t_data->t_oid, GetUserId()))
+	if (!pg_proc_ownercheck(procOid, GetUserId()))
 	{
 		if (basetypeID == InvalidOid)
 			elog(ERROR, "RemoveAggregate: aggregate %s for all types: permission denied",
@@ -439,8 +437,36 @@ RemoveAggregate(List *aggName, TypeName *aggType)
 				 NameListToString(aggName), format_type_be(basetypeID));
 	}
 
-	/* Remove any comments related to this aggregate */
-	DeleteComments(tup->t_data->t_oid, RelationGetRelid(relation));
+	/* Remove the pg_proc tuple */
+
+	relation = heap_openr(ProcedureRelationName, RowExclusiveLock);
+
+	tup = SearchSysCache(PROCOID,
+						 ObjectIdGetDatum(procOid),
+						 0, 0, 0);
+	if (!HeapTupleIsValid(tup))	/* should not happen */
+		elog(ERROR, "RemoveAggregate: couldn't find pg_proc tuple for %s",
+			 NameListToString(aggName));
+
+	/* Delete any comments associated with this function */
+	DeleteComments(procOid, RelationGetRelid(relation));
+
+	simple_heap_delete(relation, &tup->t_self);
+
+	ReleaseSysCache(tup);
+
+	heap_close(relation, RowExclusiveLock);
+
+	/* Remove the pg_aggregate tuple */
+
+	relation = heap_openr(AggregateRelationName, RowExclusiveLock);
+
+	tup = SearchSysCache(AGGFNOID,
+						 ObjectIdGetDatum(procOid),
+						 0, 0, 0);
+	if (!HeapTupleIsValid(tup))	/* should not happen */
+		elog(ERROR, "RemoveAggregate: couldn't find pg_aggregate tuple for %s",
+			 NameListToString(aggName));
 
 	simple_heap_delete(relation, &tup->t_self);
 
