@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.51 1999/11/22 17:55:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.52 1999/12/26 03:48:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -268,6 +268,18 @@ _bt_insertonpg(Relation rel,
 										 * consistent */
 
 	/*
+	 * Check whether the item can fit on a btree page at all.
+	 * (Eventually, we ought to try to apply TOAST methods if not.)
+	 * We actually need to be able to fit three items on every page,
+	 * so restrict any one item to 1/3 the per-page available space.
+	 * Note that at this point, itemsz doesn't include the ItemId.
+	 */
+	if (itemsz > (PageGetPageSize(page)-sizeof(PageHeaderData)-MAXALIGN(sizeof(BTPageOpaqueData)))/3 - sizeof(ItemIdData))
+		elog(ERROR, "btree: index item size %d exceeds maximum %d",
+			 itemsz,
+			 (PageGetPageSize(page)-sizeof(PageHeaderData)-MAXALIGN(sizeof(BTPageOpaqueData)))/3 - sizeof(ItemIdData));
+
+	/*
 	 * If we have to insert item on the leftmost page which is the first
 	 * page in the chain of duplicates then: 1. if scankey == hikey (i.e.
 	 * - new duplicate item) then insert it here; 2. if scankey < hikey
@@ -342,36 +354,42 @@ _bt_insertonpg(Relation rel,
 	{
 		OffsetNumber offnum = (P_RIGHTMOST(lpageop)) ? P_HIKEY : P_FIRSTKEY;
 		OffsetNumber maxoff = PageGetMaxOffsetNumber(page);
-		ItemId		itid;
-		BTItem		previtem,
-					chkitem;
-		Size		maxsize;
-		Size		currsize;
 
-		itid = PageGetItemId(page, offnum);
-		previtem = (BTItem) PageGetItem(page, itid);
-		maxsize = currsize = (ItemIdGetLength(itid) + sizeof(ItemIdData));
-		for (offnum = OffsetNumberNext(offnum);
-			 offnum <= maxoff; offnum = OffsetNumberNext(offnum))
+		if (offnum < maxoff)	/* can't split unless at least 2 items... */
 		{
+			ItemId		itid;
+			BTItem		previtem,
+						chkitem;
+			Size		maxsize;
+			Size		currsize;
+
+			/* find largest group of identically-keyed items on page */
 			itid = PageGetItemId(page, offnum);
-			chkitem = (BTItem) PageGetItem(page, itid);
-			if (!_bt_itemcmp(rel, keysz, previtem, chkitem,
-							 BTEqualStrategyNumber))
+			previtem = (BTItem) PageGetItem(page, itid);
+			maxsize = currsize = (ItemIdGetLength(itid) + sizeof(ItemIdData));
+			for (offnum = OffsetNumberNext(offnum);
+				 offnum <= maxoff; offnum = OffsetNumberNext(offnum))
 			{
-				if (currsize > maxsize)
-					maxsize = currsize;
-				currsize = 0;
-				previtem = chkitem;
+				itid = PageGetItemId(page, offnum);
+				chkitem = (BTItem) PageGetItem(page, itid);
+				if (!_bt_itemcmp(rel, keysz, previtem, chkitem,
+								 BTEqualStrategyNumber))
+				{
+					if (currsize > maxsize)
+						maxsize = currsize;
+					currsize = 0;
+					previtem = chkitem;
+				}
+				currsize += (ItemIdGetLength(itid) + sizeof(ItemIdData));
 			}
-			currsize += (ItemIdGetLength(itid) + sizeof(ItemIdData));
+			if (currsize > maxsize)
+				maxsize = currsize;
+			/* Decide to split if largest group is > 1/2 page size */
+			maxsize += sizeof(PageHeaderData) +
+				MAXALIGN(sizeof(BTPageOpaqueData));
+			if (maxsize >= PageGetPageSize(page) / 2)
+				do_split = true;
 		}
-		if (currsize > maxsize)
-			maxsize = currsize;
-		maxsize += sizeof(PageHeaderData) +
-			MAXALIGN(sizeof(BTPageOpaqueData));
-		if (maxsize >= PageGetPageSize(page) / 2)
-			do_split = true;
 	}
 
 	if (do_split)
