@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Sun Jan 16 21:40:18 EST 2005</P>
+    <P>Last updated: Sun Jan 16 22:01:06 EST 2005</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -854,8 +854,8 @@
     <H4><A name="4.4">4.4</A>) How do you remove a column from a
     table, or change its data type?</H4>
 
-    <P><SMALL>DROP COLUMN</SMALL> functionality was added in release 7.3 with
-    <SMALL>ALTER TABLE DROP COLUMN</SMALL>.  In earlier versions,
+    <P><SMALL>DROP COLUMN</SMALL> functionality was added in release 7.3
+    with <SMALL>ALTER TABLE DROP COLUMN</SMALL>.  In earlier versions,
     you can do this:</P>
 <PRE>
     BEGIN;
@@ -868,7 +868,10 @@
     COMMIT;
 </PRE>
 
-    <P>To change the data type of a column, do this:</P>
+    <P>Changing the data type of a column can be done easily in 8.0
+    and later with <SMALL>ALTER TABLE ALTER COLUMN TYPE</SMALL>.
+
+    <P>In earlier releases, do this:</P>
 <PRE>
     BEGIN;
     ALTER TABLE tab ADD COLUMN new_col <i>new_data_type</i>;

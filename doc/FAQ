@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Jan 16 21:40:18 EST 2005
+   Last updated: Sun Jan 16 22:01:06 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -690,7 +690,10 @@ log_*
     ALTER TABLE new_table RENAME TO old_table;
     COMMIT;
 
-   To change the data type of a column, do this:
+   Changing the data type of a column can be done easily in 8.0 and later
+   with ALTER TABLE ALTER COLUMN TYPE.
+   
+   In earlier releases, do this:
     BEGIN;
     ALTER TABLE tab ADD COLUMN new_col new_data_type;
     UPDATE tab SET new_col = CAST(old_col AS new_data_type);
