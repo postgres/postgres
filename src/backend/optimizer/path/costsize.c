@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.140 2005/03/27 23:53:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.141 2005/04/04 01:43:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -917,16 +917,17 @@ cost_mergejoin(MergePath *path, Query *root)
 	rescanratio = 1.0 + (rescannedtuples / inner_path_rows);
 
 	/*
-	 * A merge join will stop as soon as it exhausts either input stream.
-	 * Estimate fraction of the left and right inputs that will actually
-	 * need to be scanned.	We use only the first (most significant) merge
-	 * clause for this purpose.
+	 * A merge join will stop as soon as it exhausts either input stream
+	 * (unless it's an outer join, in which case the outer side has to be
+	 * scanned all the way anyway).  Estimate fraction of the left and right
+	 * inputs that will actually need to be scanned. We use only the first
+	 * (most significant) merge clause for this purpose.
 	 *
 	 * Since this calculation is somewhat expensive, and will be the same for
 	 * all mergejoin paths associated with the merge clause, we cache the
 	 * results in the RestrictInfo node.
 	 */
-	if (mergeclauses)
+	if (mergeclauses && path->jpath.jointype != JOIN_FULL)
 	{
 		firstclause = (RestrictInfo *) linitial(mergeclauses);
 		if (firstclause->left_mergescansel < 0) /* not computed yet? */
@@ -946,10 +947,14 @@ cost_mergejoin(MergePath *path, Query *root)
 			outerscansel = firstclause->right_mergescansel;
 			innerscansel = firstclause->left_mergescansel;
 		}
+		if (path->jpath.jointype == JOIN_LEFT)
+			outerscansel = 1.0;
+		else if (path->jpath.jointype == JOIN_RIGHT)
+			innerscansel = 1.0;
 	}
 	else
 	{
-		/* cope with clauseless mergejoin */
+		/* cope with clauseless or full mergejoin */
 		outerscansel = innerscansel = 1.0;
 	}
 
