@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.96 2002/09/04 20:31:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.96.2.1 2003/02/21 18:24:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -699,6 +699,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 				oopaque;
 	Buffer		sbuf = 0;
 	Page		spage = 0;
+	BTPageOpaque sopaque = 0;
 	Size		itemsz;
 	ItemId		itemid;
 	BTItem		item;
@@ -862,6 +863,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	{
 		sbuf = _bt_getbuf(rel, ropaque->btpo_next, BT_WRITE);
 		spage = BufferGetPage(sbuf);
+		sopaque = (BTPageOpaque) PageGetSpecialPointer(spage);
 	}
 
 	/*
@@ -871,6 +873,9 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	 * NO ELOG(ERROR) till right sibling is updated.
 	 */
 	START_CRIT_SECTION();
+
+	if (!P_RIGHTMOST(ropaque))
+		sopaque->btpo_prev = BufferGetBlockNumber(rbuf);
 
 	/* XLOG stuff */
 	if (!rel->rd_istemp)
@@ -922,10 +927,6 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 
 		if (!P_RIGHTMOST(ropaque))
 		{
-			BTPageOpaque sopaque = (BTPageOpaque) PageGetSpecialPointer(spage);
-
-			sopaque->btpo_prev = BufferGetBlockNumber(rbuf);
-
 			rdata[2].next = &(rdata[3]);
 			rdata[3].buffer = sbuf;
 			rdata[3].data = NULL;
