@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.49 1999/09/04 19:55:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.50 1999/09/05 17:12:34 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -1530,6 +1530,7 @@ IsTransactionBlock()
 	TransactionState s = CurrentTransactionState;
 
 	if (s->blockState == TBLOCK_INPROGRESS
+		|| s->blockState == TBLOCK_ABORT
 		|| s->blockState == TBLOCK_ENDABORT)
 		return true;
 
