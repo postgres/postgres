@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.32 1998/12/08 06:18:56 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.33 1998/12/13 04:16:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1490,15 +1490,13 @@ ParseComplexProjection(ParseState *pstate,
 						newexpr->typeOid = funcnode->functype;
 						newexpr->opType = FUNC_EXPR;
 						newexpr->oper = (Node *) funcnode;
-						newexpr->args = lcons(first_arg, NIL);
+						newexpr->args = expr->args;
 
 						return (Node *) newexpr;
 					}
 
 				}
 
-				elog(ERROR, "Function '%s' has bad return type %d",
-					 funcname, argtype);
 				break;
 			}
 		case T_Param:
