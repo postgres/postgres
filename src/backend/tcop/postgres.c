@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.319 2003/03/22 04:23:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.320 2003/03/24 18:33:52 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -82,6 +82,8 @@ sigjmp_buf	Warn_restart;
 
 bool		Warn_restart_ready = false;
 bool		InError = false;
+
+extern bool	autocommit;
 
 static bool EchoQuery = false;	/* default don't echo */
 
@@ -893,7 +895,7 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 		 * historical Postgres behavior, we do not force a transaction
 		 * boundary between queries appearing in a single query string.
 		 */
-		if (lnext(parsetree_item) == NIL && xact_started)
+		if ((lnext(parsetree_item) == NIL || !autocommit) && xact_started)
 		{
 			finish_xact_command(false);
 			xact_started = false;
@@ -1793,7 +1795,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.319 $ $Date: 2003/03/22 04:23:34 $\n");
+		puts("$Revision: 1.320 $ $Date: 2003/03/24 18:33:52 $\n");
 	}
 
 	/*

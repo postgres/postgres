@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.86 2003/03/24 14:32:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.87 2003/03/24 18:33:52 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -86,6 +86,11 @@ PostgreSQL documentation
       meta-commands. To achieve that, you could pipe the string into
       <application>psql</application>, like this: <literal>echo "\x \\
       select * from foo;" | psql</literal>.
+      </para>
+      <para>
+      If <quote>autocommit</quote> is on, multiple queries in a single
+      string are processed in a single transaction.
+
       </para>
       </listitem>
     </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.114 2003/03/22 03:29:05 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.115 2003/03/24 18:33:52 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -857,11 +857,8 @@ returned by the server.
 maintain the <structname>PGresult</structname> abstraction.  Use the accessor functions below to get
 at the contents of <structname>PGresult</structname>.  Avoid directly referencing the fields of the
 <structname>PGresult</structname> structure because they are subject to change in the future.
-(Beginning in <productname>PostgreSQL</productname> 6.4, the
-definition of <type>struct</> behind <structname>PGresult</> is not even provided in <filename>libpq-fe.h</>.  If you
-have old code that accesses <structname>PGresult</structname> fields directly, you can keep using it
-by including <filename>libpq-int.h</filename> too, but you are encouraged to fix the code
-soon.)
+If <quote>autocommit</quote> is on, multiple queries sent in a single
+function call are processed in a single transaction.
 </para>
 
 <variablelist>
