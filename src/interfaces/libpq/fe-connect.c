@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.288 2004/10/29 19:30:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.289 2004/10/30 23:11:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2189,18 +2189,54 @@ PQresetPoll(PGconn *conn)
 	return PGRES_POLLING_FAILED;
 }
 
+/*
+ * PQcancelGet: get a PGcancel structure corresponding to a connection.
+ *
+ * A copy is needed to be able to cancel a running query from a different
+ * thread. If the same structure is used all structure members would have
+ * to be individually locked (if the entire structure was locked, it would
+ * be impossible to cancel a synchronous query becuase the structure would
+ * have to stay locked for the duration of the query).
+ */
+PGcancel *
+PQgetCancel(PGconn *conn)
+{
+	PGcancel *cancel;
+
+	if (!conn)
+		return NULL;
+
+	if (conn->sock < 0)
+		return NULL;
+
+	cancel = malloc(sizeof(PGcancel));
+	if (cancel == NULL)
+		return NULL;
+
+	memcpy(&cancel->raddr, &conn->raddr, sizeof(SockAddr));
+	cancel->be_pid = conn->be_pid;
+	cancel->be_key = conn->be_key;
+
+	return cancel;
+}
+
+/* PQfreeCancel: free a cancel structure */
+void
+PQfreeCancel(PGcancel *cancel)
+{
+	if (cancel)
+		free(cancel);
+}
+
 
 /*
- * PQrequestCancel: attempt to request cancellation of the current operation.
+ * PQcancel and PQrequestCancel: attempt to request cancellation of the
+ * current operation.
  *
  * The return value is TRUE if the cancel request was successfully
- * dispatched, FALSE if not (in which case conn->errorMessage is set).
+ * dispatched, FALSE if not (in which case an error message is available).
  * Note: successful dispatch is no guarantee that there will be any effect at
  * the backend.  The application must read the operation result as usual.
- *
- * XXX it was a bad idea to have the error message returned in
- * conn->errorMessage, since it could overwrite a message already there.
- * Would be better to return it in a char array passed by the caller.
  *
  * CAUTION: we want this routine to be safely callable from a signal handler
  * (for example, an application might want to call it in a SIGINT handler).
@@ -2210,59 +2246,40 @@ PQresetPoll(PGconn *conn)
  * error messages with strcpy/strcat is tedious but should be quite safe.
  * We also save/restore errno in case the signal handler support doesn't.
  *
- * NOTE: this routine must not generate any error message longer than
- * INITIAL_EXPBUFFER_SIZE (currently 256), since we dare not try to
- * expand conn->errorMessage!
+ * internal_cancel() is an internal helper function to make code-sharing
+ * between the two versions of the cancel function possible.
  */
-
-int
-PQrequestCancel(PGconn *conn)
+static int
+internal_cancel(SockAddr *raddr, int be_pid, int be_key,
+				char *errbuf, int errbufsize)
 {
 	int			save_errno = SOCK_ERRNO;
 	int			tmpsock = -1;
 	char		sebuf[256];
+	int         maxlen;
 	struct
 	{
 		uint32		packetlen;
 		CancelRequestPacket cp;
 	}			crp;
 
-	/* Check we have an open connection */
-	if (!conn)
-		return FALSE;
-
-	if (conn->sock < 0)
-	{
-		strcpy(conn->errorMessage.data,
-			   "PQrequestCancel() -- connection is not open\n");
-		conn->errorMessage.len = strlen(conn->errorMessage.data);
-#ifdef WIN32
-		WSASetLastError(save_errno);
-#else
-		errno = save_errno;
-#endif
-		return FALSE;
-	}
-
 	/*
-	 * We need to open a temporary connection to the postmaster. Use the
-	 * information saved by connectDB to do this with only kernel calls.
+	 * We need to open a temporary connection to the postmaster. Do
+	 * this with only kernel calls.
 	 */
-	if ((tmpsock = socket(conn->raddr.addr.ss_family, SOCK_STREAM, 0)) < 0)
+	if ((tmpsock = socket(raddr->addr.ss_family, SOCK_STREAM, 0)) < 0)
 	{
-		strcpy(conn->errorMessage.data,
-			   "PQrequestCancel() -- socket() failed: ");
+		StrNCpy(errbuf, "PQcancel() -- socket() failed: ", errbufsize);
 		goto cancel_errReturn;
 	}
 retry3:
-	if (connect(tmpsock, (struct sockaddr *) & conn->raddr.addr,
-				conn->raddr.salen) < 0)
+	if (connect(tmpsock, (struct sockaddr *) & raddr->addr,
+				raddr->salen) < 0)
 	{
 		if (SOCK_ERRNO == EINTR)
 			/* Interrupted system call - we'll just try again */
 			goto retry3;
-		strcpy(conn->errorMessage.data,
-			   "PQrequestCancel() -- connect() failed: ");
+		StrNCpy(errbuf, "PQcancel() -- connect() failed: ", errbufsize);
 		goto cancel_errReturn;
 	}
 
@@ -2274,8 +2291,8 @@ retry3:
 
 	crp.packetlen = htonl((uint32) sizeof(crp));
 	crp.cp.cancelRequestCode = (MsgType) htonl(CANCEL_REQUEST_CODE);
-	crp.cp.backendPID = htonl(conn->be_pid);
-	crp.cp.cancelAuthCode = htonl(conn->be_key);
+	crp.cp.backendPID = htonl(be_pid);
+	crp.cp.cancelAuthCode = htonl(be_key);
 
 retry4:
 	if (send(tmpsock, (char *) &crp, sizeof(crp), 0) != (int) sizeof(crp))
@@ -2283,8 +2300,7 @@ retry4:
 		if (SOCK_ERRNO == EINTR)
 			/* Interrupted system call - we'll just try again */
 			goto retry4;
-		strcpy(conn->errorMessage.data,
-			   "PQrequestCancel() -- send() failed: ");
+		StrNCpy(errbuf, "PQcancel() -- send() failed: ", errbufsize);
 		goto cancel_errReturn;
 	}
 
@@ -2316,19 +2332,88 @@ retry5:
 	return TRUE;
 
 cancel_errReturn:
-	strcat(conn->errorMessage.data, SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
-	strcat(conn->errorMessage.data, "\n");
-	conn->errorMessage.len = strlen(conn->errorMessage.data);
-	if (tmpsock >= 0)
+	/*
+	 * Make sure we don't overflow the error buffer. Leave space for
+	 * the \n at the end, and for the terminating zero.
+	 */
+	maxlen = errbufsize - strlen(errbuf) - 2;
+	if (maxlen >= 0)
 	{
+		strncat(errbuf, SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)),
+				maxlen);
+		strcat(errbuf, "\n");
+	}
+	if (tmpsock >= 0)
 		closesocket(tmpsock);
 #ifdef WIN32
-		WSASetLastError(save_errno);
+	WSASetLastError(save_errno);
 #else
-		errno = save_errno;
+	errno = save_errno;
 #endif
-	}
+
 	return FALSE;
+}
+
+/*
+ * PQcancel: request query cancel
+ *
+ * Returns TRUE if able to send the cancel request, FALSE if not.
+ *
+ * On failure, an error message is stored in *errbuf, which must be of size
+ * errbufsize (recommended size is 256 bytes).  *errbuf is not changed on
+ * success return.
+ */
+int
+PQcancel(PGcancel *cancel, char *errbuf, int errbufsize)
+{
+	if (!cancel)
+	{
+		StrNCpy(errbuf, "PQcancel() -- no cancel object supplied", errbufsize);
+		return FALSE;
+	}
+
+	return internal_cancel(&cancel->raddr, cancel->be_pid, cancel->be_key,
+						   errbuf, errbufsize);
+}
+
+/*
+ * PQrequestCancel: old, not thread-safe function for requesting query cancel
+ *
+ * Returns TRUE if able to send the cancel request, FALSE if not.
+ *
+ * On failure, the error message is saved in conn->errorMessage; this means
+ * that this can't be used when there might be other active operations on
+ * the connection object.
+ *
+ * NOTE: error messages will be cut off at the current size of the
+ * error message buffer, since we dare not try to expand conn->errorMessage!
+ */
+int
+PQrequestCancel(PGconn *conn)
+{
+	int r;
+
+	/* Check we have an open connection */
+	if (!conn)
+		return FALSE;
+
+	if (conn->sock < 0)
+	{
+		StrNCpy(conn->errorMessage.data,
+				"PQrequestCancel() -- connection is not open\n",
+				conn->errorMessage.maxlen);
+		conn->errorMessage.len = strlen(conn->errorMessage.data);
+
+		return FALSE;
+	}
+
+	r = internal_cancel(&conn->raddr, conn->be_pid, conn->be_key,
+						conn->errorMessage.data, conn->errorMessage.maxlen);
+
+	if (!r)
+		conn->errorMessage.len = strlen(conn->errorMessage.data);
+
+	return r;
 }
 
 

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.64 2004/08/29 05:06:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.65 2004/10/30 23:10:50 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -121,7 +121,10 @@ MainLoop(FILE *source)
 		 * ready
 		 */
 		pqsignal(SIGINT, handle_sigint);		/* control-C => cancel */
-#endif   /* not WIN32 */
+
+#else /* WIN32 */
+		setup_cancel_handler();
+#endif
 
 		fflush(stdout);
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.166 2004/10/18 22:00:41 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.167 2004/10/30 23:09:59 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -2569,49 +2569,11 @@ if <function>PQisBusy</function> returns false (0).  It can also call
 A client that uses
 <function>PQsendQuery</function>/<function>PQgetResult</function> can
 also attempt to cancel a command that is still being processed by the
-server.<indexterm><primary>canceling</><secondary>SQL command</></>
-
-<variablelist>
-<varlistentry>
-<term><function>PQrequestCancel</function><indexterm><primary>PQrequestCancel</></></term>
-<listitem>
-<para>
-          Requests that the server abandon
-          processing of the current command.
-<synopsis>
-int PQrequestCancel(PGconn *conn);
-</synopsis>
-</para>
-
-<para>
-The return value is 1 if the cancel request was successfully
-dispatched and 0 if not.  (If not, <function>PQerrorMessage</function> tells why not.)
-Successful dispatch is no guarantee that the request will have any
-effect, however.  Regardless of the return value of <function>PQrequestCancel</function>,
-the application must continue with the normal result-reading
-sequence using <function>PQgetResult</function>.  If the cancellation
-is effective, the current command will terminate early and return
-an error result.  If the cancellation fails (say, because the
-server was already done processing the command), then there will
-be no visible result at all.
-</para>
-
-<para>
-Note that if the current command is part of a transaction block, cancellation
-will abort the whole transaction.
-</para>
-
-<para>
-<function>PQrequestCancel</function> can safely be invoked from a signal handler.
-So, it is also possible to use it in conjunction with plain
-<function>PQexec</function>, if the decision to cancel can be made in a signal
-handler.  For example, <application>psql</application> invokes
-<function>PQrequestCancel</function> from a <symbol>SIGINT</> signal handler, thus allowing
-interactive cancellation of commands that it issues through <function>PQexec</function>.
-</para>
-</listitem>
-</varlistentry>
-</variablelist>
+server; see <xref linkend="libpq-cancel">.  But regardless of the return value
+of <function>PQcancel</function>, the application must continue with the
+normal result-reading sequence using <function>PQgetResult</function>.
+A successful cancellation will simply cause the command to terminate
+sooner than it would have otherwise.
 </para>
 
 <para>
@@ -2695,6 +2657,125 @@ After sending any command or data on a nonblocking connection, call
 write-ready and call it again; repeat until it returns 0.  Once
 <function>PQflush</function> returns 0, wait for the socket to be read-ready
 and then read the response as described above.
+</para>
+
+</sect1>
+
+<sect1 id="libpq-cancel">
+<title>Cancelling Queries in Progress</title>
+
+<indexterm zone="libpq-cancel"><primary>canceling</><secondary>SQL command</></>
+
+<para>
+A client application can request cancellation of
+a command that is still being processed by the
+server, using the functions described in this section.
+
+<variablelist>
+<varlistentry>
+<term><function>PQgetCancel</function><indexterm><primary>PQgetCancel</></></term>
+<listitem>
+<para>
+          Creates a data structure containing the information needed to cancel
+	  a command issued through a particular database connection.
+<synopsis>
+PGcancel *PQgetCancel(PGconn *conn);
+</synopsis>
+</para>
+
+<para>
+<function>PQgetCancel</function> creates a 
+<structname>PGcancel</><indexterm><primary>PGcancel</></> object given
+a <structname>PGconn</> connection object.  It will return NULL if the
+given <parameter>conn</> is NULL or an invalid connection.  The
+<structname>PGcancel</> object is an opaque structure that is not meant
+to be accessed directly by the application; it can only be passed to
+<function>PQcancel</function> or <function>PQfreeCancel</function>.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><function>PQfreeCancel</function><indexterm><primary>PQfreeCancel</></></term>
+<listitem>
+<para>
+          Frees a data structure created by <function>PQgetCancel</function>.
+<synopsis>
+void PQfreeCancel(PGcancel *cancel);
+</synopsis>
+</para>
+
+<para>
+<function>PQfreeCancel</function> frees a data object previously created
+by <function>PQgetCancel</function>.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><function>PQcancel</function><indexterm><primary>PQcancel</></></term>
+<listitem>
+<para>
+          Requests that the server abandon
+          processing of the current command.
+<synopsis>
+int PQcancel(PGcancel *cancel, char *errbuf, int errbufsize);
+</synopsis>
+</para>
+
+<para>
+The return value is 1 if the cancel request was successfully
+dispatched and 0 if not.  If not, <parameter>errbuf</> is filled with an error
+message explaining why not.  <parameter>errbuf</> must be a char array of size
+<parameter>errbufsize</> (the recommended size is 256 bytes).
+</para>
+
+<para>
+Successful dispatch is no guarantee that the request will have any effect,
+however.  If the cancellation is effective, the current command will terminate
+early and return an error result.  If the cancellation fails (say, because the
+server was already done processing the command), then there will be no visible
+result at all.
+</para>
+
+<para>
+<function>PQcancel</function> can safely be invoked from a signal handler,
+if the <parameter>errbuf</> is a local variable in the signal handler.  The
+<structname>PGcancel</> object is read-only as far as
+<function>PQcancel</function> is concerned, so it can also be invoked from a
+thread that is separate from the one manipulating the <structname>PGconn</>
+object.
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+<variablelist>
+<varlistentry>
+<term><function>PQrequestCancel</function><indexterm><primary>PQrequestCancel</></></term>
+<listitem>
+<para>
+          Requests that the server abandon
+          processing of the current command.
+<synopsis>
+int PQrequestCancel(PGconn *conn);
+</synopsis>
+</para>
+
+<para>
+<function>PQrequestCancel</function> is a deprecated variant of
+<function>PQcancel</function>.  It operates directly on the
+<structname>PGconn</> object, and in case of failure stores the
+error message in the <structname>PGconn</> object (whence it can be
+retrieved by <function>PQerrorMessage</function>).  Although the
+functionality is the same, this approach creates hazards for multiple-thread
+programs and signal handlers, since it is possible that overwriting the
+<structname>PGconn</>'s error message will mess up the operation currently
+in progress on the connection.
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 </para>
 
 </sect1>
@@ -3852,11 +3933,16 @@ passed around freely between threads.
 </para>
 
 <para>
-The deprecated functions <function>PQoidStatus</function> and
-<function>fe_setauthsvc</function> are not thread-safe and should not be
-used in multithread programs.  <function>PQoidStatus</function> can be
-replaced by <function>PQoidValue</function>.  There is no good reason to
-call <function>fe_setauthsvc</function> at all.
+The deprecated functions
+<function>PQrequestCancel</function>,
+<function>PQoidStatus</function> and
+<function>fe_setauthsvc</function>
+are not thread-safe and should not be used in multithread programs.
+<function>PQrequestCancel</function> can be replaced by
+<function>PQcancel</function>.
+<function>PQoidStatus</function> can be replaced by
+<function>PQoidValue</function>.
+There is no good reason to call <function>fe_setauthsvc</function> at all.
 </para>
 
 <para>

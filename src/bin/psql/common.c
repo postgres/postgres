@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.92 2004/10/10 23:37:40 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.93 2004/10/30 23:10:50 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -223,23 +223,33 @@ NoticeProcessor(void *arg, const char *message)
  *
  * Before we start a query, we enable a SIGINT signal catcher that sends a
  * cancel request to the backend. Note that sending the cancel directly from
- * the signal handler is safe because PQrequestCancel() is written to make it
- * so. We use write() to print to stdout because it's better to use simple
+ * the signal handler is safe because PQcancel() is written to make it
+ * so. We use write() to print to stderr because it's better to use simple
  * facilities in a signal handler.
+ *
+ * On win32, the signal cancelling happens on a separate thread, because
+ * that's how SetConsoleCtrlHandler works. The PQcancel function is safe
+ * for this (unlike PQrequestCancel). However, a CRITICAL_SECTION is required
+ * to protect the PGcancel structure against being changed while the other
+ * thread is using it.
  */
-static PGconn *volatile cancelConn = NULL;
+static PGcancel *cancelConn = NULL;
+#ifdef WIN32
+static CRITICAL_SECTION cancelConnLock;
+#endif
 
 volatile bool cancel_pressed = false;
 
+#define write_stderr(str)	write(fileno(stderr), str, strlen(str))
+
 
 #ifndef WIN32
-
-#define write_stderr(String) write(fileno(stderr), String, strlen(String))
 
 void
 handle_sigint(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
+	char        errbuf[256];
 
 	/* Don't muck around if prompting for a password. */
 	if (prompt_state)
@@ -250,17 +260,60 @@ handle_sigint(SIGNAL_ARGS)
 
 	cancel_pressed = true;
 
-	if (PQrequestCancel(cancelConn))
+	if (PQcancel(cancelConn, errbuf, sizeof(errbuf)))
 		write_stderr("Cancel request sent\n");
 	else
 	{
 		write_stderr("Could not send cancel request: ");
-		write_stderr(PQerrorMessage(cancelConn));
+		write_stderr(errbuf);
 	}
 	errno = save_errno;			/* just in case the write changed it */
 }
-#endif   /* not WIN32 */
 
+#else /* WIN32 */
+
+static BOOL WINAPI
+consoleHandler(DWORD dwCtrlType)
+{
+	char        errbuf[256];
+
+	if (dwCtrlType == CTRL_C_EVENT ||
+		dwCtrlType == CTRL_BREAK_EVENT)
+	{
+		if (prompt_state)
+			return TRUE;
+
+		/* Perform query cancel */
+		EnterCriticalSection(&cancelConnLock);
+		if (cancelConn != NULL)
+		{
+			cancel_pressed = true;
+
+			if (PQcancel(cancelConn, errbuf, sizeof(errbuf)))
+				write_stderr("Cancel request sent\n");
+			else
+			{
+				write_stderr("Could not send cancel request: ");
+				write_stderr(errbuf);
+			}
+		}
+		LeaveCriticalSection(&cancelConnLock);
+
+		return TRUE;
+	}
+	else
+		/* Return FALSE for any signals not being handled */
+		return FALSE;
+}
+
+void
+setup_cancel_handler(void)
+{
+	InitializeCriticalSection(&cancelConnLock);
+	SetConsoleCtrlHandler(consoleHandler, TRUE);
+}
+
+#endif /* WIN32 */
 
 
 /* ConnectionUp
@@ -327,20 +380,42 @@ CheckConnection(void)
 static void
 SetCancelConn(void)
 {
-	cancelConn = pset.db;
+#ifdef WIN32
+	EnterCriticalSection(&cancelConnLock);
+#endif
+
+	/* Free the old one if we have one */
+	if (cancelConn != NULL)
+		PQfreeCancel(cancelConn);
+
+	cancelConn = PQgetCancel(pset.db);
+
+#ifdef WIN32
+	LeaveCriticalSection(&cancelConnLock);
+#endif
 }
 
 
 /*
  * ResetCancelConn
  *
- * Set cancelConn to NULL.	I don't know what this means exactly, but it saves
- * having to export the variable.
+ * Free the current cancel connection, if any, and set to NULL.
  */
 void
 ResetCancelConn(void)
 {
+#ifdef WIN32
+	EnterCriticalSection(&cancelConnLock);
+#endif
+
+	if (cancelConn)
+		PQfreeCancel(cancelConn);
+
 	cancelConn = NULL;
+
+#ifdef WIN32
+	LeaveCriticalSection(&cancelConnLock);
+#endif
 }
 
 

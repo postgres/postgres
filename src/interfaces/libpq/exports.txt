@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/interfaces/libpq/exports.txt,v 1.2 2004/10/18 22:00:42 tgl Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/exports.txt,v 1.3 2004/10/30 23:11:26 tgl Exp $
 # Functions to be exported by libpq DLLs
 PQconnectdb               1
 PQsetdbLogin              2
@@ -119,3 +119,6 @@ pg_valid_server_encoding  116
 pqsignal                  117
 PQprepare                 118
 PQsendPrepare             119
+PQgetCancel               120
+PQfreeCancel              121
+PQcancel                  122

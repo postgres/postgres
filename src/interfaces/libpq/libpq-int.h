@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.95 2004/10/18 22:00:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.96 2004/10/30 23:11:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -345,6 +345,18 @@ struct pg_conn
 	/* Buffer for receiving various parts of messages */
 	PQExpBufferData workBuffer; /* expansible string */
 };
+
+/* PGcancel stores all data necessary to cancel a connection. A copy of this
+ * data is required to safely cancel a connection running on a different
+ * thread.
+ */
+struct pg_cancel
+{
+	SockAddr	raddr;			/* Remote address */
+	int			be_pid;			/* PID of backend --- needed for cancels */
+	int			be_key;			/* key of backend --- needed for cancels */
+};
+
 
 /* String descriptions of the ExecStatusTypes.
  * direct use of this array is deprecated; call PQresStatus() instead.
