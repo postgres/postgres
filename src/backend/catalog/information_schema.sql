@@ -4,7 +4,7 @@
  *
  * Copyright 2002, PostgreSQL Global Development Group
  *
- * $Id: information_schema.sql,v 1.1 2002/12/14 00:24:24 petere Exp $
+ * $Id: information_schema.sql,v 1.2 2003/01/14 23:19:34 petere Exp $
  */
 
 
@@ -312,15 +312,12 @@ CREATE TABLE sql_features (
     feature_name        character_data,
     sub_feature_id      character_data,
     sub_feature_name    character_data,
-    feature_subfeature_package_code character_data,
     is_supported        character_data,
     is_verified_by      character_data,
     comments            character_data
-);
+) WITHOUT OIDS;
 
--- FIXME: Fill this in using the information in User's Guide Appendix
--- C, and then figure out a way to generate the documentation from this
--- table.
+-- Will be filled with external data by initdb.
 
 GRANT SELECT ON sql_features TO PUBLIC;
 
@@ -338,12 +335,39 @@ CREATE TABLE sql_languages (
     sql_language_implementation character_data,
     sql_language_binding_style  character_data,
     sql_language_programming_language character_data
-);
+) WITHOUT OIDS;
 
 INSERT INTO sql_languages VALUES ('ISO 9075', '1999', 'CORE', NULL, NULL, 'DIRECT', NULL);
 INSERT INTO sql_languages VALUES ('ISO 9075', '1999', 'CORE', NULL, NULL, 'EMBEDDED', 'C');
 
 GRANT SELECT ON sql_languages TO PUBLIC;
+
+
+/*
+ * 20.50
+ * SQL_PACKAGES table
+ */
+
+CREATE TABLE sql_packages (
+    feature_id      character_data,
+    feature_name    character_data,
+    is_supported    character_data,
+    is_verified_by  character_data,
+    comments        character_data
+) WITHOUT OIDS;
+
+INSERT INTO sql_packages VALUES ('PKG000', 'Core', 'NO', NULL, '');
+INSERT INTO sql_packages VALUES ('PKG001', 'Enhanced datetime facilities', 'YES', NULL, '');
+INSERT INTO sql_packages VALUES ('PKG002', 'Enhanced integrity management', 'NO', NULL, '');
+INSERT INTO sql_packages VALUES ('PKG003', 'OLAP facilities', 'NO', NULL, '');
+INSERT INTO sql_packages VALUES ('PKG004', 'PSM', 'NO', NULL, 'PL/pgSQL is similar.');
+INSERT INTO sql_packages VALUES ('PKG005', 'CLI', 'NO', NULL, 'ODBC is similar.');
+INSERT INTO sql_packages VALUES ('PKG006', 'Basic object support', 'NO', NULL, '');
+INSERT INTO sql_packages VALUES ('PKG007', 'Enhanced object support', 'NO', NULL, '');
+INSERT INTO sql_packages VALUES ('PKG008', 'Active database', 'NO', NULL, '');
+INSERT INTO sql_packages VALUES ('PKG009', 'SQL/MM support', 'NO', NULL, '');
+
+GRANT SELECT ON sql_packages TO PUBLIC;
 
 
 /*

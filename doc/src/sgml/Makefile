@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.54 2002/11/26 19:22:16 momjian Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.55 2003/01/14 23:19:34 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -52,7 +52,10 @@ vpath %.sgml ./ref
 
 ALLBOOKS = admin developer programmer reference tutorial user
 
-ALLSGML := $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml) bookindex.sgml setindex.sgml version.sgml
+GENERATED_SGML = bookindex.sgml setindex.sgml version.sgml \
+	features-supported.sgml features-unsupported.sgml
+
+ALLSGML := $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml) $(GENERATED_SGML)
 
 ifdef DOCBOOKSTYLE
 CATALOG = -c $(DOCBOOKSTYLE)/catalog
@@ -124,6 +127,12 @@ version.sgml: $(top_builddir)/src/Makefile.global
 	  echo "<!entity version \"$(VERSION)\">"; \
 	  echo "<!entity majorversion \"`expr $(VERSION) : '\([0-9][0-9]*\.[0-9][0-9]*\)'`\">"; \
 	} >$@
+
+features-supported.sgml: $(top_srcdir)/src/backend/catalog/sql_feature_packages.txt $(top_srcdir)/src/backend/catalog/sql_features.txt
+	$(PERL) $(srcdir)/mk_feature_tables.pl YES $^ > $@
+
+features-unsupported.sgml: $(top_srcdir)/src/backend/catalog/sql_feature_packages.txt $(top_srcdir)/src/backend/catalog/sql_features.txt
+	$(PERL) $(srcdir)/mk_feature_tables.pl NO $^ > $@
 
 
 ##
@@ -218,10 +227,10 @@ regress_README.html: regress.sgml
 check: $(addprefix check-, $(ALLBOOKS)) check-postgres
 
 # Quick syntax check without style processing
-$(addprefix check-, $(ALLBOOKS)): check-%: %.sgml bookindex.sgml
+$(addprefix check-, $(ALLBOOKS)): check-%: %.sgml $(ALLSGML)
 	$(NSGMLS) $(SGMLINCLUDE) -s book-decl.sgml $<
 
-check-postgres: postgres.sgml setindex.sgml
+check-postgres: postgres.sgml $(ALLSGML)
 	$(NSGMLS) $(SGMLINCLUDE) -s $<
 
 
@@ -237,4 +246,4 @@ clean distclean maintainer-clean:
 # print
 	rm -f *.rtf *.tex-ps *.tex-pdf *.dvi *.aux *.log *.ps *.pdf *.out *.eps *.fot
 # index
-	rm -f HTML.index bookindex.sgml setindex.sgml version.sgml
+	rm -f HTML.index $(GENERATED_SGML)

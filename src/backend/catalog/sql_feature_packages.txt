@@ -1,0 +1,82 @@
+B011	Core
+B012	Core
+B013	Core
+B014	Core
+B015	Core
+B016	Core
+B017	Core
+E011	Core
+E021	Core
+E031	Core
+E051	Core
+E061	Core
+E071	Core
+E081	Core
+E091	Core
+E101	Core
+E111	Core
+E121	Core
+E131	Core
+E141	Core
+E151	Core
+E152	Core
+E153	Core
+E161	Core
+E171	Core
+E182	Core
+F021	Core
+F031	Core
+F041	Core
+F051	Core
+F052	Enhanced datetime facilities
+F081	Core
+F131	Core
+F191	Enhanced integrity management
+F201	Core
+F221	Core
+F261	Core
+F302	OLAP facilities
+F304	OLAP facilities
+F311	Core
+F401	OLAP facilities
+F411	Enhanced datetime facilities
+F471	Core
+F481	Core
+F491	Enhanced integrity management
+F501	Core
+F521	Enhanced integrity management
+F555	Enhanced datetime facilities
+F591	OLAP facilities
+F641	OLAP facilities
+F671	Enhanced integrity management
+F701	Enhanced integrity management
+F812	Core
+S011	Core
+S023	Basic object support
+S023	SQL/MM support
+S024	Enhanced object support
+S024	SQL/MM support
+S041	Basic object support
+S043	Enhanced object support
+S051	Basic object support
+S071	Enhanced object support
+S081	Enhanced object support
+S091	SQL/MM support
+S092	SQL/MM support
+S111	Enhanced object support
+S151	Basic object support
+S161	Enhanced object support
+S211	Enhanced object support
+S211	SQL/MM support
+S231	Enhanced object support
+S241	Enhanced object support
+T041	Basic object support
+T191	Enhanced integrity management
+T201	Enhanced integrity management
+T211	Enhanced integrity management
+T211	Active database
+T212	Enhanced integrity management
+T321	Core
+T322	PSM
+T322	SQL/MM support
+T431	OLAP facilities

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/filelist.sgml,v 1.25 2002/10/24 17:48:54 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/filelist.sgml,v 1.26 2003/01/14 23:19:34 petere Exp $ -->
 
 <!entity history    SYSTEM "history.sgml">
 <!entity info       SYSTEM "info.sgml">
@@ -33,6 +33,9 @@
 <!entity queries    SYSTEM "queries.sgml">
 <!entity syntax     SYSTEM "syntax.sgml">
 <!entity typeconv   SYSTEM "typeconv.sgml">
+
+<!entity features-supported   SYSTEM "features-supported.sgml">
+<!entity features-unsupported SYSTEM "features-unsupported.sgml">
 
 <!-- reference pages -->
 <!entity % allfiles   SYSTEM "ref/allfiles.sgml">
