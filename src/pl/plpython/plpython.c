@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.25 2002/10/14 04:20:52 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.26 2002/10/19 22:10:58 tgl Exp $
  *
  *********************************************************************
  */
@@ -1837,21 +1837,7 @@ PLy_plan_dealloc(PyObject * arg)
 	enter();
 
 	if (ob->plan)
-	{
-		/*
-		 * free the plan... pfree(ob->plan);
-		 *
-		 * FIXME -- leaks saved plan on object destruction.  can this be
-		 * avoided?
-		 * I think so. A function prepares and then execp's a statement.
-		 * When we come to deallocate the 'statement' object we obviously
-		 * no long need the plan. Even if we did, without the object
-		 * we're never going to be able to use it again.
-		 * In the against arguments: SPI_saveplan has stuck this under
-		 * the top context so there must be a reason for doing that.
-		 */
-		pfree(ob->plan);
-	}
+		SPI_freeplan(ob->plan);
 	if (ob->types)
 		PLy_free(ob->types);
 	if (ob->args)
@@ -2023,6 +2009,7 @@ PLy_spi_prepare(PyObject * self, PyObject * args)
 	PyObject   *list = NULL;
 	PyObject   *volatile optr = NULL;
 	char	   *query;
+	void	   *tmpplan;
 
 	enter();
 
@@ -2061,7 +2048,6 @@ PLy_spi_prepare(PyObject * self, PyObject * args)
 	{
 		int			nargs,
 					i;
-
 
 		nargs = PySequence_Length(list);
 		if (nargs > 0)
@@ -2125,7 +2111,10 @@ PLy_spi_prepare(PyObject * self, PyObject * args)
 		RAISE_EXC(1);
 	}
 
-	plan->plan = SPI_saveplan(plan->plan);
+	/* transfer plan from procCxt to topCxt */
+	tmpplan = plan->plan;
+	plan->plan = SPI_saveplan(tmpplan);
+	SPI_freeplan(tmpplan);
 	if (plan->plan == NULL)
 	{
 		PLy_exception_set(PLy_exc_spi_error,

@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.65 2002/10/14 04:20:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.66 2002/10/19 22:10:58 tgl Exp $
  *
  **********************************************************************/
 
@@ -1285,7 +1285,7 @@ pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 	else if (strcmp(argv[1], "NOTICE") == 0)
 		level = NOTICE;
 	else if (strcmp(argv[1], "WARNING") == 0)
-		level = ERROR;
+		level = WARNING;
 	else if (strcmp(argv[1], "ERROR") == 0)
 		level = ERROR;
 	else if (strcmp(argv[1], "FATAL") == 0)
@@ -1837,7 +1837,8 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	}
 
 	/************************************************************
-	 * Save the plan
+	 * Save the plan into permanent memory (right now it's in the
+	 * SPI procCxt, which will go away at function end).
 	 ************************************************************/
 	qdesc->plan = SPI_saveplan(plan);
 	if (qdesc->plan == NULL)
@@ -1866,6 +1867,8 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 
 		elog(ERROR, "pltcl: SPI_saveplan() failed - %s", reason);
 	}
+	/* Release the procCxt copy to avoid within-function memory leak */
+	SPI_freeplan(plan);
 
 	/************************************************************
 	 * Insert a hashtable entry for the plan and return
