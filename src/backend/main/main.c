@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.6 1997/04/15 17:39:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.7 1997/04/24 20:30:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
 
 #include "postgres.h"
 #ifdef USE_LOCALE  
-  #include <locale.h>
+#  include <locale.h>
 #endif
 #include "miscadmin.h"
 #include "bootstrap/bootstrap.h"	/* for BootstrapMain() */
