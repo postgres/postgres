@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.79 2001/02/09 17:55:48 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.80 2001/02/11 01:48:51 momjian Exp $
 -->
 
  <appendix id="release">
@@ -319,7 +319,7 @@ Improved assembly language source code format (Bruce)
    -->
 
    <para>
-    Release date 2000-11-04. This has a variety of fixes from 7.0.2.
+    Release date 2000-11-11. This has a variety of fixes from 7.0.2.
    </para>
 
 

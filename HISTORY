@@ -1,8 +1,10 @@
+   ------------------------------------------------------------------------
+                                Release 7.1
+  ------------------------------------------------------------------------
 
-  ------------------------------------------------------------------------
-                                Release Notes
-  ------------------------------------------------------------------------
-Release 7.1
+
+Release 7.1  (2001-??-??)
+
 
 This release focuses on removing limitations that have existed in the
 PostgreSQL code for many years.
@@ -36,7 +38,7 @@ aggregates, UNION, LIMIT, cursors, subqueries, and inherited tables
 now work properly. Inherited tables are now accessed by default. 
 Subqueries in FROM are now supported.
 
-Migration to v7.1
+Migration to 7.1
 
    A dump/restore using pg_dump is required for those wishing to migrate
    data from any previous release.
@@ -226,12 +228,11 @@ Improved assembly language source code format (Bruce)
 
 
   ------------------------------------------------------------------------
-                                                               Release 7.0.3
-                                Release Notes
+                                Release 7.0.3
   ------------------------------------------------------------------------
 
 
-Release 7.0.3
+Release 7.0.3  (2000-11-11)
 
 This has a variety of fixes from 7.0.2.
 
@@ -282,12 +283,13 @@ Fix for inserting/copying longer multibyte strings into char() data
 Fix for crash of backend, on abort (Tom)
 
 
+
   ------------------------------------------------------------------------
-                                                               Release 7.0.2
-                                Release Notes
+                                Release 7.0.2
   ------------------------------------------------------------------------
           
-Release 7.0.2
+
+Release 7.0.2  (2000-06-05)
 
 This is a repackaging of 7.0.1 with added documentation.
 
@@ -300,12 +302,13 @@ Changes
 Added documentation to tarball.
 
 
+
   ------------------------------------------------------------------------
-                                                               Release 7.0.1
-                                Release Notes
+                                Release 7.0.1
   ------------------------------------------------------------------------
           
-Release 7.0.1
+
+Release 7.0.1  (2000-06-01)
 
 This is basically a cleanup release for 7.0.1
 
@@ -340,12 +343,14 @@ Fix problem with quoted indexes that are too long (Tom)
 JDBC ResultSet.getTimestamp() fix (Gregory Krasnow & Floyd Marinescu)
 ecpg changes (Michael)
 
+
+
   ------------------------------------------------------------------------
-                                                               Release 7.0
-                                Release Notes
+                                Release 7.0
   ------------------------------------------------------------------------
           
-Release 7.0
+
+Release 7.0  (2000-05-08)
 
    This release shows the continued growth of PostgreSQL. There are more
    changes in 7.0 than in any previous release. Don't be concerned this
@@ -705,12 +710,13 @@ Fixes for Alpha compiles
 New multibyte encodings
 
 
+
   ------------------------------------------------------------------------
-                                                               Release 6.5.3
-                                Release Notes
+                                Release 6.5.3
   ------------------------------------------------------------------------
 
-Release 6.5.3
+
+Release 6.5.3  (1999-10-13)
 
 This is basically a cleanup release for 6.5.2. We have added a new pgaccess
 that was missing in 6.5.2, and installed an NT-specific fix.
@@ -725,12 +731,13 @@ Updated version of pgaccess 0.98
 NT-specific patch
 
 
+
   ------------------------------------------------------------------------
-                                                               Release 6.5.2
-                                Release Notes
+                                Release 6.5.2
   ------------------------------------------------------------------------
 
-Release 6.5.2
+
+Release 6.5.2  (1999-09-15)
 
 This is basically a cleanup release for 6.5.1. We have fixed a variety of
 problems reported by 6.5.1 users.
@@ -767,12 +774,13 @@ Repair incorrect cleanup of heap memory allocation during transaction abort(Tom)
 Updated version of pgaccess 0.98
 
 
+
   ------------------------------------------------------------------------
-Release Notes                                                  Release 6.5.1
-                                Release Notes
+                                Release 6.5.1
   ------------------------------------------------------------------------
 
-Release 6.5.1
+
+Release 6.5.1  (1999-07-15)
 
 This is basically a cleanup release for 6.5. We have fixed a variety of
 problems reported by 6.5 users.
@@ -808,12 +816,13 @@ Fix some compiler warnings (Tomoaki Nishiyama)
 Add Win1250 (Czech) support (Pavel Behal)
 
 
+
   ------------------------------------------------------------------------
-Release 6.5.2                                                    Release 6.5
-                                Release Notes
+                                Release 6.5
   ------------------------------------------------------------------------
 
-Release 6.5
+
+Release 6.5  (1999-06-09)
 
 This release marks a major step in the development team's mastery of the
 source code we inherited from Berkeley. You will see we are now easily
@@ -1090,12 +1099,13 @@ Improve file handling to be more uniform, prevent file descriptor leak(Tom)
 New install commands for plpgsql(Jan)
 
 
+
   ------------------------------------------------------------------------
-Release 6.5.1                                                  Release 6.4.2
-                                Release Notes
+                                Release 6.4.2
   ------------------------------------------------------------------------
 
-Release 6.4.2
+
+Release 6.4.2  (1999-12-20)
 
 The 6.4.1 release was improperly packaged. This also has one additional bug
 fix.
@@ -1109,12 +1119,13 @@ Changes
 Fix for datetime constant problem on some platforms(Thomas)
 
 
+
   ------------------------------------------------------------------------
-Release 6.5                                                    Release 6.4.1
-                                Release Notes
+                                Release 6.4.1
   ------------------------------------------------------------------------
 
-Release 6.4.1
+
+Release 6.4.1  (1999-12-18)
 
 This is basically a cleanup release for 6.4. We have fixed a variety of
 problems reported by 6.4 users.
@@ -1157,12 +1168,13 @@ Compilation of libpq for Win32 fixes(Magnus)
 Upgrade to PyGreSQL 2.2(D'Arcy)
 
 
+
   ------------------------------------------------------------------------
-Release 6.4.2                                                    Release 6.4
-                                Release Notes
+                                Release 6.4
   ------------------------------------------------------------------------
 
-Release 6.4
+
+Release 6.4  (1998-10-30)
 
 There are many new features and improvements in this release. Thanks to our
 developers and maintainers, nearly every aspect of the system has received
@@ -1202,7 +1214,7 @@ summary:
      attention, and should be more robust for more platforms than it has
      ever been.
 
-Migration to v6.4
+Migration to 6.4
 
 A dump/restore using pg_dump or pg_dumpall is required for those wishing to
 migrate data from any previous release of Postgres.
@@ -1402,12 +1414,13 @@ configure uses supplied install-sh if no install script found(Tom)
 new Makefile.shlib for shared library configuration(Tom)
 
 
+
   ------------------------------------------------------------------------
-Release 6.4.1                                                  Release 6.3.2
-                                Release Notes
+                                Release 6.3.2
   ------------------------------------------------------------------------
 
-Release 6.3.2
+
+Release 6.3.2  (1998-04-07)
 
 This is a bugfix release for 6.3.x. Refer to the release notes for v6.3 for
 a more complete summary of new features.
@@ -1451,12 +1464,13 @@ Makefile dependency cleanup(Jeroen van Vianen)
 ASSERT fixes(Bruce)
 
 
+
   ------------------------------------------------------------------------
-Release 6.4                                                    Release 6.3.1
-                                Release Notes
+                                Release 6.3.1
   ------------------------------------------------------------------------
 
-Release 6.3.1
+
+Release 6.3.1  (1998-03-23)
 
 Summary:
 
@@ -1508,12 +1522,13 @@ Solaris compile fix(Albert Chin-A-Young)
 Better identify tcl and tk libs and includes(Bruce)
 
 
+
   ------------------------------------------------------------------------
-Release 6.3.2                                                    Release 6.3
-                                Release Notes
+                                Release 6.3
   ------------------------------------------------------------------------
 
-Release 6.3
+
+Release 6.3  (1998-03-01)
 
 There are many new features and improvements in this release. Here is a
 brief, incomplete summary:
@@ -1763,14 +1778,15 @@ Expand a few function names formerly truncated to 16 characters(Thomas)
 Remove un-needed malloc() calls and replace with palloc()(Bruce)
 
 
+
   ------------------------------------------------------------------------
-Release 6.3.1                                                  Release 6.2.1
-                                Release Notes
+                                Release 6.2.1
   ------------------------------------------------------------------------
 
-Release 6.2.1
 
-v6.2.1 is a bug-fix and usability release on v6.2.
+Release 6.2.1  (1997-10-17)
+
+This is a bug-fix and usability release on v6.2.
 
 Summary:
 
@@ -1816,12 +1832,14 @@ Documented new libpq function to return affected rows, PQcmdTuples(Bruce)
 Trigger function for inserting user names for INSERT/UPDATE(Brook Milligan)
 
 
+
   ------------------------------------------------------------------------
-Release 6.3                                                      Release 6.2
-                                Release Notes
+                                Release 6.2
   ------------------------------------------------------------------------
 
-Release 6.2
+
+Release 6.2  (1997-10-02)
+
 
 A dump/restore is required for those wishing to migrate data from previous
 releases of Postgres.
@@ -1950,12 +1968,13 @@ Files moved to /src/tools directory(Bruce)
 SPI and Trigger programming guides (Vadim & D'Arcy)
 
 
+
   ------------------------------------------------------------------------
-Release 6.2.1                                                  Release 6.1.1
-                                Release Notes
+                                Release 6.1.1
   ------------------------------------------------------------------------
 
-Release 6.1.1
+
+Release 6.1.1  (1997-07-22)
 
 Migration from v6.1 to v6.1.1
 
@@ -1985,12 +2004,14 @@ allow underscores in usernames(Bruce)
 pg_dumpall now returns proper status, portability fix(Bruce)
 
 
+
   ------------------------------------------------------------------------
-                                                                 Release 6.1
-                                Release Notes
+                                Release 6.1
   ------------------------------------------------------------------------
 
-Release 6.1
+
+Release 6.1  (1997-06-08)
+
 
 The regression tests have been adapted and extensively modified for the v6.1
 release of Postgres.
@@ -2130,12 +2151,14 @@ warn about buggy flex(Bruce)
 DG-UX, Ultrix, Irix, AIX portability fixes
 
 
+
   ------------------------------------------------------------------------
-                                                                Release v6.0
-                                Release Notes
+                                Release 6.0
   ------------------------------------------------------------------------
 
-Release v6.0
+
+Release 6.0  (1997-01-29)
+
 
 A dump/restore is required for those wishing to migrate data from previous
 releases of Postgres.
@@ -2256,22 +2279,25 @@ Restructured port-specific file locations(Bryan, Marc)
 Unused/uninialized variables corrected
 
 
+
   ------------------------------------------------------------------------
-                                                                Release v1.09
-                                Release Notes
+                                Release 1.09
   ------------------------------------------------------------------------
+
 
 Release v1.09
 
 Sorry, we stopped keeping track of changes from 1.02 to 1.09. Some of the
 changes listed in 6.0 were actually included in the 1.02.1 to 1.09 releases.
 
+
+
   ------------------------------------------------------------------------
-Release v6.0                                                   Release v1.02
-                                Release Notes
+                                Release 1.02
   ------------------------------------------------------------------------
 
-Release v1.02
+
+Release 1.02  (1996-08-01)
 
 Migration from v1.02 to v1.02.1
 
@@ -2353,12 +2379,14 @@ New Ports
  * added DGUX port
 
 
+
   ------------------------------------------------------------------------
-                                                                 Release v1.01
-                                Release Notes
+                                Release 1.01
   ------------------------------------------------------------------------
 
-Release v1.01
+
+Postgres95 Release 1.01  (1996-02-23)
+
 
 Migration from v1.0 to v1.01
 
@@ -2491,12 +2519,13 @@ Bug fixes:
  * applied public patches 1-14
 
 
+
   ------------------------------------------------------------------------
-                                                                 Release v1.0
-                                Release Notes
+                                Release 1.0
   ------------------------------------------------------------------------
 
-Release v1.0
+
+Postgres95 Release 1.0  (1995-09-05)
 
 Detailed Change List
 
@@ -2541,12 +2570,14 @@ Bug fixes:
    work when you try to use them
 
 
+
   ------------------------------------------------------------------------
-                                                           Postgres95 Beta 0.03
-                                Release Notes
+                                Release 0.03
   ------------------------------------------------------------------------
 
-Postgres95 Beta 0.03
+
+Postgres95 Release 0.03  (1995-07-21)
+
 
 Detailed Change List
 
@@ -2657,12 +2688,14 @@ New documentation:
  * the user manual has been revised and libpq documentation added.
 
 
+
   ------------------------------------------------------------------------
-                                                          Postgres95 Beta 0.02
-                                Release Notes
+                                Release 0.02
   ------------------------------------------------------------------------
 
-Postgres95 Beta 0.02
+
+Postgres95 Release 0.02  (1995-03-25)
+
 
 Detailed Change List
 
@@ -2700,21 +2733,23 @@ The following bugs have been fixed in postgres95-beta-0.02:
  * CREATE TYPE doesn't accept 'variable' as the internallength
  * wrong result using more than 1 aggregate in a SELECT
 
+
+
   ------------------------------------------------------------------------
-                                                          Postgres95 Beta 0.01
-                                Release Notes
+                                Release 0.01
   ------------------------------------------------------------------------
 
-Postgres95 Beta 0.01
+
+Postgres95 Release 0.01  (1995-05-01)
 
 Initial release.
 
 
+
   ------------------------------------------------------------------------
-                                                                Timing Results
-                                Release Notes
-Prev
+                                Timing Results
   ------------------------------------------------------------------------
+
 
 Timing Results
 
