@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.56 2002/08/10 03:56:24 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.57 2002/08/15 02:49:04 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -357,6 +357,14 @@ psql_completion(char *text, int start, int end)
 			 && (strcasecmp(prev2_wd, "ADD") == 0 || strcasecmp(prev2_wd, "DROP") == 0)
 			 && strcasecmp(prev_wd, "USER") == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_users);
+
+/* ANALYZE */
+	/* If the previous word is ANALYZE, produce list of tables. */
+	else if (strcasecmp(prev_wd, "ANALYZE") == 0)
+		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
+	/* If we have ANALYZE <table>, complete with semicolon. */
+	else if (strcasecmp(prev2_wd, "ANALYZE") == 0)
+		COMPLETE_WITH_CONST(";");
 
 /* CLUSTER */
 	/* If the previous word is CLUSTER, produce list of indexes. */
