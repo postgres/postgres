@@ -2,7 +2,7 @@
 #
 # Copyright 2002 by Bill Huang
 #
-# $Id: UCS_to_GB18030.pl,v 1.2 2002/11/12 11:33:40 ishii Exp $
+# $Id: UCS_to_GB18030.pl,v 1.3 2003/08/25 01:46:16 ishii Exp $
 #
 # Generate UTF-8 <--> GB18030 code conversion tables from
 # map files provided by Unicode organization.
@@ -78,7 +78,7 @@ while( <FILE> ){
 	if( /^#/ ){
 		next;
 	}
-	( $c, $u, $rest ) = split;
+	( $u, $c, $rest ) = split;
 	$ucs = hex($u);
 	$code = hex($c);
 	if( $code >= 0x80 && $ucs >= 0x0080 ){
