@@ -64,8 +64,9 @@ gc_to_sec(float8) - Converts the great circle distance between two points
 on the surface of the Earth to the normal straight line (secant) distance
 between them.
 
-ll_to_cube(float8, float8) - Returns the location of a point on the surface of
-the Earth given its latitude (argument 1) and longitude (argument 2) in degrees.
+ll_to_earth(float8, float8) - Returns the location of a point on the surface
+of the Earth given its latitude (argument 1) and longitude (argument 2) in
+degrees.
 
 latitude(earth) - Returns the latitude in degrees of a point on the surface
 of the Earth.
