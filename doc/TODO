@@ -177,6 +177,7 @@ COMMANDS
 * Allow RULE recompilation
 * Support UNION/INTERSECT/EXCEPT in sub-selects
 * Allow DELETE and UPDATE to use inheritance using tablename*
+* Allow INSERT INTO my_table VALUES (a, b, c, DEFAULT, x, y, z, ...)
   
 CLIENTS
 
