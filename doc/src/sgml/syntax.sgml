@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.67 2002/08/22 04:52:17 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.68 2002/08/23 04:27:19 momjian Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -460,7 +460,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 
    <para>
     An operator is a sequence of up to <symbol>NAMEDATALEN</symbol>-1
-    (31 by default) characters from the following list:
+    (63 by default) characters from the following list:
 <literallayout>
 + - * / &lt; &gt; = ~ ! @ # % ^ &amp; | ` ? $
 </literallayout>
