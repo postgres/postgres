@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.30 2004/08/13 14:47:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.31 2004/08/18 02:59:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -368,6 +368,27 @@ set_pglocale_pgservice(const char *argv0, const char *app)
 		putenv(strdup(env_path));
 	}
 }
+
+
+/*
+ *	get_include_path
+ */
+bool
+get_home_path(char *ret_path)
+{
+	if (getenv(HOMEDIR) == NULL)
+	{
+		*ret_path = '\0';
+		return false;
+	}
+	else
+	{
+		StrNCpy(ret_path, getenv(HOMEDIR), MAXPGPATH);
+		canonicalize_path(ret_path);
+		return true;
+	}
+}
+
 
 
 /*

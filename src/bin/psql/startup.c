@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.95 2004/06/03 00:07:37 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.96 2004/08/18 02:59:11 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -570,8 +570,8 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 static void
 process_psqlrc(char *argv0)
 {
-	char	   *home;
 	char	   *psqlrc;
+	char	   home[MAXPGPATH];
 	char	   global_file[MAXPGPATH];
 	char	   my_exec_path[MAXPGPATH];
 	char	   etc_path[MAXPGPATH];
@@ -582,7 +582,7 @@ process_psqlrc(char *argv0)
 	snprintf(global_file, MAXPGPATH, "%s/%s", etc_path, SYSPSQLRC);
 	process_psqlrc_file(global_file);
 
-	if ((home = getenv("HOME")) != NULL)
+	if (get_home_path(home))
 	{
 		psqlrc = pg_malloc(strlen(home) + 1 + strlen(PSQLRC) + 1);
 		sprintf(psqlrc, "%s/%s", home, PSQLRC);
