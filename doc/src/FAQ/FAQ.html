@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Sat Jan 29 23:15:42 EST 2005</P>
+    <P>Last updated: Sat Jan 29 23:20:03 EST 2005</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -114,16 +114,14 @@
     <I>"invalid large obj descriptor"</I>?<BR>
      <A href="#4.17">4.17</A>) How do I create a column that will
     default to the current time?<BR>
-     <A href="#4.18">4.18</A>) Why are my subqueries using
-    <CODE><SMALL>IN</SMALL></CODE> so slow?<BR>
-     <A href="#4.19">4.19</A>) How do I perform an outer join?<BR>
-     <A href="#4.20">4.20</A>) How do I perform queries using multiple
+     <A href="#4.18">4.18</A>) How do I perform an outer join?<BR>
+     <A href="#4.19">4.19</A>) How do I perform queries using multiple
     databases?<BR>
-     <A href="#4.21">4.21</A>) How do I return multiple rows or columns
+     <A href="#4.20">4.20</A>) How do I return multiple rows or columns
     from a function?<BR>
-     <A href="#4.22">4.22</A>) Why can't I reliably create/drop
+     <A href="#4.21">4.21</A>) Why can't I reliably create/drop
     temporary tables in PL/PgSQL functions?<BR>
-     <A href="#4.23">4.23</A>) What encryption options are available?<BR>
+     <A href="#4.22">4.22</A>) What encryption options are available?<BR>
      
 
     <H2 align="center">Extending PostgreSQL</H2>
@@ -1155,31 +1153,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
 </CODE>
 </PRE>
 
-    <H4><A name="4.18">4.18</A>) Why are my subqueries using
-    <CODE><SMALL>IN</SMALL></CODE> so slow?</H4>
-
-    <P>In versions prior to 7.4, subqueries were joined to outer queries
-    by sequentially scanning the result of the subquery for each row of
-    the outer query. If the subquery returns only a few rows and the outer
-    query returns many rows, <CODE><SMALL>IN</SMALL></CODE> is fastest.  To
-    speed up other queries, replace <CODE>IN</CODE> with
-    <CODE>EXISTS</CODE>:</P>
-<PRE>    SELECT *
-    FROM tab
-    WHERE col IN (SELECT subcol FROM subtab);
-</PRE>
-    to:
-<PRE>    SELECT *
-    FROM tab
-    WHERE EXISTS (SELECT subcol FROM subtab WHERE subcol = col);
-</PRE>
-
-    For this to be fast, <CODE>subcol</CODE> should be an indexed column.
-    <P>In version 7.4 and later,  <CODE>IN</CODE> actually uses the same
-    sophisticated join techniques as normal queries, and is prefered
-    to using <CODE>EXISTS</CODE>.
-
-    <H4><A name="4.19">4.19</A>) How do I perform an outer join?</H4>
+    <H4><A name="4.18">4.18</A>) How do I perform an outer join?</H4>
 
     <P>PostgreSQL supports outer joins using the SQL standard syntax.
     Here are two examples:</P>
@@ -1219,7 +1193,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     ORDER BY col1
 </PRE>
 
-    <H4><A name="4.20">4.20</A>) How do I perform queries using
+    <H4><A name="4.19">4.19</A>) How do I perform queries using
     multiple databases?</H4>
 
     <P>There is no way to query a database other than the current one.
@@ -1231,7 +1205,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     connections to different databases and merge the results on the
     client side.</P>
 
-    <H4><A name="4.21">4.21</A>) How do I return multiple rows or
+    <H4><A name="4.20">4.20</A>) How do I return multiple rows or
     columns from a function?</H4>
 
     <P>In 7.3, you can easily return multiple rows or columns from a
@@ -1239,7 +1213,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     <a href="http://techdocs.postgresql.org/guides/SetReturningFunctions">
     http://techdocs.postgresql.org/guides/SetReturningFunctions</a>.
 
-    <H4><A name="4.22">4.22</A>) Why can't I reliably create/drop
+    <H4><A name="4.21">4.21</A>) Why can't I reliably create/drop
     temporary tables in PL/PgSQL functions?</H4>
     <P>PL/PgSQL caches function contents, and an unfortunate side effect
     is that if a PL/PgSQL function accesses a temporary table, and that
@@ -1249,7 +1223,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     <SMALL>EXECUTE</SMALL> for temporary table access in PL/PgSQL. This
     will cause the query to be reparsed every time.</P>
 
-    <H4><A name="4.23">4.23</A>) What encryption options are available?
+    <H4><A name="4.22">4.22</A>) What encryption options are available?
     </H4>
     <UL>
     <LI><I>contrib/pgcrypto</I> contains many encryption functions for

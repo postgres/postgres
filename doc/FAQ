@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Jan 29 23:15:42 EST 2005
+   Last updated: Sat Jan 29 23:20:03 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -76,13 +76,12 @@
    4.16) Why does my large-object operations get "invalid large obj
    descriptor"?
    4.17) How do I create a column that will default to the current time?
-   4.18) Why are my subqueries using IN so slow?
-   4.19) How do I perform an outer join?
-   4.20) How do I perform queries using multiple databases?
-   4.21) How do I return multiple rows or columns from a function?
-   4.22) Why can't I reliably create/drop temporary tables in PL/PgSQL
+   4.18) How do I perform an outer join?
+   4.19) How do I perform queries using multiple databases?
+   4.20) How do I return multiple rows or columns from a function?
+   4.21) Why can't I reliably create/drop temporary tables in PL/PgSQL
    functions?
-   4.23) What encryption options are available?
+   4.22) What encryption options are available?
    
                             Extending PostgreSQL
                                       
@@ -922,28 +921,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
    Use CURRENT_TIMESTAMP:
 CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
 
-    4.18) Why are my subqueries using IN so slow?
-    
-   In versions prior to 7.4, subqueries were joined to outer queries by
-   sequentially scanning the result of the subquery for each row of the
-   outer query. If the subquery returns only a few rows and the outer
-   query returns many rows, IN is fastest. To speed up other queries,
-   replace IN with EXISTS:
-    SELECT *
-    FROM tab
-    WHERE col IN (SELECT subcol FROM subtab);
-
-   to:
-    SELECT *
-    FROM tab
-    WHERE EXISTS (SELECT subcol FROM subtab WHERE subcol = col);
-
-   For this to be fast, subcol should be an indexed column.
-   
-   In version 7.4 and later, IN actually uses the same sophisticated join
-   techniques as normal queries, and is prefered to using EXISTS.
-   
-    4.19) How do I perform an outer join?
+    4.18) How do I perform an outer join?
     
    PostgreSQL supports outer joins using the SQL standard syntax. Here
    are two examples:
@@ -973,7 +951,7 @@ CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
     WHERE tab1.col1 NOT IN (SELECT tab2.col1 FROM tab2)
     ORDER BY col1
 
-    4.20) How do I perform queries using multiple databases?
+    4.19) How do I perform queries using multiple databases?
     
    There is no way to query a database other than the current one.
    Because PostgreSQL loads database-specific system catalogs, it is
@@ -983,12 +961,12 @@ CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
    course, a client can make simultaneous connections to different
    databases and merge the results on the client side.
    
-    4.21) How do I return multiple rows or columns from a function?
+    4.20) How do I return multiple rows or columns from a function?
     
    In 7.3, you can easily return multiple rows or columns from a
    function, http://techdocs.postgresql.org/guides/SetReturningFunctions.
    
-    4.22) Why can't I reliably create/drop temporary tables in PL/PgSQL
+    4.21) Why can't I reliably create/drop temporary tables in PL/PgSQL
     functions?
     
    PL/PgSQL caches function contents, and an unfortunate side effect is
@@ -999,7 +977,7 @@ CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
    table access in PL/PgSQL. This will cause the query to be reparsed
    every time.
    
-    4.23) What encryption options are available?
+    4.22) What encryption options are available?
     
      * contrib/pgcrypto contains many encryption functions for use in SQL
        queries.
