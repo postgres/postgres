@@ -59,6 +59,43 @@ SELECT dblink_build_sql_delete('foo','1 2',2,'{"0", "a"}');
  DELETE FROM foo WHERE f1 = '0' AND f2 = 'a'
 (1 row)
 
+-- retest using a quoted and schema qualified table
+CREATE SCHEMA "MySchema";
+CREATE TABLE "MySchema"."Foo"(f1 int, f2 text, f3 text[], primary key (f1,f2));
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'Foo_pkey' for table 'Foo'
+INSERT INTO "MySchema"."Foo" VALUES (0,'a','{"a0","b0","c0"}');
+-- list the primary key fields
+SELECT *
+FROM dblink_get_pkey('"MySchema"."Foo"');
+ position | colname 
+----------+---------
+        1 | f1
+        2 | f2
+(2 rows)
+
+-- build an insert statement based on a local tuple,
+-- replacing the primary key values with new ones
+SELECT dblink_build_sql_insert('"MySchema"."Foo"','1 2',2,'{"0", "a"}','{"99", "xyz"}');
+                        dblink_build_sql_insert                         
+------------------------------------------------------------------------
+ INSERT INTO "MySchema"."Foo"(f1,f2,f3) VALUES('99','xyz','{a0,b0,c0}')
+(1 row)
+
+-- build an update statement based on a local tuple,
+-- replacing the primary key values with new ones
+SELECT dblink_build_sql_update('"MySchema"."Foo"','1 2',2,'{"0", "a"}','{"99", "xyz"}');
+                                       dblink_build_sql_update                                       
+-----------------------------------------------------------------------------------------------------
+ UPDATE "MySchema"."Foo" SET f1 = '99', f2 = 'xyz', f3 = '{a0,b0,c0}' WHERE f1 = '99' AND f2 = 'xyz'
+(1 row)
+
+-- build a delete statement based on a local tuple,
+SELECT dblink_build_sql_delete('"MySchema"."Foo"','1 2',2,'{"0", "a"}');
+                 dblink_build_sql_delete                  
+----------------------------------------------------------
+ DELETE FROM "MySchema"."Foo" WHERE f1 = '0' AND f2 = 'a'
+(1 row)
+
 -- regular old dblink
 SELECT *
 FROM dblink('dbname=regression','SELECT * FROM foo') AS t(a int, b text, c text[])

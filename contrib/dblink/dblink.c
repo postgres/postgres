@@ -71,6 +71,7 @@ static dblink_results *get_res_ptr(int32 res_id_index);
 static void append_res_ptr(dblink_results * results);
 static void remove_res_ptr(dblink_results * results);
 static TupleDesc pgresultGetTupleDesc(PGresult *res);
+static char *generate_relation_name(Oid relid);
 
 /* Global */
 List	   *res_id = NIL;
@@ -171,7 +172,7 @@ dblink_open(PG_FUNCTION_ARGS)
 	}
 	PQclear(res);
 
-	appendStringInfo(str, "DECLARE %s CURSOR FOR %s", quote_ident_cstr(curname), sql);
+	appendStringInfo(str, "DECLARE %s CURSOR FOR %s", curname, sql);
 	res = PQexec(conn, str->data);
 	if (!res ||
 		(PQresultStatus(res) != PGRES_COMMAND_OK &&
@@ -210,7 +211,7 @@ dblink_close(PG_FUNCTION_ARGS)
 	else
 		elog(ERROR, "dblink_close: no connection available");
 
-	appendStringInfo(str, "CLOSE %s", quote_ident_cstr(curname));
+	appendStringInfo(str, "CLOSE %s", curname);
 
 	/* close the cursor */
 	res = PQexec(conn, str->data);
@@ -287,7 +288,7 @@ dblink_fetch(PG_FUNCTION_ARGS)
 		else
 			elog(ERROR, "dblink_fetch: no connection available");
 
-		appendStringInfo(str, "FETCH %d FROM %s", howmany, quote_ident_cstr(curname));
+		appendStringInfo(str, "FETCH %d FROM %s", howmany, curname);
 
 		res = PQexec(conn, str->data);
 		if (!res ||
@@ -306,7 +307,7 @@ dblink_fetch(PG_FUNCTION_ARGS)
 		{
 			/* cursor does not exist - closed already or bad name */
 			PQclear(res);
-			elog(ERROR, "dblink_fetch: cursor %s does not exist", quote_ident_cstr(curname));
+			elog(ERROR, "dblink_fetch: cursor %s does not exist", curname);
 		}
 
 		funcctx->max_calls = PQntuples(res);
@@ -1528,11 +1529,13 @@ get_sql_insert(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattval
 	int			i;
 	bool		needComma;
 
+	/* get relation name including any needed schema prefix and quoting */
+	relname = generate_relation_name(relid);
+
 	/*
 	 * Open relation using relid
 	 */
 	rel = relation_open(relid, AccessShareLock);
-	relname = RelationGetRelationName(rel);
 	tupdesc = rel->rd_att;
 	natts = tupdesc->natts;
 
@@ -1540,7 +1543,7 @@ get_sql_insert(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattval
 	if (!tuple)
 		elog(ERROR, "dblink_build_sql_insert: row not found");
 
-	appendStringInfo(str, "INSERT INTO %s(", quote_ident_cstr(relname));
+	appendStringInfo(str, "INSERT INTO %s(", relname);
 
 	needComma = false;
 	for (i = 0; i < natts; i++)
@@ -1611,15 +1614,17 @@ get_sql_delete(Oid relid, int16 *pkattnums, int16 pknumatts, char **tgt_pkattval
 	char	   *val;
 	int			i;
 
+	/* get relation name including any needed schema prefix and quoting */
+	relname = generate_relation_name(relid);
+
 	/*
 	 * Open relation using relid
 	 */
 	rel = relation_open(relid, AccessShareLock);
-	relname = RelationGetRelationName(rel);
 	tupdesc = rel->rd_att;
 	natts = tupdesc->natts;
 
-	appendStringInfo(str, "DELETE FROM %s WHERE ", quote_ident_cstr(relname));
+	appendStringInfo(str, "DELETE FROM %s WHERE ", relname);
 	for (i = 0; i < pknumatts; i++)
 	{
 		int16		pkattnum = pkattnums[i];
@@ -1670,11 +1675,13 @@ get_sql_update(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattval
 	int			i;
 	bool		needComma;
 
+	/* get relation name including any needed schema prefix and quoting */
+	relname = generate_relation_name(relid);
+
 	/*
 	 * Open relation using relid
 	 */
 	rel = relation_open(relid, AccessShareLock);
-	relname = RelationGetRelationName(rel);
 	tupdesc = rel->rd_att;
 	natts = tupdesc->natts;
 
@@ -1682,7 +1689,7 @@ get_sql_update(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattval
 	if (!tuple)
 		elog(ERROR, "dblink_build_sql_update: row not found");
 
-	appendStringInfo(str, "UPDATE %s SET ", quote_ident_cstr(relname));
+	appendStringInfo(str, "UPDATE %s SET ", relname);
 
 	needComma = false;
 	for (i = 0; i < natts; i++)
@@ -1814,11 +1821,13 @@ get_tuple_of_interest(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_p
 	int			i;
 	char	   *val = NULL;
 
+	/* get relation name including any needed schema prefix and quoting */
+	relname = generate_relation_name(relid);
+
 	/*
 	 * Open relation using relid
 	 */
 	rel = relation_open(relid, AccessShareLock);
-	relname = RelationGetRelationName(rel);
 	tupdesc = CreateTupleDescCopy(rel->rd_att);
 	relation_close(rel, AccessShareLock);
 
@@ -1832,7 +1841,7 @@ get_tuple_of_interest(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_p
 	 * Build sql statement to look up tuple of interest Use src_pkattvals
 	 * as the criteria.
 	 */
-	appendStringInfo(str, "SELECT * FROM %s WHERE ", quote_ident_cstr(relname));
+	appendStringInfo(str, "SELECT * FROM %s WHERE ", relname);
 
 	for (i = 0; i < pknumatts; i++)
 	{
@@ -2003,4 +2012,38 @@ pgresultGetTupleDesc(PGresult *res)
 	}
 
 	return desc;
+}
+
+/*
+ * generate_relation_name - copied from ruleutils.c
+ *		Compute the name to display for a relation specified by OID
+ *
+ * The result includes all necessary quoting and schema-prefixing.
+ */
+static char *
+generate_relation_name(Oid relid)
+{
+	HeapTuple	tp;
+	Form_pg_class reltup;
+	char	   *nspname;
+	char	   *result;
+
+	tp = SearchSysCache(RELOID,
+						ObjectIdGetDatum(relid),
+						0, 0, 0);
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup of relation %u failed", relid);
+	reltup = (Form_pg_class) GETSTRUCT(tp);
+
+	/* Qualify the name if not visible in search path */
+	if (RelationIsVisible(relid))
+		nspname = NULL;
+	else
+		nspname = get_namespace_name(reltup->relnamespace);
+
+	result = quote_qualified_identifier(nspname, NameStr(reltup->relname));
+
+	ReleaseSysCache(tp);
+
+	return result;
 }
