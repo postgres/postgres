@@ -459,7 +459,6 @@ check_seq
 check_tbl      
 circle_tbl     
 city           
-copy_seq       
 copy_tbl       
 d_star         
 datetime_tbl   
@@ -508,5 +507,5 @@ timespan_tbl
 tinterval_tbl  
 toyemp         
 xacttest       
-(66 rows)
+(65 rows)
 
