@@ -3412,13 +3412,13 @@ fi;
 # readline on MinGW has problems with backslashes in psql and other bugs.
 # This is particularly a problem with non-US code pages.
 # Therefore disable its use until we understand the cause. 2004-07-20
-case $host_os in mingw*)
+if test "$PORTNAME" = "win32"; then
   if test "$with_readline" = yes; then
     { echo "$as_me:$LINENO: WARNING: *** Readline does not work on MinGW --- disabling" >&5
 echo "$as_me: WARNING: *** Readline does not work on MinGW --- disabling" >&2;}
     with_readline=no
-  fi;;
-esac
+  fi
+fi
 
 
 #
@@ -10701,7 +10701,6 @@ fi
 
 fi
 
-
 ##
 ## Functions, global variables
 ##
@@ -12054,12 +12053,12 @@ ac_cv_func_fseeko=yes
 esac
 
 # Solaris has a very slow qsort in certain cases, so we replace it.
-case $host_os in solaris*)
-LIBOBJS="$LIBOBJS qsort.$ac_objext" ;;
-esac
+if test "$PORTNAME" = "solaris"; then
+LIBOBJS="$LIBOBJS qsort.$ac_objext"
+fi
 
 # Win32 support
-case $host_os in mingw*)
+if test "$PORTNAME" = "win32"; then
 LIBOBJS="$LIBOBJS copydir.$ac_objext"
 LIBOBJS="$LIBOBJS gettimeofday.$ac_objext"
 LIBOBJS="$LIBOBJS kill.$ac_objext"
@@ -12070,8 +12069,7 @@ cat >>confdefs.h <<\_ACEOF
 #define HAVE_SYMLINK 1
 _ACEOF
 
-;;
-esac
+fi
 
 if test "$with_readline" = yes; then
   echo "$as_me:$LINENO: checking for rl_completion_append_character" >&5
@@ -18107,11 +18105,10 @@ ac_config_files="$ac_config_files GNUmakefile src/Makefile.global"
 ac_config_links="$ac_config_links src/backend/port/dynloader.c:src/backend/port/dynloader/${template}.c src/backend/port/pg_sema.c:${SEMA_IMPLEMENTATION} src/backend/port/pg_shmem.c:${SHMEM_IMPLEMENTATION} src/include/dynloader.h:src/backend/port/dynloader/${template}.h src/include/pg_config_os.h:src/include/port/${template}.h src/Makefile.port:src/makefiles/Makefile.${template}"
 
 
-case $host_os in mingw*)
+if test "$PORTNAME" = "win32"; then
 ac_config_commands="$ac_config_commands check_win32_symlinks"
 
-	;;
-esac
+fi
 
 ac_config_headers="$ac_config_headers src/include/pg_config.h"
 

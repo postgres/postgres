@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.375 2004/09/02 15:39:56 tgl Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.376 2004/09/10 13:53:40 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -483,12 +483,12 @@ PGAC_ARG_BOOL(with, readline, yes,
 # readline on MinGW has problems with backslashes in psql and other bugs.
 # This is particularly a problem with non-US code pages.
 # Therefore disable its use until we understand the cause. 2004-07-20
-case $host_os in mingw*)
+if test "$PORTNAME" = "win32"; then
   if test "$with_readline" = yes; then
     AC_MSG_WARN([*** Readline does not work on MinGW --- disabling])
     with_readline=no
-  fi;;
-esac
+  fi
+fi
 
 
 #
@@ -798,7 +798,6 @@ if test "$with_krb5" = yes; then
                    [#include <krb5.h>])
 fi
 
-
 ##
 ## Functions, global variables
 ##
@@ -898,12 +897,12 @@ ac_cv_func_fseeko=yes
 esac
 
 # Solaris has a very slow qsort in certain cases, so we replace it.
-case $host_os in solaris*) 
-AC_LIBOBJ(qsort) ;;
-esac
+if test "$PORTNAME" = "solaris"; then
+AC_LIBOBJ(qsort)
+fi
 
 # Win32 support
-case $host_os in mingw*)
+if test "$PORTNAME" = "win32"; then
 AC_LIBOBJ(copydir)
 AC_LIBOBJ(gettimeofday)
 AC_LIBOBJ(kill)
@@ -911,8 +910,7 @@ AC_LIBOBJ(open)
 AC_LIBOBJ(rand)
 AC_DEFINE([HAVE_SYMLINK], 1,
           [Define to 1 if you have the `symlink' function.])
-;;
-esac
+fi
 
 if test "$with_readline" = yes; then
   PGAC_VAR_RL_COMPLETION_APPEND_CHARACTER
@@ -1262,7 +1260,7 @@ AC_CONFIG_LINKS([
   src/Makefile.port:src/makefiles/Makefile.${template}
 ])
 
-case $host_os in mingw*)
+if test "$PORTNAME" = "win32"; then
 AC_CONFIG_COMMANDS([check_win32_symlinks],[
 # Links sometimes fail undetected on Mingw - 
 # so here we detect it and warn the user
@@ -1272,8 +1270,7 @@ for FILE in $CONFIG_LINKS
 	test -e `expr "$FILE" : '\([[^:]]*\)'` || AC_MSG_WARN([*** link for $FILE - please fix by hand])
  done
 ])
-	;;
-esac
+fi
 
 AC_CONFIG_HEADERS([src/include/pg_config.h],
 [
