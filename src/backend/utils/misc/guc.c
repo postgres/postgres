@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.93 2002/09/04 20:31:33 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.94 2002/09/10 16:09:02 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -767,6 +767,8 @@ static struct config_string
 		PG_KRB_SRVTAB, NULL, NULL
 	},
 
+	/* See main.c about why defaults for LC_foo are not all alike */
+
 	{
 		{"lc_messages", PGC_SUSET}, &locale_messages,
 		"", locale_messages_assign, NULL
@@ -774,17 +776,17 @@ static struct config_string
 
 	{
 		{"lc_monetary", PGC_USERSET}, &locale_monetary,
-		"", locale_monetary_assign, NULL
+		"C", locale_monetary_assign, NULL
 	},
 
 	{
 		{"lc_numeric", PGC_USERSET}, &locale_numeric,
-		"", locale_numeric_assign, NULL
+		"C", locale_numeric_assign, NULL
 	},
 
 	{
 		{"lc_time", PGC_USERSET}, &locale_time,
-		"", locale_time_assign, NULL
+		"C", locale_time_assign, NULL
 	},
 
 	{
