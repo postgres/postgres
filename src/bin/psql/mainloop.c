@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.54 2003/03/20 22:08:50 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.55 2003/03/21 03:28:29 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -281,15 +281,9 @@ MainLoop(FILE *source)
 			/* in or end of extended comment? */
 			else if (in_xcomment)
 			{
-				if (line[i] == '*' && line[i + thislen] == '/')
-				{
-					in_xcomment--;
-					if (in_xcomment <= 0)
-					{
-						in_xcomment = 0;
+				if (line[i] == '*' && line[i + thislen] == '/' &&
+					!--in_xcomment)
 						ADVANCE_1;
-					}
-				}
 			}
 
 			/* start of quote? */
