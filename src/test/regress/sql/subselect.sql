@@ -39,27 +39,31 @@ SELECT '' AS six, f1 AS "Uncorrelated Field" FROM SUBSELECT_TBL
   WHERE f1 IN (SELECT f2 FROM SUBSELECT_TBL WHERE
     f2 IN (SELECT f1 FROM SUBSELECT_TBL));
 
+SELECT '' AS three, f1, f2
+  FROM SUBSELECT_TBL
+  WHERE (f1, f2) NOT IN (SELECT f2, CAST(f3 AS int4) FROM SUBSELECT_TBL
+                         WHERE f3 IS NOT NULL);
+
 -- Correlated subselects
 
-SELECT '' AS six, f1 AS "Correlated Field", f3 AS "Second Field"
-  FROM SUBSELECT_TBL
-  WHERE f1 IN (SELECT f2 FROM SUBSELECT_TBL WHERE f2 = f1);
+SELECT '' AS six, f1 AS "Correlated Field", f2 AS "Second Field"
+  FROM SUBSELECT_TBL upper
+  WHERE f1 IN (SELECT f2 FROM SUBSELECT_TBL WHERE f1 = upper.f1);
 
 SELECT '' AS six, f1 AS "Correlated Field", f3 AS "Second Field"
-  FROM SUBSELECT_TBL
-  WHERE f1 IN (SELECT f2 FROM SUBSELECT_TBL WHERE CAST(f2 AS float) = f3);
+  FROM SUBSELECT_TBL upper
+  WHERE f1 IN
+    (SELECT f2 FROM SUBSELECT_TBL WHERE CAST(upper.f2 AS float) = f3);
 
 SELECT '' AS six, f1 AS "Correlated Field", f3 AS "Second Field"
-  FROM SUBSELECT_TBL
-  WHERE f1 IN (SELECT f2 FROM SUBSELECT_TBL WHERE f2 = CAST(f3 AS integer));
+  FROM SUBSELECT_TBL upper
+  WHERE f3 IN (SELECT upper.f1 + f2 FROM SUBSELECT_TBL
+               WHERE f2 = CAST(f3 AS integer));
 
 SELECT '' AS five, f1 AS "Correlated Field"
   FROM SUBSELECT_TBL
-  WHERE (f1, f2) IN (SELECT f2, CAST(f3 AS int4) FROM SUBSELECT_TBL WHERE f3 IS NOT NULL);
-
-SELECT '' AS three, f1 AS "Correlated Field"
-  FROM SUBSELECT_TBL
-  WHERE (f1, f2) NOT IN (SELECT f2, CAST(f3 AS int4) FROM SUBSELECT_TBL WHERE f3 IS NOT NULL);
+  WHERE (f1, f2) IN (SELECT f2, CAST(f3 AS int4) FROM SUBSELECT_TBL
+                     WHERE f3 IS NOT NULL);
 
 --
 -- Use some existing tables in the regression test
@@ -67,5 +71,7 @@ SELECT '' AS three, f1 AS "Correlated Field"
 
 SELECT '' AS eight, ss.f1 AS "Correlated Field", ss.f3 AS "Second Field"
   FROM SUBSELECT_TBL ss
-  WHERE f1 NOT IN (SELECT f1 FROM INT4_TBL WHERE f1 != ss.f1);
+  WHERE f1 NOT IN (SELECT f1+1 FROM INT4_TBL WHERE f1 != ss.f1);
 
+select q1, float8(count(*)) / (select count(*) from int8_tbl)
+from int8_tbl group by q1;

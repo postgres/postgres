@@ -78,40 +78,60 @@ SELECT '' AS six, f1 AS "Uncorrelated Field" FROM SUBSELECT_TBL
      |                  3
 (6 rows)
 
+SELECT '' AS three, f1, f2
+  FROM SUBSELECT_TBL
+  WHERE (f1, f2) NOT IN (SELECT f2, CAST(f3 AS int4) FROM SUBSELECT_TBL
+                         WHERE f3 IS NOT NULL);
+ three | f1 | f2 
+-------+----+----
+       |  1 |  2
+       |  6 |  7
+       |  8 |  9
+(3 rows)
+
 -- Correlated subselects
-SELECT '' AS six, f1 AS "Correlated Field", f3 AS "Second Field"
-  FROM SUBSELECT_TBL
-  WHERE f1 IN (SELECT f2 FROM SUBSELECT_TBL WHERE f2 = f1);
+SELECT '' AS six, f1 AS "Correlated Field", f2 AS "Second Field"
+  FROM SUBSELECT_TBL upper
+  WHERE f1 IN (SELECT f2 FROM SUBSELECT_TBL WHERE f1 = upper.f1);
  six | Correlated Field | Second Field 
 -----+------------------+--------------
-     |                1 |            3
-     |                2 |            4
-     |                3 |            5
+     |                1 |            2
+     |                2 |            3
+     |                3 |            4
      |                1 |            1
      |                2 |            2
      |                3 |            3
 (6 rows)
 
 SELECT '' AS six, f1 AS "Correlated Field", f3 AS "Second Field"
-  FROM SUBSELECT_TBL
-  WHERE f1 IN (SELECT f2 FROM SUBSELECT_TBL WHERE CAST(f2 AS float) = f3);
+  FROM SUBSELECT_TBL upper
+  WHERE f1 IN
+    (SELECT f2 FROM SUBSELECT_TBL WHERE CAST(upper.f2 AS float) = f3);
  six | Correlated Field | Second Field 
 -----+------------------+--------------
-     |                1 |            3
      |                2 |            4
      |                3 |            5
      |                1 |            1
      |                2 |            2
      |                3 |            3
-(6 rows)
+(5 rows)
 
 SELECT '' AS six, f1 AS "Correlated Field", f3 AS "Second Field"
-  FROM SUBSELECT_TBL
-  WHERE f1 IN (SELECT f2 FROM SUBSELECT_TBL WHERE f2 = CAST(f3 AS integer));
-ERROR:  dtoi4: unable to convert null
+  FROM SUBSELECT_TBL upper
+  WHERE f3 IN (SELECT upper.f1 + f2 FROM SUBSELECT_TBL
+               WHERE f2 = CAST(f3 AS integer));
+ six | Correlated Field | Second Field 
+-----+------------------+--------------
+     |                1 |            3
+     |                2 |            4
+     |                3 |            5
+     |                6 |            8
+(4 rows)
+
 SELECT '' AS five, f1 AS "Correlated Field"
   FROM SUBSELECT_TBL
-  WHERE (f1, f2) IN (SELECT f2, CAST(f3 AS int4) FROM SUBSELECT_TBL WHERE f3 IS NOT NULL);
+  WHERE (f1, f2) IN (SELECT f2, CAST(f3 AS int4) FROM SUBSELECT_TBL
+                     WHERE f3 IS NOT NULL);
  five | Correlated Field 
 ------+------------------
       |                2
@@ -121,31 +141,27 @@ SELECT '' AS five, f1 AS "Correlated Field"
       |                3
 (5 rows)
 
-SELECT '' AS three, f1 AS "Correlated Field"
-  FROM SUBSELECT_TBL
-  WHERE (f1, f2) NOT IN (SELECT f2, CAST(f3 AS int4) FROM SUBSELECT_TBL WHERE f3 IS NOT NULL);
- three | Correlated Field 
--------+------------------
-       |                1
-       |                6
-       |                8
-(3 rows)
-
 --
 -- Use some existing tables in the regression test
 --
 SELECT '' AS eight, ss.f1 AS "Correlated Field", ss.f3 AS "Second Field"
   FROM SUBSELECT_TBL ss
-  WHERE f1 NOT IN (SELECT f1 FROM INT4_TBL WHERE f1 != ss.f1);
+  WHERE f1 NOT IN (SELECT f1+1 FROM INT4_TBL WHERE f1 != ss.f1);
  eight | Correlated Field | Second Field 
 -------+------------------+--------------
-       |                1 |            3
        |                2 |            4
        |                3 |            5
-       |                1 |            1
        |                2 |            2
        |                3 |            3
        |                6 |            8
        |                8 |             
-(8 rows)
+(6 rows)
+
+select q1, float8(count(*)) / (select count(*) from int8_tbl)
+from int8_tbl group by q1;
+        q1        | ?column? 
+------------------+----------
+              123 |      0.4
+ 4567890123456789 |      0.6
+(2 rows)
 
