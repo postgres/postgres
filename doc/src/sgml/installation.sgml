@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.183 2003/11/24 14:52:58 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.184 2003/11/24 16:56:00 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -621,7 +621,6 @@ JAVACMD=$JAVA_HOME/bin/java
         </para>
        </listitem>
       </varlistentry>
-     </variablelist>
 
       <varlistentry>
        <term><option>--with-docdir=<replaceable>DIRECTORY</></option></term>
@@ -638,6 +637,7 @@ JAVACMD=$JAVA_HOME/bin/java
         </para>
        </listitem>
       </varlistentry>
+     </variablelist>
 
      <note>
       <para>
