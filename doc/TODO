@@ -6,7 +6,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Nov  5 22:25:13 EST 2004
+Last updated:		Sat Nov  6 00:38:05 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -51,12 +51,6 @@ Administration
   databases which use a specific tablespace, so this requires a tool
   that will call that function and connect to each database to find the
   objects in each database for that tablespace.
-
-* Allow database recovery where tablespaces can't be created
-
-  When a pg_dump is restored, all tablespaces will attempt to be created
-  in their original locations. If this fails, the user must be able to 
-  adjust the restore process.
 
 * Allow a database in tablespace t1 with tables created in tablespace t2
   to be used as a template for a new database created with default
