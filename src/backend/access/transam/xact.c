@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.134 2002/10/21 22:06:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.135 2002/10/22 22:44:36 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -1005,9 +1005,20 @@ CommitTransaction(void)
 	 * This is all post-commit cleanup.  Note that if an error is raised
 	 * here, it's too late to abort the transaction.  This should be just
 	 * noncritical resource releasing.
+	 *
+	 * The ordering of operations is not entirely random.  The idea is:
+	 * release resources visible to other backends (eg, files, buffer pins);
+	 * then release locks; then release backend-local resources.  We want
+	 * to release locks at the point where any backend waiting for us will
+	 * see our transaction as being fully cleaned up.
 	 */
 
 	smgrDoPendingDeletes(true);
+	AtCommit_Cache();
+	AtEOXact_Buffers(true);
+	/* smgrcommit already done */
+
+	AtCommit_Locks();
 
 	AtEOXact_GUC(true);
 	AtEOXact_SPI();
@@ -1016,15 +1027,10 @@ CommitTransaction(void)
 	AtEOXact_nbtree();
 	AtEOXact_rtree();
 	AtEOXact_Namespace(true);
-	AtCommit_Cache();
-	AtCommit_Locks();
 	AtEOXact_CatCache(true);
-	AtCommit_Memory();
-	AtEOXact_Buffers(true);
 	AtEOXact_Files();
-
-	/* Count transaction commit in statistics collector */
 	pgstat_count_xact_commit();
+	AtCommit_Memory();
 
 	/*
 	 * done with commit processing, set current transaction state back to
@@ -1078,6 +1084,9 @@ AbortTransaction(void)
 	 */
 	s->state = TRANS_ABORT;
 
+	/* Make sure we are in a valid memory context */
+	AtAbort_Memory();
+
 	/*
 	 * Reset user id which might have been changed transiently
 	 */
@@ -1109,7 +1118,17 @@ AbortTransaction(void)
 		LWLockRelease(SInvalLock);
 	}
 
+	/*
+	 * Post-abort cleanup.  See notes in CommitTransaction() concerning
+	 * ordering.
+	 */
+
 	smgrDoPendingDeletes(false);
+	AtAbort_Cache();
+	AtEOXact_Buffers(false);
+	smgrabort();
+
+	AtAbort_Locks();
 
 	AtEOXact_GUC(false);
 	AtEOXact_SPI();
@@ -1118,15 +1137,8 @@ AbortTransaction(void)
 	AtEOXact_nbtree();
 	AtEOXact_rtree();
 	AtEOXact_Namespace(false);
-	AtAbort_Cache();
 	AtEOXact_CatCache(false);
-	AtAbort_Memory();
-	AtEOXact_Buffers(false);
-	smgrabort();
 	AtEOXact_Files();
-	AtAbort_Locks();
-
-	/* Count transaction abort in statistics collector */
 	pgstat_count_xact_rollback();
 
 	/*
