@@ -4,7 +4,7 @@ import java.io.*;
 import java.sql.*;
 import java.text.*;
 
-/**
+/*
  * This example application is not really an example. It actually performs
  * some tests on various methods in the DatabaseMetaData and ResultSetMetaData
  * classes.
@@ -19,7 +19,7 @@ public class metadata
 	Statement	st;		// Our statement to run queries with
 	DatabaseMetaData dbmd;	// This defines the structure of the database
 
-	/**
+	/*
 	 * These are the available tests on DatabaseMetaData
 	 */
 	public void doDatabaseMetaData() throws SQLException
@@ -53,7 +53,7 @@ public class metadata
 
 	}
 
-	/**
+	/*
 	 * These are the available tests on ResultSetMetaData
 	 */
 	public void doResultSetMetaData() throws SQLException
@@ -81,7 +81,7 @@ public class metadata
 			rs.close();
 	}
 
-	/**
+	/*
 	 * This creates some test data
 	 */
 	public void init() throws SQLException
@@ -98,7 +98,7 @@ public class metadata
 		st.executeUpdate("insert into test_c values ('nowhere particular','$10.99',1)");
 	}
 
-	/**
+	/*
 	 * This removes the test data
 	 */
 	public void cleanup() throws SQLException
@@ -152,7 +152,7 @@ public class metadata
 		cleanup();
 	}
 
-	/**
+	/*
 	 * This asks if the user requires to run a test.
 	 */
 	public boolean doTest(String s)
@@ -177,7 +177,7 @@ public class metadata
 		return c == 'y' || c == 'Y';
 	}
 
-	/**
+	/*
 	 * This displays a result set.
 	 * Note: it closes the result once complete.
 	 */
@@ -211,7 +211,7 @@ public class metadata
 		rs.close();
 	}
 
-	/**
+	/*
 	 * This process / commands (for now just /d)
 	 */
 	public void processSlashCommand(String line) throws SQLException
@@ -259,7 +259,7 @@ public class metadata
 	private static final String usrSequences[] = {"SEQUENCE"};
 	private static final String sysTables[] = {"SYSTEM TABLE", "SYSTEM INDEX"};
 
-	/**
+	/*
 	 * Display some instructions on how to run the example
 	 */
 	public static void instructions()
@@ -269,7 +269,7 @@ public class metadata
 		System.exit(1);
 	}
 
-	/**
+	/*
 	 * This little lot starts the test
 	 */
 	public static void main(String args[])

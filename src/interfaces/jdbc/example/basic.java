@@ -4,9 +4,9 @@ import java.io.*;
 import java.sql.*;
 import java.text.*;
 
-/**
+/*
  *
- * $Id: basic.java,v 1.8 2001/10/25 05:59:58 momjian Exp $
+ * $Id: basic.java,v 1.9 2001/11/19 22:43:13 momjian Exp $
  *
  * This example tests the basic components of the JDBC driver, and shows
  * how even the simplest of queries can be implemented.
@@ -56,7 +56,7 @@ public class basic
 		//throw postgresql.Driver.notImplemented();
 	}
 
-	/**
+	/*
 	 * This drops the table (if it existed). No errors are reported.
 	 */
 	public void cleanup()
@@ -71,7 +71,7 @@ public class basic
 		}
 	}
 
-	/**
+	/*
 	 * This performs the example
 	 */
 	public void doexample() throws SQLException
@@ -178,7 +178,7 @@ public class basic
 		// cleanup() method.
 	}
 
-	/**
+	/*
 	 * Display some instructions on how to run the example
 	 */
 	public static void instructions()
@@ -188,7 +188,7 @@ public class basic
 		System.exit(1);
 	}
 
-	/**
+	/*
 	 * This little lot starts the test
 	 */
 	public static void main(String args[])

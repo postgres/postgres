@@ -2,7 +2,7 @@ package example.corba;
 
 import java.sql.*;
 
-/**
+/*
  * This class handles the JDBC side of things. It opens a connection to
  * the database, and performes queries on that database.
  *
@@ -13,7 +13,7 @@ import java.sql.*;
  * that an object could be changed by another client, and we need to ensure that
  * the returned data is live and accurate.
  *
- * $Id: StockDB.java,v 1.3 2001/10/25 05:59:58 momjian Exp $
+ * $Id: StockDB.java,v 1.4 2001/11/19 22:43:13 momjian Exp $
  */
 public class StockDB
 {

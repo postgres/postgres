@@ -6,7 +6,7 @@ import java.io.*;
 import java.sql.*;
 import org.postgresql.largeobject.*;
 
-/**
+/*
  * This example is a small application that stores and displays images
  * held on a postgresql database.
  *
@@ -81,7 +81,7 @@ public class ImageViewer implements ItemListener
 			paint(g);
 		}
 
-		/**
+		/*
 		 * Paints the image, using double buffering to prevent screen flicker
 		 */
 		public void paint(Graphics gr)
@@ -212,7 +212,7 @@ public class ImageViewer implements ItemListener
 	}
 
 
-	/**
+	/*
 	 * This method initialises the database by creating a table that contains
 	 * the image names, and Large Object OID's
 	 */
@@ -238,7 +238,7 @@ public class ImageViewer implements ItemListener
 		//}
 	}
 
-	/**
+	/*
 	 * This closes the connection, and ends the application
 	 */
 	public void close()
@@ -254,7 +254,7 @@ public class ImageViewer implements ItemListener
 		System.exit(0);
 	}
 
-	/**
+	/*
 	 * This imports an image into the database, using a Thread to do this in the
 	 * background.
 	 */
@@ -272,7 +272,7 @@ public class ImageViewer implements ItemListener
 		t.start();
 	}
 
-	/**
+	/*
 	 * This is an example of using a thread to import a file into a Large Object.
 	 * It uses the Large Object extension, to write blocks of the file to the
 	 * database.
@@ -362,7 +362,7 @@ public class ImageViewer implements ItemListener
 		}
 	}
 
-	/**
+	/*
 	 * This refreshes the list of available images
 	 */
 	public void refreshList()
@@ -385,7 +385,7 @@ public class ImageViewer implements ItemListener
 		}
 	}
 
-	/**
+	/*
 	 * This removes an image from the database
 	 *
 	 * Note: With postgresql, this is the only way of deleting a large object
@@ -427,7 +427,7 @@ public class ImageViewer implements ItemListener
 		}
 	}
 
-	/**
+	/*
 	 * This displays an image from the database.
 	 *
 	 * For images, this is the easiest method.
@@ -476,7 +476,7 @@ public class ImageViewer implements ItemListener
 		displayImage(list.getItem(((Integer)e.getItem()).intValue()));
 	}
 
-	/**
+	/*
 	 * This is the command line instructions
 	 */
 	public static void instructions()
@@ -489,7 +489,7 @@ public class ImageViewer implements ItemListener
 		System.err.println("Note: If you are running this for the first time on a particular database,\nyou have to select \"Initialise\" in the \"PostgreSQL\" menu.\nThis will create a table used to store image names.");
 	}
 
-	/**
+	/*
 	 * This is the application entry point
 	 */
 	public static void main(String args[])

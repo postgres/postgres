@@ -1,13 +1,13 @@
 package utils;
 
-/**
+/*
  * This little app checks to see what version of JVM is being used.
  * It does this by checking first the java.vm.version property, and
  * if that fails, it looks for certain classes that should be present.
  */
 public class CheckVersion
 {
-	/**
+	/*
 	 * Check for the existence of a class by attempting to load it
 	 */
 	public static boolean checkClass(String c)
@@ -23,7 +23,7 @@ public class CheckVersion
 		return true;
 	}
 
-	/**
+	/*
 	 * This first checks java.vm.version for 1.1, 1.2 or 1.3.
 	 *
 	 * It writes jdbc1 to stdout for the 1.1.x VM.

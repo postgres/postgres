@@ -4,7 +4,7 @@ import java.io.*;
 import java.sql.*;
 import java.text.*;
 
-/**
+/*
  * This example application demonstrates some of the drivers other features
  * by implementing a simple psql replacement in Java.
  *
@@ -75,7 +75,7 @@ public class psql
 
 	}
 
-	/**
+	/*
 	 * This processes a statement
 	 */
 	public void processLine(String line) throws SQLException
@@ -117,7 +117,7 @@ public class psql
 		}
 	}
 
-	/**
+	/*
 	 * This displays a result set.
 	 * Note: it closes the result once complete.
 	 */
@@ -147,7 +147,7 @@ public class psql
 		rs.close();
 	}
 
-	/**
+	/*
 	 * This process / commands (for now just /d)
 	 */
 	public void processSlashCommand(String line) throws SQLException
@@ -197,7 +197,7 @@ public class psql
 	private static final String usrSequences[] = {"SEQUENCE"};
 	private static final String sysTables[] = {"SYSTEM TABLE", "SYSTEM INDEX"};
 
-	/**
+	/*
 	 * Display some instructions on how to run the example
 	 */
 	public static void instructions()
@@ -207,7 +207,7 @@ public class psql
 		System.exit(1);
 	}
 
-	/**
+	/*
 	 * This little lot starts the test
 	 */
 	public static void main(String args[])

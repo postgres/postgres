@@ -7,7 +7,7 @@ import java.text.*;
 // rare in user code, but we use the LargeObject API in this test
 import org.postgresql.largeobject.*;
 
-/**
+/*
  * This example tests the thread safety of the driver.
  *
  * It does this by performing several queries, in different threads. Each
@@ -56,7 +56,7 @@ public class threadsafe
 
 	}
 
-	/**
+	/*
 	 * This drops the table (if it existed). No errors are reported.
 	 */
 	public void cleanup()
@@ -80,7 +80,7 @@ public class threadsafe
 		}
 	}
 
-	/**
+	/*
 	 * This performs the example
 	 */
 	public void doexample() throws SQLException
@@ -366,7 +366,7 @@ public class threadsafe
 		}
 	}
 
-	/**
+	/*
 	 * Display some instructions on how to run the example
 	 */
 	public static void instructions()
@@ -376,7 +376,7 @@ public class threadsafe
 		System.exit(1);
 	}
 
-	/**
+	/*
 	 * This little lot starts the test
 	 */
 	public static void main(String args[])

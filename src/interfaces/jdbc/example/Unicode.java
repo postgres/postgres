@@ -4,7 +4,7 @@ import java.io.*;
 import java.sql.*;
 import java.util.*;
 
-/**
+/*
  *	Test inserting and extracting Unicode-encoded strings.
  *
  *	Synopsis:
@@ -22,17 +22,17 @@ import java.util.*;
 public class Unicode
 {
 
-	/**
+	/*
 	 *	The url for the database to connect to.
 	 */
 	private String url;
 
-	/**
+	/*
 	 *	The user to connect as.
 	 */
 	private String user;
 
-	/**
+	/*
 	 *	The password to connect with.
 	 */
 	private String password;
@@ -61,7 +61,7 @@ public class Unicode
 		this.password = password;
 	}
 
-	/**
+	/*
 	 *	Establish and return a connection to the database.
 	 */
 	private Connection getConnection() throws SQLException,
@@ -75,7 +75,7 @@ public class Unicode
 		return DriverManager.getConnection(url, info);
 	}
 
-	/**
+	/*
 	 *	Get string representing a block of 256 consecutive unicode characters.
 	 *	We exclude the null character, "'",  and "\".
 	 */
@@ -97,7 +97,7 @@ public class Unicode
 		return sb.toString();
 	}
 
-	/**
+	/*
 	 *	Is the block a block of valid unicode values.
 	 *	d800 to db7f is the "unassigned high surrogate" range.
 	 *	db80 to dbff is the "private use" range.
@@ -112,7 +112,7 @@ public class Unicode
 			return true;
 	}
 
-	/**
+	/*
 	 *	Report incorrect block retrieval.
 	 */
 	private void reportRetrievalError(int blockNum, String block,
@@ -142,7 +142,7 @@ public class Unicode
 		log(message);
 	}
 
-	/**
+	/*
 	 *	Do the testing.
 	 */
 	public void runTest()

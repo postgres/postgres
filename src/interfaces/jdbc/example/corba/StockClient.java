@@ -4,12 +4,12 @@ import java.io.*;
 import java.sql.*;
 import org.omg.CosNaming.*;
 
-/**
+/*
  * This class is the frontend to our mini CORBA application.
  *
  * It has no GUI, just a text frontend to keep it simple.
  *
- * $Id: StockClient.java,v 1.2 2001/10/25 05:59:58 momjian Exp $
+ * $Id: StockClient.java,v 1.3 2001/11/19 22:43:13 momjian Exp $
  */
 public class StockClient
 {

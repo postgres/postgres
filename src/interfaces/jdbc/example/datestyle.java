@@ -4,7 +4,7 @@ import java.io.*;
 import java.sql.*;
 import java.text.*;
 
-/**
+/*
  * This example tests the various date styles that are available to postgresql.
  *
  * To use this example, you need a database to be in existence. This example
@@ -64,7 +64,7 @@ public class datestyle
 
 	}
 
-	/**
+	/*
 	 * This drops the table (if it existed). No errors are reported.
 	 */
 	public void cleanup()
@@ -79,7 +79,7 @@ public class datestyle
 		}
 	}
 
-	/**
+	/*
 	 * This initialises the database for this example
 	 */
 	public void init() throws SQLException
@@ -108,7 +108,7 @@ public class datestyle
 
 	}
 
-	/**
+	/*
 	 * This performs the example
 	 */
 	public void doexample() throws SQLException
@@ -150,7 +150,7 @@ public class datestyle
 		}
 	}
 
-	/**
+	/*
 	 * Display some instructions on how to run the example
 	 */
 	public static void instructions()
@@ -160,7 +160,7 @@ public class datestyle
 		System.exit(1);
 	}
 
-	/**
+	/*
 	 * This little lot starts the test
 	 */
 	public static void main(String args[])

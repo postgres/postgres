@@ -4,7 +4,7 @@ import java.io.*;
 import java.sql.*;
 import org.postgresql.largeobject.*;
 
-/**
+/*
  * This test attempts to create a blob in the database, then to read
  * it back.
  *
@@ -64,7 +64,7 @@ public class blobtest
 
 	}
 
-	/**
+	/*
 	 * Now this is an extension to JDBC, unique to postgresql. Here we fetch
 	 * an PGlobj object, which provides us with access to postgresql's
 	 * large object api.

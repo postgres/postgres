@@ -2,10 +2,10 @@ package example.corba;
 
 import org.omg.CosNaming.*;
 
-/**
+/*
  * This class implements the server side of the example.
  *
- * $Id: StockServer.java,v 1.2 2001/10/25 05:59:58 momjian Exp $
+ * $Id: StockServer.java,v 1.3 2001/11/19 22:43:13 momjian Exp $
  */
 public class StockServer
 {
