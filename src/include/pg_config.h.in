@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.40 2003/02/19 04:04:04 momjian Exp $
+ * $Id: pg_config.h.in,v 1.41 2003/03/06 03:16:55 tgl Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -341,6 +341,12 @@
 /* Set to 1 if you have <ieeefp.h> */
 #undef HAVE_IEEEFP_H
 
+/* Set to 1 if you have <poll.h> */
+#undef HAVE_POLL_H
+
+/* Set to 1 if you have <sys/poll.h> */
+#undef HAVE_SYS_POLL_H
+
 /* Set to 1 if you have <netinet/tcp.h> */
 #undef HAVE_NETINET_TCP_H
 
@@ -649,15 +655,18 @@
 /* Define if you have on_exit() */
 #undef HAVE_ON_EXIT
 
+/* Define if you have syslog() */
+#undef HAVE_SYSLOG
+
+/* Define if you have poll() */
+#undef HAVE_POLL
+
 /* Define if the corresponding types are defined in standard headers */
 #undef HAVE_INT8
 #undef HAVE_UINT8
 #undef HAVE_INT64
 #undef HAVE_UINT64
 #undef HAVE_SIG_ATOMIC_T
-
-/* Define if you have syslog() */
-#undef HAVE_SYSLOG
 
 /* Define exactly one of these symbols to select semaphore implementation */
 #undef USE_NAMED_POSIX_SEMAPHORES

@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.86 2003/01/07 22:23:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.87 2003/03/06 03:16:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,12 @@
 #include <sys/time.h>
 #endif
 
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#endif
+#ifdef HAVE_SYS_POLL_H
+#include <sys/poll.h>
+#endif
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
@@ -55,6 +61,9 @@
 #define DONOTICE(conn,message) \
 	((*(conn)->noticeHook) ((conn)->noticeArg, (message)))
 
+static int	pqSocketCheck(PGconn *conn, int forRead, int forWrite,
+						  time_t end_time);
+static int	pqSocketPoll(int sock, int forRead, int forWrite, time_t end_time);
 static int	pqPutBytes(const char *s, size_t nbytes, PGconn *conn);
 
 
@@ -358,40 +367,7 @@ pqPutInt(int value, size_t bytes, PGconn *conn)
 int
 pqReadReady(PGconn *conn)
 {
-	fd_set		input_mask;
-	struct timeval timeout;
-
-	if (!conn || conn->sock < 0)
-		return -1;
-
-/* JAB: Check for SSL library buffering read bytes */
-#ifdef USE_SSL
-	if (conn->ssl && SSL_pending(conn->ssl) > 0)
-	{
-		/* short-circuit the select */
-		return 1;
-	}
-#endif
-
-retry1:
-	FD_ZERO(&input_mask);
-	FD_SET(conn->sock, &input_mask);
-	timeout.tv_sec = 0;
-	timeout.tv_usec = 0;
-	if (select(conn->sock + 1, &input_mask, (fd_set *) NULL, (fd_set *) NULL,
-			   &timeout) < 0)
-	{
-		if (SOCK_ERRNO == EINTR)
-			/* Interrupted system call - we'll just try again */
-			goto retry1;
-
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("select() failed: %s\n"),
-						  SOCK_STRERROR(SOCK_ERRNO));
-		return -1;
-	}
-
-	return FD_ISSET(conn->sock, &input_mask) ? 1 : 0;
+	return pqSocketCheck(conn, 1, 0, (time_t) 0);
 }
 
 /*
@@ -401,30 +377,7 @@ retry1:
 int
 pqWriteReady(PGconn *conn)
 {
-	fd_set		input_mask;
-	struct timeval timeout;
-
-	if (!conn || conn->sock < 0)
-		return -1;
-
-retry2:
-	FD_ZERO(&input_mask);
-	FD_SET(conn->sock, &input_mask);
-	timeout.tv_sec = 0;
-	timeout.tv_usec = 0;
-	if (select(conn->sock + 1, (fd_set *) NULL, &input_mask, (fd_set *) NULL,
-			   &timeout) < 0)
-	{
-		if (SOCK_ERRNO == EINTR)
-			/* Interrupted system call - we'll just try again */
-			goto retry2;
-
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("select() failed: %s\n"),
-						  SOCK_STRERROR(SOCK_ERRNO));
-		return -1;
-	}
-	return FD_ISSET(conn->sock, &input_mask) ? 1 : 0;
+	return pqSocketCheck(conn, 0, 1, (time_t) 0);
 }
 
 /* ----------
@@ -785,27 +738,51 @@ pqWait(int forRead, int forWrite, PGconn *conn)
 /*
  * pqWaitTimed: wait, but not past finish_time.
  *
- * If finish_time is exceeded then we return failure (EOF).  This is different
- * from the response for a kernel exception (return 0) because we don't want
- * the caller to try to read/write in that case.
+ * If finish_time is exceeded then we return failure (EOF).  This is like
+ * the response for a kernel exception because we don't want the caller
+ * to try to read/write in that case.
  *
  * finish_time = ((time_t) -1) disables the wait limit.
  */
 int
 pqWaitTimed(int forRead, int forWrite, PGconn *conn, time_t finish_time)
 {
-	fd_set		input_mask;
-	fd_set		output_mask;
-	fd_set		except_mask;
-	struct timeval tmp_timeout;
-	struct timeval *ptmp_timeout = NULL;
-	int			selresult;
+	int result;
 
+	result = pqSocketCheck(conn, forRead, forWrite, finish_time);
+
+	if (result < 0)
+		return EOF;				/* errorMessage is already set */
+
+	if (result == 0)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("timeout expired\n"));
+		return EOF;
+	}
+
+	return 0;
+}
+
+/*
+ * Checks a socket, using poll or select, for data to be read, written,
+ * or both.  Returns >0 if one or more conditions are met, 0 if it timed
+ * out, -1 if an error occurred.
+ * If SSL is in use, the SSL buffer is checked prior to checking the socket
+ * for read data directly.
+ */
+static int
+pqSocketCheck(PGconn *conn, int forRead, int forWrite, time_t end_time)
+{
+	int result;
+
+	if (!conn)
+		return -1;
 	if (conn->sock < 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("connection not open\n"));
-		return EOF;
+		                  libpq_gettext("socket not open\n"));
+		return -1;
 	}
 
 /* JAB: Check for SSL library buffering read bytes */
@@ -813,61 +790,113 @@ pqWaitTimed(int forRead, int forWrite, PGconn *conn, time_t finish_time)
 	if (forRead && conn->ssl && SSL_pending(conn->ssl) > 0)
 	{
 		/* short-circuit the select */
-		return 0;
+		return 1;
 	}
 #endif
 
-	if (forRead || forWrite)
+	/* We will retry as long as we get EINTR */
+	do
 	{
-retry5:
-		FD_ZERO(&input_mask);
-		FD_ZERO(&output_mask);
-		FD_ZERO(&except_mask);
-		if (forRead)
-			FD_SET(conn->sock, &input_mask);
-		if (forWrite)
-			FD_SET(conn->sock, &output_mask);
-		FD_SET(conn->sock, &except_mask);
+		result = pqSocketPoll(conn->sock, forRead, forWrite, end_time);
+	}
+	while (result < 0 && SOCK_ERRNO == EINTR);
 
-		if (finish_time != ((time_t) -1))
-		{
-			/*
-			 * Set up delay.  Assume caller incremented finish_time
-			 * so that we can error out as soon as time() passes it.
-			 * Note we will recalculate delay each time through the loop.
-			 */
-			time_t	now = time(NULL);
-
-			if (finish_time > now)
-				tmp_timeout.tv_sec = finish_time - now;
-			else
-				tmp_timeout.tv_sec = 0;
-			tmp_timeout.tv_usec = 0;
-			ptmp_timeout = &tmp_timeout;
-		}
-
-		selresult = select(conn->sock + 1, &input_mask, &output_mask,
-						   &except_mask, ptmp_timeout);
-		if (selresult < 0)
-		{
-			if (SOCK_ERRNO == EINTR)
-				goto retry5;
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("select() failed: %s\n"),
-							  SOCK_STRERROR(SOCK_ERRNO));
-			return EOF;
-		}
-		if (selresult == 0)
-		{
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("timeout expired\n"));
-			return EOF;
-		}
+	if (result < 0)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+		                  libpq_gettext("select() failed: %s\n"),
+		                  SOCK_STRERROR(SOCK_ERRNO));
 	}
 
-	return 0;
+	return result;
 }
 
+
+/*
+ * Check a file descriptor for read and/or write data, possibly waiting.
+ * If neither forRead nor forWrite are set, immediately return a timeout
+ * condition (without waiting).  Return >0 if condition is met, 0
+ * if a timeout occurred, -1 if an error or interrupt occurred.
+ * Timeout is infinite if end_time is -1.  Timeout is immediate (no blocking)
+ * if end_time is 0 (or indeed, any time before now).
+ */
+static int
+pqSocketPoll(int sock, int forRead, int forWrite, time_t end_time)
+{
+	/* We use poll(2) if available, otherwise select(2) */
+#ifdef HAVE_POLL
+	struct pollfd input_fd;
+	int           timeout_ms;
+
+	input_fd.fd      = sock;
+	input_fd.events  = 0;
+	input_fd.revents = 0;
+
+	if (forRead)
+		input_fd.events |= POLLIN;
+	if (forWrite)
+		input_fd.events |= POLLOUT;
+	if (!input_fd.events)
+		return 0;
+
+	/* Compute appropriate timeout interval */
+	if (end_time == ((time_t) -1))
+	{
+		timeout_ms = -1;
+	}
+	else
+	{
+		time_t now = time(NULL);
+
+		if (end_time > now)
+			timeout_ms = (end_time - now) * 1000;
+		else
+			timeout_ms = 0;
+	}
+
+	return poll(&input_fd, 1, timeout_ms);
+
+#else /* !HAVE_POLL */
+
+	fd_set          input_mask;
+	fd_set          output_mask;
+	fd_set          except_mask;
+	struct timeval  timeout;
+	struct timeval *ptr_timeout;
+
+	if (!forRead && !forWrite)
+		return 0;
+
+	FD_ZERO(&input_mask);
+	FD_ZERO(&output_mask);
+	FD_ZERO(&except_mask);
+	if (forRead)
+		FD_SET(sock, &input_mask);
+	if (forWrite)
+		FD_SET(sock, &output_mask);
+	FD_SET(sock, &except_mask);
+
+	/* Compute appropriate timeout interval */
+	if (end_time == ((time_t) -1))
+	{
+		ptr_timeout = NULL;
+	}
+	else
+	{
+		time_t	now = time(NULL);
+
+		if (end_time > now)
+			timeout.tv_sec = end_time - now;
+		else
+			timeout.tv_sec = 0;
+		timeout.tv_usec = 0;
+		ptr_timeout = &timeout;
+	}
+
+	return select(sock + 1, &input_mask, &output_mask,
+				  &except_mask, ptr_timeout);
+#endif /* HAVE_POLL */
+}
 
 
 /*
@@ -902,6 +931,7 @@ PQenv2encoding(void)
 
 
 #ifdef ENABLE_NLS
+
 char *
 libpq_gettext(const char *msgid)
 {
