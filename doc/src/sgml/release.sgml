@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.180 2003/01/23 23:38:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.181 2003/01/25 23:10:27 tgl Exp $
 -->
 
 <appendix id="release">
@@ -24,6 +24,7 @@ CDATA means the content is "SGML-free", so you can write without
 worries about funny characters.
 -->
 <literallayout><![CDATA[
+Explicit JOINs no longer constrain query plan, unless JOIN_COLLAPSE_LIMIT = 1
 Performance of "foo IN (SELECT ...)" queries has been considerably improved
 FETCH 0 now re-fetches cursor's current row, per SQL spec
 Revised executor state representation; plan trees are read-only to executor now

@@ -94,6 +94,9 @@
 #cpu_index_tuple_cost = 0.001	# (same)
 #cpu_operator_cost = 0.0025	# (same)
 
+#from_collapse_limit = 8
+#join_collapse_limit = 8	# 1 disables collapsing of explicit JOINs
+
 #default_statistics_target = 10	# range 1-1000
 
 #

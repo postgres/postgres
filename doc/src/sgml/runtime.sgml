@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.166 2003/01/11 05:04:14 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.167 2003/01/25 23:10:27 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -774,6 +774,19 @@ env PGOPTIONS='-c geqo=off' psql
      </varlistentry>
 
      <varlistentry>
+      <term><varname>FROM_COLLAPSE_LIMIT</varname> (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        The planner will merge sub-queries into upper queries if the resulting
+	FROM list would have no more than this many items.  Smaller values
+	reduce planning time but may yield inferior query plans.
+	The default is 8.  It is usually wise to keep this less than
+	<literal>GEQO_THRESHOLD</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <indexterm>
        <primary>genetic query optimization</primary>
       </indexterm>
@@ -826,12 +839,27 @@ env PGOPTIONS='-c geqo=off' psql
       <listitem>
        <para>
         Use genetic query optimization to plan queries with at least
-        this many <literal>FROM</> items involved. (Note that a
+        this many <literal>FROM</> items involved. (Note that an outer
         <literal>JOIN</> construct counts as only one <literal>FROM</>
         item.) The default is 11. For simpler queries it is usually best
-        to use the deterministic, exhaustive planner. This parameter
-        also controls how hard the optimizer will try to merge subquery
-        <literal>FROM</literal> clauses into the upper query.
+        to use the deterministic, exhaustive planner, but for queries with
+	many tables the deterministic planner takes too long.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>JOIN_COLLAPSE_LIMIT</varname> (<type>integer</type>)</term>
+      <listitem>
+       <para>
+	The planner will flatten explicit inner <literal>JOIN</> constructs
+	into lists of <literal>FROM</> items whenever a list of no more than
+	this many items would result.  Usually this is set the same as
+	<literal>FROM_COLLAPSE_LIMIT</>.  Setting it to 1 prevents any
+	flattening of inner <literal>JOIN</>s, allowing explicit
+	<literal>JOIN</> syntax to be used to control the join order.
+	Intermediate values might be useful to trade off planning time
+	against quality of plan.
        </para>
       </listitem>
      </varlistentry>
@@ -1842,8 +1870,8 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
         server. The default is 64. Each buffer is typically 8192
         bytes. This must be greater than 16, as well as at least twice
         the value of <varname>MAX_CONNECTIONS</varname>; however, a
-        higher value can often improve performance on modern
-        machines. Values of at least a few thousand are recommended
+        higher value can often improve performance.
+	Values of a few thousand are recommended
         for production installations. This option can only be set at
         server start.
        </para>
@@ -1878,15 +1906,17 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       <listitem>
        <para>
 	Specifies the amount of memory to be used by internal sorts and
-	hashes before switching to temporary disk files. The value is
+	hash tables before switching to temporary disk files. The value is
 	specified in kilobytes, and defaults to 1024 kilobytes (1 MB).
-	Note that for a complex query, several sorts might be running in
-	parallel, and each one will be allowed to use as much memory as
-	this value specifies before it starts to put data into temporary
+	Note that for a complex query, several sorts or hashes might be
+	running in parallel; each one will be allowed to use as much memory
+	as this value specifies before it starts to put data into temporary
 	files. Also, each running backend could be doing one or more
 	sorts simultaneously, so the total memory used could be many
 	times the value of <varname>SORT_MEM</varname>. Sorts are used
 	by <literal>ORDER BY</>, merge joins, and <command>CREATE INDEX</>.
+	Hash tables are used in hash joins, hash-based aggregation, and
+	hash-based processing of <literal>IN</> sub-selects.
        </para>
       </listitem>
      </varlistentry>

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.64 2003/01/24 03:58:43 tgl Exp $
+ * $Id: paths.h,v 1.65 2003/01/25 23:10:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,16 +18,11 @@
 #include "nodes/relation.h"
 
 
-/* default GEQO threshold (default value for geqo_rels) */
-/* If you change this, update backend/utils/misc/postgresql.sample.conf */
-#define DEFAULT_GEQO_RELS 11
-
-
 /*
  * allpaths.c
  */
 extern bool enable_geqo;
-extern int	geqo_rels;
+extern int	geqo_threshold;
 
 extern RelOptInfo *make_one_rel(Query *root);
 extern RelOptInfo *make_fromexpr_rel(Query *root, FromExpr *from);

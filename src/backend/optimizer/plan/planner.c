@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.141 2003/01/20 18:54:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.142 2003/01/25 23:10:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,12 +167,6 @@ subquery_planner(Query *parse, double tuple_fraction)
 		pull_up_subqueries(parse, (Node *) parse->jointree, false);
 
 	/*
-	 * If so, we may have created opportunities to simplify the jointree.
-	 */
-	parse->jointree = (FromExpr *)
-		preprocess_jointree(parse, (Node *) parse->jointree);
-
-	/*
 	 * Detect whether any rangetable entries are RTE_JOIN kind; if not,
 	 * we can avoid the expense of doing flatten_join_alias_vars().
 	 * This must be done after we have done pull_up_subqueries, of course.
@@ -245,6 +239,16 @@ subquery_planner(Query *parse, double tuple_fraction)
 				lappend((List *) parse->jointree->quals, havingclause);
 	}
 	parse->havingQual = (Node *) newHaving;
+
+	/*
+	 * See if we can simplify the jointree; opportunities for this may come
+	 * from having pulled up subqueries, or from flattening explicit JOIN
+	 * syntax.  We must do this after flattening JOIN alias variables, since
+	 * eliminating explicit JOIN nodes from the jointree will cause
+	 * get_relids_for_join() to fail.
+	 */
+	parse->jointree = (FromExpr *)
+		preprocess_jointree(parse, (Node *) parse->jointree);
 
 	/*
 	 * Do the main planning.  If we have an inherited target relation,

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.23 2003/01/12 18:42:59 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.24 2003/01/25 23:10:27 tgl Exp $
 -->
 
  <chapter id="performance-tips">
@@ -591,53 +591,93 @@ SELECT * FROM a LEFT JOIN (b JOIN c ON (b.ref = c.id)) ON (a.id = b.id);
   </para>
 
   <para>
-   The <productname>PostgreSQL</productname> query planner treats all
-   explicit <literal>JOIN</> syntaxes as constraining the join order, even though
-   it is not logically necessary to make such a constraint for inner
-   joins.  Therefore, although all of these queries give the same result:
+   Explicit inner join syntax (<literal>INNER JOIN</>, <literal>CROSS
+   JOIN</>, or unadorned <literal>JOIN</>) is semantically the same as
+   listing the input relations in <literal>FROM</>, so it does not need to
+   constrain the join order.  But it is possible to instruct the
+   <productname>PostgreSQL</productname> query planner to treat
+   explicit inner <literal>JOIN</>s as constraining the join order anyway.
+   For example, these three queries are logically equivalent:
 <programlisting>
 SELECT * FROM a, b, c WHERE a.id = b.id AND b.ref = c.id;
 SELECT * FROM a CROSS JOIN b CROSS JOIN c WHERE a.id = b.id AND b.ref = c.id;
 SELECT * FROM a JOIN (b JOIN c ON (b.ref = c.id)) ON (a.id = b.id);
 </programlisting>
+   But if we tell the planner to honor the <literal>JOIN</> order,
    the second and third take less time to plan than the first.  This effect
    is not worth worrying about for only three tables, but it can be a
    lifesaver with many tables.
   </para>
 
   <para>
+   To force the planner to follow the <literal>JOIN</> order for inner joins,
+   set the <varname>JOIN_COLLAPSE_LIMIT</> run-time parameter to 1.
+   (Other possible values are discussed below.)
+  </para>
+
+  <para>
    You do not need to constrain the join order completely in order to
-   cut search time, because it's OK to use <literal>JOIN</> operators in a plain
-   <literal>FROM</> list.  For example,
+   cut search time, because it's OK to use <literal>JOIN</> operators
+   within items of a plain <literal>FROM</> list.  For example, consider
 <programlisting>
 SELECT * FROM a CROSS JOIN b, c, d, e WHERE ...;
 </programlisting>
+   With <varname>JOIN_COLLAPSE_LIMIT</> = 1, this
    forces the planner to join A to B before joining them to other tables,
    but doesn't constrain its choices otherwise.  In this example, the
    number of possible join orders is reduced by a factor of 5.
   </para>
 
   <para>
-   If you have a mix of outer and inner joins in a complex query, you
-   might not want to constrain the planner's search for a good ordering
-   of inner joins inside an outer join.  You can't do that directly in the
-   <literal>JOIN</> syntax, but you can get around the syntactic limitation by using
-   subselects.  For example,
-<programlisting>
-SELECT * FROM d LEFT JOIN
-        (SELECT * FROM a, b, c WHERE ...) AS ss
-        ON (...);
-</programlisting>
-   Here, joining to D must be the last step in the query plan, but the
-   planner is free to consider various join orders for A, B, and C.
-  </para>
-
-  <para>
    Constraining the planner's search in this way is a useful technique
    both for reducing planning time and for directing the planner to a
    good query plan.  If the planner chooses a bad join order by default,
-   you can force it to choose a better order via <literal>JOIN</> syntax --- assuming
-   that you know of a better order, that is.  Experimentation is recommended.
+   you can force it to choose a better order via <literal>JOIN</> syntax
+   --- assuming that you know of a better order, that is.  Experimentation
+   is recommended.
+  </para>
+
+  <para>
+   A closely related issue that affects planning time is collapsing of
+   sub-SELECTs into their parent query.  For example, consider
+<programlisting>
+SELECT *
+FROM x, y,
+     (SELECT * FROM a, b, c WHERE something) AS ss
+WHERE somethingelse
+</programlisting>
+   This situation might arise from use of a view that contains a join;
+   the view's SELECT rule will be inserted in place of the view reference,
+   yielding a query much like the above.  Normally, the planner will try
+   to collapse the sub-query into the parent, yielding
+<programlisting>
+SELECT * FROM x, y, a, b, c WHERE something AND somethingelse
+</programlisting>
+   This usually results in a better plan than planning the sub-query
+   separately.  (For example, the outer WHERE conditions might be such that
+   joining X to A first eliminates many rows of A, thus avoiding the need to
+   form the full logical output of the sub-select.)  But at the same time,
+   we have increased the planning time; here, we have a five-way join
+   problem replacing two separate three-way join problems.  Because of the
+   exponential growth of the number of possibilities, this makes a big
+   difference.  The planner tries to avoid getting stuck in huge join search
+   problems by not collapsing a sub-query if more than
+   <varname>FROM_COLLAPSE_LIMIT</> FROM-items would result in the parent
+   query.  You can trade off planning time against quality of plan by
+   adjusting this run-time parameter up or down.
+  </para>
+
+  <para>
+   <varname>FROM_COLLAPSE_LIMIT</> and <varname>JOIN_COLLAPSE_LIMIT</>
+   are similarly named because they do almost the same thing: one controls
+   when the planner will <quote>flatten out</> sub-SELECTs, and the
+   other controls when it will flatten out explicit inner JOINs.  Typically
+   you would either set <varname>JOIN_COLLAPSE_LIMIT</> equal to
+   <varname>FROM_COLLAPSE_LIMIT</> (so that explicit JOINs and sub-SELECTs
+   act similarly) or set <varname>JOIN_COLLAPSE_LIMIT</> to 1 (if you want
+   to control join order with explicit JOINs).  But you might set them
+   differently if you are trying to fine-tune the tradeoff between planning
+   time and run time.
   </para>
  </sect1>
 

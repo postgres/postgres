@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: prep.h,v 1.34 2003/01/20 18:55:05 tgl Exp $
+ * $Id: prep.h,v 1.35 2003/01/25 23:10:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,9 @@
 /*
  * prototypes for prepjointree.c
  */
+extern int	from_collapse_limit;
+extern int	join_collapse_limit;
+
 extern Node *pull_up_IN_clauses(Query *parse, Node *node);
 extern Node *pull_up_subqueries(Query *parse, Node *jtnode,
 				   bool below_outer_join);

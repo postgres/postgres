@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.94 2003/01/20 18:54:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.95 2003/01/25 23:10:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,8 +30,9 @@
 #include "rewrite/rewriteManip.h"
 
 
-bool		enable_geqo = true;
-int			geqo_rels = DEFAULT_GEQO_RELS;
+/* These parameters are set by GUC */
+bool		enable_geqo = false;	/* just in case GUC doesn't set it */
+int			geqo_threshold;
 
 
 static void set_base_rel_pathlists(Query *root);
@@ -422,7 +423,7 @@ make_fromexpr_rel(Query *root, FromExpr *from)
 		 * Consider the different orders in which we could join the rels,
 		 * using either GEQO or regular optimizer.
 		 */
-		if (enable_geqo && levels_needed >= geqo_rels)
+		if (enable_geqo && levels_needed >= geqo_threshold)
 			return geqo(root, levels_needed, initial_rels);
 		else
 			return make_one_rel_by_joins(root, levels_needed, initial_rels);

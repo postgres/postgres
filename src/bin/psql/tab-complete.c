@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.71 2003/01/10 22:03:30 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.72 2003/01/25 23:10:30 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -252,6 +252,7 @@ psql_completion(char *text, int start, int end)
 		"explain_pretty_print",
 		"extra_float_digits",
 		"fixbtree",
+		"from_collapse_limit",
 		"fsync",
 		"geqo",
 		"geqo_effort",
@@ -260,6 +261,7 @@ psql_completion(char *text, int start, int end)
 		"geqo_random_seed",
 		"geqo_selection_bias",
 		"geqo_threshold",
+		"join_collapse_limit",
 		"log_hostname",
 		"krb_server_keyfile",
 		"lc_messages",

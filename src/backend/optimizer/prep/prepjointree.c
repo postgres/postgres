@@ -9,19 +9,23 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.1 2003/01/20 18:54:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.2 2003/01/25 23:10:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "optimizer/clauses.h"
-#include "optimizer/paths.h"
 #include "optimizer/prep.h"
 #include "optimizer/subselect.h"
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
+
+
+/* These parameters are set by GUC */
+int		from_collapse_limit;
+int		join_collapse_limit;
 
 
 static bool is_simple_subquery(Query *subquery);
@@ -467,7 +471,16 @@ resolvenew_in_jointree(Node *jtnode, int varno, List *subtlist)
  * case we can consider collapsing the two FromExprs into one.	This is
  * an optional conversion, since the planner will work correctly either
  * way.  But we may find a better plan (at the cost of more planning time)
- * if we merge the two nodes.
+ * if we merge the two nodes, creating a single join search space out of
+ * two.  To allow the user to trade off planning time against plan quality,
+ * we provide a control parameter from_collapse_limit that limits the size
+ * of the join search space that can be created this way.
+ *
+ * We also consider flattening explicit inner JOINs into FromExprs (which
+ * will in turn allow them to be merged into parent FromExprs).  The tradeoffs
+ * here are the same as for flattening FromExprs, but we use a different
+ * control parameter so that the user can use explicit JOINs to control the
+ * join order even when they are inner JOINs.
  *
  * NOTE: don't try to do this in the same jointree scan that does subquery
  * pullup!	Since we're changing the jointree structure here, that wouldn't
@@ -492,7 +505,7 @@ preprocess_jointree(Query *parse, Node *jtnode)
 		{
 			Node	   *child = (Node *) lfirst(l);
 
-			/* Recursively simplify the child... */
+			/* Recursively simplify this child... */
 			child = preprocess_jointree(parse, child);
 			/* Now, is it a FromExpr? */
 			if (child && IsA(child, FromExpr))
@@ -500,21 +513,25 @@ preprocess_jointree(Query *parse, Node *jtnode)
 				/*
 				 * Yes, so do we want to merge it into parent?	Always do
 				 * so if child has just one element (since that doesn't
-				 * make the parent's list any longer).  Otherwise we have
-				 * to be careful about the increase in planning time
-				 * caused by combining the two join search spaces into
-				 * one.  Our heuristic is to merge if the merge will
-				 * produce a join list no longer than GEQO_RELS/2.
-				 * (Perhaps need an additional user parameter?)
+				 * make the parent's list any longer).  Otherwise merge if
+				 * the resulting join list would be no longer than
+				 * from_collapse_limit.
 				 */
 				FromExpr   *subf = (FromExpr *) child;
 				int			childlen = length(subf->fromlist);
 				int			myothers = length(newlist) + length(lnext(l));
 
-				if (childlen <= 1 || (childlen + myothers) <= geqo_rels / 2)
+				if (childlen <= 1 ||
+					(childlen + myothers) <= from_collapse_limit)
 				{
 					newlist = nconc(newlist, subf->fromlist);
-					f->quals = make_and_qual(subf->quals, f->quals);
+					/*
+					 * By now, the quals have been converted to implicit-AND
+					 * lists, so we just need to join the lists.  NOTE: we
+					 * put the pulled-up quals first.
+					 */
+					f->quals = (Node *) nconc((List *) subf->quals,
+											  (List *) f->quals);
 				}
 				else
 					newlist = lappend(newlist, child);
@@ -528,9 +545,64 @@ preprocess_jointree(Query *parse, Node *jtnode)
 	{
 		JoinExpr   *j = (JoinExpr *) jtnode;
 
-		/* Can't usefully change the JoinExpr, but recurse on children */
+		/* Recursively simplify the children... */
 		j->larg = preprocess_jointree(parse, j->larg);
 		j->rarg = preprocess_jointree(parse, j->rarg);
+		/*
+		 * If it is an outer join, we must not flatten it.  An inner join
+		 * is semantically equivalent to a FromExpr; we convert it to one,
+		 * allowing it to be flattened into its parent, if the resulting
+		 * FromExpr would have no more than join_collapse_limit members.
+		 */
+		if (j->jointype == JOIN_INNER && join_collapse_limit > 1)
+		{
+			int		leftlen,
+					rightlen;
+
+			if (j->larg && IsA(j->larg, FromExpr))
+				leftlen = length(((FromExpr *) j->larg)->fromlist);
+			else
+				leftlen = 1;
+			if (j->rarg && IsA(j->rarg, FromExpr))
+				rightlen = length(((FromExpr *) j->rarg)->fromlist);
+			else
+				rightlen = 1;
+			if ((leftlen + rightlen) <= join_collapse_limit)
+			{
+				FromExpr   *f = makeNode(FromExpr);
+
+				f->fromlist = NIL;
+				f->quals = NULL;
+
+				if (j->larg && IsA(j->larg, FromExpr))
+				{
+					FromExpr   *subf = (FromExpr *) j->larg;
+
+					f->fromlist = subf->fromlist;
+					f->quals = subf->quals;
+				}
+				else
+					f->fromlist = makeList1(j->larg);
+
+				if (j->rarg && IsA(j->rarg, FromExpr))
+				{
+					FromExpr   *subf = (FromExpr *) j->rarg;
+
+					f->fromlist = nconc(f->fromlist,
+										subf->fromlist);
+					f->quals = (Node *) nconc((List *) f->quals,
+											  (List *) subf->quals);
+				}
+				else
+					f->fromlist = lappend(f->fromlist, j->rarg);
+
+				/* pulled-up quals first */
+				f->quals = (Node *) nconc((List *) f->quals,
+										  (List *) j->quals);
+
+				return (Node *) f;
+			}
+		}
 	}
 	else
 		elog(ERROR, "preprocess_jointree: unexpected node type %d",
@@ -615,6 +687,9 @@ get_relids_in_jointree(Node *jtnode)
 
 /*
  * get_relids_for_join: get list of base RT indexes making up a join
+ *
+ * NB: this will not work reliably after preprocess_jointree() is run,
+ * since that may eliminate join nodes from the jointree.
  */
 List *
 get_relids_for_join(Query *parse, int joinrelid)
