@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.48.2.1 2005/01/21 00:31:21 neilc Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.48.2.2 2005/02/07 03:55:28 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1711,6 +1711,15 @@ read_sql_construct(int until,
 				plpgsql_dstring_append(&ds, yytext);
 				break;
 		}
+
+		/* Check for array overflow */
+		if (nparams >= 1024)
+		{
+			plpgsql_error_lineno = lno;
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("too many variables specified in SQL statement")));
+		}
 	}
 
 	expr = malloc(sizeof(PLpgSQL_expr) + sizeof(int) * nparams - sizeof(int));
@@ -1856,6 +1865,15 @@ make_select_stmt(void)
 
 					while ((tok = yylex()) == ',')
 					{
+						/* Check for array overflow */
+						if (nfields >= 1024)
+						{
+							plpgsql_error_lineno = plpgsql_scanner_lineno();
+							ereport(ERROR,
+									(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+									 errmsg("too many INTO variables specified")));
+						}
+
 						tok = yylex();
 						switch(tok)
 						{
@@ -1917,6 +1935,15 @@ make_select_stmt(void)
 			default:
 				plpgsql_dstring_append(&ds, yytext);
 				break;
+		}
+
+		/* Check for array overflow */
+		if (nparams >= 1024)
+		{
+			plpgsql_error_lineno = plpgsql_scanner_lineno();
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("too many variables specified in SQL statement")));
 		}
 	}
 
@@ -1989,6 +2016,15 @@ make_fetch_stmt(void)
 
 				while ((tok = yylex()) == ',')
 				{
+					/* Check for array overflow */
+					if (nfields >= 1024)
+					{
+						plpgsql_error_lineno = plpgsql_scanner_lineno();
+						ereport(ERROR,
+								(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+								 errmsg("too many INTO variables specified")));
+					}
+
 					tok = yylex();
 					switch(tok)
 					{
