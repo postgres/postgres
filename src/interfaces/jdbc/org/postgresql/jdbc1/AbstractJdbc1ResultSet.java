@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.22.2.3 2004/03/29 17:47:47 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.22.2.4 2004/06/21 03:11:37 jurka Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,6 +138,8 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
  			String cursorName = statement.getFetchingCursorName();
 			if (cursorName == null || lastFetchSize == 0 || rows.size() < lastFetchSize) {
 				current_row = rows.size();
+				this_row = null;
+				rowBuffer = null;
 				return false;  // Not doing a cursor-based fetch or the last fetch was the end of the query
 			}
  
@@ -160,8 +162,11 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
   
   			// Test the new rows array.
  			lastFetchSize = fetchSize;
-  			if (rows.size() == 0)
+  			if (rows.size() == 0) {
+				this_row = null;
+				rowBuffer = null;
   				return false;
+			}
 
 			// Otherwise reset the counter and let it go on...
 			current_row = 0;

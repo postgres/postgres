@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.25.2.7 2004/06/21 02:01:11 jurka Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.25.2.8 2004/06/21 03:11:49 jurka Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -225,6 +225,8 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 			current_row = rows_size;
 
 		onInsertRow = false;
+		this_row = null;
+		rowBuffer = null;
 	}
 
 
@@ -234,6 +236,8 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 			current_row = -1;
 
 		onInsertRow = false;
+		this_row = null;
+		rowBuffer = null;
 	}
 
 
@@ -500,6 +504,8 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 	{
 		if (current_row-1 < 0) {
 			current_row = -1;
+			this_row = null;
+			rowBuffer = null;
 			return false;
 		} else {
 			current_row--;
@@ -1073,6 +1079,10 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 		{
 			throw new PSQLException( "postgresql.updateable.notupdateable" );
 		}
+		if (isBeforeFirst() || isAfterLast())
+		{
+			throw new PSQLException("postgresql.updateable.badupdateposition");
+		}
 
 		if (doingUpdates)
 		{
@@ -1579,6 +1589,10 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 		if ( !isUpdateable() )
 		{
 			throw new PSQLException( "postgresql.updateable.notupdateable" );
+		}
+		if (!onInsertRow && (isBeforeFirst() || isAfterLast()))
+		{
+			throw new PSQLException("postgresql.updateable.badupdateposition");
 		}
 		doingUpdates = !onInsertRow;
 		if (value == null)

@@ -118,6 +118,57 @@ public class UpdateableResultTest extends TestCase
 		st.close();
 	}
 
+	private void checkPositioning(ResultSet rs) throws SQLException
+	{
+		try {
+			rs.getInt(1);
+			fail("Can't use an incorrectly positioned result set.");
+		} catch (SQLException sqle) { }
+
+		try {
+			rs.updateInt(1,2);
+			fail("Can't use an incorrectly positioned result set.");
+		} catch (SQLException sqle) { }
+
+		try {
+			rs.updateRow();
+			fail("Can't use an incorrectly positioned result set.");
+		} catch (SQLException sqle) { }
+
+		try {
+			rs.deleteRow();
+			fail("Can't use an incorrectly positioned result set.");
+		} catch (SQLException sqle) { }
+	}
+
+	public void testPositioning() throws SQLException
+	{
+		Statement stmt = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+		ResultSet rs = stmt.executeQuery("SELECT id1,name1 FROM second");
+
+		checkPositioning(rs);
+
+		assertTrue(rs.next());
+		rs.beforeFirst();
+		checkPositioning(rs);
+
+		rs.afterLast();
+		checkPositioning(rs);
+
+		rs.beforeFirst();
+		assertTrue(rs.next());
+		assertFalse(rs.next());
+		checkPositioning(rs);
+
+		rs.afterLast();
+		assertTrue(rs.previous());
+		assertFalse(rs.previous());
+		checkPositioning(rs);
+
+		rs.close();
+		stmt.close();
+	}
+
 	public void testUpdateStreams() throws SQLException, UnsupportedEncodingException
 	{
 		Statement stmt = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
