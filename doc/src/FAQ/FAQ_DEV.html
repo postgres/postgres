@@ -1,279 +1,304 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<meta name="generator" content=
+"HTML Tidy for BSD/OS (vers 1st July 2002), see www.w3.org">
+<title>PostgreSQL Developers FAQ</title>
+</head>
+<body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink=
+"#A00000" alink="#0000FF">
+<h1>Developer's Frequently Asked Questions (FAQ) for
+PostgreSQL</h1>
 
-<HTML>
-  <HEAD>
-    <META name="generator" content="HTML Tidy, see www.w3.org">
+<p>Last updated: Wed Dec 1 16:11:11 EST 2006</p>
 
-    <TITLE>PostgreSQL Developers FAQ</TITLE>
-  </HEAD>
+<p>Current maintainer: Bruce Momjian (<a href=
+"mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br>
+</p>
 
-  <BODY bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000"
-  alink="#0000FF">
-    <H1>Developer's Frequently Asked Questions (FAQ) for
-    PostgreSQL</H1>
+<p>The most recent version of this document can be viewed at <a
+href=
+"http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html">http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html</a>.</p>
 
-    <P>Last updated: Sat Nov 27 01:02:35 EST 2004</P>
+<hr>
+<br>
+ 
+<center>
+<h2>General Questions</h2>
+</center>
 
-    <P>Current maintainer: Bruce Momjian (<A href=
-    "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
-    </P>
+<a href="#1.1">1.1</a>) How do I get involved in PostgreSQL
+development?<br>
+ <a href="#1.2">1.2</a>) What development environment is required
+to develop code?<br>
+ <a href="#1.3">1.3</a>) What areas need work?<br>
+ <a href="#1.4">1.4</a>) What do I do after choosing an item to
+work on?<br>
+ <a href="#1.5">1.5</a>) Where can I learn more about the code?<br>
+ <a href="#1.6">1.6</a>) I've developed a patch, what next?<br>
+ <a href="#1.7">1.7</a>) How do I download/update the current
+source tree?<br>
+ <a href="#1.8">1.8</a>) How do I test my changes?<br>
+ <a href="#1.9">1.9</a>) What tools are available for
+developers?<br>
+ <a href="#1.10">1.10</a>) What books are good for developers?<br>
+ <a href="#1.11">1.11</a>) What is configure all about?<br>
+ <a href="#1.12">1.12</a>) How do I add a new port?<br>
+ <a href="#1.13">1.13</a>) Why don't you use threads/raw
+devices/async-I/O, &lt;insert your favorite wizz-bang feature
+here&gt;?<br>
+ <a href="#1.14">1.14</a>) How are RPM's packaged?<br>
+ <a href="#1.15">1.15</a>) How are CVS branches handled?<br>
+ <a href="#1.16">1.16</a>) Where can I get a copy of the SQL
+standards?<br>
+ <a href="#1.17">1.17</a>) Where can I get technical
+assistance?<br>
+ <a href="#1.18">1.18</a>) How do I get involved in PostgreSQL web
+site development?<br>
+ 
+<center>
+<h2>Technical Questions</h2>
+</center>
 
-    <P>The most recent version of this document can be viewed at <A href=
-    "http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html">http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html</A>.</P>
+<a href="#2.1">2.1</a>) How do I efficiently access information in
+tables from the backend code?<br>
+ <a href="#2.2">2.2</a>) Why are table, column, type, function,
+view names sometimes referenced as <i>Name</i> or <i>NameData,</i>
+and sometimes as <i>char *?</i><br>
+ <a href="#2.3">2.3</a>) Why do we use <i>Node</i> and <i>List</i>
+to make data structures?<br>
+ <a href="#2.4">2.4</a>) I just added a field to a structure. What
+else should I do?<br>
+ <a href="#2.5">2.5</a>) Why do we use <i>palloc</i>() and
+<i>pfree</i>() to allocate memory?<br>
+ <a href="#2.6">2.6</a>) What is ereport()?<br>
+ <a href="#2.7">2.7</a>) What is CommandCounterIncrement()?<br>
+ <br>
+ 
+<hr>
+<center>
+<h2>General Questions</h2>
+</center>
 
-    <HR>
-    <BR>
-     
+<h3><a name="1.1">1.1</a>) How go I get involved in PostgreSQL
+development?</h3>
 
-    <CENTER>
-      <H2>General Questions</H2>
-    </CENTER>
-     <A href="#1.1">1.1</A>) How do I get involved in PostgreSQL
-    development?<BR>
-     <A href="#1.2">1.2</A>) How do I add a feature or fix a bug?<BR>
-     <A href="#1.3">1.3</A>) How do I download/update the current source
-    tree?<BR>
-     <A href="#1.4">1.4</A>) How do I test my changes?<BR>
-     <A href="#1.5">1.5</A>) What tools are available for developers?<BR>
-     <A href="#1.6">1.6</A>) What books are good for developers?<BR>
-     <A href="#1.7">1.7</A>) What is configure all about?<BR>
-     <A href="#1.8">1.8</A>) How do I add a new port?<BR>
-     <A href="#1.9">1.9</A>) Why don't you use threads/raw
-     devices/async-I/O, &lt;insert your favorite wizz-bang feature 
-     here&gt;?<BR>
-     <A href="#1.10">1.10</A>) How are RPM's packaged?<BR>
-     <A href="#1.11">1.11</A>) How are CVS branches handled?<BR>
-     <A href="#1.12">1.12</A>) Where can I get a copy of the SQL
-     standards?<BR>
-     <A href="#1.13">1.1</A>) How do I get involved in PostgreSQL
-     web site development?<BR>
+<p>Download the code and have a look around. See <a href=
+"#1.7">1.7</a>.</p>
 
-    <CENTER>
-      <H2>Technical Questions</H2>
-    </CENTER>
-     <A href="#2.1">2.1</A>) How do I efficiently access information in
-    tables from the backend code?<BR>
-     <A href="#2.2">2.2</A>) Why are table, column, type, function, view
-    names sometimes referenced as <I>Name</I> or <I>NameData,</I> and
-    sometimes as <I>char *?</I><BR>
-     <A href="#2.3">2.3</A>) Why do we use <I>Node</I> and <I>List</I> to
-    make data structures?<BR>
-     <A href="#2.4">2.4</A>) I just added a field to a structure. What else
-    should I do?<BR>
-     <A href="#2.5">2.5</A>) Why do we use <I>palloc</I>() and
-    <I>pfree</I>() to allocate memory?<BR>
-     <A href="#2.6">2.6</A>) What is ereport()?<BR>
-     <A href="#2.7">2.7</A>) What is CommandCounterIncrement()?<BR>
-     <BR>
-     
-    <HR>
+<p>Subscribe to and read the <a href=
+"http://archives.posrgresql.org/pgsql-hackers">pgsql-hackers</a>
+mailing list (often termed 'hackers'). This is where the major
+contributors and core members of the project discuss
+development.</p>
 
-    <CENTER>
-      <H2>General Questions</H2>
-    </CENTER>
+<h3><a name="1.2">1.2</a>) What development environment is required
+to develop code?</h3>
 
-    <H3><A name="1.1">1.1</A>) How go I get involved in PostgreSQL
-    development?</H3>
+<p>PostgreSQL is developed mostly in the C programming language. It
+also makes use of Yacc and Lex.</p>
 
-    <P>This was written by Lamar Owen:</P>
+<p>The source code is targeted at most of the popular Unix
+platforms and the Windows environment (XP, Windows 2000, and
+up).</p>
 
-    <P>2001-06-22</P>
+<p>Most developers make use of the open source development tool
+chain. If you have contributed to open source software before, you
+will probably be familiar with these tools. They include: GCC (<a
+href="http://gcc.gnu.org">http://gcc.gnu.org</a>, GDB (<a href=
+"http://www.gnu.org/software/gdb/gdb.html">www.gnu.org/software/gdb/gdb.html</a>),
+autoconf (<a href=
+"http://www.gnu.org/software/autoconf/">www.gnu.org/software/autoconf/</a>)
+AND GNU make (<a href=
+"http://www.gnu.org/software/make/make.html">www.gnu.org/software/make/make.html</a>.</p>
 
-    <B>What open source development process is used by the PostgreSQL
-    team?</B>
+<p>Developers using this tool chain on Windows make use of MingW
+(see <a href=
+"http://www.mingw.org/">http://www.mingw.org/</a>).</p>
 
-    <P>Read HACKERS for six months (or a full release cycle, whichever
-    is longer). Really. HACKERS _is_the process. The process is not
-    well documented (AFAIK -- it may be somewhere that I am not aware
-    of) -- and it changes continually.</P>
+<p>Some developers use compilers from other software vendors with
+mixed results.</p>
 
-    <B>What development environment (OS, system, compilers, etc) is
-    required to develop code?</B>
+<p>Developers who are regularly rebuilding the source often pass
+the --enable-depend flag to <i>configure</i>. The result is that
+when you make a modification to a C header file, all files depend
+upon that file are also rebuilt.</p>
 
-    <P><A href="http://developer.postgresql.org">Developers Corner</A> on the
-    website has links to this information. The distribution tarball
-    itself includes all the extra tools and documents that go beyond a
-    good Unix-like development environment. In general, a modern unix
-    with a modern gcc, GNU make or equivalent, autoconf (of a
-    particular version), and good working knowledge of those tools are
-    required.</P>
+<h3><a name="1.3">1.3</a>) What areas need work?</h3>
 
-    <B>What areas need support?</B>
+Outstanding features are detailed in the TODO list. This is located
+in <i>doc/TODO</i> in the source distribution or at <a href=
+"http://developer.postgresql.org/todo.php">http://developer.postgresql.org/todo.php</a>.
 
-    <P>The TODO list.</P>
+<p>You can learn more about these features by consulting the
+archives, the SQL standards and the recommend texts (see <a href=
+"#1.10">1.10</a>).</p>
 
-    <P>You've made the first step, by finding and subscribing to
-    HACKERS. Once you find an area to look at in the TODO, and have
-    read the documentation on the internals, etc, then you check out a
-    current CVS,write what you are going to write (keeping your CVS
-    checkout up to date in the process), and make up a patch (as a
-    context diff only) and send to the PATCHES list, prefereably.</P>
+<h3><a name="1.4">1.4</a>) What do I do after choosing an item to
+work on?</h3>
 
-    <P>Discussion on the patch typically happens here. If the patch
-    adds a major feature, it would be a good idea to talk about it
-    first on the HACKERS list, in order to increase the chances of it
-    being accepted, as well as toavoid duplication of effort. Note that
-    experienced developers with a proven track record usually get the
-    big jobs -- for more than one reason. Also note that PostgreSQL is
-    highly portable -- nonportable code will likely be dismissed out of
-    hand.</P>
+<p>Send an email to pgsql-hackers with a proposal for what you want
+to do (assuming your contribution is not trivial). Working in
+isolation is not advisable: others may be working on the same TODO
+item; you may have misunderstood the TODO item; your approach may
+benefit from the review of others.</p>
 
-    <P>Once your contributions get accepted, things move from there.
-    Typically, you would be added as a developer on the list on the
-    website when one of the other developers recommends it. Membership
-    on the steering committee is by invitation only, by the other
-    steering committee members, from what I have gathered watching
-    froma distance.</P>
+<h3><a name="1.5">1.5</a>) Where can I learn more about the
+code?</h3>
 
-    <P>I make these statements from having watched the process for over
-    two years.</P>
+<p>Other than documentation in the source tree itself, you can find
+some papers/presentations discussing the code at <a href=
+"http://developers.postgresql.org">http://developers.postgresql.org</a>.</p>
 
-    <P>To see a good example of how one goes about this, search the
-    archives for the name 'Tom Lane' and see what his first post
-    consisted of, and where he took things. In particular, note that
-    this hasn't been _that_ long ago -- and his bugfixing and general
-    deep knowledge with this codebase is legendary. Take a few days to
-    read after him. And pay special attention to both the sheer
-    quantity as well as the painstaking quality of his work. Both are
-    in high demand.</P>
+<h3><a name="1.6">1.6</a>) I've developed a patch, what next?</h3>
 
-    <H3><A name="1.2">1.2</A>) How do I add a feature or fix a bug?</H3>
+<p>Generate the patch in contextual diff format. If you are
+unfamiliar with this, you may find the script
+<i>src/tools/makediff/difforig</i> useful.</p>
 
-    <P>The source code is over 350,000 lines. Many fixes/features
-    are isolated to one specific area of the code. Others require
-    knowledge of much of the source. If you are confused about where to
-    start, ask the hackers list, and they will be glad to assess the
-    complexity and give pointers on where to start.</P>
+<p>Ensure that your patch is generated against the most recent
+version of the code. If it is a patch adding new functionality, the
+most recent version is cvs HEAD; if it is a bug fix, this will be
+the most recently version of the branch which suffers from the bug
+(for more on branches in PostgreSQL, see <a href=
+"#1.15">1.15</a>).</p>
 
-    <P>Another thing to keep in mind is that many fixes and features
-    can be added with surprisingly little code. I often start by adding
-    code, then looking at other areas in the code where similar things
-    are done, and by the time I am finished, the patch is quite small
-    and compact.</P>
+<p>Finally, submit the patch to pgsql-patches@postgresql.org. It
+will be reviewed by other contributors to the project and may be
+either accepted or sent back for further work.</p>
 
-    <P>When adding code, keep in mind that it should use the existing
-    facilities in the source, for performance reasons and for
-    simplicity. Often a review of existing code doing similar things is
-    helpful.</P>
+<h3><a name="1.7">1.7</a>) How do I download/update the current
+source tree?</h3>
 
-    <P>The usual process for source additions is:
-    <UL>
-    <LI>Review the TODO list.</LI>
-    <LI>Discuss hackers the desirability of the fix/feature.</LI>
-    <LI>How should it behave in complex circumstances?</LI>
-    <LI>How should it be implemented?</LI>
-    <LI>Submit the patch to the patches list.</LI>
-    <LI>Answer email questions.</LI>
-    <LI>Wait for the patch to be applied.</LI>
-    </UL></P>
-    <H3><A name="1.3">1.3</A>) How do I download/update the current source
-    tree?</H3>
+<p>There are several ways to obtain the source tree. Occasional
+developers can just get the most recent source tree snapshot from
+<a href=
+"ftp://ftp.postgresql.org">ftp://ftp.postgresql.org</a>.</p>
 
-    <P>There are several ways to obtain the source tree. Occasional
-    developers can just get the most recent source tree snapshot from
-    ftp.postgresql.org. For regular developers, you can use CVS. CVS
-    allows you to download the source tree, then occasionally update
-    your copy of the source tree with any new changes. Using CVS, you
-    don't have to download the entire source each time, only the
-    changed files. Anonymous CVS does not allows developers to update
-    the remote source tree, though privileged developers can do this.
-    There is a CVS section (http://developer.postgresql.org/docs/postgres/cvs.html)
-    in our documentation that describes how to use remote CVS. You can
-    also use CVSup, which has similarly functionality, and is available
-    from ftp.postgresql.org.</P>
+<p>Regular developers may want to take advantage of anonymous
+access to our source code management system. The source tree is
+currently hosted in CVS. For details of how to obtain the source
+from CVS see <a href=
+"http://developer.postgresql.org/docs/postgres/cvs.html">http://developer.postgresql.org/docs/postgres/cvs.html</a>.</p>
 
-    <P>To update the source tree, there are two ways. You can generate
-    a patch against your current source tree, perhaps using the
-    make_diff tools mentioned above, and send them to the patches list.
-    They will be reviewed, and applied in a timely manner. If the patch
-    is major, and we are in beta testing, the developers may wait for
-    the final release before applying your patches.</P>
+<h3><a name="1.8">1.8</a>) How do I test my changes?</h3>
 
-    <P>For hard-core developers, Marc(scrappy@postgresql.org) will give
-    you a Unix shell account on postgresql.org, so you can use CVS to
-    update the main source tree, or you can ftp your files into your
-    account, patch, and cvs install the changes directly into the
-    source tree.</P>
+<p><b>Basic system testing</b></p>
 
-    <H3><A name="1.4">1.4</A>) How do I test my changes?</H3>
+<p>The easiest way to test your code is to ensure that it builds
+against the latest verion of the code and that it does not generate
+compiler warnings.</p>
 
-    <P>First, use <I>psql</I> to make sure it is working as you expect.
-    Then run <I>src/test/regress</I> and get the output of
-    <I>src/test/regress/checkresults</I> with and without your changes,
-    to see that your patch does not change the regression test in
-    unexpected ways. This practice has saved me many times. The
-    regression tests test the code in ways I would never do, and has
-    caught many bugs in my patches. By finding the problems now, you
-    save yourself a lot of debugging later when things are broken, and
-    you can't figure out when it happened.</P>
+<p>It is worth advised that you pass --enable-cassert to
+<i>configure</i>. This will turn on assertions with in the source
+which will often show us bugs because they cause data corruption of
+segmentation violations. This generally makes debugging much
+easier.</p>
 
-    <H3><A name="1.5">1.5</A>) What tools are available for
-    developers?</H3>
+<p>Then, perform run time testing via psql.</p>
 
-    <P>Aside from the User documentation mentioned in the regular FAQ,
-    there are several development tools available. First, all the files
-    in the <I>/tools</I> directory are designed for developers.</P>
-<PRE>
+<p><b>Regression test suite</b></p>
+
+<p>The next step is to test your changes against the existing
+regression test suite. To do this, issue "make check" in the root
+directory of the source tree. If any tests failure,
+investigate.</p>
+
+<p>If you've deliberately changed existing behaviour, this change
+may cause a regression test failure but not any actual regression.
+If so, you should also patch the regression test suite.</p>
+
+<p><b>Other run time testing</b></p>
+
+<p>Some developers make use of tools such as valgrind (<a href=
+"http://valgrind.kde.org">http://valgrind.kde.org</a>) for memory
+testing, gprof (which comes with the GNU binutils suite) and
+oprofile (<a href=
+"http://oprofile.sourceforge.net/">http://oprofile.sourceforge.net/</a>)
+for profiling and other related tools.</p>
+
+<p><b>What about unit testing, static analysis, model
+checking...?</b></p>
+
+<p>There have been a number of discussions about other testing
+frameworks and some developers are exploring these ideas.</p>
+
+<h3><a name="1.9">1.9</a>) What tools are available for
+developers?</h3>
+
+<p>First, all the files in the <i>src/tools</i> directory are
+designed for developers.</p>
+
+<pre>
     RELEASE_CHANGES changes we have to make for each release
-    SQL_keywords    standard SQL'92 keywords
     backend         description/flowchart of the backend directories
     ccsym           find standard defines made by your compiler
+     copyright       fixes copyright notices
+
     entab           converts tabs to spaces, used by pgindent
     find_static     finds functions that could be made static
     find_typedef    finds typedefs in the source code
     find_badmacros  finds macros that use braces incorrectly
+    fsync           a script to provide information about the cost of cache
+                     syncing system calls
     make_ctags      make vi 'tags' file in each directory
     make_diff       make *.orig and diffs of source
     make_etags      make emacs 'etags' files
     make_keywords   make comparison of our keywords and SQL'92
     make_mkid       make mkid ID files
-    mkldexport      create AIX exports file
-    pgindent        indents C source files
-    pgjindent       indents Java source files
+    pgcvslog        used to generate a list of changes for each release
     pginclude       scripts for adding/removing include files
-    unused_oids     in pgsql/src/include/catalog
-</PRE>
-    Let me note some of these. If you point your browser at the
-    <I>file:/usr/local/src/pgsql/src/tools/backend/index.html</I>
-    directory, you will see few paragraphs describing the data flow,
-    the backend components in a flow chart, and a description of the
-    shared memory area. You can click on any flowchart box to see a
-    description. If you then click on the directory name, you will be
-    taken to the source directory, to browse the actual source code
-    behind it. We also have several README files in some source
-    directories to describe the function of the module. The browser
-    will display these when you enter the directory also. The
-    <I>tools/backend</I> directory is also contained on our web page
-    under the title <I>How PostgreSQL Processes a Query.</I> 
+    pgindent        indents source files
+    pgtest          a semi-automated build system
+    thread          a thread testing script
+</pre>
 
-    <P>Second, you really should have an editor that can handle tags,
-    so you can tag a function call to see the function definition, and
-    then tag inside that function to see an even lower-level function,
-    and then back out twice to return to the original function. Most
-    editors support this via <I>tags</I> or <I>etags</I> files.</P>
+<p>In <i>src/include/catalog</i>:</p>
 
-    <P>Third, you need to get <I>id-utils</I> from:</P>
-<PRE>
-    <A href=
-"ftp://alpha.gnu.org/gnu/id-utils-3.2d.tar.gz">ftp://alpha.gnu.org/gnu/id-utils-3.2d.tar.gz</A>
-    <A href=
-"ftp://tug.org/gnu/id-utils-3.2d.tar.gz">ftp://tug.org/gnu/id-utils-3.2d.tar.gz</A>
-    <A href=
-"ftp://ftp.enst.fr/pub/gnu/gnits/id-utils-3.2d.tar.gz">ftp://ftp.enst.fr/pub/gnu/gnits/id-utils-3.2d.tar.gz</A>
-</PRE>
-    By running <I>tools/make_mkid</I>, an archive of source symbols can
-    be created that can be rapidly queried like <I>grep</I> or edited.
-    Others prefer <I>glimpse.</I> 
+<pre>
+    unused_oids     a script which generates unused OIDs for use in system
+                     catalogs
+    duplicate_oids  finds duplicate OIDs in system catalog definitions
+</pre>
 
-    <P><I>make_diff</I> has tools to create patch diff files that can
-    be applied to the distribution. This produces context diffs, which
-    is our preferred format.</P>
+If you point your browser at the <i>tools/backend/index.html</i>
+file, you will see few paragraphs describing the data flow, the
+backend components in a flow chart, and a description of the shared
+memory area. You can click on any flowchart box to see a
+description. If you then click on the directory name, you will be
+taken to the source directory, to browse the actual source code
+behind it. We also have several README files in some source
+directories to describe the function of the module. The browser
+will display these when you enter the directory also. The
+<i>tools/backend</i> directory is also contained on our web page
+under the title <i>How PostgreSQL Processes a Query.</i> 
+<p>Second, you really should have an editor that can handle tags,
+so you can tag a function call to see the function definition, and
+then tag inside that function to see an even lower-level function,
+and then back out twice to return to the original function. Most
+editors support this via <i>tags</i> or <i>etags</i> files.</p>
 
-    <P>Our standard format is to indent each code level with one tab,
-    where each tab is four spaces. You will need to set your editor to
-    display tabs as four spaces:<BR>
-    </P>
-<PRE>
+<p>Third, you need to get <i>id-utils</i> from <a href=
+"ftp://ftp.gnu.org/gnu/id-utils/">ftp://ftp.gnu.org/gnu/id-utils/</a></p>
+
+<p>By running <i>tools/make_mkid</i>, an archive of source symbols
+can be created that can be rapidly queried.</p>
+
+<p>Some developers make use of cscope, which can be found at <a
+href="http://cscope.sf.net">http://cscope.sf.net/</a>. Others use
+glimpse, which can be found at <a href=
+"http://webglimpse.net/">http://webglimpse.net/</a>.</p>
+
+<p><i>tools/make_diff</i> has tools to create patch diff files that
+can be applied to the distribution. This produces context diffs,
+which is our preferred format.</p>
+
+<p>Our standard format is to indent each code level with one tab,
+where each tab is four spaces. You will need to set your editor to
+display tabs as four spaces:<br>
+</p>
+
+<pre>
     vi in ~/.exrc:
             set tabstop=4
             set sw=4
@@ -286,26 +311,26 @@
 
         or
 
-	(c-add-style "pgsql"
-		'("bsd"
-			(indent-tabs-mode . t)
-			(c-basic-offset   . 4)
-			(tab-width . 4)
-			(c-offsets-alist .
-				((case-label . +)))
-		)
-		nil ) ; t = set this style, nil = don't
+        (c-add-style "pgsql"
+                '("bsd"
+                        (indent-tabs-mode . t)
+                        (c-basic-offset   . 4)
+                        (tab-width . 4)
+                        (c-offsets-alist .
+                                ((case-label . +)))
+                )
+                nil ) ; t = set this style, nil = don't
 
-	(defun pgsql-c-mode ()
-      		(c-mode)
-		(c-set-style "pgsql")
-	)
+        (defun pgsql-c-mode ()
+                (c-mode)
+                (c-set-style "pgsql")
+        )
 
         and add this to your autoload list (modify file path in macro):
 
-	(setq auto-mode-alist
-		(cons '("\\`/home/andrew/pgsql/.*\\.[chyl]\\'" . pgsql-c-mode)
-		auto-mode-alist))
+        (setq auto-mode-alist
+                (cons '("\\`/home/andrew/pgsql/.*\\.[chyl]\\'" . pgsql-c-mode)
+                auto-mode-alist))
         or
             /*
              * Local variables:
@@ -314,473 +339,498 @@
              *  c-basic-offset: 4
              * End:
              */
-</PRE>
-    <BR>
-     <I>pgindent</I> will the format code by specifying flags to your
-    operating system's utility <I>indent.</I>  This 
-    <A HREF="http://ezine.daemonnews.org/200112/single_coding_style.html">
-    article</A> describes the value of a constent coding style.
+</pre>
 
-    <P><I>pgindent</I> is run on all source files just before each beta
-    test period. It auto-formats all source files to make them
-    consistent. Comment blocks that need specific line breaks should be
-    formatted as <I>block comments,</I> where the comment starts as
-    <CODE>/*------</CODE>. These comments will not be reformatted in
-    any way.</P>
+<br>
+ <i>pgindent</i> will the format code by specifying flags to your
+operating system's utility <i>indent.</i> This <a href=
+"http://ezine.daemonnews.org/200112/single_coding_style.html">article</a>
+describes the value of a consistent coding style. 
+<p><i>pgindent</i> is run on all source files just before each beta
+test period. It auto-formats all source files to make them
+consistent. Comment blocks that need specific line breaks should be
+formatted as <i>block comments,</i> where the comment starts as
+<code>/*------</code>. These comments will not be reformatted in
+any way.</p>
 
-    <P><I>pginclude</I> contains scripts used to add needed
-    <CODE>#include</CODE>'s to include files, and removed unneeded
-    <CODE>#include</CODE>'s.</P>
+<p><i>pginclude</i> contains scripts used to add needed
+<code>#include</code>'s to include files, and removed unneeded
+<code>#include</code>'s.</p>
 
-    <P>When adding system types, you will need to assign oids to them.
-    There is also a script called <I>unused_oids</I> in
-    <I>pgsql/src/include/catalog</I> that shows the unused oids.</P>
+<p>When adding system types, you will need to assign oids to them.
+There is also a script called <i>unused_oids</i> in
+<i>pgsql/src/include/catalog</i> that shows the unused oids.</p>
 
-    <H3><A name="1.6">1.6</A>) What books are good for developers?</H3>
+<h3><a name="1.10">1.10</a>) What books are good for
+developers?</h3>
 
-    <P>I have four good books, <I>An Introduction to Database
-    Systems,</I> by C.J. Date, Addison, Wesley, <I>A Guide to the SQL
-    Standard,</I> by C.J. Date, et. al, Addison, Wesley,
-    <I>Fundamentals of Database Systems,</I> by Elmasri and Navathe,
-    and <I>Transaction Processing,</I> by Jim Gray, Morgan,
-    Kaufmann</P>
+<p>I have four good books, <i>An Introduction to Database
+Systems,</i> by C.J. Date, Addison, Wesley, <i>A Guide to the SQL
+Standard,</i> by C.J. Date, et. al, Addison, Wesley,
+<i>Fundamentals of Database Systems,</i> by Elmasri and Navathe,
+and <i>Transaction Processing,</i> by Jim Gray, Morgan,
+Kaufmann</p>
 
-    <P>There is also a database performance site, with a handbook
-    on-line written by Jim Gray at <A href=
-    "http://www.benchmarkresources.com">http://www.benchmarkresources.com.</A></P>
+<p>There is also a database performance site, with a handbook
+on-line written by Jim Gray at <a href=
+"http://www.benchmarkresources.com">http://www.benchmarkresources.com.</a>.</p>
 
-    <H3><A name="1.7">1.7</A>) What is configure all about?</H3>
+<h3><a name="1.11">1.11</a>) What is configure all about?</h3>
 
-    <P>The files <I>configure</I> and <I>configure.in</I> are part of
-    the GNU <I>autoconf</I> package. Configure allows us to test for
-    various capabilities of the OS, and to set variables that can then
-    be tested in C programs and Makefiles. Autoconf is installed on the
-    PostgreSQL main server. To add options to configure, edit
-    <I>configure.in,</I> and then run <I>autoconf</I> to generate
-    <I>configure.</I></P>
+<p>The files <i>configure</i> and <i>configure.in</i> are part of
+the GNU <i>autoconf</i> package. Configure allows us to test for
+various capabilities of the OS, and to set variables that can then
+be tested in C programs and Makefiles. Autoconf is installed on the
+PostgreSQL main server. To add options to configure, edit
+<i>configure.in,</i> and then run <i>autoconf</i> to generate
+<i>configure.</i></p>
 
-    <P>When <I>configure</I> is run by the user, it tests various OS
-    capabilities, stores those in <I>config.status</I> and
-    <I>config.cache,</I> and modifies a list of <I>*.in</I> files. For
-    example, if there exists a <I>Makefile.in,</I> configure generates
-    a <I>Makefile</I> that contains substitutions for all @var@
-    parameters found by configure.</P>
+<p>When <i>configure</i> is run by the user, it tests various OS
+capabilities, stores those in <i>config.status</i> and
+<i>config.cache,</i> and modifies a list of <i>*.in</i> files. For
+example, if there exists a <i>Makefile.in,</i> configure generates
+a <i>Makefile</i> that contains substitutions for all @var@
+parameters found by configure.</p>
 
-    <P>When you need to edit files, make sure you don't waste time
-    modifying files generated by <I>configure.</I> Edit the <I>*.in</I>
-    file, and re-run <I>configure</I> to recreate the needed file. If
-    you run <I>make distclean</I> from the top-level source directory,
-    all files derived by configure are removed, so you see only the
-    file contained in the source distribution.</P>
+<p>When you need to edit files, make sure you don't waste time
+modifying files generated by <i>configure.</i> Edit the <i>*.in</i>
+file, and re-run <i>configure</i> to recreate the needed file. If
+you run <i>make distclean</i> from the top-level source directory,
+all files derived by configure are removed, so you see only the
+file contained in the source distribution.</p>
 
-    <H3><A name="1.8">1.8</A>) How do I add a new port?</H3>
+<h3><a name="1.12">1.12</a>) How do I add a new port?</h3>
 
-    <P>There are a variety of places that need to be modified to add a
-    new port. First, start in the <I>src/template</I> directory. Add an
-    appropriate entry for your OS. Also, use <I>src/config.guess</I> to
-    add your OS to <I>src/template/.similar.</I> You shouldn't match
-    the OS version exactly. The <I>configure</I> test will look for an
-    exact OS version number, and if not found, find a match without
-    version number. Edit <I>src/configure.in</I> to add your new OS.
-    (See configure item above.) You will need to run autoconf, or patch
-    <I>src/configure</I> too.</P>
+<p>There are a variety of places that need to be modified to add a
+new port. First, start in the <i>src/template</i> directory. Add an
+appropriate entry for your OS. Also, use <i>src/config.guess</i> to
+add your OS to <i>src/template/.similar.</i> You shouldn't match
+the OS version exactly. The <i>configure</i> test will look for an
+exact OS version number, and if not found, find a match without
+version number. Edit <i>src/configure.in</i> to add your new OS.
+(See configure item above.) You will need to run autoconf, or patch
+<i>src/configure</i> too.</p>
 
-    <P>Then, check <I>src/include/port</I> and add your new OS file,
-    with appropriate values. Hopefully, there is already locking code
-    in <I>src/include/storage/s_lock.h</I> for your CPU. There is also
-    a <I>src/makefiles</I> directory for port-specific Makefile
-    handling. There is a <I>backend/port</I> directory if you need
-    special files for your OS.</P>
+<p>Then, check <i>src/include/port</i> and add your new OS file,
+with appropriate values. Hopefully, there is already locking code
+in <i>src/include/storage/s_lock.h</i> for your CPU. There is also
+a <i>src/makefiles</i> directory for port-specific Makefile
+handling. There is a <i>backend/port</i> directory if you need
+special files for your OS.</p>
 
-    <H3><A name="1.9">1.9</A>) Why don't you use threads/raw
-     devices/async-I/O, &lt;insert your favorite wizz-bang feature 
-     here&gt;?</H3>
+<h3><a name="1.13">1.13</a>) Why don't you use threads/raw
+devices/async-I/O, &lt;insert your favorite wizz-bang feature
+here&gt;?</h3>
 
-    <P>There is always a temptation to use the newest operating system
-    features as soon as they arrive.  We resist that temptation.</P>
+<p>There is always a temptation to use the newest operating system
+features as soon as they arrive. We resist that temptation.</p>
 
-    <P>First, we support 15+ operating systems, so any new feature has
-    to be well established before we will consider it. Second, most new
-    <I>wizz-bang</I> features don't provide <I>dramatic</I>
-    improvements. Third, they usually have some downside, such as
-    decreased reliability or additional code required. Therefore, we
-    don't rush to use new features but rather wait for the feature to be
-    established, then ask for testing to show that a measurable
-    improvement is possible.</P>
+<p>First, we support 15+ operating systems, so any new feature has
+to be well established before we will consider it. Second, most new
+<i>wizz-bang</i> features don't provide <i>dramatic</i>
+improvements. Third, they usually have some downside, such as
+decreased reliability or additional code required. Therefore, we
+don't rush to use new features but rather wait for the feature to
+be established, then ask for testing to show that a measurable
+improvement is possible.</p>
 
-    <P>As an example, threads are not currently used in the backend code
-    because:</P>
+<p>As an example, threads are not currently used in the backend
+code because:</p>
 
-    <UL>
-      <LI>Historically, threads were unsupported and buggy.</LI>
+<ul>
+<li>Historically, threads were unsupported and buggy.</li>
 
-      <LI>An error in one backend can corrupt other backends.</LI>
+<li>An error in one backend can corrupt other backends.</li>
 
-      <LI>Speed improvements using threads are small compared to the
-      remaining backend startup time.</LI>
+<li>Speed improvements using threads are small compared to the
+remaining backend startup time.</li>
 
-      <LI>The backend code would be more complex.</LI>
-    </UL>
+<li>The backend code would be more complex.</li>
+</ul>
 
-    <P>So, we are not ignorant of new features.  It is just that
-    we are cautious about their adoption.  The TODO list often
-    contains links to discussions showing our reasoning in
-    these areas.</P>
+<p>So, we are not ignorant of new features. It is just that we are
+cautious about their adoption. The TODO list often contains links
+to discussions showing our reasoning in these areas.</p>
 
-    <H3><A name="1.10">1.10</A>) How are RPM's packaged?</H3>
+<h3><a name="1.14">1.14</a>) How are RPMs packaged?</h3>
 
-    <P>This was written by Lamar Owen:</P>
+<p>This was written by Lamar Owen:</p>
 
-    <P>2001-05-03</P>
+<p>2001-05-03</p>
 
-    <P>As to how the RPMs are built -- to answer that question sanely
-    requires me to know how much experience you have with the whole RPM
-    paradigm. 'How is the RPM built?' is a multifaceted question. The
-    obvious simple answer is that I maintain:</P>
+<p>As to how the RPMs are built -- to answer that question sanely
+requires me to know how much experience you have with the whole RPM
+paradigm. 'How is the RPM built?' is a multifaceted question. The
+obvious simple answer is that I maintain:</p>
 
-    <OL>
-      <LI>A set of patches to make certain portions of the source tree
-      'behave' in the different environment of the RPMset;</LI>
+<ol>
+<li>A set of patches to make certain portions of the source tree
+'behave' in the different environment of the RPMset;</li>
 
-      <LI>The initscript;</LI>
+<li>The initscript;</li>
 
-      <LI>Any other ancilliary scripts and files;</LI>
+<li>Any other ancilliary scripts and files;</li>
 
-      <LI>A README.rpm-dist document that tries to adequately document
-      both the differences between the RPM build and the WHY of the
-      differences, as well as useful RPM environment operations (like,
-      using syslog, upgrading, getting postmaster to start at OS boot,
-      etc);</LI>
+<li>A README.rpm-dist document that tries to adequately document
+both the differences between the RPM build and the WHY of the
+differences, as well as useful RPM environment operations (like,
+using syslog, upgrading, getting postmaster to start at OS boot,
+etc);</li>
 
-      <LI>The spec file that throws it all together. This is not a
-      trivial undertaking in a package of this size.</LI>
-    </OL>
+<li>The spec file that throws it all together. This is not a
+trivial undertaking in a package of this size.</li>
+</ol>
 
-    <P>I then download and build on as many different canonical
-    distributions as I can -- currently I am able to build on Red Hat
-    6.2, 7.0, and 7.1 on my personal hardware. Occasionally I receive
-    opportunity from certain commercial enterprises such as Great
-    Bridge and PostgreSQL, Inc. to build on other distributions.</P>
+<p>I then download and build on as many different canonical
+distributions as I can -- currently I am able to build on Red Hat
+6.2, 7.0, and 7.1 on my personal hardware. Occasionally I receive
+opportunity from certain commercial enterprises such as Great
+Bridge and PostgreSQL, Inc. to build on other distributions.</p>
 
-    <P>I test the build by installing the resulting packages and
-    running the regression tests. Once the build passes these tests, I
-    upload to the postgresql.org ftp server and make a release
-    announcement. I am also responsible for maintaining the RPM
-    download area on the ftp site.</P>
+<p>I test the build by installing the resulting packages and
+running the regression tests. Once the build passes these tests, I
+upload to the postgresql.org ftp server and make a release
+announcement. I am also responsible for maintaining the RPM
+download area on the ftp site.</p>
 
-    <P>You'll notice I said 'canonical' distributions above. That
-    simply means that the machine is as stock 'out of the box' as
-    practical -- that is, everything (except select few programs) on
-    these boxen are installed by RPM; only official Red Hat released
-    RPMs are used (except in unusual circumstances involving software
-    that will not alter the build -- for example, installing a newer
-    non-RedHat version of the Dia diagramming package is OK --
-    installing Python 2.1 on the box that has Python 1.5.2 installed is
-    not, as that alters the PostgreSQL build). The RPM as uploaded is
-    built to as close to out-of-the-box pristine as is possible. Only
-    the standard released 'official to that release' compiler is used
-    -- and only the standard official kernel is used as well.</P>
+<p>You'll notice I said 'canonical' distributions above. That
+simply means that the machine is as stock 'out of the box' as
+practical -- that is, everything (except select few programs) on
+these boxen are installed by RPM; only official Red Hat released
+RPMs are used (except in unusual circumstances involving software
+that will not alter the build -- for example, installing a newer
+non-RedHat version of the Dia diagramming package is OK --
+installing Python 2.1 on the box that has Python 1.5.2 installed is
+not, as that alters the PostgreSQL build). The RPM as uploaded is
+built to as close to out-of-the-box pristine as is possible. Only
+the standard released 'official to that release' compiler is used
+-- and only the standard official kernel is used as well.</p>
 
-    <P>For a time I built on Mandrake for RedHat consumption -- no
-    more. Nonstandard RPM building systems are worse than useless.
-    Which is not to say that Mandrake is useless! By no means is
-    Mandrake useless -- unless you are building Red Hat RPMs -- and Red
-    Hat is useless if you're trying to build Mandrake or SuSE RPMs, for
-    that matter. But I would be foolish to use 'Lamar Owen's Super
-    Special RPM Blend Distro 0.1.2' to build for public consumption!
-    :-)</P>
+<p>For a time I built on Mandrake for RedHat consumption -- no
+more. Nonstandard RPM building systems are worse than useless.
+Which is not to say that Mandrake is useless! By no means is
+Mandrake useless -- unless you are building Red Hat RPMs -- and Red
+Hat is useless if you're trying to build Mandrake or SuSE RPMs, for
+that matter. But I would be foolish to use 'Lamar Owen's Super
+Special RPM Blend Distro 0.1.2' to build for public consumption!
+:-)</p>
 
-    <P>I _do_ attempt to make the _source_ RPM compatible with as many
-    distributions as possible -- however, since I have limited
-    resources (as a volunteer RPM maintainer) I am limited as to the
-    amount of testing said build will get on other distributions,
-    architectures, or systems.</P>
+<p>I _do_ attempt to make the _source_ RPM compatible with as many
+distributions as possible -- however, since I have limited
+resources (as a volunteer RPM maintainer) I am limited as to the
+amount of testing said build will get on other distributions,
+architectures, or systems.</p>
 
-    <P>And, while I understand people's desire to immediately upgrade
-    to the newest version, realize that I do this as a side interest --
-    I have a regular, full-time job as a broadcast
-    engineer/webmaster/sysadmin/Technical Director which occasionally
-    prevents me from making timely RPM releases. This happened during
-    the early part of the 7.1 beta cycle -- but I believe I was pretty
-    much on the ball for the Release Candidates and the final
-    release.</P>
+<p>And, while I understand people's desire to immediately upgrade
+to the newest version, realize that I do this as a side interest --
+I have a regular, full-time job as a broadcast
+engineer/webmaster/sysadmin/Technical Director which occasionally
+prevents me from making timely RPM releases. This happened during
+the early part of the 7.1 beta cycle -- but I believe I was pretty
+much on the ball for the Release Candidates and the final
+release.</p>
 
-    <P>I am working towards a more open RPM distribution -- I would
-    dearly love to more fully document the process and put everything
-    into CVS -- once I figure out how I want to represent things such
-    as the spec file in a CVS form. It makes no sense to maintain a
-    changelog, for instance, in the spec file in CVS when CVS does a
-    better job of changelogs -- I will need to write a tool to generate
-    a real spec file from a CVS spec-source file that would add version
-    numbers, changelog entries, etc to the result before building the
-    RPM. IOW, I need to rethink the process -- and then go through the
-    motions of putting my long RPM history into CVS one version at a
-    time so that version history information isn't lost.</P>
+<p>I am working towards a more open RPM distribution -- I would
+dearly love to more fully document the process and put everything
+into CVS -- once I figure out how I want to represent things such
+as the spec file in a CVS form. It makes no sense to maintain a
+changelog, for instance, in the spec file in CVS when CVS does a
+better job of changelogs -- I will need to write a tool to generate
+a real spec file from a CVS spec-source file that would add version
+numbers, changelog entries, etc to the result before building the
+RPM. IOW, I need to rethink the process -- and then go through the
+motions of putting my long RPM history into CVS one version at a
+time so that version history information isn't lost.</p>
 
-    <P>As to why all these files aren't part of the source tree, well,
-    unless there was a large cry for it to happen, I don't believe it
-    should. PostgreSQL is very platform-agnostic -- and I like that.
-    Including the RPM stuff as part of the Official Tarball (TM) would,
-    IMHO, slant that agnostic stance in a negative way. But maybe I'm
-    too sensitive to that. I'm not opposed to doing that if that is the
-    consensus of the core group -- and that would be a sneaky way to
-    get the stuff into CVS :-). But if the core group isn't thrilled
-    with the idea (and my instinct says they're not likely to be), I am
-    opposed to the idea -- not to keep the stuff to myself, but to not
-    hinder the platform-neutral stance. IMHO, of course.</P>
+<p>As to why all these files aren't part of the source tree, well,
+unless there was a large cry for it to happen, I don't believe it
+should. PostgreSQL is very platform-agnostic -- and I like that.
+Including the RPM stuff as part of the Official Tarball (TM) would,
+IMHO, slant that agnostic stance in a negative way. But maybe I'm
+too sensitive to that. I'm not opposed to doing that if that is the
+consensus of the core group -- and that would be a sneaky way to
+get the stuff into CVS :-). But if the core group isn't thrilled
+with the idea (and my instinct says they're not likely to be), I am
+opposed to the idea -- not to keep the stuff to myself, but to not
+hinder the platform-neutral stance. IMHO, of course.</p>
 
-    <P>Of course, there are many projects that DO include all the files
-    necessary to build RPMs from their Official Tarball (TM).</P>
+<p>Of course, there are many projects that DO include all the files
+necessary to build RPMs from their Official Tarball (TM).</p>
 
-    <H3><A name="1.11">1.11</A>) How are CVS branches managed?</H3>
+<h3><a name="1.15">1.15</a>) How are CVS branches managed?</h3>
 
-    <P>This was written by Tom Lane:</P>
+<p>This was written by Tom Lane:</p>
 
-    <P>2001-05-07</P>
+<p>2001-05-07</p>
 
-    <P>If you just do basic "cvs checkout", "cvs update", "cvs commit",
-    then you'll always be dealing with the HEAD version of the files in
-    CVS. That's what you want for development, but if you need to patch
-    past stable releases then you have to be able to access and update
-    the "branch" portions of our CVS repository. We normally fork off a
-    branch for a stable release just before starting the development
-    cycle for the next release.</P>
+<p>If you just do basic "cvs checkout", "cvs update", "cvs commit",
+then you'll always be dealing with the HEAD version of the files in
+CVS. That's what you want for development, but if you need to patch
+past stable releases then you have to be able to access and update
+the "branch" portions of our CVS repository. We normally fork off a
+branch for a stable release just before starting the development
+cycle for the next release.</p>
 
-    <P>The first thing you have to know is the branch name for the
-    branch you are interested in getting at. To do this, look at some
-    long-lived file, say the top-level HISTORY file, with "cvs status
-    -v" to see what the branch names are. (Thanks to Ian Lance Taylor
-    for pointing out that this is the easiest way to do it.) Typical
-    branch names are:</P>
-<PRE>
+<p>The first thing you have to know is the branch name for the
+branch you are interested in getting at. To do this, look at some
+long-lived file, say the top-level HISTORY file, with "cvs status
+-v" to see what the branch names are. (Thanks to Ian Lance Taylor
+for pointing out that this is the easiest way to do it.) Typical
+branch names are:</p>
+
+<pre>
     REL7_1_STABLE
     REL7_0_PATCHES
     REL6_5_PATCHES
-</PRE>
+</pre>
 
-    <P>OK, so how do you do work on a branch? By far the best way is to
-    create a separate checkout tree for the branch and do your work in
-    that. Not only is that the easiest way to deal with CVS, but you
-    really need to have the whole past tree available anyway to test
-    your work. (And you *better* test your work. Never forget that
-    dot-releases tend to go out with very little beta testing --- so
-    whenever you commit an update to a stable branch, you'd better be
-    doubly sure that it's correct.)</P>
+<p>OK, so how do you do work on a branch? By far the best way is to
+create a separate checkout tree for the branch and do your work in
+that. Not only is that the easiest way to deal with CVS, but you
+really need to have the whole past tree available anyway to test
+your work. (And you *better* test your work. Never forget that
+dot-releases tend to go out with very little beta testing --- so
+whenever you commit an update to a stable branch, you'd better be
+doubly sure that it's correct.)</p>
 
-    <P>Normally, to checkout the head branch, you just cd to the place
-    you want to contain the toplevel "pgsql" directory and say</P>
-<PRE>
+<p>Normally, to checkout the head branch, you just cd to the place
+you want to contain the toplevel "pgsql" directory and say</p>
+
+<pre>
     cvs ... checkout pgsql
-</PRE>
+</pre>
 
-    <P>To get a past branch, you cd to whereever you want it and
-    say</P>
-<PRE>
+<p>To get a past branch, you cd to whereever you want it and
+say</p>
+
+<pre>
     cvs ... checkout -r BRANCHNAME pgsql
-</PRE>
+</pre>
 
-    <P>For example, just a couple days ago I did</P>
-<PRE>
+<p>For example, just a couple days ago I did</p>
+
+<pre>
     mkdir ~postgres/REL7_1
     cd ~postgres/REL7_1
     cvs ... checkout -r REL7_1_STABLE pgsql
-</PRE>
+</pre>
 
-    <P>and now I have a maintenance copy of 7.1.*.</P>
+<p>and now I have a maintenance copy of 7.1.*.</p>
 
-    <P>When you've done a checkout in this way, the branch name is
-    "sticky": CVS automatically knows that this directory tree is for
-    the branch, and whenever you do "cvs update" or "cvs commit" in
-    this tree, you'll fetch or store the latest version in the branch,
-    not the head version. Easy as can be.</P>
+<p>When you've done a checkout in this way, the branch name is
+"sticky": CVS automatically knows that this directory tree is for
+the branch, and whenever you do "cvs update" or "cvs commit" in
+this tree, you'll fetch or store the latest version in the branch,
+not the head version. Easy as can be.</p>
 
-    <P>So, if you have a patch that needs to apply to both the head and
-    a recent stable branch, you have to make the edits and do the
-    commit twice, once in your development tree and once in your stable
-    branch tree. This is kind of a pain, which is why we don't normally
-    fork the tree right away after a major release --- we wait for a
-    dot-release or two, so that we won't have to double-patch the first
-    wave of fixes.</P>
+<p>So, if you have a patch that needs to apply to both the head and
+a recent stable branch, you have to make the edits and do the
+commit twice, once in your development tree and once in your stable
+branch tree. This is kind of a pain, which is why we don't normally
+fork the tree right away after a major release --- we wait for a
+dot-release or two, so that we won't have to double-patch the first
+wave of fixes.</p>
 
-    <H3><A name="1.12">1.12</A>) Where can I get a copy of the SQL
-    standards?</H3>
+<h3><a name="1.16">1.16</a>) Where can I get a copy of the SQL
+standards?</h3>
 
-    <P>There are three versions of the SQL standard:  SQL-92, SQL:1999,
-    and SQL:2003.  They are endorsed by ANSI and ISO.  Draft versions
-    can be downloaded from:
-    <ul>
-    <li> SQL-92 <a
-    href="http://www.contrib.andrew.cmu.edu/~shadow/sql/sql1992.txt">
-    http://www.contrib.andrew.cmu.edu/~shadow/sql/sql1992.txt</a></li>
-    <li> SQL:1999 <a
-    href="http://www.cse.iitb.ac.in/dbms/Data/Papers-Other/SQL1999/ansi-iso-9075-2-1999.pdf">
-    http://www.cse.iitb.ac.in/dbms/Data/Papers-Other/SQL1999/ansi-iso-9075-2-1999.pdf</a></li>
-    <li> SQL:2003 <a
-    href="http://www.wiscorp.com/sql/sql_2003_standard.zip">
-    http://www.wiscorp.com/sql/sql_2003_standard.zip</A></li>
-    </ul>
+<p>There are three versions of the SQL standard: SQL-92, SQL:1999,
+and SQL:2003. They are endorsed by ANSI and ISO. Draft versions can
+be downloaded from:</p>
 
-    <P>Some SQL standards web pages are:
-    <ul>
-    <li><a
-    href="http://troels.arvin.dk/db/rdbms/links/#standards">
-    http://troels.arvin.dk/db/rdbms/links/#standards</a></li>
-    <li><a
-    href="http://www.wiscorp.com/SQLStandards.html">
-    http://www.wiscorp.com/SQLStandards.html</a></li>
-    <li><a
-    href="http://www.contrib.andrew.cmu.edu/~shadow/sql.html#syntax">
-    http://www.contrib.andrew.cmu.edu/~shadow/sql.html#syntax</a> (SQL-92)</li>
-    <li><a
-    href="http://dbs.uni-leipzig.de/en/lokal/standards.pdf">
-    http://dbs.uni-leipzig.de/en/lokal/standards.pdf</a> (paper)</li>
-    </ul>
-    
-    <H3><A name="1.13">1.13</A>) How go I get involved in PostgreSQL
-    web site development?</H3>
+<ul>
+<li>SQL-92 <a href=
+"http://www.contrib.andrew.cmu.edu/~shadow/sql/sql1992.txt">http://www.contrib.andrew.cmu.edu/~shadow/sql/sql1992.txt</a></li>
 
-    <P>PostgreSQL website development is discussed on the
-    pgsql-www@postgresql.org mailing list. The is a project page where
-    the source code is available at <a
-    href="http://gborg.postgresql.org/project/pgweb/projdisplay.php">http://gborg.postgresql.org/project/pgweb/projdisplay.php
-    </a>, the code for the next version of the website is under the "portal"
-    module. You will al so find code for the "techdocs" website if you would
-    like to contribute to that. A temporary todo list for current website
-    development issues is available at <a
-    href="http://xzilla.postgresql.org/todo">http://xzilla.postgresql.org/todo</a></P>
+<li>SQL:1999 <a href=
+"http://www.cse.iitb.ac.in/dbms/Data/Papers-Other/SQL1999/ansi-iso-9075-2-1999.pdf">
+http://www.cse.iitb.ac.in/dbms/Data/Papers-Other/SQL1999/ansi-iso-9075-2-1999.pdf</a></li>
 
-    
-    <CENTER>
-      <H2>Technical Questions</H2>
-    </CENTER>
+<li>SQL:2003 <a href=
+"http://www.wiscorp.com/sql/sql_2003_standard.zip">http://www.wiscorp.com/sql/sql_2003_standard.zip</a></li>
+</ul>
 
-    <H3><A name="2.1">2.1</A>) How do I efficiently access information in
-    tables from the backend code?</H3>
+<p>Some SQL standards web pages are:</p>
 
-    <P>You first need to find the tuples(rows) you are interested in.
-    There are two ways. First, <I>SearchSysCache()</I> and related
-    functions allow you to query the system catalogs. This is the
-    preferred way to access system tables, because the first call to
-    the cache loads the needed rows, and future requests can return the
-    results without accessing the base table. The caches use system
-    table indexes to look up tuples. A list of available caches is
-    located in <I>src/backend/utils/cache/syscache.c.</I>
-    <I>src/backend/utils/cache/lsyscache.c</I> contains many
-    column-specific cache lookup functions.</P>
+<ul>
+<li><a href=
+"http://troels.arvin.dk/db/rdbms/links/#standards">http://troels.arvin.dk/db/rdbms/links/#standards</a></li>
 
-    <P>The rows returned are cache-owned versions of the heap rows.
-    Therefore, you must not modify or delete the tuple returned by
-    <I>SearchSysCache()</I>. What you <I>should</I> do is release it
-    with <I>ReleaseSysCache()</I> when you are done using it; this
-    informs the cache that it can discard that tuple if necessary. If
-    you neglect to call <I>ReleaseSysCache()</I>, then the cache entry
-    will remain locked in the cache until end of transaction, which is
-    tolerable but not very desirable.</P>
+<li><a href=
+"http://www.wiscorp.com/SQLStandards.html">http://www.wiscorp.com/SQLStandards.html</a></li>
 
-    <P>If you can't use the system cache, you will need to retrieve the
-    data directly from the heap table, using the buffer cache that is
-    shared by all backends. The backend automatically takes care of
-    loading the rows into the buffer cache.</P>
+<li><a href=
+"http://www.contrib.andrew.cmu.edu/~shadow/sql.html#syntax">http://www.contrib.andrew.cmu.edu/~shadow/sql.html#syntax</a>
+(SQL-92)</li>
 
-    <P>Open the table with <I>heap_open().</I> You can then start a
-    table scan with <I>heap_beginscan(),</I> then use
-    <I>heap_getnext()</I> and continue as long as
-    <I>HeapTupleIsValid()</I> returns true. Then do a
-    <I>heap_endscan().</I> <I>Keys</I> can be assigned to the
-    <I>scan.</I> No indexes are used, so all rows are going to be
-    compared to the keys, and only the valid rows returned.</P>
+<li><a href=
+"http://dbs.uni-leipzig.de/en/lokal/standards.pdf">http://dbs.uni-leipzig.de/en/lokal/standards.pdf</a>
+(paper)</li>
+</ul>
 
-    <P>You can also use <I>heap_fetch()</I> to fetch rows by block
-    number/offset. While scans automatically lock/unlock rows from the
-    buffer cache, with <I>heap_fetch(),</I> you must pass a
-    <I>Buffer</I> pointer, and <I>ReleaseBuffer()</I> it when
-    completed.</P>
+<h3><a name="1.17">1.17</a>) Where can I get technical
+assistance?</h3>
 
-    <P>Once you have the row, you can get data that is common to all
-    tuples, like <I>t_self</I> and <I>t_oid,</I> by merely accessing
-    the <I>HeapTuple</I> structure entries. If you need a
-    table-specific column, you should take the HeapTuple pointer, and
-    use the <I>GETSTRUCT()</I> macro to access the table-specific start
-    of the tuple. You then cast the pointer as a <I>Form_pg_proc</I>
-    pointer if you are accessing the pg_proc table, or
-    <I>Form_pg_type</I> if you are accessing pg_type. You can then
-    access the columns by using a structure pointer:</P>
-<PRE>
-<CODE>((Form_pg_class) GETSTRUCT(tuple))-&gt;relnatts
-</CODE>
-</PRE>
-    You must not directly change <I>live</I> tuples in this way. The
-    best way is to use <I>heap_modifytuple()</I> and pass it your
-    original tuple, and the values you want changed. It returns a
-    palloc'ed tuple, which you pass to <I>heap_replace().</I> You can
-    delete tuples by passing the tuple's <I>t_self</I> to
-    <I>heap_destroy().</I> You use <I>t_self</I> for
-    <I>heap_update()</I> too. Remember, tuples can be either system
-    cache copies, which may go away after you call
-    <I>ReleaseSysCache()</I>, or read directly from disk buffers, which
-    go away when you <I>heap_getnext()</I>, <I>heap_endscan</I>, or
-    <I>ReleaseBuffer()</I>, in the <I>heap_fetch()</I> case. Or it may
-    be a palloc'ed tuple, that you must <I>pfree()</I> when finished. 
+<p>Many technical questions held by those new to the code have been
+answered on the pgsql-hackers mailing list - the archives of which
+can be found at <a href=
+"http://archives.postgresql.org/pgsql-hackers/">http://archives.postgresql.org/pgsql-hackers/</a>.</p>
 
-    <H3><A name="2.2">2.2</A>) Why are table, column, type, function, view
-    names sometimes referenced as <I>Name</I> or <I>NameData,</I> and
-    sometimes as <I>char *?</I></H3>
+<p>If you cannot find discussion or your particular question, feel
+free to put it to the list.</p>
 
-    <P>Table, column, type, function, and view names are stored in
-    system tables in columns of type <I>Name.</I> Name is a
-    fixed-length, null-terminated type of <I>NAMEDATALEN</I> bytes.
-    (The default value for NAMEDATALEN is 64 bytes.)</P>
-<PRE>
-<CODE>typedef struct nameData
+<p>Major contributors also answer technical questions, including
+questions about development of new features, on IRC at
+irc.freenode.net in the #postgresql channel.</p>
+
+<h3><a name="1.18">1.18</a>) How go I get involved in PostgreSQL
+web site development?</h3>
+
+<p>PostgreSQL website development is discussed on the
+pgsql-www@postgresql.org mailing list. The is a project page where
+the source code is available at <a href=
+"http://gborg.postgresql.org/project/pgweb/projdisplay.php">http://gborg.postgresql.org/project/pgweb/projdisplay.php</a>
+, the code for the next version of the website is under the
+"portal" module. You will al so find code for the "techdocs"
+website if you would like to contribute to that. A temporary todo
+list for current website development issues is available at <a
+href=
+"http://xzilla.postgresql.org/todo">http://xzilla.postgresql.org/todo</a></p>
+
+<center>
+<h2>Technical Questions</h2>
+</center>
+
+<h3><a name="2.1">2.1</a>) How do I efficiently access information
+in tables from the backend code?</h3>
+
+<p>You first need to find the tuples(rows) you are interested in.
+There are two ways. First, <i>SearchSysCache()</i> and related
+functions allow you to query the system catalogs. This is the
+preferred way to access system tables, because the first call to
+the cache loads the needed rows, and future requests can return the
+results without accessing the base table. The caches use system
+table indexes to look up tuples. A list of available caches is
+located in <i>src/backend/utils/cache/syscache.c.</i>
+<i>src/backend/utils/cache/lsyscache.c</i> contains many
+column-specific cache lookup functions.</p>
+
+<p>The rows returned are cache-owned versions of the heap rows.
+Therefore, you must not modify or delete the tuple returned by
+<i>SearchSysCache()</i>. What you <i>should</i> do is release it
+with <i>ReleaseSysCache()</i> when you are done using it; this
+informs the cache that it can discard that tuple if necessary. If
+you neglect to call <i>ReleaseSysCache()</i>, then the cache entry
+will remain locked in the cache until end of transaction, which is
+tolerable but not very desirable.</p>
+
+<p>If you can't use the system cache, you will need to retrieve the
+data directly from the heap table, using the buffer cache that is
+shared by all backends. The backend automatically takes care of
+loading the rows into the buffer cache.</p>
+
+<p>Open the table with <i>heap_open().</i> You can then start a
+table scan with <i>heap_beginscan(),</i> then use
+<i>heap_getnext()</i> and continue as long as
+<i>HeapTupleIsValid()</i> returns true. Then do a
+<i>heap_endscan().</i> <i>Keys</i> can be assigned to the
+<i>scan.</i> No indexes are used, so all rows are going to be
+compared to the keys, and only the valid rows returned.</p>
+
+<p>You can also use <i>heap_fetch()</i> to fetch rows by block
+number/offset. While scans automatically lock/unlock rows from the
+buffer cache, with <i>heap_fetch(),</i> you must pass a
+<i>Buffer</i> pointer, and <i>ReleaseBuffer()</i> it when
+completed.</p>
+
+<p>Once you have the row, you can get data that is common to all
+tuples, like <i>t_self</i> and <i>t_oid,</i> by merely accessing
+the <i>HeapTuple</i> structure entries. If you need a
+table-specific column, you should take the HeapTuple pointer, and
+use the <i>GETSTRUCT()</i> macro to access the table-specific start
+of the tuple. You then cast the pointer as a <i>Form_pg_proc</i>
+pointer if you are accessing the pg_proc table, or
+<i>Form_pg_type</i> if you are accessing pg_type. You can then
+access the columns by using a structure pointer:</p>
+
+<pre>
+<code>((Form_pg_class) GETSTRUCT(tuple))-&gt;relnatts
+</code>
+</pre>
+
+You must not directly change <i>live</i> tuples in this way. The
+best way is to use <i>heap_modifytuple()</i> and pass it your
+original tuple, and the values you want changed. It returns a
+palloc'ed tuple, which you pass to <i>heap_replace().</i> You can
+delete tuples by passing the tuple's <i>t_self</i> to
+<i>heap_destroy().</i> You use <i>t_self</i> for
+<i>heap_update()</i> too. Remember, tuples can be either system
+cache copies, which may go away after you call
+<i>ReleaseSysCache()</i>, or read directly from disk buffers, which
+go away when you <i>heap_getnext()</i>, <i>heap_endscan</i>, or
+<i>ReleaseBuffer()</i>, in the <i>heap_fetch()</i> case. Or it may
+be a palloc'ed tuple, that you must <i>pfree()</i> when finished. 
+<h3><a name="2.2">2.2</a>) Why are table, column, type, function,
+view names sometimes referenced as <i>Name</i> or <i>NameData,</i>
+and sometimes as <i>char *?</i></h3>
+
+<p>Table, column, type, function, and view names are stored in
+system tables in columns of type <i>Name.</i> Name is a
+fixed-length, null-terminated type of <i>NAMEDATALEN</i> bytes.
+(The default value for NAMEDATALEN is 64 bytes.)</p>
+
+<pre>
+<code>typedef struct nameData
     {
         char        data[NAMEDATALEN];
     } NameData;
     typedef NameData *Name;
-</CODE>
-</PRE>
-    Table, column, type, function, and view names that come into the
-    backend via user queries are stored as variable-length,
-    null-terminated character strings. 
+</code>
+</pre>
 
-    <P>Many functions are called with both types of names, ie.
-    <I>heap_open().</I> Because the Name type is null-terminated, it is
-    safe to pass it to a function expecting a char *. Because there are
-    many cases where on-disk names(Name) are compared to user-supplied
-    names(char *), there are many cases where Name and char * are used
-    interchangeably.</P>
+Table, column, type, function, and view names that come into the
+backend via user queries are stored as variable-length,
+null-terminated character strings. 
+<p>Many functions are called with both types of names, ie.
+<i>heap_open().</i> Because the Name type is null-terminated, it is
+safe to pass it to a function expecting a char *. Because there are
+many cases where on-disk names(Name) are compared to user-supplied
+names(char *), there are many cases where Name and char * are used
+interchangeably.</p>
 
-    <H3><A name="2.3">2.3</A>) Why do we use <I>Node</I> and <I>List</I> to
-    make data structures?</H3>
+<h3><a name="2.3">2.3</a>) Why do we use <i>Node</i> and
+<i>List</i> to make data structures?</h3>
 
-    <P>We do this because this allows a consistent way to pass data
-    inside the backend in a flexible way. Every node has a
-    <I>NodeTag</I> which specifies what type of data is inside the
-    Node. <I>Lists</I> are groups of <I>Nodes chained together as a
-    forward-linked list.</I></P>
+<p>We do this because this allows a consistent way to pass data
+inside the backend in a flexible way. Every node has a
+<i>NodeTag</i> which specifies what type of data is inside the
+Node. <i>Lists</i> are groups of <i>Nodes chained together as a
+forward-linked list.</i></p>
 
-    <P>Here are some of the <I>List</I> manipulation commands:</P>
+<p>Here are some of the <i>List</i> manipulation commands:</p>
 
-    <BLOCKQUOTE>
-      <DL>
-        <DT>lfirst(i)</DT>
+<blockquote>
+<dl>
+<dt>lfirst(i), lfirst_int(i), lfirst_oid(i)</dt>
 
-        <DD>return the data at list element <I>i.</I></DD>
+<dd>return the data (a point, inteter and OID respectively) at list
+element <i>i.</i></dd>
 
-        <DT>lnext(i)</DT>
+<dt>lnext(i)</dt>
 
-        <DD>return the next list element after <I>i.</I></DD>
+<dd>return the next list element after <i>i.</i></dd>
 
-        <DT>foreach(i, list)</DT>
+<dt>foreach(i, list)</dt>
 
-        <DD>
-          loop through <I>list,</I> assigning each list element to
-          <I>i.</I> It is important to note that <I>i</I> is a List *,
-          not the data in the <I>List</I> element. You need to use
-          <I>lfirst(i)</I> to get at the data. Here is a typical code
-          snippet that loops through a List containing <I>Var *'s</I>
-          and processes each one: 
-<PRE>
-<CODE>List *i, *list;
+<dd>loop through <i>list,</i> assigning each list element to
+<i>i.</i> It is important to note that <i>i</i> is a List *, not
+the data in the <i>List</i> element. You need to use
+<i>lfirst(i)</i> to get at the data. Here is a typical code snippet
+that loops through a List containing <i>Var *'s</i> and processes
+each one: 
+<pre>
+<code>   List                *list;
+    ListCell    *i;
     
     foreach(i, list)
     {
@@ -788,109 +838,114 @@
 
         /* process var here */
     }
-</CODE>
-</PRE>
-        </DD>
+</code>
+</pre>
+</dd>
 
-        <DT>lcons(node, list)</DT>
+<dt>lcons(node, list)</dt>
 
-        <DD>add <I>node</I> to the front of <I>list,</I> or create a
-        new list with <I>node</I> if <I>list</I> is <I>NIL.</I></DD>
+<dd>add <i>node</i> to the front of <i>list,</i> or create a new
+list with <i>node</i> if <i>list</i> is <i>NIL.</i></dd>
 
-        <DT>lappend(list, node)</DT>
+<dt>lappend(list, node)</dt>
 
-        <DD>add <I>node</I> to the end of <I>list.</I> This is more
-        expensive that lcons.</DD>
+<dd>add <i>node</i> to the end of <i>list.</i> This is more
+expensive that lcons.</dd>
 
-        <DT>nconc(list1, list2)</DT>
+<dt>nconc(list1, list2)</dt>
 
-        <DD>Concat <I>list2</I> on to the end of <I>list1.</I></DD>
+<dd>Concat <i>list2</i> on to the end of <i>list1.</i></dd>
 
-        <DT>length(list)</DT>
+<dt>length(list)</dt>
 
-        <DD>return the length of the <I>list.</I></DD>
+<dd>return the length of the <i>list.</i></dd>
 
-        <DT>nth(i, list)</DT>
+<dt>nth(i, list)</dt>
 
-        <DD>return the <I>i</I>'th element in <I>list.</I></DD>
+<dd>return the <i>i</i>'th element in <i>list.</i></dd>
 
-        <DT>lconsi, ...</DT>
+<dt>lconsi, ...</dt>
 
-        <DD>There are integer versions of these: <I>lconsi, lappendi</I>,
-        etc. Also versions for OID lists: <I>lconso, lappendo</I>, etc.</DD>
-      </DL>
-    </BLOCKQUOTE>
-    You can print nodes easily inside <I>gdb.</I> First, to disable
-    output truncation when you use the gdb <I>print</I> command: 
-<PRE>
-<CODE>(gdb) set print elements 0
-</CODE>
-</PRE>
-    Instead of printing values in gdb format, you can use the next two
-    commands to print out List, Node, and structure contents in a
-    verbose format that is easier to understand. List's are unrolled
-    into nodes, and nodes are printed in detail. The first prints in a
-    short format, and the second in a long format: 
-<PRE>
-<CODE>(gdb) call print(any_pointer)
+<dd>There are integer versions of these: <i>lconsi, lappendi</i>,
+etc. Also versions for OID lists: <i>lconso, lappendo</i>,
+etc.</dd>
+</dl>
+</blockquote>
+
+You can print nodes easily inside <i>gdb.</i> First, to disable
+output truncation when you use the gdb <i>print</i> command: 
+<pre>
+<code>(gdb) set print elements 0
+</code>
+</pre>
+
+Instead of printing values in gdb format, you can use the next two
+commands to print out List, Node, and structure contents in a
+verbose format that is easier to understand. List's are unrolled
+into nodes, and nodes are printed in detail. The first prints in a
+short format, and the second in a long format: 
+<pre>
+<code>(gdb) call print(any_pointer)
     (gdb) call pprint(any_pointer)
-</CODE>
-</PRE>
-    The output appears in the postmaster log file, or on your screen if
-    you are running a backend directly without a postmaster. 
+</code>
+</pre>
 
-    <H3><A name="2.4">2.4</A>) I just added a field to a structure. What
-    else should I do?</H3>
+The output appears in the postmaster log file, or on your screen if
+you are running a backend directly without a postmaster. 
+<h3><a name="2.4">2.4</a>) I just added a field to a structure.
+What else should I do?</h3>
 
-    <P>The structures passing around from the parser, rewrite,
-    optimizer, and executor require quite a bit of support. Most
-    structures have support routines in <I>src/backend/nodes</I> used
-    to create, copy, read, and output those structures. Make sure you
-    add support for your new field to these files. Find any other
-    places the structure may need code for your new field. <I>mkid</I>
-    is helpful with this (see above).</P>
+<p>The structures passing around from the parser, rewrite,
+optimizer, and executor require quite a bit of support. Most
+structures have support routines in <i>src/backend/nodes</i> used
+to create, copy, read, and output those structures (in particular,
+the files <i>copyfuncs.c</i> and <i>equalfuncs.c</i>. Make sure you
+add support for your new field to these files. Find any other
+places the structure may need code for your new field. <i>mkid</i>
+is helpful with this (see <a href="#1.9">1.9</a>).</p>
 
-    <H3><A name="2.5">2.5</A>) Why do we use <I>palloc</I>() and
-    <I>pfree</I>() to allocate memory?</H3>
+<h3><a name="2.5">2.5</a>) Why do we use <i>palloc</i>() and
+<i>pfree</i>() to allocate memory?</h3>
 
-    <P><I>palloc()</I> and <I>pfree()</I> are used in place of malloc()
-    and free() because we find it easier to automatically free all
-    memory allocated when a query completes. This assures us that all
-    memory that was allocated gets freed even if we have lost track of
-    where we allocated it. There are special non-query contexts that
-    memory can be allocated in. These affect when the allocated memory
-    is freed by the backend.</P>
+<p><i>palloc()</i> and <i>pfree()</i> are used in place of malloc()
+and free() because we find it easier to automatically free all
+memory allocated when a query completes. This assures us that all
+memory that was allocated gets freed even if we have lost track of
+where we allocated it. There are special non-query contexts that
+memory can be allocated in. These affect when the allocated memory
+is freed by the backend.</p>
 
-    <H3><A name="2.6">2.6</A>) What is ereport()?</H3>
+<h3><a name="2.6">2.6</a>) What is ereport()?</h3>
 
-    <P><I>ereport()</I> is used to send messages to the front-end, and
-    optionally terminate the current query being processed. The first
-    parameter is an ereport level of <I>DEBUG</I> (levels 1-5), <I>LOG,</I>
-    <I>INFO,</I> <I>NOTICE,</I> <I>ERROR,</I> <I>FATAL,</I> or
-    <I>PANIC.</I> <I>NOTICE</I> prints on the user's terminal and the
-    postmaster logs. <I>INFO</I> prints only to the user's terminal and
-    <I>LOG</I> prints only to the server logs. (These can be changed
-    from <I>postgresql.conf.</I>) <I>ERROR</I> prints in both places,
-    and terminates the current query, never returning from the call.
-    <I>FATAL</I> terminates the backend process. The remaining
-    parameters of <I>ereport</I> are a <I>printf</I>-style set of
-    parameters to print.</P>
+<p><i>ereport()</i> is used to send messages to the front-end, and
+optionally terminate the current query being processed. The first
+parameter is an ereport level of <i>DEBUG</i> (levels 1-5),
+<i>LOG,</i> <i>INFO,</i> <i>NOTICE,</i> <i>ERROR,</i> <i>FATAL,</i>
+or <i>PANIC.</i> <i>NOTICE</i> prints on the user's terminal and
+the postmaster logs. <i>INFO</i> prints only to the user's terminal
+and <i>LOG</i> prints only to the server logs. (These can be
+changed from <i>postgresql.conf.</i>) <i>ERROR</i> prints in both
+places, and terminates the current query, never returning from the
+call. <i>FATAL</i> terminates the backend process. The remaining
+parameters of <i>ereport</i> are a <i>printf</i>-style set of
+parameters to print.</p>
 
-    <P><I>ereport(ERROR)</I> frees most memory and open file descriptors so
-    you don't need to clean these up before the call.</P>
+<p><i>ereport(ERROR)</i> frees most memory and open file
+descriptors so you don't need to clean these up before the
+call.</p>
 
-    <H3><A name="2.7">2.7</A>) What is CommandCounterIncrement()?</H3>
+<h3><a name="2.7">2.7</a>) What is CommandCounterIncrement()?</h3>
 
-    <P>Normally, transactions can not see the rows they modify. This
-    allows <CODE>UPDATE foo SET x = x + 1</CODE> to work correctly.</P>
+<p>Normally, transactions can not see the rows they modify. This
+allows <code>UPDATE foo SET x = x + 1</code> to work correctly.</p>
 
-    <P>However, there are cases where a transactions needs to see rows
-    affected in previous parts of the transaction. This is accomplished
-    using a Command Counter. Incrementing the counter allows
-    transactions to be broken into pieces so each piece can see rows
-    modified by previous pieces. <I>CommandCounterIncrement()</I>
-    increments the Command Counter, creating a new part of the
-    transaction.</P>
+<p>However, there are cases where a transactions needs to see rows
+affected in previous parts of the transaction. This is accomplished
+using a Command Counter. Incrementing the counter allows
+transactions to be broken into pieces so each piece can see rows
+modified by previous pieces. <i>CommandCounterIncrement()</i>
+increments the Command Counter, creating a new part of the
+transaction.</p>
+</body>
+</html>
 
-  </BODY>
-</HTML>

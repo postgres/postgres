@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Nov 27 01:02:35 EST 2004
+   Last updated: Wed Dec 1 16:11:11 EST 2006
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -12,19 +12,24 @@
                              General Questions
                                       
    1.1) How do I get involved in PostgreSQL development?
-   1.2) How do I add a feature or fix a bug?
-   1.3) How do I download/update the current source tree?
-   1.4) How do I test my changes?
-   1.5) What tools are available for developers?
-   1.6) What books are good for developers?
-   1.7) What is configure all about?
-   1.8) How do I add a new port?
-   1.9) Why don't you use threads/raw devices/async-I/O, <insert your
+   1.2) What development environment is required to develop code?
+   1.3) What areas need work?
+   1.4) What do I do after choosing an item to work on?
+   1.5) Where can I learn more about the code?
+   1.6) I've developed a patch, what next?
+   1.7) How do I download/update the current source tree?
+   1.8) How do I test my changes?
+   1.9) What tools are available for developers?
+   1.10) What books are good for developers?
+   1.11) What is configure all about?
+   1.12) How do I add a new port?
+   1.13) Why don't you use threads/raw devices/async-I/O, <insert your
    favorite wizz-bang feature here>?
-   1.10) How are RPM's packaged?
-   1.11) How are CVS branches handled?
-   1.12) Where can I get a copy of the SQL standards?
-   1.1) How do I get involved in PostgreSQL web site development?
+   1.14) How are RPM's packaged?
+   1.15) How are CVS branches handled?
+   1.16) Where can I get a copy of the SQL standards?
+   1.17) Where can I get technical assistance?
+   1.18) How do I get involved in PostgreSQL web site development?
    
                             Technical Questions
                                       
@@ -43,150 +48,157 @@
                                       
   1.1) How go I get involved in PostgreSQL development?
   
-   This was written by Lamar Owen:
+   Download the code and have a look around. See 1.7.
    
-   2001-06-22
-   What open source development process is used by the PostgreSQL team?
+   Subscribe to and read the pgsql-hackers mailing list (often termed
+   'hackers'). This is where the major contributors and core members of
+   the project discuss development.
    
-   Read HACKERS for six months (or a full release cycle, whichever is
-   longer). Really. HACKERS _is_the process. The process is not well
-   documented (AFAIK -- it may be somewhere that I am not aware of) --
-   and it changes continually.
-   What development environment (OS, system, compilers, etc) is required
-   to develop code?
-   
-   Developers Corner on the website has links to this information. The
-   distribution tarball itself includes all the extra tools and documents
-   that go beyond a good Unix-like development environment. In general, a
-   modern unix with a modern gcc, GNU make or equivalent, autoconf (of a
-   particular version), and good working knowledge of those tools are
-   required.
-   What areas need support?
-   
-   The TODO list.
-   
-   You've made the first step, by finding and subscribing to HACKERS.
-   Once you find an area to look at in the TODO, and have read the
-   documentation on the internals, etc, then you check out a current
-   CVS,write what you are going to write (keeping your CVS checkout up to
-   date in the process), and make up a patch (as a context diff only) and
-   send to the PATCHES list, prefereably.
-   
-   Discussion on the patch typically happens here. If the patch adds a
-   major feature, it would be a good idea to talk about it first on the
-   HACKERS list, in order to increase the chances of it being accepted,
-   as well as toavoid duplication of effort. Note that experienced
-   developers with a proven track record usually get the big jobs -- for
-   more than one reason. Also note that PostgreSQL is highly portable --
-   nonportable code will likely be dismissed out of hand.
-   
-   Once your contributions get accepted, things move from there.
-   Typically, you would be added as a developer on the list on the
-   website when one of the other developers recommends it. Membership on
-   the steering committee is by invitation only, by the other steering
-   committee members, from what I have gathered watching froma distance.
-   
-   I make these statements from having watched the process for over two
-   years.
-   
-   To see a good example of how one goes about this, search the archives
-   for the name 'Tom Lane' and see what his first post consisted of, and
-   where he took things. In particular, note that this hasn't been _that_
-   long ago -- and his bugfixing and general deep knowledge with this
-   codebase is legendary. Take a few days to read after him. And pay
-   special attention to both the sheer quantity as well as the
-   painstaking quality of his work. Both are in high demand.
-   
-  1.2) How do I add a feature or fix a bug?
+  1.2) What development environment is required to develop code?
   
-   The source code is over 350,000 lines. Many fixes/features are
-   isolated to one specific area of the code. Others require knowledge of
-   much of the source. If you are confused about where to start, ask the
-   hackers list, and they will be glad to assess the complexity and give
-   pointers on where to start.
+   PostgreSQL is developed mostly in the C programming language. It also
+   makes use of Yacc and Lex.
    
-   Another thing to keep in mind is that many fixes and features can be
-   added with surprisingly little code. I often start by adding code,
-   then looking at other areas in the code where similar things are done,
-   and by the time I am finished, the patch is quite small and compact.
+   The source code is targeted at most of the popular Unix platforms and
+   the Windows environment (XP, Windows 2000, and up).
    
-   When adding code, keep in mind that it should use the existing
-   facilities in the source, for performance reasons and for simplicity.
-   Often a review of existing code doing similar things is helpful.
+   Most developers make use of the open source development tool chain. If
+   you have contributed to open source software before, you will probably
+   be familiar with these tools. They include: GCC (http://gcc.gnu.org,
+   GDB (www.gnu.org/software/gdb/gdb.html), autoconf
+   (www.gnu.org/software/autoconf/) AND GNU make
+   (www.gnu.org/software/make/make.html.
    
-   The usual process for source additions is:
-     * Review the TODO list.
-     * Discuss hackers the desirability of the fix/feature.
-     * How should it behave in complex circumstances?
-     * How should it be implemented?
-     * Submit the patch to the patches list.
-     * Answer email questions.
-     * Wait for the patch to be applied.
-       
-  1.3) How do I download/update the current source tree?
+   Developers using this tool chain on Windows make use of MingW (see
+   http://www.mingw.org/).
+   
+   Some developers use compilers from other software vendors with mixed
+   results.
+   
+   Developers who are regularly rebuilding the source often pass the
+   --enable-depend flag to configure. The result is that when you make a
+   modification to a C header file, all files depend upon that file are
+   also rebuilt.
+   
+  1.3) What areas need work?
+  
+   Outstanding features are detailed in the TODO list. This is located in
+   doc/TODO in the source distribution or at
+   http://developer.postgresql.org/todo.php.
+   
+   You can learn more about these features by consulting the archives,
+   the SQL standards and the recommend texts (see 1.10).
+   
+  1.4) What do I do after choosing an item to work on?
+  
+   Send an email to pgsql-hackers with a proposal for what you want to do
+   (assuming your contribution is not trivial). Working in isolation is
+   not advisable: others may be working on the same TODO item; you may
+   have misunderstood the TODO item; your approach may benefit from the
+   review of others.
+   
+  1.5) Where can I learn more about the code?
+  
+   Other than documentation in the source tree itself, you can find some
+   papers/presentations discussing the code at
+   http://developers.postgresql.org.
+   
+  1.6) I've developed a patch, what next?
+  
+   Generate the patch in contextual diff format. If you are unfamiliar
+   with this, you may find the script src/tools/makediff/difforig useful.
+   
+   Ensure that your patch is generated against the most recent version of
+   the code. If it is a patch adding new functionality, the most recent
+   version is cvs HEAD; if it is a bug fix, this will be the most
+   recently version of the branch which suffers from the bug (for more on
+   branches in PostgreSQL, see 1.15).
+   
+   Finally, submit the patch to pgsql-patches@postgresql.org. It will be
+   reviewed by other contributors to the project and may be either
+   accepted or sent back for further work.
+   
+  1.7) How do I download/update the current source tree?
   
    There are several ways to obtain the source tree. Occasional
    developers can just get the most recent source tree snapshot from
-   ftp.postgresql.org. For regular developers, you can use CVS. CVS
-   allows you to download the source tree, then occasionally update your
-   copy of the source tree with any new changes. Using CVS, you don't
-   have to download the entire source each time, only the changed files.
-   Anonymous CVS does not allows developers to update the remote source
-   tree, though privileged developers can do this. There is a CVS section
-   (http://developer.postgresql.org/docs/postgres/cvs.html) in our
-   documentation that describes how to use remote CVS. You can also use
-   CVSup, which has similarly functionality, and is available from
-   ftp.postgresql.org.
+   ftp://ftp.postgresql.org.
    
-   To update the source tree, there are two ways. You can generate a
-   patch against your current source tree, perhaps using the make_diff
-   tools mentioned above, and send them to the patches list. They will be
-   reviewed, and applied in a timely manner. If the patch is major, and
-   we are in beta testing, the developers may wait for the final release
-   before applying your patches.
+   Regular developers may want to take advantage of anonymous access to
+   our source code management system. The source tree is currently hosted
+   in CVS. For details of how to obtain the source from CVS see
+   http://developer.postgresql.org/docs/postgres/cvs.html.
    
-   For hard-core developers, Marc(scrappy@postgresql.org) will give you a
-   Unix shell account on postgresql.org, so you can use CVS to update the
-   main source tree, or you can ftp your files into your account, patch,
-   and cvs install the changes directly into the source tree.
-   
-  1.4) How do I test my changes?
+  1.8) How do I test my changes?
   
-   First, use psql to make sure it is working as you expect. Then run
-   src/test/regress and get the output of src/test/regress/checkresults
-   with and without your changes, to see that your patch does not change
-   the regression test in unexpected ways. This practice has saved me
-   many times. The regression tests test the code in ways I would never
-   do, and has caught many bugs in my patches. By finding the problems
-   now, you save yourself a lot of debugging later when things are
-   broken, and you can't figure out when it happened.
+   Basic system testing
    
-  1.5) What tools are available for developers?
+   The easiest way to test your code is to ensure that it builds against
+   the latest verion of the code and that it does not generate compiler
+   warnings.
+   
+   It is worth advised that you pass --enable-cassert to configure. This
+   will turn on assertions with in the source which will often show us
+   bugs because they cause data corruption of segmentation violations.
+   This generally makes debugging much easier.
+   
+   Then, perform run time testing via psql.
+   
+   Regression test suite
+   
+   The next step is to test your changes against the existing regression
+   test suite. To do this, issue "make check" in the root directory of
+   the source tree. If any tests failure, investigate.
+   
+   If you've deliberately changed existing behaviour, this change may
+   cause a regression test failure but not any actual regression. If so,
+   you should also patch the regression test suite.
+   
+   Other run time testing
+   
+   Some developers make use of tools such as valgrind
+   (http://valgrind.kde.org) for memory testing, gprof (which comes with
+   the GNU binutils suite) and oprofile
+   (http://oprofile.sourceforge.net/) for profiling and other related
+   tools.
+   
+   What about unit testing, static analysis, model checking...?
+   
+   There have been a number of discussions about other testing frameworks
+   and some developers are exploring these ideas.
+   
+  1.9) What tools are available for developers?
   
-   Aside from the User documentation mentioned in the regular FAQ, there
-   are several development tools available. First, all the files in the
-   /tools directory are designed for developers.
+   First, all the files in the src/tools directory are designed for
+   developers.
     RELEASE_CHANGES changes we have to make for each release
-    SQL_keywords    standard SQL'92 keywords
     backend         description/flowchart of the backend directories
     ccsym           find standard defines made by your compiler
+     copyright       fixes copyright notices
+
     entab           converts tabs to spaces, used by pgindent
     find_static     finds functions that could be made static
     find_typedef    finds typedefs in the source code
     find_badmacros  finds macros that use braces incorrectly
+    fsync           a script to provide information about the cost of cache
+                     syncing system calls
     make_ctags      make vi 'tags' file in each directory
     make_diff       make *.orig and diffs of source
     make_etags      make emacs 'etags' files
     make_keywords   make comparison of our keywords and SQL'92
     make_mkid       make mkid ID files
-    mkldexport      create AIX exports file
-    pgindent        indents C source files
-    pgjindent       indents Java source files
+    pgcvslog        used to generate a list of changes for each release
     pginclude       scripts for adding/removing include files
-    unused_oids     in pgsql/src/include/catalog
+    pgindent        indents source files
+    pgtest          a semi-automated build system
+    thread          a thread testing script
 
-   Let me note some of these. If you point your browser at the
-   file:/usr/local/src/pgsql/src/tools/backend/index.html directory, you
+   In src/include/catalog:
+    unused_oids     a script which generates unused OIDs for use in system
+                     catalogs
+    duplicate_oids  finds duplicate OIDs in system catalog definitions
+
+   If you point your browser at the tools/backend/index.html file, you
    will see few paragraphs describing the data flow, the backend
    components in a flow chart, and a description of the shared memory
    area. You can click on any flowchart box to see a description. If you
@@ -203,18 +215,18 @@
    back out twice to return to the original function. Most editors
    support this via tags or etags files.
    
-   Third, you need to get id-utils from:
-    ftp://alpha.gnu.org/gnu/id-utils-3.2d.tar.gz
-    ftp://tug.org/gnu/id-utils-3.2d.tar.gz
-    ftp://ftp.enst.fr/pub/gnu/gnits/id-utils-3.2d.tar.gz
-
-   By running tools/make_mkid, an archive of source symbols can be
-   created that can be rapidly queried like grep or edited. Others prefer
-   glimpse.
+   Third, you need to get id-utils from ftp://ftp.gnu.org/gnu/id-utils/
    
-   make_diff has tools to create patch diff files that can be applied to
-   the distribution. This produces context diffs, which is our preferred
-   format.
+   By running tools/make_mkid, an archive of source symbols can be
+   created that can be rapidly queried.
+   
+   Some developers make use of cscope, which can be found at
+   http://cscope.sf.net/. Others use glimpse, which can be found at
+   http://webglimpse.net/.
+   
+   tools/make_diff has tools to create patch diff files that can be
+   applied to the distribution. This produces context diffs, which is our
+   preferred format.
    
    Our standard format is to indent each code level with one tab, where
    each tab is four spaces. You will need to set your editor to display
@@ -262,7 +274,7 @@
 
    pgindent will the format code by specifying flags to your operating
    system's utility indent. This article describes the value of a
-   constent coding style.
+   consistent coding style.
    
    pgindent is run on all source files just before each beta test period.
    It auto-formats all source files to make them consistent. Comment
@@ -277,7 +289,7 @@
    is also a script called unused_oids in pgsql/src/include/catalog that
    shows the unused oids.
    
-  1.6) What books are good for developers?
+  1.10) What books are good for developers?
   
    I have four good books, An Introduction to Database Systems, by C.J.
    Date, Addison, Wesley, A Guide to the SQL Standard, by C.J. Date, et.
@@ -285,9 +297,9 @@
    Navathe, and Transaction Processing, by Jim Gray, Morgan, Kaufmann
    
    There is also a database performance site, with a handbook on-line
-   written by Jim Gray at http://www.benchmarkresources.com.
+   written by Jim Gray at http://www.benchmarkresources.com..
    
-  1.7) What is configure all about?
+  1.11) What is configure all about?
   
    The files configure and configure.in are part of the GNU autoconf
    package. Configure allows us to test for various capabilities of the
@@ -309,7 +321,7 @@
    removed, so you see only the file contained in the source
    distribution.
    
-  1.8) How do I add a new port?
+  1.12) How do I add a new port?
   
    There are a variety of places that need to be modified to add a new
    port. First, start in the src/template directory. Add an appropriate
@@ -326,7 +338,7 @@
    src/makefiles directory for port-specific Makefile handling. There is
    a backend/port directory if you need special files for your OS.
    
-  1.9) Why don't you use threads/raw devices/async-I/O, <insert your favorite
+  1.13) Why don't you use threads/raw devices/async-I/O, <insert your favorite
   wizz-bang feature here>?
   
    There is always a temptation to use the newest operating system
@@ -352,7 +364,7 @@
    cautious about their adoption. The TODO list often contains links to
    discussions showing our reasoning in these areas.
    
-  1.10) How are RPM's packaged?
+  1.14) How are RPMs packaged?
   
    This was written by Lamar Owen:
    
@@ -447,7 +459,7 @@
    Of course, there are many projects that DO include all the files
    necessary to build RPMs from their Official Tarball (TM).
    
-  1.11) How are CVS branches managed?
+  1.15) How are CVS branches managed?
   
    This was written by Tom Lane:
    
@@ -506,7 +518,7 @@
    tree right away after a major release --- we wait for a dot-release or
    two, so that we won't have to double-patch the first wave of fixes.
    
-  1.12) Where can I get a copy of the SQL standards?
+  1.16) Where can I get a copy of the SQL standards?
   
    There are three versions of the SQL standard: SQL-92, SQL:1999, and
    SQL:2003. They are endorsed by ANSI and ISO. Draft versions can be
@@ -523,7 +535,20 @@
      * http://www.contrib.andrew.cmu.edu/~shadow/sql.html#syntax (SQL-92)
      * http://dbs.uni-leipzig.de/en/lokal/standards.pdf (paper)
        
-  1.13) How go I get involved in PostgreSQL web site development?
+  1.17) Where can I get technical assistance?
+  
+   Many technical questions held by those new to the code have been
+   answered on the pgsql-hackers mailing list - the archives of which can
+   be found at http://archives.postgresql.org/pgsql-hackers/.
+   
+   If you cannot find discussion or your particular question, feel free
+   to put it to the list.
+   
+   Major contributors also answer technical questions, including
+   questions about development of new features, on IRC at
+   irc.freenode.net in the #postgresql channel.
+   
+  1.18) How go I get involved in PostgreSQL web site development?
   
    PostgreSQL website development is discussed on the
    pgsql-www@postgresql.org mailing list. The is a project page where the
@@ -627,8 +652,9 @@ typedef struct nameData
    
    Here are some of the List manipulation commands:
    
-   lfirst(i)
-          return the data at list element i.
+   lfirst(i), lfirst_int(i), lfirst_oid(i)
+          return the data (a point, inteter and OID respectively) at list
+          element i.
           
    lnext(i)
           return the next list element after i.
@@ -640,7 +666,8 @@ typedef struct nameData
           a typical code snippet that loops through a List containing Var
           *'s and processes each one:
           
-List *i, *list;
+   List                *list;
+    ListCell    *i;
 
     foreach(i, list)
     {
@@ -689,9 +716,10 @@ List *i, *list;
    The structures passing around from the parser, rewrite, optimizer, and
    executor require quite a bit of support. Most structures have support
    routines in src/backend/nodes used to create, copy, read, and output
-   those structures. Make sure you add support for your new field to
-   these files. Find any other places the structure may need code for
-   your new field. mkid is helpful with this (see above).
+   those structures (in particular, the files copyfuncs.c and
+   equalfuncs.c. Make sure you add support for your new field to these
+   files. Find any other places the structure may need code for your new
+   field. mkid is helpful with this (see 1.9).
    
   2.5) Why do we use palloc() and pfree() to allocate memory?
   
