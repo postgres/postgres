@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.18 1999/02/15 01:06:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.19 1999/05/16 19:45:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ set_clause_selectivities(List *restrictinfo_list, Cost new_selectivity)
 	{
 		clausenode = (RestrictInfo *) lfirst(temp);
 		cost_clause = clausenode->selectivity;
-		if (FLOAT_IS_ZERO(cost_clause) || new_selectivity < cost_clause)
+		if (cost_clause <= 0 || new_selectivity < cost_clause)
 			clausenode->selectivity = new_selectivity;
 	}
 }
@@ -129,7 +129,7 @@ set_rest_selec(Query *root, List *restrictinfo_list)
 		 * Check to see if the selectivity of this clause or any 'or'
 		 * subclauses (if any) haven't been set yet.
 		 */
-		if (valid_or_clause(clausenode) || FLOAT_IS_ZERO(cost_clause))
+		if (cost_clause <= 0 || valid_or_clause(clausenode))
 		{
 			clausenode->selectivity = compute_clause_selec(root,
 									 (Node *) clausenode->clause,

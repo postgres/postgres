@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.34 1999/05/01 19:47:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.35 1999/05/16 19:45:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -418,29 +418,21 @@ match_unsorted_inner(RelOptInfo *joinrel,
 					 List *innerpath_list,
 					 List *mergeinfo_list)
 {
-	Path	   *innerpath = (Path *) NULL;
 	List	   *mp_list = NIL;
-	PathOrder  *innerpath_ordering = NULL;
-	Cost		temp1 = 0.0;
-	bool		temp2 = false;
-	List	   *i = NIL;
+	List	   *i;
 
 	foreach(i, innerpath_list)
 	{
+		Path	   *innerpath = (Path *) lfirst(i);
+		PathOrder  *innerpath_ordering = innerpath->pathorder;
 		MergeInfo  *xmergeinfo = (MergeInfo *) NULL;
 		List	   *clauses = NIL;
 		List	   *matchedJoinKeys = NIL;
 		List	   *matchedJoinClauses = NIL;
 
-		innerpath = (Path *) lfirst(i);
-
-		innerpath_ordering = innerpath->pathorder;
-
 		if (innerpath_ordering)
-		{
 			xmergeinfo = match_order_mergeinfo(innerpath_ordering,
-									  mergeinfo_list);
-		}
+											   mergeinfo_list);
 
 		if (xmergeinfo)
 			clauses = ((JoinMethod *) xmergeinfo)->clauses;
@@ -463,13 +455,13 @@ match_unsorted_inner(RelOptInfo *joinrel,
 		 */
 		if (clauses && matchedJoinKeys)
 		{
+			Cost		temp1;
+
 			temp1 = outerrel->cheapestpath->path_cost +
 				cost_sort(matchedJoinKeys, outerrel->size, outerrel->width);
 
-			temp2 = (bool) (FLOAT_IS_ZERO(innerpath->outerjoincost)
-							|| (innerpath->outerjoincost > temp1));
-
-			if (temp2)
+			if (innerpath->outerjoincost <= 0 /* unset? */
+				|| innerpath->outerjoincost > temp1)
 			{
 				List	   *outerkeys = make_pathkeys_from_joinkeys(matchedJoinKeys,
 								  outerrel->targetlist,
@@ -494,8 +486,8 @@ match_unsorted_inner(RelOptInfo *joinrel,
 			}
 		}
 	}
-	return mp_list;
 
+	return mp_list;
 }
 
 static bool

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: internal.h,v 1.18 1999/03/07 12:00:38 momjian Exp $
+ * $Id: internal.h,v 1.19 1999/05/16 19:45:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
  *		System-dependent tuning constants
  *
  */
-#define _CPU_PAGE_WEIGHT_  0.033/* CPU-heap-to-page cost weighting factor */
+#define _CPU_PAGE_WEIGHT_  0.033  /* CPU-heap-to-page cost weighting factor */
 #define _CPU_INDEX_PAGE_WEIGHT_ 0.017	/* CPU-index-to-page cost
 										 * weighting factor */
 #define _MAX_KEYS_	   INDEX_MAX_KEYS	/* maximum number of keys in an
@@ -64,7 +64,7 @@
 /*	   Identifier for invalid relation OIDs and attribute numbers for use by
  *	   selectivity functions
  */
-#define _SELEC_VALUE_UNKNOWN_	-1
+#define _SELEC_VALUE_UNKNOWN_	(-1)
 
 /*	   Flag indicating that a clause constant is really a parameter (or other
  *		non-constant?), a non-parameter, or a constant on the right side
@@ -74,11 +74,6 @@
 #define _SELEC_IS_CONSTANT_    1
 #define _SELEC_CONSTANT_LEFT_  0
 #define _SELEC_CONSTANT_RIGHT_ 2
-
-#define TOLERANCE 0.000001
-
-#define FLOAT_EQUAL(X,Y) ((X) - (Y) < TOLERANCE)
-#define FLOAT_IS_ZERO(X) (FLOAT_EQUAL(X,0.0))
 
 /* #define deactivate_joininfo(joininfo)		joininfo->inactive=true*/
 /*#define joininfo_inactive(joininfo)	joininfo->inactive */
