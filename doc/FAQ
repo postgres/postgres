@@ -83,25 +83,21 @@
    other users?
    4.17) What is an OID? What is a TID?
    4.18) What is the meaning of some of the terms used in PostgreSQL?
-   4.19) Why do I get the error "FATAL: palloc failure: memory
-   exhausted?"
-   4.20) How do I tell what PostgreSQL version I am running?
-   4.21) My large-object operations get invalid large obj descriptor.
+   4.19) How do I tell what PostgreSQL version I am running?
+   4.20) My large-object operations get invalid large obj descriptor.
    Why?
-   4.22) How do I create a column that will default to the current time?
-   4.23) Why are my subqueries using IN so slow?
-   4.24) How do I perform an outer join?
+   4.21) How do I create a column that will default to the current time?
+   4.22) Why are my subqueries using IN so slow?
+   4.23) How do I perform an outer join?
    
                             Extending PostgreSQL
                                       
    5.1) I wrote a user-defined function. When I run it in psql, why does
    it dump core?
-   5.2) What does the message "NOTICE:PortalHeapMemoryFree: 0x402251d0
-   not in alloc set!" mean?
-   5.3) How can I contribute some nifty new types and functions to
+   5.2) How can I contribute some nifty new types and functions to
    PostgreSQL?
-   5.4) How do I write a C function to return a tuple?
-   5.5) I have changed a source file. Why does the recompile not see the
+   5.3) How do I write a C function to return a tuple?
+   5.4) I have changed a source file. Why does the recompile not see the
    change?
      _________________________________________________________________
    
@@ -887,26 +883,11 @@ BYTEA           bytea           variable-length byte array (null-safe)
    A list of general database terms can be found at:
    http://www.comptechnews.com/~reaster/dbdesign.html
    
-    4.19) Why do I get the error "FATAL: palloc failure: memory exhausted?"
-    
-   It is possible you have run out of virtual memory on your system, or
-   your kernel has a low limit for certain resources. Try this before
-   starting the postmaster:
-    ulimit -d 65536
-    limit datasize 64m
-
-   Depending on your shell, only one of these may succeed, but it will
-   set your process data segment limit much higher and perhaps allow the
-   query to complete. This command applies to the current process, and
-   all subprocesses created after the command is run. If you are having a
-   problem with the SQL client because the backend is returning too much
-   data, try it before starting the client.
-   
-    4.20) How do I tell what PostgreSQL version I am running?
+    4.19) How do I tell what PostgreSQL version I am running?
     
    From psql, type select version();
    
-    4.21) My large-object operations get invalid large obj descriptor. Why?
+    4.20) My large-object operations get invalid large obj descriptor. Why?
     
    You need to put BEGIN WORK and COMMIT around any use of a large object
    handle, that is, surrounding lo_open ... lo_close.
@@ -920,12 +901,12 @@ BYTEA           bytea           variable-length byte array (null-safe)
    If you are using a client interface like ODBC you may need to set
    auto-commit off.
    
-    4.22) How do I create a column that will default to the current time?
+    4.21) How do I create a column that will default to the current time?
     
    Use now():
 CREATE TABLE test (x int, modtime timestamp DEFAULT now() );
 
-    4.23) Why are my subqueries using IN so slow?
+    4.22) Why are my subqueries using IN so slow?
     
    Currently, we join subqueries to outer queries by sequentially
    scanning the result of the subquery for each row of the outer query. A
@@ -941,7 +922,7 @@ SELECT *
 
    We hope to fix this limitation in a future release.
    
-    4.24) How do I perform an outer join?
+    4.23) How do I perform an outer join?
     
    PostgreSQL 7.1 and later supports outer joins using the SQL standard
    syntax. Here are two examples:
@@ -980,23 +961,17 @@ SELECT *
    The problem could be a number of things. Try testing your user-defined
    function in a stand-alone test program first.
    
-    5.2) What does the message "NOTICE:PortalHeapMemoryFree: 0x402251d0 not in
-    alloc set!" mean?
-    
-   You are pfree'ing something that was not palloc'ed. Beware of mixing
-   malloc/free and palloc/pfree.
-   
-    5.3) How can I contribute some nifty new types and functions to PostgreSQL?
+    5.2) How can I contribute some nifty new types and functions to PostgreSQL?
     
    Send your extensions to the pgsql-hackers mailing list, and they will
    eventually end up in the contrib/ subdirectory.
    
-    5.4) How do I write a C function to return a tuple?
+    5.3) How do I write a C function to return a tuple?
     
    This requires wizardry so extreme that the authors have never tried
    it, though in principle it can be done.
    
-    5.5) I have changed a source file. Why does the recompile not see the
+    5.4) I have changed a source file. Why does the recompile not see the
     change?
     
    The Makefiles do not have the proper dependencies for include files.
