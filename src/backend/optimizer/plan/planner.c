@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.145 2003/02/09 00:30:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.146 2003/02/09 23:57:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,6 +144,7 @@ subquery_planner(Query *parse, double tuple_fraction)
 {
 	List	   *saved_initplan = PlannerInitPlan;
 	int			saved_planid = PlannerPlanId;
+	bool		hasOuterJoins;
 	Plan	   *plan;
 	List	   *newHaving;
 	List	   *lst;
@@ -172,10 +173,12 @@ subquery_planner(Query *parse, double tuple_fraction)
 
 	/*
 	 * Detect whether any rangetable entries are RTE_JOIN kind; if not,
-	 * we can avoid the expense of doing flatten_join_alias_vars().
+	 * we can avoid the expense of doing flatten_join_alias_vars().  Also
+	 * check for outer joins --- if none, we can skip reduce_outer_joins().
 	 * This must be done after we have done pull_up_subqueries, of course.
 	 */
 	parse->hasJoinRTEs = false;
+	hasOuterJoins = false;
 	foreach(lst, parse->rtable)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lst);
@@ -183,7 +186,12 @@ subquery_planner(Query *parse, double tuple_fraction)
 		if (rte->rtekind == RTE_JOIN)
 		{
 			parse->hasJoinRTEs = true;
-			break;
+			if (IS_OUTER_JOIN(rte->jointype))
+			{
+				hasOuterJoins = true;
+				/* Can quit scanning once we find an outer join */
+				break;
+			}
 		}
 	}
 
@@ -245,14 +253,22 @@ subquery_planner(Query *parse, double tuple_fraction)
 	parse->havingQual = (Node *) newHaving;
 
 	/*
+	 * If we have any outer joins, try to reduce them to plain inner joins.
+	 * This step is most easily done after we've done expression preprocessing.
+	 */
+	if (hasOuterJoins)
+		reduce_outer_joins(parse);
+
+	/*
 	 * See if we can simplify the jointree; opportunities for this may come
 	 * from having pulled up subqueries, or from flattening explicit JOIN
 	 * syntax.  We must do this after flattening JOIN alias variables, since
 	 * eliminating explicit JOIN nodes from the jointree will cause
-	 * get_relids_for_join() to fail.
+	 * get_relids_for_join() to fail.  But it should happen after
+	 * reduce_outer_joins, anyway.
 	 */
 	parse->jointree = (FromExpr *)
-		preprocess_jointree(parse, (Node *) parse->jointree);
+		simplify_jointree(parse, (Node *) parse->jointree);
 
 	/*
 	 * Do the main planning.  If we have an inherited target relation,

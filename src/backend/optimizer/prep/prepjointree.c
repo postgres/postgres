@@ -3,13 +3,20 @@
  * prepjointree.c
  *	  Planner preprocessing for subqueries and join tree manipulation.
  *
+ * NOTE: the intended sequence for invoking these operations is
+ *		pull_up_IN_clauses
+ *		pull_up_subqueries
+ *		do expression preprocessing (including flattening JOIN alias vars)
+ *		reduce_outer_joins
+ *		simplify_jointree
+ *
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.4 2003/02/09 00:35:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.5 2003/02/09 23:57:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +28,7 @@
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
+#include "utils/lsyscache.h"
 
 
 /* These parameters are set by GUC */
@@ -28,9 +36,22 @@ int		from_collapse_limit;
 int		join_collapse_limit;
 
 
+typedef struct reduce_outer_joins_state
+{
+	Relids		relids;			/* base relids within this subtree */
+	bool		contains_outer;	/* does subtree contain outer join(s)? */
+	List	   *sub_states;		/* List of states for subtree components */
+} reduce_outer_joins_state;
+
 static bool is_simple_subquery(Query *subquery);
 static bool has_nullable_targetlist(Query *subquery);
 static void resolvenew_in_jointree(Node *jtnode, int varno, List *subtlist);
+static reduce_outer_joins_state *reduce_outer_joins_pass1(Node *jtnode);
+static void reduce_outer_joins_pass2(Node *jtnode,
+									 reduce_outer_joins_state *state,
+									 Query *parse,
+									 Relids nonnullable_rels);
+static Relids find_nonnullable_rels(Node *node, bool top_level);
 static void fix_in_clause_relids(List *in_info_list, int varno,
 								 Relids subrelids);
 static Node *find_jointree_node_for_rel(Node *jtnode, int relid);
@@ -463,7 +484,332 @@ resolvenew_in_jointree(Node *jtnode, int varno, List *subtlist)
 }
 
 /*
- * preprocess_jointree
+ * reduce_outer_joins
+ *		Attempt to reduce outer joins to plain inner joins.
+ *
+ * The idea here is that given a query like
+ *		SELECT ... FROM a LEFT JOIN b ON (...) WHERE b.y = 42;
+ * we can reduce the LEFT JOIN to a plain JOIN if the "=" operator in WHERE
+ * is strict.  The strict operator will always return NULL, causing the outer
+ * WHERE to fail, on any row where the LEFT JOIN filled in NULLs for b's
+ * columns.  Therefore, there's no need for the join to produce null-extended
+ * rows in the first place --- which makes it a plain join not an outer join.
+ * (This scenario may not be very likely in a query written out by hand, but
+ * it's reasonably likely when pushing quals down into complex views.)
+ *
+ * More generally, an outer join can be reduced in strength if there is a
+ * strict qual above it in the qual tree that constrains a Var from the
+ * nullable side of the join to be non-null.  (For FULL joins this applies
+ * to each side separately.)
+ *
+ * To ease recognition of strict qual clauses, we require this routine to be
+ * run after expression preprocessing (i.e., qual canonicalization and JOIN
+ * alias-var expansion).
+ */
+void
+reduce_outer_joins(Query *parse)
+{
+	reduce_outer_joins_state *state;
+
+	/*
+	 * To avoid doing strictness checks on more quals than necessary,
+	 * we want to stop descending the jointree as soon as there are no
+	 * outer joins below our current point.  This consideration forces
+	 * a two-pass process.  The first pass gathers information about which
+	 * base rels appear below each side of each join clause, and about
+	 * whether there are outer join(s) below each side of each join clause.
+	 * The second pass examines qual clauses and changes join types as
+	 * it descends the tree.
+	 */
+	state = reduce_outer_joins_pass1((Node *) parse->jointree);
+
+	/* planner.c shouldn't have called me if no outer joins */
+	if (state == NULL || !state->contains_outer)
+		elog(ERROR, "reduce_outer_joins: so where are the outer joins?");
+
+	reduce_outer_joins_pass2((Node *) parse->jointree, state, parse, NULL);
+}
+
+/*
+ * reduce_outer_joins_pass1 - phase 1 data collection
+ *
+ * Returns a state node describing the given jointree node.
+ */
+static reduce_outer_joins_state *
+reduce_outer_joins_pass1(Node *jtnode)
+{
+	reduce_outer_joins_state *result;
+
+	result = (reduce_outer_joins_state *)
+		palloc(sizeof(reduce_outer_joins_state));
+	result->relids = NULL;
+	result->contains_outer = false;
+	result->sub_states = NIL;
+
+	if (jtnode == NULL)
+		return result;
+	if (IsA(jtnode, RangeTblRef))
+	{
+		int			varno = ((RangeTblRef *) jtnode)->rtindex;
+
+		result->relids = bms_make_singleton(varno);
+	}
+	else if (IsA(jtnode, FromExpr))
+	{
+		FromExpr   *f = (FromExpr *) jtnode;
+		List	   *l;
+
+		foreach(l, f->fromlist)
+		{
+			reduce_outer_joins_state *sub_state;
+
+			sub_state = reduce_outer_joins_pass1(lfirst(l));
+			result->relids = bms_add_members(result->relids,
+											 sub_state->relids);
+			result->contains_outer |= sub_state->contains_outer;
+			result->sub_states = lappend(result->sub_states, sub_state);
+		}
+	}
+	else if (IsA(jtnode, JoinExpr))
+	{
+		JoinExpr   *j = (JoinExpr *) jtnode;
+		reduce_outer_joins_state *sub_state;
+
+		/* join's own RT index is not wanted in result->relids */
+		if (IS_OUTER_JOIN(j->jointype))
+			result->contains_outer = true;
+
+		sub_state = reduce_outer_joins_pass1(j->larg);
+		result->relids = bms_add_members(result->relids,
+										 sub_state->relids);
+		result->contains_outer |= sub_state->contains_outer;
+		result->sub_states = lappend(result->sub_states, sub_state);
+
+		sub_state = reduce_outer_joins_pass1(j->rarg);
+		result->relids = bms_add_members(result->relids,
+										 sub_state->relids);
+		result->contains_outer |= sub_state->contains_outer;
+		result->sub_states = lappend(result->sub_states, sub_state);
+	}
+	else
+		elog(ERROR, "reduce_outer_joins_pass1: unexpected node type %d",
+			 nodeTag(jtnode));
+	return result;
+}
+
+/*
+ * reduce_outer_joins_pass2 - phase 2 processing
+ *
+ *	jtnode: current jointree node
+ *	state: state data collected by phase 1 for this node
+ *	parse: toplevel Query
+ *	nonnullable_rels: set of base relids forced non-null by upper quals
+ */
+static void
+reduce_outer_joins_pass2(Node *jtnode,
+						 reduce_outer_joins_state *state,
+						 Query *parse,
+						 Relids nonnullable_rels)
+{
+	/*
+	 * pass 2 should never descend as far as an empty subnode or base rel,
+	 * because it's only called on subtrees marked as contains_outer.
+	 */
+	if (jtnode == NULL)
+		elog(ERROR, "reduce_outer_joins_pass2: reached empty jointree");
+	if (IsA(jtnode, RangeTblRef))
+	{
+		elog(ERROR, "reduce_outer_joins_pass2: reached base rel");
+	}
+	else if (IsA(jtnode, FromExpr))
+	{
+		FromExpr   *f = (FromExpr *) jtnode;
+		List	   *l;
+		List	   *s;
+		Relids		pass_nonnullable;
+
+		/* Scan quals to see if we can add any nonnullability constraints */
+		pass_nonnullable = find_nonnullable_rels(f->quals, true);
+		pass_nonnullable = bms_add_members(pass_nonnullable,
+										   nonnullable_rels);
+		/* And recurse --- but only into interesting subtrees */
+		s = state->sub_states;
+		foreach(l, f->fromlist)
+		{
+			reduce_outer_joins_state *sub_state = lfirst(s);
+
+			if (sub_state->contains_outer)
+				reduce_outer_joins_pass2(lfirst(l), sub_state, parse,
+										 pass_nonnullable);
+			s = lnext(s);
+		}
+		bms_free(pass_nonnullable);
+	}
+	else if (IsA(jtnode, JoinExpr))
+	{
+		JoinExpr   *j = (JoinExpr *) jtnode;
+		int			rtindex = j->rtindex;
+		JoinType	jointype = j->jointype;
+		reduce_outer_joins_state *left_state = lfirst(state->sub_states);
+		reduce_outer_joins_state *right_state = lsecond(state->sub_states);
+
+		/* Can we simplify this join? */
+		switch (jointype)
+		{
+			case JOIN_LEFT:
+				if (bms_overlap(nonnullable_rels, right_state->relids))
+					jointype = JOIN_INNER;
+				break;
+			case JOIN_RIGHT:
+				if (bms_overlap(nonnullable_rels, left_state->relids))
+					jointype = JOIN_INNER;
+				break;
+			case JOIN_FULL:
+				if (bms_overlap(nonnullable_rels, left_state->relids))
+				{
+					if (bms_overlap(nonnullable_rels, right_state->relids))
+						jointype = JOIN_INNER;
+					else
+						jointype = JOIN_LEFT;
+				}
+				else
+				{
+					if (bms_overlap(nonnullable_rels, right_state->relids))
+						jointype = JOIN_RIGHT;
+				}
+				break;
+			default:
+				break;
+		}
+		if (jointype != j->jointype)
+		{
+			/* apply the change to both jointree node and RTE */
+			RangeTblEntry *rte = rt_fetch(rtindex, parse->rtable);
+
+			Assert(rte->rtekind == RTE_JOIN);
+			Assert(rte->jointype == j->jointype);
+			rte->jointype = j->jointype = jointype;
+		}
+
+		/* Only recurse if there's more to do below here */
+		if (left_state->contains_outer || right_state->contains_outer)
+		{
+			Relids		pass_nonnullable;
+
+			/*
+			 * Scan join quals to see if we can add any nonnullability
+			 * constraints.  (Okay to do this even if join is still outer.)
+			 */
+			pass_nonnullable = find_nonnullable_rels(j->quals, true);
+			pass_nonnullable = bms_add_members(pass_nonnullable,
+											   nonnullable_rels);
+			/* And recurse as needed */
+			if (left_state->contains_outer)
+				reduce_outer_joins_pass2(j->larg, left_state, parse,
+										 pass_nonnullable);
+			if (right_state->contains_outer)
+				reduce_outer_joins_pass2(j->rarg, right_state, parse,
+										 pass_nonnullable);
+			bms_free(pass_nonnullable);
+		}
+	}
+	else
+		elog(ERROR, "reduce_outer_joins_pass2: unexpected node type %d",
+			 nodeTag(jtnode));
+}
+
+/*
+ * find_nonnullable_rels
+ *		Determine which base rels are forced nonnullable by given quals
+ *
+ * We don't use expression_tree_walker here because we don't want to
+ * descend through very many kinds of nodes; only the ones we can be sure
+ * are strict.  We can descend through the top level of implicit AND'ing,
+ * but not through any explicit ANDs (or ORs) below that, since those are not
+ * strict constructs.  The List case handles the top-level implicit AND list
+ * as well as lists of arguments to strict operators/functions.
+ */
+static Relids
+find_nonnullable_rels(Node *node, bool top_level)
+{
+	Relids		result = NULL;
+
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, Var))
+	{
+		Var		   *var = (Var *) node;
+
+		if (var->varlevelsup == 0)
+			result = bms_make_singleton(var->varno);
+	}
+	else if (IsA(node, List))
+	{
+		List	   *l;
+
+		foreach(l, (List *) node)
+		{
+			result = bms_join(result, find_nonnullable_rels(lfirst(l),
+															top_level));
+		}
+	}
+	else if (IsA(node, FuncExpr))
+	{
+		FuncExpr   *expr = (FuncExpr *) node;
+
+		if (func_strict(expr->funcid))
+			result = find_nonnullable_rels((Node *) expr->args, false);
+	}
+	else if (IsA(node, OpExpr))
+	{
+		OpExpr   *expr = (OpExpr *) node;
+
+		if (op_strict(expr->opno))
+			result = find_nonnullable_rels((Node *) expr->args, false);
+	}
+	else if (IsA(node, BoolExpr))
+	{
+		BoolExpr   *expr = (BoolExpr *) node;
+
+		/* NOT is strict, others are not */
+		if (expr->boolop == NOT_EXPR)
+			result = find_nonnullable_rels((Node *) expr->args, false);
+	}
+	else if (IsA(node, RelabelType))
+	{
+		RelabelType   *expr = (RelabelType *) node;
+
+		result = find_nonnullable_rels((Node *) expr->arg, top_level);
+	}
+	else if (IsA(node, NullTest))
+	{
+		NullTest   *expr = (NullTest *) node;
+
+		/*
+		 * IS NOT NULL can be considered strict, but only at top level;
+		 * else we might have something like NOT (x IS NOT NULL).
+		 */
+		if (top_level && expr->nulltesttype == IS_NOT_NULL)
+			result = find_nonnullable_rels((Node *) expr->arg, false);
+	}
+	else if (IsA(node, BooleanTest))
+	{
+		BooleanTest   *expr = (BooleanTest *) node;
+
+		/*
+		 * Appropriate boolean tests are strict at top level.
+		 */
+		if (top_level &&
+			(expr->booltesttype == IS_TRUE ||
+			 expr->booltesttype == IS_FALSE ||
+			 expr->booltesttype == IS_NOT_UNKNOWN))
+			result = find_nonnullable_rels((Node *) expr->arg, false);
+	}
+	return result;
+}
+
+/*
+ * simplify_jointree
  *		Attempt to simplify a query's jointree.
  *
  * If we succeed in pulling up a subquery then we might form a jointree
@@ -487,7 +833,7 @@ resolvenew_in_jointree(Node *jtnode, int varno, List *subtlist)
  * work reliably --- see comments for pull_up_subqueries().
  */
 Node *
-preprocess_jointree(Query *parse, Node *jtnode)
+simplify_jointree(Query *parse, Node *jtnode)
 {
 	if (jtnode == NULL)
 		return NULL;
@@ -506,7 +852,7 @@ preprocess_jointree(Query *parse, Node *jtnode)
 			Node	   *child = (Node *) lfirst(l);
 
 			/* Recursively simplify this child... */
-			child = preprocess_jointree(parse, child);
+			child = simplify_jointree(parse, child);
 			/* Now, is it a FromExpr? */
 			if (child && IsA(child, FromExpr))
 			{
@@ -546,8 +892,8 @@ preprocess_jointree(Query *parse, Node *jtnode)
 		JoinExpr   *j = (JoinExpr *) jtnode;
 
 		/* Recursively simplify the children... */
-		j->larg = preprocess_jointree(parse, j->larg);
-		j->rarg = preprocess_jointree(parse, j->rarg);
+		j->larg = simplify_jointree(parse, j->larg);
+		j->rarg = simplify_jointree(parse, j->rarg);
 		/*
 		 * If it is an outer join, we must not flatten it.  An inner join
 		 * is semantically equivalent to a FromExpr; we convert it to one,
@@ -605,7 +951,7 @@ preprocess_jointree(Query *parse, Node *jtnode)
 		}
 	}
 	else
-		elog(ERROR, "preprocess_jointree: unexpected node type %d",
+		elog(ERROR, "simplify_jointree: unexpected node type %d",
 			 nodeTag(jtnode));
 	return jtnode;
 }
@@ -684,7 +1030,7 @@ get_relids_in_jointree(Node *jtnode)
 /*
  * get_relids_for_join: get set of base RT indexes making up a join
  *
- * NB: this will not work reliably after preprocess_jointree() is run,
+ * NB: this will not work reliably after simplify_jointree() is run,
  * since that may eliminate join nodes from the jointree.
  */
 Relids

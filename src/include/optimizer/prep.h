@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: prep.h,v 1.36 2003/02/08 20:20:55 tgl Exp $
+ * $Id: prep.h,v 1.37 2003/02/09 23:57:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,8 @@ extern int	join_collapse_limit;
 extern Node *pull_up_IN_clauses(Query *parse, Node *node);
 extern Node *pull_up_subqueries(Query *parse, Node *jtnode,
 				   bool below_outer_join);
-extern Node *preprocess_jointree(Query *parse, Node *jtnode);
+extern void reduce_outer_joins(Query *parse);
+extern Node *simplify_jointree(Query *parse, Node *jtnode);
 extern Relids get_relids_in_jointree(Node *jtnode);
 extern Relids get_relids_for_join(Query *parse, int joinrelid);
 
