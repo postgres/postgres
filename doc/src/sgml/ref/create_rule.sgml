@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.20 2000/12/12 16:47:52 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.21 2001/01/06 04:14:35 tgl Exp $
 Postgres documentation
 -->
 
@@ -20,17 +20,27 @@ Postgres documentation
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1999-07-20</date>
+   <date>2001-01-05</date>
   </refsynopsisdivinfo>
   <synopsis>
 CREATE RULE <replaceable class="parameter">name</replaceable> AS ON <replaceable class="parameter">event</replaceable>
     TO <replaceable class="parameter">object</replaceable> [ WHERE <replaceable class="parameter">condition</replaceable> ]
-    DO [ INSTEAD ] [ <replaceable class="parameter">action</replaceable> | NOTHING ]
+    DO [ INSTEAD ] <replaceable class="parameter">action</replaceable>
+
+where <replaceable class="PARAMETER">action</replaceable> can be:
+
+NOTHING
+|
+<replaceable class="parameter">query</replaceable>
+|
+( <replaceable class="parameter">query</replaceable> ; <replaceable class="parameter">query</replaceable> ... )
+|
+[ <replaceable class="parameter">query</replaceable> ; <replaceable class="parameter">query</replaceable> ... ]
   </synopsis>
 
   <refsect2 id="R2-SQL-CREATERULE-1">
    <refsect2info>
-    <date>1998-09-11</date>
+    <date>2001-01-05</date>
    </refsect2info>
    <title>
     Inputs
@@ -50,9 +60,9 @@ CREATE RULE <replaceable class="parameter">name</replaceable> AS ON <replaceable
       <term><replaceable class="parameter">event</replaceable></term>
       <listitem>
        <para>
-	Event is one of <literal>select</literal>,
-	<literal>update</literal>, <literal>delete</literal>
-	or <literal>insert</literal>.
+	Event is one of <literal>SELECT</literal>,
+	<literal>UPDATE</literal>, <literal>DELETE</literal>
+	or <literal>INSERT</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -62,7 +72,9 @@ CREATE RULE <replaceable class="parameter">name</replaceable> AS ON <replaceable
        <para>
 	Object is either <replaceable class="parameter">table</replaceable>
 	or <replaceable class="parameter">table</replaceable>.<replaceable
-	 class="parameter">column</replaceable>.
+	 class="parameter">column</replaceable>.  (Currently, only the
+	 <replaceable class="parameter">table</replaceable> form is
+	 actually implemented.)
        </para>
       </listitem>
      </varlistentry>
@@ -70,23 +82,37 @@ CREATE RULE <replaceable class="parameter">name</replaceable> AS ON <replaceable
       <term><replaceable class="parameter">condition</replaceable></term>
       <listitem>
        <para>
-	Any SQL WHERE clause, <literal>new</literal> or
-	<literal>old</literal>, can appear instead of an instance
-	variable whenever an instance variable is permissible in SQL.
+	Any SQL boolean-condition expression.  The condition expression may not
+	refer to any tables except <literal>new</literal> and
+	<literal>old</literal>.
        </para>
       </listitem>
      </varlistentry>
      <varlistentry>
-      <term><replaceable class="parameter">action</replaceable></term>
+      <term><replaceable class="parameter">query</replaceable></term>
       <listitem>
        <para>
-	Any SQL statement, <literal>new</literal> or
-	<literal>old</literal>, can appear instead of an instance
-	variable whenever an instance variable is permissible in SQL.
+        The query or queries making up the
+	<replaceable class="PARAMETER">action</replaceable>
+	can be any SQL <literal>SELECT</literal>, <literal>INSERT</literal>,
+	<literal>UPDATE</literal>, <literal>DELETE</literal>, or
+	<literal>NOTIFY</literal> statement.
        </para>
       </listitem>
      </varlistentry>
     </variablelist>
+   </para>
+
+   <para>
+    Within the <replaceable class="parameter">condition</replaceable>
+    and <replaceable class="PARAMETER">action</replaceable>, the special
+    table names <literal>new</literal> and <literal>old</literal> may be
+    used to refer to values in the referenced table (the
+    <replaceable class="parameter">object</replaceable>).
+    <literal>new</literal> is valid in ON INSERT and ON UPDATE rules
+    to refer to the new row being inserted or updated.
+    <literal>old</literal> is valid in ON SELECT, ON UPDATE, and ON DELETE
+    rules to refer to the existing row being selected, updated, or deleted.
    </para>
   </refsect2>
 
@@ -127,24 +153,40 @@ CREATE
    The <productname>Postgres</productname> 
    <firstterm>rule system</firstterm> allows one to define an
    alternate action to be performed on inserts, updates, or deletions
-   from database tables or classes. Currently, rules are used to
-   implement table views.
+   from database tables. Rules are used to
+   implement table views as well.
   </para>
 
   <para>
-   The semantics of a rule is that at the time an individual instance is
+   The semantics of a rule is that at the time an individual instance (row)
+   is
    accessed, inserted, updated, or deleted, there is an old instance (for
    selects, updates and deletes) and a new instance (for inserts and
-  updates).
-  If the <replaceable class="parameter">event</replaceable>
-   specified in the ON clause and the
+   updates).  All the rules for the given event type and the given target
+   object (table) are examined, in an unspecified order.  If the
    <replaceable class="parameter">condition</replaceable> specified in the
-   WHERE clause are true for the old instance, the
+   WHERE clause (if any) is true, the 
    <replaceable class="parameter">action</replaceable> part of the rule is
-   executed. First, however, values from fields in the old instance
-   and/or the new instance are substituted for
+   executed.  The <replaceable class="parameter">action</replaceable> is
+   done instead of the original query if INSTEAD is specified; otherwise
+   it is done before the original query is performed.
+   Within both the <replaceable class="parameter">condition</replaceable>
+   and <replaceable class="parameter">action</replaceable>, values from
+   fields in the old instance and/or the new instance are substituted for
    <literal>old.</literal><replaceable class="parameter">attribute-name</replaceable>
    and <literal>new.</literal><replaceable class="parameter">attribute-name</replaceable>.
+  </para>
+
+  <para>
+   The <replaceable class="parameter">action</replaceable> part of the rule
+   can consist of one or more queries.  To write multiple queries, surround
+   them with either parentheses or square brackets.  Such queries will be
+   performed in the specified order (whereas there are no guarantees about
+   the execution order of multiple rules for an object).  The
+   <replaceable class="parameter">action</replaceable> can also be NOTHING
+   indicating no action.  Thus, a DO INSTEAD NOTHING rule suppresses the
+   original query from executing (when its condition is true); a DO NOTHING
+   rule is useless.
   </para>
 
   <para>
@@ -155,47 +197,29 @@ CREATE
   
   <refsect2 id="R2-SQL-CREATERULE-3">
    <refsect2info>
-    <date>1998-09-11</date>
+    <date>2001-01-05</date>
    </refsect2info>
    <title>
     Notes
    </title>
    <para>
-    A caution about SQL rules is in  order.  If the same class name
-    or instance variable appears in the
-    <replaceable class="parameter">event</replaceable>,
-    <replaceable class="parameter">condition</replaceable> and
-    <replaceable class="parameter">action</replaceable> parts of a rule,
-    they are all considered different tuple variables. More accurately,
-    <literal>new</literal> and <literal>old</literal> are the only tuple
-    variables that are shared between these clauses. For example, the following
-    two rules have the same semantics:
-    <programlisting>
-ON UPDATE TO emp.salary WHERE emp.name = "Joe"
-    DO 
-	UPDATE emp SET ... WHERE ...
-    </programlisting>
-
-    <programlisting>
-ON UPDATE TO emp-1.salary WHERE emp-2.name = "Joe"
-    DO 
-	UPDATE emp-3 SET ...  WHERE ...
-    </programlisting>
-
-    Each rule can have the optional tag INSTEAD.
-    Without
-    this tag, <replaceable class="parameter">action</replaceable> will be
-    performed in addition to the user command when the
-    <replaceable class="parameter">event</replaceable> in the
-    <replaceable class="parameter">condition</replaceable> part of the rule
-    occurs. Alternately, the
-    <replaceable class="parameter">action</replaceable> part will be done
-    instead of the user command. In this latter case, the
-    <replaceable class="parameter">action</replaceable> can be the keyword
-    <literal>NOTHING</literal>.
+    Presently, ON SELECT rules must be unconditional INSTEAD rules and must
+    have actions that consist of a single SELECT query.  Thus, an ON SELECT
+    rule effectively turns the object table into a view, whose visible
+    contents are the rows returned by the rule's SELECT query rather than
+    whatever had been stored in the table (if anything).  It is considered
+    better style to write a CREATE VIEW command than to create a table and
+    define an ON SELECT rule for it.
    </para>
+
    <para>
-    It is very important to note to avoid circular rules.
+    You must have rule definition access to a class in order
+    to define a rule on it. Use <command>GRANT</command>
+    and <command>REVOKE</command> to change permissions.
+   </para>
+
+   <para>
+    It is very important to take care to avoid circular rules.
     For example, though each
     of the following two rule definitions are accepted by
     <productname>Postgres</productname>, the
@@ -226,104 +250,7 @@ SELECT * FROM emp;
       </programlisting></para>
     </example>
    </para>
-
-   <para>
-    You must have rule definition access to a class in order
-    to define a rule on it. Use <command>GRANT</command>
-    and <command>REVOKE</command> to change permissions.
-   </para>
-
-   <para>
-    The object in a <acronym>SQL</acronym> rule cannot be an array reference and
-    cannot have parameters.
-   </para>
-
-   <para>
-    Aside from the "oid" field, system attributes cannot be
-    referenced anywhere in a rule. Among other things, this
-    means that functions of instances (e.g., <literal>foo(emp)</literal> where
-    <literal>emp</literal> is a class) cannot be called anywhere in a rule.
-   </para>
-
-   <para>
-    The rule system stores the rule text and query plans as
-    text attributes. This implies that creation of rules may
-    fail if the rule plus its various internal representations
-    exceed some value that is on the order of one page (8KB).
-   </para>
   </refsect2>
- </refsect1>
- 
- <refsect1 id="R1-SQL-CREATERULE-2">
-  <title>
-   Usage
-  </title>
-  <para>
-   Make Sam get the same salary adjustment as Joe:
-   
-   <programlisting>
-CREATE RULE example_1 AS
-    ON UPDATE emp.salary WHERE old.name = "Joe"
-    DO 
-	UPDATE emp 
-	SET salary = new.salary
-	WHERE emp.name = "Sam";
-   </programlisting>
-
-   At the time Joe receives a salary adjustment, the event
-   will become true and Joe's old instance and proposed
-   new instance are available to the execution routines.
-   Hence, his new salary is substituted into the action part
-   of the rule which is subsequently executed.  This propagates
-   Joe's salary on to Sam.
-  </para>
-  <para>
-   Make Bill get Joe's salary when it is accessed:
-   <programlisting>
-CREATE RULE example_2 AS
-    ON SELECT TO EMP.salary
-    WHERE old.name = "Bill"
-    DO INSTEAD
-	SELECT emp.salary
-	FROM emp
-	WHERE emp.name = "Joe";
-   </programlisting>
-  </para>
-  <para>
-   Deny Joe access to the salary of employees in the shoe
-   department (<function>current_user</function> returns the name of
-   the current user):
-   <programlisting>  
-CREATE RULE example_3 AS
-    ON 
-	SELECT TO emp.salary
-   	WHERE old.dept = "shoe" AND current_user = "Joe"
-    DO INSTEAD NOTHING;
-   </programlisting>
-  </para>
-  <para>
-   Create a view of the employees working in the toy department:
-   <programlisting>
-CREATE toyemp(name = char16, salary = int4);
-
-CREATE RULE example_4 AS
-    ON SELECT TO toyemp
-    DO INSTEAD
-    	SELECT emp.name, emp.salary
-	FROM emp
-        WHERE emp.dept = "toy";
-   </programlisting>
-  </para>
-  <para>
-   All new employees must make 5,000 or less:
-   <programlisting>
-CREATE RULE example_5 AS
-    ON INERT TO emp WHERE new.salary > 5000
-    DO 
-	UPDATE emp SET salary = 5000
-	WHERE emp.oid = new.oid;
-   </programlisting>
-  </para>
  </refsect1>
 
  <refsect1 id="R1-SQL-CREATERULE-4">
