@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL 7.2
 Sun Solaris specific
 to be read in conjunction with the installation instructions
 ============================================================
-last updated:        $Date: 2002/01/18 20:56:17 $
+last updated:        $Date: 2002/02/12 22:35:07 $
 
 current maintainer:  Peter Eisentraut <peter_e@gmx.net>
 
@@ -23,14 +23,17 @@ You will need
 - GNU zip (for installing the documentation)
 - GNU make
 - GNU readline library (optional)
-
-Both GCC and the Sun compiler suite work.
+- GCC (if you don't have Sun's compiler)
 
 If you like Solaris packages, you can find these tools here:
 http://www.sunfreeware.com
 
 If you prefer sources, look here:
 http://www.gnu.org/order/ftp.html
+
+You can build with either GCC or Sun's compiler suite.
+If you are using Sun's compiler, be careful *not* to select /usr/ucb/cc;
+use /opt/SUNWspro/bin/cc.
 
 
 2) Why do I get problems when building with OpenSSL support?
