@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.24 1998/01/17 23:39:05 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.25 1998/04/06 17:02:13 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -83,6 +83,7 @@ distclean: clean
 		backend/port/tas.s \
 		backend/port/dynloader.c \
 		backend/utils/Gen_fmgrtab.sh \
+		interfaces/ecpg/lib/Makefile \
 		interfaces/libpq/Makefile \
 		interfaces/libpgtcl/Makefile \
 		include/os.h \
