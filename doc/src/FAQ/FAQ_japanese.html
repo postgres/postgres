@@ -1,3 +1,4 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML>
 <HEAD>
 <TITLE>PostgreSQL FAQ in Japanese</TITLE>
@@ -7,7 +8,7 @@
 <H1>
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)</H1>
 <P>
-原文最終更新日:		Sun Oct 13 23:15:09 EDT 2002
+原文最終更新日:		Mon Mar 17 11:32:59 EST 2003</P>
 <P>
 現在の維持管理者:	Bruce Momjian (<A
 HREF="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -15,14 +16,14 @@ Maintainer of Japanese Translation:	Jun Kuwamura (<A
 HREF="mailto:juk@PostgreSQL.jp">juk@PostgreSQL.jp</A>)<BR><P>
 <P>
 この文書の最新版は
-<A HREF="http://www.PostgreSQL.org/docs/faq-english.html">
-http://www.PostgreSQL.org/docs/faq-english.html</A>
+<A HREF="http://www.PostgreSQL.org/docs/faqs/FAQ.html">
+http://www.PostgreSQL.org/docs/faqs/FAQ.html</A>
 で見ることができます。
 <P>
 
 プラットホームに特有の質問については:
- <A HREF="http://www.PostgreSQL.org/docs/">
- http://www.PostgreSQL.org/users-lounge/docs/faq.html</A>
+ <A HREF="http://www.PostgreSQL.org/docs/index.html">
+ http://www.PostgreSQL.org/users-lounge/docs/index.html</A>
 <BR>に回答があります。
 <P>
 
@@ -32,8 +33,8 @@ http://www.PostgreSQL.org/docs/faq-english.html</A>
 [訳注：
 	日本語版製作についてのメモは最後尾へ移動しました。
 
-	日本語版のこの文書は 本家 "User's Lounge" の "Collection of FAQs" の
-	"Japanese" という見出しのところにあります。また、以下のサイトにも
+	日本語版のこの文書は <a HREF="http://www.PostgreSQL.org/docs/index.html">本家 "Docs" </a> の "Frequently Asked Questions" の
+	ところに "Japanese FAQ" という見出であります。また、以下のサイトにも
 	あります。
 		<A HREF="http://www.PostgreSQL.jp/subcommittee/jpugdoc/">http://www.PostgreSQL.jp/subcommittee/jpugdoc/</A>
 		<A HREF="http://www.rccm.co.jp/~juk/pgsql/">http://www.rccm.co.jp/~juk/pgsql/</A>
@@ -41,7 +42,7 @@ http://www.PostgreSQL.org/docs/faq-english.html</A>
 
 	この和訳についてお気づきの点は(<A HREF="mailto:juk@PostgreSQL.jp">juk@PostgreSQL.jp</A>)までメールでお寄せ下さい。
 
-						2002年10月16日    桑村 潤
+						2003年04月10日    桑村 潤
 ]
 </PRE></SMALL>
 
@@ -72,8 +73,7 @@ http://www.PostgreSQL.org/docs/faq-english.html</A>
 
 <A HREF="#2.1">2.1</A>)	PostgreSQL の <SMALL>ODBC</SMALL> ドライバーはありますか？<BR>
 <A HREF="#2.2">2.2</A>)	PostgreSQL を Web ページと連携させるにはどんなツールがありますか？<BR>
-<A HREF="#2.3">2.3</A>)	PostgreSQL にグラフィカル・ユーザインターフェースはありますか？
-レポートジェネレータや埋め込み問い合わせ言語インターフェースはありますか？<BR>
+<A HREF="#2.3">2.3</A>)	PostgreSQL にグラフィカル・ユーザインターフェイスはありますか？<BR>
 <A HREF="#2.4">2.4</A>)	どのような言語で PostgreSQL と通信できすか？<BR>
 
 
@@ -228,11 +228,11 @@ MODIFICATIONS.</P>
 
 <P><STRONG>クライアント</STRONG></P>
 
-<P> MS Windows プラットホーム上で走せるために、<I>libpq</I> C ライブラリ、psql、その他のインターフェース、および、クライアントアプリケーションをコンパイルすることは可能です。この場合、クライアントを MS Windows 上で走らせて、TCP/IP 経由でサポートされている Unix プラットホーム上で走るサーバと通信します。</P>
+<P> MS Windows プラットホーム上で走せるために、<I>libpq</I> C ライブラリ、psql、その他のインターフェイス、および、クライアントアプリケーションをコンパイルすることは可能です。この場合、クライアントを MS Windows 上で走らせて、TCP/IP 経由でサポートされている Unix プラットホーム上で走るサーバと通信します。</P>
 <P> Win32 <I>libpq</I> ライブラリと psql を作るために、<I>win32.mak</I> が配布に含まれてます。PostgreSQLは <SMALL>ODBC</SMALL> クライアントとも通信できます。</P>
 
 <P><STRONG>サーバ</STRONG></P>
-<P> 現在、Cygnus Unix/NT 移植ライブラリの Cygwin を使って、PostgreSQL データベースサーバは Windows NT と Win2k 上で稼働しています。配布に含まれる<I>pgsql/doc/FAQ_MSWIN</I>、あるいは、<A href="http://www.PostgreSQL.org/docs/faq-mswin.html">http://www.PostgreSQL.org/docs/faq-mswin.html</A>にある MS Windows FAQ をご覧下さい。</P>
+<P> 現在、Cygnus Unix/NT 移植ライブラリの Cygwin を使って、PostgreSQL データベースサーバは Windows NT と Win2k 上で稼働しています。配布に含まれる<I>pgsql/doc/FAQ_MSWIN</I>、あるいは、<A href="http://www.PostgreSQL.org/docs/faqs/faq-mswin.html">http://www.PostgreSQL.org/docs/faqs/faq-mswin.html</A>にある MS Windows FAQ をご覧下さい。</P>
 <P>MS Win NT/2000/XP ネイティブ版への移植が現在進行中です。</P>
 
 <BR>
@@ -340,7 +340,7 @@ UNIX コマンドで<tt>irc -c '#PostgreSQL' "$USER" <A HREF="http://irc.phoenix.net"
 </PRE></SMALL>
 
 
-<P>商用サポート会社のリストは<a href="http://www.PostgreSQL.org/users-lounge/commercial-support.html">http://www.PostgreSQL.org/users-lounge/commercial-support.html</a>にあります。</P>
+<P>商用サポート会社のリストは<a href="http://www.ca.PostgreSQL.org/users-lounge/commercial-support.html">http://www.ca.PostgreSQL.org/users-lounge/commercial-support.html</a>にあります。</P>
 <P>
 <SMALL><PRE>
     [訳注:
@@ -353,7 +353,7 @@ UNIX コマンドで<tt>irc -c '#PostgreSQL' "$USER" <A HREF="http://irc.phoenix.net"
 
 <H4><A NAME="1.7">1.7</A>)	最新版はどれですか</H4>
 <P>
-PostgreSQL の最新版はバージョン 7.2.3 です。</P>
+PostgreSQL の最新版はバージョン 7.3.2 です。</P>
 <P>
 我々は、4カ月毎にメジャーリリースを行なうことを計画しています。</P>
 
@@ -361,8 +361,8 @@ PostgreSQL の最新版はバージョン 7.2.3 です。</P>
 <H4><A NAME="1.8">1.8</A>)	どのような文書がありますか？</H4>
 
 <P> 配付の中に、いくつかのマニュアルとオンライン・マニュアル(マニュアル・ページ)およびいくつかの小さなテスト例題が含まれます。<I>/doc</I> ディレクトリをご覧下さい。また、マニュアルは、<A
-HREF="http://www.PostgreSQL.org/users-lounge/docs/">
-http://www.PostgreSQL.org/users-lounge/docs/</A>
+HREF="http://www.ca.PostgreSQL.org/users-lounge/docs/">
+http://www.ca.PostgreSQL.org/users-lounge/docs/</A>
 でオンラインでも閲覧できます。</P>
 
 <SMALL><PRE>
@@ -512,7 +512,7 @@ href="http://www.PostgreSQL.org/bugs/bugs.php">http://www.PostgreSQL.org/bugs/bu
 
  <DT> <B>性能(Performance)</B></DT>
  <DD>
-      PostgreSQLは他の商用あるいはオープンソースのデータベースと互角の性能も持ちます。ある面ではより早かったり、ほかの面ではより遅かったりします。MySQLなどの特化型データベース・システムにくらべて、PostgreSQLの挿入／更新が遅いのは、トランザクションによるオーバーヘッドがあるからです。もちろん、MySQLには上記の<I>Features</I>の節に示すような機能はまったくありません。我々は、PostgreSQLに柔軟性と機能性を組み込みながらも、絶えず、プロファイラーに掛けたりソースコードを解析したりして、性能の改善を続けています。PostgreSQL と MySQL とを比較している面白い Web ページが<A href="http://openacs.org/why-not-mysql.html">http://openacs.org/why-not-mysql.html</A>にあります。
+      PostgreSQLは他の商用あるいはオープンソースのデータベースと互角の性能も持ちます。ある面ではより早かったり、ほかの面ではより遅かったりします。MySQLなどの特化型データベース・システムにくらべて、PostgreSQLの挿入／更新が遅いのは、トランザクションによるオーバーヘッドがあるからです。もちろん、MySQLには上記の<I>Features</I>の節に示すような機能はまったくありません。我々は、PostgreSQLに柔軟性と機能性を組み込みながらも、絶えず、プロファイラーに掛けたりソースコードを解析したりして、性能の改善を続けています。PostgreSQL と MySQL とを比較している面白い Web ページが<A href="http://openacs.org/philosophy/why-not-mysql.html">http://openacs.org/philosophy/why-not-mysql.html</A>にあります。
       <BR>
 PostgreSQLは、Unixプロセスを起動することによりユーザー接続を操作します。複数のバックエンド・プロセスが情報をロックしながらデータ・バッファーを共有します。マルチCPUでは、簡単に複数のバックエンドをそれぞれのCPUで走らせることができます。<BR>
       </DD>
@@ -554,17 +554,17 @@ href="https://store.pgsql.com/shopping/">https://store.pgsql.com/shopping/</A>か
 <H4><A NAME="2.1">2.1</A>)	PostgreSQL のための <SMALL>ODBC</SMALL> ドライバーはありますか？
 </H4>
 
-<P> PsqlODBC と OpenLink <SMALL>ODBC</SMALL> の二つの <SMALL>ODBC</SMALL> ドライバーが利用可能です。
+<P> PsqlODBC と OpenLink <SMALL>ODBC</SMALL> の二つの <SMALL>ODBC</SMALL> ドライバーが利用可能です。</P>
 
-<P> PsqlODBC は PostgreSQL の配布に含まれています。それについてのさらに詳細な情報は 
-<A HREF="ftp://ftp.PostgreSQL.org/pub/odbc/">ftp://ftp.PostgreSQL.org/pub/odbc/</A>
-から取得できます。<P>
+<P> PsqlODBC は次の場所からダウンロードできます。 
+<A href=
+    "http://gborg.postgresql.org/project/psqlodbc/projdisplay.php">
+    http://gborg.postgresql.org/project/psqlodbc/projdisplay.php</A>
+</P>
 
 <SMALL><PRE>
     [訳注:
-	PsqlODBC の 日本語パッチを片岡裕生さん(kataoka@interwiz.koganei.tokyo.jp)が作られました:
-	●<A HREF="http://www.interwiz.koganei.tokyo.jp/software/PsqlODBC/index.html">http://www.interwiz.koganei.tokyo.jp/software/PsqlODBC/index.html</A>
-	現在、最新版は井上博司さんのサイトにあります。
+	最新版は井上博司さんのサイトにあります。
 	●<A HREF="http://w2422.nsk.ne.jp/~inoue/indexj.html">http://w2422.nsk.ne.jp/~inoue/indexj.html</A>
     ]
 </PRE></SMALL>
@@ -587,7 +587,7 @@ Programmer's Guide</A>
 
 <P> データベースを裏に持つ Web ページについての素晴らしい紹介が、<BR>
     <A href="http://www.webreview.com">http://www.webreview.com</A>にあります。</P>
-<P> Web への拡張のためには、PHP が卓越したインターフェースとなっています。<A HREF="http://www.php.net">http://www.php.net/</A>にあります。
+<P> Web への拡張のためには、PHP が卓越したインターフェイスとなっています。<A HREF="http://www.php.net">http://www.php.net/</A>にあります。
 
 <SMALL><PRE>
     [訳注:
@@ -596,19 +596,10 @@ Programmer's Guide</A>
 	あるいは、廣川 類さんのサイト
 		<A HREF="http://www.geocities.jp/rui_hirokawa/php/">http://www.geocities.jp/rui_hirokawa/php/</A>
 	にかなりまとめられています。
-	  前田 充宏さんにより作られた<A HREF="http://pg.cni.co.jp/">PHP/FIの日本語パッチ</A>が様々な人の手を経てPHP3.0.7に適用されました。
-	現在はPHPJ-DEVにて、
-		<A HREF="http://php.jpnnet.com/">http://php.jpnnet.com/</A>
-	佐藤さんを中心にマルチバイト拡張として作り直され、最新版はPHP-3.0.18に対応しています。
-	  塚田 卓也さんは、PHP4 用の日本語関係の拡張モジュール
-		<A HREF="ftp://night.fminn.nagano.nagano.jp/php4/">ftp://night.fminn.nagano.nagano.jp/php4/</A>
-	を用意して下さってます。
-	  本家の方で国際化のMLも立ち上がっています。
-	PHP-4.2 からマルチバイト拡張文字列として採り入れられました。
     ]
 </PRE></SMALL>
 
-<P> 処理が複雑な場合、多くの人は Perl インターフェースと CGI.pm か mod_perl を使います。
+<P> 処理が複雑な場合、多くの人は Perl インターフェイスと CGI.pm か mod_perl を使います。
 
 <SMALL><PRE>
     [訳注:
@@ -623,48 +614,55 @@ Programmer's Guide</A>
 </PRE></SMALL>
 
 <P>
-<H4><A NAME="2.3">2.3</A>)	PostgreSQL にグラフィカル・ユーザインターフェースはありますか？
-レポートジェネレータや埋め込み問い合わせ言語インターフェースはありますか？
+<H4><A NAME="2.3">2.3</A>)	PostgreSQL にグラフィカル・ユーザインターフェイスはありますか？
 </H4>
+  <p>もちろん、PostgreSQL へのグラフィカルインターフェイスがいくつかあります。
+その中にPgAccess <a
+    href="http://www.pgaccess.com">http://www.pgaccess.com</a>
+も含まれます。 
+PgAdmin II (<a
+    href="http://www.pgadmin.org">http://www.pgadmin.org</a> Win32-only)もあります。
+RHDB Admin (<a
+    href="http://sources.redhat.com/rhdb/">http://sources.redhat.com/rhdb/
+</a>)と Rekall (<a href="http://www.thekompany.com/products/rekall/">
+    http://www.thekompany.com/products/rekall/</a>, proprietary)もありま
+す。 
+PHPPgAdmin (<a href="http://phppgadmin.sourceforge.net/">
+    http://phppgadmin.sourceforge.net/ </a>) はPostgreSQLへのWebベースの
+インターフェイスを提供します。
 
-<P> PgAccess と呼ばれる素晴らしいグラフィカル・ユーザ・インターフェースがあり、この配布と共に出荷されます。PgAccess にはレポート・ジェネレータもあります。Web ページは<A HREF="http://www.pgaccess.org/">http://www.pgaccess.org/</A>です。
+<P> PgAccess と呼ばれる素晴らしいグラフィカル・ユーザ・インターフェイスがあり、この配布と共に出荷されます。PgAccess にはレポート・ジェネレータもあります。Web ページは<A HREF="http://www.pgaccess.org/">http://www.pgaccess.org/</A>です。
 
-<P> <I>ecpg</I> という C 言語のための埋め込み <SMALL>SQL</SMALL> 問い合わせ言語インターフェースもあります。
+<P>より詳細なリストについては、<a
+    href="http://techdocs.postgresql.org/guides/GUITools">http://techdocs.postgresql.org/guides/GUITools</a>
+    をご覧ください。</P>
 
 <P>
 <H4><A NAME="2.4">2.4</A>)	どのような言語で PostgreSQL と通信できすか？
 </H4>
 
-<P>以下のものがあります:
+<P>人気のあるほとんどの言語はPostgreSQLへのインターフェイスを持っています。
+あなたが使うプログラミング言語の拡張モジュールのリストを覗いてみてください。
+</P>
+
+<P>以下のインターフェイスはPostgreSQLの配布に含まれています。
 
 <UL>
 <LI>C (libpq, libpgeasy)
-<LI>C++ (libpq++)
 <LI>埋め込みC (ecpg)
 <LI>Java (jdbc)
-<LI>Perl (DBD::Pg and perl5)
-<LI>ODBC (odbc)
 <LI>Python (<A HREF="http://www.druid.net/pygresql/">PyGreSQL</A>)
 <LI>TCL (libpgtcl)
-<LI>C Easy API (libpgeasy)
-<LI>PHP ('pg_' 関数群、 Pear::DB)
 </UL>
-    <P>その他の利用可能なインターフェースは <a 
-    href="http://www.PostgreSQL.org/interfaces.html">
-    http://www.PostgreSQL.org/interfaces.html</A>
-    にあります。
+    <P>その他の利用可能なインターフェイスは <a 
+href="http://www.PostgreSQL.org/interfaces.html">http://www.PostgreSQL.org/interfaces.html</a>
+    および、
+<a href="http://gborg.postgresql.org">http://gborg.postgresql.org</A>
+の<I>Drivers/Interfaces</I>のセクションにあります。
     </P>
 
 <SMALL><PRE>
     [訳注：
-	<A HREF="http://www.ruby-lang.org/">ruby</A>の作者であるまつもと ゆきひろ(matz@ZetaBITS.COM)さんと、まつもと えいじ(ematsu@pfu.co.jp)さんが
-	ruby の PostgreSQL インターフェースを作りました。現在の維持管理は斉藤 登さんがしています。
-		<A HREF="http://www.postgresql.jp/interfaces/ruby/">http://www.postgresql.jp/interfaces/ruby/</A>
-        PgBash は 境田 雅明 さんが作った bash の PostgreSQL インターフェースです。
-		<A HREF="http://www.psn.co.jp/PostgreSQL/pgbash/">http://www.psn.co.jp/PostgreSQL/pgbash/</A>
-	Bashコマンドラインでpostgres に問い合わせできます。
-	Perl のモジュールは古くからある Pg と DBI ドライバの DBD::Pg とがあり、
-	いずれも Edmund Mergl 氏によるもので <A HREF="http://www.cpan.org/">CPAN サイト</A>にあります。
 	永安悟史さんは Palm 版の libpq を開発されました。
 		<a href="http://www.snaga.org/libpq/">http://www.snaga.org/libpq/</a>
     ]
@@ -780,13 +778,12 @@ PostgreSQL Administrator's Gide に共有メモリーとセマフォについての情報の詳細があ
 PostgreSQLに許されるバックエンドのプロセス数が制限されているのは、
 システムのリソースを使い果してしまうことを避けるためです。
 
-<P>6.5より前のバージョンのPostgreSQLではバックエンドの最大数は64でしたが、変更するには、<I>include/storage/sinvaladt.h</I>の中のMaxBackendId定数を修正した後に再構築が必要でした。
-
 <P>
 <H4><A NAME="3.9">3.9</A>)	pgsql_tmp</I> ディレクトリの中には何がありますか？
 </H4>
 
-<P> 問い合わせ実行モジュールによって生成された一時的なファイルです。例えば、もし <SMALL>ORDER BY</SMALL> 句を満たすためにバックエンドの <I>-S</I> パラメータで許可した値よりも大きなスペースがソートの際に必要だとすると、溢れたデータを保持するために一時的なファイルがいくつか生成されます。
+<P> 問い合わせ実行モジュールによって生成された一時的なファイルが、このディ
+レクトリに含まれます。例えば、もし <SMALL>ORDER BY</SMALL> 句を満たすためにバックエンドの <I>-S</I> パラメータで許可した値よりも大きなスペースがソートの際に必要だとすると、溢れたデータを保持するために一時的なファイルがいくつかここに生成されます。
 <P>
 一時的なファイルは自動的に消し去られるはずですが、もし、ソートの途中でバックエンドがクラッシュしてしまうとそうはなりません。<I>postmaster</I>の停止とリスタートでこれらのファイルはディレクトリから消しさられます。
 
@@ -794,7 +791,7 @@ PostgreSQLに許されるバックエンドのプロセス数が制限されているのは、
     [訳注：
 	 SYSLOGD 経由でログを出力するには、まず、configure を --enable-syslog 
 	付きで走らせた後、コンパイルとインストールを行ないます。
-	 次に、syslog.conf に local0.* の 出力先を指定し(環境変数で変更可能)、
+	 次に、syslog.conf に local?.* の 出力先を指定し(環境変数で変更可能)、
 	syslogd に HUP シグナルを送って初期化しておきます。そして、
 	$PGDATA/pg_options に syslog=2 を加えて、 postmaster を -S 
 	オプション付きにてサーバモードで起動します。(バージョン 7.1 からは 
@@ -863,7 +860,7 @@ PostgreSQLチームはマイナーリリースでは小さな変更しか行ないませんので、7.2 から 7
 
 <P> 制限は以下のとおりです。
 <PRE>
-データベースの最大サイズ? 	制限無し (1 TB のデータベースも存在します)
+データベースの最大サイズ? 	制限無し (4 TB のデータベースも存在します)
 テーブルの最大サイズ?           16TB
 ロウの最大サイズ?               1.6TB
 フィールドの最大サイズ?         1GB
@@ -955,13 +952,15 @@ ORDER BY と LIMIT を使ってインデックスを使って取り出すことが可能です:
     LIMIT 1;
 </PRE>
 
+    <P>もし、オプティマイザが間違ってシーケンシャルスキャンを選択したことに疑いがなければ、<CODE>SET enable_seqscan TO 'off'</CODE>を使ってインデクススキャンでまちがいなく速くなっているかをテストをしてみてください。</P>
+
     <P> <SMALL>LIKE</SMALL> あるいは <I>~</I> のようなワイルドカード演算
 子は特別な環境でしか使えません：
     <UL>
     <LI>検索文字列が文字列の最初にききます。たとえば：</LI>
     <UL>
-    <LI><SMALL>LIKE</SMALL> パターンが<I>%.</I>で始まらない</LI>
-    <LI><I>~</I> (正規表現) パターンは<I>^.</I>で始まらなければならない</LI>
+    <LI><SMALL>LIKE</SMALL> パターンが<I>%</I>で始まらない</LI>
+    <LI><I>~</I> (正規表現) パターンは<I>^</I>で始まらなければならない</LI>
     </UL>
     <LI>検索文字列を文字クラスから始めることはできません。たとえば、[a-e]。</LI>
     <LI><SMALL>ILIKE</SMALL> や <I>~*</I> のような大文字と小文字を区別し
@@ -1067,8 +1066,8 @@ Proceedings of the 1984 ACM SIGMOD Int'l Conf on Mgmt of Data, 45-57.
 <PRE>
 Type            Internal Name   Notes
 --------------------------------------------------
-"char"          char            1 character
 CHAR(n)         bpchar          指定された固定長となるように空白が詰められる
+"char"          char            １文字
 VARCHAR(n)      varchar         最大長のサイズを指定する、詰め物無し
 TEXT            text            長さに上限の無いテキスト
 BYTEA           bytea           可変長のバイト配列(null-byte safe)
@@ -1077,15 +1076,9 @@ BYTEA           bytea           可変長のバイト配列(null-byte safe)
 <P> 内部名にお目にかかるのは、システム・カタログを調べるときや、エラーメッセージを受け取るときです。
 
 
-<P> 上記の型のうち後の４つの型は "varlena" 型です(すなわち、ディスクの最初の４バイトがデータ長で、それの後に実際のデータが続きます)。このように実際の空間は宣言された大きさよりも少し大きくなります。しかし、これらのデータ型は<SMALL>TOAST</SMALL>により圧縮されたり複数ロウに渡って保存されたりして、ディスク上の空間は思ったより小さくなります。
+<P> 上記の型のうち最初の４つの型は "varlena" 型です(すなわち、ディスクの最初の４バイトがデータ長で、それの後に実際のデータが続きます)。このように実際の空間は宣言された大きさよりも少し大きくなります。しかし、これらのデータ型は<SMALL>TOAST</SMALL>により圧縮されたり複数ロウに渡って保存されたりして、ディスク上の空間は思ったより小さくなります。
 
-    <P><SMALL>CHAR(n)</SMALL>はいつも長さが同じ文字列を保存するのに最適で
-す。<SMALL>VARCHAR(n)</SMALL> は可変長の文字列を保存するのに最適ですが、
-保存できる文字列の長さに制限があります。<SMALL>TEXT</SMALL> は長さに制限
-の無い文字列の保存ためのもので、最大1ギガバイトです。
-<SMALL>BYTEA</SMALL>は、部分的に<SMALL>NULL</SMALL> のバイトを含むバイナ
-リデータを保存するためのものです。</P>
-
+    <P><SMALL>VARCHAR(n)</SMALL> は可変長の文字列を保存するのに最適ですが、保存できる文字列の長さに制限があります。<SMALL>TEXT</SMALL> は長さに制限の無い文字列の保存ためのもので、最大で 1ギガバイトです。 <SMALL>CHAR(n)</SMALL>は、<SMALL>VARCHAR(n)</SMALL>が与えられた文字だけを保存するのに対し、ブランクを詰め込んでいつも同じ長さで文字列を保存するのに最適です。<SMALL>BYTEA</SMALL>は、部分的に<SMALL>NULL</SMALL> のバイトを含むバイナリデータを保存するためのものです。これらのタイプは同じくらいの性能特性ををもちます。</P>
 
 <P>
 <H4><A NAME="4.15.1">4.15.1</A>)	通番(serial)／自動増分フィールドはどのようにつくりますか？
@@ -1142,14 +1135,10 @@ BYTEA           bytea           可変長のバイト配列(null-byte safe)
     <P>それはありません。<I>currval()</I> は、すべてのユーザではありませんが、あなたのバックエンドに与えられた現在の値を返します。
 
 
-<H4><A name="4.15.4">4.15.4</A>) トランザクションが中断したときにもうい
-ちどシーケンス番号が使われないのはなぜですか？シーケンス／SERIALカラムに
-空きがあるのはなぜですか？
+<H4><A name="4.15.4">4.15.4</A>) トランザクションが中断したときにもういちどシーケンス番号が使われないのはなぜですか？シーケンス／SERIALカラムに空きがあるのはなぜですか？
 </H4>
 
-    <P>同時性を改善するために、実行中のトランザクションに、必要でト
-ランザクションが終了するまでロックされないシーケンス値を与えています。
-このためトランザクションが中断されると番号割り当てにギャップを生じます。
+    <P>同時性を改善するために、実行中のトランザクションに、必要でトランザクションが終了するまでロックされないシーケンス値を与えています。このためトランザクションが中断されると番号割り当てにギャップを生じます。
 </P>
 
 <P> 
@@ -1231,7 +1220,7 @@ href="http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glo
 
 <P>現在は、PostgreSQLのトランザクションのコミット時にラージ・オブジェクト・ハンドルを閉じることにより、<I>lo_open</I>コマンドが完了した直後に強制的にルールを実行します。このため、最初にハンドルに対して何かをしようとすると、<I>invalid large obj descriptor(ラージ・オブジェクトの記述子が不正)</I>となります。それで、もし、トランザクションを使うのを忘れると、（少なくともほとんどの時間）働いていたコードがエラーメッセージを出すのです。
 
-<P>もし、<SMALL>ODBC</SMALL>のようなクライアントインターフェースをお使いなら、<tt>auto-commit off</tt>を設定する必要があるかもしれません。
+<P>もし、<SMALL>ODBC</SMALL>のようなクライアントインターフェイスをお使いなら、<tt>auto-commit off</tt>を設定する必要があるかもしれません。
 <P>
 
 
@@ -1247,10 +1236,7 @@ href="http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glo
 <H4><A NAME="4.22">4.22</A>)	なぜ、<SMALL>IN</SMALL>を使う副問い合わせがとても遅いのですか？
 </H4>
 <P>
-現在、外部問い合わせの各ロウについて副問い合わせの結果を順番にスキャンす
-ることにより、副問い合わせを外部問い合わせに結合しています。
-もし、副問い合わせが数行しか返さず、外部問い合わせが沢山の行を返すなら、
-当面は<CODE>IN</CODE>を<CODE>EXISTS</CODE>で置き換えることです：
+現在、外部問い合わせの各ロウについて副問い合わせの結果を順番にスキャンすることにより、副問い合わせを外部問い合わせに結合しています。もし、副問い合わせが数行しか返さず、外部問い合わせが沢山の行を返すなら、当面は<CODE>IN</CODE>を<CODE>EXISTS</CODE>で置き換えることです：
 <PRE>
 	SELECT *
 	FROM tab
@@ -1264,7 +1250,7 @@ href="http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glo
 </PRE>
 とします。
 これが手っ取り早いですが、<CODE>subcol</CODE>は索引付きカラムであるべきです。
-この制限は将来のリリースで直したいと思っています。
+ここで示した問題は7.4で修正されます。
 <P>
 
 <H4><A NAME="4.23">4.23</A>) <i>外部</i>結合(<i>outer</i> join)はどのように実現しますか?<BR></H4>
@@ -1303,7 +1289,7 @@ PostgreSQL は SQL 標準構文を使う外部結合(アウタージョイン)をサポートします。ここ
 <P>
 現行のデータベース以外への問い合わせ方法はありません。というのもPostgreSQLがデータベース仕様のシステムカタログを読み込むためで、そこには、たとえそのふりをするだけにしろ、データベースを越えて問い合わせをするすべがありません。
 <P>
-<I>/contrib/dblink</I> はデータベース間(cross-database)の問い合わせを関数呼出しにより許します。もちろん、クライアントは同時に接続を別のデータベースへも張らなくてはならず、結果をクライアント側でマージしなくてはなりません。</P>
+<I>contrib/dblink</I> はデータベース間(cross-database)の問い合わせを関数呼出しにより許します。もちろん、クライアントは同時に接続を別のデータベースへも張らなくてはならず、結果をクライアント側でマージしなくてはなりません。</P>
 
 
 <P>
@@ -1334,28 +1320,26 @@ http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</a>
 にて作業が進められています。
 </P>
 
-<SMALL><PRE>
 [訳注
     JPUG 分散トランザクション開発分科会では、永安悟史さんを中心に２相
     コミットの実装を行なっています。
-	<A href="http://www.postgresql.jp/subcommittee/dt/index.html">http://www.postgresql.jp/subcommittee/dt/index.html</A>
-	<A href="http://www.snaga.org/jpug-dt/">http://www.snaga.org/jpug-dt/</A>
+	http://www.postgresql.jp/subcommittee/dt/index.html
+	http://www.snaga.org/jpug-dt/
 
     三谷篤さんによる双方向リプリケーションPGReplicate
-	<A href="http://www.csra.co.jp/~mitani/jpug/pgreplicate/">http://www.csra.co.jp/~mitani/jpug/pgreplicate/</A>
+	http://www.csra.co.jp/~mitani/jpug/pgreplicate/
 ]
-</PRE></SMALL>
 
 <H4><A name="4.28">4.28</A>) どのような暗号化オプションを利用できますか?
 </H4>
 <UL>
-<LI><I>/contrib/pgcrypto</I>
+<LI><I>contrib/pgcrypto</I>
 <SMALL>SQL</SMALL>問い合わせの中で使うための沢山の暗号化を含みます。
 </LI>
 <LI>
 クライアントからサーバーへの転送をを暗号化する唯一の方法は<I>pg_hba.conf</I>の中で<I>hostssl</I>を使うことによります。 
 </LI>
-<LI>バージョン7.3 ではデータベースユーザのパスワードは保存される時に自動的に暗号化されます。 それより前のバージョンでは<i>postgresql.conf</i>中で<i>PASSWORD_ENCRYPTION</i>を有効にする必要があります。 
+<LI>バージョン7.3 ではデータベースユーザのパスワードは保存される時に自動的に暗号化されます。 それより前のバージョンでは<I>postgresql.conf</I>中で<I>PASSWORD_ENCRYPTION</I>を有効にする必要があります。 
 </LI>
 <LI></LI>サーバーは暗号化ファイルシステムを使って走ることもできます。
 </UL>
@@ -1382,7 +1366,8 @@ http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</a>
 <H4><A NAME="5.3">5.3</A>)	タプルを返す C言語の関数はどのように書きますか？
 </H4>
 
-<P> 原理的には可能ですが、これには究極の妙技を要しますので、著者のまわりでは未だ誰もやったことがありません。
+<P>バージョン7.3以降のPostgreSQLでは、テーブルを返す関数を C, PL/PgSQL、そして SQL にて完全にサポートします。詳しくはプログラマガイドの情報を見てください。Cで定義された表を返す関数の例題が<I>contrib/tablefunc</I>の中にあります。
+
 
 <P><H4><A NAME="5.4">5.4</A>)	ソース・ファイルを変更しました。再コンパイルしても変化が見られないのはなぜですか？
 </H4>
@@ -1396,7 +1381,7 @@ http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</a>
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:	2002年10月18日
+  最終更新日:	2003年04月10日
   翻訳者:	桑村 潤 (<A HREF="mailto:juk@PostgreSQL.jp">Jun Kuwamura &lt;juk@PostgreSQL.jp&gt;</A>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
@@ -1426,7 +1411,6 @@ Atsushi SUGAWARA &lt;asugawar at f3.dion.ne.jp&gt;</A>)
 	<A HREF="http://www.rccm.co.jp/~juk/pgsql/">http://www.rccm.co.jp/~juk/pgsql/</A>(FAQ和訳 PostgreSQL についてよくある質問)
 	<A HREF="http://www.PostgreSQL.jp/subcommittee/jpugdoc/">http://www.PostgreSQL.jp/subcommittee/jpugdoc/</A>JPUG文書・書籍関連分科会
 	<A HREF="http://www.linux.or.jp/JF/">http://www.linux.or.jp/JF/</A>Linux JFプロジェクト
-	<A HREF="http://www.sra.co.jp/people/t-ishii/PostgreSQL/doc-jp/">http://www.sra.co.jp/people/t-ishii/PostgreSQL/doc-jp/</A>
 
   なお、この和訳に関するご意見は(<A HREF="mailto:juk@PostgreSQL.jp">juk@PostgreSQL.jp</A>)までお寄せ下さい。
 ]
