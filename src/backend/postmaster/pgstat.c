@@ -16,7 +16,7 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.27 2002/09/04 20:31:24 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.28 2002/09/05 18:26:18 petere Exp $
  * ----------
  */
 #include "postgres.h"
@@ -1575,7 +1575,7 @@ pgstat_recvbuffer(void)
 		{
 			fromlen = sizeof(fromaddr);
 			len = recvfrom(pgStatSock,
-						   &input_buffer, sizeof(PgStat_Msg), 0,
+						   (char *) &input_buffer, sizeof(PgStat_Msg), 0,
 						   (struct sockaddr *) &fromaddr, &fromlen);
 			if (len < 0)
 			{
