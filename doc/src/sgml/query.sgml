@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.11 2000/04/11 05:39:06 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.11.2.1 2000/06/14 13:18:59 thomas Exp $
 -->
 
  <chapter id="query">
@@ -154,7 +154,7 @@ INSERT INTO weather
    </para>
 
    <para>
-    You can also use the <command>COPY</command> command to perform load large
+    You can also use <command>COPY</command> to load large
     amounts of data from flat (<acronym>ASCII</acronym>) files.
     This is usually faster because the data is read (or written) as a
     single atomic

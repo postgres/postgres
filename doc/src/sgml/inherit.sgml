@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/inherit.sgml,v 1.7 2000/05/02 20:01:51 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/inherit.sgml,v 1.7.2.1 2000/06/14 13:18:59 thomas Exp $
 -->
 
  <chapter id="inherit">
@@ -40,6 +40,7 @@ CREATE TABLE capitals (
      The inheritance hierarchy is a actually a directed acyclic graph.
     </para>
    </note>
+  </para>
 
    For example, the  following  query  finds
    all  the cities that are situated at an attitude of 500ft or higher:
@@ -87,6 +88,7 @@ SELECT c.name, c.altitude
    <command>ALTER TABLE</command>.
   </para>
  </chapter>
+  <para>
 
 <!-- Keep this comment at the end of the file
 Local variables:
