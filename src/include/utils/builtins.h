@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.4 1996/11/04 04:00:43 momjian Exp $
+ * $Id: builtins.h,v 1.5 1996/11/04 07:46:00 scrappy Exp $
  *
  * NOTES
  *    This should normally only be included by fmgr.h.
@@ -18,10 +18,10 @@
 #ifndef BUILTINS_H
 #define BUILTINS_H
 
-#include "storage/itemptr.h"
-#include "utils/nabstime.h"
-#include "utils/geo-decls.h" 
-#include "utils/rel.h"
+#include <storage/itemptr.h>
+#include <utils/rel.h>
+#include <utils/nabstime.h>
+#include <utils/geo-decls.h>
 
 /*
  *	Defined in adt/
@@ -228,7 +228,6 @@ extern POLYGON	*rt_poly_inter();
 extern int32 pqtest(struct varlena *vlena);
 
 /* arrayfuncs.c */
-#include "utils/array.h"
 
 /* date.c */
 extern int32 reltimein(char *timestring);
@@ -335,7 +334,6 @@ extern long float84gt(float64 arg1, float32 arg2);
 extern long float84ge(float64 arg1, float32 arg2);
 
 /* geo-ops.c, geo-selfuncs.c */
-#include "utils/geo-decls.h"
 
 /* misc.c */
 extern bool NullValue(Datum value, bool *isNull);
@@ -425,6 +423,5 @@ extern struct varlena *byteaSetByte(struct varlena *v, int32 n, int32 newByte);
 extern struct varlena *byteaSetBit(struct varlena *v, int32 n, int32 newBit);
 
 /* acl.c */
-#include "utils/acl.h"
 
 #endif	/* BUILTINS_H */

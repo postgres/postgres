@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fd.h,v 1.3 1996/11/01 09:31:10 scrappy Exp $
+ * $Id: fd.h,v 1.4 1996/11/04 07:45:53 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,19 +37,15 @@
 /*
  * FileOpen uses the standard UNIX open(2) flags.
  */
-#include <fcntl.h>	/* for O_ on most */
 #ifndef O_RDONLY
-#include <sys/file.h>	/* for O_ on the rest */
 #endif /* O_RDONLY */
 
 /*
  * FileSeek uses the standard UNIX lseek(2) flags.
  */
 #ifndef WIN32
-#include <unistd.h>	/* for SEEK_ on most */
 #else
 #ifndef SEEK_SET
-#include <stdio.h>	/* for SEEK_ on the rest */
 #endif /* SEEK_SET */
 #endif /* WIN32 */
 

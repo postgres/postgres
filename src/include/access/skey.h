@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: skey.h,v 1.2 1996/10/19 04:36:08 scrappy Exp $
+ * $Id: skey.h,v 1.3 1996/11/04 07:45:26 scrappy Exp $
  *
  *
  * Note:
@@ -16,8 +16,7 @@
 #ifndef	SKEY_H
 #define SKEY_H
 
-#include "access/attnum.h"
-
+#include <access/attnum.h>
 
 typedef struct ScanKeyData {
     bits16		sk_flags;	/* flags */
