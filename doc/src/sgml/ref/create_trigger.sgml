@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.19 2001/11/29 22:18:14 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.20 2001/11/30 01:22:47 momjian Exp $
 Postgres documentation
 -->
 
@@ -132,7 +132,8 @@ CREATE
   </para>
   <para>
   <command>SELECT</command> does not modify any rows so you can not
-  create <command>SELECT</command> triggers.
+  create <command>SELECT</command> triggers. Rules and views are more
+  appropriate in such cases.
   </para>
 
   <para>
