@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.23 2000/07/11 14:30:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.24 2000/08/22 04:00:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,6 +114,8 @@ MemoryContextInit(void)
 void
 MemoryContextReset(MemoryContext context)
 {
+	AssertArg(MemoryContextIsValid(context));
+
 	MemoryContextResetChildren(context);
 	(*context->methods->reset) (context);
 }
@@ -128,6 +130,8 @@ void
 MemoryContextResetChildren(MemoryContext context)
 {
 	MemoryContext	child;
+
+	AssertArg(MemoryContextIsValid(context));
 
 	for (child = context->firstchild; child != NULL; child = child->nextchild)
 	{
@@ -148,6 +152,7 @@ MemoryContextResetChildren(MemoryContext context)
 void
 MemoryContextDelete(MemoryContext context)
 {
+	AssertArg(MemoryContextIsValid(context));
 	/* We had better not be deleting TopMemoryContext ... */
 	Assert(context != TopMemoryContext);
 	/* And not CurrentMemoryContext, either */
@@ -194,6 +199,7 @@ MemoryContextDelete(MemoryContext context)
 void
 MemoryContextDeleteChildren(MemoryContext context)
 {
+	AssertArg(MemoryContextIsValid(context));
 	/*
 	 * MemoryContextDelete will delink the child from me,
 	 * so just iterate as long as there is a child.
@@ -215,6 +221,8 @@ MemoryContextDeleteChildren(MemoryContext context)
 void
 MemoryContextResetAndDeleteChildren(MemoryContext context)
 {
+	AssertArg(MemoryContextIsValid(context));
+
 	MemoryContextDeleteChildren(context);
 	(*context->methods->reset) (context);
 }
@@ -230,6 +238,8 @@ void
 MemoryContextStats(MemoryContext context)
 {
 	MemoryContext	child;
+
+	AssertArg(MemoryContextIsValid(context));
 
 	(*context->methods->stats) (context);
 	for (child = context->firstchild; child != NULL; child = child->nextchild)
@@ -250,6 +260,8 @@ void
 MemoryContextCheck(MemoryContext context)
 {
 	MemoryContext	child;
+
+	AssertArg(MemoryContextIsValid(context));
 
 	(*context->methods->check) (context);
 	for (child = context->firstchild; child != NULL; child = child->nextchild)
