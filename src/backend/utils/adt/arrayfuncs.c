@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.74 2002/03/01 22:17:10 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.75 2002/03/02 00:34:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -839,7 +839,8 @@ array_get_slice(ArrayType *array,
 	int			i,
 				ndim,
 			   *dim,
-			   *lb;
+			   *lb,
+			   *newlb;
 	int			fixedDim[1],
 				fixedLb[1];
 	char	   *arraydataptr;
@@ -911,7 +912,14 @@ array_get_slice(ArrayType *array,
 	newarray->ndim = ndim;
 	newarray->flags = 0;
 	memcpy(ARR_DIMS(newarray), span, ndim * sizeof(int));
-	memcpy(ARR_LBOUND(newarray), lowerIndx, ndim * sizeof(int));
+	/*
+	 * Lower bounds of the new array are set to 1.  Formerly (before 7.3)
+	 * we copied the given lowerIndx values ... but that seems confusing.
+	 */
+	newlb = ARR_LBOUND(newarray);
+	for (i = 0; i < ndim; i++)
+		newlb[i] = 1;
+
 	array_extract_slice(ndim, dim, lb, arraydataptr, elmlen,
 						lowerIndx, upperIndx, ARR_DATA_PTR(newarray));
 
