@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.132 2004/11/06 05:20:41 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.133 2004/11/06 17:56:40 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1528,7 +1528,11 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 #ifndef WIN32
 #define DEFAULT_SHELL "/bin/sh"
 #else
-#define DEFAULT_SHELL "c:/windows/system32/cmd.exe"
+/*
+ *	CMD.EXE is in different places in different Win32 releases so we
+ *	have to rely on the path to find it.
+ */
+#define DEFAULT_SHELL "cmd.exe"
 #endif
 
 static bool
