@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.66 2000/02/22 09:55:20 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.67 2000/04/30 21:23:31 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -492,14 +492,14 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	int			is_user_lock;
 
 	is_user_lock = (lockmethod == USER_LOCKMETHOD);
+#ifdef USER_LOCKS_DEBUG
 	if (is_user_lock)
 	{
-#ifdef USER_LOCKS_DEBUG
 		TPRINTF(TRACE_USERLOCKS, "LockAcquire: user lock [%u] %s",
 				locktag->objId.blkno,
 				lock_types[lockmode]);
-#endif
 	}
+#endif
 #endif
 
 	/* ???????? This must be changed when short term locks will be used */
@@ -1266,14 +1266,11 @@ LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 	LOCK	   *lock;
 	bool		found;
 	int			trace_flag;
-	int			xidtag_lockmethod;
-
-#ifdef USER_LOCKS
-	int			is_user_lock_table,
-				count,
+	int			xidtag_lockmethod,
 				nleft;
 
-	count = nleft = 0;
+#ifdef USER_LOCKS
+	int			is_user_lock_table;
 
 	is_user_lock_table = (lockmethod == USER_LOCKMETHOD);
 	trace_flag = (lockmethod == 2) ? TRACE_USERLOCKS : TRACE_LOCKS;
@@ -1282,6 +1279,8 @@ LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 #endif
 	TPRINTF(trace_flag, "LockReleaseAll: lockmethod=%d, pid=%d",
 			lockmethod, MyProcPid);
+
+	nleft = 0;
 
 	Assert(lockmethod < NumLockMethods);
 	lockMethodTable = LockMethodTable[lockmethod];
@@ -1303,16 +1302,6 @@ LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 	for (;;)
 	{
 		bool		wakeupNeeded = false;
-
-		/*
-		 * Sometimes the queue appears to be messed up.
-		 */
-		if (count++ > 1000)
-		{
-			elog(NOTICE, "LockReleaseAll: xid loop detected, giving up");
-			nleft = 0;
-			break;
-		}
 
 		/* ---------------------------
 		 * XXX Here we assume the shared memory queue is circular and
@@ -1485,9 +1474,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 			ProcLockWakeup(waitQueue, lockmethod, lock);
 		}
 
-#ifdef USER_LOCKS
 next_item:
-#endif
 		if (done)
 			break;
 		SHMQueueFirst(&xidLook->queue, (Pointer *) &tmp, &tmp->queue);
