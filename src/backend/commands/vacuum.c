@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.276 2004/05/21 16:08:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.277 2004/05/22 23:14:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,7 +161,9 @@ vacuum(VacuumStmt *vacstmt)
 	MemoryContext anl_context = NULL;
 	TransactionId initialOldestXmin = InvalidTransactionId;
 	TransactionId initialFreezeLimit = InvalidTransactionId;
-	bool		all_rels;
+	bool		all_rels,
+				in_outer_xact,
+				use_own_xacts;
 	List	   *relations,
 			   *cur;
 
@@ -177,10 +179,23 @@ vacuum(VacuumStmt *vacstmt)
 	 * Furthermore, the forced commit that occurs before truncating the
 	 * relation's file would have the effect of committing the rest of the
 	 * user's transaction too, which would certainly not be the desired
-	 * behavior.
+	 * behavior.  (This only applies to VACUUM FULL, though.  We could
+	 * in theory run lazy VACUUM inside a transaction block, but we choose
+	 * to disallow that case because we'd rather commit as soon as possible
+	 * after finishing the vacuum.  This is mainly so that we can let go the
+	 * AccessExclusiveLock that we may be holding.)
+	 *
+	 * ANALYZE (without VACUUM) can run either way.
 	 */
 	if (vacstmt->vacuum)
+	{
 		PreventTransactionChain((void *) vacstmt, stmttype);
+		in_outer_xact = false;
+	}
+	else
+	{
+		in_outer_xact = IsInTransactionChain((void *) vacstmt);
+	}
 
 	/* Turn vacuum cost accounting on or off */
 	VacuumCostActive = (VacuumCostNaptime > 0);
@@ -205,81 +220,89 @@ vacuum(VacuumStmt *vacstmt)
 										ALLOCSET_DEFAULT_INITSIZE,
 										ALLOCSET_DEFAULT_MAXSIZE);
 
-	/*
-	 * If we are running only ANALYZE, we don't need per-table
-	 * transactions, but we still need a memory context with table
-	 * lifetime.
-	 */
-	if (vacstmt->analyze && !vacstmt->vacuum)
-		anl_context = AllocSetContextCreate(PortalContext,
-											"Analyze",
-											ALLOCSET_DEFAULT_MINSIZE,
-											ALLOCSET_DEFAULT_INITSIZE,
-											ALLOCSET_DEFAULT_MAXSIZE);
-
 	/* Assume we are processing everything unless one table is mentioned */
 	all_rels = (vacstmt->relation == NULL);
 
 	/* Build list of relations to process (note this lives in vac_context) */
 	relations = get_rel_oids(vacstmt->relation, stmttype);
 
-	/*
-	 * Formerly, there was code here to prevent more than one VACUUM from
-	 * executing concurrently in the same database.  However, there's no
-	 * good reason to prevent that, and manually removing lockfiles after
-	 * a vacuum crash was a pain for dbadmins.	So, forget about
-	 * lockfiles, and just rely on the locks we grab on each target table
-	 * to ensure that there aren't two VACUUMs running on the same table
-	 * at the same time.
-	 */
+	if (vacstmt->vacuum && all_rels)
+	{
+		/*
+		 * It's a database-wide VACUUM.
+		 *
+		 * Compute the initially applicable OldestXmin and FreezeLimit
+		 * XIDs, so that we can record these values at the end of the
+		 * VACUUM. Note that individual tables may well be processed
+		 * with newer values, but we can guarantee that no
+		 * (non-shared) relations are processed with older ones.
+		 *
+		 * It is okay to record non-shared values in pg_database, even
+		 * though we may vacuum shared relations with older cutoffs,
+		 * because only the minimum of the values present in
+		 * pg_database matters.  We can be sure that shared relations
+		 * have at some time been vacuumed with cutoffs no worse than
+		 * the global minimum; for, if there is a backend in some
+		 * other DB with xmin = OLDXMIN that's determining the cutoff
+		 * with which we vacuum shared relations, it is not possible
+		 * for that database to have a cutoff newer than OLDXMIN
+		 * recorded in pg_database.
+		 */
+		vacuum_set_xid_limits(vacstmt, false,
+							  &initialOldestXmin,
+							  &initialFreezeLimit);
+	}
 
 	/*
-	 * The strangeness with committing and starting transactions here is
-	 * due to wanting to run each table's VACUUM as a separate
-	 * transaction, so that we don't hold locks unnecessarily long.  Also,
-	 * if we are doing VACUUM ANALYZE, the ANALYZE part runs as a separate
-	 * transaction from the VACUUM to further reduce locking.
+	 * Decide whether we need to start/commit our own transactions.
 	 *
+	 * For VACUUM (with or without ANALYZE): always do so, so that we
+	 * can release locks as soon as possible.  (We could possibly use the
+	 * outer transaction for a one-table VACUUM, but handling TOAST tables
+	 * would be problematic.)
+	 *
+	 * For ANALYZE (no VACUUM): if inside a transaction block, we cannot
+	 * start/commit our own transactions.  Also, there's no need to do so
+	 * if only processing one relation.  For multiple relations when not
+	 * within a transaction block, use own transactions so we can release
+	 * locks sooner.
+	 */
+	if (vacstmt->vacuum)
+	{
+		use_own_xacts = true;
+	}
+	else
+	{
+		Assert(vacstmt->analyze);
+		if (in_outer_xact)
+			use_own_xacts = false;
+		else if (length(relations) > 1)
+			use_own_xacts = true;
+		else
+			use_own_xacts = false;
+	}
+
+	/*
+	 * If we are running ANALYZE without per-table transactions, we'll
+	 * need a memory context with table lifetime.
+	 */
+	if (!use_own_xacts)
+		anl_context = AllocSetContextCreate(PortalContext,
+											"Analyze",
+											ALLOCSET_DEFAULT_MINSIZE,
+											ALLOCSET_DEFAULT_INITSIZE,
+											ALLOCSET_DEFAULT_MAXSIZE);
+
+	/*
 	 * vacuum_rel expects to be entered with no transaction active; it will
 	 * start and commit its own transaction.  But we are called by an SQL
 	 * command, and so we are executing inside a transaction already.  We
 	 * commit the transaction started in PostgresMain() here, and start
 	 * another one before exiting to match the commit waiting for us back
 	 * in PostgresMain().
-	 *
-	 * In the case of an ANALYZE statement (no vacuum, just analyze) it's
-	 * okay to run the whole thing in the outer transaction, and so we
-	 * skip transaction start/stop operations.
 	 */
-	if (vacstmt->vacuum)
+	if (use_own_xacts)
 	{
-		if (all_rels)
-		{
-			/*
-			 * It's a database-wide VACUUM.
-			 *
-			 * Compute the initially applicable OldestXmin and FreezeLimit
-			 * XIDs, so that we can record these values at the end of the
-			 * VACUUM. Note that individual tables may well be processed
-			 * with newer values, but we can guarantee that no
-			 * (non-shared) relations are processed with older ones.
-			 *
-			 * It is okay to record non-shared values in pg_database, even
-			 * though we may vacuum shared relations with older cutoffs,
-			 * because only the minimum of the values present in
-			 * pg_database matters.  We can be sure that shared relations
-			 * have at some time been vacuumed with cutoffs no worse than
-			 * the global minimum; for, if there is a backend in some
-			 * other DB with xmin = OLDXMIN that's determining the cutoff
-			 * with which we vacuum shared relations, it is not possible
-			 * for that database to have a cutoff newer than OLDXMIN
-			 * recorded in pg_database.
-			 */
-			vacuum_set_xid_limits(vacstmt, false,
-								  &initialOldestXmin,
-								  &initialFreezeLimit);
-		}
-
 		/* matches the StartTransaction in PostgresMain() */
 		CommitTransactionCommand();
 	}
@@ -301,13 +324,13 @@ vacuum(VacuumStmt *vacstmt)
 			MemoryContext old_context = NULL;
 
 			/*
-			 * If we vacuumed, use new transaction for analyze. Otherwise,
+			 * If using separate xacts, start one for analyze. Otherwise,
 			 * we can use the outer transaction, but we still need to call
 			 * analyze_rel in a memory context that will be cleaned up on
 			 * return (else we leak memory while processing multiple
 			 * tables).
 			 */
-			if (vacstmt->vacuum)
+			if (use_own_xacts)
 			{
 				StartTransactionCommand();
 				SetQuerySnapshot();		/* might be needed for functions
@@ -326,7 +349,7 @@ vacuum(VacuumStmt *vacstmt)
 
 			StrategyHintVacuum(false);
 
-			if (vacstmt->vacuum)
+			if (use_own_xacts)
 				CommitTransactionCommand();
 			else
 			{
@@ -339,7 +362,7 @@ vacuum(VacuumStmt *vacstmt)
 	/*
 	 * Finish up processing.
 	 */
-	if (vacstmt->vacuum)
+	if (use_own_xacts)
 	{
 		/* here, we are not in a transaction */
 
@@ -348,7 +371,10 @@ vacuum(VacuumStmt *vacstmt)
 		 * PostgresMain().
 		 */
 		StartTransactionCommand();
+	}
 
+	if (vacstmt->vacuum)
+	{
 		/*
 		 * If it was a database-wide VACUUM, print FSM usage statistics
 		 * (we don't make you be superuser to see these).

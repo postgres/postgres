@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.166 2004/05/21 05:07:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.167 2004/05/22 23:14:37 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -1417,7 +1417,7 @@ PreventTransactionChain(void *stmtNode, const char *stmtType)
 			 errmsg("%s cannot be executed from a function", stmtType)));
 	/* If we got past IsTransactionBlock test, should be in default state */
 	if (CurrentTransactionState->blockState != TBLOCK_DEFAULT &&
-			CurrentTransactionState->blockState != TBLOCK_STARTED)
+		CurrentTransactionState->blockState != TBLOCK_STARTED)
 		elog(ERROR, "cannot prevent transaction chain");
 	/* all okay */
 }
@@ -1460,6 +1460,36 @@ RequireTransactionChain(void *stmtNode, const char *stmtType)
 	/* translator: %s represents an SQL statement name */
 			 errmsg("%s may only be used in transaction blocks",
 					stmtType)));
+}
+
+/*
+ *	IsInTransactionChain
+ *
+ *	This routine is for statements that need to behave differently inside
+ *	a transaction block than when running as single commands.  ANALYZE is
+ *	currently the only example.
+ *
+ *	stmtNode: pointer to parameter block for statement; this is used in
+ *	a very klugy way to determine whether we are inside a function.
+ */
+bool
+IsInTransactionChain(void *stmtNode)
+{
+	/*
+	 * Return true on same conditions that would make PreventTransactionChain
+	 * error out
+	 */
+	if (IsTransactionBlock())
+		return true;
+
+	if (!MemoryContextContains(QueryContext, stmtNode))
+		return true;
+
+	if (CurrentTransactionState->blockState != TBLOCK_DEFAULT &&
+		CurrentTransactionState->blockState != TBLOCK_STARTED)
+		return true;
+
+	return false;
 }
 
 
