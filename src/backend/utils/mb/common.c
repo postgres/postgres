@@ -2,7 +2,7 @@
  * This file contains some public functions
  * usable for both the backend and the frontend.
  * Tatsuo Ishii
- * $Id: common.c,v 1.3 1998/10/06 03:02:21 momjian Exp $ */
+ * $Id: common.c,v 1.4 1999/05/13 10:28:25 ishii Exp $ */
 
 #include <stdlib.h>
 
@@ -27,6 +27,10 @@ int
 pg_char_to_encoding(const char *s)
 {
 	pg_encoding_conv_tbl *p = pg_conv_tbl;
+
+        if (!s) {
+		return (-1);
+	}
 
 	for (; p->encoding >= 0; p++)
 	{

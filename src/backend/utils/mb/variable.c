@@ -2,7 +2,7 @@
  * This file contains some public functions
  * related to show/set/reset variable commands.
  * Tatsuo Ishii
- * $Id: variable.c,v 1.2 1998/09/01 04:33:24 momjian Exp $
+ * $Id: variable.c,v 1.3 1999/05/13 10:28:26 ishii Exp $
  */
 
 #include "mb/pg_wchar.h"
@@ -13,8 +13,13 @@ parse_client_encoding(const char *value)
 	int			encoding;
 
 	encoding = pg_valid_client_encoding(value);
-	if (encoding < 0)
-		elog(ERROR, "Client encoding %s is not supported", value);
+	if (encoding < 0) {
+	        if (value) {
+			elog(ERROR, "Client encoding %s is not supported", value);
+		} else {
+			elog(ERROR, "No client encoding is specified");
+		}
+	}
 	else
 	{
 		if (pg_set_client_encoding(encoding))
