@@ -7,15 +7,17 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.1 1996/10/12 07:47:09 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.2 1996/10/13 18:37:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 #include <pwd.h>
 #include <ctype.h>		        /* isspace() declaration */
 #include <sys/stat.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
