@@ -16,7 +16,7 @@ All of the mailing lists are currently archived and viewable at:
 And, so that we have an idea of who is using what, please connect to the
 following registration URL:
 
-	http://www.postgresql.org -> Helping Us -> Survey/Register
+	http://www.postgresql.org -> User's Lounge -> Register as a user
 
 
 Thank you for choosing PostgreSQL, the most advanced open source database 
