@@ -4,15 +4,14 @@
 #    Makefile for port/hpux
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/hpux/Attic/Makefile,v 1.2 1996/11/09 06:19:21 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/hpux/Attic/Makefile,v 1.3 1997/12/20 00:25:34 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
 
-INCLUDE_OPT = -I../.. \
-              -I../../../include
+INCLUDE_OPT = -I../.. 
 
 CFLAGS+=$(INCLUDE_OPT)
 

@@ -4,7 +4,7 @@
 #    Makefile for rewrite
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/rewrite/Makefile,v 1.4 1997/12/19 02:06:48 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/rewrite/Makefile,v 1.5 1997/12/20 00:27:05 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,10 +12,6 @@ SRCDIR = ../..
 include ../../Makefile.global
 
 INCLUDE_OPT = -I.. 
-
-ifdef PORTNAME
-INCLUDE_OPT+=-I../port/$(PORTNAME) 
-endif
 
 CFLAGS+=$(INCLUDE_OPT)
 

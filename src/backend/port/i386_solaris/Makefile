@@ -4,15 +4,14 @@
 #    Makefile for port/i386_solaris
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/i386_solaris/Attic/Makefile,v 1.3 1997/12/19 13:28:06 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/i386_solaris/Attic/Makefile,v 1.4 1997/12/20 00:25:41 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
 
-INCLUDE_OPT = -I../.. \
-              -I../../../include
+INCLUDE_OPT = -I../.. 
 
 CFLAGS+=$(INCLUDE_OPT)
 

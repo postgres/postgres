@@ -4,16 +4,14 @@
 #    Makefile for tioga
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/tioga/Attic/Makefile,v 1.3 1996/11/09 06:22:42 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/tioga/Attic/Makefile,v 1.4 1997/12/20 00:28:13 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../..
 include ../../Makefile.global
 
-INCLUDE_OPT = -I.. \
-              -I../port/$(PORTNAME) \
-              -I../../include
+INCLUDE_OPT = -I.. 
 
 CFLAGS+=$(INCLUDE_OPT)
 

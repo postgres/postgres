@@ -4,7 +4,7 @@
 #    Makefile for utils/sort
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/sort/Makefile,v 1.3 1997/12/19 02:08:58 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/sort/Makefile,v 1.4 1997/12/20 00:29:29 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,10 +12,6 @@ SRCDIR = ../../..
 include ../../../Makefile.global
 
 INCLUDE_OPT = -I../.. 
-
-ifdef PORTNAME
-INCLUDE+=-I../../port/$(PORTNAME)    
-endif
 
 CFLAGS+=$(INCLUDE_OPT)
 

@@ -4,15 +4,14 @@
 #    Makefile for port/ultrix
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/ultrix4/Attic/Makefile,v 1.2 1996/11/09 06:20:36 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/ultrix4/Attic/Makefile,v 1.3 1997/12/20 00:26:38 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
 
-INCLUDE_OPT = -I../.. \
-              -I../../../include
+INCLUDE_OPT = -I../.. 
 
 CFLAGS+=$(INCLUDE_OPT)
 

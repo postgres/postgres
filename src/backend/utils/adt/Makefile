@@ -4,7 +4,7 @@
 #    Makefile for utils/adt
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.9 1997/12/19 02:07:55 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.10 1997/12/20 00:28:21 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,10 +12,6 @@ SRCDIR = ../../..
 include ../../../Makefile.global
 
 INCLUDE_OPT = -I../.. 
-
-ifdef PORTNAME
-INCLUDE+=-I../../port/$(PORTNAME)    
-endif
 
 CFLAGS+=$(INCLUDE_OPT)
 

@@ -4,7 +4,7 @@
 #    Makefile for tcop
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/tcop/Makefile,v 1.13 1997/12/19 02:07:43 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/tcop/Makefile,v 1.14 1997/12/20 00:28:06 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,10 +12,6 @@ SRCDIR= ../..
 include ../../Makefile.global
 
 INCLUDE_OPT= -I.. 
-
-ifdef PORTNAME
-INCLUDE+=-I../../port/$(PORTNAME)    
-endif
 
 CFLAGS+= $(INCLUDE_OPT) 
 

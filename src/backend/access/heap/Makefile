@@ -4,7 +4,7 @@
 #    Makefile for access/heap
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/heap/Makefile,v 1.4 1997/12/17 04:31:00 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/heap/Makefile,v 1.5 1997/12/20 00:22:39 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,10 +12,6 @@ SRCDIR = ../../..
 include ../../../Makefile.global
 
 INCLUDE_OPT = -I../.. 
-
-ifdef PORTNAME
-INCLUDE_OPT += -I../../port/$(PORTNAME) 
-endif
 
 CFLAGS += $(INCLUDE_OPT)
 

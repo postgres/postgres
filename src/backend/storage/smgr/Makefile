@@ -4,7 +4,7 @@
 #    Makefile for storage/smgr
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/smgr/Makefile,v 1.4 1997/12/19 02:07:34 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/storage/smgr/Makefile,v 1.5 1997/12/20 00:27:56 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,10 +12,6 @@ SRCDIR = ../../..
 include ../../../Makefile.global
 
 INCLUDE_OPT = -I../.. 
-
-ifdef PORTNAME
-INCLUDE+=-I../../port/$(PORTNAME)    
-endif
 
 CFLAGS+=$(INCLUDE_OPT)
 

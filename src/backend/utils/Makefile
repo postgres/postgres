@@ -4,15 +4,14 @@
 #    Makefile for utils
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Makefile,v 1.4 1996/11/09 06:22:52 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Makefile,v 1.5 1997/12/20 00:28:17 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../..
 include ../../Makefile.global
 
-INCLUDE_OPT = -I.. \
-              -I../../include
+INCLUDE_OPT = -I.. 
 
 CFLAGS+=$(INCLUDE_OPT)
 

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.29 1997/12/19 21:29:28 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.30 1997/12/20 00:22:04 scrappy Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -41,18 +41,9 @@
 # CONFIGURATION SECTION
 #
 # Following are settings pertaining to the postgres build and 
-# installation.  The most important one is obviously the name 
+# installation.  
 # of the port.
 #
-# Note that portname is defined here to be UNDEFINED to remind you
-# to change it in Makefile.custom.
-#
-# make sure that you have no whitespaces after the PORTNAME setting
-# or the makefiles can get confused
-#
-# This should no longer be appropriate...scrappy@postgresql.org
-#PORTNAME= @PORTNAME@
-
 # Ignore LINUX_ELF if you're not using Linux.  But if you are, and you're
 # compiling to a.out (which means you're using the dld dynamic loading 
 # library), set LINUX_ELF to null in Makefile.custom.

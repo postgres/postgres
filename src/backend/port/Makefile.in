@@ -3,12 +3,6 @@
 # Makefile--
 #    Makefile for the port-specific subsystem of the backend
 #
-# You must invoke this make file with the PORTNAME variable set to the
-# name of a port, i.e. the name of a subdirectory of the current directory.
-# Example: 
-#
-#    make SUBSYS.o PORTNAME=linux
-#
 # We have two different modes of operation: 1) put stuff specific to Port X
 # in subdirectory X and have that subdirectory's make file make it all, and 
 # 2) use conditional statements in the present make file to include what's
@@ -19,7 +13,7 @@
 # be converted to Method 2.  
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.8 1997/12/20 00:10:14 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.9 1997/12/20 00:25:03 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 

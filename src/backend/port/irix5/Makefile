@@ -4,15 +4,14 @@
 #    Makefile for port/irix5
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/irix5/Attic/Makefile,v 1.2 1996/11/09 06:19:36 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/irix5/Attic/Makefile,v 1.3 1997/12/20 00:25:48 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
 
-INCLUDE_OPT = -I../.. \
-              -I../../../include
+INCLUDE_OPT = -I../.. 
 
 CFLAGS+=$(INCLUDE_OPT)
 

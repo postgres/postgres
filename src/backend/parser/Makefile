@@ -4,16 +4,14 @@
 #    Makefile for parser
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.12 1997/11/25 22:00:21 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.13 1997/12/20 00:24:55 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ../..
 include ../../Makefile.global
 
-INCLUDE_OPT= -I.. \
-             -I../port/$(PORTNAME) \
-             -I../../include
+INCLUDE_OPT= -I.. 
 
 CFLAGS+= $(INCLUDE_OPT)
 

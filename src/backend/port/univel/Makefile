@@ -4,15 +4,14 @@
 #    Makefile for port/univel
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/univel/Attic/Makefile,v 1.2 1997/12/19 02:56:35 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/univel/Attic/Makefile,v 1.3 1997/12/20 00:26:45 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
 
-INCLUDE_OPT = -I../.. \
-              -I../../../include
+INCLUDE_OPT = -I../.. 
 
 CFLAGS+=$(INCLUDE_OPT)
 

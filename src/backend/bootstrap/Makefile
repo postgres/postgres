@@ -4,7 +4,7 @@
 #    Makefile for the bootstrap module
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.11 1997/12/17 04:58:21 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.12 1997/12/20 00:23:19 scrappy Exp $
 #
 #
 # We must build bootparse.c and bootscanner.c with yacc and lex and sed,
@@ -22,10 +22,6 @@ SRCDIR= ../..
 include ../../Makefile.global
 
 INCLUDE_OPT= -I.. 
-
-ifdef PORTNAME
-INCLUDE_OPT+=-I../port/$(PORTNAME) 
-endif
 
 CFLAGS+= $(INCLUDE_OPT)  
 

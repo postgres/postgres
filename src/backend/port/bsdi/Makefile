@@ -4,15 +4,14 @@
 #    Makefile for port/bsdi
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/bsdi/Attic/Makefile,v 1.5 1997/03/19 03:01:25 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/bsdi/Attic/Makefile,v 1.6 1997/12/20 00:25:19 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
 
-INCLUDE_OPT = -I../.. \
-              -I../../../include
+INCLUDE_OPT = -I../.. 
 
 CFLAGS+=$(INCLUDE_OPT)
 
