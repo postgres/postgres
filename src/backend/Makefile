@@ -34,7 +34,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.38 1999/03/07 23:05:56 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.39 1999/11/14 17:12:42 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -116,12 +116,16 @@ postgres.o: $(OBJS)
 # make files in our subdirectories.
 
 parse.h: parser/parse.h
-	$(MAKE) -C parser parse.h
 	cp parser/parse.h .
 
-fmgr.h:
-	$(MAKE) -C utils fmgr.h
+parser/parse.h:
+	$(MAKE) -C parser parse.h
+
+fmgr.h: utils/fmgr.h
 	cp utils/fmgr.h .
+
+utils/fmgr.h:
+	$(MAKE) -C utils fmgr.h
 
 #############################################################################
 clean:
