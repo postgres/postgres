@@ -1,0 +1,112 @@
+Pg_buffercache - Real time queries on the shared buffer cache.
+--------------
+
+  This module consists of a C function 'pg_buffercache_pages()' that returns 
+  a set of records, plus a view 'pg_buffercache' to wrapper the function.
+
+  The intent is to do for the buffercache what pg_locks does for locks, i.e -
+  ability to examine what is happening at any given time without having to 
+  restart or rebuild the server with debugging code added.
+
+  By default public access is REVOKED from both of these, just in case there
+  are security issues lurking.
+
+
+Installation
+------------
+
+  Build and install the main Postgresql source, then this contrib module:
+
+  $ cd contrib/pg_buffercache
+  $ gmake
+  $ gmake install
+
+
+  To register the functions:
+
+  $ psql -d <database> -f pg_buffercache.sql
+
+
+Notes
+-----
+
+  The definition of the columns exposed in the view is:
+
+       Column     |  references          | Description
+  ----------------+----------------------+------------------------------------
+   bufferid       |                      | Id, 1->shared_buffers.
+   relfilenode    | pg_class.relfilenode | Refilenode of the relation.
+   reltablespace  | pg_tablespace.oid    | Tablespace oid of the relation.
+   reldatabase    | pg_database.oid      | Database for the relation.
+   relblocknumber |                      | Offset of the page in the relation.
+   isdirty        |                      | Is the page dirty?
+
+
+  There is one row for each buffer in the shared cache. Unused buffers are
+  shown with all fields null except bufferid.
+
+  Because the cache is shared by all the databases, there are pages from
+  relations not belonging to the current database.
+
+  When the pg_buffercache view is accessed, internal buffer manager locks are 
+  taken, and a copy of the buffer cache data is made for the view to display. 
+  This ensures that the view produces a consistent set of results, while not 
+  blocking normal buffer activity longer than necessary.  Nonetheless there 
+  could be some impact on database performance if this view is read often.
+
+
+Sample output
+-------------
+
+  regression=# \d pg_buffercache;
+       View "public.pg_buffercache"
+       Column     |  Type   | Modifiers
+  ----------------+---------+-----------
+   bufferid       | integer |
+   relfilenode    | oid     |
+   reltablespace  | oid     |
+   reldatabase    | oid     |
+   relblocknumber | numeric |
+   isdirty        | boolean |
+  View definition:
+   SELECT p.bufferid, p.relfilenode, p.reltablespace, p.reldatabase, 
+          p.relblocknumber, p.isdirty
+     FROM pg_buffercache_pages() p(bufferid integer, relfilenode oid, 
+     reltablespace oid, reldatabase oid, relblocknumber numeric(10,0), 
+     isdirty boolean);
+
+  regression=# SELECT c.relname, count(*) AS buffers
+               FROM pg_class c, pg_buffercache b
+               WHERE b.relfilenode = c.relfilenode
+               GROUP BY c.relname
+               ORDER BY 2 DESC LIMIT 10;
+               relname             | buffers
+  ---------------------------------+---------
+   tenk2                           |     345
+   tenk1                           |     141
+   pg_proc                         |      46
+   pg_class                        |      45
+   pg_attribute                    |      43
+   pg_class_relname_nsp_index      |      30
+   pg_proc_proname_args_nsp_index  |      28
+   pg_attribute_relid_attnam_index |      26
+   pg_depend                       |      22
+   pg_depend_reference_index       |      20
+  (10 rows)
+
+  regression=# 
+
+
+Author
+------
+
+  * Mark Kirkwood <markir@paradise.net.nz>
+
+
+Help
+----
+
+  * Design suggestions : Neil Conway <neilc@samurai.com>
+  * Debugging advice : Tom Lane <tgl@sss.pgh.pa.us>
+
+  Thanks guys!

@@ -136,6 +136,10 @@ pg_autovacuum -
 	Automatically performs vacuum
 	by Matthew T. O'Connor <matthew@zeut.net>
 
+pg_buffercache -
+	Real time queries on the shared buffer cache
+	by Mark Kirkwood <markir@paradise.net.nz>
+
 pg_dumplo -
 	Dump large objects
 	by Karel Zak <zakkr@zf.jcu.cz>
