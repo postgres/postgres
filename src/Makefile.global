@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.49 1996/11/01 21:04:48 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.50 1996/11/02 09:49:57 bryanh Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -236,6 +236,16 @@ YFLAGS = -d
 
 ##############################################################################
 #
+#  AR
+
+ifneq (,$(findstring /$(PORTNAME)/, /BSD44_derived/bsdi/sparc/))
+  AROPT = cq
+else
+  AROPT = crs
+endif
+
+##############################################################################
+#
 # Installation. 
 #
 # For many ports, INSTALL is overridden below.
@@ -300,8 +310,6 @@ CC=		gcc
 
 INSTALL=	/usr/bin/install
 RANLIB=		/usr/bin/ranlib
-
-AROPT = cq
 
 # FreeBSD 2.1R with new Flex v2.5.2 in /usr/local
 LEX = flex
@@ -447,8 +455,6 @@ else
   CFLAGS_BE = -DPRE_BSDI_2_1
   LDADD_BE = -ldld -lcompat
 endif
-
-AROPT=		cq
 
 #
 # for postgres.user.mk
@@ -679,9 +685,6 @@ MK_PORT=	sparc
 
 # cc won't work!
 CC=		gcc
-
-# the ar on SunOs is dumb, can't use the s option
-AROPT=          cq
 
 INSTALL=	/usr/bin/install
 RANLIB=		/usr/bin/ranlib
