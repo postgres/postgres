@@ -452,7 +452,7 @@ drop table atacc1;
 create table atacc1 ( test int );
 -- add a unique constraint
 alter table atacc1 add constraint atacc_test1 unique (test);
-NOTICE:  ALTER TABLE / UNIQUE will create implicit index 'atacc_test1' for table 'atacc1'
+NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index 'atacc_test1' for table 'atacc1'
 -- insert first value
 insert into atacc1 (test) values (2);
 -- should fail
@@ -462,7 +462,7 @@ ERROR:  Cannot insert a duplicate key into unique index atacc_test1
 insert into atacc1 (test) values (4);
 -- try adding a unique oid constraint
 alter table atacc1 add constraint atacc_oid1 unique(oid);
-NOTICE:  ALTER TABLE / UNIQUE will create implicit index 'atacc_oid1' for table 'atacc1'
+NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index 'atacc_oid1' for table 'atacc1'
 drop table atacc1;
 -- let's do one where the unique constraint fails when added
 create table atacc1 ( test int );
@@ -471,7 +471,7 @@ insert into atacc1 (test) values (2);
 insert into atacc1 (test) values (2);
 -- add a unique constraint (fails)
 alter table atacc1 add constraint atacc_test1 unique (test);
- NOTICE:  ALTER TABLE / UNIQUE will create implicit index 'atacc_test1' for table 'atacc1'
+ NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index 'atacc_test1' for table 'atacc1'
 ERROR:  Cannot create unique index. Table contains non-unique values
 insert into atacc1 (test) values (3);
 drop table atacc1;
@@ -486,7 +486,7 @@ drop table atacc1;
 create table atacc1 ( test int, test2 int);
 -- add a unique constraint
 alter table atacc1 add constraint atacc_test1 unique (test, test2);
-NOTICE:  ALTER TABLE / UNIQUE will create implicit index 'atacc_test1' for table 'atacc1'
+NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index 'atacc_test1' for table 'atacc1'
 -- insert initial value
 insert into atacc1 (test,test2) values (4,4);
 -- should fail
@@ -501,7 +501,7 @@ drop table atacc1;
 create table atacc1 (test int, test2 int, unique(test));
 NOTICE:  CREATE TABLE / UNIQUE will create implicit index 'atacc1_test_key' for table 'atacc1'
 alter table atacc1 add unique (test2);
-NOTICE:  ALTER TABLE / UNIQUE will create implicit index 'atacc1_test2_key' for table 'atacc1'
+NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index 'atacc1_test2_key' for table 'atacc1'
 -- should fail for @@ second one @@
 insert into atacc1 (test2, test) values (3, 3);
 insert into atacc1 (test2, test) values (2, 3);
