@@ -343,6 +343,12 @@ rmdyjul (short mdy[3], Date *d)
 	return 0;
 }
 
+int
+rdayofweek(Date d)
+{
+	return(PGTYPESdate_dayofweek(d));
+}
+	
 /* And the datetime stuff */
 
 void

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.233 2003/06/17 07:28:22 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.234 2003/06/19 09:52:11 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -5048,30 +5048,6 @@ variable: opt_pointer ECPGColLabelCommon opt_array_bounds opt_initializer
 					$$ = cat_str(4, $1, mm_strdup($2), $3.str, $4);
 					break;
 
-				/*case ECPGt_numeric:
-					if (atoi(dimension) < 0)
-                                                type = ECPGmake_simple_type(actual_type[struct_level].type_enum, length);
-                                        else
-                                                type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length), dimension);
-
-					if (atoi(dimension) < 0)
-						$$ = cat_str(4, mm_strdup(actual_storage[struct_level]), make_str("Numeric"), mm_strdup($2), $4);
-					else
-						$$ = cat_str(5, mm_strdup(actual_storage[struct_level]), make_str("Numeric"), mm_strdup($2), mm_strdup(dim), $4);
-					break;
-				
-				case ECPGt_interval:
-					if (atoi(dimension) < 0)
-                                                type = ECPGmake_simple_type(actual_type[struct_level].type_enum, length);
-                                        else
-                                                type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length), dimension);
-
-					if (atoi(dimension) < 0)
-						$$ = cat_str(4, mm_strdup(actual_storage[struct_level]), make_str("Interval"), mm_strdup($2), $4);
-					else
-						$$ = cat_str(5, mm_strdup(actual_storage[struct_level]), make_str("Interval"), mm_strdup($2), mm_strdup(dim), $4);
-					break;*/
-					
 				default:
 					if (atoi(dimension) < 0)
 						type = ECPGmake_simple_type(actual_type[struct_level].type_enum, make_str("1"));

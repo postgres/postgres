@@ -1496,6 +1496,11 @@ Sun Jun 15 11:18:58 CEST 2003
 Tue Jun 17 08:45:14 CEST 2003
 
 	- Fixed several parsing bugs.
+	
+Thu Jun 19 10:08:26 CEST 2003
+
+	- Added missing rdayofweek function for Informix compatibility.
+	- Fixed fetch into char pointer.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.5 2003/06/15 04:07:58 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.6 2003/06/19 09:52:11 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -100,11 +100,11 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 		switch (type)
 		{
 				long		res;
-				unsigned long ures;
+				unsigned long 	ures;
 				double		dres;
-				char	   *scan_length;
-				Numeric *nres;
-				Date	   ddres;
+				char	   	*scan_length;
+				Numeric 	*nres;
+				Date		ddres;
 				Timestamp	tres;
 				Interval	*ires;
 
@@ -300,37 +300,45 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 			case ECPGt_char:
 			case ECPGt_unsigned_char:
 				{
-					strncpy((char *) ((long) var + offset * act_tuple), pval, varcharsize);
-					if (varcharsize && varcharsize < strlen(pval))
+					if (varcharsize == 0)
 					{
-						/* truncation */
-						switch (ind_type)
+						strncpy((char *) ((long) var + offset * act_tuple), pval, strlen(pval));
+					}
+					else
+					{
+						strncpy((char *) ((long) var + offset * act_tuple), pval, varcharsize);
+
+						if (varcharsize < strlen(pval))
 						{
-							case ECPGt_short:
-							case ECPGt_unsigned_short:
-/*								((short *) ind)[act_tuple] = strlen(pval);*/
-								*((short *) (ind + ind_offset * act_tuple)) = strlen(pval);
-								break;
-							case ECPGt_int:
-							case ECPGt_unsigned_int:
-/*								((int *) ind)[act_tuple] = strlen(pval);*/
-								*((int *) (ind + ind_offset * act_tuple)) = strlen(pval);
-								break;
-							case ECPGt_long:
-							case ECPGt_unsigned_long:
-/*								((long *) ind)[act_tuple] = strlen(pval);*/
-								*((long *) (ind + ind_offset * act_tuple)) = strlen(pval);
-								break;
+							/* truncation */
+							switch (ind_type)
+							{
+								case ECPGt_short:
+								case ECPGt_unsigned_short:
+	/*								((short *) ind)[act_tuple] = strlen(pval);*/
+									*((short *) (ind + ind_offset * act_tuple)) = strlen(pval);
+									break;
+								case ECPGt_int:
+								case ECPGt_unsigned_int:
+	/*								((int *) ind)[act_tuple] = strlen(pval);*/
+									*((int *) (ind + ind_offset * act_tuple)) = strlen(pval);
+									break;
+								case ECPGt_long:
+								case ECPGt_unsigned_long:
+	/*								((long *) ind)[act_tuple] = strlen(pval);*/
+									*((long *) (ind + ind_offset * act_tuple)) = strlen(pval);
+									break;
 #ifdef HAVE_LONG_LONG_INT_64
-							case ECPGt_long_long:
-							case ECPGt_unsigned_long_long:
-								*((long long int *) (ind + ind_offset * act_tuple)) = strlen(pval);
-								break;
+								case ECPGt_long_long:
+								case ECPGt_unsigned_long_long:
+									*((long long int *) (ind + ind_offset * act_tuple)) = strlen(pval);
+									break;
 #endif   /* HAVE_LONG_LONG_INT_64 */
-							default:
-								break;
+								default:
+									break;
+							}
+							sqlca->sqlwarn[0] = sqlca->sqlwarn[1] = 'W';
 						}
-						sqlca->sqlwarn[0] = sqlca->sqlwarn[1] = 'W';
 					}
 				}
 				break;
@@ -342,42 +350,46 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 
 					variable->len = strlen(pval);
 					if (varcharsize == 0)
+					{
 						strncpy(variable->arr, pval, variable->len);
+					}
 					else
+					{
 						strncpy(variable->arr, pval, varcharsize);
 
-					if (varcharsize > 0 && variable->len > varcharsize)
-					{
-						/* truncation */
-						switch (ind_type)
+						if (variable->len > varcharsize)
 						{
-							case ECPGt_short:
-							case ECPGt_unsigned_short:
-/*								((short *) ind)[act_tuple] = variable->len;*/
-								*((short *) (ind + offset * act_tuple)) = variable->len;
-								break;
-							case ECPGt_int:
-							case ECPGt_unsigned_int:
-/*								((int *) ind)[act_tuple] = variable->len;*/
-								*((int *) (ind + offset * act_tuple)) = variable->len;
-								break;
-							case ECPGt_long:
-							case ECPGt_unsigned_long:
-/*								((long *) ind)[act_tuple] = variable->len;*/
-								*((long *) (ind + offset * act_tuple)) = variable->len;
-								break;
+							/* truncation */
+							switch (ind_type)
+							{
+								case ECPGt_short:
+								case ECPGt_unsigned_short:
+	/*								((short *) ind)[act_tuple] = variable->len;*/
+									*((short *) (ind + offset * act_tuple)) = variable->len;
+									break;
+								case ECPGt_int:
+								case ECPGt_unsigned_int:
+	/*								((int *) ind)[act_tuple] = variable->len;*/
+									*((int *) (ind + offset * act_tuple)) = variable->len;
+									break;
+								case ECPGt_long:
+								case ECPGt_unsigned_long:
+	/*								((long *) ind)[act_tuple] = variable->len;*/
+									*((long *) (ind + offset * act_tuple)) = variable->len;
+									break;
 #ifdef HAVE_LONG_LONG_INT_64
-							case ECPGt_long_long:
-							case ECPGt_unsigned_long_long:
-								*((long long int *) (ind + ind_offset * act_tuple)) = variable->len;
-								break;
+								case ECPGt_long_long:
+								case ECPGt_unsigned_long_long:
+									*((long long int *) (ind + ind_offset * act_tuple)) = variable->len;
+									break;
 #endif   /* HAVE_LONG_LONG_INT_64 */
-							default:
-								break;
-						}
-						sqlca->sqlwarn[0] = sqlca->sqlwarn[1] = 'W';
+								default:
+									break;
+							}
+							sqlca->sqlwarn[0] = sqlca->sqlwarn[1] = 'W';
 
-						variable->len = varcharsize;
+							variable->len = varcharsize;
+						}
 					}
 				}
 				break;
