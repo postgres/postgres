@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.175 2003/11/01 01:56:29 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.176 2003/11/02 08:54:09 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1562,10 +1562,10 @@ gunzip -c postgres.ps.gz \
        <row>
 	<entry><systemitem class="osname">HP-UX</></entry>
 	<entry><systemitem>PA-RISC</></entry>
-	<entry>7.3</entry>
-        <entry>2002-10-28,
-	 10.20 Tom Lane (<email>tgl@sss.pgh.pa.us</email>),
-	 11.00, 11.11, 32 and 64 bit, Giles Lean (<email>giles@nemeton.com.au</email>)</entry>
+	<entry>7.4</entry>
+        <entry>2003-10-31,
+	 10.20 Tom Lane (<email>tgl@sss.pgh.pa.us</email>)
+        </entry>
         <entry><command>gcc</> and <command>cc</>; see also <filename>doc/FAQ_HPUX</filename></entry>
        </row>
        <row>
@@ -1615,6 +1615,14 @@ gunzip -c postgres.ps.gz \
 	<entry>2003-10-25,
 	 No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
 	<entry>2.4</entry>
+       </row>
+       <row>
+	<entry><systemitem class="osname">Linux</></entry>
+	<entry><systemitem>Opteron</></entry>
+	<entry>7.4</entry>
+	<entry>2003-11-01,
+	 Jani Averbach (<email>jaa@cc.jyu.fi</email>)</entry>
+	<entry>2.6</entry>
        </row>
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
@@ -1684,10 +1692,10 @@ gunzip -c postgres.ps.gz \
        <row>
 	<entry><systemitem class="osname">OpenBSD</></entry>
 	<entry><systemitem>Sparc</></entry>
-	<entry>7.3</entry>
-	<entry>2002-11-17,
-	 Christopher Kings-Lynne (<email>chriskl@familyhealth.com.au</email>)</entry>
-        <entry>3.2</entry>
+	<entry>7.4</entry>
+	<entry>2003-11-01,
+	 Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
+        <entry>3.4</entry>
        </row>
        <row>
 	<entry><systemitem class="osname">OpenBSD</></entry>
@@ -1711,7 +1719,7 @@ gunzip -c postgres.ps.gz \
 	<entry>7.4</entry>
 	<entry>2003-10-26,
 	 Christopher Browne (<email>cbbrowne@libertyrms.info</email>)</entry>
-	<entry>5.8; see also <filename>doc/FAQ_Solaris</filename></entry>
+	<entry>2.8; see also <filename>doc/FAQ_Solaris</filename></entry>
        </row>
        <row>
 	<entry><systemitem class="osname">Solaris</></entry>
@@ -1719,15 +1727,15 @@ gunzip -c postgres.ps.gz \
 	<entry>7.4</entry>
 	<entry>2003-10-26,
 	 Kurt Roeckx Christopher Browne (<email>Q@ping.be</email>)</entry>
-	<entry>5.6 see also <filename>doc/FAQ_Solaris</filename></entry>
+	<entry>2.6 see also <filename>doc/FAQ_Solaris</filename></entry>
        </row>
        <row>
 	<entry><systemitem class="osname">Tru64 UNIX</></entry>
 	<entry><systemitem>Alpha</></entry>
 	<entry>7.4</entry>
 	<entry>2003-10-25,
-	 5.1 Peter Eisentraut (<email>peter_e@gmx.net</email>),
-	 4.0 Alessio Bragadini (<email>alessio@albourne.com</email>)</entry>
+	 5.1b Peter Eisentraut (<email>peter_e@gmx.net</email>),
+	 4.0g Alessio Bragadini (<email>alessio@albourne.com</email>)</entry>
         <entry></entry>
        </row>
        <row>
@@ -1748,7 +1756,7 @@ gunzip -c postgres.ps.gz \
         <entry>see <filename>doc/FAQ_MSWIN</filename></entry>
        </row>
        <row>
-        <entry><systemitem class="osname">Windows Clients</></entry>
+        <entry><systemitem class="osname">Windows</></entry>
         <entry><systemitem>x86</></entry>
         <entry>7.4</entry>
         <entry>2003-10-27, 
