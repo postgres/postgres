@@ -3,10 +3,12 @@
  */
 
 
-/* Since we don't do autoconf, we need to read the .in file. Ugly */
-#include "version.h.in" 
+#define PG_VERSION 7.1
+#define PG_VERSION_STR "7.1 (win32)"
 
-#define DEF_PGPORT "5432"
+#define SYSCONFDIR ""
+
+#define DEF_PGPORT_STR "5432"
 #define MAXIMUM_ALIGNOF 4
 #define MAXPGPATH 1024
 

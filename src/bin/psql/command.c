@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.43 2000/12/30 14:47:06 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.44 2001/01/24 03:42:37 momjian Exp $
  */
 #include "postgres.h"
 #include "command.h"
@@ -18,6 +18,8 @@
 #include <unistd.h>				/* for geteuid(), getpid(), stat() */
 #else
 #include <win32.h>
+#include <io.h>
+#include <fnctl.h>
 #endif
 
 #include "libpq-fe.h"
