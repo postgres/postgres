@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.225 2004/01/04 03:51:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.226 2004/01/05 05:07:35 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -971,7 +971,7 @@ _outIndexPath(StringInfo str, IndexPath *node)
 	WRITE_NODE_FIELD(indexqual);
 	WRITE_NODE_FIELD(indexjoinclauses);
 	WRITE_ENUM_FIELD(indexscandir, ScanDirection);
-	WRITE_FLOAT_FIELD(rows, "%.2f");
+	WRITE_FLOAT_FIELD(rows, "%.0f");
 }
 
 static void
@@ -1073,8 +1073,9 @@ _outRestrictInfo(StringInfo str, RestrictInfo *node)
 
 	/* NB: this isn't a complete set of fields */
 	WRITE_NODE_FIELD(clause);
-	WRITE_BOOL_FIELD(ispusheddown);
-	WRITE_BOOL_FIELD(canjoin);
+	WRITE_BOOL_FIELD(is_pushed_down);
+	WRITE_BOOL_FIELD(valid_everywhere);
+	WRITE_BOOL_FIELD(can_join);
 	WRITE_BITMAPSET_FIELD(clause_relids);
 	WRITE_BITMAPSET_FIELD(left_relids);
 	WRITE_BITMAPSET_FIELD(right_relids);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.90 2004/01/04 03:51:52 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.91 2004/01/05 05:07:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -321,6 +321,8 @@ typedef struct Path
 {
 	NodeTag		type;
 
+	NodeTag		pathtype;		/* tag identifying scan/join method */
+
 	RelOptInfo *parent;			/* the relation this path can build */
 
 	/* estimated execution costs for path (see costsize.c for more info) */
@@ -328,8 +330,6 @@ typedef struct Path
 								 * tuples */
 	Cost		total_cost;		/* total cost (assuming all tuples
 								 * fetched) */
-
-	NodeTag		pathtype;		/* tag identifying scan/join method */
 
 	List	   *pathkeys;		/* sort ordering of path's output */
 	/* pathkeys is a List of Lists of PathKeyItem nodes; see above */
@@ -389,6 +389,9 @@ typedef struct IndexPath
 
 /*
  * TidPath represents a scan by TID
+ *
+ * tideval is an implicitly OR'ed list of quals of the form CTID = something.
+ * Note they are bare quals, not RestrictInfos.
  */
 typedef struct TidPath
 {
@@ -570,13 +573,17 @@ typedef struct HashPath
  * When we do form the outer join's joinrel, we still need to distinguish
  * those quals that are actually in that join's JOIN/ON condition from those
  * that appeared higher in the tree and were pushed down to the join rel
- * because they used no other rels.  That's what the ispusheddown flag is for;
- * it tells us that a qual came from a point above the join of the specific
- * set of base rels that it uses (or that the JoinInfo structures claim it
- * uses).  A clause that originally came from WHERE will *always* have its
- * ispusheddown flag set; a clause that came from an INNER JOIN condition,
- * but doesn't use all the rels being joined, will also have ispusheddown set
- * because it will get attached to some lower joinrel.
+ * because they used no other rels.  That's what the is_pushed_down flag is
+ * for; it tells us that a qual came from a point above the join of the
+ * specific set of base rels that it uses (or that the JoinInfo structures
+ * claim it uses).  A clause that originally came from WHERE will *always*
+ * have its is_pushed_down flag set; a clause that came from an INNER JOIN
+ * condition, but doesn't use all the rels being joined, will also have
+ * is_pushed_down set because it will get attached to some lower joinrel.
+ *
+ * We also store a valid_everywhere flag, which says that the clause is not
+ * affected by any lower-level outer join, and therefore any conditions it
+ * asserts can be presumed true throughout the plan tree.
  *
  * In general, the referenced clause might be arbitrarily complex.	The
  * kinds of clauses we can handle as indexscan quals, mergejoin clauses,
@@ -602,7 +609,9 @@ typedef struct RestrictInfo
 
 	Expr	   *clause;			/* the represented clause of WHERE or JOIN */
 
-	bool		ispusheddown;	/* TRUE if clause was pushed down in level */
+	bool		is_pushed_down;	/* TRUE if clause was pushed down in level */
+
+	bool		valid_everywhere;	/* TRUE if valid on every level */
 
 	/*
 	 * This flag is set true if the clause looks potentially useful as a
@@ -611,7 +620,7 @@ typedef struct RestrictInfo
 	 * (Whether the operator is actually merge or hash joinable isn't
 	 * checked, however.)
 	 */
-	bool		canjoin;
+	bool		can_join;
 
 	/* The set of relids (varnos) referenced in the clause: */
 	Relids		clause_relids;

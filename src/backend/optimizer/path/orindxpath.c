@@ -8,20 +8,21 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.55 2004/01/04 00:07:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.56 2004/01/05 05:07:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/restrictinfo.h"
 
 
-static IndexPath *best_or_subclause_indices(Query *root, RelOptInfo *rel,
+static IndexPath *best_or_subclause_indexes(Query *root, RelOptInfo *rel,
 											List *subclauses);
 static bool best_or_subclause_index(Query *root,
 						RelOptInfo *rel,
@@ -32,16 +33,166 @@ static bool best_or_subclause_index(Query *root,
 						Cost *retTotalCost);
 
 
+/*----------
+ * create_or_index_quals
+ *	  Examine join OR-of-AND quals to see if any useful restriction OR
+ *	  clauses can be extracted.  If so, add them to the query.
+ *
+ * Although a join clause must reference other relations overall,
+ * an OR of ANDs clause might contain sub-clauses that reference just this
+ * relation and can be used to build a restriction clause.
+ * For example consider
+ *		WHERE ((a.x = 42 AND b.y = 43) OR (a.x = 44 AND b.z = 45));
+ * We can transform this into
+ *		WHERE ((a.x = 42 AND b.y = 43) OR (a.x = 44 AND b.z = 45))
+ *			AND (a.x = 42 OR a.x = 44)
+ *			AND (b.y = 43 OR b.z = 45);
+ * which opens the potential to build OR indexscans on a and b.  In essence
+ * this is a partial transformation to CNF (AND of ORs format).  It is not
+ * complete, however, because we do not unravel the original OR --- doing so
+ * would usually bloat the qualification expression to little gain.
+ *
+ * The added quals are partially redundant with the original OR, and therefore
+ * will cause the size of the joinrel to be underestimated when it is finally
+ * formed.  (This would be true of a full transformation to CNF as well; the
+ * fault is not really in the transformation, but in clauselist_selectivity's
+ * inability to recognize redundant conditions.)  To minimize the collateral
+ * damage, we want to minimize the number of quals added.  Therefore we do
+ * not add every possible extracted restriction condition to the query.
+ * Instead, we search for the single restriction condition that generates
+ * the most useful (cheapest) OR indexscan, and add only that condition.
+ * This is a pretty ad-hoc heuristic, but quite useful.
+ *
+ * We can then compensate for the redundancy of the added qual by poking
+ * the recorded selectivity of the original OR clause, thereby ensuring
+ * the added qual doesn't change the estimated size of the joinrel when
+ * it is finally formed.  This is a MAJOR HACK: it depends on the fact
+ * that clause selectivities are cached and on the fact that the same
+ * RestrictInfo node will appear in every joininfo list that might be used
+ * when the joinrel is formed.  And it probably isn't right in cases where
+ * the size estimation is nonlinear (i.e., outer and IN joins).  But it
+ * beats not doing anything.
+ *
+ * NOTE: one might think this messiness could be worked around by generating
+ * the indexscan path with a small path->rows value, and not touching the
+ * rel's baserestrictinfo or rel->rows.  However, that does not work.
+ * The optimizer's fundamental design assumes that every general-purpose
+ * Path for a given relation generates the same number of rows.  Without
+ * this assumption we'd not be able to optimize solely on the cost of Paths,
+ * but would have to take number of output rows into account as well.
+ * (Perhaps someday that'd be worth doing, but it's a pretty big change...)
+ *
+ * 'rel' is the relation entry for which quals are to be created
+ *
+ * If successful, adds qual(s) to rel->baserestrictinfo and returns TRUE.
+ * If no quals available, returns FALSE and doesn't change rel.
+ *
+ * Note: check_partial_indexes() must have been run previously.
+ *----------
+ */
+bool
+create_or_index_quals(Query *root, RelOptInfo *rel)
+{
+	IndexPath  *bestpath = NULL;
+	RestrictInfo *bestrinfo = NULL;
+	FastList	orclauses;
+	List	   *orclause;
+	Expr	   *indxqual_or_expr;
+	RestrictInfo *or_rinfo;
+	Selectivity or_selec,
+				orig_selec;
+	List	   *i;
+
+	/*
+	 * We use the best_or_subclause_indexes() machinery to locate the
+	 * best combination of restriction subclauses.  Note we must ignore
+	 * any joinclauses that are not marked valid_everywhere, because they
+	 * cannot be pushed down due to outer-join rules.
+	 */
+	foreach(i, rel->joininfo)
+	{
+		JoinInfo   *joininfo = (JoinInfo *) lfirst(i);
+		List	   *j;
+
+		foreach(j, joininfo->jinfo_restrictinfo)
+		{
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(j);
+
+			if (restriction_is_or_clause(rinfo) &&
+				rinfo->valid_everywhere)
+			{
+				IndexPath  *pathnode;
+
+				pathnode = best_or_subclause_indexes(root,
+													 rel,
+										((BoolExpr *) rinfo->orclause)->args);
+
+				if (pathnode)
+				{
+					if (bestpath == NULL ||
+						pathnode->path.total_cost < bestpath->path.total_cost)
+					{
+						bestpath = pathnode;
+						bestrinfo = rinfo;
+					}
+				}
+			}
+		}
+	}
+
+	/* Fail if no suitable clauses found */
+	if (bestpath == NULL)
+		return false;
+
+	/*
+	 * Build an expression representation of the indexqual, expanding
+	 * the implicit OR and AND semantics of the first- and
+	 * second-level lists.
+	 */
+	FastListInit(&orclauses);
+	foreach(orclause, bestpath->indexqual)
+		FastAppend(&orclauses, make_ands_explicit(lfirst(orclause)));
+	indxqual_or_expr = make_orclause(FastListValue(&orclauses));
+
+	/*
+	 * And add it to the rel's restriction list.
+	 */
+	or_rinfo = make_restrictinfo(indxqual_or_expr, true, true);
+	rel->baserestrictinfo = lappend(rel->baserestrictinfo, or_rinfo);
+
+	/*
+	 * Adjust the original OR clause's cached selectivity to compensate
+	 * for the selectivity of the added (but redundant) lower-level qual.
+	 * This should result in the join rel getting approximately the same
+	 * rows estimate as it would have gotten without all these shenanigans.
+	 * (XXX major hack alert ... this depends on the assumption that the
+	 * selectivity will stay cached ...)
+	 */
+	or_selec = clause_selectivity(root, (Node *) or_rinfo,
+								  0, JOIN_INNER);
+	if (or_selec > 0 && or_selec < 1)
+	{
+		orig_selec = clause_selectivity(root, (Node *) bestrinfo,
+										0, JOIN_INNER);
+		bestrinfo->this_selec = orig_selec / or_selec;
+		/* clamp result to sane range */
+		if (bestrinfo->this_selec > 1)
+			bestrinfo->this_selec = 1;
+	}
+
+	/* Tell caller to recompute rel's rows estimate */
+	return true;
+}
+
 /*
  * create_or_index_paths
- *	  Creates multi-scan index paths for indices that match OR clauses.
+ *	  Creates multi-scan index paths for indexes that match OR clauses.
  *
  * 'rel' is the relation entry for which the paths are to be created
  *
  * Returns nothing, but adds paths to rel->pathlist via add_path().
  *
- * Note: create_index_paths() must have been run already, since it does
- * the heavy lifting to determine whether partial indexes may be used.
+ * Note: check_partial_indexes() must have been run previously.
  */
 void
 create_or_index_paths(Query *root, RelOptInfo *rel)
@@ -60,7 +211,7 @@ create_or_index_paths(Query *root, RelOptInfo *rel)
 		{
 			IndexPath  *pathnode;
 
-			pathnode = best_or_subclause_indices(root,
+			pathnode = best_or_subclause_indexes(root,
 												 rel,
 							   ((BoolExpr *) rinfo->orclause)->args);
 
@@ -68,49 +219,10 @@ create_or_index_paths(Query *root, RelOptInfo *rel)
 				add_path(rel, (Path *) pathnode);
 		}
 	}
-
-	/*
-	 * Also consider join clauses that are ORs.  Although a join clause
-	 * must reference other relations overall, an OR of ANDs clause might
-	 * contain sub-clauses that reference just our relation and can be
-	 * used to build a non-join indexscan.  For example consider
-	 *		WHERE (a.x = 42 AND b.y = 43) OR (a.x = 44 AND b.z = 45);
-	 * We could build an OR indexscan on a.x using those subclauses.
-	 *
-	 * XXX don't enable this code quite yet.  Although the plans it creates
-	 * are correct, and possibly even useful, we are totally confused about
-	 * the number of rows returned, leading to poor choices of join plans
-	 * above the indexscan.  Need to restructure the way join sizes are
-	 * calculated before this will really work.
-	 */
-#ifdef NOT_YET
-	foreach(i, rel->joininfo)
-	{
-		JoinInfo   *joininfo = (JoinInfo *) lfirst(i);
-		List	   *j;
-
-		foreach(j, joininfo->jinfo_restrictinfo)
-		{
-			RestrictInfo *rinfo = (RestrictInfo *) lfirst(j);
-
-			if (restriction_is_or_clause(rinfo))
-			{
-				IndexPath  *pathnode;
-
-				pathnode = best_or_subclause_indices(root,
-													 rel,
-										((BoolExpr *) rinfo->orclause)->args);
-
-				if (pathnode)
-					add_path(rel, (Path *) pathnode);
-			}
-		}
-	}
-#endif
 }
 
 /*
- * best_or_subclause_indices
+ * best_or_subclause_indexes
  *	  Determine the best index to be used in conjunction with each subclause
  *	  of an OR clause, and build a Path for a multi-index scan.
  *
@@ -134,7 +246,7 @@ create_or_index_paths(Query *root, RelOptInfo *rel)
  * single tuple more than once).
  */
 static IndexPath *
-best_or_subclause_indices(Query *root,
+best_or_subclause_indexes(Query *root,
 						  RelOptInfo *rel,
 						  List *subclauses)
 {
@@ -202,7 +314,10 @@ best_or_subclause_indices(Query *root,
 	/* We don't actually care what order the index scans in. */
 	pathnode->indexscandir = NoMovementScanDirection;
 
-	/* XXX this may be wrong when using join OR clauses... */
+	/*
+	 * The number of rows is the same as the parent rel's estimate, since
+	 * this isn't a join inner indexscan.
+	 */
 	pathnode->rows = rel->rows;
 
 	return pathnode;

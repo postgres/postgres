@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.153 2004/01/04 03:51:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.154 2004/01/05 05:07:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,8 +63,7 @@ static bool match_join_clause_to_indexcol(RelOptInfo *rel, IndexOptInfo *index,
 										  RestrictInfo *rinfo);
 static Oid indexable_operator(Expr *clause, Oid opclass,
 				   bool indexkey_on_left);
-static bool pred_test(List *predicate_list, List *restrictinfo_list,
-		  List *joininfo_list);
+static bool pred_test(List *predicate_list, List *restrictinfo_list);
 static bool pred_test_restrict_list(Expr *predicate, List *restrictinfo_list);
 static bool pred_test_recurse_clause(Expr *predicate, Node *clause);
 static bool pred_test_recurse_pred(Expr *predicate, Node *clause);
@@ -114,12 +113,12 @@ static Const *string_to_const(const char *str, Oid datatype);
  * and avoid repeated computation.
  *
  * 'rel' is the relation for which we want to generate index paths
+ *
+ * Note: check_partial_indexes() must have been run previously.
  */
 void
 create_index_paths(Query *root, RelOptInfo *rel)
 {
-	List	   *restrictinfo_list = rel->baserestrictinfo;
-	List	   *joininfo_list = rel->joininfo;
 	Relids		all_join_outerrelids = NULL;
 	List	   *ilist;
 
@@ -132,16 +131,9 @@ create_index_paths(Query *root, RelOptInfo *rel)
 		bool		index_is_ordered;
 		Relids		join_outerrelids;
 
-		/*
-		 * If this is a partial index, we can only use it if it passes the
-		 * predicate test.
-		 */
-		if (index->indpred != NIL)
-		{
-			if (!pred_test(index->indpred, restrictinfo_list, joininfo_list))
-				continue;
-			index->predOK = true; /* set flag for orindxpaths.c */
-		}
+		/* Ignore partial indexes that do not match the query */
+		if (index->indpred != NIL && !index->predOK)
+			continue;
 
 		/*
 		 * 1. Match the index against non-OR restriction clauses.
@@ -336,7 +328,7 @@ group_clauses_by_indexkey_for_join(Query *root,
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(i);
 
 			/* Can't use pushed-down clauses in outer join */
-			if (isouterjoin && rinfo->ispusheddown)
+			if (isouterjoin && rinfo->is_pushed_down)
 				continue;
 
 			if (match_clause_to_indexcol(rel,
@@ -365,7 +357,7 @@ group_clauses_by_indexkey_for_join(Query *root,
 				RestrictInfo *rinfo = (RestrictInfo *) lfirst(j);
 
 				/* Can't use pushed-down clauses in outer join */
-				if (isouterjoin && rinfo->ispusheddown)
+				if (isouterjoin && rinfo->is_pushed_down)
 					continue;
 
 				if (match_join_clause_to_indexcol(rel,
@@ -737,6 +729,32 @@ indexable_operator(Expr *clause, Oid opclass, bool indexkey_on_left)
  ****************************************************************************/
 
 /*
+ * check_partial_indexes
+ *		Check each partial index of the relation, and mark it predOK or not
+ *		depending on whether the predicate is satisfied for this query.
+ */
+void
+check_partial_indexes(Query *root, RelOptInfo *rel)
+{
+	List	   *restrictinfo_list = rel->baserestrictinfo;
+	List	   *ilist;
+
+	foreach(ilist, rel->indexlist)
+	{
+		IndexOptInfo *index = (IndexOptInfo *) lfirst(ilist);
+
+		/*
+		 * If this is a partial index, we can only use it if it passes the
+		 * predicate test.
+		 */
+		if (index->indpred == NIL)
+			continue;			/* ignore non-partial indexes */
+
+		index->predOK = pred_test(index->indpred, restrictinfo_list);
+	}
+}
+
+/*
  * pred_test
  *	  Does the "predicate inclusion test" for partial indexes.
  *
@@ -751,7 +769,7 @@ indexable_operator(Expr *clause, Oid opclass, bool indexkey_on_left)
  *	  to CNF format). --Nels, Jan '93
  */
 static bool
-pred_test(List *predicate_list, List *restrictinfo_list, List *joininfo_list)
+pred_test(List *predicate_list, List *restrictinfo_list)
 {
 	List	   *pred;
 
@@ -1464,8 +1482,7 @@ make_innerjoin_index_path(Query *root,
 							   rel->relid,		/* do not use 0! */
 							   JOIN_INNER);
 	/* Like costsize.c, force estimate to be at least one row */
-	if (pathnode->rows < 1.0)
-		pathnode->rows = 1.0;
+	pathnode->rows = clamp_row_est(pathnode->rows);
 
 	cost_index(&pathnode->path, root, rel, index, indexquals, true);
 

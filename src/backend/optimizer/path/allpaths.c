@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.110 2003/12/17 17:07:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.111 2004/01/05 05:07:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,6 +151,17 @@ set_plain_rel_pathlist(Query *root, RelOptInfo *rel, RangeTblEntry *rte)
 	/* Mark rel with estimated output rows, width, etc */
 	set_baserel_size_estimates(root, rel);
 
+	/* Test any partial indexes of rel for applicability */
+	check_partial_indexes(root, rel);
+
+	/*
+	 * Check to see if we can extract any restriction conditions from
+	 * join quals that are OR-of-AND structures.  If so, add them to the
+	 * rel's restriction list, and recompute the size estimates.
+	 */
+	if (create_or_index_quals(root, rel))
+		set_baserel_size_estimates(root, rel);
+
 	/*
 	 * Generate paths and add them to the rel's pathlist.
 	 *
@@ -167,8 +178,6 @@ set_plain_rel_pathlist(Query *root, RelOptInfo *rel, RangeTblEntry *rte)
 
 	/* Consider index paths for both simple and OR index clauses */
 	create_index_paths(root, rel);
-
-	/* create_index_paths must be done before create_or_index_paths */
 	create_or_index_paths(root, rel);
 
 	/* Now find the cheapest of the paths for this rel */

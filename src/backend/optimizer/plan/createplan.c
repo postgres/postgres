@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.161 2003/11/29 19:51:50 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.162 2004/01/05 05:07:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -643,6 +643,7 @@ create_unique_plan(Query *root, UniquePath *best_path)
 		plan = (Plan *) make_unique(my_tlist, plan, sortList);
 	}
 
+	/* Adjust output size estimate (other fields should be OK already) */
 	plan->plan_rows = best_path->rows;
 
 	return plan;

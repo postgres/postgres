@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.84 2003/12/30 23:53:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.85 2004/01/05 05:07:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -690,7 +690,7 @@ hash_inner_and_outer(Query *root,
 	{
 		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(i);
 
-		if (!restrictinfo->canjoin ||
+		if (!restrictinfo->can_join ||
 			restrictinfo->hashjoinoperator == InvalidOid)
 			continue;			/* not hashjoinable */
 
@@ -698,7 +698,7 @@ hash_inner_and_outer(Query *root,
 		 * If processing an outer join, only use its own join clauses for
 		 * hashing.  For inner joins we need not be so picky.
 		 */
-		if (isouterjoin && restrictinfo->ispusheddown)
+		if (isouterjoin && restrictinfo->is_pushed_down)
 			continue;
 
 		/*
@@ -804,17 +804,17 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 		 */
 		if (isouterjoin)
 		{
-			if (restrictinfo->ispusheddown)
+			if (restrictinfo->is_pushed_down)
 				continue;
 			switch (jointype)
 			{
 				case JOIN_RIGHT:
-					if (!restrictinfo->canjoin ||
+					if (!restrictinfo->can_join ||
 						restrictinfo->mergejoinoperator == InvalidOid)
 						return NIL;		/* not mergejoinable */
 					break;
 				case JOIN_FULL:
-					if (!restrictinfo->canjoin ||
+					if (!restrictinfo->can_join ||
 						restrictinfo->mergejoinoperator == InvalidOid)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -826,7 +826,7 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 			}
 		}
 
-		if (!restrictinfo->canjoin ||
+		if (!restrictinfo->can_join ||
 			restrictinfo->mergejoinoperator == InvalidOid)
 			continue;			/* not mergejoinable */
 

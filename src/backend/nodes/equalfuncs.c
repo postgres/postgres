@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.211 2003/12/30 23:53:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.212 2004/01/05 05:07:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -560,7 +560,8 @@ static bool
 _equalRestrictInfo(RestrictInfo *a, RestrictInfo *b)
 {
 	COMPARE_NODE_FIELD(clause);
-	COMPARE_SCALAR_FIELD(ispusheddown);
+	COMPARE_SCALAR_FIELD(is_pushed_down);
+	COMPARE_SCALAR_FIELD(valid_everywhere);
 
 	/*
 	 * We ignore all the remaining fields, since they may not be set yet,

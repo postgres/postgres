@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.96 2003/11/29 19:51:51 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.97 2004/01/05 05:07:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -373,13 +373,6 @@ create_index_path(Query *root,
 	 */
 	pathnode->rows = rel->rows;
 
-	/*
-	 * Not sure if this is necessary, but it should help if the statistics
-	 * are too far off
-	 */
-	if (index->indpred && index->tuples < pathnode->rows)
-		pathnode->rows = index->tuples;
-
 	cost_index(&pathnode->path, root, rel, index, indexquals, false);
 
 	return pathnode;
@@ -398,6 +391,7 @@ create_tidscan_path(Query *root, RelOptInfo *rel, List *tideval)
 	pathnode->path.pathtype = T_TidScan;
 	pathnode->path.parent = rel;
 	pathnode->path.pathkeys = NIL;
+
 	pathnode->tideval = tideval;
 
 	cost_tidscan(&pathnode->path, root, rel, tideval);

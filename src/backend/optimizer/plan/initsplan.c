@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.96 2004/01/04 03:51:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.97 2004/01/05 05:07:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@
 static void mark_baserels_for_outer_join(Query *root, Relids rels,
 							 Relids outerrels);
 static void distribute_qual_to_rels(Query *root, Node *clause,
-						bool ispusheddown,
+						bool is_pushed_down,
 						bool isdeduced,
 						Relids outerjoin_nonnullable,
 						Relids qualscope);
@@ -356,7 +356,7 @@ mark_baserels_for_outer_join(Query *root, Relids rels, Relids outerrels)
  *	  equijoined vars.
  *
  * 'clause': the qual clause to be distributed
- * 'ispusheddown': if TRUE, force the clause to be marked 'ispusheddown'
+ * 'is_pushed_down': if TRUE, force the clause to be marked 'is_pushed_down'
  *		(this indicates the clause came from a FromExpr, not a JoinExpr)
  * 'isdeduced': TRUE if the qual came from implied-equality deduction
  * 'outerjoin_nonnullable': NULL if not an outer-join qual, else the set of
@@ -365,16 +365,17 @@ mark_baserels_for_outer_join(Query *root, Relids rels, Relids outerrels)
  *
  * 'qualscope' identifies what level of JOIN the qual came from.  For a top
  * level qual (WHERE qual), qualscope lists all baserel ids and in addition
- * 'ispusheddown' will be TRUE.
+ * 'is_pushed_down' will be TRUE.
  */
 static void
 distribute_qual_to_rels(Query *root, Node *clause,
-						bool ispusheddown,
+						bool is_pushed_down,
 						bool isdeduced,
 						Relids outerjoin_nonnullable,
 						Relids qualscope)
 {
 	Relids		relids;
+	bool		valid_everywhere;
 	bool		can_be_equijoin;
 	RestrictInfo *restrictinfo;
 	RelOptInfo *rel;
@@ -415,6 +416,7 @@ distribute_qual_to_rels(Query *root, Node *clause,
 		 * the vars were equal).
 		 */
 		Assert(bms_equal(relids, qualscope));
+		valid_everywhere = true;
 		can_be_equijoin = true;
 	}
 	else if (bms_overlap(relids, outerjoin_nonnullable))
@@ -433,6 +435,7 @@ distribute_qual_to_rels(Query *root, Node *clause,
 		 * result, so we treat it the same as an ordinary inner-join qual.
 		 */
 		relids = qualscope;
+		valid_everywhere = false;
 		can_be_equijoin = false;
 	}
 	else
@@ -447,18 +450,26 @@ distribute_qual_to_rels(Query *root, Node *clause,
 		 * time we are called, the outerjoinset of each baserel will show
 		 * exactly those outer joins that are below the qual in the join
 		 * tree.
+		 *
+		 * We also need to determine whether the qual is "valid everywhere",
+		 * which is true if the qual mentions no variables that are involved
+		 * in lower-level outer joins (this may be an overly strong test).
 		 */
 		Relids		addrelids = NULL;
 		Relids		tmprelids;
 		int			relno;
 
+		valid_everywhere = true;
 		tmprelids = bms_copy(relids);
 		while ((relno = bms_first_member(tmprelids)) >= 0)
 		{
 			RelOptInfo *rel = find_base_rel(root, relno);
 
 			if (rel->outerjoinset != NULL)
+			{
 				addrelids = bms_add_members(addrelids, rel->outerjoinset);
+				valid_everywhere = false;
+			}
 		}
 		bms_free(tmprelids);
 
@@ -489,13 +500,15 @@ distribute_qual_to_rels(Query *root, Node *clause,
 	 * same joinrel. A qual originating from WHERE is always considered
 	 * "pushed down".
 	 */
-	if (!ispusheddown)
-		ispusheddown = !bms_equal(relids, qualscope);
+	if (!is_pushed_down)
+		is_pushed_down = !bms_equal(relids, qualscope);
 
 	/*
 	 * Build the RestrictInfo node itself.
 	 */
-	restrictinfo = make_restrictinfo((Expr *) clause, ispusheddown);
+	restrictinfo = make_restrictinfo((Expr *) clause,
+									 is_pushed_down,
+									 valid_everywhere);
 
 	/*
 	 * Figure out where to attach it.

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.23 2004/01/04 03:51:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.24 2004/01/05 05:07:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,8 @@
 #include "optimizer/var.h"
 
 
-static Expr *make_sub_restrictinfos(Expr *clause, bool ispusheddown);
+static Expr *make_sub_restrictinfos(Expr *clause, bool is_pushed_down,
+									bool valid_everywhere);
 static bool join_clause_is_redundant(Query *root,
 						 RestrictInfo *rinfo,
 						 List *reference_list,
@@ -32,18 +33,22 @@ static bool join_clause_is_redundant(Query *root,
  *
  * Build a RestrictInfo node containing the given subexpression.
  *
- * The ispusheddown flag must be supplied by the caller.  We initialize
- * fields that depend only on the given subexpression, leaving others that
- * depend on context (or may never be needed at all) to be filled later.
+ * The is_pushed_down and valid_everywhere flags must be supplied by the
+ * caller.
+ *
+ * We initialize fields that depend only on the given subexpression, leaving
+ * others that depend on context (or may never be needed at all) to be filled
+ * later.
  */
 RestrictInfo *
-make_restrictinfo(Expr *clause, bool ispusheddown)
+make_restrictinfo(Expr *clause, bool is_pushed_down, bool valid_everywhere)
 {
 	RestrictInfo *restrictinfo = makeNode(RestrictInfo);
 
 	restrictinfo->clause = clause;
-	restrictinfo->ispusheddown = ispusheddown;
-	restrictinfo->canjoin = false;		/* may get set below */
+	restrictinfo->is_pushed_down = is_pushed_down;
+	restrictinfo->valid_everywhere = valid_everywhere;
+	restrictinfo->can_join = false;		/* may get set below */
 
 	/*
 	 * If it's a binary opclause, set up left/right relids info.
@@ -67,7 +72,7 @@ make_restrictinfo(Expr *clause, bool ispusheddown)
 			!bms_is_empty(restrictinfo->right_relids) &&
 			!bms_overlap(restrictinfo->left_relids,
 						 restrictinfo->right_relids))
-			restrictinfo->canjoin = true;
+			restrictinfo->can_join = true;
 	}
 	else
 	{
@@ -84,7 +89,9 @@ make_restrictinfo(Expr *clause, bool ispusheddown)
 	 */
 	if (or_clause((Node *) clause))
 	{
-		restrictinfo->orclause = make_sub_restrictinfos(clause, ispusheddown);
+		restrictinfo->orclause = make_sub_restrictinfos(clause,
+														is_pushed_down,
+														valid_everywhere);
 	}
 	else
 	{
@@ -126,7 +133,8 @@ make_restrictinfo(Expr *clause, bool ispusheddown)
  * Recursively insert sub-RestrictInfo nodes into a boolean expression.
  */
 static Expr *
-make_sub_restrictinfos(Expr *clause, bool ispusheddown)
+make_sub_restrictinfos(Expr *clause, bool is_pushed_down,
+					   bool valid_everywhere)
 {
 	if (or_clause((Node *) clause))
 	{
@@ -136,7 +144,8 @@ make_sub_restrictinfos(Expr *clause, bool ispusheddown)
 		foreach(temp, ((BoolExpr *) clause)->args)
 			orlist = lappend(orlist,
 							 make_sub_restrictinfos(lfirst(temp),
-													ispusheddown));
+													is_pushed_down,
+													valid_everywhere));
 		return make_orclause(orlist);
 	}
 	else if (and_clause((Node *) clause))
@@ -147,11 +156,14 @@ make_sub_restrictinfos(Expr *clause, bool ispusheddown)
 		foreach(temp, ((BoolExpr *) clause)->args)
 			andlist = lappend(andlist,
 							  make_sub_restrictinfos(lfirst(temp),
-													 ispusheddown));
+													 is_pushed_down,
+													 valid_everywhere));
 		return make_andclause(andlist);
 	}
 	else
-		return (Expr *) make_restrictinfo(clause, ispusheddown);
+		return (Expr *) make_restrictinfo(clause,
+										  is_pushed_down,
+										  valid_everywhere);
 }
 
 /*
@@ -207,7 +219,7 @@ get_actual_join_clauses(List *restrictinfo_list,
 	{
 		RestrictInfo *clause = (RestrictInfo *) lfirst(temp);
 
-		if (clause->ispusheddown)
+		if (clause->is_pushed_down)
 			*otherquals = lappend(*otherquals, clause->clause);
 		else
 			*joinquals = lappend(*joinquals, clause->clause);
@@ -348,7 +360,7 @@ join_clause_is_redundant(Query *root,
 			if (refrinfo->mergejoinoperator != InvalidOid &&
 				rinfo->left_pathkey == refrinfo->left_pathkey &&
 				rinfo->right_pathkey == refrinfo->right_pathkey &&
-				(rinfo->ispusheddown == refrinfo->ispusheddown ||
+				(rinfo->is_pushed_down == refrinfo->is_pushed_down ||
 				 !IS_OUTER_JOIN(jointype)))
 			{
 				redundant = true;
