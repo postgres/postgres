@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.302 2003/01/06 03:18:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.303 2003/01/06 09:58:36 petere Exp $
  *
  * NOTES
  *
@@ -72,7 +72,6 @@
 #include <fcntl.h>
 #include <time.h>
 #include <sys/param.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <limits.h>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.95 2003/01/06 03:18:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.96 2003/01/06 09:58:23 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
 #include "libpq/hba.h"
 #include "libpq/libpq.h"
 #include "libpq/password.h"
+#include "libpq/pqcomm.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "storage/ipc.h"
