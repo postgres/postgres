@@ -9,8 +9,8 @@
  */
 
 #include "postgres.h"
-#include "stdio.h"
-#include "OS.h"
+#include <stdio.h>
+#include <OS.h>
 
 // Detachement d'une zone de mémoire partagée
 // On detruit le clone de l'area dans notre adress-space

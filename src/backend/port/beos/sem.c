@@ -10,9 +10,9 @@
 
 
 #include "postgres.h"
-#include "stdio.h"
-#include "errno.h"
-#include "OS.h"
+#include <stdio.h>
+#include <errno.h>
+#include <OS.h>
 
 // Controle d'un pool de sémaphores
 // On considere que le semId utilisé correspond bien a une area de notre adress space

@@ -1,26 +1,18 @@
-#-------------------------------------------------------------------------
-#
-# Makefile--
-#    Makefile for port/beos
-#
-#-------------------------------------------------------------------------
+# $Header: /cvsroot/pgsql/src/backend/port/beos/Attic/Makefile,v 1.2 2000/10/09 16:42:54 petere Exp $
 
+subdir = src/backend/port/beos
 top_builddir = ../../../..
-include ../../../Makefile.global
-
-INCLUDE_OPT = 
-
-CFLAGS+=$(INCLUDE_OPT)
+include $(top_builddir)/src/Makefile.global
 
 OBJS = sem.o shm.o support.o
 
 all: SUBSYS.o 
 
 SUBSYS.o: $(OBJS)
-	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) $(LDOUT) $@ $^
 
 depend dep:
-	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+	$(CC) -MM $(CFLAGS) $(CPPFLAGS) *.c >depend
 
 clean: 
 	rm -f SUBSYS.o $(OBJS) 
@@ -28,4 +20,3 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

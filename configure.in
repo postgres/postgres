@@ -634,7 +634,7 @@ AC_CHECK_LIB(gen,      main)
 AC_CHECK_LIB(PW,       main)
 AC_SEARCH_LIBS(crypt,  crypt)
 AC_CHECK_LIB(z,        inflate)
-AC_CHECK_LIB(bind,     main)
+AC_SEARCH_LIBS(inet_ntoa, bind)
 
 if test "$with_krb4" = yes ; then
   AC_CHECK_LIB(des, [des_encrypt], [], [AC_MSG_ERROR([library \`des' is required for Kerberos 4])])
