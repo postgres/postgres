@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.116 2005/02/28 03:45:21 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.117 2005/03/24 21:50:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2193,13 +2193,20 @@ array_set_slice(ArrayType *array,
  *	 or binary-compatible with, the first argument type of fn().
  * * retType: OID of element type of output array.	This must be the same as,
  *	 or binary-compatible with, the result type of fn().
+ * * amstate: workspace for array_map.  Must be zeroed by caller before
+ *	 first call, and not touched after that.
+ *
+ * It is legitimate to pass a freshly-zeroed ArrayMapState on each call,
+ * but better performance can be had if the state can be preserved across
+ * a series of calls.
  *
  * NB: caller must assure that input array is not NULL.  Currently,
  * any additional parameters passed to fn() may not be specified as NULL
  * either.
  */
 Datum
-array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType)
+array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType,
+		  ArrayMapState *amstate)
 {
 	ArrayType  *v;
 	ArrayType  *result;
@@ -2217,12 +2224,6 @@ array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType)
 	bool		typbyval;
 	char		typalign;
 	char	   *s;
-	typedef struct
-	{
-		ArrayMetaState inp_extra;
-		ArrayMetaState ret_extra;
-	} am_extra;
-	am_extra   *my_extra;
 	ArrayMetaState *inp_extra;
 	ArrayMetaState *ret_extra;
 
@@ -2254,22 +2255,8 @@ array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType)
 	 * only once per series of calls, assuming the element type doesn't
 	 * change underneath us.
 	 */
-	my_extra = (am_extra *) fcinfo->flinfo->fn_extra;
-	if (my_extra == NULL)
-	{
-		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-													  sizeof(am_extra));
-		my_extra = (am_extra *) fcinfo->flinfo->fn_extra;
-		inp_extra = &my_extra->inp_extra;
-		inp_extra->element_type = InvalidOid;
-		ret_extra = &my_extra->ret_extra;
-		ret_extra->element_type = InvalidOid;
-	}
-	else
-	{
-		inp_extra = &my_extra->inp_extra;
-		ret_extra = &my_extra->ret_extra;
-	}
+	inp_extra = &amstate->inp_extra;
+	ret_extra = &amstate->ret_extra;
 
 	if (inp_extra->element_type != inpType)
 	{
@@ -3101,6 +3088,7 @@ array_type_length_coerce_internal(ArrayType *src,
 		Oid			srctype;
 		Oid			desttype;
 		FmgrInfo	coerce_finfo;
+		ArrayMapState amstate;
 	} atc_extra;
 	atc_extra  *my_extra;
 	FunctionCallInfoData locfcinfo;
@@ -3113,10 +3101,9 @@ array_type_length_coerce_internal(ArrayType *src,
 	my_extra = (atc_extra *) fmgr_info->fn_extra;
 	if (my_extra == NULL)
 	{
-		fmgr_info->fn_extra = MemoryContextAlloc(fmgr_info->fn_mcxt,
-												 sizeof(atc_extra));
+		fmgr_info->fn_extra = MemoryContextAllocZero(fmgr_info->fn_mcxt,
+													 sizeof(atc_extra));
 		my_extra = (atc_extra *) fmgr_info->fn_extra;
-		my_extra->srctype = InvalidOid;
 	}
 
 	if (my_extra->srctype != src_elem_type)
@@ -3192,7 +3179,8 @@ array_type_length_coerce_internal(ArrayType *src,
 	locfcinfo.arg[1] = Int32GetDatum(desttypmod);
 	locfcinfo.arg[2] = BoolGetDatum(isExplicit);
 
-	return array_map(&locfcinfo, my_extra->srctype, my_extra->desttype);
+	return array_map(&locfcinfo, my_extra->srctype, my_extra->desttype,
+					 &my_extra->amstate);
 }
 
 /*
@@ -3210,6 +3198,7 @@ array_length_coerce(PG_FUNCTION_ARGS)
 	{
 		Oid			elemtype;
 		FmgrInfo	coerce_finfo;
+		ArrayMapState amstate;
 	} alc_extra;
 	alc_extra  *my_extra;
 	FunctionCallInfoData locfcinfo;
@@ -3226,10 +3215,9 @@ array_length_coerce(PG_FUNCTION_ARGS)
 	my_extra = (alc_extra *) fmgr_info->fn_extra;
 	if (my_extra == NULL)
 	{
-		fmgr_info->fn_extra = MemoryContextAlloc(fmgr_info->fn_mcxt,
-												 sizeof(alc_extra));
+		fmgr_info->fn_extra = MemoryContextAllocZero(fmgr_info->fn_mcxt,
+													 sizeof(alc_extra));
 		my_extra = (alc_extra *) fmgr_info->fn_extra;
-		my_extra->elemtype = InvalidOid;
 	}
 
 	if (my_extra->elemtype != ARR_ELEMTYPE(v))
@@ -3265,7 +3253,8 @@ array_length_coerce(PG_FUNCTION_ARGS)
 	locfcinfo.arg[1] = Int32GetDatum(desttypmod);
 	locfcinfo.arg[2] = BoolGetDatum(isExplicit);
 
-	return array_map(&locfcinfo, ARR_ELEMTYPE(v), ARR_ELEMTYPE(v));
+	return array_map(&locfcinfo, ARR_ELEMTYPE(v), ARR_ELEMTYPE(v),
+					 &my_extra->amstate);
 }
 
 /*
