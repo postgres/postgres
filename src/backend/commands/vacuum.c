@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.223 2002/04/12 20:38:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.224 2002/04/15 23:39:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,6 +181,10 @@ vacuum(VacuumStmt *vacstmt)
 	if (IsTransactionBlock())
 		elog(ERROR, "%s cannot run inside a BEGIN/END block", stmttype);
 
+	/* Running VACUUM from a function would free the function context */
+	if (!MemoryContextContains(QueryContext, vacstmt))
+		elog(ERROR, "%s cannot be executed from a function", stmttype);
+                        
 	/*
 	 * Send info about dead objects to the statistics collector
 	 */
