@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catname.h,v 1.2 1996/10/31 09:47:02 scrappy Exp $
+ * $Id: catname.h,v 1.3 1997/08/21 04:33:20 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,6 +45,8 @@
 #define  UserRelationName "pg_user"
 #define  VariableRelationName "pg_variable"
 #define  VersionRelationName "pg_version"
+#define  AttrDefaultRelationName "pg_attrdef"
+#define  RelCheckRelationName "pg_relcheck"
 
 extern char *SharedSystemRelationNames[];
 
