@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.109 2004/04/07 18:17:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.110 2004/05/11 22:43:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -264,8 +264,11 @@ generate_union_plan(SetOperationStmt *op, Query *parse,
 		List	   *sortList;
 
 		sortList = addAllTargetsToSortList(NULL, NIL, tlist, false);
-		plan = (Plan *) make_sort_from_sortclauses(parse, sortList, plan);
-		plan = (Plan *) make_unique(plan, sortList);
+		if (sortList)
+		{
+			plan = (Plan *) make_sort_from_sortclauses(parse, sortList, plan);
+			plan = (Plan *) make_unique(plan, sortList);
+		}
 		*sortClauses = sortList;
 	}
 	else
@@ -324,6 +327,13 @@ generate_nonunion_plan(SetOperationStmt *op, Query *parse,
 	 * correct output.
 	 */
 	sortList = addAllTargetsToSortList(NULL, NIL, tlist, false);
+
+	if (sortList == NIL)		/* nothing to sort on? */
+	{
+		*sortClauses = NIL;
+		return plan;
+	}
+
 	plan = (Plan *) make_sort_from_sortclauses(parse, sortList, plan);
 	switch (op->op)
 	{
@@ -519,9 +529,9 @@ generate_append_tlist(List *colTypes, bool flag,
 	 * First extract typmods to use.
 	 *
 	 * If the inputs all agree on type and typmod of a particular column, use
-	 * that typmod; else use -1.
+	 * that typmod; else use -1.  (+1 here in case of zero columns.)
 	 */
-	colTypmods = (int32 *) palloc(length(colTypes) * sizeof(int32));
+	colTypmods = (int32 *) palloc(length(colTypes) * sizeof(int32) + 1);
 
 	foreach(planl, input_plans)
 	{
