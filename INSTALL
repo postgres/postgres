@@ -161,17 +161,10 @@ superuser.  The simplest way is by creating and running a C language
 function.  There are plans to remedy this in future developent.
 
 The program initdb (part of Postgres) is what initializes (creates) a
-database system.  See the man page for initdb.
+database system.  Initdb uses the defaults specified in Makefile.global.
+See the man page for initdb for more information.
 
-Example for postgres version 1.*:
   % initdb
-
-Example for postgres version 2.0:(to be released in several months)
-  % initdb -d /usr/lib/postgres_data -u postgres
-
-  This example creates the files for the database system in the directory
-  /usr/lib/postgres_data and makes user "postgres" the Postgres superuser
-  for the new database system.
 
 By default, the user issuing the initdb command becomes the Postgres
 superuser, and only the unix superuser can specify any other user as the
