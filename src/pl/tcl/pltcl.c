@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.56 2002/06/15 19:54:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.57 2002/07/18 04:16:07 ishii Exp $
  *
  **********************************************************************/
 
@@ -65,20 +65,16 @@
 
 #include "mb/pg_wchar.h"
 
-static pg_enconv *tcl_enconv;
-
 static unsigned char *
 utf_u2e(unsigned char *src)
 {
-	return pg_do_encoding_conversion(src, strlen(src),
-									 NULL, tcl_enconv->from_unicode);
+	return pg_do_encoding_conversion(src, strlen(src), PG_UNICODE, GetDatabaseEncoding());
 }
 
 static unsigned char *
 utf_e2u(unsigned char *src)
 {
-	return pg_do_encoding_conversion(src, strlen(src),
-									 tcl_enconv->to_unicode, NULL);
+	return pg_do_encoding_conversion(src, strlen(src), GetDatabaseEncoding(), PG_UNICODE);
 }
 
 #define PLTCL_UTF
@@ -210,14 +206,6 @@ pltcl_init_all(void)
 	 ************************************************************/
 	if (!pltcl_firstcall)
 		return;
-
-#ifdef PLTCL_UTF
-	/************************************************************
-	 * Do unicode conversion initialization
-	 ************************************************************/
-
-	tcl_enconv = pg_get_enconv_by_encoding(GetDatabaseEncoding());
-#endif
 
 	/************************************************************
 	 * Create the dummy hold interpreter to prevent close of
