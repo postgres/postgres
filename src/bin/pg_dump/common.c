@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.41 2000/04/12 17:16:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.42 2000/05/19 23:00:00 tgl Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -190,7 +190,7 @@ parseNumericArray(const char *str, char **array, int arraysize)
 		}
 		else
 		{
-			if (!isdigit(s) || j >= sizeof(temp) - 1)
+			if (!(isdigit(s) || s == '-') || j >= sizeof(temp) - 1)
 			{
 				fprintf(stderr, "parseNumericArray: bogus number\n");
 				exit(2);
