@@ -1821,6 +1821,10 @@ Sun Jun 27 13:50:58 CEST 2004
 	- Variables that are out of scope, were not removed all the time.
 	- Make a varchar NULL set everything to 0 when not using indicators.
 	- Synced parser.
+	
+Mon Jun 28 11:08:42 CEST 2004
+
+	- Arrays can be read as arrays or as character strings now.
 	- Set pgtypes library version to 1.2.
 	- Set ecpg version to 3.2.0.
 	- Set compat library version to 1.2.

@@ -13,7 +13,7 @@ EXEC SQL BEGIN DECLARE SECTION;
 	int i = 1;
 	int *did = &i;
 	int a[10] = {9,8,7,6,5,4,3,2,1,0};
-	char text[10] = "klmnopqrst";
+	char text[25] = "klmnopqrst";
 	char *t = (char *)malloc(10);
 	double f;
 	bool b = true;
@@ -63,6 +63,13 @@ EXEC SQL END DECLARE SECTION;
 		printf("Found a[%d] = %d\n", i, a[i]);
 
 	printf("Found text=%10.10s\n", t);
+
+	EXEC SQL SELECT a
+	 INTO :text
+	 FROM test
+	 WHERE f = :f;
+
+	printf("Found text=%s\n", text);
 
 	EXEC SQL DROP TABLE test;
 

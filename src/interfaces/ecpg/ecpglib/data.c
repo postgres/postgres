@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.24 2004/06/27 12:28:39 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.25 2004/06/28 11:47:41 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -152,6 +152,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						ECPGraise(lineno, ECPG_INT_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 						return (false);
 					}
+					pval = scan_length;
 				}
 				else
 					res = 0L;
@@ -184,6 +185,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						ECPGraise(lineno, ECPG_UINT_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 						return (false);
 					}
+					pval = scan_length;
 				}
 				else
 					ures = 0L;
@@ -216,6 +218,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						ECPGraise(lineno, ECPG_INT_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 						return (false);
 					}
+					pval = scan_length;
 				}
 				else
 					*((long long int *) (var + offset * act_tuple)) = (long long) 0;
@@ -233,6 +236,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						ECPGraise(lineno, ECPG_UINT_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 						return (false);
 					}
+					pval = scan_length;
 				}
 				else
 					*((unsigned long long int *) (var + offset * act_tuple)) = (long long) 0;
@@ -258,6 +262,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						ECPGraise(lineno, ECPG_FLOAT_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 						return (false);
 					}
+					pval = scan_length;
 				}
 				else
 					dres = 0.0;
@@ -312,8 +317,9 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 
 			case ECPGt_char:
 			case ECPGt_unsigned_char:
+				if (pval)
 				{
-					if (varcharsize == 0)
+					if (varcharsize == 0 || varcharsize > strlen(pval))
 						strncpy((char *) ((long) var + offset * act_tuple), pval, strlen(pval) + 1);
 					else
 					{
@@ -348,10 +354,12 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 							sqlca->sqlwarn[0] = sqlca->sqlwarn[1] = 'W';
 						}
 					}
+					pval += strlen(pval);
 				}
 				break;
 
 			case ECPGt_varchar:
+				if (pval)
 				{
 					struct ECPGgeneric_varchar *variable =
 					(struct ECPGgeneric_varchar *) ((long) var + offset * act_tuple);
@@ -394,6 +402,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 							variable->len = varcharsize;
 						}
 					}
+					pval += strlen(pval);
 				}
 				break;
 
@@ -433,6 +442,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 							return (false);
 						}
 					}
+					pval = scan_length;
 				}
 				else
 					nres = PGTYPESnumeric_from_asc("0.0", &scan_length);
@@ -476,6 +486,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 							return (false);
 						}
 					}
+					pval = scan_length;
 				}
 				else
 					ires = PGTYPESinterval_from_asc("0 seconds", NULL);
@@ -517,6 +528,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					}
 
 					*((date *) (var + offset * act_tuple)) = ddres;
+					pval = scan_length;
 				}
 				break;
 
@@ -555,6 +567,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					}
 
 					*((timestamp *) (var + offset * act_tuple)) = tres;
+					pval = scan_length;
 				}
 				break;
 
@@ -571,7 +584,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 			++act_tuple;
 
 			/* set pval to the next entry */
-			for (; string || (*pval != ',' && *pval != '}'); ++pval)
+			for (; string || (*pval != ',' && *pval != '}' && *pval != '\0'); ++pval)
 				if (*pval == '"')
 					string = string ? false : true;
 
@@ -593,7 +606,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 			if (*pval == ' ')
 				++pval;
 		}
-	} while ((isarray == ECPG_ARRAY_ARRAY && *pval != '}') || (isarray == ECPG_ARRAY_VECTOR && *pval != '\0'));
+	} while (*pval != '\0' && ((isarray == ECPG_ARRAY_ARRAY && *pval != '}') || isarray == ECPG_ARRAY_VECTOR));
 
 	return (true);
 }
