@@ -1,13 +1,13 @@
 #-------------------------------------------------------------------------
 #
-# Makefile.inc--
+# Makefile.in--
 #    Makefile for bin/psql
 #
 # Copyright (c) 1994, Regents of the University of California
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.15 1999/01/17 06:19:19 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.16 1999/11/04 21:56:01 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -28,7 +28,9 @@ ifdef MULTIBYTE
 CFLAGS+= $(MBFLAGS)
 endif
 
-OBJS= psql.o stringutils.o @STRDUP@ @STRERROR2@
+OBJS=command.o common.o help.o input.o stringutils.o mainloop.o \
+copy.o startup.o prompt.o variables.o large_obj.o print.o describe.o \
+@STRDUP@ @STRERROR2@
 
 all: submake psql
 
@@ -38,6 +40,18 @@ psql: $(OBJS) $(LIBPQDIR)/libpq.a
 ../../utils/strdup.o:
 	$(MAKE) -C ../../utils strdup.o
 
+OBJS:
+	$(CC) $(CFLAGS) -c $< -o $@
+
+help.o: sql_help.h
+
+ifneq ($(strip $(PERL)),) 
+sql_help.h: ../../../doc/src/sgml/ref/*.sgml create_help.pl
+	$(PERL) create_help.pl sql_help.h 
+else
+sql_help.h:
+endif
+
 .PHONY: submake
 submake:
 	$(MAKE) -C $(LIBPQDIR) libpq.a
@@ -46,14 +60,18 @@ install: psql
 	$(INSTALL) $(INSTL_EXE_OPTS) psql$(X) $(BINDIR)/psql$(X)
 
 depend dep:
-	$(CC) -MM $(CFLAGS) *.c >depend
+	$(CC) -MM -MG $(CFLAGS) *.c >depend
 
 clean: 
-	rm -f psql$(X) $(OBJS) 
+	rm -f psql$(X) $(OBJS)
+
+# Some people might get in trouble if they do a make clean and the
+# sql_help.h is gone, for it needs the docs in the right place to be
+# regenerated. -- (pe)
+
+distclean: clean
+	rm -f sql_help.h
 
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-
-
-
