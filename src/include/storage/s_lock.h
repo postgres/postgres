@@ -63,7 +63,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: s_lock.h,v 1.100 2002/09/02 04:42:52 momjian Exp $
+ *	  $Id: s_lock.h,v 1.101 2002/09/21 00:14:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -215,6 +215,21 @@ tas(volatile slock_t *lock)
 }
 
 #endif	 /* defined(__mc68000__) && defined(__linux__) */
+
+
+#if defined(__ppc__) || defined(__powerpc__)
+/*
+ * We currently use out-of-line assembler for TAS on PowerPC; see s_lock.c.
+ * S_UNLOCK is almost standard but requires a "sync" instruction.
+ */
+#define S_UNLOCK(lock)	\
+do \
+{\
+	__asm__ __volatile__ ("	sync \n"); \
+	*((volatile slock_t *) (lock)) = 0; \
+} while (0)
+
+#endif /* defined(__ppc__) || defined(__powerpc__) */
 
 
 #if defined(NEED_VAX_TAS_ASM)
