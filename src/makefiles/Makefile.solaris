@@ -1,0 +1,4 @@
+# $Header: /cvsroot/pgsql/src/makefiles/Makefile.solaris,v 1.1 2000/10/10 21:22:28 petere Exp $
+
+%.so: %.o
+	$(LD) -G -Bdynamic -o $@ $<

@@ -5,6 +5,7 @@ if test "$GCC" = yes ; then
   CFLAGS=
   SHARED_LIB=-fPIC
 else
-  CFLAGS='-Xa -v -D__sparc__ -D__sun__'
+  CC="$CC -Xa"			# relaxed ISO C mode
+  CFLAGS=-v			# -v is like gcc -Wall
   SHARED_LIB=-KPIC
 fi

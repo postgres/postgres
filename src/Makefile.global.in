@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.99 2000/10/10 13:04:46 momjian Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.100 2000/10/10 21:22:21 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -157,6 +157,7 @@ LDREL = -r
 LDOUT = -o
 DLSUFFIX = @DLSUFFIX@
 RANLIB = @RANLIB@
+LORDER = @LORDER@
 X = @EXEEXT@
 
 # Miscellaneous

@@ -1,5 +1,0 @@
-%.so: %.o
-	$(LD) -G -Bdynamic -o $@ $<
-
-MK_NO_LORDER=true
-

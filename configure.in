@@ -70,11 +70,7 @@ nextstep*) template=nextstep ;;
      osf*) template=osf ;;
      qnx*) template=qnx4 ;;
      sco*) template=sco ;;
- solaris*)
-	case $host_cpu in
-	  sparc) template=solaris_sparc ;;
-	   i?86) template=solaris_i386 ;;
-	esac ;;
+ solaris*) template=solaris ;;
    sunos*) template=sunos4 ;;
  sysv4.2*)
         case $host_vendor in
@@ -83,7 +79,6 @@ nextstep*) template=nextstep ;;
    sysv4*) template=svr4 ;;
  sysv5uw*) template=unixware ;;
   ultrix*) template=ultrix4 ;;
-  beos*) template=beos ;;
 esac
 
   if test x"$template" = x"" ; then
@@ -112,15 +107,15 @@ AC_LINK_FILES([src/backend/port/dynloader/${template}.h], [src/include/dynloader
 AC_LINK_FILES([src/include/port/${template}.h], [src/include/os.h])
 AC_LINK_FILES([src/makefiles/Makefile.${template}], [src/Makefile.port])
 
-# Pick right test-and-set (TAS) code. Most platforms have inline
-# assembler code in their port include file, so we just use a dummy
-# file here.
+# Pick right test-and-set (TAS) code.  Most platforms have inline
+# assembler code in src/include/storage/s_lock.h, so we just use
+# a dummy file here.
 tas_file=dummy.s
 need_tas=no
-case $template in
-  hpux)           need_tas=yes; tas_file=hpux.s ;;
-  solaris_sparc)  need_tas=yes; tas_file=solaris_sparc.s ;;
-  solaris_i386)   need_tas=yes; tas_file=solaris_i386.s ;;
+case $host in
+  *-*-hpux*)        need_tas=yes; tas_file=hpux.s ;;
+  sparc-*-solaris*) need_tas=yes; tas_file=solaris_sparc.s ;;
+  i?86-*-solaris)   need_tas=yes; tas_file=solaris_i386.s ;;
 esac
 
 if test "$need_tas" = yes ; then
@@ -593,8 +588,9 @@ AC_PROG_AWK
 PGAC_PATH_FLEX
 AC_PROG_LN_S
 AC_PROG_RANLIB
+AC_CHECK_PROGS(LORDER, lorder)
 AC_PATH_PROG(TAR, tar)
-AC_CHECK_PROGS(PERL, perl,)
+AC_CHECK_PROGS(PERL, perl)
 AC_PROG_YACC
 AC_SUBST(YFLAGS)
 if test "$with_tk" = yes; then

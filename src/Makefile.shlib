@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.24 2000/10/07 14:39:06 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.25 2000/10/10 21:22:21 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -70,7 +70,7 @@ ifeq ($(PORTNAME), aix)
   SHLIB_LINK		+= -lc
 endif
 
-ifeq ($(PORTNAME), bsd)
+ifeq ($(PORTNAME), openbsd)
   ifdef BSD_SHLIB
     shlib		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
     ifdef ELF_SYSTEM
@@ -149,21 +149,14 @@ ifeq ($(PORTNAME), linux)
   CFLAGS		+= $(CFLAGS_SL)
 endif
 
-ifeq ($(PORTNAME), solaris_i386)
+ifeq ($(PORTNAME), solaris)
   shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL		:= -G
   SHLIB_LINK		+= -ldl -lsocket -lresolv -lnsl -lm -lc
   CFLAGS		+= $(CFLAGS_SL)
 endif
 
-ifeq ($(PORTNAME), solaris_sparc)
-  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL		:= -G
-  SHLIB_LINK		+= -ldl -lsocket -lresolv -lnsl -lm -lc
-  CFLAGS		+= $(CFLAGS_SL)
-endif
-
-ifeq ($(PORTNAME), alpha)
+ifeq ($(PORTNAME), osf)
   shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL		+= -shared -expect_unresolved '*'
 endif
@@ -219,11 +212,15 @@ all-lib: lib$(NAME).a $(shlib)
 
 ifneq ($(PORTNAME), win)
 
+ifndef LORDER
+MK_NO_LORDER := true
+endif
+
 lib$(NAME).a: $(OBJS)
 ifdef MK_NO_LORDER
-	$(AR) $(AROPT) $@ $(OBJS) 
+	$(AR) $(AROPT) $@ $^
 else
-	$(AR) $(AROPT) $@ `lorder $(OBJS) | tsort`
+	$(AR) $(AROPT) $@ `$(LORDER) $^ | tsort`
 endif
 	$(RANLIB) $@
 
