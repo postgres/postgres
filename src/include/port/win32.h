@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.37 2004/10/06 09:35:23 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.38 2004/10/06 16:36:02 momjian Exp $ */
 
 /* undefine and redefine after #include */
 #undef mkdir
@@ -194,9 +194,17 @@ int			setitimer(int which, const struct itimerval * value, struct itimerval * ov
 
 /*
  * Supplement to <sys/types.h>.
+ *
+ * Perl already has conflicting defines for uid_t and gid_t.
  */
+#ifndef PLPERL_HAVE_UID_GID
 typedef int uid_t;
 typedef int gid_t;
+#else
+/* These are redefined by perl. */
+#define int uid_t;
+#define int gid_t;
+#endif
 typedef long key_t;
 
 /*
