@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Id: fd.c,v 1.11 1996/12/27 22:57:51 bryanh Exp $
+ *    $Id: fd.c,v 1.12 1996/12/28 22:44:14 momjian Exp $
  *
  * NOTES:
  *
@@ -378,7 +378,7 @@ AssertLruRoom()
         /* We supposedly are using more vfds than we want to be.  First
            assert that there is at least one used vfd in the ring. 
            */
-        Assert(VfdCache[0].lruMoreRecently ! 0);
+        Assert(VfdCache[0].lruMoreRecently != 0);
         LruDelete(VfdCache[0].lruMoreRecently);
     }
 }
