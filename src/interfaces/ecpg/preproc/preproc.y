@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.227 2003/05/30 13:22:02 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.228 2003/06/02 15:38:02 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -4437,7 +4437,7 @@ single_vt_type: common_type
 			/* this is for named structs/unions */
 			char *name;
 			struct typedefs *this;
-			bool forward = (strcmp($1.symbol, forward_name) == 0 && strcmp($1.su, "struct") == 0);
+			bool forward = (forward_name != NULL && strcmp($1.symbol, forward_name) == 0 && strcmp($1.su, "struct") == 0);
 
 			name = cat2_str($1.su, $1.symbol);
 			/* Do we have a forward definition? */
@@ -4791,7 +4791,7 @@ var_type:	common_type
 			/* this is for named structs/unions */
 			char *name;
 			struct typedefs *this;
-			bool forward = (strcmp($1.symbol, forward_name) == 0 && strcmp($1.su, "struct") == 0);
+			bool forward = (forward_name != NULL && strcmp($1.symbol, forward_name) == 0 && strcmp($1.su, "struct") == 0);
 
 			name = cat2_str($1.su, $1.symbol);
 			/* Do we have a forward definition? */
