@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.43 2004/10/27 17:17:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.44 2004/10/27 19:44:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -767,20 +767,20 @@ do_status(void)
 	pid = get_pgpid();
 	if (pid == 0)				/* no pid file */
 	{
-		write_stderr(_("%s: neither postmaster nor postgres running\n"), progname);
+		printf(_("%s: neither postmaster nor postgres running\n"), progname);
 		exit(1);
 	}
 	else if (pid < 0)			/* standalone backend */
 	{
 		pid = -pid;
-		fprintf(stdout, _("%s: a standalone backend \"postgres\" is running (PID: %ld)\n"), progname, pid);
+		printf(_("%s: a standalone backend \"postgres\" is running (PID: %ld)\n"), progname, pid);
 	}
 	else
 	/* postmaster */
 	{
 		char	  **optlines;
 
-		fprintf(stdout, _("%s: postmaster is running (PID: %ld)\n"), progname, pid);
+		printf(_("%s: postmaster is running (PID: %ld)\n"), progname, pid);
 
 		optlines = readfile(postopts_file);
 		if (optlines != NULL)
