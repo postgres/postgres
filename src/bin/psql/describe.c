@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.59 2002/08/10 03:56:24 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.60 2002/08/10 16:01:16 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -714,11 +714,7 @@ describeOneTableDetails(const char *schemaname,
 		printfPQExpBuffer(&buf, "SELECT pg_catalog.pg_get_viewdef('%s'::pg_catalog.oid)", oid);
 		result = PSQLexec(buf.data);
 		if (!result)
-		{
-			PQclear(res);
-			PQclear(result);
 			goto error_return;
-		}
 
 		if (PQntuples(result) > 0)
 			view_def = xstrdup(PQgetvalue(result, 0, 0));
