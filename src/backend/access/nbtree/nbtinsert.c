@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.63 2000/10/04 00:04:42 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.64 2000/10/05 20:10:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -576,8 +576,8 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	BTPageOpaque ropaque,
 				lopaque,
 				oopaque;
-	Buffer		sbuf;
-	Page		spage;
+	Buffer		sbuf = 0;
+	Page		spage = 0;
 	BTPageOpaque sopaque;
 	Size		itemsz;
 	ItemId		itemid;
