@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.370 2003/10/04 02:47:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.371 2003/10/08 03:49:37 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -694,7 +694,7 @@ exec_simple_query(const char *query_string)
 	 * because gettimeofday() wasn't called. Similarly,
 	 * log_statement_stats has to be captured once.
 	 */
-	if (save_log_duration || save_log_min_duration_statement > 0)
+	if (save_log_duration || save_log_min_duration_statement != -1)
 		gettimeofday(&start_t, NULL);
 
 	if (save_log_statement_stats)
@@ -940,7 +940,7 @@ exec_simple_query(const char *query_string)
 	 * Combine processing here as we need to calculate the query duration
 	 * in both instances.
 	 */
-	if (save_log_duration || save_log_min_duration_statement > 0)
+	if (save_log_duration || save_log_min_duration_statement != -1)
 	{
 		long		usecs;
 		bool		print_statement;
@@ -957,15 +957,17 @@ exec_simple_query(const char *query_string)
 		 * Output a duration_statement to the log if the query has exceeded
 		 * the min duration, or if we are to print all durations.
 		 */
-		print_statement = (save_log_min_duration_statement > 0 &&
-						   usecs >= save_log_min_duration_statement * 1000);
+		print_statement = (save_log_min_duration_statement == 0 ||
+						   (save_log_min_duration_statement > 0 &&
+						    usecs >= save_log_min_duration_statement * 1000));
 
 		if (save_log_duration || print_statement)
 			ereport(LOG,
-					(errmsg("duration(secs): %ld.%06ld%s%s",
-							(long) (stop_t.tv_sec - start_t.tv_sec),
-							(long) (stop_t.tv_usec - start_t.tv_usec),
-							print_statement ? " " : "",
+					(errmsg("duration: %ld.%03ld ms%s%s",
+							(long) ((stop_t.tv_sec - start_t.tv_sec) * 1000 +
+							(stop_t.tv_usec - start_t.tv_usec) / 1000),
+							(long) (stop_t.tv_usec - start_t.tv_usec) % 1000,
+							print_statement ? "  query: " : "",
 							print_statement ? query_string : "")));
 	}
 
@@ -2655,7 +2657,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.370 $ $Date: 2003/10/04 02:47:04 $\n");
+		puts("$Revision: 1.371 $ $Date: 2003/10/08 03:49:37 $\n");
 	}
 
 	/*
@@ -3196,3 +3198,4 @@ ShowUsage(const char *title)
 
 	pfree(str.data);
 }
+

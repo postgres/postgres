@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.123 2003/09/25 06:58:05 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.124 2003/10/08 03:49:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,6 +145,7 @@ static const char *useful_strerror(int errnum);
 static const char *error_severity(int elevel);
 static const char *print_timestamp(void);
 static const char *print_pid(void);
+static char *str_prepend_tabs(const char *str);
 
 
 /*
@@ -1135,6 +1136,8 @@ send_message_to_server_log(ErrorData *edata)
 	/* Write to stderr, if enabled */
 	if (Use_syslog <= 1 || whereToSendOutput == Debug)
 	{
+		char *p = str_prepend_tabs(buf.data);
+
 		/*
 		 * Timestamp and PID are only used for stderr output --- we assume
 		 * the syslog daemon will supply them for us in the other case.
@@ -1142,7 +1145,8 @@ send_message_to_server_log(ErrorData *edata)
 		fprintf(stderr, "%s%s%s",
 				Log_timestamp ? print_timestamp() : "",
 				Log_pid ? print_pid() : "",
-				buf.data);
+				p);
+		pfree(p);
 	}
 
 	pfree(buf.data);
@@ -1449,4 +1453,25 @@ print_pid(void)
 
 	snprintf(buf, sizeof(buf), "[%d] ", (int) MyProcPid);
 	return buf;
+}
+
+/*
+ *	str_prepend_tabs
+ *
+ *	This string prepends a tab to message continuation lines.
+ */
+static char *str_prepend_tabs(const char *str)
+{
+	char *outstr = palloc(strlen(str) * 2 + 1);
+	int	len = strlen(str);
+	int i, outlen = 0;
+
+	for (i = 0; i < len; i++)
+	{
+		outstr[outlen++] = str[i];
+		if (str[i] == '\n' && str[i+1] != '\0' )
+			outstr[outlen++] = '\t';
+	}
+	outstr[outlen++]	= '\0';
+	return outstr;
 }

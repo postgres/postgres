@@ -157,9 +157,10 @@
 				 #   debug5, debug4, debug3, debug2, debug1,
 				 #   info, notice, warning, error, panic(off)
 				 
-#log_min_duration_statement = 0  # Log all statements whose
+#log_min_duration_statement = -1 # Log all statements whose
 				 # execution time exceeds the value, in
-				 # milliseconds.  Zero disables.
+				 # milliseconds.  Zero prints all queries.
+				 # Minus-one disables.
 
 #silent_mode = false		 # DO NOT USE without Syslog!
 

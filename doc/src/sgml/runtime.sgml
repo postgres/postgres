@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.210 2003/10/03 19:26:49 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.211 2003/10/08 03:49:37 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1689,16 +1689,16 @@ SET ENABLE_SEQSCAN TO OFF;
        <listitem>
         <para>
          Sets a minimum statement execution time (in milliseconds)
-         above which a statement will be logged.  All SQL statements
-         that run longer than the time specified will be logged together
-         with their actual duration.  Setting this to zero (the default)
-	 disables time-based logging.  For example, if you set it
-         to <literal>250</literal> then all SQL statements that run longer
-         than 250ms will be logged.  Enabling this
-         option can be useful in tracking down unoptimized queries in
-         your applications.
-         Only superusers can increase this or set it to zero if this option
-         is set to non-zero by the administrator.
+         for statement to be logged.  All SQL statements
+         that run in the time specified or longer will be logged with
+         their duration.  Setting this to zero will print
+         all queries and their durations.  Minus-one (the default)
+         disables this.  For example, if you set it to 
+         <literal>250</literal> then all SQL statements that run 250ms 
+         or longer will be logged.  Enabling this option can be
+         useful in tracking down unoptimized queries in your applications.
+         Only superusers can increase this or set it to minus-one if this 
+         option is set by the administrator.
         </para>
        </listitem>
       </varlistentry>
