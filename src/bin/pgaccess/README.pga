@@ -1,0 +1,91 @@
+PGACCESS 0.3 , 29 September 1997
+================================
+
+
+
+1.Why PGACCESS ?
+
+First of all because PostgreSQL lacks a graphical interface from within
+you could manage your tables, edit them, define queries, sequences and
+functiones more simple than in psql.
+In Tcl/Tk because it's a powerfull language, and it tooks me only 3 days
+of hard work to get it like you see it.
+It's for free! Probably I should enter here that kind of text that says
+that is GNU-like license or whatsoever.
+Let's say : 
+If PostgreSQL and Linux are for free, so PGACCESS should be.
+
+
+
+2.How to INSTALL ?
+
+You will need Tcl/Tk package, I am using now Tcl 7.6 and Tk 4.2. There
+are some problems running under Tcl/Tk 8.0 but I will soon fix them.
+Also, you will need the PostgreSQL to Tcl interface library. It is
+called libpgtcl.so and because most of the people asked for it, I
+will supply a version compiled for 6.2 along with theese files.
+It is compiled and it's working on my system, a RedHat 4.2 Linux on
+Pentium machine.
+Just copy libpgtcl.so into your system library director (/usr/lib) and
+go for it.
+
+
+3.How to run it?
+
+You run it with the command :
+wish -f pgaccess.tcl
+Another way of loading the PostgreSQL library is running it with pgwish.
+It's a wish compiled with libpgtcl library so it could understand the
+commands for working with PostgreSQL.
+For this, remove the line "load libpgtcl.so" from the source
+
+
+
+4.What does it now ?
+
+Opens any database on a specified host at the specified port.
+
+Tables
+- opening tables for vieweing, max 200 records
+- column resizing by dragging the vertical grid lines
+- table layout saved for every table
+- import/export to external files (SDF,CSV)
+- filter capabilities ,enter filter like price>3.14
+- sort order capabilities ,enter manually the sort field(s)
+- editing in place
+- table generator assistant lizzard :-) (not wizzard)
+- table renaming and deleting (dropping)
+Queries
+- define, edit and store "user defined queries"
+- can store queries as views
+- execution of queries
+- vieweing of select type queries result
+- running action queries (insert, update, delete)
+
+
+
+5.What it should do in the future ?
+
+- table design (add new fields, renaming, etc)
+- script execution (simple SQL commands)
+- function manipulation (defining, vieweing)
+- a simple report generator and viewer
+- help on line
+
+
+
+6. How you should report the errors?
+First of all : operating system, PostgreSQL version,Tcl/Tk version.
+A more detailed story of what have you done when error had occured.
+Tcl/Tk stops usually with a error message and there is a button there
+"Stack Trace" and if you press it, you will see a detailed information
+about the place where it stucks. Please send it to me.
+Some information about table structure, no. of fields, records would
+be also good.
+
+===========================================================================
+You would find always the last version at   http://www.flex.ro/pgaccess
+
+Please feel free to e-mail me any suggestion , bug description that would
+help me improving this 
+

@@ -24,7 +24,7 @@ global dbc host pport tablist dirty fldval activetab
 set host localhost
 set pport 5432
 set dbc {}
-set tablist [list Tables Queries Views Sequences Reports Scripts]
+set tablist [list Tables Queries Views Sequences Functions Reports Scripts]
 set activetab {}
 set dirty false
 set fldval ""
@@ -32,6 +32,45 @@ trace variable fldval w mark_dirty
 }
 
 init $argc $argv
+
+
+proc cmd_Delete {} {
+global dbc activetab
+if {$dbc==""} return;
+set objtodelete [get_dwlb_Selection]
+if {$objtodelete==""} return;
+set temp {}
+switch $activetab {
+	Tables {
+		if {[tk_messageBox -title "FINAL WARNING" -message "You are going to delete table:\n\n$objtodelete\n\nProceed ?" -type yesno -default no]=="yes"} {
+			sql_exec noquiet "drop table $objtodelete"
+			sql_exec quiet "delete from pga_layout where tablename='$objtodelete'"
+			cmd_Tables
+		}
+	}
+	Views {
+		if {[tk_messageBox -title "FINAL WARNING" -message "Youa re going to delete view:\n\n$objtodelete\n\nProceed ?" -type yesno -default no]=="yes"} {
+			sql_exec noquiet "drop view $objtodelete"
+			sql_exec quiet "delete from pga_layout where tablename='$objtodelete'"
+			cmd_Views
+		}
+	}
+	Queries {
+		if {[tk_messageBox -title "FINAL WARNING" -message "You are going to delete query:\n\n$objtodelete\n\nProceed ?" -type yesno -default no]=="yes"} {
+			sql_exec quiet "delete from pga_queries where queryname='$objtodelete'"
+			sql_exec quiet "delete from pga_layout where tablename='$objtodelete'"
+			cmd_Queries
+		}
+	}
+	Sequences {
+		if {[tk_messageBox -title "FINAL WARNING" -message "You are going to delete sequence:\n\n$objtodelete\n\nProceed ?" -type yesno -default no]=="yes"} {
+			sql_exec quiet "drop sequence $objtodelete"
+			cmd_Sequences
+		}
+	}
+}
+if {$temp==""} return;
+}
 
 proc cmd_Design {} {
 global dbc activetab tablename
@@ -41,6 +80,10 @@ set tablename [.dw.lb get [.dw.lb curselection]]
 switch $activetab {
     Queries {open_query design}
 }
+}
+
+proc cmd_Functions {} {
+global dbc
 }
 
 proc cmd_Import_Export {how} {
@@ -59,29 +102,36 @@ if {$activetab=="Tables"} {
 }
 
 proc cmd_New {} {
-global dbc activetab queryname qtype queryoid
+global dbc activetab queryname queryoid cbv
 if {$dbc==""} return;
 switch $activetab {
-    Tables {Window show .nt}
+    Tables {Window show .nt; focus .nt.etabn}
     Queries {
             Window show .qb
-            set queryname {}
-            set qtype "S"
-            set queryoid 0
-            .qb.text1 delete 1.0 end
+            set cbv 0
         }
+    Views {
+            Window show .qb
+            set cbv 1
+            .qb.cbv configure -state disabled
+        }
+    Sequences {
+			Window show .sqf
+			focus .sqf.e1
+    	}
 }
 }
 
 proc cmd_Open {} {
-global dbc activetab tablename
+global dbc activetab
 if {$dbc==""} return;
-if {[.dw.lb curselection]==""} return;
-set tablename [.dw.lb get [.dw.lb curselection]]
+set objname [get_dwlb_Selection]
+if {$objname==""} return;
 switch $activetab {
-    Tables {Window show .mw; load_table $tablename}
+    Tables {Window show .mw; load_table $objname}
     Queries {open_query view}
 	Views {open_view}
+	Sequences {open_sequence $objname}
 }
 }
 
@@ -94,6 +144,20 @@ catch {
         .dw.lb insert end $rec(queryname)
     }
 }
+}
+
+proc cmd_Rename {} {
+global dbc oldobjname activetab
+if {$dbc==""} return;
+if {$activetab=="Views"} return;
+if {$activetab=="Sequences"} return;
+set temp [get_dwlb_Selection]
+if {$temp==""} {
+	tk_messageBox -title Warning -message "Please select first an object!"
+	return;
+}
+set oldobjname $temp
+Window show .rf
 }
 
 proc cmd_Reports {} {
@@ -123,8 +187,8 @@ global dbc
 cursor_watch .dw
 .dw.lb delete 0 end
 catch {
-    pg_select $dbc "select * from pg_class where (relname not like 'pg_%') and (relkind='r') and (not relhasrules) order by relname" rec {
-        .dw.lb insert end $rec(relname)
+    pg_select $dbc "select * from pg_class where (relname !~ '^pg_') and (relkind='r') and (not relhasrules) order by relname" rec {
+        if {![regexp "^pga_" $rec(relname)]} {.dw.lb insert end $rec(relname)}
     }
 }
 cursor_arrow .dw
@@ -154,7 +218,7 @@ global dbc
 cursor_watch .dw
 .dw.lb delete 0 end
 catch {
-    pg_select $dbc "select * from pg_class where (relname not like 'pg_%') and (relkind='r') and (relhasrules) order by relname" rec {
+    pg_select $dbc "select * from pg_class where (relname !~ '^pg_') and (relkind='r') and (relhasrules) order by relname" rec {
         .dw.lb insert end $rec(relname)
     }
 }
@@ -356,7 +420,7 @@ if {[catch {set newdbc [pg_connect $newdbname -host $newhost -port $newpport]} m
 }
 
 proc open_query {how} {
-global dbc qtype queryname layout_found queryoid ds_query ds_updatable ds_isaquery sortfield filter
+global dbc queryname layout_found queryoid ds_query ds_updatable ds_isaquery sortfield filter
 
 if {[.dw.lb curselection]==""} return;
 set queryname [.dw.lb get [.dw.lb curselection]]
@@ -370,8 +434,8 @@ if {[pg_result $pgres -numTuples]==0} {
     return
 }
 set tuple [pg_result $pgres -getTuple 0]
-set qtype [lindex $tuple 1]
 set qcmd [lindex $tuple 0]
+set qtype [lindex $tuple 1]
 set queryoid [lindex $tuple 2]
 pg_result $pgres -clear
 if {$how=="design"} {
@@ -397,6 +461,31 @@ if {$how=="design"} {
 }
 }
 
+proc open_sequence {objname} {
+global dbc seq_name seq_inc seq_start seq_minval seq_maxval
+Window show .sqf
+set flag 1
+pg_select $dbc "select * from $objname" rec {
+	set flag 0
+	set seq_name $objname
+	set seq_inc $rec(increment_by)
+	set seq_start $rec(last_value)
+	.sqf.l3 configure -text "Last value"
+	set seq_minval $rec(min_value)
+	set seq_maxval $rec(max_value)
+	.sqf.defbtn configure -state disabled
+	place .sqf.defbtn -x 40 -y 300
+}
+if {$flag} {
+	show_error "Sequence $objname not found!"
+} else {
+	for {set i 1} {$i<6} {incr i} {
+		.sqf.e$i configure -state disabled
+	}
+	focus .sqf.closebtn
+}
+}
+
 proc open_view {} {
 global ds_query ds_updatable ds_isaquery
 set vn [get_dwlb_Selection]
@@ -408,7 +497,6 @@ set ds_updatable false
 load_layout $vn
 select_records $ds_query
 }
-
 
 proc pan_left {} {
 global leftcol leftoffset colwidth colcount
@@ -644,6 +732,63 @@ proc vTclWindow. {base} {
     ###################
 }
 
+proc vTclWindow.about {base} {
+    if {$base == ""} {
+        set base .about
+    }
+    if {[winfo exists $base]} {
+        wm deiconify $base; return
+    }
+    ###################
+    # CREATING WIDGETS
+    ###################
+    toplevel $base -class Toplevel
+    wm focusmodel $base passive
+    wm geometry $base 471x177+168+243
+    wm maxsize $base 1009 738
+    wm minsize $base 1 1
+    wm overrideredirect $base 0
+    wm resizable $base 1 1
+    wm title $base "About"
+    label $base.l1 \
+        -borderwidth 3 -font -Adobe-Helvetica-Bold-R-Normal-*-*-180-*-*-*-*-* \
+        -relief ridge -text PGACCESS 
+    label $base.l2 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -relief groove \
+        -text {A Tcl/Tk interface to
+PostgreSQL
+by Constantin Teodorescu} 
+    label $base.l3 \
+        -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -relief sunken -text {vers 0.3} 
+    label $base.l4 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -relief groove \
+        -text {You will always get the latest version at:
+http://ww.flex.ro/pgaccess
+
+Suggestions : teo@flex.ro} 
+    button $base.b1 \
+        -borderwidth 1 -command {Window hide .about} \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
+        -pady 3 -text Ok 
+    ###################
+    # SETTING GEOMETRY
+    ###################
+    place $base.l1 \
+        -x 10 -y 10 -width 196 -height 103 -anchor nw -bordermode ignore 
+    place $base.l2 \
+        -x 10 -y 115 -width 198 -height 55 -anchor nw -bordermode ignore 
+    place $base.l3 \
+        -x 145 -y 80 -anchor nw -bordermode ignore 
+    place $base.l4 \
+        -x 215 -y 10 -width 246 -height 103 -anchor nw -bordermode ignore 
+    place $base.b1 \
+        -x 295 -y 130 -width 105 -height 28 -anchor nw -bordermode ignore 
+}
+
 proc vTclWindow.dbod {base} {
     if {$base == ""} {
         set base .dbod
@@ -654,8 +799,7 @@ proc vTclWindow.dbod {base} {
     ###################
     # CREATING WIDGETS
     ###################
-    toplevel $base -class Toplevel \
-        -cursor top_left_arrow 
+    toplevel $base -class Toplevel
     wm focusmodel $base passive
     wm geometry $base 282x128+353+310
     wm maxsize $base 1009 738
@@ -668,19 +812,22 @@ proc vTclWindow.dbod {base} {
         -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
         -relief raised -text Host 
     entry $base.ehost \
-        -background #fefefe -borderwidth 1 -textvariable newhost 
+        -background #fefefe -borderwidth 1 -highlightthickness 1 \
+        -selectborderwidth 0 -textvariable newhost 
     label $base.lport \
         -borderwidth 0 \
         -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
         -relief raised -text Port 
     entry $base.epport \
-        -background #fefefe -borderwidth 1 -textvariable newpport 
+        -background #fefefe -borderwidth 1 -highlightthickness 1 \
+        -selectborderwidth 0 -textvariable newpport 
     label $base.ldbname \
         -borderwidth 0 \
         -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
         -relief raised -text Database 
     entry $base.edbname \
-        -background #fefefe -borderwidth 1 -textvariable newdbname 
+        -background #fefefe -borderwidth 1 -highlightthickness 1 \
+        -selectborderwidth 0 -textvariable newdbname 
     button $base.opbtu \
         -borderwidth 1 -command open_database \
         -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
@@ -693,15 +840,15 @@ proc vTclWindow.dbod {base} {
     # SETTING GEOMETRY
     ###################
     place $base.lhost \
-        -x 35 -y 5 -anchor nw -bordermode ignore 
+        -x 35 -y 7 -anchor nw -bordermode ignore 
     place $base.ehost \
         -x 100 -y 5 -anchor nw -bordermode ignore 
     place $base.lport \
-        -x 35 -y 30 -anchor nw -bordermode ignore 
+        -x 35 -y 32 -anchor nw -bordermode ignore 
     place $base.epport \
         -x 100 -y 30 -anchor nw -bordermode ignore 
     place $base.ldbname \
-        -x 35 -y 60 -anchor nw -bordermode ignore 
+        -x 35 -y 57 -anchor nw -bordermode ignore 
     place $base.edbname \
         -x 100 -y 55 -anchor nw -bordermode ignore 
     place $base.opbtu \
@@ -723,7 +870,7 @@ proc vTclWindow.dw {base} {
     toplevel $base -class Toplevel \
         -background #efefef 
     wm focusmodel $base passive
-    wm geometry $base 322x355+131+142
+    wm geometry $base 322x355+147+218
     wm maxsize $base 1009 738
     wm minsize $base 1 1
     wm overrideredirect $base 0
@@ -763,15 +910,15 @@ proc vTclWindow.dw {base} {
         -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
         -menu .dw.menubutton23.01 -padx 4 -pady 3 -text Database 
     menu $base.menubutton23.01 \
-        -cursor {} -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
-        -tearoff 0 
+        -borderwidth 1 -cursor {} \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -tearoff 0 
     $base.menubutton23.01 add command \
         \
         -command {set newhost $host
 set newpport $pport
 Window show .dbod
 focus .dbod.edbname} \
-        -label Open 
+        -label Open -state active 
     $base.menubutton23.01 add command \
         \
         -command {.dw.lb delete 0 end
@@ -797,6 +944,33 @@ set sdbname {}} \
         -relief groove -textvariable sdbname 
     scrollbar $base.sb \
         -borderwidth 1 -command {.dw.lb yview} -orient vert 
+    menubutton $base.mnob \
+        -borderwidth 1 \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
+        -menu .dw.mnob.m -padx 4 -pady 3 -text Object 
+    menu $base.mnob.m \
+        -borderwidth 1 -cursor {} \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -tearoff 0 
+    $base.mnob.m add command \
+        -command cmd_New -label New -state active 
+    $base.mnob.m add command \
+        -command {cmd_Delete } -label Delete 
+    $base.mnob.m add command \
+        -command {cmd_Rename } -label Rename 
+    menubutton $base.mhelp \
+        -borderwidth 1 \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
+        -menu .dw.mhelp.m -padx 4 -pady 3 -text Help 
+    menu $base.mhelp.m \
+        -borderwidth 1 -cursor {} \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -tearoff 0 
+    $base.mhelp.m add command \
+        -label Contents 
+    $base.mhelp.m add command \
+        -label PostgreSQL 
+    $base.mhelp.m add separator
+    $base.mhelp.m add command \
+        -command {Window show .about} -label About 
     ###################
     # SETTING GEOMETRY
     ###################
@@ -822,6 +996,10 @@ set sdbname {}} \
         -x 95 -y 335 -width 223 -height 20 -anchor nw -bordermode ignore 
     place $base.sb \
         -x 295 -y 75 -width 18 -height 249 -anchor nw -bordermode ignore 
+    place $base.mnob \
+        -x 70 -y 2 -width 44 -height 19 -anchor nw -bordermode ignore 
+    place $base.mhelp \
+        -x 280 -y 1 -height 20 -anchor nw -bordermode ignore 
 }
 
 proc vTclWindow.iew {base} {
@@ -834,8 +1012,7 @@ proc vTclWindow.iew {base} {
     ###################
     # CREATING WIDGETS
     ###################
-    toplevel $base -class Toplevel \
-        -cursor top_left_arrow 
+    toplevel $base -class Toplevel
     wm focusmodel $base passive
     wm geometry $base 287x151+259+304
     wm maxsize $base 1009 738
@@ -935,16 +1112,21 @@ proc vTclWindow.mw {base} {
     ###################
     # CREATING WIDGETS
     ###################
-    toplevel $base -class Toplevel  -cursor top_left_arrow 
+    toplevel $base -class Toplevel
     wm focusmodel $base passive
     wm geometry $base 631x452+152+213
     wm maxsize $base 1009 738
     wm minsize $base 1 1
     wm overrideredirect $base 0
-    wm resizable $base 1 1
+    wm resizable $base 0 0
     wm title $base "Table browser"
-    label $base.hoslbl  -borderwidth 0  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief raised -text {Sort field} 
-    button $base.fillbtn  -borderwidth 1  -command {set nq $ds_query
+    label $base.hoslbl \
+        -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -relief raised -text {Sort field} 
+    button $base.fillbtn \
+        -borderwidth 1 \
+        -command {set nq $ds_query
 if {($ds_isaquery=="true") && ("$filter$sortfield"!="")} {
     show_error "Sorting and filtering not (yet) available from queries!\n\nPlease enter them in the query definition!"
 	set sortfield {}
@@ -959,34 +1141,70 @@ if {($ds_isaquery=="true") && ("$filter$sortfield"!="")} {
         set nq "$nq order by $sortfield"
     }
 }
-select_records $nq}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text Reload 
-    button $base.exitbtn  -borderwidth 1  -command {.mw.c delete rows
+select_records $nq} \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
+        -pady 3 -text Reload 
+    button $base.exitbtn \
+        -borderwidth 1 \
+        -command {.mw.c delete rows
 .mw.c delete header
 set sortfield {}
 set filter {}
-Window hide .mw}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text Exit 
-    canvas $base.c  -background #fefefe -borderwidth 2 -height 207 -relief ridge  -width 295 
-    label $base.msglbl  -anchor w -borderwidth 1  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief sunken -textvariable msg 
-    scrollbar $base.sb  -borderwidth 1 -command scroll_window -orient vert 
-    button $base.ert  -borderwidth 1 -command pan_left  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text < 
-    button $base.dfggfh  -borderwidth 1 -command pan_right  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text > 
-    entry $base.tbn  -background #fefefe -borderwidth 1 -highlightthickness 1  -selectborderwidth 0 -textvariable filter 
-    label $base.tbllbl  -borderwidth 0  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief raised -text {Filter conditions} 
-    entry $base.dben  -background #fefefe -borderwidth 1 -highlightthickness 1  -textvariable sortfield 
+Window hide .mw} \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
+        -pady 3 -text Close 
+    canvas $base.c \
+        -background #fefefe -borderwidth 2 -height 207 -relief ridge \
+        -width 295 
+    label $base.msglbl \
+        -anchor w -borderwidth 1 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -relief sunken -textvariable msg 
+    scrollbar $base.sb \
+        -borderwidth 1 -command scroll_window -orient vert 
+    button $base.ert \
+        -borderwidth 1 -command pan_left \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
+        -pady 3 -text < 
+    button $base.dfggfh \
+        -borderwidth 1 -command pan_right \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
+        -pady 3 -text > 
+    entry $base.tbn \
+        -background #fefefe -borderwidth 1 -highlightthickness 1 \
+        -selectborderwidth 0 -textvariable filter 
+    label $base.tbllbl \
+        -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -relief raised -text {Filter conditions} 
+    entry $base.dben \
+        -background #fefefe -borderwidth 1 -highlightthickness 1 \
+        -textvariable sortfield 
     ###################
     # SETTING GEOMETRY
     ###################
-    place $base.hoslbl  -x 5 -y 5 -anchor nw -bordermode ignore 
-    place $base.fillbtn  -x 487 -y 1 -height 25 -anchor nw -bordermode ignore 
-    place $base.exitbtn  -x 590 -y 1 -width 39 -height 25 -anchor nw -bordermode ignore 
-    place $base.c  -x 5 -y 25 -width 608 -height 405 -anchor nw -bordermode ignore 
-    place $base.msglbl  -x 9 -y 430 -width 616 -height 18 -anchor nw -bordermode ignore 
-    place $base.sb  -x 610 -y 26 -width 18 -height 404 -anchor nw -bordermode ignore 
-    place $base.ert  -x 552 -y 1 -width 20 -height 25 -anchor nw -bordermode ignore 
-    place $base.dfggfh  -x 570 -y 1 -width 20 -height 25 -anchor nw -bordermode ignore 
-    place $base.tbn  -x 280 -y 3 -width 203 -height 21 -anchor nw -bordermode ignore 
-    place $base.tbllbl  -x 180 -y 5 -anchor nw -bordermode ignore 
-    place $base.dben  -x 65 -y 3 -width 81 -height 21 -anchor nw -bordermode ignore
+    place $base.hoslbl \
+        -x 5 -y 5 -anchor nw -bordermode ignore 
+    place $base.fillbtn \
+        -x 487 -y 1 -height 25 -anchor nw -bordermode ignore 
+    place $base.exitbtn \
+        -x 590 -y 1 -width 39 -height 25 -anchor nw -bordermode ignore 
+    place $base.c \
+        -x 5 -y 25 -width 608 -height 405 -anchor nw -bordermode ignore 
+    place $base.msglbl \
+        -x 9 -y 430 -width 616 -height 18 -anchor nw -bordermode ignore 
+    place $base.sb \
+        -x 610 -y 26 -width 18 -height 404 -anchor nw -bordermode ignore 
+    place $base.ert \
+        -x 552 -y 1 -width 20 -height 25 -anchor nw -bordermode ignore 
+    place $base.dfggfh \
+        -x 570 -y 1 -width 20 -height 25 -anchor nw -bordermode ignore 
+    place $base.tbn \
+        -x 280 -y 3 -width 203 -height 21 -anchor nw -bordermode ignore 
+    place $base.tbllbl \
+        -x 180 -y 5 -anchor nw -bordermode ignore 
+    place $base.dben \
+        -x 65 -y 3 -width 81 -height 21 -anchor nw -bordermode ignore 
 }
 
 proc vTclWindow.nt {base} {
@@ -1005,21 +1223,68 @@ proc vTclWindow.nt {base} {
     wm maxsize $base 1009 738
     wm minsize $base 1 1
     wm overrideredirect $base 0
-    wm resizable $base 1 1
+    wm resizable $base 0 0
     wm title $base "Create table"
-    entry $base.e1  -background #fefefe -borderwidth 1 -cursor {} -highlightthickness 1  -selectborderwidth 0 -textvariable fldtype 
+    entry $base.etabn \
+        -background #fefefe -borderwidth 1 -highlightthickness 1 \
+        -selectborderwidth 0 -textvariable newtablename 
+    bind $base.etabn <Key-Return> {
+        focus .nt.e2
+    }
+    entry $base.e2 \
+        -background #fefefe -borderwidth 1 -highlightthickness 1 \
+        -selectborderwidth 0 -textvariable fldname 
+    bind $base.e2 <Key-Return> {
+        focus .nt.e1
+    }
+    entry $base.e1 \
+        -background #fefefe -borderwidth 1 -cursor {} -highlightthickness 1 \
+        -selectborderwidth 0 -textvariable fldtype 
     bind $base.e1 <Button-1> {
         tk_popup .nt.pop %X %Y
     }
-    label $base.lab1  -borderwidth 0  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief raised -text {Field type} 
-    label $base.lab2  -borderwidth 0  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief raised -text {Field name} 
-    entry $base.e2  -background #fefefe -borderwidth 1 -highlightthickness 1  -selectborderwidth 0 -textvariable fldname 
-    label $base.lab3  -borderwidth 0  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief raised -text {Field size} 
-    entry $base.e3  -background #fefefe -borderwidth 1 -highlightthickness 1  -selectborderwidth 0 -textvariable fldsize 
-    checkbutton $base.cb1  -borderwidth 1  -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-*  -offvalue { } -onvalue { NOT NULL} -text {field cannot be empty}  -variable notnull 
-    label $base.lab4  -borderwidth 0  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief raised -text {Default value} 
-    entry $base.e5  -background #fefefe -borderwidth 1 -highlightthickness 1  -selectborderwidth 0 -textvariable defaultval 
-    button $base.addfld  -borderwidth 1  -command {if {$fldname==""} {
+    bind $base.e1 <Key-Return> {
+        focus .nt.e5
+    }
+    bind $base.e1 <Key> {
+        tk_popup .nt.pop [expr 150+[winfo rootx .nt]] [expr 65+[winfo rooty .nt]]
+    }
+    entry $base.e3 \
+        -background #fefefe -borderwidth 1 -highlightthickness 1 \
+        -selectborderwidth 0 -state disabled -textvariable fldsize 
+    bind $base.e3 <Key-Return> {
+        focus .nt.e5
+    }
+    entry $base.e5 \
+        -background #fefefe -borderwidth 1 -highlightthickness 1 \
+        -selectborderwidth 0 -textvariable defaultval 
+    bind $base.e5 <Key-Return> {
+        focus .nt.cb1
+    }
+    checkbutton $base.cb1 \
+        -borderwidth 1 \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
+        -offvalue { } -onvalue { NOT NULL} -text {field cannot be null} \
+        -variable notnull 
+    label $base.lab1 \
+        -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -relief raised -text {Field type} 
+    label $base.lab2 \
+        -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -relief raised -text {Field name} 
+    label $base.lab3 \
+        -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -relief raised -text {Field size} 
+    label $base.lab4 \
+        -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -relief raised -text {Default value} 
+    button $base.addfld \
+        -borderwidth 1 \
+        -command {if {$fldname==""} {
     show_error "Enter a field name"
     focus .nt.e2
 } elseif {$fldtype==""} {
@@ -1035,12 +1300,20 @@ proc vTclWindow.nt {base} {
   set fldname {}
   set fldsize {}
   set defaultval {}
-}}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text {Add field} 
-    listbox $base.lb  -background #fefefe -borderwidth 1  -font -*-Clean-Medium-R-Normal--*-130-*-*-*-*-*-*  -highlightthickness 1 -selectborderwidth 0  -yscrollcommand {.nt.sb set} 
-    button $base.emptb  -borderwidth 1 -command {.nt.lb delete 0 [.nt.lb size]}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text {Delete all} 
-    button $base.delfld  -borderwidth 1 -command {catch {.nt.lb delete [.nt.lb curselection]}}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text {Delete field} 
-    button $base.exitbtn  -borderwidth 1 -command {Window hide .nt}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text Cancel 
-    button $base.maketbl  -borderwidth 1  -command {if {$newtablename==""} then {
+}} \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
+        -pady 3 -text {Add field} 
+    button $base.delfld \
+        -borderwidth 1 -command {catch {.nt.lb delete [.nt.lb curselection]}} \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
+        -pady 3 -text {Delete field} 
+    button $base.emptb \
+        -borderwidth 1 -command {.nt.lb delete 0 [.nt.lb size]} \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
+        -pady 3 -text {Delete all} 
+    button $base.maketbl \
+        -borderwidth 1 \
+        -command {if {$newtablename==""} then {
     show_error "You must supply a name for your table!"
     focus .nt.etabn
 } elseif {[.nt.lb size]==0} then {
@@ -1059,50 +1332,138 @@ proc vTclWindow.nt {base} {
         Window hide .nt
         cmd_Tables
     }
-}}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text {Create table} 
-    label $base.l1  -anchor w -borderwidth 1  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief raised -text {field name} 
-    label $base.l2  -borderwidth 1  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief raised -text type 
-    label $base.l3  -borderwidth 1  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief raised -text options 
-    scrollbar $base.sb  -borderwidth 1 -command {.nt.lb yview} -orient vert 
-    label $base.l93  -borderwidth 0  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief raised -text {Table name} 
-    entry $base.etabn  -background #fefefe -borderwidth 1 -highlightthickness 1  -selectborderwidth 0 -textvariable newtablename 
-    menu $base.pop  -tearoff 0 
-    $base.pop add command   -command {set fldtype char; if {("char"=="varchar")||("char"=="char")} then {.nt.e3 configure -state normal;focus .nt.e3} else {.nt.e3 configure -state disabled;focus .nt.e5} }  -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -label char 
-    $base.pop add command   -command {set fldtype char4; if {("char4"=="varchar")||("char4"=="char")} then {.nt.e3 configure -state normal;focus .nt.e3} else {.nt.e3 configure -state disabled;focus .nt.e5} }  -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-*  -label char4 
-    $base.pop add command   -command {set fldtype char8; if {("char8"=="varchar")||("char8"=="char")} then {.nt.e3 configure -state normal;focus .nt.e3} else {.nt.e3 configure -state disabled;focus .nt.e5} }  -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-*  -label char8 
-    $base.pop add command   -command {set fldtype char16; if {("char16"=="varchar")||("char16"=="char")} then {.nt.e3 configure -state normal;focus .nt.e3} else {.nt.e3 configure -state disabled;focus .nt.e5} }  -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-*  -label char16 
-    $base.pop add command   -command {set fldtype varchar; if {("varchar"=="varchar")||("varchar"=="char")} then {.nt.e3 configure -state normal;focus .nt.e3} else {.nt.e3 configure -state disabled;focus .nt.e5} }  -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-*  -label varchar 
-    $base.pop add command   -command {set fldtype text; if {("text"=="varchar")||("text"=="char")} then {.nt.e3 configure -state normal;focus .nt.e3} else {.nt.e3 configure -state disabled;focus .nt.e5} }  -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -label text 
-    $base.pop add command   -command {set fldtype int2; if {("int2"=="varchar")||("int2"=="char")} then {.nt.e3 configure -state normal;focus .nt.e3} else {.nt.e3 configure -state disabled;focus .nt.e5} }  -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -label int2 
-    $base.pop add command   -command {set fldtype int4; if {("int4"=="varchar")||("int4"=="char")} then {.nt.e3 configure -state normal;focus .nt.e3} else {.nt.e3 configure -state disabled;focus .nt.e5} }  -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -label int4 
-    $base.pop add command   -command {set fldtype float4; if {("float4"=="varchar")||("float4"=="char")} then {.nt.e3 configure -state normal;focus .nt.e3} else {.nt.e3 configure -state disabled;focus .nt.e5} }  -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-*  -label float4 
-    $base.pop add command   -command {set fldtype float8; if {("float8"=="varchar")||("float8"=="char")} then {.nt.e3 configure -state normal;focus .nt.e3} else {.nt.e3 configure -state disabled;focus .nt.e5} }  -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-*  -label float8 
-    $base.pop add command   -command {set fldtype date; if {("date"=="varchar")||("date"=="char")} then {.nt.e3 configure -state normal;focus .nt.e3} else {.nt.e3 configure -state disabled;focus .nt.e5} }  -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -label date 
-    $base.pop add command   -command {set fldtype datetime; if {("datetime"=="varchar")||("datetime"=="char")} then {.nt.e3 configure -state normal;focus .nt.e3} else {.nt.e3 configure -state disabled;focus .nt.e5} }  -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-*  -label datetime 
+}} \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
+        -pady 3 -text {Create table} 
+    listbox $base.lb \
+        -background #fefefe -borderwidth 1 \
+        -font -*-Clean-Medium-R-Normal--*-130-*-*-*-*-*-* \
+        -highlightthickness 1 -selectborderwidth 0 \
+        -yscrollcommand {.nt.sb set} 
+    button $base.exitbtn \
+        -borderwidth 1 -command {Window hide .nt} \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
+        -pady 3 -text Cancel 
+    label $base.l1 \
+        -anchor w -borderwidth 1 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -relief raised -text {field name} 
+    label $base.l2 \
+        -borderwidth 1 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -relief raised -text type 
+    label $base.l3 \
+        -borderwidth 1 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -relief raised -text options 
+    scrollbar $base.sb \
+        -borderwidth 1 -command {.nt.lb yview} -orient vert 
+    label $base.l93 \
+        -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -relief raised -text {Table name} 
+    menu $base.pop \
+        -tearoff 0 
+    $base.pop add command \
+        \
+        -command {set fldtype char; if {("char"=="varchar")||("char"=="char")} then {.nt.e3 configure -state normal;focus .nt.e3} else {.nt.e3 configure -state disabled;focus .nt.e5} } \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -label char 
+    $base.pop add command \
+        \
+        -command {set fldtype char4; if {("char4"=="varchar")||("char4"=="char")} then {.nt.e3 configure -state normal;focus .nt.e3} else {.nt.e3 configure -state disabled;focus .nt.e5} } \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
+        -label char4 
+    $base.pop add command \
+        \
+        -command {set fldtype char8; if {("char8"=="varchar")||("char8"=="char")} then {.nt.e3 configure -state normal;focus .nt.e3} else {.nt.e3 configure -state disabled;focus .nt.e5} } \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
+        -label char8 
+    $base.pop add command \
+        \
+        -command {set fldtype char16; if {("char16"=="varchar")||("char16"=="char")} then {.nt.e3 configure -state normal;focus .nt.e3} else {.nt.e3 configure -state disabled;focus .nt.e5} } \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
+        -label char16 
+    $base.pop add command \
+        \
+        -command {set fldtype varchar; if {("varchar"=="varchar")||("varchar"=="char")} then {.nt.e3 configure -state normal;focus .nt.e3} else {.nt.e3 configure -state disabled;focus .nt.e5} } \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
+        -label varchar 
+    $base.pop add command \
+        \
+        -command {set fldtype text; if {("text"=="varchar")||("text"=="char")} then {.nt.e3 configure -state normal;focus .nt.e3} else {.nt.e3 configure -state disabled;focus .nt.e5} } \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -label text 
+    $base.pop add command \
+        \
+        -command {set fldtype int2; if {("int2"=="varchar")||("int2"=="char")} then {.nt.e3 configure -state normal;focus .nt.e3} else {.nt.e3 configure -state disabled;focus .nt.e5} } \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -label int2 
+    $base.pop add command \
+        \
+        -command {set fldtype int4; if {("int4"=="varchar")||("int4"=="char")} then {.nt.e3 configure -state normal;focus .nt.e3} else {.nt.e3 configure -state disabled;focus .nt.e5} } \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -label int4 
+    $base.pop add command \
+        \
+        -command {set fldtype float4; if {("float4"=="varchar")||("float4"=="char")} then {.nt.e3 configure -state normal;focus .nt.e3} else {.nt.e3 configure -state disabled;focus .nt.e5} } \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
+        -label float4 
+    $base.pop add command \
+        \
+        -command {set fldtype float8; if {("float8"=="varchar")||("float8"=="char")} then {.nt.e3 configure -state normal;focus .nt.e3} else {.nt.e3 configure -state disabled;focus .nt.e5} } \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
+        -label float8 
+    $base.pop add command \
+        \
+        -command {set fldtype date; if {("date"=="varchar")||("date"=="char")} then {.nt.e3 configure -state normal;focus .nt.e3} else {.nt.e3 configure -state disabled;focus .nt.e5} } \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -label date 
+    $base.pop add command \
+        \
+        -command {set fldtype datetime; if {("datetime"=="varchar")||("datetime"=="char")} then {.nt.e3 configure -state normal;focus .nt.e3} else {.nt.e3 configure -state disabled;focus .nt.e5} } \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
+        -label datetime 
     ###################
     # SETTING GEOMETRY
     ###################
-    place $base.e1  -x 95 -y 65 -anchor nw -bordermode ignore 
-    place $base.lab1  -x 10 -y 67 -anchor nw -bordermode ignore 
-    place $base.lab2  -x 10 -y 45 -anchor nw -bordermode ignore 
-    place $base.e2  -x 95 -y 40 -anchor nw -bordermode ignore 
-    place $base.lab3  -x 10 -y 93 -anchor nw -bordermode ignore 
-    place $base.e3  -x 95 -y 90 -anchor nw -bordermode ignore 
-    place $base.cb1  -x 95 -y 135 -anchor nw -bordermode ignore 
-    place $base.lab4  -x 10 -y 118 -anchor nw -bordermode ignore 
-    place $base.e5  -x 95 -y 115 -anchor nw -bordermode ignore 
-    place $base.lb  -x 260 -y 25 -width 353 -height 206 -anchor nw -bordermode ignore 
-    place $base.addfld  -x 10 -y 175 -anchor nw -bordermode ignore 
-    place $base.delfld  -x 90 -y 175 -width 82 -anchor nw -bordermode ignore 
-    place $base.emptb  -x 175 -y 175 -anchor nw -bordermode ignore 
-    place $base.exitbtn  -x 175 -y 205 -width 77 -height 26 -anchor nw -bordermode ignore 
-    place $base.maketbl  -x 10 -y 205 -width 161 -height 26 -anchor nw -bordermode ignore 
-    place $base.l1  -x 261 -y 9 -width 98 -height 18 -anchor nw -bordermode ignore 
-    place $base.l2  -x 360 -y 9 -width 86 -height 18 -anchor nw -bordermode ignore 
-    place $base.l3  -x 446 -y 9 -width 166 -height 18 -anchor nw -bordermode ignore 
-    place $base.sb  -x 610 -y 25 -width 18 -height 207 -anchor nw -bordermode ignore 
-    place $base.l93  -x 10 -y 10 -anchor nw -bordermode ignore 
-    place $base.etabn  -x 95 -y 7 -anchor nw -bordermode ignore
+    place $base.etabn \
+        -x 95 -y 7 -anchor nw -bordermode ignore 
+    place $base.e2 \
+        -x 95 -y 40 -anchor nw -bordermode ignore 
+    place $base.e1 \
+        -x 95 -y 65 -anchor nw -bordermode ignore 
+    place $base.e3 \
+        -x 95 -y 90 -anchor nw -bordermode ignore 
+    place $base.e5 \
+        -x 95 -y 115 -anchor nw -bordermode ignore 
+    place $base.cb1 \
+        -x 95 -y 135 -anchor nw -bordermode ignore 
+    place $base.lab1 \
+        -x 10 -y 67 -anchor nw -bordermode ignore 
+    place $base.lab2 \
+        -x 10 -y 45 -anchor nw -bordermode ignore 
+    place $base.lab3 \
+        -x 10 -y 93 -anchor nw -bordermode ignore 
+    place $base.lab4 \
+        -x 10 -y 118 -anchor nw -bordermode ignore 
+    place $base.addfld \
+        -x 10 -y 175 -anchor nw -bordermode ignore 
+    place $base.delfld \
+        -x 90 -y 175 -width 82 -anchor nw -bordermode ignore 
+    place $base.emptb \
+        -x 175 -y 175 -anchor nw -bordermode ignore 
+    place $base.maketbl \
+        -x 10 -y 205 -width 161 -height 26 -anchor nw -bordermode ignore 
+    place $base.lb \
+        -x 260 -y 25 -width 353 -height 206 -anchor nw -bordermode ignore 
+    place $base.exitbtn \
+        -x 175 -y 205 -width 77 -height 26 -anchor nw -bordermode ignore 
+    place $base.l1 \
+        -x 261 -y 9 -width 98 -height 18 -anchor nw -bordermode ignore 
+    place $base.l2 \
+        -x 360 -y 9 -width 86 -height 18 -anchor nw -bordermode ignore 
+    place $base.l3 \
+        -x 446 -y 9 -width 166 -height 18 -anchor nw -bordermode ignore 
+    place $base.sb \
+        -x 610 -y 25 -width 18 -height 207 -anchor nw -bordermode ignore 
+    place $base.l93 \
+        -x 10 -y 10 -anchor nw -bordermode ignore 
 }
 
 proc vTclWindow.qb {base} {
@@ -1117,15 +1478,22 @@ proc vTclWindow.qb {base} {
     ###################
     toplevel $base -class Toplevel
     wm focusmodel $base passive
-    wm geometry $base 442x344+256+232
+    wm geometry $base 442x344+258+271
     wm maxsize $base 1009 738
     wm minsize $base 1 1
     wm overrideredirect $base 0
-    wm resizable $base 1 1
+    wm resizable $base 0 0
     wm title $base "Query builder"
-    label $base.lqn  -borderwidth 0  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief raised -text {Query name} 
-    entry $base.eqn  -background #fefefe -borderwidth 1 -highlightthickness 1  -selectborderwidth 0 -textvariable queryname 
-    button $base.savebtn  -borderwidth 1  -command {if {$queryname==""} then {
+    label $base.lqn \
+        -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -relief raised -text {Query name} 
+    entry $base.eqn \
+        -background #fefefe -borderwidth 1 -highlightthickness 1 \
+        -selectborderwidth 0 -textvariable queryname 
+    button $base.savebtn \
+        -borderwidth 1 \
+        -command {if {$queryname==""} then {
     show_error "You have to supply a name for this query!"
     focus .qb.eqn
 } else {
@@ -1135,23 +1503,42 @@ proc vTclWindow.qb {base} {
     if {$qcmd==""} then {
         show_error "This query has no commands ?"
     } else {
-        set retval [catch {
-            if {$queryoid==0} then {
-                set pgres [pg_exec $dbc "insert into pga_queries values ('$queryname','$qtype','$qcmd')"]
-            } else {
-                set pgres [pg_exec $dbc "update pga_queries set queryname='$queryname',querytype='$qtype',querycommand='$qcmd' where oid=$queryoid"]
-            }
-        } errmsg]
-        if {$retval} then {
-            show_error "Error executing query\n$errmsg"
+        if { [lindex [split [string toupper [string trim $qcmd]]] 0] == "SELECT" } {
+            set qtype S
         } else {
-            cmd_Queries
-            if {$queryoid==0} {set queryoid [pg_result $pgres -oid]}
+            set qtype A
+        }
+        if {$cbv} {
+            set retval [catch {set pgres [pg_exec $dbc "create view $queryname as $qcmd"]} errmsg]
+            if {$retval} {
+                show_error "Error defining view\n\n$errmsg"
+            } else {
+                tab_click .dw.tabViews
+                Window hide .qb
+            }
+        } else {
+            set retval [catch {
+                if {$queryoid==0} then {
+                    set pgres [pg_exec $dbc "insert into pga_queries values ('$queryname','$qtype','$qcmd')"]
+                } else {
+                    set pgres [pg_exec $dbc "update pga_queries set queryname='$queryname',querytype='$qtype',querycommand='$qcmd' where oid=$queryoid"]
+                }
+            } errmsg]
+            if {$retval} then {
+                show_error "Error executing query\n$errmsg"
+            } else {
+                cmd_Queries
+                if {$queryoid==0} {set queryoid [pg_result $pgres -oid]}
+            }
         }
         catch {pg_result $pgres -clear}
     }
-}}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text {Save query definition} 
-    button $base.execbtn  -borderwidth 1  -command {Window show .mw
+}} \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
+        -pady 3 -text {Save query definition} 
+    button $base.execbtn \
+        -borderwidth 1 \
+        -command {Window show .mw
 set qcmd [.qb.text1 get 0.0 end]
 regsub -all "\n" $qcmd " " qcmd
 set layout_name $queryname
@@ -1159,22 +1546,228 @@ load_layout $queryname
 set ds_query $qcmd
 set ds_updatable false
 set ds_isaquery true
-select_records $qcmd}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text {Execute query} 
-    radiobutton $base.qt1  -borderwidth 1  -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-*  -text {Select query} -value S -variable qtype 
-    radiobutton $base.qt2  -borderwidth 1  -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-*  -text {Insert,update,delete query} -value A -variable qtype 
-    button $base.termbtn  -borderwidth 1 -command {Window hide .qb}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text Close 
-    text $base.text1  -background #fefefe -borderwidth 1  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* 
+select_records $qcmd} \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
+        -pady 3 -text {Execute query} 
+    button $base.termbtn \
+        -borderwidth 1 \
+        -command {.qb.cbv configure -state normal
+set cbv 0
+set queryname {}
+.qb.text1 delete 1.0 end
+Window hide .qb} \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
+        -pady 3 -text Close 
+    text $base.text1 \
+        -background #fefefe -borderwidth 1 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -highlightthickness 1 
+    checkbutton $base.cbv \
+        -borderwidth 1 \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
+        -text {Save this query as a view} -variable cbv 
     ###################
     # SETTING GEOMETRY
     ###################
-    place $base.lqn  -x 5 -y 5 -anchor nw -bordermode ignore 
-    place $base.eqn  -x 80 -y 1 -width 355 -height 24 -anchor nw -bordermode ignore 
-    place $base.savebtn  -x 5 -y 60 -anchor nw -bordermode ignore 
-    place $base.execbtn  -x 150 -y 60 -anchor nw -bordermode ignore 
-    place $base.qt1  -x 5 -y 30 -anchor nw -bordermode ignore 
-    place $base.qt2  -x 145 -y 30 -anchor nw -bordermode ignore 
-    place $base.termbtn  -x 255 -y 60 -anchor nw -bordermode ignore 
-    place $base.text1  -x 5 -y 90 -width 430 -height 246 -anchor nw -bordermode ignore
+    place $base.lqn \
+        -x 5 -y 5 -anchor nw -bordermode ignore 
+    place $base.eqn \
+        -x 80 -y 1 -width 355 -height 24 -anchor nw -bordermode ignore 
+    place $base.savebtn \
+        -x 5 -y 60 -anchor nw -bordermode ignore 
+    place $base.execbtn \
+        -x 150 -y 60 -anchor nw -bordermode ignore 
+    place $base.termbtn \
+        -x 380 -y 60 -anchor nw -bordermode ignore 
+    place $base.text1 \
+        -x 5 -y 90 -width 430 -height 246 -anchor nw -bordermode ignore 
+    place $base.cbv \
+        -x 5 -y 30 -anchor nw -bordermode ignore 
+}
+
+proc vTclWindow.rf {base} {
+    if {$base == ""} {
+        set base .rf
+    }
+    if {[winfo exists $base]} {
+        wm deiconify $base; return
+    }
+    ###################
+    # CREATING WIDGETS
+    ###################
+    toplevel $base -class Toplevel
+    wm focusmodel $base passive
+    wm geometry $base 272x105+294+262
+    wm maxsize $base 1009 738
+    wm minsize $base 1 1
+    wm overrideredirect $base 0
+    wm resizable $base 0 0
+    wm title $base "Rename"
+    label $base.l1 \
+        -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -relief raised -text {New name} 
+    entry $base.e1 \
+        -background #fefefe -borderwidth 1 -textvariable newobjname 
+    button $base.b1 \
+        -borderwidth 1 \
+        -command {
+			if {$newobjname==""} {
+				show_error "You must give object a new name!"
+			} elseif {$activetab=="Tables"} {
+				set retval [sql_exec noquiet "alter table $oldobjname rename to $newobjname"]
+				if {$retval} {
+					sql_exec quiet "update pga_layout set tablename='$newobjname' where tablename='$oldobjname'"
+					cmd_Tables
+					Window hide .rf
+				}			
+			} elseif {$activetab=="Queries"} {
+				set retval [catch {set pgres [pg_exec $dbc "select * from pga_queries where queryname='$newobjname'"]} errmsg]
+				if {$retval} {
+					show_error $errmsg
+				} elseif {[pg_result $pgres -numTuples]>0} {
+					show_error "Query $newobjname already exists!"
+					pg_result $pgres -clear
+				} else {
+					pg_result $pgres -clear
+					sql_exec noquiet "update pga_queries set queryname='$newobjname' where queryname='$oldobjname'"
+					sql_exec noquiet "update pga_layout set tablename='$newobjname' where tablename='$oldobjname'"
+					cmd_Queries
+					Window hide .rf
+				}
+			}
+       } \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
+        -pady 3 -text Rename 
+    button $base.b2 \
+        -borderwidth 1 -command {Window hide .rf} \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
+        -pady 3 -text Cancel 
+    ###################
+    # SETTING GEOMETRY
+    ###################
+    place $base.l1 \
+        -x 15 -y 28 -anchor nw -bordermode ignore 
+    place $base.e1 \
+        -x 100 -y 25 -anchor nw -bordermode ignore 
+    place $base.b1 \
+        -x 65 -y 65 -width 70 -anchor nw -bordermode ignore 
+    place $base.b2 \
+        -x 145 -y 65 -width 70 -anchor nw -bordermode ignore 
+}
+
+proc vTclWindow.sqf {base} {
+    if {$base == ""} {
+        set base .sqf
+    }
+    if {[winfo exists $base]} {
+        wm deiconify $base; return
+    }
+    ###################
+    # CREATING WIDGETS
+    ###################
+    toplevel $base -class Toplevel
+    wm focusmodel $base passive
+    wm geometry $base 310x223+245+158
+    wm maxsize $base 1009 738
+    wm minsize $base 1 1
+    wm overrideredirect $base 0
+    wm resizable $base 0 0
+    wm title $base "Sequence"
+    label $base.l1 \
+        -anchor w -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -relief raised -text {Sequence name} 
+    entry $base.e1 \
+        -borderwidth 1 -highlightthickness 1 -textvariable seq_name 
+    label $base.l2 \
+        -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -relief raised -text Increment 
+    entry $base.e2 \
+        -borderwidth 1 -highlightthickness 1 -selectborderwidth 0 \
+        -textvariable seq_inc 
+    label $base.l3 \
+        -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -relief raised -text {Start value} 
+    entry $base.e3 \
+        -borderwidth 1 -highlightthickness 1 -selectborderwidth 0 \
+        -textvariable seq_start 
+    label $base.l4 \
+        -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -relief raised -text Minvalue 
+    entry $base.e4 \
+        -borderwidth 1 -highlightthickness 1 -selectborderwidth 0 \
+        -textvariable seq_minval 
+    label $base.l5 \
+        -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -relief raised -text Maxvalue 
+    entry $base.e5 \
+        -borderwidth 1 -highlightthickness 1 -selectborderwidth 0 \
+        -textvariable seq_maxval 
+    button $base.defbtn \
+        -borderwidth 1 \
+        -command {
+        if {$seq_name==""} {
+        	show_error "You should supply a name for this sequence"
+        } else {
+			set s1 {};set s2 {};set s3 {};set s4 {};
+			if {$seq_inc!=""} {set s1 "increment $seq_inc"};
+			if {$seq_start!=""} {set s2 "start $seq_start"};
+			if {$seq_minval!=""} {set s3 "minvalue $seq_minval"};
+			if {$seq_maxval!=""} {set s4 "maxvalue $seq_maxval"};
+			set sqlcmd "create sequence $seq_name $s1 $s2 $s3 $s4"
+			if {[sql_exec noquiet $sqlcmd]} {
+				cmd_Sequences
+				tk_messageBox -title Information -message "Sequence created!"
+			}
+        }
+    } \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
+        -pady 3 -text {Define sequence} 
+    button $base.closebtn \
+        -borderwidth 1 \
+        -command {for {set i 1} {$i<6} {incr i} {
+    .sqf.e$i configure -state normal
+    .sqf.e$i delete 0 end
+    .sqf.defbtn configure -state normal
+    .sqf.l3 configure -text {Start value}
+}
+place .sqf.defbtn -x 40 -y 175
+Window hide .sqf
+} \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
+        -pady 3 -text Close 
+    ###################
+    # SETTING GEOMETRY
+    ###################
+    place $base.l1 \
+        -x 20 -y 20 -width 111 -height 18 -anchor nw -bordermode ignore 
+    place $base.e1 \
+        -x 135 -y 19 -anchor nw -bordermode ignore 
+    place $base.l2 \
+        -x 20 -y 50 -anchor nw -bordermode ignore 
+    place $base.e2 \
+        -x 135 -y 49 -anchor nw -bordermode ignore 
+    place $base.l3 \
+        -x 20 -y 80 -anchor nw -bordermode ignore 
+    place $base.e3 \
+        -x 135 -y 79 -anchor nw -bordermode ignore 
+    place $base.l4 \
+        -x 20 -y 110 -anchor nw -bordermode ignore 
+    place $base.e4 \
+        -x 135 -y 109 -anchor nw -bordermode ignore 
+    place $base.l5 \
+        -x 20 -y 140 -anchor nw -bordermode ignore 
+    place $base.e5 \
+        -x 135 -y 139 -anchor nw -bordermode ignore 
+    place $base.defbtn \
+        -x 40 -y 175 -anchor nw -bordermode ignore 
+    place $base.closebtn \
+        -x 195 -y 175 -anchor nw -bordermode ignore 
 }
 
 Window show .
