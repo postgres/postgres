@@ -635,7 +635,7 @@ char *yytext_ptr;
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.c,v 1.1 1998/10/28 17:07:17 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.c,v 1.1.2.1 1998/12/23 14:39:04 momjian Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
