@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.9 2002/08/30 23:59:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.10 2002/08/31 19:09:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -226,6 +226,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, Plan *parent)
 		List *coldeflist = rte->coldeflist;
 
 		tupdesc = BuildDescForRelation(coldeflist);
+		tupdesc->tdhasoid = WITHOUTOID;
 	}
 	else
 		elog(ERROR, "Unknown kind of return type specified for function");
