@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.38 1998/07/24 03:31:24 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.39 1998/08/24 01:37:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,12 @@ static ScanKeyword ScanKeywords[] = {
 	{"createdb", CREATEDB},
 	{"createuser", CREATEUSER},
 	{"cross", CROSS},
-	{"current", CURRENT},
+	{"current", CURRENT},		/*
+					 * 6.4 to 6.5 is migration time!
+					 * CURRENT will be removed in 6.5!
+					 * Use OLD keyword in rules.
+					 *    Jan
+					 */
 	{"current_date", CURRENT_DATE},
 	{"current_time", CURRENT_TIME},
 	{"current_timestamp", CURRENT_TIMESTAMP},
@@ -152,6 +157,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"null", NULL_P},
 	{"numeric", NUMERIC},
 	{"oids", OIDS},
+	{"old", OLD},
 	{"on", ON},
 	{"operator", OPERATOR},
 	{"option", OPTION},

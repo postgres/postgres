@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.17 1998/06/15 19:28:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.18 1998/08/24 01:37:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,7 +137,7 @@ PQexec(char *query)
 	 *	end up on the top of the portal stack.
 	 * ----------------
 	 */
-	pg_exec_query_dest(query, Local);
+	pg_exec_query_dest(query, Local, FALSE);
 
 	/* ----------------
 	 *	pop the portal off the portal stack and return the

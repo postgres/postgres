@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.82 1998/08/04 16:44:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.83 1998/08/24 01:38:02 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -380,7 +380,8 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 				  int nargs,	/* number of arguments */
 				  QueryTreeList **queryListP,	/* pointer to the parse
 												 * trees */
-				  CommandDest dest)		/* where results should go */
+				  CommandDest dest,		/* where results should go */
+				  bool aclOverride)
 {
 	QueryTreeList *querytree_list;
 	int			i;
@@ -451,23 +452,23 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 		/* rewrite queries (retrieve, append, delete, replace) */
 		rewritten = QueryRewrite(querytree);
 
-		/*
-		 * Rewrite the UNIONS.
-		 */
-		foreach(rewritten_list, rewritten)
-		{
-			Query	   *qry = (Query *) lfirst(rewritten_list);
-
-			union_result = NIL;
-			foreach(union_list, qry->unionClause)
-				union_result = nconc(union_result, QueryRewrite((Query *) lfirst(union_list)));
-			qry->unionClause = union_result;
-		}
-
-		if (rewritten != NULL)
+		if (rewritten != NIL)
 		{
 			int			len,
 						k;
+
+			/*
+			 * Rewrite the UNIONS.
+			 */
+			foreach(rewritten_list, rewritten)
+			{
+				Query	   *qry = (Query *) lfirst(rewritten_list);
+
+				union_result = NIL;
+				foreach(union_list, qry->unionClause)
+					union_result = nconc(union_result, QueryRewrite((Query *) lfirst(union_list)));
+				qry->unionClause = union_result;
+			}
 
 			len = length(rewritten);
 			if (len == 1)
@@ -487,11 +488,39 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 		}
 	}
 
+	/* ----------
+	 * Due to rewriting, the new list could also have been
+	 * shrunk (do instead nothing). Forget obsolete queries
+	 * at the end.
+	 * ----------
+	 */
+	new_list->len = j;
+
 	/* we're done with the original lists, free it */
 	free(querytree_list->qtrees);
 	free(querytree_list);
 
 	querytree_list = new_list;
+
+	/*
+	 * Override ACL checking if requested
+	 */
+	if (aclOverride) {
+		for (i = 0; i < querytree_list->len; i++) {
+			RangeTblEntry	*rte;
+			List		*l;
+
+			querytree = querytree_list->qtrees[i];
+			if (querytree->commandType == CMD_UTILITY)
+				continue;
+
+			foreach (l, querytree->rtable) {
+				rte = (RangeTblEntry *)lfirst(l);
+
+				rte->skipAcl = TRUE;
+			}
+		}
+	}
 
 	if (DebugPrintRewrittenParsetree == true)
 	{
@@ -530,7 +559,10 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 				elog(NOTICE, "(transaction aborted): %s",
 					 "queries ignored until END");
 
-				*queryListP = (QueryTreeList *) NULL;
+				free(querytree_list->qtrees);
+				free(querytree_list);
+				if (queryListP)
+					*queryListP = (QueryTreeList *) NULL;
 				return (List *) NULL;
 			}
 
@@ -573,6 +605,16 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 #endif
 	}
 
+	/* ----------
+	 * Check if the rewriting had thrown away anything
+	 * ----------
+	 */
+	if (querytree_list->len == 0) {
+		free(querytree_list->qtrees);
+		free(querytree_list);
+		querytree_list = NULL;
+	}
+
 	if (queryListP)
 		*queryListP = querytree_list;
 
@@ -599,12 +641,22 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 void
 pg_exec_query(char *query_string)
 {
-	pg_exec_query_dest(query_string, whereToSendOutput);
+	pg_exec_query_dest(query_string, whereToSendOutput, FALSE);
+}
+
+void
+pg_exec_query_acl_override(char *query_string)
+{
+	pg_exec_query_dest(query_string, whereToSendOutput, TRUE);
 }
 
 void
 pg_exec_query_dest(char *query_string,	/* string to execute */
-				   CommandDest dest)	/* where results should go */
+				   CommandDest dest,	/* where results should go */
+				   bool aclOverride)	/* to give utility
+				   			 * commands power of
+							 * superusers
+							 */
 {
 	List	   *plan_list;
 	Plan	   *plan;
@@ -614,7 +666,7 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 	QueryTreeList *querytree_list;
 
 	/* plan the queries */
-	plan_list = pg_parse_and_plan(query_string, NULL, 0, &querytree_list, dest);
+	plan_list = pg_parse_and_plan(query_string, NULL, 0, &querytree_list, dest, aclOverride);
 
 	if (QueryCancel)
 		CancelQuery();
@@ -1339,7 +1391,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.82 $ $Date: 1998/08/04 16:44:20 $");
+		puts("$Revision: 1.83 $ $Date: 1998/08/24 01:38:02 $");
 	}
 
 	/* ----------------

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.19 1998/08/19 02:02:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.20 1998/08/24 01:37:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,6 @@ fireRules(Query *parsetree, int rt_index, CmdType event,
 static void QueryRewriteSubLink(Node *node);
 static List *QueryRewriteOne(Query *parsetree);
 static List *deepRewriteQuery(Query *parsetree);
-static void CheckViewPerms(Relation view, List *rtable);
 static void RewritePreprocessQuery(Query *parsetree);
 static Query *RewritePostprocessNonSelect(Query *parsetree);
 
@@ -273,7 +272,6 @@ ApplyRetrieveRule(Query *parsetree,
 	int			nothing,
 				rt_length;
 	int			badsql = FALSE;
-	int			viewAclOverride = FALSE;
 
 	rule_qual = rule->qual;
 	if (rule->actions)
@@ -291,19 +289,6 @@ ApplyRetrieveRule(Query *parsetree,
 			return;
 		rule_action = copyObject(lfirst(rule->actions));
 		nothing = FALSE;
-
-		/*
-		 * If this rule is on the relation level, the rule action is a
-		 * select and the rule is instead then it must be a view.
-		 * Permissions for views now follow the owner of the view, not the
-		 * current user.
-		 */
-		if (relation_level && rule_action->commandType == CMD_SELECT
-			&& rule->isInstead)
-		{
-			CheckViewPerms(relation, rule_action->rtable);
-			viewAclOverride = TRUE;
-		}
 	}
 	else
 		nothing = TRUE;
@@ -321,28 +306,7 @@ ApplyRetrieveRule(Query *parsetree,
 	}
 	rt_length = length(rtable);
 
-	if (viewAclOverride)
-	{
-		List	   *rule_rtable,
-				   *rule_rt;
-		RangeTblEntry *rte;
-
-		rule_rtable = copyObject(rule_action->rtable);
-		foreach(rule_rt, rule_rtable)
-		{
-			rte = lfirst(rule_rt);
-
-			/*
-			 * tell the executor that the ACL check on this range table
-			 * entry is already done
-			 */
-			rte->skipAcl = true;
-		}
-
-		rtable = nconc(rtable, rule_rtable);
-	}
-	else
-		rtable = nconc(rtable, copyObject(rule_action->rtable));
+	rtable = nconc(rtable, copyObject(rule_action->rtable));
 	parsetree->rtable = rtable;
 
 	rule_action->rtable = rtable;
@@ -424,6 +388,8 @@ ProcessRetrieveQuery(Query *parsetree,
 	}
 	if (rule)
 		return NIL;
+
+	rt_index = 0;
 
 	foreach(rt, rtable)
 	{
@@ -536,6 +502,44 @@ fireRules(Query *parsetree,
 		List	   *actions;
 		List	   *r;
 		bool		orig_instead_flag = *instead_flag;
+
+		/*
+		 * Instead rules change the resultRelation of the
+		 * query. So the permission checks on the initial
+		 * resultRelation would never be done (this is
+		 * normally done in the executor deep down). So
+		 * we must do it here. The result relations resulting
+		 * from earlier rewrites are already checked against
+		 * the rules eventrelation owner (during matchLocks)
+		 * and have the skipAcl flag set.
+		 */
+		if (rule_lock->isInstead && 
+				parsetree->commandType != CMD_SELECT) {
+			RangeTblEntry	*rte;
+			int32		acl_rc;
+			int32		reqperm;
+
+			switch (parsetree->commandType) {
+				case CMD_INSERT:
+					reqperm = ACL_AP;
+					break;
+				default:
+					reqperm = ACL_WR;
+					break;
+			}
+			
+			rte = (RangeTblEntry *)nth(parsetree->resultRelation - 1,
+					parsetree->rtable);
+			if (!rte->skipAcl) {
+				acl_rc = pg_aclcheck(rte->relname,
+					GetPgUserName(), reqperm);
+				if (acl_rc != ACLCHECK_OK) {
+					elog(ERROR, "%s: %s",
+						rte->relname,
+						aclcheck_error_strings[acl_rc]);
+				}
+			}
+		}
 
 		/* multiple rule action time */
 		*instead_flag = rule_lock->isInstead;
@@ -1023,43 +1027,4 @@ deepRewriteQuery(Query *parsetree)
 		rewritten = lappend(rewritten, parsetree);
 
 	return rewritten;
-}
-
-
-static void
-CheckViewPerms(Relation view, List *rtable)
-{
-	HeapTuple	utup;
-	NameData	uname;
-	List	   *rt;
-	RangeTblEntry *rte;
-	int32		aclcheck_res;
-
-	/*
-	 * get the usename of the view's owner
-	 */
-	utup = SearchSysCacheTuple(USESYSID,
-								ObjectIdGetDatum(view->rd_rel->relowner),
-								0, 0, 0);
-	if (!HeapTupleIsValid(utup))
-	{
-		elog(ERROR, "cache lookup for userid %d failed",
-			 view->rd_rel->relowner);
-	}
-	StrNCpy(uname.data,
-			((Form_pg_shadow) GETSTRUCT(utup))->usename.data,
-			NAMEDATALEN);
-
-	/*
-	 * check that we have read access to all the classes in the range
-	 * table of the view
-	 */
-	foreach(rt, rtable)
-	{
-		rte = (RangeTblEntry *) lfirst(rt);
-
-		aclcheck_res = pg_aclcheck(rte->relname, uname.data, ACL_RD);
-		if (aclcheck_res != ACLCHECK_OK)
-			elog(ERROR, "%s: %s", rte->relname, aclcheck_error_strings[aclcheck_res]);
-	}
 }

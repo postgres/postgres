@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.18 1998/08/19 02:02:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.19 1998/08/24 01:37:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,7 +131,7 @@ InsertRule(char *rulname,
 			rulname, evtype, eventrel_oid, evslot_index, actionbuf,
 			qualbuf, is_instead);
 
-	pg_exec_query(rulebuf);
+	pg_exec_query_acl_override(rulebuf);
 
 	return (LastOidProcessed);
 }
@@ -192,11 +192,60 @@ DefineQueryRewrite(RuleStmt *stmt)
 	Oid			event_attype = 0;
 	char	   *actionP,
 			   *event_qualP;
+	List	   *l;
+	Query	   *query;
 
+	/* ----------
+	 * The current rewrite handler is known to work on relation level
+	 * rules only. And for SELECT events, it expects one non-nothing
+	 * action that is instead. Since we now hand out views and rules
+	 * to regular users, we must deny anything else.
+	 * 
+	 * I know that I must write a new rewrite handler from scratch
+	 * for 6.5 so we can remove these checks and allow all the rules.
+	 *
+	 *     Jan
+	 * ----------
+	 */
 	if (event_obj->attrs)
+		elog(ERROR, "attribute level rules currently not supported");
+		/*
 		eslot_string = strVal(lfirst(event_obj->attrs));
+		*/
 	else
 		eslot_string = NULL;
+
+	if (action != NIL)
+		foreach (l, action) {
+			query = (Query *)lfirst(l);
+			if (query->resultRelation == 1) {
+				elog(NOTICE, "rule actions on OLD currently not supported");
+				elog(ERROR, " use views or triggers instead");
+			}
+			if (query->resultRelation == 2) {
+				elog(NOTICE, "rule actions on NEW currently not supported");
+				elog(ERROR, " use triggers instead");
+			}
+		}
+
+	if (event_type == CMD_SELECT) {
+		if (length(action) == 0) {
+			elog(NOTICE, "instead nothing rules on select currently not supported");
+			elog(ERROR, " use views instead");
+		}
+		if (length(action) > 1) {
+			elog(ERROR, "multiple action rules on select currently not supported");
+		}
+		query = (Query *)lfirst(action);
+		if (!is_instead || query->commandType != CMD_SELECT) {
+			elog(ERROR, "only instead-select rules currently supported on select");
+		}
+	}
+	/*
+	 * This rule is currently allowed - too restricted I know -
+	 * but women and children first
+	 *     Jan
+	 */
 
 	event_relation = heap_openr(event_obj->relname);
 	if (event_relation == NULL)

@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.53 1998/08/24 01:14:04 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.54 1998/08/24 01:38:06 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -431,6 +431,39 @@ echo "CREATE RULE _RETpg_user AS ON SELECT TO pg_user DO INSTEAD	\
 		   valuntil FROM pg_shadow;" | \
 	postgres $PGSQL_OPT template1 > /dev/null
 echo "REVOKE ALL on pg_shadow FROM public" | \
+	postgres $PGSQL_OPT template1 > /dev/null
+
+echo "Creating view pg_rule"
+echo "CREATE TABLE xpg_rule (		\
+	    rulename	name,		\
+	    definition	text);" | postgres $PGSQL_OPT template1 > /dev/null
+#move it into pg_rule
+echo "UPDATE pg_class SET relname = 'pg_rule' WHERE relname = 'xpg_rule';" |\
+	postgres $PGSQL_OPT template1 > /dev/null
+echo "UPDATE pg_type SET typname = 'pg_rule' WHERE typname = 'xpg_rule';" |\
+	postgres $PGSQL_OPT template1 > /dev/null
+mv $PGDATA/base/template1/xpg_rule $PGDATA/base/template1/pg_rule
+
+echo "CREATE RULE _RETpg_rule AS ON SELECT TO pg_rule DO INSTEAD	\
+	    SELECT rulename, pg_get_ruledef(rulename) AS definition	\
+	      FROM pg_rewrite;" | postgres $PGSQL_OPT template1 > /dev/null
+
+echo "Creating view pg_view"
+echo "CREATE TABLE xpg_view (		\
+	    viewname	name,		\
+	    definition	text);" | postgres $PGSQL_OPT template1 > /dev/null
+#move it into pg_view
+echo "UPDATE pg_class SET relname = 'pg_view' WHERE relname = 'xpg_view';" |\
+	postgres $PGSQL_OPT template1 > /dev/null
+echo "UPDATE pg_type SET typname = 'pg_view' WHERE typname = 'xpg_view';" |\
+	postgres $PGSQL_OPT template1 > /dev/null
+mv $PGDATA/base/template1/xpg_view $PGDATA/base/template1/pg_view
+
+echo "CREATE RULE _RETpg_view AS ON SELECT TO pg_view DO INSTEAD	\
+	    SELECT relname AS viewname, 				\
+	           pg_get_viewdef(relname) AS definition		\
+	      FROM pg_class WHERE relhasrules AND			\
+	           pg_get_viewdef(relname) != 'Not a view';" | \
 	postgres $PGSQL_OPT template1 > /dev/null
 
 echo "Loading pg_description"

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.66 1998/08/19 02:03:54 momjian Exp $
+ * $Id: pg_proc.h,v 1.67 1998/08/24 01:38:08 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2032,6 +2032,12 @@ DESCR("sequence current value");
 
 /* for multi-byte support */
 DATA(insert OID = 1039 (  getdatabaseencoding	   PGUID 11 f t f 0 f 19 "0" 100 0 0 100  foo bar ));
+
+/* System-view support functions */
+DATA(insert OID = 1640 (  pg_get_ruledef	   PGUID 11 f t f 1 f 25 "19" 100 0 0 100  foo bar ));
+DESCR("source text of a rule");
+DATA(insert OID = 1641 (  pg_get_viewdef	   PGUID 11 f t f 1 f 25 "19" 100 0 0 100  foo bar ));
+DESCR("select statement of a view");
 
 /*
  * prototypes for functions pg_proc.c

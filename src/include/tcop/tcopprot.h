@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.14 1998/06/04 17:26:49 momjian Exp $
+ * $Id: tcopprot.h,v 1.15 1998/08/24 01:38:11 momjian Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -24,10 +24,12 @@
 #ifndef BOOTSTRAP_INCLUDE
 extern List *
 pg_parse_and_plan(char *query_string, Oid *typev, int nargs,
-				  QueryTreeList **queryListP, CommandDest dest);
+				  QueryTreeList **queryListP, CommandDest dest,
+				  bool aclOverride);
 extern void pg_exec_query(char *query_string);
+extern void pg_exec_query_acl_override(char *query_string);
 extern void
-pg_exec_query_dest(char *query_string, CommandDest dest);
+pg_exec_query_dest(char *query_string, CommandDest dest, bool aclOverride);
 
 #endif							/* BOOTSTRAP_HEADER */
 

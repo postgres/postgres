@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.25 1998/08/19 02:02:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.26 1998/08/24 01:38:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,6 +158,10 @@ prs2_addToRelation(Oid relid,
 	 */
 	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
 	thisRule = (RewriteRule *) palloc(sizeof(RewriteRule));
+	if (qual != NULL)
+		qual = copyObject(qual);
+	if (actions != NIL)
+		actions = copyObject(actions);
 	MemoryContextSwitchTo(oldcxt);
 
 	thisRule->ruleId = ruleId;
