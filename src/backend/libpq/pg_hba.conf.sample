@@ -35,6 +35,9 @@
 # encrypted passwords.  OPTION is the ident map or the name of the PAM
 # service.
 #
+# Note: On some Solaris systems, an IP-MASK of 255.255.255.255 is known not to work.
+# The corresponding CIDR-MASK of /32 does work.
+#
 # Database and user names containing spaces, commas, quotes and other special
 # characters can be quoted. Quoting one of the keywords "all", "sameuser" or
 # "samegroup"  makes the name lose its special character, and just match a 
@@ -49,8 +52,10 @@
 # ----------------------------------
 #
 # If you want to allow non-local connections, you need to add more
-# "host" records.  Also, remember TCP/IP connections are only enabled
-# if you enable "tcpip_socket" in postgresql.conf.
+# "host" records. In that case you will also need to make PostgreSQL listen
+# on a non-local interface via the listen_addresses configuration parameter, or
+# the -i or -h command line switches.
+#
 
 @authcomment@
 
@@ -58,6 +63,6 @@
 
 local   all         all                                             @authmethod@
 # IPv4-style local connections:
-host    all         all         127.0.0.1         255.255.255.255   @authmethod@
+host    all         all         127.0.0.1/32                        @authmethod@
 # IPv6-style local connections:
 host    all         all         ::1/128                             @authmethod@
