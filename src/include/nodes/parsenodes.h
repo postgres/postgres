@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.61 1998/10/22 13:52:24 momjian Exp $
+ * $Id: parsenodes.h,v 1.62 1998/12/04 15:34:44 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -714,6 +714,28 @@ typedef struct A_Const
 } A_Const;
 
 /*
+ * CaseExpr - a CASE expression
+ */
+typedef struct CaseExpr
+{
+	NodeTag		type;
+	Oid			casetype;
+	Node	   *arg;			/* implicit equality comparison argument */
+	List	   *args;			/* the arguments (list of WHEN clauses) */
+	Node	   *defresult;		/* the default result (ELSE clause) */
+} CaseExpr;
+
+/*
+ * CaseWhen - an argument to a CASE expression
+ */
+typedef struct CaseWhen
+{
+	NodeTag		type;
+	Node	   *expr;			/* comparison expression */
+	Node	   *result;			/* substitution result */
+} CaseWhen;
+
+/*
  * ColumnDef - column definition (used in various creates)
  */
 typedef struct ColumnDef
@@ -777,7 +799,7 @@ typedef struct ResTarget
 } ResTarget;
 
 /*
- * ParamString - used in with clauses
+ * ParamString - used in WITH clauses
  */
 typedef struct ParamString
 {
@@ -797,7 +819,7 @@ typedef struct RelExpr
 } RelExpr;
 
 /*
- * SortGroupBy - for order by clause
+ * SortGroupBy - for ORDER BY clause
  */
 typedef struct SortGroupBy
 {
@@ -807,7 +829,7 @@ typedef struct SortGroupBy
 } SortGroupBy;
 
 /*
- * JoinUsing - for join using clause
+ * JoinUsing - for JOIN USING clause
  */
 typedef struct JoinUsing
 {
@@ -818,7 +840,7 @@ typedef struct JoinUsing
 }			JoinUsing;
 
 /*
- * RangeVar - range variable, used in from clauses
+ * RangeVar - range variable, used in FROM clauses
  */
 typedef struct RangeVar
 {
@@ -828,7 +850,7 @@ typedef struct RangeVar
 } RangeVar;
 
 /*
- * IndexElem - index parameters (used in create index)
+ * IndexElem - index parameters (used in CREATE INDEX)
  */
 typedef struct IndexElem
 {

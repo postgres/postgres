@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.31 1998/10/01 02:04:01 tgl Exp $
+ * $Id: nodes.h,v 1.32 1998/12/04 15:34:44 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,11 +213,13 @@ typedef enum NodeTag
 	T_SortClause,
 	T_GroupClause,
 	T_SubSelect,
-	T_JoinUsing
+	T_JoinUsing,
+	T_CaseExpr,
+	T_CaseWhen
 } NodeTag;
 
 /*
- * The first field of a node of any type is gauranteed to be the NodeTag.
+ * The first field of a node of any type is guaranteed to be the NodeTag.
  * Hence the type of any node can be gotten by casting it to Node. Declaring
  * a variable to be of Node * (instead of void *) can also facilitate
  * debugging.

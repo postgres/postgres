@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.25 1998/11/27 19:52:07 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.26 1998/12/04 15:34:14 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -306,6 +306,26 @@ make_andclause(List *andclauses)
 	return expr;
 }
 
+
+/*****************************************************************************
+ *		CASE clause functions
+ *****************************************************************************/
+
+
+/*
+ * case_clause--
+ *
+ * Returns t iff its argument is a 'case' clause: (CASE { expr }).
+ *
+ */
+bool
+case_clause(Node *clause)
+{
+	return
+	(clause != NULL &&
+	 nodeTag(clause) == T_CaseExpr);
+}
+
 /*****************************************************************************
  *																			 *
  *																			 *
@@ -540,6 +560,19 @@ fix_opid(Node *clause)
 			fix_opid((Node *) get_leftop((Expr *) lfirst(lst)));
 		}
 	}
+	else if (case_clause(clause))
+	{
+		List	   *lst;
+
+		fix_opid(((CaseExpr *) clause)->defresult);
+
+		/* Run through the WHEN clauses... */
+		foreach(lst, ((CaseExpr *) clause)->args)
+		{
+			fix_opid(((CaseWhen *) lfirst(lst))->expr);
+			fix_opid(((CaseWhen *) lfirst(lst))->result);
+		}
+	}
 
 }
 
@@ -577,13 +610,12 @@ fix_opids(List *clauses)
  *		returned for the value if it is unknown or null.
  * END OF OLD OBSOLETE COMMENT.
  * NEW COMMENT:
- * when defining rules one of the attibutes of the operator can
+ * when defining rules one of the attributes of the operator can
  * be a Param node (which is supposed to be treated as a constant).
  * However as there is no value specified for a parameter until run time
- * this routine used to return "" as value, which made 'compute_selec'
+ * this routine used to return "" as value, which caused 'compute_selec'
  * to bomb (because it was expecting a lisp integer and got back a lisp
  * string). Now the code returns a plain old good "lispInteger(0)".
- *
  */
 void
 get_relattval(Node *clause,
@@ -787,3 +819,4 @@ CommuteClause(Node *clause)
 	lfirst(((Expr *) clause)->args) = lsecond(((Expr *) clause)->args);
 	lsecond(((Expr *) clause)->args) = temp;
 }
+

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.9 1998/10/22 13:50:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.10 1998/12/04 15:34:30 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -342,7 +342,7 @@ TypeCategory(Oid inType)
 
 
 /* IsPreferredType()
- * Assign a category to the specified OID.
+ * Check if this type is a preferred type.
  */
 bool
 IsPreferredType(CATEGORY category, Oid type)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.48 1998/11/22 10:48:39 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.49 1998/12/04 15:33:33 thomas Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -1635,6 +1635,82 @@ _outAConst(StringInfo str, A_Const *node)
 	return;
 }
 
+static void
+_outConstraint(StringInfo str, Constraint *node)
+{
+	char		buf[500];
+
+	sprintf(buf," %s :type",
+		((node->name != NULL)? node->name: "<>"));
+	appendStringInfo(str, buf);
+
+	switch (node->contype)
+	{
+		case CONSTR_PRIMARY:
+			sprintf(buf," PRIMARY KEY ");
+			appendStringInfo(str, buf);
+			_outNode(str, node->keys);
+			break;
+
+		case CONSTR_CHECK:
+			sprintf(buf," CHECK ");
+			appendStringInfo(str, buf);
+			appendStringInfo(str, node->def);
+			break;
+
+		case CONSTR_DEFAULT:
+			sprintf(buf," DEFAULT ");
+			appendStringInfo(str, buf);
+			appendStringInfo(str, node->def);
+			break;
+
+		case CONSTR_NOTNULL:
+			sprintf(buf," NOT NULL ");
+			appendStringInfo(str, buf);
+			break;
+
+		case CONSTR_UNIQUE:
+			sprintf(buf," UNIQUE ");
+			appendStringInfo(str, buf);
+			_outNode(str, node->keys);
+			break;
+
+		default:
+			sprintf(buf,"<unrecognized constraint>");
+			appendStringInfo(str, buf);
+			break;
+	}
+	return;
+}
+
+static void
+_outCaseExpr(StringInfo str, CaseExpr *node)
+{
+	char		buf[500];
+
+	sprintf(buf, "CASE ");
+	appendStringInfo(str, buf);
+	_outNode(str, node->args);
+	sprintf(buf, " :default ");
+	appendStringInfo(str, buf);
+	_outNode(str, node->defresult);
+	return;
+}
+
+static void
+_outCaseWhen(StringInfo str, CaseWhen *node)
+{
+	char		buf[500];
+
+	sprintf(buf, " :when ");
+	appendStringInfo(str, buf);
+	_outNode(str, node->expr);
+	sprintf(buf, " :then ");
+	appendStringInfo(str, buf);
+	_outNode(str, node->result);
+	return;
+}
+
 /*
  * _outNode -
  *	  converts a Node into ascii string and append it to 'str'
@@ -1860,6 +1936,15 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_A_Const:
 				_outAConst(str, obj);
+				break;
+			case T_Constraint:
+				_outConstraint(str, obj);
+				break;
+			case T_CaseExpr:
+				_outCaseExpr(str, obj);
+				break;
+			case T_CaseWhen:
+				_outCaseWhen(str, obj);
 				break;
 			default:
 				elog(NOTICE, "_outNode: don't know how to print type %d ",

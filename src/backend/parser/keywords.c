@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.48 1998/10/18 23:30:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.49 1998/12/04 15:34:29 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,12 +51,14 @@ static ScanKeyword ScanKeywords[] = {
 	{"by", BY},
 	{"cache", CACHE},
 	{"cascade", CASCADE},
+	{"case", CASE},
 	{"cast", CAST},
 	{"char", CHAR},
 	{"character", CHARACTER},
 	{"check", CHECK},
 	{"close", CLOSE},
 	{"cluster", CLUSTER},
+	{"coalesce", COALESCE},
 	{"collate", COLLATE},
 	{"column", COLUMN},
 	{"commit", COMMIT},
@@ -88,6 +90,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"double", DOUBLE},
 	{"drop", DROP},
 	{"each", EACH},
+	{"else", ELSE},
 	{"encoding", ENCODING},
 	{"end", END_TRANS},
 	{"execute", EXECUTE},
@@ -154,6 +157,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"notify", NOTIFY},
 	{"notnull", NOTNULL},
 	{"null", NULL_P},
+	{"nullif", NULLIF},
 	{"numeric", NUMERIC},
 	{"of", OF},
 	{"oids", OIDS},
@@ -201,6 +205,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"stdout", STDOUT},
 	{"substring", SUBSTRING},
 	{"table", TABLE},
+	{"then", THEN},
 	{"time", TIME},
 	{"timestamp", TIMESTAMP},
 	{"timezone_hour", TIMEZONE_HOUR},
@@ -228,6 +233,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"verbose", VERBOSE},
 	{"version", VERSION},
 	{"view", VIEW},
+	{"when", WHEN},
 	{"where", WHERE},
 	{"with", WITH},
 	{"work", WORK},

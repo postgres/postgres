@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.30 1998/10/08 18:29:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.31 1998/12/04 15:34:30 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,9 @@ static Node *SizeTargetExpr(ParseState *pstate,
 			   Oid attrtype,
 			   int32 attrtypmod);
 
+static TargetEntry *
+MakeTargetEntryCase(ParseState *pstate,
+					ResTarget *res);
 
 /* MakeTargetEntryIdent()
  * Transforms an Ident Node to a Target Entry
@@ -53,11 +56,7 @@ static Node *SizeTargetExpr(ParseState *pstate,
  */
 TargetEntry *
 MakeTargetEntryIdent(ParseState *pstate,
-#if FALSE
-					 Ident *ident,
-#else
 					 Node *node,
-#endif
 					 char **resname,
 					 char *refname,
 					 char *colname,
@@ -77,7 +76,7 @@ MakeTargetEntryIdent(ParseState *pstate,
 			pstate->p_insert_columns = lnext(pstate->p_insert_columns);
 		}
 		else
-			elog(ERROR, "insert: more expressions than target columns");
+			elog(ERROR, "INSERT has more expressions than target columns");
 	}
 
 	if (pstate->p_is_insert || pstate->p_is_update)
@@ -105,7 +104,7 @@ MakeTargetEntryIdent(ParseState *pstate,
 		{
 			rte = colnameRangeTableEntry(pstate, colname);
 			if (rte == (RangeTblEntry *) NULL)
-				elog(ERROR, "attribute %s not found", colname);
+				elog(ERROR, "Attribute %s not found", colname);
 			refname = rte->refname;
 		}
 
@@ -129,14 +128,9 @@ MakeTargetEntryIdent(ParseState *pstate,
 			}
 			else
 			{
-#if TRUE
 				elog(ERROR, "Unable to convert %s to %s for column %s",
 					 typeidTypeName(attrtype_id), typeidTypeName(attrtype_target),
 					 target_colname);
-#else
-				elog(ERROR, "Type or size of %s(%d) does not match target column %s(%d)",
-				 colname, attrtypmod, target_colname, attrtypmod_target);
-#endif
 			}
 		}
 	}
@@ -152,11 +146,7 @@ MakeTargetEntryIdent(ParseState *pstate,
 
 		name = ((*resname != NULL) ? *resname : colname);
 
-#if FALSE
-		expr = transformIdent(pstate, (Node *) ident, EXPR_COLUMN_FIRST);
-#else
 		expr = transformExpr(pstate, node, EXPR_COLUMN_FIRST);
-#endif
 
 		attrtype_target = exprType(expr);
 		if (nodeTag(expr) == T_Var)
@@ -187,7 +177,7 @@ MakeTargetEntryIdent(ParseState *pstate,
  * - thomas 1998-05-08
  *
  * Added resjunk flag and made extern so that it can be use by GROUP/
- * ORDER BY a function or expersion not in the target_list
+ * ORDER BY a function or expression not in the target_list
  * -  daveh@insightdist.com 1998-07-31
  */
 TargetEntry *
@@ -207,7 +197,7 @@ MakeTargetEntryExpr(ParseState *pstate,
 	Resdom	   *resnode;
 
 	if (expr == NULL)
-		elog(ERROR, "MakeTargetEntryExpr: invalid use of NULL expression");
+		elog(ERROR, "Invalid use of NULL expression (internal error)");
 
 	type_id = exprType(expr);
 	if (nodeTag(expr) == T_Var)
@@ -251,9 +241,9 @@ MakeTargetEntryExpr(ParseState *pstate,
 				expr = CoerceTargetExpr(pstate, expr, type_id, typelem);
 
 				if (!HeapTupleIsValid(expr))
-					elog(ERROR, "parser: attribute '%s' is of type '%s'"
+					elog(ERROR, "Attribute '%s' is of type '%s'"
 						 " but expression is of type '%s'"
-					"\n\tYou will need to rewrite or cast the expression",
+						 "\n\tYou will need to rewrite or cast the expression",
 						 colname,
 						 typeidTypeName(attrtype),
 						 typeidTypeName(type_id));
@@ -324,6 +314,45 @@ MakeTargetEntryExpr(ParseState *pstate,
 }	/* MakeTargetEntryExpr() */
 
 /*
+ *	MakeTargetEntryCase()
+ *	Make a TargetEntry from a case node.
+ */
+static TargetEntry *
+MakeTargetEntryCase(ParseState *pstate,
+					ResTarget *res)
+{
+	TargetEntry	*tent;
+	CaseExpr	*expr;
+	Resdom		*resnode;
+	int			 resdomno;
+	Oid			 type_id;
+	int32		 type_mod;
+
+	expr = (CaseExpr *)transformExpr(pstate, (Node *)res->val, EXPR_COLUMN_FIRST);
+
+	type_id = expr->casetype;
+	type_mod = -1;
+	handleTargetColname(pstate, &res->name, NULL, NULL);
+	if (res->name == NULL)
+		res->name = FigureColname((Node *)expr, res->val);
+
+	resdomno = pstate->p_last_resno++;
+	resnode = makeResdom((AttrNumber) resdomno,
+						 (Oid) type_id,
+						 type_mod,
+						 res->name,
+						 (Index) 0,
+						 (Oid) 0,
+						 0);
+
+	tent = makeNode(TargetEntry);
+	tent->resdom = resnode;
+	tent->expr = (Node *)expr;
+
+	return tent;
+}	/* MakeTargetEntryCase() */
+
+/*
  *	MakeTargetEntryComplex()
  *	Make a TargetEntry from a complex node.
  */
@@ -351,7 +380,7 @@ MakeTargetEntryComplex(ParseState *pstate,
 		Value	   *constval;
 
 		if (exprType(expr) != UNKNOWNOID || !IsA(expr, Const))
-			elog(ERROR, "yyparse: string constant expected");
+			elog(ERROR, "String constant expected (internal error)");
 
 		val = (char *) textout((struct varlena *)
 							   ((Const *) expr)->constvalue);
@@ -376,7 +405,7 @@ MakeTargetEntryComplex(ParseState *pstate,
 			else
 				lindx[i] = 1;
 			if (lindx[i] > uindx[i])
-				elog(ERROR, "yyparse: lower index cannot be greater than upper index");
+				elog(ERROR, "Lower index cannot be greater than upper index");
 
 			sprintf(str, "[%d:%d]", lindx[i], uindx[i]);
 			str += strlen(str);
@@ -388,7 +417,7 @@ MakeTargetEntryComplex(ParseState *pstate,
 		resdomno = attnameAttNum(rd, res->name);
 		ndims = attnumAttNelems(rd, resdomno);
 		if (i != ndims)
-			elog(ERROR, "yyparse: array dimensions do not match");
+			elog(ERROR, "Array dimensions do not match");
 
 		constval = makeNode(Value);
 		constval->type = T_String;
@@ -400,9 +429,9 @@ MakeTargetEntryComplex(ParseState *pstate,
 	}
 	else
 	{
-		char	   *colname = res->name;
-
 		/* this is not an array assignment */
+		char	  *colname = res->name;
+
 		if (colname == NULL)
 		{
 
@@ -540,6 +569,11 @@ transformTargetList(ParseState *pstate, List *targetlist)
 					tent = MakeTargetEntryComplex(pstate, res);
 					break;
 				}
+			case T_CaseExpr:
+				{
+					tent = MakeTargetEntryCase(pstate, res);
+					break;
+				}
 			case T_Attr:
 				{
 					bool		expand_star = false;
@@ -604,7 +638,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 				}
 			default:
 				/* internal error */
-				elog(ERROR, "internal error: do not know how to transform targetlist");
+				elog(ERROR, "Unable to transform targetlist (internal error)");
 				break;
 		}
 
@@ -788,7 +822,7 @@ ExpandAllTables(ParseState *pstate)
 
 	/* this should not happen */
 	if (rtable == NULL)
-		elog(ERROR, "cannot expand: null p_rtable");
+		elog(ERROR, "Cannot expand tables; null p_rtable (internal error)");
 
 	/*
 	 * go through the range table and make a list of range table entries
@@ -838,7 +872,7 @@ FigureColname(Node *expr, Node *resval)
 {
 	switch (nodeTag(expr))
 	{
-			case T_Aggreg:
+		case T_Aggreg:
 			return (char *) ((Aggreg *) expr)->aggname;
 		case T_Expr:
 			if (((Expr *) expr)->opType == FUNC_EXPR)

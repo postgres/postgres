@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.13 1998/09/01 04:36:53 momjian Exp $
+ * $Id: clauses.h,v 1.14 1998/12/04 15:34:49 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,8 @@ extern Expr *get_notclausearg(Expr *notclause);
 
 extern bool and_clause(Node *clause);
 extern Expr *make_andclause(List *andclauses);
+
+extern bool case_clause(Node *clause);
 
 extern List *pull_constant_clauses(List *quals, List **constantQual);
 extern void clause_get_relids_vars(Node *clause, List **relids, List **vars);

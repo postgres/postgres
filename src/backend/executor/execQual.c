@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.38 1998/11/27 19:52:00 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.39 1998/12/04 15:33:19 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
  *	 NOTES
  *		ExecEvalExpr() and ExecEvalVar() are hotspots.	making these faster
  *		will speed up the entire system.  Unfortunately they are currently
- *		implemented recursively..  Eliminating the recursion is bound to
+ *		implemented recursively.  Eliminating the recursion is bound to
  *		improve the speed of the executor.
  *
  *		ExecTargetList() is used to make tuple projections.  Rather then
@@ -205,7 +205,7 @@ ExecEvalAggreg(Aggreg *agg, ExprContext *econtext, bool *isNull)
  *		variable with respect to given expression context.
  *
  *
- *		As an entry condition, we expect that the the datatype the
+ *		As an entry condition, we expect that the datatype the
  *		plan expects to get (as told by our "variable" argument) is in
  *		fact the datatype of the attribute the plan says to fetch (as
  *		seen in the current context, identified by our "econtext"
@@ -1125,6 +1125,79 @@ ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull)
 }
 
 /* ----------------------------------------------------------------
+ *		ExecEvalCase
+ *
+ *		Evaluate a CASE clause. Will have boolean expressions
+ *		inside the WHEN clauses, and will have constants
+ *		for results.
+ *		- thomas 1998-11-09
+ * ----------------------------------------------------------------
+ */
+static Datum
+ExecEvalCase(CaseExpr *caseExpr, ExprContext *econtext, bool *isNull)
+{
+	List	   *clauses;
+	List	   *clause;
+	CaseWhen   *wclause;
+	Datum		const_value = 0;
+	bool		isDone;
+
+	clauses = caseExpr->args;
+
+	/******************
+	 *	we evaluate each of the WHEN clauses in turn,
+	 *	as soon as one is true we return the corresponding
+	 *	result.	If none are true then we return the value
+	 *	of the default clause, or NULL.
+	 ******************
+	 */
+	foreach(clause, clauses)
+	{
+
+		/******************
+		 *	We don't iterate over sets in the quals, so pass in an isDone
+		 *	flag, but ignore it.
+		 ******************
+		 */
+
+		wclause = lfirst(clause);
+		const_value = ExecEvalExpr((Node *) wclause->expr,
+								   econtext,
+								   isNull,
+								   &isDone);
+
+		/******************
+		 *	 if we have a true test, then we return the result,
+		 *	 since the case statement is satisfied.
+		 ******************
+		 */
+		if (DatumGetInt32(const_value) != 0)
+		{
+			const_value = ExecEvalExpr((Node *) wclause->result,
+									   econtext,
+									   isNull,
+									   &isDone);
+			return (Datum) const_value;
+
+		}
+	}
+
+	if (caseExpr->defresult)
+	{
+		const_value = ExecEvalExpr((Node *) caseExpr->defresult,
+								   econtext,
+								   isNull,
+								   &isDone);
+	}
+	else
+	{
+		*isNull = true;
+	}
+
+	return const_value;
+}
+
+/* ----------------------------------------------------------------
  *		ExecEvalExpr
  *
  *		Recursively evaluate a targetlist or qualification expression.
@@ -1236,13 +1309,18 @@ ExecEvalExpr(Node *expression,
 				}
 				break;
 			}
+		case T_CaseExpr:
+			retDatum = (Datum) ExecEvalCase((CaseExpr *) expression, econtext, isNull);
+			break;
+
 		default:
 			elog(ERROR, "ExecEvalExpr: unknown expression type %d", nodeTag(expression));
 			break;
 	}
 
 	return retDatum;
-}
+} /* ExecEvalExpr() */
+
 
 /* ----------------------------------------------------------------
  *					 ExecQual / ExecTargetList
@@ -1642,3 +1720,4 @@ ExecProject(ProjectionInfo *projInfo, bool *isDone)
 					   InvalidBuffer,	/* tuple has no buffer */
 					   true);
 }
+

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.20 1998/09/22 21:48:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.21 1998/12/04 15:34:15 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -482,7 +482,6 @@ flatten_tlistentry(Node *tlistentry, List *flat_tlist)
 							flatten_tlistentry(lfirst(elt), flat_tlist));
 
 		return ((Node *) make_funcclause((Func *) expr->oper, temp_result));
-
 	}
 	else if (IsA(tlistentry, Aggreg))
 	{
@@ -509,19 +508,36 @@ flatten_tlistentry(Node *tlistentry, List *flat_tlist)
 
 		return tlistentry;
 	}
+	else if (case_clause(tlistentry))
+	{
+		CaseExpr   *cexpr = (CaseExpr *) tlistentry;
+		CaseWhen   *cwhen;
+		List	   *elt = NIL;
+
+		foreach(elt, cexpr->args)
+			cwhen = (CaseWhen *)lfirst(elt);
+			cwhen->result = flatten_tlistentry(cwhen->result, flat_tlist);
+		cexpr->defresult = flatten_tlistentry(cexpr->defresult, flat_tlist);
+
+		return ((Node *) cexpr);
+	}
 	else
 	{
-		Expr	   *expr = (Expr *) tlistentry;
-
-		Var 	   *left = (Var *) flatten_tlistentry((Node *) get_leftop(expr),
-								   flat_tlist);
-		Var		   *right = (Var *) flatten_tlistentry((Node *) get_rightop(expr),
-								   flat_tlist);
-		Expr	   *final = make_opclause((Oper *) expr->oper, left, right);
+		Expr	   *expr, *final;
+		Var 	   *left, *right;
 
 		Assert(IsA(tlistentry, Expr));
+
+		expr = (Expr *) tlistentry;
+		left = (Var *) flatten_tlistentry((Node *) get_leftop(expr),
+								   flat_tlist);
+		right = (Var *) flatten_tlistentry((Node *) get_rightop(expr),
+								   flat_tlist);
+
+		final = make_opclause((Oper *) expr->oper, left, right);
 		final->opType = expr->opType;
 		final->typeOid = expr->typeOid;
+
 		return (Node *)final;
 	}
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.33 1998/11/22 10:48:43 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.34 1998/12/04 15:34:05 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -437,7 +437,7 @@ create_nestloop_node(JoinPath *best_path,
 		 * used in the inner scan path, so we need only consider the first
 		 * set of qualifications in indxqual.
 		 *
-		 * But there may be more than one clauses in this "first set" in the
+		 * But there may be more than one clause in this "first set" in the
 		 * case of multi-column indices. - vadim 03/18/97
 		 */
 
@@ -734,6 +734,11 @@ fix_indxqual_references(Node *clause, Path *index_path)
 		}
 		else
 			return clause;
+	}
+	else if (IsA(clause, CaseExpr))
+	{
+		elog(NOTICE,"optimizer: fix_indxqual_references sees CaseExpr");
+		return clause;
 	}
 	else
 	{

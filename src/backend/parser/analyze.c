@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.89 1998/10/28 16:06:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.90 1998/12/04 15:34:28 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -396,7 +396,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	 */
 	if ((qry->hasAggs == false) && (qry->havingQual != NULL))
 	{
-		elog(ERROR, "This is not a valid having query!");
+		elog(ERROR, "SELECT/HAVING requires aggregates to be valid");
 		return (Query *) NIL;
 	}
 
@@ -621,7 +621,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 								break;
 
 							default:
-								elog(ERROR, "parser: internal error; unrecognized constraint", NULL);
+								elog(ERROR, "parser: unrecognized constraint (internal error)", NULL);
 								break;
 						}
 						clist = lnext(clist);
@@ -653,16 +653,16 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 
 					case CONSTR_NOTNULL:
 					case CONSTR_DEFAULT:
-						elog(ERROR, "parser: internal error; illegal context for constraint", NULL);
+						elog(ERROR, "parser: illegal context for constraint (internal error)", NULL);
 						break;
 					default:
-						elog(ERROR, "parser: internal error; unrecognized constraint", NULL);
+						elog(ERROR, "parser: unrecognized constraint (internal error)", NULL);
 						break;
 				}
 				break;
 
 			default:
-				elog(ERROR, "parser: internal error; unrecognized node", NULL);
+				elog(ERROR, "parser: unrecognized node (internal error)", NULL);
 		}
 
 		elements = lnext(elements);
@@ -684,7 +684,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 	{
 		constraint = lfirst(dlist);
 		if (nodeTag(constraint) != T_Constraint)
-			elog(ERROR, "parser: internal error; unrecognized deferred node", NULL);
+			elog(ERROR, "parser: unrecognized deferred node (internal error)", NULL);
 
 		if (constraint->contype == CONSTR_PRIMARY)
 		{
@@ -695,7 +695,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 				have_pkey = TRUE;
 		}
 		else if (constraint->contype != CONSTR_UNIQUE)
-			elog(ERROR, "parser: internal error; unrecognized deferred constraint", NULL);
+			elog(ERROR, "parser: unrecognized deferred constraint (internal error)", NULL);
 
 		index = makeNode(IndexStmt);
 
@@ -735,7 +735,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 				columns = lnext(columns);
 			}
 			if (column == NULL)
-				elog(ERROR, "parser: column '%s' in key does not exist", key->name);
+				elog(ERROR, "CREATE TABLE column '%s' in key does not exist", key->name);
 
 			if (constraint->contype == CONSTR_PRIMARY)
 				column->is_not_null = TRUE;
@@ -753,7 +753,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 		}
 
 		if (index->idxname == NULL)
-			elog(ERROR, "parser: unable to construct implicit index for table %s"
+			elog(ERROR, "CREATE TABLE unable to construct implicit index for table %s"
 				 "; name too long", stmt->relname);
 		else
 			elog(NOTICE, "CREATE TABLE/%s will create implicit index %s for table %s",
@@ -918,8 +918,7 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	/*
 	 * The havingQual has a similar meaning as "qual" in the where
 	 * statement. So we can easily use the code from the "where clause"
-	 * with some additional traversals done in
-	 * .../optimizer/plan/planner.c
+	 * with some additional traversals done in optimizer/plan/planner.c
 	 */
 	qry->havingQual = transformWhereClause(pstate, stmt->havingClause);
 
@@ -955,7 +954,7 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	 */
 	if ((qry->hasAggs == false) && (qry->havingQual != NULL))
 	{
-		elog(ERROR, "This is not a valid having query!");
+		elog(ERROR, "SELECT/HAVING requires aggregates to be valid");
 		return (Query *) NIL;
 	}
 

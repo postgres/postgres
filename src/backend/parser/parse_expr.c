@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.36 1998/10/02 16:23:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.37 1998/12/04 15:34:30 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "parser/parse_node.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
+#include "parser/parse_coerce.h"
 #include "utils/builtins.h"
 
 static Node *parser_typecast(Value *expr, TypeName *typename, int32 atttypmod);
@@ -265,7 +266,9 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				foreach(args, fn->args)
 					lfirst(args) = transformExpr(pstate, (Node *) lfirst(args), precedence);
 				result = ParseFuncOrColumn(pstate,
-						   fn->funcname, fn->args, &pstate->p_last_resno,
+										   fn->funcname,
+										   fn->args,
+										   &pstate->p_last_resno,
 										   precedence);
 				break;
 			}
@@ -329,6 +332,146 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				else
 					sublink->oper = NIL;
 				result = (Node *) expr;
+				break;
+			}
+
+		case T_CaseExpr:
+			{
+				CaseExpr   *c = (CaseExpr *) expr;
+				CaseWhen   *w;
+				List	   *args;
+				Oid			ptype;
+				CATEGORY	pcategory;
+
+				/* transform the list of arguments */
+				foreach(args, c->args)
+				{
+					w = lfirst(args);
+					/* shorthand form was specified, so expand... */
+					if (c->arg != NULL)
+					{
+						A_Expr *a = makeNode(A_Expr);
+						a->oper = OP;
+						a->opname = "=";
+						a->lexpr = c->arg;
+						a->rexpr = w->expr;
+						w->expr = (Node *)a;
+					}
+					lfirst(args) = transformExpr(pstate, (Node *) w, precedence);
+
+					if (w->result == NULL)
+					{
+						A_Const *n = makeNode(A_Const);
+						n->val.type = T_Null;
+						w->result = (Node *)n;
+					}
+				}
+
+				if (c->defresult == NULL)
+				{
+					A_Const *n = makeNode(A_Const);
+					n->val.type = T_Null;
+					c->defresult = (Node *)n;
+				}
+				c->defresult = transformExpr(pstate, (Node *) c->defresult, precedence);
+				c->casetype = exprType(c->defresult);
+
+				/* now check types across result clauses... */
+				ptype = c->casetype;
+				pcategory = TypeCategory(ptype);
+				foreach(args, c->args)
+				{
+					Oid			wtype;
+
+					w = lfirst(args);
+					wtype = exprType(w->result);
+					/* move on to next one if no new information... */
+					if (wtype && (wtype != UNKNOWNOID)
+					 && (wtype != ptype))
+					{
+						/* so far, only nulls so take anything... */
+						if (!ptype)
+						{
+							ptype = wtype;
+							pcategory = TypeCategory(ptype);
+						}
+						/* both types in different categories? then not much hope... */
+						else if ((TypeCategory(wtype) != pcategory)
+							|| ((TypeCategory(wtype) == USER_TYPE)
+							 && (TypeCategory(c->casetype) == USER_TYPE)))
+						{
+							elog(ERROR,"CASE/WHEN types '%s' and '%s' not matched",
+								 typeidTypeName(c->casetype), typeidTypeName(wtype));
+						}
+						/* new one is preferred and can convert? then take it... */
+						else if (IsPreferredType(pcategory, wtype)
+								 && can_coerce_type(1, &ptype, &wtype))
+						{
+							ptype = wtype;
+							pcategory = TypeCategory(ptype);
+						}
+					}
+				}
+
+				/* Convert default clause, if necessary */
+				if (c->casetype != ptype)
+				{
+					if (! c->casetype)
+					{
+						/* default clause is NULL,
+						 * so assign preferred type from WHEN clauses... */
+						c->casetype = ptype;
+					}
+					else if (can_coerce_type(1, &c->casetype, &ptype))
+					{
+						c->defresult = coerce_type(pstate, c->defresult, c->casetype, ptype);
+						c->casetype = ptype;
+					}
+					else
+					{
+						elog(ERROR,"CASE/ELSE unable to convert to type %s",
+							 typeidTypeName(ptype));
+					}
+				}
+
+				/* Convert when clauses, if not null and if necessary */
+				foreach(args, c->args)
+				{
+					Oid		wtype;
+
+					w = lfirst(args);
+					wtype = exprType(w->result);
+					/* only bother with conversion if not NULL and different type... */
+					if (wtype && (wtype != ptype))
+					{
+						if (can_coerce_type(1, &wtype, &ptype))
+						{
+							w->result = coerce_type(pstate, w->result, wtype, ptype);
+						}
+						else
+						{
+							elog(ERROR,"CASE/WHEN unable to convert to type %s",
+								 typeidTypeName(ptype));
+						}
+					}
+				}
+
+				result = expr;
+				break;
+			}
+
+		case T_CaseWhen:
+			{
+				CaseWhen   *w = (CaseWhen *) expr;
+
+				w->expr = transformExpr(pstate, (Node *) w->expr, precedence);
+				if (exprType(w->expr) != BOOLOID)
+					elog(ERROR,"WHEN clause must have a boolean result");
+
+				/* result is NULL for NULLIF() construct - thomas 1998-11-11 */
+				if (w->result != NULL)
+					w->result = transformExpr(pstate, (Node *) w->result, precedence);
+				result = expr;
 				break;
 			}
 
@@ -423,6 +566,9 @@ exprType(Node *expr)
 {
 	Oid			type = (Oid) 0;
 
+	if (!expr)
+		return type;
+
 	switch (nodeTag(expr))
 	{
 		case T_Func:
@@ -451,6 +597,12 @@ exprType(Node *expr)
 			break;
 		case T_SubLink:
 			type = BOOLOID;
+			break;
+		case T_CaseExpr:
+			type = ((CaseExpr *) expr)->casetype;
+			break;
+		case T_CaseWhen:
+			type = exprType(((CaseWhen *) expr)->result);
 			break;
 		case T_Ident:
 			/* is this right? */

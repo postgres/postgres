@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.37 1998/10/14 15:56:43 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.38 1998/12/04 15:34:29 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -208,6 +208,8 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <list>	row_descriptor, row_list, c_list, c_expr
 %type <node>	row_expr
 %type <str>		row_op
+%type <node>	case_expr, case_arg, when_clause, case_default
+%type <list>	when_clause_list
 %type <ival>	sub_type
 %type <list>	OptCreateAs, CreateAsList
 %type <node>	CreateAsElement
@@ -259,26 +261,27 @@ Oid	param_type(int t); /* used in parse_expr.c */
 /* Keywords (in SQL92 reserved words) */
 %token	ABSOLUTE, ACTION, ADD, ALL, ALTER, AND, ANY, AS, ASC,
 		BEGIN_TRANS, BETWEEN, BOTH, BY,
-		CASCADE, CAST, CHAR, CHARACTER, CHECK, CLOSE, COLLATE, COLUMN, COMMIT, 
+		CASCADE, CASE, CAST, CHAR, CHARACTER, CHECK, CLOSE,
+		COALESCE, COLLATE, COLUMN, COMMIT, 
 		CONSTRAINT, CREATE, CROSS, CURRENT, CURRENT_DATE, CURRENT_TIME, 
 		CURRENT_TIMESTAMP, CURRENT_USER, CURSOR,
 		DAY_P, DECIMAL, DECLARE, DEFAULT, DELETE, DESC, DISTINCT, DOUBLE, DROP,
-		END_TRANS, EXECUTE, EXISTS, EXTRACT,
+		ELSE, END_TRANS, EXECUTE, EXISTS, EXTRACT,
 		FALSE_P, FETCH, FLOAT, FOR, FOREIGN, FROM, FULL,
 		GRANT, GROUP, HAVING, HOUR_P,
 		IN, INNER_P, INSENSITIVE, INSERT, INTERVAL, INTO, IS,
 		JOIN, KEY, LANGUAGE, LEADING, LEFT, LIKE, LOCAL,
 		MATCH, MINUTE_P, MONTH_P, NAMES,
-		NATIONAL, NATURAL, NCHAR, NEXT, NO, NOT, NULL_P, NUMERIC,
+		NATIONAL, NATURAL, NCHAR, NEXT, NO, NOT, NULLIF, NULL_P, NUMERIC,
 		OF, ON, ONLY, OPTION, OR, ORDER, OUTER_P,
 		PARTIAL, POSITION, PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE, PUBLIC,
 		READ, REFERENCES, RELATIVE, REVOKE, RIGHT, ROLLBACK,
 		SCROLL, SECOND_P, SELECT, SET, SUBSTRING,
-		TABLE, TIME, TIMESTAMP, TIMEZONE_HOUR, TIMEZONE_MINUTE,
+		TABLE, THEN, TIME, TIMESTAMP, TIMEZONE_HOUR, TIMEZONE_MINUTE,
 		TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
 		UNION, UNIQUE, UPDATE, USER, USING,
 		VALUES, VARCHAR, VARYING, VIEW,
-		WHERE, WITH, WORK, YEAR_P, ZONE
+		WHEN, WHERE, WITH, WORK, YEAR_P, ZONE
 
 /* Keywords (in SQL3 reserved words) */
 %token	TRIGGER
@@ -2861,7 +2864,7 @@ opt_array_bounds:  '[' ']' nest_array_bounds
 				{  $$ = lcons(makeInteger(-1), $3); }
 		| '[' Iconst ']' nest_array_bounds
 				{  $$ = lcons(makeInteger($2), $4); }
-		| /* EMPTY */
+		| /*EMPTY*/
 				{  $$ = NIL; }
 		;
 
@@ -3276,14 +3279,14 @@ sub_type:  ANY								{ $$ = ANY_SUBLINK; }
 		| ALL								{ $$ = ALL_SUBLINK; }
 		;
 
-/*
+/* General expressions
  * This is the heart of the expression syntax.
  * Note that the BETWEEN clause looks similar to a boolean expression
  *  and so we must define b_expr which is almost the same as a_expr
  *  but without the boolean expressions.
- * All operations are allowed in a BETWEEN clause if surrounded by parens.
+ * All operations/expressions are allowed in a BETWEEN clause
+ *  if surrounded by parens.
  */
-
 a_expr:  attr opt_indirection
 				{
 					$1->indirection = $2;
@@ -3895,14 +3898,15 @@ a_expr:  attr opt_indirection
 				{	$$ = makeA_Expr(OR, NULL, $1, $3); }
 		| NOT a_expr
 				{	$$ = makeA_Expr(NOT, NULL, NULL, $2); }
+		| case_expr
+				{	$$ = $1; }
 		;
 
-/*
+/* Restricted expressions
  * b_expr is a subset of the complete expression syntax
  *  defined by a_expr. b_expr is used in BETWEEN clauses
  *  to eliminate parser ambiguities stemming from the AND keyword.
  */
-
 b_expr:  attr opt_indirection
 				{
 					$1->indirection = $2;
@@ -4150,7 +4154,7 @@ opt_indirection:  '[' a_expr ']' opt_indirection
 					ai->uidx = $4;
 					$$ = lcons(ai, $6);
 				}
-		| /* EMPTY */
+		| /*EMPTY*/
 				{	$$ = NIL; }
 		;
 
@@ -4169,7 +4173,7 @@ extract_list:  extract_arg FROM a_expr
 					n->val.val.str = $1;
 					$$ = lappend(lcons((Node *)n,NIL), $3);
 				}
-		| /* EMPTY */
+		| /*EMPTY*/
 				{	$$ = NIL; }
 		;
 
@@ -4180,7 +4184,7 @@ extract_arg:  datetime						{ $$ = $1; }
 
 position_list:  position_expr IN position_expr
 				{	$$ = makeList($3, $1, -1); }
-		| /* EMPTY */
+		| /*EMPTY*/
 				{	$$ = NIL; }
 		;
 
@@ -4314,13 +4318,13 @@ substr_list:  expr_list substr_from substr_for
 				{
 					$$ = nconc(nconc($1,$2),$3);
 				}
-		| /* EMPTY */
+		| /*EMPTY*/
 				{	$$ = NIL; }
 		;
 
 substr_from:  FROM expr_list
 				{	$$ = $2; }
-		| /* EMPTY */
+		| /*EMPTY*/
 				{
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_Integer;
@@ -4331,7 +4335,7 @@ substr_from:  FROM expr_list
 
 substr_for:  FOR expr_list
 				{	$$ = $2; }
-		| /* EMPTY */
+		| /*EMPTY*/
 				{	$$ = NIL; }
 		;
 
@@ -4377,6 +4381,94 @@ not_in_expr_nodes:  AexprConst
 				{	$$ = makeA_Expr(AND, NULL, $1,
 						makeA_Expr(OP, "<>", lfirst(saved_In_Expr), $3));
 				}
+		;
+
+/* Case clause
+ * Define SQL92-style case clause.
+ * Allow all four forms described in the standard:
+ * - Full specification
+ *  CASE WHEN a = b THEN c ... ELSE d END
+ * - Implicit argument
+ *  CASE a WHEN b THEN c ... ELSE d END
+ * - Conditional NULL
+ *  NULLIF(x,y)
+ *  same as CASE WHEN x = y THEN NULL ELSE x END
+ * - Conditional substitution from list, use first non-null argument
+ *  COALESCE(a,b,...)
+ * same as CASE WHEN a IS NOT NULL THEN a WHEN b IS NOT NULL THEN b ... END
+ * - thomas 1998-11-09
+ */
+case_expr:  CASE case_arg when_clause_list case_default END_TRANS
+				{
+					CaseExpr *c = makeNode(CaseExpr);
+					c->arg = $2;
+					c->args = $3;
+					c->defresult = $4;
+					$$ = (Node *)c;
+				}
+		| NULLIF '(' a_expr ',' a_expr ')'
+				{
+					CaseExpr *c = makeNode(CaseExpr);
+					CaseWhen *w = makeNode(CaseWhen);
+					c->args = lcons(w, NIL);
+					c->defresult = $3;
+					w->expr = makeA_Expr(OP, "=", $3, $5);
+					$$ = (Node *)c;
+
+					elog(NOTICE,"NULLIF() not yet fully implemented");
+				}
+		| COALESCE '(' expr_list ')'
+				{
+					CaseExpr *c = makeNode(CaseExpr);
+					CaseWhen *w;
+					List *l;
+					foreach (l,$3)
+					{
+						w = makeNode(CaseWhen);
+						w->expr = makeA_Expr(NOTNULL, NULL, lfirst(l), NULL);
+						w->result = lfirst(l);
+						c->args = lappend(c->args, w);
+					}
+					$$ = (Node *)c;
+
+					elog(NOTICE,"COALESCE() not yet fully implemented");
+				}
+		;
+
+when_clause_list:  when_clause_list when_clause
+				{ $$ = lappend($1, $2); }
+		| when_clause
+				{ $$ = lcons($1, NIL); }
+		;
+
+when_clause:  WHEN a_expr THEN a_expr_or_null
+				{
+					CaseWhen *w = makeNode(CaseWhen);
+					w->expr = $2;
+					w->result = $4;
+					$$ = (Node *)w;
+				}
+		;
+
+case_default:  ELSE a_expr_or_null				{ $$ = $2; }
+		| /*EMPTY*/								{ $$ = NULL; }
+		;
+
+case_arg:  attr opt_indirection
+				{
+					$1->indirection = $2;
+					$$ = (Node *)$1;
+				}
+		| ColId
+				{
+					/* could be a column name or a relation_name */
+					Ident *n = makeNode(Ident);
+					n->name = $1;
+					n->indirection = NULL;
+					$$ = (Node *)n;
+				}
+		| /*EMPTY*/
+				{	$$ = NULL; }
 		;
 
 attr:  relation_name '.' attrs
@@ -4512,7 +4604,7 @@ res_target_el2:  a_expr_or_null AS ColLabel
 		;
 
 opt_id:  ColId									{ $$ = $1; }
-		| /* EMPTY */							{ $$ = NULL; }
+		| /*EMPTY*/								{ $$ = NULL; }
 		;
 
 relation_name:	SpecialRuleRelation
@@ -4723,12 +4815,16 @@ ColLabel:  ColId						{ $$ = $1; }
 		| ABORT_TRANS					{ $$ = "abort"; }
 		| ANALYZE						{ $$ = "analyze"; }
 		| BINARY						{ $$ = "binary"; }
+		| CASE							{ $$ = "case"; }
 		| CLUSTER						{ $$ = "cluster"; }
+		| COALESCE						{ $$ = "coalesce"; }
 		| CONSTRAINT					{ $$ = "constraint"; }
 		| COPY							{ $$ = "copy"; }
 		| CROSS							{ $$ = "cross"; }
 		| CURRENT						{ $$ = "current"; }
 		| DO							{ $$ = "do"; }
+		| ELSE							{ $$ = "else"; }
+		| END_TRANS						{ $$ = "end"; }
 		| EXPLAIN						{ $$ = "explain"; }
 		| EXTEND						{ $$ = "extend"; }
 		| FALSE_P						{ $$ = "false"; }
@@ -4740,6 +4836,7 @@ ColLabel:  ColId						{ $$ = $1; }
 		| MOVE							{ $$ = "move"; }
 		| NEW							{ $$ = "new"; }
 		| NONE							{ $$ = "none"; }
+		| NULLIF						{ $$ = "nullif"; }
 		| ORDER							{ $$ = "order"; }
 		| POSITION						{ $$ = "position"; }
 		| PRECISION						{ $$ = "precision"; }
@@ -4747,10 +4844,12 @@ ColLabel:  ColId						{ $$ = $1; }
 		| SETOF							{ $$ = "setof"; }
 		| SHOW							{ $$ = "show"; }
 		| TABLE							{ $$ = "table"; }
+		| THEN							{ $$ = "then"; }
 		| TRANSACTION					{ $$ = "transaction"; }
 		| TRUE_P						{ $$ = "true"; }
 		| VACUUM						{ $$ = "vacuum"; }
 		| VERBOSE						{ $$ = "verbose"; }
+		| WHEN							{ $$ = "when"; }
 		;
 
 SpecialRuleRelation:  CURRENT

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.25 1998/10/21 16:21:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.26 1998/12/04 15:34:36 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,6 @@
 #include "catalog/pg_type.h"
 
 
-
 static RewriteInfo *gatherRewriteMeta(Query *parsetree,
 				  Query *rule_action,
 				  Node *rule_qual,
@@ -53,17 +52,6 @@ static void modifyAggregChangeVarnodes(Node **nodePtr, int rt_index, int new_ind
 static void modifyAggregDropQual(Node **nodePtr, Node *orignode, Expr *expr);
 static SubLink *modifyAggregMakeSublink(Expr *origexp, Query *parsetree);
 static void modifyAggregQual(Node **nodePtr, Query *parsetree);
-
-
-
-
-
-
-
-
-
-
-
 
 
 static Query *fireRIRrules(Query *parsetree);
@@ -287,6 +275,46 @@ rangeTableEntry_used(Node *node, int rt_index, int sublevels_up)
 						(Node *)(sub->subselect),
 						rt_index,
 						sublevels_up + 1))
+					return TRUE;
+
+				return FALSE;
+			}
+			break;
+
+		case T_CaseExpr:
+			{
+				CaseExpr	*exp = (CaseExpr *)node;
+
+				if (rangeTableEntry_used(
+						(Node *)(exp->args),
+						rt_index,
+						sublevels_up))
+					return TRUE;
+
+				if (rangeTableEntry_used(
+						(Node *)(exp->defresult),
+						rt_index,
+						sublevels_up))
+					return TRUE;
+
+				return FALSE;
+			}
+			break;
+
+		case T_CaseWhen:
+			{
+				CaseWhen	*when = (CaseWhen *)node;
+
+				if (rangeTableEntry_used(
+						(Node *)(when->expr),
+						rt_index,
+						sublevels_up))
+					return TRUE;
+
+				if (rangeTableEntry_used(
+						(Node *)(when->result),
+						rt_index,
+						sublevels_up))
 					return TRUE;
 
 				return FALSE;
@@ -1055,10 +1083,12 @@ modifyAggregMakeSublink(Expr *origexp, Query *parsetree)
 	Expr		*exp = copyObject(origexp);
 
 	if (nodeTag(nth(0, exp->args)) == T_Aggreg)
+	{
 		if (nodeTag(nth(1, exp->args)) == T_Aggreg)
 			elog(ERROR, "rewrite: comparision of 2 aggregate columns not supported");
 		else
 			elog(ERROR, "rewrite: aggregate column of view must be at rigth side in qual");
+	}
 
 	aggreg = (Aggreg *)nth(1, exp->args);
 	target	= (Var *)(aggreg->target);
@@ -1186,6 +1216,33 @@ modifyAggregQual(Node **nodePtr, Query *parsetree)
 
 				*nodePtr = (Node *)sub;
 				parsetree->hasSubLinks = TRUE;
+			}
+			break;
+
+		case T_CaseExpr:
+			{
+				/* We're calling recursively,
+				 * and this routine knows how to handle lists
+				 * so let it do the work to handle the WHEN clauses... */
+				modifyAggregQual(
+						(Node **)(&(((CaseExpr *)node)->args)),
+						parsetree);
+
+				modifyAggregQual(
+						(Node **)(&(((CaseExpr *)node)->defresult)),
+						parsetree);
+			}
+			break;
+
+		case T_CaseWhen:
+			{
+				modifyAggregQual(
+						(Node **)(&(((CaseWhen *)node)->expr)),
+						parsetree);
+
+				modifyAggregQual(
+						(Node **)(&(((CaseWhen *)node)->result)),
+						parsetree);
 			}
 			break;
 
@@ -1825,6 +1882,10 @@ fireRIRonSubselect(Node *node)
 
 				sub->subselect = (Node *) qry;
 			}
+			break;
+
+		case T_CaseExpr:
+		case T_CaseWhen:
 			break;
 
 		case T_Query:
