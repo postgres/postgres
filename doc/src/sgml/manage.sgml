@@ -11,12 +11,14 @@ This section is currently a thinly disguised copy of the Tutorial. Needs to be a
 </Para>
 
 <Para>
-Although the <FirstTerm>site administrator</FirstTerm> is responsible for overall management of the
-<ProductName>Postgres</ProductName> installation, some databases within the
-installation may be managed by another person, designated the <FirstTerm>database administrator</FirstTerm>.
-This assignment of responsibilities occurs when a database is created. A user may be assigned
-explicit privileges to create databases and/or to create new users. A user assigned both privileges
-can perform most administrative task within <ProductName>Postgres</ProductName>, but will
+Although the <FirstTerm>site administrator</FirstTerm> is responsible for overall management 
+of the <ProductName>Postgres</ProductName> installation, some databases within the
+installation may be managed by another person, 
+designated the <FirstTerm>database administrator</FirstTerm>.
+This assignment of responsibilities occurs when a database is created. 
+A user may be assigned explicit privileges to create databases and/or to create new users. 
+A user assigned both privileges can perform most administrative task 
+within <ProductName>Postgres</ProductName>, but will
 not by default have the same operating system privileges as the site administrator.
 </Para>
 
@@ -82,18 +84,27 @@ occurs through the database backend, so that any location specified must
 be accessible by the backend.
 
 <Para>
- Either an absolute path name or an environment variable
-may be specified as a location.
-Any environment variable specifying an alternate location must have
-been defined before the backend was started.
+ Alternate database locations are created and referenced by an environment variable 
+which gives the absolute path to the intended storage location.  
+This environment variable must have been defined before the backend was started 
+and the location it points to must be writable by the postgres administrator account.
 Consult with the site administrator
-regarding preconfigured alternate database locations.
+regarding preconfigured alternate database locations.  
+Any valid environment variable name may be used to reference an alternate location, 
+although using variable names with a prefix of <quote>PGDATA</quote> is recommended 
+to avoid confusion 
+and conflict with other variables.
 
 <Note>
 <Para>
- The environment variable style of specification
+ In previous versions of <ProductName>Postgres</ProductName>, 
+it was also permissable to use an absolute path name to specify 
+an alternate storage location.  
+Although the environment variable style of specification
 is to be preferred since it allows the site administrator more flexibility in
-managing disk storage.
+managing disk storage, it is also possible to use an absolute path 
+to specify an alternate location.  
+The administrator's guide discusses how to enable this feature.
 </Para>
 </Note>
 
@@ -103,45 +114,29 @@ any path or environment variable specified has some
 additional path fields appended.
 
 <Para>
-Alternate database locations must be prepared by running <Application>initlocation</Application>.
+Alternate database locations must be prepared by running 
+<Application>initlocation</Application>.
 
 <Para>
-To create a data storage area in <FileName>/alt/postgres/data</FileName>, ensure
-that <FileName>/alt/postgres</FileName> already exists.
-From the command line, type
-<ProgramListing>
-% initlocation /alt/postgres/data
-Creating Postgres database system directory /alt/postgres/data
-
-Creating Postgres database system directory /alt/postgres/data/base
-
-</ProgramListing>
-
-<Para>
-To do the same using an environment variable PGDATA2, type
+To create a data storage area using the environment variable 
+<envar>PGDATA2</envar> (for this example set to <filename>/alt/postgres</filename>), 
+ensure that <FileName>/alt/postgres</FileName> already exists and is writable by 
+the Postgres administrator account.
+Then, from the command line, type
 <ProgramListing>
 % initlocation $PGDATA2
 Creating Postgres database system directory /alt/postgres/data
-
 Creating Postgres database system directory /alt/postgres/data/base
-
 </ProgramListing>
 
 <Para>
-To create a database in the alternate storage area <FileName>/alt/postgres/data</FileName>
-from the command line,
-type
-<ProgramListing>
-% createdb -D /alt/postgres/data mydb
-</ProgramListing>
-
-or
-
+To create a database in the alternate storage area <envar>PGDATA2<envar>
+from the command line, use the following command: 
 <ProgramListing>
 % createdb -D PGDATA2 mydb
 </ProgramListing>
 
-and to do the same from within <Application>psql</Application> type
+To do the same from within <Application>psql</Application> type
 <ProgramListing>
 * CREATE DATABASE mydb WITH LOCATION = 'PGDATA2';
 </ProgramListing>
@@ -195,7 +190,8 @@ running the <ProductName>Postgres</ProductName>  terminal  monitor  programs  (e
 </ListItem>
 </ItemizedList>
 
-You might want to start up <Application>psql</Application>, to try out the examples in this manual.
+You might want to start up <Application>psql</Application>, 
+to try out the examples in this manual.
  It can be activated for the <Database>mydb</Database>
      database by typing the command:
 <ProgramListing>
@@ -237,7 +233,8 @@ mydb=> \g
 
      This  tells  the  server  to process the query.  If you
      terminate your query with a semicolon, the  <Quote>\g</Quote> is  not
-     necessary.   <Application>psql</Application> will automatically process semicolon terminated queries.
+     necessary.   
+<Application>psql</Application> will automatically process semicolon terminated queries.
      To read queries from a file,  say  myFile,  instead  of
      entering them interactively, type:
 <ProgramListing>

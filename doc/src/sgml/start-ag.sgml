@@ -75,16 +75,32 @@ occurs through the database backend, so that any location specified must
 be accessible by the backend.
 
 <Para>
- Either an absolute path name or an environment variable
-may be specified as a location. Note that for security and integrity reasons,
-all paths and environment variables so specified have some
-additional path fields appended.
+ Alternate database locations are created and referenced by an environment variable
+ which gives the absolute path to the intended storage location.
+This environment variable must have been defined before the backend was started
+and must be writable by the postgres administrator account.
+Any valid environment variable name may be used to reference an alternate 
+location, although using variable name with a prefix of PGDATA is recommended
+to avoid confusion and conflict with other variables.
 
 <Note>
 <Para>
- The environment variable style of specification
+ In previous versions of <ProductName>Postgres</ProductName>, 
+it was also permissable to use an absolute path name to specify an alternate storage location.
+The environment variable style of specification
 is to be preferred since it allows the site administrator more flexibility in
 managing disk storage.
+If you prefer using absolute paths, you may do so by defining 
+"ALLOW_ABSOLUTE_DBPATHS" and recompiling <ProductName>Postgres</ProductName>
+ To do this, either add this line
+<ProgramListing>
+#define ALLOW_ABSOLUTE_DBPATHS 1
+</ProgramListing>
+to the file <filename>src/include/config.h</filename>, or by specifying
+<ProgramListing>
+ CFLAGS+= -DALLOW_ABSOLUTE_DBPATHS
+</ProgramListing>
+in your <filename>Makefile.custom</filename>.
 </Para>
 </Note>
 
@@ -92,24 +108,29 @@ managing disk storage.
 Remember that database creation is actually performed by the database backend.
 Therefore, any environment variable specifying an alternate location must have
 been defined before the backend was started. To define an alternate location
-PGDATA2 pointing to <filename>/home/postgres/data</filename>, type
+PGDATA2 pointing to <filename>/home/postgres/data</filename>, first type
 <ProgramListing>
 % setenv PGDATA2 /home/postgres/data
 </ProgramListing>
-
-<Para>
+to define the environment variable to be used with subsequent commands.
 Usually, you will want to define this variable in the 
 <ProductName>Postgres</ProductName> superuser's
 <filename>.profile</filename>
 or
 <filename>.cshrc</filename>
-initialization file to ensure that it is defined upon system startup.
+initialization file to ensure that it is defined upon system startup. 
+Any environment variable can be used to reference alternate location, 
+although it is preferred that the variables be prefixed with "PGDATA" 
+to eliminate confusion and the possibility of conflicting with or 
+overwriting other variables.
 
 <Para>
-To create a data storage area in <filename>/home/postgres/data</filename>, ensure
-that <filename>/home/postgres</filename> already exists and is writable.
-From the command line, type
+To create a data storage area in PGDATA2, ensure
+that <filename>/home/postgres</filename> already exists and is writable 
+by the postgres administrator.
+Then from the command line, type
 <ProgramListing>
+% setenv PGDATA2 /home/postgres/data
 % initlocation $PGDATA2
 Creating Postgres database system directory /home/postgres/data
 
@@ -132,8 +153,7 @@ To test the new location, create a database <Database>test</Database> by typing
 <Para>
      Assuming that  your  site  administrator  has  properly
      started  the  <Application>postmaster</Application>  process 
-and authorized you to
-     use the database, you (as a user) may begin to start up
+and authorized you to use the database, you (as a user) may begin to start up
      applications.   As previously mentioned, you should add
      <filename>/usr/local/pgsql/bin</filename> to your  shell  search  path.
      In  most  cases,  this  is all you should have to do in
@@ -147,7 +167,7 @@ and authorized you to
 <ProgramListing>
 connectDB() failed: Is the postmaster running at 'localhost' on port '5432'?
 </ProgramListing>
-     it is usually because either the <Application>postmaster</Application>  is  not  running,
+     it is usually because either the <Application>postmaster</Application> is not running,
  or you are attempting to connect to the wrong server host.
      If you get the following error message:
 <ProgramListing>
