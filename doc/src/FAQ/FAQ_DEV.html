@@ -76,6 +76,7 @@
     make_mkid       make mkid ID files
     mkldexport      create AIX exports file
     pgindent        indents C source files
+    pgjindent       indents Java source files
     pginclude       scripts for adding/removing include files
     unused_oids     in pgsql/src/include/catalog
 </PRE>
@@ -112,7 +113,7 @@
     Others prefer <I>glimpse.</I> 
 
     <P><I>make_diff</I> has tools to create patch diff files that can
-    be applied to the distribution.  This produces context diffs, which
+    be applied to the distribution. This produces context diffs, which
     is our preferred format.</P>
 
     <P>Our standard format is to indent each code level with one tab,
@@ -163,10 +164,14 @@
     consistent. Comment blocks that need specific line breaks should be
     formatted as <I>block comments,</I> where the comment starts as
     <CODE>/*------</CODE>. These comments will not be reformatted in
-    any way. <I>pginclude</I> contains scripts used to add needed
-    #include's to include files, and removed unneeded #include's. When
-    adding system types, you will need to assign oids to them. There is
-    also a script called <I>unused_oids</I> in
+    any way.</P>
+
+    <P><I>pginclude</I> contains scripts used to add needed
+    <CODE>#include</CODE>'s to include files, and removed unneeded
+    <CODE>#include</CODE>'s.</P>
+
+    <P>When adding system types, you will need to assign oids to them.
+    There is also a script called <I>unused_oids</I> in
     <I>pgsql/src/include/catalog</I> that shows the unused oids.</P>
 
     <H3><A name="2">2</A>) What books are good for developers?</H3>
