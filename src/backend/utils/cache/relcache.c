@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.68 1999/09/02 02:57:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.69 1999/09/04 18:42:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,8 @@
 static void RelationFlushRelation(Relation *relationPtr,
 					  bool onlyFlushReferenceCountZero);
 static Relation RelationNameCacheGetRelation(char *relationName);
+static void RelationCacheAbortWalker(Relation *relationPtr,
+									 int dummy);
 static void init_irels(void);
 static void write_irels(void);
 
@@ -213,14 +215,16 @@ static void RelationFlushIndexes(Relation *r, Oid accessMethodId);
 static HeapTuple ScanPgRelation(RelationBuildDescInfo buildinfo);
 static HeapTuple scan_pg_rel_seq(RelationBuildDescInfo buildinfo);
 static HeapTuple scan_pg_rel_ind(RelationBuildDescInfo buildinfo);
-static Relation AllocateRelationDesc(u_int natts, Form_pg_class relp);
+static Relation AllocateRelationDesc(Relation relation, u_int natts,
+									 Form_pg_class relp);
 static void RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
 					   Relation relation, u_int natts);
 static void build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 				  Relation relation, u_int natts);
 static void build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 				  Relation relation, u_int natts);
-static Relation RelationBuildDesc(RelationBuildDescInfo buildinfo);
+static Relation RelationBuildDesc(RelationBuildDescInfo buildinfo,
+								  Relation oldrelation);
 static void IndexedAccessMethodInitialize(Relation relation);
 static void AttrDefaultFetch(Relation relation);
 static void RelCheckFetch(Relation relation);
@@ -405,12 +409,16 @@ scan_pg_rel_ind(RelationBuildDescInfo buildinfo)
  *
  *		This is used to allocate memory for a new relation descriptor
  *		and initialize the rd_rel field.
+ *
+ *		If 'relation' is NULL, allocate a new RelationData object.
+ *		If not, reuse the given object (that path is taken only when
+ *		we have to rebuild a relcache entry during RelationFlushRelation).
  * ----------------
  */
 static Relation
-AllocateRelationDesc(u_int natts, Form_pg_class relp)
+AllocateRelationDesc(Relation relation, u_int natts,
+					 Form_pg_class relp)
 {
-	Relation	relation;
 	Size		len;
 	Form_pg_class relationForm;
 
@@ -424,17 +432,21 @@ AllocateRelationDesc(u_int natts, Form_pg_class relp)
 	memmove((char *) relationForm, (char *) relp, CLASS_TUPLE_SIZE);
 
 	/* ----------------
-	 *	allocate space for new relation descriptor
+	 *	allocate space for new relation descriptor, if needed
 	 */
-	len = sizeof(RelationData) + 10;	/* + 10 is voodoo XXX mao */
+	len = sizeof(RelationData);
 
-	relation = (Relation) palloc(len);
+	if (relation == NULL)
+		relation = (Relation) palloc(len);
 
 	/* ----------------
 	 *	clear new reldesc
 	 * ----------------
 	 */
 	MemSet((char *) relation, 0, len);
+
+	/* make sure relation is marked as having no open file yet */
+	relation->rd_fd = -1;
 
 	/* initialize attribute tuple form */
 	relation->rd_att = CreateTemplateTupleDesc(natts);
@@ -737,6 +749,11 @@ RelationBuildRuleLock(Relation relation)
 /* --------------------------------
  *		RelationBuildDesc
  *
+ *		Build a relation descriptor --- either a new one, or by
+ *		recycling the given old relation object.  The latter case
+ *		supports rebuilding a relcache entry without invalidating
+ *		pointers to it.
+ *
  *		To build a relation descriptor, we have to allocate space,
  *		open the underlying unix file and initialize the following
  *		fields:
@@ -758,7 +775,8 @@ RelationBuildRuleLock(Relation relation)
  * --------------------------------
  */
 static Relation
-RelationBuildDesc(RelationBuildDescInfo buildinfo)
+RelationBuildDesc(RelationBuildDescInfo buildinfo,
+				  Relation oldrelation)
 {
 	File		fd;
 	Relation	relation;
@@ -803,7 +821,7 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo)
 	 *	initialize relation->rd_rel and get the access method id.
 	 * ----------------
 	 */
-	relation = AllocateRelationDesc(natts, relp);
+	relation = AllocateRelationDesc(oldrelation, natts, relp);
 	relam = relation->rd_rel->relam;
 
 	/* ----------------
@@ -833,9 +851,6 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo)
 
 	/* ----------------
 	 *	initialize the tuple descriptor (relation->rd_att).
-	 *	remember, rd_att is an array of attribute pointers that lives
-	 *	off the end of the relation descriptor structure so space was
-	 *	already allocated for it by AllocateRelationDesc.
 	 * ----------------
 	 */
 	RelationBuildTupleDesc(buildinfo, relation, natts);
@@ -1153,7 +1168,7 @@ RelationIdGetRelation(Oid relationId)
 	buildinfo.infotype = INFO_RELID;
 	buildinfo.i.info_id = relationId;
 
-	rd = RelationBuildDesc(buildinfo);
+	rd = RelationBuildDesc(buildinfo, NULL);
 	return rd;
 }
 
@@ -1193,7 +1208,7 @@ RelationNameGetRelation(char *relationName)
 	buildinfo.infotype = INFO_RELNAME;
 	buildinfo.i.info_name = relationName;
 
-	rd = RelationBuildDesc(buildinfo);
+	rd = RelationBuildDesc(buildinfo, NULL);
 	return rd;
 }
 
@@ -1236,7 +1251,7 @@ RelationClose(Relation relation)
 /* --------------------------------
  * RelationFlushRelation
  *
- *	 Actually blows away a relation... RelationFree doesn't do
+ *	 Actually blows away a relation cache entry... RelationFree doesn't do
  *	 anything anymore.
  * --------------------------------
  */
@@ -1244,50 +1259,74 @@ static void
 RelationFlushRelation(Relation *relationPtr,
 					  bool onlyFlushReferenceCountZero)
 {
-	MemoryContext oldcxt;
 	Relation	relation = *relationPtr;
+	MemoryContext oldcxt;
+
+	/*
+	 * Make sure smgr and lower levels close the relation's files,
+	 * if they weren't closed already.  We do this unconditionally;
+	 * if the relation is not deleted, the next smgr access should
+	 * reopen the files automatically.  This ensures that the low-level
+	 * file access state is updated after, say, a vacuum truncation.
+	 * NOTE: this call is a no-op if the relation's smgr file is already
+	 * closed or unlinked.
+	 */
+	smgrclose(DEFAULT_SMGR, relation);
 
 	if (relation->rd_isnailed)
 	{
-		/* this is a nailed special relation for bootstraping */
+		/* this is a nailed special relation for bootstrapping */
 		return;
 	}
 
+	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+
+	/* Remove relation from hash tables
+	 *
+	 * Note: we might be reinserting it momentarily, but we must not have it
+	 * visible in the hash tables until it's valid again, so don't try to
+	 * optimize this away...
+	 */
+	RelationCacheDelete(relation);
+
+	/* Clear out catcache's entries for this relation */
+	SystemCacheRelationFlushed(RelationGetRelid(relation));
+
+	/* Free all the subsidiary data structures of the relcache entry */
+	FreeTupleDesc(relation->rd_att);
+	FreeTriggerDesc(relation);
+	pfree(RelationGetLockInfo(relation));
+	pfree(RelationGetForm(relation));
+
+	/* If we're really done with the relcache entry, blow it away.
+	 * But if someone is still using it, reconstruct the whole deal
+	 * without moving the physical RelationData record (so that the
+	 * someone's pointer is still valid).  Preserve ref count, too.
+	 */
 	if (!onlyFlushReferenceCountZero ||
 		RelationHasReferenceCountZero(relation))
 	{
-		oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
-
-		/* make sure smgr and lower levels close the relation's files,
-		 * if they weren't closed already
-		 */
-		smgrclose(DEFAULT_SMGR, relation);
-
-		RelationCacheDelete(relation);
-
-		FreeTupleDesc(relation->rd_att);
-		SystemCacheRelationFlushed(RelationGetRelid(relation));
-
-		FreeTriggerDesc(relation);
-
-#ifdef NOT_USED
-		if (relation->rd_rules)
-		{
-			int			j;
-
-			for (j = 0; j < relation->rd_rules->numLocks; j++)
-				pfree(relation->rd_rules->rules[j]);
-			pfree(relation->rd_rules->rules);
-			pfree(relation->rd_rules);
-		}
-#endif
-
-		pfree(RelationGetLockInfo(relation));
-		pfree(RelationGetForm(relation));
 		pfree(relation);
-
-		MemoryContextSwitchTo(oldcxt);
 	}
+	else
+	{
+		uint16		old_refcnt = relation->rd_refcnt;
+		RelationBuildDescInfo buildinfo;
+
+		buildinfo.infotype = INFO_RELID;
+		buildinfo.i.info_id = RelationGetRelid(relation);
+
+		if (RelationBuildDesc(buildinfo, relation) != relation)
+		{
+			/* Should only get here if relation was deleted */
+			pfree(relation);
+			elog(ERROR, "RelationFlushRelation: relation %u deleted while still in use",
+				 buildinfo.i.info_id);
+		}
+		RelationSetReferenceCount(relation, old_refcnt);
+	}
+
+	MemoryContextSwitchTo(oldcxt);
 }
 
 /* --------------------------------
@@ -1442,6 +1481,36 @@ RelationCacheInvalidate(bool onlyFlushReferenceCountZero)
 	}
 }
 
+/*
+ * RelationCacheAbort
+ *
+ *	Clean up the relcache at transaction abort.
+ *
+ *	What we need to do here is reset relcache entry ref counts to
+ *	their normal not-in-a-transaction state.  A ref count may be
+ *	too high because some routine was exited by elog() between
+ *	incrementing and decrementing the count.
+ *
+ *	XXX Maybe we should do this at transaction commit, too, in case
+ *	someone forgets to decrement a refcount in a non-error path?
+ */
+void
+RelationCacheAbort(void)
+{
+	HashTableWalk(RelationNameCache, (HashtFunc) RelationCacheAbortWalker,
+				  0);
+}
+
+static void
+RelationCacheAbortWalker(Relation *relationPtr, int dummy)
+{
+	Relation	relation = *relationPtr;
+
+	if (relation->rd_isnailed)
+		RelationSetReferenceCount(relation, 1);
+	else
+		RelationSetReferenceCount(relation, 0);
+}
 
 /* --------------------------------
  *		RelationRegisterRelation -
@@ -1523,7 +1592,7 @@ RelationPurgeLocalRelation(bool xactCommitted)
 		reln->rd_myxactonly = FALSE;
 
 		if (!IsBootstrapProcessingMode())
-			RelationFlushRelation(&reln, FALSE);
+			RelationFlushRelation(&reln, false);
 
 		newlyCreatedRelns = lnext(newlyCreatedRelns);
 		pfree(l);
@@ -2010,15 +2079,15 @@ write_irels(void)
 
 	bi.infotype = INFO_RELNAME;
 	bi.i.info_name = AttributeNumIndex;
-	irel[0] = RelationBuildDesc(bi);
+	irel[0] = RelationBuildDesc(bi, NULL);
 	irel[0]->rd_isnailed = true;
 
 	bi.i.info_name = ClassNameIndex;
-	irel[1] = RelationBuildDesc(bi);
+	irel[1] = RelationBuildDesc(bi, NULL);
 	irel[1]->rd_isnailed = true;
 
 	bi.i.info_name = ClassOidIndex;
-	irel[2] = RelationBuildDesc(bi);
+	irel[2] = RelationBuildDesc(bi, NULL);
 	irel[2]->rd_isnailed = true;
 
 	SetProcessingMode(oldmode);

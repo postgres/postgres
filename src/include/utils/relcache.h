@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relcache.h,v 1.13 1999/07/15 23:04:23 momjian Exp $
+ * $Id: relcache.h,v 1.14 1999/09/04 18:42:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,8 @@ extern void RelationCacheInvalidate(bool onlyFlushReferenceCountZero);
 extern void RelationRegisterRelation(Relation relation);
 extern void RelationPurgeLocalRelation(bool xactComitted);
 extern void RelationInitialize(void);
+
+extern void RelationCacheAbort(void);
 
 /*
  * both vacuum.c and relcache.c need to know the name of the relcache init file
