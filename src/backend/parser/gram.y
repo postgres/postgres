@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.51 1997/09/25 14:11:42 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.52 1997/09/26 15:09:11 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2938,9 +2938,7 @@ position_expr:  attr opt_indirection
 
 substr_list: expr_list substr_from substr_for
 				{
-					$$ = $1;
-					if ($2 != NULL) $$ = lappend($$, $2);
-					if ($3 != NULL) $$ = lappend($$, $3);
+					$$ = nconc(nconc($1,$2),$3);
 				}
 		| /* EMPTY */
 				{	$$ = NIL; }
@@ -2949,7 +2947,12 @@ substr_list: expr_list substr_from substr_for
 substr_from: FROM expr_list
 				{	$$ = $2; }
 		| /* EMPTY */
-				{	$$ = NIL; }
+				{
+					A_Const *n = makeNode(A_Const);
+					n->val.type = T_Integer;
+					n->val.val.ival = 1;
+					$$ = lcons((Node *)n,NIL);
+				}
 		;
 
 substr_for: FOR expr_list
