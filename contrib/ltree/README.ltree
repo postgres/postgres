@@ -146,9 +146,9 @@ INDICES
 Various indices could be created to speed up execution of operations:
 
   * B-tree index over ltree:
-    <, <=, =, =>, >
+    <, <=, =, >=, >
   * GiST index over ltree:
-    <, <=, =, =>, >, @>, <@, @, ~, ?
+    <, <=, =, >=, >, @>, <@, @, ~, ?
     Example:
     create index path_gist_idx on test using gist (path);
   * GiST index over ltree[]:
@@ -500,7 +500,7 @@ GiST, which provides indexed access.
 ltree:
 For ltree we store LPS in a B-tree, implemented using GiST. Each node entry is
 represented by (left_bound, signature, right_bound), so that we could speedup
-operations <, <=, =, =>, > using left_bound, right_bound and prune branches of
+operations <, <=, =, >=, > using left_bound, right_bound and prune branches of
 a tree using signature.
 -------------------------------------------------------------------------------
 We ask people who find the module useful to send us a postcards to:
