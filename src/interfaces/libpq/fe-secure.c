@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.50 2004/09/23 13:20:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.51 2004/09/23 20:27:43 tgl Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -297,9 +297,12 @@ pqsecure_read(PGconn *conn, void *ptr, size_t len)
 #ifdef USE_SSL
 	if (conn->ssl)
 	{
+		int			err;
+
 rloop:
 		n = SSL_read(conn->ssl, ptr, len);
-		switch (SSL_get_error(conn->ssl, n))
+		err = SSL_get_error(conn->ssl, n);
+		switch (err)
 		{
 			case SSL_ERROR_NONE:
 				break;
@@ -349,7 +352,8 @@ rloop:
 				break;
 			default:
 				printfPQExpBuffer(&conn->errorMessage,
-						 libpq_gettext("unrecognized SSL error code\n"));
+						 libpq_gettext("unrecognized SSL error code: %d\n"),
+								  err);
 				n = -1;
 				break;
 		}
@@ -380,8 +384,11 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 #ifdef USE_SSL
 	if (conn->ssl)
 	{
+		int			err;
+
 		n = SSL_write(conn->ssl, ptr, len);
-		switch (SSL_get_error(conn->ssl, n))
+		err = SSL_get_error(conn->ssl, n);
+		switch (err)
 		{
 			case SSL_ERROR_NONE:
 				break;
@@ -429,7 +436,8 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 				break;
 			default:
 				printfPQExpBuffer(&conn->errorMessage,
-						 libpq_gettext("unrecognized SSL error code\n"));
+						 libpq_gettext("unrecognized SSL error code: %d\n"),
+								  err);
 				n = -1;
 				break;
 		}
@@ -1020,6 +1028,7 @@ open_client_SSL(PGconn *conn)
 	if (r <= 0)
 	{
 		int err = SSL_get_error(conn->ssl, r);
+
 		switch (err)
 		{
 			case SSL_ERROR_WANT_READ:
@@ -1055,7 +1064,8 @@ open_client_SSL(PGconn *conn)
 
 			default:
 				printfPQExpBuffer(&conn->errorMessage,
-						 libpq_gettext("unrecognized SSL error code (%d)\n"), err);
+						 libpq_gettext("unrecognized SSL error code: %d\n"),
+								  err);
 				close_SSL(conn);
 				return PGRES_POLLING_FAILED;
 		}

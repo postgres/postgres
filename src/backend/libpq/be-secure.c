@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.49 2004/09/09 00:59:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.50 2004/09/23 20:27:50 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -257,9 +257,12 @@ secure_read(Port *port, void *ptr, size_t len)
 #ifdef USE_SSL
 	if (port->ssl)
 	{
+		int			err;
+
 rloop:
 		n = SSL_read(port->ssl, ptr, len);
-		switch (SSL_get_error(port->ssl, n))
+		err = SSL_get_error(port->ssl, n);
+		switch (err)
 		{
 			case SSL_ERROR_NONE:
 				port->count += n;
@@ -293,8 +296,8 @@ rloop:
 			default:
 				ereport(COMMERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg("unrecognized SSL error code %d",
-								SSL_get_error(port->ssl, n))));
+						 errmsg("unrecognized SSL error code: %d",
+								err)));
 				n = -1;
 				break;
 		}
@@ -317,6 +320,8 @@ secure_write(Port *port, void *ptr, size_t len)
 #ifdef USE_SSL
 	if (port->ssl)
 	{
+		int			err;
+
 		if (port->count > RENEGOTIATION_LIMIT)
 		{
 			SSL_set_session_id_context(port->ssl, (void *) &SSL_context,
@@ -344,7 +349,8 @@ secure_write(Port *port, void *ptr, size_t len)
 
 wloop:
 		n = SSL_write(port->ssl, ptr, len);
-		switch (SSL_get_error(port->ssl, n))
+		err = SSL_get_error(port->ssl, n);
+		switch (err)
 		{
 			case SSL_ERROR_NONE:
 				port->count += n;
@@ -378,8 +384,8 @@ wloop:
 			default:
 				ereport(COMMERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg("unrecognized SSL error code %d",
-								SSL_get_error(port->ssl, n))));
+						 errmsg("unrecognized SSL error code: %d",
+								err)));
 				n = -1;
 				break;
 		}
