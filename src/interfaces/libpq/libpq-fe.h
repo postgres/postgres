@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.68 2000/11/13 15:18:15 momjian Exp $
+ * $Id: libpq-fe.h,v 1.69 2000/11/28 07:25:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,7 +217,6 @@ extern		"C"
 	extern char *PQpass(const PGconn *conn);
 	extern char *PQhost(const PGconn *conn);
 	extern char *PQport(const PGconn *conn);
-	extern char *PQunixsocket(const PGconn *conn);
 	extern char *PQtty(const PGconn *conn);
 	extern char *PQoptions(const PGconn *conn);
 	extern ConnStatusType PQstatus(const PGconn *conn);
