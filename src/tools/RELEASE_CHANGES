@@ -2,6 +2,7 @@ README
 INSTALL
 HISTORY
 register.txt
+configure.in
 doc/FAQ, including version number
 doc/Machine-specific FAQ's
 doc/TODO
