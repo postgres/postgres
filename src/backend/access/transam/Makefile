@@ -4,18 +4,20 @@
 #    Makefile for access/transam
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/transam/Makefile,v 1.3 1996/11/09 06:17:38 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/transam/Makefile,v 1.4 1997/12/17 04:31:34 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
 
-INCLUDE_OPT = -I../.. \
-              -I../../port/$(PORTNAME) \
-              -I../../../include
+INCLUDE_OPT = -I../.. 
 
-CFLAGS+=$(INCLUDE_OPT)
+ifdef PORTNAME
+INCLUDE_OPT += -I../../port/$(PORTNAME) 
+endif
+
+CFLAGS += $(INCLUDE_OPT)
 
 OBJS = transam.o transsup.o varsup.o xact.o xid.o 
 

@@ -4,18 +4,20 @@
 #    Makefile for access/gist
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/gist/Makefile,v 1.3 1996/11/05 08:18:42 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/gist/Makefile,v 1.4 1997/12/17 04:30:47 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
 
-INCLUDE_OPT = -I../.. \
-              -I../../port/$(PORTNAME) \
-              -I../../../include
+INCLUDE_OPT = -I../.. 
 
-CFLAGS+=$(INCLUDE_OPT)
+ifdef PORTNAME
+INCLUDE_OPT += -I../../port/$(PORTNAME) 
+endif
+
+CFLAGS += $(INCLUDE_OPT)
 
 OBJS = gist.o gistget.o gistscan.o giststrat.o
 

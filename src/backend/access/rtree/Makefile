@@ -4,18 +4,20 @@
 #    Makefile for access/rtree
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/Makefile,v 1.3 1996/11/05 10:54:15 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/Makefile,v 1.4 1997/12/17 04:31:24 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
 
-INCLUDE_OPT = -I../.. \
-              -I../../port/$(PORTNAME) \
-              -I../../../include
+INCLUDE_OPT = -I../.. 
 
-CFLAGS+=$(INCLUDE_OPT)
+ifdef PORTNAME
+INCLUDE_OPT += -I../../port/$(PORTNAME) 
+endif
+
+CFLAGS += $(INCLUDE_OPT)
 
 OBJS = rtget.o rtproc.o rtree.o rtscan.o rtstrat.o
 
