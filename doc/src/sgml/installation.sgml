@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.202 2004/05/23 15:13:43 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.203 2004/06/20 01:32:46 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1071,6 +1071,19 @@ All of PostgreSQL is successfully made. Ready to install.
    </formalpara>
   </step>
   </procedure>
+
+  <formalpara>
+   <title>Registering <application>eventlog</> on <systemitem 
+   class="osname">Windows</>:</title>
+   <para>
+    To register a <systemitem class="osname">Windows</> <application>eventlog</>
+    library with the operating system, issue this command after installation:
+<screen>
+<userinput>regsvr32 <replaceable>pgsql_library_directory</>/pgevent.dll</>
+</screen>
+    This creates registry entries used by the event viewer.
+   </para>
+  </formalpara>
 
   <formalpara>
    <title>Uninstallation:</title>

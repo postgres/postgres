@@ -1,0 +1,18 @@
+The files attached with this mail have to be stored in pgevent directory.
+MSG000001.bin is a bin files, result of Microsoft MC compiler. MC compiler
+can be downloaded for free with MS Core SDK but it is not included with MSYS
+tools and I didn't find a alternative way to compile MC file.
+
+To summarize MC pgmsgevent.mc command generates pgmsgevent.h
+pgmsgevent.rc and MSG00001.bin files.  In MC file, we declare a string
+with %s format, so we can write anything we want in the future without
+need to change the definition of this string.
+
+To finish, because DllUnregisterServer and DllRegisterServer are system
+defined entry point, we need to export these two functions with their names
+without "decoration", so we cannot uses auto generated .def files without
+handy modifications.
+
+Laurent Ballester
+
+
