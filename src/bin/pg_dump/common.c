@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.17 1997/10/02 13:57:03 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.18 1997/10/30 16:47:57 thomas Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include <sys/param.h>			/* for MAXHOSTNAMELEN on most */
 #ifdef sparc_solaris
 #include <netdb.h>				/* for MAXHOSTNAMELEN on some */
@@ -478,3 +479,29 @@ isArchiveName(const char *relname)
 {
 	return (strlen(relname) > 1 && relname[1] == ',');
 }
+
+/*
+ * fmtId
+ *
+ *	checks input string for non-lowercase characters
+ *	returns pointer to input string or string surrounded by double quotes
+ */
+const char *
+fmtId(const char *rawid)
+{
+	const char *cp;
+	static char id[MAXQUERYLEN];
+
+	for (cp = rawid; *cp != '\0'; cp++)
+		if (! (islower(*cp) || isdigit(*cp) || (*cp == '_'))) break;
+
+	if (*cp != '\0') {
+		strcpy(id, "\"");
+		strcat(id, rawid);
+		strcat(id, "\"");
+		cp = id;
+	} else {
+		cp = rawid;
+	}
+	return(cp);
+} /* fmtId() */
