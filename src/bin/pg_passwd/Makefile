@@ -1,0 +1,20 @@
+#-------------------------------------------------------------------------
+#
+# Makefile
+#    Makefile for bin/pg_passwd
+#-------------------------------------------------------------------------
+SRCDIR= ../..
+include ../../Makefile.global
+OBJS= pg_passwd.o
+all: pg_passwd
+pg_passwd: $(OBJS)
+      $(CC) -o pg_passwd $(OBJS) $(LDFLAGS)
+install: pg_passwd
+      $(INSTALL) $(INSTL_EXE_OPTS) pg_passwd $(DESTDIR)$(BINDIR)/pg_passwd
+depend dep:
+      $(CC) -MM $(INCLUDE_OPT) *.c >depend
+clean:
+      rm -f pg_passwd $(OBJS)
+ifeq (depend,$(wildcard depend))
+include depend
+endif

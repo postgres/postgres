@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.8 1997/08/25 19:41:39 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.9 1997/08/25 19:59:52 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,7 +21,7 @@
 	$(MAKE) -C pg_version $@
 	$(MAKE) -C psql $@
 	$(MAKE) -C pg_dump $@
-      $(MAKE) -C pg_passwd $@
+	$(MAKE) -C pg_passwd $@
 #
 # Shell scripts
 # 
