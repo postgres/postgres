@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.25 1997/04/05 06:29:03 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.26 1997/04/27 19:16:44 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -634,7 +634,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 	    {
 		Node *lexpr = transformExpr(pstate, a->lexpr, precedence);
 		result = ParseFunc(pstate, 
-				   "NullValue", lcons(lexpr, NIL),
+				   "nullvalue", lcons(lexpr, NIL),
 				   &pstate->p_last_resno);
 	    }
 	    break;
@@ -642,7 +642,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 	    {
 		Node *lexpr = transformExpr(pstate, a->lexpr, precedence);
 		result = ParseFunc(pstate,
-				   "NonNullValue", lcons(lexpr, NIL),
+				   "nonnullvalue", lcons(lexpr, NIL),
 				   &pstate->p_last_resno);
 	    }
 	    break;
