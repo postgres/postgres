@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.156 2004/01/07 22:02:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.157 2004/03/07 05:43:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -965,24 +965,38 @@ static const StrategyNumber
 };
 
 
-/*
+/*----------
  * pred_test_simple_clause
  *	  Does the "predicate inclusion test" for a "simple clause" predicate
  *	  and a "simple clause" restriction.
  *
- *	  We have two strategies for determining whether one simple clause
- *	  implies another.	A simple and general way is to see if they are
- *	  equal(); this works for any kind of expression.  (Actually, there
- *	  is an implied assumption that the functions in the expression are
- *	  immutable, ie dependent only on their input arguments --- but this
- *	  was checked for the predicate by CheckPredicate().)
+ * We have three strategies for determining whether one simple clause
+ * implies another:
  *
- *	  Our other way works only for (binary boolean) operators that are
- *	  in some btree operator class.  We use the above operator implication
- *	  table to be able to derive implications between nonidentical clauses.
+ * A simple and general way is to see if they are equal(); this works for any
+ * kind of expression.  (Actually, there is an implied assumption that the
+ * functions in the expression are immutable, ie dependent only on their input
+ * arguments --- but this was checked for the predicate by CheckPredicate().)
  *
- *	  Eventually, rtree operators could also be handled by defining an
- *	  appropriate "RT_implic_table" array.
+ * When the predicate is of the form "foo IS NOT NULL", we can conclude that
+ * the predicate is implied if the clause is a strict operator or function
+ * that has "foo" as an input.  In this case the clause must yield NULL when
+ * "foo" is NULL, which we can take as equivalent to FALSE because we know
+ * we are within an AND/OR subtree of a WHERE clause.  (Again, "foo" is
+ * already known immutable, so the clause will certainly always fail.)
+ *
+ * Our other way works only for binary boolean opclauses of the form
+ * "foo op constant", where "foo" is the same in both clauses.  The operators
+ * and constants can be different but the operators must be in the same btree
+ * operator class.  We use the above operator implication table to be able to
+ * derive implications between nonidentical clauses.  (Note: "foo" is known
+ * immutable, and constants are surely immutable, and we assume that operators
+ * that are in btree opclasses are immutable, so there's no need to do extra
+ * mutability checks in this case either.)
+ *
+ * Eventually, rtree operators could also be handled by defining an
+ * appropriate "RT_implic_table" array.
+ *----------
  */
 static bool
 pred_test_simple_clause(Expr *predicate, Node *clause)
@@ -1019,6 +1033,23 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	/* First try the equal() test */
 	if (equal((Node *) predicate, clause))
 		return true;
+
+	/* Next try the IS NOT NULL case */
+	if (predicate && IsA(predicate, NullTest) &&
+		((NullTest *) predicate)->nulltesttype == IS_NOT_NULL)
+	{
+		Expr *nonnullarg = ((NullTest *) predicate)->arg;
+
+		if (is_opclause(clause) &&
+			member(nonnullarg, ((OpExpr *) clause)->args) &&
+			op_strict(((OpExpr *) clause)->opno))
+			return true;
+		if (is_funcclause(clause) &&
+			member(nonnullarg, ((FuncExpr *) clause)->args) &&
+			func_strict(((FuncExpr *) clause)->funcid))
+			return true;
+		return false;			/* we can't succeed below... */
+	}
 
 	/*
 	 * Can't do anything more unless they are both binary opclauses with a
