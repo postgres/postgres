@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.20 2003/06/30 16:38:30 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.21 2003/08/11 21:33:50 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -253,6 +253,8 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 
 	public java.sql.Array getArray(int i) throws SQLException
 	{
+		checkResultSet( i );
+
 		wasNullFlag = (this_row[i - 1] == null);
 		if (wasNullFlag)
 			return null;
