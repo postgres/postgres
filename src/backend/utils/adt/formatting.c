@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.71 2003/12/25 03:36:23 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.72 2004/01/07 18:56:28 neilc Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2003, PostgreSQL Global Development Group
@@ -927,7 +927,7 @@ index_seq_search(char *str, KeyWord *kw, int *index)
 	int			poz;
 
 	if (!KeyWord_INDEX_FILTER(*str))
-		return (KeyWord *) NULL;
+		return NULL;
 
 	if ((poz = *(index + (*str - ' '))) > -1)
 	{
@@ -940,10 +940,10 @@ index_seq_search(char *str, KeyWord *kw, int *index)
 				return k;
 			k++;
 			if (!k->name)
-				return (KeyWord *) NULL;
+				return NULL;
 		} while (*str == *k->name);
 	}
-	return (KeyWord *) NULL;
+	return NULL;
 }
 
 static KeySuffix *
@@ -959,7 +959,7 @@ suff_search(char *str, KeySuffix *suf, int type)
 		if (!strncmp(str, s->name, s->len))
 			return s;
 	}
-	return (KeySuffix *) NULL;
+	return NULL;
 }
 
 /* ----------
@@ -1246,7 +1246,7 @@ parse_format(FormatNode *node, char *str, KeyWord *kw,
 					}
 					n->type = NODE_TYPE_CHAR;
 					n->character = *str;
-					n->key = (KeyWord *) NULL;
+					n->key = NULL;
 					n->suffix = 0;
 					++n;
 					x = *str;
@@ -1266,7 +1266,7 @@ parse_format(FormatNode *node, char *str, KeyWord *kw,
 			{
 				n->type = NODE_TYPE_CHAR;
 				n->character = *str;
-				n->key = (KeyWord *) NULL;
+				n->key = NULL;
 				node_set = 1;
 				last = 0;
 				str++;
@@ -2731,7 +2731,7 @@ DCH_cache_getnew(char *str)
 		return ent;
 	}
 
-	return (DCHCacheEntry *) NULL;		/* never */
+	return NULL;		/* never */
 }
 
 static DCHCacheEntry *
@@ -2761,7 +2761,7 @@ DCH_cache_search(char *str)
 		i++;
 	}
 
-	return (DCHCacheEntry *) NULL;
+	return NULL;
 }
 
 static text *
@@ -3362,7 +3362,7 @@ NUM_cache_search(char *str)
 		i++;
 	}
 
-	return (NUMCacheEntry *) NULL;
+	return NULL;
 }
 
 static void

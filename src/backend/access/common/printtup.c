@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.79 2003/11/29 19:51:39 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.80 2004/01/07 18:56:23 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -509,7 +509,7 @@ debugStartup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	 * show the return type of the tuples
 	 */
 	for (i = 0; i < natts; ++i)
-		printatt((unsigned) i + 1, attinfo[i], (char *) NULL);
+		printatt((unsigned) i + 1, attinfo[i], NULL);
 	printf("\t----\n");
 }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.59 2003/11/29 19:51:48 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.60 2004/01/07 18:56:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -405,10 +405,10 @@ ExecInitHashJoin(HashJoin *node, EState *estate)
 	 */
 
 	hjstate->hj_hashdone = false;
-	hjstate->hj_HashTable = (HashJoinTable) NULL;
+	hjstate->hj_HashTable = NULL;
 
 	hjstate->hj_CurBucketNo = 0;
-	hjstate->hj_CurTuple = (HashJoinTuple) NULL;
+	hjstate->hj_CurTuple = NULL;
 
 	/*
 	 * Deconstruct the hash clauses into outer and inner argument values,
@@ -733,9 +733,9 @@ ExecReScanHashJoin(HashJoinState *node, ExprContext *exprCtxt)
 
 	/* Always reset intra-tuple state */
 	node->hj_CurBucketNo = 0;
-	node->hj_CurTuple = (HashJoinTuple) NULL;
+	node->hj_CurTuple = NULL;
 
-	node->js.ps.ps_OuterTupleSlot = (TupleTableSlot *) NULL;
+	node->js.ps.ps_OuterTupleSlot = NULL;
 	node->js.ps.ps_TupFromTlist = false;
 	node->hj_NeedNewOuter = true;
 	node->hj_MatchedOuter = false;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.152 2003/12/18 22:23:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.153 2004/01/07 18:56:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -548,7 +548,7 @@ GetAttributeByNum(TupleTableSlot *slot,
 	if (!AttributeNumberIsValid(attrno))
 		elog(ERROR, "invalid attribute number %d", attrno);
 
-	if (isNull == (bool *) NULL)
+	if (isNull == NULL)
 		elog(ERROR, "a NULL isNull pointer was passed");
 
 	if (TupIsNull(slot))
@@ -579,7 +579,7 @@ GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull)
 	if (attname == NULL)
 		elog(ERROR, "invalid attribute name");
 
-	if (isNull == (bool *) NULL)
+	if (isNull == NULL)
 		elog(ERROR, "a NULL isNull pointer was passed");
 
 	if (TupIsNull(slot))
@@ -3116,7 +3116,7 @@ ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 	 * sanity checks
 	 */
 	if (projInfo == NULL)
-		return (TupleTableSlot *) NULL;
+		return NULL;
 
 	/*
 	 * get the projection info we want

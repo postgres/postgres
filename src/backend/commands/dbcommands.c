@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.129 2003/12/15 22:56:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.130 2004/01/07 18:56:25 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -749,7 +749,7 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 		datum = heap_getattr(tuple, Anum_pg_database_datconfig,
 							 RelationGetDescr(rel), &isnull);
 
-		a = isnull ? ((ArrayType *) NULL) : DatumGetArrayTypeP(datum);
+		a = isnull ? NULL : DatumGetArrayTypeP(datum);
 
 		if (valuestr)
 			a = GUCArrayAdd(a, stmt->variable, valuestr);

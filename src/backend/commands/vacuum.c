@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.270 2004/01/06 18:07:31 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.271 2004/01/07 18:56:25 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -958,7 +958,7 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 		vacrelstats->hasindex = true;
 
 	/* Clean/scan index relation(s) */
-	if (Irel != (Relation *) NULL)
+	if (Irel != NULL)
 	{
 		if (vacuum_pages.num_pages > 0)
 		{
@@ -1257,7 +1257,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 				 * removal of dead tuples.	But note we are NOT changing
 				 * the real page yet...
 				 */
-				if (tempPage == (Page) NULL)
+				if (tempPage == NULL)
 				{
 					Size		pageSize;
 
@@ -1284,7 +1284,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 			}
 		}						/* scan along page */
 
-		if (tempPage != (Page) NULL)
+		if (tempPage != NULL)
 		{
 			/* Some tuples are removable; figure free space after removal */
 			PageRepairFragmentation(tempPage, NULL);
@@ -2406,7 +2406,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 	if (Nvacpagelist.num_pages > 0)
 	{
 		/* vacuum indexes again if needed */
-		if (Irel != (Relation *) NULL)
+		if (Irel != NULL)
 		{
 			VacPage    *vpleft,
 					   *vpright,
@@ -3057,7 +3057,7 @@ vac_open_indexes(Relation relation, int *nindexes, Relation **Irel)
 void
 vac_close_indexes(int nindexes, Relation *Irel)
 {
-	if (Irel == (Relation *) NULL)
+	if (Irel == NULL)
 		return;
 
 	while (nindexes--)

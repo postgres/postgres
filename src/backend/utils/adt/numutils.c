@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numutils.c,v 1.59 2003/11/29 19:51:59 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numutils.c,v 1.60 2004/01/07 18:56:28 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ pg_atoi(char *s, int size, int c)
 	 * Some versions of strtol treat the empty string as an error, but
 	 * some seem not to.  Make an explicit test to be sure we catch it.
 	 */
-	if (s == (char *) NULL)
+	if (s == NULL)
 		elog(ERROR, "NULL pointer");
 	if (*s == 0)
 		ereport(ERROR,

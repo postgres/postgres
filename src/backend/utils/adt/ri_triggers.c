@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.65 2003/11/29 19:51:59 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.66 2004/01/07 18:56:28 neilc Exp $
  *
  * ----------
  */
@@ -114,7 +114,7 @@ typedef struct RI_QueryHashEntry
  * Local data
  * ----------
  */
-static HTAB *ri_query_cache = (HTAB *) NULL;
+static HTAB *ri_query_cache = NULL;
 
 
 /* ----------

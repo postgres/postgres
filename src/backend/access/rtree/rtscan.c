@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtscan.c,v 1.50 2003/11/29 19:51:40 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtscan.c,v 1.51 2004/01/07 18:56:24 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ typedef struct RTScanListData
 typedef RTScanListData *RTScanList;
 
 /* pointer to list of local scans on rtrees */
-static RTScanList RTScans = (RTScanList) NULL;
+static RTScanList RTScans = NULL;
 
 Datum
 rtbeginscan(PG_FUNCTION_ARGS)
@@ -80,19 +80,19 @@ rtrescan(PG_FUNCTION_ARGS)
 	ItemPointerSetInvalid(&s->currentMarkData);
 
 	p = (RTreeScanOpaque) s->opaque;
-	if (p != (RTreeScanOpaque) NULL)
+	if (p != NULL)
 	{
 		/* rescan an existing indexscan --- reset state */
 		freestack(p->s_stack);
 		freestack(p->s_markstk);
-		p->s_stack = p->s_markstk = (RTSTACK *) NULL;
+		p->s_stack = p->s_markstk = NULL;
 		p->s_flags = 0x0;
 	}
 	else
 	{
 		/* initialize opaque data */
 		p = (RTreeScanOpaque) palloc(sizeof(RTreeScanOpaqueData));
-		p->s_stack = p->s_markstk = (RTSTACK *) NULL;
+		p->s_stack = p->s_markstk = NULL;
 		p->s_internalNKey = s->numberOfKeys;
 		p->s_flags = 0x0;
 		s->opaque = p;
@@ -156,11 +156,11 @@ rtmarkpos(PG_FUNCTION_ARGS)
 	else
 		p->s_flags &= ~RTS_MRKBEFORE;
 
-	o = (RTSTACK *) NULL;
+	o = NULL;
 	n = p->s_stack;
 
 	/* copy the parent stack from the current item data */
-	while (n != (RTSTACK *) NULL)
+	while (n != NULL)
 	{
 		tmp = (RTSTACK *) palloc(sizeof(RTSTACK));
 		tmp->rts_child = n->rts_child;
@@ -192,11 +192,11 @@ rtrestrpos(PG_FUNCTION_ARGS)
 	else
 		p->s_flags &= ~RTS_CURBEFORE;
 
-	o = (RTSTACK *) NULL;
+	o = NULL;
 	n = p->s_markstk;
 
 	/* copy the parent stack from the current item data */
-	while (n != (RTSTACK *) NULL)
+	while (n != NULL)
 	{
 		tmp = (RTSTACK *) palloc(sizeof(RTSTACK));
 		tmp->rts_child = n->rts_child;
@@ -220,7 +220,7 @@ rtendscan(PG_FUNCTION_ARGS)
 
 	p = (RTreeScanOpaque) s->opaque;
 
-	if (p != (RTreeScanOpaque) NULL)
+	if (p != NULL)
 	{
 		freestack(p->s_stack);
 		freestack(p->s_markstk);
@@ -250,18 +250,18 @@ rtdropscan(IndexScanDesc s)
 	RTScanList	l;
 	RTScanList	prev;
 
-	prev = (RTScanList) NULL;
+	prev = NULL;
 
 	for (l = RTScans;
-		 l != (RTScanList) NULL && l->rtsl_scan != s;
+		 l != NULL && l->rtsl_scan != s;
 		 l = l->rtsl_next)
 		prev = l;
 
-	if (l == (RTScanList) NULL)
+	if (l == NULL)
 		elog(ERROR, "rtree scan list corrupted -- could not find 0x%p",
 			 (void *) s);
 
-	if (prev == (RTScanList) NULL)
+	if (prev == NULL)
 		RTScans = l->rtsl_next;
 	else
 		prev->rtsl_next = l->rtsl_next;
@@ -297,7 +297,7 @@ rtadjscans(Relation r, int op, BlockNumber blkno, OffsetNumber offnum)
 	Oid			relid;
 
 	relid = RelationGetRelid(r);
-	for (l = RTScans; l != (RTScanList) NULL; l = l->rtsl_next)
+	for (l = RTScans; l != NULL; l = l->rtsl_next)
 	{
 		if (RelationGetRelid(l->rtsl_scan->indexRelation) == relid)
 			rtadjone(l->rtsl_scan, op, blkno, offnum);
@@ -414,12 +414,10 @@ adjustiptr(IndexScanDesc s,
  *		are looking at already in this transaction, we ignore the update
  *		request.
  */
-/*ARGSUSED*/
 static void
-adjuststack(RTSTACK *stk,
-			BlockNumber blkno)
+adjuststack(RTSTACK *stk, BlockNumber blkno)
 {
-	while (stk != (RTSTACK *) NULL)
+	while (stk != NULL)
 	{
 		if (stk->rts_blk == blkno)
 			stk->rts_child = FirstOffsetNumber;

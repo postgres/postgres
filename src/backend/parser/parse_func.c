@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.164 2003/11/29 19:51:52 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.165 2004/01/07 18:56:27 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -993,7 +993,7 @@ argtype_inherit(int nargs, Oid *argtypes)
 		else
 		{
 			arginh[i].nsupers = 0;
-			arginh[i].supervec = (Oid *) NULL;
+			arginh[i].supervec = NULL;
 		}
 	}
 
@@ -1090,7 +1090,7 @@ find_inheritors(Oid relid, Oid **supervec)
 		}
 	}
 	else
-		*supervec = (Oid *) NULL;
+		*supervec = NULL;
 
 	freeList(visited);
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistscan.c,v 1.50 2003/11/29 19:51:39 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistscan.c,v 1.51 2004/01/07 18:56:23 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@ typedef struct GISTScanListData
 typedef GISTScanListData *GISTScanList;
 
 /* pointer to list of local scans on GiSTs */
-static GISTScanList GISTScans = (GISTScanList) NULL;
+static GISTScanList GISTScans = NULL;
 
 Datum
 gistbeginscan(PG_FUNCTION_ARGS)
@@ -79,19 +79,19 @@ gistrescan(PG_FUNCTION_ARGS)
 	ItemPointerSetInvalid(&s->currentMarkData);
 
 	p = (GISTScanOpaque) s->opaque;
-	if (p != (GISTScanOpaque) NULL)
+	if (p != NULL)
 	{
 		/* rescan an existing indexscan --- reset state */
 		gistfreestack(p->s_stack);
 		gistfreestack(p->s_markstk);
-		p->s_stack = p->s_markstk = (GISTSTACK *) NULL;
+		p->s_stack = p->s_markstk = NULL;
 		p->s_flags = 0x0;
 	}
 	else
 	{
 		/* initialize opaque data */
 		p = (GISTScanOpaque) palloc(sizeof(GISTScanOpaqueData));
-		p->s_stack = p->s_markstk = (GISTSTACK *) NULL;
+		p->s_stack = p->s_markstk = NULL;
 		p->s_flags = 0x0;
 		s->opaque = p;
 		p->giststate = (GISTSTATE *) palloc(sizeof(GISTSTATE));
@@ -137,11 +137,11 @@ gistmarkpos(PG_FUNCTION_ARGS)
 	else
 		p->s_flags &= ~GS_MRKBEFORE;
 
-	o = (GISTSTACK *) NULL;
+	o = NULL;
 	n = p->s_stack;
 
 	/* copy the parent stack from the current item data */
-	while (n != (GISTSTACK *) NULL)
+	while (n != NULL)
 	{
 		tmp = (GISTSTACK *) palloc(sizeof(GISTSTACK));
 		tmp->gs_child = n->gs_child;
@@ -173,11 +173,11 @@ gistrestrpos(PG_FUNCTION_ARGS)
 	else
 		p->s_flags &= ~GS_CURBEFORE;
 
-	o = (GISTSTACK *) NULL;
+	o = NULL;
 	n = p->s_markstk;
 
 	/* copy the parent stack from the current item data */
-	while (n != (GISTSTACK *) NULL)
+	while (n != NULL)
 	{
 		tmp = (GISTSTACK *) palloc(sizeof(GISTSTACK));
 		tmp->gs_child = n->gs_child;
@@ -201,7 +201,7 @@ gistendscan(PG_FUNCTION_ARGS)
 
 	p = (GISTScanOpaque) s->opaque;
 
-	if (p != (GISTScanOpaque) NULL)
+	if (p != NULL)
 	{
 		gistfreestack(p->s_stack);
 		gistfreestack(p->s_markstk);
@@ -233,18 +233,16 @@ gistdropscan(IndexScanDesc s)
 	GISTScanList l;
 	GISTScanList prev;
 
-	prev = (GISTScanList) NULL;
+	prev = NULL;
 
-	for (l = GISTScans;
-		 l != (GISTScanList) NULL && l->gsl_scan != s;
-		 l = l->gsl_next)
+	for (l = GISTScans; l != NULL && l->gsl_scan != s; l = l->gsl_next)
 		prev = l;
 
-	if (l == (GISTScanList) NULL)
+	if (l == NULL)
 		elog(ERROR, "GiST scan list corrupted -- could not find 0x%p",
 			 (void *) s);
 
-	if (prev == (GISTScanList) NULL)
+	if (prev == NULL)
 		GISTScans = l->gsl_next;
 	else
 		prev->gsl_next = l->gsl_next;
@@ -280,7 +278,7 @@ gistadjscans(Relation rel, int op, BlockNumber blkno, OffsetNumber offnum)
 	Oid			relid;
 
 	relid = RelationGetRelid(rel);
-	for (l = GISTScans; l != (GISTScanList) NULL; l = l->gsl_next)
+	for (l = GISTScans; l != NULL; l = l->gsl_next)
 	{
 		if (l->gsl_scan->indexRelation->rd_id == relid)
 			gistadjone(l->gsl_scan, op, blkno, offnum);
@@ -397,12 +395,10 @@ adjustiptr(IndexScanDesc s,
  *		are looking at already in this transaction, we ignore the update
  *		request.
  */
-/*ARGSUSED*/
 static void
-adjuststack(GISTSTACK *stk,
-			BlockNumber blkno)
+adjuststack(GISTSTACK *stk, BlockNumber blkno)
 {
-	while (stk != (GISTSTACK *) NULL)
+	while (stk != NULL)
 	{
 		if (stk->gs_blk == blkno)
 			stk->gs_child = FirstOffsetNumber;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.76 2003/11/29 19:51:48 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.77 2004/01/07 18:56:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@ typedef struct local_es
 	QueryDesc  *qd;				/* null unless status == RUN */
 } execution_state;
 
-#define LAST_POSTQUEL_COMMAND(es) ((es)->next == (execution_state *) NULL)
+#define LAST_POSTQUEL_COMMAND(es) ((es)->next == NULL)
 
 
 /*
@@ -259,7 +259,7 @@ init_sql_fcache(FmgrInfo *finfo)
 		}
 	}
 	else
-		argOidVect = (Oid *) NULL;
+		argOidVect = NULL;
 
 	tmp = SysCacheGetAttr(PROCOID,
 						  procedureTuple,
@@ -304,7 +304,7 @@ postquel_getnext(execution_state *es)
 	if (es->qd->operation == CMD_UTILITY)
 	{
 		ProcessUtility(es->qd->parsetree->utilityStmt, es->qd->dest, NULL);
-		return (TupleTableSlot *) NULL;
+		return NULL;
 	}
 
 	/*
@@ -358,7 +358,7 @@ postquel_sub_params(SQLFunctionCachePtr fcache,
 		paramLI[nargs].kind = PARAM_INVALID;
 	}
 	else
-		paramLI = (ParamListInfo) NULL;
+		paramLI = NULL;
 
 	if (fcache->paramLI)
 		pfree(fcache->paramLI);
@@ -551,7 +551,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	/*
 	 * If we've gone through every command in this function, we are done.
 	 */
-	if (es == (execution_state *) NULL)
+	if (es == NULL)
 	{
 		/*
 		 * Reset the execution states to start over again on next call.

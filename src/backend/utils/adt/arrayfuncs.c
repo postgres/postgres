@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.101 2003/11/29 19:51:57 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.102 2004/01/07 18:56:28 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -307,10 +307,8 @@ array_in(PG_FUNCTION_ARGS)
 	retval->size = nbytes;
 	retval->ndim = ndim;
 	retval->elemtype = element_type;
-	memcpy((char *) ARR_DIMS(retval), (char *) dim,
-		   ndim * sizeof(int));
-	memcpy((char *) ARR_LBOUND(retval), (char *) lBound,
-		   ndim * sizeof(int));
+	memcpy(ARR_DIMS(retval), dim, ndim * sizeof(int));
+	memcpy(ARR_LBOUND(retval), lBound, ndim * sizeof(int));
 
 	CopyArrayEls(ARR_DATA_PTR(retval), dataPtr, nitems,
 				 typlen, typbyval, typalign, true);
@@ -972,10 +970,8 @@ array_recv(PG_FUNCTION_ARGS)
 	retval->size = nbytes;
 	retval->ndim = ndim;
 	retval->elemtype = element_type;
-	memcpy((char *) ARR_DIMS(retval), (char *) dim,
-		   ndim * sizeof(int));
-	memcpy((char *) ARR_LBOUND(retval), (char *) lBound,
-		   ndim * sizeof(int));
+	memcpy(ARR_DIMS(retval), dim, ndim * sizeof(int));
+	memcpy(ARR_LBOUND(retval), lBound, ndim * sizeof(int));
 
 	CopyArrayEls(ARR_DATA_PTR(retval), dataPtr, nitems,
 				 typlen, typbyval, typalign, true);
@@ -1384,7 +1380,7 @@ array_ref(ArrayType *array,
 	char	   *arraydataptr,
 			   *retptr;
 
-	if (array == (ArrayType *) NULL)
+	if (array == NULL)
 		RETURN_NULL(Datum);
 
 	if (arraylen > 0)
@@ -1463,7 +1459,7 @@ array_get_slice(ArrayType *array,
 	int			bytes,
 				span[MAXDIM];
 
-	if (array == (ArrayType *) NULL)
+	if (array == NULL)
 		RETURN_NULL(ArrayType *);
 
 	if (arraylen > 0)
@@ -1602,7 +1598,7 @@ array_set(ArrayType *array,
 				lenbefore,
 				lenafter;
 
-	if (array == (ArrayType *) NULL)
+	if (array == NULL)
 		RETURN_NULL(ArrayType *);
 
 	if (arraylen > 0)
@@ -1798,9 +1794,9 @@ array_set_slice(ArrayType *array,
 				lenbefore,
 				lenafter;
 
-	if (array == (ArrayType *) NULL)
+	if (array == NULL)
 		RETURN_NULL(ArrayType *);
-	if (srcArray == (ArrayType *) NULL)
+	if (srcArray == NULL)
 		return array;
 
 	if (arraylen > 0)
@@ -2279,8 +2275,8 @@ construct_md_array(Datum *elems,
 	result->ndim = ndims;
 	result->flags = 0;
 	result->elemtype = elmtype;
-	memcpy((char *) ARR_DIMS(result), (char *) dims, ndims * sizeof(int));
-	memcpy((char *) ARR_LBOUND(result), (char *) lbs, ndims * sizeof(int));
+	memcpy(ARR_DIMS(result), dims, ndims * sizeof(int));
+	memcpy(ARR_LBOUND(result), lbs, ndims * sizeof(int));
 	CopyArrayEls(ARR_DATA_PTR(result), elems, nelems,
 				 elmlen, elmbyval, elmalign, false);
 

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/mm.c,v 1.35 2003/11/29 19:51:57 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/mm.c,v 1.36 2004/01/07 18:56:27 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,7 +96,7 @@ mminit(void)
 	mmsize += MAXALIGN((MMNBUFFERS * sizeof(MMCacheTag)));
 	mmcacheblk = (char *) ShmemInitStruct("Main memory smgr", mmsize, &found);
 
-	if (mmcacheblk == (char *) NULL)
+	if (mmcacheblk == NULL)
 	{
 		LWLockRelease(MMCacheLock);
 		return SM_FAIL;
@@ -110,7 +110,7 @@ mminit(void)
 							  MMNBUFFERS, MMNBUFFERS,
 							  &info, (HASH_ELEM | HASH_FUNCTION));
 
-	if (MMCacheHT == (HTAB *) NULL)
+	if (MMCacheHT == NULL)
 	{
 		LWLockRelease(MMCacheLock);
 		return SM_FAIL;
@@ -124,7 +124,7 @@ mminit(void)
 								 MMNRELATIONS, MMNRELATIONS,
 								 &info, (HASH_ELEM | HASH_FUNCTION));
 
-	if (MMRelCacheHT == (HTAB *) NULL)
+	if (MMRelCacheHT == NULL)
 	{
 		LWLockRelease(MMCacheLock);
 		return SM_FAIL;
@@ -183,7 +183,7 @@ mmcreate(Relation reln)
 										   (void *) &tag,
 										   HASH_ENTER, &found);
 
-	if (entry == (MMRelHashEntry *) NULL)
+	if (entry == NULL)
 	{
 		LWLockRelease(MMCacheLock);
 		ereport(FATAL,
@@ -228,7 +228,7 @@ mmunlink(RelFileNode rnode)
 			entry = (MMHashEntry *) hash_search(MMCacheHT,
 												(void *) &MMBlockTags[i],
 												HASH_REMOVE, NULL);
-			if (entry == (MMHashEntry *) NULL)
+			if (entry == NULL)
 			{
 				LWLockRelease(MMCacheLock);
 				elog(FATAL, "cache hash table corrupted");
@@ -245,7 +245,7 @@ mmunlink(RelFileNode rnode)
 											(void *) &rtag,
 											HASH_REMOVE, NULL);
 
-	if (rentry == (MMRelHashEntry *) NULL)
+	if (rentry == NULL)
 	{
 		LWLockRelease(MMCacheLock);
 		elog(FATAL, "rel cache hash table corrupted");
@@ -308,7 +308,7 @@ mmextend(Relation reln, BlockNumber blocknum, char *buffer)
 	rentry = (MMRelHashEntry *) hash_search(MMRelCacheHT,
 											(void *) &rtag,
 											HASH_FIND, NULL);
-	if (rentry == (MMRelHashEntry *) NULL)
+	if (rentry == NULL)
 	{
 		LWLockRelease(MMCacheLock);
 		elog(FATAL, "rel cache hash table corrupted");
@@ -319,7 +319,7 @@ mmextend(Relation reln, BlockNumber blocknum, char *buffer)
 	entry = (MMHashEntry *) hash_search(MMCacheHT,
 										(void *) &tag,
 										HASH_ENTER, &found);
-	if (entry == (MMHashEntry *) NULL || found)
+	if (entry == NULL || found)
 	{
 		LWLockRelease(MMCacheLock);
 		elog(FATAL, "cache hash table corrupted");
@@ -389,7 +389,7 @@ mmread(Relation reln, BlockNumber blocknum, char *buffer)
 										(void *) &tag,
 										HASH_FIND, NULL);
 
-	if (entry == (MMHashEntry *) NULL)
+	if (entry == NULL)
 	{
 		/* reading nonexistent pages is defined to fill them with zeroes */
 		LWLockRelease(MMCacheLock);
@@ -430,7 +430,7 @@ mmwrite(Relation reln, BlockNumber blocknum, char *buffer)
 										(void *) &tag,
 										HASH_FIND, NULL);
 
-	if (entry == (MMHashEntry *) NULL)
+	if (entry == NULL)
 	{
 		LWLockRelease(MMCacheLock);
 		elog(FATAL, "cache hash table missing requested page");

@@ -6,7 +6,7 @@
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.53 2003/11/29 19:51:40 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.54 2004/01/07 18:56:24 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,7 @@ GetNewTransactionId(void)
 	 * (SInvalLock would then mean primarily that PROCs couldn't be added/
 	 * removed while holding the lock.)
 	 */
-	if (MyProc != (PGPROC *) NULL)
+	if (MyProc != NULL)
 		MyProc->xid = xid;
 
 	LWLockRelease(XidGenLock);

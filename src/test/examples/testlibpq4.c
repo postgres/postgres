@@ -106,7 +106,7 @@ main(int argc, char **argv)
 	{
 		fprintf(stderr, "DECLARE CURSOR command failed\n");
 		PQclear(res1);
-		exit_nicely(conn1, (PGconn *) NULL);
+		exit_nicely(conn1, NULL);
 	}
 	PQclear(res1);
 
@@ -115,7 +115,7 @@ main(int argc, char **argv)
 	{
 		fprintf(stderr, "FETCH ALL command didn't return tuples properly\n");
 		PQclear(res1);
-		exit_nicely(conn1, (PGconn *) NULL);
+		exit_nicely(conn1, NULL);
 	}
 
 	/* first, print out the attribute names */

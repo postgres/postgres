@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.160 2004/01/05 20:36:04 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.161 2004/01/07 18:56:24 neilc Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -124,7 +124,7 @@ heapgettup(Relation relation,
 	int			linesleft;
 	ItemPointer tid;
 
-	tid = (tuple->t_data == NULL) ? (ItemPointer) NULL : &(tuple->t_self);
+	tid = (tuple->t_data == NULL) ? NULL : &(tuple->t_self);
 
 	/*
 	 * debugging stuff
@@ -919,7 +919,7 @@ heap_fetch(Relation relation,
 	 * check time qualification of tuple, then release lock
 	 */
 	HeapTupleSatisfies(tuple, relation, buffer, dp,
-					   snapshot, 0, (ScanKey) NULL, valid);
+					   snapshot, 0, NULL, valid);
 
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
@@ -1026,7 +1026,7 @@ heap_get_latest_tid(Relation relation,
 	 */
 
 	HeapTupleSatisfies(&tp, relation, buffer, dp,
-					   snapshot, 0, (ScanKey) NULL, valid);
+					   snapshot, 0, NULL, valid);
 
 	linkend = true;
 	if ((t_data->t_infomask & HEAP_XMIN_COMMITTED) != 0 &&
@@ -1946,7 +1946,7 @@ heap_restrpos(HeapScanDesc scan)
 				   &(scan->rs_cbuf),
 				   scan->rs_snapshot,
 				   0,
-				   (ScanKey) NULL);
+				   NULL);
 	}
 }
 

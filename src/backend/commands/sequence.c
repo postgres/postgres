@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.106 2003/12/14 00:34:47 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.107 2004/01/07 18:56:25 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -946,7 +946,7 @@ init_params(List *options, Form_pg_sequence new, bool isInit)
 	}
 
 	/* INCREMENT BY */
-	if (increment_by != (DefElem *) NULL)
+	if (increment_by != NULL)
 	{
 		new->increment_by = defGetInt64(increment_by);
 		if (new->increment_by == 0)
@@ -958,7 +958,7 @@ init_params(List *options, Form_pg_sequence new, bool isInit)
 		new->increment_by = 1;
 
 	/* CYCLE */
-	if (is_cycled != (DefElem *) NULL)
+	if (is_cycled != NULL)
 	{
 		new->is_cycled = intVal(is_cycled->arg);
 		Assert(new->is_cycled == false || new->is_cycled == true);
@@ -967,11 +967,11 @@ init_params(List *options, Form_pg_sequence new, bool isInit)
 		new->is_cycled = false;
 
 	/* MAXVALUE (null arg means NO MAXVALUE) */
-	if (max_value != (DefElem *) NULL && max_value->arg)
+	if (max_value != NULL && max_value->arg)
 	{
 		new->max_value = defGetInt64(max_value);
 	}
-	else if (isInit || max_value != (DefElem *) NULL)
+	else if (isInit || max_value != NULL)
 	{
 		if (new->increment_by > 0)
 			new->max_value = SEQ_MAXVALUE;		/* ascending seq */
@@ -980,11 +980,11 @@ init_params(List *options, Form_pg_sequence new, bool isInit)
 	}
 
 	/* MINVALUE (null arg means NO MINVALUE) */
-	if (min_value != (DefElem *) NULL && min_value->arg)
+	if (min_value != NULL && min_value->arg)
 	{
 		new->min_value = defGetInt64(min_value);
 	}
-	else if (isInit || min_value != (DefElem *) NULL)
+	else if (isInit || min_value != NULL)
 	{
 		if (new->increment_by > 0)
 			new->min_value = 1;					/* ascending seq */
@@ -1007,7 +1007,7 @@ init_params(List *options, Form_pg_sequence new, bool isInit)
 	}
 
 	/* START WITH */
-	if (last_value != (DefElem *) NULL)
+	if (last_value != NULL)
 		new->last_value = defGetInt64(last_value);
 	else if (isInit)
 	{
@@ -1044,7 +1044,7 @@ init_params(List *options, Form_pg_sequence new, bool isInit)
 	}
 
 	/* CACHE */
-	if (cache_value != (DefElem *) NULL)
+	if (cache_value != NULL)
 	{
 		new->cache_value = defGetInt64(cache_value);
 		if (new->cache_value <= 0)

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.74 2003/12/01 23:09:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.75 2004/01/07 18:56:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -271,11 +271,11 @@ ExecAllocTableSlot(TupleTable table)
 
 	/* Make sure the allocated slot is valid (and empty) */
 	slot->type = T_TupleTableSlot;
-	slot->val = (HeapTuple) NULL;
+	slot->val = NULL;
 	slot->ttc_shouldFree = true;
 	slot->ttc_descIsNew = true;
 	slot->ttc_shouldFreeDesc = true;
-	slot->ttc_tupleDescriptor = (TupleDesc) NULL;
+	slot->ttc_tupleDescriptor = NULL;
 	slot->ttc_buffer = InvalidBuffer;
 
 	return slot;
@@ -296,11 +296,11 @@ MakeTupleTableSlot(void)
 	TupleTableSlot *slot = makeNode(TupleTableSlot);
 
 	/* This should match ExecAllocTableSlot() */
-	slot->val = (HeapTuple) NULL;
+	slot->val = NULL;
 	slot->ttc_shouldFree = true;
 	slot->ttc_descIsNew = true;
 	slot->ttc_shouldFreeDesc = true;
-	slot->ttc_tupleDescriptor = (TupleDesc) NULL;
+	slot->ttc_tupleDescriptor = NULL;
 	slot->ttc_buffer = InvalidBuffer;
 
 	return slot;
@@ -406,7 +406,7 @@ ExecClearTuple(TupleTableSlot *slot)	/* slot in which to store tuple */
 	if (slot->ttc_shouldFree && oldtuple != NULL)
 		heap_freetuple(oldtuple);
 
-	slot->val = (HeapTuple) NULL;
+	slot->val = NULL;
 
 	slot->ttc_shouldFree = true;	/* probably useless code... */
 

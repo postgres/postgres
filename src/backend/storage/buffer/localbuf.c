@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.50 2003/11/29 19:51:56 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.51 2004/01/07 18:56:27 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ BufferDesc *
 LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 {
 	int			i;
-	BufferDesc *bufHdr = (BufferDesc *) NULL;
+	BufferDesc *bufHdr = NULL;
 
 	/* a low tech search for now -- not optimized for scans */
 	for (i = 0; i < NLocBuffer; i++)
@@ -93,7 +93,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 		Relation	bufrel = RelationNodeCacheGetRelation(bufHdr->tag.rnode);
 
 		/* flush this page */
-		if (bufrel == (Relation) NULL)
+		if (bufrel == NULL)
 		{
 			smgrblindwrt(DEFAULT_SMGR,
 						 bufHdr->tag.rnode,

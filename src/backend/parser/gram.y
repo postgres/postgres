@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.442 2004/01/06 23:55:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.443 2004/01/07 18:56:27 neilc Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -467,13 +467,13 @@ stmtblock:	stmtmulti								{ parsetree = $1; }
 
 /* the thrashing around here is to discard "empty" statements... */
 stmtmulti:	stmtmulti ';' stmt
-				{ if ($3 != (Node *)NULL)
+				{ if ($3 != NULL)
 					$$ = lappend($1, $3);
 				  else
 					$$ = $1;
 				}
 			| stmt
-					{ if ($1 != (Node *)NULL)
+					{ if ($1 != NULL)
 						$$ = makeList1($1);
 					  else
 						$$ = NIL;
@@ -553,7 +553,7 @@ stmt :
 			| VariableShowStmt
 			| ViewStmt
 			| /*EMPTY*/
-				{ $$ = (Node *)NULL; }
+				{ $$ = NULL; }
 		;
 
 /*****************************************************************************
@@ -1955,11 +1955,11 @@ OptSeqElem: CACHE NumericOnly
 				}
 			| NO MAXVALUE
 				{
-					$$ = makeDefElem("maxvalue", (Node *)NULL);
+					$$ = makeDefElem("maxvalue", NULL);
 				}
 			| NO MINVALUE
 				{
-					$$ = makeDefElem("minvalue", (Node *)NULL);
+					$$ = makeDefElem("minvalue", NULL);
 				}
 			| START opt_with NumericOnly
 				{
@@ -2371,7 +2371,7 @@ def_elem:  ColLabel '=' def_arg
 				}
 			| ColLabel
 				{
-					$$ = makeDefElem($1, (Node *)NULL);
+					$$ = makeDefElem($1, NULL);
 				}
 		;
 
@@ -3563,13 +3563,13 @@ RuleActionList:
 /* the thrashing around here is to discard "empty" statements... */
 RuleActionMulti:
 			RuleActionMulti ';' RuleActionStmtOrEmpty
-				{ if ($3 != (Node *) NULL)
+				{ if ($3 != NULL)
 					$$ = lappend($1, $3);
 				  else
 					$$ = $1;
 				}
 			| RuleActionStmtOrEmpty
-				{ if ($1 != (Node *) NULL)
+				{ if ($1 != NULL)
 					$$ = makeList1($1);
 				  else
 					$$ = NIL;
@@ -3586,7 +3586,7 @@ RuleActionStmt:
 
 RuleActionStmtOrEmpty:
 			RuleActionStmt							{ $$ = $1; }
-			|	/*EMPTY*/							{ $$ = (Node *)NULL; }
+			|	/*EMPTY*/							{ $$ = NULL; }
 		;
 
 /* change me to select, update, etc. some day */

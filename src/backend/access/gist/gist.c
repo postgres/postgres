@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.106 2003/11/29 19:51:39 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.107 2004/01/07 18:56:23 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,10 +45,10 @@
  */
 #define FILLITEM(evp, isnullkey, okey, okeyb, rkey, rkeyb)	 do { \
 		if ( isnullkey ) {										  \
-				gistentryinit((evp), rkey, r, (Page) NULL ,		  \
+				gistentryinit((evp), rkey, r, NULL,				  \
 						(OffsetNumber) 0, rkeyb, FALSE);		  \
 		} else {												  \
-				gistentryinit((evp), okey, r, (Page) NULL,		  \
+				gistentryinit((evp), okey, r, NULL,				  \
 						(OffsetNumber) 0, okeyb, FALSE);		  \
 		}														  \
 } while(0)
@@ -248,7 +248,7 @@ gistbuildCallback(Relation index,
 		else
 		{
 			gistcentryinit(&buildstate->giststate, i, &tmpcentry, attdata[i],
-						   (Relation) NULL, (Page) NULL, (OffsetNumber) 0,
+						   NULL, NULL, (OffsetNumber) 0,
 						 -1 /* size is currently bogus */ , TRUE, FALSE);
 			if (attdata[i] != tmpcentry.key &&
 				!(isAttByVal(&buildstate->giststate, i)))
@@ -332,7 +332,7 @@ gistinsert(PG_FUNCTION_ARGS)
 		else
 		{
 			gistcentryinit(&giststate, i, &tmpentry, datum[i],
-						   (Relation) NULL, (Page) NULL, (OffsetNumber) 0,
+						   NULL, NULL, (OffsetNumber) 0,
 						 -1 /* size is currently bogus */ , TRUE, FALSE);
 			if (datum[i] != tmpentry.key && !(isAttByVal(&giststate, i)))
 				compvec[i] = TRUE;
@@ -695,7 +695,7 @@ gistunion(Relation r, IndexTuple *itvec, int len, GISTSTATE *giststate)
 			gistdentryinit(giststate, j,
 						   &((GISTENTRY *) VARDATA(evec))[reallen],
 						   datum,
-					   (Relation) NULL, (Page) NULL, (OffsetNumber) NULL,
+						   NULL, NULL, (OffsetNumber) 0,
 						   ATTSIZE(datum, giststate->tupdesc, j + 1, IsNull), FALSE, IsNull);
 			if ((!isAttByVal(giststate, j)) &&
 				((GISTENTRY *) VARDATA(evec))[reallen].key != datum)
@@ -717,7 +717,7 @@ gistunion(Relation r, IndexTuple *itvec, int len, GISTSTATE *giststate)
 			{
 				VARATT_SIZEP(evec) = 2 * sizeof(GISTENTRY) + VARHDRSZ;
 				gistentryinit(((GISTENTRY *) VARDATA(evec))[1],
-					((GISTENTRY *) VARDATA(evec))[0].key, r, (Page) NULL,
+					((GISTENTRY *) VARDATA(evec))[0].key, r, NULL,
 							  (OffsetNumber) 0, ((GISTENTRY *) VARDATA(evec))[0].bytes, FALSE);
 
 			}
@@ -732,7 +732,7 @@ gistunion(Relation r, IndexTuple *itvec, int len, GISTSTATE *giststate)
 					pfree(DatumGetPointer(((GISTENTRY *) VARDATA(evec))[i].key));
 
 			gistcentryinit(giststate, j, &centry[j], datum,
-					   (Relation) NULL, (Page) NULL, (OffsetNumber) NULL,
+						   NULL, NULL, (OffsetNumber) 0,
 						   datumsize, FALSE, FALSE);
 			isnull[j] = ' ';
 			attr[j] = centry[j].key;
@@ -793,10 +793,10 @@ gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *gis
 	ev0p = &((GISTENTRY *) VARDATA(evec))[0];
 	ev1p = &((GISTENTRY *) VARDATA(evec))[1];
 
-	gistDeCompressAtt(giststate, r, oldtup, (Page) NULL,
+	gistDeCompressAtt(giststate, r, oldtup, NULL,
 					  (OffsetNumber) 0, oldatt, olddec, oldisnull);
 
-	gistDeCompressAtt(giststate, r, addtup, (Page) NULL,
+	gistDeCompressAtt(giststate, r, addtup, NULL,
 					  (OffsetNumber) 0, addatt, adddec, addisnull);
 
 
@@ -841,7 +841,7 @@ gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *gis
 				pfree(DatumGetPointer(addatt[j].key));
 
 			gistcentryinit(giststate, j, &centry[j], datum,
-					   (Relation) NULL, (Page) NULL, (OffsetNumber) NULL,
+						   NULL, NULL, (OffsetNumber) 0,
 						   datumsize, FALSE, FALSE);
 
 			isnull[j] = ' ';
@@ -929,8 +929,7 @@ gistunionsubkey(Relation r, GISTSTATE *giststate, IndexTuple *itvec, GIST_SPLITV
 				gistdentryinit(giststate, j,
 							   &((GISTENTRY *) VARDATA(evec))[reallen],
 							   datum,
-							   (Relation) NULL, (Page) NULL,
-							   (OffsetNumber) NULL,
+							   NULL, NULL, (OffsetNumber) 0,
 							   ATTSIZE(datum, giststate->tupdesc, j + 1, IsNull), FALSE, IsNull);
 				if ((!isAttByVal(giststate, j)) &&
 					((GISTENTRY *) VARDATA(evec))[reallen].key != datum)
@@ -1110,7 +1109,7 @@ gistadjsubkey(Relation r,
 	{
 		if (v->spl_idgrp[i + 1] == 0)	/* already inserted */
 			continue;
-		gistDeCompressAtt(giststate, r, itup[i], (Page) NULL, (OffsetNumber) 0,
+		gistDeCompressAtt(giststate, r, itup[i], NULL, (OffsetNumber) 0,
 						  identry, decfree, isnull);
 
 		v->spl_ngrp[v->spl_idgrp[i + 1]]--;
@@ -1127,12 +1126,12 @@ gistadjsubkey(Relation r,
 			/* where? */
 			for (j = 1; j < r->rd_att->natts; j++)
 			{
-				gistentryinit(entry, v->spl_lattr[j], r, (Page) NULL,
+				gistentryinit(entry, v->spl_lattr[j], r, NULL,
 						   (OffsetNumber) 0, v->spl_lattrsize[j], FALSE);
 				gistpenalty(giststate, j, &entry, v->spl_lisnull[j],
 							&identry[j], isnull[j], &lpenalty);
 
-				gistentryinit(entry, v->spl_rattr[j], r, (Page) NULL,
+				gistentryinit(entry, v->spl_rattr[j], r, NULL,
 						   (OffsetNumber) 0, v->spl_rattrsize[j], FALSE);
 				gistpenalty(giststate, j, &entry, v->spl_risnull[j],
 							&identry[j], isnull[j], &rpenalty);
@@ -1486,7 +1485,7 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 	which = -1;
 	sum_grow = 1;
 	gistDeCompressAtt(giststate, r,
-					  it, (Page) NULL, (OffsetNumber) 0,
+					  it, NULL, (OffsetNumber) 0,
 					  identry, decompvec, isnull);
 
 	for (i = FirstOffsetNumber; i <= maxoff && sum_grow; i = OffsetNumberNext(i))
@@ -1530,7 +1529,7 @@ gistfreestack(GISTSTACK *s)
 {
 	GISTSTACK  *p;
 
-	while (s != (GISTSTACK *) NULL)
+	while (s != NULL)
 	{
 		p = s->gs_parent;
 		pfree(s);
@@ -1609,7 +1608,7 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 	 */
 
 	/* walk through the entire index */
-	iscan = index_beginscan(NULL, rel, SnapshotAny, 0, (ScanKey) NULL);
+	iscan = index_beginscan(NULL, rel, SnapshotAny, 0, NULL);
 	/* including killed tuples */
 	iscan->ignore_killed_tuples = false;
 
@@ -1829,7 +1828,7 @@ gistFormTuple(GISTSTATE *giststate, Relation r,
 		else
 		{
 			gistcentryinit(giststate, j, &centry[j], attdata[j],
-					   (Relation) NULL, (Page) NULL, (OffsetNumber) NULL,
+						   NULL, NULL, (OffsetNumber) 0,
 						   datumsize[j], FALSE, FALSE);
 			isnullchar[j] = ' ';
 			compatt[j] = centry[j].key;

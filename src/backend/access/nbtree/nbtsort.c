@@ -36,7 +36,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.79 2003/11/29 19:51:40 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.80 2004/01/07 18:56:24 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -257,7 +257,7 @@ _bt_pagestate(Relation index, uint32 level)
 	/* create initial page */
 	_bt_blnewpage(index, &(state->btps_buf), &(state->btps_page), level);
 
-	state->btps_minkey = (BTItem) NULL;
+	state->btps_minkey = NULL;
 	/* initialize lastoff so first item goes into P_FIRSTKEY */
 	state->btps_lastoff = P_HIKEY;
 	state->btps_level = level;
@@ -267,7 +267,7 @@ _bt_pagestate(Relation index, uint32 level)
 	else
 		state->btps_full = PageGetPageSize(state->btps_page) / 10;
 	/* no parent level, yet */
-	state->btps_next = (BTPageState *) NULL;
+	state->btps_next = NULL;
 
 	return state;
 }
@@ -444,7 +444,7 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti)
 		 * we don't have a parent, we have to create one; this adds a new
 		 * btree level.
 		 */
-		if (state->btps_next == (BTPageState *) NULL)
+		if (state->btps_next == NULL)
 			state->btps_next = _bt_pagestate(index, state->btps_level + 1);
 
 		Assert(state->btps_minkey != NULL);
@@ -520,7 +520,7 @@ _bt_uppershutdown(Relation index, BTPageState *state)
 	/*
 	 * Each iteration of this loop completes one more level of the tree.
 	 */
-	for (s = state; s != (BTPageState *) NULL; s = s->btps_next)
+	for (s = state; s != NULL; s = s->btps_next)
 	{
 		BlockNumber blkno;
 		BTPageOpaque opaque;
@@ -536,7 +536,7 @@ _bt_uppershutdown(Relation index, BTPageState *state)
 		 * key.  This may cause the last page of the parent level to
 		 * split, but that's not a problem -- we haven't gotten to it yet.
 		 */
-		if (s->btps_next == (BTPageState *) NULL)
+		if (s->btps_next == NULL)
 		{
 			opaque->btpo_flags |= BTP_ROOT;
 			rootblkno = blkno;

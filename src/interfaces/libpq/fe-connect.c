@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.265 2003/12/19 21:50:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.266 2004/01/07 18:56:29 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -279,7 +279,7 @@ PQconnectStart(const char *conninfo)
 	 */
 	conn = makeEmptyPGconn();
 	if (conn == NULL)
-		return (PGconn *) NULL;
+		return NULL;
 
 	/*
 	 * Parse the conninfo string
@@ -532,7 +532,7 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 	 */
 	conn = makeEmptyPGconn();
 	if (conn == NULL)
-		return (PGconn *) NULL;
+		return NULL;
 
 	/*
 	 * Parse an empty conninfo string in order to set up the same defaults
@@ -1938,7 +1938,7 @@ makeEmptyPGconn(void)
 	WSADATA		wsaData;
 
 	if (WSAStartup(MAKEWORD(1, 1), &wsaData))
-		return (PGconn *) NULL;
+		return NULL;
 	WSASetLastError(0);
 #endif
 
@@ -1947,7 +1947,7 @@ makeEmptyPGconn(void)
 		return conn;
 
 	/* Zero all pointers and booleans */
-	MemSet((char *) conn, 0, sizeof(PGconn));
+	MemSet(conn, 0, sizeof(PGconn));
 
 	conn->noticeHooks.noticeRec = defaultNoticeReceiver;
 	conn->noticeHooks.noticeProc = defaultNoticeProcessor;
@@ -2765,7 +2765,7 @@ char *
 PQdb(const PGconn *conn)
 {
 	if (!conn)
-		return (char *) NULL;
+		return NULL;
 	return conn->dbName;
 }
 
@@ -2773,7 +2773,7 @@ char *
 PQuser(const PGconn *conn)
 {
 	if (!conn)
-		return (char *) NULL;
+		return NULL;
 	return conn->pguser;
 }
 
@@ -2781,7 +2781,7 @@ char *
 PQpass(const PGconn *conn)
 {
 	if (!conn)
-		return (char *) NULL;
+		return NULL;
 	return conn->pgpass;
 }
 
@@ -2789,7 +2789,7 @@ char *
 PQhost(const PGconn *conn)
 {
 	if (!conn)
-		return (char *) NULL;
+		return NULL;
 	return conn->pghost ? conn->pghost : conn->pgunixsocket;
 }
 
@@ -2797,7 +2797,7 @@ char *
 PQport(const PGconn *conn)
 {
 	if (!conn)
-		return (char *) NULL;
+		return NULL;
 	return conn->pgport;
 }
 
@@ -2805,7 +2805,7 @@ char *
 PQtty(const PGconn *conn)
 {
 	if (!conn)
-		return (char *) NULL;
+		return NULL;
 	return conn->pgtty;
 }
 
@@ -2813,7 +2813,7 @@ char *
 PQoptions(const PGconn *conn)
 {
 	if (!conn)
-		return (char *) NULL;
+		return NULL;
 	return conn->pgoptions;
 }
 
@@ -2915,7 +2915,7 @@ PQsetClientEncoding(PGconn *conn, const char *encoding)
 	sprintf(qbuf, query, encoding);
 	res = PQexec(conn, qbuf);
 
-	if (res == (PGresult *) NULL)
+	if (res == NULL)
 		return -1;
 	if (res->resultStatus != PGRES_COMMAND_OK)
 		status = -1;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.150 2003/12/20 22:18:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.151 2004/01/07 18:56:27 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -372,7 +372,7 @@ BufferAlloc(Relation reln,
 	 * it to disk. Remember to unlock BufMgrLock while doing the IOs.
 	 */
 	inProgress = FALSE;
-	for (buf = (BufferDesc *) NULL; buf == (BufferDesc *) NULL;)
+	for (buf = NULL; buf == NULL;)
 	{
 		buf = StrategyGetBuffer();
 
@@ -399,7 +399,7 @@ BufferAlloc(Relation reln,
 			if ((buf->flags & BM_IO_ERROR) != 0)
 			{
 				UnpinBuffer(buf);
-				buf = (BufferDesc *) NULL;
+				buf = NULL;
 				continue;
 			}
 
@@ -440,7 +440,7 @@ BufferAlloc(Relation reln,
 				buf->flags &= ~BM_IO_IN_PROGRESS;
 				TerminateBufferIO(buf);
 				UnpinBuffer(buf);
-				buf = (BufferDesc *) NULL;
+				buf = NULL;
 			}
 			else
 			{
@@ -476,7 +476,7 @@ BufferAlloc(Relation reln,
 				buf->flags &= ~BM_IO_IN_PROGRESS;
 				TerminateBufferIO(buf);
 				UnpinBuffer(buf);
-				buf = (BufferDesc *) NULL;
+				buf = NULL;
 			}
 
 			/*
@@ -799,7 +799,7 @@ BufferSync(int percent, int maxpages)
 		bufHdr->flags &= ~BM_JUST_DIRTIED;
 		LWLockRelease(BufMgrLock);
 
-		if (reln == (Relation) NULL)
+		if (reln == NULL)
 		{
 			status = smgrblindwrt(DEFAULT_SMGR,
 								  bufHdr->tag.rnode,
@@ -849,7 +849,7 @@ BufferSync(int percent, int maxpages)
 		LWLockRelease(BufMgrLock);
 
 		/* drop refcnt obtained by RelationNodeCacheGetRelation */
-		if (reln != (Relation) NULL)
+		if (reln != NULL)
 			RelationDecrementReferenceCount(reln);
 	}
 
@@ -1105,7 +1105,7 @@ BufferReplace(BufferDesc *bufHdr)
 
 	reln = RelationNodeCacheGetRelation(bufHdr->tag.rnode);
 
-	if (reln != (Relation) NULL)
+	if (reln != NULL)
 	{
 		status = smgrwrite(DEFAULT_SMGR, reln,
 						   bufHdr->tag.blockNum,
@@ -1119,7 +1119,7 @@ BufferReplace(BufferDesc *bufHdr)
 	}
 
 	/* drop relcache refcnt incremented by RelationNodeCacheGetRelation */
-	if (reln != (Relation) NULL)
+	if (reln != NULL)
 		RelationDecrementReferenceCount(reln);
 
 	/* Pop the error context stack */
@@ -1949,7 +1949,7 @@ LockBufferForCleanup(Buffer buffer)
  *	Note : We assume that nested buffer IO never occur.
  *	i.e at most one io_in_progress lock is held per proc.
 */
-static BufferDesc *InProgressBuf = (BufferDesc *) NULL;
+static BufferDesc *InProgressBuf = NULL;
 static bool IsForInput;
 
 /*
@@ -1991,7 +1991,7 @@ TerminateBufferIO(BufferDesc *buf)
 {
 	Assert(buf == InProgressBuf);
 	LWLockRelease(buf->io_in_progress_lock);
-	InProgressBuf = (BufferDesc *) NULL;
+	InProgressBuf = NULL;
 }
 
 /*
@@ -2016,7 +2016,7 @@ ContinueBufferIO(BufferDesc *buf, bool forInput)
 void
 InitBufferIO(void)
 {
-	InProgressBuf = (BufferDesc *) NULL;
+	InProgressBuf = NULL;
 }
 #endif
 

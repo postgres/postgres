@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.158 2003/12/02 19:26:47 joe Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.159 2004/01/07 18:56:24 neilc Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -947,7 +947,7 @@ CommitTransaction(void)
 	 * as running as well or it will see two tuple versions - one deleted
 	 * by xid 1 and one inserted by xid 0.	See notes in GetSnapshotData.
 	 */
-	if (MyProc != (PGPROC *) NULL)
+	if (MyProc != NULL)
 	{
 		/* Lock SInvalLock because that's what GetSnapshotData uses. */
 		LWLockAcquire(SInvalLock, LW_EXCLUSIVE);
@@ -1064,7 +1064,7 @@ AbortTransaction(void)
 	 * this must be done _before_ releasing locks we hold and _after_
 	 * RecordTransactionAbort.
 	 */
-	if (MyProc != (PGPROC *) NULL)
+	if (MyProc != NULL)
 	{
 		/* Lock SInvalLock because that's what GetSnapshotData uses. */
 		LWLockAcquire(SInvalLock, LW_EXCLUSIVE);
@@ -1831,7 +1831,7 @@ xact_desc(char *buf, uint8 xl_info, char *rec)
 }
 
 void
-			XactPushRollback(void (*func) (void *), void *data)
+XactPushRollback(void (*func) (void *), void *data)
 {
 #ifdef XLOG_II
 	if (_RollbackFunc != NULL)

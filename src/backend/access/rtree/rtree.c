@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtree.c,v 1.81 2003/11/29 19:51:40 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtree.c,v 1.82 2004/01/07 18:56:24 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -244,7 +244,7 @@ rtinsert(PG_FUNCTION_ARGS)
 	if (IndexTupleHasNulls(itup))
 	{
 		pfree(itup);
-		PG_RETURN_POINTER((InsertIndexResult) NULL);
+		PG_RETURN_POINTER(NULL);
 	}
 
 	initRtstate(&rtState, r);
@@ -275,7 +275,7 @@ rtdoinsert(Relation r, IndexTuple itup, RTSTATE *rtstate)
 
 	blk = P_ROOT;
 	buffer = InvalidBuffer;
-	stack = (RTSTACK *) NULL;
+	stack = NULL;
 
 	do
 	{
@@ -360,7 +360,7 @@ rttighten(Relation r,
 				newd_size;
 	Buffer		b;
 
-	if (stk == (RTSTACK *) NULL)
+	if (stk == NULL)
 		return;
 
 	b = ReadBuffer(r, stk->rts_blk);
@@ -622,7 +622,7 @@ rtintinsert(Relation r,
 				newdatum;
 	InsertIndexResult res;
 
-	if (stk == (RTSTACK *) NULL)
+	if (stk == NULL)
 	{
 		rtnewroot(r, ltup, rtup);
 		return;
@@ -912,7 +912,7 @@ rtpicksplit(Relation r,
 	 */
 
 	/* to keep compiler quiet */
-	cost_vector = (SPLITCOST *) NULL;
+	cost_vector = NULL;
 
 	if (num_tuples_without_seeds > 0)
 	{
@@ -1172,7 +1172,7 @@ freestack(RTSTACK *s)
 {
 	RTSTACK    *p;
 
-	while (s != (RTSTACK *) NULL)
+	while (s != NULL)
 	{
 		p = s->rts_parent;
 		pfree(s);
@@ -1213,7 +1213,7 @@ rtbulkdelete(PG_FUNCTION_ARGS)
 	 */
 
 	/* walk through the entire index */
-	iscan = index_beginscan(NULL, rel, SnapshotAny, 0, (ScanKey) NULL);
+	iscan = index_beginscan(NULL, rel, SnapshotAny, 0, NULL);
 	/* including killed tuples */
 	iscan->ignore_killed_tuples = false;
 

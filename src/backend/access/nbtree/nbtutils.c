@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.57 2003/11/29 19:51:40 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.58 2004/01/07 18:56:24 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,7 +126,7 @@ _bt_freestack(BTStack stack)
 {
 	BTStack		ostack;
 
-	while (stack != (BTStack) NULL)
+	while (stack != NULL)
 	{
 		ostack = stack;
 		stack = stack->bts_parent;

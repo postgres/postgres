@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.89 2004/01/06 04:31:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.90 2004/01/07 18:56:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -758,9 +758,9 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 		lossyflags = lfirst(indxlossy);
 		indxlossy = lnext(indxlossy);
 		n_keys = length(quals);
-		scan_keys = (n_keys <= 0) ? (ScanKey) NULL :
+		scan_keys = (n_keys <= 0) ? NULL :
 			(ScanKey) palloc(n_keys * sizeof(ScanKeyData));
-		run_keys = (n_keys <= 0) ? (ExprState **) NULL :
+		run_keys = (n_keys <= 0) ? NULL :
 			(ExprState **) palloc(n_keys * sizeof(ExprState *));
 
 		/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.61 2003/11/29 19:51:51 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.62 2004/01/07 18:56:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ matching_tlist_expr(Node *node, List *targetlist)
 	if (tlentry)
 		return tlentry->expr;
 
-	return (Node *) NULL;
+	return NULL;
 }
 #endif
 
@@ -76,7 +76,7 @@ tlist_member(Node *node, List *targetlist)
 	if (tlentry)
 		return tlentry->resdom;
 
-	return (Resdom *) NULL;
+	return NULL;
 }
 
 /*

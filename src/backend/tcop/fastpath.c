@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.70 2003/11/29 19:51:57 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.71 2004/01/07 18:56:27 neilc Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -206,7 +206,7 @@ fetch_fp_info(Oid func_id, struct fp_info * fip)
 	Form_pg_proc pp;
 
 	Assert(OidIsValid(func_id));
-	Assert(fip != (struct fp_info *) NULL);
+	Assert(fip != NULL);
 
 	/*
 	 * Since the validity of this structure is determined by whether the

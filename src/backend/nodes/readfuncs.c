@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.163 2003/11/29 19:51:49 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.164 2004/01/07 18:56:26 neilc Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -129,7 +129,7 @@
 #define strtobool(x)  ((*(x) == 't') ? true : false)
 
 #define nullable_string(token,length)  \
-	((length) == 0 ? (char *) NULL : debackslash(token, length))
+	((length) == 0 ? NULL : debackslash(token, length))
 
 
 static Datum readDatum(bool typbyval);

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.354 2004/01/06 23:15:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.355 2004/01/07 18:56:27 neilc Exp $
  *
  * NOTES
  *
@@ -167,7 +167,7 @@ int			MaxBackends;
 int			ReservedBackends;
 
 
-static char *progname = (char *) NULL;
+static char *progname = NULL;
 
 /* The socket(s) we're listening to. */
 #define MAXLISTEN	10
@@ -1082,8 +1082,7 @@ ServerLoop(void)
 
 		PG_SETMASK(&UnBlockSig);
 
-		if (select(nSockets, &rmask, (fd_set *) NULL,
-				   (fd_set *) NULL, &timeout) < 0)
+		if (select(nSockets, &rmask, NULL, NULL, &timeout) < 0)
 		{
 			PG_SETMASK(&BlockSig);
 			if (errno == EINTR || errno == EWOULDBLOCK)
@@ -2583,7 +2582,7 @@ BackendRun(Port *port)
 	if (port->cmdline_options)
 		split_opts(av, &ac, port->cmdline_options);
 
-	av[ac] = (char *) NULL;
+	av[ac] = NULL;
 
 	Assert(ac < maxac);
 
@@ -3038,7 +3037,7 @@ SSDataBase(int xlop)
 		av[ac++] = "template1";
 #endif
 
-		av[ac] = (char *) NULL;
+		av[ac] = NULL;
 
 		Assert(ac < lengthof(av));
 

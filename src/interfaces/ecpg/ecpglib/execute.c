@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.30 2003/12/03 08:49:17 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.31 2004/01/07 18:56:29 neilc Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -190,7 +190,7 @@ free_variable(struct variable * var)
 {
 	struct variable *var_next;
 
-	if (var == (struct variable *) NULL)
+	if (var == NULL)
 		return;
 	var_next = var->next;
 	ECPGfree(var);
@@ -206,7 +206,7 @@ free_variable(struct variable * var)
 static void
 free_statement(struct statement * stmt)
 {
-	if (stmt == (struct statement *) NULL)
+	if (stmt == NULL)
 		return;
 	free_variable(stmt->inlist);
 	free_variable(stmt->outlist);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.100 2004/01/06 18:07:31 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.101 2004/01/07 18:56:27 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@ typedef struct _MdfdVec
 } MdfdVec;
 
 static int	Nfds = 100;			/* initial/current size of Md_fdvec array */
-static MdfdVec *Md_fdvec = (MdfdVec *) NULL;
+static MdfdVec *Md_fdvec = NULL;
 static int	Md_Free = -1;		/* head of freelist of unused fdvec
 								 * entries */
 static int	CurFd = 0;			/* first never-used fdvec index */
@@ -158,7 +158,7 @@ mdcreate(Relation reln)
 	Md_fdvec[vfd].mdfd_vfd = fd;
 	Md_fdvec[vfd].mdfd_flags = (uint16) 0;
 #ifndef LET_OS_MANAGE_FILESIZE
-	Md_fdvec[vfd].mdfd_chain = (MdfdVec *) NULL;
+	Md_fdvec[vfd].mdfd_chain = NULL;
 #endif
 
 	return vfd;
@@ -322,7 +322,7 @@ mdopen(Relation reln)
 	Md_fdvec[vfd].mdfd_vfd = fd;
 	Md_fdvec[vfd].mdfd_flags = (uint16) 0;
 #ifndef LET_OS_MANAGE_FILESIZE
-	Md_fdvec[vfd].mdfd_chain = (MdfdVec *) NULL;
+	Md_fdvec[vfd].mdfd_chain = NULL;
 	Assert(_mdnblocks(fd, BLCKSZ) <= ((BlockNumber) RELSEG_SIZE));
 #endif
 
@@ -359,7 +359,7 @@ mdclose_fd(int fd)
 	MdfdVec    *v;
 
 #ifndef LET_OS_MANAGE_FILESIZE
-	for (v = &Md_fdvec[fd]; v != (MdfdVec *) NULL;)
+	for (v = &Md_fdvec[fd]; v != NULL;)
 	{
 		MdfdVec    *ov = v;
 
@@ -372,10 +372,10 @@ mdclose_fd(int fd)
 			pfree(ov);
 	}
 
-	Md_fdvec[fd].mdfd_chain = (MdfdVec *) NULL;
+	Md_fdvec[fd].mdfd_chain = NULL;
 #else
 	v = &Md_fdvec[fd];
-	if (v != (MdfdVec *) NULL)
+	if (v != NULL)
 	{
 		if (v->mdfd_vfd >= 0)
 			FileClose(v->mdfd_vfd);
@@ -553,7 +553,7 @@ mdnblocks(Relation reln)
 	 * levels to handle that scenario by closing and re-opening the md
 	 * fd.)
 	 */
-	while (v->mdfd_chain != (MdfdVec *) NULL)
+	while (v->mdfd_chain != NULL)
 	{
 		segno++;
 		v = v->mdfd_chain;
@@ -572,7 +572,7 @@ mdnblocks(Relation reln)
 		 */
 		segno++;
 
-		if (v->mdfd_chain == (MdfdVec *) NULL)
+		if (v->mdfd_chain == NULL)
 		{
 			/*
 			 * Because we pass O_CREAT, we will create the next segment
@@ -582,7 +582,7 @@ mdnblocks(Relation reln)
 			 * worth.
 			 */
 			v->mdfd_chain = _mdfd_openseg(reln, segno, O_CREAT);
-			if (v->mdfd_chain == (MdfdVec *) NULL)
+			if (v->mdfd_chain == NULL)
 				elog(ERROR, "could not count blocks of \"%s\": %m",
 					 RelationGetRelationName(reln));
 		}
@@ -625,7 +625,7 @@ mdtruncate(Relation reln, BlockNumber nblocks)
 
 #ifndef LET_OS_MANAGE_FILESIZE
 	priorblocks = 0;
-	while (v != (MdfdVec *) NULL)
+	while (v != NULL)
 	{
 		MdfdVec    *ov = v;
 
@@ -660,7 +660,7 @@ mdtruncate(Relation reln, BlockNumber nblocks)
 			if (FileTruncate(v->mdfd_vfd, lastsegblocks * BLCKSZ) < 0)
 				return InvalidBlockNumber;
 			v = v->mdfd_chain;
-			ov->mdfd_chain = (MdfdVec *) NULL;
+			ov->mdfd_chain = NULL;
 		}
 		else
 		{
@@ -815,7 +815,7 @@ _mdfd_openseg(Relation reln, BlockNumber segno, int oflags)
 	pfree(fullpath);
 
 	if (fd < 0)
-		return (MdfdVec *) NULL;
+		return NULL;
 
 	/* allocate an mdfdvec entry for it */
 	v = (MdfdVec *) MemoryContextAlloc(MdCxt, sizeof(MdfdVec));
@@ -824,7 +824,7 @@ _mdfd_openseg(Relation reln, BlockNumber segno, int oflags)
 	v->mdfd_vfd = fd;
 	v->mdfd_flags = (uint16) 0;
 #ifndef LET_OS_MANAGE_FILESIZE
-	v->mdfd_chain = (MdfdVec *) NULL;
+	v->mdfd_chain = NULL;
 	Assert(_mdnblocks(fd, BLCKSZ) <= ((BlockNumber) RELSEG_SIZE));
 #endif
 
@@ -877,7 +877,7 @@ _mdfd_getseg(Relation reln, BlockNumber blkno)
 		 i++, segno--)
 	{
 
-		if (v->mdfd_chain == (MdfdVec *) NULL)
+		if (v->mdfd_chain == NULL)
 		{
 			/*
 			 * We will create the next segment only if the target block is
@@ -891,7 +891,7 @@ _mdfd_getseg(Relation reln, BlockNumber blkno)
 			 */
 			v->mdfd_chain = _mdfd_openseg(reln, i, (segno == 1) ? O_CREAT : 0);
 
-			if (v->mdfd_chain == (MdfdVec *) NULL)
+			if (v->mdfd_chain == NULL)
 				elog(ERROR, "could not open segment %u of relation \"%s\" (target block %u): %m",
 					 i, RelationGetRelationName(reln), blkno);
 		}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.67 2003/11/29 19:52:01 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.68 2004/01/07 18:56:29 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,8 +40,8 @@ typedef struct df_files
 	 */
 } DynamicFileList;
 
-static DynamicFileList *file_list = (DynamicFileList *) NULL;
-static DynamicFileList *file_tail = (DynamicFileList *) NULL;
+static DynamicFileList *file_list = NULL;
+static DynamicFileList *file_tail = NULL;
 
 #define SAME_INODE(A,B) ((A).st_ino == (B).inode && (A).st_dev == (B).device)
 
@@ -84,11 +84,11 @@ load_external_function(char *filename, char *funcname,
 	 * Scan the list of loaded FILES to see if the file has been loaded.
 	 */
 	for (file_scanner = file_list;
-		 file_scanner != (DynamicFileList *) NULL &&
+		 file_scanner != NULL &&
 		 strcmp(fullname, file_scanner->filename) != 0;
 		 file_scanner = file_scanner->next)
 		;
-	if (file_scanner == (DynamicFileList *) NULL)
+	if (file_scanner == NULL)
 	{
 		/*
 		 * Check for same files - different paths (ie, symlink or link)
@@ -100,13 +100,13 @@ load_external_function(char *filename, char *funcname,
 							fullname)));
 
 		for (file_scanner = file_list;
-			 file_scanner != (DynamicFileList *) NULL &&
+			 file_scanner != NULL &&
 			 !SAME_INODE(stat_buf, *file_scanner);
 			 file_scanner = file_scanner->next)
 			;
 	}
 
-	if (file_scanner == (DynamicFileList *) NULL)
+	if (file_scanner == NULL)
 	{
 		/*
 		 * File not loaded yet.
@@ -122,10 +122,10 @@ load_external_function(char *filename, char *funcname,
 		strcpy(file_scanner->filename, fullname);
 		file_scanner->device = stat_buf.st_dev;
 		file_scanner->inode = stat_buf.st_ino;
-		file_scanner->next = (DynamicFileList *) NULL;
+		file_scanner->next = NULL;
 
 		file_scanner->handle = pg_dlopen(fullname);
-		if (file_scanner->handle == (void *) NULL)
+		if (file_scanner->handle == NULL)
 		{
 			load_error = (char *) pg_dlerror();
 			free((char *) file_scanner);
@@ -137,7 +137,7 @@ load_external_function(char *filename, char *funcname,
 		}
 
 		/* OK to link it into list */
-		if (file_list == (DynamicFileList *) NULL)
+		if (file_list == NULL)
 			file_list = file_scanner;
 		else
 			file_tail->next = file_scanner;
@@ -151,15 +151,15 @@ load_external_function(char *filename, char *funcname,
 	/*
 	 * If funcname is NULL, we only wanted to load the file.
 	 */
-	if (funcname == (char *) NULL)
+	if (funcname == NULL)
 	{
 		pfree(fullname);
-		return (PGFunction) NULL;
+		return NULL;
 	}
 
 	retval = pg_dlsym(file_scanner->handle, funcname);
 
-	if (retval == (PGFunction) NULL && signalNotFound)
+	if (retval == NULL && signalNotFound)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("could not find function \"%s\" in file \"%s\"",
@@ -221,7 +221,7 @@ load_file(char *filename)
 			prv = file_scanner;
 	}
 
-	load_external_function(fullname, (char *) NULL, false, (void *) NULL);
+	load_external_function(fullname, NULL, false, NULL);
 
 	pfree(fullname);
 }

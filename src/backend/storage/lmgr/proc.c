@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.143 2003/12/25 03:52:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.144 2004/01/07 18:56:27 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -745,7 +745,7 @@ ProcWakeup(PGPROC *proc, int errType)
 	/* Proc should be sleeping ... */
 	if (proc->links.prev == INVALID_OFFSET ||
 		proc->links.next == INVALID_OFFSET)
-		return (PGPROC *) NULL;
+		return NULL;
 
 	/* Save next process before we zap the list link */
 	retProc = (PGPROC *) MAKE_PTR(proc->links.next);

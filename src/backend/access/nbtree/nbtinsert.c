@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.110 2003/12/21 01:23:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.111 2004/01/07 18:56:24 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1186,7 +1186,7 @@ _bt_insert_parent(Relation rel,
 	{
 		Buffer		rootbuf;
 
-		Assert(stack == (BTStack) NULL);
+		Assert(stack == NULL);
 		Assert(is_only);
 		/* create a new root node and update the metapage */
 		rootbuf = _bt_newroot(rel, buf, rbuf);
@@ -1206,7 +1206,7 @@ _bt_insert_parent(Relation rel,
 		BTItem		ritem;
 		Buffer		pbuf;
 
-		if (stack == (BTStack) NULL)
+		if (stack == NULL)
 		{
 			BTPageOpaque lpageop;
 

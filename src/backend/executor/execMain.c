@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.224 2003/12/28 21:57:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.225 2004/01/07 18:56:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -782,7 +782,7 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 	 *
 	 * If EXPLAIN, skip creating the "into" relation.
 	 */
-	intoRelationDesc = (Relation) NULL;
+	intoRelationDesc = NULL;
 
 	if (do_select_into && !explainOnly)
 	{
@@ -1076,7 +1076,7 @@ lnext:	;
 		 *
 		 * Also, extract all the junk information we need.
 		 */
-		if ((junkfilter = estate->es_junkFilter) != (JunkFilter *) NULL)
+		if ((junkfilter = estate->es_junkFilter) != NULL)
 		{
 			Datum		datum;
 			HeapTuple	newTuple;

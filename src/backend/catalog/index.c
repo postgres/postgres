@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.224 2003/12/28 21:57:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.225 2004/01/07 18:56:25 neilc Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1419,7 +1419,7 @@ IndexBuildHeapScan(Relation heapRelation,
 	scan = heap_beginscan(heapRelation, /* relation */
 						  snapshot,		/* seeself */
 						  0,	/* number of keys */
-						  (ScanKey) NULL);		/* scan key */
+						  NULL);		/* scan key */
 
 	reltuples = 0;
 

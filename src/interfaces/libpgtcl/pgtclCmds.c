@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpgtcl/pgtclCmds.c,v 1.76 2003/11/29 19:52:11 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpgtcl/pgtclCmds.c,v 1.77 2004/01/07 18:56:29 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,7 +153,7 @@ tcl_value(char *value)
 	char	   *p;
 
 	if (!value)
-		return (char *) NULL;
+		return NULL;
 
 #ifdef TCL_ARRAYS_DEBUG
 	printf("pq_value  = '%s'\n", value);
@@ -417,8 +417,8 @@ Pg_disconnect(ClientData cData, Tcl_Interp *interp, int argc, CONST84 char *argv
 	}
 
 	/* Check that it is a PG connection and not something else */
-	conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId **) NULL);
-	if (conn == (PGconn *) NULL)
+	conn = PgGetConnectionId(interp, argv[1], NULL);
+	if (conn == NULL)
 		return TCL_ERROR;
 
 	return Tcl_UnregisterChannel(interp, conn_chan);
@@ -450,7 +450,7 @@ Pg_exec(ClientData cData, Tcl_Interp *interp, int argc, CONST84 char *argv[])
 	}
 
 	conn = PgGetConnectionId(interp, argv[1], &connid);
-	if (conn == (PGconn *) NULL)
+	if (conn == NULL)
 		return TCL_ERROR;
 
 	if (connid->res_copyStatus != RES_COPY_NONE)
@@ -555,7 +555,7 @@ Pg_result(ClientData cData, Tcl_Interp *interp, int argc, CONST84 char *argv[])
 	}
 
 	result = PgGetResultId(interp, argv[1]);
-	if (result == (PGresult *) NULL)
+	if (result == NULL)
 	{
 		Tcl_AppendResult(interp, "\n",
 						 argv[1], " is not a valid query result", 0);
@@ -878,7 +878,7 @@ Pg_execute(ClientData cData, Tcl_Interp *interp, int argc, CONST84 char *argv[])
 	 * Get the connection and make sure no COPY command is pending
 	 */
 	conn = PgGetConnectionId(interp, argv[i++], &connid);
-	if (conn == (PGconn *) NULL)
+	if (conn == NULL)
 		return TCL_ERROR;
 
 	if (connid->res_copyStatus != RES_COPY_NONE)
@@ -1085,8 +1085,8 @@ Pg_lo_open(ClientData cData, Tcl_Interp *interp, int argc, CONST84 char *argv[])
 		return TCL_ERROR;
 	}
 
-	conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId **) NULL);
-	if (conn == (PGconn *) NULL)
+	conn = PgGetConnectionId(interp, argv[1], NULL);
+	if (conn == NULL)
 		return TCL_ERROR;
 
 	lobjId = atoi(argv[2]);
@@ -1153,8 +1153,8 @@ Pg_lo_close(ClientData cData, Tcl_Interp *interp, int argc, CONST84 char *argv[]
 		return TCL_ERROR;
 	}
 
-	conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId **) NULL);
-	if (conn == (PGconn *) NULL)
+	conn = PgGetConnectionId(interp, argv[1], NULL);
+	if (conn == NULL)
 		return TCL_ERROR;
 
 	fd = atoi(argv[2]);
@@ -1195,8 +1195,8 @@ Pg_lo_read(ClientData cData, Tcl_Interp *interp, int objc,
 	}
 
 	conn = PgGetConnectionId(interp, Tcl_GetStringFromObj(objv[1], NULL),
-							 (Pg_ConnectionId **) NULL);
-	if (conn == (PGconn *) NULL)
+							 NULL);
+	if (conn == NULL)
 		return TCL_ERROR;
 
 	if (Tcl_GetIntFromObj(interp, objv[2], &fd) != TCL_OK)
@@ -1254,8 +1254,8 @@ Pg_lo_read(ClientData cData, Tcl_Interp *interp, int argc, CONST84 char *argv[])
 		return TCL_ERROR;
 	}
 
-	conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId **) NULL);
-	if (conn == (PGconn *) NULL)
+	conn = PgGetConnectionId(interp, argv[1], NULL);
+	if (conn == NULL)
 		return TCL_ERROR;
 
 	fd = atoi(argv[2]);
@@ -1310,8 +1310,8 @@ Pg_lo_write(ClientData cData, Tcl_Interp *interp, int objc,
 	}
 
 	conn = PgGetConnectionId(interp, Tcl_GetStringFromObj(objv[1], NULL),
-							 (Pg_ConnectionId **) NULL);
-	if (conn == (PGconn *) NULL)
+							 NULL);
+	if (conn == NULL)
 		return TCL_ERROR;
 
 	if (Tcl_GetIntFromObj(interp, objv[2], &fd) != TCL_OK)
@@ -1357,8 +1357,8 @@ Pg_lo_write(ClientData cData, Tcl_Interp *interp, int argc, CONST84 char *argv[]
 		return TCL_ERROR;
 	}
 
-	conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId **) NULL);
-	if (conn == (PGconn *) NULL)
+	conn = PgGetConnectionId(interp, argv[1], NULL);
+	if (conn == NULL)
 		return TCL_ERROR;
 
 	fd = atoi(argv[2]);
@@ -1405,8 +1405,8 @@ Pg_lo_lseek(ClientData cData, Tcl_Interp *interp, int argc, CONST84 char *argv[]
 		return TCL_ERROR;
 	}
 
-	conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId **) NULL);
-	if (conn == (PGconn *) NULL)
+	conn = PgGetConnectionId(interp, argv[1], NULL);
+	if (conn == NULL)
 		return TCL_ERROR;
 
 	fd = atoi(argv[2]);
@@ -1457,8 +1457,8 @@ Pg_lo_creat(ClientData cData, Tcl_Interp *interp, int argc, CONST84 char *argv[]
 		return TCL_ERROR;
 	}
 
-	conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId **) NULL);
-	if (conn == (PGconn *) NULL)
+	conn = PgGetConnectionId(interp, argv[1], NULL);
+	if (conn == NULL)
 		return TCL_ERROR;
 
 	modeStr = strdup(argv[2]);
@@ -1477,7 +1477,7 @@ Pg_lo_creat(ClientData cData, Tcl_Interp *interp, int argc, CONST84 char *argv[]
 		return TCL_ERROR;
 	}
 
-	while ((modeWord = strtok((char *) NULL, "|")) != NULL)
+	while ((modeWord = strtok(NULL, "|")) != NULL)
 	{
 		if (strcmp(modeWord, "INV_READ") == 0)
 			mode |= INV_READ;
@@ -1518,8 +1518,8 @@ Pg_lo_tell(ClientData cData, Tcl_Interp *interp, int argc, CONST84 char *argv[])
 		return TCL_ERROR;
 	}
 
-	conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId **) NULL);
-	if (conn == (PGconn *) NULL)
+	conn = PgGetConnectionId(interp, argv[1], NULL);
+	if (conn == NULL)
 		return TCL_ERROR;
 
 	fd = atoi(argv[2]);
@@ -1552,8 +1552,8 @@ Pg_lo_unlink(ClientData cData, Tcl_Interp *interp, int argc, CONST84 char *argv[
 		return TCL_ERROR;
 	}
 
-	conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId **) NULL);
-	if (conn == (PGconn *) NULL)
+	conn = PgGetConnectionId(interp, argv[1], NULL);
+	if (conn == NULL)
 		return TCL_ERROR;
 
 	lobjId = atoi(argv[2]);
@@ -1594,8 +1594,8 @@ Pg_lo_import(ClientData cData, Tcl_Interp *interp, int argc, CONST84 char *argv[
 		return TCL_ERROR;
 	}
 
-	conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId **) NULL);
-	if (conn == (PGconn *) NULL)
+	conn = PgGetConnectionId(interp, argv[1], NULL);
+	if (conn == NULL)
 		return TCL_ERROR;
 
 	filename = argv[2];
@@ -1638,8 +1638,8 @@ Pg_lo_export(ClientData cData, Tcl_Interp *interp, int argc, CONST84 char *argv[
 		return TCL_ERROR;
 	}
 
-	conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId **) NULL);
-	if (conn == (PGconn *) NULL)
+	conn = PgGetConnectionId(interp, argv[1], NULL);
+	if (conn == NULL)
 		return TCL_ERROR;
 
 	lobjId = atoi(argv[2]);
@@ -1702,7 +1702,7 @@ Pg_select(ClientData cData, Tcl_Interp *interp, int argc, CONST84 char *argv[])
 	}
 
 	conn = PgGetConnectionId(interp, argv[1], &connid);
-	if (conn == (PGconn *) NULL)
+	if (conn == NULL)
 		return TCL_ERROR;
 
 	if ((result = PQexec(conn, argv[2])) == 0)
@@ -1858,7 +1858,7 @@ Pg_listen(ClientData cData, Tcl_Interp *interp, int argc, CONST84 char *argv[])
 	 * allocated by us.
 	 */
 	conn = PgGetConnectionId(interp, argv[1], &connid);
-	if (conn == (PGconn *) NULL)
+	if (conn == NULL)
 		return TCL_ERROR;
 
 	/*
@@ -2032,7 +2032,7 @@ Pg_on_connection_loss(ClientData cData, Tcl_Interp *interp, int argc, CONST84 ch
 	 * Get the command arguments.
 	 */
 	conn = PgGetConnectionId(interp, argv[1], &connid);
-	if (conn == (PGconn *) NULL)
+	if (conn == NULL)
 		return TCL_ERROR;
 
 	if ((argc > 2) && *argv[2])

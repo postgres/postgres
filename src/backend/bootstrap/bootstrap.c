@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.174 2004/01/06 23:55:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.175 2004/01/07 18:56:25 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,8 +142,8 @@ struct typmap
 	FormData_pg_type am_typ;
 };
 
-static struct typmap **Typ = (struct typmap **) NULL;
-static struct typmap *Ap = (struct typmap *) NULL;
+static struct typmap **Typ = NULL;
+static struct typmap *Ap = NULL;
 
 static int	Warnings = 0;
 static char Blanks[MAXATTR];
@@ -173,7 +173,7 @@ typedef struct _IndexList
 	struct _IndexList *il_next;
 } IndexList;
 
-static IndexList *ILHead = (IndexList *) NULL;
+static IndexList *ILHead = NULL;
 
 
 /* ----------------------------------------------------------------
@@ -509,7 +509,7 @@ BootstrapMain(int argc, char *argv[])
 	/* Initialize stuff for bootstrap-file processing */
 	for (i = 0; i < MAXATTR; i++)
 	{
-		attrtypes[i] = (Form_pg_attribute) NULL;
+		attrtypes[i] = NULL;
 		Blanks[i] = ' ';
 	}
 	for (i = 0; i < STRTABLESIZE; ++i)
@@ -569,10 +569,10 @@ boot_openrel(char *relname)
 	if (strlen(relname) >= NAMEDATALEN - 1)
 		relname[NAMEDATALEN - 1] = '\0';
 
-	if (Typ == (struct typmap **) NULL)
+	if (Typ == NULL)
 	{
 		rel = heap_openr(TypeRelationName, NoLock);
-		scan = heap_beginscan(rel, SnapshotNow, 0, (ScanKey) NULL);
+		scan = heap_beginscan(rel, SnapshotNow, 0, NULL);
 		i = 0;
 		while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)
 			++i;
@@ -580,8 +580,8 @@ boot_openrel(char *relname)
 		app = Typ = ALLOC(struct typmap *, i + 1);
 		while (i-- > 0)
 			*app++ = ALLOC(struct typmap, 1);
-		*app = (struct typmap *) NULL;
-		scan = heap_beginscan(rel, SnapshotNow, 0, (ScanKey) NULL);
+		*app = NULL;
+		scan = heap_beginscan(rel, SnapshotNow, 0, NULL);
 		app = Typ;
 		while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)
 		{
@@ -648,7 +648,7 @@ closerel(char *name)
 	{
 		elog(DEBUG4, "close relation %s", relname ? relname : "(null)");
 		heap_close(boot_reldesc, NoLock);
-		boot_reldesc = (Relation) NULL;
+		boot_reldesc = NULL;
 	}
 }
 
@@ -674,7 +674,7 @@ DefineAttr(char *name, char *type, int attnum)
 		closerel(relname);
 	}
 
-	if (attrtypes[attnum] == (Form_pg_attribute) NULL)
+	if (attrtypes[attnum] == NULL)
 		attrtypes[attnum] = AllocateAttribute();
 	MemSet(attrtypes[attnum], 0, ATTRIBUTE_TUPLE_SIZE);
 
@@ -684,7 +684,7 @@ DefineAttr(char *name, char *type, int attnum)
 
 	typeoid = gettype(type);
 
-	if (Typ != (struct typmap **) NULL)
+	if (Typ != NULL)
 	{
 		attrtypes[attnum]->atttypid = Ap->am_oid;
 		attlen = attrtypes[attnum]->attlen = Ap->am_typ.typlen;
@@ -817,7 +817,7 @@ InsertOneValue(char *value, int i)
 
 	elog(DEBUG4, "inserting column %d value \"%s\"", i, value);
 
-	if (Typ != (struct typmap **) NULL)
+	if (Typ != NULL)
 	{
 		struct typmap *ap;
 
@@ -949,9 +949,9 @@ gettype(char *type)
 	HeapTuple	tup;
 	struct typmap **app;
 
-	if (Typ != (struct typmap **) NULL)
+	if (Typ != NULL)
 	{
-		for (app = Typ; *app != (struct typmap *) NULL; app++)
+		for (app = Typ; *app != NULL; app++)
 		{
 			if (strncmp(NameStr((*app)->am_typ.typname), type, NAMEDATALEN) == 0)
 			{
@@ -969,7 +969,7 @@ gettype(char *type)
 		}
 		elog(DEBUG4, "external type: %s", type);
 		rel = heap_openr(TypeRelationName, NoLock);
-		scan = heap_beginscan(rel, SnapshotNow, 0, (ScanKey) NULL);
+		scan = heap_beginscan(rel, SnapshotNow, 0, NULL);
 		i = 0;
 		while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)
 			++i;
@@ -977,8 +977,8 @@ gettype(char *type)
 		app = Typ = ALLOC(struct typmap *, i + 1);
 		while (i-- > 0)
 			*app++ = ALLOC(struct typmap, 1);
-		*app = (struct typmap *) NULL;
-		scan = heap_beginscan(rel, SnapshotNow, 0, (ScanKey) NULL);
+		*app = NULL;
+		scan = heap_beginscan(rel, SnapshotNow, 0, NULL);
 		app = Typ;
 		while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)
 		{
@@ -1223,7 +1223,7 @@ index_register(Oid heap,
 	 */
 
 	if (nogc == NULL)
-		nogc = AllocSetContextCreate((MemoryContext) NULL,
+		nogc = AllocSetContextCreate(NULL,
 									 "BootstrapNoGC",
 									 ALLOCSET_DEFAULT_MINSIZE,
 									 ALLOCSET_DEFAULT_INITSIZE,
@@ -1253,9 +1253,9 @@ index_register(Oid heap,
 }
 
 void
-build_indices()
+build_indices(void)
 {
-	for (; ILHead != (IndexList *) NULL; ILHead = ILHead->il_next)
+	for (; ILHead != NULL; ILHead = ILHead->il_next)
 	{
 		Relation	heap;
 		Relation	ind;

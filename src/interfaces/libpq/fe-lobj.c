@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.45 2003/11/29 19:52:12 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.46 2004/01/07 18:56:29 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ lo_open(PGconn *conn, Oid lobjId, int mode)
 	argv[1].len = 4;
 	argv[1].u.integer = mode;
 
-	if (conn->lobjfuncs == (PGlobjfuncs *) NULL)
+	if (conn->lobjfuncs == NULL)
 	{
 		if (lo_initialize(conn) < 0)
 			return -1;
@@ -97,7 +97,7 @@ lo_close(PGconn *conn, int fd)
 	int			retval;
 	int			result_len;
 
-	if (conn->lobjfuncs == (PGlobjfuncs *) NULL)
+	if (conn->lobjfuncs == NULL)
 	{
 		if (lo_initialize(conn) < 0)
 			return -1;
@@ -135,7 +135,7 @@ lo_read(PGconn *conn, int fd, char *buf, size_t len)
 	PGresult   *res;
 	int			result_len;
 
-	if (conn->lobjfuncs == (PGlobjfuncs *) NULL)
+	if (conn->lobjfuncs == NULL)
 	{
 		if (lo_initialize(conn) < 0)
 			return -1;
@@ -177,7 +177,7 @@ lo_write(PGconn *conn, int fd, char *buf, size_t len)
 	int			result_len;
 	int			retval;
 
-	if (conn->lobjfuncs == (PGlobjfuncs *) NULL)
+	if (conn->lobjfuncs == NULL)
 	{
 		if (lo_initialize(conn) < 0)
 			return -1;
@@ -223,7 +223,7 @@ lo_lseek(PGconn *conn, int fd, int offset, int whence)
 	int			retval;
 	int			result_len;
 
-	if (conn->lobjfuncs == (PGlobjfuncs *) NULL)
+	if (conn->lobjfuncs == NULL)
 	{
 		if (lo_initialize(conn) < 0)
 			return -1;
@@ -272,7 +272,7 @@ lo_creat(PGconn *conn, int mode)
 	int			retval;
 	int			result_len;
 
-	if (conn->lobjfuncs == (PGlobjfuncs *) NULL)
+	if (conn->lobjfuncs == NULL)
 	{
 		if (lo_initialize(conn) < 0)
 			return InvalidOid;
@@ -310,7 +310,7 @@ lo_tell(PGconn *conn, int fd)
 	PGresult   *res;
 	int			result_len;
 
-	if (conn->lobjfuncs == (PGlobjfuncs *) NULL)
+	if (conn->lobjfuncs == NULL)
 	{
 		if (lo_initialize(conn) < 0)
 			return -1;
@@ -348,7 +348,7 @@ lo_unlink(PGconn *conn, Oid lobjId)
 	int			result_len;
 	int			retval;
 
-	if (conn->lobjfuncs == (PGlobjfuncs *) NULL)
+	if (conn->lobjfuncs == NULL)
 	{
 		if (lo_initialize(conn) < 0)
 			return -1;
@@ -534,7 +534,7 @@ lo_initialize(PGconn *conn)
 	 * Allocate the structure to hold the functions OID's
 	 */
 	lobjfuncs = (PGlobjfuncs *) malloc(sizeof(PGlobjfuncs));
-	if (lobjfuncs == (PGlobjfuncs *) NULL)
+	if (lobjfuncs == NULL)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("out of memory\n"));
@@ -554,7 +554,7 @@ lo_initialize(PGconn *conn)
 		   or proname = 'lo_tell'	\
 		   or proname = 'loread'	\
 		   or proname = 'lowrite'");
-	if (res == (PGresult *) NULL)
+	if (res == NULL)
 	{
 		free(lobjfuncs);
 		return -1;

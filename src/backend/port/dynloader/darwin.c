@@ -3,7 +3,7 @@
  * available with a PostgreSQL-compatible license.	Kudos Wilfredo
  * Sánchez <wsanchez@apple.com>.
  *
- * $PostgreSQL: pgsql/src/backend/port/dynloader/darwin.c,v 1.9 2003/11/29 19:51:54 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/port/dynloader/darwin.c,v 1.10 2004/01/07 18:56:27 neilc Exp $
  */
 #include "postgres.h"
 
@@ -50,7 +50,7 @@ pg_dlsym(void *handle, char *funcname)
 	else
 	{
 		free(symname);
-		return (PGFunction) NULL;
+		return NULL;
 	}
 }
 

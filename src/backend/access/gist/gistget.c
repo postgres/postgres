@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.39 2003/11/29 19:51:39 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.40 2004/01/07 18:56:23 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@ gistfirst(IndexScanDesc s, ScanDirection dir)
 		while (n < FirstOffsetNumber || n > maxoff)
 		{
 			ReleaseBuffer(b);
-			if (so->s_stack == (GISTSTACK *) NULL)
+			if (so->s_stack == NULL)
 				return false;
 
 			stk = so->s_stack;
@@ -158,7 +158,7 @@ gistnext(IndexScanDesc s, ScanDirection dir)
 		while (n < FirstOffsetNumber || n > maxoff)
 		{
 			ReleaseBuffer(b);
-			if (so->s_stack == (GISTSTACK *) NULL)
+			if (so->s_stack == NULL)
 				return false;
 
 			stk = so->s_stack;

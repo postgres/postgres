@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.24 2003/11/29 19:51:47 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.25 2004/01/07 18:56:25 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -323,7 +323,7 @@ StorePreparedStatement(const char *stmt_name,
 	 * out-of-memory failure only wastes memory and doesn't leave us with
 	 * an incomplete (ie corrupt) hashtable entry.
 	 */
-	qstring = query_string ? pstrdup(query_string) : (char *) NULL;
+	qstring = query_string ? pstrdup(query_string) : NULL;
 	query_list = (List *) copyObject(query_list);
 	plan_list = (List *) copyObject(plan_list);
 	argtype_list = listCopy(argtype_list);

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.131 2003/11/29 19:51:47 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.132 2004/01/07 18:56:25 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -986,7 +986,7 @@ AlterUserSet(AlterUserSetStmt *stmt)
 		datum = SysCacheGetAttr(SHADOWNAME, oldtuple,
 								Anum_pg_shadow_useconfig, &isnull);
 
-		array = isnull ? ((ArrayType *) NULL) : DatumGetArrayTypeP(datum);
+		array = isnull ? NULL : DatumGetArrayTypeP(datum);
 
 		if (valuestr)
 			array = GUCArrayAdd(array, stmt->variable, valuestr);
@@ -1457,7 +1457,7 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 	/* Fetch old group membership. */
 	datum = heap_getattr(group_tuple, Anum_pg_group_grolist,
 						 pg_group_dsc, &null);
-	oldarray = null ? ((IdList *) NULL) : DatumGetIdListP(datum);
+	oldarray = null ? NULL : DatumGetIdListP(datum);
 
 	/* initialize list with old array contents */
 	newlist = IdArrayToList(oldarray);
