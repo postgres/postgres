@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Feb 21 23:07:19 EST 2005
+Last updated:		Thu Feb 24 09:14:47 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -492,7 +492,7 @@ Commands
 
 	  Currently only constants are supported.
 
-	o Change PL/PgSQL to use palloc() instead of malloc()
+	o -Change PL/PgSQL to use palloc() instead of malloc()
 	o Handle references to temporary tables that are created, destroyed,
 	  then recreated during a session, and EXECUTE is not used
 
