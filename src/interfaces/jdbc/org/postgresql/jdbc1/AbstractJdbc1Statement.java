@@ -25,7 +25,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Vector;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.26 2003/06/30 21:10:55 davec Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.27 2003/07/09 05:12:04 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -1488,13 +1488,31 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 				setString(parameterIndex, x.toString());
 				break;
 			case Types.DATE:
-				setDate(parameterIndex, (java.sql.Date)x);
+				if (x instanceof java.sql.Date) 
+					setDate(parameterIndex, (java.sql.Date)x);
+				else
+				{
+					java.sql.Date tmpd = (x instanceof java.util.Date) ? new java.sql.Date(((java.util.Date)x).getTime()) : dateFromString(x.toString());
+					setDate(parameterIndex, tmpd);
+				}
 				break;
 			case Types.TIME:
-				setTime(parameterIndex, (Time)x);
+				if (x instanceof java.sql.Time)
+					setTime(parameterIndex, (java.sql.Time)x);
+				else
+				{
+					java.sql.Time tmpt = (x instanceof java.util.Date) ? new java.sql.Time(((java.util.Date)x).getTime()) : timeFromString(x.toString());
+					setTime(parameterIndex, tmpt);
+				}
 				break;
 			case Types.TIMESTAMP:
-				setTimestamp(parameterIndex, (Timestamp)x);
+				if (x instanceof java.sql.Timestamp)
+					setTimestamp(parameterIndex ,(java.sql.Timestamp)x);
+				else
+				{
+					java.sql.Timestamp tmpts = (x instanceof java.util.Date) ? new java.sql.Timestamp(((java.util.Date)x).getTime()) : timestampFromString(x.toString());
+					setTimestamp(parameterIndex, tmpts);
+				}
 				break;
 			case Types.BIT:
 				if (x instanceof Boolean)
@@ -2032,7 +2050,113 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 		return m_useServerPrepare;
 	}
 
-
+	private java.sql.Date dateFromString (String s) throws SQLException
+	{
+		int timezone = 0;
+		long millis = 0;
+		long localoffset = 0;
+		int timezoneLocation = (s.indexOf('+') == -1) ? s.lastIndexOf("-") : s.indexOf('+');
+		//if the last index of '-' or '+' is past 8. we are guaranteed that it is a timezone marker
+		//shortest = yyyy-m-d
+		//longest = yyyy-mm-dd
+		try
+		{
+			timezone = (timezoneLocation>7) ? timezoneLocation : s.length();
+			millis = java.sql.Date.valueOf(s.substring(0,timezone)).getTime();
+		}
+		catch (Exception e)
+		{
+			throw new PSQLException("postgresql.format.baddate",s , "yyyy-MM-dd[-tz]");
+		}
+		timezone = 0;
+		if (timezoneLocation>7 && timezoneLocation+3 == s.length())
+		{
+			timezone = Integer.parseInt(s.substring(timezoneLocation+1,s.length()));
+			localoffset = java.util.Calendar.getInstance().getTimeZone().getOffset(millis);
+			if (s.charAt(timezoneLocation)=='+')
+				timezone*=-1;
+		}
+		millis = millis + timezone*60*60*1000 + localoffset;
+		return new java.sql.Date(millis);
+	}
+	
+	private java.sql.Time timeFromString (String s) throws SQLException
+	{
+		int timezone = 0;
+		long millis = 0;
+		long localoffset = 0;
+		int timezoneLocation = (s.indexOf('+') == -1) ? s.lastIndexOf("-") : s.indexOf('+');
+		//if the index of the last '-' or '+' is greater than 0 that means this time has a timezone.
+		//everything earlier than that position, we treat as the time and parse it as such.
+		try
+		{
+			timezone = (timezoneLocation==-1) ? s.length() : timezoneLocation;	
+			millis = java.sql.Time.valueOf(s.substring(0,timezone)).getTime();
+		}
+		catch (Exception e)
+		{
+			throw new PSQLException("postgresql.format.badtime",s, "HH:mm:ss[-tz]");
+		}
+		timezone = 0;
+		if (timezoneLocation != -1 && timezoneLocation+3 == s.length())
+		{
+			timezone = Integer.parseInt(s.substring(timezoneLocation+1,s.length()));
+			localoffset = java.util.Calendar.getInstance().getTimeZone().getOffset(millis);
+			if (s.charAt(timezoneLocation)=='+')
+				timezone*=-1;
+		}
+		millis = millis + timezone*60*60*1000 + localoffset;
+		return new java.sql.Time(millis);
+	}
+	
+	private java.sql.Timestamp timestampFromString (String s) throws SQLException
+	{
+		int timezone = 0;
+		long millis = 0;
+		long localoffset = 0;
+		int nanosVal = 0;
+		int timezoneLocation = (s.indexOf('+') == -1) ? s.lastIndexOf("-") : s.indexOf('+');
+		int nanospos = s.indexOf(".");
+		//if there is a '.', that means there are nanos info, and we take the timestamp up to that point
+		//if not, then we check to see if the last +/- (to indicate a timezone) is greater than 8
+		//8 is because the shortest date, will have last '-' at position 7. e.g yyyy-x-x
+		try
+		{
+			if (nanospos != -1)
+				timezone = nanospos;
+			else if (timezoneLocation > 8)
+				timezone = timezoneLocation;
+			else 
+				timezone = s.length();
+			millis = java.sql.Timestamp.valueOf(s.substring(0,timezone)).getTime();
+		}
+		catch (Exception e)
+		{
+			throw new PSQLException("postgresql.format.badtimestamp", s, "yyyy-MM-dd HH:mm:ss[.xxxxxx][-tz]");
+		}
+		timezone = 0;
+		if (nanospos != -1)
+		{
+			int tmploc = (timezoneLocation > 8) ? timezoneLocation : s.length();
+			nanosVal = Integer.parseInt(s.substring(nanospos+1,tmploc));
+			int diff = 8-((tmploc-1)-(nanospos+1));
+			for (int i=0;i<diff;i++)
+				nanosVal*=10;
+		}
+		if (timezoneLocation>8 && timezoneLocation+3 == s.length())
+		{
+			timezone = Integer.parseInt(s.substring(timezoneLocation+1,s.length()));
+			localoffset = java.util.Calendar.getInstance().getTimeZone().getOffset(millis);
+			if (s.charAt(timezoneLocation)=='+')
+				timezone*=-1;
+		}
+		millis = millis + timezone*60*60*1000 + localoffset;
+		java.sql.Timestamp tmpts = new java.sql.Timestamp(millis);
+		tmpts.setNanos(nanosVal);
+		return tmpts;
+	}
+			
+	
 	private static final String PG_TEXT = "text";
 	private static final String PG_INTEGER = "integer";
 	private static final String PG_INT2 = "int2";
