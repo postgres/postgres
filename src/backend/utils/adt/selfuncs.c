@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.39 1999/08/21 00:56:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.40 1999/09/09 02:35:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
 #include "utils/syscache.h"
 
 /* N is not a valid var/constant or relation id */
-#define NONVALUE(N)		((N) == -1)
+#define NONVALUE(N)		((N) == 0)
 
 /* are we looking at a functional index selectivity request? */
 #define FunctionalSelectivity(nIndKeys,attNum) ((attNum)==InvalidAttrNumber)
@@ -170,7 +170,9 @@ eqsel(Oid opid,
 		else
 		{
 			/* No VACUUM ANALYZE stats available, so make a guess using
-			 * the disbursion stat (if we have that, which is unlikely...)
+			 * the disbursion stat (if we have that, which is unlikely
+			 * for a normal attribute; but for a system attribute we may
+			 * be able to estimate it).
 			 */
 			selec = get_attdisbursion(relid, attno, 0.01);
 		}
@@ -366,7 +368,7 @@ eqjoinsel(Oid opid,
 	float64		result;
 	float64data num1,
 				num2,
-				max;
+				min;
 
 	result = (float64) palloc(sizeof(float64data));
 	if (NONVALUE(attno1) || NONVALUE(relid1) ||
@@ -376,11 +378,23 @@ eqjoinsel(Oid opid,
 	{
 		num1 = get_attdisbursion(relid1, attno1, 0.01);
 		num2 = get_attdisbursion(relid2, attno2, 0.01);
-		max = (num1 > num2) ? num1 : num2;
-		if (max <= 0)
-			*result = 1.0;
-		else
-			*result = max;
+		/*
+		 * The join selectivity cannot be more than num2, since each
+		 * tuple in table 1 could match no more than num2 fraction of
+		 * tuples in table 2 (and that's only if the table-1 tuple
+		 * matches the most common value in table 2, so probably it's
+		 * less).  By the same reasoning it is not more than num1.
+		 * The min is therefore an upper bound.
+		 *
+		 * XXX can we make a better estimate here?  Using the nullfrac
+		 * statistic might be helpful, for example.  Assuming the operator
+		 * is strict (does not succeed for null inputs) then the selectivity
+		 * couldn't be more than (1-nullfrac1)*(1-nullfrac2), which might
+		 * be usefully small if there are many nulls.  How about applying
+		 * the operator to the most common values?
+		 */
+		min = (num1 < num2) ? num1 : num2;
+		*result = min;
 	}
 	return result;
 }

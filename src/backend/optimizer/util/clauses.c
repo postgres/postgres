@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.50 1999/08/26 05:09:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.51 1999/09/09 02:35:53 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -116,7 +116,10 @@ make_opclause(Oper *op, Var *leftop, Var *rightop)
  *
  * Returns the left operand of a clause of the form (op expr expr)
  *		or (op expr)
- * NB: it is assumed (for now) that all expr must be Var nodes
+ *
+ * NB: for historical reasons, the result is declared Var *, even
+ * though many callers can cope with results that are not Vars.
+ * The result really ought to be declared Expr * or Node *.
  */
 Var *
 get_leftop(Expr *clause)
@@ -549,8 +552,11 @@ NumRelids(Node *clause)
  *			if the "something" is a constant, the value of the constant
  *			flags indicating whether a constant was found, and on which side.
  *		Default values are returned if the expression is too complicated,
- *		specifically -1 for the relid and attno, 0 for the constant value.
- *		Note that InvalidAttrNumber is *not* -1, but 0.
+ *		specifically 0 for the relid and attno, 0 for the constant value.
+ *
+ *		Note that negative attno values are *not* invalid, but represent
+ *		system attributes such as OID.  It's sufficient to check for relid=0
+ *		to determine whether the routine succeeded.
  */
 void
 get_relattval(Node *clause,
@@ -610,8 +616,8 @@ get_relattval(Node *clause,
 	{
 		/* Duh, it's too complicated for me... */
 default_results:
-		*relid = -1;
-		*attno = -1;
+		*relid = 0;
+		*attno = 0;
 		*constval = 0;
 		*flag = 0;
 		return;
@@ -663,7 +669,7 @@ static int is_single_func(Node *node)
  *		for a joinclause.
  *
  * If the clause is not of the form (var op var) or if any of the vars
- * refer to nested attributes, then -1's are returned.
+ * refer to nested attributes, then zeroes are returned.
  *
  */
 void
@@ -674,10 +680,10 @@ get_rels_atts(Node *clause,
 			  AttrNumber *attno2)
 {
 	/* set default values */
-	*relid1 = -1;
-	*attno1 = -1;
-	*relid2 = -1;
-	*attno2 = -1;
+	*relid1 = 0;
+	*attno1 = 0;
+	*relid2 = 0;
+	*attno2 = 0;
 
 	if (is_opclause(clause))
 	{

@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.33 1999/08/16 02:06:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.34 1999/09/09 02:36:04 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -221,6 +221,14 @@ get_attdisbursion(Oid relid, AttrNumber attnum, double min_estimate)
 		return min_estimate;	/* no data available */
 
 	if (disbursion < 0.0)		/* VACUUM thinks there are no duplicates */
+		return 1.0 / (double) ntuples;
+
+	/*
+	 * VACUUM ANALYZE does not compute disbursion for system attributes,
+	 * but some of them can reasonably be assumed unique anyway.
+	 */
+	if (attnum == ObjectIdAttributeNumber ||
+		attnum == SelfItemPointerAttributeNumber)
 		return 1.0 / (double) ntuples;
 
 	/*

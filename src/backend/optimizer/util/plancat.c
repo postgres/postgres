@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.36 1999/07/25 23:07:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.37 1999/09/09 02:35:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -288,7 +288,7 @@ index_selectivity(Query *root,
 }
 
 /*
- * restriction_selectivity in lisp system.
+ * restriction_selectivity
  *
  *	  NOTE: The routine is now merged with RestrictionClauseSelectivity
  *	  as defined in plancat.c
@@ -298,7 +298,7 @@ index_selectivity(Query *root,
  * operator relation, by calling the function manager.
  *
  * XXX The assumption in the selectivity procedures is that if the
- *		relation OIDs or attribute numbers are -1, then the clause
+ *		relation OIDs or attribute numbers are 0, then the clause
  *		isn't of the form (op var const).
  */
 Cost
@@ -337,7 +337,7 @@ restriction_selectivity(Oid functionObjectId,
  *	  information.
  *
  * XXX The assumption in the selectivity procedures is that if the
- *		relation OIDs or attribute numbers are -1, then the clause
+ *		relation OIDs or attribute numbers are 0, then the clause
  *		isn't of the form (op var var).
  */
 Cost
