@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Aug 26 19:00:53 EDT 2002
+Last updated:		Mon Aug 26 19:13:30 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -437,7 +437,7 @@ Write-Ahead Log
 
 * Have after-change WAL write()'s write only modified data to kernel
 * Reduce number of after-change WAL writes; they exist only to gaurd against
-  partial page writes
+  partial page writes [wal]
 * Turn off after-change writes if fsync is disabled (?)
 * Add WAL index reliability improvement to non-btree indexes
 * -Reorder postgresql.conf WAL items in order of importance (Bruce)
