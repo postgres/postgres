@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.64 2001/11/21 05:57:33 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.64.2.1 2002/03/15 23:37:48 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1622,7 +1622,6 @@ timetz_izone(PG_FUNCTION_ARGS)
 	Interval   *zone = PG_GETARG_INTERVAL_P(0);
 	TimeTzADT  *time = PG_GETARG_TIMETZADT_P(1);
 	TimeTzADT  *result;
-	TimeADT		time1;
 	int			tz;
 
 	if (zone->month != 0)
@@ -1634,10 +1633,12 @@ timetz_izone(PG_FUNCTION_ARGS)
 
 	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
 
-	time1 = time->time - time->zone + tz;
-	TMODULO(result->time, time1, 86400e0);
-	if (result->time < 0)
+	result->time = (time->time + (time->zone - tz));
+	while (result->time < 0)
 		result->time += 86400;
+	while (result->time >= 86400)
+		result->time -= 86400;
+
 	result->zone = tz;
 
 	PG_RETURN_TIMETZADT_P(result);
