@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.178 2005/01/14 00:23:21 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.179 2005/02/26 14:21:40 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -3691,7 +3691,7 @@ sets the user name used to connect to the database.
 </indexterm>
 <envar>PGPASSWORD</envar>
 sets the password used if the server demands password
-authentication.  This environment variable is deprecated for security
+authentication.  This environment variable is not recommended for security
 reasons; instead consider using the <filename>~/.pgpass</>
 file (see <xref linkend="libpq-pgpass">).
 </para>
