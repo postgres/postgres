@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.26 1999/07/16 17:07:37 momjian Exp $
+ * $Id: bufpage.h,v 1.27 2000/01/08 21:59:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@
  * disk page is always a slotted page of the form:
  *
  * +----------------+---------------------------------+
- * | PageHeaderData | linp0 linp1 linp2 ...			  |
+ * | PageHeaderData | linp1 linp2 linp3 ...			  |
  * +-----------+----+---------------------------------+
  * | ... linpN |									  |
  * +-----------+--------------------------------------+
@@ -38,7 +38,7 @@
  * +-------------+------------------------------------+
  * |			 | tupleN ...						  |
  * +-------------+------------------+-----------------+
- * |	   ... tuple2 tuple1 tuple0 | "special space" |
+ * |	   ... tuple3 tuple2 tuple1 | "special space" |
  * +--------------------------------+-----------------+
  *									^ pd_special
  *
@@ -58,17 +58,19 @@
  *
  * NOTES:
  *
- * linp0..N form an ItemId array.  ItemPointers point into this array
- * rather than pointing directly to a tuple.
+ * linp1..N form an ItemId array.  ItemPointers point into this array
+ * rather than pointing directly to a tuple.  Note that OffsetNumbers
+ * conventionally start at 1, not 0.
  *
- * tuple0..N are added "backwards" on the page.  because a tuple's
+ * tuple1..N are added "backwards" on the page.  because a tuple's
  * ItemPointer points to its ItemId entry rather than its actual
  * byte-offset position, tuples can be physically shuffled on a page
  * whenever the need arises.
  *
  * AM-generic per-page information is kept in the pd_opaque field of
- * the PageHeaderData.	(this is currently only the page size.)
- * AM-specific per-page data is kept in the area marked "special
+ * the PageHeaderData.	(Currently, only the page size is kept here.)
+ *
+ * AM-specific per-page data (if any) is kept in the area marked "special
  * space"; each AM has an "opaque" structure defined somewhere that is
  * stored as the page trailer.	an access method should always
  * initialize its pages with PageInit and then set its own opaque
@@ -85,11 +87,8 @@
 /*
  * location (byte offset) within a page.
  *
- * note that this is actually limited to 2^13 because we have limited
- * ItemIdData.lp_off and ItemIdData.lp_len to 13 bits (see itemid.h).
- *
- * uint16 is still valid, but the limit has been raised to 15 bits.
- * 06 Jan 98 - darrenk
+ * note that this is actually limited to 2^15 because we have limited
+ * ItemIdData.lp_off and ItemIdData.lp_len to 15 bits (see itemid.h).
  */
 typedef uint16 LocationIndex;
 
@@ -98,13 +97,11 @@ typedef uint16 LocationIndex;
  * space management information generic to any page
  *
  *		od_pagesize		- size in bytes.
- *						  in reality, we need at least 64B to fit the
+ *						  Minimum possible page size is perhaps 64B to fit
  *						  page header, opaque space and a minimal tuple;
- *						  on the high end, we can only support pages up
- *						  to 8KB because lp_off/lp_len are 13 bits.
- *
- *						  see above comment.  Now use 15 bits and pages
- *						  up to 32KB at your own risk.
+ *						  of course, in reality you want it much bigger.
+ *						  On the high end, we can only support pages up
+ *						  to 32KB because lp_off/lp_len are 15 bits.
  */
 typedef struct OpaqueData
 {
@@ -123,7 +120,7 @@ typedef struct PageHeaderData
 	LocationIndex pd_upper;		/* offset to end of free space */
 	LocationIndex pd_special;	/* offset to start of special space */
 	OpaqueData	pd_opaque;		/* AM-generic information */
-	ItemIdData	pd_linp[1];		/* line pointers */
+	ItemIdData	pd_linp[1];		/* beginning of line pointer array */
 } PageHeaderData;
 
 typedef PageHeaderData *PageHeader;
@@ -160,8 +157,8 @@ typedef enum
  *		returns true iff no itemid has been allocated on the page
  */
 #define PageIsEmpty(page) \
-	(((PageHeader) (page))->pd_lower == \
-	 (sizeof(PageHeaderData) - sizeof(ItemIdData)) ? true : false)
+	(((PageHeader) (page))->pd_lower <= \
+	 (sizeof(PageHeaderData) - sizeof(ItemIdData)))
 
 /*
  * PageIsNew
@@ -175,7 +172,7 @@ typedef enum
  *		Returns an item identifier of a page.
  */
 #define PageGetItemId(page, offsetNumber) \
-	((ItemId) (&((PageHeader) (page))->pd_linp[(-1) + (offsetNumber)]))
+	((ItemId) (&((PageHeader) (page))->pd_linp[(offsetNumber) - 1]))
 
 /* ----------------
  *		macros to access opaque space
@@ -210,7 +207,7 @@ typedef enum
  *		Sets the page size of a page.
  */
 #define PageSetPageSize(page, size) \
-	((PageHeader) (page))->pd_opaque.od_pagesize = (size)
+	(((PageHeader) (page))->pd_opaque.od_pagesize = (size))
 
 /* ----------------
  *		page special data macros
@@ -244,7 +241,7 @@ typedef enum
  *		Retrieves an item on the given page.
  *
  * Note:
- *		This does change the status of any of the resources passed.
+ *		This does not change the status of any of the resources passed.
  *		The semantics may change in the future.
  */
 #define PageGetItem(page, itemId) \
@@ -264,7 +261,7 @@ typedef enum
  *		The buffer can be a raw disk block and need not contain a valid
  *		(formatted) disk page.
  */
-/* XXX dig out of buffer descriptor */
+/* XXX should dig out of buffer descriptor */
 #define BufferGetPageSize(buffer) \
 ( \
 	AssertMacro(BufferIsValid(buffer)), \
@@ -280,17 +277,17 @@ typedef enum
 /*
  * PageGetMaxOffsetNumber
  *		Returns the maximum offset number used by the given page.
+ *		Since offset numbers are 1-based, this is also the number
+ *		of items on the page.
  *
- *		NOTE: The offset is invalid if the page is non-empty.
- *		Test whether PageIsEmpty before calling this routine
- *		and/or using its return value.
+ *		NOTE: to ensure sane behavior if the page is not initialized
+ *		(pd_lower == 0), cast the unsigned values to int before dividing.
+ *		That way we get -1 or so, not a huge positive number...
  */
 #define PageGetMaxOffsetNumber(page) \
-( \
-	(((PageHeader) (page))->pd_lower - \
-		(sizeof(PageHeaderData) - sizeof(ItemIdData))) \
-	/ sizeof(ItemIdData) \
-)
+	(((int) (((PageHeader) (page))->pd_lower - \
+			 (sizeof(PageHeaderData) - sizeof(ItemIdData)))) \
+	 / ((int) sizeof(ItemIdData)))
 
 
 /* ----------------------------------------------------------------
