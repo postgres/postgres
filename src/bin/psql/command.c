@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.72 2002/04/24 05:24:00 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.73 2002/07/15 01:56:25 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -846,7 +846,7 @@ exec_command(const char *cmd,
 
 	/* \? -- slash command help */
 	else if (strcmp(cmd, "?") == 0)
-		slashUsage();
+		slashUsage(pset.popt.topt.pager);
 
 #if 0
 

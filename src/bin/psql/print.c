@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.26 2002/04/24 15:56:38 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.27 2002/07/15 01:56:25 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "print.h"
@@ -22,12 +22,6 @@
 #include "libpq-fe.h"
 
 #include "settings.h"
-
-#ifndef __CYGWIN__
-#define DEFAULT_PAGER "more"
-#else
-#define DEFAULT_PAGER "less"
-#endif
 
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
@@ -1033,7 +1027,7 @@ printTable(const char *title,
 {
 	const char *default_footer[] = {NULL};
 	unsigned short int border = opt->border;
-	FILE	   *pager = NULL,
+	FILE	   *pagerfd = NULL,
 			   *output;
 
 
@@ -1090,15 +1084,15 @@ printTable(const char *title,
 			pagerprog = getenv("PAGER");
 			if (!pagerprog)
 				pagerprog = DEFAULT_PAGER;
-			pager = popen(pagerprog, "w");
+			pagerfd = popen(pagerprog, "w");
 #ifdef TIOCGWINSZ
 		}
 #endif
 	}
 
-	if (pager)
+	if (pagerfd)
 	{
-		output = pager;
+		output = pagerfd;
 #ifndef WIN32
 		pqsignal(SIGPIPE, SIG_IGN);
 #endif
@@ -1139,13 +1133,12 @@ printTable(const char *title,
 			fprintf(stderr, "+ Oops, you shouldn't see this!\n");
 	}
 
-	if (pager)
+	if (pagerfd)
 	{
-		pclose(pager);
+		pclose(pagerfd);
 #ifndef WIN32
 		pqsignal(SIGPIPE, SIG_DFL);
 #endif
-
 	}
 }
 

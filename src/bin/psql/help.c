@@ -3,9 +3,10 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.51 2002/06/20 20:29:42 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.52 2002/07/15 01:56:25 momjian Exp $
  */
 #include "postgres_fe.h"
+#include "print.h"
 #include "help.h"
 
 #include <signal.h>
@@ -138,7 +139,6 @@ usage(void)
 }
 
 
-
 /*
  * slashUsage
  *
@@ -154,98 +154,106 @@ struct winsize
 #endif
 
 void
-slashUsage(void)
+slashUsage(bool pager)
 {
-	bool		usePipe = false;
-	const char *pagerenv;
-	FILE	   *fout;
-	struct winsize screen_size;
+	FILE	   *output, *pagerfd = NULL;
+
+	/* check whether we need / can / are supposed to use pager */
+	if (pager
+#ifndef WIN32
+		&&
+		isatty(fileno(stdin)) &&
+		isatty(fileno(stdout))
+#endif
+		)
+	{
+		const char *pagerprog;
 
 #ifdef TIOCGWINSZ
-	if (pset.notty == 0 &&
-		(ioctl(fileno(stdout), TIOCGWINSZ, &screen_size) == -1 ||
-		 screen_size.ws_col == 0 ||
-		 screen_size.ws_row == 0))
-	{
+		int			result;
+		struct winsize screen_size;
+
+		result = ioctl(fileno(stdout), TIOCGWINSZ, &screen_size);
+		if (result == -1 || 50 > screen_size.ws_row)
+		{
 #endif
-		screen_size.ws_row = 24;
-		screen_size.ws_col = 80;
+			pagerprog = getenv("PAGER");
+			if (!pagerprog)
+				pagerprog = DEFAULT_PAGER;
+			pagerfd = popen(pagerprog, "w");
 #ifdef TIOCGWINSZ
+		}
+#endif
 	}
-#endif
 
-	if (pset.notty == 0 &&
-		(pagerenv = getenv("PAGER")) &&
-		(pagerenv[0] != '\0') &&
-		screen_size.ws_row <= 46 &&
-		(fout = popen(pagerenv, "w")))
+	if (pagerfd)
 	{
-		usePipe = true;
+		output = pagerfd;
 #ifndef WIN32
 		pqsignal(SIGPIPE, SIG_IGN);
 #endif
 	}
 	else
-		fout = stdout;
+		output = stdout;
 
 	/* if you add/remove a line here, change the row test above */
     /*      if this " is the start of the string then it ought to end there to fit in 80 columns >> " */
-	fprintf(fout, _(" \\a             toggle between unaligned and aligned output mode\n"));
-	fprintf(fout, _(" \\c[onnect] [DBNAME|- [USER]]\n"
+	fprintf(output, _(" \\a             toggle between unaligned and aligned output mode\n"));
+	fprintf(output, _(" \\c[onnect] [DBNAME|- [USER]]\n"
 					"                connect to new database (currently \"%s\")\n"),
 			PQdb(pset.db));
-	fprintf(fout, _(" \\C [STRING]    set table title, or unset if none\n"));
-	fprintf(fout, _(" \\cd [DIR]      change the current working directory\n"));
-	fprintf(fout, _(" \\copy ...      perform SQL COPY with data stream to the client host\n"));
-	fprintf(fout, _(" \\copyright     show PostgreSQL usage and distribution terms\n"));
-	fprintf(fout, _(" \\d [NAME]      describe table (or view, index, sequence)\n"));
-	fprintf(fout, _(" \\d{t|i|s|v|S} [PATTERN]\n"));
-	fprintf(fout, _("                list tables/indexes/sequences/views/system tables\n"));
-	fprintf(fout, _(" \\da [PATTERN]  list aggregate functions\n"));
-	fprintf(fout, _(" \\dd [PATTERN]  show comment for object\n"));
-	fprintf(fout, _(" \\dD [PATTERN]  list domains\n"));
-	fprintf(fout, _(" \\df [PATTERN]  list functions\n"));
-	fprintf(fout, _(" \\do [NAME]     list operators\n"));
-	fprintf(fout, _(" \\dl            list large objects, same as lo_list\n"));
-	fprintf(fout, _(" \\dp [PATTERN]  list table access privileges\n"));
-	fprintf(fout, _(" \\dT [PATTERN]  list data types\n"));
-	fprintf(fout, _(" \\du [PATTERN]  list users\n"));
-	fprintf(fout, _(" \\e [FILE]      edit the query buffer (or file) with external editor\n"));
-	fprintf(fout, _(" \\echo [STRING] write string to standard output\n"));
-	fprintf(fout, _(" \\encoding [ENCODING]  show or set client encoding\n"));
-	fprintf(fout, _(" \\f [STRING]    show or set field separator for unaligned query output\n"));
-	fprintf(fout, _(" \\g [FILE]      send query buffer to server (and results to file or |pipe)\n"));
-	fprintf(fout, _(" \\h [NAME]      help on syntax of SQL commands, * for all commands\n"));
-	fprintf(fout, _(" \\H             toggle HTML output mode (currently %s)\n"),
+	fprintf(output, _(" \\C [STRING]    set table title, or unset if none\n"));
+	fprintf(output, _(" \\cd [DIR]      change the current working directory\n"));
+	fprintf(output, _(" \\copy ...      perform SQL COPY with data stream to the client host\n"));
+	fprintf(output, _(" \\copyright     show PostgreSQL usage and distribution terms\n"));
+	fprintf(output, _(" \\d [NAME]      describe table (or view, index, sequence)\n"));
+	fprintf(output, _(" \\d{t|i|s|v|S} [PATTERN]\n"));
+	fprintf(output, _("                list tables/indexes/sequences/views/system tables\n"));
+	fprintf(output, _(" \\da [PATTERN]  list aggregate functions\n"));
+	fprintf(output, _(" \\dd [PATTERN]  show comment for object\n"));
+	fprintf(output, _(" \\dD [PATTERN]  list domains\n"));
+	fprintf(output, _(" \\df [PATTERN]  list functions\n"));
+	fprintf(output, _(" \\do [NAME]     list operators\n"));
+	fprintf(output, _(" \\dl            list large objects, same as lo_list\n"));
+	fprintf(output, _(" \\dp [PATTERN]  list table access privileges\n"));
+	fprintf(output, _(" \\dT [PATTERN]  list data types\n"));
+	fprintf(output, _(" \\du [PATTERN]  list users\n"));
+	fprintf(output, _(" \\e [FILE]      edit the query buffer (or file) with external editor\n"));
+	fprintf(output, _(" \\echo [STRING] write string to standard output\n"));
+	fprintf(output, _(" \\encoding [ENCODING]  show or set client encoding\n"));
+	fprintf(output, _(" \\f [STRING]    show or set field separator for unaligned query output\n"));
+	fprintf(output, _(" \\g [FILE]      send query buffer to server (and results to file or |pipe)\n"));
+	fprintf(output, _(" \\h [NAME]      help on syntax of SQL commands, * for all commands\n"));
+	fprintf(output, _(" \\H             toggle HTML output mode (currently %s)\n"),
 			ON(pset.popt.topt.format == PRINT_HTML));
-	fprintf(fout, _(" \\i FILE        execute commands from file\n"));
-	fprintf(fout, _(" \\l             list all databases\n"));
-	fprintf(fout, _(" \\lo_export, \\lo_import, \\lo_list, \\lo_unlink\n"
+	fprintf(output, _(" \\i FILE        execute commands from file\n"));
+	fprintf(output, _(" \\l             list all databases\n"));
+	fprintf(output, _(" \\lo_export, \\lo_import, \\lo_list, \\lo_unlink\n"
 					"                large object operations\n"));
-	fprintf(fout, _(" \\o FILE        send all query results to file or |pipe\n"));
-	fprintf(fout, _(" \\p             show the contents of the query buffer\n"));
-	fprintf(fout, _(" \\pset NAME [VALUE]  set table output option (NAME := {format|border|expanded|\n"
+	fprintf(output, _(" \\o FILE        send all query results to file or |pipe\n"));
+	fprintf(output, _(" \\p             show the contents of the query buffer\n"));
+	fprintf(output, _(" \\pset NAME [VALUE]  set table output option (NAME := {format|border|expanded|\n"
 					"                fieldsep|null|recordsep|tuples_only|title|tableattr|pager})\n"));
-	fprintf(fout, _(" \\q             quit psql\n"));
-	fprintf(fout, _(" \\qecho [STRING]  write string to query output stream (see \\o)\n"));
-	fprintf(fout, _(" \\r             reset (clear) the query buffer\n"));
-	fprintf(fout, _(" \\s [FILE]      display history or save it to file\n"));
-	fprintf(fout, _(" \\set [NAME [VALUE]]  set internal variable, or list all if no parameters\n"));
-	fprintf(fout, _(" \\t             show only rows (currently %s)\n"),
+	fprintf(output, _(" \\q             quit psql\n"));
+	fprintf(output, _(" \\qecho [STRING]  write string to query output stream (see \\o)\n"));
+	fprintf(output, _(" \\r             reset (clear) the query buffer\n"));
+	fprintf(output, _(" \\s [FILE]      display history or save it to file\n"));
+	fprintf(output, _(" \\set [NAME [VALUE]]  set internal variable, or list all if no parameters\n"));
+	fprintf(output, _(" \\t             show only rows (currently %s)\n"),
 			ON(pset.popt.topt.tuples_only));
-	fprintf(fout, _(" \\T [STRING]    set HTML <table>-tag attributes, or unset if none\n"));
-	fprintf(fout, _(" \\timing        toggle timing of queries (currently %s)\n"),
+	fprintf(output, _(" \\T [STRING]    set HTML <table>-tag attributes, or unset if none\n"));
+	fprintf(output, _(" \\timing        toggle timing of queries (currently %s)\n"),
 			ON(pset.timing));
-	fprintf(fout, _(" \\unset NAME    unset (delete) internal variable\n"));
-	fprintf(fout, _(" \\w [FILE]      write query buffer to file\n"));
-	fprintf(fout, _(" \\x             toggle expanded output (currently %s)\n"),
+	fprintf(output, _(" \\unset NAME    unset (delete) internal variable\n"));
+	fprintf(output, _(" \\w [FILE]      write query buffer to file\n"));
+	fprintf(output, _(" \\x             toggle expanded output (currently %s)\n"),
 			ON(pset.popt.topt.expanded));
-	fprintf(fout, _(" \\z [PATTERN]   list table access privileges (same as \\dp)\n"));
-	fprintf(fout, _(" \\! [COMMAND]   execute command in shell or start interactive shell\n"));
+	fprintf(output, _(" \\z [PATTERN]   list table access privileges (same as \\dp)\n"));
+	fprintf(output, _(" \\! [COMMAND]   execute command in shell or start interactive shell\n"));
 
-	if (usePipe)
+	if (pagerfd)
 	{
-		pclose(fout);
+		pclose(pagerfd);
 #ifndef WIN32
 		pqsignal(SIGPIPE, SIG_DFL);
 #endif

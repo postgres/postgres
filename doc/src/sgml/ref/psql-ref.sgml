@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.67 2002/06/20 16:00:43 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.68 2002/07/15 01:56:25 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1036,7 +1036,7 @@ lo_import 152801
 	  <term><literal>pager</literal></term>
 	  <listitem>
 	  <para>
-	  Toggles the list of a pager to do table output. If the
+	  Toggles the use of a pager for query and psql help output. If the
 	  environment variable <envar>PAGER</envar> is set, the output
 	  is piped to the specified program. Otherwise
 	  <filename>more</filename> is used.
@@ -1050,7 +1050,7 @@ lo_import 152801
 	  of the printing routines it is not always possible to predict
 	  the number of lines that will actually be printed. For that
 	  reason <application>psql</application> might not appear very
-	  discriminating about when to use the pager and when not to.
+	  discriminating about when to use the pager.
 	  </para>
 	  </listitem>
 	  </varlistentry>
