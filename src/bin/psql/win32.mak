@@ -7,14 +7,16 @@ NULL=nul
 !ENDIF 
 
 CPP=cl.exe
+PERL=perl.exe
 
 OUTDIR=.\Release
 INTDIR=.\Release
+REFDOCDIR= ../../../doc/src/sgml/ref
 # Begin Custom Macros
 OutDir=.\Release
 # End Custom Macros
 
-ALL : "$(OUTDIR)\psql.exe"
+ALL : sql_help.h "$(OUTDIR)\psql.exe"
 
 CLEAN :
 	-@erase "$(INTDIR)\command.obj"
@@ -91,3 +93,7 @@ LINK32_OBJS= \
    $(CPP) @<<
    $(CPP_PROJ) $< 
 <<
+
+sql_help.h: create_help.pl
+        $(PERL) create_help.pl $(REFDOCDIR) $@
+
