@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.80 2004/10/12 01:04:09 momjian Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.81 2004/10/12 04:48:34 neilc Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -245,9 +245,9 @@ endif # enable_shared
 
 all-lib: all-static-lib all-shared-lib
 
-all-static-lib: $(PTHREAD_H_WIN32) $(top_srcdir)/src/port/pg_config_paths.h lib$(NAME).a
+all-static-lib: $(PTHREAD_H_WIN32) $(top_builddir)/src/port/pg_config_paths.h lib$(NAME).a
 
-all-shared-lib: $(PTHREAD_H_WIN32) $(top_srcdir)/src/port/pg_config_paths.h $(shlib)
+all-shared-lib: $(PTHREAD_H_WIN32) $(top_builddir)/src/port/pg_config_paths.h $(shlib)
 
 ifneq ($(PORTNAME), cygwin)
 ifneq ($(PORTNAME), win32)

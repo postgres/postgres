@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.116 2004/10/12 01:04:11 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.117 2004/10/12 04:48:36 neilc Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -51,7 +51,7 @@ SHLIB_LINK += -lwsock32 -lws2_32 $(filter -leay32 -lssleay32, $(LIBS))
 endif
 
 
-all: $(PTHREAD_H_WIN32) $(top_srcdir)/src/port/pg_config_paths.h all-lib
+all: $(PTHREAD_H_WIN32) $(top_builddir)/src/port/pg_config_paths.h all-lib
 
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib
