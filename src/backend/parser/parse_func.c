@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.69 2000/02/15 03:37:47 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.70 2000/02/20 06:35:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,14 +45,13 @@ static Oid **argtype_inherit(int nargs, Oid *oid_array);
 
 static int	find_inheritors(Oid relid, Oid **supervec);
 static CandidateList func_get_candidates(char *funcname, int nargs);
-static bool
-func_get_detail(char *funcname,
-				int nargs,
-				Oid *oid_array,
-				Oid *funcid,	/* return value */
-				Oid *rettype,	/* return value */
-				bool *retset,	/* return value */
-				Oid **true_typeids);
+static bool func_get_detail(char *funcname,
+							int nargs,
+							Oid *oid_array,
+							Oid *funcid,	/* return value */
+							Oid *rettype,	/* return value */
+							bool *retset,	/* return value */
+							Oid **true_typeids);
 static Oid **gen_cross_product(InhPaths *arginh, int nargs);
 static void make_arguments(ParseState *pstate,
 			   int nargs,
@@ -228,9 +227,10 @@ agg_select_candidate(Oid typeid, CandidateList candidates)
 			}
 		}
 		/* otherwise, don't bother keeping this one around... */
-		else if (last_candidate != NULL)
-			last_candidate->next = NULL;
 	}
+
+	if (last_candidate)			/* terminate rebuilt list */
+		last_candidate->next = NULL;
 
 	return ((ncandidates == 1) ? candidates->args[0] : 0);
 }	/* agg_select_candidate() */
@@ -559,8 +559,8 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		}
 
 		/* Most of the rest of the parser just assumes that functions do not
-		 * have more than FUNC_MAX_ARGS parameters.  We have to test here to protect
-		 * against array overruns, etc.
+		 * have more than FUNC_MAX_ARGS parameters.  We have to test here
+		 * to protect against array overruns, etc.
 		 */
 		if (nargs >= FUNC_MAX_ARGS)
 			elog(ERROR, "Cannot pass more than %d arguments to a function",
@@ -892,6 +892,7 @@ func_select_candidate(int nargs,
 		if ((nmatch + nident) == nargs)
 			return current_candidate->args;
 
+		/* take this one as the best choice so far? */
 		if ((nmatch > nbestMatch) || (last_candidate == NULL))
 		{
 			nbestMatch = nmatch;
@@ -899,15 +900,18 @@ func_select_candidate(int nargs,
 			last_candidate = current_candidate;
 			ncandidates = 1;
 		}
+		/* no worse than the last choice, so keep this one too? */
 		else if (nmatch == nbestMatch)
 		{
 			last_candidate->next = current_candidate;
 			last_candidate = current_candidate;
 			ncandidates++;
 		}
-		else
-			last_candidate->next = NULL;
+		/* otherwise, don't bother keeping this one... */
 	}
+
+	if (last_candidate)			/* terminate rebuilt list */
+		last_candidate->next = NULL;
 
 	if (ncandidates == 1)
 		return candidates->args;
@@ -922,6 +926,7 @@ func_select_candidate(int nargs,
 		{
 			slot_category = INVALID_TYPE;
 			slot_type = InvalidOid;
+			last_candidate = NULL;
 			for (current_candidate = candidates;
 				 current_candidate != NULL;
 				 current_candidate = current_candidate->next)
@@ -935,26 +940,39 @@ func_select_candidate(int nargs,
 					slot_category = current_category;
 					slot_type = current_type;
 				}
-				else if ((current_category != slot_category)
-						 && IS_BUILTIN_TYPE(current_type))
+				else if (current_category != slot_category)
+				{
+					/* punt if more than one category for this slot */
 					return NULL;
+				}
 				else if (current_type != slot_type)
 				{
 					if (IsPreferredType(slot_category, current_type))
 					{
 						slot_type = current_type;
+						/* forget all previous candidates */
 						candidates = current_candidate;
+						last_candidate = current_candidate;
 					}
 					else if (IsPreferredType(slot_category, slot_type))
-						candidates->next = current_candidate->next;
+					{
+						/* forget this candidate */
+						if (last_candidate)
+							last_candidate->next = current_candidate->next;
+						else
+							candidates = current_candidate->next;
+					}
+					else
+						last_candidate = current_candidate;
+				}
+				else
+				{
+					/* keep this candidate */
+					last_candidate = current_candidate;
 				}
 			}
-
-			if (slot_type != InvalidOid)
-				input_typeids[i] = slot_type;
-		}
-		else
-		{
+			if (last_candidate)			/* terminate rebuilt list */
+				last_candidate->next = NULL;
 		}
 	}
 
