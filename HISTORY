@@ -85,7 +85,7 @@ Migration to version 7.3
      * Pre-7.3 databases loaded into 7.3 will not have the new object
        dependencies for serial columns, unique constraints, and foreign
        keys. See the directory "contrib/adddepend/" for a detailed
-       description and a script that will add the such dependencies.
+       description and a script that will add such dependencies.
      _________________________________________________________________
 
 Changes
