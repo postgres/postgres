@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.383 2004/05/11 21:57:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.384 2004/05/12 03:48:42 momjian Exp $
  *
  * NOTES
  *
@@ -692,7 +692,7 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * On some systems our dynloader code needs the executable's pathname.
 	 */
-	if (find_my_binary(pg_pathname, progname, "postgres") < 0)
+	if (find_my_binary(pg_pathname, argv[0], "postgres") < 0)
 		ereport(FATAL,
 				(errmsg("%s: could not locate postgres executable",
 						progname)));
