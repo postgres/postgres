@@ -1,13 +1,8 @@
 #include <pgtypes_timestamp.h>
 #include <pgtypes_interval.h>
 
-#ifndef dtime_t
-#define dtime_t timestamp
-#endif   /* dtime_t */
-
-#ifndef intrvl_t
-#define intrvl_t interval
-#endif   /* intrvl_t */
+typedef timestamp dtime_t;
+typedef interval intrvl_t;
 
 extern void dtcurrent(dtime_t *);
 extern int	dtcvasc(char *, dtime_t *);

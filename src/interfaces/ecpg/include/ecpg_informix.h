@@ -5,15 +5,12 @@
 #include <decimal.h>
 #include <datetime.h>
 #include <ecpglib.h>
+#include <pgtypes_date.h>
 
 #define SQLNOTFOUND 100
 
-#ifndef date
-#define date long
-#endif   /* ! date */
-
 extern int	rdatestr(date, char *);
-extern void rtoday(date *);
+extern void 	rtoday(date *);
 extern int	rjulmdy(date, short *);
 extern int	rdefmtdate(date *, char *, char *);
 extern int	rfmtdate(date, char *, char *);

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.18 2003/09/18 13:12:23 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.19 2003/09/19 14:06:21 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -397,7 +397,6 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						{
 							/* Informix wants its own NULL value here instead of an error */
 							ECPGset_informix_null(ECPGt_numeric, &nres);
-							return (true);
 						}
 						else
 						{
@@ -405,14 +404,17 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 							return (false);
 						}
 					}
-					if (isarray && *scan_length == '"')
-						scan_length++;
-
-					if ((isarray && *scan_length != ',' && *scan_length != '}')
-						|| (!isarray && *scan_length != '\0' && *scan_length != ' '))	/* Garbage left */
+					else
 					{
-						ECPGraise(lineno, ECPG_NUMERIC_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
-						return (false);
+						if (isarray && *scan_length == '"')
+							scan_length++;
+
+						if ((isarray && *scan_length != ',' && *scan_length != '}')
+							|| (!isarray && *scan_length != '\0' && *scan_length != ' '))	/* Garbage left */
+						{
+							ECPGraise(lineno, ECPG_NUMERIC_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
+							return (false);
+						}
 					}
 				}
 				else
@@ -439,7 +441,6 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						{
 							/* Informix wants its own NULL value here instead of an error */
 							ECPGset_informix_null(ECPGt_interval, &ires);
-							return (true);
 						}
 						else
 						{
@@ -447,14 +448,17 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 							return (false);
 						}
 					}
-					if (isarray && *scan_length == '"')
-						scan_length++;
-
-					if ((isarray && *scan_length != ',' && *scan_length != '}')
-						|| (!isarray && *scan_length != '\0' && *scan_length != ' '))	/* Garbage left */
+					else
 					{
-						ECPGraise(lineno, ECPG_INTERVAL_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
-						return (false);
+						if (isarray && *scan_length == '"')
+							scan_length++;
+
+						if ((isarray && *scan_length != ',' && *scan_length != '}')
+							|| (!isarray && *scan_length != '\0' && *scan_length != ' '))	/* Garbage left */
+						{
+							ECPGraise(lineno, ECPG_INTERVAL_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
+							return (false);
+						}
 					}
 				}
 				else
@@ -477,7 +481,6 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						{
 							/* Informix wants its own NULL value here instead of an error */
 							ECPGset_informix_null(ECPGt_date, &ddres);
-							return (true);
 						}
 						else
 						{
@@ -485,15 +488,17 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 							return (false);
 						}
 					}
-					
-					if (isarray && *scan_length == '"')
-						scan_length++;
-
-					if ((isarray && *scan_length != ',' && *scan_length != '}')
-						|| (!isarray && *scan_length != '\0' && *scan_length != ' '))	/* Garbage left */
+					else
 					{
-						ECPGraise(lineno, ECPG_DATE_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
-						return (false);
+						if (isarray && *scan_length == '"')
+							scan_length++;
+
+						if ((isarray && *scan_length != ',' && *scan_length != '}')
+							|| (!isarray && *scan_length != '\0' && *scan_length != ' '))	/* Garbage left */
+						{
+							ECPGraise(lineno, ECPG_DATE_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
+							return (false);
+						}
 					}
 
 					*((date *) (var + offset * act_tuple)) = ddres;
@@ -515,7 +520,6 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						{
 							/* Informix wants its own NULL value here instead of an error */
 							ECPGset_informix_null(ECPGt_timestamp, &tres);
-							return (true);
 						}
 						else
 						{
@@ -523,14 +527,17 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 							return (false);
 						}
 					}
-					if (isarray && *scan_length == '"')
-						scan_length++;
-
-					if ((isarray && *scan_length != ',' && *scan_length != '}')
-						|| (!isarray && *scan_length != '\0' && *scan_length != ' '))	/* Garbage left */
+					else
 					{
-						ECPGraise(lineno, ECPG_TIMESTAMP_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
-						return (false);
+						if (isarray && *scan_length == '"')
+							scan_length++;
+
+						if ((isarray && *scan_length != ',' && *scan_length != '}')
+							|| (!isarray && *scan_length != '\0' && *scan_length != ' '))	/* Garbage left */
+						{
+							ECPGraise(lineno, ECPG_TIMESTAMP_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
+							return (false);
+						}
 					}
 
 					*((timestamp *) (var + offset * act_tuple)) = tres;

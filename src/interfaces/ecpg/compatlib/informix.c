@@ -161,11 +161,9 @@ deccvasc(char *cp, int len, decimal * np)
 	int			ret = 0;
 	numeric    *result;
 
+	rsetnull(CDECIMALTYPE, (char *) np);
 	if (risnull(CSTRINGTYPE, cp))
-	{
-		rsetnull(CDECIMALTYPE, (char *) np);
 		return 0;
-	}
 
 	if (!str)
 		ret = -1201;
@@ -206,11 +204,9 @@ deccvdbl(double dbl, decimal * np)
 	numeric    *nres = PGTYPESnumeric_new();
 	int			result = 1;
 
+	rsetnull(CDECIMALTYPE, (char *) np);
 	if (risnull(CDOUBLETYPE, (char *) &dbl))
-	{
-		rsetnull(CDECIMALTYPE, (char *) np);
 		return 0;
-	}
 
 	if (nres == NULL)
 		return -1211;
@@ -229,11 +225,9 @@ deccvint(int in, decimal * np)
 	numeric    *nres = PGTYPESnumeric_new();
 	int			result = 1;
 
+	rsetnull(CDECIMALTYPE, (char *) np);
 	if (risnull(CINTTYPE, (char *) &in))
-	{
-		rsetnull(CDECIMALTYPE, (char *) np);
 		return 0;
-	}
 
 	if (nres == NULL)
 		return -1211;
@@ -252,11 +246,9 @@ deccvlong(long lng, decimal * np)
 	numeric    *nres = PGTYPESnumeric_new();
 	int			result = 1;
 
+	rsetnull(CDECIMALTYPE, (char *) np);
 	if (risnull(CLONGTYPE, (char *) &lng))
-	{
-		rsetnull(CDECIMALTYPE, (char *) np);
 		return 0;
-	}
 
 	if (nres == NULL)
 		return -1211;
@@ -338,11 +330,9 @@ dectoasc(decimal * np, char *cp, int len, int right)
 	if (nres == NULL)
 		return -1211;
 
+	rsetnull(CSTRINGTYPE, (char *) cp);
 	if (risnull(CDECIMALTYPE, (char *) np))
-	{
-		rsetnull(CSTRINGTYPE, (char *) cp);
 		return 0;
-	}
 
 	if (PGTYPESnumeric_from_decimal(np, nres) != 0)
 		return -1211;

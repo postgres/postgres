@@ -3,7 +3,7 @@
 
 #include <pgtypes_timestamp.h>
 
-#define date long
+typedef long date;
 
 extern date PGTYPESdate_from_asc(char *, char **);
 extern char *PGTYPESdate_to_asc(date);
