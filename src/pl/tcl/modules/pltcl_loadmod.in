@@ -1,6 +1,6 @@
 #!/bin/sh
 # Start tclsh \
-exec tclsh "$0" $@
+exec @TCLSH@ "$0" $@
 
 #
 # Code still has to be documented

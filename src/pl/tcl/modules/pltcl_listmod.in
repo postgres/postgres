@@ -1,6 +1,6 @@
 #!/bin/sh
 # Start tclsh \
-exec tclsh "$0" $@
+exec @TCLSH@ "$0" $@
 
 #
 # Code still has to be documented
@@ -15,7 +15,7 @@ package require Pgtcl
 #
 if {$argc < 1} {
     puts stderr ""
-    puts stderr "usage: pltcl_delmod dbname \[options\] modulename \[...\]"
+    puts stderr "usage: pltcl_listmod dbname \[options\] \[modulename \[...\]\]"
     puts stderr ""
     puts stderr "options:"
     puts stderr "    -host hostname"
@@ -66,9 +66,9 @@ while {$i < $argc} {
 #
 # Final syntax check
 #
-if {$i >= $argc || $errors > 0} {
+if {$errors > 0} {
     puts stderr ""
-    puts stderr "usage: pltcl_delmod dbname \[options\] modulename \[...\]"
+    puts stderr "usage: pltcl_listmod dbname \[options\] \[modulename \[...\]\]"
     puts stderr ""
     puts stderr "options:"
     puts stderr "    -host hostname"
@@ -77,7 +77,7 @@ if {$i >= $argc || $errors > 0} {
     exit 1
 }
 
-proc delmodule {conn modname} {
+proc listmodule {conn modname} {
     set xname $modname
     regsub -all {\\} $xname {\\} xname
     regsub -all {'}  $xname {''} xname
@@ -95,21 +95,27 @@ proc delmodule {conn modname} {
 	return
     }
 
-    pg_result \
-        [pg_exec $conn "delete from pltcl_modules where modname = '$xname'"] \
-	-clear
-    pg_result \
-        [pg_exec $conn "delete from pltcl_modfuncs where modname = '$xname'"] \
-	-clear
-
-    puts "Module $modname removed"
+    puts "Module $modname defines procedures:"
+    pg_select $conn "select funcname from pltcl_modfuncs \
+	    where modname = '$xname' order by funcname" FUNC {
+        puts "    $FUNC(funcname)"
+    }
+    puts ""
 }
 
 set conn [eval pg_connect $dbname $options]
 
-while {$i < $argc} {
-    delmodule $conn [lindex $argv $i]
-    incr i
+if {$i == $argc} {
+    pg_select $conn "select distinct modname from pltcl_modules	\
+    		order by modname"	\
+    		MOD {
+        listmodule $conn $MOD(modname)
+    }
+} else {
+    while {$i < $argc} {
+        listmodule $conn [lindex $argv $i]
+	incr i
+    }
 }
 
 pg_disconnect $conn
