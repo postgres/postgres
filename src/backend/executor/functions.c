@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * functions.c
- *	  Routines to handle functions called from the executor
+ *	  Execution of SQL-language functions
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.68 2003/07/21 17:05:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.69 2003/07/28 18:33:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,6 @@ typedef struct local_es
  * An SQLFunctionCache record is built during the first call,
  * and linked to from the fn_extra field of the FmgrInfo struct.
  */
-
 typedef struct
 {
 	int			typlen;			/* length of the return type */
@@ -88,6 +87,7 @@ static void postquel_sub_params(SQLFunctionCachePtr fcache,
 static Datum postquel_execute(execution_state *es,
 				 FunctionCallInfo fcinfo,
 				 SQLFunctionCachePtr fcache);
+static void sql_exec_error_callback(void *arg);
 static void ShutdownSQLFunction(Datum arg);
 
 
@@ -323,15 +323,15 @@ postquel_getnext(execution_state *es)
 static void
 postquel_end(execution_state *es)
 {
+	/* mark status done to ensure we don't do ExecutorEnd twice */
+	es->status = F_EXEC_DONE;
+
 	/* Utility commands don't need Executor. */
 	if (es->qd->operation != CMD_UTILITY)
 		ExecutorEnd(es->qd);
 
 	FreeQueryDesc(es->qd);
-
 	es->qd = NULL;
-
-	es->status = F_EXEC_DONE;
 }
 
 /* Build ParamListInfo array representing current arguments */
@@ -492,6 +492,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 {
 	MemoryContext oldcontext;
 	SQLFunctionCachePtr fcache;
+	ErrorContextCallback sqlerrcontext;
 	execution_state *es;
 	Datum		result = 0;
 
@@ -501,6 +502,14 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	 * sub-executor is responsible for deleting per-tuple information.
 	 */
 	oldcontext = MemoryContextSwitchTo(fcinfo->flinfo->fn_mcxt);
+
+	/*
+	 * Setup error traceback support for ereport()
+	 */
+	sqlerrcontext.callback = sql_exec_error_callback;
+	sqlerrcontext.arg = fcinfo->flinfo;
+	sqlerrcontext.previous = error_context_stack;
+	error_context_stack = &sqlerrcontext;
 
 	/*
 	 * Initialize fcache (build plans) if first time through.
@@ -580,6 +589,8 @@ fmgr_sql(PG_FUNCTION_ARGS)
 			}
 		}
 
+		error_context_stack = sqlerrcontext.previous;
+
 		MemoryContextSwitchTo(oldcontext);
 
 		return result;
@@ -618,10 +629,73 @@ fmgr_sql(PG_FUNCTION_ARGS)
 		}
 	}
 
+	error_context_stack = sqlerrcontext.previous;
+
 	MemoryContextSwitchTo(oldcontext);
 
 	return result;
 }
+
+
+/*
+ * error context callback to let us supply a call-stack traceback
+ */
+static void
+sql_exec_error_callback(void *arg)
+{
+	FmgrInfo   *flinfo = (FmgrInfo *) arg;
+	SQLFunctionCachePtr fcache = (SQLFunctionCachePtr) flinfo->fn_extra;
+	char	   *fn_name;
+
+	fn_name = get_func_name(flinfo->fn_oid);
+	/* safety check, shouldn't happen */
+	if (fn_name == NULL)
+		return;
+
+	/*
+	 * Try to determine where in the function we failed.  If there is a
+	 * query with non-null QueryDesc, finger it.  (We check this rather
+	 * than looking for F_EXEC_RUN state, so that errors during ExecutorStart
+	 * or ExecutorEnd are blamed on the appropriate query; see postquel_start
+	 * and postquel_end.)
+	 */
+	if (fcache)
+	{
+		execution_state *es;
+		int		query_num;
+
+		es = fcache->func_state;
+		query_num = 1;
+		while (es)
+		{
+			if (es->qd)
+			{
+				errcontext("SQL function \"%s\" query %d",
+						   fn_name, query_num);
+				break;
+			}
+			es = es->next;
+			query_num++;
+		}
+		if (es == NULL)
+		{
+			/*
+			 * couldn't identify a running query; might be function entry,
+			 * function exit, or between queries.
+			 */
+			errcontext("SQL function \"%s\"", fn_name);
+		}
+	}
+	else
+	{
+		/* must have failed during init_sql_fcache() */
+		errcontext("SQL function \"%s\" during startup", fn_name);
+	}
+
+	/* free result of get_func_name (in case this is only a notice) */
+	pfree(fn_name);
+}
+
 
 /*
  * callback function in case a function-returning-set needs to be shut down

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.147 2003/07/25 00:01:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.148 2003/07/28 18:33:18 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -70,6 +70,7 @@ static Node *substitute_actual_parameters(Node *expr, int nargs, List *args,
 										  int *usecounts);
 static Node *substitute_actual_parameters_mutator(Node *node,
 					 substitute_actual_parameters_context *context);
+static void sql_inline_error_callback(void *arg);
 static Expr *evaluate_expr(Expr *expr, Oid result_type);
 
 
@@ -1730,6 +1731,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	bool		isNull;
 	MemoryContext oldcxt;
 	MemoryContext mycxt;
+	ErrorContextCallback sqlerrcontext;
 	List	   *raw_parsetree_list;
 	List	   *querytree_list;
 	Query	   *querytree;
@@ -1779,6 +1781,15 @@ inline_function(Oid funcid, Oid result_type, List *args,
 			argtypes[i] = exprType((Node *) nth(i, args));
 		}
 	}
+
+	/*
+	 * Setup error traceback support for ereport().  This is so that we can
+	 * finger the function that bad information came from.
+	 */
+	sqlerrcontext.callback = sql_inline_error_callback;
+	sqlerrcontext.arg = funcform;
+	sqlerrcontext.previous = error_context_stack;
+	error_context_stack = &sqlerrcontext;
 
 	/*
 	 * Make a temporary memory context, so that we don't leak all the
@@ -1926,12 +1937,15 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	newexpr = eval_const_expressions_mutator(newexpr,
 											 lconso(funcid, active_fns));
 
+	error_context_stack = sqlerrcontext.previous;
+
 	return (Expr *) newexpr;
 
 	/* Here if func is not inlinable: release temp memory and return NULL */
 fail:
 	MemoryContextSwitchTo(oldcxt);
 	MemoryContextDelete(mycxt);
+	error_context_stack = sqlerrcontext.previous;
 
 	return NULL;
 }
@@ -1976,6 +1990,18 @@ substitute_actual_parameters_mutator(Node *node,
 	}
 	return expression_tree_mutator(node, substitute_actual_parameters_mutator,
 								   (void *) context);
+}
+
+/*
+ * error context callback to let us supply a call-stack traceback
+ */
+static void
+sql_inline_error_callback(void *arg)
+{
+	Form_pg_proc funcform = (Form_pg_proc) arg;
+
+	errcontext("SQL function \"%s\" during inlining",
+			   NameStr(funcform->proname));
 }
 
 /*
