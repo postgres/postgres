@@ -474,12 +474,15 @@ Compile the program.  Type
 <Para>
  14) If necessary, tell UNIX how to find your shared libraries.  You can
      do ONE of the following, preferably the first:
+
 <SubSteps>
 <Step Performance="optional">
 <Para>
-       As root, edit file /etc/ld.so.conf.  Add line
-             <FileName>/usr/local/pgsql/lib</FileName>
-          to the file.  Then run command <Command>/sbin/ldconfig</Command>.
+       As root, edit file /etc/ld.so.conf.  Add a line
+<programlisting>
+<FileName>/usr/local/pgsql/lib</FileName>
+</programlisting>
+to the file.  Then run command <Command>/sbin/ldconfig</Command>.
 </Para>
 </Step>
 <Step Performance="optional">
@@ -515,7 +518,8 @@ Compile the program.  Type
 <Step Performance="required">
 <Para>
  If it has not already been done, then prepare account postgres
-     for using <ProductName>Postgres</ProductName>.  Any account that will use <ProductName>Postgres</ProductName> must
+     for using <ProductName>Postgres</ProductName>.  
+Any account that will use <ProductName>Postgres</ProductName> must
      be similarily prepared.  (The following instructions are for a
      bash shell.  Adapt accordingly for other shells.)
 </Para>
@@ -568,13 +572,21 @@ Compile the program.  Type
 <Step Performance="required">
 <Para>
 
- Start the postmaster daemon running.  Type
+<Para>
+     The file /usr/src/pgsql/src/test/regress/README has detailed
+     instructions for running and interpreting the regression tests.
+     A short version follows here:
+</Para>
+
+<Para>
+     Start the postmaster daemon running in the background by typing
 <ProgramListing>
-    cd
-    nohup postmaster > server.log 2>&1 &
+$ cd
+$ nohup postmaster > regress.log 2>&1 &
 </ProgramListing>
      Run postmaster from your <ProductName>Postgres</ProductName> super user account (typically
-     account postgres).  DO NOT RUN POSTMASTER FROM THE ROOT ACCOUNT.
+     account postgres).
+<emphasis>Do not run <application>postmaster</application> from the root account!</emphasis>
 </Para>
 </Step>
 
@@ -722,10 +734,20 @@ Compile the program.  Type
       your computer to do regular maintainence.  The following should be
       done at regular intervals:
 
-        a) Run the SQL command vacuum.  This will clean up your database.
-        b) Back up your system.  (You should probably keep the last few
-           backups on hand.)  Ideally, no one else should be using the
+<procedure>
+<title>Minimal Backup Procedure</title>
+
+<step performance="required">
+<para>
+Run the SQL command vacuum.  This will clean up your database.
+
+<step performance="required">
+<para>
+Back up your system.  (You should probably keep the last few
+           backups on hand.)  Preferably, no one else should be using the
            system at the time.
+
+</procedure>
 
       Ideally, the above tasks should be done by a shell script that is
       run nightly or weekly by cron.  Look at the man page for crontab
@@ -787,6 +809,8 @@ Compile the program.  Type
  You will probably want to print out the documentation.  Here is how
      you might do it if you have Ghostscript on your system and are
      writing to a laserjet printer.
+
+<programlisting>
         alias gshp='gs -sDEVICE=laserjet -r300 -dNOPAUSE'
         export GS_LIB=/usr/share/ghostscript:/usr/share/ghostscript/fonts
         # Print out the man pages.
@@ -799,35 +823,49 @@ Compile the program.  Type
         cd /usr/src/pgsql/doc
         gshp -sOUTPUTFILE=userguide.hp userguide.ps
         lpr -l -s -r userguide.hp
+</programlisting>
 
-     If you are a developer, you will probably want to also print out
-     the Postgres Implemention Guide, version 1.0, October 1, 1995.
-     This is a WWW document located at
-     http://www.postgresql.org/docs/impguide.
-</Para>
 </Step>
 
 <Step Performance="required">
 <Para>
- The <ProductName>Postgres</ProductName> team wants to keep <ProductName>Postgres</ProductName> working on all of the
+ The <ProductName>Postgres</ProductName> team wants
+ to keep <ProductName>Postgres</ProductName> working on all of the
      supported platforms.  We therefore ask you to let us know if you did
-     or did not get <ProductName>Postgres</ProductName> to work on you system.  Please send a
+     or did not get <ProductName>Postgres</ProductName> to work on you system.
+  Please send a
      mail message to pgsql-ports@postgresql.org telling us the following:
-       - The version of <ProductName>Postgres</ProductName> (v6.2.1, 6.1.1, beta 970703, etc.).
-       - Your operating system (i.e. RedHat v4.0 Linux v2.0.26).
-       - Your hardware (SPARC, i486, etc.).
-       - Did you compile, install and run the regression tests cleanly?
+
+<itemizedlist>
+<listitem>
+<para>
+The version of <ProductName>Postgres</ProductName> (v6.4, 6.3.2, beta 981014, etc.).
+
+<listitem>
+<para>
+Your operating system (i.e. RedHat v5.1 Linux v2.0.34).
+
+<listitem>
+<para>
+Your hardware (SPARC, i486, etc.).
+
+<listitem>
+<para>
+Did you compile, install and run the regression tests cleanly?
          If not, what source code did you change (i.e. patches you
          applied, changes you made, etc.), what tests failed, etc.
          It is normal to get many warning when you compile.  You do
          not need to report these.
+
+</itemizedlist>
+
 </Para>
 </Step>
 
 <Step Performance="required">
 <Para>
  Now create, access and manipulate databases as desired.  Write client
-     programs to access the database server.  In other words, ENJOY!
+     programs to access the database server.  In other words, <emphasis>enjoy</emphasis>!
 </Para>
 </Step>
 </Procedure>
