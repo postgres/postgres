@@ -1898,5 +1898,9 @@ Mon Jan 10 13:55:32 CET 2005
 Tue Jan 25 13:47:45 CET 2005
 
 	- Fixed segfault in preprocessor due to free a struct twice.
+
+Wed Feb  2 16:35:27 CET 2005
+
+	- Fixed bug in parsing of #line statement in declare section.
 	- Set ecpg version to 3.2.1.
 

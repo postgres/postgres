@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.304 2005/01/25 12:51:31 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.305 2005/02/02 15:37:43 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -4635,12 +4635,14 @@ sql_enddeclare: ecpgstart END_P DECLARE SQL_SECTION ';' {};
 
 var_type_declarations:	/*EMPTY*/			{ $$ = EMPTY; }
 		| vt_declarations			{ $$ = $1; }
+		| CPP_LINE				{ $$ = $1; }
 		;
 
 vt_declarations:  var_declaration			{ $$ = $1; }
 		| type_declaration			{ $$ = $1; }
 		| vt_declarations var_declaration	{ $$ = cat2_str($1, $2); }
 		| vt_declarations type_declaration	{ $$ = cat2_str($1, $2); }
+		| vt_declarations CPP_LINE		{ $$ = cat2_str($1, $2); }
 		;
 
 variable_declarations:	var_declaration                         { $$ = $1; }
