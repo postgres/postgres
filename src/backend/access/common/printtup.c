@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.32 1998/08/19 02:00:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.33 1998/08/30 19:30:38 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,9 +123,11 @@ printtup(HeapTuple tuple, TupleDesc typeinfo)
 	for (i = 0; i < tuple->t_natts; ++i)
 	{
 		attr = heap_getattr(tuple, i + 1, typeinfo, &isnull);
-		typoutput = typtoout((Oid) typeinfo->attrs[i]->atttypid);
+		if (isnull)
+			continue;
 
-		if (!isnull && OidIsValid(typoutput))
+		typoutput = typtoout((Oid) typeinfo->attrs[i]->atttypid);
+		if (OidIsValid(typoutput))
 		{
 			outputstr = fmgr(typoutput, attr,
 							 gettypelem(typeinfo->attrs[i]->atttypid),
@@ -140,6 +142,12 @@ printtup(HeapTuple tuple, TupleDesc typeinfo)
 #endif
 			pfree(outputstr);
 		}
+		else
+		{
+			outputstr = "<unprintable>";
+			pq_putint(strlen(outputstr) + VARHDRSZ, VARHDRSZ);
+			pq_putnchar(outputstr, strlen(outputstr));
+		} 
 	}
 }
 
