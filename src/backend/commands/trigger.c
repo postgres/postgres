@@ -684,6 +684,8 @@ ExecBRDeleteTriggers(Relation rel, ItemPointer tupleid)
 		newtuple = ExecCallTriggerFunc(trigger[i]);
 		if (newtuple == NULL)
 			break;
+		if (newtuple != trigtuple)
+			pfree(newtuple);
 	}
 	CurrentTriggerData = NULL;
 	pfree(SaveTriggerData);
