@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.37 1999/09/18 19:06:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.38 1999/10/26 03:12:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "commands/comment.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
 #include "parser/parse_func.h"
@@ -93,7 +94,14 @@ RemoveOperator(char *operatorName,		/* operator name */
 			elog(ERROR, "RemoveOperator: operator '%s': permission denied",
 				 operatorName);
 #endif
+
+
+		/*** Delete any comments associated with this operator ***/
+
+		DeleteComments(tup->t_data->t_oid);
+
 		heap_delete(relation, &tup->t_self, NULL);
+
 	}
 	else
 	{
@@ -147,8 +155,17 @@ SingleOpOperatorRemove(Oid typeOid)
 	{
 		key[0].sk_attno = attnums[i];
 		scan = heap_beginscan(rel, 0, SnapshotNow, 1, key);
-		while (HeapTupleIsValid(tup = heap_getnext(scan, 0)))
-			heap_delete(rel, &tup->t_self, NULL);
+		while (HeapTupleIsValid(tup = heap_getnext(scan, 0))) {
+
+		  /*** This is apparently a routine not in use, but remove ***/
+		  /*** any comments anyways ***/
+
+		  DeleteComments(tup->t_data->t_oid);
+
+		  heap_delete(rel, &tup->t_self, NULL);
+		  
+		}
+
 		heap_endscan(scan);
 	}
 	heap_close(rel, RowExclusiveLock);
@@ -259,6 +276,11 @@ RemoveType(char *typeName)		/* type name to be removed */
 	}
 
 	typeOid = tup->t_data->t_oid;
+
+	/*** Delete any comments associated with this type ***/
+
+	DeleteComments(typeOid);
+
 	heap_delete(relation, &tup->t_self, NULL);
 
 	/* Now, Delete the "array of" that type */
@@ -347,6 +369,10 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 		elog(ERROR, "RemoveFunction: function \"%s\" is built-in", functionName);
 	}
 
+	/*** Delete any comments associated with this function ***/
+
+	DeleteComments(tup->t_data->t_oid);
+
 	heap_delete(relation, &tup->t_self, NULL);
 
 	heap_close(relation, RowExclusiveLock);
@@ -418,6 +444,11 @@ RemoveAggregate(char *aggName, char *aggType)
 				 aggName);
 		}
 	}
+	
+	/*** Remove any comments related to this aggregate ***/
+
+	DeleteComments(tup->t_data->t_oid);
+
 	heap_delete(relation, &tup->t_self, NULL);
 
 	heap_close(relation, RowExclusiveLock);

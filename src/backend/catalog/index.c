@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.91 1999/09/24 00:24:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.92 1999/10/26 03:12:33 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -32,6 +32,7 @@
 #include "catalog/pg_index.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "commands/comment.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
@@ -1127,6 +1128,13 @@ index_destroy(Oid indexId)
 	if (IsTransactionBlock() && ! userindexRelation->rd_myxactonly)
 		elog(NOTICE, "Caution: DROP INDEX cannot be rolled back, so don't abort now");
 
+	/* ----------------
+	 * fix DESCRIPTION relation
+	 * ----------------
+	 */
+
+	DeleteComments(indexId);
+	
 	/* ----------------
 	 * fix RELATION relation
 	 * ----------------

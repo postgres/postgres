@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: creatinh.h,v 1.11 1999/10/15 01:49:46 momjian Exp $
+ * $Id: creatinh.h,v 1.12 1999/10/26 03:12:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,5 @@
 extern void DefineRelation(CreateStmt *stmt, char relkind);
 extern void RemoveRelation(char *name);
 extern void TruncateRelation(char *name);
-extern void CommentRelation(char *name, char *attr, char *comment);
 
 #endif	 /* CREATINH_H */

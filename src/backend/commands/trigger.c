@@ -16,6 +16,7 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
+#include "commands/comment.h"
 #include "commands/trigger.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
@@ -297,8 +298,14 @@ DropTrigger(DropTrigStmt *stmt)
 
 		if (namestrcmp(&(pg_trigger->tgname), stmt->trigname) == 0)
 		{
-			heap_delete(tgrel, &tuple->t_self, NULL);
-			tgfound++;
+
+		  /*** Delete any comments associated with this trigger ***/
+
+		  DeleteComments(tuple->t_data->t_oid);
+
+		  heap_delete(tgrel, &tuple->t_self, NULL);
+		  tgfound++;
+		  
 		}
 		else
 			found++;
@@ -355,8 +362,15 @@ RelationRemoveTriggers(Relation rel)
 
 	tgscan = heap_beginscan(tgrel, 0, SnapshotNow, 1, &key);
 
-	while (HeapTupleIsValid(tup = heap_getnext(tgscan, 0)))
-		heap_delete(tgrel, &tup->t_self, NULL);
+	while (HeapTupleIsValid(tup = heap_getnext(tgscan, 0))) {
+
+	  /*** Delete any comments associated with this trigger ***/
+
+	  DeleteComments(tup->t_data->t_oid);
+	  
+	  heap_delete(tgrel, &tup->t_self, NULL);
+
+	}
 
 	heap_endscan(tgscan);
 

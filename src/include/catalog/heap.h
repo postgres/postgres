@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heap.h,v 1.23 1999/10/15 01:49:44 momjian Exp $
+ * $Id: heap.h,v 1.24 1999/10/26 03:12:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,23 +21,20 @@ typedef struct RawColumnDefault
 	Node	   *raw_default;	/* default value (untransformed parse tree) */
 } RawColumnDefault;
 
-extern Oid	RelnameFindRelid(char *relname);
+extern Oid RelnameFindRelid(char *relname);
 extern Relation heap_create(char *relname, TupleDesc att,
-			bool isnoname, bool istemp);
+			    bool isnoname, bool istemp);
 
-extern Oid heap_create_with_catalog(char *relname,
-						 TupleDesc tupdesc, char relkind, bool istemp);
+extern Oid heap_create_with_catalog(char *relname, TupleDesc tupdesc, 
+				    char relkind, bool istemp);
 
 extern void heap_destroy_with_catalog(char *relname);
 extern void heap_truncate(char *relname);
 extern void heap_destroy(Relation rel);
 
-extern void CreateComments(Oid object, char *comments);
-extern void DeleteComments(Oid object);
-
 extern void AddRelationRawConstraints(Relation rel,
-									  List *rawColDefaults,
-									  List *rawConstraints);
+				      List *rawColDefaults,
+				      List *rawConstraints);
 
 extern void InitNoNameRelList(void);
 extern void DestroyNoNameRels(void);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.85 1999/10/15 01:49:47 momjian Exp $
+ * $Id: parsenodes.h,v 1.86 1999/10/26 03:12:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -316,10 +316,12 @@ typedef struct TruncateStmt
  */
 typedef struct CommentStmt
 {
-  NodeTag         type;
-  char *relname;                       /* relation to create/drop comment */
-  char *attrname;                      /* attribute to comment on */
-  char *comment;                       /* the actual comment */
+  NodeTag type;
+  int objtype;                         /* Object's type */
+  char *objname;                       /* Name of the object */
+  char *objproperty;                   /* Property Id (such as column) */
+  List *objlist;                       /* Arguments for VAL objects */
+  char *comment;                       /* The comment to insert */
 } CommentStmt;
       
 /* ----------------------

@@ -4,7 +4,7 @@
 #    Makefile for commands
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/commands/Makefile,v 1.18 1999/02/27 21:42:33 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/commands/Makefile,v 1.19 1999/10/26 03:12:34 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ ifdef MULTIBYTE
 CFLAGS+= $(MBFLAGS)
 endif
 
-OBJS = async.o creatinh.o command.o copy.o indexcmds.o define.o \
+OBJS = async.o creatinh.o command.o comment.o copy.o indexcmds.o define.o \
        remove.o rename.o vacuum.o view.o cluster.o \
        explain.o sequence.o trigger.o user.o proclang.o \
        dbcommands.o variable.o
@@ -26,6 +26,12 @@ all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
 	$(LD) -r -o SUBSYS.o $(OBJS)
+
+# The following declares a hard-coded dependency on parse.h since, 
+# if compiled without make dep, comment.c would get compiled before 
+# the parser. 
+
+comment.o: ../parse.h
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

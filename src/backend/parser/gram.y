@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.109 1999/10/15 01:49:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.110 1999/10/26 03:12:34 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -196,7 +196,8 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <boolean> opt_cursor
 
 %type <ival>	copy_dirn, def_type, opt_direction, remove_type,
-				opt_column, event
+		opt_column, event, comment_type, comment_cl,
+		comment_ag, comment_fn, comment_op, comment_tg
 
 %type <ival>	fetch_how_many
 
@@ -1542,28 +1543,101 @@ TruncateStmt:  TRUNCATE TABLE relation_name
 
 /*****************************************************************************
  *
- *             QUERY:
- *                     comment on [ table <relname> | column <relname>.<attribute> ]
- *                                is 'text'
+ *  The COMMENT ON statement can take different forms based upon the type of
+ *  the object associated with the comment. The form of the statement is:
+ *
+ *  COMMENT ON [ [ DATABASE | INDEX | RULE | SEQUENCE | TABLE | TYPE | VIEW ] 
+ *               <objname> | AGGREGATE <aggname> <aggtype> | FUNCTION 
+ *		 <funcname> (arg1, arg2, ...) | OPERATOR <op> 
+ *		 (leftoperand_typ rightoperand_typ) | TRIGGER <triggername> ON
+ *		 <relname> ] IS 'text'
  *
  *****************************************************************************/
  
-CommentStmt:	COMMENT ON COLUMN relation_name '.' attr_name IS Sconst
+CommentStmt:	COMMENT ON comment_type name IS Sconst
 			{
 				CommentStmt *n = makeNode(CommentStmt);
-				n->relname = $4;
-				n->attrname = $6;
-				n->comment = $8;
-				$$ = (Node *) n;
-			}
-		| COMMENT ON TABLE relation_name IS Sconst
-		        {
-				CommentStmt *n = makeNode(CommentStmt);
-				n->relname = $4;
-				n->attrname = NULL;
+				n->objtype = $3;
+				n->objname = $4;
+				n->objproperty = NULL;
+				n->objlist = NULL;
 				n->comment = $6;
 				$$ = (Node *) n;
 			}
+		| COMMENT ON comment_cl relation_name '.' attr_name IS Sconst
+			{
+				CommentStmt *n = makeNode(CommentStmt);
+				n->objtype = $3;
+				n->objname = $4;
+				n->objproperty = $6;
+				n->objlist = NULL;
+				n->comment = $8;
+				$$ = (Node *) n;
+			}
+		| COMMENT ON comment_ag name aggr_argtype IS Sconst
+			{
+				CommentStmt *n = makeNode(CommentStmt);
+				n->objtype = $3;
+				n->objname = $4;
+				n->objproperty = $5;
+				n->objlist = NULL;
+				n->comment = $7;
+				$$ = (Node *) n;
+			}
+		| COMMENT ON comment_fn func_name func_args IS Sconst
+			{
+				CommentStmt *n = makeNode(CommentStmt);
+				n->objtype = $3;
+				n->objname = $4;
+				n->objproperty = NULL;
+				n->objlist = $5;
+				n->comment = $7;
+				$$ = (Node *) n;
+			}
+		| COMMENT ON comment_op all_Op '(' oper_argtypes ')' IS Sconst
+			{
+				CommentStmt *n = makeNode(CommentStmt);
+				n->objtype = $3;
+				n->objname = $4;
+				n->objproperty = NULL;
+				n->objlist = $6;
+				n->comment = $9;
+				$$ = (Node *) n;
+			}
+		| COMMENT ON comment_tg name ON relation_name IS Sconst
+			{
+				CommentStmt *n = makeNode(CommentStmt);
+				n->objtype = $3;
+				n->objname = $4;
+				n->objproperty = $6;
+				n->objlist = NULL;
+				n->comment = $8;
+				$$ = (Node *) n;
+			}
+		;
+
+comment_type:	DATABASE { $$ = DATABASE; }
+		| INDEX { $$ = INDEX; }
+		| RULE { $$ = RULE; }
+		| SEQUENCE { $$ = SEQUENCE; }
+		| TABLE { $$ = TABLE; }
+		| TYPE_P { $$ = TYPE_P; }
+		| VIEW { $$ = VIEW; }
+		;		
+
+comment_cl:	COLUMN { $$ = COLUMN; }
+		;
+
+comment_ag:	AGGREGATE { $$ = AGGREGATE; }
+		;
+
+comment_fn:	FUNCTION { $$ = FUNCTION; }
+		;
+
+comment_op:	OPERATOR { $$ = OPERATOR; }
+		;
+
+comment_tg:	TRIGGER { $$ = TRIGGER; }
 		;
 
 /*****************************************************************************

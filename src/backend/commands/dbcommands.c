@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.42 1999/10/25 03:07:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.43 1999/10/26 03:12:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "catalog/catname.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_shadow.h"
+#include "commands/comment.h"
 #include "commands/dbcommands.h"
 #include "miscadmin.h"
 #include "storage/sinval.h"
@@ -148,6 +149,10 @@ destroydb(char *dbname, CommandDest dest)
 		elog(ERROR, "Database '%s', OID %u, not found in pg_database",
 			 dbname, db_id);
 	}
+
+	/*** Delete any comments associated with the database ***/
+	
+	DeleteComments(db_id);
 
 	/*
 	 * Houston, we have launch commit...

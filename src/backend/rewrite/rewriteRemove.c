@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.29 1999/09/18 19:07:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.30 1999/10/26 03:12:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/pg_rewrite.h"
+#include "commands/comment.h"
 #include "rewrite/rewriteRemove.h"
 #include "rewrite/rewriteSupport.h"
 #include "utils/syscache.h"
@@ -120,6 +121,13 @@ RemoveRewriteRule(char *ruleName)
 	prs2_deleteFromRelation(eventRelationOid, ruleId);
 
 	/*
+	 * Delete any comments associated with this rule
+	 *
+	 */	 
+	 
+	DeleteComments(ruleId);
+
+	/*
 	 * Now delete the tuple...
 	 */
 	heap_delete(RewriteRelation, &tuple->t_self, NULL);
@@ -158,8 +166,15 @@ RelationRemoveRules(Oid relid)
 	scanDesc = heap_beginscan(RewriteRelation,
 							  0, SnapshotNow, 1, &scanKeyData);
 
-	while (HeapTupleIsValid(tuple = heap_getnext(scanDesc, 0)))
-		heap_delete(RewriteRelation, &tuple->t_self, NULL);
+	while (HeapTupleIsValid(tuple = heap_getnext(scanDesc, 0))) {
+
+	  /*** Delete any comments associated with this relation ***/
+
+	  DeleteComments(tuple->t_data->t_oid);
+	   
+	  heap_delete(RewriteRelation, &tuple->t_self, NULL);
+
+	}
 
 	heap_endscan(scanDesc);
 	heap_close(RewriteRelation, RowExclusiveLock);

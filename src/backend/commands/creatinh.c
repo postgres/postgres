@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.49 1999/10/15 01:49:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.50 1999/10/26 03:12:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -232,52 +232,6 @@ TruncateRelation(char *name)
 {
 	AssertArg(name);
 	heap_truncate(name);
-}
-
-/*------------------------------------------------------------------
- * CommentRelation --
- *                Adds a comment to pg_description for the associated
- *                relation or relation attribute.
- *
- * Note:           
- *                The comment is dropped on the relation or attribute if
- *                the comment is an empty string.
- *------------------------------------------------------------------
- */
-void 
-CommentRelation(char *relname, char *attrname, char *comments) 
-{
-
-  Relation relation;
-  HeapTuple attrtuple;
-  Oid oid;
-
-  /*** First ensure relname is valid ***/
-
-  relation = heap_openr(relname, AccessShareLock);
-  
-  /*** Now, if an attribute was specified, fetch its oid, else use relation's oid ***/
-  
-  if (attrname != NULL) {
-    attrtuple = SearchSysCacheTuple(ATTNAME, ObjectIdGetDatum(relation->rd_id),
-				    PointerGetDatum(attrname), 0, 0);
-    if (!HeapTupleIsValid(attrtuple)) {
-      elog(ERROR, "CommentRelation: attribute \"%s\" is not an attribute of relation \"%s\"",
-	   attrname, relname);
-    }
-    oid = attrtuple->t_data->t_oid;
-  } else {
-    oid = RelationGetRelid(relation);
-  }
-  
-  /*** Call CreateComments() to create/drop the comments ***/
-
-  CreateComments(oid, comments);
-
-  /*** Now, close the heap relation ***/
-
-  heap_close(relation, AccessShareLock); 
-
 }
 
 /*
