@@ -93,6 +93,11 @@
 #define INDEXSCAN_PATCH 
 
 /*
+ * Maximum number of columns in an index.
+ */
+#define INDEX_MAX_KEYS		8
+
+/*
  * Enables debugging print statements in the date/time support routines.
  * Particularly useful for porting to a new platform/OS combination.
  */

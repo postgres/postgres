@@ -47,15 +47,15 @@ describeAggregates(const char *name, PsqlSettings *pset, bool verbose, bool desc
 	strcpy(buf,
 		   "SELECT a.aggname AS \"Name\", t.typname AS \"Type\"");
     if (verbose)
-        strcat(buf, " ,u.usename as \"Owner\"");
+	strcat(buf, " ,u.usename as \"Owner\"");
 	if (desc)
 		strcat(buf, ",\n       obj_description(a.oid) as \"Description\"");
 	strcat(buf, !verbose ?
 		   ("\nFROM pg_aggregate a, pg_type t\n"
-            "WHERE a.aggbasetype = t.oid\n") :
+	    "WHERE a.aggbasetype = t.oid\n") :
 		   ("\nFROM pg_aggregate a, pg_type t, pg_user u\n"
-            "WHERE a.aggbasetype = t.oid AND a.aggowner = u.usesysid\n")
-        );
+	    "WHERE a.aggbasetype = t.oid AND a.aggowner = u.usesysid\n")
+	);
 
 	if (name)
 	{
@@ -68,16 +68,16 @@ describeAggregates(const char *name, PsqlSettings *pset, bool verbose, bool desc
 		   "UNION\n"
 		   "SELECT a.aggname AS \"Name\", '(all types)' as \"Type\"");
     if (verbose)
-        strcat(buf, " ,u.usename as \"Owner\"");
+	strcat(buf, " ,u.usename as \"Owner\"");
 	if (desc)
 		strcat(buf,
 			   ",\n       obj_description(a.oid) as \"Description\"");
 	strcat(buf, !verbose ?
 		   ("\nFROM pg_aggregate a\n"
-            "WHERE a.aggbasetype = 0\n") :
+	    "WHERE a.aggbasetype = 0\n") :
 		   ("\nFROM pg_aggregate a, pg_user u\n"
-            "WHERE a.aggbasetype = 0 AND a.aggowner = u.usesysid\n")
-        );
+	    "WHERE a.aggbasetype = 0 AND a.aggowner = u.usesysid\n")
+	);
 	if (name)
 	{
 		strcat(buf, "  AND a.aggname ~* '");
@@ -117,22 +117,22 @@ describeFunctions(const char *name, PsqlSettings *pset, bool verbose, bool desc)
 	 * arguments, but have no types defined for those arguments
 	 */
 	strcpy(buf,
-           "SELECT t.typname as \"Result\", p.proname as \"Function\",\n"
+	   "SELECT t.typname as \"Result\", p.proname as \"Function\",\n"
 		   "       oid8types(p.proargtypes) as \"Arguments\"");
     if (verbose)
-        strcat(buf, ",\n       u.usename as \"Owner\", l.lanname as \"Language\", p.prosrc as \"Source\"");
+	strcat(buf, ",\n       u.usename as \"Owner\", l.lanname as \"Language\", p.prosrc as \"Source\"");
 	if (desc)
 		strcat(buf, ",\n       obj_description(p.oid) as \"Description\"");
 
     if (!verbose)
-        strcat(buf,
-               "\nFROM pg_proc p, pg_type t\n"
-               "WHERE p.prorettype = t.oid and (pronargs = 0 or oid8types(p.proargtypes) != '')\n");
+	strcat(buf,
+	       "\nFROM pg_proc p, pg_type t\n"
+	       "WHERE p.prorettype = t.oid and (pronargs = 0 or oid8types(p.proargtypes) != '')\n");
     else
-        strcat(buf,
-               "\nFROM pg_proc p, pg_type t, pg_language l, pg_user u\n"
-               "WHERE p.prorettype = t.oid AND p.prolang = l.oid AND p.proowner = u.usesysid\n"
-               "  AND (pronargs = 0 or oid8types(p.proargtypes) != '')\n");
+	strcat(buf,
+	       "\nFROM pg_proc p, pg_type t, pg_language l, pg_user u\n"
+	       "WHERE p.prorettype = t.oid AND p.prolang = l.oid AND p.proowner = u.usesysid\n"
+	       "  AND (pronargs = 0 or oid8types(p.proargtypes) != '')\n");
 
 	if (name)
 	{
@@ -171,10 +171,10 @@ describeTypes(const char *name, PsqlSettings *pset, bool verbose, bool desc)
 
 	strcpy(buf, "SELECT t.typname AS \"Type\"");
     if (verbose)
-        strcat(buf,
-               ",\n       (CASE WHEN t.typlen=-1 THEN 'var'::text ELSE t.typlen::text END) as \"Length\""
-               ",\n       u.usename as \"Owner\""
-            );
+	strcat(buf,
+	       ",\n       (CASE WHEN t.typlen=-1 THEN 'var'::text ELSE t.typlen::text END) as \"Length\""
+	       ",\n       u.usename as \"Owner\""
+	    );
     /*
 	 *	Let's always show descriptions for this.  There is room.
 	 *	bjm 1999/12/31
@@ -185,11 +185,11 @@ describeTypes(const char *name, PsqlSettings *pset, bool verbose, bool desc)
      * do not include user relations (typrelid!=0)
      */
 	strcat(buf, !verbose ?
-           ("\nFROM pg_type t\n"
-            "WHERE t.typrelid = 0 AND t.typname !~ '^_.*'\n") :
-           ("\nFROM pg_type t, pg_user u\n"
-            "WHERE t.typrelid = 0 AND t.typname !~ '^_.*' AND t.typowner = u.usesysid\n")
-        );
+	   ("\nFROM pg_type t\n"
+	    "WHERE t.typrelid = 0 AND t.typname !~ '^_.*'\n") :
+	   ("\nFROM pg_type t, pg_user u\n"
+	    "WHERE t.typrelid = 0 AND t.typname !~ '^_.*' AND t.typowner = u.usesysid\n")
+	);
 
 	if (name)
 	{
@@ -230,14 +230,14 @@ describeOperators(const char *name, PsqlSettings *pset, bool verbose, bool desc)
     /* FIXME: Use outer joins here when ready */
 
 	strcpy(buf,
-           "SELECT o.oprname AS \"Op\",\n"
+	   "SELECT o.oprname AS \"Op\",\n"
 		   "       t1.typname AS \"Left arg\",\n"
 		   "       t2.typname AS \"Right arg\",\n"
 		   "       t0.typname AS \"Result\"");
 	if (desc)
 		strcat(buf, ",\n       obj_description(p.oid) as \"Description\"");
 	strcat(buf,
-           "\nFROM   pg_proc p, pg_type t0,\n"
+	   "\nFROM   pg_proc p, pg_type t0,\n"
 		   "       pg_type t1, pg_type t2,\n"
 		   "       pg_operator o\n"
 		   "WHERE  p.prorettype = t0.oid AND\n"
@@ -319,7 +319,7 @@ listAllDbs(PsqlSettings *pset, bool desc)
 	printQueryOpt myopt = pset->popt;
 
 	strcpy(buf,
-           "SELECT pg_database.datname as \"Database\",\n"
+	   "SELECT pg_database.datname as \"Database\",\n"
 		   "       pg_user.usename as \"Owner\"");
 #ifdef MULTIBYTE
 	strcat(buf,
@@ -541,7 +541,7 @@ xmalloc(size_t size)
 bool
 describeTableDetails(const char *name, PsqlSettings *pset, bool desc)
 {
-	char		buf[512 + 8 * NAMEDATALEN];
+	char		buf[512 + INDEX_MAX_KEYS * NAMEDATALEN];
 	PGresult   *res = NULL;
 	printTableOpt myopt = pset->popt.topt;
 	int			i;
@@ -557,20 +557,20 @@ describeTableDetails(const char *name, PsqlSettings *pset, bool desc)
 
     /* truncate table name */
     if (strlen(name) > NAMEDATALEN) {
-        char *my_name = xmalloc(NAMEDATALEN+1);
-        strncpy(my_name, name, NAMEDATALEN);
-        my_name[NAMEDATALEN] = '\0';
-        name = my_name;
+	char *my_name = xmalloc(NAMEDATALEN+1);
+	strncpy(my_name, name, NAMEDATALEN);
+	my_name[NAMEDATALEN] = '\0';
+	name = my_name;
     }
 
 	/* Get general table info */
     sprintf(buf,
-            "SELECT relhasindex, relkind, relchecks, reltriggers, relhasrules\n"
-            "FROM pg_class WHERE relname='%s'",
-            name);
+	    "SELECT relhasindex, relkind, relchecks, reltriggers, relhasrules\n"
+	    "FROM pg_class WHERE relname='%s'",
+	    name);
     res = PSQLexec(pset, buf);
     if (!res)
-        return false;
+	return false;
 
 	/* Did we get anything? */
 	if (PQntuples(res) == 0)
@@ -596,13 +596,13 @@ describeTableDetails(const char *name, PsqlSettings *pset, bool desc)
 
     if (tableinfo.relkind == 'r' || tableinfo.relkind == 's')
     {
-        cols++;
-        headers[cols-1] = "Extra";
+	cols++;
+	headers[cols-1] = "Extra";
     }
 
 	if (desc)
 	{
-        cols++;
+	cols++;
 		headers[cols-1] = "Description";
 	}
 
@@ -625,19 +625,19 @@ describeTableDetails(const char *name, PsqlSettings *pset, bool desc)
 
 	/* Check if table is a view */
     if (tableinfo.hasrules) {
-        PGresult *result;
-        sprintf(buf, "SELECT definition FROM pg_views WHERE viewname = '%s'", name);
-        result = PSQLexec(pset, buf);
-        if (!result)
-        {
-            PQclear(res);
-            PQclear(result);
-            return false;
-        }
+	PGresult *result;
+	sprintf(buf, "SELECT definition FROM pg_views WHERE viewname = '%s'", name);
+	result = PSQLexec(pset, buf);
+	if (!result)
+	{
+	    PQclear(res);
+	    PQclear(result);
+	    return false;
+	}
 
-        if (PQntuples(result) > 0)
-            view_def = xstrdup(PQgetvalue(result, 0, 0));
-        PQclear(result);
+	if (PQntuples(result) > 0)
+	    view_def = xstrdup(PQgetvalue(result, 0, 0));
+	PQclear(result);
     }
 
 
@@ -652,9 +652,9 @@ describeTableDetails(const char *name, PsqlSettings *pset, bool desc)
 
 		/* Name */
 		cells[i * cols + 0] = (char *)PQgetvalue(res, i, 0);	/* don't free this afterwards */
-		
+
 		/* Type */
-        /* (convert some internal type names to "readable") */
+	/* (convert some internal type names to "readable") */
 		cells[i * cols + 1] = xmalloc(NAMEDATALEN + 16);
 		if (strcmp(attype, "bpchar") == 0)
 			sprintf(cells[i * cols + 1], "char(%d)", attypmod != -1 ? attypmod - VARHDRSZ : 0);
@@ -671,38 +671,38 @@ describeTableDetails(const char *name, PsqlSettings *pset, bool desc)
 
 		/* Extra: not null and default */
 		/* (I'm cutting off the 'default' string at 128) */
-        if (tableinfo.relkind == 'r' || tableinfo.relkind == 's')
-        {
-            cells[i * cols + 2] = xmalloc(128 + 128);
-            cells[i * cols + 2][0] = '\0';
-            if (strcmp(PQgetvalue(res, i, 4), "t") == 0)
-                strcat(cells[i * cols + 2], "not null");
+	if (tableinfo.relkind == 'r' || tableinfo.relkind == 's')
+	{
+	    cells[i * cols + 2] = xmalloc(128 + 128);
+	    cells[i * cols + 2][0] = '\0';
+	    if (strcmp(PQgetvalue(res, i, 4), "t") == 0)
+		strcat(cells[i * cols + 2], "not null");
 
-            /* handle "default" here */
-            if (strcmp(PQgetvalue(res, i, 5), "t") == 0)
-            {
-                PGresult *result;
+	    /* handle "default" here */
+	    if (strcmp(PQgetvalue(res, i, 5), "t") == 0)
+	    {
+		PGresult *result;
 
-                sprintf(buf, "SELECT substring(d.adsrc for 128) FROM pg_attrdef d, pg_class c\n"
-                        "WHERE c.relname = '%s' AND c.oid = d.adrelid AND d.adnum = %s",
-                        name, PQgetvalue(res, i, 6));
+		sprintf(buf, "SELECT substring(d.adsrc for 128) FROM pg_attrdef d, pg_class c\n"
+			"WHERE c.relname = '%s' AND c.oid = d.adrelid AND d.adnum = %s",
+			name, PQgetvalue(res, i, 6));
 
-                result = PSQLexec(pset, buf);
-                if (!result)
-                    error = true;
-                else
-                {
-                    if (cells[i * cols + 2][0])
-                        strcat(cells[i * cols + 2], " ");
-                    strcat(cells[i * cols + 2], "default ");
-                    strcat(cells[i * cols + 2], PQgetvalue(result, 0, 0));
-                    PQclear(result);
-                }
-            }
-        }
+		result = PSQLexec(pset, buf);
+		if (!result)
+		    error = true;
+		else
+		{
+		    if (cells[i * cols + 2][0])
+			strcat(cells[i * cols + 2], " ");
+		    strcat(cells[i * cols + 2], "default ");
+		    strcat(cells[i * cols + 2], PQgetvalue(result, 0, 0));
+		    PQclear(result);
+		}
+	    }
+	}
 
-        if (error)
-            break;
+	if (error)
+	    break;
 
 		/* Description */
 		if (desc)
@@ -713,50 +713,50 @@ describeTableDetails(const char *name, PsqlSettings *pset, bool desc)
 	title = xmalloc(20 + strlen(name));
     switch (tableinfo.relkind) {
     case 'r':
-        if (view_def)
-            sprintf(title, "View \"%s\"", name);
-        else
-            sprintf(title, "Table \"%s\"", name);
-        break;
+	if (view_def)
+	    sprintf(title, "View \"%s\"", name);
+	else
+	    sprintf(title, "Table \"%s\"", name);
+	break;
     case 'S':
-        sprintf(title, "Sequence \"%s\"", name);
-        break;
+	sprintf(title, "Sequence \"%s\"", name);
+	break;
     case 'i':
-        sprintf(title, "Index \"%s\"", name);
-        break;
+	sprintf(title, "Index \"%s\"", name);
+	break;
     case 's':
-        sprintf(title, "System table \"%s\"", name);
-        break;
+	sprintf(title, "System table \"%s\"", name);
+	break;
     default:
-        sprintf(title, "?%c?", tableinfo.relkind);
+	sprintf(title, "?%c?", tableinfo.relkind);
     }
 
 	/* Make footers */
     /* Information about the index */
     if (tableinfo.relkind == 'i')
     {
-        PGresult * result;
+	PGresult * result;
 
-        sprintf(buf, "SELECT i.indisunique, i.indisprimary, a.amname\n"
-                "FROM pg_index i, pg_class c, pg_am a\n"
-                "WHERE i.indexrelid = c.oid AND c.relname = '%s' AND c.relam = a.oid",
-                name);
+	sprintf(buf, "SELECT i.indisunique, i.indisprimary, a.amname\n"
+		"FROM pg_index i, pg_class c, pg_am a\n"
+		"WHERE i.indexrelid = c.oid AND c.relname = '%s' AND c.relam = a.oid",
+		name);
 
-        result = PSQLexec(pset, buf);
-        if (!result)
-            error = true;
-        else
-        {
-            footers = xmalloc(2 * sizeof(*footers));
-            footers[0] = xmalloc(NAMEDATALEN + 32);
-            sprintf(footers[0], "%s%s",
-                    strcmp(PQgetvalue(result, 0, 0), "t")==0 ? "unique " : "",
-                    PQgetvalue(result, 0, 2)
-                );
-            if (strcmp(PQgetvalue(result, 0, 1), "t")==0)
-                strcat(footers[0], " (primary key)");
-            footers[1] = NULL;
-        }
+	result = PSQLexec(pset, buf);
+	if (!result)
+	    error = true;
+	else
+	{
+	    footers = xmalloc(2 * sizeof(*footers));
+	    footers[0] = xmalloc(NAMEDATALEN + 32);
+	    sprintf(footers[0], "%s%s",
+		    strcmp(PQgetvalue(result, 0, 0), "t")==0 ? "unique " : "",
+		    PQgetvalue(result, 0, 2)
+		);
+	    if (strcmp(PQgetvalue(result, 0, 1), "t")==0)
+		strcat(footers[0], " (primary key)");
+	    footers[1] = NULL;
+	}
     }
     /* Information about the view */
 	else if (tableinfo.relkind == 'r' && view_def)
@@ -770,132 +770,132 @@ describeTableDetails(const char *name, PsqlSettings *pset, bool desc)
     /* Information about the table */
 	else if (tableinfo.relkind == 'r')
 	{
-        PGresult *result1=NULL, *result2=NULL, *result3=NULL, *result4=NULL;
-        int index_count=0, constr_count=0, rule_count=0, trigger_count=0;
-        int count_footers=0;
+	PGresult *result1=NULL, *result2=NULL, *result3=NULL, *result4=NULL;
+	int index_count=0, constr_count=0, rule_count=0, trigger_count=0;
+	int count_footers=0;
 
 		/* count indices */
-        if (!error && tableinfo.hasindex)
-        {
-            sprintf(buf, "SELECT c2.relname\n"
-                    "FROM pg_class c, pg_class c2, pg_index i\n"
-                    "WHERE c.relname = '%s' AND c.oid = i.indrelid AND i.indexrelid = c2.oid\n"
-                    "ORDER BY c2.relname",
-                    name);
-            result1 = PSQLexec(pset, buf);
-            if (!result1)
-                error = true;
-            else
-                index_count = PQntuples(result1);
-        }
-            
-        /* count table (and column) constraints */
-        if (!error && tableinfo.checks)
-        {
-            sprintf(buf, "SELECT rcsrc\n"
-                    "FROM pg_relcheck r, pg_class c\n"
-                    "WHERE c.relname='%s' AND c.oid = r.rcrelid",
-                    name);
-            result2 = PSQLexec(pset, buf);
-            if (!result2)
-                error = true;
-            else
-                constr_count = PQntuples(result2);
-        }
+	if (!error && tableinfo.hasindex)
+	{
+	    sprintf(buf, "SELECT c2.relname\n"
+		    "FROM pg_class c, pg_class c2, pg_index i\n"
+		    "WHERE c.relname = '%s' AND c.oid = i.indrelid AND i.indexrelid = c2.oid\n"
+		    "ORDER BY c2.relname",
+		    name);
+	    result1 = PSQLexec(pset, buf);
+	    if (!result1)
+		error = true;
+	    else
+		index_count = PQntuples(result1);
+	}
 
-        /* count rules */
-        if (!error && tableinfo.hasrules)
-        {
-            sprintf(buf,
-                    "SELECT r.rulename\n"
-                    "FROM pg_rewrite r, pg_class c\n"
-                    "WHERE c.relname='%s' AND c.oid = r.ev_class",
-                    name);
-            result3 = PSQLexec(pset, buf);
-            if (!result3)
-                error = true;
-            else
-                rule_count = PQntuples(result3);
-        }
+	/* count table (and column) constraints */
+	if (!error && tableinfo.checks)
+	{
+	    sprintf(buf, "SELECT rcsrc\n"
+		    "FROM pg_relcheck r, pg_class c\n"
+		    "WHERE c.relname='%s' AND c.oid = r.rcrelid",
+		    name);
+	    result2 = PSQLexec(pset, buf);
+	    if (!result2)
+		error = true;
+	    else
+		constr_count = PQntuples(result2);
+	}
 
-        /* count triggers */
-        if (!error && tableinfo.hasrules)
-        {
-            sprintf(buf,
-                    "SELECT t.tgname\n"
-                    "FROM pg_trigger t, pg_class c\n"
-                    "WHERE c.relname='%s' AND c.oid = t.tgrelid",
-                    name);
-            result4 = PSQLexec(pset, buf);
-            if (!result4)
-                error = true;
-            else
-                trigger_count = PQntuples(result4);
-        }
+	/* count rules */
+	if (!error && tableinfo.hasrules)
+	{
+	    sprintf(buf,
+		    "SELECT r.rulename\n"
+		    "FROM pg_rewrite r, pg_class c\n"
+		    "WHERE c.relname='%s' AND c.oid = r.ev_class",
+		    name);
+	    result3 = PSQLexec(pset, buf);
+	    if (!result3)
+		error = true;
+	    else
+		rule_count = PQntuples(result3);
+	}
 
-        footers = xmalloc((index_count + constr_count + rule_count + trigger_count + 1) * sizeof(*footers));
+	/* count triggers */
+	if (!error && tableinfo.hasrules)
+	{
+	    sprintf(buf,
+		    "SELECT t.tgname\n"
+		    "FROM pg_trigger t, pg_class c\n"
+		    "WHERE c.relname='%s' AND c.oid = t.tgrelid",
+		    name);
+	    result4 = PSQLexec(pset, buf);
+	    if (!result4)
+		error = true;
+	    else
+		trigger_count = PQntuples(result4);
+	}
 
-        /* print indices */
-        for (i = 0; i < index_count; i++)
-        {
-            sprintf(buf, "%s %s",
-                    index_count==1 ? "Index:" : (i==0 ? "Indices:" : "        "),
-                    PQgetvalue(result1, i, 0)
-                    );
-            if (i < index_count-1)
-                strcat(buf, ",");
+	footers = xmalloc((index_count + constr_count + rule_count + trigger_count + 1) * sizeof(*footers));
 
-            footers[count_footers++] = xstrdup(buf);
+	/* print indices */
+	for (i = 0; i < index_count; i++)
+	{
+	    sprintf(buf, "%s %s",
+		    index_count==1 ? "Index:" : (i==0 ? "Indices:" : "        "),
+		    PQgetvalue(result1, i, 0)
+		    );
+	    if (i < index_count-1)
+		strcat(buf, ",");
+
+	    footers[count_footers++] = xstrdup(buf);
 		}
 
-        /* print contraints */
-        for (i = 0; i < constr_count; i++)
-        {
-            sprintf(buf, "%s %s",
-                    constr_count==1 ? "Constraint:" : (i==0 ? "Constraints:" : "            "),
-                    PQgetvalue(result2, i, 0)
-                    );
-            footers[count_footers++] = xstrdup(buf);
+	/* print contraints */
+	for (i = 0; i < constr_count; i++)
+	{
+	    sprintf(buf, "%s %s",
+		    constr_count==1 ? "Constraint:" : (i==0 ? "Constraints:" : "            "),
+		    PQgetvalue(result2, i, 0)
+		    );
+	    footers[count_footers++] = xstrdup(buf);
 		}
 
-        /* print rules */
-        for (i = 0; i < rule_count; i++)
-        {
-            sprintf(buf, "%s %s",
-                    rule_count==1 ? "Rule:" : (i==0 ? "Rules:" : "      "),
-                    PQgetvalue(result3, i, 0)
-                    );
-            if (i < rule_count-1)
-                strcat(buf, ",");
+	/* print rules */
+	for (i = 0; i < rule_count; i++)
+	{
+	    sprintf(buf, "%s %s",
+		    rule_count==1 ? "Rule:" : (i==0 ? "Rules:" : "      "),
+		    PQgetvalue(result3, i, 0)
+		    );
+	    if (i < rule_count-1)
+		strcat(buf, ",");
 
-            footers[count_footers++] = xstrdup(buf);
+	    footers[count_footers++] = xstrdup(buf);
 		}
 
-        /* print triggers */
-        for (i = 0; i < trigger_count; i++)
-        {
-            sprintf(buf, "%s %s",
-                    trigger_count==1 ? "Trigger:" : (i==0 ? "Triggers:" : "         "),
-                    PQgetvalue(result4, i, 0)
-                    );
-            if (i < trigger_count-1)
-                strcat(buf, ",");
+	/* print triggers */
+	for (i = 0; i < trigger_count; i++)
+	{
+	    sprintf(buf, "%s %s",
+		    trigger_count==1 ? "Trigger:" : (i==0 ? "Triggers:" : "         "),
+		    PQgetvalue(result4, i, 0)
+		    );
+	    if (i < trigger_count-1)
+		strcat(buf, ",");
 
-            footers[count_footers++] = xstrdup(buf);
+	    footers[count_footers++] = xstrdup(buf);
 		}
 
-        /* end of list marker */
-        footers[count_footers] = NULL;
+	/* end of list marker */
+	footers[count_footers] = NULL;
 
-        PQclear(result1);
-        PQclear(result2);
-        PQclear(result3);
-        PQclear(result4);
+	PQclear(result1);
+	PQclear(result2);
+	PQclear(result3);
+	PQclear(result4);
 	}
 
     if (!error) {
-        myopt.tuples_only = false;
-        printTable(title, headers, (const char**)cells, (const char**)footers, "llll", &myopt, pset->queryFout);
+	myopt.tuples_only = false;
+	printTable(title, headers, (const char**)cells, (const char**)footers, "llll", &myopt, pset->queryFout);
     }
 
 	/* clean up */
@@ -904,8 +904,8 @@ describeTableDetails(const char *name, PsqlSettings *pset, bool desc)
 	for (i = 0; i < PQntuples(res); i++)
 	{
 		free(cells[i * cols + 1]);
-        if (tableinfo.relkind == 'r' || tableinfo.relkind == 's')
-            free(cells[i * cols + 2]);
+	if (tableinfo.relkind == 'r' || tableinfo.relkind == 's')
+	    free(cells[i * cols + 2]);
 	}
 	free(cells);
 
@@ -994,10 +994,10 @@ listTables(const char *infotype, const char *name, PsqlSettings *pset, bool desc
 			strcat(buf, "\nUNION\n\n");
 
 		strcat(buf,
-               "SELECT c.relname as \"Name\",\n"
+	       "SELECT c.relname as \"Name\",\n"
 			   "  (CASE WHEN relkind = 'S' THEN 'sequence'::text ELSE 'index'::text END) as \"Type\",\n"
-               "  u.usename as \"Owner\""
-            );
+	       "  u.usename as \"Owner\""
+	    );
 		if (desc)
 			strcat(buf, ", obj_description(c.oid) as \"Description\"");
 		strcat(buf, "\nFROM pg_class c, pg_user u\n"

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.27 1999/07/17 20:17:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.28 2000/01/10 05:20:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,29 +76,26 @@ int2out(int16 sh)
  *				Fills any nonexistent digits with NULLs.
  */
 int16 *
-int28in(char *shs)
+int28in(char *intString)
 {
 	int16	   *result;
-	int			nums;
+	int			slot;
 
-	if (shs == NULL)
+	if (intString == NULL)
 		return NULL;
 
-	result = (int16 *) palloc(sizeof(int16[8]));
-	if ((nums = sscanf(shs, "%hd%hd%hd%hd%hd%hd%hd%hd",
-					   &result[0],
-					   &result[1],
-					   &result[2],
-					   &result[3],
-					   &result[4],
-					   &result[5],
-					   &result[6],
-					   &result[7])) != 8)
+	result = (int16 *) palloc(sizeof(int16[INDEX_MAX_KEYS]));
+
+	for (slot=0; *intString && slot < INDEX_MAX_KEYS; slot++)
 	{
-		do
-			result[nums++] = 0;
-		while (nums < 8);
+		if (sscanf(intString, "%hd", &result[slot]) != 1)
+			break;
+		while (*intString && *intString != ' ')
+			intString++;
 	}
+	while (slot < INDEX_MAX_KEYS)
+		result[slot++] = 0;
+
 	return result;
 }
 
@@ -120,10 +117,10 @@ int28out(int16 *shs)
 		result[1] = '\0';
 		return result;
 	}
-	rp = result = (char *) palloc(8 * 7);		/* assumes sign, 5 digits,
-												 * ' ' */
+	rp = result = (char *) palloc(INDEX_MAX_KEYS * 7);
+							/* assumes sign, 5 digits, ' ' */
 	sp = shs;
-	for (num = 8; num != 0; num--)
+	for (num = INDEX_MAX_KEYS; num != 0; num--)
 	{
 		itoa(*sp++, rp);
 		while (*++rp != '\0')

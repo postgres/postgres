@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.127 2000/01/06 20:46:49 wieck Exp $
+ *	$Id: analyze.c,v 1.128 2000/01/10 05:20:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -674,7 +674,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 
 						fkconstraint = (FkConstraint *)constraint;
 						fkconstraint->fk_attrs = lappend(NIL, id);
-						
+
 						fkconstraints = lappend(fkconstraints, constraint);
 						continue;
 					}
@@ -960,7 +960,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 			 */
 			if (fkconstraint->fk_attrs != NIL && fkconstraint->pk_attrs == NIL)
 				transformFkeyGetPrimaryKey(fkconstraint);
-			
+
 			/*
 			 * Build a CREATE CONSTRAINT TRIGGER statement for the CHECK
 			 * action.
@@ -1016,7 +1016,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 			extras_after = lappend(extras_after, (Node *)fk_trigger);
 
 			/*
-			 * Build a CREATE CONSTRAINT TRIGGER statement for the 
+			 * Build a CREATE CONSTRAINT TRIGGER statement for the
 			 * ON DELETE action fired on the PK table !!!
 			 *
 			 */
@@ -1084,7 +1084,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 			extras_after = lappend(extras_after, (Node *)fk_trigger);
 
 			/*
-			 * Build a CREATE CONSTRAINT TRIGGER statement for the 
+			 * Build a CREATE CONSTRAINT TRIGGER statement for the
 			 * ON UPDATE action fired on the PK table !!!
 			 *
 			 */
@@ -1679,7 +1679,7 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint)
 	 * using the attribute names of the PK relation descriptor
 	 * ----------
 	 */
-	for (i = 0; i < 8 && indexStruct->indkey[i] != 0; i++)
+	for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++)
 	{
 		pkattno = indexStruct->indkey[i];
 		pkattr = (Ident *)makeNode(Ident);
