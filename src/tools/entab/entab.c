@@ -2,7 +2,7 @@
 **	entab.c		- add tabs to a text file
 **	by Bruce Momjian (root@candle.pha.pa.us)
 **
-**  version 1.0
+**  version 1.1
 **
 **	tabsize = 4
 **
