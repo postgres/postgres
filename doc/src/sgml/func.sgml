@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.224 2004/11/27 21:27:06 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.225 2004/12/01 19:32:12 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -4877,19 +4877,20 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
 
       <tbody>
        <row>
-	<entry><literal><function>age</function>(<type>timestamp</type>)</literal></entry>
+	<entry><literal><function>age</function>(<type>timestamp</type>, <type>timestamp</type>)</literal></entry>
 	<entry><type>interval</type></entry>
-	<entry>Subtract from today</entry>
-	<entry><literal>age(timestamp '1957-06-13')</literal></entry>
-	<entry><literal>43 years 8 mons 3 days</literal></entry>
+	<entry>Subtract arguments, producing a <quote>symbolic</> result that
+	uses years and months</entry>
+	<entry><literal>age(timestamp '2001-04-10', timestamp '1957-06-13')</literal></entry>
+	<entry><literal>43 years 9 mons 27 days</literal></entry>
        </row>
 
        <row>
-	<entry><literal><function>age</function>(<type>timestamp</type>, <type>timestamp</type>)</literal></entry>
+	<entry><literal><function>age</function>(<type>timestamp</type>)</literal></entry>
 	<entry><type>interval</type></entry>
-	<entry>Subtract arguments</entry>
-	<entry><literal>age('2001-04-10', timestamp '1957-06-13')</literal></entry>
-	<entry><literal>43 years 9 mons 27 days</literal></entry>
+	<entry>Subtract from <function>current_date</function></entry>
+	<entry><literal>age(timestamp '1957-06-13')</literal></entry>
+	<entry><literal>43 years 8 mons 3 days</literal></entry>
        </row>
 
        <row>
