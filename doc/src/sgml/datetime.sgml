@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.38 2003/11/29 19:51:36 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.39 2003/12/01 20:34:53 tgl Exp $
 -->
 
  <appendix id="datetime-appendix">
@@ -370,13 +370,23 @@ $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.38 2003/11/29 19:51:36 pgsql E
 
    <para>
     <xref linkend="datetime-timezone-table"> shows the time zone
-    abbreviations recognized by <productname>PostgreSQL</productname>.
-    <productname>PostgreSQL</productname> contains internal tabular
-    information for time zone decoding, since there is no standard
+    abbreviations recognized by <productname>PostgreSQL</productname>
+    in date/time input values.
+    <productname>PostgreSQL</productname> uses internal tables
+    for time zone input decoding, since there is no standard
     operating system interface to provide access to general,
     cross-time zone information. The underlying operating system
     <emphasis>is</emphasis> used to provide time zone information for
     <emphasis>output</emphasis>, however.
+   </para>
+
+   <para>
+    Keep in mind also that the time zone names
+    recognized by <command>SET TIMEZONE</> are operating-system
+    dependent and may have little to do with <xref
+    linkend="datetime-timezone-table">.  For example, some systems
+    recognize values like <literal>'Europe/Rome'</> in <command>SET
+    TIMEZONE</>.
    </para>
 
    <para>

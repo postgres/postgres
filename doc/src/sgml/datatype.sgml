@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.133 2003/11/30 20:55:09 joe Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.134 2003/12/01 20:34:53 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -1301,7 +1301,7 @@ SELECT b, char_length(b) FROM test2;
         <entry>8 bytes</entry>
         <entry>both date and time</entry>
         <entry>4713 BC</entry>
-        <entry>AD 5874897</entry>
+        <entry>5874897 AD</entry>
         <entry>1 microsecond / 14 digits</entry>
        </row>
        <row>
@@ -1309,7 +1309,7 @@ SELECT b, char_length(b) FROM test2;
         <entry>8 bytes</entry>
         <entry>both date and time, with time zone</entry>
         <entry>4713 BC</entry>
-        <entry>AD 5874897</entry>
+        <entry>5874897 AD</entry>
         <entry>1 microsecond / 14 digits</entry>
        </row>
        <row>
@@ -1348,6 +1348,14 @@ SELECT b, char_length(b) FROM test2;
      </tgroup>
     </table>
 
+   <note>
+    <para>
+     Prior to <productname>PostgreSQL</productname> 7.3, writing just
+     <type>timestamp</type> was equivalent to <type>timestamp with
+     time zone</type>.  This was changed for SQL compliance.
+    </para>
+   </note>
+
    <para>
     <type>time</type>, <type>timestamp</type>, and
     <type>interval</type> accept an optional precision value
@@ -1363,21 +1371,14 @@ SELECT b, char_length(b) FROM test2;
     When <type>timestamp</> values are stored as double precision floating-point
     numbers (currently the default), the effective limit of precision
     may be less than 6. <type>timestamp</type> values are stored as seconds
-    since 2000-01-01, and microsecond precision is achieved for dates within
-    a few years of 2000-01-01, but the precision degrades for dates further
-    away.  When <type>timestamp</type> values are stored as eight-byte integers (a compile-time
+    before or after midnight 2000-01-01.  Microsecond precision is achieved for
+    dates within a few years of 2000-01-01, but the precision degrades for
+    dates further away.  When <type>timestamp</type> values are stored as
+    eight-byte integers (a compile-time
     option), microsecond precision is available over the full range of
-    values. However eight-byte integer timestamps have a reduced range of
-    dates from 4713 BC up to 294276 AD.
+    values. However eight-byte integer timestamps have a more limited range of
+    dates than shown above: from 4713 BC up to 294276 AD.
    </para>
-   </note>
-
-   <note>
-    <para>
-     Prior to <productname>PostgreSQL</productname> 7.3, writing just
-     <type>timestamp</type> was equivalent to <type>timestamp with
-     time zone</type>.  This was changed for SQL compliance.
-    </para>
    </note>
 
    <para>
