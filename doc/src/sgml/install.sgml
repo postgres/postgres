@@ -730,8 +730,7 @@ pg_id: can't load library 'libpq.so'
        <ProgramListing>
 	LC_COLLATE=C
 	LC_CTYPE=C
-	LC_COLLATE=C
-	export LC_COLLATE LC_CTYPE LC_COLLATE
+	export LC_COLLATE LC_CTYPE
        </ProgramListing>
        
        <ProgramListing>
