@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.109 2004/07/31 07:39:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.110 2004/07/31 20:55:44 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -904,6 +904,7 @@ exec_stmt_block(PLpgSQL_execstate * estate, PLpgSQL_stmt_block * block)
 		 */
 		MemoryContext	oldcontext = CurrentMemoryContext;
 		volatile bool	caught = false;
+		int		xrc;
 
 		/*
 		 * Start a subtransaction, and re-connect to SPI within it
@@ -912,8 +913,9 @@ exec_stmt_block(PLpgSQL_execstate * estate, PLpgSQL_stmt_block * block)
 		BeginInternalSubTransaction(NULL);
 		/* Want to run statements inside function's memory context */
 		MemoryContextSwitchTo(oldcontext);
-		if (SPI_connect() != SPI_OK_CONNECT)
-			elog(ERROR, "SPI_connect failed");
+		if ((xrc = SPI_connect()) != SPI_OK_CONNECT)
+			elog(ERROR, "SPI_connect failed: %s",
+				 SPI_result_code_string(xrc));
 
 		PG_TRY();
 		{
@@ -961,8 +963,9 @@ exec_stmt_block(PLpgSQL_execstate * estate, PLpgSQL_stmt_block * block)
 		/* Commit the inner transaction, return to outer xact context */
 		if (!caught)
 		{
-			if (SPI_finish() != SPI_OK_FINISH)
-				elog(ERROR, "SPI_finish failed");
+			if ((xrc = SPI_finish()) != SPI_OK_FINISH)
+				elog(ERROR, "SPI_finish failed: %s",
+					 SPI_result_code_string(xrc));
 			ReleaseCurrentSubTransaction();
 			MemoryContextSwitchTo(oldcontext);
 			SPI_pop();
@@ -2069,7 +2072,8 @@ exec_prepare_plan(PLpgSQL_execstate * estate,
 	 */
 	plan = SPI_prepare(expr->query, expr->nparams, argtypes);
 	if (plan == NULL)
-		elog(ERROR, "SPI_prepare() failed on \"%s\"", expr->query);
+		elog(ERROR, "SPI_prepare failed for \"%s\": %s",
+			 expr->query, SPI_result_code_string(SPI_result));
 	expr->plan = SPI_saveplan(plan);
 	spi_plan = (_SPI_plan *) expr->plan;
 	expr->plan_argtypes = spi_plan->argtypes;
@@ -2151,7 +2155,8 @@ exec_stmt_execsql(PLpgSQL_execstate * estate,
 					 errhint("If you want to discard the results, use PERFORM instead.")));
 
 		default:
-			elog(ERROR, "error executing query \"%s\"", expr->query);
+			elog(ERROR, "SPI_execp failed executing query \"%s\": %s",
+				 expr->query, SPI_result_code_string(rc));
 	}
 
 	/*
@@ -2250,8 +2255,8 @@ exec_stmt_dynexecute(PLpgSQL_execstate * estate,
 			}
 
 		default:
-			elog(ERROR, "unexpected error %d in EXECUTE of query \"%s\"",
-				 exec_res, querystr);
+			elog(ERROR, "SPI_exec failed executing query \"%s\": %s",
+				 querystr, SPI_result_code_string(exec_res));
 			break;
 	}
 
@@ -2321,11 +2326,12 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 	 */
 	plan = SPI_prepare(querystr, 0, NULL);
 	if (plan == NULL)
-		elog(ERROR, "SPI_prepare() failed for dynamic query \"%s\"", querystr);
+		elog(ERROR, "SPI_prepare failed for \"%s\": %s",
+			 querystr, SPI_result_code_string(SPI_result));
 	portal = SPI_cursor_open(NULL, plan, NULL, NULL);
 	if (portal == NULL)
-		elog(ERROR, "failed to open implicit cursor for dynamic query \"%s\"",
-			 querystr);
+		elog(ERROR, "could not open implicit cursor for query \"%s\": %s",
+			 querystr, SPI_result_code_string(SPI_result));
 	pfree(querystr);
 	SPI_freeplan(plan);
 
@@ -2512,11 +2518,12 @@ exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
 		 */
 		curplan = SPI_prepare(querystr, 0, NULL);
 		if (curplan == NULL)
-			elog(ERROR, "SPI_prepare() failed for dynamic query \"%s\"",
-				 querystr);
+			elog(ERROR, "SPI_prepare failed for \"%s\": %s",
+				 querystr, SPI_result_code_string(SPI_result));
 		portal = SPI_cursor_open(curname, curplan, NULL, NULL);
 		if (portal == NULL)
-			elog(ERROR, "failed to open cursor");
+			elog(ERROR, "could not open cursor for query \"%s\": %s",
+				 querystr, SPI_result_code_string(SPI_result));
 		pfree(querystr);
 		SPI_freeplan(curplan);
 
@@ -2609,7 +2616,8 @@ exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
 	 */
 	portal = SPI_cursor_open(curname, query->plan, values, nulls);
 	if (portal == NULL)
-		elog(ERROR, "failed to open cursor");
+		elog(ERROR, "could not open cursor: %s",
+			 SPI_result_code_string(SPI_result));
 
 	pfree(values);
 	pfree(nulls);
@@ -3454,8 +3462,8 @@ exec_run_select(PLpgSQL_execstate * estate,
 	{
 		*portalP = SPI_cursor_open(NULL, expr->plan, values, nulls);
 		if (*portalP == NULL)
-			elog(ERROR, "failed to open implicit cursor for \"%s\"",
-				 expr->query);
+			elog(ERROR, "could not open implicit cursor for query \"%s\": %s",
+				 expr->query, SPI_result_code_string(SPI_result));
 		pfree(values);
 		pfree(nulls);
 		return SPI_OK_CURSOR;

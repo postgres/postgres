@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.121 2004/07/27 05:10:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.122 2004/07/31 20:55:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -987,6 +987,68 @@ SPI_is_cursor_plan(void *plan)
 			return true;
 	}
 	return false;
+}
+
+/*
+ * SPI_result_code_string --- convert any SPI return code to a string
+ *
+ * This is often useful in error messages.  Most callers will probably
+ * only pass negative (error-case) codes, but for generality we recognize
+ * the success codes too.
+ */
+const char *
+SPI_result_code_string(int code)
+{
+	static char buf[64];
+
+	switch (code)
+	{
+		case SPI_ERROR_CONNECT:
+			return "SPI_ERROR_CONNECT";
+		case SPI_ERROR_COPY:
+			return "SPI_ERROR_COPY";
+		case SPI_ERROR_OPUNKNOWN:
+			return "SPI_ERROR_OPUNKNOWN";
+		case SPI_ERROR_UNCONNECTED:
+			return "SPI_ERROR_UNCONNECTED";
+		case SPI_ERROR_CURSOR:
+			return "SPI_ERROR_CURSOR";
+		case SPI_ERROR_ARGUMENT:
+			return "SPI_ERROR_ARGUMENT";
+		case SPI_ERROR_PARAM:
+			return "SPI_ERROR_PARAM";
+		case SPI_ERROR_TRANSACTION:
+			return "SPI_ERROR_TRANSACTION";
+		case SPI_ERROR_NOATTRIBUTE:
+			return "SPI_ERROR_NOATTRIBUTE";
+		case SPI_ERROR_NOOUTFUNC:
+			return "SPI_ERROR_NOOUTFUNC";
+		case SPI_ERROR_TYPUNKNOWN:
+			return "SPI_ERROR_TYPUNKNOWN";
+		case SPI_OK_CONNECT:
+			return "SPI_OK_CONNECT";
+		case SPI_OK_FINISH:
+			return "SPI_OK_FINISH";
+		case SPI_OK_FETCH:
+			return "SPI_OK_FETCH";
+		case SPI_OK_UTILITY:
+			return "SPI_OK_UTILITY";
+		case SPI_OK_SELECT:
+			return "SPI_OK_SELECT";
+		case SPI_OK_SELINTO:
+			return "SPI_OK_SELINTO";
+		case SPI_OK_INSERT:
+			return "SPI_OK_INSERT";
+		case SPI_OK_DELETE:
+			return "SPI_OK_DELETE";
+		case SPI_OK_UPDATE:
+			return "SPI_OK_UPDATE";
+		case SPI_OK_CURSOR:
+			return "SPI_OK_CURSOR";
+	}
+	/* Unrecognized code ... return something useful ... */
+	sprintf(buf, "Unrecognized SPI code %d", code);
+	return buf;
 }
 
 /* =================== private functions =================== */

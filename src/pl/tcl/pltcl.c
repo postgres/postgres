@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.87 2004/07/31 00:45:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.88 2004/07/31 20:55:45 tgl Exp $
  *
  **********************************************************************/
 
@@ -1602,46 +1602,10 @@ pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
 		case SPI_OK_SELECT:
 			break;
 
-		case SPI_ERROR_ARGUMENT:
-			Tcl_SetResult(interp,
-						  "pltcl: SPI_exec() failed - SPI_ERROR_ARGUMENT",
-						  TCL_VOLATILE);
-			return TCL_ERROR;
-
-		case SPI_ERROR_UNCONNECTED:
-			Tcl_SetResult(interp,
-					  "pltcl: SPI_exec() failed - SPI_ERROR_UNCONNECTED",
-						  TCL_VOLATILE);
-			return TCL_ERROR;
-
-		case SPI_ERROR_COPY:
-			Tcl_SetResult(interp,
-						  "pltcl: SPI_exec() failed - SPI_ERROR_COPY",
-						  TCL_VOLATILE);
-			return TCL_ERROR;
-
-		case SPI_ERROR_CURSOR:
-			Tcl_SetResult(interp,
-						  "pltcl: SPI_exec() failed - SPI_ERROR_CURSOR",
-						  TCL_VOLATILE);
-			return TCL_ERROR;
-
-		case SPI_ERROR_TRANSACTION:
-			Tcl_SetResult(interp,
-					  "pltcl: SPI_exec() failed - SPI_ERROR_TRANSACTION",
-						  TCL_VOLATILE);
-			return TCL_ERROR;
-
-		case SPI_ERROR_OPUNKNOWN:
-			Tcl_SetResult(interp,
-						"pltcl: SPI_exec() failed - SPI_ERROR_OPUNKNOWN",
-						  TCL_VOLATILE);
-			return TCL_ERROR;
-
 		default:
-			snprintf(buf, sizeof(buf), "%d", spi_rc);
-			Tcl_AppendResult(interp, "pltcl: SPI_exec() failed - ",
-							 "unknown RC ", buf, NULL);
+			Tcl_AppendResult(interp, "pltcl: SPI_exec failed: ",
+							 SPI_result_code_string(spi_rc), NULL);
+			SPI_freetuptable(SPI_tuptable);
 			return TCL_ERROR;
 	}
 
@@ -2117,46 +2081,10 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 		case SPI_OK_SELECT:
 			break;
 
-		case SPI_ERROR_ARGUMENT:
-			Tcl_SetResult(interp,
-						  "pltcl: SPI_exec() failed - SPI_ERROR_ARGUMENT",
-						  TCL_VOLATILE);
-			return TCL_ERROR;
-
-		case SPI_ERROR_UNCONNECTED:
-			Tcl_SetResult(interp,
-					  "pltcl: SPI_exec() failed - SPI_ERROR_UNCONNECTED",
-						  TCL_VOLATILE);
-			return TCL_ERROR;
-
-		case SPI_ERROR_COPY:
-			Tcl_SetResult(interp,
-						  "pltcl: SPI_exec() failed - SPI_ERROR_COPY",
-						  TCL_VOLATILE);
-			return TCL_ERROR;
-
-		case SPI_ERROR_CURSOR:
-			Tcl_SetResult(interp,
-						  "pltcl: SPI_exec() failed - SPI_ERROR_CURSOR",
-						  TCL_VOLATILE);
-			return TCL_ERROR;
-
-		case SPI_ERROR_TRANSACTION:
-			Tcl_SetResult(interp,
-					  "pltcl: SPI_exec() failed - SPI_ERROR_TRANSACTION",
-						  TCL_VOLATILE);
-			return TCL_ERROR;
-
-		case SPI_ERROR_OPUNKNOWN:
-			Tcl_SetResult(interp,
-						"pltcl: SPI_exec() failed - SPI_ERROR_OPUNKNOWN",
-						  TCL_VOLATILE);
-			return TCL_ERROR;
-
 		default:
-			snprintf(buf, sizeof(buf), "%d", spi_rc);
-			Tcl_AppendResult(interp, "pltcl: SPI_exec() failed - ",
-							 "unknown RC ", buf, NULL);
+			Tcl_AppendResult(interp, "pltcl: SPI_execp failed: ",
+							 SPI_result_code_string(spi_rc), NULL);
+			SPI_freetuptable(SPI_tuptable);
 			return TCL_ERROR;
 	}
 

@@ -2,7 +2,7 @@
  *
  * spi.h
  *
- * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.45 2004/07/01 00:51:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.46 2004/07/31 20:55:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,6 +93,7 @@ extern int	SPI_freeplan(void *plan);
 extern Oid SPI_getargtypeid(void *plan, int argIndex);
 extern int SPI_getargcount(void *plan);
 extern bool SPI_is_cursor_plan(void *plan);
+extern const char *SPI_result_code_string(int code);
 
 extern HeapTuple SPI_copytuple(HeapTuple tuple);
 extern HeapTupleHeader SPI_returntuple(HeapTuple tuple, TupleDesc tupdesc);

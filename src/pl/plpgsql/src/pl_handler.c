@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.21 2004/03/22 03:15:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.22 2004/07/31 20:55:44 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -102,6 +102,7 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 {
 	PLpgSQL_function *func;
 	Datum		retval;
+	int			rc;
 
 	/* perform initialization */
 	plpgsql_init_all();
@@ -109,8 +110,8 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 	/*
 	 * Connect to SPI manager
 	 */
-	if (SPI_connect() != SPI_OK_CONNECT)
-		elog(ERROR, "SPI_connect failed");
+	if ((rc = SPI_connect()) != SPI_OK_CONNECT)
+		elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
 
 	/* Find or compile the function */
 	func = plpgsql_compile(fcinfo, false);
@@ -128,8 +129,8 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 	/*
 	 * Disconnect from SPI manager
 	 */
-	if (SPI_finish() != SPI_OK_FINISH)
-		elog(ERROR, "SPI_finish failed");
+	if ((rc = SPI_finish()) != SPI_OK_FINISH)
+		elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 
 	return retval;
 }
@@ -211,12 +212,13 @@ plpgsql_validator(PG_FUNCTION_ARGS)
 		FunctionCallInfoData fake_fcinfo;
 		FmgrInfo	flinfo;
 		TriggerData trigdata;
+		int			rc;
 
 		/*
 		 * Connect to SPI manager (is this needed for compilation?)
 		 */
-		if (SPI_connect() != SPI_OK_CONNECT)
-			elog(ERROR, "SPI_connect failed");
+		if ((rc = SPI_connect()) != SPI_OK_CONNECT)
+			elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
 
 		/*
 		 * Set up a fake fcinfo with just enough info to satisfy
@@ -240,8 +242,8 @@ plpgsql_validator(PG_FUNCTION_ARGS)
 		/*
 		 * Disconnect from SPI manager
 		 */
-		if (SPI_finish() != SPI_OK_FINISH)
-			elog(ERROR, "SPI_finish failed");
+		if ((rc = SPI_finish()) != SPI_OK_FINISH)
+			elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 	}
 
 	ReleaseSysCache(tuple);

@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.50 2004/07/31 00:45:52 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.51 2004/07/31 20:55:45 tgl Exp $
  *
  *********************************************************************
  */
@@ -1522,7 +1522,6 @@ static int	PLy_result_ass_slice(PyObject *, int, int, PyObject *);
 
 static PyObject *PLy_spi_prepare(PyObject *, PyObject *);
 static PyObject *PLy_spi_execute(PyObject *, PyObject *);
-static const char *PLy_spi_error_string(int);
 static PyObject *PLy_spi_execute_query(char *query, int limit);
 static PyObject *PLy_spi_execute_plan(PyObject *, PyObject *, int);
 static PyObject *PLy_spi_execute_fetch_result(SPITupleTable *, int, int);
@@ -1911,16 +1910,16 @@ PLy_spi_prepare(PyObject * self, PyObject * args)
 
 	plan->plan = SPI_prepare(query, plan->nargs, plan->types);
 	if (plan->plan == NULL)
-		elog(ERROR, "Unable to prepare plan. SPI_prepare failed -- %s.",
-			 PLy_spi_error_string(SPI_result));
+		elog(ERROR, "SPI_prepare failed: %s",
+			 SPI_result_code_string(SPI_result));
 
 	/* transfer plan from procCxt to topCxt */
 	tmpplan = plan->plan;
 	plan->plan = SPI_saveplan(tmpplan);
 	SPI_freeplan(tmpplan);
 	if (plan->plan == NULL)
-		elog(ERROR, "Unable to save plan. SPI_saveplan failed -- %s.",
-			 PLy_spi_error_string(SPI_result));
+		elog(ERROR, "SPI_saveplan failed: %s",
+			 SPI_result_code_string(SPI_result));
 	}
 	PG_CATCH();
 	{
@@ -2095,8 +2094,8 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, int limit)
 	if (rv < 0)
 	{
 		PLy_exception_set(PLy_exc_spi_error,
-					   "Unable to execute plan.  SPI_execp failed -- %s",
-						  PLy_spi_error_string(rv));
+						  "SPI_execp failed: %s",
+						  SPI_result_code_string(rv));
 		return NULL;
 	}
 
@@ -2130,8 +2129,8 @@ PLy_spi_execute_query(char *query, int limit)
 	if (rv < 0)
 	{
 		PLy_exception_set(PLy_exc_spi_error,
-					   "Unable to execute query.  SPI_exec failed -- %s",
-						  PLy_spi_error_string(rv));
+						  "SPI_exec failed: %s",
+						  SPI_result_code_string(rv));
 		return NULL;
 	}
 
@@ -2206,38 +2205,9 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, int rows, int status)
 	return (PyObject *) result;
 }
 
-static const char *
-PLy_spi_error_string(int code)
-{
-	switch (code)
-	{
-		case SPI_ERROR_TYPUNKNOWN:
-			return "SPI_ERROR_TYPUNKNOWN";
-		case SPI_ERROR_NOOUTFUNC:
-			return "SPI_ERROR_NOOUTFUNC";
-		case SPI_ERROR_NOATTRIBUTE:
-			return "SPI_ERROR_NOATTRIBUTE";
-		case SPI_ERROR_TRANSACTION:
-			return "SPI_ERROR_TRANSACTION";
-		case SPI_ERROR_PARAM:
-			return "SPI_ERROR_PARAM";
-		case SPI_ERROR_ARGUMENT:
-			return "SPI_ERROR_ARGUMENT";
-		case SPI_ERROR_CURSOR:
-			return "SPI_ERROR_CURSOR";
-		case SPI_ERROR_UNCONNECTED:
-			return "SPI_ERROR_UNCONNECTED";
-		case SPI_ERROR_OPUNKNOWN:
-			return "SPI_ERROR_OPUNKNOWN";
-		case SPI_ERROR_COPY:
-			return "SPI_ERROR_COPY";
-		case SPI_ERROR_CONNECT:
-			return "SPI_ERROR_CONNECT";
-	}
-	return "Unknown or Invalid code";
-}
 
-/* language handler and interpreter initialization
+/*
+ * language handler and interpreter initialization
  */
 
 /*
