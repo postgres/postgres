@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.93 2001/06/22 19:16:21 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.94 2001/08/02 15:59:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1499,7 +1499,7 @@ deferredTriggerInvokeEvents(bool immediate_only)
 	per_tuple_context =
 		AllocSetContextCreate(CurrentMemoryContext,
 							  "DeferredTriggerTupleContext",
-							  0,
+							  ALLOCSET_DEFAULT_MINSIZE,
 							  ALLOCSET_DEFAULT_INITSIZE,
 							  ALLOCSET_DEFAULT_MAXSIZE);
 
@@ -1594,9 +1594,13 @@ deferredTriggerInvokeEvents(bool immediate_only)
 void
 DeferredTriggerInit(void)
 {
+	/*
+	 * Since this context will never be reset, give it a minsize of 0.
+	 * This avoids using any memory if the session never stores anything.
+	 */
 	deftrig_gcxt = AllocSetContextCreate(TopMemoryContext,
 										 "DeferredTriggerSession",
-										 ALLOCSET_DEFAULT_MINSIZE,
+										 0,
 										 ALLOCSET_DEFAULT_INITSIZE,
 										 ALLOCSET_DEFAULT_MAXSIZE);
 }
@@ -1623,11 +1627,12 @@ DeferredTriggerBeginXact(void)
 
 	/*
 	 * Create the per transaction memory context and copy all states from
-	 * the per session context to here.
+	 * the per session context to here.  Set the minsize to 0 to avoid
+	 * wasting memory if there is no deferred trigger data.
 	 */
 	deftrig_cxt = AllocSetContextCreate(TopTransactionContext,
 										"DeferredTriggerXact",
-										ALLOCSET_DEFAULT_MINSIZE,
+										0,
 										ALLOCSET_DEFAULT_INITSIZE,
 										ALLOCSET_DEFAULT_MAXSIZE);
 	oldcxt = MemoryContextSwitchTo(deftrig_cxt);
@@ -1911,7 +1916,6 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 
 	if (!IsTransactionBlock())
 	{
-
 		/*
 		 * Outside of a transaction block set the trigger states of
 		 * individual triggers on session level.
@@ -1949,7 +1953,6 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 	}
 	else
 	{
-
 		/*
 		 * Inside of a transaction block set the trigger states of
 		 * individual triggers on transaction level.
