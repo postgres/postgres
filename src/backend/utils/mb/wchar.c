@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.30 2002/09/04 20:31:31 momjian Exp $
+ * $Id: wchar.c,v 1.30.2.1 2003/01/11 06:59:30 ishii Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -633,7 +633,7 @@ pg_verifymbstr(const unsigned char *mbstr, int len)
 		if (GetDatabaseEncoding() == PG_UTF8 &&
 			(*mbstr & 0xf8) == 0xf0)
 		{
-			snprintf(buf, sizeof(buf), "Unicode >= 0x10000 is not supoorted");
+			snprintf(buf, sizeof(buf), "Unicode >= 0x10000 is not supported");
 			return (buf);
 		}
 
