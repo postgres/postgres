@@ -6,7 +6,7 @@
  * WIN1250 client encoding support contributed by Pavel Behal
  * SJIS UDC (NEC selection IBM kanji) support contributed by Eiji Tokuya
  *
- * $Id: conv.c,v 1.28 2001/09/11 04:50:36 ishii Exp $
+ * $Id: conv.c,v 1.29 2001/09/22 08:44:48 ishii Exp $
  *
  *
  */
@@ -63,8 +63,7 @@
 
 /*
  * convert bogus chars that cannot be represented in the current
-encoding
- * system.
+ * encoding system.
  */
 static void
 printBogusChar(unsigned char **mic, unsigned char **p)
