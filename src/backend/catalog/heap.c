@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.6 1996/11/06 07:31:19 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.7 1996/11/08 00:59:10 scrappy Exp $
  *
  * INTERFACE ROUTINES
  *	heap_creatr()		- Create an uncataloged heap relation
@@ -824,14 +824,14 @@ heap_create(char relname[],
  * old comments
  *	Except for vital relations, removes relation from
  *	relation catalog, and related attributes from
- *	attribute catalog (needed?).  (Anything else???)
+ *	attribute catalog (needed?).  (Anything else?)
  *
  *	get proper relation from relation catalog (if not arg)
- *	check if relation is vital (strcmp()/reltype???)
+ *	check if relation is vital (strcmp()/reltype?)
  *	scan attribute catalog deleting attributes of reldesc
  *		(necessary?)
  *	delete relation from relation catalog
- *	(How are the tuples of the relation discarded???)
+ *	(How are the tuples of the relation discarded?)
  *
  *	XXX Must fix to work with indexes.
  *	There may be a better order for doing things.
