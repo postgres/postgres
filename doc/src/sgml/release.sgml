@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.190 2003/05/26 00:11:27 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.191 2003/05/26 18:58:26 tgl Exp $
 -->
 
 <appendix id="release">
@@ -131,7 +131,7 @@ Fix problem with checking for wrong type of access permission in rule query
 Fix problem with EXCEPT in CREATE RULE
 Prevent problem with dropping temp tables having serial columns
 Fix replace_vars_with_subplan_refs failure in complex views
-Fix regexp slowness in multibyte encodings (Tatsuo)
+Fix regexp slowness in single-byte encodings (Tatsuo)
 Allow qualified type names in CREATE CAST and DROP CAST
 Accept 'SETOF type[]', which formerly had to be written 'SETOF _type'
 Fix pg_dump core dump in some cases with procedural languages
