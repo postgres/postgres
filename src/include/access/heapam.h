@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.1 1996/08/27 21:50:13 scrappy Exp $
+ * $Id: heapam.h,v 1.2 1996/09/23 08:36:39 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,7 +125,7 @@ extern int heap_attisnull(HeapTuple tup, int attnum);
 extern int heap_sysattrlen(AttrNumber attno);
 extern bool heap_sysattrbyval(AttrNumber attno);
 extern char *heap_getsysattr(HeapTuple tup, Buffer b, int attnum);
-extern char *fastgetattr(HeapTuple tup, unsigned attnum,
+extern char *fastgetattr(HeapTuple tup, int attnum,
 			 TupleDesc att, bool *isnull);
 extern char *heap_getattr(HeapTuple tup, Buffer b, int attnum,
 			  TupleDesc att, bool *isnull);
