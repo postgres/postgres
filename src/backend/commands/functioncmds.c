@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.13 2002/07/24 19:11:09 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.14 2002/07/29 20:45:44 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -764,14 +764,14 @@ DropCast(DropCastStmt *stmt)
 			elog(ERROR, "permission denied");
 	}
 
-	ReleaseSysCache(tuple);
-
 	/*
 	 * Do the deletion
 	 */
 	object.classId = get_system_catalog_relid(CastRelationName);
 	object.objectId = HeapTupleGetOid(tuple);
 	object.objectSubId = 0;
+
+	ReleaseSysCache(tuple);
 
 	performDeletion(&object, stmt->behavior);
 }
