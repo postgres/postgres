@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Dec 15 20:08:46 EST 2003
+Last updated:		Mon Dec 15 20:35:38 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -284,7 +284,7 @@ Clients
 	o Implement SQLDA
 	o Fix nested C comments
 	o sqlwarn[6] should be 'W' if the PRECISION or SCALE value specified
-	o Make SET CONNECTION thread-aware
+	o Make SET CONNECTION thread-aware, non-standard?
 
 * Python
 	o Allow users to register their own types with pg_
@@ -462,7 +462,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $PostgreSQL: pgsql/doc/TODO,v 1.1181 2003/12/16 01:08:40 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1181 2003/12/16 01:08:40 momjian Exp $
+* Change CVS $PostgreSQL: pgsql/doc/TODO,v 1.1182 2003/12/16 01:35:40 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1182 2003/12/16 01:35:40 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
