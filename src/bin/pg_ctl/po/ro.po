@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl-ro-8.0\n"
-"POT-Creation-Date: 2005-01-07 07:06+0000\n"
-"PO-Revision-Date: 2005-01-07 12:53+0200\n"
+"POT-Creation-Date: 2005-01-16 01:11+0000\n"
+"PO-Revision-Date: 2005-01-16 10:54+0200\n"
 "Last-Translator: Alin Vaida <alin.vaida@gmail.com>\n"
 "Language-Team: Romanian <translators@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -479,32 +479,47 @@ msgstr "%s: nici o operaþiune specificatã\n"
 msgid "%s: no database directory specified and environment variable PGDATA unset\n"
 msgstr "%s: nici un director pentru baze de date specificat, iar variabila de mediu PGDATA nu este setatã\n"
 
-#: ../../port/exec.c:193 ../../port/exec.c:306 ../../port/exec.c:349
+#: ../../port/exec.c:194 ../../port/exec.c:308 ../../port/exec.c:351
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "imposibil de identificat directorul curent: %s"
 
-#: ../../port/exec.c:322 ../../port/exec.c:358
+#: ../../port/exec.c:213
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "binar incorect \"%s\""
+
+#: ../../port/exec.c:262
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "imposibil de citit binar \"%s\""
+
+#: ../../port/exec.c:269
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "imposibil de gãsit \"%s\" pentru executare"
+
+#: ../../port/exec.c:324 ../../port/exec.c:360
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "imposibil de schimbat directorul în \"%s\""
 
-#: ../../port/exec.c:337
+#: ../../port/exec.c:339
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "imposibil de citit legãtura simbolicã \"%s\""
 
-#: ../../port/exec.c:585
+#: ../../port/exec.c:587
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "procesul fiu a ieºit cu codul %d"
 
-#: ../../port/exec.c:588
+#: ../../port/exec.c:590
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "procesul fiu a fost terminat cu semnalul %d"
 
-#: ../../port/exec.c:591
+#: ../../port/exec.c:593
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "procesul fiu a ieºit cu starea nerecunoscutã %d"

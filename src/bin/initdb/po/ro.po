@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: initdb-ro-8.0\n"
-"POT-Creation-Date: 2005-01-07 07:05+0000\n"
-"PO-Revision-Date: 2005-01-07 12:49+0200\n"
+"POT-Creation-Date: 2005-01-16 01:09+0000\n"
+"PO-Revision-Date: 2005-01-16 12:26+0200\n"
 "Last-Translator: Alin Vaida <alin.vaida@gmail.com>\n"
 "Language-Team: Romanian <translators@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -204,7 +204,7 @@ msgstr "creare schemã de informaþii ... "
 
 #: initdb.c:1819
 msgid "vacuuming database template1 ... "
-msgstr "executare ?vacuum? pentru baza de date template1 ... "
+msgstr "vidare bazã de date template1 ... "
 
 #: initdb.c:1873
 msgid "copying template1 to template0 ... "
@@ -226,7 +226,7 @@ msgstr "ok\n"
 #: initdb.c:1992
 #, c-format
 msgid "%s: invalid locale name \"%s\"\n"
-msgstr "%s: nume de localizare invalid \"%s\"\n"
+msgstr "%s: nume de localizare incorect \"%s\"\n"
 
 #: initdb.c:2059
 #, c-format
@@ -551,32 +551,47 @@ msgstr ""
 msgid "out of memory\n"
 msgstr "memorie insuficientã\n"
 
-#: ../../port/exec.c:193 ../../port/exec.c:306 ../../port/exec.c:349
+#: ../../port/exec.c:194 ../../port/exec.c:308 ../../port/exec.c:351
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "imposibil de identificat directorul curent: %s"
 
-#: ../../port/exec.c:322 ../../port/exec.c:358
+#: ../../port/exec.c:213
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "binar incorect \"%s\""
+
+#: ../../port/exec.c:262
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "imposibil de citit binar \"%s\""
+
+#: ../../port/exec.c:269
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "imposibil de gãsit \"%s\" pentru executare"
+
+#: ../../port/exec.c:324 ../../port/exec.c:360
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "imposibil de schimbat directorul în \"%s\""
 
-#: ../../port/exec.c:337
+#: ../../port/exec.c:339
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "imposibil de citit legãtura simbolicã \"%s\""
 
-#: ../../port/exec.c:585
+#: ../../port/exec.c:587
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "procesul fiu a ieºit cu codul %d"
 
-#: ../../port/exec.c:588
+#: ../../port/exec.c:590
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "procesul fiu a fost terminat cu semnalul %d"
 
-#: ../../port/exec.c:591
+#: ../../port/exec.c:593
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "procesul fiu a ieºit cu starea nerecunoscutã %d"

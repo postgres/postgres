@@ -4,8 +4,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump-ro-8.0\n"
-"POT-Creation-Date: 2005-01-07 07:06+0000\n"
-"PO-Revision-Date: 2005-01-07 12:57+0200\n"
+"POT-Creation-Date: 2005-01-16 01:12+0000\n"
+"PO-Revision-Date: 2005-01-16 10:55+0200\n"
 "Last-Translator: Alin Vaida <alin.vaida@gmail.com>\n"
 "Language-Team: Romanian <translators@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -300,12 +300,12 @@ msgid ""
 "failed.\n"
 msgstr "Comanda SQL pentru descãrcarea conþinutului tabelei\"%s\" a eºuat: PQendcopy() a eºuat.\n"
 
-#: pg_dump.c:912 pg_dump.c:8104
+#: pg_dump.c:912 pg_dump.c:8116
 #, c-format
 msgid "Error message from server: %s"
 msgstr "Mesaj de eroare de la server: %s"
 
-#: pg_dump.c:913 pg_dump.c:8105
+#: pg_dump.c:913 pg_dump.c:8117
 #, c-format
 msgid "The command was: %s\n"
 msgstr "Comanda era: %s\n"
@@ -382,74 +382,74 @@ msgstr "AVERTISMENT: proprietarul funcþiei de agregare \"%s\" pare sã fie incore
 msgid "WARNING: owner of function \"%s\" appears to be invalid\n"
 msgstr "AVERTISMENT: proprietarul funcþiei \"%s\" pare sã fie incorect\n"
 
-#: pg_dump.c:2577
+#: pg_dump.c:2586
 #, c-format
 msgid "WARNING: owner of table \"%s\" appears to be invalid\n"
 msgstr "AVERTISMENT: proprietarul tabelei \"%s\" pare sã fie incorect\n"
 
-#: pg_dump.c:2596
+#: pg_dump.c:2605
 #, c-format
 msgid "specified table \"%s\" does not exist\n"
 msgstr "tabela specificatã \"%s\" nu existã\n"
 
-#: pg_dump.c:2703
+#: pg_dump.c:2712
 #, c-format
 msgid "reading indexes for table \"%s\"\n"
 msgstr "citire indexuri pentru tabela \"%s\"\n"
 
-#: pg_dump.c:2940
+#: pg_dump.c:2949
 #, c-format
 msgid "reading foreign key constraints for table \"%s\"\n"
 msgstr "citire restricþii de cheie strãinã pentru tabela \"%s\"\n"
 
-#: pg_dump.c:3225
+#: pg_dump.c:3234
 #, c-format
 msgid "reading triggers for table \"%s\"\n"
 msgstr "citire declanºatori pentru tabela \"%s\"\n"
 
-#: pg_dump.c:3297
+#: pg_dump.c:3306
 #, c-format
 msgid "expected %d triggers on table \"%s\" but found %d\n"
 msgstr "%d declanºatori aºteptaþi pentru tabela \"%s\", %d gãsiþi\n"
 
-#: pg_dump.c:3342
+#: pg_dump.c:3351
 #, c-format
 msgid ""
 "query produced null referenced table name for foreign key trigger \"%s\" on "
 "table \"%s\" (OID of table: %u)\n"
 msgstr "interogarea a returnat un nume de tabelã referinþã nulã pentru declanºatorul de cheie strãinã \"%s\" pentru tabela \"%s\" (OID tabelã: %u)\n"
 
-#: pg_dump.c:3643
+#: pg_dump.c:3652
 #, c-format
 msgid "finding the columns and types of table \"%s\"\n"
 msgstr "gãsire coloane ºi tipuri pentru tabela \"%s\"\n"
 
-#: pg_dump.c:3729
+#: pg_dump.c:3738
 #, c-format
 msgid "invalid column numbering in table \"%s\"\n"
 msgstr "numerotarea coloanelor incorectã în tabela \"%s\"\n"
 
-#: pg_dump.c:3763
+#: pg_dump.c:3772
 #, c-format
 msgid "finding default expressions of table \"%s\"\n"
 msgstr "gãsire expresii implicite pentru tabela \"%s\"\n"
 
-#: pg_dump.c:3846
+#: pg_dump.c:3855
 #, c-format
 msgid "invalid adnum value %d for table \"%s\"\n"
 msgstr "valoare adnum incorectã (%d) pentru tabela \"%s\"\n"
 
-#: pg_dump.c:3864
+#: pg_dump.c:3873
 #, c-format
 msgid "finding check constraints for table \"%s\"\n"
 msgstr "gãsire verificãri de restricþii pentru tabela \"%s\"\n"
 
-#: pg_dump.c:3928
+#: pg_dump.c:3937
 #, c-format
 msgid "expected %d check constraints on table \"%s\" but found %d\n"
 msgstr "%d verificãri de restricþii aºteptate pentru tabela \"%s\", %d gãsite\n"
 
-#: pg_dump.c:3930
+#: pg_dump.c:3939
 msgid "(The system catalogs might be corrupted.)\n"
 msgstr "(Cataloagele sistem ar putea fi corupte)\n"
 
@@ -573,12 +573,12 @@ msgstr "interogarea pentru obþinerea regulii \"%s\" pentru tabela \"%s\" a eºuat
 msgid "reading dependency data\n"
 msgstr "citire date de suport\n"
 
-#: pg_dump.c:7912
+#: pg_dump.c:7924
 #, c-format
 msgid "query yielded %d rows instead of one: %s\n"
 msgstr "interogarea a furnizat %d rânduri în loc de 1: %s\n"
 
-#: pg_dump.c:8099
+#: pg_dump.c:8111
 msgid "SQL command failed\n"
 msgstr "comanda SQL a eºuat\n"
 
@@ -949,44 +949,49 @@ msgstr "citire intrare în cuprins %d (ID %d) pentru %s %s\n"
 msgid "could not set session user to \"%s\": %s"
 msgstr "imposibil de setat utilizatorul sesiunii la \"%s\": %s"
 
-#: pg_backup_archiver.c:2569
+#: pg_backup_archiver.c:2436 pg_backup_archiver.c:2573
+#, c-format
+msgid "WARNING: don't know how to set owner for object type %s\n"
+msgstr "AVERTISMENT: nu existã o metodã de setare a proprietarului pentru obiectele de tipul %s\n"
+
+#: pg_backup_archiver.c:2606
 msgid ""
 "WARNING: requested compression not available in this installation -- archive "
 "will be uncompressed\n"
 msgstr "AVERTISMENT: compresia solicitatã nu este disponibilã în aceastã instalare -- arhiva va fi necomprimatã\n"
 
-#: pg_backup_archiver.c:2604
+#: pg_backup_archiver.c:2641
 msgid "did not find magic string in file header\n"
 msgstr "nu a fost gãsit ºirul magic în antet\n"
 
-#: pg_backup_archiver.c:2618
+#: pg_backup_archiver.c:2655
 #, c-format
 msgid "unsupported version (%d.%d) in file header\n"
 msgstr "versiune nesuportatã (%d.%d) în antetul fiºierului\n"
 
-#: pg_backup_archiver.c:2623
+#: pg_backup_archiver.c:2660
 #, c-format
 msgid "sanity check on integer size (%lu) failed\n"
 msgstr "verificare de siguranþã pentru dimensiunea întregilor (%lu) eºuatã\n"
 
-#: pg_backup_archiver.c:2627
+#: pg_backup_archiver.c:2664
 msgid ""
 "WARNING: archive was made on a machine with larger integers, some operations "
 "may fail\n"
 msgstr "AVERTISMENT: arhiva a fost creatã pe o maºinã cu întregi mai mari, unele operaþii ar putea eºua\n"
 
-#: pg_backup_archiver.c:2637
+#: pg_backup_archiver.c:2674
 #, c-format
 msgid "expected format (%d) differs from format found in file (%d)\n"
 msgstr "formatul aºteptat (%d) diferã de formatul gãsit în fiºier (%d)\n"
 
-#: pg_backup_archiver.c:2653
+#: pg_backup_archiver.c:2690
 msgid ""
 "WARNING: archive is compressed, but this installation does not support "
 "compression -- no data will be available\n"
 msgstr "AVERTISMENT: arhiva este comprimatã, dar instalarea nu suportã compresia -- datele nu vor fi disponibile\n"
 
-#: pg_backup_archiver.c:2671
+#: pg_backup_archiver.c:2708
 msgid "WARNING: invalid creation date in header\n"
 msgstr "AVERTISMENT: data creãrii din antet este incorectã\n"
 
@@ -1701,32 +1706,47 @@ msgstr "%s: interogare eºuatã: %s"
 msgid "%s: query was: %s\n"
 msgstr "%s: interogarea era: %s\n"
 
-#: ../../port/exec.c:193 ../../port/exec.c:306 ../../port/exec.c:349
+#: ../../port/exec.c:194 ../../port/exec.c:308 ../../port/exec.c:351
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "imposibil de identificat directorul curent: %s"
 
-#: ../../port/exec.c:322 ../../port/exec.c:358
+#: ../../port/exec.c:213
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "binar incorect \"%s\""
+
+#: ../../port/exec.c:262
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "imposibil de citit binar \"%s\""
+
+#: ../../port/exec.c:269
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "imposibil de gãsit \"%s\" pentru executare"
+
+#: ../../port/exec.c:324 ../../port/exec.c:360
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "imposibil de schimbat directorul în \"%s\""
 
-#: ../../port/exec.c:337
+#: ../../port/exec.c:339
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "imposibil de citit legãtura simbolicã \"%s\""
 
-#: ../../port/exec.c:585
+#: ../../port/exec.c:587
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "procesul fiu a ieºit cu codul %d"
 
-#: ../../port/exec.c:588
+#: ../../port/exec.c:590
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "procesul fiu a fost terminat cu semnalul %d"
 
-#: ../../port/exec.c:591
+#: ../../port/exec.c:593
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "procesul fiu a ieºit cu starea nerecunoscutã %d"

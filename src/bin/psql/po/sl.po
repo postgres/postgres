@@ -4,8 +4,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2003-10-13 03:11+0200\n"
-"PO-Revision-Date: 2004-12-11 21:21+0100\n"
+"POT-Creation-Date: 2005-01-16 01:13+0000\n"
+"PO-Revision-Date: 2005-01-17 01:54+0100\n"
 "Last-Translator: Aleksander Kmetec <aleksander.kmetec@intera.si>\n"
 "Language-Team: Slovenian <aleksander.kmetec@intera.si>\n"
 "MIME-Version: 1.0\n"
@@ -29,56 +29,56 @@ msgstr "Ukaz \\%s ni veljaven. Za pomoè vtipkajte \\?.\n"
 msgid "invalid command \\%s\n"
 msgstr "neveljaven ukaz \\%s\n"
 
-#: command.c:135
+#: command.c:137
 #, c-format
 msgid "\\%s: extra argument \"%s\" ignored\n"
 msgstr "\\%s: odveèni argument \"%s\" je bil ignoriran\n"
 
-#: command.c:244
+#: command.c:254
 #, c-format
 msgid "could not get home directory: %s\n"
 msgstr "lokacije domaèega imenika ni bilo mogoèe izvedeti: %s\n"
 
-#: command.c:260
+#: command.c:270
 #, c-format
 msgid "\\%s: could not change directory to \"%s\": %s\n"
 msgstr "\\%s: delovnega imenika nisem uspel spremeniti v \"%s\": %s\n"
 
-#: command.c:374
-#: command.c:766
+#: command.c:384
+#: command.c:776
 msgid "no query buffer\n"
 msgstr "medpomnilnik poizvedb ne obstaja\n"
 
-#: command.c:437
+#: command.c:447
 #, c-format
 msgid "%s: invalid encoding name or conversion procedure not found\n"
 msgstr "%s: neveljavno ime kodne tabele, ali pa pretvorbeni postopek ni bil najden\n"
 
-#: command.c:505
-#: command.c:539
-#: command.c:553
-#: command.c:570
-#: command.c:616
-#: command.c:746
-#: command.c:777
+#: command.c:515
+#: command.c:549
+#: command.c:563
+#: command.c:580
+#: command.c:626
+#: command.c:756
+#: command.c:787
 #, c-format
 msgid "\\%s: missing required argument\n"
 msgstr "\\%s: manjka zahtevan argument\n"
 
-#: command.c:602
+#: command.c:612
 msgid "Query buffer is empty."
 msgstr "Medpomnilnik poizvedb je prazen."
 
-#: command.c:636
+#: command.c:646
 msgid "Query buffer reset (cleared)."
 msgstr "Medpomnilnik poizvedb je bil poèi¹èen."
 
-#: command.c:650
+#: command.c:660
 #, c-format
 msgid "Wrote history to file \"%s\".\n"
 msgstr "Zgodovina je bila zapisana v datoteko \"%s\".\n"
 
-#: command.c:687
+#: command.c:697
 #: common.c:85
 #: common.c:99
 #: mainloop.c:71
@@ -98,30 +98,30 @@ msgstr "Zgodovina je bila zapisana v datoteko \"%s\".\n"
 msgid "out of memory\n"
 msgstr "zmanjkalo je pomnilnika\n"
 
-#: command.c:702
-#: command.c:751
+#: command.c:712
+#: command.c:761
 #, c-format
 msgid "\\%s: error\n"
 msgstr "\\%s: pri¹lo je do napake\n"
 
-#: command.c:732
+#: command.c:742
 msgid "Timing is on."
 msgstr "Merjenje èasa je vkljuèeno."
 
-#: command.c:734
+#: command.c:744
 msgid "Timing is off."
 msgstr "Merjenje èasa je izkljuèeno."
 
-#: command.c:794
-#: command.c:814
-#: command.c:1199
-#: command.c:1206
+#: command.c:804
+#: command.c:824
+#: command.c:1209
 #: command.c:1216
-#: command.c:1228
-#: command.c:1241
-#: command.c:1255
-#: command.c:1277
-#: command.c:1308
+#: command.c:1226
+#: command.c:1238
+#: command.c:1251
+#: command.c:1265
+#: command.c:1287
+#: command.c:1318
 #: common.c:170
 #: copy.c:530
 #: copy.c:575
@@ -129,14 +129,14 @@ msgstr "Merjenje èasa je izkljuèeno."
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
 
-#: command.c:921
-#: command.c:945
+#: command.c:931
+#: command.c:955
 #: startup.c:188
 #: startup.c:206
 msgid "Password: "
 msgstr "Geslo: "
 
-#: command.c:959
+#: command.c:969
 #: common.c:216
 #: common.c:685
 #: common.c:740
@@ -145,142 +145,142 @@ msgstr "Geslo: "
 msgid "%s"
 msgstr "%s"
 
-#: command.c:963
+#: command.c:973
 msgid "Previous connection kept\n"
 msgstr "Predhodna povezava je bila ohranjena\n"
 
-#: command.c:975
+#: command.c:985
 #, c-format
 msgid "\\connect: %s"
 msgstr "\\connect: %s"
 
-#: command.c:987
+#: command.c:997
 #, c-format
 msgid "You are now connected to database \"%s\".\n"
 msgstr "Sedaj ste povezani s podatkovno bazo \"%s\".\n"
 
-#: command.c:989
+#: command.c:999
 #, c-format
 msgid "You are now connected as new user \"%s\".\n"
 msgstr "Sedaj ste povezani kot nov uporabnik \"%s\".\n"
 
-#: command.c:992
+#: command.c:1002
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\".\n"
 msgstr "Sedaj ste povezani s podatkovno bazo \"%s\" kot uporabnik \"%s\".\n"
 
-#: command.c:1117
+#: command.c:1127
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "urejevalnika \"%s\" ni bilo mogoèe zagnati\n"
 
-#: command.c:1119
+#: command.c:1129
 msgid "could not start /bin/sh\n"
 msgstr "lupine /bin/sh ni bilo mogoèe zagnati\n"
 
-#: command.c:1158
+#: command.c:1168
 #, c-format
 msgid "cannot locate temporary directory: %s"
 msgstr "zaèasnega imenika ni bilo mogoèe najti: %s"
 
-#: command.c:1184
+#: command.c:1194
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "zaèasne datoteke \"%s\" ni bilo mogoèe odpreti: %s\n"
 
-#: command.c:1376
+#: command.c:1386
 msgid "\\pset: allowed formats are unaligned, aligned, html, latex\n"
 msgstr "\\pset: dovoljene oblike izpisa so: unaligned, aligned, html, latex\n"
 
-#: command.c:1381
+#: command.c:1391
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "Izhodna oblika je: %s.\n"
 
-#: command.c:1391
+#: command.c:1401
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "Stil obrobe: %d.\n"
 
-#: command.c:1400
+#: command.c:1410
 msgid "Expanded display is on.\n"
 msgstr "Raz¹irjen prikaz je vkljuèen.\n"
 
-#: command.c:1401
+#: command.c:1411
 msgid "Expanded display is off.\n"
 msgstr "Raz¹irjen prikaz je izkljuèen.\n"
 
-#: command.c:1413
+#: command.c:1423
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Vrednost NULL bo prikazana kot \"%s\".\n"
 
-#: command.c:1425
+#: command.c:1435
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "Loèitveni niz med polji je \"%s\".\n"
 
-#: command.c:1439
+#: command.c:1449
 msgid "Record separator is <newline>."
 msgstr "Loèitveni niz med zapisi (vrsticami) je <newline>."
 
-#: command.c:1441
+#: command.c:1451
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "Loèitveni niz med zapisi (vrsticami) je \"%s\".\n"
 
-#: command.c:1452
+#: command.c:1462
 msgid "Showing only tuples."
 msgstr "Prikazujem samo vrednosti."
 
-#: command.c:1454
+#: command.c:1464
 msgid "Tuples only is off."
 msgstr "Prikaz samih vrednosti je izkljuèen."
 
-#: command.c:1470
+#: command.c:1480
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "Naslov je \"%s\".\n"
 
-#: command.c:1472
+#: command.c:1482
 msgid "Title is unset.\n"
 msgstr "Naslov pobrisan.\n"
 
-#: command.c:1488
+#: command.c:1498
 #, c-format
 msgid "Table attribute is \"%s\".\n"
 msgstr "Atributi tabele: \"%s\".\n"
 
-#: command.c:1490
+#: command.c:1500
 msgid "Table attributes unset.\n"
 msgstr "Atributi tabele pobrisani.\n"
 
-#: command.c:1506
+#: command.c:1516
 msgid "Pager is used for long output."
 msgstr "Postopni izpis se uporablja za prikaz dolgega besedila."
 
-#: command.c:1508
+#: command.c:1518
 msgid "Pager is always used."
 msgstr "Postopni izpis je vkljuèen."
 
-#: command.c:1510
+#: command.c:1520
 msgid "Pager usage is off."
 msgstr "Postopni izpis je izkljuèen."
 
-#: command.c:1521
+#: command.c:1531
 msgid "Default footer is on."
 msgstr "Izpis privzete noge je vkljuèen."
 
-#: command.c:1523
+#: command.c:1533
 msgid "Default footer is off."
 msgstr "Izpis privzete noge je izkljuèen."
 
-#: command.c:1529
+#: command.c:1539
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: neznana mo¾nost: %s\n"
 
-#: command.c:1582
+#: command.c:1592
 msgid "\\!: failed\n"
 msgstr "\\!: spodletelo\n"
 
@@ -866,12 +866,12 @@ msgstr ""
 "Pomoè za \"%-.*s\" ni na voljo.\n"
 "Za izpis razpolo¾ljive pomoèi vpi¹ite \"\\h\" brez dodatnih argumentov.\n"
 
-#: input.c:210
+#: input.c:211
 #, c-format
 msgid "could not save history to file \"%s\": %s\n"
 msgstr "shranjevanje zgodovine v datoteko \"%s\" ni uspelo: %s\n"
 
-#: input.c:213
+#: input.c:214
 msgid "history is not supported by this installation\n"
 msgstr "zgodovina ni podprta\n"
 
@@ -925,7 +925,7 @@ msgstr "(1 vrstica)"
 msgid "(%d rows)"
 msgstr "(%d vrstic)"
 
-#: startup.c:133
+#: startup.c:138
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: zmanjkalo je spomina\n"
@@ -986,17 +986,31 @@ msgstr "%s: opozorilo: odveèni argument \"%s\" je bil ignoriran\n"
 msgid "%s: Warning: The -u option is deprecated. Use -U.\n"
 msgstr "%s: Opozorilo: Opcija -u je zastarela. Uporabite -U.\n"
 
-#: startup.c:630
+#: startup.c:627
 msgid "contains support for command-line editing"
 msgstr "vsebuje podporo za urejanje ukazne vrstice"
 
-#: startup.c:653
+#: startup.c:650
 #, c-format
 msgid ""
 "SSL connection (cipher: %s, bits: %i)\n"
 "\n"
 msgstr ""
 "SSL povezava (cipher: %s, bits: %i)\n"
+"\n"
+
+#: startup.c:673
+#, c-format
+msgid ""
+"Warning: Console code page (%u) differs from Windows code page (%u)\n"
+"         8-bit characters may not work correctly. See psql reference\n"
+"         page \"Notes for Windows users\" for details.\n"
+"\n"
+msgstr ""
+"Opozorilo: Kodna stran ukazne vrstice (%u) se razlikuje od kodne strani\n"
+"           sistema Windows (%u). 8-bitni znaki morda ne bodo delovali\n"
+"           pravilno. Za podrobnosti si oglejte poglavje z naslovom\n"
+"           \"Notes for Windows users\" v navodilih za uporabo.\n"
 "\n"
 
 #: describe.c:82
@@ -3100,35 +3114,50 @@ msgstr ""
 "VACUUM [ FULL | FREEZE ] [ VERBOSE ] [ ime_tabele ]\n"
 "VACUUM [ FULL | FREEZE ] [ VERBOSE ] ANALYZE [ ime_tabele [ (stolpec [, ...] ) ] ]"
 
-#: ../../port/exec.c:193
-#: ../../port/exec.c:307
-#: ../../port/exec.c:350
+#: ../../port/exec.c:194
+#: ../../port/exec.c:308
+#: ../../port/exec.c:351
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "trenutnega imenika ni bilo mogoèe izvedeti: %s"
 
-#: ../../port/exec.c:323
-#: ../../port/exec.c:359
+#: ../../port/exec.c:213
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "\"%s\" ni veljavna binarna datoteka"
+
+#: ../../port/exec.c:262
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "izvr¹ljive datoteke \"%s\" ni bilo mogoèe prebrati"
+
+#: ../../port/exec.c:269
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "izvr¹ljive datoteke z imenom \"%s\" ni bilo mogoèe najti"
+
+#: ../../port/exec.c:324
+#: ../../port/exec.c:360
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "delovnega imenika ni bilo mogoèe spremeniti v \"%s\""
 
-#: ../../port/exec.c:338
+#: ../../port/exec.c:339
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "simbolne povezave \"%s\" ni bilo mogoèe prebrati"
 
-#: ../../port/exec.c:569
+#: ../../port/exec.c:587
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "podproces je zakljuèil izvajanje z izhodno kodo %d"
 
-#: ../../port/exec.c:572
+#: ../../port/exec.c:590
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "podproces je bil pokonèan s signalom %d"
 
-#: ../../port/exec.c:575
+#: ../../port/exec.c:593
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "podproces je zakljuèil izvajanje z neznanim statusom %d"
