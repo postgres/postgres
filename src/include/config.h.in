@@ -282,7 +282,25 @@
  */
 /* #define PSQL_ALWAYS_GET_PASSWORDS */
 
-/* Undocumented "features"? */
+/*
+ * Use btree bulkload code: 
+ * this code is moderately slow (~10% slower) compared to the regular
+ * btree (insertion) build code on sorted or well-clustered data.  on
+ * random data, however, the insertion build code is unusable -- the
+ * difference on a 60MB heap is a factor of 15 because the random
+ * probes into the btree thrash the buffer pool.
+ *
+ * Great thanks to Paul M. Aoki (aoki@CS.Berkeley.EDU)
+ */
 #define FASTBUILD /* access/nbtree/nbtsort.c */
+
+/* 
+ * BTREE_VERSION_1: we must guarantee that all tuples in A LEVEL
+ * are unique, not in ALL INDEX. So, we can use bti_itup->t_tid                
+ * as unique identifier for a given index tuple (logical position
+ * within a level) and take off bti_oid & bti_dummy (8 bytes total)
+ * from btree items.
+ */
+#define BTREE_VERSION_1
 
 #endif /* CONFIG_H */
