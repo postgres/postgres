@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Wed Nov  3 14:37:57 EST 2004
+Last updated:		Wed Nov  3 17:20:38 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -72,8 +72,8 @@ Administration
 * Add a GUC variable to control the tablespace for temporary objects and
   sort files
 
-  This perhaps should use a round-robin allocation system where several
-  tablespaces are used in a cycle.  The cycle pointer should be global.
+  It could start with a random tablespace from a supplied list and cycle
+  through the list.
   
 * Add "include file" functionality in postgresql.conf
 * Add session start time and last statement time to pg_stat_activity
