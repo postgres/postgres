@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.111 2000/09/12 04:49:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.112 2000/10/16 14:52:13 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1017,6 +1017,12 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	 */
 	RelationInitLockInfo(relation);		/* see lmgr.c */
 
+	if (IsSharedSystemRelationName(NameStr(relation->rd_rel->relname)))
+		relation->rd_node.tblNode = InvalidOid;
+	else
+		relation->rd_node.tblNode = MyDatabaseId;
+	relation->rd_node.relNode = relation->rd_rel->relfilenode;
+
 	/* ----------------
 	 *	open the relation and assign the file descriptor returned
 	 *	by the storage manager code to rd_fd.
@@ -1191,6 +1197,13 @@ formrdesc(char *relationName,
 	 * ----------------
 	 */
 	RelationCacheInsert(relation);
+
+	if (IsSharedSystemRelationName(relationName))
+		relation->rd_node.tblNode = InvalidOid;
+	else
+		relation->rd_node.tblNode = MyDatabaseId;
+	relation->rd_node.relNode = 
+		relation->rd_rel->relfilenode = RelationGetRelid(relation);
 
 	/*
 	 * Determining this requires a scan on pg_class, but to do the scan
@@ -2437,6 +2450,8 @@ init_irels(void)
 
 		/* the file descriptor is not yet opened */
 		ird->rd_fd = -1;
+
+		ird->rd_node.tblNode = MyDatabaseId;
 
 		/* next, read the access method tuple form */
 		if ((nread = FileRead(fd, (char *) &len, sizeof(len))) != sizeof(len))

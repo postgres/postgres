@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.85 2000/09/29 03:55:45 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.86 2000/10/16 14:52:09 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -614,6 +614,9 @@ BufferAlloc(Relation reln,
 	/* record the database name and relation name for this buffer */
 	strcpy(buf->blind.dbname, DatabaseName);
 	strcpy(buf->blind.relname, RelationGetPhysicalRelationName(reln));
+#ifndef OLD_FILE_NAMING
+	buf->blind.rnode = reln->rd_node;
+#endif
 
 	INIT_BUFFERTAG(&(buf->tag), reln, blockNum);
 	if (!BufTableInsert(buf))
@@ -779,10 +782,12 @@ FlushBuffer(Buffer buffer, bool release)
 	Assert(PrivateRefCount[buffer - 1] > 0);	/* else caller didn't pin */
 
 	bufHdr = &BufferDescriptors[buffer - 1];
+
 	bufdb = bufHdr->tag.relId.dbId;
 
 	Assert(bufdb == MyDatabaseId || bufdb == (Oid) NULL);
 	bufrel = RelationIdCacheGetRelation(bufHdr->tag.relId.relId);
+
 	Assert(bufrel != (Relation) NULL);
 
 	SharedBufferChanged = true;
@@ -962,12 +967,18 @@ SetBufferDirtiedByMe(Buffer buffer, BufferDesc *bufHdr)
 
 		if (reln == (Relation) NULL)
 		{
+#ifdef OLD_FILE_NAMING
 			status = smgrblindmarkdirty(DEFAULT_SMGR,
-							   BufferBlindLastDirtied[buffer - 1].dbname,
-							  BufferBlindLastDirtied[buffer - 1].relname,
-										tagLastDirtied->relId.dbId,
-										tagLastDirtied->relId.relId,
-										tagLastDirtied->blockNum);
+							BufferBlindLastDirtied[buffer - 1].dbname,
+							BufferBlindLastDirtied[buffer - 1].relname,
+							tagLastDirtied->relId.dbId,
+							tagLastDirtied->relId.relId,
+							tagLastDirtied->blockNum);
+#else
+			status = smgrblindmarkdirty(DEFAULT_SMGR,
+							BufferBlindLastDirtied[buffer - 1].rnode,
+							tagLastDirtied->blockNum);
+#endif
 		}
 		else
 		{
@@ -1017,10 +1028,10 @@ ClearBufferDirtiedByMe(Buffer buffer, BufferDesc *bufHdr)
 	 * the data we just wrote.	This is unlikely, but possible if some
 	 * other backend replaced the buffer contents since we set our flag.
 	 */
-	if (bufHdr->tag.relId.dbId == tagLastDirtied->relId.dbId &&
-		bufHdr->tag.relId.relId == tagLastDirtied->relId.relId &&
-		bufHdr->tag.blockNum == tagLastDirtied->blockNum)
-		BufferDirtiedByMe[buffer - 1] = false;
+		if (bufHdr->tag.relId.dbId == tagLastDirtied->relId.dbId &&
+				bufHdr->tag.relId.relId == tagLastDirtied->relId.relId &&
+				bufHdr->tag.blockNum == tagLastDirtied->blockNum)
+			BufferDirtiedByMe[buffer - 1] = false;
 }
 
 /*
@@ -1136,13 +1147,21 @@ BufferSync()
 					 */
 					if (reln == (Relation) NULL)
 					{
+#ifdef OLD_FILE_NAMING
 						status = smgrblindwrt(DEFAULT_SMGR,
-											  bufHdr->blind.dbname,
-											  bufHdr->blind.relname,
-											  bufdb, bufrel,
-											  bufHdr->tag.blockNum,
-										 (char *) MAKE_PTR(bufHdr->data),
-											  true);	/* must fsync */
+											bufHdr->blind.dbname,
+											bufHdr->blind.relname,
+											bufdb, bufrel,
+											bufHdr->tag.blockNum,
+											(char *) MAKE_PTR(bufHdr->data),
+											true);	/* must fsync */
+#else
+						status = smgrblindwrt(DEFAULT_SMGR,
+											bufHdr->blind.rnode,
+											bufHdr->tag.blockNum,
+											(char *) MAKE_PTR(bufHdr->data),
+											true);	/* must fsync */
+#endif
 					}
 					else
 					{
@@ -1202,12 +1221,18 @@ BufferSync()
 			reln = RelationIdCacheGetRelation(BufferTagLastDirtied[i].relId.relId);
 			if (reln == (Relation) NULL)
 			{
+#ifdef OLD_FILE_NAMING
 				status = smgrblindmarkdirty(DEFAULT_SMGR,
-										BufferBlindLastDirtied[i].dbname,
-									   BufferBlindLastDirtied[i].relname,
-									  BufferTagLastDirtied[i].relId.dbId,
-									 BufferTagLastDirtied[i].relId.relId,
-									   BufferTagLastDirtied[i].blockNum);
+									BufferBlindLastDirtied[i].dbname,
+									BufferBlindLastDirtied[i].relname,
+									BufferTagLastDirtied[i].relId.dbId,
+									BufferTagLastDirtied[i].relId.relId,
+									BufferTagLastDirtied[i].blockNum);
+#else
+				status = smgrblindmarkdirty(DEFAULT_SMGR,
+									BufferBlindLastDirtied[i].rnode,
+									BufferTagLastDirtied[i].blockNum);
+#endif
 			}
 			else
 			{
@@ -1556,11 +1581,18 @@ BufferReplace(BufferDesc *bufHdr)
 	}
 	else
 	{
+#ifdef OLD_FILE_NAMING
 		status = smgrblindwrt(DEFAULT_SMGR, bufHdr->blind.dbname,
 							  bufHdr->blind.relname, bufdb, bufrel,
 							  bufHdr->tag.blockNum,
 							  (char *) MAKE_PTR(bufHdr->data),
 							  false);	/* no fsync */
+#else
+		status = smgrblindwrt(DEFAULT_SMGR, bufHdr->blind.rnode,
+							  bufHdr->tag.blockNum,
+							  (char *) MAKE_PTR(bufHdr->data),
+							  false);	/* no fsync */
+#endif
 	}
 
 	LockBuffer(BufferDescriptorGetBuffer(bufHdr), BUFFER_LOCK_UNLOCK);
@@ -1784,8 +1816,8 @@ blockNum=%d, flags=0x%x, refcount=%d %ld)",
 		for (i = 0; i < NBuffers; ++i, ++buf)
 		{
 			printf("[%-2d] (%s, %d) flags=0x%x, refcnt=%d %ld)\n",
-				   i, buf->blind.relname, buf->tag.blockNum,
-				   buf->flags, buf->refcount, PrivateRefCount[i]);
+					i, buf->blind.relname, buf->tag.blockNum,
+					buf->flags, buf->refcount, PrivateRefCount[i]);
 		}
 	}
 }

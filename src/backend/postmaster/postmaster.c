@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.171 2000/10/11 17:58:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.172 2000/10/16 14:52:08 vadim Exp $
  *
  * NOTES
  *
@@ -60,6 +60,7 @@
 #include "getopt.h"
 #endif
 
+#include "catalog/pg_database.h"
 #include "commands/async.h"
 #include "lib/dllist.h"
 #include "libpq/auth.h"
@@ -278,8 +279,14 @@ checkDataDir(const char *DataDir)
 		exit(2);
 	}
 
+#ifdef OLD_FILE_NAMING
 	snprintf(path, sizeof(path), "%s%cbase%ctemplate1%cpg_class",
 			 DataDir, SEP_CHAR, SEP_CHAR, SEP_CHAR);
+#else
+	snprintf(path, sizeof(path), "%s%cbase%c%u%c%u",
+			 DataDir, SEP_CHAR, SEP_CHAR, 
+			 TemplateDbOid, SEP_CHAR, RelOid_pg_class);
+#endif
 
 	fp = AllocateFile(path, PG_BINARY_R);
 	if (fp == NULL)

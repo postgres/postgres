@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_database.h,v 1.9 2000/01/26 05:57:57 momjian Exp $
+ * $Id: pg_database.h,v 1.10 2000/10/16 14:52:26 vadim Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -55,4 +55,10 @@ typedef FormData_pg_database *Form_pg_database;
 #define Anum_pg_database_datdba			2
 #define Anum_pg_database_encoding		3
 #define Anum_pg_database_datpath		4
+
+DATA(insert OID = 1 (  template1 PGUID ENCODING template1 ));
+DESCR("");
+
+#define TemplateDbOid			1
+
 #endif	 /* PG_DATABASE_H */

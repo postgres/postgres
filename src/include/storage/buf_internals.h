@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.37 2000/04/12 17:16:51 momjian Exp $
+ * $Id: buf_internals.h,v 1.38 2000/10/16 14:52:28 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,7 @@ typedef struct buftag
 	(a)->relId = (xx_reln)->rd_lockInfo.lockRelId \
 )
 
+#ifdef OLD_FILE_NAMING
 /* If we have to write a buffer "blind" (without a relcache entry),
  * the BufferTag is not enough information.  BufferBlindId carries the
  * additional information needed.
@@ -70,6 +71,17 @@ typedef struct bufblindid
 	char		dbname[NAMEDATALEN];	/* name of db in which buf belongs */
 	char		relname[NAMEDATALEN];	/* name of reln */
 }			BufferBlindId;
+
+#else
+
+typedef struct bufblindid
+{
+	char		dbname[NAMEDATALEN];	/* name of db in which buf belongs */
+	char		relname[NAMEDATALEN];	/* name of reln */
+	RelFileNode	rnode;
+} BufferBlindId;
+
+#endif
 
 #define BAD_BUFFER_ID(bid) ((bid) < 1 || (bid) > NBuffers)
 #define INVALID_DESCRIPTOR (-3)

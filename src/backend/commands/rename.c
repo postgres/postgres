@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.47 2000/09/06 14:15:16 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.48 2000/10/16 14:52:03 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -311,6 +311,7 @@ renamerel(const char *oldrelname, const char *newrelname)
 	if (relkind != RELKIND_INDEX)
 		TypeRename(oldrelname, newrelname);
 
+#ifdef OLD_FILE_NAMING
 	/*
 	 * Perform physical rename of files.  If this fails, we haven't yet
 	 * done anything irreversible.  NOTE that this MUST be the last step;
@@ -340,4 +341,5 @@ renamerel(const char *oldrelname, const char *newrelname)
 				 toldpath, tnewpath);
 		}
 	}
+#endif
 }

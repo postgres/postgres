@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.60 2000/09/06 14:15:16 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.61 2000/10/16 14:52:03 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/catalog.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_shadow.h"
 #include "commands/comment.h"
@@ -76,6 +77,7 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 	if (IsTransactionBlock())
 		elog(ERROR, "CREATE DATABASE: may not be called in a transaction block");
 
+#ifdef OLD_FILE_NAMING
 	/* Generate directory name for the new database */
 	if (dbpath == NULL || strcmp(dbpath, dbname) == 0)
 		strcpy(locbuf, dbname);
@@ -89,6 +91,7 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 			 "The database path '%s' is invalid. "
 			 "This may be due to a character that is not allowed or because the chosen "
 			 "path isn't permitted for databases", dbpath);
+#endif
 
 	/*
 	 * Insert a new tuple into pg_database
@@ -110,6 +113,10 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 	 * Update table
 	 */
 	heap_insert(pg_database_rel, tuple);
+
+#ifndef OLD_FILE_NAMING
+	loc = GetDatabasePath(tuple->t_data->t_oid);
+#endif
 
 	/*
 	 * Update indexes (there aren't any currently)
@@ -140,8 +147,19 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 	if (mkdir(loc, S_IRWXU) != 0)
 		elog(ERROR, "CREATE DATABASE: unable to create database directory '%s': %s", loc, strerror(errno));
 
+#ifdef OLD_FILE_NAMING
 	snprintf(buf, sizeof(buf), "cp %s%cbase%ctemplate1%c* '%s'",
 			 DataDir, SEP_CHAR, SEP_CHAR, SEP_CHAR, loc);
+#else
+	{
+		char   *tmpl = GetDatabasePath(TemplateDbOid);
+
+		snprintf(buf, sizeof(buf), "cp %s%c* '%s'",
+			tmpl, SEP_CHAR, loc);
+		pfree(tmpl);
+	}
+#endif
+
 	ret = system(buf);
 	/* Some versions of SunOS seem to return ECHILD after a system() call */
 #if defined(sun)
@@ -204,12 +222,16 @@ dropdb(const char *dbname)
 	if (GetUserId() != db_owner && !use_super)
 		elog(ERROR, "DROP DATABASE: Permission denied");
 
+#ifdef OLD_FILE_NAMING
 	path = ExpandDatabasePath(dbpath);
 	if (path == NULL)
 		elog(ERROR,
 			 "The database path '%s' is invalid. "
 			 "This may be due to a character that is not allowed or because the chosen "
 			 "path isn't permitted for databases", path);
+#else
+	path = GetDatabasePath(db_id);
+#endif
 
 	/*
 	 * Obtain exclusive lock on pg_database.  We need this to ensure that

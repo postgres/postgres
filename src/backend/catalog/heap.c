@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.148 2000/10/11 21:28:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.149 2000/10/16 14:52:02 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -177,12 +177,13 @@ heap_create(char *relname,
 {
 	static unsigned int uniqueId = 0;
 
-	Oid			relid;
-	Relation	rel;
-	bool		nailme = false;
-	int			natts = tupDesc->natts;
-	int			i;
-	MemoryContext oldcxt;
+	Oid				relid;
+	Relation		rel;
+	bool			nailme = false;
+	int				natts = tupDesc->natts;
+	int				i;
+	MemoryContext	oldcxt;
+	Oid				tblNode = MyDatabaseId;
 
 	/* ----------------
 	 *	sanity checks
@@ -203,25 +204,65 @@ heap_create(char *relname,
 	 *	descriptor follows.
 	 * ----------------
 	 */
-	if (relname && strcmp(RelationRelationName, relname) == 0)
+	if (relname && IsSystemRelationName(relname))
 	{
-		relid = RelOid_pg_class;
-		nailme = true;
-	}
-	else if (relname && strcmp(AttributeRelationName, relname) == 0)
-	{
-		relid = RelOid_pg_attribute;
-		nailme = true;
-	}
-	else if (relname && strcmp(ProcedureRelationName, relname) == 0)
-	{
-		relid = RelOid_pg_proc;
-		nailme = true;
-	}
-	else if (relname && strcmp(TypeRelationName, relname) == 0)
-	{
-		relid = RelOid_pg_type;
-		nailme = true;
+		if (strcmp(TypeRelationName, relname) == 0)
+		{
+			nailme = true;
+			relid = RelOid_pg_type;
+		}
+		else if (strcmp(AttributeRelationName, relname) == 0)
+		{
+			nailme = true;
+			relid = RelOid_pg_attribute;
+		}
+		else if (strcmp(ProcedureRelationName, relname) == 0)
+		{
+			nailme = true;
+			relid = RelOid_pg_proc;
+		}
+		else if (strcmp(RelationRelationName, relname) == 0)
+		{
+			nailme = true;
+			relid = RelOid_pg_class;
+		}
+		else if (strcmp(ShadowRelationName, relname) == 0)
+		{
+			tblNode = InvalidOid;
+			relid = RelOid_pg_shadow;
+		}
+		else if (strcmp(GroupRelationName, relname) == 0)
+		{
+			tblNode = InvalidOid;
+			relid = RelOid_pg_group;
+		}
+		else if (strcmp(DatabaseRelationName, relname) == 0)
+		{
+			tblNode = InvalidOid;
+			relid = RelOid_pg_database;
+		}
+		else if (strcmp(VariableRelationName, relname) == 0)
+		{
+			tblNode = InvalidOid;
+			relid = RelOid_pg_variable;
+		}
+		else if (strcmp(LogRelationName, relname) == 0)
+		{
+			tblNode = InvalidOid;
+			relid = RelOid_pg_log;
+		}
+		else if (strcmp(AttrDefaultRelationName, relname) == 0)
+			relid = RelOid_pg_attrdef;
+		else if (strcmp(RelCheckRelationName, relname) == 0)
+			relid = RelOid_pg_relcheck;
+		else if (strcmp(TriggerRelationName, relname) == 0)
+			relid = RelOid_pg_trigger;
+		else
+		{
+			relid = newoid();
+			if (IsSharedSystemRelationName(relname))
+				tblNode = InvalidOid;
+		}
 	}
 	else
 		relid = newoid();
@@ -289,6 +330,10 @@ heap_create(char *relname,
 		/* for system relations, set the reltype field here */
 		rel->rd_rel->reltype = relid;
 	}
+
+	rel->rd_node.tblNode = tblNode;
+	rel->rd_node.relNode = relid;
+	rel->rd_rel->relfilenode = relid;
 
 	/* ----------------
 	 *	done building relcache entry.

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.67 2000/10/02 19:42:54 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.68 2000/10/16 14:52:15 vadim Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -20,6 +20,10 @@
 #include <sys/types.h>
 #include <math.h>
 #include <unistd.h>
+
+#ifndef OLD_FILE_NAMING
+#include "catalog/catalog.h"
+#endif
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
@@ -242,7 +246,12 @@ InitPostgres(const char *dbname, const char *username)
 	 */
 	if (bootstrap)
 	{
+		MyDatabaseId = TemplateDbOid;
+#ifdef OLD_FILE_NAMING
 		SetDatabasePath(ExpandDatabasePath(dbname));
+#else
+		SetDatabasePath(GetDatabasePath(MyDatabaseId));
+#endif
 		LockDisable(true);
 	}
 	else
@@ -276,9 +285,13 @@ InitPostgres(const char *dbname, const char *username)
 				 "Database \"%s\" does not exist in the system catalog.",
 				 dbname);
 
+#ifdef OLD_FILE_NAMING
 		fullpath = ExpandDatabasePath(datpath);
 		if (!fullpath)
 			elog(FATAL, "Database path could not be resolved.");
+#else
+		fullpath = GetDatabasePath(MyDatabaseId);
+#endif
 
 		/* Verify the database path */
 

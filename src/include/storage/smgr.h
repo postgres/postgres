@@ -7,13 +7,14 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: smgr.h,v 1.21 2000/06/05 07:29:06 tgl Exp $
+ * $Id: smgr.h,v 1.22 2000/10/16 14:52:28 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef SMGR_H
 #define SMGR_H
 
+#include "storage/relfilenode.h"
 #include "storage/block.h"
 #include "storage/spin.h"
 #include "utils/rel.h"
@@ -35,14 +36,21 @@ extern int smgrwrite(int16 which, Relation reln, BlockNumber blocknum,
 		  char *buffer);
 extern int smgrflush(int16 which, Relation reln, BlockNumber blocknum,
 		  char *buffer);
+#ifdef OLD_FILE_NAMING
 extern int smgrblindwrt(int16 which, char *dbname, char *relname,
 			 Oid dbid, Oid relid,
 			 BlockNumber blkno, char *buffer,
 			 bool dofsync);
-extern int	smgrmarkdirty(int16 which, Relation reln, BlockNumber blkno);
 extern int smgrblindmarkdirty(int16 which, char *dbname, char *relname,
 				   Oid dbid, Oid relid,
 				   BlockNumber blkno);
+#else
+extern int smgrblindwrt(int16 which, RelFileNode rnode,
+						BlockNumber blkno, char *buffer, bool dofsync);
+extern int smgrblindmarkdirty(int16 which, RelFileNode rnode,
+						BlockNumber blkno);
+#endif
+extern int	smgrmarkdirty(int16 which, Relation reln, BlockNumber blkno);
 extern int	smgrnblocks(int16 which, Relation reln);
 extern int	smgrtruncate(int16 which, Relation reln, int nblocks);
 extern int	smgrcommit(void);
@@ -62,12 +70,18 @@ extern int	mdclose(Relation reln);
 extern int	mdread(Relation reln, BlockNumber blocknum, char *buffer);
 extern int	mdwrite(Relation reln, BlockNumber blocknum, char *buffer);
 extern int	mdflush(Relation reln, BlockNumber blocknum, char *buffer);
+extern int	mdmarkdirty(Relation reln, BlockNumber blkno);
+#ifdef OLD_FILE_NAMING
 extern int mdblindwrt(char *dbname, char *relname, Oid dbid, Oid relid,
 		   BlockNumber blkno, char *buffer,
 		   bool dofsync);
-extern int	mdmarkdirty(Relation reln, BlockNumber blkno);
 extern int mdblindmarkdirty(char *dbname, char *relname, Oid dbid, Oid relid,
 				 BlockNumber blkno);
+#else
+extern int mdblindwrt(RelFileNode rnode, BlockNumber blkno,
+						char *buffer, bool dofsync);
+extern int mdblindmarkdirty(RelFileNode rnode, BlockNumber blkno);
+#endif
 extern int	mdnblocks(Relation reln);
 extern int	mdtruncate(Relation reln, int nblocks);
 extern int	mdcommit(void);

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.39 2000/10/02 21:45:33 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.40 2000/10/16 14:52:12 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,14 +36,23 @@ typedef struct f_smgr
 										   char *buffer);
 	int			(*smgr_flush) (Relation reln, BlockNumber blocknum,
 										   char *buffer);
+#ifdef OLD_FILE_NAMING
 	int			(*smgr_blindwrt) (char *dbname, char *relname,
 											  Oid dbid, Oid relid,
 										 BlockNumber blkno, char *buffer,
 											  bool dofsync);
+#else
+	int			(*smgr_blindwrt) (RelFileNode rnode, BlockNumber blkno, 
+										char *buffer, bool dofsync);
+#endif
 	int			(*smgr_markdirty) (Relation reln, BlockNumber blkno);
+#ifdef OLD_FILE_NAMING
 	int			(*smgr_blindmarkdirty) (char *dbname, char *relname,
 													Oid dbid, Oid relid,
 													BlockNumber blkno);
+#else
+	int			(*smgr_blindmarkdirty) (RelFileNode, BlockNumber blkno);
+#endif
 	int			(*smgr_nblocks) (Relation reln);
 	int			(*smgr_truncate) (Relation reln, int nblocks);
 	int			(*smgr_commit) (void);	/* may be NULL */
@@ -301,6 +310,7 @@ smgrflush(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
  *		this page down to stable storage in this circumstance.	The
  *		write should be synchronous if dofsync is true.
  */
+#ifdef OLD_FILE_NAMING
 int
 smgrblindwrt(int16 which,
 			 char *dbname,
@@ -331,6 +341,27 @@ smgrblindwrt(int16 which,
 
 	return status;
 }
+
+#else
+
+int
+smgrblindwrt(int16 which,
+			 RelFileNode rnode,
+			 BlockNumber blkno,
+			 char *buffer,
+			 bool dofsync)
+{
+	int			status;
+
+	status = (*(smgrsw[which].smgr_blindwrt)) (rnode, blkno, buffer, dofsync);
+
+	if (status == SM_FAIL)
+		elog(ERROR, "cannot write block %d of %u/%u blind: %m",
+			 blkno, rnode.tblNode, rnode.relNode);
+
+	return status;
+}
+#endif
 
 /*
  *	smgrmarkdirty() -- Mark a page dirty (needs fsync).
@@ -363,6 +394,7 @@ smgrmarkdirty(int16 which,
  *
  *		Just like smgrmarkdirty, except we don't have a reldesc.
  */
+#ifdef OLD_FILE_NAMING
 int
 smgrblindmarkdirty(int16 which,
 				   char *dbname,
@@ -392,6 +424,25 @@ smgrblindmarkdirty(int16 which,
 
 	return status;
 }
+
+#else
+
+int
+smgrblindmarkdirty(int16 which,
+				   RelFileNode rnode,
+				   BlockNumber blkno)
+{
+	int			status;
+
+	status = (*(smgrsw[which].smgr_blindmarkdirty)) (rnode, blkno);
+
+	if (status == SM_FAIL)
+		elog(ERROR, "cannot mark block %d of %u/%u blind: %m",
+			 blkno, rnode.tblNode, rnode.relNode);
+
+	return status;
+}
+#endif
 
 /*
  *	smgrnblocks() -- Calculate the number of POSTGRES blocks in the

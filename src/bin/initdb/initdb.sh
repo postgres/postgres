@@ -23,7 +23,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.104 2000/09/29 13:38:02 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.105 2000/10/16 14:52:21 vadim Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -414,8 +414,8 @@ fi
 #
 # CREATE TEMPLATE1 DATABASE
 
-rm -rf "$PGDATA"/base/template1 || exit_nicely
-mkdir "$PGDATA"/base/template1 || exit_nicely
+rm -rf "$PGDATA"/base/1 || exit_nicely
+mkdir "$PGDATA"/base/1 || exit_nicely
 
 if [ "$debug" = yes ]
 then
@@ -427,7 +427,7 @@ fi
 BACKENDARGS="-boot -C -F -D$PGDATA $BACKEND_TALK_ARG"
 FIRSTRUN="-boot -x -C -F -D$PGDATA $BACKEND_TALK_ARG"
 
-echo "Creating template database in $PGDATA/base/template1"
+echo "Creating template database in $PGDATA/base/1"
 [ "$debug" = yes ] && echo "Running: $PGPATH/postgres $FIRSTRUN template1"
 
 cat "$TEMPLATE1_BKI" \
@@ -435,7 +435,7 @@ cat "$TEMPLATE1_BKI" \
 | "$PGPATH"/postgres $FIRSTRUN template1 \
 || exit_nicely
 
-echo $short_version > "$PGDATA"/base/template1/PG_VERSION || exit_nicely
+echo $short_version > "$PGDATA"/base/1/PG_VERSION || exit_nicely
 
 
 ##########################################################################
@@ -450,6 +450,7 @@ then
     cat "$GLOBAL_BKI" \
     | sed -e "s/POSTGRES/$POSTGRES_SUPERUSERNAME/g" \
           -e "s/PGUID/$POSTGRES_SUPERUSERID/g" \
+          -e "s/ENCODING/$MULTIBYTEID/g" \
     | "$PGPATH"/postgres $BACKENDARGS template1 \
     || exit_nicely
 
@@ -459,20 +460,6 @@ then
     cp "$POSTGRESQL_CONF_SAMPLE" "$PGDATA"/postgresql.conf || exit_nicely
     chmod 0600 "$PGDATA"/pg_hba.conf "$PGDATA"/postgresql.conf
 
-    echo "Adding template1 database to pg_database"
-
-    echo "open pg_database" > "$TEMPFILE"
-    echo "insert (template1 $POSTGRES_SUPERUSERID $MULTIBYTEID template1)" >> $TEMPFILE
-    #echo "show" >> "$TEMPFILE"
-    echo "close pg_database" >> "$TEMPFILE"
-
-    [ "$debug" = yes ] && echo "Running: $PGPATH/postgres $BACKENDARGS template1 < $TEMPFILE"
-
-    "$PGPATH"/postgres $BACKENDARGS template1 < "$TEMPFILE"
-    # Gotta remove that temp file before exiting on error.
-    retval="$?"
-    rm -f "$TEMPFILE" || exit_nicely
-    [ "$retval" -ne 0 ] && exit_nicely
 fi
 
 

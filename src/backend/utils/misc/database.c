@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.39 2000/07/03 20:48:42 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.40 2000/10/16 14:52:19 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 
 #include "access/xact.h"
 #include "catalog/catname.h"
+#include "catalog/catalog.h"
 #include "catalog/pg_database.h"
 #include "miscadmin.h"
 #include "utils/syscache.h"
@@ -143,8 +144,17 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 	char	   *dbfname;
 	Form_pg_database tup_db;
 
+#ifdef OLD_FILE_NAMING
 	dbfname = (char *) palloc(strlen(DataDir) + 8 + strlen(DatabaseRelationName) + 2);
 	sprintf(dbfname, "%s/global/%s", DataDir, DatabaseRelationName);
+#else
+	{
+		RelFileNode	rnode;
+		rnode.tblNode = 0;
+		rnode.relNode = RelOid_pg_database;
+		dbfname = relpath(rnode);
+	}
+#endif
 
 	if ((dbfd = open(dbfname, O_RDONLY | PG_BINARY, 0)) < 0)
 		elog(FATAL, "cannot open %s: %s", dbfname, strerror(errno));

@@ -2,13 +2,17 @@
 #define RELFILENODE_H
 
 /*
- * This is temporal place holder for Relation File Node till
- * reloid.version/unique_id file naming is not implemented
+ * This is all what we need to know to find relation file.
+ * tblNode is identificator of tablespace and because of
+ * currently our tablespaces are equal to databases this is
+ * database OID. relNode is currently relation OID on creation
+ * but may be changed later if required. relNode is stored in
+ * pg_class.relfilenode.
  */
 typedef struct RelFileNode
 {
-	Oid					dbId;		/* database */
-	Oid					relId;		/* relation */
+	Oid					tblNode;		/* tablespace */
+	Oid					relNode;		/* relation */
 } RelFileNode;
 
 #endif	/* RELFILENODE_H */
