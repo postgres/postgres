@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.15 2000/12/12 05:07:58 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.16 2001/01/09 15:48:18 momjian Exp $
 -->
 
  <chapter id="sql">
@@ -1029,6 +1029,239 @@ SELECT S.SNAME, P.PNAME
       named attributes have to be equal). Finally we project out all
       columns but S.SNAME and P.PNAME. 
      </para>
+
+	 <para>
+	 Another way to perform joins is to use the SQL JOIN syntax as follows:
+	 <programlisting>
+select sname, pname from supplier
+	JOIN sells USING (sno)
+	JOIN part USING (pno);
+	</programlisting>
+	giving again:
+	<programlisting>
+ sname | pname
+-------+-------
+ Smith | Screw
+ Adams | Screw
+ Smith | Nut
+ Blake | Nut
+ Adams | Bolt
+ Blake | Bolt
+ Jones | Cam
+ Blake | Cam
+(8 rows) 
+	 </programlisting>
+	 </para>
+
+	 <para>
+	 A joined table, created using JOIN syntax, is a table reference list
+	 item that occurs in a FROM clause and before any WHERE, GROUP BY,
+	 or HAVING clause.  Other table references, including table names or
+	 other JOIN clauses, may be included in the FROM clause if separated
+	 by commas.  A JOIN of two tables is logically like any other
+	 table listed in the FROM clause.  A JOINed table can only be JOINed
+	 to additional tables in a Qualified JOIN as indicated by the
+	 elipses below.
+	 </para>
+
+    <variablelist>
+        <title>Join Types</title>
+        <varlistentry>
+            <term>CROSS JOIN</term>
+	        <listitem>
+			<cmdsynopsis>
+			    <arg choice="req"> <replaceable class="parameter">T1</replaceable> </arg>
+				<arg choice="plain">CROSS</arg>
+			    <command> JOIN </command>
+			    <arg choice="req"> <replaceable class="parameter">T2</replaceable> </arg>
+            </cmdsynopsis>
+
+			<para>
+			A cross join takes two tables T1 and T2 having N and M rows
+			respectively, and returns a joined table containing a cross
+			product, NxM, of joined rows. For each row R1 of T1, each row
+			R2 of T2 is joined with R1 to yield a joined table row JR
+			consisting of all fields in R1 and R2.
+			</para>
+			</listitem>
+		</varlistentry>
+
+		<varlistentry>
+		    <term>Qualified JOINs</term>			
+		    <listitem>
+			<cmdsynopsis>
+				<arg choice="req"> <replaceable class="parameter">T1</replaceable> </arg>
+				<arg>
+					<group>
+					<arg choice="plain"> INNER </arg>
+					<arg>
+						<group>
+						<arg> LEFT </arg>
+						<arg> RIGHT </arg>
+						<arg> FULL </arg>
+						</group>
+						<arg> OUTER </arg>
+      				</arg>
+					</group>
+     			</arg>
+				<command> JOIN </command>
+				<arg choice="req"> <replaceable class="parameter">T2</replaceable> </arg>
+				<arg choice="req">
+					<group>
+					<arg> ON <replaceable>search condition</replaceable></arg>
+					<arg> USING ( <replaceable>join column list</replaceable> ) </arg>
+					</group>
+				</arg>
+				<arg choice="plain"> ... </arg>
+			</cmdsynopsis>
+
+			<para>
+			Only the qualified JOIN types can use ON or USING clauses.  The ON clause
+			takes a <replaceable>search condition</replaceable>, which is the same
+			as in a WHERE clause.  The USING clause takes a comma-separated list of
+			column names, which the joined tables must have in common, and joins
+			the tables on those columns, resulting in a joined table having one
+			column for each common column and all of the other columns from both tables.
+			Like all SELECT queries, the <replaceable>select list</replaceable> of the
+			SELECT query, before the FROM clause, decides which columns from the joined
+			table are in the result	table returned.
+			</para>
+
+			<!-- begin join semantics -->
+			<variablelist>
+			<varlistentry>
+				<term>
+					<cmdsynopsis>
+						<arg> INNER </arg>
+						<command> JOIN </command>
+					</cmdsynopsis>
+				</term>
+				<listitem>
+				<para>
+				For each row R1 of T1, the joined table has a row for each row
+				in T2 that satisfies the join specification with R1. 
+				</para>
+				<tip>
+					<para>
+					The words INNER and OUTER are optional for all JOINs.
+					INNER is the default.  LEFT, RIGHT, and FULL are for
+					OUTER JOINs only.
+					</para>
+				</tip>
+				</listitem>
+    		</varlistentry>
+			<varlistentry>
+				<term>
+					<cmdsynopsis>
+						<arg choice="plain"> LEFT </arg>
+						<arg> OUTER </arg>
+						<command> JOIN </command>
+					</cmdsynopsis>
+     			</term>
+				<listitem>
+				<para>
+                First, an INNER JOIN is performed.
+                Then, where a row in T1 does not satisfy the join specification
+				with any row in T2, a joined row is returned with null fields in
+				columns from T2.
+				</para>
+				<tip>
+					<para>
+					The joined table unconditionally has a row for each row in T1.
+					</para>
+				</tip>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term>
+					<cmdsynopsis>
+						<arg choice="plain"> RIGHT </arg>
+						<arg> OUTER </arg>
+						<command> JOIN </command>
+      				</cmdsynopsis>
+          		</term>
+				<listitem>
+				<para>
+				Rule 1: For each row R2 of T2, the joined table has a row for each
+				row in T1 that satisfies the join specification with R2 (transposed
+				[INNER] JOIN).
+                Rule 2: Where a row in T2 does not satisfy the join specification
+				with any row in T1, a joined row is returned with null fields in
+				columns from T1.
+				</para>
+				<tip>
+					<para>
+					The joined table unconditionally has a row for each row in T2.
+					</para>
+				</tip>
+				</listitem>
+    		</varlistentry>
+			<varlistentry>
+				<term>
+					<cmdsynopsis>
+						<arg choice="plain"> FULL </arg>
+						<arg> OUTER </arg>
+						<command> JOIN </command>
+      				</cmdsynopsis>
+          		</term>
+            	<listitem>
+				<para>
+				First, a LEFT [OUTER] JOIN is performed.
+				Then, Rule 2 of a RIGHT [OUTER] JOIN is performed.
+				</para>
+				<tip>
+					<para>
+        			The joined table unconditionally has a row for every row of T1
+					and a row for every row of T2.
+					</para>
+				</tip>
+				</listitem>
+    		</varlistentry>
+			</variablelist>
+			<!-- end join semantics -->
+
+			</listitem>
+        </varlistentry>
+
+		<varlistentry>
+		    <term>NATURAL JOINs</term>
+    		<listitem>
+			<cmdsynopsis>
+				<arg choice="req"> <replaceable class="parameter">T1</replaceable> </arg>
+				<arg>
+					<arg choice="plain"> NATURAL </arg>
+					<group>
+					<arg choice="plain"> INNER </arg>
+					<arg>
+						<group>
+						<arg> LEFT </arg>
+						<arg> RIGHT </arg>
+						<arg> FULL </arg>
+						</group>
+						<arg> OUTER </arg>
+      				</arg>
+					</group>
+     			</arg>
+				<command> JOIN </command>
+				<arg choice="req"> <replaceable class="parameter">T2</replaceable> </arg>
+			</cmdsynopsis>
+
+			<para>
+			A natural join creates a joined table where every pair of matching
+			column names between the two tables are merged into one column. The
+			join specification is effectively a USING clause containing all the
+            common column names and is otherwise like a Qualified JOIN except
+			additional JOINs to the JOINed table are not permitted.
+			</para>
+			</listitem>
+		</varlistentry>
+
+		<varlistentry>
+		    <term>UNION JOIN</term>
+		    <listitem><para>Deprecated.</para></listitem>
+		</varlistentry>
+	 </variablelist>
+
     </sect3>
 
     <sect3>
