@@ -1,0 +1,81 @@
+This is an implementation of RD-tree data structure using GiST interface
+of PostgreSQL. It has built-in lossy compression - must be declared
+in index creation - with (islossy). Current implementation has index support 
+for one-dimensional array of int4's.
+All work was done by Teodor Sigaev (teodor@stack.net) and Oleg Bartunov
+(oleg@sai.msu.su). See http://www.sai.msu.su/~megera/postgres/gist
+for additional information.
+
+INSTALLATION:
+
+  gmake
+  gmake install
+  -- load functions
+  psql <database> < _int.sql 
+
+REGRESSION TEST:
+
+   gmake installcheck
+
+EXAMPLE USAGE:
+
+  create table message (mid int not null,sections int[]);
+  create table message_section_map (mid int not null,sid int not null);
+
+  -- create indices
+CREATE unique index message_key on message ( mid );
+CREATE unique index message_section_map_key2 on message_section_map (sid, mid );
+CREATE INDEX message_rdtree_idx on message using gist ( sections ) with ( islossy );
+
+  -- select some messages with section in 1 OR 2 - OVERLAP operator
+  select message.mid from message where message.sections && '{1,2}';  
+
+  -- select messages contains in sections 1 AND 2 - CONTAINS operator
+  select message.mid from message where message.sections @ '{1,2}';
+  -- the same, CONTAINED operator
+  select message.mid from message where '{1,2}' ~ message.sections;
+
+BENCHMARK:
+
+  subdirectory bench contains benchmark suite.
+  cd ./bench
+  1. createdb TEST
+  2. psql TEST < ../_int.sql
+  3. ./create_test.pl | psql TEST
+  4. ./bench.pl - perl script to benchmark queries, supports OR, AND queries
+                  with/without RD-Tree. Run script without arguments to 
+                  see availbale options.
+
+     a)test without RD-Tree (OR)
+       ./bench.pl -d TEST -s 1,2 -v
+     b)test with RD-Tree 
+       ./bench.pl -d TEST -s 1,2 -v -r
+
+BENCHMARKS:
+
+Size of table <message>: 200000
+Size of table <message_section_map>: 268538 
+
+Distribution of messages by sections:
+
+section 0: 73899 messages
+section 1: 16298 messages
+section 50: 1241 messages
+section 99: 705 messages
+
+old - without RD-Tree support,
+new - with RD-Tree
+
++----------+---------------+----------------+
+|Search set|OR, time in sec|AND, time in sec|
+|          +-------+-------+--------+-------+
+|          |  old  |  new  |   old  |  new  |
++----------+-------+-------+--------+-------+
+|         1|  1.427|  0.215|       -|      -|
++----------+-------+-------+--------+-------+
+|        99|  1.029|  0.018|       -|      -|
++----------+-------+-------+--------+-------+
+|       1,2|  1.829|  0.334|   5.654|  0.042|
++----------+-------+-------+--------+-------+
+| 1,2,50,60|  2.057|  0.359|   5.044|  0.007|
++----------+-------+-------+--------+-------+

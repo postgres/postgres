@@ -1,0 +1,64 @@
+#-------------------------------------------------------------------------
+#
+# Makefile --
+#
+#    Makefile for Enzyme Commission catalogue number type -- ec_code
+#
+#-------------------------------------------------------------------------
+
+PGDIR = ../..
+SRCDIR = $(PGDIR)/src
+
+include $(SRCDIR)/Makefile.global
+
+INCLUDE_OPT =	-I ./ \
+		-I $(SRCDIR)/ \
+		-I $(SRCDIR)/include \
+		-I $(SRCDIR)/port/$(PORTNAME)
+
+CFLAGS += $(INCLUDE_OPT) $(CFLAGS_SL)
+
+MODNAME =	_int
+OBJFILES =	$(MODNAME).o
+
+SQLDEFS =	$(MODNAME).sql
+
+MODULE =	$(MODNAME)$(DLSUFFIX)
+
+MODDIR =	$(LIBDIR)/modules
+
+SQLDIR =	$(LIBDIR)/sql
+
+all:		module sql
+
+module:		$(MODULE)
+
+sql:		$(SQLDEFS)
+
+$(MODULE):	$(OBJFILES)
+		$(CC) $(CFLAGS) -shared -o $@ $(OBJFILES)
+
+install:	$(MODULE) $(SQLDEFS) $(MODDIR) $(SQLDIR)
+		cp -p $(MODULE) $(MODDIR)/
+		strip $(MODDIR)/$(MODULE)
+		cp -p $(SQLDEFS) $(SQLDIR)/
+
+$(MODDIR):
+		mkdir -p $@
+
+$(SQLDIR):
+		mkdir -p $@
+
+%.sql: %.sql.in
+		sed "s|MODULE_PATHNAME|$(MODDIR)/$(MODULE)|" < $< > $@
+
+depend dep:
+		$(CC) -MM $(INCLUDE_OPT) *.c >depend
+
+clean:
+		rm -f $(MODULE) $(SQLDEFS) *$(DLSUFFIX)
+		rm -f *~ *# *.b *.o *.output *.tab.h $(MODNAME)parse.h $(MODNAME)parse.c $(MODNAME)scan.c 
+
+ifeq (depend,$(wildcard depend))
+include depend
+endif
