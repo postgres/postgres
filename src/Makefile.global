@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.19.2.14 1996/10/25 09:33:44 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.19.2.15 1996/10/25 19:57:43 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -60,7 +60,7 @@
 #  make sure that you have no whitespaces after the PORTNAME setting
 #  or the makefiles can get confused
 # 
-PORTNAME=	UNDEFINED
+PORTNAME=	BSD44_derived
 
 # SRCDIR specifies where the source files are. 
 SRCDIR=		/usr/local/postgres95/src
