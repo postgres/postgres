@@ -1,17 +1,16 @@
-# Traditional Chinese translation file for pg_controldata
-# 2003-11-25 Zhenbang Wei <forth@zbwei.net>
-# 
+# Traditional Chinese translation file for pg_controldata.
+# 2004-07-30 Zhenbang Wei <forth@zbwei.net>
+#
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 7.4\n"
-"POT-Creation-Date: 2003-11-25 04:33-0400\n"
-"PO-Revision-Date: 2003-11-25 09:26+0800\n"
+"Project-Id-Version: PostgreSQL 7.5\n"
+"POT-Creation-Date: 2004-07-29 19:15-0300\n"
+"PO-Revision-Date: 2004-07-30 11:06+0800\n"
 "Last-Translator: Zhenbang Wei <forth@zbwei.net>\n"
 "Language-Team: Zhenbang Wei <forth@zbwei.net>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=Big5\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Report-Msgid-Bugs-To: \n"
 
 #: pg_controldata.c:28
 #, c-format
@@ -19,7 +18,7 @@ msgid ""
 "%s displays control information of a PostgreSQL database cluster.\n"
 "\n"
 msgstr ""
-"%s 顯示PostgreSQL資料庫叢集控制訊息。\n"
+"%s 顯示PostgreSQL資料庫cluster控制資訊。\n"
 "\n"
 
 #: pg_controldata.c:32
@@ -49,12 +48,12 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"如果沒有指定資料存放目錄，則使用環境變數PGDATA。\n"
+"如果沒有指定資料目錄就會使用環境變數PGDATA。\n"
 "\n"
 
 #: pg_controldata.c:42
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-msgstr "將錯誤回報至<pgsql-bugs@postgresql.org>.\n"
+msgstr "回報錯誤至<pgsql-bugs@postgresql.org>。\n"
 
 #: pg_controldata.c:52
 msgid "starting up"
@@ -80,27 +79,27 @@ msgstr "正在運作"
 msgid "unrecognized status code"
 msgstr "無法識別的狀態碼"
 
-#: pg_controldata.c:107
+#: pg_controldata.c:104
 #, c-format
 msgid "%s: no data directory specified\n"
-msgstr "%s: 沒有指定資料存放目錄\n"
+msgstr "%s: 沒有指定資料目錄\n"
 
-#: pg_controldata.c:108
+#: pg_controldata.c:105
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "用\"%s --help\"顯示更多訊息。\n"
+msgstr "執行\"%s --help\"顯示更多資訊。\n"
 
-#: pg_controldata.c:116
+#: pg_controldata.c:113
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s: 無法開啟檔案\"%s\"以讀取: %s\n"
 
-#: pg_controldata.c:123
+#: pg_controldata.c:120
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
 msgstr "%s: 無法讀取檔案\"%s\": %s\n"
 
-#: pg_controldata.c:137
+#: pg_controldata.c:134
 msgid ""
 "WARNING: Calculated CRC checksum does not match value stored in file.\n"
 "Either the file is corrupt, or it has a different layout than this program\n"
@@ -112,120 +111,131 @@ msgstr ""
 "的結果是不可信賴的。\n"
 "\n"
 
-#: pg_controldata.c:150
-#, c-format
-msgid "pg_control version number:            %u\n"
-msgstr "pg_control 版本:                      %u\n"
-
-#: pg_controldata.c:151
-#, c-format
-msgid "Catalog version number:               %u\n"
-msgstr "Catalog 版本:                         %u\n"
-
-#: pg_controldata.c:152
-#, c-format
-msgid "Database cluster state:               %s\n"
-msgstr "資料庫叢集狀態:                         %s\n"
-
 #: pg_controldata.c:153
 #, c-format
-msgid "pg_control last modified:             %s\n"
-msgstr "pg_control最後修改:                  %s\n"
+msgid "pg_control version number:            %u\n"
+msgstr "pg_control版本號碼:                   %u\n"
 
 #: pg_controldata.c:154
+#, c-format
+msgid "Catalog version number:               %u\n"
+msgstr "catalog版本號碼:                      %u\n"
+
+#: pg_controldata.c:155
+#, c-format
+msgid "Database system identifier:           %s\n"
+msgstr "資料庫系統識別名稱:                   %s\n"
+
+#: pg_controldata.c:156
+#, c-format
+msgid "Database cluster state:               %s\n"
+msgstr "資料庫cluster狀態:                    %s\n"
+
+#: pg_controldata.c:157
+#, c-format
+msgid "pg_control last modified:             %s\n"
+msgstr "pg_control最後修改時間:               %s\n"
+
+#: pg_controldata.c:158
 #, c-format
 msgid "Current log file ID:                  %u\n"
 msgstr "目前的日誌檔ID:                       %u\n"
 
-#: pg_controldata.c:155
+#: pg_controldata.c:159
 #, c-format
 msgid "Next log file segment:                %u\n"
-msgstr "下一個日誌檔案區段:                     %u\n"
-
-#: pg_controldata.c:156
-#, c-format
-msgid "Latest checkpoint location:           %X/%X\n"
-msgstr "最新的檢查點位置:                       %X/%X\n"
-
-#: pg_controldata.c:158
-#, c-format
-msgid "Prior checkpoint location:            %X/%X\n"
-msgstr "前一個檢查點位置:                       %X/%X\n"
+msgstr "下一個日誌檔案區段:                   %u\n"
 
 #: pg_controldata.c:160
 #, c-format
-msgid "Latest checkpoint's REDO location:    %X/%X\n"
-msgstr "最新檢查點的REDO位置:               %X/%X\n"
+msgid "Latest checkpoint location:           %X/%X\n"
+msgstr "最新的檢查點位置:                     %X/%X\n"
 
 #: pg_controldata.c:162
 #, c-format
-msgid "Latest checkpoint's UNDO location:    %X/%X\n"
-msgstr "最新檢查點的UNDO位置:               %X/%X\n"
+msgid "Prior checkpoint location:            %X/%X\n"
+msgstr "前一個檢查點位置:                     %X/%X\n"
 
 #: pg_controldata.c:164
 #, c-format
-msgid "Latest checkpoint's StartUpID:        %u\n"
-msgstr "最新檢查點的StartUpID:               %u\n"
-
-#: pg_controldata.c:165
-#, c-format
-msgid "Latest checkpoint's NextXID:          %u\n"
-msgstr "最新檢查點的NextXID:                 %u\n"
+msgid "Latest checkpoint's REDO location:    %X/%X\n"
+msgstr "最新的檢查點REDO位置:                 %X/%X\n"
 
 #: pg_controldata.c:166
 #, c-format
-msgid "Latest checkpoint's NextOID:          %u\n"
-msgstr "最新檢查點的NextOID:                 %u\n"
-
-#: pg_controldata.c:167
-#, c-format
-msgid "Time of latest checkpoint:            %s\n"
-msgstr "最新檢查點的時間:                     %s\n"
+msgid "Latest checkpoint's UNDO location:    %X/%X\n"
+msgstr "最新的檢查點UNDO位置:                 %X/%X\n"
 
 #: pg_controldata.c:168
 #, c-format
-msgid "Database block size:                  %u\n"
-msgstr "資料庫區塊大小:                         %u\n"
+msgid "Latest checkpoint's TimeLineID:       %u\n"
+msgstr "最新的檢查點TimeLineID:               %u\n"
 
 #: pg_controldata.c:169
 #, c-format
-msgid "Blocks per segment of large relation: %u\n"
-msgstr "大型關聯每一段的區塊數:                     %u\n"
+msgid "Latest checkpoint's NextXID:          %u\n"
+msgstr "最新的檢查點NextXID:                  %u\n"
 
 #: pg_controldata.c:170
+#, c-format
+msgid "Latest checkpoint's NextOID:          %u\n"
+msgstr "最新的檢查點NextOID:                  %u\n"
+
+#: pg_controldata.c:171
+#, c-format
+msgid "Time of latest checkpoint:            %s\n"
+msgstr "最新的檢查點時間:                     %s\n"
+
+#: pg_controldata.c:172
+#, c-format
+msgid "Database block size:                  %u\n"
+msgstr "資料庫區塊大小:                       %u\n"
+
+#: pg_controldata.c:173
+#, c-format
+msgid "Blocks per segment of large relation: %u\n"
+msgstr "large relation每個區段的區塊數:       %u\n"
+
+#: pg_controldata.c:174
+#, c-format
+msgid "Bytes per WAL segment:                %u\n"
+msgstr "每個WAL區段的位元組數:                %u\n"
+
+#: pg_controldata.c:175
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "識別字的最大長度:                     %u\n"
 
-#: pg_controldata.c:171
+#: pg_controldata.c:176
 #, c-format
 msgid "Maximum number of function arguments: %u\n"
 msgstr "函式參數的最大個數:                   %u\n"
 
-#: pg_controldata.c:172
+#: pg_controldata.c:177
 #, c-format
 msgid "Date/time type storage:               %s\n"
-msgstr "日期/時間類型儲存:                   %s\n"
+msgstr "日期/時間儲存類型:                    %s\n"
 
-#: pg_controldata.c:173
+#: pg_controldata.c:178
 msgid "64-bit integers"
 msgstr "64位元整數"
 
-#: pg_controldata.c:173
+#: pg_controldata.c:178
 msgid "floating-point numbers"
 msgstr "浮點數"
 
-#: pg_controldata.c:174
+#: pg_controldata.c:179
 #, c-format
 msgid "Maximum length of locale name:        %u\n"
-msgstr "區域(locale)名稱的最大長度:                   %u\n"
+msgstr "locale名稱的最大長度:                 %u\n"
 
-#: pg_controldata.c:175
+#: pg_controldata.c:180
 #, c-format
 msgid "LC_COLLATE:                           %s\n"
 msgstr "LC_COLLATE:                           %s\n"
 
-#: pg_controldata.c:176
+#: pg_controldata.c:181
 #, c-format
 msgid "LC_CTYPE:                             %s\n"
 msgstr "LC_CTYPE:                             %s\n"
+

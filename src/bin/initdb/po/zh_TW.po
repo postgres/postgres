@@ -1,0 +1,477 @@
+# Traditional Chinese translation for initdb.
+# 2004-07-30 Zhenbang Wei <forth@zbwei.net>
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 7.5\n"
+"POT-Creation-Date: 2004-07-29 01:10-0300\n"
+"PO-Revision-Date: 2004-07-30 10:21+0800\n"
+"Last-Translator: Zhenbang Wei <forth@zbwei.net>\n"
+"Language-Team: Zhenbang Wei <forth@zbwei.net>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=Big5\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: initdb.c:223
+#: initdb.c:237
+#, c-format
+msgid "%s: out of memory\n"
+msgstr "%s: 記憶體用盡\n"
+
+#: initdb.c:343
+#: initdb.c:1305
+#, c-format
+msgid "%s: could not open file \"%s\" for reading: %s\n"
+msgstr "%s: 無法開啟檔案\"%s\"讀取資料: %s\n"
+
+#: initdb.c:401
+#, c-format
+msgid "%s: could not open file \"%s\" for writing: %s\n"
+msgstr "%s: 無法開啟檔案\"%s\"寫入資料: %s\n"
+
+#: initdb.c:529
+#: initdb.c:538
+#: initdb.c:546
+#, c-format
+msgid "%s: failed\n"
+msgstr "%s: 失敗\n"
+
+#: initdb.c:535
+#, c-format
+msgid "%s: removing data directory \"%s\"\n"
+msgstr "%s: 移除資料目錄 \"%s\"\n"
+
+#: initdb.c:543
+#, c-format
+msgid "%s: removing contents of data directory \"%s\"\n"
+msgstr "%s: 移除資料目錄 \"%s\" 的內容\n"
+
+#: initdb.c:554
+#, c-format
+msgid "%s: data directory \"%s\" not removed at user's request\n"
+msgstr "%s: 無法依使用者的要求移除資料目錄 \"%s\"\n"
+
+#: initdb.c:580
+#, c-format
+msgid ""
+"%s: cannot be run as root\n"
+"Please log in (using, e.g., \"su\") as the (unprivileged) user that will\n"
+"own the server process.\n"
+msgstr ""
+"%s: 無法以root身份執行\n"
+"請以將會擁有伺服器行程的非特權使用者登入(例如用\"su\")。\n"
+
+#: initdb.c:631
+#, c-format
+msgid "%s: \"%s\" is not a valid server encoding name\n"
+msgstr "%s: \"%s\" 不是有效的伺服器編碼名稱\n"
+
+#: initdb.c:786
+#, c-format
+msgid "%s: warning: encoding mismatch\n"
+msgstr "%s: 警告：編碼不符\n"
+
+#: initdb.c:788
+#, c-format
+msgid ""
+"The encoding you selected (%s) and the encoding that the selected\n"
+"locale uses (%s) are not known to match.  This may lead to\n"
+"misbehavior in various character string processing functions.  To fix\n"
+"this situation, rerun %s and either do not specify an encoding\n"
+"explicitly, or choose a matching combination.\n"
+msgstr ""
+"你選擇的編碼(%s)和locale使用的編碼(%s)不符，這樣可能會讓文\n"
+"字處理函式出現異常行為，要修正這個問題，請重新執行 %s 且\n"
+"不指定使用的編碼或是指定正確的編碼組合。\n"
+
+#: initdb.c:940
+#, c-format
+msgid ""
+"%s: file \"%s\" does not exist\n"
+"This means you have a corrupted installation or identified\n"
+"the wrong directory with the invocation option -L.\n"
+msgstr ""
+"%s: 檔案 \"%s\" 不存在\n"
+"這表示你的安裝可能發生錯誤，或是指定了錯誤的\n"
+"目錄給選項 -L。\n"
+
+#: initdb.c:1005
+msgid "selecting default max_connections ... "
+msgstr "選擇預設的 max_connections ..."
+
+#: initdb.c:1041
+msgid "selecting default shared_buffers ... "
+msgstr "選擇預設的 shared_buffers ..."
+
+#: initdb.c:1074
+msgid "creating configuration files ... "
+msgstr "建立設定檔..."
+
+#: initdb.c:1152
+#, c-format
+msgid "creating template1 database in %s/base/1 ... "
+msgstr "建立 template1 資料庫於 %s/base/1 ... "
+
+#: initdb.c:1168
+#, c-format
+msgid ""
+"%s: input file \"%s\" does not belong to PostgreSQL %s\n"
+"Check your installation or specify the correct path using the option -L.\n"
+msgstr ""
+"%s: 輸入檔 \"%s\" 不屬於 PostgreSQL %s\n"
+"請檢查你的安裝或用 -L 選項指定正確的路徑。\n"
+
+#: initdb.c:1244
+msgid "initializing pg_shadow ... "
+msgstr "初始化pg_shadow..."
+
+#: initdb.c:1280
+msgid "Enter new superuser password: "
+msgstr "輸入新的管理者密碼:"
+
+#: initdb.c:1281
+msgid "Enter it again: "
+msgstr "再輸入一次:"
+
+#: initdb.c:1284
+msgid "Passwords didn't match.\n"
+msgstr "密碼不符。\n"
+
+#: initdb.c:1311
+#, c-format
+msgid "%s: could not read password from file \"%s\": %s\n"
+msgstr "%s: 無法從檔案 \"%s\" 讀取密碼: %s\n"
+
+#: initdb.c:1324
+msgid "setting password ... "
+msgstr "設定密碼..."
+
+#: initdb.c:1348
+#, c-format
+msgid "%s: The password file was not generated. Please report this problem.\n"
+msgstr "%s: 無法產生密碼檔，請回報這個錯誤。\n"
+
+#: initdb.c:1378
+msgid "enabling unlimited row size for system tables ... "
+msgstr "啟用系統資料表無行大小限制 ..."
+
+#: initdb.c:1451
+msgid "initializing pg_depend ... "
+msgstr "初始化pg_depend..."
+
+#: initdb.c:1479
+msgid "creating system views ... "
+msgstr "建立系統檢視..."
+
+#: initdb.c:1516
+msgid "loading pg_description ... "
+msgstr "載入pg_description..."
+
+#: initdb.c:1564
+msgid "creating conversions ... "
+msgstr "建立 conversions ... "
+
+#: initdb.c:1620
+msgid "setting privileges on built-in objects ... "
+msgstr "設定內建物件的權限 ... "
+
+#: initdb.c:1678
+msgid "creating information schema ... "
+msgstr "建立 information schema ... "
+
+#: initdb.c:1740
+msgid "vacuuming database template1 ... "
+msgstr "重整資料庫 template1 ..."
+
+#: initdb.c:1796
+msgid "copying template1 to template0 ... "
+msgstr "複製 template1 至 template0 ..."
+
+#: initdb.c:1853
+msgid "caught signal\n"
+msgstr "捕捉到信號\n"
+
+#: initdb.c:1858
+msgid "could not write to child process\n"
+msgstr "無法寫至子行程\n"
+
+#: initdb.c:1864
+msgid "ok\n"
+msgstr "成功\n"
+
+#: initdb.c:1894
+#, c-format
+msgid "%s: invalid locale name \"%s\"\n"
+msgstr "%s: 無效的locale名稱 \"%s\"\n"
+
+#: initdb.c:1961
+#, c-format
+msgid ""
+"%s initializes a PostgreSQL database cluster.\n"
+"\n"
+msgstr ""
+"%s 初始化PostgreSQL資料庫cluster.\n"
+"\n"
+
+#: initdb.c:1962
+msgid "Usage:\n"
+msgstr "用法:\n"
+
+#: initdb.c:1963
+#, c-format
+msgid "  %s [OPTION]... [DATADIR]\n"
+msgstr "  %s [選項]... [資料目錄]\n"
+
+#: initdb.c:1964
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"選項:\n"
+
+#: initdb.c:1965
+msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
+msgstr " [-D, --pgdata=]DATADIR     資料庫cluster的目錄\n"
+
+#: initdb.c:1966
+msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
+msgstr "  -E, --encoding=ENCODING   新資料庫的預設編碼\n"
+
+#: initdb.c:1967
+msgid "  --locale=LOCALE           initialize database cluster with given locale\n"
+msgstr "  --locale=LOCALE           以指定的locale初始化資料庫cluster\n"
+
+#: initdb.c:1968
+msgid ""
+"  --lc-collate, --lc-ctype, --lc-messages=LOCALE\n"
+"  --lc-monetary, --lc-numeric, --lc-time=LOCALE\n"
+"                            initialize database cluster with given locale\n"
+"                            in the respective category (default taken from\n"
+"                            environment)\n"
+msgstr ""
+"  --lc-collate, --lc-ctype, --lc-messages=LOCALE\n"
+"  --lc-monetary, --lc-numeric, --lc-time=LOCALE\n"
+"                            指定不同種類的locale以初始化資料庫cluster\n"
+"                            (預設從環境變數取得)\n"
+
+#: initdb.c:1973
+msgid "  --no-locale               equivalent to --locale=C\n"
+msgstr "  --no-locale               功能同 --locale=C\n"
+
+#: initdb.c:1974
+msgid "  -U, --username=NAME       database superuser name\n"
+msgstr "  -U, --username=NAME       資料庫管理者名稱\n"
+
+#: initdb.c:1975
+msgid "  -W, --pwprompt            prompt for a password for the new superuser\n"
+msgstr "  -W, --pwprompt            詢問新管理者的密碼\n"
+
+#: initdb.c:1976
+msgid "  --pwfile=filename         read password for the new superuser from file\n"
+msgstr "  --pwfile=filename         從檔案讀取新管理者的密碼\n"
+
+#: initdb.c:1977
+msgid "  -?, --help                show this help, then exit\n"
+msgstr "  -?, --help                顯示這份說明然後結束\n"
+
+#: initdb.c:1978
+msgid "  -V, --version             output version information, then exit\n"
+msgstr "  -V, --version             顯示版本資訊然後結束\n"
+
+#: initdb.c:1979
+msgid ""
+"\n"
+"Less commonly used options:\n"
+msgstr ""
+"\n"
+"非常用選項:\n"
+
+#: initdb.c:1980
+msgid "  -d, --debug               generate lots of debugging output\n"
+msgstr "  -d, --debug               顯示除錯訊息\n"
+
+#: initdb.c:1981
+msgid "  -s, --show                show internal settings\n"
+msgstr "  -s, --show                顯示內部設定\n"
+
+#: initdb.c:1982
+msgid "  -L DIRECTORY              where to find the input files\n"
+msgstr "  -L DIRECTORY              where to find the input files\n"
+
+#: initdb.c:1983
+msgid "  -n, --noclean             do not clean up after errors\n"
+msgstr "  -n, --noclean             發生錯誤時不做清理\n"
+
+#: initdb.c:1984
+msgid ""
+"\n"
+"If the data directory is not specified, the environment variable PGDATA\n"
+"is used.\n"
+msgstr ""
+"\n"
+"如果沒有指定資料目錄就會使用環境變數PGDATA。\n"
+
+#: initdb.c:1986
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"回報錯誤給 <pgsql-bugs@postgresql.org>。\n"
+
+#: initdb.c:2073
+msgid "Running in debug mode.\n"
+msgstr "以除錯模式執行。\n"
+
+#: initdb.c:2077
+msgid "Running in noclean mode.  Mistakes will not be cleaned up.\n"
+msgstr "以noclean模式執行，發生錯誤時不會清理。\n"
+
+#: initdb.c:2113
+#: initdb.c:2130
+#: initdb.c:2298
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "執行\"%s --help\"取得更多資訊。\n"
+
+#: initdb.c:2128
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: 命令列參數過多(第一個是 \"%s\")\n"
+
+#: initdb.c:2136
+#, c-format
+msgid "%s: you cannot specify both password prompt and password file\n"
+msgstr "%s: 不能同時使用詢問密碼和指定密碼檔\n"
+
+#: initdb.c:2151
+#, c-format
+msgid ""
+"%s: no data directory specified\n"
+"You must identify the directory where the data for this database system\n"
+"will reside.  Do this with either the invocation option -D or the\n"
+"environment variable PGDATA.\n"
+msgstr ""
+"%s: 未指定資料目錄\n"
+"你必須指定資料庫系統存放資料的目錄，你可以使用 -D 選項\n"
+"或是環境變數PGDATA。\n"
+
+#: initdb.c:2177
+#, c-format
+msgid ""
+"The program \"postgres\" is needed by %s but was not found in the same directory as \"%s\".\n"
+"Check your installation.\n"
+msgstr ""
+"%s 需要程式 \"postgres\"，但是在與\"%s\"相同的目錄中找不到。\n"
+"請檢查你的安裝。\n"
+
+#: initdb.c:2183
+#, c-format
+msgid ""
+"The program \"postgres\" was found by %s but was not the same version as \"%s\".\n"
+"Check your installation.\n"
+msgstr ""
+"%s 已找到程式\"postgres\"，但是與\"%s\"的版本不符。\n"
+"請檢查你的安裝。\n"
+
+#: initdb.c:2204
+#, c-format
+msgid "%s: could not determine valid short version string\n"
+msgstr "%s: 無法取得短版本字串\n"
+
+#: initdb.c:2257
+#, c-format
+msgid ""
+"The files belonging to this database system will be owned by user \"%s\".\n"
+"This user must also own the server process.\n"
+"\n"
+msgstr ""
+"使用者\"%s\"將會成為資料庫系統檔案和伺服器行程的擁有者。\n"
+"\n"
+
+#: initdb.c:2268
+#, c-format
+msgid "The database cluster will be initialized with locale %s.\n"
+msgstr "資料庫cluster會以locale %s初始化。\n"
+
+#: initdb.c:2272
+#, c-format
+msgid ""
+"The database cluster will be initialized with locales\n"
+"  COLLATE:  %s\n"
+"  CTYPE:    %s\n"
+"  MESSAGES: %s\n"
+"  MONETARY: %s\n"
+"  NUMERIC:  %s\n"
+"  TIME:     %s\n"
+msgstr ""
+"資料庫cluster會以下列locale初始化\n"
+"  COLLATE:  %s\n"
+"  CTYPE:    %s\n"
+"  MESSAGES: %s\n"
+"  MONETARY: %s\n"
+"  NUMERIC:  %s\n"
+"  TIME:     %s\n"
+
+#: initdb.c:2296
+#, c-format
+msgid "%s: could not find suitable encoding for locale \"%s\"\n"
+msgstr "%s: 找不到適合的編碼給locale \"%s\"\n"
+
+#: initdb.c:2297
+#, c-format
+msgid "Rerun %s with the -E option.\n"
+msgstr "用 -E 選項重新執行 %s。\n"
+
+#: initdb.c:2304
+#, c-format
+msgid "The default database encoding has accordingly been set to %s.\n"
+msgstr "預設資料庫編碼被設為 %s。\n"
+
+#: initdb.c:2345
+#, c-format
+msgid "creating directory %s ... "
+msgstr "建立目錄 %s ..."
+
+#: initdb.c:2359
+#, c-format
+msgid "fixing permissions on existing directory %s ... "
+msgstr "修正現有目錄 %s 的權限..."
+
+#: initdb.c:2377
+#, c-format
+msgid ""
+"%s: directory \"%s\" exists but is not empty\n"
+"If you want to create a new database system, either remove or empty\n"
+"the directory \"%s\" or run %s\n"
+"with an argument other than \"%s\".\n"
+msgstr ""
+"%s: 目錄\"%s\"不是空的\n"
+"如果你想建立新的資料庫系統，請將目錄\"%s\"刪除或清空，\n"
+"或是在執行 %s 時加上\"%s\"以外的參數。\n"
+
+#: initdb.c:2394
+#, c-format
+msgid "creating directory %s/%s ... "
+msgstr "建立目錄 %s/%s ..."
+
+#: initdb.c:2452
+#, c-format
+msgid ""
+"\n"
+"Success. You can now start the database server using:\n"
+"\n"
+"    %s%s%s/postmaster -D %s%s%s\n"
+"or\n"
+"    %s%s%s/pg_ctl -D %s%s%s -l logfile start\n"
+"\n"
+msgstr ""
+"\n"
+"執行成功，現在你可以用下列命令啟動資料庫伺服器:\n"
+"\n"
+"    %s%s%s/postmaster -D %s%s%s\n"
+"或\n"
+"    %s%s%s/pg_ctl -D %s%s%s -l logfile start\n"
+"\n"
+
