@@ -7,13 +7,13 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.12 1997/01/16 15:28:21 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.13 1997/02/06 02:31:05 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ../..
-include ../Makefile.global
 include ../../Makefile.global
+include ../Makefile.global
 
 OBJS= pg_dump.o common.o
 

@@ -7,13 +7,13 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/Makefile,v 1.2 1996/11/12 06:46:54 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/Makefile,v 1.3 1997/02/06 02:31:52 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ../..
-include ../Makefile.global
 include ../../Makefile.global
+include ../Makefile.global
 
 OBJS= pg_version.o ../../utils/version.o
 
