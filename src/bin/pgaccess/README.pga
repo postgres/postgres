@@ -22,7 +22,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 ---------------------------------------------------------------------------
 
 
-PGACCESS 0.91 1 November 1998
+PGACCESS 0.93 10 December 1998
 ================================
 I dedicate this program to my little daughters Ana-Maria and Emilia and to my
 wife for their understanding. I hope they will forgive me for spending so many
@@ -55,8 +55,17 @@ loadable object file, because libpgtcl is a collection of object files.
 
 Under Linux, this is called libpgtcl.so.  You will find a pre-compiled
 copy of it for Linux i386 systems at : http://www.flex.ro/pgaccess. 
-Just copy libpgtcl.so into your system library director (/usr/lib) and
-go for it.
+Just copy libpgtcl.so into your system library directory /usr/lib or
+/lib and go for it.
+
+Under Windows, copy libpgtcl.dll and libpq.dll into C:\WINDOWS\SYSTEM directory.
+Make sure you have Tcl/Tk at least version 8.0.0 for Microsoft Windows 95 & NT.
+PgAccess has been checked with Tcl/Tk 8.0.4 version on Windows95 and Windows98
+platforms.
+
+Tcl/Tk 8.0.4 for Windows95 & NT can be downloaded from 
+ftp://ftp.scriptics.com/pub/tcl/tcl8_0/tcl804.exe
+It is 1833712 bytes long.
 
 
 3.How to run it?
@@ -79,10 +88,10 @@ pgaccess.tcl file.
 
 - Opens any database on a specified host at the specified port, username and password
 - Perform vacuum command.
-- Saves preferences in ~/pgaccessrc file
+- Saves preferences in ~/.pgaccessrc file
 
 Tables
-- opening tables for viewing, max 200 records
+- opening multiple tables for viewing, max n records (configurable)
 - column resizing by dragging the vertical grid lines
 - text will wrap in cells now
 - dynamic row height when editing
@@ -135,7 +144,6 @@ Scripts
 
 5.What it should do in the future ?
 
-- table design (add new fields, renaming, etc)
 - sequence and function renaming
 - more powerful report generator and viewer
 - help on line
