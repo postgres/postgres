@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.48 2004/03/23 02:47:35 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.49 2004/03/23 06:09:00 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -179,7 +179,7 @@ PostgreSQL documentation
         <command>postmaster</command>.  Defaults to listening only on
         <systemitem class="systemname">localhost</systemitem>.
         Specifying this option is equivalent to setting the <xref
-        linkend="guc-listen-addresses">.
+        linkend="guc-listen-addresses"> configuration parameter.
        </para>
       </listitem>
      </varlistentry>
