@@ -1,0 +1,26 @@
+#!/bin/sh
+#
+# PostgreSQL Build Script
+#
+if echo '\c' | grep -s c >/dev/null 2>&1
+then
+        ECHO_N="echo -n"
+        ECHO_C=""
+else
+        ECHO_N="echo"
+        ECHO_C='\c'
+fi
+
+$ECHO_N "Additional directories to search for library files []: $ECHO_C"
+read a
+if [ "$a." = "." ]
+then
+        ADD_LIB_DIRS=
+else
+        ADD_LIB_DIRS=`echo "$a" | sed 's@  *@ @g; s@^\([^ ]\)@-L\1@; s@ \([^ ]\)@ -L\1@g'`
+        LDFLAGS=$ADD_LIB_DIRS
+        export LDFLAGS
+fi
+
+./configure
+

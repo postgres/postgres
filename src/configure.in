@@ -103,12 +103,7 @@ AC_PATH_PROG(xargs, xargs)
 AC_PATH_PROG(ipcs, ipcs)
 AC_PATH_PROG(ipcrm, ipcrm)
 
-dnl Checks for libraries.
-dnl readline (used in psql if present)
-dnl   if the library readline is present,
-dnl   set the shell variable USE_READLINE
-dnl   to have the value  USE_READLINE=true
-dnl   and substitute it into the makefiles
+AC_CHECK_LIB(tk41,     main)
 AC_CHECK_LIB(readline, main)
 AC_CHECK_LIB(readline, write_history, AC_DEFINE(HAVE_HISTORY))
 AC_CHECK_LIB(history,  main)
