@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.24 1997/09/18 14:41:56 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.25 1997/09/26 20:05:47 momjian Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -919,7 +919,7 @@ gettape()
 	 * now, copy template with final null into palloc'd space
 	 */
 
-	memmove(tp->tl_name, uniqueName, strlen(uniqueName));
+	strNcpy(tp->tl_name, uniqueName, MAXPGPATH-1);
 
 
 	file = AllocateFile(tp->tl_name, "w+");
