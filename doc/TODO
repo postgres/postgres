@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Aug  6 11:12:36 EDT 2004
+Last updated:		Fri Aug  6 11:24:17 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -539,6 +539,7 @@ Dependency Checking
 * Flush cached query plans when the dependent objects change
 * -Use dependency information to dump data in proper order
 * -Have pg_dump -c clear the database using dependency information
+* Track dependencies in function bodies and recompile/invalidate
 
 
 Exotic Features
