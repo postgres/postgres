@@ -66,7 +66,7 @@
 # Postgres username.
 
 # 
-# For backwards compatibility, Postgres also accepts pre-Version 2 records,
+# For backwards compatibility, PostgreSQL also accepts pre-Version 6 records,
 # which look like:
 # 
 #   all         127.0.0.1    0.0.0.0
