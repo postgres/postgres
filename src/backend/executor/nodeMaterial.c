@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.30.2.1 2000/09/08 02:11:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.30.2.2 2000/10/06 01:28:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,12 +38,6 @@
  *		materialized, the first tuple is then returned.  Successive
  *		calls to ExecMaterial return successive tuples from the temp
  *		relation.
- *
- *		Initial State:
- *
- *		ExecMaterial assumes the temporary relation has been
- *		created and opened by ExecInitMaterial during the prior
- *		InitPlan() phase.
  *
  * ----------------------------------------------------------------
  */
@@ -78,24 +72,53 @@ ExecMaterial(Material *node)
 
 	if (matstate->mat_Flag == false)
 	{
+		TupleDesc	tupType;
+
 		/* ----------------
-		 *	set all relations to be scanned in the forward direction
-		 *	while creating the temporary relation.
+		 *	get type information needed for ExecCreatR
 		 * ----------------
 		 */
-		estate->es_direction = ForwardScanDirection;
+		tupType = ExecGetScanType(&matstate->csstate);
+
+		/* ----------------
+		 *	ExecCreatR wants its second argument to be an object id of
+		 *	a relation in the range table or a _NONAME_RELATION_ID
+		 *	indicating that the relation is not in the range table.
+		 *
+		 *	In the second case ExecCreatR creates a temp relation.
+		 *	(currently this is the only case we support -cim 10/16/89)
+		 * ----------------
+		 */
+		/* ----------------
+		 *	create the temporary relation
+		 * ----------------
+		 */
+		tempRelation = ExecCreatR(tupType, _NONAME_RELATION_ID_);
 
 		/* ----------------
 		 *	 if we couldn't create the temp relation then
 		 *	 we print a warning and return NULL.
 		 * ----------------
 		 */
-		tempRelation = matstate->mat_TempRelation;
 		if (tempRelation == NULL)
 		{
 			elog(DEBUG, "ExecMaterial: temp relation is NULL! aborting...");
 			return NULL;
 		}
+
+		/* ----------------
+		 *	save the relation descriptor in the sortstate
+		 * ----------------
+		 */
+		matstate->mat_TempRelation = tempRelation;
+		matstate->csstate.css_currentRelation = NULL;
+
+		/* ----------------
+		 *	set all relations to be scanned in the forward direction
+		 *	while creating the temporary relation.
+		 * ----------------
+		 */
+		estate->es_direction = ForwardScanDirection;
 
 		/* ----------------
 		 *	 retrieve tuples from the subplan and
@@ -134,9 +157,6 @@ ExecMaterial(Material *node)
 										 NULL); /* scan keys */
 		matstate->csstate.css_currentRelation = currentRelation;
 		matstate->csstate.css_currentScanDesc = currentScanDesc;
-
-		ExecAssignScanType(&matstate->csstate,
-						   RelationGetDescr(currentRelation));
 
 		/* ----------------
 		 *	finally set the sorted flag to true
@@ -178,10 +198,6 @@ ExecInitMaterial(Material *node, EState *estate, Plan *parent)
 {
 	MaterialState *matstate;
 	Plan	   *outerPlan;
-	TupleDesc	tupType;
-	Relation	tempDesc;
-
-	/* int						len; */
 
 	/* ----------------
 	 *	assign the node's execution state
@@ -226,12 +242,6 @@ ExecInitMaterial(Material *node, EState *estate, Plan *parent)
 	ExecInitNode(outerPlan, estate, (Plan *) node);
 
 	/* ----------------
-	 *	initialize matstate information
-	 * ----------------
-	 */
-	matstate->mat_Flag = false;
-
-	/* ----------------
 	 *	initialize tuple type.	no need to initialize projection
 	 *	info because this node doesn't do projections.
 	 * ----------------
@@ -239,39 +249,6 @@ ExecInitMaterial(Material *node, EState *estate, Plan *parent)
 	ExecAssignScanTypeFromOuterPlan((Plan *) node, &matstate->csstate);
 	matstate->csstate.cstate.cs_ProjInfo = NULL;
 
-	/* ----------------
-	 *	get type information needed for ExecCreatR
-	 * ----------------
-	 */
-	tupType = ExecGetScanType(&matstate->csstate);
-
-	/* ----------------
-	 *	ExecCreatR wants its second argument to be an object id of
-	 *	a relation in the range table or a _NONAME_RELATION_ID
-	 *	indicating that the relation is not in the range table.
-	 *
-	 *	In the second case ExecCreatR creates a temp relation.
-	 *	(currently this is the only case we support -cim 10/16/89)
-	 * ----------------
-	 */
-	/* ----------------
-	 *	create the temporary relation
-	 * ----------------
-	 */
-	tempDesc = ExecCreatR(tupType, _NONAME_RELATION_ID_);
-
-	/* ----------------
-	 *	save the relation descriptor in the sortstate
-	 * ----------------
-	 */
-	matstate->mat_TempRelation = tempDesc;
-	matstate->csstate.css_currentRelation = NULL;
-
-	/* ----------------
-	 *	return relation oid of temporary relation in a list
-	 *	(someday -- for now we return LispTrue... cim 10/12/89)
-	 * ----------------
-	 */
 	return TRUE;
 }
 
@@ -343,13 +320,39 @@ ExecMaterialReScan(Material *node, ExprContext *exprCtxt, Plan *parent)
 {
 	MaterialState *matstate = node->matstate;
 
+	/*
+	 * If we haven't materialized yet, just return. If outerplan' chgParam is
+	 * not NULL then it will be re-scanned by ExecProcNode, else - no
+	 * reason to re-scan it at all.
+	 */
 	if (matstate->mat_Flag == false)
 		return;
 
-	matstate->csstate.css_currentScanDesc = ExecReScanR(matstate->csstate.css_currentRelation,
-								   matstate->csstate.css_currentScanDesc,
-								node->plan.state->es_direction, 0, NULL);
+	/*
+	 * If subnode is to be rescanned then we forget previous stored results;
+	 * we have to re-read the subplan and re-store.
+	 *
+	 * Otherwise we can just rewind and rescan the stored output.
+	 */
+	if (((Plan *) node)->lefttree->chgParam != NULL)
+	{
+		Relation	tempRelation = matstate->mat_TempRelation;
 
+		matstate->csstate.css_currentRelation = NULL;
+		ExecCloseR((Plan *) node);
+		ExecClearTuple(matstate->csstate.css_ScanTupleSlot);
+		if (tempRelation != NULL)
+			heap_drop(tempRelation);
+		matstate->mat_TempRelation = NULL;
+		matstate->mat_Flag = false;
+	}
+	else
+	{
+		matstate->csstate.css_currentScanDesc =
+			ExecReScanR(matstate->csstate.css_currentRelation,
+						matstate->csstate.css_currentScanDesc,
+						node->plan.state->es_direction, 0, NULL);
+	}
 }
 
 /* ----------------------------------------------------------------
