@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.57 2001/10/18 19:54:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.58 2001/10/20 01:02:18 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -374,14 +374,14 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 {
 	if (typmod != -1)
 	{
-		int range = ((typmod >> 16) & 0xFFFF);
+		int range = ((typmod >> 16) & 0x7FFF);
 		int precision = (typmod & 0xFFFF);
 
-		if (range == 0xFFFF)
+		if (range == 0x7FFF)
 		{
 			/* Do nothing... */
 		}
-		if (range == MASK(YEAR))
+		else if (range == MASK(YEAR))
 		{
 			interval->month = ((interval->month / 12) * 12);
 			interval->time = 0;
@@ -483,7 +483,18 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 				IntervalScale = pow(10.0, IntervalTypmod);
 			}
 
-			interval->time = (rint(interval->time * IntervalScale) / IntervalScale);
+			/* Hmm. For the time field, we can get to a large value
+			 * since we store everything related to an absolute interval
+			 * (e.g. years worth of days) in this one field. So we have
+			 * precision problems doing rint() on this field if the field
+			 * is too large. This resulted in an annoying "...0001" appended
+			 * to the printed result on my Linux box.
+			 * I hate doing an expensive math operation like log10()
+			 * to avoid this, but what else can we do??
+			 * - thomas 2001-10-19
+			 */
+			if ((log10(interval->time) + IntervalTypmod) <= 13)
+				interval->time = (rint(interval->time * IntervalScale) / IntervalScale);
 		}
 	}
 
@@ -671,14 +682,15 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 		else
 		{
 			*tzp = 0;
-			tm->tm_isdst = 0;
+			/* Mark this as *no* time zone available */
+			tm->tm_isdst = -1;
 			if (tzn != NULL)
 				*tzn = NULL;
 		}
 	}
 	else
 	{
-		tm->tm_isdst = 0;
+		tm->tm_isdst = -1;
 		if (tzn != NULL)
 			*tzn = NULL;
 	}

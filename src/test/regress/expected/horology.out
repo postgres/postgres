@@ -359,7 +359,7 @@ SELECT '' AS "64", d1 + interval '1 year' AS one_year FROM TIMESTAMPTZ_TBL;
     | Tue Feb 10 17:32:01 1998 PST
     | Tue Feb 10 17:32:01 1998 PST
     | Wed Jun 10 17:32:01 1998 PDT
-    | Sun Sep 22 11:19:20 2002 PDT
+    | Sun Sep 22 18:19:20 2002 PDT
     | Thu Mar 15 08:14:01 2001 PST
     | Thu Mar 15 04:14:02 2001 PST
     | Thu Mar 15 02:14:03 2001 PST
@@ -428,7 +428,7 @@ SELECT '' AS "64", d1 - interval '1 year' AS one_year FROM TIMESTAMPTZ_TBL;
     | Sat Feb 10 17:32:01 1996 PST
     | Sat Feb 10 17:32:01 1996 PST
     | Mon Jun 10 17:32:01 1996 PDT
-    | Fri Sep 22 11:19:20 2000 PDT
+    | Fri Sep 22 18:19:20 2000 PDT
     | Mon Mar 15 08:14:01 1999 PST
     | Mon Mar 15 04:14:02 1999 PST
     | Mon Mar 15 02:14:03 1999 PST

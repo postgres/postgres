@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.89 2001/10/18 19:52:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.90 2001/10/20 01:02:18 thomas Exp $
  *
  * NOTES
  *
@@ -256,7 +256,7 @@ GetCurrentAbsoluteTimeUsec(int *usec)
 	};
 
 	return (AbsoluteTime) now;
-}	/* GetCurrentAbsoluteTime() */
+}	/* GetCurrentAbsoluteTimeUsec() */
 
 
 void
@@ -344,7 +344,7 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 		{
 			*tzp = CTimeZone;
 			tm->tm_gmtoff = CTimeZone;
-			tm->tm_isdst = -1;
+			tm->tm_isdst = 0;
 			tm->tm_zone = NULL;
 			if (tzn != NULL)
 				*tzn = NULL;
@@ -366,6 +366,10 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 			}
 		}
 	}
+	else
+	{
+		tm->tm_isdst = -1;
+	}
 #elif defined(HAVE_INT_TIMEZONE)
 	if (tzp != NULL)
 	{
@@ -376,7 +380,7 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 		if (HasCTZSet)
 		{
 			*tzp = CTimeZone;
-			tm->tm_isdst = -1;
+			tm->tm_isdst = 0;
 			if (tzn != NULL)
 				*tzn = NULL;
 		}
@@ -396,6 +400,10 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 					elog(NOTICE, "Invalid timezone \'%s\'", tzname[tm->tm_isdst]);
 			}
 		}
+	}
+	else
+	{
+		tm->tm_isdst = -1;
 	}
 #endif
 #else							/* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
@@ -425,6 +433,10 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 				tzn[MAXTZLEN] = '\0';	/* let's just be sure it's null-terminated */
 			}
 		}
+	}
+	else
+	{
+		tm->tm_isdst = -1;
 	}
 #endif
 

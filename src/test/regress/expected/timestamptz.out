@@ -152,7 +152,7 @@ SELECT '' AS "64", d1 FROM TIMESTAMPTZ_TBL;
     | Mon Feb 10 17:32:01 1997 PST
     | Mon Feb 10 17:32:01 1997 PST
     | Tue Jun 10 17:32:01 1997 PDT
-    | Sat Sep 22 11:19:20 2001 PDT
+    | Sat Sep 22 18:19:20 2001 PDT
     | Wed Mar 15 08:14:01 2000 PST
     | Wed Mar 15 04:14:02 2000 PST
     | Wed Mar 15 02:14:03 2000 PST
@@ -220,7 +220,7 @@ SELECT '' AS "48", d1 FROM TIMESTAMPTZ_TBL
     | Mon Feb 10 17:32:01 1997 PST
     | Mon Feb 10 17:32:01 1997 PST
     | Tue Jun 10 17:32:01 1997 PDT
-    | Sat Sep 22 11:19:20 2001 PDT
+    | Sat Sep 22 18:19:20 2001 PDT
     | Wed Mar 15 08:14:01 2000 PST
     | Wed Mar 15 04:14:02 2000 PST
     | Wed Mar 15 02:14:03 2000 PST
@@ -304,7 +304,7 @@ SELECT '' AS "63", d1 FROM TIMESTAMPTZ_TBL
     | Mon Feb 10 17:32:01 1997 PST
     | Mon Feb 10 17:32:01 1997 PST
     | Tue Jun 10 17:32:01 1997 PDT
-    | Sat Sep 22 11:19:20 2001 PDT
+    | Sat Sep 22 18:19:20 2001 PDT
     | Wed Mar 15 08:14:01 2000 PST
     | Wed Mar 15 04:14:02 2000 PST
     | Wed Mar 15 02:14:03 2000 PST
@@ -394,7 +394,7 @@ SELECT '' AS "49", d1 FROM TIMESTAMPTZ_TBL
     | Mon Feb 10 17:32:01 1997 PST
     | Mon Feb 10 17:32:01 1997 PST
     | Tue Jun 10 17:32:01 1997 PDT
-    | Sat Sep 22 11:19:20 2001 PDT
+    | Sat Sep 22 18:19:20 2001 PDT
     | Wed Mar 15 08:14:01 2000 PST
     | Wed Mar 15 04:14:02 2000 PST
     | Wed Mar 15 02:14:03 2000 PST
@@ -449,7 +449,7 @@ SELECT '' AS "54", d1 - timestamp with time zone '1997-01-02' AS diff
     | @ 39 days 17 hours 32 mins 1 sec
     | @ 39 days 17 hours 32 mins 1 sec
     | @ 159 days 16 hours 32 mins 1 sec
-    | @ 1724 days 10 hours 19 mins 20 secs
+    | @ 1724 days 17 hours 19 mins 20 secs
     | @ 1168 days 8 hours 14 mins 1 sec
     | @ 1168 days 4 hours 14 mins 2 secs
     | @ 1168 days 2 hours 14 mins 3 secs
@@ -511,7 +511,7 @@ SELECT '' AS "54", d1 - timestamp with time zone '1997-01-02' AS diff
     | @ 39 days 17 hours 32 mins 1 sec
     | @ 39 days 17 hours 32 mins 1 sec
     | @ 159 days 16 hours 32 mins 1 sec
-    | @ 1724 days 10 hours 19 mins 20 secs
+    | @ 1724 days 17 hours 19 mins 20 secs
     | @ 1168 days 8 hours 14 mins 1 sec
     | @ 1168 days 4 hours 14 mins 2 secs
     | @ 1168 days 2 hours 14 mins 3 secs
@@ -574,7 +574,7 @@ SELECT '' AS "54", d1 as timestamptz,
     | Mon Feb 10 17:32:01 1997 PST    | 1997 |     2 |  10 |   17 |     32 |      1
     | Mon Feb 10 17:32:01 1997 PST    | 1997 |     2 |  10 |   17 |     32 |      1
     | Tue Jun 10 17:32:01 1997 PDT    | 1997 |     6 |  10 |   17 |     32 |      1
-    | Sat Sep 22 11:19:20 2001 PDT    | 2001 |     9 |  22 |   11 |     19 |     20
+    | Sat Sep 22 18:19:20 2001 PDT    | 2001 |     9 |  22 |   18 |     19 |     20
     | Wed Mar 15 08:14:01 2000 PST    | 2000 |     3 |  15 |    8 |     14 |      1
     | Wed Mar 15 04:14:02 2000 PST    | 2000 |     3 |  15 |    4 |     14 |      2
     | Wed Mar 15 02:14:03 2000 PST    | 2000 |     3 |  15 |    2 |     14 |      3
@@ -636,7 +636,7 @@ SELECT '' AS "54", d1 as timestamptz,
     | Mon Feb 10 17:32:01 1997 PST    |       1 |    0 |      0
     | Mon Feb 10 17:32:01 1997 PST    |       1 |    0 |      0
     | Tue Jun 10 17:32:01 1997 PDT    |       2 |    0 |      0
-    | Sat Sep 22 11:19:20 2001 PDT    |       3 |    0 |      0
+    | Sat Sep 22 18:19:20 2001 PDT    |       3 |    0 |      0
     | Wed Mar 15 08:14:01 2000 PST    |       1 |    0 |      0
     | Wed Mar 15 04:14:02 2000 PST    |       1 |    0 |      0
     | Wed Mar 15 02:14:03 2000 PST    |       1 |    0 |      0
@@ -982,7 +982,7 @@ SELECT '' AS to_char_5, to_char(d1, 'HH HH12 HH24 MI SS SSSS')
            | 05 05 17 32 01 63121
            | 05 05 17 32 01 63121
            | 05 05 17 32 01 63121
-           | 11 11 11 19 20 40760
+           | 06 06 18 19 20 65960
            | 08 08 08 14 01 29641
            | 04 04 04 14 02 15242
            | 02 02 02 14 03 8043
@@ -1052,7 +1052,7 @@ SELECT '' AS to_char_6, to_char(d1, '"HH:MI:SS is" HH:MI:SS "\\"text between quo
            | HH:MI:SS is 05:32:01 "text between quote marks"
            | HH:MI:SS is 05:32:01 "text between quote marks"
            | HH:MI:SS is 05:32:01 "text between quote marks"
-           | HH:MI:SS is 11:19:20 "text between quote marks"
+           | HH:MI:SS is 06:19:20 "text between quote marks"
            | HH:MI:SS is 08:14:01 "text between quote marks"
            | HH:MI:SS is 04:14:02 "text between quote marks"
            | HH:MI:SS is 02:14:03 "text between quote marks"
@@ -1123,7 +1123,7 @@ SELECT '' AS to_char_7, to_char(d1, 'HH24--text--MI--text--SS')
            | 17--text--32--text--01
            | 17--text--32--text--01
            | 17--text--32--text--01
-           | 11--text--19--text--20
+           | 18--text--19--text--20
            | 08--text--14--text--01
            | 04--text--14--text--02
            | 02--text--14--text--03
@@ -1264,7 +1264,7 @@ SELECT '' AS to_char_9, to_char(d1, 'YYYY A.D. YYYY a.d. YYYY bc HH:MI:SS P.M. H
            | 1997 A.D. 1997 a.d. 1997 ad 05:32:01 P.M. 05:32:01 p.m. 05:32:01 pm
            | 1997 A.D. 1997 a.d. 1997 ad 05:32:01 P.M. 05:32:01 p.m. 05:32:01 pm
            | 1997 A.D. 1997 a.d. 1997 ad 05:32:01 P.M. 05:32:01 p.m. 05:32:01 pm
-           | 2001 A.D. 2001 a.d. 2001 ad 11:19:20 A.M. 11:19:20 a.m. 11:19:20 am
+           | 2001 A.D. 2001 a.d. 2001 ad 06:19:20 P.M. 06:19:20 p.m. 06:19:20 pm
            | 2000 A.D. 2000 a.d. 2000 ad 08:14:01 A.M. 08:14:01 a.m. 08:14:01 am
            | 2000 A.D. 2000 a.d. 2000 ad 04:14:02 A.M. 04:14:02 a.m. 04:14:02 am
            | 2000 A.D. 2000 a.d. 2000 ad 02:14:03 A.M. 02:14:03 a.m. 02:14:03 am

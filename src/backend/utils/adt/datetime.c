@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.73 2001/10/18 17:30:15 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.74 2001/10/20 01:02:18 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -385,17 +385,22 @@ j2day(int date)
 }	/* j2day() */
 
 
+/* TrimTrailingZeros()
+ * ... resulting from printing numbers with full precision.
+ */
 void
 TrimTrailingZeros(char *str)
 {
 	int len = strlen(str);
 
+#if 0
 	/* chop off trailing one to cope with interval rounding */
 	if (strcmp((str + len - 4), "0001") == 0)
 	{
 		len -= 4;
 		*(str + len) = '\0';
 	}
+#endif
 
 	/* chop off trailing zeros... */
 	while ((*(str + len - 1) == '0')
@@ -905,11 +910,12 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						break;
 
 					case UNITS:
-						ptype = val;
 						tmask = 0;
+						ptype = val;
 						break;
 
 					case DTK_ISO_TIME:
+						tmask = 0;
 						if ((i < 1) || (i >= (nf-1))
 							|| (ftype[i-1] != DTK_DATE)
 							|| (ftype[i+1] != DTK_TIME))
@@ -2267,10 +2273,10 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 				}
 
 				/* tzp == NULL indicates that we don't want *any* time zone info in the output string.
-				 * *tzn != NULL indicates that we *have* time zone info available.
+				 * *tzn != NULL indicates that we have alpha time zone info available.
 				 * tm_isdst != -1 indicates that we have a valid time zone translation.
 				 */
-				if ((tzp != NULL) && (*tzn != NULL) && (tm->tm_isdst >= 0))
+				if ((tzp != NULL) && (tm->tm_isdst >= 0))
 				{
 					hour = -(*tzp / 3600);
 					min = ((abs(*tzp) / 60) % 60);
@@ -2315,14 +2321,18 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 					sprintf((str + strlen(str)), ":%02.0f", sec);
 				}
 
-				if ((*tzn != NULL) && (tm->tm_isdst >= 0))
-					sprintf((str + strlen(str)), " %.*s", MAXTZLEN, *tzn);
-
-				else if (tzp != NULL)
+				if ((tzp != NULL) && (tm->tm_isdst >= 0))
 				{
-					hour = -(*tzp / 3600);
-					min = ((abs(*tzp) / 60) % 60);
-					sprintf((str + strlen(str)), ((min != 0) ? "%+03d:%02d" : "%+03d"), hour, min);
+					if (*tzn != NULL)
+					{
+						sprintf((str + strlen(str)), " %.*s", MAXTZLEN, *tzn);
+					}
+					else
+					{
+						hour = -(*tzp / 3600);
+						min = ((abs(*tzp) / 60) % 60);
+						sprintf((str + strlen(str)), ((min != 0) ? "%+03d:%02d" : "%+03d"), hour, min);
+					}
 				}
 			}
 			else
@@ -2353,14 +2363,18 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 					sprintf((str + strlen(str)), ":%02.0f", sec);
 				}
 
-				if ((*tzn != NULL) && (tm->tm_isdst >= 0))
-					sprintf((str + strlen(str)), " %.*s", MAXTZLEN, *tzn);
-
-				else if (tzp != NULL)
+				if ((tzp != NULL) && (tm->tm_isdst >= 0))
 				{
-					hour = -(*tzp / 3600);
-					min = ((abs(*tzp) / 60) % 60);
-					sprintf((str + strlen(str)), ((min != 0) ? "%+03d:%02d" : "%+03d"), hour, min);
+					if (*tzn != NULL)
+					{
+						sprintf((str + strlen(str)), " %.*s", MAXTZLEN, *tzn);
+					}
+					else
+					{
+						hour = -(*tzp / 3600);
+						min = ((abs(*tzp) / 60) % 60);
+						sprintf((str + strlen(str)), ((min != 0) ? "%+03d:%02d" : "%+03d"), hour, min);
+					}
 				}
 			}
 			else
@@ -2403,14 +2417,23 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 
 				sprintf((str + strlen(str)), " %04d", tm->tm_year);
 
-				if ((tzp != NULL) && (*tzn != NULL) && (tm->tm_isdst >= 0))
-					sprintf((str + strlen(str)), " %.*s", MAXTZLEN, *tzn);
-
-				else if (HasCTZSet && (tzp != NULL))
+				if ((tzp != NULL) && (tm->tm_isdst >= 0))
 				{
-					hour = -(*tzp / 3600);
-					min = ((abs(*tzp) / 60) % 60);
-					sprintf((str + strlen(str)), ((min != 0) ? "%+03d:%02d" : "%+03d"), hour, min);
+					if (*tzn != NULL)
+					{
+						sprintf((str + strlen(str)), " %.*s", MAXTZLEN, *tzn);
+					}
+					else
+					{
+						/* We have a time zone, but no string version.
+						 * Use the numeric form, but be sure to include a leading space
+						 * to avoid formatting something which would be rejected by the
+						 * date/time parser later. - thomas 2001-10-19
+						 */
+						hour = -(*tzp / 3600);
+						min = ((abs(*tzp) / 60) % 60);
+						sprintf((str + strlen(str)), ((min != 0) ? " %+03d:%02d" : " %+03d"), hour, min);
+					}
 				}
 			}
 			else
