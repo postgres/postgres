@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.45 2004/10/07 15:21:55 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.46 2004/11/29 03:01:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1019,6 +1019,10 @@ _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th)
 	 */
 	fseeko(tmp, 0, SEEK_END);
 	th->fileLen = ftello(tmp);
+	/*
+	 *	Some compilers with throw a warning knowing this test can never be
+	 *	true because off_t can't exceed the compared maximum.
+	 */
 	if (th->fileLen > MAX_TAR_MEMBER_FILELEN)
 		die_horribly(AH, modulename, "archive member too large for tar format\n");
 	fseeko(tmp, 0, SEEK_SET);
