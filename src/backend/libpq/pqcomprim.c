@@ -10,10 +10,11 @@
 
 
 /* --------------------------------------------------------------------- */
-/* Is the other way around than system ntoh/hton, so we roll our own
-	here */
-	
-#ifndef		BYTE_ORDER
+/* These definitions for ntoh/hton are the other way around from the
+ *  default system definitions, so we roll our own here.
+ */
+
+#ifndef	BYTE_ORDER
 #error BYTE_ORDER must be defined as LITTLE_ENDIAN, BIG_ENDIAN or PDP_ENDIAN
 #endif
 
@@ -24,11 +25,13 @@
 #  define hton_l(n) n
 #else	/* BYTE_ORDER != LITTLE_ENDIAN */
 #  if BYTE_ORDER == BIG_ENDIAN
-#    define ntoh_s(n) (u_short)(((u_char *) &n)[0] << 8 | ((u_char *) &n)[1])
-#    define ntoh_l(n) (u_long)(((u_char *)&n)[0] << 24 | \
-							((u_char *)&n)[1] << 16 | \
-      	             	   ((u_char *)&n)[2] << 8 | ((u_char *)&n)[3])
-#    define hton_s(n) (u_short)(((u_char *) &n)[2] << 8 | ((u_char *) &n)[3])
+#    define ntoh_s(n) (u_short)(((u_char *)&n)[1] << 8 \
+                              | ((u_char *)&n)[0])
+#    define ntoh_l(n) (u_long) (((u_char *)&n)[3] << 24 \
+                              | ((u_char *)&n)[2] << 16 \
+      	             	      | ((u_char *)&n)[1] <<  8 \
+                              | ((u_char *)&n)[0])
+#    define hton_s(n) (ntoh_s(n))
 #    define hton_l(n) (ntoh_l(n))
 #  else	/* BYTE_ORDER != BIG_ENDIAN */
 #    if BYTE_ORDER == PDP_ENDIAN
@@ -43,9 +46,10 @@
 int pqPutShort(int integer, FILE *f)
     {
     int retval = 0;
-    u_short n;
+    u_short n,s;
 		
-    n = hton_s(integer);
+    s = integer;
+    n = hton_s(s);
     if(fwrite(&n, sizeof(u_short), 1, f) != 1)
     	retval = EOF;
     
