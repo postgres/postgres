@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.150 2000/07/14 15:43:32 thomas Exp $
+ *	$Id: analyze.c,v 1.151 2000/07/15 00:01:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -947,7 +947,6 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 			iparam->name = pstrdup(column->colname);
 			iparam->args = NIL;
 			iparam->class = NULL;
-			iparam->typename = NULL;
 			index->indexParams = lappend(index->indexParams, iparam);
 
 			if (index->idxname == NULL)

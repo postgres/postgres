@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.121 2000/07/12 02:37:06 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.122 2000/07/15 00:01:37 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -139,9 +139,9 @@ _outIndexStmt(StringInfo str, IndexStmt *node)
 	appendStringInfo(str, " :rangetable ");
 	_outNode(str, node->rangetable);
 
-	appendStringInfo(str, " :lossy %s :unique %s ",
-					 node->lossy ? "true" : "false",
-					 node->unique ? "true" : "false");
+	appendStringInfo(str, " :unique %s :primary %s ",
+					 node->unique ? "true" : "false",
+					 node->primary ? "true" : "false");
 }
 
 static void
@@ -210,8 +210,6 @@ _outIndexElem(StringInfo str, IndexElem *node)
 	_outNode(str, node->args);
 	appendStringInfo(str, " :class ");
 	_outToken(str, node->class);
-	appendStringInfo(str, " :typename ");
-	_outNode(str, node->typename);
 }
 
 static void

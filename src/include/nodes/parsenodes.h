@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.109 2000/07/14 15:43:51 thomas Exp $
+ * $Id: parsenodes.h,v 1.110 2000/07/15 00:01:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -467,13 +467,12 @@ typedef struct IndexStmt
 	NodeTag		type;
 	char	   *idxname;		/* name of the index */
 	char	   *relname;		/* name of relation to index on */
-	char	   *accessMethod;	/* name of acess methood (eg. btree) */
+	char	   *accessMethod;	/* name of access method (eg. btree) */
 	List	   *indexParams;	/* a list of IndexElem */
 	List	   *withClause;		/* a list of DefElem */
-	Node	   *whereClause;	/* qualifications */
-	List	   *rangetable;		/* range table, filled in by
+	Node	   *whereClause;	/* qualification (partial-index predicate) */
+	List	   *rangetable;		/* range table for qual, filled in by
 								 * transformStmt() */
-	bool	   *lossy;			/* is index lossy? */
 	bool		unique;			/* is index unique? */
 	bool		primary;		/* is index on primary key? */
 } IndexStmt;
@@ -1088,14 +1087,18 @@ typedef struct RangeVar
 
 /*
  * IndexElem - index parameters (used in CREATE INDEX)
+ *
+ * For a plain index, each 'name' is an attribute name in the heap relation,
+ * and 'args' is NIL.  For a functional index, only one IndexElem is allowed.
+ * It has name = name of function and args = list of attribute names that
+ * are the function's arguments.
  */
 typedef struct IndexElem
 {
 	NodeTag		type;
-	char	   *name;			/* name of index */
-	List	   *args;			/* if not NULL, function index */
-	char	   *class;
-	TypeName   *typename;		/* type of index's keys (optional) */
+	char	   *name;			/* name of attribute to index, or function */
+	List	   *args;			/* list of names of function arguments */
+	char	   *class;			/* name of desired opclass; NULL = default */
 } IndexElem;
 
 /*

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.178 2000/07/14 15:43:32 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.179 2000/07/15 00:01:41 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -250,7 +250,7 @@ static void doNegateFloat(Value *v);
 %type <target>	target_el, update_target_el
 %type <paramno> ParamNo
 
-%type <typnam>	Typename, opt_type, SimpleTypename, ConstTypename
+%type <typnam>	Typename, SimpleTypename, ConstTypename
 				Generic, Numeric, Character, ConstDatetime, ConstInterval, Bit
 %type <str>		typename, generic, numeric, character, datetime, bit
 %type <str>		extract_arg
@@ -1778,7 +1778,7 @@ TriggerFuncArg:  ICONST
 				}
 			| FCONST						{  $$ = $1; }
 			| Sconst						{  $$ = $1; }
-			| IDENT							{  $$ = $1; }
+			| ColId							{  $$ = $1; }
 		;
 
 OptConstrFromTable:			/* Empty */
@@ -2315,8 +2315,6 @@ RevokeStmt:  REVOKE privileges ON relation_name_list FROM grantee
 IndexStmt:	CREATE index_opt_unique INDEX index_name ON relation_name
 			access_method_clause '(' index_params ')' opt_with
 				{
-					/* should check that access_method is valid,
-					   etc ... but doesn't */
 					IndexStmt *n = makeNode(IndexStmt);
 					n->unique = $2;
 					n->idxname = $4;
@@ -2345,37 +2343,24 @@ index_list:  index_list ',' index_elem			{ $$ = lappend($1, $3); }
 		| index_elem							{ $$ = lcons($1, NIL); }
 		;
 
-func_index:  func_name '(' name_list ')' opt_type opt_class
+func_index:  func_name '(' name_list ')' opt_class
 				{
 					$$ = makeNode(IndexElem);
 					$$->name = $1;
 					$$->args = $3;
-					$$->class = $6;
-					$$->typename = $5;
+					$$->class = $5;
 				}
 		  ;
 
-index_elem:  attr_name opt_type opt_class
+index_elem:  attr_name opt_class
 				{
 					$$ = makeNode(IndexElem);
 					$$->name = $1;
 					$$->args = NIL;
-					$$->class = $3;
-					$$->typename = $2;
+					$$->class = $2;
 				}
 		;
 
-opt_type:  ':' Typename							{ $$ = $2; }
-		| FOR Typename							{ $$ = $2; }
-		| /*EMPTY*/								{ $$ = NULL; }
-		;
-
-/* opt_class "WITH class" conflicts with preceeding opt_type
- *  for Typename of "TIMESTAMP WITH TIME ZONE"
- * So, remove "WITH class" from the syntax. OK??
- * - thomas 1997-10-12
- *		| WITH class							{ $$ = $2; }
- */
 opt_class:  class								{
 	/*
 	 * Release 7.0 removed network_ops, timespan_ops, and datetime_ops, 
@@ -5352,9 +5337,9 @@ relation_name:	SpecialRuleRelation
 		;
 
 database_name:			ColId			{ $$ = $1; };
-access_method:			IDENT			{ $$ = $1; };
+access_method:			ColId			{ $$ = $1; };
 attr_name:				ColId			{ $$ = $1; };
-class:					IDENT			{ $$ = $1; };
+class:					ColId			{ $$ = $1; };
 index_name:				ColId			{ $$ = $1; };
 
 /* Functions
@@ -5365,7 +5350,6 @@ name:					ColId			{ $$ = $1; };
 func_name:				ColId			{ $$ = xlateSqlFunc($1); };
 
 file_name:				Sconst			{ $$ = $1; };
-/* NOT USED recipe_name:			IDENT			{ $$ = $1; };*/
 
 /* Constants
  * Include TRUE/FALSE for SQL3 support. - thomas 1997-10-24
@@ -5453,7 +5437,7 @@ ParamNo:  PARAM opt_indirection
 
 Iconst:  ICONST							{ $$ = $1; };
 Sconst:  SCONST							{ $$ = $1; };
-UserId:  IDENT							{ $$ = $1; };
+UserId:  ColId							{ $$ = $1; };
 
 /* Column identifier
  * Include date/time keywords as SQL92 extension.
