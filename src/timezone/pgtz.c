@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.19 2004/07/22 05:28:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.20 2004/07/30 17:31:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,6 +182,15 @@ score_timezone(const char *tzname, struct tztry *tt)
 		if (!pgtm)
 			return -1;		/* probably shouldn't happen */
 		systm = localtime(&(tt->test_times[i]));
+		if (!systm)
+		{
+			elog(DEBUG4, "TZ \"%s\" scores %d: at %ld %04d-%02d-%02d %02d:%02d:%02d %s, system had no data",
+				 tzname, i, (long) pgtt,
+				 pgtm->tm_year + 1900, pgtm->tm_mon + 1, pgtm->tm_mday,
+				 pgtm->tm_hour, pgtm->tm_min, pgtm->tm_sec,
+				 pgtm->tm_isdst ? "dst" : "std");
+			return i;
+		}
 		if (!compare_tm(systm, pgtm))
 		{
 			elog(DEBUG4, "TZ \"%s\" scores %d: at %ld %04d-%02d-%02d %02d:%02d:%02d %s versus %04d-%02d-%02d %02d:%02d:%02d %s",
@@ -302,6 +311,8 @@ identify_system_timezone(void)
 	for (t = tnow; t <= tnow + T_MONTH * 14; t += T_MONTH)
 	{
 		tm = localtime(&t);
+		if (!tm)
+			continue;
 		if (tm->tm_isdst < 0)
 			continue;
 		if (tm->tm_isdst == 0 && std_zone_name[0] == '\0')
@@ -491,7 +502,7 @@ tz_acceptable(void)
 	 */
 	time2000 = (POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * 86400;
 	tt = pg_localtime(&time2000);
-	if (tt->tm_sec != 0)
+	if (!tt || tt->tm_sec != 0)
 		return false;
 
 	return true;
