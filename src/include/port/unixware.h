@@ -1,5 +1,3 @@
-#define HAS_TEST_AND_SET
-
 /* see src/backend/libpq/pqcomm.c */
 #define SCO_ACCEPT_BUG
 
@@ -20,5 +18,4 @@
 #endif
 #ifndef			BYTE_ORDER
 #define			BYTE_ORDER		LITTLE_ENDIAN
-
 #endif

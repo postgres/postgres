@@ -1,5 +1,3 @@
-#define HAS_TEST_AND_SET
-
 /***************************************
  * Define this if you are compiling with
  * the native UNIXWARE C compiler.
@@ -17,5 +15,4 @@
 #endif
 #ifndef			BYTE_ORDER
 #define			BYTE_ORDER		LITTLE_ENDIAN
-
 #endif
