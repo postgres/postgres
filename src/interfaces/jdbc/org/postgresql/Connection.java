@@ -8,9 +8,10 @@ import org.postgresql.Field;
 import org.postgresql.fastpath.*;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
+import org.postgresql.core.Encoding;
 
 /**
- * $Id: Connection.java,v 1.18 2001/07/15 04:21:26 momjian Exp $
+ * $Id: Connection.java,v 1.19 2001/07/21 18:52:10 momjian Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -33,11 +34,8 @@ public abstract class Connection
 
   /**
    *  The encoding to use for this connection.
-   *  If <b>null</b>, the encoding has not been specified by the
-   *  user, and the default encoding for the platform should be
-   *  used.
    */
-  private String encoding;
+  private Encoding encoding = Encoding.defaultEncoding();
 
   public boolean CONNECTION_OK = true;
   public boolean CONNECTION_BAD = false;
@@ -162,7 +160,7 @@ public abstract class Connection
 		// The most common one to be thrown here is:
 		// "User authentication failed"
 		//
-                throw new SQLException(pg_stream.ReceiveString(getEncoding()));
+                throw new SQLException(pg_stream.ReceiveString(encoding));
 
 	      case 'R':
 		// Get the type of request
@@ -232,7 +230,7 @@ public abstract class Connection
           break;
 	case 'E':
 	case 'N':
-           throw new SQLException(pg_stream.ReceiveString(getEncoding()));
+           throw new SQLException(pg_stream.ReceiveString(encoding));
         default:
           throw new PSQLException("postgresql.con.setup");
       }
@@ -244,111 +242,34 @@ public abstract class Connection
 	   break;
 	case 'E':
 	case 'N':
-           throw new SQLException(pg_stream.ReceiveString(getEncoding()));
+           throw new SQLException(pg_stream.ReceiveString(encoding));
         default:
           throw new PSQLException("postgresql.con.setup");
       }
 
-      // Originally we issued a SHOW DATESTYLE statement to find the databases default
-      // datestyle. However, this caused some problems with timestamps, so in 6.5, we
-      // went the way of ODBC, and set the connection to ISO.
-      //
-      // This may cause some clients to break when they assume anything other than ISO,
-      // but then - they should be using the proper methods ;-)
-      //
-      // We also ask the DB for certain properties (i.e. DatabaseEncoding at this time)
-      //
       firstWarning = null;
 
-      java.sql.ResultSet initrset = ExecSQL("set datestyle to 'ISO'; " +
-        "select case when pg_encoding_to_char(1) = 'SQL_ASCII' then 'UNKNOWN' else getdatabaseencoding() end");
+      String dbEncoding;
 
-      String dbEncoding = null;
-      //retrieve DB properties
-      if(initrset.next()) {
+      // "pg_encoding_to_char(1)" will return 'EUC_JP' for a backend compiled with multibyte,
+      // otherwise it's hardcoded to 'SQL_ASCII'.
+      // If the backend doesn't know about multibyte we can't assume anything about the encoding
+      // used, so we denote this with 'UNKNOWN'.
 
-        //handle DatabaseEncoding
-        dbEncoding = initrset.getString(1);
-        //convert from the PostgreSQL name to the Java name
-        if (dbEncoding.equals("SQL_ASCII")) {
-          dbEncoding = "ASCII";
-        } else if (dbEncoding.equals("UNICODE")) {
-          dbEncoding = "UTF8";
-        } else if (dbEncoding.equals("LATIN1")) {
-          dbEncoding = "ISO8859_1";
-        } else if (dbEncoding.equals("LATIN2")) {
-          dbEncoding = "ISO8859_2";
-        } else if (dbEncoding.equals("LATIN3")) {
-          dbEncoding = "ISO8859_3";
-        } else if (dbEncoding.equals("LATIN4")) {
-          dbEncoding = "ISO8859_4";
-        } else if (dbEncoding.equals("LATIN5")) {
-          dbEncoding = "ISO8859_5";
-        } else if (dbEncoding.equals("LATIN6")) {
-          dbEncoding = "ISO8859_6";
-        } else if (dbEncoding.equals("LATIN7")) {
-          dbEncoding = "ISO8859_7";
-        } else if (dbEncoding.equals("LATIN8")) {
-          dbEncoding = "ISO8859_8";
-        } else if (dbEncoding.equals("LATIN9")) {
-          dbEncoding = "ISO8859_9";
-        } else if (dbEncoding.equals("EUC_JP")) {
-          dbEncoding = "EUC_JP";
-        } else if (dbEncoding.equals("EUC_CN")) {
-          dbEncoding = "EUC_CN";
-        } else if (dbEncoding.equals("EUC_KR")) {
-          dbEncoding = "EUC_KR";
-        } else if (dbEncoding.equals("EUC_TW")) {
-          dbEncoding = "EUC_TW";
-        } else if (dbEncoding.equals("KOI8")) {
-	  // try first if KOI8_U is present, it's a superset of KOI8_R
-	    try {
-        	dbEncoding = "KOI8_U";
-		"test".getBytes(dbEncoding);
-	    }
-	    catch(UnsupportedEncodingException uee) {
-	    // well, KOI8_U is still not in standard JDK, falling back to KOI8_R :(
-        	dbEncoding = "KOI8_R";
-	    }
+      final String encodingQuery =
+	  "select case when pg_encoding_to_char(1) = 'SQL_ASCII' then 'UNKNOWN' else getdatabaseencoding() end";
 
-        } else if (dbEncoding.equals("WIN")) {
-          dbEncoding = "Cp1252";
-        } else if (dbEncoding.equals("UNKNOWN")) {
-          //This isn't a multibyte database so we don't have an encoding to use
-          //We leave dbEncoding null which will cause the default encoding for the
-          //JVM to be used
-          dbEncoding = null;
-        } else {
-          dbEncoding = null;
-        }
+      // Set datestyle and fetch db encoding in a single call, to avoid making
+      // more than one round trip to the backend during connection startup.
+
+      java.sql.ResultSet resultSet =
+	  ExecSQL("set datestyle to 'ISO'; " + encodingQuery);
+
+      if (! resultSet.next()) {
+	  throw new PSQLException("postgresql.con.failed", "failed getting backend encoding");
       }
-
-
-      //Set the encoding for this connection
-      //Since the encoding could be specified or obtained from the DB we use the
-      //following order:
-      //  1.  passed as a property
-      //  2.  value from DB if supported by current JVM
-      //  3.  default for JVM (leave encoding null)
-      String passedEncoding = info.getProperty("charSet");  // could be null
-
-      if (passedEncoding != null) {
-        encoding = passedEncoding;
-      } else {
-        if (dbEncoding != null) {
-          //test DB encoding
-          try {
-            "TEST".getBytes(dbEncoding);
-            //no error the encoding is supported by the current JVM
-            encoding = dbEncoding;
-          } catch (UnsupportedEncodingException uee) {
-            //dbEncoding is not supported by the current JVM
-            encoding = null;
-          }
-        } else {
-          encoding = null;
-        }
-      }
+      dbEncoding = resultSet.getString(1);
+      encoding = Encoding.getEncoding(dbEncoding, info.getProperty("charSet"));
 
       // Initialise object handling
       initObjectTypes();
@@ -448,22 +369,7 @@ public abstract class Connection
 	    int insert_oid = 0;
 	    SQLException final_error = null;
 
-	    // Commented out as the backend can now handle queries
-	    // larger than 8K. Peter June 6 2000
-	    //if (sql.length() > 8192)
-	    //throw new PSQLException("postgresql.con.toolong",sql);
-
-        if (getEncoding() == null)
-            buf = sql.getBytes();
-        else {
-            try {
-                buf = sql.getBytes(getEncoding());
-            } catch (UnsupportedEncodingException unse) {
-                 throw new PSQLException("postgresql.con.encoding",
-                                        unse);
-            }
-        }
-
+	    buf = encoding.encode(sql);
 	    try
 		{
 		    pg_stream.SendChar('Q');
@@ -484,7 +390,7 @@ public abstract class Connection
 			{
 			case 'A':	// Asynchronous Notify
 			    pid = pg_stream.ReceiveInteger(4);
-                            msg = pg_stream.ReceiveString(getEncoding());
+                            msg = pg_stream.ReceiveString(encoding);
 			    break;
 			case 'B':	// Binary Data Transfer
 			    if (fields == null)
@@ -495,7 +401,7 @@ public abstract class Connection
 				tuples.addElement(tup);
 			    break;
 			case 'C':	// Command Status
-                            recv_status = pg_stream.ReceiveString(getEncoding());
+                            recv_status = pg_stream.ReceiveString(encoding);
 
 				// Now handle the update count correctly.
 				if(recv_status.startsWith("INSERT") || recv_status.startsWith("UPDATE") || recv_status.startsWith("DELETE") || recv_status.startsWith("MOVE")) {
@@ -537,7 +443,7 @@ public abstract class Connection
 				tuples.addElement(tup);
 			    break;
 			case 'E':	// Error Message
-                            msg = pg_stream.ReceiveString(getEncoding());
+                            msg = pg_stream.ReceiveString(encoding);
 			    final_error = new SQLException(msg);
 			    hfr = true;
 			    break;
@@ -552,10 +458,10 @@ public abstract class Connection
 				hfr = true;
 			    break;
 			case 'N':	// Error Notification
-                            addWarning(pg_stream.ReceiveString(getEncoding()));
+                            addWarning(pg_stream.ReceiveString(encoding));
 			    break;
 			case 'P':	// Portal Name
-                            String pname = pg_stream.ReceiveString(getEncoding());
+                            String pname = pg_stream.ReceiveString(encoding);
 			    break;
 			case 'T':	// MetaData Field Description
 			    if (fields != null)
@@ -588,7 +494,7 @@ public abstract class Connection
 
 	for (i = 0 ; i < nf ; ++i)
 	    {
-                String typname = pg_stream.ReceiveString(getEncoding());
+                String typname = pg_stream.ReceiveString(encoding);
 		int typid = pg_stream.ReceiveIntegerR(4);
 		int typlen = pg_stream.ReceiveIntegerR(2);
 		int typmod = pg_stream.ReceiveIntegerR(4);
@@ -653,11 +559,9 @@ public abstract class Connection
     }
 
     /**
-     *  Get the character encoding to use for this connection.
-     *  @return the encoding to use, or <b>null</b> for the
-     *  default encoding.
+     * Get the character encoding to use for this connection.
      */
-    public String getEncoding() throws SQLException {
+    public Encoding getEncoding() throws SQLException {
         return encoding;
     }
 

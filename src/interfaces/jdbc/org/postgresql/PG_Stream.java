@@ -10,7 +10,7 @@ import org.postgresql.core.*;
 import org.postgresql.util.*;
 
 /**
- * @version 1.0 15-APR-1997
+ * $Id: PG_Stream.java,v 1.10 2001/07/21 18:52:10 momjian Exp $
  *
  * This class is used by Connection & PGlobj for communicating with the
  * backend.
@@ -208,7 +208,7 @@ public class PG_Stream
    * @return string from back end
    * @exception SQLException if an I/O error occurs, or end of file
    */
-  public String ReceiveString(String encoding)
+  public String ReceiveString(Encoding encoding)
       throws SQLException
   {
     int s = 0;
@@ -239,18 +239,7 @@ public class PG_Stream
       } catch (IOException e) {
 	throw new PSQLException("postgresql.stream.ioerror",e);
       }
-
-      String v = null;
-      if (encoding == null)
-          v = new String(rst, 0, s);
-      else {
-          try {
-              v = new String(rst, 0, s, encoding);
-          } catch (UnsupportedEncodingException unse) {
-              throw new PSQLException("postgresql.stream.encoding", unse);
-          }
-      }
-      return v;
+      return encoding.decode(rst, 0, s);
   }
 
   /**

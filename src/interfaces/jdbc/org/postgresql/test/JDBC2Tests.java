@@ -195,6 +195,7 @@ public class JDBC2Tests extends TestSuite {
     suite.addTestSuite(DriverTest.class);
     suite.addTestSuite(ConnectionTest.class);
     suite.addTestSuite(DatabaseMetaDataTest.class);
+    suite.addTestSuite(EncodingTest.class);
 
     // Connectivity/Protocols
 

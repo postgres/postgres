@@ -151,6 +151,7 @@ BytePoolDim2    Handles a pool of byte[][] arrays
 MemoryPool      Interface for managing MemoryPools. Not used (yet).
 ObjectPool      Interface for an Object Pool
 SimpleObjectPool Class that implements ObjectPool and used by BytePoolDim#
+Encoding        Character encoding logic, mainly for Connection and PG_Stream.
 
 Package org.postgresql.fastpath
 ---------------------------
