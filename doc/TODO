@@ -1,7 +1,7 @@
 ====================================================
 TODO list (FAQ) for PostgreSQL
 ====================================================
-last updated:		Wed Jan 29 00:16:44 EST 1997
+last updated:		Sat Mar  1 21:28:10 EST 1997
 
 current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -16,6 +16,7 @@ Developers who have claimed items are:
 	Bruce is Bruce Momjian<maillist@candle.pha.pa.us>
 	Bryan is Bryan Henderson<bryanh@giraffe.netgate.net>
 	Dan is Dan McGuirk <mcguirk@indirect.com>
+	Daniel is Daniel Kalchev <daniel@digsys.bg>
 	Darren is Darren King <darrenk@insightdist.com>
 	Edmund is Edmund Mergl <E.Mergl@bawue.de>
 	Erich Stamberger <eberger@gewi.kfunigraz.ac.at>
@@ -33,17 +34,20 @@ remove -S (stable memory) option or fix memory manager
 Fix CLUSTER
 Fix all NULL features
 	allow psql to print nulls meaningfully
-Fix compile and security of Kerberos V code
+Fix compile and security of Kerberos/GSSAPI code (Daniel Kalchev?)
 Dropping a table twice causes corruption, drop/create not rollback-able
 -SUM aggregate on no rows or null value should return NULL, not zero(Thomas)
 SELECT on two tables where zero or one table in WHERE and target
-	clause returns no rows
-fix system to use oid index using constant without cast to oid
+ 	clause returns no rows
 COUNT on VIEW always returns zero (maybe because there is no oid for views?)
 CREATE VIEW requires super-user priviledge
 SELECT a[1] FROM test fails, it needs test.a[1]
 INSERT INTO ... SELECT DISTINCT ... generates error on DISTINCT
 pg_database.datdba is oid, should be int4
+fix array diffs in regression test
+can lo_export()/lo_import() read/write anywhere, causing a security problem?
+SELECT ... INTO TABLE ... with varchar()/char() types have zero-length fields
+Fix UPDATE key_table SET keyval=max(reftab.NUM)+1 WHERE tblname='reftab'
 
 ENHANCEMENTS
 ------------
@@ -63,7 +67,7 @@ Add full ANSI SQL capabilities
 	add domains
 	add sql3 recursive unions
 	add the concept of dataspaces
-	allow conversion type casts on select target fields
+	allow conversion type casts on SELECT target fields
 Allow compression of large fields or a compressed field type
 Fix the rules system(Jan?)
 	robust
@@ -92,22 +96,21 @@ Add other language types for built-in functions
 	expand to allow tcl, perl, java,
 	generalize the function manager switch to pass 
 		function sources to interpreter engines.
-	remove time-travel feature(Vadim)
-	reduce system column overhead(Vadmin)
-	remove pg_time table(Vadim)
-	allow row re-use without vacuum, maybe?(Vadim)
-	split apart row removal function from statistics function
-	can't vacuum large objects
+remove time-travel feature(Vadim)
+reduce system column overhead(Vadmin)
+remove pg_time table(Vadim)
+allow row re-use without vacuum, maybe?(Vadim)
+split apart row removal function from statistics function
+can't vacuum large objects
 Remove restriction that ORDER BY field must be in SELECT list(?)
 Allow queries about owner of datbases, tables like:
         SELECT u.usesysid FROM postgres.pg_user u;
 DROP AGGREGATE should take in basetype as an arg(Darren)
 Add word index for text fields, maybe with trigrams, i.e.:
     ' (cat | dog) & ! fox ' meaning text has cat or dog, but not fox
-Add common-sense constant type promotions
+-Add common-sense constant type promotions(Bruce)
 Allow readline-type or editor command editing of multi-line SQL commands
-Allow pg_dump to dump all databases at a site in one command
-Allow function result to be used in GROUP BY
+-Allow pg_dump to dump all databases at a site in one command(Bruce)
 Populate backend status area and write program to dump status data
 Add ALTER TABLE DROP COLUMN feature
 Remove stale files upon startup(Vivek)
@@ -118,11 +121,13 @@ Allow aggregate for All types, like count(Darren)
 Improve optimizer plan choice(Darren)
 Add STDDEV/VARIANCE() function for standard deviation computation/variance
 Add upper/lower functions
--Add table/column/function discription table indexed by oid
+Add table/column/function discription table indexed by oid
 -make all identifiers case-insensitive(Bruce)
 add pg_type attribute to identify types that need length (bpchar, varchar)
 add UNIQUE capability to non-btree indexes
-improve auto-type casting
+allow GROUP BY on columns that are functions
+add non-ascii collating strings with strcoll() and setlocale()
+new DATE routines (Thomas)
 
 PERFORMANCE
 -----------
@@ -136,12 +141,12 @@ Multi-representational types, a la Illustra. For example, have a
        objects, when greater than 8K.
 Use indexes in ORDER BY
 Profile engine in INSERT's and other operations
-Speed up hash creation by using btree's fast sort/insert routines
+-Speed up hash creation by using btree's fast sort/insert routines(done)
 Cache most recent query plan(s?)
 Allow compression of log and meta data
 Allow LIKE/wildcard matches to use indexes if the wildcard character is not first
 Add FILLFACTOR to index creation
-Allow indexes to be used with OR clauses
+Allow indexes to be used with OR clauses(Vadim)
 -Add column optimization statistics to vacuum(Bruce)
 -Change pg_attribute.attnvals name to attdispursion and change type float4
 	update pg_statistic table to remove operator column
@@ -151,15 +156,10 @@ DOCUMENTATION
 Update usermanual source
 remove time-travel in documentation(Bruce)
 added features used in grammer but not in docs, like :: and CAST
-add DECLARE manual pages
+add DECLARE manual page
 
 PORTABILITY
 -----------
-Windows NT port
-	Mariposa project at Berkeley has a person who's working on this
-Win95 port, use GNU port or remove it?
-Merge i386_solaris and sparc_solaris into solaris
-Switch from PORTNAME to individual feature defines (use configure/autoconf?)
 Change c.h "Index" and "bool" so they do not conflict with c++
 
 
@@ -214,6 +214,8 @@ Allow libpq to distinguish between text value '' and null(Bruce)
 Allow non-postgres users with createdb privs to destroydb's
 Allow restriction on who can create C functions(Bryan)
 Allow restriction on who can do backend COPY(Bryan)
+Allow system to use oid index using constant without cast to oid(Bruce)
+Auto-cast numeric constants to type of non-constant(Bruce)
 Can shrink tables, pg_time and pg_log(Vadim & Erich)
 Change debug level 2 to print queries only, changed debug heading layout(Bruce)
 Change default decimal constant representation from float4 to float8(Bruce)
