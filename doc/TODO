@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed May 30 16:17:28 EDT 2001
+Last updated:		Thu May 31 10:48:15 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -84,7 +84,7 @@ MULTILANGUAGE SUPPORT
 VIEWS
 
 * Automatically create rules on views so they are updateable, per SQL92
-* Add the functionality for "with check option" clause of create view
+* Add the functionality for WITH CHECK OPTION clause of CREATE VIEW
 * Allow NOTIFY in rules involving conditionals
 * Evaluate INSERT rules at end of query, rather than beginning
 
@@ -150,7 +150,7 @@ COMMANDS
 	* cluster all tables at once
 	* prevent lose of indexes, permissions, inheritance
 	* Automatically keep clustering on a table
-	* Keep statistics about clustering, perhaps during VACUUM ANALYZE
+	* -Keep statistics about clustering
 	  [optimizer]
 * COPY
 	* Allow specification of column names
@@ -201,13 +201,15 @@ REFERENTIAL INTEGRITY
 * INSERT & UPDATE/DELETE in transaction of primary key fails with
   deferredTriggerGetPreviousEvent or "change violation" [foreign]
 * Make constraints clearer in dump file
+* Make foreign keys easier to identify
 * Change foreign key constraint for array -> element to mean element
    in array
 * Automatically drop constraints/functions when object is dropped
 
 TRANSACTIONS
 
-* Implement UNDO using transaction log
+* Implement UNDO using transaction log, overwriting storage manager? 
+  [vacuum] (Vadim)
 * Allow autocommit so always in a transaction block
 * Overhaul bufmgr/lockmgr/transaction manager
 * Allow nested transactions (Vadim)
@@ -229,7 +231,6 @@ MISCELLANEOUS
 * Create a background process for each database that runs while
   database is idle, finding superceeded rows, gathering stats and
   vacuuming (Tom)
-* WAL UNDO, overwriting storage manager? [vacuum] (Vadim)
 * Populate backend status area and write program to dump status data (Jan)
 * -Put sort files in their own directory (Bruce)
 * Show location of syntax error in query [yacc]
