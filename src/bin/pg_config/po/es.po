@@ -1,13 +1,12 @@
 # pg_config spanish translation
 # This file is put in the public domain.
 # Alvaro Herrera <alvherre@dcc.uchile.cl>, 2004
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_config 8.0\n"
-"Report-Msgid-Bugs-To: <pgsql-es-ayuda@postgresql.org>\n"
-"POT-Creation-Date: 2004-11-02 23:28-0300\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2004-12-03 13:05-0300\n"
 "PO-Revision-Date: 2004-11-02 23:30 CLST\n"
 "Last-Translator: Alvaro Herrera <alvherre@dcc.uchile.cl>\n"
 "Language-Team: es <pgsql-es-ayuda@postgresql.org>\n"
@@ -48,7 +47,8 @@ msgstr "Opciones:\n"
 #: pg_config.c:40
 #, c-format
 msgid "  --bindir              show location of user executables\n"
-msgstr "  --bindir              muestra la ubicación de ejecutables de usuario\n"
+msgstr ""
+"  --bindir              muestra la ubicación de ejecutables de usuario\n"
 
 #: pg_config.c:41
 #, c-format
@@ -70,20 +70,22 @@ msgstr ""
 #: pg_config.c:44
 #, c-format
 msgid "  --libdir              show location of object code libraries\n"
-msgstr "  --libdir              muestra la ubicación de bibliotecas\n"
+msgstr ""
+"  --libdir              muestra la ubicación de bibliotecas\n"
 "                        de código objeto\n"
 
 #: pg_config.c:45
 #, c-format
 msgid "  --pkglibdir           show location of dynamically loadable modules\n"
-msgstr
+msgstr ""
 "  --pkglibdir           muestra la ubicación de módulos para carga dinámica\n"
 
 #: pg_config.c:46
 #, c-format
 msgid "  --pgxs                show location of extension makefile\n"
-msgstr "  --pgxs                muestra la ubicación del archivo makefile\n"
-       "                        para extensiones\n"
+msgstr ""
+"  --pgxs                muestra la ubicación del archivo makefile\n"
+"                        para extensiones\n"
 
 #: pg_config.c:47
 #, c-format
@@ -136,3 +138,33 @@ msgstr "%s: el argumento no es válido: %s\n"
 #, c-format
 msgid "%s: could not find own executable\n"
 msgstr "%s: no se pudo encontrar el propio ejecutable\n"
+
+#: ../../port/exec.c:193 ../../port/exec.c:307 ../../port/exec.c:350
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "no se pudo identificar el directorio actual: %s"
+
+#: ../../port/exec.c:323 ../../port/exec.c:359
+#, c-format
+msgid "could not change directory to \"%s\""
+msgstr "no se pudo cambiar el directorio a «%s»"
+
+#: ../../port/exec.c:338
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "no se pudo leer el enlace simbólico «%s»"
+
+#: ../../port/exec.c:569
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "el proceso hijo terminó con código de salida %d"
+
+#: ../../port/exec.c:572
+#, c-format
+msgid "child process was terminated by signal %d"
+msgstr "el proceso hijo fue terminado por una señal %d"
+
+#: ../../port/exec.c:575
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "el proceso hijo terminó con código no reconocido %d"

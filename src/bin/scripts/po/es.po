@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts 8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-09-14 20:05-0400\n"
+"POT-Creation-Date: 2004-12-06 18:46-0300\n"
 "PO-Revision-Date: 2003-10-05 20:10-0400\n"
 "Last-Translator: Alvaro Herrera <alvherre@dcc.uchile.cl>\n"
 "Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"
@@ -79,7 +79,8 @@ msgstr ""
 #: createdb.c:221
 #, c-format
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
-msgstr "  -D, --tablespace=TBLSPC   tablespace por omisión de la base de datos\n"
+msgstr ""
+"  -D, --tablespace=TBLSPC   tablespace por omisión de la base de datos\n"
 
 #: createdb.c:222
 #, c-format
@@ -119,8 +120,7 @@ msgstr "  --help                    mostrar esta ayuda y salir\n"
 #: createdb.c:228
 #, c-format
 msgid "  --version                    output version information, then exit\n"
-msgstr ""
-"  --version                 mostrar el número de versión y salir\n"
+msgstr "  --version                 mostrar el número de versión y salir\n"
 
 #: createdb.c:229 createuser.c:255 clusterdb.c:244 vacuumdb.c:273
 #, c-format
@@ -684,8 +684,7 @@ msgstr "  -q, --quiet               no desplegar mensajes\n"
 #: vacuumdb.c:270
 #, c-format
 msgid "  -v, --verbose                   write a lot of output\n"
-msgstr ""
-"  -v, --verbose             desplegar varios mensajes informativos\n"
+msgstr "  -v, --verbose             desplegar varios mensajes informativos\n"
 
 #: vacuumdb.c:271
 #, c-format
@@ -696,8 +695,7 @@ msgstr "  --help                    mostrar esta ayuda y salir\n"
 #, c-format
 msgid ""
 "  --version                       output version information, then exit\n"
-msgstr ""
-"  --version                 mostrar el número de versión y salir\n"
+msgstr "  --version                 mostrar el número de versión y salir\n"
 
 #: vacuumdb.c:278
 #, c-format
@@ -708,42 +706,46 @@ msgstr ""
 "\n"
 "Lea la descripción del comando VACUUM de SQL para obtener mayores detalles.\n"
 
-#: common.c:86 common.c:112
+#: common.c:33
+#, c-format
+msgid "%s: could not obtain information about current user: %s"
+msgstr "%s: no se pudo obtener información sobre el usuario actual: %s"
+
+#: common.c:44
+#, c-format
+msgid "%s: could not get current user name: %s"
+msgstr "%s: no se pudo obtener el nombre de usuario actual: %s"
+
+#: common.c:89 common.c:115
 msgid "Password: "
 msgstr "Contraseña: "
 
-#: common.c:99
+#: common.c:102
 #, c-format
 msgid "%s: could not connect to database %s\n"
 msgstr "%s: no se pudo conectar a la base de datos %s\n"
 
-#: common.c:122
+#: common.c:125
 #, c-format
 msgid "%s: could not connect to database %s: %s"
-msgstr ""
-"%s: no se pudo conectar a la base de datos %s:\n"
-"%s"
+msgstr "%s: no se pudo conectar a la base de datos %s: %s"
 
-#: common.c:146
+#: common.c:149
 #, c-format
 msgid "%s: query failed: %s"
 msgstr "%s: la consulta falló: %s"
 
-#: common.c:147
+#: common.c:150
 #, c-format
 msgid "%s: query was: %s\n"
 msgstr "%s: la consulta era: %s\n"
 
 #. translator: Make sure the (y/n) prompts match the translation of this.
-#: common.c:161
+#: common.c:164
 msgid "y"
 msgstr "s"
 
 #. translator: Make sure the (y/n) prompts match the translation of this.
-#: common.c:163
+#: common.c:166
 msgid "n"
 msgstr "n"
-
-#~ msgid ""
-#~ "  -D, --location=PATH       alternative place to store the database\n"
-#~ msgstr "  -D, --location=RUTA       lugar donde ubicar la base de datos\n"
