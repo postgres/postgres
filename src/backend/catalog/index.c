@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.80 1999/07/03 00:32:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.81 1999/07/07 09:27:25 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -57,8 +57,10 @@
 /*
  * macros used in guessing how many tuples are on a page.
  */
-#define AVG_TUPLE_SIZE MinTupleSize
-#define NTUPLES_PER_PAGE(natts) (BLCKSZ/((natts)*AVG_TUPLE_SIZE))
+#define AVG_ATTR_SIZE 8
+#define NTUPLES_PER_PAGE(natts) \
+	((BLCKSZ - MAXALIGN(sizeof (PageHeaderData))) / \
+	((natts) * AVG_ATTR_SIZE + MAXALIGN(sizeof(HeapTupleHeaderData))))
 
 /* non-export function prototypes */
 static Oid GetHeapRelationOid(char *heapRelationName, char *indexRelationName,

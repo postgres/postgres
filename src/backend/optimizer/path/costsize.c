@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.39 1999/07/07 09:11:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.40 1999/07/07 09:27:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ bool		_enable_nestloop_ = true;
 bool		_enable_mergejoin_ = true;
 bool		_enable_hashjoin_ = true;
 
-Cost		_cpu_page_weight_ = _CPU_PAGE_WEIGHT_;
+Cost		 _cpu_page_weight_ = _CPU_PAGE_WEIGHT_;
 Cost		_cpu_index_page_wight_ = _CPU_INDEX_PAGE_WEIGHT_;
 
 /*
