@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.152 2003/10/19 21:36:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.153 2003/10/31 17:43:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2326,21 +2326,21 @@ PQescapeBytea(const unsigned char *bintext, size_t binlen, size_t *bytealen)
 	return result;
 }
 
-#define VAL(CH) ((CH) - '0')
+#define ISFIRSTOCTDIGIT(CH) ((CH) >= '0' && (CH) <= '3')
+#define ISOCTDIGIT(CH) ((CH) >= '0' && (CH) <= '7')
+#define OCTVAL(CH) ((CH) - '0')
 
 /*
  *		PQunescapeBytea - converts the null terminated string representation
  *		of a bytea, strtext, into binary, filling a buffer. It returns a
- *		pointer to the buffer which is NULL on error, and the size of the
+ *		pointer to the buffer (or NULL on error), and the size of the
  *		buffer in retbuflen. The pointer may subsequently be used as an
  *		argument to the function free(3). It is the reverse of PQescapeBytea.
  *
  *		The following transformations are made:
- *		\'	 == ASCII 39 == '
  *		\\	 == ASCII 92 == \
  *		\ooo == a byte whose value = ooo (ooo is an octal number)
  *		\x	 == x (x is any character not matched by the above transformations)
- *
  */
 unsigned char *
 PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
@@ -2349,21 +2349,22 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 				buflen;
 	unsigned char *buffer,
 			   *tmpbuf;
-	int			i,
-				j,
-				byte;
+	size_t		i,
+				j;
 
 	if (strtext == NULL)
 		return NULL;
 
-	strtextlen = strlen(strtext);		/* will shrink, also we discover
-										 * if strtext isn't NULL
-										 * terminated */
-	buffer = (unsigned char *) malloc(strtextlen);
+	strtextlen = strlen(strtext);
+	/*
+	 * Length of input is max length of output, but add one to avoid
+	 * unportable malloc(0) if input is zero-length.
+	 */
+	buffer = (unsigned char *) malloc(strtextlen + 1);
 	if (buffer == NULL)
 		return NULL;
 
-	for (i = j = buflen = 0; i < (int)strtextlen;)
+	for (i = j = 0; i < strtextlen; )
 	{
 		switch (strtext[i])
 		{
@@ -2373,26 +2374,38 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 					buffer[j++] = strtext[i++];
 				else
 				{
-					if ((isdigit(strtext[i])) &&
-						(isdigit(strtext[i + 1])) &&
-						(isdigit(strtext[i + 2])))
+					if ((ISFIRSTOCTDIGIT(strtext[i])) &&
+						(ISOCTDIGIT(strtext[i + 1])) &&
+						(ISOCTDIGIT(strtext[i + 2])))
 					{
-						byte = VAL(strtext[i++]);
-						byte = (byte << 3) + VAL(strtext[i++]);
-						buffer[j++] = (byte << 3) + VAL(strtext[i++]);
+						int		byte;
+
+						byte = OCTVAL(strtext[i++]);
+						byte = (byte << 3) + OCTVAL(strtext[i++]);
+						byte = (byte << 3) + OCTVAL(strtext[i++]);
+						buffer[j++] = byte;
 					}
 				}
+				/*
+				 * Note: if we see '\' followed by something that isn't
+				 * a recognized escape sequence, we loop around having
+				 * done nothing except advance i.  Therefore the something
+				 * will be emitted as ordinary data on the next cycle.
+				 * Corner case: '\' at end of string will just be discarded.
+				 */
 				break;
 
 			default:
 				buffer[j++] = strtext[i++];
+				break;
 		}
 	}
-	buflen = j;					/* buflen is the length of the unquoted
+	buflen = j;					/* buflen is the length of the dequoted
 								 * data */
 
 	/* Shrink the buffer to be no larger than necessary */
-	tmpbuf = realloc(buffer, buflen);
+	/* +1 avoids unportable behavior when buflen==0 */
+	tmpbuf = realloc(buffer, buflen + 1);
 
 	/* It would only be a very brain-dead realloc that could fail, but... */
 	if (!tmpbuf)
