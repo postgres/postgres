@@ -1,11 +1,11 @@
 PostgresSQL on QNX 4
 --------------------
-last updated:           $Date: 2001/05/24 15:53:31 $
+last updated:           $Date: 2001/12/21 06:00:15 $
 
 current maintainer:     Bernd Tegge (tegge@repas-aeg.de)
 original author:        Andreas Kardos (kardos@repas-aeg.de)
 
-This port is an important step because PostgreSQL is now the only free
+This port is an important step because PostgreSQL is still the only free
 relational database with full SQL and ODBC support available for QNX 4.
 The only commercial databases available are Empress RDBMS and Velocis
 Database Server (not supported for Digital Unix).
@@ -22,9 +22,12 @@ QNX 4 does not offer native support of shared libraries. Therefore the related
 functionality cannot be used. Shared library support could probably be
 implemented in future.
 
-QNX 4 does not support UNIX domain sockets. Clients must use TCP/IP sockets.
-Therefore postmaster must always be started with the -i option. Furthermore
-it would be useful to set the PGHOST variable.
+QNX 4 does not support UNIX domain sockets. Clients must use TCP/IP
+sockets. Therefore you either have to set "tcpip_socket = true" in
+your postgresql.conf or to start postmaster with the -i option.
+Furthermore it's advisable to set to set the PGHOST or SOCK environment
+variable for postmaster in an environment using native QNX networking.
+Otherwise the postmaster might not use the IP-Address you think it does :-)
 
 Prerequisites:
 --------------
@@ -128,14 +131,8 @@ the object file into the SUBSYS.o but link it directly. For further information
 see backend/Makefile and backend/bootstrap/Makefile.
 libpgsql.a currently cannot be generated because of the same problem. But this
 doesn't matter since shared libraries are not supported.
-
-Currently yacc fails on backend/parser/gram.y and 
-interfaces/ecpg/preproc/preproc.y due to exceeded maximum table size. You can
-generate the gram.h, parse.h, preproc.h and preproc.c files on another platform
-and use them. This is only a problem when you use the current source tree since
-parse.h, gram.c, preproc.h and preproc.c are included in official
-distributions. In order to avoid this, install the bison binary mentioned
-above.
+(The Makefiles are already changed to ignore this, you don't have to
+do anything)
 
 Regression tests:
 -----------------
@@ -150,32 +147,27 @@ Some slight deviation in the last digit and "0" instead of "-0".
 Can be ignored.
 
 timestamp, tinterval, abstime, horology:
-Differences for years outside the normal Unix range, e.g. 1968
-instead of 2105
+Differences for years before the UNIX epoch. The QNX library probably treats
+time_t as unsigned -> dates before 1970 get moved into the far future.
 Can be ignored.
-
-rules:
-"ERROR:  Bad money external representation ..."
-if a value of type money is inserted in string representation e.g. as in
-"insert into rtest_emp values ('wiech', '5000.00');"
-Subject of further investigation.
 
 create_function_1, create_function_2, create_type, create_operator,
 create_view, select_views, triggers, misc, plpgsql:
 Error messages due to the lack of shared library support.
 
-numeric, numeric_big, sanity_check:
-"ERROR:  Cannot create unique index. Table contains non-unique values"
-This error occurs for indices of tables num_exp_add, num_exp_sub,
-num_exp_div and num_exp_mul only.
-Subject of further investigation. Probably because of the missing indices
-these numeric tests take a long time.
-The diffence in sanity_check.out is a consequence of this problem only.
+rules, select_views:
+looks like it fails because it depends on tables created by previously
+failing tests.
+
+alter_table:
+An expected failure message contains one blank more than expected.
+Possibly a faulty output file.
+
+int8, subselect, union
+fails for Watcom version because of lacking int8 support.
 
 The current state of this port should be sufficient for lot of applications.
 
-The Watcom version failed additional tests because of the lack of int8
-support.
 
 Have fun!
 
@@ -184,7 +176,7 @@ Andreas Kardos
 
 Bernd Tegge
 tegge@repas-aeg.de
-2001-03-01
+2001-12-10
 
 ---------------------------------------------------------------------------
 
@@ -211,3 +203,28 @@ tegge@repas-aeg.de
   #if defined(__sgi) && !defined(__GNUC__) && (_MIPS_SIM != _MIPS_SIM_ABI32)
   #pragma reset woff 1174
 
+
+Patch required to build with gcc:
+
+*** /usr/src/postgresql-7.2b3/src/backend/port/qnx4/sem.h       Thu Nov  8 21:37:52 2001
+--- src/backend/port/qnx4/sem.h Mon Dec 10 13:22:18 2001
+***************
+*** 55,60 ****
+--- 55,71 ----
+        ushort_t        sem_num;                /* semaphore #                  */
+        short           sem_op;                 /* semaphore operation          */
+        short           sem_flg;                /* operation flags              */
++ };
++
++ /*
++  * command union for semctl.
++  */
++
++ union semun {
++   int val;                    /* value for SETVAL */
++   struct semid_ds *buf;       /* buffer for IPC_STAT, IPC_SET */
++   unsigned short int *array;  /* array for GETALL, SETALL */
++   struct seminfo *__buf;      /* buffer for IPC_INFO */
+  };
+
+  extern int    semctl(int semid, int semnum, int cmd, /* ... */ union semun arg);
