@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.43 2000/04/12 17:14:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.44 2000/07/22 11:18:45 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "access/tuptoaster.h"
 #include "access/itup.h"
 #include "catalog/pg_type.h"
 
@@ -44,11 +45,40 @@ index_formtuple(TupleDesc tupleDescriptor,
 	bool		hasnull = false;
 	uint16		tupmask = 0;
 	int			numberOfAttributes = tupleDescriptor->natts;
+#ifdef TOAST_INDEX_HACK
+	Datum		untoasted_value[MaxHeapAttributeNumber];
+	bool		untoasted_free[MaxHeapAttributeNumber];
+#endif
 
 	if (numberOfAttributes > INDEX_MAX_KEYS)
 		elog(ERROR, "index_formtuple: numberOfAttributes %d > %d",
 			 numberOfAttributes, INDEX_MAX_KEYS);
 
+#ifdef TOAST_INDEX_HACK
+	for (i = 0; i < numberOfAttributes; i++)
+	{
+		if (null[i] != ' ' || tupleDescriptor->attrs[i]->attlen >= 0)
+		{
+			untoasted_value[i] = value[i];
+			untoasted_free[i] = false;
+		}
+		else
+		{
+			if (VARATT_IS_EXTERNAL(value[i]))
+			{
+				untoasted_value[i] = PointerGetDatum(
+						heap_tuple_fetch_attr(
+						(varattrib *)DatumGetPointer(value[i])));
+				untoasted_free[i] = true;
+			}
+			else
+			{
+				untoasted_value[i] = value[i];
+				untoasted_free[i] = false;
+			}
+		}
+	}
+#endif
 	for (i = 0; i < numberOfAttributes && !hasnull; i++)
 	{
 		if (null[i] != ' ')
@@ -59,7 +89,11 @@ index_formtuple(TupleDesc tupleDescriptor,
 		infomask |= INDEX_NULL_MASK;
 
 	hoff = IndexInfoFindDataOffset(infomask);
+#ifdef TOAST_INDEX_HACK
+	size = hoff + ComputeDataSize(tupleDescriptor, untoasted_value, null);
+#else
 	size = hoff + ComputeDataSize(tupleDescriptor, value, null);
+#endif
 	size = MAXALIGN(size);		/* be conservative */
 
 	tp = (char *) palloc(size);
@@ -68,10 +102,22 @@ index_formtuple(TupleDesc tupleDescriptor,
 
 	DataFill((char *) tp + hoff,
 			 tupleDescriptor,
+#ifdef TOAST_INDEX_HACK
+			 untoasted_value,
+#else
 			 value,
+#endif
 			 null,
 			 &tupmask,
 			 (hasnull ? (bits8 *) tp + sizeof(*tuple) : NULL));
+
+#ifdef TOAST_INDEX_HACK
+	for (i = 0; i < numberOfAttributes; i++)
+	{
+		if (untoasted_free[i])
+			pfree(DatumGetPointer(untoasted_value[i]));
+	}
+#endif
 
 	/*
 	 * We do this because DataFill wants to initialize a "tupmask" which

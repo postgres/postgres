@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2000, PostgreSQL Development Team
  *
- * $Id: tuptoaster.h,v 1.6 2000/07/21 10:31:31 wieck Exp $
+ * $Id: tuptoaster.h,v 1.7 2000/07/22 11:18:47 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,13 +20,7 @@
 #include "access/tupmacs.h"
 #include "utils/rel.h"
 
-/*
- * DO NOT ENABLE THIS
- * until we have crash safe file versioning and you've
- * changed VACUUM to recreate indices that use possibly
- * toasted values. 2000/07/20 Jan
- */
-#undef TOAST_INDICES
+#define TOAST_INDEX_HACK
 
 
 #define	TOAST_MAX_CHUNK_SIZE	((MaxTupleSize -							\
@@ -37,15 +31,36 @@
 					MAXALIGN(VARHDRSZ))) / 4)
 
 
-#ifdef TOAST_INDICES
+/* ----------
+ * heap_tuple_toast_attrs() -
+ *
+ *		Called by heap_insert(), heap_update() and heap_delete().
+ *		Outdates not any longer needed toast entries referenced
+ *		by oldtup and creates new ones until newtup is smaller
+ *		that ~2K (or running out of toastable values).
+ *		Possibly modifies newtup by replacing the t_data part!
+ * ----------
+ */
 extern void heap_tuple_toast_attrs(Relation rel,
 				HeapTuple newtup, HeapTuple oldtup);
-#else
-extern void heap_tuple_toast_attrs(Relation rel,
-				HeapTuple newtup, HeapTuple oldtup, 
-				HeapTupleHeader *plaintdata, int32 *plaintlen);
-#endif
 
+/* ----------
+ * heap_tuple_fetch_attr() -
+ *
+ *		Fetches an external stored attribute from the toast
+ *		relation. Does NOT decompress it, if stored external
+ *		in compressed format.
+ * ----------
+ */
+extern varattrib *heap_tuple_fetch_attr(varattrib * attr);
+
+/* ----------
+ * heap_tuple_untoast_attr() -
+ *
+ *		Fully detoasts one attribute, fetching and/or decompressing
+ *		it as needed.
+ * ----------
+ */
 extern varattrib *heap_tuple_untoast_attr(varattrib * attr);
 
 #endif	 /* TUPLE_TOASTER_ACTIVE */
