@@ -200,19 +200,16 @@ gbt_num_consistent(
 }
 
 
-
-
 GIST_SPLITVEC *
-gbt_num_picksplit( const GistEntryVector *entryvec, GIST_SPLITVEC *v, const gbtree_ninfo * tinfo )
+gbt_num_picksplit( const GistEntryVector *entryvec, GIST_SPLITVEC *v,
+				   const gbtree_ninfo * tinfo )
 {
+    OffsetNumber  i,
+		maxoff    = entryvec->n - 1;
+    Nsrt     *arr;
+    int       nbytes;
 
-    OffsetNumber  i   ,
-
-    maxoff    = entryvec->n - 1;
-
-    Nsrt     arr[maxoff+1]  ;
-    int       nbytes  ;   
-
+	arr = (Nsrt *) palloc((maxoff+1) * sizeof(Nsrt));
     nbytes        = (maxoff + 2) * sizeof(OffsetNumber);
     v->spl_left   = (OffsetNumber *) palloc(nbytes);
     v->spl_right  = (OffsetNumber *) palloc(nbytes);   
@@ -248,7 +245,7 @@ gbt_num_picksplit( const GistEntryVector *entryvec, GIST_SPLITVEC *v, const gbtr
       }
     }  
 
+	pfree(arr);
+
     return v;
-
 }
-

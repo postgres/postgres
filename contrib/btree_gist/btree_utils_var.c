@@ -416,36 +416,35 @@ gbt_var_penalty ( float * res , const GISTENTRY * o , const GISTENTRY * n, const
 }
 
 
-static int32 gbt_vsrt_cmp ( const Vsrt * a , const Vsrt * b , const gbtree_vinfo * tinfo )
+/*
+ * Fortunately, this sort comparsion routine needn't be reentrant...
+ */
+static const gbtree_vinfo * gbt_vsrt_cmp_tinfo;
+
+static int
+gbt_vsrt_cmp(const void *a, const void *b)
 {
-  GBT_VARKEY_R    ar  = gbt_var_key_readable ( a->t );
-  GBT_VARKEY_R    br  = gbt_var_key_readable ( b->t );
-  return (*tinfo->f_cmp) ( ar.lower, br.lower );
+	GBT_VARKEY_R    ar  = gbt_var_key_readable ( ((const Vsrt *) a)->t );
+	GBT_VARKEY_R    br  = gbt_var_key_readable ( ((const Vsrt *) b)->t );
+
+	return (*gbt_vsrt_cmp_tinfo->f_cmp) ( ar.lower, br.lower );
 }
-
-
 
 extern GIST_SPLITVEC *
 gbt_var_picksplit( const GistEntryVector *entryvec, GIST_SPLITVEC *v, const gbtree_vinfo * tinfo )
 {
-
-    OffsetNumber  i   ,
-            maxoff    = entryvec->n - 1;
-
-    Vsrt     arr[maxoff+1]  ;
+    OffsetNumber  i,
+		maxoff    = entryvec->n - 1;
+    Vsrt     *arr;
     int       pfrcntr = 0 ,
               svcntr  = 0 , 
               nbytes  ;   
     char        * tst ,
                 * cur ;
-
     char       **pfr = NULL ;
     GBT_VARKEY **sv  = NULL;
 
-    static int cmp (const void *a, const void *b ){
-      return gbt_vsrt_cmp ((Vsrt *) a , (Vsrt *) b , tinfo );
-    }
-
+	arr = (Vsrt *) palloc((maxoff+1) * sizeof(Vsrt));
     nbytes        = (maxoff + 2) * sizeof(OffsetNumber);
     v->spl_left   = (OffsetNumber *) palloc(nbytes);
     v->spl_right  = (OffsetNumber *) palloc(nbytes);   
@@ -482,8 +481,11 @@ gbt_var_picksplit( const GistEntryVector *entryvec, GIST_SPLITVEC *v, const gbtr
     }
 
     /* sort */
-    qsort ( (void*) &arr[FirstOffsetNumber], maxoff-FirstOffsetNumber+1,sizeof(Vsrt), cmp );
-
+	gbt_vsrt_cmp_tinfo = tinfo;
+    qsort((void*) &arr[FirstOffsetNumber],
+		  maxoff-FirstOffsetNumber+1,
+		  sizeof(Vsrt),
+		  gbt_vsrt_cmp);
 
     /* We do simply create two parts */
 
@@ -545,18 +547,15 @@ gbt_var_picksplit( const GistEntryVector *entryvec, GIST_SPLITVEC *v, const gbtr
 
     }
 
-    return v;
+	pfree(arr);
 
+    return v;
 }
 
 
-
-
-
 /*
-** The GiST consistent method
-*/
-
+ * The GiST consistent method
+ */
 extern bool  
 gbt_var_consistent( 
   GBT_VARKEY_R * key,

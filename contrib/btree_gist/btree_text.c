@@ -65,13 +65,15 @@ static bytea *
 gbt_text_xfrm ( bytea * leaf )
 {
     bytea  * out = leaf;
-
     int32  ilen = VARSIZE (leaf) - VARHDRSZ;
     int32  olen ;
-    char   sin[ilen+1]; 
-    char   * sou = NULL;
-    memcpy ( (void*)&sin[0], (void*) VARDATA(leaf) ,ilen );
+    char   * sin;
+    char   * sou;
+
+	sin = palloc(ilen + 1);
+    memcpy (sin, (void*) VARDATA(leaf) ,ilen );
     sin[ilen]   = '\0';
+
     olen        = strxfrm ( NULL, &sin[0], 0 ) + 1;
     sou         = palloc ( olen );
     olen        = strxfrm ( sou , &sin[0] , olen );
@@ -80,7 +82,9 @@ gbt_text_xfrm ( bytea * leaf )
     out->vl_len = olen+1;
     memcpy( (void*) VARDATA(out), sou, olen-VARHDRSZ );
     ((char*)out)[olen]   = '\0';
+
     pfree(sou);
+    pfree(sin);
 
     return out;
 }
