@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.11 1996/10/07 07:18:34 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.12 1996/10/12 07:48:49 bryanh Exp $
  *
  * NOTES
  *
@@ -95,6 +95,11 @@
 # endif
 #endif
 
+#define LINGER_TIME 3
+  /* Max time in seconds for socket to linger (close() to block) waiting
+     for frontend to retrieve its message from us.
+  */
+
 /*
  * Info for garbage collection.  Whenever a process dies, the Postmaster
  * cleans up after it.  Currently, NO information is required for cleanup,
@@ -142,12 +147,6 @@ static int	SendStop = 0;
 
 static int MultiplexedBackends = 0;
 static int MultiplexedBackendPort;
-
-#if defined(HBA)
-static int useHostBasedAuth = 1;
-#else
-static int useHostBasedAuth = 0;
-#endif
 
 /* 
  * postmaster.c - function prototypes
@@ -498,9 +497,16 @@ ServerLoop(void)
 		 */
 		status = PacketReceive(port, &port->buf, NON_BLOCKING);
 		switch (status) {
-		case STATUS_OK: 
-		    ConnStartup(port);
+		case STATUS_OK: {
+                    int CSstatus;      /* Completion status of ConnStartup */
+                    char errormsg[200];    /* error msg from ConnStartup */
+
+		    ConnStartup(port, &CSstatus, errormsg, sizeof(errormsg));
+
+                    if (CSstatus == STATUS_ERROR) 
+                        send_error_reply(port, errormsg);
 		    ActiveBackends = TRUE;
+                  }
 		    /*FALLTHROUGH*/
 		case STATUS_INVALID: 
 		    if (DebugLvl)
@@ -553,15 +559,25 @@ ServerLoop(void)
     }
 }
 
-static int
-ConnStartup(Port *port)		/* receiving port */
+
+
+/*
+    ConnStartup: get the startup packet from the front end (client), 
+    authenticate the user, and start up a backend.
+
+    If all goes well, return *status == STATUS_OK.
+    Otherwise, return *status == STATUS_ERROR and return a text string
+    explaining why in the "errormsg_len" bytes at "errormsg", 
+*/
+
+static void
+ConnStartup(Port *port, int *status, 
+            char *errormsg, const int errormsg_len)
 {
-    MsgType		msgType;
-    char		namebuf[NAMEDATALEN + 1];
-/*    StartupInfo   	*sp;*/
-    int			pid;
+    MsgType msgType;
+    char namebuf[NAMEDATALEN + 1];
+    int	pid;
     PacketBuf *p;
-/*    sp = PacketBuf2StartupInfo(&port->buf);*/
     StartupInfo sp;
     char *tmp;
 
@@ -589,27 +605,95 @@ ConnStartup(Port *port)		/* receiving port */
     (void) strncpy(namebuf, sp.user, NAMEDATALEN);
     namebuf[NAMEDATALEN] = '\0';
     if (!namebuf[0]) {
-	fprintf(stderr, "%s: ConnStartup: no user name specified\n",
-		progname);
-	return(STATUS_ERROR);
+        snprintf(errormsg, errormsg_len, 
+                 "No Postgres username specified in startup packet.");
+        *status = STATUS_ERROR;
+    } else {
+        if (be_recvauth(msgType, port, namebuf, &sp) != STATUS_OK) {
+            snprintf(errormsg, errormsg_len, 
+                     "Failed to authenticate client as Postgres user '%s' "
+                     "using authentication scheme %d.",
+                     namebuf, msgType);
+            *status = STATUS_ERROR;
+        } else {
+            if (BackendStartup(&sp, port, &pid) != STATUS_OK) {
+                snprintf(errormsg, errormsg_len, 
+                         "Startup (fork) of backend failed.");
+                *status = STATUS_ERROR;
+            } else {
+                errormsg[0] = '\0';  /* just for robustness */
+                *status = STATUS_OK;
+            }
+        }
     }
-    
-    if (msgType == STARTUP_MSG && useHostBasedAuth)
-	msgType = STARTUP_HBA_MSG;
-    if (be_recvauth(msgType, port, namebuf,&sp) != STATUS_OK) {
-	fprintf(stderr, "%s: ConnStartup: authentication failed\n",
-		progname);
-	return(STATUS_ERROR);
-    }
-    
-    if (BackendStartup(&sp, port, &pid) != STATUS_OK) {
-	fprintf(stderr, "%s: ConnStartup: couldn't start backend\n",
-		progname);
-	return(STATUS_ERROR);
-    }
-    
-    return(STATUS_OK);
+    if (*status == STATUS_ERROR)
+        fprintf(stderr, "%s: ConnStartup: %s\n", progname, errormsg);
 }
+
+
+/*
+     send_error_reply: send a reply to the front end telling it that
+     the connection was a bust, and why.
+
+     "port" tells to whom and how to send the reply.  "errormsg" is
+     the string of text telling what the problem was.
+
+     It should be noted that we're executing a pretty messy protocol
+     here.  The postmaster does not reply when the connection is
+     successful, but rather just hands the connection off to the
+     backend and the backend waits for a query from the frontend.
+     Thus, the frontend is not expecting any reply in regards to the
+     connect request.
+
+     But when the connection fails, we send this reply that starts
+     with "E".  The frontend only gets this reply when it sends its
+     first query and waits for the reply.  Nobody receives that query,
+     but this reply is already in the pipe, so that's what the
+     frontend sees.
+
+     Note that the backend closes the socket immediately after sending
+     the reply, so to give the frontend a fighting chance to see the
+     error info, we set the socket to linger up to 3 seconds waiting
+     for the frontend to retrieve the message.  That's all the delay
+     we can afford, since we have other clients to serve and the
+     postmaster will be blocked the whole time.  Also, if there is no
+     message space in the socket for the reply (shouldn't be a
+     problem) the postmaster will block until the frontend reads the
+     reply.  
+
+*/
+
+static void
+send_error_reply(Port *port, const char *errormsg)
+{
+    int rc;  /* return code from sendto */
+    char reply[201];
+    const struct linger linger_parm = {true, LINGER_TIME};
+    /* A parameter for setsockopt() that tells it to have close() block for
+       a while waiting for the frontend to read its outstanding messages.
+       */
+
+    snprintf(reply, sizeof(reply), "E%s", errormsg);
+
+    rc = send(port->sock, (Addr) reply, strlen(reply)+1, /* flags */ 0);
+    if (rc < 0)
+      fprintf(stderr, 
+              "%s: ServerLoop:\t\t"
+              "Failed to send error reply to front end\n",
+              progname);
+    else if (rc < strlen(reply)+1)
+      fprintf(stderr, 
+              "%s: ServerLoop:\t\t"
+              "Only partial error reply sent to front end.\n",
+              progname);
+
+    /* Now we have to make sure frontend has a chance to see what we
+       just wrote.
+       */
+    rc = setsockopt(port->sock, SOL_SOCKET, SO_LINGER, 
+                    &linger_parm, sizeof(linger_parm));
+}
+
 
 /*
  * ConnCreate -- create a local connection data structure
