@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.31 1999/02/13 23:21:23 momjian Exp $
+ * $Id: executor.h,v 1.32 1999/04/16 21:27:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,7 +151,7 @@ extern TupleDesc ExecTypeFromTL(List *targetList);
 extern void SetChangedParamList(Plan *node, List *newchg);
 
 /*
- * prototypes from functions in execTuples.c
+ * prototypes from functions in execUtils.c
  */
 extern void ResetTupleCount(void);
 extern void ExecAssignNodeBaseInfo(EState *estate, CommonState *basenode,
@@ -165,6 +165,8 @@ extern void ExecAssignResultTypeFromTL(Plan *node, CommonState *commonstate);
 extern TupleDesc ExecGetResultType(CommonState *commonstate);
 extern void ExecAssignProjectionInfo(Plan *node, CommonState *commonstate);
 extern void ExecFreeProjectionInfo(CommonState *commonstate);
+extern void ExecFreeExprContext(CommonState *commonstate);
+extern void ExecFreeTypeInfo(CommonState *commonstate);
 extern TupleDesc ExecGetScanType(CommonScanState *csstate);
 extern void ExecAssignScanType(CommonScanState *csstate,
 				   TupleDesc tupDesc);
