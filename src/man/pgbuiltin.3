@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/pgbuiltin.3,v 1.1 1997/08/26 17:39:32 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/pgbuiltin.3,v 1.2 1997/09/01 06:21:00 thomas Exp $
 .TH PGBUILTIN INTRO 04/01/97 PostgreSQL PostgreSQL
 .SH "DESCRIPTION"
 This section describes the data types, functions and operators
@@ -79,13 +79,11 @@ types are either unique to Postgres, such as open and closed paths, or have
 several possibilities for formats, such as date and time types.
 
 .SH "Syntax of date and time types"
-Some date and time types share code for data input. For those types (currently
-.IR datetime
-and
-.IR abstime
-, and
-.IR timespan
-and
+Most date and time types share code for data input. For those types (
+.IR datetime ,
+.IR abstime ,
+.IR timestamp ,
+.IR timespan and
 .IR reltime )
 the input can have any of a wide variety of styles. For numeric date representations,
 European and US conventions can differ, and the proper interpretation is obtained
@@ -232,6 +230,17 @@ where
 Valid relative times are less than or equal to 68 years.)
 In addition, the special relative time \*(lqUndefined RelTime\*(rq is
 provided.
+
+.SH "TIMESTAMP"
+This is currently a limited-range absolute time which closely resembles the
+.IR abstime
+data type. It shares the general input parser with the other date/time types.
+In future releases this type will absorb the capabilities of the datetime type
+and will move toward SQL92 compliance.
+
+.PP
+timestamp is specified using the same syntax as for datetime.
+
 .SH "TIME RANGES"
 Time ranges are specified as:
 .PP
@@ -317,22 +326,23 @@ path is specified using the following syntax:
 .nf
   ( x1 , y1 ) , ... , ( xn , yn )  
 .nf
-    x1 , y1   , ... ,   xn , yn    
+  ( x1 , y1   , ... ,   xn , yn )  
 .nf
-( closed, n, x1 , y1   , ... ,   xn , yn )  
+    x1 , y1   , ... ,   xn , yn    
 .sp
 where
 	(x1,y1),...,(xn,yn) are points 1 through n
 	a leading "[" indicates an open path
 	a leading "(" indicates a closed path
-	a single leading "(" indicates a v6.0-compatible format
-	closed is an integer flag which is zero for an open path
-	n is the number of points in the path
 .fi
 .PP
 Paths are output using the first syntax.
-The last format is supplied to be backward compatible with v6.0 and earlier
-path formats and will not be supported in future versions of Postgres.
+Note that Postgres versions prior to
+v6.1 used a format for paths which had a single leading parenthesis, a "closed" flag,
+an integer count of the number of points, then the list of points followed by a
+closing parenthesis. The built-in function upgradepath() is supplied to convert
+paths dumped and reloaded from pre-v6.1 databases.
+
 .SH "POLYGON"
 Polygons are represented by sets of points. Polygons should probably be
 considered 
@@ -346,18 +356,25 @@ polygon is specified using the following syntax:
 .nf
   ( x1 , y1 ) , ... , ( xn , yn )  
 .nf
-    x1 , y1   , ... ,   xn , yn    
+  ( x1 , y1   , ... ,   xn , yn )  
 .nf
-( x1 , ... , xn , y1 , ... , yn )  
+    x1 , y1   , ... ,   xn , yn    
 .sp
 where
 	(x1,y1),...,(xn,yn) are points 1 through n
-	a single leading "(" indicates a v6.0-compatible format
 .fi
 .PP
 Polygons are output using the first syntax.
 The last format is supplied to be backward compatible with v6.0 and earlier
 path formats and will not be supported in future versions of Postgres.
+	a single leading "(" indicates a v6.0-compatible format
+( x1 , ... , xn , y1 , ... , yn )  
+Note that Postgres versions prior to
+v6.1 used a format for polygons which had a single leading parenthesis, the list
+of x-axis coordinates, the list of y-axis coordinates, followed by a closing parenthesis.
+The built-in function upgradepoly() is supplied to convert
+polygons dumped and reloaded from pre-v6.1 databases.
+
 .SH "CIRCLE"
 Circles are represented by a center point and a radius.
 .PP
@@ -426,7 +443,19 @@ general
 	/	division
 	%	modulus
 	@	absolute value
-	<===>	distance between
+
+geometric
+	@	A contained by (inside or on) B
+	~	A contains (around or on) B
+	@@	center of object
+	<->	distance between A and B
+	&&	objects overlap
+	&<	A overlaps B, but does not extend to right of B
+	&>	A overlaps B, but does not extend to left of B
+	<<	A is left of B
+	>>	A is right of B
+	>^	A is above B
+	<^	A is below B
 
 float8	
 	^	exponentiation
@@ -437,28 +466,28 @@ float8
 	;	natural logarithm (in psql, protect with parentheses)
 
 point
-	!<	A is left of B
-	!>	A is right of B
-	!^	A is above B
-	!|	A is below B
-	\(eq|\(eq	equality
-	===>	point inside box
-	===`	point on path
+	<<	A is left of B
+	>>	A is right of B
+	>^	A is above B
+	<^	A is below B
+	~\(eq	A same as B (equality)
+	@	point inside (or on) path, box, circle, polygon
 
 box
 	&&	boxes overlap
 	&<	box A overlaps box B, but does not extend to right of box B
 	&>	box A overlaps box B, but does not extend to left of box B
 	<<	A is left of B
+	>>	A is right of B
+	>^	A is above B
+	<^	A is below B
 	\(eq	area equal
 	<	area less than
 	<\(eq	area less or equal
 	>\(eq	area greater or equal
 	>	area greater than
-	>>	A is right of B
+	~\(eq	A same as B (equality)
 	@	A is contained in B
-	~\(eq	box equality
-	~=	A same as B
 	~	A contains B
 	@@	center of box
 
@@ -468,9 +497,8 @@ polygon
 	&>	A overlaps B but does not extend to left of B
 	<<	A is left of B
 	>>	A is right of B
+	~\(eq	A same as B (equality)
 	@	A is contained by B
-	~\(eq	equality
-	~=	A same as B
 	~	A contains B
 
 circle	
@@ -479,9 +507,10 @@ circle
 	&>	A overlaps B but does not extend to left of B
 	<<	A is left of B
 	>>	A is right of B
+	>^	A is above B
+	<^	A is below B
+	~\(eq	A same as B (equality)
 	@	A is contained by B
-	~\(eq	equality
-	~=	A same as B
 	~	A contains B
 
 tinterval
@@ -518,18 +547,19 @@ to return day of week and `epoch' to return seconds since 1970.
 Functions:
 
 abstime
-	datetime datetime(abstime)         convert to datetime
 	bool     isfinite(abstime)         TRUE if this is a finite time
+	datetime datetime(abstime)         convert to datetime
 
 date
 	datetime datetime(date)            convert to datetime
 	datetime datetime(date,time)       convert to datetime
 
 datetime
-	abstime  abstime(datetime)         convert to abstime
+	timespan age(datetime,datetime)    date difference preserving months and years
 	float8   date_part(text,datetime)  specified portion of date field
 	datetime date_trunc(text,datetime) truncate date at specified units
 	bool     isfinite(datetime)        TRUE if this is a finite time
+	abstime  abstime(datetime)         convert to abstime
 
 reltime
 	timespan timespan(reltime)         convert to timespan
@@ -585,394 +615,455 @@ These operations are cast in terms of SQL types and so are
 directly usable as C function prototypes.
 
 .nf
-result   |left_type |right_type|operatr|func_name
----------+----------+----------+-------+-----------------
-_aclitem |_aclitem  |aclitem   |+      |aclinsert
-_aclitem |_aclitem  |aclitem   |-      |aclremove
-abstime  |abstime   |reltime   |+      |timepl
-abstime  |abstime   |reltime   |-      |timemi
-bool     |_abstime  |_abstime  |=      |array_eq
-bool     |_aclitem  |_aclitem  |=      |array_eq
-bool     |_aclitem  |aclitem   |~      |aclcontains
-bool     |_bool     |_bool     |=      |array_eq
-bool     |_box      |_box      |=      |array_eq
-bool     |_bytea    |_bytea    |=      |array_eq
-bool     |_char     |_char     |=      |array_eq
-bool     |_char16   |_char16   |=      |array_eq
-bool     |_cid      |_cid      |=      |array_eq
-bool     |_filename |_filename |=      |array_eq
-bool     |_float4   |_float4   |=      |array_eq
-bool     |_float8   |_float8   |=      |array_eq
-bool     |_int2     |_int2     |=      |array_eq
-bool     |_int28    |_int28    |=      |array_eq
-bool     |_int4     |_int4     |=      |array_eq
-bool     |_lseg     |_lseg     |=      |array_eq
-bool     |_name     |_name     |=      |array_eq
-bool     |_oid      |_oid      |=      |array_eq
-bool     |_oid8     |_oid8     |=      |array_eq
-bool     |_path     |_path     |=      |array_eq
-bool     |_point    |_point    |=      |array_eq
-bool     |_polygon  |_polygon  |=      |array_eq
-bool     |_ref      |_ref      |=      |array_eq
-bool     |_regproc  |_regproc  |=      |array_eq
-bool     |_reltime  |_reltime  |=      |array_eq
-bool     |_stub     |_stub     |=      |array_eq
-bool     |_text     |_text     |=      |array_eq
-bool     |_tid      |_tid      |=      |array_eq
-bool     |_tinterval|_tinterval|=      |array_eq
-bool     |_xid      |_xid      |=      |array_eq
-bool     |abstime   |abstime   |<      |abstimelt
-bool     |abstime   |abstime   |<=     |abstimele
-bool     |abstime   |abstime   |<>     |abstimene
-bool     |abstime   |abstime   |=      |abstimeeq
-bool     |abstime   |abstime   |>      |abstimegt
-bool     |abstime   |abstime   |>=     |abstimege
-bool     |abstime   |tinterval |<?>    |ininterval
-bool     |bool      |bool      |<      |boollt
-bool     |bool      |bool      |<>     |boolne
-bool     |bool      |bool      |=      |booleq
-bool     |bool      |bool      |>      |boolgt
-bool     |box       |box       |&&     |box_overlap
-bool     |box       |box       |&<     |box_overleft
-bool     |box       |box       |&>     |box_overright
-bool     |box       |box       |<      |box_lt
-bool     |box       |box       |<<     |box_left
-bool     |box       |box       |<=     |box_le
-bool     |box       |box       |=      |box_eq
-bool     |box       |box       |>      |box_gt
-bool     |box       |box       |>=     |box_ge
-bool     |box       |box       |>>     |box_right
-bool     |box       |box       |@      |box_contained
-bool     |box       |box       |~      |box_contain
-bool     |box       |box       |~=     |box_same
-bool     |bpchar    |bpchar    |<      |bpcharlt
-bool     |bpchar    |bpchar    |<=     |bpcharle
-bool     |bpchar    |bpchar    |<>     |bpcharne
-bool     |bpchar    |bpchar    |=      |bpchareq
-bool     |bpchar    |bpchar    |>      |bpchargt
-bool     |bpchar    |bpchar    |>=     |bpcharge
-bool     |bpchar    |text      |!~     |textregexne
-bool     |bpchar    |text      |!~*    |texticregexne
-bool     |bpchar    |text      |!~~    |textnlike
-bool     |bpchar    |text      |~      |textregexeq
-bool     |bpchar    |text      |~*     |texticregexeq
-bool     |bpchar    |text      |~~     |textlike
-bool     |char      |char      |<      |charlt
-bool     |char      |char      |<=     |charle
-bool     |char      |char      |<>     |charne
-bool     |char      |char      |=      |chareq
-bool     |char      |char      |>      |chargt
-bool     |char      |char      |>=     |charge
-bool     |char16    |char16    |<      |char16lt
-bool     |char16    |char16    |<=     |char16le
-bool     |char16    |char16    |<>     |char16ne
-bool     |char16    |char16    |=      |char16eq
-bool     |char16    |char16    |>      |char16gt
-bool     |char16    |char16    |>=     |char16ge
-bool     |char16    |text      |!~     |char16regexne
-bool     |char16    |text      |!~*    |char16icregexne
-bool     |char16    |text      |!~~    |char16nlike
-bool     |char16    |text      |!~~    |char16nlike
-bool     |char16    |text      |~      |char16regexeq
-bool     |char16    |text      |~*     |char16icregexeq
-bool     |char16    |text      |~~     |char16like
-bool     |char16    |text      |~~     |char16like
-bool     |char2     |char2     |<      |char2lt
-bool     |char2     |char2     |<=     |char2le
-bool     |char2     |char2     |<>     |char2ne
-bool     |char2     |char2     |=      |char2eq
-bool     |char2     |char2     |>      |char2gt
-bool     |char2     |char2     |>=     |char2ge
-bool     |char2     |text      |!~     |char2regexne
-bool     |char2     |text      |!~*    |char2icregexne
-bool     |char2     |text      |!~~    |char2nlike
-bool     |char2     |text      |~      |char2regexeq
-bool     |char2     |text      |~*     |char2icregexeq
-bool     |char2     |text      |~~     |char2like
-bool     |char4     |char4     |<      |char4lt
-bool     |char4     |char4     |<=     |char4le
-bool     |char4     |char4     |<>     |char4ne
-bool     |char4     |char4     |=      |char4eq
-bool     |char4     |char4     |>      |char4gt
-bool     |char4     |char4     |>=     |char4ge
-bool     |char4     |text      |!~     |char4regexne
-bool     |char4     |text      |!~*    |char4icregexne
-bool     |char4     |text      |!~~    |char4nlike
-bool     |char4     |text      |~      |char4regexeq
-bool     |char4     |text      |~*     |char4icregexeq
-bool     |char4     |text      |~~     |char4like
-bool     |char8     |char8     |<      |char8lt
-bool     |char8     |char8     |<=     |char8le
-bool     |char8     |char8     |<>     |char8ne
-bool     |char8     |char8     |=      |char8eq
-bool     |char8     |char8     |>      |char8gt
-bool     |char8     |char8     |>=     |char8ge
-bool     |char8     |text      |!~     |char8regexne
-bool     |char8     |text      |!~*    |char8icregexne
-bool     |char8     |text      |!~~    |char8nlike
-bool     |char8     |text      |~      |char8regexeq
-bool     |char8     |text      |~*     |char8icregexeq
-bool     |char8     |text      |~~     |char8like
-bool     |circle    |circle    |!^     |circle_above
-bool     |circle    |circle    |!\|    |circle_below
-bool     |circle    |circle    |&&     |circle_overlap
-bool     |circle    |circle    |&<     |circle_overleft
-bool     |circle    |circle    |&>     |circle_overright
-bool     |circle    |circle    |<      |circle_eq
-bool     |circle    |circle    |<<     |circle_left
-bool     |circle    |circle    |<=     |circle_eq
-bool     |circle    |circle    |<>     |circle_ne
-bool     |circle    |circle    |=      |circle_eq
-bool     |circle    |circle    |>      |circle_eq
-bool     |circle    |circle    |>=     |circle_eq
-bool     |circle    |circle    |>>     |circle_right
-bool     |circle    |circle    |@      |circle_contained
-bool     |circle    |circle    |~      |circle_contain
-bool     |circle    |circle    |~=     |circle_same
-bool     |date      |date      |<      |date_lt
-bool     |date      |date      |<=     |date_le
-bool     |date      |date      |<>     |date_ne
-bool     |date      |date      |=      |date_eq
-bool     |date      |date      |>      |date_gt
-bool     |date      |date      |>=     |date_ge
-bool     |datetime  |datetime  |<      |datetime_lt
-bool     |datetime  |datetime  |<=     |datetime_le
-bool     |datetime  |datetime  |<>     |datetime_ne
-bool     |datetime  |datetime  |=      |datetime_eq
-bool     |datetime  |datetime  |>      |datetime_gt
-bool     |datetime  |datetime  |>=     |datetime_ge
-bool     |float4    |float4    |<      |float4lt
-bool     |float4    |float4    |<=     |float4le
-bool     |float4    |float4    |<>     |float4ne
-bool     |float4    |float4    |=      |float4eq
-bool     |float4    |float4    |>      |float4gt
-bool     |float4    |float4    |>=     |float4ge
-bool     |float4    |float8    |<      |float48lt
-bool     |float4    |float8    |<=     |float48le
-bool     |float4    |float8    |<>     |float48ne
-bool     |float4    |float8    |=      |float48eq
-bool     |float4    |float8    |>      |float48gt
-bool     |float4    |float8    |>=     |float48ge
-bool     |float8    |float4    |<      |float84lt
-bool     |float8    |float4    |<=     |float84le
-bool     |float8    |float4    |<>     |float84ne
-bool     |float8    |float4    |=      |float84eq
-bool     |float8    |float4    |>      |float84gt
-bool     |float8    |float4    |>=     |float84ge
-bool     |float8    |float8    |<      |float8lt
-bool     |float8    |float8    |<=     |float8le
-bool     |float8    |float8    |<>     |float8ne
-bool     |float8    |float8    |=      |float8eq
-bool     |float8    |float8    |>      |float8gt
-bool     |float8    |float8    |>=     |float8ge
-bool     |int2      |int2      |<      |int2lt
-bool     |int2      |int2      |<=     |int2le
-bool     |int2      |int2      |<>     |int2ne
-bool     |int2      |int2      |=      |int2eq
-bool     |int2      |int2      |>      |int2gt
-bool     |int2      |int2      |>=     |int2ge
-bool     |int4      |int4      |<      |int4lt
-bool     |int4      |int4      |<=     |int4le
-bool     |int4      |int4      |<>     |int4ne
-bool     |int4      |int4      |=      |int4eq
-bool     |int4      |int4      |>      |int4gt
-bool     |int4      |int4      |>=     |int4ge
-bool     |int4      |name      |!!=    |int4notin
-bool     |int4      |oid       |=      |int4eqoid
-bool     |money     |money     |<      |cash_lt
-bool     |money     |money     |<=     |cash_le
-bool     |money     |money     |<>     |cash_ne
-bool     |money     |money     |=      |cash_eq
-bool     |money     |money     |>      |cash_gt
-bool     |money     |money     |>=     |cash_ge
-bool     |name      |name      |<      |namelt
-bool     |name      |name      |<=     |namele
-bool     |name      |name      |<>     |namene
-bool     |name      |name      |=      |nameeq
-bool     |name      |name      |>      |namegt
-bool     |name      |name      |>=     |namege
-bool     |name      |text      |!~     |nameregexne
-bool     |name      |text      |!~*    |nameicregexne
-bool     |name      |text      |!~~    |namenlike
-bool     |name      |text      |~      |nameregexeq
-bool     |name      |text      |~*     |nameicregexeq
-bool     |name      |text      |~~     |namelike
-bool     |oid       |int4      |=      |oideqint4
-bool     |oid       |name      |!!=    |oidnotin
-bool     |oid       |oid       |<      |int4lt
-bool     |oid       |oid       |<=     |int4le
-bool     |oid       |oid       |<>     |oidne
-bool     |oid       |oid       |=      |oideq
-bool     |oid       |oid       |>      |int4gt
-bool     |oid       |oid       |>=     |int4ge
-bool     |oidint2   |oidint2   |<      |oidint2lt
-bool     |oidint2   |oidint2   |<=     |oidint2le
-bool     |oidint2   |oidint2   |<>     |oidint2ne
-bool     |oidint2   |oidint2   |=      |oidint2eq
-bool     |oidint2   |oidint2   |>      |oidint2gt
-bool     |oidint2   |oidint2   |>=     |oidint2ge
-bool     |oidint4   |oidint4   |<      |oidint4lt
-bool     |oidint4   |oidint4   |<=     |oidint4le
-bool     |oidint4   |oidint4   |<>     |oidint4ne
-bool     |oidint4   |oidint4   |=      |oidint4eq
-bool     |oidint4   |oidint4   |>      |oidint4gt
-bool     |oidint4   |oidint4   |>=     |oidint4ge
-bool     |oidname   |oidname   |<      |oidnamelt
-bool     |oidname   |oidname   |<=     |oidnamele
-bool     |oidname   |oidname   |<>     |oidnamene
-bool     |oidname   |oidname   |=      |oidnameeq
-bool     |oidname   |oidname   |>      |oidnamegt
-bool     |oidname   |oidname   |>=     |oidnamege
-bool     |point     |box       |===>   |on_pb
-bool     |point     |path      |===`   |on_ppath
-bool     |point     |point     |!<     |point_left
-bool     |point     |point     |!>     |point_right
-bool     |point     |point     |!^     |point_above
-bool     |point     |point     |!\|    |point_below
-bool     |point     |point     |=\|=   |point_eq
-bool     |polygon   |polygon   |&&     |poly_overlap
-bool     |polygon   |polygon   |&<     |poly_overleft
-bool     |polygon   |polygon   |&>     |poly_overright
-bool     |polygon   |polygon   |<<     |poly_left
-bool     |polygon   |polygon   |>>     |poly_right
-bool     |polygon   |polygon   |@      |poly_contained
-bool     |polygon   |polygon   |~      |poly_contain
-bool     |polygon   |polygon   |~=     |poly_same
-bool     |reltime   |reltime   |<      |reltimelt
-bool     |reltime   |reltime   |<=     |reltimele
-bool     |reltime   |reltime   |<>     |reltimene
-bool     |reltime   |reltime   |=      |reltimeeq
-bool     |reltime   |reltime   |>      |reltimegt
-bool     |reltime   |reltime   |>=     |reltimege
-bool     |text      |text      |!~     |textregexne
-bool     |text      |text      |!~*    |texticregexne
-bool     |text      |text      |!~~    |textnlike
-bool     |text      |text      |<      |text_lt
-bool     |text      |text      |<=     |text_le
-bool     |text      |text      |<>     |textne
-bool     |text      |text      |=      |texteq
-bool     |text      |text      |>      |text_gt
-bool     |text      |text      |>=     |text_ge
-bool     |text      |text      |~      |textregexeq
-bool     |text      |text      |~*     |texticregexeq
-bool     |text      |text      |~~     |textlike
-bool     |time      |time      |<      |time_lt
-bool     |time      |time      |<=     |time_le
-bool     |time      |time      |<>     |time_ne
-bool     |time      |time      |=      |time_eq
-bool     |time      |time      |>      |time_gt
-bool     |time      |time      |>=     |time_ge
-bool     |timespan  |timespan  |<      |timespan_lt
-bool     |timespan  |timespan  |<=     |timespan_le
-bool     |timespan  |timespan  |<>     |timespan_ne
-bool     |timespan  |timespan  |=      |timespan_eq
-bool     |timespan  |timespan  |>      |timespan_gt
-bool     |timespan  |timespan  |>=     |timespan_ge
-bool     |timestamp |timestamp |<      |timestamplt
-bool     |timestamp |timestamp |<=     |timestample
-bool     |timestamp |timestamp |<>     |timestampne
-bool     |timestamp |timestamp |=      |timestampeq
-bool     |timestamp |timestamp |>      |timestampgt
-bool     |timestamp |timestamp |>=     |timestampge
-bool     |tinterval |reltime   |#<     |intervallenlt
-bool     |tinterval |reltime   |#<=    |intervallenle
-bool     |tinterval |reltime   |#<>    |intervallenne
-bool     |tinterval |reltime   |#=     |intervalleneq
-bool     |tinterval |reltime   |#>     |intervallengt
-bool     |tinterval |reltime   |#>=    |intervallenge
-bool     |tinterval |tinterval |&&     |intervalov
-bool     |tinterval |tinterval |<<     |intervalct
-bool     |tinterval |tinterval |=      |intervaleq
-bool     |varchar   |text      |!~     |textregexne
-bool     |varchar   |text      |!~*    |texticregexne
-bool     |varchar   |text      |!~~    |textnlike
-bool     |varchar   |text      |~      |textregexeq
-bool     |varchar   |text      |~*     |texticregexeq
-bool     |varchar   |text      |~~     |textlike
-bool     |varchar   |varchar   |<      |varcharlt
-bool     |varchar   |varchar   |<=     |varcharle
-bool     |varchar   |varchar   |<>     |varcharne
-bool     |varchar   |varchar   |=      |varchareq
-bool     |varchar   |varchar   |>      |varchargt
-bool     |varchar   |varchar   |>=     |varcharge
-char     |char      |char      |*      |charmul
-char     |char      |char      |+      |charpl
-char     |char      |char      |-      |charmi
-char     |char      |char      |/      |chardiv
-date     |date      |int4      |+      |date_pli
-date     |date      |int4      |-      |date_mii
-datetime |datetime  |timespan  |+      |datetime_add_span
-datetime |datetime  |timespan  |-      |datetime_sub_span
-float4   |float4    |float4    |*      |float4mul
-float4   |float4    |float4    |+      |float4pl
-float4   |float4    |float4    |-      |float4mi
-float4   |float4    |float4    |/      |float4div
-float8   |box       |box       |<===>  |box_distance
-float8   |circle    |circle    |<===>  |circle_distance
-float8   |float4    |float8    |*      |float48mul
-float8   |float4    |float8    |+      |float48pl
-float8   |float4    |float8    |-      |float48mi
-float8   |float4    |float8    |/      |float48div
-float8   |float8    |float4    |*      |float84mul
-float8   |float8    |float4    |+      |float84pl
-float8   |float8    |float4    |-      |float84mi
-float8   |float8    |float4    |/      |float84div
-float8   |float8    |float8    |*      |float8mul
-float8   |float8    |float8    |+      |float8pl
-float8   |float8    |float8    |-      |float8mi
-float8   |float8    |float8    |/      |float8div
-float8   |float8    |float8    |^      |dpow
-float8   |lseg      |box       |<===>  |dist_sb
-float8   |lseg      |lseg      |<===>  |lseg_distance
-float8   |path      |path      |<===>  |path_distance
-float8   |point     |box       |<===>  |dist_pl
-float8   |point     |box       |<===>  |dist_ps
-float8   |point     |box       |<===>  |dist_pb
-float8   |point     |lseg      |<===>  |dist_ps
-float8   |point     |path      |<===>  |dist_ppth
-float8   |point     |point     |<===>  |point_distance
-int2     |int2      |int2      |%      |int2mod
-int2     |int2      |int2      |*      |int2mul
-int2     |int2      |int2      |+      |int2pl
-int2     |int2      |int2      |-      |int2mi
-int2     |int2      |int2      |/      |int2div
-int4     |date      |date      |-      |date_mi
-int4     |int2      |int4      |%      |int24mod
-int4     |int2      |int4      |*      |int24mul
-int4     |int2      |int4      |+      |int24pl
-int4     |int2      |int4      |-      |int24mi
-int4     |int2      |int4      |/      |int24div
-int4     |int2      |int4      |<      |int24lt
-int4     |int2      |int4      |<=     |int24le
-int4     |int2      |int4      |<>     |int24ne
-int4     |int2      |int4      |=      |int24eq
-int4     |int2      |int4      |>      |int24gt
-int4     |int2      |int4      |>=     |int24ge
-int4     |int4      |int2      |%      |int42mod
-int4     |int4      |int2      |*      |int42mul
-int4     |int4      |int2      |+      |int42pl
-int4     |int4      |int2      |-      |int42mi
-int4     |int4      |int2      |/      |int42div
-int4     |int4      |int2      |<      |int42lt
-int4     |int4      |int2      |<=     |int42le
-int4     |int4      |int2      |<>     |int42ne
-int4     |int4      |int2      |=      |int42eq
-int4     |int4      |int2      |>      |int42gt
-int4     |int4      |int2      |>=     |int42ge
-int4     |int4      |int4      |%      |int4mod
-int4     |int4      |int4      |*      |int4mul
-int4     |int4      |int4      |+      |int4pl
-int4     |int4      |int4      |-      |int4mi
-int4     |int4      |int4      |/      |int4div
-money    |money     |float8    |*      |cash_mul
-money    |money     |float8    |/      |cash_div
-money    |money     |money     |+      |cash_pl
-money    |money     |money     |-      |cash_mi
-timespan |datetime  |datetime  |-      |datetime_sub
-timespan |timespan  |timespan  |+      |timespan_add
-timespan |timespan  |timespan  |-      |timespan_sub
-tinterval|abstime   |abstime   |<#>    |mktinterval
-
+result   |left_type |right_type|operatr|func_name          
+---------+----------+----------+-------+-------------------
+_aclitem |_aclitem  |aclitem   |+      |aclinsert          
+_aclitem |_aclitem  |aclitem   |-      |aclremove          
+abstime  |abstime   |reltime   |+      |timepl             
+abstime  |abstime   |reltime   |-      |timemi             
+bool     |_abstime  |_abstime  |=      |array_eq           
+bool     |_aclitem  |_aclitem  |=      |array_eq           
+bool     |_aclitem  |aclitem   |~      |aclcontains        
+bool     |_bool     |_bool     |=      |array_eq           
+bool     |_box      |_box      |=      |array_eq           
+bool     |_bytea    |_bytea    |=      |array_eq           
+bool     |_char     |_char     |=      |array_eq           
+bool     |_char16   |_char16   |=      |array_eq           
+bool     |_cid      |_cid      |=      |array_eq           
+bool     |_filename |_filename |=      |array_eq           
+bool     |_float4   |_float4   |=      |array_eq           
+bool     |_float8   |_float8   |=      |array_eq           
+bool     |_int2     |_int2     |=      |array_eq           
+bool     |_int28    |_int28    |=      |array_eq           
+bool     |_int4     |_int4     |=      |array_eq           
+bool     |_lseg     |_lseg     |=      |array_eq           
+bool     |_name     |_name     |=      |array_eq           
+bool     |_oid      |_oid      |=      |array_eq           
+bool     |_oid8     |_oid8     |=      |array_eq           
+bool     |_path     |_path     |=      |array_eq           
+bool     |_point    |_point    |=      |array_eq           
+bool     |_polygon  |_polygon  |=      |array_eq           
+bool     |_ref      |_ref      |=      |array_eq           
+bool     |_regproc  |_regproc  |=      |array_eq           
+bool     |_reltime  |_reltime  |=      |array_eq           
+bool     |_stub     |_stub     |=      |array_eq           
+bool     |_text     |_text     |=      |array_eq           
+bool     |_tid      |_tid      |=      |array_eq           
+bool     |_tinterval|_tinterval|=      |array_eq           
+bool     |_xid      |_xid      |=      |array_eq           
+bool     |abstime   |abstime   |<      |abstimelt          
+bool     |abstime   |abstime   |<=     |abstimele          
+bool     |abstime   |abstime   |<>     |abstimene          
+bool     |abstime   |abstime   |=      |abstimeeq          
+bool     |abstime   |abstime   |>      |abstimegt          
+bool     |abstime   |abstime   |>=     |abstimege          
+bool     |abstime   |tinterval |<?>    |ininterval         
+bool     |bool      |bool      |<      |boollt             
+bool     |bool      |bool      |<>     |boolne             
+bool     |bool      |bool      |=      |booleq             
+bool     |bool      |bool      |>      |boolgt             
+bool     |box       |box       |&&     |box_overlap        
+bool     |box       |box       |&<     |box_overleft       
+bool     |box       |box       |&>     |box_overright      
+bool     |box       |box       |<      |box_lt             
+bool     |box       |box       |<<     |box_left           
+bool     |box       |box       |<=     |box_le             
+bool     |box       |box       |<^     |box_below          
+bool     |box       |box       |=      |box_eq             
+bool     |box       |box       |>      |box_gt             
+bool     |box       |box       |>=     |box_ge             
+bool     |box       |box       |>>     |box_right          
+bool     |box       |box       |>^     |box_above          
+bool     |box       |box       |?#     |box_overlap        
+bool     |box       |box       |@      |box_contained      
+bool     |box       |box       |~      |box_contain        
+bool     |box       |box       |~=     |box_same           
+bool     |bpchar    |bpchar    |<      |bpcharlt           
+bool     |bpchar    |bpchar    |<=     |bpcharle           
+bool     |bpchar    |bpchar    |<>     |bpcharne           
+bool     |bpchar    |bpchar    |=      |bpchareq           
+bool     |bpchar    |bpchar    |>      |bpchargt           
+bool     |bpchar    |bpchar    |>=     |bpcharge           
+bool     |bpchar    |text      |!~     |textregexne        
+bool     |bpchar    |text      |!~*    |texticregexne      
+bool     |bpchar    |text      |!~~    |textnlike          
+bool     |bpchar    |text      |~      |textregexeq        
+bool     |bpchar    |text      |~*     |texticregexeq      
+bool     |bpchar    |text      |~~     |textlike           
+bool     |char      |char      |<      |charlt             
+bool     |char      |char      |<=     |charle             
+bool     |char      |char      |<>     |charne             
+bool     |char      |char      |=      |chareq             
+bool     |char      |char      |>      |chargt             
+bool     |char      |char      |>=     |charge             
+bool     |char16    |char16    |<      |char16lt           
+bool     |char16    |char16    |<=     |char16le           
+bool     |char16    |char16    |<>     |char16ne           
+bool     |char16    |char16    |=      |char16eq           
+bool     |char16    |char16    |>      |char16gt           
+bool     |char16    |char16    |>=     |char16ge           
+bool     |char16    |text      |!~     |char16regexne      
+bool     |char16    |text      |!~*    |char16icregexne    
+bool     |char16    |text      |!~~    |char16nlike        
+bool     |char16    |text      |~      |char16regexeq      
+bool     |char16    |text      |~*     |char16icregexeq    
+bool     |char16    |text      |~~     |char16like         
+bool     |char2     |char2     |<      |char2lt            
+bool     |char2     |char2     |<=     |char2le            
+bool     |char2     |char2     |<>     |char2ne            
+bool     |char2     |char2     |=      |char2eq            
+bool     |char2     |char2     |>      |char2gt            
+bool     |char2     |char2     |>=     |char2ge            
+bool     |char2     |text      |!~     |char2regexne       
+bool     |char2     |text      |!~*    |char2icregexne     
+bool     |char2     |text      |!~~    |char2nlike         
+bool     |char2     |text      |~      |char2regexeq       
+bool     |char2     |text      |~*     |char2icregexeq     
+bool     |char2     |text      |~~     |char2like          
+bool     |char4     |char4     |<      |char4lt            
+bool     |char4     |char4     |<=     |char4le            
+bool     |char4     |char4     |<>     |char4ne            
+bool     |char4     |char4     |=      |char4eq            
+bool     |char4     |char4     |>      |char4gt            
+bool     |char4     |char4     |>=     |char4ge            
+bool     |char4     |text      |!~     |char4regexne       
+bool     |char4     |text      |!~*    |char4icregexne     
+bool     |char4     |text      |!~~    |char4nlike         
+bool     |char4     |text      |~      |char4regexeq       
+bool     |char4     |text      |~*     |char4icregexeq     
+bool     |char4     |text      |~~     |char4like          
+bool     |char8     |char8     |<      |char8lt            
+bool     |char8     |char8     |<=     |char8le            
+bool     |char8     |char8     |<>     |char8ne            
+bool     |char8     |char8     |=      |char8eq            
+bool     |char8     |char8     |>      |char8gt            
+bool     |char8     |char8     |>=     |char8ge            
+bool     |char8     |text      |!~     |char8regexne       
+bool     |char8     |text      |!~*    |char8icregexne     
+bool     |char8     |text      |!~~    |char8nlike         
+bool     |char8     |text      |~      |char8regexeq       
+bool     |char8     |text      |~*     |char8icregexeq     
+bool     |char8     |text      |~~     |char8like          
+bool     |circle    |circle    |&&     |circle_overlap     
+bool     |circle    |circle    |&<     |circle_overleft    
+bool     |circle    |circle    |&>     |circle_overright   
+bool     |circle    |circle    |<      |circle_lt          
+bool     |circle    |circle    |<<     |circle_left        
+bool     |circle    |circle    |<=     |circle_le          
+bool     |circle    |circle    |<>     |circle_ne          
+bool     |circle    |circle    |<^     |circle_below       
+bool     |circle    |circle    |=      |circle_eq          
+bool     |circle    |circle    |>      |circle_gt          
+bool     |circle    |circle    |>=     |circle_ge          
+bool     |circle    |circle    |>>     |circle_right       
+bool     |circle    |circle    |>^     |circle_above       
+bool     |circle    |circle    |@      |circle_contained   
+bool     |circle    |circle    |~      |circle_contain     
+bool     |circle    |circle    |~=     |circle_same        
+bool     |circle    |point     |~      |circle_contain_pt  
+bool     |date      |date      |<      |date_lt            
+bool     |date      |date      |<=     |date_le            
+bool     |date      |date      |<>     |date_ne            
+bool     |date      |date      |=      |date_eq            
+bool     |date      |date      |>      |date_gt            
+bool     |date      |date      |>=     |date_ge            
+bool     |datetime  |datetime  |<      |datetime_lt        
+bool     |datetime  |datetime  |<=     |datetime_le        
+bool     |datetime  |datetime  |<>     |datetime_ne        
+bool     |datetime  |datetime  |=      |datetime_eq        
+bool     |datetime  |datetime  |>      |datetime_gt        
+bool     |datetime  |datetime  |>=     |datetime_ge        
+bool     |float4    |float4    |<      |float4lt           
+bool     |float4    |float4    |<=     |float4le           
+bool     |float4    |float4    |<>     |float4ne           
+bool     |float4    |float4    |=      |float4eq           
+bool     |float4    |float4    |>      |float4gt           
+bool     |float4    |float4    |>=     |float4ge           
+bool     |float4    |float8    |<      |float48lt          
+bool     |float4    |float8    |<=     |float48le          
+bool     |float4    |float8    |<>     |float48ne          
+bool     |float4    |float8    |=      |float48eq          
+bool     |float4    |float8    |>      |float48gt          
+bool     |float4    |float8    |>=     |float48ge          
+bool     |float8    |float4    |<      |float84lt          
+bool     |float8    |float4    |<=     |float84le          
+bool     |float8    |float4    |<>     |float84ne          
+bool     |float8    |float4    |=      |float84eq          
+bool     |float8    |float4    |>      |float84gt          
+bool     |float8    |float4    |>=     |float84ge          
+bool     |float8    |float8    |<      |float8lt           
+bool     |float8    |float8    |<=     |float8le           
+bool     |float8    |float8    |<>     |float8ne           
+bool     |float8    |float8    |=      |float8eq           
+bool     |float8    |float8    |>      |float8gt           
+bool     |float8    |float8    |>=     |float8ge           
+bool     |int2      |int2      |<      |int2lt             
+bool     |int2      |int2      |<=     |int2le             
+bool     |int2      |int2      |<>     |int2ne             
+bool     |int2      |int2      |=      |int2eq             
+bool     |int2      |int2      |>      |int2gt             
+bool     |int2      |int2      |>=     |int2ge             
+bool     |int4      |int4      |<      |int4lt             
+bool     |int4      |int4      |<=     |int4le             
+bool     |int4      |int4      |<>     |int4ne             
+bool     |int4      |int4      |=      |int4eq             
+bool     |int4      |int4      |>      |int4gt             
+bool     |int4      |int4      |>=     |int4ge             
+bool     |int4      |name      |!!=    |int4notin          
+bool     |int4      |oid       |=      |int4eqoid          
+bool     |line      |box       |?#     |inter_lb           
+bool     |lseg      |box       |?#     |inter_sb           
+bool     |lseg      |box       |@      |on_sb              
+bool     |lseg      |line      |?#     |inter_sl           
+bool     |lseg      |line      |@      |on_sl              
+bool     |lseg      |lseg      |=      |lseg_eq            
+bool     |lseg      |lseg      |?#     |lseg_intersect     
+bool     |lseg      |lseg      |?-\|   |lseg_perp          
+bool     |lseg      |lseg      |?\|\|  |lseg_parallel      
+bool     |money     |money     |<      |cash_lt            
+bool     |money     |money     |<=     |cash_le            
+bool     |money     |money     |<>     |cash_ne            
+bool     |money     |money     |=      |cash_eq            
+bool     |money     |money     |>      |cash_gt            
+bool     |money     |money     |>=     |cash_ge            
+bool     |name      |name      |<      |namelt             
+bool     |name      |name      |<=     |namele             
+bool     |name      |name      |<>     |namene             
+bool     |name      |name      |=      |nameeq             
+bool     |name      |name      |>      |namegt             
+bool     |name      |name      |>=     |namege             
+bool     |name      |text      |!~     |nameregexne        
+bool     |name      |text      |!~*    |nameicregexne      
+bool     |name      |text      |!~~    |namenlike          
+bool     |name      |text      |~      |nameregexeq        
+bool     |name      |text      |~*     |nameicregexeq      
+bool     |name      |text      |~~     |namelike           
+bool     |oid       |int4      |=      |oideqint4          
+bool     |oid       |name      |!!=    |oidnotin           
+bool     |oid       |oid       |<      |int4lt             
+bool     |oid       |oid       |<=     |int4le             
+bool     |oid       |oid       |<>     |oidne              
+bool     |oid       |oid       |=      |oideq              
+bool     |oid       |oid       |>      |int4gt             
+bool     |oid       |oid       |>=     |int4ge             
+bool     |oidint2   |oidint2   |<      |oidint2lt          
+bool     |oidint2   |oidint2   |<=     |oidint2le          
+bool     |oidint2   |oidint2   |<>     |oidint2ne          
+bool     |oidint2   |oidint2   |=      |oidint2eq          
+bool     |oidint2   |oidint2   |>      |oidint2gt          
+bool     |oidint2   |oidint2   |>=     |oidint2ge          
+bool     |oidint4   |oidint4   |<      |oidint4lt          
+bool     |oidint4   |oidint4   |<=     |oidint4le          
+bool     |oidint4   |oidint4   |<>     |oidint4ne          
+bool     |oidint4   |oidint4   |=      |oidint4eq          
+bool     |oidint4   |oidint4   |>      |oidint4gt          
+bool     |oidint4   |oidint4   |>=     |oidint4ge          
+bool     |oidname   |oidname   |<      |oidnamelt          
+bool     |oidname   |oidname   |<=     |oidnamele          
+bool     |oidname   |oidname   |<>     |oidnamene          
+bool     |oidname   |oidname   |=      |oidnameeq          
+bool     |oidname   |oidname   |>      |oidnamegt          
+bool     |oidname   |oidname   |>=     |oidnamege          
+bool     |path      |path      |<      |path_n_lt          
+bool     |path      |path      |<=     |path_n_le          
+bool     |path      |path      |=      |path_n_eq          
+bool     |path      |path      |>      |path_n_gt          
+bool     |path      |path      |>=     |path_n_ge          
+bool     |path      |path      |?#     |path_inter         
+bool     |path      |point     |~      |path_contain_pt    
+bool     |point     |box       |@      |on_pb              
+bool     |point     |circle    |@      |pt_contained_circle
+bool     |point     |line      |@      |on_pl              
+bool     |point     |lseg      |@      |on_ps              
+bool     |point     |path      |@      |pt_contained_path  
+bool     |point     |path      |@      |on_ppath           
+bool     |point     |point     |<<     |point_left         
+bool     |point     |point     |<^     |point_below        
+bool     |point     |point     |>>     |point_right        
+bool     |point     |point     |>^     |point_above        
+bool     |point     |point     |?-     |point_horiz        
+bool     |point     |point     |?\|    |point_vert         
+bool     |point     |point     |~=     |point_eq           
+bool     |point     |polygon   |@      |pt_contained_poly  
+bool     |polygon   |point     |~      |poly_contain_pt    
+bool     |polygon   |polygon   |&&     |poly_overlap       
+bool     |polygon   |polygon   |&<     |poly_overleft      
+bool     |polygon   |polygon   |&>     |poly_overright     
+bool     |polygon   |polygon   |<<     |poly_left          
+bool     |polygon   |polygon   |>>     |poly_right         
+bool     |polygon   |polygon   |@      |poly_contained     
+bool     |polygon   |polygon   |~      |poly_contain       
+bool     |polygon   |polygon   |~=     |poly_same          
+bool     |reltime   |reltime   |<      |reltimelt          
+bool     |reltime   |reltime   |<=     |reltimele          
+bool     |reltime   |reltime   |<>     |reltimene          
+bool     |reltime   |reltime   |=      |reltimeeq          
+bool     |reltime   |reltime   |>      |reltimegt          
+bool     |reltime   |reltime   |>=     |reltimege          
+bool     |text      |text      |!~     |textregexne        
+bool     |text      |text      |!~*    |texticregexne      
+bool     |text      |text      |!~~    |textnlike          
+bool     |text      |text      |<      |text_lt            
+bool     |text      |text      |<=     |text_le            
+bool     |text      |text      |<>     |textne             
+bool     |text      |text      |=      |texteq             
+bool     |text      |text      |>      |text_gt            
+bool     |text      |text      |>=     |text_ge            
+bool     |text      |text      |~      |textregexeq        
+bool     |text      |text      |~*     |texticregexeq      
+bool     |text      |text      |~~     |textlike           
+bool     |time      |time      |<      |time_lt            
+bool     |time      |time      |<=     |time_le            
+bool     |time      |time      |<>     |time_ne            
+bool     |time      |time      |=      |time_eq            
+bool     |time      |time      |>      |time_gt            
+bool     |time      |time      |>=     |time_ge            
+bool     |timespan  |timespan  |<      |timespan_lt        
+bool     |timespan  |timespan  |<=     |timespan_le        
+bool     |timespan  |timespan  |<>     |timespan_ne        
+bool     |timespan  |timespan  |=      |timespan_eq        
+bool     |timespan  |timespan  |>      |timespan_gt        
+bool     |timespan  |timespan  |>=     |timespan_ge        
+bool     |timestamp |timestamp |<      |timestamplt        
+bool     |timestamp |timestamp |<=     |timestample        
+bool     |timestamp |timestamp |<>     |timestampne        
+bool     |timestamp |timestamp |=      |timestampeq        
+bool     |timestamp |timestamp |>      |timestampgt        
+bool     |timestamp |timestamp |>=     |timestampge        
+bool     |tinterval |reltime   |#<     |intervallenlt      
+bool     |tinterval |reltime   |#<=    |intervallenle      
+bool     |tinterval |reltime   |#<>    |intervallenne      
+bool     |tinterval |reltime   |#=     |intervalleneq      
+bool     |tinterval |reltime   |#>     |intervallengt      
+bool     |tinterval |reltime   |#>=    |intervallenge      
+bool     |tinterval |tinterval |&&     |intervalov         
+bool     |tinterval |tinterval |<      |intervalct         
+bool     |tinterval |tinterval |<<     |intervalct         
+bool     |tinterval |tinterval |=      |intervaleq         
+bool     |varchar   |text      |!~     |textregexne        
+bool     |varchar   |text      |!~*    |texticregexne      
+bool     |varchar   |text      |!~~    |textnlike          
+bool     |varchar   |text      |~      |textregexeq        
+bool     |varchar   |text      |~*     |texticregexeq      
+bool     |varchar   |text      |~~     |textlike           
+bool     |varchar   |varchar   |<      |varcharlt          
+bool     |varchar   |varchar   |<=     |varcharle          
+bool     |varchar   |varchar   |<>     |varcharne          
+bool     |varchar   |varchar   |=      |varchareq          
+bool     |varchar   |varchar   |>      |varchargt          
+bool     |varchar   |varchar   |>=     |varcharge          
+box      |box       |box       |#      |box_intersect      
+box      |box       |point     |*      |box_mul            
+box      |box       |point     |+      |box_add            
+box      |box       |point     |-      |box_sub            
+box      |box       |point     |/      |box_div            
+char     |char      |char      |*      |charmul            
+char     |char      |char      |+      |charpl             
+char     |char      |char      |-      |charmi             
+char     |char      |char      |/      |chardiv            
+circle   |circle    |point     |*      |circle_mul_pt      
+circle   |circle    |point     |+      |circle_add_pt      
+circle   |circle    |point     |-      |circle_sub_pt      
+circle   |circle    |point     |/      |circle_div_pt      
+date     |date      |int4      |+      |date_pli           
+date     |date      |int4      |-      |date_mii           
+datetime |datetime  |timespan  |+      |datetime_pl_span   
+datetime |datetime  |timespan  |-      |datetime_mi_span   
+float4   |float4    |float4    |*      |float4mul          
+float4   |float4    |float4    |+      |float4pl           
+float4   |float4    |float4    |-      |float4mi           
+float4   |float4    |float4    |/      |float4div          
+float8   |box       |box       |<->    |box_distance       
+float8   |circle    |circle    |<->    |circle_distance    
+float8   |circle    |polygon   |<->    |dist_cpoly         
+float8   |float4    |float8    |*      |float48mul         
+float8   |float4    |float8    |+      |float48pl          
+float8   |float4    |float8    |-      |float48mi          
+float8   |float4    |float8    |/      |float48div         
+float8   |float8    |float4    |*      |float84mul         
+float8   |float8    |float4    |+      |float84pl          
+float8   |float8    |float4    |-      |float84mi          
+float8   |float8    |float4    |/      |float84div         
+float8   |float8    |float8    |*      |float8mul          
+float8   |float8    |float8    |+      |float8pl           
+float8   |float8    |float8    |-      |float8mi           
+float8   |float8    |float8    |/      |float8div          
+float8   |float8    |float8    |^      |dpow               
+float8   |line      |box       |<->    |dist_lb            
+float8   |line      |line      |<->    |line_distance      
+float8   |lseg      |box       |<->    |dist_sb            
+float8   |lseg      |line      |<->    |dist_sl            
+float8   |lseg      |lseg      |<->    |lseg_distance      
+float8   |path      |path      |<->    |path_distance      
+float8   |point     |box       |<->    |dist_pl            
+float8   |point     |box       |<->    |dist_pb            
+float8   |point     |lseg      |<->    |dist_ps            
+float8   |point     |path      |<->    |dist_ppath         
+float8   |point     |point     |<->    |point_distance     
+float8   |polygon   |polygon   |<->    |poly_distance      
+int2     |int2      |int2      |%      |int2mod            
+int2     |int2      |int2      |*      |int2mul            
+int2     |int2      |int2      |+      |int2pl             
+int2     |int2      |int2      |-      |int2mi             
+int2     |int2      |int2      |/      |int2div            
+int4     |date      |date      |-      |date_mi            
+int4     |int2      |int4      |%      |int24mod           
+int4     |int2      |int4      |*      |int24mul           
+int4     |int2      |int4      |+      |int24pl            
+int4     |int2      |int4      |-      |int24mi            
+int4     |int2      |int4      |/      |int24div           
+int4     |int2      |int4      |<      |int24lt            
+int4     |int2      |int4      |<=     |int24le            
+int4     |int2      |int4      |<>     |int24ne            
+int4     |int2      |int4      |=      |int24eq            
+int4     |int2      |int4      |>      |int24gt            
+int4     |int2      |int4      |>=     |int24ge            
+int4     |int4      |int2      |%      |int42mod           
+int4     |int4      |int2      |*      |int42mul           
+int4     |int4      |int2      |+      |int42pl            
+int4     |int4      |int2      |-      |int42mi            
+int4     |int4      |int2      |/      |int42div           
+int4     |int4      |int2      |<      |int42lt            
+int4     |int4      |int2      |<=     |int42le            
+int4     |int4      |int2      |<>     |int42ne            
+int4     |int4      |int2      |=      |int42eq            
+int4     |int4      |int2      |>      |int42gt            
+int4     |int4      |int2      |>=     |int42ge            
+int4     |int4      |int4      |%      |int4mod            
+int4     |int4      |int4      |*      |int4mul            
+int4     |int4      |int4      |+      |int4pl             
+int4     |int4      |int4      |-      |int4mi             
+int4     |int4      |int4      |/      |int4div            
+money    |money     |float8    |*      |cash_mul           
+money    |money     |float8    |/      |cash_div           
+money    |money     |money     |+      |cash_pl            
+money    |money     |money     |-      |cash_mi            
+path     |path      |path      |+      |path_add           
+path     |path      |point     |*      |path_mul_pt        
+path     |path      |point     |+      |path_add_pt        
+path     |path      |point     |-      |path_sub_pt        
+path     |path      |point     |/      |path_div_pt        
+point    |line      |box       |##     |close_lb           
+point    |lseg      |box       |##     |close_sb           
+point    |lseg      |line      |##     |close_sl           
+point    |lseg      |lseg      |#      |lseg_interpt       
+point    |point     |box       |##     |close_pb           
+point    |point     |line      |##     |close_pl           
+point    |point     |lseg      |##     |close_ps           
+point    |point     |point     |*      |point_mul          
+point    |point     |point     |+      |point_add          
+point    |point     |point     |-      |point_sub          
+point    |point     |point     |/      |point_div          
+polygon  |point     |circle    |<->    |dist_pc            
+text     |bpchar    |bpchar    |\|\|   |textcat            
+text     |text      |text      |\|\|   |textcat            
+text     |varchar   |varchar   |\|\|   |textcat            
+timespan |datetime  |datetime  |-      |datetime_mi        
+timespan |timespan  |timespan  |+      |timespan_pl        
+timespan |timespan  |timespan  |-      |timespan_mi        
+timespan |timespan  |timespan  |/      |timespan_div       
+tinterval|abstime   |abstime   |<#>    |mktinterval        
+(446 rows)
 
 .fi
 .SH "LEFT UNARY OPERATORS"
@@ -983,32 +1074,41 @@ This list was generated from the Postgres system catalogs with the query:
 
 .nf
 SELECT   o.oprname AS left_unary, 
-         right.typname AS operand,
-         result.typname AS return_type
-FROM     pg_operator o, pg_type right, pg_type result
+         t.typname AS operand,
+         r.typname AS return_type
+FROM     pg_operator o, pg_type t, pg_type r
 WHERE    o.oprkind = 'l' AND          -- left unary
-         o.oprright = right.oid AND
-         o.oprresult = result.oid
+         o.oprright = t.oid AND
+         o.oprresult = r.oid
 ORDER BY operand;
 
 left_unary|operand  |return_type
 ----------+---------+-----------
-@@        |box      |point
-@         |float4   |float4
--         |float4   |float4
-|/        |float8   |float8
-@         |float8   |float8
-;         |float8   |float8
-:         |float8   |float8
-%         |float8   |float8
-||/       |float8   |float8
--         |float8   |float8
--         |int2     |int2
-!!        |int4     |int4
--         |int4     |int4
-#         |polygon  |int4
--         |timespan |timespan
-|         |tinterval|abstime
+@@        |box      |point      
+@@        |circle   |point      
+@         |float4   |float4     
+-         |float4   |float4     
+\|/       |float8   |float8     
+@         |float8   |float8     
+;         |float8   |float8     
+:         |float8   |float8     
+%         |float8   |float8     
+\|\|/     |float8   |float8     
+-         |float8   |float8     
+-         |int2     |int2       
+-         |int4     |int4       
+!!        |int4     |int4       
+?-        |lseg     |bool       
+?\|       |lseg     |bool       
+@@        |lseg     |point      
+??        |path     |float8     
+#         |path     |int4       
+@@        |path     |point      
+@@        |polygon  |point      
+#         |polygon  |int4       
+-         |timespan |timespan   
+\|        |tinterval|abstime    
+(24 rows)
 
 .fi
 .in
@@ -1020,18 +1120,19 @@ This list was generated from the Postgres system catalogs with the query:
 
 .nf
 SELECT   o.oprname AS right_unary,
-         left.typname AS operand,
-         result.typname AS return_type
-FROM     pg_operator o, pg_type left, pg_type result
+         t.typname AS operand,
+         r.typname AS return_type
+FROM     pg_operator o, pg_type t, pg_type r
 WHERE    o.oprkind = 'r' AND          -- right unary
-         o.oprleft = left.oid AND
-         o.oprresult = result.oid
+         o.oprleft = t.oid AND
+         o.oprresult = r.oid
 ORDER BY operand;
 
 right_unary|operand|return_type
 -----------+-------+-----------
 %          |float8 |float8     
 !          |int4   |int4       
+(2 rows)
 
 .fi
 .in
@@ -1047,36 +1148,39 @@ FROM     pg_aggregate a, pg_type t
 WHERE    a.aggbasetype = t.oid
 ORDER BY aggname, typname;
 
-aggname|typname
+aggname|typname 
 -------+--------
-avg    |float4
-avg    |float8
-avg    |int2
-avg    |int4
-avg    |money
-max    |abstime
-max    |date
+avg    |float4  
+avg    |float8  
+avg    |int2    
+avg    |int4    
+avg    |money   
+avg    |timespan
+max    |abstime 
+max    |date    
 max    |datetime
-max    |float4
-max    |float8
-max    |int2
-max    |int4
-max    |money
+max    |float4  
+max    |float8  
+max    |int2    
+max    |int4    
+max    |money   
 max    |timespan
-min    |abstime
-min    |date
+min    |abstime 
+min    |date    
 min    |datetime
-min    |float4
-min    |float8
-min    |int2
-min    |int4
-min    |money
+min    |float4  
+min    |float8  
+min    |int2    
+min    |int4    
+min    |money   
 min    |timespan
-sum    |float4
-sum    |float8
-sum    |int2
-sum    |int4
-sum    |money
+sum    |float4  
+sum    |float8  
+sum    |int2    
+sum    |int4    
+sum    |money   
+sum    |timespan
+(30 rows)
 
 .fi
 \fBcount\fR is also available, where \fBcount(*)\fR returns a count of all
