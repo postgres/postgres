@@ -1,7 +1,7 @@
 *  You can get the most recent version of this from
 *  http://people.freebsd.org/~kevlo/postgres/portNT.html.
 
-*  Problem reports can be sent to <pgsql-ports@postgresql.org>.
+*  Problem reports can be sent to pgsql-ports@postgresql.org.
 
 How do I install the PostgreSQL server on Windows NT or Windows 2000?
 =====================================================================
