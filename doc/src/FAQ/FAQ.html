@@ -14,7 +14,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Mon Mar 18 14:34:57 EST 2002</P>
+    <P>Last updated: Mon Sep 30 23:28:35 EDT 2002</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -81,6 +81,8 @@
     clients"</I> when trying to connect?<BR>
      <A href="#3.9">3.9</A>) What are the <I>pg_sorttempNNN.NN</I>
     files in my database directory?<BR>
+     <A href="#3.10">3.10</A>) Why do I need to do a dump and restore 
+    to upgrade PostgreSQL releases?<BR>
      
 
     <H2 align="center">Operational Questions</H2>
@@ -96,8 +98,8 @@
     table, and a database?<BR>
      <A href="#4.6">4.6</A>) How much database disk space is required
     to store data from a typical text file?<BR>
-     <A href="#4.7">4.7</A>) How do I find out what tables or indexes
-    are defined in the database?<BR>
+     <A href="#4.7">4.7</A>) How do I find out what tables, indexes,
+    databases, and users are defined?<BR>
      <A href="#4.8">4.8</A>) My queries are slow or don't make use of
     the indexes. Why?<BR>
      <A href="#4.9">4.9</A>) How do I see how the query optimizer is
@@ -137,6 +139,10 @@
      <A href="#4.23">4.23</A>) How do I perform an outer join?<BR>
      <A href="#4.24">4.24</A>) How do I perform queries using multiple
     databases?<BR>
+     <A href="#4.25">4.25</A>) How do I return multiple rows or columns
+    from a function?<BR>
+     <A href="#4.26">4.26</A>) Why can't I reliably create/drop
+    temporary tables in PL/PgSQL functions?<BR>
      
 
     <H2 align="center">Extending PostgreSQL</H2>
@@ -276,6 +282,7 @@
     subscribe
     end
 </PRE>
+
     Digests are sent out to members of this list whenever the main list
     has received around 30k of messages. 
 
@@ -287,6 +294,7 @@
     subscribe
     end
 </PRE>
+
     There is also a developers discussion mailing list available. To
     subscribe to this list, send email to <A href=
     "mailto:pgsql-hackers-request@PostgreSQL.org">pgsql-hackers-request@PostgreSQL.org</A>
@@ -312,7 +320,7 @@
 
     <H4><A name="1.7">1.7</A>) What is the latest release?</H4>
 
-    <P>The latest release of PostgreSQL is version 7.2.1.</P>
+    <P>The latest release of PostgreSQL is version 7.2.3.</P>
 
     <P>We plan to have major releases every four months.</P>
 
@@ -421,32 +429,18 @@
 
       <DT><B>Performance</B></DT>
 
-      <DD>PostgreSQL runs in two modes. Normal <I>fsync</I> mode
-      flushes every completed transaction to disk, guaranteeing that if
-      the OS crashes or loses power in the next few seconds, all your
-      data is safely stored on disk. In this mode, we are slower than
-      most commercial databases, partly because few of them do such
-      conservative flushing to disk in their default modes. In
-      <I>no-fsync</I> mode, we are usually faster than commercial
-      databases, though in this mode, an OS crash could cause data
-      corruption. We are working to provide an intermediate mode that
-      suffers less performance overhead than full fsync mode, and will
-      allow data integrity within 30 seconds of an OS crash.<BR>
-      <BR>
-       In comparison to MySQL or leaner database systems, we are slower
-      on inserts/updates because we have transaction overhead. Of
+      <DD>PostgreSQL has performance similar to other commercial and
+      open source databases. it is faster for some things, slower for
+      others. In comparison to MySQL or leaner database systems, we are
+      slower on inserts/updates because of transaction overhead. Of
       course, MySQL does not have any of the features mentioned in the
-      <I>Features</I> section above. We are built for flexibility and
-      features, though we continue to improve performance through
-      profiling and source code analysis. There is an interesting Web
-      page comparing PostgreSQL to MySQL at <A href=
-      "http://openacs.org/why-not-mysql.html">http://openacs.org/why-not-mysql.html</A><BR>
+      <I>Features</I> section above. We are built for reliability and
+      features, though we continue to improve performance in every
+      release. There is an interesting Web page comparing PostgreSQL to
+      MySQL at <A href= "http://openacs.org/why-not-mysql.html">
 
-      <BR>
-       We handle each user connection by creating a Unix process.
-      Backend processes share data buffers and locking information.
-      With multiple CPUs, multiple backends can easily run on different
-      CPUs.<BR>
+      http://openacs.org/why-not-mysql.html</A><BR>
+
       <BR>
       </DD>
 
@@ -499,7 +493,8 @@
     of monthly and one-time expenses that are required to keep it
     going. If you or your company has money it can donate to help fund
     this effort, please go to <A href=
-    "http://www.pgsql.com/pg_goodies">http://www.pgsql.com/pg_goodies</A>
+    "https://store.pgsql.com/shopping/index.php?id=1">
+    https://store.pgsql.com/shopping/index.php?id=1</A>
     and make a donation.</P>
 
     <P>Although the web page mentions PostgreSQL, Inc, the
@@ -588,6 +583,10 @@
       <LI>Embedded <SMALL>HTML</SMALL> (<A href=
       "http://www.php.net">PHP from http://www.php.net</A>)</LI>
     </UL>
+    <P>Additional interfaces are available at <a 
+    href="http://www.postgresql.org/interfaces.html">
+    http://www.postgresql.org/interfaces.html.</A>
+    </P>
     <HR>
 
     <H2 align="center">Administrative Questions</H2>
@@ -740,7 +739,8 @@
     <P>You can also compile with profiling to see what functions are
     taking execution time. The backend profile files will be deposited
     in the <I>pgsql/data/base/dbname</I> directory. The client profile
-    file will be put in the client's current directory.</P>
+    file will be put in the client's current directory. Linux requires
+    a compile with <I>-DLINUX_PROFILE</I> for proper profiling.</P>
 
     <H4><A name="3.8">3.8</A>) Why do I get <I>"Sorry, too many
     clients"</I> when trying to connect?</H4>
@@ -785,6 +785,23 @@
     not if a backend crashes during a sort. If you have no backends
     running at the time, it is safe to delete the pg_tempNNN.NN
     files.</P>
+
+    <H4><A name="3.10">3.10</A>) Why do I need to do a dump and restore
+    to upgrade between major PostgreSQL releases?</H4>
+
+    <P>The PostgreSQL team makes only small changes between minor releases,
+    so upgrading from 7.2 to 7.2.1 does not require a dump and restore.
+    However, major releases often change the internal format of system
+    tables and data files.  These changes are often complex, so we don't
+    maintain backward compatability for data files.  A dump outputs data
+    in a generic format that can then be loaded in using the new internal
+    format.
+
+    <P>In releases where the on-disk format does not change, the
+    <i>pg_upgrade</i> script can be used to upgrade without a dump/restore.
+    The release notes mention whether <i>pg_upgrade</i> is available for the
+    release.
+
     <HR>
 
     <H2 align="center">Operational Questions</H2>
@@ -824,11 +841,14 @@
     <P>We do not support <SMALL>ALTER TABLE DROP COLUMN,</SMALL> but do
     this:</P>
 <PRE>
+    BEGIN;
+    LOCK TABLE old_table;
     SELECT ...  -- select all columns but the one you want to remove
     INTO TABLE new_table
     FROM old_table;
     DROP TABLE old_table;
     ALTER TABLE new_table RENAME TO old_table;
+    COMMIT;
 </PRE>
 
     <H4><A name="4.5">4.5</A>) What is the maximum size for a row, a
@@ -836,14 +856,15 @@
 
     <P>These are the limits:</P>
 <PRE>
-    Maximum size for a database?             unlimited (500 GB databases exist)
+    Maximum size for a database?             unlimited (1 TB databases exist)
     Maximum size for a table?                16 TB
-    Maximum size for a row?                  unlimited in 7.1 and later
-    Maximum size for a field?                1 GB in 7.1 and later
+    Maximum size for a row?                  1.6TB
+    Maximum size for a field?                1 GB
     Maximum number of rows in a table?       unlimited
     Maximum number of columns in a table?    250-1600 depending on column types
     Maximum number of indexes on a table?    unlimited
 </PRE>
+
     Of course, these are not actually unlimited, but limited to
     available disk space and memory/swap space. Performance may suffer
     when these values get unusually large. 
@@ -890,11 +911,16 @@
     <P>Indexes do not require as much overhead, but do contain the data
     that is being indexed, so they can be large also.</P>
 
-    <H4><A name="4.7">4.7</A>) How do I find out what tables or indexes
-    are defined in the database?</H4>
+    <P><SMALL>NULL</SMALL>s are stored in bitmaps, so they
+    use very little space.</P>
+    
+    <H4><A name="4.7">4.7</A>) How do I find out what tables, indexes,
+    databases, and users are defined?</H4>
 
     <P><I>psql</I> has a variety of backslash commands to show such
-    information. Use \? to see them.</P>
+    information. Use \? to see them. There are also system tables
+    beginning with <I>pg_</I> that describe these too. Also, <I>psql
+    -l</I> will list all databases.</P>
 
     <P>Also try the file <I>pgsql/src/tutorial/syscat.source</I>. It
     illustrates many of the <SMALL>SELECT</SMALL>s needed to get
@@ -905,7 +931,7 @@
     Indexes are not automatically used by every query. Indexes are only
     used if the table is larger than a minimum size, and the query
     selects only a small percentage of the rows in the table. This is
-    because the random disk access caused by an index scan is sometimes
+    because the random disk access caused by an index scan can be
     slower than a straight read through the table, or sequential scan. 
 
     <P>To determine if an index should be used, PostgreSQL must have
@@ -922,13 +948,35 @@
     usually faster than an index scan of a large table.</P>
     However, <SMALL>LIMIT</SMALL> combined with <SMALL>ORDER BY</SMALL>
     often will use an index because only a small portion of the table
-    is returned. 
+    is returned.  In fact, though MAX() and MIN() don't use indexes,
+    it is possible to retrieve such values using an index with ORDER BY
+    and LIMIT:
+<PRE>
+    SELECT col
+    FROM tab
+    ORDER BY col [ DESC ]
+    LIMIT 1
+</PRE>
 
     <P>When using wild-card operators such as <SMALL>LIKE</SMALL> or
-    <I>~</I>, indexes can only be used if the beginning of the search
-    is anchored to the start of the string. Therefore, to use indexes,
-    <SMALL>LIKE</SMALL> patterns must not start with <I>%</I>, and
-    <I>~</I>(regular expression) patterns must start with <I>^</I>.</P>
+    <I>~</I>, indexes can only be used in certain circumstances:
+    <UL>
+    <LI>The beginning of the search string must be anchored to the start
+    of the string, i.e.:</LI>
+    <UL>
+    <LI><SMALL>LIKE</SMALL> patterns must not start with <I>%.</I></LI>
+    <LI><I>~</I> (regular expression) patterns must start with
+    <I>^.</I></LI>
+    </UL>
+    <LI>The search string can not start with a character class,
+    e.g. [a-e].</LI>
+    <LI>Case-insensitive searches like <SMALL>ILIKE</SMALL> and
+    <I>~*</I> can not be used.  Instead, use functional
+    indexes, which are described later in this FAQ.</LI>
+    <LI>The default <I>C</I> local must be used during
+    <i>initdb.</i></LI>
+    </UL>
+    <P>
 
     <H4><A name="4.9">4.9</A>) How do I see how the query optimizer is
     evaluating my query?</H4>
@@ -975,7 +1023,7 @@
     <P>The <I>~</I> operator does regular expression matching, and
     <I>~*</I> does case-insensitive regular expression matching. The
     case-insensitive variant of <SMALL>LIKE</SMALL> is called
-    <SMALL>ILIKE</SMALL> in PostgreSQL 7.1 and later.</P>
+    <SMALL>ILIKE</SMALL>.</P>
 
     <P>Case-insensitive equality comparisons are normally expressed
     as:</P>
@@ -983,13 +1031,12 @@
     SELECT *
     FROM tab
     WHERE lower(col) = 'abc'
-   
 </PRE>
+
     This will not use an standard index. However, if you create a
     functional index, it will be used: 
 <PRE>
     CREATE INDEX tabindex on tab (lower(col));
-   
 </PRE>
 
     <H4><A name="4.13">4.13</A>) In a query, how do I detect if a field
@@ -1039,6 +1086,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
         name TEXT 
     );
 </PRE>
+
     is automatically translated into this: 
 <PRE>
     CREATE SEQUENCE person_id_seq;
@@ -1048,6 +1096,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     );
     CREATE UNIQUE INDEX person_id_key ON person ( id );
 </PRE>
+
     See the <I>create_sequence</I> manual page for more information
     about sequences. You can also use each row's <I>OID</I> field as a
     unique value. However, if you need to dump and reload the database,
@@ -1066,6 +1115,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     new_id = output of "SELECT nextval('person_id_seq')"
     INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal');
 </PRE>
+
     You would then also have the new value stored in
     <CODE>new_id</CODE> for use in other queries (e.g., as a foreign
     key to the <CODE>person</CODE> table). Note that the name of the
@@ -1081,6 +1131,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     INSERT INTO person (name) VALUES ('Blaise Pascal');
     new_id = output of "SELECT currval('person_id_seq')";
 </PRE>
+
     Finally, you could use the <A href="#4.16"><SMALL>OID</SMALL></A>
     returned from the <SMALL>INSERT</SMALL> statement to look up the
     default value, though this is probably the least portable approach.
@@ -1180,14 +1231,14 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     <H4><A name="4.18">4.18</A>) Why do I get the error <I>"ERROR:
     Memory exhausted in AllocSetAlloc()"</I>?</H4>
 
-    <P>If you are running a version older than 7.1, an upgrade may fix
-    the problem. Also it is possible you have run out of virtual memory
-    on your system, or your kernel has a low limit for certain
-    resources. Try this before starting <I>postmaster</I>:</P>
+    <P>You probably have run out of virtual memory on your system,
+    or your kernel has a low limit for certain resources. Try this
+    before starting <I>postmaster</I>:</P>
 <PRE>
     ulimit -d 262144
     limit datasize 256m
 </PRE>
+
     Depending on your shell, only one of these may succeed, but it will
     set your process data segment limit much higher and perhaps allow
     the query to complete. This command applies to the current process,
@@ -1246,12 +1297,13 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     WHERE EXISTS (SELECT col2 FROM TAB2 WHERE col1 = col2)
 </CODE>
 </PRE>
+
     We hope to fix this limitation in a future release. 
 
     <H4><A name="4.23">4.23</A>) How do I perform an outer join?</H4>
 
-    <P>PostgreSQL 7.1 and later supports outer joins using the SQL
-    standard syntax. Here are two examples:</P>
+    <P>PostgreSQL supports outer joins using the SQL standard syntax.
+    Here are two examples:</P>
 <PRE>
     SELECT *
     FROM t1 LEFT OUTER JOIN t2 ON (t1.col = t2.col);
@@ -1297,6 +1349,26 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
 
     <P>Of course, a client can make simultaneous connections to
     different databases and merge the information that way.</P>
+
+    <H4><A name="4.25">4.25</A>) How do I return multiple rows or
+    columns from a function?</H4>
+
+    <P>You can return result sets from PL/pgSQL functions using
+    <I>refcursors</I>. See <A href=
+    "http://developer.postgresql.org/docs/postgres/plpgsql-cursors.html">
+    http://developer.postgresql.org/docs/postgres/plpgsql-cursors.html,</A>
+    section 23.7.3.3.</P>
+
+    <H4><A name="4.26">4.26</A>) Why can't I reliably create/drop
+    temporary tables in PL/PgSQL functions?</H4>
+    PL/PgSQL caches function contents, and an unfortunate side effect
+    is that if a PL/PgSQL function accesses a temporary table, and that
+    table is later dropped and recreated, and the function called
+    again, the function will fail because the cached function contents
+    still point to the old temporary table. The solution is to use
+    <SMALL>EXECUTE</SMALL> for temporary table access in PL/PgSQL. This
+    will cause the query to be reparsed every time. 
+
     <HR>
 
     <H2 align="center">Extending PostgreSQL</H2>
