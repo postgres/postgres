@@ -196,12 +196,13 @@ inner_subltree(ltree * t, int4 startpos, int4 endpos)
 	ltree	   *res;
 	int			i;
 
-	if (startpos < 0 || endpos < 0 || startpos >= t->numlevel || startpos >= endpos)
+	if (startpos < 0 || endpos < 0 || startpos >= t->numlevel || startpos > endpos)
 		elog(ERROR, "Wrong positions");
 
 	if (endpos > t->numlevel)
 		endpos = t->numlevel;
 
+	start = end = (char *) ptr;
 	for (i = 0; i < endpos; i++)
 	{
 		if (i == startpos)
@@ -258,7 +259,7 @@ subpath(PG_FUNCTION_ARGS)
 	if (len < 0)
 		end = t->numlevel + len;
 	else if (len == 0)
-		end = 0xffff;
+		end = (fcinfo->nargs == 3) ? start : 0xffff;
 
 	res = inner_subltree(t, start, end);
 
