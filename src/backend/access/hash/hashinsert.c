@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.17 1999/07/15 23:02:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.18 1999/07/19 07:07:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,7 +128,7 @@ _hash_insertonpg(Relation rel,
 
 	itemsz = IndexTupleDSize(hitem->hash_itup)
 		+ (sizeof(HashItemData) - sizeof(IndexTupleData));
-	itemsz = DOUBLEALIGN(itemsz);
+	itemsz = MAXALIGN(itemsz);
 
 	while (PageGetFreeSpace(page) < itemsz)
 	{

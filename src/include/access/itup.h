@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itup.h,v 1.20 1999/07/16 17:07:27 momjian Exp $
+ * $Id: itup.h,v 1.21 1999/07/19 07:07:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,7 +103,7 @@ typedef struct PredInfo
 	) \
 	: \
 	( \
-		(Size)DOUBLEALIGN(sizeof(IndexTupleData) + sizeof(IndexAttributeBitMapData)) \
+		(Size)MAXALIGN(sizeof(IndexTupleData) + sizeof(IndexAttributeBitMapData)) \
 	) \
 )
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.47 1999/07/17 20:17:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.48 1999/07/19 07:07:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -472,7 +472,7 @@ _ReadArrayStr(char *arrayStr,
 			if (values[i])
 			{
 				if (typalign == 'd')
-					*nbytes += DOUBLEALIGN(*(int32 *) values[i]);
+					*nbytes += MAXALIGN(*(int32 *) values[i]);
 				else
 					*nbytes += INTALIGN(*(int32 *) values[i]);
 			}

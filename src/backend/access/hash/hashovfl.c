@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.24 1999/07/17 20:16:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.25 1999/07/19 07:07:16 momjian Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -531,7 +531,7 @@ _hash_squeezebucket(Relation rel,
 		hitem = (HashItem) PageGetItem(rpage, PageGetItemId(rpage, roffnum));
 		itemsz = IndexTupleDSize(hitem->hash_itup)
 			+ (sizeof(HashItemData) - sizeof(IndexTupleData));
-		itemsz = DOUBLEALIGN(itemsz);
+		itemsz = MAXALIGN(itemsz);
 
 		/*
 		 * walk up the bucket chain, looking for a page big enough for

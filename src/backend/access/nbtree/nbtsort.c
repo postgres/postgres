@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: nbtsort.c,v 1.45 1999/07/17 20:16:43 momjian Exp $
+ *	  $Id: nbtsort.c,v 1.46 1999/07/19 07:07:19 momjian Exp $
  *
  * NOTES
  *
@@ -86,7 +86,7 @@ extern int	NDirectFileWrite;
  * are potentially reading a bunch of zeroes off of disk in many
  * cases.
  *
- * BTItems are packed in and DOUBLEALIGN'd.
+ * BTItems are packed in and MAXALIGN'd.
  *
  * the fd should not be going out to disk, strictly speaking, but it's
  * the only thing like that so i'm not going to worry about wasting a
@@ -497,7 +497,7 @@ _bt_tapenext(BTTapeBlock *tape, char **pos)
 		return (BTItem) NULL;
 	bti = (BTItem) *pos;
 	itemsz = BTITEMSZ(bti);
-	*pos += DOUBLEALIGN(itemsz);
+	*pos += MAXALIGN(itemsz);
 	return bti;
 }
 
@@ -517,7 +517,7 @@ _bt_tapeadd(BTTapeBlock *tape, BTItem item, int itemsz)
 {
 	memcpy(tape->bttb_data + tape->bttb_top, item, itemsz);
 	++tape->bttb_ntup;
-	tape->bttb_top += DOUBLEALIGN(itemsz);
+	tape->bttb_top += MAXALIGN(itemsz);
 }
 
 /*-------------------------------------------------------------------------
@@ -653,7 +653,7 @@ _bt_spool(Relation index, BTItem btitem, void *spool)
 
 	itape = btspool->bts_itape[btspool->bts_tape];
 	itemsz = BTITEMSZ(btitem);
-	itemsz = DOUBLEALIGN(itemsz);
+	itemsz = MAXALIGN(itemsz);
 
 	/*
 	 * if this buffer is too full for this BTItemData, or if we have run
@@ -693,7 +693,7 @@ _bt_spool(Relation index, BTItem btitem, void *spool)
 		 * BTItemDatas in the order dictated by the sorted array of
 		 * BTItems, not the original order.
 		 *
-		 * (since everything was DOUBLEALIGN'd and is all on a single tape
+		 * (since everything was MAXALIGN'd and is all on a single tape
 		 * block, everything had *better* still fit on one tape block..)
 		 */
 		otape = btspool->bts_otape[btspool->bts_tape];
@@ -701,7 +701,7 @@ _bt_spool(Relation index, BTItem btitem, void *spool)
 		{
 			bti = parray[i].btsk_item;
 			btisz = BTITEMSZ(bti);
-			btisz = DOUBLEALIGN(btisz);
+			btisz = MAXALIGN(btisz);
 			_bt_tapeadd(otape, bti, btisz);
 #if defined(FASTBUILD_DEBUG) && defined(FASTBUILD_SPOOL)
 			{
@@ -903,7 +903,7 @@ _bt_buildadd(Relation index, void *pstate, BTItem bti, int flags)
 
 	pgspc = PageGetFreeSpace(npage);
 	btisz = BTITEMSZ(bti);
-	btisz = DOUBLEALIGN(btisz);
+	btisz = MAXALIGN(btisz);
 	if (pgspc < btisz)
 	{
 		Buffer		obuf = nbuf;
@@ -1221,7 +1221,7 @@ _bt_merge(Relation index, BTSpool *btspool)
 				if (bti != (BTItem) NULL)
 				{
 					btisz = BTITEMSZ(bti);
-					btisz = DOUBLEALIGN(btisz);
+					btisz = MAXALIGN(btisz);
 					if (doleaf)
 					{
 						_bt_buildadd(index, state, bti, BTP_LEAF);

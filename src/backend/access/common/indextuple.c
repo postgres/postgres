@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.37 1999/07/17 20:16:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.38 1999/07/19 07:07:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@ index_formtuple(TupleDesc tupleDescriptor,
 
 	hoff = IndexInfoFindDataOffset(infomask);
 	size = hoff + ComputeDataSize(tupleDescriptor, value, null);
-	size = DOUBLEALIGN(size);	/* be conservative */
+	size = MAXALIGN(size);	/* be conservative */
 
 	tp = (char *) palloc(size);
 	tuple = (IndexTuple) tp;

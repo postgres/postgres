@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.26 1999/07/17 20:17:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.27 1999/07/19 07:07:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ PageInit(Page page, Size pageSize, Size specialSize)
 	Assert(pageSize >
 			 specialSize + sizeof(PageHeaderData) - sizeof(ItemIdData));
 
-	specialSize = DOUBLEALIGN(specialSize);
+	specialSize = MAXALIGN(specialSize);
 
 	p->pd_lower = sizeof(PageHeaderData) - sizeof(ItemIdData);
 	p->pd_upper = pageSize - specialSize;
@@ -149,7 +149,7 @@ PageAddItem(Page page,
 	else
 		lower = ((PageHeader) page)->pd_lower;
 
-	alignedSize = DOUBLEALIGN(size);
+	alignedSize = MAXALIGN(size);
 
 	upper = ((PageHeader) page)->pd_upper - alignedSize;
 
@@ -190,12 +190,12 @@ PageGetTempPage(Page page, Size specialSize)
 
 	/* clear out the middle */
 	size = (pageSize - sizeof(PageHeaderData)) + sizeof(ItemIdData);
-	size -= DOUBLEALIGN(specialSize);
+	size -= MAXALIGN(specialSize);
 	MemSet((char *) &(thdr->pd_linp[0]), 0, size);
 
 	/* set high, low water marks */
 	thdr->pd_lower = sizeof(PageHeaderData) - sizeof(ItemIdData);
-	thdr->pd_upper = pageSize - DOUBLEALIGN(specialSize);
+	thdr->pd_upper = pageSize - MAXALIGN(specialSize);
 
 	return temp;
 }
@@ -307,7 +307,7 @@ PageRepairFragmentation(Page page)
 		for (i = 0, itemidptr = itemidbase; i < nused; i++, itemidptr++)
 		{
 			lp = ((PageHeader) page)->pd_linp + itemidptr->offsetindex;
-			alignedSize = DOUBLEALIGN((*lp).lp_len);
+			alignedSize = MAXALIGN((*lp).lp_len);
 			upper = ((PageHeader) page)->pd_upper - alignedSize;
 			memmove((char *) page + upper,
 					(char *) page + (*lp).lp_off,
@@ -381,7 +381,7 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
 
 	tup = PageGetItemId(page, offnum);
 	size = ItemIdGetLength(tup);
-	size = DOUBLEALIGN(size);
+	size = MAXALIGN(size);
 
 	/* location of deleted tuple data */
 	locn = (char *) (page + ItemIdGetOffset(tup));

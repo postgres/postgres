@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.114 1999/07/17 20:16:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.115 1999/07/19 07:07:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1282,9 +1282,9 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 						to_item = i;
 						to_vpd = fraged_pages->vpl_pagedesc[to_item];
 					}
-					to_vpd->vpd_free -= DOUBLEALIGN(tlen);
+					to_vpd->vpd_free -= MAXALIGN(tlen);
 					if (to_vpd->vpd_offsets_used >= to_vpd->vpd_offsets_free)
-						to_vpd->vpd_free -= DOUBLEALIGN(sizeof(ItemIdData));
+						to_vpd->vpd_free -= MAXALIGN(sizeof(ItemIdData));
 					(to_vpd->vpd_offsets_used)++;
 					if (free_vtmove == 0)
 					{
@@ -2790,7 +2790,7 @@ static bool
 vc_enough_space(VPageDescr vpd, Size len)
 {
 
-	len = DOUBLEALIGN(len);
+	len = MAXALIGN(len);
 
 	if (len > vpd->vpd_free)
 		return false;
@@ -2800,7 +2800,7 @@ vc_enough_space(VPageDescr vpd, Size len)
 		return true;			/* and len <= free_space */
 
 	/* ok. noff_usd >= noff_free and so we'll have to allocate new itemid */
-	if (len + DOUBLEALIGN(sizeof(ItemIdData)) <= vpd->vpd_free)
+	if (len + MAXALIGN(sizeof(ItemIdData)) <= vpd->vpd_free)
 		return true;
 
 	return false;

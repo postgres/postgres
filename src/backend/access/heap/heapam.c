@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.52 1999/07/17 20:16:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.53 1999/07/19 07:07:18 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1280,7 +1280,7 @@ l2:
 							 HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
 
 	/* insert new item */
-	if ((unsigned) DOUBLEALIGN(newtup->t_len) <= PageGetFreeSpace((Page) dp))
+	if ((unsigned) MAXALIGN(newtup->t_len) <= PageGetFreeSpace((Page) dp))
 		RelationPutHeapTuple(relation, buffer, newtup);
 	else
 	{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.24 1999/07/17 20:16:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.25 1999/07/19 07:07:17 momjian Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -96,8 +96,8 @@ _hash_metapinit(Relation rel)
 	for (i = metap->hashm_bshift; i > 0; --i)
 	{
 		if ((1 << i) < (metap->hashm_bsize -
-						(DOUBLEALIGN(sizeof(PageHeaderData)) +
-						 DOUBLEALIGN(sizeof(HashPageOpaqueData)))))
+						(MAXALIGN(sizeof(PageHeaderData)) +
+						 MAXALIGN(sizeof(HashPageOpaqueData)))))
 			break;
 	}
 	Assert(i);
@@ -605,7 +605,7 @@ _hash_splitpage(Relation rel,
 			itemsz = IndexTupleDSize(hitem->hash_itup)
 				+ (sizeof(HashItemData) - sizeof(IndexTupleData));
 
-			itemsz = DOUBLEALIGN(itemsz);
+			itemsz = MAXALIGN(itemsz);
 
 			if (PageGetFreeSpace(npage) < itemsz)
 			{

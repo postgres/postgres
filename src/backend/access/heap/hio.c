@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.25 1999/07/16 04:58:27 momjian Exp $
+ *	  $Id: hio.c,v 1.26 1999/07/19 07:07:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@ RelationPutHeapTuple(Relation relation,
 	IncrHeapAccessStat(global_RelationPutHeapTuple);
 
 	pageHeader = (Page) BufferGetPage(buffer);
-	len = (unsigned) DOUBLEALIGN(tuple->t_len); /* be conservative */
+	len = (unsigned) MAXALIGN(tuple->t_len); /* be conservative */
 	Assert((int) len <= PageGetFreeSpace(pageHeader));
 
 	offnum = PageAddItem((Page) pageHeader, (Item) tuple->t_data,
@@ -143,7 +143,7 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 	pageHeader = (Page) BufferGetPage(buffer);
-	len = (unsigned) DOUBLEALIGN(tuple->t_len); /* be conservative */
+	len = (unsigned) MAXALIGN(tuple->t_len); /* be conservative */
 
 	/*
 	 * Note that this is true if the above returned a bogus page, which it

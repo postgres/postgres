@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.27 1999/07/16 17:07:26 momjian Exp $
+ * $Id: hash.h,v 1.28 1999/07/19 07:07:27 momjian Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -202,7 +202,7 @@ typedef HashItemData *HashItem;
 #define BMPGSZ_BYTE(metap)		((metap)->hashm_bmsize)
 #define BMPGSZ_BIT(metap)		((metap)->hashm_bmsize << BYTE_TO_BIT)
 #define HashPageGetBitmap(pg) \
-	((uint32 *) (((char *) (pg)) + DOUBLEALIGN(sizeof(PageHeaderData))))
+	((uint32 *) (((char *) (pg)) + MAXALIGN(sizeof(PageHeaderData))))
 
 /*
  * The number of bits in an ovflpage bitmap which

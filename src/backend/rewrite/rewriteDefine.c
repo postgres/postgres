@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.34 1999/07/17 20:17:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.35 1999/07/19 07:07:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,8 +108,9 @@ InsertRule(char *rulname,
 (rulename, ev_type, ev_class, ev_attr, ev_action, ev_qual, is_instead) VALUES \
 ('%s', %d::char, %u::oid, %d::int2, '%s'::text, '%s'::text, \
  '%s'::bool);";
-	if (sizeof(FormData_pg_rewrite) + strlen(actionbuf) +
-		strlen(qualbuf) > MaxAttrSize)
+	if (MAXALIGN(sizeof(FormData_pg_rewrite)) +
+		MAXALIGN(strlen(actionbuf)) +
+		MAXALIGN(strlen(qualbuf)) > MaxAttrSize)
 		elog(ERROR, "DefineQueryRewrite: rule plan string too big.");
 	sprintf(rulebuf, template,
 			rulname, evtype, eventrel_oid, evslot_index, actionbuf,

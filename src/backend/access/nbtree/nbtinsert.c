@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.48 1999/07/17 20:16:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.49 1999/07/19 07:07:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -263,7 +263,7 @@ _bt_insertonpg(Relation rel,
 	itemsz = IndexTupleDSize(btitem->bti_itup)
 		+ (sizeof(BTItemData) - sizeof(IndexTupleData));
 
-	itemsz = DOUBLEALIGN(itemsz);		/* be safe, PageAddItem will do
+	itemsz = MAXALIGN(itemsz);		/* be safe, PageAddItem will do
 										 * this but we need to be
 										 * consistent */
 
@@ -369,7 +369,7 @@ _bt_insertonpg(Relation rel,
 		if (currsize > maxsize)
 			maxsize = currsize;
 		maxsize += sizeof(PageHeaderData) +
-			DOUBLEALIGN(sizeof(BTPageOpaqueData));
+			MAXALIGN(sizeof(BTPageOpaqueData));
 		if (maxsize >= PageGetPageSize(page) / 2)
 			do_split = true;
 	}
@@ -460,7 +460,7 @@ _bt_insertonpg(Relation rel,
 
 			maxoff = PageGetMaxOffsetNumber(page);
 			llimit = PageGetPageSize(page) - sizeof(PageHeaderData) -
-				DOUBLEALIGN(sizeof(BTPageOpaqueData))
+				MAXALIGN(sizeof(BTPageOpaqueData))
 				+sizeof(ItemIdData);
 			llimit /= 2;
 			firstright = _bt_findsplitloc(rel, page, start, maxoff, llimit);
@@ -689,8 +689,8 @@ l_spl:	;
 				 * then we must forse insertion.
 				 */
 				if (!parent_chained &&
-					DOUBLEALIGN(IndexTupleDSize(lowLeftItem->bti_itup)) ==
-				DOUBLEALIGN(IndexTupleDSize(stack->bts_btitem->bti_itup)))
+					MAXALIGN(IndexTupleDSize(lowLeftItem->bti_itup)) ==
+					MAXALIGN(IndexTupleDSize(stack->bts_btitem->bti_itup)))
 				{
 					_bt_updateitem(rel, keysz, pbuf,
 								   stack->bts_btitem, lowLeftItem);
@@ -1591,7 +1591,7 @@ _bt_shift(Relation rel, Buffer buf, BTStack stack, int keysz,
 	/* add passed hikey */
 	itemsz = IndexTupleDSize(hikey->bti_itup)
 		+ (sizeof(BTItemData) - sizeof(IndexTupleData));
-	itemsz = DOUBLEALIGN(itemsz);
+	itemsz = MAXALIGN(itemsz);
 	if (PageAddItem(page, (Item) hikey, itemsz, P_HIKEY, LP_USED) == InvalidOffsetNumber)
 		elog(FATAL, "btree: failed to add hikey in _bt_shift");
 	pfree(hikey);
@@ -1599,7 +1599,7 @@ _bt_shift(Relation rel, Buffer buf, BTStack stack, int keysz,
 	/* add btitem */
 	itemsz = IndexTupleDSize(btitem->bti_itup)
 		+ (sizeof(BTItemData) - sizeof(IndexTupleData));
-	itemsz = DOUBLEALIGN(itemsz);
+	itemsz = MAXALIGN(itemsz);
 	if (PageAddItem(page, (Item) btitem, itemsz, P_FIRSTKEY, LP_USED) == InvalidOffsetNumber)
 		elog(FATAL, "btree: failed to add firstkey in _bt_shift");
 	pfree(btitem);

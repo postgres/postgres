@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.57 1999/07/17 20:17:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.58 1999/07/19 07:07:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,8 +57,8 @@
  */
 
 #define IFREESPC(p)		(PageGetFreeSpace(p) - \
-				 DOUBLEALIGN(offsetof(HeapTupleHeaderData,t_bits)) - \
-				 DOUBLEALIGN(sizeof(struct varlena) + sizeof(int32)) - \
+				 MAXALIGN(offsetof(HeapTupleHeaderData,t_bits)) - \
+				 MAXALIGN(sizeof(struct varlena) + sizeof(int32)) - \
 				 sizeof(double))
 #define IMAXBLK			8092
 #define IMINBLK			512
@@ -1005,11 +1005,11 @@ inv_newtuple(LargeObjectDesc *obj_desc,
 
 	/* compute tuple size -- no nulls */
 	hoff = offsetof(HeapTupleHeaderData, t_bits);
-	hoff = DOUBLEALIGN(hoff);
+	hoff = MAXALIGN(hoff);
 
 	/* add in olastbyte, varlena.vl_len, varlena.vl_dat */
 	tupsize = hoff + (2 * sizeof(int32)) + nwrite;
-	tupsize = DOUBLEALIGN(tupsize);
+	tupsize = MAXALIGN(tupsize);
 
 	/*
 	 * Allocate the tuple on the page, violating the page abstraction.

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.24 1999/07/15 23:03:34 momjian Exp $
+ * $Id: htup.h,v 1.25 1999/07/19 07:07:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,7 @@ typedef struct HeapTupleData
 
 typedef HeapTupleData *HeapTuple;
 
-#define HEAPTUPLESIZE	DOUBLEALIGN(sizeof(HeapTupleData))
+#define HEAPTUPLESIZE	MAXALIGN(sizeof(HeapTupleData))
 
 
 /* ----------------
