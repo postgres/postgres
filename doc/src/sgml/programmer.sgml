@@ -16,6 +16,7 @@ $log$
 <!entity info     SYSTEM "info.sgml">
 <!entity legal    SYSTEM "legal.sgml">
 <!entity notation SYSTEM "notation.sgml">
+<!entity y2k      SYSTEM "y2k.sgml">
 
 <!entity arch     SYSTEM "arch.sgml">
 <!entity start    SYSTEM "start.sgml">
@@ -152,6 +153,7 @@ It provides SQL92/SQL3 language support,
 &xaggr;
 &rules;
 &xindex;
+&xplang;
 &gist;
 &dfunc;
 
@@ -167,11 +169,19 @@ It provides SQL92/SQL3 language support,
 &ecpg;
 &odbc;
 &jdbc;
-&xplang;
 
 <!-- development -->
 
-&arch-dev;
+<!--
+The arch-dev chapter is current almost identical 
+to the arch-pg chapter appearing earlier in the
+Programmer's Guide. If the Developer's Guide is
+split into a separate document the start using this
+again.
+- thomas 1998-10-23
+&arch-dev; 
+-->
+
 &geqo;
 &protocol;
 &signals;

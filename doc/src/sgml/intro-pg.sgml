@@ -2,10 +2,10 @@
 <TITLE>Introduction</TITLE>
 
 <Para>
-     This document is the programmer's  manual  for  the  
-     <Ulink url="http://postgresql.org/"><ProductName>PostgreSQL</ProductName></Ulink>
-     database  management system, originally developed at the University
-     of California at  Berkeley.
+This document is the programmer's  manual  for  the  
+<Ulink url="http://postgresql.org/"><ProductName>PostgreSQL</ProductName></Ulink>
+database  management system, originally developed at the University
+of California at Berkeley.
 
 <ProductName>PostgreSQL</ProductName>  is  based  on
      <Ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/postgres.html">
@@ -18,16 +18,16 @@ The <ProductName>Postgres</ProductName> project,
 </Para>
 
 <Para>
-     The first part of this manual 
-     explains  the <ProductName>Postgres</ProductName>  
+The first part of this manual 
+explains  the <ProductName>Postgres</ProductName>  
 approach  to  extensibility  and describe how
-     users can extend <ProductName>Postgres</ProductName> 
+users can extend <ProductName>Postgres</ProductName> 
 by adding user-defined types,
-     operators, aggregates, and both query language and programming 
+operators, aggregates, and both query language and programming 
 language functions.
-     After an extremely  brief
-     overview  of  the <ProductName>Postgres</ProductName> rule system, we discuss
-     the trigger and SPI interfaces.
+     After a discussion  of  the <ProductName>Postgres</ProductName> 
+rule system, we discuss
+the trigger and SPI interfaces.
      The manual concludes with a detailed description of 
 the programming interfaces and
      support libraries for various languages.
@@ -37,7 +37,11 @@ the programming interfaces and
      We assume proficiency with UNIX and C programming.
 </Para>
 
+&info;
+
 &notation;
+
+&y2k;
 
 &legal;
 

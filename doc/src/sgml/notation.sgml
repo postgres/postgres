@@ -14,22 +14,23 @@ particular set of installed
 
 <para>
 The 
-<Productname>Postgres</Productname> <firstterm>super-user</firstterm>
+<Productname>Postgres</Productname> <firstterm>superuser</firstterm>
 is the user named <replaceable>postgres</replaceable>
  who owns the <Productname>Postgres</Productname>
-binaries and database files.  As the database super-user, all
+binaries and database files.  As the database superuser, all
 protection mechanisms may be bypassed and any data accessed
 arbitrarily.  
-In addition, the <Productname>Postgres</Productname> super-user is allowed to execute
+In addition, the <Productname>Postgres</Productname> superuser is allowed to execute
 some support programs which are generally not available to all users.
-Note that the <Productname>Postgres</Productname> super-user is
+Note that the <Productname>Postgres</Productname> superuser is
 <emphasis>not</emphasis>
-the same as the Unix super-user (<literal>root</literal>),
-and should have a non-zero userid for security reasons.
+the same as the Unix superuser (which will be referred to as <firstterm>root</firstterm>).
+The superuser should have a non-zero user identifier (<firstterm>UID</firstterm>)
+for security reasons.
 
 <para>
 The
-<firstterm>database base administrator</firstterm>
+<firstterm>database administrator</firstterm>
 or <acronym>DBA</acronym>, is the person who is responsible for installing 
 <Productname>Postgres</Productname> with mechanisms to
 enforce a security policy for a site.  The DBA can add new users by
@@ -62,12 +63,34 @@ site.
 <title>Notation</title>
 
 <para>
-<quote>...</quote> at the front of a file name is used to represent the
-path to the <Productname>Postgres</Productname> super-user's home directory.  
-Anything in brackets
-<quote>[</quote> and <quote>]</quote>) is optional.  Anything in braces
-(<quote>{</quote> and <quote>}</quote>) can be repeated 0 or more times.
-Parentheses (<quote>(</quote> and <quote>)</quote>) are used to group boolean
+<quote>...</quote> or <filename>/usr/local/pgsql/<filename> 
+at the front of a file name is used to represent the
+path to the <Productname>Postgres</Productname> superuser's home directory.
+
+<para>
+In a command synopsis, brackets
+<quote>[</quote> and <quote>]</quote>) indicate an optional phrase or keyword.
+Anything in braces
+(<quote>{</quote> and <quote>}</quote>) and containing vertical bars (<quote>|</quote>)
+ indicates that you must choose one.
+
+<para>
+In examples, parentheses (<quote>(</quote> and <quote>)</quote>) are used to group boolean
 expressions.  <quote>|</quote> is the boolean operator OR.
+
+<para>
+Examples will show commands executed from various accounts and programs.
+Commands executed from the root account will be preceeded with <quote>&gt;</quote>.
+Commands executed from the superuser account will be preceeded with <quote>$</quote>.
+<acronym>SQL</acronym> commands will be preceeded with <quote>=&gt;</quote>
+or will have no leading prompt.
+
+<note>
+<para>
+At the time of writing (<Productname>Postgres</Productname> v6.4) the notation for
+flagging commands is not universally consistant throughout the documentation set.
+Please report problems to
+<ulink url="mailto:docs@postgresql.org">the Documentation Mailing List</ulink>.
+</note>
 
 </sect1>

@@ -1,11 +1,15 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.10 1998/10/21 05:31:52 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.11 1998/10/25 00:24:31 thomas Exp $
 
 Postgres integrated documentation.
 Other subset docs should be copied and shrunk from here.
 thomas 1998-02-23
 
 $Log: postgres.sgml,v $
+Revision 1.11  1998/10/25 00:24:31  thomas
+Add Y2K statement for intros.
+Make sure notation section is included in most intros.
+
 Revision 1.10  1998/10/21 05:31:52  thomas
 Include new information from Massimo. Rearrange ODBC docs.
 
@@ -32,6 +36,7 @@ Include new chapters.
 <!entity info     SYSTEM "info.sgml">
 <!entity legal    SYSTEM "legal.sgml">
 <!entity notation SYSTEM "notation.sgml">
+<!entity y2k      SYSTEM "y2k.sgml">
 
 <!-- tutorial -->
 <!entity intro    SYSTEM "intro.sgml">
@@ -221,6 +226,7 @@ Installation and maintenance information.
 &intro-ag;
 &ports;
 &install;
+&runtime;
 &options;
 &start-ag;
 &recovery;
