@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.14 2000/03/31 03:27:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.15 2000/05/02 20:01:52 thomas Exp $
 -->
 
  <chapter id="odbc">
@@ -125,7 +125,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.14 2000/03/31 03:27:41 
       can I write it using <acronym>ODBC</acronym> calls
       to the <productname>Postgres</productname> server, 
       or is that only when another database program 
-      like MS SQL Server or Access needs to access the data?</quote>
+      like MS SQL Server or Access needs to access the data?
+     </quote>
     </para>
     <para>
      The <acronym>ODBC</acronym> <acronym>API</acronym>
@@ -171,8 +172,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.14 2000/03/31 03:27:41 
     <productname>ApplixWare</productname> has an 
     <acronym>ODBC</acronym> database interface
     supported on at least some platforms. 
-    <productname>ApplixWare</productname> v4.4.1 has been
-    demonstrated under Linux with <productname>Postgres</productname> v6.4 
+    <productname>ApplixWare</productname> v4.4.2 has been
+    demonstrated under Linux with <productname>Postgres</productname> v7.0 
     using the <productname>psqlODBC</productname>
     driver contained in the <productname>Postgres</productname> distribution.
    </para>
@@ -253,18 +254,34 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.14 2000/03/31 03:27:41 
        command-line argument for <application>src/configure</application>:
 
        <programlisting>
-	% ./configure --with-odbc
-	% make
+% ./configure --with-odbc
+% make
        </programlisting>
       </para>
      </step>
+
      <step performance="required">
       <para>
        Rebuild the <productname>Postgres</productname> distribution:
 
        <programlisting>
-	% make install
+% make install
        </programlisting>
+      </para>
+     </step>
+
+     <step performance="optional">
+      <para>
+       Install the ODBC catalog extensions available in
+       <filename>PGROOT/contrib/odbc/odbc.sql</filename>:
+
+       <programlisting>
+% psql -e template1 &lt; $PGROOT/contrib/odbc/odbc.sql
+       </programlisting>
+
+       where specifying <literal>template1</literal> as the target
+       database will ensure that all subsequent new databases will
+       have these same definitions.
       </para>
      </step>
     </procedure>
@@ -278,7 +295,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.14 2000/03/31 03:27:41 
      This can be overridden from the <application>make</application> command-line
      as
      <programlisting>
-      % make ODBCINST=<replaceable>filename</replaceable> install
+% make ODBCINST=<replaceable>filename</replaceable> install
      </programlisting>
     </para>
 
@@ -304,9 +321,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.14 2000/03/31 03:27:41 
        sources, type:
 
        <programlisting>
-	% ./configure
-	% make
-	% make POSTGRESDIR=<replaceable class="parameter">PostgresTopDir</replaceable> install
+% ./configure
+% make
+% make POSTGRESDIR=<replaceable class="parameter">PostgresTopDir</replaceable> install
        </programlisting>
       </para>
      </step>
@@ -317,7 +334,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.14 2000/03/31 03:27:41 
        then you can specify various destinations explicitly:
 
        <programlisting>
-	% make BINDIR=bindir  LIBDIR=libdir  HEADERDIR=headerdir ODBCINST=instfile install
+% make BINDIR=bindir  LIBDIR=libdir  HEADERDIR=headerdir ODBCINST=instfile install
        </programlisting>
       </para>
      </step>
@@ -368,7 +385,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.14 2000/03/31 03:27:41 
        or gzipped tarfile to an empty directory. If using the zip package
        unzip it with the command 
        <programlisting>
-	% unzip -a <replaceable>packagename</replaceable>
+% unzip -a <replaceable>packagename</replaceable>
        </programlisting>
 
        The <option>-a</option> option
@@ -380,7 +397,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.14 2000/03/31 03:27:41 
        If you have the gzipped tar package than simply run
 
        <programlisting>
-	tar -xzf <replaceable>packagename</replaceable>
+% tar -xzf <replaceable>packagename</replaceable>
        </programlisting>
       </para>
 
@@ -404,8 +421,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.14 2000/03/31 03:27:41 
        Create the tar file:
 
        <programlisting>
-	% cd interfaces/odbc
-	% make standalone
+% cd interfaces/odbc
+% make standalone
        </programlisting>
       </para>
      </step>
@@ -429,7 +446,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.14 2000/03/31 03:27:41 
        Configure the standalone installation:
 
        <programlisting>
-	% ./configure
+% ./configure
        </programlisting>
       </para>
 
@@ -437,8 +454,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.14 2000/03/31 03:27:41 
        The configuration can be done with options:
 
        <programlisting>
-	% ./configure --prefix=<replaceable>rootdir</replaceable>
-	--with-odbc=<replaceable>inidir</replaceable>
+% ./configure --prefix=<replaceable>rootdir</replaceable> --with-odbc=<replaceable>inidir</replaceable>
        </programlisting>
 
        where <option>--prefix</option> installs the libraries and headers in
@@ -463,7 +479,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.14 2000/03/31 03:27:41 
        Compile and link the source code:
 
        <programlisting>
-	% make ODBCINST=<replaceable>instdir</replaceable>
+% make ODBCINST=<replaceable>instdir</replaceable>
        </programlisting>
       </para>
 
@@ -493,7 +509,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.14 2000/03/31 03:27:41 
        Install the source code:
 
        <programlisting>
-	% make POSTGRESDIR=<replaceable>targettree</replaceable> install
+% make POSTGRESDIR=<replaceable>targettree</replaceable> install
        </programlisting>
       </para>
 
@@ -513,9 +529,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.14 2000/03/31 03:27:41 
        Here is how you would specify the various destinations explicitly:
 
        <programlisting>
-	% make BINDIR=<replaceable>bindir</replaceable>
-	LIBDIR<replaceable>>libdi</replaceable>>
-	HEADERDIR=<replaceable>headerdir</replaceable> install
+% make BINDIR=<replaceable>bindir</replaceable> LIBDIR=<replaceable>libdir</replaceable> HEADERDIR=<replaceable>headerdir</replaceable> install
        </programlisting>
       </para>
 
@@ -523,7 +537,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.14 2000/03/31 03:27:41 
        For example, typing
 
        <programlisting>
-	% make POSTGRESDIR=/opt/psqlodbc install
+% make POSTGRESDIR=/opt/psqlodbc install
        </programlisting>
 
        (after you've used
@@ -537,7 +551,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.14 2000/03/31 03:27:41 
        The command
 
        <programlisting>
-	% make POSTGRESDIR=/opt/psqlodbc HEADERDIR=/usr/local install
+% make POSTGRESDIR=/opt/psqlodbc HEADERDIR=/usr/local install
        </programlisting>
 
        should cause the libraries to be installed in /opt/psqlodbc/lib and
@@ -570,10 +584,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.14 2000/03/31 03:27:41 
     <literal>[ODBC Data Sources]</literal> and must contain the following entries: 
 
     <programlisting>
-     Driver = <replaceable>POSTGRESDIR</replaceable>/lib/libpsqlodbc.so
-     Database=<replaceable>DatabaseName</replaceable>
-     Servername=localhost
-     Port=5432
+Driver = <replaceable>POSTGRESDIR</replaceable>/lib/libpsqlodbc.so
+Database=<replaceable>DatabaseName</replaceable>
+Servername=localhost
+Port=5432
     </programlisting>
 
     <tip>
@@ -632,6 +646,7 @@ InstallDir = /opt/applix/axdata/axshlib
     </programlisting>
    </para>
   </sect1>
+
   <sect1>
    <title>ApplixWare</title>
 
@@ -679,7 +694,7 @@ InstallDir = /opt/applix/axdata/axshlib
 	 find the line that starts with
 
 	 <programlisting>
-	  #libFor elfodbc /ax/<replaceable>...</replaceable>
+#libFor elfodbc /ax/<replaceable>...</replaceable>
 	 </programlisting>
 	</para>
        </step>
@@ -688,7 +703,7 @@ InstallDir = /opt/applix/axdata/axshlib
 	 Change line to read
 
 	 <programlisting>
-	  libFor elfodbc <replaceable>applixroot</replaceable>/applix/axdata/axshlib/lib
+libFor elfodbc <replaceable>applixroot</replaceable>/applix/axdata/axshlib/lib
 	 </programlisting>
 
 	 which will tell elfodbc to look in this directory
@@ -709,7 +724,7 @@ InstallDir = /opt/applix/axdata/axshlib
        described above.  You may also want to add the flag
 
        <programlisting>
-	TextAsLongVarchar=0
+TextAsLongVarchar=0
        </programlisting>
 
        to the database-specific portion of <filename>.odbc.ini</filename>
@@ -763,7 +778,7 @@ InstallDir = /opt/applix/axdata/axshlib
       </substeps>
 
       <para>
-       You should see <quote>Starting elfodbc server</quote>
+       You should see "<literal>Starting elfodbc server</literal>"
        in the lower left corner of the
        data window.  If you get an error dialog box, see the debugging section
        below.
@@ -895,14 +910,14 @@ InstallDir = /opt/applix/axdata/axshlib
        the axnet process.  For example, if
 
        <programlisting>
-	ps -aucx | grep ax 
+% ps -aucx | grep ax 
        </programlisting>
 
        shows
 
        <programlisting>
-	cary   10432  0.0  2.6  1740   392  ?  S  Oct  9  0:00 axnet
-	cary   27883  0.9 31.0 12692  4596  ?  S   10:24  0:04 axmain
+cary   10432  0.0  2.6  1740   392  ?  S  Oct  9  0:00 axnet
+cary   27883  0.9 31.0 12692  4596  ?  S   10:24  0:04 axmain
        </programlisting>
       </para>
 
@@ -910,7 +925,7 @@ InstallDir = /opt/applix/axdata/axshlib
        Then run
 
        <programlisting>
-	strace -f -s 1024 -p 10432 
+% strace -f -s 1024 -p 10432
        </programlisting>
       </para>
      </step>
@@ -934,16 +949,16 @@ InstallDir = /opt/applix/axdata/axshlib
 
     <para>
      For example, after getting
-     a <quote>Cannot launch gateway on server</quote>, 
+     a "<literal>Cannot launch gateway on server</literal>", 
      I ran strace on axnet and got
 
      <programlisting>
-      [pid 27947] open("/usr/lib/libodbc.so", O_RDONLY) = -1 ENOENT
-      (No such file or directory)
-      [pid 27947] open("/lib/libodbc.so", O_RDONLY) = -1 ENOENT
-      (No such file or directory)
-      [pid 27947] write(2, "/usr2/applix/axdata/elfodbc:
-      can't load library 'libodbc.so'\n", 61) = -1 EIO (I/O error)
+[pid 27947] open("/usr/lib/libodbc.so", O_RDONLY) = -1 ENOENT
+(No such file or directory)
+[pid 27947] open("/lib/libodbc.so", O_RDONLY) = -1 ENOENT
+(No such file or directory)
+[pid 27947] write(2, "/usr2/applix/axdata/elfodbc:
+can't load library 'libodbc.so'\n", 61) = -1 EIO (I/O error)
      </programlisting>  
      So what is happening is that applix elfodbc is searching for libodbc.so, but it
      can't find it.  That is why axnet.cnf needed to be changed.
@@ -1034,7 +1049,7 @@ InstallDir = /opt/applix/axdata/axshlib
 
      <step performance="required">
       <para>
-       Enter the value <quote>sqldemo</quote>, then click <command>OK</command>.
+       Enter the value "<literal>sqldemo</literal>", then click <command>OK</command>.
       </para>
 
       <para>
@@ -1060,10 +1075,10 @@ InstallDir = /opt/applix/axdata/axshlib
      <filename>~/axhome/macros/login.am</filename> file:
 
      <programlisting>
-      macro login
-      set_set_system_var@("sql_username@","tgl")
-      set_system_var@("sql_passwd@","no$way")
-      endmacro
+macro login
+set_set_system_var@("sql_username@","tgl")
+set_system_var@("sql_passwd@","no$way")
+endmacro
      </programlisting>
 
      <caution>

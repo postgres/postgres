@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.7 2000/03/31 03:27:40 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.8 2000/05/02 20:01:51 thomas Exp $
 CVS code repository
 Thomas Lockhart
 -->
@@ -88,7 +88,7 @@ $ cvs checkout -r REL6_4 tc
                              1.6
    </programlisting>
 
-   then the tag <quote><literal>TAG</literal></quote> will reference
+   then the tag "<literal>TAG</literal>" will reference
    file1-1.2, file2-1.3, etc.
 
    <note>
@@ -606,7 +606,7 @@ $ which cvsup
 	who are actively maintaining the code base originally developed by 
 	<ulink
 	 url="http://www.research.digital.com/SRC/modula-3/html/home.html">the DEC Systems Research Center</ulink>.
-       The <quote>PM3</quote> <productname>RPM</productname> distribution is roughly
+       The <productname>PM3</productname> <productname>RPM</productname> distribution is roughly
 	30MB compressed. At the time of writing, the 1.1.10-1 release
 	installed cleanly on RH-5.2, whereas the 1.1.11-1 release is
 	apparently built for another release (RH-6.0?) and does not run on RH-5.2.

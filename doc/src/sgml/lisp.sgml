@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/lisp.sgml,v 2.2 2000/03/31 03:27:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/lisp.sgml,v 2.3 2000/05/02 20:01:52 thomas Exp $
 -->
 
  <chapter id="lisp">
@@ -31,8 +31,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/lisp.sgml,v 2.2 2000/03/31 03:27:41 t
 
   <para>
    The code (version 0.2) is available under GNU GPL from
-   <ulink url="http://www.chez.com/emarsden/downloads/pg.el">
-    http://www.chez.com/emarsden/downloads/pg.el</ulink>
+   <ulink url="http://www.chez.com/emarsden/downloads/pg.el">Eric Marsden</ulink>
   </para>
 
   <para>

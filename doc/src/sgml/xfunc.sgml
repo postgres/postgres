@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.13 2000/03/31 03:27:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.14 2000/05/02 20:01:53 thomas Exp $
 -->
 
  <chapter id="xfunc">
@@ -123,16 +123,16 @@ select function hobbies (EMP) returns set of HOBBIES
      simply returns a base type, such as <literal>int4</literal>:
      
      <programlisting>
-    CREATE FUNCTION one() RETURNS int4
-     AS 'SELECT 1 as RESULT' LANGUAGE 'sql';
+CREATE FUNCTION one() RETURNS int4
+    AS 'SELECT 1 as RESULT' LANGUAGE 'sql';
 
-    SELECT one() AS answer;
+SELECT one() AS answer;
 
-         +-------+
-         |answer |
-         +-------+
-         |1      |
-         +-------+
+     +-------+
+     |answer |
+     +-------+
+     |1      |
+     +-------+
      </programlisting>
     </para>
     <para>
@@ -149,16 +149,16 @@ select function hobbies (EMP) returns set of HOBBIES
      and $2:
 
      <programlisting>
-    CREATE FUNCTION add_em(int4, int4) RETURNS int4
-     AS 'SELECT $1 + $2;' LANGUAGE 'sql';
+CREATE FUNCTION add_em(int4, int4) RETURNS int4
+    AS 'SELECT $1 + $2;' LANGUAGE 'sql';
 
-    SELECT add_em(1, 2) AS answer;
+SELECT add_em(1, 2) AS answer;
 
-         +-------+
-         |answer |
-         +-------+
-         |3      |
-         +-------+
+     +-------+
+     |answer |
+     +-------+
+     |3      |
+     +-------+
      </programlisting>
     </para>
    </sect2>
@@ -175,19 +175,19 @@ select function hobbies (EMP) returns set of HOBBIES
      salary would be if it were doubled:
 
      <programlisting>
-    CREATE FUNCTION double_salary(EMP) RETURNS int4
-     AS 'SELECT $1.salary * 2 AS salary;' LANGUAGE 'sql';
+CREATE FUNCTION double_salary(EMP) RETURNS int4
+    AS 'SELECT $1.salary * 2 AS salary;' LANGUAGE 'sql';
 
-    SELECT name, double_salary(EMP) AS dream
-     FROM EMP
-     WHERE EMP.cubicle ~= '(2,1)'::point;
-     
+SELECT name, double_salary(EMP) AS dream
+    FROM EMP
+    WHERE EMP.cubicle ~= '(2,1)'::point;
+ 
 
-         +-----+-------+
-         |name | dream |
-         +-----+-------+
-         |Sam  | 2400  |
-         +-----+-------+
+     +-----+-------+
+     |name | dream |
+     +-----+-------+
+     |Sam  | 2400  |
+     +-----+-------+
      </programlisting>
     </para>
     <para>
@@ -199,19 +199,19 @@ select function hobbies (EMP) returns set of HOBBIES
      notation attribute(class)  and  class.attribute  interchangably:
 
      <programlisting>
-    --
-    -- this is the same as:
-    --  SELECT EMP.name AS youngster FROM EMP WHERE EMP.age &lt; 30
-    --
-    SELECT name(EMP) AS youngster
-     FROM EMP
-     WHERE age(EMP) &lt; 30;
+--
+-- this is the same as:
+--  SELECT EMP.name AS youngster FROM EMP WHERE EMP.age &lt; 30
+--
+SELECT name(EMP) AS youngster
+    FROM EMP
+    WHERE age(EMP) &lt; 30;
 
-         +----------+
-         |youngster |
-         +----------+
-         |Sam       |
-         +----------+
+     +----------+
+     |youngster |
+     +----------+
+     |Sam       |
+     +----------+
      </programlisting>
     </para>
     <para>
@@ -223,12 +223,12 @@ select function hobbies (EMP) returns set of HOBBIES
      that returns a single EMP instance:
 
      <programlisting>
-    CREATE FUNCTION new_emp() RETURNS EMP
-     AS 'SELECT \'None\'::text AS name,
-      1000 AS salary,
-      25 AS age,
-       \'(2,2)\'::point AS cubicle'
-      LANGUAGE 'sql';
+CREATE FUNCTION new_emp() RETURNS EMP
+    AS 'SELECT \'None\'::text AS name,
+        1000 AS salary,
+        25 AS age,
+        \'(2,2)\'::point AS cubicle'
+    LANGUAGE 'sql';
      </programlisting>
     </para>
     <para>
@@ -266,13 +266,13 @@ WARN::function declared to return type EMP does not retrieve (EMP.*)
         entire instance into another function.
 
 	<programlisting>
-    SELECT name(new_emp()) AS nobody;
+SELECT name(new_emp()) AS nobody;
 
-            +-------+
-            |nobody |
-            +-------+
-            |None   |
-            +-------+
+        +-------+
+        |nobody |
+        +-------+
+        |None   |
+        +-------+
 	</programlisting>
        </para>
       </listitem>
@@ -285,8 +285,8 @@ WARN::function declared to return type EMP does not retrieve (EMP.*)
         with function calls.
 
 	<programlisting>
-            SELECT new_emp().name AS nobody;
-            WARN:parser: syntax error at or near "."
+SELECT new_emp().name AS nobody;
+WARN:parser: syntax error at or near "."
 	</programlisting>
        </para>
       </listitem>
@@ -303,19 +303,18 @@ WARN::function declared to return type EMP does not retrieve (EMP.*)
      specified as the function's returntype.
 
      <programlisting>
-    CREATE FUNCTION clean_EMP () RETURNS int4
-     AS 'DELETE FROM EMP WHERE EMP.salary &lt;= 0;
-    SELECT 1 AS ignore_this'
-     LANGUAGE 'sql';
+CREATE FUNCTION clean_EMP () RETURNS int4
+    AS 'DELETE FROM EMP WHERE EMP.salary &lt;= 0;
+SELECT 1 AS ignore_this'
+    LANGUAGE 'sql';
 
-    SELECT clean_EMP();
+SELECT clean_EMP();
 
-         +--+
-         |x |
-         +--+
-         |1 |
-         +--+
-         
+     +--+
+     |x |
+     +--+
+     |1 |
+     +--+
      </programlisting>
     </para>
    </sect2>
@@ -688,62 +687,62 @@ memmove(destination-&gt;data, buffer, 40);
      Suppose <filename>funcs.c</filename> look like:
 
      <programlisting>
-         #include &lt;string.h&gt;
-         #include "postgres.h"
+#include &lt;string.h&gt;
+#include "postgres.h"
 
-         /* By Value */
+/* By Value */
          
-         int
-         add_one(int arg)
-         {
-             return(arg + 1);
-         }
-         
-         /* By Reference, Fixed Length */
-         
-         Point *
-         makepoint(Point *pointx, Point *pointy )
-         {
-             Point     *new_point = (Point *) palloc(sizeof(Point));
-        
-             new_point->x = pointx->x;
-             new_point->y = pointy->y;
-                
-             return new_point;
-         }
-        
-         /* By Reference, Variable Length */
-         
-         text *
-         copytext(text *t)
-         {
-             /*
-              * VARSIZE is the total size of the struct in bytes.
-              */
-             text *new_t = (text *) palloc(VARSIZE(t));
-             memset(new_t, 0, VARSIZE(t));
-             VARSIZE(new_t) = VARSIZE(t);
-             /*
-              * VARDATA is a pointer to the data region of the struct.
-              */
-             memcpy((void *) VARDATA(new_t), /* destination */
-                    (void *) VARDATA(t),     /* source */
-                    VARSIZE(t)-VARHDRSZ);        /* how many bytes */
-             return(new_t);
-         }
-         
-         text *
-         concat_text(text *arg1, text *arg2)
-         {
-             int32 new_text_size = VARSIZE(arg1) + VARSIZE(arg2) - VARHDRSZ;
-             text *new_text = (text *) palloc(new_text_size);
+int
+add_one(int arg)
+{
+    return(arg + 1);
+}
 
-             memset((void *) new_text, 0, new_text_size);
-             VARSIZE(new_text) = new_text_size;
-             strncpy(VARDATA(new_text), VARDATA(arg1), VARSIZE(arg1)-VARHDRSZ);
-             strncat(VARDATA(new_text), VARDATA(arg2), VARSIZE(arg2)-VARHDRSZ);
-             return (new_text);
-         }
+/* By Reference, Fixed Length */
+
+Point *
+makepoint(Point *pointx, Point *pointy )
+{
+    Point     *new_point = (Point *) palloc(sizeof(Point));
+
+    new_point->x = pointx->x;
+    new_point->y = pointy->y;
+       
+    return new_point;
+}
+
+/* By Reference, Variable Length */
+
+text *
+copytext(text *t)
+{
+    /*
+     * VARSIZE is the total size of the struct in bytes.
+     */
+    text *new_t = (text *) palloc(VARSIZE(t));
+    memset(new_t, 0, VARSIZE(t));
+    VARSIZE(new_t) = VARSIZE(t);
+    /*
+     * VARDATA is a pointer to the data region of the struct.
+     */
+    memcpy((void *) VARDATA(new_t), /* destination */
+           (void *) VARDATA(t),     /* source */
+           VARSIZE(t)-VARHDRSZ);        /* how many bytes */
+    return(new_t);
+}
+
+text *
+concat_text(text *arg1, text *arg2)
+{
+    int32 new_text_size = VARSIZE(arg1) + VARSIZE(arg2) - VARHDRSZ;
+    text *new_text = (text *) palloc(new_text_size);
+
+    memset((void *) new_text, 0, new_text_size);
+    VARSIZE(new_text) = new_text_size;
+    strncpy(VARDATA(new_text), VARDATA(arg1), VARSIZE(arg1)-VARHDRSZ);
+    strncat(VARDATA(new_text), VARDATA(arg2), VARSIZE(arg2)-VARHDRSZ);
+    return (new_text);
+}
      </programlisting>
     </para>
 
@@ -751,17 +750,17 @@ memmove(destination-&gt;data, buffer, 40);
      On <acronym>OSF/1</acronym> we would type:
      
      <programlisting>
-         CREATE FUNCTION add_one(int4) RETURNS int4
-              AS '<replaceable>PGROOT</replaceable>/tutorial/funcs.so' LANGUAGE 'c';
+CREATE FUNCTION add_one(int4) RETURNS int4
+     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs.so' LANGUAGE 'c';
 
-         CREATE FUNCTION makepoint(point, point) RETURNS point
-              AS '<replaceable>PGROOT</replaceable>/tutorial/funcs.so' LANGUAGE 'c';
-    
-         CREATE FUNCTION concat_text(text, text) RETURNS text
-              AS '<replaceable>PGROOT</replaceable>/tutorial/funcs.so' LANGUAGE 'c';
-                                  
-         CREATE FUNCTION copytext(text) RETURNS text
-              AS '<replaceable>PGROOT</replaceable>/tutorial/funcs.so' LANGUAGE 'c';
+CREATE FUNCTION makepoint(point, point) RETURNS point
+     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs.so' LANGUAGE 'c';
+
+CREATE FUNCTION concat_text(text, text) RETURNS text
+     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs.so' LANGUAGE 'c';
+                         
+CREATE FUNCTION copytext(text) RETURNS text
+     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs.so' LANGUAGE 'c';
      </programlisting>
     </para>
 
@@ -796,20 +795,20 @@ memmove(destination-&gt;data, buffer, 40);
      In the query above, we can define c_overpaid as:
      
      <programlisting>
-         #include "postgres.h"
-         #include "executor/executor.h"  /* for GetAttributeByName() */
-         
-         bool
-         c_overpaid(TupleTableSlot *t, /* the current instance of EMP */
-                    int4 limit)
-         {
-             bool isnull = false;
-             int4 salary;
-             salary = (int4) GetAttributeByName(t, "salary", &amp;isnull);
-             if (isnull)
-                 return (false);
-             return(salary &gt; limit);
-         }
+#include "postgres.h"
+#include "executor/executor.h"  /* for GetAttributeByName() */
+
+bool
+c_overpaid(TupleTableSlot *t, /* the current instance of EMP */
+           int4 limit)
+{
+    bool isnull = false;
+    int4 salary;
+    salary = (int4) GetAttributeByName(t, "salary", &amp;isnull);
+    if (isnull)
+        return (false);
+    return(salary &gt; limit);
+}
      </programlisting>
     </para>
 
@@ -827,9 +826,9 @@ memmove(destination-&gt;data, buffer, 40);
      call would look like:
 
      <programlisting>
-         char *str;
-         ...
-         str = (char *) GetAttributeByName(t, "name", &amp;isnull)
+char *str;
+...
+str = (char *) GetAttributeByName(t, "name", &amp;isnull)
      </programlisting>
     </para>
 
@@ -838,8 +837,8 @@ memmove(destination-&gt;data, buffer, 40);
      know  about  the c_overpaid function:
 
      <programlisting>
-         * CREATE FUNCTION c_overpaid(EMP, int4) RETURNS bool
-              AS '<replaceable>PGROOT</replaceable>/tutorial/obj/funcs.so' LANGUAGE 'c';
+* CREATE FUNCTION c_overpaid(EMP, int4) RETURNS bool
+     AS '<replaceable>PGROOT</replaceable>/tutorial/obj/funcs.so' LANGUAGE 'c';
      </programlisting>
     </para>
 

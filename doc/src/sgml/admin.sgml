@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.21 2000/03/31 03:27:40 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.22 2000/05/02 20:01:51 thomas Exp $
 
 Postgres Administrator's Guide.
 Derived from postgres.sgml.
@@ -34,27 +34,27 @@ Derived from postgres.sgml.
 <!entity biblio    SYSTEM "biblio.sgml">
 ]>
 
-<Book Id="admin">
+<book id="admin">
 
 <!-- Title information -->
 
- <Title>PostgreSQL Administrator's Guide</Title>
- <BookInfo>
-  <ReleaseInfo>Covering v6.5 for general release</ReleaseInfo>
-  <BookBiblio>
-   <AuthorGroup>
-    <CorpAuthor>The PostgreSQL Development Team</CorpAuthor>
-   </AuthorGroup>
+ <title>PostgreSQL Administrator's Guide</title>
+ <bookinfo>
+  <releaseinfo>Covering v7.0 for general release</releaseinfo>
+  <bookbiblio>
+   <authorgroup>
+    <corpauthor>The PostgreSQL Development Team</corpauthor>
+   </authorgroup>
 <!-- editor in authorgroup is not supported
     <AuthorGroup>
 -->
-   <Editor>
-    <FirstName>Thomas</FirstName>
-    <SurName>Lockhart</SurName>
-    <Affiliation>
-     <OrgName>Caltech/JPL</OrgName>
-    </Affiliation>
-   </Editor>
+   <editor>
+    <firstname>Thomas</firstname>
+    <surname>Lockhart</surname>
+    <affiliation>
+     <orgname>Caltech/JPL</orgname>
+    </affiliation>
+   </editor>
 <!--
     </AuthorGroup>
 -->
@@ -63,17 +63,17 @@ Derived from postgres.sgml.
     <AuthorInitials>TGL</AuthorInitials>
 -->
 
-   <Date>(last updated 1999-06-01)</Date>
-  </BookBiblio>
+   <date>(last updated 2000-05-01)</date>
+  </bookbiblio>
 
-  <LegalNotice>
-   <Para>
-    <ProductName>PostgreSQL</ProductName> is Copyright &copy; 1996-9
-    by the Postgres Global Development Group.
-   </Para>
-  </LegalNotice>
+  <legalnotice>
+   <para>
+    <productname>PostgreSQL</productname> is Copyright &copy; 1996-2000
+    by PostgreSQL Inc.
+   </para>
+  </legalnotice>
 
- </BookInfo>
+ </bookinfo>
 
 <!--
 <TOC> </TOC>
@@ -88,20 +88,20 @@ Your name here...
 </Dedication>
 -->
 
- <Preface id="preface">
-  <Title>Summary</Title>
+ <preface id="preface">
+  <title>Summary</title>
 
-  <Para>
-   <ProductName>Postgres</ProductName>, 
+  <para>
+   <productname>Postgres</productname>, 
    developed originally in the UC Berkeley Computer Science Department,
    pioneered many of the object-relational concepts
    now becoming available in some commercial databases.
    It provides SQL92/SQL3 language support,
    transaction integrity, and type extensibility.
-   <ProductName>PostgreSQL</ProductName> is an open-source descendant
+   <productname>PostgreSQL</productname> is an open-source descendant
    of this original Berkeley code.
-  </Para>
- </Preface>
+  </para>
+ </preface>
 
   &intro-ag;
 
@@ -128,7 +128,7 @@ Don't bother with an index until we get some index entries.
 </index>
 -->
 
-</Book>
+</book>
 
 <!-- Keep this comment at the end of the file
 Local variables:

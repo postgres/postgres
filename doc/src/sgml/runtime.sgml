@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.9 2000/04/23 00:25:06 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.10 2000/05/02 20:01:52 thomas Exp $
 -->
 
  <Chapter Id="runtime">
@@ -16,7 +16,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.9 2000/04/23 00:25:06 tgl 
    <para>
     All <Productname>Postgres</Productname> commands that are executed 
     directly from a Unix shell are
-    found in the directory <quote>.../bin</quote>.  Including this directory in
+    found in the directory <filename>.../bin</filename>.  Including this directory in
     your search path will make executing the commands easier.
    </para>
 

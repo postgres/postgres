@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/biblio.sgml,v 1.12 2000/03/31 03:27:40 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/biblio.sgml,v 1.13 2000/05/02 20:01:51 thomas Exp $
 -->
 
  <bibliography id="biblio">
@@ -15,7 +15,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/biblio.sgml,v 1.12 2000/03/31 03:27:40 thom
    <productname>Postgres</productname> development team
    are available at
    <ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/">
-    http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/</ulink>
+    the University of California, Berkeley, Computer Science
+    Department web site</ulink>
   </para>
 
   <bibliodiv>
@@ -235,7 +236,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/biblio.sgml,v 1.12 2000/03/31 03:27:40 thom
      <surname>Lockhart</surname>
     </editor>
 
-    <pubdate>1998-10-01</pubdate>
+    <pubdate>2000-05-01</pubdate>
     <publisher>
      <publishername>The PostgreSQL Global Development Group</publishername>
     </publisher>
@@ -261,7 +262,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/biblio.sgml,v 1.12 2000/03/31 03:27:40 thom
      <surname>Lockhart</surname>
     </editor>
 
-    <pubdate>1998-10-01</pubdate>
+    <pubdate>2000-05-01</pubdate>
     <publisher>
      <publishername>The PostgreSQL Global Development Group</publishername>
     </publisher>
@@ -287,7 +288,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/biblio.sgml,v 1.12 2000/03/31 03:27:40 thom
      <surname>Lockhart</surname>
     </editor>
     
-    <pubdate>1998-10-01</pubdate>
+    <pubdate>2000-05-01</pubdate>
     <publisher>
      <publishername>The PostgreSQL Global Development Group</publishername>
     </publisher>
@@ -313,7 +314,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/biblio.sgml,v 1.12 2000/03/31 03:27:40 thom
      <surname>Lockhart</surname>
     </editor>
 
-    <pubdate>1998-10-01</pubdate>
+    <pubdate>2000-05-01</pubdate>
     <publisher>
      <publishername>The PostgreSQL Global Development Group</publishername>
     </publisher>
@@ -339,7 +340,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/biblio.sgml,v 1.12 2000/03/31 03:27:40 thom
      <surname>Lockhart</surname>
     </editor>
 
-    <pubdate>1998-10-01</pubdate>
+    <pubdate>2000-05-01</pubdate>
     <publisher>
      <publishername>The PostgreSQL Global Development Group</publishername>
     </publisher>
@@ -585,6 +586,7 @@ http://simon.cs.cornell.edu/home/praveen/papers/partindex.de95.ps.Z
      </ulink>
     </title>
     <titleabbrev id="SESHADRI95">
+     Seshardri, 1995
     </titleabbrev>
     <authorgroup>
      <author>

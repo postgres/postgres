@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.9 2000/03/31 03:27:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.10 2000/05/02 20:01:52 thomas Exp $
 -->
 
  <Chapter Id="manage">
@@ -46,7 +46,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.9 2000/03/31 03:27:41
    </Para>
 
    <Para>
-    To create a new database named <Quote>mydb</Quote> from the command line, type
+    To create a new database named <literal>mydb</literal> from the command line, type
 <ProgramListing>
 % createdb mydb
 </ProgramListing>
@@ -93,7 +93,7 @@ ERROR:  CREATE DATABASE: Permission denied.
     Consult with the site administrator
     regarding preconfigured alternate database locations.  
     Any valid environment variable name may be used to reference an alternate location, 
-    although using variable names with a prefix of <quote>PGDATA</quote> is recommended 
+    although using variable names with a prefix of <envar>PGDATA</envar> is recommended 
     to avoid confusion 
     and conflict with other variables.
    </Para>
@@ -185,7 +185,7 @@ enter, edit, and execute <Acronym>SQL</Acronym> commands.
         library.   This  allows  you  to submit <Acronym>SQL</Acronym> commands
         from C and get answers and status messages  back  to
         your  program.   This interface is discussed further
-        in section ??.
+        in <citetitle>The PostgreSQL Programmer's Guide</citetitle>.
 </Para>
 </ListItem>
 </ItemizedList>
@@ -217,7 +217,7 @@ This prompt indicates that psql is listening
   to you and that you can type <Acronym>SQL</Acronym> queries into a
      workspace maintained by the terminal monitor.
      The <Application>psql</Application> program responds to escape  codes  that  begin
-     with  the  backslash  character, <Quote>\</Quote>  For example, you
+     with  the  backslash  character, "<literal>\</literal>".  For example, you
      can get help on the syntax of various
  <ProductName>PostgreSQL</ProductName> <Acronym>SQL</Acronym> commands by typing:
 <ProgramListing>
@@ -232,7 +232,7 @@ mydb=> \g
 </ProgramListing>
 
      This  tells  the  server  to process the query.  If you
-     terminate your query with a semicolon, the  <Quote>\g</Quote> is  not
+     terminate your query with a semicolon, the  "<literal>\g</literal>" is  not
      necessary.   
 <Application>psql</Application> will automatically process semicolon terminated queries.
      To read queries from a file,  say  myFile,  instead  of
@@ -251,9 +251,9 @@ mydb=> \q
      prompt.)
      White  space  (i.e.,  spaces, tabs and newlines) may be
      used freely in <Acronym>SQL</Acronym> queries.  Single-line comments  are  denoted  by
-     <Quote>--</Quote>.   Everything  after the dashes up to the end of the
+     "<literal>--</literal>".   Everything  after the dashes up to the end of the
      line is ignored. Multiple-line comments, and comments within a line,
-     are denoted by <Quote>/* ... */</Quote>
+     are denoted by "<literal>/* ... */</literal>".
 </Para>
 
 <Sect2>

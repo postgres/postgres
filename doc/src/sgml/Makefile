@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.13 2000/01/14 22:11:31 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.14 2000/05/02 20:01:51 thomas Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -67,17 +67,18 @@ vpath %.sgml ./ref
 
 MANSOURCES= $(wildcard ref/*.sgml)
 
-APPLICATIONS= createdb.sgml createuser.sgml \
-	createlang.sgml \
-	dropdb.sgml dropuser.sgml \
-	droplang.sgml \
+APPLICATIONS= createdb.sgml createlang.sgml createuser.sgml \
+	dropdb.sgml droplang.sgml dropuser.sgml \
+	ecpg-ref.sgml \
 	initdb.sgml initlocation.sgml \
 	ipcclean.sgml \
 	pg_dump.sgml \
 	pg_dumpall.sgml \
+	pg_passwd.sgml \
 	pg_upgrade.sgml \
 	pgaccess-ref.sgml \
 	pgadmin-ref.sgml \
+	pgctl-ref.sgml \
 	pgtclsh.sgml \
 	pgtksh.sgml \
 	postgres-ref.sgml \
@@ -87,8 +88,9 @@ APPLICATIONS= createdb.sgml createuser.sgml \
 
 COMMANDS= abort.sgml alter_group.sgml alter_table.sgml alter_user.sgml \
 	begin.sgml \
-	close.sgml cluster.sgml commit.sgml copy.sgml \
-	create_aggregate.sgml create_database.sgml create_function.sgml create_group.sgml \
+	close.sgml cluster.sgml comment.sgml commit.sgml copy.sgml \
+	create_aggregate.sgml create_constraint.sgml create_database.sgml \
+	create_function.sgml create_group.sgml \
 	create_index.sgml \
 	create_language.sgml create_operator.sgml create_rule.sgml create_sequence.sgml \
 	create_table.sgml create_table_as.sgml create_trigger.sgml create_type.sgml \
@@ -98,12 +100,12 @@ COMMANDS= abort.sgml alter_group.sgml alter_table.sgml alter_user.sgml \
 	drop_index.sgml \
 	drop_language.sgml drop_operator.sgml drop_rule.sgml drop_sequence.sgml \
 	drop_table.sgml drop_trigger.sgml drop_type.sgml drop_user.sgml drop_view.sgml \
-	explain.sgml fetch.sgml grant.sgml \
+	end.sgml explain.sgml fetch.sgml grant.sgml \
 	insert.sgml listen.sgml load.sgml lock.sgml move.sgml \
 	notify.sgml \
-	reset.sgml revoke.sgml rollback.sgml \
+	reindex.sgml reset.sgml revoke.sgml rollback.sgml \
 	select.sgml select_into.sgml set.sgml show.sgml \
-	unlisten.sgml update.sgml vacuum.sgml
+	truncate.sgml unlisten.sgml update.sgml vacuum.sgml
 
 FUNCTIONS= current_date.sgml current_time.sgml current_timestamp.sgml current_user.sgml
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.8 2000/03/27 17:14:43 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.9 2000/05/02 20:02:03 thomas Exp $
 Postgres documentation
 -->
 
@@ -23,8 +23,9 @@ Postgres documentation
    <date>1999-12-04</date>
   </refsynopsisdivinfo>
   <synopsis>
-vacuumdb [ <replaceable class="parameter">connection options</replaceable> ] [ --analyze | -z ] [ --alldb | -a ] [ --verbose | -v ]
-         [ --table '<replaceable class="parameter">table</replaceable> [ ( <replaceable class="parameter">column</replaceable> [,...] ) ]' ] [ [-d] <replaceable class="parameter">dbname</replaceable> ]
+vacuumdb [ <replaceable class="parameter">options</replaceable> ] [ --analyze | -z ]
+    [ --alldb | -a ] [ --verbose | -v ]
+    [ --table '<replaceable class="parameter">table</replaceable> [ ( <replaceable class="parameter">column</replaceable> [,...] ) ]' ] [ [-d] <replaceable class="parameter">dbname</replaceable> ]
   </synopsis>
 
   <refsect2 id="R2-APP-VACUUMDB-1">
@@ -39,7 +40,8 @@ vacuumdb [ <replaceable class="parameter">connection options</replaceable> ] [ -
     
     <variablelist>
      <varlistentry>
-      <term>[-d, --dbname] <replaceable class="parameter">dbname</replaceable></term>
+      <term>-d <replaceable class="parameter">dbname</replaceable></term>
+      <term>--dbname <replaceable class="parameter">dbname</replaceable></term>
       <listitem>
        <para>
 	Specifies the name of the database to be cleaned or analyzed.
@@ -48,7 +50,8 @@ vacuumdb [ <replaceable class="parameter">connection options</replaceable> ] [ -
      </varlistentry>
 
      <varlistentry>
-      <term>-z, --analyze</term>
+      <term>-z</term>
+      <term>--analyze</term>
       <listitem>
        <para>
 	Calculate statistics on the database for use by the optimizer.
@@ -57,7 +60,8 @@ vacuumdb [ <replaceable class="parameter">connection options</replaceable> ] [ -
      </varlistentry>
 
      <varlistentry>
-      <term>-a, --alldb</term>
+      <term>-a</term>
+      <term>--alldb</term>
       <listitem>
        <para>
 	Vacuum all databases.
@@ -66,7 +70,8 @@ vacuumdb [ <replaceable class="parameter">connection options</replaceable> ] [ -
      </varlistentry>
 
      <varlistentry>
-      <term>-v, --verbose</term>
+      <term>-v</term>
+      <term>--verbose</term>
       <listitem>
        <para>
 	Print detailed information during processing.
@@ -75,7 +80,8 @@ vacuumdb [ <replaceable class="parameter">connection options</replaceable> ] [ -
      </varlistentry>
 
      <varlistentry>
-      <term>-t, --table <replaceable class="parameter">table</replaceable> [ (<replaceable class="parameter">column</replaceable> [,...]) ]</term>
+      <term>-t <replaceable class="parameter">table</replaceable> [ (<replaceable class="parameter">column</replaceable> [,...]) ]</term>
+      <term>--table <replaceable class="parameter">table</replaceable> [ (<replaceable class="parameter">column</replaceable> [,...]) ]</term>
       <listitem>
        <para>
 	Clean or analyze <replaceable class="parameter">table</replaceable> only.
@@ -100,7 +106,8 @@ vacuumdb [ <replaceable class="parameter">connection options</replaceable> ] [ -
     
     <variablelist>
      <varlistentry>
-      <term>-h, --host <replaceable class="parameter">host</replaceable></term>
+      <term>-h <replaceable class="parameter">host</replaceable></term>
+      <term>--host <replaceable class="parameter">host</replaceable></term>
       <listitem>
        <para>
 	Specifies the hostname of the machine on which the 
@@ -111,7 +118,8 @@ vacuumdb [ <replaceable class="parameter">connection options</replaceable> ] [ -
      </varlistentry>
 
      <varlistentry>
-      <term>-p, --port <replaceable class="parameter">port</replaceable></term>
+      <term>-p <replaceable class="parameter">port</replaceable></term>
+      <term>--port <replaceable class="parameter">port</replaceable></term>
       <listitem>
        <para>
 	Specifies the Internet TCP/IP port or local Unix domain socket file 
@@ -122,7 +130,8 @@ vacuumdb [ <replaceable class="parameter">connection options</replaceable> ] [ -
      </varlistentry>
 
      <varlistentry>
-      <term>-U, --username <replaceable class="parameter">username</replaceable></term>
+      <term>-U <replaceable class="parameter">username</replaceable></term>
+      <term>--username <replaceable class="parameter">username</replaceable></term>
       <listitem>
        <para>
         Username to connect as.
@@ -131,7 +140,8 @@ vacuumdb [ <replaceable class="parameter">connection options</replaceable> ] [ -
      </varlistentry>
 
      <varlistentry>
-      <term>-W, --password</term>
+      <term>-W</term>
+      <term>--password</term>
       <listitem>
        <para>
         Force password prompt.
@@ -140,7 +150,8 @@ vacuumdb [ <replaceable class="parameter">connection options</replaceable> ] [ -
      </varlistentry>
 
      <varlistentry>
-      <term>-e, --echo</term>
+      <term>-e</term>
+      <term>--echo</term>
       <listitem>
        <para>
         Echo the commands that <application>vacuumdb</application> generates
@@ -150,7 +161,8 @@ vacuumdb [ <replaceable class="parameter">connection options</replaceable> ] [ -
      </varlistentry>
 
      <varlistentry>
-      <term>-q, --quiet</term>
+      <term>-q</term>
+      <term>--quiet</term>
       <listitem>
        <para>
         Do not display a response.

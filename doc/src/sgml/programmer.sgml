@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.25 2000/03/31 03:26:21 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.26 2000/05/02 20:01:52 thomas Exp $
 
 Postgres Programmer's Guide.
 -->
@@ -44,6 +44,7 @@ Postgres Programmer's Guide.
 <!entity arch-dev   SYSTEM "arch-dev.sgml">
 <!entity biblio     SYSTEM "biblio.sgml">
 <!entity bki        SYSTEM "bki.sgml">
+<!entity catalogs   SYSTEM "catalogs.sgml">
 <!entity compiler   SYSTEM "compiler.sgml">
 <!entity contacts   SYSTEM "contacts.sgml">
 <!entity cvs        SYSTEM "cvs.sgml">
@@ -62,7 +63,7 @@ Postgres Programmer's Guide.
 
  <title>PostgreSQL Programmer's Guide</title>
  <bookinfo>
-  <releaseinfo>Covering v6.5 for general release</releaseinfo>
+  <releaseinfo>Covering v7.0 for general release</releaseinfo>
   <bookbiblio>
    <authorgroup>
     <corpauthor>The PostgreSQL Development Team</corpauthor>
@@ -85,13 +86,13 @@ Postgres Programmer's Guide.
     <AuthorInitials>TGL</AuthorInitials>
 -->
 
-   <date>(last updated 1999-06-19)</date>
+   <date>(last updated 2000-05-01)</date>
   </bookbiblio>
 
   <legalnotice>
    <para>
-    <productname>PostgreSQL</productname> is Copyright &copy; 1996-9
-    by the Postgres Global Development Group.
+    <productname>PostgreSQL</productname> is Copyright &copy; 1996-2000
+    by PostgreSQL Inc.
    </para>
   </legalnotice>
 
@@ -148,29 +149,35 @@ Disable it until we put in some info.
 &func-ref;
 -->
 
-  &trigger;
-  &spi;
-  &lobj;
-  &libpq;
-  &libpqpp;
-  &libpgtcl;
-  &libpgeasy;
-  &ecpg;
-  &odbc;
-  &jdbc;
-  &lisp;
+ &trigger;
+ &spi;
+ &lobj;
+ &libpq;
+ &libpqpp;
+ &libpgtcl;
+ &libpgeasy;
+ &ecpg;
+ &odbc;
+ &jdbc;
+ &lisp;
  
 <!-- development -->
  
-  &sources;
-  &arch-dev; 
-  &options;
-  &geqo;
-  &protocol;
-  &signals;
-  &compiler;
-  &bki;
-  &page;
+ &sources;
+ &arch-dev; 
+ &options;
+ &geqo;
+<!--
+ This listing of Postgres catalogs is currently just a copy of the old
+ man page. It is not up to date and has not been marked up for SGML.
+ - thomas 2000-04-20
+ &catalogs;
+-->
+ &protocol;
+ &signals;
+ &compiler;
+ &bki;
+ &page;
 
 <!-- appendices -->
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.10 2000/04/07 13:30:58 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.11 2000/05/02 20:01:52 thomas Exp $
 -->
 
  <chapter id="start">
@@ -19,7 +19,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.10 2000/04/07 13:30:58 thoma
    the  database  directories  and  started the
    <application>postmaster</application>
    process.  This person does not  have  to  be  the  Unix
-   superuser (<quote>root</quote>)
+   superuser ("root")
    or the computer system administrator; a person can install and use
    <productname>Postgres</productname> without any special accounts or 
    privileges.
@@ -34,9 +34,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.10 2000/04/07 13:30:58 thoma
 
   <para>
    Throughout this manual, any examples  that  begin  with
-   the  character  <quote>%</quote> are commands that should be typed
+   the  character  "<literal>%</literal>" are commands that should be typed
    at the Unix shell prompt.  Examples that begin with the
-   character <quote>*</quote> are commands in the Postgres query 
+   character "<literal>*</literal>" are commands in the Postgres query 
    language, Postgres <acronym>SQL</acronym>.
   </para>
 
@@ -346,7 +346,7 @@ mydb=>
      workspace maintained by the terminal monitor.
      The <application>psql</application> program responds to escape
      codes  that  begin
-     with  the  backslash  character, <quote>\</quote>  For example, you
+     with  the  backslash  character, "<literal>\</literal>"  For example, you
      can get help on the syntax of various
      <productname>Postgres</productname> <acronym>SQL</acronym>
      commands by typing:
@@ -364,7 +364,7 @@ mydb=> \g
      </programlisting>
 
      This  tells  the  server  to process the query.  If you
-     terminate your query with a semicolon, the  <quote>\g</quote> is  not
+     terminate your query with a semicolon, the  "<literal>\g</literal>" is  not
      necessary.
      <application>psql</application> will automatically process
      semicolon terminated queries.
@@ -386,9 +386,9 @@ mydb=> \q
      White  space  (i.e.,  spaces, tabs and newlines) may be
      used freely in <acronym>SQL</acronym> queries.  Single-line
      comments  are  denoted  by
-     <quote>--</quote>.   Everything  after the dashes up to the end of the
+     "<literal>--</literal>".   Everything  after the dashes up to the end of the
      line is ignored. Multiple-line comments, and comments within a line,
-     are denoted by <quote>/* ... */</quote>
+     are denoted by "<literal>/* ... */</literal>".
     </para>
    </sect2>
 

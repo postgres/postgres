@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.9 2000/04/07 13:30:58 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.10 2000/05/02 20:01:52 thomas Exp $
 -->
 
 <sect1 id="terminology">
@@ -75,35 +75,35 @@ $Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.9 2000/04/07 13:30:58 tho
  <title>Notation</title>
 
  <para>
-  <quote>...</quote> or <filename>/usr/local/pgsql/</filename> 
+  "<literal>...</literal>" or <filename>/usr/local/pgsql/</filename> 
   at the front of a file name is used to represent the
   path to the <Productname>Postgres</Productname> superuser's home directory.
  </para>
 
  <para>
   In a command synopsis, brackets
-  (<quote>[</quote> and <quote>]</quote>) indicate an optional phrase or keyword.
+  ("<literal>[</literal>" and "<literal>]</literal>") indicate an optional phrase or keyword.
   Anything in braces
-  (<quote>{</quote> and <quote>}</quote>) and containing vertical bars
-  (<quote>|</quote>)
+  ("<literal>{</literal>" and "<literal>}</literal>") and containing vertical bars
+  ("<literal>|</literal>")
   indicates that you must choose one.
  </para>
 
  <para>
-  In examples, parentheses (<quote>(</quote> and <quote>)</quote>) are
+  In examples, parentheses ("<literal>(</literal>" and "<literal>)</literal>") are
   used to group boolean
-  expressions.  <quote>|</quote> is the boolean operator OR.
+  expressions.  "<literal>|</literal>" is the boolean operator OR.
  </para>
 
  <para>
   Examples will show commands executed from various accounts and programs.
   Commands executed from the root account will be preceeded with
-  <quote>&gt;</quote>.
+  "<literal>&gt;</literal>".
   Commands executed from the <Productname>Postgres</Productname>
-  superuser account will be preceeded with <quote>%</quote>, while commands
+  superuser account will be preceeded with "<literal>%</literal>", while commands
   executed from an unprivileged user's account will be preceeded with
-  <quote>$</quote>.
-  <acronym>SQL</acronym> commands will be preceeded with <quote>=&gt;</quote>
+  "<literal>$</literal>".
+  <acronym>SQL</acronym> commands will be preceeded with "<literal>=&gt;</literal>"
   or will have no leading prompt, depending on the context.
  </para>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.8 2000/04/07 13:30:58 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.9 2000/05/02 20:01:52 thomas Exp $
 -->
 
  <chapter id="sql">
@@ -24,7 +24,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.8 2000/04/07 13:30:58 thomas E
   <para>
    <acronym>SQL</acronym> has become the most popular relational query 
    language.
-   The name <quote><acronym>SQL</acronym></quote> is an abbreviation for
+   The name "<acronym>SQL</acronym>" is an abbreviation for
    <firstterm>Structured Query Language</firstterm>. 
    In 1974 Donald Chamberlin and others defined the
    language SEQUEL (<firstterm>Structured English Query
@@ -759,8 +759,8 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
      can be formulated using relational algebra can also be formulated 
      using the relational calculus and vice versa.
      This was first proved by E. F. Codd in
-     1972. This proof is based on an algorithm (<quote>Codd's reduction
-     algorithm</quote>) by which an arbitrary expression of the relational
+     1972. This proof is based on an algorithm ("Codd's reduction
+     algorithm") by which an arbitrary expression of the relational
      calculus can be reduced to a semantically equivalent expression of
      relational algebra. For a more detailed discussion on that refer to
      <xref linkend="DATE94" endterm="DATE94">

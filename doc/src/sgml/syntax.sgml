@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.19 2000/04/08 23:12:00 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.20 2000/05/02 20:01:53 thomas Exp $
 -->
 
  <chapter id="syntax">
@@ -65,7 +65,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.19 2000/04/08 23:12:00 momj
       Any string can be specified as an identifier if surrounded by
       double quotes (<quote>like this!</quote>). Some care is required since
       such an identifier will be case sensitive
-      and will retain embedded whitespace other special characters.
+      and will retain embedded whitespace and most other special characters.
      </para>
     </tip>
 
@@ -84,6 +84,7 @@ EXPLAIN EXTEND
 LISTEN LOAD LOCK 
 MOVE 
 NEW NONE NOTIFY 
+OFFSET 
 RESET 
 SETOF SHOW
 UNLISTEN UNTIL 
@@ -98,19 +99,27 @@ VACUUM VERBOSE
      are allowed to be present as column labels, but not as identifiers:
 
      <programlisting>
-CASE COALESCE CROSS CURRENT CURRENT_USER CURRENT_SESSION
-DEC DECIMAL 
-ELSE END
-FALSE FOREIGN 
+ALL ANY ASC BETWEEN BIT BOTH 
+CASE CAST CHAR CHARACTER CHECK COALESCE COLLATE COLUMN
+ CONSTRAINT CROSS CURRENT CURRENT_DATE CURRENT_TIME
+ CURRENT_TIMESTAMP CURRENT_USER 
+DEC DECIMAL DEFAULT DESC DISTINCT 
+ELSE END EXCEPT EXISTS EXTRACT 
+FALSE FLOAT FOR FOREIGN FROM FULL 
 GLOBAL GROUP 
-LOCAL
-NULLIF NUMERIC 
-ORDER 
-POSITION PRECISION 
-SESSION_USER 
-TABLE THEN TRANSACTION TRUE
-USER 
-WHEN
+HAVING 
+IN INNER INTERSECT INTO IS 
+JOIN 
+LEADING LEFT LIKE LOCAL
+NATURAL NCHAR NOT NULL NULLIF NUMERIC 
+ON OR ORDER OUTER OVERLAPS 
+POSITION PRECISION PRIMARY PUBLIC
+REFERENCES RIGHT 
+SELECT SESSION_USER SOME SUBSTRING 
+TABLE THEN TO TRANSACTION TRIM TRUE
+UNION UNIQUE USER 
+VARCHAR 
+WHEN WHERE 
      </programlisting>
 
      The following are <productname>Postgres</productname>
@@ -118,12 +127,9 @@ WHEN
      or <acronym>SQL3</acronym> reserved words:
 
      <programlisting>
-ADD ALL ALTER AND ANY AS ASC
-BEGIN BETWEEN BOTH BY
-CASCADE CAST CHAR CHARACTER CHECK CLOSE
- COLLATE COLUMN COMMIT CONSTRAINT CREATE
- CURRENT_DATE CURRENT_TIME CURRENT_TIMESTAMP 
- CURSOR
+ADD ALTER AND AS 
+BEGIN BY
+CASCADE CLOSE COMMIT CREATE CURSOR
 DECLARE DEFAULT DELETE DESC DISTINCT DROP
 EXECUTE EXISTS EXTRACT
 FETCH FLOAT FOR FROM FULL
@@ -148,10 +154,10 @@ WHERE WITH WORK
      The following are <acronym>SQL92</acronym> reserved key words which
      are not <productname>Postgres</productname> reserved key words, but which
      if used as function names are always translated into the function
-     <function>length</function>:
+     <function>CHAR_LENGTH</function>:
 
      <programlisting>
-CHAR_LENGTH CHARACTER_LENGTH
+CHARACTER_LENGTH
      </programlisting>
     </para>
 
@@ -167,11 +173,27 @@ BOOLEAN DOUBLE FLOAT INT INTEGER INTERVAL REAL SMALLINT
     </para>
 
     <para>
+     The following are not keywords of any kind, but when used in the
+     context of a type name are translated into a native
+     <productname>Postgres</productname> type, and when used in the
+     context of a function name are translated into a native function:
+
+     <programlisting>
+DATETIME TIMESPAN
+     </programlisting>
+
+     (translated to <type>TIMESTAMP</type> and <type>INTERVAL</type>,
+     respectively). This feature is intended to help with
+     transitioning to v7.0, and will be removed in the next full
+     release (likely v7.1).
+    </para>
+
+    <para>
      The following are either <acronym>SQL92</acronym>
      or <acronym>SQL3</acronym> reserved key words
      which are not key words in <productname>Postgres</productname>.
      These have no proscribed usage in <productname>Postgres</productname>
-     at the time of writing (v6.5) but may become reserved key words in the
+     at the time of writing (v7.0) but may become reserved key words in the
      future:
 
      <note>
@@ -185,9 +207,10 @@ BOOLEAN DOUBLE FLOAT INT INTEGER INTERVAL REAL SMALLINT
 
      <programlisting>
 ALLOCATE ARE ASSERTION AT AUTHORIZATION AVG 
-BIT BIT_LENGTH
-CASCADED CATALOG COLLATION CONNECT CONNECTION
- CONTINUE CONVERT CORRESPONDING COUNT
+BIT_LENGTH
+CASCADED CATALOG CHAR_LENGTH CHARACTER_LENGTH COLLATION
+ CONNECT CONNECTION CONTINUE CONVERT CORRESPONDING COUNT
+ CURRENT_SESSION
 DATE DEALLOCATE DEC DESCRIBE DESCRIPTOR
  DIAGNOSTICS DISCONNECT DOMAIN 
 ESCAPE EXCEPT EXCEPTION EXEC EXTERNAL 
@@ -231,20 +254,21 @@ WHENEVER WRITE
      <programlisting>
 ACCESS AFTER AGGREGATE 
 BACKWARD BEFORE 
-CACHE CREATEDB CREATEUSER CYCLE
+CACHE COMMENT CREATEDB CREATEUSER CYCLE
 DATABASE DELIMITERS 
 EACH ENCODING EXCLUSIVE
-FORWARD FUNCTION 
+FORCE FORWARD FUNCTION 
 HANDLER
 INCREMENT INDEX INHERITS INSENSITIVE INSTEAD ISNULL
 LANCOMPILER LOCATION 
 MAXVALUE MINVALUE MODE
-NOCREATEDB NOCREATEUSER NOTHING NOTNULL 
+NOCREATEDB NOCREATEUSER NOTHING NOTIFY NOTNULL 
 OIDS OPERATOR 
 PASSWORD PROCEDURAL
-RECIPE RENAME RETURNS ROW RULE
+RECIPE REINDEX RENAME RETURNS ROW RULE
 SEQUENCE SERIAL SHARE START STATEMENT STDIN STDOUT 
-TRUSTED 
+TEMP TRUSTED 
+UNLISTEN UNTIL 
 VALID VERSION
      </programlisting>
     </para>

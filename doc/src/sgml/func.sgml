@@ -18,7 +18,7 @@
    <title id="sql-funcs">SQL Functions</title>
 
    <para>
-    <quote><acronym>SQL</acronym> functions</quote> are constructs
+    <firstterm><acronym>SQL</acronym> functions</firstterm> are constructs
     defined by the <acronym>SQL92</acronym> standard which have
     function-like syntax but which can not be implemented as simple
     functions. 
@@ -477,24 +477,6 @@
 	<entry>age('now', timestamp '1957-06-13')</entry>
        </row>
        <row>
-	<entry>timestamp(abstime)</entry>
-	<entry>timestamp</entry>
-	<entry>convert to timestamp</entry>
-	<entry>timestamp(abstime 'now')</entry>
-       </row>
-       <row>
-	<entry>timestamp(date)</entry>
-	<entry>timestamp</entry>
-	<entry>convert to timestamp</entry>
-	<entry>timestamp(date 'today')</entry>
-       </row>
-       <row>
-	<entry>timestamp(date,time)</entry>
-	<entry>timestamp</entry>
-	<entry>convert to timestamp</entry>
-	<entry>timestamp(timestamp '1998-02-24',time '23:07');</entry>
-       </row>
-       <row>
 	<entry>date_part(text,timestamp)</entry>
 	<entry>float8</entry>
 	<entry>portion of date</entry>
@@ -513,10 +495,10 @@
 	<entry>date_trunc('month',abstime 'now')</entry>
        </row>
        <row>
-	<entry>isfinite(abstime)</entry>
-	<entry>bool</entry>
-	<entry>a finite time?</entry>
-	<entry>isfinite(abstime 'now')</entry>
+	<entry>interval(reltime)</entry>
+	<entry>interval</entry>
+	<entry>convert to interval</entry>
+	<entry>interval(reltime '4 hours')</entry>
        </row>
        <row>
 	<entry>isfinite(timestamp)</entry>
@@ -537,10 +519,22 @@
 	<entry>reltime(interval '4 hrs')</entry>
        </row>
        <row>
-	<entry>interval(reltime)</entry>
-	<entry>interval</entry>
-	<entry>convert to interval</entry>
-	<entry>interval(reltime '4 hours')</entry>
+	<entry>timestamp(date)</entry>
+	<entry>timestamp</entry>
+	<entry>convert to timestamp</entry>
+	<entry>timestamp(date 'today')</entry>
+       </row>
+       <row>
+	<entry>timestamp(date,time)</entry>
+	<entry>timestamp</entry>
+	<entry>convert to timestamp</entry>
+	<entry>timestamp(timestamp '1998-02-24',time '23:07');</entry>
+       </row>
+       <row>
+	<entry>to_char(timestamp,text)</entry>
+	<entry>text</entry>
+	<entry>convert to string</entry>
+	<entry>to_char(timestamp '1998-02-24','DD');</entry>
        </row>
       </tbody>
      </tgroup>
@@ -672,6 +666,10 @@
        <row>
 	<entry>HH12</entry>
 	<entry>hour of day (01-12)</entry>
+       </row>       
+       <row>
+	<entry>HH24</entry>
+	<entry>hour of day (00-23)</entry>
        </row>       
        <row>
 	<entry>MI</entry>
@@ -810,7 +808,7 @@
 	<entry>month in Roman Numerals (I-XII; I=JAN) - upper case</entry>
        </row>
        <row>
-	<entry>rn</entry>
+	<entry>rm</entry>
 	<entry>month in Roman Numerals (I-XII; I=JAN) - lower case</entry>
        </row>
       </tbody>
@@ -874,29 +872,34 @@
       <para>
        <function>to_timestamp</function> and <function>to_date</function>
        skip blank space if the <literal>FX</literal> option is
-       not use. <literal>FX</literal> Must be specified as the first item
+       not used. <literal>FX</literal> must be specified as the first item
        in the template.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       '\' - must be use as double \\, example '\\HH\\MI\\SS' 
+       Backslash ("<literal>\</literal>") must be specified with a double backslash
+       ("<literal>\\</literal>"); for example <literal>'\\HH\\MI\\SS'</literal>.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       '"' - string between a quotation marks is skipen and not is parsed. 
-       If you want write '"' to output you must use \\", example '\\"YYYY Month\\"'.
+       A double quote ('"') between quotation marks is skipped and is not parsed. 
+       If you want to write a double quote to output you must preceed
+       it with a double backslash (<literal>'\\"</literal>), for
+       example <literal>'\\"YYYY Month\\"'</literal>.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       text - the PostgreSQL's to_char() support text without '"', but string 
-       between a quotation marks is fastly and you have guarantee, that a text 
-       not will interpreted as a keyword (format-picture), exapmle '"Hello Year: "YYYY'.  
+       <function>to_char</function> supports text without a leading
+       double quote ('"'), but any string 
+       between a quotation marks is rapidly handled and you are
+       guaranteed that it will not be interpreted as a template
+       keyword (example: <literal>'"Hello Year: "YYYY'</literal>).
       </para>
      </listitem>
     </itemizedlist>
@@ -1213,19 +1216,19 @@
        <row>
 	<entry>area(object)</entry>
 	<entry>float8</entry>
-	<entry>area of circle, ...</entry>
+	<entry>area of item</entry>
 	<entry>area(box '((0,0),(1,1))')</entry>
        </row>
        <row>
 	<entry>box(box,box)</entry>
 	<entry>box</entry>
-	<entry>boxes to intersection box</entry>
+	<entry>intersection box</entry>
 	<entry>box(box '((0,0),(1,1))',box '((0.5,0.5),(2,2))')</entry>
        </row>
        <row>
 	<entry>center(object)</entry>
 	<entry>point</entry>
-	<entry>center of circle, ...</entry>
+	<entry>center of item</entry>
 	<entry>center(box '((0,0),(1,2))')</entry>
        </row>
        <row>
@@ -1255,14 +1258,8 @@
        <row>
 	<entry>length(object)</entry>
 	<entry>float8</entry>
-	<entry>length of line segment, ...</entry>
+	<entry>length of item</entry>
 	<entry>length(path '((-1,0),(1,0))')</entry>
-       </row>
-       <row>
-	<entry>length(path)</entry>
-	<entry>float8</entry>
-	<entry>length of path</entry>
-	<entry>length(path '((0,0),(1,1),(2,0))')</entry>
        </row>
        <row>
 	<entry>pclose(path)</entry>
@@ -1324,91 +1321,91 @@ Not defined by this name. Implements the intersection operator '#'
        <row>
 	<entry>box(circle)</entry>
 	<entry>box</entry>
-	<entry>convert circle to box</entry>
+	<entry>circle to box</entry>
 	<entry>box('((0,0),2.0)'::circle)</entry>
        </row>
        <row>
 	<entry>box(point,point)</entry>
 	<entry>box</entry>
-	<entry>convert points to box</entry>
+	<entry>points to box</entry>
 	<entry>box('(0,0)'::point,'(1,1)'::point)</entry>
        </row>
        <row>
 	<entry>box(polygon)</entry>
 	<entry>box</entry>
-	<entry>convert polygon to box</entry>
+	<entry>polygon to box</entry>
 	<entry>box('((0,0),(1,1),(2,0))'::polygon)</entry>
        </row>
        <row>
 	<entry>circle(box)</entry>
 	<entry>circle</entry>
-	<entry>convert to circle</entry>
+	<entry>to circle</entry>
 	<entry>circle('((0,0),(1,1))'::box)</entry>
        </row>
        <row>
 	<entry>circle(point,float8)</entry>
 	<entry>circle</entry>
-	<entry>convert to circle</entry>
+	<entry>point to circle</entry>
 	<entry>circle('(0,0)'::point,2.0)</entry>
        </row>
        <row>
 	<entry>lseg(box)</entry>
 	<entry>lseg</entry>
-	<entry>convert diagonal to lseg</entry>
+	<entry>box diagonal to lseg</entry>
 	<entry>lseg('((-1,0),(1,0))'::box)</entry>
        </row>
        <row>
 	<entry>lseg(point,point)</entry>
 	<entry>lseg</entry>
-	<entry>convert to lseg</entry>
+	<entry>points to lseg</entry>
 	<entry>lseg('(-1,0)'::point,'(1,0)'::point)</entry>
        </row>
        <row>
 	<entry>path(polygon)</entry>
 	<entry>point</entry>
-	<entry>convert to path</entry>
+	<entry>polygon to path</entry>
 	<entry>path('((0,0),(1,1),(2,0))'::polygon)</entry>
        </row>
        <row>
 	<entry>point(circle)</entry>
 	<entry>point</entry>
-	<entry>convert to point (center)</entry>
+	<entry>center</entry>
 	<entry>point('((0,0),2.0)'::circle)</entry>
        </row>
        <row>
 	<entry>point(lseg,lseg)</entry>
 	<entry>point</entry>
-	<entry>convert to point (intersection)</entry>
+	<entry>intersection</entry>
 	<entry>point('((-1,0),(1,0))'::lseg, '((-2,-2),(2,2))'::lseg)</entry>
        </row>
        <row>
 	<entry>point(polygon)</entry>
 	<entry>point</entry>
-	<entry>center of polygon</entry>
+	<entry>center</entry>
 	<entry>point('((0,0),(1,1),(2,0))'::polygon)</entry>
        </row>
        <row>
 	<entry>polygon(box)</entry>
 	<entry>polygon</entry>
-	<entry>convert to polygon with 12 points</entry>
+	<entry>12 point polygon</entry>
 	<entry>polygon('((0,0),(1,1))'::box)</entry>
        </row>
        <row>
 	<entry>polygon(circle)</entry>
 	<entry>polygon</entry>
-	<entry>convert to 12-point polygon</entry>
+	<entry>12-point polygon</entry>
 	<entry>polygon('((0,0),2.0)'::circle)</entry>
        </row>
        <row>
 	<entry>polygon(<replaceable class="parameter">npts</replaceable>,circle)</entry>
 	<entry>polygon</entry>
-	<entry>convert to <replaceable class="parameter">npts</replaceable> polygon</entry>
+	<entry><replaceable class="parameter">npts</replaceable> polygon</entry>
 	<entry>polygon(12,'((0,0),2.0)'::circle)</entry>
        </row>
        <row>
 	<entry>polygon(path)</entry>
 	<entry>polygon</entry>
-	<entry>convert to polygon</entry>
+	<entry>path to polygon</entry>
 	<entry>polygon('((0,0),(1,1),(2,0))'::path)</entry>
        </row>
       </tbody>
@@ -1438,19 +1435,19 @@ Not defined by this name. Implements the intersection operator '#'
        <row>
 	<entry>revertpoly(polygon)</entry>
 	<entry>polygon</entry>
-	<entry>convert pre-v6.1 polygon</entry>
+	<entry>to pre-v6.1</entry>
 	<entry>revertpoly('((0,0),(1,1),(2,0))'::polygon)</entry>
        </row>
        <row>
 	<entry>upgradepath(path)</entry>
 	<entry>path</entry>
-	<entry>convert pre-v6.1 path</entry>
+	<entry>to pre-v6.1</entry>
 	<entry>upgradepath('(1,3,0,0,1,1,2,0)'::path)</entry>
        </row>
        <row>
 	<entry>upgradepoly(polygon)</entry>
 	<entry>polygon</entry>
-	<entry>convert pre-v6.1 polygon</entry>
+	<entry>to pre-v6.1</entry>
 	<entry>upgradepoly('(0,1,2,0,1,0)'::polygon)</entry>
        </row>
       </tbody>

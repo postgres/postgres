@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.35 2000/03/31 03:26:21 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.36 2000/05/02 20:01:52 thomas Exp $
 -->
 
 <!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
@@ -93,6 +93,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.35 2000/03/31 03:26:21 th
 <!entity arch-dev   SYSTEM "arch-dev.sgml">
 <!entity biblio     SYSTEM "biblio.sgml">
 <!entity bki        SYSTEM "bki.sgml">
+<!entity catalogs   SYSTEM "catalogs.sgml">
 <!entity compiler   SYSTEM "compiler.sgml">
 <!entity contacts   SYSTEM "contacts.sgml">
 <!entity cvs        SYSTEM "cvs.sgml">
@@ -106,27 +107,28 @@ $Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.35 2000/03/31 03:26:21 th
 <!entity sources    SYSTEM "sources.sgml">
 ]>
 <!-- entity manpages SYSTEM "man/manpages.sgml" subdoc -->
-<Book Id="postgres">
+
+<book id="postgres">
 
  <!-- Title information -->
 
- <Title>PostgreSQL</Title>
- <BookInfo>
-  <ReleaseInfo>Covering v6.5 for general release</ReleaseInfo>
-  <BookBiblio>
-   <AuthorGroup>
-    <CorpAuthor>The PostgreSQL Development Team</CorpAuthor>
-   </AuthorGroup>
+ <title>PostgreSQL</title>
+ <bookinfo>
+  <releaseinfo>Covering v7.0 for general release</releaseinfo>
+  <bookbiblio>
+   <authorgroup>
+    <corpauthor>The PostgreSQL Development Team</corpauthor>
+   </authorgroup>
 <!-- editor in authorgroup is not supported
     <AuthorGroup>
 -->
-   <Editor>
-    <FirstName>Thomas</FirstName>
-    <SurName>Lockhart</SurName>
-    <Affiliation>
-     <OrgName>Caltech/JPL</OrgName>
-    </Affiliation>
-   </Editor>
+   <editor>
+    <firstname>Thomas</firstname>
+    <surname>Lockhart</surname>
+    <affiliation>
+     <orgname>Caltech/JPL</orgname>
+    </affiliation>
+   </editor>
 <!--
     </AuthorGroup>
 -->
@@ -135,17 +137,17 @@ $Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.35 2000/03/31 03:26:21 th
     <AuthorInitials>TGL</AuthorInitials>
 -->
 
-   <Date>(last updated 1999-06-01)</Date>
-  </BookBiblio>
+   <date>(last updated 2000-05-01)</date>
+  </bookbiblio>
 
-  <LegalNotice>
-   <Para>
-    <ProductName>PostgreSQL</ProductName> is Copyright &copy; 1996-9 
-    by the Postgres Global Development Group.
-   </Para>
-  </LegalNotice>
+  <legalnotice>
+   <para>
+    <productname>PostgreSQL</productname> is Copyright &copy; 1996-2000 
+    by PostgreSQL Inc.
+   </para>
+  </legalnotice>
 
- </BookInfo>
+ </bookinfo>
 
 <!--
 <TOC> </TOC>
@@ -161,27 +163,27 @@ Your name here...
 -->
 
  <preface id="preface">
-  <Title>Summary</Title>
+  <title>Summary</title>
 
-  <Para>
-   <ProductName>Postgres</ProductName>, 
+  <para>
+   <productname>Postgres</productname>, 
    developed originally in the UC Berkeley Computer Science Department,
    pioneered many of the object-relational concepts
    now becoming available in some commercial databases.
    It provides SQL92/SQL3 language support,
    transaction integrity, and type extensibility.
-   <ProductName>PostgreSQL</ProductName> is an
+   <productname>PostgreSQL</productname> is an
    open-source descendant of this original Berkeley code.
-  </Para>
- </Preface>
+  </para>
+ </preface>
 
- <part Id="part-user">
-  <Title>User's Guide</Title>
-  <PartIntro>
-   <Para>
+ <part id="part-user">
+  <title>User's Guide</title>
+  <partintro>
+   <para>
     Information for users.
-   </Para>
-  </PartIntro>
+   </para>
+  </partintro>
 
   &intro;
   &syntax;
@@ -202,15 +204,15 @@ Your name here...
   &plan;
   &populate;
   &commands;
- </Part>
+ </part>
 
- <part Id="part-admin">
-  <Title>Administrator's Guide</Title>
-  <PartIntro>
-   <Para>
+ <part id="part-admin">
+  <title>Administrator's Guide</title>
+  <partintro>
+   <para>
     Installation and maintenance information.
-   </Para>
-  </PartIntro>
+   </para>
+  </partintro>
 <!--
   Disable these extra intro chapters since some elements (e.g. y2k
   statement) are included in the first intro.sgml and cause errors if
@@ -230,15 +232,15 @@ Your name here...
    &recovery;
    &regress;
    &release;
- </Part>
+ </part>
 
- <part Id="part-programmer">
-  <Title>Programmer's Guide</Title>
-  <PartIntro>
-   <Para>
-    Information for extending <ProductName>Postgres</ProductName>.
-   </Para>
-  </PartIntro>
+ <part id="part-programmer">
+  <title>Programmer's Guide</title>
+  <partintro>
+   <para>
+    Information for extending <productname>Postgres</productname>.
+   </para>
+  </partintro>
 <!--
   Disable these extra intro chapters since some elements (e.g. y2k
   statement) are included in the first intro.sgml and cause errors if
@@ -259,15 +261,15 @@ Your name here...
    &trigger;
    &spi;
    &xplang;
- </Part>
+ </part>
 
- <part Id="part-interfaces">
-  <Title>Interfaces</Title>
-  <PartIntro>
-   <Para>
+ <part id="part-interfaces">
+  <title>Interfaces</title>
+  <partintro>
+   <para>
     User and programmer interfaces.
-   </Para>
-  </PartIntro>
+   </para>
+  </partintro>
    &func-ref;
    &lobj;
    &ecpg;
@@ -278,48 +280,54 @@ Your name here...
    &odbc;
    &jdbc;
    &lisp;
- </Part>
+ </part>
  
- <part Id="part-developer">
-  <Title>Developer's Guide</Title>
-  <PartIntro>
-   <Para>
+ <part id="part-developer">
+  <title>Developer's Guide</title>
+  <partintro>
+   <para>
     The Developer's Guide includes discussion of design decisions and 
     suggestions for future development.
-   </Para>
-  </PartIntro>
+   </para>
+  </partintro>
    &sources;
    &arch-dev;
    &options;
    &geqo;
+<!--
+ This listing of Postgres catalogs is currently just a copy of the old
+ man page. It is not up to date and has not been marked up for SGML.
+ - thomas 2000-04-20
+ &catalogs;
+-->
    &protocol;
    &signals;
    &compiler;
    &bki;
    &page;
- </Part>
+ </part>
  
- <part Id="part-tutorial">
-  <Title>Tutorial</Title>
-  <PartIntro>
-   <Para>
+ <part id="part-tutorial">
+  <title>Tutorial</title>
+  <partintro>
+   <para>
     Introduction for new users.
-   </Para>
-  </PartIntro>
+   </para>
+  </partintro>
    &sql;
    &arch;
    &start;
    &query;
    &advanced;
- </Part>
+ </part>
 
- <part Id="part-appendix">
-  <Title>Appendices</Title>
-  <PartIntro>
-   <Para>
+ <part id="part-appendix">
+  <title>Appendices</title>
+  <partintro>
+   <para>
     Additional related information.
-   </Para>
-  </PartIntro>
+   </para>
+  </partintro>
 
   &datetime;
   &cvs;
@@ -328,7 +336,7 @@ Your name here...
    &contacts;
 -->
    &biblio;
- </Part>
+ </part>
 
 <!--
 Omit index until we have some index entries.
@@ -337,7 +345,7 @@ Omit index until we have some index entries.
 </index>
 -->
 
-</Book>
+</book>
 
 <!-- Keep this comment at the end of the file
 Local variables:

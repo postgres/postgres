@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.12 2000/04/23 02:08:33 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.13 2000/05/02 20:02:03 thomas Exp $
 Postgres documentation
 -->
 
@@ -227,6 +227,11 @@ ERROR: Cannot create index: 'index_name' already exists.
    access methods).
   </para>
 
+  <para>
+   Use <xref linkend="sql-dropindex-title" endterm="sql-dropindex-title">
+   to remove an index.
+  </para>
+
   <refsect2 id="R2-SQL-CREATEINDEX-3">
    <refsect2info>
     <date>1998-09-09</date>
@@ -338,11 +343,6 @@ SELECT am.amname AS acc_name,
    </para>
   </refsect2>
  </refsect1>
-
-   <para>
-    Use <xref linkend="sql-dropindex-title" endterm="sql-dropindex-title">
-    to remove an index.
-   </para>
 
  <refsect1 id="R1-SQL-CREATEINDEX-2">
   <title>

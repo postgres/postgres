@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.7 2000/03/31 03:27:40 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.8 2000/05/02 20:01:51 thomas Exp $
 -->
 
 <sect1>
@@ -189,7 +189,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.7 2000/03/31 03:27:40 thom
   <title><productname>PostgreSQL</productname></title>
 
   <para>
-   By 1996, it became clear that the name <quote>Postgres95</quote> would
+   By 1996, it became clear that the name "Postgres95" would
    not stand the test of time. We chose a new name,
    <productname>PostgreSQL</productname>, to reflect the relationship
    between the original <productname>Postgres</productname> and the more

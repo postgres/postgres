@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.7 2000/03/31 03:27:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.8 2000/05/02 20:01:52 thomas Exp $
 -->
 
  <chapter id="manage-ag">
@@ -133,9 +133,9 @@ Type:  \copyright for distribution terms
     White  space  (i.e.,  spaces, tabs and newlines) may be
     used freely in <acronym>SQL</acronym> queries.  
     Single-line comments  are  denoted  by two dashes
-    (<quote>--</quote>).   Everything  after the dashes up to the end of the
+    ("<literal>--</literal>").   Everything  after the dashes up to the end of the
     line is ignored. Multiple-line comments, and comments within a line,
-    are denoted by <quote>/* ... */</quote>, a convention borrowed
+    are denoted by "<literal>/* ... */</literal>", a convention borrowed
     from <productname>Ingres</productname>.
    </para>
   </sect1>

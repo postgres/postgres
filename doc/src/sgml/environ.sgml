@@ -38,8 +38,8 @@ $ export PATH
      to the <FileName>.profile</FileName> file in your home directory.
      From now on, we will assume that  you  have  added  the
      <ProductName>Postgres</ProductName>  bin  directory to your path.  In addition, we
-     will make frequent reference to <Quote>setting a shell  
-     variable</Quote>  or  <Quote>setting an environment variable</Quote> throughout
+     will make frequent reference to "setting a shell  
+     variable"  or  "setting an environment variable" throughout
      this document.  If you did  not  fully  understand  the
      last  paragraph  on  modifying  your  search  path, you
      should consult the Unix manual pages that describe your

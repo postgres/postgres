@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.8 2000/03/26 07:04:54 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.9 2000/05/02 20:02:03 thomas Exp $
 Postgres documentation
 -->
 
@@ -24,8 +24,8 @@ Postgres documentation
   </refsynopsisdivinfo>
   <synopsis>
 postmaster [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -D <replaceable class="parameter">DataDir</replaceable> ] [ -N <replaceable class="parameter">maxBackends</replaceable> ] [ -S ]
-   [ -d <replaceable class="parameter">DebugLevel</replaceable> ] [ -i ] [ -l ]
- [ -o <replaceable class="parameter">BackendOptions</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ] [ -n | -s ]
+    [ -d <replaceable class="parameter">DebugLevel</replaceable> ] [ -i ] [ -l ]
+    [ -o <replaceable class="parameter">BackendOptions</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ] [ -n | -s ]
   </synopsis>
 
   <refsect2 id="R2-APP-POSTMASTER-1">

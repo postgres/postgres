@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgctl-ref.sgml,v 1.1 2000/04/08 02:16:26 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgctl-ref.sgml,v 1.2 2000/05/02 20:02:03 thomas Exp $
 Postgres documentation
 -->
 
@@ -28,7 +28,8 @@ Postgres documentation
   <synopsis>
 pg_ctl [-w] [-D <replaceable class="parameter">datadir</replaceable>][-p <replaceable class="parameter">path</replaceable>] [-o "<replaceable class="parameter">options</replaceable>"] start
 pg_ctl [-w] [-D <replaceable class="parameter">datadir</replaceable>] [-m [s[mart]|f[ast]|i[mmediate]]] stop
-pg_ctl [-w] [-D <replaceable class="parameter">datadir</replaceable>] [-m [s[mart]|f[ast]|i[mmediate]] [-o "<replaceable class="parameter">options</replaceable>"] restart
+pg_ctl [-w] [-D <replaceable class="parameter">datadir</replaceable>] [-m [s[mart]|f[ast]|i[mmediate]]
+    [-o "<replaceable class="parameter">options</replaceable>"] restart
 pg_ctl [-D <replaceable class="parameter">datadir</replaceable>] status
   </synopsis>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.29 2000/04/14 15:08:56 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.30 2000/05/02 20:01:51 thomas Exp $
 -->
 
  <chapter id="datatype">
@@ -262,9 +262,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.29 2000/04/14 15:08:56 th
 
    <note>
     <para>
-     The original <productname>Postgres</productname> v4.2 code received from
-     Berkeley rounded all double precision floating point results to six digits for
-     output. Starting with v6.1, floating point numbers are allowed to retain
+     Floating point numbers are allowed to retain
      most of the intrinsic precision of the type (typically 15 digits for doubles, 
      6 digits for 4-byte floats). 
      Other types with underlying floating point fields (e.g. geometric
@@ -277,8 +275,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.29 2000/04/14 15:08:56 th
    <title>Numeric Types</title>
 
    <para>
-    Numeric types consist of two- and four-byte integers and four- and eight-byte
-    floating point numbers.
+    Numeric types consist of two- and four-byte integers, four- and eight-byte
+    floating point numbers and fixed-precision decimals.
    </para>
 
    <para>
@@ -299,7 +297,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.29 2000/04/14 15:08:56 th
 	<entry>decimal</entry>
 	<entry>variable</entry>
 	<entry>User-specified precision</entry>
-	<entry>no limit</entry>
+	<entry>~8000 digits</entry>
        </row>
        <row>
 	<entry>float4</entry>
@@ -554,13 +552,13 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
    <title>Date/Time Types</title>
 
    <para>
-    <productname>PostgreSQL</productname> supports the full set of
+    <productname>Postgres</productname> supports the full set of
     <acronym>SQL</acronym> date and time types.
    </para>
 
    <para>
     <table tocentry="1">
-     <title><productname>PostgreSQL</productname> Date/Time Types</title>
+     <title><productname>Postgres</productname> Date/Time Types</title>
      <titleabbrev>Date/Time</titleabbrev>
      <tgroup cols="4">
       <thead>
@@ -576,7 +574,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
       <tbody>
        <row>
         <entry><type>timestamp</type></entry>
-        <entry>for data containing both date and time</entry>
+        <entry>both date and time</entry>
         <entry>8 bytes</entry>
         <entry>4713 BC</entry>
         <entry>AD 1465001</entry>
@@ -584,7 +582,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
        </row>
        <row>
         <entry><type>timestamp with time zone</type></entry>
-        <entry>date and time including time zone</entry>
+        <entry>date and time with time zone</entry>
         <entry>8 bytes</entry>
         <entry>1903 AD</entry>
         <entry>2037 AD</entry>
@@ -600,7 +598,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
        </row>
        <row>
         <entry><type>date</type></entry>
-        <entry>for data containing only dates</entry>
+        <entry>dates only</entry>
         <entry>4 bytes</entry>
         <entry>4713 BC</entry>
         <entry>32767 AD</entry>
@@ -608,7 +606,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
        </row>
        <row>
         <entry><type>time</type></entry>
-        <entry>for data containing only times of the day</entry>
+        <entry>times of day only</entry>
         <entry>4 bytes</entry>
         <entry>00:00:00.00</entry>
         <entry>23:59:59.99</entry>
@@ -616,7 +614,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
        </row>
        <row>
         <entry><type>time with time zone</type></entry>
-        <entry>times of the day</entry>
+        <entry>times of day only</entry>
         <entry>4 bytes</entry>
         <entry>00:00:00.00+12</entry>
         <entry>23:59:59.99-12</entry>
@@ -628,13 +626,17 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 
     <note>
      <para>
-      To ensure compatibility to earlier versions of <productname>PostgreSQL</productname>
+      To ensure compatibility to earlier versions of <productname>Postgres</productname>
       we also continue to provide <type>datetime</type> (equivalent to <type>timestamp</type>) and
-      <type>timespan</type> (equivalent to <type>interval</type>). The types <type>abstime</type>
+      <type>timespan</type> (equivalent to <type>interval</type>),
+      however support for these is now restricted to having an
+      implicit translation to <type>timestamp</type> and
+      <type>interval</type>.
+      The types <type>abstime</type>
       and <type>reltime</type> are lower precision types which are used internally.
       You are discouraged from using any of these types in new
       applications and are encouraged to move any old
-      ones over when appropriate. Any or all of these types might disappear in a future release.
+      ones over when appropriate. Any or all of these internal types might disappear in a future release.
      </para>
     </note>
    </para>
@@ -648,11 +650,11 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
      <acronym>ISO-8601</acronym>, <acronym>SQL</acronym>-compatible, 
      traditional <productname>Postgres</productname>, and others.
      The ordering of month and day in date input can be ambiguous, therefore a setting
-     exists to specify how it should be interpreted. The command
+     exists to specify how it should be interpreted in ambiguous cases. The command
      <literal>SET DateStyle TO 'US'</literal> or <literal>SET DateStyle TO 'NonEuropean'</literal>
-     specifies the variant <quote>month before day</quote>, the command
+     specifies the variant "month before day", the command
      <literal>SET DateStyle TO 'European'</literal> sets the variant
-     <quote>day before month</quote>. The <literal>ISO</literal> style
+     "day before month". The <literal>ISO</literal> style
      is the default but this default can be changed at compile time or at run time.
     </para>
 
@@ -672,7 +674,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
      The following are possible inputs for the <type>date</type> type.
 
      <table tocentry="1">
-      <title><productname>PostgreSQL</productname> Date Input</title>
+      <title><productname>Postgres</productname> Date Input</title>
       <titleabbrev>Date Inputs</titleabbrev>
       <tgroup cols="2">
        <thead>
@@ -703,10 +705,6 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 	 <entry>US; read as January 18 in any mode</entry>
 	</row>
 	<row>
-	 <entry>1999.008</entry>
-	 <entry>Year and day of year</entry>
-	</row>
-	<row>
 	 <entry>19990108</entry>
 	 <entry>ISO-8601 year, month, day</entry>
 	</row>
@@ -724,7 +722,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 	</row>
 	<row>
 	 <entry>January 8, 99 BC</entry>
-	 <entry>Year 99 before the common era</entry>
+	 <entry>Year 99 before the Common Era</entry>
 	</row>
        </tbody>
       </tgroup>
@@ -733,7 +731,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 
     <para>
      <table tocentry="1">
-      <title><productname>PostgreSQL</productname> Month Abbreviations</title>
+      <title><productname>Postgres</productname> Month Abbreviations</title>
       <titleabbrev>Month Abbreviations</titleabbrev>
       <tgroup cols="2">
        <thead>
@@ -800,7 +798,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 
     <para>
      <table tocentry="1">
-      <title><productname>PostgreSQL</productname> Day of Week Abbreviations</title>
+      <title><productname>Postgres</productname> Day of Week Abbreviations</title>
       <titleabbrev>Day of Week Abbreviations</titleabbrev>
       <tgroup cols="2">
        <thead>
@@ -850,7 +848,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
       The following are valid <type>time</type> inputs.
 
       <table tocentry="1">
-       <title><productname>PostgreSQL</productname> Time Input</title>
+       <title><productname>Postgres</productname> Time Input</title>
        <titleabbrev>Time Inputs</titleabbrev>
        <tgroup cols="2">
 	<thead>
@@ -904,13 +902,14 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 
     <sect3>
      <title>time with time zone</title>
+
      <para>
       This type is defined by SQL92, but the definition exhibits
-      fundamental deficiencies which renders the type near useless. In
+      fundamental deficiencies which renders the type nearly useless. In
       most cases, a combination of <type>date</type>,
-      <type>time</type>, and <type>timestamp with time zone</type>
+      <type>time</type>, and <type>timestamp</type>
       should provide a complete range of date/time functionality
-      required by an application.
+      required by any application.
      </para>
 
      <para>
@@ -919,7 +918,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
       as follows:
 
       <table tocentry="1">
-       <title><productname>PostgreSQL</productname> Time With Time
+       <title><productname>Postgres</productname> Time With Time
 	Zone Input</title>
        <titleabbrev>Time With Time Zone Inputs</titleabbrev>
        <tgroup cols="2">
@@ -959,89 +958,97 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 
     <sect3>
     <title>timestamp</title>
-    <para>
-     Valid input for the <type>timestamp</type> type consists of a concatenation
-     of a date and a time, followed by an optional <literal>AD</literal> or
-     <literal>BC</literal>, followed by an optional time zone. (See below.)
-     Thus
-<programlisting>
-1999-01-08 04:05:06 -8:00
-</programlisting>
-     is a valid <type>timestamp</type> value, which is <acronym>ISO</acronym>-compliant.
-     In addition, the wide-spread format
-<programlisting>
-January 8 04:05:06 1999 PST
-</programlisting>
-     is supported.
-    </para>
 
-    <para>
-     <table tocentry="1" id="timezone">
-      <title id="timezone-title"><productname>PostgreSQL</productname> Time Zone Input</title>
-      <titleabbrev>Time Zone Inputs</titleabbrev>
-      <tgroup cols="2">
-       <thead>
-	<row>
-	 <entry>Time Zone</entry>
-	 <entry>Description</entry>
-	</row>
-       </thead>
-       <tbody>
-	<row>
-	 <entry>PST</entry>
-	 <entry>Pacific Standard Time</entry>
-	</row>
-	<row>
-	 <entry>-8:00</entry>
-	 <entry>ISO-8601 offset for PST</entry>
-	</row>
-	<row>
-	 <entry>-800</entry>
-	 <entry>ISO-8601 offset for PST</entry>
-	</row>
-	<row>
-	 <entry>-8</entry>
-	 <entry>ISO-8601 offset for PST</entry>
-	</row>
-       </tbody>
-      </tgroup>
-     </table>
-    </para>
+     <para>
+      Valid input for the <type>timestamp</type> type consists of a concatenation
+      of a date and a time, followed by an optional <literal>AD</literal> or
+      <literal>BC</literal>, followed by an optional time zone. (See below.)
+      Thus
+
+      <programlisting>
+1999-01-08 04:05:06 -8:00
+      </programlisting>
+
+      is a valid <type>timestamp</type> value, which is <acronym>ISO</acronym>-compliant.
+      In addition, the wide-spread format
+
+      <programlisting>
+January 8 04:05:06 1999 PST
+      </programlisting>
+      is supported.
+     </para>
+
+     <para>
+      <table tocentry="1" id="timezone">
+       <title id="timezone-title"><productname>Postgres</productname> Time Zone Input</title>
+       <titleabbrev>Time Zone Inputs</titleabbrev>
+       <tgroup cols="2">
+	<thead>
+	 <row>
+	  <entry>Time Zone</entry>
+	  <entry>Description</entry>
+	 </row>
+	</thead>
+	<tbody>
+	 <row>
+	  <entry>PST</entry>
+	  <entry>Pacific Standard Time</entry>
+	 </row>
+	 <row>
+	  <entry>-8:00</entry>
+	  <entry>ISO-8601 offset for PST</entry>
+	 </row>
+	 <row>
+	  <entry>-800</entry>
+	  <entry>ISO-8601 offset for PST</entry>
+	 </row>
+	 <row>
+	  <entry>-8</entry>
+	  <entry>ISO-8601 offset for PST</entry>
+	 </row>
+	</tbody>
+       </tgroup>
+      </table>
+     </para>
     </sect3>
 
     <sect3>
      <title>interval</title>
+
       <para>
        <type>interval</type>s can be specified with the following syntax:
-<programlisting>
+
+      <programlisting>
   Quantity Unit [Quantity Unit...] [Direction]
 @ Quantity Unit [Direction]
-</programlisting>
-       where: <literal>Quantity</literal> is ..., <literal>-1</literal>,
-       <literal>0</literal>, <literal>1</literal>, <literal>2</literal>, ...;
-       <literal>Unit</literal> is <literal>second</literal>,
-       <literal>minute</literal>, <literal>hour</literal>, <literal>day</literal>,
-       <literal>week</literal>, <literal>month</literal>, <literal>year</literal>,
-       <literal>decade</literal>, <literal>century</literal>, <literal>millennium</literal>,
-       or abbreviations or plurals of these units;
-       <literal>Direction</literal> can be <literal>ago</literal> or
-       empty.
-      </para>
-     </sect3>
+      </programlisting>
+
+      where: <literal>Quantity</literal> is ..., <literal>-1</literal>,
+      <literal>0</literal>, <literal>1</literal>, <literal>2</literal>, ...;
+      <literal>Unit</literal> is <literal>second</literal>,
+      <literal>minute</literal>, <literal>hour</literal>, <literal>day</literal>,
+      <literal>week</literal>, <literal>month</literal>, <literal>year</literal>,
+      <literal>decade</literal>, <literal>century</literal>, <literal>millennium</literal>,
+      or abbreviations or plurals of these units;
+      <literal>Direction</literal> can be <literal>ago</literal> or
+      empty.
+     </para>
+    </sect3>
 
     <sect3>
-    <title>Special values</title>
-    <para>
-     The following <acronym>SQL</acronym>-compatible functions can be used as date or time
-     input for the corresponding datatype: <literal>CURRENT_DATE</literal>,
-     <literal>CURRENT_TIME</literal>, <literal>CURRENT_TIMESTAMP</literal>.
-    </para>
-    <para>
-     <productname>PostgreSQL</productname> also supports several special constants for
-     convenience.
+     <title>Special values</title>
+
+     <para>
+      The following <acronym>SQL</acronym>-compatible functions can be used as date or time
+      input for the corresponding datatype: <literal>CURRENT_DATE</literal>,
+      <literal>CURRENT_TIME</literal>, <literal>CURRENT_TIMESTAMP</literal>.
+     </para>
+     <para>
+      <productname>Postgres</productname> also supports several special constants for
+      convenience.
 
      <table tocentry="1">
-      <title><productname>PostgresSQL</productname> Special Date/Time Constants</title>
+      <title><productname>Postgres</productname> Special Date/Time Constants</title>
       <titleabbrev>Constants</titleabbrev>
       <tgroup cols="2">
        <thead>
@@ -1110,7 +1117,7 @@ January 8 04:05:06 1999 PST
      The default is the <acronym>ISO</acronym> format.
 
      <table tocentry="1">
-      <title><productname>PostgreSQL</productname> Date/Time Output Styles</title>
+      <title><productname>Postgres</productname> Date/Time Output Styles</title>
       <titleabbrev>Styles</titleabbrev>
       <tgroup cols="3">
        <thead>
@@ -1148,7 +1155,7 @@ January 8 04:05:06 1999 PST
 
     <para>
      The output of the <type>date</type> and <type>time</type> styles is of course
-     only the date or time part in accordance with the above examples
+     only the date or time part in accordance with the above examples.
     </para>
 
     <para>
@@ -1157,22 +1164,25 @@ January 8 04:05:06 1999 PST
      at Date/Time Input, how this setting affects interpretation of input values.)
 
      <table tocentry="1">
-      <title><productname>PostgreSQL</productname> Date Order Conventions</title>
-      <titleabbrev>Order</titleabbrev>
+      <title><productname>Postgres</productname> Date Order Conventions</title>
+      <titleabbrev>Date Order</titleabbrev>
       <tgroup cols="3">
        <thead>
 	<row>
 	 <entry>Style Specification</entry>
+	 <entry>Description</entry>
 	 <entry>Example</entry>
 	</row>
        </thead>
        <tbody>
 	<row>
 	 <entry>European</entry>
+	 <entry><replaceable>day</replaceable>/<replaceable>month</replaceable>/<replaceable>year</replaceable></entry>
 	 <entry>17/12/1997 15:37:16.00 MET</entry>
 	</row>
 	<row>
 	 <entry>US</entry>
+	 <entry><replaceable>month</replaceable>/<replaceable>day</replaceable>/<replaceable>year</replaceable></entry>
 	 <entry>12/17/1997 07:37:16.00 PST</entry>
 	</row>
        </tbody>
@@ -1181,9 +1191,10 @@ January 8 04:05:06 1999 PST
     </para>
 
     <para>
-    <type>interval</type> output looks like the input format, expect that units like
+    <type>interval</type> output looks like the input format, except that units like
     <literal>week</literal> or <literal>century</literal> are converted to years and days.
     In ISO mode the output looks like
+
 <programlisting>
 [ Quantity Units [ ... ] ] [ Days ] Hours:Minutes [ ago ]
 </programlisting>
@@ -1219,7 +1230,7 @@ January 8 04:05:06 1999 PST
     <title>Time Zones</title>
 
     <para>
-     <productname>PostgreSQL</productname> endeavors to be compatible with
+     <productname>Postgres</productname> endeavors to be compatible with
      <acronym>SQL92</acronym> definitions for typical usage.
      However, the <acronym>SQL92</acronym> standard has an odd mix of date and
      time types and capabilities. Two obvious problems are:
@@ -1249,7 +1260,7 @@ January 8 04:05:06 1999 PST
     </para>
 
     <para>
-     To address these difficulties, <productname>PostgreSQL</productname> 
+     To address these difficulties, <productname>Postgres</productname> 
      associates time zones only with date and time
      types which contain both date and time,
      and assumes local time for any type containing only
@@ -1260,7 +1271,7 @@ January 8 04:05:06 1999 PST
     </para>
 
     <para>
-     <productname>PostgreSQL</productname> obtains time zone support 
+     <productname>Postgres</productname> obtains time zone support 
      from the underlying operating system for dates between 1902 and
      2038 (near the typical date limits for Unix-style
      systems). Outside of this range, all dates are assumed to be
@@ -1322,7 +1333,7 @@ January 8 04:05:06 1999 PST
     <title>Internals</title>
 
     <para>
-     <productname>PostgreSQL</productname> uses Julian dates
+     <productname>Postgres</productname> uses Julian dates
      for all date/time calculations. They have the nice property of correctly
      predicting/calculating any date more recent than 4713BC
      to far into the future, using the assumption that the length of the
@@ -1476,13 +1487,32 @@ January 8 04:05:06 1999 PST
     <para>
      <type>point</type> is specified using the following syntax:
 
-     <programlisting>
-( x , y )
-  x , y
-where
-    x is the x-axis coordinate as a floating point number
-    y is the y-axis coordinate as a floating point number
-     </programlisting>
+     <synopsis>
+( <replaceable>x</replaceable> , <replaceable>y</replaceable> )
+  <replaceable>x</replaceable> , <replaceable>y</replaceable>
+     </synopsis>
+
+     where the arguments are
+
+     <variablelist>
+      <varlistentry>
+       <term><replaceable>x</replaceable></term>
+       <listitem>
+	<para>
+	 The x-axis coordinate as a floating point number.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><replaceable>y</replaceable></term>
+       <listitem>
+	<para>
+	 The y-axis coordinate as a floating point number.
+	</para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
     </para>
    </sect2>
 
@@ -1495,13 +1525,26 @@ where
 
     <para>
      <type>lseg</type> is specified using the following syntax:
-     <programlisting>
-( ( x1 , y1 ) , ( x2 , y2 ) )
-  ( x1 , y1 ) , ( x2 , y2 )  
-    x1 , y1   ,   x2 , y2    
-where
-    (x1,y1) and (x2,y2) are the endpoints of the segment
-     </programlisting>
+
+     <synopsis>
+( ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable> ) , ( <replaceable>x2</replaceable> , <replaceable>y2</replaceable> ) )
+  ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable> ) , ( <replaceable>x2</replaceable> , <replaceable>y2</replaceable> )  
+    <replaceable>x1</replaceable> , <replaceable>y1</replaceable>   ,   <replaceable>x2</replaceable> , <replaceable>y2</replaceable>
+     </synopsis>
+
+     where the arguments are
+
+     <variablelist>
+      <varlistentry>
+       <term>(<replaceable>x1</replaceable>,<replaceable>y1</replaceable>)</term>
+       <term>(<replaceable>x2</replaceable>,<replaceable>y2</replaceable>)</term>
+       <listitem>
+	<para>
+	 The endpoints of the line segment.
+	</para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
     </para>
    </sect2>
 
@@ -1516,14 +1559,28 @@ where
     <para>
      <type>box</type> is specified using the following syntax:
 
-     <programlisting>
-( ( x1 , y1 ) , ( x2 , y2 ) )
-  ( x1 , y1 ) , ( x2 , y2 )  
-    x1 , y1   ,   x2 , y2    
-where
-    (x1,y1) and (x2,y2) are opposite corners
-     </programlisting>
+     <synopsis>
+( ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable> ) , ( <replaceable>x2</replaceable> , <replaceable>y2</replaceable> ) )
+  ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable> ) , ( <replaceable>x2</replaceable> , <replaceable>y2</replaceable> )  
+    <replaceable>x1</replaceable> , <replaceable>y1</replaceable>   ,   <replaceable>x2</replaceable> , <replaceable>y2</replaceable>
+     </synopsis>
 
+     where the arguments are
+
+     <variablelist>
+      <varlistentry>
+       <term>(<replaceable>x1</replaceable>,<replaceable>y1</replaceable>)</term>
+       <term>(<replaceable>x2</replaceable>,<replaceable>y2</replaceable>)</term>
+       <listitem>
+	<para>
+	 Opposite corners of the box.
+	</para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
+    </para>
+
+    <para>
      Boxes are output using the first syntax.
      The corners are reordered on input to store
      the lower left corner first and the upper right corner last.
@@ -1546,24 +1603,37 @@ where
      <function>isopen(p)</function>
      and
      <function>isclosed(p)</function>
-     are supplied to select either type in a query.
+     are supplied to test for either type in a query.
     </para>
 
     <para>
      <type>path</type> is specified using the following syntax:
 
-     <programlisting>
-( ( x1 , y1 ) , ... , ( xn , yn ) )
-[ ( x1 , y1 ) , ... , ( xn , yn ) ]
-  ( x1 , y1 ) , ... , ( xn , yn )  
-  ( x1 , y1   , ... ,   xn , yn )  
-    x1 , y1   , ... ,   xn , yn    
-where
-    (x1,y1),...,(xn,yn) are points 1 through n
-    a leading "[" indicates an open path
-    a leading "(" indicates a closed path
-     </programlisting>
+     <synopsis>
+( ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable> ) , ... , ( <replaceable>xn</replaceable> , <replaceable>yn</replaceable> ) )
+[ ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable> ) , ... , ( <replaceable>xn</replaceable> , <replaceable>yn</replaceable> ) ]
+  ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable> ) , ... , ( <replaceable>xn</replaceable> , <replaceable>yn</replaceable> )  
+  ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable>   , ... ,   <replaceable>xn</replaceable> , <replaceable>yn</replaceable> )  
+    <replaceable>x1</replaceable> , <replaceable>y1</replaceable>   , ... ,   <replaceable>xn</replaceable> , <replaceable>yn</replaceable>    
+     </synopsis>
 
+     where the arguments are
+
+     <variablelist>
+      <varlistentry>
+       <term>(<replaceable>x</replaceable>,<replaceable>y</replaceable>)</term>
+       <listitem>
+	<para>
+	 Endpoints of the line segments comprising the path.
+	 A leading square bracket ("[") indicates an open path, while
+	 a leading parenthesis ("(") indicates a closed path.
+	</para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
+    </para>
+
+    <para>
      Paths are output using the first syntax.
      Note that <productname>Postgres</productname> versions prior to
      v6.1 used a format for paths which had a single leading parenthesis, 
@@ -1587,19 +1657,33 @@ where
     <para>
      <type>polygon</type> is specified using the following syntax:
 
-     <programlisting>
-( ( x1 , y1 ) , ... , ( xn , yn ) )
-  ( x1 , y1 ) , ... , ( xn , yn )  
-  ( x1 , y1   , ... ,   xn , yn )  
-    x1 , y1   , ... ,   xn , yn    
-where
-    (x1,y1),...,(xn,yn) are points 1 through n
-     </programlisting>
+     <synopsis>
+( ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable> ) , ... , ( <replaceable>xn</replaceable> , <replaceable>yn</replaceable> ) )
+  ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable> ) , ... , ( <replaceable>xn</replaceable> , <replaceable>yn</replaceable> )  
+  ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable>   , ... ,   <replaceable>xn</replaceable> , <replaceable>yn</replaceable> )  
+    <replaceable>x1</replaceable> , <replaceable>y1</replaceable>   , ... ,   <replaceable>xn</replaceable> , <replaceable>yn</replaceable>    
+     </synopsis>
 
+     where the arguments are
+
+     <variablelist>
+      <varlistentry>
+       <term>(<replaceable>x</replaceable>,<replaceable>y</replaceable>)</term>
+       <listitem>
+	<para>
+	 Endpoints of the line segments comprising the boundary of the
+	 polygon.
+	</para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
+    </para>
+
+    <para>
      Polygons are output using the first syntax.
      Note that <productname>Postgres</productname> versions prior to
      v6.1 used a format for polygons which had a single leading parenthesis, the list
-     of x-axis coordinates, the list of y-axis coordinates, 
+     of x-axis coordinates, the list of y-axis coordinates,
      followed by a closing parenthesis.
      The built-in function <function>upgradepoly</function> is supplied to convert
      polygons dumped and reloaded from pre-v6.1 databases.
@@ -1616,16 +1700,37 @@ where
     <para>
      <type>circle</type> is specified using the following syntax:
 
-     <programlisting>
-< ( x , y ) , r >
-( ( x , y ) , r )
-  ( x , y ) , r  
-    x , y   , r  
-where
-    (x,y) is the center of the circle
-    r is the radius of the circle
-     </programlisting>
+     <synopsis>
+&lt; ( <replaceable>x</replaceable> , <replaceable>y</replaceable> ) , <replaceable>r</replaceable> &gt;
+( ( <replaceable>x</replaceable> , <replaceable>y</replaceable> ) , <replaceable>r</replaceable> )
+  ( <replaceable>x</replaceable> , <replaceable>y</replaceable> ) , <replaceable>r</replaceable>  
+    <replaceable>x</replaceable> , <replaceable>y</replaceable>   , <replaceable>r</replaceable>  
+     </synopsis>
 
+     where the arguments are
+
+     <variablelist>
+      <varlistentry>
+       <term>(<replaceable>x</replaceable>,<replaceable>y</replaceable>)</term>
+       <listitem>
+	<para>
+	 Center of the circle.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><replaceable>r</replaceable></term>
+       <listitem>
+	<para>
+	 Radius of the circle.
+	</para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
+    </para>
+
+    <para>
      Circles are output using the first syntax.
     </para>
    </sect2>

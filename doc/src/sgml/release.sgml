@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.46 2000/05/02 17:06:10 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.47 2000/05/02 20:01:52 thomas Exp $
 -->
 
  <chapter id="release">
@@ -19,9 +19,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.46 2000/05/02 17:06:10 mom
   </docinfo>
    -->
    <para>
-    This release shows the continued growth of PostgreSQL.  There are more
-    changes in 7.0 than in any previous release.  Don't be concerned this is
-    a dot-zero release. We do our best to put out only solid releases, and
+    This release contains improvements in many areas, demonstrating
+    the continued growth of <productname>PostgreSQL</productname>.
+    There are more improvements and fixes in 7.0 than in any previous
+    release. The developers have confidence that this is the best
+    release yet; we do our best to put out only solid releases, and
     this one is no exception.
    </para>
 
@@ -49,7 +51,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.46 2000/05/02 17:06:10 mom
       <listitem>
        <para>
 	Continuing on work started a year ago, the optimizer has been
-	overhauled, allowing improved query execution and better performance
+	improved, allowing better query plan selection and faster performance
 	with less memory usage.
        </para>
       </listitem>
@@ -80,7 +82,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.46 2000/05/02 17:06:10 mom
       </listitem>
      </varlistentry>
 
-
+<!--
      <varlistentry>
       <term>
        Upcoming Features
@@ -92,6 +94,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.46 2000/05/02 17:06:10 mom
        </para>
       </listitem>
      </varlistentry>
+-->
     </variablelist>
    </para>
 
@@ -102,10 +105,75 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.46 2000/05/02 17:06:10 mom
      A dump/restore using <application>pg_dump</application>
      is required for those wishing to migrate data from any
      previous release of <productname>Postgres</productname>.
-     For those upgrading from 6.5.*, you can use 
+     For those upgrading from 6.5.*, you may instead use 
      <application>pg_upgrade</application> to upgrade to this
-     release.
+     release; however, a full dump/reload installation is always the
+     most robust method for upgrades.
     </para>
+
+    <para>
+     Interface and compatibility issues to consider for the new
+     release include:
+
+     <itemizedlist>
+      <listitem>
+       <para>
+	The date/time types <type>datetime</type> and
+	<type>timespan</type> have been superceded by the
+	SQL92-defined types <type>timestamp</type> and
+	<type>interval</type>. Although there has been some effort to
+	ease the transition by allowing
+	<productname>Postgres</productname> to recognize
+	the deprecated type names and translate them to the new type
+	names, this mechanism may not be completely transparent to
+	your existing application.
+       </para>
+      </listitem>
+
+<!--
+      <listitem>
+       <para>
+	The security provisions for <firstterm>alternate locations</firstterm> have
+	been strengthened by requiring the absolute path to be present
+	in the environment variable <envar>PGxxx
+
+Ack! This isn't yet in the code?? - thomas 2000-04-30
+       </para>
+      </listitem>
+-->
+
+      <listitem>
+       <para>
+	The optimizer has been substantially improved in the area of
+	query cost estimation. In some cases, this will result in
+	decreased query times as the optimizer makes a better choice
+	for the preferred plan. However, in a small number of cases,
+	usually involving pathological distributions of data, your
+	query times may go up. If you are dealing with large amounts
+	of data, you may want to check your queries to verify
+	performance.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	The <acronym>JDBC</acronym> and <acronym>ODBC</acronym>
+	interfaces have been upgraded and extended.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	The string function <function>CHAR_LENGTH</function> is now a
+	native function. Previous versions translated this into a call
+	to <function>LENGTH</function>, which could result in
+	ambiguity with other types implementing
+	<function>LENGTH</function> such as the geometric types.
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+
    </sect2>
 
    <sect2>
@@ -114,7 +182,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.46 2000/05/02 17:06:10 mom
      <programlisting>
 Bug Fixes
 ---------
-Prevent function calls with more than maximum number of arguments (Tom)
+Prevent function calls exceeding maximum number of arguments (Tom)
 Improve CASE construct (Tom)
 Fix SELECT coalesce(f1,0) FROM int4_tbl GROUP BY f1 (Tom)
 Fix SELECT sentence.words[0] FROM sentence GROUP BY sentence.words[0] (Tom)
@@ -125,15 +193,15 @@ Fix for SELECT a/2, a/2 FROM test_missing_target GROUP BY a/2 (Tom)
 Fix for subselects in INSERT ... SELECT (Tom)
 Prevent INSERT ... SELECT ... ORDER BY (Tom)
 Fixes for relations greater than 2GB, including vacuum
-Improve communication of system table changes to other running backends (Tom)
-Improve communication of user table modifications to other running backends (Tom)
+Improve propagating system table changes to other backends (Tom)
+Improve propagating user table changes to other backends (Tom)
 Fix handling of temp tables in complex situations (Bruce, Tom)
-Allow table locking when tables opened, improving concurrent reliability (Tom)
+Allow table locking at table open, improving concurrent reliability (Tom)
 Properly quote sequence names in pg_dump (Ross J. Reedstrom)
 Prevent DROP DATABASE while others accessing
 Prevent any rows from being returned by GROUP BY if no rows processed (Tom)
 Fix SELECT COUNT(1) FROM table WHERE ...' if no rows matching WHERE (Tom)
-Fix pg_upgrade so it works for MVCC(Tom)
+Fix pg_upgrade so it works for MVCC (Tom)
 Fix for SELECT ... WHERE x IN (SELECT ... HAVING SUM(x) &gt; 1) (Tom)
 Fix for "f1 datetime DEFAULT 'now'"  (Tom)
 Fix problems with CURRENT_DATE used in DEFAULT (Tom)
@@ -141,8 +209,8 @@ Allow comment-only lines, and ;;; lines too. (Tom)
 Improve recovery after failed disk writes, disk full (Hiroshi)
 Fix cases where table is mentioned in FROM but not joined (Tom)
 Allow HAVING clause without aggregate functions (Tom)
-Fix for "--" comment and no trailing newline, as seen in Perl
-Improve pg_dump failure  error reports (Bruce)
+Fix for "--" comment and no trailing newline, as seen in perl interface
+Improve pg_dump failure error reports (Bruce)
 Allow sorts and hashes to exceed 2GB file sizes (Tom)
 Fix for pg_dump dumping of inherited rules (Tom)
 Fix for NULL handling comparisons (Tom)
@@ -197,8 +265,7 @@ Update jdbc protocol to 2.0 (<ulink url="mailto:jens@jens.de">Jens Glaser</ulink
 Add TRUNCATE command to quickly truncate relation (Mike Mascari)
 Fix to give super user and createdb user proper update catalog rights (Peter E)
 Allow ecpg bool variables to have NULL values (Christof)
-Issue ecpg error if NULL value is returned to variable with no NULL
-indicator (Christof)
+Issue ecpg error if NULL value for variable with no NULL indicator (Christof)
 Allow ^C to cancel COPY command (Massimo)
 Add SET FSYNC and SHOW PG_OPTIONS commands(Massimo)
 Function name overloading for dynamically-loaded C functions (Frankpitt)
@@ -214,7 +281,6 @@ Add FOREIGN KEY ... MATCH &lt;unspecified&gt; referential actions (Don Baccus)
 Allow WHERE restriction on ctid (physical heap location) (Hiroshi)
 Move pginterface from contrib to interface directory, rename to pgeasy (Bruce)
 Change pgeasy connectdb() parameter ordering (Bruce)
-Add DEC and SESSION_USER as reserved words (Thomas)
 Require SELECT DISTINCT target list to have all ORDER BY columns (Tom)
 Add Oracle's COMMENT ON command (<ulink url="mailto:mascarim@yahoo">Mike Mascari</ulink>)
 libpq's PQsetNoticeProcessor function now returns previous hook(Peter E)
@@ -227,8 +293,7 @@ Change backend-side COPY to write files with permissions 644 not 666 (Tom)
 Force permissions on PGDATA directory to be secure, even if it exists (Tom)
 Added psql LASTOID variable to return last inserted oid (Peter E)
 Allow concurrent vacuum and remove pg_vlock vacuum lock file (Tom)
-Add permissions check so only Postgres superuser or table owner can
-vacuum (Peter E)
+Add permissions check for vacuum (Peter E)
 New libpq functions to allow asynchronous connections: PQconnectStart(), 
    PQconnectPoll(), PQresetStart(), PQresetPoll(), PQsetenvStart(), 
    PQsetenvPoll(), PQsetenvAbort (Ewan Mellor)
@@ -236,8 +301,8 @@ New libpq PQsetenv() function (Ewan Mellor)
 create/alter user extension (Peter E)
 New postmaster.pid and postmaster.opts under $PGDATA (Tatsuo)
 New scripts for create/drop user/db (Peter E)
-Major psql overhaul(Peter E)
-Add const to libpq interface(Peter E)
+Major psql overhaul (Peter E)
+Add const to libpq interface (Peter E)
 New libpq function PQoidValue (Peter E)
 Show specific non-aggregate causing problem with GROUP BY (Tom)
 Make changes to pg_shadow recreate pg_pwd file (Peter E)
@@ -281,12 +346,11 @@ Allow SELECT .. FOR UPDATE in PL/pgSQL (Hiroshi)
 Enable backward sequential scan even after reaching EOF (Hiroshi)
 Add btree indexing of boolean values, &gt;= and &lt;= (Don Baccus)
 Print current line number when COPY FROM fails (Massimo)
-Recognize special case of POSIX time zone: "GMT+8" and "GMT-8" (Thomas)
-Add DEC as synonym for "DECIMAL" (Thomas)
+Recognize POSIX time zone e.g. "PST+8" and "GMT-8" (Thomas)
+Add DEC as synonym for DECIMAL (Thomas)
 Add SESSION_USER as SQL92 keyword, same as CURRENT_USER (Thomas)
-Implement column aliases (aka correlation names) and join syntax (Thomas)
-Allow queries like SELECT a FROM t1 tx (a) (Thomas)
-Allow queries like SELECT * FROM t1 NATURAL JOIN t2 (Thomas)
+Implement SQL92 column aliases (aka correlation names) (Thomas)
+Implement SQL92 join syntax (Thomas)
 Make INTERVAL reserved word allowed as a column identifier (Thomas)
 Implement REINDEX command (Hiroshi)
 Accept ALL in aggregate function SUM(ALL col) (Tom)
@@ -322,9 +386,8 @@ Allow bare column names to be subscripted as arrays (Tom)
 Improve type casting of int and float constants (Tom)
 Cleanups for int8 inputs, range checking, and type conversion (Tom)
 Fix for SELECT timespan('21:11:26'::time) (Tom)
-Fix for netmask('x.x.x.x/0') is 255.255.255.255 instead of 0.0.0.0 
-	(Oleg Sharoiko)
-Add btree index on NUMERIC(Jan)
+netmask('x.x.x.x/0') is 255.255.255.255 instead of 0.0.0.0 (Oleg Sharoiko)
+Add btree index on NUMERIC (Jan)
 Perl fix for large objects containing NUL characters (Douglas Thomson) 
 ODBC fix for for large objects (free)
 Fix indexing of cidr data type
@@ -338,26 +401,25 @@ Make char_length()/octet_length including trailing blanks (Tom)
 Made abstime/reltime use int4 instead of time_t (Peter E)
 New lztext data type for compressed text fields
 Revise code to handle coercion of int and float constants (Tom)
-New C-routines to implement a BIT and BIT VARYING type in /contrib 
-	(Adriaan Joubert)
+Start at new code to implement a BIT and BIT VARYING type (Adriaan Joubert)
 NUMERIC now accepts scientific notation (Tom)
 NUMERIC to int4 rounds (Tom)
 Convert float4/8 to NUMERIC properly (Tom)
 Allow type conversion with NUMERIC (Thomas)
 Make ISO date style (2000-02-16 09:33) the default (Thomas)
-Add NATIONAL CHAR [ VARYING ]
+Add NATIONAL CHAR [ VARYING ] (Thomas)
 Allow NUMERIC round and trunc to accept negative scales (Tom)
 New TIME WITH TIME ZONE type (Thomas)
 Add MAX()/MIN() on time type (Thomas)
 Add abs(), mod(), fac() for int8 (Thomas)
-Add round(), sqrt(), cbrt(), pow()
-Rename NUMERIC power() to pow()
-Improved TRANSLATE() function
+Rename functions to round(), sqrt(), cbrt(), pow() for float8 (Thomas)
+Add transcendental math functions (e.g. sin(), acos()) for float8 (Thomas)
+Add exp() and ln() for NUMERIC type
+Rename NUMERIC power() to pow() (Thomas)
+Improved TRANSLATE() function (Edwin Ramirez, Tom)
 Allow X=-Y operators  (Tom)
-Add exp() and ln() as NUMERIC types
-Allow SELECT float8(COUNT(*)) / (SELECT COUNT(*) FROM int4_tbl) FROM int4_tbl
-	GROUP BY f1; (Tom)
-Allow LOCALE to use indexes in regular expression searches(Tom)
+Allow SELECT float8(COUNT(*))/(SELECT COUNT(*) FROM t) FROM t GROUP BY f1; (Tom)
+Allow LOCALE to use indexes in regular expression searches (Tom)
 Allow creation of functional indexes to use default types
 
 Performance
@@ -378,13 +440,12 @@ Prefer index scans in cases where ORDER BY/GROUP BY is required (Tom)
 Allocate large memory requests in fix-sized chunks for performance (Tom)
 Fix vacuum's performance by reducing memory allocation requests (Tom)
 Implement constant-expression simplification (Bernard Frankpitt, Tom)
-Allow more than first column to be used to determine start of index scan
-   (Hiroshi)
+Use secondary columns to be used to determine start of index scan (Hiroshi)
 Prevent quadruple use of disk space when doing internal sorting (Tom)
 Faster sorting by calling fewer functions (Tom)
 Create system indexes to match all system caches (Bruce, Hiroshi)
-Make system caches use system indexes(Bruce)
-Make all system indexes unique(Bruce)
+Make system caches use system indexes (Bruce)
+Make all system indexes unique (Bruce)
 Improve pg_statistics management for VACUUM speed improvement (Tom)
 Flush backend cache less frequently (Tom, Hiroshi)
 COPY now reuses previous memory allocation, improving performance (Tom)
@@ -398,17 +459,17 @@ New SET variable to control optimizer costs (Tom)
 Optimizer queries based on LIMIT, OFFSET, and EXISTS qualifications (Tom)
 Reduce optimizer internal housekeeping of join paths for speedup (Tom)
 Major subquery speedup (Tom)
-Fewer fsync writes when fsync is not disabled(Tom)
-Improved LIKE optimizer estimates(Tom)
-Prevent fsync in SELECT-only queries(Vadim)
-Make index creation use psort code, because it is now faster(Tom)
+Fewer fsync writes when fsync is not disabled (Tom)
+Improved LIKE optimizer estimates (Tom)
+Prevent fsync in SELECT-only queries (Vadim)
+Make index creation use psort code, because it is now faster (Tom)
 Allow creation of sort temp tables > 1 Gig
 
 Source Tree Changes
 -------------------
 Fix for linux PPC compile
 New generic expression-tree-walker subroutine (Tom)
-Change form() to varargform() to prevent portability problems.
+Change form() to varargform() to prevent portability problems
 Improved range checking for large integers on Alphas
 Clean up #include in /include directory (Bruce)
 Add scripts for checking includes (Bruce)
@@ -418,9 +479,9 @@ Enable WIN32 compilation of libpq
 Alpha spinlock fix from <ulink url="mailto:gatgul@voicenet.com">Uncle George</ulink>
 Overhaul of optimizer data structures (Tom)
 Fix to cygipc library (Yutaka Tanida)
-Allow pgsql to work on newer Cygwin snapshots(Dan)
+Allow pgsql to work on newer Cygwin snapshots (Dan)
 New catalog version number (Tom)
-Add Linux ARM.
+Add Linux ARM
 Rename heap_replace to heap_update
 Update for QNX (Dr. Andreas Kardos)
 New platform-specific regression handling (Tom)
@@ -1636,7 +1697,7 @@ Support for client-side environment variables to specify time zone and date styl
 <para>
 Socket interface for client/server connection. This is the default now
 so you may need to start <application>postmaster</application> with the
-<quote>-i</quote> flag.
+<option>-i</option> flag.
 </para>
 </listitem>
 
@@ -1646,11 +1707,12 @@ Better password authorization mechanisms. Default table permissions have changed
 </para>
 </listitem>
 
-<listitem>
-<para>
-Old-style <quote>time travel</quote> has been removed. Performance has been improved.
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Old-style <firstterm>time travel</firstterm>
+       has been removed. Performance has been improved.
+      </para>
+     </listitem>
 
 </itemizedlist>
 </para>

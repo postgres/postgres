@@ -1,34 +1,8 @@
 <!-- reference.sgml
-$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.7 2000/03/30 22:22:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.8 2000/05/02 20:01:52 thomas Exp $
 
 Postgres User's Reference documentation.
 - thomas 1998-08-31
-
-$Log: reference.sgml,v $
-Revision 1.7  2000/03/30 22:22:41  thomas
-Accumulated fixups.
-Add some chapters on new topics.
-Change to referencing OASIS/Docbook v3.1 rather than Davenport/Docbook v3.0
-Grepped for and fixed apparent tag mangling from emacs
- "Normalize" operation. Should be the last of those.
-
-Revision 1.6  1999/05/26 17:30:30  thomas
-Add chapters on CVS access, MVCC, SQL theory to the docs.
-Add an appendix with more details on date/time attributes and handling.
-Update most references to Postgres version numbers to 6.5,
- *except* for the porting list which will require a report
- from a successful installation to be updated.
-
-Revision 1.5  1998/10/31 09:36:37  thomas
-Cleanup for v6.4 release.
-Make new file current.sgml to hold release info for the current release.
- Should be moved to release.sgml before filling with next release info.
-
-Revision 1.4  1998/10/30 19:37:12  thomas
-Minor editing and markup changes as a result of preparing the Postscript
- documentation for v6.4.
-Bigger updates to the installation instructions (install and config).
-
 -->
 
 <!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
@@ -40,24 +14,25 @@ Bigger updates to the installation instructions (install and config).
 <!entity biblio     SYSTEM "biblio.sgml">
 <!entity contacts   SYSTEM "contacts.sgml">
 ]>
-<Book Id="reference">
 
-<!-- Title information -->
+<book id="reference">
 
-<Title>PostgreSQL Reference Manual</Title>
-<BookInfo>
-    <ReleaseInfo>Covering v6.5 for general release</ReleaseInfo>
-    <BookBiblio>
-    <AuthorGroup>
-      <Author>
-        <FirstName>Jose</FirstName>
-        <SurName>Soares Da Silva</SurName>
-      </Author>
-      <Author>
-        <FirstName>Oliver</FirstName>
-        <SurName>Elphick</SurName>
-      </Author>
-    </AuthorGroup>
+ <!-- Title information -->
+
+ <title>PostgreSQL Reference Manual</title>
+ <bookinfo>
+  <releaseinfo>Covering v6.5 for general release</releaseinfo>
+  <bookbiblio>
+   <authorgroup>
+    <author>
+     <firstname>Jose</firstname>
+     <surname>Soares Da Silva</surname>
+    </author>
+    <author>
+     <firstname>Oliver</firstname>
+     <surname>Elphick</surname>
+    </author>
+   </authorgroup>
 <!--
     <AuthorGroup>
       <CorpAuthor>The PostgreSQL Development Team</CorpAuthor>
@@ -75,25 +50,25 @@ Bigger updates to the installation instructions (install and config).
         </Affiliation>
       </Editor>
 -->
-      <Editor>
-        <FirstName>Oliver</FirstName>
-        <SurName>Elphick</SurName>
-      </Editor>
+   <editor>
+    <firstname>Oliver</firstname>
+    <surname>Elphick</surname>
+   </editor>
 <!--
     </AuthorGroup>
 -->
  
-    <Date>(last updated 1999-06-01)</Date>
-    </BookBiblio>
+   <date>(last updated 2000-05-01)</date>
+  </bookbiblio>
 
-<LegalNotice>
-<Para>
-<ProductName>PostgreSQL</ProductName> is &copy; 1998-9
-by the Postgres Global Development Group.
-</Para>
-</LegalNotice>
+  <legalnotice>
+   <para>
+    <productname>PostgreSQL</productname> is &copy; 1998-2000
+    by PostgreSQL Inc.
+   </para>
+  </legalnotice>
 
-</BookInfo>
+ </bookinfo>
 
 <!--
 <TOC> </TOC>
@@ -108,37 +83,53 @@ Your name here...
 </Dedication>
 -->
 
-<Preface Id="preface">
-<Title>Summary</Title>
+ <preface id="preface">
+  <title>Summary</title>
 
-<Para>
-<ProductName>Postgres</ProductName>, 
- developed originally in the UC Berkeley Computer Science Department,
- pioneered many of the object-relational concepts
- now becoming available in some commercial databases.
-It provides SQL92/SQL3 language support,
- transaction integrity, and type extensibility.
- <ProductName>PostgreSQL</ProductName> is a public-domain, open source descendant
- of this original Berkeley code.
-</Para>
-</Preface>
+  <para>
+   <productname>Postgres</productname>, 
+   developed originally in the UC Berkeley Computer Science Department,
+   pioneered many of the object-relational concepts
+   now becoming available in some commercial databases.
+   It provides SQL92/SQL3 language support,
+   transaction integrity, and type extensibility.
+   <productname>PostgreSQL</productname> is a public-domain, open source descendant
+   of this original Berkeley code.
+  </para>
+ </preface>
 
 <!--
 &intro-ref;
 -->
 
-&commands;
+ &commands;
 
 <!--
 &contacts;
 -->
 
-&biblio;
+ &biblio;
 
 <!--
 <index Id="index">
 </index>
 -->
 
-</Book>
+</book>
 
+<!-- Keep this comment at the end of the file
+Local variables:
+mode:sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
+sgml-local-ecat-files:nil
+End:
+-->

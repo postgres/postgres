@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/oper.sgml,v 1.15 2000/03/31 03:27:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/oper.sgml,v 1.16 2000/05/02 20:01:52 thomas Exp $
 -->
 
  <Chapter Id="operators">
@@ -22,7 +22,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/oper.sgml,v 1.15 2000/03/31 03:27:41 
   </Para>
 
   <Para>
-   To view all variations of the <Quote>||</Quote> string concatenation operator, 
+   To view all variations of the "<literal>||</literal>" string concatenation operator, 
    try
    <ProgramListing>
     SELECT oprleft, oprright, oprresult, oprcode
@@ -74,15 +74,9 @@ Operator Ordering (decreasing precedence)
 <tgroup cols="2">
 <thead>
 <row>
-<entry>
-Element
-</entry>
-<entry>
-Precedence
-</entry>
-<entry>
-Description
-</entry>
+<entry>Element</entry>
+<entry>Precedence</entry>
+<entry>Description</entry>
 </row>
 </thead>
 
@@ -141,6 +135,8 @@ right
 unary minus
 </entry>
 </row>
+<!--
+Deprecated as of v7.0
 <row>
 <entry>
 ;
@@ -152,6 +148,7 @@ left
 statement termination, logarithm
 </entry>
 </row>
+-->
 <row>
 <entry>
 :
@@ -283,7 +280,7 @@ string pattern matching
 <entry>
 </entry>
 <entry>
-boolean inequality
+inequality
 </entry>
 </row>
 <row>
@@ -305,7 +302,7 @@ NOT
 right
 </entry>
 <entry>
-negation
+logical negation
 </entry>
 </row>
 <row>
@@ -494,11 +491,14 @@ logical union
 	<ENTRY>Natural Exponentiation</ENTRY>
 	<ENTRY>: 3.0</ENTRY>
        </ROW>
+<!--
+Deprecated in v7.0, esp. since ln() is available as a generic function.
        <ROW>
 	<ENTRY> ; </ENTRY>
 	<ENTRY>Natural Logarithm</ENTRY>
 	<ENTRY>(; 5.0)</ENTRY>
        </ROW>
+-->
        <ROW>
 	<ENTRY> @ </ENTRY>
 	<ENTRY>Absolute value</ENTRY>
@@ -527,8 +527,8 @@ logical union
    <para>
     <note>
      <para>
-      The operators ":" and ";" are deprecated, and will be removed in
-      the near future.  Use the equivalent functions exp() and ln()
+      Two operators, ":" and ";", are now deprecated and will be removed in
+      the next release.  Use the equivalent functions exp() and ln()
       instead.
      </para>
     </note>

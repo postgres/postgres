@@ -354,7 +354,8 @@ CREATE MEMSTORE ON &lt;table&gt; COLUMNS &lt;cols&gt;
     is an index built over a subset of a table; the subset is defined by
     a predicate.  <productname>Postgres</productname>
     supported partial indices with arbitrary
-    predicates.  I believe IBM's db2 for as/400 supports partial indices
+    predicates.  I believe IBM's <productname>DB2</productname>
+    for AS/400 supports partial indices
     using single-clause predicates.
    </para>
 

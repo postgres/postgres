@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.9 2000/03/31 03:27:40 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.10 2000/05/02 20:01:51 thomas Exp $
 
 Postgres quick Installation Guide.
 - thomas 1998-10-26
@@ -28,27 +28,27 @@ Postgres quick Installation Guide.
 <!entity biblio   SYSTEM "biblio.sgml">
 ]>
 
-<book>
+<book id="installation">
 
 <!-- Title information -->
 
-<title>PostgreSQL Installation Guide</title>
-<bookinfo>
-    <releaseinfo>Covering v6.5 for general release</releaseinfo>
-    <bookbiblio>
-    <authorgroup>
-      <corpauthor>The PostgreSQL Development Team</corpauthor>
-    </authorgroup>
+ <title>PostgreSQL Installation Guide</title>
+ <bookinfo>
+  <releaseinfo>Covering v7.0 for general release</releaseinfo>
+  <bookbiblio>
+   <authorgroup>
+    <corpauthor>The PostgreSQL Development Team</corpauthor>
+   </authorgroup>
 <!-- editor in authorgroup is not supported
     <AuthorGroup>
 -->
-      <editor>
-        <firstname>Thomas</firstname>
-        <surname>Lockhart</surname>
-        <affiliation>
-          <orgname>Caltech/JPL</orgname>
-        </affiliation>
-      </editor>
+   <editor>
+    <firstname>Thomas</firstname>
+    <surname>Lockhart</surname>
+    <affiliation>
+     <orgname>Caltech/JPL</orgname>
+    </affiliation>
+   </editor>
 <!--
     </AuthorGroup>
 -->
@@ -57,17 +57,17 @@ Postgres quick Installation Guide.
     <AuthorInitials>TGL</AuthorInitials>
 -->
 
-    <date>(last updated 1999-06-01)</date>
-    </bookbiblio>
+   <date>(last updated 2000-05-01)</date>
+  </bookbiblio>
 
-<legalnotice>
-<para>
-<productname>PostgreSQL</productname> is Copyright &copy; 1996-9
-by the Postgres Global Development Group.
-</para>
-</legalnotice>
+  <legalnotice>
+   <para>
+    <productname>PostgreSQL</productname> is Copyright &copy; 1996-2000
+    by PostgreSQL Inc.
+   </para>
+  </legalnotice>
 
-</bookinfo>
+ </bookinfo>
 
 <!--
 <TOC> </TOC>
@@ -82,38 +82,38 @@ Your name here...
 </Dedication>
 -->
 
-<preface>
-<title>Summary</title>
+ <preface>
+  <title>Summary</title>
 
-<para>
-<productname>Postgres</productname>, 
- developed originally in the UC Berkeley Computer Science Department,
- pioneered many of the object-relational concepts
- now becoming available in some commercial databases.
-It provides SQL92/SQL3 language support,
- transaction integrity, and type extensibility.
- <productname>PostgreSQL</productname> is an open-source descendant
- of this original Berkeley code.
-</para>
-</preface>
+  <para>
+   <productname>Postgres</productname>, 
+   developed originally in the UC Berkeley Computer Science Department,
+   pioneered many of the object-relational concepts
+   now becoming available in some commercial databases.
+   It provides SQL92/SQL3 language support,
+   transaction integrity, and type extensibility.
+   <productname>PostgreSQL</productname> is an open-source descendant
+   of this original Berkeley code.
+  </para>
+ </preface>
 
-<chapter>
-<title>Introduction</title>
+ <chapter>
+  <title>Introduction</title>
 
-<para>
-This installation procedure makes some assumptions about the desired configuration
-and runtime environment for your system. This may be adequate for many installations,
-and is almost certainly adequate for a first installation. But you may want to
-do an initial installation up to the point of unpacking the source tree
-and installing documentation, and then print or browse the 
-<citetitle>Administrator's Guide</citetitle>.</para>
+  <para>
+   This installation procedure makes some assumptions about the desired configuration
+   and runtime environment for your system. This may be adequate for many installations,
+   and is almost certainly adequate for a first installation. But you may want to
+   do an initial installation up to the point of unpacking the source tree
+   and installing documentation, and then print or browse the 
+   <citetitle>Administrator's Guide</citetitle>.</para>
 
-</chapter>
+ </chapter>
 
-&ports;
-&install;
-&config;
-&release;
+ &ports;
+ &install;
+ &config;
+ &release;
 
 <!--
 <INDEX> </INDEX>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.28 2000/04/15 23:29:58 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.29 2000/05/02 20:02:03 thomas Exp $
 Postgres documentation
 -->
 
@@ -905,13 +905,12 @@ ERROR: Cannot insert a duplicate key into a unique index.
     REFERENCES Constraint
    </title>
    <synopsis>
-[ CONSTRAINT <replaceable class="parameter">name</replaceable> ] REFERENCES 
-<replaceable class="parameter">reftable</replaceable> [ ( <replaceable class="parameter">refcolumn</replaceable> ) ] 
-[ MATCH <replaceable class="parameter">matchtype</replaceable> ]
-[ ON DELETE <replaceable class="parameter">action</replaceable> ] 
-[ ON UPDATE <replaceable class="parameter">action</replaceable> ]
-[ [ NOT ] DEFERRABLE ] 
-[ INITIALLY <replaceable class="parameter">checktime</replaceable> ]
+[ CONSTRAINT <replaceable class="parameter">name</replaceable> ] REFERENCES <replaceable class="parameter">reftable</replaceable> [ ( <replaceable class="parameter">refcolumn</replaceable> ) ] 
+    [ MATCH <replaceable class="parameter">matchtype</replaceable> ]
+    [ ON DELETE <replaceable class="parameter">action</replaceable> ] 
+    [ ON UPDATE <replaceable class="parameter">action</replaceable> ]
+    [ [ NOT ] DEFERRABLE ] 
+    [ INITIALLY <replaceable class="parameter">checktime</replaceable> ]
    </synopsis>
    <para>
     The REFERENCES constraint specifies a rule that a column
@@ -1448,14 +1447,13 @@ CREATE TABLE distributors (
     REFERENCES Constraint
    </title>
    <synopsis>
-[ CONSTRAINT <replaceable class="parameter">name</replaceable> ] 
-FOREIGN KEY ( <replaceable class="parameter">column</replaceable> [, ...] ) REFERENCES 
-<replaceable class="parameter">reftable</replaceable> [ ( <replaceable class="parameter">refcolumn</replaceable> [, ...] ) ] 
-[ MATCH <replaceable class="parameter">matchtype</replaceable> ]
-[ ON DELETE <replaceable class="parameter">action</replaceable> ] 
-[ ON UPDATE <replaceable class="parameter">action</replaceable> ]
-[ [ NOT ] DEFERRABLE ]
-[ INITIALLY <replaceable class="parameter">checktime</replaceable> ]
+[ CONSTRAINT <replaceable class="parameter">name</replaceable> ] FOREIGN KEY ( <replaceable class="parameter">column</replaceable> [, ...] )
+    REFERENCES <replaceable class="parameter">reftable</replaceable> [ ( <replaceable class="parameter">refcolumn</replaceable> [, ...] ) ] 
+    [ MATCH <replaceable class="parameter">matchtype</replaceable> ]
+    [ ON DELETE <replaceable class="parameter">action</replaceable> ] 
+    [ ON UPDATE <replaceable class="parameter">action</replaceable> ]
+    [ [ NOT ] DEFERRABLE ]
+    [ INITIALLY <replaceable class="parameter">checktime</replaceable> ]
    </synopsis>
    <para>
     The REFERENCES constraint specifies a rule that a column value is
@@ -1901,7 +1899,7 @@ CREATE TEMPORARY TABLE actors (
      Table Constraint definition:
 
      <synopsis>
-[ CONSTRAINT name ] UNIQUE ( column [, ...] )
+[ CONSTRAINT <replaceable>name</replaceable> ] UNIQUE ( <replaceable>column</replaceable> [, ...] )
     [ { INITIALLY DEFERRED | INITIALLY IMMEDIATE } ]
     [ [ NOT ] DEFERRABLE ]
      </synopsis>
@@ -1911,7 +1909,7 @@ CREATE TEMPORARY TABLE actors (
      Column Constraint definition:
 
      <synopsis>
-[ CONSTRAINT name ] UNIQUE
+[ CONSTRAINT <replaceable>name</replaceable> ] UNIQUE
       [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
       [ [ NOT ] DEFERRABLE ]
      </synopsis>
@@ -1928,7 +1926,7 @@ CREATE TEMPORARY TABLE actors (
 	included for symmetry with the NOT NULL clause. Since it is the
 	default for any column, its presence is simply noise.
      <synopsis>
-[ CONSTRAINT name ] NULL 
+[ CONSTRAINT <replaceable>name</replaceable> ] NULL 
      </synopsis>
     </para>
    </refsect3>
@@ -1941,7 +1939,7 @@ CREATE TEMPORARY TABLE actors (
      
      SQL92 specifies some additional capabilities for NOT NULL:
      <synopsis>
-[ CONSTRAINT name ] NOT NULL 
+[ CONSTRAINT <replaceable>name</replaceable> ] NOT NULL 
     [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
     [ [ NOT ] DEFERRABLE ]
      </synopsis>
@@ -1965,9 +1963,7 @@ the column. Not our problem...
      or a domain.
     </para>
     <synopsis>
-     DEFAULT niladic USER function |
-             niladic datetime function |
-             NULL
+DEFAULT niladic_user_function | niladic_datetime_function | NULL
     </synopsis>
    </refsect3>
 -->
@@ -1994,7 +1990,7 @@ the column. Not our problem...
      as an alternate method for defining a constraint:
     </para>
     <synopsis>
-CREATE ASSERTION name CHECK ( condition )
+CREATE ASSERTION <replaceable>name</replaceable> CHECK ( <replaceable>condition</replaceable> )
     </synopsis>
     
     <para>
@@ -2005,7 +2001,7 @@ CREATE ASSERTION name CHECK ( condition )
      Domain constraint: 
 
      <synopsis>
-[ CONSTRAINT name ] CHECK constraint 
+[ CONSTRAINT <replaceable>name</replaceable> ] CHECK <replaceable>constraint</replaceable> 
     [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
     [ [ NOT ] DEFERRABLE ]
      </synopsis>
@@ -2015,7 +2011,7 @@ CREATE ASSERTION name CHECK ( condition )
      Table constraint definition:
 
      <synopsis>
-[ CONSTRAINT name ] { PRIMARY KEY ( <replaceable class="parameter">column</replaceable>, ... ) | FOREIGN KEY constraint | UNIQUE constraint | CHECK constraint }
+[ CONSTRAINT <replaceable>name</replaceable> ] { PRIMARY KEY ( <replaceable class="parameter">column</replaceable>, ... ) | FOREIGN KEY <replaceable>constraint</replaceable> | UNIQUE <replaceable>constraint</replaceable> | CHECK <replaceable>constraint</replaceable> }
     [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
     [ [ NOT ] DEFERRABLE ]
      </synopsis>
@@ -2025,7 +2021,7 @@ CREATE ASSERTION name CHECK ( condition )
      Column constraint definition:
 
      <synopsis>
-[ CONSTRAINT name ] { NOT NULL | PRIMARY KEY | FOREIGN KEY constraint | UNIQUE | CHECK constraint }  
+[ CONSTRAINT <replaceable>name</replaceable> ] { NOT NULL | PRIMARY KEY | FOREIGN KEY <replaceable>constraint</replaceable> | UNIQUE | CHECK <replaceable>constraint</replaceable> }  
     [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
     [ [ NOT ] DEFERRABLE ]
      </synopsis>
@@ -2067,8 +2063,8 @@ CREATE ASSERTION name CHECK ( condition )
        <term>INITIALLY IMMEDIATE</term>
        <listitem>
 	<para>
-	     Check constraint only at the end of the transaction. This
-	     is the default
+	 Check constraint only at the end of the transaction. This
+	 is the default
 	</para>
        </listitem>
       </varlistentry>
@@ -2076,7 +2072,7 @@ CREATE ASSERTION name CHECK ( condition )
        <term>INITIALLY DEFERRED</term>
        <listitem>
 	<para>
-	     Check constraint after each statement.
+	 Check constraint after each statement.
 	</para>
        </listitem>
       </varlistentry>
@@ -2106,7 +2102,7 @@ affect a column or a table.
     <para>
      table constraint definition:
      <synopsis>
-[ CONSTRAINT name ] CHECK ( VALUE condition ) 
+[ CONSTRAINT <replaceable>name</replaceable> ] CHECK ( VALUE <replaceable>condition</replaceable> ) 
       [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
       [ [ NOT ] DEFERRABLE ]
      </synopsis>
@@ -2115,7 +2111,7 @@ affect a column or a table.
     <para>
      column constraint definition:
     <synopsis>
-[ CONSTRAINT name ] CHECK ( VALUE condition ) 
+[ CONSTRAINT <replaceable>name</replaceable> ] CHECK ( VALUE <replaceable>condition</replaceable> ) 
       [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
       [ [ NOT ] DEFERRABLE ]
     </synopsis>
@@ -2125,7 +2121,7 @@ affect a column or a table.
      domain constraint definition: 
     </para>
     <synopsis>
-     [ CONSTRAINT name ] 
+     [ CONSTRAINT name] 
       CHECK ( VALUE condition ) 
       [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
       [ [ NOT ] DEFERRABLE ]
@@ -2154,7 +2150,7 @@ ALTER DOMAIN cities
     <para>
      Table Constraint definition:
      <synopsis>
-[ CONSTRAINT name ] PRIMARY KEY ( column [, ...] ) 
+[ CONSTRAINT <replaceable>name</replaceable> ] PRIMARY KEY ( <replaceable>column</replaceable> [, ...] ) 
     [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
     [ [ NOT ] DEFERRABLE ]
      </synopsis>
@@ -2162,7 +2158,7 @@ ALTER DOMAIN cities
     <para>
      Column Constraint definition: 
      <synopsis>
-[ CONSTRAINT name ] PRIMARY KEY 
+[ CONSTRAINT <replaceable>name</replaceable> ] PRIMARY KEY 
     [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
     [ [ NOT ] DEFERRABLE ]
      </synopsis>

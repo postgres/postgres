@@ -29,7 +29,7 @@
   <title>Identifying Bugs</title>
 
   <para>
-   Before you ask <quote>Is this a bug?</quote>, please read and re-read the
+   Before you ask "Is this a bug?", please read and re-read the
    documentation to verify that you can really do whatever it is you are
    trying. If it is not clear from the documentation whether you can do
    something or not, please report that too; it's a bug in the documentation.
@@ -42,7 +42,7 @@
      <para>
       A program terminates with a fatal signal or an operating system
       error message that would point to a problem in the program (a
-      counterexample might be a <quote>disk full</quote> message,
+      counterexample might be a "disk full" message,
       since that must be fixed outside of <productname>Postgres</productname>).
      </para>
     </listitem>
@@ -73,7 +73,7 @@
     </listitem>
    </itemizedlist>
 
-   Here <quote>program</quote> refers to any executable, not only the backend server.
+   Here "<literal>program</literal>" refers to any executable, not only the backend server.
   </para>
 
   <para>
@@ -96,7 +96,7 @@
   <para>
    The most important thing to remember about bug reporting is to state all
    the facts and only facts. Do not speculate what you think went wrong, what
-   <quote>it seemed to do</quote>, or which part of the program has a fault.
+   "it seemed to do", or which part of the program has a fault.
    If you are not familiar with the implementation you would probably guess
    wrong and not help us a bit. And even if you are, educated explanations are
    a great supplement to but no substitute for facts. If we are going to fix
@@ -104,7 +104,7 @@
    Reporting the bare facts
    is relatively straightforward (you can probably copy and paste them from the
    screen) but all too often important details are left out because someone
-   thought it doesn't matter or the report would <quote>ring a bell</quote>
+   thought it doesn't matter or the report would be understood
    anyway.
   </para>
 
@@ -134,14 +134,15 @@
       please try to isolate the offending queries. We probably won't set up a
       web server to reproduce your problem. In any case remember to provide
       the exact input files, do not guess that the problem happens for
-      <quote>large files</quote> or <quote>mid-size databases</quote>, etc.
+      "large files" or "mid-size databases", etc. since this
+      information is too inexact to be of use.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      The output you got. Please do not say that it <quote>didn't work</quote> or
-      <quote>failed</quote>. If there is an error message,
+      The output you got. Please do not say that it "didn't work" or
+      "failed". If there is an error message,
       show it, even if you don't understand it. If the program terminates with
       an operating system error, say which. If nothing at all happens, say so.
       Even if the result of your test case is a program crash or otherwise obvious
@@ -161,12 +162,12 @@
     <listitem>
      <para>
       The output you expected is very important to state. If you just write
-      <quote>This command gives me that output.</quote> or <quote>This is not
-      what I expected.</quote>, we might run it ourselves, scan the output, and
+      "This command gives me that output." or "This is not
+      what I expected.", we might run it ourselves, scan the output, and
       think it looks okay and is exactly what we expected. We shouldn't have to
       spend the time to decode the exact semantics behind your commands.
-      Especially refrain from merely saying that <quote>This is not what SQL says/Oracle
-      does.</quote> Digging out the correct behavior from <acronym>SQL</acronym>
+      Especially refrain from merely saying that "This is not what SQL says/Oracle
+      does." Digging out the correct behavior from <acronym>SQL</acronym>
       is not a fun undertaking, nor do we all know how all the other relational
       databases out there behave. (If your problem is a program crash you can
       obviously omit this item.)
@@ -191,14 +192,15 @@
 
     <listitem>
      <para>
-      The PostgreSQL version. You can run the command
+      The <productname>PostgreSQL</productname> version. You can run the command
       <literal>SELECT version();</literal> to
-      find out. If this function does not exist, say so, then we know that
+      find out what version you are currently running.
+      If this function does not exist, say so, then we know that
       your version is old enough. If you can't start up the server or a
       client, look into the README file in the source directory or at the
       name of your distribution file or package name. If your version is older
-      than 6.5 we will almost certainly tell you to upgrade. There are tons
-      of bugs in old versions, that's why we write new ones.
+      than 7.0 we will almost certainly tell you to upgrade. There are tons
+      of bug fixes in each new version, that's why we write them.
      </para>
      <para>
       If you run a pre-packaged version, such as RPMs, say so, including any
@@ -212,7 +214,7 @@
       Platform information. This includes the kernel name and version, C library,
       processor, memory information. In most cases it is sufficient to report
       the vendor and version, but do not assume everyone knows what exactly
-      <quote>Debian</quote> contains or that everyone runs on Pentiums. If
+      "Debian" contains or that everyone runs on Pentiums. If
       you have installation problems information about compilers, make, etc.
       is also necessary.
      </para>
@@ -235,12 +237,12 @@
 
   <para>
    When writing a bug report, please choose non-confusing terminology.
-   The software package as such is called <quote>PostgreSQL</quote>,
-   sometimes <quote>Postgres</quote> for short. (Sometimes
-   the abbreviation <quote>Pgsql</quote> is used but don't do that.) When you
+   The software package as such is called "PostgreSQL",
+   sometimes "Postgres" for short. (Sometimes
+   the abbreviation "Pgsql" is used but don't do that.) When you
    are specifically talking about the backend server, mention that, don't
-   just say <quote>Postgres crashes</quote>. The interactive frontend is called
-   <quote>psql</quote> and is for all intends and purposes completely separate
+   just say "Postgres crashes". The interactive frontend is called
+   "psql" and is for all intends and purposes completely separate
    from the backend.
   </para>
  </sect2>
@@ -249,35 +251,49 @@
   <title>Where to report bugs</title>
 
   <para>
-   In general, send bug reports to &lt;pgsql-bugs@postgresql.org&gt;. You are
-   invited to find a descriptive subject for your email message, perhaps parts
-   of the error message.
+   In general, send bug reports to
+   <ulink url="mailto:pgsql-bugs@postgresql.org">the bug report
+    mailing list</ulink>.
+   You are invited to find a descriptive subject for your email
+   message, perhaps parts of the error message.
   </para>
 
   <para> 
    Do not send bug reports to any of the user mailing lists, such as
-   pgsql-sql or pgsql-general. These mailing lists are for answering
-   user questions, their subscribers normally do not wish to receive
+
+   <ulink url="mailto:pgsql-sql@postgresql.org">the SQL language
+    mailing list</ulink>
+   or
+   <ulink url="mailto:pgsql-general@postgresql.org">the general topics
+    mailing list</ulink>.
+   These mailing lists are for answering
+   user questions and their subscribers normally do not wish to receive
    bug reports. More importantly, they are unlikely to fix them.
   </para>
 
   <para>
    Also, please do <emphasis>not</emphasis> send reports to
-   &lt;pgsql-hackers@postgresql.org&gt;. This list is for discussing the
-   development of <productname>PostgreSQL</productname>, it would be nice
-   if we could keep the bug reports separate. We might choose take up a
+   <ulink url="mailto:pgsql-hackers@postgresql.org">the developers'
+    mailing list</ulink>.
+   This list is for discussing the
+   development of <productname>PostgreSQL</productname> and it would be nice
+   if we could keep the bug reports separate. We might choose to take up a
    discussion
    about your bug report on it, if the bug needs more review.
   </para>
 
   <para>
    If you have a problem with the documentation, send email to
-   &lt;pgsql-docs@postgresql.org&gt;. Refer to the document, chapter, and sections.
+   <ulink url="mailto:pgsql-docs@postgresql.org">the documentation
+    mailing list</ulink>.
+   Mention the document, chapter, and sections in your problem report.
   </para>
  
   <para>
-   If your bug is a portability problem on a non-supported platform, send
-   mail to &lt;pgsql-ports@postgresql.org&gt;, so we (and you) can work on
+   If your bug is a portability problem on a non-supported platform,
+   send mail to
+   <ulink url="mailto:pgsql-ports@postgresql.org">the porting issues mail list</ulink>,
+   so we (and you) can work on
    porting <productname>PostgreSQL</productname> to your platform.
   </para>
 
@@ -287,10 +303,11 @@
     email addresses are closed mailing lists. That is, you need to be
     subscribed to them in order to be allowed to post. If you simply
     want to send mail but do not want to receive list traffic, you can
-    subscribe to the special pgsql-loophole <quote>list</quote>, which
+    subscribe to the special pgsql-loophole mailing list, which
     allows you to post to all <productname>PostgreSQL</productname>
     mailing lists without receiving any messages. Send email to
-    &lt;pgsql-loophole-request@postgresql.org&gt; to subscribe.
+    <ulink url="mailto:pgsql-loophole-request@postgresql.org">pgsql-loophole-request@postgresql.org</ulink>
+    to subscribe.
    </para>
   </note>
  </sect2>

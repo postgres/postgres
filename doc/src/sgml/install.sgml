@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/install.sgml,v 1.40 2000/04/14 23:04:44 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/install.sgml,v 1.41 2000/05/02 20:01:51 thomas Exp $
 -->
 
  <chapter id="install">
@@ -33,7 +33,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/install.sgml,v 1.40 2000/04/14 23:04:
     work with other <application>make</application> programs. On GNU/Linux systems
     GNU make is the default tool, on other systems you may find that
     GNU <application>make</application> is installed under the name
-    <quote>gmake</quote>.
+    <literal>gmake</literal>.
     We will use that name from now on to indicate <acronym>GNU</acronym>
     <application>make</application>, no matter what name it has on your system.
     To test for <acronym>GNU</acronym> <application>make</application> enter
@@ -612,23 +612,28 @@ libpq.so.2.1: cannot open shared object file: No such file or directory
       Run the regression tests against the installed server (using the sequential
       test method).  If you didn't run the tests before installation, you should
       definitely do it now.
-      For detailed instructions see <xref endterm="regress-title"
-       linkend="regress">.
+      For detailed instructions see
+      <xref endterm="regress-title" linkend="regress">.
      </para>
     </listitem>
 
    </itemizedlist>
 
    <para>
-    To start <quote>playing around</quote>, set up the paths as explained above
+    To start experimenting with <productname>Postgres</productname>,
+    set up the paths as explained above
     and start the server. To create a database, type
+
     <programlisting>
 &gt; createdb testdb
     </programlisting>
+
     Then enter
+
     <programlisting>
 &gt; psql testdb
     </programlisting>
+
     to connect to that database. At the prompt you can enter SQL commands
     and start experimenting.
    </para>

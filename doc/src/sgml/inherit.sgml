@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/inherit.sgml,v 1.6 2000/03/31 03:27:40 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/inherit.sgml,v 1.7 2000/05/02 20:01:51 thomas Exp $
 -->
 
  <chapter id="inherit">
@@ -78,12 +78,12 @@ SELECT c.name, c.altitude
  Madison   |      845
 </programlisting>
 
-   Here the <quote>*</quote> after cities indicates that the query should
+   Here the "*" after cities indicates that the query should
    be  run over cities and all classes below cities in the
    inheritance hierarchy.  Many of the  commands  that  we
    have  already discussed -- <command>SELECT</command>,
    <command>UPDATE</command> and <command>DELETE</command> --
-   support this <quote>*</quote> notation, as do others, like
+   support this "*" notation, as do others, like
    <command>ALTER TABLE</command>.
   </para>
  </chapter>

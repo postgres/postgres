@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.37 2000/04/25 16:39:07 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.38 2000/05/02 20:01:52 thomas Exp $
 -->
 
  <chapter id="libpq-chapter">
@@ -8,11 +8,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.37 2000/04/25 16:39:07 momji
   <para>
    <filename>libpq</filename> is the <acronym>C</acronym>
    application programmer's interface to
-   <productname>PostgreSQL</productname>.  <filename>libpq</filename> is a set
+   <productname>Postgres</productname>.  <filename>libpq</filename> is a set
    of library routines that allow client programs to pass queries to the
    <productname>Postgres</productname> backend server and to receive the
    results of these queries.  <filename>libpq</filename> is also the
-   underlying engine for several other <productname>PostgreSQL</productname>
+   underlying engine for several other <productname>Postgres</productname>
    application interfaces, including <filename>libpq++</filename> (C++),
    <filename>libpgtcl</filename> (Tcl), <productname>Perl</productname>, and
    <filename>ecpg</filename>.  So some aspects of libpq's behavior will be
@@ -415,7 +415,7 @@ struct PQconninfoOption
     is leaked for each call to PQconndefaults().
    </para>
    <para>
-    In PostgreSQL versions before 7.0, PQconndefaults() returned a pointer
+    In Postgres versions before 7.0, PQconndefaults() returned a pointer
     to a static array, rather than a dynamically allocated array.  That
     wasn't thread-safe, so the behavior has been changed.
    </para>
@@ -484,7 +484,7 @@ libpq application programmers should be careful to
 maintain the PGconn abstraction.  Use the accessor functions below to get
 at the contents of PGconn.  Avoid directly referencing the fields of the
 PGconn structure because they are subject to change in the future.
-(Beginning in <productname>PostgreSQL</productname> release 6.4, the
+(Beginning in <productname>Postgres</productname> release 6.4, the
 definition of struct PGconn is not even provided in <filename>libpq-fe.h</filename>.
 If you have old code that accesses PGconn fields directly, you can keep using it
 by including <filename>libpq-int.h</filename> too, but you are encouraged to fix the code
@@ -985,7 +985,7 @@ and is not thread-safe.
 <function>PQprint</function>
           Prints out all the  tuples  and,  optionally,  the
           attribute  names  to  the specified output stream.
-<synopsis>
+       <synopsis>
 void PQprint(FILE* fout,      /* output stream */
              const PGresult *res,
              const PQprintOpt *po);
@@ -998,11 +998,11 @@ struct {
     pqbool  expanded;    /* expand tables */
     pqbool  pager;       /* use pager for output if needed */
     char    *fieldSep;   /* field separator */
-    char    *tableOpt;   /* insert to HTML &lt;table ...&gt; */
-    char    *caption;    /* HTML &lt;caption&gt; */
+    char    *tableOpt;   /* insert to HTML <replaceable>table ...</replaceable> */
+    char    *caption;    /* HTML <replaceable>caption</replaceable> */
     char    **fieldName; /* null terminated array of replacement field names */
 } PQprintOpt;
-</synopsis>
+       </synopsis>
 This function was formerly used by <application>psql</application>
 to print query results, but this is no longer the case and this
 function is no longer actively supported.
@@ -1342,7 +1342,7 @@ is not currently open or the backend is not currently processing a query.
 <title>Fast Path</title>
 
 <para>
-<productname>PostgreSQL</productname> provides a fast path interface to send
+<productname>Postgres</productname> provides a fast path interface to send
 function calls to the backend.  This is a trapdoor into system internals and
 can be a potential security hole.  Most users will not need this feature.
 
@@ -1398,7 +1398,7 @@ typedef struct {
 <title>Asynchronous Notification</title>
 
 <para>
-<productname>PostgreSQL</productname> supports asynchronous notification via the
+<productname>Postgres</productname> supports asynchronous notification via the
 LISTEN and NOTIFY commands.  A backend registers its interest in a particular
 notification condition with the LISTEN command (and can stop listening
 with the UNLISTEN command).  All backends listening on a
@@ -1438,7 +1438,7 @@ be sure to free it with <function>free()</function> to avoid a memory leak.
 </para>
 <note>
 <para>
- In <productname>PostgreSQL</productname> 6.4 and later,
+ In <productname>Postgres</productname> 6.4 and later,
  the <literal>be_pid</literal> is the notifying backend's,
  whereas in earlier versions it was always your own backend's <acronym>PID</acronym>.
 </para>
@@ -1484,7 +1484,7 @@ if any notifications came in during the processing of the query.
 <title>Functions Associated with the COPY Command</title>
 
 <para>
- The COPY command in <productname>PostgreSQL</productname> has options to  read  from
+ The COPY command in <productname>Postgres</productname> has options to  read  from
  or  write  to  the  network  connection  used by <filename>libpq</filename>.
  Therefore, functions are necessary to access this  network
  connection directly so applications may take advantage of this capability.
@@ -1568,7 +1568,7 @@ The data returned will not extend beyond a newline character.  If possible
 a whole line will be returned at one time.  But if the buffer offered by
 the caller is too small to hold a line sent by the backend, then a partial
 data line will be returned.  This can be detected by testing whether the
-last returned byte is <quote><literal>\n</literal></quote> or not.
+last returned byte is "<literal>\n</literal>" or not.
 The returned string is not null-terminated.  (If you want to add a
 terminating null, be sure to pass a bufsize one smaller than the room
 actually available.)
@@ -1585,7 +1585,7 @@ int PQputline(PGconn *conn,
               const char *string);
 </synopsis>
 Note the application must explicitly  send  the  two
-characters  <quote><literal>\.</literal></quote> on a final line  to indicate to
+characters  "<literal>\.</literal>" on a final line  to indicate to
 the backend that it has finished sending its data.
 </para>
 </listitem>
@@ -1615,7 +1615,7 @@ specified directly.
  sent  to  the  backend using <function>PQputline</function> or when the
  last string has been  received  from  the  backend
  using <function>PGgetline</function>.  It must be issued or the backend
- may get <quote>out of sync</quote>  with  the  frontend.   Upon
+ may get "out of sync"  with  the  frontend.   Upon
  return from this function, the backend is ready to
  receive the next query.
  The return value is 0  on  successful  completion,
@@ -1718,7 +1718,7 @@ PQsetNoticeProcessor(PGconn *conn,
 </para>
 
 <para>
-By default, <application>libpq</application> prints <quote>notice</quote>
+By default, <application>libpq</application> prints "notice"
 messages from the backend on <filename>stderr</filename>,
 as well as a few error messages that it generates by itself.
 This behavior can be overridden by supplying a callback function that
@@ -1777,14 +1777,14 @@ Without a host name, libpq will connect using a local Unix domain socket.
 <listitem>
 <para>
 <envar>PGPORT</envar>  sets the default port or local Unix domain socket
-file extension for communicating with the <productname>PostgreSQL</productname>
+file extension for communicating with the <productname>Postgres</productname>
 backend.
 </para>
 </listitem>
 <listitem>
 <para>
 <envar>PGDATABASE</envar>  sets the default 
-<productname>PostgreSQL</productname> database name.
+<productname>Postgres</productname> database name.
 </para>
 </listitem>
 <listitem>
@@ -1802,8 +1802,8 @@ sets the password used if the backend demands password authentication.
 <listitem>
 <para>
 <envar>PGREALM</envar> sets the Kerberos realm to  use  with  
-<productname>PostgreSQL</productname>, if  it is different from the local realm.
-If <envar>PGREALM</envar> is set, <productname>PostgreSQL</productname> 
+<productname>Postgres</productname>, if  it is different from the local realm.
+If <envar>PGREALM</envar> is set, <productname>Postgres</productname> 
 applications  will  attempt authentication  with  servers for this realm and use
 separate ticket files to avoid conflicts with  local
 ticket  files.   This  environment  variable is only
@@ -1813,7 +1813,7 @@ used if Kerberos authentication is selected by the backend.
 <listitem>
 <para>
 <envar>PGOPTIONS</envar> sets additional runtime  options  for  
-the <productname>PostgreSQL</productname> backend.
+the <productname>Postgres</productname> backend.
 </para>
 </listitem>
 <listitem>
@@ -1878,7 +1878,7 @@ for information on correct values for these environment variables.
 
 <para>
 <filename>libpq</filename> is thread-safe as of
-<productname>PostgreSQL</productname> 7.0, so long as no two threads
+<productname>Postgres</productname> 7.0, so long as no two threads
 attempt to manipulate the same PGconn object at the same time.  In particular,
 you can't issue concurrent queries from different threads through the same
 connection object.  (If you need to run concurrent queries, start up multiple

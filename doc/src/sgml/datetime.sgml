@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.8 2000/03/31 03:27:40 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.9 2000/05/02 20:01:51 thomas Exp $
 Date/time details
 -->
 
@@ -645,7 +645,7 @@ Date/time details
   </para>
 
   <para>
-   <quote>Julian Day</quote> is different from <quote>Julian Date</quote>.
+   "Julian Day" is different from "Julian Date".
 
    The Julian calendar was introduced by Julius Caesar in 45 BC. It was
    in common use until the 1582, when countries started changing to the
