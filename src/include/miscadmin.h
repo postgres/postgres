@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.52 2000/02/21 02:42:37 inoue Exp $
+ * $Id: miscadmin.h,v 1.53 2000/02/22 09:55:20 inoue Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -214,7 +214,7 @@ extern ProcessingMode Mode;
 extern void IgnoreSystemIndexes(bool mode);
 extern bool IsIgnoringSystemIndexes(void);
 extern bool IsCacheInitialized(void);
-extern void SetLockWaiting(bool);
+extern void SetWaitingForLock(bool);
 
 /* 
  * "postmaster.pid" is a file containing postmaster's pid, being

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.68 2000/02/21 02:42:36 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.69 2000/02/22 09:55:20 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.68 2000/02/21 02:42:36 inoue Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.69 2000/02/22 09:55:20 inoue Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -74,6 +74,7 @@
 
 void HandleDeadLock(SIGNAL_ARGS);
 static void ProcFreeAllSemaphores(void);
+static bool GetOffWaitqueue(PROC *);
 
 #define DeadlockCheckTimer pg_options[OPT_DEADLOCKTIMEOUT]
 
@@ -316,9 +317,10 @@ InitProcess(IPCKey key)
  * get off the wait queue
  * -----------------------
  */
-static void
+static bool
 GetOffWaitqueue(PROC *proc)
 {
+	bool	getoffed = false;
 	LockLockTable();
 	if (proc->links.next != INVALID_OFFSET)
 	{
@@ -334,11 +336,12 @@ GetOffWaitqueue(PROC *proc)
 		if (proc->waitLock->activeHolders[lockmode] ==
 			proc->waitLock->holders[lockmode])
 			proc->waitLock->waitMask &= ~(1 << lockmode);
+		getoffed = true;
 	}
 	SHMQueueElemInit(&(proc->links));
 	UnlockLockTable();
 
-	return;
+	return getoffed;
 }
 /*
  * ProcReleaseLocks() -- release all locks associated with this process
@@ -478,6 +481,23 @@ ProcQueueInit(PROC_QUEUE *queue)
 }
 
 
+static bool	lockWaiting = false;
+void	SetWaitingForLock(bool waiting)
+{
+	lockWaiting = waiting;
+}
+void	LockWaitCancel(void)
+{
+	struct itimerval timeval, dummy;
+
+	if (!lockWaiting)	return;
+	lockWaiting = false;
+	/* Deadlock timer off */
+	MemSet(&timeval, 0, sizeof(struct itimerval));
+	setitimer(ITIMER_REAL, &timeval, &dummy);
+	if (GetOffWaitqueue(MyProc))
+		elog(ERROR, "Query cancel requested while waiting lock");
+}
 
 /*
  * ProcSleep -- put a process to sleep
@@ -590,7 +610,7 @@ ins:;
 	timeval.it_value.tv_sec = \
 		(DeadlockCheckTimer ? DeadlockCheckTimer : DEADLOCK_CHECK_TIMER);
 
-	SetLockWaiting(true);
+	lockWaiting = true;
 	do
 	{
 		MyProc->errType = NO_ERROR;		/* reset flag after deadlock check */
@@ -610,7 +630,7 @@ ins:;
 						 IpcExclusiveLock);
 	} while (MyProc->errType == STATUS_NOT_FOUND);		/* sleep after deadlock
 														 * check */
-	SetLockWaiting(false);
+	lockWaiting = false;
 
 	/* ---------------
 	 * We were awoken before a timeout - now disable the timer
@@ -824,6 +844,7 @@ HandleDeadLock(SIGNAL_ARGS)
 	 * ------------------------
 	 */
 	Assert(mywaitlock->waitProcs.size > 0);
+	lockWaiting = false;
 	--mywaitlock->waitProcs.size;
 	SHMQueueDelete(&(MyProc->links));
 	SHMQueueElemInit(&(MyProc->links));
