@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.59 1998/01/26 01:42:28 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.60 1998/01/28 03:42:27 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -584,7 +584,6 @@ connectDB(PGconn *conn)
 	 * authentication request.
 	 */
 
-	do
 	{
 		int beresp;
 
@@ -645,7 +644,6 @@ connectDB(PGconn *conn)
 					conn->errorMessage) != STATUS_OK)
 			goto connect_errReturn;
 	}
-	while (areq != AUTH_REQ_OK);
 
 	/* free the password so it's not hanging out in memory forever */
 	if (conn->pgpass != NULL)
