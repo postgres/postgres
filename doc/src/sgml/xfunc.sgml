@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.99 2005/02/21 06:12:14 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.100 2005/03/12 20:25:06 tgl Exp $
 -->
 
  <sect1 id="xfunc">
@@ -1188,10 +1188,10 @@ typedef struct
      them in and out of <productname>PostgreSQL</productname> functions.
      To return a value of such a type, allocate the right amount of
      memory with <literal>palloc</literal>, fill in the allocated memory,
-     and return a pointer to it.  (You can also return an input value
-     that has the same type as the return value directly by returning
-     the pointer to the input value.  <emphasis>Never</> modify the
-     contents of a pass-by-reference input value, however.)
+     and return a pointer to it.  (Also, if you just want to return the
+     same value as one of your input arguments that's of the same data type,
+     you can skip the extra <literal>palloc</literal> and just return the
+     pointer to the input value.)
     </para>
 
     <para>
@@ -1204,6 +1204,16 @@ typedef struct
      that is,  it  includes  the  size  of  the  length  field
      itself.
     </para>
+
+    <warning>
+     <para>
+      <emphasis>Never</> modify the contents of a pass-by-reference input
+      value.  If you do so you are likely to corrupt on-disk data, since
+      the pointer you are given may well point directly into a disk buffer.
+      The sole exception to this rule is explained in
+      <xref linkend="xaggr">.
+     </para>
+    </warning>
 
     <para>
      As an example, we can define the type <type>text</type> as

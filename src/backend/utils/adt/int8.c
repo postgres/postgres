@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.57 2004/12/31 22:01:22 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.58 2005/03/12 20:25:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 
 #include "funcapi.h"
 #include "libpq/pqformat.h"
+#include "nodes/nodes.h"
 #include "utils/int8.h"
 
 
@@ -649,17 +650,45 @@ int8mod(PG_FUNCTION_ARGS)
 Datum
 int8inc(PG_FUNCTION_ARGS)
 {
-	int64		arg = PG_GETARG_INT64(0);
-	int64		result;
+	if (fcinfo->context && IsA(fcinfo->context, AggState))
+	{
+		/*
+		 * Special case to avoid palloc overhead for COUNT(): when called
+		 * from nodeAgg, we know that the argument is modifiable local
+		 * storage, so just update it in-place.
+		 *
+		 * Note: this assumes int8 is a pass-by-ref type; if we ever support
+		 * pass-by-val int8, this should be ifdef'd out when int8 is
+		 * pass-by-val.
+		 */
+		int64	   *arg = (int64 *) PG_GETARG_POINTER(0);
+		int64		result;
 
-	result = arg + 1;
-	/* Overflow check */
-	if (arg > 0 && result < 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("bigint out of range")));
+		result = *arg + 1;
+		/* Overflow check */
+		if (result < 0 && *arg > 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("bigint out of range")));
 
-	PG_RETURN_INT64(result);
+		*arg = result;
+		PG_RETURN_POINTER(arg);
+	}
+	else
+	{
+		/* Not called by nodeAgg, so just do it the dumb way */
+		int64		arg = PG_GETARG_INT64(0);
+		int64		result;
+
+		result = arg + 1;
+		/* Overflow check */
+		if (result < 0 && arg > 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("bigint out of range")));
+
+		PG_RETURN_INT64(result);
+	}
 }
 
 Datum

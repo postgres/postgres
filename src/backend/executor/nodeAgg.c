@@ -40,12 +40,28 @@
  *	  is used to run finalize functions and compute the output tuple;
  *	  this context can be reset once per output tuple.
  *
+ *	  Beginning in PostgreSQL 8.1, the executor's AggState node is passed as
+ *	  the fmgr "context" value in all transfunc and finalfunc calls.  It is
+ *	  not really intended that the transition functions will look into the
+ *	  AggState node, but they can use code like
+ *			if (fcinfo->context && IsA(fcinfo->context, AggState))
+ *	  to verify that they are being called by nodeAgg.c and not as ordinary
+ *	  SQL functions.  The main reason a transition function might want to know
+ *	  that is that it can avoid palloc'ing a fixed-size pass-by-ref transition
+ *	  value on every call: it can instead just scribble on and return its left
+ *	  input.  Ordinarily it is completely forbidden for functions to modify
+ *	  pass-by-ref inputs, but in the aggregate case we know the left input is
+ *	  either the initial transition value or a previous function result, and
+ *	  in either case its value need not be preserved.  See int8inc() for an
+ *	  example.  Notice that advance_transition_function() is coded to avoid a
+ *	  data copy step when the previous transition value pointer is returned.
+ *
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.128 2005/01/28 19:33:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.129 2005/03/12 20:25:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -363,7 +379,7 @@ advance_transition_function(AggState *aggstate,
 	 */
 
 	/* MemSet(&fcinfo, 0, sizeof(fcinfo)); */
-	fcinfo.context = NULL;
+	fcinfo.context = (void *) aggstate;
 	fcinfo.resultinfo = NULL;
 	fcinfo.isnull = false;
 
@@ -541,6 +557,7 @@ finalize_aggregate(AggState *aggstate,
 		FunctionCallInfoData fcinfo;
 
 		MemSet(&fcinfo, 0, sizeof(fcinfo));
+		fcinfo.context = (void *) aggstate;
 		fcinfo.flinfo = &peraggstate->finalfn;
 		fcinfo.nargs = 1;
 		fcinfo.arg[0] = pergroupstate->transValue;

@@ -34,8 +34,12 @@
 #include "utils/lsyscache.h"
 
 
-/* This is actually a postgres version of a one dimensional array */
-
+/*
+ * This is actually a postgres version of a one dimensional array.
+ * We cheat a little by using the lower-bound field as an indicator
+ * of the physically allocated size, while the dimensionality is the
+ * count of items accumulated so far.
+ */
 typedef struct
 {
 	ArrayType	a;
@@ -56,7 +60,7 @@ typedef struct callContext
 #define START_NUM	8			/* initial size of arrays */
 #define PGARRAY_SIZE(n) (sizeof(PGARRAY) + (((n)-1)*sizeof(int4)))
 
-static PGARRAY *GetPGArray(PGARRAY *p, int fAdd);
+static PGARRAY *GetPGArray(PGARRAY *p, AggState *aggstate, bool fAdd);
 static PGARRAY *ShrinkPGArray(PGARRAY *p);
 
 Datum		int_agg_state(PG_FUNCTION_ARGS);
@@ -68,72 +72,68 @@ PG_FUNCTION_INFO_V1(int_agg_final_array);
 PG_FUNCTION_INFO_V1(int_enum);
 
 /*
- * Manage the aggregation state of the array
+ * Manage the allocation state of the array
  *
- * Need to specify a suitably long-lived memory context, or it will vanish!
- * PortalContext isn't really right, but it's close enough.
+ * Note that the array needs to be in a reasonably long-lived context,
+ * ie the Agg node's aggcontext.
  */
 static PGARRAY *
-GetPGArray(PGARRAY *p, int fAdd)
+GetPGArray(PGARRAY *p, AggState *aggstate, bool fAdd)
 {
 	if (!p)
 	{
 		/* New array */
 		int			cb = PGARRAY_SIZE(START_NUM);
 
-		p = (PGARRAY *) MemoryContextAlloc(PortalContext, cb);
+		p = (PGARRAY *) MemoryContextAlloc(aggstate->aggcontext, cb);
 		p->a.size = cb;
-		p->a.ndim = 0;
+		p->a.ndim = 1;
 		p->a.flags = 0;
 		p->a.elemtype = INT4OID;
 		p->items = 0;
 		p->lower = START_NUM;
 	}
 	else if (fAdd)
-	{							/* Ensure array has space */
+	{
+		/* Ensure array has space for another item */
 		if (p->items >= p->lower)
 		{
-			PGARRAY    *pn;
-			int			n = p->lower + p->lower;
+			PGARRAY	   *pn;
+			int			n = p->lower * 2;
 			int			cbNew = PGARRAY_SIZE(n);
 
-			pn = (PGARRAY *) repalloc(p, cbNew);
+			pn = (PGARRAY *) MemoryContextAlloc(aggstate->aggcontext, cbNew);
+			memcpy(pn, p, p->a.size);
 			pn->a.size = cbNew;
 			pn->lower = n;
-			return pn;
+			/* do not pfree(p), because nodeAgg.c will */
+			p = pn;
 		}
 	}
 	return p;
 }
 
-/* Shrinks the array to its actual size and moves it into the standard
- * memory allocation context, frees working memory
+/*
+ * Shrinks the array to its actual size and moves it into the standard
+ * memory allocation context
  */
 static PGARRAY *
-ShrinkPGArray(PGARRAY * p)
+ShrinkPGArray(PGARRAY *p)
 {
-	PGARRAY    *pnew = NULL;
+	PGARRAY    *pnew;
+	/* get target size */
+	int			cb = PGARRAY_SIZE(p->items);
 
-	if (p)
-	{
-		/* get target size */
-		int			cb = PGARRAY_SIZE(p->items);
+	/* use current transaction context */
+	pnew = palloc(cb);
+	memcpy(pnew, p, cb);
 
-		/* use current transaction context */
-		pnew = palloc(cb);
+	/* fix up the fields in the new array to match normal conventions */
+	pnew->a.size = cb;
+	pnew->lower = 1;
 
-		/*
-		 * Fix up the fields in the new structure, so Postgres understands
-		 */
-		memcpy(pnew, p, cb);
-		pnew->a.size = cb;
-		pnew->a.ndim = 1;
-		pnew->a.flags = 0;
-		pnew->a.elemtype = INT4OID;
-		pnew->lower = 1;
+	/* do not pfree(p), because nodeAgg.c will */
 
-		pfree(p);
-	}
 	return pnew;
 }
 
@@ -144,11 +144,18 @@ int_agg_state(PG_FUNCTION_ARGS)
 	PGARRAY    *state;
 	PGARRAY    *p;
 
+	/*
+	 * As of PG 8.1 we can actually verify that we are being used as an
+	 * aggregate function, and so it is safe to scribble on our left input.
+	 */
+	if (!(fcinfo->context && IsA(fcinfo->context, AggState)))
+		elog(ERROR, "int_agg_state may only be used as an aggregate");
+
 	if (PG_ARGISNULL(0))
-		state = NULL;
+		state = NULL;			/* first time through */
 	else
 		state = (PGARRAY *) PG_GETARG_POINTER(0);
-	p = GetPGArray(state, 1);
+	p = GetPGArray(state, (AggState *) fcinfo->context, true);
 
 	if (!PG_ARGISNULL(1))
 	{
@@ -164,22 +171,38 @@ int_agg_state(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(p);
 }
 
-/* This is the final function used for the integer aggregator. It returns all
+/*
+ * This is the final function used for the integer aggregator. It returns all
  * the integers collected as a one dimensional integer array
  */
 Datum
 int_agg_final_array(PG_FUNCTION_ARGS)
 {
-	PGARRAY    *state = (PGARRAY *) PG_GETARG_POINTER(0);
-	PGARRAY    *pnew = ShrinkPGArray(GetPGArray(state, 0));
+	PGARRAY    *state;
+	PGARRAY    *p;
+	PGARRAY    *pnew;
 
-	if (pnew)
-		PG_RETURN_POINTER(pnew);
+	/*
+	 * As of PG 8.1 we can actually verify that we are being used as an
+	 * aggregate function, and so it is safe to scribble on our left input.
+	 */
+	if (!(fcinfo->context && IsA(fcinfo->context, AggState)))
+		elog(ERROR, "int_agg_final_array may only be used as an aggregate");
+
+	if (PG_ARGISNULL(0))
+		state = NULL;			/* zero items in aggregation */
 	else
-		PG_RETURN_NULL();
+		state = (PGARRAY *) PG_GETARG_POINTER(0);
+	p = GetPGArray(state, (AggState *) fcinfo->context, false);
+
+	pnew = ShrinkPGArray(p);
+	PG_RETURN_POINTER(pnew);
 }
 
-/* This function accepts an array, and returns one item for each entry in the array */
+/*
+ * This function accepts an array, and returns one item for each entry in the
+ * array
+ */
 Datum
 int_enum(PG_FUNCTION_ARGS)
 {

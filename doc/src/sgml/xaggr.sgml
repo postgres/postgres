@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xaggr.sgml,v 1.26 2005/01/22 22:56:36 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xaggr.sgml,v 1.27 2005/03/12 20:25:06 tgl Exp $
 -->
 
  <sect1 id="xaggr">
@@ -159,6 +159,21 @@ SELECT attrelid::regclass, array_accum(atttypid)
  pg_user  | {19,23,16,16,16,25,702,1009}
 (1 row)
 </programlisting>
+  </para>
+
+  <para>
+   A function written in C can detect that it is being called as an
+   aggregate transition or final function by seeing if it was passed
+   an <structname>AggState</> node as the function call <quote>context</>,
+   for example by
+<programlisting>
+        if (fcinfo->context &amp;&amp; IsA(fcinfo->context, AggState))
+</programlisting>
+   One reason for checking this is that when it is true, the left input
+   must be a temporary transition value and can therefore safely be modified
+   in-place rather than allocating a new copy.  (This is the <emphasis>only</>
+   case where it is safe for a function to modify a pass-by-reference input.)
+   See <literal>int8inc()></> for an example.
   </para>
 
   <para>
