@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sun Oct 31 21:21:38 EST 2004
+Last updated:		Tue Nov  2 09:49:20 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -69,7 +69,12 @@ Administration
   explicit tablespaces.  To fix this would require modifying pg_class in the
   newly copied database, which we don't currently do.
 
-* Add a GUC variable to control the tablespace for temporary objects
+* Add a GUC variable to control the tablespace for temporary objects and
+  sort files
+
+  This perhaps should use a round-robin allocation system where several
+  tablespaces are used in a cycle.  The cycle pointer should be global.
+  
 * Add "include file" functionality in postgresql.conf
 * Add session start time and last statement time to pg_stat_activity
 * Allow server logs to be remotely read using SQL commands
