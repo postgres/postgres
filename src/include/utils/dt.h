@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dt.h,v 1.26 1998/02/03 02:09:02 scrappy Exp $
+ * $Id: dt.h,v 1.27 1998/02/13 17:12:07 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -187,11 +187,11 @@ typedef struct
 /* keep this struct small; it gets used a lot */
 typedef struct
 {
-#if defined(__AIX)
+#if defined(_AIX)
 	char	   *token;
 #else
 	char		token[TOKMAXLEN];
-#endif							/* __AIX */
+#endif							/* _AIX */
 	char		type;
 	char		value;			/* this may be unsigned, alas */
 } datetkn;

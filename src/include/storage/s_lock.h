@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.25 1998/02/13 05:09:50 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.26 1998/02/13 17:11:55 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,7 +141,7 @@ static int	tas(slock_t *lock);
  * (see storage/ipc.h).
  */
 
-#if defined(__AIX)
+#if defined(_AIX)
 
 #define	S_LOCK(lock)	do \
 						{ \
@@ -153,7 +153,7 @@ static int	tas(slock_t *lock);
 
 #define	S_INIT_LOCK(lock)	S_UNLOCK(lock)
 
-#endif							/* __AIX */
+#endif							/* _AIX */
 
 /*
  * HP-UX (PA-RISC)
