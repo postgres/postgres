@@ -1,15 +1,15 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Jul  5 23:23:25 EDT 2004
+Last updated:		Tue Jul  6 12:18:16 EDT 2004
+
+A dash (-) marks changes that will appear in the upcoming 7.5 release.
+
+Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
 The most recent version of this document can be viewed at
 the PostgreSQL web site, http://www.PostgreSQL.org.
-
-A dash (-) marks changes that will appear in the upcoming 7.5 release.
-
-Bracketed items "[]" have more detail.
 
 
 Urgent
